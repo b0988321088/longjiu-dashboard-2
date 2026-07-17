@@ -419,7 +419,7 @@ __MARKET_ROWS__
       <strong>🤖 CTO 技術視角（tech_stack / risk / action）</strong><br>
       __CTO_TECH__<br>
       __CTO_RISK__<br>
-      <strong style="color:#b91c1c">今日最大風險</strong>：台股加權重挫 -6.47%、台積電 -7.29%，短線受科技股獲利了結與資金移轉衝擊。<br>
+      <strong style="color:#b91c1c">今日場景</strong>：__SCENARIO_EVENT__<br>
       <strong style="color:#b91c1c">建議動作</strong>：__CTO_ACTION__；縮短持有期間，優先保留現金，觀望 Q3 外資动向。
     </div>
   </div>
@@ -465,6 +465,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
     if not analysis:
         return html
 
+    scenario = analysis.get("scenario", {})
     buffett = analysis.get("buffett", {})
     cto = analysis.get("cto", {})
 
@@ -481,7 +482,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
     cpi = market.get("cpi", "待補齊")
 
     rows = [
-        f"<tr><td>台股加權指數（{TODAY}）</td><td>{twii}</td><td>高檔震盪</td></tr>",
+        f"<tr><td>台股加權指數（{TODAY}）</td><td>{twii}</td><td>{scenario.get('market_assessment', market.get('twii', '待補齊'))}</td></tr>",
         f"<tr><td>台積電（{TODAY}）</td><td>{tsm}</td><td>半導體龍頭穩盤</td></tr>",
         f"<tr><td>費半（{TODAY}）</td><td>{sox}</td><td>高檔回調</td></tr>",
         f"<tr><td>美股（{TODAY}）</td><td>{us}</td><td>通膨降溫驅動科技領漲</td></tr>",
@@ -494,7 +495,8 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
     buf_bull = buffett.get("bull", "")
     buf_bear = buffett.get("bear", "")
     buf_actions = buffett.get("actions", [])
-    buf_content = "<strong>🧓 巴菲特式思考（規範：整體資產配置，非個股評論）</strong><br>"
+    scenario_event = scenario.get("event", "—")
+    buf_content = f"<strong>🧓 巴菲特式思考（規範：整體資產配置，非個股評論）</strong><br><strong>場景判定</strong>：{scenario_event}<br>"
     if buf_bull:
         buf_content += f"• Bull：{buf_bull}<br>"
     if buf_bear:
@@ -502,7 +504,14 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
     for a in buf_actions:
         buf_content += f"• {a}<br>"
     # Buffett injection: add explicit allocation call-to-action
+    scenario = analysis.get("scenario", {})
+    if scenario.get("scenario_summary"):
+        buf_content += "<br><strong>📋  scenario 判斷</strong>：" + scenario["scenario_summary"] + "<br>"
     buf_content += "<br>• 建議：減碼美股權重、增加高利活存與防禦型配息部位；0050 配息縮水後缺口以 00878/00713 補位。"
+    # scenario string placeholders
+    scenario = analysis.get("scenario", {})
+    html = html.replace("__SCENARIO_EVENT__", scenario.get("event", "—"))
+    # buffett placeholder injection handled above; now replace __BUFFETT_CONTENT__
     html = html.replace("__BUFFETT_CONTENT__", buf_content)
     html = html.replace("__CTO_TECH__", cto.get("tech_stack", "—"))
     html = html.replace("__CTO_RISK__", cto.get("risk", "—"))
