@@ -109,6 +109,11 @@ def calibrate_sources() -> dict:
         # 保守回退：安聯 A+B + 第一金月配
         monthly_dividend = (snap.get("allianz_ab_monthly", 55_451) or 55_451) + (snap.get("firstjin_monthly", 13_593) or 13_593)
 
+    total_assets = snap.get("total_assets")
+    total_liabilities = snap.get("total_liabilities")
+    net_worth = snap.get("net_worth")
+    if net_worth is None and total_assets is not None and total_liabilities is not None:
+        net_worth = total_assets - total_liabilities
     return {
         "date": TODAY,
         "monthly_income": s_income,
@@ -124,6 +129,10 @@ def calibrate_sources() -> dict:
         "relay_stations": 3,
         "cc_4cards": ["玉山UNI", "台新Richart", "永豐SPORT", "台北富邦momo/J"],
         "loans_2mortgage": ["洲際W房貸", "大義街房貸+理財型利息"],
+        "total_assets": total_assets,
+        "total_liabilities": total_liabilities,
+        "net_worth": net_worth,
+        "insurance_current_value": s_insurance,
     }
 
 
@@ -411,16 +420,11 @@ __MARKET_ROWS__
     <h3>巴菲特視角建議</h3>
     <div class="callout callout-bull">
       __BUFFETT_CONTENT__
-      <br><strong>📋 當前資產配置建議</strong>：減碼美股權重、增加高利活存與防禦型配息部位；0050 配息縮水後缺口以 00878/00713 補位。
     </div>
 
     <h3>CTO 技術視角</h3>
     <div class="callout callout-bear">
-      <strong>🤖 CTO 技術視角（tech_stack / risk / action）</strong><br>
-      __CTO_TECH__<br>
-      __CTO_RISK__<br>
-      <strong style="color:#b91c1c">今日場景</strong>：__SCENARIO_EVENT__<br>
-      <strong style="color:#b91c1c">建議動作</strong>：__CTO_ACTION__；縮短持有期間，優先保留現金，觀望 Q3 外資动向。
+      __CTO_TECH__
     </div>
   </div>
 
@@ -496,6 +500,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
     buf_bear = buffett.get("bear", "")
     buf_actions = buffett.get("actions", [])
     scenario_event = scenario.get("event", "—")
+    net_worth = tv.get("net_worth", 0)
     buf_content = f"<strong>🧓 巴菲特式思考（規範：整體資產配置，非個股評論）</strong><br><strong>場景判定</strong>：{scenario_event}<br>"
     if buf_bull:
         buf_content += f"• Bull：{buf_bull}<br>"
@@ -503,19 +508,26 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
         buf_content += f"• Bear：{buf_bear}<br>"
     for a in buf_actions:
         buf_content += f"• {a}<br>"
-    # Buffett injection: add explicit allocation call-to-action
+    # Scenario judgment block + allocation CTA
     scenario = analysis.get("scenario", {})
     if scenario.get("scenario_summary"):
         buf_content += "<br><strong>📋  scenario 判斷</strong>：" + scenario["scenario_summary"] + "<br>"
-    buf_content += "<br>• 建議：減碼美股權重、增加高利活存與防禦型配息部位；0050 配息縮水後缺口以 00878/00713 補位。"
-    # scenario string placeholders
-    scenario = analysis.get("scenario", {})
-    html = html.replace("__SCENARIO_EVENT__", scenario.get("event", "—"))
+    buf_content += "<br><strong>🤝 Buffett 派操作建議</strong><br>"
+    buf_content += f"• 淨資產：{net_worth:,.0f} TWD<br>"
+    buf_content += "• 建議部位：美股權益 ≤ 35%、台股權益 15-20%、高利活存/短債 ≥ 20%、保單/配息穩定型 ≥ 25%<br>"
+    buf_content += "• 今日動作：減碼美股權重、增加高利活存與防禦型配息部位；0050 配息縮水後缺口以 00878/00713 補位。<br>"
+    buf_content += "• 觸發條件：外資賣超 > 150 億 / 大盤跌 1.5% / 費半跌 2% / 跌破季線+量增 → 啟動減碼；外資買超 > 100 億 + 大盤漲 1% + 費半 +3% → 回補。"
+
     # buffett placeholder injection handled above; now replace __BUFFETT_CONTENT__
     html = html.replace("__BUFFETT_CONTENT__", buf_content)
-    html = html.replace("__CTO_TECH__", cto.get("tech_stack", "—"))
-    html = html.replace("__CTO_RISK__", cto.get("risk", "—"))
-    html = html.replace("__CTO_ACTION__", cto.get("action", "—"))
+    cto_tech = cto.get("tech_stack", "—")
+    cto_risk = cto.get("risk", "—")
+    cto_action = cto.get("action", "—")
+    cto_signal = scenario.get("cto_signal", "")
+    if cto_signal:
+        cto_risk = f"今日觸發：{cto_signal}；{cto_risk}"
+    cto_content = f"<strong>🤖 CTO 技術視角</strong><br><strong>tech_stack</strong>：{cto_tech}<br><strong>今日最大風險</strong>：{cto_risk}<br><strong>建議動作</strong>：{cto_action}"
+    html = html.replace("__CTO_TECH__", cto_content)
 
     return html
 

@@ -20,6 +20,15 @@ from datetime import date
 from pathlib import Path
 
 BASE = Path(__file__).parent.resolve()
+DAILY_ANALYSIS = BASE / "daily_analysis.json"
+
+
+def read_json(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
 TODAY = date.today().isoformat()
 DAILY_REPORT = BASE / f"daily_report_v2_{TODAY}.html"
 INDEX_FILE = BASE / "index.html"
@@ -123,12 +132,30 @@ def main() -> None:
         fail("7/17 轉貸倒數仍顯示 3 天")
     pass_check("7/17 轉貸倒數正確")
 
-    # 10. 巴菲特分析已使用確認過的真值
-    if "待補齊" in daily and "巴菲特" in daily:
-        # 如果巴菲特區塊出現在待補齊 section，視為不完整
-        pass_check("巴菲特分析存在（部分待補齊可接受）")
-    else:
-        pass_check("巴菲特分析存在")
+    # 8. 巴菲特分析強化審查（必須有場景判定 + 建議部位 + 淨資產數字）
+    if "巴菲特" in daily and "Buffett 派操作建議" not in daily:
+        fail("巴菲特分析待補齊：缺少建議部位")
+    if "巴菲特" in daily and "淨資產" not in daily:
+        fail("巴菲特分析待補齊：缺少淨資產數字")
+    if "巴菲特" in daily:
+        buf_section = daily.split("巴菲特式思考")[1][:900] if "巴菲特式思考" in daily else daily.split("巴菲特")[1][:800]
+        if "TWD" not in buf_section:
+            fail("巴菲特分析待補齊：缺少可驗證的數字錠定")
+    pass_check("巴菲特分析完整（場景判定 + 建議部位 + 淨資產數字）")
+
+    # 8.5 CTO 技術視角強化審查
+    if "CTO" in daily and "今日最大風險" not in daily:
+        fail("CTO 分析待補齊：缺少今日最大風險")
+    if "CTO" in daily and "建議動作" not in daily:
+        fail("CTO 分析待補齊：缺少建議動作")
+    pass_check("CTO 分析完整（今日最大風險 + 建議動作）")
+
+    # 8.6 場景驅動分析
+    analysis = read_json(DAILY_ANALYSIS)
+    scenario = analysis.get("scenario", {})
+    if scenario.get("cto_signal") and "今日觸發" not in daily:
+        fail("CTO 訊號未顯示：daily_analysis.json 有 cto_signal 但日報未顯示「今日觸發」")
+    pass_check("場景驅動分析已注入")
 
     # 最終結論
     print("\n[CIO 審查] 全部通過。允許推送。")
