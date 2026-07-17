@@ -4,7 +4,7 @@
 
 **Goal:** 建立一套能 24/7 自主監控資產、對比其他理財機器人、動態平衡投資組合的系統，讓執行長從 70% 技術微操中解脫，回歸純粹戰略裁決。
 
-**Architecture:** 在現有 team chain 基礎上（Hermes + Notion + Gemini + daily_deploy.py），新增三大模組：Asset Moat Monitor（資產護城河監控）、External Comparator（外部機器人對標）、Dynamic Balancer（動態平衡引擎）。每日 08:00、每週五 17:00 自動執行。
+**Architecture:** 在現有 team chain 基礎上（Hermes + Notion + Gemini + daily_deploy.py），新增三大模組。**市場定位差異**：台灣 robo-advisor 只能給建議無法自動執行，且以「資產增值」為核心；龍九追求「被動現金流覆蓋支出」，並擁有獨特的 T+4 配息接力、除息日排程、Rule-based 自動再平衡能力。每日 08:00、每週五 17:00 自動執行。
 
 **Tech Stack:** Python + Notion API + Gemini 2.5 Flash + Yahoo Finance + GitHub Pages + Telegram Bot + daily_intel.py 擴充
 
@@ -12,6 +12,20 @@
 
 ## 當前期限：2026-07-18 ~ 2026-07-25（P0）
 **Exit 條件：** 1) 外部對標模組產出第一份對比報告 2) 資產防禦審計 cron 首次成功執行
+
+### 市場定位差異（Market Positioning）
+
+| 維度 | 台灣 robo-advisor | 龍九控股自駕系統 |
+|------|-------------------|------------------|
+| 核心目標 | 資產增值（growth-first） | 被動現金流覆蓋支出（cash-flow-first） |
+| 自動化範圍 | 建議 only，下單需人按 | 建議自動產出，可接自動下單 |
+| 配息處理 | 不在 scpoe | T+4 配息接力、除息日排程 |
+| 截圖依賴 | 投資人自行上傳持倉截圖 | Yahoo Finance API + Moneybook CSV → 減少截圖 |
+| 再平衡 | 選定的 portfolio 才自動 | rule-based，不呼叫 LLM 也跑 |
+| 情報偵察 | 靜態組合輪動 | daily_intel.py 即時市場情報 |
+| 費用 | 管理費 0.5%-1.5% | 零管理費（自有系統） |
+
+**結論**：龍九的 positioning 是「退休現金流 OS」而非「growth robo-advisor」，這是我們不對標 00878/0050 報酬，而是對標「Coverage Ratio + Runway + 配息效率」的原因。
 
 ### Task 1：建立 Asset Moat Monitor 模組
 
