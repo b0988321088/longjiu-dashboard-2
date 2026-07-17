@@ -77,12 +77,24 @@
   "monthly_expense_mb_override": 222910,
   "monthly_expense_snapshot_original": 141958,
   "securities_total": 2240710,
-  "funds_total": 422534,
+  "funds_total": 783873,
   "insurance_total": 9876282,
   "last_calibration_sources": {
     "securities": "凱基證券截圖 2026-07-18 02:00",
     "funds": "鉅亨基金截圖 2026-07-18 02:03",
     "bank": "MB Moneybook_明細_20260718_1.csv",
     "insurance": "Company_Ledger.md + 第一金 7/14 配息 update"
-  }
+  },
+  "funds_breakdown": {
+    "路博邁5G_累積": 235840,
+    "路博邁5G_月配": 87790,
+    "0050連結_A不配息": 103415,
+    "0050連結_B配息": 44914,
+    "統一奔騰": 83279,
+    "台中銀台灣優惠": 46264,
+    "台新美日台半導體": 647977
+  },
+  "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
+  "real_liquid_assets": 6890791,
+  "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）"
 }
