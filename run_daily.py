@@ -12,7 +12,7 @@ import json
 import os
 import re
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 import daily_intel as mi_mod
 from daily_intel import load_daily_analysis
@@ -508,12 +508,11 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
 
 
 def render_changelog(tv: dict) -> str:
-    """Build today-vs-yesterday diff from snapshot archives."""
+    """Build today-vs-yesterday diff: snapshot numbers + report structure."""
     today_snap = tv
     snap_dir = BASE / "snapshots"
     yesterday_snap = {}
 
-    # Try yesterday's snapshot
     candidates = sorted(snap_dir.glob("snapshot_*.json"), reverse=True)
     if candidates:
         try:
@@ -532,34 +531,52 @@ def render_changelog(tv: dict) -> str:
         ("insurance_current_value", "保單現值"),
         ("monthly_dividend", "本月配息"),
     ]
-
     for k, label in keys:
         t = today_snap.get(k)
         y = yesterday_snap.get(k)
         if t is None:
             continue
-        t_str = f"{t:,}" if isinstance(t, (int, float)) else str(t)
+        t_str = f"{t:,}"
         if y is None:
             diffs.append(f"- **{label}**：{t_str}（昨日無紀錄）")
-        elif t == y:
-            diffs.append(f"- **{label}**：{t_str}（= 無變化）")
+        elif t != y:
+            y_str = f"{y:,}"
+            diff = abs(t - y) if isinstance(t, (int, float)) and isinstance(y, (int, float)) else "?"
+            diffs.append(f"- **{label}**：{t_str}（昨日 {y_str}，變動 {diff:,}）")
         else:
-            y_str = f"{y:,}" if isinstance(y, (int, float)) else str(y)
-            sign = "+" if (isinstance(t, (int, float)) and t > y and k != "monthly_expense") else ""
-            if k == "monthly_expense" and t != y:
-                sign = "-" if t < y else "+"
-            diffs.append(f"- **{label}**：{t_str}（昨日 {y_str}，{sign}{abs(t-y):,}）")
+            diffs.append(f"- **{label}**：{t_str}（= 無變化）")
+
+    # Report structure diff
+    base = BASE
+    yesterday_date = (datetime.strptime(TODAY, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
+    y_html_path = base / f"daily_report_v2_{yesterday_date}.html"
+    t_html_path = base / f"daily_report_v2_{TODAY}.html"
+    if y_html_path.exists() and t_html_path.exists():
+        def headings(html_text):
+            h2 = [re.sub(r"<[^>]+>", "", h).strip() for h in re.findall(r"<h2[^>]*>(.*?)</h2>", html_text)]
+            h3 = [re.sub(r"<[^>]+>", "", h).strip() for h in re.findall(r"<h3[^>]*>(.*?)</h3>", html_text)]
+            return set(h2 + h3)
+        t_heads = headings(t_html_path.read_text(encoding="utf-8"))
+        y_heads = headings(y_html_path.read_text(encoding="utf-8"))
+        added = sorted(t_heads - y_heads)
+        removed = sorted(y_heads - t_heads)
+        if added:
+            diffs.append("- **新增章節**：" + "、".join(added[:5]))
+        if removed:
+            diffs.append("- **消失章節**：" + "、".join(removed[:5]))
+
+    diffs.append("- **版面**：今日縮編資產/現金流/行事曆為摘要卡")
 
     if not diffs:
-        diffs = ["- 昨日 snapshot 缺失，無法計算差異。"]
+        diffs = ["- 昨日報告缺失，無法計算差異。"]
 
     md = f"""# 龍九日報 changelog {TODAY}
 
-## 差異分析
+## 差異分析 (今日 vs 昨日)
 
 {chr(10).join(diffs)}
 
-## 真值錨定
+## 真值錠定
 
 - 總資產：{today_snap.get('total_assets', 0):,} TWD
 - 保單現值：{today_snap.get('insurance_current_value', 0):,} TWD
@@ -569,7 +586,7 @@ def render_changelog(tv: dict) -> str:
 ## 待補齊
 
 - 0050 配息：待 MB 確認
-- 台股外資流向：依 hunter_logs 為主
+- 月支出明細：信用卡拆分各 card 金額
 """
     return md
 
