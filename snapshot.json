@@ -75,5 +75,14 @@
   "credit_card_pending": 34213,
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_mb_override": 222910,
-  "monthly_expense_snapshot_original": 141958
+  "monthly_expense_snapshot_original": 141958,
+  "securities_total": 2240710,
+  "funds_total": 422534,
+  "insurance_total": 9876282,
+  "last_calibration_sources": {
+    "securities": "凱基證券截圖 2026-07-18 02:00",
+    "funds": "鉅亨基金截圖 2026-07-18 02:03",
+    "bank": "MB Moneybook_明細_20260718_1.csv",
+    "insurance": "Company_Ledger.md + 第一金 7/14 配息 update"
+  }
 }
