@@ -368,7 +368,11 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
         "費城半導體 SOX 今日",
         "台積電 ADR TSM 今日",
         "美股 道瓊 納指 今日",
+        "美債收益率 10年 跳動 2026",
+        "央行 理監事會議 利率決策 2026",
+        "國泰世華 轉貸 利率 政策 2026",
         "0050 配息 除息日 2026",
+        "凱基證券 鉅亨基金 機構調倉 2026",
     ]
     search_results = []
     for q in queries:
