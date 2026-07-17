@@ -55,6 +55,47 @@ def checklist_failed() -> bool:
     return result.returncode != 0
 
 
+def cio_review_failed() -> tuple[bool, str]:
+    print("[STEP] cio_review")
+    result = subprocess.run(
+        [sys.executable, str(BASE / "cio_review.py")],
+        cwd=BASE,
+        capture_output=True,
+        text=True,
+    )
+    print(result.stdout)
+    if result.returncode != 0:
+        return True, result.stdout
+    return False, result.stdout
+
+
+def gemini_review_failed() -> tuple[bool, dict]:
+    print("[STEP] gemini_review")
+    result = subprocess.run(
+        [sys.executable, str(BASE / "gemini_review.py")],
+        cwd=BASE,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        print(f"[SKIP/WARN] gemini_review: {result.stderr[:200]}")
+        return False, {}
+    try:
+        data = json.loads(result.stdout)
+    except Exception:
+        print(f"[WARN] gemini_review output parse failed: {result.stdout[:200]}")
+        return False, {}
+    status = data.get("status", "")
+    if status == "rejected":
+        print(f"[REJECTED] Gemini review: {data.get('summary', '')}")
+        return True, data
+    if status == "error":
+        print(f"[ERROR] Gemini review: {data.get('reason', '')}")
+        return False, data
+    print(f"[OK] Gemini review: score={data.get('score', '?')}, summary={data.get('summary', '')}")
+    return False, data
+
+
 def github_push(filepath: str) -> bool:
     result = subprocess.run(
         ["git", "add", filepath],
@@ -90,7 +131,7 @@ def telegram_push(text: str) -> bool:
     import requests
 
     url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
-    payload = {"chat_id": TG_CHAT_ID, "text": text, "parse_mode": "Markdown"}
+    payload = {"chat_id": TG_CHAT_ID, "text": text}
     r = requests.post(url, data=payload, timeout=10)
     ok = r.status_code == 200
     print(f"  telegram: {r.status_code}")
@@ -110,16 +151,15 @@ def main() -> None:
         return
 
     # 2.5 CIO 審查
-    print("[STEP] cio_review")
-    result = subprocess.run(
-        [sys.executable, str(BASE / "cio_review.py")],
-        cwd=BASE,
-        capture_output=True,
-        text=True,
-    )
-    print(result.stdout)
-    if result.returncode != 0:
+    failed_cio, cio_out = cio_review_failed()
+    if failed_cio:
         print("[STOP] CIO 審查未過，停止推送")
+        return
+
+    # 2.6 Gemini review
+    failed_gemini, gemini_data = gemini_review_failed()
+    if failed_gemini:
+        print("[STOP] Gemini 審查未過，停止推送")
         return
 
     # 3. 推送
