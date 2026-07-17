@@ -140,6 +140,29 @@ def calibrate_sources() -> dict:
 # 2. 日報產出
 # ==========================================================================
 
+
+def _diff_to_buffett_bullets(tv: dict, y: dict) -> list[str]:
+    bullets = []
+    pairs = [
+        ("monthly_expense", "月支出", "支出上升時優先檢視信用卡/房貸是否異常"),
+        ("monthly_income", "月收入", "收入變動確認是否為實質調整或一次性"),
+        ("net_worth", "淨資產", "淨資產下滑需檢視資產配置是否有過度曝險"),
+        ("insurance_current_value", "保單現值", "保單現值下降應評估是否調整基金標的"),
+        ("monthly_dividend", "本月配息", "配息縮水時補位防禦型配息基金"),
+        ("working_surplus", "工作期盈餘", "盈餘下滑應壓縮非必要支出"),
+        ("retirement_surplus", "退休後盈餘", "退休金流下降需提前建立現金緩衝"),
+    ]
+    for key, label, hint in pairs:
+        t = tv.get(key)
+        prev = y.get(key)
+        if t is None or prev is None:
+            continue
+        if isinstance(t, (int, float)) and isinstance(prev, (int, float)) and t != prev:
+            direction = "上升" if t > prev else "下降"
+            bullets.append(f"{label}{direction}（{t:,} vs 昨日 {prev:,}）：{hint}")
+    return bullets
+
+
 def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None) -> str:
     """產出五大章節日報 HTML。"""
     allianz = tv["allianz_ab"] or 7_881_584
@@ -500,18 +523,30 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
     buf_bear = buffett.get("bear", "")
     buf_actions = buffett.get("actions", [])
     scenario_event = scenario.get("event", "—")
+    buf_scenario = scenario.get("scenario_summary") or buffett.get("scenario_summary")
     net_worth = tv.get("net_worth", 0)
-    buf_content = f"<strong>🧓 巴菲特式思考（規範：整體資產配置，非個股評論）</strong><br><strong>場景判定</strong>：{scenario_event}<br>"
+    snap_dir = BASE / "snapshots"
+    yesterday_snap = {}
+    candidates = sorted(snap_dir.glob("snapshot_*.json"), reverse=True)
+    if candidates:
+        try:
+            yesterday_snap = json.loads(candidates[0].read_text(encoding="utf-8"))
+        except Exception:
+            yesterday_snap = {}
+    buf_content = f"<strong>🧓 巴菲特式思考（規範：整體資產配置，非個股評論）</strong><br><strong>場景判定</strong>：{buf_scenario or scenario_event}<br>"
     if buf_bull:
         buf_content += f"• Bull：{buf_bull}<br>"
     if buf_bear:
         buf_content += f"• Bear：{buf_bear}<br>"
     for a in buf_actions:
         buf_content += f"• {a}<br>"
-    # Scenario judgment block + allocation CTA
-    scenario = analysis.get("scenario", {})
-    if scenario.get("scenario_summary"):
-        buf_content += "<br><strong>📋  scenario 判斷</strong>：" + scenario["scenario_summary"] + "<br>"
+    # Diff-driven Buffett narrative
+    diff_bullets = _diff_to_buffett_bullets(tv, yesterday_snap)
+    if diff_bullets:
+        buf_content += "<br><strong>📋  昨日差異帶來的行動啟示</strong><br>"
+        for b in diff_bullets:
+            buf_content += f"• {b}<br>"
+    # Allocation CTA
     buf_content += "<br><strong>🤝 Buffett 派操作建議</strong><br>"
     buf_content += f"• 淨資產：{net_worth:,.0f} TWD<br>"
     buf_content += "• 建議部位：美股權益 ≤ 35%、台股權益 15-20%、高利活存/短債 ≥ 20%、保單/配息穩定型 ≥ 25%<br>"
@@ -613,6 +648,35 @@ def render_changelog(tv: dict) -> str:
 - 0050 配息：待 MB 確認
 - 月支出明細：信用卡拆分各 card 金額
 """
+    # Also write an HTML version for GitHub Pages
+    out_html = OUT_CHANGELOG.with_suffix('.html')
+    lines = md.splitlines()
+    body_parts = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('# '):
+            body_parts.append(f'<h1 style="font-size:18px;font-weight:800;margin:12px 0 8px;">{stripped[2:]}</h1>')
+        elif stripped.startswith('## '):
+            body_parts.append(f'<h2 style="font-size:16px;font-weight:800;margin:10px 0 6px;color:#334155;">{stripped[3:]}</h2>')
+        elif stripped.startswith('- '):
+            body_parts.append(f'<li style="margin-left:18px;line-height:1.7;">{stripped[2:]}</li>')
+        elif stripped == '':
+            body_parts.append('<br>')
+        else:
+            body_parts.append(f'<p style="line-height:1.7;">{stripped}</p>')
+    html_body = '\n'.join(body_parts)
+    html_doc = f"""<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>changelog {TODAY}</title>
+</head>
+<body style="background:#f5f5f7;color:#111;font-family:-apple-system,BlinkMacSystemFont,Noto Sans TC,sans-serif;max-width:720px;margin:0 auto;padding:16px;">
+{html_body}
+</body>
+</html>"""
+    out_html.write_text(html_doc, encoding='utf-8')
     return md
 
 
