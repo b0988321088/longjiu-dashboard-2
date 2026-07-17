@@ -357,3 +357,31 @@
 | 根因 | 四站規劃未同步至日報，用戶回饋才補齊 |
 | 正確表述 | 第四站：QL18610694 + QL18488224，M&G 入息基金 → 安聯AI + 貝萊德A10， T+? 待定 |
 | 狀態 | ✅ 已修正/已紀錄 |
+
+## E-029 儀表板假數據殘留（嚴重）
+
+| 欄位 | 內容 |
+|------|------|
+| 編號 | E-029 |
+| 日期 | 2026-07-17 |
+| 發現人 | 用戶截圖對比 + 數值校驗 |
+| 用戶確認 | 2026-07-17 |
+| 描述 | 線上儀表板 `index.html` 在 `clean-main` 分支仍顯示假數據：台股 45,624.98、台積 2,470、0050 配息 0.6 元縮水 4 成、外資賣超 14.15 億。真實數據：台股 42,671.27、台積 2,290、外資賣超 156.15 億。 |
+| 根因 | 1) `index.html` 為靜態 SPA，`run_daily.py` 早先只負責日報，未自動更新儀表板 2) 舊版 `dashboard.py` 硬編假數據流入線上版 3) push `main` timeout 造成使用者看到 stale 版本 |
+| 正確表述 | 儀表板由 `index_template.html` + `_inject_dashboard()` 每日重建，自動填入 snapshot + daily_analysis.json + hunter 解析數據 |
+| 主要出現位置 | `index.html`（線上版）、`run_daily.py`、`index_template.html` |
+| 狀態 | ✅ 已修正/已紀錄 — 加入 `_inject_dashboard()`、46 placeholders、fund fallback block、push 至 `clean-main`（79d27b4） |
+
+## E-030 0050 配息文案硬編過時（中度）
+
+| 欄位 | 內容 |
+|------|------|
+| 編號 | E-030 |
+| 日期 | 2026-07-17 |
+| 發現人 | 用戶截圖 |
+| 用戶確認 | 2026-07-17 |
+| 描述 | 儀表板 / 日報多處出現 `0050 配息 0.6 元縮水 4 成` 硬編文案，實際 7/17 市場數據為台股大跌日，0050 除息尚未到（7/21），應標記「待 MB 確認」 |
+| 根因 | 文案未隨 market data 更新；`daily_analysis.json` 無 0050 dividend 欄位，但 template 未 placeholder 化 |
+| 正確表述 | `0050：配息 __DIVIDEND_0050__，__EX_DATE_0050__；防禦缺口由 00878/00713 補位` |
+| 主要出現位置 | `index_template.html` l.267 / 279 |
+| 狀態 | ✅ 已修正/已紀錄 — __DIVIDEND_0050__ / __EX_DATE_0050__ placeholder 已建立，mb 確認後補齊 |
