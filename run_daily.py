@@ -422,6 +422,14 @@ __MARKET_ROWS__
     </div>
   </div>
 
+<!-- 差異分析 -->
+<div class="card">
+  <h2>📊 差異分析</h2>
+  <div class="table-wrap" style="background:#fff;">
+    <div style="padding:8px 12px;font-size:15px;line-height:1.6;">__CHANGELOG__</div>
+  </div>
+</div>
+
 </div>
 </body>
 </html>"""
@@ -500,28 +508,68 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
 
 
 def render_changelog(tv: dict) -> str:
+    """Build today-vs-yesterday diff from snapshot archives."""
+    today_snap = tv
+    snap_dir = BASE / "snapshots"
+    yesterday_snap = {}
+
+    # Try yesterday's snapshot
+    candidates = sorted(snap_dir.glob("snapshot_*.json"), reverse=True)
+    if candidates:
+        try:
+            yesterday_snap = json.loads(candidates[0].read_text(encoding="utf-8"))
+        except Exception:
+            yesterday_snap = {}
+
+    diffs = []
+    keys = [
+        ("total_assets", "總資產"),
+        ("net_worth", "淨資產"),
+        ("monthly_income", "月收入"),
+        ("monthly_expense", "月支出"),
+        ("working_surplus", "工作期盈餘"),
+        ("retirement_surplus", "退休後盈餘"),
+        ("insurance_current_value", "保單現值"),
+        ("monthly_dividend", "本月配息"),
+    ]
+
+    for k, label in keys:
+        t = today_snap.get(k)
+        y = yesterday_snap.get(k)
+        if t is None:
+            continue
+        t_str = f"{t:,}" if isinstance(t, (int, float)) else str(t)
+        if y is None:
+            diffs.append(f"- **{label}**：{t_str}（昨日無紀錄）")
+        elif t == y:
+            diffs.append(f"- **{label}**：{t_str}（= 無變化）")
+        else:
+            y_str = f"{y:,}" if isinstance(y, (int, float)) else str(y)
+            sign = "+" if (isinstance(t, (int, float)) and t > y and k != "monthly_expense") else ""
+            if k == "monthly_expense" and t != y:
+                sign = "-" if t < y else "+"
+            diffs.append(f"- **{label}**：{t_str}（昨日 {y_str}，{sign}{abs(t-y):,}）")
+
+    if not diffs:
+        diffs = ["- 昨日 snapshot 缺失，無法計算差異。"]
+
     md = f"""# 龍九日報 changelog {TODAY}
 
-## 本次更新
+## 差異分析
 
-- 五大章節完整校準
-- relay 三站制確認
-- 四大信用卡 + 房貸列管
-- 情報狀態：以 daily_analysis.json / hunter_logs 為準
-- 巴菲特分析更新
+{chr(10).join(diffs)}
 
 ## 真值錨定
 
-- 總資產：50,689,930 TWD
-- 保單現值：{tv['insurance_total']:,}（安聯 A+B {tv['allianz_ab']:,} / 第一金 {tv['firstjin']:,}）
-- 本月配息：69,044 TWD
-- 月收入：{tv['monthly_income']:,} / 月支出：{tv['monthly_expense']:,}
-- 工作期盈餘：+{tv['working_surplus']:,} / 退休後盈餘：+{tv['retirement_surplus']:,}
+- 總資產：{today_snap.get('total_assets', 0):,} TWD
+- 保單現值：{today_snap.get('insurance_current_value', 0):,} TWD
+- 月收入：{today_snap.get('monthly_income', 0):,} / 月支出：{today_snap.get('monthly_expense', 0):,}
+- 工作期盈餘：+{today_snap.get('working_surplus', 0):,} / 退休後盈餘：+{today_snap.get('retirement_surplus', 0):,}
 
 ## 待補齊
 
-- 台股 7/16 收盤需凱基證券 App 截圖確認
-- 台積電 ADR 無一致可信數據
+- 0050 配息：待 MB 確認
+- 台股外資流向：依 hunter_logs 為主
 """
     return md
 
@@ -546,6 +594,36 @@ def main():
     # 日報
     daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals)
     daily_html = _inject_market_intel(daily_html, tv, intel_signals)
+    # inject changelog diff block
+    changelog_md = render_changelog(tv)
+    changelog_html = "<div class='card'><h2>📊 差異分析</h2>" + "<div style='font-size:14px;line-height:1.7;'>"
+    # Very simple markdown -> HTML conversion
+    md_lines = changelog_md.splitlines()
+    in_list = False
+    for line in md_lines:
+        s = line.strip()
+        if not s:
+            if in_list:
+                changelog_html += "</ul>"
+                in_list = False
+        elif s.startswith("- "):
+            if not in_list:
+                changelog_html += "<ul style='padding-left:18px;'>"
+                in_list = True
+            changelog_html += "<li>" + s[2:] + "</li>"
+        elif s.startswith("## "):
+            changelog_html += "<h3 style='font-size:16px;font-weight:800;margin:8px 0 4px;'>" + s[3:] + "</h3>"
+        elif s.startswith("# "):
+            changelog_html += "<h2 style='font-size:18px;font-weight:800;margin:8px 0 4px;'>" + s[2:] + "</h2>"
+        else:
+            if in_list:
+                changelog_html += "</ul>"
+                in_list = False
+            changelog_html += "<p>" + s + "</p>"
+    if in_list:
+        changelog_html += "</ul>"
+    changelog_html += "</div></div>"
+    daily_html = daily_html.replace("__CHANGELOG__", changelog_html)
     OUT_DAILY.write_text(daily_html, encoding="utf-8")
     print(f"[RUN_DAILY] 日報產出：{OUT_DAILY}")
 
@@ -686,6 +764,39 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     # 0050 dividend placeholders
     html = html.replace("__DIVIDEND_0050__", "待 MB 確認")
     html = html.replace("__EX_DATE_0050__", "待確認")
+
+    # Fund placeholders for daily report (same logic as dashboard)
+    try:
+        from daily_intel import load_daily_analysis
+        da2 = load_daily_analysis()
+        funds2 = da2.get("funds", {})
+    except Exception:
+        funds2 = {}
+    if not funds2:
+        funds2 = {
+            "allianz_return": 16.41,
+            "allianz_monthly": 55_451,
+            "allianz_cum": 1_613_246,
+            "allianz_cost": 8_000_000,
+            "firstjin_monthly": 13_593,
+            "firstjin_cum": 63_985,
+            "firstjin_cost": 2_000_000,
+        }
+    def fmt(v):
+        if isinstance(v, (int, float)):
+            return f"{v:,.0f}"
+        return str(v or "—")
+    def fmt_pct(v):
+        if isinstance(v, (int, float)):
+            return f"{v:.2f}"
+        return str(v or "—")
+    html = html.replace("__ALLIANZ_RETURN__", fmt_pct(funds2.get("allianz_return", 16.41)))
+    html = html.replace("__ALLIANZ_MONTHLY__", fmt(funds2.get("allianz_monthly", 55_451)))
+    html = html.replace("__ALLIANZ_CUM__", fmt(funds2.get("allianz_cum", 1_613_246)))
+    html = html.replace("__ALLIANZ_COST__", fmt(funds2.get("allianz_cost", 8_000_000)))
+    html = html.replace("__FIRSTJIN_MONTHLY__", fmt(funds2.get("firstjin_monthly", 13_593)))
+    html = html.replace("__FIRSTJIN_CUM__", fmt(funds2.get("firstjin_cum", 63_985)))
+    html = html.replace("__FIRSTJIN_COST__", fmt(funds2.get("firstjin_cost", 2_000_000)))
 
     # Fund breakdown: prefer daily_analysis.json, fallback to known true values
     funds = da.get("funds", {})
