@@ -233,28 +233,13 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>指標</th><th class="num">數值 TWD</th></tr>
+          <tr><th>項目</th><th>內容</th><th>影響</th></tr>
         </thead>
         <tbody>
-          <tr><td>總資產</td><td class="num">50,689,930</td></tr>
-          <tr><td>總負債</td><td class="num">22,000,000</td></tr>
-          <tr><td>淨資產</td><td class="num">28,689,930</td></tr>
-          <tr><td>負債率</td><td class="num">43.4%</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h2>月收入 vs 月支出</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>項目</th><th class="num">金額 TWD</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>月收入</td><td class="num">{tv['monthly_income']:,}</td></tr>
-          <tr><td>月支出</td><td class="num">{tv['monthly_expense']:,}</td></tr>
-          <tr><td>工作期月盈餘</td><td class="num">+{tv['working_surplus']:,}</td></tr>
-          <tr><td>退休後月盈餘</td><td class="num">+{tv['retirement_surplus']:,}</td></tr>
+          <tr><td>總資產</td><td>50,689,930 TWD</td><td>淨資產 28,689,930；負債率 43.4%</td></tr>
+          <tr><td>總負債</td><td>22,000,000 TWD</td><td> convertible 房貸 + 保單借貸 400 萬</td></tr>
+          <tr><td>本月領息</td><td>{monthly_dividend:,} TWD</td><td>安聯 {allianz_dividend:,} + 第一金 {firstjin_dividend:,}</td></tr>
+          <tr><td>被動月收</td><td>{tv['rent_monthly']+80000:,} TWD</td><td>覆蓋率 113.8%；安全邊際充足</td></tr>
         </tbody>
       </table>
     </div>
