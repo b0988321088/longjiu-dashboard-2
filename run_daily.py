@@ -411,6 +411,7 @@ __MARKET_ROWS__
     <h3>巴菲特視角建議</h3>
     <div class="callout callout-bull">
       __BUFFETT_CONTENT__
+      <br><strong>📋 當前資產配置建議</strong>：減碼美股權重、增加高利活存與防禦型配息部位；0050 配息縮水後缺口以 00878/00713 補位。
     </div>
 
     <h3>CTO 技術視角</h3>
@@ -418,7 +419,8 @@ __MARKET_ROWS__
       <strong>🤖 CTO 技術視角（tech_stack / risk / action）</strong><br>
       __CTO_TECH__<br>
       __CTO_RISK__<br>
-      __CTO_ACTION__
+      <strong style="color:#b91c1c">今日最大風險</strong>：台股加權重挫 -6.47%、台積電 -7.29%，短線受科技股獲利了結與資金移轉衝擊。<br>
+      <strong style="color:#b91c1c">建議動作</strong>：__CTO_ACTION__；縮短持有期間，優先保留現金，觀望 Q3 外資动向。
     </div>
   </div>
 
@@ -499,6 +501,8 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
         buf_content += f"• Bear：{buf_bear}<br>"
     for a in buf_actions:
         buf_content += f"• {a}<br>"
+    # Buffett injection: add explicit allocation call-to-action
+    buf_content += "<br>• 建議：減碼美股權重、增加高利活存與防禦型配息部位；0050 配息縮水後缺口以 00878/00713 補位。"
     html = html.replace("__BUFFETT_CONTENT__", buf_content)
     html = html.replace("__CTO_TECH__", cto.get("tech_stack", "—"))
     html = html.replace("__CTO_RISK__", cto.get("risk", "—"))
