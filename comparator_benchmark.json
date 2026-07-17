@@ -1,0 +1,9 @@
+{
+  "twii_ytd_return": 5.2,
+  "sox_ytd_return": 3.1,
+  "peers": [
+    {"name": "元大00878", "dividend_yield": 6.5, "expense_ratio": 0.5},
+    {"name": "元大0050", "dividend_yield": 1.8, "expense_ratio": 0.32},
+    {"name": "凱基台股", "dividend_yield": 2.1, "expense_ratio": 0.68}
+  ]
+}
