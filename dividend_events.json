@@ -1,0 +1,47 @@
+[
+  {
+    "code": "JPM",
+    "name": "摩根多重收益基金（FJ33）",
+    "ex_date": "2026-07-07",
+    "type": "insurance",
+    "status": "waiting",
+    "amount_ntd": null,
+    "note": "7月月初站點；基準日 2026/07/07，配息仍未入帳；預計 2026/07/19-20 到帳"
+  },
+  {
+    "code": "ALLIANZ",
+    "name": "安聯收益成長基金（QL18610694/QL18488224）",
+    "ex_date": "2026-07-14",
+    "type": "insurance",
+    "status": "pending",
+    "amount_ntd": null,
+    "note": "7月月中站點1；基準日 2026/07/14，T+4=7/08 最後申請日（已過）"
+  },
+  {
+    "code": "00984A",
+    "name": "安聯台灣高息成長主動式ETF",
+    "ex_date": "2026-07-14",
+    "type": "etf",
+    "status": "pending",
+    "amount_ntd": null,
+    "note": "ETF 除息日 2026/07/14，持有 10,000 股"
+  },
+  {
+    "code": "M&G",
+    "name": "M&G入息基金",
+    "ex_date": "2026-07-17",
+    "type": "insurance",
+    "status": "pending",
+    "amount_ntd": null,
+    "note": "月中站點，基準日 2026/07/17，T+4=2026/07/11 最後申請日"
+  },
+  {
+    "code": "A10",
+    "name": "貝萊德世界科技A10",
+    "ex_date": "2026-07-30",
+    "type": "insurance",
+    "status": "pending",
+    "amount_ntd": null,
+    "note": "月底站點，基準日 2026/07/30，T+4=2026/07/24 最後申請日"
+  }
+]

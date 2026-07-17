@@ -1,0 +1,110 @@
+---
+name: taiwan-train-query
+description: 查詢台灣高鐵 (THSR) 與台鐵 (TRA) 時刻表、票價、車次資訊，輸出美化 UI
+author: Hermes CTX
+version: 1.0.0
+category: travel
+tags: [台鐵, 高鐵, THSR, TRA, 時刻表, 查詢, ui]
+triggers:
+  - 台鐵
+  - 高鐵
+  - 查詢列車
+  - 時刻表
+  - THSR
+  - TRA
+---
+
+# 台灣台鐵/高鐵時刻查詢技能
+
+## 職責
+- 查詢台灣高鐵 (THSR) 時刻表與票價
+- 查詢台鐵 (TRA) 時刻表與票價
+- 提供站對站 route planning
+- 輸出美化戰術風格 UI
+
+## 使用方式
+
+### 指令觸發
+```
+查詢 台北→左營 高鐵
+台鐵 台中→台北 時刻表
+THSR 南港→台中 票價
+```
+
+### 技能模式
+load_skill('taiwan-train-query') → 載入查詢邏輯
+
+## 資料源
+
+### 官方 API
+1. **台灣高鐵**
+   - 時刻表查詢：https://www.thsrc.com.tw/英文/時刻表
+   - 票價計算：https://www.thsrc.com.tw/票價查詢
+   - 注意：無公開 JSON API，需 web scraping 或使用第三方聚合服務
+
+2. **台鐵 (TRA)**
+   - 時刻表：https://traffic.taichung.gov.tw/ 或 https://www.tra.gov.tw/
+   - 有開放式資料平台 (data.gov.tw) 提供 JSON
+
+3. **替代方案**
+   - Google Maps Directions API (需 API key)
+   - 自行維護站點/加密,最小 token cost
+
+## UI 設計 (V4.2.0 戰術風格)
+
+### 色彩
+- 深色背景：#070b14
+- 戰術紅：#ef4444
+- 高鐵藍：#3b82f6
+- 安全綠：#10b981
+- 警告黃：#f59e0b
+
+### 元件
+- **搜尋列**：出發站、到達站、日期、列車類型（全/高鐵/台鐵）
+- **結果卡片**：車次、出發時間、到達時間、行車時間、票價
+- **狀態燈**：準點/誤點/售票中
+- **地圖視圖**：台灣地圖標記站點
+
+## 資料結構
+
+```json
+{
+  "query": {
+    "from": "台北",
+    "to": "左營",
+    "date": "2026-07-10",
+    "type": "all"
+  },
+  "results": [
+    {
+      "type": "THSR",
+      "trainNo": "808",
+      "departure": "08:30",
+      "arrival": "11:45",
+      "duration": "3h15m",
+      "price": 1490,
+      "status": "正常"
+    }
+  ]
+}
+```
+
+## 限制與合規
+
+1. **無 API key 模式**：使用靜態範例資料或 data.gov.tw 開放資料
+2. **不保證即時性**：標註資料時間戳
+3. **僅供查詢參考**：最終票務以官方網站為準
+4. **費用**：0 TWD（使用免費資料源）
+
+## 部署
+
+將 UI 部署至 Railway：
+- 路徑：`C:/Users/bot/Desktop/龍九系統/train_query/`
+- index.html 為主頁面
+- 搭配 Railway static file serving 或相依 dashboard.py 分頁
+
+## 子代理協作
+
+- **CIO 子代理**：負責資料擷取與新聞連結
+- **CTO 子代理**：負責部署與 UI 主題對齊
+- **使用者裁決**：70/30 法則，系統 70% 拚裝，使用者確認 30%

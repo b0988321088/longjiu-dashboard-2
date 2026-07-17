@@ -1,0 +1,1551 @@
+"""
+
+龍九控股 Dashboard v5.0.7
+
+單 authoritative 資料源：framework_snapshot_<DATE>.json
+
+"""
+
+import json
+
+from pathlib import Path
+
+
+
+import streamlit as st
+
+import plotly.express as px
+
+
+
+# ============================================================
+
+# 0. 頁面設定
+
+# ============================================================
+
+st.set_page_config(
+
+    page_title="龍九控股 Dashboard",
+
+    page_icon="📊",
+
+    layout="wide",
+
+    initial_sidebar_state="expanded",
+
+)
+
+
+
+# ============================================================
+
+import json, base64
+EMBEDDED_SNAPSHOT_B64 = "eyJzbmFwc2hvdCI6IHsiZ2VuZXJhdGVkX2F0IjogIjIwMjYtMDctMTEiLCAidmVyc2lvbiI6ICIyMDI2LTA3LTExLWZpbmFsIiwgImRhdGUiOiAiMjAyNi0wNy0xMSIsICJ0b3RhbF9hc3NldHMiOiA1NTQ4OTkzMCwgInRvdGFsX2xpYWJpbGl0aWVzIjogMjY4MDAwMDAsICJuZXRfd29ydGgiOiAyODY4OTkzMCwgImRlYnRfcmF0aW8iOiAiNDguMyUiLCAibW9udGhseV9pbmNvbWUiOiAxNzgxNjcsICJtb250aGx5X2V4cGVuc2UiOiAxNDM5NTgsICJ3b3JraW5nX3N1cnBsdXMiOiAzNDIwOSwgInJldGlyZW1lbnRfc3VycGx1cyI6IDE5MDAwLCAic2VjdXJpdGllc190b3RhbF9tYXJrZXRfdmFsdWUiOiAyMzYyMTIwLCAiaW5zdXJhbmNlX21vbnRobHlfZGl2aWRlbmQiOiA2OTA0NCwgInBhZ2UxIjogeyJhY3R1YWxfY2FzaF9mbG93IjogeyJpbmNvbWUiOiB7IuWPsOmbu+iWquawtCI6IDgyMjY1LCAi5oi/56efIjogMjQwMDAsICLphY3mga8iOiA2OTA0NCwgIuWIqeaBryI6IDI4NTh9LCAiZXhwZW5zZSI6IHsi5oi/6LK4IjogOTk0NTgsICLmtojosrsiOiA0MDAwMCwgIuaymem5v+aIv+ennyI6IDQ1MDB9fSwgInRvdGFsX2luY29tZSI6IDE3ODE2NywgInRvdGFsX2V4cGVuc2UiOiAxNDM5NTgsICJ3b3JraW5nX3N1cnBsdXMiOiAzNDIwOSwgInJldGlyZW1lbnRfc3VycGx1cyI6IDE5MDAwfSwgInBhZ2UyX2FsbG9jYXRpb24iOiB7Iuezu+e1seebruaomSI6IHsi5Y+w6IKhIjogIjIwJSIsICLnvo7ogqEiOiAiMjAlIiwgIumYsuWuiCI6ICIzMCUiLCAi5YK15Yi454++6YeRIjogIjI1JSIsICLop4Dlr5/nt6nooZ0iOiAiNSUiLCAi5ZCI6KiIIjogIjEwMCUifSwgIuWPsOiCoeW4guWAvOWei+aIkOmVtyI6IHsi5qiZ55qEIjogIjAwNTArMDA2MjA4KzAwOTgxNiIsICLluILlgLwiOiA5NDY2ODAsICLkvZTmr5QiOiAiNy4yJSIsICLnvLrlj6MiOiAiLTEyLjglIn0sICLnvo7ogqHluILlgLzlnovmiJDplbciOiB7IuaomeeahCI6ICIwMDY0NiswMDk4MjMvODI0K+iBr+WNmivosp3okIrlvrciLCAi5biC5YC8IjogNjAyMjA5NSwgIuS9lOavlCI6ICI0Ni4xJSIsICLnvLrlj6MiOiAiKzI2LjElIn0sICLpmLLlrojlnovphY3mga8iOiB7IuaomeeahCI6ICIwMDU2KzAwNzEzKzAwODc4KzAwOTgxQSswMDk4NEErMDA5MTkrMDA5MTgr5a6J6IGvQUnmlLbnm4rmiJDplbciLCAi5biC5YC8IjogMjU1OTA3NywgIuS9lOavlCI6ICIxOS42JSIsICLnvLrlj6MiOiAiLTEwLjQlIn0sICLlgrXliLjlj4rnj77ph5EiOiB7IuaomeeahCI6ICLpioDooYznj77ph5ErUElNQ08r56ys5LiA6YeRK+WfuumHkSIsICLluILlgLwiOiAzNTQyMjg0LCAi5L2U5q+UIjogIjI3LjElIiwgIue8uuWPoyI6ICIrMi4xJSJ9LCAi57WQ6KuWIjogIuWPsOiCoeS4jei2sy0xMi44Je+8m+e+juiCoei2heaomSsyNi4xJe+8m+mYsuWuiOS4jei2sy0xMC40Je+8m+iqv+W6pj3liqDnorzlj7DogqEwMDUxIn0sICJwYWdlM19pbnN1cmFuY2VfcmVsYXkiOiB7InN5c3RlbV90YXJnZXQiOiB7IuWPsOiCoeW4guWAvOWei+aIkOmVtyI6ICIyMCUiLCAi576O6IKh5biC5YC85Z6L5oiQ6ZW3IjogIjIwJSIsICLpmLLlrojlnovphY3mga8iOiAiMzAlIiwgIuWCteWIuOWPiuePvumHkSI6ICIyNSUiLCAi6KeA5a+fL+e3qeihnSI6ICI1JSIsICLlkIjoqIgiOiAiMTAwJSJ9LCAiY3VycmVudCI6IHsi5Y+w6IKh5biC5YC85Z6L5oiQ6ZW3IjogeyLmqJnnmoQiOiAiMDA1MCArIDAwNjIwOCArIDAwOTgxNiIsICLluILlgLwiOiA5NDY2ODAsICLkvZTmr5QiOiAiNy4yJSIsICLnvLrlj6MiOiAiLTEyLjglIn0sICLnvo7ogqHluILlgLzlnovmiJDplbciOiB7IuaomeeahCI6ICIwMDY0NiArIDAwOTgyMyArIDAwOTgyNCArIOiBr+WNmue+juWci+aIkOmVtyArIOiyneiQiuW+t+S4lueVjOenkeaKgCIsICLluILlgLwiOiA2MDIyMDk1LCAi5L2U5q+UIjogIjQ2LjElIiwgIue8uuWPoyI6ICIrMjYuMSUifSwgIumYsuWuiOWei+mFjeaBryI6IHsi5qiZ55qEIjogIjAwNTYgKyAwMDcxMyArIDAwODc4ICsgMDA5ODFBICsgMDA5ODRBICsgMDA5MTkgKyAwMDkxOCArIOWuieiBr0FJ5pS255uK5oiQ6ZW3IiwgIuW4guWAvCI6IDI1NTkwNzcsICLkvZTmr5QiOiAiMTkuNiUiLCAi57y65Y+jIjogIi0xMC40JSJ9LCAi5YK15Yi45Y+K54++6YeRIjogeyLmqJnnmoQiOiAi6YqA6KGM54++6YeRICsgUElNQ0/mlLbnm4rlop7plbcgKyDnrKzkuIDph5EgKyDln7rph5EiLCAi5biC5YC8IjogMzU0MjI4NCwgIuS9lOavlCI6ICIyNy4xJSIsICLnvLrlj6MiOiAiKzIuMSUifX0sICJzdW1tYXJ5IjogeyLlj7DogqEiOiAi5Zq06YeN5LiN6LazIiwgIue+juiCoSI6ICLlmrTph43otoXmqJkiLCAi6Ziy5a6I6YWN5oGvIjogIuS4jei2syIsICLoqr/luqbmlrnlkJEiOiAi5Yqg56K85Y+w6IKh77yIMDA1Me+8ie+8jOS4jeWunOWGjeWKoOe+juiCoS/lgrXliLgifSwgInJlbGF5X3RyYWNraW5nIjogeyLmnIjliJ0iOiB7IuaMgeaciSI6ICLmkanmoLnlpJrph43mlLbnm4rvvIhGSjMz77yJIiwgIuWfuua6luaXpSI6ICI3LzA3IiwgIumgkOS8sOWFpeW4syI6ICI3LzE5IiwgIuS4i+asoeeUs+iri+aXpSI6ICLigJQifSwgIuaciOS4rSI6IHsi5oyB5pyJIjogIk0mRyDlhaXmga/ln7rph5HvvIhRTDE4NiArIFFMMTg077yJIiwgIuWfuua6luaXpSI6ICI3LzE3IiwgIumgkOS8sOWFpeW4syI6ICI3LzI5IiwgIuS4i+asoeeUs+iri+aXpSI6ICI3LzEz77yIVCs077yJIn0sICLmnIjlupUiOiB7IuaMgeaciSI6ICLlronoga9BSeaUtuebiuaIkOmVtyArIOiyneiQiuW+t+S4lueVjOenkeaKgEExMO+8iFFMMTg2ICsgUUwxODTvvIkiLCAi5Z+65rqW5pelIjogIjcvMjnjgIE3LzMwIiwgIumgkOS8sOWFpeW4syI6ICI4LzEwIiwgIuS4i+asoeeUs+iri+aXpSI6ICI3LzI177yIVCs077yJIn19LCAianVseV9kaXZpZGVuZF9jYWxlbmRhciI6IHsi5L6G5rqQIjogIum+jeS6lOWumOaWuemFjeaBr+aXpeabhu+8iENvbXBhbnlfTGVkZ2VyLm1k77yJIiwgIuaRqeaguSBKUE0iOiB7IuWfuua6luaXpSI6ICIwNy8wNyIsICLlgpnoqLsiOiAi5pyI5Yid56uZ6bue77yM5bey5Lqr5Y+XIn0sICLlronoga/mlLbnm4rmiJDplbciOiB7IuWfuua6luaXpSI6ICIwNy8xNCIsICLlgpnoqLsiOiAi5pyI5Lit56uZ6bueIDHvvIznrKzkuIDnq5novYnlhaXmqJnnmoQifSwgIk0mRyDlhaXmga/ln7rph5EiOiB7IuWfuua6luaXpSI6ICIwNy8xNyIsICLlgpnoqLsiOiAi5pyI5Lit56uZ6bueIDLvvIznrKzkuowv5LiJ56uZ6L2J5YWl5qiZ55qEIn0sICLlronoga8gQUkg5pS255uKIjogeyLln7rmupbml6UiOiAiMDcvMjkiLCAi5YKZ6Ki7IjogIuaciOW6leermem7niAx77yM56ys5Zub56uZ6L2J5YWl5qiZ55qEIn0sICLosp3okIrlvrcgQTEwIjogeyLln7rmupbml6UiOiAiMDcvMzAiLCAi5YKZ6Ki7IjogIuaciOW6leermem7niAy77yM56ys5Zub56uZ6L2J5YWl5qiZ55qEIn19LCAiY29tcGxldGVkX29wZXJhdGlvbnMiOiBbeyJkYXRlIjogIjIwMjYtMDctMDkiLCAicG9saWN5IjogIkZKMzMiLCAi5pON5L2cIjogIui0luWbnui9ieeUs+izvCIsICLovYnlh7oiOiAi5pGp5qC55aSa6YeN5pS255uKIiwgIui9ieWFpSI6ICJGTDY1IOWuieiBr+aUtuebiuaIkOmVtyIsICLni4DmhYsiOiAi4pyFIOW3sumAgeWHuiJ9LCB7ImRhdGUiOiAiMjAyNi0wNy0wOCIsICJwb2xpY3kiOiAiUUwxODYxMDY5NCIsICLmk43kvZwiOiAi6LSW5Zue6L2J55Sz6LO8IiwgIui9ieWHuiI6ICLlronoga9BSeaUtuebiuaIkOmVtyIsICLovYnlhaUiOiAiTSZHIOWFpeaBr+WfuumHkSIsICLni4DmhYsiOiAi4pyFIOW3sumAgeWHuiJ9LCB7ImRhdGUiOiAiMjAyNi0wNy0wOCIsICJwb2xpY3kiOiAiUUwxODQ4ODIyNCIsICLmk43kvZwiOiAi6LSW5Zue6L2J55Sz6LO8IiwgIui9ieWHuiI6ICLlronoga9BSeaUtuebiuaIkOmVtyIsICLovYnlhaUiOiAiTSZHIOWFpeaBr+WfuumHkSIsICLni4DmhYsiOiAi4pyFIOW3sumAgeWHuiJ9XSwgImFsbGlhbnpfY29tYmluZWQiOiB7ImNvc3QiOiA4MDAwMDAwLCAiY3VycmVudF92YWx1ZSI6IDc4NDY2OTAsICJjdW11bGF0aXZlX2RpdmlkZW5kIjogMTYxMzI0NiwgInJvaSI6ICIrMTYuNDElIiwgIm1vbnRobHlfZGl2aWRlbmQiOiA1NTQ1MX0sICJmaXJzdF9nb2xkIjogeyJjb3N0IjogMjAwMDAwMCwgImN1cnJlbnRfdmFsdWUiOiAxOTg4Mjg1LCAiY3VtdWxhdGl2ZV9kaXZpZGVuZCI6IDYzOTg1LCAicm9pIjogIisyLjYxJSIsICJtb250aGx5X2RpdmlkZW5kIjogMTM1OTN9LCAidG90YWxfbW9udGhseV9kaXZpZGVuZCI6IDY5MDQ0fSwgInBhZ2U0X2xpcXVpZGl0eSI6IHsiYmFua3MiOiBbeyJuYW1lIjogIuaYn+WxlemKgOihjCIsICJhY2NvdW50IjogIua0u+acn+WEsuiThCIsICJiYWxhbmNlIjogNzI4NywgIuawtOS9jSI6ICLkvY7ppJjpoY0iLCAi54uA5oWLIjogIuW7uuitsOijnOW6qyAzMEsifSwgeyJuYW1lIjogIuesrOS4gOmKgOihjCIsICJhY2NvdW50IjogImlMRU8iLCAiYmFsYW5jZSI6IDUwMDAwLCAi5rC05L2NIjogIuato+W4uCIsICLni4DmhYsiOiAi5L+d6LK75omj5qy+In0sIHsibmFtZSI6ICLlsIfkvobpioDooYwiLCAiYWNjb3VudCI6ICJEaWdpdGFsIFNhdmluZ3MiLCAiYmFsYW5jZSI6IDIwMDAwMDAsICLmsLTkvY0iOiAi5YWF6KOVIiwgIueLgOaFiyI6ICLmqZ/mnIPlrZDlvYjos4fph5EifV0sICJpbmZsb3dzIjogW3siaXRlbSI6ICLlj7Dpm7volqrmsLQiLCAiYW1vdW50IjogODIyNjUsICJkYXRlIjogIjcvNis3LzgiLCAic3RhdHVzIjogIuKchSJ9LCB7Iml0ZW0iOiAi5oi/56ef77yI5aSn576p6KGX77yJIiwgImFtb3VudCI6IDI0MDAwLCAiZGF0ZSI6ICLmr4/mnIgiLCAic3RhdHVzIjogIuKPsyJ9LCB7Iml0ZW0iOiAi5a6J6IGv6YWN5oGvIEErQiIsICJhbW91bnQiOiA1NTQ1MSwgImRhdGUiOiAiNy85IiwgInN0YXR1cyI6ICLinIUifSwgeyJpdGVtIjogIuesrOS4gOmHkemFjeaBryIsICJhbW91bnQiOiAxMzU5MywgImRhdGUiOiAiNy84IiwgInN0YXR1cyI6ICLinIUifSwgeyJpdGVtIjogIuWIqeaBr+aUtuWFpSIsICJhbW91bnQiOiAyODU4LCAiZGF0ZSI6ICLmr4/mnIgiLCAic3RhdHVzIjogIuKchSJ9XSwgInBheWFibGVzIjogW3siZGF0ZSI6ICI3LzEzIiwgIml0ZW0iOiAi5pif5bGV57WQ5riFIiwgImFtb3VudCI6IDQ4OTM1MjksICJwcmlvcml0eSI6ICLwn5S0IFAwIn0sIHsiZGF0ZSI6ICI3LzIwIiwgIml0ZW0iOiAi5rSy6ZqbV+aIv+iyuCIsICJhbW91bnQiOiA2NTczNCwgInByaW9yaXR5IjogIvCfn6EgUDEifSwgeyJkYXRlIjogIjcvMjIiLCAiaXRlbSI6ICLnjonlsbHkv6HnlKjljaEiLCAiYW1vdW50IjogMzE3NiwgInByaW9yaXR5IjogIvCfn6IgUDIifSwgeyJkYXRlIjogIjgvMSIsICJpdGVtIjogIuWkp+e+qeihl+aIv+iyuCvliKnmga8iLCAiYW1vdW50IjogMzM3MjQsICJwcmlvcml0eSI6ICLwn5+hIFAxIn1dfSwgInBhZ2U1X2FjdGlvbnMiOiB7InAwIjogW3siaXRlbSI6ICLmmJ/lsZXoo5zluqsgMzBLIiwgImRlYWRsaW5lIjogIuS7iuaXpSJ9LCB7Iml0ZW0iOiAiNy8xMyDmmJ/lsZXntZDmuIXmupblgpkiLCAiZGVhZGxpbmUiOiAiNy8xMyJ9XSwgInAxIjogW3siaXRlbSI6ICIwMDUxIOiyt+WFpSIsICJxdHkiOiAiNS0xMCDlvLUiLCAiY29zdCI6ICJ+MTEwLTIyMEsiLCAidGltaW5nIjogIjcvMTMg5pif5bGV57WQ5riF5b6MIn0sIHsiaXRlbSI6ICLmiL/np5/norroqo3lhaXluLMiLCAiZGVhZGxpbmUiOiAiNy8xMS0xMiJ9LCB7Iml0ZW0iOiAi56ys5LiA56uZ57WQ566X56K66KqN77yIRkw2Ne+8iSIsICJkZWFkbGluZSI6ICI3LzEzIn0sIHsiaXRlbSI6ICLnrKzkuowv5LiJ56uZ57WQ566X56K66KqN77yITSZH77yJIiwgImRlYWRsaW5lIjogIjcvMTUifV0sICJwMiI6IFt7Iml0ZW0iOiAiMDA5ODIzLzAwOTgyNCIsICJ0aW1pbmciOiAi6KeA5a+f5LiA5YCL5pyIIn0sIHsiaXRlbSI6ICIwMDUwIOmFjeaBr+e4ruawtCIsICLpmaTmga/ml6UiOiAiNy8yMSIsICLlhaXluLPml6UiOiAiOC8xMCJ9LCB7Iml0ZW0iOiAiTSZHIOWfuua6luaXpSIsICJkYXRlIjogIjcvMTcifSwgeyJpdGVtIjogIui2hei3jC/otoXmvLLnm6PmjqciLCAidGltaW5nIjogIuavj+mAsSJ9XSwgInBhdXNlZCI6IFt7Iml0ZW0iOiAiMDA1NiIsICJyZWFzb24iOiAi55uu5YmN5oyB5pyJIDEg5by177yM5YeN57WQ5Lit77yM55+t5pyf54Sh5rOV5Yqg56K877yM562J6Kej5oq85YaN6KmV5LywIn0sIHsiaXRlbSI6ICIwMDkwM0IvMDA1MiDosrflhaUiLCAicmVhc29uIjogIuiIh+ePvuaciemDqOS9jemHjeeWiiJ9LCB7Iml0ZW0iOiAiMDA2MjA4IOWKoOeivCIsICJyZWFzb24iOiAi6LOH6YeR5LiN6Laz77yM562JIDcvMTMg5b6M6KmV5LywIn1dfSwgInJlbGF5X3N0YXR1cyI6IHsiZmlyc3RfbGVnIjogeyJkb25lIjogdHJ1ZSwgImRhdGUiOiAiMjAyNi0wNy0wOSIsICJmcm9tIjogIuaRqeagueWkmumHjeaUtuebiiIsICJ0byI6ICJGTDY1IOWuieiBr+aUtuebiuaIkOmVtyJ9LCAic2Vjb25kX2xlZyI6IHsiZG9uZSI6IHRydWUsICJkYXRlIjogIjIwMjYtMDctMDgiLCAiZnJvbSI6ICLlronoga9BSeaUtuebiuaIkOmVtyIsICJ0byI6ICJNJkcg5YWl5oGv5Z+66YeRIiwgInBvbGljeSI6ICJRTDE4NjEwNjk0In0sICJ0aGlyZF9sZWciOiB7ImRvbmUiOiB0cnVlLCAiZGF0ZSI6ICIyMDI2LTA3LTA4IiwgImZyb20iOiAi5a6J6IGvQUnmlLbnm4rmiJDplbciLCAidG8iOiAiTSZHIOWFpeaBr+WfuumHkSIsICJwb2xpY3kiOiAiUUwxODQ4ODIyNCJ9LCAiZm91cnRoX2xlZyI6IHsiZG9uZSI6IGZhbHNlLCAicGxhbm5lZCI6ICLmnIjlupUiLCAiZnJvbSI6ICJNJkcg5YWl5oGv5Z+66YeRIiwgInRvIjogIuWuieiBr0FJ5pS255uK5oiQ6ZW3ICsg6LKd6JCK5b635LiW55WM56eR5oqAQTEwIn19LCAicGFnZXMiOiB7InBhZ2UxX3dlYWx0aF9iYXNlbGluZSI6IHsiYWN0dWFsX2Nhc2hfZmxvdyI6IHsiaW5jb21lIjogeyLlj7Dpm7volqrmsLQiOiA4MjI2NSwgIuaIv+ennyI6IDI0MDAwLCAi6YWN5oGvIjogNjkwNDQsICLliKnmga8iOiAyODU4fSwgImV4cGVuc2UiOiB7IuaIv+iyuCI6IDk5NDU4LCAi5raI6LK7IjogNDAwMDAsICLmspnpub/miL/np58iOiA0NTAwfX0sICJ0b3RhbF9pbmNvbWUiOiAxNzgxNjcsICJ0b3RhbF9leHBlbnNlIjogMTQzOTU4LCAid29ya2luZ19zdXJwbHVzIjogMzQyMDksICJyZXRpcmVtZW50X3N1cnBsdXMiOiAxOTAwMH0sICJwYWdlMl9zdHJhdGVnaWNfcmlzayI6IHsi57O757Wx55uu5qiZIjogeyLlj7DogqEiOiAiMjAlIiwgIue+juiCoSI6ICIyMCUiLCAi6Ziy5a6IIjogIjMwJSIsICLlgrXliLjnj77ph5EiOiAiMjUlIiwgIuingOWvn+e3qeihnSI6ICI1JSIsICLlkIjoqIgiOiAiMTAwJSJ9LCAi5Y+w6IKh5biC5YC85Z6L5oiQ6ZW3IjogeyLmqJnnmoQiOiAiMDA1MCswMDYyMDgrMDA5ODE2IiwgIuW4guWAvCI6IDk0NjY4MCwgIuS9lOavlCI6ICI3LjIlIiwgIue8uuWPoyI6ICItMTIuOCUifSwgIue+juiCoeW4guWAvOWei+aIkOmVtyI6IHsi5qiZ55qEIjogIjAwNjQ2KzAwOTgyMy84MjQr6IGv5Y2aK+iyneiQiuW+tyIsICLluILlgLwiOiA2MDIyMDk1LCAi5L2U5q+UIjogIjQ2LjElIiwgIue8uuWPoyI6ICIrMjYuMSUifSwgIumYsuWuiOWei+mFjeaBryI6IHsi5qiZ55qEIjogIjAwNTYrMDA3MTMrMDA4NzgrMDA5ODFBKzAwOTg0QSswMDkxOSswMDkxOCvlronoga9BSeaUtuebiuaIkOmVtyIsICLluILlgLwiOiAyNTU5MDc3LCAi5L2U5q+UIjogIjE5LjYlIiwgIue8uuWPoyI6ICItMTAuNCUifSwgIuWCteWIuOWPiuePvumHkSI6IHsi5qiZ55qEIjogIumKgOihjOePvumHkStQSU1DTyvnrKzkuIDph5Er5Z+66YeRIiwgIuW4guWAvCI6IDM1NDIyODQsICLkvZTmr5QiOiAiMjcuMSUiLCAi57y65Y+jIjogIisyLjElIn0sICLntZDoq5YiOiAi5Y+w6IKh5LiN6LazLTEyLjgl77yb576O6IKh6LaF5qiZKzI2LjEl77yb6Ziy5a6I5LiN6LazLTEwLjQl77yb6Kq/5bqmPeWKoOeivOWPsOiCoTAwNTEifSwgInBhZ2UzX2luc3VyYW5jZV9yZWxheSI6IHsic3lzdGVtX3RhcmdldCI6IHsi5Y+w6IKh5biC5YC85Z6L5oiQ6ZW3IjogIjIwJSIsICLnvo7ogqHluILlgLzlnovmiJDplbciOiAiMjAlIiwgIumYsuWuiOWei+mFjeaBryI6ICIzMCUiLCAi5YK15Yi45Y+K54++6YeRIjogIjI1JSIsICLop4Dlr58v57ep6KGdIjogIjUlIiwgIuWQiOioiCI6ICIxMDAlIn0sICJjdXJyZW50IjogeyLlj7DogqHluILlgLzlnovmiJDplbciOiB7IuaomeeahCI6ICIwMDUwICsgMDA2MjA4ICsgMDA5ODE2IiwgIuW4guWAvCI6IDk0NjY4MCwgIuS9lOavlCI6ICI3LjIlIiwgIue8uuWPoyI6ICItMTIuOCUifSwgIue+juiCoeW4guWAvOWei+aIkOmVtyI6IHsi5qiZ55qEIjogIjAwNjQ2ICsgMDA5ODIzICsgMDA5ODI0ICsg6IGv5Y2a576O5ZyL5oiQ6ZW3ICsg6LKd6JCK5b635LiW55WM56eR5oqAIiwgIuW4guWAvCI6IDYwMjIwOTUsICLkvZTmr5QiOiAiNDYuMSUiLCAi57y65Y+jIjogIisyNi4xJSJ9LCAi6Ziy5a6I5Z6L6YWN5oGvIjogeyLmqJnnmoQiOiAiMDA1NiArIDAwNzEzICsgMDA4NzggKyAwMDk4MUEgKyAwMDk4NEEgKyAwMDkxOSArIDAwOTE4ICsg5a6J6IGvQUnmlLbnm4rmiJDplbciLCAi5biC5YC8IjogMjU1OTA3NywgIuS9lOavlCI6ICIxOS42JSIsICLnvLrlj6MiOiAiLTEwLjQlIn0sICLlgrXliLjlj4rnj77ph5EiOiB7IuaomeeahCI6ICLpioDooYznj77ph5EgKyBQSU1DT+aUtuebiuWinumVtyArIOesrOS4gOmHkSArIOWfuumHkSIsICLluILlgLwiOiAzNTQyMjg0LCAi5L2U5q+UIjogIjI3LjElIiwgIue8uuWPoyI6ICIrMi4xJSJ9fSwgInN1bW1hcnkiOiB7IuWPsOiCoSI6ICLlmrTph43kuI3otrMiLCAi576O6IKhIjogIuWatOmHjei2heaomSIsICLpmLLlrojphY3mga8iOiAi5LiN6LazIiwgIuiqv+W6puaWueWQkSI6ICLliqDnorzlj7DogqHvvIgwMDUx77yJ77yM5LiN5a6c5YaN5Yqg576O6IKhL+WCteWIuCJ9LCAicmVsYXlfdHJhY2tpbmciOiB7IuaciOWInSI6IHsi5oyB5pyJIjogIuaRqeagueWkmumHjeaUtuebiu+8iEZKMzPvvIkiLCAi5Z+65rqW5pelIjogIjcvMDciLCAi6aCQ5Lyw5YWl5bizIjogIjcvMTkiLCAi5LiL5qyh55Sz6KuL5pelIjogIuKAlCJ9LCAi5pyI5LitIjogeyLmjIHmnIkiOiAiTSZHIOWFpeaBr+WfuumHke+8iFFMMTg2ICsgUUwxODTvvIkiLCAi5Z+65rqW5pelIjogIjcvMTciLCAi6aCQ5Lyw5YWl5bizIjogIjcvMjkiLCAi5LiL5qyh55Sz6KuL5pelIjogIjcvMTPvvIhUKzTvvIkifSwgIuaciOW6lSI6IHsi5oyB5pyJIjogIuWuieiBr0FJ5pS255uK5oiQ6ZW3ICsg6LKd6JCK5b635LiW55WM56eR5oqAQTEw77yIUUwxODYgKyBRTDE4NO+8iSIsICLln7rmupbml6UiOiAiNy8yOeOAgTcvMzAiLCAi6aCQ5Lyw5YWl5bizIjogIjgvMTAiLCAi5LiL5qyh55Sz6KuL5pelIjogIjcvMjXvvIhUKzTvvIkifX0sICJqdWx5X2RpdmlkZW5kX2NhbGVuZGFyIjogeyLkvobmupAiOiAi6b6N5LqU5a6Y5pa56YWN5oGv5pel5puG77yIQ29tcGFueV9MZWRnZXIubWTvvIkiLCAi5pGp5qC5IEpQTSI6IHsi5Z+65rqW5pelIjogIjA3LzA3IiwgIuWCmeiouyI6ICLmnIjliJ3nq5npu57vvIzlt7Lkuqvlj5cifSwgIuWuieiBr+aUtuebiuaIkOmVtyI6IHsi5Z+65rqW5pelIjogIjA3LzE0IiwgIuWCmeiouyI6ICLmnIjkuK3nq5npu54gMe+8jOesrOS4gOermei9ieWFpeaomeeahCJ9LCAiTSZHIOWFpeaBr+WfuumHkSI6IHsi5Z+65rqW5pelIjogIjA3LzE3IiwgIuWCmeiouyI6ICLmnIjkuK3nq5npu54gMu+8jOesrOS6jC/kuInnq5novYnlhaXmqJnnmoQifSwgIuWuieiBryBBSSDmlLbnm4oiOiB7IuWfuua6luaXpSI6ICIwNy8yOSIsICLlgpnoqLsiOiAi5pyI5bqV56uZ6bueIDHvvIznrKzlm5vnq5novYnlhaXmqJnnmoQifSwgIuiyneiQiuW+tyBBMTAiOiB7IuWfuua6luaXpSI6ICIwNy8zMCIsICLlgpnoqLsiOiAi5pyI5bqV56uZ6bueIDLvvIznrKzlm5vnq5novYnlhaXmqJnnmoQifX0sICJjb21wbGV0ZWRfb3BlcmF0aW9ucyI6IFt7ImRhdGUiOiAiMjAyNi0wNy0wOSIsICJwb2xpY3kiOiAiRkozMyIsICLmk43kvZwiOiAi6LSW5Zue6L2J55Sz6LO8IiwgIui9ieWHuiI6ICLmkanmoLnlpJrph43mlLbnm4oiLCAi6L2J5YWlIjogIkZMNjUg5a6J6IGv5pS255uK5oiQ6ZW3IiwgIueLgOaFiyI6ICLinIUg5bey6YCB5Ye6In0sIHsiZGF0ZSI6ICIyMDI2LTA3LTA4IiwgInBvbGljeSI6ICJRTDE4NjEwNjk0IiwgIuaTjeS9nCI6ICLotJblm57ovYnnlLPos7wiLCAi6L2J5Ye6IjogIuWuieiBr0FJ5pS255uK5oiQ6ZW3IiwgIui9ieWFpSI6ICJNJkcg5YWl5oGv5Z+66YeRIiwgIueLgOaFiyI6ICLinIUg5bey6YCB5Ye6In0sIHsiZGF0ZSI6ICIyMDI2LTA3LTA4IiwgInBvbGljeSI6ICJRTDE4NDg4MjI0IiwgIuaTjeS9nCI6ICLotJblm57ovYnnlLPos7wiLCAi6L2J5Ye6IjogIuWuieiBr0FJ5pS255uK5oiQ6ZW3IiwgIui9ieWFpSI6ICJNJkcg5YWl5oGv5Z+66YeRIiwgIueLgOaFiyI6ICLinIUg5bey6YCB5Ye6In1dLCAiYWxsaWFuel9jb21iaW5lZCI6IHsiY29zdCI6IDgwMDAwMDAsICJjdXJyZW50X3ZhbHVlIjogNzg0NjY5MCwgImN1bXVsYXRpdmVfZGl2aWRlbmQiOiAxNjEzMjQ2LCAicm9pIjogIisxNi40MSUiLCAibW9udGhseV9kaXZpZGVuZCI6IDU1NDUxfSwgImZpcnN0X2dvbGQiOiB7ImNvc3QiOiAyMDAwMDAwLCAiY3VycmVudF92YWx1ZSI6IDE5ODgyODUsICJjdW11bGF0aXZlX2RpdmlkZW5kIjogNjM5ODUsICJyb2kiOiAiKzIuNjElIiwgIm1vbnRobHlfZGl2aWRlbmQiOiAxMzU5M30sICJ0b3RhbF9tb250aGx5X2RpdmlkZW5kIjogNjkwNDR9LCAicGFnZTRfbGlxdWlkaXR5X2JhbmtpbmciOiB7ImJhbmtzIjogW3sibmFtZSI6ICLmmJ/lsZXpioDooYwiLCAiYWNjb3VudCI6ICLmtLvmnJ/lhLLok4QiLCAiYmFsYW5jZSI6IDcyODcsICLmsLTkvY0iOiAi5L2O6aSY6aGNIiwgIueLgOaFiyI6ICLlu7rorbDoo5zluqsgMzBLIn0sIHsibmFtZSI6ICLnrKzkuIDpioDooYwiLCAiYWNjb3VudCI6ICJpTEVPIiwgImJhbGFuY2UiOiA1MDAwMCwgIuawtOS9jSI6ICLmraPluLgiLCAi54uA5oWLIjogIuS/neiyu+aJo+asviJ9LCB7Im5hbWUiOiAi5bCH5L6G6YqA6KGMIiwgImFjY291bnQiOiAiRGlnaXRhbCBTYXZpbmdzIiwgImJhbGFuY2UiOiAyMDAwMDAwLCAi5rC05L2NIjogIuWFheijlSIsICLni4DmhYsiOiAi5qmf5pyD5a2Q5b2I6LOH6YeRIn1dLCAiaW5mbG93cyI6IFt7Iml0ZW0iOiAi5Y+w6Zu76Jaq5rC0IiwgImFtb3VudCI6IDgyMjY1LCAiZGF0ZSI6ICI3LzYrNy84IiwgInN0YXR1cyI6ICLinIUifSwgeyJpdGVtIjogIuaIv+enn++8iOWkp+e+qeihl++8iSIsICJhbW91bnQiOiAyNDAwMCwgImRhdGUiOiAi5q+P5pyIIiwgInN0YXR1cyI6ICLij7MifSwgeyJpdGVtIjogIuWuieiBr+mFjeaBryBBK0IiLCAiYW1vdW50IjogNTU0NTEsICJkYXRlIjogIjcvOSIsICJzdGF0dXMiOiAi4pyFIn0sIHsiaXRlbSI6ICLnrKzkuIDph5HphY3mga8iLCAiYW1vdW50IjogMTM1OTMsICJkYXRlIjogIjcvOCIsICJzdGF0dXMiOiAi4pyFIn0sIHsiaXRlbSI6ICLliKnmga/mlLblhaUiLCAiYW1vdW50IjogMjg1OCwgImRhdGUiOiAi5q+P5pyIIiwgInN0YXR1cyI6ICLinIUifV0sICJwYXlhYmxlcyI6IFt7ImRhdGUiOiAiNy8xMyIsICJpdGVtIjogIuaYn+Wxlee1kOa4hSIsICJhbW91bnQiOiA0ODkzNTI5LCAicHJpb3JpdHkiOiAi8J+UtCBQMCJ9LCB7ImRhdGUiOiAiNy8yMCIsICJpdGVtIjogIua0sumam1fmiL/osrgiLCAiYW1vdW50IjogNjU3MzQsICJwcmlvcml0eSI6ICLwn5+hIFAxIn0sIHsiZGF0ZSI6ICI3LzIyIiwgIml0ZW0iOiAi546J5bGx5L+h55So5Y2hIiwgImFtb3VudCI6IDMxNzYsICJwcmlvcml0eSI6ICLwn5+iIFAyIn0sIHsiZGF0ZSI6ICI4LzEiLCAiaXRlbSI6ICLlpKfnvqnooZfmiL/osrgr5Yip5oGvIiwgImFtb3VudCI6IDMzNzI0LCAicHJpb3JpdHkiOiAi8J+foSBQMSJ9XX0sICJwYWdlNV90YWN0aWNhbF9vcHMiOiB7InAwIjogW3siaXRlbSI6ICLmmJ/lsZXoo5zluqsgMzBLIiwgImRlYWRsaW5lIjogIuS7iuaXpSJ9LCB7Iml0ZW0iOiAiNy8xMyDmmJ/lsZXntZDmuIXmupblgpkiLCAiZGVhZGxpbmUiOiAiNy8xMyJ9XSwgInAxIjogW3siaXRlbSI6ICIwMDUxIOiyt+WFpSIsICJxdHkiOiAiNS0xMCDlvLUiLCAiY29zdCI6ICJ+MTEwLTIyMEsiLCAidGltaW5nIjogIjcvMTMg5pif5bGV57WQ5riF5b6MIn0sIHsiaXRlbSI6ICLmiL/np5/norroqo3lhaXluLMiLCAiZGVhZGxpbmUiOiAiNy8xMS0xMiJ9LCB7Iml0ZW0iOiAi56ys5LiA56uZ57WQ566X56K66KqN77yIRkw2Ne+8iSIsICJkZWFkbGluZSI6ICI3LzEzIn0sIHsiaXRlbSI6ICLnrKzkuowv5LiJ56uZ57WQ566X56K66KqN77yITSZH77yJIiwgImRlYWRsaW5lIjogIjcvMTUifV0sICJwMiI6IFt7Iml0ZW0iOiAiMDA5ODIzLzAwOTgyNCIsICJ0aW1pbmciOiAi6KeA5a+f5LiA5YCL5pyIIn0sIHsiaXRlbSI6ICIwMDUwIOmFjeaBr+e4ruawtCIsICLpmaTmga/ml6UiOiAiNy8yMSIsICLlhaXluLPml6UiOiAiOC8xMCJ9LCB7Iml0ZW0iOiAiTSZHIOWfuua6luaXpSIsICJkYXRlIjogIjcvMTcifSwgeyJpdGVtIjogIui2hei3jC/otoXmvLLnm6PmjqciLCAidGltaW5nIjogIuavj+mAsSJ9XSwgInBhdXNlZCI6IFt7Iml0ZW0iOiAiMDA1NiIsICJyZWFzb24iOiAi55uu5YmN5oyB5pyJIDEg5by177yM5YeN57WQ5Lit77yM55+t5pyf54Sh5rOV5Yqg56K877yM562J6Kej5oq85YaN6KmV5LywIn0sIHsiaXRlbSI6ICIwMDkwM0IvMDA1MiDosrflhaUiLCAicmVhc29uIjogIuiIh+ePvuaciemDqOS9jemHjeeWiiJ9LCB7Iml0ZW0iOiAiMDA2MjA4IOWKoOeivCIsICJyZWFzb24iOiAi6LOH6YeR5LiN6Laz77yM562JIDcvMTMg5b6M6KmV5LywIn1dfX0sICJfY2FjaGVfYnVzdGVyIjogMTc4Mzc2NDQ1MX19"
+EMBEDDED_SNAPSHOT = json.loads(base64.b64decode(EMBEDDED_SNAPSHOT_B64).decode("utf-8"))
+
+# 1. Snapshot 載入
+
+# ============================================================
+
+
+def load_snapshot() -> dict:
+
+    cwd = Path(__file__).parent
+
+    print("[DEBUG] cwd:", cwd)
+
+    print("[DEBUG] glob files:", sorted(list(cwd.glob("framework_snapshot_*.json")) + list(cwd.glob("framework_snapshot_*_final.json")), reverse=True))
+
+    for f in sorted(list(cwd.glob("framework_snapshot_*.json")) + list(cwd.glob("framework_snapshot_*_final.json")), reverse=True):
+
+        try:
+
+            data = json.loads(f.read_text(encoding="utf-8"))
+
+            print("[DEBUG] loaded file keys:", list(data.keys())[:5])
+
+            if "snapshot" in data:
+
+                print("[DEBUG] using snapshot key")
+
+                return data["snapshot"]
+
+            if "pages" in data:
+
+                print("[DEBUG] using pages key")
+
+                return data
+
+        except Exception as e:
+
+            print("[DEBUG] load error:", e)
+
+            continue
+
+    print("[DEBUG] returning empty dict")
+
+    return {}
+
+
+
+print("[DEPLOY CHECK] dashboard.py v5.0.6 loaded")
+
+APP_VERSION = "v5.0.7"
+
+# Force-bust Streamlit cache before loading so Railway never serves stale empty data
+
+try:
+
+    import streamlit as st
+
+    st.cache_data.clear()
+
+except Exception:
+
+    pass
+
+SNAP = load_snapshot()
+
+FILE_DATE = SNAP.get("generated_at", "N/A")
+
+DATE_TAG = "🔄 " + FILE_DATE.split(" ")[0] if FILE_DATE != "N/A" else ""
+
+SNAP_DATE = FILE_DATE.split(" ")[0] if FILE_DATE != "N/A" else "2026-07-11"
+
+
+
+# ============================================================
+
+# 2. CSS：龍九戰役風 dark theme + responsive
+
+# ============================================================
+
+def inject_css() -> None:
+
+    st.markdown(
+
+        """
+
+<style>
+
+    /* Global dark mode force */
+
+    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stVerticalBlock"], [data-testid="stHorizontalBlock"] {background:#0e1117 !important; color:#f1f5f9 !important; font-family:"Microsoft JhengHei","PingFang SC",sans-serif !important;}
+
+    /* Streamlit top header / toolbar */
+
+    header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stHeader"] *, [data-testid="stToolbar"] * {background:#0e1117 !important; color:#f1f5f9 !important;}
+
+    /* Sidebar everything */
+
+    [data-testid="stSidebar"] {background:#0b0f19 !important; color:#ffffff !important;}
+
+    [data-testid="stSidebar"] *, [data-testid="stSidebar"] *::after, [data-testid="stSidebar"] *::before {color:#ffffff !important;}
+
+    /* Buttons */
+
+    .stButton>button {color:#ffffff !important; background:#1e293b !important; border:1px solid rgba(255,255,255,.2) !important;}
+
+    .stButton>button[type="primary"] {background:#2563eb !important; border-color:#3b82f6 !important;}
+
+    .stButton>button[type="secondary"] {background:#334155 !important; color:#ffffff !important;}
+
+    /* KPI cards: light gradient bg needs dark text */
+
+    .kpi-label {color:#0f172a !important; font-weight:600 !important;}
+
+    .kpi-value {color:#0f172a !important; text-shadow:0 1px 2px rgba(0,0,0,.15);}
+
+    /* Tables */
+
+    th, td {color:#f1f5f9 !important; border-color:#334155 !important;}
+
+    .block-container{padding-top:1.5rem !important; padding-bottom:2rem !important;}
+
+    h1,h2,h3,h4,h5,[data-testid="stMarkdownContainer"] h1, [data-testid="stMarkdownContainer"] h2, [data-testid="stMarkdownContainer"] h3 {color:#ffffff !important;}
+
+    .stMarkdown, .stText, .stCaption, p, span, div, label, [data-testid="stMarkdownContainer"] {color:#f1f5f9 !important;}
+
+    /* force sidebar text and radio radio labels to be pure white */
+
+    [data-testid="stSidebar"] {background:#0b0f19 !important;}
+
+    [data-testid="stSidebar"] .stRadio > label > div[data-testid="stMarkdownContainer"] {color:#ffffff !important;}
+
+    [data-testid="stSidebar"] span {color:#ffffff !important;}
+
+    [data-testid="stSidebar"] div {color:#ffffff !important;}
+
+    [data-testid="stSidebar"] *, [data-testid="stSidebar"] *::after, [data-testid="stSidebar"] *::before {color:#ffffff !important;}
+
+    [data-testid="stSidebar"] label span {color:#ffffff !important;}
+
+    [data-testid="stSidebar"] .stRadio label {color:#ffffff !important;}
+
+    [data-testid="stSidebar"] .stRadio [role="radiogroup"] label span {color:#ffffff !important;}
+
+    [data-testid="stSidebar"] input[type="radio"] + div {color:#ffffff !important;}
+
+    [data-testid="stSidebar"] .stRadio div[data-baseweb="radio"] + label {color:#ffffff !important;}
+
+    /* mobile buttons */
+
+    .stButton>button {color:#ffffff !important; background:#1e293b !important; border:1px solid rgba(255,255,255,.2) !important;}
+
+    .stButton>button[type="primary"] {background:#2563eb !important; border-color:#3b82f6 !important;}
+
+    .stButton>button[type="secondary"] {background:#334155 !important; color:#ffffff !important;}
+
+    .kpi-label {color:#0f172a !important; font-weight:600 !important;}
+
+    .kpi-value {color:#0f172a !important; text-shadow:0 1px 2px rgba(0,0,0,.15);}
+
+    th, td {color:#f1f5f9 !important; border-color:#334155 !important;}
+
+    .block-container{padding-top:1.5rem !important; padding-bottom:2rem !important;}
+
+
+
+    .kpi-box {border-radius:12px; padding:14px 18px; color:#fff; margin:6px 0;}
+
+    .kpi-green {background:linear-gradient(135deg,#059669,#047857);}
+
+    .kpi-yellow{background:linear-gradient(135deg,#d97706,#b45309);}
+
+    .kpi-red   {background:linear-gradient(135deg,#dc2626,#b91c1c);}
+
+    .kpi-blue  {background:linear-gradient(135deg,#2563eb,#1d4ed8);}
+
+    .kpi-purple{background:linear-gradient(135deg,#7c3aed,#6d28d9);}
+
+    .kpi-label {font-size:0.78rem; opacity:.95; text-transform:uppercase; letter-spacing:1px; color:#0f172a !important;}
+
+    .kpi-value {font-size:1.6rem; font-weight:700; margin-top:2px; color:#0f172a !important;}
+
+
+
+    .alert {border-radius:8px; padding:10px 14px; margin:8px 0; font-size:0.92rem;}
+
+    .alert-red    {background:#7f1d1d44; border-left:4px solid #ef4444;}
+
+    .alert-yellow {background:#78350f44; border-left:4px solid #f59e0b;}
+
+    .alert-green  {background:#064e3b44; border-left:4px solid #10b981;}
+
+
+
+    table {width:100%; border-collapse:collapse;}
+
+    th {text-align:left; padding:8px; border-bottom:1px solid #334155; color:#94a3b8; font-size:0.82rem;}
+
+    td {padding:8px; border-bottom:1px solid #1e293b; font-size:0.9rem;}
+
+    tr:hover td {background:#1e293b;}
+
+
+
+    .morning-cf {background:#0f172acc; border:1px solid #334155; border-radius:10px; padding:18px;}
+
+    .morning-cf h3 {margin-top:0; font-size:1.05rem;}
+
+
+
+    /* mobile sidebar visibility */
+
+    [data-testid="stSidebar"] {display:block !important;}
+
+    [data-testid="stSidebar"] .stRadio label span {color:#f1f5f9 !important;}
+
+    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] label span {color:#f1f5f9 !important;}
+
+    .stButton>button {color:#ffffff !important; background:#1e293b !important; border:1px solid rgba(255,255,255,.2) !important;}
+
+    .stButton>button[type="primary"] {background:#2563eb !important; border-color:#3b82f6 !important;}
+
+    .stButton>button[type="secondary"] {background:#334155 !important; color:#f1f5f9 !important;}
+
+
+
+    @media (max-width: 780px) {
+
+        .kpi-value {font-size:1.2rem;}
+
+        table {font-size:0.82rem;}
+
+    }
+
+</style>
+
+""",
+
+        unsafe_allow_html=True,
+
+    )
+
+
+
+inject_css()
+
+
+
+# ============================================================
+
+# 3. 頁面選擇（Sidebar 桌面 / 按鈕 手機；單一 source of truth）
+
+# ============================================================
+
+_PAGE_OPTS = [
+
+    "1｜財富生命線",
+
+    "2｜戰略異常中心",
+
+    "3｜保單接力引擎",
+
+    "4｜流動性調度",
+
+    "5｜戰術任務",
+
+]
+
+_PAGE_ICONS = ["💰", "🛡️", "🛡️", "🏦", "📋"]
+
+
+
+if "page" not in st.session_state:
+
+    st.session_state.page = _PAGE_OPTS[0]
+
+
+
+current_idx = _PAGE_OPTS.index(st.session_state.page) if st.session_state.page in _PAGE_OPTS else 0
+
+sidebar_pick = st.sidebar.radio(
+
+    "分頁導航",
+
+    _PAGE_OPTS,
+
+    index=current_idx,
+
+    label_visibility="collapsed",
+
+)
+
+if sidebar_pick != st.session_state.page:
+
+    st.session_state.page = sidebar_pick
+
+    st.rerun()
+
+
+
+# 手機版水平按鈕（不與 sidebar 重複 radio）
+
+st.markdown('<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">', unsafe_allow_html=True)
+
+new_page = st.session_state.page
+
+for i, (opt, icon) in enumerate(zip(_PAGE_OPTS, _PAGE_ICONS)):
+
+    active = (opt == st.session_state.page)
+
+    if st.button(f"{icon} {opt.split('｜')[-1]}", key=f"mob_pg_{i}", type="primary" if active else "secondary", use_container_width=True):
+
+        new_page = opt
+
+st.markdown("</div>", unsafe_allow_html=True)
+
+if new_page != st.session_state.page:
+
+    st.session_state.page = new_page
+
+    st.rerun()
+
+
+
+page = st.session_state.page
+
+
+
+# ============================================================
+
+# 4. 共用小工具
+
+# ============================================================
+
+PAGES = SNAP.get("pages", {})
+
+
+
+page1 = PAGES.get("page1_wealth_baseline", {})
+
+page3 = PAGES.get("page3_insurance_relay", {}) or PAGES.get("page3_allocation", {})
+
+if page3 and not page3.get("current_value"):
+
+    _p3a = page3.get("current", {})
+
+    page3 = dict(page3)
+
+    page3["current_value"] = _p3a.get("value") or _p3a.get("current_value") or 0
+
+    page3["total_premium"] = _p3a.get("premium") or 0
+
+    page3["monthly_dividend"] = _p3a.get("current_month_dividend") or _p3a.get("monthly_dividend") or 0
+
+    page3["dividend_yield"] = _p3a.get("dividend_yield") or _p3a.get("yield") or 0
+
+page4 = PAGES.get("page4_liquidity_banking", {}) or PAGES.get("page4_liquidity", {})
+
+page5 = PAGES.get("page5_tactical_ops", {}) or PAGES.get("page5_battle", {})
+
+
+
+# Page2：snapshot 使用不同欄位名，先別名對應
+
+_p2 = dict(PAGES.get("page2_strategic_risk", {}))
+
+if "allocation_check" in _p2:
+
+    ac = _p2["allocation_check"]
+
+    _p2["allocation_analysis"] = {
+
+        "current": ac.get("current", {}),
+
+        "target": ac.get("target", {}),
+
+        "variance": {k: ac.get("current", {}).get(k, 0) - ac.get("target", {}).get(k, 0) for k in ac.get("target", {})},
+
+        "status": ac.get("status", ""),
+
+    }
+
+if "industry_exposure" in _p2 and "concentration" not in _p2:
+
+    _p2["concentration"] = _p2["industry_exposure"]
+
+if "buffett_view" in _p2 and "buffett_decision" not in _p2:
+
+    _p2["buffett_decision"] = _p2["buffett_view"]
+
+if "gemini_suggestion" in _p2 and "gemini_analysis" not in _p2:
+
+    _p2["gemini_analysis"] = _p2["gemini_suggestion"]
+
+page2 = _p2
+
+
+
+# Page4：帳戶欄位別名
+
+_p4 = dict(page4)
+
+if "liquidity" not in _p4:
+
+    _p4["liquidity"] = {}
+
+page4 = _p4
+
+
+
+
+
+def fmt_twd(v):
+
+    """格式化為 TWD，None / 空字串安全處理"""
+
+    if v is None or v == "":
+
+        return "—"
+
+    if isinstance(v, str):
+
+        return v
+
+    try:
+
+        return f"{float(v):,.0f} TWD"
+
+    except Exception:
+
+        return str(v)
+
+
+
+
+
+def kpi_card(label: str, value: str, color: str = "blue") -> None:
+
+    st.markdown(
+
+        f"""<div class='kpi-box kpi-{color}'>
+
+        <div class='kpi-label'>{label}</div>
+
+        <div class='kpi-value'>{value}</div>
+
+        </div>""",
+
+        unsafe_allow_html=True,
+
+    )
+
+
+
+
+
+def table(title: str, rows: list, cols: list) -> None:
+
+    if not rows:
+
+        st.info("尚無資料")
+
+        return
+
+    st.markdown(f"**{title}**")
+
+    html = (
+
+        ["<table><thead><tr>"]
+
+        + [f"<th>{c}</th>" for c in cols]
+
+        + ["</tr></thead><tbody>"]
+
+    )
+
+    for row in rows:
+
+        html.append("<tr>" + "".join(f"<td>{cell}</td>" for cell in row) + "</tr>")
+
+    html.append("</tbody></table>")
+
+    st.markdown("".join(html), unsafe_allow_html=True)
+
+
+
+
+
+# ============================================================
+
+# 5. 分頁內容
+
+# ============================================================
+
+
+
+## ---------- Page1 ----------
+
+if page.startswith("1｜"):
+
+    st.title("💰 財富生命線")
+
+
+
+    kpi_items = [
+
+        ("流動性 (月)", f"{page1.get('runway_months', 0):.1f} 月", "green"),
+
+        ("資產負債比 (%)", f"{page1.get('debt_ratio_pct', 0):.1f}%", "red"),
+
+        ("工作期月盈餘", fmt_twd(page1.get("work_surplus", 0)), "blue"),
+
+        ("退休後月盈餘", fmt_twd(page1.get("retire_surplus", 0)), "purple"),
+
+        ("本月收入", fmt_twd(page1.get("monthly_income", 0)), "green"),
+
+        ("本月支出", fmt_twd(page1.get("monthly_expense", 0)), "yellow"),
+
+    ]
+
+    cols = st.columns(3)
+
+    for i, (label, value, color) in enumerate(kpi_items):
+
+        with cols[i % 3]:
+
+            kpi_card(label, value, color)
+
+
+
+    acf = page1.get("actual_cash_flow", {}) or {}
+
+    if not acf:
+
+        acf = {
+
+            "income": {k: v for k, v in page1.get("income", {}).items() if isinstance(v, (int, float))},
+
+            "expense": {k: v for k, v in page1.get("expense", {}).items() if isinstance(v, (int, float))},
+
+        }
+
+    ctx = page1.get("context", []) or []
+
+
+
+    # 早上動態現金流
+
+    st.markdown("<div class='morning-cf'>", unsafe_allow_html=True)
+
+    st.markdown("### 🌅 資金流入流出動態（{}）".format(DATE_TAG.replace("🔄 ", "") or "2026-07-10"))
+
+
+
+    def _totals(d):
+
+        if isinstance(d, dict):
+
+            return sum(v for v in d.values() if isinstance(v, (int, float)))
+
+        return 0.0
+
+
+
+    income = _totals(acf.get("income", {}))
+
+    outflow = _totals(acf.get("expense", {}))
+
+    surplus = income - outflow
+
+    st.caption(f"📥 本月收入 {fmt_twd(income)} ｜ 📤 本月支出 {fmt_twd(outflow)} ｜ 💰 盈餘 {fmt_twd(surplus)}")
+
+
+
+    income_items = acf.get("income", {})
+
+    expense_items = acf.get("expense", {})
+
+    if isinstance(income_items, dict) and income_items:
+
+        st.markdown("### 📈 本月收入來源")
+
+        _income_names = [k for k in income_items.keys() if k not in ("合計", "total")]
+
+        _income_values = [income_items[k] for k in _income_names]
+
+        fig = px.pie(
+
+            names=_income_names,
+
+            values=_income_values,
+
+            hole=0.55,
+
+            color_discrete_sequence=["#10b981", "#3b82f6", "#f59e0b", "#6366f1"],
+
+        )
+
+        fig.update_traces(
+
+            textinfo="percent+label",
+
+            hovertemplate="%{label}: %{value:,.0f} TWD<extra></extra>",
+
+        )
+
+        st.plotly_chart(fig, use_container_width=True, height=260)
+
+    if isinstance(expense_items, dict) and expense_items:
+
+        st.markdown("### 📉 本月支出組成")
+
+        fig = px.pie(
+
+            names=list(expense_items.keys()),
+
+            values=list(expense_items.values()),
+
+            hole=0.55,
+
+            color_discrete_sequence=["#ef4444", "#f97316", "#ec4899", "#8b5cf6"],
+
+        )
+
+        fig.update_traces(
+
+            textinfo="percent+label",
+
+            hovertemplate="%{label}: %{value:,.0f} TWD<extra></extra>",
+
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+
+
+    if acf.get("today_notes"):
+
+        st.info(f"📌 {acf.get('today_notes')}")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+
+    with st.expander("📋 收入明細"):
+
+        table("", [[name, fmt_twd(val)] for name, val in acf.get("income", {}).items()], ["收入項目", "月額"])
+
+    with st.expander("💸 支出明細"):
+
+        table("", [[name, fmt_twd(val)] for name, val in acf.get("expense", {}).items()], ["支出項目", "月額"])
+
+    with st.expander("市場脈動"):
+
+        for item in ctx:
+
+            st.write(f"• {item}")
+
+
+
+    st.caption(DATE_TAG)
+
+
+
+## ---------- Page2 ----------
+
+elif page.startswith("2｜"):
+
+    st.title("🐋 戰略異常中心")
+
+    st.caption(DATE_TAG)
+
+
+
+    red = page2.get("red_zone", [])
+
+    if red:
+
+        st.markdown("### 🚨 紅區（嚴重溢價 / 槓桿過度）")
+
+        rows = []
+
+        for r in red:
+
+            if isinstance(r, dict):
+
+                rows.append([
+
+                    r.get("ticker", r.get("code", "")),
+
+                    r.get("name", r.get("ticker", "")),
+
+                    f"{r.get('return_pct', r.get('premium_pct', 0)):+.1f}%",
+
+                    r.get("status", ""),
+
+                    r.get("level", ""),
+
+                ])
+
+        table("", rows, ["代號", "名稱", "溢價/變化", "狀態", "等級"])
+
+
+
+    alloc = page2.get("allocation_analysis", {})
+
+    if alloc:
+
+        st.markdown("### 📊 資產配置分析（40%台股 / 35%美股 / 25%高利活存現金及債券）")
+
+        current = alloc.get("current", {})
+
+        target = alloc.get("target", {})
+
+        variance = alloc.get("variance", {})
+
+
+
+        labels, cur_vals, tgt_vals, var_vals = [], [], [], []
+
+        for k, v in current.items():
+
+            labels.append(k)
+
+            cur_vals.append(v)
+
+            tgt_vals.append(target.get(k, 0))
+
+            var_vals.append(variance.get(k, 0))
+
+
+
+        if any(cur_vals):
+
+            fig = px.bar(
+
+                x=labels, y=[cur_vals, tgt_vals],
+
+                labels={"x": "資產類別", "y": "配置 %"},
+
+                color_discrete_sequence=["#3b82f6", "#10b981"],
+
+                title="當前 vs 目標配置",
+
+                barmode="group",
+
+            )
+
+            fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5), xaxis_tickangle=-15)
+
+            st.plotly_chart(fig, use_container_width=True)
+
+
+
+        if any(var_vals):
+
+            fig2 = px.bar(
+
+                x=labels, y=var_vals,
+
+                labels={"x": "資產類別", "y": "偏離 %"},
+
+                color=[abs(v) > 10 for v in var_vals],
+
+                color_discrete_map={True: "#ef4444", False: "#f59e0b"},
+
+                title="配置偏差（🔴 >10% / 🟡 >5%）",
+
+            )
+
+            fig2.add_hline(y=0, line_dash="dash", line_color="white")
+
+            fig2.update_layout(xaxis_tickangle=-15)
+
+            st.plotly_chart(fig2, use_container_width=True)
+
+
+
+        if alloc.get("status"):
+
+            st.warning(f"⚠️ {alloc.get('status')}")
+
+
+
+    holdings = page2.get("holdings_composition", {})
+
+    if holdings:
+
+        st.markdown("### 🔍 穿透分析 - 資產成分")
+
+        for asset_class, details in holdings.items():
+
+            if isinstance(details, str):
+
+                st.write(f"• {details}")
+
+                continue
+
+            name = details.get("name", asset_class)
+
+            items = details.get("items", [])
+
+            total = details.get("total_value", 0)
+
+            pct = details.get("allocation_pct", 0)
+
+            status = details.get("status", "")
+
+            with st.expander(f"📦 {name} - {fmt_twd(total)} ({pct}%)"):
+
+                for item in items:
+
+                    st.write(f"  • {item}")
+
+                if status:
+
+                    st.caption(f"狀態：{status}")
+
+
+
+    b = page2.get("buffett_decision", {})
+
+    st.markdown("### 🧓 巴菲特視角")
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+
+        scope = b.get("scope", b.get("circle_of_competence", ""))
+
+        if scope:
+
+            st.success(f"✅ 能力圈：{scope}")
+
+        moat = b.get("moat", b.get("holdings", ""))
+
+        if moat:
+
+            if isinstance(moat, list):
+
+                moat = ", ".join(str(x) for x in moat)
+
+            st.info(f"🛡️ 持有/護城河：{moat}")
+
+    with c2:
+
+        margin = b.get("margin_of_safety", b.get("insurance_assets", ""))
+
+        if margin:
+
+            if isinstance(margin, list):
+
+                margin = ", ".join(str(x) for x in margin)
+
+            st.warning(f"⚠️ 資產/保單：{margin}")
+
+        action = b.get("action", "")
+
+        if action:
+
+            st.markdown(f"💡 **建議：{action}**")
+
+
+
+    gemini = page2.get("gemini_analysis", "")
+
+    if gemini:
+
+        st.markdown("### 🤖 Gemini 投資建議（根據持倉與市場情報）")
+
+        st.markdown(gemini)
+
+
+
+    st.markdown("### 🔍 穿透式產業曝險")
+
+    rows = []
+
+    for c in page2.get("concentration", []):
+
+        if isinstance(c, dict):
+
+            rows.append([c.get("industry", c.get("name", "")), fmt_twd(c.get("exposure_twd", 0)), f"{c.get('weight_pct', 0):.1f}%"])
+
+        else:
+
+            rows.append([str(c), "—", "—"])
+
+    table("", rows, ["產業", "實質曝險", "權重"])
+
+
+
+    leverage = page2.get("leverage", {})
+
+    if leverage and isinstance(leverage, dict):
+
+        st.markdown("### 🏦 負債結構")
+
+        table("", [[k, fmt_twd(v)] for k, v in leverage.items()], ["指標", "金額"])
+
+
+
+## ---------- Page3 ----------
+
+elif page.startswith("3｜"):
+
+    st.title("🛡️ 保單接力引擎")
+
+    st.caption(DATE_TAG)
+
+
+
+    # Snapshot schema: current + summary / category breakdown
+    cur = page3.get("current") if isinstance(page3.get("current"), dict) else {}
+    summ = page3.get("summary") if isinstance(page3.get("summary"), dict) else {}
+
+
+
+    if isinstance(cur, dict) and any(isinstance(v, dict) and "市值" in v for v in cur.values()):
+
+        total_value = sum(v.get("市值", 0) for v in cur.values() if isinstance(v, dict))
+
+    else:
+
+        total_value = cur.get("value", cur.get("current_value", 0))
+
+
+
+    total_cost = (
+
+        page3.get("allianz_combined", {}).get("cost", 0)
+
+        + page3.get("first_gold", {}).get("cost", 0)
+
+    ) or summ.get("total_cost", summ.get("cost_basis", 0))
+
+
+
+    monthly_div = (
+
+        page3.get("allianz_combined", {}).get("monthly_dividend", 0)
+
+        + page3.get("first_gold", {}).get("monthly_dividend", 0)
+
+    ) or page3.get("total_monthly_dividend", 0) or summ.get("current_month_dividend", summ.get("monthly_dividend", 0))
+
+
+
+    overall_yield = summ.get("dividend_yield", summ.get("overall_yield_pct"))
+
+
+
+    st.metric("保單現值", fmt_twd(total_value))
+
+    st.metric("總成本", fmt_twd(total_cost))
+
+    try:
+
+        st.metric("總報酬率", f"{float(overall_yield):+.2f}%" if overall_yield is not None else "—")
+
+    except Exception:
+
+        st.metric("總報酬率", str(overall_yield) if overall_yield is not None else "—")
+
+    st.metric("本月配息", fmt_twd(monthly_div))
+
+
+
+    st.markdown("### ⏱️ 三站接力時間軸（T+2 / T+4 / 月底站）")
+
+    _relay = page3.get("relay_progress") or page3.get("relay_tracking", [])
+
+    if isinstance(_relay, dict):
+
+        _relay = [{"station": k, **v} for k, v in _relay.items()]
+
+    for relay in _relay:
+
+        st.markdown(
+
+            f"<div style='background:#1e293b;border-left:3px solid #3b82f6;padding:8px 12px;margin:6px 0;border-radius:6px;'>"
+
+            f"<b>{relay.get('station','')}｜{relay.get('date','')}</b><br/>"
+
+            f"📌 {relay.get('name','')} → {relay.get('convert_to','')}<br/>"
+
+            f"🔄 狀態：{relay.get('status','')}｜最晚期限：{relay.get('deadline','')}<br/>"
+
+            f"📅 除息日：{relay.get('ex_date','')}｜預計入帳：{relay.get('schedule','')}<br/>"
+
+            f"💡 {relay.get('action','')}</div>",
+
+            unsafe_allow_html=True,
+
+        )
+
+
+
+    # 7月配息基準日
+
+    cal = page3.get("july_dividend_calendar", {})
+
+    if cal:
+
+        st.markdown("### 📅 7 月配息基準日")
+
+        rows = []
+
+        for name, info in cal.items():
+
+            if name == "來源":
+
+                continue
+
+            rows.append([name, info.get("基準日", info.get("date", "—")), info.get("備註", info.get("note", ""))])
+
+        if rows:
+
+            table("", rows, ["標的", "基準日", "備註"])
+
+
+
+    # 已完成轉換紀錄
+
+    ops = page3.get("completed_operations", [])
+
+    if ops:
+
+        st.markdown("### 📋 已完成轉換操作紀錄")
+
+        rows = [[o.get("date",""), o.get("policy",""), o.get("操作",""), o.get("轉出",""), o.get("轉入",""), o.get("狀態","")] for o in ops]
+
+        table("", rows, ["日期", "保單", "操作", "轉出標的", "轉入標的", "狀態"])
+
+
+
+    r = page3.get("rebalancing", {})
+
+    st.markdown("### 🎯 70/30 裁決按鈕")
+
+    st.write(r.get("status", ""))
+
+    c1, c2, c3 = st.columns(3)
+
+    c1.button("✅ 執行利潤回填", use_container_width=True)
+
+    c2.button("⏸️ 延後投入", use_container_width=True)
+
+    c3.button("🔄 轉入其他標的", use_container_width=True)
+
+
+
+## ---------- Page4 ----------
+
+elif page.startswith("4｜"):
+
+    st.title("🏦 流動性調度站")
+
+    st.caption(DATE_TAG)
+
+
+
+    liq = page4.get("liquidity", {})
+
+    if liq:
+
+        st.markdown(
+
+            f"### 📊 流動性概況<br/>"
+
+            f"• 流動性：{liq.get('runway_months', 0):.1f} 月<br/>"
+
+            f"• 3個月緩衝水位：{fmt_twd(liq.get('three_month_buffer_twd', 0))}<br/>"
+
+            f"• 覆蓋倍數：{liq.get('buffer_coverage_x', 0)}x",
+
+            unsafe_allow_html=True,
+
+        )
+
+
+
+    accs = page4.get("accounts", [])
+
+    refill = page4.get("refill_alert")
+
+    if accs:
+
+        bank_rows, ins_rows, total_bank, total_ins = [], [], 0, 0
+
+        for a in accs:
+
+            if not isinstance(a, dict):
+
+                continue
+
+            name = a.get("name", a.get("bank", "—"))
+
+            atype = a.get("type", "銀行").strip()
+
+            label = f"{name} ({atype})" if atype and atype not in ("銀行", "活存") else name
+
+            if "保單" in atype or "保險" in atype or "投資" in atype:
+
+                ins_rows.append([label, fmt_twd(a.get("balance", 0) or 0)])
+
+                total_ins += a.get("balance", 0) or 0
+
+            else:
+
+                bank_rows.append([name, fmt_twd(a.get("balance", 0) or 0)])
+
+                total_bank += a.get("balance", 0) or 0
+
+
+
+        # 銀行流動性水位檢查
+
+        st.markdown("### 🏦 銀行流動水位")
+
+        # 銀行管控規則（唯一真值，請與 Company_Ledger.md 對齊）
+
+        bank_controls = {
+
+            "台新Richart":      {"function": "調度中心",       "min": 100_000,  "note": "Richart 利率 1.8%，上限 100 萬"},
+
+            "台新薪轉":         {"function": "薪轉帳戶",       "min": 50_000,   "note": "薪轉戶，約 20 萬"},
+
+            "台新優利存":       {"function": "高利活存",       "min": 500_000,  "note": "優利存利率 1.8%，上限 100 萬"},
+
+            "玉山銀行":         {"function": "LINE Pay 生活消費", "min": 50_000,  "note": "月扣款約 1 萬"},
+
+            "永豐銀行":         {"function": "房貸扣款 + 一般卡", "min": 180_000, "note": "月扣款 6 萬，控 3 個月"},
+
+            "星展銀行":         {"function": "房貸尾數",         "min": 3_300 * 3,"note": "月扣 2.3 萬房貸+1 萬利息=3.3 萬；本月結清僅放 7,000"},
+
+            "台北富邦":         {"function": "富邦J卡 + MOMO卡",  "min": 50_000,  "note": "月消費約 8,000，控 5 萬以上"},
+
+            "國泰世華":         {"function": "轉貸專戶",         "min": 50_000,  "note": "轉貸用途，2個月緩衝"},
+
+            "將來銀行":         {"function": "高利活存(1.8%)",   "min": 500_000,  "note": "活存部位約 120 萬"},
+
+            "第一銀行":         {"function": "活存(2%)",         "min": 50_000,   "note": "上限 12 萬，目前 10 萬"},
+
+            "現金儲備":         {"function": "備用現金",         "min": 50_000,   "note": ""},
+
+        }
+
+        monthly_expense = page4.get('liquidity', {}).get('three_month_buffer_twd', 431_874) / 3  # 月支出
+
+
+
+        liquidity_rows = []
+
+        for name, balance_str in bank_rows:
+
+            raw = str(balance_str).replace(" TWD", "").replace(",", "").replace("+", "").replace("萬", "").replace("—", "").strip()
+
+            try:
+
+                bal = float(raw) * (10_000 if "萬" in str(balance_str) and raw else 1)
+
+            except Exception:
+
+                bal = 0
+
+
+
+            # 依银行功能决定最低要求
+
+            if "台新" in name or "Richart" in name:
+
+                func = "主帳戶（調度中心）"
+
+                req = 431_874  # 3個月總支出緩衝，DASHBOARD_SPEC
+
+            elif "玉山" in name:
+
+                func = "LINE Pay生活消费"
+
+                req = 328_374  # 3個月房貸+3個月LINE Pay緩衝，DASHBOARD_SPEC
+
+            elif "永丰" in name:
+
+                func = "房貸扣款 + 一般卡"
+
+                req = 180_000  # 3個月房貸(99,459)+2個月消費(42,287) buffer，DASHBOARD_SPEC
+
+            elif "富邦" in name or "台北富邦" in name:
+
+                func = "富邦J卡 + MOMO卡消费"
+
+                req = 80_000  # 2个月卡片消费 buffer，DASHBOARD_SPEC
+
+            elif "星展" in name:
+
+                func = "房貸尾數"
+
+                req = 30_000  # 最低警示线
+
+            elif "國泰" in name:
+
+                func = "轉貸專戶"
+
+                req = 287_916  # 2个月支出缓冲，DASHBOARD_SPEC
+
+            elif "現金" in name:
+
+                func = "現金儲備"
+
+                req = 50_000
+
+            else:
+
+                func = "日常"
+
+                req = 50_000
+
+
+
+            coverage = bal / req if req else 0
+
+            months_cov = bal / monthly_expense if monthly_expense else 0
+
+            status = "✅ 充足" if coverage >= 1 else ("⚠️ 偏低" if coverage >= 0.5 else "🔴 不足")
+
+            liquidity_rows.append([
+
+                name, func, balance_str,
+
+                fmt_twd(req),
+
+                f"{coverage:.1f}x / {months_cov:.1f}月",
+
+                status
+
+            ])
+
+
+
+        # sort by coverage ascending
+
+        try:
+
+            cov = float(str(r[4]).split("x")[0].strip() or 0)
+
+        except Exception:
+
+            cov = 0.0
+
+        liquidity_rows.sort(key=lambda r: cov)
+
+        table("", liquidity_rows, ["銀行", "功能", "目前餘額", "最低要求", "覆蓋", "狀態"])
+
+
+
+        # 低餘額預警
+
+        warns = [r for r in liquidity_rows if "🔴" in r[5]]
+
+        if warns:
+
+            st.markdown("### ⚠️ 低餘額預警")
+
+            for r in warns:
+
+                try:
+
+                    short = round(float(str(r[4]).split("x")[0].strip() or 0), 1)
+
+                except Exception:
+
+                    short = 0.0
+
+                st.error(f"**{r[0]}** 目前 {r[2]} / 要求 {r[3]} / 覆蓋 {r[4].split('x')[0].strip()}x — {r[5]}")
+
+
+
+        # 低餘額警示
+
+        if refill and isinstance(refill, dict):
+
+            st.warning(f"🔔 {refill.get('low_balance_account','?')} 餘額 {fmt_twd(refill.get('balance',0))} → 建議從 {refill.get('recommended_refill_from','?')} 調度 {fmt_twd(refill.get('refill_amount',0))}（{refill.get('reason','')}）")
+
+
+
+        # 保單 / 投資帳戶
+
+        st.markdown("### 🛡️ 保單 / 投資帳戶")
+
+        if ins_rows:
+
+            table("", ins_rows, ["保單/投資", "現值"])
+
+        else:
+
+            st.caption("本日無保單資料")
+
+
+
+        # 甜甜圈
+
+        all_names = [r[0] for r in bank_rows] + ([r[0] for r in ins_rows] if ins_rows else [])
+
+        all_vals = []
+
+        for r in bank_rows:
+
+            try:
+
+                all_vals.append(float(r[1].replace(" TWD", "").replace(",", "")))
+
+            except Exception:
+
+                all_vals.append(0)
+
+        for r in ins_rows:
+
+            try:
+
+                all_vals.append(float(r[1].replace(" TWD", "").replace(",", "")))
+
+            except Exception:
+
+                all_vals.append(0)
+
+        if all_names:
+
+            fig = px.pie(names=all_names, values=all_vals, hole=0.45, title="帳戶/保單餘額分佈")
+
+            fig.update_traces(textinfo="percent", hovertemplate="%{label}: %{value:,.0f} TWD<extra></extra>")
+
+            st.plotly_chart(fig, use_container_width=True)
+
+
+
+    refill = page4.get("refill_alert", {})
+
+    if refill:
+
+        st.warning(
+
+            f"🔴 低餘額警示：{refill.get('low_balance_account', refill.get('bank',''))} "
+
+            f"{fmt_twd(refill.get('balance', 0))} → 建議補庫 {fmt_twd(refill.get('refill_amount', 0))}"
+
+        )
+
+
+
+    st.markdown("### 💸 近期應付（30天）")
+
+    for p in page4.get("upcoming_outflows", []):
+
+        if not isinstance(p, dict):
+
+            continue
+
+        days_left = p.get("days_left", "")
+
+        st.markdown(f"- **{p.get('date','')}** {p.get('name', p.get('item',''))} {fmt_twd(p.get('amount', 0))}（剩餘 {days_left} 天）")
+
+
+
+    rt = page4.get("rental_tracker", [])
+
+    if rt:
+
+        st.markdown("### 🏠 租金到帳監控")
+
+        for r in rt:
+
+            if isinstance(r, dict):
+
+                st.write(f"• {r.get('name','')}：{fmt_twd(r.get('amount', 0))}（{r.get('days_left','')} 天）")
+
+            else:
+
+                st.write(f"• {r}")
+
+
+
+## ---------- Page5 ----------
+
+elif page.startswith("5｜"):
+
+    st.title("🗓️ 戰術任務")
+
+    st.caption(DATE_TAG)
+
+
+
+    p0 = page5.get("p0_tasks", [])
+
+    if p0:
+
+        st.markdown("### 🚨 決戰日前表（P0）")
+
+        for task in p0:
+
+            if isinstance(task, dict):
+
+                st.markdown(
+
+                    f"<div style='background:#7f1d1d44;border-left:3px solid #ef4444;padding:8px 12px;margin:6px 0;border-radius:6px;'>"
+
+                    f"{task.get('title', task.get('text', ''))}</div>",
+
+                    unsafe_allow_html=True,
+
+                )
+
+            else:
+
+                st.markdown(f"<div style='background:#7f1d1d44;border-left:3px solid #ef4444;padding:8px 12px;margin:6px 0;border-radius:6px;'>{task}</div>", unsafe_allow_html=True)
+
+
+
+    lifestyle = page5.get("lifestyle", [])
+
+    if lifestyle:
+
+        st.markdown("### 🧳 重要行事曆")
+
+        for item in lifestyle:
+
+            if isinstance(item, dict):
+
+                st.markdown(f"- **{item.get('date','')}** {item.get('item','')} （剩餘 {item.get('days_left','')} 天）")
+
+            else:
+
+                st.write(item)
+
+
+
+    ps = page5.get("payment_schedule", [])
+
+    if ps:
+
+        st.markdown("### 💰 繳款日曆")
+
+        if ps and isinstance(ps[0], dict):
+
+            rows = []
+
+            for p in ps:
+
+                if isinstance(p, dict):
+
+                    rows.append([
+
+                        p.get("cycle", ""),
+
+                        p.get("item", ""),
+
+                        fmt_twd(p.get("amount", 0)),
+
+                        p.get("date", ""),
+
+                    ])
+
+            if rows:
+
+                table("", rows, ["週期", "項目", "金額", "扣款日"])
+
+        else:
+
+            table("", ps, ["週期", "項目", "金額", "扣款日"])
+
+
+
+    if not p0 and not lifestyle and not ps:
+
+        report_text = page5.get("report", "")
+
+        if report_text:
+
+            st.markdown(report_text)
+
+
+
+    nav = page5.get("notion_nav", {})
+
+    if nav:
+
+        st.markdown("### 📘 Notion 戰術導航")
+
+        for name, url in nav.items():
+
+            st.markdown(f"- [{name}]({url})")
+
+
+
+# ============================================================
+
+# 6. 頁尾
+
+# ============================================================
+
+st.markdown("---")
+
+st.markdown(f"📎 資料快照：{FILE_DATE}")
+
+
+
+# force redeploy 2026-07-11 v5.0.7 pages wrapper fix
+

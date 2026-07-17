@@ -1,0 +1,52 @@
+{
+  "version": "2026-07-16",
+  "buffett_5step_template": {
+    "step1_circle_of_competence": {
+      "title": "能力圈",
+      "prompt": "列出目前所有資產類別的曝險比例，找出超出能力圈的部位。",
+      "inputs": ["snapshot.json:securities_total_market_value", "snapshot.json:insurance_current_value", "snapshot.json:allianz_ab_current_value", "snapshot.json:firstjin_current_value"],
+      "output_format": "list",
+      "example_good": "美股權益曝險過高（保單穿透後美股占 86%）",
+      "example_bad": "台股很好"
+    },
+    "step2_margin_of_safety": {
+      "title": "安全邊際",
+      "prompt": "針對能力圈外的部位，計算安全邊際：配息品質、集中度風險、流動性缺口。",
+      "inputs": ["snapshot.json:monthly_dividend", "dividend_events.json", "snapshot.json:securities_total_market_value"],
+      "output_format": "table",
+      "example_good": "0050配息0.6元縮水4成→防禦缺口由00878/00713補位",
+      "example_bad": "0050很好"
+    },
+    "step3_cash_call_option": {
+      "title": "現金看漲期權",
+      "prompt": "保留多少現金？為什麼？什麼時候行使？",
+      "inputs": ["snapshot.json:actual_cash_flow", "snapshot.json:liquid_cash_twd", "Company_Ledger.md:銀行餘額"],
+      "output_format": "bullet",
+      "example_good": "CPI降至3.5%/核心2.6%，降息預期升溫，保留將來銀行200萬高利活存等超跌",
+      "example_bad": "保留現金"
+    },
+    "step4_long_term_hold": {
+      "title": "長期持有",
+      "prompt": "哪些標的值得長期持有？理由必須來自財務數據，不是感覺。",
+      "inputs": ["market_intel.py:scored_market_data", "snapshot.json:securities_top_holdings"],
+      "output_format": "list_with_evidence",
+      "example_good": "台積電法說會Q2營收創歷史新高、全年營收成長上調至30%+、資本支出600-640億美元→半導體主升段持續",
+      "example_bad": "台積電很好"
+    },
+    "step5_dividend_quality": {
+      "title": "配息品質",
+      "prompt": "本月配息是多少？信號是否穩定？T+4 relay是否排程正確？",
+      "inputs": ["snapshot.json:monthly_dividend", "dividend_events.json", "DAILY_REPORT_PIPELINE_RULE.md:relay_table"],
+      "output_format": "table",
+      "example_good": "本月配息69,044 TWD（安聯55,451 + 第一金13,593），0050縮水後防禦缺口需補位",
+      "example_bad": "配息穩定"
+    }
+  },
+  "rules": {
+    "no_free_text_without_evidence": true,
+    "must_reference_snapshot_or_market_intel": true,
+    "no_contradicting_snapshot_values": true,
+    "sop_wording_mandatory": "配息入帳後hold住現金，於T+4最晚轉換申請日才執行relay轉換",
+    "relay_stations_mandatory": ["摩根FJ33", "安聯收益+M&G", "AI+PIMCO+貝萊德A10"]
+  }
+}

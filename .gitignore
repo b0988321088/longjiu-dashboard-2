@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+.venv/
+venv/
+
+# Environment / secrets
+.env
+.eggs/
+*.pem
+*.key
+*credentials*
+gmail_token.json
+
+# Hermes runtime temp files
+.hermes-tmp.*
+schemas/.hermes-tmp.*
+
+# Scripts
+push_main.sh
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Project caches
+*.log
+*.tmp
+.cache/
+
+# Data exports (keep source, ignore large generated exports)
+daily_reports_*.txt

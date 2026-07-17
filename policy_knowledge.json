@@ -1,0 +1,96 @@
+{
+  "version": "2026-07-16",
+  "last_verified": "2026-07-16",
+  "sources": [
+    "https://www.housefeel.com.tw/article/青年-首購-貸款-購屋貸款-安心成家貸款/",
+    "https://www.threads.com/@yicheng_0625_tw/post/DB43MG4hVbW",
+    "https://www.nta.gov.tw/singlehtml/109",
+    "https://www.msn.com/zh-tw/money/topstories/繼承房產後想買房新青安vs首購房貸怎選/ar-AA1R3yen",
+    "https://www.housefeel.com.tw/article/公教貸款-公教房貸-築巢優利貸-公務員貸款/",
+    "https://guaziloan.com/military-public-loan-guide",
+    "https://www.dgpa.gov.tw/eserver/informationlist?uid=447",
+    "https://oi.landbank.com.tw/product/4",
+    "https://www.jsl.com.tw/agent/schoolDetail/112",
+    "https://house.udn.com/house/story/123589/9629797"
+  ],
+  "新青安3_0": {
+    "official_name": "青年安心成家購屋優惠貸款",
+    "period": "2026-08-01 至 2029-07-31",
+    "interest_rate": "1.775%（政府＋行庫合補）",
+    "max_amount": {
+      "general": "10,000,000",
+      "marriage_or_kids": "15,000,000"
+    },
+    "max_term_years": 40,
+    "grace_period_years": 5,
+    "eligibility": {
+      "age_limit": "申貸時未滿 50 歲",
+      "age_plus_term_limit": "申貸年齡 + 核貸年限 ≤ 80",
+      "first_time_homeowner": "借款人、配偶、未成年子女均無自有住宅",
+      "income_cap_annual": "個人年所得總額 ≤ 200 萬",
+      "once_per_lifetime": true,
+      "house_price_limit": "依地區不同，有最高總價限制"
+    },
+    "inheritance_policy": {
+      "summary": "繼承取得的房產，在多數解釋中不計入自有住宅戶數，但各銀行執行口徑不同，須當場確認。",
+      "keywords": ["繼承", "首購", "自有住宅", "戶數"],
+      "caveat": "非保證，需分行口頭或書面確認"
+    },
+    "rental_property_policy": {
+      "summary": "出租房產是否影響首購資格，解釋權在銀行，通常會重新評估。",
+      "caveat": "名下已有出租房產，新青安首購定義容易被挑戰"
+    },
+    "key_changes_vs_2_0": [
+      "利息補貼逐年退場",
+      "婚育家庭貸款額度提高至 1,500 萬",
+      "新增排富條款（年收200萬）",
+      "貸款年齡不得超過50歲，年齡＋貸款年限不超過80"
+    ]
+  },
+  "築巢優利貸": {
+    "official_name": "築巢優利貸－全國公教員工房屋貸款",
+    "period": "2025-2027（每三年一期）",
+    "operator": "臺灣銀行（主辦）",
+    "interest_rate": "2.185%（郵政儲金2年期定期儲蓄存款機動利率＋0.465%）",
+    "max_amount": "依房價鑑價八成，上限未公開明定",
+    "max_term_years": "最長 20-30 年",
+    "grace_period_years": 5,
+    "eligibility": {
+      "target": "全國公務員／公立學校教職員工",
+      "employment_status": "在職",
+      "first_time_homeowner_required": false,
+      "age_limit": "無特別限制",
+      "income_cap": "無排富條款"
+    },
+    "inheritance_policy": {
+      "summary": "不問有無自有住宅，只要有繼承/出租房產都不影響。",
+      "caveat": "仍需檢視房貸負債比率"
+    },
+    "fees": {
+      "range": "5,300-5,600 元",
+      "components": ["裝訂費", "保險費", "其他規費"]
+    },
+    "total_expense_rate": "約 2.214%-2.215%"
+  },
+  "user_profile_match": {
+    "步電公務員": {
+      "新青安3_0": {
+        "eligible": false,
+        "disqualifiers": [
+          "年收超過 200 萬排富上限（月薪 43,144 × 12 + 差旅 12,000 × 12 ≈ 661,728，但記憶中月收入 218,102 × 12 = 2,617,224，確實超過）",
+          "名下已有出租房產，首購定義被挑戰",
+          "繼承房是否計入雖可能豁免，但與出租房叠加後風險高"
+        ]
+      },
+      "築巢優利貸": {
+        "eligible": true,
+        "advantages": [
+          "現職公務員直接符合",
+          "不問有無自有住宅",
+          "繼承/出租房產不影響",
+          "利率固定透明"
+        ]
+      }
+    }
+  }
+}

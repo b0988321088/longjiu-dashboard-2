@@ -1,0 +1,39 @@
+{
+  "snapshot": {
+    "generated_at": "2026-07-13",
+    "version": "2026-07-13-final",
+    "date": "2026-07-13",
+    "total_assets": 50140136,
+    "total_liabilities": 21906471,
+    "net_worth": 28233665,
+    "debt_ratio": "43.7%",
+    "monthly_income": 245223,
+    "monthly_expense": 145486,
+    "working_surplus": 99737,
+    "retirement_surplus": 12972,
+    "securities_total_market_value": 2362120,
+    "insurance_monthly_dividend": 69044,
+    "moneybook_cash": 3070000,
+    "rent_account_balance": 377335,
+    "page1": {
+      "actual_cash_flow": {
+        "income": {
+          "台電薪水": 82265,
+          "房租": 80100,
+          "配息": 80000,
+          "利息": 2858
+        },
+        "expense": {
+          "房貸": 145486,
+          "消費": 42287,
+          "沙鹿房租": 4500
+        }
+      },
+      "total_income": 245223,
+      "total_expense": 145486,
+      "surplus": 99737,
+      "runway_months": 21.1,
+      "coverage_ratio": "21.1x"
+    }
+  }
+}

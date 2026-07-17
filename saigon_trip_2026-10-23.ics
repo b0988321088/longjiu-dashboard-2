@@ -1,0 +1,69 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Hermes Chief Secretary//LongJiu Holdings//TW
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:saigon-depart-2026@longjiu
+DTSTART;VALUE=DATE:20261023
+DTEND;VALUE=DATE:20261024
+SUMMARY:✈️ 胡志明市出發 — 星宇航空 16:55
+DESCRIPTION:6D5N 越境西貢行程 Day 1。\n1. 16:55 新山一機場降落\n2. 入住 The Hammock Hotel Fine Arts Museum\n3. Ha Tam 換匯\n4. 書街散策 + Pizza 4P's 晚餐\n\n住宿：The Hammock Hotel Fine Arts Museum (2晚)
+LOCATION:胡志明市
+BEGIN:VALARM
+TRIGGER:-PT24H
+ACTION:DISPLAY
+DESCRIPTION:明天出發胡志明！確認護照、機票、行李
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:前往機場 Check-in
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:saigon-hammock2-2026@longjiu
+DTSTART;VALUE=DATE:20261024
+DTEND;VALUE=DATE:20261025
+SUMMARY:🇻🇳 Saigon Day 2 — 黃昏遊艇 + Lobster Bay 龍蝦大餐
+DESCRIPTION:Day 2 行程：\n1. 睡到自然醒\n2. 胡志明市美術博物館\n3. MGallery 英式午茶\n4. 16:30 西貢河落日遊艇\n5. Lobster Bay 雙人龍蝦盛宴
+LOCATION:胡志明市
+END:VEVENT
+BEGIN:VEVENT
+UID:saigon-mgallery-2026@longjiu
+DTSTART;VALUE=DATE:20261025
+DTEND;VALUE=DATE:20261027
+SUMMARY:🏨 Hotel des Arts MGallery (2晚) + Miu Miu Spa
+DESCRIPTION:Day 3-4 住宿：Hotel des Arts Saigon - MGallery\n\nDay 3：粉紅教堂、西貢郵局、Miu Miu Spa 90分鐘熱石按摩、Vietnam House\nDay 4：湄公河水鄉私人包車、手搖木船、范五老街\n\n核心亮點：西貢最美法式精品五星 + 全城口碑第一 Spa
+LOCATION:胡志明市
+END:VEVENT
+BEGIN:VEVENT
+UID:saigon-landmark-2026@longjiu
+DTSTART;VALUE=DATE:20261027
+DTEND;VALUE=DATE:20261028
+SUMMARY:🌃 Vinpearl Landmark 81 雲端極奢 + 古芝地道
+DESCRIPTION:Day 5：古芝地道私人包車、咖啡公寓(The Cafe Apartment)、Landmark 81 高空景觀台、胡氏紀夜市\n\n住宿：Vinpearl Landmark 81 (越南最高樓雲端五星)
+LOCATION:胡志明市
+END:VEVENT
+BEGIN:VEVENT
+UID:saigon-return-2026@longjiu
+DTSTART;VALUE=DATE:20261028
+DTEND;VALUE=DATE:20261029
+SUMMARY:✈️ 胡志明市返台 — 星宇航空 11:40
+DESCRIPTION:Day 6：\n1. Little HaNoi 蛋咖啡 + 芒果烤吐司\n2. 樂天瑪特七郡店伴手禮採購\n3. 09:30 前往機場\n4. 11:40 星宇航空返台
+LOCATION:胡志明市
+BEGIN:VALARM
+TRIGGER:-PT24H
+ACTION:DISPLAY
+DESCRIPTION:明天返台！確認行李、伴手禮、機場時間
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:intercontinental-w-eval-2026@longjiu
+DTSTART;VALUE=DATE:20261031
+DTEND;VALUE=DATE:20261101
+SUMMARY:🏢 洲際W轉貸評估
+DESCRIPTION:洲際W轉貸評估日。配合 70/30 裁決律，CIO-Gemini 將產出方案供執行長審核。\n\n參考：大義街估值 17M/34M 選項保留；10/31 為關鍵評估節點。
+LOCATION:新竹
+END:VEVENT
+END:VCALENDAR

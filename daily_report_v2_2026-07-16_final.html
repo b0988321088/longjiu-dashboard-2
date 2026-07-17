@@ -1,0 +1,871 @@
+<html><head><style>
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+  background: #f5f5f7;
+  margin: 0;
+  padding: 20px;
+  line-height: 1.8;
+  font-size: 18px;
+  -webkit-text-size-adjust: 100%;
+}
+h1, h2, h3 {
+  color: #000;
+  font-weight: 900;
+  margin-top: 1.6em;
+}
+.table-wrap {
+  overflow-x: auto;
+  margin: 16px 0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+  background: #fff;
+}
+thead {
+  background: #f5f5f7;
+}
+th {
+  padding: 12px 10px;
+  text-align: left;
+  font-weight: 800;
+  color: #000;
+  border-bottom: 2px solid #d2d2d7;
+  white-space: nowrap;
+}
+tbody tr:nth-child(odd) {
+  background: #fff;
+}
+tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+tbody tr:hover {
+  background: #f0f8ff;
+}
+td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e5e5ea;
+  color: #333;
+}
+tr:last-child td {
+  border-bottom: none;
+}
+
+.callout {
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 14px 0;
+  border: 1px solid transparent;
+}
+.callout-bull {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #14532d;
+}
+.callout-bear {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #7f1d1d;
+}
+.callout-warn {
+  background: #fef9c3;
+  border-color: #fde047;
+  color: #713f12;
+}
+.callout strong { font-weight: 800; }
+</style></head><body>
+# daily_report_v2_2026-07-16.md（Chief Reporter 產出）
+## 📊 第一章：資產管理動態現金流快照
+
+### 資產結構（Moneybook + 截圖 + Company_Ledger 真值）
+
+<div class="table-wrap" style="margin-top:18px">
+<table>
+<thead>
+<tr>
+<th>分類</th>
+<th>金額 TWD</th>
+<th>佔總資產</th>
+<th>備註</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>不動產</td>
+<td>34,000,000</td>
+<td>66.2%</td>
+<td>大義街 1-3F 17,000,000 + 洲際W 17,000,000；不流動</td>
+</tr>
+<tr class="even">
+<td>保險現值</td>
+<td>9,876,282</td>
+<td>19.4%</td>
+<td>安聯A+B 7,881,584 + 第一金 FJ33 1,988,285</td>
+</tr>
+<tr class="odd">
+<td>基金市值</td>
+<td>858,328</td>
+<td>1.7%</td>
+<td>鉅亨 App 截圖；含息報酬率 55.53%</td>
+</tr>
+<tr class="even">
+<td>證券市值</td>
+<td>2,328,830</td>
+<td>4.5%</td>
+<td>凱基 App 截圖；未實現損益 +330,580（+16.54%）</td>
+</tr>
+<tr class="odd">
+<td>銀行資產</td>
+<td>3,087,044</td>
+<td>6.0%</td>
+<td>Moneybook 帳戶 CSV 唯一真值</td>
+</tr>
+<tr class="even">
+<td>轉貸專戶（國泰世華）</td>
+<td>500,000</td>
+<td>1.0%</td>
+<td>480 萬已於 7/17 轉出消抵星展一般房貸，剩 50 萬</td>
+</tr>
+<tr class="odd">
+<td>總資產</td>
+<td>50,689,930</td>
+<td>100%</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>總負債</td>
+<td>22,000,000</td>
+<td>—</td>
+<td>見下方「負債明細」</td>
+</tr>
+<tr class="odd">
+<td>淨值</td>
+<td>28,689,930</td>
+<td>—</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>負債比</td>
+<td>43.4%</td>
+<td>—</td>
+<td>警戒線 50%</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+> 資產時序備註：本數字為 2026-07-16 08:50 Chief Reporter 快照基數，以 Moneybook + Company_Ledger 為唯一真值源，未含即時證券浮動。
+
+### 現金流預算（保守口徑）
+
+<div class="table-wrap" style="margin-top:18px">
+<table>
+<thead>
+<tr>
+<th>來源</th>
+<th>金額 TWD</th>
+<th>備註</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>台電薪水（非獎金月）</td>
+<td>43,144</td>
+<td>Moneybook 實入 43,144</td>
+</tr>
+<tr class="even">
+<td>台電獎金（半年一次）</td>
+<td>39,121</td>
+<td>Moneybook 7/8 實入，不預估</td>
+</tr>
+<tr class="odd">
+<td>房租收入</td>
+<td>80,100</td>
+<td>大義街一樓 24,000 + 二/三樓 21,000 + 管理費 2,100 + W33 33,000</td>
+</tr>
+<tr class="even">
+<td>配息（保守估）</td>
+<td>97,066</td>
+<td>Moneybook 拆分：保單 69,044 + ETF/基金 28,022</td>
+</tr>
+<tr class="odd">
+<td>利息收入</td>
+<td>2,858</td>
+<td>銀行利息</td>
+</tr>
+<tr class="even">
+<td>非獎金月收入</td>
+<td>206,152</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>月支出</td>
+<td>141,958</td>
+<td>房貸 99,458 + 信用卡/四大主力 38,000 + 沙鹿房租 4,500</td>
+</tr>
+<tr class="even">
+<td>非獎金月盈餘</td>
+<td>+76,144</td>
+<td>保守估：配息 80,000</td>
+</tr>
+<tr class="odd">
+<td>獎金月盈餘</td>
+<td>+82,664</td>
+<td>入帳當月才計</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+> 配息拆分根據 Moneybook_明細 20260714_1.csv實際統計：保單配息 69,044 + ETF/基金配息 28,022；其中 ETF/基金包含 00981A/00919/00918/00713/摩根/貝萊德/聯博/施羅德/路博邁/M&G 各筆明細。
+
+### 高利活存配置
+
+<div class="table-wrap" style="margin-top:18px">
+<table>
+<thead>
+<tr>
+<th>帳戶</th>
+<th>類型</th>
+<th>餘額 TWD</th>
+<th>利率</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>將來銀行 Digital Savings</td>
+<td>高利活存</td>
+<td>1,100,004</td>
+<td>1.6-2.0%</td>
+<td>安全緩衝 + 轉貸款備用</td>
+</tr>
+<tr class="even">
+<td>台新 敦南Richart子帳戶</td>
+<td>高利活存</td>
+<td>1,000,321</td>
+<td>1.8%</td>
+<td>本來就有</td>
+</tr>
+<tr class="odd">
+<td>第一金 優利存款</td>
+<td>高利活存</td>
+<td>100,000</td>
+<td>2.0%</td>
+<td>高利活存</td>
+</tr>
+<tr class="even">
+<td>高利活存合計</td>
+<td>—</td>
+<td>2,200,325</td>
+<td>—</td>
+<td>不動用，僅供利息與緊急緩衝</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+> 配置原則：高利活存 220 萬僅供利息累積 + 緊急緩衝。
+
+### 1C 列管帳戶監控總表（4卡＋2貸）
+
+<div class="table-wrap" style="margin-top:18px">
+<table>
+<thead>
+<tr>
+<th>銀行/帳戶</th>
+<th>餘額 TWD</th>
+<th>類型</th>
+<th>待扣項目</th>
+<th>扣款金額</th>
+<th>扣款時間</th>
+<th>夠扣？</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>星展 活期儲蓄</td>
+<td>7,287</td>
+<td>房貸扣款</td>
+<td>大義街房貸+利息</td>
+<td>33,724</td>
+<td>8/1 約 00:00</td>
+<td>❌</td>
+</tr>
+<tr class="even">
+<td>永豐 營業部DAWHO</td>
+<td>235,547</td>
+<td>房貸扣款</td>
+<td>永豐房貸</td>
+<td>65,734</td>
+<td>7/20 約 00:00</td>
+<td>✅</td>
+</tr>
+<tr class="odd">
+<td>永豐 全家fm365卡</td>
+<td>3,425</td>
+<td>信用卡扣款（唯一）</td>
+<td>餘額 3,425</td>
+<td>—</td>
+<td>帳戶已納入</td>
+<td>✅</td>
+</tr>
+<tr class="even">
+<td>玉山 臺幣綜存</td>
+<td>41,182</td>
+<td>信用卡扣款</td>
+<td>玉山信用卡</td>
+<td>18,420</td>
+<td>7/22 約 00:00</td>
+<td>✅</td>
+</tr>
+<tr class="odd">
+<td>台新 文心綜活儲</td>
+<td>354,039</td>
+<td>信用卡扣款</td>
+<td>台新信用卡</td>
+<td>12,368</td>
+<td>7/27 約 00:00</td>
+<td>✅</td>
+</tr>
+<tr class="even">
+<td>台北富邦 數位活儲</td>
+<td>44,116</td>
+<td>信用卡扣款</td>
+<td>台北富邦信用卡</td>
+<td>—</td>
+<td>無待扣</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+### 流動性預警
+
+<div class="table-wrap" style="margin-top:18px">
+<table>
+<thead>
+<tr>
+<th>等級</th>
+<th>警示</th>
+<th>建議</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>🔴</td>
+<td>星展 7,287 < 大義街房貸 33,724</td>
+<td>補 26,437 到星展，或改扣 將來銀行</td>
+</tr>
+<tr class="even">
+<td>🟡</td>
+<td>7/20 永豐房貸 + 7/22 玉山卡 + 7/27 台新卡</td>
+<td>月底前確保永豐/玉山/台新餘額足夠</td>
+</tr>
+<tr class="odd">
+<td>🟢</td>
+<td>將來銀行 110 萬充裕</td>
+<td>不動用，轉貸款後再評估</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+## 📐 第二章：資產穿透與市場脈動
+
+### 證券 + 保單 + 基金穿透整合
+
+> 投資部位穿透合計：證券 2,328,830 + 保單 9,876,282 + 基金 858,328 = **13,063,440 TWD**
+
+<div class="table-wrap" style="margin-top:18px">
+<table>
+<thead>
+<tr>
+<th>標的類別</th>
+<th>標的</th>
+<th>市值 TWD</th>
+<th>佔投資部位</th>
+<th>系統目標</th>
+<th>缺口</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>台股市值型成長</td>
+<td>0050/006208/009816</td>
+<td>946,680</td>
+<td>7.2%</td>
+<td>40%</td>
+<td>-32.8%</td>
+</tr>
+<tr class="even">
+<td>美股曝險穿透</td>
+<td>00646/009823/824/聯博+貝萊德</td>
+<td>6,022,095</td>
+<td>46.1%</td>
+<td>35%</td>
+<td>+11.1%</td>
+</tr>
+<tr class="odd">
+<td>防守型配息</td>
+<td>0056/00713/00878/00981A/00984A/00919+00918</td>
+<td>1,136,190</td>
+<td>8.7%</td>
+<td>20%</td>
+<td>-11.3%</td>
+</tr>
+<tr class="even">
+<td>債券/現金</td>
+<td>銀行+PIMCO+第一金+基金</td>
+<td>4,221,120</td>
+<td>32.4%</td>
+<td>25%</td>
+<td>+7.4%</td>
+</tr>
+<tr class="odd">
+<td>觀察/緩衝</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>5%</td>
+<td>-5%</td>
+</tr>
+<tr class="even">
+<td>合計</td>
+<td>—</td>
+<td>13,063,440</td>
+<td>100%</td>
+<td>100%</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+**核心結論**
+- 台股嚴重不足（7.2% vs 目標 40%）
+- 美股嚴重超標（46.1% vs 目標 35%）
+- 防守配息不足（8.7% vs 目標 20%）
+- 短期調度方向：加碼台股低溢價市值型 ETF；不宜再加碼美股/債券
+
+### 資產配置缺口表
+
+<div class="table-wrap" style="margin-top:18px">
+<table>
+<thead>
+<tr>
+<th>區塊</th>
+<th>系統目標</th>
+<th>目前實際</th>
+<th>缺口</th>
+<th>優先調度策略</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>台股市值型成長</td>
+<td>40%</td>
+<td>7.2%</td>
+<td>-32.8%</td>
+<td>啟動 009816 進場並置換 0050</td>
+</tr>
+<tr class="even">
+<td>美股市值型成長</td>
+<td>35%</td>
+<td>46.1%</td>
+<td>+11.1%</td>
+<td>暫停加碼；獲利了結轉台股/防守</td>
+</tr>
+<tr class="odd">
+<td>防守型配息</td>
+<td>20%</td>
+<td>8.7%</td>
+<td>-11.3%</td>
+<td>00878 / 00713 維持並視情況略增</td>
+</tr>
+<tr class="even">
+<td>債券及現金</td>
+<td>25%</td>
+<td>32.4%</td>
+<td>+7.4%</td>
+<td>維持現有現金水位，不做降息預賭</td>
+</tr>
+<tr class="odd">
+<td>觀察/緩衝</td>
+<td>5%</td>
+<td>0%</td>
+<td>-5%</td>
+<td>提撥 6 個月費用作為緩衝金</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+### ⚖️ Bull / Bear 決策框架
+
+<div class="callout callout-bull">
+<strong>🟢 Bull Case（多方情境）</strong><br>
+• <strong>市場動態：</strong>通膨回落 + 美國 Q2 財報季開局亮眼，風險偏好回升。<br>
+• <strong>關鍵指標：</strong>台積電 7/16 法說會若下修資本支出幅度小，半導體主升段持續。<br>
+• <strong>外部因素：</strong>美伊停火協議降低中東地緣溢價，流動性回流亞洲科技股。<br>
+• <strong>防禦配置：</strong>保單可轉債提供 36% 防禦支撐。
+</div>
+
+<div class="callout callout-bear">
+<strong>🔴 Bear Case（空方情境）</strong><br>
+• <strong>市場動態：</strong>費半翻黑 -2.08%，短線法人逢高調節，半導體氣勢未明。<br>
+• <strong>關鍵指標：</strong>0050 配息擬縮水 4 成，高股息 ETF 下修壓力；美股 Q2 財報若出現 AI 支出放緩，聯博/貝萊德曝險回撤。<br>
+• <strong>外部因素：</strong>戰後通膨反撲、Fed 延後降息，新台幣升值侵蝕美元基金匯損。
+</div>
+
+### 💡 巴菲特 / CTO 建議（2026-07-16 真值 + 市場消息驅動）
+
+<div class="callout callout-warn">
+<strong>📌 市場真值（產出時檢索）</strong><br>
+• 台股 7/15 收盤 45,631.59（+893.64，+2.00%）；7/16 夜盤跟隨費半走弱<br>
+• 美股 7/15：道瓊 52,658.64（+0.29%）、納指 26,269.23（+0.62%）、標普 7,572.40（+0.38%）<br>
+• 費半 7/15：12,398.89（-263.04，-2.08%）；ASML 漲價爭議，台積電反對<br>
+• 台積電 7/16 法說會：2026 年資本支出維持 560 億美元高檔，2027 年上看 730 億；毛利率衝 7 成；AI 需求強勁；外資 target price 上調至 3,500 元<br>
+• 6 月 CPI 3.5% YoY（低於預期），7/29 Fed 利率決策未到；0050 配息擬縮水 4 成；MSCI 半年度調整在即<br>
+• 美伊 6 月簽署臨時和平協議，但 7/19 首輪對話喊卡；中東油價高檔震盪<br><br>
+
+<strong>🐢 巴菲特原則應用</strong><br>
+• <strong>能力圈優先：</strong>0050/006208 權值集中在台積電，配息縮水 + 費半擠壓 = 雙重壓力，不加碼權值型；009816 非前 50 大，分散度較高，是台股進攻火種。<br>
+• <strong>安全邊際：</strong>高利活存 220 萬 + 國泰轉貸 530 萬 = 750 萬流動緩衝。<br>
+• <strong>獎息優先：</strong>安聯 AI 收益月底基準日 7/29、0056 7/17 入帳、摩根 FJ33 已於 7/15-20 入帳 13,593。配息接力不能斷層，現金水位優先保留，不預支。<br>
+• <strong>別人貪婪我恐懼：</strong>美股七巨頭撐盤（+0.5% 以上）但費半 -2.08%，市場結構性分化；台股大漲 893 點但夜盤空方回補，短線震盪恐加劇。<br><br>
+
+<strong>🛠️ CTO 可操作建議</strong><br>
+• <strong>009816：</strong>網格單建立部位，等兩次有效守住 250 再加碼。<br>
+• <strong>0051（元大中型100）：</strong>批次進場：先買 1 成，跌破月線再補 1 成。<br>
+• <strong>00878 / 00713：</strong>0050 配息縮水 4 成後，防禦型配息 ETF 缺口急需補位，維持並視情況略增。<br>
+• <strong>安聯 AI 收益月底轉投：</strong>不急著馬上出，等基準日 7/29 過後、台積法說後市場方向確認再處理。<br>
+• <strong>009824 / 009823：</strong>年底前若費比率維持 46 以上再考慮減碼；費半盤整 2% 時暫緩。<br><br>
+
+<strong>⛔ 禁止事項</strong><br>
+• 0050 配息縮水未明朗前，<strong>絕不加碼權值型</strong>。<br>
+• 7/19 美伊會談若破局，油價重返 80 美元以上 → 通膨升溫 → <strong>絕不追高航運/中概</strong>。<br>
+• 星展戶頭資金不足 8/1 扣款，<strong>務必先補缺口</strong>。
+</div>
+
+## 📌 市場動態分析（2026-07-16 08:50 即時）
+
+> 本頁面所有數據與觀點皆透過 web_search 於產出當日擷取，非靜態模板內容。
+
+### 台股 / 美股 / 費半 / 台積電 ADR
+
+<div class="table-wrap" style="margin-top:18px">
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>最新狀態</th>
+<th>影響解讀</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>台股 7/15 收盤</td>
+<td>加權指數 45,631.59，大漲 893.64 點，+2.0%</td>
+<td>盤中一度強彈上千點，重返 4 萬 5 千點</td>
+</tr>
+<tr class="even">
+<td>台股 7/16 盤前</td>
+<td>夜盤追隨費半走弱，台指期跌約 249 點</td>
+<td>短線高檔震盪、法人多空拉鋸</td>
+</tr>
+<tr class="odd">
+<td>美股 7/15 收盤</td>
+<td>道瓊 52,658.64 +0.29%；納指 26,269.23 +0.62%；標普 7,572.40 +0.38%</td>
+<td>通膨降溫驅動大型科技領漲</td>
+</tr>
+<tr class="even">
+<td>費半 7/15 收盤</td>
+<td>12,398.89，跌 263.04 點，-2.08%</td>
+<td>半導體族群出現高檔調節，逆三大指數走跌</td>
+</tr>
+<tr class="odd">
+<td>台積電 ADR</td>
+<td>滑落 0.2% 附近，未能續強</td>
+<td>財報前的觀望氣氛濃厚</td>
+</tr>
+<tr class="even">
+<td>6 月 CPI</td>
+<td>年增 3.5%，月減 0.4%，低於預期</td>
+<td>降息預期回升，但市場同時擔憂通膨反撲</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+### 美伊地緣政治
+
+<div class="table-wrap" style="margin-top:18px">
+<table>
+<thead>
+<tr>
+<th>進展</th>
+<th>狀態</th>
+<th>影響</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>14 點臨時和平協議</td>
+<td>2026/6 已簽署，但 7/19 首輪對話臨時喊卡</td>
+<td>中東油價維持高檔震盪；避險資金尚未全面回流</td>
+</tr>
+<tr class="even">
+<td>台股反應</td>
+<td>受停火激勵曾反彈，但技術面缺乏低接買盤</td>
+<td>短線震盪恐加劇</td>
+</tr>
+<tr class="odd">
+<td>避險建議</td>
+<td>保留 5% 觀察/緩衝，不因單一新聞重倉</td>
+<td>避免地緣風險重估失敗時過度暴露</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+### 地緣風險匯總
+
+<div class="table-wrap" style="margin-top:18px">
+<table>
+<thead>
+<tr>
+<th>風險源</th>
+<th>觀察重點</th>
+<th>對資產影響</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>美伊停火但談判卡關</td>
+<td>7/19 首輪會談是否順利</td>
+<td>油價若重返 80 美元以上，通膨預期升溫</td>
+</tr>
+<tr class="even">
+<td>中東供應鏈</td>
+<td>台灣半導體原料運輸無大礙</td>
+<td>目前中性，但後續若升溫會推升保險/航運</td>
+</tr>
+<tr class="odd">
+<td>Fed 政策</td>
+<td>6 月 CPI 年增 3.5%，7/29 利率決策</td>
+<td>降息幅度若低於預期，美股高估值受挑戰</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+## 🔄 第三章：保單接力引擎
+
+### 月配息基準日卡
+
+<div class="table-wrap" style="margin-top:18px">
+<table>
+<thead>
+<tr>
+<th>標的</th>
+<th>除息基準日</th>
+<th>配息日</th>
+<th>預估入帳</th>
+<th>狀態</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>摩根（FJ33）</td>
+<td>7/07</td>
+<td>7/19-20</td>
+<td>7/20 前後</td>
+<td>✅ 已配息/待入帳</td>
+</tr>
+<tr class="even">
+<td>FL65 安聯收益</td>
+<td>7/14</td>
+<td>待確認</td>
+<td>待 MB 確認</td>
+<td>🔄 第一站轉入</td>
+</tr>
+<tr class="odd">
+<td>M&G 入息基金</td>
+<td>7/17</td>
+<td>月底</td>
+<td>~7/29</td>
+<td>🔄 已轉換/未配息/未入帳</td>
+</tr>
+<tr class="even">
+<td>安聯 AI 收益</td>
+<td>7/29</td>
+<td>月底</td>
+<td>~8/10</td>
+<td>⏸️ 等待到期</td>
+</tr>
+<tr class="odd">
+<td>貝萊德 A10</td>
+<td>7/30</td>
+<td>月底</td>
+<td>~8/10</td>
+<td>⏸️ 等待到期</td>
+</tr>
+<tr class="even">
+<td>0050 配息</td>
+<td>8/10</td>
+<td>-</td>
+<td>8/10</td>
+<td>⚠️ 擬縮水 4 成</td>
+</tr>
+<tr class="odd">
+<td>0056 配息</td>
+<td>7/17</td>
+<td>-</td>
+<td>7/29</td>
+<td>❄️ 凍結中</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+> **接力路徑：** 月初摩根 → 月中安聯(`+`M&G) → 月底安聯AI / 貝萊德
+
+### 保單成分穿透分析
+
+#### QL18610694 + QL18488224 合併（7,881,584）【截圖 7/15】
+
+<div class="table-wrap" style="margin-top:18px">
+<table>
+<thead>
+<tr>
+<th>基金</th>
+<th>合計市值 TWD</th>
+<th>佔保單</th>
+<th>備註</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>USDEQ3490 安聯收益成長</td>
+<td>2,808,488</td>
+<td>35.6%</td>
+<td>核心月配息，基準日 7/14</td>
+</tr>
+<tr class="even">
+<td>USDEQ6330 聯博美國成長</td>
+<td>2,139,858</td>
+<td>27.1%</td>
+<td>美股成長曝險，+1.58%</td>
+</tr>
+<tr class="odd">
+<td>USDEQ6080 貝萊德世界科技</td>
+<td>1,483,585</td>
+<td>18.8%</td>
+<td>科技股集中，+16.10%</td>
+</tr>
+<tr class="even">
+<td>USDEQ6270 安聯 AI 收益成長</td>
+<td>1,449,653</td>
+<td>18.4%</td>
+<td>AI+多重資產，基準日 7/29</td>
+</tr>
+<tr class="odd">
+<td>合計</td>
+<td>7,881,584</td>
+<td>100%</td>
+<td>本月累計配息 55,451</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+#### 第一金保單 FJ33（1,988,285）
+
+<div class="table-wrap" style="margin-top:18px">
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>內容</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>名稱</td>
+<td>摩根多重收益（FJ33，公司債+REITs；已於 7/09 轉出）</td>
+</tr>
+<tr class="even">
+<td>原現值</td>
+<td>1,988,285 TWD（配息前）</td>
+</tr>
+<tr class="odd">
+<td>除息日</td>
+<td>7/07（上月底）</td>
+</tr>
+<tr class="even">
+<td>配息日</td>
+<td>約 7/19 前後</td>
+</tr>
+<tr class="odd">
+<td>本月配息</td>
+<td>**13,593**（上月底配息）</td>
+</tr>
+<tr class="even">
+<td>備註</td>
+<td>月初站點，無美股曝險；已轉出至安聯收益成長</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+## 🛡️ 第四章：保單接力引擎
+
+### 月配息 relay 總表（三站制）
+
+<div class="table-wrap" style="margin-top:18px">
+<table>
+<thead>
+<tr>
+<th>站別</th>
+<th>標的</th>
+<th>除息基準日</th>
+<th>預估入帳</th>
+<th>狀態</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>第一站</td>
+<td>摩根多重收益（FJ33）</td>
+<td>7/07</td>
+<td>7/19-20</td>
+<td>已配息/待入帳</td>
+<td>✅</td>
+</tr>
+<tr class="even">
+<td>第二站</td>
+<td>安聯收益成長（FL65）+ M&G 入息基金（QL186+QL184）</td>
+<td>FL65 **7/14** / M&G 7/17</td>
+<td>FL65 待MB確認 / M&G 7/29 入帳</td>
+<td>🔄 轉換中</td>
+</tr>
+<tr class="odd">
+<td>第三站</td>
+<td>安聯 AI 收益成長 + 貝萊德世界科技 A10（月底除息）</td>
+<td>7/29-30</td>
+<td>**8 月初**入帳</td>
+<td>⏸️ 等待到期</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+> **跳躍規律：** 摩根 7/07 除息 → 7/20 入帳；FL65 **7/14** 基準日 → 配息日/MB 待確認；第三站 7/29-30 除息 → 8 月初入帳
+
+</body>
+</html>

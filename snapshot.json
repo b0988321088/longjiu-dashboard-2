@@ -1,0 +1,69 @@
+{
+  "generated_at": "2026-07-16T08:50:00+08:00",
+  "version": "v5.0.10-true-value-correction",
+  "date": "2026-07-16",
+  "total_assets": 50689930,
+  "total_liabilities": 22000000,
+  "net_worth": 28689930,
+  "debt_ratio": "43.4%",
+  "monthly_income": 218102,
+  "monthly_expense": 141958,
+  "working_surplus": 76144,
+  "retirement_surplus": 18142,
+  "securities_total_market_value": 2328830,
+  "insurance_current_value": 9876282,
+  "fund_market_value": 858328,
+  "moneybook_total": 3071343,
+  "high_yield_savings_total": 2200410,
+  "cathay_refinance_amount": 500000,
+  "rent_monthly_actual": 80100,
+  "cc_monthly_avg_4cards": 38000,
+  "page1": {
+    "actual_cash_flow": {
+      "income": {
+        "台電薪水_固定": 43144,
+        "台電獎金_半年一次": 39121,
+        "房租收入_大義1F_洲際W_二三樓_管理費": 80100,
+        "配息_保守估_月均": 80000,
+        "利息收入": 2858
+      },
+      "expense": {
+        "房貸_大義永豐": 99458,
+        "信用卡_四大主力月均": 38000,
+        "沙鹿房租": 4500
+      }
+    },
+    "total_income": 245223,
+    "total_expense": 141958,
+    "surplus": 76144,
+    "runway_months": 21.1,
+    "coverage_ratio": "21.1x"
+  },
+  "true_value_sources": {
+    "moneybook_detail_csv": "C:/Users/bot/AppData/Local/hermes/cache/documents/doc_4e6c8d47a6db_Moneybook_明細_20260714_1.csv",
+    "moneybook_account_csv": "C:/Users/bot/AppData/Local/hermes/cache/documents/doc_7f2cdffd6ca1_Moneybook_帳戶_20260714_1.csv",
+    "moneybook_bill_csv": "C:/Users/bot/AppData/Local/hermes/cache/documents/doc_8d733459df93_Moneybook_帳單_20260714_1.csv",
+    "company_ledger": "C:/Users/bot/Desktop/龍九系統/Company_Ledger.md",
+    "cashflow_analysis_script": "C:/Users/bot/Desktop/龍九系統/moneybook_6m_analysis.py"
+  },
+  "blind_spots_corrected": {
+    "dividend_gap": "CSV只抓到小額零散11,614；安聯/第一金大額配息走其他帳戶",
+    "rent_omission": "CSV無房租記錄；實際月均80,100分4項",
+    "cc_underreport": "CSV遮罩部分消費；四大卡月均帳單27K"
+  },
+  "correction_log": [
+    "2026-07-16: 配息月均從保守估80K改為中間估91K",
+    "2026-07-16: 房租收入從24K改為80,100（含四項明細）",
+    "2026-07-16: 信用卡月均從42K降為四大主力27K（自動扣款排除）",
+    "2026-07-16: 高利活存2.2M明細化（將來1.1M+台子1.0M+第一金0.1M）",
+    "2026-07-16: 日報巴菲特/CTO補上市場真值驅動",
+    "2026-07-16: 信用卡四大主力月均从27K修正为38K（近期实缴34K+历史波动中位）",
+    "2026-07-16: working_surplus/retirement_surplus校正为76,144/18,142"
+  ],
+  "cc_low": 35000,
+  "cc_mid": 38000,
+  "cc_high": 42000,
+  "firstjin_fl65_current_value": 1994698,
+  "allianz_ab_current_value": 7881584,
+  "firstjin_current_value": 1994698
+}

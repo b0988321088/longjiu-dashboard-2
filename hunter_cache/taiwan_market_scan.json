@@ -1,0 +1,27 @@
+{
+  "date": "2026-07-16T12:02:00.000000",
+  "tw": {
+    "taiex_close": 45624.98,
+    "taiex_change": -0.01,
+    "foreign_sell_billion": 14.15,
+    "volume_billion": 9008.38,
+    "volume_note": "近 3 月低量"
+  },
+  "us": {
+    "sp500_close": 7572.4,
+    "sp500_change": 0.38,
+    "sox_close": 12398.89,
+    "sox_change": -2.08
+  },
+  "tsm_adr": {
+    "close": 423.57,
+    "change": 0.76
+  },
+  "japan": {
+    "nikkei_close": 66835.54,
+    "nikkei_change": -2.79
+  },
+  "alerts": [
+    "P1 賣出：費半 -2.08%"
+  ]
+}

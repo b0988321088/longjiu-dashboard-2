@@ -1,0 +1,9 @@
+{
+  "asset_investment": "27ecdd83-8137-4943-ba87-2b0b8e9555c6",
+  "debt_cashflow": "22bc6fdb-6b06-4f63-8bb9-eaf9482f828d",
+  "fund_station": "39dfc735-d433-81df-acfe-f179b6666c1d",
+  "ops_logs": "39dfc735-d433-818e-9b5c-d206d0c791af",
+  "master_ledger": "39dfc735-d433-8153-9712-c8a0ee0ec846",
+  "updated_at": "2026-07-17",
+  "note": "五表 ID 由 2026-07-17 API 實測確認"
+}

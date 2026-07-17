@@ -1,0 +1,1 @@
+{"timestamp":"2026-07-16T08:50:00+08:00","event":"hunter_mode_execution","status":"success","intel_items_processed":8,"new_intel_added":0,"updated_intel":8,"p0_count":0,"p1_count":1,"p2_count":2,"p3_count":5,"expired_archived":0,"mcp_test":"pending","notes":"情報紀錄表已更新，以 web_search 結果覆蓋同日條目；TTL 檢查無過期條目。"}

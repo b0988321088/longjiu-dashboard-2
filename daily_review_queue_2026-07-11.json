@@ -1,0 +1,282 @@
+[
+  {
+    "sheet_id": 1,
+    "page": "Page 1｜財富生命線",
+    "title": "【CIO-Gemini 審查通過】財富生命線日報",
+    "date": "2026-07-11",
+    "summary": "資產總覽、資產負債表、現金流。",
+    "kpi": {
+      "runway_months": 43.8,
+      "debt_ratio_pct": 48.3,
+      "work_surplus_twd": 71286,
+      "retire_surplus_twd": 16142,
+      "monthly_income_twd": 183780,
+      "monthly_expense_twd": 106892,
+      "monthly_surplus_twd": 71286
+    },
+    "assets": {
+      "台股ETF": 2362120,
+      "全球債券ETF": 456600,
+      "不動產大義街": 17000000,
+      "不動產洲際W": 17000000,
+      "Moneybook銀行現金": 3110093,
+      "國泰世華轉貸專戶": 5300000,
+      "保單": 9844676,
+      "基金": 873041,
+      "總資產": 55489930
+    },
+    "liabilities": {
+      "星展一般房貸": 4800000,
+      "星展理財型房貸_已動用": 4000000,
+      "永豐房貸": 6000000,
+      "永豐週轉金": 7000000,
+      "凱基質押": 1000000,
+      "保單借貸": 4000000,
+      "總負債": 26800000
+    },
+    "net_worth": 28689930,
+    "cash_flow": {
+      "income": {
+        "台電薪水": 82265,
+        "獎金": 30000,
+        "房租_大義街一樓": 24000,
+        "配息": 64157,
+        "利息": 2858,
+        "差旅費": 12000
+      },
+      "expense": {
+        "星展房貸": 32965,
+        "永豐房貸": 65734,
+        "信用卡消費": 42287,
+        "房租_沙鹿": 4500
+      }
+    },
+    "dividend_breakdown": {
+      "安聯系統": 55451,
+      "第一金系統": 13593,
+      "合計": 69044
+    },
+    "credit_card_breakdown": {
+      "台新": 5962,
+      "玉山": 10569,
+      "永豐": 15198,
+      "台北富邦": 10558,
+      "月均": 42287
+    },
+    "notes": [
+      "獎金 30,000+ 為不定收入，已含於台電薪水合計，不另外列計為獨立獎金來源。",
+      "差旅費 12,000 TWD：現金結算，不列帳戶餘額、不列帳戶流動性。",
+      "配息 64,157+ TWD 已標註來源：安聯 55,451 + 第一金 13,593 ≈ 69,044。",
+      "本月收入 183,780+ = 82,265 + 30,000 + 24,000 + 64,157+ + 2,858 + 12,000；本欄為變動制。",
+      "本月支出 106,892 = 32,965 + 65,734 + 42,287 + 4,500。",
+      "凱基質押調整為 1,000,000 TWD。"
+    ]
+  },
+  {
+    "sheet_id": 2,
+    "page": "Page 2｜戰略異常中心",
+    "title": "【CIO-Gemini 審查通過】戰略異常中心日報",
+    "date": "2026-07-11",
+    "summary": "資產配置、紅區警示、巴菲特視角、穿透分析。",
+    "allocation_check": {
+      "target": {
+        "證券台股美股": "40-45%",
+        "保單": "20-25%",
+        "基金": "15-20%",
+        "現金銀行": "10-15%"
+      },
+      "当前": {
+        "台股ETF": 2362120,
+        "全球債券ETF": 456600,
+        "不動产_大義街": 17000000,
+        "不动產_洲際W": 17000000,
+        "Moneybook銀行現金": 3110093,
+        "國泰世華轉貸專戶": 5300000,
+        "保單": 9844676,
+        "基金": 873041
+      },
+      "status": "證券與基金市值待 full_monitor.py 更新；配置暫時以真值備援"
+    },
+    "red_zone": [
+      {"ticker": "0056", "return_pct": 40.92, "action": "減碼"},
+      {"ticker": "0050", "return_pct": 35.1, "action": "偏高警示"},
+      {"ticker": "006208", "return_pct": 28.5, "action": "偏高警示"},
+      {"ticker": "009816", "return_pct": 22.3, "action": "偏高警示"},
+      {"ticker": "00878", "return_pct": 18.7, "action": "偏高警示"}
+    ],
+    "buffett_view": {
+      "circle_of_competence": 13,
+      "holdings": ["0056","0050","006208","009816","00878","00903B","00904B"],
+      "insurance_assets": ["安聯保單A","安聯保單B","第一金保單FJ33"],
+      "action": "0056 減碼，回收現金優先投入 006208 或 00903B。"
+    },
+    "gemini_suggestion": "40/35/25 配置偏差：台股/美股部位偏低，保單/現金偏高。建議 0056 減碼 20%，回收現金優先投入 006208 或 00903B。",
+    "industry_exposure": [
+      {"industry": "台積電", "exposure_twd": 0, "weight_pct": 0.0},
+      {"industry": "聯電", "exposure_twd": 0, "weight_pct": 0.0},
+      {"industry": "台達電", "exposure_twd": 0, "weight_pct": 0.0}
+    ],
+    "notes": [
+      "產業曝險 await full_monitor.py 穿透；目前 placeholder。",
+      "資產配置舊 snapshot 顯示 '待補'，因 yfinance 市值尚未補齊。"
+    ]
+  },
+  {
+    "sheet_id": 3,
+    "page": "Page 3｜保單接力引擎",
+    "title": "【CIO-Gemini 審查通過】保單接力引擎日報",
+    "date": "2026-07-11",
+    "summary": "保單現值、配息、三站接力、70/30 決策。",
+    "policies": [
+      {"name":"安聯保單A","code":"QL18610694","value":5102428,"cost":5202863,"return_pct":-1.93,"with_dividend_pct":-0.86,"status":"轉換中→M&G入息","ex_div_date":"2026-07-14","expected_credit":"2026-07-29","latest_deadline":"2026-07-13"},
+      {"name":"安聯保單B","code":"QL18488224","value":2743142,"cost":2797137,"return_pct":-1.93,"with_dividend_pct":0.05,"status":"轉換中→M&G入息","ex_div_date":"2026-07-14","expected_credit":"2026-07-29","latest_deadline":"2026-07-13"},
+      {"name":"第一金保單","code":"FJ33","value":1999106,"cost":1996454,"return_pct":0.13,"with_dividend_pct":0.81,"status":"轉換中→FL65安聯收益成長","ex_div_date":"2026-07-14","expected_credit":"2026-07-26","latest_deadline":"2026-07-13"}
+    ],
+    "kpi": {
+      "total_value": 9844676,
+      "total_cost": 9996454,
+      "overall_yield_pct": -0.83,
+      "monthly_dividend": 69044
+    },
+    "relay_progress": [
+      {"station":1,"date":"2026-07-07","name":"摩根JPM(FJ33)","action":"FJ33原持有摩根，基準日07/07","status":"已轉換申請摩根→FL65安聯收益成長"},
+      {"station":2,"date":"2026-07-14","name":"安聯收益成長","action":"QL186/B基準日07/14","status":"已轉出→M&G入息基金，T+4=7/15"},
+      {"station":3,"date":"2026-07-17","name":"M&G入息基金","action":"QL186/B轉換中，基準日07/17","status":"T+4=7/15，預計7/29入帳"},
+      {"station":4,"date":"2026-07-29-30","name":"月底站點","action":"安聯AI收益、貝萊德A10","status":"監控中"}
+    ],
+    "dividend_breakdown": {
+      "安聯系統": 55451,
+      "第一金系統": 13593,
+      "合計": 69044
+    },
+    "rebalancing": {
+      "貝萊德世界科技A10": "減碼20%",
+      "安聯AI收益成長": "維持持有",
+      "PIMCO收益增長": "維持持有"
+    },
+    "yield_performance": {
+      "安聯A": "-0.86%",
+      "安聯B": "+0.05%",
+      "FJ33": "+0.81%",
+      "total_current_value": 9844676,
+      "total_cost_basis": 9996454,
+      "overall_yield_pct": -0.83,
+      "monthly_yield_twd": 69044
+    },
+    "notes": [
+      "本次合併含息報酬率 -0.83% 為 value-weighted avg。",
+      "各站 T+2 / T+4 時間軸需持續追蹤。",
+      "配息 69,044 TWD 來源標註：安聯系統 55,451；第一金系統 13,593。"
+    ]
+  },
+  {
+    "sheet_id": 4,
+    "page": "Page 4｜流動性調度站",
+    "title": "【CIO-Gemini 審查通過】流動性調度站日報",
+    "date": "2026-07-11",
+    "summary": "銀行流動水位、低餘額預警、近期應付、租金到帳。",
+    "liquidity": {
+      "runway_months": 43.8,
+      "three_month_buffer_twd": 431874,
+      "buffer_coverage_x": 6.5,
+      "warning_threshold_twd": 5000
+    },
+      "accounts": [
+      {"name":"Moneybook合計","balance":3110093,"type":"唯一真值截圖"},
+      {"name":"國泰世華專戶","balance":5300000,"type":"轉貸專戶（非 Moneybook）"}
+    ],
+    "accounts_detail": [
+      {"name":"星展銀行","balance":7287,"type":"活存/房貸尾數"},
+      {"name":"將來銀行_優利","balance":1100004,"type":"優利1.8%"},
+      {"name":"台新Richart","balance":1175183,"type":"活存/調度"},
+      {"name":"台新薪轉","balance":330000,"type":"薪轉/生活流動"},
+      {"name":"台新優利存","balance":1000000,"type":"優利1.8%"},
+      {"name":"永豐銀行","balance":89340,"type":"活存/房貸"},
+      {"name":"玉山銀行","balance":41182,"type":"活存/LINE Pay"},
+      {"name":"台北富邦","balance":44116,"type":"活存/J卡+MOMO"},
+      {"name":"第一銀行_優利","balance":100000,"type":"優利2%"},
+      {"name":"台新其他","balance":331263,"type":"待拆分（薪轉+優利）"},
+      {"name":"土地銀行","balance":209,"type":"暫停監控"},
+      {"name":"國泰世華專戶","balance":5300000,"type":"轉貸專戶"}
+    ],
+    "bank_controls": {
+      "台新Richart": "主帳戶（調度中心）",
+      "台新薪轉": "薪轉帳戶",
+      "台新優利存優利": "高利活存 1.8%",
+      "將來銀行_優利": "高利活存 1.8%",
+      "第一銀行_優利": "活存 2%",
+      "玉山銀行": "LINE Pay + 生活消費",
+      "永豐銀行": "房貸扣款 + 一般卡",
+      "台北富邦": "J卡 + MOMO 卡",
+      "星展銀行": "房貸尾數",
+      "國泰世華專戶": "轉貸專戶",
+      "現金儲備": "備用"
+    },
+    "refill_alert": {
+      "low_balance_account": "星展銀行",
+      "balance": 7287,
+      "recommended_refill_from": "台新Richart",
+      "refill_amount": 30000,
+      "reason": "8/1 需扣款 23,424 + 10,300 = 33,724；建議補庫後預估 37,287 TWD。"
+    },
+    "upcoming_outflows": [
+      {"date":"2026-07-20","name":"洲際W房貸","amount":65734},
+      {"date":"2026-07-22","name":"玉山信用卡","amount":3176},
+      {"date":"2026-07-29","name":"台新信用卡","amount":0},
+      {"date":"2026-07-29","name":"永豐信用卡","amount":0},
+      {"date":"2026-08-01","name":"大義街房貸","amount":23424},
+      {"date":"2026-08-01","name":"理財型利息","amount":10300},
+      {"date":"2026-08-03","name":"台北富邦信用卡","amount":0}
+    ],
+    "rental_tracker": [
+      {"name":"大義街1樓店面","amount":24000,"day":1,"days_left":23},
+      {"name":"洲際W 18F-6","amount":33000,"day":20,"days_left":11},
+      {"name":"大義街2-3F","amount":23100,"day":20,"days_left":11}
+    ],
+    "notes": [
+      "近期應付 0 TWD 欄位保留 upstream 補齊；Moneybook 明細已標註支出來源。",
+      "可動用現金：Moneybook 3,110,093 + 國泰 5,300,000 = 8,410,093 TWD（不含未到期未確認租金）。"
+    ]
+  },
+  {
+    "sheet_id": 5,
+    "page": "Page 5｜戰術任務",
+    "title": "【CIO-Gemini 審查通過】戰術任務日報",
+    "date": "2026-07-11",
+    "summary": "P0 任務、行事曆、繳款日程、一語煞尾。",
+    "p0_tasks": [
+      {"title":"🚨 7/13 前完成星展一般房貸結清匯款 4,893,529 TWD","deadline":"2026-07-13"},
+      {"title":"🚨 確認國泰世華基金款到帳；若未到，延至下週一 7/14","deadline":"2026-07-10"},
+      {"title":"⚠️ 8/1 預留 33,724 TWD 清償星展房貸尾數 + 理財型利息","deadline":"2026-08-01"},
+      {"title":"⚠️ 凱基質押金額降至 1,000,000 TWD；確認質押品調整文件","deadline":"2026-07-11"},
+      {"title":"⏳ 胡志明市旅行（10/23-10/28）行程與換匯排程","deadline":"2026-10-23"}
+    ],
+    "lifestyle": [
+      {"date":"2026-07-10","item":"確認國泰基金款到帳","days_left":0},
+      {"date":"2026-07-13","item":"星展結清匯款截止日","days_left":2},
+      {"date":"2026-07-20","item":"洲際W 18F-6 預期租金入帳 + 洲際W房貸扣款","days_left":9},
+      {"date":"2026-07-22","item":"玉山信用卡扣繳 3,176 TWD","days_left":11},
+      {"date":"2026-07-29","item":"信用卡：台新 / 永豐","days_left":18},
+      {"date":"2026-08-01","item":"大義街房貸 + 理財型利息","days_left":21},
+      {"date":"2026-08-03","item":"台北富邦信用卡扣繳","days_left":23},
+      {"date":"2026-10-23","item":"胡志明市旅行出發","days_left":103},
+      {"date":"2026-10-28","item":"胡志明市旅行回程","days_left":108}
+    ],
+    "payment_schedule": [
+      {"cycle":"7/20","item":"洲際W房貸","amount":65734,"date":"2026-07-20"},
+      {"cycle":"7/22","item":"玉山信用卡","amount":3176,"date":"2026-07-22"},
+      {"cycle":"8/1","item":"大義街房貸","amount":23424,"date":"2026-08-01"},
+      {"cycle":"8/1","item":"理財型利息","amount":10300,"date":"2026-08-01"},
+      {"cycle":"月末","item":"信用卡平均月支出","amount":42287,"date":"每月29-30日"}
+    ],
+    "gemini_conclusion": "本日最高風險：星展結清逾期壓力；8/1 資金水位需提前補足。資產結構正確：負債比 48.3% 仍健康。保單接力路徑清楚，三站機制無空窗。",
+    "notion_nav": {
+      "公司資產負債表": "https://www.notion.so/待權限更新",
+      "保單配息追蹤": "https://www.notion.so/待權限更新"
+    },
+    "notes": [
+      "P0 = 收入保護 / 資金斷裂；Tier2 = 美化。",
+      "郵件與通知非緊急不打擾；以異常為最高優先。"
+    ]
+  }
+]
