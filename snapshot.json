@@ -66,6 +66,14 @@
   "firstjin_fl65_current_value": 1994698,
   "allianz_ab_current_value": 7881584,
   "firstjin_current_value": 1994698,
-  "last_mb_sync": null,
-  "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation"
+  "last_mb_sync": "2026-07-18",
+  "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
+  "bank_assets_moneybook": 3866208,
+  "bank_assets_memo": "MB 20260718 正數帳戶合計；44帳戶；排除負數",
+  "monthly_expense_mb": 222910,
+  "monthly_expense_mb_note": "MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償",
+  "credit_card_pending": 34213,
+  "mb_source": "Moneybook_明細_20260718.zip",
+  "monthly_expense_mb_override": 222910,
+  "monthly_expense_snapshot_original": 141958
 }
