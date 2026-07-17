@@ -103,6 +103,12 @@ def calibrate_sources() -> dict:
         sys.exit(2)
 
     print(f"[CALIBRATE] 三源校準通過")
+    # 真值錨定：本月保單配息（缺 snapshot 欄位時由真值計算）
+    monthly_dividend = snap.get("monthly_dividend")
+    if monthly_dividend is None:
+        # 保守回退：安聯 A+B + 第一金月配
+        monthly_dividend = (snap.get("allianz_ab_monthly", 55_451) or 55_451) + (snap.get("firstjin_monthly", 13_593) or 13_593)
+
     return {
         "date": TODAY,
         "monthly_income": s_income,
@@ -114,6 +120,7 @@ def calibrate_sources() -> dict:
         "firstjin": s_firstjin,
         "rent_monthly": s_rent,
         "securities_total": s_securities,
+        "monthly_dividend": monthly_dividend,
         "relay_stations": 3,
         "cc_4cards": ["玉山UNI", "台新Richart", "永豐SPORT", "台北富邦momo/J"],
         "loans_2mortgage": ["洲際W房貸", "大義街房貸+理財型利息"],
@@ -562,13 +569,132 @@ def main():
     OUT_CHANGELOG.write_text(changelog, encoding="utf-8")
     print(f"[RUN_DAILY] changelog 產出：{OUT_CHANGELOG}")
 
-    # 靜態儀表板：若無模板則跳過，不破壞現有 index.html
+    # 靜態儀表板：由 index_template.html 注入動態數據
     if INDEX_TEMPLATE.exists():
         index_html = INDEX_TEMPLATE.read_text(encoding="utf-8")
+        try:
+            intel_text2 = mi_mod.load_latest_hunter()
+            intel_signals2 = mi_mod.parse_hunter_signals(intel_text2)
+        except Exception:
+            intel_signals2 = {}
+        index_html = _inject_dashboard(index_html, tv, intel_signals2)
         OUT_INDEX.write_text(index_html, encoding="utf-8")
         print(f"[RUN_DAILY] 儀表板產出：{OUT_INDEX}")
-    else:
-        print(f"[RUN_DAILY] 無 index_template.html，保留現有 index.html")
+
+
+
+# ==========================================================================
+# 4. 靜態儀表板注入
+# ==========================================================================
+
+
+def _load_latest_hunter() -> str:
+    """Load latest hunter intel text."""
+    try:
+        import daily_intel as mi_mod
+        return mi_mod.load_latest_hunter()
+    except Exception:
+        return ""
+
+
+def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) -> str:
+    """Inject dynamic values into index_template.html placeholders."""
+    if not html:
+        return html
+
+    # System date
+    today = date.today().isoformat()
+    html = html.replace("__SYSTEM_DATE__", today)
+
+    # Snapshot placeholders
+    def fmt(v):
+        if isinstance(v, (int, float)):
+            return f"{v:,.0f}"
+        return str(v or "—")
+
+    html = html.replace("__INSURANCE_TOTAL__", fmt(tv.get("insurance_total", 0)))
+    html = html.replace("__ALLIANZ_AB__", fmt(tv.get("allianz_ab", 0)))
+    html = html.replace("__ALLIANZ_MONTHLY__", fmt(tv.get("allianz_monthly", 0)))
+    html = html.replace("__ALLIANZ_CUM__", fmt(tv.get("allianz_cum", 0)))
+    html = html.replace("__ALLIANZ_RETURN__", fmt(tv.get("allianz_return", 0)))
+    html = html.replace("__ALLIANZ_COST__", fmt(tv.get("allianz_cost", 8_000_000)))
+    html = html.replace("__FIRSTJIN__", fmt(tv.get("firstjin", 0)))
+    html = html.replace("__FIRSTJIN_MONTHLY__", fmt(tv.get("firstjin_monthly", 0)))
+    html = html.replace("__FIRSTJIN_CUM__", fmt(tv.get("firstjin_cum", 0)))
+    html = html.replace("__FIRSTJIN_COST__", fmt(tv.get("firstjin_cost", 2_000_000)))
+    html = html.replace("__FIRSTJIN_VALUE__", fmt(tv.get("firstjin", 0)))
+    html = html.replace("__TOTAL_MONTHLY__", fmt(tv.get("monthly_dividend", 0)))
+    html = html.replace("__WORKING_INCOME__", fmt(tv.get("monthly_income", 0)))
+    html = html.replace("__WORKING_SURPLUS__", f"+{fmt(tv.get('working_surplus', 0))}")
+    html = html.replace("__RETIREMENT_INCOME__", fmt(tv.get("retirement_income", 0)))
+    html = html.replace("__RETIREMENT_SURPLUS__", f"+{fmt(tv.get('retirement_surplus', 0))}")
+    html = html.replace("__PASSIVE_INCOME__", fmt(tv.get("rent_monthly_actual", 0) + tv.get("monthly_dividend", 0)))
+    html = html.replace("__RUNWAY_MONTHS__", fmt(tv.get("runway_months", "—")))
+    html = html.replace("__CASH_TOTAL__", fmt(tv.get("cash_total", 0)))
+
+    # Allocation
+    html = html.replace("__TW_EQ_PCT__", fmt(tv.get("tw_eq_pct", 0)))
+    html = html.replace("__TW_EQ_TARGET__", fmt(20.0))
+    html = html.replace("__TW_EQ_GAP__", fmt(tv.get("tw_eq_gap", 0)))
+    html = html.replace("__TW_EQ_VALUE__", fmt(tv.get("tw_eq_value", 0)))
+    html = html.replace("__US_EQ_PCT__", fmt(tv.get("us_eq_pct", 0)))
+    html = html.replace("__US_EQ_TARGET__", fmt(20.0))
+    html = html.replace("__US_EQ_GAP__", fmt(tv.get("us_eq_gap", 0)))
+    html = html.replace("__US_EQ_VALUE__", fmt(tv.get("us_eq_value", 0)))
+    html = html.replace("__DEF_PCT__", fmt(tv.get("def_pct", 0)))
+    html = html.replace("__DEF_TARGET__", fmt(30.0))
+    html = html.replace("__DEF_GAP__", fmt(tv.get("def_gap", 0)))
+    html = html.replace("__DEF_VALUE__", fmt(tv.get("def_value", 0)))
+    html = html.replace("__BOND_PCT__", fmt(tv.get("bond_pct", 0)))
+    html = html.replace("__BOND_TARGET__", fmt(25.0))
+    html = html.replace("__BOND_GAP__", fmt(tv.get("bond_gap", 0)))
+    html = html.replace("__BOND_VALUE__", fmt(tv.get("bond_value", 0)))
+
+    # Market / Hunter rows from daily_analysis.json / intel
+    try:
+        from daily_intel import load_daily_analysis
+        da = load_daily_analysis()
+    except Exception:
+        da = {}
+
+    market = da.get("market", {})
+    market_rows = []
+    market_map = [
+        ("twii", "台股加權"),
+        ("tsm", "台積電"),
+        ("sox", "費半"),
+        ("us", "美股"),
+        ("cpi", "美國 CPI"),
+    ]
+    for key, label in market_map:
+        val = market.get(key)
+        if val and val != "—":
+            market_rows.append(f'<li>• <span class="text-white">{label}</span> — {val}</li>')
+    if not market_rows:
+        market_rows = ["<li>本日情報待補齊</li>"]
+    html = html.replace("__MARKET_ROWS__", chr(10).join("                        " + r for r in market_rows))
+
+    hunter_date = "盤前"
+    hunter_rows = []
+    if intel_signals:
+        sell_signals = intel_signals.get("sell_signals", [])
+        buy_signals = intel_signals.get("buy_signals", [])
+        for s in sell_signals[:5]:
+            hunter_rows.append(f"<li>P1 risk：{s}</li>")
+        for b in buy_signals[:5]:
+            hunter_rows.append(f"<li>P1 buy：{b}</li>")
+        hunter_rows.append("<li>結論：以 hunter_logs/intel_*.txt 為準。</li>")
+    if not hunter_rows:
+        hunter_rows = ["<li>本日 Hunter 情報待補齊</li>"]
+    html = html.replace("__HUNTER_DATE__", f"{today} {hunter_date}")
+    html = html.replace("__HUNTER_ROWS__", chr(10).join("                        " + r for r in hunter_rows))
+
+    # 0050 dividend placeholders
+    html = html.replace("__DIVIDEND_0050__", "待 MB 確認")
+    html = html.replace("__EX_DATE_0050__", "待確認")
+
+    return html
+
 
     print("\n[DONE] 產出完成。")
     print(f"  日報：{OUT_DAILY}")
