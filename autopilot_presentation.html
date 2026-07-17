@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>龍九控股 ｜一人公司自主強化</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Inter", "Noto Sans TC", sans-serif;
+      background: #0f0f1a;
+      color: #f0f0f5;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .slide {
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      padding: 5vh 8vw;
+      flex-direction: column;
+      justify-content: center;
+      animation: fadeIn 0.4s ease;
+    }
+    .slide.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    h1 { font-size: 3.6rem; font-weight: 900; letter-spacing: -0.02em; line-height: 1.1; }
+    h2 { font-size: 2.4rem; font-weight: 800; margin-bottom: 1.2rem; color: #fff; }
+    h3 { font-size: 1.3rem; font-weight: 600; color: #aaa; margin-bottom: 0.6rem; letter-spacing: 0.05em; }
+    p { font-size: 1.15rem; line-height: 1.6; color: #ccc; margin-bottom: 0.6rem; }
+    .highlight { color: #64ffda; font-weight: 600; }
+    .warn { color: #ffb74d; font-weight: 600; }
+    .danger { color: #ff6b6b; font-weight: 600; }
+    .tag {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-right: 0.4rem;
+      background: #64ffda22;
+      color: #64ffda;
+      border: 1px solid #64ffda44;
+    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 12px;
+      padding: 1.6rem;
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+    th { text-align: left; padding: 0.6rem 0.4rem; border-bottom: 2px solid #2a2a4a; color: #fff; font-size: 0.9rem; }
+    td { padding: 0.5rem 0.4rem; border-bottom: 1px solid #2a2a4a; font-size: 0.9rem; }
+    .nav {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 2rem;
+      display: flex;
+      gap: 0.5rem;
+      z-index: 100;
+    }
+    .nav button {
+      background: #1a1a2e;
+      color: #f0f0f5;
+      border: 1px solid #2a2a4a;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .nav button:hover { background: #2a2a4a; }
+    .dot {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.4rem;
+    }
+    .dot span {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #2a2a4a;
+      cursor: pointer;
+    }
+    .dot span.active { background: #64ffda; }
+  </style>
+</head>
+<body>
+
+  <!-- Slide 0：Cover -->
+  <div class="slide active">
+    <h3>一人公司自主強化</h3>
+    <h1>從「手動協駕」到<br><span class="highlight">全實相監控自駕模式</span></h1>
+    <p style="margin-top:1.2rem">系統目的：讓 AI 穩定管理資產、對標外部理財機器人、動態平衡投資組合，執行長回歸純粹戰略裁決。</p>
+    <p style="margin-top:0.6rem"><span class="tag">v1.0</span><span class="tag">2026-07-18</span><span class="tag">Hermès + Gemini + Notion</span></p>
+  </div>
+
+  <!-- Slide 1：現況盤點 -->
+  <div class="slide">
+    <h3>SYSTEM STATUS</h3>
+    <h2>當前系統資產</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>✅ 已固化</h3>
+        <p>• SSoT 對位：Moneybook > snapshot.json > Notion 9/9 一致</p>
+        <p>• 記錄員上崗：Notion 5 表 ops_logs 31 頁，自動寫入</p>
+        <p>• 大腦導通：Gemini review 情報驅動， Buffett/CTO 分析</p>
+        <p>• 每日管線：daily_deploy.py → 08:00 自動執行</p>
+        <p>• 週五審計：cron job 已排程 (2026-07-24 首次執行)</p>
+      </div>
+      <div class="card">
+        <h3>⏳ 待強化</h3>
+        <p>• 資產護城河監控：Runway、半導體曝險、覆蓋率自動警報</p>
+        <p>• 外部對標引擎：與 00878/0050/債券型基金比對績效</p>
+        <p>• 動態平衡建議：auto-rebalance rule engine</p>
+        <p>• SOP 資產化：OPERATIONS_MANUAL.md 已建立，持續擴充</p>
+        <p>• 資訊偵察範圍：美債收益率、央行政策、機構調倉</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 2：戰術設計 -->
+  <div class="slide">
+    <h3>ARCHITECTURE</h3>
+    <h2>三大強化模組設計</h2>
+    <table>
+      <tr><th>模組</th><th>功能</th><th>頻率</th><th>負責人</th></tr>
+      <tr><td>Asset Moat Monitor</td><td>Runway / 半導體曝險 / 配息覆蓋率 / 負債比</td><td>每日 08:00</td><td>Hermès</td></tr>
+      <tr><td>External Comparator</td><td>與外部機器人對標（00878/0050/公債）</td><td>每日 08:30</td><td>Hermès</td></tr>
+      <tr><td>Dynamic Balancer</td><td>資產再平衡建議（rule-based + 情報觸發）</td><td>每日 08:45</td><td>Hermès</td></tr>
+      <tr><td>Weekly Audit</td><td>本週資產防禦審計、巴菲特視角壓力測試</td><td>每週五 17:00</td><td>Gemini + Hermès</td></tr>
+    </table>
+    <p style="margin-top:1rem">三個新模組完全 rule-based，不每次都呼叫 Gemini，確保成本可控。</p>
+  </div>
+
+  <!-- Slide 3：動態平衡邏輯 -->
+  <div class="slide">
+    <h3>DYNAMIC BALANCE ENGINE</h3>
+    <h2>動態平衡觸發條件</h2>
+    <table>
+      <tr><th>條件</th><th>觸發 action</th><th>優先級</th></tr>
+      <tr><td class="warn">半導體曝險 > 70%</td><td>REDUCE_TECH：0050/006208 減碼 3%</td><td>P1</td></tr>
+      <tr><td class="danger">被動收入 < 月支出</td><td>INCREASE_DIVIDEND：加碼配息型 ETF / 債券</td><td>P0</td></tr>
+      <tr><td class="danger">負債比 > 50%</td><td>DELEVERAGE：債務調度、暫緩新部位</td><td>P0</td></tr>
+      <tr><td class="highlight">0050 除息前 4 天</td><td>T+4 預警：啟動配息接力轉換</td><td>P1</td></tr>
+      <tr><td class="highlight">外資賣超 > 150 億</td><td> activate P1 賣出訊號</td><td>P0</td></tr>
+    </table>
+    <p style="margin-top:1rem">執行長只需審閱每週五的審計報告，核准 / 拒絕建議，系統自動調整。</p>
+  </div>
+
+  <!-- Slide 4：外部對標設計 -->
+  <div class="slide">
+    <h3>EXTERNAL COMPARATOR</h3>
+    <h2>理財機器人對標矩陣</h2>
+    <table>
+      <tr><th>標的</th><th>我的收益率 YTD</th><th>機器人收益率</th><th>差異</th><th>結論</th></tr>
+      <tr><td>台股 (0050)</td><td class="warn">待 7/21 除息確認</td><td class="highlight">元大 00878: +4.2%</td><td>—</td><td>0050 配息縮水 40%，00878 替代方案</td></tr>
+      <tr><td>債券型基金</td><td class="highlight">3.5%</td><td>5Y 公債: 3.8%</td><td>—0.3pp</td><td>接近，維持現有部位</td></tr>
+      <tr><td>半導體曝險</td><td class="danger">72%</td><td>理想上限 50%</td><td>+22pp</td><td class="danger">超標，0056 減碼 / 00878 補強</td></tr>
+      <tr><td>Coverage Ratio</td><td class="highlight">113%</td><td>安全線 100%</td><td>+13pp</td><td class="highlight">穩健，持續監控</td></tr>
+    </table>
+    <p style="margin-top:1rem">對標數據每日自動從 Yahoo Finance + internal snapshot 更新，每周五產生對比報告。</p>
+  </div>
+
+  <!-- Slide 5：執行路線圖 -->
+  <div class="slide">
+    <h3>ROADMAP</h3>
+    <h2>自主強化執行路線圖</h2>
+    <table>
+      <tr><th>階段</th><th>時間</th><th>任務</th><th>Exit 條件</th></tr>
+      <tr><td class="highlight">P0</td><td>7/18-7/25</td><td>Asset Moat Monitor + Comparator + Balancer</td><td>每日 moat report 產出 + Telegram 推送</td></tr>
+      <tr><td class="highlight">P1</td><td>7/26-8/02</td><td>外部 benchmark 自動更新 + 0050 除息 T+4 預警</td><td>0050 轉換前 4 天自動預警觸發</td></tr>
+      <tr><td class="warn">P2</td><td>8/03-8/09</td><td>動態平衡 rule engine 上線 + ops_logs auto-write</td><td>dynamic_balancer 產出 3 條以上建議</td></tr>
+      <tr><td class="warn">P3</td><td>8/10-8/16</td><td>Heatmap + 資產護城河儀表板 (Port 8501)</td><td>Streamlit Dashboard 部署</td></tr>
+      <tr><td class="warn">P4</td><td>月底</td><td>Gemini CEO 重新評估 + team chain v6.0 規劃</td><td>OpenAI 導入 if needed</td></tr>
+    </table>
+    <p style="margin-top:1rem"><span class="highlight">P0 目標：</span>在 7/25 前完成三個新模組並通過 daily_deploy 整合測試。</p>
+  </div>
+
+  <!-- Slide 6：預期價值 -->
+  <div class="slide">
+    <h3>VALUE CAPTURE</h3>
+    <h2>自主強化對一人公司的價值</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>🛡️ 資產護城河</h3>
+        <p>• Runway 自動監控，防止現金斷裂</p>
+        <p>• 半導體曝險 > 70% 自動預警</p>
+        <p>• 對標外部機器人，避免績效落後</p>
+        <p>• 配息覆蓋率維持 100%+</p>
+      </div>
+      <div class="card">
+        <h3>🧠 決策頻寬釋放</h3>
+        <p>• 系統自動產出建議，執行長只做核准/拒絕</p>
+        <p>• 每日 moat report + 每週審計，不需要手動追蹤</p>
+        <p>• 系統 > 紀律，AI 24/7 監控不疲勞</p>
+        <p>• 70% 技術微操 → 30% 戰略裁決</p>
+      </div>
+    </div>
+    <p style="margin-top:1.2rem; text-align:center" class="highlight">「一人公司的護城河不在規模，而在系統紀律。」</p>
+  </div>
+
+  <div class="dot" id="dots"></div>
+  <div class="nav">
+    <button onclick="prev()">← 上一頁</button>
+    <button onclick="next()">下一頁 →</button>
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.getElementById('dots');
+    let current = 0;
+    slides.forEach((_, i) => {
+      const s = document.createElement('span');
+      s.onclick = () => go(i);
+      dots.appendChild(s);
+    });
+    function go(i) {
+      slides[current].classList.remove('active');
+      current = (i + slides.length) % slides.length;
+      slides[current].classList.add('active');
+      document.querySelectorAll('.dot span').forEach((d, idx) => d.classList.toggle('active', idx === current));
+    }
+    function next() { go(current + 1); }
+    function prev() { go(current - 1); }
+    go(0);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') next();
+      if (e.key === 'ArrowLeft') prev();
+    });
+  </script>
+</body>
+</html>

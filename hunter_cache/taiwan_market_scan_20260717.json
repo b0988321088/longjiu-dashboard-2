@@ -1,0 +1,54 @@
+{
+  "date": "2026-07-17T10:30:00+08:00",
+  "scan_window": "07/17 日盤交易時段（截至 scan 時間）",
+  "tw": {
+    "taiex_prev_close": 45624.98,
+    "taiex_prev_change_pct": -0.01,
+    "taiex_prev_vol_billion": 9008.38,
+    "taifut_level": 45381.0,
+    "taifut_change_pct": -1.49,
+    "taifut_low": 45216,
+    "taifut_high": 46260,
+    "foreign_sell_billion_twse": 14.15,
+    "foreign_sell_billion_wantgoo": 483.35,
+    "volume_note": "7/16 近3月低量"
+  },
+  "us": {
+    "sp500_prev_close": 7533.77,
+    "sp500_prev_change_pct": -0.51,
+    "sox_prev_close": 12398.9,
+    "sox_prev_change_pct": -2.08,
+    "sox_recovery_pct": 0.73
+  },
+  "tsm_adr": {
+    "prev_close": 409.74,
+    "prev_change_pct": -2.32
+  },
+  "japan": {
+    "nikkei_prev_close": 66835.54,
+    "nikkei_prev_change_pct": -2.79,
+    "nikkei_intraday_pct": -4.40
+  },
+  "alerts": [
+    "P1 監控：Wantgoo 報導外資賣超 483.35 億（7/17）— 惟 TWSE 官方外資及陸資實為 -14.15 億，數據落差龐大，需收盤確認。若 483 億成立，將觸發 P1 賣出訊號。",
+    "P1 監控：台指期盤中跌幅 -1.49%，距 1.5% 收盤閾值一步之遙，觀察尾盤能否守穩。",
+    "P1 前日：費半 7/16 重挫 -4.28%/-2.08%，亞洲供應鏈短線承壓，7/17 日盤 SOX 反彈 +0.73% 觀察止血。",
+    "P1 前日：日經 7/16 收 -2.79%，7/17 日盤續跌 -4.40% 破 65,000，亞洲風險偏好急降。"
+  ],
+  "threshold_check": {
+    "foreign_sell_150b": "WATCH (Wantgoo 483.35 億 > 150 億; TWSE 14.15 億 < 150 億)",
+    "taiex_drop_1.5pct": "WATCH (台指期 -1.49%，尚未關門)",
+    "sox_drop_2pct": "NO (7/17 日盤 +0.73%；前日 -2~4% 已消化)",
+    "break_quarterly_volume_up": "NO (期貨低點 45,216，未放量破季線)",
+    "foreign_buy_triple": "NO (外資賣超時態)"
+  },
+  "sources": [
+    "TWSE 官方三大法人（7/17 外資淨額 -14.15 億）",
+    "Wantgoo 三大法人（7/17 外資 -483.35 億）",
+    "Yahoo Finance 加權指數（45,624.98 -0.01%）",
+    "Yahoo Futures 台指期（盤中 45,381 / -1.49%）",
+    "同花順 iFinD SOX 7/17 異動（+0.73% 至 5,737.64）— 數值待校準",
+    "Futunn 日經 7/17 11:30（-4.40%）",
+    "UDN 7/17 台股盤前（7/16 收 45,624.98 / 9008.38 億）"
+  ]
+}
