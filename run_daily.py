@@ -612,17 +612,14 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             return f"{v:,.0f}"
         return str(v or "—")
 
+    def fmt_pct(v):
+        if isinstance(v, (int, float)):
+            return f"{v:.2f}"
+        return str(v or "—")
+
     html = html.replace("__INSURANCE_TOTAL__", fmt(tv.get("insurance_total", 0)))
     html = html.replace("__ALLIANZ_AB__", fmt(tv.get("allianz_ab", 0)))
-    html = html.replace("__ALLIANZ_MONTHLY__", fmt(tv.get("allianz_monthly", 0)))
-    html = html.replace("__ALLIANZ_CUM__", fmt(tv.get("allianz_cum", 0)))
-    html = html.replace("__ALLIANZ_RETURN__", fmt(tv.get("allianz_return", 0)))
-    html = html.replace("__ALLIANZ_COST__", fmt(tv.get("allianz_cost", 8_000_000)))
     html = html.replace("__FIRSTJIN__", fmt(tv.get("firstjin", 0)))
-    html = html.replace("__FIRSTJIN_MONTHLY__", fmt(tv.get("firstjin_monthly", 0)))
-    html = html.replace("__FIRSTJIN_CUM__", fmt(tv.get("firstjin_cum", 0)))
-    html = html.replace("__FIRSTJIN_COST__", fmt(tv.get("firstjin_cost", 2_000_000)))
-    html = html.replace("__FIRSTJIN_VALUE__", fmt(tv.get("firstjin", 0)))
     html = html.replace("__TOTAL_MONTHLY__", fmt(tv.get("monthly_dividend", 0)))
     html = html.replace("__WORKING_INCOME__", fmt(tv.get("monthly_income", 0)))
     html = html.replace("__WORKING_SURPLUS__", f"+{fmt(tv.get('working_surplus', 0))}")
@@ -670,6 +667,18 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         val = market.get(key)
         if val and val != "—":
             market_rows.append(f'<li>• <span class="text-white">{label}</span> — {val}</li>')
+
+    # Parse foreign sell from hunter intel
+    try:
+        hunter_for_foreign = intel_text or ""
+        foreign_m = re.search(r"外資[賣買]超\s*([0-9,.]+)\s*億", hunter_for_foreign)
+        if foreign_m:
+            fval = foreign_m.group(1).replace(",", "")
+            direction = "賣超" if "賣超" in hunter_for_foreign[max(0, foreign_m.start()-5):foreign_m.start()+10] else "買超"
+            market_rows.append(f'<li>• <span class="text-white">外資{direction}</span> — {foreign_m.group(1)} 億元</li>')
+    except Exception:
+        pass
+
     if not market_rows:
         market_rows = ["<li>本日情報待補齊</li>"]
     html = html.replace("__MARKET_ROWS__", chr(10).join("                        " + r for r in market_rows))
@@ -692,6 +701,42 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     # 0050 dividend placeholders
     html = html.replace("__DIVIDEND_0050__", "待 MB 確認")
     html = html.replace("__EX_DATE_0050__", "待確認")
+
+    # Fund breakdown: prefer daily_analysis.json, fallback to known true values
+    funds = da.get("funds", {})
+    if not funds:
+        funds = {
+            "allianz_return": 16.41,
+            "allianz_monthly": 55_451,
+            "allianz_cum": 1_613_246,
+            "allianz_cost": 8_000_000,
+            "firstjin_monthly": 13_593,
+            "firstjin_cum": 63_985,
+            "firstjin_cost": 2_000_000,
+        }
+    def fmt(v):
+        if isinstance(v, (int, float)):
+            return f"{v:,.0f}"
+        return str(v or "—")
+
+    def fmt_pct(v):
+        if isinstance(v, (int, float)):
+            return f"{v:.2f}"
+        return str(v or "—")
+    html = html.replace("__ALLIANZ_RETURN__", fmt_pct(funds.get("allianz_return", 0)))
+    html = html.replace("__ALLIANZ_MONTHLY__", fmt(funds.get("allianz_monthly", 0)))
+    html = html.replace("__ALLIANZ_CUM__", fmt(funds.get("allianz_cum", 0)))
+    html = html.replace("__ALLIANZ_COST__", fmt(funds.get("allianz_cost", 8_000_000)))
+    html = html.replace("__FIRSTJIN_MONTHLY__", fmt(funds.get("firstjin_monthly", 0)))
+    html = html.replace("__FIRSTJIN_CUM__", fmt(funds.get("firstjin_cum", 0)))
+    html = html.replace("__FIRSTJIN_COST__", fmt(funds.get("firstjin_cost", 2_000_000)))
+    # firstjin value uses same as firstjin current value
+    html = html.replace("__FIRSTJIN_VALUE__", fmt(tv.get("firstjin", 0) or funds.get("firstjin_value", 1_994_698)))
+    # allianz value uses snapshot
+    html = html.replace("__ALLIANZ_AB__", fmt(tv.get("allianz_ab", 0) or funds.get("allianz_value", 7_881_584)))
+    # total monthly = sum of fund monthly + snapshot fallback
+    calc_total = (funds.get("allianz_monthly", 0) or 0) + (funds.get("firstjin_monthly", 0) or 0)
+    html = html.replace("__TOTAL_MONTHLY__", fmt(calc_total or tv.get("monthly_dividend", 69_044)))
 
     return html
 
