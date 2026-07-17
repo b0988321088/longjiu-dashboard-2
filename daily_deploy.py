@@ -27,10 +27,12 @@ BASE = Path(__file__).parent.resolve()
 TODAY = date.today().isoformat()
 DAILY_REPORT = BASE / f"daily_report_v2_{TODAY}.html"
 INDEX_FILE = BASE / "index.html"
-REPO = os.getenv("GITHUB_REPO", "b0988321088/longjiu-dashboard-2")
+# REPO already set above from env
 
 TG_TOKEN = os.getenv("TG_TOKEN", "")
 TG_CHAT_ID = os.getenv("TG_CHAT_ID", "")
+GITHUB_BRANCH = os.getenv("GITHUB_BRANCH", "clean-main")
+GITHUB_# REPO already set above from env
 
 
 def run_step(name: str, cmd: list[str]) -> bool:
@@ -56,14 +58,15 @@ def checklist_failed() -> bool:
 
 
 def github_push(filepath: str) -> bool:
-    token = None
-    cred_file = Path.home() / ".git-credentials"
-    if cred_file.exists():
-        for line in cred_file.read_text(encoding="utf-8").splitlines():
-            if "github.com" in line:
-                token = line.split(":")[-1].split("@")[0]
+    token = os.getenv("GITHUB_TOKEN")
     if not token:
-        print("[FAIL] 找不到 GitHub token")
+        cred_file = Path.home() / ".git-credentials"
+        if cred_file.exists():
+            for line in cred_file.read_text(encoding="utf-8").splitlines():
+                if "github.com" in line:
+                    token = line.split(":")[-1].split("@")[0]
+    if not token:
+        print("[FAIL] 找不到 GitHub token；请设定 GITHUB_TOKEN 或 ~/.git-credentials")
         return False
 
     import requests
@@ -83,7 +86,7 @@ def github_push(filepath: str) -> bool:
     payload = {
         "message": f"auto: {filepath} {TODAY}",
         "content": b64,
-        "branch": "main",
+        "branch": GITHUB_BRANCH,
     }
     if sha:
         payload["sha"] = sha
