@@ -628,7 +628,7 @@ def main():
     print(f"[RUN_DAILY] 真值：月收 {tv['monthly_income']:,} / 月支 {tv['monthly_expense']:,} / 盈餘 +{tv['working_surplus']:,}")
 
     # 情報：refresh today's hunter intel
-    intel_result = mi_mod.ensure_today_intel()
+    intel_result = mi_mod.ensure_today_intel(force_refresh=True)
     print(f"[INTEL] {intel_result.get('file') or intel_result}")
     intel_text = mi_mod.load_latest_hunter()
     intel_signals = mi_mod.parse_hunter_signals(intel_text)
@@ -717,6 +717,14 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             return f"{v:,.0f}"
         return str(v or "—")
 
+    def trend(val, prev):
+        if prev is None:
+            return "→"
+        try:
+            return "↑" if val > prev else ("↓" if val < prev else "→")
+        except Exception:
+            return "→"
+
     def fmt_pct(v):
         if isinstance(v, (int, float)):
             return f"{v:.2f}"
@@ -730,7 +738,25 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__WORKING_SURPLUS__", f"+{fmt(tv.get('working_surplus', 0))}")
     html = html.replace("__RETIREMENT_INCOME__", fmt(tv.get("retirement_income", 0)))
     html = html.replace("__RETIREMENT_SURPLUS__", f"+{fmt(tv.get('retirement_surplus', 0))}")
-    html = html.replace("__PASSIVE_INCOME__", fmt(tv.get("rent_monthly_actual", 0) + tv.get("monthly_dividend", 0)))
+    # Trend arrows vs yesterday
+    snap_dir = BASE / "snapshots"
+    yesterday_snap = {}
+    candidates = sorted(snap_dir.glob("snapshot_*.json"), reverse=True)
+    if candidates:
+        try:
+            yesterday_snap = json.loads(candidates[0].read_text(encoding="utf-8"))
+        except Exception:
+            yesterday_snap = {}
+
+    passive_trend = trend(tv.get("rent_monthly_actual", 0) + tv.get("monthly_dividend", 0), yesterday_snap.get("rent_monthly_actual", 0) + yesterday_snap.get("monthly_dividend", 0))
+    income_trend = trend(tv.get("monthly_income", 0), yesterday_snap.get("monthly_income", 0))
+    expense_trend = trend(tv.get("monthly_expense", 0), yesterday_snap.get("monthly_expense", 0))
+    insurance_trend = trend(tv.get("insurance_total", 0), yesterday_snap.get("insurance_current_value", 0))
+
+    html = html.replace("__PASSIVE_INCOME__", fmt(tv.get("rent_monthly_actual", 0) + tv.get("monthly_dividend", 0)) + f" {passive_trend}")
+    html = html.replace("__MONTHLY_INCOME_TREND__", income_trend)
+    html = html.replace("__MONTHLY_EXPENSE_TREND__", expense_trend)
+    html = html.replace("__INSURANCE_TREND__", insurance_trend)
     html = html.replace("__RUNWAY_MONTHS__", fmt(tv.get("runway_months", "—")))
     html = html.replace("__CASH_TOTAL__", fmt(tv.get("cash_total", 0)))
 
@@ -828,6 +854,14 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         if isinstance(v, (int, float)):
             return f"{v:,.0f}"
         return str(v or "—")
+    def trend(val, prev):
+        if prev is None:
+            return "→"
+        try:
+            return "↑" if val > prev else ("↓" if val < prev else "→")
+        except Exception:
+            return "→"
+
     def fmt_pct(v):
         if isinstance(v, (int, float)):
             return f"{v:.2f}"
@@ -856,6 +890,14 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         if isinstance(v, (int, float)):
             return f"{v:,.0f}"
         return str(v or "—")
+
+    def trend(val, prev):
+        if prev is None:
+            return "→"
+        try:
+            return "↑" if val > prev else ("↓" if val < prev else "→")
+        except Exception:
+            return "→"
 
     def fmt_pct(v):
         if isinstance(v, (int, float)):
