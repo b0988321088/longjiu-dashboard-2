@@ -36,9 +36,13 @@ def ns_get(path: str) -> dict:
     return r.json()
 
 
-def ns_post(path: str, payload: dict) -> dict:
+def ns_post(path: str, payload: dict, method: str = "") -> dict:
     import requests
-    r = requests.post(f"{BASE}{path}", headers=HEADERS, json=payload, timeout=30)
+    # PATCH for updates, POST for queries/creates
+    if method == "PATCH" or "/pages/" in path and "?" not in path:
+        r = requests.patch(f"{BASE}{path}", headers=HEADERS, json=payload, timeout=30)
+    else:
+        r = requests.post(f"{BASE}{path}", headers=HEADERS, json=payload, timeout=30)
     if r.status_code >= 400:
         print(f"HTTP {r.status_code} response: {r.text[:500]}")
     r.raise_for_status()
@@ -70,15 +74,13 @@ class NotionIngester:
         self.dry = dry_run
 
     def _find_existing_page(self, db_id: str, title_prop: str, title_value: str, date_value: str = "") -> dict | None:
-        """查詢同一 DB 內是否有同日期的同名 page，供 upsert 使用。"""
+        """查詢同一 DB 內是否有同名 page，供 upsert 使用（以 title 比對即可）。"""
         if self.dry:
             return None
         payload = {
             "filter": {
-                "and": [
-                    {"property": title_prop, "title": {"contains": title_value}},
-                    {"property": "更新日期", "date": {"equals": date_value}},
-                ]
+                "property": title_prop,
+                "title": {"contains": title_value},
             },
             "page_size": 1,
         }
@@ -93,7 +95,7 @@ class NotionIngester:
         if self.dry:
             return {"id": page_id, "archived": False}
         payload = {"properties": props}
-        return ns_post(f"/pages/{page_id}", payload)
+        return ns_post(f"/pages/{page_id}", payload, method="PATCH")
 
     def _create_or_update(self, db_id: str, props: dict, markdown: str = "", date_value: str = TODAY):
         title_prop = "資產名稱" if "資產名稱" in props else "項目" if "項目" in props else "Name"
@@ -201,15 +203,16 @@ class NotionIngester:
     def ingest_collateral_hub(self, loans: list[dict]):
         db_id = DB_MAP["debt_cashflow"]
         for loan in loans:
-            self._create_or_update(db_id, {
+            props = {
                 "項目": {"title": [{"text": {"content": loan.get("name", "貸款")}}]},
                 "金額": {"number": abs(loan.get("balance", 0))},
                 "類型": {"select": {"name": "貸款"}},
-                "方向": {"select": {"name": "負債"}},
+                "方向": {"select": {"name": "負債" if loan.get("active", True) else "清償"}},
                 "日期": {"date": {"start": TODAY}},
                 "狀態": {"status": {"name": "進行中" if loan.get("active") else "已完成"}},
                 "備註": {"rich_text": [{"text": {"content": loan.get("memo", "")}}]},
-            })
+            }
+            self._create_or_update(db_id, props)
 
     def ingest_ops_logs(self, events: list[dict]):
         db_id = DB_MAP["ops_logs"]
@@ -220,10 +223,7 @@ class NotionIngester:
                 "執行狀態": {"select": {"name": ev.get("status", "待處理")}},
                 "事件分類": {"select": {"name": ev.get("category", "未分類")}},
                 "CIO摘要": {"rich_text": [{"text": {"content": ev.get("summary", "")}}]},
-                "日期時間": {"date": {"start": datetime.now().isoformat()}},
             }
-            if ev.get("amount"):
-                props["金額影響"] = {"number": ev["amount"]}
             link = (ev.get("link") or "").strip()
             if link:
                 props["關聯頁面"] = {"url": link}
@@ -233,18 +233,15 @@ class NotionIngester:
         db_id = DB_MAP.get("asset_investment")
         if not db_id:
             return
-        for a in assets:
-            if isinstance(a, dict):
-                name = a.get("name", "")
-                props = {"Name": {"title": [{"text": {"content": name}}]}}
-                for extra in ("market_value", "weight", "target_weight"):
-                    if a.get(extra) is not None:
-                        props[{"market_value": "市值", "weight": "權重", "target_weight": "目標權重"}[extra]] = {"number": a[extra]}
+        # asset_investment DB schema 只有 Name 欄位
+        for asset in assets:
+            if isinstance(asset, dict):
+                name = asset.get("name", "")
             else:
-                name = str(a)
-                props = {"Name": {"title": [{"text": {"content": name}}]}}
+                name = str(asset)
             if not name:
                 continue
+            props = {"Name": {"title": [{"text": {"content": name}}]}}
             self._create_or_update(db_id, props)
 
 
