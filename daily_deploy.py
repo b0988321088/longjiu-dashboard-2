@@ -27,12 +27,10 @@ BASE = Path(__file__).parent.resolve()
 TODAY = date.today().isoformat()
 DAILY_REPORT = BASE / f"daily_report_v2_{TODAY}.html"
 INDEX_FILE = BASE / "index.html"
-# REPO already set above from env
-
+REPO = os.getenv("GITHUB_REPO", "b0988321088/longjiu-dashboard-2")
 TG_TOKEN = os.getenv("TG_TOKEN", "")
 TG_CHAT_ID = os.getenv("TG_CHAT_ID", "")
 GITHUB_BRANCH = os.getenv("GITHUB_BRANCH", "clean-main")
-GITHUB_# REPO already set above from env
 
 
 def run_step(name: str, cmd: list[str]) -> bool:
@@ -58,46 +56,30 @@ def checklist_failed() -> bool:
 
 
 def github_push(filepath: str) -> bool:
-    token = os.getenv("GITHUB_TOKEN")
-    if not token:
-        cred_file = Path.home() / ".git-credentials"
-        if cred_file.exists():
-            for line in cred_file.read_text(encoding="utf-8").splitlines():
-                if "github.com" in line:
-                    token = line.split(":")[-1].split("@")[0]
-    if not token:
-        print("[FAIL] 找不到 GitHub token；请设定 GITHUB_TOKEN 或 ~/.git-credentials")
-        return False
-
-    import requests
-
-    headers = {
-        "Authorization": f"token {token}",
-        "Accept": "application/vnd.github.v3+json",
-    }
-    data = Path(filepath).read_bytes()
-    b64 = base64.b64encode(data).decode()
-    r_get = requests.get(
-        f"https://api.github.com/repos/{REPO}/contents/{filepath}",
-        headers=headers,
-        timeout=30,
+    result = subprocess.run(
+        ["git", "add", filepath],
+        cwd=BASE,
+        capture_output=True,
+        text=True,
     )
-    sha = r_get.json().get("sha") if r_get.status_code == 200 else None
-    payload = {
-        "message": f"auto: {filepath} {TODAY}",
-        "content": b64,
-        "branch": GITHUB_BRANCH,
-    }
-    if sha:
-        payload["sha"] = sha
-    r_put = requests.put(
-        f"https://api.github.com/repos/{REPO}/contents/{filepath}",
-        headers=headers,
-        json=payload,
-        timeout=60,
+    result = subprocess.run(
+        ["git", "commit", "-m", f"auto: {filepath} {TODAY}"],
+        cwd=BASE,
+        capture_output=True,
+        text=True,
     )
-    ok = r_put.status_code in (200, 201)
-    print(f"  push {filepath}: {r_put.status_code}")
+    if result.returncode != 0:
+        print(f"  git commit: {result.stderr[:200]}")
+    result = subprocess.run(
+        ["git", "push", "origin", GITHUB_BRANCH],
+        cwd=BASE,
+        capture_output=True,
+        text=True,
+    )
+    ok = result.returncode == 0
+    print(f"  push {filepath} via git: {result.returncode}")
+    if not ok:
+        print(f"  {result.stderr[:300]}")
     return ok
 
 
