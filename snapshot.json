@@ -57,13 +57,15 @@
     "2026-07-16: 信用卡月均從42K降為四大主力27K（自動扣款排除）",
     "2026-07-16: 高利活存2.2M明細化（將來1.1M+台子1.0M+第一金0.1M）",
     "2026-07-16: 日報巴菲特/CTO補上市場真值驅動",
-    "2026-07-16: 信用卡四大主力月均从27K修正为38K（近期实缴34K+历史波动中位）",
-    "2026-07-16: working_surplus/retirement_surplus校正为76,144/18,142"
+    "2026-07-16: 信用卡四大主力月均從27K修正為38K（近期实缴34K+历史波动中位）",
+    "2026-07-16: working_surplus/retirement_surplus校正為76,144/18,142"
   ],
   "cc_low": 35000,
   "cc_mid": 38000,
   "cc_high": 42000,
   "firstjin_fl65_current_value": 1994698,
   "allianz_ab_current_value": 7881584,
-  "firstjin_current_value": 1994698
+  "firstjin_current_value": 1994698,
+  "last_mb_sync": null,
+  "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation"
 }
