@@ -31,7 +31,7 @@ TODAY = datetime.now().strftime("%Y-%m-%d")
 
 def ns_get(path: str) -> dict:
     import requests
-    r = requests.get(f"{BASE}{path}", headers=HEADERS, timeout=30)
+    r = requests.get(f"{BASE}{path}", headers=HEADERS, timeout=60)
     r.raise_for_status()
     return r.json()
 
@@ -40,9 +40,9 @@ def ns_post(path: str, payload: dict, method: str = "") -> dict:
     import requests
     # PATCH for updates, POST for queries/creates
     if method == "PATCH" or "/pages/" in path and "?" not in path:
-        r = requests.patch(f"{BASE}{path}", headers=HEADERS, json=payload, timeout=30)
+        r = requests.patch(f"{BASE}{path}", headers=HEADERS, json=payload, timeout=60)
     else:
-        r = requests.post(f"{BASE}{path}", headers=HEADERS, json=payload, timeout=30)
+        r = requests.post(f"{BASE}{path}", headers=HEADERS, json=payload, timeout=60)
     if r.status_code >= 400:
         print(f"HTTP {r.status_code} response: {r.text[:500]}")
     r.raise_for_status()
@@ -98,7 +98,8 @@ class NotionIngester:
         return ns_post(f"/pages/{page_id}", payload, method="PATCH")
 
     def _create_or_update(self, db_id: str, props: dict, markdown: str = "", date_value: str = TODAY):
-        title_prop = "資產名稱" if "資產名稱" in props else "項目" if "項目" in props else "Name"
+        title_map = ["資產名稱", "項目", "Name", "事件名稱", "基金名稱", "保單名稱"]
+        title_prop = next((k for k in title_map if k in props), "")
         title_value = ""
         if title_prop in props:
             try:
