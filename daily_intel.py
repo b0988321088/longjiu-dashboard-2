@@ -209,6 +209,32 @@ def render_intel_text(intel_text: str, signals: dict) -> str:
 
 
 # ===== Analysis builder =====
+
+def _fetch_news(queries: list[str], limit: int = 3) -> list[dict]:
+    """Search market news. Fallback: returns empty list silently."""
+    try:
+        import urllib.request, json as _json
+        results = []
+        for q in queries[:2]:
+            try:
+                url = "https://html.duckduckgo.com/html/?q=" + urllib.parse.quote(q)
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=8) as r:
+                    html = r.read().decode("utf-8", errors="ignore")[:5000]
+                # crude extract titles/links from DDG results
+                import re
+                for m in re.finditer(r'<a[^>]+class="[^"]*result__a[^"]*"[^>]+href="([^"]+)"[^>]*>(.*?)</a>', html):
+                    href = m.group(1)
+                    title = re.sub(r'<[^>]+>', '', m.group(2)).strip()
+                    if title and len(title) > 10 and 'duckduckgo' not in href:
+                        results.append({"title": title[:120], "url": href[:200], "desc": ""})
+            except Exception:
+                continue
+        return results[:6]
+    except Exception:
+        return []
+
+
 def build_analysis(intel_text: str, signals: dict, market_override: dict | None = None) -> dict:
     today = date.today().isoformat().replace("-", "")
     market = market_override if market_override else fetch_yf_market()
@@ -303,6 +329,16 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
             "cto_signal": "",
         }
 
+    news_queries = []
+    if crash:
+        news_queries = ["台股 大跌 外資 賣超 原因 2026年7月", "韓國 過度槓桿 亞洲股市 2026", "美國 科技股 泡沫 Fed 利率 2026"]
+    elif rally:
+        news_queries = ["台股 反彈 外資 買超 2026年7月", "美股 科技股 反彈 Fed 2026"]
+    else:
+        news_queries = ["台股 震盪 外資 2026年7月", "韓國 亞洲市場 連動 2026"]
+
+    news = _fetch_news(news_queries)
+
     return {
         "date": today,
         "generated_at": datetime.now().isoformat(),
@@ -310,6 +346,8 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
         "buffett": buffett,
         "cto": cto,
         "signals": signals,
+        "news": news,
+        "scenario_summary": scenario_summary,
     }
 
 
@@ -318,11 +356,6 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
     ensure_dir()
     today = _today_str()
     existing = sorted(HUNTER_DIR.glob(f"intel_{today}_*.txt"), key=os.path.getmtime, reverse=True)
-
-    if existing and not force_refresh:
-        intel_text = existing[0].read_text(encoding="utf-8")
-        signals = parse_hunter_signals(intel_text)
-        return {"skipped": True, "file": str(existing[0]), "signals": signals}
 
     # 1. 优先使用 Yahoo Finance API
     market = fetch_yf_market()

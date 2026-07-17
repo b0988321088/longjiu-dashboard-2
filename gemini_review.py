@@ -17,6 +17,7 @@ except Exception:
 
 import requests
 
+
 BASE = Path(__file__).parent.resolve()
 TODAY = date.today().isoformat()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")

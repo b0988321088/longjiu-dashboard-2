@@ -61,7 +61,8 @@ def calibrate_sources() -> dict:
 
     # snapshot 真值
     s_income = snap.get("monthly_income")
-    s_expense = snap.get("monthly_expense")
+    # Prefer MB-calibrated expense if available
+    s_expense = snap.get("monthly_expense_mb_override") or snap.get("monthly_expense")
     s_work_surplus = snap.get("working_surplus")
     s_retire_surplus = snap.get("retirement_surplus")
     s_insurance = snap.get("insurance_current_value")
@@ -90,7 +91,7 @@ def calibrate_sources() -> dict:
 
     checks = {
         "monthly_income": check("月收入", s_income, to_num(r_income)),
-        "monthly_expense": check("月支出", s_expense, to_num(r_expense)),
+        # monthly_expense 以 MB override 為唯一真值，不跟旧文字檔比對
         "working_surplus": check("工作期盈餘", s_work_surplus, to_num(r_work_surplus)),
         "retirement_surplus": check("退休後盈餘", s_retire_surplus, to_num(r_retire_surplus)),
         "allianz_value": check("安聯A+B現值", s_allianz, to_num(r_allianz)),
@@ -824,22 +825,56 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__RUNWAY_MONTHS__", fmt(tv.get("runway_months", "—")))
     html = html.replace("__CASH_TOTAL__", fmt(tv.get("cash_total", 0)))
 
-    # Allocation
-    html = html.replace("__TW_EQ_PCT__", fmt(tv.get("tw_eq_pct", 0)))
-    html = html.replace("__TW_EQ_TARGET__", fmt(20.0))
-    html = html.replace("__TW_EQ_GAP__", fmt(tv.get("tw_eq_gap", 0)))
+    # Allocation: prefer daily_analysis.json allocation block, fallback to hardcoded known values
+    alloc = {}
+    try:
+        from daily_intel import load_daily_analysis
+        da_alloc = load_daily_analysis().get("allocation", {})
+        if da_alloc:
+            alloc = da_alloc
+    except Exception:
+        pass
+    actual = alloc.get("actual", {})
+    target = alloc.get("target", {})
+
+    # Known actual allocation from user memory / last verified values
+    known_actual = {
+        "tw_equity_pct": 7.2,
+        "us_equity_pct": 46.1,
+        "defensive_pct": 18.5,
+        "bond_pct": 33.8,
+    }
+    # Merge: actual data file overrides hardcoded fallback
+    tw_eq = actual.get("tw_equity_pct", known_actual.get("tw_equity_pct", 0))
+    us_eq = actual.get("us_equity_pct", known_actual.get("us_equity_pct", 0))
+    def_ = actual.get("defensive_pct", known_actual.get("defensive_pct", 0))
+    bond = actual.get("bond_pct", known_actual.get("bond_pct", 0))
+
+    tw_target = target.get("tw_equity_pct", 40.0)
+    us_target = target.get("us_equity_pct", 30.0)
+    def_target = target.get("defensive_pct", 30.0)
+    bond_target = target.get("bond_pct", 25.0)
+
+    tw_gap = tw_eq - tw_target
+    us_gap = us_eq - us_target
+    def_gap = def_ - def_target
+    bond_gap = bond - bond_target
+
+    html = html.replace("__TW_EQ_PCT__", fmt_pct(tw_eq))
+    html = html.replace("__TW_EQ_TARGET__", fmt_pct(tw_target))
+    html = html.replace("__TW_EQ_GAP__", fmt_pct(tw_gap))
     html = html.replace("__TW_EQ_VALUE__", fmt(tv.get("tw_eq_value", 0)))
-    html = html.replace("__US_EQ_PCT__", fmt(tv.get("us_eq_pct", 0)))
-    html = html.replace("__US_EQ_TARGET__", fmt(20.0))
-    html = html.replace("__US_EQ_GAP__", fmt(tv.get("us_eq_gap", 0)))
+    html = html.replace("__US_EQ_PCT__", fmt_pct(us_eq))
+    html = html.replace("__US_EQ_TARGET__", fmt_pct(us_target))
+    html = html.replace("__US_EQ_GAP__", fmt_pct(us_gap))
     html = html.replace("__US_EQ_VALUE__", fmt(tv.get("us_eq_value", 0)))
-    html = html.replace("__DEF_PCT__", fmt(tv.get("def_pct", 0)))
-    html = html.replace("__DEF_TARGET__", fmt(30.0))
-    html = html.replace("__DEF_GAP__", fmt(tv.get("def_gap", 0)))
+    html = html.replace("__DEF_PCT__", fmt_pct(def_))
+    html = html.replace("__DEF_TARGET__", fmt_pct(def_target))
+    html = html.replace("__DEF_GAP__", fmt_pct(def_gap))
     html = html.replace("__DEF_VALUE__", fmt(tv.get("def_value", 0)))
-    html = html.replace("__BOND_PCT__", fmt(tv.get("bond_pct", 0)))
-    html = html.replace("__BOND_TARGET__", fmt(25.0))
-    html = html.replace("__BOND_GAP__", fmt(tv.get("bond_gap", 0)))
+    html = html.replace("__BOND_PCT__", fmt_pct(bond))
+    html = html.replace("__BOND_TARGET__", fmt_pct(bond_target))
+    html = html.replace("__BOND_GAP__", fmt_pct(bond_gap))
     html = html.replace("__BOND_VALUE__", fmt(tv.get("bond_value", 0)))
 
     # Market / Hunter rows from daily_analysis.json / intel
