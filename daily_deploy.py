@@ -138,6 +138,68 @@ def telegram_push(text: str) -> bool:
     return ok
 
 
+
+
+def _load_snapshot() -> dict:
+    path = BASE / "snapshot.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _run_moat_pipeline(output_path: Path) -> bool:
+    print("[STEP] moat_pipeline")
+    try:
+        from asset_moat_monitor import AssetMoatMonitor
+        from external_comparator import ExternalComparator
+        from dynamic_balancer import DynamicBalancer
+    except Exception as exc:
+        print(f"  [SKIP] import failed: {exc}")
+        return False
+
+    snapshot = _load_snapshot()
+    print(f"  debug: loaded snapshot keys = {list(snapshot.keys())[:10]}")
+    monitor = AssetMoatMonitor()
+    moat = monitor.compute(snapshot)
+
+    comparator = ExternalComparator()
+    bench = comparator.benchmark if hasattr(comparator, "benchmark") else {}
+    tw_signal = {
+        "twii_return_ytd": snapshot.get("securities", {}).get("0050", 0) * 0.05,
+    }
+    bench_cmp = comparator.compare(tw_signal, bench)
+
+    peers = bench.get("peers", [])
+    my_fund = {"dividend_yield": moat.get("coverage_ratio", 0) * 100, "expense_ratio": 1.5}
+    peer_cmp = comparator.compare_peers(my_fund, peers)
+
+    balancer = DynamicBalancer()
+    signals = {
+        "semiconductor_exposure_pct": moat.get("semiconductor_exposure_pct", 0),
+        "coverage_ratio": moat.get("coverage_ratio", 0),
+        "debt_ratio_pct": moat.get("debt_ratio_pct", 0),
+    }
+    balance_suggestion = balancer.suggest(
+        {"TW": 7.2, "US": 46.1, "BOND": 33.8, "DEF": 18.5}, signals
+    )
+
+    report = {
+        "date": TODAY,
+        "moat": moat,
+        "benchmark_comparison": bench_cmp,
+        "peer_comparison": peer_cmp,
+        "balancer": balance_suggestion,
+    }
+    output_path.write_text(
+        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    print(f"  moat_report -> {output_path.name}")
+    return True
+
+
 def main() -> None:
     print(f"[DEPLOY] 日期：{TODAY}")
 
@@ -161,6 +223,11 @@ def main() -> None:
     if failed_gemini:
         print("[STOP] Gemini 審查未過，停止推送")
         return
+
+    # 2.7 Moat / Comparator / Balancer
+    moat_path = BASE / f"moat_report_{TODAY}.json"
+    if not _run_moat_pipeline(moat_path):
+        print("[WARN] moat pipeline 失敗，繼續推送（不阻擋）")
 
     # 3. 推送
     daily_name = DAILY_REPORT.name

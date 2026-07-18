@@ -1,0 +1,47 @@
+{
+  "date": "2026-07-18",
+  "moat": {
+    "runway_months": 357.1,
+    "liquid_runway_months": 0.0,
+    "coverage_ratio": 0.0,
+    "debt_ratio_pct": 0.0,
+    "semiconductor_exposure_pct": 0.0,
+    "alert": [
+      "RED: passive income < monthly expense"
+    ]
+  },
+  "benchmark_comparison": {
+    "my_return": 0.0,
+    "benchmark_return": 0.0,
+    "diff_pct": 0.0,
+    "verdict": "par"
+  },
+  "peer_comparison": {
+    "my_dividend_yield": 0.0,
+    "my_expense_ratio": 1.5,
+    "peers_count": 3,
+    "rank": 4,
+    "better_peers": [
+      "元大00878",
+      "凱基台股",
+      "元大0050"
+    ]
+  },
+  "balancer": {
+    "actions": [
+      {
+        "action": "INCREASE_DIVIDEND",
+        "target": "配息型 ETF / 債券型基金",
+        "amount_pct": 2.0,
+        "reason": "被動收入覆蓋率 0.0% < 100%",
+        "priority": "P0"
+      }
+    ],
+    "allocation": {
+      "TW": 7.2,
+      "US": 46.1,
+      "BOND": 33.8,
+      "DEF": 18.5
+    }
+  }
+}
