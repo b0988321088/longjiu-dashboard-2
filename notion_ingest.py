@@ -255,7 +255,7 @@ def load_snapshot():
 
 def load_moneybook_accounts():
     account_paths = [
-        Path("C:/Users/bot/AppData/Local/hermes/cache/documents") / "doc_7f2cdffd6ca1_Moneybook_帳戶_20260714_1.csv",
+        Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "hermes" / "cache" / "documents" / "doc_7f2cdffd6ca1_Moneybook_帳戶_20260714_1.csv",
         REPO / "Moneybook" / "account.csv",  # fallback
     ]
     for p in account_paths:

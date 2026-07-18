@@ -5,6 +5,8 @@ from typing import Any
 
 
 class AssetMoatMonitor:
+    SEMI_THRESHOLD = 70.0
+    DEBT_THRESHOLD = 50.0
     semiconductor_keywords = [
         "0050", "006208", "2330", "台積", "半導體", "electronics",
     ]
@@ -57,8 +59,8 @@ class AssetMoatMonitor:
         alerts: list[str] = []
         if coverage < 1.0:
             alerts.append("RED: passive income < monthly expense")
-        if semi_pct > 70:
+        if semi_pct > self.SEMI_THRESHOLD:
             alerts.append("YELLOW: semiconductor exposure > 70%")
-        if debt_pct > 50:
+        if debt_pct > self.DEBT_THRESHOLD:
             alerts.append("RED: debt ratio > 50%")
         return alerts

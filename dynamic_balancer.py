@@ -9,6 +9,9 @@ from typing import Any
 
 @dataclass
 class DynamicBalancer:
+    SEMI_THRESHOLD = 70.0
+    COVERAGE_THRESHOLD = 1.0
+    DEBT_THRESHOLD = 50.0
     rules: dict[str, Any] = field(default_factory=dict)
 
     def suggest(self, allocation: dict[str, float], signals: dict[str, Any]) -> dict[str, Any]:
@@ -17,7 +20,7 @@ class DynamicBalancer:
         coverage = signals.get("coverage_ratio", 1.0)
         debt = signals.get("debt_ratio_pct", 0)
 
-        if semi > 70:
+        if semi > self.SEMI_THRESHOLD:
             actions.append({
                 "action": "REDUCE_TECH",
                 "target": "TW tech / 0050 / 006208",
@@ -26,7 +29,7 @@ class DynamicBalancer:
                 "priority": "P1",
             })
 
-        if coverage < 1.0:
+        if coverage < self.COVERAGE_THRESHOLD:
             actions.append({
                 "action": "INCREASE_DIVIDEND",
                 "target": "配息型 ETF / 債券型基金",
@@ -35,7 +38,7 @@ class DynamicBalancer:
                 "priority": "P0",
             })
 
-        if debt > 50:
+        if debt > self.DEBT_THRESHOLD:
             actions.append({
                 "action": "DELEVERAGE",
                 "target": "債務調度、暫緩新部位",
