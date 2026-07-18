@@ -361,7 +361,7 @@
     <h3>🚨 P0 任務</h3>
     <div class="callout callout-warn">
       <ul>
-        <li>7/18（六）— 國泰轉貸面簽/對保（原國泰名義尚未轉出，剩 1 天）</li>
+        <li>✅ 已完成 — 7/17（五）國泰轉貸面簽/對保</li>
         <li>7/20（一）— 洲際 W 租金到帳監控 33,000 TWD</li>
         <li>7/22（三）— 玉山信用卡繳款截止 3,176</li>
         <li>7/27（一）— 台新信用卡繳款截止 1,000</li>
@@ -378,7 +378,7 @@
           <tr><th>日期</th><th>項目</th><th class="num">金額 TWD</th><th>狀態</th></tr>
         </thead>
         <tbody>
-          <tr><td>7/18（六）</td><td>國泰轉貸面簽/對保 + 段部上課</td><td class="num">—</td><td>🚨 P0</td></tr>
+          <tr><td colspan="4" style="color:#888">✅ 已完成：7/17 國泰轉貸面簽/對保 + 段部上課</td></tr>
           <tr><td>7/19-20</td><td>摩根 FJ33 配息入帳</td><td class="num">13,593</td><td>✅ 已配息</td></tr>
           <tr><td>7/22</td><td>玉山信用卡繳款截止</td><td class="num">3,176</td><td>🔄 待處理</td></tr>
           <tr><td>7/27</td><td>台新信用卡繳款截止</td><td class="num">1,000</td><td>🔄 待處理</td></tr>
