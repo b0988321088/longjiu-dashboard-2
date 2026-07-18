@@ -96,5 +96,7 @@
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
   "real_liquid_assets": 6890791,
-  "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）"
+  "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
+  "passive_income": 160100,
+  "fund_dividend_monthly": 80000
 }

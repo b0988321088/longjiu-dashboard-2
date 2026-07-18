@@ -3,11 +3,9 @@
   "moat": {
     "runway_months": 357.1,
     "liquid_runway_months": 15.5,
-    "coverage_ratio": 0.5643,
+    "coverage_ratio": 1.1278,
     "debt_ratio_pct": 43.4,
     "semiconductor_exposure_pct": 63.7,
-    "alert": [
-      "RED: passive income < monthly expense"
-    ]
+    "alert": []
   }
 }
