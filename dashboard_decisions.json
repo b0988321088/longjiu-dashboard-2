@@ -64,6 +64,29 @@
       "summary": "Laing 確認：7/17 國泰已傳办理申請，房貸進行中，預計 15 天完成",
       "remind_at": "2026-08-02",
       "notes": "申請日 2026-07-17，預計 15 天，提醒 2026-08-02"
+    },
+    {
+      "timestamp": "2026-07-18T13:17:46.852144",
+      "action": "核准",
+      "name": "Decision: 測試按鈕",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1784351866",
+      "summary": "Laing 按 Telegram 底部鍵盤 [✅ 核准]"
+    },
+    {
+      "timestamp": "2026-07-18T13:25:58.016971",
+      "update_id": 718083248,
+      "action": "核准",
+      "name": "Decision: 改成5分鐘好了",
+      "source": "Telegram Poller",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "poll-718083248",
+      "summary": "Laing 在 Telegram 輸入 [核准] 改成5分鐘好了"
     }
   ]
 }

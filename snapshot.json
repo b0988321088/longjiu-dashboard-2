@@ -24,7 +24,7 @@
         "台電薪水_固定": 43144,
         "台電獎金_半年一次": 39121,
         "房租收入_大義1F_洲際W_二三樓_管理費": 80100,
-        "配息_保守估_月均": 80000,
+        "配息_保守估_月均": 72798,
         "利息收入": 2858
       },
       "expense": {
@@ -33,11 +33,11 @@
         "沙鹿房租": 4500
       }
     },
-    "total_income": 245223,
+    "total_income": 238021,
     "total_expense": 141958,
-    "surplus": 76144,
-    "runway_months": 21.1,
-    "coverage_ratio": "21.1x"
+    "surplus": 96063,
+    "runway_months": 0.7,
+    "coverage_ratio": "67.7%"
   },
   "true_value_sources": {
     "moneybook_detail_csv": "C:/Users/bot/AppData/Local/hermes/cache/documents/doc_4e6c8d47a6db_Moneybook_明細_20260714_1.csv",
