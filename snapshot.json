@@ -484,12 +484,14 @@
     "canonical": 141958,
     "updated_at": "2026-07-18"
   },
-  "last_calibrated": "2026-07-18T23:32:20.998223+08:00",
+  "last_calibrated": "2026-07-18T23:56:43.616162+08:00",
   "rent_monthly_total": 82200,
   "rent_breakdown": {
     "大義街店面": 24000,
     "大義街二三樓": 23100,
     "洲際W": 33000,
     "管理費": 2100
-  }
+  },
+  "monthly_expense_definition": "生活常規支出（不含旅遊/機票等偶發性費用）",
+  "monthly_expense_source": "snapshot canonical baseline ~142K（MB 扣除非生活支出誤分類後吻合）"
 }
