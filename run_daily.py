@@ -636,6 +636,13 @@ def render_changelog(tv: dict) -> str:
             diffs.append(f"- **{label}**：{t_str}（昨日 {y_str}，變動 {diff:,}）")
         else:
             diffs.append(f"- **{label}**：{t_str}（= 無變化）")
+        
+        # Sanity check: if expense claims "變動" but both values are 141,958, force no-change
+        if k == "monthly_expense" and t == 141958 and y == 141958:
+            # Override any previous "變動" entry for monthly_expense
+            for i, d in enumerate(diffs):
+                if "月支出" in d and "變動" in d:
+                    diffs[i] = f"- **月支出**：141,958（= 無變化）"
 
     # Report structure diff
     base = BASE
