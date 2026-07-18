@@ -5,7 +5,7 @@
 規則：
 - 五大章節完整且順序正確
 - Relay 三站制、銀行正確
-- 配息 SOP wording 正確（hold住、T+4）
+- 配息 SOP wording 正確（hold住、保單 relay T+4/t+2，ETF 除息日排程）
 - 僅准許交付：日報 .html + 靜態儀表板 index.html
 - 無 Railway / dashboard.py / 旗艦版 / 簡體字
 - 保單現值與 snapshot.json 一致

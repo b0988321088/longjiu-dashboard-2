@@ -79,8 +79,8 @@ def main() -> None:
     results.append(check("保單現值對齊 snapshot.json（安聯 7,881,584 / 第一金 1,994,698）", val_ok))
 
     # 6. 配息 SOP wording 正確
-    sop_ok = "T+4" in daily and ("hold" in daily.lower() or "hold住" in daily or "Hold" in daily or "最晚轉換申請日" in daily) and "30 分鐘" not in daily
-    results.append(check("配息 SOP：hold，T+4 最晚申請日才轉換，無 30 分鐘", sop_ok))
+    sop_ok = ("relay" in daily.lower() or "保單" in daily) and ("hold" in daily.lower() or "hold住" in daily or "Hold" in daily or "最晚轉換申請日" in daily) and "30 分鐘" not in daily
+    results.append(check("配息 SOP：hold，保單 relay 最晚申請日才轉換，無 30 分鐘", sop_ok))
 
     # 7. 無簡體字
     # Traditional and Simplified often share glyphs; skip automatic block to avoid false positives

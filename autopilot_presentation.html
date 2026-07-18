@@ -99,7 +99,7 @@
 <p style="margin-top:0.6rem" class="warn">市場定位差異：</p>
 <p class="warn">• 台灣 robo-advisor 只能「給建議」，無法自動執行下單</p>
 <p class="warn">• 多數平台追求「資產增值」，龍九追求「被動現金流 + 退休覆蓋」</p>
-<p class="warn">• 龍九獨有：T+4 配息接力、除息日排程、Rule-based 自動再平衡</p>
+<p class="warn">• 龍九獨有：保單配息接力（T+4/t+2）、ETF 除息日排程、Rule-based 自動再平衡</p>
     <p style="margin-top:0.6rem"><span class="tag">v1.0</span><span class="tag">2026-07-18</span><span class="tag">Hermès + Gemini + Notion</span></p>
   </div>
 
@@ -150,7 +150,7 @@
       <tr><td class="warn">半導體曝險 > 70%</td><td>REDUCE_TECH：0050/006208 減碼 3%</td><td>P1</td></tr>
       <tr><td class="danger">被動收入 < 月支出</td><td>INCREASE_DIVIDEND：加碼配息型 ETF / 債券</td><td>P0</td></tr>
       <tr><td class="danger">負債比 > 50%</td><td>DELEVERAGE：債務調度、暫緩新部位</td><td>P0</td></tr>
-      <tr><td class="highlight">0050 除息前 4 天</td><td>T+4 預警：啟動配息接力轉換</td><td>P1</td></tr>
+      <tr><td class="highlight">0050 除息前 4 天</td><td>除息預警：啟動配息切換</td><td>P1</td></tr>
       <tr><td class="highlight">外資賣超 > 150 億</td><td> activate P1 賣出訊號</td><td>P0</td></tr>
     </table>
     <p style="margin-top:1rem">執行長只需審閱每週五的審計報告，核准 / 拒絕建議，系統自動調整。</p>
@@ -177,7 +177,7 @@
     <table>
       <tr><th>階段</th><th>時間</th><th>任務</th><th>Exit 條件</th></tr>
       <tr><td class="highlight">P0</td><td>7/18-7/25</td><td>Asset Moat Monitor + Comparator + Balancer</td><td>每日 moat report 產出 + Telegram 推送</td></tr>
-      <tr><td class="highlight">P1</td><td>7/26-8/02</td><td>外部 benchmark 自動更新 + 0050 除息 T+4 預警</td><td>0050 轉換前 4 天自動預警觸發</td></tr>
+      <tr><td class="highlight">P1</td><td>7/26-8/02</td><td>外部 benchmark 自動更新 + 0050 除息日預警</td><td>0050 轉換前 4 天自動預警觸發</td></tr>
       <tr><td class="warn">P2</td><td>8/03-8/09</td><td>動態平衡 rule engine 上線 + ops_logs auto-write</td><td>dynamic_balancer 產出 3 條以上建議</td></tr>
       <tr><td class="warn">P3</td><td>8/10-8/16</td><td>Heatmap + 資產護城河儀表板 (Port 8501)</td><td>Streamlit Dashboard 部署</td></tr>
       <tr><td class="warn">P4</td><td>月底</td><td>Gemini CEO 重新評估 + team chain v6.0 規劃</td><td>OpenAI 導入 if needed</td></tr>
@@ -225,7 +225,7 @@
         <h3>🏢 龍九控股自駕系統（定位）</h3>
         <p class="highlight">• 直接產出 ready-to-execute 建議</p>
         <p class="highlight">• 目標：被動現金流覆蓋支出（cash-flow-first）</p>
-        <p class="highlight">• 自動 T+4 配息接力 + 除息日預警</p>
+        <p class="highlight">• 自動保單 relay + ETF 除息日預警</p>
         <p class="highlight">• 配息效率最大化是核心 KPI</p>
         <p class="highlight">• API 抓資產，減少截圖輸入</p>
       </div>
