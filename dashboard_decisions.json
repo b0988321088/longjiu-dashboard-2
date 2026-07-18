@@ -10,6 +10,31 @@
       "user": "Laing",
       "idem_key": "hermes-1784345477",
       "summary": "Laing 在 Telegram 對話中輸入 [核准]"
+    },
+    {
+      "timestamp": "2026-07-18T11:36:16.147241",
+      "action": "延後",
+      "name": "延后明天提醒",
+      "target": "DEFAULT_POLICY",
+      "source": "Hermes Telegram Gate",
+      "status": "已延後",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1784345776",
+      "summary": "Laing 指定延后預設為 +1 天提醒",
+      "remind_at": "2026-07-19"
+    },
+    {
+      "timestamp": "2026-07-18T11:36:34.226158",
+      "action": "延後",
+      "name": "Decision: 延後（未指定事項）",
+      "source": "Hermes Telegram Gate",
+      "status": "已延後",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1784345794",
+      "summary": "Laing 在 Telegram 輸入延後，預設 +1 天提醒",
+      "remind_at": "2026-07-19"
     }
   ]
 }
