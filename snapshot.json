@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-07-16T08:50:00+08:00",
+  "generated_at": "2026-07-18T23:32:20.998223+08:00",
   "version": "v5.0.10-true-value-correction",
-  "date": "2026-07-16",
+  "date": "2026-07-18",
   "total_assets": 50689930,
   "total_liabilities": 22000000,
   "net_worth": 28689930,
@@ -477,5 +477,6 @@
     "note": "222,910 為 MB 近30天未完全分類值（含未分類 3,060,921），不作為真值",
     "canonical": 141958,
     "updated_at": "2026-07-18"
-  }
+  },
+  "last_calibrated": "2026-07-18T23:32:20.998223+08:00"
 }
