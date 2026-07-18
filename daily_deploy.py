@@ -243,18 +243,53 @@ def main() -> None:
 
     # 2.7 Moat / Comparator / Balancer
     moat_path = BASE / f"moat_report_{TODAY}.json"
-    if not _run_moat_pipeline(moat_path):
-        print("[WARN] moat pipeline 失敗，繼續推送（不阻擋）")
+    try:
+        _run_moat_pipeline(moat_path)
+    except Exception as exc:
+        print(f"[WARN] moat pipeline 異常：{exc}，繼續推送")
 
-    # 2.8 Buffett/CTO 差異驅動分析（補丁模式：只發送 Telegram，不改 HTML）
+    # 2.8 Buffett/CTO 分析（讀取報告嵌入 HTML，不手動維護）
     if buffett_cto_run is not None:
         print("[STEP] buffett_cto_analyzer")
         try:
             ok_bc = buffett_cto_run()
-            if not ok_bc:
-                print("[WARN] buffett_cto_analyzer 發送失敗，繼續推送")
+            if ok_bc:
+                print("[OK] buffett_cto_analyzer 完成")
+            else:
+                print("[WARN] buffett_cto_analyzer 發送失敗")
         except Exception as exc:
             print(f"[WARN] buffett_cto_analyzer 異常：{exc}")
+        
+        # 嵌入 Buffett/CTO 報告到 HTML
+        report_path = BASE / f"buffett_cto_report_{TODAY}.md"
+        if report_path.exists() and DAILY_REPORT.exists():
+            try:
+                html = DAILY_REPORT.read_text(encoding='utf-8')
+                bc_content = report_path.read_text(encoding='utf-8')
+                # Parse markdown-like content into HTML paragraphs
+                # Parse markdown-like content into HTML paragraphs
+                parts = []
+                parts.append('<div class="callout callout-bull">')
+                for line in bc_content.splitlines():
+                    line_stripped = line.strip()
+                    if not line_stripped:
+                        continue
+                    if line_stripped.startswith('【'):
+                        parts.append(f'<h3>{line_stripped}</h3>')
+                    elif line_stripped.startswith('•') or line_stripped.startswith('▸'):
+                        parts.append(f'{line_stripped}<br>')
+                    else:
+                        parts.append(f'{line_stripped}<br>')
+                parts.append('</div>')
+                bc_html = '\n'.join(parts)
+                
+                html = html.replace(
+                    '<!-- BUFFETT_CTO_PLACEHOLDER -->',
+                    bc_html
+                )
+                print("[OK] Buffett/CTO report embedded into HTML")
+            except Exception as exc:
+                print(f"[WARN] Buffett/CTO embed failed: {exc}")
     else:
         print("[SKIP] buffett_cto_analyzer 模組不存在")
 

@@ -1,0 +1,28 @@
+{
+  "updated_at": "2026-07-18",
+  "TAIEX": {
+    "current": 42671,
+    "prev_close": 45624,
+    "high_52w": 48218,
+    "low_52w": 22525,
+    "1_week_change_pct": -6.0,
+    "1_month_change_pct": -8.17,
+    "source": "TWSE/Yahoo Finance",
+    "prev_close_7d": 45381
+  },
+  "SOXX": {
+    "1_week_change_pct": -5.5,
+    "note": "費半跟隨美股科技股回檔"
+  },
+  "foreign_flow": {
+    "7d_net": "-215 億",
+    "direction": "sell"
+  },
+  "opportunity_bullet_status": "monitoring",
+  "trigger_status": {
+    "weekly_change_pct": -6.0,
+    "threshold": -15.0,
+    "triggered": false,
+    "note": "單週 -6.0%，距離觸發線 -15% 還有 9.0pp 空間"
+  }
+}

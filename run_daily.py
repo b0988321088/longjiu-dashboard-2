@@ -534,35 +534,65 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
             yesterday_snap = json.loads(candidates[0].read_text(encoding="utf-8"))
         except Exception:
             yesterday_snap = {}
-    buf_content = f"<strong>🧓 巴菲特式思考（規範：整體資產配置，非個股評論）</strong><br><strong>場景判定</strong>：{buf_scenario or scenario_event}<br>"
-    if buf_bull:
-        buf_content += f"• Bull：{buf_bull}<br>"
-    if buf_bear:
-        buf_content += f"• Bear：{buf_bear}<br>"
-    for a in buf_actions:
-        buf_content += f"• {a}<br>"
-    # Diff-driven Buffett narrative
-    diff_bullets = _diff_to_buffett_bullets(tv, yesterday_snap)
-    if diff_bullets:
-        buf_content += "<br><strong>📋  昨日差異帶來的行動啟示</strong><br>"
-        for b in diff_bullets:
-            buf_content += f"• {b}<br>"
-    # Allocation CTA
-    buf_content += "<br><strong>🤝 Buffett 派操作建議</strong><br>"
-    buf_content += f"• 淨資產：{net_worth:,.0f} TWD<br>"
-    buf_content += "• 建議部位：美股權益 ≤ 35%、台股權益 15-20%、高利活存/短債 ≥ 20%、保單/配息穩定型 ≥ 25%<br>"
-    buf_content += "• 今日動作：減碼美股權重、增加高利活存與防禦型配息部位；0050 配息縮水後缺口以 00878/00713 補位。<br>"
-    buf_content += "• 觸發條件：外資賣超 > 150 億 / 大盤跌 1.5% / 費半跌 2% / 跌破季線+量增 → 啟動減碼；外資買超 > 100 億 + 大盤漲 1% + 費半 +3% → 回補。"
+    # Buffett/CTO: 優先從 buffett_cto_report_{TODAY}.md 讀取，不手動維護
+    report_md = BASE / f"buffett_cto_report_{TODAY}.md"
+    if report_md.exists():
+        try:
+            md_text = report_md.read_text(encoding='utf-8')
+            buf_lines, cto_lines = [], []
+            current = None
+            for line in md_text.splitlines():
+                s = line.strip()
+                if s.startswith('【Buffett'):
+                    current = 'buffett'
+                    continue
+                elif s.startswith('【CTO'):
+                    current = 'cto'
+                    continue
+                elif s.startswith('【'):
+                    current = None
+                    continue
+                if current == 'buffett' and s:
+                    buf_lines.append(s)
+                elif current == 'cto' and s:
+                    cto_lines.append(s)
+            buf_content = '<br>'.join(buf_lines)
+            cto_content = '<br>'.join(cto_lines)
+        except Exception:
+            buf_content, cto_content = '', ''
+    else:
+        buf_content, cto_content = '', ''
+    
+    # Fallback to old logic if md report missing
+    if not buf_content:
+        buf_content = f"<strong>🧓 巴菲特式思考</strong><br>• 場景判定：{buf_scenario or scenario_event}<br>"
+        if buf_bull:
+            buf_content += f"• Bull：{buf_bull}<br>"
+        if buf_bear:
+            buf_content += f"• Bear：{buf_bear}<br>"
+        for a in buf_actions:
+            buf_content += f"• {a}<br>"
+        diff_bullets = _diff_to_buffett_bullets(tv, yesterday_snap)
+        if diff_bullets:
+            buf_content += "<br><strong>📋  昨日差異帶來的行動啟示</strong><br>"
+            for b in diff_bullets:
+                buf_content += f"• {b}<br>"
+        buf_content += "<br><strong>🤝 Buffett 派操作建議</strong><br>"
+        buf_content += f"• 淨資產：{net_worth:,.0f} TWD<br>"
+        buf_content += "• 建議部位：美股權益 ≤ 35%、台股權益 15-20%、高利活存/短債 ≥ 20%、保單/配息穩定型 ≥ 25%<br>"
+        buf_content += "• 今日動作：減碼美股權重、增加高利活存與防禦型配息部位；0050 配息縮水後缺口以 00878/00713 補位。<br>"
+        buf_content += "• 觸發條件：外資賣超 > 150 億 / 大盤跌 1.5% / 費半跌 2% / 跌破季線+量增 → 啟動減碼；外資買超 > 100 億 + 大盤漲 1% + 費半 +3% → 回補。"
 
-    # buffett placeholder injection handled above; now replace __BUFFETT_CONTENT__
+    if not cto_content:
+        cto_tech = cto.get("tech_stack", "—")
+        cto_risk = cto.get("risk", "—")
+        cto_action = cto.get("action", "—")
+        cto_signal = scenario.get("cto_signal", "")
+        if cto_signal:
+            cto_risk = f"今日觸發：{cto_signal}；{cto_risk}"
+        cto_content = f"<strong>🤖 CTO 技術視角</strong><br><strong>tech_stack</strong>：{cto_tech}<br><strong>今日最大風險</strong>：{cto_risk}<br><strong>建議動作</strong>：{cto_action}"
+
     html = html.replace("__BUFFETT_CONTENT__", buf_content)
-    cto_tech = cto.get("tech_stack", "—")
-    cto_risk = cto.get("risk", "—")
-    cto_action = cto.get("action", "—")
-    cto_signal = scenario.get("cto_signal", "")
-    if cto_signal:
-        cto_risk = f"今日觸發：{cto_signal}；{cto_risk}"
-    cto_content = f"<strong>🤖 CTO 技術視角</strong><br><strong>tech_stack</strong>：{cto_tech}<br><strong>今日最大風險</strong>：{cto_risk}<br><strong>建議動作</strong>：{cto_action}"
     html = html.replace("__CTO_TECH__", cto_content)
 
     return html
@@ -697,6 +727,14 @@ def main():
     print(f"[INTEL] {intel_result.get('file') or intel_result}")
     intel_text = mi_mod.load_latest_hunter()
     intel_signals = mi_mod.parse_hunter_signals(intel_text)
+
+    # 巴菲特/CTO 動態分析（產出報告，供 render_daily_report 讀取）
+    try:
+        from buffett_cto_analyzer import run as buffett_run
+        buffett_run()
+        print("[RUN_DAILY] buffett_cto_analyzer 報告產出完成")
+    except Exception as exc:
+        print(f"[WARN] buffett_cto_analyzer 失敗：{exc}")
 
     # 日報
     daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals)

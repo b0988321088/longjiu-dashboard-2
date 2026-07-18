@@ -10,7 +10,7 @@
   "monthly_expense": 141958,
   "working_surplus": 76144,
   "retirement_surplus": 18142,
-  "securities_total_market_value": 2328830,
+  "securities_total_market_value": 2158900,
   "insurance_current_value": 9876282,
   "fund_market_value": 783700,
   "moneybook_total": 3071343,
@@ -76,7 +76,7 @@
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_mb_override": 222910,
   "monthly_expense_snapshot_original": 141958,
-  "securities_total": 2224710,
+  "securities_total": 2208900,
   "funds_total": 783873,
   "insurance_total": 11791280,
   "last_calibration_sources": {
@@ -108,5 +108,375 @@
     "dividend": 17519,
     "as_of": "2026-07-18",
     "note": "自由PAY 3隻 + 一般申購 4隻，當日變化 -349 (-0.04%)"
+  },
+  "securities": {
+    "0050": {
+      "shares": 2000,
+      "price": 100.15,
+      "value": 200000,
+      "type": "台股50大权值"
+    },
+    "006208": {
+      "shares": 2000,
+      "price": 227.75,
+      "value": 455000,
+      "type": "台股50大权值"
+    },
+    "009816": {
+      "shares": 16000,
+      "price": 14.28,
+      "value": 228480,
+      "type": "台股TOP50分散"
+    },
+    "00981A": {
+      "shares": 4000,
+      "price": 26.43,
+      "value": 105720,
+      "type": "主动型台股增长"
+    },
+    "00984A": {
+      "shares": 10000,
+      "price": 14.8,
+      "value": 148000,
+      "type": "主动型高息"
+    },
+    "00878": {
+      "shares": 15000,
+      "price": 31.81,
+      "value": 477150,
+      "type": "ESG高股息"
+    },
+    "00919": {
+      "shares": 5000,
+      "price": 28.93,
+      "value": 144650,
+      "type": "金融股为主"
+    },
+    "00713": {
+      "shares": 2000,
+      "price": 60.25,
+      "value": 120500,
+      "type": "高股息低波"
+    },
+    "0056": {
+      "shares": 1000,
+      "price": 50.75,
+      "value": 50750,
+      "type": "高股息"
+    },
+    "00646": {
+      "shares": 1000,
+      "price": 76.05,
+      "value": 76050,
+      "type": "美股S&P500"
+    },
+    "009823": {
+      "shares": 10000,
+      "price": 10.32,
+      "value": 103200,
+      "type": "美股S&P500"
+    },
+    "009824": {
+      "shares": 10000,
+      "price": 9.94,
+      "value": 99400,
+      "type": "美股科技巨头"
+    }
+  },
+  "core_watchlist": {
+    "updated_at": "2026-07-18",
+    "note": "用戶常調動的核心標的，每季成分股可能調整，需定期追蹤",
+    "tw_equity_etf": [
+      {
+        "code": "0050",
+        "name": "元大台灣卓越50ETF",
+        "role": "台股權值基準",
+        "rebalance": "半年"
+      },
+      {
+        "code": "006208",
+        "name": "富邦台灣50ETF",
+        "role": "台股權值基準",
+        "rebalance": "半年"
+      },
+      {
+        "code": "009816",
+        "name": "凱基台灣TOP50ETF",
+        "role": "台股50大分散",
+        "rebalance": "半年"
+      },
+      {
+        "code": "00878",
+        "name": "國泰永續高股息ETF",
+        "role": "ESG高股息",
+        "rebalance": "半年"
+      },
+      {
+        "code": "00919",
+        "name": "群益台灣精選高息ETF",
+        "role": "金融股為主",
+        "rebalance": "季"
+      },
+      {
+        "code": "00713",
+        "name": "大華優利高填息30",
+        "role": "高股息低波動",
+        "rebalance": "季"
+      },
+      {
+        "code": "0056",
+        "name": "元大高股息ETF",
+        "role": "高股息",
+        "rebalance": "半年"
+      },
+      {
+        "code": "00981A",
+        "name": "主動統一台股增長",
+        "role": "主動型成長",
+        "rebalance": "季"
+      },
+      {
+        "code": "00984A",
+        "name": "主動安聯台灣高息",
+        "role": "主動型高息",
+        "rebalance": "季"
+      }
+    ],
+    "us_equity_etf": [
+      {
+        "code": "00646",
+        "name": "元大S&P500ETF",
+        "role": "美股大盤",
+        "rebalance": "季"
+      },
+      {
+        "code": "009823",
+        "name": "群益S&P500ETF",
+        "role": "美股大盤",
+        "rebalance": "季"
+      },
+      {
+        "code": "009824",
+        "name": "群益美國科技巨頭ETF",
+        "role": "美股科技七巨頭",
+        "rebalance": "季"
+      }
+    ],
+    "policy_funds": [
+      {
+        "code": "QL18610694",
+        "name": "安聯保單A",
+        "role": "核心保單",
+        "rebalance": "隨保單"
+      },
+      {
+        "code": "QL18488224",
+        "name": "安聯保單B",
+        "role": "核心保單",
+        "rebalance": "隨保單"
+      },
+      {
+        "code": "FJ33/FL65",
+        "name": "第一金保單",
+        "role": "配息養房貸",
+        "rebalance": "隨保單"
+      }
+    ],
+    "rebalance_alerts": {
+      "季調整": "每年 3/6/9/12 月檢查成分股是否有重大異動",
+      "0050半年度": "每年 6/12 月檢查名單異動",
+      "00919季調整": "每季檢查金融股權重是否失衡"
+    }
+  },
+  "saa_framework": {
+    "updated_at": "2026-07-18",
+    "description": "使用者主觀資產分類框架，用於穿透分析與動態再平衡",
+    "targets": {
+      "市值型成長": {
+        "target_pct": "30%",
+        "purpose": "長期資本增值",
+        "risk": "高",
+        "rebalance_trigger": "±10%",
+        "holdings": [
+          "0050",
+          "006208",
+          "009816",
+          "00981A",
+          "00984A",
+          "貝萊德A10",
+          "聯博美國成長",
+          "安聯AI收益成長",
+          "路博邁5G",
+          "台新美日台半導體",
+          "統一奔騰",
+          "009824"
+        ]
+      },
+      "債券型/防禦": {
+        "target_pct": "60%",
+        "purpose": "穩定配息+避險+退休現金流基石",
+        "risk": "低",
+        "rebalance_trigger": "±10%",
+        "holdings": [
+          "安聯保單A",
+          "安聯保單B",
+          "第一金FL65",
+          "PIMCO",
+          "摩根M&G",
+          "00878",
+          "00919",
+          "00713",
+          "0056",
+          "00646",
+          "009823"
+        ]
+      },
+      "流動資金/安全網": {
+        "target_pct": "10%",
+        "purpose": "生活保底+應急+機會子彈",
+        "risk": "極低",
+        "rebalance_trigger": "±5%",
+        "holdings": [
+          "高利活存",
+          "活期存款",
+          "現金部位"
+        ]
+      }
+    },
+    "note": "目標：成長30% + 防禦60% + 安全網10%。防禦內含配息型高股息+債券+保險保單",
+    "opportunity_bullet": {
+      "enabled": true,
+      "trigger_condition": "台股大盤跌幅 >= 15% 或 目標ETF回檔 >= 20%",
+      "deployment_speed": "分批進場，大跌後第1週進30%、第2週進70%",
+      "historical_evidence": "台股長年回檔後約2週內反弹",
+      "exit_condition": "反弹收益達 8-12% 或 1個月內未反弹則撤離",
+      "max_allocation": "機會子彈 ≤ 20% 安全網部位",
+      "note": "不是抄底，而是追反弹；嚴格止損"
+    }
+  },
+  "saa_targets": {
+    "growth": 0.3,
+    "defensive": 0.6,
+    "safety_net": 0.1,
+    "note": "安全網=機會子彈；防禦=配息+債券+保險；成長=台股+美股權值"
+  },
+  "tactical_rules": {
+    "opportunity_bullet_auto": true,
+    "panic_threshold_pct": 0.15,
+    "deploy_week1_pct": 0.3,
+    "deploy_week2_pct": 0.7,
+    "take_profit_pct": 0.1,
+    "stop_loss_days": 30,
+    "note": "單週漲跌15%為觸發點；大跌追反彈，大漲追確認趨勢",
+    "trigger": "單週漲跌幅 >= 15%",
+    "max_allocation": "機會子彈 ≤ 20% 安全網部位"
+  },
+  "penetration": {
+    "updated_at": "2026-07-18",
+    "source": "dashboard screenshot",
+    "targets": {
+      "市值型成長": 30.0,
+      "配息型高股息": 30.0,
+      "債券型防禦": 30.0,
+      "現金/安全網": 10.0
+    },
+    "actual_pct": {
+      "台股市值型成長": 7.2,
+      "美股市值型成長": 46.1,
+      "防守型配息": 18.5,
+      "債券及安全現金": 33.8
+    },
+    "gaps": {
+      "台股市值型成長": -32.8,
+      "美股市值型成長": 16.1,
+      "防守型配息": -11.5,
+      "債券及安全現金": 8.8
+    },
+    "alert": "美股暴露46.1%嚴重超標；台股7.2%極度低於目標40%",
+    "actual_twd": {
+      "台股市值型成長": 2065675,
+      "美股市值型成長": 13226058,
+      "防守型配息": 5307637,
+      "債券及安全現金": 9697196,
+      "現金/安全網": 2200410,
+      "不動產": 34000000
+    }
+  },
+  "penetration_canonical": {
+    "updated_at": "2026-07-18",
+    "source": "dashboard screenshot + buffett_cto_analyzer",
+    "total_invest_assets": 52249106,
+    "categories": {
+      "台股市值型成長": {
+        "twd": 2065675,
+        "pct": 7.2,
+        "target_pct": 40.0,
+        "status": "嚴重低標"
+      },
+      "美股市值型成長": {
+        "twd": 13226058,
+        "pct": 46.1,
+        "target_pct": 40.0,
+        "status": "嚴重超標"
+      },
+      "防守型配息": {
+        "twd": 5307637,
+        "pct": 18.5,
+        "target_pct": 30.0,
+        "status": "不足"
+      },
+      "債券及安全現金": {
+        "twd": 9697196,
+        "pct": 33.8,
+        "target_pct": 25.0,
+        "status": "超標"
+      },
+      "現金/安全網": {
+        "twd": 2200410,
+        "pct": 7.7,
+        "target_pct": 10.0,
+        "status": "略低"
+      },
+      "不動產": {
+        "twd": 34000000,
+        "pct": 51.1,
+        "target_pct": "N/A",
+        "status": "穩定"
+      }
+    },
+    "rebalance_summary": {
+      "growth_drift": "+23.3pp",
+      "defense_drift": "-41.5pp",
+      "safety_drift": "-6.7pp",
+      "action_required": "美股減碼、台股加碼、防禦補足、安全網重建"
+    },
+    "opportunity_bullet": {
+      "trigger": "單週漲跌幅 >= 15%",
+      "current_taiex_1w": "-6.5%",
+      "status": "監控中，未觸發"
+    }
+  },
+  "known_issues": [
+    {
+      "id": "issue-001",
+      "type": "cathay_bank_merge_impact",
+      "description": "國泰世華銀行併網後，MB 明細出現大量未分類交易（3,060,921 TWD，佔近30天 16.3%）",
+      "root_cause": "帳戶合併後分類規則未同步，導致消費分類標籤缺失",
+      "affected_value": "月支出計算",
+      "raw_mb_30d": 222910,
+      "canonical": 141958,
+      "status": "resolved",
+      "resolution": "以 snapshot 141,958 為真值；222,910 存入 history 備查",
+      "resolved_at": "2026-07-18"
+    }
+  ],
+  "monthly_expense_history": {
+    "historical_baseline": 140000,
+    "2026-07-14": 141958,
+    "2026-07-18_mb_raw_30d": 222910,
+    "2026-07-18_mb_classified": 141958,
+    "note": "222,910 為 MB 近30天未完全分類值（含未分類 3,060,921），不作為真值",
+    "canonical": 141958,
+    "updated_at": "2026-07-18"
   }
 }

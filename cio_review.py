@@ -132,15 +132,19 @@ def main() -> None:
         fail("7/17 轉貸倒數仍顯示 3 天")
     pass_check("7/17 轉貸倒數正確")
 
-    # 8. 巴菲特分析強化審查（必須有場景判定 + 建議部位 + 淨資產數字）
-    if "巴菲特" in daily and "Buffett 派操作建議" not in daily:
-        fail("巴菲特分析待補齊：缺少建議部位")
-    if "巴菲特" in daily and "淨資產" not in daily:
-        fail("巴菲特分析待補齊：缺少淨資產數字")
-    if "巴菲特" in daily:
-        buf_section = daily.split("巴菲特式思考")[1][:900] if "巴菲特式思考" in daily else daily.split("巴菲特")[1][:800]
-        if "TWD" not in buf_section:
+    # 8. 巴菲特分析強化審查（動態嵌入版：檢查結構完整而非硬編碼字串）
+    if "巴菲特視角建議" in daily:
+        buf_part = daily.split("巴菲特視角建議")[1][:1200]
+        if "場景判定" not in buf_part:
+            fail("巴菲特分析待補齊：缺少場景判定")
+        if "淨資產" not in buf_part:
+            fail("巴菲特分析待補齊：缺少淨資產數字")
+        if "TWD" not in buf_part:
             fail("巴菲特分析待補齊：缺少可驗證的數字錠定")
+        if "建議" not in buf_part and "減碼" not in buf_part and "補碼" not in buf_part:
+            fail("巴菲特分析待補齊：缺少動態建議")
+    else:
+        fail("巴菲特分析待補齊：缺少巴菲特視角建議區塊")
     pass_check("巴菲特分析完整（場景判定 + 建議部位 + 淨資產數字）")
 
     # 8.5 CTO 技術視角強化審查

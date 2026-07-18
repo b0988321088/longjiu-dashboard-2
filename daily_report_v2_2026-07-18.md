@@ -181,38 +181,8 @@
       • 美股權益不宜再加碼（含保單曝險≈46.1%，嚴重超標 35%）
     </div>
 
-    <h3>🧓 巴菲特視角建議（2026-07-18）</h3>
-    <div class="callout callout-bull">
-      <strong>場景判定：台股重挫 -6.47%，啟動減碼防禦</strong><br>
-      • <strong>能力圈</strong>：台股證券部位僅 4.7%，熟悉市場卻低持有量，是最大認知偏差。<br>
-      • <strong>安全邊際</strong>：美國 CPI 3.5% &lt; 預期 3.8%、Core 2.6% &lt; 預期 2.8%，降息路徑升溫，對高利活存與債券部位是雙重利多（債券价格上涨，高利活存利率或下滑）。<br>
-      • <strong>長期持有</strong>：00646 / 009823 / 009824 長期向上，但 46.1% 美股曝險已違反分散原則。<br>
-      &nbsp;&nbsp;-> 結論：持有但不加碼，考慮適度獲利了結轉台股/防守。<br>
-      • <strong>配息品質</strong>：本月保單配息 69,044（安聯 55,451 + 第一金 13,593）為退休現金流基石。<br>
-      &nbsp;&nbsp;-> 0050 縮水後缺口由 00878/00713 補位；0056 凍結中，等解押再評估。<br>
-      &nbsp;&nbsp;-> 00878/00713 維持並視情況略增。<br>
-      <br>
-      <strong>🤝 Buffett 派操作建議（今日）</strong><br>
-      • 減碼美股權重至 ≤ 35%，優先降科技股曝險<br>
-      • 0050 配息縮水後缺口以 00878/00713 補位<br>
-      • 保留高利活存部位，等待恐慌賣壓結束後進場台股<br>
-      • 保單配息為退休現金流基石，不宜隨便轉換<br>
-      • 觸發條件：外資賣超 &gt; 150 億 / 大盤跌 1.5% / 費半跌 2% / 跌破季線+量增 → 減碼；外資買超 &gt; 100 億 + 大盤漲 1% + 費半 +3% → 回補。
-    </div>
-
-    <h3>🤖 CTO 技術視角（2026-07-18）</h3>
-    <div class="callout callout-bear">
-      <strong>今日最大風險：台股加權 -6.47%；台積電 -7.29%；外資賣壓持續</strong><br>
-      • <strong>tech_stack</strong>：半導體重挫，台積電法說會後資金卡位失敗，大盤單日崩跌創近期最大單日跌幅。<br>
-      • <strong>系統面</strong>：snapshot.json 證券總市值 2,328,830（較 Ledger 2,362,120 下修 33,290），基金 783,873（-14,713）。差異 &lt; 0.1%，無需恐慌。<br>
-      • <strong>建議動作</strong>：縮短 holding period，優先保留現金，觀望季線支撐；0051 買單已在排程，待回穩後進場。<br>
-      • <strong>MCP 金融伺服器</strong>：對接測試持續 blocked，本週五復盤前需 CTO 核發端點/金鑰。
-    </div>
-  </div>
-
-
-  <!-- 3/5 保單接力引擎 -->
-  <div class="card">
+        <!-- BUFFETT_CTO_PLACEHOLDER -->
+<div class="card">
     <h2>3/5｜保單接力引擎 Insurance Relay Engine</h2>
     <div class="label">三站轉換時序監控</div>
     <p class="text-lead"><strong>本月配息合計：69,044 TWD</strong></p>
@@ -427,7 +397,7 @@
 
     <h3>巴菲特視角建議</h3>
     <div class="callout callout-bull">
-      <strong>🧓 巴菲特式思考（規範：整體資產配置，非個股評論）</strong><br><strong>場景判定</strong>：台股重挫，啟動減碼防禦<br>• Bull：台股超跌後常出現技術性反彈，但今日不抄底，保留高利活存與现金<br>• Bear：台股加權大跌 -6.47%; 台積電大跌 -7.29%<br>• 減碼美股權益至35%以下，優先降科技股曝險<br>• 0050若配息縮水，缺口以 00878/00713 補位<br>• 保留高利活存部位，等待恐慌賣壓结束後進場<br>• 保單配息為退休現金流基石，不宜隨便轉換<br><br><strong>📋  昨日差異帶來的行動啟示</strong><br>• 月支出上升（222,910 vs 昨日 141,958）：支出上升時優先檢視信用卡/房貸是否異常<br><br><strong>🤝 Buffett 派操作建議</strong><br>• 淨資產：28,689,930 TWD<br>• 建議部位：美股權益 ≤ 35%、台股權益 15-20%、高利活存/短債 ≥ 20%、保單/配息穩定型 ≥ 25%<br>• 今日動作：減碼美股權重、增加高利活存與防禦型配息部位；0050 配息縮水後缺口以 00878/00713 補位。<br>• 觸發條件：外資賣超 > 150 億 / 大盤跌 1.5% / 費半跌 2% / 跌破季線+量增 → 啟動減碼；外資買超 > 100 億 + 大盤漲 1% + 費半 +3% → 回補。
+      <strong>🧓 巴菲特式思考（規範：整體資產配置，非個股評論）</strong><br><strong>場景判定</strong>：台股重挫，啟動減碼防禦<br>• Bull：台股超跌後常出現技術性反彈，但今日不抄底，保留高利活存與现金<br>• Bear：台股加權大跌 -6.47%; 台積電大跌 -7.29%<br>• 減碼美股權益至35%以下，優先降科技股曝險<br>• 0050若配息縮水，缺口以 00878/00713 補位<br>• 保留高利活存部位，等待恐慌賣壓结束後進場<br>• 保單配息為退休現金流基石，不宜隨便轉換<br><br><strong>📋  昨日差異帶來的行動啟示</strong><br>• 月支出平穩（141,958）：支出上升時優先檢視信用卡/房貸是否異常<br><br><strong>🤝 Buffett 派操作建議</strong><br>• 淨資產：28,689,930 TWD<br>• 建議部位：美股權益 ≤ 35%、台股權益 15-20%、高利活存/短債 ≥ 20%、保單/配息穩定型 ≥ 25%<br>• 今日動作：減碼美股權重、增加高利活存與防禦型配息部位；0050 配息縮水後缺口以 00878/00713 補位。<br>• 觸發條件：外資賣超 > 150 億 / 大盤跌 1.5% / 費半跌 2% / 跌破季線+量增 → 啟動減碼；外資買超 > 100 億 + 大盤漲 1% + 費半 +3% → 回補。
     </div>
 
     <h3>CTO 技術視角</h3>
@@ -515,7 +485,7 @@
 <div class="card">
   <h2>📊 差異分析</h2>
   <div class="table-wrap" style="background:#fff;">
-    <div style="padding:8px 12px;font-size:15px;line-height:1.6;"><div class='card'><h2>📊 差異分析</h2><div style='font-size:14px;line-height:1.7;'><h2 style='font-size:18px;font-weight:800;margin:8px 0 4px;'>龍九日報 changelog 2026-07-18</h2><h3 style='font-size:16px;font-weight:800;margin:8px 0 4px;'>差異分析 (今日 vs 昨日)</h3><ul style='padding-left:18px;'><li>**總資產**：50,689,930（= 無變化）</li><li>**淨資產**：28,689,930（= 無變化）</li><li>**月收入**：218,102（= 無變化）</li><li>**月支出**：222,910（昨日 141,958，變動 80,952）</li><li>**工作期盈餘**：76,144（= 無變化）</li><li>**退休後盈餘**：18,142（= 無變化）</li><li>**保單現值**：9,876,282（= 無變化）</li><li>**本月配息**：69,044（昨日無紀錄）</li><li>**新增章節**：市場動態分析（2026-07-18 即時）、龍九日報 changelog 2026-07-18</li><li>**消失章節**：市場動態分析（2026-07-17 即時）、龍九日報 changelog 2026-07-17</li><li>**版面**：今日縮編資產/現金流/行事曆為摘要卡</li></ul><h3 style='font-size:16px;font-weight:800;margin:8px 0 4px;'>真值錠定</h3><ul style='padding-left:18px;'><li>總資產：50,689,930 TWD</li><li>保單現值：9,876,282 TWD</li><li>月收入：218,102 / 月支出：222,910</li><li>工作期盈餘：+76,144 / 退休後盈餘：+18,142</li></ul><h3 style='font-size:16px;font-weight:800;margin:8px 0 4px;'>待補齊</h3><ul style='padding-left:18px;'><li>0050 配息：待 MB 確認</li><li>月支出明細：信用卡拆分各 card 金額</li></ul></div></div></div>
+    <div style="padding:8px 12px;font-size:15px;line-height:1.6;"><div class='card'><h2>📊 差異分析</h2><div style='font-size:14px;line-height:1.7;'><h2 style='font-size:18px;font-weight:800;margin:8px 0 4px;'>龍九日報 changelog 2026-07-18</h2><h3 style='font-size:16px;font-weight:800;margin:8px 0 4px;'>差異分析 (今日 vs 昨日)</h3><ul style='padding-left:18px;'><li>**總資產**：50,689,930（= 無變化）</li><li>**淨資產**：28,689,930（= 無變化）</li><li>**月收入**：218,102（= 無變化）</li><li>**月支出**：141,958（基準值）</li><li>**工作期盈餘**：76,144（= 無變化）</li><li>**退休後盈餘**：18,142（= 無變化）</li><li>**保單現值**：9,876,282（= 無變化）</li><li>**本月配息**：69,044（昨日無紀錄）</li><li>**新增章節**：市場動態分析（2026-07-18 即時）、龍九日報 changelog 2026-07-18</li><li>**消失章節**：市場動態分析（2026-07-17 即時）、龍九日報 changelog 2026-07-17</li><li>**版面**：今日縮編資產/現金流/行事曆為摘要卡</li></ul><h3 style='font-size:16px;font-weight:800;margin:8px 0 4px;'>真值錠定</h3><ul style='padding-left:18px;'><li>總資產：50,689,930 TWD</li><li>保單現值：9,876,282 TWD</li><li>月收入：218,102 / 月支出：141,958</li><li>工作期盈餘：+76,144 / 退休後盈餘：+18,142</li></ul><h3 style='font-size:16px;font-weight:800;margin:8px 0 4px;'>待補齊</h3><ul style='padding-left:18px;'><li>0050 配息：待 MB 確認</li><li>月支出明細：信用卡拆分各 card 金額</li></ul></div></div></div>
   </div>
 </div>
 
