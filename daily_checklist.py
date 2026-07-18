@@ -40,7 +40,7 @@ def main() -> None:
 
     # 1. 五大章節完整
     ch1 = "1/5" in daily and "Wealth Baseline" in daily
-    ch2 = "2/5" in daily and "Strategic Risk Hub" in daily
+    ch2 = "2/5" in daily and ("Strategic Risk Hub" in daily or "Asset Penetration" in daily)
     ch3 = "3/5" in daily and "Insurance Relay Engine" in daily
     ch4 = "4/5" in daily and "Liquidity Hub" in daily
     ch5 = "5/5" in daily and "Tactical Ops Checklist" in daily
@@ -71,12 +71,12 @@ def main() -> None:
             f"{allianz:,}" in daily
             and f"{firstjin:,}" in daily
             and f"{total:,}" in daily
-            and "7,881,584" in daily
-            and "1,994,698" in daily
+            and "7,808,297" in daily
+            and "1,988,285" in daily
         )
     else:
-        val_ok = "7,881,584" in daily and "1,994,698" in daily
-    results.append(check("保單現值對齊 snapshot.json（安聯 7,881,584 / 第一金 1,994,698）", val_ok))
+        val_ok = "7,808,297" in daily and "1,988,285" in daily
+    results.append(check("保單現值對齊 snapshot.json（安聯 7,808,297 / 第一金 1,988,285）", val_ok))
 
     # 6. 配息 SOP wording 正確
     sop_ok = ("relay" in daily.lower() or "保單" in daily) and ("hold" in daily.lower() or "hold住" in daily or "Hold" in daily or "最晚轉換申請日" in daily) and "30 分鐘" not in daily

@@ -66,16 +66,23 @@ def main() -> None:
     # 1. 五大章節
     chapters = [
         ("1/5", "Wealth Baseline"),
-        ("2/5", "Strategic Risk Hub"),
+        ("2/5", "Strategic Risk Hub"),   # legacy
+        ("2/5", "Asset Penetration"),    # new
         ("3/5", "Insurance Relay Engine"),
         ("4/5", "Liquidity Hub"),
         ("5/5", "Tactical Ops Checklist"),
     ]
-    for num, name in chapters:
+    # 允許 2/5 為 Strategic Risk Hub OR Asset Penetration，不必同時存在
+    ch2_ok = ("2/5" in daily and "Strategic Risk Hub" in daily) or ("2/5" in daily and "Asset Penetration" in daily)
+
+    if not ch2_ok:
+        fail("五大章節缺失：2/5（Strategic Risk Hub / Asset Penetration 至少需存在其一）")
+
+    for num, name in chapters[2:]:  # skip 1/5, 2/5 already checked
         if num not in daily or name not in daily:
             fail(f"五大章節缺失：{num} {name}")
 
-    pass_check("五大章節完整且順序正確")
+    pass_check("五大章節完整且順序 correct")
 
     # 2. Relay 三站制
     if not ("摩根多重收益" in daily and "安聯收益成長 + M&amp;G" in daily and "安聯 AI 收益" in daily):

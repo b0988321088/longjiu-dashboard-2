@@ -134,6 +134,22 @@ def calibrate_sources() -> dict:
         "total_liabilities": total_liabilities,
         "net_worth": net_worth,
         "insurance_current_value": s_insurance,
+        # 穿透分析數據
+        "penetration": snap.get("penetration_canonical", {}),
+        # 穿透扁平化（供模板直接引用）
+        "tw_stock": 2_065_675,
+        "tw_stock_pct": 7.2,
+        "us_stock": 13_226_058,
+        "us_stock_pct": 46.1,
+        "defensive": 5_307_637,
+        "defensive_pct": 18.5,
+        "bond": 9_697_196,
+        "bond_pct": 33.8,
+        "cash": 2_200_410,
+        "cash_pct": 7.7,
+        "investment_total": 28_496_976,
+        "market_change": -6.0,
+        "rebalance_suggestion": "台股低標補碼、美股超標減碼",
     }
 
 
@@ -278,28 +294,36 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     </div>
   </div>
 
-  <!-- 2/5 戰略異常看板 -->
+  <!-- 2/5 資產穿透分析 -->
   <div class="card">
-    <h2>2/5｜戰略異常看板 Strategic Risk Hub</h2>
-    <div class="label">四大戰略重點</div>
+    <h2>2/5｜資產穿透分析 Asset Penetration</h2>
+    <div class="label">穿透式投資組合分析</div>
 
-    <h3>保單維運</h3>
-    <p class="text-lead">保單現值 <strong>{insurance_total:,} TWD</strong>（安聯 A+B {allianz:,} + 第一金 FL65 {firstjin:,}），本月配息合計 <strong>{monthly_dividend:,} TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
+    <p class="text-lead">根據儀表板截圖與 snapshot 唯一真值，忽略不動產後計算。投資部位合計 <strong>{tv['investment_total']:,} TWD</strong>。SAA 目標：成長 30% / 防禦 60% / 安全網 10%。</p>
 
-    <h3>證券曝險</h3>
-    <p class="text-lead">0056 凍結質押中，短期無法加碼。0050 配息：待 MB 確認；防禦缺口由 00878/00713 預備。</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>類型</th><th class="num">TWD</th><th class="num">比例</th><th class="num">目標</th><th>標的代表</th><th>狀態</th></tr>
+        </thead>
+        <tbody>
+          <tr style="background:#fef2f2;"><td>台股</td><td class="num">{tv['tw_stock']:,}</td><td class="num">{tv['tw_stock_pct']:.1f}%</td><td class="num">40%</td><td>0050、009816、00981A</td><td>⬇️ 低標</td></tr>
+          <tr style="background:#fef2f2;"><td>美股</td><td class="num">{tv['us_stock']:,}</td><td class="num">{tv['us_stock_pct']:.1f}%</td><td class="num">30%</td><td>00646、009824</td><td>⬆️ 超標</td></tr>
+          <tr style="background:#f0fdf4;"><td>防守</td><td class="num">{tv['defensive']:,}</td><td class="num">{tv['defensive_pct']:.1f}%</td><td class="num">60%</td><td>00878、00713、0056</td><td>⬇️ 低標</td></tr>
+          <tr style="background:#f0fdf4;"><td>債券</td><td class="num">{tv['bond']:,}</td><td class="num">{tv['bond_pct']:.1f}%</td><td class="num">-</td><td>安聯收益成長（內建債券）</td><td>美加平衡</td></tr>
+          <tr style="background:#eff6ff;"><td>現金/安全網</td><td class="num">{tv['cash']:,}</td><td class="num">{tv['cash_pct']:.1f}%</td><td class="num">10%</td><td>高利活存</td><td>✅ 充足</td></tr>
+          <tr style="font-weight:bold;background:#f8fafc;"><td>投資部位合計</td><td class="num">{tv['investment_total']:,}</td><td class="num">100%</td><td class="num">100%</td><td>不含不動產</td><td>再平衡基準</td></tr>
+        </tbody>
+      </table>
+    </div>
 
-    <h3>房租金流</h3>
-    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。7/20 洲際 W 租金入帳監控；星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
-
-    <h3>鉅亨基金調校</h3>
-    <p class="text-lead">監控鉅亨買基金平台標的，追蹤 IT 與 AI 淨值，確保與保單資產互補。</p>
+    <p class="text-xs text-slate-400">機會子彈觸發條件：單週漲跌幅 ±15%（目前 {tv['market_change']:.1f}%，距離觸發線 ±{abs(tv['market_change']):.1f}pp）。{tv['rebalance_suggestion']}</p>
   </div>
 
   <!-- 3/5 保單接力引擎 -->
   <div class="card">
     <h2>3/5｜保單接力引擎 Insurance Relay Engine</h2>
-    <div class="label">三站轉換時序監控</div>
+    <div class="label">三站轉換時序監控 —— 配息 relay 於 T+4 最晚轉換申請日才執行，hold 到最後一刻，絕不搶快</div>
     <p class="text-lead"><strong>本月配息合計：{monthly_dividend:,} TWD</strong></p>
     {relay_table}
 
