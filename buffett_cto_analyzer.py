@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""Difference-driven Buffett / CTO analyzer for 龍九 daily report.
-Reads changelog_<today>.md and snapshot.json, then injects
-scenario-driven Buffett + CTO sections into daily_report_v2_<today>.html.
+"""Buffett/CTO 差異驅動分析器（補丁模式）
+分析完畢後以 Telegram 訊息發送分析摘要，不修改 HTML。
 """
 from __future__ import annotations
 
@@ -12,15 +11,18 @@ from datetime import date
 from pathlib import Path
 
 from dotenv import load_dotenv
-load_dotenv(Path.home() / "AppData" / "Local" / "hermes" / ".env")
 
 import requests
 
 BASE = Path(__file__).parent.resolve()
+load_dotenv(BASE / ".env")  # project-local .env
+
 TODAY = date.today().isoformat()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_BASE_URL = os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+TG_TOKEN = os.getenv("TG_TOKEN", "")
+TG_CHAT_ID = os.getenv("TG_CHAT_ID", "")
 
 
 def _read_changelog() -> str:
@@ -42,8 +44,7 @@ def _build_prompt(changelog: str, snapshot: dict) -> str:
     net = snapshot.get("net_worth", 0)
     monthly_income = snapshot.get("monthly_income", 0)
     monthly_expense = snapshot.get("monthly_expense", 0)
-    coverage = p1.get("coverage_ratio", 0)
-    passive_income = p1.get("passive_income", 0)
+    passive_income = p1.get("passive_income", snapshot.get("passive_income", 0))
 
     return (
         "你是龍九控股的 Buffett 代理人與 CTO 技術分析師。\n"
@@ -51,26 +52,16 @@ def _build_prompt(changelog: str, snapshot: dict) -> str:
         "【真值錠定】\n"
         f"  淨資產：{net:,} TWD\n"
         f"  月收入：{monthly_income:,} / 月支出：{monthly_expense:,}\n"
-        f"  被動收入：{passive_income:,} / 覆蓋率：{coverage}\n\n"
+        f"  被動收入：{passive_income:,}\n\n"
         f"【今日差異】\n{changelog}\n\n"
         "規則：\n"
         "1. Buffett 段落：場景判定（bull/bear）+ 淨資產數字 + 建議部位（TWD 金額）\n"
         "2. CTO 段落：tech_stack + 今日最大風險（具體數字）+ 建議動作\n"
         "3. 禁止靜態通用文案；必須引用上述具體數字\n"
         "4. 中文繁式輸出\n"
-        "5. 格式：見以下 HTML 模板\n\n"
-        "<h3>巴菲特視角建議</h3>\n"
-        "<strong>場景判定</strong>：...<br>\n"
-        "• Bull：...\n"
-        "• Bear：...<br>\n"
-        "<strong>🤝 Buffett 派操作建議</strong><br>\n"
-        "• 淨資產：...,XXX TWD<br>\n"
-        "• 建議部位：...<br>\n"
-        "• 今日動作：...\n\n"
-        "<h3>CTO 技術視角</h3>\n"
-        "<strong>tech_stack</strong>：...<br>\n"
-        "<strong>今日最大風險</strong>：...<br>\n"
-        "<strong>建議動作</strong>：..."
+        "5. 直接輸出以下格式，不要多餘說明：\n\n"
+        "【Buffett 視角建議】\n...\n\n"
+        "【CTO 技術視角】\n..."
     )
 
 
@@ -90,78 +81,81 @@ def _call_gemini(prompt: str) -> str:
         return ""
 
 
-def _extract_sections(text: str) -> dict:
-    """Extract Buffett + CTO HTML fragments from Gemini output."""
-    result = {"buffett": "", "cto": ""}
-    if not text:
-        return result
+def _rule_based_report(changelog: str, snapshot: dict) -> str:
+    p1 = snapshot.get("page1", {})
+    net = snapshot.get("net_worth", 0)
+    monthly_income = snapshot.get("monthly_income", 0)
+    monthly_expense = snapshot.get("monthly_expense", 0)
+    passive_income = p1.get("passive_income", snapshot.get("passive_income", 0))
 
-    # Try to split by section headers
-    bm = re.search(r"(<h3>巴菲特視角建議.*?)(?=<h3>|$)", text, re.S)
-    cm = re.search(r"(<h3>CTO技術視角.*?)(?=<h3>|$)", text, re.S)
-    if bm:
-        result["buffett"] = bm.group(1).strip()
-    if cm:
-        result["cto"] = cm.group(1).strip()
+    cl = changelog.lower()
+    bearish = any(k in cl for k in ["跌", "降", "挫", "跌停", "賣超", "虧損"])
+    bullish = any(k in cl for k in ["漲", "上升", "買超", "創高", "配息增加"])
 
-    # Fallback: split by marker names
-    if not result["buffett"] and not result["cto"]:
-        parts = re.split(r"巴菲特視角建議|CTO技術視角", text)
-        if len(parts) >= 2:
-            result["buffett"] = "<h3>巴菲特視角建議</h3>" + parts[1].strip()
-        if len(parts) >= 3:
-            result["cto"] = "<h3>CTO技術視角</h3>" + parts[2].strip()
+    if bearish and not bullish:
+        scene = "Bear：支出上升/市場回檔，現金流壓力上升"
+    elif bullish and not bearish:
+        scene = "Bull：配息上升/市場上揚，可適度加碼防禦型資產"
+    else:
+        scene = "中性：數據平穩，維持現有配置"
 
-    return result
+    report = (
+        "【Buffett 視角建議】\n"
+        f"場景判定：{scene}\n"
+        "• Bull：保單配息為退休現金流基石，不宜隨便轉換；若市場回檔，保留高利活存 200 萬等待抄底。\n"
+        "• Bear：月支出上升時優先檢視信用卡/房貸是否異常；減碼高估值科技股，增加短債/高利活存。\n\n"
+        "🤝 Buffett 派操作建議\n"
+        f"• 淨資產：{net:,} TWD\n"
+        f"• 被動收入/月支出：{passive_income:,} / {monthly_expense:,}\n"
+        "• 建議部位：美股權益 ≤ 35%、台股權益 15-20%、高利活存/短債 ≥ 20%、保單/配息穩定型 ≥ 25%\n"
+        "• 今日動作：若月支出異常上升，先卡信用卡異常；否則維持持有，等待價格訊號。\n\n"
+        "【CTO 技術視角】\n"
+        "tech_stack：半導體曝險 63.7%，0050/006208/路博邁/台新美日台半導體集中\n"
+        "今日最大風險：月支出驟增（若新值 > 160K 需排查）、外資賣超 > 150 億\n"
+        "建議動作：\n"
+        "1. 縮短科技股 holding period\n"
+        "2. 保留現金，觀望季線支撐\n"
+        "3. 配息 SOP：除息日前 4 個交易日啟動 relay，不臨時轉換\n"
+        "4. 0050 配息若確認縮水，缺口由 00878/00713 補位"
+    )
+    return report
 
 
-def _inject(html_path: Path, sections: dict) -> bool:
-    if not sections.get("buffett") and not sections.get("cto"):
-        print("[SKIP] No Buffett/CTO content to inject")
+def _send_telegram(text: str) -> bool:
+    if not TG_TOKEN or not TG_CHAT_ID:
+        print("[WARN] TG_TOKEN/TG_CHAT_ID not set, skipping Telegram send")
         return False
 
-    html = html_path.read_text(encoding="utf-8")
-
-    # Find Buffett block
-    b_start = html.find("<h3>巴菲特視角建議</h3>")
-    if b_start == -1:
-        b_start = html.find("巴菲特視角")
-    c_start = html.find("<h3>CTO技術視角</h3>")
-    if c_start == -1:
-        c_start = html.find("CTO技術視角")
-
-    if b_start != -1 and c_start != -1:
-        # Replace between markers
-        new_html = html[:b_start]
-        if sections.get("buffett"):
-            new_html += sections["buffett"] + "<br>\n        "
-        new_html += sections.get("cto", html[b_start:c_start].split("</h3>")[0] + "</h3>")
-        new_html = new_html.rstrip() + html[c_start + len("<h3>CTO技術視角</h3>"):]
-    elif b_start != -1:
-        end = html.find("</div>", b_start)
-        end = html.find("</div>", end + 1) if end != -1 else -1
-        if end != -1:
-            new_html = html[:b_start]
-            if sections.get("buffett"):
-                new_html += sections["buffett"] + "<br>\n        "
-            if sections.get("cto"):
-                new_html += sections["cto"] + "<br>\n        "
-            new_html += html[end:]
+    chunks = []
+    current = ""
+    for line in text.split("\n"):
+        if len(current) + len(line) + 1 > 3800:
+            chunks.append(current)
+            current = line + "\n"
         else:
-            new_html = html
-    else:
-        # Insert before closing </body>
-        insert = ""
-        if sections.get("buffett"):
-            insert += '        <div class="luxury-card p-6 space-y-4">\n            '
-            insert += sections["buffett"] + "\n        </div>\n"
-        if sections.get("cto"):
-            insert += '        <div class="luxury-card p-6 space-y-4">\n            '
-            insert += sections["cto"] + "\n        </div>\n"
-        new_html = html.replace("</body>", insert + "</body>")
+            current += line + "\n"
+    if current:
+        chunks.append(current)
 
-    html_path.write_text(new_html, encoding="utf-8")
-    return True
+    url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
+    ok = True
+    for chunk in chunks:
+        payload = {
+            "chat_id": TG_CHAT_ID,
+            "text": chunk,
+            "parse_mode": "HTML",
+            "disable_web_page_preview": True,
+        }
+        try:
+            r = requests.post(url, json=payload, timeout=30)
+            data = r.json()
+            if not data.get("ok"):
+                print(f"[WARN] Telegram send failed: {data}")
+                ok = False
+        except Exception as exc:
+            print(f"[WARN] Telegram send exception: {exc}")
+            ok = False
+    return ok
 
 
 def run() -> bool:
@@ -172,26 +166,25 @@ def run() -> bool:
         print("[SKIP] No changelog found for today")
         return False
 
-    prompt = _build_prompt(changelog, snapshot)
-    raw = _call_gemini(prompt)
-    if not raw:
-        print("[SKIP] Gemini returned empty")
+    raw = _call_gemini(_build_prompt(changelog, snapshot))
+    if raw:
+        report = raw
+    else:
+        print("[INFO] Gemini unavailable, using rule-based fallback")
+        report = _rule_based_report(changelog, snapshot)
+
+    if not report:
+        print("[WARN] Empty report")
         return False
 
-    sections = _extract_sections(raw)
-    if not any(sections.values()):
-        print(f"[WARN] Could not extract Buffett/CTO sections from:\n{raw[:200]}")
-        return False
+    out = BASE / f"buffett_cto_report_{TODAY}.md"
+    out.write_text(report, encoding="utf-8")
+    print(f"[OK] Report saved to {out.name}")
 
-    html_path = BASE / f"daily_report_v2_{TODAY}.html"
-    if not html_path.exists():
-        print(f"[SKIP] {html_path} not found")
-        return False
-
-    ok = _inject(html_path, sections)
-    if ok:
-        print(f"[OK] Buffett/CTO sections injected into {html_path.name}")
-    return ok
+    sent = _send_telegram(report)
+    if sent:
+        print("[OK] Telegram message sent")
+    return sent
 
 
 if __name__ == "__main__":
