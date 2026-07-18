@@ -96,7 +96,13 @@
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
   "real_liquid_assets": 6890791,
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
-  "passive_income": 152898,
+  "passive_income": {
+    "rent_total": 82200,
+    "fund_dividend_conservative": 72798,
+    "fund_dividend_actual": 17519,
+    "total_conservative": 154998,
+    "coverage_ratio": 1.0918581552290114
+  },
   "fund_dividend_monthly": 17519,
   "allianz_policy_a_value": 5079576,
   "allianz_policy_b_value": 2728721,
@@ -478,5 +484,12 @@
     "canonical": 141958,
     "updated_at": "2026-07-18"
   },
-  "last_calibrated": "2026-07-18T23:32:20.998223+08:00"
+  "last_calibrated": "2026-07-18T23:32:20.998223+08:00",
+  "rent_monthly_total": 82200,
+  "rent_breakdown": {
+    "大義街店面": 24000,
+    "大義街二三樓": 23100,
+    "洲際W": 33000,
+    "管理費": 2100
+  }
 }
