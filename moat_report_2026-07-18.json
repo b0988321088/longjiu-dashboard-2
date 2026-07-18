@@ -3,9 +3,10 @@
   "moat": {
     "runway_months": 357.1,
     "liquid_runway_months": 15.5,
-    "coverage_ratio": 1.1278,
+    "coverage_ratio": 1.0771,
     "debt_ratio_pct": 43.4,
     "semiconductor_exposure_pct": 63.7,
     "alert": []
-  }
+  },
+  "passive_income_source": "mb_2month_mean_conservative"
 }
