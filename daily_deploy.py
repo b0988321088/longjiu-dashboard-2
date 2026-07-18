@@ -136,7 +136,7 @@ def telegram_push(text: str, actions: list | None = None) -> bool:
     import requests
 
     url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
-    payload = {"chat_id": TG_CHAT_ID, "text": text, "parse_mode": "Markdown"}
+    payload = {"chat_id": TG_CHAT_ID, "text": text, "parse_mode": "HTML", "disable_web_page_preview": True}
 
     if actions:
         rows = []

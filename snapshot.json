@@ -12,7 +12,7 @@
   "retirement_surplus": 18142,
   "securities_total_market_value": 2328830,
   "insurance_current_value": 9876282,
-  "fund_market_value": 858328,
+  "fund_market_value": 783700,
   "moneybook_total": 3071343,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": 500000,
@@ -64,8 +64,8 @@
   "cc_mid": 38000,
   "cc_high": 42000,
   "firstjin_fl65_current_value": 1994698,
-  "allianz_ab_current_value": 7881584,
-  "firstjin_current_value": 1994698,
+  "allianz_ab_current_value": 7808297,
+  "firstjin_current_value": 1988285,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
   "bank_assets_moneybook": 3866208,
@@ -76,9 +76,9 @@
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_mb_override": 222910,
   "monthly_expense_snapshot_original": 141958,
-  "securities_total": 2240710,
+  "securities_total": 2224710,
   "funds_total": 783873,
-  "insurance_total": 9876282,
+  "insurance_total": 11791280,
   "last_calibration_sources": {
     "securities": "凱基證券截圖 2026-07-18 02:00",
     "funds": "鉅亨基金截圖 2026-07-18 02:03",
@@ -86,17 +86,27 @@
     "insurance": "Company_Ledger.md + 第一金 7/14 配息 update"
   },
   "funds_breakdown": {
-    "路博邁5G_累積": 235840,
-    "路博邁5G_月配": 87790,
-    "0050連結_A不配息": 103415,
+    "台新美日台半導體A-日圓": 647977,
+    "台中銀台灣優息B配息": 46264,
+    "路博邁5G股票T月配": 87790,
+    "路博邁5G股票T累積": 235840,
+    "0050連結A不配息": 103415,
     "0050連結_B配息": 44914,
-    "統一奔騰": 83279,
-    "台中銀台灣優惠": 46264,
-    "台新美日台半導體": 647977
+    "統一奔騰": 83279
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
   "real_liquid_assets": 6890791,
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
   "passive_income": 152898,
-  "fund_dividend_monthly": 72798
+  "fund_dividend_monthly": 17519,
+  "allianz_policy_a_value": 5079576,
+  "allianz_policy_b_value": 2728721,
+  "anue_account": {
+    "total_mv": 783700,
+    "total_cost": 563153,
+    "total_pl": 220547,
+    "dividend": 17519,
+    "as_of": "2026-07-18",
+    "note": "自由PAY 3隻 + 一般申購 4隻，當日變化 -349 (-0.04%)"
+  }
 }
