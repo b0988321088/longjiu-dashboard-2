@@ -38,3 +38,4 @@ Desktop.ini
 
 # Data exports (keep source, ignore large generated exports)
 daily_reports_*.txt
+moneybook/
