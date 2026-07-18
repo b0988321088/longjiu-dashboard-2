@@ -25,7 +25,12 @@ NOTION_TOKEN = os.getenv("NOTION_TOKEN", "")
 
 DECISIONS_FILE = BASE / "dashboard_decisions.json"
 OPS_LOGS_FILE = BASE / "ops_logs_2026-07-18.md"
-NOTION_DB_ID = os.getenv("NOTION_OPS_LOGS_DB_ID", "")
+def _load_notion_ops_db_id() -> str:
+    try:
+        return json.loads((BASE / "notion_db_ids.json").read_text(encoding="utf-8")).get("ops_logs", "")
+    except Exception:
+        return os.getenv("NOTION_OPS_LOGS_DB_ID", "")
+NOTION_DB_ID = _load_notion_ops_db_id()
 
 # ===== helpers =====
 
