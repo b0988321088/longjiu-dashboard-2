@@ -39,6 +39,10 @@ class AssetMoatMonitor:
             page1 = snapshot.get("page1") or {}
             if isinstance(page1, dict):
                 securities = page1.get("securities") or {}
+        if not securities:
+            funds = snapshot.get("funds_breakdown") or {}
+            if isinstance(funds, dict):
+                securities = funds
         semi_exposure = 0
         for name, value in securities.items():
             if any(k in name for k in self.semiconductor_keywords):
