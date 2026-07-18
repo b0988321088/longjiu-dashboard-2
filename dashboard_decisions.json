@@ -87,6 +87,17 @@
       "user": "Laing",
       "idem_key": "poll-718083248",
       "summary": "Laing 在 Telegram 輸入 [核准] 改成5分鐘好了"
+    },
+    {
+      "timestamp": "2026-07-18T20:05:51.504191",
+      "action": "核准",
+      "name": "整合 buffett_cto_analyzer + daily_deploy / cron 確認",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "系統優化",
+      "user": "Laing",
+      "idem_key": "hermes-1784376351",
+      "summary": "Laing 核准整合 buffett_cto_analyzer 進 daily_deploy 並確認 cron 穩定"
     }
   ]
 }

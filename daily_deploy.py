@@ -23,6 +23,11 @@ try:
 except Exception:
     pass
 
+try:
+    from buffett_cto_analyzer import run as buffett_cto_run
+except Exception:
+    buffett_cto_run = None
+
 BASE = Path(__file__).parent.resolve()
 TODAY = date.today().isoformat()
 DAILY_REPORT = BASE / f"daily_report_v2_{TODAY}.html"
@@ -240,6 +245,18 @@ def main() -> None:
     moat_path = BASE / f"moat_report_{TODAY}.json"
     if not _run_moat_pipeline(moat_path):
         print("[WARN] moat pipeline 失敗，繼續推送（不阻擋）")
+
+    # 2.8 Buffett/CTO 差異驅動分析（補丁模式：只發送 Telegram，不改 HTML）
+    if buffett_cto_run is not None:
+        print("[STEP] buffett_cto_analyzer")
+        try:
+            ok_bc = buffett_cto_run()
+            if not ok_bc:
+                print("[WARN] buffett_cto_analyzer 發送失敗，繼續推送")
+        except Exception as exc:
+            print(f"[WARN] buffett_cto_analyzer 異常：{exc}")
+    else:
+        print("[SKIP] buffett_cto_analyzer 模組不存在")
 
     # 3. 推送
     daily_name = DAILY_REPORT.name
