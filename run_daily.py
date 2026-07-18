@@ -31,7 +31,6 @@ LEDGER = BASE / "Company_Ledger.md"
 INDEX_TEMPLATE = BASE / "index_template.html"  # 靜態儀表板模板（預留）
 OUT_DAILY = BASE / f"daily_report_v2_{TODAY}.html"
 OUT_INDEX = BASE / "index.html"
-OUT_CHANGELOG = BASE / f"changelog_{TODAY}.md"
 
 
 # ==========================================================================
@@ -180,316 +179,6 @@ def _diff_to_buffett_bullets(tv: dict, y: dict) -> list[str]:
     return bullets
 
 
-def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None) -> str:
-    """產出五大章節日報 HTML。"""
-    allianz = tv["allianz_ab"] or 7_881_584
-    firstjin = tv["firstjin"] or 1_994_698
-    insurance_total = tv["insurance_total"] or allianz + firstjin
-    monthly_dividend = 69_044
-    allianz_dividend = 55_451
-    firstjin_dividend = 13_593
-
-    # 從 full_monitor.py 動態取得 relay 時序描述
-    relay_table = f"""<div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>站別</th><th>流向</th><th>基準日</th><th>預估入帳</th><th>狀態</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>第一站</td><td>摩根多重收益（FJ33）→ 安聯收益成長（FL65）</td><td>7/14</td><td>7/19-20</td><td>✅ 已配息/已入帳</td></tr>
-          <tr><td>第二站</td><td>安聯收益成長 + M&amp;G 入息基金</td><td>7/17</td><td>~7/29</td><td>🔄 配息接力中</td></tr>
-          <tr><td>第三站</td><td>安聯 AI 收益 + PIMCO 第一金 + 貝萊德世界科技 A10</td><td>7/29-30</td><td>~8/10</td><td>⏸️ 等待到期</td></tr>
-        </tbody>
-      </table>
-    </div>"""
-
-    html = f"""<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>龍九控股日報 {TODAY}</title>
-<style>
-  * {{ box-sizing: border-box; }}
-  body {{
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", sans-serif;
-    background: #f5f5f7;
-    margin: 0;
-    padding: 16px;
-    line-height: 1.8;
-    font-size: 17px;
-    color: #1d1d1f;
-    -webkit-text-size-adjust: 100%;
-  }}
-  .page {{ max-width: 900px; margin: 0 auto; }}
-  .card {{
-    background: #fff;
-    border-radius: 12px;
-    padding: 18px;
-    margin-bottom: 14px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }}
-  h1 {{ font-size: 22px; font-weight: 900; margin: 0 0 6px; }}
-  h2 {{ font-size: 18px; font-weight: 800; margin: 14px 0 8px; }}
-  h3 {{ font-size: 16px; font-weight: 800; margin: 10px 0 6px; }}
-  .label {{ font-size: 12px; color: #6e6e73; margin-bottom: 6px; }}
-  .text-lead {{ color: #3a3a3c; margin: 6px 0; }}
-  .table-wrap {{ overflow-x: auto; margin: 8px 0; }}
-  table {{
-    width: 100%;
-    border-collapse: collapse;
-    background: #fff;
-    border: 1px solid #e5e5ea;
-    border-radius: 10px;
-    overflow: hidden;
-    font-size: 16px;
-  }}
-  thead th {{
-    background: #f2f2f7;
-    font-weight: 800;
-    text-align: left;
-    padding: 10px 12px;
-    border-bottom: 1px solid #e5e5ea;
-    font-size: 15px;
-  }}
-  tbody td {{
-    padding: 10px 12px;
-    border-bottom: 1px solid #f2f2f7;
-    vertical-align: top;
-  }}
-  tbody tr:nth-child(even) td {{ background: #fafafa; }}
-  tbody tr:hover td {{ background: #f0f8ff; }}
-  td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
-  .callout {{
-    border-radius: 10px;
-    padding: 12px 14px;
-    margin: 10px 0;
-    border-left: 4px solid;
-  }}
-  .callout-bull {{ background:#f0fff4; border-color:#22c55e; }}
-  .callout-bear {{ background:#fff5f5; border-color:#ef4444; }}
-  .callout-warn {{ background:#fffbeb; border-color:#f59e0b; }}
-  .callout-info {{ background:#eff6ff; border-color:#3b82f6; }}
-</style>
-</head>
-<body>
-<div class="page">
-
-  <!-- 1/5 財富生命線 -->
-  <div class="card">
-    <h1>1/5｜財富生命線 Wealth Baseline</h1>
-    <div class="label">資產負債快照</div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>項目</th><th>內容</th><th>影響</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>總資產</td><td>50,689,930 TWD</td><td>淨資產 28,689,930；負債率 43.4%</td></tr>
-          <tr><td>總負債</td><td>22,000,000 TWD</td><td> convertible 房貸 + 保單借貸 400 萬</td></tr>
-          <tr><td>本月領息</td><td>{monthly_dividend:,} TWD</td><td>安聯 {allianz_dividend:,} + 第一金 {firstjin_dividend:,}</td></tr>
-          <tr><td>被動月收</td><td>{tv['rent_monthly']+80000:,} TWD</td><td>覆蓋率 113.8%；安全邊際充足</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- 2/5 資產穿透分析 -->
-  <div class="card">
-    <h2>2/5｜資產穿透分析 Asset Penetration</h2>
-    <div class="label">穿透式投資組合分析</div>
-
-    <p class="text-lead">根據儀表板截圖與 snapshot 唯一真值，忽略不動產後計算。投資部位合計 <strong>{tv['investment_total']:,} TWD</strong>。SAA 目標：成長 30% / 防禦 60% / 安全網 10%。</p>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>類型</th><th class="num">TWD</th><th class="num">比例</th><th class="num">目標</th><th>標的代表</th><th>狀態</th></tr>
-        </thead>
-        <tbody>
-          <tr style="background:#fef2f2;"><td>台股</td><td class="num">{tv['tw_stock']:,}</td><td class="num">{tv['tw_stock_pct']:.1f}%</td><td class="num">40%</td><td>0050、009816、00981A</td><td>⬇️ 低標</td></tr>
-          <tr style="background:#fef2f2;"><td>美股</td><td class="num">{tv['us_stock']:,}</td><td class="num">{tv['us_stock_pct']:.1f}%</td><td class="num">30%</td><td>00646、009824</td><td>⬆️ 超標</td></tr>
-          <tr style="background:#f0fdf4;"><td>防守</td><td class="num">{tv['defensive']:,}</td><td class="num">{tv['defensive_pct']:.1f}%</td><td class="num">60%</td><td>00878、00713、0056</td><td>⬇️ 低標</td></tr>
-          <tr style="background:#f0fdf4;"><td>債券</td><td class="num">{tv['bond']:,}</td><td class="num">{tv['bond_pct']:.1f}%</td><td class="num">-</td><td>安聯收益成長（內建債券）</td><td>美加平衡</td></tr>
-          <tr style="background:#eff6ff;"><td>現金/安全網</td><td class="num">{tv['cash']:,}</td><td class="num">{tv['cash_pct']:.1f}%</td><td class="num">10%</td><td>高利活存</td><td>✅ 充足</td></tr>
-          <tr style="font-weight:bold;background:#f8fafc;"><td>投資部位合計</td><td class="num">{tv['investment_total']:,}</td><td class="num">100%</td><td class="num">100%</td><td>不含不動產</td><td>再平衡基準</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p class="text-xs text-slate-400">機會子彈觸發條件：單週漲跌幅 ±15%（目前 {tv['market_change']:.1f}%，距離觸發線 ±{abs(tv['market_change']):.1f}pp）。{tv['rebalance_suggestion']}</p>
-  </div>
-
-  <!-- 3/5 保單接力引擎 -->
-  <div class="card">
-    <h2>3/5｜保單接力引擎 Insurance Relay Engine</h2>
-    <div class="label">三站轉換時序監控 —— 配息 relay 於 T+4 最晚轉換申請日才執行，hold 到最後一刻，絕不搶快</div>
-    <p class="text-lead"><strong>本月配息合計：{monthly_dividend:,} TWD</strong></p>
-    {relay_table}
-
-    <h3>保單成分穿透</h3>
-    <h3>安聯 A+B 合併帳戶（成本 8,000,000 / 現值 {allianz:,}）</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>指標</th><th class="num">數值 TWD</th><th>備註</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>現值</td><td class="num">{allianz:,}</td><td>最新 market value</td></tr>
-          <tr><td>本月配息</td><td class="num">{allianz_dividend:,}</td><td>當月配息</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h3>第一金保單（成本 2,000,000 / 現值 {firstjin:,}）</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>指標</th><th class="num">數值 TWD</th><th>備註</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>現值</td><td class="num">{firstjin:,}</td><td>配息前</td></tr>
-          <tr><td>本月配息</td><td class="num">{firstjin_dividend:,}</td><td>上月底配息</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- 4/5 流動性調度站 -->
-  <div class="card">
-    <h2>4/5｜流動性調度站 Liquidity Hub</h2>
-    <div class="label">5,000 元過濾器 + 補庫預警</div>
-
-    <h3>信用卡四大主力（列管帳戶）</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>銀行</th><th>卡片</th><th>繳款日</th><th class="num">近期應付 TWD</th><th>狀態</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>玉山銀行</td><td>UNI</td><td>7/22</td><td class="num">3,176</td><td>🔄 待扣繳</td></tr>
-          <tr><td>台新銀行</td><td>Richart</td><td>7/29</td><td class="num">1,000</td><td>🔄 待扣繳</td></tr>
-          <tr><td>永豐銀行</td><td>SPORT</td><td>7/29</td><td class="num">500</td><td>🔄 待扣繳</td></tr>
-          <tr><td>台北富邦</td><td>momo / J</td><td>8/3</td><td class="num">800</td><td>🔄 待扣繳</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h3>房貸帳戶（列管帳戶）</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>銀行</th><th>貸款名稱</th><th>扣款日</th><th class="num">金額 TWD</th><th>狀態</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>永豐銀行</td><td>洲際 W 房貸</td><td>7/20</td><td class="num">65,734</td><td>📌 待扣款</td></tr>
-          <tr><td>國泰世華</td><td>大義街房貸（原國泰，尚未完成轉貸）</td><td>8/1</td><td class="num">23,424</td><td>📌 待扣款</td></tr>
-          <tr><td>國泰世華</td><td>理財型利息</td><td>8/1</td><td class="num">10,300</td><td>📌 隨房貸扣款</td></tr>
-          <tr><td>永豐銀行</td><td>週轉金</td><td>—</td><td class="num">7,000,000</td><td>已動用額度</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="callout callout-warn">
-      <strong>🚨 星展補庫警示</strong><br>
-      星展戶頭餘額 7,287 TWD，不足以覆蓋 8/1 扣款 33,724（大義街房貸 23,424 + 理財型利息 10,300）。<br>
-      指令：由台新調度 3 萬元，優先補足扣款缺口。
-    </div>
-  </div>
-
-  <!-- 5/5 龍九決戰日檢核 -->
-  <div class="card">
-    <h2>5/5｜龍九決戰日檢核 Tactical Ops Checklist</h2>
-    <div class="label">P0 任務置頂 + 行事曆維度聚合</div>
-
-    <h3>🚨 P0 任務</h3>
-    <div class="callout callout-warn">
-      <ul>
-        <li>7/17（五）— 國泰轉貸面簽/對保（原國泰名義尚未轉出，剩 1 天）</li>
-        <li>7/20（一）— 洲際 W 租金到帳監控 33,000 TWD</li>
-        <li>7/22（三）— 玉山信用卡繳款截止 3,176</li>
-        <li>7/27（一）— 台新信用卡繳款截止 1,000</li>
-        <li>7/29-30 — Fed 利率決策 + 安聯 AI / 貝萊德 A10 基準日</li>
-        <li>8/1（五）— 星展戶頭扣款 33,724（大義街房貸 + 理財型利息）🚨 需補缺口</li>
-        <li><relay_0050> — 0050 配息 ⚠️ 待 MB 確認</li>
-      </ul>
-    </div>
-
-    <h3>本週行程 + 繳款 / 配息排程</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>日期</th><th>項目</th><th class="num">金額 TWD</th><th>狀態</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>7/17（五）</td><td>國泰轉貸面簽/對保 + 段部上課</td><td class="num">—</td><td>🚨 P0</td></tr>
-          <tr><td>7/19-20</td><td>摩根 FJ33 配息入帳</td><td class="num">13,593</td><td>✅ 已配息</td></tr>
-          <tr><td>7/22</td><td>玉山信用卡繳款截止</td><td class="num">3,176</td><td>🔄 待處理</td></tr>
-          <tr><td>7/27</td><td>台新信用卡繳款截止</td><td class="num">1,000</td><td>🔄 待處理</td></tr>
-          <tr><td>7/29-30</td><td>安聯 AI / 貝萊德 A10 基準日</td><td class="num">—</td><td>⏸️ 等待到期</td></tr>
-          <tr><td>8/1</td><td>星展戶頭扣款（大義街房貸 + 理財型利息）</td><td class="num">33,724</td><td>🚨 需補缺口</td></tr>
-          <tr><td>待 MB</td><td>0050 配息</td><td class="num">—</td><td>待確認</td></tr>
-          <tr><td>10/23-28</td><td>胡志明市旅行 6D5N</td><td class="num">—</td><td>✅ 已排程</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- 投資決策框架 -->
-  <div class="card">
-    <h2>投資決策框架</h2>
-
-    <div class="callout callout-bull">
-      <strong>🟢 Bull Case</strong><br>
-      __BULL_TEXT__
-    </div>
-
-    <div class="callout callout-bear">
-      <strong>🔴 Bear Case</strong><br>
-      __BEAR_TEXT__
-    </div>
-
-    <h3>市場動態分析（{TODAY} 即時）</h3>
-    <div class="callout callout-info">
-      <strong>ℹ️ 數據來源</strong><br>
-      台股/費半/美股/台積電/TWII 透過 web_search + Yahoo Finance/GoodInfo 擷取；美國 CPI 透過 web_search 確認。
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>項目</th><th>最新狀態</th><th>影響預估</th></tr>
-        </thead>
-        <tbody>
-__MARKET_ROWS__
-        </tbody>
-      </table>
-    </div>
-
-    <h3>巴菲特視角建議</h3>
-    <div class="callout callout-bull">
-      __BUFFETT_CONTENT__
-    </div>
-
-    <h3>CTO 技術視角</h3>
-    <div class="callout callout-bear">
-      __CTO_TECH__
-    </div>
-  </div>
-
-<!-- 差異分析 -->
-<div class="card">
-  <h2>📊 差異分析</h2>
-  <div class="table-wrap" style="background:#fff;">
-    <div style="padding:8px 12px;font-size:15px;line-height:1.6;">__CHANGELOG__</div>
-  </div>
-</div>
-
-</div>
-</body>
-</html>"""
-
-    return html
-    return html
 
 
 # ==========================================================================
@@ -501,10 +190,10 @@ __MARKET_ROWS__
 def _build_market_rows(signals: dict, tv: dict) -> str:
     sell = signals.get("sell_signals", [])
     rows = [
-        f"<tr><td>台股加權指數（{TODAY}）</td><td>待補齊；外資單日賣超 —</td><td>高檔震盪</td></tr>",
-        f"<tr><td>台積電（{TODAY}）</td><td>待補齊</td><td>觀察</td></tr>",
-        f"<tr><td>費半（{TODAY}）</td><td>待補齊</td><td>觀察</td></tr>",
-        f"<tr><td>美股（{TODAY}）</td><td>待補齊</td><td>觀察</td></tr>",
+        f"<tr><td>台股加權指數（{{TODAY}}）</td><td>待補齊；外資單日賣超 —</td><td>高檔震盪</td></tr>",
+        f"<tr><td>台積電（{{TODAY}}）</td><td>待補齊</td><td>觀察</td></tr>",
+        f"<tr><td>費半（{{TODAY}}）</td><td>待補齊</td><td>觀察</td></tr>",
+        f"<tr><td>美股（{{TODAY}}）</td><td>待補齊</td><td>觀察</td></tr>",
         f"<tr><td>美國 CPI</td><td>待補齊</td><td>待補齊</td></tr>",
         # 0050 配息：待 MB 確認後由 daily_analysis.json 注入
     ]
@@ -517,16 +206,16 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
     if not analysis:
         return html
 
-    scenario = analysis.get("scenario", {})
-    buffett = analysis.get("buffett", {})
-    cto = analysis.get("cto", {})
+    scenario = analysis.get("scenario", {{}})
+    buffett = analysis.get("buffett", {{}})
+    cto = analysis.get("cto", {{}})
 
     # Bull / Bear
     html = html.replace("__BULL_TEXT__", buffett.get("bull", "—"))
     html = html.replace("__BEAR_TEXT__", buffett.get("bear", "—"))
 
     # Market rows from analysis
-    market = analysis.get("market", {})
+    market = analysis.get("market", {{}})
     twii = market.get("twii", "待補齊")
     tsm = market.get("tsm", "待補齊")
     sox = market.get("sox", "待補齊")
@@ -534,11 +223,11 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
     cpi = market.get("cpi", "待補齊")
 
     rows = [
-        f"<tr><td>台股加權指數（{TODAY}）</td><td>{twii}</td><td>{scenario.get('market_assessment', market.get('twii', '待補齊'))}</td></tr>",
-        f"<tr><td>台積電（{TODAY}）</td><td>{tsm}</td><td>半導體龍頭穩盤</td></tr>",
-        f"<tr><td>費半（{TODAY}）</td><td>{sox}</td><td>高檔回調</td></tr>",
-        f"<tr><td>美股（{TODAY}）</td><td>{us}</td><td>通膨降溫驅動科技領漲</td></tr>",
-        f"<tr><td>美國 CPI</td><td>{cpi}</td><td>降息預期升溫</td></tr>",
+        f"<tr><td>台股加權指數（{{TODAY}}）</td><td>{{twii}}</td><td>{{scenario.get('market_assessment', market.get('twii', '待補齊'))}}</td></tr>",
+        f"<tr><td>台積電（{{TODAY}}）</td><td>{{tsm}}</td><td>半導體龍頭穩盤</td></tr>",
+        f"<tr><td>費半（{{TODAY}}）</td><td>{{sox}}</td><td>高檔回調</td></tr>",
+        f"<tr><td>美股（{{TODAY}}）</td><td>{{us}}</td><td>通膨降溫驅動科技領漲</td></tr>",
+        f"<tr><td>美國 CPI</td><td>{{cpi}}</td><td>降息預期升溫</td></tr>",
         # 0050 配息：待 MB 確認後由 daily_analysis.json 注入
     ]
     html = html.replace("__MARKET_ROWS__", chr(10).join("          " + r for r in rows))
@@ -551,15 +240,15 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
     buf_scenario = scenario.get("scenario_summary") or buffett.get("scenario_summary")
     net_worth = tv.get("net_worth", 0)
     snap_dir = BASE / "snapshots"
-    yesterday_snap = {}
+    yesterday_snap = {{}}
     candidates = sorted(snap_dir.glob("snapshot_*.json"), reverse=True)
     if candidates:
         try:
             yesterday_snap = json.loads(candidates[0].read_text(encoding="utf-8"))
         except Exception:
-            yesterday_snap = {}
-    # Buffett/CTO: 優先從 buffett_cto_report_{TODAY}.md 讀取，不手動維護
-    report_md = BASE / f"buffett_cto_report_{TODAY}.md"
+            yesterday_snap = {{}}
+    # Buffett/CTO: 優先從 buffett_cto_report_{{TODAY}}.md 讀取，不手動維護
+    report_md = BASE / f"buffett_cto_report_{{TODAY}}.md"
     if report_md.exists():
         try:
             md_text = report_md.read_text(encoding='utf-8')
@@ -589,20 +278,20 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
     
     # Fallback to old logic if md report missing
     if not buf_content:
-        buf_content = f"<strong>🧓 巴菲特式思考</strong><br>• 場景判定：{buf_scenario or scenario_event}<br>"
+        buf_content = f"<strong>🧓 巴菲特式思考</strong><br>• 場景判定：{{buf_scenario or scenario_event}}<br>"
         if buf_bull:
-            buf_content += f"• Bull：{buf_bull}<br>"
+            buf_content += f"• Bull：{{buf_bull}}<br>"
         if buf_bear:
-            buf_content += f"• Bear：{buf_bear}<br>"
+            buf_content += f"• Bear：{{buf_bear}}<br>"
         for a in buf_actions:
-            buf_content += f"• {a}<br>"
+            buf_content += f"• {{a}}<br>"
         diff_bullets = _diff_to_buffett_bullets(tv, yesterday_snap)
         if diff_bullets:
             buf_content += "<br><strong>📋  昨日差異帶來的行動啟示</strong><br>"
             for b in diff_bullets:
-                buf_content += f"• {b}<br>"
+                buf_content += f"• {{b}}<br>"
         buf_content += "<br><strong>🤝 Buffett 派操作建議</strong><br>"
-        buf_content += f"• 淨資產：{net_worth:,.0f} TWD<br>"
+        buf_content += f"• 淨資產：{{net_worth:,.0f}} TWD<br>"
         buf_content += "• 建議部位：美股權益 ≤ 35%、台股權益 15-20%、高利活存/短債 ≥ 20%、保單/配息穩定型 ≥ 25%<br>"
         buf_content += "• 今日動作：減碼美股權重、增加高利活存與防禦型配息部位；0050 配息縮水後缺口以 00878/00713 補位。<br>"
         buf_content += "• 觸發條件：外資賣超 > 150 億 / 大盤跌 1.5% / 費半跌 2% / 跌破季線+量增 → 啟動減碼；外資買超 > 100 億 + 大盤漲 1% + 費半 +3% → 回補。"
@@ -613,135 +302,13 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
         cto_action = cto.get("action", "—")
         cto_signal = scenario.get("cto_signal", "")
         if cto_signal:
-            cto_risk = f"今日觸發：{cto_signal}；{cto_risk}"
-        cto_content = f"<strong>🤖 CTO 技術視角</strong><br><strong>tech_stack</strong>：{cto_tech}<br><strong>今日最大風險</strong>：{cto_risk}<br><strong>建議動作</strong>：{cto_action}"
+            cto_risk = f"今日觸發：{{cto_signal}}；{{cto_risk}}"
+        cto_content = f"<strong>🤖 CTO 技術視角</strong><br><strong>tech_stack</strong>：{{cto_tech}}<br><strong>今日最大風險</strong>：{{cto_risk}}<br><strong>建議動作</strong>：{{cto_action}}"
 
     html = html.replace("__BUFFETT_CONTENT__", buf_content)
     html = html.replace("__CTO_TECH__", cto_content)
 
     return html
-
-
-def render_changelog(tv: dict) -> str:
-    """Build today-vs-yesterday diff: snapshot numbers + report structure."""
-    today_snap = tv
-    snap_dir = BASE / "snapshots"
-    yesterday_snap = {}
-
-    candidates = sorted(snap_dir.glob("snapshot_*.json"), reverse=True)
-    if candidates:
-        try:
-            yesterday_snap = json.loads(candidates[0].read_text(encoding="utf-8"))
-        except Exception:
-            yesterday_snap = {}
-
-    diffs = []
-    keys = [
-        ("total_assets", "總資產"),
-        ("net_worth", "淨資產"),
-        ("monthly_income", "月收入"),
-        ("monthly_expense", "月支出"),
-        ("working_surplus", "工作期盈餘"),
-        ("retirement_surplus", "退休後盈餘"),
-        ("insurance_current_value", "保單現值"),
-        ("monthly_dividend", "本月配息"),
-    ]
-    for k, label in keys:
-        t = today_snap.get(k)
-        y = yesterday_snap.get(k)
-        if t is None:
-            continue
-        t_str = f"{t:,}"
-        if y is None:
-            diffs.append(f"- **{label}**：{t_str}（昨日無紀錄）")
-        elif t != y:
-            y_str = f"{y:,}"
-            diff = abs(t - y) if isinstance(t, (int, float)) and isinstance(y, (int, float)) else "?"
-            diffs.append(f"- **{label}**：{t_str}（昨日 {y_str}，變動 {diff:,}）")
-        else:
-            diffs.append(f"- **{label}**：{t_str}（= 無變化）")
-        
-        # Sanity check: if expense claims "變動" but both values are 141,958, force no-change
-        if k == "monthly_expense" and t == 141958 and y == 141958:
-            # Override any previous "變動" entry for monthly_expense
-            for i, d in enumerate(diffs):
-                if "月支出" in d and "變動" in d:
-                    diffs[i] = f"- **月支出**：141,958（= 無變化）"
-
-    # Report structure diff
-    base = BASE
-    yesterday_date = (datetime.strptime(TODAY, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
-    y_html_path = base / f"daily_report_v2_{yesterday_date}.html"
-    t_html_path = base / f"daily_report_v2_{TODAY}.html"
-    if y_html_path.exists() and t_html_path.exists():
-        def headings(html_text):
-            h2 = [re.sub(r"<[^>]+>", "", h).strip() for h in re.findall(r"<h2[^>]*>(.*?)</h2>", html_text)]
-            h3 = [re.sub(r"<[^>]+>", "", h).strip() for h in re.findall(r"<h3[^>]*>(.*?)</h3>", html_text)]
-            return set(h2 + h3)
-        t_heads = headings(t_html_path.read_text(encoding="utf-8"))
-        y_heads = headings(y_html_path.read_text(encoding="utf-8"))
-        added = sorted(t_heads - y_heads)
-        removed = sorted(y_heads - t_heads)
-        if added:
-            diffs.append("- **新增章節**：" + "、".join(added[:5]))
-        if removed:
-            diffs.append("- **消失章節**：" + "、".join(removed[:5]))
-
-    diffs.append("- **版面**：今日縮編資產/現金流/行事曆為摘要卡")
-
-    if not diffs:
-        diffs = ["- 昨日報告缺失，無法計算差異。"]
-
-    md = f"""# 龍九日報 changelog {TODAY}
-
-## 差異分析 (今日 vs 昨日)
-
-{chr(10).join(diffs)}
-
-## 真值錠定
-
-- 總資產：{today_snap.get('total_assets', 0):,} TWD
-- 保單現值：{today_snap.get('insurance_current_value', 0):,} TWD
-- 月收入：{today_snap.get('monthly_income', 0):,} / 月支出：{today_snap.get('monthly_expense', 0):,}
-- 工作期盈餘：+{today_snap.get('working_surplus', 0):,} / 退休後盈餘：+{today_snap.get('retirement_surplus', 0):,}
-
-## 待補齊
-
-- 0050 配息：待 MB 確認
-- 月支出明細：信用卡拆分各 card 金額
-"""
-    # Also write an HTML version for GitHub Pages
-    out_html = OUT_CHANGELOG.with_suffix('.html')
-    lines = md.splitlines()
-    body_parts = []
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith('# '):
-            body_parts.append(f'<h1 style="font-size:18px;font-weight:800;margin:12px 0 8px;">{stripped[2:]}</h1>')
-        elif stripped.startswith('## '):
-            body_parts.append(f'<h2 style="font-size:16px;font-weight:800;margin:10px 0 6px;color:#334155;">{stripped[3:]}</h2>')
-        elif stripped.startswith('- '):
-            body_parts.append(f'<li style="margin-left:18px;line-height:1.7;">{stripped[2:]}</li>')
-        elif stripped == '':
-            body_parts.append('<br>')
-        else:
-            body_parts.append(f'<p style="line-height:1.7;">{stripped}</p>')
-    html_body = '\n'.join(body_parts)
-    html_doc = f"""<!DOCTYPE html>
-<html lang="zh-Hant-TW">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>changelog {TODAY}</title>
-</head>
-<body style="background:#f5f5f7;color:#111;font-family:-apple-system,BlinkMacSystemFont,Noto Sans TC,sans-serif;max-width:720px;margin:0 auto;padding:16px;">
-{html_body}
-</body>
-</html>"""
-    out_html.write_text(html_doc, encoding='utf-8')
-    return md
-
-
 # ==========================================================================
 # 4. 產出
 # ==========================================================================
@@ -770,43 +337,8 @@ def main():
     # 日報
     daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals)
     daily_html = _inject_market_intel(daily_html, tv, intel_signals)
-    # inject changelog diff block
-    changelog_md = render_changelog(tv)
-    changelog_html = "<div class='card'><h2>📊 差異分析</h2>" + "<div style='font-size:14px;line-height:1.7;'>"
-    # Very simple markdown -> HTML conversion
-    md_lines = changelog_md.splitlines()
-    in_list = False
-    for line in md_lines:
-        s = line.strip()
-        if not s:
-            if in_list:
-                changelog_html += "</ul>"
-                in_list = False
-        elif s.startswith("- "):
-            if not in_list:
-                changelog_html += "<ul style='padding-left:18px;'>"
-                in_list = True
-            changelog_html += "<li>" + s[2:] + "</li>"
-        elif s.startswith("## "):
-            changelog_html += "<h3 style='font-size:16px;font-weight:800;margin:8px 0 4px;'>" + s[3:] + "</h3>"
-        elif s.startswith("# "):
-            changelog_html += "<h2 style='font-size:18px;font-weight:800;margin:8px 0 4px;'>" + s[2:] + "</h2>"
-        else:
-            if in_list:
-                changelog_html += "</ul>"
-                in_list = False
-            changelog_html += "<p>" + s + "</p>"
-    if in_list:
-        changelog_html += "</ul>"
-    changelog_html += "</div></div>"
-    daily_html = daily_html.replace("__CHANGELOG__", changelog_html)
     OUT_DAILY.write_text(daily_html, encoding="utf-8")
     print(f"[RUN_DAILY] 日報產出：{OUT_DAILY}")
-
-    # changelog
-    changelog = render_changelog(tv)
-    OUT_CHANGELOG.write_text(changelog, encoding="utf-8")
-    print(f"[RUN_DAILY] changelog 產出：{OUT_CHANGELOG}")
 
     # 靜態儀表板：由 index_template.html 注入動態數據
     if INDEX_TEMPLATE.exists():
@@ -1091,9 +623,5 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
 
     print("\n[DONE] 產出完成。")
     print(f"  日報：{OUT_DAILY}")
-    if OUT_CHANGELOG.exists():
-        print(f"  差異：{OUT_CHANGELOG}")
-
-
 if __name__ == "__main__":
     main()

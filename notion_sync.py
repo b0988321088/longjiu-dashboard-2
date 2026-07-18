@@ -4,10 +4,10 @@ import requests
 from dotenv import load_dotenv
 
 load_dotenv()
-NOTION_API_KEY = os.getenv("NOTION_API_KEY", "")
+NOTION_TOKEN = os.getenv("NOTION_TOKEN", "")
 BASE = "https://api.notion.com/v1"
 HEADERS = {
-    "Authorization": f"Bearer {NOTION_API_KEY}",
+    "Authorization": f"Bearer {NOTION_TOKEN}",
     "Notion-Version": "2022-06-28",
     "Content-Type": "application/json",
 }
