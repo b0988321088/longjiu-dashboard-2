@@ -210,23 +210,6 @@
     </div>
   </div>
 
-  <!-- 2/5 戰略異常看板 -->
-  <div class="card">
-    <h2>2/5｜戰略異常看板 Strategic Risk Hub</h2>
-    <div class="label">四大戰略重點</div>
-
-    <h3>保單維運</h3>
-    <p class="text-lead">保單現值 <strong>9,876,282 TWD</strong>（安聯 A+B 7,881,584 + 第一金 FL65 1,994,698），本月配息合計 <strong>69,044 TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
-
-    <h3>證券曝險</h3>
-    <p class="text-lead">0056 凍結質押中，短期無法加碼。0050 配息：待 MB 確認；防禦缺口由 00878/00713 預備。</p>
-
-    <h3>房租金流</h3>
-    <p class="text-lead">房租月收 <strong>80,100 TWD</strong>，覆蓋月支出 55%。7/20 洲際 W 租金入帳監控；星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
-
-    <h3>鉅亨基金調校</h3>
-    <p class="text-lead">監控鉅亨買基金平台標的，追蹤 IT 與 AI 淨值，確保與保單資產互補。</p>
-  </div>
 
   <!-- 3/5 保單接力引擎 -->
   <div class="card">
@@ -318,7 +301,7 @@
 
 <!-- 第五章：信用卡刷出策略 -->
   <div class="card">
-    <h2>5/5｜信用卡刷出策略 Credit Card Playbook</h2>
+    <h2>4/5｜信用卡刷出策略 Credit Card Playbook</h2>
     <div class="label">本月代繳合計 34,213 TWD／月均管控線 38,000 TWD</div>
 
     <h3>本月信用卡代繳明細</h3>
