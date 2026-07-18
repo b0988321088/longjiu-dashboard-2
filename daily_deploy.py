@@ -252,7 +252,7 @@ def main() -> None:
     if buffett_cto_run is not None:
         print("[STEP] buffett_cto_analyzer")
         try:
-            ok_bc = buffett_cto_run()
+            ok_bc = buffett_cto_run(send=False)  # 報告已由 run_daily 或手動產生，不重複發送
             if ok_bc:
                 print("[OK] buffett_cto_analyzer 完成")
             else:

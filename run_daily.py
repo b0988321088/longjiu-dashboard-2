@@ -738,7 +738,7 @@ def main():
     # 巴菲特/CTO 動態分析（產出報告，供 render_daily_report 讀取）
     try:
         from buffett_cto_analyzer import run as buffett_run
-        buffett_run()
+        buffett_run(send=False)  # 產出報告，Telegram 統一由 deploy 發送
         print("[RUN_DAILY] buffett_cto_analyzer 報告產出完成")
     except Exception as exc:
         print(f"[WARN] buffett_cto_analyzer 失敗：{exc}")

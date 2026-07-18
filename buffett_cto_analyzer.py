@@ -258,7 +258,7 @@ def send_telegram(text: str) -> bool:
         return False
 
 
-def run() -> bool:
+def run(send: bool = True) -> bool:
     snapshot = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     intel = load_market_intel()
     pen = penetration_analysis(snapshot)
@@ -266,12 +266,14 @@ def run() -> bool:
     out = BASE / f"buffett_cto_report_{TODAY}.md"
     out.write_text(report, encoding="utf-8")
     print(f"[OK] Report saved to {out.name}")
-    sent = send_telegram(report)
-    if sent:
-        print("[OK] Telegram sent")
-    return sent
+    if send:
+        sent = send_telegram(report)
+        if sent:
+            print("[OK] Telegram sent")
+        return sent
+    return True
 
 
 if __name__ == "__main__":
-    ok = run()
+    ok = run(send=True)
     raise SystemExit(0 if ok else 1)
