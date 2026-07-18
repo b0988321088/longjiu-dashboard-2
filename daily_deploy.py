@@ -124,15 +124,27 @@ def github_push(filepath: str) -> bool:
     return ok
 
 
-def telegram_push(text: str) -> bool:
+def telegram_push(text: str, actions: list | None = None) -> bool:
     if not TG_TOKEN or not TG_CHAT_ID:
         print("[SKIP] Telegram 未設定，跳過推送")
         return True
     import requests
 
     url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
-    payload = {"chat_id": TG_CHAT_ID, "text": text}
-    r = requests.post(url, data=payload, timeout=10)
+    payload = {"chat_id": TG_CHAT_ID, "text": text, "parse_mode": "Markdown"}
+
+    if actions:
+        rows = []
+        for a in actions:
+            target = (a.get("target") or a.get("action") or "unknown").replace(" ", "_")[:40]
+            idem = secrets.token_hex(3)
+            rows.append([
+                {"text": "✅ 核准", "callback_data": f"approve|{target}|{idem}"},
+                {"text": "⏸️ 延後", "callback_data": f"defer|{target}|{idem}"},
+            ])
+        payload["reply_markup"] = {"inline_keyboard": rows}
+
+    r = requests.post(url, json=payload, timeout=10)
     ok = r.status_code == 200
     print(f"  telegram: {r.status_code}")
     return ok
