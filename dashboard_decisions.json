@@ -35,6 +35,35 @@
       "idem_key": "hermes-1784345794",
       "summary": "Laing 在 Telegram 輸入延後，預設 +1 天提醒",
       "remind_at": "2026-07-19"
+    },
+    {
+      "timestamp": "2026-07-18T11:43:15.830259",
+      "action": "延後",
+      "name": "Decision: 國泰轉貸（15天）",
+      "target": "國泰轉貸",
+      "source": "Hermes Telegram Gate",
+      "status": "已延後",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1784346195",
+      "summary": "Laing 在 Telegram 輸入：延後國泰轉貸要15天才會辦理完成",
+      "remind_at": "2026-08-02",
+      "raw_text": "延後國泰轉貸要15天才會辦理完成",
+      "notes": "轉貸辦理預計15天，提醒日期 2026-08-02"
+    },
+    {
+      "timestamp": "2026-07-18T11:44:29.430414",
+      "action": "進行中",
+      "name": "Decision: 國泰轉貸（申請中）",
+      "target": "國泰轉貸",
+      "source": "Hermes Telegram Gate",
+      "status": "處理中",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1784346269",
+      "summary": "Laing 確認：7/17 國泰已傳办理申請，房貸進行中，預計 15 天完成",
+      "remind_at": "2026-08-02",
+      "notes": "申請日 2026-07-17，預計 15 天，提醒 2026-08-02"
     }
   ]
 }
