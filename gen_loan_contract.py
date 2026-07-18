@@ -79,7 +79,7 @@ add_article_header(doc, '第一條：借貸明細與交付方式')
 
 for item in [
     '一、借貸總金額：新台幣參拾萬元整（NT$ 300,000）。',
-    '二、借貸期限：自民國 115 年 7 月 ____ 日起，至民國 115 年 12 月 31 日止。',
+    '二、借貸期限：自民國 115 年 7 月 ____ 日起，至民國 115 年 12 月 31 日止。實際還款自民國 115 年 8 月起算。',
     '三、交付方式：甲方於本契約簽署後，將全額借款匯入乙方指定帳戶（合作金庫銀行東沙鹿分行，戶名：洛禾思健康發展有限公司）。匯款完成即視為交付完畢。',
 ]:
     add_item(doc, item)
@@ -116,7 +116,7 @@ for i, text in enumerate(headers):
     cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
 
 balance = 300000
-for month in range(7, 13):
+for month in range(8, 13):
     if month == 12:
         interest = balance * 0.05 / 12
         principal = balance
@@ -147,7 +147,7 @@ for month in range(7, 13):
 doc.add_paragraph()
 
 p = doc.add_paragraph()
-run = p.add_run('★ 12 月 31 日到期需一筆清償尾款：277,201 元（本金 276,051 + 利息 1,150）')
+run = p.add_run('★ 12 月 31 日到期需一筆清償尾款：282,051 元（本金 280,890 + 利息 1,161）')
 fmt(run, size=12, bold=True)
 run.font.color.rgb = RGBColor(0xC0, 0x00, 0x00)
 
