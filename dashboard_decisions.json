@@ -1,0 +1,15 @@
+{
+  "decisions": [
+    {
+      "timestamp": "2026-07-18T11:31:17.191108",
+      "action": "核准",
+      "name": "Decision: 核准",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1784345477",
+      "summary": "Laing 在 Telegram 對話中輸入 [核准]"
+    }
+  ]
+}

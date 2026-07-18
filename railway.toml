@@ -4,5 +4,5 @@ builder = "nixpacks"
 [deploy]
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 5
-healthcheckPath = "/"
+healthcheckPath = "/health"
 healthcheckTimeout = 120
