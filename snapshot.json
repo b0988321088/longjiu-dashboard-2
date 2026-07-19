@@ -13,10 +13,10 @@
   "securities_total_market_value": 2158900,
   "insurance_current_value": 9876282,
   "fund_market_value": 783700,
-  "moneybook_total": 3071343,
+  "moneybook_total": 3853985,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
-  "rent_monthly_actual": 80100,
+  "rent_monthly_actual": 24000,
   "cc_monthly_avg_4cards": 38000,
   "page1": {
     "actual_cash_flow": {
@@ -68,7 +68,7 @@
   "firstjin_current_value": 1988285,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
-  "bank_assets_moneybook": 3866208,
+  "bank_assets_moneybook": 3853985,
   "bank_assets_memo": "MB 20260718 正數帳戶合計；44帳戶；排除負數",
   "monthly_expense_mb": 222910,
   "monthly_expense_mb_note": "MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償",
@@ -95,7 +95,7 @@
     "其他基金部位": 52603
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
-  "real_liquid_assets": 6890791,
+  "real_liquid_assets": 3853985,
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
   "passive_income": {
     "fund_dividend_monthly": 17519,
@@ -499,5 +499,11 @@
   "cathay_refinance_note": "核贷进行中，预计 8/2 完成，金额待银行确认，利率 2.6%",
   "policy_pledge_loan": 4000000,
   "policy_pledge_loan_note": "含安联A 2M + 安联B 1M + 第一金 1M",
-  "fund_dividend_actual": 17519
+  "fund_dividend_actual": 17519,
+  "rent_monthly_target": 80100,
+  "rent_monthly_gap": 56100,
+  "passive_income_coverage": 0.6819,
+  "passive_income_total": 96798,
+  "moneybook_account_csv": "C:/Users/bot/Desktop/龍九系統/Moneybook/Moneybook_帳戶_20260718_1.csv",
+  "real_estate_value": 34017063
 }

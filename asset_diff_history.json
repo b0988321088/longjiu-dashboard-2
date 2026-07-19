@@ -5,7 +5,10 @@
     "net_worth": 28689930,
     "insurance_total": 11791280,
     "securities_cost": 2208900,
-    "securities_market": 2158900
+    "securities_market": 2158900,
+    "cash": 3853985,
+    "fund_market": 783700,
+    "insurance_current": 9876282
   },
   "2026-07-18": {
     "date": "2026-07-18",
@@ -16,8 +19,8 @@
     "insurance_current": 9876282.0,
     "insurance_total": 11791280.0,
     "fund_market": 783700.0,
-    "real_estate": 30980257.0,
-    "cash": 6890791.0,
+    "real_estate": 34017063.0,
+    "cash": 3853985.0,
     "other": 0.0,
     "insurance_detail": {
       "安聯保單A+B 現值": 7808297,
@@ -30,7 +33,7 @@
     "fund_dividend_monthly": 17519.0,
     "monthly_income": 218102.0,
     "monthly_expense": 141958.0,
-    "rent_monthly": 80100.0,
+    "rent_monthly": 24000.0,
     "cathay_refinance": 0.0
   },
   "2026-06-20": {
