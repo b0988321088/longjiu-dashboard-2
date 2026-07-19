@@ -163,7 +163,7 @@ def _diff_to_buffett_bullets(tv: dict, y: dict) -> list[str]:
     return bullets
 
 
-def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None) -> str:
+def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "") -> str:
     """產出五大章節日報 HTML。"""
     allianz = tv["allianz_ab"] or 7_881_584
     firstjin = tv["firstjin"] or 1_994_698
@@ -297,7 +297,17 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     </div>
     <p class="text-sm" style="color:#6e6e73;margin-top:8px">資產穿透分母：證券＋保單＋基金＋現金＋不動產；管理費~1.5%，偏高於配息收益率。</p>
   </div>
-    <h2>2/5｜戰略異常看板 Strategic Risk Hub</h2>
+
+  <!-- 市場情報 -->
+  <div class="card">
+    <h2>2/5｜市場情報 Market Intel</h2>
+    <div class="label">獵人情報 + 市場搜尋 + 持倉關聯</div>
+    <pre id="market-intel-block" style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:#1d1d1f;">{market_intel_text}</pre>
+  </div>
+
+  <!-- 戰略異常看板 -->
+  <div class="card">
+    <h2>3/5｜戰略異常看板 Strategic Risk Hub</h2>
     <div class="label">四大戰略重點</div>
 
     <h3>保單維運</h3>
@@ -618,7 +628,23 @@ def main():
     # 情報：refresh today's hunter intel
     intel_result = mi_mod.ensure_today_intel(force_refresh=True)
     print(f"[INTEL] {intel_result.get('file') or intel_result}")
-    intel_text = mi_mod.load_latest_hunter()
+    # Load unified market briefing from daily_intel_report_{date}.json
+    unified_path = BASE / f"daily_intel_report_{TODAY.replace('-','')}.json"
+    market_intel_text = ""
+    if unified_path.exists():
+        try:
+            import json as _json
+            unified = _json.loads(unified_path.read_text(encoding='utf-8'))
+            market_intel_text = unified.get("briefing", "")
+        except Exception as _exc:
+            print(f"[WARN] load unified market briefing failed: {_exc}")
+            market_intel_text = ""
+
+    if not market_intel_text:
+        # Fallback: legacy hunter text
+        market_intel_text = mi_mod.load_latest_hunter()
+
+    intel_text = market_intel_text
     intel_signals = mi_mod.parse_hunter_signals(intel_text)
 
     # 巴菲特/CTO 動態分析（產出報告，供 render_daily_report 讀取）
@@ -630,7 +656,7 @@ def main():
         print(f"[WARN] buffett_cto_analyzer 失敗：{exc}")
 
     # 日報
-    daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals)
+    daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text)
     daily_html = _inject_market_intel(daily_html, tv, intel_signals)
 
     OUT_DAILY.write_text(daily_html, encoding="utf-8")

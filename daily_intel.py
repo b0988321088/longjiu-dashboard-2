@@ -364,6 +364,15 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
     # 2. 備援 web_search
     intel_text = ""
     queries = [
+    "0050 台積電 配息 除息 2026",
+    "0056 元大高股息 配息 除息 2026",
+    "00878 國泰永續高股息 配息 除息 2026",
+    "00713 元大台灣高息 配息 除息 2026",
+    "00646 元大S&P500 配息 除息 2026",
+    "009816 統一FANG+ 配息 除息 2026",
+    "009824 台新美日台半導體 配息 除息 2026",
+    "00981A 永豐美國科技 配息 除息 2026",
+    "00984A 元大美債20年 配息 除息 2026",
         "台股加權指數 今日 收盤 外資",
         "費城半導體 SOX 今日",
         "台積電 ADR TSM 今日",
@@ -398,12 +407,86 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
     analysis_path = BASE / "daily_analysis.json"
     analysis_path.write_text(json.dumps(analysis, ensure_ascii=False, indent=2), encoding="utf-8")
 
+    # 5. 產出 unified intel report（single source of truth）
+    unified = {
+        "date": today,
+        "generated_at": datetime.now().isoformat(),
+        "sources": {
+            "yf_market": market,
+            "web_search_count": len(search_results),
+            "hunter_raw": intel_text[:2000] if intel_text else "",
+        },
+        "market": market,
+        "signals": signals,
+        "buffett": analysis.get("buffett", {}),
+        "cto": analysis.get("cto", {}),
+        "scenario_summary": analysis.get("scenario_summary", ""),
+        "news": analysis.get("news", []),
+    }
+    unified_path = BASE / f"daily_intel_report_{today}.json"
+    unified_path.write_text(json.dumps(unified, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    # Generate unified briefing text for run_daily.py injection
+    briefing_lines = []
+    briefing_lines.append("【台股/大盤】")
+    briefing_lines.append(f"加權指數：{market.get('twii', '—')}")
+    briefing_lines.append(f"台積電：{market.get('tsm', '—')}")
+    briefing_lines.append(f"費半：{market.get('sox', '—')}")
+    briefing_lines.append("")
+    briefing_lines.append("【美股/外資】")
+    briefing_lines.append(f"美股：{market.get('us', '—')}")
+    briefing_lines.append(f"外資7日淨流：{market.get('foreign_flow', {}).get('7d_net', '—')}")
+    briefing_lines.append("")
+    briefing_lines.append("【CPI/利率】")
+    briefing_lines.append(f"美國CPI：{market.get('cpi', '—')}")
+    briefing_lines.append("")
+    briefing_lines.append("【情報訊號】")
+    if signals.get("sell_signals"):
+        briefing_lines.append("賣出訊號：")
+        for s in signals["sell_signals"][:3]:
+            briefing_lines.append(f"• {s}")
+    else:
+        briefing_lines.append("賣出訊號：無")
+    briefing_lines.append("")
+    if signals.get("buy_signals"):
+        briefing_lines.append("買進訊號：")
+        for s in signals["buy_signals"][:3]:
+            briefing_lines.append(f"• {s}")
+    else:
+        briefing_lines.append("買進訊號：無")
+    briefing_lines.append("")
+    briefing_lines.append("【持倉關聯分析】")
+    # Read snapshot to relate market moves to holdings
+    try:
+        snap = json.loads((BASE / "snapshot.json").read_text(encoding='utf-8'))
+        pen = snap.get('penetration', {}).get('actual_twd', {})
+        tw_equity = pen.get('台股市值型成長', 0)
+        us_equity = pen.get('美股市值型成長', 0)
+        dividend = pen.get('防守型配息', 0)
+        briefing_lines.append(f"台股曝險部位約 {tw_equity/10000:.0f} 萬；美股曝險 {us_equity/10000:.0f} 萬；防守配息 {dividend/10000:.0f} 萬")
+        briefing_lines.append("關聯：台股重挫 → 0050/009816/00981A 跌幅同步監控；外資賣超 → 高股息 00878/00713 支撐度")
+    except Exception:
+        briefing_lines.append("持倉關聯：略（snapshot 讀取失敗）")
+
+    briefing = "\n".join(briefing_lines)
+    briefing_path = BASE / f"daily_intel_report_{today}.json"
+    # write briefing into same unified file
+    try:
+        unified_data = json.loads(unified_path.read_text(encoding='utf-8'))
+    except Exception:
+        unified_data = {}
+    unified_data["briefing"] = briefing
+    unified_data["briefing_updated_at"] = datetime.now().isoformat()
+    unified_path.write_text(json.dumps(unified_data, ensure_ascii=False, indent=2), encoding='utf-8')
+
     return {
         "created": True,
         "file": str(out),
         "signals": signals,
         "analysis": str(analysis_path),
+        "unified": str(unified_path),
         "market": market,
+        "briefing": briefing,
     }
 
 
