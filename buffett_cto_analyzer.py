@@ -106,6 +106,26 @@ def generate_report(pen: dict, intel: dict, snapshot: dict) -> str:
 
         passive_income = _safe_int(pi_raw)
 
+    # Snapshot-aware allocation context
+    _has_snapshot = False
+    try:
+        _snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        _pen = _snap.get("penetration", {}).get("actual_twd", {})
+        _us_eq = float(_pen.get("美股市值型成長", 0))
+        _tw_eq = float(_pen.get("台股市值型成長", 0))
+        _div  = float(_pen.get("防守型配息", 0))
+        _bond = float(_pen.get("債券及安全現金", 0))
+        _cash = float(_pen.get("現金/安全網", 0))
+        _invest_total = _us_eq + _tw_eq + _div
+        _us_pct = _us_eq / (_invest_total + 1e-9)
+        _tw_pct = _tw_eq / (_invest_total + 1e-9)
+        _safe_total = _bond + _cash
+        _safe_pct = _safe_total / (_invest_total + _safe_total + 1e-9)
+        _has_snapshot = True
+    except Exception:
+        _has_snapshot = False
+
+
     targets = pen.get("targets", {})
     raw = pen.get("raw", {})
     pct = pen.get("pct", {})
@@ -173,19 +193,51 @@ def generate_report(pen: dict, intel: dict, snapshot: dict) -> str:
     lines.append(f"場景判定：台股重挫 {twii}%，穿透部位失衡，啟動減碼防禦")
     lines.append(f"• 淨資產：{net:,} TWD")
     
-    # 1. 成長部位
+
+    # Extract market context for scenario-aware advice
+    twii = intel.get("TAIEX", {}).get("1_week_change_pct", "N/A") if intel else "N/A"
+    soxx = intel.get("SOXX", {}).get("1_week_change_pct", "N/A") if intel else "N/A"
+    foreign = intel.get("foreign_flow", {}).get("7d_net", "N/A") if intel else "N/A"
+
+    # 1. 成長部位（穿透驅動，情境感知）
     if drift_growth > 10:
-        lines.append(f"• 成長型部位超標 +{drift_growth:.1f}pp（實際 {actual_growth_pct:.1f}% vs 目標 {target_growth:.0f}%），建議減碼美股權益（00646/009824/009823）")
-        lines.append(f"  預計減碼空間：{us_growth_twd - target_growth/100*denom:,.0f} TWD")
+        lines.append(f"• 成長型部位超標 +{drift_growth:.1f}pp（實際 {actual_growth_pct:.1f}% vs 目標 {target_growth:.0f}%）")
+        if not _has_snapshot:
+            lines.append("  （snapshot 穿透未讀取，建議手動確認台股/美股比例後再決策）")
+        else:
+            # 以情境為主，避免暴跌時追跌賣出
+            twii_num = float(str(twii).replace(",","")) if twii != "N/A" else None
+            if twii_num is not None and twii_num <= -3:
+                lines.append(f"  台股單週暴跌 {twii_num:.1f}%，此時不追跌賣出權益；等反彈確認後再減碼超標部位")
+            elif twii_num is not None and twii != "N/A" and twii >= 2:
+                lines.append(f"  台股反彈 +{twii_num:.1f}%，可分批減碼超標部位")
+            else:
+                # 震盪：指出實際過重部位
+                if _us_pct > 0.35 and _tw_pct > 0.15:
+                    lines.append(f"  台股 {_tw_pct*100:.1f}%、美股 {_us_pct*100:.1f}%，雙邊偏重；建議先減碼超標幅度較大的一方")
+                elif _us_pct > 0.35:
+                    lines.append(f"  美股佔比 {_us_pct*100:.1f}% 偏高，建議優先減碼美股科技型 ETF（00646/009824/009823）")
+                elif _tw_pct > 0.20:
+                    lines.append(f"  台股佔比 {_tw_pct*100:.1f}% 偏高，建議優先減碼台股集中部位（0050/009816）")
+                else:
+                    lines.append(f"  建議減碼整體權益部位，預計減碼 {us_growth_twd + tw_growth_twd - target_growth/100*(_invest_total+1):,.0f} TWD")
     elif drift_growth < -10:
-        lines.append(f"• 成長型部位低標 {drift_growth:.1f}pp（實際 {actual_growth_pct:.1f}% vs 目標 {target_growth:.0f}%），建議加碼台股/美股權值")
+        lines.append(f"• 成長型部位低標 {drift_growth:.1f}pp（實際 {actual_growth_pct:.1f}% vs 目標 {target_growth:.0f}%），建議分批加碼台股/美股權值")
     else:
         lines.append(f"• 成長型部位 {actual_growth_pct:.1f}%，接近目標 {target_growth:.0f}%，維持現有配置")
     
     # 2. 台股/美股配置
     tw_pct = tw_growth_twd / denom * 100 if denom > 0 else 0
     us_pct = us_growth_twd / denom * 100 if denom > 0 else 0
-    lines.append(f"• 台股市值型成長 {tw_pct:.1f}%（0050台積電權重57%過高），美股 {us_pct:.1f}%（00646比009824分散）")
+    lines.append(f"• 台股市值型成長 {tw_pct:.1f}%，美股 {us_pct:.1f}%")
+    if tw_pct > 15 and us_pct > 40:
+        lines.append("  台股/美股雙高，避免過度集中，優先分散至防禦型配息與債券部位")
+    elif tw_pct > 20:
+        lines.append("  台股權重偏高，注意單一市場曝險")
+    elif us_pct > 40:
+        lines.append("  美股權重偏高，注意美國科技股季節性回檔風險")
+    else:
+        lines.append("  台股/美股權重在可控範圍")
     
     # 3. 防禦部位
     if actual_defense_pct < target_defense - 10:
@@ -202,7 +254,7 @@ def generate_report(pen: dict, intel: dict, snapshot: dict) -> str:
     # 5. 配息品質
     lines.append(f"• 本月配息 {passive_income:,} TWD 為退休現金流基石，不宜隨便解約")
     lines.append("")
-    
+
     # CTO 建議：根據技術面動態生成
     lines.append("【CTO 技術視角】")
     lines.append("今日最大風險：")
@@ -217,7 +269,7 @@ def generate_report(pen: dict, intel: dict, snapshot: dict) -> str:
     if us_pct > 45:
         lines.append(f"3. 美股超標 {us_pct:.1f}%（46.1% vs 40%），009824 科技巨頭比 00646 S&P500 更集中")
     else:
-        lines.append(f"3. 美股曝險 {us_pct:.1f}%，00646 S&P500 分散度優於 009824")
+        lines.append(f"3. 美股曝險 {us_pct:.1f}%，{('美股權重偏高，注意美國科技股季節性回檔風險' if us_pct > 40 else '00646 S&P500 分散度優於 009824')}")
     
     lines.append("4. 配息SOP：安聯收益成長已配息入帳，屬正常除息")
     lines.append("5. PIMCO 已轉出，M&G 尚未入帳，待追蹤")
@@ -225,9 +277,20 @@ def generate_report(pen: dict, intel: dict, snapshot: dict) -> str:
     lines.append("建議動作：")
     
     if drift_growth > 10:
-        lines.append(f"1. 減碼美股 {us_pct:.1f}% → 目標 40%，預計賣出 {us_growth_twd - target_growth/100*denom:,.0f} TWD")
+        if not _has_snapshot:
+            lines.append("1. 成長部位超標，建議減碼超標權益部位（advice pending snapshot）")
+        elif twii_num is not None and twii != "N/A" and twii <= -3:
+            lines.append(f"1. 成長部位超標，但台股暴跌中，不追跌賣出；等反彈後再減碼")
+        elif _us_pct > 0.35 and _tw_pct > 0.15:
+            lines.append("1. 台股/美股雙高，優先減碼超標幅度大的一方，避免一刀斬美股")
+        elif _us_pct > 0.35:
+            lines.append(f"1. 美股權重 {_us_pct*100:.1f}% 偏高，建議優先減碼科技型 ETF（00646/009824/009823）")
+        elif _tw_pct > 0.20:
+            lines.append(f"1. 台股權重 {_tw_pct*100:.1f}% 偏高，建議優先減碼台股集中部位（0050/009816）")
+        else:
+            lines.append(f"1. 成長部位超標，建議減碼整體權益 {drift_growth:.1f}pp")
     elif drift_growth < -10:
-        lines.append(f"1. 加碼台股/美股權值，目前 {actual_growth_pct:.1f}% 低標")
+        lines.append(f"1. 成長部位低標，分批加碼台股/美股權值，目前低標 {abs(drift_growth):.1f}pp")
     else:
         lines.append("1. 成長部位接近目標，维持現有配置")
     
