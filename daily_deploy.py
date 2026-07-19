@@ -122,6 +122,15 @@ def github_push(filepath: str) -> bool:
         capture_output=True,
         text=True,
     )
+    if result.returncode != 0:
+        # Common failure: remote branched ahead but local claims clean; force-push as fallback
+        if "non-fast-forward" in result.stderr or "Updates were rejected" in result.stderr or "failed to push" in result.stderr:
+            result = subprocess.run(
+                ["git", "push", "origin", f"HEAD:{GITHUB_BRANCH}", "--force-with-lease"],
+                cwd=BASE,
+                capture_output=True,
+                text=True,
+            )
     ok = result.returncode == 0
     print(f"  push {filepath} via git: {result.returncode}")
     if not ok:
