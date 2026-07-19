@@ -83,10 +83,29 @@ def load_market_intel() -> dict:
 
 
 def generate_report(pen: dict, intel: dict, snapshot: dict) -> str:
+
+    # defensive: snapshot may contain dict values instead of scalars
+    def _safe_int(v, fallback=0):
+        if isinstance(v, dict):
+            return fallback
+        try:
+            return int(v or 0)
+        except Exception:
+            return fallback
+
     net = snapshot.get("net_worth", 0)
     monthly_income = snapshot.get("monthly_income", 0)
     monthly_expense = snapshot.get("monthly_expense", 0)
-    passive_income = snapshot.get("passive_income", 0)
+    pi_raw = snapshot.get("passive_income", 0) or 0
+
+    if isinstance(pi_raw, dict):
+
+        passive_income = pi_raw.get("total_conservative", 0) or 0
+
+    else:
+
+        passive_income = _safe_int(pi_raw)
+
     targets = pen.get("targets", {})
     raw = pen.get("raw", {})
     pct = pen.get("pct", {})
