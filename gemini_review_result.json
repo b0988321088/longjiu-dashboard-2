@@ -1,0 +1,5 @@
+{
+  "status": "ok",
+  "raw": "{\n  \"status\": \"rejected\",\n  \"issues\": [\n    {\n      \"point\": \"1. 數字計算正確性 - 覆蓋率\",\n      \"description\": \"覆蓋率計算方式與要求不符。報告中月度配息覆蓋率為68.8%，",
+  "score": 0
+}

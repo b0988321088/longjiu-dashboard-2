@@ -22,7 +22,8 @@
       "user": "Laing",
       "idem_key": "hermes-1784345776",
       "summary": "Laing 指定延后預設為 +1 天提醒",
-      "remind_at": "2026-07-19"
+      "remind_at": "2026-07-19",
+      "reminded": true
     },
     {
       "timestamp": "2026-07-18T11:36:34.226158",
@@ -34,7 +35,8 @@
       "user": "Laing",
       "idem_key": "hermes-1784345794",
       "summary": "Laing 在 Telegram 輸入延後，預設 +1 天提醒",
-      "remind_at": "2026-07-19"
+      "remind_at": "2026-07-19",
+      "reminded": true
     },
     {
       "timestamp": "2026-07-18T11:43:15.830259",
@@ -98,6 +100,30 @@
       "user": "Laing",
       "idem_key": "hermes-1784376351",
       "summary": "Laing 核准整合 buffett_cto_analyzer 進 daily_deploy 並確認 cron 穩定"
+    },
+    {
+      "timestamp": "2026-07-19T10:29:48.068803",
+      "update_id": 718083496,
+      "action": "核准",
+      "name": "Decision: 最好能上傳到網路上我才能夠看幫我執行",
+      "source": "Telegram Poller",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "poll-718083496",
+      "summary": "Laing 在 Telegram 輸入 [核准] 最好能上傳到網路上我才能夠看幫我執行"
+    },
+    {
+      "timestamp": "2026-07-19T12:47:19.650318",
+      "update_id": 718083542,
+      "action": "核准",
+      "name": "Decision: 我的基金部位的有一個日幣計價的你好像記錯了",
+      "source": "Telegram Poller",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "poll-718083542",
+      "summary": "Laing 在 Telegram 輸入 [核准] 我的基金部位的有一個日幣計價的你好像記錯了"
     }
   ]
 }

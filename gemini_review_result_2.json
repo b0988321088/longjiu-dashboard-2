@@ -1,0 +1,5 @@
+{
+  "status": "ok",
+  "raw": "{\n  \"status\": \"rejected\",\n  \"issues\": [\n    {\n      \"point\": \"1. 數字計算正確性 - 覆蓋率\",\n      \"description\": \"報告中的覆蓋率 (107.7%) 僅基於保守配息計算，與指令要求 '覆",
+  "score": 0
+}

@@ -579,13 +579,6 @@ def main() -> int:
 
     push_to_notion(snap)
 
-    # Also generate professional DOCX layout daily
-    try:
-        import subprocess
-        subprocess.run(["python", "report_asset_diff.py"], check=False)
-    except Exception:
-        pass
-
     try:
         import webbrowser
         webbrowser.open(OUT_HTML.resolve().as_uri())

@@ -1,0 +1,24 @@
+{
+  "alerts": [
+    {
+      "event": {
+        "name": "延后明天提醒",
+        "action": "延後",
+        "user": "Laing",
+        "summary": "Laing 指定延后預設為 +1 天提醒",
+        "remind_at": "2026-07-19"
+      },
+      "message": "🔔 決策提醒\n事件：延后明天提醒\n原始動作：延後\n操作人：Laing\n原始摘要：Laing 指定延后預設為 +1 天提醒\n請盡快處理這個延後的決策事項。"
+    },
+    {
+      "event": {
+        "name": "Decision: 延後（未指定事項）",
+        "action": "延後",
+        "user": "Laing",
+        "summary": "Laing 在 Telegram 輸入延後，預設 +1 天提醒",
+        "remind_at": "2026-07-19"
+      },
+      "message": "🔔 決策提醒\n事件：Decision: 延後（未指定事項）\n原始動作：延後\n操作人：Laing\n原始摘要：Laing 在 Telegram 輸入延後，預設 +1 天提醒\n請盡快處理這個延後的決策事項。"
+    }
+  ]
+}
