@@ -2,13 +2,28 @@
   "2026-07-19": {
     "date": "2026-07-19",
     "total_assets": 50689930,
+    "total_liabilities": 22000000,
     "net_worth": 28689930,
-    "insurance_total": 11791280,
-    "securities_cost": 2208900,
     "securities_market": 2158900,
-    "cash": 3853985,
+    "insurance_current": 9876282,
+    "insurance_total": 11791280,
     "fund_market": 783700,
-    "insurance_current": 9876282
+    "real_estate": 34017063,
+    "cash": 3853985,
+    "other": 0,
+    "insurance_detail": {
+      "安聯保單A+B 現值": 7808297,
+      "安聯保單A 帳面": 5079576,
+      "安聯保單B 帳面": 2728721,
+      "第一金保單 FL65 現值": 1994698,
+      "保單總現値": 9876282,
+      "保單總帳面": 11791280
+    },
+    "fund_dividend_monthly": 17519,
+    "monthly_income": 218102,
+    "monthly_expense": 141958,
+    "rent_monthly": 24000,
+    "cathay_refinance": 0
   },
   "2026-07-18": {
     "date": "2026-07-18",
