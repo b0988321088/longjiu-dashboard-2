@@ -1,0 +1,27 @@
+{
+  "date": "2026-07-19",
+  "created_at": "2026-07-19T16:00:00+08:00",
+  "issues": [
+    {
+      "id": 1,
+      "category": "snapshot",
+      "point": "runway_months",
+      "status": "fixed",
+      "note": "snapshot.json runway_months=27.1"
+    },
+    {
+      "id": 2,
+      "category": "extract_snapshot",
+      "point": "runway_months calculation",
+      "status": "fixed",
+      "note": "extract_snapshot now derives runway_months from real_liquid_assets / monthly_expense"
+    },
+    {
+      "id": 3,
+      "category": "queue",
+      "point": "daily_review_queue initialization",
+      "status": "pending",
+      "note": "Need to append today review results after Gemini confirmation"
+    }
+  ]
+}

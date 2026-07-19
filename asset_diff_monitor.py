@@ -23,6 +23,16 @@ default_env = os.environ.get("DOTENV", str(project_env))
 if not Path(default_env).exists() and hermes_env.exists():
     default_env = str(hermes_env)
 load_dotenv(default_env)
+if hermes_env.exists():
+    try:
+        load_dotenv(str(hermes_env), override=True)
+    except Exception:
+        pass
+if hermes_env.exists():
+    try:
+        load_dotenv(str(hermes_env), override=True)
+    except Exception:
+        pass
 
 NOTION_TOKEN = os.getenv("NOTION_TOKEN", "")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -151,6 +161,7 @@ def extract_snapshot(snap: dict) -> dict:
         "monthly_expense": float(snap.get("monthly_expense", snap.get("monthly_expense_mb", 141958))),
         "rent_monthly": float(snap.get("rent_monthly_actual", 80100)),
         "cathay_refinance": float(snap.get("cathay_refinance_amount") or 0),
+        "runway_months": float(snap.get("runway_months") or (snap.get("real_liquid_assets", 0) / (snap.get("monthly_expense", 1) or 1))),
     }
 
 
@@ -562,6 +573,25 @@ def build_telegram_text(rows: list[dict], snap: dict) -> str:
     )
 
 
+def send_telegram_document(path: str, caption: str = "") -> bool:
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "") or os.environ.get("TELEGRAM_ALLOWED_USERS", "")
+    if not token or not chat_id:
+        print("⚠️ TELEGRAM_BOT_TOKEN / CHAT_ID 未設定")
+        return False
+    try:
+        url = f"https://api.telegram.org/bot{token}/sendDocument"
+        with open(path, "rb") as f:
+            files = {"document": f}
+            data = {"chat_id": chat_id, "caption": caption}
+            req = urllib.request.Request(url, data=__import__("urllib.parse").parse.urlencode(data).encode(), method="POST")
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                raw = json.loads(resp.read())
+                return raw.get("ok", False)
+    except Exception as e:
+        print(f"❌ Telegram document {e}")
+        return False
+
 def send_telegram(text: str) -> None:
     token = TELEGRAM_BOT_TOKEN
     chat_id = TELEGRAM_CHAT_ID
@@ -580,6 +610,17 @@ def send_telegram(text: str) -> None:
     except urllib.error.HTTPError as e:
         print(f"❌ Telegram {e.code}: {e.read().decode('utf-8', errors='ignore')[:240]}")
 
+
+
+def check_url(url: str, timeout: int = 15) -> dict:
+    try:
+        req = urllib.request.Request(url, method="GET")
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return {"url": url, "status": resp.status, "ok": True}
+    except urllib.error.HTTPError as e:
+        return {"url": url, "status": e.code, "ok": False}
+    except Exception as e:
+        return {"url": url, "status": str(e), "ok": False}
 
 # ---------- notion ----------
 def push_to_notion(snap: dict) -> None:

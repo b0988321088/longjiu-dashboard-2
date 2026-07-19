@@ -506,5 +506,6 @@
   "passive_income_total": 96798,
   "moneybook_account_csv": "C:/Users/bot/Desktop/龍九系統/Moneybook/Moneybook_帳戶_20260718_1.csv",
   "real_estate_value": 34017063,
-  "insurance_total_note": "含配息"
+  "insurance_total_note": "含配息",
+  "runway_months": 27.1
 }
