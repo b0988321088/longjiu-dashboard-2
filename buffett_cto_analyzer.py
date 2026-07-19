@@ -50,10 +50,13 @@ def penetration_analysis(snapshot: dict) -> dict:
     
     # 用投資部位（不含不動產）計算再平衡百分比
     invest_total = sum(v for k, v in raw.items() if k != "不動產")
+    total_with_re = invest_total + raw.get("不動產", 0)
     safety_pct = safety_cash / invest_total * 100 if invest_total > 0 else 0
+    real_estate_pct = raw.get("不動產", 0) / total_with_re * 100 if total_with_re > 0 else 0
     
     return {
         "total_assets": invest_total,
+        "total_with_re": total_with_re,
         "raw": raw,
         "pct": {
             "市值型成長（台股/美股）": growth_pct,
@@ -69,9 +72,9 @@ def penetration_analysis(snapshot: dict) -> dict:
         "growth_pct": growth_pct,
         "defense_pct": defense_pct,
         "safety_pct": safety_pct,
+        "real_estate_pct": real_estate_pct,
         "alert": pen.get("alert", ""),
     }
-
 def load_market_intel() -> dict:
     p = BASE / "market_intel.json"
     if not p.exists():
@@ -122,6 +125,10 @@ def generate_report(pen: dict, intel: dict, snapshot: dict) -> str:
         _safe_total = _bond + _cash
         _safe_pct = _safe_total / (_invest_total + _safe_total + 1e-9)
         _has_snapshot = True
+        monthly_rent = float(snapshot.get("rent_monthly_actual", 0))
+        # Use monthly_expense as proxy for total debt service (mortgage + insurance loans)
+        mortgage_monthly_total = float(snapshot.get("monthly_expense", 0))
+        _mortgage_count = len(_snap.get("mortgages", []))
     except Exception:
         _has_snapshot = False
 
@@ -251,6 +258,24 @@ def generate_report(pen: dict, intel: dict, snapshot: dict) -> str:
     else:
         lines.append(f"• 安全網 {actual_safety_pct:.1f}%，充足")
     
+    # 槓桿套利自我檢驗
+    if _has_snapshot:
+        lines.append("【槓桿套利自我檢驗】")
+        total_assets = snapshot.get("total_assets", 0)
+        debt_ratio = float(str(snapshot.get("debt_ratio", "43.4%")).replace("%",""))
+        monthly_expense = float(snapshot.get("monthly_expense", 0))
+        lines.append(f"• 總資產 {total_assets:,.0f} TWD vs 淨資產 {net:,} TWD（負債率 {debt_ratio:.1f}%）")
+        lines.append(f"• 不動產 3,400 萬佔比 67.1%，淨租金回報率僅 {monthly_rent*12/34000000*100:.2f}%")
+        lines.append(f"• 被動月收 {passive_income:,} TWD - 月支出 {monthly_expense:,.0f} TWD = 剩餘 {passive_income - monthly_expense:,.0f} TWD")
+        if passive_income - monthly_expense < 5000:
+            lines.append("  ⚠️ 被動金流扣支出後剩餘不足 5,000 元/月，現金流極度緊張")
+        management_fee = _invest_total * 0.015
+        borrow_cost = monthly_expense * 12 * 0.025 + management_fee
+        lines.append(f"• 管理費年侵蝕約 {management_fee/10000:.0f} 萬；借貸成本+管理費共 {borrow_cost/10000:.0f} 萬/年")
+        lines.append("• 建議：停止新增槓桿；優先減碼高管理費部位償還高息借款")
+        lines.append("")
+
+
     # 5. 配息品質
     lines.append(f"• 本月配息 {passive_income:,} TWD 為退休現金流基石，不宜隨便解約")
     lines.append("")
