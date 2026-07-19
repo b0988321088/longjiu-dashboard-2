@@ -166,7 +166,7 @@ def generate_report(pen: dict, intel: dict, snapshot: dict) -> str:
     lines.append(f"• 台股加權指數：{intel.get('TAIEX', {}).get('current', 'N/A')}（單週 {twii}%）")
     lines.append(f"• 費半：{soxx}%")
     lines.append(f"• 外資動向：{foreign}")
-    lines.append(f"• 機會子彈觸發條件：單週漲跌幅 >= 15%（目前單週 {twii}%，{'已觸發' if abs(twii) >= 15 else '距離觸發線還有空間'}）")
+    lines.append(f"• 機會子彈觸發條件：單週漲跌幅 >= 10%（目前單週 {twii}%，{'已觸發' if abs(twii) >= 10 else '距離觸發線還有空間'}）")
     lines.append("")
     lines.append("【穿透分析】")
     lines.append("【穿透分析】")
@@ -259,10 +259,10 @@ def generate_report(pen: dict, intel: dict, snapshot: dict) -> str:
     lines.append("【CTO 技術視角】")
     lines.append("今日最大風險：")
     
-    if abs(twii) >= 15:
+    if abs(twii) >= 10:
         lines.append(f"1. 台股單週 {twii}%，{'大跌' if twii < 0 else '大漲'}已觸發機會子彈門檻")
     else:
-        lines.append(f"1. 台股單週 {twii}%，距離機會子彈觸發線 ±15% 還有 {max(0, 15-abs(twii)):.1f}pp 空間")
+        lines.append(f"1. 台股單週 {twii}%，距離機會子彈觸發線 ±10% 還有 {max(0, 10-abs(twii)):.1f}pp 空間")
     
     lines.append(f"2. 0050 內建台積電 57%，單一公司曝險過高，009816 約 42%")
     
@@ -310,14 +310,14 @@ def generate_report(pen: dict, intel: dict, snapshot: dict) -> str:
     else:
         lines.append("4. 安全網充足，保留高利活存作為機會子彈資金")
     
-    lines.append(f"5. 機會子彈監控：單週 ±15% 觸發，目前 {twii}%")
+    lines.append(f"5. 機會子彈監控：單週 ±10% 觸發，目前 {twii}%")
     lines.append("")
     lines.append("【機會子彈戰術】")
-    lines.append("Trigger：單週漲跌幅 >= 15%（大漲或大跌都觸發）")
+    lines.append("Trigger：單週漲跌幅 >= 10%（大漲或大跌都觸發）")
     lines.append("Deploy：大跌後第1週進30%、第2週進70%（追反彈）")
     lines.append("Take profit：+8-12% 或 30天未反彈則撤離")
     lines.append("Upper bound：機會子彈動用 ≤ 20% 安全網部位")
-    lines.append(f"今天狀態：台股單週 {twii}%，{'🔴 已觸發！' if abs(twii) >= 15 else '距離觸發線-15%還有空間，持續監控'}")
+    lines.append(f"今天狀態：台股單週 {twii}%，{'🔴 已觸發！' if abs(twii) >= 10 else '距離觸發線-10%還有空間，持續監控'}")
 
     return "\n".join(lines)
 
