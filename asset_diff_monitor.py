@@ -125,10 +125,11 @@ def extract_snapshot(snap: dict) -> dict:
         "insurance_total": float(insurance_total),
         "fund_market": float(funds),
         "real_estate": float(real_estate or 0),
-        "cash": float(cash),
         "other": float(other),
+        "cash": float(cash),
         "insurance_detail": insurance_detail,
         "fund_dividend_monthly": float(snap.get("fund_dividend_monthly", 0)),
+        "fund_dividend_conservative": float(snap.get("passive_income", {}).get("fund_dividend_conservative", snap.get("fund_dividend_monthly", 0))),
         "monthly_income": float(snap.get("monthly_income", 218102)),
         "monthly_expense": float(snap.get("monthly_expense", snap.get("monthly_expense_mb", 141958))),
         "rent_monthly": float(snap.get("rent_monthly_actual", 80100)),
@@ -293,9 +294,10 @@ def buffett_advice(history: dict, snap: dict) -> str:
     ta = ex["total_assets"] or 1
     debt_ratio = ex["total_liabilities"] / ta * 100
     monthly_div = ex["fund_dividend_monthly"]
+    monthly_div_conservative = ex.get("fund_dividend_conservative", monthly_div)
     monthly_rent = ex["rent_monthly"]
     monthly_exp = ex["monthly_expense"]
-    passive_total = monthly_div + monthly_rent
+    passive_total = monthly_div_conservative + monthly_rent
     passive_coverage = passive_total / monthly_exp * 100 if monthly_exp else 0
 
     # allocations
@@ -312,7 +314,7 @@ def buffett_advice(history: dict, snap: dict) -> str:
         "",
         f"資產結構：{alloc}",
         f"負債比率：{debt_ratio:.1f}%",
-        f"月度配息：{_fmt(monthly_div)}（覆蓋率 {passive_coverage:.1f}%）",
+        f"保守配息：{_fmt(monthly_div_conservative)}（覆蓋率 {passive_coverage:.1f}%）",
     ]
 
     if rows:
