@@ -5,7 +5,7 @@ asset_diff_monitor.py — 資產每日變化監控 + 趨勢 + 巴菲特建議
 """
 from __future__ import annotations
 
-import json
+import json, sys
 import os
 import urllib.request
 import urllib.error
@@ -568,7 +568,7 @@ def send_telegram(text: str) -> None:
     if not token or not chat_id:
         print("⚠️ TELEGRAM_BOT_TOKEN / CHAT_ID 未設定")
         return
-    payload = json.dumps({"chat_id": chat_id, "text": text, "parse_mode": "HTML"}).encode("utf-8")
+    payload = json.dumps({"chat_id": chat_id, "text": text, "parse_mode": "HTML", "disable_web_page_preview": True}).encode("utf-8")
     req = urllib.request.Request(
         f"https://api.telegram.org/bot{token}/sendMessage",
         data=payload,
@@ -634,8 +634,33 @@ def main() -> int:
     OUT_HTML.write_text(html, encoding="utf-8")
     print(f"✅ HTML 已產出：{OUT_HTML} ({len(html)} bytes)")
 
+    today_r = rows[-1]["date"]
     tg = build_telegram_text(rows, snap)
     send_telegram(tg)
+
+    try:
+        import subprocess
+        if OUT_HTML.exists():
+            subprocess.run([
+                sys.executable,
+                str(Path(__file__).resolve().parent / "scripts" / "telegram_send_document.py"),
+                str(OUT_HTML.resolve()),
+                f"📈 資產變化對照 {today_r} 網頁版",
+                TELEGRAM_BOT_TOKEN,
+                TELEGRAM_CHAT_ID,
+            ], check=False)
+        docx_path = OUT_HTML.with_suffix('.docx')
+        if docx_path.exists():
+            subprocess.run([
+                sys.executable,
+                str(Path(__file__).resolve().parent / "scripts" / "telegram_send_document.py"),
+                str(docx_path.resolve()),
+                f"📈 資產變化對照 {today_r} Word 版",
+                TELEGRAM_BOT_TOKEN,
+                TELEGRAM_CHAT_ID,
+            ], check=False)
+    except Exception as e:
+        print(f"⚠️ 附件傳送失敗：{e}")
 
     push_to_notion(snap)
 
