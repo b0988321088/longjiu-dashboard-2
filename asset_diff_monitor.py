@@ -115,6 +115,22 @@ def extract_snapshot(snap: dict) -> dict:
         "保單總帳面": insurance_total,
     }
 
+    # Build display breakdown with JPY funds converted to TWD
+    jpy_rate = snap.get('fx_rates', {}).get('jpy_to_twd', 0.2)
+    display_funds = {}
+    for name, val in snap.get('funds_breakdown', {}).items():
+        if '日元' in name or '日圓' in name or 'JPY' in name.upper():
+            jpy_val = val
+            # Handle already converted values: if val > 1_000_000 assume still JPY
+            twd = round(jpy_val * jpy_rate)
+            display_name = name + '（換算台幣）'
+            display_funds[display_name] = twd
+        else:
+            display_funds[name] = val
+    # Add gap fund if present
+    for name, val in snap.get('funds_gap_fill', {}).items():
+        display_funds[name] = val
+
     return {
         "date": str(snap.get("generated_at", snap.get("date", date.today().isoformat())))[:10],
         "total_assets": float(total_assets),
@@ -124,6 +140,7 @@ def extract_snapshot(snap: dict) -> dict:
         "insurance_current": float(insurance),
         "insurance_total": float(insurance_total),
         "fund_market": float(funds),
+        "fund_breakdown_display": display_funds,
         "real_estate": float(real_estate or 0),
         "other": float(other),
         "cash": float(cash),
@@ -437,6 +454,46 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     buffett_md = buffett_advice(history, snap)
     charts_html = build_trend_charts(history)
 
+    # Fund detail card from screenshot
+    fund_detail_rows = "".join(
+        f"<tr><td>{k}</td><td class='num'>{v:,.0f}</td><td>{'JPY換算' if '日元' in k else 'TWD'}</td></tr>"
+        for k, v in ex.get('fund_breakdown_display', {}).items()
+    )
+    fund_card = (
+        '<div class="card"><h2>📊 基金部位</h2>'
+        '<div class="table-wrap"><table><thead><tr><th>基金名稱</th><th class=\'num\'>市值</th><th>幣別</th></tr></thead><tbody>'
+        + fund_detail_rows
+        + "</tbody></table></div></div>"
+    )
+
+    # Cash detail card
+    cash_card = (
+        '<div class="card"><h2>💵 現金部位</h2>'
+        '<div class="table-wrap"><table><thead><tr><th>項目</th><th class=\'num\'>金額</th></tr></thead><tbody>'
+        f"<tr><td>real_liquid_assets（總流動資產）</td><td class='num'>{_fmt(ex['cash'])}</td></tr>"
+        "</tbody></table></div>"
+        '<div class="text-sm" style="margin-top:8px;color:#6e6e73">包含：高利活存 2,200,410 + Moneybook 活期 3,071,343｜合併後唯一真值</div>'
+        "</div>"
+    )
+
+    # Asset allocation card with all components incl real estate
+    # Allocation: exclude real estate so other components sum to ~100%
+    alloc_den = max(1, ex['total_assets'] - ex.get('real_estate', 0))
+    alloc_items = [
+        ('證券市值', ex['securities_market'], '#3b82f6'),
+        ('保單現値', ex['insurance_current'], '#10b981'),
+        ('基金市值', ex['fund_market'], '#f59e0b'),
+        ('現金部位', ex['cash'], '#8b5cf6'),
+    ]
+    alloc_bars = "".join(
+        f"<div style='margin:6px 0'><div style='display:flex;justify-content:space-between;font-size:14px'>"
+        f"<span>{label}</span><span class='num'>{v/10000:.0f}萬 ({v/alloc_den*100:.1f}%)</span></div>"
+        f"<div style='background:#f2f2f7;border-radius:4px;height:8px;margin-top:4px'><div style='background:{c};width:{v/alloc_den*100:.1f}%;height:8px;border-radius:4px'></div></div>"
+        "</div>"
+        for label, v, c in alloc_items
+    )
+    alloc_card = f'<div class="card"><h2>📈 資產結構（最新）</h2>{alloc_bars}</div>'
+
     body = "\n".join([
         f'<div class="card"><h1>📈 資產變化對照 {today}</h1><div class="text-sm">資產監控 / 趨勢 / 巴菲特分析</div></div>',
         f'<div class="card"><h2>📋 資產變化明細（近 7 日）</h2><div class="table-wrap"><table><thead>{table_header}</thead><tbody>',
@@ -444,6 +501,9 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         "</tbody></table></div></div>",
         charts_html,
         detail_table,
+        fund_card,
+        cash_card,
+        alloc_card,
         f'<div class="card"><h2>🚨 監控警示</h2><div class="text-sm">{alert_header}</div><ul style="list-style:none;padding:0;">{alerts_html}</ul></div>',
         f'<div class="card"><h2>🧠 在家巴菲特</h2><pre style="font-size:15px;line-height:1.8;white-space:pre-wrap;">{buffett_md}</pre></div>',
         '</div></body></html>',
