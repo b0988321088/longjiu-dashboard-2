@@ -328,19 +328,20 @@ def buffett_advice(history: dict, snap: dict) -> str:
     passive_total = monthly_div_conservative + monthly_rent
     passive_coverage = passive_total / monthly_exp * 100 if monthly_exp else 0
 
-    # allocations
+    alloc_den = max(1, ta - ex.get('real_estate', 0))
     alloc = (
-        f"證券 {ex['securities_market']/ta*100:.1f}% / "
-        f"保單 {ex['insurance_current']/ta*100:.1f}% / "
-        f"基金 {ex['fund_market']/ta*100:.1f}% / "
-        f"現金 {ex['cash']/ta*100:.1f}% / "
-        f"不動產 {ex['real_estate']/ta*100:.1f}%"
+        f"證券 {ex['securities_market']/alloc_den*100:.1f}% / "
+        f"保單 {ex['insurance_current']/alloc_den*100:.1f}% / "
+        f"基金 {ex['fund_market']/alloc_den*100:.1f}% / "
+        f"現金 {ex['cash']/alloc_den*100:.1f}%"
     )
+    real_estate_line = f"不動產 {ex.get('real_estate',0)/10000:.0f} 萬（單獨列出）"
 
     lines = [
         "🧠 在家巴菲特",
         "",
         f"資產結構：{alloc}",
+        real_estate_line,
         f"負債比率：{debt_ratio:.1f}%",
         f"保守配息：{_fmt(monthly_div_conservative)}（覆蓋率 {passive_coverage:.1f}%）",
     ]
@@ -384,7 +385,7 @@ def buffett_advice(history: dict, snap: dict) -> str:
     suggestions.append("0050 權重集中台積電 ~57%，可考慮補碼分散")
     suggestions.append("保單 A+B 管理費 1.5% 偏高，定期複檢配息收益率")
     if passive_coverage < 100:
-        suggestions.append(f"保守配息 70K+房租 80K 可覆蓋月支出 {_fmt(monthly_exp)}")
+        suggestions.append(f"保守配息 70K+房租 24K 可覆蓋月支出 {_fmt(monthly_exp)}")
     lines += ["", "💡 建議："]
     lines += [f"• {s}" for s in suggestions]
 
@@ -514,8 +515,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         detail_table,
         fund_card,
         cash_card,
-        alloc_card,
-        f'<div class="card"><h2>🚨 監控警示</h2><div class="text-sm">{alert_header}</div><ul style="list-style:none;padding:0;">{alerts_html}</ul></div>',
+f'<div class="card"><h2>🚨 監控警示</h2><div class="text-sm">{alert_header}</div><ul style="list-style:none;padding:0;">{alerts_html}</ul></div>',
         f'<div class="card"><h2>🧠 在家巴菲特</h2><pre style="font-size:15px;line-height:1.8;white-space:pre-wrap;">{buffett_md}</pre></div>',
         '</div></body></html>',
     ])
