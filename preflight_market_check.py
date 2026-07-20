@@ -2,6 +2,7 @@
 """preflight_market_check：檢查日報 market 區塊日期是否為今日"""
 import re
 import sys
+from datetime import date
 from pathlib import Path
 
 def check(report_path: str):
@@ -16,7 +17,7 @@ def check(report_path: str):
             sys.exit(1)
 
     text = p.read_text(encoding='utf-8')
-    today = "2026-07-18"
+    today = date.today().isoformat()
     # 找到所有 2026-07-XX 日期
     dates = set(re.findall(r'2026-07-\d+', text))
     if today not in dates:
