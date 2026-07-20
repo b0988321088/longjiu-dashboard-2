@@ -32,7 +32,7 @@ def tg_send_keyboard(text: str) -> bool:
         "text": text,
         "reply_markup": {
             "keyboard": [
-                [{"text": "✅ 核准"}, {"text": "⏸️ 延后"}],
+                [{"text": "✅ 核准"}, {"text": "⏸️ 延後"}],
             ],
             "resize_keyboard": True,
             "one_time_keyboard": True,
@@ -98,7 +98,16 @@ def record_decision(action: str, summary: str) -> dict:
                 decs = d
         except Exception:
             pass
-    decs.setdefault("decisions", []).append(event)
+    decs.setdefault("decisions", [])
+    # 冪等性檢查：同名+同動作+同分鐘，視為重複
+    is_dup = any(
+        d.get("name") == event["name"]
+        and d.get("action") == event["action"]
+        and d.get("timestamp", "")[:16] == now.isoformat()[:16]
+        for d in decs["decisions"]
+    )
+    if not is_dup:
+        decs["decisions"].append(event)
     DECISIONS_FILE.write_text(json.dumps(decs, ensure_ascii=False, indent=2), encoding="utf-8")
 
     # 2) ops_logs.md

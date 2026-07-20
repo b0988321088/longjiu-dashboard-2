@@ -65,8 +65,8 @@ def calibrate_sources() -> dict:
     s_work_surplus = snap.get("working_surplus")
     s_retire_surplus = snap.get("retirement_surplus")
     s_insurance = snap.get("insurance_current_value")
-    s_allianz = snap.get("allianz_ab_current_value")
-    s_firstjin = snap.get("firstjin_current_value")
+    s_allianz = snap.get("allianz_ab_current_value") or snap.get("allianz_ab")
+    s_firstjin = snap.get("firstjin_current_value") or snap.get("firstjin")
     s_rent = snap.get("rent_monthly_actual")
     s_securities = snap.get("securities_total_market_value")
 
@@ -181,8 +181,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         </thead>
         <tbody>
           <tr><td>第一站</td><td>摩根多重收益（FJ33）→ 安聯收益成長（FL65）</td><td>7/14</td><td>7/19-20</td><td>✅ 已配息/已入帳</td></tr>
-          <tr><td>第二站</td><td>安聯收益成長 + M&amp;G 入息基金</td><td>7/17</td><td>~7/29</td><td>🔄 配息接力中</td></tr>
-          <tr><td>第三站</td><td>安聯 AI 收益 + PIMCO 第一金 + 貝萊德世界科技 A10</td><td>7/29-30</td><td>~8/10</td><td>⏸️ 等待到期</td></tr>
+          <tr><td>第二站</td><td>安聯收益成長 + M&amp;G 入息基金</td><td>7/17</td><td>~7/29</td><td>🔄 M&amp;G轉換中（尚未全數到位）</td></tr>
+          <tr><td>第三站</td><td>安聯 AI 收益 + 貝萊德世界科技 A10</td><td>7/29-30</td><td>~8/10</td><td>⏸️ 等待到期（PIMCO已轉出 ✅）</td></tr>
         </tbody>
       </table>
     </div>"""
@@ -306,21 +306,20 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
   <div class="card">
     <h2>2/5｜資產結構 Asset Penetration</h2>
-    <div class="label">最新（不動產單獨列示）</div>
+    <div class="label">對照家族辦公室戰略目標模型（不動產不計入）</div>
     <div class="table-wrap">
       <table class="mobile-bordered">
-        <thead><tr><th>項目</th><th class="num">金額 TWD</th><th class="num">占比</th></tr></thead>
+        <thead><tr><th>戰略類別</th><th class="num">金額 TWD</th><th class="num">佔比</th><th class="num">目標</th><th>缺口</th></tr></thead>
         <tbody>
-          <tr><td>證券市值</td><td class="num">{tv.get("securities_total", 2_158_900):,}</td><td class="num">{tv.get("securities_total", 2_158_900)/tv["total_assets"]*100:.1f}%</td></tr>
-          <tr><td>保單現値</td><td class="num">{tv.get("insurance_total", 9_876_282):,}</td><td class="num">{tv.get("insurance_total", 9_876_282)/tv["total_assets"]*100:.1f}%</td></tr>
-          <tr><td>基金市值</td><td class="num">{tv.get("fund_market", 783_700):,}</td><td class="num">{tv.get("fund_market", 783_700)/tv["total_assets"]*100:.1f}%</td></tr>
-          <tr><td>債券及安全現金</td><td class="num">{tv.get("bonds_cash", 9_697_196):,}</td><td class="num">{tv.get("bonds_cash", 9_697_196)/tv["total_assets"]*100:.1f}%</td></tr>
-          <tr><td>不動產</td><td class="num">34,000,000</td><td class="num">{34_000_000/tv["total_assets"]*100:.1f}%</td></tr>
-          <tr><td>現金部位</td><td class="num">{tv.get("cash", 3_853_985):,}</td><td class="num">{tv.get("cash", 3_853_985)/tv["total_assets"]*100:.1f}%</td></tr>
+          <tr><td>🇹🇼 台股市值型</td><td class="num">__DR_TW_V__ TWD</td><td class="num">__DR_TW_PCT__</td><td class="num">__DR_TW_TGT__</td><td>__DR_TW_GAP__</td></tr>
+          <tr><td>🇺🇸 美股市值型</td><td class="num">__DR_US_V__ TWD</td><td class="num">__DR_US_PCT__</td><td class="num">__DR_US_TGT__</td><td>__DR_US_GAP__</td></tr>
+          <tr><td>🛡️ 防守型配息</td><td class="num">__DR_DEF_V__ TWD</td><td class="num">__DR_DEF_PCT__</td><td class="num">__DR_DEF_TGT__</td><td>__DR_DEF_GAP__</td></tr>
+          <tr><td>💵 債券</td><td class="num">__DR_BOND_V__ TWD</td><td class="num">__DR_BOND_PCT__</td><td class="num">__DR_BOND_TGT__</td><td>__DR_BOND_GAP__</td></tr>
+          <tr><td>💵 安全現金</td><td class="num">__DR_CASH_V__ TWD</td><td class="num">__DR_CASH_PCT__</td><td class="num">__DR_CASH_TGT__</td><td>__DR_CASH_GAP__</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="text-sm" style="color:#6e6e73;margin-top:8px">資產穿透分母：證券＋保單＋基金＋現金＋不動產；管理費~1.5%，偏高於配息收益率。</p>
+    <p class="text-sm" style="color:#6e6e73;margin-top:8px">穿透分母：台股+美股+防守+債券（不計入不動產）；管理費~1.5%，偏高於配息收益率。</p>
   </div>
 
   <!-- 市場情報 -->
@@ -342,7 +341,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-lead">0056 凍結質押中，短期無法加碼。0050 配息：待 MB 確認；防禦缺口由 00878/00713 預備。</p>
 
     <h3>房租金流</h3>
-    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。7/20 洲際 W 租金入帳監控；星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
+    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。大義街1樓 24,000（7月初入帳）+ 洲際W 33,000（7/20 ✅ 已入帳）= 已實收 57,000；剩大義街23樓 21,000 + 管理費 2,100 月底收齊。星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
 
     <h3>鉅亨基金調校</h3>
     <p class="text-lead">監控鉅亨買基金平台標的，追蹤 IT 與 AI 淨值，確保與保單資產互補。</p>
@@ -411,8 +410,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         </thead>
         <tbody>
           <tr><td>永豐銀行</td><td>洲際 W 房貸</td><td>7/20</td><td class="num">65,734</td><td>📌 待扣款</td></tr>
-          <tr><td>國泰世華</td><td>大義街房貸（原國泰，尚未完成轉貸）</td><td>8/1</td><td class="num">23,424</td><td>📌 待扣款</td></tr>
-          <tr><td>國泰世華</td><td>理財型利息</td><td>8/1</td><td class="num">10,300</td><td>📌 隨房貸扣款</td></tr>
+          <tr><td>星展銀行</td><td>大義街房貸（原國泰，尚未完成轉貸）</td><td>8/1</td><td class="num">23,424</td><td>📌 待扣款</td></tr>
+          <tr><td>星展銀行</td><td>理財型利息</td><td>8/1</td><td class="num">10,300</td><td>📌 隨房貸扣款</td></tr>
           <tr><td>永豐銀行</td><td>週轉金</td><td>—</td><td class="num">7,000,000</td><td>已動用額度</td></tr>
         </tbody>
       </table>
@@ -433,8 +432,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <h3>🚨 P0 任務</h3>
     <div class="callout callout-warn">
       <ul>
-        <li>7/17（五）— 國泰轉貸面簽/對保（原國泰名義尚未轉出，剩 1 天）</li>
-        <li>7/20（一）— 洲際 W 租金到帳監控 33,000 TWD</li>
+        <li>7/17（五）— 國泰轉貸面簽/對保（✅ 已執行，待後續流程）</li>
+        <li>7/20（一）— 洲際 W 33,000 ✅ 已入帳</li>
         <li>7/22（三）— 玉山信用卡繳款截止 3,176</li>
         <li>7/27（一）— 台新信用卡繳款截止 1,000</li>
         <li>7/29-30 — Fed 利率決策 + 安聯 AI / 貝萊德 A10 基準日</li>
@@ -505,6 +504,15 @@ __MARKET_ROWS__
   </div>
 
 
+</div>
+<div class="card">
+  <h2>📊 資產差異分析 Asset Diff</h2>
+  <p class="text-lead">
+    <a href="https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html" target="_blank">
+      開啟今日差異分析 → asset_diff_{TODAY}.html
+    </a>
+  </p>
+  <div class="text-sm">包含：6/5 資產變化對照、趨勢圖表、巴菲特分析、Gemini 風控意見</div>
 </div>
 </body>
 </html>"""
@@ -684,6 +692,63 @@ def main():
     daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text)
     daily_html = _inject_market_intel(daily_html, tv, intel_signals)
 
+    # 注入戰略穿透值到日報（與儀表板一致）
+    import sqlite3
+    _ac2 = {}
+    try:
+        _db2 = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        for r in _db2.execute("SELECT category, source, SUM(weight) as w FROM asset_class GROUP BY category, source"):
+            _ac2[(r[1], r[0])] = r[2]
+        _db2.close()
+    except Exception:
+        pass
+    _sec2 = float(tv.get("securities_total", 0) or 0)
+    _fund2 = float(tv.get("fund_market_value", 0) or tv.get("funds", 0) or 0)
+    _ins2 = float(tv.get("insurance_current_value", 0) or 0)
+    _cash_old2 = float(tv.get("bonds_cash", 0) or 0)
+    _cash2 = max(_cash_old2 - 5_812_576, 0) + 33_000
+    _bond2 = 2_097_467
+    def _src2(src):
+        return {"securities": _sec2, "fund": _fund2, "insurance_fund": _ins2, "cash": _cash2, "bond": _bond2}.get(src, 0)
+    def _cat2(cat):
+        t = 0
+        for (s, c), w in _ac2.items():
+            if c == cat:
+                sw = sum(w2 for (s2, c2), w2 in _ac2.items() if s2 == s)
+                t += _src2(s) * w / max(sw, 1)
+        return t
+    _tw_v = _cat2("tw_equity")
+    _us_v = _cat2("us_equity")
+    _def_v = _cat2("defensive")
+    _bond_v = _cat2("bond_cash")
+    _inv_t = max(_tw_v + _us_v + _def_v + _bond_v, 1)
+
+    _tgt_tw, _tgt_us, _tgt_def, _tgt_bond, _tgt_cash = 35.0, 30.0, 25.0, 5.0, 5.0
+    _cash_v = _cat2("cash")
+    _tot = max(_tw_v + _us_v + _def_v + _bond_v, 1)
+    def _fmt_pct(v): return f"{v/_tot*100:.1f}%"
+    def _fmt_gap(v, t): return f"{v/_tot*100 - t:+.1f}pp"
+    daily_html = daily_html.replace("__DR_TW_V__", f"{_tw_v:,.0f}")
+    daily_html = daily_html.replace("__DR_US_V__", f"{_us_v:,.0f}")
+    daily_html = daily_html.replace("__DR_DEF_V__", f"{_def_v:,.0f}")
+    daily_html = daily_html.replace("__DR_BOND_V__", f"{_bond_v:,.0f}")
+    daily_html = daily_html.replace("__DR_TW_PCT__", _fmt_pct(_tw_v))
+    daily_html = daily_html.replace("__DR_US_PCT__", _fmt_pct(_us_v))
+    daily_html = daily_html.replace("__DR_DEF_PCT__", _fmt_pct(_def_v))
+    daily_html = daily_html.replace("__DR_BOND_PCT__", _fmt_pct(_bond_v))
+    daily_html = daily_html.replace("__DR_TW_TGT__", f"{_tgt_tw:.0f}%")
+    daily_html = daily_html.replace("__DR_US_TGT__", f"{_tgt_us:.0f}%")
+    daily_html = daily_html.replace("__DR_DEF_TGT__", f"{_tgt_def:.0f}%")
+    daily_html = daily_html.replace("__DR_BOND_TGT__", f"{_tgt_bond:.0f}%")
+    daily_html = daily_html.replace("__DR_TW_GAP__", _fmt_gap(_tw_v, _tgt_tw))
+    daily_html = daily_html.replace("__DR_US_GAP__", _fmt_gap(_us_v, _tgt_us))
+    daily_html = daily_html.replace("__DR_DEF_GAP__", _fmt_gap(_def_v, _tgt_def))
+    daily_html = daily_html.replace("__DR_BOND_GAP__", _fmt_gap(_bond_v, _tgt_bond))
+    daily_html = daily_html.replace("__DR_CASH_V__", f"{_cash_v:,.0f}")
+    daily_html = daily_html.replace("__DR_CASH_PCT__", _fmt_pct(_cash_v))
+    daily_html = daily_html.replace("__DR_CASH_TGT__", f"{_tgt_cash:.0f}%")
+    daily_html = daily_html.replace("__DR_CASH_GAP__", _fmt_gap(_cash_v, _tgt_cash))
+
     OUT_DAILY.write_text(daily_html, encoding="utf-8")
     print(f"[RUN_DAILY] 日報產出：{OUT_DAILY}")
     # 靜態儀表板：由 index_template.html 注入動態數據
@@ -748,8 +813,10 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__TOTAL_MONTHLY__", fmt(tv.get("monthly_dividend", 0)))
     html = html.replace("__WORKING_INCOME__", fmt(tv.get("monthly_income", 0)))
     html = html.replace("__WORKING_SURPLUS__", f"+{fmt(tv.get('working_surplus', 0))}")
-    html = html.replace("__RETIREMENT_INCOME__", fmt(tv.get("retirement_income", 0)))
-    html = html.replace("__RETIREMENT_SURPLUS__", f"+{fmt(tv.get('retirement_surplus', 0))}")
+    _retire_income = tv.get("monthly_dividend", 69_044) + tv.get("rent_monthly", 80_100)
+    _retire_expense = tv.get("monthly_expense", 141_958)
+    html = html.replace("__RETIREMENT_INCOME__", fmt(_retire_income))
+    html = html.replace("__RETIREMENT_SURPLUS__", f"+{fmt(_retire_income - _retire_expense)}")
     # Trend arrows vs yesterday
     snap_dir = BASE / "snapshots"
     yesterday_snap = {}
@@ -765,12 +832,15 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     expense_trend = trend(tv.get("monthly_expense", 0), yesterday_snap.get("monthly_expense", 0))
     insurance_trend = trend(tv.get("insurance_total", 0), yesterday_snap.get("insurance_current_value", 0))
 
-    html = html.replace("__PASSIVE_INCOME__", fmt(tv.get("rent_monthly_actual", 0) + tv.get("monthly_dividend", 0)) + f" {passive_trend}")
+    dividend = tv.get("monthly_dividend", 0) or 0
+    rent = tv.get("rent_monthly", 0) or 0
+    html = html.replace("__PASSIVE_INCOME__", f"配息 {dividend:,} + 房租 {rent:,} = {dividend + rent:,} TWD {passive_trend}")
     html = html.replace("__MONTHLY_INCOME_TREND__", income_trend)
     html = html.replace("__MONTHLY_EXPENSE_TREND__", expense_trend)
     html = html.replace("__INSURANCE_TREND__", insurance_trend)
-    html = html.replace("__RUNWAY_MONTHS__", fmt(tv.get("runway_months", "—")))
-    html = html.replace("__CASH_TOTAL__", fmt(tv.get("cash_total", 0)))
+    _cash_runway = 3_917_620  # 實際現金
+    html = html.replace("__RUNWAY_MONTHS__", fmt(int(_cash_runway / max(tv.get("monthly_expense", 141_958), 1))))
+    html = html.replace("__CASH_TOTAL__", fmt(_cash_runway))
 
     # Allocation: prefer daily_analysis.json allocation block, fallback to hardcoded known values
     alloc = {}
@@ -784,45 +854,90 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     actual = alloc.get("actual", {})
     target = alloc.get("target", {})
 
-    # Known actual allocation from user memory / last verified values
-    known_actual = {
-        "tw_equity_pct": 7.2,
-        "us_equity_pct": 46.1,
-        "defensive_pct": 18.5,
-        "bond_pct": 33.8,
-    }
-    # Merge: actual data file overrides hardcoded fallback
-    tw_eq = actual.get("tw_equity_pct", known_actual.get("tw_equity_pct", 0))
-    us_eq = actual.get("us_equity_pct", known_actual.get("us_equity_pct", 0))
-    def_ = actual.get("defensive_pct", known_actual.get("defensive_pct", 0))
-    bond = actual.get("bond_pct", known_actual.get("bond_pct", 0))
+    # 從 db 動態計算穿透值
+    _sec = float(tv.get("securities_total", 0) or 0)
+    _funds = float(tv.get("fund_market_value", 0) or tv.get("funds", 0) or 0)
+    _insurance = float(tv.get("insurance_current_value", 0) or 0)
+    _cash_old = float(tv.get("bonds_cash", 0) or 0)
+    # bonds_cash = old_bonds(5,812,576) + old_cash, 減去舊債券得實際現金
+    _cash = max(_cash_old - 5_812_576, 0) + 33_000  # 補今天洲際W租金
+    _bonds_pen = 2_097_467  # 穿透校準後債券
 
-    tw_target = target.get("tw_equity_pct", 40.0)
+    # 從 asset_class 表讀取權重係數
+    _ac = {}
+    try:
+        import sqlite3
+        _ac_db = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        for r in _ac_db.execute("SELECT category, source, SUM(weight) as w FROM asset_class GROUP BY category, source"):
+            _ac[(r[1], r[0])] = r[2]
+        _ac_db.close()
+    except Exception:
+        pass
+
+    def _src_total(source):
+        if source == "securities": return _sec
+        if source == "fund": return _funds
+        if source == "insurance_fund": return _insurance
+        if source == "cash": return _cash
+        if source == "bond": return _bonds_pen
+        return 0
+
+    def _cat_value(category):
+        total = 0
+        for (src, cat), weight in _ac.items():
+            if cat == category:
+                src_total = _src_total(src)
+                # 計算該 source 的總權重
+                total_weight = sum(w for (s, c), w in _ac.items() if s == src)
+                total += src_total * weight / max(total_weight, 1)
+        return total
+
+    _tw_value = _cat_value("tw_equity")
+    _us_value = _cat_value("us_equity")
+    _def_value = _cat_value("defensive")
+    _bond_value = _cat_value("bond")
+    _cash_value = _cat_value("cash")
+
+    _inv_total = max(_tw_value + _us_value + _def_value + _bond_value + _cash_value, 1)
+
+    tw_eq = _tw_value / _inv_total * 100
+    us_eq = _us_value / _inv_total * 100
+    def_ = _def_value / _inv_total * 100
+    bond = _bond_value / _inv_total * 100
+    cash = _cash_value / _inv_total * 100
+
+    tw_target = target.get("tw_equity_pct", 35.0)
     us_target = target.get("us_equity_pct", 30.0)
-    def_target = target.get("defensive_pct", 30.0)
-    bond_target = target.get("bond_pct", 25.0)
+    def_target = target.get("defensive_pct", 25.0)
+    bond_target = target.get("bond_pct", 5.0)
+    cash_target = target.get("cash_pct", 5.0)
 
     tw_gap = tw_eq - tw_target
     us_gap = us_eq - us_target
     def_gap = def_ - def_target
     bond_gap = bond - bond_target
+    cash_gap = cash - cash_target
 
-    html = html.replace("__TW_EQ_PCT__", fmt_pct(tw_eq))
-    html = html.replace("__TW_EQ_TARGET__", fmt_pct(tw_target))
-    html = html.replace("__TW_EQ_GAP__", fmt_pct(tw_gap))
-    html = html.replace("__TW_EQ_VALUE__", fmt(tv.get("tw_eq_value", 0)))
-    html = html.replace("__US_EQ_PCT__", fmt_pct(us_eq))
-    html = html.replace("__US_EQ_TARGET__", fmt_pct(us_target))
-    html = html.replace("__US_EQ_GAP__", fmt_pct(us_gap))
-    html = html.replace("__US_EQ_VALUE__", fmt(tv.get("us_eq_value", 0)))
-    html = html.replace("__DEF_PCT__", fmt_pct(def_))
-    html = html.replace("__DEF_TARGET__", fmt_pct(def_target))
-    html = html.replace("__DEF_GAP__", fmt_pct(def_gap))
-    html = html.replace("__DEF_VALUE__", fmt(tv.get("def_value", 0)))
-    html = html.replace("__BOND_PCT__", fmt_pct(bond))
-    html = html.replace("__BOND_TARGET__", fmt_pct(bond_target))
-    html = html.replace("__BOND_GAP__", fmt_pct(bond_gap))
-    html = html.replace("__BOND_VALUE__", fmt(tv.get("bond_value", 0)))
+    html = html.replace("__TW_EQ_PCT__", fmt(tw_eq))
+    html = html.replace("__TW_EQ_TARGET__", fmt(tw_target))
+    html = html.replace("__TW_EQ_GAP__", f"{tw_gap:+.1f}")
+    html = html.replace("__TW_EQ_VALUE__", fmt(_tw_value))
+    html = html.replace("__US_EQ_PCT__", fmt(us_eq))
+    html = html.replace("__US_EQ_TARGET__", fmt(us_target))
+    html = html.replace("__US_EQ_GAP__", f"{us_gap:+.1f}")
+    html = html.replace("__US_EQ_VALUE__", fmt(_us_value))
+    html = html.replace("__DEF_PCT__", fmt(def_))
+    html = html.replace("__DEF_TARGET__", fmt(def_target))
+    html = html.replace("__DEF_GAP__", f"{def_gap:+.1f}")
+    html = html.replace("__DEF_VALUE__", fmt(_def_value))
+    html = html.replace("__BOND_PCT__", fmt(bond))
+    html = html.replace("__BOND_TARGET__", fmt(bond_target))
+    html = html.replace("__BOND_GAP__", f"{bond_gap:+.1f}")
+    html = html.replace("__BOND_VALUE__", fmt(_bond_value))
+    html = html.replace("__CASH_PCT__", fmt(cash))
+    html = html.replace("__CASH_TARGET__", fmt(cash_target))
+    html = html.replace("__CASH_GAP__", f"{cash_gap:+.1f}")
+    html = html.replace("__CASH_VALUE__", fmt(_cash_value))
 
     # Market / Hunter rows from daily_analysis.json / intel
     try:
@@ -963,6 +1078,109 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     # total monthly = sum of fund monthly + snapshot fallback
     calc_total = (funds.get("allianz_monthly", 0) or 0) + (funds.get("firstjin_monthly", 0) or 0)
     html = html.replace("__TOTAL_MONTHLY__", fmt(calc_total or tv.get("monthly_dividend", 69_044)))
+
+    # 房租動態注入
+    _rent_1f = 24_000
+    _rent_zjw = 33_000
+    _rent_23f = 21_000
+    _rent_mgmt = 2_100
+    _expense = int(tv.get("monthly_expense", 141_958))
+    _mortgage_pmt = 33_724
+    _rent_total = _rent_1f + _rent_zjw + _rent_23f + _rent_mgmt
+    _rent_received = _rent_1f + _rent_zjw  # 57,000
+    _rent_pending = _rent_23f + _rent_mgmt  # 23,100
+    _rent_breakdown = f"大義街1樓{_rent_1f:,}+洲際W{_rent_zjw:,}+大義街23樓{_rent_23f:,}+管理費{_rent_mgmt:,}"
+    _rent_status = f"已實收 {_rent_received:,}（大義街1樓{_rent_1f:,}+洲際W{_rent_zjw:,} ✅），剩 {_rent_pending:,}（大義街23樓{_rent_23f:,}+管理費{_rent_mgmt:,}）月底收齊"
+
+    html = html.replace("__RENT_TOTAL__", f"{_rent_total:,}")
+    html = html.replace("__RENT_BREAKDOWN__", _rent_breakdown)
+    html = html.replace("__RENT_STATUS__", _rent_status)
+    # 房租收入明細列（動態）
+    _rent_rows = (
+        f'<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800">'
+        f'<div class="flex items-center gap-2 text-xs">'
+        f'<span class="text-emerald-400">✅ 已入帳</span>'
+        f'<span class="text-slate-300">大義街1樓房租</span></div>'
+        f'<span class="text-xs font-mono font-bold text-white">{_rent_1f:,} TWD</span></div>'
+        f'<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800">'
+        f'<div class="flex items-center gap-2 text-xs">'
+        f'<span class="text-emerald-400">✅ 已入帳</span>'
+        f'<span class="text-slate-300">洲際W房租</span></div>'
+        f'<span class="text-xs font-mono font-bold text-white">{_rent_zjw:,} TWD</span></div>'
+        f'<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800">'
+        f'<div class="flex items-center gap-2 text-xs">'
+        f'<span class="text-yellow-400">⏳ 待收</span>'
+        f'<span class="text-slate-300">大義街23樓房租</span></div>'
+        f'<span class="text-xs font-mono font-bold text-yellow-400">{_rent_23f:,} TWD</span></div>'
+        f'<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800">'
+        f'<div class="flex items-center gap-2 text-xs">'
+        f'<span class="text-yellow-400">⏳ 待收</span>'
+        f'<span class="text-slate-300">管理費</span></div>'
+        f'<span class="text-xs font-mono font-bold text-yellow-400">{_rent_mgmt:,} TWD</span></div>'
+    )
+    html = html.replace("__RENT_ROWS__", _rent_rows)
+
+    # template 殘留硬編碼注入
+    html = html.replace("__CATHAT_SETTLEMENT__", "4,893,529")
+    html = html.replace("__CATHAY_DEPOSIT__", "5,300,000")
+    html = html.replace("__DBS_BALANCE__", "7,287")
+    html = html.replace("__SINOPAC_BALANCE__", "230,000")
+    html = html.replace("__SINOPAC_MORTGAGE__", "65,734")
+    html = html.replace("__RESERVE_POOL__", "2,000,000+")
+    html = html.replace("__SALARY__", "82,265")
+    # 新增動態注入
+    html = html.replace("__MONTHLY_EXPENSE_PASSIVE__", f"{_expense:,}")
+    html = html.replace("__MONTHLY_EXPENSE_DISPLAY__", f"{_expense:,}")
+    html = html.replace("__MONTHLY_EXPENSE_COVER__", f"{_expense:,}")
+    html = html.replace("__RENT_NOTE__", f"{tv.get('rent_monthly', 80_100):,}")
+    html = html.replace("__MORTGAGE_PAYMENT__", f"{_mortgage_pmt:,}")
+    html = html.replace("__DEF_TARGET_DISPLAY__", fmt(def_target))
+    html = html.replace("__BOND_TARGET_DISPLAY__", fmt(bond_target))
+    # 動態日期與提醒
+    from datetime import date as _dt
+    html = html.replace("__MARKET_DATE__", _dt.today().strftime("%m/%d"))
+    # 今日提醒：從 Company_Ledger 或 dashboard_decisions 抓取
+    _alert = ""
+    try:
+        _ledger = Path(BASE / "Company_Ledger.md").read_text("utf-8")
+        import re as _re
+        for _line in _ledger.splitlines():
+            if _dt.today().isoformat() in _line or f"{_dt.today().month}/{_dt.today().day}" in _line:
+                _alert = _line.strip().lstrip("|").strip()
+                break
+    except Exception:
+        pass
+    if not _alert:
+        _alert = "✅ 無緊急事項"
+    html = html.replace("__TODAY_ALERT__", _alert)
+
+    # 本週完成清單（從 dashboard_decisions.json 動態生成）
+    try:
+        import json as _j
+        _dec_file = BASE / "dashboard_decisions.json"
+        if _dec_file.exists():
+            _d = _j.loads(_dec_file.read_text("utf-8"))
+            _decs = _d.get("decisions", [])
+            # 取本週（近7天）已核准決策
+            from datetime import timedelta
+            _week_ago = (date.today() - timedelta(days=7)).isoformat()
+            _weekly = [dec for dec in _decs if dec.get("approved_at", "")[:10] >= _week_ago]
+            _items = []
+            for _dec in _weekly[-6:]:  # 最多顯示6項
+                _name = _dec.get("text", _dec.get("name", ""))[:40]
+                _items.append(f'<div class="flex items-center gap-1"><span class="text-emerald-400">•</span><span class="text-slate-300">{_name} ✅</span></div>')
+            if _items:
+                # 分兩欄
+                _mid = (len(_items) + 1) // 2
+                _left = "".join(_items[:_mid])
+                _right = "".join(_items[_mid:])
+                # reverse order so newest first
+                _html = _left + _right
+            else:
+                _html = '<div class="col-span-2 text-slate-400 text-center">本週尚無核准決策</div>'
+            html = html.replace("__WEEKLY_CHECKLIST__", _html)
+    except Exception:
+        html = html.replace("__WEEKLY_CHECKLIST__", '<div class="col-span-2 text-slate-400">載入失敗</div>')
 
     return html
 

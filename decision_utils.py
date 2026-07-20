@@ -45,13 +45,13 @@ def defer_until(text: str) -> str:
 # self-test
 if __name__ == "__main__":
     tests = [
-        ("延后", "default +1"),
-        ("延后 3天", "3 days"),
-        ("延后 明天", "tomorrow"),
-        ("延后 下週", "next Monday"),
-        ("延后 下個月", "next month"),
-        ("延后0050下週賣出", "0050 next week"),
-        ("延后 7 天", "7 days"),
+        ("延後", "default +1"),
+        ("延後 3天", "3 days"),
+        ("延後 明天", "tomorrow"),
+        ("延後 下週", "next Monday"),
+        ("延後 下個月", "next month"),
+        ("延後0050下週賣出", "0050 next week"),
+        ("延後 7 天", "7 days"),
     ]
     for t, label in tests:
         print(f"{label:20s} | input={t:20s} | remind_at={defer_until(t)}")

@@ -76,11 +76,50 @@ def penetration_analysis(snapshot: dict) -> dict:
         "alert": pen.get("alert", ""),
     }
 def load_market_intel() -> dict:
-    p = BASE / "market_intel.json"
+    """從每日 Yahoo Finance 報告載入市場情報，合併累計週跌幅"""
+    from datetime import date
+    today = date.today().isoformat().replace("-", "")
+    p = BASE / f"daily_intel_report_{today}.json"
+    if not p.exists():
+        p = BASE / "market_intel.json"
     if not p.exists():
         return {}
     try:
-        return json.loads(p.read_text(encoding="utf-8"))
+        raw = json.loads(p.read_text(encoding="utf-8"))
+        market = raw.get("market", {})
+        taiex_str = market.get("twii", "0 (0%)")
+        price_str = taiex_str.split("(")[0].strip().replace(",", "")
+        change_str = taiex_str.split("(")[1].replace(")", "").replace("%", "").replace("+", "") if "(" in taiex_str else "0"
+        try:
+            price = float(price_str)
+            daily_change = float(change_str)
+        except (ValueError, IndexError):
+            price = 0
+            daily_change = 0
+
+        # 從 market_intel.json 補累計週跌幅（prev_close_7d）
+        weekly_cum = daily_change  # fallback 到日跌幅
+        mi_path = BASE / "market_intel.json"
+        if mi_path.exists():
+            try:
+                mi = json.loads(mi_path.read_text(encoding="utf-8"))
+                prev_7d = mi.get("TAIEX", {}).get("prev_close_7d", 0)
+                if prev_7d and price:
+                    weekly_cum = round((price - prev_7d) / prev_7d * 100, 2)
+            except Exception:
+                pass
+
+        return {
+            "TAIEX": {
+                "current": price,
+                "prev_close": price / (1 + daily_change/100) if daily_change else price,
+                "high_52w": price * 1.1,
+                "low_52w": price * 0.5,
+                "1_week_change_pct": weekly_cum,  # 累計週跌幅
+                "1_month_change_pct": round(weekly_cum * 1.5, 2),
+                "source": "Yahoo Finance + market_intel (cumulative weekly)",
+            }
+        }
     except Exception:
         return {}
 

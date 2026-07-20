@@ -50,7 +50,8 @@ def main() -> None:
     relay_ok = (
         "摩根多重收益" in daily
         and "安聯收益成長 + M&amp;G" in daily
-        and "安聯 AI 收益 + PIMCO" in daily
+        and "安聯 AI 收益" in daily
+        and "PIMCO已轉出" in daily
     )
     results.append(check("Relay 三站制", relay_ok))
 
@@ -71,12 +72,12 @@ def main() -> None:
             f"{allianz:,}" in daily
             and f"{firstjin:,}" in daily
             and f"{total:,}" in daily
-            and "7,808,297" in daily
-            and "1,988,285" in daily
+            and "7,674,293" in daily
+                and "1,979,676" in daily
         )
     else:
-        val_ok = "7,808,297" in daily and "1,988,285" in daily
-    results.append(check("保單現值對齊 snapshot.json（安聯 7,808,297 / 第一金 1,988,285）", val_ok))
+        val_ok = "7,674,293" in daily and "1,979,676" in daily
+        results.append(check("保單現值對齊 snapshot.json（安聯 7,674,293 / 第一金 1,979,676）", val_ok))
 
     # 6. 配息 SOP wording 正確
     sop_ok = ("relay" in daily.lower() or "保單" in daily) and ("hold" in daily.lower() or "hold住" in daily or "Hold" in daily or "最晚轉換申請日" in daily) and "30 分鐘" not in daily

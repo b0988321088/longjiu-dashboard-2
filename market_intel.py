@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-龍九控股 Market情报可信度評分 + Hunter 情報自动納入
+龍九控股 Market情報可信度評分 + Hunter 情報自動納入
 規則：
 - web_search 結果一致 → ✅ 可信度 90%+，直接寫入
 - web_search 結果矛盾 → ⚠️ 可信度 50%，標記「待補齊」
 - 無來源或單一匿名來源 → ❌ 可信度 0%，不顯示
-- Hunter 情報自动納入：讀取 hunter_logs/ 最新檔案，解析 P1 訊號
+- Hunter 情報自動納入：讀取 hunter_logs/ 最新檔案，解析 P1 訊號
 """
 from __future__ import annotations
 

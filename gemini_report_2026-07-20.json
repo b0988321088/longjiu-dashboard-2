@@ -1,0 +1,24 @@
+{
+  "status": "approved",
+  "issues": [
+    {
+      "point": "管理費侵蝕",
+      "description": "年管理費約 14.7萬 TWD，超過 10萬 TWD 的閾值，此為已知策略問題。",
+      "risk_level": "medium"
+    },
+    {
+      "point": "集中度風險",
+      "description": "台積電佔 0050 權重約 57%，超過 40% 的閾值，此為已知且正在調整中。",
+      "risk_level": "medium"
+    },
+    {
+      "point": "房產佔比",
+      "description": "不動產佔總資產 67.1%，超過 50% 的閾值，此為已知結構問題。",
+      "risk_level": "medium"
+    }
+  ],
+  "score": 6,
+  "risk_score": 6,
+  "summary": "日報審查通過，但存在多項中等風險，建議進一步審查後推送。",
+  "_raw": "{\n  \"status\": \"approved\",\n  \"issues\": [\n    {\n      \"point\": \"管理費侵蝕\",\n      \"description\": \"年管理費約 14.7萬 TWD，超過 10萬 TWD 的閾值，此為已知策略問題。\",\n      \"risk_level\": \"medium\"\n    },\n    {\n      \"point\": \"集中度風險\",\n      \"description\": \"台積電佔 0050 權重約 57%，超過 40% 的閾值，此為已知且正在調整中。\",\n      \"risk_level\": \"medium\"\n    },\n    {\n      \"point\": \"房產佔比\",\n      \"description\": \"不動產佔總資產 67.1%，超過 50% 的閾值，此為已知結構問題。\",\n      \"risk_level\": \"medium\"\n    }\n  ],\n  \"score\": 6,\n  \"risk_score\": 6,\n  \"summary\": \"日報審查通過，但存在多項中等風險，建議進一步審查後推送。\"\n}"
+}

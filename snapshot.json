@@ -11,8 +11,8 @@
   "working_surplus": 76144,
   "retirement_surplus": 18142,
   "securities_total_market_value": 2158900,
-  "insurance_current_value": 9876282,
-  "fund_market_value": 783700,
+  "insurance_current_value": 9653969,
+  "fund_market_value": 1219477,
   "moneybook_total": 3853985,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
@@ -64,8 +64,8 @@
   "cc_mid": 38000,
   "cc_high": 42000,
   "firstjin_fl65_current_value": 1994698,
-  "allianz_ab_current_value": 7808297,
-  "firstjin_current_value": 1988285,
+  "allianz_ab_current_value": 7674293,
+  "firstjin_current_value": 1979676,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
   "bank_assets_moneybook": 3853985,
@@ -77,7 +77,7 @@
   "monthly_expense_snapshot_original": 141958,
   "securities_total": 2205230,
   "funds_total": 783700,
-  "insurance_total": 11791280,
+  "insurance_total": 9653969,
   "last_calibration_sources": {
     "securities": "凱基證券截圖 2026-07-18 02:00",
     "funds": "鉅亨基金截圖 2026-07-18 02:03",
@@ -90,9 +90,8 @@
     "路博邁5G股票T月配": 87790,
     "0050連結B配息": 44914,
     "路博邁5G股票T累積": 235840,
-    "0050連結A不配息": 103415,
-    "統一奔騰": 83279,
-    "其他基金部位": 52603
+    "0050連結A不配息": 103364,
+    "統一奔騰": 81094
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
   "real_liquid_assets": 3853985,
@@ -558,5 +557,33 @@
   ],
   "mortgage_monthly_total": 99458,
   "mortgage_count": 3,
-  "note_rent_status": "本月房租全數實收 80,100（大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100）"
+  "note_rent_status": "本月房租全數實收 80,100（大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100）",
+  "insurance_breakdown": {
+    "policy_a_total": 4992334,
+    "policy_a_funds": {
+      "安聯收益成長": 1824342,
+      "貝萊德世界科技A10": 963484,
+      "安聯AI收益成長": 721245,
+      "聯博美國成長": 1483263
+    },
+    "policy_b_dividend_accumulated": 681118,
+    "policy_a_dividend_accumulated": 932128,
+    "policy_b_total": 2681959,
+    "policy_b_funds": {
+      "安聯收益成長": 932955,
+      "貝萊德世界科技A10": 442558,
+      "安聯AI收益成長": 682149,
+      "聯博美國成長": 624297
+    }
+  },
+  "allianz_ab": 7674293,
+  "firstjin": 1979676,
+  "dividend_records": {
+    "2026-07-21": {
+      "摩根多重收益(FJ33)": 9356,
+      "來源": "台新文心薪轉帳戶"
+    }
+  },
+  "monthly_dividend": 69044,
+  "actual_fj33_dividend": 9356
 }

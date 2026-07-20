@@ -47,7 +47,7 @@
         <div class="text-right flex flex-col items-end">
             <span class="text-xs font-mono text-slate-300">系統時間：__SYSTEM_DATE__</span>
             <span class="text-[10px] text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 mt-1 flex items-center gap-1">
-                ⚠️ 今日 7/17 國泰轉貸面簽/對保
+                ⚠️ 今日 __TODAY_ALERT__
             </span>
         </div>
     </div>
@@ -56,30 +56,10 @@
 <!-- 本週完成清單 -->
 <div class="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
     <div class="flex items-center gap-2 mb-2">
-        <span class="text-emerald-400 font-bold text-sm">✅ 本週完成清單（2026-07-17）</span>
+        <span class="text-emerald-400 font-bold text-sm">✅ 本週完成清單</span>
     </div>
     <div class="grid grid-cols-2 gap-2 text-xs">
-        <div class="flex items-center gap-1">
-            <span class="text-emerald-400">•</span>
-            <span class="text-slate-300">7/13 A-1 匯款結清 4,893,529 TWD ✅</span>
-        </div>
-        <div class="flex items-center gap-1">
-            <span class="text-emerald-400">•</span>
-            <span class="text-slate-300">7/13 國泰一般房貸結清 ✅</span>
-        </div>
-        <div class="flex items-center gap-1">
-            <span class="text-emerald-400">•</span>
-            <span class="text-slate-300">7/13 國泰專戶入帳 5,300,000 TWD ✅</span>
-        </div>
-        <div class="flex items-center gap-1">
-            <span class="text-emerald-400">•</span>
-            <span class="text-slate-300">7/09 贖回轉申購安聯收益成長 (FL65) ✅</span>
-        </div>
-        <div class="flex items-center gap-1">
-            <span class="text-emerald-400">•</span>
-            <span class="text-slate-300">7/08 QL186/QL184 安聯AI轉M&G ✅</span>
-        </div>
-    </div>
+    __WEEKLY_CHECKLIST__
 </div>
 
 <!-- 頂層導航 -->
@@ -122,7 +102,7 @@
             <div class="space-y-4">
                 <div class="relative pt-1">
                     <div class="flex mb-2 items-center justify-between text-xs font-mono">
-                        <div>被動安全月收入：<span class="text-teal-400 font-bold">__PASSIVE_INCOME__</span> / 141,958 TWD <span class="text-xs">__MONTHLY_INCOME_TREND__</span></div>
+                        <div>被動安全月收入：<span class="text-teal-400 font-bold">__PASSIVE_INCOME__</span> / __MONTHLY_EXPENSE_COVER__ TWD <span class="text-xs">__MONTHLY_INCOME_TREND__</span></div>
                         <div class="text-right text-teal-400 font-bold">113.8% 覆蓋</div>
                     </div>
                     <div class="overflow-hidden h-4 text-xs flex rounded-full bg-slate-800">
@@ -130,7 +110,7 @@
                         <div style="width: 45%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-teal-600 font-bold">房租 45%</div>
                     </div>
                 </div>
-                <p class="text-xs text-slate-400 italic">*被動收入包含：房租收入 80,100 TWD（大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100）與保單/基金月均配息保守估 80,000。現已實現完全被動生活壓力測試覆蓋。</p>
+                <p class="text-xs text-slate-400 italic">*被動收入包含：房租收入 __RENT_TOTAL__ TWD（__RENT_BREAKDOWN__）與保單/基金月均配息保守估 __RENT_NOTE__。現已實現完全被動生活壓力測試覆蓋。</p>
             </div>
         </div>
 
@@ -144,7 +124,7 @@
                 </div>
                 <div class="flex justify-between items-baseline border-b border-slate-800 pb-2">
                     <span class="text-xs text-slate-300">月經常性總支出</span>
-                    <span class="text-sm font-bold text-slate-400">141,958 TWD</span> <span class="text-xs">__MONTHLY_EXPENSE_TREND__</span>
+                    <span class="text-sm font-bold text-slate-400">__MONTHLY_EXPENSE_PASSIVE__ TWD</span> <span class="text-xs">__MONTHLY_EXPENSE_TREND__</span>
                 </div>
                 <div class="flex justify-between items-baseline pt-1">
                     <span class="text-xs text-emerald-400 font-bold">工作期淨盈餘</span>
@@ -159,7 +139,7 @@
                 </div>
                 <div class="flex justify-between items-baseline border-b border-slate-800 pb-2">
                     <span class="text-xs text-slate-300">退休維持月支出</span>
-                    <span class="text-sm font-bold text-slate-400">141,958 TWD</span> <span class="text-xs">__MONTHLY_EXPENSE_TREND__</span>
+                    <span class="text-sm font-bold text-slate-400">__MONTHLY_EXPENSE_PASSIVE__ TWD</span> <span class="text-xs">__MONTHLY_EXPENSE_TREND__</span>
                 </div>
                 <div class="flex justify-between items-baseline pt-1">
                     <span class="text-xs text-blue-400 font-bold">安全退休盈餘</span>
@@ -187,7 +167,7 @@
     <div id="tab-content-2" class="tab-pane hidden space-y-6">
         <div class="luxury-card p-6 space-y-6">
             <div>
-                <h3 class="text-md font-bold text-white">資產穿透 (40 / 30 / 25 + 5%)</h3>
+                <h3 class="text-md font-bold text-white">資產穿透 (35 / 30 / 25 / 5 / 5)</h3>
                 <p class="text-xs text-slate-400">對照家族辦公室戰略目標模型，實時追蹤配置偏離度</p>
             </div>
             <div class="space-y-4">
@@ -205,7 +185,7 @@
                 <div class="space-y-1">
                     <div class="flex justify-between text-xs font-mono">
                         <span class="text-slate-300">2. 美股市值型成長 (00646/貝萊德/聯博)</span>
-                        <span class="text-amber-500 font-bold">現況 __US_EQ_PCT__ / 目標 __TW_EQ_TARGET__ (溢價 __US_EQ_GAP__)</span>
+                        <span class="text-amber-500 font-bold">現況 __US_EQ_PCT__ / 目標 __US_EQ_TARGET__ (溢價 __US_EQ_GAP__)</span>
                     </div>
                     <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
                         <div class="bg-amber-500 h-full" style="width: __US_EQ_PCT__"></div>
@@ -215,7 +195,7 @@
                 <div class="space-y-1">
                     <div class="flex justify-between text-xs font-mono">
                         <span class="text-slate-300">3. 防守型配息 (0056/00713/00878/安聯)</span>
-                        <span class="text-red-400 font-bold">現況 __DEF_PCT__ / 目標 30.0% (缺口 __DEF_GAP__)</span>
+                        <span class="text-red-400 font-bold">現況 __DEF_PCT__ / 目標 __DEF_TARGET_DISPLAY__ (缺口 __DEF_GAP__)</span>
                     </div>
                     <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden flex">
                         <div class="bg-blue-500 h-full" style="width: __DEF_PCT__"></div>
@@ -225,8 +205,8 @@
                 </div>
                 <div class="space-y-1">
                     <div class="flex justify-between text-xs font-mono">
-                        <span class="text-slate-300">4. 債券及安全現金</span>
-                        <span class="text-emerald-400 font-bold">現況 __BOND_PCT__ / 目標 25.0% (盈餘 __BOND_GAP__)</span>
+                        <span class="text-slate-300">4. 債券</span>
+                        <span class="text-emerald-400 font-bold">現況 __BOND_PCT__ / 目標 __BOND_TARGET_DISPLAY__ (盈餘 __BOND_GAP__)</span>
                     </div>
                     <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
                         <div class="bg-emerald-500 h-full" style="width: __BOND_PCT__"></div>
@@ -234,10 +214,22 @@
                     <span class="text-[10px] text-slate-400 font-mono">市值：__BOND_VALUE__ TWD</span>
                 </div>
             </div>
+
+            <!-- 5. 現金 -->
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-300 text-xs">5. 💵 安全現金</span>
+                    <span class="text-sky-400 font-bold text-xs">現況 __CASH_PCT__ / 目標 __CASH_TARGET__ (盈餘 __CASH_GAP__)</span>
+                </div>
+                <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+                    <div class="bg-sky-500 h-full" style="width: __CASH_PCT__"></div>
+                </div>
+                <span class="text-[10px] text-slate-400 font-mono">市值：__CASH_VALUE__ TWD</span>
+            </div>
             <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
                 <span class="text-xs font-bold text-amber-400">🚨 戰略調整警示：</span>
                 <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-                    目前投資部位穿透呈現極高失衡，美股暴露 __US_EQ_PCT__ 嚴重超標；台股 __TW_EQ_PCT__ 低於目標 40%</p>
+                    目前投資部位穿透呈現極高失衡，美股暴露 __US_EQ_PCT__ 超標；台股 __TW_EQ_PCT__ 低於目標 40%；債券 __BOND_PCT__ 超標</p>
                 <div class="mt-3 p-3 bg-slate-800/50 rounded border border-slate-700">
                     <p class="text-xs font-bold text-slate-300 mb-2">📊 市場動態（__SYSTEM_DATE__）</p>
                     <ul class="text-xs text-slate-400 space-y-1">
@@ -373,11 +365,11 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-red-500/10 border border-red-500/20 p-4 rounded-xl space-y-1">
                     <div class="flex justify-between text-xs font-bold text-red-400">
-                        <span>國泰世華 (大義街)</span>
+                        <span>星展銀行 (大義街)</span>
                         <span>🔴 警報</span>
                     </div>
-                    <p class="text-lg font-mono font-black text-white">7,287</p>
-                    <p class="text-[10px] text-slate-300 font-mono">月扣款：33,724 TWD</p>
+                    <p class="text-lg font-mono font-black text-white">__DBS_BALANCE__</p>
+                    <p class="text-[10px] text-slate-300 font-mono">月扣款：__MORTGAGE_PAYMENT__ TWD</p>
                     <p class="text-[10px] text-slate-400">防禦水位：<span class="text-red-400 font-bold">0.2個月</span> (目標 101k~202k)。7/13結清前，必須立刻從台新補庫 30K。<br>⚠️ 貸款執行名義人仍是國泰，尚未完成轉貸。</p>
                 </div>
                 <div class="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl space-y-1">
@@ -385,8 +377,8 @@
                         <span>永豐銀行 (洲際W)</span>
                         <span>🟢 安全</span>
                     </div>
-                    <p class="text-lg font-mono font-black text-white">230,000</p>
-                    <p class="text-[10px] text-slate-300 font-mono">月扣款：65,734 TWD</p>
+                    <p class="text-lg font-mono font-black text-white">__SINOPAC_BALANCE__</p>
+                    <p class="text-[10px] text-slate-300 font-mono">月扣款：__SINOPAC_MORTGAGE__ TWD</p>
                     <p class="text-[10px] text-slate-400">防禦水位：<span class="text-emerald-400 font-bold">3.5個月</span> (目標 197k~394k)。目前安全備用金餘額無虞，維持扣攤。</p>
                 </div>
                 <div class="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl space-y-1">
@@ -394,7 +386,7 @@
                         <span>將來 / 土銀 (預備庫)</span>
                         <span>🟢 充裕</span>
                     </div>
-                    <p class="text-lg font-mono font-black text-white">2,000,000+</p>
+                    <p class="text-lg font-mono font-black text-white">__RESERVE_POOL__+</p>
                     <p class="text-[10px] text-slate-300 font-mono">非動用流動現金</p>
                     <p class="text-[10px] text-slate-400">機會子彈總蓄水池。支援 7/13 國泰結清及未來市場超跌之加碼調度。</p>
                 </div>
@@ -410,7 +402,7 @@
                         <span class="text-emerald-400">✅ 已入帳</span>
                         <span class="text-slate-300">台電薪水</span>
                     </div>
-                    <span class="text-xs font-mono font-bold text-white">82,265 TWD</span>
+                    <span class="text-xs font-mono font-bold text-white">__SALARY__ TWD</span>
                 </div>
                 <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800">
                     <div class="flex items-center gap-2 text-xs">
@@ -426,20 +418,7 @@
                     </div>
                     <span class="text-xs font-mono font-bold text-white">__FIRSTJIN_MONTHLY__ TWD</span>
                 </div>
-                <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800">
-                    <div class="flex items-center gap-2 text-xs">
-                        <span class="text-emerald-400">✅ 已入帳</span>
-                        <span class="text-slate-300">大義街房租收入</span>
-                    </div>
-                    <span class="text-xs font-mono font-bold text-white">24,000 TWD</span>
-                </div>
-                <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800">
-                    <div class="flex items-center gap-2 text-xs">
-                        <span class="text-yellow-400">⏳ 待核實</span>
-                        <span class="text-slate-300">大義街房租收入</span>
-                    </div>
-                    <span class="text-xs font-mono font-bold text-yellow-400">24,000 TWD</span>
-                </div>
+                __RENT_ROWS__
             </div>
         </div>
 
@@ -449,18 +428,18 @@
             <div class="space-y-3 font-mono text-xs">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                     <span class="text-slate-400">07/13</span>
-                    <span class="text-red-400 font-bold">國泰大義街轉貸結清繳款</span>
-                    <span class="text-white font-bold">4,893,529 TWD</span>
+                    <span class="text-red-400 font-bold">星展大義街轉貸結清繳款</span>
+                    <span class="text-white font-bold">__CATHAT_SETTLEMENT__ TWD</span>
                 </div>
                 <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                     <span class="text-slate-400">07/20</span>
                     <span class="text-yellow-400 font-bold">永豐銀行：洲際W房貸扣款</span>
-                    <span class="text-white font-bold">65,734 TWD</span>
+                    <span class="text-white font-bold">__SINOPAC_MORTGAGE__ TWD</span>
                 </div>
                 <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                     <span class="text-slate-400">08/01</span>
-                    <span class="text-yellow-400 font-bold">國泰世華：大義街房貸本息扣款</span>
-                    <span class="text-white font-bold">33,724 TWD</span>
+                    <span class="text-yellow-400 font-bold">星展銀行：大義街房貸本息扣款</span>
+                    <span class="text-white font-bold">__MORTGAGE_PAYMENT__ TWD</span>
                 </div>
             </div>
         </div>

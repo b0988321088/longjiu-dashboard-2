@@ -17,14 +17,18 @@ class AssetMoatMonitor:
         liquid_assets = (
             snapshot.get("liquid_assets")
             or snapshot.get("high_yield_savings_total")
+            or snapshot.get("cash_total")
             or 0
         )
-        passive_income = (
-            snapshot.get("passive_income")
-            or (snapshot.get("rent_monthly_actual") or 0)
-            + (snapshot.get("fund_dividend_monthly") or 0)
-            or 0
-        )
+        if isinstance(liquid_assets, dict):
+            liquid_assets = float(liquid_assets.get("total", 0) or liquid_assets.get("value", 0) or 0)
+        raw_passive = snapshot.get("passive_income")
+        if isinstance(raw_passive, dict):
+            passive_income = float(raw_passive.get("fund_dividend_conservative", 0) or raw_passive.get("total", 0) or 0)
+        else:
+            passive_income = float(raw_passive or 0)
+        if not passive_income:
+            passive_income = float(snapshot.get("rent_monthly_actual", 0) or 0) + float(snapshot.get("fund_dividend_monthly", 0) or 0)
         try:
             debt_ratio = float(str(snapshot.get("debt_ratio", "0")).replace("%", "")) / 100
         except (TypeError, ValueError):
@@ -45,9 +49,21 @@ class AssetMoatMonitor:
                 securities = funds
         semi_exposure = 0
         for name, value in securities.items():
+            if isinstance(value, dict):
+                value = float(value.get("value", 0) or value.get("market_value", 0) or 0)
+            elif not isinstance(value, (int, float)):
+                try:
+                    value = float(value)
+                except (TypeError, ValueError):
+                    value = 0
             if any(k in name for k in self.semiconductor_keywords):
                 semi_exposure += value
-        total_securities = sum(securities.values()) if securities else 1
+        total_securities = 1
+        for v in securities.values():
+            if isinstance(v, dict):
+                total_securities += float(v.get("value", 0) or v.get("market_value", 0) or 0)
+            elif isinstance(v, (int, float)):
+                total_securities += v
         semi_pct = semi_exposure / total_securities * 100 if total_securities else 0
 
         return {

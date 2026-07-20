@@ -1,306 +1,68 @@
 {
   "2026-07-19": {
     "date": "2026-07-19",
-    "total_assets": 50689930,
-    "total_liabilities": 22000000,
-    "net_worth": 28689930,
-    "securities_market": 2158900,
-    "insurance_current": 9876282,
-    "insurance_total": 11791280,
-    "fund_market": 783700,
-    "real_estate": 34017063,
-    "cash": 3853985,
-    "other": 0,
-    "insurance_detail": {
-      "安聯保單A+B 現值": 7808297,
-      "安聯保單A 帳面": 5079576,
-      "安聯保單B 帳面": 2728721,
-      "第一金保單 FL65 現值": 1994698,
-      "保單總現値": 9876282,
-      "保單總帳面": 11791280
-    },
-    "fund_dividend_monthly": 17519,
-    "monthly_income": 218102,
-    "monthly_expense": 141958,
-    "rent_monthly": 24000,
-    "cathay_refinance": 0
+    "total_assets": 56562408.0,
+    "total_liabilities": 18197422,
+    "net_worth": 38364986.0,
+    "securities_market": 2205230.0,
+    "insurance_current": 9876282.0,
+    "insurance_total": 9876282.0,
+    "fund_market": 783700.0,
+    "real_estate": 34000000.0,
+    "cash": 3884620.0,
+    "bonds": 5812576.0,
+    "other": 0.0,
+    "insurance_detail": {},
+    "fund_dividend_monthly": 69044.0,
+    "monthly_income": 218102.0,
+    "monthly_expense": 141958.0,
+    "rent_monthly": 80100.0,
+    "cathay_refinance": 0.0
+  },
+  "2026-07-20": {
+    "date": "2026-07-20",
+    "total_assets": 53148763.0,
+    "total_liabilities": 18197422,
+    "net_worth": 34951341.0,
+    "securities_market": 2260230.0,
+    "insurance_current": 9653969.0,
+    "insurance_total": 9653969.0,
+    "fund_market": 1219477.0,
+    "real_estate": 34000000.0,
+    "cash": 3917620.0,
+    "bonds": 2097467.0,
+    "other": 0.0,
+    "insurance_detail": {},
+    "fund_dividend_monthly": 69044.0,
+    "monthly_income": 218102.0,
+    "monthly_expense": 141958.0,
+    "rent_monthly": 80100.0,
+    "cathay_refinance": 0.0
   },
   "2026-07-18": {
     "date": "2026-07-18",
     "total_assets": 50689930.0,
-    "total_liabilities": 22000000.0,
-    "net_worth": 28689930.0,
+    "total_liabilities": 17199287.0,
+    "net_worth": 33490643.0,
     "securities_market": 2158900.0,
-    "insurance_current": 9876282.0,
-    "insurance_total": 11791280.0,
-    "fund_market": 783700.0,
+    "insurance_current": 9653969.0,
+    "insurance_total": 9653969.0,
+    "fund_market": 1219477.0,
     "real_estate": 34017063.0,
     "cash": 3853985.0,
     "other": 0.0,
     "insurance_detail": {
-      "安聯保單A+B 現值": 7808297,
+      "安聯保單A+B 現值": 7674293,
       "安聯保單A 帳面": 5079576,
       "安聯保單B 帳面": 2728721,
       "第一金保單 FL65 現值": 1994698,
-      "保單總現値": 9876282,
-      "保單總帳面": 11791280
+      "保單總現値": 9653969,
+      "保單總帳面": 9653969
     },
     "fund_dividend_monthly": 17519.0,
     "monthly_income": 218102.0,
     "monthly_expense": 141958.0,
-    "rent_monthly": 24000.0,
+    "rent_monthly": 80100.0,
     "cathay_refinance": 0.0
-  },
-  "2026-06-20": {
-    "total_assets": 49909931,
-    "total_liabilities": 21955492,
-    "net_worth": 27954439,
-    "securities_market": 2103099,
-    "insurance_current": 9733403,
-    "fund_market": 783882,
-    "cash": 6848839
-  },
-  "2026-06-21": {
-    "total_assets": 50006070,
-    "total_liabilities": 22024251,
-    "net_worth": 27981819,
-    "securities_market": 2045872,
-    "insurance_current": 9791701,
-    "fund_market": 775882,
-    "cash": 6782307
-  },
-  "2026-06-22": {
-    "total_assets": 50314306,
-    "total_liabilities": 22026224,
-    "net_worth": 28288082,
-    "securities_market": 2241885,
-    "insurance_current": 9810599,
-    "fund_market": 782726,
-    "cash": 6969908
-  },
-  "2026-06-23": {
-    "total_assets": 50116007,
-    "total_liabilities": 21984418,
-    "net_worth": 28131589,
-    "securities_market": 2088255,
-    "insurance_current": 9757375,
-    "fund_market": 765110,
-    "cash": 7059248
-  },
-  "2026-06-24": {
-    "total_assets": 50099016,
-    "total_liabilities": 21988348,
-    "net_worth": 28110668,
-    "securities_market": 2069819,
-    "insurance_current": 9786398,
-    "fund_market": 791993,
-    "cash": 7111216
-  },
-  "2026-06-25": {
-    "total_assets": 50266675,
-    "total_liabilities": 22028505,
-    "net_worth": 28238170,
-    "securities_market": 2193723,
-    "insurance_current": 9805254,
-    "fund_market": 723790,
-    "cash": 7004747
-  },
-  "2026-06-26": {
-    "total_assets": 50261966,
-    "total_liabilities": 21968431,
-    "net_worth": 28293535,
-    "securities_market": 2243468,
-    "insurance_current": 9809515,
-    "fund_market": 780316,
-    "cash": 7014304
-  },
-  "2026-06-27": {
-    "total_assets": 50132160,
-    "total_liabilities": 21956907,
-    "net_worth": 28175253,
-    "securities_market": 2159143,
-    "insurance_current": 9797310,
-    "fund_market": 812967,
-    "cash": 6898767
-  },
-  "2026-06-28": {
-    "total_assets": 50216388,
-    "total_liabilities": 21964651,
-    "net_worth": 28251737,
-    "securities_market": 2147541,
-    "insurance_current": 9785832,
-    "fund_market": 735469,
-    "cash": 6939579
-  },
-  "2026-06-29": {
-    "total_assets": 50180956,
-    "total_liabilities": 21961489,
-    "net_worth": 28219467,
-    "securities_market": 1982437,
-    "insurance_current": 9862182,
-    "fund_market": 775651,
-    "cash": 6793970
-  },
-  "2026-06-30": {
-    "total_assets": 50452930,
-    "total_liabilities": 21991124,
-    "net_worth": 28461806,
-    "securities_market": 2191409,
-    "insurance_current": 9865818,
-    "fund_market": 832089,
-    "cash": 6915395
-  },
-  "2026-07-01": {
-    "total_assets": 50227342,
-    "total_liabilities": 21974718,
-    "net_worth": 28252624,
-    "securities_market": 2033099,
-    "insurance_current": 9860273,
-    "fund_market": 776095,
-    "cash": 7154735
-  },
-  "2026-07-02": {
-    "total_assets": 50175081,
-    "total_liabilities": 22003899,
-    "net_worth": 28171182,
-    "securities_market": 2127371,
-    "insurance_current": 9875947,
-    "fund_market": 791035,
-    "cash": 6924196
-  },
-  "2026-07-03": {
-    "total_assets": 50331802,
-    "total_liabilities": 21951580,
-    "net_worth": 28380222,
-    "securities_market": 2176933,
-    "insurance_current": 9845998,
-    "fund_market": 787097,
-    "cash": 6971370
-  },
-  "2026-07-04": {
-    "total_assets": 50346652,
-    "total_liabilities": 22009843,
-    "net_worth": 28336809,
-    "securities_market": 2187567,
-    "insurance_current": 9833196,
-    "fund_market": 822815,
-    "cash": 6928615
-  },
-  "2026-07-05": {
-    "total_assets": 50331321,
-    "total_liabilities": 21978809,
-    "net_worth": 28352512,
-    "securities_market": 2129380,
-    "insurance_current": 9891491,
-    "fund_market": 854679,
-    "cash": 6972503
-  },
-  "2026-07-06": {
-    "total_assets": 50517353,
-    "total_liabilities": 22013195,
-    "net_worth": 28504158,
-    "securities_market": 2208271,
-    "insurance_current": 9934459,
-    "fund_market": 769279,
-    "cash": 7067714
-  },
-  "2026-07-07": {
-    "total_assets": 50304921,
-    "total_liabilities": 21950155,
-    "net_worth": 28354766,
-    "securities_market": 1973696,
-    "insurance_current": 9906794,
-    "fund_market": 819010,
-    "cash": 6988857
-  },
-  "2026-07-08": {
-    "total_assets": 50349742,
-    "total_liabilities": 21962423,
-    "net_worth": 28387319,
-    "securities_market": 2099614,
-    "insurance_current": 9860413,
-    "fund_market": 810031,
-    "cash": 6855740
-  },
-  "2026-07-09": {
-    "total_assets": 50418164,
-    "total_liabilities": 22005629,
-    "net_worth": 28412535,
-    "securities_market": 2219967,
-    "insurance_current": 9862693,
-    "fund_market": 738470,
-    "cash": 6852346
-  },
-  "2026-07-10": {
-    "total_assets": 50801037,
-    "total_liabilities": 22014781,
-    "net_worth": 28786256,
-    "securities_market": 2277444,
-    "insurance_current": 9944261,
-    "fund_market": 765865,
-    "cash": 7203016
-  },
-  "2026-07-11": {
-    "total_assets": 50690305,
-    "total_liabilities": 22022208,
-    "net_worth": 28668097,
-    "securities_market": 2213081,
-    "insurance_current": 9949304,
-    "fund_market": 741825,
-    "cash": 7107917
-  },
-  "2026-07-12": {
-    "total_assets": 50604335,
-    "total_liabilities": 21995537,
-    "net_worth": 28608798,
-    "securities_market": 2234345,
-    "insurance_current": 9880848,
-    "fund_market": 796649,
-    "cash": 7038172
-  },
-  "2026-07-13": {
-    "total_assets": 50591886,
-    "total_liabilities": 22005199,
-    "net_worth": 28586687,
-    "securities_market": 2189307,
-    "insurance_current": 9954450,
-    "fund_market": 759084,
-    "cash": 6827651
-  },
-  "2026-07-14": {
-    "total_assets": 50470430,
-    "total_liabilities": 21993126,
-    "net_worth": 28477304,
-    "securities_market": 2022900,
-    "insurance_current": 9938384,
-    "fund_market": 763521,
-    "cash": 6853618
-  },
-  "2026-07-15": {
-    "total_assets": 50537499,
-    "total_liabilities": 21953041,
-    "net_worth": 28584458,
-    "securities_market": 2009384,
-    "insurance_current": 9936461,
-    "fund_market": 791122,
-    "cash": 7043800
-  },
-  "2026-07-16": {
-    "total_assets": 50653262,
-    "total_liabilities": 22022529,
-    "net_worth": 28630733,
-    "securities_market": 2314984,
-    "insurance_current": 9917944,
-    "fund_market": 825493,
-    "cash": 6650096
-  },
-  "2026-07-17": {
-    "total_assets": 50453586,
-    "total_liabilities": 21961831,
-    "net_worth": 28491755,
-    "securities_market": 2065175,
-    "insurance_current": 9924412,
-    "fund_market": 773678,
-    "cash": 7050939
   }
 }

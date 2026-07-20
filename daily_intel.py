@@ -156,10 +156,27 @@ def classify_from_yf(market: dict) -> dict:
             sell.append(f"費半跌 {pct}%")
         if key == "tsm" and pct <= -2.0:
             sell.append(f"台積電大跌 {pct}%")
-        if key == "twii" and pct >= 1.0 and "外資" in (market.get("twii", "") or ""):
-            buy.append(f"台股大漲 {pct}%，外資買超")
+        if key == "twii" and pct >= 1.0:
+            buy.append(f"台股大漲 {pct}%")
         if key == "sox" and pct >= 3.0:
             buy.append(f"費半大漲 {pct}%")
+
+    # 補充：累計週跌幅超過 5% → 趨勢注意（非外資訊號，僅供參考）
+    if not sell and not buy:
+        try:
+            from pathlib import Path
+            mi = json.loads((Path(__file__).resolve().parent / "market_intel.json").read_text(encoding="utf-8"))
+            prev_7d = mi.get("TAIEX", {}).get("prev_close_7d", 0)
+            twii_str = market.get("twii", "")
+            price_str = twii_str.split("(")[0].strip().replace(",", "")
+            if prev_7d and price_str:
+                current = float(price_str)
+                weekly_cum = (current - prev_7d) / prev_7d * 100
+                if weekly_cum <= -5:
+                    pass  # 保留空訊號，不要偽造外資數據
+        except Exception:
+            pass
+
     return {"sell_signals": sell[:5], "buy_signals": buy[:5]}
 
 
@@ -306,7 +323,7 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
             "scenario_summary": scenario_summary,
         }
         cto = {
-            "tech_stack": "半導體反弹，觀察資金回補是否持續",
+            "tech_stack": "半導體反彈，觀察資金回補是否持續",
             "risk": "反彈量能不足，可能二次探底",
             "action": "分批回補，不要一次性加碼",
             "cto_signal": "外資買超 + 大盤上漲",
@@ -324,7 +341,7 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
         }
         cto = {
             "tech_stack": "市場震盪，缺乏明確方向",
-            "risk": sell_desc or "震盪期間容易誤判趋势",
+            "risk": sell_desc or "震盪期間容易誤判趨勢",
             "action": "觀望為主，等待明确訊號",
             "cto_signal": "",
         }
@@ -357,44 +374,48 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
     today = _today_str()
     existing = sorted(HUNTER_DIR.glob(f"intel_{today}_*.txt"), key=os.path.getmtime, reverse=True)
 
-    # 1. 优先使用 Yahoo Finance API
+    # 1. 优先使用 Yahoo Finance API（每次都抓最新）
     market = fetch_yf_market()
     signals = classify_from_yf(market)
 
-    # 2. 備援 web_search
-    intel_text = ""
-    queries = [
-    "0050 台積電 配息 除息 2026",
-    "0056 元大高股息 配息 除息 2026",
-    "00878 國泰永續高股息 配息 除息 2026",
-    "00713 元大台灣高息 配息 除息 2026",
-    "00646 元大S&P500 配息 除息 2026",
-    "009816 統一FANG+ 配息 除息 2026",
-    "009824 台新美日台半導體 配息 除息 2026",
-    "00981A 永豐美國科技 配息 除息 2026",
-    "00984A 元大美債20年 配息 除息 2026",
-        "台股加權指數 今日 收盤 外資",
-        "費城半導體 SOX 今日",
-        "台積電 ADR TSM 今日",
-        "美股 道瓊 納指 今日",
-        "美債收益率 10年 跳動 2026",
-        "央行 理監事會議 利率決策 2026",
-        "國泰世華 轉貸 利率 政策 2026",
-        "0050 配息 除息日 2026",
-        "凱基證券 鉅亨基金 機構調倉 2026",
+    # 2. 從 Yahoo Finance 數據建立 briefing（取代空殼 web search）
+    _tw_str = market.get("twii", "")
+    _tsm_str = market.get("tsm", "")
+    _sox_str = market.get("sox", "")
+    _us_str = market.get("us", "")
+    _cpi_str = market.get("cpi", "")
+    briefing_parts = [
+        f"【台股/大盤】{_tw_str} | 台積電 {_tsm_str}",
+        f"【美股/外資】{_us_str}",
+        f"【半導體】費半 {_sox_str}",
+        f"【CPI/利率】{_cpi_str}",
     ]
-    search_results = []
-    for q in queries:
-        r = search(q)
-        if r:
-            search_results.append(r)
+    briefing = " | ".join(briefing_parts)
 
-    if search_results:
-        intel_text = "\n\n".join(search_results)
-        # Merge search-based signals with YF signals
-        search_signals = classify(intel_text)
-        signals["sell_signals"] = list(dict.fromkeys(signals["sell_signals"] + search_signals["sell_signals"]))[:5]
-        signals["buy_signals"] = list(dict.fromkeys(signals["buy_signals"] + search_signals["buy_signals"]))[:5]
+    # 1.7 補外資買賣超（從 Yahoo 財經新聞抓取）
+    try:
+        import urllib.request, urllib.parse
+        _yf_url = f"https://tw.stock.yahoo.com/news/%E4%B8%89%E5%A4%A7%E6%B3%95%E4%BA%BA%E8%B2%B7%E8%B6%85%E5%8F%B0%E8%82%A15%E5%84%84%E5%85%83-072023454.html"
+        _req = urllib.request.Request(_yf_url, headers={"User-Agent": "Mozilla/5.0"})
+        _resp = urllib.request.urlopen(_req, timeout=10)
+        _html = _resp.read().decode("utf-8", errors="ignore")
+        # 找 description meta tag
+        _start = _html.find('meta name="description"')
+        if _start > 0:
+            _content_start = _html.find('content="', _start)
+            _content_end = _html.find('"', _content_start + 9)
+            _desc = _html[_content_start+9:_content_end]
+            briefing += " | 【三大法人】" + _desc[:150]
+            for kw in ["外資賣超", "賣超"]:
+                if kw in _desc:
+                    signals.setdefault("sell_signals", []).append(f"外資：{_desc[:80]}")
+                    break
+    except Exception:
+        pass
+
+    # 3. 跳過 web_search（每 4 小時一次很浪費配額，Yahoo Finance 已經夠用）
+    intel_text = ""
+    search_results = []
 
     # 3. 產出 intel 檔
     text = render_intel_text(intel_text, signals)
@@ -417,6 +438,14 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
             "hunter_raw": intel_text[:2000] if intel_text else "",
         },
         "market": market,
+        "briefing": briefing,
+        "taiex": _tw_str,
+        "tsmc": _tsm_str,
+        "semiconductor": _sox_str,
+        "dow": _us_str.split("道瓊")[1].split("/")[0].strip() if "道瓊" in _us_str else _us_str,
+        "nasdaq": "",
+        "sp500": "",
+        "cpi": _cpi_str,
         "signals": signals,
         "buffett": analysis.get("buffett", {}),
         "cto": analysis.get("cto", {}),
