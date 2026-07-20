@@ -16,7 +16,7 @@
   "moneybook_total": 3853985,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
-  "rent_monthly_actual": 24000,
+  "rent_monthly_actual": 80100,
   "cc_monthly_avg_4cards": 38000,
   "page1": {
     "actual_cash_flow": {
@@ -557,5 +557,6 @@
     }
   ],
   "mortgage_monthly_total": 99458,
-  "mortgage_count": 3
+  "mortgage_count": 3,
+  "note_rent_status": "本月房租全數實收 80,100（大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100）"
 }

@@ -136,7 +136,9 @@ def extract_snapshot(snap: dict) -> dict:
                     "insurance_current": float(_ar.get("insurance", 0)),
                     "insurance_total": float(_ar.get("insurance", 0)),
                     "fund_market": float(_ar.get("funds", 0)),
-                    "fund_breakdown_display": {},
+                    # 從 snapshot.json 補基金明細
+                    "_fund_breakdown": snap.get("funds_breakdown", {}),
+                    "fund_breakdown_display": snap.get("funds_breakdown", {}),
                     "real_estate": float(_ar.get("real_estate", 34_000_000)),
                     "other": 0.0,
                     "cash": float(_ar.get("cash_total", 0)),
@@ -493,7 +495,9 @@ def buffett_advice(history: dict, snap: dict) -> str:
     suggestions.append("0050 權重集中台積電 ~57%，可考慮補碼分散")
     suggestions.append("保單 A+B 管理費 1.5% 偏高，定期複檢配息收益率")
     if passive_coverage < 100:
-        suggestions.append(f"保守配息 70K+房租 24K 可覆蓋月支出 {_fmt(monthly_exp)}")
+        suggestions.append(f"被動收入 {_fmt(passive_total)} 可覆蓋月支出 {_fmt(monthly_exp)}")
+    else:
+        suggestions.append(f"被動收入 {_fmt(passive_total)} 已完全覆蓋月支出 {_fmt(monthly_exp)}（覆蓋率 {passive_coverage:.1f}%）")
     lines += ["", "💡 建議："]
     lines += [f"• {s}" for s in suggestions]
 
