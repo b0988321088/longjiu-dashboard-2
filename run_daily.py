@@ -132,6 +132,7 @@ def calibrate_sources() -> dict:
         "total_assets": total_assets,
         "total_liabilities": total_liabilities,
         "net_worth": net_worth,
+        "bonds_cash": snap.get("penetration", {}).get("actual_twd", {}).get("債券及安全現金", 9_697_196),
         "insurance_current_value": s_insurance,
     }
 
@@ -310,11 +311,12 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       <table class="mobile-bordered">
         <thead><tr><th>項目</th><th class="num">金額 TWD</th><th class="num">占比</th></tr></thead>
         <tbody>
-          <tr><td>證券市值</td><td class="num">{tv.get("securities_total", 2_158_900):,}</td><td class="num">4.2%</td></tr>
-          <tr><td>保單現値</td><td class="num">{tv.get("insurance_total", 9_876_282):,}</td><td class="num">22.4%</td></tr>
-          <tr><td>基金市值</td><td class="num">{tv.get("fund_market", 783_700):,}</td><td class="num">1.5%</td></tr>
-          <tr><td>不動產</td><td class="num">34,000,000</td><td class="num">64.6%</td></tr>
-          <tr><td>現金部位</td><td class="num">3,853,985</td><td class="num">7.3%</td></tr>
+          <tr><td>證券市值</td><td class="num">{tv.get("securities_total", 2_158_900):,}</td><td class="num">{tv.get("securities_total", 2_158_900)/tv["total_assets"]*100:.1f}%</td></tr>
+          <tr><td>保單現値</td><td class="num">{tv.get("insurance_total", 9_876_282):,}</td><td class="num">{tv.get("insurance_total", 9_876_282)/tv["total_assets"]*100:.1f}%</td></tr>
+          <tr><td>基金市值</td><td class="num">{tv.get("fund_market", 783_700):,}</td><td class="num">{tv.get("fund_market", 783_700)/tv["total_assets"]*100:.1f}%</td></tr>
+          <tr><td>債券及安全現金</td><td class="num">{tv.get("bonds_cash", 9_697_196):,}</td><td class="num">{tv.get("bonds_cash", 9_697_196)/tv["total_assets"]*100:.1f}%</td></tr>
+          <tr><td>不動產</td><td class="num">34,000,000</td><td class="num">{34_000_000/tv["total_assets"]*100:.1f}%</td></tr>
+          <tr><td>現金部位</td><td class="num">{tv.get("cash", 3_853_985):,}</td><td class="num">{tv.get("cash", 3_853_985)/tv["total_assets"]*100:.1f}%</td></tr>
         </tbody>
       </table>
     </div>
