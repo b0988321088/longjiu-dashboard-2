@@ -174,14 +174,51 @@ for i, (v, d) in enumerate(zip(inv_v, td)):
     html += f'<div class="bar{cls}" style="height:{pct}%"><div class="lb">{d}</div></div>'
 html += f"""</div>
 <div style="font-size:10px;color:#6b7280;text-align:center;margin-top:10px">{fm(inv_mn)} ~ {fm(inv_mx)} TWD</div></div>
-<!-- 各類別迷你趨勢 -->
-<div class="c"><div class="ct">📊 各類別七日走勢</div>
+<!-- 各類別變化堆疊圖 -->
+<div class="c"><div class="ct">📊 資產變化對比圖</div>
+<div class="section-desc">各部位以不同顏色顯示，一條線為7天前基準線，另一條為今日現況</div>
 """
-html += mini_chart(cat_trends["securities"], "📈 證券市值", "#60a5fa")
-html += mini_chart(cat_trends["insurance"], "📋 保單現值", "#f59e0b")
-html += mini_chart(cat_trends["funds"], "💰 基金市值", "#14b8a6")
-html += mini_chart(cat_trends["cash_total"], "💵 現金", "#10b981")
-html += mini_chart(cat_trends["bonds"], "🏦 債券", "#8b5cf6")
+CAT_COLORS = {"securities":"#3b82f6","insurance":"#f59e0b","funds":"#14b8a6","cash_total":"#10b981","bonds":"#8b5cf6"}
+CAT_LABELS = {"securities":"證券","insurance":"保單","funds":"基金","cash_total":"現金","bonds":"債券"}
+
+# 7天前與今日的總投資部位
+base_inv = {ck: (base[ck] or 0) for ck in CAT_KEYS}
+latest_inv = {ck: (latest[ck] or 0) for ck in CAT_KEYS}
+total_base_inv = sum(base_inv.values())
+total_latest_inv = sum(latest_inv.values())
+
+html += '<div style="display:flex;height:200px;gap:20px;justify-content:center;align-items:flex-end;padding:10px 0">'
+# 7天前
+html += '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;width:80px">'
+html += '<div style="font-size:9px;color:#6b7280;margin-bottom:4px">7天前</div>'
+for ck in CAT_KEYS:
+    v = base_inv[ck]
+    h = int(v / total_base_inv * 180)
+    color = CAT_COLORS[ck]
+    html += f'<div style="width:24px;height:{h}px;background:{color};border-radius:2px;opacity:0.6;display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff;overflow:hidden" title="{CAT_LABELS[ck]}: {fm(v)}">{CAT_LABELS[ck][0]}</div>'
+html += f'<div style="font-size:8px;color:#6b7280;margin-top:4px">{fm(total_base_inv)}</div></div>'
+
+# 箭頭
+html += '<div style="display:flex;flex-direction:column;justify-content:center;font-size:20px;color:#6b7280">→</div>'
+
+# 今日
+html += '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;width:80px">'
+html += '<div style="font-size:9px;color:#60a5fa;margin-bottom:4px">今日</div>'
+for ck in CAT_KEYS:
+    v = latest_inv[ck]
+    h = int(v / total_latest_inv * 180)
+    color = CAT_COLORS[ck]
+    html += f'<div style="width:24px;height:{h}px;background:{color};border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff;overflow:hidden" title="{CAT_LABELS[ck]}: {fm(v)}">{CAT_LABELS[ck][0]}</div>'
+html += f'<div style="font-size:8px;color:#60a5fa;margin-top:4px">{fm(total_latest_inv)}</div></div></div>'
+
+# 圖例
+html += '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px;font-size:9px">'
+for ck in CAT_KEYS:
+    color = CAT_COLORS[ck]
+    chg = latest_inv[ck] - base_inv[ck]
+    chg_str = f"({fp(chg/max(base_inv[ck],1)*100)})" if base_inv[ck] else ""
+    html += f'<span style="color:{color}">■</span> {CAT_LABELS[ck]} {chg_str}'
+html += '</div>'
 html += """</div>
 
 
