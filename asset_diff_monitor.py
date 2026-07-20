@@ -398,7 +398,7 @@ def build_trend_charts(history: dict) -> str:
         '"<span style=\"width:12px;height:12px;background:"+pieChart.data.datasets[0].backgroundColor[i]+";border-radius:3px;margin-right:8px;display:inline-block\"></span>"+'
         '"<span style=\"flex:1\">"+l+"</span>"+'
         '"<span style=\"font-weight:700;margin-left:8px\">"+(v/10000).toFixed(0)+"萤</span></div>"}).join("");'
-        'document.getElementById("pie_legend").innerHTML=legendHtml;'
+        'document.getElementById("pie_legend").innerHTML=legendHtml;},500);'
         '</script>'
     )# ---------- buffett ----------
 def buffett_advice(history: dict, snap: dict) -> str:
