@@ -3,9 +3,9 @@
   "version": "v5.0.10-true-value-correction",
   "date": "2026-07-18",
   "total_assets": 50689930,
-  "total_liabilities": 22000000,
-  "net_worth": 28689930,
-  "debt_ratio": "43.4%",
+  "total_liabilities": 17199287,
+  "net_worth": 33490643,
+  "debt_ratio": "33.9%",
   "monthly_income": 218102,
   "monthly_expense": 141958,
   "working_surplus": 76144,
@@ -75,7 +75,7 @@
   "credit_card_pending": 34213,
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
-  "securities_total": 2208900,
+  "securities_total": 2205230,
   "funds_total": 783700,
   "insurance_total": 11791280,
   "last_calibration_sources": {
@@ -401,12 +401,19 @@
     },
     "alert": "美股暴露46.1%嚴重超標；台股7.2%極度低於目標40%",
     "actual_twd": {
-      "台股市值型成長": 2065675,
-      "美股市值型成長": 13226058,
-      "防守型配息": 5307637,
+      "台股市值型成長": 1007090,
+      "美股市值型成長": 76050,
+      "防守型配息": 1022090,
       "債券及安全現金": 9697196,
       "現金/安全網": 2200410,
-      "不動產": 34000000
+      "不動產": 34000000,
+      "證券市值": 2205230,
+      "現金部位": 3884620,
+      "高利活存": 2200410,
+      "一般現金": 1684210,
+      "房貸餘額": 13159422,
+      "信用卡": 39865,
+      "保單借貸": 4000000
     }
   },
   "penetration_canonical": {
@@ -507,5 +514,48 @@
   "moneybook_account_csv": "C:/Users/bot/Desktop/龍九系統/Moneybook/Moneybook_帳戶_20260718_1.csv",
   "real_estate_value": 34017063,
   "insurance_total_note": "含配息",
-  "runway_months": 27.1
+  "runway_months": 27.1,
+  "securities_breakdown": {
+    "0050": 198600,
+    "006208": 453200,
+    "009816": 227040,
+    "00646": 76050,
+    "00713": 119700,
+    "00878": 468900,
+    "0056": 49500,
+    "00981A": 128250,
+    "00984A": 143800,
+    "00919": 142750,
+    "00918": 30780,
+    "00924": 100000,
+    "0088": 66660
+  },
+  "securities_tw_growth": 1007090,
+  "securities_tw_defense": 1022090,
+  "securities_us_growth": 76050,
+  "cash": 3884620,
+  "high_yield_savings": 2200410,
+  "regular_cash": 1684210,
+  "mortgages": [
+    {
+      "bank": "永豐銀行",
+      "name": "房屋貸款",
+      "balance": 5759374,
+      "account": "市政分行"
+    },
+    {
+      "bank": "永豐銀行",
+      "name": "房屋貸款",
+      "balance": 4607578,
+      "account": "營業部DAWHO"
+    },
+    {
+      "bank": "永豐銀行",
+      "name": "房屋貸款",
+      "balance": 2792470,
+      "account": "未知"
+    }
+  ],
+  "mortgage_monthly_total": 99458,
+  "mortgage_count": 3
 }

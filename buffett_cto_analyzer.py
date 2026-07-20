@@ -119,7 +119,7 @@ def generate_report(pen: dict, intel: dict, snapshot: dict) -> str:
         _div  = float(_pen.get("防守型配息", 0))
         _bond = float(_pen.get("債券及安全現金", 0))
         _cash = float(_pen.get("現金/安全網", 0))
-        _invest_total = _us_eq + _tw_eq + _div
+        _invest_total = float(snapshot.get("total_assets", 0)) - float(snapshot.get("real_estate_value", 0))
         _us_pct = _us_eq / (_invest_total + 1e-9)
         _tw_pct = _tw_eq / (_invest_total + 1e-9)
         _safe_total = _bond + _cash

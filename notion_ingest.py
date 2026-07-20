@@ -74,13 +74,13 @@ class NotionIngester:
         self.dry = dry_run
 
     def _find_existing_page(self, db_id: str, title_prop: str, title_value: str, date_value: str = "") -> dict | None:
-        """查詢同一 DB 內是否有同名 page，供 upsert 使用（以 title 比對即可）。"""
+        """查詢同一 DB 內是否有同名 page，供 upsert 使用（以 title 精準比對）。"""
         if self.dry:
             return None
         payload = {
             "filter": {
                 "property": title_prop,
-                "title": {"contains": title_value},
+                "title": {"equals": title_value},
             },
             "page_size": 1,
         }
@@ -255,9 +255,13 @@ def load_snapshot():
 
 def load_moneybook_accounts():
     account_paths = [
-        Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "hermes" / "cache" / "documents" / "doc_7f2cdffd6ca1_Moneybook_帳戶_20260714_1.csv",
-        REPO / "Moneybook" / "account.csv",  # fallback
+        REPO / "Moneybook" / "account.csv",  # fallback legacy
     ]
+    # auto-discover latest Moneybook_帳戶_*.csv in Moneybook folder
+    mb_dir = REPO / "Moneybook"
+    found = sorted(mb_dir.glob("Moneybook_帳戶_*.csv"))
+    if found:
+        account_paths = [found[-1]] + account_paths
     for p in account_paths:
         if p.exists():
             break
@@ -279,9 +283,13 @@ def load_moneybook_accounts():
 
 def load_moneybook_details():
     detail_paths = [
-        Path("C:/Users/bot/AppData/Local/hermes/cache/documents") / "doc_4e6c8d47a6db_Moneybook_明細_20260714_1.csv",
-        REPO / "Moneybook" / "detail.csv",
+        REPO / "Moneybook" / "detail.csv",  # fallback legacy
     ]
+    # auto-discover latest Moneybook_明細_*.csv in Moneybook folder
+    mb_dir = REPO / "Moneybook"
+    found = sorted(mb_dir.glob("Moneybook_明細_*.csv"))
+    if found:
+        detail_paths = [found[-1]] + detail_paths
     for p in detail_paths:
         if p.exists():
             break
@@ -303,6 +311,9 @@ def load_moneybook_details():
             currency = row.get("幣別", "").strip()
             amt = float(row.get("金額", "0") or "0")
             if currency != "TWD" or amt <= 0:
+                continue
+            # exclude redemptions / fund sales which are not dividends
+            if "贖回" in desc or "賣出基金" in cat or "賣出" in desc:
                 continue
             is_fund = any(k in desc for k in fund_keywords) or "媒體轉入 - 基金配息" in desc
             is_policy = any(k in desc for k in policy_keywords) or "保單配息" in cat
@@ -395,31 +406,44 @@ def default_funds(snapshot):
 
 
 def default_policies(snapshot):
-    # Use actual policy names from snapshot + ledger
+    # Use actual policy values from snapshot keys
     policies = []
-    anl_a = snapshot.get("ANL_A") or snapshot.get("allianz_ab_current_value") or 0
-    anl_b = snapshot.get("ANL_B") or snapshot.get("firstjin_fl65_current_value") or 0
-    fj33 = snapshot.get("FIRST_GOLD") or snapshot.get("firstjin_current_value") or 0
+    anl_a = snapshot.get("allianz_policy_a_value") or 0
+    anl_b = snapshot.get("allianz_policy_b_value") or 0
+    fj33 = snapshot.get("firstjin_current_value") or 0
+    fl65 = snapshot.get("firstjin_fl65_current_value") or 0
+    # Proportional split of total Moneybook policy dividends by surrender value
+    total_policy_div = snapshot.get("dividend_income", 0)
+    total_value = anl_a + anl_b + fj33 + fl65
+    if total_value <= 0:
+        total_value = snapshot.get("insurance_total", 0)
     if anl_a:
         policies.append({
             "name": "安聯保單 A（QL186）",
             "surrender_value": anl_a,
             "cost_basis": 5_000_000,
-            "monthly_payout": snapshot.get("page1", {}).get("actual_cash_flow", {}).get("income", {}).get("配息_保守估_月均", 0) / 2,  # approximate split
+            "monthly_payout": round(total_policy_div * anl_a / total_value) if total_value else 0,
         })
     if anl_b:
         policies.append({
             "name": "安聯保單 B（QL184）",
             "surrender_value": anl_b,
             "cost_basis": 3_000_000,
-            "monthly_payout": snapshot.get("page1", {}).get("actual_cash_flow", {}).get("income", {}).get("配息_保守估_月均", 0) / 2,
+            "monthly_payout": round(total_policy_div * anl_b / total_value) if total_value else 0,
+        })
+    if fl65:
+        policies.append({
+            "name": "第一金保單 FL65",
+            "surrender_value": fl65,
+            "cost_basis": 2_000_000,
+            "monthly_payout": round(total_policy_div * fl65 / total_value) if total_value else 0,
         })
     if fj33:
         policies.append({
-            "name": "第一金保單 FL65",
+            "name": "第一金保單 FJ33",
             "surrender_value": fj33,
-            "cost_basis": 2_000_000,
-            "monthly_payout": snapshot.get("page1", {}).get("actual_cash_flow", {}).get("income", {}).get("配息_保守估_月均", 0) / 3,
+            "cost_basis": snapshot.get("insurance_total") or fj33,
+            "monthly_payout": round(total_policy_div * fj33 / total_value) if total_value else 0,
         })
     if not policies:
         policies.append({
@@ -453,8 +477,10 @@ def main():
     # Override snapshot fields with computed true values
     snapshot["bank_assets_moneybook"] = bank_assets
     snapshot["bank_assets_memo"] = f"正數TWD帳戶合計 {bank_assets:,.0f}"
-    snapshot["dividend_income"] = snapshot.get("page1", {}).get("actual_cash_flow", {}).get("income", {}).get("配息_保守估_月均", policy_div + etf_div)
-    snapshot["rent_income"] = snapshot.get("rent_monthly_actual")
+    # 配息 = 保單配息 + ETF/基金配息（從 Moneybook 明細拆解）
+    snapshot["dividend_income"] = policy_div + etf_div
+    # 房租收入 = snapshot 推導（MB 明細中房租多為支出）
+    snapshot["rent_income"] = snapshot.get("passive_income", {}).get("rent_monthly", snapshot.get("rent_monthly_actual", 0))
     snapshot["interest_income"] = snapshot.get("page1", {}).get("actual_cash_flow", {}).get("income", {}).get("利息收入")
     snapshot["non_bonus_income"] = snapshot.get("monthly_income")
     snapshot["monthly_expense"] = snapshot.get("monthly_expense")
@@ -463,7 +489,7 @@ def main():
     expense = (snapshot.get("page1", {}) or {}).get("actual_cash_flow", {}).get("expense", {})
     moneybook = {
         "dividend_income": snapshot["dividend_income"],
-        "rent_income": snapshot.get("rent_monthly_actual"),
+        "rent_income": snapshot.get("rent_income"),
         "interest_income": income.get("利息收入"),
         "non_bonus_income": snapshot.get("monthly_income"),
         "monthly_expense": snapshot.get("monthly_expense"),
@@ -472,7 +498,7 @@ def main():
     print(f"真值：銀行資產(正數TWD)={bank_assets:,.0f}")
     print(f"真值：保單配息(7月)={policy_div:,.0f}，ETF/基金配息(7月)={etf_div:,.0f}")
     print(f"真值：配息收入(採用)={snapshot['dividend_income']:,.0f}")
-    print(f"真值：房租收入={snapshot.get('rent_monthly_actual',0):,.0f}")
+    print(f"真值：房租收入={snapshot.get('rent_income',0):,.0f}")
     print(f"真值：利息收入={snapshot.get('interest_income',0):,.0f}")
     print(f"真值：月支出={snapshot.get('monthly_expense',0):,.0f}")
 
@@ -481,6 +507,8 @@ def main():
         print("⚠️ 警告：銀行資產為負數！")
     if snapshot["dividend_income"] == 0:
         print("⚠️ 警告：配息收入為 0！")
+    if snapshot.get("rent_income", 0) == 0:
+        print("⚠️ 警告：房租收入為 0！")
     diff = abs(bank_assets - snapshot.get("moneybook_total", 0))
     if diff > 2000:
         print(f"⚠️ 警告：Moneybook 正數合計與 snapshot.moneybook_total 差異 {diff:,.0f}")
