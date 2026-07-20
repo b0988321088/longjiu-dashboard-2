@@ -446,12 +446,14 @@ def buffett_advice(history: dict, snap: dict) -> str:
         f"不動產 {ex['real_estate']/alloc_den*100:.1f}%"
     )
     real_estate_line = f"不動產 {ex.get('real_estate',0)/10000:.0f} 萬（單獨列出）"
+    rent_line = f"房租月收 {_fmt(monthly_rent)}（大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100）"
 
     lines = [
         "🧠 在家巴菲特",
         "",
         f"資產結構：{alloc}",
         real_estate_line,
+        rent_line,
         f"負債比率：{debt_ratio:.1f}%",
         f"保守配息：{_fmt(monthly_div_conservative)}（覆蓋率 {passive_coverage:.1f}%）",
     ]
