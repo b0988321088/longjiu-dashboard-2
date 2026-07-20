@@ -342,12 +342,28 @@ def build_trend_charts(history: dict) -> str:
     import json as _cj
     dates = sorted(history.keys())
     rows = [history[d] for d in dates[-14:]]
-    if len(rows) < 2:
-        return '<div class="card"><h2>📈 資產趨勢</h2><div class="text-sm">需至少 2 天資料才能產出趨勢圖</div></div>'
+    if not rows:
+        return '<div class="card"><h2>📈 資產趨勢</h2><div class="text-sm">暂無資料</div></div>'
 
-    chart_id = "trend_chart"
-    labels_json = _cj.dumps([d[-5:] for d in dates[-14:]])
-    datasets = []
+    # ---- CSS 條狀圖 (不依賴 JavaScript) ----
+    # 近 7 日證券走勢 (顏色條)
+    last_vals = {}
+    for key in ["securities_market","insurance_current","fund_market","cash","total_assets","total_liabilities"]:
+        last_vals[key] = [float(r.get(key,0) or 0) for r in rows[-7:]]
+
+    def _mini_bar(vals, color):
+        """產生 7 小樣本條"""
+        if not vals or max(vals) == min(vals):
+            return ""
+        mx = max(vals)
+        mn = min(vals)
+        sp = mx - mn if mx != mn else 1
+        bars = []
+        for v in vals:
+            h = max(6, (v - mn) / sp * 24)
+            bars.append(f'<div style="width:8px;height:{h:.0f}px;background:{color};border-radius:2px;display:inline-block;margin-right:3px;"></div>')
+        return "".join(bars)
+
     chart_configs = [
         ("證券市值", "securities_market", "#2563eb"),
         ("保單現値", "insurance_current", "#16a34a"),
@@ -356,13 +372,29 @@ def build_trend_charts(history: dict) -> str:
         ("總資產", "total_assets", "#0ea5e9"),
         ("總負債", "total_liabilities", "#dc2626"),
     ]
+    trend_cards = []
     for label, key, color in chart_configs:
-        vals = [float(r.get(key, 0) or 0) for r in rows]
-        datasets.append(_cj.dumps({"label": label, "data": vals, "borderColor": color, "backgroundColor": color + "20", "fill": False, "tension": 0.2, "pointRadius": 3}))
+        vals = last_vals[key]
+        bars = _mini_bar(vals, color) if len(vals) > 1 else '<span style="color:#6e6e73;font-size:12px">正在累積</span>'
+        last_v = vals[-1] if vals else 0
+        trend_cards.append(
+            f'<div style="flex:1;min-width:140px;background:#f8f9fa;border-radius:8px;padding:10px;margin:4px">'
+            f'<div style="font-size:13px;font-weight:600;color:#1d1d1f">{label}</div>'
+            f'<div style="font-size:20px;font-weight:800;color:#111;margin:4px 0">{last_v/10000:.0f}萬</div>'
+            f'<div style="display:flex;align-items:flex-end;height:30px;padding-top:4px">{bars}</div>'
+            f'</div>'
+        )
 
-    datasets_json = "[" + ",".join(datasets) + "]"
+    trend_section = (
+        '<div class="card"><h2>📈 資產趨勢（近 7 日）</h2>'
+        '<div style="display:flex;flex-wrap:wrap;">'
+        + "".join(trend_cards) +
+        '</div><div class="text-sm" style="margin-top:8px">每條 = 一天，高度代表相對值</div></div>'
+    )
 
+    # ---- 資產結構 (水平樄加欄) ----
     last = rows[-1]
+    total = last.get("total_assets", 1) or 1
     pie_items = [
         ("證券", last.get("securities_market", 0), "#2563eb"),
         ("保單", last.get("insurance_current", 0), "#16a34a"),
@@ -370,37 +402,25 @@ def build_trend_charts(history: dict) -> str:
         ("不動產", last.get("real_estate", 0), "#10b981"),
         ("現金", last.get("cash", 0), "#f59e0b"),
     ]
-    pie_labels = _cj.dumps([k for k, v, _ in pie_items if v > 0])
-    pie_data = _cj.dumps([int(v) for _, v, _ in pie_items if v > 0])
-    pie_colors = _cj.dumps([c for _, v, c in pie_items if v > 0])
+    bars = []
+    for label, v, c in pie_items:
+        v = max(0, float(v or 0))
+        pct = v / total * 100
+        if pct < 0.5:
+            continue
+        bars.append(
+            f'<div style="display:flex;align-items:center;margin:6px 0;">'
+            f'<span style="width:12px;height:12px;background:{c};border-radius:3px;margin-right:8px;display:inline-block"></span>'
+            f'<span style="flex:1;font-size:14px;color:#374151">{label}</span>'
+            f'<div style="flex:2;background:#f2f2f7;border-radius:4px;height:10px;margin:0 8px;overflow:hidden">'
+            f'<div style="background:{c};width:{pct:.1f}%;height:10px;border-radius:4px"></div></div>'
+            f'<span style="font-size:14px;font-weight:700;color:#111;width:50px;text-align:right">{v/10000:.0f}萬</span>'
+            f'<span style="font-size:12px;color:#6e6e73;width:36px;text-align:right">{pct:.1f}%</span>'
+            f'</div>'
+        )
+    stack_section = '<div class="card"><h2>📊 資產結構（最新）</h2>' + "".join(bars) + '</div>'
 
-    return (
-        '<div class="card"><h2>📈 資產趨勢（近 14 日）</h2>'
-        '<canvas id="' + chart_id + '" height="200" style="max-height:300px"></canvas></div>'
-        '<div class="card"><h2>📊 資產結構（最新）</h2>'
-        '<div style="display:flex;gap:16px;flex-wrap:wrap">'
-        '<div style="flex:1;min-width:180px"><canvas id="pie_chart" height="180"></canvas></div>'
-        '<div style="flex:1;min-width:160px" id="pie_legend"></div></div></div>'
-        '<script>'
-        'var ctx=document.getElementById("' + chart_id + '").getContext("2d");'
-        'new Chart(ctx,{type:"line",'
-        'data:{labels:' + labels_json + ',datasets:' + datasets_json + '},'
-        'options:{responsive:true,maintainAspectRatio:false,'
-        'plugins:{legend:{position:"bottom",labels:{boxWidth:12,font:{size:11}}}},'
-        'scales:{y:{beginAtZero:false,ticks:{callback:function(v){return(v/10000).toFixed(0)+"萬";}}}}}});'
-        'var pctx=document.getElementById("pie_chart").getContext("2d");'
-        'var pieChart=new Chart(pctx,{type:"doughnut",'
-        'data:{labels:' + pie_labels + ',datasets:[{data:' + pie_data + ',backgroundColor:' + pie_colors + '}]},'
-        'options:{responsive:true,plugins:{legend:{display:false}}}});'
-        'var legendHtml=pieChart.data.labels.map(function(l,i){'
-        'var v=pieChart.data.datasets[0].data[i];'
-        'return"<div style=\"display:flex;align-items:center;margin:4px 0;font-size:13px\">"+'
-        '"<span style=\"width:12px;height:12px;background:"+pieChart.data.datasets[0].backgroundColor[i]+";border-radius:3px;margin-right:8px;display:inline-block\"></span>"+'
-        '"<span style=\"flex:1\">"+l+"</span>"+'
-        '"<span style=\"font-weight:700;margin-left:8px\">"+(v/10000).toFixed(0)+"萤</span></div>"}).join("");'
-        'document.getElementById("pie_legend").innerHTML=legendHtml;},500);'
-        '</script>'
-    )# ---------- buffett ----------
+    return trend_section + stack_section# ---------- buffett ----------
 def buffett_advice(history: dict, snap: dict) -> str:
     rows = compute_changes(history)
     ex = extract_snapshot(snap)
