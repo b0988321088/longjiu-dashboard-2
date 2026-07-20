@@ -4,56 +4,80 @@
 <title>龍九週報 2026-07-21</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,'Segoe UI','Noto Sans TC',sans-serif;background:#0a0e1a;color:#e2e8f0;padding:16px}
-.h{text-align:center;padding:20px 0 12px}
+body{font-family:-apple-system,'Segoe UI','Noto Sans TC',sans-serif;background:#0a0e1a;color:#e2e8f0;padding:14px}
+.h{text-align:center;padding:20px 0 10px}
 .h h1{font-size:20px;font-weight:700;color:#fff}
-.h .s{font-size:12px;color:#6b7280;margin-top:4px}
-.c{background:#111827;border-radius:12px;padding:16px;margin-bottom:10px;border:1px solid #1f2937}
-.ct{font-size:13px;font-weight:600;color:#9ca3af;margin-bottom:10px}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th{text-align:left;padding:6px 4px;color:#6b7280;border-bottom:1px solid #1f2937;font-weight:500}
-td{padding:7px 4px;border-bottom:1px solid #1a1f2e}
-td.n,th.n{text-align:right;font-family:'SF Mono',monospace}
-.g{color:#10b981} .r{color:#ef4444}
-.sg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.si{background:#1a1f2e;border-radius:8px;padding:10px;text-align:center}
-.si .v{font-size:18px;font-weight:700;font-family:'SF Mono';margin:4px 0}
-.si .l{font-size:10px;color:#6b7280}
-.tr{display:flex;align-items:flex-end;gap:3px;height:70px;padding:8px 0}
-.ba{flex:1;background:linear-gradient(to top,#1e40af,#3b82f6);border-radius:3px 3px 0 0;min-width:10px;position:relative}
-.ba .lb{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font-size:7px;color:#6b7280;white-space:nowrap}
-.ar{background:#7f1d1d;border:1px solid #ef4444;color:#fca5a5;padding:10px;border-radius:8px;font-size:12px;margin-bottom:8px}
-.ag{background:#064e3b;border:1px solid #059669;color:#6ee7b7;padding:10px;border-radius:8px;font-size:12px;margin-bottom:8px}
-.ci{font-size:11px;color:#9ca3af;padding:4px 0;border-bottom:1px solid #1a1f2e}
-.b{font-size:12px;line-height:1.6;color:#d1d5db}
-.b h3{color:#f59e0b;font-size:13px;margin-bottom:6px;margin-top:10px}
-.b h3:first-child{margin-top:0}
-.b li{margin-bottom:4px;margin-left:16px}
+.h .s{font-size:11px;color:#6b7280;margin-top:3px}
+.c{background:#111827;border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid #1f2937}
+.ct{font-size:13px;font-weight:600;color:#9ca3af;margin-bottom:8px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{text-align:left;padding:6px 3px;color:#6b7280;border-bottom:1px solid #1f2937;font-weight:500}
+td{padding:6px 3px;border-bottom:1px solid #1a1f2e}
+.n{text-align:right;font-family:'SF Mono',monospace}
+.g{color:#10b981}.r{color:#ef4444}.w{color:#f59e0b}
+.sg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.si{background:#1a1f2e;border-radius:8px;padding:8px;text-align:center}
+.si .v{font-size:16px;font-weight:700;font-family:'SF Mono';margin:3px 0}
+.si .l{font-size:9px;color:#6b7280}
+.chart{display:flex;align-items:flex-end;gap:3px;height:80px;padding:6px 0;position:relative}
+.bar{flex:1;background:linear-gradient(to top,#1e40af,#3b82f6);border-radius:3px 3px 0 0;min-width:10px;position:relative;opacity:0.85}
+.bar .lb{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font-size:7px;color:#6b7280;white-space:nowrap}
+.bar-today{background:linear-gradient(to top,#0d9488,#14b8a6);opacity:1}
+.ar{background:#7f1d1d;border:1px solid #ef4444;color:#fca5a5;padding:8px;border-radius:8px;font-size:11px;margin-bottom:6px}
+.ay{background:#713f12;border:1px solid #d97706;color:#fde68a;padding:8px;border-radius:8px;font-size:11px;margin-bottom:6px}
+.ag{background:#064e3b;border:1px solid #059669;color:#6ee7b7;padding:8px;border-radius:8px;font-size:11px;margin-bottom:6px}
+.note{font-size:9px;color:#6b7280;margin-top:2px}
+.buffett{font-size:11px;line-height:1.6;color:#d1d5db}
+.buffett h3{color:#f59e0b;font-size:12px;margin-bottom:5px;margin-top:8px}
+.buffett h3:first-child{margin-top:0}
+.buffett li{margin-bottom:3px;margin-left:14px}
+.section-desc{font-size:10px;color:#6b7280;margin-bottom:8px;line-height:1.4}
+.highlight{color:#60a5fa;font-weight:600}
 </style></head>
 <body>
-<div class="h"><h1>📊 龍九週報</h1><div class="s">2026-07-20 ~ 2026-07-21</div></div>
+<div class="h"><h1>📊 龍九週報</h1><div class="s">2026-07-14 ~ 2026-07-21 · 七日回溯比較</div></div>
 
 <div class="sg">
-<div class="si"><div class="l">總資產</div><div class="v" style="color:#60a5fa">50,689,930</div><div class="l" style="color:#10b981">較上週 +0.0%</div></div>
-<div class="si"><div class="l">淨值</div><div class="v" style="color:#10b981">32,492,508</div><div class="l" style="color:#10b981">負債比 36%</div></div>
+<div class="si"><div class="l">總資產</div><div class="v" style="color:#60a5fa">50,689,930</div><div class="l" style="color:#10b981">七日 +0.0%</div></div>
+<div class="si"><div class="l">投資部位</div><div class="v" style="color:#14b8a6">19,148,763</div><div class="l" style="color:#ef4444">七日 -15.1%</div></div>
+<div class="si"><div class="l">本月配息</div><div class="v" style="color:#f59e0b">69,044</div><div class="l">含摩根FJ33 9,356</div></div>
 </div>
 
-<div class="c"><div class="ct">📈 本週資產趨勢</div><div class="tr"><div class="ba" style="height:5%"><div class="lb">07-19</div></div><div class="ba" style="height:5%"><div class="lb">07-20</div></div></div><div style="font-size:10px;color:#6b7280;text-align:center;margin-top:10px">50,689,930 ~ 50,689,930</div></div>
+<!-- 投資部位趨勢 -->
+<div class="c"><div class="ct">📈 投資部位趨勢（不含不動產）</div>
+<div class="section-desc">扣除不動產 34M 的<span class="highlight">投資部位</span>更真實反映市場與配置變動</div>
+<div class="chart"><div class="bar" style="height:90%"><div class="lb">07-19</div></div><div class="bar bar-today" style="height:10%"><div class="lb">07-20</div></div></div>
+<div style="font-size:10px;color:#6b7280;text-align:center;margin-top:10px">19,148,763 ~ 22,562,408 TWD</div></div>
 
-<div class="c"><div class="ct">📋 資產變化</div><table><tr><th>類別</th><th class="n">上週</th><th class="n">本週</th><th class="n">增減</th><th class="n">增幅</th></tr><tr><td>📈 證券</td><td class="n">2,205,230</td><td class="n">2,260,230</td><td class="n g">▲ 55,000</td><td class="n g">+2.5%</td></tr><tr><td>📋 保單</td><td class="n">9,876,282</td><td class="n">9,653,969</td><td class="n r">▼ 222,313</td><td class="n r">-2.3%</td></tr><tr><td>💰 基金</td><td class="n">783,700</td><td class="n">1,219,477</td><td class="n g">▲ 435,777</td><td class="n g">+55.6%</td></tr><tr><td>💵 現金</td><td class="n">3,884,620</td><td class="n">3,917,620</td><td class="n g">▲ 33,000</td><td class="n g">+0.8%</td></tr><tr><td>🏦 債券</td><td class="n">5,812,576</td><td class="n">2,097,467</td><td class="n r">▼ 3,715,109</td><td class="n r">-63.9%</td></tr><tr><td>📊 總資產</td><td class="n">50,689,930</td><td class="n">50,689,930</td><td class="n ">— 0</td><td class="n ">+0.0%</td></tr></table></div><div class="c"><div class="ct">🚨 異常</div><div class="ar">💰 基金 週變動 +55.6%（783,700→1,219,477）</div><div class="ar">🏦 債券 週變動 -63.9%（5,812,576→2,097,467）</div></div><div class="c"><div class="ct">⚙️ 決策變動</div><div class="ci">2026-07-20 日報推送核准（底部按鈕測試）</div></div><div class="c"><div class="ct">🧓 巴菲特週審</div><div class="b">
-<h3>📊 資產概況</h3><ul>
-<li>總資產 50,689,930 → 上漲 0</li>
-<li>淨值 32,492,508（負債 18,197,422）</li>
+<!-- 7 日變化表 -->
+<div class="c"><div class="ct">📋 七日資產變化對照</div>
+<table><tr><th>類別</th><th class="n">7天前</th><th class="n">今日</th><th class="n">增減</th><th class="n">變幅</th></tr><tr><td>📈 證券</td><td class="n">2,205,230</td><td class="n">2,260,230</td><td class="n g">▲ 55,000</td><td class="n g">+2.5%</td></tr><tr><td>📋 保單</td><td class="n">9,876,282</td><td class="n">9,653,969</td><td class="n r">▼ 222,313</td><td class="n r">-2.3%</td></tr><tr><td>💰 基金</td><td class="n">783,700</td><td class="n">1,219,477</td><td class="n g">▲ 435,777</td><td class="n g">+55.6%</td></tr><tr><td>💵 現金</td><td class="n">3,884,620</td><td class="n">3,917,620</td><td class="n g">▲ 33,000</td><td class="n g">+0.8%</td></tr><tr><td>🏦 債券</td><td class="n">5,812,576</td><td class="n">2,097,467</td><td class="n r">▼ 3,715,109</td><td class="n r">-63.9%</td></tr><tr><td>📊 總資產</td><td class="n">50,689,930</td><td class="n">50,689,930</td><td class="n ">— 0</td><td class="n ">+0.0%</td></tr></table></div><div class="c"><div class="ct">🚨 顯著變動</div><div class="ay">💰 基金 變動 +55.6%（783,700→1,219,477）<div class="note">ℹ️ 本次包含鉅亨基金平台完整匯入，非純損益</div></div><div class="ar">🏦 債券 變動 -63.9%（5,812,576→2,097,467）<div class="note">⚠️ 此變化係穿透校準調整（5.8M→2.1M），非真實損益</div></div></div><div class="c"><div class="ct">📌 本週配息紀錄</div>
+<table><tr><th>來源</th><th>金額</th><th>入帳日</th><th>狀態</th></tr>
+<tr><td>安聯 A+B 月配</td><td class="n g">55,451</td><td>7/09-10</td><td>✅</td></tr>
+<tr><td>第一金 FL65</td><td class="n g">13,593</td><td>7/08</td><td>✅</td></tr>
+<tr><td>摩根 FJ33</td><td class="n g">9,356</td><td>7/20</td><td>✅</td></tr>
+<tr><td>基金配息（00919等）</td><td class="n g">~11,000</td><td>7/14-15</td><td>✅</td></tr>
+<tr><td colspan="2" style="font-weight:600">本月合計</td><td class="n" style="font-weight:600">69,044</td><td></td></tr>
+</table></div><div class="c"><div class="ct">🧓 巴菲特七日審查</div><div class="buffett">
+<h3>📊 資產變動</h3>
+<ul>
+<li>總資產 50,689,930（+0.0%）</li>
+<li>投資部位（扣不動產）19,148,763（-15.1%）</li>
+<li>主要動因：保單穿透校正 + 基金補入鉅亨平台</li>
 </ul>
-<h3>💡 安全邊際</h3><ul>
-<li>現金 3,917,620 → 可支應 27 個月</li>
+<h3>💡 安全邊際</h3>
+<ul>
+<li>現金 3,917,620 → 可支應 <strong>27</strong> 個月</li>
 <li>保單 9,653,969 / 證券 2,260,230</li>
+<li>負債比 36%</li>
 </ul>
-<h3>🎯 策略</h3><ul>
-<li>🟢 資產穩定</li>
-<li>🟢 現金充裕 >851,748</li>
-<li>📌 機會子彈：現金 27 個月</li>
+<h3>🎯 策略</h3>
+<ul>
+<li>🔴 資產微幅下跌，但屬系統校正非實損</li>
+<li>🟢 現金充裕（>851,748），安全邊際穩固</li>
+<li>📌 機會子彈：現金可支應 27 個月</li>
+<li>📌 本週配息 69,044 正常入帳</li>
 </ul></div></div>
 
-<div style="text-align:center;font-size:10px;color:#374151;padding:12px 0">龍九週報 · 2026-07-21 · SSoT: dragon_assets.db</div>
+<div style="text-align:center;font-size:10px;color:#374151;padding:12px 0">龍九週報 · 2026-07-14 ~ 2026-07-21 · SSoT: dragon_assets.db</div>
 </body></html>
