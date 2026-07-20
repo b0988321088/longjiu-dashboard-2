@@ -89,6 +89,32 @@ inv_v = [(r["securities"] or 0) + (r["insurance"] or 0) + (r["funds"] or 0) + (r
 inv_mx, inv_mn = max(inv_v) if inv_v else 1, min(inv_v) if inv_v else 0
 inv_rg = inv_mx - inv_mn if inv_mx != inv_mn else 1
 
+# 各類別7日趨勢資料
+CAT_KEYS = ["securities", "insurance", "funds", "cash_total", "bonds"]
+CAT_NAMES = ["證券市值", "保單現值", "基金市值", "現金", "債券"]
+CAT_EMOJI = ["📈", "📋", "💰", "💵", "🏦"]
+cat_trends = {}
+for ck in CAT_KEYS:
+    vals = [(r[ck] or 0) for r in rows]
+    cat_trends[ck] = vals
+
+def mini_chart(vals, label, color, width_px=280):
+    mn_v = min(vals) if vals else 0
+    mx_v = max(vals) if vals else 1
+    rg_v = mx_v - mn_v if mx_v != mn_v else 1
+    bars = []
+    for i, v in enumerate(vals):
+        h = int((v - mn_v) / rg_v * 30 + 3)
+        is_last = (i == len(vals) - 1)
+        l = td[i] if i % 2 == 0 else ""
+        cls = "bar-today" if is_last else ""
+        bars.append(f'<div class="bar {cls}" style="height:{h}px;flex:1;"><div class="lb" style="bottom:-9px">{l}</div></div>')
+    return f"""<div style="margin-bottom:10px;padding:8px;background:#1a1f2e;border-radius:8px">
+<div style="font-size:10px;color:#9ca3af;margin-bottom:3px">{label}</div>
+<div style="display:flex;align-items:flex-end;gap:2px;height:40px">{"".join(bars)}</div>
+<div style="font-size:8px;color:#6b7280;display:flex;justify-content:space-between;margin-top:2px">
+<span>{fm(mn_v)}</span><span>{fm(mx_v)}</span></div></div>"""
+
 def fm(v): return f"{v:,.0f}" if isinstance(v,(int,float)) else "-"
 def fp(v): return f"{v:+.1f}%" if isinstance(v,(int,float)) else "-"
 
@@ -148,6 +174,16 @@ for i, (v, d) in enumerate(zip(inv_v, td)):
     html += f'<div class="bar{cls}" style="height:{pct}%"><div class="lb">{d}</div></div>'
 html += f"""</div>
 <div style="font-size:10px;color:#6b7280;text-align:center;margin-top:10px">{fm(inv_mn)} ~ {fm(inv_mx)} TWD</div></div>
+<!-- 各類別迷你趨勢 -->
+<div class="c"><div class="ct">📊 各類別七日走勢</div>
+"""
+html += mini_chart(cat_trends["securities"], "📈 證券市值", "#60a5fa")
+html += mini_chart(cat_trends["insurance"], "📋 保單現值", "#f59e0b")
+html += mini_chart(cat_trends["funds"], "💰 基金市值", "#14b8a6")
+html += mini_chart(cat_trends["cash_total"], "💵 現金", "#10b981")
+html += mini_chart(cat_trends["bonds"], "🏦 債券", "#8b5cf6")
+html += """</div>
+
 
 <!-- 7 日變化表 -->
 <div class="c"><div class="ct">📋 七日資產變化對照</div>
