@@ -174,7 +174,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
     # 從 full_monitor.py 動態取得 relay 時序描述
     relay_table = f"""<div class="table-wrap">
-      <table>
+      <table class="mobile-bordered">
         <thead>
           <tr><th>站別</th><th>流向</th><th>基準日</th><th>預估入帳</th><th>狀態</th></tr>
         </thead>
@@ -253,6 +253,29 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   .callout-bear {{ background:#fff5f5; border-color:#ef4444; }}
   .callout-warn {{ background:#fffbeb; border-color:#f59e0b; }}
   .callout-info {{ background:#eff6ff; border-color:#3b82f6; }}
+
+  /* Mobile table style: bordered with background fill */
+  @media (max-width: 640px) {{
+    body {{ font-size: 15px; padding: 10px; }}
+    table {{ font-size: 14px; }}
+    th, td {{ padding: 8px 10px !important; }}
+  }}
+  table.mobile-bordered {{
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    overflow: hidden;
+  }}
+  table.mobile-bordered th {{
+    background: #f2f2f7 !important;
+    border: 1px solid #e5e5ea;
+    color: #1d1d1f;
+  }}
+  table.mobile-bordered td {{
+    background: #ffffff !important;
+    border: 1px solid #f2f2f7;
+  }}
+  table.mobile-bordered tr:nth-child(even) td {{ background: #f9fafb !important; }}
+  table.mobile-bordered .num {{ background: transparent !important; }}
 </style>
 </head>
 <body>
@@ -263,7 +286,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <h1>1/5｜財富生命線 Wealth Baseline</h1>
     <div class="label">資產負債快照</div>
     <div class="table-wrap">
-      <table>
+      <table class="mobile-bordered">
         <thead>
           <tr><th>項目</th><th>內容</th><th>影響</th></tr>
         </thead>
@@ -284,7 +307,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <h2>2/5｜資產結構 Asset Penetration</h2>
     <div class="label">最新（不動產單獨列示）</div>
     <div class="table-wrap">
-      <table>
+      <table class="mobile-bordered">
         <thead><tr><th>項目</th><th class="num">金額 TWD</th><th class="num">占比</th></tr></thead>
         <tbody>
           <tr><td>證券市值</td><td class="num">{tv.get("securities_total", 2_158_900):,}</td><td class="num">4.2%</td></tr>
@@ -333,7 +356,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <h3>保單成分穿透</h3>
     <h3>安聯 A+B 合併帳戶（成本 8,000,000 / 現值 {allianz:,}）</h3>
     <div class="table-wrap">
-      <table>
+      <table class="mobile-bordered">
         <thead>
           <tr><th>指標</th><th class="num">數值 TWD</th><th>備註</th></tr>
         </thead>
@@ -346,7 +369,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
     <h3>第一金保單（成本 2,000,000 / 現值 {firstjin:,}）</h3>
     <div class="table-wrap">
-      <table>
+      <table class="mobile-bordered">
         <thead>
           <tr><th>指標</th><th class="num">數值 TWD</th><th>備註</th></tr>
         </thead>
@@ -365,7 +388,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
     <h3>信用卡四大主力（列管帳戶）</h3>
     <div class="table-wrap">
-      <table>
+      <table class="mobile-bordered">
         <thead>
           <tr><th>銀行</th><th>卡片</th><th>繳款日</th><th class="num">近期應付 TWD</th><th>狀態</th></tr>
         </thead>
@@ -380,7 +403,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
     <h3>房貸帳戶（列管帳戶）</h3>
     <div class="table-wrap">
-      <table>
+      <table class="mobile-bordered">
         <thead>
           <tr><th>銀行</th><th>貸款名稱</th><th>扣款日</th><th class="num">金額 TWD</th><th>狀態</th></tr>
         </thead>
@@ -420,7 +443,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
     <h3>本週行程 + 繳款 / 配息排程</h3>
     <div class="table-wrap">
-      <table>
+      <table class="mobile-bordered">
         <thead>
           <tr><th>日期</th><th>項目</th><th class="num">金額 TWD</th><th>狀態</th></tr>
         </thead>
@@ -458,7 +481,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       台股/費半/美股/台積電/TWII 透過 web_search + Yahoo Finance/GoodInfo 擷取；美國 CPI 透過 web_search 確認。
     </div>
     <div class="table-wrap">
-      <table>
+      <table class="mobile-bordered">
         <thead>
           <tr><th>項目</th><th>最新狀態</th><th>影響預估</th></tr>
         </thead>
