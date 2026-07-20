@@ -35,13 +35,13 @@ if hermes_env.exists():
         pass
 
 NOTION_TOKEN = os.getenv("NOTION_TOKEN", "")
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", os.getenv("TG_TOKEN", ""))
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "") or os.getenv("TELEGRAM_ALLOWED_USERS", "")
 
 BASE = "https://api.notion.com/v1"
 NOTION_HEADERS = {
     "Authorization": f"Bearer {NOTION_TOKEN}",
-    "Notion-Version": "2022-06-28",
+    "Notion-Version": "2025-09-03",
     "Content-Type": "application/json",
 }
 MASTER_DB = "39dfc735-d433-8153-9712-c8a0ee0ec846"
@@ -100,6 +100,65 @@ def _pct(v, base):
 
 # ---------- snapshot parsing ----------
 def extract_snapshot(snap: dict) -> dict:
+    """從 dragon_assets.db 讀取（fallback 到 snapshot.json）"""
+    # 優先從 db 讀取
+    import sqlite3
+    _db_path = Path(__file__).resolve().parent / "dragon_assets.db"
+    if _db_path.exists():
+        try:
+            _db = sqlite3.connect(str(_db_path))
+            _db.row_factory = sqlite3.Row
+            _today = date.today().isoformat()
+            _ar = _db.execute("SELECT * FROM assets WHERE date = ?", (_today,)).fetchone()
+            _ir = _db.execute("SELECT * FROM income WHERE date = ?", (_today,)).fetchone()
+            if _ar:
+                # 轉為 dict 以支援 .get()
+                _ar = dict(_ar)
+                _ir = dict(_ir) if _ir else {}
+                _total_assets = sum(_ar[k] for k in ["securities","insurance","funds","bonds","cash_total","real_estate"] if k in _ar)
+                _total_liab = 18_197_422
+                # 從 db 拿負債
+                _lr = _db.execute("SELECT * FROM liabilities WHERE date = ?", (_today,)).fetchone()
+                if _lr:
+                    _lr = dict(_lr)
+                    _total_liab = sum(_lr.get(k, 0) for k in ["mortgage_yy","mortgage_yydu","mortgage_xz","policy_loan","pledge_loan","credit_card"])
+                    # 直接用 total_liabilities 欄位（如果有的話）
+                    if _lr.get("total_liabilities", 0):
+                        _total_liab = _lr["total_liabilities"]
+                
+                _db.close()
+                return {
+                    "date": _today,
+                    "total_assets": float(_total_assets),
+                    "total_liabilities": float(_total_liab),
+                    "net_worth": float(_total_assets - _total_liab),
+                    "securities_market": float(_ar.get("securities", 0)),
+                    "insurance_current": float(_ar.get("insurance", 0)),
+                    "insurance_total": float(_ar.get("insurance", 0)),
+                    "fund_market": float(_ar.get("funds", 0)),
+                    "fund_breakdown_display": {},
+                    "real_estate": float(_ar.get("real_estate", 34_000_000)),
+                    "other": 0.0,
+                    "cash": float(_ar.get("cash_total", 0)),
+                    "bonds": float(_ar.get("bonds", 0)),
+                    "insurance_detail": {
+                        "安聯保單A+B 現值": float((9_787_973 - _ar.get("firstjin", 1_979_676))),
+                        "第一金保單 FL65 現值": float(_ar.get("firstjin", 1_979_676)),
+                        "保單總現値": float(_ar.get("insurance", 0)),
+                    },
+                    "fund_dividend_monthly": float(snap.get("fund_dividend_monthly", _ir.get("dividend_total", 69_044) if _ir else 69_044)),
+                    "fund_dividend_conservative": float(snap.get("passive_income", {}).get("fund_dividend_conservative", _ir.get("dividend_total", 69_044) if _ir else 69_044)),
+                    "monthly_income": float(snap.get("monthly_income", _ir.get("salary", 43_144) + _ir.get("travel_allowance", 12_000) if _ir else 218_102)),
+                    "monthly_expense": float(snap.get("monthly_expense", 141_958)),
+                    "rent_monthly": float(snap.get("rent_monthly_actual", 80_100)),
+                    "cathay_refinance": float(snap.get("cathay_refinance_amount") or 0),
+                    "runway_months": float(snap.get("runway_months", 12)),
+                }
+        except Exception as e:
+            print(f"[WARN] db read failed ({e}), fallback to snapshot")
+            _db.close()
+    
+    # fallback 到 snapshot.json（原有邏輯）
     total_assets = snap.get("total_assets", 0)
     total_liab = snap.get("total_liabilities", 22_000_000)
     net_worth = snap.get("net_worth", total_assets - total_liab)
@@ -167,14 +226,58 @@ def extract_snapshot(snap: dict) -> dict:
 
 # ---------- history ----------
 def load_history() -> dict:
-    return load_json(HISTORY_FILE)
+    """從 dragon_assets.db 讀取所有歷史資產記錄"""
+    history = {}
+    import sqlite3
+    _db_path = Path(__file__).resolve().parent / "dragon_assets.db"
+    if not _db_path.exists():
+        history = load_json(HISTORY_FILE)  # fallback
+        return history
+    try:
+        _db = sqlite3.connect(str(_db_path))
+        _db.row_factory = sqlite3.Row
+        for row in _db.execute("SELECT * FROM assets ORDER BY date"):
+            r = dict(row)
+            d = r.get("date", "")
+            if not d:
+                continue
+            history[d] = {
+                "date": d,
+                "total_assets": float(sum(r.get(k, 0) for k in ["securities","insurance","funds","bonds","cash_total","real_estate"])),
+                "total_liabilities": 18_197_422,  # fixed for now
+                "net_worth": 0.0,
+                "securities_market": float(r.get("securities", 0)),
+                "insurance_current": float(r.get("insurance", 0)),
+                "insurance_total": float(r.get("insurance", 0)),
+                "fund_market": float(r.get("funds", 0)),
+                "real_estate": float(r.get("real_estate", 34_000_000)),
+                "cash": float(r.get("cash_total", 0)),
+                "bonds": float(r.get("bonds", 0)),
+                "other": 0.0,
+                "insurance_detail": {},
+                "fund_dividend_monthly": 69_044.0,
+                "monthly_income": 218_102.0,
+                "monthly_expense": 141_958.0,
+                "rent_monthly": 80_100.0,
+                "cathay_refinance": 0.0,
+            }
+            nw = history[d]["total_assets"] - 18_197_422
+            history[d]["net_worth"] = float(nw)
+        _db.close()
+    except Exception as e:
+        print(f"[WARN] db history load failed ({e}), fallback to json")
+        history = load_json(HISTORY_FILE)
+    return history
 
 
 def append_today(snap: dict) -> dict:
+    """寫入今日資料到 JSON（僅為備份用途）"""
     history = load_history()
     ex = extract_snapshot(snap)
     today = ex["date"]
-
+    # 如果 db 已經有今天的資料就不覆寫
+    if today in history:
+        return history
     history[today] = {
         "date": today,
         "total_assets": ex["total_assets"],
@@ -235,38 +338,17 @@ def compute_changes(history: dict) -> list[dict]:
 
 
 # ---------- charts ----------
-def _svg_line(values, width=600, height=120, color="#2563eb", label=""):
-    if not values or len(values) < 2:
-        return ""
-    values = [float(v) for v in values]
-    min_v = min(values)
-    max_v = max(values)
-    span = max_v - min_v if max_v != min_v else 1
-    pad = 8
-    w = width - pad * 2
-    h = height - pad * 2
-    step = w / (len(values) - 1)
-    pts = []
-    for i, v in enumerate(values):
-        x = pad + i * step
-        y = pad + h - ((v - min_v) / span) * h
-        pts.append(f"{x:.1f},{y:.1f}")
-    points_str = " ".join(f"L {p}" for p in pts)
-    first = pts[0]
-    return (
-        f'<svg width="{width}" height="{height}" style="max-width:100%;height:auto;" viewBox="0 0 {width} {height}">'
-        f'<polyline points="{first} {points_str.replace("L ", "L")}" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
-        f'<circle cx="{first.split(",")[0]}" cy="{first.split(",")[1]}" r="3" fill="{color}"/>'
-        f'<circle cx="{pts[-1].split(",")[0]}" cy="{pts[-1].split(",")[1]}" r="3" fill="{color}"/>'
-        f'<text x="{first.split(",")[0]}" y="{height - 1}" font-size="9" fill="#6b7280" text-anchor="middle">{label}</text>'
-        f'</svg>'
-    )
-
-
 def build_trend_charts(history: dict) -> str:
+    import json as _cj
     dates = sorted(history.keys())
     rows = [history[d] for d in dates[-14:]]
-    charts = [
+    if len(rows) < 2:
+        return '<div class="card"><h2>📈 資產趨勢</h2><div class="text-sm">需至少 2 天資料才能產出趨勢圖</div></div>'
+
+    chart_id = "trend_chart"
+    labels_json = _cj.dumps([d[-5:] for d in dates[-14:]])
+    datasets = []
+    chart_configs = [
         ("證券市值", "securities_market", "#2563eb"),
         ("保單現値", "insurance_current", "#16a34a"),
         ("基金市值", "fund_market", "#7c3aed"),
@@ -274,52 +356,57 @@ def build_trend_charts(history: dict) -> str:
         ("總資產", "total_assets", "#0ea5e9"),
         ("總負債", "total_liabilities", "#dc2626"),
     ]
-    svgs = []
-    for label, key, color in charts:
+    for label, key, color in chart_configs:
         vals = [float(r.get(key, 0) or 0) for r in rows]
-        label_short = dates[0][5:] if len(dates) > 1 else ""
-        svg = _svg_line(vals, color=color, label=label_short)
-        block = f'<div style="flex:1;min-width:260px;"><div class="text-sm">{label}</div>'
-        svgs.append(block + (svg if svg else '<div class="text-sm">累計中</div>') + '</div>')
+        datasets.append(_cj.dumps({"label": label, "data": vals, "borderColor": color, "backgroundColor": color + "20", "fill": False, "tension": 0.2, "pointRadius": 3}))
 
-    # asset structure (latest)
+    datasets_json = "[" + ",".join(datasets) + "]"
+
     last = rows[-1]
-    stack = [
-        ("證券市值", last.get("securities_market", 0), "#2563eb"),
-        ("保單現値", last.get("insurance_current", 0), "#16a34a"),
-        ("基金市值", last.get("fund_market", 0), "#7c3aed"),
+    pie_items = [
+        ("證券", last.get("securities_market", 0), "#2563eb"),
+        ("保單", last.get("insurance_current", 0), "#16a34a"),
+        ("基金", last.get("fund_market", 0), "#7c3aed"),
         ("不動產", last.get("real_estate", 0), "#10b981"),
         ("現金", last.get("cash", 0), "#f59e0b"),
-        ("其他", last.get("other", 0), "#9ca3af"),
     ]
-    bars = []
-    for label, v, c in stack:
-        v = max(0, float(v or 0))
-        if v == 0:
-            continue
-        bars.append(
-            f'<div style="display:flex;align-items:center;margin:4px 0;">'
-            f'<div style="width:14px;height:14px;background:{c};border-radius:3px;margin-right:8px;"></div>'
-            f'<div style="flex:1;font-size:13px;color:#374151;">{label}</div>'
-            f'<div style="font-size:13px;font-weight:700;color:#111;margin-left:8px;width:70px;text-align:right;">{v/10000:.0f}萬</div>'
-            f'</div>'
-        )
-    stack_chart = '<div class="card"><h2>📊 資產結構（最新）</h2>' + "".join(bars) + '</div>'
+    pie_labels = _cj.dumps([k for k, v, _ in pie_items if v > 0])
+    pie_data = _cj.dumps([int(v) for _, v, _ in pie_items if v > 0])
+    pie_colors = _cj.dumps([c for _, v, c in pie_items if v > 0])
 
-    trend = (
+    return (
         '<div class="card"><h2>📈 資產趨勢（近 14 日）</h2>'
-        '<div style="display:flex;flex-wrap:wrap;gap:12px;">'
-        + "".join(svgs) +
-        '</div></div>'
-    )
-    return trend + stack_chart
-
-
-# ---------- buffett ----------
+        '<canvas id="' + chart_id + '" height="200" style="max-height:300px"></canvas></div>'
+        '<div class="card"><h2>📊 資產結構（最新）</h2>'
+        '<div style="display:flex;gap:16px;flex-wrap:wrap">'
+        '<div style="flex:1;min-width:180px"><canvas id="pie_chart" height="180"></canvas></div>'
+        '<div style="flex:1;min-width:160px" id="pie_legend"></div></div></div>'
+        '<script>'
+        'var ctx=document.getElementById("' + chart_id + '").getContext("2d");'
+        'new Chart(ctx,{type:"line",'
+        'data:{labels:' + labels_json + ',datasets:' + datasets_json + '},'
+        'options:{responsive:true,maintainAspectRatio:false,'
+        'plugins:{legend:{position:"bottom",labels:{boxWidth:12,font:{size:11}}}},'
+        'scales:{y:{beginAtZero:false,ticks:{callback:function(v){return(v/10000).toFixed(0)+"萬";}}}}}});'
+        'var pctx=document.getElementById("pie_chart").getContext("2d");'
+        'var pieChart=new Chart(pctx,{type:"doughnut",'
+        'data:{labels:' + pie_labels + ',datasets:[{data:' + pie_data + ',backgroundColor:' + pie_colors + '}]},'
+        'options:{responsive:true,plugins:{legend:{display:false}}}});'
+        'var legendHtml=pieChart.data.labels.map(function(l,i){'
+        'var v=pieChart.data.datasets[0].data[i];'
+        'return"<div style=\"display:flex;align-items:center;margin:4px 0;font-size:13px\">"+'
+        '"<span style=\"width:12px;height:12px;background:"+pieChart.data.datasets[0].backgroundColor[i]+";border-radius:3px;margin-right:8px;display:inline-block\"></span>"+'
+        '"<span style=\"flex:1\">"+l+"</span>"+'
+        '"<span style=\"font-weight:700;margin-left:8px\">"+(v/10000).toFixed(0)+"萤</span></div>"}).join("");'
+        'document.getElementById("pie_legend").innerHTML=legendHtml;'
+        '</script>'
+    )# ---------- buffett ----------
 def buffett_advice(history: dict, snap: dict) -> str:
     rows = compute_changes(history)
     ex = extract_snapshot(snap)
-    ta = ex["total_assets"] or 1
+    # 確保不動產正確
+    ex["real_estate"] = 34_000_000
+    ta = ex["total_assets"] or (34_000_000 + ex["securities_market"] + ex["insurance_current"] + ex["fund_market"] + ex["cash"] + ex.get("bonds",0))
     debt_ratio = ex["total_liabilities"] / ta * 100
     monthly_div = ex["fund_dividend_monthly"]
     monthly_div_conservative = ex.get("fund_dividend_conservative", monthly_div)
@@ -328,12 +415,13 @@ def buffett_advice(history: dict, snap: dict) -> str:
     passive_total = monthly_div_conservative + monthly_rent
     passive_coverage = passive_total / monthly_exp * 100 if monthly_exp else 0
 
-    alloc_den = max(1, ta - ex.get('real_estate', 0))
+    alloc_den = max(1, ta)
     alloc = (
         f"證券 {ex['securities_market']/alloc_den*100:.1f}% / "
         f"保單 {ex['insurance_current']/alloc_den*100:.1f}% / "
         f"基金 {ex['fund_market']/alloc_den*100:.1f}% / "
-        f"現金 {ex['cash']/alloc_den*100:.1f}%"
+        f"現金 {ex['cash']/alloc_den*100:.1f}% / "
+        f"不動產 {ex['real_estate']/alloc_den*100:.1f}%"
     )
     real_estate_line = f"不動產 {ex.get('real_estate',0)/10000:.0f} 萬（單獨列出）"
 
@@ -393,6 +481,30 @@ def buffett_advice(history: dict, snap: dict) -> str:
 
 
 # ---------- HTML ----------
+def _load_gemini_block() -> str:
+    """載入 Gemini 風控報告"""
+    import json as _gj
+    _gp = Path(__file__).resolve().parent / f"gemini_report_{date.today().isoformat()}.json"
+    if not _gp.exists():
+        return ""
+    try:
+        _gd = _gj.loads(_gp.read_text(encoding="utf-8"))
+        _is = _gd.get("issues", [])
+        if not _is:
+            return ""
+        _sc = _gd.get("score", "?")
+        _su = _gd.get("summary", "")
+        _bl = "".join(f'<li>{"🔴" if i.get("risk_level")=="high" else "🟡"}{i.get("point","")}：{i.get("description","")}（{i.get("risk_level","?")}）</li>' for i in _is if i.get("point"))
+        return (
+            '<div class="card"><h2>🧠 Gemini 風控意見</h2>'
+            f'<div class="label">score: {_sc}/10 | {_su}</div>'
+            f'<ul style="list-style:none;padding:0;">{_bl}</ul>'
+            '<p class="text-sm">資料來源：Gemini 2.5 Flash 自動審查</p></div>'
+        )
+    except Exception:
+        return ""
+
+
 def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     today = rows[-1]["date"] if rows else date.today().isoformat()
     ex = extract_snapshot(snap)
@@ -506,8 +618,11 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     )
     alloc_card = f'<div class="card"><h2>📈 資產結構（最新）</h2>{alloc_bars}</div>'
 
+    # Gemini 風控嵌入
+    _gemini_block = _load_gemini_block()
+
     body = "\n".join([
-        f'<div class="card"><h1>📈 資產變化對照 {today}</h1><div class="text-sm">資產監控 / 趨勢 / 巴菲特分析</div></div>',
+        f'<div class="card"><h1>📈 資產變化對照 {today}</h1><div class="text-sm">資產監控 / 趨勢 / 巴菲特分析 / Gemini 風控</div></div>',
         f'<div class="card"><h2>📋 資產變化明細（近 7 日）</h2><div class="table-wrap"><table><thead>{table_header}</thead><tbody>',
         "".join(changes_rows),
         "</tbody></table></div></div>",
@@ -517,6 +632,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         cash_card,
 f'<div class="card"><h2>🚨 監控警示</h2><div class="text-sm">{alert_header}</div><ul style="list-style:none;padding:0;">{alerts_html}</ul></div>',
         f'<div class="card"><h2>🧠 在家巴菲特</h2><pre style="font-size:15px;line-height:1.8;white-space:pre-wrap;">{buffett_md}</pre></div>',
+        _gemini_block,
         '</div></body></html>',
     ])
 
@@ -536,6 +652,7 @@ f'<div class="card"><h2>🚨 監控警示</h2><div class="text-sm">{alert_header
         "<!DOCTYPE html><html lang=\"zh-TW\"><head><meta charset=\"UTF-8\">"
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
         f"<title>asset_diff_{today}</title>"
+        "<script src=\"https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js\"></script>"
         f"<style>{style}</style></head><body><div class=\"page\">"
         + body
     )
@@ -682,24 +799,14 @@ def main() -> int:
     try:
         import subprocess
         if OUT_HTML.exists():
-            subprocess.run([
-                sys.executable,
-                str(Path(__file__).resolve().parent / "scripts" / "telegram_send_document.py"),
-                str(OUT_HTML.resolve()),
-                f"📈 資產變化對照 {today_r} 網頁版",
-                TELEGRAM_BOT_TOKEN,
-                TELEGRAM_CHAT_ID,
-            ], check=False)
-        docx_path = OUT_HTML.with_suffix('.docx')
-        if docx_path.exists():
-            subprocess.run([
-                sys.executable,
-                str(Path(__file__).resolve().parent / "scripts" / "telegram_send_document.py"),
-                str(docx_path.resolve()),
-                f"📈 資產變化對照 {today_r} Word 版",
-                TELEGRAM_BOT_TOKEN,
-                TELEGRAM_CHAT_ID,
-            ], check=False)
+            # 用 requests 直接發送文件（不依賴 scripts/telegram_send_document.py）
+            _url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendDocument"
+            with open(str(OUT_HTML.resolve()), "rb") as _f:
+                _r = requests.post(_url, data={"chat_id": TELEGRAM_CHAT_ID, "caption": f"📈 資產變化對照 {today_r} 網頁版"}, files={"document": _f}, timeout=30)
+                if _r.status_code == 200:
+                    print("[telegram] document 200")
+    except Exception as e:
+        print(f"⚠️ 附件傳送失敗：{e}")
     except Exception as e:
         print(f"⚠️ 附件傳送失敗：{e}")
 
