@@ -433,8 +433,10 @@ def buffett_advice(history: dict, snap: dict) -> str:
     monthly_div = ex["fund_dividend_monthly"]
     monthly_div_conservative = ex.get("fund_dividend_conservative", monthly_div)
     monthly_rent = ex["rent_monthly"]
+    monthly_rent_received = 57_000  # 已實收：大義街1樓24,000+洲際W33,000
+    monthly_rent_pending = 23_100   # 未收：大義街23樓21,000+管理費2,100
     monthly_exp = ex["monthly_expense"]
-    passive_total = monthly_div_conservative + monthly_rent
+    passive_total = monthly_div_conservative + monthly_rent_received
     passive_coverage = passive_total / monthly_exp * 100 if monthly_exp else 0
 
     alloc_den = max(1, ta)
@@ -446,7 +448,7 @@ def buffett_advice(history: dict, snap: dict) -> str:
         f"不動產 {ex['real_estate']/alloc_den*100:.1f}%"
     )
     real_estate_line = f"不動產 {ex.get('real_estate',0)/10000:.0f} 萬（單獨列出）"
-    rent_line = f"房租月收 {_fmt(monthly_rent)}（大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100）"
+    rent_line = f"房租月收 {_fmt(monthly_rent_received)} / 目標 {_fmt(monthly_rent)}（已收：大義街1樓24,000+洲際W33,000；未收：大義街23樓21,000+管理費2,100 月底收齊）"
 
     lines = [
         "🧠 在家巴菲特",
