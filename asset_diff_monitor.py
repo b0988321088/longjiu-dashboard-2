@@ -624,13 +624,35 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         + "</tbody></table></div></div>"
     )
 
-    # Cash detail card
+    # Cash detail card — 從 MB CSV 讀取銀行明細（動態）
+    _cash_rows = ""
+    try:
+        import csv
+        from collections import defaultdict as _dd
+        _cp = sorted(Path("Moneybook").glob("Moneybook_帳戶_*_1.csv"))[-1]
+        _grps = _dd(list)
+        with open(str(_cp), encoding="utf-8-sig") as _f:
+            for _r in csv.DictReader(_f):
+                _n = _r.get("帳戶名稱","").strip()
+                _b = _r.get("金融機構/手動新增","").strip()
+                _v = _r.get("帳戶金額","0").strip().replace(",","")
+                if _n and _v and float(_v) >= 5000:
+                    _grps[_b].append((float(_v), _n))
+        for _g in ["台新銀行","玉山銀行","永豐銀行","將來銀行","國泰世華","第一銀行","台北富邦","星展銀行"]:
+            if _g in _grps:
+                _its = sorted(_grps[_g], key=lambda x: -x[0])
+                _gt = sum(fv for fv,_ in _its)
+                for fv, n in _its:
+                    _cash_rows += f"<tr><td style='padding-left:20px'>{n}</td><td class='num'>{fv:,.0f}</td></tr>"
+                _cash_rows += f"<tr style='border-top:1px dashed #888'><td><strong>{_g}</strong></td><td class='num'><strong>{_gt:,.0f}</strong></td></tr>"
+    except:
+        _cash_rows = "<tr><td colspan='2'>讀取失敗</td></tr>"
     cash_card = (
         '<div class="card"><h2>💵 現金部位</h2>'
         '<div class="table-wrap"><table><thead><tr><th>項目</th><th class=\'num\'>金額</th></tr></thead><tbody>'
-        f"<tr><td>real_liquid_assets（總流動資產）</td><td class='num'>{_fmt(ex['cash'])}</td></tr>"
+        f"{_cash_rows}"
+        f"<tr style='font-weight:600;border-top:2px solid #3b82f6'><td>合計</td><td class='num'>{_fmt(ex['cash'])}</td></tr>"
         "</tbody></table></div>"
-        '<div class="text-sm" style="margin-top:8px;color:#6e6e73">包含：高利活存 2,200,410 + Moneybook 活期 3,071,343｜合併後唯一真值</div>'
         "</div>"
     )
 
@@ -643,7 +665,8 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         _holdings = []
     _sec_rows = ""
     _names = {'0050':'台灣50','0056':'高股息','006208':'富邦50','00646':'元大S&P500','00713':'高息低波','00878':'國泰永續高股息','00888':'中信永續','00918':'大華優利高填息','00919':'群益台灣精選高息','009816':'凱基台灣TOP 50','00981A':'00981A','009823':'009823','009824':'009824','00984A':'00984A'}
-    _prices = {'0050':120,'0056':40,'006208':60,'00646':35,'00713':55,'00878':30,'00888':25,'00918':42,'00919':45,'009816':24,'00981A':28,'009823':27,'009824':26,'00984A':25}
+    _prices = {'0050':102.50,'0056':40.20,'006208':58.30,'00646':50.80,'00713':55.60,'00878':32.05,'00888':24.50,'00918':19.80,'00919':23.60,'009816':24.00,'00981A':15.80,'009823':14.90,'009824':14.80,'00984A':14.60}
+    # 部分價格來自 Yahoo Finance 2026/07/21 收盤
     _total_sec = float(ex.get("securities_market", 0) or 0)
     _list = []
     for _t, _s, _b in _holdings:
