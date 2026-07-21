@@ -177,6 +177,16 @@ def main():
     
     # 4. 產生報告
     buffett = generate_buffett_report(pen)
+    
+    # 補入市場情報摘要
+    try:
+        import sqlite3
+        _db = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        _r = _db.execute("SELECT buy_count, sell_count, hunter_count, tw_index, tw_change, sox, summary FROM market_intel WHERE date=? ORDER BY timestamp DESC LIMIT 1", (TODAY,)).fetchone()
+        _db.close()
+        if _r:
+            buffett.insert(1, f"📊 市場：加權 {_r[3]:,.0f} ({_r[4]:+.2f}%) | SOX {_r[5]:,.0f} | Hunter {_r[2]}筆 (買{_r[0]}/賣{_r[1]})")
+    except: pass
     cto = generate_cto_report(pen)
     
     report = "\n".join(buffett) + "\n\n" + "\n".join(cto)

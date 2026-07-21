@@ -75,7 +75,7 @@
   "credit_card_pending": 34213,
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
-  "securities_total": 2205230,
+  "securities_total": 2375390,
   "funds_total": 765991,
   "insurance_total": 9633273,
   "last_calibration_sources": {
@@ -600,5 +600,11 @@
   "allianz_cost": 8000000,
   "firstjin_cum_dividend": 73341,
   "allianz_cum_dividend": 1630962,
-  "firstjin_cost": 2000000
+  "firstjin_cost": 2000000,
+  "securities_market_value": 2375390,
+  "securities_unrealized_pnl": 285220,
+  "monthly_salary": 43144,
+  "travel_allowance": 12000,
+  "second_salary": 39121,
+  "bonus_july": 39121
 }

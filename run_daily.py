@@ -544,6 +544,23 @@ def _build_market_rows(signals: dict, tv: dict) -> str:
 
 def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
     """以 daily_analysis.json + hunter intel 注入 market + Buffett + CTO 區塊。"""
+    # 先從 market_intel 表補入 hunter 情報
+    try:
+        import sqlite3
+        _db = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        _r = _db.execute("SELECT buy_count,sell_count,summary,signals FROM market_intel WHERE date=? ORDER BY timestamp DESC LIMIT 1", (TODAY,)).fetchone()
+        _db.close()
+        if _r and _r[0] is not None and (_r[0] > 0 or _r[1] > 0):
+            _mr = [f"<tr><td>Hunter 情報訊號</td><td>買{_r[0]}/賣{_r[1]}筆</td><td>{(_r[2] or '')[:60]}</td></tr>"]
+            try:
+                _j = json.loads(_r[3]) if _r[3] else {}
+                for _s in (_j.get("buy",[])or[])[:2]:
+                    _mr.append(f"<tr><td>購 買進訊號</td><td colspan='2'>{_s[:60]}</td></tr>")
+                for _s in (_j.get("sell",[])or[])[:2]:
+                    _mr.append(f"<tr><td>網 賣出訊號</td><td colspan='2'>{_s[:60]}</td></tr>")
+            except: pass
+            html = html.replace("__MARKET_ROWS__", chr(10).join("          "+r for r in _mr))
+    except: pass
     analysis = load_daily_analysis()
     if not analysis:
         return html
@@ -662,6 +679,12 @@ def main():
 
     # 情報：refresh today's hunter intel
     intel_result = mi_mod.ensure_today_intel(force_refresh=True)
+    # 彙整所有情報源到 market_intel 表
+    try:
+        from compile_intel import compile_intel
+        compile_intel(force_refresh=True)
+    except Exception:
+        pass
     print(f"[INTEL] {intel_result.get('file') or intel_result}")
     # Load unified market briefing from daily_intel_report_{date}.json
     unified_path = BASE / f"daily_intel_report_{TODAY.replace('-','')}.json"
