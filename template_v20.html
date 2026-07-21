@@ -5,22 +5,22 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>龍九家族辦公室 戰略日報</title>
 <style>
-:root{--bg-main:#0B0F17;--card-bg:#131A26;--card-border:#1E293B;--text-primary:#FFF;--text-body:#CBD5E1;--text-muted:#64748B;--accent-gold:#F59E0B;--accent-blue:#38BDF8;--danger-red:#EF4444;--success-green:#10B981;--font-main:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC","Noto Sans TC",sans-serif;--font-mono:"JetBrains Mono","Fira Code",monospace}
+:root{--bg-main:#05070A;--card-bg:#0D1117;--card-border:#1F2937;--text-primary:#FFF;--text-body:#A0AEC0;--text-muted:#64748B;--accent-gold:#FBBF24;--accent-blue:#60A5FA;--danger-red:#F87171;--success-green:#34D399;--font-main:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC","Noto Sans TC",sans-serif;--font-mono:"JetBrains Mono","Fira Code",monospace}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg-main);color:var(--text-body);font-family:var(--font-main);line-height:1.6;padding:16px 12px;max-width:480px;margin:0 auto;-webkit-font-smoothing:antialiased}
-.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:-0.3px}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:-0.3px;color:var(--accent-blue)!important;font-weight:600!important}
 .app-header{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;margin-bottom:16px;border-bottom:1px solid var(--card-border)}
 .app-title{font-size:15px;font-weight:700;color:var(--text-primary)}
 .badge-live{background:rgba(16,185,129,0.12);color:var(--success-green);font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;border:1px solid rgba(16,185,129,0.25)}
-.hero-card{background:linear-gradient(180deg,#162032,#111723);border:1px solid #2B394E;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 10px 25px rgba(0,0,0,0.4);position:relative}
+.hero-card{background:linear-gradient(180deg,#111827,#080C14);border:1px solid #374151;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 10px 25px rgba(0,0,0,0.4);position:relative}
 .hero-card::before{content:"";position:absolute;top:0;left:20px;right:20px;height:2px;background:linear-gradient(90deg,var(--accent-blue),var(--success-green))}
 .hero-label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
-.hero-val-main{font-size:32px;font-weight:800;color:var(--text-primary);line-height:1.2;margin-bottom:16px}
+.hero-val-main{font-size:32px;font-weight:800;color:#FFF;line-height:1.2;margin-bottom:16px;text-shadow:0 0 20px rgba(255,255,255,0.1)}
 .hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)}
 .hero-sub-item{display:flex;flex-direction:column}
 .hero-sub-label{font-size:11px;color:var(--text-muted)}
 .hero-sub-val{font-size:14px;font-weight:700;color:var(--accent-blue)}
-.alert-card{background:rgba(239,68,68,0.06);border-left:4px solid var(--danger-red);border-radius:4px 12px 12px 4px;padding:14px 16px;margin-bottom:24px}
+.alert-card{background:#140A0C;border-left:4px solid var(--danger-red);border-top:1px solid #2A1215;border-right:1px solid #2A1215;border-bottom:1px solid #2A1215;border-radius:4px 12px 12px 4px;padding:14px 16px;margin-bottom:24px;color:#FECACA}
 .alert-header{display:flex;align-items:center;gap:6px;color:var(--danger-red);font-weight:700;font-size:14px;margin-bottom:6px}
 .alert-body{font-size:13px;line-height:1.6}
 .alert-action{display:inline-block;margin-top:8px;background:rgba(239,68,68,0.15);color:#FCA5A5;padding:3px 10px;border-radius:4px;font-weight:600;font-size:12px}
@@ -28,11 +28,13 @@ body{background:var(--bg-main);color:var(--text-body);font-family:var(--font-mai
 .section-title{font-size:15px;font-weight:700;color:var(--text-primary)}
 .section-subtitle{font-size:11px;color:var(--text-muted)}
 .card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:16px;margin-bottom:20px}
-.market-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.market-box{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:10px 12px}
-.market-name{font-size:11px;color:var(--text-muted);margin-bottom:2px}
-.market-val{font-size:15px;font-weight:700}
-.up{color:var(--success-green)}.down{color:var(--danger-red)}
+table{width:100%;border-collapse:collapse;background:#0d131d!important}
+th{color:#fff!important;font-size:11px;font-weight:700!important;text-align:left;padding:8px 6px;border-bottom:1px solid #1e293b!important;text-transform:uppercase;background:#162032!important}
+td{padding:10px 6px;font-size:13px;border-bottom:1px solid #1e293b!important;color:#e2e8f0!important;background:#0d131d!important}
+td.td-num{color:var(--accent-blue)!important;font-weight:600}
+td.td-num{color:var(--accent-blue);font-weight:600}
+.strategy-block{background:rgba(30,41,59,0.5);border-left:3px solid var(--accent-gold);border-radius:0 8px 8px 0;padding:12px 14px;margin-top:10px;font-size:13px;line-height:1.6}
+.footer-text{text-align:center;font-size:11px;color:var(--text-muted);margin:30px 0 20px}
 .progress-item{margin-bottom:14px}
 .progress-info{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
 .progress-name{font-weight:600;color:var(--text-primary)}
@@ -40,14 +42,8 @@ body{background:var(--bg-main);color:var(--text-body);font-family:var(--font-mai
 .progress-bar-bg{height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
 .progress-bar-fill{height:100%;border-radius:3px}
 .pill{font-size:10px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px}
-.pill-red{background:rgba(239,68,68,0.2);color:var(--danger-red)}
-.pill-green{background:rgba(16,185,129,0.2);color:var(--success-green)}
-table{width:100%;border-collapse:collapse}
-th{color:var(--text-muted);font-size:11px;font-weight:600;text-align:left;padding:8px 6px;border-bottom:1px solid var(--card-border);text-transform:uppercase}
-td{padding:10px 6px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text-body)}
-td.td-num{color:var(--accent-blue);font-weight:600}
-.strategy-block{background:rgba(30,41,59,0.5);border-left:3px solid var(--accent-gold);border-radius:0 8px 8px 0;padding:12px 14px;margin-top:10px;font-size:13px;line-height:1.6}
-.footer-text{text-align:center;font-size:11px;color:var(--text-muted);margin:30px 0 20px}
+.pill-red{background:rgba(248,113,113,0.15);color:var(--danger-red);border:1px solid rgba(248,113,113,0.3)}
+.pill-green{background:rgba(52,211,153,0.15);color:var(--success-green);border:1px solid rgba(52,211,153,0.3)}
 </style>
 </head>
 <body>
