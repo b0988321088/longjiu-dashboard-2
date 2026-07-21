@@ -198,38 +198,150 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>龍九控股日報 {TODAY}</title>
 <style>
+  :root {{
+    --bg-canvas: #0F172A;
+    --bg-card: #1E293B;
+    --bg-card-border: #334155;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-accent: #38BDF8;
+    --danger: #EF4444;
+    --danger-bg: rgba(239,68,68,0.1);
+    --success: #10B981;
+    --success-bg: rgba(16,185,129,0.1);
+    --warn: #F59E0B;
+    --warn-bg: rgba(245,158,11,0.1);
+  }}
   * {{ box-sizing: border-box; }}
   body {{
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", sans-serif;
-    background: #f0f2f5;
+    background: var(--bg-canvas);
     margin: 0;
     padding: 16px;
-    line-height: 1.8;
-    font-size: 17px;
-    color: #1d1d1f;
+    line-height: 1.7;
+    font-size: 16px;
+    color: var(--text-primary);
     -webkit-text-size-adjust: 100%;
   }}
   .page {{ max-width: 900px; margin: 0 auto; }}
-  .card {{
-    background: #fff;
+  
+  /* 三級色塊系統 */
+  .card-hero {{
+    background: linear-gradient(135deg, #1E293B, #0F172A);
     border-radius: 14px;
-    padding: 18px;
+    padding: 20px;
     margin-bottom: 14px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    border: 1px solid #e8eaed;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    border: 1px solid var(--bg-card-border);
   }}
-  h1 {{ font-size: 22px; font-weight: 900; margin: 0 0 6px; color: #0f172a; }}
-  h2 {{ font-size: 18px; font-weight: 800; margin: 14px 0 8px; color: #1e3a5f; border-bottom: 2px solid #2563eb; padding-bottom: 4px; }}
-  h3 {{ font-size: 16px; font-weight: 800; margin: 10px 0 6px; color: #334155; }}
-  .label {{ font-size: 12px; color: #6b7280; margin-bottom: 6px; letter-spacing: 0.5px; }}
-  .text-lead {{ color: #374151; margin: 6px 0; }}
-  .num {{ font-weight: 800; color: #0f172a; }}
-  .num-blue {{ font-weight: 800; color: #2563eb; }}
-  .num-green {{ font-weight: 800; color: #059669; }}
-  .num-red {{ font-weight: 800; color: #dc2626; }}
-  .tag-ok {{ display:inline-block;background:#dcfce7;color:#059669;padding:2px 8px;border-radius:4px;font-size:13px;font-weight:700; }}
-  .tag-warn {{ display:inline-block;background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:4px;font-size:13px;font-weight:700; }}
-  .tag-p0 {{ display:inline-block;background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:4px;font-size:13px;font-weight:700; }}
+  .card {{
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+    border: 1px solid var(--bg-card-border);
+  }}
+  .card-danger {{
+    background: var(--danger-bg);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    border-left: 4px solid var(--danger);
+    border-top: 1px solid rgba(239,68,68,0.2);
+    border-right: 1px solid rgba(239,68,68,0.2);
+    border-bottom: 1px solid rgba(239,68,68,0.2);
+  }}
+  .card-ceo {{
+    background: #172554;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    border: 1px solid #1E40AF;
+  }}
+  .card-buffett {{
+    background: #1F2937;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    border-left: 4px solid var(--warn);
+    border-top: 1px solid #374151;
+    border-right: 1px solid #374151;
+    border-bottom: 1px solid #374151;
+  }}
+  
+  h1 {{ font-size: 22px; font-weight: 900; margin: 0 0 6px; color: var(--text-primary); }}
+  h2 {{ font-size: 18px; font-weight: 800; margin: 16px 0 10px; color: var(--text-primary); border-bottom: 2px solid var(--text-accent); padding-bottom: 6px; }}
+  h3 {{ font-size: 15px; font-weight: 800; margin: 10px 0 6px; color: var(--text-accent); }}
+  .label {{ font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }}
+  .text-lead {{ color: var(--text-secondary); margin: 6px 0; font-size: 15px; line-height: 1.6; }}
+  .num {{ font-weight: 800; color: var(--text-primary); }}
+  .num-blue {{ font-weight: 800; color: var(--text-accent); }}
+  .num-green {{ font-weight: 800; color: var(--success); }}
+  .num-red {{ font-weight: 800; color: var(--danger); }}
+  .tag-ok {{ display:inline-block;background:var(--success-bg);color:var(--success);padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700; }}
+  .tag-warn {{ display:inline-block;background:var(--warn-bg);color:var(--warn);padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700; }}
+  .tag-p0 {{ display:inline-block;background:var(--danger-bg);color:var(--danger);padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700; }}
+  
+  /* 市場情報 Grid */
+  .intel-grid {{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 8px 0;
+  }}
+  .intel-tile {{
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--bg-card-border);
+  }}
+  .intel-tile .tile-label {{
+    font-size: 11px; color: var(--text-secondary); margin-bottom: 2px;
+  }}
+  .intel-tile .tile-value {{
+    font-size: 15px; font-weight: 800; color: var(--text-primary);
+  }}
+  .intel-tile .tile-change-up {{
+    font-size: 13px; color: var(--success);
+  }}
+  .intel-tile .tile-change-down {{
+    font-size: 13px; color: var(--danger);
+  }}
+  
+  /* 進度條 */
+  .progress-bar {{
+    height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin: 6px 0; overflow: hidden;
+  }}
+  .progress-fill {{
+    height: 100%; border-radius: 3px; transition: width 0.3s;
+  }}
+  
+  .table-wrap {{ overflow-x: auto; margin: 8px 0; }}
+  table {{
+    width: 100%;
+    border-collapse: collapse;
+    background: transparent;
+    border: 1px solid var(--bg-card-border);
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 14px;
+  }}
+  thead th {{
+    background: rgba(255,255,255,0.06);
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--bg-card-border);
+    font-size: 13px;
+  }}
+  tbody td {{
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+    vertical-align: top;
+  }}
+  tbody tr:nth-child(even) td {{ background: rgba(255,255,255,0.02); }}
   .table-wrap {{ overflow-x: auto; margin: 8px 0; }}
   table {{
     width: 100%;
@@ -295,7 +407,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 <div class="page">
 
   <!-- 1/5 財富生命線 -->
-  <div class="card">
+  <div class="card-hero">
     <h1>1/5｜財富生命線 Wealth Baseline</h1>
     <div class="label">資產負債快照</div>
     <div class="table-wrap">
@@ -338,7 +450,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   <div class="card">
     <h2>2/5｜市場情報 Market Intel</h2>
     <div class="label">獵人情報 + 市場搜尋 + 持倉關聯</div>
-    <pre id="market-intel-block" style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:#1d1d1f;">{market_intel_text}</pre>
+    <div id="market-intel-block" class="intel-grid">{market_intel_text}</div>
   </div>
 
   <!-- 戰略異常看板 -->
@@ -353,7 +465,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-lead">0056 凍結質押中，短期無法加碼。0050 配息：待 MB 確認；防禦缺口由 00878/00713 預備。</p>
 
     <h3>房租金流</h3>
-    <p class="text-lead">房租月收 <strong><span class="num">{tv["rent_monthly"]:,}</span> TWD</strong>，覆蓋月支出 55%。大義街1樓 24,000（7月初入帳）+ 洲際W 33,000（7/20 ✅ 已入帳）= 已實收 57,000；剩大義街23樓 21,000 + 管理費 2,100 月底收齊。星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
+    <p class="text-lead">房租月收 <strong><span class="num">{tv["rent_monthly"]:,}</span> TWD</strong>，覆蓋月支出 55%。大義街1樓 24,000（7月初入帳）+ 洲際W 33,000（7/20 ✅ 已入帳）= 已實收 57,000；剩大義街23樓 21,000 + 管理費 2,100 月底收齊。<span class="tag-p0">⚠️ 補庫預警</span> 星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
 
     <h3>鉅亨基金部位</h3>
     <p class="text-lead">基金總市值 <strong><span class="num">{tv.get("funds",0):,}</span> TWD</strong>（一般申購 361,224 + 自由PAY 433,933）。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 795,157。</p>
@@ -677,7 +789,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, strategy_notes: str
     # 注入 CEO 戰略筆記（從 Notion 同步）— 在 __BUFFETT_CONTENT__ 替換之前
     if strategy_notes:
         _sn_lines = [l.strip() for l in strategy_notes.strip().split("\n") if l.strip() and "來源" not in l and "讀取" not in l and "戰略手稿" not in l and "—" not in l]
-        _sn_html = '<div class="card" style="margin-top:12px;border-left:3px solid #2563eb;padding:10px 14px;background:#f0f7ff;">'
+        _sn_html = '<div class="card-ceo">'
         _sn_html += '<div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:6px;">📝 CEO 戰略指令</div>'
         _sn_html += '<div style="font-size:13px;line-height:1.6;">'
         for _l in _sn_lines:
