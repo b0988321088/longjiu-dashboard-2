@@ -704,7 +704,7 @@ def main():
         compile_intel(force_refresh=True)
     except Exception:
         pass
-    # 從 Notion 戰略手稿同步決策
+    # 從 Notion 同步決策（寫入策略檔）
     try:
         from notion_bridge import sync_notion_to_local
         _nr = sync_notion_to_local()
@@ -712,7 +712,22 @@ def main():
             print(f"[NOTION BRIDGE] 匯入 {_nr['decisions_imported']} 筆決策")
     except Exception as _e:
         pass
-    # 載入 Notion 戰略手稿文字，注入日報
+    
+    # 確保策略檔有內容（從 Notion 頁面直接讀取 blocks）
+    try:
+        from notion_bridge import read_page_blocks, parse_blocks_to_text
+        _blocks = read_page_blocks("3a4fc735d43381d18a4bfe63e1bd6b2a")
+        _block_text = parse_blocks_to_text(_blocks)
+        if _block_text.strip():
+            _raw_dir = BASE / "notion_bridge"
+            _raw_dir.mkdir(exist_ok=True)
+            (_raw_dir / f"{TODAY}_strategy_handbook.md").write_text(
+                f"# 今日決策摘要\n來源頁面：3a4fc735...\n讀取時間：{__import__('datetime').datetime.now().isoformat()}\n\n{_block_text}",
+                encoding="utf-8"
+            )
+    except: pass
+    
+    # 載入戰略手稿（從 Notion 同步後的最新內容）
     _strategy_text = ""
     try:
         _strategy_file = BASE / "notion_bridge" / f"{TODAY}_strategy_handbook.md"

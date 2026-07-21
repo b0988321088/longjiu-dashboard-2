@@ -172,13 +172,17 @@ def rebuild_strategy_file():
     lines = ["# 今日決策摘要"]
     for d in today_decs[-10:]:
         t = d.get("text", d.get("id", ""))[:60]
+        # 清理雜訊
+        t = t.replace("#", "").replace("/", "").strip()
+        if not t:
+            continue
         act = d.get("action", "核准")
         if "核准" in act:
-            lines.append(f"【核准】{t}")
+            lines.append(f"✅ {t}")
         elif "延後" in act:
-            lines.append(f"【延後】{t}")
+            lines.append(f"⏸️ {t}")
         else:
-            lines.append(f"【決策】{t}")
+            lines.append(f"• {t}")
     raw_dir = LJ / "notion_bridge"
     raw_dir.mkdir(exist_ok=True)
     content = chr(10).join(lines)
