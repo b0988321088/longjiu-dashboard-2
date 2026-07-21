@@ -706,14 +706,13 @@ def main():
         compile_intel(force_refresh=True)
     except Exception:
         pass
-    # 從 Notion 戰略手稿同步決策
+    # 先從 dashboard_decisions 重建策略檔（確保有內容）
     try:
-        from notion_bridge import sync_notion_to_local
-        _nr = sync_notion_to_local()
-        if _nr["decisions_imported"] > 0:
-            print(f"[NOTION BRIDGE] 匯入 {_nr['decisions_imported']} 筆決策")
-    except Exception as _e:
+        from notion_bridge import rebuild_strategy_file
+        rebuild_strategy_file()
+    except Exception:
         pass
+    
     # 載入 Notion 戰略手稿文字，注入日報
     _strategy_text = ""
     try:
@@ -721,6 +720,15 @@ def main():
         if _strategy_file.exists():
             _strategy_text = _strategy_file.read_text(encoding="utf-8")
     except: pass
+    
+    # 再從 Notion 同步（不會再覆蓋策略檔）
+    try:
+        from notion_bridge import sync_notion_to_local
+        _nr = sync_notion_to_local()
+        if _nr["decisions_imported"] > 0:
+            print(f"[NOTION BRIDGE] 匯入 {_nr['decisions_imported']} 筆決策")
+    except Exception as _e:
+        pass
     print(f"[INTEL] {intel_result.get('file') or intel_result}")
     # Load unified market briefing from daily_intel_report_{date}.json
     unified_path = BASE / f"daily_intel_report_{TODAY.replace('-','')}.json"

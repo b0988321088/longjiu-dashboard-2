@@ -155,6 +155,35 @@ def sync_notion_to_local() -> dict:
     
     return result
 
+
+def rebuild_strategy_file():
+    """從 dashboard_decisions.json 重建戰略手稿檔，確保永不空白"""
+    dec_path = LJ / "dashboard_decisions.json"
+    if not dec_path.exists():
+        return
+    import json
+    decs = json.loads(dec_path.read_text(encoding="utf-8"))
+    decisions = decs.get("decisions", [])
+    from datetime import date
+    today = str(date.today())
+    today_decs = [d for d in decisions if d.get("approved_at", "")[:10] >= today]
+    if not today_decs:
+        return
+    lines = ["# 今日決策摘要"]
+    for d in today_decs[-10:]:
+        t = d.get("text", d.get("id", ""))[:60]
+        act = d.get("action", "核准")
+        if "核准" in act:
+            lines.append(f"【核准】{t}")
+        elif "延後" in act:
+            lines.append(f"【延後】{t}")
+        else:
+            lines.append(f"【決策】{t}")
+    raw_dir = LJ / "notion_bridge"
+    raw_dir.mkdir(exist_ok=True)
+    content = chr(10).join(lines)
+    (raw_dir / f"{today}_strategy_handbook.md").write_text(content, encoding="utf-8")
+
 def local_to_notion(decisions: list) -> dict:
     """本地決策 → Notion Ops Logs（已有 decision_handler.py 處理）"""
     return {"synced": False, "note": "由 decision_handler.py 接管"}
