@@ -7,7 +7,7 @@
     "securities_market": 2205230.0,
     "insurance_current": 9633273,
     "insurance_total": 9633273,
-    "fund_market": 795157,
+    "fund_market": 765991,
     "real_estate": 34000000.0,
     "cash": 3884620.0,
     "bonds": 5812576.0,
@@ -22,7 +22,7 @@
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,
     "cathay_refinance": 0.0,
-    "fund": 795157
+    "fund": 765991
   },
   "2026-07-20": {
     "date": "2026-07-20",
@@ -32,7 +32,7 @@
     "securities_market": 2260230.0,
     "insurance_current": 9633273,
     "insurance_total": 9633273,
-    "fund_market": 795157,
+    "fund_market": 765991,
     "real_estate": 34000000.0,
     "cash": 3917620.0,
     "bonds": 2097467.0,
@@ -47,7 +47,7 @@
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,
     "cathay_refinance": 0.0,
-    "fund": 795157
+    "fund": 765991
   },
   "2026-07-18": {
     "date": "2026-07-18",
@@ -57,7 +57,7 @@
     "securities_market": 2158900.0,
     "insurance_current": 9633273,
     "insurance_total": 9633273,
-    "fund_market": 795157,
+    "fund_market": 765991,
     "real_estate": 34017063.0,
     "cash": 3853985.0,
     "other": 0.0,
@@ -74,7 +74,7 @@
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,
     "cathay_refinance": 0.0,
-    "fund": 795157
+    "fund": 765991
   },
   "2026-07-21": {
     "date": "2026-07-21",
