@@ -136,6 +136,7 @@ def calibrate_sources() -> dict:
         "net_worth": net_worth,
         "bonds_cash": snap.get("penetration", {}).get("actual_twd", {}).get("債券及安全現金", 9_697_196),
         "insurance_current_value": s_insurance,
+        "funds": snap.get("fund_market_value", snap.get("funds_total", 0)) or 0,
     }
 
 
