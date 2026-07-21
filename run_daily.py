@@ -303,7 +303,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         <tbody>
           <tr><td>總資產</td><td>50,689,930 TWD</td><td>淨資產 28,689,930；負債率 43.4%</td></tr>
           <tr><td>總負債</td><td>22,000,000 TWD</td><td> convertible 房貸 + 保單借貸 400 萬</td></tr>
-          <tr><td>本月領息</td><td>{monthly_dividend:,} TWD</td><td>安聯 {allianz_dividend:,} + 第一金 {firstjin_dividend:,}</td></tr>
+          <tr><td>本月領息</td><td><span class="num">{monthly_dividend:,}</span> TWD</td><td>安聯 {allianz_dividend:,} + 第一金 {firstjin_dividend:,}</td></tr>
           <tr><td>被動月收</td><td>{tv['rent_monthly']+80000:,} TWD</td><td>覆蓋率 113.8%；安全邊際充足</td></tr>
         </tbody>
       </table>
@@ -344,23 +344,23 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <div class="label">四大戰略重點</div>
 
     <h3>保單維運</h3>
-    <p class="text-lead">保單現值 <strong>{insurance_total:,} TWD</strong>（安聯 A+B {allianz:,} + 第一金 FL65 {firstjin:,}），本月配息合計 <strong>{monthly_dividend:,} TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
+    <p class="text-lead">保單現值 <strong><span class="num">{insurance_total:,}</span> TWD</strong>（安聯 A+B {allianz:,} + 第一金 FL65 {firstjin:,}），本月配息合計 <strong><span class="num">{monthly_dividend:,}</span> TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
 
     <h3>證券曝險</h3>
     <p class="text-lead">0056 凍結質押中，短期無法加碼。0050 配息：待 MB 確認；防禦缺口由 00878/00713 預備。</p>
 
     <h3>房租金流</h3>
-    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。大義街1樓 24,000（7月初入帳）+ 洲際W 33,000（7/20 ✅ 已入帳）= 已實收 57,000；剩大義街23樓 21,000 + 管理費 2,100 月底收齊。星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
+    <p class="text-lead">房租月收 <strong><span class="num">{tv["rent_monthly"]:,}</span> TWD</strong>，覆蓋月支出 55%。大義街1樓 24,000（7月初入帳）+ 洲際W 33,000（7/20 ✅ 已入帳）= 已實收 57,000；剩大義街23樓 21,000 + 管理費 2,100 月底收齊。星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
 
     <h3>鉅亨基金部位</h3>
-    <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong>（一般申購 361,224 + 自由PAY 433,933）。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 795,157。</p>
+    <p class="text-lead">基金總市值 <strong><span class="num">{tv.get("funds",0):,}</span> TWD</strong>（一般申購 361,224 + 自由PAY 433,933）。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 795,157。</p>
   </div>
 
   <!-- 3/5 保單接力引擎 -->
   <div class="card">
     <h2>3/5｜保單接力引擎 Insurance Relay Engine</h2>
     <div class="label">三站轉換時序監控</div>
-    <p class="text-lead"><strong>本月配息合計：{monthly_dividend:,} TWD</strong></p>
+    <p class="text-lead"><strong>本月配息合計：<span class="num">{monthly_dividend:,}</span> TWD</strong></p>
     {relay_table}
 
     <h3>保單成分穿透</h3>
