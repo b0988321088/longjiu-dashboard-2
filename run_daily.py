@@ -668,20 +668,20 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, strategy_notes: str
 
     # 注入 CEO 戰略筆記（從 Notion 同步）— 在 __BUFFETT_CONTENT__ 替換之前
     if strategy_notes:
-        _sn_lines = strategy_notes.strip().split("\n")
-        _sn_html = '<div class="card" style="margin-top:16px;border-left:4px solid #2563eb;padding:12px;background:#f0f7ff;">'
-        _sn_html += '<h3 style="color:#1e40af;margin:0 0 8px 0;">📝 CEO 戰略指令</h3>'
-        _sn_html += '<div style="font-size:14px;line-height:1.7;">'
+        _sn_lines = [l.strip() for l in strategy_notes.strip().split("\n") if l.strip() and "來源" not in l and "讀取" not in l and "戰略手稿" not in l and "—" not in l]
+        _sn_html = '<div class="card" style="margin-top:12px;border-left:3px solid #2563eb;padding:10px 14px;background:#f0f7ff;">'
+        _sn_html += '<div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:6px;">📝 CEO 戰略指令</div>'
+        _sn_html += '<div style="font-size:13px;line-height:1.6;">'
         for _l in _sn_lines:
-            _l = _l.strip()
-            if not _l or "來源" in _l or "讀取" in _l or "戰略手稿" in _l or "—" in _l:
+            _l = _l.replace("#", "").replace("/", "").strip()
+            if not _l:
                 continue
-            if _l.startswith("# "):
-                _sn_html += f"<strong style='color:#1e40af;'>{_l[2:]}</strong><br>"
-            elif _l.startswith("- ") or "✅" in _l or "⏸️" in _l:
-                _sn_html += f"• {_l.lstrip('- ✅⏸️ ')}<br>"
-            elif _l:
-                _sn_html += f"<span style='color:#4b5563;'>{_l}</span><br>"
+            if _l.startswith("✅"):
+                _sn_html += f'<div style="color:#059669;margin:1px 0;">{_l}</div>'
+            elif _l.startswith("⏸️"):
+                _sn_html += f'<div style="color:#d97706;margin:1px 0;">{_l}</div>'
+            else:
+                _sn_html += f'<div style="color:#4b5563;margin:1px 0;">{_l}</div>'
         _sn_html += '</div></div>'
         buf_content = _sn_html + buf_content
 
