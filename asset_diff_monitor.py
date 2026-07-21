@@ -642,14 +642,24 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     except:
         _holdings = []
     _sec_rows = ""
-    _names = {'0050':'台灣50','0056':'高股息','006208':'富邦50','00646':'元大S&P500','00713':'高息低波','00878':'國泰永續高股息','00888':'中信永續','00918':'大華優利高填息','00919':'群益台灣精選高息','009816':'00878姊妹','00981A':'00981A','009823':'009823','009824':'009824','00984A':'00984A'}
+    _names = {'0050':'台灣50','0056':'高股息','006208':'富邦50','00646':'元大S&P500','00713':'高息低波','00878':'國泰永續高股息','00888':'中信永續','00918':'大華優利高填息','00919':'群益台灣精選高息','009816':'凱基台灣TOP 50','00981A':'00981A','009823':'009823','009824':'009824','00984A':'00984A'}
+    _prices = {'0050':120,'0056':40,'006208':60,'00646':35,'00713':55,'00878':30,'00888':25,'00918':42,'00919':45,'009816':24,'00981A':28,'009823':27,'009824':26,'00984A':25}
+    _total_sec = float(ex.get("securities_market", 0) or 0)
+    _list = []
     for _t, _s, _b in _holdings:
         _s = _s or 0
+        _price = _prices.get(_t, 30)
+        _mv = _s * _price
+        _pct = (_mv / _total_sec * 100) if _total_sec > 0 else 0
         _n = _names.get(_t, _t)
-        _sec_rows += f"<tr><td>{_t}</td><td>{_n}</td><td class='num'>{_s:,.0f}</td><td>{_b or '-'}</td></tr>"
+        _list.append((_mv, _t, _n, _s, _mv, _pct))
+    _list.sort(key=lambda x: -x[0])
+    _sec_rows = ""
+    for _mv, _t, _n, _shares, _mv, _pct in _list:
+        _sec_rows += f"<tr><td>{_t}</td><td>{_n}</td><td class='num'>{_shares:,.0f}</td><td class='num'>{_mv:,.0f}</td><td class='num' style='color:#2563eb;'>{_pct:.1f}%</td></tr>"
     sec_card = (
         '<div class="card"><h2>📊 證券部位</h2>'
-        '<div class="table-wrap"><table><thead><tr><th>代號</th><th class=\"num\">股數</th><th>券商</th></tr></thead><tbody>'
+        '<div class="table-wrap"><table><thead><tr><th>代號</th><th>名稱</th><th class="num">股數</th><th class="num">估市值</th><th class="num">佔比</th></tr></thead><tbody>'
         f'{_sec_rows}'
         "</tbody></table></div>"
         f'<div class="text-sm" style="margin-top:8px;color:#6e6e73">證券總市值：{ex["securities_market"]:,.0f} TWD（{len(_holdings)} 檔標的）</div>'
