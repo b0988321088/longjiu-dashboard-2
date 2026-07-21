@@ -136,6 +136,8 @@ def calibrate_sources() -> dict:
         "net_worth": net_worth,
         "bonds_cash": snap.get("penetration", {}).get("actual_twd", {}).get("債券及安全現金", 9_697_196),
         "insurance_current_value": s_insurance,
+        "funds": snap.get("fund_market_value", snap.get("funds_total", 795_157)),
+        "fund_market_value": snap.get("fund_market_value", snap.get("funds_total", 795_157)),
     }
 
 
@@ -346,7 +348,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。大義街1樓 24,000（7月初入帳）+ 洲際W 33,000（7/20 ✅ 已入帳）= 已實收 57,000；剩大義街23樓 21,000 + 管理費 2,100 月底收齊。星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
 
     <h3>鉅亨基金部位</h3>
-    <p class="text-lead">基金總市值 <strong>{tv.get('fund_market_value',0):,} TWD</strong>（一般申購 361,224 + 自由PAY 433,933）。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 795,157。</p>
+    <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong>（一般申購 361,224 + 自由PAY 433,933）。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 795,157。</p>
   </div>
 
   <!-- 3/5 保單接力引擎 -->
@@ -668,17 +670,17 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, strategy_notes: str
     if strategy_notes:
         _sn_lines = strategy_notes.strip().split("\n")
         _sn_html = '<div class="card" style="margin-top:16px;border-left:4px solid #2563eb;padding:12px;background:#f0f7ff;">'
-        _sn_html += '<h3 style="color:#1e40af;margin:0 0 8px 0;">📝 CEO 戰略指令（來自 Notion）</h3>'
+        _sn_html += '<h3 style="color:#1e40af;margin:0 0 8px 0;">📝 CEO 戰略指令</h3>'
         _sn_html += '<div style="font-size:14px;line-height:1.7;">'
         for _l in _sn_lines:
             _l = _l.strip()
-            if not _l:
+            if not _l or "來源" in _l or "讀取" in _l or "戰略手稿" in _l or "—" in _l:
                 continue
             if _l.startswith("# "):
                 _sn_html += f"<strong style='color:#1e40af;'>{_l[2:]}</strong><br>"
-            elif _l.startswith("- ") or _l.startswith("✅") or _l.startswith("⏸️"):
+            elif _l.startswith("- ") or "✅" in _l or "⏸️" in _l:
                 _sn_html += f"• {_l.lstrip('- ✅⏸️ ')}<br>"
-            elif _l and not _l.startswith("—"):
+            elif _l:
                 _sn_html += f"<span style='color:#4b5563;'>{_l}</span><br>"
         _sn_html += '</div></div>'
         buf_content = _sn_html + buf_content
