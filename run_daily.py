@@ -242,8 +242,50 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     border-bottom: 1px solid #f2f2f7;
     vertical-align: top;
   }}
-  tbody tr:nth-child(even) td {{ background: #fafafa; }}
-  tbody tr:hover td {{ background: #f0f8ff; }}
+  tbody tr:hover td {{ background: #1F2937; }}
+body {{
+    background-color: #05070A !important;
+    color: #A0AEC0 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", sans-serif;
+    margin: 0; padding: 16px;
+    line-height: 1.7; font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+}}
+.page {{ max-width: 900px; margin: 0 auto; }}
+.card {{
+    background: #0D1117 !important;
+    border: 1px solid #1F2937 !important;
+    border-radius: 12px !important;
+    padding: 16px !important;
+    margin-bottom: 16px !important;
+}}
+h1 {{ font-size: 22px; font-weight: 900; color: #FFFFFF; margin: 0 0 6px; }}
+h2 {{ font-size: 18px; font-weight: 800; color: #FFFFFF; margin: 16px 0 10px; border-bottom: 2px solid #60A5FA; padding-bottom: 6px; }}
+h3 {{ font-size: 15px; font-weight: 800; color: #60A5FA; margin: 10px 0 6px; }}
+.label {{ font-size: 11px; color: #64748B; margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }}
+.text-lead {{ color: #A0AEC0; margin: 6px 0; font-size: 15px; line-height: 1.6; }}
+.num {{ font-family: "JetBrains Mono", "Fira Code", monospace; font-weight: 800; color: #60A5FA !important; }}
+.num-green {{ font-weight: 800; color: #34D399 !important; }}
+.num-red {{ font-weight: 800; color: #F87171 !important; }}
+.tag-ok {{ display:inline-block; background:rgba(52,211,153,0.15); color:#34D399; border:1px solid rgba(52,211,153,0.3); padding:2px 8px; border-radius:4px; font-size:12px; font-weight:700; }}
+.tag-warn {{ display:inline-block; background:rgba(251,191,36,0.15); color:#FBBF24; border:1px solid rgba(251,191,36,0.3); padding:2px 8px; border-radius:4px; font-size:12px; font-weight:700; }}
+.tag-p0 {{ display:inline-block; background:rgba(248,113,113,0.15); color:#F87171; border:1px solid rgba(248,113,113,0.3); padding:2px 8px; border-radius:4px; font-size:12px; font-weight:700; }}
+.table-wrap {{ overflow-x: auto; margin: 8px 0; }}
+table {{ width: 100%; border-collapse: collapse; background: transparent; font-size: 14px; }}
+thead th {{ background: #162032 !important; color: #FFFFFF !important; border-bottom: 2px solid #1F2937 !important; padding: 10px 8px !important; font-size: 13px !important; text-align: left; font-weight: 700; }}
+tbody td {{ color: #A0AEC0 !important; border-bottom: 1px solid #1F2937 !important; padding: 12px 8px !important; font-size: 14px !important; vertical-align: top; background: #0D131D !important; }}
+tbody tr:nth-child(even) td {{ background: #0D1117; }}
+tbody tr:hover td {{ background: #1F2937; }}
+td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
+.callout {{
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin: 10px 0;
+    border-left: 4px solid;
+}}
+.callout-bull {{ background: rgba(52,211,153,0.08); border-color: #34D399; color: #A0AEC0; }}
+.callout-bear {{ background: rgba(248,113,113,0.08); border-color: #F87171; color: #A0AEC0; }}
+.callout-bull strong, .callout-bear strong {{ color: #FFFFFF; }}
   td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
   .callout {{
     border-radius: 10px;
@@ -251,10 +293,10 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     margin: 10px 0;
     border-left: 4px solid;
   }}
-  .callout-bull {{ background:#f0fff4; border-color:#22c55e; }}
-  .callout-bear {{ background:#fff5f5; border-color:#ef4444; }}
-  .callout-warn {{ background:#fffbeb; border-color:#f59e0b; }}
-  .callout-info {{ background:#eff6ff; border-color:#3b82f6; }}
+  .callout-bull {{ background: rgba(52,211,153,0.08); border-color: #34D399; color: #A0AEC0; }}
+  .callout-bear {{ background: rgba(248,113,113,0.08); border-color: #F87171; color: #A0AEC0; }}
+  .callout-warn {{ background: rgba(251,191,36,0.08); border-color: #FBBF24; color: #A0AEC0; }}
+  .callout-info {{ background: rgba(96,165,250,0.08); border-color: #60A5FA; color: #A0AEC0; }}
 
   /* Mobile table style: bordered with background fill */
   @media (max-width: 640px) {{
