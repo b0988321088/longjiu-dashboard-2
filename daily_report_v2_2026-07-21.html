@@ -8,63 +8,63 @@
   * { box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", sans-serif;
-    background: #05070A;
+    background: #f5f5f7;
     margin: 0;
     padding: 16px;
     line-height: 1.8;
     font-size: 17px;
-    color: #A0AEC0;
+    color: #1d1d1f;
     -webkit-text-size-adjust: 100%;
   }
   .page { max-width: 900px; margin: 0 auto; }
   .card {
-    background: #0D1117;
+    background: #fff;
     border-radius: 12px;
     padding: 18px;
     margin-bottom: 14px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
   h1 { font-size: 22px; font-weight: 900; margin: 0 0 6px; }
   h2 { font-size: 18px; font-weight: 800; margin: 14px 0 8px; }
   h3 { font-size: 16px; font-weight: 800; margin: 10px 0 6px; }
-  .label { font-size: 12px; color: #64748B; margin-bottom: 6px; }
-  .text-lead { color: #A0AEC0; margin: 6px 0; }
+  .label { font-size: 12px; color: #6e6e73; margin-bottom: 6px; }
+  .text-lead { color: #3a3a3c; margin: 6px 0; }
   .table-wrap { overflow-x: auto; margin: 8px 0; }
   table {
     width: 100%;
     border-collapse: collapse;
-    background: #0D1117;
-    border: 1px solid #1F2937;
+    background: #fff;
+    border: 1px solid #e5e5ea;
     border-radius: 10px;
     overflow: hidden;
     font-size: 16px;
   }
   thead th {
-    background: #162032;
+    background: #f2f2f7;
     font-weight: 800;
     text-align: left;
     padding: 10px 12px;
-    border-bottom: 1px solid #1F2937;
+    border-bottom: 1px solid #e5e5ea;
     font-size: 15px;
   }
   tbody td {
     padding: 10px 12px;
-    border-bottom: 1px solid #162032;
+    border-bottom: 1px solid #f2f2f7;
     vertical-align: top;
   }
-  tbody tr:nth-child(even) td { background: #0D131D; }
+  tbody tr:nth-child(even) td { background: #fafafa; }
   tbody tr:hover td { background: #f0f8ff; }
-  td.num { text-align: right; font-variant-numeric: tabular-nums; color: #60A5FA; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
   .callout {
     border-radius: 10px;
     padding: 12px 14px;
     margin: 10px 0;
     border-left: 4px solid;
   }
-  .callout-bull { background:rgba(52,211,153,0.08); border-color:#34D399; }
-  .callout-bear { background:#0D11175f5; border-color:#F87171; }
-  .callout-warn { background:#0D1117beb; border-color:#FBBF24; }
-  .callout-info { background:rgba(96,165,250,0.08); border-color:#60A5FA; }
+  .callout-bull { background:#f0fff4; border-color:#22c55e; }
+  .callout-bear { background:#fff5f5; border-color:#ef4444; }
+  .callout-warn { background:#fffbeb; border-color:#f59e0b; }
+  .callout-info { background:#eff6ff; border-color:#3b82f6; }
 
   /* Mobile table style: bordered with background fill */
   @media (max-width: 640px) {
@@ -78,13 +78,13 @@
     overflow: hidden;
   }
   table.mobile-bordered th {
-    background: #162032 !important;
-    border: 1px solid #1F2937;
-    color: #A0AEC0;
+    background: #f2f2f7 !important;
+    border: 1px solid #e5e5ea;
+    color: #1d1d1f;
   }
   table.mobile-bordered td {
-    background: #0D1117fff !important;
-    border: 1px solid #162032;
+    background: #ffffff !important;
+    border: 1px solid #f2f2f7;
   }
   table.mobile-bordered tr:nth-child(even) td { background: #f9fafb !important; }
   table.mobile-bordered .num { background: transparent !important; }
@@ -131,22 +131,22 @@
         </tbody>
       </table>
     </div>
-    <p class="text-sm" style="color:#64748B;margin-top:8px">資產穿透分母：證券＋保單＋基金＋現金＋不動產；管理費~1.5%，偏高於配息收益率。</p>
+    <p class="text-sm" style="color:#6e6e73;margin-top:8px">資產穿透分母：證券＋保單＋基金＋現金＋不動產；管理費~1.5%，偏高於配息收益率。</p>
     <p class="text-sm" style="color:#16a34a;margin-top:4px"><strong>✅ 債券穿透校準：</strong>2,097,467 TWD（安聯A+B+FL65保單內基金債券曝險合計），資料日期 2026-07-20。</p>
-    <p class="text-sm" style="color:#A0AEC0;margin-top:6px"><strong>📌 本日新增持倉：</strong>00888 永豐台灣ESG × 2張 + 00918 大華優利高填息30 × 1張（7/20購入，尚未扣款入帳）</p>
+    <p class="text-sm" style="color:#1d1d1f;margin-top:6px"><strong>📌 本日新增持倉：</strong>00888 永豐台灣ESG × 2張 + 00918 大華優利高填息30 × 1張（7/20購入，尚未扣款入帳）</p>
   </div>
 
   <!-- 市場情報 -->
   <div class="card">
     <h2>2/5｜市場情報 Market Intel</h2>
     <div class="label">獵人情報 + 市場搜尋 + 持倉關聯</div>
-    <pre id="market-intel-block" style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:#A0AEC0;">【台股/大盤】
+    <pre id="market-intel-block" style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:#1d1d1f;">【台股/大盤】
 加權指數：44,232.87 (+4.20%)
 台積電：2,410.00 (+3.88%)
-費半：12,254.92 (+4.35%)
+費半：12,238.93 (+4.22%)
 
 【美股/外資】
-美股：道瓊 52,094.37 (+0.49%) / 納指 25,797.12 (+1.13%) / S&P 7,493.25 (+0.67%)
+美股：道瓊 52,107.04 (+0.52%) / 納指 25,804.38 (+1.16%) / S&P 7,495.35 (+0.70%)
 外資7日淨流：—
 
 【CPI/利率】
@@ -158,7 +158,7 @@
 
 買進訊號：
 • 台股大漲 4.2%
-• 費半大漲 4.35%
+• 費半大漲 4.22%
 
 【持倉關聯分析】
 台股曝險部位約 101 萬；美股曝險 8 萬；防守配息 102 萬
@@ -316,7 +316,7 @@
 
     <div class="callout callout-bull">
       <strong>🟢 Bull Case</strong><br>
-      台股大漲 4.2%; 費半大漲 4.35%
+      台股大漲 4.2%; 費半大漲 4.22%
     </div>
 
     <div class="callout callout-bear">
@@ -337,8 +337,8 @@
         <tbody>
           <tr><td>台股加權指數（2026-07-21）</td><td>44,232.87 (+4.20%)</td><td>44,232.87 (+4.20%)</td></tr>
           <tr><td>台積電（2026-07-21）</td><td>2,410.00 (+3.88%)</td><td>半導體龍頭穩盤</td></tr>
-          <tr><td>費半（2026-07-21）</td><td>12,254.92 (+4.35%)</td><td>高檔回調</td></tr>
-          <tr><td>美股（2026-07-21）</td><td>道瓊 52,094.37 (+0.49%) / 納指 25,797.12 (+1.13%) / S&P 7,493.25 (+0.67%)</td><td>通膨降溫驅動科技領漲</td></tr>
+          <tr><td>費半（2026-07-21）</td><td>12,238.93 (+4.22%)</td><td>高檔回調</td></tr>
+          <tr><td>美股（2026-07-21）</td><td>道瓊 52,107.04 (+0.52%) / 納指 25,804.38 (+1.16%) / S&P 7,495.35 (+0.70%)</td><td>通膨降溫驅動科技領漲</td></tr>
           <tr><td>美國 CPI</td><td>美國 6 月 CPI YoY 3.5% (預期 3.8%)；Core 2.6% (預期 2.8%)</td><td>降息預期升溫</td></tr>
         </tbody>
       </table>
@@ -346,7 +346,7 @@
 
     <h3>巴菲特視角建議</h3>
     <div class="callout callout-bull">
-      <strong>🧓 巴菲特式思考（穿透+市場驅動）</strong><br><strong>📋 場景判定</strong>：中性盤整<br><strong>📊 穿透快照</strong><br>• 總資產：53,329,695 TWD | 淨資產：35,132,273 TWD<br>• 房地產 63.8% | 管理費 ~1.5%（年 144,499 TWD）| 台積電集中度 57%<br><br><strong>🔍 三大潛在隱憂</strong><br>• 🧱 房產過重 63.8% → 流動性受限，轉貸時開理財型額度<br>• 💸 管理費侵蝕 ~1.5%（年 144,499 TWD）→ 高費用標的轉低成本工具<br>• 🐣 台積電集中度 57% → 防禦配置 00713/00878 補位<br><br><strong>📋 今日行動</strong><br>• ⏸️ 無賣出訊號，維持現有部位<br>• 💳 星展補庫 3 萬（唯一急事，確保 8/1 扣款）<br>• 🔫 機會子彈監控：單週 ±10% 觸發線，目前未達<br>• 📌 轉貸資金優先清償 3%+ 高息負債（保單借貸 400 萬、週轉金利息）<br><br><strong>📌 戰略優先級</strong><br>1. 轉貸資金入帳 → 優先清償保單借貸 400 萬 + 週轉金利息<br>2. 剩餘額度 → 設為理財型（隨借隨還、冰凍不動）<br>3. 全部完成後 → 配息才是真正乾淨配息<br><br><small style="color:#64748B">資料日期：2026-07-21（穿透+市場聯合驅動）</small>
+      <strong>🧓 巴菲特式思考（穿透+市場驅動）</strong><br><strong>📋 場景判定</strong>：中性盤整<br><strong>📊 穿透快照</strong><br>• 總資產：53,329,695 TWD | 淨資產：35,132,273 TWD<br>• 房地產 63.8% | 管理費 ~1.5%（年 144,499 TWD）| 台積電集中度 57%<br><br><strong>🔍 三大潛在隱憂</strong><br>• 🧱 房產過重 63.8% → 流動性受限，轉貸時開理財型額度<br>• 💸 管理費侵蝕 ~1.5%（年 144,499 TWD）→ 高費用標的轉低成本工具<br>• 🐣 台積電集中度 57% → 防禦配置 00713/00878 補位<br><br><strong>📋 今日行動</strong><br>• ⏸️ 無賣出訊號，維持現有部位<br>• 💳 星展補庫 3 萬（唯一急事，確保 8/1 扣款）<br>• 🔫 機會子彈監控：單週 ±10% 觸發線，目前未達<br>• 📌 轉貸資金優先清償 3%+ 高息負債（保單借貸 400 萬、週轉金利息）<br><br><strong>📌 戰略優先級</strong><br>1. 轉貸資金入帳 → 優先清償保單借貸 400 萬 + 週轉金利息<br>2. 剩餘額度 → 設為理財型（隨借隨還、冰凍不動）<br>3. 全部完成後 → 配息才是真正乾淨配息<br><br><small style="color:#6e6e73">資料日期：2026-07-21（穿透+市場聯合驅動）</small>
     </div>
 
     <h3>CTO 技術視角</h3>
@@ -366,8 +366,8 @@
         <tbody><tr style="background:#dcfce7"><td>總資產（動態加總）</td><td class="num">52,674,581</td><td class="num">53,384,695</td><td class="num">+710,114</td><td class="num">+1.3%</td><td>↑</td></tr><tr style="background:#dcfce7"><td>  其中：保單現値</td><td class="num">9,633,273</td><td class="num">9,633,273</td><td class="num">+0</td><td class="num">+0.0%</td><td>→</td></tr><tr style="background:#dcfce7"><td>  其中：證券市值</td><td class="num">2,260,230</td><td class="num">2,375,390</td><td class="num">+115,160</td><td class="num">+5.1%</td><td>↑</td></tr><tr style="background:#dcfce7"><td>  其中：基金市值</td><td class="num">765,991</td><td class="num">795,157</td><td class="num">+29,166</td><td class="num">+3.8%</td><td>↑</td></tr><tr style="background:#dcfce7"><td>  其中：現金部位</td><td class="num">3,917,620</td><td class="num">4,483,408</td><td class="num">+565,788</td><td class="num">+14.4%</td><td>↑</td></tr><tr style="background:#dcfce7"><td>  其中：債券</td><td class="num">2,097,467</td><td class="num">2,097,467</td><td class="num">+0</td><td class="num">+0.0%</td><td>→</td></tr></tbody>
       </table>
     </div>
-    <p class="text-sm" style="color:#64748B;margin-top:8px">資料來源：dragon_assets.db | 自動計算</p>
-    <p class="text-sm" style="color:#A0AEC0;margin-top:4px;background:#f0fdf4;padding:8px;border-radius:6px"><strong>📌 本日變動說明：</strong>證券市值 +55,000（00888×2 + 00918×1 今日購入）+ 現金 +33,000（洲際W房租入帳）。總資產反映上述真實變動。</p>
+    <p class="text-sm" style="color:#6e6e73;margin-top:8px">資料來源：dragon_assets.db | 自動計算</p>
+    <p class="text-sm" style="color:#1d1d1f;margin-top:4px;background:#f0fdf4;padding:8px;border-radius:6px"><strong>📌 本日變動說明：</strong>證券市值 +55,000（00888×2 + 00918×1 今日購入）+ 現金 +33,000（洲際W房租入帳）。總資產反映上述真實變動。</p>
   </div>
 </body>
 </html>
