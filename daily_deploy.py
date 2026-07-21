@@ -250,7 +250,18 @@ def main() -> None:
     # 1. 產出
     if not run_step("run_daily", [sys.executable, str(BASE / "run_daily.py")]):
         return
-
+    
+    # 1.5 內容保護攔截（推送前自動檢查）
+    print("\n[STEP] 內容保護審計")
+    audit_result = subprocess.run(
+        [sys.executable, str(BASE / "pre_push_audit.py")],
+        capture_output=True, text=True, timeout=30
+    )
+    print(audit_result.stdout.strip())
+    if audit_result.returncode != 0:
+        print("[STOP] 內容保護未通過，停止推送。修復後重試。")
+        return
+    
     # 2. 檢查
     if checklist_failed():
         print("[STOP] 檢查未過，停止推送")
