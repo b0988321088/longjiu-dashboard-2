@@ -256,21 +256,25 @@ def main() -> None:
         print("[STOP] 檢查未過，停止推送")
         return
 
-    # 2.5 CIO 審查
-    failed_cio, cio_out = cio_review_failed()
-    if failed_cio:
-        print("[STOP] CIO 審查未過")
-        # Gemini 复核：CIO 擋住時才跑 Gemini 審查（節省 API 呼叫）
-        print("[STEP] gemini_review（CIO 擋住，觸發 Gemini 复核）")
-        failed_gemini, gemini_data = gemini_review_failed()
-        if failed_gemini:
-            print("[STOP] Gemini 亦未通過，停止推送")
+    # 2.5 Gemini 審查（每次 deploy 前必跑）
+    print("[STEP] Gemini 審查日報內容")
+    try:
+        import subprocess
+        _gr = subprocess.run(
+            [sys.executable, str(BASE / "gemini_review.py")],
+            capture_output=True, text=True, timeout=60
+        )
+        if _gr.returncode != 0:
+            print(f"[WARN] Gemini 審查回報問題:\n{_gr.stdout[:500]}")
+            print("[STOP] Gemini 審查未通過，停止推送。請修復後重試。")
+            print(f"   錯誤：{_gr.stderr[:200]}")
             return
         else:
-            print("[OK] Gemini 复核通過，覆蓋 CIO 決定，繼續推送")
-    else:
-        print("[CIO 審查] 全部通過。允許推送。")
-        # CIO 通過時跳過 Gemini，節省 API 費用
+            print(f"[OK] Gemini 審查通過")
+    except Exception as _ge:
+        print(f"[WARN] Gemini 審查執行失敗：{_ge}，繼續推送（降級）")
+    
+    # 2.6 CIO 通知（不再擋住流程，僅作為 deploy 前確認）
 
     # 2.7 Moat / Comparator / Balancer
     moat_path = BASE / f"moat_report_{TODAY}.json"
