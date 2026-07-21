@@ -1,6 +1,6 @@
 {
   "date": "20260721",
-  "generated_at": "2026-07-21T15:44:59.680563",
+  "generated_at": "2026-07-21T18:48:14.073425",
   "sources": {
     "yf_market": {
       "twii": "44,232.87 (+4.20%)",
@@ -53,5 +53,5 @@
   },
   "scenario_summary": "台股反彈，觀察回補訊號",
   "news": [],
-  "briefing_updated_at": "2026-07-21T15:44:59.682679"
+  "briefing_updated_at": "2026-07-21T18:48:14.074408"
 }

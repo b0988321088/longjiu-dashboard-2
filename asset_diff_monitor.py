@@ -339,7 +339,7 @@ def compute_changes(history: dict) -> list[dict]:
 
 
 # ---------- charts ----------
-def build_trend_charts(history: dict) -> str:
+def build_trend_charts(history: dict, current: dict | None = None) -> str:
     import json as _cj
     dates = sorted(history.keys())
     rows = [history[d] for d in dates[-14:]]
@@ -352,6 +352,12 @@ def build_trend_charts(history: dict) -> str:
     for key in ["securities_market","insurance_current","fund_market","cash","total_assets","total_liabilities"]:
         last_vals[key] = [float(r.get(key,0) or 0) for r in rows[-7:]]
 
+    # 如果有 current（即時 snapshot 值），覆蓋最後一筆
+    if current:
+        for key in last_vals:
+            ck = {"securities_market":"securities_market","insurance_current":"insurance_current","fund_market":"fund_market","cash":"cash","total_assets":"total_assets","total_liabilities":"total_liabilities"}[key]
+            if current.get(ck):
+                last_vals[key][-1] = float(current[ck])
     def _mini_bar(vals, color):
         """產生 7 小樣本條"""
         if not vals or max(vals) == min(vals):
@@ -603,7 +609,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     alert_header = f"單日資產下跌 ≥ {ALERT_DROP_TWD:,.0f} / {ALERT_DROP_PCT:.1f}%；證券下跌 ≥ {ALERT_SEC_DROP_TWD:,.0f} / ±{WATCH_SEC_PCT:.1f}%"
 
     buffett_md = buffett_advice(history, snap)
-    charts_html = build_trend_charts(history)
+    charts_html = build_trend_charts(history, ex)
 
     # Fund detail card from screenshot
     fund_detail_rows = "".join(

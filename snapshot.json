@@ -94,7 +94,7 @@
     "統一奔騰": 81094
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
-  "real_liquid_assets": 3853985,
+  "real_liquid_assets": 4483408,
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
   "passive_income": {
     "fund_dividend_monthly": 17519,
@@ -403,7 +403,7 @@
       "台股市值型成長": 1007090,
       "美股市值型成長": 76050,
       "防守型配息": 1022090,
-      "債券及安全現金": 9697196,
+      "債券及安全現金": 10262984,
       "現金/安全網": 2200410,
       "不動產": 34000000,
       "證券市值": 2205230,
@@ -606,5 +606,7 @@
   "monthly_salary": 43144,
   "travel_allowance": 12000,
   "second_salary": 39121,
-  "bonus_july": 39121
+  "bonus_july": 39121,
+  "cash_total": 4483408,
+  "bonds_cash": 10262984
 }
