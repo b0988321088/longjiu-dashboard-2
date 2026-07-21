@@ -201,7 +201,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   * {{ box-sizing: border-box; }}
   body {{
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", sans-serif;
-    background: #f5f5f7;
+    background: #f0f2f5;
     margin: 0;
     padding: 16px;
     line-height: 1.8;
@@ -212,21 +212,24 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   .page {{ max-width: 900px; margin: 0 auto; }}
   .card {{
     background: #fff;
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 18px;
     margin-bottom: 14px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border: 1px solid #e8eaed;
   }}
-  h1 {{ font-size: 22px; font-weight: 900; margin: 0 0 6px; }}
-  h2 {{ font-size: 18px; font-weight: 800; margin: 14px 0 8px; }}
-  h3 {{ font-size: 16px; font-weight: 800; margin: 10px 0 6px; }}
-  .label {{ font-size: 12px; color: #6e6e73; margin-bottom: 6px; }}
-  .text-lead {{ color: #3a3a3c; margin: 6px 0; }}
-  .num {{ font-weight: 800; color: #1d1d1f; }}
+  h1 {{ font-size: 22px; font-weight: 900; margin: 0 0 6px; color: #0f172a; }}
+  h2 {{ font-size: 18px; font-weight: 800; margin: 14px 0 8px; color: #1e3a5f; border-bottom: 2px solid #2563eb; padding-bottom: 4px; }}
+  h3 {{ font-size: 16px; font-weight: 800; margin: 10px 0 6px; color: #334155; }}
+  .label {{ font-size: 12px; color: #6b7280; margin-bottom: 6px; letter-spacing: 0.5px; }}
+  .text-lead {{ color: #374151; margin: 6px 0; }}
+  .num {{ font-weight: 800; color: #0f172a; }}
+  .num-blue {{ font-weight: 800; color: #2563eb; }}
   .num-green {{ font-weight: 800; color: #059669; }}
   .num-red {{ font-weight: 800; color: #dc2626; }}
-  .tag-ok {{ display:inline-block;background:#dcfce7;color:#059669;padding:1px 6px;border-radius:4px;font-size:13px;font-weight:700; }}
-  .tag-warn {{ display:inline-block;background:#fef3c7;color:#d97706;padding:1px 6px;border-radius:4px;font-size:13px;font-weight:700; }}
+  .tag-ok {{ display:inline-block;background:#dcfce7;color:#059669;padding:2px 8px;border-radius:4px;font-size:13px;font-weight:700; }}
+  .tag-warn {{ display:inline-block;background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:4px;font-size:13px;font-weight:700; }}
+  .tag-p0 {{ display:inline-block;background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:4px;font-size:13px;font-weight:700; }}
   .table-wrap {{ overflow-x: auto; margin: 8px 0; }}
   table {{
     width: 100%;
