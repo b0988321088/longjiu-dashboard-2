@@ -222,6 +222,11 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   h3 {{ font-size: 16px; font-weight: 800; margin: 10px 0 6px; }}
   .label {{ font-size: 12px; color: #6e6e73; margin-bottom: 6px; }}
   .text-lead {{ color: #3a3a3c; margin: 6px 0; }}
+  .num {{ font-weight: 800; color: #1d1d1f; }}
+  .num-green {{ font-weight: 800; color: #059669; }}
+  .num-red {{ font-weight: 800; color: #dc2626; }}
+  .tag-ok {{ display:inline-block;background:#dcfce7;color:#059669;padding:1px 6px;border-radius:4px;font-size:13px;font-weight:700; }}
+  .tag-warn {{ display:inline-block;background:#fef3c7;color:#d97706;padding:1px 6px;border-radius:4px;font-size:13px;font-weight:700; }}
   .table-wrap {{ overflow-x: auto; margin: 8px 0; }}
   table {{
     width: 100%;
