@@ -346,7 +346,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。大義街1樓 24,000（7月初入帳）+ 洲際W 33,000（7/20 ✅ 已入帳）= 已實收 57,000；剩大義街23樓 21,000 + 管理費 2,100 月底收齊。星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
 
     <h3>鉅亨基金部位</h3>
-    <p class="text-lead">基金總市值 <strong>{tv.get('fund_market_value',0):,} TWD</strong>（一般申購 361,224 + 自由PAY 433,933）。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 795,157。</p>
+    <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong>（一般申購 361,224 + 自由PAY 433,933）。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 795,157。</p>
   </div>
 
   <!-- 3/5 保單接力引擎 -->
@@ -674,10 +674,16 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, strategy_notes: str
             _l = _l.strip()
             if not _l:
                 continue
+            # 移除 bullet 前綴，保留 emoji
+            _disp = _l.lstrip("- ")
             if _l.startswith("# "):
                 _sn_html += f"<strong style='color:#1e40af;'>{_l[2:]}</strong><br>"
-            elif _l.startswith("- ") or _l.startswith("✅") or _l.startswith("⏸️"):
-                _sn_html += f"• {_l.lstrip('- ✅⏸️ ')}<br>"
+            elif _disp.startswith("✅"):
+                _sn_html += f"<div style='color:#059669;margin:1px 0;'>{_disp}</div>"
+            elif _disp.startswith("⏸️"):
+                _sn_html += f"<div style='color:#d97706;margin:1px 0;'>{_disp}</div>"
+            elif _l.startswith("- "):
+                _sn_html += f"• {_l[2:]}<br>"
             elif _l and not _l.startswith("—"):
                 _sn_html += f"<span style='color:#4b5563;'>{_l}</span><br>"
         _sn_html += '</div></div>'
