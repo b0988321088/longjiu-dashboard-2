@@ -198,105 +198,63 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   * {{ box-sizing: border-box; }}
   body {{
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", sans-serif;
-    background: #f5f5f7;
+    background: #05070A;
     margin: 0;
     padding: 16px;
     line-height: 1.8;
     font-size: 17px;
-    color: #1d1d1f;
+    color: #A0AEC0;
     -webkit-text-size-adjust: 100%;
   }}
   .page {{ max-width: 900px; margin: 0 auto; }}
   .card {{
-    background: #fff;
+    background: #0D1117;
     border-radius: 12px;
     padding: 18px;
     margin-bottom: 14px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   }}
   h1 {{ font-size: 22px; font-weight: 900; margin: 0 0 6px; }}
   h2 {{ font-size: 18px; font-weight: 800; margin: 14px 0 8px; }}
   h3 {{ font-size: 16px; font-weight: 800; margin: 10px 0 6px; }}
-  .label {{ font-size: 12px; color: #6e6e73; margin-bottom: 6px; }}
-  .text-lead {{ color: #3a3a3c; margin: 6px 0; }}
+  .label {{ font-size: 12px; color: #64748B; margin-bottom: 6px; }}
+  .text-lead {{ color: #A0AEC0; margin: 6px 0; }}
   .table-wrap {{ overflow-x: auto; margin: 8px 0; }}
   table {{
     width: 100%;
     border-collapse: collapse;
-    background: #fff;
-    border: 1px solid #e5e5ea;
+    background: #0D1117;
+    border: 1px solid #1F2937;
     border-radius: 10px;
     overflow: hidden;
     font-size: 16px;
   }}
   thead th {{
-    background: #f2f2f7;
+    background: #162032;
     font-weight: 800;
     text-align: left;
     padding: 10px 12px;
-    border-bottom: 1px solid #e5e5ea;
+    border-bottom: 1px solid #1F2937;
     font-size: 15px;
   }}
   tbody td {{
     padding: 10px 12px;
-    border-bottom: 1px solid #f2f2f7;
+    border-bottom: 1px solid #162032;
     vertical-align: top;
   }}
-  tbody tr:hover td {{ background: #1F2937; }}
-body {{
-    background-color: #05070A !important;
-    color: #A0AEC0 !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", sans-serif;
-    margin: 0; padding: 16px;
-    line-height: 1.7; font-size: 16px;
-    -webkit-text-size-adjust: 100%;
-}}
-.page {{ max-width: 900px; margin: 0 auto; }}
-.card {{
-    background: #0D1117 !important;
-    border: 1px solid #1F2937 !important;
-    border-radius: 12px !important;
-    padding: 16px !important;
-    margin-bottom: 16px !important;
-}}
-h1 {{ font-size: 22px; font-weight: 900; color: #FFFFFF; margin: 0 0 6px; }}
-h2 {{ font-size: 18px; font-weight: 800; color: #FFFFFF; margin: 16px 0 10px; border-bottom: 2px solid #60A5FA; padding-bottom: 6px; }}
-h3 {{ font-size: 15px; font-weight: 800; color: #60A5FA; margin: 10px 0 6px; }}
-.label {{ font-size: 11px; color: #64748B; margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }}
-.text-lead {{ color: #A0AEC0; margin: 6px 0; font-size: 15px; line-height: 1.6; }}
-.num {{ font-family: "JetBrains Mono", "Fira Code", monospace; font-weight: 800; color: #60A5FA !important; }}
-.num-green {{ font-weight: 800; color: #34D399 !important; }}
-.num-red {{ font-weight: 800; color: #F87171 !important; }}
-.tag-ok {{ display:inline-block; background:rgba(52,211,153,0.15); color:#34D399; border:1px solid rgba(52,211,153,0.3); padding:2px 8px; border-radius:4px; font-size:12px; font-weight:700; }}
-.tag-warn {{ display:inline-block; background:rgba(251,191,36,0.15); color:#FBBF24; border:1px solid rgba(251,191,36,0.3); padding:2px 8px; border-radius:4px; font-size:12px; font-weight:700; }}
-.tag-p0 {{ display:inline-block; background:rgba(248,113,113,0.15); color:#F87171; border:1px solid rgba(248,113,113,0.3); padding:2px 8px; border-radius:4px; font-size:12px; font-weight:700; }}
-.table-wrap {{ overflow-x: auto; margin: 8px 0; }}
-table {{ width: 100%; border-collapse: collapse; background: transparent; font-size: 14px; }}
-thead th {{ background: #162032 !important; color: #FFFFFF !important; border-bottom: 2px solid #1F2937 !important; padding: 10px 8px !important; font-size: 13px !important; text-align: left; font-weight: 700; }}
-tbody td {{ color: #A0AEC0 !important; border-bottom: 1px solid #1F2937 !important; padding: 12px 8px !important; font-size: 14px !important; vertical-align: top; background: #0D131D !important; }}
-tbody tr:nth-child(even) td {{ background: #0D1117; }}
-tbody tr:hover td {{ background: #1F2937; }}
-td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
-.callout {{
-    border-radius: 10px;
-    padding: 12px 14px;
-    margin: 10px 0;
-    border-left: 4px solid;
-}}
-.callout-bull {{ background: rgba(52,211,153,0.08); border-color: #34D399; color: #A0AEC0; }}
-.callout-bear {{ background: rgba(248,113,113,0.08); border-color: #F87171; color: #A0AEC0; }}
-.callout-bull strong, .callout-bear strong {{ color: #FFFFFF; }}
-  td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
+  tbody tr:nth-child(even) td {{ background: #0D131D; }}
+  tbody tr:hover td {{ background: #f0f8ff; }}
+  td.num {{ text-align: right; font-variant-numeric: tabular-nums; color: #60A5FA; }}
   .callout {{
     border-radius: 10px;
     padding: 12px 14px;
     margin: 10px 0;
     border-left: 4px solid;
   }}
-  .callout-bull {{ background: rgba(52,211,153,0.08); border-color: #34D399; color: #A0AEC0; }}
-  .callout-bear {{ background: rgba(248,113,113,0.08); border-color: #F87171; color: #A0AEC0; }}
-  .callout-warn {{ background: rgba(251,191,36,0.08); border-color: #FBBF24; color: #A0AEC0; }}
-  .callout-info {{ background: rgba(96,165,250,0.08); border-color: #60A5FA; color: #A0AEC0; }}
+  .callout-bull {{ background:rgba(52,211,153,0.08); border-color:#34D399; }}
+  .callout-bear {{ background:#0D11175f5; border-color:#F87171; }}
+  .callout-warn {{ background:#0D1117beb; border-color:#FBBF24; }}
+  .callout-info {{ background:rgba(96,165,250,0.08); border-color:#60A5FA; }}
 
   /* Mobile table style: bordered with background fill */
   @media (max-width: 640px) {{
@@ -310,13 +268,13 @@ td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
     overflow: hidden;
   }}
   table.mobile-bordered th {{
-    background: #f2f2f7 !important;
-    border: 1px solid #e5e5ea;
-    color: #1d1d1f;
+    background: #162032 !important;
+    border: 1px solid #1F2937;
+    color: #A0AEC0;
   }}
   table.mobile-bordered td {{
-    background: #ffffff !important;
-    border: 1px solid #f2f2f7;
+    background: #0D1117fff !important;
+    border: 1px solid #162032;
   }}
   table.mobile-bordered tr:nth-child(even) td {{ background: #f9fafb !important; }}
   table.mobile-bordered .num {{ background: transparent !important; }}
@@ -363,16 +321,16 @@ td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
         </tbody>
       </table>
     </div>
-    <p class="text-sm" style="color:#6e6e73;margin-top:8px">資產穿透分母：證券＋保單＋基金＋現金＋不動產；管理費~1.5%，偏高於配息收益率。</p>
+    <p class="text-sm" style="color:#64748B;margin-top:8px">資產穿透分母：證券＋保單＋基金＋現金＋不動產；管理費~1.5%，偏高於配息收益率。</p>
     <p class="text-sm" style="color:#16a34a;margin-top:4px"><strong>✅ 債券穿透校準：</strong>{tv.get("bonds", 2_097_467):,} TWD（安聯A+B+FL65保單內基金債券曝險合計），資料日期 2026-07-20。</p>
-    <p class="text-sm" style="color:#1d1d1f;margin-top:6px"><strong>📌 本日新增持倉：</strong>{today_purchases}</p>
+    <p class="text-sm" style="color:#A0AEC0;margin-top:6px"><strong>📌 本日新增持倉：</strong>{today_purchases}</p>
   </div>
 
   <!-- 市場情報 -->
   <div class="card">
     <h2>2/5｜市場情報 Market Intel</h2>
     <div class="label">獵人情報 + 市場搜尋 + 持倉關聯</div>
-    <pre id="market-intel-block" style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:#1d1d1f;">{market_intel_text}</pre>
+    <pre id="market-intel-block" style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:#A0AEC0;">{market_intel_text}</pre>
   </div>
 
   <!-- 戰略異常看板 -->
@@ -669,7 +627,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
         buf_content += """1. 轉貸資金入帳 → 優先清償保單借貸 400 萬 + 週轉金利息<br>"""
         buf_content += """2. 剩餘額度 → 設為理財型（隨借隨還、冰凍不動）<br>"""
         buf_content += """3. 全部完成後 → 配息才是真正乾淨配息<br>"""
-        buf_content += f"""<br><small style="color:#6e6e73">資料日期：{TODAY}（穿透+市場聯合驅動）</small>"""
+        buf_content += f"""<br><small style="color:#64748B">資料日期：{TODAY}（穿透+市場聯合驅動）</small>"""
 
     if not cto_content:
         cto_tech = cto.get("tech_stack", "—")
@@ -751,8 +709,8 @@ def _inject_asset_diff(html: str, tv: dict) -> str:
         <tbody>{diff_rows}</tbody>
       </table>
     </div>
-    <p class="text-sm" style="color:#6e6e73;margin-top:8px">資料來源：dragon_assets.db | 自動計算</p>
-    <p class="text-sm" style="color:#1d1d1f;margin-top:4px;background:#f0fdf4;padding:8px;border-radius:6px"><strong>📌 本日變動說明：</strong>證券市值 +55,000（00888×2 + 00918×1 今日購入）+ 現金 +33,000（洲際W房租入帳）。總資產反映上述真實變動。</p>
+    <p class="text-sm" style="color:#64748B;margin-top:8px">資料來源：dragon_assets.db | 自動計算</p>
+    <p class="text-sm" style="color:#A0AEC0;margin-top:4px;background:#f0fdf4;padding:8px;border-radius:6px"><strong>📌 本日變動說明：</strong>證券市值 +55,000（00888×2 + 00918×1 今日購入）+ 現金 +33,000（洲際W房租入帳）。總資產反映上述真實變動。</p>
   </div>"""
 
     html = html.replace('</body>', block + '\n</body>')
@@ -831,7 +789,7 @@ def main():
     <h2>🧠 Gemini 風控意見</h2>
     <div class="label">score: {_score}/10 | status: {_status} | {_summary}</div>
     <ul style="padding-left:16px;margin:8px 0">{_bullet}</ul>
-    <p class="text-sm" style="color:#6e6e73">資料來源：Gemini 2.5 Flash 自動審查</p>
+    <p class="text-sm" style="color:#64748B">資料來源：Gemini 2.5 Flash 自動審查</p>
   </div>"""
             daily_html = daily_html.replace('</body>', _gemini_block + '\n</body>')
         except Exception as _ge:
