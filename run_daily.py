@@ -204,7 +204,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     --border-card: #2d3d54;
     --text-primary: #ffffff;
     --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
+    --text-muted: #cbd5e1;
     --accent-num: #38bdf8;
     --accent-green: #34d399;
     --accent-red: #f87171;
@@ -215,18 +215,18 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     background-color: var(--bg-canvas) !important;
     color: var(--text-primary) !important;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", sans-serif;
-    margin: 0; padding: 16px;
-    line-height: 1.7; font-size: 16px;
+    margin: 0; padding: 20px;
+    line-height: 1.9; font-size: 17px;
     -webkit-text-size-adjust: 100%;
   }}
   .page {{ max-width: 900px; margin: 0 auto; }}
   .card-hero, .card, .card-ceo, .card-buffett, .card-danger, div[class*="card"] {{
     background-color: var(--bg-card) !important;
-    border: 1px solid var(--border-card) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
-    padding: 16px !important;
-    margin-bottom: 16px !important;
+    border: 1px solid #3d5270 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5) !important;
+    padding: 18px !important;
+    margin-bottom: 18px !important;
   }}
   .card-hero {{
     background: linear-gradient(135deg, #1E293B, #0F172A) !important;
@@ -251,8 +251,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   h2 {{ font-size: 18px; font-weight: 800; color: var(--text-primary); margin: 16px 0 10px; border-bottom: 2px solid var(--accent-num); padding-bottom: 6px; }}
   h3 {{ font-size: 15px; font-weight: 800; color: var(--accent-num); margin: 10px 0 6px; }}
   .label {{ font-size: 11px; color: var(--text-muted); margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }}
-  .text-lead {{ color: var(--text-secondary); margin: 6px 0; font-size: 15px; line-height: 1.6; }}
-  .num {{ font-weight: 800; color: var(--text-primary); }}
+  .text-lead {{ color: var(--text-secondary); margin: 8px 0; font-size: 16px; line-height: 1.8; }}
+  .num {{ font-weight: 800; color: #ffffff; }}
   .num-blue {{ font-weight: 800; color: var(--accent-num); }}
   .num-green {{ font-weight: 800; color: var(--accent-green); }}
   .num-red {{ font-weight: 800; color: var(--accent-red); }}
@@ -266,9 +266,9 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   .intel-tile .tile-label {{ font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }}
   .intel-tile .tile-value {{ font-size: 15px; font-weight: 800; color: var(--text-primary); }}
   
-  table {{ width: 100%; border-collapse: collapse; background: transparent; border: 1px solid var(--border-card); border-radius: 10px; overflow: hidden; font-size: 14px; }}
-  thead th {{ background-color: #1e293b !important; color: #f1f5f9 !important; border-bottom: 2px solid #475569 !important; padding: 10px 8px !important; font-size: 13px !important; text-align: left; }}
-  tbody td {{ color: var(--text-secondary) !important; border-bottom: 1px solid #283548 !important; padding: 12px 8px !important; font-size: 14px !important; vertical-align: top; }}
+  table {{ width: 100%; border-collapse: collapse; background: transparent; border: 1px solid #3d5270; border-radius: 12px; overflow: hidden; font-size: 15px; }}
+  thead th {{ background-color: #1e293b !important; color: #ffffff !important; border-bottom: 2px solid #4b6a9b !important; padding: 12px 10px !important; font-size: 14px !important; text-align: left; font-weight: 700; }}
+  tbody td {{ color: #e2e8f0 !important; border-bottom: 1px solid #2d3d54 !important; padding: 14px 10px !important; font-size: 15px !important; vertical-align: top; }}
   tbody tr:nth-child(even) td {{ background: rgba(255,255,255,0.02); }}
   .table-wrap {{ overflow-x: auto; margin: 8px 0; }}
   table {{

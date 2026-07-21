@@ -11,7 +11,7 @@
     --border-card: #2d3d54;
     --text-primary: #ffffff;
     --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
+    --text-muted: #cbd5e1;
     --accent-num: #38bdf8;
     --accent-green: #34d399;
     --accent-red: #f87171;
@@ -22,18 +22,18 @@
     background-color: var(--bg-canvas) !important;
     color: var(--text-primary) !important;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", sans-serif;
-    margin: 0; padding: 16px;
-    line-height: 1.7; font-size: 16px;
+    margin: 0; padding: 20px;
+    line-height: 1.9; font-size: 17px;
     -webkit-text-size-adjust: 100%;
   }
   .page { max-width: 900px; margin: 0 auto; }
   .card-hero, .card, .card-ceo, .card-buffett, .card-danger, div[class*="card"] {
     background-color: var(--bg-card) !important;
-    border: 1px solid var(--border-card) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
-    padding: 16px !important;
-    margin-bottom: 16px !important;
+    border: 1px solid #3d5270 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5) !important;
+    padding: 18px !important;
+    margin-bottom: 18px !important;
   }
   .card-hero {
     background: linear-gradient(135deg, #1E293B, #0F172A) !important;
@@ -58,8 +58,8 @@
   h2 { font-size: 18px; font-weight: 800; color: var(--text-primary); margin: 16px 0 10px; border-bottom: 2px solid var(--accent-num); padding-bottom: 6px; }
   h3 { font-size: 15px; font-weight: 800; color: var(--accent-num); margin: 10px 0 6px; }
   .label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }
-  .text-lead { color: var(--text-secondary); margin: 6px 0; font-size: 15px; line-height: 1.6; }
-  .num { font-weight: 800; color: var(--text-primary); }
+  .text-lead { color: var(--text-secondary); margin: 8px 0; font-size: 16px; line-height: 1.8; }
+  .num { font-weight: 800; color: #ffffff; }
   .num-blue { font-weight: 800; color: var(--accent-num); }
   .num-green { font-weight: 800; color: var(--accent-green); }
   .num-red { font-weight: 800; color: var(--accent-red); }
@@ -73,9 +73,9 @@
   .intel-tile .tile-label { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
   .intel-tile .tile-value { font-size: 15px; font-weight: 800; color: var(--text-primary); }
   
-  table { width: 100%; border-collapse: collapse; background: transparent; border: 1px solid var(--border-card); border-radius: 10px; overflow: hidden; font-size: 14px; }
-  thead th { background-color: #1e293b !important; color: #f1f5f9 !important; border-bottom: 2px solid #475569 !important; padding: 10px 8px !important; font-size: 13px !important; text-align: left; }
-  tbody td { color: var(--text-secondary) !important; border-bottom: 1px solid #283548 !important; padding: 12px 8px !important; font-size: 14px !important; vertical-align: top; }
+  table { width: 100%; border-collapse: collapse; background: transparent; border: 1px solid #3d5270; border-radius: 12px; overflow: hidden; font-size: 15px; }
+  thead th { background-color: #1e293b !important; color: #ffffff !important; border-bottom: 2px solid #4b6a9b !important; padding: 12px 10px !important; font-size: 14px !important; text-align: left; font-weight: 700; }
+  tbody td { color: #e2e8f0 !important; border-bottom: 1px solid #2d3d54 !important; padding: 14px 10px !important; font-size: 15px !important; vertical-align: top; }
   tbody tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
   .table-wrap { overflow-x: auto; margin: 8px 0; }
   table {
@@ -188,10 +188,10 @@
     <div id="market-intel-block" class="intel-grid">【台股/大盤】
 加權指數：44,232.87 (+4.20%)
 台積電：2,410.00 (+3.88%)
-費半：12,146.18 (+3.43%)
+費半：12,128.37 (+3.27%)
 
 【美股/外資】
-美股：道瓊 52,092.86 (+0.49%) / 納指 25,711.90 (+0.80%) / S&P 7,480.26 (+0.50%)
+美股：道瓊 52,126.57 (+0.55%) / 納指 25,702.02 (+0.76%) / S&P 7,477.55 (+0.46%)
 外資7日淨流：—
 
 【CPI/利率】
@@ -203,7 +203,7 @@
 
 買進訊號：
 • 台股大漲 4.2%
-• 費半大漲 3.43%
+• 費半大漲 3.27%
 
 【持倉關聯分析】
 台股曝險部位約 101 萬；美股曝險 8 萬；防守配息 102 萬
@@ -360,7 +360,7 @@
 
     <div class="callout callout-bull">
       <strong>🟢 Bull Case</strong><br>
-      台股大漲 4.2%; 費半大漲 3.43%
+      台股大漲 4.2%; 費半大漲 3.27%
     </div>
 
     <div class="callout callout-bear">
@@ -381,8 +381,8 @@
         <tbody>
           <tr><td>台股加權指數（2026-07-21）</td><td>44,232.87 (+4.20%)</td><td>44,232.87 (+4.20%)</td></tr>
           <tr><td>台積電（2026-07-21）</td><td>2,410.00 (+3.88%)</td><td>半導體龍頭穩盤</td></tr>
-          <tr><td>費半（2026-07-21）</td><td>12,146.18 (+3.43%)</td><td>高檔回調</td></tr>
-          <tr><td>美股（2026-07-21）</td><td>道瓊 52,092.86 (+0.49%) / 納指 25,711.90 (+0.80%) / S&P 7,480.26 (+0.50%)</td><td>通膨降溫驅動科技領漲</td></tr>
+          <tr><td>費半（2026-07-21）</td><td>12,128.37 (+3.27%)</td><td>高檔回調</td></tr>
+          <tr><td>美股（2026-07-21）</td><td>道瓊 52,126.57 (+0.55%) / 納指 25,702.02 (+0.76%) / S&P 7,477.55 (+0.46%)</td><td>通膨降溫驅動科技領漲</td></tr>
           <tr><td>美國 CPI</td><td>美國 6 月 CPI YoY 3.5% (預期 3.8%)；Core 2.6% (預期 2.8%)</td><td>降息預期升溫</td></tr>
         </tbody>
       </table>
@@ -390,7 +390,7 @@
 
     <h3>巴菲特視角建議</h3>
     <div class="callout callout-bull">
-      <div class="card-ceo"><div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:6px;">📝 CEO 戰略指令</div><div style="font-size:13px;line-height:1.6;"><div style="color:#059669;margin:1px 0;">✅ 今日決策（2026-07-21）</div><div style="color:#059669;margin:1px 0;">✅ 三源同步機制（snapshot+db+history），傳截圖一次到位</div><div style="color:#059669;margin:1px 0;">✅ 全離峰排程，尖峰時段零 Token</div><div style="color:#059669;margin:1px 0;">✅ 費用監控 06:00 自動回報 + Gemini 921 提醒</div><div style="color:#059669;margin:1px 0;">✅ 跨代理記憶同步 19:00 每天執行</div><div style="color:#059669;margin:1px 0;">✅ Notion 雙向中樞 MVP（notion_bridge.py）</div><div style="color:#d97706;margin:1px 0;">⏸️ 待確認</div><div style="color:#d97706;margin:1px 0;">⏸️ 724 確認國泰轉貸進度</div><div style="color:#d97706;margin:1px 0;">⏸️ 79萬星展還款（今天17:00提醒）</div><div style="color:#d97706;margin:1px 0;">⏸️ 87 教育訓練（13:10-16:20）</div></div></div><strong>🧓 巴菲特式思考</strong><br>• 場景判定：台股反彈，觀察回補訊號<br>• Bull：台股大漲 4.2%; 費半大漲 3.43%<br>• Bear：反彈不宜追價，等待量能確認<br>• 若外資買超 + 大盤漲1% + 费半+3%，可回補台股至15-20%<br>• 保留高利活存作為安全邊際<br>• 保單配息持續入帳，維持退休金流<br><br><strong>📋  昨日差異帶來的行動啟示</strong><br>• 淨資產上升（33,490,643 vs 昨日 28,689,930）：淨資產下滑需檢視資產配置是否有過度曝險<br>• 保單現值下降（9,633,273 vs 昨日 9,876,282）：保單現值下降應評估是否調整基金標的<br><br><strong>🤝 Buffett 派操作建議</strong><br>• 淨資產：33,490,643 TWD<br>• 建議部位：美股權益 ≤ 35%、台股權益 15-20%、高利活存/短債 ≥ 20%、保單/配息穩定型 ≥ 25%<br>• 今日動作：減碼美股權重、增加高利活存與防禦型配息部位；0050 配息縮水後缺口以 00878/00713 補位。<br>• 觸發條件：外資賣超 > 150 億 / 大盤跌 1.5% / 費半跌 2% / 跌破季線+量增 → 啟動減碼；外資買超 > 100 億 + 大盤漲 1% + 費半 +3% → 回補。
+      <div class="card-ceo"><div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:6px;">📝 CEO 戰略指令</div><div style="font-size:13px;line-height:1.6;"><div style="color:#059669;margin:1px 0;">✅ 今日決策（2026-07-21）</div><div style="color:#059669;margin:1px 0;">✅ 三源同步機制（snapshot+db+history），傳截圖一次到位</div><div style="color:#059669;margin:1px 0;">✅ 全離峰排程，尖峰時段零 Token</div><div style="color:#059669;margin:1px 0;">✅ 費用監控 06:00 自動回報 + Gemini 921 提醒</div><div style="color:#059669;margin:1px 0;">✅ 跨代理記憶同步 19:00 每天執行</div><div style="color:#059669;margin:1px 0;">✅ Notion 雙向中樞 MVP（notion_bridge.py）</div><div style="color:#d97706;margin:1px 0;">⏸️ 待確認</div><div style="color:#d97706;margin:1px 0;">⏸️ 724 確認國泰轉貸進度</div><div style="color:#d97706;margin:1px 0;">⏸️ 79萬星展還款（今天17:00提醒）</div><div style="color:#d97706;margin:1px 0;">⏸️ 87 教育訓練（13:10-16:20）</div></div></div><strong>🧓 巴菲特式思考</strong><br>• 場景判定：台股反彈，觀察回補訊號<br>• Bull：台股大漲 4.2%; 費半大漲 3.27%<br>• Bear：反彈不宜追價，等待量能確認<br>• 若外資買超 + 大盤漲1% + 费半+3%，可回補台股至15-20%<br>• 保留高利活存作為安全邊際<br>• 保單配息持續入帳，維持退休金流<br><br><strong>📋  昨日差異帶來的行動啟示</strong><br>• 淨資產上升（33,490,643 vs 昨日 28,689,930）：淨資產下滑需檢視資產配置是否有過度曝險<br>• 保單現值下降（9,633,273 vs 昨日 9,876,282）：保單現值下降應評估是否調整基金標的<br><br><strong>🤝 Buffett 派操作建議</strong><br>• 淨資產：33,490,643 TWD<br>• 建議部位：美股權益 ≤ 35%、台股權益 15-20%、高利活存/短債 ≥ 20%、保單/配息穩定型 ≥ 25%<br>• 今日動作：減碼美股權重、增加高利活存與防禦型配息部位；0050 配息縮水後缺口以 00878/00713 補位。<br>• 觸發條件：外資賣超 > 150 億 / 大盤跌 1.5% / 費半跌 2% / 跌破季線+量增 → 啟動減碼；外資買超 > 100 億 + 大盤漲 1% + 費半 +3% → 回補。
     </div>
 
     <h3>CTO 技術視角</h3>
