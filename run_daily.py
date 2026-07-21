@@ -198,149 +198,77 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>龍九控股日報 {TODAY}</title>
 <style>
-  :root {{
-    --bg-canvas: #0F172A;
-    --bg-card: #1E293B;
-    --bg-card-border: #334155;
-    --text-primary: #F8FAFC;
-    --text-secondary: #94A3B8;
-    --text-accent: #38BDF8;
-    --danger: #EF4444;
-    --danger-bg: rgba(239,68,68,0.1);
-    --success: #10B981;
-    --success-bg: rgba(16,185,129,0.1);
-    --warn: #F59E0B;
-    --warn-bg: rgba(245,158,11,0.1);
+    :root {{
+    --bg-canvas: #090d16;
+    --bg-card: #162032;
+    --border-card: #2d3d54;
+    --text-primary: #ffffff;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --accent-num: #38bdf8;
+    --accent-green: #34d399;
+    --accent-red: #f87171;
+    --accent-amber: #fbbf24;
   }}
   * {{ box-sizing: border-box; }}
   body {{
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", sans-serif;
-    background: var(--bg-canvas);
-    margin: 0;
-    padding: 16px;
-    line-height: 1.7;
-    font-size: 16px;
-    color: var(--text-primary);
+    background-color: var(--bg-canvas) !important;
+    color: var(--text-primary) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", sans-serif;
+    margin: 0; padding: 16px;
+    line-height: 1.7; font-size: 16px;
     -webkit-text-size-adjust: 100%;
   }}
   .page {{ max-width: 900px; margin: 0 auto; }}
-  
-  /* 三級色塊系統 */
-  .card-hero {{
-    background: linear-gradient(135deg, #1E293B, #0F172A);
-    border-radius: 14px;
-    padding: 20px;
-    margin-bottom: 14px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    border: 1px solid var(--bg-card-border);
+  .card-hero, .card, .card-ceo, .card-buffett, .card-danger, div[class*="card"] {{
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-card) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+    padding: 16px !important;
+    margin-bottom: 16px !important;
   }}
-  .card {{
-    background: var(--bg-card);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 14px;
-    border: 1px solid var(--bg-card-border);
+  .card-hero {{
+    background: linear-gradient(135deg, #1E293B, #0F172A) !important;
   }}
   .card-danger {{
-    background: var(--danger-bg);
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin-bottom: 14px;
-    border-left: 4px solid var(--danger);
-    border-top: 1px solid rgba(239,68,68,0.2);
-    border-right: 1px solid rgba(239,68,68,0.2);
-    border-bottom: 1px solid rgba(239,68,68,0.2);
+    background-color: #2a1215 !important;
+    border-left: 5px solid #ef4444 !important;
+    border-top: 1px solid #7f1d1d !important;
+    border-right: 1px solid #7f1d1d !important;
+    border-bottom: 1px solid #7f1d1d !important;
+    color: #fecaca !important;
   }}
   .card-ceo {{
-    background: #172554;
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin-bottom: 14px;
-    border: 1px solid #1E40AF;
+    background-color: #172554 !important;
+    border: 1px solid #1E40AF !important;
   }}
   .card-buffett {{
-    background: #1F2937;
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin-bottom: 14px;
-    border-left: 4px solid var(--warn);
-    border-top: 1px solid #374151;
-    border-right: 1px solid #374151;
-    border-bottom: 1px solid #374151;
+    background-color: #1F2937 !important;
+    border-left: 4px solid var(--accent-amber) !important;
   }}
-  
-  h1 {{ font-size: 22px; font-weight: 900; margin: 0 0 6px; color: var(--text-primary); }}
-  h2 {{ font-size: 18px; font-weight: 800; margin: 16px 0 10px; color: var(--text-primary); border-bottom: 2px solid var(--text-accent); padding-bottom: 6px; }}
-  h3 {{ font-size: 15px; font-weight: 800; margin: 10px 0 6px; color: var(--text-accent); }}
-  .label {{ font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }}
+  h1 {{ font-size: 22px; font-weight: 900; color: var(--text-primary); margin: 0 0 6px; }}
+  h2 {{ font-size: 18px; font-weight: 800; color: var(--text-primary); margin: 16px 0 10px; border-bottom: 2px solid var(--accent-num); padding-bottom: 6px; }}
+  h3 {{ font-size: 15px; font-weight: 800; color: var(--accent-num); margin: 10px 0 6px; }}
+  .label {{ font-size: 11px; color: var(--text-muted); margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }}
   .text-lead {{ color: var(--text-secondary); margin: 6px 0; font-size: 15px; line-height: 1.6; }}
   .num {{ font-weight: 800; color: var(--text-primary); }}
-  .num-blue {{ font-weight: 800; color: var(--text-accent); }}
-  .num-green {{ font-weight: 800; color: var(--success); }}
-  .num-red {{ font-weight: 800; color: var(--danger); }}
-  .tag-ok {{ display:inline-block;background:var(--success-bg);color:var(--success);padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700; }}
-  .tag-warn {{ display:inline-block;background:var(--warn-bg);color:var(--warn);padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700; }}
-  .tag-p0 {{ display:inline-block;background:var(--danger-bg);color:var(--danger);padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700; }}
+  .num-blue {{ font-weight: 800; color: var(--accent-num); }}
+  .num-green {{ font-weight: 800; color: var(--accent-green); }}
+  .num-red {{ font-weight: 800; color: var(--accent-red); }}
   
-  /* 市場情報 Grid */
-  .intel-grid {{
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin: 8px 0;
-  }}
-  .intel-tile {{
-    background: rgba(255,255,255,0.04);
-    border-radius: 8px;
-    padding: 10px 12px;
-    border: 1px solid var(--bg-card-border);
-  }}
-  .intel-tile .tile-label {{
-    font-size: 11px; color: var(--text-secondary); margin-bottom: 2px;
-  }}
-  .intel-tile .tile-value {{
-    font-size: 15px; font-weight: 800; color: var(--text-primary);
-  }}
-  .intel-tile .tile-change-up {{
-    font-size: 13px; color: var(--success);
-  }}
-  .intel-tile .tile-change-down {{
-    font-size: 13px; color: var(--danger);
-  }}
+  .tag-ok {{ display:inline-block;background:#064e3b;color:#6ee7b7;border:1px solid #34d399;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700; }}
+  .tag-warn {{ display:inline-block;background:#422006;color:#fbbf24;border:1px solid #f59e0b;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700; }}
+  .tag-p0 {{ display:inline-block;background:#7f1d1d;color:#fca5a5;border:1px solid #f87171;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700; }}
   
-  /* 進度條 */
-  .progress-bar {{
-    height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; margin: 6px 0; overflow: hidden;
-  }}
-  .progress-fill {{
-    height: 100%; border-radius: 3px; transition: width 0.3s;
-  }}
+  .intel-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }}
+  .intel-tile {{ background: rgba(255,255,255,0.04); border-radius: 8px; padding: 10px 12px; border: 1px solid var(--border-card); }}
+  .intel-tile .tile-label {{ font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }}
+  .intel-tile .tile-value {{ font-size: 15px; font-weight: 800; color: var(--text-primary); }}
   
-  .table-wrap {{ overflow-x: auto; margin: 8px 0; }}
-  table {{
-    width: 100%;
-    border-collapse: collapse;
-    background: transparent;
-    border: 1px solid var(--bg-card-border);
-    border-radius: 10px;
-    overflow: hidden;
-    font-size: 14px;
-  }}
-  thead th {{
-    background: rgba(255,255,255,0.06);
-    font-weight: 700;
-    color: var(--text-secondary);
-    text-align: left;
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--bg-card-border);
-    font-size: 13px;
-  }}
-  tbody td {{
-    padding: 8px 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    color: var(--text-secondary);
-    vertical-align: top;
-  }}
+  table {{ width: 100%; border-collapse: collapse; background: transparent; border: 1px solid var(--border-card); border-radius: 10px; overflow: hidden; font-size: 14px; }}
+  thead th {{ background-color: #1e293b !important; color: #f1f5f9 !important; border-bottom: 2px solid #475569 !important; padding: 10px 8px !important; font-size: 13px !important; text-align: left; }}
+  tbody td {{ color: var(--text-secondary) !important; border-bottom: 1px solid #283548 !important; padding: 12px 8px !important; font-size: 14px !important; vertical-align: top; }}
   tbody tr:nth-child(even) td {{ background: rgba(255,255,255,0.02); }}
   .table-wrap {{ overflow-x: auto; margin: 8px 0; }}
   table {{
