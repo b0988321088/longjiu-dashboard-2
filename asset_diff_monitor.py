@@ -5,7 +5,7 @@ asset_diff_monitor.py — 資產每日變化監控 + 趨勢 + 巴菲特建議
 """
 from __future__ import annotations
 
-import json, sys
+import json, sys, sqlite3
 import os
 import urllib.request
 import urllib.error
@@ -634,6 +634,28 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         "</div>"
     )
 
+    # Securities detail card
+    try:
+        _db_sec = sqlite3.connect(str(Path("dragon_assets.db").resolve()))
+        _holdings = _db_sec.execute("SELECT ticker, shares, source FROM holdings ORDER BY ticker").fetchall()
+        _db_sec.close()
+    except:
+        _holdings = []
+    _sec_rows = ""
+    _names = {'0050':'台灣50','0056':'高股息','006208':'富邦50','00646':'元大S&P500','00713':'高息低波','00878':'國泰永續高股息','00888':'中信永續','00918':'大華優利高填息','00919':'群益台灣精選高息','009816':'00878姊妹','00981A':'00981A','009823':'009823','009824':'009824','00984A':'00984A'}
+    for _t, _s, _b in _holdings:
+        _s = _s or 0
+        _n = _names.get(_t, _t)
+        _sec_rows += f"<tr><td>{_t}</td><td>{_n}</td><td class='num'>{_s:,.0f}</td><td>{_b or '-'}</td></tr>"
+    sec_card = (
+        '<div class="card"><h2>📊 證券部位</h2>'
+        '<div class="table-wrap"><table><thead><tr><th>代號</th><th class=\"num\">股數</th><th>券商</th></tr></thead><tbody>'
+        f'{_sec_rows}'
+        "</tbody></table></div>"
+        f'<div class="text-sm" style="margin-top:8px;color:#6e6e73">證券總市值：{ex["securities_market"]:,.0f} TWD（{len(_holdings)} 檔標的）</div>'
+        "</div>"
+    )
+
     # Asset allocation card with all components incl real estate
     # Allocation: exclude real estate so other components sum to ~100%
     alloc_den = max(1, ex['total_assets'] - ex.get('real_estate', 0))
@@ -663,6 +685,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         charts_html,
         detail_table,
         fund_card,
+        sec_card,
         cash_card,
 f'<div class="card"><h2>🚨 監控警示</h2><div class="text-sm">{alert_header}</div><ul style="list-style:none;padding:0;">{alerts_html}</ul></div>',
         f'<div class="card"><h2>🧠 在家巴菲特</h2><pre style="font-size:15px;line-height:1.8;white-space:pre-wrap;">{buffett_md}</pre></div>',
