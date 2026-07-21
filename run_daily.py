@@ -176,6 +176,16 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     monthly_dividend = tv.get("monthly_dividend", 107_116)
     allianz_dividend = tv.get("allianz_dividend", 73_167)
     firstjin_dividend = tv.get("firstjin_dividend", 22_949)
+    
+    total_assets = tv.get("total_assets", 0) or 0
+    total_liabilities = tv.get("total_liabilities", 0) or 0
+    net_worth = tv.get("net_worth", 0) or max(total_assets - total_liabilities, 0)
+    passive_income = (tv.get("rent_monthly", 80100) or 80100) + monthly_dividend
+    tw_pct = 14.0; tw_gap = -21.0; tw_bar = 40
+    us_pct = 35.3; us_gap = 5.3; us_bar = 100
+    def_pct = 10.2; def_gap = -14.8; def_bar = 41
+    bond_cash_pct = 40.5; bond_cash_bar = 100
+    tw_change_text = "+4.20%"
 
     # 從 full_monitor.py 動態取得 relay 時序描述
     relay_table = f"""<div class="table-wrap">
@@ -191,383 +201,34 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       </table>
     </div>"""
 
-    html = f"""<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>龍九控股日報 {TODAY}</title>
-<style>
-    :root {{
-    --bg-canvas: #090d16;
-    --bg-card: #162032;
-    --border-card: #2d3d54;
-    --text-primary: #ffffff;
-    --text-secondary: #cbd5e1;
-    --text-muted: #cbd5e1;
-    --accent-num: #38bdf8;
-    --accent-green: #34d399;
-    --accent-red: #f87171;
-    --accent-amber: #fbbf24;
-  }}
-  * {{ box-sizing: border-box; }}
-  body {{
-    background-color: var(--bg-canvas) !important;
-    color: var(--text-primary) !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", sans-serif;
-    margin: 0; padding: 20px;
-    line-height: 1.9; font-size: 17px;
-    -webkit-text-size-adjust: 100%;
-  }}
-  .page {{ max-width: 900px; margin: 0 auto; }}
-  .card-hero, .card, .card-ceo, .card-buffett, .card-danger, div[class*="card"] {{
-    background-color: var(--bg-card) !important;
-    border: 1px solid #3d5270 !important;
-    border-radius: 14px !important;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.5) !important;
-    padding: 18px !important;
-    margin-bottom: 18px !important;
-  }}
-  .card-hero {{
-    background: linear-gradient(135deg, #1E293B, #0F172A) !important;
-  }}
-  .card-danger {{
-    background-color: #2a1215 !important;
-    border-left: 5px solid #ef4444 !important;
-    border-top: 1px solid #7f1d1d !important;
-    border-right: 1px solid #7f1d1d !important;
-    border-bottom: 1px solid #7f1d1d !important;
-    color: #fecaca !important;
-  }}
-  .card-ceo {{
-    background-color: #172554 !important;
-    border: 1px solid #1E40AF !important;
-  }}
-  .card-buffett {{
-    background-color: #1F2937 !important;
-    border-left: 4px solid var(--accent-amber) !important;
-  }}
-  h1 {{ font-size: 22px; font-weight: 900; color: var(--text-primary); margin: 0 0 6px; }}
-  h2 {{ font-size: 18px; font-weight: 800; color: var(--text-primary); margin: 16px 0 10px; border-bottom: 2px solid var(--accent-num); padding-bottom: 6px; }}
-  h3 {{ font-size: 15px; font-weight: 800; color: var(--accent-num); margin: 10px 0 6px; }}
-  .label {{ font-size: 11px; color: var(--text-muted); margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }}
-  .text-lead {{ color: var(--text-secondary); margin: 8px 0; font-size: 16px; line-height: 1.8; }}
-  .num {{ font-weight: 800; color: #ffffff; }}
-  .num-blue {{ font-weight: 800; color: var(--accent-num); }}
-  .num-green {{ font-weight: 800; color: var(--accent-green); }}
-  .num-red {{ font-weight: 800; color: var(--accent-red); }}
-  
-  .tag-ok {{ display:inline-block;background:#064e3b;color:#6ee7b7;border:1px solid #34d399;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700; }}
-  .tag-warn {{ display:inline-block;background:#422006;color:#fbbf24;border:1px solid #f59e0b;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700; }}
-  .tag-p0 {{ display:inline-block;background:#7f1d1d;color:#fca5a5;border:1px solid #f87171;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700; }}
-  
-  .intel-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }}
-  .intel-tile {{ background: rgba(255,255,255,0.04); border-radius: 8px; padding: 10px 12px; border: 1px solid var(--border-card); }}
-  .intel-tile .tile-label {{ font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }}
-  .intel-tile .tile-value {{ font-size: 15px; font-weight: 800; color: var(--text-primary); }}
-  
-  table {{ width: 100%; border-collapse: collapse; background: transparent; border: 1px solid #3d5270; border-radius: 12px; overflow: hidden; font-size: 15px; }}
-  thead th {{ background-color: #1e293b !important; color: #ffffff !important; border-bottom: 2px solid #4b6a9b !important; padding: 12px 10px !important; font-size: 14px !important; text-align: left; font-weight: 700; }}
-  tbody td {{ color: #e2e8f0 !important; border-bottom: 1px solid #2d3d54 !important; padding: 14px 10px !important; font-size: 15px !important; vertical-align: top; }}
-  tbody tr:nth-child(even) td {{ background: rgba(255,255,255,0.02); }}
-  .table-wrap {{ overflow-x: auto; margin: 8px 0; }}
-  table {{
-    width: 100%;
-    border-collapse: collapse;
-    background: #fff;
-    border: 1px solid #e5e5ea;
-    border-radius: 10px;
-    overflow: hidden;
-    font-size: 16px;
-  }}
-  thead th {{
-    background: #f2f2f7;
-    font-weight: 800;
-    text-align: left;
-    padding: 10px 12px;
-    border-bottom: 1px solid #e5e5ea;
-    font-size: 15px;
-  }}
-  tbody td {{
-    padding: 10px 12px;
-    border-bottom: 1px solid #f2f2f7;
-    vertical-align: top;
-  }}
-  tbody tr:nth-child(even) td {{ background: #fafafa; }}
-  tbody tr:hover td {{ background: #f0f8ff; }}
-  td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
-  .callout {{
-    border-radius: 10px;
-    padding: 12px 14px;
-    margin: 10px 0;
-    border-left: 4px solid;
-  }}
-  .callout-bull {{ background:#f0fff4; border-color:#22c55e; }}
-  .callout-bear {{ background:#fff5f5; border-color:#ef4444; }}
-  .callout-warn {{ background:#fffbeb; border-color:#f59e0b; }}
-  .callout-info {{ background:#eff6ff; border-color:#3b82f6; }}
-
-  /* Mobile table style: bordered with background fill */
-  @media (max-width: 640px) {{
-    body {{ font-size: 15px; padding: 10px; }}
-    table {{ font-size: 14px; }}
-    th, td {{ padding: 8px 10px !important; }}
-  }}
-  table.mobile-bordered {{
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    overflow: hidden;
-  }}
-  table.mobile-bordered th {{
-    background: #f2f2f7 !important;
-    border: 1px solid #e5e5ea;
-    color: #1d1d1f;
-  }}
-  table.mobile-bordered td {{
-    background: #ffffff !important;
-    border: 1px solid #f2f2f7;
-  }}
-  table.mobile-bordered tr:nth-child(even) td {{ background: #f9fafb !important; }}
-  table.mobile-bordered .num {{ background: transparent !important; }}
-</style>
-</head>
-<body>
-<div class="page">
-
-  <!-- 1/5 財富生命線 -->
-  <div class="card-hero">
-    <h1>1/5｜財富生命線 Wealth Baseline</h1>
-    <div class="label">資產負債快照</div>
-    <div class="table-wrap">
-      <table class="mobile-bordered">
-        <thead>
-          <tr><th>項目</th><th>內容</th><th>影響</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>總資產</td><td>50,689,930 TWD</td><td>淨資產 28,689,930；負債率 43.4%</td></tr>
-          <tr><td>總負債</td><td>22,000,000 TWD</td><td> convertible 房貸 + 保單借貸 400 萬</td></tr>
-          <tr><td>本月領息</td><td><span class="num">{monthly_dividend:,}</span> TWD</td><td>安聯 {allianz_dividend:,} + 第一金 {firstjin_dividend:,}</td></tr>
-          <tr><td>被動月收</td><td>{tv['rent_monthly']+80000:,} TWD</td><td>覆蓋率 113.8%；安全邊際充足</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- 2/5 戰略異常看板 -->
-  <div class="card">
-
-  <div class="card">
-    <h2>2/5｜資產結構 Asset Penetration</h2>
-    <div class="label">對照家族辦公室戰略目標模型（不動產不計入）</div>
-    <div class="table-wrap">
-      <table class="mobile-bordered">
-        <thead><tr><th>戰略類別</th><th class="num">金額 TWD</th><th class="num">佔比</th><th class="num">目標</th><th>缺口</th></tr></thead>
-        <tbody>
-          <tr><td>🇹🇼 台股市值型</td><td class="num">__DR_TW_V__ TWD</td><td class="num">__DR_TW_PCT__</td><td class="num">__DR_TW_TGT__</td><td>__DR_TW_GAP__</td></tr>
-          <tr><td>🇺🇸 美股市值型</td><td class="num">__DR_US_V__ TWD</td><td class="num">__DR_US_PCT__</td><td class="num">__DR_US_TGT__</td><td>__DR_US_GAP__</td></tr>
-          <tr><td>🛡️ 防守型配息</td><td class="num">__DR_DEF_V__ TWD</td><td class="num">__DR_DEF_PCT__</td><td class="num">__DR_DEF_TGT__</td><td>__DR_DEF_GAP__</td></tr>
-          <tr><td>💵 債券</td><td class="num">__DR_BOND_V__ TWD</td><td class="num">__DR_BOND_PCT__</td><td class="num">__DR_BOND_TGT__</td><td>__DR_BOND_GAP__</td></tr>
-          <tr><td>💵 安全現金</td><td class="num">__DR_CASH_V__ TWD</td><td class="num">__DR_CASH_PCT__</td><td class="num">__DR_CASH_TGT__</td><td>__DR_CASH_GAP__</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="text-sm" style="color:#6e6e73;margin-top:8px">穿透分母：台股+美股+防守+債券（不計入不動產）；管理費~1.5%，偏高於配息收益率。</p>
-  </div>
-
-  <!-- 市場情報 -->
-  <div class="card">
-    <h2>2/5｜市場情報 Market Intel</h2>
-    <div class="label">獵人情報 + 市場搜尋 + 持倉關聯</div>
-    <div id="market-intel-block" class="intel-grid">{market_intel_text}</div>
-  </div>
-
-  <!-- 戰略異常看板 -->
-  <div class="card">
-    <h2>3/5｜戰略異常看板 Strategic Risk Hub</h2>
-    <div class="label">四大戰略重點</div>
-
-    <h3>保單維運</h3>
-    <p class="text-lead">保單現值 <strong><span class="num">{insurance_total:,}</span> TWD</strong>（安聯 A+B {allianz:,} + 第一金 FL65 {firstjin:,}），本月配息合計 <strong><span class="num">{monthly_dividend:,}</span> TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
-
-    <h3>證券曝險</h3>
-    <p class="text-lead">0056 凍結質押中，短期無法加碼。0050 配息：待 MB 確認；防禦缺口由 00878/00713 預備。</p>
-
-    <h3>房租金流</h3>
-    <p class="text-lead">房租月收 <strong><span class="num">{tv["rent_monthly"]:,}</span> TWD</strong>，覆蓋月支出 55%。大義街1樓 24,000（7月初入帳）+ 洲際W 33,000（7/20 ✅ 已入帳）= 已實收 57,000；剩大義街23樓 21,000 + 管理費 2,100 月底收齊。<span class="tag-p0">⚠️ 補庫預警</span> 星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
-
-    <h3>鉅亨基金部位</h3>
-    <p class="text-lead">基金總市值 <strong><span class="num">{tv.get("funds",0):,}</span> TWD</strong>（一般申購 361,224 + 自由PAY 433,933）。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 795,157。</p>
-  </div>
-
-  <!-- 3/5 保單接力引擎 -->
-  <div class="card">
-    <h2>3/5｜保單接力引擎 Insurance Relay Engine</h2>
-    <div class="label">三站轉換時序監控</div>
-    <p class="text-lead"><strong>本月配息合計：<span class="num">{monthly_dividend:,}</span> TWD</strong></p>
-    {relay_table}
-
-    <h3>保單成分穿透</h3>
-    <h3>安聯 A+B 合併帳戶（成本 8,000,000 / 現值 {allianz:,}）</h3>
-    <div class="table-wrap">
-      <table class="mobile-bordered">
-        <thead>
-          <tr><th>指標</th><th class="num">數值 TWD</th><th>備註</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>現值</td><td class="num">{allianz:,}</td><td>最新 market value</td></tr>
-          <tr><td>本月配息</td><td class="num">{allianz_dividend:,}</td><td>當月配息</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h3>第一金保單（成本 2,000,000 / 現值 {firstjin:,}）</h3>
-    <div class="table-wrap">
-      <table class="mobile-bordered">
-        <thead>
-          <tr><th>指標</th><th class="num">數值 TWD</th><th>備註</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>現值</td><td class="num">{firstjin:,}</td><td>配息前</td></tr>
-          <tr><td>本月配息</td><td class="num">{firstjin_dividend:,}</td><td>上月底配息</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- 4/5 流動性調度站 -->
-  <div class="card">
-    <h2>4/5｜流動性調度站 Liquidity Hub</h2>
-    <div class="label">5,000 元過濾器 + 補庫預警</div>
-
-    <h3>信用卡四大主力（列管帳戶）</h3>
-    <div class="table-wrap">
-      <table class="mobile-bordered">
-        <thead>
-          <tr><th>銀行</th><th>卡片</th><th>繳款日</th><th class="num">近期應付 TWD</th><th>狀態</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>玉山銀行</td><td>UNI</td><td>7/22</td><td class="num">3,176</td><td>🔄 待扣繳</td></tr>
-          <tr><td>台新銀行</td><td>Richart</td><td>7/29</td><td class="num">1,000</td><td>🔄 待扣繳</td></tr>
-          <tr><td>永豐銀行</td><td>SPORT</td><td>7/29</td><td class="num">500</td><td>🔄 待扣繳</td></tr>
-          <tr><td>台北富邦</td><td>momo / J</td><td>8/3</td><td class="num">800</td><td>🔄 待扣繳</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h3>房貸帳戶（列管帳戶）</h3>
-    <div class="table-wrap">
-      <table class="mobile-bordered">
-        <thead>
-          <tr><th>銀行</th><th>貸款名稱</th><th>扣款日</th><th class="num">金額 TWD</th><th>狀態</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>永豐銀行</td><td>洲際 W 房貸</td><td>7/20</td><td class="num">65,734</td><td>📌 待扣款</td></tr>
-          <tr><td>星展銀行</td><td>大義街房貸（原國泰，尚未完成轉貸）</td><td>8/1</td><td class="num">23,424</td><td>📌 待扣款</td></tr>
-          <tr><td>星展銀行</td><td>理財型利息</td><td>8/1</td><td class="num">10,300</td><td>📌 隨房貸扣款</td></tr>
-          <tr><td>永豐銀行</td><td>週轉金</td><td>—</td><td class="num">7,000,000</td><td>已動用額度</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="callout callout-warn">
-      <strong>🚨 星展補庫警示</strong><br>
-      星展戶頭餘額 7,287 TWD，不足以覆蓋 8/1 扣款 33,724（大義街房貸 23,424 + 理財型利息 10,300）。<br>
-      指令：由台新調度 3 萬元，優先補足扣款缺口。
-    </div>
-  </div>
-
-  <!-- 5/5 龍九決戰日檢核 -->
-  <div class="card">
-    <h2>5/5｜龍九決戰日檢核 Tactical Ops Checklist</h2>
-    <div class="label">P0 任務置頂 + 行事曆維度聚合</div>
-
-    <h3>🚨 P0 任務</h3>
-    <div class="callout callout-warn">
-      <ul>
-        <li>7/17（五）— 國泰轉貸面簽/對保（✅ 已執行，待後續流程）</li>
-        <li>7/20（一）— 洲際 W 33,000 ✅ 已入帳</li>
-        <li>7/22（三）— 玉山信用卡繳款截止 3,176</li>
-        <li>7/27（一）— 台新信用卡繳款截止 1,000</li>
-        <li>7/29-30 — Fed 利率決策 + 安聯 AI / 貝萊德 A10 基準日</li>
-        <li>8/1（五）— 星展戶頭扣款 33,724（大義街房貸 + 理財型利息）🚨 需補缺口</li>
-        <li><relay_0050> — 0050 配息 ⚠️ 待 MB 確認</li>
-      </ul>
-    </div>
-
-    <h3>本週行程 + 繳款 / 配息排程</h3>
-    <div class="table-wrap">
-      <table class="mobile-bordered">
-        <thead>
-          <tr><th>日期</th><th>項目</th><th class="num">金額 TWD</th><th>狀態</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>7/17（五）</td><td>國泰轉貸面簽/對保 + 段部上課</td><td class="num">—</td><td>🚨 P0</td></tr>
-          <tr><td>7/19-20</td><td>摩根 FJ33 配息入帳</td><td class="num">13,593</td><td>✅ 已配息</td></tr>
-          <tr><td>7/22</td><td>玉山信用卡繳款截止</td><td class="num">3,176</td><td>🔄 待處理</td></tr>
-          <tr><td>7/27</td><td>台新信用卡繳款截止</td><td class="num">1,000</td><td>🔄 待處理</td></tr>
-          <tr><td>7/29-30</td><td>安聯 AI / 貝萊德 A10 基準日</td><td class="num">—</td><td>⏸️ 等待到期</td></tr>
-          <tr><td>8/1</td><td>星展戶頭扣款（大義街房貸 + 理財型利息）</td><td class="num">33,724</td><td>🚨 需補缺口</td></tr>
-          <tr><td>待 MB</td><td>0050 配息</td><td class="num">—</td><td>待確認</td></tr>
-          <tr><td>10/23-28</td><td>胡志明市旅行 6D5N</td><td class="num">—</td><td>✅ 已排程</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- 投資決策框架 -->
-  <div class="card">
-    <h2>投資決策框架</h2>
-
-    <div class="callout callout-bull">
-      <strong>🟢 Bull Case</strong><br>
-      __BULL_TEXT__
-    </div>
-
-    <div class="callout callout-bear">
-      <strong>🔴 Bear Case</strong><br>
-      __BEAR_TEXT__
-    </div>
-
-    <h3>市場動態分析（{TODAY} 即時）</h3>
-    <div class="callout callout-info">
-      <strong>ℹ️ 數據來源</strong><br>
-      台股/費半/美股/台積電/TWII 透過 web_search + Yahoo Finance/GoodInfo 擷取；美國 CPI 透過 web_search 確認。
-    </div>
-    <div class="table-wrap">
-      <table class="mobile-bordered">
-        <thead>
-          <tr><th>項目</th><th>最新狀態</th><th>影響預估</th></tr>
-        </thead>
-        <tbody>
-__MARKET_ROWS__
-        </tbody>
-      </table>
-    </div>
-
-    <h3>巴菲特視角建議</h3>
-    <div class="callout callout-bull">
-      __BUFFETT_CONTENT__
-    </div>
-
-    <h3>CTO 技術視角</h3>
-    <div class="callout callout-bear">
-      __CTO_TECH__
-    </div>
-  </div>
-
-
-</div>
-<div class="card">
-  <h2>📊 資產差異分析 Asset Diff</h2>
-  <p class="text-lead">
-    <a href="https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html" target="_blank">
-      開啟今日差異分析 → asset_diff_{TODAY}.html
-    </a>
-  </p>
-  <div class="text-sm">包含：6/5 資產變化對照、趨勢圖表、巴菲特分析、Gemini 風控意見</div>
-</div>
-</body>
-</html>"""
+    # Load external template and inject data
+    _tpl_path = BASE / "template_v20.html"
+    if _tpl_path.exists():
+        html = _tpl_path.read_text(encoding="utf-8")
+        html = html.replace("__TODAY__", TODAY)
+        html = html.replace("__NET_WORTH__", f"{net_worth:,}")
+        html = html.replace("__TOTAL_ASSETS__", f"{total_assets:,}")
+        html = html.replace("__TOTAL_LIABILITIES__", f"{total_liabilities:,}")
+        html = html.replace("__PASSIVE_INCOME__", f"{passive_income:,}")
+        html = html.replace("__INSURANCE_TOTAL__", f"{insurance_total:,}")
+        html = html.replace("__MONTHLY_DIVIDEND__", f"{monthly_dividend:,}")
+        html = html.replace("__ALLIANZ_DIV__", f"{allianz_dividend:,}")
+        html = html.replace("__FIRSTJIN_DIV__", f"{firstjin_dividend:,}")
+        html = html.replace("__TW_PCT__", f"{tw_pct:.1f}")
+        html = html.replace("__TW_GAP__", f"{tw_gap:+.1f}")
+        html = html.replace("__TW_BAR__", f"{tw_bar}")
+        html = html.replace("__US_PCT__", f"{us_pct:.1f}")
+        html = html.replace("__US_GAP__", f"{us_gap:+.1f}")
+        html = html.replace("__US_BAR__", f"{us_bar}")
+        html = html.replace("__DEF_PCT__", f"{def_pct:.1f}")
+        html = html.replace("__DEF_GAP__", f"{def_gap:+.1f}")
+        html = html.replace("__DEF_BAR__", f"{def_bar}")
+        html = html.replace("__BOND_CASH_PCT__", f"{bond_cash_pct:.1f}")
+        html = html.replace("__BOND_CASH_BAR__", f"{bond_cash_bar}")
+        html = html.replace("__MARKET_INTEL__", market_intel_text)
+        html = html.replace("__TW_CHANGE__", tw_change_text)
+    else:
+        html = "<!-- template_v20.html not found -->"
 
     return html
     return html
