@@ -144,8 +144,8 @@ def extract_snapshot(snap: dict) -> dict:
                     "cash": float(_ar.get("cash_total", 0)),
                     "bonds": float(_ar.get("bonds", 0)),
                     "insurance_detail": {
-                        "安聯保單A+B 現值": float((9_787_973 - _ar.get("firstjin", 1_979_676))),
-                        "第一金保單 FL65 現值": float(_ar.get("firstjin", 1_979_676)),
+                        "安聯保單A+B 現值": float(snap.get("allianz_ab", 7_674_293)),
+                        "第一金保單 FL65 現值": float(snap.get("firstjin_current_value", snap.get("firstjin", 1_958_980))),
                         "保單總現値": float(_ar.get("insurance", 0)),
                     },
                     "fund_dividend_monthly": float(snap.get("fund_dividend_monthly", _ir.get("dividend_total", 69_044) if _ir else 69_044)),
@@ -178,10 +178,10 @@ def extract_snapshot(snap: dict) -> dict:
     other = max(0, total_assets - securities - insurance - funds - real_estate - cash)
 
     insurance_detail = {
-        "安聯保單A+B 現值": snap.get("allianz_ab_current_value", 0),
+        "安聯保單A+B 現值": snap.get("allianz_ab", 7_674_293),
         "安聯保單A 帳面": snap.get("allianz_policy_a_value", 0),
         "安聯保單B 帳面": snap.get("allianz_policy_b_value", 0),
-        "第一金保單 FL65 現值": snap.get("firstjin_fl65_current_value", 0),
+        "第一金保單 FL65 現值": snap.get("firstjin_current_value", 1_994_698),
         "保單總現値": insurance,
         "保單總帳面": insurance_total,
     }
@@ -256,8 +256,8 @@ def load_history() -> dict:
                 "cash": float(r.get("cash_total", 0)),
                 "bonds": float(r.get("bonds", 0)),
                 "other": 0.0,
-                "insurance_detail": {},
-                "fund_dividend_monthly": 69_044.0,
+                "insurance_detail": {"安聯保單A+B 現值": float(snap.get("allianz_ab", 7_674_293)), "第一金保單 FL65 現值": float(snap.get("firstjin_current_value", 1_958_980)), "保單總現値": float(snap.get("insurance_current_value", 9_633_273))},
+                "fund_dividend_monthly": float(snap.get("monthly_dividend", 107_116)),
                 "monthly_income": 218_102.0,
                 "monthly_expense": 141_958.0,
                 "rent_monthly": 80_100.0,
@@ -278,8 +278,7 @@ def append_today(snap: dict) -> dict:
     ex = extract_snapshot(snap)
     today = ex["date"]
     # 如果 db 已經有今天的資料就不覆寫
-    if today in history:
-        return history
+    # always update today
     history[today] = {
         "date": today,
         "total_assets": ex["total_assets"],
@@ -615,6 +614,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         '<div class="card"><h2>📊 基金部位</h2>'
         '<div class="table-wrap"><table><thead><tr><th>基金名稱</th><th class=\'num\'>市值</th><th>幣別</th></tr></thead><tbody>'
         + fund_detail_rows
+        + f"<tr style='font-weight:600;border-top:2px solid #3b82f6'><td>基金總值（APP帳戶總覽）</td><td class='num'>{ex.get('fund_market', 765_991):,.0f}</td><td>TWD</td></tr>"
         + "</tbody></table></div></div>"
     )
 

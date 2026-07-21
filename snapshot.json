@@ -11,8 +11,8 @@
   "working_surplus": 76144,
   "retirement_surplus": 18142,
   "securities_total_market_value": 2158900,
-  "insurance_current_value": 9653969,
-  "fund_market_value": 1219477,
+  "insurance_current_value": 9633273,
+  "fund_market_value": 765991,
   "moneybook_total": 3853985,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
@@ -65,7 +65,7 @@
   "cc_high": 42000,
   "firstjin_fl65_current_value": 1994698,
   "allianz_ab_current_value": 7674293,
-  "firstjin_current_value": 1979676,
+  "firstjin_current_value": 1958980,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
   "bank_assets_moneybook": 3853985,
@@ -76,8 +76,8 @@
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
   "securities_total": 2205230,
-  "funds_total": 783700,
-  "insurance_total": 9653969,
+  "funds_total": 765991,
+  "insurance_total": 9633273,
   "last_calibration_sources": {
     "securities": "凱基證券截圖 2026-07-18 02:00",
     "funds": "鉅亨基金截圖 2026-07-18 02:03",
@@ -85,11 +85,11 @@
     "insurance": "Company_Ledger.md + 第一金 7/14 配息 update"
   },
   "funds_breakdown": {
-    "台新美日台半導體A-日元": 129595,
-    "台中銀台灣優息B配息": 46264,
-    "路博邁5G股票T月配": 87790,
-    "0050連結B配息": 44914,
-    "路博邁5G股票T累積": 235840,
+    "台新美日台半導體A-日圓": 620602,
+    "台中銀台灣優息B配息": 45900,
+    "路博邁5G股票T月配": 85209,
+    "0050連結B配息": 44887,
+    "路博邁5G股票T累積": 228897,
     "0050連結A不配息": 103364,
     "統一奔騰": 81094
   },
@@ -98,7 +98,7 @@
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
   "passive_income": {
     "fund_dividend_monthly": 17519,
-    "fund_dividend_conservative": 72798,
+    "fund_dividend_conservative": 107116,
     "rent_monthly": 80100,
     "total_conservative": 152898,
     "monthly_expense": 141958,
@@ -577,13 +577,28 @@
     }
   },
   "allianz_ab": 7674293,
-  "firstjin": 1979676,
+  "firstjin": 1958980,
   "dividend_records": {
     "2026-07-21": {
-      "摩根多重收益(FJ33)": 9356,
-      "來源": "台新文心薪轉帳戶"
+      "FJ33 摩根": 9356,
+      "保單A 安聯": 11722,
+      "保單B 安聯": 5994
     }
   },
-  "monthly_dividend": 89400,
-  "actual_fj33_dividend": 9356
+  "monthly_dividend": 107116,
+  "actual_fj33_dividend": 9356,
+  "policy_a_total": 4992334,
+  "policy_b_total": 2681959,
+  "policy_a_book_value": 5079576,
+  "policy_b_book_value": 2728721,
+  "allianz_ab_book_value": 7808297,
+  "policy_a_cumulative_dividend": 943850,
+  "policy_b_cumulative_dividend": 687112,
+  "allianz_ab_monthly": 73167,
+  "firstjin_monthly": 22949,
+  "firstjin_dividend": 22949,
+  "allianz_cost": 8000000,
+  "firstjin_cum_dividend": 73341,
+  "allianz_cum_dividend": 1630962,
+  "firstjin_cost": 2000000
 }

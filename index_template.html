@@ -242,38 +242,7 @@
         <!-- 巴菲特視角與基金審查 -->
         <div class="luxury-card p-6 space-y-4">
             <h3 class="text-md font-bold text-white">智慧審查：巴菲特配置哲學與實操</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2">
-                    <span class="text-xs font-bold text-blue-400">💡 核心觀點</span>
-                    <ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4 leading-relaxed">
-                        <li><strong>能力圈：</strong>美股權益曝險遠超目標，保單穿透後美股占比 86%，不應盲目拓展，先降美股權重。</li>
-                        <li><strong>安全邊際：</strong>保留將來銀行 200萬高利活存。無價格訊號（週跌幅未破20%）嚴禁開火。0050配息縮水後，防禦缺口由 00878/00713 補位。</li>
-                        <li><strong>分散配置：</strong>0050/006208 權值重疊度高，加碼非前50大的 0051 是正解。</li>
-                    </ul>
-                </div>
-                <div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2">
-                    <span class="text-xs font-bold text-teal-400">🔍 基金層級狀態</span>
-                    <ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed">
-                        <li>• <strong class="text-white">安聯保單A/B 合併：</strong>回報率 <span class="text-emerald-400 font-bold">__ALLIANZ_RETURN__</span>，本月貢獻配息 __ALLIANZ_MONTHLY__，高度集中但具有護城河。</li>
-                        <li>• <strong class="text-white">第一金 FJ33：</strong>成本 __FIRSTJIN_COST__，現值 __FIRSTJIN_VALUE__（配息 __FIRSTJIN_MONTHLY__）；7/09 由摩根轉出至安聯收益成長 FL65，若息流轉弱應果斷退出。</li>
-                        <li>• <strong class="text-white">0050：</strong>配息 __DIVIDEND_0050__，__EX_DATE_0050__；防禦型配息缺口需由 00878 / 00713 補位。</li>
-                        <li>• <strong class="text-white">0056：</strong>配息創新高，但目前凍結質押中，禁止加碼，等解押再評估。</li>
-                    </ul>
-                </div>
-                <div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2">
-                    <span class="text-xs font-bold text-blue-400">📈 7/17 市場情報（web_search 即時）</span>
-                    <ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed list-disc pl-4">
-                        __MARKET_ROWS__
-                        <li>0050 配息：__DIVIDEND_0050__，__EX_DATE_0050__，防禦缺口由 00878/00713 補位</li>
-                    </ul>
-                </div>
-                <div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2 mt-3">
-                    <span class="text-xs font-bold text-amber-400">🛰️ Hunter 情報（__HUNTER_DATE__）</span>
-                    <ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed list-disc pl-4">
-                        __HUNTER_ROWS__
-                    </ul>
-                </div>
-            </div>
+            __BUFFETT_DYNAMIC__
         </div>
     </div>
 
@@ -293,11 +262,13 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex justify-between text-xs font-bold text-slate-300">
-                        <span>安聯收益成長 A+B</span>
+                        <span>安聯收益成長</span>
                         <span class="text-emerald-400">__ALLIANZ_RETURN__</span>
                     </div>
                     <div class="text-xs text-slate-400 font-mono space-y-1">
-                        <p>現值：__ALLIANZ_AB__ (成本：__ALLIANZ_COST__)</p>
+                        <p>保單A QL18610694：<span class="text-white">__POLICY_A_VAL__</span></p>
+                        <p>保單B QL18488224：<span class="text-white">__POLICY_B_VAL__</span></p>
+                        <p>A+B合計：<span class="text-white font-bold">__ALLIANZ_AB__ TWD</span>（成本：__ALLIANZ_COST__）</p>
                         <p>累計配息：__ALLIANZ_CUM__</p>
                         <p class="text-white">本月領息：__ALLIANZ_MONTHLY__</p>
                     </div>

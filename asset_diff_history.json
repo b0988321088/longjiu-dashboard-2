@@ -72,5 +72,28 @@
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,
     "cathay_refinance": 0.0
+  },
+  "2026-07-21": {
+    "date": "2026-07-21",
+    "total_assets": 52674581.0,
+    "total_liabilities": 18197422.0,
+    "net_worth": 34477159.0,
+    "securities_market": 2260230.0,
+    "insurance_current": 9633273.0,
+    "insurance_total": 9633273.0,
+    "fund_market": 765991.0,
+    "real_estate": 34000000.0,
+    "cash": 3917620.0,
+    "other": 0.0,
+    "insurance_detail": {
+      "安聯保單A+B 現值": 7674293.0,
+      "第一金保單 FL65 現值": 1958980.0,
+      "保單總現値": 9633273.0
+    },
+    "fund_dividend_monthly": 17519.0,
+    "monthly_income": 218102.0,
+    "monthly_expense": 141958.0,
+    "rent_monthly": 80100.0,
+    "cathay_refinance": 0.0
   }
 }

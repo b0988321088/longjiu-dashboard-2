@@ -107,7 +107,7 @@ def calibrate_sources() -> dict:
     monthly_dividend = snap.get("monthly_dividend")
     if monthly_dividend is None:
         # 保守回退：安聯 A+B + 第一金月配
-        monthly_dividend = (snap.get("allianz_ab_monthly", 55_451) or 55_451) + (snap.get("firstjin_monthly", 13_593) or 13_593)
+        monthly_dividend = (snap.get("allianz_ab_monthly", 73_167) or 55_451) + (snap.get("firstjin_monthly", 22_949) or 13_593)
 
     total_assets = snap.get("total_assets")
     total_liabilities = snap.get("total_liabilities")
@@ -126,6 +126,8 @@ def calibrate_sources() -> dict:
         "rent_monthly": s_rent,
         "securities_total": s_securities,
         "monthly_dividend": monthly_dividend,
+        "allianz_dividend": snap.get("allianz_ab_monthly", 73_167),
+        "firstjin_dividend": snap.get("firstjin_monthly", 22_949),
         "relay_stations": 3,
         "cc_4cards": ["玉山UNI", "台新Richart", "永豐SPORT", "台北富邦momo/J"],
         "loans_2mortgage": ["洲際W房貸", "大義街房貸+理財型利息"],
@@ -169,9 +171,9 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     allianz = tv["allianz_ab"] or 7_881_584
     firstjin = tv["firstjin"] or 1_994_698
     insurance_total = tv["insurance_total"] or allianz + firstjin
-    monthly_dividend = 69_044
-    allianz_dividend = 55_451
-    firstjin_dividend = 13_593
+    monthly_dividend = tv.get("monthly_dividend", 107_116)
+    allianz_dividend = tv.get("allianz_dividend", 73_167)
+    firstjin_dividend = tv.get("firstjin_dividend", 22_949)
 
     # 從 full_monitor.py 動態取得 relay 時序描述
     relay_table = f"""<div class="table-wrap">
@@ -720,12 +722,13 @@ def main():
     _tw_v = _cat2("tw_equity")
     _us_v = _cat2("us_equity")
     _def_v = _cat2("defensive")
-    _bond_v = _cat2("bond_cash")
-    _inv_t = max(_tw_v + _us_v + _def_v + _bond_v, 1)
+    _bond_v = _cat2("bond")
+    _cash_v = _cat2("cash")
+    _inv_t = max(_tw_v + _us_v + _def_v + _bond_v + _cash_v, 1)
 
     _tgt_tw, _tgt_us, _tgt_def, _tgt_bond, _tgt_cash = 35.0, 30.0, 25.0, 5.0, 5.0
     _cash_v = _cat2("cash")
-    _tot = max(_tw_v + _us_v + _def_v + _bond_v, 1)
+    _tot = max(_tw_v + _us_v + _def_v + _bond_v + _cash_v, 1)
     def _fmt_pct(v): return f"{v/_tot*100:.1f}%"
     def _fmt_gap(v, t): return f"{v/_tot*100 - t:+.1f}pp"
     daily_html = daily_html.replace("__DR_TW_V__", f"{_tw_v:,.0f}")
@@ -813,7 +816,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__TOTAL_MONTHLY__", fmt(tv.get("monthly_dividend", 0)))
     html = html.replace("__WORKING_INCOME__", fmt(tv.get("monthly_income", 0)))
     html = html.replace("__WORKING_SURPLUS__", f"+{fmt(tv.get('working_surplus', 0))}")
-    _retire_income = tv.get("monthly_dividend", 69_044) + tv.get("rent_monthly", 80_100)
+    _retire_income = tv.get("monthly_dividend", 107_116) + tv.get("rent_monthly", 80_100)
     _retire_expense = tv.get("monthly_expense", 141_958)
     html = html.replace("__RETIREMENT_INCOME__", fmt(_retire_income))
     html = html.replace("__RETIREMENT_SURPLUS__", f"+{fmt(_retire_income - _retire_expense)}")
@@ -990,6 +993,50 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__HUNTER_DATE__", f"{today} {hunter_date}")
     html = html.replace("__HUNTER_ROWS__", chr(10).join("                        " + r for r in hunter_rows))
 
+    # 動態巴菲特：從 buffett_cto_analyzer 即時注入
+    try:
+        import json as _j
+        from pathlib import Path as _P
+        _snap = _j.loads((_P(r"c:/Users/bot/Desktop/龍九系統/snapshot.json")).read_text("utf-8"))
+        from buffett_cto_analyzer import penetration_analysis as _pa, generate_buffett_report as _gr
+        _p = _pa(_snap)
+        _bl = _gr(_p)
+        _cd = {"tw_equity":("🇹🇼","台股",35),"us_equity":("🇺🇸","美股",30),"defensive":("🛡️","防守",25),"bond":("💵","債券",5),"cash":("💰","現金",5)}
+        _h = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-blue-400">💡 穿透現況</span><ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4">'
+        for _k,(_e,_l,_t) in _cd.items():
+            _v = _p["actual"].get(_k,0)
+            _g = _p["gaps"].get(_k,0)
+            _c = "text-emerald-400" if _g >= 0 else "text-red-400"
+            _s = f"+{_g:.0f}pp" if _g > 0 else f"{_g:.0f}pp"
+            _h += f"<li>{_e} <strong>{_l}</strong>：{_v:.0f}%（目標 {_t}%，<span class=\"{_c}\">{_s}</span>）</li>"
+        _h += '</ul></div><div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-teal-400">🎯 策略建議</span><ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed">'
+        for _ln in _bl:
+            if "補碼" in _ln or "減碼" in _ln or "合理" in _ln:
+                _h += f"<li>{_ln.replace('  ✅ ','').replace('  ⚠️ ','')}</li>"
+        _h += "</ul>"
+        # 加入巴菲特敘述
+        _h += '<div class="mt-3 pt-3 border-t border-slate-700"><span class="text-xs font-bold text-amber-400">📝 巴菲特視角</span><ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4 mt-2">'
+        _tw_g = _p["gaps"].get("tw_equity",0)
+        _us_g = _p["gaps"].get("us_equity",0)
+        _def_g = _p["gaps"].get("defensive",0)
+        _bond_g = _p["gaps"].get("bond",0)
+        _cash_g = _p["gaps"].get("cash",0)
+        if _tw_g < -10:
+            _h += "<li><strong>能力圈：</strong>台股嚴重不足，逢低補碼至目標水準，聚焦0050/009816</li>"
+        if _us_g > 5:
+            _h += "<li><strong>安全邊際：</strong>美股超標，優先減碼，保留現金等待機會</li>"
+        if _bond_g > 5:
+            _h += "<li><strong>分散配置：</strong>債券現金過多，可轉投入台股防守型配息</li>"
+        if _def_g < -10:
+            _h += "<li><strong>護城河：</strong>防守型配息不足，補00878/00713建立穩定現金流</li>"
+        _h += "<li><strong>現金子彈：</strong>安全邊際充足，等待台股恐慌時加碼</li>"
+        _h += "</ul></div>"
+        _h += "</div></div>"
+        html = html.replace("__BUFFETT_DYNAMIC__", _h)
+    except Exception as _e:
+        print(f"[WARN] Buffett dynamic inject fail: {_e}")
+        html = html.replace("__BUFFETT_DYNAMIC__", '<div class="text-xs text-slate-400">📊 分析中</div>')
+
     # 0050 dividend placeholders
     html = html.replace("__DIVIDEND_0050__", "待 MB 確認")
     html = html.replace("__EX_DATE_0050__", "待確認")
@@ -1004,10 +1051,10 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     if not funds2:
         funds2 = {
             "allianz_return": 16.41,
-            "allianz_monthly": 55_451,
-            "allianz_cum": 1_613_246,
+            "allianz_monthly": 73_167,
+            "allianz_cum": 1_631_962,
             "allianz_cost": 8_000_000,
-            "firstjin_monthly": 13_593,
+            "firstjin_monthly": 22_949,
             "firstjin_cum": 63_985,
             "firstjin_cost": 2_000_000,
         }
@@ -1028,11 +1075,13 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             return f"{v:.2f}"
         return str(v or "—")
     html = html.replace("__ALLIANZ_RETURN__", fmt_pct(funds2.get("allianz_return", 16.41)))
-    html = html.replace("__ALLIANZ_MONTHLY__", fmt(funds2.get("allianz_monthly", 55_451)))
-    html = html.replace("__ALLIANZ_CUM__", fmt(funds2.get("allianz_cum", 1_613_246)))
-    html = html.replace("__ALLIANZ_COST__", fmt(funds2.get("allianz_cost", 8_000_000)))
-    html = html.replace("__FIRSTJIN_MONTHLY__", fmt(funds2.get("firstjin_monthly", 13_593)))
-    html = html.replace("__FIRSTJIN_CUM__", fmt(funds2.get("firstjin_cum", 63_985)))
+    html = html.replace("__ALLIANZ_MONTHLY__", fmt(funds2.get("allianz_monthly", tv.get("allianz_ab_monthly", 73_167))))
+    html = html.replace("__ALLIANZ_CUM__", fmt(funds2.get("allianz_cum", 1_630_962)))
+    html = html.replace("__ALLIANZ_COST__", fmt(funds2.get("allianz_cost", 7_808_297)))
+    html = html.replace("__POLICY_A_VAL__", "4,992,334")
+    html = html.replace("__POLICY_B_VAL__", "2,681,959")
+    html = html.replace("__FIRSTJIN_MONTHLY__", fmt(funds2.get("firstjin_monthly", tv.get("firstjin_monthly", 22_949))))
+    html = html.replace("__FIRSTJIN_CUM__", fmt(funds2.get("firstjin_cum", 73_341)))
     html = html.replace("__FIRSTJIN_COST__", fmt(funds2.get("firstjin_cost", 2_000_000)))
 
     # Fund breakdown: prefer daily_analysis.json, fallback to known true values
@@ -1040,10 +1089,10 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     if not funds:
         funds = {
             "allianz_return": 16.41,
-            "allianz_monthly": 55_451,
-            "allianz_cum": 1_613_246,
+            "allianz_monthly": 73_167,
+            "allianz_cum": 1_631_962,
             "allianz_cost": 8_000_000,
-            "firstjin_monthly": 13_593,
+            "firstjin_monthly": 22_949,
             "firstjin_cum": 63_985,
             "firstjin_cost": 2_000_000,
         }
@@ -1067,22 +1116,24 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__ALLIANZ_RETURN__", fmt_pct(funds.get("allianz_return", 0)))
     html = html.replace("__ALLIANZ_MONTHLY__", fmt(funds.get("allianz_monthly", 0)))
     html = html.replace("__ALLIANZ_CUM__", fmt(funds.get("allianz_cum", 0)))
-    html = html.replace("__ALLIANZ_COST__", fmt(funds.get("allianz_cost", 8_000_000)))
+    html = html.replace("__ALLIANZ_COST__", fmt(funds.get("allianz_cost", 7_808_297)))
     html = html.replace("__FIRSTJIN_MONTHLY__", fmt(funds.get("firstjin_monthly", 0)))
     html = html.replace("__FIRSTJIN_CUM__", fmt(funds.get("firstjin_cum", 0)))
     html = html.replace("__FIRSTJIN_COST__", fmt(funds.get("firstjin_cost", 2_000_000)))
     # firstjin value uses same as firstjin current value
-    html = html.replace("__FIRSTJIN_VALUE__", fmt(tv.get("firstjin", 0) or funds.get("firstjin_value", 1_994_698)))
+    html = html.replace("__FIRSTJIN_VALUE__", fmt(tv.get("firstjin", 0) or funds.get("firstjin_value", 1_958_980)))
     # allianz value uses snapshot
-    html = html.replace("__ALLIANZ_AB__", fmt(tv.get("allianz_ab", 0) or funds.get("allianz_value", 7_881_584)))
+    html = html.replace("__ALLIANZ_AB__", fmt(tv.get("allianz_ab", 0) or funds.get("allianz_value", 7_674_293)))
     # total monthly = sum of fund monthly + snapshot fallback
     calc_total = (funds.get("allianz_monthly", 0) or 0) + (funds.get("firstjin_monthly", 0) or 0)
-    html = html.replace("__TOTAL_MONTHLY__", fmt(calc_total or tv.get("monthly_dividend", 69_044)))
+    html = html.replace("__TOTAL_MONTHLY__", fmt(calc_total or tv.get("monthly_dividend", 107_116)))
 
     # 房租動態注入
     _rent_1f = 24_000
     _rent_zjw = 33_000
     _rent_23f = 21_000
+    html = html.replace("__POLICY_A_VAL__", "4,992,334")
+    html = html.replace("__POLICY_B_VAL__", "2,681,959")
     _rent_mgmt = 2_100
     _expense = int(tv.get("monthly_expense", 141_958))
     _mortgage_pmt = 33_724
