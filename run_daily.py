@@ -345,8 +345,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <h3>房租金流</h3>
     <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。大義街1樓 24,000（7月初入帳）+ 洲際W 33,000（7/20 ✅ 已入帳）= 已實收 57,000；剩大義街23樓 21,000 + 管理費 2,100 月底收齊。星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
 
-    <h3>鉅亨基金調校</h3>
-    <p class="text-lead">監控鉅亨買基金平台標的，追蹤 IT 與 AI 淨值，確保與保單資產互補。</p>
+    <h3>鉅亨基金部位</h3>
+    <p class="text-lead">基金總市值 <strong>{tv.get('fund_market_value',0):,} TWD</strong>（一般申購 361,224 + 自由PAY 433,933）。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 795,157。</p>
   </div>
 
   <!-- 3/5 保單接力引擎 -->
@@ -542,7 +542,7 @@ def _build_market_rows(signals: dict, tv: dict) -> str:
     return "\n          ".join(rows)
 
 
-def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
+def _inject_market_intel(html: str, tv: dict, signals: dict, strategy_notes: str = "") -> str:
     """以 daily_analysis.json + hunter intel 注入 market + Buffett + CTO 區塊。"""
     # 先從 market_intel 表補入 hunter 情報
     try:
@@ -664,6 +664,25 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
             cto_risk = f"今日觸發：{cto_signal}；{cto_risk}"
         cto_content = f"<strong>🤖 CTO 技術視角</strong><br><strong>tech_stack</strong>：{cto_tech}<br><strong>今日最大風險</strong>：{cto_risk}<br><strong>建議動作</strong>：{cto_action}"
 
+    # 注入 CEO 戰略筆記（從 Notion 同步）— 在 __BUFFETT_CONTENT__ 替換之前
+    if strategy_notes:
+        _sn_lines = strategy_notes.strip().split("\n")
+        _sn_html = '<div class="card" style="margin-top:16px;border-left:4px solid #2563eb;padding:12px;background:#f0f7ff;">'
+        _sn_html += '<h3 style="color:#1e40af;margin:0 0 8px 0;">📝 CEO 戰略指令（來自 Notion）</h3>'
+        _sn_html += '<div style="font-size:14px;line-height:1.7;">'
+        for _l in _sn_lines:
+            _l = _l.strip()
+            if not _l:
+                continue
+            if _l.startswith("# "):
+                _sn_html += f"<strong style='color:#1e40af;'>{_l[2:]}</strong><br>"
+            elif _l.startswith("- ") or _l.startswith("✅") or _l.startswith("⏸️"):
+                _sn_html += f"• {_l.lstrip('- ✅⏸️ ')}<br>"
+            elif _l and not _l.startswith("—"):
+                _sn_html += f"<span style='color:#4b5563;'>{_l}</span><br>"
+        _sn_html += '</div></div>'
+        buf_content = _sn_html + buf_content
+
     html = html.replace("__BUFFETT_CONTENT__", buf_content)
     html = html.replace("__CTO_TECH__", cto_content)
 
@@ -685,6 +704,21 @@ def main():
         compile_intel(force_refresh=True)
     except Exception:
         pass
+    # 從 Notion 戰略手稿同步決策
+    try:
+        from notion_bridge import sync_notion_to_local
+        _nr = sync_notion_to_local()
+        if _nr["decisions_imported"] > 0:
+            print(f"[NOTION BRIDGE] 匯入 {_nr['decisions_imported']} 筆決策")
+    except Exception as _e:
+        pass
+    # 載入 Notion 戰略手稿文字，注入日報
+    _strategy_text = ""
+    try:
+        _strategy_file = BASE / "notion_bridge" / f"{TODAY}_strategy_handbook.md"
+        if _strategy_file.exists():
+            _strategy_text = _strategy_file.read_text(encoding="utf-8")
+    except: pass
     print(f"[INTEL] {intel_result.get('file') or intel_result}")
     # Load unified market briefing from daily_intel_report_{date}.json
     unified_path = BASE / f"daily_intel_report_{TODAY.replace('-','')}.json"
@@ -715,7 +749,7 @@ def main():
 
     # 日報
     daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text)
-    daily_html = _inject_market_intel(daily_html, tv, intel_signals)
+    daily_html = _inject_market_intel(daily_html, tv, intel_signals, _strategy_text)
 
     # 注入戰略穿透值到日報（與儀表板一致）
     import sqlite3

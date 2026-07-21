@@ -249,6 +249,174 @@
       "idem_key": "hermes-1784561448",
       "summary": "保單現值同步完成：allianz_ab=7,674,293 + allianz_ab_current_value同步 + firstjin=1,979,676",
       "remind_at": ""
+    },
+    {
+      "timestamp": "2026-07-21T19:17:25.148702",
+      "action": "核准",
+      "name": "差異分析趨勢卡根治：build_trend_charts改用即時snapshot覆蓋歷史檔，不再因歷史檔陳舊導致現金/基",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1784632645",
+      "summary": "差異分析趨勢卡根治：build_trend_charts改用即時snapshot覆蓋歷史檔，不再因歷史檔陳舊導致現金/基金值不一致",
+      "remind_at": ""
+    },
+    {
+      "timestamp": "2026-07-21T19:21:30.285098",
+      "action": "核准",
+      "name": "建立3技能+SOP：截圖品質/記憶保養/更新SOP。明天討論Notion雙向同步改進。今天休息。",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1784632890",
+      "summary": "建立3技能+SOP：截圖品質/記憶保養/更新SOP。明天討論Notion雙向同步改進。今天休息。",
+      "remind_at": ""
+    },
+    {
+      "timestamp": "2026-07-21T19:28:45.031228",
+      "action": "核准",
+      "name": "全系統改造完工：三源同步+離峰排程+技能SOP+記憶同步19:00。預期效益：傳截圖一次到位、三份一致、不須糾正。",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1784633325",
+      "summary": "全系統改造完工：三源同步+離峰排程+技能SOP+記憶同步19:00。預期效益：傳截圖一次到位、三份一致、不須糾正。",
+      "remind_at": ""
+    },
+    {
+      "timestamp": "2026-07-21T19:50:43.568149",
+      "action": "核准",
+      "name": "費用監控完成：cost_monitor.py+06:00自動回報+Gemini餘額提醒9/21。今天全部完工，13小時系",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1784634643",
+      "summary": "費用監控完成：cost_monitor.py+06:00自動回報+Gemini餘額提醒9/21。今天全部完工，13小時系統翻新。",
+      "remind_at": ""
+    },
+    {
+      "timestamp": "2026-07-21T19:59:23.129387",
+      "action": "核准",
+      "name": "技能精簡（留1刪2）+ 夜間整理加入記憶清理。核心：每次糾正→即時寫入fact_store+修正，不依賴腳本。",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1784635163",
+      "summary": "技能精簡（留1刪2）+ 夜間整理加入記憶清理。核心：每次糾正→即時寫入fact_store+修正，不依賴腳本。",
+      "remind_at": ""
+    },
+    {
+      "timestamp": "2026-07-21T20:03:40.699745",
+      "action": "核准",
+      "name": "錯誤轉技能完成：INC-057/058/059→error_register+preflight_check自動化。以後",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1784635420",
+      "summary": "錯誤轉技能完成：INC-057/058/059→error_register+preflight_check自動化。以後部署前自動掃描硬編碼殘留。今天19項改造全部完工。",
+      "remind_at": ""
+    },
+    {
+      "source": "notion",
+      "action": "核准",
+      "text": "某事",
+      "approved_at": "2026-07-21T20:18:41.457931"
+    },
+    {
+      "source": "notion",
+      "action": "核准",
+      "text": "範例： 7/24 確認轉貸進度",
+      "approved_at": "2026-07-21T20:18:41.457931"
+    },
+    {
+      "source": "notion",
+      "action": "核准",
+      "text": "##  今日決策（2026-07-21）",
+      "approved_at": "2026-07-21T20:34:04.713134"
+    },
+    {
+      "source": "notion",
+      "action": "核准",
+      "text": "三源同步機制（snapshot+db+history），傳截圖一次到位",
+      "approved_at": "2026-07-21T20:34:04.713134"
+    },
+    {
+      "source": "notion",
+      "action": "核准",
+      "text": "全離峰排程，尖峰時段零 Token",
+      "approved_at": "2026-07-21T20:34:04.713134"
+    },
+    {
+      "source": "notion",
+      "action": "核准",
+      "text": "費用監控 06:00 自動回報 + Gemini 9/21 提醒",
+      "approved_at": "2026-07-21T20:34:04.713134"
+    },
+    {
+      "source": "notion",
+      "action": "核准",
+      "text": "跨代理記憶同步 19:00 每天執行",
+      "approved_at": "2026-07-21T20:34:04.713134"
+    },
+    {
+      "source": "notion",
+      "action": "核准",
+      "text": "Notion 雙向中樞 MVP（notion_bridge.py）",
+      "approved_at": "2026-07-21T20:34:04.713134"
+    },
+    {
+      "source": "notion",
+      "action": "延後",
+      "text": "##  /待確認",
+      "approved_at": "2026-07-21T20:34:04.713134"
+    },
+    {
+      "source": "notion",
+      "action": "延後",
+      "text": "7/24 確認國泰轉貸進度",
+      "approved_at": "2026-07-21T20:34:04.713134"
+    },
+    {
+      "source": "notion",
+      "action": "延後",
+      "text": "79萬星展還款（今天17:00提醒）",
+      "approved_at": "2026-07-21T20:34:04.713134"
+    },
+    {
+      "source": "notion",
+      "action": "延後",
+      "text": "8/7 教育訓練（13:10-16:20）",
+      "approved_at": "2026-07-21T20:34:04.713134"
+    },
+    {
+      "timestamp": "2026-07-21T20:39:39.917485",
+      "action": "核准",
+      "name": "Notion雙向中樞完工：戰略手稿09-17每小時同步+CIO讀取+日報注入。2/月從備份升級為第二大腦。明天07:00",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1784637579",
+      "summary": "Notion雙向中樞完工：戰略手稿09-17每小時同步+CIO讀取+日報注入。2/月從備份升級為第二大腦。明天07:00日報首航。",
+      "remind_at": ""
+    },
+    {
+      "timestamp": "2026-07-21T21:14:52.648368",
+      "action": "核准",
+      "name": "SOP驗證通過：四輪測試後，截圖→三源同步一次到位。只改當天不動歷史。INC-060登記。",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1784639692",
+      "summary": "SOP驗證通過：四輪測試後，截圖→三源同步一次到位。只改當天不動歷史。INC-060登記。",
+      "remind_at": ""
     }
   ]
 }

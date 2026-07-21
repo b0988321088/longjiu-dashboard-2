@@ -136,17 +136,38 @@ def handle(input_text: str) -> str:
     data["decisions"].append(matched)
     _save_decisions(data)
 
-    # 建構事件物件
+    # 建構事件物件（含即時資產摘要）
+    snap_now = {}
+    try:
+        snap_now = json.loads((BASE / "snapshot.json").read_text("utf-8"))
+    except: pass
     event = {
         "name": matched.get("text", matched["id"]),
         "source": "Hermes Decision Handler",
         "status": "已核准",
         "category": matched.get("category", "決策"),
         "summary": f"[{matched['id']}] {matched.get('text', '')} — 執行長核准 ✅",
+        "context": f"資產 {snap_now.get('total_assets',0):,} / 保險 {snap_now.get('insurance_current_value',0):,} / 現金 {snap_now.get('real_liquid_assets',0):,}",
     }
 
     # 同步 Notion
     notion_ok = _notion_write(event)
+    
+    # 同步到戰略手稿頁面
+    try:
+        _summary = matched.get("text", matched["id"])
+        import requests as _rq
+        _env = open(os.path.expanduser("~/AppData/Local/hermes/.env"))
+        _nt = ""
+        for _l in _env:
+            if "NOTION_TOKEN" in _l and "=" in _l:
+                _nt = _l.split("=",1)[1].strip()
+        if _nt:
+            _hdrs = {"Authorization": f"Bearer {_nt}", "Notion-Version": "2022-06-28", "Content-Type": "application/json"}
+            _block = {"children": [{"object": "block", "type": "bulleted_list_item", "bulleted_list_item": {"rich_text": [{"type": "text", "text": {"content": f"✅ {_summary[:80]}"}}]}}]}
+            _rq.patch("https://api.notion.com/v1/blocks/3a4fc735d43381d18a4bfe63e1bd6b2a/children", json=_block, headers=_hdrs, timeout=10)
+    except: pass
+    
     if notion_ok:
         reply = f"✅ 已記錄：{matched['id']} 並同步至 Notion ✅"
     else:

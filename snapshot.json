@@ -12,7 +12,7 @@
   "retirement_surplus": 18142,
   "securities_total_market_value": 2158900,
   "insurance_current_value": 9633273,
-  "fund_market_value": 765991,
+  "fund_market_value": 795157,
   "moneybook_total": 3853985,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
@@ -76,7 +76,7 @@
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
   "securities_total": 2375390,
-  "funds_total": 765991,
+  "funds_total": 795157,
   "insurance_total": 9633273,
   "last_calibration_sources": {
     "securities": "凱基證券截圖 2026-07-18 02:00",
@@ -85,13 +85,13 @@
     "insurance": "Company_Ledger.md + 第一金 7/14 配息 update"
   },
   "funds_breakdown": {
-    "台新美日台半導體A-日圓": 620602,
-    "台中銀台灣優息B配息": 45900,
-    "路博邁5G股票T月配": 85209,
-    "0050連結B配息": 44887,
-    "路博邁5G股票T累積": 228897,
-    "0050連結A不配息": 103364,
-    "統一奔騰": 81094
+    "路博邁5G股票T累積": 238955,
+    "0050連結A不配息": 108047,
+    "統一奔騰": 86931,
+    "台新美日台半導體A-日圓": 177662,
+    "台中銀台灣優息B配息": 47699,
+    "路博邁5G股票T月配": 88939,
+    "0050連結B配息": 46924
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
   "real_liquid_assets": 4483408,
