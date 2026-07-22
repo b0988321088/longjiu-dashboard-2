@@ -143,11 +143,7 @@ def extract_snapshot(snap: dict) -> dict:
                     "other": 0.0,
                     "cash": float(_ar.get("cash_total", 0)),
                     "bonds": float(_ar.get("bonds", 0)),
-                    "insurance_detail": {
-                        "安聯保單A+B 現值": float(snap.get("allianz_ab", 7_674_293)),
-                        "第一金保單 FL65 現值": float(snap.get("firstjin_current_value", snap.get("firstjin", 1_958_980))),
-                        "保單總現値": float(_ar.get("insurance", 0)),
-                    },
+                    "insurance_detail": {"【安聯保單A】現值": float(snap.get("allianz_policy_a_value", 5_072_827)), "  安聯收益成長": 1_839_672, "  M&G入息": 2_367_954, "  貝萊德科技A10": 502_692, "  安聯AI收益成長": 359_165, "  聯博美國成長": 3_344, "【安聯保單B】現值": float(snap.get("allianz_policy_b_value", 2_716_000)), "  安聯收益成長": 940_794, "  M&G入息": 768_482, "  貝萊德科技A10": 461_803, "  安聯AI收益成長": 543_514, "  聯博美國成長": 1_407, "安聯A+B合計": float(snap.get("allianz_ab_current_value", snap.get("allianz_ab", 7_788_827))), "第一金FL65 現值": float(snap.get("firstjin_current_value", 1_958_980)), "保單總現値": float(_ar.get("insurance", 0))},
                     "fund_dividend_monthly": float(snap.get("fund_dividend_monthly", _ir.get("dividend_total", 69_044) if _ir else 69_044)),
                     "fund_dividend_conservative": float(snap.get("passive_income", {}).get("fund_dividend_conservative", _ir.get("dividend_total", 69_044) if _ir else 69_044)),
                     "monthly_income": float(snap.get("monthly_income", _ir.get("salary", 43_144) + _ir.get("travel_allowance", 12_000) if _ir else 218_102)),
@@ -177,14 +173,21 @@ def extract_snapshot(snap: dict) -> dict:
 
     other = max(0, total_assets - securities - insurance - funds - real_estate - cash)
 
-    insurance_detail = {
-        "安聯保單A+B 現值": snap.get("allianz_ab", 7_674_293),
-        "安聯保單A 帳面": snap.get("allianz_policy_a_value", 0),
-        "安聯保單B 帳面": snap.get("allianz_policy_b_value", 0),
-        "第一金保單 FL65 現值": snap.get("firstjin_current_value", 1_994_698),
-        "保單總現値": insurance,
-        "保單總帳面": insurance_total,
-    }
+    # 保險明細含 A/B 各基金成分
+    _aa = snap.get("allianz_ab_current_value", snap.get("allianz_ab", 7_788_827))
+    _aa_pct = {"安聯收益成長": 36.3, "M&G入息": 46.7, "貝萊德科技A10": 9.9, "安聯AI收益成長": 7.1, "聯博美國成長": 0.1}
+    _ab_pct = {"安聯收益成長": 34.6, "M&G入息": 28.3, "貝萊德科技A10": 17.0, "安聯AI收益成長": 20.0, "聯博美國成長": 0.1}
+    _aa_val = snap.get("allianz_policy_a_value", 5_072_827)
+    _ab_val = snap.get("allianz_policy_b_value", 2_716_000)
+    insurance_detail = {"【安聯保單A】現值": _aa_val}
+    for _n, _p in _aa_pct.items():
+        insurance_detail[f"  {_n}"] = round(_aa_val * _p / 100)
+    insurance_detail["【安聯保單B】現值"] = _ab_val
+    for _n, _p in _ab_pct.items():
+        insurance_detail[f"  {_n}"] = round(_ab_val * _p / 100)
+    insurance_detail["安聯A+B合計"] = _aa
+    insurance_detail["第一金FL65 現值"] = snap.get("firstjin_current_value", 1_958_980)
+    insurance_detail["保單總現値"] = insurance
 
     # Build display breakdown with JPY funds converted to TWD
     jpy_rate = snap.get('fx_rates', {}).get('jpy_to_twd', 0.2)
@@ -256,8 +259,8 @@ def load_history() -> dict:
                 "cash": float(r.get("cash_total", 0)),
                 "bonds": float(r.get("bonds", 0)),
                 "other": 0.0,
-                "insurance_detail": {"安聯保單A+B 現值": float(snap.get("allianz_ab", 7_674_293)), "第一金保單 FL65 現值": float(snap.get("firstjin_current_value", 1_958_980)), "保單總現値": float(snap.get("insurance_current_value", 9_633_273))},
-                "fund_dividend_monthly": float(snap.get("monthly_dividend", 107_116)),
+                "insurance_detail": {"【安聯保單A】現值": 5_072_827, "  安聯收益成長": 1_839_672, "  M&G入息": 2_367_954, "  貝萊德科技A10": 502_692, "  安聯AI收益成長": 359_165, "  聯博美國成長": 3_344, "【安聯保單B】現值": 2_716_000, "  安聯收益成長": 940_794, "  M&G入息": 768_482, "  貝萊德科技A10": 461_803, "  安聯AI收益成長": 543_514, "  聯博美國成長": 1_407, "安聯A+B合計": 7_788_827, "第一金FL65 現值": 1_958_980, "保單總現値": 9_747_807},
+                "fund_dividend_monthly": 107_116.0,
                 "monthly_income": 218_102.0,
                 "monthly_expense": 141_958.0,
                 "rent_monthly": 80_100.0,
@@ -583,16 +586,19 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     )
 
     # insurance detail block
-    if ex.get("insurance_detail"):
-        d = ex["insurance_detail"]
-        detail_rows = "".join(f"<tr><td>{k}</td><td class='num'>{_fmt(v)}</td></tr>" for k, v in d.items())
+    detail_table = ""
+    _ins = history.get(rows[-1]["date"], {}).get("insurance_detail", {})
+    if _ins:
+        _rows = ""
+        for k, v in _ins.items():
+            _sty = "" if k.startswith("【") else " style=\"padding-left:24px;font-size:13px;color:#6e6e73\""
+            _lb = ("<b>" + k.replace(chr(0x3010),"").replace(chr(0x3011),"").strip() + "</b>") if k.startswith(chr(0x3010)) else k.strip()
+            _rows += f"<tr{_sty}><td>{_lb}</td><td class='num'>{_fmt(v)}</td></tr>"
         detail_table = (
             '<div class="card"><h2>🛡️ 保單明細（最新）</h2>'
             '<div class="table-wrap"><table><thead><tr><th>項目</th><th class=\'num\'>金額 TWD</th></tr></thead><tbody>'
-            + detail_rows + "</tbody></table></div></div>"
+            + _rows + "</tbody></table></div></div>"
         )
-    else:
-        detail_table = ""
 
     # alerts
     alerts = []
