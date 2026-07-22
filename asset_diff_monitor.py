@@ -143,7 +143,7 @@ def extract_snapshot(snap: dict) -> dict:
                     "other": 0.0,
                     "cash": float(_ar.get("cash_total", 0)),
                     "bonds": float(_ar.get("bonds", 0)),
-                    "insurance_detail": {"【安聯保單A】現值": float(snap.get("allianz_policy_a_value", 5_079_576)), **{f"  {k}": v for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": float(snap.get("allianz_policy_b_value", 2_728_721)), **{f"  {k}": v for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": float(snap.get("allianz_ab_current_value", 7_788_827)), "第一金FL65 現值": float(snap.get("firstjin_current_value", 1_958_980)), "保單總現値": float(_ar.get("insurance", 0))},
+                    "insurance_detail": {"【安聯保單A】現值": float(snap.get("allianz_policy_a_value", 5_079_576)), **{f"  A-{k}": v for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": float(snap.get("allianz_policy_b_value", 2_728_721)), **{f"  B-{k}": v for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": float(snap.get("allianz_ab_current_value", 7_788_827)), "━第一金FL65現値": float(snap.get("firstjin_current_value", 1_958_980)), "保單總現値": float(_ar.get("insurance", 0))},
                     "fund_dividend_monthly": float(snap.get("fund_dividend_monthly", _ir.get("dividend_total", 69_044) if _ir else 69_044)),
                     "fund_dividend_conservative": float(snap.get("passive_income", {}).get("fund_dividend_conservative", _ir.get("dividend_total", 69_044) if _ir else 69_044)),
                     "monthly_income": float(snap.get("monthly_income", _ir.get("salary", 43_144) + _ir.get("travel_allowance", 12_000) if _ir else 218_102)),
@@ -179,12 +179,12 @@ def extract_snapshot(snap: dict) -> dict:
     _ab_val = snap.get("allianz_policy_b_value", 2_728_721)
     insurance_detail = {"【安聯保單A】現值": _aa_val}
     for _n, _v in _ins_brk.get("policy_a_funds", {}).items():
-        insurance_detail[f"  {_n}"] = _v
+        insurance_detail[f"  A-{_n}"] = _v
     insurance_detail["【安聯保單B】現值"] = _ab_val
     for _n, _v in _ins_brk.get("policy_b_funds", {}).items():
-        insurance_detail[f"  {_n}"] = _v
+        insurance_detail[f"  B-{_n}"] = _v
     insurance_detail["安聯A+B合計"] = snap.get("allianz_ab_current_value", 7_788_827)
-    insurance_detail["第一金FL65 現值"] = snap.get("firstjin_current_value", 1_958_980)
+    insurance_detail["━" + "" +  "第一金FL65現値"] = snap.get("firstjin_current_value", 1_958_980)
     insurance_detail["保單總現値"] = insurance
 
     # Build display breakdown with JPY funds converted to TWD
@@ -257,7 +257,7 @@ def load_history(snap=None) -> dict:
                 "cash": float(r.get("cash_total", 0)),
                 "bonds": float(r.get("bonds", 0)),
                 "other": 0.0,
-                "insurance_detail": {"【安聯保單A】現值": snap.get("allianz_policy_a_value", 5_079_576), **{"  "+k: v for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": snap.get("allianz_policy_b_value", 2_728_721), **{"  "+k: v for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": snap.get("allianz_ab_current_value", 7_788_827), "第一金FL65 現值": snap.get("firstjin_current_value", 1_958_980), "保單總現値": snap.get("insurance_current_value", 9_747_807)},
+                "insurance_detail": {"【安聯保單A】現值": snap.get("allianz_policy_a_value", 5_079_576), **{"  A-"+k: v for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": snap.get("allianz_policy_b_value", 2_728_721), **{"  B-"+k: v for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": snap.get("allianz_ab_current_value", 7_788_827), "━第一金FL65現値": snap.get("firstjin_current_value", 1_958_980), "保單總現値": snap.get("insurance_current_value", 9_747_807)},
                 "fund_dividend_monthly": 107_116.0,
                 "monthly_income": 218_102.0,
                 "monthly_expense": 141_958.0,
@@ -589,8 +589,12 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     if _ins:
         _rows = ""
         for k, v in _ins.items():
-            _sty = "" if k.startswith("【") else " style=\"padding-left:24px;font-size:13px;color:#6e6e73\""
-            _lb = ("<b>" + k.replace(chr(0x3010),"").replace(chr(0x3011),"").strip() + "</b>") if k.startswith(chr(0x3010)) else k.strip()
+            if k.startswith("━"):
+                _lb = k.replace("━","").strip()
+                _rows += f"<tr style='border-top:2px solid #888'><td><b>{_lb}</b></td><td class='num'><b>{_fmt(v)}</b></td></tr>"
+            else:
+                _sty = "" if k.startswith("【") else " style=\"padding-left:24px;font-size:13px;color:#6e6e73\""
+                _lb = ("<b>" + k.replace(chr(0x3010),"").replace(chr(0x3011),"").strip() + "</b>") if k.startswith(chr(0x3010)) else k.strip()
             _rows += f"<tr{_sty}><td>{_lb}</td><td class='num'>{_fmt(v)}</td></tr>"
         detail_table = (
             '<div class="card"><h2>🛡️ 保單明細（最新）</h2>'
