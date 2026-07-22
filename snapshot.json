@@ -2,17 +2,17 @@
   "generated_at": "2026-07-22T02:35:15.524024",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-07-18",
-  "total_assets": 50689930,
+  "total_assets": 17468791,
   "total_liabilities": 17199287,
-  "net_worth": 33490643,
+  "net_worth": 269504,
   "debt_ratio": "33.9%",
   "monthly_income": 218102,
   "monthly_expense": 141958,
   "working_surplus": 76144,
   "retirement_surplus": 18142,
-  "securities_total_market_value": 2158900,
-  "insurance_current_value": 9694964,
-  "fund_market_value": 795157,
+  "securities_total_market_value": 2413920,
+  "insurance_current_value": 9747807,
+  "fund_market_value": 823656,
   "moneybook_total": 3853985,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
@@ -64,7 +64,7 @@
   "cc_mid": 38000,
   "cc_high": 42000,
   "firstjin_fl65_current_value": 1994698,
-  "allianz_ab_current_value": 7735984,
+  "allianz_ab_current_value": 7788827,
   "firstjin_current_value": 1958980,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
@@ -105,8 +105,8 @@
     "coverage_pct": 107.7
   },
   "fund_dividend_monthly": 615,
-  "allianz_policy_a_value": 5079576,
-  "allianz_policy_b_value": 2728721,
+  "allianz_policy_a_value": 5072827,
+  "allianz_policy_b_value": 2716000,
   "anue_account": {
     "total_mv": 783700,
     "total_cost": 563153,
@@ -400,19 +400,11 @@
     },
     "alert": "美股暴露46.1%嚴重超標；台股7.2%極度低於目標40%",
     "actual_twd": {
-      "台股市值型成長": 1007090,
-      "美股市值型成長": 76050,
-      "防守型配息": 1022090,
-      "債券及安全現金": 10262984,
-      "現金/安全網": 2200410,
-      "不動產": 34000000,
-      "證券市值": 2205230,
-      "現金部位": 3884620,
-      "高利活存": 2200410,
-      "一般現金": 1684210,
-      "房貸餘額": 13159422,
-      "信用卡": 39865,
-      "保單借貸": 4000000
+      "台股市值型成長": 3165158,
+      "美股市值型成長": 3932234,
+      "防守型配息": 1958980,
+      "債券": 3929011,
+      "現金/安全網": 4483408
     }
   },
   "penetration_canonical": {
@@ -561,22 +553,24 @@
   "insurance_breakdown": {
     "policy_a_total": 4992334,
     "policy_a_funds": {
-      "安聯收益成長": 1824342,
-      "貝萊德世界科技A10": 963484,
-      "安聯AI收益成長": 721245,
-      "聯博美國成長": 1483263
+      "安聯收益成長": 1839672,
+      "M&G入息": 2367954,
+      "貝萊德世界科技A10": 502692,
+      "安聯AI收益成長": 359165,
+      "聯博美國成長": 3344
     },
     "policy_b_dividend_accumulated": 681118,
     "policy_a_dividend_accumulated": 932128,
     "policy_b_total": 2681959,
     "policy_b_funds": {
-      "安聯收益成長": 932955,
-      "貝萊德世界科技A10": 442558,
-      "安聯AI收益成長": 682149,
-      "聯博美國成長": 624297
+      "安聯收益成長": 940794,
+      "M&G入息": 768482,
+      "貝萊德世界科技A10": 461803,
+      "安聯AI收益成長": 543514,
+      "聯博美國成長": 1407
     }
   },
-  "allianz_ab": 7674293,
+  "allianz_ab": 7788827,
   "firstjin": 1958980,
   "dividend_records": {
     "2026-07-21": {
@@ -616,5 +610,8 @@
     "etf": 10740,
     "total": 107471,
     "note": "安聯App截圖+第一金月配+FJ33/FR55+MB明細基金+MB明細ETF"
+  },
+  "market": {
+    "twii": "44,825.78 (+1.34%)"
   }
 }
