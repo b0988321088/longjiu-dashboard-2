@@ -99,9 +99,24 @@ def _pct(v, base):
 
 
 # ---------- snapshot parsing ----------
+def _build_insurance_detail(snap: dict, insurance_total: float) -> dict:
+    """統一建構保險明細"""
+    _ins_brk = snap.get("insurance_breakdown", {})
+    _aa_val = float(snap.get("allianz_policy_a_value", 5_079_576))
+    _ab_val = float(snap.get("allianz_policy_b_value", 2_728_721))
+    d = {"【安聯保單A】現值": _aa_val}
+    for _n, _v in _ins_brk.get("policy_a_funds", {}).items():
+        d[f"  A-{_n}"] = _v
+    d["【安聯保單B】現值"] = _ab_val
+    for _n, _v in _ins_brk.get("policy_b_funds", {}).items():
+        d[f"  B-{_n}"] = _v
+    d["安聯A+B合計"] = float(snap.get("allianz_ab_current_value", 7_788_827))
+    d["━第一金FL65現値"] = float(snap.get("firstjin_current_value", 1_958_980))
+    d["━保單總現値"] = insurance_total
+    return d
+
 def extract_snapshot(snap: dict) -> dict:
     """從 dragon_assets.db 讀取（fallback 到 snapshot.json）"""
-    # 優先從 db 讀取
     import sqlite3
     _db_path = Path(__file__).resolve().parent / "dragon_assets.db"
     if _db_path.exists():
@@ -127,14 +142,18 @@ def extract_snapshot(snap: dict) -> dict:
                         _total_liab = _lr["total_liabilities"]
                 
                 _db.close()
+
+                insurance_current_from_db = float(_ar.get("insurance", 0))
+                insurance_detail_from_db = _build_insurance_detail(snap, insurance_current_from_db)
+
                 return {
                     "date": _today,
                     "total_assets": float(_total_assets),
                     "total_liabilities": float(_total_liab),
                     "net_worth": float(_total_assets - _total_liab),
                     "securities_market": float(_ar.get("securities", 0)),
-                    "insurance_current": float(_ar.get("insurance", 0)),
-                    "insurance_total": float(_ar.get("insurance", 0)),
+                    "insurance_current": insurance_current_from_db,
+                    "insurance_total": insurance_current_from_db,
                     "fund_market": float(_ar.get("funds", 0)),
                     # 從 snapshot.json 補基金明細
                     "_fund_breakdown": snap.get("funds_breakdown", {}),
@@ -143,7 +162,7 @@ def extract_snapshot(snap: dict) -> dict:
                     "other": 0.0,
                     "cash": float(_ar.get("cash_total", 0)),
                     "bonds": float(_ar.get("bonds", 0)),
-                    "insurance_detail": {"【安聯保單A】現值": float(snap.get("allianz_policy_a_value", 5_079_576)), **{f"  A-{k}": v for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": float(snap.get("allianz_policy_b_value", 2_728_721)), **{f"  B-{k}": v for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": float(snap.get("allianz_ab_current_value", 7_788_827)), "━第一金FL65現値": float(snap.get("firstjin_current_value", 1_958_980)), "━保單總現値": float(_ar.get("insurance", 0))},
+                    "insurance_detail": insurance_detail_from_db,
                     "fund_dividend_monthly": float(snap.get("fund_dividend_monthly", _ir.get("dividend_total", 69_044) if _ir else 69_044)),
                     "fund_dividend_conservative": float(snap.get("passive_income", {}).get("fund_dividend_conservative", _ir.get("dividend_total", 69_044) if _ir else 69_044)),
                     "monthly_income": float(snap.get("monthly_income", _ir.get("salary", 43_144) + _ir.get("travel_allowance", 12_000) if _ir else 218_102)),
@@ -173,19 +192,8 @@ def extract_snapshot(snap: dict) -> dict:
 
     other = max(0, total_assets - securities - insurance - funds - real_estate - cash)
 
-    # 保險明細從 snapshot 讀（不寫死）
-    _ins_brk = snap.get("insurance_breakdown", {})
-    _aa_val = snap.get("allianz_policy_a_value", 5_079_576)
-    _ab_val = snap.get("allianz_policy_b_value", 2_728_721)
-    insurance_detail = {"【安聯保單A】現值": _aa_val}
-    for _n, _v in _ins_brk.get("policy_a_funds", {}).items():
-        insurance_detail[f"  A-{_n}"] = _v
-    insurance_detail["【安聯保單B】現值"] = _ab_val
-    for _n, _v in _ins_brk.get("policy_b_funds", {}).items():
-        insurance_detail[f"  B-{_n}"] = _v
-    insurance_detail["安聯A+B合計"] = snap.get("allianz_ab_current_value", 7_788_827)
-    insurance_detail["━" + "" +  "第一金FL65現値"] = snap.get("firstjin_current_value", 1_958_980)
-    insurance_detail["━保單總現値"] = insurance
+    # 保險明細（呼叫共用函數）
+    insurance_detail = _build_insurance_detail(snap, insurance)
 
     # Build display breakdown with JPY funds converted to TWD
     jpy_rate = snap.get('fx_rates', {}).get('jpy_to_twd', 0.2)

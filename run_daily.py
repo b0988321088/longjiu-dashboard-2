@@ -326,9 +326,6 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   </div>
 
   <div class="card" style="margin-top:4px;padding:10px 14px;background:#f0f4ff;">
-    <div style="font-size:14px;font-weight:600;margin-bottom:4px;">📈 證券部位</div>
-    <div style="font-size:13px;">總市值：<strong>__SEC_TOTAL__</strong></div>
-    <div style="font-size:13px;color:#6e6e73;margin-top:4px;">前三大：__SEC_TOP3__</div>
   </div>
 
   <!-- 市場情報 -->
