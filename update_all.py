@@ -124,20 +124,9 @@ def main():
                 print("\n⛔ 校驗失敗（儀表板證券值暫跳過）")
     # Notion 資產快照（即使校驗失敗也執行）
     try:
-        import requests, os, json
-        _snap = json.load(open(str(BASE / "snapshot.json")))
-        _db = json.load(open(str(BASE / ".env")))["NOTION_TOKEN"]
-        _db_id = "3a5fc735-d433-8152-ac44-d6a87e0acb74"
-        _hd = {"Authorization": f"Bearer {os.environ['NOTION_TOKEN']}", "Content-Type": "application/json", "Notion-Version": "2022-06-28"}
-        _pl = {"parent": {"database_id": _db_id}, "properties": {
-            "日期": {"date": {"start": str(date.today())}},
-            "名稱": {"title": [{"text": {"content": f"{str(date.today())} 資產快照"}}]},
-            "總資產": {"number": args["cash"]+args["ins"]+args["sec"]+args["funds"]},
-            "證券": {"number": args["sec"]}, "保單": {"number": args["ins"]},
-            "基金": {"number": args["funds"]}, "現金": {"number": args["cash"]},
-            "備註": {"rich_text": [{"text": {"content": "update_all sync"}}]},
-        }}
-        requests.post("https://api.notion.com/v1/pages", headers=_hd, json=_pl, timeout=10)
+        from notion_knowledge import write_snapshot
+        _w = args
+        write_snapshot(_w["cash"]+_w["ins"]+_w["sec"]+_w["funds"], _w["sec"], _w["ins"], _w["funds"], _w["cash"], "update_all.py 自動同步")
         print("  ✅ Notion 快照已寫入")
     except Exception as _ne:
         print(f"  ⚠️ Notion 寫入失敗: {_ne}")
