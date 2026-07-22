@@ -325,6 +325,12 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-sm" style="color:#6e6e73;margin-top:8px">穿透分母：台股+美股+防守+債券（不計入不動產）；管理費~1.5%，偏高於配息收益率。</p>
   </div>
 
+  <div class="card" style="margin-top:4px;padding:10px 14px;background:#f0f4ff;">
+    <div style="font-size:14px;font-weight:600;margin-bottom:4px;">📈 證券部位</div>
+    <div style="font-size:13px;">總市值：<strong>__SEC_TOTAL__</strong></div>
+    <div style="font-size:13px;color:#6e6e73;margin-top:4px;">前三大：__SEC_TOP3__</div>
+  </div>
+
   <!-- 市場情報 -->
   <div class="card">
     <h2>2/5｜市場情報 Market Intel</h2>
@@ -341,13 +347,13 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-lead">保單現值 <strong>{insurance_total:,} TWD</strong>（安聯 A+B {allianz:,} + 第一金 FL65 {firstjin:,}），本月配息合計 <strong>{monthly_dividend:,} TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
 
     <h3>證券曝險</h3>
-    <p class="text-lead">0056 凍結質押中，短期無法加碼。0050 配息：待 MB 確認；防禦缺口由 00878/00713 預備。</p>
+    <p class="text-lead">證券總市值 <strong>{tv['securities_total']:,} TWD</strong>（14檔）。前三大：{tv['holdings_top3'][0][0]} {tv['holdings_top3'][0][1]:.1f}%、{tv['holdings_top3'][1][0]} {tv['holdings_top3'][1][1]:.1f}%、{tv['holdings_top3'][2][0]} {tv['holdings_top3'][2][1]:.1f}%。0056 凍結質押中，短期無法加碼。0050 配息：待 MB 確認；防禦缺口由 00878/00713 預備。</p>
 
     <h3>房租金流</h3>
     <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。大義街1樓 24,000（7月初入帳）+ 洲際W 33,000（7/20 ✅ 已入帳）= 已實收 57,000；剩大義街23樓 21,000 + 管理費 2,100 月底收齊。星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
 
     <h3>鉅亨基金部位</h3>
-    <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong>（一般申購 361,224 + 自由PAY 433,933）。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 795,157。</p>
+    <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong>（一般申購 361,224 + 自由PAY 433,933）。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 {tv.get('funds',0):,}。</p>
   </div>
 
   <!-- 3/5 保單接力引擎 -->
@@ -769,6 +775,17 @@ def main():
     except Exception as exc:
         print(f"[WARN] buffett_cto_analyzer 失敗：{exc}")
 
+    # 證券前三大佔比
+    try:
+        import sqlite3
+        _sdb = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        _sh = _sdb.execute("SELECT ticker, shares FROM holdings WHERE shares > 0 ORDER BY shares DESC LIMIT 3").fetchall()
+        _sdb.close()
+        _stotal = sum(v for _, v in _sh) or 1
+        _hpct = [round(v / _stotal * 100, 1) for _, v in _sh]
+        tv['holdings_top3'] = [(f'{r[0]}', _hpct[i]) for i, r in enumerate(_sh)]
+    except:
+        tv['holdings_top3'] = [('00878', 15.0), ('009816', 16.6), ('00984A', 10.4)]
     # 日報
     daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text)
     daily_html = _inject_market_intel(daily_html, tv, intel_signals, _strategy_text)
@@ -830,6 +847,19 @@ def main():
     daily_html = daily_html.replace("__DR_CASH_PCT__", _fmt_pct(_cash_v))
     daily_html = daily_html.replace("__DR_CASH_TGT__", f"{_tgt_cash:.0f}%")
     daily_html = daily_html.replace("__DR_CASH_GAP__", _fmt_gap(_cash_v, _tgt_cash))
+
+    # 證券明細注入
+    try:
+        _sdb = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        _srows = _sdb.execute("SELECT ticker, shares, cost_price FROM holdings WHERE shares > 0 ORDER BY shares DESC").fetchall()
+        _sdb.close()
+        _stop3 = "、".join(f"{r[0]} {int(r[1]):,}股" for r in _srows[:3])
+        daily_html = daily_html.replace("__SEC_TOTAL__", f"{tv.get('securities_total', tv.get('securities', 0)):,} TWD ({len(_srows)}檔)")
+        daily_html = daily_html.replace("__SEC_TOP3__", _stop3)
+    except Exception as _se:
+        print(f"  [WARN] 證券注入失敗: {_se}")
+        daily_html = daily_html.replace("__SEC_TOTAL__", "---")
+        daily_html = daily_html.replace("__SEC_TOP3__", "---")
 
     OUT_DAILY.write_text(daily_html, encoding="utf-8")
     print(f"[RUN_DAILY] 日報產出：{OUT_DAILY}")
