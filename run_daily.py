@@ -816,11 +816,10 @@ def main():
     _us_v = _cat2("us_equity")
     _def_v = _cat2("defensive")
     _bond_v = _cat2("bond")
-    _cash_v = _cat2("cash")
+    _cash_v = tv.get('cash', tv.get('cash_total', 4_483_408))
     _inv_t = max(_tw_v + _us_v + _def_v + _bond_v + _cash_v, 1)
 
     _tgt_tw, _tgt_us, _tgt_def, _tgt_bond, _tgt_cash = 35.0, 30.0, 25.0, 5.0, 5.0
-    _cash_v = _cat2("cash")
     _tot = max(_tw_v + _us_v + _def_v + _bond_v + _cash_v, 1)
     def _fmt_pct(v): return f"{v/_tot*100:.1f}%"
     def _fmt_gap(v, t): return f"{v/_tot*100 - t:+.1f}pp"
