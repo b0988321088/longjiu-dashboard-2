@@ -63,6 +63,25 @@ def write_analysis(agent, summary, full="", tags=""):
         return r.json().get("id","") if r.status_code==200 else ""
     except: return ""
 
+def write_inc(inc_id, title, severity, description=""):
+    """寫入異常記錄（INC）到 Notion 分析資料庫"""
+    db = _db_id("NOTION_ANALYSIS_DB_ID")
+    if not db: return ""
+    d = datetime.date.today().isoformat()
+    sv = {"P0":"🔴 P0","P1":"🟡 P1","P2":"🟢 P2","fixed":"✅ Fixed"}
+    p = {"parent":{"database_id":db},"properties":{
+        "日期":{"date":{"start":d}},
+        "名稱":{"title":[{"text":{"content":f"{inc_id}: {title[:50]}"}}]},
+        "類型":{"select":{"name":"Hermes更新"}},
+        "摘要":{"rich_text":[{"text":{"content":f"[{sv.get(severity,severity)}] {description[:2000]}"}}]},
+        "原始報告":{"rich_text":[{"text":{"content":f"INC: {inc_id}\\nSev: {severity}\\n{title}\\n{description[:2000]}"}}]},
+        "相關資產":{"rich_text":[{"text":{"content":"系統"}}]},
+    }}
+    try:
+        r = requests.post("https://api.notion.com/v1/pages", headers=_headers(), json=p, timeout=10)
+        return r.json().get("id","") if r.status_code==200 else ""
+    except: return ""
+
 def query_latest(db_key="NOTION_DAILY_SNAPSHOT_DB_ID", limit=5):
     """查詢最近的記錄（所有代理共用）"""
     db = _db_id(db_key)
@@ -88,8 +107,12 @@ def query_latest(db_key="NOTION_DAILY_SNAPSHOT_DB_ID", limit=5):
 
 if __name__=="__main__":
     import sys
-    if len(sys.argv)>1 and sys.argv[1]=="test":
-        r = query_latest(limit=3)
-        print(f"最近 {len(r)} 筆記錄:")
-        for e in r:
-            print(f"  {e.get('title','?'):30s} | 總資產: {e.get('總資產','?')}")
+    if len(sys.argv)>1:
+        if sys.argv[1]=="test":
+            r = query_latest(limit=3)
+            print(f"最近 {len(r)} 筆記錄:")
+            for e in r:
+                print(f"  {e.get('title','?'):30s} | 總資產: {e.get('總資產','?')}")
+        elif sys.argv[1]=="inc":
+            r = write_inc(sys.argv[2] if len(sys.argv)>2 else "INC-TEST", "測試異常", "P0", "這是一筆來自命令列的測試異常記錄")
+            print(f"寫入結果: {r[:20] if r else '❌'}")
