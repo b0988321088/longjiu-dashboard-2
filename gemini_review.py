@@ -67,12 +67,55 @@ def _load_diff() -> str:
     return path.read_text(encoding="utf-8")[:2000]
 
 
+
+def _extract(t):
+    import re
+    c = t.replace(chr(92)+chr(34), chr(34)).replace(chr(92)+chr(110), " ")
+    s = 0; sm = ""; ii = []
+    m = re.search('"score"\s*:\s*(\d+)', c)
+    if m: s = int(m.group(1))
+    m = re.search('"summary"\s*:\s*"(.+?)"', c)
+    if m: sm = m.group(1)[:120]
+    pts = re.findall('"point"\s*:\s*"(.+?)"', c)
+    ds = re.findall('"description"\s*:\s*"(.+?)"', c)
+    for p,d in zip(pts, ds): ii.append({"point": p, "description": d[:80]})
+    return {"status":"ok","raw":t[:500],"score":s,"summary":sm,"issues":ii}
+
+
+def _load_hunter_intel():
+    import re, json
+    from pathlib import Path
+    BASE2 = Path(__file__).resolve().parent
+    parts = []
+    da_path = BASE2 / "daily_analysis.json"
+    if da_path.exists():
+        try:
+            da = json.loads(da_path.read_text("utf-8"))
+            m = da.get("market", {})
+            parts.append("加權：" + str(m.get("twii","?")))
+            sig = da.get("signals", {})
+            for s in sig.get("sell_signals", [])[:2]:
+                if re.search(r"7月(1[0-9]|20)日|2026-07-(1[0-9]|20)", s): continue
+                parts.append("賣出：" + s[:60])
+            for s in sig.get("buy_signals", [])[:2]:
+                parts.append("買進：" + s[:60])
+        except: pass
+    try:
+        import sqlite3
+        db = sqlite3.connect(str(BASE2 / "dragon_assets.db"))
+        r = db.execute("SELECT summary FROM market_intel WHERE date=? ORDER BY id DESC LIMIT 1", (TODAY,)).fetchone()
+        db.close()
+        if r: parts.append("Hunter統計：" + str(r[0] or ""))
+    except: pass
+    return chr(10).join(parts) if parts else "（無）"
+
 def review() -> dict:
     if not GEMINI_API_KEY:
         return {"status": "skipped", "reason": "GEMINI_API_KEY not set"}
 
     report = _load_daily_report()
     diff = _load_diff()
+    hunter = _load_hunter_intel()
 
     prompt = (
         "你是CIO-Gemini代理人。審查龍九日報。\n"
@@ -90,7 +133,7 @@ def review() -> dict:
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
             "temperature": 0.1,
-            "maxOutputTokens": 2048,
+            "maxOutputTokens": 4096,
             "responseMimeType": "application/json",
         },
     }
@@ -140,11 +183,7 @@ def review() -> dict:
                 except Exception:
                     pass
 
-        raw_score = 0
-        m = re.search(r'"score"\s*:\s*(\d+)', model_text)
-        if m:
-            raw_score = int(m.group(1))
-        return {"status": "ok", "raw": model_text[:500], "score": raw_score}
+        return _extract(model_text)
     except Exception as exc:
         return {"status": "error", "reason": str(exc)}
 
