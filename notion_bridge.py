@@ -188,12 +188,41 @@ def rebuild_strategy_file():
     content = chr(10).join(lines)
     (raw_dir / f"{today}_strategy_handbook.md").write_text(content, encoding="utf-8")
 
+def push_market_briefing():
+    import json, requests
+    from datetime import date as dt
+    _p = LJ / ("daily_intel_report_" + dt.today().isoformat().replace("-","") + ".json")
+    try:
+        report = json.loads(_p.read_text("utf-8"))
+        briefing = report.get("briefing", "")
+    except:
+        return {"synced": False, "error": "report not found"}
+    if not briefing:
+        return {"synced": False, "error": "no data"}
+    blocks = []
+    blocks.append({"object":"block","type":"heading_2","heading_2":{"rich_text":[{"type":"text","text":{"content":"📊 市場情報 " + str(dt.today())}}]}})
+    for line in briefing.split(chr(10)):
+        line = line.strip()
+        if not line: continue
+        if line.startswith("【"):
+            blocks.append({"object":"block","type":"heading_3","heading_3":{"rich_text":[{"type":"text","text":{"content":line}}]}})
+        else:
+            blocks.append({"object":"block","type":"bulleted_list_item","bulleted_list_item":{"rich_text":[{"type":"text","text":{"content":line[:150]}}]}})
+    parent = {"type":"page_id","page_id":"3a5fc735-d433-8170-94c5-f0a145b7b8b9"}
+    page_data = {"parent":parent,"properties":{"title":{"title":[{"type":"text","text":{"content":"市場動態分析 (" + str(dt.today()) + " 即時)"}}]}},"children":blocks[:50]}
+    h = {"Authorization": "Bearer " + NOTION_TOKEN, "Content-Type": "application/json", "Notion-Version": "2022-06-28"}
+    r = requests.post("https://api.notion.com/v1/pages", headers=h, json=page_data, timeout=15)
+    if r.status_code in [200,201]:
+        return {"synced": True}
+    return {"synced": False, "error": "HTTP " + str(r.status_code)}
+
 def local_to_notion(decisions: list) -> dict:
     """本地決策 → Notion Ops Logs（已有 decision_handler.py 處理）"""
     return {"synced": False, "note": "由 decision_handler.py 接管"}
 
 if __name__ == "__main__":
     r = sync_notion_to_local()
+    push_market_briefing()
     print(f"📡 Notion 橋接報告")
     print(f"找到頁面：{r['pages_found']}")
     print(f"匯入決策：{r['decisions_imported']}")
