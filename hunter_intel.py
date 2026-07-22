@@ -39,21 +39,15 @@ def get_yf_market():
     return results
 
 market = get_yf_market()
-now = datetime.now().strftime("%H:%M")
-lines = [f"📈 Hunter 情報 {date.today().isoformat()} {now}", ""]
+intel_data = {
+    "date": date.today().isoformat(),
+    "timestamp": datetime.now().strftime("%H:%M"),
+    "market_data": market
+}
+# Save to hunter_cache as JSON
+cache_dir = BASE / "hunter_cache"
+cache_dir.mkdir(exist_ok=True)
+cache_file = cache_dir / f"market_intel_{date.today().isoformat()}.json"
+cache_file.write_text(json.dumps(intel_data, ensure_ascii=False, indent=2), encoding="utf-8")
 
-if market:
-    for k, v in market.items():
-        lines.append(f"  {k}: {v}")
-else:
-    lines.append("  ⚠️ 無法取得市場數據")
-
-msg = "\n".join(lines)
-print(msg)
-
-if TG_TOKEN and TG_CHAT_ID:
-    try:
-        requests.post(f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage",
-                      json={"chat_id": TG_CHAT_ID, "text": msg}, timeout=10)
-    except Exception:
-        pass
+print(f"Hunter intelligence data saved to {cache_file}")
