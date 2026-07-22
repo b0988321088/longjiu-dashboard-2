@@ -6,13 +6,26 @@ from datetime import date, datetime
 from pathlib import Path
 
 # ── 設定 ──
-ENV = Path(os.path.expanduser("~/AppData/Local/hermes/.env"))
+ENV = Path("/c/Users/bot/Desktop/龍九系統/.env")
 LJ = Path(os.path.expanduser("~/Desktop/龍九系統"))
 NOTION_TOKEN = ""
+# 動態讀取（支援 .env 更新後不重啟）
+def _get_snapshot_db_id() -> str:
+    import os
+    if 'NOTION_DAILY_SNAPSHOT_DB_ID' in os.environ:
+        return os.environ['NOTION_DAILY_SNAPSHOT_DB_ID']
+    try:
+        for line in open(os.path.join(os.path.dirname(__file__), '.env')):
+            if 'NOTION_DAILY_SNAPSHOT_DB_ID' in line and '=' in line and not line.strip().startswith('#'):
+                return line.split('=',1)[1].strip().strip('"')
+    except: pass
+    return ""
 if ENV.exists():
     for line in ENV.read_text().splitlines():
         if "NOTION_TOKEN" in line and "=" in line and not line.strip().startswith("#"):
             NOTION_TOKEN = line.split("=", 1)[1].strip()
+        if "NOTION_DAILY_SNAPSHOT_DB_ID" in line and "=" in line and not line.strip().startswith("#"):
+            NOTION_DAILY_SNAPSHOT_DB_ID = line.split("=", 1)[1].strip()
 
 HEADERS = {
     "Authorization": f"Bearer {NOTION_TOKEN}",
@@ -155,74 +168,45 @@ def sync_notion_to_local() -> dict:
     
     return result
 
-
-def rebuild_strategy_file():
-    """從 dashboard_decisions.json 重建戰略手稿檔，確保永不空白"""
-    dec_path = LJ / "dashboard_decisions.json"
-    if not dec_path.exists():
-        return
-    import json
-    decs = json.loads(dec_path.read_text(encoding="utf-8"))
-    decisions = decs.get("decisions", [])
-    from datetime import date
-    today = str(date.today())
-    today_decs = [d for d in decisions if d.get("approved_at", "")[:10] >= today]
-    if not today_decs:
-        return
-    lines = ["# 今日決策摘要"]
-    for d in today_decs[-10:]:
-        t = d.get("text", d.get("id", ""))[:60]
-        # 清理雜訊
-        t = t.replace("#", "").replace("/", "").strip()
-        if not t:
-            continue
-        act = d.get("action", "核准")
-        if "核准" in act:
-            lines.append(f"✅ {t}")
-        elif "延後" in act:
-            lines.append(f"⏸️ {t}")
-        else:
-            lines.append(f"• {t}")
-    raw_dir = LJ / "notion_bridge"
-    raw_dir.mkdir(exist_ok=True)
-    content = chr(10).join(lines)
-    (raw_dir / f"{today}_strategy_handbook.md").write_text(content, encoding="utf-8")
-
-def push_market_briefing():
-    import json, requests
-    from datetime import date as dt
-    _p = LJ / ("daily_intel_report_" + dt.today().isoformat().replace("-","") + ".json")
-    try:
-        report = json.loads(_p.read_text("utf-8"))
-        briefing = report.get("briefing", "")
-    except:
-        return {"synced": False, "error": "report not found"}
-    if not briefing:
-        return {"synced": False, "error": "no data"}
-    blocks = []
-    blocks.append({"object":"block","type":"heading_2","heading_2":{"rich_text":[{"type":"text","text":{"content":"📊 市場情報 " + str(dt.today())}}]}})
-    for line in briefing.split(chr(10)):
-        line = line.strip()
-        if not line: continue
-        if line.startswith("【"):
-            blocks.append({"object":"block","type":"heading_3","heading_3":{"rich_text":[{"type":"text","text":{"content":line}}]}})
-        else:
-            blocks.append({"object":"block","type":"bulleted_list_item","bulleted_list_item":{"rich_text":[{"type":"text","text":{"content":line[:150]}}]}})
-    parent = {"type":"page_id","page_id":"3a5fc735-d433-8170-94c5-f0a145b7b8b9"}
-    page_data = {"parent":parent,"properties":{"title":{"title":[{"type":"text","text":{"content":"市場動態分析 (" + str(dt.today()) + " 即時)"}}]}},"children":blocks[:50]}
-    h = {"Authorization": "Bearer " + NOTION_TOKEN, "Content-Type": "application/json", "Notion-Version": "2022-06-28"}
-    r = requests.post("https://api.notion.com/v1/pages", headers=h, json=page_data, timeout=15)
-    if r.status_code in [200,201]:
-        return {"synced": True}
-    return {"synced": False, "error": "HTTP " + str(r.status_code)}
-
 def local_to_notion(decisions: list) -> dict:
     """本地決策 → Notion Ops Logs（已有 decision_handler.py 處理）"""
     return {"synced": False, "note": "由 decision_handler.py 接管"}
 
+def push_daily_snapshot(tv: dict) -> str:
+    """將每日資產快照寫入 Notion database"""
+    db_id = _get_snapshot_db_id()
+    if not db_id:
+        print("Error: NOTION_DAILY_SNAPSHOT_DB_ID is not set in .env")
+        return """
+
+    data_to_send = {
+        "parent": {"database_id": db_id},
+        "properties": {
+            "日期": {"date": {"start": tv.get("date", datetime.now().isoformat())}},
+            "名稱": {"title": [{"text": {"content": f"{tv.get('date','today')} 資產快照"}}]},
+            "總資產": {"number": tv.get("total_assets", 0)},
+            "證券": {"number": tv.get("securities", 0)},
+            "保單": {"number": tv.get("insurance", 0)},
+            "基金": {"number": tv.get("funds", 0)},
+            "現金": {"number": tv.get("cash", 0)},
+            "備註": {"rich_text": [{"text": {"content": tv.get('note', '')}}]},
+        },
+    }
+    
+    try:
+        response = notion_post("/pages", data_to_send)
+        page_id = response.get("id")
+        if page_id:
+            print(f"Successfully pushed daily snapshot to Notion. Page ID: {page_id}")
+        else:
+            print(f"Failed to push daily snapshot to Notion. Response: {response}")
+        return page_id
+    except requests.exceptions.RequestException as e:
+        print(f"Error pushing daily snapshot to Notion: {e}")
+        return """
+
 if __name__ == "__main__":
     r = sync_notion_to_local()
-    push_market_briefing()
     print(f"📡 Notion 橋接報告")
     print(f"找到頁面：{r['pages_found']}")
     print(f"匯入決策：{r['decisions_imported']}")
