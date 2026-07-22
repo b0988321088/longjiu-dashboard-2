@@ -782,6 +782,7 @@ def build_telegram_text(rows: list[dict], snap: dict) -> str:
         f"證券市值：{_fmt(last['securities_market'])}（{d_sec:+,.0f} / {d_sec_pct:+.2f}%）\n"
         f"保單現値：{_fmt(last['insurance_current'])}（{last.get('d_insurance_current',0):+,.0f}）\n"
         f"基金市值：{_fmt(last['fund_market'])}（{last.get('d_fund_market',0):+,.0f}）\n"
+        f"現金：{_fmt(last['cash'])}（{last.get('d_cash',0):+,.0f}）\n"
         f"{alloc}\n"
         f"負債比率：{ex['total_liabilities']/ex['total_assets']*100:.1f}%\n"
         f"{flag}"
