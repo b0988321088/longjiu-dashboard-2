@@ -43,7 +43,7 @@ def main():
     for a in sys.argv[1:]:
         if "=" in a:
             k,v = a[2:].split("=",1)
-            args[k] = json.loads(v) if k == "fund_ratios" else int(v)
+            args[{"insurance":"ins","securities":"sec","cash":"cash","funds":"funds"}.get(k,k)] = json.loads(v) if k == "fund_ratios" else int(v)
 
     pen = calc_penetration(args["cash"], args["ins"], args["sec"], args["funds"], args.get("bond_portion"), args.get("fund_ratios"))
 
