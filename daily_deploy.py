@@ -250,6 +250,7 @@ def main() -> None:
     # 1. 產出
     if not run_step("run_daily", [sys.executable, str(BASE / "run_daily.py")]):
         return
+    run_step("gen_diff", [sys.executable, str(BASE / "gen_diff.py")])
     
     # 1.5 內容保護攔截（推送前自動檢查）
     print("\n[STEP] 內容保護審計")
@@ -270,7 +271,7 @@ def main() -> None:
     # 2.5 Gemini 審查（每次 deploy 前必跑）
     print("[STEP] Gemini 審查日報內容")
     try:
-        import subprocess
+        pass
         _gr = subprocess.run(
             [sys.executable, str(BASE / "gemini_review.py")],
             capture_output=True, text=True, timeout=60
