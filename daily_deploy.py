@@ -251,6 +251,7 @@ def main() -> None:
     if not run_step("run_daily", [sys.executable, str(BASE / "run_daily.py")]):
         return
     run_step("gen_diff", [sys.executable, str(BASE / "gen_diff.py")])
+    run_step("dashboard", [sys.executable, str(BASE / "extract_dashboard.py")])
     
     # 1.5 內容保護攔截（推送前自動檢查）
     print("\n[STEP] 內容保護審計")
