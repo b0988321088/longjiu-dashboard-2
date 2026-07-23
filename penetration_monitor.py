@@ -32,9 +32,9 @@ if len(rows) < 2:
 
 today, yesterday = rows[0], rows[1]
 alerts = []
-fields = ["securities", "fund_market_value", "insurance", "bonds", "cash", "total_assets", "total_liabilities", "net_worth"]
-labels = {"securities":"證券", "fund_market_value":"基金", "insurance":"保單", "bonds":"債券", "cash":"現金",
-          "total_assets":"總資產", "total_liabilities":"總負債", "net_worth":"淨值"}
+fields = ["securities", "funds", "insurance", "bonds", "cash_total", "total_assets"]
+labels = {"securities":"證券", "funds":"基金", "insurance":"保單", "bonds":"債券", "cash_total":"現金",
+          "total_assets":"總資產"}
 
 for f in fields:
     old_v = float(yesterday[f] or 0)
