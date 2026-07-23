@@ -113,11 +113,17 @@ def calibrate_sources() -> dict:
 
     # 從 monthly_dividend_breakdown 取得證券、基金配息及下次除息資訊
     dividend_breakdown = snap.get("monthly_dividend_breakdown", {})
-    sec_dividend_monthly = dividend_breakdown.get("securities", {}).get("monthly_total", 0)
-    fund_dividend_monthly = dividend_breakdown.get("funds", {}).get("monthly_total", 0)
-    # 格式化下次除息清單
-    next_ex_dividend_list_raw = dividend_breakdown.get("securities", {}).get("next_ex_dividend", [])
-    next_ex_dividend_list = ", ".join([f"{item['ticker']}（{item['date']}）" for item in next_ex_dividend_list_raw]) if next_ex_dividend_list_raw else "待確認"
+    sec_dividend_monthly = dividend_breakdown.get("etf", 0)
+    fund_dividend_monthly = dividend_breakdown.get("fund", 0)
+    # 下次除息資訊（從 snapshot 或 relay_calendar 讀取）
+    next_ex_dividend_list = "待確認"
+    try:
+        _rc = open(BASE / "relay_calendar.md", encoding="utf-8").read()
+        _ex = re.findall(r"(\d+/\d+).*?除息.*?([\dA-Z]+)", _rc)
+        if _ex:
+            next_ex_dividend_list = "、".join([f"{b}（{a}）" for a, b in _ex[:3]])
+    except:
+        pass
 
 
     total_assets = snap.get("total_assets")
@@ -153,6 +159,15 @@ def calibrate_sources() -> dict:
         "funds": snap.get("fund_market_value", snap.get("funds_total", 0)) or 0,
         "cash_total": snap.get("cash_total", 3_614_169),
         "rent_breakdown": snap.get("rent_breakdown", {}),
+        # Liabilities from snapshot.json
+        "mortgage_yy": snap.get("mortgage_yy", 0),
+        "mortgage_yydu": snap.get("mortgage_yydu", 0),
+        "mortgage_xz": snap.get("mortgage_xz", 0),
+        "mortgage_balance": snap.get("mortgage_balance", 0),
+        "financial_mortgage": snap.get("financial_mortgage", 0),
+        "policy_loan": snap.get("policy_loan", 0),
+        "pledge_loan": snap.get("pledge_loan", 0),
+        "cc_liability": snap.get("cc_liability", 0),
     }
 
 
@@ -204,6 +219,20 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     monthly_dividend = tv.get("monthly_dividend", 107_116)
     allianz_dividend = tv.get("allianz_dividend", 73_167)
     firstjin_dividend = tv.get("firstjin_dividend", 22_949)
+
+    loans_rows_html = ""
+    if tv['mortgage_yy'] > 0:
+        loans_rows_html += f"""          <tr><td>永豐銀行</td><td>永豐房貸 (YY)</td><td>—</td><td class="num">{tv['mortgage_yy']:,}</td><td>—</td></tr>\n"""
+    if tv['mortgage_yydu'] > 0:
+        loans_rows_html += f"""          <tr><td>永豐銀行</td><td>永豐房貸 (YYDU)</td><td>—</td><td class="num">{tv['mortgage_yydu']:,}</td><td>—</td></tr>\n"""
+    if tv['mortgage_xz'] > 0:
+        loans_rows_html += f"""          <tr><td>永豐銀行</td><td>永豐房貸 (XZ)</td><td>—</td><td class="num">{tv['mortgage_xz']:,}</td><td>—</td></tr>\n"""
+    if tv['financial_mortgage'] > 0:
+        loans_rows_html += f"""          <tr><td>星展銀行</td><td>理財型房貸</td><td>—</td><td class="num">{tv['financial_mortgage']:,}</td><td>—</td></tr>\n"""
+    if tv['policy_loan'] > 0:
+        loans_rows_html += f"""          <tr><td>—</td><td>保單借貸</td><td>—</td><td class="num">{tv['policy_loan']:,}</td><td>—</td></tr>\n"""
+    if tv['pledge_loan'] > 0:
+        loans_rows_html += f"""          <tr><td>—</td><td>證券質押</td><td>—</td><td class="num">{tv['pledge_loan']:,}</td><td>—</td></tr>\n"""
 
     # 從 relay_calendar.md 取得 T+4 轉換截止日
     relay_table = f"""<div class="table-wrap">
@@ -325,7 +354,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         </thead>
         <tbody>
           <tr><td>總資產</td><td>50,689,930 TWD</td><td>淨資產 28,689,930；負債率 43.4%</td></tr>
-          <tr><td>總負債</td><td>22,000,000 TWD</td><td> convertible 房貸 + 保單借貸 400 萬</td></tr>
+          <tr><td>總負債</td><td>{tv['total_liabilities']:,} TWD</td><td>總負債合計（含房貸、保單借貸、質押）</td></tr>
           <tr><td>本月領息</td><td>{monthly_dividend:,} TWD</td><td>安聯 {allianz_dividend:,} + 第一金 {firstjin_dividend:,}</td></tr>
           <tr><td>被動月收</td><td>{monthly_dividend + tv['rent_monthly']:,} TWD</td><td>被動收入（配息+房租）</td></tr>
         </tbody>
@@ -441,9 +470,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
           <tr><th>銀行</th><th>貸款名稱</th><th>扣款日</th><th class="num">金額 TWD</th><th>狀態</th></tr>
         </thead>
         <tbody>
-          <tr><td>永豐銀行</td><td>洲際 W 房貸</td><td>7/20</td><td class="num">65,734</td><td>📌 待扣款</td></tr>
-          <tr><td>星展銀行</td><td>理財型利息</td><td>8/1</td><td class="num">10,300</td><td>📌 隨房貸扣款</td></tr>
-          <tr><td>永豐銀行</td><td>週轉金</td><td>—</td><td class="num">7,000,000</td><td>已動用額度</td></tr>
+{loans_rows_html}
         </tbody>
       </table>
     </div>
