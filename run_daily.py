@@ -160,6 +160,7 @@ def calibrate_sources() -> dict:
         "rent_monthly": s_rent,
         "securities_total": s_securities,
         "monthly_dividend": monthly_dividend,
+        "insurance_dividend": dividend_breakdown.get("allianz", 0) + dividend_breakdown.get("firstjin", 0),
         "allianz_dividend": snap.get("allianz_ab_monthly", 73_167),
         "firstjin_dividend": snap.get("firstjin_monthly", 22_949),
         "relay_stations": 3,
@@ -369,8 +370,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         <tbody>
           <tr><td>總資產</td><td>50,689,930 TWD</td><td>淨資產 28,689,930；負債率 43.4%</td></tr>
           <tr><td>總負債</td><td>{tv['total_liabilities']:,} TWD</td><td>總負債合計（含房貸、保單借貸、質押）</td></tr>
-          <tr><td>本月領息</td><td>{monthly_dividend:,} TWD</td><td>安聯 {allianz_dividend:,} + 第一金 {firstjin_dividend:,}</td></tr>
-          <tr><td>被動月收</td><td>{monthly_dividend + tv['rent_monthly']:,} TWD</td><td>被動收入（配息+房租）</td></tr>
+          <tr><td>本月領息</td><td>{monthly_dividend:,} TWD</td><td>保單 {tv['insurance_dividend']:,} + ETF {tv['sec_dividend_monthly']:,} + 基金 {tv['fund_dividend_monthly']:,}</td></tr>
+          <tr><td>被動月收</td><td>{monthly_dividend + tv['rent_monthly']:,} TWD</td><td>配息 {monthly_dividend:,} + 房租 {tv['rent_monthly']:,}</td></tr>
         </tbody>
       </table>
     </div>
