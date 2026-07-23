@@ -40,6 +40,37 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None)
     c = cash + total - (tw + us + 1_958_980 + ins_bonds + cash)
     return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": 1_958_980, "債券": ins_bonds, "現金/安全網": c}
 
+
+def perform_data_validation(data: dict) -> list[str]:
+    """資料校驗：三源同步後檢查數據一致性"""
+    from logging_config import get_logger
+    logger = get_logger("validation")
+    alerts = []
+
+    cash = data.get("cash", 0)
+    insurance = data.get("insurance", 0)
+    securities = data.get("securities", 0)
+    funds = data.get("funds", 0)
+    total = data.get("total_assets", 0)
+
+    # 規則 1：總資產 ≈ 現金+保險+證券+基金（誤差 < 0.1%）
+    if total > 0:
+        calc = cash + insurance + securities + funds
+        err = abs(total - calc) / total
+        if err > 0.01:  # > 1%
+            msg = f"🔴 總資產嚴重不符：{total:,.0f} vs {calc:,.0f} ({err*100:.2f}%)"
+            alerts.append(f"[CRITICAL] {msg}")
+            logger.critical(msg)
+        elif err > 0.001:  # 0.1% ~ 1%
+            msg = f"🟡 總資產略有偏差：{total:,.0f} vs {calc:,.0f} ({err*100:.2f}%)"
+            alerts.append(f"[WARN] {msg}")
+            logger.warning(msg)
+        else:
+            logger.info(f"總資產校驗通過：{total:,.0f} vs {calc:,.0f} ({err*100:.2f}%)")
+
+    return alerts
+
+
 def main():
     snap = load_json(SNAP)
     args = {"cash": snap.get("real_liquid_assets",4483408), "ins": snap.get("insurance_current_value",9747807),
