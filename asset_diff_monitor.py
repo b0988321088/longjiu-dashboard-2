@@ -441,8 +441,7 @@ def buffett_advice(history: dict, snap: dict) -> str:
     rows = compute_changes(history)
     ex = extract_snapshot(snap)
     # 確保不動產正確
-    ex["real_estate"] = 34_000_000
-    ta = ex["total_assets"] or (34_000_000 + ex["securities_market"] + ex["insurance_current"] + ex["fund_market"] + ex["cash"] + ex.get("bonds",0))
+    ta = ex["total_assets"] + 34_000_000
     debt_ratio = ex["total_liabilities"] / ta * 100
     monthly_div = ex["fund_dividend_monthly"]
     monthly_div_conservative = ex.get("fund_dividend_conservative", monthly_div)
