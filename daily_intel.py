@@ -182,7 +182,14 @@ def classify_from_yf(market: dict) -> dict:
 
 def classify(text: str) -> dict:
     sell, buy = [], []
+    _today_md = date.today().strftime("%m/%d")
+    _today_iso = date.today().isoformat()
+    _today_slash = date.today().strftime("%m/%d")
+    _today_cn = f"{date.today().month}月{date.today().day}日"
     for line in text.splitlines():
+        # 只取今日訊號，跳過過期新聞
+        if _today_md not in line and _today_iso not in line and _today_slash not in line and _today_cn not in line:
+            continue
         if any(k in line for k in ["賣超", "大跌", "跌 2%", "跌2%", "跌破", "賣壓", "外資賣超"]):
             sell.append(line.strip())
         if any(k in line for k in ["買超", "大漲", "漲 3%", "漲3%", "買盤", "外資買超"]):
@@ -392,26 +399,7 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
     ]
     briefing = " | ".join(briefing_parts)
 
-    # 1.7 補外資買賣超（從 Yahoo 財經新聞抓取）
-    try:
-        import urllib.request, urllib.parse
-        _yf_url = f"https://tw.stock.yahoo.com/news/%E4%B8%89%E5%A4%A7%E6%B3%95%E4%BA%BA%E8%B2%B7%E8%B6%85%E5%8F%B0%E8%82%A15%E5%84%84%E5%85%83-072023454.html"
-        _req = urllib.request.Request(_yf_url, headers={"User-Agent": "Mozilla/5.0"})
-        _resp = urllib.request.urlopen(_req, timeout=10)
-        _html = _resp.read().decode("utf-8", errors="ignore")
-        # 找 description meta tag
-        _start = _html.find('meta name="description"')
-        if _start > 0:
-            _content_start = _html.find('content="', _start)
-            _content_end = _html.find('"', _content_start + 9)
-            _desc = _html[_content_start+9:_content_end]
-            briefing += " | 【三大法人】" + _desc[:150]
-            for kw in ["外資賣超", "賣超"]:
-                if kw in _desc:
-                    signals.setdefault("sell_signals", []).append(f"外資：{_desc[:80]}")
-                    break
-    except Exception:
-        pass
+    # 跳過硬編碼新聞抓取（Yahoo Finance 即時數據已足夠）
 
     # 3. 跳過 web_search（每 4 小時一次很浪費配額，Yahoo Finance 已經夠用）
     intel_text = ""
