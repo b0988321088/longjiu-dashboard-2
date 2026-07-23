@@ -465,7 +465,7 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
             _news = _fetch_news(_news_queries, limit=10) # Fetch more, filter later
             search_results = _news
             if _news:
-                _news_text = "\n".join(n.get("title","") + " " + n.get("snippet",""))
+                _news_text = "\n".join(item.get("title","") + " " + item.get("snippet","") for item in _news)
                 _news_signals = classify(_news_text)
                 for k in ["sell_signals", "buy_signals"]:
                     if _news_signals.get(k):
@@ -510,6 +510,8 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
     }
     unified_path = BASE / f"daily_intel_report_{today}.json"
     unified_path.write_text(json.dumps(unified, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    return {"briefing_text": briefing}
 
 
 if __name__ == "__main__":
