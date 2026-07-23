@@ -315,7 +315,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
           <tr><td>總資產</td><td>50,689,930 TWD</td><td>淨資產 28,689,930；負債率 43.4%</td></tr>
           <tr><td>總負債</td><td>22,000,000 TWD</td><td> convertible 房貸 + 保單借貸 400 萬</td></tr>
           <tr><td>本月領息</td><td>{monthly_dividend:,} TWD</td><td>安聯 {allianz_dividend:,} + 第一金 {firstjin_dividend:,}</td></tr>
-          <tr><td>被動月收</td><td>{tv['rent_monthly']+80000:,} TWD</td><td>覆蓋率 113.8%；安全邊際充足</td></tr>
+          <tr><td>被動月收</td><td>{monthly_dividend + tv['rent_monthly']:,} TWD</td><td>被動收入（配息+房租）</td></tr>
         </tbody>
       </table>
     </div>
@@ -573,7 +573,44 @@ def _build_market_rows(signals: dict, tv: dict) -> str:
 
 
 def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
+
     """以 daily_analysis.json + hunter intel 注入 market + Buffett + CTO 區塊。"""
+    # Moved from end of function for Buffett advice generation.
+    import sqlite3
+    _ac2 = {}
+    try:
+        _db2 = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        for r in _db2.execute("SELECT category, source, SUM(weight) as w FROM asset_class GROUP BY category, source"):
+            _ac2[(r[1], r[0])] = r[2]
+        _db2.close()
+    except Exception:
+        pass
+    _sec2 = float(tv.get("securities_total", 0) or 0)
+    _fund2 = float(tv.get("fund_market_value", 0) or tv.get("funds", 0) or 0)
+    _ins2 = float(tv.get("insurance_current_value", 0) or 0)
+    _cash_old2 = float(tv.get("bonds_cash", 0) or 0)
+    _cash2 = max(_cash_old2 - 5_812_576, 0) + 33_000
+    _bond2 = 2_097_467
+    def _src2(src):
+        return {"securities": _sec2, "fund": _fund2, "insurance_fund": _ins2, "cash": _cash2, "bond": _bond2}.get(src, 0)
+    def _cat2(cat):
+        t = 0
+        for (s, c), w in _ac2.items():
+            if c == cat:
+                sw = sum(w2 for (s2, c2), w2 in _ac2.items() if s2 == s)
+                t += _src2(s) * w / max(sw, 1)
+        return t
+    _tw_v = _cat2("tw_equity")
+    _us_v = _cat2("us_equity")
+    _def_v = _cat2("defensive")
+    _bond_v = _cat2("bond")
+    _cash_v = tv.get('cash', tv.get('cash_total', 4_483_408))
+
+    _tgt_tw, _tgt_us, _tgt_def, _tgt_bond, _tgt_cash = 35.0, 30.0, 25.0, 5.0, 5.0
+    _tot = max(_tw_v + _us_v + _def_v + _bond_v + _cash_v, 1) # This needs to be calculated before _fmt_pct and _fmt_gap
+    def _fmt_pct(v): return f"{v/_tot*100:.1f}%"
+    def _fmt_gap(v, t): return f"{v/_tot*100 - t:+.1f}pp"
+
     # 先從 market_intel 表補入 hunter 情報
     try:
         import sqlite3
@@ -687,8 +724,25 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
                 buf_content += f"• {b}<br>"
         buf_content += "<br><strong>🤝 Buffett 派操作建議</strong><br>"
         buf_content += f"• 淨資產：{net_worth:,.0f} TWD<br>"
-        buf_content += "• 建議部位：美股權益 ≤ 35%、台股權益 15-20%、高利活存/短債 ≥ 20%、保單/配息穩定型 ≥ 25%<br>"
-        buf_content += "• 今日動作：減碼美股權重、增加高利活存與防禦型配息部位；0050 配息縮水後缺口以 00878/00713 補位。<br>"
+        _us_pct = _us_v / _tot * 100
+        _tw_pct = _tw_v / _tot * 100
+        _def_pct = _def_v / _tot * 100
+        _bond_pct = _bond_v / _tot * 100
+        _cash_pct = _cash_v / _tot * 100
+        buf_content += f"• 建議部位：美股 {_us_pct:.0f}%（目標 {_tgt_us:.0f}%）、台股 {_tw_pct:.0f}%（目標 {_tgt_tw:.0f}%）、防守 {_def_pct:.0f}%（目標 {_tgt_def:.0f}%）、債券 {_bond_pct:.0f}%（目標 {_tgt_bond:.0f}%）、現金 {_cash_pct:.0f}%（目標 {_tgt_cash:.0f}%）<br>"
+
+        today_action = []
+        if (_tw_v / _tot * 100 - _tgt_tw) < -5:
+            today_action.append("台股偏低，逢低補碼")
+        if (_us_v / _tot * 100 - _tgt_us) > 5:
+            today_action.append("美股超標，優先減碼")
+        if (_def_v / _tot * 100 - _tgt_def) < -5:
+            today_action.append("防守不足，補 00878/00713")
+        if (_cash_v / _tot * 100 - _tgt_cash) > 5:
+            today_action.append("現金過多，可轉投入")
+        if not today_action:
+            today_action.append("持股觀望，等待機會")
+        buf_content += f"• 今日動作：{'、'.join(today_action)}<br>"
         buf_content += "• 觸發條件：外資賣超 > 150 億 / 大盤跌 1.5% / 費半跌 2% / 跌破季線+量增 → 啟動減碼；外資買超 > 100 億 + 大盤漲 1% + 費半 +3% → 回補。"
 
     if not cto_content:
@@ -814,61 +868,27 @@ def main():
     daily_html = _inject_market_intel(daily_html, tv, intel_signals)
 
     # 注入戰略穿透值到日報（與儀表板一致）
-    import sqlite3
-    _ac2 = {}
-    try:
-        _db2 = sqlite3.connect(str(BASE / "dragon_assets.db"))
-        for r in _db2.execute("SELECT category, source, SUM(weight) as w FROM asset_class GROUP BY category, source"):
-            _ac2[(r[1], r[0])] = r[2]
-        _db2.close()
-    except Exception:
-        pass
-    _sec2 = float(tv.get("securities_total", 0) or 0)
-    _fund2 = float(tv.get("fund_market_value", 0) or tv.get("funds", 0) or 0)
-    _ins2 = float(tv.get("insurance_current_value", 0) or 0)
-    _cash_old2 = float(tv.get("bonds_cash", 0) or 0)
-    _cash2 = max(_cash_old2 - 5_812_576, 0) + 33_000
-    _bond2 = 2_097_467
-    def _src2(src):
-        return {"securities": _sec2, "fund": _fund2, "insurance_fund": _ins2, "cash": _cash2, "bond": _bond2}.get(src, 0)
-    def _cat2(cat):
-        t = 0
-        for (s, c), w in _ac2.items():
-            if c == cat:
-                sw = sum(w2 for (s2, c2), w2 in _ac2.items() if s2 == s)
-                t += _src2(s) * w / max(sw, 1)
-        return t
-    _tw_v = _cat2("tw_equity")
-    _us_v = _cat2("us_equity")
-    _def_v = _cat2("defensive")
-    _bond_v = _cat2("bond")
-    _cash_v = tv.get('cash', tv.get('cash_total', 4_483_408))
-    _inv_t = max(_tw_v + _us_v + _def_v + _bond_v + _cash_v, 1)
-
-    _tgt_tw, _tgt_us, _tgt_def, _tgt_bond, _tgt_cash = 35.0, 30.0, 25.0, 5.0, 5.0
-    _tot = max(_tw_v + _us_v + _def_v + _bond_v + _cash_v, 1)
-    def _fmt_pct(v): return f"{v/_tot*100:.1f}%"
-    def _fmt_gap(v, t): return f"{v/_tot*100 - t:+.1f}pp"
-    daily_html = daily_html.replace("__DR_TW_V__", f"{_tw_v:,.0f}")
-    daily_html = daily_html.replace("__DR_US_V__", f"{_us_v:,.0f}")
-    daily_html = daily_html.replace("__DR_DEF_V__", f"{_def_v:,.0f}")
-    daily_html = daily_html.replace("__DR_BOND_V__", f"{_bond_v:,.0f}")
-    daily_html = daily_html.replace("__DR_TW_PCT__", _fmt_pct(_tw_v))
-    daily_html = daily_html.replace("__DR_US_PCT__", _fmt_pct(_us_v))
-    daily_html = daily_html.replace("__DR_DEF_PCT__", _fmt_pct(_def_v))
-    daily_html = daily_html.replace("__DR_BOND_PCT__", _fmt_pct(_bond_v))
-    daily_html = daily_html.replace("__DR_TW_TGT__", f"{_tgt_tw:.0f}%")
-    daily_html = daily_html.replace("__DR_US_TGT__", f"{_tgt_us:.0f}%")
-    daily_html = daily_html.replace("__DR_DEF_TGT__", f"{_tgt_def:.0f}%")
-    daily_html = daily_html.replace("__DR_BOND_TGT__", f"{_tgt_bond:.0f}%")
-    daily_html = daily_html.replace("__DR_TW_GAP__", _fmt_gap(_tw_v, _tgt_tw))
-    daily_html = daily_html.replace("__DR_US_GAP__", _fmt_gap(_us_v, _tgt_us))
-    daily_html = daily_html.replace("__DR_DEF_GAP__", _fmt_gap(_def_v, _tgt_def))
-    daily_html = daily_html.replace("__DR_BOND_GAP__", _fmt_gap(_bond_v, _tgt_bond))
-    daily_html = daily_html.replace("__DR_CASH_V__", f"{_cash_v:,.0f}")
-    daily_html = daily_html.replace("__DR_CASH_PCT__", _fmt_pct(_cash_v))
-    daily_html = daily_html.replace("__DR_CASH_TGT__", f"{_tgt_cash:.0f}%")
-    daily_html = daily_html.replace("__DR_CASH_GAP__", _fmt_gap(_cash_v, _tgt_cash))
+    # Moved to top of function for Buffett advice generation.
+    # daily_html = daily_html.replace("__DR_TW_V__", f"{_tw_v:,.0f}")
+    # daily_html = daily_html.replace("__DR_US_V__", f"{_us_v:,.0f}")
+    # daily_html = daily_html.replace("__DR_DEF_V__", f"{_def_v:,.0f}")
+    # daily_html = daily_html.replace("__DR_BOND_V__", f"{_bond_v:,.0f}")
+    # daily_html = daily_html.replace("__DR_TW_PCT__", _fmt_pct(_tw_v))
+    # daily_html = daily_html.replace("__DR_US_PCT__", _fmt_pct(_us_v))
+    # daily_html = daily_html.replace("__DR_DEF_PCT__", _fmt_pct(_def_v))
+    # daily_html = daily_html.replace("__DR_BOND_PCT__", _fmt_pct(_bond_v))
+    # daily_html = daily_html.replace("__DR_TW_TGT__", f"{_tgt_tw:.0f}%")
+    # daily_html = daily_html.replace("__DR_US_TGT__", f"{_tgt_us:.0f}%")
+    # daily_html = daily_html.replace("__DR_DEF_TGT__", f"{_tgt_def:.0f}%")
+    # daily_html = daily_html.replace("__DR_BOND_TGT__", f"{_tgt_bond:.0f}%")
+    # daily_html = daily_html.replace("__DR_TW_GAP__", _fmt_gap(_tw_v, _tgt_tw))
+    # daily_html = daily_html.replace("__DR_US_GAP__", _fmt_gap(_us_v, _tgt_us))
+    # daily_html = daily_html.replace("__DR_DEF_GAP__", _fmt_gap(_def_v, _tgt_def))
+    # daily_html = daily_html.replace("__DR_BOND_GAP__", _fmt_gap(_bond_v, _tgt_bond))
+    # daily_html = daily_html.replace("__DR_CASH_V__", f"{_cash_v:,.0f}")
+    # daily_html = daily_html.replace("__DR_CASH_PCT__", _fmt_pct(_cash_v))
+    # daily_html = daily_html.replace("__DR_CASH_TGT__", f"{_tgt_cash:.0f}%")
+    # daily_html = daily_html.replace("__DR_CASH_GAP__", _fmt_gap(_cash_v, _tgt_cash))
 
     # 證券明細注入
     try:
