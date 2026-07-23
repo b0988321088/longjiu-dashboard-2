@@ -255,7 +255,7 @@ def load_history(snap=None) -> dict:
             history[d] = {
                 "date": d,
                 "total_assets": float(sum(r.get(k, 0) for k in ["securities","insurance","funds","bonds","cash_total","real_estate"])),
-                "total_liabilities": 18_197_422,  # fixed for now
+                "total_liabilities": snap.get("total_liabilities", 21_000_000),
                 "net_worth": 0.0,
                 "securities_market": float(r.get("securities", 0)),
                 "insurance_current": float(r.get("insurance", 0)),
