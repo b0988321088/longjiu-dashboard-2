@@ -21,6 +21,7 @@
 | 06-17 整點 | 龍九情報同步 | no_agent | intel_sync_wrapper.py |
 | 13:00 | 台股緊急應變 | agent | — |
 | 21:00 | 美股緊急應變 | no_agent | emergency_1330.py |
+| 21:30 | 龍九晚報 | no_agent | update_all.py |
 
 ### 每週特定
 | 時間 | 名稱 | 排程 |
