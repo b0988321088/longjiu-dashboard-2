@@ -350,7 +350,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-lead">證券總市值 <strong>{tv['securities_total']:,} TWD</strong>（14檔）。前三大：{tv['holdings_top3'][0][0]} {tv['holdings_top3'][0][1]:.1f}%、{tv['holdings_top3'][1][0]} {tv['holdings_top3'][1][1]:.1f}%、{tv['holdings_top3'][2][0]} {tv['holdings_top3'][2][1]:.1f}%。0056 凍結質押中，短期無法加碼。0050 配息：待 MB 確認；防禦缺口由 00878/00713 預備。</p>
 
     <h3>房租金流</h3>
-    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。大義街1樓 24,000（7月初入帳）+ 洲際W 33,000（7/20 ✅ 已入帳）= 已實收 57,000；剩大義街23樓 21,000 + 管理費 2,100 月底收齊。星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
+    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。大義街1樓 24,000（7月初入帳）+ 洲際W 33,000（7/20 ✅ 已入帳）+ 大義街23樓 21,000 + 管理費 2,100（7/23 ✅ 已入帳）= 已全數實收 <strong>80,100 TWD</strong>。星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
 
     <h3>鉅亨基金部位</h3>
     <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong>。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 {tv.get('funds',0):,}。</p>
@@ -1255,10 +1255,10 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     _expense = int(tv.get("monthly_expense", 141_958))
     _mortgage_pmt = 33_724
     _rent_total = _rent_1f + _rent_zjw + _rent_23f + _rent_mgmt
-    _rent_received = _rent_1f + _rent_zjw  # 57,000
-    _rent_pending = _rent_23f + _rent_mgmt  # 23,100
+    _rent_received = _rent_1f + _rent_zjw + _rent_23f + _rent_mgmt  # 80,100 全數實收
+    _rent_pending = 0  # 已全數收齊
     _rent_breakdown = f"大義街1樓{_rent_1f:,}+洲際W{_rent_zjw:,}+大義街23樓{_rent_23f:,}+管理費{_rent_mgmt:,}"
-    _rent_status = f"已實收 {_rent_received:,}（大義街1樓{_rent_1f:,}+洲際W{_rent_zjw:,} ✅），剩 {_rent_pending:,}（大義街23樓{_rent_23f:,}+管理費{_rent_mgmt:,}）月底收齊"
+    _rent_status = f"全數實收 {_rent_received:,}（大義街1樓{_rent_1f:,}+洲際W{_rent_zjw:,}+大義街23樓{_rent_23f:,}+管理費{_rent_mgmt:,} ✅）"
 
     html = html.replace("__RENT_TOTAL__", f"{_rent_total:,}")
     html = html.replace("__RENT_BREAKDOWN__", _rent_breakdown)
