@@ -2,9 +2,9 @@
   "generated_at": "2026-07-22T02:35:15.524024",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-07-18",
-  "total_assets": 17487610,
+  "total_assets": 16618371,
   "total_liabilities": 17199287,
-  "net_worth": 288323,
+  "net_worth": -580916,
   "debt_ratio": "33.9%",
   "monthly_income": 218102,
   "monthly_expense": 141958,
@@ -13,7 +13,7 @@
   "securities_total_market_value": 2413920,
   "insurance_current_value": 9766626,
   "fund_market_value": 823656,
-  "moneybook_total": 3853985,
+  "moneybook_total": 3614169,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
   "rent_monthly_actual": 80100,
@@ -65,14 +65,14 @@
   "cc_high": 42000,
   "firstjin_fl65_current_value": 1977799,
   "allianz_ab_current_value": 7788827,
-  "firstjin_current_value": 1977799,
+  "firstjin_current_value": 1958980,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
-  "bank_assets_moneybook": 3853985,
+  "bank_assets_moneybook": 3614169,
   "bank_assets_memo": "MB 20260718 正數帳戶合計；44帳戶；排除負數",
   "monthly_expense_mb": 222910,
   "monthly_expense_mb_note": "MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償",
-  "credit_card_pending": 34213,
+  "credit_card_pending": 24976,
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
   "securities_total": 2413920,
@@ -94,7 +94,7 @@
     "0050連結B配息": 46924
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
-  "real_liquid_assets": 4483408,
+  "real_liquid_assets": 3614169,
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
   "passive_income": {
     "fund_dividend_monthly": 17519,
@@ -404,7 +404,7 @@
       "美股市值型成長": 3932234,
       "防守型配息": 1958980,
       "債券": 3929011,
-      "現金/安全網": 4502227
+      "現金/安全網": 3632988
     }
   },
   "penetration_canonical": {
@@ -524,7 +524,7 @@
   "securities_tw_growth": 1007090,
   "securities_tw_defense": 1022090,
   "securities_us_growth": 76050,
-  "cash": 3884620,
+  "cash": 3614169,
   "high_yield_savings": 2200410,
   "regular_cash": 1684210,
   "mortgages": [
@@ -601,7 +601,7 @@
   "travel_allowance": 12000,
   "second_salary": 39121,
   "bonus_july": 39121,
-  "cash_total": 4483408,
+  "cash_total": 3614169,
   "bonds_cash": 10262984,
   "monthly_dividend_breakdown": {
     "allianz": 73167,
@@ -635,5 +635,14 @@
     "cost": 2000000,
     "base_value_before_dividend": 1958980,
     "dividend_this_month": 22949
-  }
+  },
+  "credit_card": {
+    "台新Richart": 14295,
+    "玉山UNI": 6509,
+    "永豐SPORT": 3590,
+    "國泰CUBE": 582,
+    "富邦momo": 0
+  },
+  "mortgage_balance": 13159422,
+  "updated_by": "moneybook_20260723"
 }
