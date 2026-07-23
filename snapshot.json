@@ -16,7 +16,7 @@
   "moneybook_total": 3614169,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
-  "rent_monthly_actual": 80100,
+  "rent_monthly_actual": 103200,
   "cc_monthly_avg_4cards": 38000,
   "page1": {
     "actual_cash_flow": {
@@ -485,7 +485,7 @@
     "updated_at": "2026-07-18"
   },
   "last_calibrated": "2026-07-18T23:56:43.616162+08:00",
-  "rent_monthly_total": 82200,
+  "rent_monthly_total": 105300,
   "rent_breakdown": {
     "大義街店面": 24000,
     "大義街二三樓": 23100,
@@ -644,5 +644,12 @@
     "富邦momo": 0
   },
   "mortgage_balance": 13159422,
-  "updated_by": "moneybook_20260723"
+  "updated_by": "moneybook_20260723",
+  "rent_qiu_en": {
+    "name": "邱*恩",
+    "rent": 21000,
+    "bonus": 2100,
+    "total": 23100,
+    "date": "2026-07-23"
+  }
 }
