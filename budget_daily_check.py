@@ -4,7 +4,7 @@
 from pathlib import Path
 import csv
 
-BASE = Path("C:/Users/bot/Desktop/龍九系統")
+BASE = Path(__file__).resolve().parent
 REPORT = BASE / "BUDGET_WEEKLY_REPORT.md"
 
 BUDGET = {
@@ -17,21 +17,27 @@ BUDGET = {
 CARDS = list(BUDGET.keys())
 
 
-def parse_moneybook_csv():
-    csv_files = list(BASE.glob("*.csv"))
-    if not csv_files:
+def parse_moneybook_bill():
+    """從 MB 最新帳單 CSV 讀取信用卡本期應付金額"""
+    _mb_dir = BASE / "moneybook"
+    _mb_bill = sorted(_mb_dir.glob("*帳單*.csv"), reverse=True)
+    if not _mb_bill:
         return None
-    csv_path = max(csv_files, key=lambda p: p.stat().st_mtime)
     expenses = {card: 0 for card in CARDS}
+    _cc_map = {"玉山銀行": "玉山", "台新銀行": "台新", "永豐銀行": "永豐", "台北富邦": "台北富邦"}
+    _latest = {}
     try:
-        with open(csv_path, "r", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                desc = str(row.get("description", "") + row.get(" Desc", "")).lower()
-                amount = float(row.get("amount", 0))
-                for card in CARDS:
-                    if card.lower() in desc and amount > 0:
-                        expenses[card] += amount
+        with open(_mb_bill[0], "r", encoding="utf-8-sig") as f:
+            for row in csv.DictReader(f):
+                bank = row.get("金融機構", "")
+                if bank in _cc_map:
+                    due = row.get("繳費截止日", "")
+                    amt = float(row.get("帳單金額", 0))
+                    if bank not in _latest or due > _latest[bank][0]:
+                        _latest[bank] = (due, amt)
+        for bank, (_, amt) in _latest.items():
+            if amt > 0:
+                expenses[_cc_map[bank]] = int(amt)
     except Exception as e:
         print("CSV parse error: {}".format(e))
         return None
@@ -92,7 +98,7 @@ def calculate_budget_status(expenses):
 
 
 def main():
-    expenses = parse_moneybook_csv()
+    expenses = parse_moneybook_bill()
     if expenses is None:
         expenses = {card: 0 for card in CARDS}
     report = calculate_budget_status(expenses)

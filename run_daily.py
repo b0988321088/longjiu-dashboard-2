@@ -167,7 +167,7 @@ def _diff_to_buffett_bullets(tv: dict, y: dict) -> list[str]:
     return bullets
 
 
-def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "") -> str:
+def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "", mb_cc_rows: str = "") -> str:
     """產出五大章節日報 HTML。"""
     allianz = tv["allianz_ab"] or 7_881_584
     firstjin = tv["firstjin"] or 1_994_698
@@ -400,10 +400,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
           <tr><th>銀行</th><th>卡片</th><th>繳款日</th><th class="num">近期應付 TWD</th><th>狀態</th></tr>
         </thead>
         <tbody>
-          <tr><td>玉山銀行</td><td>UNI</td><td>7/22</td><td class="num">3,176</td><td>🔄 待扣繳</td></tr>
-          <tr><td>台新銀行</td><td>Richart</td><td>7/29</td><td class="num">1,000</td><td>🔄 待扣繳</td></tr>
-          <tr><td>永豐銀行</td><td>SPORT</td><td>7/29</td><td class="num">500</td><td>🔄 待扣繳</td></tr>
-          <tr><td>台北富邦</td><td>momo / J</td><td>8/3</td><td class="num">800</td><td>🔄 待扣繳</td></tr>
+{mb_cc_rows}
         </tbody>
       </table>
     </div>
@@ -769,8 +766,34 @@ def main():
         tv['holdings_top3'] = [(f'{r[0]}', _hpct[i]) for i, r in enumerate(_sh)]
     except:
         tv['holdings_top3'] = [('00878', 15.0), ('009816', 16.6), ('00984A', 10.4)]
+    # 從 MB 最新帳單 CSV 讀取信用卡資料（只取每卡最新一筆）
+    _mb_cc_rows = ""
+    try:
+        _mb_dir = BASE / "moneybook"
+        _mb_bill = sorted(_mb_dir.glob("*帳單*.csv"), reverse=True)
+        if _mb_bill:
+            import csv
+            _cc_map = {"玉山銀行": "UNI", "台新銀行": "Richart", "永豐銀行": "SPORT", "台北富邦": "momo / J"}
+            _latest = {}
+            with open(_mb_bill[0], "r", encoding="utf-8-sig") as _f:
+                for _r in csv.DictReader(_f):
+                    _bank = _r.get("金融機構","")
+                    if _bank in _cc_map:
+                        _due = _r.get("繳費截止日","")
+                        _amt = float(_r.get("帳單金額",0))
+                        # 只保留每卡繳費截止日最新的那筆
+                        if _bank not in _latest or _due > _latest[_bank][0]:
+                            _latest[_bank] = (_due, _amt)
+            _cc_rows = []
+            for _bank, (_due, _amt) in _latest.items():
+                if _amt > 0:
+                    _due_md = "/".join(_due.split("/")[1:]) if "/" in _due else _due
+                    _cc_rows.append(f'          <tr><td>{_bank}</td><td>{_cc_map[_bank]}</td><td>{_due_md}</td><td class="num">{int(_amt):,}</td><td>🔄 待扣繳</td></tr>')
+            if _cc_rows:
+                _mb_cc_rows = "\n".join(_cc_rows)
+    except: pass
     # 日報
-    daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text)
+    daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text, mb_cc_rows=_mb_cc_rows)
     daily_html = _inject_market_intel(daily_html, tv, intel_signals)
 
     # 注入戰略穿透值到日報（與儀表板一致）

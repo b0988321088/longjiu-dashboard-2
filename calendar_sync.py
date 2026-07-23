@@ -42,8 +42,30 @@ def parse_events(text: str):
         if any(d >= today for d in dates):
             events.append({"summary": summary, "start": dates[0].isoformat(), "end": dates[-1].isoformat()})
     
-    # 信用卡繳款（每月固定日）
-    cc = [("玉山 3,176", 22), ("台新 1,000", 27)]
+    # 信用卡繳款（從 MB 最新帳單 CSV 讀取）
+    cc = []
+    try:
+        _mb_dir = Path(__file__).resolve().parent / "moneybook"
+        _mb_bill = sorted(_mb_dir.glob("*帳單*.csv"), reverse=True)
+        if _mb_bill:
+            import csv
+            _cc_map = {"玉山銀行": ("玉山", 22), "台新銀行": ("台新", 27), "永豐銀行": ("永豐", 29), "台北富邦": ("富邦", 3)}
+            _latest = {}
+            with open(_mb_bill[0], "r", encoding="utf-8-sig") as _f:
+                for _r in csv.DictReader(_f):
+                    _bank = _r.get("金融機構","")
+                    if _bank in _cc_map:
+                        _due = _r.get("繳費截止日","")
+                        _amt = float(_r.get("帳單金額",0))
+                        if _bank not in _latest or _due > _latest[_bank][0]:
+                            _latest[_bank] = (_due, int(_amt))
+            for _bank, (_, _amt) in _latest.items():
+                if _amt > 0:
+                    _name, _day = _cc_map[_bank]
+                    cc.append((f"{_name} {_amt:,}", _day))
+    except: pass
+    if not cc:
+        cc = [("玉山 3,176", 22), ("台新 1,000", 27)]
     for name, day in cc:
         d = today.replace(day=min(day, 28))
         if d >= today:
