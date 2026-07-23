@@ -4,6 +4,8 @@
 import sqlite3, json, os
 from datetime import date
 from pathlib import Path
+from logging_config import get_logger
+logger = get_logger("penetration_monitor")
 
 BASE = Path(__file__).resolve().parent
 db_path = BASE / "dragon_assets.db"
@@ -17,7 +19,7 @@ if env_path.exists():
         if line.startswith("TG_CHAT_ID="): TG_CHAT_ID = line.split("=",1)[1].strip()
 
 if not db_path.exists():
-    print("❌ db 不存在")
+    logger.error("❌ db 不存在")
     exit(1)
 
 db = sqlite3.connect(str(db_path))
@@ -26,7 +28,7 @@ db.row_factory = sqlite3.Row
 # 取最近2天
 rows = db.execute("SELECT * FROM assets ORDER BY date DESC LIMIT 2").fetchall()
 if len(rows) < 2:
-    print("⚠️ 數據不足2天，無法比對")
+    logger.warning("⚠️ 數據不足2天，無法比對")
     db.close()
     exit(0)
 

@@ -4,6 +4,8 @@
 import json, os, requests, re
 from datetime import date, datetime
 from pathlib import Path
+from logging_config import get_logger
+logger = get_logger("hunter_intel")
 
 BASE = Path(__file__).resolve().parent
 env_path = Path.home() / "AppData/Local/hermes/.env"

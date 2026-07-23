@@ -4,6 +4,8 @@
 import json, os, re
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from logging_config import get_logger
+logger = get_logger("calendar_sync")
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -16,7 +18,7 @@ SCOPES = ["https://www.googleapis.com/auth/calendar", "https://www.googleapis.co
 
 def load_creds():
     if not TOKEN_PATH.exists():
-        print("❌ 無 Google token")
+        logger.error("❌ 無 Google token")
         return None
     creds = Credentials.from_authorized_user_file(str(TOKEN_PATH), SCOPES)
     if creds.expired and creds.refresh_token:
@@ -93,4 +95,4 @@ for ev in events:
         service.events().insert(calendarId="primary", body=body).execute()
         created += 1
 
-print(f"✅ Calendar 同步完成：新增 {created} 個行程")
+logger.info(f"✅ Calendar 同步完成：新增 {created} 個行程")
