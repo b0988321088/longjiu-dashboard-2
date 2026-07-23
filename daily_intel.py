@@ -392,6 +392,25 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
     market = fetch_yf_market()
     signals = classify_from_yf(market)
 
+    # --- NEW: News fetching and processing moved here ---
+    news_queries = ["台股", "美股", "今日", "走勢", "川普", "分析", "台積電", "股價", "大盤", "外資"]
+    news = [] # Initialize news list for use in briefing and unified report
+    _h = datetime.now().hour
+    if force_refresh or _h in [7, 13, 21]:
+        try:
+            _fetched_news = _fetch_news(news_queries, limit=10) # Fetch more, filter later
+            news.extend(_fetched_news) # Populate the news list
+            if news:
+                _news_text = "\n".join(item.get("title","") + " " + item.get("snippet","") for item in news)
+                _news_signals = classify(_news_text)
+                for k in ["sell_signals", "buy_signals"]:
+                    if _news_signals.get(k):
+                        signals.setdefault(k, []).extend(_news_signals[k])
+        except Exception as e:
+            print(f"Error in fetching news for cron job: {e}", file=sys.stderr)
+            pass
+    # --- END NEW ---
+
     # 2. 從 Yahoo Finance 數據建立 briefing（取代空殼 web search）
     _tw_str = market.get("twii", "")
     _tsm_str = market.get("tsm", "")
@@ -426,6 +445,17 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
     else:
         _temp_briefing_lines.append("買進訊號：無")
     _temp_briefing_lines.append("")
+
+    # --- NEW: Insert latest market news here ---
+    if news:
+        _temp_briefing_lines.append("【最新市場消息】")
+        for n in news[:3]: # Limit to 3 news items for briefing
+            _temp_briefing_lines.append(f"• {n.get('title', '')} ({n.get('url', '').split('/')[2]})")
+            if n.get('snippet'):
+                _temp_briefing_lines.append(f"  {n['snippet']}")
+        _temp_briefing_lines.append("") # Add an empty line after news if present
+    # --- END NEW ---
+
     _temp_briefing_lines.append("【持倉關聯分析】")
     try:
         snap = json.loads((BASE / "snapshot.json").read_text(encoding='utf-8'))
@@ -455,24 +485,9 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
         _temp_briefing_lines.append(f"持倉關聯分析錯誤: {e}")
     briefing = "\n".join(_temp_briefing_lines)
 
-    # web_search 定時執行：07:00 / 13:00 / 21:00 各抓一次（force_refresh 時強制執行）
+    # Old news fetching block moved earlier. Keep initializations.
     intel_text = ""
     search_results = []
-    _h = datetime.now().hour
-    if force_refresh or _h in [7, 13, 21]:
-        try:
-            _news_queries = ["台股", "美股", "川普", "走勢", "分析", "台積電", "股價", "大盤", "外資"]
-            _news = _fetch_news(_news_queries, limit=10) # Fetch more, filter later
-            search_results = _news
-            if _news:
-                _news_text = "\n".join(item.get("title","") + " " + item.get("snippet","") for item in _news)
-                _news_signals = classify(_news_text)
-                for k in ["sell_signals", "buy_signals"]:
-                    if _news_signals.get(k):
-                        signals.setdefault(k, []).extend(_news_signals[k])
-        except Exception as e:
-            print(f"Error in fetching news for cron job: {e}", file=sys.stderr)
-            pass
 
     # 3. 產出 intel 檔
     text = render_intel_text(intel_text, signals)
