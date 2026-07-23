@@ -29,7 +29,7 @@ def get_yf_market():
             if r.status_code == 200:
                 data = r.json()
                 meta = data.get("chart", {}).get("result", [{}])[0].get("meta", {})
-                prev = meta.get("previousClose", 0)
+                prev = meta.get("chartPreviousClose", 0)
                 cur = meta.get("regularMarketPrice", 0) or meta.get("chartPreviousClose", 0)
                 if prev and cur:
                     chg = (cur - prev) / prev * 100
