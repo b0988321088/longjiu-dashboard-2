@@ -3,7 +3,7 @@
   "version": "v5.0.10-true-value-correction",
   "date": "2026-07-18",
   "total_assets": 16618371,
-  "total_liabilities": 17199287,
+  "total_liabilities": 5038000,
   "net_worth": -580916,
   "debt_ratio": "33.9%",
   "monthly_income": 218102,
@@ -70,7 +70,7 @@
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
   "bank_assets_moneybook": 3614169,
   "bank_assets_memo": "MB 20260718 正數帳戶合計；44帳戶；排除負數",
-  "monthly_expense_mb": 222910,
+  "monthly_expense_mb": 199186,
   "monthly_expense_mb_note": "MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償",
   "credit_card_pending": 24976,
   "mb_source": "Moneybook_明細_20260718.zip",
@@ -664,5 +664,11 @@
     "bonus": 2100,
     "total": 23100,
     "note": "=大義街二三樓，已含在 rent_breakdown"
-  }
+  },
+  "mortgage": 0,
+  "mortgage_yy": 0,
+  "mortgage_yydu": 0,
+  "mortgage_xz": 0,
+  "financial_mortgage_interest": 10000,
+  "dbs_balance": 17000
 }
