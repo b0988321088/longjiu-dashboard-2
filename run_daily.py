@@ -115,8 +115,20 @@ def calibrate_sources() -> dict:
     dividend_breakdown = snap.get("monthly_dividend_breakdown", {})
     sec_dividend_monthly = dividend_breakdown.get("etf", 0)
     fund_dividend_monthly = dividend_breakdown.get("fund", 0)
+    
+    # ETF 除息時程表（HTML）
+    _etf_div = snap.get("etf_dividend_schedule", {})
+    _etf_table = "<table style='width:100%;font-size:14px;border-collapse:collapse;margin-top:8px'><thead><tr style='background:#f0f0f5'><th>ETF</th><th>狀態</th><th>除息日</th><th>配息</th><th>發放日</th></tr></thead><tbody>"
+    for status_label, status_key in [("✅ 已除息","已除息"), ("🔜 下一梯次","下一梯次")]:
+        items = _etf_div.get(status_key, {})
+        for ticker, info in items.items():
+            _ex = info.get("除息日") or info.get("預計除息", "")
+            _dv = f"{info.get('配息','')}元" if info.get('配息') else "-"
+            _pay = info.get("發放日", "")
+            _etf_table += f"<tr><td>{ticker}</td><td>{status_label}</td><td>{_ex}</td><td>{_dv}</td><td>{_pay}</td></tr>"
+    _etf_table += "</tbody></table>"
+    
     # 下次除息資訊（從 relay_calendar 讀取）
-    next_ex_dividend_list = "待確認"
     try:
         _rc = open(BASE / "relay_calendar.md", encoding="utf-8").read()
         _matches = re.findall(r'\|\s*([^|]+?)\s*\|\s*(\d+/\d+)\(', _rc)
@@ -137,6 +149,7 @@ def calibrate_sources() -> dict:
         "sec_dividend_monthly": sec_dividend_monthly,
         "fund_dividend_monthly": fund_dividend_monthly,
         "next_ex_dividend_list": next_ex_dividend_list,
+        "etf_div_table": _etf_table,
         "monthly_income": s_income,
         "monthly_expense": s_expense,
         "working_surplus": s_work_surplus,
@@ -403,7 +416,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-lead">保單現值 <strong>{insurance_total:,} TWD</strong>（安聯 A+B {allianz:,} + 第一金 FL65 {firstjin:,}），本月配息合計 <strong>{monthly_dividend:,} TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
 
     <h3>證券曝險</h3>
-    <p class="text-lead">證券總市值 <strong>{tv['securities_total']:,} TWD</strong>（14檔）。本月已收配息：{tv['sec_dividend_monthly']:,} TWD。下一梯次除息：{tv['next_ex_dividend_list']}。前三大：{tv['holdings_top3'][0][0]} {tv['holdings_top3'][0][1]:.1f}%、{tv['holdings_top3'][1][0]} {tv['holdings_top3'][1][1]:.1f}%、{tv['holdings_top3'][2][0]} {tv['holdings_top3'][2][1]:.1f}%。0056 凍結質押中，短期無法加碼。</p>
+    <p class="text-lead">證券總市值 <strong>{tv['securities_total']:,} TWD</strong>（14檔）。本月已收配息：{tv['sec_dividend_monthly']:,} TWD。前三大：{tv['holdings_top3'][0][0]} {tv['holdings_top3'][0][1]:.1f}%、{tv['holdings_top3'][1][0]} {tv['holdings_top3'][1][1]:.1f}%、{tv['holdings_top3'][2][0]} {tv['holdings_top3'][2][1]:.1f}%。0056 凍結質押中，短期無法加碼。</p>
+    {tv['etf_div_table']}
 
     <h3>房租金流</h3>
     <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。{_fmt_rent_status(tv)}星展戶頭餘額 17,000 TWD，8/1 扣理財型利息 ~10,000，餘裕充足 ✅</p>
