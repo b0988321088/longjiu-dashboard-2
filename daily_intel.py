@@ -398,13 +398,62 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
     _sox_str = market.get("sox", "")
     _us_str = market.get("us", "")
     _cpi_str = market.get("cpi", "")
-    briefing_parts = [
-        f"【台股/大盤】{_tw_str} | 台積電 {_tsm_str}",
-        f"【美股/外資】{_us_str}",
-        f"【半導體】費半 {_sox_str}",
-        f"【CPI/利率】{_cpi_str}",
-    ]
-    briefing = " | ".join(briefing_parts)
+    _temp_briefing_lines = []
+    _temp_briefing_lines.append("【台股/大盤】")
+    _temp_briefing_lines.append(f"加權指數：{market.get('twii', '—')}")
+    _temp_briefing_lines.append(f"台積電：{market.get('tsm', '—')}")
+    _temp_briefing_lines.append(f"費半：{market.get('sox', '—')}")
+    _temp_briefing_lines.append("")
+    _temp_briefing_lines.append("【美股/外資】")
+    _temp_briefing_lines.append(f"美股：{market.get('us', '—')}")
+    _temp_briefing_lines.append(f"外資7日淨流：{market.get('foreign_flow', {}).get('7d_net', '—')}")
+    _temp_briefing_lines.append("")
+    _temp_briefing_lines.append("【CPI/利率】")
+    _temp_briefing_lines.append(f"美國CPI：{market.get('cpi', '—')}")
+    _temp_briefing_lines.append("")
+    _temp_briefing_lines.append("【情報訊號】")
+    if signals.get("sell_signals"):
+        _temp_briefing_lines.append("賣出訊號：")
+        for s in signals["sell_signals"][:3]:
+            _temp_briefing_lines.append(f"• {s}")
+    else:
+        _temp_briefing_lines.append("賣出訊號：無")
+    _temp_briefing_lines.append("")
+    if signals.get("buy_signals"):
+        _temp_briefing_lines.append("買進訊號：")
+        for s in signals["buy_signals"][:3]:
+            _temp_briefing_lines.append(f"• {s}")
+    else:
+        _temp_briefing_lines.append("買進訊號：無")
+    _temp_briefing_lines.append("")
+    _temp_briefing_lines.append("【持倉關聯分析】")
+    try:
+        snap = json.loads((BASE / "snapshot.json").read_text(encoding='utf-8'))
+        pen = snap.get('penetration', {}).get('actual_twd', {})
+        tw_equity = pen.get('台股市值型成長', 0)
+        us_equity = pen.get('美股市值型成長', 0)
+        long_short = ""
+        if tw_equity > 0 and (market.get('twii') and "%" in market['twii']):
+            twii_pct = float(re.search(r"\(([+-]?\d+\.\d+)%\)", market['twii']).group(1))
+            if twii_pct <= -1.0:
+                long_short += f"台股持倉市值型成長 {tw_equity:,.0f} 萬元，今日大盤下跌，短線承壓。"
+            elif twii_pct >= 1.0:
+                long_short += f"台股持倉市值型成長 {tw_equity:,.0f} 萬元，今日大盤上漲，動能轉強。"
+
+        if us_equity > 0 and (market.get('us') and "道瓊" in market['us']):
+            us_match = re.search(r"道瓊 [^()]+ \(([+-]?\d+\.\d+)%\)", market['us'])
+            if us_match:
+                us_dji_pct = float(us_match.group(1))
+                if us_dji_pct <= -1.0:
+                    long_short += f"美股持倉市值型成長 {us_equity:,.0f} 萬元，今日美股下跌，短期風險增加。"
+                elif us_dji_pct >= 1.0:
+                    long_short += f"美股持倉市值型成長 {us_equity:,.0f} 萬元，今日美股上漲，可適度樂觀。"
+        if not long_short:
+            long_short = "目前持倉與市場連動正常，無特殊事件。"
+        _temp_briefing_lines.append(long_short)
+    except Exception as e:
+        _temp_briefing_lines.append(f"持倉關聯分析錯誤: {e}")
+    briefing = "\n".join(_temp_briefing_lines)
 
     # web_search 定時執行：07:00 / 13:00 / 21:00 各抓一次（force_refresh 時強制執行）
     intel_text = ""
@@ -462,67 +511,6 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
     unified_path = BASE / f"daily_intel_report_{today}.json"
     unified_path.write_text(json.dumps(unified, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    # Generate unified briefing text for run_daily.py injection
-    briefing_lines = []
-    briefing_lines.append("【台股/大盤】")
-    briefing_lines.append(f"加權指數：{market.get('twii', '—')}")
-    briefing_lines.append(f"台積電：{market.get('tsm', '—')}")
-    briefing_lines.append(f"費半：{market.get('sox', '—')}")
-    briefing_lines.append("")
-    briefing_lines.append("【美股/外資】")
-    briefing_lines.append(f"美股：{market.get('us', '—')}")
-    briefing_lines.append(f"外資7日淨流：{market.get('foreign_flow', {}).get('7d_net', '—')}")
-    briefing_lines.append("")
-    briefing_lines.append("【CPI/利率】")
-    briefing_lines.append(f"美國CPI：{market.get('cpi', '—')}")
-    briefing_lines.append("")
-    briefing_lines.append("【情報訊號】")
-    if signals.get("sell_signals"):
-        briefing_lines.append("賣出訊號：")
-        for s in signals["sell_signals"][:3]:
-            briefing_lines.append(f"• {s}")
-    else:
-        briefing_lines.append("賣出訊號：無")
-    briefing_lines.append("")
-    if signals.get("buy_signals"):
-        briefing_lines.append("買進訊號：")
-        for s in signals["buy_signals"][:3]:
-            briefing_lines.append(f"• {s}")
-    else:
-        briefing_lines.append("買進訊號：無")
-    briefing_lines.append("")
-    briefing_lines.append("【持倉關聯分析】")
-    # Read snapshot to relate market moves to holdings
-    try:
-        snap = json.loads((BASE / "snapshot.json").read_text(encoding='utf-8'))
-        pen = snap.get('penetration', {}).get('actual_twd', {})
-        tw_equity = pen.get('台股市值型成長', 0)
-        us_equity = pen.get('美股市值型成長', 0)
-        long_short = "" # Placeholder for now
-
-        if tw_equity > 0 and (market.get('twii') and "%" in market['twii']):
-            twii_pct = float(re.search(r"\(([+-]?\d+\.\d+)%\)", market['twii']).group(1))
-            if twii_pct <= -1.0:
-                long_short += f"台股持倉市值型成長 {tw_equity:,.0f} 萬元，今日大盤下跌，短線承壓。"
-            elif twii_pct >= 1.0:
-                long_short += f"台股持倉市值型成長 {tw_equity:,.0f} 萬元，今日大盤上漲，動能轉強。"
-
-        if us_equity > 0 and (market.get('us') and "道瓊" in market['us']):
-            # Extract Dow Jones percentage change from the 'us' string
-            us_match = re.search(r"道瓊 [^()]+ \(([+-]?\d+\.\d+)%\)", market['us'])
-            if us_match:
-                us_dji_pct = float(us_match.group(1))
-                if us_dji_pct <= -1.0:
-                    long_short += f"美股持倉市值型成長 {us_equity:,.0f} 萬元，今日美股下跌，短期風險增加。"
-                elif us_dji_pct >= 1.0:
-                    long_short += f"美股持倉市值型成長 {us_equity:,.0f} 萬元，今日美股上漲，可適度樂觀。"
-        if not long_short:
-            long_short = "目前持倉與市場連動正常，無特殊事件。"
-        briefing_lines.append(long_short)
-    except Exception as e:
-        briefing_lines.append(f"持倉關聯分析錯誤: {e}")
-
-    return {"briefing_text": "\n".join(briefing_lines)}
 
 if __name__ == "__main__":
     # Manual test / cron job entry point
