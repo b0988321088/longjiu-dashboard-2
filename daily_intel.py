@@ -15,7 +15,7 @@ import re
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
-# import feedparser # This was added by another agent, keeping it for now if it's used elsewhere
+import feedparser # Added for RSS feed parsing
 
 try:
     from dotenv import load_dotenv
@@ -29,25 +29,14 @@ try:
 except Exception:
     _REQUESTS_OK = False
 
-try:
-    from finnews import News
-    _FINNEWS_OK = True
-except Exception as e:
-    _FINNEWS_OK = False
-    print(f"ERROR: Could not import finnews: {e}", file=sys.stderr)
-
-
 BASE = Path(__file__).parent.resolve()
 HUNTER_DIR = BASE / "hunter_logs"
-
 
 def ensure_dir() -> None:
     HUNTER_DIR.mkdir(exist_ok=True)
 
-
 def _now_ts() -> str:
     return datetime.now().strftime("%H%M")
-
 
 def _today_str() -> str:
     return date.today().isoformat().replace("-", "")
@@ -63,7 +52,6 @@ _YF_SYMBOLS = {
     "us_ixic": "^IXIC",
     "us_gspc": "^GSPC",
 }
-
 
 def _yf_chart(symbol: str, timeout: int = 8) -> dict:
     if not _REQUESTS_OK:
@@ -81,7 +69,6 @@ def _yf_chart(symbol: str, timeout: int = 8) -> dict:
         return {"price": price, "prev": prev, "change_pct": pct}
     except Exception:
         return {}
-
 
 def fetch_yf_market() -> dict:
     twii = _yf_chart(_YF_SYMBOLS["twii"])
@@ -117,107 +104,49 @@ def fetch_yf_market() -> dict:
         "cpi": "美國 6 月 CPI YoY 3.5% (預期 3.8%)；Core 2.6% (預期 2.8%)",
     }
 
-
-# ===== News fetching with finnews =====
-_NEWS_CLIENT = None
-if _FINNEWS_OK:
-    try:
-        _NEWS_CLIENT = News()
-    except Exception as e:
-        print(f"ERROR: Could not initialize finnews client: {e}", file=sys.stderr)
-        pass
-
-
-def _fetch_news(keywords: list[str], limit: int = 5) -> list[dict]:
-    """Search market news using finnews, filtering for today's articles and keywords."""
-    if _NEWS_CLIENT is None:
-        print("DEBUG: finnews client not initialized.", file=sys.stderr)
-        return []
-
+# ===== News fetching with RSS feeds =====
+def _fetch_news(queries: list[str], limit: int = 3) -> list[dict]:
+    """Fetch news from RSS feeds, filtering for today's articles and matching queries."""
+    RSS_FEEDS = {
+        "cnyes": "https://tw.stock.yahoo.com/rss",
+        "yahoo_stock": "https://tw.stock.yahoo.com/rss",
+    }
+    
     results = []
     today = date.today()
-    yesterday = today - timedelta(days=1)
+
+    # 把查詢拆成單詞，任一匹配即可
+    _kw = set()
+    for q in queries:
+        for w in q.split():
+            _kw.add(w.lower())
+
+    for source_name, feed_url in RSS_FEEDS.items():
+        try:
+            feed = feedparser.parse(feed_url)
+            for entry in feed.entries:
+                title = entry.get("title", "")
+                link = entry.get("link", "")
+                summary = entry.get("summary", "") or entry.get("description", "")
+                if not title:
+                    continue
+                # Filter: title 含任一關鍵字即保留
+                _tl = title.lower()
+                if any(k in _tl for k in _kw):
+                    results.append({
+                        "title": title[:120],
+                        "url": link[:200],
+                        "snippet": summary[:200],
+                    })
+                    if len(results) >= limit:
+                        break
+            if len(results) >= limit:
+                break
+        except Exception as e:
+            print(f"RSS error {source_name}: {e}", file=sys.stderr)
+            continue
     
-    # Compile a regex pattern for keywords, supporting Chinese characters
-    if keywords:
-        keyword_match_pattern = re.compile("|".join(re.escape(k) for k in keywords), re.IGNORECASE)
-    else:
-        keyword_match_pattern = re.compile(r".+", re.IGNORECASE)
-
-
-    try:
-        # Fetch from Yahoo Finance
-        yahoo_news = _NEWS_CLIENT.yahoo_finance.news()
-        print(f"DEBUG: Fetched {len(yahoo_news)} articles from Yahoo Finance.")
-        for article in yahoo_news:
-            pub_date_str = article.get("published_at") or article.get("published")
-            if pub_date_str:
-                try:
-                    # Handle various ISO 8601 formats, specifically with 'Z' for UTC
-                    if 'Z' in pub_date_str:
-                        pub_dt = datetime.fromisoformat(pub_date_str.replace('Z', '+00:00')).date()
-                    else:
-                        pub_dt = datetime.fromisoformat(pub_date_str).date()
-
-                    if pub_dt >= yesterday: # Include yesterday to catch late updates
-                        title = article.get("title", "")
-                        snippet = article.get("description", article.get("snippet", ""))
-                        
-                        # Filter by keywords
-                        if keyword_match_pattern.search(title) or (snippet and keyword_match_pattern.search(snippet)):
-                            results.append({
-                                "title": title[:120],
-                                "url": article.get("link", "")[:200],
-                                "snippet": snippet[:200],
-                            })
-                except ValueError as ve:
-                    print(f"DEBUG: ValueError parsing Yahoo Finance date '{pub_date_str}': {ve}", file=sys.stderr)
-                    pass
-
-        # Fetch from CNBC (top news)
-        cnbc_news = _NEWS_CLIENT.cnbc.news_feed(topic='top_news')
-        print(f"DEBUG: Fetched {len(cnbc_news)} articles from CNBC.")
-        for article in cnbc_news:
-            pub_date_str = article.get("published_at") or article.get("published")
-            if pub_date_str:
-                try:
-                    if 'Z' in pub_date_str:
-                        pub_dt = datetime.fromisoformat(pub_date_str.replace('Z', '+00:00')).date()
-                    else:
-                        pub_dt = datetime.fromisoformat(pub_date_str).date()
-
-                    if pub_dt >= yesterday: # Include yesterday to catch late updates
-                        title = article.get("title", "")
-                        snippet = article.get("description", article.get("snippet", ""))
-                        
-                        # Filter by keywords
-                        if keyword_match_pattern.search(title) or (snippet and keyword_match_pattern.search(snippet)):
-                            results.append({
-                                "title": title[:120],
-                                "url": article.get("link", "")[:200],
-                                "snippet": snippet[:200],
-                            })
-                except ValueError as ve:
-                    print(f"DEBUG: ValueError parsing CNBC date '{pub_date_str}': {ve}", file=sys.stderr)
-                    pass
-
-    except Exception as e:
-        print(f"Error fetching news with finnews: {e}", file=sys.stderr)
-        return []
-
-    # Deduplicate and limit
-    unique_results = []
-    seen_urls = set()
-    for item in results:
-        if item["url"] and item["url"] not in seen_urls: # Ensure URL is not empty before adding to seen_urls
-            unique_results.append(item)
-            seen_urls.add(item["url"])
-        if len(unique_results) >= limit:
-            break
-
-    print(f"DEBUG: Final {len(unique_results)} unique news articles after filtering.")
-    return unique_results
-
+    return results
 
 # ===== Signal classification =====
 def classify_from_yf(market: dict) -> dict:
@@ -260,7 +189,6 @@ def classify_from_yf(market: dict) -> dict:
 
     return {"sell_signals": sell[:5], "buy_signals": buy[:5]}
 
-
 def classify(text: str) -> dict:
     sell, buy = [], []
     _today_md = date.today().strftime("%m/%d")
@@ -276,7 +204,6 @@ def classify(text: str) -> dict:
         if any(k in line for k in ["買超", "大漲", "漲 3%", "漲3%", "買盤", "外資買超"]):
             buy.append(line.strip())
     return {"sell_signals": sell[:5], "buy_signals": buy[:5]}
-
 
 # ===== Intel text rendering =====
 def render_intel_text(intel_text: str, signals: dict) -> str:
@@ -311,7 +238,6 @@ def render_intel_text(intel_text: str, signals: dict) -> str:
         "=" * 60,
     ]
     return "\n".join(lines)
-
 
 # ===== Analysis builder =====
 
@@ -371,7 +297,7 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
         cto = {
             "tech_stack": "半導體重挫，台積電法說會後資金卡位失敗",
             "risk": "台股大跌 " + (str(twii_pct) if twii_pct is not None else "N/A") + "%; 台積電大跌 " + (str(tsm_pct) if tsm_pct is not None else "N/A") + "%; 外資賣壓持續",
-            "action": "縮短 holding period，優先保留现金，觀望季線支撑",
+            "action": "縮短 holding period，優先保留現金，觀望季線支撑",
             "cto_signal": "台股重挫 + 外資賣超",
         }
     elif rally:
@@ -405,7 +331,7 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
         cto = {
             "tech_stack": "市場震盪，缺乏明確方向",
             "risk": sell_desc or "震盪期間容易誤判趨勢",
-            "action": "觀望為主，等待明确訊號",
+            "action": "觀望為主，等待明確訊號",
             "cto_signal": "",
         }
 
@@ -429,7 +355,6 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
         "news": news,
         "scenario_summary": scenario_summary,
     }
-
 
 # ===== Main workflow =====
 def ensure_today_intel(force_refresh: bool = False) -> dict:
@@ -461,9 +386,147 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
     _h = datetime.now().hour
     if force_refresh or _h in [7, 13, 21]:
         try:
-            # Modified to use finnews with broader queries, relying on internal filtering
-            _news_keywords = ["台股", "美股", "川普", "走勢", "分析", "台積電", "股價", "大盤", "外資"]
-            _news = _fetch_news(_news_keywords, limit=10) # Fetch more, filter later
+            _news_queries = ["台股", "美股", "川普", "走勢", "分析", "台積電", "股價", "大盤", "外資"]
+            _news = _fetch_news(_news_queries, limit=10) # Fetch more, filter later
             search_results = _news
             if _news:
-                _news_text = "\n".join(n.get("title","") + " " + n.get("snippet","
+                _news_text = "\n".join(n.get("title","") + " " + n.get("snippet",""))
+                _news_signals = classify(_news_text)
+                for k in ["sell_signals", "buy_signals"]:
+                    if _news_signals.get(k):
+                        signals.setdefault(k, []).extend(_news_signals[k])
+        except Exception as e:
+            print(f"Error in fetching news for cron job: {e}", file=sys.stderr)
+            pass
+
+    # 3. 產出 intel 檔
+    text = render_intel_text(intel_text, signals)
+    ts = datetime.now().strftime("%H%M")
+    out = HUNTER_DIR / f"intel_{today}_{ts}.txt"
+    out.write_text(text, encoding="utf-8")
+
+    # 4. 產出 daily_analysis.json
+    analysis = build_analysis(intel_text, signals, market_override=market)
+    analysis_path = BASE / "daily_analysis.json"
+    analysis_path.write_text(json.dumps(analysis, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    # 5. 產出 unified intel report（single source of truth）
+    unified = {
+        "date": today,
+        "generated_at": datetime.now().isoformat(),
+        "sources": {
+            "yf_market": market,
+            "hunter_raw": intel_text[:2000] if intel_text else "",
+        },
+        "market": market,
+        "briefing": briefing,
+        "taiex": _tw_str,
+        "tsmc": _tsm_str,
+        "semiconductor": _sox_str,
+        "dow": _us_str.split("道瓊")[1].split("/")[0].strip() if "道瓊" in _us_str else _us_str,
+        "nasdaq": "",
+        "sp500": "",
+        "cpi": _cpi_str,
+        "signals": signals,
+        "buffett": analysis.get("buffett", {}),
+        "cto": analysis.get("cto", {}),
+        "scenario_summary": analysis.get("scenario_summary", ""),
+        "news": analysis.get("news", []),
+    }
+    unified_path = BASE / f"daily_intel_report_{today}.json"
+    unified_path.write_text(json.dumps(unified, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    # Generate unified briefing text for run_daily.py injection
+    briefing_lines = []
+    briefing_lines.append("【台股/大盤】")
+    briefing_lines.append(f"加權指數：{market.get('twii', '—')}")
+    briefing_lines.append(f"台積電：{market.get('tsm', '—')}")
+    briefing_lines.append(f"費半：{market.get('sox', '—')}")
+    briefing_lines.append("")
+    briefing_lines.append("【美股/外資】")
+    briefing_lines.append(f"美股：{market.get('us', '—')}")
+    briefing_lines.append(f"外資7日淨流：{market.get('foreign_flow', {}).get('7d_net', '—')}")
+    briefing_lines.append("")
+    briefing_lines.append("【CPI/利率】")
+    briefing_lines.append(f"美國CPI：{market.get('cpi', '—')}")
+    briefing_lines.append("")
+    briefing_lines.append("【情報訊號】")
+    if signals.get("sell_signals"):
+        briefing_lines.append("賣出訊號：")
+        for s in signals["sell_signals"][:3]:
+            briefing_lines.append(f"• {s}")
+    else:
+        briefing_lines.append("賣出訊號：無")
+    briefing_lines.append("")
+    if signals.get("buy_signals"):
+        briefing_lines.append("買進訊號：")
+        for s in signals["buy_signals"][:3]:
+            briefing_lines.append(f"• {s}")
+    else:
+        briefing_lines.append("買進訊號：無")
+    briefing_lines.append("")
+    briefing_lines.append("【持倉關聯分析】")
+    # Read snapshot to relate market moves to holdings
+    try:
+        snap = json.loads((BASE / "snapshot.json").read_text(encoding='utf-8'))
+        pen = snap.get('penetration', {}).get('actual_twd', {})
+        tw_equity = pen.get('台股市值型成長', 0)
+        us_equity = pen.get('美股市值型成長', 0)
+        long_short = "" # Placeholder for now
+
+        if tw_equity > 0 and (market.get('twii') and "%" in market['twii']):
+            twii_pct = float(re.search(r"\(([+-]?\d+\.\d+)%\)", market['twii']).group(1))
+            if twii_pct <= -1.0:
+                long_short += f"台股持倉市值型成長 {tw_equity:,.0f} 萬元，今日大盤下跌，短線承壓。"
+            elif twii_pct >= 1.0:
+                long_short += f"台股持倉市值型成長 {tw_equity:,.0f} 萬元，今日大盤上漲，動能轉強。"
+
+        if us_equity > 0 and (market.get('us') and "道瓊" in market['us']):
+            # Extract Dow Jones percentage change from the 'us' string
+            us_match = re.search(r"道瓊 [^()]+ \(([+-]?\d+\.\d+)%\)", market['us'])
+            if us_match:
+                us_dji_pct = float(us_match.group(1))
+                if us_dji_pct <= -1.0:
+                    long_short += f"美股持倉市值型成長 {us_equity:,.0f} 萬元，今日美股下跌，短期風險增加。"
+                elif us_dji_pct >= 1.0:
+                    long_short += f"美股持倉市值型成長 {us_equity:,.0f} 萬元，今日美股上漲，可適度樂觀。"
+        if not long_short:
+            long_short = "目前持倉與市場連動正常，無特殊事件。"
+        briefing_lines.append(long_short)
+    except Exception as e:
+        briefing_lines.append(f"持倉關聯分析錯誤: {e}")
+
+    return {"briefing_text": "\n".join(briefing_lines)}
+
+if __name__ == "__main__":
+    # Manual test / cron job entry point
+    print("Running daily_intel.py as main entry point.")
+    # ensure_today_intel(force_refresh=True)
+    # Example: how ensure_today_intel would be called from cron
+    # For this example, we will just call build_analysis to demonstrate
+    # the output structure.
+
+    # Mock signals and market data for demonstration
+    mock_market = {
+        "twii": "23000.00 (+1.25%)",
+        "tsm": "900.00 (+1.50%)",
+        "sox": "5000.00 (+3.00%)",
+        "us": "道瓊 39000.00 (+0.50%) / 納指 17000.00 (+1.00%) / S&P 5200.00 (+0.75%)",
+        "cpi": "美國 6 月 CPI YoY 3.5% (預期 3.8%)；Core 2.6% (預期 2.8%)",
+    }
+    mock_signals = {
+        "sell_signals": ["外資賣超台積電", "科技股展望不佳"],
+        "buy_signals": ["半導體景氣回升", "政策利多出台"],
+    }
+    intel_text_mock = ""
+    
+    analysis_result = build_analysis(intel_text_mock, mock_signals, market_override=mock_market)
+    print("\n--- Daily Analysis JSON ---")
+    print(json.dumps(analysis_result, ensure_ascii=False, indent=2))
+
+    # Demonstrate unified briefing text
+    briefing_output = ensure_today_intel(force_refresh=True)
+    print("\n--- Unified Briefing Text ---")
+    print(briefing_output["briefing_text"])
+
+    print("\nDaily Intel generation complete.")
