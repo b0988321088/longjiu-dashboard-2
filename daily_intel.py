@@ -530,3 +530,57 @@ if __name__ == "__main__":
     print(briefing_output["briefing_text"])
 
     print("\nDaily Intel generation complete.")
+
+def load_latest_hunter() -> str:
+    ensure_dir()
+    files = sorted(HUNTER_DIR.glob("intel_*.txt"), key=os.path.getmtime, reverse=True)
+    if not files:
+        return ""
+    return files[0].read_text(encoding="utf-8")
+
+
+def parse_hunter_signals(text: str) -> dict:
+    result = {"sell_signals": [], "buy_signals": [], "summary": ""}
+    if not text:
+        return result
+    sell_keywords = ["賣超", "大跌", "跌 2%", "跌2%", "跌破", "賣壓", "外資賣超"]
+    buy_keywords = ["買超", "大漲", "漲 3%", "漲3%", "買盤", "外資買超"]
+    for line in text.splitlines():
+        if any(k in line for k in sell_keywords):
+            result["sell_signals"].append(line.strip())
+        if any(k in line for k in buy_keywords):
+            result["buy_signals"].append(line.strip())
+    m = re.search(r"【最終結論】\s*(.+)", text, re.DOTALL)
+    if m:
+        result["summary"] = m.group(1).strip()[:200]
+    return result
+
+
+def _load_condensed_intel() -> str:
+    """讀取濃縮情報"""
+    import json
+    cf = __file__ and chr(10)
+    cf = __import__("pathlib").Path(__file__).parent / f"daily_condensed_intel_{__import__('datetime').date.today()}.json"
+    if not cf.exists(): return ""
+    try:
+        data = json.loads(cf.read_text(encoding='utf-8'))
+        if not data: return ""
+        lines = []
+        for item in data:
+            sig = (item.get("signal_level","") or "").split()[0]
+            desc = item.get("description","")
+            impact = ", ".join(item.get("holdings_impact",[]))
+            lines.append(f"{sig} {desc}（影響: {impact}）")
+        return chr(10).join(lines)
+    except: return ""
+
+def load_daily_analysis() -> dict:
+    path = BASE / "daily_analysis.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
