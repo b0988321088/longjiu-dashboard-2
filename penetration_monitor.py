@@ -7,7 +7,7 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 db_path = BASE / "dragon_assets.db"
-env_path = BASE / ".env"
+env_path = Path.home() / "AppData/Local/hermes/.env"
 
 TG_TOKEN = ""
 TG_CHAT_ID = ""

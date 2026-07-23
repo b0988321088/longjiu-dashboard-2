@@ -6,22 +6,19 @@ from datetime import date, datetime
 from pathlib import Path
 
 # ── 設定 ──
-ENV = Path(r"C:\Users\bot\Desktop\longjiu_system\.env")
 _HERMES_ENV = Path(os.path.expanduser("~/AppData/Local/hermes/.env"))
 LJ = Path(os.path.expanduser("~/Desktop/longjiu_system"))
 NOTION_TOKEN = ""
-# 動態讀取（支援 .env 更新後不重啟）
+# 動態讀取（從 Hermes 主 .env）
 def _load_env():
     global NOTION_TOKEN, NOTION_DAILY_SNAPSHOT_DB_ID
     NOTION_DAILY_SNAPSHOT_DB_ID = ""
-    candidates = [ENV, _HERMES_ENV]
-    for env_path in candidates:
-        if env_path.exists():
-            for line in env_path.read_text().splitlines():
-                if 'NOTION_TOKEN' in line and '=' in line and not line.strip().startswith('#'):
-                    NOTION_TOKEN = line.split('=',1)[1].strip().strip('"\'')
-                if 'NOTION_DAILY_SNAPSHOT_DB_ID' in line and '=' in line and not line.strip().startswith('#'):
-                    NOTION_DAILY_SNAPSHOT_DB_ID = line.split('=',1)[1].strip().strip('"\'')
+    if _HERMES_ENV.exists():
+        for line in _HERMES_ENV.read_text().splitlines():
+            if 'NOTION_TOKEN' in line and '=' in line and not line.strip().startswith('#'):
+                NOTION_TOKEN = line.split('=',1)[1].strip().strip('"\'')
+            if 'NOTION_DAILY_SNAPSHOT_DB_ID' in line and '=' in line and not line.strip().startswith('#'):
+                NOTION_DAILY_SNAPSHOT_DB_ID = line.split('=',1)[1].strip().strip('"\'')
     if NOTION_TOKEN:
         HEADERS["Authorization"] = f"Bearer {NOTION_TOKEN}"
 
@@ -29,12 +26,8 @@ def _get_snapshot_db_id() -> str:
     import os
     if 'NOTION_DAILY_SNAPSHOT_DB_ID' in os.environ:
         return os.environ['NOTION_DAILY_SNAPSHOT_DB_ID']
-    try:
-        for line in open(os.path.join(os.path.dirname(__file__), '.env')):
-            if 'NOTION_DAILY_SNAPSHOT_DB_ID' in line and '=' in line and not line.strip().startswith('#'):
-                return line.split('=',1)[1].strip().strip('"')
-    except: pass
-    return ""
+    _load_env()
+    return NOTION_DAILY_SNAPSHOT_DB_ID or ""
 HEADERS = {
     "Authorization": "Bearer invalid",
     "Notion-Version": "2022-06-28",
