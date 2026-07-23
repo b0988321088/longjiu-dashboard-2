@@ -7,3 +7,4 @@ numpy==1.26.4
 plotly==5.24.1
 
 flask>=3.0
+finnews
