@@ -97,7 +97,19 @@ except: pass
 # ── 4. 記憶容量（從 memory_archiver.py 狀態） ──
 # 此項由 06:45 cron 處理，此處跳過
 
-# ── 輸出 ──
+# ── 5. 資產再平衡檢查（穿透比 vs 目標） ──
+try:
+    _snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+    pen = _snap.get("penetration", {})
+    actual = pen.get("actual_pct", {})
+    for key, tgt, label in [("台股市值型成長", 30, "台股"), ("美股市值型成長", 30, "美股"), ("防守型配息", 25, "防守"), ("債券及安全現金", 10, "債券+現金")]:
+        act = actual.get(key, 0)
+        if tgt > 0 and abs(act - tgt) > 5:
+            direction = "超標 ▲" if act > tgt else "偏低 ▼"
+            alerts.append(f"📊 {label}配置偏差 {abs(act-tgt):.0f}%：目前 {act:.0f}% 目標 {tgt:.0f}% {direction}")
+except: pass
+
+# ── 6. 輸出 ──
 if alerts:
     msg = f"📌 **龍九主動提醒 — {today}**\n\n" + "\n".join(alerts[:8])
 else:
