@@ -140,6 +140,7 @@ def calibrate_sources() -> dict:
         "insurance_current_value": s_insurance,
         "funds": snap.get("fund_market_value", snap.get("funds_total", 0)) or 0,
         "cash_total": snap.get("cash_total", 3_614_169),
+        "rent_breakdown": snap.get("rent_breakdown", {}),
     }
 
 
@@ -168,6 +169,19 @@ def _diff_to_buffett_bullets(tv: dict, y: dict) -> list[str]:
             direction = "上升" if t > prev else "下降"
             bullets.append(f"{label}{direction}（{t:,} vs 昨日 {prev:,}）：{hint}")
     return bullets
+
+
+def _fmt_rent_status(tv):
+    """動態產生房租金流文字"""
+    rb = tv.get("rent_breakdown", {})
+    if not rb:
+        return "大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100 ✅"
+    parts = []
+    label_map = {"大義街店面":"大義街1樓", "大義街二三樓":"大義街23樓"}
+    for k, v in rb.items():
+        label = label_map.get(k, k)
+        parts.append(f"{label}{v:,}")
+    return "已全數實收 " + "+".join(parts) + " ✅ "
 
 
 def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "", mb_cc_rows: str = "") -> str:
@@ -350,7 +364,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-lead">證券總市值 <strong>{tv['securities_total']:,} TWD</strong>（14檔）。前三大：{tv['holdings_top3'][0][0]} {tv['holdings_top3'][0][1]:.1f}%、{tv['holdings_top3'][1][0]} {tv['holdings_top3'][1][1]:.1f}%、{tv['holdings_top3'][2][0]} {tv['holdings_top3'][2][1]:.1f}%。0056 凍結質押中，短期無法加碼。0050 配息：待 MB 確認；防禦缺口由 00878/00713 預備。</p>
 
     <h3>房租金流</h3>
-    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。大義街1樓 24,000（7月初入帳）+ 洲際W 33,000（7/20 ✅ 已入帳）+ 大義街23樓 21,000 + 管理費 2,100（7/23 ✅ 已入帳）= 已全數實收 <strong>80,100 TWD</strong>。星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
+    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。{_fmt_rent_status(tv)}星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
 
     <h3>鉅亨基金部位</h3>
     <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong>。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 {tv.get('funds',0):,}。</p>

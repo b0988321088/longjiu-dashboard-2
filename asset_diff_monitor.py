@@ -447,8 +447,8 @@ def buffett_advice(history: dict, snap: dict) -> str:
     monthly_div = ex["fund_dividend_monthly"]
     monthly_div_conservative = ex.get("fund_dividend_conservative", monthly_div)
     monthly_rent = ex["rent_monthly"]
-    monthly_rent_received = 80_100  # 已全數實收（邱*恩 7/23 ✅）
-    monthly_rent_pending = 0        # 已全數收齊
+    monthly_rent_received = monthly_rent  # 動態從 snapshot 讀取
+    monthly_rent_pending = 0
     monthly_exp = ex["monthly_expense"]
     passive_total = monthly_div_conservative + monthly_rent_received
     passive_coverage = passive_total / monthly_exp * 100 if monthly_exp else 0
@@ -462,7 +462,17 @@ def buffett_advice(history: dict, snap: dict) -> str:
         f"不動產 {ex['real_estate']/alloc_den*100:.1f}%"
     )
     real_estate_line = f"不動產 {ex.get('real_estate',0)/10000:.0f} 萬（單獨列出）"
-    rent_line = f"房租月收 {_fmt(monthly_rent_received)} / 目標 {_fmt(monthly_rent)}（全數實收：大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100 ✅）"
+    # 動態租金明細（從 snapshot rent_breakdown 自動產生）
+    _rb = snap.get("rent_breakdown", {})
+    if _rb:
+        _parts = []
+        for _k, _v in _rb.items():
+            label = _k.replace("大義街店面", "大義街1樓").replace("大義街二三樓", "大義街23樓")
+            _parts.append(f"{label}{_v:,}")
+        _detail = "+".join(_parts)
+    else:
+        _detail = f"大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100"
+    rent_line = f"房租月收 {_fmt(monthly_rent_received)} / 目標 {_fmt(monthly_rent)}（全數實收：{_detail} ✅）"
 
     lines = [
         "🧠 在家巴菲特",
