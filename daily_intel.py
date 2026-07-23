@@ -235,14 +235,27 @@ def render_intel_text(intel_text: str, signals: dict) -> str:
 # ===== Analysis builder =====
 
 def _fetch_news(queries: list[str], limit: int = 3) -> list[dict]:
-    """Search market news via Hermes web_search. Fallback: returns empty list silently."""
+    """Search market news via web_search (hermes) or DDG fallback."""
     try:
-        import json as _json
         results = []
         for q in queries[:2]:
             try:
-                _resp = _WEB_SEARCH(q, limit=limit)
-                _items = _resp.get("data", {}).get("web", [])
+                if _WEB_SEARCH is not None:
+                    _resp = _WEB_SEARCH(q, limit=limit)
+                    _items = _resp.get("data", {}).get("web", [])
+                else:
+                    # fallback: DuckDuckGo HTML scraping
+                    import urllib.request, urllib.parse, re
+                    url = "https://html.duckduckgo.com/html/?q=" + urllib.parse.quote(q)
+                    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                    with urllib.request.urlopen(req, timeout=8) as r:
+                        html = r.read().decode("utf-8", errors="ignore")[:8000]
+                    _items = []
+                    for m in re.finditer(r'<a[^>]+class="[^"]*result__a[^"]*"[^>]+href="([^"]+)"[^>]*>(.*?)</a>', html):
+                        href = m.group(1)
+                        title = re.sub(r'<[^>]+>', '', m.group(2)).strip()
+                        if title and len(title) > 10 and 'duckduckgo' not in href:
+                            _items.append({"title": title[:120], "url": href[:200], "snippet": ""})
                 for item in _items[:limit]:
                     results.append({
                         "title": item.get("title", "")[:120],
