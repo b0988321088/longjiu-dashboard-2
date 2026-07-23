@@ -777,11 +777,12 @@ def build_telegram_text(rows: list[dict], snap: dict) -> str:
     flag = "\n🚨 異常警示已觸發，請查看詳細 HTML。" if d_total < -ALERT_DROP_TWD or d_total_pct < -ALERT_DROP_PCT else ""
 
     ex = extract_snapshot(snap)
+    total_with_re = ex['total_assets'] + 34_000_000
     alloc = (
-        f"資產佔比：證券 {_pct(ex['securities_market'], ex['total_assets'])} / "
-        f"保單 {_pct(ex['insurance_current'], ex['total_assets'])} / "
-        f"基金 {_pct(ex['fund_market'], ex['total_assets'])} / "
-        f"現金 {_pct(ex['cash'], ex['total_assets'])}"
+        f"資產佔比：證券 {_pct(ex['securities_market'], total_with_re)} / "
+        f"保單 {_pct(ex['insurance_current'], total_with_re)} / "
+        f"基金 {_pct(ex['fund_market'], total_with_re)} / "
+        f"現金 {_pct(ex['cash'], total_with_re)}"
     )
 
     return (
@@ -792,7 +793,7 @@ def build_telegram_text(rows: list[dict], snap: dict) -> str:
         f"基金市值：{_fmt(last['fund_market'])}（{last.get('d_fund_market',0):+,.0f}）\n"
         f"現金：{_fmt(last['cash'])}（{last.get('d_cash',0):+,.0f}）\n"
         f"{alloc}\n"
-        f"負債比率：{ex['total_liabilities']/ex['total_assets']*100:.1f}%\n"
+        f"負債比率：{ex['total_liabilities']/total_with_re*100:.1f}%\n"
         f"{flag}"
     )
 
