@@ -40,6 +40,20 @@ def parse_events(text: str):
         ("大義街23樓房租 + 管理費", (today.replace(day=min(today.day + 30, 28)),)),
     ]
     
+    # 每月固定收支（當月及未來3個月）
+    for offset in range(0, 4):
+        m = today.month + offset
+        y = today.year + (m - 1) // 12
+        m = (m - 1) % 12 + 1
+        # 1號：大義街店面 24,000
+        events.append({"summary": "🏠 大義街店面房租入帳 $24,000", "start": date(y, m, 1).isoformat(), "end": date(y, m, 1).isoformat()})
+        # 6號：台電薪資
+        events.append({"summary": "💰 台電薪資入帳 $43,144", "start": date(y, m, 6).isoformat(), "end": date(y, m, 6).isoformat()})
+        # 20號：洲際W房租
+        events.append({"summary": "🏠 洲際W房租入帳 $33,000", "start": date(y, m, 20).isoformat(), "end": date(y, m, 20).isoformat()})
+        # 25號：大義街二三樓房租＋管理費
+        events.append({"summary": "🏠 大義街二三樓房租 $21,000+$2,100 入帳", "start": date(y, m, 25).isoformat(), "end": date(y, m, 25).isoformat()})
+    
     for summary, dates in fixed:
         if any(d >= today for d in dates):
             events.append({"summary": summary, "start": dates[0].isoformat(), "end": dates[-1].isoformat()})
