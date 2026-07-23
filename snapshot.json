@@ -630,5 +630,10 @@
       "amount": 13593,
       "currency": "TWD"
     }
+  },
+  "firstjin_detail": {
+    "cost": 2000000,
+    "base_value_before_dividend": 1958980,
+    "dividend_this_month": 22949
   }
 }
