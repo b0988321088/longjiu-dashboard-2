@@ -691,13 +691,13 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         _holdings = []
     _sec_rows = ""
     _names = {'0050':'台灣50','0056':'高股息','006208':'富邦50','00646':'元大S&P500','00713':'高息低波','00878':'國泰永續高股息','00888':'中信永續','00918':'大華優利高填息','00919':'群益台灣精選高息','009816':'凱基台灣TOP 50','00981A':'00981A','009823':'009823','009824':'009824','00984A':'00984A'}
-    _prices = {'0050':102.50,'0056':40.20,'006208':58.30,'00646':50.80,'00713':55.60,'00878':32.05,'00888':24.50,'00918':19.80,'00919':23.60,'009816':24.00,'00981A':15.80,'009823':14.90,'009824':14.80,'00984A':14.60}
-    # 部分價格來自 Yahoo Finance 2026/07/21 收盤
+    # 從 snapshot 動態讀取股價（不再硬編碼）
+    _sec_data = snap.get("securities", {})
     _total_sec = float(ex.get("securities_market", 0) or 0)
     _list = []
     for _t, _s, _b in _holdings:
         _s = _s or 0
-        _price = _prices.get(_t, 30)
+        _price = _sec_data.get(_t, {}).get("price", 30)
         _mv = _s * _price
         _pct = (_mv / _total_sec * 100) if _total_sec > 0 else 0
         _n = _names.get(_t, _t)
