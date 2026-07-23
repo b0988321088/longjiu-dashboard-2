@@ -3,7 +3,7 @@ import json
 import requests
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(os.path.expanduser("~/AppData/Local/hermes/.env"))
 NOTION_TOKEN = os.getenv("NOTION_TOKEN", "")
 BASE = "https://api.notion.com/v1"
 HEADERS = {

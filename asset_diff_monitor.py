@@ -183,7 +183,7 @@ def extract_snapshot(snap: dict) -> dict:
     securities = snap.get("securities_total_market_value", snap.get("securities_total", 0))
     insurance = snap.get("insurance_current_value", snap.get("insurance_total", 0))
     insurance_total = snap.get("insurance_total", insurance)
-    funds = snap.get("fund_market_value", snap.get("funds_total", 0))
+    funds = snap.get("funds", snap.get("fund_market_value", snap.get("funds_total", 0)))
 
     cash = snap.get("real_liquid_assets", 0) or (snap.get("high_yield_savings_total", 0) + snap.get("moneybook_total", 0))
     real_estate = snap.get("real_estate_value", 0)
