@@ -345,6 +345,30 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
 
     news = _fetch_news(news_queries)
 
+    briefing_lines = []
+    briefing_lines.append(f"【台股/大盤】加權指數：{market.get('twii', '—')} | 台積電：{market.get('tsm', '—')}")
+    briefing_lines.append(f"【美股/外資】美股：{market.get('us', '—')} | 費半：{market.get('sox', '—')}")
+    briefing_lines.append(f"【CPI/利率】美國CPI：{market.get('cpi', '—')}")
+    briefing_lines.append("")
+
+    if signals.get("sell_signals"):
+        briefing_lines.append("【賣出訊號】")
+        for s in signals["sell_signals"][:3]:
+            briefing_lines.append(f"• {s}")
+    if signals.get("buy_signals"):
+        briefing_lines.append("【買進訊號】")
+        for s in signals["buy_signals"][:3]:
+            briefing_lines.append(f"• {s}")
+    if news:
+        briefing_lines.append("")
+        briefing_lines.append("【最新市場消息】")
+        for n in news[:3]: # Limit to 3 news items for briefing
+            briefing_lines.append(f"• {n.get('title', '')} ({n.get('url', '').split('/')[2]})")
+            if n.get('snippet'):
+                briefing_lines.append(f"  {n['snippet']}")
+
+    full_briefing_text = "\n".join(briefing_lines)
+
     return {
         "date": today,
         "generated_at": datetime.now().isoformat(),
@@ -354,6 +378,7 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
         "signals": signals,
         "news": news,
         "scenario_summary": scenario_summary,
+        "briefing": full_briefing_text,
     }
 
 # ===== Main workflow =====
