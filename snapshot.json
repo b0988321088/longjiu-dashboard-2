@@ -2,16 +2,16 @@
   "generated_at": "2026-07-22T02:35:15.524024",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-07-18",
-  "total_assets": 17468791,
+  "total_assets": 17487610,
   "total_liabilities": 17199287,
-  "net_worth": 269504,
+  "net_worth": 288323,
   "debt_ratio": "33.9%",
   "monthly_income": 218102,
   "monthly_expense": 141958,
   "working_surplus": 76144,
   "retirement_surplus": 18142,
   "securities_total_market_value": 2413920,
-  "insurance_current_value": 9747807,
+  "insurance_current_value": 9766626,
   "fund_market_value": 823656,
   "moneybook_total": 3853985,
   "high_yield_savings_total": 2200410,
@@ -404,7 +404,7 @@
       "美股市值型成長": 3932234,
       "防守型配息": 1958980,
       "債券": 3929011,
-      "現金/安全網": 4483408
+      "現金/安全網": 4502227
     }
   },
   "penetration_canonical": {
@@ -571,7 +571,7 @@
     }
   },
   "allianz_ab": 7788827,
-  "firstjin": 1958980,
+  "firstjin": 1977799,
   "dividend_records": {
     "2026-07-21": {
       "FJ33 摩根": 9356,
@@ -613,5 +613,22 @@
   },
   "market": {
     "twii": "44,825.78 (+1.34%)"
+  },
+  "dividend_details_july": {
+    "fl65_allianz_income": {
+      "date": "2026-07-14",
+      "amount": 12634,
+      "currency": "TWD"
+    },
+    "fj33_morgan_multi": {
+      "date": "2026-07-07",
+      "amount": 9356,
+      "currency": "TWD"
+    },
+    "fr55_franklin": {
+      "date": "2026-06-30",
+      "amount": 13593,
+      "currency": "TWD"
+    }
   }
 }
