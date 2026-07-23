@@ -33,8 +33,22 @@ if Path(__file__).parent.parent.parent / "skills":
         result["actions"].append(f"技能摘要失敗：{e}")
 
 # 2. 記憶容量提醒
-result["actions"].append("請執行 `memory(action='list')` 檢查容量，必要時移除低頻條目")
-result["actions"].append("低頻判定：INC記錄(已存ERROR_LOG)、超過1個月未更新的設定、已穩定的決策")
+result["actions"].append(f"請執行 `memory(action='list')` 檢查容量，必要時移除低頻條目")
+result["actions"].append(f"低頻判定：INC記錄(已存ERROR_LOG)、超過1個月未更新的設定、已穩定的決策")
+
+# 3. ERROR_LOG 摘要
+try:
+    el = BASE / "ERROR_LOG_20260710.md"
+    if el.exists():
+        el_text = el.read_text(encoding="utf-8")
+        incs = re.findall(r"(INC-\d+)\s*[-:：]\s*(.*?)(?=\n(?:INC-|\Z))", el_text + "\n", re.DOTALL)
+        result["inc_count"] = len(incs)
+        result["actions"].append(f"INC 記錄：{len(incs)} 條（詳見 error_summary_cache.txt）")
+except:
+    pass
+
+# 4. 記憶體重塑建議
+result["actions"].append("記憶體重塑建議：技能摘要已快取 → memory 中可移除舊技能描述")
 
 CACHE.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
 print(f"📦 記憶歸檔檢查 — {today}")
