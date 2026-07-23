@@ -60,7 +60,7 @@ def main() -> None:
     results.append(check("四大信用卡列管", cc_ok))
 
     # 4. 兩大房貸帳戶
-    loan_ok = "洲際 W 房貸" in daily
+    loan_ok = all(x in daily for x in ["永豐房貸 (YY)", "永豐房貸 (YYDU)", "永豐房貸 (XZ)", "理財型房貸", "保單借貸", "證券質押"])
     results.append(check("房貸帳戶（大義街已清償 ✅）", loan_ok))
 
     # 5. 保單現值對齊 snapshot.json
