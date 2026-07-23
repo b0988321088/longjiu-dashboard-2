@@ -3,8 +3,8 @@
   "version": "v5.0.10-true-value-correction",
   "date": "2026-07-18",
   "total_assets": 16618371,
-  "total_liabilities": 5038000,
-  "net_worth": -580916,
+  "total_liabilities": 8038000,
+  "net_worth": 8580371,
   "debt_ratio": "33.9%",
   "monthly_income": 218102,
   "monthly_expense": 141958,
@@ -670,5 +670,7 @@
   "mortgage_yydu": 0,
   "mortgage_xz": 0,
   "financial_mortgage_interest": 10000,
-  "dbs_balance": 17000
+  "dbs_balance": 17000,
+  "financial_mortgage": 3000000,
+  "financial_mortgage_paid": 790000
 }

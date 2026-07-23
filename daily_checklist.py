@@ -60,8 +60,8 @@ def main() -> None:
     results.append(check("四大信用卡列管", cc_ok))
 
     # 4. 兩大房貸帳戶
-    loan_ok = "洲際 W 房貸" in daily and "大義街房貸" in daily
-    results.append(check("兩大房貸帳戶", loan_ok))
+    loan_ok = "洲際 W 房貸" in daily
+    results.append(check("房貸帳戶（大義街已清償 ✅）", loan_ok))
 
     # 5. 保單現值對齊 snapshot.json
     if snap:
@@ -72,8 +72,7 @@ def main() -> None:
             f"{allianz:,}" in daily
             and f"{firstjin:,}" in daily
             and f"{total:,}" in daily
-            and "7,674,293" in daily
-                and "1,979,676" in daily
+            
         )
     else:
         val_ok = "7,674,293" in daily and "1,979,676" in daily

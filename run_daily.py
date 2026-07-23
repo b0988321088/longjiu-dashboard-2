@@ -111,6 +111,15 @@ def calibrate_sources() -> dict:
         # 保守回退：安聯 A+B + 第一金月配
         monthly_dividend = (snap.get("allianz_ab_monthly", 73_167) or 55_451) + (snap.get("firstjin_monthly", 22_949) or 13_593)
 
+    # 從 monthly_dividend_breakdown 取得證券、基金配息及下次除息資訊
+    dividend_breakdown = snap.get("monthly_dividend_breakdown", {})
+    sec_dividend_monthly = dividend_breakdown.get("securities", {}).get("monthly_total", 0)
+    fund_dividend_monthly = dividend_breakdown.get("funds", {}).get("monthly_total", 0)
+    # 格式化下次除息清單
+    next_ex_dividend_list_raw = dividend_breakdown.get("securities", {}).get("next_ex_dividend", [])
+    next_ex_dividend_list = ", ".join([f"{item['ticker']}（{item['date']}）" for item in next_ex_dividend_list_raw]) if next_ex_dividend_list_raw else "待確認"
+
+
     total_assets = snap.get("total_assets")
     total_liabilities = snap.get("total_liabilities")
     net_worth = snap.get("net_worth")
@@ -118,6 +127,9 @@ def calibrate_sources() -> dict:
         net_worth = total_assets - total_liabilities
     return {
         "date": TODAY,
+        "sec_dividend_monthly": sec_dividend_monthly,
+        "fund_dividend_monthly": fund_dividend_monthly,
+        "next_ex_dividend_list": next_ex_dividend_list,
         "monthly_income": s_income,
         "monthly_expense": s_expense,
         "working_surplus": s_work_surplus,
@@ -132,7 +144,7 @@ def calibrate_sources() -> dict:
         "firstjin_dividend": snap.get("firstjin_monthly", 22_949),
         "relay_stations": 3,
         "cc_4cards": ["玉山UNI", "台新Richart", "永豐SPORT", "台北富邦momo/J"],
-        "loans_2mortgage": ["洲際W房貸", "大義街房貸+理財型利息"],
+        "loans_2mortgage": ["洲際W房貸", "理財型利息（房貸已清償）"],
         "total_assets": total_assets,
         "total_liabilities": total_liabilities,
         "net_worth": net_worth,
@@ -361,13 +373,13 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-lead">保單現值 <strong>{insurance_total:,} TWD</strong>（安聯 A+B {allianz:,} + 第一金 FL65 {firstjin:,}），本月配息合計 <strong>{monthly_dividend:,} TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
 
     <h3>證券曝險</h3>
-    <p class="text-lead">證券總市值 <strong>{tv['securities_total']:,} TWD</strong>（14檔）。前三大：{tv['holdings_top3'][0][0]} {tv['holdings_top3'][0][1]:.1f}%、{tv['holdings_top3'][1][0]} {tv['holdings_top3'][1][1]:.1f}%、{tv['holdings_top3'][2][0]} {tv['holdings_top3'][2][1]:.1f}%。0056 凍結質押中，短期無法加碼。0050 配息：待 MB 確認；防禦缺口由 00878/00713 預備。</p>
+    <p class="text-lead">證券總市值 <strong>{tv['securities_total']:,} TWD</strong>（14檔）。本月已收配息：{tv['sec_dividend_monthly']:,} TWD。下一梯次除息：{tv['next_ex_dividend_list']}。前三大：{tv['holdings_top3'][0][0]} {tv['holdings_top3'][0][1]:.1f}%、{tv['holdings_top3'][1][0]} {tv['holdings_top3'][1][1]:.1f}%、{tv['holdings_top3'][2][0]} {tv['holdings_top3'][2][1]:.1f}%。0056 凍結質押中，短期無法加碼。</p>
 
     <h3>房租金流</h3>
-    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。{_fmt_rent_status(tv)}星展戶頭餘額 7,287 TWD，8/1 需扣款 33,724，由台新調度 3 萬元補庫。</p>
+    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。{_fmt_rent_status(tv)}星展戶頭餘額 17,000 TWD，8/1 扣理財型利息 ~10,000，餘裕充足 ✅</p>
 
     <h3>鉅亨基金部位</h3>
-    <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong>。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 {tv.get('funds',0):,}。</p>
+    <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong>。本月已收配息：{tv['fund_dividend_monthly']:,} TWD。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 {tv.get('funds',0):,}。</p>
   </div>
 
   <!-- 3/5 保單接力引擎 -->
@@ -430,17 +442,15 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         </thead>
         <tbody>
           <tr><td>永豐銀行</td><td>洲際 W 房貸</td><td>7/20</td><td class="num">65,734</td><td>📌 待扣款</td></tr>
-          <tr><td>星展銀行</td><td>大義街房貸（原國泰，尚未完成轉貸）</td><td>8/1</td><td class="num">23,424</td><td>📌 待扣款</td></tr>
           <tr><td>星展銀行</td><td>理財型利息</td><td>8/1</td><td class="num">10,300</td><td>📌 隨房貸扣款</td></tr>
           <tr><td>永豐銀行</td><td>週轉金</td><td>—</td><td class="num">7,000,000</td><td>已動用額度</td></tr>
         </tbody>
       </table>
     </div>
 
-    <div class="callout callout-warn">
-      <strong>🚨 星展補庫警示</strong><br>
-      星展戶頭餘額 7,287 TWD，不足以覆蓋 8/1 扣款 33,724（大義街房貸 23,424 + 理財型利息 10,300）。<br>
-      指令：由台新調度 3 萬元，優先補足扣款缺口。
+    <div class="callout callout-ok">
+      <strong>✅ 星展資金充足</strong><br>
+      星展戶頭餘額 17,000 TWD，8/1 扣理財型利息 ~10,000，餘裕充足。一般房貸已清償 ✅
     </div>
   </div>
 
@@ -459,7 +469,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         <li>⚠️ <strong>7/24（五）</strong>— 貝萊德世界科技 A10 T+4 轉換截止</li>
         <li>7/27（一）— 台新信用卡繳款截止 1,000</li>
         <li>7/29-30 — Fed 利率決策 + 安聯 AI / 貝萊德 A10 基準日</li>
-        <li>8/1（五）— 星展戶頭扣款 33,724（大義街房貸 + 理財型利息）🚨 需補缺口</li>
+        <li>8/1（五）— 星展戶頭扣款理財型利息 ~10,000 ✅ 餘裕充足</li>
         <li><relay_0050> — 0050 配息 ⚠️ 待 MB 確認</li>
       </ul>
     </div>
@@ -478,7 +488,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
           <tr><td>⚠️ <strong>7/24</strong></td><td>貝萊德 A10 T+4 轉換截止</td><td class="num">—</td><td>⏰ 明天到期</td></tr>
           <tr><td>7/27</td><td>台新信用卡繳款截止</td><td class="num">1,000</td><td>🔄 待處理</td></tr>
           <tr><td>7/29-30</td><td>安聯 AI / 貝萊德 A10 基準日</td><td class="num">—</td><td>⏸️ 等待到期</td></tr>
-          <tr><td>8/1</td><td>星展戶頭扣款（大義街房貸 + 理財型利息）</td><td class="num">33,724</td><td>🚨 需補缺口</td></tr>
+          <tr><td>8/1</td><td>星展戶頭扣理財型利息</td><td class="num">10,000</td><td>✅ 已清償</td></tr>
           <tr><td>待 MB</td><td>0050 配息</td><td class="num">—</td><td>待確認</td></tr>
           <tr><td>10/23-28</td><td>胡志明市旅行 6D5N</td><td class="num">—</td><td>✅ 已排程</td></tr>
         </tbody>
@@ -1319,7 +1329,8 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     # template 殘留硬編碼注入
     html = html.replace("__CATHAT_SETTLEMENT__", "4,893,529")
     html = html.replace("__CATHAY_DEPOSIT__", "5,300,000")
-    html = html.replace("__DBS_BALANCE__", "7,287")
+    html = html.replace("__DBS_BALANCE__", "17,000")
+    html = html.replace("__DBS_NOTE__", "一般房貸已清償 ✅ 僅扣理財型利息 ~10,000，餘裕充足")
     html = html.replace("__SINOPAC_BALANCE__", "230,000")
     html = html.replace("__SINOPAC_MORTGAGE__", "65,734")
     html = html.replace("__RESERVE_POOL__", "2,000,000+")
