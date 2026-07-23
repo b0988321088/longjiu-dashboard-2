@@ -867,28 +867,22 @@ def main():
     daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text, mb_cc_rows=_mb_cc_rows)
     daily_html = _inject_market_intel(daily_html, tv, intel_signals)
 
-    # 注入戰略穿透值到日報（與儀表板一致）
-    # Moved to top of function for Buffett advice generation.
-    # daily_html = daily_html.replace("__DR_TW_V__", f"{_tw_v:,.0f}")
-    # daily_html = daily_html.replace("__DR_US_V__", f"{_us_v:,.0f}")
-    # daily_html = daily_html.replace("__DR_DEF_V__", f"{_def_v:,.0f}")
-    # daily_html = daily_html.replace("__DR_BOND_V__", f"{_bond_v:,.0f}")
-    # daily_html = daily_html.replace("__DR_TW_PCT__", _fmt_pct(_tw_v))
-    # daily_html = daily_html.replace("__DR_US_PCT__", _fmt_pct(_us_v))
-    # daily_html = daily_html.replace("__DR_DEF_PCT__", _fmt_pct(_def_v))
-    # daily_html = daily_html.replace("__DR_BOND_PCT__", _fmt_pct(_bond_v))
-    # daily_html = daily_html.replace("__DR_TW_TGT__", f"{_tgt_tw:.0f}%")
-    # daily_html = daily_html.replace("__DR_US_TGT__", f"{_tgt_us:.0f}%")
-    # daily_html = daily_html.replace("__DR_DEF_TGT__", f"{_tgt_def:.0f}%")
-    # daily_html = daily_html.replace("__DR_BOND_TGT__", f"{_tgt_bond:.0f}%")
-    # daily_html = daily_html.replace("__DR_TW_GAP__", _fmt_gap(_tw_v, _tgt_tw))
-    # daily_html = daily_html.replace("__DR_US_GAP__", _fmt_gap(_us_v, _tgt_us))
-    # daily_html = daily_html.replace("__DR_DEF_GAP__", _fmt_gap(_def_v, _tgt_def))
-    # daily_html = daily_html.replace("__DR_BOND_GAP__", _fmt_gap(_bond_v, _tgt_bond))
-    # daily_html = daily_html.replace("__DR_CASH_V__", f"{_cash_v:,.0f}")
-    # daily_html = daily_html.replace("__DR_CASH_PCT__", _fmt_pct(_cash_v))
-    # daily_html = daily_html.replace("__DR_CASH_TGT__", f"{_tgt_cash:.0f}%")
-    # daily_html = daily_html.replace("__DR_CASH_GAP__", _fmt_gap(_cash_v, _tgt_cash))
+    # 注入戰略穿透值到日報
+    _snap = json.loads(Path(SNAPSHOT).read_text(encoding="utf-8")) if Path(SNAPSHOT).exists() else {}
+    _pen = _snap.get("penetration", {})
+    _atwd = _pen.get("actual_twd", {})
+    _apct = _pen.get("actual_pct", {})
+    _tgt = _pen.get("targets", {})
+    _tw_v = _atwd.get("台股市值型成長", 0)
+    _us_v = _atwd.get("美股市值型成長", 0)
+    _def_v = _atwd.get("防守型配息", 0)
+    _bond_v = _atwd.get("債券", 0)
+    _cash_v = _atwd.get("現金/安全網", 0)
+    for k, v in [("__DR_TW_V__",f"{_tw_v:,.0f}"),("__DR_US_V__",f"{_us_v:,.0f}"),("__DR_DEF_V__",f"{_def_v:,.0f}"),("__DR_BOND_V__",f"{_bond_v:,.0f}"),("__DR_CASH_V__",f"{_cash_v:,.0f}")]: daily_html = daily_html.replace(k, v)
+    for k, v in [("__DR_TW_PCT__",f"{_apct.get('台股市值型成長',0):.1f}%"),("__DR_US_PCT__",f"{_apct.get('美股市值型成長',0):.1f}%"),("__DR_DEF_PCT__",f"{_apct.get('防守型配息',0):.1f}%"),("__DR_BOND_PCT__",f"{_apct.get('債券及安全現金',0):.1f}%"),("__DR_CASH_PCT__",f"{_apct.get('債券及安全現金',0):.1f}%")]: daily_html = daily_html.replace(k, v)
+    for k, v in [("__DR_TW_TGT__",f"{_tgt.get('市值型成長',30):.0f}%"),("__DR_US_TGT__",f"{_tgt.get('市值型成長',30):.0f}%"),("__DR_DEF_TGT__",f"{_tgt.get('配息型高股息',30):.0f}%"),("__DR_BOND_TGT__",f"{_tgt.get('債券型防禦',30):.0f}%"),("__DR_CASH_TGT__",f"{_tgt.get('現金/安全網',10):.0f}%")]: daily_html = daily_html.replace(k, v)
+    for k, t, g in [("__DR_TW_GAP__",_tw_v,_tgt.get('市值型成長',30)),("__DR_US_GAP__",_us_v,_tgt.get('市值型成長',30)),("__DR_DEF_GAP__",_def_v,_tgt.get('配息型高股息',30)),("__DR_BOND_GAP__",_bond_v,_tgt.get('債券型防禦',30)),("__DR_CASH_GAP__",_cash_v,_tgt.get('現金/安全網',10))]: 
+        _gap = t - g; daily_html = daily_html.replace(k, f"{'+'if _gap>0 else ''}{_gap:,.0f}")
 
     # 證券明細注入
     try:
