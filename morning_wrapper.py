@@ -9,7 +9,8 @@ BASE = Path(__file__).resolve().parent
 
 scripts = [
     ("cost_monitor.py", 3),
-    ("calendar_sync.py", 5),
+    ("calendar_sync.py", 3),
+    ("notion_context_loader.py", 2),
     ("update_all.py", 3),
 ]
 
