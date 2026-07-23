@@ -10,7 +10,7 @@
   "monthly_expense": 141958,
   "working_surplus": 76144,
   "retirement_surplus": 18142,
-  "securities_total_market_value": 2413920,
+  "securities_total_market_value": 2413760,
   "insurance_current_value": 9766626,
   "fund_market_value": 823656,
   "moneybook_total": 3614169,
@@ -75,7 +75,7 @@
   "credit_card_pending": 24976,
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
-  "securities_total": 2413920,
+  "securities_total": 2413760,
   "funds_total": 795157,
   "insurance_total": 9633273,
   "last_calibration_sources": {
@@ -118,75 +118,87 @@
   "securities": {
     "0050": {
       "shares": 2000,
-      "price": 100.15,
-      "value": 200000,
+      "price": 103.9,
+      "value": 207800,
       "type": "台股50大权值"
     },
     "006208": {
       "shares": 2000,
-      "price": 227.75,
-      "value": 455000,
+      "price": 237.9,
+      "value": 475800,
       "type": "台股50大权值"
     },
     "009816": {
       "shares": 16000,
-      "price": 14.28,
-      "value": 228480,
+      "price": 15.08,
+      "value": 241280,
       "type": "台股TOP50分散"
     },
+    "00646": {
+      "shares": 1000,
+      "price": 76.1,
+      "value": 76100,
+      "type": "美股S&P500"
+    },
+    "00713": {
+      "shares": 2000,
+      "price": 60.55,
+      "value": 121100,
+      "type": "高股息低波"
+    },
+    "00878": {
+      "shares": 15000,
+      "price": 32.73,
+      "value": 490950,
+      "type": "ESG高股息"
+    },
+    "0056": {
+      "shares": 1000,
+      "price": 50.65,
+      "value": 50650,
+      "type": "高股息"
+    },
     "00981A": {
-      "shares": 4000,
-      "price": 26.43,
-      "value": 105720,
+      "shares": 5000,
+      "price": 28.69,
+      "value": 143450,
       "type": "主动型台股增长"
     },
     "00984A": {
       "shares": 10000,
-      "price": 14.8,
-      "value": 148000,
+      "price": 15.11,
+      "value": 151100,
       "type": "主动型高息"
-    },
-    "00878": {
-      "shares": 15000,
-      "price": 31.81,
-      "value": 477150,
-      "type": "ESG高股息"
     },
     "00919": {
       "shares": 5000,
-      "price": 28.93,
-      "value": 144650,
+      "price": 29.5,
+      "value": 147500,
       "type": "金融股为主"
     },
-    "00713": {
-      "shares": 2000,
-      "price": 60.25,
-      "value": 120500,
-      "type": "高股息低波"
-    },
-    "0056": {
+    "00918": {
       "shares": 1000,
-      "price": 50.75,
-      "value": 50750,
-      "type": "高股息"
-    },
-    "00646": {
-      "shares": 1000,
-      "price": 76.05,
-      "value": 76050,
-      "type": "美股S&P500"
-    },
-    "009823": {
-      "shares": 10000,
-      "price": 10.32,
-      "value": 103200,
-      "type": "美股S&P500"
+      "price": 32.35,
+      "value": 32350,
+      "type": "高填息ETF"
     },
     "009824": {
       "shares": 10000,
-      "price": 9.94,
-      "value": 99400,
+      "price": 10.2,
+      "value": 102000,
       "type": "美股科技巨头"
+    },
+    "009823": {
+      "shares": 10000,
+      "price": 10.33,
+      "value": 103300,
+      "type": "美股S&P500"
+    },
+    "00888": {
+      "shares": 2000,
+      "price": 35.19,
+      "value": 70380,
+      "type": "ESG永續ETF"
     }
   },
   "core_watchlist": {
@@ -507,19 +519,20 @@
   "insurance_total_note": "含配息",
   "runway_months": 27.1,
   "securities_breakdown": {
-    "0050": 198600,
-    "006208": 453200,
-    "009816": 227040,
-    "00646": 76050,
-    "00713": 119700,
-    "00878": 468900,
-    "0056": 49500,
-    "00981A": 128250,
-    "00984A": 143800,
-    "00919": 142750,
-    "00918": 30780,
-    "00924": 100000,
-    "0088": 66660
+    "0050": 207800,
+    "006208": 475800,
+    "009816": 241280,
+    "00646": 76100,
+    "00713": 121100,
+    "00878": 490950,
+    "0056": 50650,
+    "00981A": 143450,
+    "00984A": 151100,
+    "00919": 147500,
+    "00918": 32350,
+    "009824": 102000,
+    "009823": 103300,
+    "00888": 70380
   },
   "securities_tw_growth": 1007090,
   "securities_tw_defense": 1022090,
@@ -595,7 +608,7 @@
   "firstjin_cum_dividend": 73341,
   "allianz_cum_dividend": 1630962,
   "firstjin_cost": 2000000,
-  "securities_market_value": 2413920,
+  "securities_market_value": 2413760,
   "securities_unrealized_pnl": 285220,
   "monthly_salary": 43144,
   "travel_allowance": 12000,
