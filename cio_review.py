@@ -78,6 +78,12 @@ def main() -> None:
     if not (ch1_ok and ch2_ok):
         fail("五大章節缺失：1/5 Wealth Baseline 或 2/5 Market Intel")
 
+    # Removed CEO strategic directives and added CIO review, so chapters shift.
+    # Check for presence of CIO block now.
+    if "CIO 審查 / 觀點" not in daily:
+        fail("CIO 審查 / 觀點區塊缺失")
+
+
     for num, name in chapters[2:]:
         if num not in daily or name not in daily:
             fail(f"五大章節缺失：{num} {name}")

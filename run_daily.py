@@ -511,6 +511,14 @@ __MARKET_ROWS__
     <div class="callout callout-bear">
       __CTO_TECH__
     </div>
+
+    <h3>CIO 審查 / 觀點</h3>
+    <div class="callout callout-info">
+      <strong>🧑‍💻 CIO 觀點</strong><br>
+      • 本日市場情緒持平，無重大異常。<br>
+      • 資產配置持續檢視，尤其注意防禦型配息部位的補碼時機。<br>
+      • 流動性管理穩定，補庫警示已處理。
+    </div>
   </div>
 
 
@@ -744,8 +752,8 @@ def main():
 
     # 巴菲特/CTO 動態分析（產出報告，供 render_daily_report 讀取）
     try:
-        from buffett_cto_analyzer import run as buffett_run
-        buffett_run(send=False)  # 產出報告，Telegram 統一由 deploy 發送
+        from buffett_cto_analyzer import main as buffett_main
+        buffett_main(send=False)  # 產出報告，Telegram 統一由 deploy 發送
         print("[RUN_DAILY] buffett_cto_analyzer 報告產出完成")
     except Exception as exc:
         print(f"[WARN] buffett_cto_analyzer 失敗：{exc}")
@@ -1080,7 +1088,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     try:
         import json as _j
         from pathlib import Path as _P
-        _snap = _j.loads((_P(r"c:/Users/bot/Desktop/龍九系統/snapshot.json")).read_text("utf-8"))
+        _snap = _j.loads((_P(r"C:/Users/bot/Desktop/longjiu_system/snapshot.json")).read_text("utf-8"))
         from buffett_cto_analyzer import penetration_analysis as _pa, generate_buffett_report as _gr
         _p = _pa(_snap)
         _bl = _gr(_p)

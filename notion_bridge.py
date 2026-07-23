@@ -6,10 +6,25 @@ from datetime import date, datetime
 from pathlib import Path
 
 # ── 設定 ──
-ENV = Path("/c/Users/bot/Desktop/龍九系統/.env")
-LJ = Path(os.path.expanduser("~/Desktop/龍九系統"))
+ENV = Path(r"C:\Users\bot\Desktop\longjiu_system\.env")
+_HERMES_ENV = Path(os.path.expanduser("~/AppData/Local/hermes/.env"))
+LJ = Path(os.path.expanduser("~/Desktop/longjiu_system"))
 NOTION_TOKEN = ""
 # 動態讀取（支援 .env 更新後不重啟）
+def _load_env():
+    global NOTION_TOKEN, NOTION_DAILY_SNAPSHOT_DB_ID
+    NOTION_DAILY_SNAPSHOT_DB_ID = ""
+    candidates = [ENV, _HERMES_ENV]
+    for env_path in candidates:
+        if env_path.exists():
+            for line in env_path.read_text().splitlines():
+                if 'NOTION_TOKEN' in line and '=' in line and not line.strip().startswith('#'):
+                    NOTION_TOKEN = line.split('=',1)[1].strip().strip('"\'')
+                if 'NOTION_DAILY_SNAPSHOT_DB_ID' in line and '=' in line and not line.strip().startswith('#'):
+                    NOTION_DAILY_SNAPSHOT_DB_ID = line.split('=',1)[1].strip().strip('"\'')
+    if NOTION_TOKEN:
+        HEADERS["Authorization"] = f"Bearer {NOTION_TOKEN}"
+
 def _get_snapshot_db_id() -> str:
     import os
     if 'NOTION_DAILY_SNAPSHOT_DB_ID' in os.environ:
@@ -20,19 +35,13 @@ def _get_snapshot_db_id() -> str:
                 return line.split('=',1)[1].strip().strip('"')
     except: pass
     return ""
-if ENV.exists():
-    for line in ENV.read_text().splitlines():
-        if "NOTION_TOKEN" in line and "=" in line and not line.strip().startswith("#"):
-            NOTION_TOKEN = line.split("=", 1)[1].strip()
-        if "NOTION_DAILY_SNAPSHOT_DB_ID" in line and "=" in line and not line.strip().startswith("#"):
-            NOTION_DAILY_SNAPSHOT_DB_ID = line.split("=", 1)[1].strip()
-
 HEADERS = {
-    "Authorization": f"Bearer {NOTION_TOKEN}",
+    "Authorization": "Bearer invalid",
     "Notion-Version": "2022-06-28",
     "Content-Type": "application/json",
 }
 BASE = "https://api.notion.com/v1"
+_load_env()
 
 def notion_get(path: str) -> dict:
     r = requests.get(f"{BASE}{path}", headers=HEADERS, timeout=30)

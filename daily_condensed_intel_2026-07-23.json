@@ -1,0 +1,50 @@
+[
+  {
+    "title": "Hunter 情報",
+    "description": "台積電今日大漲，晶圓代工訂單滿載。",
+    "holdings_impact": [
+      "0050"
+    ],
+    "sentiment": "positive",
+    "signal_level": "🔴 重要 (正面)",
+    "raw_source": "C:\\Users\\bot\\Desktop\\longjiu_system\\hunter_logs\\intel_2026-07-23_1000.txt"
+  },
+  {
+    "title": "Hunter 情報",
+    "description": "金融股表現強勢，國泰金控獲利超預期。",
+    "holdings_impact": [
+      "00878"
+    ],
+    "sentiment": "positive",
+    "signal_level": "🟡 注意",
+    "raw_source": "C:\\Users\\bot\\Desktop\\longjiu_system\\hunter_logs\\intel_2026-07-23_1000.txt"
+  },
+  {
+    "title": "Hunter 情報",
+    "description": "全球科技股持續走強，費半指數創歷史新高。",
+    "holdings_impact": [
+      "0050"
+    ],
+    "sentiment": "neutral",
+    "signal_level": "🟡 注意",
+    "raw_source": "C:\\Users\\bot\\Desktop\\longjiu_system\\hunter_logs\\intel_2026-07-23_1000.txt"
+  },
+  {
+    "title": "市場動態：台股加權",
+    "description": "台股加權 今日 44,825.78 (+1.34%)，市場情緒看漲。",
+    "holdings_impact": [],
+    "sentiment": "positive",
+    "signal_level": "✅ 參考",
+    "raw_source": "Yahoo Finance - 台股加權"
+  },
+  {
+    "title": "市場動態：台積電",
+    "description": "台積電 今日 2,400.00 (-0.41%)，市場情緒持平。",
+    "holdings_impact": [
+      "0050"
+    ],
+    "sentiment": "neutral",
+    "signal_level": "✅ 參考",
+    "raw_source": "Yahoo Finance - 台積電"
+  }
+]

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-TW"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>龍九資產管理系統</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+body{background:#f5f5f7;padding:16px;color:#1d1d1f}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card-title{font-size:15px;font-weight:600;margin-bottom:10px;color:#1d1d1f}
+.row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px;border-bottom:1px solid #f0f0f0}
+.row:last-child{border:none}
+.label{color:#6e6e73}
+.value{font-weight:600}
+.gap{font-size:12px;padding:2px 6px;border-radius:4px}
+.gap-over{background:#fee2e2;color:#dc2626}
+.gap-under{background:#dbeafe;color:#2563eb}
+.header{text-align:center;padding:20px 0 12px}
+.header h1{font-size:20px;font-weight:700}
+.header .date{font-size:13px;color:#6e6e73;margin-top:4px}
+.bar-wrap{background:#f0f0f0;border-radius:6px;height:8px;margin:4px 0 8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:6px;min-width:2%}
+</style></head><body>
+<div class="header"><h1>📊 龍九資產管理系統</h1>
+<div class="date">2026-07-22 | 資料來源：日報</div></div>
+
+<div class="card"><div class="card-title">💰 總覽</div>
+<div class="row"><span class="label">總資產</span><span class="value">—</span></div>
+<div class="row"><span class="label">淨資產</span><span class="value">—</span></div>
+</div>
+
+<div class="card"><div class="card-title">📈 穿透分析 (35/30/25/5/5)</div>
+<div class="row"><span class="label">🇹🇼 台股</span><span class="value">7788827 TWD</span></div>
+<div class="bar-wrap"><div class="bar-fill" style="width:73,167%;background:#2563eb"></div></div>
+<div style="font-size:12px;color:#6e6e73;margin-bottom:8px">佔比 73,167% | 目標 35%</div>
+<div class="row"><span class="label">🇺🇸 美股</span><span class="value">22949 TWD</span></div>
+<div class="bar-wrap"><div class="bar-fill" style="width:3,176%;background:#059669"></div></div>
+<div style="font-size:12px;color:#6e6e73;margin-bottom:8px">佔比 3,176% | 目標 30%</div>
+<div class="row"><span class="label">🛡️ 防守</span><span class="value">500 TWD</span></div>
+<div class="bar-wrap"><div class="bar-fill" style="width:800%;background:#d97706"></div></div>
+<div style="font-size:12px;color:#6e6e73;margin-bottom:8px">佔比 800% | 目標 25%</div>
+<div class="row"><span class="label">💵 債券</span><span class="value">23424 TWD</span></div>
+<div class="bar-wrap"><div class="bar-fill" style="width:10,300%;background:#7c3aed"></div></div>
+<div style="font-size:12px;color:#6e6e73;margin-bottom:8px">佔比 10,300% | 目標 5%</div>
+<div class="row"><span class="label">💰 現金</span><span class="value">13593 TWD</span></div>
+<div class="bar-wrap"><div class="bar-fill" style="width:3,176%;background:#0891b2"></div></div>
+<div style="font-size:12px;color:#6e6e73;margin-bottom:4px">佔比 3,176% | 目標 5%</div>
+</div>
+
+<div class="card"><div class="card-title">📋 證券部位</div>
+<div class="row"><span class="label">總市值</span><span class="value">—</span></div>
+<div style="font-size:13px;color:#6e6e73;margin-top:6px">前三大：__SEC_TOP3__</div>
+</div>
+
+<div style="text-align:center;font-size:12px;color:#6e6e73;padding:12px 0">
+龍九控股 · 靜態儀表板 · 2026-07-22
+</div>
+</body></html>

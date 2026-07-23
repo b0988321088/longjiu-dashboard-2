@@ -493,7 +493,21 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
         us_equity = pen.get('美股市值型成長', 0)
         dividend = pen.get('防守型配息', 0)
         briefing_lines.append(f"台股曝險部位約 {tw_equity/10000:.0f} 萬；美股曝險 {us_equity/10000:.0f} 萬；防守配息 {dividend/10000:.0f} 萬")
-        briefing_lines.append("關聯：台股重挫 → 0050/009816/00981A 跌幅同步監控；外資賣超 → 高股息 00878/00713 支撐度")
+        # 動態持倉關聯（根據市場漲跌調整語氣）
+        _tw_change = 0
+        try:
+            _mf = json.loads((BASE / "hunter_cache" / f"market_intel_{date.today().isoformat()}.json").read_text())
+            _tw_str = _mf.get("market_data", {}).get("台股加權", "0.00 (0.00%)")
+            _tw_pct = float(_tw_str.split("(")[1].split("%")[0].replace("+","")) if "(" in _tw_str else 0
+            _tw_change = _tw_pct
+        except: pass
+        if _tw_change < -1:
+            _corr = "台股重挫 → 0050/009816/00981A 跌幅同步監控；外資賣超 → 高股息 00878/00713 支撐度"
+        elif _tw_change > 1:
+            _corr = "台股大漲 → 0050/009816/00981A 跟進上漲；外資買超 → 高股息 00878/00713 同步受惠"
+        else:
+            _corr = "台股盤整 → 0050/009816/00981A 波動有限；外資動向 → 高股息 00878/00713 支撐度"
+        briefing_lines.append(f"關聯：{_corr}")
     except Exception:
         briefing_lines.append("持倉關聯：略（snapshot 讀取失敗）")
 
@@ -544,6 +558,24 @@ def parse_hunter_signals(text: str) -> dict:
         result["summary"] = m.group(1).strip()[:200]
     return result
 
+
+def _load_condensed_intel() -> str:
+    """讀取濃縮情報"""
+    import json
+    cf = __file__ and chr(10)
+    cf = __import__("pathlib").Path(__file__).parent / f"daily_condensed_intel_{__import__('datetime').date.today()}.json"
+    if not cf.exists(): return ""
+    try:
+        data = json.loads(cf.read_text(encoding='utf-8'))
+        if not data: return ""
+        lines = []
+        for item in data:
+            sig = (item.get("signal_level","") or "").split()[0]
+            desc = item.get("description","")
+            impact = ", ".join(item.get("holdings_impact",[]))
+            lines.append(f"{sig} {desc}（影響: {impact}）")
+        return chr(10).join(lines)
+    except: return ""
 
 def load_daily_analysis() -> dict:
     path = BASE / "daily_analysis.json"

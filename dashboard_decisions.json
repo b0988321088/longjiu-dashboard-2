@@ -417,6 +417,42 @@
       "idem_key": "hermes-1784639692",
       "summary": "SOP驗證通過：四輪測試後，截圖→三源同步一次到位。只改當天不動歷史。INC-060登記。",
       "remind_at": ""
+    },
+    {
+      "source": "notion",
+      "action": "核准",
+      "text": "範例： 724 確認轉貸進度",
+      "approved_at": "2026-07-23T03:15:03.210417"
+    },
+    {
+      "source": "notion",
+      "action": "核准",
+      "text": "今日決策（2026-07-21）",
+      "approved_at": "2026-07-23T03:15:03.210417"
+    },
+    {
+      "source": "notion",
+      "action": "核准",
+      "text": "費用監控 06:00 自動回報 + Gemini 921 提醒",
+      "approved_at": "2026-07-23T03:15:03.210417"
+    },
+    {
+      "source": "notion",
+      "action": "延後",
+      "text": "待確認",
+      "approved_at": "2026-07-23T03:15:03.210417"
+    },
+    {
+      "source": "notion",
+      "action": "延後",
+      "text": "724 確認國泰轉貸進度",
+      "approved_at": "2026-07-23T03:15:03.210417"
+    },
+    {
+      "source": "notion",
+      "action": "延後",
+      "text": "87 教育訓練（13:10-16:20）",
+      "approved_at": "2026-07-23T03:15:03.210417"
     }
   ]
 }

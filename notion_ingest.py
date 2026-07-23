@@ -97,7 +97,7 @@ class NotionIngester:
         payload = {"properties": props}
         return ns_post(f"/pages/{page_id}", payload, method="PATCH")
 
-    def _create_or_update(self, db_id: str, props: dict, markdown: str = "", date_value: str = TODAY):
+    def _create_or_update(self, db_id: str, props: dict, markdown: str = "", date_prop: str = "", date_value: str = TODAY):
         title_map = ["資產名稱", "項目", "Name", "事件名稱", "基金名稱", "保單名稱"]
         title_prop = next((k for k in title_map if k in props), "")
         title_value = ""
@@ -106,7 +106,7 @@ class NotionIngester:
                 title_value = props[title_prop]["title"][0]["text"]["content"]
             except Exception:
                 pass
-        existing = self._find_existing_page(db_id, title_prop, title_value, date_value)
+        existing = self._find_existing_page(db_id, title_prop, title_value, date_prop, date_value)
         if existing:
             return self._update(existing["id"], props)
         payload = {"parent": {"database_id": db_id}, "properties": props}
@@ -371,6 +371,94 @@ def parse_ledger_loans():
     return loans
 
 
+    def ingest_daily_asset_snapshot(self, snapshot: dict):
+        db_id = DB_MAP.get("daily_asset_snapshots")
+        if not db_id:
+            print("[SKIP] daily_asset_snapshots DB ID not found.")
+            return
+        
+        today_date = TODAY # Use the TODAY variable defined globally
+        
+        props = {
+            "Date": {"date": {"start": today_date}},
+            "Total Assets": {"number": to_num(snapshot.get("total_assets"))},
+            "Securities": {"number": to_num(snapshot.get("securities_total"))},
+            "Insurance": {"number": to_num(snapshot.get("insurance_current_value"))},
+            "Funds": {"number": to_num(snapshot.get("fund_market_value"))},
+            "Cash": {"number": to_num(snapshot.get("real_liquid_assets"))},
+            "Snapshot ID": {"title": [{"text": {"content": f"Snapshot-{today_date}"}}]},
+            "Source": {"select": {"name": "Hermes"}}, # Default source
+            "Link": {"url": f"file://{REPO}/daily_report_v2_{today_date}.html"}, # Example link
+        }
+        # Filter out None values from properties before sending to Notion
+        props_clean = {k: v for k, v in props.items() if v.get("number") is not None or v.get("date") is not None or v.get("title") is not None or v.get("select") is not None or v.get("url") is not None}
+
+        print(f"[Notion] Ingesting Daily Asset Snapshot for {today_date}")
+        self._create_or_update(db_id, props_clean, date_prop="Date", date_value=today_date)
+
+    def ingest_decision_record(self, decision: dict):
+        db_id = DB_MAP.get("major_decision_records")
+        if not db_id:
+            print("[SKIP] major_decision_records DB ID not found.")
+            return
+
+        title_content = decision.get("text", "Unknown Decision")
+        if len(title_content) > 2000: # Notion title limit
+            title_content = title_content[:1997] + "..."
+
+        props = {
+            "Decision": {"title": [{"text": {"content": title_content}}]},
+            "Date": {"date": {"start": decision.get("approved_at", TODAY)[:10]}},
+            "Context": {"rich_text": [{"text": {"content": decision.get("context", "")}}]},
+            "Reasoning": {"rich_text": [{"text": {"content": decision.get("reasoning", "")}}]},
+            "Outcome": {"rich_text": [{"text": {"content": decision.get("outcome", "")}}]},
+            "Agent": {"select": {"name": decision.get("source", "Hermes").capitalize()}},
+            "Tags": {"multi_select": [{"name": tag} for tag in decision.get("tags", [])]},
+            "Link": {"url": decision.get("link", "")},
+        }
+        # Filter out empty strings for URL and rich_text if they cause issues
+        props_clean = {}
+        for k, v in props.items():
+            if k == "Link" and not v["url"]:
+                continue
+            if k in ["Context", "Reasoning", "Outcome"] and not v["rich_text"][0]["text"]["content"].strip():
+                continue
+            props_clean[k] = v
+
+        print(f"[Notion] Ingesting Decision Record: {title_content}")
+        self._create_or_update(db_id, props_clean, date_prop="Date", date_value=decision.get("approved_at", TODAY)[:10])
+
+    def ingest_analysis_result(self, analysis_result: dict):
+        db_id = DB_MAP.get("agent_analysis_results")
+        if not db_id:
+            print("[SKIP] agent_analysis_results DB ID not found.")
+            return
+
+        title_content = analysis_result.get("title", "Unknown Analysis")
+        if len(title_content) > 2000: # Notion title limit
+            title_content = title_content[:1997] + "..."
+
+        props = {
+            "Title": {"title": [{"text": {"content": title_content}}]},
+            "Date": {"date": {"start": analysis_result.get("date", TODAY)[:10]}},
+            "Agent": {"select": {"name": analysis_result.get("agent", "Hermes").capitalize()}},
+            "Analysis Type": {"select": {"name": analysis_result.get("analysis_type", "General").capitalize()}},
+            "Summary": {"rich_text": [{"text": {"content": analysis_result.get("summary", "")}}]},
+            "Raw Output Link": {"url": analysis_result.get("raw_output_link", "")},
+            "Sentiment": {"select": {"name": analysis_result.get("sentiment", "Neutral").capitalize()}},
+        }
+        props_clean = {}
+        for k, v in props.items():
+            if k == "Raw Output Link" and not v["url"]:
+                continue
+            if k == "Summary" and not v["rich_text"][0]["text"]["content"].strip():
+                continue
+            props_clean[k] = v
+
+        print(f"[Notion] Ingesting Analysis Result: {title_content}")
+        self._create_or_update(db_id, props_clean, date_prop="Date", date_value=analysis_result.get("date", TODAY)[:10])
+
+
 def load_daily_report_cio():
     report_path = REPO / f"daily_report_v2_{TODAY}.md"
     if not report_path.exists():
@@ -454,6 +542,30 @@ def default_policies(snapshot):
         })
     return policies
 
+def test_notion_api_connectivity():
+    print("\n=== Testing Notion API Connectivity ===")
+    try:
+        user_data = ns_get("/users/me")
+        print(f'[OK] Connected to Notion as: {user_data.get("name", "Unknown User")} ({user_data.get("id")})')
+
+        search_payload = {"query": "", "filter": {"property": "object", "value": "database"}}
+        db_results = ns_post("/search", search_payload)
+        print(f'[INFO] Found {len(db_results.get("results", []))} databases accessible to the token.')
+
+        # Check if the placeholder IDs are still present, if so, prompt user for manual creation
+        if any(DB_MAP.get(db_key) == "00000000-0000-0000-0000-000000000000" for db_key in ["daily_asset_snapshots", "major_decision_records", "agent_analysis_results"]):
+            print("\n[ACTION REQUIRED] 請在 Notion 手動建立以下資料庫，並將其 ID 更新至 notion_db_ids.json：")
+            print("1. Daily Asset Snapshots (資料庫名稱): Date (日期), Total Assets (數字), Securities (數字), Insurance (數字), Funds (數字), Cash (數字), Snapshot ID (標題), Source (選取), Link (網址)")
+            print("2. Major Decision Records (資料庫名稱): Decision (標題), Date (日期), Context (文字), Reasoning (文字), Outcome (文字), Agent (選取), Tags (多重選取), Link (網址)")
+            print("3. Agent Analysis Results (資料庫名稱): Title (標題), Date (日期), Agent (選取), Analysis Type (選取), Summary (文字), Raw Output Link (網址), Sentiment (選取)")
+        else:
+            print("[INFO] Notion 資料庫 ID 已設定，準備進行資料寫入。")
+
+    except Exception as e:
+        print(f"[ERROR] Notion API 連線測試失敗: {e}")
+        print("請確認您的 NOTION_TOKEN 有效，並具有讀取/寫入頁面和資料庫的權限。")
+    print("=== Notion API Connectivity Test End ===\n")
+
 
 def main():
     import argparse
@@ -461,6 +573,9 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="只顯示將寫入的資料，不呼叫 Notion API")
     args = parser.parse_args()
 
+    # Run Notion API connectivity test
+    test_notion_api_connectivity()
+    
     snapshot = load_snapshot()
     ingester = NotionIngester(dry_run=args.dry_run)
 
@@ -517,17 +632,46 @@ def main():
     ingester.ingest_fund_station(default_funds(snapshot))
     ingester.ingest_policy_vault(default_policies(snapshot), DB_MAP["master_ledger"], DB_MAP["debt_cashflow"])
     ingester.ingest_collateral_hub(parse_ledger_loans())
-    cio_summary = load_daily_report_cio()
-    ingester.ingest_ops_logs([
-        {
-            "name": f"notion_ingest daily + CIO Summary {TODAY}",
-            "source": "Hermes",
-            "status": "完成",
-            "category": "同步",
-            "summary": cio_summary,
-            "link": f"daily_report_v2_{TODAY}.md",
+
+    # Ingest Daily Asset Snapshot
+    ingester.ingest_daily_asset_snapshot(snapshot)
+
+    # Ingest Major Decision Records from dashboard_decisions.json
+    dec_file = REPO / "dashboard_decisions.json"
+    if dec_file.exists():
+        existing_decisions = json.loads(dec_file.read_text(encoding="utf-8"))
+        for d in existing_decisions.get("decisions", []):
+            # Add 'context', 'reasoning', 'outcome', 'tags', 'link' if not present in dashboard_decisions.json
+            # For simplicity now, we assume these are empty if not explicitly available.
+            decision_data = {
+                "text": d.get("text", ""),
+                "approved_at": d.get("approved_at", TODAY),
+                "source": d.get("source", "Hermes"),
+                "context": d.get("context", ""),
+                "reasoning": d.get("reasoning", ""),
+                "outcome": d.get("outcome", ""),
+                "tags": d.get("tags", []),
+                "link": d.get("link", ""),
+            }
+            ingester.ingest_decision_record(decision_data)
+
+    # Ingest Agent Analysis Results (example: CIO summary)
+    cio_summary_text = load_daily_report_cio() # Re-add this helper if needed, or get summary from relevant source
+    if cio_summary_text and cio_summary_text != "今日日報未發現明確 CIO 摘要。" and cio_summary_text != "今日日報未找到，無 CIO 摘要。":
+        analysis_data = {
+            "date": TODAY,
+            "title": f"CIO Daily Review Summary {TODAY}",
+            "agent": "CIO",
+            "analysis_type": "Daily Review",
+            "summary": cio_summary_text,
+            "raw_output_link": f"file://{REPO}/daily_report_v2_{TODAY}.md",
+            "sentiment": "Neutral", # Placeholder
         }
-    ])
+        ingester.ingest_analysis_result(analysis_data)
+
+    # Original ingest_ops_logs removed as analysis results will be handled by ingest_analysis_result
+    # ingester.ingest_ops_logs([...]) # This call will be removed
+
     asset_names = [
         "凱基證券 台股持倉",
         "安聯人壽 QL184",
