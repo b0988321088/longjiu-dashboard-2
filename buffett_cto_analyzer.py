@@ -10,7 +10,9 @@ from dotenv import load_dotenv
 import requests
 
 BASE = Path(__file__).parent.resolve()
-load_dotenv(BASE / ".env")
+load_dotenv(os.path.expanduser("~/AppData/Local/hermes/.env"))
+TG_TOKEN = os.environ.get("TG_TOKEN", "")
+TG_CHAT_ID = os.environ.get("TG_CHAT_ID", "") or os.environ.get("TELEGRAM_ALLOWED_USERS", "")
 TODAY = date.today().isoformat()
 
 # 5 類穿透目標（固定，對應 asset_class 分類）
@@ -162,7 +164,7 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
     lines.append("再平衡：優先處理最大偏離類別")
     return lines
 
-def main():
+def main(**kwargs):
     # 1. 從 snapshot 讀取
     snap = json.loads((BASE / "snapshot.json").read_text("utf-8"))
     
