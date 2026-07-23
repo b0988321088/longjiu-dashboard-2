@@ -1,0 +1,20 @@
+• ai-api-cost-monitoring：追蹤AI API餘額、每日花費、剩餘天數估算。支援 DeepSeek（有公開 balance API）等服務。
+• asset-diff-monitor-patterns：asset_diff_monitor.py 異常偵測邏輯、渲染模式、已知陷阱
+• asset-management-architecture：5,000萬資產管理架構 — 程式算準數、Agent當管家
+• asset-penetration-update-sop：保單/證券資料更新時的穿透分析 SOP。每次收到截圖或新數據時，依基金成分自動拆解股債比例、同步三源。
+• buffett-style-asset-analysis：>
+• computer-use：|
+• daily-deploy-pipeline：日報 + 資產變化對照 + 靜態儀表板 一條龍推送。含 dragon_assets.db 單源、巴菲特動態分析、6/5 變化對照區塊。
+• daily-report-c-mode-review：日報 C 模式審核流程：11 階段完整審核、CIO-Gemini 複審、GitHub Contents API 上傳、日期追蹤、連結推送規範。
+• dogfood："Exploratory QA of web apps: find bugs, evidence, reports."
+• hermes-desktop-plugins：Write desktop app plugins that add UI panes and commands.
+• hermes-themes："Author a Hermes color theme that skins every surface."
+• hermes-workflow-sop：Hermes 自主工作流程 SOP — 任務分派、執行、紀錄標準程序
+• longjiu-workflow-best-practices：龍九系統工作流程最佳實踐 — 包含數據管理、自動化、日誌和校驗原則
+• mb-zip-extraction：Moneybook ZIP 解密與數據提取 SOP
+• nuwa-skill：|
+• pipeline-sync-patterns：資料管線同步陷阱與執行順序模式 — 一次改到位、避免 patch over patch
+• rent-data-dynamic-workflow：房租數據動態化流程 — 從 snapshot 自動讀取租金結構，不再硬編碼
+• screenshot-update-sop：截圖/檔案更新SOP — 辨識→確認→同步一次到位
+• team-mindset-and-evolution：團隊心態、自主進化、三層派工與費用意識
+• yuanbao："Yuanbao (元宝) groups: @mention users, query info/members."
