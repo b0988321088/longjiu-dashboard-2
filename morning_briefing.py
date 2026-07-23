@@ -61,13 +61,18 @@ def format_events(events, with_time=True):
 def get_market_intel():
     try:
         h = load_json(BASE / "hunter_cache" / f"market_intel_{TODAY.isoformat()}.json")
+        if not h:
+            files = sorted((BASE / "hunter_cache").glob("market_intel_*.json"), reverse=True)
+            if files: h = load_json(files[0])
         if not h: return []
         parts = []
-        for key, label in [("TWII","台股"),("TSE","台股加權"),("SPX","美股標普")]:
-            d = h.get(key, {})
-            p = d.get("close") or d.get("price")
-            c = d.get("change", 0)
-            if p: parts.append(f"{label} {p:,.0f} {'▲' if c>0 else '▼'} {abs(c):.0f}")
+        md = h.get("market_data", {})
+        if md.get("台股加權"):
+            parts.append(f"台股 {md['台股加權']}")
+        if md.get("S&P500"):
+            parts.append(f"美股 {md['S&P500']}")
+        if md.get("費半"):
+            parts.append(f"費半 {md['費半']}")
         return parts
     except:
         return []
