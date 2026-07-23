@@ -115,13 +115,14 @@ def calibrate_sources() -> dict:
     dividend_breakdown = snap.get("monthly_dividend_breakdown", {})
     sec_dividend_monthly = dividend_breakdown.get("etf", 0)
     fund_dividend_monthly = dividend_breakdown.get("fund", 0)
-    # 下次除息資訊（從 snapshot 或 relay_calendar 讀取）
+    # 下次除息資訊（從 relay_calendar 讀取）
     next_ex_dividend_list = "待確認"
     try:
         _rc = open(BASE / "relay_calendar.md", encoding="utf-8").read()
-        _ex = re.findall(r"(\d+/\d+).*?除息.*?([\dA-Z]+)", _rc)
-        if _ex:
-            next_ex_dividend_list = "、".join([f"{b}（{a}）" for a, b in _ex[:3]])
+        _matches = re.findall(r'\|\s*([^|]+?)\s*\|\s*(\d+/\d+)\(', _rc)
+        _filtered = [(n.strip(), d) for n, d in _matches if n.strip() not in ('基金', '基金名稱')]
+        if _filtered:
+            next_ex_dividend_list = "、".join([f"{n}（{d}）" for n, d in _filtered[:5]])
     except:
         pass
 
