@@ -346,9 +346,16 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
     news = _fetch_news(news_queries)
 
     briefing_lines = []
-    briefing_lines.append(f"【台股/大盤】加權指數：{market.get('twii', '—')} | 台積電：{market.get('tsm', '—')}")
-    briefing_lines.append(f"【美股/外資】美股：{market.get('us', '—')} | 費半：{market.get('sox', '—')}")
-    briefing_lines.append(f"【CPI/利率】美國CPI：{market.get('cpi', '—')}")
+    briefing_lines.append("【台股/大盤】")
+    briefing_lines.append(f"加權指數：{market.get('twii', '—')}")
+    briefing_lines.append(f"台積電：{market.get('tsm', '—')}")
+    briefing_lines.append("")
+    briefing_lines.append("【美股/外資】")
+    briefing_lines.append(f"美股：{market.get('us', '—')}")
+    briefing_lines.append(f"費半：{market.get('sox', '—')}")
+    briefing_lines.append("")
+    briefing_lines.append("【CPI/利率】")
+    briefing_lines.append(f"美國CPI：{market.get('cpi', '—')}")
     briefing_lines.append("")
 
     if signals.get("sell_signals"):
