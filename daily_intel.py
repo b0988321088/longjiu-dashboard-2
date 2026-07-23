@@ -235,23 +235,20 @@ def render_intel_text(intel_text: str, signals: dict) -> str:
 # ===== Analysis builder =====
 
 def _fetch_news(queries: list[str], limit: int = 3) -> list[dict]:
-    """Search market news. Fallback: returns empty list silently."""
+    """Search market news via Hermes web_search. Fallback: returns empty list silently."""
     try:
-        import urllib.request, json as _json
+        import json as _json
         results = []
         for q in queries[:2]:
             try:
-                url = "https://html.duckduckgo.com/html/?q=" + urllib.parse.quote(q)
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=8) as r:
-                    html = r.read().decode("utf-8", errors="ignore")[:5000]
-                # crude extract titles/links from DDG results
-                import re
-                for m in re.finditer(r'<a[^>]+class="[^"]*result__a[^"]*"[^>]+href="([^"]+)"[^>]*>(.*?)</a>', html):
-                    href = m.group(1)
-                    title = re.sub(r'<[^>]+>', '', m.group(2)).strip()
-                    if title and len(title) > 10 and 'duckduckgo' not in href:
-                        results.append({"title": title[:120], "url": href[:200], "desc": ""})
+                _resp = _WEB_SEARCH(q, limit=limit)
+                _items = _resp.get("data", {}).get("web", [])
+                for item in _items[:limit]:
+                    results.append({
+                        "title": item.get("title", "")[:120],
+                        "url": item.get("url", "")[:200],
+                        "snippet": item.get("description", item.get("snippet", ""))[:200],
+                    })
             except Exception:
                 continue
         return results[:6]
@@ -399,11 +396,22 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
     ]
     briefing = " | ".join(briefing_parts)
 
-    # 跳過硬編碼新聞抓取（Yahoo Finance 即時數據已足夠）
-
-    # 3. 跳過 web_search（每 4 小時一次很浪費配額，Yahoo Finance 已經夠用）
+    # web_search 定時執行：07:00 / 13:00 / 21:00 各抓一次（force_refresh 時強制執行）
     intel_text = ""
     search_results = []
+    _h = datetime.now().hour
+    if force_refresh or _h in [7, 13, 21]:
+        try:
+            _news = _fetch_news(["台股 美股 今日 走勢 川普 分析", "台積電 今日 股價 大盤 外資"], limit=3)
+            search_results = _news
+            if _news:
+                _news_text = "\n".join(n.get("title","") + " " + n.get("snippet","") for n in _news)
+                _news_signals = classify(_news_text)
+                for k in ["sell_signals", "buy_signals"]:
+                    if _news_signals.get(k):
+                        signals.setdefault(k, []).extend(_news_signals[k])
+        except Exception:
+            pass
 
     # 3. 產出 intel 檔
     text = render_intel_text(intel_text, signals)
