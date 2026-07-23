@@ -5,9 +5,17 @@ from pathlib import Path
 from datetime import date
 
 BASE = Path(__file__).resolve().parent
+# Cron no_agent 模式：CWD 可能不是 workdir，手動後備路徑
+if not (BASE / "snapshot.json").exists():
+    _alt = Path(r"C:\Users\bot\Desktop\longjiu_system")
+    if _alt.exists():
+        BASE = _alt
 SNAP = BASE / "snapshot.json"
 DB = BASE / "dragon_assets.db"
 HIST = BASE / "asset_diff_history.json"
+# 確保 BASE 在 Python 路徑中（給 cron no_agent 用）
+if str(BASE) not in sys.path:
+    sys.path.insert(0, str(BASE))
 TODAY = date.today().isoformat()
 
 def load_json(p):
