@@ -335,13 +335,7 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
             "cto_signal": "",
         }
 
-    news_queries = []
-    if crash:
-        news_queries = ["台股 大跌 外資 賣超 原因 2026年7月", "韓國 過度槓桿 亞洲股市 2026", "美國 科技股 泡沫 Fed 利率 2026"]
-    elif rally:
-        news_queries = ["台股 反彈 外資 買超 2026年7月", "美股 科技股 反彈 Fed 2026"]
-    else:
-        news_queries = ["台股 震盪 外資 2026年7月", "韓國 亞洲市場 連動 2026"]
+    news_queries = ["台股 美股 今日 走勢 川普 分析", "台積電 今日 股價 大盤 外資"]
 
     news = _fetch_news(news_queries)
 
