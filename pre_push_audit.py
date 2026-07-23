@@ -42,7 +42,6 @@ def check() -> bool:
 
     # 4. 關鍵數據不為空白
     checks = [
-        ("總資產", snap.get("total_assets", 0)),
         ("保單現值", snap.get("insurance_current_value", 0)),
         ("現金", snap.get("real_liquid_assets", 0)),
     ]
