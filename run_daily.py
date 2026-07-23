@@ -441,6 +441,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         <li>7/17（五）— 國泰轉貸面簽/對保（✅ 已執行，待後續流程）</li>
         <li>7/20（一）— 洲際 W 33,000 ✅ 已入帳</li>
         <li>7/22（三）— 玉山信用卡繳款截止 3,176</li>
+        <li>⚠️ <strong>7/23（四）</strong>— 安聯 AI 收益 T+4 轉換截止 ← ⏰ 今天！</li>
+        <li>⚠️ <strong>7/24（五）</strong>— 貝萊德世界科技 A10 T+4 轉換截止</li>
         <li>7/27（一）— 台新信用卡繳款截止 1,000</li>
         <li>7/29-30 — Fed 利率決策 + 安聯 AI / 貝萊德 A10 基準日</li>
         <li>8/1（五）— 星展戶頭扣款 33,724（大義街房貸 + 理財型利息）🚨 需補缺口</li>
@@ -458,6 +460,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
           <tr><td>7/17（五）</td><td>國泰轉貸面簽/對保 + 段部上課</td><td class="num">—</td><td>🚨 P0</td></tr>
           <tr><td>7/19-20</td><td>摩根 FJ33 配息入帳</td><td class="num">13,593</td><td>✅ 已配息</td></tr>
           <tr><td>7/22</td><td>玉山信用卡繳款截止</td><td class="num">3,176</td><td>🔄 待處理</td></tr>
+          <tr><td>⚠️ <strong>7/23</strong></td><td>安聯 AI 收益 T+4 轉換截止</td><td class="num">—</td><td>🔴 今天到期</td></tr>
+          <tr><td>⚠️ <strong>7/24</strong></td><td>貝萊德 A10 T+4 轉換截止</td><td class="num">—</td><td>⏰ 明天到期</td></tr>
           <tr><td>7/27</td><td>台新信用卡繳款截止</td><td class="num">1,000</td><td>🔄 待處理</td></tr>
           <tr><td>7/29-30</td><td>安聯 AI / 貝萊德 A10 基準日</td><td class="num">—</td><td>⏸️ 等待到期</td></tr>
           <tr><td>8/1</td><td>星展戶頭扣款（大義街房貸 + 理財型利息）</td><td class="num">33,724</td><td>🚨 需補缺口</td></tr>
@@ -546,7 +550,7 @@ def _build_market_rows(signals: dict, tv: dict) -> str:
     return "\n          ".join(rows)
 
 
-def _inject_market_intel(html: str, tv: dict, signals: dict, strategy_notes: str = "") -> str:
+def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
     """以 daily_analysis.json + hunter intel 注入 market + Buffett + CTO 區塊。"""
     # 先從 market_intel 表補入 hunter 情報
     try:
@@ -563,7 +567,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, strategy_notes: str
                 for _s in (_j.get("sell",[])or[])[:2]:
                     _mr.append(f"<tr><td>網 賣出訊號</td><td colspan='2'>{_s[:60]}</td></tr>")
             except: pass
-            html = html.replace("__MARKET_ROWS__", chr(10).join("          "+r for r in _mr))
+            _hunter_rows = chr(10).join("          "+r for r in _mr)
     except: pass
     analysis = load_daily_analysis()
     if not analysis:
@@ -593,7 +597,13 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, strategy_notes: str
         f"<tr><td>美國 CPI</td><td>{cpi}</td><td>降息預期升溫</td></tr>",
         # 0050 配息：待 MB 確認後由 daily_analysis.json 注入
     ]
-    html = html.replace("__MARKET_ROWS__", chr(10).join("          " + r for r in rows))
+    # 合併 Hunter 訊號 + 標準市場數據
+    _all_rows = rows[:]
+    try:
+        if _hunter_rows:
+            _all_rows = [_hunter_rows] + rows
+    except: pass
+    html = html.replace("__MARKET_ROWS__", chr(10).join("          " + r for r in _all_rows))
 
     # Buffett / CTO 區塊
     buf_bull = buffett.get("bull", "")
@@ -668,31 +678,6 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, strategy_notes: str
             cto_risk = f"今日觸發：{cto_signal}；{cto_risk}"
         cto_content = f"<strong>🤖 CTO 技術視角</strong><br><strong>tech_stack</strong>：{cto_tech}<br><strong>今日最大風險</strong>：{cto_risk}<br><strong>建議動作</strong>：{cto_action}"
 
-    # 注入 CEO 戰略筆記（從 Notion 同步）— 在 __BUFFETT_CONTENT__ 替換之前
-    if strategy_notes:
-        _sn_lines = strategy_notes.strip().split("\n")
-        _sn_html = '<div class="card" style="margin-top:16px;border-left:4px solid #2563eb;padding:12px;background:#f0f7ff;">'
-        _sn_html += '<h3 style="color:#1e40af;margin:0 0 8px 0;">📝 CEO 戰略指令（來自 Notion）</h3>'
-        _sn_html += '<div style="font-size:14px;line-height:1.7;">'
-        for _l in _sn_lines:
-            _l = _l.strip()
-            if not _l:
-                continue
-            # 移除 bullet 前綴，保留 emoji
-            _disp = _l.lstrip("- ")
-            if _l.startswith("# "):
-                _sn_html += f"<strong style='color:#1e40af;'>{_l[2:]}</strong><br>"
-            elif _disp.startswith("✅"):
-                _sn_html += f"<div style='color:#059669;margin:1px 0;'>{_disp}</div>"
-            elif _disp.startswith("⏸️"):
-                _sn_html += f"<div style='color:#d97706;margin:1px 0;'>{_disp}</div>"
-            elif _l.startswith("- "):
-                _sn_html += f"• {_l[2:]}<br>"
-            elif _l and not _l.startswith("—"):
-                _sn_html += f"<span style='color:#4b5563;'>{_l}</span><br>"
-        _sn_html += '</div></div>'
-        buf_content = _sn_html + buf_content
-
     html = html.replace("__BUFFETT_CONTENT__", buf_content)
     html = html.replace("__CTO_TECH__", cto_content)
 
@@ -737,14 +722,7 @@ def main():
             )
     except: pass
     
-    # 載入戰略手稿（從 Notion 同步後的最新內容）
-    _strategy_text = ""
-    try:
-        _strategy_file = BASE / "notion_bridge" / f"{TODAY}_strategy_handbook.md"
-        if _strategy_file.exists():
-            _strategy_text = _strategy_file.read_text(encoding="utf-8")
-    except: pass
-    print(f"[INTEL] {intel_result.get('file') or intel_result}")
+    # 載入統一市場情報
     # Load unified market briefing from daily_intel_report_{date}.json
     unified_path = BASE / f"daily_intel_report_{TODAY.replace('-','')}.json"
     market_intel_text = ""
@@ -785,7 +763,7 @@ def main():
         tv['holdings_top3'] = [('00878', 15.0), ('009816', 16.6), ('00984A', 10.4)]
     # 日報
     daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text)
-    daily_html = _inject_market_intel(daily_html, tv, intel_signals, _strategy_text)
+    daily_html = _inject_market_intel(daily_html, tv, intel_signals)
 
     # 注入戰略穿透值到日報（與儀表板一致）
     import sqlite3
