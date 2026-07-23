@@ -9,6 +9,8 @@
 import json, csv, os, sqlite3
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from logging_config import get_logger
+logger = get_logger("reminder_agent")
 
 BASE = Path(__file__).resolve().parent
 

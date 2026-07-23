@@ -16,6 +16,8 @@ import sys
 import base64
 from datetime import date
 from pathlib import Path
+from logging_config import get_logger
+logger = get_logger("daily_deploy")
 
 try:
     from dotenv import load_dotenv

@@ -2,6 +2,8 @@
 """budget_daily_check.py - 每週信用卡預算管家"""
 
 from pathlib import Path
+from logging_config import get_logger
+logger = get_logger("budget_daily_check")
 import csv
 
 BASE = Path(__file__).resolve().parent

@@ -2,6 +2,8 @@
 """morning_wrapper.py — 龍九晨間自動化：依序執行費用→日曆→日報"""
 import subprocess, sys, time
 from pathlib import Path
+from logging_config import get_logger
+logger = get_logger("morning_wrapper")
 
 BASE = Path(__file__).resolve().parent
 
@@ -14,7 +16,7 @@ scripts = [
 for name, wait in scripts:
     path = BASE / name
     if not path.exists():
-        print(f"⚠️ 跳過 {name}：不存在")
+        logger.warning(f"⚠️ 跳過 {name}：不存在")
         continue
     print(f"▶ 執行 {name}...")
     try:
@@ -27,4 +29,4 @@ for name, wait in scripts:
         print(f"  ⏰ {name} 逾時")
     time.sleep(wait)
 
-print("✅ 晨間自動化完成")
+logger.info("✅ 晨間自動化完成")

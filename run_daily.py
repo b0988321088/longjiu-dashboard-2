@@ -14,6 +14,8 @@ import re
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from logging_config import get_logger
+logger = get_logger("run_daily")
 import daily_intel as mi_mod
 from daily_intel import load_daily_analysis
 

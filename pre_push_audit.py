@@ -3,6 +3,8 @@
 任一項失敗 → 禁止推送 + 印出原因"""
 import json, sys
 from pathlib import Path
+from logging_config import get_logger
+logger = get_logger("pre_push_audit")
 
 BASE = Path(__file__).parent.resolve()
 TODAY = __import__("datetime").date.today().isoformat()

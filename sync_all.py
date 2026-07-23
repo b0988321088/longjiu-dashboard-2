@@ -2,6 +2,8 @@
 """sync_all.py — 一鍵同步 longjiu_system/ 腳本到 hermes/scripts/"""
 
 from pathlib import Path
+from logging_config import get_logger
+logger = get_logger("sync_all")
 import shutil
 
 BASE = Path(__file__).resolve().parent

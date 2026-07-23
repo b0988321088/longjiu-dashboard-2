@@ -2,6 +2,8 @@
 """nightly_wrapper.py — 龍九夜間維護：Notion同步 → 夜間整理"""
 import subprocess, sys, time
 from pathlib import Path
+from logging_config import get_logger
+logger = get_logger("nightly_wrapper")
 
 BASE = Path(__file__).resolve().parent
 
@@ -13,7 +15,7 @@ scripts = [
 for name, wait in scripts:
     path = BASE / name
     if not path.exists():
-        print(f"⚠️ 跳過 {name}：不存在")
+        logger.warning(f"⚠️ 跳過 {name}：不存在")
         continue
     print(f"▶ 執行 {name}...")
     try:
@@ -26,4 +28,4 @@ for name, wait in scripts:
         print(f"  ⏰ {name} 逾時")
     time.sleep(wait)
 
-print("✅ 夜間維護完成")
+logger.info("✅ 夜間維護完成")

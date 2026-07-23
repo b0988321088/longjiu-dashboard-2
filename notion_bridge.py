@@ -4,6 +4,8 @@
 import json, os, re, requests
 from datetime import date, datetime
 from pathlib import Path
+from logging_config import get_logger
+logger = get_logger("notion_bridge")
 
 # ── 設定 ──
 _HERMES_ENV = Path(os.path.expanduser("~/AppData/Local/hermes/.env"))
@@ -178,7 +180,7 @@ def push_daily_snapshot(tv: dict) -> str:
     """將每日資產快照寫入 Notion database"""
     db_id = _get_snapshot_db_id()
     if not db_id:
-        print("Error: NOTION_DAILY_SNAPSHOT_DB_ID is not set in .env")
+        logger.error("Error: NOTION_DAILY_SNAPSHOT_DB_ID is not set in .env")
         return """
 
     data_to_send = {
@@ -217,4 +219,4 @@ if __name__ == "__main__":
     
     if r["pages_found"] > 0:
         print(f"\n✅ 已寫入 notion_bridge/{date.today()}_strategy_handbook.md")
-        print(f"✅ 決策已合併至 dashboard_decisions.json")
+        logger.info(f"✅ 決策已合併至 dashboard_decisions.json")

@@ -2,6 +2,8 @@
 import sqlite3, json, re, glob
 from datetime import date, datetime
 from pathlib import Path
+from logging_config import get_logger
+logger = get_logger("compile_intel")
 
 BASE = Path(__file__).resolve().parent
 today = date.today().isoformat()

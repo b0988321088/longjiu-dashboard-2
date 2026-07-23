@@ -2,6 +2,8 @@
 """intel_sync_wrapper.py — 合併 Hunter情報 + Notion戰略手稿同步"""
 import subprocess, sys, time
 from pathlib import Path
+from logging_config import get_logger
+logger = get_logger("intel_sync_wrapper")
 
 BASE = Path(__file__).resolve().parent
 
@@ -13,7 +15,7 @@ scripts = [
 for name, wait in scripts:
     path = BASE / name
     if not path.exists():
-        print(f"⚠️ 跳過 {name}：不存在")
+        logger.warning(f"⚠️ 跳過 {name}：不存在")
         continue
     print(f"▶ 執行 {name}...")
     r = subprocess.run([sys.executable, str(path)], capture_output=True, text=True, timeout=120)
@@ -23,4 +25,4 @@ for name, wait in scripts:
         print(f"  ❌ {name} 失敗：{r.stderr[:200]}")
     time.sleep(wait)
 
-print("✅ 情報同步完成")
+logger.info("✅ 情報同步完成")
