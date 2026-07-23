@@ -1,0 +1,13 @@
+{
+  "date": "2026-07-23",
+  "memory_pct": "?",
+  "skills_count": 20,
+  "actions": [
+    "技能摘要：20 個已更新",
+    "請執行 `memory(action='list')` 檢查容量，必要時移除低頻條目",
+    "低頻判定：INC記錄(已存ERROR_LOG)、超過1個月未更新的設定、已穩定的決策",
+    "INC 記錄：1 條（詳見 error_summary_cache.txt）",
+    "記憶體重塑建議：技能摘要已快取 → memory 中可移除舊技能描述"
+  ],
+  "inc_count": 1
+}

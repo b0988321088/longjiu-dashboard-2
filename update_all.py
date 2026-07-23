@@ -110,11 +110,11 @@ def main():
     snap.setdefault("penetration",{}).setdefault("actual_twd",{}).update(pen)
     save_json(SNAP, snap)
     db = sqlite3.connect(str(DB))
-    db.execute("UPDATE assets SET cash_total=?, securities=?, insurance=?, funds=?, bonds=0, total_assets=? WHERE date=?",
-        (args["cash"], args["sec"], args["ins"], args["funds"], total, TODAY))
+    db.execute("UPDATE assets SET cash_total=?, securities=?, insurance=?, funds=?, bonds=0, total_assets=?, total_liabilities=? WHERE date=?",
+        (args["cash"], args["sec"], args["ins"], args["funds"], total, snap.get("total_liabilities",0), TODAY))
     if db.total_changes == 0:
-        db.execute("INSERT INTO assets(date,cash_total,securities,insurance,funds,bonds,total_assets) VALUES(?,?,?,?,?,0,?)",
-            (TODAY, args["cash"], args["sec"], args["ins"], args["funds"], total))
+        db.execute("INSERT INTO assets(date,cash_total,securities,insurance,funds,bonds,total_assets,total_liabilities) VALUES(?,?,?,?,?,0,?,?)",
+            (TODAY, args["cash"], args["sec"], args["ins"], args["funds"], total, snap.get("total_liabilities",0)))
     db.commit(); db.close()
     hist = load_json(HIST)
     hist.setdefault(TODAY, {}).update({"cash": args["cash"], "securities_market": args["sec"],

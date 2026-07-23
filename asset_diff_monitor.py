@@ -124,16 +124,40 @@ def extract_snapshot(snap: dict) -> dict:
             _db = sqlite3.connect(str(_db_path))
             _db.row_factory = sqlite3.Row
             _today = date.today().isoformat()
-            _ar = _db.execute("SELECT * FROM assets WHERE date = ?", (_today,)).fetchone()
-            _ir = _db.execute("SELECT * FROM income WHERE date = ?", (_today,)).fetchone()
-            if _ar:
+            _ar, _ir, _lr = None, None, None
+            _data_date = _today # Initialize data_date with today
+
+            # 1. 查 today
+            _ar_today = _db.execute("SELECT * FROM assets WHERE date = ?", (_today,)).fetchone()
+            if _ar_today:
+                _ar = _ar_today
+                _ir = _db.execute("SELECT * FROM income WHERE date = ?", (_today,)).fetchone()
+                _lr = _db.execute("SELECT * FROM liabilities WHERE date = ?", (_today,)).fetchone()
+                print(f"[INFO] Loaded data for today ({_today}) from DB.")
+            else:
+                # 2. 查 yesterday (DB assets 最新一筆)
+                print(f"[WARN] No data for today ({_today}) found. Attempting to load latest available data from DB.")
+                _latest_asset_record = _db.execute("SELECT * FROM assets ORDER BY date DESC LIMIT 1").fetchone()
+                if _latest_asset_record:
+                    _latest_date = _latest_asset_record['date']
+                    _ar = _db.execute("SELECT * FROM assets WHERE date = ?", (_latest_date,)).fetchone()
+                    _ir = _db.execute("SELECT * FROM income WHERE date = ?", (_latest_date,)).fetchone()
+                    _lr = _db.execute("SELECT * FROM liabilities WHERE date = ?", (_latest_date,)).fetchone()
+                    _data_date = _latest_date # Update data_date to latest_date
+                    print(f"[INFO] Loaded data for latest date ({_latest_date}) from DB as fallback.")
+                else:
+                    print("[WARN] No asset data found in DB. Falling back to snapshot.json.")
+            
+            # Ensure DB connection is closed regardless of outcome
+            _db.close()
+
+            if _ar: # Proceed if _ar has data (either today or yesterday)
                 # 轉為 dict 以支援 .get()
                 _ar = dict(_ar)
                 _ir = dict(_ir) if _ir else {}
                 _total_assets = sum(_ar[k] for k in ["securities","insurance","funds","bonds","cash_total","real_estate"] if k in _ar)
                 _total_liab = 18_197_422
                 # 從 db 拿負債
-                _lr = _db.execute("SELECT * FROM liabilities WHERE date = ?", (_today,)).fetchone()
                 if _lr:
                     _lr = dict(_lr)
                     _total_liab = sum(_lr.get(k, 0) for k in ["mortgage_yy","mortgage_yydu","mortgage_xz","policy_loan","pledge_loan","credit_card"])
@@ -141,13 +165,11 @@ def extract_snapshot(snap: dict) -> dict:
                     if _lr.get("total_liabilities", 0):
                         _total_liab = _lr["total_liabilities"]
                 
-                _db.close()
-
                 insurance_current_from_db = float(_ar.get("insurance", 0))
                 insurance_detail_from_db = _build_insurance_detail(snap, insurance_current_from_db)
 
                 return {
-                    "date": _today,
+                    "date": _data_date, # Use _data_date which could be today or yesterday
                     "total_assets": float(_total_assets),
                     "total_liabilities": float(_total_liab),
                     "net_worth": float(_total_assets - _total_liab),
@@ -158,14 +180,35 @@ def extract_snapshot(snap: dict) -> dict:
                     # 從 snapshot.json 補基金明細
                     "_fund_breakdown": snap.get("funds_breakdown", {}),
                     "fund_breakdown_display": snap.get("funds_breakdown", {}),
-                    "real_estate": float(_ar.get("real_estate", 34_000_000)),
+                    "real_estate": float(
+                        _ar.get("real_estate", 34_000_000)
+                    ),  # Updated default for real_estate
                     "other": 0.0,
                     "cash": float(_ar.get("cash_total", 0)),
                     "bonds": float(_ar.get("bonds", 0)),
                     "insurance_detail": insurance_detail_from_db,
-                    "fund_dividend_monthly": float(snap.get("fund_dividend_monthly", _ir.get("dividend_total", 69_044) if _ir else 69_044)),
-                    "fund_dividend_conservative": float(snap.get("passive_income", {}).get("fund_dividend_conservative", _ir.get("dividend_total", 69_044) if _ir else 69_044)),
-                    "monthly_income": float(snap.get("monthly_income", _ir.get("salary", 43_144) + _ir.get("travel_allowance", 12_000) if _ir else 218_102)),
+                    "fund_dividend_monthly": float(
+                        snap.get(
+                            "fund_dividend_monthly",
+                            _ir.get("dividend_total", 69_044) if _ir else 69_044,
+                        )
+                    ),
+                    "fund_dividend_conservative": float(
+                        snap.get(
+                            "passive_income", {}
+                        ).get(
+                            "fund_dividend_conservative",
+                            _ir.get("dividend_total", 69_044) if _ir else 69_044,
+                        )
+                    ),
+                    "monthly_income": float(
+                        snap.get(
+                            "monthly_income",
+                            _ir.get("salary", 43_144) + _ir.get("travel_allowance", 12_000)
+                            if _ir
+                            else 218_102,
+                        )
+                    ),
                     "monthly_expense": float(snap.get("monthly_expense", 141_958)),
                     "rent_monthly": float(snap.get("rent_monthly_actual", 80_100)),
                     "cathay_refinance": float(snap.get("cathay_refinance_amount") or 0),
@@ -272,7 +315,7 @@ def load_history(snap=None) -> dict:
                 "rent_monthly": 80_100.0,
                 "cathay_refinance": 0.0,
             }
-            nw = history[d]["total_assets"] - 18_197_422
+            nw = history[d]["total_assets"] - history[d].get("total_liabilities", 0)
             history[d]["net_worth"] = float(nw)
         _db.close()
     except Exception as e:

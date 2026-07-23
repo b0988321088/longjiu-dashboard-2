@@ -16,6 +16,12 @@ import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 import feedparser # Added for RSS feed parsing
+from logging_config import get_logger
+
+import feedparser # Added for RSS feed parsing
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 try:
     from dotenv import load_dotenv
@@ -67,7 +73,9 @@ def _yf_chart(symbol: str, timeout: int = 8) -> dict:
             return {}
         pct = round((price - prev) / prev * 100, 2)
         return {"price": price, "prev": prev, "change_pct": pct}
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error fetching Yahoo Finance chart for {symbol}: {e}")
+        return {}
         return {}
 
 def fetch_yf_market() -> dict:
@@ -143,7 +151,7 @@ def _fetch_news(queries: list[str], limit: int = 3) -> list[dict]:
             if len(results) >= limit:
                 break
         except Exception as e:
-            print(f"RSS error {source_name}: {e}", file=sys.stderr)
+            logger.error(f"RSS error {source_name}: {e}")
             continue
     
     return results
@@ -184,7 +192,8 @@ def classify_from_yf(market: dict) -> dict:
                 weekly_cum = (current - prev_7d) / prev_7d * 100
                 if weekly_cum <= -5:
                     pass  # 保留空訊號，不要偽造外資數據
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error in classifying from YF (weekly cumulative): {e}")
             pass
 
     return {"sell_signals": sell[:5], "buy_signals": buy[:5]}
@@ -407,7 +416,7 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
                     if _news_signals.get(k):
                         signals.setdefault(k, []).extend(_news_signals[k])
         except Exception as e:
-            print(f"Error in fetching news for cron job: {e}", file=sys.stderr)
+            logger.error(f"Error in fetching news for cron job: {e}")
             pass
     # --- END NEW ---
 
@@ -562,6 +571,7 @@ if __name__ == "__main__":
 
     print("\nDaily Intel generation complete.")
 
+
 def load_latest_hunter() -> str:
     ensure_dir()
     files = sorted(HUNTER_DIR.glob("intel_*.txt"), key=os.path.getmtime, reverse=True)
@@ -611,7 +621,8 @@ def load_daily_analysis() -> dict:
         return {}
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error fetching Yahoo Finance chart for {symbol}: {e}")
         return {}
 
 
