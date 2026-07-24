@@ -263,6 +263,14 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       </table>
     </div>"""
 
+    # CIO 觀點
+    cio_content = []
+    cio_content.append(f'<p><strong>🧑‍💻 CIO 觀點</strong></p>')
+    cio_content.append(f'<span style="display:block">• 本日市場情緒持平，無重大異常。</span>')
+    cio_content.append(f'<span style="display:block">• 資產配置持續檢視，尤其注意防禦型配息部位的補碼時機。</span>')
+    cio_content.append(f'<span style="display:block">• 流動性管理穩定，補庫警示已處理。</span>')
+    cio_content_html = '\n'.join(cio_content)
+
     html = f"""<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -270,7 +278,6 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>龍九控股日報 {TODAY}</title>
 <style>
-  font-size: 17px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
   color: #1d1d1f;
   background: #f5f5f7;
@@ -295,9 +302,10 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   h3 {{ font-size: 16px; font-weight: 800; margin: 10px 0 6px; }}
   .label {{ font-size: 12px; color: #6e6e73; margin-bottom: 6px; }}
   .text-lead {{ color: #3a3a3c; margin: 6px 0; }}
-  .table-wrap {{ overflow-x: auto; margin: 8px 0; }}
+  .table-wrap {{ overflow-x: auto; margin: 8px 0; -webkit-overflow-scrolling: touch; }}
   table {{
     width: 100%;
+    min-width: 360px;
     border-collapse: collapse;
     background: #fff;
     border: 1px solid #e5e5ea;
@@ -324,19 +332,29 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   .callout {{
     border-radius: 10px;
     padding: 12px 14px;
-    margin: 10px 0;
+    margin: 14px 0; /* Adjusted margin */
     border-left: 4px solid;
+    font-size: 16px; /* Added font-size */
+    line-height: 1.8; /* Added line-height */
   }}
+  .callout h3 {{ text-decoration: underline; }} /* Added underline for h3 inside callout */
+  .callout strong {{ color:#c2410c; text-decoration: underline; }} /* Added orange color and underline for strong inside callout */
   .callout-bull {{ background:#f0fff4; border-color:#22c55e; }}
   .callout-bear {{ background:#fff5f5; border-color:#ef4444; }}
   .callout-warn {{ background:#fffbeb; border-color:#f59e0b; }}
+  .callout-warn span {{ display:block; margin:3px 0; padding-left:4px; border-left:2px solid rgba(245,158,11,0.2); }}
   .callout-info {{ background:#eff6ff; border-color:#3b82f6; }}
 
   /* Mobile table style: bordered with background fill */
   @media (max-width: 640px) {{
     body {{ font-size: 15px; padding: 10px; }}
-    table {{ font-size: 14px; }}
-    th, td {{ padding: 8px 10px !important; }}
+    table {{ font-size: 13px; }}
+    th, td {{ padding: 6px 6px !important; }}
+    th:nth-child(2), td:nth-child(2) { max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #market-intel-block table th:nth-child(2),
+    #market-intel-block table td:nth-child(2) {
+      display: none !important;
+    }
   }}
   table.mobile-bordered {{
     border: 1px solid #d1d5db;
@@ -564,10 +582,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
     <!-- CIO 審查 / 觀點 -->
         <div class="callout callout-info">
-          <strong>🧑‍💻 CIO 觀點</strong><br>
-          • 本日市場情緒持平，無重大異常。<br>
-          • 資產配置持續檢視，尤其注意防禦型配息部位的補碼時機。<br>
-          • 流動性管理穩定，補庫警示已處理。
+          {cio_content_html}
         </div>
         <!-- END CIO -->
   </div>
@@ -607,6 +622,11 @@ def _build_market_rows(signals: dict, tv: dict) -> str:
     ]
     return "\n          ".join(rows)
 
+
+def _format_line_with_numbers(line: str) -> str:
+    import re as _nm
+    _b = _nm.sub(r'([0-9,]{1,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c">\\1</strong>', line)
+    return _b
 
 def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str = "") -> str:
 
@@ -746,49 +766,73 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
     
     # Fallback to old logic if md report missing
     if not buf_content:
-        buf_content = f"<strong>🧓 巴菲特式思考</strong><br>• 場景判定：{buf_scenario or scenario_event}<br>"
-        if buf_bull:
-            buf_content += f"• Bull：{buf_bull}<br>"
-        if buf_bear:
-            buf_content += f"• Bear：{buf_bear}<br>"
-        for a in buf_actions:
-            buf_content += f"• {a}<br>"
-        diff_bullets = _diff_to_buffett_bullets(tv, yesterday_snap)
-        if diff_bullets:
-            buf_content += "<br><strong>📋  昨日差異帶來的行動啟示</strong><br>"
-            for b in diff_bullets:
-                buf_content += f"• {b}<br>"
-        buf_content += "<br><strong>🤝 Buffett 派操作建議</strong><br>"
-        buf_content += f"• 淨資產：{net_worth:,.0f} TWD<br>"
-        _us_pct = _us_v / _tot * 100
-        _tw_pct = _tw_v / _tot * 100
-        _def_pct = _def_v / _tot * 100
-        _bond_pct = _bond_v / _tot * 100
-        _cash_pct = _cash_v / _tot * 100
-        buf_content += f"• 建議部位：美股 {_us_pct:.0f}%（目標 {_tgt_us:.0f}%）、台股 {_tw_pct:.0f}%（目標 {_tgt_tw:.0f}%）、防守 {_def_pct:.0f}%（目標 {_tgt_def:.0f}%）、債券 {_bond_pct:.0f}%（目標 {_tgt_bond:.0f}%）、現金 {_cash_pct:.0f}%（目標 {_tgt_cash:.0f}%）<br>"
+        buf_content = []
+        def _format_line_with_numbers(line):
+            import re as _nm
+            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c;">\\\\1</strong>', line)
+            return _b
 
-        today_action = []
-        if (_tw_v / _tot * 100 - _tgt_tw) < -5:
-            today_action.append("台股偏低，逢低補碼")
-        if (_us_v / _tot * 100 - _tgt_us) > 5:
-            today_action.append("美股超標，優先減碼")
-        if (_def_v / _tot * 100 - _tgt_def) < -5:
-            today_action.append("防守不足，補 00878/00713")
-        if (_cash_v / _tot * 100 - _tgt_cash) > 5:
-            today_action.append("現金過多，可轉投入")
-        if not today_action:
-            today_action.append("持股觀望，等待機會")
-        buf_content += f"• 今日動作：{'、'.join(today_action)}<br>"
-        buf_content += "• 觸發條件：外資賣超 > 150 億 / 大盤跌 1.5% / 費半跌 2% / 跌破季線+量增 → 啟動減碼；外資買超 > 100 億 + 大盤漲 1% + 費半 +3% → 回補。"
+        buf_content.append(f'<p><strong>🧓 巴菲特式思考</strong></p>')
+        buf_content = []
+        def _format_line_with_numbers(line):
+            import re as _nm
+            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c">\\1</strong>', line)
+            return _b
+        if not buf_content:
+            buf_content_lines = []
+            buf_content_lines.append(f'<p><strong>🧓 巴菲特式思考</strong></p>')
+            buf_content_lines.append(f'<span style="display:block">• 場景判定：{_format_line_with_numbers(buf_scenario or scenario_event)}</span>')
+            if buf_bull:
+                buf_content_lines.append(f'<span style="display:block">• Bull：{_format_line_with_numbers(buf_bull)}</span>')
+            if buf_bear:
+                buf_content_lines.append(f'<span style="display:block">• Bear：{_format_line_with_numbers(buf_bear)}</span>')
+            for a in buf_actions:
+                buf_content_lines.append(f'<span style="display:block">• {_format_line_with_numbers(a)}</span>')
+
+            diff_bullets = _diff_to_buffett_bullets(tv, yesterday_snap)
+            if diff_bullets:
+                buf_content_lines.append(f'<p><strong>📋 昨日差異帶來的行動啟示</strong></p>')
+                for b in diff_bullets:
+                    buf_content_lines.append(f'<span style="display:block">• {_format_line_with_numbers(b)}</span>')
+
+            buf_content_lines.append(f'<p><strong>🤝 Buffett 派操作建議</strong></p>')
+            buf_content_lines.append(f'<span style="display:block">• 淨資產：{_format_line_with_numbers(f"{net_worth:,.0f} TWD")}</span>')
+            _us_pct = _us_v / _tot * 100
+            _tw_pct = _tw_v / _tot * 100
+            _def_pct = _def_v / _tot * 100
+            _bond_pct = _bond_v / _tot * 100
+            _cash_pct = _cash_v / _tot * 100
+            buf_content_lines.append(f'<span style="display:block">• 建議部位：美股 {_format_line_with_numbers(f"{_us_pct:.0f}%")}（目標 {_format_line_with_numbers(f"{_tgt_us:.0f}%")}）、台股 {_format_line_with_numbers(f"{_tw_pct:.0f}%")}（目標 {_format_line_with_numbers(f"{_tgt_tw:.0f}%")}）、防守 {_format_line_with_numbers(f"{_def_pct:.0f}%")}（目標 {_format_line_with_numbers(f"{_tgt_def:.0f}%")}）、債券 {_format_line_with_numbers(f"{_bond_pct:.0f}%")}（目標 {_format_line_with_numbers(f"{_tgt_bond:.0f}%")}）、現金 {_format_line_with_numbers(f"{_cash_pct:.0f}%")}（目標 {_format_line_with_numbers(f"{_tgt_cash:.0f}%")}）</span>')
+
+            today_action = []
+            if (_tw_v / _tot * 100 - _tgt_tw) < -5:
+                today_action.append("台股偏低，逢低補碼")
+            if (_us_v / _tot * 100 - _tgt_us) > 5:
+                today_action.append("美股超標，優先減碼")
+            if (_def_v / _tot * 100 - _tgt_def) < -5:
+                today_action.append("防守不足，補 00878/00713")
+            if (_cash_v / _tot * 100 - _tgt_cash) > 5:
+                today_action.append("現金過多，可轉投入")
+            if not today_action:
+                today_action.append("持股觀望，等待機會")
+            buf_content_lines.append(f'<span style="display:block">• 今日動作：{_format_line_with_numbers("、".join(today_action))}</span>')
+            buf_content_lines.append(f'<span style="display:block">• 觸發條件：{_format_line_with_numbers("外資賣超 > 150 億 / 大盤跌 1.5% / 費半跌 2% / 跌破季線+量增 → 啟動減碼；外資買超 > 100 億 + 大盤漲 1% + 費半 +3% → 回補。")}</span>')
+            buf_content = '\n'.join(buf_content_lines)
+
+    cto_tech = cto.get("tech_stack", "—")
+    cto_risk = cto.get("risk", "—")
+    cto_action = cto.get("action", "—")
+    cto_signal = scenario.get("cto_signal", "")
+    if cto_signal:
+        cto_risk = f"今日觸發：{cto_signal}；{cto_risk}"
 
     if not cto_content:
-        cto_tech = cto.get("tech_stack", "—")
-        cto_risk = cto.get("risk", "—")
-        cto_action = cto.get("action", "—")
-        cto_signal = scenario.get("cto_signal", "")
-        if cto_signal:
-            cto_risk = f"今日觸發：{cto_signal}；{cto_risk}"
-        cto_content = f"<strong>🤖 CTO 技術視角</strong><br><strong>tech_stack</strong>：{cto_tech}<br><strong>今日最大風險</strong>：{cto_risk}<br><strong>建議動作</strong>：{cto_action}"
+        cto_content_lines = []
+        cto_content_lines.append(f'<p><strong>🤖 CTO 技術視角</strong></p>')
+        cto_content_lines.append(f'<span style="display:block"><strong>tech_stack</strong>：{_format_line_with_numbers(cto_tech)}</span>')
+        cto_content_lines.append(f'<span style="display:block"><strong>今日最大風險</strong>：{_format_line_with_numbers(cto_risk)}</span>')
+        cto_content_lines.append(f'<span style="display:block"><strong>建議動作</strong>：{_format_line_with_numbers(cto_action)}</span>')
+        cto_content = '\n'.join(cto_content_lines)
 
     html = html.replace("{llm_emergency_analysis}", llm_emergency)
     html = html.replace("__BUFFETT_CONTENT__", buf_content)
@@ -903,22 +947,40 @@ def main():
             if _cc_rows:
                 _mb_cc_rows = "\n".join(_cc_rows)
     except: pass
-    # 格式化市場情報：標題加粗 + 段落分行
-    _fmt_lines = []
-    _known_headers = {"【台股/大盤】", "【美股/外資】", "【CPI/利率】", "【情報訊號】", "【最新市場消息】", "【持倉關聯分析】", "【買進訊號】", "【賣出訊號】"}
-    for _l in market_intel_text.split("\n"):
-        _l = _l.strip()
-        if not _l:
-            continue
-        _header = _l[:_l.find("】")+1] if "】" in _l else ""
-        if _header in _known_headers:
-            _rest = _l[len(_header):].strip()
-            _fmt_lines.append(f"<p><strong>{_header}</strong>{' '+_rest if _rest else ''}</p>")
-        elif _l.startswith("•"):
-            _fmt_lines.append(f"<p style=\"margin-left:12px\">{_l}</p>")
-        else:
-            _fmt_lines.append(f"<p>{_l}</p>")
-    market_intel_text = "".join(_fmt_lines)
+def _format_content_to_html(text, content_type="market_intel"):
+    _formatted_lines = []
+    if content_type == "market_intel":
+        _known_headers = {"【台股/大盤】", "【美股/外資】", "【CPI/利率】", "【情報訊號】", "【最新市場消息】", "【持倉關聯分析】", "【買進訊號】", "【賣出訊號】"}
+        for _l in text.split("\n"):
+            _l = _l.strip()
+            if not _l:
+                continue
+            _header = _l[:_l.find("】")+1] if "】" in _l else ""
+            if _header in _known_headers:
+                _rest = _l[len(_header):].strip()
+                _formatted_lines.append(f"<p><strong>{_header}</strong>{' '+_rest if _rest else ''}</p>")
+            elif _l.startswith("•"):
+                _formatted_lines.append(f"<p style=\"margin-left:12px\">{_l}</p>")
+            else:
+                _formatted_lines.append(f"<p>{_l}</p>")
+    elif content_type == "emergency_analysis":
+        import re as _nm # This import needs to be handled carefully if it's not global
+        for _analysis_line in text.split('\n'):
+            _trimmed_line = _analysis_line.strip()
+            if not _trimmed_line:
+                _formatted_lines.append('<p></p>')
+            elif _trimmed_line.startswith('━'):
+                _formatted_lines.append('<hr>')
+            elif _trimmed_line.startswith('•') or _trimmed_line.startswith('🔥'):
+                _formatted_lines.append(f'<span style=\"display:block\">{_trimmed_line}</span>')
+            elif _trimmed_line.startswith('【') and _trimmed_line.endswith('】'):
+                _formatted_lines.append(f'<strong>{_trimmed_line}</strong>')
+            else:
+                _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%)', r'<strong style=\"color:#c2410c\">\\1</strong>', _trimmed_line)
+                _formatted_lines.append(f'<span>{_b}</span>')
+    return "\n".join(_formatted_lines)
+
+    market_intel_text = _format_content_to_html(market_intel_text, content_type="market_intel")
 
     # 日報
     # LLM 緊急應變分析
@@ -928,11 +990,10 @@ def main():
         try:
             emergency_data = json.loads(emergency_json_path.read_text(encoding='utf-8'))
             analysis_content = emergency_data.get("full_report", emergency_data.get("analysis", ""))
-            if analysis_content:
-                _report_html = analysis_content.replace("\\n", "<br>\\n")
-                llm_emergency_analysis_html = f"""<div class="callout callout-warn">
-      {_report_html}
-    </div>"""
+            _report_html = _format_content_to_html(analysis_content, content_type="emergency_analysis")
+            llm_emergency_analysis_html = f"""<div class="callout callout-warn">
+            {_report_html}
+            </div>"""
         except Exception as _exc:
             print(f"[WARN] load emergency_llm_analysis.json failed: {_exc}")
 
