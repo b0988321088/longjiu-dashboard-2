@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# 強制推送前審查：commit message 必須含 [cioreviewed] 才准推
+# 臨時例外：允許 [skipreview]（僅限緊急修復）
+set -e
+
+COMMIT_MSG=$(git log -1 --pretty=%B)
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "HEAD")
+
+# 允許 merge commit
+if echo "$COMMIT_MSG" | grep -q "^Merge"; then
+    exit 0
+fi
+
+# 允許 skipreview
+if echo "$COMMIT_MSG" | grep -q "\[skipreview\]"; then
+    exit 0
+fi
+
+# 必須有 cioreviewed
+if ! echo "$COMMIT_MSG" | grep -q "\[cioreviewed\]"; then
+    echo ""
+    echo "╔══════════════════════════════════════════════╗"
+    echo "║  ❌ 推送被擋：缺少 CIO 審查標記            ║"
+    echo "║                                             ║"
+    echo "║  commit message 需包含 [cioreviewed]        ║"
+    echo "║  緊急情況可用 [skipreview]                  ║"
+    echo "╚══════════════════════════════════════════════╝"
+    echo ""
+    exit 1
+fi
