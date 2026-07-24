@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>龍九控股日報 2026-07-24</title>
 <style>
+  font-size: 17px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
   color: #1d1d1f;
   background: #f5f5f7;
@@ -29,10 +30,9 @@
   h3 { font-size: 16px; font-weight: 800; margin: 10px 0 6px; }
   .label { font-size: 12px; color: #6e6e73; margin-bottom: 6px; }
   .text-lead { color: #3a3a3c; margin: 6px 0; }
-  .table-wrap { overflow-x: auto; margin: 8px 0; -webkit-overflow-scrolling: touch; }
+  .table-wrap { overflow-x: auto; margin: 8px 0; }
   table {
     width: 100%;
-    min-width: 360px;
     border-collapse: collapse;
     background: #fff;
     border: 1px solid #e5e5ea;
@@ -59,26 +59,19 @@
   .callout {
     border-radius: 10px;
     padding: 12px 14px;
-    margin: 14px 0; /* Adjusted margin */
+    margin: 10px 0;
     border-left: 4px solid;
-    font-size: 16px; /* Added font-size */
-    line-height: 1.8; /* Added line-height */
   }
-  .callout h3 { text-decoration: underline; } /* Added underline for h3 inside callout */
-  .callout strong { color:#c2410c; } /* Added orange color and underline for strong inside callout */
   .callout-bull { background:#f0fff4; border-color:#22c55e; }
-
+  .callout-bear { background:#fff5f5; border-color:#ef4444; }
+  .callout-warn { background:#fffbeb; border-color:#f59e0b; }
+  .callout-info { background:#eff6ff; border-color:#3b82f6; }
 
   /* Mobile table style: bordered with background fill */
   @media (max-width: 640px) {
     body { font-size: 15px; padding: 10px; }
-    table { font-size: 13px; }
-    th, td { padding: 6px 6px !important; }
-        /* 隱藏第二欄 (名稱) */
-        table th:nth-child(2),
-        table td:nth-child(2) {
-          display: none !important;
-        }
+    table { font-size: 14px; }
+    th, td { padding: 8px 10px !important; }
   }
   table.mobile-bordered {
     border: 1px solid #d1d5db;
@@ -130,24 +123,25 @@
       <table class="mobile-bordered">
         <thead><tr><th>戰略類別</th><th class="num">金額 TWD</th><th class="num">佔比</th><th class="num">目標</th><th>缺口</th></tr></thead>
         <tbody>
-          <tr><td>🇹🇼 台股市值型</td><td class="num">__DR_TW_V__ TWD</td><td class="num">__DR_TW_PCT__</td><td class="num">__DR_TW_TGT__</td><td>__DR_TW_GAP__</td></tr>
-          <tr><td>🇺🇸 美股市值型</td><td class="num">__DR_US_V__ TWD</td><td class="num">__DR_US_PCT__</td><td class="num">__DR_US_TGT__</td><td>__DR_US_GAP__</td></tr>
-          <tr><td>🛡️ 防守型配息</td><td class="num">__DR_DEF_V__ TWD</td><td class="num">__DR_DEF_PCT__</td><td class="num">__DR_DEF_TGT__</td><td>__DR_DEF_GAP__</td></tr>
-          <tr><td>💵 債券</td><td class="num">__DR_BOND_V__ TWD</td><td class="num">__DR_BOND_PCT__</td><td class="num">__DR_BOND_TGT__</td><td>__DR_BOND_GAP__</td></tr>
-          <tr><td>💵 安全現金</td><td class="num">__DR_CASH_V__ TWD</td><td class="num">__DR_CASH_PCT__</td><td class="num">__DR_CASH_TGT__</td><td>__DR_CASH_GAP__</td></tr>
+          <tr><td>🇹🇼 台股市值型</td><td class="num">3,165,003 TWD</td><td class="num">7.2%</td><td class="num">30%</td><td>+3,164,973</td></tr>
+          <tr><td>🇺🇸 美股市值型</td><td class="num">3,932,229 TWD</td><td class="num">46.1%</td><td class="num">30%</td><td>+3,932,199</td></tr>
+          <tr><td>🛡️ 防守型配息</td><td class="num">1,958,980 TWD</td><td class="num">18.5%</td><td class="num">30%</td><td>+1,958,950</td></tr>
+          <tr><td>💵 債券</td><td class="num">3,929,011 TWD</td><td class="num">33.8%</td><td class="num">30%</td><td>+3,928,981</td></tr>
+          <tr><td>💵 安全現金</td><td class="num">3,632,988 TWD</td><td class="num">33.8%</td><td class="num">10%</td><td>+3,632,978</td></tr>
         </tbody>
       </table>
     </div>
     <p class="text-sm" style="color:#6e6e73;margin-top:8px">穿透分母：台股+美股+防守+債券（不計入不動產）；管理費~1.5%，偏高於配息收益率。</p>
   </div>
 
-
+  <div class="card" style="margin-top:4px;padding:10px 14px;background:#f0f4ff;">
+  </div>
 
   <!-- 市場情報 -->
   <div class="card">
     <h2>2/5｜市場情報 Market Intel</h2>
     <div class="label">獵人情報 + 市場搜尋 + 持倉關聯</div>
-    <div id="market-intel-block"></div>
+    <div id="market-intel-block"><p><strong>【台股/大盤】</strong></p><p>加權指數：43,654.84 (-2.67%)</p><p>台積電：2,350.00 (-2.29%)</p><p>費半：12,343.84 (-0.54%)</p><p><strong>【美股/外資】</strong></p><p>美股：道瓊 51,711.65 (-0.97%) / 納指 25,137.69 (-2.15%) / S&P 7,408.30 (-1.21%)</p><p>外資7日淨流：—</p><p><strong>【CPI/利率】</strong></p><p>美國CPI：美國 6 月 CPI YoY 3.5% (預期 3.8%)；Core 2.6% (預期 2.8%)</p><p><strong>【情報訊號】</strong></p><p>賣出訊號：</p><p style="margin-left:12px">• 台股加權大跌 -2.67%</p><p style="margin-left:12px">• 台積電大跌 -2.29%</p><p style="margin-left:12px">• 台股重挫千點　金管會：反映國際情勢持續關注波動 （中央社記者蘇思云高雄2026年07月24日電）台股今天終場下跌1195.97點，為史上第9大跌點。金管會今天表示，台股主要反映國際情勢，將持續關注股市波動情形，並請證交所及櫃買中心密切注意國際金融市</p><p>買進訊號：無</p><p><strong>【最新市場消息】</strong></p><p style="margin-left:12px">• 3利空夾擊台股大跌近1200點 本週週線仍翻紅 (tw.news.yahoo.com)</p><p>Google近期公布最新財報，由於快速擴充雲端業務，現金流轉負數，加上中東衝突升溫，油價攀升，通膨問題再次讓市場憂心聯準會升息。3大利空夾集，亞洲股市今天(24日)全軍覆沒，台北股市終場大跌1,195</p><p style="margin-left:12px">• 台股本週震盪上漲983點　上市公司總市值142.5兆元 (tw.stock.yahoo.com)</p><p>（中央社記者曾仁凱台北2026年07月24日電）台股繼上週五重挫2953.71點，創史上最大單日跌點紀錄後，本週反彈，但震盪劇烈，週五集中市場指數以43654.84點作收，週漲983.57點或2.3%</p><p style="margin-left:12px">• 台股重挫千點　金管會：反映國際情勢持續關注波動 (tw.stock.yahoo.com)</p><p>（中央社記者蘇思云高雄2026年07月24日電）台股今天終場下跌1195.97點，為史上第9大跌點。金管會今天表示，台股主要反映國際情勢，將持續關注股市波動情形，並請證交所及櫃買中心密切注意國際金融市</p><p><strong>【持倉關聯分析】</strong></p><p>台股持倉市值型成長 3,165,003 萬元，今日大盤下跌，短線承壓。</p></div>
   </div>
 
   <!-- 戰略異常看板 -->
@@ -227,7 +221,10 @@
           <tr><th>銀行</th><th>卡片</th><th>繳款日</th><th class="num">近期應付 TWD</th><th>狀態</th></tr>
         </thead>
         <tbody>
-
+          <tr><td>玉山銀行</td><td>UNI</td><td>07/22</td><td class="num">18,420</td><td>🔄 待扣繳</td></tr>
+          <tr><td>台北富邦</td><td>momo / J</td><td>06/03</td><td class="num">1,598</td><td>🔄 待扣繳</td></tr>
+          <tr><td>永豐銀行</td><td>SPORT</td><td>07/29</td><td class="num">3,425</td><td>🔄 待扣繳</td></tr>
+          <tr><td>台新銀行</td><td>Richart</td><td>07/27</td><td class="num">12,368</td><td>🔄 待扣繳</td></tr>
         </tbody>
       </table>
     </div>
@@ -303,30 +300,187 @@
     <h2>5/5｜投資決策框架 Investment Decision Framework</h2>
     <div class="label">決策核心 + 緊急應變分析</div>
 
- 
+    <div id="emergency-llm-analysis">
+      <!-- LLM 緊急應變分析區塊 -->
+            <div class="callout callout-warn">
+            <span>🚨 龍九控股 — 台股重挫緊急應變報告 🚨</span>
+<span>📅 2026-07-24（五）13:00 午盤</span>
+<p></p>
+<hr>
+<p></p>
+<strong>【一、市場概況】</strong>
+<p></p>
+<span>📉 加權指數：43,654.84 點（-1,195.97 / -2.67%）</span>
+<span>📊 成交量：7,924 億</span>
+<span>🏆 史上第九大收盤跌點，摜破季線（44,000 關卡）</span>
+<p></p>
+<span>🏭 權值股表現：</span>
+<span>• 台積電（2330）：2,350 元（-55 / -2.29%）</span>
+<span>• 鴻海（2317）：-2% 左右</span>
+<span>• 廣達（2382）：-2% 左右</span>
+<span>• 國巨（2327）：-7% 以上</span>
+<span>• 聯電（2303）：-7% 以上</span>
+<span>• 南亞科、旺宏：-5% 以上</span>
+<span>• 緯創（3231）：逆勢 +3%（老AI逆風撐盤）</span>
+<p></p>
+<hr>
+<p></p>
+<strong>【二、暴跌三大導火線】</strong>
+<p></p>
+<span>🔥 導火線一：美國威脅升級對伊朗軍事打擊</span>
+<span>布蘭特原油飆破 100 美元/桶，引發全球通膨恐慌與風險資產拋售。</span>
+<p></p>
+<span>🔥 導火線二：川普新關稅今生效</span>
+<span>美東時間 7/24 生效，台灣被課徵 10% 關稅，出口導向股全面承壓。</span>
+<p></p>
+<span>🔥 導火線三：融資多殺多 + 程式交易助跌</span>
+<span>近日反彈期間融資餘額增加，今日殺盤觸發融資斷頭連鎖反應，程式交易放大跌幅。</span>
+<p></p>
+<hr>
+<p></p>
+<strong>【三、三大法人動向】</strong>
+<p></p>
+<span>• 外資：賣超 609.5 億（外電報導實際砍倉逾 1,700 億）</span>
+<span>• 投信：買超 57.08 億（持續護盤買超）</span>
+<span>• 自營商：賣超 111.52 億</span>
+<span>• 合計：三大法人淨賣超 663.94 億</span>
+<span>• 台指期外資未平倉淨空單：-76,260 口（偏空態度明確）</span>
+<p></p>
+<hr>
+<p></p>
+<strong>【四、龍九持倉關聯分析】</strong>
+<p></p>
+<span>📋 龍九系統持倉（證券商 + 基金帳戶，截至 snapshot 7/18）：</span>
+<p></p>
+<span>┌────────────┬────────┬────────┬─────────┐</span>
+<span>│ 標的代號    │ 名稱    │ 收盤價  │ 單日漲跌 │</span>
+<span>├────────────┼────────┼────────┼─────────┤</span>
+<span>│ 0050        │ 元大台灣50   │ 101.70  │ -2.20 (-2.12%) │</span>
+<span>│ 00878       │ 國泰永續高股息 │ 32.61   │ -0.12 (-0.37%) │</span>
+<span>│ 009816      │ 台股TOP50分散 │ 14.72   │ -0.36 (-2.39%) │</span>
+<span>│ 00984A      │ 標的（ETF）   │ 14.76   │ -0.35 (-2.32%) │</span>
+<span>│ 00713       │ 元大高息低波  │ 61.00   │ +0.45 (+0.74%) │</span>
+<span>│ 0056        │ 元大高股息  │ 50.20   │ -0.45 (-0.89%) │</span>
+<span>│ 006208      │ 富邦台50  │ 會隨大盤同步 │ N/A │</span>
+<span>├────────────┼────────┼────────┼─────────┤</span>
+<p></p>
+<span>🔍 關鍵發現：</span>
+<span>• 00878（高股息）僅跌 0.37%，展現出色防禦力！</span>
+<span>• 00713（高息低波）逆勢收紅 +0.74%，為今日最抗跌標的</span>
+<span>• 0050 / 009816 / 00984A 跌幅 2.1%~2.4%，與大盤跌幅（2.67%）大致同步</span>
+<span>• 0056（高股息）跌 0.89%，防禦性次於 00878</span>
+<p></p>
+<span>💰 台股部位曝險估算：</span>
+<span>持倉總值（台股證券）約 NT$2,413,760（含 0050/006208/00878/009816 等）</span>
+<span>加上基金持有台股部位（0050 連結基金等），台股合計約 280 萬 TWD</span>
+<span>今日帳面未實現損失估算：約 NT$50,000~70,000</span>
+<p></p>
+<span>但龍九整體投資組合中台股僅佔 14.6%（目標 35%），目前仍屬低配，</span>
+<span>安全邊際充分——現金 + 債券佔比 39.7%（其中現金 22.9%），緩衝充足。</span>
+<p></p>
+<hr>
+<p></p>
+<strong>【五、巴菲特/蒙格式策略建議】</strong>
+<p></p>
+<span>🧓 巴菲特原則：</span>
+<span>「別人貪婪時恐懼，別人恐懼時貪婪。」</span>
+<span>目前市場瀰漫恐慌情緒（千點暴跌、融資斷頭、季線失守），</span>
+<span>但龍九系統持倉輕（台股僅 14.6% 遠低於目標 35%），</span>
+<span>此時恐慌性殺出反而會錯失潛在反彈。</span>
+<p></p>
+<span>📐 安全邊際分析（來自今早 Buffett CTO Report）：</span>
+<span>• 台股低配 20.4pp（14.6% vs 目標 35%）→ 還有大量加碼空間</span>
+<span>• 現金超配 17.9pp（22.9% vs 目標 5%）→ 彈藥充足</span>
+<span>• 防守資產低配 14.5pp（10.5% vs 目標 25%）</span>
+<span>• 安全網（債 + 現金）39.7%，遠高於目標 10%</span>
+<p></p>
+<span>📊 蒙格思維：</span>
+<span>「反轉的時刻總在看似最絕望的時候悄悄到來。」</span>
+<span>今日三大主因均屬一次性事件（關稅生效、地緣政治、融資斷頭），</span>
+<span>並非結構性基本面惡化。AI 長線趨勢未變（中經院報告：17.6% 製造業已切入半導體供應鏈）。</span>
+<p></p>
+<span>建議動用巴菲特「企業所有權」心態：</span>
+<span>買的是企業營運，不是股價波動。0050/00878 的長期配息 + 資本利得能力未因單日暴跌而改變。</span>
+<p></p>
+<hr>
+<p></p>
+<strong>【六、應變行動建議】</strong>
+<p></p>
+<span>📌 立即行動（13:00~14:30 午盤）：</span>
+<p></p>
+<span>✅ 保持冷靜，不恐慌殺出</span>
+<span>— 台股佔比僅 14.6%，遠低於目標 35%，砍倉無意義</span>
+<p></p>
+<span>✅ 密切監控兩個關鍵價位</span>
+<span>• 台積電 2,300 元（整數關卡，跌破則可能測試 2,200）</span>
+<span>• 加權 43,000 點（今日低點觀察）</span>
+<p></p>
+<span>✅ 若尾盤跌幅收斂至 -1.5% 以內</span>
+<span>→ 代表季線有撐，維持現狀即可</span>
+<p></p>
+<span>✅ 若尾盤擴大至 -4% 以上（42,800 以下）</span>
+<span>→ 啟動分批低接：3 日內分 3 筆補台股 5pp（約 97 萬 TWD）</span>
+<span>→ 優先標的：00878、00713（防禦型）</span>
+<p></p>
+<span>📌 下週觀察重點（7/27~7/31）：</span>
+<span>• FOMC 利率決議（市場預期按兵不動）</span>
+<span>• 台股重量級法說：聯發科、台達電、欣興、國巨、聯電、友達、旺宏</span>
+<span>• 關稅衝擊消化後是否出現報復性反彈</span>
+<span>• 外資期貨空單是否回補</span>
+<p></p>
+<span>📌 CTO 技術面觀點：</span>
+<span>• 今日帶量長黑 K 摜破季線，短線慣性偏空</span>
+<span>• 但 7/17 暴跌 2,953 點後已反彈 4 日，今日屬二次探底</span>
+<span>• 若下週不再破底，可能形成 W 底反彈格局</span>
+<p></p>
+<span>📌 中長期配置建議（維持今早 CTO 建議）：</span>
+<span>• 台股：逢低補碼 20pp → 從 14.6% 逐步拉回至 35% 目標</span>
+<span>• 美股：減碼 5pp → 從 35.1% 降回 30%</span>
+<span>• 防守：補碼 14pp → 從 10.5% 增至 25%</span>
+<span>• 現金運用：保留 ≥ 20% 活存作為緩衝（符合防禦所需）</span>
+<p></p>
+<hr>
+<p></p>
+<strong>【七、總結】</strong>
+<p></p>
+<span>今日台股重挫主因為關稅 + 地緣政治 + 技術面融資斷頭的三重打擊，</span>
+<span>屬系統性風險事件而非龍九個股問題。</span>
+<p></p>
+<span>龍九系統因台股部位僅 14.6%（低配 20.4pp），且現金達 22.9%，</span>
+<span>緩衝空間充裕，無立即危險。</span>
+<p></p>
+<span>✅ 短期對策：持倉不動、靜觀其變</span>
+<span>✅ 中期機會：若下週續跌，可分批低接優質防禦標的（00878、00713）</span>
+<span>✅ 長期方向：維持逢低補碼台股的既定策略不變</span>
+<p></p>
+<span>「市場波動是財富重分配的過程，而非財富毀滅的時刻。」</span>
+<span>—— 龍九控股 Chief Reporter + 台股危機應變官</span>
+<p></p>
+<span>📊 數據來源：Yahoo Finance / TWSE / 三大法人買賣超日統計</span>
+<span>🕐 報告時間：2026-07-24 13:30</span>
+            </div>
+    </div>
 
     <!-- 巴菲特視角建議 (Fallback 或輔助) -->
     <div class="callout callout-bull">
       <h3>巴菲特視角建議</h3>
-      <p><strong>🧓 巴菲特式思考</strong></p>
-<span style="display:block">• 場景判定：市場震盪，維持防禦</span>
-<span style="display:block">• Bull：無買進訊號</span>
-<span style="display:block">• Bear：台股加權大跌 <strong style="color:#c2410c">\1</strong>; 台積電大跌 <strong style="color:#c2410c">\1</strong></span>
-<span style="display:block">• 維持现有配置，不主動加碼 nor 減碼</span>
-<span style="display:block">• 保留高利活存 ≥ <strong style="color:#c2410c">\1</strong> 作為緩衝</span>
-<span style="display:block">• 0050 配息若確認縮水，提前部署 00878/00713</span>
-<p><strong>📋 昨日差異帶來的行動啟示</strong></p>
-<span style="display:block">• 淨資產下降（-4,547,658 vs 昨日 28,689,930）：淨資產下滑需檢視資產配置是否有過度曝險</span>
-<span style="display:block">• 保單現值下降（9,766,626 vs 昨日 9,876,282）：保單現值下降應評估是否調整基金標的</span>
-<p><strong>🤝 Buffett 派操作建議</strong></p>
-<span style="display:block">• 淨資產：-4,547,658 TWD</span>
-<span style="display:block">• 建議部位：美股 <strong style="color:#c2410c">\1</strong>（目標 <strong style="color:#c2410c">\1</strong>）、台股 <strong style="color:#c2410c">\1</strong>（目標 <strong style="color:#c2410c">\1</strong>）、防守 <strong style="color:#c2410c">\1</strong>（目標 <strong style="color:#c2410c">\1</strong>）、債券 <strong style="color:#c2410c">\1</strong>（目標 <strong style="color:#c2410c">\1</strong>）、現金 <strong style="color:#c2410c">\1</strong>（目標 <strong style="color:#c2410c">\1</strong>）</span>
-<span style="display:block">• 今日動作：台股偏低，逢低補碼、美股超標，優先減碼、防守不足，補 00878/00713、現金過多，可轉投入</span>
-<span style="display:block">• 觸發條件：外資賣超 > 150 億 / 大盤跌 <strong style="color:#c2410c">\1</strong> / 費半跌 <strong style="color:#c2410c">\1</strong> / 跌破季線+量增 → 啟動減碼；外資買超 > 100 億 + 大盤漲 <strong style="color:#c2410c">\1</strong> + 費半 <strong style="color:#c2410c">\1</strong> → 回補。</span>
+      <strong>🧓 巴菲特式思考</strong><br>• 場景判定：市場震盪，維持防禦<br>• Bull：無買進訊號<br>• Bear：台股加權大跌 -2.67%; 台積電大跌 -2.29%<br>• 維持现有配置，不主動加碼 nor 減碼<br>• 保留高利活存 ≥ 20% 作為緩衝<br>• 0050 配息若確認縮水，提前部署 00878/00713<br><br><strong>📋  昨日差異帶來的行動啟示</strong><br>• 淨資產下降（-4,547,658 vs 昨日 28,689,930）：淨資產下滑需檢視資產配置是否有過度曝險<br>• 保單現值下降（9,766,626 vs 昨日 9,876,282）：保單現值下降應評估是否調整基金標的<br><br><strong>🤝 Buffett 派操作建議</strong><br>• 淨資產：-4,547,658 TWD<br>• 建議部位：美股 37%（目標 30%）、台股 15%（目標 35%）、防守 11%（目標 25%）、債券 18%（目標 5%）、現金 19%（目標 5%）<br>• 今日動作：台股偏低，逢低補碼、美股超標，優先減碼、防守不足，補 00878/00713、現金過多，可轉投入<br>• 觸發條件：外資賣超 > 150 億 / 大盤跌 1.5% / 費半跌 2% / 跌破季線+量增 → 啟動減碼；外資買超 > 100 億 + 大盤漲 1% + 費半 +3% → 回補。
     </div>
 
+    <!-- CTO 技術視角 (Fallback 或輔助) -->
+    <div class="callout callout-bear">
+      <h3>CTO 技術視角</h3>
+      <strong>🤖 CTO 技術視角</strong><br><strong>tech_stack</strong>：市場震盪，缺乏明確方向<br><strong>今日最大風險</strong>：台股加權大跌 -2.67%; 台積電大跌 -2.29%<br><strong>建議動作</strong>：觀望為主，等待明確訊號
+    </div>
 
-
+    <!-- CIO 審查 / 觀點 -->
+        <div class="callout callout-info">
+          <strong>🧑‍💻 CIO 觀點</strong><br>
+          • 本日市場情緒持平，無重大異常。<br>
+          • 資產配置持續檢視，尤其注意防禦型配息部位的補碼時機。<br>
+          • 流動性管理穩定，補庫警示已處理。
+        </div>
+        <!-- END CIO -->
   </div>
 
 </div>
