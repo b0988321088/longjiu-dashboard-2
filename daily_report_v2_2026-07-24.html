@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>龍九控股日報 2026-07-24</title>
 <style>
-  font-size: 17px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
   color: #1d1d1f;
   background: #f5f5f7;
@@ -30,9 +29,10 @@
   h3 { font-size: 16px; font-weight: 800; margin: 10px 0 6px; }
   .label { font-size: 12px; color: #6e6e73; margin-bottom: 6px; }
   .text-lead { color: #3a3a3c; margin: 6px 0; }
-  .table-wrap { overflow-x: auto; margin: 8px 0; }
+  .table-wrap { overflow-x: auto; margin: 8px 0; -webkit-overflow-scrolling: touch; }
   table {
     width: 100%;
+    min-width: 360px;
     border-collapse: collapse;
     background: #fff;
     border: 1px solid #e5e5ea;
@@ -59,19 +59,29 @@
   .callout {
     border-radius: 10px;
     padding: 12px 14px;
-    margin: 10px 0;
+    margin: 14px 0; /* Adjusted margin */
     border-left: 4px solid;
+    font-size: 16px; /* Added font-size */
+    line-height: 1.8; /* Added line-height */
   }
+  .callout h3 { text-decoration: underline; } /* Added underline for h3 inside callout */
+  .callout strong { color:#c2410c; text-decoration: underline; } /* Added orange color and underline for strong inside callout */
   .callout-bull { background:#f0fff4; border-color:#22c55e; }
   .callout-bear { background:#fff5f5; border-color:#ef4444; }
   .callout-warn { background:#fffbeb; border-color:#f59e0b; }
+  .callout-warn span { display:block; margin:3px 0; padding-left:4px; border-left:2px solid rgba(245,158,11,0.2); }
   .callout-info { background:#eff6ff; border-color:#3b82f6; }
 
   /* Mobile table style: bordered with background fill */
   @media (max-width: 640px) {
     body { font-size: 15px; padding: 10px; }
-    table { font-size: 14px; }
-    th, td { padding: 8px 10px !important; }
+    table { font-size: 13px; }
+    th, td { padding: 6px 6px !important; }
+    th:nth-child(2), td:nth-child(2) { max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #market-intel-block table th:nth-child(2),
+    #market-intel-block table td:nth-child(2) {
+      display: none !important;
+    }
   }
   table.mobile-bordered {
     border: 1px solid #d1d5db;
@@ -141,7 +151,30 @@
   <div class="card">
     <h2>2/5｜市場情報 Market Intel</h2>
     <div class="label">獵人情報 + 市場搜尋 + 持倉關聯</div>
-    <div id="market-intel-block"><p><strong>【台股/大盤】</strong></p><p>加權指數：43,654.84 (-2.67%)</p><p>台積電：2,350.00 (-2.29%)</p><p>費半：12,343.84 (-0.54%)</p><p><strong>【美股/外資】</strong></p><p>美股：道瓊 51,711.65 (-0.97%) / 納指 25,137.69 (-2.15%) / S&P 7,408.30 (-1.21%)</p><p>外資7日淨流：—</p><p><strong>【CPI/利率】</strong></p><p>美國CPI：美國 6 月 CPI YoY 3.5% (預期 3.8%)；Core 2.6% (預期 2.8%)</p><p><strong>【情報訊號】</strong></p><p>賣出訊號：</p><p style="margin-left:12px">• 台股加權大跌 -2.67%</p><p style="margin-left:12px">• 台積電大跌 -2.29%</p><p style="margin-left:12px">• 台股重挫千點　金管會：反映國際情勢持續關注波動 （中央社記者蘇思云高雄2026年07月24日電）台股今天終場下跌1195.97點，為史上第9大跌點。金管會今天表示，台股主要反映國際情勢，將持續關注股市波動情形，並請證交所及櫃買中心密切注意國際金融市</p><p>買進訊號：無</p><p><strong>【最新市場消息】</strong></p><p style="margin-left:12px">• 3利空夾擊台股大跌近1200點 本週週線仍翻紅 (tw.news.yahoo.com)</p><p>Google近期公布最新財報，由於快速擴充雲端業務，現金流轉負數，加上中東衝突升溫，油價攀升，通膨問題再次讓市場憂心聯準會升息。3大利空夾集，亞洲股市今天(24日)全軍覆沒，台北股市終場大跌1,195</p><p style="margin-left:12px">• 台股本週震盪上漲983點　上市公司總市值142.5兆元 (tw.stock.yahoo.com)</p><p>（中央社記者曾仁凱台北2026年07月24日電）台股繼上週五重挫2953.71點，創史上最大單日跌點紀錄後，本週反彈，但震盪劇烈，週五集中市場指數以43654.84點作收，週漲983.57點或2.3%</p><p style="margin-left:12px">• 台股重挫千點　金管會：反映國際情勢持續關注波動 (tw.stock.yahoo.com)</p><p>（中央社記者蘇思云高雄2026年07月24日電）台股今天終場下跌1195.97點，為史上第9大跌點。金管會今天表示，台股主要反映國際情勢，將持續關注股市波動情形，並請證交所及櫃買中心密切注意國際金融市</p><p><strong>【持倉關聯分析】</strong></p><p>台股持倉市值型成長 3,165,003 萬元，今日大盤下跌，短線承壓。</p></div>
+    <div id="market-intel-block"><p><strong>【台股/大盤】</strong></p>
+<p>加權指數：43,654.84 (-2.67%)</p>
+<p>台積電：2,350.00 (-2.29%)</p>
+<p>費半：11,947.58 (-3.21%)</p>
+<p><strong>【美股/外資】</strong></p>
+<p>美股：道瓊 51,850.94 (+0.27%) / 納指 25,013.98 (-0.49%) / S&P 7,407.32 (-0.01%)</p>
+<p>外資7日淨流：—</p>
+<p><strong>【CPI/利率】</strong></p>
+<p>美國CPI：美國 6 月 CPI YoY 3.5% (預期 3.8%)；Core 2.6% (預期 2.8%)</p>
+<p><strong>【情報訊號】</strong></p>
+<p>賣出訊號：</p>
+<p style='margin-left:12px'>• 台股加權大跌 -2.67%</p>
+<p style='margin-left:12px'>• 台積電大跌 -2.29%</p>
+<p style='margin-left:12px'>• 費半跌 -3.21%</p>
+<p>買進訊號：無</p>
+<p><strong>【最新市場消息】</strong></p>
+<p style='margin-left:12px'>• 油價回落救不了科技股！美股費半下跌200點 (tw.news.yahoo.com)</p>
+<p>[NOWNEWS今日新聞]美股週五（24日）開盤後各主要指數漲跌不一，道瓊工業指數從昨天的大跌中反彈，科技股為主的那斯達克指數則是持續疲軟。不過，漲幅或跌幅都不大，基本持平，投資人多空拉鋸交戰。截至寫</p>
+<p style='margin-left:12px'>• 下周台股反攻有望？美國科技巨頭傳好消息　台指期夜盤一度勁揚近500點 (tw.stock.yahoo.com)</p>
+<p>即時中心／徐子為報導美國科技巨頭英特爾（Intel）公布今年第二季財報，表現強勁優於預期，讓今天美股電子股開盤帶動翻紅，連帶帶動台指期夜盤，開盤後雖一度翻黑，不過指數一路上揚，指數最高來到44,306</p>
+<p style='margin-left:12px'>• 台股慘跌1195點！阮慕驊點名「這3檔」抗跌還能反彈 (tw.stock.yahoo.com)</p>
+<p>財經中心／周孟漢報導台股今（24）日以44,769.39點開出、小跌81.42點，隨後指數一路走低，大跌1195點，創下史上第9慘，不少投資人擔心後市該如何布局。財經專家阮慕驊發文，點名「這3檔」，不</p>
+<p><strong>【持倉關聯分析】</strong></p>
+<p>台股持倉市值型成長 3,165,003 萬元，今日大盤下跌，短線承壓。</p></div>
   </div>
 
   <!-- 戰略異常看板 -->
@@ -259,19 +292,190 @@
     <div class="label">P0 任務置頂 + 行事曆維度聚合</div>
 
     <h3>🚨 P0 任務</h3>
-    <div class="callout callout-warn">
-      <ul>
-        <li>7/17（五）— 國泰轉貸面簽/對保（✅ 已執行，待後續流程）</li>
-        <li>7/20（一）— 洲際 W 33,000 ✅ 已入帳</li>
-        <li>7/22（三）— 玉山信用卡繳款截止 3,176</li>
-        <li>⚠️ <strong>7/23（四）</strong>— 安聯 AI 收益 T+4 轉換截止 ← ⏰ 今天！</li>
-        <li>⚠️ <strong>7/24（五）</strong>— 貝萊德世界科技 A10 T+4 轉換截止</li>
-        <li>7/27（一）— 台新信用卡繳款截止 1,000</li>
-        <li>7/29-30 — Fed 利率決策 + 安聯 AI / 貝萊德 A10 基準日</li>
-        <li>8/1（五）— 星展戶頭扣款理財型利息 ~10,000 ✅ 餘裕充足</li>
-        <li><relay_0050> — 0050 配息 ⚠️ 待 MB 確認</li>
-      </ul>
-    </div>
+    <div class="callout callout-warn">🚨 龍九控股 — 美股緊急應變報告 🚨<br>
+📅 2026-07-24（五）21:30 美股開盤<br>
+<br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<br>
+【一、市場概況】<br>
+<br>
+📉 昨日收盤（7/23）三大指數全面重挫：<br>
+• 道瓊：51,711.65（-506.93 / -0.97%）<br>
+• S&P 500：7,408.30（-90.66 / -1.21%）<br>
+• 納斯達克：25,137.69（-553.21 / -2.15%）<br>
+• 費城半導體 SOX：12,343.84（-66.83 / -0.54%）<br>
+<br>
+📊 今日盤前期貨（21:30 前）：<br>
+• 道瓊期貨：+0.38%~+0.52%（溫和反彈）<br>
+• S&P期貨：+0.16%~+0.20%<br>
+• 納斯達克期貨：-0.02%~+0.09%（接近平盤）<br>
+• 黃金：$4,060/盎司（+0.24%，避險需求持續）<br>
+• 原油WTI：$89.90（-2.48%，短線獲利了結）<br>
+<br>
+🏭 個股重要動態：<br>
+• TSMC ADR：$415.00 盤前（-0.14%，昨日收盤 $415.58 / -1.34%）<br>
+• 英特爾 INTC：盤後 +4.37%（財報優於預期）<br>
+• 特斯拉 TSLA：昨日 -14.52%（暴跌最重）<br>
+• Google GOOGL：昨日 -7.13%<br>
+• NVIDIA NVDA：昨日 -1.56%<br>
+• AMD：昨日 -2.29%<br>
+<br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<br>
+【二、影響今晚美股的五大關鍵事件】<br>
+<br>
+🔥 事件一：川普對 60 國新關稅今日生效<br>
+• 美東時間 7/24 生效，全球貿易戰升級<br>
+• 台灣被課 10% 關稅，出口導向半導體股承壓<br>
+• 但英特爾因製造回流美國，反而受關稅保護而大漲<br>
+<br>
+🔥 事件二：美伊戰爭升級（伊朗衝突）— 油價波動劇烈<br>
+• 布蘭特原油一度突破 $100/桶，伊朗原油供應中斷風險<br>
+• 避險情緒推升黃金至 $4,060<br>
+• 國防股 Lockheed Martin +10.54% 受惠戰爭預期<br>
+• 航空股 Southwest -6.19% 受油價衝擊<br>
+<br>
+🔥 事件三：Mag7 市值蒸發 $7,970 億<br>
+• 特斯拉暴跌 -14.52% 為領頭羊<br>
+• 市場擔憂 AI 資本支出無底洞 + 中國 AI 競爭<br>
+• CXMT（中國記憶體廠）今日掛牌，中國半導體自主化加速<br>
+<br>
+🔥 事件四：Fed 維持利率不變 + 債市擔憂<br>
+• 利率維持不變，但市場擔憂通膨因油價再起<br>
+• 10 年期公債殖利率波動加劇<br>
+• 部分分析師警告可能重啟升息<br>
+<br>
+🔥 事件五：台股日盤已先跌 -2.67%（4.3 萬保衛戰）<br>
+• 台灣加權今日暴跌 1,195 點，史上第九大<br>
+• 台積電跌 -2.29%、融資斷頭連鎖<br>
+• 台股先行反應，美股今晚有補跌壓力<br>
+<br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<br>
+【三、龍九持倉關聯分析】<br>
+<br>
+📋 龍九持倉 vs 美股影響矩陣：<br>
+<br>
+┌────────────┬──────────────┬───────────┬─────────────┐<br>
+│ 標的        │ 類型          │ 美股曝險強度 │ 今晚預期影響 │<br>
+├────────────┼──────────────┼───────────┼─────────────┤<br>
+│ 0050        │ 台股市值型     │ 高（50%台積電）│ ⚠️ 跟跌台積電ADR │<br>
+│ 00878       │ 台股高股息     │ 低          │ ✅ 防禦力強   │<br>
+│ 009816      │ 台股/ETF       │ 中          │ ⚠️ 跟隨大盤   │<br>
+│ 00984A      │ 標的/ETF       │ 中          │ ⚠️ 跟隨大盤   │<br>
+│ 00713       │ 高息低波       │ 低          │ ✅ 最抗跌     │<br>
+└────────────┴──────────────┴───────────┴─────────────┘<br>
+<br>
+🔍 關鍵發現：<br>
+<br>
+1️⃣ 0050（元大台灣50）— ⚠️ 高風險<br>
+• 台積電佔比 ~50%，TSM ADR 持續弱勢（-1.34% + 盤前再跌）<br>
+• 今日台股已跌 -2.12%（101.70），今晚若美股續跌，週一開盤恐再跌 1~2%<br>
+• 但台股今日已先行反映恐慌，若美股今晚反彈則有回補空間<br>
+<br>
+2️⃣ 00878（國泰永續高股息）— ✅ 低風險<br>
+• 今日台股僅跌 -0.37%，防禦性優異<br>
+• 成分股以金融/傳產為主，美股連動性低<br>
+• 適合做為避險核心持有<br>
+<br>
+3️⃣ 009816 / 00984A — ⚠️ 中風險<br>
+• 今日台股跌幅 -2.39% / -2.32%，與大盤同步<br>
+• 美股續跌將拖累下週一台股開盤<br>
+<br>
+4️⃣ 00713（元大高息低波）— ✅ 最抗跌<br>
+• 今日台股逆勢 +0.74%，為全組合最抗跌標的<br>
+• 低波動因子 + 高股息雙重防禦<br>
+• 今晚美股波動對其影響有限<br>
+<br>
+💰 龍九整體部位曝險評估：<br>
+• 美股部位佔 35.1%（高於目標 30%），超配 5.1pp<br>
+• 若 S&P 再跌 -1%，美股部位損失約 NT$87,000（以總資產 2,500 萬計）<br>
+• 若納斯達克再跌 -2%，損失放大至 NT$175,000<br>
+• 但台股部位僅 14.6%（低配 20.4pp），緩衝空間充足<br>
+• 現金 22.9% 提供強力後盾<br>
+<br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<br>
+【四、巴菲特/蒙格式策略建議】<br>
+<br>
+🧓 巴菲特原則：<br>
+<br>
+「市場恐懼時保持理性。」<br>
+• 目前市場正處於多重恐懼疊加狀態：關稅 + 戰爭 + AI泡沫疑慮 + 油價<br>
+• 但巴菲特式思維強調：買的是企業，不是股價波動<br>
+• TSMC 2026 營收成長上調至 40%+，基本面未變<br>
+• 英特爾財報優異 +4.37%，半導體並非全面悲觀<br>
+<br>
+📐 安全邊際分析：<br>
+• 美股超配 5.1pp（35.1% vs 目標 30%）→ 面臨風險，需減碼<br>
+• 台股低配 20.4pp（14.6% vs 目標 35%）→ 可作為跌深加碼空間<br>
+• 現金 22.9% 充足 → 即使美股跌 10% 也無需砍倉<br>
+• 整體安全邊際：正向（現金 + 債券 39.7% > 目標 10%）<br>
+<br>
+📊 蒙格思維：<br>
+• 「重大危機往往來自你未曾預料的方向。」<br>
+• 今晚最大灰犀牛：川普關稅 + 美伊戰爭同步升級<br>
+• 但台股今日已先跌 -2.67%，部分風險已釋放<br>
+• 若美股今晚開低後收斂跌幅（follow futures），則為「利空鈍化」訊號<br>
+<br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<br>
+【五、應變行動建議】<br>
+<br>
+📌 今晚（21:30~04:00）即時監控：<br>
+<br>
+✅ 開盤 30 分鐘內觀察三個關鍵訊號：<br>
+• S&P 500 是否守住 7,350 關卡（前低 7/17 低點）<br>
+• 費半 SOX 是否反彈（TSM 走勢關鍵）<br>
+• VIX 恐慌指數是否突破 30（目前 ~25-28 區間）<br>
+<br>
+✅ 情境 A（機率 45%）：開低走高（S&P +0.3%~+0.8%）<br>
+→ 期貨反彈有延續性，週一台股可望回穩<br>
+→ 行動：維持現狀，不需調整<br>
+<br>
+✅ 情境 B（機率 35%）：開高走低或平盤震盪<br>
+→ 關稅不確定性壓制反彈力道<br>
+→ 行動：美股超配 5.1pp 部位設停利減碼條件<br>
+<br>
+✅ 情境 C（機率 20%）：開盤即暴跌 S&P -1.5% 以上<br>
+→ 戰事升級或中國半導體重大利空<br>
+→ 行動：下週一啟動美股減碼至 30% 目標，資金轉入 00878/00713<br>
+<br>
+📌 下週一（7/27）操作預案：<br>
+<br>
+美股情景 → 台股對策：<br>
+• 美股今晚大反彈 → 台股週一開高震盪，維持現狀<br>
+• 美股今晚小跌（-0.5%~-1%）→ 0050/009816 若再跌 1%，分批小額加碼<br>
+• 美股今晚大跌（-1.5%+）→ 啟動防禦：暫不加碼台股，優先減碼美股至 30%<br>
+<br>
+📌 中長期配置調整建議：<br>
+• 美股：從 35.1% 減碼 5pp → 30% 目標（符合巴菲特減碼超配原則）<br>
+• 台股：維持 14.6% 不變，等待更明確底部訊號再加碼<br>
+• 防守資產：從 10.5% 補至 15%（防禦型優先補 00878/00713）<br>
+• 現金：維持 22.9% 作為緩衝，不急於進場<br>
+<br>
+━━━━━━━━━━━━━━━━━━━━━━━━━━<br>
+<br>
+【六、總結】<br>
+<br>
+今晚美股面臨關稅生效 + 戰爭升級 + AI疑慮的三重打擊，<br>
+但從期貨盤前表現來看，市場正嘗試溫和反彈。<br>
+<br>
+龍九系統因現金充足（22.9%）+ 台股低配（14.6%），<br>
+防禦空間充裕，無立即危險。<br>
+<br>
+⚠️ 最大風險：美股超配（35.1% > 目標 30%）<br>
+若今晚續跌，需評估減碼至目標比例。<br>
+<br>
+✅ 短期：開盤後觀察 30 分鐘，不 rush to action<br>
+✅ 中期：若美股續跌，優先減碼美股而非加碼台股<br>
+✅ 長期：維持逢低逐步建立台股部位的既定策略<br>
+<br>
+「在非理性下跌中保持理性，是長期投資的唯一獲勝之道。」<br>
+—— 龍九控股 Chief Reporter + 美股危機應變官<br>
+<br>
+📊 數據來源：MarketWatch / CNBC / Yahoo Finance / CNN Markets<br>
+🕐 報告時間：2026-07-24 21:30（美股開盤）</div>
 
     <h3>本週行程 + 繳款 / 配息排程</h3>
     <div class="table-wrap">
@@ -303,182 +507,228 @@
     <div id="emergency-llm-analysis">
       <!-- LLM 緊急應變分析區塊 -->
             <div class="callout callout-warn">
-            <span>🚨 龍九控股 — 台股重挫緊急應變報告 🚨</span>
-<span>📅 2026-07-24（五）13:00 午盤</span>
+            <span>🚨 龍九控股 — 美股緊急應變報告 🚨</span>
+<span>📅 2026-07-24（五）21:30 美股開盤</span>
 <p></p>
 <hr>
 <p></p>
 <strong>【一、市場概況】</strong>
 <p></p>
-<span>📉 加權指數：43,654.84 點（-1,195.97 / -2.67%）</span>
-<span>📊 成交量：7,924 億</span>
-<span>🏆 史上第九大收盤跌點，摜破季線（44,000 關卡）</span>
+<span>📉 昨日收盤（7/23）三大指數全面重挫：</span>
+<span style="display:block">• 道瓊：51,711.65（-506.93 / -0.97%）</span>
+<span style="display:block">• S&P 500：7,408.30（-90.66 / -1.21%）</span>
+<span style="display:block">• 納斯達克：25,137.69（-553.21 / -2.15%）</span>
+<span style="display:block">• 費城半導體 SOX：12,343.84（-66.83 / -0.54%）</span>
 <p></p>
-<span>🏭 權值股表現：</span>
-<span>• 台積電（2330）：2,350 元（-55 / -2.29%）</span>
-<span>• 鴻海（2317）：-2% 左右</span>
-<span>• 廣達（2382）：-2% 左右</span>
-<span>• 國巨（2327）：-7% 以上</span>
-<span>• 聯電（2303）：-7% 以上</span>
-<span>• 南亞科、旺宏：-5% 以上</span>
-<span>• 緯創（3231）：逆勢 +3%（老AI逆風撐盤）</span>
+<span>📊 今日盤前期貨（21:30 前）：</span>
+<span style="display:block">• 道瓊期貨：+0.38%~+0.52%（溫和反彈）</span>
+<span style="display:block">• S&P期貨：+0.16%~+0.20%</span>
+<span style="display:block">• 納斯達克期貨：-0.02%~+0.09%（接近平盤）</span>
+<span style="display:block">• 黃金：$4,060/盎司（+0.24%，避險需求持續）</span>
+<span style="display:block">• 原油WTI：$89.90（-2.48%，短線獲利了結）</span>
 <p></p>
-<hr>
-<p></p>
-<strong>【二、暴跌三大導火線】</strong>
-<p></p>
-<span>🔥 導火線一：美國威脅升級對伊朗軍事打擊</span>
-<span>布蘭特原油飆破 100 美元/桶，引發全球通膨恐慌與風險資產拋售。</span>
-<p></p>
-<span>🔥 導火線二：川普新關稅今生效</span>
-<span>美東時間 7/24 生效，台灣被課徵 10% 關稅，出口導向股全面承壓。</span>
-<p></p>
-<span>🔥 導火線三：融資多殺多 + 程式交易助跌</span>
-<span>近日反彈期間融資餘額增加，今日殺盤觸發融資斷頭連鎖反應，程式交易放大跌幅。</span>
+<span>🏭 個股重要動態：</span>
+<span style="display:block">• TSMC ADR：$415.00 盤前（-0.14%，昨日收盤 $415.58 / -1.34%）</span>
+<span style="display:block">• 英特爾 INTC：盤後 +4.37%（財報優於預期）</span>
+<span style="display:block">• 特斯拉 TSLA：昨日 -14.52%（暴跌最重）</span>
+<span style="display:block">• Google GOOGL：昨日 -7.13%</span>
+<span style="display:block">• NVIDIA NVDA：昨日 -1.56%</span>
+<span style="display:block">• AMD：昨日 -2.29%</span>
 <p></p>
 <hr>
 <p></p>
-<strong>【三、三大法人動向】</strong>
+<strong>【二、影響今晚美股的五大關鍵事件】</strong>
 <p></p>
-<span>• 外資：賣超 609.5 億（外電報導實際砍倉逾 1,700 億）</span>
-<span>• 投信：買超 57.08 億（持續護盤買超）</span>
-<span>• 自營商：賣超 111.52 億</span>
-<span>• 合計：三大法人淨賣超 663.94 億</span>
-<span>• 台指期外資未平倉淨空單：-76,260 口（偏空態度明確）</span>
+<span style="display:block">🔥 事件一：川普對 60 國新關稅今日生效</span>
+<span style="display:block">• 美東時間 7/24 生效，全球貿易戰升級</span>
+<span style="display:block">• 台灣被課 10% 關稅，出口導向半導體股承壓</span>
+<span style="display:block">• 但英特爾因製造回流美國，反而受關稅保護而大漲</span>
+<p></p>
+<span style="display:block">🔥 事件二：美伊戰爭升級（伊朗衝突）— 油價波動劇烈</span>
+<span style="display:block">• 布蘭特原油一度突破 $100/桶，伊朗原油供應中斷風險</span>
+<span style="display:block">• 避險情緒推升黃金至 $4,060</span>
+<span style="display:block">• 國防股 Lockheed Martin +10.54% 受惠戰爭預期</span>
+<span style="display:block">• 航空股 Southwest -6.19% 受油價衝擊</span>
+<p></p>
+<span style="display:block">🔥 事件三：Mag7 市值蒸發 $7,970 億</span>
+<span style="display:block">• 特斯拉暴跌 -14.52% 為領頭羊</span>
+<span style="display:block">• 市場擔憂 AI 資本支出無底洞 + 中國 AI 競爭</span>
+<span style="display:block">• CXMT（中國記憶體廠）今日掛牌，中國半導體自主化加速</span>
+<p></p>
+<span style="display:block">🔥 事件四：Fed 維持利率不變 + 債市擔憂</span>
+<span style="display:block">• 利率維持不變，但市場擔憂通膨因油價再起</span>
+<span style="display:block">• 10 年期公債殖利率波動加劇</span>
+<span style="display:block">• 部分分析師警告可能重啟升息</span>
+<p></p>
+<span style="display:block">🔥 事件五：台股日盤已先跌 -2.67%（4.3 萬保衛戰）</span>
+<span style="display:block">• 台灣加權今日暴跌 1,195 點，史上第九大</span>
+<span style="display:block">• 台積電跌 -2.29%、融資斷頭連鎖</span>
+<span style="display:block">• 台股先行反應，美股今晚有補跌壓力</span>
 <p></p>
 <hr>
 <p></p>
-<strong>【四、龍九持倉關聯分析】</strong>
+<strong>【三、龍九持倉關聯分析】</strong>
 <p></p>
-<span>📋 龍九系統持倉（證券商 + 基金帳戶，截至 snapshot 7/18）：</span>
+<span>📋 龍九持倉 vs 美股影響矩陣：</span>
 <p></p>
-<span>┌────────────┬────────┬────────┬─────────┐</span>
-<span>│ 標的代號    │ 名稱    │ 收盤價  │ 單日漲跌 │</span>
-<span>├────────────┼────────┼────────┼─────────┤</span>
-<span>│ 0050        │ 元大台灣50   │ 101.70  │ -2.20 (-2.12%) │</span>
-<span>│ 00878       │ 國泰永續高股息 │ 32.61   │ -0.12 (-0.37%) │</span>
-<span>│ 009816      │ 台股TOP50分散 │ 14.72   │ -0.36 (-2.39%) │</span>
-<span>│ 00984A      │ 標的（ETF）   │ 14.76   │ -0.35 (-2.32%) │</span>
-<span>│ 00713       │ 元大高息低波  │ 61.00   │ +0.45 (+0.74%) │</span>
-<span>│ 0056        │ 元大高股息  │ 50.20   │ -0.45 (-0.89%) │</span>
-<span>│ 006208      │ 富邦台50  │ 會隨大盤同步 │ N/A │</span>
-<span>├────────────┼────────┼────────┼─────────┤</span>
+<span>┌────────────┬──────────────┬───────────┬─────────────┐</span>
+<span>│ 標的        │ 類型          │ 美股曝險強度 │ 今晚預期影響 │</span>
+<span>├────────────┼──────────────┼───────────┼─────────────┤</span>
+<span>│ 0050        │ 台股市值型     │ 高（<strong style="color:#c2410c">\1</strong>台積電）│ ⚠️ 跟跌台積電ADR │</span>
+<span>│ 00878       │ 台股高股息     │ 低          │ ✅ 防禦力強   │</span>
+<span>│ 009816      │ 台股/ETF       │ 中          │ ⚠️ 跟隨大盤   │</span>
+<span>│ 00984A      │ 標的/ETF       │ 中          │ ⚠️ 跟隨大盤   │</span>
+<span>│ 00713       │ 高息低波       │ 低          │ ✅ 最抗跌     │</span>
+<span>└────────────┴──────────────┴───────────┴─────────────┘</span>
 <p></p>
 <span>🔍 關鍵發現：</span>
-<span>• 00878（高股息）僅跌 0.37%，展現出色防禦力！</span>
-<span>• 00713（高息低波）逆勢收紅 +0.74%，為今日最抗跌標的</span>
-<span>• 0050 / 009816 / 00984A 跌幅 2.1%~2.4%，與大盤跌幅（2.67%）大致同步</span>
-<span>• 0056（高股息）跌 0.89%，防禦性次於 00878</span>
 <p></p>
-<span>💰 台股部位曝險估算：</span>
-<span>持倉總值（台股證券）約 NT$2,413,760（含 0050/006208/00878/009816 等）</span>
-<span>加上基金持有台股部位（0050 連結基金等），台股合計約 280 萬 TWD</span>
-<span>今日帳面未實現損失估算：約 NT$50,000~70,000</span>
+<span>1️⃣ 0050（元大台灣50）— ⚠️ 高風險</span>
+<span style="display:block">• 台積電佔比 ~50%，TSM ADR 持續弱勢（-1.34% + 盤前再跌）</span>
+<span style="display:block">• 今日台股已跌 -2.12%（101.70），今晚若美股續跌，週一開盤恐再跌 1~2%</span>
+<span style="display:block">• 但台股今日已先行反映恐慌，若美股今晚反彈則有回補空間</span>
 <p></p>
-<span>但龍九整體投資組合中台股僅佔 14.6%（目標 35%），目前仍屬低配，</span>
-<span>安全邊際充分——現金 + 債券佔比 39.7%（其中現金 22.9%），緩衝充足。</span>
+<span>2️⃣ 00878（國泰永續高股息）— ✅ 低風險</span>
+<span style="display:block">• 今日台股僅跌 -0.37%，防禦性優異</span>
+<span style="display:block">• 成分股以金融/傳產為主，美股連動性低</span>
+<span style="display:block">• 適合做為避險核心持有</span>
+<p></p>
+<span>3️⃣ 009816 / 00984A — ⚠️ 中風險</span>
+<span style="display:block">• 今日台股跌幅 -2.39% / -2.32%，與大盤同步</span>
+<span style="display:block">• 美股續跌將拖累下週一台股開盤</span>
+<p></p>
+<span>4️⃣ 00713（元大高息低波）— ✅ 最抗跌</span>
+<span style="display:block">• 今日台股逆勢 +0.74%，為全組合最抗跌標的</span>
+<span style="display:block">• 低波動因子 + 高股息雙重防禦</span>
+<span style="display:block">• 今晚美股波動對其影響有限</span>
+<p></p>
+<span>💰 龍九整體部位曝險評估：</span>
+<span style="display:block">• 美股部位佔 35.1%（高於目標 30%），超配 5.1pp</span>
+<span style="display:block">• 若 S&P 再跌 -1%，美股部位損失約 NT$87,000（以總資產 2,500 萬計）</span>
+<span style="display:block">• 若納斯達克再跌 -2%，損失放大至 NT$175,000</span>
+<span style="display:block">• 但台股部位僅 14.6%（低配 20.4pp），緩衝空間充足</span>
+<span style="display:block">• 現金 22.9% 提供強力後盾</span>
 <p></p>
 <hr>
 <p></p>
-<strong>【五、巴菲特/蒙格式策略建議】</strong>
+<strong>【四、巴菲特/蒙格式策略建議】</strong>
 <p></p>
 <span>🧓 巴菲特原則：</span>
-<span>「別人貪婪時恐懼，別人恐懼時貪婪。」</span>
-<span>目前市場瀰漫恐慌情緒（千點暴跌、融資斷頭、季線失守），</span>
-<span>但龍九系統持倉輕（台股僅 14.6% 遠低於目標 35%），</span>
-<span>此時恐慌性殺出反而會錯失潛在反彈。</span>
 <p></p>
-<span>📐 安全邊際分析（來自今早 Buffett CTO Report）：</span>
-<span>• 台股低配 20.4pp（14.6% vs 目標 35%）→ 還有大量加碼空間</span>
-<span>• 現金超配 17.9pp（22.9% vs 目標 5%）→ 彈藥充足</span>
-<span>• 防守資產低配 14.5pp（10.5% vs 目標 25%）</span>
-<span>• 安全網（債 + 現金）39.7%，遠高於目標 10%</span>
+<span>「市場恐懼時保持理性。」</span>
+<span style="display:block">• 目前市場正處於多重恐懼疊加狀態：關稅 + 戰爭 + AI泡沫疑慮 + 油價</span>
+<span style="display:block">• 但巴菲特式思維強調：買的是企業，不是股價波動</span>
+<span style="display:block">• TSMC 2026 營收成長上調至 40%+，基本面未變</span>
+<span style="display:block">• 英特爾財報優異 +4.37%，半導體並非全面悲觀</span>
+<p></p>
+<span>📐 安全邊際分析：</span>
+<span style="display:block">• 美股超配 5.1pp（35.1% vs 目標 30%）→ 面臨風險，需減碼</span>
+<span style="display:block">• 台股低配 20.4pp（14.6% vs 目標 35%）→ 可作為跌深加碼空間</span>
+<span style="display:block">• 現金 22.9% 充足 → 即使美股跌 10% 也無需砍倉</span>
+<span style="display:block">• 整體安全邊際：正向（現金 + 債券 39.7% > 目標 10%）</span>
 <p></p>
 <span>📊 蒙格思維：</span>
-<span>「反轉的時刻總在看似最絕望的時候悄悄到來。」</span>
-<span>今日三大主因均屬一次性事件（關稅生效、地緣政治、融資斷頭），</span>
-<span>並非結構性基本面惡化。AI 長線趨勢未變（中經院報告：17.6% 製造業已切入半導體供應鏈）。</span>
-<p></p>
-<span>建議動用巴菲特「企業所有權」心態：</span>
-<span>買的是企業營運，不是股價波動。0050/00878 的長期配息 + 資本利得能力未因單日暴跌而改變。</span>
+<span style="display:block">• 「重大危機往往來自你未曾預料的方向。」</span>
+<span style="display:block">• 今晚最大灰犀牛：川普關稅 + 美伊戰爭同步升級</span>
+<span style="display:block">• 但台股今日已先跌 -2.67%，部分風險已釋放</span>
+<span style="display:block">• 若美股今晚開低後收斂跌幅（follow futures），則為「利空鈍化」訊號</span>
 <p></p>
 <hr>
 <p></p>
-<strong>【六、應變行動建議】</strong>
+<strong>【五、應變行動建議】</strong>
 <p></p>
-<span>📌 立即行動（13:00~14:30 午盤）：</span>
+<span>📌 今晚（21:30~04:00）即時監控：</span>
 <p></p>
-<span>✅ 保持冷靜，不恐慌殺出</span>
-<span>— 台股佔比僅 14.6%，遠低於目標 35%，砍倉無意義</span>
+<span>✅ 開盤 30 分鐘內觀察三個關鍵訊號：</span>
+<span style="display:block">• S&P 500 是否守住 7,350 關卡（前低 7/17 低點）</span>
+<span style="display:block">• 費半 SOX 是否反彈（TSM 走勢關鍵）</span>
+<span style="display:block">• VIX 恐慌指數是否突破 30（目前 ~25-28 區間）</span>
 <p></p>
-<span>✅ 密切監控兩個關鍵價位</span>
-<span>• 台積電 2,300 元（整數關卡，跌破則可能測試 2,200）</span>
-<span>• 加權 43,000 點（今日低點觀察）</span>
+<span>✅ 情境 A（機率 <strong style="color:#c2410c">\1</strong>）：開低走高（S&P <strong style="color:#c2410c">\1</strong>~<strong style="color:#c2410c">\1</strong>）</span>
+<span>→ 期貨反彈有延續性，週一台股可望回穩</span>
+<span>→ 行動：維持現狀，不需調整</span>
 <p></p>
-<span>✅ 若尾盤跌幅收斂至 -1.5% 以內</span>
-<span>→ 代表季線有撐，維持現狀即可</span>
+<span>✅ 情境 B（機率 <strong style="color:#c2410c">\1</strong>）：開高走低或平盤震盪</span>
+<span>→ 關稅不確定性壓制反彈力道</span>
+<span>→ 行動：美股超配 5.1pp 部位設停利減碼條件</span>
 <p></p>
-<span>✅ 若尾盤擴大至 -4% 以上（42,800 以下）</span>
-<span>→ 啟動分批低接：3 日內分 3 筆補台股 5pp（約 97 萬 TWD）</span>
-<span>→ 優先標的：00878、00713（防禦型）</span>
+<span>✅ 情境 C（機率 <strong style="color:#c2410c">\1</strong>）：開盤即暴跌 S&P <strong style="color:#c2410c">\1</strong> 以上</span>
+<span>→ 戰事升級或中國半導體重大利空</span>
+<span>→ 行動：下週一啟動美股減碼至 <strong style="color:#c2410c">\1</strong> 目標，資金轉入 00878/00713</span>
 <p></p>
-<span>📌 下週觀察重點（7/27~7/31）：</span>
-<span>• FOMC 利率決議（市場預期按兵不動）</span>
-<span>• 台股重量級法說：聯發科、台達電、欣興、國巨、聯電、友達、旺宏</span>
-<span>• 關稅衝擊消化後是否出現報復性反彈</span>
-<span>• 外資期貨空單是否回補</span>
+<span>📌 下週一（7/27）操作預案：</span>
 <p></p>
-<span>📌 CTO 技術面觀點：</span>
-<span>• 今日帶量長黑 K 摜破季線，短線慣性偏空</span>
-<span>• 但 7/17 暴跌 2,953 點後已反彈 4 日，今日屬二次探底</span>
-<span>• 若下週不再破底，可能形成 W 底反彈格局</span>
+<span>美股情景 → 台股對策：</span>
+<span style="display:block">• 美股今晚大反彈 → 台股週一開高震盪，維持現狀</span>
+<span style="display:block">• 美股今晚小跌（-0.5%~-1%）→ 0050/009816 若再跌 1%，分批小額加碼</span>
+<span style="display:block">• 美股今晚大跌（-1.5%+）→ 啟動防禦：暫不加碼台股，優先減碼美股至 30%</span>
 <p></p>
-<span>📌 中長期配置建議（維持今早 CTO 建議）：</span>
-<span>• 台股：逢低補碼 20pp → 從 14.6% 逐步拉回至 35% 目標</span>
-<span>• 美股：減碼 5pp → 從 35.1% 降回 30%</span>
-<span>• 防守：補碼 14pp → 從 10.5% 增至 25%</span>
-<span>• 現金運用：保留 ≥ 20% 活存作為緩衝（符合防禦所需）</span>
+<span>📌 中長期配置調整建議：</span>
+<span style="display:block">• 美股：從 35.1% 減碼 5pp → 30% 目標（符合巴菲特減碼超配原則）</span>
+<span style="display:block">• 台股：維持 14.6% 不變，等待更明確底部訊號再加碼</span>
+<span style="display:block">• 防守資產：從 10.5% 補至 15%（防禦型優先補 00878/00713）</span>
+<span style="display:block">• 現金：維持 22.9% 作為緩衝，不急於進場</span>
 <p></p>
 <hr>
 <p></p>
-<strong>【七、總結】</strong>
+<strong>【六、總結】</strong>
 <p></p>
-<span>今日台股重挫主因為關稅 + 地緣政治 + 技術面融資斷頭的三重打擊，</span>
-<span>屬系統性風險事件而非龍九個股問題。</span>
+<span>今晚美股面臨關稅生效 + 戰爭升級 + AI疑慮的三重打擊，</span>
+<span>但從期貨盤前表現來看，市場正嘗試溫和反彈。</span>
 <p></p>
-<span>龍九系統因台股部位僅 14.6%（低配 20.4pp），且現金達 22.9%，</span>
-<span>緩衝空間充裕，無立即危險。</span>
+<span>龍九系統因現金充足（<strong style="color:#c2410c">\1</strong>）+ 台股低配（<strong style="color:#c2410c">\1</strong>），</span>
+<span>防禦空間充裕，無立即危險。</span>
 <p></p>
-<span>✅ 短期對策：持倉不動、靜觀其變</span>
-<span>✅ 中期機會：若下週續跌，可分批低接優質防禦標的（00878、00713）</span>
-<span>✅ 長期方向：維持逢低補碼台股的既定策略不變</span>
+<span>⚠️ 最大風險：美股超配（<strong style="color:#c2410c">\1</strong> > 目標 <strong style="color:#c2410c">\1</strong>）</span>
+<span>若今晚續跌，需評估減碼至目標比例。</span>
 <p></p>
-<span>「市場波動是財富重分配的過程，而非財富毀滅的時刻。」</span>
-<span>—— 龍九控股 Chief Reporter + 台股危機應變官</span>
+<span>✅ 短期：開盤後觀察 30 分鐘，不 rush to action</span>
+<span>✅ 中期：若美股續跌，優先減碼美股而非加碼台股</span>
+<span>✅ 長期：維持逢低逐步建立台股部位的既定策略</span>
 <p></p>
-<span>📊 數據來源：Yahoo Finance / TWSE / 三大法人買賣超日統計</span>
-<span>🕐 報告時間：2026-07-24 13:30</span>
+<span>「在非理性下跌中保持理性，是長期投資的唯一獲勝之道。」</span>
+<span>—— 龍九控股 Chief Reporter + 美股危機應變官</span>
+<p></p>
+<span>📊 數據來源：MarketWatch / CNBC / Yahoo Finance / CNN Markets</span>
+<span>🕐 報告時間：2026-07-24 21:30（美股開盤）</span>
             </div>
     </div>
 
     <!-- 巴菲特視角建議 (Fallback 或輔助) -->
     <div class="callout callout-bull">
       <h3>巴菲特視角建議</h3>
-      <strong>🧓 巴菲特式思考</strong><br>• 場景判定：市場震盪，維持防禦<br>• Bull：無買進訊號<br>• Bear：台股加權大跌 -2.67%; 台積電大跌 -2.29%<br>• 維持现有配置，不主動加碼 nor 減碼<br>• 保留高利活存 ≥ 20% 作為緩衝<br>• 0050 配息若確認縮水，提前部署 00878/00713<br><br><strong>📋  昨日差異帶來的行動啟示</strong><br>• 淨資產下降（-4,547,658 vs 昨日 28,689,930）：淨資產下滑需檢視資產配置是否有過度曝險<br>• 保單現值下降（9,766,626 vs 昨日 9,876,282）：保單現值下降應評估是否調整基金標的<br><br><strong>🤝 Buffett 派操作建議</strong><br>• 淨資產：-4,547,658 TWD<br>• 建議部位：美股 37%（目標 30%）、台股 15%（目標 35%）、防守 11%（目標 25%）、債券 18%（目標 5%）、現金 19%（目標 5%）<br>• 今日動作：台股偏低，逢低補碼、美股超標，優先減碼、防守不足，補 00878/00713、現金過多，可轉投入<br>• 觸發條件：外資賣超 > 150 億 / 大盤跌 1.5% / 費半跌 2% / 跌破季線+量增 → 啟動減碼；外資買超 > 100 億 + 大盤漲 1% + 費半 +3% → 回補。
+      <p><strong>🧓 巴菲特式思考</strong></p>
+<span style="display:block">• 場景判定：市場震盪，維持防禦</span>
+<span style="display:block">• Bull：無買進訊號</span>
+<span style="display:block">• Bear：台股加權大跌 <b>-2.67%</b>; 台積電大跌 <b>-2.29%</b></span>
+<span style="display:block">• 維持现有配置，不主動加碼 nor 減碼</span>
+<span style="display:block">• 保留高利活存 ≥ <b>20%</b> 作為緩衝</span>
+<span style="display:block">• <b>0050</b> 配息若確認縮水，提前部署 <b>00878</b>/<b>00713</b></span>
+<p><strong>📋 昨日差異帶來的行動啟示</strong></p>
+<span style="display:block">• 淨資產下降（-<b>4,547,658</b> vs 昨日 <b>28,689,930</b>）：淨資產下滑需檢視資產配置是否有過度曝險</span>
+<span style="display:block">• 保單現值下降（<b>9,766,626</b> vs 昨日 <b>9,876,282</b>）：保單現值下降應評估是否調整基金標的</span>
+<p><strong>🤝 Buffett 派操作建議</strong></p>
+<span style="display:block">• 淨資產：-<b>4,547,658</b> TWD</span>
+<span style="display:block">• 建議部位：美股 <b>37%</b>（目標 <b>30%</b>）、台股 <b>15%</b>（目標 <b>35%</b>）、防守 <b>11%</b>（目標 <b>25%</b>）、債券 <b>18%</b>（目標 <b>5%</b>）、現金 <b>19%</b>（目標 <b>5%</b>）</span>
+<span style="display:block">• 今日動作：台股偏低，逢低補碼、美股超標，優先減碼、防守不足，補 <b>00878</b>/<b>00713</b>、現金過多，可轉投入</span>
+<span style="display:block">• 觸發條件：外資賣超 > <b>150</b> 億 / 大盤跌 <b>1.5%</b> / 費半跌 <b>2%</b> / 跌破季線+量增 → 啟動減碼；外資買超 > <b>100</b> 億 + 大盤漲 <b>1%</b> + 費半 <b>+3%</b> → 回補。</span>
     </div>
 
     <!-- CTO 技術視角 (Fallback 或輔助) -->
     <div class="callout callout-bear">
       <h3>CTO 技術視角</h3>
-      <strong>🤖 CTO 技術視角</strong><br><strong>tech_stack</strong>：市場震盪，缺乏明確方向<br><strong>今日最大風險</strong>：台股加權大跌 -2.67%; 台積電大跌 -2.29%<br><strong>建議動作</strong>：觀望為主，等待明確訊號
+      <p><strong>🤖 CTO 技術視角</strong></p>
+<span style="display:block"><strong>tech_stack</strong>：市場震盪，缺乏明確方向</span>
+<span style="display:block"><strong>今日最大風險</strong>：台股加權大跌 <b>-2.67%</b>; 台積電大跌 <b>-2.29%</b></span>
+<span style="display:block"><strong>建議動作</strong>：觀望為主，等待明確訊號</span>
     </div>
 
     <!-- CIO 審查 / 觀點 -->
         <div class="callout callout-info">
-          <strong>🧑‍💻 CIO 觀點</strong><br>
-          • 本日市場情緒持平，無重大異常。<br>
-          • 資產配置持續檢視，尤其注意防禦型配息部位的補碼時機。<br>
-          • 流動性管理穩定，補庫警示已處理。
+          <p><strong>🧑‍💻 CIO 觀點</strong></p>
+<span style="display:block">• 本日市場情緒持平，無重大異常。</span>
+<span style="display:block">• 資產配置持續檢視，尤其注意防禦型配息部位的補碼時機。</span>
+<span style="display:block">• 流動性管理穩定，補庫警示已處理。</span>
         </div>
         <!-- END CIO -->
   </div>
