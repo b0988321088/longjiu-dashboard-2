@@ -225,6 +225,40 @@ def _fmt_rent_status(tv):
         parts.append(f"{label}{v:,}")
     return "已全數實收 " + "+".join(parts) + " ✅ "
 
+def _format_content_to_html(text, content_type="market_intel"):
+    _formatted_lines = []
+    if content_type == "market_intel":
+        _known_headers = {"【台股/大盤】", "【美股/外資】", "【CPI/利率】", "【情報訊號】", "【最新市場消息】", "【持倉關聯分析】", "【買進訊號】", "【賣出訊號】"}
+        for _l in text.split("\n"):
+            _l = _l.strip()
+            if not _l:
+                continue
+            _header = _l[:_l.find("】")+1] if "】" in _l else ""
+            if _header in _known_headers:
+                _rest = _l[len(_header):].strip()
+                _formatted_lines.append(f"<p><strong>{_header}</strong>{' '+_rest if _rest else ''}</p>")
+            elif _l.startswith("•"):
+                _formatted_lines.append(f"<p style='margin-left:12px'>{_l}</p>")
+            else:
+                _formatted_lines.append(f"<p>{_l}</p>")
+    elif content_type == "emergency_analysis":
+        import re as _nm
+        for _analysis_line in text.split('\n'):
+            _trimmed_line = _analysis_line.strip()
+            if not _trimmed_line:
+                _formatted_lines.append('<p></p>')
+            elif _trimmed_line.startswith('━'):
+                _formatted_lines.append('<hr>')
+            elif _trimmed_line.startswith('•') or _trimmed_line.startswith('🔥'):
+                _formatted_lines.append(f'<span style="display:block">{_trimmed_line}</span>')
+            elif _trimmed_line.startswith('【') and _trimmed_line.endswith('】'):
+                _formatted_lines.append(f'<strong>{_trimmed_line}</strong>')
+            else:
+                _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%)', r'<strong style="color:#c2410c">\\1</strong>', _trimmed_line)
+                _formatted_lines.append(f'<span>{_b}</span>')
+    return "\n".join(_formatted_lines)
+
+
 
 def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "", mb_cc_rows: str = "", llm_emergency_analysis: str = "") -> str:
     """產出五大章節日報 HTML。"""
@@ -350,11 +384,11 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     body {{ font-size: 15px; padding: 10px; }}
     table {{ font-size: 13px; }}
     th, td {{ padding: 6px 6px !important; }}
-    th:nth-child(2), td:nth-child(2) { max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    th:nth-child(2), td:nth-child(2) {{ max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
     #market-intel-block table th:nth-child(2),
-    #market-intel-block table td:nth-child(2) {
+    #market-intel-block table td:nth-child(2) {{
       display: none !important;
-    }
+    }}
   }}
   table.mobile-bordered {{
     border: 1px solid #d1d5db;
@@ -601,7 +635,6 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 </html>"""
 
     return html
-    return html
 
 
 # ==========================================================================
@@ -624,9 +657,9 @@ def _build_market_rows(signals: dict, tv: dict) -> str:
 
 
 def _format_line_with_numbers(line: str) -> str:
+    # 簡化：只加粗數字，不跳脫
     import re as _nm
-    _b = _nm.sub(r'([0-9,]{1,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c">\\1</strong>', line)
-    return _b
+    return _nm.sub(r'([0-9,]{3,}(?:\.[0-9]+)?%?|[+-]?[0-9.]+%)', r'<b>\1</b>', line)
 
 def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str = "") -> str:
 
@@ -766,18 +799,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
     
     # Fallback to old logic if md report missing
     if not buf_content:
-        buf_content = []
-        def _format_line_with_numbers(line):
-            import re as _nm
-            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c;">\\\\1</strong>', line)
-            return _b
 
-        buf_content.append(f'<p><strong>🧓 巴菲特式思考</strong></p>')
-        buf_content = []
-        def _format_line_with_numbers(line):
-            import re as _nm
-            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c">\\1</strong>', line)
-            return _b
         if not buf_content:
             buf_content_lines = []
             buf_content_lines.append(f'<p><strong>🧓 巴菲特式思考</strong></p>')
@@ -882,35 +904,42 @@ def main():
     # 載入統一市場情報
     daily_analysis_path = BASE / "daily_analysis.json"
     market_intel_text = ""
+    print(f"[RUN_DAILY] Checking daily_analysis_path: {daily_analysis_path}")
     if daily_analysis_path.exists():
         try:
             daily_analysis_data = json.loads(daily_analysis_path.read_text(encoding='utf-8'))
             market_intel_text = daily_analysis_data.get("briefing", "")
+            print(f"[RUN_DAILY] Loaded market_intel_text (length: {len(market_intel_text)}).")
         except Exception as _exc:
             print(f"[WARN] load daily_analysis.json for market briefing failed: {_exc}")
 
     # Fallback to legacy hunter text if LLM analysis is not available
     if not market_intel_text:
+        print("[RUN_DAILY] market_intel_text is empty, falling back to legacy hunter intel.")
         intel_result = mi_mod.ensure_today_intel(force_refresh=True)
         intel_text = intel_result.get("briefing_text", "") # Get briefing text from daily_intel.py
         intel_signals = mi_mod.parse_hunter_signals(intel_text)
+        print(f"[RUN_DAILY] Loaded legacy hunter intel (text length: {len(intel_text)}, signals: {len(intel_signals)}).")
     else:
         # If LLM analysis is present, we still need signals for other parts of the report
         # For now, we'll try to extract them from the LLM text or use a placeholder.
         # A more robust solution would involve the LLM also outputting structured signals.
         intel_text = ""
         intel_signals = {"sell_signals": [], "buy_signals": []}
-
+        print("[RUN_DAILY] Using LLM analysis, setting intel_text to empty and intel_signals to placeholder.")
 
     # 巴菲特/CTO 動態分析（產出報告，供 render_daily_report 讀取）
     try:
         from buffett_cto_analyzer import main as buffett_main
+        print("[RUN_DAILY] Calling buffett_cto_analyzer.main...")
         buffett_main(send=False)  # 產出報告，Telegram 統一由 deploy 發送
         print("[RUN_DAILY] buffett_cto_analyzer 報告產出完成")
+        print("[RUN_DAILY] Resuming run_daily.py after buffett_cto_analyzer...")
     except Exception as exc:
         print(f"[WARN] buffett_cto_analyzer 失敗：{exc}")
 
     # 證券前三大佔比
+    print("[RUN_DAILY] Processing securities top 3 holdings...")
     try:
         import sqlite3
         _sdb = sqlite3.connect(str(BASE / "dragon_assets.db"))
@@ -919,10 +948,16 @@ def main():
         _stotal = sum(v for _, v in _sh) or 1
         _hpct = [round(v / _stotal * 100, 1) for _, v in _sh]
         tv['holdings_top3'] = [(f'{r[0]}', _hpct[i]) for i, r in enumerate(_sh)]
-    except:
+        print(f"[RUN_DAILY] Securities top 3 holdings processed: {tv['holdings_top3']}")
+    except Exception as e:
+        print(f"[WARN] Failed to process securities top 3 holdings: {e}")
         tv['holdings_top3'] = [('00878', 15.0), ('009816', 16.6), ('00984A', 10.4)]
+        print(f"[RUN_DAILY] Using fallback for holdings_top3: {tv['holdings_top3']}")
+
+
     # 從 MB 最新帳單 CSV 讀取信用卡資料（只取每卡最新一筆）
     _mb_cc_rows = ""
+    print("[RUN_DAILY] Processing MB credit card data...")
     try:
         _mb_dir = BASE / "moneybook"
         _mb_bill = sorted(_mb_dir.glob("*帳單*.csv"), reverse=True)
@@ -935,7 +970,7 @@ def main():
                     _bank = _r.get("金融機構","")
                     if _bank in _cc_map:
                         _due = _r.get("繳費截止日","")
-                        _amt = float(_r.get("帳單金額",0))
+                        _amt = float(str(_r.get("帳單金額",0)).replace(",",""))
                         # 只保留每卡繳費截止日最新的那筆
                         if _bank not in _latest or _due > _latest[_bank][0]:
                             _latest[_bank] = (_due, _amt)
@@ -946,46 +981,21 @@ def main():
                     _cc_rows.append(f'          <tr><td>{_bank}</td><td>{_cc_map[_bank]}</td><td>{_due_md}</td><td class="num">{int(_amt):,}</td><td>🔄 待扣繳</td></tr>')
             if _cc_rows:
                 _mb_cc_rows = "\n".join(_cc_rows)
-    except: pass
-def _format_content_to_html(text, content_type="market_intel"):
-    _formatted_lines = []
-    if content_type == "market_intel":
-        _known_headers = {"【台股/大盤】", "【美股/外資】", "【CPI/利率】", "【情報訊號】", "【最新市場消息】", "【持倉關聯分析】", "【買進訊號】", "【賣出訊號】"}
-        for _l in text.split("\n"):
-            _l = _l.strip()
-            if not _l:
-                continue
-            _header = _l[:_l.find("】")+1] if "】" in _l else ""
-            if _header in _known_headers:
-                _rest = _l[len(_header):].strip()
-                _formatted_lines.append(f"<p><strong>{_header}</strong>{' '+_rest if _rest else ''}</p>")
-            elif _l.startswith("•"):
-                _formatted_lines.append(f"<p style=\"margin-left:12px\">{_l}</p>")
-            else:
-                _formatted_lines.append(f"<p>{_l}</p>")
-    elif content_type == "emergency_analysis":
-        import re as _nm # This import needs to be handled carefully if it's not global
-        for _analysis_line in text.split('\n'):
-            _trimmed_line = _analysis_line.strip()
-            if not _trimmed_line:
-                _formatted_lines.append('<p></p>')
-            elif _trimmed_line.startswith('━'):
-                _formatted_lines.append('<hr>')
-            elif _trimmed_line.startswith('•') or _trimmed_line.startswith('🔥'):
-                _formatted_lines.append(f'<span style=\"display:block\">{_trimmed_line}</span>')
-            elif _trimmed_line.startswith('【') and _trimmed_line.endswith('】'):
-                _formatted_lines.append(f'<strong>{_trimmed_line}</strong>')
-            else:
-                _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%)', r'<strong style=\"color:#c2410c\">\\1</strong>', _trimmed_line)
-                _formatted_lines.append(f'<span>{_b}</span>')
-    return "\n".join(_formatted_lines)
-
+            print(f"[RUN_DAILY] MB credit card data processed. Rows length: {len(_mb_cc_rows)}")
+        else:
+            print("[RUN_DAILY] No MB credit card bill found.")
+    except Exception as e:
+        print(f"[WARN] Failed to process MB credit card data: {e}")
+    
+    print("[RUN_DAILY] Formatting market_intel_text to HTML...")
     market_intel_text = _format_content_to_html(market_intel_text, content_type="market_intel")
+    print(f"[RUN_DAILY] Formatted market_intel_text length: {len(market_intel_text)}")
 
     # 日報
     # LLM 緊急應變分析
     emergency_json_path = BASE / "data" / "emergency_llm_analysis.json"
     llm_emergency_analysis_html = ""
+    print(f"[RUN_DAILY] Checking emergency_json_path: {emergency_json_path}")
     if emergency_json_path.exists():
         try:
             emergency_data = json.loads(emergency_json_path.read_text(encoding='utf-8'))
@@ -994,11 +1004,18 @@ def _format_content_to_html(text, content_type="market_intel"):
             llm_emergency_analysis_html = f"""<div class="callout callout-warn">
             {_report_html}
             </div>"""
+            print(f"[RUN_DAILY] Loaded LLM emergency analysis (HTML length: {len(llm_emergency_analysis_html)}).")
         except Exception as _exc:
             print(f"[WARN] load emergency_llm_analysis.json failed: {_exc}")
+    else:
+        print("[RUN_DAILY] No emergency_llm_analysis.json found.")
 
+    print("[RUN_DAILY] Calling render_daily_report...")
     daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text, mb_cc_rows=_mb_cc_rows, llm_emergency_analysis=llm_emergency_analysis_html)
+    print(f"[RUN_DAILY] render_daily_report returned HTML (length: {len(daily_html)}).")
+    print("[RUN_DAILY] Calling _inject_market_intel...")
     daily_html = _inject_market_intel(daily_html, tv, intel_signals, llm_emergency_analysis_html)
+    print(f"[RUN_DAILY] _inject_market_intel finished (HTML length: {len(daily_html)}).")
 
     # 注入戰略穿透值到日報
     _snap = json.loads(Path(SNAPSHOT).read_text(encoding="utf-8")) if Path(SNAPSHOT).exists() else {}
@@ -1030,6 +1047,7 @@ def _format_content_to_html(text, content_type="market_intel"):
         daily_html = daily_html.replace("__SEC_TOTAL__", "---")
         daily_html = daily_html.replace("__SEC_TOP3__", "---")
 
+    print(f"[RUN_DAILY] Attempting to write daily report to: {OUT_DAILY}")
     OUT_DAILY.write_text(daily_html, encoding="utf-8")
     print(f"[RUN_DAILY] 日報產出：{OUT_DAILY}")
     # 靜態儀表板：由 index_template.html 注入動態數據
