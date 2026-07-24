@@ -2,17 +2,17 @@
   "generated_at": "2026-07-22T02:35:15.524024",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-07-18",
-  "total_assets": 16618371,
+  "total_assets": 16689795,
   "total_liabilities": 21165869,
-  "net_worth": -4547498,
+  "net_worth": -4476074,
   "debt_ratio": "33.9%",
   "monthly_income": 218102,
   "monthly_expense": 141958,
   "working_surplus": 76144,
   "retirement_surplus": 18142,
-  "securities_total_market_value": 2413760,
-  "insurance_current_value": 9766626,
-  "fund_market_value": 823656,
+  "securities_total_market_value": 2479320,
+  "insurance_current_value": 9802872,
+  "fund_market_value": 793434,
   "moneybook_total": 3614169,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
@@ -64,7 +64,7 @@
   "cc_mid": 38000,
   "cc_high": 42000,
   "firstjin_fl65_current_value": 1977799,
-  "allianz_ab_current_value": 7788827,
+  "allianz_ab_current_value": 7843892,
   "firstjin_current_value": 1958980,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
@@ -76,8 +76,8 @@
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
   "securities_total": 2413760,
-  "funds_total": 795157,
-  "insurance_total": 9633273,
+  "funds_total": 793434,
+  "insurance_total": 9802872,
   "last_calibration_sources": {
     "securities": "凱基證券截圖 2026-07-18 02:00",
     "funds": "鉅亨基金截圖 2026-07-18 02:03",
@@ -85,9 +85,9 @@
     "insurance": "Company_Ledger.md + 第一金 7/14 配息 update"
   },
   "funds_breakdown": {
-    "路博邁5G股票T累積": 238955,
-    "0050連結A不配息": 108047,
-    "統一奔騰": 86931,
+    "路博邁5G股票T累積": 232910,
+    "0050連結A不配息": 106503,
+    "統一奔騰": 86243,
     "台新美日台半導體A-日圓": 177662,
     "台中銀台灣優息B配息": 47699,
     "路博邁5G股票T月配": 88939,
@@ -105,8 +105,8 @@
     "coverage_pct": 107.7
   },
   "fund_dividend_monthly": 615,
-  "allianz_policy_a_value": 5072827,
-  "allianz_policy_b_value": 2716000,
+  "allianz_policy_a_value": 5103668,
+  "allianz_policy_b_value": 2740224,
   "anue_account": {
     "total_mv": 783700,
     "total_cost": 563153,
@@ -116,90 +116,161 @@
     "note": "自由PAY 3隻 + 一般申購 4隻，當日變化 -349 (-0.04%)"
   },
   "securities": {
-    "0050": {
-      "shares": 2000,
-      "price": 103.9,
-      "value": 207800,
-      "type": "台股50大权值"
-    },
-    "006208": {
-      "shares": 2000,
-      "price": 237.9,
-      "value": 475800,
-      "type": "台股50大权值"
-    },
-    "009816": {
-      "shares": 16000,
-      "price": 15.08,
-      "value": 241280,
-      "type": "台股TOP50分散"
-    },
-    "00646": {
-      "shares": 1000,
-      "price": 76.1,
-      "value": 76100,
-      "type": "美股S&P500"
-    },
-    "00713": {
-      "shares": 2000,
-      "price": 60.55,
-      "value": 121100,
-      "type": "高股息低波"
-    },
-    "00878": {
-      "shares": 15000,
-      "price": 32.73,
-      "value": 490950,
-      "type": "ESG高股息"
-    },
-    "0056": {
-      "shares": 1000,
-      "price": 50.65,
-      "value": 50650,
-      "type": "高股息"
-    },
-    "00981A": {
-      "shares": 5000,
-      "price": 28.69,
-      "value": 143450,
-      "type": "主动型台股增长"
-    },
-    "00984A": {
-      "shares": 10000,
-      "price": 15.11,
-      "value": 151100,
-      "type": "主动型高息"
-    },
-    "00919": {
-      "shares": 5000,
-      "price": 29.5,
-      "value": 147500,
-      "type": "金融股为主"
-    },
-    "00918": {
-      "shares": 1000,
-      "price": 32.35,
-      "value": 32350,
-      "type": "高填息ETF"
-    },
-    "009824": {
-      "shares": 10000,
-      "price": 10.2,
-      "value": 102000,
-      "type": "美股科技巨头"
-    },
-    "009823": {
-      "shares": 10000,
-      "price": 10.33,
-      "value": 103300,
-      "type": "美股S&P500"
-    },
-    "00888": {
-      "shares": 2000,
-      "price": 35.19,
-      "value": 70380,
-      "type": "ESG永續ETF"
-    }
+    "total_market_value": 2479320,
+    "unrealized_pnl": 288250,
+    "unrealized_pnl_pct": 13.16,
+    "holdings": [
+      {
+        "ticker": "0050",
+        "shares": 2000,
+        "price": 101.7,
+        "cost": 84.9,
+        "value": 203400,
+        "pnl": 33600,
+        "pnl_pct": 19.79,
+        "name": "元大台灣50"
+      },
+      {
+        "ticker": "006208",
+        "shares": 2000,
+        "price": 233.0,
+        "cost": 196.9,
+        "value": 466000,
+        "pnl": 72200,
+        "pnl_pct": 18.33,
+        "name": "富邦台50"
+      },
+      {
+        "ticker": "009816",
+        "shares": 16000,
+        "price": 14.72,
+        "cost": 11.8,
+        "value": 235520,
+        "pnl": 46720,
+        "pnl_pct": 24.75,
+        "name": "凱基台灣TOP50"
+      },
+      {
+        "ticker": "00646",
+        "shares": 1000,
+        "price": 75.5,
+        "cost": 71.6,
+        "value": 75500,
+        "pnl": 3900,
+        "pnl_pct": 5.45,
+        "name": "元大S&P500"
+      },
+      {
+        "ticker": "00713",
+        "shares": 2000,
+        "price": 61.0,
+        "cost": 54.8,
+        "value": 122000,
+        "pnl": 12400,
+        "pnl_pct": 11.31,
+        "name": "元大台灣高息低波"
+      },
+      {
+        "ticker": "00878",
+        "shares": 15000,
+        "price": 32.61,
+        "cost": 26.81,
+        "value": 489150,
+        "pnl": 87000,
+        "pnl_pct": 21.63,
+        "name": "國泰永續高股息"
+      },
+      {
+        "ticker": "0056",
+        "shares": 1000,
+        "price": 50.2,
+        "cost": 37.15,
+        "value": 50200,
+        "pnl": 13050,
+        "pnl_pct": 35.13,
+        "name": "元大高股息"
+      },
+      {
+        "ticker": "00981A",
+        "shares": 5000,
+        "price": 27.54,
+        "cost": 25.9,
+        "value": 137700,
+        "pnl": 8220,
+        "pnl_pct": 6.35,
+        "name": "主動統一台股增長"
+      },
+      {
+        "ticker": "00984A",
+        "shares": 10000,
+        "price": 14.76,
+        "cost": 14.56,
+        "value": 147600,
+        "pnl": 2000,
+        "pnl_pct": 1.37,
+        "name": "主動安聯台灣高息"
+      },
+      {
+        "ticker": "00919",
+        "shares": 5000,
+        "price": 29.49,
+        "cost": 29.56,
+        "value": 147450,
+        "pnl": -330,
+        "pnl_pct": -0.22,
+        "name": "群益台灣精選高息"
+      },
+      {
+        "ticker": "00918",
+        "shares": 1000,
+        "price": 32.5,
+        "cost": 28.55,
+        "value": 32500,
+        "pnl": 3950,
+        "pnl_pct": 13.84,
+        "name": "大華優利高息30"
+      },
+      {
+        "ticker": "009824",
+        "shares": 10000,
+        "price": 10.03,
+        "cost": 9.93,
+        "value": 100300,
+        "pnl": 1000,
+        "pnl_pct": 1.01,
+        "name": "群益美國科技巨頭"
+      },
+      {
+        "ticker": "009823",
+        "shares": 10000,
+        "price": 10.25,
+        "cost": 10.02,
+        "value": 102500,
+        "pnl": 2300,
+        "pnl_pct": 2.3,
+        "name": "群益S&P500"
+      },
+      {
+        "ticker": "00888",
+        "shares": 2000,
+        "price": 34.25,
+        "cost": 33.18,
+        "value": 68500,
+        "pnl": 2140,
+        "pnl_pct": 3.22,
+        "name": "永豐台灣ESG"
+      },
+      {
+        "ticker": "00983D",
+        "shares": 10000,
+        "price": 10.1,
+        "cost": 10.09,
+        "value": 101000,
+        "pnl": 100,
+        "pnl_pct": 0.1,
+        "name": "主動富邦複合收益"
+      }
+    ]
   },
   "core_watchlist": {
     "updated_at": "2026-07-18",
@@ -412,11 +483,11 @@
     },
     "alert": "美股暴露46.1%嚴重超標；台股7.2%極度低於目標40%",
     "actual_twd": {
-      "台股市值型成長": 3165158,
-      "美股市值型成長": 3932234,
+      "台股市值型成長": 3198374,
+      "美股市值型成長": 3934196,
       "防守型配息": 1958980,
       "債券": 3929011,
-      "現金/安全網": 3632988
+      "現金/安全網": 3669234
     }
   },
   "penetration_canonical": {
@@ -583,7 +654,7 @@
       "聯博美國成長": 1407
     }
   },
-  "allianz_ab": 7788827,
+  "allianz_ab": 7843892,
   "firstjin": 1977799,
   "dividend_records": {
     "2026-07-21": {
@@ -598,7 +669,7 @@
   "policy_b_total": 2681959,
   "policy_a_book_value": 5079576,
   "policy_b_book_value": 2728721,
-  "allianz_ab_book_value": 7808297,
+  "allianz_ab_book_value": 7843892,
   "policy_a_cumulative_dividend": 943850,
   "policy_b_cumulative_dividend": 687112,
   "allianz_ab_monthly": 73167,
@@ -730,5 +801,9 @@
         "週期": "月配"
       }
     }
-  }
+  },
+  "true_value": {
+    "total_assets": 16659573
+  },
+  "funds": 793434
 }
