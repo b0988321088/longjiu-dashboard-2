@@ -131,28 +131,43 @@ def daily_summary():
 
 
 def weekly_review():
-    """週報：本週決策彙整 + 趨勢"""
+    """週報：從共享知識層讀取本週資產快照 + 分析記錄"""
     week_ago = (date.today() - timedelta(days=7)).isoformat()
-    
-    ops = _query_db("ops_logs")
-    approved = []
-    deferred = []
-    for p in ops:
-        name = _extract_title(p)
-        status = _extract_text(p, "執行狀態")
-        summary = _extract_text(p, "CIO摘要")
-        if "核准" in status:
-            approved.append(f"  ✅ {name}")
-        elif "延後" in status:
-            deferred.append(f"  ⏸️ {name}")
+    try:
+        from notion_knowledge import query_latest, _db_id
+        # 讀取本週資產快照
+        snaps = query_latest("NOTION_DAILY_SNAPSHOT_DB_ID", limit=7)
+        # 讀取本週分析記錄
+        analyses = query_latest("NOTION_ANALYSIS_DB_ID", limit=10)
+    except:
+        snaps, analyses = [], []
     
     lines = ["📋 Notion 週報", f"期間：{week_ago} ~ {date.today().isoformat()}", ""]
-    lines.append(f"✅ 已核准 ({len(approved)} 項)：")
-    lines.extend(approved[:10] or ["  （無）"])
-    lines.append(f"\n⏸️ 延後 ({len(deferred)} 項)：")
-    lines.extend(deferred[:5] or ["  （無）"])
-    lines.append(f"\n💡 使用 Notion AI：在 master_ledger 問「本週資產變化」")
     
+    # 資產趨勢
+    if snaps:
+        latest = snaps[0]
+        lines.append(f"📊 最新資產：{latest.get('總資產',0):,} TWD")
+        lines.append(f"  證券 {latest.get('證券',0):,} / 保單 {latest.get('保單',0):,} / 基金 {latest.get('基金',0):,} / 現金 {latest.get('現金',0):,}")
+        if len(snaps) >= 2:
+            diff = (snaps[0].get('總資產',0) or 0) - (snaps[-1].get('總資產',0) or 0)
+            lines.append(f"  本週變動：{diff:+,} TWD")
+    else:
+        lines.append("📊 資產資料：尚無記錄")
+    
+    # 分析記錄摘要
+    lines.append("")
+    if analyses:
+        lines.append(f"📝 分析記錄 ({len(analyses)} 筆)：")
+        for a in analyses[:5]:
+            t = a.get('類型','')
+            s = a.get('摘要','')[:60]
+            if t or s:
+                lines.append(f"  [{t}] {s}")
+    else:
+        lines.append("📝 分析記錄：尚無記錄")
+    
+    lines.append(f"\n💡 所有代理共享：notion_knowledge.py 自動寫入")
     return "\n".join(lines)
 
 
