@@ -226,7 +226,7 @@ def _fmt_rent_status(tv):
     return "已全數實收 " + "+".join(parts) + " ✅ "
 
 
-def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "", mb_cc_rows: str = "") -> str:
+def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "", mb_cc_rows: str = "", llm_emergency_analysis: str = "") -> str:
     """產出五大章節日報 HTML。"""
     allianz = tv["allianz_ab"] or 7_881_584
     firstjin = tv["firstjin"] or 1_994_698
@@ -270,12 +270,13 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>龍九控股日報 {TODAY}</title>
 <style>
-  * {{ box-sizing: border-box; }}
-  body {{
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", sans-serif;
-    background: #f5f5f7;
-    margin: 0;
-    padding: 16px;
+  font-size: 17px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
+  color: #1d1d1f;
+  background: #f5f5f7;
+  margin: 0;
+  padding: 16px;
+  }}
     line-height: 1.8;
     font-size: 17px;
     color: #1d1d1f;
@@ -405,7 +406,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   <div class="card">
     <h2>2/5｜市場情報 Market Intel</h2>
     <div class="label">獵人情報 + 市場搜尋 + 持倉關聯</div>
-    <pre id="market-intel-block" style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:#1d1d1f;">{market_intel_text}</pre>
+    <div id="market-intel-block">{market_intel_text}</div>
   </div>
 
   <!-- 戰略異常看板 -->
@@ -541,53 +542,35 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
   <!-- 投資決策框架 -->
   <div class="card">
-    <h2>投資決策框架</h2>
+    <h2>5/5｜投資決策框架 Investment Decision Framework</h2>
+    <div class="label">決策核心 + 緊急應變分析</div>
 
+    <div id="emergency-llm-analysis">
+      <!-- LLM 緊急應變分析區塊 -->
+            {llm_emergency_analysis}
+    </div>
+
+    <!-- 巴菲特視角建議 (Fallback 或輔助) -->
     <div class="callout callout-bull">
-      <strong>🟢 Bull Case</strong><br>
-      __BULL_TEXT__
-    </div>
-
-    <div class="callout callout-bear">
-      <strong>🔴 Bear Case</strong><br>
-      __BEAR_TEXT__
-    </div>
-
-    <h3>市場動態分析（{TODAY} 即時）</h3>
-    <div class="callout callout-info">
-      <strong>ℹ️ 數據來源</strong><br>
-      台股/費半/美股/台積電/TWII 透過 web_search + Yahoo Finance/GoodInfo 擷取；美國 CPI 透過 web_search 確認。
-    </div>
-    <div class="table-wrap">
-      <table class="mobile-bordered">
-        <thead>
-          <tr><th>項目</th><th>最新狀態</th><th>影響預估</th></tr>
-        </thead>
-        <tbody>
-__MARKET_ROWS__
-        </tbody>
-      </table>
-    </div>
-
-    <h3>巴菲特視角建議</h3>
-    <div class="callout callout-bull">
+      <h3>巴菲特視角建議</h3>
       __BUFFETT_CONTENT__
     </div>
 
-    <h3>CTO 技術視角</h3>
+    <!-- CTO 技術視角 (Fallback 或輔助) -->
     <div class="callout callout-bear">
+      <h3>CTO 技術視角</h3>
       __CTO_TECH__
     </div>
 
-    <h3>CIO 審查 / 觀點</h3>
-    <div class="callout callout-info">
-      <strong>🧑‍💻 CIO 觀點</strong><br>
-      • 本日市場情緒持平，無重大異常。<br>
-      • 資產配置持續檢視，尤其注意防禦型配息部位的補碼時機。<br>
-      • 流動性管理穩定，補庫警示已處理。
-    </div>
+    <!-- CIO 審查 / 觀點 -->
+        <div class="callout callout-info">
+          <strong>🧑‍💻 CIO 觀點</strong><br>
+          • 本日市場情緒持平，無重大異常。<br>
+          • 資產配置持續檢視，尤其注意防禦型配息部位的補碼時機。<br>
+          • 流動性管理穩定，補庫警示已處理。
+        </div>
+        <!-- END CIO -->
   </div>
-
 
 </div>
 <div class="card">
@@ -625,7 +608,7 @@ def _build_market_rows(signals: dict, tv: dict) -> str:
     return "\n          ".join(rows)
 
 
-def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
+def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str = "") -> str:
 
     """以 daily_analysis.json + hunter intel 注入 market + Buffett + CTO 區塊。"""
     # Moved from end of function for Buffett advice generation.
@@ -807,6 +790,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict) -> str:
             cto_risk = f"今日觸發：{cto_signal}；{cto_risk}"
         cto_content = f"<strong>🤖 CTO 技術視角</strong><br><strong>tech_stack</strong>：{cto_tech}<br><strong>今日最大風險</strong>：{cto_risk}<br><strong>建議動作</strong>：{cto_action}"
 
+    html = html.replace("{llm_emergency_analysis}", llm_emergency)
     html = html.replace("__BUFFETT_CONTENT__", buf_content)
     html = html.replace("__CTO_TECH__", cto_content)
 
@@ -852,24 +836,27 @@ def main():
     except: pass
     
     # 載入統一市場情報
-    # Load unified market briefing from daily_intel_report_{date}.json
-    unified_path = BASE / f"daily_intel_report_{TODAY.replace('-','')}.json"
+    daily_analysis_path = BASE / "daily_analysis.json"
     market_intel_text = ""
-    if unified_path.exists():
+    if daily_analysis_path.exists():
         try:
-            import json as _json
-            unified = _json.loads(unified_path.read_text(encoding='utf-8'))
-            market_intel_text = unified.get("briefing", "")
+            daily_analysis_data = json.loads(daily_analysis_path.read_text(encoding='utf-8'))
+            market_intel_text = daily_analysis_data.get("briefing", "")
         except Exception as _exc:
-            print(f"[WARN] load unified market briefing failed: {_exc}")
-            market_intel_text = ""
+            print(f"[WARN] load daily_analysis.json for market briefing failed: {_exc}")
 
+    # Fallback to legacy hunter text if LLM analysis is not available
     if not market_intel_text:
-        # Fallback: legacy hunter text
-        market_intel_text = mi_mod.load_latest_hunter()
+        intel_result = mi_mod.ensure_today_intel(force_refresh=True)
+        intel_text = intel_result.get("briefing_text", "") # Get briefing text from daily_intel.py
+        intel_signals = mi_mod.parse_hunter_signals(intel_text)
+    else:
+        # If LLM analysis is present, we still need signals for other parts of the report
+        # For now, we'll try to extract them from the LLM text or use a placeholder.
+        # A more robust solution would involve the LLM also outputting structured signals.
+        intel_text = ""
+        intel_signals = {"sell_signals": [], "buy_signals": []}
 
-    intel_text = market_intel_text
-    intel_signals = mi_mod.parse_hunter_signals(intel_text)
 
     # 巴菲特/CTO 動態分析（產出報告，供 render_daily_report 讀取）
     try:
@@ -916,9 +903,41 @@ def main():
             if _cc_rows:
                 _mb_cc_rows = "\n".join(_cc_rows)
     except: pass
+    # 格式化市場情報：標題加粗 + 段落分行
+    _fmt_lines = []
+    _known_headers = {"【台股/大盤】", "【美股/外資】", "【CPI/利率】", "【情報訊號】", "【最新市場消息】", "【持倉關聯分析】", "【買進訊號】", "【賣出訊號】"}
+    for _l in market_intel_text.split("\n"):
+        _l = _l.strip()
+        if not _l:
+            continue
+        _header = _l[:_l.find("】")+1] if "】" in _l else ""
+        if _header in _known_headers:
+            _rest = _l[len(_header):].strip()
+            _fmt_lines.append(f"<p><strong>{_header}</strong>{' '+_rest if _rest else ''}</p>")
+        elif _l.startswith("•"):
+            _fmt_lines.append(f"<p style=\"margin-left:12px\">{_l}</p>")
+        else:
+            _fmt_lines.append(f"<p>{_l}</p>")
+    market_intel_text = "".join(_fmt_lines)
+
     # 日報
-    daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text, mb_cc_rows=_mb_cc_rows)
-    daily_html = _inject_market_intel(daily_html, tv, intel_signals)
+    # LLM 緊急應變分析
+    emergency_json_path = BASE / "data" / "emergency_llm_analysis.json"
+    llm_emergency_analysis_html = ""
+    if emergency_json_path.exists():
+        try:
+            emergency_data = json.loads(emergency_json_path.read_text(encoding='utf-8'))
+            analysis_content = emergency_data.get("full_report", emergency_data.get("analysis", ""))
+            if analysis_content:
+                _report_html = analysis_content.replace("\\n", "<br>\\n")
+                llm_emergency_analysis_html = f"""<div class="callout callout-warn">
+      {_report_html}
+    </div>"""
+        except Exception as _exc:
+            print(f"[WARN] load emergency_llm_analysis.json failed: {_exc}")
+
+    daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text, mb_cc_rows=_mb_cc_rows, llm_emergency_analysis=llm_emergency_analysis_html)
+    daily_html = _inject_market_intel(daily_html, tv, intel_signals, llm_emergency_analysis_html)
 
     # 注入戰略穿透值到日報
     _snap = json.loads(Path(SNAPSHOT).read_text(encoding="utf-8")) if Path(SNAPSHOT).exists() else {}
