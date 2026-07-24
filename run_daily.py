@@ -263,13 +263,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       </table>
     </div>"""
 
-    # CIO 觀點
-    cio_content = []
-    cio_content.append(f'<p><strong>🧑‍💻 CIO 觀點</strong></p>')
-    cio_content.append(f'<span style="display:block">• 本日市場情緒持平，無重大異常。</span>')
-    cio_content.append(f'<span style="display:block">• 資產配置持續檢視，尤其注意防禦型配息部位的補碼時機。</span>')
-    cio_content.append(f'<span style="display:block">• 流動性管理穩定，補庫警示已處理。</span>')
-    cio_content_html = '\n'.join(cio_content)
+
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-TW">
@@ -338,23 +332,20 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     line-height: 1.8; /* Added line-height */
   }}
   .callout h3 {{ text-decoration: underline; }} /* Added underline for h3 inside callout */
-  .callout strong {{ color:#c2410c; text-decoration: underline; }} /* Added orange color and underline for strong inside callout */
+  .callout strong {{ color:#c2410c; }} /* Added orange color and underline for strong inside callout */
   .callout-bull {{ background:#f0fff4; border-color:#22c55e; }}
-  .callout-bear {{ background:#fff5f5; border-color:#ef4444; }}
-  .callout-warn {{ background:#fffbeb; border-color:#f59e0b; }}
-  .callout-warn span {{ display:block; margin:3px 0; padding-left:4px; border-left:2px solid rgba(245,158,11,0.2); }}
-  .callout-info {{ background:#eff6ff; border-color:#3b82f6; }}
+
 
   /* Mobile table style: bordered with background fill */
   @media (max-width: 640px) {{
     body {{ font-size: 15px; padding: 10px; }}
     table {{ font-size: 13px; }}
     th, td {{ padding: 6px 6px !important; }}
-    th:nth-child(2), td:nth-child(2) { max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    #market-intel-block table th:nth-child(2),
-    #market-intel-block table td:nth-child(2) {
-      display: none !important;
-    }
+        /* 隱藏第二欄 (名稱) */
+        table th:nth-child(2),
+        table td:nth-child(2) {{
+          display: none !important;
+        }}
   }}
   table.mobile-bordered {{
     border: 1px solid #d1d5db;
@@ -417,8 +408,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-sm" style="color:#6e6e73;margin-top:8px">穿透分母：台股+美股+防守+債券（不計入不動產）；管理費~1.5%，偏高於配息收益率。</p>
   </div>
 
-  <div class="card" style="margin-top:4px;padding:10px 14px;background:#f0f4ff;">
-  </div>
+
 
   <!-- 市場情報 -->
   <div class="card">
@@ -563,10 +553,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <h2>5/5｜投資決策框架 Investment Decision Framework</h2>
     <div class="label">決策核心 + 緊急應變分析</div>
 
-    <div id="emergency-llm-analysis">
-      <!-- LLM 緊急應變分析區塊 -->
-            {llm_emergency_analysis}
-    </div>
+ 
 
     <!-- 巴菲特視角建議 (Fallback 或輔助) -->
     <div class="callout callout-bull">
@@ -574,17 +561,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       __BUFFETT_CONTENT__
     </div>
 
-    <!-- CTO 技術視角 (Fallback 或輔助) -->
-    <div class="callout callout-bear">
-      <h3>CTO 技術視角</h3>
-      __CTO_TECH__
-    </div>
 
-    <!-- CIO 審查 / 觀點 -->
-        <div class="callout callout-info">
-          {cio_content_html}
-        </div>
-        <!-- END CIO -->
+
   </div>
 
 </div>
@@ -685,8 +663,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             _hunter_rows = chr(10).join("          "+r for r in _mr)
     except: pass
     analysis = load_daily_analysis()
-    if not analysis:
-        return html
+
 
     scenario = analysis.get("scenario", {})
     buffett = analysis.get("buffett", {})
@@ -767,17 +744,11 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
     # Fallback to old logic if md report missing
     if not buf_content:
         buf_content = []
-        def _format_line_with_numbers(line):
-            import re as _nm
-            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c;">\\\\1</strong>', line)
-            return _b
+
 
         buf_content.append(f'<p><strong>🧓 巴菲特式思考</strong></p>')
         buf_content = []
-        def _format_line_with_numbers(line):
-            import re as _nm
-            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c">\\1</strong>', line)
-            return _b
+
         if not buf_content:
             buf_content_lines = []
             buf_content_lines.append(f'<p><strong>🧓 巴菲特式思考</strong></p>')
@@ -900,6 +871,7 @@ def main():
         # A more robust solution would involve the LLM also outputting structured signals.
         intel_text = ""
         intel_signals = {"sell_signals": [], "buy_signals": []}
+    market_intel_text = _format_content_to_html(market_intel_text, content_type="market_intel")
 
 
     # 巴菲特/CTO 動態分析（產出報告，供 render_daily_report 讀取）
@@ -980,7 +952,7 @@ def _format_content_to_html(text, content_type="market_intel"):
                 _formatted_lines.append(f'<span>{_b}</span>')
     return "\n".join(_formatted_lines)
 
-    market_intel_text = _format_content_to_html(market_intel_text, content_type="market_intel")
+
 
     # 日報
     # LLM 緊急應變分析
@@ -991,47 +963,55 @@ def _format_content_to_html(text, content_type="market_intel"):
             emergency_data = json.loads(emergency_json_path.read_text(encoding='utf-8'))
             analysis_content = emergency_data.get("full_report", emergency_data.get("analysis", ""))
             _report_html = _format_content_to_html(analysis_content, content_type="emergency_analysis")
-            llm_emergency_analysis_html = f"""<div class="callout callout-warn">
-            {_report_html}
-            </div>"""
+            llm_emergency_analysis_html = "" # CIO content removed per task (太籠統, 硬編碼)
         except Exception as _exc:
             print(f"[WARN] load emergency_llm_analysis.json failed: {_exc}")
 
-    daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text, mb_cc_rows=_mb_cc_rows, llm_emergency_analysis=llm_emergency_analysis_html)
-    daily_html = _inject_market_intel(daily_html, tv, intel_signals, llm_emergency_analysis_html)
-
-    # 注入戰略穿透值到日報
-    _snap = json.loads(Path(SNAPSHOT).read_text(encoding="utf-8")) if Path(SNAPSHOT).exists() else {}
-    _pen = _snap.get("penetration", {})
-    _atwd = _pen.get("actual_twd", {})
-    _apct = _pen.get("actual_pct", {})
-    _tgt = _pen.get("targets", {})
-    _tw_v = _atwd.get("台股市值型成長", 0)
-    _us_v = _atwd.get("美股市值型成長", 0)
-    _def_v = _atwd.get("防守型配息", 0)
-    _bond_v = _atwd.get("債券", 0)
-    _cash_v = _atwd.get("現金/安全網", 0)
-    for k, v in [("__DR_TW_V__",f"{_tw_v:,.0f}"),("__DR_US_V__",f"{_us_v:,.0f}"),("__DR_DEF_V__",f"{_def_v:,.0f}"),("__DR_BOND_V__",f"{_bond_v:,.0f}"),("__DR_CASH_V__",f"{_cash_v:,.0f}")]: daily_html = daily_html.replace(k, v)
-    for k, v in [("__DR_TW_PCT__",f"{_apct.get('台股市值型成長',0):.1f}%"),("__DR_US_PCT__",f"{_apct.get('美股市值型成長',0):.1f}%"),("__DR_DEF_PCT__",f"{_apct.get('防守型配息',0):.1f}%"),("__DR_BOND_PCT__",f"{_apct.get('債券及安全現金',0):.1f}%"),("__DR_CASH_PCT__",f"{_apct.get('債券及安全現金',0):.1f}%")]: daily_html = daily_html.replace(k, v)
-    for k, v in [("__DR_TW_TGT__",f"{_tgt.get('市值型成長',30):.0f}%"),("__DR_US_TGT__",f"{_tgt.get('市值型成長',30):.0f}%"),("__DR_DEF_TGT__",f"{_tgt.get('配息型高股息',30):.0f}%"),("__DR_BOND_TGT__",f"{_tgt.get('債券型防禦',30):.0f}%"),("__DR_CASH_TGT__",f"{_tgt.get('現金/安全網',10):.0f}%")]: daily_html = daily_html.replace(k, v)
-    for k, t, g in [("__DR_TW_GAP__",_tw_v,_tgt.get('市值型成長',30)),("__DR_US_GAP__",_us_v,_tgt.get('市值型成長',30)),("__DR_DEF_GAP__",_def_v,_tgt.get('配息型高股息',30)),("__DR_BOND_GAP__",_bond_v,_tgt.get('債券型防禦',30)),("__DR_CASH_GAP__",_cash_v,_tgt.get('現金/安全網',10))]: 
-        _gap = t - g; daily_html = daily_html.replace(k, f"{'+'if _gap>0 else ''}{_gap:,.0f}")
-
-    # 證券明細注入
+    print("[DEBUG] Entering daily report generation try block.")
     try:
-        _sdb = sqlite3.connect(str(BASE / "dragon_assets.db"))
-        _srows = _sdb.execute("SELECT ticker, shares, cost_price FROM holdings WHERE shares > 0 ORDER BY shares DESC").fetchall()
-        _sdb.close()
-        _stop3 = "、".join(f"{r[0]} {int(r[1]):,}股" for r in _srows[:3])
-        daily_html = daily_html.replace("__SEC_TOTAL__", f"{tv.get('securities_total', tv.get('securities', 0)):,} TWD ({len(_srows)}檔)")
-        daily_html = daily_html.replace("__SEC_TOP3__", _stop3)
-    except Exception as _se:
-        print(f"  [WARN] 證券注入失敗: {_se}")
-        daily_html = daily_html.replace("__SEC_TOTAL__", "---")
-        daily_html = daily_html.replace("__SEC_TOP3__", "---")
+        daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text, mb_cc_rows=_mb_cc_rows, llm_emergency_analysis=llm_emergency_analysis_html)
+        daily_html = _inject_market_intel(daily_html, tv, intel_signals, llm_emergency_analysis_html)
 
-    OUT_DAILY.write_text(daily_html, encoding="utf-8")
-    print(f"[RUN_DAILY] 日報產出：{OUT_DAILY}")
+        # 注入戰略穿透值到日報
+        _snap = json.loads(Path(SNAPSHOT).read_text(encoding="utf-8")) if Path(SNAPSHOT).exists() else {}
+        _pen = _snap.get("penetration", {})
+        _atwd = _pen.get("actual_twd", {})
+        _apct = _pen.get("actual_pct", {})
+        _tgt = _pen.get("targets", {})
+        _tw_v = _atwd.get("台股市值型成長", 0)
+        _us_v = _atwd.get("美股市值型成長", 0)
+        _def_v = _atwd.get("防守型配息", 0)
+        _bond_v = _atwd.get("債券", 0)
+        _cash_v = _atwd.get("現金/安全網", 0)
+        for k, v in [("__DR_TW_V__",f"{_tw_v:,.0f}"),("__DR_US_V__",f"{_us_v:,.0f}"),("__DR_DEF_V__",f"{_def_v:,.0f}"),("__DR_BOND_V__",f"{_bond_v:,.0f}"),("__DR_CASH_V__",f"{_cash_v:,.0f}")]: daily_html = daily_html.replace(k, v)
+        for k, v in [("__DR_TW_PCT__",f"{_apct.get('台股市值型成長',0):.1f}%"),("__DR_US_PCT__",f"{_apct.get('美股市值型成長',0):.1f}%"),("__DR_DEF_PCT__",f"{_apct.get('防守型配息',0):.1f}%"),("__DR_BOND_PCT__",f"{_apct.get('債券及安全現金',0):.1f}%"),("__DR_CASH_PCT__",f"{_apct.get('債券及安全現金',0):.1f}%")]: daily_html = daily_html.replace(k, v)
+        for k, v in [("__DR_TW_TGT__",f"{_tgt.get('市值型成長',30):.0f}%"),("__DR_US_TGT__",f"{_tgt.get('市值型成長',30):.0f}%"),("__DR_DEF_TGT__",f"{_tgt.get('配息型高股息',30):.0f}%"),("__DR_BOND_TGT__",f"{_tgt.get('債券型防禦',30):.0f}%"),("__DR_CASH_TGT__",f"{_tgt.get('現金/安全網',10):.0f}%")]: daily_html = daily_html.replace(k, v)
+        for k, t_pct, g_tgt_pct in [("__DR_TW_GAP__", _apct.get('台股市值型成長',0), _tgt.get('市值型成長',30)),
+                                  ("__DR_US_GAP__", _apct.get('美股市值型成長',0), _tgt.get('市值型成長',30)),
+                                  ("__DR_DEF_GAP__", _apct.get('防守型配息',0), _tgt.get('配息型高股息',30)),
+                                  ("__DR_BOND_GAP__", _apct.get('債券及安全現金',0), _tgt.get('債券型防禦',30)),
+                                  ("__DR_CASH_GAP__", _apct.get('債券及安全現金',0), _tgt.get('現金/安全網',10))]: 
+            _gap = t_pct - g_tgt_pct; daily_html = daily_html.replace(k, f"{'+'if _gap>0 else ''}{_gap:+.1f}pp")
+
+        # 證券明細注入
+        try:
+            _sdb = sqlite3.connect(str(BASE / "dragon_assets.db"))
+            _srows = _sdb.execute("SELECT ticker, shares, cost_price FROM holdings WHERE shares > 0 ORDER BY shares DESC").fetchall()
+            _sdb.close()
+            _stop3 = "、".join(f"{r[0]} {int(r[1]):,}股" for r in _srows[:3])
+            daily_html = daily_html.replace("__SEC_TOTAL__", f"{tv.get('securities_total', tv.get('securities', 0)):,} TWD ({len(_srows)}檔)")
+            daily_html = daily_html.replace("__SEC_TOP3__", _stop3)
+        except Exception as _se:
+            print(f"  [WARN] 證券注入失敗: {_se}")
+            daily_html = daily_html.replace("__SEC_TOTAL__", "---")
+            daily_html = daily_html.replace("__SEC_TOP3__", "---")
+
+        OUT_DAILY.write_text(daily_html, encoding="utf-8")
+        print(f"[RUN_DAILY] 日報產出成功：{OUT_DAILY}")
+    except Exception as e:
+        print(f"[RUN_DAILY] 處理日報失敗，錯誤：{e}")
+        print(f"[ERROR] Detailed exception: {e}")
+
     # 靜態儀表板：由 index_template.html 注入動態數據
     if INDEX_TEMPLATE.exists():
         index_html = INDEX_TEMPLATE.read_text(encoding="utf-8")
