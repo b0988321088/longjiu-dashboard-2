@@ -16,6 +16,22 @@ LEDGER = BASE / "Company_Ledger.md"
 
 SCOPES = ["https://www.googleapis.com/auth/calendar", "https://www.googleapis.com/auth/calendar.events"]
 
+def delete_existing_event(service, summary: str, event_date: str):
+    """刪除相同標題+日期的舊事件，避免重複"""
+    try:
+        events = service.events().list(
+            calendarId='primary',
+            timeMin=f"{event_date}T00:00:00Z",
+            timeMax=f"{event_date}T23:59:59Z",
+            q=summary
+        ).execute()
+        for item in events.get('items', []):
+            if item['summary'] == summary:
+                service.events().delete(calendarId='primary', eventId=item['id']).execute()
+                logger.info(f"  刪除舊事件: {summary} ({event_date})")
+    except Exception as e:
+        logger.warning(f"  刪除事件失敗: {e}")
+
 def load_creds():
     if not TOKEN_PATH.exists():
         logger.error("❌ 無 Google token")
@@ -98,15 +114,14 @@ events = parse_events(LEDGER.read_text("utf-8") if LEDGER.exists() else "")
 
 created = 0
 for ev in events:
-    exists = service.events().list(calendarId="primary", q=ev["summary"], timeMin=f"{ev['start']}T00:00:00Z",
-                                    timeMax=f"{ev['end']}T23:59:59Z", maxResults=5).execute()
-    if not exists.get("items"):
-        body = {
-            "summary": ev["summary"],
-            "start": {"date": ev["start"]},
-            "end": {"date": ev["end"]},
-        }
-        service.events().insert(calendarId="primary", body=body).execute()
-        created += 1
+    # 先刪舊的（精確比對標題+日期），再新增
+    delete_existing_event(service, ev["summary"], ev["start"])
+    body = {
+        "summary": ev["summary"],
+        "start": {"date": ev["start"]},
+        "end": {"date": ev["end"]},
+    }
+    service.events().insert(calendarId="primary", body=body).execute()
+    created += 1
 
 logger.info(f"✅ Calendar 同步完成：新增 {created} 個行程")
