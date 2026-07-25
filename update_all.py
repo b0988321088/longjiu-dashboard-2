@@ -106,6 +106,27 @@ def main():
         for k,v in pen.items(): print(f"  {k}: {v:,}")
         print(f"  總和: {sum(pen.values()):,}  應={args['cash']+args['ins']+args['sec']+args['funds']:,}")
         return
+    # === 配息資料自動校驗（確保 snapshot 內所有配息值一致）===
+    try:
+        _az = snap.get("allianz_ab_monthly", 73167) or 73167
+        _fj = snap.get("firstjin_monthly", 22949) or 22949
+        _bd = snap.get("monthly_dividend_breakdown", {})
+        _etf = _bd.get("etf", 10740)
+        _fund = _bd.get("fund", 615)
+        _expected_ins = _az + _fj
+        if _bd.get("allianz", 0) != _az or _bd.get("insurance", 0) != _expected_ins or snap.get("monthly_dividend", 0) != _expected_ins + _etf + _fund:
+            _bd["allianz"] = _az
+            _bd["firstjin"] = _fj
+            _bd["insurance"] = _expected_ins
+            _bd["etf"] = _etf
+            _bd["fund"] = _fund
+            _bd["total"] = _expected_ins + _etf + _fund
+            snap["monthly_dividend_breakdown"] = _bd
+            snap["monthly_dividend"] = _expected_ins + _etf + _fund
+            save_json(SNAP, snap)
+            print(f"  ✅ 配息資料自動校驗完成（allianz={_az:,} + firstjin={_fj:,} = {_expected_ins:,}）")
+    except Exception as _de:
+        print(f"  ⚠️ 配息校驗失敗: {_de}")
     print("=== 三源同步 ===")
     total = args["cash"] + args["ins"] + args["sec"] + args["funds"]
     net = total - snap.get("total_liabilities", 0)
