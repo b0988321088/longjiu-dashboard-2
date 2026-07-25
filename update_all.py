@@ -93,6 +93,17 @@ def main():
         ins_calc = pen["債券"] + (pen["美股市值型成長"] - round(args.get("sec",0)*0.03)) + pen["防守型配息"]
         if abs(ins_calc - args["ins"]) > 100:
             print(f"  ⚠️ 保單校驗失敗：拆分總和 {ins_calc:,} ≠ 保險 {args['ins']:,}")
+    # 自動同步腳本到 hermes/scripts/
+    try:
+        import shutil
+        _scripts_dst = Path(os.environ.get("HERMES_SCRIPTS", str(Path.home() / "AppData/Local/hermes/scripts")))
+        for _sf in ["update_all.py", "run_daily.py", "asset_diff_monitor.py", "memory_sync.py", "daily_deploy.py", "penetration_monitor.py", "reminder_agent.py", "weekly_report.py", "gmail_cleanup.py"]:
+            _src = BASE / _sf
+            _dst = _scripts_dst / _sf
+            if _src.exists() and (not _dst.exists() or _src.stat().st_mtime > _dst.stat().st_mtime):
+                shutil.copy2(str(_src), str(_dst))
+    except Exception:
+        pass
     if "--check" in sys.argv or "--check_fund" in sys.argv:
         if "--check_fund" in sys.argv:
             fv = {"安聯收益成長": 2_780_466, "M&G入息": 3_136_436, "安聯AI收益成長": 902_679, "貝萊德科技A10": 964_495, "聯博美國成長": 4_751}
