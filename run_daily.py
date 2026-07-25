@@ -436,7 +436,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-lead">保單現值 <strong>{insurance_total:,} TWD</strong>（安聯 A+B {allianz:,} + 第一金 FL65 {firstjin:,}），本月配息合計 <strong>{monthly_dividend:,} TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
 
     <h3>證券曝險</h3>
-    <p class="text-lead">證券總市值 <strong>{tv['securities_total']:,} TWD</strong>（14檔）。本月已收配息：{tv['sec_dividend_monthly']:,} TWD。前三大：{tv['holdings_top3'][0][0]} {tv['holdings_top3'][0][1]:.1f}%、{tv['holdings_top3'][1][0]} {tv['holdings_top3'][1][1]:.1f}%、{tv['holdings_top3'][2][0]} {tv['holdings_top3'][2][1]:.1f}%。0056 凍結質押中，短期無法加碼。</p>
+    <p class="text-lead">證券總市值 <strong>{tv['securities_total']:,} TWD</strong>（{tv['holdings_count']}檔）。本月已收配息：{tv['sec_dividend_monthly']:,} TWD。前三大：{tv['holdings_top3'][0][0]} {tv['holdings_top3'][0][1]:.1f}%、{tv['holdings_top3'][1][0]} {tv['holdings_top3'][1][1]:.1f}%、{tv['holdings_top3'][2][0]} {tv['holdings_top3'][2][1]:.1f}%。0056 凍結質押中，短期無法加碼。</p>
     {tv['etf_div_table']}
 
     <h3>房租金流</h3>
@@ -949,12 +949,15 @@ def main():
         import sqlite3
         _sdb = sqlite3.connect(str(BASE / "dragon_assets.db"))
         _sh = _sdb.execute("SELECT ticker, shares FROM holdings WHERE shares > 0 ORDER BY shares DESC LIMIT 3").fetchall()
+        _cnt = _sdb.execute("SELECT COUNT(*) FROM holdings WHERE shares > 0").fetchone()
         _sdb.close()
         _stotal = sum(v for _, v in _sh) or 1
         _hpct = [round(v / _stotal * 100, 1) for _, v in _sh]
         tv['holdings_top3'] = [(f'{r[0]}', _hpct[i]) for i, r in enumerate(_sh)]
+        tv['holdings_count'] = _cnt[0] if _cnt else len(_sh)
     except:
         tv['holdings_top3'] = [('00878', 15.0), ('009816', 16.6), ('00984A', 10.4)]
+        tv['holdings_count'] = 15
     # 從 MB 最新帳單 CSV 讀取信用卡資料（只取每卡最新一筆）
     _mb_cc_rows = ""
     try:
