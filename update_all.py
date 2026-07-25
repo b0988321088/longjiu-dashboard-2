@@ -23,12 +23,20 @@ def load_json(p):
 def save_json(p, d):
     Path(p).write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
 
-def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None):
+def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None, snap=None):
     if bond_portion is not None:
         ins_bonds = int(bond_portion)
         ins_eq = int(ins) - int(bond_portion) - 1_958_980
     elif fund_ratios:
-        fv = {"安聯收益成長": 2_780_466, "M&G入息": 3_136_436, "安聯AI收益成長": 902_679, "貝萊德科技A10": 964_495, "聯博美國成長": 4_751}
+        # 從 snapshot 動態讀取保險基金市值
+        if snap:
+            _a = snap.get("allianz_a_breakdown", {})
+            _b = snap.get("allianz_b_breakdown", {})
+            fv = {}
+            for k in list(dict.fromkeys(list(_a.keys()) + list(_b.keys()))):
+                fv[k] = _a.get(k, 0) + _b.get(k, 0)
+        else:
+            fv = {"安聯收益成長": 2_780_466, "M&G入息": 3_136_436, "安聯AI收益成長": 902_679, "貝萊德科技A10": 964_495, "聯博美國成長": 4_751}
         ins_bonds = sum(round(fv[n] * fund_ratios.get(n, 0)) for n in fv)
         ins_eq = int(ins) - ins_bonds - 1_958_980
     else:
@@ -79,7 +87,7 @@ def main():
         if "=" in a:
             k,v = a[2:].split("=",1)
             args[{"insurance":"ins","securities":"sec","cash":"cash","funds":"funds"}.get(k,k)] = json.loads(v) if k == "fund_ratios" else int(v)
-    pen = calc_penetration(args["cash"], args["ins"], args["sec"], args["funds"], args.get("bond_portion"), args.get("fund_ratios"))
+    pen = calc_penetration(args["cash"], args["ins"], args["sec"], args["funds"], args.get("bond_portion"), args.get("fund_ratios"), snap=snap)
     if args.get("ins"):
         ins_calc = pen["債券"] + (pen["美股市值型成長"] - round(args.get("sec",0)*0.03)) + pen["防守型配息"]
         if abs(ins_calc - args["ins"]) > 100:
