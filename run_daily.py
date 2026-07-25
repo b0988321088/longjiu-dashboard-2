@@ -249,15 +249,27 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         loans_rows_html += f"""          <tr><td>—</td><td>證券質押</td><td>—</td><td class="num">{tv['pledge_loan']:,}</td><td>—</td></tr>\n"""
 
     # 從 relay_calendar.md 取得 T+4 轉換截止日
+    _rc_text = ""
+    try:
+        _rc_text = open(BASE / "relay_calendar.md", encoding="utf-8").read()
+    except:
+        pass
+    # 找摩根JPM的T+4
+    _morgen_t4 = "—"
+    if _rc_text:
+        _m = re.search(r'摩根[^|]+\|\s*(\d+/\d+)[^|]+\|\s*(\d+/\d+)', _rc_text)
+        if _m:
+            _morgen_t4 = _m.group(2)
     relay_table = f"""<div class="table-wrap">
       <table class="mobile-bordered">
         <thead>
           <tr><th>站別</th><th>流向</th><th>基準日</th><th>轉換截止</th><th>預估入帳</th><th>狀態</th></tr>
         </thead>
         <tbody>
-          <tr><td>第一站</td><td>摩根多重收益（FJ33）→ 安聯收益成長（FL65）</td><td>7/14</td><td>—</td><td>7/19-20</td><td>✅ 已配息/已入帳</td></tr>
+          <tr><td>第一站</td><td>摩根多重收益（FJ33）→ 安聯收益成長（FL65）</td><td>7/14</td><td>{_morgen_t4}</td><td>7/19-20</td><td>✅ 已配息/已入帳</td></tr>
           <tr><td>第二站</td><td>安聯收益成長 + M&amp;G 入息基金</td><td>7/17</td><td>8/10（FL65）<br>8/17（M&amp;G）</td><td>~7/29</td><td>🔄 M&amp;G轉換中（尚未全數到位）</td></tr>
-          <tr><td>第三站</td><td>安聯 AI 收益 + 貝萊德世界科技 A10</td><td>7/29-30</td><td>⚠️ <strong>7/23</strong>（AI）<br><strong>7/24</strong>（A10）</td><td>~8/10</td><td>⏸️ 等待到期（PIMCO已轉出 ✅）</td></tr>
+          <tr><td>第三站</td><td>安聯 AI 收益 + 貝萊德世界科技 A10</td><td>7/29-30</td><td>⚠️ <strong>7/23</strong>（AI）<br><strong>7/24</strong>（A10）</td><td>~8/10</td><td>🔄 PIMCO已轉出（7/24五），待月底入帳</td></tr>
+          <tr><td>第四站</td><td>摩根JPM入息</td><td>8月初</td><td>8/03（一）</td><td>~8/07</td><td>⏳ 待執行</td></tr>
         </tbody>
       </table>
     </div>"""
