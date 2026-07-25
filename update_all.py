@@ -136,6 +136,10 @@ def main():
             print(f"  ✅ 配息資料自動校驗完成（allianz={_az:,} + firstjin={_fj:,} = {_expected_ins:,}）")
     except Exception as _de:
         print(f"  ⚠️ 配息校驗失敗: {_de}")
+    # 確保 relay_stations 存在
+    if not snap.get("relay_stations"):
+        snap["relay_stations"] = {}
+        save_json(SNAP, snap)
     print("=== 三源同步 ===")
     total = args["cash"] + args["ins"] + args["sec"] + args["funds"]
     net = total - snap.get("total_liabilities", 0)
