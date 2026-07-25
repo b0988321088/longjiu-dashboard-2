@@ -257,12 +257,55 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     if tv['pledge_loan'] > 0:
         loans_rows_html += f"""          <tr><td>—</td><td>證券質押</td><td>—</td><td class="num">{tv['pledge_loan']:,}</td><td>—</td></tr>\n"""
 
-    # 從 relay_calendar.md 取得 T+4 轉換截止日
+    # 從 relay_calendar.md 取得 T+4 轉換截止日 & 完整行事曆
     _rc_text = ""
+    _rc_data = {}  # {月份: {基金: {除息日, T+4}}}
     try:
         _rc_text = open(BASE / "relay_calendar.md", encoding="utf-8").read()
+        # 解析行事曆
+        _cur_month = None
+        for _line in _rc_text.splitlines():
+            _mh = re.match(r'##\s*(\d+)月', _line)
+            if _mh:
+                _cur_month = _mh.group(1)
+                _rc_data[_cur_month] = {}
+                continue
+            if _cur_month and '|' in _line and not _line.startswith('| 基金') and not _line.startswith('|---'):
+                _cells = [c.strip() for c in _line.split('|') if c.strip()]
+                if len(_cells) >= 3:
+                    _name = _cells[0].strip()
+                    _ex = re.sub(r'\([^)]*\)', '', _cells[1]).strip()
+                    _t4 = re.sub(r'\([^)]*\)', '', _cells[2]).strip()
+                    _rc_data[_cur_month][_name] = {'除息日': _ex, 'T+4': _t4}
     except:
         pass
+    # 基金順序
+    _rc_funds = ['摩根JPM', '安聯收益成長', 'M&G入息', '安聯AI收益', '貝萊德A10']
+    _rc_months = ['8', '9', '10', '11', '12']
+    # 動態生成行事曆表格
+    _rc_rows = ""
+    for _f in _rc_funds:
+        _rc_rows += f"          <tr><td>{_f}</td>"
+        for _m in _rc_months:
+            _d = _rc_data.get(_m, {}).get(_f, {})
+            _ex = _d.get('除息日', '')
+            _t4 = _d.get('T+4', '')
+            if _ex and _t4:
+                _rc_rows += f"<td>{_ex}→<strong>{_t4}</strong></td>"
+            else:
+                _rc_rows += "<td>—</td>"
+        _rc_rows += "</tr>"
+    _relay_calendar_html = f"""    <h3>2026 保單基金配息接力行事曆</h3>
+    <div class="table-wrap">
+      <table class="mobile-bordered">
+        <thead><tr><th>基金</th><th>8月</th><th>9月</th><th>10月</th><th>11月</th><th>12月</th></tr></thead>
+        <tbody>
+{_rc_rows}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-sm" style="color:#6e6e73;margin-top:6px">除息日→<strong>T+4轉換截止</strong>。T+4 = 除息日前4工作日。</p>"""
+
     # 找摩根JPM的T+4
     _morgen_t4 = "—"
     if _rc_text:
@@ -472,21 +515,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <div class="label">三站轉換時序監控</div>
     <p class="text-lead"><strong>本月配息合計：{monthly_dividend:,} TWD</strong></p>
     {relay_table}
-
-    <h3>2026 保單基金配息接力行事曆</h3>
-    <div class=\"table-wrap\">
-      <table class=\"mobile-bordered\">
-        <thead><tr><th>基金</th><th>8月</th><th>9月</th><th>10月</th><th>11月</th><th>12月</th></tr></thead>
-        <tbody>
-          <tr><td>摩根JPM</td><td>8/07→<strong>8/03</strong></td><td>9/07→<strong>9/01</strong></td><td>10/07→<strong>10/01</strong></td><td>11/07→<strong>11/03</strong></td><td>12/07→<strong>12/01</strong></td></tr>
-          <tr><td>安聯收益成長</td><td>8/14→<strong>8/10</strong></td><td>9/14→<strong>9/08</strong></td><td>10/14→<strong>10/08</strong></td><td>11/13→<strong>11/09</strong></td><td>12/14→<strong>12/08</strong></td></tr>
-          <tr><td>M&amp;G入息</td><td>8/21→<strong>8/17</strong></td><td>9/18→<strong>9/14</strong></td><td>10/16→<strong>10/12</strong></td><td>11/20→<strong>11/16</strong></td><td>12/18→<strong>12/14</strong></td></tr>
-          <tr><td>安聯AI收益</td><td>8/27→<strong>8/21</strong></td><td>9/24→<strong>9/18</strong></td><td>10/28→<strong>10/22</strong></td><td>11/25→<strong>11/19</strong></td><td>12/29→<strong>12/23</strong></td></tr>
-          <tr><td>貝萊德A10</td><td>8/28→<strong>8/24</strong></td><td>9/29→<strong>9/23</strong></td><td>10/29→<strong>10/23</strong></td><td>11/27→<strong>11/23</strong></td><td>12/30→<strong>12/24</strong></td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="text-sm" style="color:#6e6e73;margin-top:6px">除息日→<strong>T+4轉換截止</strong>。T+4 = 除息日前4工作日，須在此日前申請轉換。</p>
+    {_relay_calendar_html}
 
     <h3>保單成分穿透</h3>
     <h3>安聯 A+B 合併帳戶（成本 8,000,000 / 現值 {allianz:,}）</h3>
