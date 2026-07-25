@@ -1125,6 +1125,15 @@ def main():
         OUT_INDEX.write_text(index_html, encoding="utf-8")
         print(f"[RUN_DAILY] 儀表板產出：{OUT_INDEX}")
 
+    # === 寫入記憶 ===
+    try:
+        from memory_helper import add_memory
+        _pen = _snap.get("penetration", {}).get("actual_twd", {})
+        add_memory("Hermes", f"日報{TODAY}", f"證券{_snap.get('securities_total_market_value',0):,} 保單{_snap.get('insurance_current_value',0):,} 配息{tv.get('monthly_dividend',0):,}")
+        add_memory("Hermes", f"資產穿透{TODAY}", f"台股{_pen.get('台股市值型成長',0):,} 美股{_pen.get('美股市值型成長',0):,} 防守{_pen.get('防守型配息',0):,} 債券{_pen.get('債券',0):,} 現金{_pen.get('現金/安全網',0):,}")
+    except Exception as _me:
+        print(f"  ⚠️ 記憶寫入失敗: {_me}")
+
 
 
 # ==========================================================================
