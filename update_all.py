@@ -136,6 +136,7 @@ def main():
     snap["allianz_ab_current_value"] = snap.get("allianz_ab_current_value", 7788827)
     snap["allianz_ab"] = snap["allianz_ab_current_value"]
     snap["firstjin_current_value"] = 1958980
+    snap.setdefault("penetration",{})["targets"] = {"台股市值型目標": 35, "美股市值型目標": 30, "配息型目標": 25, "債券型目標": 5, "現金目標": 5}
     snap.setdefault("penetration",{}).setdefault("actual_twd",{}).update(pen)
     # 計算實際佔比（分母=台股+美股+防守+債券+現金，不含不動產）
     _pen_total = sum(pen.values()) or 1
