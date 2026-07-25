@@ -350,11 +350,11 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     body {{ font-size: 15px; padding: 10px; }}
     table {{ font-size: 13px; }}
     th, td {{ padding: 6px 6px !important; }}
-    th:nth-child(2), td:nth-child(2) { max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    th:nth-child(2), td:nth-child(2) {{ max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
     #market-intel-block table th:nth-child(2),
-    #market-intel-block table td:nth-child(2) {
+    #market-intel-block table td:nth-child(2) {{
       display: none !important;
-    }
+    }}
   }}
   table.mobile-bordered {{
     border: 1px solid #d1d5db;
@@ -625,7 +625,7 @@ def _build_market_rows(signals: dict, tv: dict) -> str:
 
 def _format_line_with_numbers(line: str) -> str:
     import re as _nm
-    _b = _nm.sub(r'([0-9,]{1,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c">\\1</strong>', line)
+    _b = _nm.sub(r'([0-9,]{1,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c">\1</strong>', line)
     return _b
 
 def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str = "") -> str:
@@ -769,14 +769,14 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
         buf_content = []
         def _format_line_with_numbers(line):
             import re as _nm
-            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c;">\\\\1</strong>', line)
+            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c;">\\\1</strong>', line)
             return _b
 
         buf_content.append(f'<p><strong>🧓 巴菲特式思考</strong></p>')
         buf_content = []
         def _format_line_with_numbers(line):
             import re as _nm
-            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c">\\1</strong>', line)
+            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c">\1</strong>', line)
             return _b
         if not buf_content:
             buf_content_lines = []
@@ -840,6 +840,40 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
 
     return html
 
+
+
+def _format_content_to_html(text, content_type="market_intel"):
+    _formatted_lines = []
+    if content_type == "market_intel":
+        _known_headers = {"【台股/大盤】", "【美股/外資】", "【CPI/利率】", "【情報訊號】", "【最新市場消息】", "【持倉關聯分析】", "【買進訊號】", "【賣出訊號】"}
+        for _l in text.split("\n"):
+            _l = _l.strip()
+            if not _l:
+                continue
+            _header = _l[:_l.find("】")+1] if "】" in _l else ""
+            if _header in _known_headers:
+                _rest = _l[len(_header):].strip()
+                _formatted_lines.append(f"<p><strong>{_header}</strong>{' '+_rest if _rest else ''}</p>")
+            elif _l.startswith("•"):
+                _formatted_lines.append(f"<p style=\"margin-left:12px\">{_l}</p>")
+            else:
+                _formatted_lines.append(f"<p>{_l}</p>")
+    elif content_type == "emergency_analysis":
+        import re as _nm # This import needs to be handled carefully if it's not global
+        for _analysis_line in text.split('\n'):
+            _trimmed_line = _analysis_line.strip()
+            if not _trimmed_line:
+                _formatted_lines.append('<p></p>')
+            elif _trimmed_line.startswith('━'):
+                _formatted_lines.append('<hr>')
+            elif _trimmed_line.startswith('•') or _trimmed_line.startswith('🔥'):
+                _formatted_lines.append(f'<span style=\"display:block\">{_trimmed_line}</span>')
+            elif _trimmed_line.startswith('【') and _trimmed_line.endswith('】'):
+                _formatted_lines.append(f'<strong>{_trimmed_line}</strong>')
+            else:
+                _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%)', r'<strong style=\"color:#c2410c\">\1</strong>', _trimmed_line)
+                _formatted_lines.append(f'<span>{_b}</span>')
+    return "\n".join(_formatted_lines)
 
 def main():
     print(f"[RUN_DAILY] 日期：{TODAY}")
@@ -947,38 +981,6 @@ def main():
             if _cc_rows:
                 _mb_cc_rows = "\n".join(_cc_rows)
     except: pass
-def _format_content_to_html(text, content_type="market_intel"):
-    _formatted_lines = []
-    if content_type == "market_intel":
-        _known_headers = {"【台股/大盤】", "【美股/外資】", "【CPI/利率】", "【情報訊號】", "【最新市場消息】", "【持倉關聯分析】", "【買進訊號】", "【賣出訊號】"}
-        for _l in text.split("\n"):
-            _l = _l.strip()
-            if not _l:
-                continue
-            _header = _l[:_l.find("】")+1] if "】" in _l else ""
-            if _header in _known_headers:
-                _rest = _l[len(_header):].strip()
-                _formatted_lines.append(f"<p><strong>{_header}</strong>{' '+_rest if _rest else ''}</p>")
-            elif _l.startswith("•"):
-                _formatted_lines.append(f"<p style=\"margin-left:12px\">{_l}</p>")
-            else:
-                _formatted_lines.append(f"<p>{_l}</p>")
-    elif content_type == "emergency_analysis":
-        import re as _nm # This import needs to be handled carefully if it's not global
-        for _analysis_line in text.split('\n'):
-            _trimmed_line = _analysis_line.strip()
-            if not _trimmed_line:
-                _formatted_lines.append('<p></p>')
-            elif _trimmed_line.startswith('━'):
-                _formatted_lines.append('<hr>')
-            elif _trimmed_line.startswith('•') or _trimmed_line.startswith('🔥'):
-                _formatted_lines.append(f'<span style=\"display:block\">{_trimmed_line}</span>')
-            elif _trimmed_line.startswith('【') and _trimmed_line.endswith('】'):
-                _formatted_lines.append(f'<strong>{_trimmed_line}</strong>')
-            else:
-                _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%)', r'<strong style=\"color:#c2410c\">\\1</strong>', _trimmed_line)
-                _formatted_lines.append(f'<span>{_b}</span>')
-    return "\n".join(_formatted_lines)
 
     market_intel_text = _format_content_to_html(market_intel_text, content_type="market_intel")
 
@@ -991,8 +993,14 @@ def _format_content_to_html(text, content_type="market_intel"):
             emergency_data = json.loads(emergency_json_path.read_text(encoding='utf-8'))
             analysis_content = emergency_data.get("full_report", emergency_data.get("analysis", ""))
             _report_html = _format_content_to_html(analysis_content, content_type="emergency_analysis")
+            # 從 JSON 取出報告日期，製作動態連結
+            _er_date = emergency_data.get("generated_at", "")[:10]
+            _er_link = f"https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_{_er_date}.html"
             llm_emergency_analysis_html = f"""<div class="callout callout-warn">
             {_report_html}
+            <p style="margin-top:8px;text-align:right;font-size:13px">
+              <a href="{_er_link}" target="_blank" style="color:#2563eb">📄 查看完整緊急應變報告 →</a>
+            </p>
             </div>"""
         except Exception as _exc:
             print(f"[WARN] load emergency_llm_analysis.json failed: {_exc}")
