@@ -122,8 +122,17 @@ def calibrate_sources() -> dict:
         items = _etf_div.get(status_key, {})
         for ticker, info in items.items():
             _ex = info.get("除息日") or info.get("預計除息", "")
+            # 自動加星期
+            try:
+                _ex_dt = datetime.strptime(f"2026/{_ex.replace('月初','')}", "%Y/%m/%d") if '/' in _ex else None
+                _ex = f"{_ex}({['一','二','三','四','五','六','日'][_ex_dt.weekday()]})" if _ex_dt else _ex
+            except: pass
             _dv = f"{info.get('配息','')}元" if info.get('配息') else "-"
             _pay = info.get("發放日", "")
+            try:
+                _pay_dt = datetime.strptime(f"2026/{_pay}", "%Y/%m/%d") if '/' in _pay else None
+                _pay = f"{_pay}({['一','二','三','四','五','六','日'][_pay_dt.weekday()]})" if _pay_dt else _pay
+            except: pass
             _etf_table += f"<tr><td>{ticker}</td><td>{status_label}</td><td>{_ex}</td><td>{_dv}</td><td>{_pay}</td></tr>"
     _etf_table += "</tbody></table>"
     
