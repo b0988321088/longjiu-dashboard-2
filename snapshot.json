@@ -663,7 +663,7 @@
       "保單B 安聯": 5994
     }
   },
-  "monthly_dividend": 107471,
+  "monthly_dividend": 118296,
   "actual_fj33_dividend": 9356,
   "policy_a_total": 4992334,
   "policy_b_total": 2681959,
@@ -672,7 +672,7 @@
   "allianz_ab_book_value": 7843892,
   "policy_a_cumulative_dividend": 943850,
   "policy_b_cumulative_dividend": 687112,
-  "allianz_ab_monthly": 73167,
+  "allianz_ab_monthly": 95347,
   "firstjin_monthly": 22949,
   "firstjin_dividend": 22949,
   "allianz_cost": 8000000,
@@ -688,12 +688,13 @@
   "cash_total": 3614169,
   "bonds_cash": 10262984,
   "monthly_dividend_breakdown": {
-    "allianz": 73167,
+    "allianz": 95347,
     "firstjin": 22949,
     "fund": 615,
     "etf": 10740,
-    "total": 107471,
-    "note": "安聯App截圖+第一金月配+FJ33/FR55+MB明細基金+MB明細ETF"
+    "total": 129651,
+    "note": "安聯App截圖+第一金月配+FJ33/FR55+MB明細基金+MB明細ETF",
+    "insurance": 118296
   },
   "market": {
     "twii": "44,825.78 (+1.34%)"
