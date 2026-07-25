@@ -137,6 +137,15 @@ def main():
     snap["allianz_ab"] = snap["allianz_ab_current_value"]
     snap["firstjin_current_value"] = 1958980
     snap.setdefault("penetration",{}).setdefault("actual_twd",{}).update(pen)
+    # 計算實際佔比（分母=台股+美股+防守+債券+現金，不含不動產）
+    _pen_total = sum(pen.values()) or 1
+    snap.setdefault("penetration",{})["actual_pct"] = {
+        "台股市值型成長": round(pen["台股市值型成長"] / _pen_total * 100, 1),
+        "美股市值型成長": round(pen["美股市值型成長"] / _pen_total * 100, 1),
+        "防守型配息": round(pen["防守型配息"] / _pen_total * 100, 1),
+        "債券": round(pen["債券"] / _pen_total * 100, 1),
+        "現金/安全網": round(pen["現金/安全網"] / _pen_total * 100, 1),
+    }
     save_json(SNAP, snap)
     db = sqlite3.connect(str(DB))
     # 檢查是否跟最後一筆相同（週末/休市自動跳過）
