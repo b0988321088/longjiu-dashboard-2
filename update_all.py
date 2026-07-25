@@ -110,18 +110,32 @@ def main():
     snap.setdefault("penetration",{}).setdefault("actual_twd",{}).update(pen)
     save_json(SNAP, snap)
     db = sqlite3.connect(str(DB))
-    db.execute("UPDATE assets SET cash_total=?, securities=?, insurance=?, funds=?, bonds=0, total_assets=?, total_liabilities=? WHERE date=?",
-        (args["cash"], args["sec"], args["ins"], args["funds"], total, snap.get("total_liabilities",0), TODAY))
-    if db.total_changes == 0:
-        db.execute("INSERT INTO assets(date,cash_total,securities,insurance,funds,bonds,total_assets,total_liabilities) VALUES(?,?,?,?,?,0,?,?)",
-            (TODAY, args["cash"], args["sec"], args["ins"], args["funds"], total, snap.get("total_liabilities",0)))
+    # 檢查是否跟最後一筆相同（週末/休市自動跳過）
+    _last_db = db.execute("SELECT date, cash_total, securities, insurance, funds FROM assets ORDER BY date DESC LIMIT 1").fetchone()
+    _db_same = _last_db and _last_db[1] == args["cash"] and _last_db[2] == args["sec"] and _last_db[3] == args["ins"] and _last_db[4] == args["funds"]
+    if _db_same and _last_db[0] != TODAY:
+        print(f"  ℹ️ DB 無變化（同 {_last_db[0]}），跳過寫入")
+    else:
+        db.execute("UPDATE assets SET cash_total=?, securities=?, insurance=?, funds=?, bonds=0, total_assets=?, total_liabilities=? WHERE date=?",
+            (args["cash"], args["sec"], args["ins"], args["funds"], total, snap.get("total_liabilities",0), TODAY))
+        if db.total_changes == 0:
+            db.execute("INSERT INTO assets(date,cash_total,securities,insurance,funds,bonds,total_assets,total_liabilities) VALUES(?,?,?,?,?,0,?,?)",
+                (TODAY, args["cash"], args["sec"], args["ins"], args["funds"], total, snap.get("total_liabilities",0)))
     db.commit(); db.close()
     hist = load_json(HIST)
-    hist.setdefault(TODAY, {}).update({"cash": args["cash"], "securities_market": args["sec"],
-        "insurance_current": args["ins"], "fund_market": args["funds"], "total_assets": total, "net_worth": net,
-        "insurance_detail": {"安聯保單A+B 現值": float(snap["allianz_ab_current_value"]),
-            "第一金保單 FL65 現值": 1958980.0, "保單總現値": float(args["ins"])}})
-    save_json(HIST, hist)
+    # 如果今天數據跟最後一筆相同，不重複記錄（週末/休市自動跳過）
+    _last_date = sorted(hist.keys())[-1] if hist else None
+    _last = hist.get(_last_date, {}) if _last_date else {}
+    _same = (_last.get("cash") == args["cash"] and _last.get("securities_market") == args["sec"]
+             and _last.get("insurance_current") == args["ins"] and _last.get("fund_market") == args["funds"])
+    if _same and _last_date != TODAY:
+        print(f"  ℹ️ 數據無變化（同 {_last_date}），跳過新增記錄")
+    else:
+        hist.setdefault(TODAY, {}).update({"cash": args["cash"], "securities_market": args["sec"],
+            "insurance_current": args["ins"], "fund_market": args["funds"], "total_assets": total, "net_worth": net,
+            "insurance_detail": {"安聯保單A+B 現值": float(snap["allianz_ab_current_value"]),
+                "第一金保單 FL65 現值": 1958980.0, "保單總現値": float(args["ins"])}})
+        save_json(HIST, hist)
     print(f"  ✅ 現金={args['cash']:,}  保險={args['ins']:,}  證券={args['sec']:,}  基金={args['funds']:,}")
     print(f"  總資產={total:,}")
     # === 串聯產出管線（不可中斷）===
