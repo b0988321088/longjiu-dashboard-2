@@ -1,1 +1,1 @@
-web: python decision_webhook.py
+web: python report_server.py
