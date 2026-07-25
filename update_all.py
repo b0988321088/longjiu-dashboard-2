@@ -54,6 +54,19 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         ins_eq = int(ins) - ins_bonds - 1_958_980
     tw = round(sec * 0.97) + funds
     us = round(sec * 0.03) + ins_eq
+    # 用 snapshot holdings 精算台/美股比例（取代固定97/3）
+    try:
+        _sec_holdings = (snap or {}).get("securities", {}).get("holdings", [])
+        if _sec_holdings:
+            _us_tickers = {"00646", "009823", "009824"}
+            _us_v = sum(h["shares"] * h.get("price", 30) for h in _sec_holdings if h.get("ticker") in _us_tickers) or 1
+            _total_v = sum(h["shares"] * h.get("price", 30) for h in _sec_holdings) or 1
+            _us_pct = _us_v / _total_v
+            _tw_pct = 1 - _us_pct
+            tw = round(sec * _tw_pct) + funds
+            us = round(sec * _us_pct) + ins_eq
+    except:
+        pass
     total = cash + ins + sec + funds
     c = cash + total - (tw + us + 1_958_980 + ins_bonds + cash)
     return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": 1_958_980, "債券": ins_bonds, "現金/安全網": c}
