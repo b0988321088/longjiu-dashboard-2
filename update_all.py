@@ -114,7 +114,7 @@ def main():
         _etf = _bd.get("etf", 10740)
         _fund = _bd.get("fund", 615)
         _expected_ins = _az + _fj
-        if _bd.get("allianz", 0) != _az or _bd.get("insurance", 0) != _expected_ins or snap.get("monthly_dividend", 0) != _expected_ins + _etf + _fund:
+        if _bd.get("allianz", 0) != _az or _bd.get("insurance", 0) != _expected_ins:
             _bd["allianz"] = _az
             _bd["firstjin"] = _fj
             _bd["insurance"] = _expected_ins
@@ -122,7 +122,8 @@ def main():
             _bd["fund"] = _fund
             _bd["total"] = _expected_ins + _etf + _fund
             snap["monthly_dividend_breakdown"] = _bd
-            snap["monthly_dividend"] = _expected_ins + _etf + _fund
+            snap["monthly_dividend_total"] = _expected_ins + _etf + _fund  # 總額（含ETF+基金）
+            snap["monthly_dividend"] = _expected_ins  # 保險配息（不含ETF+基金）
             save_json(SNAP, snap)
             print(f"  ✅ 配息資料自動校驗完成（allianz={_az:,} + firstjin={_fj:,} = {_expected_ins:,}）")
     except Exception as _de:
@@ -133,9 +134,9 @@ def main():
     snap.update({"real_liquid_assets": args["cash"], "insurance_current_value": args["ins"],
         "securities_total_market_value": args["sec"], "fund_market_value": args["funds"],
         "total_assets": total, "net_worth": net})
-    snap["allianz_ab_current_value"] = snap.get("allianz_ab_current_value", 7788827)
+    snap["allianz_ab_current_value"] = snap.get("allianz_a_current_value", 0) + snap.get("allianz_b_current_value", 0) or snap.get("allianz_ab_current_value", sn_a := snap.get("allianz_ab", 0) or sum(snap.get("allianz_a_breakdown", {}).values()) + sum(snap.get("allianz_b_breakdown", {}).values()))
     snap["allianz_ab"] = snap["allianz_ab_current_value"]
-    snap["firstjin_current_value"] = 1958980
+    snap["firstjin_current_value"] = snap.get("firstjin_current_value", sn_f := snap.get("firstjin_fl65_value", 1958980) or 1958980)
     snap.setdefault("penetration",{})["targets"] = {"台股市值型目標": 35, "美股市值型目標": 30, "配息型目標": 25, "債券型目標": 5, "現金目標": 5}
     snap.setdefault("penetration",{}).setdefault("actual_twd",{}).update(pen)
     # 計算實際佔比（分母=台股+美股+防守+債券+現金，不含不動產）

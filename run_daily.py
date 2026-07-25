@@ -105,11 +105,10 @@ def calibrate_sources() -> dict:
         sys.exit(2)
 
     print(f"[CALIBRATE] 三源校準通過")
-    # 真值錨定：本月保單配息（缺 snapshot 欄位時由真值計算）
+    # 真值錨定：本月保單配息（從 snapshot allianz_ab_monthly + firstjin_monthly 動態計算）
     monthly_dividend = snap.get("monthly_dividend")
     if monthly_dividend is None:
-        # 保守回退：安聯 A+B + 第一金月配
-        monthly_dividend = (snap.get("allianz_ab_monthly", 73_167) or 55_451) + (snap.get("firstjin_monthly", 22_949) or 13_593)
+        monthly_dividend = (snap.get("allianz_ab_monthly", 0) or 0) + (snap.get("firstjin_monthly", 0) or 0)
 
     # 從 monthly_dividend_breakdown 取得證券、基金配息及下次除息資訊
     dividend_breakdown = snap.get("monthly_dividend_breakdown", {})
