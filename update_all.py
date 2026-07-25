@@ -40,9 +40,18 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         ins_bonds = sum(round(fv[n] * fund_ratios.get(n, 0)) for n in fv)
         ins_eq = int(ins) - ins_bonds - 1_958_980
     else:
-        print("  ⚠️ Warning: calc_penetration() fallback to 0 for insurance funds. Please provide bond_portion or fund_ratios.")
-        ins_bonds = 0
-        ins_eq = 0
+        # 從 snapshot 動態讀取 + 預設債券比率（安聯收益35%, M&G 55%, AI收益50%）
+        if snap:
+            _a = snap.get("allianz_a_breakdown", {})
+            _b = snap.get("allianz_b_breakdown", {})
+            fv = {}
+            for k in list(dict.fromkeys(list(_a.keys()) + list(_b.keys()))):
+                fv[k] = _a.get(k, 0) + _b.get(k, 0)
+            _br = {"安聯收益成長": 0.35, "M&G入息": 0.55, "安聯AI收益成長": 0.50}
+            ins_bonds = sum(round(fv[n] * _br.get(n, 0)) for n in fv)
+        else:
+            ins_bonds = round(2_780_466*0.35 + 3_136_436*0.55 + 902_679*0.50)
+        ins_eq = int(ins) - ins_bonds - 1_958_980
     tw = round(sec * 0.97) + funds
     us = round(sec * 0.03) + ins_eq
     total = cash + ins + sec + funds
@@ -107,7 +116,7 @@ def main():
     if "--check" in sys.argv or "--check_fund" in sys.argv:
         if "--check_fund" in sys.argv:
             fv = {"安聯收益成長": 2_780_466, "M&G入息": 3_136_436, "安聯AI收益成長": 902_679, "貝萊德科技A10": 964_495, "聯博美國成長": 4_751}
-            fr = args.get("fund_ratios", {"安聯收益成長":0.55, "M&G入息":0.65, "安聯AI收益成長":0.40, "貝萊德科技A10":0.0, "聯博美國成長":0.0})
+            fr = args.get("fund_ratios", {"安聯收益成長":0.35, "M&G入息":0.55, "安聯AI收益成長":0.50, "貝萊德科技A10":0.0, "聯博美國成長":0.0})
             tb = sum(round(fv[n]*fr.get(n,0)) for n in fv)
             te = sum(fv[n] for n in fv) - tb
             ok = "✅" if abs(tb+te+1_958_980-sum(fv.values())-1_958_980) < 100 else "❌"
