@@ -189,8 +189,8 @@ def extract_snapshot(snap: dict) -> dict:
                     "insurance_detail": insurance_detail_from_db,
                     "fund_dividend_monthly": float(
                         snap.get(
-                            "fund_dividend_monthly",
-                            _ir.get("dividend_total", 69_044) if _ir else 69_044,
+                            "monthly_dividend_total",
+                            snap.get("monthly_dividend_breakdown", {}).get("total", 118296),
                         )
                     ),
                     "fund_dividend_conservative": float(
@@ -198,7 +198,7 @@ def extract_snapshot(snap: dict) -> dict:
                             "passive_income", {}
                         ).get(
                             "fund_dividend_conservative",
-                            _ir.get("dividend_total", 69_044) if _ir else 69_044,
+                            snap.get("monthly_dividend_total", snap.get("monthly_dividend_breakdown", {}).get("total", 118296)),
                         )
                     ),
                     "monthly_income": float(
@@ -268,8 +268,8 @@ def extract_snapshot(snap: dict) -> dict:
         "other": float(other),
         "cash": float(cash),
         "insurance_detail": insurance_detail,
-        "fund_dividend_monthly": float(snap.get("fund_dividend_monthly", 0)),
-        "fund_dividend_conservative": float(snap.get("passive_income", {}).get("fund_dividend_conservative", snap.get("fund_dividend_monthly", 0))),
+        "fund_dividend_monthly": float(snap.get("monthly_dividend_total", snap.get("monthly_dividend_breakdown", {}).get("total", 0)) or 0),
+        "fund_dividend_conservative": float(snap.get("passive_income", {}).get("fund_dividend_conservative", snap.get("monthly_dividend_total", snap.get("monthly_dividend_breakdown", {}).get("total", 0)) or 0)),
         "monthly_income": float(snap.get("monthly_income", 218102)),
         "monthly_expense": float(snap.get("monthly_expense", snap.get("monthly_expense_mb", 141958))),
         "rent_monthly": float(snap.get("rent_monthly_actual", 80100)),
@@ -309,7 +309,7 @@ def load_history(snap=None) -> dict:
                 "bonds": float(r.get("bonds", 0)),
                 "other": 0.0,
                 "insurance_detail": {"【安聯保單A】現值": snap.get("allianz_policy_a_value", 5_079_576), **{"  A-"+k: v for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": snap.get("allianz_policy_b_value", 2_728_721), **{"  B-"+k: v for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": snap.get("allianz_ab_current_value", 7_788_827), "━第一金FL65現値": snap.get("firstjin_current_value", 1_958_980), "━保單總現値": snap.get("insurance_current_value", 9_747_807)},
-                "fund_dividend_monthly": 107_116.0,
+                "fund_dividend_monthly": float(snap.get("monthly_dividend_total", snap.get("monthly_dividend_breakdown", {}).get("total", 0)) or 129651),
                 "monthly_income": 218_102.0,
                 "monthly_expense": 141_958.0,
                 "rent_monthly": 80_100.0,
