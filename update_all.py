@@ -108,22 +108,29 @@ def main():
         return
     # === 配息資料自動校驗（確保 snapshot 內所有配息值一致）===
     try:
-        _az = snap.get("allianz_ab_monthly", 73167) or 73167
-        _fj = snap.get("firstjin_monthly", 22949) or 22949
+        _az = snap.get("allianz_ab_monthly", 0) or 0
+        _fj = snap.get("firstjin_monthly", 0) or 0
         _bd = snap.get("monthly_dividend_breakdown", {})
         _etf = _bd.get("etf", 10740)
         _fund = _bd.get("fund", 615)
         _expected_ins = _az + _fj
-        if _bd.get("allianz", 0) != _az or _bd.get("insurance", 0) != _expected_ins:
+        _expected_total = _expected_ins + _etf + _fund
+        if _bd.get("allianz", 0) != _az or _bd.get("insurance", 0) != _expected_ins or snap.get("monthly_dividend_total", 0) != _expected_total:
             _bd["allianz"] = _az
             _bd["firstjin"] = _fj
             _bd["insurance"] = _expected_ins
             _bd["etf"] = _etf
             _bd["fund"] = _fund
-            _bd["total"] = _expected_ins + _etf + _fund
+            _bd["total"] = _expected_total
             snap["monthly_dividend_breakdown"] = _bd
-            snap["monthly_dividend_total"] = _expected_ins + _etf + _fund  # 總額（含ETF+基金）
             snap["monthly_dividend"] = _expected_ins  # 保險配息（不含ETF+基金）
+            snap["monthly_dividend_total"] = _expected_total  # 總額（含ETF+基金）
+            # 同步 passive_income 保守值
+            _pi = snap.get("passive_income", {})
+            _pi["fund_dividend_conservative"] = _expected_ins
+            _pi["total_conservative"] = _expected_ins + _pi.get("rent_monthly", 80100)
+            _pi["coverage_pct"] = round(_pi["total_conservative"] / _pi.get("monthly_expense", 141958) * 100, 1)
+            snap["passive_income"] = _pi
             save_json(SNAP, snap)
             print(f"  ✅ 配息資料自動校驗完成（allianz={_az:,} + firstjin={_fj:,} = {_expected_ins:,}）")
     except Exception as _de:
