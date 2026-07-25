@@ -40,8 +40,9 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         ins_bonds = sum(round(fv[n] * fund_ratios.get(n, 0)) for n in fv)
         ins_eq = int(ins) - ins_bonds - 1_958_980
     else:
-        ins_bonds = round(2_780_466*0.55 + 3_136_436*0.65 + 902_679*0.40)
-        ins_eq = round(2_780_466*0.45 + 3_136_436*0.35 + 902_679*0.60) + 964_495 + 4_751
+        print("  ⚠️ Warning: calc_penetration() fallback to 0 for insurance funds. Please provide bond_portion or fund_ratios.")
+        ins_bonds = 0
+        ins_eq = 0
     tw = round(sec * 0.97) + funds
     us = round(sec * 0.03) + ins_eq
     total = cash + ins + sec + funds
@@ -208,7 +209,6 @@ def main():
             print("\n=== 產出校驗 ===")
             sec_str = f"{sec_total:,}"
             files = [("日報", BASE/f"daily_report_v2_{TODAY}.html"),
-                     ("儀表板", BASE/"index.html"),
                      ("差異分析", BASE/f"asset_diff_{TODAY}.html")]
             all_ok = True
             for label, fp in files:

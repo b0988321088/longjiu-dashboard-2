@@ -105,10 +105,11 @@ def calibrate_sources() -> dict:
         sys.exit(2)
 
     print(f"[CALIBRATE] 三源校準通過")
-    # 真值錨定：本月保單配息（從 snapshot allianz_ab_monthly + firstjin_monthly 動態計算）
+    # 真值錨定：本月保單配息（缺 snapshot 欄位時由真值計算）
     monthly_dividend = snap.get("monthly_dividend")
     if monthly_dividend is None:
-        monthly_dividend = (snap.get("allianz_ab_monthly", 0) or 0) + (snap.get("firstjin_monthly", 0) or 0)
+        # 保守回退：安聯 A+B + 第一金月配
+        monthly_dividend = (snap.get("allianz_ab_monthly", 73_167) or 55_451) + (snap.get("firstjin_monthly", 22_949) or 13_593)
 
     # 從 monthly_dividend_breakdown 取得證券、基金配息及下次除息資訊
     dividend_breakdown = snap.get("monthly_dividend_breakdown", {})
@@ -122,17 +123,8 @@ def calibrate_sources() -> dict:
         items = _etf_div.get(status_key, {})
         for ticker, info in items.items():
             _ex = info.get("除息日") or info.get("預計除息", "")
-            # 自動加星期
-            try:
-                _ex_dt = datetime.strptime(f"2026/{_ex.replace('月初','')}", "%Y/%m/%d") if '/' in _ex else None
-                _ex = f"{_ex}({['一','二','三','四','五','六','日'][_ex_dt.weekday()]})" if _ex_dt else _ex
-            except: pass
             _dv = f"{info.get('配息','')}元" if info.get('配息') else "-"
             _pay = info.get("發放日", "")
-            try:
-                _pay_dt = datetime.strptime(f"2026/{_pay}", "%Y/%m/%d") if '/' in _pay else None
-                _pay = f"{_pay}({['一','二','三','四','五','六','日'][_pay_dt.weekday()]})" if _pay_dt else _pay
-            except: pass
             _etf_table += f"<tr><td>{ticker}</td><td>{status_label}</td><td>{_ex}</td><td>{_dv}</td><td>{_pay}</td></tr>"
     _etf_table += "</tbody></table>"
     
@@ -171,7 +163,7 @@ def calibrate_sources() -> dict:
         "insurance_dividend": dividend_breakdown.get("allianz", 0) + dividend_breakdown.get("firstjin", 0),
         "allianz_dividend": snap.get("allianz_ab_monthly", 73_167),
         "firstjin_dividend": snap.get("firstjin_monthly", 22_949),
-        "relay_stations": snap.get("relay_stations", {}),
+        "relay_stations": 3,
         "cc_4cards": ["玉山UNI", "台新Richart", "永豐SPORT", "台北富邦momo/J"],
         "loans_2mortgage": ["洲際W房貸", "理財型利息（房貸已清償）"],
         "total_assets": total_assets,
@@ -257,76 +249,16 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     if tv['pledge_loan'] > 0:
         loans_rows_html += f"""          <tr><td>—</td><td>證券質押</td><td>—</td><td class="num">{tv['pledge_loan']:,}</td><td>—</td></tr>\n"""
 
-    # 從 relay_calendar.md 取得 T+4 轉換截止日 & 完整行事曆
-    _rc_text = ""
-    _rc_data = {}  # {月份: {基金: {除息日, T+4}}}
-    try:
-        _rc_text = open(BASE / "relay_calendar.md", encoding="utf-8").read()
-        # 解析行事曆
-        _cur_month = None
-        for _line in _rc_text.splitlines():
-            _mh = re.match(r'##\s*(\d+)月', _line)
-            if _mh:
-                _cur_month = _mh.group(1)
-                _rc_data[_cur_month] = {}
-                continue
-            if _cur_month and '|' in _line and not _line.startswith('| 基金') and not _line.startswith('|---'):
-                _cells = [c.strip() for c in _line.split('|') if c.strip()]
-                if len(_cells) >= 3:
-                    _name = _cells[0].strip()
-                    _ex = re.sub(r'\([^)]*\)', '', _cells[1]).strip()
-                    _t4 = re.sub(r'\([^)]*\)', '', _cells[2]).strip()
-                    _rc_data[_cur_month][_name] = {'除息日': _ex, 'T+4': _t4}
-    except:
-        pass
-    # 基金順序
-    _rc_funds = ['摩根JPM', '安聯收益成長', 'M&G入息', '安聯AI收益', '貝萊德A10']
-    _rc_months = ['8', '9', '10', '11', '12']
-    # 動態生成行事曆表格
-    _rc_rows = ""
-    for _f in _rc_funds:
-        _rc_rows += f"          <tr><td>{_f}</td>"
-        for _m in _rc_months:
-            _d = _rc_data.get(_m, {}).get(_f, {})
-            _ex = _d.get('除息日', '')
-            _t4 = _d.get('T+4', '')
-            if _ex and _t4:
-                _rc_rows += f"<td>{_ex}→<strong>{_t4}</strong></td>"
-            else:
-                _rc_rows += "<td>—</td>"
-        _rc_rows += "</tr>"
-    _relay_calendar_html = f"""    <h3>2026 保單基金配息接力行事曆</h3>
-    <div class="table-wrap">
-      <table class="mobile-bordered">
-        <thead><tr><th>基金</th><th>8月</th><th>9月</th><th>10月</th><th>11月</th><th>12月</th></tr></thead>
-        <tbody>
-{_rc_rows}
-        </tbody>
-      </table>
-    </div>
-    <p class="text-sm" style="color:#6e6e73;margin-top:6px">除息日→<strong>T+4轉換截止</strong>。T+4 = 除息日前4工作日。</p>"""
-    _rc_rows = ""
-    # 從 snapshot relay_stations 動態生成接力站表
-    _stations = tv.get("relay_stations", {})
-    _station_icons = {'已配息': '✅', '轉換完成': '✅', '轉換中': '🔄', '待執行': '⏳', '等待': '⏸️'}
-    _station_rows = ""
-    for _sn, _sd in _stations.items():
-        _st = _sd.get("狀態", "")
-        _icon = ""
-        for _k, _v in _station_icons.items():
-            if _k in _st:
-                _icon = _v
-                break
-        _t4 = _sd.get("轉換截止", "—")
-        _deadline = f"⚠️ {_t4}" if "⚠️" in str(_t4) or any(x in str(_t4) for x in ["7/23","7/24"]) else _t4
-        _station_rows += f"""          <tr><td>{_sn}</td><td>{_sd.get("流向","")}</td><td>{_sd.get("基準日","")}</td><td>{_deadline}</td><td>{_sd.get("預估入帳","")}</td><td>{_icon} {_st}</td></tr>"""
+    # 從 relay_calendar.md 取得 T+4 轉換截止日
     relay_table = f"""<div class="table-wrap">
       <table class="mobile-bordered">
         <thead>
           <tr><th>站別</th><th>流向</th><th>基準日</th><th>轉換截止</th><th>預估入帳</th><th>狀態</th></tr>
         </thead>
         <tbody>
-{_station_rows}
+          <tr><td>第一站</td><td>摩根多重收益（FJ33）→ 安聯收益成長（FL65）</td><td>7/14</td><td>—</td><td>7/19-20</td><td>✅ 已配息/已入帳</td></tr>
+          <tr><td>第二站</td><td>安聯收益成長 + M&amp;G 入息基金</td><td>7/17</td><td>8/10（FL65）<br>8/17（M&amp;G）</td><td>~7/29</td><td>🔄 M&amp;G轉換中（尚未全數到位）</td></tr>
+          <tr><td>第三站</td><td>安聯 AI 收益 + 貝萊德世界科技 A10</td><td>7/29-30</td><td>⚠️ <strong>7/23</strong>（AI）<br><strong>7/24</strong>（A10）</td><td>~8/10</td><td>⏸️ 等待到期（PIMCO已轉出 ✅）</td></tr>
         </tbody>
       </table>
     </div>"""
@@ -504,7 +436,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-lead">保單現值 <strong>{insurance_total:,} TWD</strong>（安聯 A+B {allianz:,} + 第一金 FL65 {firstjin:,}），本月配息合計 <strong>{monthly_dividend:,} TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
 
     <h3>證券曝險</h3>
-    <p class="text-lead">證券總市值 <strong>{tv['securities_total']:,} TWD</strong>（{tv['holdings_count']}檔）。本月已收配息：{tv['sec_dividend_monthly']:,} TWD。前三大：{tv['holdings_top3'][0][0]} {tv['holdings_top3'][0][1]:.1f}%、{tv['holdings_top3'][1][0]} {tv['holdings_top3'][1][1]:.1f}%、{tv['holdings_top3'][2][0]} {tv['holdings_top3'][2][1]:.1f}%。0056 凍結質押中，短期無法加碼。</p>
+    <p class="text-lead">證券總市值 <strong>{tv['securities_total']:,} TWD</strong>（14檔）。本月已收配息：{tv['sec_dividend_monthly']:,} TWD。前三大：{tv['holdings_top3'][0][0]} {tv['holdings_top3'][0][1]:.1f}%、{tv['holdings_top3'][1][0]} {tv['holdings_top3'][1][1]:.1f}%、{tv['holdings_top3'][2][0]} {tv['holdings_top3'][2][1]:.1f}%。0056 凍結質押中，短期無法加碼。</p>
     {tv['etf_div_table']}
 
     <h3>房租金流</h3>
@@ -520,7 +452,6 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <div class="label">三站轉換時序監控</div>
     <p class="text-lead"><strong>本月配息合計：{monthly_dividend:,} TWD</strong></p>
     {relay_table}
-    {_relay_calendar_html}
 
     <h3>保單成分穿透</h3>
     <h3>安聯 A+B 合併帳戶（成本 8,000,000 / 現值 {allianz:,}）</h3>
@@ -694,7 +625,7 @@ def _build_market_rows(signals: dict, tv: dict) -> str:
 
 def _format_line_with_numbers(line: str) -> str:
     import re as _nm
-    _b = _nm.sub(r'([0-9,]{1,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c">\1</strong>', line)
+    _b = _nm.sub(r'([0-9,]{1,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c">\\1</strong>', line)
     return _b
 
 def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str = "") -> str:
@@ -838,14 +769,14 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
         buf_content = []
         def _format_line_with_numbers(line):
             import re as _nm
-            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c;">\\\1</strong>', line)
+            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c;">\\\\1</strong>', line)
             return _b
 
         buf_content.append(f'<p><strong>🧓 巴菲特式思考</strong></p>')
         buf_content = []
         def _format_line_with_numbers(line):
             import re as _nm
-            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c">\1</strong>', line)
+            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c">\\1</strong>', line)
             return _b
         if not buf_content:
             buf_content_lines = []
@@ -909,40 +840,6 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
 
     return html
 
-
-
-def _format_content_to_html(text, content_type="market_intel"):
-    _formatted_lines = []
-    if content_type == "market_intel":
-        _known_headers = {"【台股/大盤】", "【美股/外資】", "【CPI/利率】", "【情報訊號】", "【最新市場消息】", "【持倉關聯分析】", "【買進訊號】", "【賣出訊號】"}
-        for _l in text.split("\n"):
-            _l = _l.strip()
-            if not _l:
-                continue
-            _header = _l[:_l.find("】")+1] if "】" in _l else ""
-            if _header in _known_headers:
-                _rest = _l[len(_header):].strip()
-                _formatted_lines.append(f"<p><strong>{_header}</strong>{' '+_rest if _rest else ''}</p>")
-            elif _l.startswith("•"):
-                _formatted_lines.append(f"<p style=\"margin-left:12px\">{_l}</p>")
-            else:
-                _formatted_lines.append(f"<p>{_l}</p>")
-    elif content_type == "emergency_analysis":
-        import re as _nm # This import needs to be handled carefully if it's not global
-        for _analysis_line in text.split('\n'):
-            _trimmed_line = _analysis_line.strip()
-            if not _trimmed_line:
-                _formatted_lines.append('<p></p>')
-            elif _trimmed_line.startswith('━'):
-                _formatted_lines.append('<hr>')
-            elif _trimmed_line.startswith('•') or _trimmed_line.startswith('🔥'):
-                _formatted_lines.append(f'<span style=\"display:block\">{_trimmed_line}</span>')
-            elif _trimmed_line.startswith('【') and _trimmed_line.endswith('】'):
-                _formatted_lines.append(f'<strong>{_trimmed_line}</strong>')
-            else:
-                _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%)', r'<strong style=\"color:#c2410c\">\1</strong>', _trimmed_line)
-                _formatted_lines.append(f'<span>{_b}</span>')
-    return "\n".join(_formatted_lines)
 
 def main():
     print(f"[RUN_DAILY] 日期：{TODAY}")
@@ -1018,15 +915,12 @@ def main():
         import sqlite3
         _sdb = sqlite3.connect(str(BASE / "dragon_assets.db"))
         _sh = _sdb.execute("SELECT ticker, shares FROM holdings WHERE shares > 0 ORDER BY shares DESC LIMIT 3").fetchall()
-        _cnt = _sdb.execute("SELECT COUNT(*) FROM holdings WHERE shares > 0").fetchone()
         _sdb.close()
         _stotal = sum(v for _, v in _sh) or 1
         _hpct = [round(v / _stotal * 100, 1) for _, v in _sh]
         tv['holdings_top3'] = [(f'{r[0]}', _hpct[i]) for i, r in enumerate(_sh)]
-        tv['holdings_count'] = _cnt[0] if _cnt else len(_sh)
     except:
         tv['holdings_top3'] = [('00878', 15.0), ('009816', 16.6), ('00984A', 10.4)]
-        tv['holdings_count'] = 15
     # 從 MB 最新帳單 CSV 讀取信用卡資料（只取每卡最新一筆）
     _mb_cc_rows = ""
     try:
@@ -1054,6 +948,149 @@ def main():
                 _mb_cc_rows = "\n".join(_cc_rows)
     except: pass
 
+# LLM 緊急應變分析格式化
+def _format_content_to_html(text, content_type="market_intel"):
+    _formatted_lines = []
+    if content_type == "market_intel":
+        _known_headers = {"【台股/大盤】", "【美股/外資】", "【CPI/利率】", "【情報訊號】", "【最新市場消息】", "【持倉關聯分析】", "【買進訊號】", "【賣出訊號】"}
+        for _l in text.split("\n"):
+            _l = _l.strip()
+            if not _l:
+                continue
+            _header = _l[:_l.find("】")+1] if "】" in _l else ""
+            if _header in _known_headers:
+                _rest = _l[len(_header):].strip()
+                _formatted_lines.append(f"<p><strong>{_header}</strong>{' '+_rest if _rest else ''}</p>")
+            elif _l.startswith("•"):
+                _formatted_lines.append(f"<p style=\"margin-left:12px\">{_l}</p>")
+            else:
+                _formatted_lines.append(f"<p>{_l}</p>")
+    elif content_type == "emergency_analysis":
+        import re as _nm # This import needs to be handled carefully if it's not global
+        for _analysis_line in text.split('\n'):
+            _trimmed_line = _analysis_line.strip()
+            if not _trimmed_line:
+                _formatted_lines.append('<p></p>')
+            elif _trimmed_line.startswith('━'):
+                _formatted_lines.append('<hr>')
+            elif _trimmed_line.startswith('•') or _trimmed_line.startswith('🔥'):
+                _formatted_lines.append(f'<span style=\"display:block\">{_trimmed_line}</span>')
+            elif _trimmed_line.startswith('【') and _trimmed_line.endswith('】'):
+                _formatted_lines.append(f'<strong>{_trimmed_line}</strong>')
+            else:
+                _b = _nm.sub(r'([0-9,]{3,}\.?[0-9]*|[+-]?[0-9.]+%)', r'<strong style=\"color:#c2410c\">\\1</strong>', _trimmed_line)
+                _formatted_lines.append(f'<span>{_b}</span>')
+    return "\n".join(_formatted_lines)
+
+
+def main():
+def main():
+    print(f"[RUN_DAILY] 日期：{TODAY}")
+
+    # 校準
+    tv = calibrate_sources()
+    print(f"[RUN_DAILY] 真值：月收 {tv['monthly_income']:,} / 月支 {tv['monthly_expense']:,} / 盈餘 +{tv['working_surplus']:,}")
+
+    # 情報：refresh today's hunter intel
+    intel_result = mi_mod.ensure_today_intel(force_refresh=True)
+    # 彙整所有情報源到 market_intel 表
+    try:
+        from compile_intel import compile_intel
+        compile_intel(force_refresh=True)
+    except Exception:
+        pass
+    # 從 Notion 同步決策（寫入策略檔）
+    try:
+        from notion_bridge import sync_notion_to_local
+        _nr = sync_notion_to_local()
+        if _nr["decisions_imported"] > 0:
+            print(f"[NOTION BRIDGE] 匯入 {_nr['decisions_imported']} 筆決策")
+    except Exception as _e:
+        pass
+    
+    # 確保策略檔有內容（從 Notion 頁面直接讀取 blocks）
+    try:
+        from notion_bridge import read_page_blocks, parse_blocks_to_text
+        _blocks = read_page_blocks("3a4fc735d43381d18a4bfe63e1bd6b2a")
+        _block_text = parse_blocks_to_text(_blocks)
+        if _block_text.strip():
+            _raw_dir = BASE / "notion_bridge"
+            _raw_dir.mkdir(exist_ok=True)
+            (_raw_dir / f"{TODAY}_strategy_handbook.md").write_text(
+                f"# 今日決策摘要\n來源頁面：3a4fc735...\n讀取時間：{__import__('datetime').datetime.now().isoformat()}\n\n{_block_text}",
+                encoding="utf-8"
+            )
+    except: pass
+    
+    # 載入統一市場情報
+    daily_analysis_path = BASE / "daily_analysis.json"
+    market_intel_text = ""
+    if daily_analysis_path.exists():
+        try:
+            daily_analysis_data = json.loads(daily_analysis_path.read_text(encoding='utf-8'))
+            market_intel_text = daily_analysis_data.get("briefing", "")
+        except Exception as _exc:
+            print(f"[WARN] load daily_analysis.json for market briefing failed: {_exc}")
+
+    # Fallback to legacy hunter text if LLM analysis is not available
+    if not market_intel_text:
+        intel_result = mi_mod.ensure_today_intel(force_refresh=True)
+        intel_text = intel_result.get("briefing_text", "") # Get briefing text from daily_intel.py
+        intel_signals = mi_mod.parse_hunter_signals(intel_text)
+    else:
+        # If LLM analysis is present, we still need signals for other parts of the report
+        # For now, we'll try to extract them from the LLM text or use a placeholder.
+
+        # A more robust solution would involve the LLM also outputting structured signals.
+        intel_text = ""
+        intel_signals = {"sell_signals": [], "buy_signals": []}
+
+
+    # 巴菲特/CTO 動態分析（產出報告，供 render_daily_report 讀取）
+    try:
+        from buffett_cto_analyzer import main as buffett_main
+        buffett_main(send=False)  # 產出報告，Telegram 統一由 deploy 發送
+        print("[RUN_DAILY] buffett_cto_analyzer 報告產出完成")
+    except Exception as exc:
+        print(f"[WARN] buffett_cto_analyzer 失敗：{exc}")
+
+    # 證券前三大佔比
+    try:
+        import sqlite3
+        _sdb = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        _sh = _sdb.execute("SELECT ticker, shares FROM holdings WHERE shares > 0 ORDER BY shares DESC LIMIT 3").fetchall()
+        _sdb.close()
+        _stotal = sum(v for _, v in _sh) or 1
+        _hpct = [round(v / _stotal * 100, 1) for _, v in _sh]
+        tv['holdings_top3'] = [(f'{r[0]}', _hpct[i]) for i, r in enumerate(_sh)]
+    except:
+        tv['holdings_top3'] = [('00878', 15.0), ('009816', 16.6), ('00984A', 10.4)]
+    # 從 MB 最新帳單 CSV 讀取信用卡資料（只取每卡最新一筆）
+    _mb_cc_rows = ""
+    try:
+        _mb_dir = BASE / "moneybook"
+        _mb_bill = sorted(_mb_dir.glob("*帳單*.csv"), reverse=True)
+        if _mb_bill:
+            import csv
+            _cc_map = {"玉山銀行": "UNI", "台新銀行": "Richart", "永豐銀行": "SPORT", "台北富邦": "momo / J"}
+            _latest = {}
+            with open(_mb_bill[0], "r", encoding="utf-8-sig") as _f:
+                for _r in csv.DictReader(_f):
+                    _bank = _r.get("金融機構","")
+                    if _bank in _cc_map:
+                        _due = _r.get("繳費截止日","")
+                        _amt = float(_r.get("帳單金額",0))
+                        # 只保留每卡繳費截止日最新的那筆
+                        if _bank not in _latest or _due > _latest[_bank][0]:
+                            _latest[_bank] = (_due, _amt)
+            _cc_rows = []
+            for _bank, (_due, _amt) in _latest.items():
+                if _amt > 0:
+                    _due_md = "/".join(_due.split("/")[1:]) if "/" in _due else _due
+                    _cc_rows.append(f'          <tr><td>{_bank}</td><td>{_cc_map[_bank]}</td><td>{_due_md}</td><td class="num">{int(_amt):,}</td><td>🔄 待扣繳</td></tr>')
+            if _cc_rows:
+                _mb_cc_rows = "\n".join(_cc_rows)
+    except: pass
     market_intel_text = _format_content_to_html(market_intel_text, content_type="market_intel")
 
     # 日報
@@ -1065,14 +1102,8 @@ def main():
             emergency_data = json.loads(emergency_json_path.read_text(encoding='utf-8'))
             analysis_content = emergency_data.get("full_report", emergency_data.get("analysis", ""))
             _report_html = _format_content_to_html(analysis_content, content_type="emergency_analysis")
-            # 從 JSON 取出報告日期，製作動態連結
-            _er_date = emergency_data.get("generated_at", "")[:10]
-            _er_link = f"https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_{_er_date}.html"
             llm_emergency_analysis_html = f"""<div class="callout callout-warn">
             {_report_html}
-            <p style="margin-top:8px;text-align:right;font-size:13px">
-              <a href="{_er_link}" target="_blank" style="color:#2563eb">📄 查看完整緊急應變報告 →</a>
-            </p>
             </div>"""
         except Exception as _exc:
             print(f"[WARN] load emergency_llm_analysis.json failed: {_exc}")
@@ -1092,11 +1123,10 @@ def main():
     _bond_v = _atwd.get("債券", 0)
     _cash_v = _atwd.get("現金/安全網", 0)
     for k, v in [("__DR_TW_V__",f"{_tw_v:,.0f}"),("__DR_US_V__",f"{_us_v:,.0f}"),("__DR_DEF_V__",f"{_def_v:,.0f}"),("__DR_BOND_V__",f"{_bond_v:,.0f}"),("__DR_CASH_V__",f"{_cash_v:,.0f}")]: daily_html = daily_html.replace(k, v)
-    for k, v in [("__DR_TW_PCT__",f"{_apct.get('台股市值型成長',0):.1f}%"),("__DR_US_PCT__",f"{_apct.get('美股市值型成長',0):.1f}%"),("__DR_DEF_PCT__",f"{_apct.get('防守型配息',0):.1f}%"),("__DR_BOND_PCT__",f"{_apct.get('債券',0):.1f}%"),("__DR_CASH_PCT__",f"{_apct.get('現金/安全網',0):.1f}%")]: daily_html = daily_html.replace(k, v)
-    for k, v in [("__DR_TW_TGT__",f"{_tgt.get('台股市值型目標',35):.0f}%"),("__DR_US_TGT__",f"{_tgt.get('美股市值型目標',30):.0f}%"),("__DR_DEF_TGT__",f"{_tgt.get('配息型目標',25):.0f}%"),("__DR_BOND_TGT__",f"{_tgt.get('債券型目標',5):.0f}%"),("__DR_CASH_TGT__",f"{_tgt.get('現金目標',5):.0f}%")]: daily_html = daily_html.replace(k, v)
-    _pen_total = _tw_v + _us_v + _def_v + _bond_v + _cash_v or 1
-    for k, t, g in [("__DR_TW_GAP__",_tw_v,_tgt.get('台股市值型目標',35)),("__DR_US_GAP__",_us_v,_tgt.get('美股市值型目標',30)),("__DR_DEF_GAP__",_def_v,_tgt.get('配息型目標',25)),("__DR_BOND_GAP__",_bond_v,_tgt.get('債券型目標',5)),("__DR_CASH_GAP__",_cash_v,_tgt.get('現金目標',5))]:
-        _gap = t - _pen_total * g / 100; daily_html = daily_html.replace(k, f"{'+'if _gap>0 else ''}{_gap:,.0f}")
+    for k, v in [("__DR_TW_PCT__",f"{_apct.get('台股市值型成長',0):.1f}%"),("__DR_US_PCT__",f"{_apct.get('美股市值型成長',0):.1f}%"),("__DR_DEF_PCT__",f"{_apct.get('防守型配息',0):.1f}%"),("__DR_BOND_PCT__",f"{_apct.get('債券及安全現金',0):.1f}%"),("__DR_CASH_PCT__",f"{_apct.get('債券及安全現金',0):.1f}%")]: daily_html = daily_html.replace(k, v)
+    for k, v in [("__DR_TW_TGT__",f"{_tgt.get('市值型成長',30):.0f}%"),("__DR_US_TGT__",f"{_tgt.get('市值型成長',30):.0f}%"),("__DR_DEF_TGT__",f"{_tgt.get('配息型高股息',30):.0f}%"),("__DR_BOND_TGT__",f"{_tgt.get('債券型防禦',30):.0f}%"),("__DR_CASH_TGT__",f"{_tgt.get('現金/安全網',10):.0f}%")]: daily_html = daily_html.replace(k, v)
+    for k, t, g in [("__DR_TW_GAP__",_tw_v,_tgt.get('市值型成長',30)),("__DR_US_GAP__",_us_v,_tgt.get('市值型成長',30)),("__DR_DEF_GAP__",_def_v,_tgt.get('配息型高股息',30)),("__DR_BOND_GAP__",_bond_v,_tgt.get('債券型防禦',30)),("__DR_CASH_GAP__",_cash_v,_tgt.get('現金/安全網',10))]: 
+        _gap = t - g; daily_html = daily_html.replace(k, f"{'+'if _gap>0 else ''}{_gap:,.0f}")
 
     # 證券明細注入
     try:

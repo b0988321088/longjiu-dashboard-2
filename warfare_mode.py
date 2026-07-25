@@ -1,12 +1,13 @@
 """
- warfare_mode.py
- 戰略錄入模式：連續記錄戰爭室決策，最終同步到 LongJiu_Holdings_OS/Investment_SOP.md。
+warfare_mode.py
+戰略錄入模式：連續記錄戰爭室決策，最終同步到 LongJiu_Holdings_OS/Investment_SOP.md。
 """
 
 from __future__ import annotations
 
 import json
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional
@@ -21,10 +22,12 @@ def _ts() -> str:
 
 
 def _log_root() -> Path:
+    # Use the script's directory as the log root
     return Path(__file__).resolve().parent
 
 
 def sop_path() -> Path:
+    # Ensure this path is correct for the user's setup
     return Path("C:/Users/bot/Desktop/LongJiu_Holdings_OS/Investment_SOP.md")
 
 

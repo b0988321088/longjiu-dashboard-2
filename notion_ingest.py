@@ -106,7 +106,7 @@ class NotionIngester:
                 title_value = props[title_prop]["title"][0]["text"]["content"]
             except Exception:
                 pass
-        existing = self._find_existing_page(db_id, title_prop, title_value, date_prop, date_value)
+        existing = self._find_existing_page(db_id, title_prop, title_value, date_value)
         if existing:
             return self._update(existing["id"], props)
         payload = {"parent": {"database_id": db_id}, "properties": props}
@@ -245,6 +245,91 @@ class NotionIngester:
             props = {"Name": {"title": [{"text": {"content": name}}]}}
             self._create_or_update(db_id, props)
 
+    def ingest_daily_asset_snapshot(self, snapshot: dict):
+        db_id = DB_MAP.get("daily_asset_snapshots")
+        if not db_id:
+            print("[SKIP] daily_asset_snapshots DB ID not found.")
+            return
+        
+        today_date = TODAY
+        
+        props = {
+            "Date": {"date": {"start": today_date}},
+            "Total Assets": {"number": to_num(snapshot.get("total_assets"))},
+            "Securities": {"number": to_num(snapshot.get("securities_total"))},
+            "Insurance": {"number": to_num(snapshot.get("insurance_current_value"))},
+            "Funds": {"number": to_num(snapshot.get("fund_market_value"))},
+            "Cash": {"number": to_num(snapshot.get("real_liquid_assets"))},
+            "Snapshot ID": {"title": [{"text": {"content": f"Snapshot-{today_date}"}}]},
+            "Source": {"select": {"name": "Hermes"}},
+            "Link": {"url": f"file://{REPO}/daily_report_v2_{today_date}.html"},
+        }
+        props_clean = {k: v for k, v in props.items() if v.get("number") is not None or v.get("date") is not None or v.get("title") is not None or v.get("select") is not None or v.get("url") is not None}
+
+        print(f"[Notion] Ingesting Daily Asset Snapshot for {today_date}")
+        self._create_or_update(db_id, props_clean, date_prop="Date", date_value=today_date)
+
+    def ingest_decision_record(self, decision: dict):
+        db_id = DB_MAP.get("major_decision_records")
+        if not db_id:
+            print("[SKIP] major_decision_records DB ID not found.")
+            return
+
+        title_content = decision.get("text", "Unknown Decision")
+        if len(title_content) > 2000:
+            title_content = title_content[:1997] + "..."
+
+        props = {
+            "Decision": {"title": [{"text": {"content": title_content}}]},
+            "Date": {"date": {"start": decision.get("approved_at", TODAY)[:10]}},
+            "Context": {"rich_text": [{"text": {"content": decision.get("context", "")}}]},
+            "Reasoning": {"rich_text": [{"text": {"content": decision.get("reasoning", "")}}]},
+            "Outcome": {"rich_text": [{"text": {"content": decision.get("outcome", "")}}]},
+            "Agent": {"select": {"name": decision.get("source", "Hermes").capitalize()}},
+            "Tags": {"multi_select": [{"name": tag} for tag in decision.get("tags", [])]},
+            "Link": {"url": decision.get("link", "")},
+        }
+        props_clean = {}
+        for k, v in props.items():
+            if k == "Link" and not v["url"]:
+                continue
+            if k in ["Context", "Reasoning", "Outcome"] and not v["rich_text"][0]["text"]["content"].strip():
+                continue
+            props_clean[k] = v
+
+        print(f"[Notion] Ingesting Decision Record: {title_content}")
+        self._create_or_update(db_id, props_clean, date_prop="Date", date_value=decision.get("approved_at", TODAY)[:10])
+
+    def ingest_analysis_result(self, analysis_result: dict):
+        db_id = DB_MAP.get("agent_analysis_results")
+        if not db_id:
+            print("[SKIP] agent_analysis_results DB ID not found.")
+            return
+
+        title_content = analysis_result.get("title", "Unknown Analysis")
+        if len(title_content) > 2000:
+            title_content = title_content[:1997] + "..."
+
+        props = {
+            "Title": {"title": [{"text": {"content": title_content}}]},
+            "Date": {"date": {"start": analysis_result.get("date", TODAY)[:10]}},
+            "Agent": {"select": {"name": analysis_result.get("agent", "Hermes").capitalize()}},
+            "Analysis Type": {"select": {"name": analysis_result.get("analysis_type", "General").capitalize()}},
+            "Summary": {"rich_text": [{"text": {"content": analysis_result.get("summary", "")}}]},
+            "Raw Output Link": {"url": analysis_result.get("raw_output_link", "")},
+            "Sentiment": {"select": {"name": analysis_result.get("sentiment", "Neutral").capitalize()}},
+        }
+        props_clean = {}
+        for k, v in props.items():
+            if k == "Raw Output Link" and not v["url"]:
+                continue
+            if k == "Summary" and not v["rich_text"][0]["text"]["content"].strip():
+                continue
+            props_clean[k] = v
+
+        print(f"[Notion] Ingesting Analysis Result: {title_content}")
+        self._create_or_update(db_id, props_clean, date_prop="Date", date_value=analysis_result.get("date", TODAY)[:10])
+
 
 def load_snapshot():
     snapshot_path = REPO / "snapshot.json"
@@ -369,94 +454,6 @@ def parse_ledger_loans():
         },
     ]
     return loans
-
-
-    def ingest_daily_asset_snapshot(self, snapshot: dict):
-        db_id = DB_MAP.get("daily_asset_snapshots")
-        if not db_id:
-            print("[SKIP] daily_asset_snapshots DB ID not found.")
-            return
-        
-        today_date = TODAY # Use the TODAY variable defined globally
-        
-        props = {
-            "Date": {"date": {"start": today_date}},
-            "Total Assets": {"number": to_num(snapshot.get("total_assets"))},
-            "Securities": {"number": to_num(snapshot.get("securities_total"))},
-            "Insurance": {"number": to_num(snapshot.get("insurance_current_value"))},
-            "Funds": {"number": to_num(snapshot.get("fund_market_value"))},
-            "Cash": {"number": to_num(snapshot.get("real_liquid_assets"))},
-            "Snapshot ID": {"title": [{"text": {"content": f"Snapshot-{today_date}"}}]},
-            "Source": {"select": {"name": "Hermes"}}, # Default source
-            "Link": {"url": f"file://{REPO}/daily_report_v2_{today_date}.html"}, # Example link
-        }
-        # Filter out None values from properties before sending to Notion
-        props_clean = {k: v for k, v in props.items() if v.get("number") is not None or v.get("date") is not None or v.get("title") is not None or v.get("select") is not None or v.get("url") is not None}
-
-        print(f"[Notion] Ingesting Daily Asset Snapshot for {today_date}")
-        self._create_or_update(db_id, props_clean, date_prop="Date", date_value=today_date)
-
-    def ingest_decision_record(self, decision: dict):
-        db_id = DB_MAP.get("major_decision_records")
-        if not db_id:
-            print("[SKIP] major_decision_records DB ID not found.")
-            return
-
-        title_content = decision.get("text", "Unknown Decision")
-        if len(title_content) > 2000: # Notion title limit
-            title_content = title_content[:1997] + "..."
-
-        props = {
-            "Decision": {"title": [{"text": {"content": title_content}}]},
-            "Date": {"date": {"start": decision.get("approved_at", TODAY)[:10]}},
-            "Context": {"rich_text": [{"text": {"content": decision.get("context", "")}}]},
-            "Reasoning": {"rich_text": [{"text": {"content": decision.get("reasoning", "")}}]},
-            "Outcome": {"rich_text": [{"text": {"content": decision.get("outcome", "")}}]},
-            "Agent": {"select": {"name": decision.get("source", "Hermes").capitalize()}},
-            "Tags": {"multi_select": [{"name": tag} for tag in decision.get("tags", [])]},
-            "Link": {"url": decision.get("link", "")},
-        }
-        # Filter out empty strings for URL and rich_text if they cause issues
-        props_clean = {}
-        for k, v in props.items():
-            if k == "Link" and not v["url"]:
-                continue
-            if k in ["Context", "Reasoning", "Outcome"] and not v["rich_text"][0]["text"]["content"].strip():
-                continue
-            props_clean[k] = v
-
-        print(f"[Notion] Ingesting Decision Record: {title_content}")
-        self._create_or_update(db_id, props_clean, date_prop="Date", date_value=decision.get("approved_at", TODAY)[:10])
-
-    def ingest_analysis_result(self, analysis_result: dict):
-        db_id = DB_MAP.get("agent_analysis_results")
-        if not db_id:
-            print("[SKIP] agent_analysis_results DB ID not found.")
-            return
-
-        title_content = analysis_result.get("title", "Unknown Analysis")
-        if len(title_content) > 2000: # Notion title limit
-            title_content = title_content[:1997] + "..."
-
-        props = {
-            "Title": {"title": [{"text": {"content": title_content}}]},
-            "Date": {"date": {"start": analysis_result.get("date", TODAY)[:10]}},
-            "Agent": {"select": {"name": analysis_result.get("agent", "Hermes").capitalize()}},
-            "Analysis Type": {"select": {"name": analysis_result.get("analysis_type", "General").capitalize()}},
-            "Summary": {"rich_text": [{"text": {"content": analysis_result.get("summary", "")}}]},
-            "Raw Output Link": {"url": analysis_result.get("raw_output_link", "")},
-            "Sentiment": {"select": {"name": analysis_result.get("sentiment", "Neutral").capitalize()}},
-        }
-        props_clean = {}
-        for k, v in props.items():
-            if k == "Raw Output Link" and not v["url"]:
-                continue
-            if k == "Summary" and not v["rich_text"][0]["text"]["content"].strip():
-                continue
-            props_clean[k] = v
-
-        print(f"[Notion] Ingesting Analysis Result: {title_content}")
-        self._create_or_update(db_id, props_clean, date_prop="Date", date_value=analysis_result.get("date", TODAY)[:10])
 
 
 def load_daily_report_cio():
