@@ -1025,8 +1025,9 @@ def main():
     for k, v in [("__DR_TW_V__",f"{_tw_v:,.0f}"),("__DR_US_V__",f"{_us_v:,.0f}"),("__DR_DEF_V__",f"{_def_v:,.0f}"),("__DR_BOND_V__",f"{_bond_v:,.0f}"),("__DR_CASH_V__",f"{_cash_v:,.0f}")]: daily_html = daily_html.replace(k, v)
     for k, v in [("__DR_TW_PCT__",f"{_apct.get('台股市值型成長',0):.1f}%"),("__DR_US_PCT__",f"{_apct.get('美股市值型成長',0):.1f}%"),("__DR_DEF_PCT__",f"{_apct.get('防守型配息',0):.1f}%"),("__DR_BOND_PCT__",f"{_apct.get('債券',0):.1f}%"),("__DR_CASH_PCT__",f"{_apct.get('現金/安全網',0):.1f}%")]: daily_html = daily_html.replace(k, v)
     for k, v in [("__DR_TW_TGT__",f"{_tgt.get('台股市值型目標',35):.0f}%"),("__DR_US_TGT__",f"{_tgt.get('美股市值型目標',30):.0f}%"),("__DR_DEF_TGT__",f"{_tgt.get('配息型目標',25):.0f}%"),("__DR_BOND_TGT__",f"{_tgt.get('債券型目標',5):.0f}%"),("__DR_CASH_TGT__",f"{_tgt.get('現金目標',5):.0f}%")]: daily_html = daily_html.replace(k, v)
-    for k, t, g in [("__DR_TW_GAP__",_tw_v,_tgt.get('台股市值型目標',35)),("__DR_US_GAP__",_us_v,_tgt.get('美股市值型目標',30)),("__DR_DEF_GAP__",_def_v,_tgt.get('配息型目標',25)),("__DR_BOND_GAP__",_bond_v,_tgt.get('債券型目標',5)),("__DR_CASH_GAP__",_cash_v,_tgt.get('現金目標',5))]: 
-        _gap = t - g; daily_html = daily_html.replace(k, f"{'+'if _gap>0 else ''}{_gap:,.0f}")
+    _pen_total = _tw_v + _us_v + _def_v + _bond_v + _cash_v or 1
+    for k, t, g in [("__DR_TW_GAP__",_tw_v,_tgt.get('台股市值型目標',35)),("__DR_US_GAP__",_us_v,_tgt.get('美股市值型目標',30)),("__DR_DEF_GAP__",_def_v,_tgt.get('配息型目標',25)),("__DR_BOND_GAP__",_bond_v,_tgt.get('債券型目標',5)),("__DR_CASH_GAP__",_cash_v,_tgt.get('現金目標',5))]:
+        _gap = t - _pen_total * g / 100; daily_html = daily_html.replace(k, f"{'+'if _gap>0 else ''}{_gap:,.0f}")
 
     # 證券明細注入
     try:
