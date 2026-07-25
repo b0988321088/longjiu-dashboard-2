@@ -119,7 +119,7 @@ new_facts = [
 
 for f in new_facts:
     cur.execute(
-        "INSERT INTO facts (content, category, tags, trust_score, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT OR IGNORE INTO facts (content, category, tags, trust_score, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
         (f["content"], f["category"], f["tags"], f["trust_score"], now.isoformat(), now.isoformat())
     )
     print(f"  + {f['category']}: {f['content'][:60]}...")
