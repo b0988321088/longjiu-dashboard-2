@@ -8,7 +8,7 @@ TODAY = dt.today().isoformat()
 OUT = BASE / f"daily_report_v2_{TODAY}.html"
 
 sys.path.insert(0, str(BASE))
-from run_daily import calibrate_sources, render_daily_report, _inject_market_intel
+from run_daily import calibrate_sources, render_daily_report, _inject_market_intel, _generate_schedule_html
 
 # 1. 載入資料
 tv = calibrate_sources()
@@ -22,8 +22,13 @@ pcts = [round(v / total * 100, 1) for _, v in rows]
 tv["holdings_top3"] = [(r[0], pcts[i]) for i, r in enumerate(rows[:3])]
 tv["holdings_count"] = len(rows)
 
-# 3. 產出 HTML
-html = render_daily_report(tv)
+# 3. 產出 HTML + 動態排程
+from calendar_sync import parse_events
+today = dt.today().isoformat()
+_events = parse_events("")
+_future = [e for e in _events if e.get("start","") >= today] # Filter for future events
+_schedule = _generate_schedule_html(_future) # Use the function from run_daily
+html = render_daily_report(tv, schedule_rows_html=_schedule)
 
 # 4. 注入市場情報 + 穿透值
 html = _inject_market_intel(html, tv, {})
