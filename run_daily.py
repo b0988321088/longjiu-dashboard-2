@@ -251,6 +251,7 @@ def _generate_schedule_html(events: list) -> str:
 
 
 def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "", mb_cc_rows: str = "", llm_emergency_analysis: str = "", schedule_rows_html: str = "", p0_tasks_html: str = "") -> str:
+    _dbs_note_ph = "{_dbs_note}"  # placeholder for dynamic DBS note
     """產出五大章節日報 HTML。"""
     allianz = tv["allianz_ab"] or 7_881_584
     firstjin = tv["firstjin"] or 1_994_698
@@ -524,7 +525,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     {tv['etf_div_table']}
 
     <h3>房租金流</h3>
-    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。{_fmt_rent_status(tv)}星展戶頭餘額 17,000 TWD，8/1 扣理財型利息 ~10,000，餘裕充足 ✅</p>
+    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。{_fmt_rent_status(tv)}{_dbs_note_ph}</p>
 
     <h3>鉅亨基金部位</h3>
     <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong>。本月已收配息：{tv['fund_dividend_monthly']:,} TWD。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 {tv.get('funds',0):,}。</p>
@@ -659,7 +660,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 <div class="card">
   <h2>📊 資產差異分析 Asset Diff</h2>
   <p class="text-lead">
-    <a href="https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html" target="_blank">
+    <a href="https://longjiu-dashboard-2-production.up.railway.app/asset_diff_{TODAY}.html" target="_blank">
       開啟今日差異分析 → asset_diff_{TODAY}.html
     </a>
   </p>
@@ -1066,7 +1067,7 @@ def main():
             _report_html = _format_content_to_html(analysis_content, content_type="emergency_analysis")
             # 從 JSON 取出報告日期，製作動態連結
             _er_date = emergency_data.get("generated_at", "")[:10]
-            _er_link = f"https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_{_er_date}.html"
+            _er_link = f"https://longjiu-dashboard-2-production.up.railway.app/emergency_report_{_er_date}.html"
             llm_emergency_analysis_html = f"""<div class="callout callout-warn">
             {_report_html}
             <p style="margin-top:8px;text-align:right;font-size:13px">
@@ -1539,14 +1540,14 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__RENT_ROWS__", _rent_rows)
 
     # template 殘留硬編碼注入
-    html = html.replace("__CATHAT_SETTLEMENT__", "4,893,529")
-    html = html.replace("__CATHAY_DEPOSIT__", "5,300,000")
-    html = html.replace("__DBS_BALANCE__", "17,000")
-    html = html.replace("__DBS_NOTE__", "一般房貸已清償 ✅ 僅扣理財型利息 ~10,000，餘裕充足")
-    html = html.replace("__SINOPAC_BALANCE__", "230,000")
-    html = html.replace("__SINOPAC_MORTGAGE__", "65,734")
-    html = html.replace("__RESERVE_POOL__", "2,000,000+")
-    html = html.replace("__SALARY__", "82,265")
+    html = html.replace("__CATHAT_SETTLEMENT__", f'{tv.get("mortgage_yy",0):,.0f}')
+    html = html.replace("__CATHAY_DEPOSIT__", f'{tv.get("mortgage_yydu",0):,.0f}')
+    html = html.replace("__DBS_BALANCE__", f'{tv.get("cash",0):,.0f}')
+    html = html.replace("{_dbs_note}", "一般房貸已清償 ✅ 僅扣理財型利息 ~10,000，餘裕充足")
+    html = html.replace("__SINOPAC_BALANCE__", f'{tv.get("cash",0):,.0f}')
+    html = html.replace("__SINOPAC_MORTGAGE__", f'{tv.get("mortgage_monthly_total",0):,.0f}')
+    html = html.replace("__RESERVE_POOL__", f'{tv.get("financial_mortgage",0):,.0f}+')
+    html = html.replace("__SALARY__", f'{tv.get("salary",43144):,.0f}')
     # 新增動態注入
     html = html.replace("__MONTHLY_EXPENSE_PASSIVE__", f"{_expense:,}")
     html = html.replace("__MONTHLY_EXPENSE_DISPLAY__", f"{_expense:,}")
