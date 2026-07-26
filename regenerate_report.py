@@ -120,6 +120,23 @@ import subprocess
 _diff_ok = subprocess.run(["python", str(BASE / "asset_diff_monitor.py")], capture_output=True, text=True, timeout=60)
 print(_diff_ok.stdout.split(chr(10))[-2] if _diff_ok.stdout else f"差異分析 exit={_diff_ok.returncode}")
 
+# 9c. 自動更新儀表板
+from run_daily import _inject_dashboard
+_index_tpl = BASE / "index_template.html"
+if _index_tpl.exists():
+    _index_html = _index_tpl.read_text(encoding="utf-8")
+    _index_html = _inject_dashboard(_index_html, tv, daily_analysis)
+    # 動態取代 placeholder
+    _cash_v = tv.get("cash_total", tv.get("cash", 3614169))
+    _mortgage_v = tv.get("mortgage_monthly_total", tv.get("mortgage_balance", 0))
+    _salary_v = tv.get("salary", 43144)
+    for ph, val in [("__DBS_BALANCE__", f"{_cash_v:,.0f}"), ("__SINOPAC_BALANCE__", f"{_cash_v:,.0f}"),
+                    ("__SINOPAC_MORTGAGE__", f"{_mortgage_v:,.0f}"), ("__RESERVE_POOL__", f"{tv.get('financial_mortgage',2000000):,.0f}"),
+                    ("__SALARY__", f"{_salary_v:,.0f}")]:
+        _index_html = _index_html.replace(ph, val)
+    (BASE / "index.html").write_text(_index_html, encoding="utf-8")
+    print(f"✅ index.html ({len(_index_html):,} bytes)")
+
 h = OUT.read_text(encoding="utf-8")
 print(f"✅ {OUT.name} — {len(h):,} bytes")
 
