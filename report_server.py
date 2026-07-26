@@ -26,8 +26,54 @@ def generate_report():
     _future = [e for e in _events if e.get("start","") >= today] # Filter for future events
     _schedule = rd._generate_schedule_html(_future) # Use the function from run_daily
 
-    html = rd.render_daily_report(tv, schedule_rows_html=_schedule)
-    html = rd._inject_market_intel(html, tv, {})
+    # --- 動態市場情報 ---
+    _mi_html_rows = []
+    try:
+        import sqlite3
+        _db_mi = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        _r_mi = _db_mi.execute("SELECT summary, signals FROM market_intel WHERE date=? ORDER BY timestamp DESC LIMIT 1", (today,)).fetchone()
+        _db_mi.close()
+        if _r_mi and _r_mi[0]:
+            _mi_html_rows.append(f"<p><strong>【情報摘要】</strong>{_r_mi[0]}</p>")
+            try:
+                _j_mi = json.loads(_r_mi[1]) if _r_mi[1] else {}
+                if _j_mi.get("buy"):
+                    _mi_html_rows.append("<p><strong>【買進訊號】</strong></p>")
+                    for _s_mi in (_j_mi.get("buy", []) or [])[:2]:
+                        _mi_html_rows.append(f"<p style=\"margin-left:12px\">• {_s_mi}</p>")
+                if _j_mi.get("sell"):
+                    _mi_html_rows.append("<p><strong>【賣出訊號】</strong></p>")
+                    for _s_mi in (_j_mi.get("sell", []) or [])[:2]:
+                        _mi_html_rows.append(f"<p style=\"margin-left:12px\">• {_s_mi}</p>")
+            except: pass
+    except Exception as _ex_mi:
+        print(f"[WARN] Failed to load market_intel from DB in report_server: {_ex_mi}")
+
+    # 從 daily_analysis.json 補充市場數據
+    _da_mi = {}
+    _da_path = BASE / "daily_analysis.json"
+    if _da_path.exists():
+        try:
+            _da_mi = json.loads(_da_path.read_text(encoding='utf-8')).get("market", {})
+        except Exception as _ex_da:
+            print(f"[WARN] Failed to load market data from daily_analysis.json in report_server: {_ex_da}")
+
+    _mi_map = [
+        ("twii", "台股加權"), ("tsm", "台積電"), ("sox", "費半"), ("us", "美股"), ("cpi", "美國 CPI")
+    ]
+    for _k_mi, _l_mi in _mi_map:
+        _v_mi = _da_mi.get(_k_mi)
+        if _v_mi and _v_mi != "—":
+            _mi_html_rows.append(f"<p><strong>【{_l_mi}】</strong>{_v_mi}</p>")
+    
+    if not _mi_html_rows:
+        _mi_html_rows.append("<p>本日市場情報待補齊</p>")
+
+    _market_intel_html = "\n".join(_mi_html_rows)
+    # --- END 動態市場情報 ---
+
+    html = rd.render_daily_report(tv, schedule_rows_html=_schedule, market_intel_text=_market_intel_html)
+    html = rd._inject_market_intel(html, tv, {}) # This still populates __MARKET_ROWS__ etc. if needed
 
     # Penetration replacement
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
