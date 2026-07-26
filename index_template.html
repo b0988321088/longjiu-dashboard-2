@@ -5,7 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>龍九資產管理系統 v2.1</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com">// 支援 hash 切換分頁
+function hashTab() {
+    var h = location.hash.replace('#tab','');
+    if (h) switchTab(parseInt(h));
+}
+window.addEventListener('hashchange', hashTab);
+// 頁面載入時檢查 hash
+if (location.hash) hashTab();
+</script>
     <style>
         body {
             background-color: #0f172a;
@@ -65,19 +73,19 @@
 <!-- 頂層導航 -->
 <nav class="max-w-4xl mx-auto px-4 mt-6">
     <div class="bg-slate-950 p-1.5 rounded-xl flex justify-between gap-1 border border-slate-800 text-xs font-bold overflow-x-auto">
-        <button id="btn-tab-1" onclick="switchTab(1)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 bg-blue-600 text-white shadow">
+        <button id="btn-tab-1" onclick="switchTab(1)" href="#tab1" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 bg-blue-600 text-white shadow">
             💰 財富生命線
         </button>
-        <button id="btn-tab-2" onclick="switchTab(2)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        <button id="btn-tab-2" onclick="switchTab(2)" href="#tab2" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             🛡️ 戰略異常中心
         </button>
-        <button id="btn-tab-3" onclick="switchTab(3)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        <button id="btn-tab-3" onclick="switchTab(3)" href="#tab3" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             🔄 保單接力引擎
         </button>
-        <button id="btn-tab-4" onclick="switchTab(4)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        <button id="btn-tab-4" onclick="switchTab(4)" href="#tab4" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             🏦 流動性調度
         </button>
-        <button id="btn-tab-5" onclick="switchTab(5)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        <button id="btn-tab-5" onclick="switchTab(5)" href="#tab5" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             📋 戰術任務
         </button>
     </div>
@@ -523,6 +531,14 @@ function switchTab(num) {
     // 設定活動按鈕
     document.getElementById('btn-tab-' + num).className = "flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 bg-blue-600 text-white shadow";
 }
+// 支援 hash 切換分頁
+function hashTab() {
+    var h = location.hash.replace('#tab','');
+    if (h) switchTab(parseInt(h));
+}
+window.addEventListener('hashchange', hashTab);
+// 頁面載入時檢查 hash
+if (location.hash) hashTab();
 </script>
 </body>
 </html>
