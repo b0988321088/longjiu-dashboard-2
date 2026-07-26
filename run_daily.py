@@ -18,6 +18,58 @@ from logging_config import get_logger
 logger = get_logger("run_daily")
 import daily_intel as mi_mod
 from daily_intel import load_daily_analysis
+from calendar_sync import parse_events
+
+
+def _generate_schedule_html(events: list[dict]) -> str:
+    """從 calendar_sync 事件產生排程 HTML。"""
+    if not events:
+        return "<p>無未來配息/轉換排程</p>"
+    
+    html_rows = []
+    current_month = None
+    
+    for event in events:
+        event_date_str = event.get("start", "")
+        if not event_date_str:
+            continue
+        
+        try:
+            event_date = datetime.strptime(event_date_str, "%Y-%m-%d").date()
+            event_month = event_date.strftime("%Y年%m月")
+        except ValueError:
+            continue
+
+        if event_month != current_month:
+            if current_month is not None:
+                html_rows.append("</tbody></table></div>")
+            html_rows.append(f"<h4>{event_month}</h4>")
+            html_rows.append('''
+            <div class="table-wrap">
+              <table class="mobile-bordered">
+                <thead><tr><th>日期</th><th>類型</th><th>項目</th><th>細節</th></tr></thead>
+                <tbody>
+            ''')
+            current_month = event_month
+
+        _type = event.get("type", "")
+        _item = event.get("title", "")
+        _detail = event.get("description", "")
+        
+        html_rows.append(f'''
+            <tr>
+                <td>{event_date.strftime("%m/%d")}</td>
+                <td>{_type}</td>
+                <td>{_item}</td>
+                <td>{_detail}</td>
+            </tr>
+        ''')
+    
+    if current_month is not None: # Close the last tbody
+        html_rows.append("</tbody></table></div>")
+            
+    return "".join(html_rows)
+
 
 try:
     from dotenv import load_dotenv
@@ -234,7 +286,7 @@ def _fmt_rent_status(tv):
     return "已全數實收 " + "+".join(parts) + " ✅ "
 
 
-def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "", mb_cc_rows: str = "", llm_emergency_analysis: str = "") -> str:
+def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "", mb_cc_rows: str = "", llm_emergency_analysis: str = "", schedule_rows_html: str = "") -> str:
     """產出五大章節日報 HTML。"""
     allianz = tv["allianz_ab"] or 7_881_584
     firstjin = tv["firstjin"] or 1_994_698
@@ -625,6 +677,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         </tbody>
       </table>
     </div>
+    {schedule_rows_html}
   </div>
 
   <!-- 投資決策框架 -->
@@ -1055,6 +1108,97 @@ def main():
     except: pass
 
     market_intel_text = _format_content_to_html(market_intel_text, content_type="market_intel")
+    # --- 動態市場情報 ---
+    market_intel_html_parts = []
+    
+    # Initialize variables to avoid UnboundLocalError
+    db_summary = ""
+    db_signals = {}
+    db_news = []
+
+    # 1. 嘗試從 market_intel DB 讀取資料
+    try:
+        import sqlite3
+        _db_mi = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        _r_mi = _db_mi.execute("SELECT summary, signals, news FROM market_intel WHERE date=? ORDER BY timestamp DESC LIMIT 1", (TODAY,)).fetchone()
+        _db_mi.close()
+        if _r_mi:
+            db_summary = _r_mi[0] or ""
+            db_signals = json.loads(_r_mi[1]) if _r_mi[1] else {}
+            db_news = json.loads(_r_mi[2]) if _r_mi[2] else []
+            
+            if db_summary:
+                market_intel_html_parts.append(f"<p><strong>【情報摘要】</strong>{db_summary}</p>")
+            
+            if db_signals.get("buy"):
+                market_intel_html_parts.append("<p><strong>【買進訊號】</strong></p>")
+                for _s in (db_signals.get("buy", []) or [])[:2]:
+                    market_intel_html_parts.append(f"<p style=\"margin-left:12px\">• {_s}</p>")
+            if db_signals.get("sell"):
+                market_intel_html_parts.append("<p><strong>【賣出訊號】</strong></p>")
+                for _s in (db_signals.get("sell", []) or [])[:2]:
+                    market_intel_html_parts.append(f"<p style=\"margin-left:12px\">• {_s}</p>")
+            
+            if db_news:
+                market_intel_html_parts.append("<p><strong>【最新市場消息】</strong></p>")
+                for _n in db_news[:3]: # 只顯示最新的三條新聞
+                    _link = _n.get('link', '#') # 提供預設連結
+                    _title = _n.get('title', '無標題')
+                    market_intel_html_parts.append(f"<p style=\"margin-left:12px\">• <a href=\"{_link}\" target=\"_blank\">{_title}</a></p>")
+
+    except Exception as _ex_mi:
+        print(f"[WARN] Failed to load market_intel from DB: {_ex_mi}")
+
+    # 2. 從 daily_analysis.json 補充資料 (如果 DB 中沒有，則使用 daily_analysis.json)
+    _da_data = {}
+    _da_path = BASE / "daily_analysis.json"
+    if _da_path.exists():
+        try:
+            _da_data = json.loads(_da_path.read_text(encoding='utf-8'))
+        except Exception as _ex_da:
+            print(f"[WARN] Failed to load daily_analysis.json: {_ex_da}")
+
+    da_market = _da_data.get("market", {})
+    da_signals = _da_data.get("signals", {})
+    da_news = _da_data.get("news", [])
+    da_scenario_summary = _da_data.get("scenario_summary", "")
+
+    # 如果 DB 中沒有情報摘要，則使用 daily_analysis.json 的 scenario_summary
+    if not db_summary and da_scenario_summary:
+        market_intel_html_parts.append(f"<p><strong>【情報摘要】</strong>{da_scenario_summary}</p>")
+
+    # 如果 DB 中沒有訊號，則使用 daily_analysis.json 的訊號
+    if not db_signals.get("buy") and da_signals.get("buy"):
+        market_intel_html_parts.append("<p><strong>【買進訊號】</strong></p>")
+        for _s in (da_signals.get("buy", []) or [])[:2]:
+            market_intel_html_parts.append(f"<p style=\"margin-left:12px\">• {_s}</p>")
+    if not db_signals.get("sell") and da_signals.get("sell"):
+        market_intel_html_parts.append("<p><strong>【賣出訊號】</strong></p>")
+        for _s in (da_signals.get("sell", []) or [])[:2]:
+            market_intel_html_parts.append(f"<p style=\"margin-left:12px\">• {_s}</p>")
+
+    # 如果 DB 中沒有新聞，則使用 daily_analysis.json 的新聞
+    if not db_news and da_news:
+        market_intel_html_parts.append("<p><strong>【最新市場消息】</strong></p>")
+        for _n in da_news[:3]: # 只顯示最新的三條新聞
+            _link = _n.get('link', '#') # 提供預設連結
+            _title = _n.get('title', '無標題')
+            market_intel_html_parts.append(f"<p style=\"margin-left:12px\">• <a href=\"{_link}\" target=\"_blank\">{_title}</a></p>")
+
+    # 3. 加入指數數據 (無論 DB 或 daily_analysis.json 是否有其他內容，指數數據都應顯示)
+    _mi_map = [
+        ("twii", "台股加權"), ("tsm", "台積電"), ("sox", "費半"), ("us", "美股"), ("cpi", "美國 CPI")
+    ]
+    for _k_mi, _l_mi in _mi_map:
+        _v_mi = da_market.get(_k_mi)
+        if _v_mi and _v_mi != "—":
+            market_intel_html_parts.append(f"<p><strong>【{_l_mi}】</strong>{_v_mi}</p>")
+    
+    if not market_intel_html_parts:
+        market_intel_html_parts.append("<p>本日市場情報待補齊</p>")
+
+    market_intel_text = "\n".join(market_intel_html_parts)
+    # --- END 動態市場情報 ---
 
     # 日報
     # LLM 緊急應變分析
@@ -1077,7 +1221,12 @@ def main():
         except Exception as _exc:
             print(f"[WARN] load emergency_llm_analysis.json failed: {_exc}")
 
-    daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text, mb_cc_rows=_mb_cc_rows, llm_emergency_analysis=llm_emergency_analysis_html)
+    # 動態排程
+    _events = parse_events("")
+    _future = [e for e in _events if e.get("start","") >= TODAY] # Filter for future events
+    schedule_html = _generate_schedule_html(_future)
+
+    daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text, mb_cc_rows=_mb_cc_rows, llm_emergency_analysis=llm_emergency_analysis_html, schedule_rows_html=schedule_html)
     daily_html = _inject_market_intel(daily_html, tv, intel_signals, llm_emergency_analysis_html)
 
     # 注入戰略穿透值到日報
