@@ -669,6 +669,10 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 </body>
 </html>"""
 
+    # 動態 DBS note
+    _dbs_cash = tv.get("cash_total", 0)
+    _dbs_str = f"星展餘額 {_dbs_cash:,} TWD，扣理財型利息 ~10,000，{'餘裕充足 ✅' if _dbs_cash > 30000 else '⚠️ 需補資金'}"
+    html = html.replace("{_dbs_note}", _dbs_str)
     return html
     return html
 
@@ -1543,7 +1547,10 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__CATHAT_SETTLEMENT__", f'{tv.get("mortgage_yy",0):,.0f}')
     html = html.replace("__CATHAY_DEPOSIT__", f'{tv.get("mortgage_yydu",0):,.0f}')
     html = html.replace("__DBS_BALANCE__", f'{tv.get("cash",0):,.0f}')
-    html = html.replace("{_dbs_note}", "一般房貸已清償 ✅ 僅扣理財型利息 ~10,000，餘裕充足")
+        # 動態 DBS note
+    _dbs_cash = tv.get("cash_total", 0)
+    _dbs_str = f"星展餘額 {_dbs_cash:,} TWD，扣理財型利息 ~10,000，{'餘裕充足 ✅' if _dbs_cash > 30000 else '⚠️ 需補資金'}"
+    html = html.replace("{_dbs_note}", _dbs_str)
     html = html.replace("__SINOPAC_BALANCE__", f'{tv.get("cash",0):,.0f}')
     html = html.replace("__SINOPAC_MORTGAGE__", f'{tv.get("mortgage_monthly_total",0):,.0f}')
     html = html.replace("__RESERVE_POOL__", f'{tv.get("financial_mortgage",0):,.0f}+')
