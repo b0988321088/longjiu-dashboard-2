@@ -1,4 +1,24 @@
-"""日報重新產生腳本 — 從 schedule_events.json 統一讀取排程"""
+"""日報重新產生腳本 — 從 schedule_events.json 統一讀取排程
+
+用法：python regenerate_report.py
+自動產出：daily_report_v2_YYYY-MM-DD.html + asset_diff_YYYY-MM-DD.html
+
+依賴：
+- snapshot.json（資產數據）
+- schedule_events.json（排程事件，修改此檔即可更新日報排程）
+- daily_analysis.json（市場情報、巴菲特/CTO分析）
+- data/emergency_llm_analysis.json（緊急應變報告）
+
+流程：
+1. calibrate_sources() → 三源校驗
+2. 讀取 schedule_events.json → 排程表(P0+本週)
+3. 讀取 daily_analysis.json → 市場情報
+4. render_daily_report() → HTML（含緊急應變）
+5. _inject_market_intel() → 巴菲特/CTO/CIO
+6. 穿透 __DR_*__ 取代
+7. 章節 1/6→6/6
+8. subprocess asset_diff_monitor.py → 差異分析
+"""
 import json, sqlite3, re, sys
 from pathlib import Path
 from datetime import date as dt
