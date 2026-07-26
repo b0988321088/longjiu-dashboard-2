@@ -49,6 +49,7 @@ def generate_report():
         d = json.loads(ej.read_text(encoding="utf-8"))
         r = d.get("full_report", d.get("analysis", ""))
         em = f'<div class="callout callout-warn">{r.replace(chr(10), "<br>" + chr(10))}</div>'
+    em += '<br><a href=\"https://longjiu-dashboard-2-production.up.railway.app/emergency_report_2026-07-24.html\" target=\"_blank\" style=\"display:inline-block;margin-top:10px;color:#34D399;font-weight:bold\">📄 檢視完整緊急應變報告 →</a>'
 
     html = render_daily_report(tv, market_intel_text=mk, schedule_rows_html=_sched, p0_tasks_html=_p0, llm_emergency_analysis=em)
     html = _inject_market_intel(html, tv, da, em)
