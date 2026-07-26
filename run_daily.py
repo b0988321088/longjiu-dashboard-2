@@ -1126,6 +1126,15 @@ def main():
         except Exception:
             intel_signals2 = {}
         index_html = _inject_dashboard(index_html, tv, intel_signals2)
+        # 動態取代模板 placeholder
+        _cash_val = tv.get("cash_total", tv.get("cash", 3614169))
+        _mortgage_total = tv.get("mortgage_monthly_total", tv.get("mortgage_balance", 0))
+        _salary_val = tv.get("salary", 43144)
+        index_html = index_html.replace("__DBS_BALANCE__", f"{_cash_val:,.0f}")
+        index_html = index_html.replace("__SINOPAC_BALANCE__", f"{_cash_val:,.0f}")
+        index_html = index_html.replace("__SINOPAC_MORTGAGE__", f"{_mortgage_total:,.0f}")
+        index_html = index_html.replace("__RESERVE_POOL__", f"{tv.get('financial_mortgage',2000000):,.0f}")
+        index_html = index_html.replace("__SALARY__", f"{_salary_val:,.0f}")
         OUT_INDEX.write_text(index_html, encoding="utf-8")
         print(f"[RUN_DAILY] 儀表板產出：{OUT_INDEX}")
 
