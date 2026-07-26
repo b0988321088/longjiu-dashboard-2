@@ -1,4 +1,4 @@
-"""日報重新產生腳本 — 直接呼叫 render_daily_report() + _inject_market_intel()"""
+"""日報重新產生腳本 — 從 schedule_events.json 統一讀取排程"""
 import json, sqlite3, re, sys
 from pathlib import Path
 from datetime import date as dt
@@ -8,7 +8,7 @@ TODAY = dt.today().isoformat()
 OUT = BASE / f"daily_report_v2_{TODAY}.html"
 
 sys.path.insert(0, str(BASE))
-from run_daily import calibrate_sources, render_daily_report, _inject_market_intel, _generate_schedule_html
+from run_daily import calibrate_sources, render_daily_report, _inject_market_intel
 
 # 1. 載入資料
 tv = calibrate_sources()
@@ -22,7 +22,7 @@ pcts = [round(v / total * 100, 1) for _, v in rows]
 tv["holdings_top3"] = [(r[0], pcts[i]) for i, r in enumerate(rows[:3])]
 tv["holdings_count"] = len(rows)
 
-# 3. 載入市場情報（render_daily_report 需要 market_intel_text）
+# 3. 載入市場情報
 daily_analysis = {}
 da_path = BASE / "daily_analysis.json"
 if da_path.exists():
@@ -33,26 +33,24 @@ if da_path.exists():
 briefing = daily_analysis.get("briefing", "")
 _market_html = f"<pre style='font-size:14px;line-height:1.6;white-space:pre-wrap'>{briefing}</pre>"
 
-# 4. 產出 HTML + 動態排程
-from calendar_sync import parse_events
-_events = parse_events("")
-_future = [e for e in _events if e.get("start","") >= TODAY][:12]
-_schedule = _generate_schedule_html(_future)
+# 4. 從 schedule_events.json 統一讀取排程
+_events = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
 
-# 產生 P0 任務（重要待辦事件）
-_p0_core = [
+# 排程表（7-8月 + 待處理）
+_schedule_rows = []
+for e in _events:
+    d = e.get("date","")
+    if d == "待處理" or (d >= "2026-07-26" and d <= "2026-08-31"):
+        _schedule_rows.append(f'<tr><td>{d}</td><td>{e.get("item","")}</td><td class="num">{e.get("amount","")}</td><td>{e.get("status","")}</td></tr>')
+_schedule = "\n".join(_schedule_rows[:15])
+
+# P0 任務
+_p0_core = [f'<li>{e.get("date","—")} — {e.get("item","")} {e.get("amount","")} {e.get("status","")}</li>' for e in _events]
+_p0_html  = '\n'.join([
     '<li>7/17（五）— 國泰轉貸面簽/對保（✅ 已執行，待後續流程）</li>',
     '<li>7/22（三）— 玉山信用卡繳款截止 3,176</li>',
     '<li>⚠️ <strong>7/23（四）</strong>— 安聯 AI 收益 T+4 轉換截止 ← ⏰ 已過期</li>',
-    '<li>7/27（一）— 台新信用卡繳款截止 1,000</li>',
-    '<li>7/29-30 — Fed 利率決策 + 安聯 AI / 貝萊德 A10 基準日 + 峨眉會勘</li>',
-    '<li>8/1（五）— 星展戶頭扣款理財型利息 ~10,000 ✅ 待確認</li>',
-    '<li>⚠️ 待處理 — 女友借款 300,000（每月還 6,000，預計 12/5 清償）</li>',
-    '<li>8/3（一）— 體檢 📋 重要</li>',
-]
-# 從日曆補動態事件
-_p0_dynamic = [f'<li>{e.get("start","—")} — {e.get("summary","")}</li>' for e in _events if e.get("status") in ("P0","🔴","待處理","今天")][:5]
-_p0_html = "\n".join(_p0_core + _p0_dynamic)
+]) + '\n' + '\n'.join(_p0_core)
 
 html = render_daily_report(tv, market_intel_text=_market_html, schedule_rows_html=_schedule, p0_tasks_html=_p0_html)
 
@@ -83,6 +81,12 @@ html = html.replace("5/6｜投資決策框架", "6/6｜投資決策框架")
 
 # 9. 寫入
 OUT.write_text(html, encoding="utf-8")
+
+# 9b. 自動產出差異分析
+import subprocess
+_diff_ok = subprocess.run(["python", str(BASE / "asset_diff_monitor.py")], capture_output=True, text=True, timeout=60)
+print(_diff_ok.stdout.split(chr(10))[-2] if _diff_ok.stdout else f"差異分析 exit={_diff_ok.returncode}")
+
 h = OUT.read_text(encoding="utf-8")
 print(f"✅ {OUT.name} — {len(h):,} bytes")
 
@@ -91,11 +95,13 @@ drs = h.count("__DR_")
 checks = {
     "__DR_殘留": drs == 0,
     "市場情報": len(briefing) > 0,
-    "排程動態": "2026-08-01" in h,
+    "排程7/27": "台新信用卡" in h,
+    "排程體檢": "體檢" in h,
     "配息118,296": "118,296" in h,
     "章節6/6": "6/6｜" in h,
 }
 ok = all(checks.values())
 for k, v in checks.items():
     print(f"  {'✅' if v else '❌'} {k}")
+import sys
 sys.exit(0 if ok else 1)
