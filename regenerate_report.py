@@ -33,6 +33,14 @@ if da_path.exists():
 briefing = daily_analysis.get("briefing", "")
 _market_html = f"<pre style='font-size:14px;line-height:1.6;white-space:pre-wrap'>{briefing}</pre>"
 
+# 3b. 載入緊急應變分析
+_emergency_html = ""
+_ej = BASE / "data" / "emergency_llm_analysis.json"
+if _ej.exists():
+    _d = json.loads(_ej.read_text(encoding="utf-8"))
+    _r = _d.get("full_report", _d.get("analysis", ""))
+    _emergency_html = f'<div class="callout callout-warn">{_r.replace(chr(10), "<br>" + chr(10))}</div>'
+
 # 4. 從 schedule_events.json 統一讀取排程
 _events = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
 
@@ -44,18 +52,28 @@ for e in _events:
         _schedule_rows.append(f'<tr><td>{d}</td><td>{e.get("item","")}</td><td class="num">{e.get("amount","")}</td><td>{e.get("status","")}</td></tr>')
 _schedule = "\n".join(_schedule_rows[:15])
 
-# P0 任務
-_p0_core = [f'<li>{e.get("date","—")} — {e.get("item","")} {e.get("amount","")} {e.get("status","")}</li>' for e in _events]
-_p0_html  = '\n'.join([
+# P0 任務（只顯示重要/待處理事件）
+_p0_core = [
     '<li>7/17（五）— 國泰轉貸面簽/對保（✅ 已執行，待後續流程）</li>',
     '<li>7/22（三）— 玉山信用卡繳款截止 3,176</li>',
     '<li>⚠️ <strong>7/23（四）</strong>— 安聯 AI 收益 T+4 轉換截止 ← ⏰ 已過期</li>',
-]) + '\n' + '\n'.join(_p0_core)
+]
+# 篩選重要事件（只顯示 7-8 月，排除遠期每月重複）
+_important = ['🔴','🔄','⚠️','⏸️','📋 重要']
+_p0_dynamic = []
+for e in _events:
+    d = e.get("date","")
+    st = e.get("status","") or ""
+    if any(s in st for s in _important):
+        # 只保留 7-8 月 + 待處理
+        if d == "待處理" or ("2026-07" <= d <= "2026-08"):
+            _p0_dynamic.append(f'<li>{d} — {e.get("item","")} {e.get("amount","")} {st}</li>')
+_p0_html = '\n'.join(_p0_core + _p0_dynamic)
 
-html = render_daily_report(tv, market_intel_text=_market_html, schedule_rows_html=_schedule, p0_tasks_html=_p0_html)
+html = render_daily_report(tv, market_intel_text=_market_html, schedule_rows_html=_schedule, p0_tasks_html=_p0_html, llm_emergency_analysis=_emergency_html)
 
-# 5. 注入市場情報（巴菲特/CTO/CIO）
-html = _inject_market_intel(html, tv, daily_analysis)
+# 5. 注入市場情報 + 緊急應變（雙保險）
+html = _inject_market_intel(html, tv, daily_analysis, _emergency_html)
 
 # 6. 穿透 __DR_*__ 取代
 _snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
@@ -66,13 +84,6 @@ for k, v in [("__DR_TW_PCT__",f"{_apct.get('台股市值型成長',0):.1f}%"),("
 for k, v in [("__DR_TW_TGT__",f"{_tgt.get('台股市值型目標',35):.0f}%"),("__DR_US_TGT__",f"{_tgt.get('美股市值型目標',30):.0f}%"),("__DR_DEF_TGT__",f"{_tgt.get('配息型目標',25):.0f}%"),("__DR_BOND_TGT__",f"{_tgt.get('債券型目標',5):.0f}%"),("__DR_CASH_TGT__",f"{_tgt.get('現金目標',5):.0f}%")]: html = html.replace(k, v)
 for k, t, g in [("__DR_TW_GAP__",_apct.get('台股市值型成長',0),_tgt.get('台股市值型目標',35)),("__DR_US_GAP__",_apct.get('美股市值型成長',0),_tgt.get('美股市值型目標',30)),("__DR_DEF_GAP__",_apct.get('防守型配息',0),_tgt.get('配息型目標',25)),("__DR_BOND_GAP__",_apct.get('債券',0),_tgt.get('債券型目標',5)),("__DR_CASH_GAP__",_apct.get('現金/安全網',0),_tgt.get('現金目標',5))]:
     html = html.replace(k, f"{t - g:+.1f}pp")
-
-# 7. 注入緊急應變分析
-ej = BASE / "data" / "emergency_llm_analysis.json"
-if ej.exists():
-    d = json.loads(ej.read_text(encoding="utf-8"))
-    report = d.get("full_report", d.get("analysis", ""))
-    html = html.replace("{llm_emergency_analysis}", f'<div class="callout callout-warn">{report.replace(chr(10), "<br>" + chr(10))}</div>')
 
 # 8. 章節 5→6
 for i in range(1, 7):
