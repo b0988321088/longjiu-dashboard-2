@@ -18,12 +18,12 @@ def build():
     hist = load_json(BASE / "asset_diff_history.json")
     snap = load_json(BASE / "snapshot.json")
     
-    # 過濾近7日
+    WEEK_AGO = TODAY - timedelta(days=7)
     week_dates = sorted([d for d in hist if WEEK_AGO.isoformat() <= d <= TODAY.isoformat()])
-    if len(week_dates) < 2:
-        print("⚠️ 不足2日資料")
+    if not week_dates:
+        logger.warning("無資料，跳過")
         return None
-    
+
     first = hist[week_dates[0]]
     last = hist[week_dates[-1]]
     
