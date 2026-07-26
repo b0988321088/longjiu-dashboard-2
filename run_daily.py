@@ -234,7 +234,23 @@ def _fmt_rent_status(tv):
     return "已全數實收 " + "+".join(parts) + " ✅ "
 
 
-def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "", mb_cc_rows: str = "", llm_emergency_analysis: str = "") -> str:
+def _generate_schedule_html(events: list) -> str:
+    """從 calendar_sync 事件生成排程 HTML 表格行"""
+    from datetime import date
+    today = date.today().isoformat()
+    rows = []
+    for ev in events:
+        start = ev.get("start", "")
+        if start < today:
+            continue
+        summary = ev.get("summary", "")
+        amount = ev.get("amount", "")
+        status = ev.get("status", "")
+        rows.append(f'<tr><td>{start}</td><td>{summary}</td><td class="num">{amount}</td><td>{status}</td></tr>')
+    return "\n".join(rows[:12])
+
+
+def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "", mb_cc_rows: str = "", llm_emergency_analysis: str = "", schedule_rows_html: str = "", p0_tasks_html: str = "") -> str:
     """產出五大章節日報 HTML。"""
     allianz = tv["allianz_ab"] or 7_881_584
     firstjin = tv["firstjin"] or 1_994_698
@@ -593,15 +609,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <h3>🚨 P0 任務</h3>
     <div class="callout callout-warn">
       <ul>
-        <li>7/17（五）— 國泰轉貸面簽/對保（✅ 已執行，待後續流程）</li>
-        <li>7/20（一）— 洲際 W 33,000 ✅ 已入帳</li>
-        <li>7/22（三）— 玉山信用卡繳款截止 3,176</li>
-        <li>⚠️ <strong>7/23（四）</strong>— 安聯 AI 收益 T+4 轉換截止 ← ⏰ 今天！</li>
-        <li>⚠️ <strong>7/24（五）</strong>— 貝萊德世界科技 A10 T+4 轉換截止</li>
-        <li>7/27（一）— 台新信用卡繳款截止 1,000</li>
-        <li>7/29-30 — Fed 利率決策 + 安聯 AI / 貝萊德 A10 基準日</li>
-        <li>8/1（五）— 星展戶頭扣款理財型利息 ~10,000 ✅ 餘裕充足</li>
-        <li><relay_0050> — 0050 配息 ⚠️ 待 MB 確認</li>
+        {p0_tasks_html}
       </ul>
     </div>
 
@@ -612,16 +620,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
           <tr><th>日期</th><th>項目</th><th class="num">金額 TWD</th><th>狀態</th></tr>
         </thead>
         <tbody>
-          <tr><td>7/17（五）</td><td>國泰轉貸面簽/對保 + 段部上課</td><td class="num">—</td><td>🚨 P0</td></tr>
-          <tr><td>7/19-20</td><td>摩根 FJ33 配息入帳</td><td class="num">13,593</td><td>✅ 已配息</td></tr>
-          <tr><td>7/22</td><td>玉山信用卡繳款截止</td><td class="num">3,176</td><td>🔄 待處理</td></tr>
-          <tr><td>⚠️ <strong>7/23</strong></td><td>安聯 AI 收益 T+4 轉換截止</td><td class="num">—</td><td>🔴 今天到期</td></tr>
-          <tr><td>⚠️ <strong>7/24</strong></td><td>貝萊德 A10 T+4 轉換截止</td><td class="num">—</td><td>⏰ 明天到期</td></tr>
-          <tr><td>7/27</td><td>台新信用卡繳款截止</td><td class="num">1,000</td><td>🔄 待處理</td></tr>
-          <tr><td>7/29-30</td><td>安聯 AI / 貝萊德 A10 基準日</td><td class="num">—</td><td>⏸️ 等待到期</td></tr>
-          <tr><td>8/1</td><td>星展戶頭扣理財型利息</td><td class="num">10,000</td><td>✅ 已清償</td></tr>
-          <tr><td>待 MB</td><td>0050 配息</td><td class="num">—</td><td>待確認</td></tr>
-          <tr><td>10/23-28</td><td>胡志明市旅行 6D5N</td><td class="num">—</td><td>✅ 已排程</td></tr>
+{schedule_rows_html}
         </tbody>
       </table>
     </div>

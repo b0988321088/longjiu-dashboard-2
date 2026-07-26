@@ -38,7 +38,23 @@ from calendar_sync import parse_events
 _events = parse_events("")
 _future = [e for e in _events if e.get("start","") >= TODAY][:12]
 _schedule = _generate_schedule_html(_future)
-html = render_daily_report(tv, market_intel_text=_market_html, schedule_rows_html=_schedule)
+
+# 產生 P0 任務（重要待辦事件）
+_p0_core = [
+    '<li>7/17（五）— 國泰轉貸面簽/對保（✅ 已執行，待後續流程）</li>',
+    '<li>7/22（三）— 玉山信用卡繳款截止 3,176</li>',
+    '<li>⚠️ <strong>7/23（四）</strong>— 安聯 AI 收益 T+4 轉換截止 ← ⏰ 已過期</li>',
+    '<li>7/27（一）— 台新信用卡繳款截止 1,000</li>',
+    '<li>7/29-30 — Fed 利率決策 + 安聯 AI / 貝萊德 A10 基準日 + 峨眉會勘</li>',
+    '<li>8/1（五）— 星展戶頭扣款理財型利息 ~10,000 ✅ 待確認</li>',
+    '<li>⚠️ 待處理 — 女友借款 300,000（每月還 6,000，預計 12/5 清償）</li>',
+    '<li>8/3（一）— 體檢 📋 重要</li>',
+]
+# 從日曆補動態事件
+_p0_dynamic = [f'<li>{e.get("start","—")} — {e.get("summary","")}</li>' for e in _events if e.get("status") in ("P0","🔴","待處理","今天")][:5]
+_p0_html = "\n".join(_p0_core + _p0_dynamic)
+
+html = render_daily_report(tv, market_intel_text=_market_html, schedule_rows_html=_schedule, p0_tasks_html=_p0_html)
 
 # 5. 注入市場情報（巴菲特/CTO/CIO）
 html = _inject_market_intel(html, tv, daily_analysis)
