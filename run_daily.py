@@ -1541,14 +1541,14 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         f'<span class="text-xs font-mono font-bold text-white">{_rent_zjw:,} TWD</span></div>'
         f'<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800">'
         f'<div class="flex items-center gap-2 text-xs">'
-        f'<span class="text-yellow-400">⏳ 待收</span>'
+        f'<span class="text-emerald-400">✅ 已入帳</span>'
         f'<span class="text-slate-300">大義街23樓房租</span></div>'
-        f'<span class="text-xs font-mono font-bold text-yellow-400">{_rent_23f:,} TWD</span></div>'
+        f'<span class="text-xs font-mono font-bold text-white">{_rent_23f:,} TWD</span></div>'
         f'<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800">'
         f'<div class="flex items-center gap-2 text-xs">'
-        f'<span class="text-yellow-400">⏳ 待收</span>'
+        f'<span class="text-emerald-400">✅ 已入帳</span>'
         f'<span class="text-slate-300">管理費</span></div>'
-        f'<span class="text-xs font-mono font-bold text-yellow-400">{_rent_mgmt:,} TWD</span></div>'
+        f'<span class="text-xs font-mono font-bold text-white">{_rent_mgmt:,} TWD</span></div>'
     )
     html = html.replace("__RENT_ROWS__", _rent_rows)
 
