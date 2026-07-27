@@ -89,42 +89,40 @@ def parse_events(text: str):
     
     return events
 
-creds = load_creds()
-if not creds:
-    exit(1)
+def sync():
+    creds = load_creds()
+    if not creds:
+        return
+    service = build("calendar", "v3", credentials=creds)
+    events = parse_events(LEDGER.read_text("utf-8") if LEDGER.exists() else "")
 
-service = build("calendar", "v3", credentials=creds)
-events = parse_events(LEDGER.read_text("utf-8") if LEDGER.exists() else "")
+    # 清空所有舊系統事件（依標記 + 關鍵字雙重清掃）
+    import logging
+    logger = logging.getLogger('calendar_sync')
+    _CLEAN_KEYWORDS = ['房租', '大義街', '洲際W', '台電薪資', '管理費', '繳款截止', '[calendar_sync]']
+    try:
+        page_token = None
+        deleted = 0
+        while True:
+            _evs = service.events().list(calendarId='primary', pageToken=page_token, maxResults=250).execute()
+            for item in _evs.get('items', []):
+                desc = item.get('description','')
+                summary = item.get('summary','')
+                if '[calendar_sync]' in desc or any(kw in summary for kw in _CLEAN_KEYWORDS):
+                    service.events().delete(calendarId='primary', eventId=item['id']).execute()
+                    deleted += 1
+            page_token = _evs.get('nextPageToken')
+            if not page_token:
+                break
+        if deleted:
+            logger.info(f'  刪除 {deleted} 個舊系統事件')
+    except Exception as e:
+        logger.warning(f'  刪除系統事件失敗: {e}')
 
-# 清空所有舊系統事件（含 [calendar_sync] 標記）
-import logging
-logger = logging.getLogger('calendar_sync')
-try:
-    page_token = None
-    deleted = 0
-    while True:
-        _evs = service.events().list(calendarId='primary', pageToken=page_token, maxResults=250).execute()
-        for item in _evs.get('items', []):
-            desc = item.get('description','')
-            if '[calendar_sync]' in desc:
-                service.events().delete(calendarId='primary', eventId=item['id']).execute()
-                deleted += 1
-        page_token = _evs.get('nextPageToken')
-        if not page_token:
-            break
-    if deleted:
-        logger.info(f'  刪除 {deleted} 個舊系統事件')
-except Exception as e:
-    logger.warning(f'  刪除系統事件失敗: {e}')
-
-created = 0
-for ev in events:
-    exists = service.events().list(calendarId="primary", q=ev["summary"], timeMin=f"{ev['start']}T00:00:00Z",
-                                    timeMax=f"{ev['end']}T23:59:59Z", maxResults=5).execute()
-    if not exists.get("items"):
+    created = 0
+    for ev in events:
         body = {
             "summary": ev["summary"],
-            "description": "[calendar_sync]",
             "description": "[calendar_sync]",
             "start": {"date": ev["start"]},
             "end": {"date": ev["end"]},
@@ -132,4 +130,7 @@ for ev in events:
         service.events().insert(calendarId="primary", body=body).execute()
         created += 1
 
-logger.info(f"✅ Calendar 同步完成：新增 {created} 個行程")
+    logger.info(f"✅ Calendar 同步完成：新增 {created} 個行程")
+
+if __name__ == "__main__":
+    sync()

@@ -637,21 +637,61 @@
   "insurance_breakdown": {
     "policy_a_total": 4992334,
     "policy_a_funds": {
-      "安聯收益成長": 1839672,
-      "M&G入息": 2367954,
-      "貝萊德世界科技A10": 502692,
-      "安聯AI收益成長": 359165,
-      "聯博美國成長": 3344
+      "安聯收益成長": {
+        "value": 1839672,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "M&G入息": {
+        "value": 2367954,
+        "code": "USDEQ5700",
+        "performance_pct": -0.63
+      },
+      "貝萊德世界科技A10": {
+        "value": 502692,
+        "code": "USDEQ6080",
+        "performance_pct": 9.36
+      },
+      "安聯AI收益成長": {
+        "value": 359165,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "聯博美國成長": {
+        "value": 3344,
+        "code": "USDEQ6330",
+        "performance_pct": -0.27
+      }
     },
     "policy_b_dividend_accumulated": 681118,
     "policy_a_dividend_accumulated": 932128,
     "policy_b_total": 2681959,
     "policy_b_funds": {
-      "安聯收益成長": 940794,
-      "M&G入息": 768482,
-      "貝萊德世界科技A10": 461803,
-      "安聯AI收益成長": 543514,
-      "聯博美國成長": 1407
+      "安聯收益成長": {
+        "value": 940794,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "M&G入息": {
+        "value": 768482,
+        "code": "USDEQ5700",
+        "performance_pct": -0.61
+      },
+      "貝萊德世界科技A10": {
+        "value": 461803,
+        "code": "USDEQ6080",
+        "performance_pct": 15.75
+      },
+      "安聯AI收益成長": {
+        "value": 543514,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "聯博美國成長": {
+        "value": 1407,
+        "code": "USDEQ6330",
+        "performance_pct": -0.5
+      }
     }
   },
   "allianz_ab": 7843892,
@@ -830,19 +870,59 @@
   },
   "funds": 793434,
   "allianz_a_breakdown": {
-    "安聯收益成長": 1848071,
-    "M&G入息": 2377759,
-    "貝萊德世界科技A10": 506770,
-    "安聯AI收益成長": 367768,
-    "聯博美國成長": 3300
+    "安聯收益成長": {
+      "value": 1848071,
+      "code": "USDEQ3490",
+      "performance_pct": -0.55
+    },
+    "M&G入息": {
+      "value": 2377759,
+      "code": "USDEQ5700",
+      "performance_pct": -0.63
+    },
+    "貝萊德世界科技A10": {
+      "value": 506770,
+      "code": "USDEQ6080",
+      "performance_pct": 9.36
+    },
+    "安聯AI收益成長": {
+      "value": 367768,
+      "code": "USDEQ6270",
+      "performance_pct": 6.46
+    },
+    "聯博美國成長": {
+      "value": 3300,
+      "code": "USDEQ6330",
+      "performance_pct": -0.27
+    }
   },
   "allianz_a_current_value": 5103668,
   "allianz_b_breakdown": {
-    "安聯收益成長": 945089,
-    "M&G入息": 771664,
-    "貝萊德世界科技A10": 465549,
-    "安聯AI收益成長": 556533,
-    "聯博美國成長": 1389
+    "安聯收益成長": {
+      "value": 945089,
+      "code": "USDEQ3490",
+      "performance_pct": -0.55
+    },
+    "M&G入息": {
+      "value": 771664,
+      "code": "USDEQ5700",
+      "performance_pct": -0.61
+    },
+    "貝萊德世界科技A10": {
+      "value": 465549,
+      "code": "USDEQ6080",
+      "performance_pct": 15.75
+    },
+    "安聯AI收益成長": {
+      "value": 556533,
+      "code": "USDEQ6270",
+      "performance_pct": 6.46
+    },
+    "聯博美國成長": {
+      "value": 1389,
+      "code": "USDEQ6330",
+      "performance_pct": -0.5
+    }
   },
   "allianz_b_current_value": 2740224,
   "monthly_dividend_total": 129651,
@@ -885,5 +965,15 @@
       "利率": "0%（無息）",
       "備註": "女友借款，每月5號還6,000，年底12/5全部清償"
     }
+  },
+  "allianz_a_performance": 0.79,
+  "allianz_b_performance": 3.28,
+  "allianz_a_monthly": {
+    "total": 5103668,
+    "performance_pct": 0.79
+  },
+  "allianz_b_monthly": {
+    "total": 2740224,
+    "performance_pct": 3.28
   }
 }

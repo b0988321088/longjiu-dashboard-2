@@ -61,7 +61,7 @@ if _ej.exists():
     _r = _d.get("full_report", _d.get("analysis", ""))
     _emergency_html = f'<div class="callout callout-warn">{_r.replace(chr(10), "<br>" + chr(10))}</div>'
     # 加入緊急應變連結
-    _emergency_html += '<br><a href=\"https://longjiu-dashboard-2-production.up.railway.app/emergency_report_2026-07-24.html\" target=\"_blank\" style=\"display:inline-block;margin-top:10px;color:#34D399;font-weight:bold\">📄 檢視完整緊急應變報告 →</a>'
+    _emergency_html += f'<br><a href=\"https://b0988321088.github.io/longjiu-dashboard-2/emergency_taiex_report_{TODAY}.html\" target=\"_blank\" style=\"display:inline-block;margin-top:10px;color:#34D399;font-weight:bold\">📄 檢視完整緊急應變報告 →</a>'
 
 # 4. 從 schedule_events.json 統一讀取排程
 _events = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))

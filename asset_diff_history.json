@@ -14,17 +14,57 @@
     "other": 0.0,
     "insurance_detail": {
       "【安聯保單A】現值": 5103668,
-      "  A-安聯收益成長": 1839672,
-      "  A-M&G入息": 2367954,
-      "  A-貝萊德世界科技A10": 502692,
-      "  A-安聯AI收益成長": 359165,
-      "  A-聯博美國成長": 3344,
+      "  A-安聯收益成長": {
+        "value": 1839672,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  A-M&G入息": {
+        "value": 2367954,
+        "code": "USDEQ5700",
+        "performance_pct": -0.63
+      },
+      "  A-貝萊德世界科技A10": {
+        "value": 502692,
+        "code": "USDEQ6080",
+        "performance_pct": 9.36
+      },
+      "  A-安聯AI收益成長": {
+        "value": 359165,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  A-聯博美國成長": {
+        "value": 3344,
+        "code": "USDEQ6330",
+        "performance_pct": -0.27
+      },
       "【安聯保單B】現值": 2740224,
-      "  B-安聯收益成長": 940794,
-      "  B-M&G入息": 768482,
-      "  B-貝萊德世界科技A10": 461803,
-      "  B-安聯AI收益成長": 543514,
-      "  B-聯博美國成長": 1407,
+      "  B-安聯收益成長": {
+        "value": 940794,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  B-M&G入息": {
+        "value": 768482,
+        "code": "USDEQ5700",
+        "performance_pct": -0.61
+      },
+      "  B-貝萊德世界科技A10": {
+        "value": 461803,
+        "code": "USDEQ6080",
+        "performance_pct": 15.75
+      },
+      "  B-安聯AI收益成長": {
+        "value": 543514,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  B-聯博美國成長": {
+        "value": 1407,
+        "code": "USDEQ6330",
+        "performance_pct": -0.5
+      },
       "安聯A+B合計": 7843892,
       "━第一金FL65現値": 1958980,
       "━保單總現値": 9802872
@@ -50,17 +90,57 @@
     "other": 0.0,
     "insurance_detail": {
       "【安聯保單A】現值": 5103668,
-      "  A-安聯收益成長": 1839672,
-      "  A-M&G入息": 2367954,
-      "  A-貝萊德世界科技A10": 502692,
-      "  A-安聯AI收益成長": 359165,
-      "  A-聯博美國成長": 3344,
+      "  A-安聯收益成長": {
+        "value": 1839672,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  A-M&G入息": {
+        "value": 2367954,
+        "code": "USDEQ5700",
+        "performance_pct": -0.63
+      },
+      "  A-貝萊德世界科技A10": {
+        "value": 502692,
+        "code": "USDEQ6080",
+        "performance_pct": 9.36
+      },
+      "  A-安聯AI收益成長": {
+        "value": 359165,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  A-聯博美國成長": {
+        "value": 3344,
+        "code": "USDEQ6330",
+        "performance_pct": -0.27
+      },
       "【安聯保單B】現值": 2740224,
-      "  B-安聯收益成長": 940794,
-      "  B-M&G入息": 768482,
-      "  B-貝萊德世界科技A10": 461803,
-      "  B-安聯AI收益成長": 543514,
-      "  B-聯博美國成長": 1407,
+      "  B-安聯收益成長": {
+        "value": 940794,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  B-M&G入息": {
+        "value": 768482,
+        "code": "USDEQ5700",
+        "performance_pct": -0.61
+      },
+      "  B-貝萊德世界科技A10": {
+        "value": 461803,
+        "code": "USDEQ6080",
+        "performance_pct": 15.75
+      },
+      "  B-安聯AI收益成長": {
+        "value": 543514,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  B-聯博美國成長": {
+        "value": 1407,
+        "code": "USDEQ6330",
+        "performance_pct": -0.5
+      },
       "安聯A+B合計": 7843892,
       "━第一金FL65現値": 1958980,
       "━保單總現値": 9802872
@@ -86,17 +166,57 @@
     "other": 0.0,
     "insurance_detail": {
       "【安聯保單A】現值": 5103668,
-      "  A-安聯收益成長": 1839672,
-      "  A-M&G入息": 2367954,
-      "  A-貝萊德世界科技A10": 502692,
-      "  A-安聯AI收益成長": 359165,
-      "  A-聯博美國成長": 3344,
+      "  A-安聯收益成長": {
+        "value": 1839672,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  A-M&G入息": {
+        "value": 2367954,
+        "code": "USDEQ5700",
+        "performance_pct": -0.63
+      },
+      "  A-貝萊德世界科技A10": {
+        "value": 502692,
+        "code": "USDEQ6080",
+        "performance_pct": 9.36
+      },
+      "  A-安聯AI收益成長": {
+        "value": 359165,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  A-聯博美國成長": {
+        "value": 3344,
+        "code": "USDEQ6330",
+        "performance_pct": -0.27
+      },
       "【安聯保單B】現值": 2740224,
-      "  B-安聯收益成長": 940794,
-      "  B-M&G入息": 768482,
-      "  B-貝萊德世界科技A10": 461803,
-      "  B-安聯AI收益成長": 543514,
-      "  B-聯博美國成長": 1407,
+      "  B-安聯收益成長": {
+        "value": 940794,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  B-M&G入息": {
+        "value": 768482,
+        "code": "USDEQ5700",
+        "performance_pct": -0.61
+      },
+      "  B-貝萊德世界科技A10": {
+        "value": 461803,
+        "code": "USDEQ6080",
+        "performance_pct": 15.75
+      },
+      "  B-安聯AI收益成長": {
+        "value": 543514,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  B-聯博美國成長": {
+        "value": 1407,
+        "code": "USDEQ6330",
+        "performance_pct": -0.5
+      },
       "安聯A+B合計": 7843892,
       "━第一金FL65現値": 1958980,
       "━保單總現値": 9802872
@@ -122,17 +242,57 @@
     "other": 0.0,
     "insurance_detail": {
       "【安聯保單A】現值": 5103668,
-      "  A-安聯收益成長": 1839672,
-      "  A-M&G入息": 2367954,
-      "  A-貝萊德世界科技A10": 502692,
-      "  A-安聯AI收益成長": 359165,
-      "  A-聯博美國成長": 3344,
+      "  A-安聯收益成長": {
+        "value": 1839672,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  A-M&G入息": {
+        "value": 2367954,
+        "code": "USDEQ5700",
+        "performance_pct": -0.63
+      },
+      "  A-貝萊德世界科技A10": {
+        "value": 502692,
+        "code": "USDEQ6080",
+        "performance_pct": 9.36
+      },
+      "  A-安聯AI收益成長": {
+        "value": 359165,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  A-聯博美國成長": {
+        "value": 3344,
+        "code": "USDEQ6330",
+        "performance_pct": -0.27
+      },
       "【安聯保單B】現值": 2740224,
-      "  B-安聯收益成長": 940794,
-      "  B-M&G入息": 768482,
-      "  B-貝萊德世界科技A10": 461803,
-      "  B-安聯AI收益成長": 543514,
-      "  B-聯博美國成長": 1407,
+      "  B-安聯收益成長": {
+        "value": 940794,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  B-M&G入息": {
+        "value": 768482,
+        "code": "USDEQ5700",
+        "performance_pct": -0.61
+      },
+      "  B-貝萊德世界科技A10": {
+        "value": 461803,
+        "code": "USDEQ6080",
+        "performance_pct": 15.75
+      },
+      "  B-安聯AI收益成長": {
+        "value": 543514,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  B-聯博美國成長": {
+        "value": 1407,
+        "code": "USDEQ6330",
+        "performance_pct": -0.5
+      },
       "安聯A+B合計": 7843892,
       "━第一金FL65現値": 1958980,
       "━保單總現値": 9802872
@@ -158,17 +318,57 @@
     "other": 0.0,
     "insurance_detail": {
       "【安聯保單A】現值": 5103668,
-      "  A-安聯收益成長": 1839672,
-      "  A-M&G入息": 2367954,
-      "  A-貝萊德世界科技A10": 502692,
-      "  A-安聯AI收益成長": 359165,
-      "  A-聯博美國成長": 3344,
+      "  A-安聯收益成長": {
+        "value": 1839672,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  A-M&G入息": {
+        "value": 2367954,
+        "code": "USDEQ5700",
+        "performance_pct": -0.63
+      },
+      "  A-貝萊德世界科技A10": {
+        "value": 502692,
+        "code": "USDEQ6080",
+        "performance_pct": 9.36
+      },
+      "  A-安聯AI收益成長": {
+        "value": 359165,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  A-聯博美國成長": {
+        "value": 3344,
+        "code": "USDEQ6330",
+        "performance_pct": -0.27
+      },
       "【安聯保單B】現值": 2740224,
-      "  B-安聯收益成長": 940794,
-      "  B-M&G入息": 768482,
-      "  B-貝萊德世界科技A10": 461803,
-      "  B-安聯AI收益成長": 543514,
-      "  B-聯博美國成長": 1407,
+      "  B-安聯收益成長": {
+        "value": 940794,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  B-M&G入息": {
+        "value": 768482,
+        "code": "USDEQ5700",
+        "performance_pct": -0.61
+      },
+      "  B-貝萊德世界科技A10": {
+        "value": 461803,
+        "code": "USDEQ6080",
+        "performance_pct": 15.75
+      },
+      "  B-安聯AI收益成長": {
+        "value": 543514,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  B-聯博美國成長": {
+        "value": 1407,
+        "code": "USDEQ6330",
+        "performance_pct": -0.5
+      },
       "安聯A+B合計": 7843892,
       "━第一金FL65現値": 1958980,
       "━保單總現値": 9802872
@@ -194,17 +394,57 @@
     "other": 0.0,
     "insurance_detail": {
       "【安聯保單A】現值": 5103668,
-      "  A-安聯收益成長": 1839672,
-      "  A-M&G入息": 2367954,
-      "  A-貝萊德世界科技A10": 502692,
-      "  A-安聯AI收益成長": 359165,
-      "  A-聯博美國成長": 3344,
+      "  A-安聯收益成長": {
+        "value": 1839672,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  A-M&G入息": {
+        "value": 2367954,
+        "code": "USDEQ5700",
+        "performance_pct": -0.63
+      },
+      "  A-貝萊德世界科技A10": {
+        "value": 502692,
+        "code": "USDEQ6080",
+        "performance_pct": 9.36
+      },
+      "  A-安聯AI收益成長": {
+        "value": 359165,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  A-聯博美國成長": {
+        "value": 3344,
+        "code": "USDEQ6330",
+        "performance_pct": -0.27
+      },
       "【安聯保單B】現值": 2740224,
-      "  B-安聯收益成長": 940794,
-      "  B-M&G入息": 768482,
-      "  B-貝萊德世界科技A10": 461803,
-      "  B-安聯AI收益成長": 543514,
-      "  B-聯博美國成長": 1407,
+      "  B-安聯收益成長": {
+        "value": 940794,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  B-M&G入息": {
+        "value": 768482,
+        "code": "USDEQ5700",
+        "performance_pct": -0.61
+      },
+      "  B-貝萊德世界科技A10": {
+        "value": 461803,
+        "code": "USDEQ6080",
+        "performance_pct": 15.75
+      },
+      "  B-安聯AI收益成長": {
+        "value": 543514,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  B-聯博美國成長": {
+        "value": 1407,
+        "code": "USDEQ6330",
+        "performance_pct": -0.5
+      },
       "安聯A+B合計": 7843892,
       "━第一金FL65現値": 1958980,
       "━保單總現値": 9802872
@@ -218,28 +458,144 @@
   "2026-07-26": {
     "date": "2026-07-26",
     "total_assets": 16389795.0,
-    "total_liabilities": 18197422.0,
-    "net_worth": -1807627.0,
+    "total_liabilities": 21165869,
+    "net_worth": -4776074.0,
     "securities_market": 2479320.0,
     "insurance_current": 9802872.0,
     "insurance_total": 9802872.0,
     "fund_market": 793434.0,
     "real_estate": 0.0,
     "cash": 3314169.0,
+    "bonds": 0.0,
+    "other": 0.0,
+    "insurance_detail": {
+      "【安聯保單A】現值": 5103668,
+      "  A-安聯收益成長": {
+        "value": 1839672,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  A-M&G入息": {
+        "value": 2367954,
+        "code": "USDEQ5700",
+        "performance_pct": -0.63
+      },
+      "  A-貝萊德世界科技A10": {
+        "value": 502692,
+        "code": "USDEQ6080",
+        "performance_pct": 9.36
+      },
+      "  A-安聯AI收益成長": {
+        "value": 359165,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  A-聯博美國成長": {
+        "value": 3344,
+        "code": "USDEQ6330",
+        "performance_pct": -0.27
+      },
+      "【安聯保單B】現值": 2740224,
+      "  B-安聯收益成長": {
+        "value": 940794,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  B-M&G入息": {
+        "value": 768482,
+        "code": "USDEQ5700",
+        "performance_pct": -0.61
+      },
+      "  B-貝萊德世界科技A10": {
+        "value": 461803,
+        "code": "USDEQ6080",
+        "performance_pct": 15.75
+      },
+      "  B-安聯AI收益成長": {
+        "value": 543514,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  B-聯博美國成長": {
+        "value": 1407,
+        "code": "USDEQ6330",
+        "performance_pct": -0.5
+      },
+      "安聯A+B合計": 7843892,
+      "━第一金FL65現値": 1958980,
+      "━保單總現値": 9802872
+    },
+    "fund_dividend_monthly": 129651.0,
+    "monthly_income": 218102.0,
+    "monthly_expense": 141958.0,
+    "rent_monthly": 80100.0,
+    "cathay_refinance": 0.0
+  },
+  "2026-07-27": {
+    "date": "2026-07-27",
+    "total_assets": 16689795.0,
+    "total_liabilities": 18197422.0,
+    "net_worth": -1507627.0,
+    "securities_market": 2479320.0,
+    "insurance_current": 9802872.0,
+    "insurance_total": 9802872.0,
+    "fund_market": 793434.0,
+    "real_estate": 0.0,
+    "cash": 3614169.0,
     "other": 0.0,
     "insurance_detail": {
       "【安聯保單A】現值": 5103668.0,
-      "  A-安聯收益成長": 1839672,
-      "  A-M&G入息": 2367954,
-      "  A-貝萊德世界科技A10": 502692,
-      "  A-安聯AI收益成長": 359165,
-      "  A-聯博美國成長": 3344,
+      "  A-安聯收益成長": {
+        "value": 1839672,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  A-M&G入息": {
+        "value": 2367954,
+        "code": "USDEQ5700",
+        "performance_pct": -0.63
+      },
+      "  A-貝萊德世界科技A10": {
+        "value": 502692,
+        "code": "USDEQ6080",
+        "performance_pct": 9.36
+      },
+      "  A-安聯AI收益成長": {
+        "value": 359165,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  A-聯博美國成長": {
+        "value": 3344,
+        "code": "USDEQ6330",
+        "performance_pct": -0.27
+      },
       "【安聯保單B】現值": 2740224.0,
-      "  B-安聯收益成長": 940794,
-      "  B-M&G入息": 768482,
-      "  B-貝萊德世界科技A10": 461803,
-      "  B-安聯AI收益成長": 543514,
-      "  B-聯博美國成長": 1407,
+      "  B-安聯收益成長": {
+        "value": 940794,
+        "code": "USDEQ3490",
+        "performance_pct": -0.55
+      },
+      "  B-M&G入息": {
+        "value": 768482,
+        "code": "USDEQ5700",
+        "performance_pct": -0.61
+      },
+      "  B-貝萊德世界科技A10": {
+        "value": 461803,
+        "code": "USDEQ6080",
+        "performance_pct": 15.75
+      },
+      "  B-安聯AI收益成長": {
+        "value": 543514,
+        "code": "USDEQ6270",
+        "performance_pct": 6.46
+      },
+      "  B-聯博美國成長": {
+        "value": 1407,
+        "code": "USDEQ6330",
+        "performance_pct": -0.5
+      },
       "安聯A+B合計": 7843892.0,
       "━第一金FL65現値": 1958980.0,
       "━保單總現値": 9802872.0

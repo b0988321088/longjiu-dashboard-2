@@ -167,6 +167,36 @@ generate_emergency_report(taiex_realtime_data, etf_0050_data, etf_00878_data)
 
 run_step("更新 snapshot", [sys.executable, "-c",
     f"import json; p=r'{LJ}/snapshot.json'; s=json.loads(open(p).read()); print('snapshot 已讀取')"], 15)
+
+# 寫入緊急應變分析 JSON（供日報第5章讀取）
+_ts = datetime.now().strftime("%Y-%m-%d %H:%M")
+_snap = json.loads((LJ / "snapshot.json").read_text("utf-8"))
+_sec = _snap.get("securities_total_market_value", 0)
+_taiex_line = ""
+if taiex_realtime_data:
+    _taiex_line = f"加權指數：{taiex_realtime_data['close']:,.2f}（{taiex_realtime_data['change']:+.2f} / {taiex_realtime_data['pct']:+.2f}%）"
+_0050_line = ""
+if etf_0050_data:
+    _0050_line = f"0050：{etf_0050_data['close']:,.2f}（{etf_0050_data['change']:+.2f} / {etf_0050_data['pct']:+.2f}%）"
+_00878_line = ""
+if etf_00878_data:
+    _00878_line = f"00878：{etf_00878_data['close']:,.2f}（{etf_00878_data['change']:+.2f} / {etf_00878_data['pct']:+.2f}%）"
+_analysis = {
+    "generated_at": _ts,
+    "source": "台股緊急應變",
+    "full_report": (
+        f"🚨 龍九控股 — 台股緊急應變報告 🚨\n"
+        f"📅 {_ts}\n\n"
+        f"【一、市場概況】\n{_taiex_line}\n{_0050_line}\n{_00878_line}\n\n"
+        f"【二、持倉關聯】\n證券市值 {_sec:,} TWD\n\n"
+        f"【三、資產配置】\n請參閱完整報告\n\n"
+        f"【四、應變建議】\n市場波動時保持理性，避免恐慌性交易。\n"
+        f"數據來源：Yahoo Finance"
+    ),
+}
+(LJ / "data" / "emergency_llm_analysis.json").write_text(
+    json.dumps(_analysis, ensure_ascii=False, indent=2), "utf-8")
+print(f"✅ 緊急應變分析已寫入 data/emergency_llm_analysis.json")
 run_step("日報+儀表板", [sys.executable, str(LJ / "run_daily.py")], 120)
 run_step("差異分析", [sys.executable, str(LJ / "asset_diff_monitor.py")], 60)
 run_step("推送", [sys.executable, str(LJ / "daily_deploy.py")], 300)

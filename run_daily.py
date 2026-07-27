@@ -660,7 +660,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 <div class="card">
   <h2>📊 資產差異分析 Asset Diff</h2>
   <p class="text-lead">
-    <a href="https://longjiu-dashboard-2-production.up.railway.app/asset_diff_{TODAY}.html" target="_blank">
+    <a href="https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html" target="_blank">
       開啟今日差異分析 → asset_diff_{TODAY}.html
     </a>
   </p>
@@ -1071,7 +1071,7 @@ def main():
             _report_html = _format_content_to_html(analysis_content, content_type="emergency_analysis")
             # 從 JSON 取出報告日期，製作動態連結
             _er_date = emergency_data.get("generated_at", "")[:10]
-            _er_link = f"https://longjiu-dashboard-2-production.up.railway.app/emergency_report_{_er_date}.html"
+            _er_link = f"https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_{_er_date}.html"
             llm_emergency_analysis_html = f"""<div class="callout callout-warn">
             {_report_html}
             <p style="margin-top:8px;text-align:right;font-size:13px">
