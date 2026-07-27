@@ -66,6 +66,17 @@ if _ej.exists():
     _emergency_html += f'<br><a href=\"{_railway_link}\" target=\"_blank\" style=\"display:inline-block;margin-top:10px;color:#34D399;font-weight:bold\">📄 檢視完整 LLM 緊急應變報告 →</a>'
     _emergency_html += f'<br><a href=\"{_github_link}\" target=\"_blank\" style=\"font-size:13px;color:#6e6e73\">📊 數據版報告（備援）</a>'
 
+# 3c. 載入執行中決策追蹤
+_decision_rows = ""
+_dp = BASE / "pending_decisions.json"
+if _dp.exists():
+    try:
+        _dd = json.loads(_dp.read_text(encoding="utf-8"))
+        for _d in _dd:
+            _decision_rows += f'<tr><td>{_d.get("date","")}</td><td>{_d.get("title","")}</td><td>{_d.get("status","")}</td></tr>'
+    except:
+        pass
+
 # 4. 從 schedule_events.json 統一讀取排程
 _events = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
 
@@ -94,6 +105,12 @@ for e in _events:
         if d == "待處理" or ("2026-07" <= d <= "2026-08"):
             _p0_dynamic.append(f'<li>{d} — {e.get("item","")} {e.get("amount","")} {st}</li>')
 _p0_html = '\n'.join(_p0_core + _p0_dynamic)
+# 決策追蹤附加至 P0 區塊
+if _decision_rows:
+    _p0_html += '\n<p style="margin-top:12px;font-weight:700;color:#3b82f6">📋 執行中決策追蹤</p>'
+    _p0_html += '\n<table style="width:100%;font-size:13px;border-collapse:collapse"><thead><tr style="background:#f0f0f5"><th>日期</th><th>決策</th><th>狀態</th></tr></thead><tbody>'
+    _p0_html += _decision_rows
+    _p0_html += '\n</tbody></table>'
 
 html = render_daily_report(tv, market_intel_text=_market_html, schedule_rows_html=_schedule, p0_tasks_html=_p0_html, llm_emergency_analysis=_emergency_html)
 
