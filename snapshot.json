@@ -636,7 +636,7 @@
   "mortgage_count": 3,
   "note_rent_status": "本月房租全數實收 80,100（大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100）",
   "insurance_breakdown": {
-    "policy_a_total": 4992334,
+    "policy_a_total": 5103668,
     "policy_a_funds": {
       "安聯收益成長": {
         "value": 1839672,
@@ -666,7 +666,7 @@
     },
     "policy_b_dividend_accumulated": 681118,
     "policy_a_dividend_accumulated": 932128,
-    "policy_b_total": 2681959,
+    "policy_b_total": 2740224,
     "policy_b_funds": {
       "安聯收益成長": {
         "value": 940794,
@@ -872,27 +872,27 @@
   "funds": 793434,
   "allianz_a_breakdown": {
     "安聯收益成長": {
-      "value": 1848071,
+      "value": 1839672,
       "code": "USDEQ3490",
       "performance_pct": -0.55
     },
     "M&G入息": {
-      "value": 2377759,
+      "value": 2367954,
       "code": "USDEQ5700",
       "performance_pct": -0.63
     },
     "貝萊德世界科技A10": {
-      "value": 506770,
+      "value": 502692,
       "code": "USDEQ6080",
       "performance_pct": 9.36
     },
     "安聯AI收益成長": {
-      "value": 367768,
+      "value": 359165,
       "code": "USDEQ6270",
       "performance_pct": 6.46
     },
     "聯博美國成長": {
-      "value": 3300,
+      "value": 3344,
       "code": "USDEQ6330",
       "performance_pct": -0.27
     }
@@ -900,27 +900,27 @@
   "allianz_a_current_value": 5103668,
   "allianz_b_breakdown": {
     "安聯收益成長": {
-      "value": 945089,
+      "value": 940794,
       "code": "USDEQ3490",
       "performance_pct": -0.55
     },
     "M&G入息": {
-      "value": 771664,
+      "value": 768482,
       "code": "USDEQ5700",
       "performance_pct": -0.61
     },
     "貝萊德世界科技A10": {
-      "value": 465549,
+      "value": 461803,
       "code": "USDEQ6080",
       "performance_pct": 15.75
     },
     "安聯AI收益成長": {
-      "value": 556533,
+      "value": 543514,
       "code": "USDEQ6270",
       "performance_pct": 6.46
     },
     "聯博美國成長": {
-      "value": 1389,
+      "value": 1407,
       "code": "USDEQ6330",
       "performance_pct": -0.5
     }
