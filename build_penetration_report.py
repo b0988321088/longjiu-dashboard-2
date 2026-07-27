@@ -16,6 +16,28 @@ p = calc_penetration(cash, ins, sec, funds, snap=snap)
 tw_v, us_v, def_v, bond_v, cash_pv = p["台股市值型成長"], p["美股市值型成長"], p["防守型配息"], p["債券"], p["現金/安全網"]
 total = tw_v + us_v + def_v + bond_v + cash_pv
 
+# 自動校正 snapshot 穿透數據（供日報第2章使用）
+targets_map = {"台股市值型": 35, "美股市值型": 30, "配息型": 25, "債券型": 5, "現金": 5}
+actual_map = {"台股市值型成長": tw_v, "美股市值型成長": us_v, "防守型配息": def_v, "債券": bond_v, "現金/安全網": cash_pv}
+actual_pct = {k: round(v / total * 100, 1) for k, v in actual_map.items()}
+gaps = {
+    "台股市值型成長": round(actual_pct["台股市值型成長"] - targets_map["台股市值型"], 1),
+    "美股市值型成長": round(actual_pct["美股市值型成長"] - targets_map["美股市值型"], 1),
+    "防守型配息": round(actual_pct["防守型配息"] - targets_map["配息型"], 1),
+    "債券及安全現金": round(actual_pct["債券"] + actual_pct["現金/安全網"] - targets_map["債券型"] - targets_map["現金"], 1),
+}
+snap["penetration"] = {
+    "updated_at": date.today().isoformat(),
+    "source": "calc_penetration (auto-calibrated)",
+    "targets": {f"{k}目標": v for k, v in targets_map.items()},
+    "actual_pct": actual_pct,
+    "gaps": gaps,
+    "actual_twd": actual_map,
+    "alert": f"台股不足{abs(round(actual_pct['台股市值型成長']-targets_map['台股市值型'],1))}pp；現金+債券超標{abs(round(actual_pct['債券']+actual_pct['現金/安全網']-targets_map['債券型']-targets_map['現金'],1))}pp",
+}
+(BASE / "snapshot.json").write_text(json.dumps(snap, ensure_ascii=False, indent=2), encoding="utf-8")
+print(f"  穿透數據已自動校正並寫入 snapshot.json")
+
 holdings = snap.get("securities", {}).get("holdings", [])
 today = date.today().isoformat()
 
