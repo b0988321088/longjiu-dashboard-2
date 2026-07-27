@@ -155,48 +155,15 @@ checks = {
 }
 # 11. 穿透分析報告
 try:
-    _pen = json.loads((BASE / "snapshot.json").read_text("utf-8"))
-    _cash_p = _pen.get("cash_total", 3119158)
-    _ins_p = _pen.get("insurance_current_value", 9802872)
-    _sec_p = _pen.get("securities_total_market_value", 2597360)
-    _fund_p = _pen.get("fund_market_value", 793434)
-    from update_all import calc_penetration
-    _p = calc_penetration(_cash_p, _ins_p, _sec_p, _fund_p, snap=_pen)
-    # Generate penetration report inline (reuse report builder logic)
-    _tw_v, _us_v, _def_v, _bond_v, _cash_v = _p['台股市值型成長'], _p['美股市值型成長'], _p['防守型配息'], _p['債券'], _p['現金/安全網']
-    _total_p = _tw_v + _us_v + _def_v + _bond_v + _cash_v
-    _targets_pen = [('台股市值型',35,'#3b82f6'),('美股市值型',30,'#06b6d4'),('配息型',25,'#22c55e'),('債券型',5,'#f59e0b'),('現金',5,'#a855f7')]
-    _rows = ""
-    for _i, (_n, _t, _c) in enumerate([('🇹🇼 台股市值型',35,'#3b82f6'),('🇺🇸 美股市值型',30,'#06b6d4'),('🛡️ 防守型配息',25,'#22c55e'),('💵 債券',5,'#f59e0b'),('💰 安全現金',5,'#a855f7')]):
-        _vals = [_tw_v, _us_v, _def_v, _bond_v, _cash_v][_i]
-        _pct = _vals / _total_p * 100
-        _gap = _pct - _t
-        _tag_cls = "over" if _gap > 5 else ("under" if _gap < -5 else "good")
-        _tag_txt = "⚠️ 超標" if _gap > 5 else ("🔴 不足" if _gap < -5 else "✅ 正常")
-        _gap_cls = "down" if _gap < 0 else "up"
-        _tag = f'<span class="tag {_tag_cls}">{_tag_txt}</span>'
-        _rows += f'<tr><td>{_n}</td><td class="num">{_vals:,}</td><td class="num">{_pct:.1f}%</td><td class="num">{_t}%</td><td class="num {_gap_cls}">{_gap:+.1f}pp</td><td>{_tag}</td></tr>'
-    _pen_html = f'''<!DOCTYPE html><html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>龍九控股 穿透分析報告 {TODAY}</title>
-<style>body{{font-family:-apple-system,sans-serif;background:#0f172a;color:#f1f5f9;max-width:800px;margin:20px auto;padding:0 16px}}
-h1{{font-size:24px;font-weight:900;text-align:center;background:linear-gradient(135deg,#3b82f6,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}}
-.meta{{color:#94a3b8;font-size:13px;text-align:center;margin-bottom:20px}}
-.card{{background:#1e293b;border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid #334155}}
-h2{{font-size:15px;font-weight:700;margin:0 0 12px;padding-left:10px;border-left:3px solid #3b82f6}}
-table{{width:100%;border-collapse:collapse;font-size:13px}} th{{background:#334155;padding:8px 6px;text-align:left;color:#94a3b8;font-weight:600}}
-td{{padding:8px 6px;border-top:1px solid #334155}} .num{{text-align:right}} .up{{color:#22c55e}} .down{{color:#ef4444}}
-.tag{{display:inline-block;padding:2px 10px;border-radius:8px;font-size:11px;font-weight:700}}
-.over{{background:#ef444420;color:#ef4444}} .under{{background:#22c55e20;color:#22c55e}} .good{{background:#3b82f620;color:#3b82f6}}
-</style></head><body>
-<h1>📊 龍九控股 穿透分析報告</h1>
-<p class="meta">{TODAY} ｜ 總分母 {_total_p:,} TWD</p>
-<div class="card"><h2>🎯 配置總覽</h2><table><thead><tr><th>類別</th><th class="num">金額</th><th class="num">佔比</th><th class="num">目標</th><th class="num">缺口</th><th>狀態</th></tr></thead><tbody>{_rows}</tbody></table></div>
-<p class="meta">龍九控股 ｜ 穿透分析 v2.1</p></body></html>'''
-    (BASE / f"penetration_report_{TODAY}.html").write_text(_pen_html, encoding="utf-8")
-    pen_size = len(_pen_html)
-    print(f"✅ penetration_report_{TODAY}.html ({pen_size:,} bytes)")
+    # 11. 穿透分析報告（詳細版）
+    import subprocess as _sp
+    _pen_r = _sp.run([sys.executable, str(BASE / "build_penetration_report.py")], capture_output=True, text=True, timeout=30, cwd=BASE)
+    if _pen_r.returncode == 0:
+        print(f"  {_pen_r.stdout.strip()}")
+    else:
+        print(f"⚠️ 穿透報告略過: {_pen_r.stderr[:100]}")
 except Exception as _e:
-    print(f"⚠️ 穿透報告略過: {_e}")
+    print(f"⚠️ 穿透報告異常: {_e}")
 
 ok = all(checks.values())
 for k, v in checks.items():
