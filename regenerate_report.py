@@ -75,7 +75,7 @@ for e in _events:
     d = e.get("date","")
     if d == "待處理" or (d >= "2026-07-26" and d <= "2026-08-31"):
         _schedule_rows.append(f'<tr><td>{d}</td><td>{e.get("item","")}</td><td class="num">{e.get("amount","")}</td><td>{e.get("status","")}</td></tr>')
-_schedule = "\n".join(_schedule_rows[:15])
+_schedule = "\n".join(_schedule_rows[:20])
 
 # P0 任務（只顯示重要/待處理事件）
 _p0_core = [
