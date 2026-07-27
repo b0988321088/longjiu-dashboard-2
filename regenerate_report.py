@@ -203,9 +203,15 @@ if ok and len(sys.argv) > 1 and sys.argv[1] == '--deploy':
         _r = subprocess.run(['git','push','origin',_ref,'--force'], capture_output=True, text=True, timeout=30, cwd=BASE)
         _ok = 'Everything up-to-date' in _r.stdout or _r.returncode == 0
         print(f"  {'✅' if _ok else '❌'} 推送到 {_ref}")
-    print(f'📋 日報: https://b0988321088.github.io/longjiu-dashboard-2/{OUT.name}')
-    print(f'📊 儀表板: https://b0988321088.github.io/longjiu-dashboard-2/')
-    print(f'📈 差異分析: https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html')
+# 12. 產出連結清單（不論是否推播都顯示）
+print(f'\n{"="*50}')
+print(f'  龍九控股 — 管線產出完成 {TODAY}')
+print(f'{"="*50}')
+print(f'📰 日報:      https://b0988321088.github.io/longjiu-dashboard-2/{OUT.name}')
+print(f'🏠 儀表板:    https://b0988321088.github.io/longjiu-dashboard-2/')
+print(f'📈 差異分析:  https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html')
+print(f'📊 穿透分析:  https://b0988321088.github.io/longjiu-dashboard-2/penetration_report_{TODAY}.html')
+print(f'🚨 緊急應變:  https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_{TODAY}.html')
 
 import sys
 sys.exit(0 if ok else 1)
