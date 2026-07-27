@@ -132,6 +132,26 @@ for key, name, val, target, color, desc in cats_data:
         w("</tbody></table>")
 w("</div>")
 
+# 3b. 基金明細（鉅亨基金）
+_fb = snap.get("funds_breakdown", {})
+if _fb:
+    w("<div class='card'><h2>📦 基金穿透（鉅亨基金帳戶）</h2>")
+    w("<table><thead><tr><th>基金名稱</th><th class='num'>市值</th><th>穿透分類</th></tr></thead><tbody>")
+    _fund_tw = _fund_us = _fund_def = 0
+    for _fn, _fv2 in sorted(_fb.items(), key=lambda x: x[1], reverse=True):
+        if "路博邁5G" in _fn or "台新美日台" in _fn:
+            _cat = "🌎 美股"; _fund_us += _fv2
+        elif "0050連結" in _fn or "統一奔騰" in _fn:
+            _cat = "🇹🇼 台股"; _fund_tw += _fv2
+        elif "台中銀台灣優息" in _fn:
+            _cat = "🛡️ 防守型"; _fund_def += _fv2
+        else:
+            _cat = "🇹🇼 台股"; _fund_tw += _fv2
+        w(f"<tr><td style='max-width:180px'>{_fn}</td><td class='num'>{_fv2:,}</td><td>{_cat}</td></tr>")
+    w(f"<tr style='border-top:2px solid #3b82f6;font-weight:700'><td>合計</td><td class='num'>{sum(_fb.values()):,}</td>")
+    w(f"<td>🇹🇼 台股 {_fund_tw:,} + 🌎 美股 {_fund_us:,} + 🛡️ 防守型 {_fund_def:,}</td></tr>")
+    w("</tbody></table></div>")
+
 # 4. Insurance
 w("<div class='card'><h2>🏦 保險穿透</h2>")
 w("<table><thead><tr><th>項目</th><th class='num'>金額</th></tr></thead><tbody>")
