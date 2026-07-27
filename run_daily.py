@@ -1456,11 +1456,11 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             return f"{v:.2f}"
         return str(v or "—")
     html = html.replace("__ALLIANZ_RETURN__", fmt_pct(funds2.get("allianz_return", 16.41)))
-    html = html.replace("__ALLIANZ_MONTHLY__", fmt(funds2.get("allianz_monthly", tv.get("allianz_ab_monthly", 73_167))))
-    html = html.replace("__ALLIANZ_CUM__", fmt(funds2.get("allianz_cum", 1_630_962)))
-    html = html.replace("__ALLIANZ_COST__", fmt(funds2.get("allianz_cost", 7_808_297)))
-    html = html.replace("__POLICY_A_VAL__", "4,992,334")
-    html = html.replace("__POLICY_B_VAL__", "2,681,959")
+    html = html.replace("__ALLIANZ_MONTHLY__", fmt(funds2.get("allianz_monthly", tv.get("allianz_ab_monthly", 95_347))))
+    html = html.replace("__ALLIANZ_CUM__", fmt(funds2.get("allianz_cum", tv.get("allianz_cum_dividend", 1_630_962))))
+    html = html.replace("__ALLIANZ_COST__", fmt(funds2.get("allianz_cost", tv.get("allianz_cost", 8_000_000))))
+    html = html.replace("__POLICY_A_VAL__", fmt(tv.get("allianz_a_current_value", tv.get("allianz_policy_a_value", 5_103_668))))
+    html = html.replace("__POLICY_B_VAL__", fmt(tv.get("allianz_b_current_value", tv.get("allianz_policy_b_value", 2_740_224))))
     html = html.replace("__FIRSTJIN_MONTHLY__", fmt(funds2.get("firstjin_monthly", tv.get("firstjin_monthly", 22_949))))
     html = html.replace("__FIRSTJIN_CUM__", fmt(funds2.get("firstjin_cum", 73_341)))
     html = html.replace("__FIRSTJIN_COST__", fmt(funds2.get("firstjin_cost", 2_000_000)))
@@ -1513,8 +1513,8 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     _rent_1f = 24_000
     _rent_zjw = 33_000
     _rent_23f = 21_000
-    html = html.replace("__POLICY_A_VAL__", "4,992,334")
-    html = html.replace("__POLICY_B_VAL__", "2,681,959")
+    html = html.replace("__POLICY_A_VAL__", fmt(tv.get("allianz_a_current_value", tv.get("allianz_policy_a_value", 5_103_668))))
+    html = html.replace("__POLICY_B_VAL__", fmt(tv.get("allianz_b_current_value", tv.get("allianz_policy_b_value", 2_740_224))))
     _rent_mgmt = 2_100
     _expense = int(tv.get("monthly_expense", 141_958))
     _mortgage_pmt = 33_724
