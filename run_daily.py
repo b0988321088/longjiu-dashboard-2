@@ -1431,13 +1431,13 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         funds2 = {}
     if not funds2:
         funds2 = {
-            "allianz_return": 16.41,
-            "allianz_monthly": 73_167,
-            "allianz_cum": 1_631_962,
-            "allianz_cost": 8_000_000,
-            "firstjin_monthly": 22_949,
-            "firstjin_cum": 63_985,
-            "firstjin_cost": 2_000_000,
+            "allianz_return": tv.get("allianz_a_performance", 16.41),
+            "allianz_monthly": tv.get("allianz_ab_monthly", 95_347),
+            "allianz_cum": tv.get("allianz_cum_dividend", 1_631_962),
+            "allianz_cost": tv.get("allianz_cost", 8_000_000),
+            "firstjin_monthly": tv.get("firstjin_monthly", 22_949),
+            "firstjin_cum": tv.get("firstjin_cum_dividend", 73_341),
+            "firstjin_cost": tv.get("firstjin_cost", 2_000_000),
         }
     def fmt(v):
         if isinstance(v, (int, float)):
