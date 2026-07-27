@@ -10,9 +10,9 @@
   "monthly_expense": 141958,
   "working_surplus": 76144,
   "retirement_surplus": 18142,
-  "securities_total_market_value": 2714780,
+  "securities_total_market_value": 2597360,
   "insurance_current_value": 9802872,
-  "fund_market_value": 793434,
+  "fund_market_value": 783751,
   "moneybook_total": 3614169,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
@@ -141,12 +141,12 @@
       },
       {
         "ticker": "009816",
-        "shares": 20000,
-        "price": 14.56,
-        "cost": 12.36,
-        "value": 291200,
-        "pnl": 44000,
-        "pnl_pct": 17.8,
+        "shares": 18000,
+        "price": 14.68,
+        "cost": 12.11,
+        "value": 264240,
+        "pnl": 46320,
+        "pnl_pct": 21.26,
         "name": "凱基台灣TOP50"
       },
       {
@@ -211,12 +211,12 @@
       },
       {
         "ticker": "00919",
-        "shares": 7000,
-        "price": 29.5,
-        "cost": 29.54,
-        "value": 206500,
-        "pnl": -280,
-        "pnl_pct": -0.14,
+        "shares": 6000,
+        "price": 29.59,
+        "cost": 29.55,
+        "value": 177540,
+        "pnl": 260,
+        "pnl_pct": 0.15,
         "name": "群益台灣精選高息"
       },
       {
@@ -251,12 +251,12 @@
       },
       {
         "ticker": "00888",
-        "shares": 6000,
-        "price": 31.55,
-        "cost": 32.1,
-        "value": 189300,
-        "pnl": -3300,
-        "pnl_pct": -1.71,
+        "shares": 4000,
+        "price": 31.95,
+        "cost": 32.37,
+        "value": 127800,
+        "pnl": -1660,
+        "pnl_pct": -1.28,
         "name": "永豐台灣ESG"
       },
       {
@@ -978,5 +978,5 @@
     "performance_pct": 3.28
   },
   "moneybook_date": "2026-07-27",
-  "total_portfolio_value": 16430244
+  "total_portfolio_value": 16303141
 }
