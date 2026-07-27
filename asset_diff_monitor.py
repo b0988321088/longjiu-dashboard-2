@@ -308,7 +308,7 @@ def load_history(snap=None) -> dict:
                 "cash": float(r.get("cash_total", 0)),
                 "bonds": float(r.get("bonds", 0)),
                 "other": 0.0,
-                "insurance_detail": {"【安聯保單A】現值": snap.get("allianz_policy_a_value", 5_079_576), **{"  A-"+k: v for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": snap.get("allianz_policy_b_value", 2_728_721), **{"  B-"+k: v for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": snap.get("allianz_ab_current_value", 7_788_827), "━第一金FL65現値": snap.get("firstjin_current_value", 1_958_980), "━保單總現値": snap.get("insurance_current_value", 9_747_807)},
+                "insurance_detail": {"【安聯保單A】現值": snap.get("allianz_a_current_value", 5_103_668), **{"  A-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": snap.get("allianz_b_current_value", 2_740_224), **{"  B-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": snap.get("allianz_ab_current_value", 7_843_892), "━第一金FL65現値": snap.get("firstjin_current_value", 1_958_980), "━保單總現値": snap.get("insurance_current_value", 9_802_872)},
                 "fund_dividend_monthly": float(snap.get("monthly_dividend_total", snap.get("monthly_dividend_breakdown", {}).get("total", 0)) or 129651),
                 "monthly_income": 218_102.0,
                 "monthly_expense": 141_958.0,
