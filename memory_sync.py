@@ -40,12 +40,12 @@ if dash_file.exists():
     
     decisions = data.get("decisions", [])
     # Get today's approved decisions
-    today_str = "2026-07-23"
+    today_str = datetime.datetime.now().strftime("%Y-%m-%d")
     today_approved = []
     for d in decisions:
         ts = d.get("timestamp", d.get("approved_at", ""))
-        if today_str in ts and d.get("action") in ("核准", "approved"):
-            text = d.get("name") or d.get("summary") or d.get("text", "")
+        if today_str in ts and d.get("decision") in ("核准", "approved", "✅"):
+            text = d.get("action") or d.get("name") or d.get("summary") or d.get("text", "")
             if text and len(text) > 10:
                 today_approved.append(text)
     
