@@ -1,38 +1,26 @@
-# Strategic Handbook for 2026-07-27
-# 戰略手稿：📝 戰略手稿 2026-07-21
-來源頁面：3a4fc735-d433-81d1-8a4b-fe63e1bd6b2a
-讀取時間：2026-07-27T06:00:29.626564
+# Strategic Handbook for 2026-07-28
+# 戰略手稿：Notion雙向中樞完工：戰略手稿09-17每小時同步+CIO讀取+日報注入。2/月從備份升級為第二大腦。明天07:00
+來源頁面：3a4fc735-d433-81df-925f-fe921467e94b
+讀取時間：2026-07-28T06:00:16.221760
 
-## 今日決策 2026-07-21
-- ✅ 某事
-- ✅ 範例： 724 確認轉貸進度
-- ✅ 今日決策（2026-07-21）
-- ✅ 三源同步機制（snapshot+db+history），傳截圖一次到位
-- ✅ 全離峰排程，尖峰時段零 Token
-- ✅ 費用監控 06:00 自動回報 + Gemini 921 提醒
-- ✅ 跨代理記憶同步 19:00 每天執行
-- ✅ Notion 雙向中樞 MVP（notion_bridge.py）
-- ⏸️ 待確認
-- ⏸️ 724 確認國泰轉貸進度
-- ⏸️ 79萬星展還款（今天17:00提醒）
-- ⏸️ 87 教育訓練（13:10-16:20）
+
 ---
 
 ## Latest Asset Snapshot
 - **Generated At**: 2026-07-22T02:35:15.524024
 - **Version**: v5.0.10-true-value-correction
 - **Date**: 2026-07-18
-- **Total Assets**: 16389795
+- **Total Assets**: 16498152
 - **Total Liabilities**: 21165869
-- **Net Worth**: -4776074
+- **Net Worth**: -4667717
 - **Debt Ratio**: 33.9%
 - **Monthly Income**: 218102
 - **Monthly Expense**: 141958
 - **Working Surplus**: 76144
 - **Retirement Surplus**: 18142
-- **Securities Total Market Value**: 2479320
+- **Securities Total Market Value**: 2597360
 - **Insurance Current Value**: 9802872
-- **Fund Market Value**: 793434
+- **Fund Market Value**: 783751
 - **Moneybook Total**: 3614169
 - **High Yield Savings Total**: 2200410
 - **Cathay Refinance Amount**: None
@@ -50,14 +38,14 @@
 - **Firstjin Current Value**: 1958980
 - **Last Mb Sync**: 2026-07-18
 - **Last Mb Sync Note**: pending SCB payoff update + 0050 dividend confirmation
-- **Bank Assets Moneybook**: 3614169
+- **Bank Assets Moneybook**: 3119158
 - **Bank Assets Memo**: MB 20260718 正數帳戶合計；44帳戶；排除負數
 - **Monthly Expense Mb**: 199186
 - **Monthly Expense Mb Note**: MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償
 - **Credit Card Pending**: 24976
 - **Mb Source**: Moneybook_明細_20260718.zip
 - **Monthly Expense Snapshot Original**: 141958
-- **Securities Total**: 2413760
+- **Securities Total**: 2597360
 - **Funds Total**: 793434
 - **Insurance Total**: 9802872
 - **Last Calibration Sources**: {'securities': '凱基證券截圖 2026-07-18 02:00', 'funds': '鉅亨基金截圖 2026-07-18 02:03', 'bank': 'MB Moneybook_明細_20260718_1.csv', 'insurance': 'Company_Ledger.md + 第一金 7/14 配息 update'}
@@ -69,12 +57,12 @@
 - **Allianz Policy A Value**: 5103668
 - **Allianz Policy B Value**: 2740224
 - **Anue Account**: {'total_mv': 783700, 'total_cost': 563153, 'total_pl': 220547, 'dividend': 17519, 'as_of': '2026-07-18', 'note': '自由PAY 3隻 + 一般申購 4隻，當日變化 -349 (-0.04%)'}
-- **Securities**: {'total_market_value': 2479320, 'unrealized_pnl': 288250, 'unrealized_pnl_pct': 13.16, 'holdings': [{'ticker': '0050', 'shares': 2000, 'price': 101.7, 'cost': 84.9, 'value': 203400, 'pnl': 33600, 'pnl_pct': 19.79, 'name': '元大台灣50'}, {'ticker': '006208', 'shares': 2000, 'price': 233.0, 'cost': 196.9, 'value': 466000, 'pnl': 72200, 'pnl_pct': 18.33, 'name': '富邦台50'}, {'ticker': '009816', 'shares': 16000, 'price': 14.72, 'cost': 11.8, 'value': 235520, 'pnl': 46720, 'pnl_pct': 24.75, 'name': '凱基台灣TOP50'}, {'ticker': '00646', 'shares': 1000, 'price': 75.5, 'cost': 71.6, 'value': 75500, 'pnl': 3900, 'pnl_pct': 5.45, 'name': '元大S&P500'}, {'ticker': '00713', 'shares': 2000, 'price': 61.0, 'cost': 54.8, 'value': 122000, 'pnl': 12400, 'pnl_pct': 11.31, 'name': '元大台灣高息低波'}, {'ticker': '00878', 'shares': 15000, 'price': 32.61, 'cost': 26.81, 'value': 489150, 'pnl': 87000, 'pnl_pct': 21.63, 'name': '國泰永續高股息'}, {'ticker': '0056', 'shares': 1000, 'price': 50.2, 'cost': 37.15, 'value': 50200, 'pnl': 13050, 'pnl_pct': 35.13, 'name': '元大高股息'}, {'ticker': '00981A', 'shares': 5000, 'price': 27.54, 'cost': 25.9, 'value': 137700, 'pnl': 8220, 'pnl_pct': 6.35, 'name': '主動統一台股增長'}, {'ticker': '00984A', 'shares': 10000, 'price': 14.76, 'cost': 14.56, 'value': 147600, 'pnl': 2000, 'pnl_pct': 1.37, 'name': '主動安聯台灣高息'}, {'ticker': '00919', 'shares': 5000, 'price': 29.49, 'cost': 29.56, 'value': 147450, 'pnl': -330, 'pnl_pct': -0.22, 'name': '群益台灣精選高息'}, {'ticker': '00918', 'shares': 1000, 'price': 32.5, 'cost': 28.55, 'value': 32500, 'pnl': 3950, 'pnl_pct': 13.84, 'name': '大華優利高息30'}, {'ticker': '009824', 'shares': 10000, 'price': 10.03, 'cost': 9.93, 'value': 100300, 'pnl': 1000, 'pnl_pct': 1.01, 'name': '群益美國科技巨頭'}, {'ticker': '009823', 'shares': 10000, 'price': 10.25, 'cost': 10.02, 'value': 102500, 'pnl': 2300, 'pnl_pct': 2.3, 'name': '群益S&P500'}, {'ticker': '00888', 'shares': 2000, 'price': 34.25, 'cost': 33.18, 'value': 68500, 'pnl': 2140, 'pnl_pct': 3.22, 'name': '永豐台灣ESG'}, {'ticker': '00983D', 'shares': 10000, 'price': 10.1, 'cost': 10.09, 'value': 101000, 'pnl': 100, 'pnl_pct': 0.1, 'name': '主動富邦複合收益'}]}
+- **Securities**: {'total_market_value': 2597360, 'unrealized_pnl': 284570, 'unrealized_pnl_pct': 12.3, 'holdings': [{'ticker': '0050', 'shares': 2000, 'price': 101.45, 'cost': 84.9, 'value': 202900, 'pnl': 33100, 'pnl_pct': 19.49, 'name': '元大台灣50'}, {'ticker': '006208', 'shares': 2000, 'price': 232.75, 'cost': 196.9, 'value': 465500, 'pnl': 71700, 'pnl_pct': 18.21, 'name': '富邦台50'}, {'ticker': '009816', 'shares': 18000, 'price': 14.68, 'cost': 12.11, 'value': 264240, 'pnl': 46320, 'pnl_pct': 21.26, 'name': '凱基台灣TOP50'}, {'ticker': '00646', 'shares': 1000, 'price': 76.2, 'cost': 71.6, 'value': 76200, 'pnl': 4600, 'pnl_pct': 6.42, 'name': '元大S&P500'}, {'ticker': '00713', 'shares': 2000, 'price': 61.2, 'cost': 54.8, 'value': 122400, 'pnl': 12800, 'pnl_pct': 11.68, 'name': '元大台灣高息低波'}, {'ticker': '00878', 'shares': 15000, 'price': 32.55, 'cost': 26.81, 'value': 488250, 'pnl': 86100, 'pnl_pct': 21.41, 'name': '國泰永續高股息'}, {'ticker': '0056', 'shares': 1000, 'price': 50.0, 'cost': 37.15, 'value': 50000, 'pnl': 12850, 'pnl_pct': 34.59, 'name': '元大高股息'}, {'ticker': '00981A', 'shares': 5000, 'price': 27.53, 'cost': 25.9, 'value': 137650, 'pnl': 8170, 'pnl_pct': 6.31, 'name': '主動統一台股增長'}, {'ticker': '00984A', 'shares': 10000, 'price': 14.66, 'cost': 14.56, 'value': 146600, 'pnl': 1000, 'pnl_pct': 0.69, 'name': '主動安聯台灣高息'}, {'ticker': '00919', 'shares': 6000, 'price': 29.59, 'cost': 29.55, 'value': 177540, 'pnl': 260, 'pnl_pct': 0.15, 'name': '群益台灣精選高息'}, {'ticker': '00918', 'shares': 1000, 'price': 32.58, 'cost': 28.55, 'value': 32580, 'pnl': 4030, 'pnl_pct': 14.12, 'name': '大華優利高息30'}, {'ticker': '009824', 'shares': 10000, 'price': 10.11, 'cost': 9.93, 'value': 101100, 'pnl': 1800, 'pnl_pct': 1.81, 'name': '群益美國科技巨頭'}, {'ticker': '009823', 'shares': 10000, 'price': 10.33, 'cost': 10.02, 'value': 103300, 'pnl': 3100, 'pnl_pct': 3.09, 'name': '群益S&P500'}, {'ticker': '00888', 'shares': 4000, 'price': 31.95, 'cost': 32.37, 'value': 127800, 'pnl': -1660, 'pnl_pct': -1.28, 'name': '永豐台灣ESG'}, {'ticker': '00983D', 'shares': 10000, 'price': 10.13, 'cost': 10.09, 'value': 101300, 'pnl': 400, 'pnl_pct': 0.4, 'name': '主動富邦複合收益'}]}
 - **Core Watchlist**: {'updated_at': '2026-07-18', 'note': '用戶常調動的核心標的，每季成分股可能調整，需定期追蹤', 'tw_equity_etf': [{'code': '0050', 'name': '元大台灣卓越50ETF', 'role': '台股權值基準', 'rebalance': '半年'}, {'code': '006208', 'name': '富邦台灣50ETF', 'role': '台股權值基準', 'rebalance': '半年'}, {'code': '009816', 'name': '凱基台灣TOP50ETF', 'role': '台股50大分散', 'rebalance': '半年'}, {'code': '00878', 'name': '國泰永續高股息ETF', 'role': 'ESG高股息', 'rebalance': '半年'}, {'code': '00919', 'name': '群益台灣精選高息ETF', 'role': '金融股為主', 'rebalance': '季'}, {'code': '00713', 'name': '大華優利高填息30', 'role': '高股息低波動', 'rebalance': '季'}, {'code': '0056', 'name': '元大高股息ETF', 'role': '高股息', 'rebalance': '半年'}, {'code': '00981A', 'name': '主動統一台股增長', 'role': '主動型成長', 'rebalance': '季'}, {'code': '00984A', 'name': '主動安聯台灣高息', 'role': '主動型高息', 'rebalance': '季'}], 'us_equity_etf': [{'code': '00646', 'name': '元大S&P500ETF', 'role': '美股大盤', 'rebalance': '季'}, {'code': '009823', 'name': '群益S&P500ETF', 'role': '美股大盤', 'rebalance': '季'}, {'code': '009824', 'name': '群益美國科技巨頭ETF', 'role': '美股科技七巨頭', 'rebalance': '季'}], 'policy_funds': [{'code': 'QL18610694', 'name': '安聯保單A', 'role': '核心保單', 'rebalance': '隨保單'}, {'code': 'QL18488224', 'name': '安聯保單B', 'role': '核心保單', 'rebalance': '隨保單'}, {'code': 'FJ33/FL65', 'name': '第一金保單', 'role': '配息養房貸', 'rebalance': '隨保單'}], 'rebalance_alerts': {'季調整': '每年 3/6/9/12 月檢查成分股是否有重大異動', '0050半年度': '每年 6/12 月檢查名單異動', '00919季調整': '每季檢查金融股權重是否失衡'}}
 - **Saa Framework**: {'updated_at': '2026-07-18', 'description': '使用者主觀資產分類框架，用於穿透分析與動態再平衡', 'targets': {'市值型成長': {'target_pct': '30%', 'purpose': '長期資本增值', 'risk': '高', 'rebalance_trigger': '±10%', 'holdings': ['0050', '006208', '009816', '00981A', '00984A', '貝萊德A10', '聯博美國成長', '安聯AI收益成長', '路博邁5G', '台新美日台半導體', '統一奔騰', '009824']}, '債券型/防禦': {'target_pct': '60%', 'purpose': '穩定配息+避險+退休現金流基石', 'risk': '低', 'rebalance_trigger': '±10%', 'holdings': ['安聯保單A', '安聯保單B', '第一金FL65', 'PIMCO', '摩根M&G', '00878', '00919', '00713', '0056', '00646', '009823']}, '流動資金/安全網': {'target_pct': '10%', 'purpose': '生活保底+應急+機會子彈', 'risk': '極低', 'rebalance_trigger': '±5%', 'holdings': ['高利活存', '活期存款', '現金部位']}}, 'note': '目標：成長30% + 防禦60% + 安全網10%。防禦內含配息型高股息+債券+保險保單', 'opportunity_bullet': {'enabled': True, 'trigger_condition': '台股大盤跌幅 >= 15% 或 目標ETF回檔 >= 20%', 'deployment_speed': '分批進場，大跌後第1週進30%、第2週進70%', 'historical_evidence': '台股長年回檔後約2週內反弹', 'exit_condition': '反弹收益達 8-12% 或 1個月內未反弹則撤離', 'max_allocation': '機會子彈 ≤ 20% 安全網部位', 'note': '不是抄底，而是追反弹；嚴格止損'}}
 - **Saa Targets**: {'growth': 0.3, 'defensive': 0.6, 'safety_net': 0.1, 'note': '安全網=機會子彈；防禦=配息+債券+保險；成長=台股+美股權值'}
 - **Tactical Rules**: {'opportunity_bullet_auto': True, 'panic_threshold_pct': 0.15, 'deploy_week1_pct': 0.3, 'deploy_week2_pct': 0.7, 'take_profit_pct': 0.1, 'stop_loss_days': 30, 'note': '單週漲跌15%為觸發點；大跌追反彈，大漲追確認趨勢', 'trigger': '單週漲跌幅 >= 15%', 'max_allocation': '機會子彈 ≤ 20% 安全網部位'}
-- **Penetration**: {'updated_at': '2026-07-18', 'source': 'dashboard screenshot', 'targets': {'台股市值型目標': 35, '美股市值型目標': 30, '配息型目標': 25, '債券型目標': 5, '現金目標': 5}, 'actual_pct': {'台股市值型成長': 18.3, '美股市值型成長': 30.2, '防守型配息': 12.0, '債券': 19.4, '現金/安全網': 20.2}, 'gaps': {'台股市值型成長': -32.8, '美股市值型成長': 16.1, '防守型配息': -11.5, '債券及安全現金': 8.8}, 'alert': '美股暴露46.1%嚴重超標；台股7.2%極度低於目標40%', 'actual_twd': {'台股市值型成長': 2994454, '美股市值型成長': 4950253, '防守型配息': 1958980, '債券': 3171939, '現金/安全網': 3314169}}
+- **Penetration**: {'updated_at': '2026-07-27', 'source': 'calc_penetration (auto-calibrated)', 'targets': {'台股市值型目標': 35, '美股市值型目標': 30, '配息型目標': 25, '債券型目標': 5, '現金目標': 5}, 'actual_pct': {'台股市值型成長': 15.6, '美股市值型成長': 33.5, '防守型配息': 12.3, '債券': 19.3, '現金/安全網': 19.3}, 'gaps': {'台股市值型成長': -19.4, '美股市值型成長': 3.5, '防守型配息': -12.7, '債券及安全現金': 28.6}, 'actual_twd': {'台股市值型成長': 2556430, '美股市值型成長': 5474460, '防守型配息': 2006679, '債券': 3149543, '現金/安全網': 3163728}, 'alert': '台股不足19.4pp；現金+債券超標28.6pp'}
 - **Penetration Canonical**: {'updated_at': '2026-07-18', 'source': 'dashboard screenshot + buffett_cto_analyzer', 'total_invest_assets': 52249106, 'categories': {'台股市值型成長': {'twd': 2065675, 'pct': 7.2, 'target_pct': 40.0, 'status': '嚴重低標'}, '美股市值型成長': {'twd': 13226058, 'pct': 46.1, 'target_pct': 40.0, 'status': '嚴重超標'}, '防守型配息': {'twd': 5307637, 'pct': 18.5, 'target_pct': 30.0, 'status': '不足'}, '債券及安全現金': {'twd': 9697196, 'pct': 33.8, 'target_pct': 25.0, 'status': '超標'}, '現金/安全網': {'twd': 2200410, 'pct': 7.7, 'target_pct': 10.0, 'status': '略低'}, '不動產': {'twd': 34000000, 'pct': 51.1, 'target_pct': 'N/A', 'status': '穩定'}}, 'rebalance_summary': {'growth_drift': '+23.3pp', 'defense_drift': '-41.5pp', 'safety_drift': '-6.7pp', 'action_required': '美股減碼、台股加碼、防禦補足、安全網重建'}, 'opportunity_bullet': {'trigger': '單週漲跌幅 >= 15%', 'current_taiex_1w': '-6.5%', 'status': '監控中，未觸發'}}
 - **Known Issues**: [{'id': 'issue-001', 'type': 'cathay_bank_merge_impact', 'description': '國泰世華銀行併網後，MB 明細出現大量未分類交易（3,060,921 TWD，佔近30天 16.3%）', 'root_cause': '帳戶合併後分類規則未同步，導致消費分類標籤缺失', 'affected_value': '月支出計算', 'raw_mb_30d': 222910, 'canonical': 141958, 'status': 'resolved', 'resolution': '以 snapshot 141,958 為真值；222,910 存入 history 備查', 'resolved_at': '2026-07-18'}]
 - **Monthly Expense History**: {'historical_baseline': 140000, '2026-07-14': 141958, '2026-07-18_mb_raw_30d': 222910, '2026-07-18_mb_classified': 141958, 'note': '222,910 為 MB 近30天未完全分類值（含未分類 3,060,921），不作為真值', 'canonical': 141958, 'updated_at': '2026-07-18'}
@@ -94,18 +82,18 @@
 - **Real Estate Value**: 34017063
 - **Insurance Total Note**: 含配息
 - **Runway Months**: 27.1
-- **Securities Breakdown**: {'0050': 207800, '006208': 475800, '009816': 241280, '00646': 76100, '00713': 121100, '00878': 490950, '0056': 50650, '00981A': 143450, '00984A': 151100, '00919': 147500, '00918': 32350, '009824': 102000, '009823': 103300, '00888': 70380}
+- **Securities Breakdown**: {'0050': 202900, '006208': 465500, '009816': 264240, '00646': 76200, '00713': 122400, '00878': 488250, '0056': 50000, '00981A': 137650, '00984A': 146600, '00919': 177540, '00918': 32580, '009824': 101100, '009823': 103300, '00888': 127800, '00983D': 101300}
 - **Securities Tw Growth**: 1007090
 - **Securities Tw Defense**: 1022090
 - **Securities Us Growth**: 76050
-- **Cash**: 3614169
+- **Cash**: 3119158
 - **High Yield Savings**: 2200410
 - **Regular Cash**: 1684210
 - **Mortgages**: [{'bank': '永豐銀行', 'name': '房屋貸款', 'balance': 5759374, 'account': '市政分行'}, {'bank': '永豐銀行', 'name': '房屋貸款', 'balance': 4607578, 'account': '營業部DAWHO'}, {'bank': '永豐銀行', 'name': '房屋貸款', 'balance': 2792470, 'account': '未知'}]
 - **Mortgage Monthly Total**: 99458
 - **Mortgage Count**: 3
 - **Note Rent Status**: 本月房租全數實收 80,100（大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100）
-- **Insurance Breakdown**: {'policy_a_total': 4992334, 'policy_a_funds': {'安聯收益成長': 1839672, 'M&G入息': 2367954, '貝萊德世界科技A10': 502692, '安聯AI收益成長': 359165, '聯博美國成長': 3344}, 'policy_b_dividend_accumulated': 681118, 'policy_a_dividend_accumulated': 932128, 'policy_b_total': 2681959, 'policy_b_funds': {'安聯收益成長': 940794, 'M&G入息': 768482, '貝萊德世界科技A10': 461803, '安聯AI收益成長': 543514, '聯博美國成長': 1407}}
+- **Insurance Breakdown**: {'policy_a_total': 5103668, 'policy_a_funds': {'安聯收益成長': {'value': 1839672, 'code': 'USDEQ3490', 'performance_pct': -0.55}, 'M&G入息': {'value': 2367954, 'code': 'USDEQ5700', 'performance_pct': -0.63}, '貝萊德世界科技A10': {'value': 502692, 'code': 'USDEQ6080', 'performance_pct': 9.36}, '安聯AI收益成長': {'value': 359165, 'code': 'USDEQ6270', 'performance_pct': 6.46}, '聯博美國成長': {'value': 3344, 'code': 'USDEQ6330', 'performance_pct': -0.27}}, 'policy_b_dividend_accumulated': 681118, 'policy_a_dividend_accumulated': 932128, 'policy_b_total': 2740224, 'policy_b_funds': {'安聯收益成長': {'value': 940794, 'code': 'USDEQ3490', 'performance_pct': -0.55}, 'M&G入息': {'value': 768482, 'code': 'USDEQ5700', 'performance_pct': -0.61}, '貝萊德世界科技A10': {'value': 461803, 'code': 'USDEQ6080', 'performance_pct': 15.75}, '安聯AI收益成長': {'value': 543514, 'code': 'USDEQ6270', 'performance_pct': 6.46}, '聯博美國成長': {'value': 1407, 'code': 'USDEQ6330', 'performance_pct': -0.5}}}
 - **Allianz Ab**: 7843892
 - **Firstjin**: 1977799
 - **Dividend Records**: {'2026-07-21': {'FJ33 摩根': 9356, '保單A 安聯': 11722, '保單B 安聯': 5994}}
@@ -125,13 +113,13 @@
 - **Firstjin Cum Dividend**: 73341
 - **Allianz Cum Dividend**: 1630962
 - **Firstjin Cost**: 2000000
-- **Securities Market Value**: 2413760
-- **Securities Unrealized Pnl**: 285220
+- **Securities Market Value**: 2597360
+- **Securities Unrealized Pnl**: 284570
 - **Monthly Salary**: 43144
 - **Travel Allowance**: 12000
 - **Second Salary**: 39121
 - **Bonus July**: 39121
-- **Cash Total**: 3614169
+- **Cash Total**: 3119158
 - **Bonds Cash**: 10262984
 - **Monthly Dividend Breakdown**: {'allianz': 95347, 'firstjin': 22949, 'fund': 615, 'etf': 10740, 'total': 129651, 'note': '安聯App截圖+第一金月配+FJ33/FR55+MB明細基金+MB明細ETF', 'insurance': 118296}
 - **Market**: {'twii': '44,825.78 (+1.34%)'}
@@ -157,18 +145,24 @@
 - **Etf Dividend Schedule**: {'已除息': {'0050': {'除息日': '7/21', '配息': 0.6, '發放日': '8/10'}, '006208': {'除息日': '7/16', '配息': 4.75, '發放日': '8/10'}, '0056': {'除息日': '7/21', '配息': 1.35, '發放日': '8/10'}, '00713': {'除息日': '6/22', '配息': 1.0, '發放日': '7/10'}, '00919': {'除息日': '6/16', '配息': 1.0, '發放日': '7/13'}, '00918': {'除息日': '6/18', '配息': 1.26, '發放日': '7/13'}, '00981A': {'除息日': '6/16', '配息': 0.63, '發放日': '7/09'}, '00983D': {'除息日': '7/16', '配息': 0.06, '發放日': '8/10'}, '00646': {'除息日': '7/15', '配息': 1.38, '發放日': '8月初'}}, '下一梯次': {'00878': {'預計除息': '8月', '週期': '季配'}, '00888': {'預計除息': '8-9月', '週期': '季配'}, '00984A': {'預計除息': '每月', '週期': '月配'}, '009816': {'預計除息': '不配息', '週期': '不配息'}, '009823': {'預計除息': '8月', '週期': '季配'}, '009824': {'預計除息': '9月', '週期': '季配'}}}
 - **True Value**: {'total_assets': 16659573}
 - **Funds**: 793434
-- **Allianz A Breakdown**: {'安聯收益成長': 1848071, 'M&G入息': 2377759, '貝萊德世界科技A10': 506770, '安聯AI收益成長': 367768, '聯博美國成長': 3300}
+- **Allianz A Breakdown**: {'安聯收益成長': {'value': 1839672, 'code': 'USDEQ3490', 'performance_pct': -0.55}, 'M&G入息': {'value': 2367954, 'code': 'USDEQ5700', 'performance_pct': -0.63}, '貝萊德世界科技A10': {'value': 502692, 'code': 'USDEQ6080', 'performance_pct': 9.36}, '安聯AI收益成長': {'value': 359165, 'code': 'USDEQ6270', 'performance_pct': 6.46}, '聯博美國成長': {'value': 3344, 'code': 'USDEQ6330', 'performance_pct': -0.27}}
 - **Allianz A Current Value**: 5103668
-- **Allianz B Breakdown**: {'安聯收益成長': 945089, 'M&G入息': 771664, '貝萊德世界科技A10': 465549, '安聯AI收益成長': 556533, '聯博美國成長': 1389}
+- **Allianz B Breakdown**: {'安聯收益成長': {'value': 940794, 'code': 'USDEQ3490', 'performance_pct': -0.55}, 'M&G入息': {'value': 768482, 'code': 'USDEQ5700', 'performance_pct': -0.61}, '貝萊德世界科技A10': {'value': 461803, 'code': 'USDEQ6080', 'performance_pct': 15.75}, '安聯AI收益成長': {'value': 543514, 'code': 'USDEQ6270', 'performance_pct': 6.46}, '聯博美國成長': {'value': 1407, 'code': 'USDEQ6330', 'performance_pct': -0.5}}
 - **Allianz B Current Value**: 2740224
 - **Monthly Dividend Total**: 129651
 - **Relay Stations**: {'第一站': {'流向': '摩根多重收益（FJ33）→ 安聯收益成長（FL65）', '基準日': '7/14', '預估入帳': '7/19-20', '狀態': '已配息/已入帳'}, '第二站': {'流向': '安聯收益成長 + M&G 入息基金', '基準日': '7/17', '轉換截止': '8/10（FL65）<br>8/17（M&G）', '預估入帳': '~7/29', '狀態': '轉換完成（7月中）'}, '第三站': {'流向': '安聯 AI 收益 + 貝萊德世界科技 A10', '基準日': '7/29-30', '轉換截止': '<strong>7/23</strong>（AI）<br><strong>7/24</strong>（A10）', '預估入帳': '~8/10', '狀態': '轉換中（預計7月底入帳）'}, '第四站': {'流向': '摩根JPM入息', '基準日': '8月初', '轉換截止': '8/03（一）', '預估入帳': '~8/07', '狀態': '待執行'}}
 - **Personal Loans**: {'女友借款': {'金額': 300000, '日期': '2026-07-25', '月還款': 6000, '還款日': '每月5號', '最後清償': '2026-12-05', '利率': '0%（無息）', '備註': '女友借款，每月5號還6,000，年底12/5全部清償'}}
+- **Allianz A Performance**: 0.79
+- **Allianz B Performance**: 3.28
+- **Allianz A Monthly**: {'total': 5103668, 'performance_pct': 0.79}
+- **Allianz B Monthly**: {'total': 2740224, 'performance_pct': 3.28}
+- **Moneybook Date**: 2026-07-27
+- **Total Portfolio Value**: 16303141
 
 ---
 
-## Schedule Events for 2026-07-27
-- **台新信用卡繳款截止**: 1,000 (🔄 待處理)
+## Schedule Events for 2026-07-28
+No events scheduled for today.
 
 ---
 
