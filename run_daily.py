@@ -1600,10 +1600,10 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             # 取本週（近7天）已核准決策
             from datetime import timedelta
             _week_ago = (date.today() - timedelta(days=7)).isoformat()
-            _weekly = [dec for dec in _decs if dec.get("approved_at", "")[:10] >= _week_ago]
+            _weekly = [dec for dec in _decs if dec.get("timestamp", dec.get("approved_at", ""))[:10] >= _week_ago]
             _items = []
             for _dec in _weekly[-6:]:  # 最多顯示6項
-                _name = _dec.get("text", _dec.get("name", ""))[:40]
+                _name = _dec.get("action", _dec.get("text", _dec.get("name", "")))[:40]
                 _items.append(f'<div class="flex items-center gap-1"><span class="text-emerald-400">•</span><span class="text-slate-300">{_name} ✅</span></div>')
             if _items:
                 # 分兩欄
