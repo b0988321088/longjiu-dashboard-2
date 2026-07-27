@@ -101,16 +101,18 @@ def _pct(v, base):
 # ---------- snapshot parsing ----------
 def _build_insurance_detail(snap: dict, insurance_total: float) -> dict:
     """統一建構保險明細"""
+    def _extract(v):
+        return v["value"] if isinstance(v, dict) else (v if isinstance(v, (int,float)) else 0)
     _ins_brk = snap.get("insurance_breakdown", {})
-    _aa_val = float(snap.get("allianz_policy_a_value", 5_079_576))
-    _ab_val = float(snap.get("allianz_policy_b_value", 2_728_721))
+    _aa_val = float(snap.get("allianz_a_current_value", snap.get("allianz_policy_a_value", 5_103_668)))
+    _ab_val = float(snap.get("allianz_b_current_value", snap.get("allianz_policy_b_value", 2_740_224)))
     d = {"【安聯保單A】現值": _aa_val}
     for _n, _v in _ins_brk.get("policy_a_funds", {}).items():
-        d[f"  A-{_n}"] = _v
+        d[f"  A-{_n}"] = _extract(_v)
     d["【安聯保單B】現值"] = _ab_val
     for _n, _v in _ins_brk.get("policy_b_funds", {}).items():
-        d[f"  B-{_n}"] = _v
-    d["安聯A+B合計"] = float(snap.get("allianz_ab_current_value", 7_788_827))
+        d[f"  B-{_n}"] = _extract(_v)
+    d["安聯A+B合計"] = float(snap.get("allianz_ab_current_value", 7_843_892))
     d["━第一金FL65現値"] = float(snap.get("firstjin_current_value", 1_958_980))
     d["━保單總現値"] = insurance_total
     return d
