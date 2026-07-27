@@ -18,7 +18,7 @@ def load_json(p):
 def save_json(p, data):
     p.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
-def check_conditions(d):
+def check_conditions(d, _all_decisions=None):
     """回傳 (auto_close: bool, reason: str)"""
     title = d.get("title", "")
     status = d.get("status", "")
@@ -60,6 +60,18 @@ def check_conditions(d):
             return True, "10/1築巢優利貸生效日已到"
         return False, ""
 
+    # ── 信貸套利：依賴二轉貸完成 ──
+    if "信貸套利" in title:
+        # 檢查國泰轉貸和築巢是否已完成（不在 pending 列表）
+        other_titles = [x.get("title", "") for x in _all_decisions if x is not d]
+        refinance_done = all(
+            "轉貸" not in t and "築巢" not in t and "台銀" not in t
+            for t in other_titles
+        )
+        if refinance_done and today >= date(2026, 10, 1):
+            return True, "前序轉貸已完成，可啟動信貸套利"
+        return False, ""
+
     # ── 其他：超過30天自動歸檔 ──
     d_date = d.get("date", "")
     try:
@@ -78,7 +90,7 @@ def auto_close():
     alerts = []
 
     for d in decisions:
-        auto_close, reason = check_conditions(d)
+        auto_close, reason = check_conditions(d, decisions)
         if auto_close:
             closed += 1
             # 更新 Notion
