@@ -108,8 +108,9 @@ batch_archive(
 print("\n📥 任務三：建立標籤")
 labels = ["01_待處理", "02_等待中", "03_財務與帳單", "04_專案歸檔",
           "🔐 帳號安全", "💼 保險", "📰 財經新聞", "🛠️ 開發通知", "📸 OneDrive回憶",
+          "📱 社群通知", "🍎 Apple", "🎮 娛樂", "✈️ 旅遊", "📋 稅務",
           "🏦 玉山銀行", "🏦 台新銀行", "🏦 國泰世華", "🏦 永豐銀行",
-          "🏦 富邦銀行", "🏦 星展銀行", "🏦 兆豐銀行", "苗栗站中五段"]
+          "🏦 富邦銀行", "🏦 星展銀行", "🏦 兆豐銀行", "🏦 凱基證券", "苗栗站中五段"]
 label_map = {l["name"]: l["id"] for l in service.users().labels().list(userId="me").execute().get("labels", [])}
 for name in labels:
     if name not in label_map:
@@ -130,16 +131,24 @@ batch_label("from:(firstlife OR 第一金人壽 OR 安聯人壽) OR subject:(保
 batch_label("from:(鉅亨 OR 晨訊 OR 大紀元 OR 國泰期貨) OR subject:(投顧週報 OR 晨訊 OR 美股盤後)", "📰 財經新聞")
 batch_label("from:(github.com OR railway OR notifications@github)", "🛠️ 開發通知")
 batch_label("from:(onedrive OR onedrive@)", "📸 OneDrive回憶")
+# 其他分類
+batch_label("from:(instagram)", "📱 社群通知")
+batch_label("from:(apple.com OR insideapple)", "🍎 Apple")
+batch_label("from:(playstation)", "🎮 娛樂")
+batch_label("from:(starlux OR 星宇)", "✈️ 旅遊")
+batch_label("from:(etax OR 稅務)", "📋 稅務")
 # 銀行分類
 for bank, kw in [("🏦 玉山銀行","esun OR email.esunbank"), ("🏦 台新銀行","taishinbank"),
-                  ("🏦 國泰世華","cathaybk OR cathay"), ("🏦 永豐銀行","sinopac"),
+                  ("🏦 國泰世華","cathaybk OR cathay OR cathaysec"), ("🏦 永豐銀行","sinopac"),
                   ("🏦 富邦銀行","taipeifubon OR fubon"), ("🏦 星展銀行","dbsbank OR dbs"),
-                  ("🏦 兆豐銀行","megabank OR megatrust")]:
+                  ("🏦 兆豐銀行","megabank OR megatrust"), ("🏦 凱基證券","kgieworld")]:
     batch_label(f"from:({kw})", bank)
 batch_label("from:(中五段-苗栗站 OR hinet.net) subject:(苗栗)", "苗栗站中五段")
-# 刪廣告/登入通知
+# 刪廣告/垃圾
 batch_trash("subject:(登入成功 OR 登入通知) from:(esun OR taishin)", "登入通知(可刪)")
-batch_trash("from:(Uber OR yahoo購物 OR deviantart) subject:(折價券 OR 折扣 OR 優惠)", "廣告(可刪)")
+batch_trash("from:(uber OR yahoo購物 OR shopee OR deviantart OR 菁英交友 OR academicsingles)", "廣告垃圾")
+batch_trash("from:(pressplay OR greenpeace OR 綠色和平 OR nextbank OR 將來銀行)", "廣告垃圾")
+batch_trash("from:(gamma.app OR pdfguru OR thebestpdf OR 阿爾發 OR patreon OR 耶萊娜)", "廣告垃圾")
 
 # 5. 建立過濾器（選擇性，依權限）
 print("\n📥 任務五：建立自動過濾器（選擇性）")
