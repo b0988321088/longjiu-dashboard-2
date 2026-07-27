@@ -175,10 +175,10 @@ def extract_snapshot(snap: dict) -> dict:
                     "total_assets": float(_total_assets),
                     "total_liabilities": float(_total_liab),
                     "net_worth": float(_total_assets - _total_liab),
-                    "securities_market": float(_ar.get("securities", 0)),
+                    "securities_market": float(snap.get("securities_total_market_value", _ar.get("securities", 0))),
                     "insurance_current": insurance_current_from_db,
                     "insurance_total": insurance_current_from_db,
-                    "fund_market": float(_ar.get("funds", 0)),
+                    "fund_market": float(snap.get("fund_market_value", _ar.get("funds", 0))),
                     # 從 snapshot.json 補基金明細
                     "_fund_breakdown": snap.get("funds_breakdown", {}),
                     "fund_breakdown_display": snap.get("funds_breakdown", {}),
@@ -186,7 +186,7 @@ def extract_snapshot(snap: dict) -> dict:
                         _ar.get("real_estate", 34_000_000)
                     ),  # Updated default for real_estate
                     "other": 0.0,
-                    "cash": float(_ar.get("cash_total", 0)),
+                    "cash": float(snap.get("cash_total", _ar.get("cash_total", 0))),
                     "bonds": float(_ar.get("bonds", 0)),
                     "insurance_detail": insurance_detail_from_db,
                     "fund_dividend_monthly": float(
