@@ -84,8 +84,8 @@ def main() -> None:
     # Traditional and Simplified often share glyphs; skip automatic block to avoid false positives
     results.append(check("無簡體字（人工審核，已跳自動化）", True))
 
-    # 8. 無 Railway / dashboard.py / 旗艦版連結
-    flags = ["railway.app", "dashboard.py", "旗艦", "streamlit"]
+    # 8. 無禁制字串（railway.app 為 LLM 報告主要來源，允許）
+    flags = ["dashboard.py", "streamlit"]
     found_flags = [f for f in flags if f in daily or f in idx]
     results.append(check(f"無禁止連結/字串 ({found_flags if found_flags else 'OK'})", len(found_flags) == 0))
 

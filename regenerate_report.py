@@ -60,8 +60,11 @@ if _ej.exists():
     _d = json.loads(_ej.read_text(encoding="utf-8"))
     _r = _d.get("full_report", _d.get("analysis", ""))
     _emergency_html = f'<div class="callout callout-warn">{_r.replace(chr(10), "<br>" + chr(10))}</div>'
-    # 加入緊急應變連結
-    _emergency_html += f'<br><a href=\"https://b0988321088.github.io/longjiu-dashboard-2/emergency_taiex_report_{TODAY}.html\" target=\"_blank\" style=\"display:inline-block;margin-top:10px;color:#34D399;font-weight:bold\">📄 檢視完整緊急應變報告 →</a>'
+    # 加入緊急應變連結（先 Railway LLM 版，再 GitHub 備援）
+    _railway_link = f"https://longjiu-dashboard-2-production.up.railway.app/emergency_report_{TODAY}.html"
+    _github_link = f"https://b0988321088.github.io/longjiu-dashboard-2/emergency_taiex_report_{TODAY}.html"
+    _emergency_html += f'<br><a href=\"{_railway_link}\" target=\"_blank\" style=\"display:inline-block;margin-top:10px;color:#34D399;font-weight:bold\">📄 檢視完整 LLM 緊急應變報告 →</a>'
+    _emergency_html += f'<br><a href=\"{_github_link}\" target=\"_blank\" style=\"font-size:13px;color:#6e6e73\">📊 數據版報告（備援）</a>'
 
 # 4. 從 schedule_events.json 統一讀取排程
 _events = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
