@@ -105,6 +105,16 @@ for e in _events:
         if d == "待處理" or ("2026-07" <= d <= "2026-08"):
             _p0_dynamic.append(f'<li>{d} — {e.get("item","")} {e.get("amount","")} {st}</li>')
 _p0_html = '\n'.join(_p0_core + _p0_dynamic)
+# 同步更新 dashboard_decisions.json（供 CIO 審計用）
+try:
+    _dash_decisions = {
+        'last_updated': f'{TODAY}T18:00:00+08:00',
+        'decisions': [{'date': d.get('date',''), 'action': d.get('title',''), 'decision': '核准', 'status': d.get('status',''), 'tags': d.get('tags',''), 'timestamp': TODAY} for d in json.loads((BASE / 'pending_decisions.json').read_text('utf-8')) if '核准' in d.get('status','')],
+        'pending_decisions': [{'date': d.get('date',''), 'action': d.get('title',''), 'status': d.get('status',''), 'tags': d.get('tags','')} for d in json.loads((BASE / 'pending_decisions.json').read_text('utf-8')) if '核准' not in d.get('status','')],
+    }
+    (BASE / 'dashboard_decisions.json').write_text(json.dumps(_dash_decisions, ensure_ascii=False, indent=2), encoding='utf-8')
+except:
+    pass
 # 決策追蹤附加至 P0 區塊
 if _decision_rows:
     _p0_html += '\n<p style="margin-top:12px;font-weight:700;color:#3b82f6">📋 執行中決策追蹤</p>'
