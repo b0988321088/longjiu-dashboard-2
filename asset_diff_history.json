@@ -533,15 +533,15 @@
   },
   "2026-07-27": {
     "date": "2026-07-27",
-    "total_assets": 16689795.0,
+    "total_assets": 16194784.0,
     "total_liabilities": 18197422.0,
-    "net_worth": -1507627.0,
+    "net_worth": -2002638.0,
     "securities_market": 2479320.0,
     "insurance_current": 9802872.0,
     "insurance_total": 9802872.0,
     "fund_market": 793434.0,
     "real_estate": 0.0,
-    "cash": 3614169.0,
+    "cash": 3119158.0,
     "other": 0.0,
     "insurance_detail": {
       "【安聯保單A】現值": 5103668.0,

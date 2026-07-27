@@ -68,7 +68,7 @@
   "firstjin_current_value": 1958980,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
-  "bank_assets_moneybook": 3614169,
+  "bank_assets_moneybook": 3119158,
   "bank_assets_memo": "MB 20260718 正數帳戶合計；44帳戶；排除負數",
   "monthly_expense_mb": 199186,
   "monthly_expense_mb_note": "MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償",
@@ -608,7 +608,7 @@
   "securities_tw_growth": 1007090,
   "securities_tw_defense": 1022090,
   "securities_us_growth": 76050,
-  "cash": 3614169,
+  "cash": 3119158,
   "high_yield_savings": 2200410,
   "regular_cash": 1684210,
   "mortgages": [
@@ -725,7 +725,7 @@
   "travel_allowance": 12000,
   "second_salary": 39121,
   "bonus_july": 39121,
-  "cash_total": 3614169,
+  "cash_total": 3119158,
   "bonds_cash": 10262984,
   "monthly_dividend_breakdown": {
     "allianz": 95347,
@@ -975,5 +975,6 @@
   "allianz_b_monthly": {
     "total": 2740224,
     "performance_pct": 3.28
-  }
+  },
+  "moneybook_date": "2026-07-27"
 }
