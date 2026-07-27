@@ -56,8 +56,20 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         else:
             ins_bonds = round(2_780_466*0.35 + 3_136_436*0.55 + 902_679*0.50)
         ins_eq = int(ins) - ins_bonds - 1_958_980
-    tw = round(sec * 0.97) + funds
-    us = round(sec * 0.03) + ins_eq
+    # 分類基金（鉅亨基金帳戶）
+    _fund_tw = _fund_us = _fund_def = 0
+    _fb = (snap or {}).get("funds_breakdown", {})
+    for _fn, _fval in _fb.items():
+        if "路博邁5G" in _fn or "台新美日台" in _fn:
+            _fund_us += _fval
+        elif "0050連結" in _fn or "統一奔騰" in _fn:
+            _fund_tw += _fval
+        elif "台中銀台灣優息" in _fn:
+            _fund_def += _fval
+        else:
+            _fund_tw += _fval
+    tw = round(sec * 0.97) + _fund_tw
+    us = round(sec * 0.03) + ins_eq + _fund_us
     # 用 snapshot holdings 精算台/美股比例（取代固定97/3）
     try:
         _sec_holdings = (snap or {}).get("securities", {}).get("holdings", [])
@@ -67,13 +79,14 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             _total_v = sum(h["shares"] * h.get("price", 30) for h in _sec_holdings) or 1
             _us_pct = _us_v / _total_v
             _tw_pct = 1 - _us_pct
-            tw = round(sec * _tw_pct) + funds
-            us = round(sec * _us_pct) + ins_eq
+            tw = round(sec * _tw_pct) + _fund_tw
+            us = round(sec * _us_pct) + ins_eq + _fund_us
     except:
         pass
     total = cash + ins + sec + funds
     c = cash + total - (tw + us + 1_958_980 + ins_bonds + cash)
-    return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": 1_958_980, "債券": ins_bonds, "現金/安全網": c}
+    # 防守型加上基金防守部位
+    return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": 1_958_980 + _fund_def, "債券": ins_bonds, "現金/安全網": c}
 
 
 def perform_data_validation(data: dict) -> list[str]:
