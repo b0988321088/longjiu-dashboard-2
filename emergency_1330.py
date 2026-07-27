@@ -151,6 +151,9 @@ def generate_emergency_report(taiex_data=None, etf_0050_data=None, etf_00878_dat
     <p class="meta">⏰ 下次執行：下個交易日 13:00</p></body></html>'''
     (LJ / f"emergency_taiex_report_{today}.html").write_text(html, "utf-8")
     print(f"✅ 緊急應變報告已產出至 emergency_taiex_report_{today}.html")
+    # 同時存一份給 Railway 用的命名（LLM agent 版命名格式）
+    (LJ / f"emergency_report_{today}.html").write_text(html, "utf-8")
+    print(f"✅ Railway 版已同步至 emergency_report_{today}.html")
 
 
 ts = datetime.now().strftime("%H%M")
