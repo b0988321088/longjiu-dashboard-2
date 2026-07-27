@@ -102,16 +102,23 @@ try:
     _snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     pen = _snap.get("penetration", {})
     actual = pen.get("actual_pct", {})
-    for key, tgt, label in [("台股市值型成長", 35, "台股"), ("美股市值型成長", 30, "美股"), ("防守型配息", 25, "防守")]:
+    targets = pen.get("targets", {})
+    # 從 snapshot 動態讀取目標值
+    _tgt_tw = targets.get("台股市值型目標", 35)
+    _tgt_us = targets.get("美股市值型目標", 30)
+    _tgt_def = targets.get("配息型目標", 25)
+    _tgt_bond = targets.get("債券型目標", 5)
+    _tgt_cash = targets.get("現金目標", 5)
+    for key, tgt, label in [("台股市值型成長", _tgt_tw, "台股"), ("美股市值型成長", _tgt_us, "美股"), ("防守型配息", _tgt_def, "防守")]:
         act = actual.get(key, 0)
         if tgt > 0 and abs(act - tgt) > 5:
             direction = "超標 ▲" if act > tgt else "偏低 ▼"
             alerts.append(f"📊 {label}配置偏差 {abs(act-tgt):.0f}%：目前 {act:.0f}% 目標 {tgt:.0f}% {direction}")
-    # 債券+現金：分開讀取兩個 key 再合計
+    # 債券+現金：分開讀取兩個 key 再合計（目標=債券型+現金）
     _bond_pct = actual.get("債券", 0)
     _cash_pct = actual.get("現金/安全網", 0)
     _bondcash_pct = _bond_pct + _cash_pct
-    _bondcash_tgt = 10
+    _bondcash_tgt = _tgt_bond + _tgt_cash
     if abs(_bondcash_pct - _bondcash_tgt) > 5:
         _dir = "超標 ▲" if _bondcash_pct > _bondcash_tgt else "偏低 ▼"
         alerts.append(f"📊 債券+現金配置偏差 {abs(_bondcash_pct-_bondcash_tgt):.0f}%：目前 {_bondcash_pct:.0f}% 目標 {_bondcash_tgt:.0f}% {_dir}")
