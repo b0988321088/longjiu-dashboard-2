@@ -1,0 +1,31 @@
+{
+  "角色": "18歲小提琴手",
+  "英文識別名": "18yo_violinist",
+  "基本設定": {
+    "年齡": 18,
+    "性別": "男",
+    "種族": "亞洲人",
+    "風格": "日系動漫（新海誠/京都動畫質感）",
+    "身形": "纖瘦高挑",
+    "髮型": "棕色微亂中長髮，演奏時會隨動作飄動",
+    "眼神": "溫和但帶有銳利專注力，舞台上面容會轉為無比堅定",
+    "服裝": {
+      "正式": "黑色燕尾服 + 白襯衫 + 黑色領結",
+      "後台": "白色練習襯衫 + 黑色長褲（領口微敞）"
+    },
+    "道具": "一把深褐色小提琴 + 黑色琴弓"
+  },
+  "個性特徵": {
+    "上台前": "緊張、自我懷疑、手指微微發抖",
+    "演奏中": "極致專注、忘我、全身散發金色光芒",
+    "演奏後": "自信微笑、脫胎換骨"
+  },
+  "核心場景": ["後台緊張", "舞台演奏", "評審反應", "全場歡呼"],
+  "英文提示詞模板": {
+    "角色模板": "Anime style, handsome 18-year-old male violinist, brown messy hair, black concert suit, {場景描述}",
+    "後台": "backstage corridor, nervous expression, trembling hands, dramatic shadow lighting, Makoto Shinkai style",
+    "演奏": "on stage playing violin with intense passion, glowing golden particles, dynamic bow action, cinematic lighting, Kyoto Animation quality",
+    "評審反應": "reaction shot, strict judges looking shocked and amazed, pen dropping, dramatic anime expression",
+    "歡呼": "finishing bow with confident smile, crowd cheering standing ovation, triumphant warm lighting"
+  }
+}
