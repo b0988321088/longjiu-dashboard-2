@@ -106,7 +106,10 @@ batch_archive(
 
 # 3. 建立/確保標籤存在
 print("\n📥 任務三：建立標籤")
-labels = ["01_待處理", "02_等待中", "03_財務與帳單", "04_專案歸檔"]
+labels = ["01_待處理", "02_等待中", "03_財務與帳單", "04_專案歸檔",
+          "🔐 帳號安全", "💼 保險", "📰 財經新聞", "🛠️ 開發通知", "📸 OneDrive回憶",
+          "🏦 玉山銀行", "🏦 台新銀行", "🏦 國泰世華", "🏦 永豐銀行",
+          "🏦 富邦銀行", "🏦 星展銀行", "🏦 兆豐銀行", "苗栗站中五段"]
 label_map = {l["name"]: l["id"] for l in service.users().labels().list(userId="me").execute().get("labels", [])}
 for name in labels:
     if name not in label_map:
@@ -121,6 +124,22 @@ for name in labels:
 print("\n📥 任務四：分類既有郵件")
 batch_label("subject:(交易 OR 帳單 OR 通知 OR 投資 OR 貸款)", "03_財務與帳單", remove_inbox=True)
 batch_label("subject:(日報 OR 系統通報 OR 會議紀錄)", "04_專案歸檔", remove_inbox=True)
+# 分類標籤
+batch_label("from:(security@ OR no-reply@google OR google.com) OR from:(noreply@github.com) OR subject:(安全通知 OR 登入成功)", "🔐 帳號安全")
+batch_label("from:(firstlife OR 第一金人壽 OR 安聯人壽) OR subject:(保單 OR 人壽)", "💼 保險")
+batch_label("from:(鉅亨 OR 晨訊 OR 大紀元 OR 國泰期貨) OR subject:(投顧週報 OR 晨訊 OR 美股盤後)", "📰 財經新聞")
+batch_label("from:(github.com OR railway OR notifications@github)", "🛠️ 開發通知")
+batch_label("from:(onedrive OR onedrive@)", "📸 OneDrive回憶")
+# 銀行分類
+for bank, kw in [("🏦 玉山銀行","esun OR email.esunbank"), ("🏦 台新銀行","taishinbank"),
+                  ("🏦 國泰世華","cathaybk OR cathay"), ("🏦 永豐銀行","sinopac"),
+                  ("🏦 富邦銀行","taipeifubon OR fubon"), ("🏦 星展銀行","dbsbank OR dbs"),
+                  ("🏦 兆豐銀行","megabank OR megatrust")]:
+    batch_label(f"from:({kw})", bank)
+batch_label("from:(中五段-苗栗站 OR hinet.net) subject:(苗栗)", "苗栗站中五段")
+# 刪廣告/登入通知
+batch_trash("subject:(登入成功 OR 登入通知) from:(esun OR taishin)", "登入通知(可刪)")
+batch_trash("from:(Uber OR yahoo購物 OR deviantart) subject:(折價券 OR 折扣 OR 優惠)", "廣告(可刪)")
 
 # 5. 建立過濾器（選擇性，依權限）
 print("\n📥 任務五：建立自動過濾器（選擇性）")
