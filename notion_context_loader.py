@@ -1,36 +1,59 @@
-#!/usr/bin/env python3
-"""notion_context_loader.py — 從 Notion 載入昨日快照供 Agent 參考
-由 morning_wrapper.py 在每日 06:00 自動執行，產出快取檔案供 agent 讀取"""
 
+import datetime
 import json
-from pathlib import Path
-from datetime import date, timedelta
+import os
 
-BASE = Path(__file__).resolve().parent
-CACHE = BASE / "notion_context_cache.json"
-YESTERDAY = (date.today() - timedelta(days=1)).isoformat()
+def load_context():
+    today = datetime.date.today()
+    today_str = today.strftime("%Y-%m-%d")
 
-def load_from_notion():
-    """查詢 Notion 最新分析記錄"""
-    try:
-        from notion_knowledge import query_latest
-        data = query_latest(limit=1)
-        if data:
-            return {"source": "notion", "date": YESTERDAY, "data": data}
-    except Exception as e:
-        return {"source": "error", "error": str(e)}
-    return {"source": "not_found"}
+    # Paths to source files
+    notion_bridge_path = f"C:/Users/bot/Desktop/longjiu_system/notion_bridge/{today_str}_strategy_handbook.md"
+    snapshot_path = "C:/Users/bot/Desktop/longjiu_system/snapshot.json"
+    schedule_events_path = "C:/Users/bot/Desktop/longjiu_system/schedule_events.json"
+    output_path = "C:/Users/bot/Desktop/longjiu_system/notion_shared_context.md"
 
-def load_from_local():
-    """Fallback: 讀取本地 daily_analysis.json"""
-    path = BASE / "daily_analysis.json"
-    if path.exists():
-        return {"source": "local", "date": YESTERDAY, "data": json.loads(path.read_text(encoding="utf-8"))}
-    return {"source": "not_found"}
+    context_content = []
 
-result = load_from_notion()
-if result["source"] == "not_found":
-    result = load_from_local()
+    # 1. Add Strategic Handbook
+    if os.path.exists(notion_bridge_path):
+        with open(notion_bridge_path, 'r', encoding='utf-8') as f:
+            context_content.append(f"# Strategic Handbook for {today_str}\n")
+            context_content.append(f.read())
+            context_content.append("\n---\n\n")
+    else:
+        context_content.append(f"# Strategic Handbook for {today_str} (Not Found)\n\n---\n\n")
 
-CACHE.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-print(f"[CONTEXT] Notion 脈絡載入完成 → {result['source']}")
+    # 2. Add Latest Asset Snapshot
+    if os.path.exists(snapshot_path):
+        with open(snapshot_path, 'r', encoding='utf-8') as f:
+            snapshot_data = json.load(f)
+            context_content.append("## Latest Asset Snapshot\n")
+            for key, value in snapshot_data.items():
+                context_content.append(f"- **{key.replace('_', ' ').title()}**: {value}\n")
+            context_content.append("\n---\n\n")
+    else:
+        context_content.append("## Latest Asset Snapshot (Not Found)\n\n---\n\n")
+
+    # 3. Add Today's Schedule Events
+    if os.path.exists(schedule_events_path):
+        with open(schedule_events_path, 'r', encoding='utf-8') as f:
+            schedule_data = json.load(f)
+            today_events = [event for event in schedule_data if event.get("date") == today_str]
+            context_content.append(f"## Schedule Events for {today_str}\n")
+            if today_events:
+                for event in today_events:
+                    context_content.append(f"- **{event.get('item')}**: {event.get('amount', '—')} ({event.get('status')})\n")
+            else:
+                context_content.append("No events scheduled for today.\n")
+            context_content.append("\n---\n\n")
+    else:
+        context_content.append("## Schedule Events (Not Found)\n\n---\n\n")
+
+    # Write to shared context file
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.writelines(context_content)
+    print(f"Notion shared context loaded to {output_path}")
+
+if __name__ == "__main__":
+    load_context()

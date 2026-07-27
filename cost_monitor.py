@@ -6,7 +6,7 @@ from logging_config import get_logger
 logger = get_logger("cost_monitor")
 
 ENV = Path(os.path.expanduser("~/AppData/Local/hermes/.env"))
-LJ = Path(os.path.expanduser("~/Desktop/龍九系統"))
+LJ = Path(os.path.expanduser("~/Desktop/longjiu_system"))
 LOG = LJ / "cost_log.csv"
 TODAY = str(date.today())
 

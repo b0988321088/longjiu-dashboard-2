@@ -132,7 +132,7 @@ if _index_tpl.exists():
     _salary_v = tv.get("salary", 43144)
     for ph, val in [("__DBS_BALANCE__", f"{_cash_v:,.0f}"), ("__SINOPAC_BALANCE__", f"{_cash_v:,.0f}"),
                     ("__SINOPAC_MORTGAGE__", f"{_mortgage_v:,.0f}"), ("__RESERVE_POOL__", f"{tv.get('financial_mortgage',2000000):,.0f}"),
-                    ("__SALARY__", f"{_salary_v:,.0f}")]:
+                    ("__SALARY__", f"{_salary_v:,.0f}"), ("__MORTGAGE_PAYMENT__", f"{int(_mortgage_v/3):,.0f}")]:
         _index_html = _index_html.replace(ph, val)
     (BASE / "index.html").write_text(_index_html, encoding="utf-8")
     print(f"✅ index.html ({len(_index_html):,} bytes)")
@@ -153,5 +153,17 @@ checks = {
 ok = all(checks.values())
 for k, v in checks.items():
     print(f"  {'✅' if v else '❌'} {k}")
+
+# 11. 自動推送到 GitHub（兩個分支）
+import subprocess, shlex, sys
+if ok and len(sys.argv) > 1 and sys.argv[1] == '--deploy':
+    for _ref in ['clean-main','clean-main:main']:
+        _r = subprocess.run(['git','push','origin',_ref,'--force'], capture_output=True, text=True, timeout=30, cwd=BASE)
+        _ok = 'Everything up-to-date' in _r.stdout or _r.returncode == 0
+        print(f"  {'✅' if _ok else '❌'} 推送到 {_ref}")
+    print(f'📋 日報: https://b0988321088.github.io/longjiu-dashboard-2/{OUT.name}')
+    print(f'📊 儀表板: https://b0988321088.github.io/longjiu-dashboard-2/')
+    print(f'📈 差異分析: https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html')
+
 import sys
 sys.exit(0 if ok else 1)
