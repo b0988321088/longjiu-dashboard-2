@@ -196,13 +196,21 @@ ok = all(checks.values())
 for k, v in checks.items():
     print(f"  {'✅' if v else '❌'} {k}")
 
-# 11. 自動推送到 GitHub（兩個分支）
+# 11. 自動推送到 GitHub（兩個分支）— cron 無需 --deploy 參數
 import subprocess, shlex, sys
-if ok and len(sys.argv) > 1 and sys.argv[1] == '--deploy':
-    for _ref in ['clean-main','clean-main:main']:
-        _r = subprocess.run(['git','push','origin',_ref,'--force'], capture_output=True, text=True, timeout=30, cwd=BASE)
+if ok:
+    for _ref in ['clean-main', 'clean-main:main']:
+        _r = subprocess.run(['git', 'push', 'origin', _ref, '--force'], capture_output=True, text=True, timeout=30, cwd=BASE)
         _ok = 'Everything up-to-date' in _r.stdout or _r.returncode == 0
-        print(f"  {'✅' if _ok else '❌'} 推送到 {_ref}")
+        print(f"  {'✅' if _ok else '❌'} 推到 {_ref}")
+    # 驗證上線
+    import time
+    time.sleep(30)  # 等 Pages 建置
+    _base = f"https://b0988321088.github.io/longjiu-dashboard-2"
+    for _f in [f"daily_report_v2_{TODAY}.html", f"asset_diff_{TODAY}.html", f"penetration_report_{TODAY}.html", "index.html"]:
+        _c = subprocess.run(['curl', '-s', '-o', '/dev/null', '-w', '%{http_code}', f"{_base}/{_f}"], capture_output=True, text=True, timeout=10)
+        _code = _c.stdout.strip()
+        print(f"  {'✅' if _code == '200' else '❌'} {_f} → {_code}")
 # 12. 產出連結清單（不論是否推播都顯示）
 print(f'\n{"="*50}')
 print(f'  龍九控股 — 管線產出完成 {TODAY}')
