@@ -363,15 +363,13 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>龍九控股日報 {TODAY}</title>
 <style>
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
-  color: #1d1d1f;
-  background: #f5f5f7;
-  margin: 0;
-  padding: 16px;
-  }}
+  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
+    color: #1d1d1f;
+    background: #f5f5f7;
+    margin: 0;
+    padding: 16px;
     line-height: 1.8;
     font-size: 17px;
-    color: #1d1d1f;
     -webkit-text-size-adjust: 100%;
   }}
   .page {{ max-width: 900px; margin: 0 auto; }}
@@ -632,7 +630,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <h2>5/5｜投資決策框架 Investment Decision Framework</h2>
     <div class="label">決策核心 + 緊急應變分析</div>
 
-    <div id="emergency-llm-analysis" style="background:#1e293b;border-radius:8px;padding:12px;margin-top:8px;font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-x:auto;color:#e2e8f0;">
+    <div id="emergency-llm-analysis" style="background:#fffbeb;border-radius:8px;padding:12px;margin-top:8px;font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-x:auto;color:#1d1d1f;">
       <!-- LLM 緊急應變分析區塊 -->
             {llm_emergency_analysis}
     </div>

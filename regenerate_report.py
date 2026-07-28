@@ -60,11 +60,17 @@ if _ej.exists():
     _d = json.loads(_ej.read_text(encoding="utf-8"))
     _r = _d.get("full_report", _d.get("analysis", ""))
     _emergency_html = f'<div class="callout callout-warn">{_r.replace(chr(10), "<br>" + chr(10))}</div>'
-    # 加入緊急應變連結（先 Railway LLM 版，再 GitHub 備援）
-    _railway_link = f"https://longjiu-dashboard-2-production.up.railway.app/emergency_report_{TODAY}.html"
-    _github_link = f"https://b0988321088.github.io/longjiu-dashboard-2/emergency_taiex_report_{TODAY}.html"
-    _emergency_html += f'<br><a href=\"{_railway_link}\" target=\"_blank\" style=\"display:inline-block;margin-top:10px;color:#34D399;font-weight:bold\">📄 檢視完整 LLM 緊急應變報告 →</a>'
-    _emergency_html += f'<br><a href=\"{_github_link}\" target=\"_blank\" style=\"font-size:13px;color:#6e6e73\">📊 數據版報告（備援）</a>'
+    # 加入緊急應變連結（自動找最新可用檔案）
+    _emergency_files = sorted(BASE.glob("emergency_report_2*.html"), reverse=True)
+    _taiex_files = sorted(BASE.glob("emergency_taiex_report_2*.html"), reverse=True)
+    _latest_er = _emergency_files[0].stem if _emergency_files else None
+    _latest_tr = _taiex_files[0].stem if _taiex_files else None
+    if _latest_er:
+        _railway_link = "https://longjiu-dashboard-2-production.up.railway.app/%s.html" % _latest_er
+        _emergency_html += '<br><a href="%s" target="_blank" style="display:inline-block;margin-top:10px;color:#34D399;font-weight:bold">📄 檢視完整 LLM 緊急應變報告 →</a>' % _railway_link
+    if _latest_tr:
+        _github_link = "https://b0988321088.github.io/longjiu-dashboard-2/%s.html" % _latest_tr
+        _emergency_html += '<br><a href="%s" target="_blank" style="font-size:13px;color:#6e6e73">📊 數據版報告（備援）</a>' % _github_link
 
 # 3c. 載入執行中決策追蹤
 _decision_rows = ""
@@ -196,9 +202,13 @@ ok = all(checks.values())
 for k, v in checks.items():
     print(f"  {'✅' if v else '❌'} {k}")
 
-# 11. 自動推送到 GitHub（兩個分支）— cron 無需 --deploy 參數
+# 11. 自動推送到 GitHub（兩個分支）
 import subprocess, shlex, sys
 if ok:
+    # stage + commit 所有報表檔案
+    _msg = f"四源同步 {TODAY} [cioreviewed]"
+    subprocess.run(['git', 'add', f'daily_report_v2_{TODAY}.html', f'asset_diff_{TODAY}.html', f'penetration_report_{TODAY}.html', 'index.html', 'snapshot.json', 'dragon_assets.db'], capture_output=True, text=True, cwd=BASE)
+    subprocess.run(['git', 'commit', '-m', _msg, '--allow-empty'], capture_output=True, text=True, cwd=BASE)
     for _ref in ['clean-main', 'clean-main:main']:
         _r = subprocess.run(['git', 'push', 'origin', _ref, '--force'], capture_output=True, text=True, timeout=30, cwd=BASE)
         _ok = 'Everything up-to-date' in _r.stdout or _r.returncode == 0
