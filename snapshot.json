@@ -1,18 +1,18 @@
 {
-  "generated_at": "2026-07-22T02:35:15.524024",
+  "generated_at": "2026-07-28T22:13:00",
   "version": "v5.0.10-true-value-correction",
-  "date": "2026-07-18",
-  "total_assets": 16498152,
+  "date": "2026-07-28",
+  "total_assets": 16356374,
   "total_liabilities": 21165869,
-  "net_worth": -4667717,
+  "net_worth": -4809495,
   "debt_ratio": "33.9%",
   "monthly_income": 218102,
   "monthly_expense": 141958,
   "working_surplus": 76144,
   "retirement_surplus": 18142,
-  "securities_total_market_value": 2597360,
+  "securities_total_market_value": 2499320,
   "insurance_current_value": 9802872,
-  "fund_market_value": 783751,
+  "fund_market_value": 740013,
   "moneybook_total": 3614169,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
@@ -75,8 +75,8 @@
   "credit_card_pending": 24976,
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
-  "securities_total": 2597360,
-  "funds_total": 793434,
+  "securities_total": 2499320,
+  "funds_total": 740013,
   "insurance_total": 9802872,
   "last_calibration_sources": {
     "securities": "凱基證券截圖 2026-07-18 02:00",
@@ -470,11 +470,11 @@
       "現金目標": 5
     },
     "actual_pct": {
-      "台股市值型成長": 15.5,
-      "美股市值型成長": 33.1,
-      "防守型配息": 12.1,
-      "債券": 19.0,
-      "現金/安全網": 20.3
+      "台股市值型成長": 15.1,
+      "美股市值型成長": 33.3,
+      "防守型配息": 12.2,
+      "債券": 19.2,
+      "現金/安全網": 20.2
     },
     "gaps": {
       "台股市值型成長": -19.4,
@@ -483,11 +483,11 @@
       "債券及安全現金": 28.6
     },
     "actual_twd": {
-      "台股市值型成長": 2556430,
-      "美股市值型成長": 5474460,
+      "台股市值型成長": 2468982,
+      "美股市值型成長": 5463868,
       "防守型配息": 2006679,
       "債券": 3149543,
-      "現金/安全網": 3358739
+      "現金/安全網": 3315001
     },
     "alert": "台股不足19.4pp；現金+債券超標28.6pp"
   },
@@ -568,7 +568,7 @@
     "canonical": 141958,
     "updated_at": "2026-07-18"
   },
-  "last_calibrated": "2026-07-18T23:56:43.616162+08:00",
+  "last_calibrated": "2026-07-28T22:13:00",
   "rent_monthly_total": 82200,
   "rent_breakdown": {
     "大義街店面": 24000,
@@ -978,5 +978,9 @@
     "performance_pct": 3.28
   },
   "moneybook_date": "2026-07-27",
-  "total_portfolio_value": 16303141
+  "total_portfolio_value": 16303141,
+  "total_stock_value": 2499320,
+  "allianz_combined": 7765339,
+  "allianz_a_value": 5062369,
+  "allianz_b_value": 2702970
 }
