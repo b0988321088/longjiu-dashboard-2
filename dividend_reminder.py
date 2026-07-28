@@ -1,38 +1,33 @@
-"""配息入帳提醒 — 比對 relay_calendar.md 檢查今明後天有無配息/T+4"""
-import re
+"""配息入帳提醒 — 從 schedule_events.json 檢查今明後天有無配息/T+4事件"""
+import json
 from datetime import date, timedelta
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
-CAL = BASE / "relay_calendar.md"
+EVENTS = BASE / "schedule_events.json"
 
-if not CAL.exists():
-    print("⚠️ relay_calendar.md 不存在")
+if not EVENTS.exists():
+    print("⚠️ schedule_events.json 不存在")
     exit(0)
 
-text = CAL.read_text(encoding="utf-8")
+events = json.loads(EVENTS.read_text(encoding="utf-8"))
 today = date.today()
-today_md = f"{today.month}/{today.day}"
-tomorrow_md = f"{(today+timedelta(1)).month}/{(today+timedelta(1)).day}"
-day3_md = f"{(today+timedelta(2)).month}/{(today+timedelta(2)).day}"
+window = [today, today + timedelta(1), today + timedelta(2)]
 
 alerts = []
-for line in text.splitlines():
-    if "|" not in line or line.startswith("| 基金") or line.startswith("|---"):
+for e in events:
+    try:
+        d = e["date"]
+        if d == "待處理":
+            continue
+        ed = date.fromisoformat(d)
+        if ed in window and ("配息" in e.get("item", "") or "T+4" in e.get("item", "") or "股息" in e.get("item", "")):
+            alerts.append(f"  {d} — {e['item']} ({e.get('status','')})")
+    except:
         continue
-    cells = [c.strip() for c in line.split("|") if c.strip()]
-    if len(cells) >= 3:
-        name = cells[0]
-        ex = re.sub(r'\(.*?\)', '', cells[1]).strip()
-        t4 = re.sub(r'\(.*?\)', '', cells[2]).strip()
-        for label, date_str in [("除息日", ex), ("T+4截止", t4)]:
-            if date_str in (today_md, tomorrow_md, day3_md):
-                day_label = "今天" if date_str == today_md else ("明天" if date_str == tomorrow_md else "後天")
-                alerts.append(f"🔔 {name} {label}: {date_str}（{day_label}）")
 
 if alerts:
-    print("📌 近3日配息提醒：")
-    for a in alerts:
-        print(f"  {a}")
+    print(f"📅 今明後天配息/事件提醒 ({today}):")
+    print("\n".join(alerts))
 else:
-    print("✅ 近3日無配息行程")
+    print(f"✅ 今明後天無配息/事件 ({today})")

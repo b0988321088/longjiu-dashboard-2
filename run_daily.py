@@ -632,7 +632,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <h2>5/5｜投資決策框架 Investment Decision Framework</h2>
     <div class="label">決策核心 + 緊急應變分析</div>
 
-    <div id="emergency-llm-analysis">
+    <div id="emergency-llm-analysis" style="background:#1e293b;border-radius:8px;padding:12px;margin-top:8px;font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-x:auto;color:#e2e8f0;">
       <!-- LLM 緊急應變分析區塊 -->
             {llm_emergency_analysis}
     </div>
@@ -906,6 +906,25 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
         cto_content_lines.append(f'<span style="display:block"><strong>今日最大風險</strong>：{_format_line_with_numbers(cto_risk)}</span>')
         cto_content_lines.append(f'<span style="display:block"><strong>建議動作</strong>：{_format_line_with_numbers(cto_action)}</span>')
         cto_content = '\n'.join(cto_content_lines)
+
+    # 緊急應變 LLM 分析
+    if llm_emergency:
+        # 清理 ASCII 排版，轉換為 HTML
+        _em = llm_emergency
+        _em = _em.replace("╔", "").replace("╗", "").replace("╚", "").replace("╝", "").replace("║", "").replace("═", "")
+        _em = _em.replace("━━━", "").replace("━━", "").replace("━", "")
+        _em = _em.replace("───", "").replace("──", "").replace("─", "")
+        # 分隔線改為 HTML hr
+        import re
+        _em = re.sub(r'[━═─]{5,}', '<hr style="border:0;border-top:1px dashed #475569;margin:10px 0">', _em)
+        # 標題關鍵字加粗
+        for kw in ["【壹】", "【貳】", "【參】", "【肆】", "【伍】", "【陸】"]:
+            _em = _em.replace(kw, f"<strong style='color:#f59e0b'>{kw}</strong>")
+        # 分析/建議字樣加粗
+        _em = _em.replace("分析：", "<strong>分析：</strong>")
+        _em = _em.replace("建議：", "<strong>建議：</strong>")
+        _em = _em.replace("警訊：", "<strong style='color:#ef4444'>警訊：</strong>")
+        llm_emergency = _em
 
     html = html.replace("{llm_emergency_analysis}", llm_emergency)
     html = html.replace("__BUFFETT_CONTENT__", buf_content)
