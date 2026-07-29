@@ -34,3 +34,11 @@
 **影響檔案：** regenerate_report.py
 **預防：** 日報中所有連結不應假設今日檔案存在，應 fallback 到最新可用版本
 
+## INC-20260729-005：CIO 觀點永遠靜態「情緒持平」無動態分析
+**發現日期：** 2026-07-29
+**症狀：** 日報第六章 CIO 觀點永遠顯示「本日市場情緒持平，無重大異常」，不反映當日市場實際狀況
+**根因：** run_daily.py 第354-356行 CIO 內容為硬編碼靜態文字，未從 daily_analysis.json 讀取市場資料
+**修復：** CIO 改用 daily_analysis.json 的 market/signals 欄位即時生成；新增 `cio_content_html` 參數支援外部傳入動態內容
+**影響檔案：** run_daily.py
+**預防：** render_daily_report() 中所有分析性區塊應從 daily_analysis.json 動態產生，不可有永不改變的靜態文字
+
