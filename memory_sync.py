@@ -197,15 +197,27 @@ if latest_hist:
         "trust_score": 0.85
     })
 
-# Write all new facts
+# Write all new facts (INSERT OR IGNORE for UNIQUE constraint)
+written = 0
+skipped = 0
 for f in new_facts:
-    cur.execute(
-        "INSERT INTO facts (content, category, tags, trust_score, created_at, updated_at) "
-        "VALUES (?, ?, ?, ?, ?, ?)",
-        (f["content"], f["category"], f["tags"], f["trust_score"],
-         now.isoformat(), now.isoformat())
-    )
-    print(f"  + [{f['category']}] {f['content'][:70]}...")
+    try:
+        cur.execute(
+            "INSERT OR IGNORE INTO facts (content, category, tags, trust_score, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (f["content"], f["category"], f["tags"], f["trust_score"],
+             now.isoformat(), now.isoformat())
+        )
+        if cur.rowcount > 0:
+            written += 1
+            print(f"  + [{f['category']}] {f['content'][:70]}...")
+        else:
+            skipped += 1
+            print(f"  ~ [{f['category']}] duplicate skipped")
+    except Exception as e:
+        skipped += 1
+        print(f"  ! [{f['category']}] error: {e}")
+print(f"   → 寫入 {written} 條，跳過 {skipped} 條重複")
 
 conn.commit()
 

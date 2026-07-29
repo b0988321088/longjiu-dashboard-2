@@ -1,26 +1,26 @@
-# Strategic Handbook for 2026-07-28
+# Strategic Handbook for 2026-07-29
 # 戰略手稿：Notion雙向中樞完工：戰略手稿09-17每小時同步+CIO讀取+日報注入。2/月從備份升級為第二大腦。明天07:00
 來源頁面：3a4fc735-d433-81df-925f-fe921467e94b
-讀取時間：2026-07-28T06:00:16.221760
+讀取時間：2026-07-29T06:00:17.356759
 
 
 ---
 
 ## Latest Asset Snapshot
-- **Generated At**: 2026-07-22T02:35:15.524024
+- **Generated At**: 2026-07-28T22:13:00
 - **Version**: v5.0.10-true-value-correction
-- **Date**: 2026-07-18
-- **Total Assets**: 16498152
+- **Date**: 2026-07-28
+- **Total Assets**: 16356374
 - **Total Liabilities**: 21165869
-- **Net Worth**: -4667717
+- **Net Worth**: -4809495
 - **Debt Ratio**: 33.9%
 - **Monthly Income**: 218102
 - **Monthly Expense**: 141958
 - **Working Surplus**: 76144
 - **Retirement Surplus**: 18142
-- **Securities Total Market Value**: 2597360
+- **Securities Total Market Value**: 2499320
 - **Insurance Current Value**: 9802872
-- **Fund Market Value**: 783751
+- **Fund Market Value**: 740013
 - **Moneybook Total**: 3614169
 - **High Yield Savings Total**: 2200410
 - **Cathay Refinance Amount**: None
@@ -33,7 +33,7 @@
 - **Cc Low**: 35000
 - **Cc Mid**: 38000
 - **Cc High**: 42000
-- **Firstjin Fl65 Current Value**: 1977799
+- **Firstjin Fl65 Current Value**: 1958980
 - **Allianz Ab Current Value**: 7843892
 - **Firstjin Current Value**: 1958980
 - **Last Mb Sync**: 2026-07-18
@@ -45,13 +45,13 @@
 - **Credit Card Pending**: 24976
 - **Mb Source**: Moneybook_明細_20260718.zip
 - **Monthly Expense Snapshot Original**: 141958
-- **Securities Total**: 2597360
-- **Funds Total**: 793434
+- **Securities Total**: 2499320
+- **Funds Total**: 740013
 - **Insurance Total**: 9802872
 - **Last Calibration Sources**: {'securities': '凱基證券截圖 2026-07-18 02:00', 'funds': '鉅亨基金截圖 2026-07-18 02:03', 'bank': 'MB Moneybook_明細_20260718_1.csv', 'insurance': 'Company_Ledger.md + 第一金 7/14 配息 update'}
 - **Funds Breakdown**: {'路博邁5G股票T累積': 232910, '0050連結A不配息': 106503, '統一奔騰': 86243, '台新美日台半導體A-日圓': 177662, '台中銀台灣優息B配息': 47699, '路博邁5G股票T月配': 88939, '0050連結B配息': 46924}
 - **Funds Total Note**: 鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534
-- **Real Liquid Assets**: 3314169
+- **Real Liquid Assets**: 3106904
 - **Total Assets Note**: snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）
 - **Passive Income**: {'fund_dividend_monthly': 17519, 'fund_dividend_conservative': 118296, 'rent_monthly': 80100, 'total_conservative': 198396, 'monthly_expense': 141958, 'coverage_pct': 139.8}
 - **Allianz Policy A Value**: 5103668
@@ -62,11 +62,11 @@
 - **Saa Framework**: {'updated_at': '2026-07-18', 'description': '使用者主觀資產分類框架，用於穿透分析與動態再平衡', 'targets': {'市值型成長': {'target_pct': '30%', 'purpose': '長期資本增值', 'risk': '高', 'rebalance_trigger': '±10%', 'holdings': ['0050', '006208', '009816', '00981A', '00984A', '貝萊德A10', '聯博美國成長', '安聯AI收益成長', '路博邁5G', '台新美日台半導體', '統一奔騰', '009824']}, '債券型/防禦': {'target_pct': '60%', 'purpose': '穩定配息+避險+退休現金流基石', 'risk': '低', 'rebalance_trigger': '±10%', 'holdings': ['安聯保單A', '安聯保單B', '第一金FL65', 'PIMCO', '摩根M&G', '00878', '00919', '00713', '0056', '00646', '009823']}, '流動資金/安全網': {'target_pct': '10%', 'purpose': '生活保底+應急+機會子彈', 'risk': '極低', 'rebalance_trigger': '±5%', 'holdings': ['高利活存', '活期存款', '現金部位']}}, 'note': '目標：成長30% + 防禦60% + 安全網10%。防禦內含配息型高股息+債券+保險保單', 'opportunity_bullet': {'enabled': True, 'trigger_condition': '台股大盤跌幅 >= 15% 或 目標ETF回檔 >= 20%', 'deployment_speed': '分批進場，大跌後第1週進30%、第2週進70%', 'historical_evidence': '台股長年回檔後約2週內反弹', 'exit_condition': '反弹收益達 8-12% 或 1個月內未反弹則撤離', 'max_allocation': '機會子彈 ≤ 20% 安全網部位', 'note': '不是抄底，而是追反弹；嚴格止損'}}
 - **Saa Targets**: {'growth': 0.3, 'defensive': 0.6, 'safety_net': 0.1, 'note': '安全網=機會子彈；防禦=配息+債券+保險；成長=台股+美股權值'}
 - **Tactical Rules**: {'opportunity_bullet_auto': True, 'panic_threshold_pct': 0.15, 'deploy_week1_pct': 0.3, 'deploy_week2_pct': 0.7, 'take_profit_pct': 0.1, 'stop_loss_days': 30, 'note': '單週漲跌15%為觸發點；大跌追反彈，大漲追確認趨勢', 'trigger': '單週漲跌幅 >= 15%', 'max_allocation': '機會子彈 ≤ 20% 安全網部位'}
-- **Penetration**: {'updated_at': '2026-07-27', 'source': 'calc_penetration (auto-calibrated)', 'targets': {'台股市值型目標': 35, '美股市值型目標': 30, '配息型目標': 25, '債券型目標': 5, '現金目標': 5}, 'actual_pct': {'台股市值型成長': 15.6, '美股市值型成長': 33.5, '防守型配息': 12.3, '債券': 19.3, '現金/安全網': 19.3}, 'gaps': {'台股市值型成長': -19.4, '美股市值型成長': 3.5, '防守型配息': -12.7, '債券及安全現金': 28.6}, 'actual_twd': {'台股市值型成長': 2556430, '美股市值型成長': 5474460, '防守型配息': 2006679, '債券': 3149543, '現金/安全網': 3163728}, 'alert': '台股不足19.4pp；現金+債券超標28.6pp'}
+- **Penetration**: {'updated_at': '2026-07-28', 'source': 'calc_penetration (auto-calibrated)', 'targets': {'台股市值型目標': 35, '美股市值型目標': 30, '配息型目標': 25, '債券型目標': 5, '現金目標': 5}, 'actual_pct': {'台股市值型成長': 15.2, '美股市值型成長': 33.7, '防守型配息': 12.4, '債券': 19.4, '現金/安全網': 19.2}, 'gaps': {'台股市值型成長': -19.8, '美股市值型成長': 3.7, '防守型配息': -12.6, '債券及安全現金': 28.6}, 'actual_twd': {'台股市值型成長': 2468982, '美股市值型成長': 5463868, '防守型配息': 2006679, '債券': 3149543, '現金/安全網': 3119990}, 'alert': '台股不足19.8pp；現金+債券超標28.6pp'}
 - **Penetration Canonical**: {'updated_at': '2026-07-18', 'source': 'dashboard screenshot + buffett_cto_analyzer', 'total_invest_assets': 52249106, 'categories': {'台股市值型成長': {'twd': 2065675, 'pct': 7.2, 'target_pct': 40.0, 'status': '嚴重低標'}, '美股市值型成長': {'twd': 13226058, 'pct': 46.1, 'target_pct': 40.0, 'status': '嚴重超標'}, '防守型配息': {'twd': 5307637, 'pct': 18.5, 'target_pct': 30.0, 'status': '不足'}, '債券及安全現金': {'twd': 9697196, 'pct': 33.8, 'target_pct': 25.0, 'status': '超標'}, '現金/安全網': {'twd': 2200410, 'pct': 7.7, 'target_pct': 10.0, 'status': '略低'}, '不動產': {'twd': 34000000, 'pct': 51.1, 'target_pct': 'N/A', 'status': '穩定'}}, 'rebalance_summary': {'growth_drift': '+23.3pp', 'defense_drift': '-41.5pp', 'safety_drift': '-6.7pp', 'action_required': '美股減碼、台股加碼、防禦補足、安全網重建'}, 'opportunity_bullet': {'trigger': '單週漲跌幅 >= 15%', 'current_taiex_1w': '-6.5%', 'status': '監控中，未觸發'}}
 - **Known Issues**: [{'id': 'issue-001', 'type': 'cathay_bank_merge_impact', 'description': '國泰世華銀行併網後，MB 明細出現大量未分類交易（3,060,921 TWD，佔近30天 16.3%）', 'root_cause': '帳戶合併後分類規則未同步，導致消費分類標籤缺失', 'affected_value': '月支出計算', 'raw_mb_30d': 222910, 'canonical': 141958, 'status': 'resolved', 'resolution': '以 snapshot 141,958 為真值；222,910 存入 history 備查', 'resolved_at': '2026-07-18'}]
 - **Monthly Expense History**: {'historical_baseline': 140000, '2026-07-14': 141958, '2026-07-18_mb_raw_30d': 222910, '2026-07-18_mb_classified': 141958, 'note': '222,910 為 MB 近30天未完全分類值（含未分類 3,060,921），不作為真值', 'canonical': 141958, 'updated_at': '2026-07-18'}
-- **Last Calibrated**: 2026-07-18T23:56:43.616162+08:00
+- **Last Calibrated**: 2026-07-28T22:13:00
 - **Rent Monthly Total**: 82200
 - **Rent Breakdown**: {'大義街店面': 24000, '大義街二三樓': 23100, '洲際W': 33000, '管理費': 2100}
 - **Monthly Expense Definition**: 生活常規支出（不含旅遊/機票等偶發性費用）
@@ -158,11 +158,18 @@
 - **Allianz B Monthly**: {'total': 2740224, 'performance_pct': 3.28}
 - **Moneybook Date**: 2026-07-27
 - **Total Portfolio Value**: 16303141
+- **Total Stock Value**: 2499320
+- **Allianz Combined**: 7765339
+- **Allianz A Value**: 5062369
+- **Allianz B Value**: 2702970
+- ** Updated By**: safe_update.py
+- ** Updated At**: 2026-07-29 00:10
 
 ---
 
-## Schedule Events for 2026-07-28
-No events scheduled for today.
+## Schedule Events for 2026-07-29
+- **峨眉初驗**: — (🔴 重要)
+- **Fed 利率決策 + 安聯 AI / 貝萊德 A10 基準日**: — (⏸️ 等待)
 
 ---
 
