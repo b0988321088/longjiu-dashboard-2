@@ -2,17 +2,17 @@
   "generated_at": "2026-07-28T22:13:00",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-07-28",
-  "total_assets": 16174079,
+  "total_assets": 15966318,
   "total_liabilities": 21165869,
-  "net_worth": -4991790,
+  "net_worth": -5199551,
   "debt_ratio": "33.9%",
   "monthly_income": 218102,
   "monthly_expense": 141958,
   "working_surplus": 76144,
   "retirement_surplus": 18142,
   "securities_total_market_value": 2524290,
-  "insurance_current_value": 9814363,
-  "fund_market_value": 740013,
+  "insurance_current_value": 9604517,
+  "fund_market_value": 718353,
   "moneybook_total": 3614169,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
@@ -64,7 +64,7 @@
   "cc_mid": 38000,
   "cc_high": 42000,
   "firstjin_fl65_current_value": 1970471,
-  "allianz_ab_current_value": 7843892,
+  "allianz_ab_current_value": 7634046,
   "firstjin_current_value": 1970471,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
@@ -77,7 +77,7 @@
   "monthly_expense_snapshot_original": 141958,
   "securities_total": 2524290,
   "funds_total": 740013,
-  "insurance_total": 9814363,
+  "insurance_total": 9604517,
   "last_calibration_sources": {
     "securities": "凱基證券截圖 2026-07-18 02:00",
     "funds": "鉅亨基金截圖 2026-07-18 02:03",
@@ -94,7 +94,7 @@
     "0050連結B配息": 46924
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
-  "real_liquid_assets": 3106904,
+  "real_liquid_assets": 3119158,
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
   "passive_income": {
     "fund_dividend_monthly": 17519,
@@ -470,26 +470,26 @@
       "現金目標": 5
     },
     "actual_pct": {
-      "台股市值型成長": 15.3,
-      "美股市值型成長": 33.7,
-      "防守型配息": 12.4,
-      "債券": 19.4,
-      "現金/安全網": 19.2
+      "台股市值型成長": 15.6,
+      "美股市值型成長": 33.0,
+      "防守型配息": 12.5,
+      "債券": 19.5,
+      "現金/安全網": 19.3
     },
     "gaps": {
-      "台股市值型成長": -19.7,
-      "美股市值型成長": 3.7,
-      "防守型配息": -12.6,
-      "債券及安全現金": 28.6
+      "台股市值型成長": -19.4,
+      "美股市值型成長": 3.0,
+      "防守型配息": -12.5,
+      "債券及安全現金": 28.8
     },
     "actual_twd": {
       "台股市值型成長": 2491254,
-      "美股市值型成長": 5478057,
+      "美股市值型成長": 5291838,
       "防守型配息": 2006679,
-      "債券": 3149543,
-      "現金/安全網": 3119990
+      "債券": 3125916,
+      "現金/安全網": 3098330
     },
-    "alert": "台股不足19.7pp；現金+債券超標28.6pp"
+    "alert": "台股不足19.4pp；現金+債券超標28.8pp"
   },
   "penetration_canonical": {
     "updated_at": "2026-07-18",
@@ -695,7 +695,7 @@
       }
     }
   },
-  "allianz_ab": 7843892,
+  "allianz_ab": 7634046,
   "firstjin": 1977799,
   "dividend_records": {
     "2026-07-21": {
@@ -871,61 +871,21 @@
   },
   "funds": 793434,
   "allianz_a_breakdown": {
-    "安聯收益成長": {
-      "value": 1839672,
-      "code": "USDEQ3490",
-      "performance_pct": -0.55
-    },
-    "M&G入息": {
-      "value": 2367954,
-      "code": "USDEQ5700",
-      "performance_pct": -0.63
-    },
-    "貝萊德世界科技A10": {
-      "value": 502692,
-      "code": "USDEQ6080",
-      "performance_pct": 9.36
-    },
-    "安聯AI收益成長": {
-      "value": 359165,
-      "code": "USDEQ6270",
-      "performance_pct": 6.46
-    },
-    "聯博美國成長": {
-      "value": 3344,
-      "code": "USDEQ6330",
-      "performance_pct": -0.27
-    }
+    "安聯收益成長": 1806212,
+    "M&G入息": 2361295,
+    "貝萊德世界科技A10": 454128,
+    "安聯AI收益成長": 358309,
+    "聯博美國成長": 3300
   },
-  "allianz_a_current_value": 5103668,
+  "allianz_a_current_value": 4983244,
   "allianz_b_breakdown": {
-    "安聯收益成長": {
-      "value": 940794,
-      "code": "USDEQ3490",
-      "performance_pct": -0.55
-    },
-    "M&G入息": {
-      "value": 768482,
-      "code": "USDEQ5700",
-      "performance_pct": -0.61
-    },
-    "貝萊德世界科技A10": {
-      "value": 461803,
-      "code": "USDEQ6080",
-      "performance_pct": 15.75
-    },
-    "安聯AI收益成長": {
-      "value": 543514,
-      "code": "USDEQ6270",
-      "performance_pct": 6.46
-    },
-    "聯博美國成長": {
-      "value": 1407,
-      "code": "USDEQ6330",
-      "performance_pct": -0.5
-    }
+    "安聯收益成長": 923683,
+    "M&G入息": 766321,
+    "貝萊德世界科技A10": 417190,
+    "安聯AI收益成長": 542219,
+    "聯博美國成長": 1389
   },
-  "allianz_b_current_value": 2740224,
+  "allianz_b_current_value": 2650802,
   "monthly_dividend_total": 129651,
   "relay_stations": {
     "第一站": {
@@ -1076,6 +1036,47 @@
       "shares": 10000,
       "price": 10.14,
       "cost": 10.09
+    }
+  ],
+  "fund_general": {
+    "台新美日台半導體A-日圓": 581815,
+    "台中銀台灣優息B配息台幣": 44638,
+    "路博邁台灣5G股票T月配台幣": 79148,
+    "元大台灣50(0050)連結B配息": 42441
+  },
+  "fund_freepay": {
+    "路博邁台灣5G股票T累積台幣": 212636,
+    "元大台灣50(0050)連結A不配息": 97721,
+    "統一奔騰基金": 74620
+  },
+  "fund_holdings": [
+    {
+      "name": "台新美日台半導體A-日圓",
+      "value": 581815
+    },
+    {
+      "name": "台中銀台灣優息B配息台幣",
+      "value": 44638
+    },
+    {
+      "name": "路博邁台灣5G股票T月配台幣",
+      "value": 79148
+    },
+    {
+      "name": "元大台灣50(0050)連結B配息",
+      "value": 42441
+    },
+    {
+      "name": "路博邁台灣5G股票T累積台幣",
+      "value": 212636
+    },
+    {
+      "name": "元大台灣50(0050)連結A不配息",
+      "value": 97721
+    },
+    {
+      "name": "統一奔騰基金",
+      "value": 74620
     }
   ]
 }
