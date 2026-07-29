@@ -2,15 +2,15 @@
   "generated_at": "2026-07-28T22:13:00",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-07-28",
-  "total_assets": 16356374,
+  "total_assets": 16174079,
   "total_liabilities": 21165869,
-  "net_worth": -4809495,
+  "net_worth": -4991790,
   "debt_ratio": "33.9%",
   "monthly_income": 218102,
   "monthly_expense": 141958,
   "working_surplus": 76144,
   "retirement_surplus": 18142,
-  "securities_total_market_value": 2499320,
+  "securities_total_market_value": 2524290,
   "insurance_current_value": 9802872,
   "fund_market_value": 740013,
   "moneybook_total": 3614169,
@@ -75,7 +75,7 @@
   "credit_card_pending": 24976,
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
-  "securities_total": 2499320,
+  "securities_total": 2524290,
   "funds_total": 740013,
   "insurance_total": 9802872,
   "last_calibration_sources": {
@@ -470,26 +470,26 @@
       "現金目標": 5
     },
     "actual_pct": {
-      "台股市值型成長": 15.2,
+      "台股市值型成長": 15.3,
       "美股市值型成長": 33.7,
       "防守型配息": 12.4,
       "債券": 19.4,
       "現金/安全網": 19.2
     },
     "gaps": {
-      "台股市值型成長": -19.8,
+      "台股市值型成長": -19.7,
       "美股市值型成長": 3.7,
       "防守型配息": -12.6,
       "債券及安全現金": 28.6
     },
     "actual_twd": {
-      "台股市值型成長": 2468982,
-      "美股市值型成長": 5463868,
+      "台股市值型成長": 2491254,
+      "美股市值型成長": 5466566,
       "防守型配息": 2006679,
       "債券": 3149543,
       "現金/安全網": 3119990
     },
-    "alert": "台股不足19.8pp；現金+債券超標28.6pp"
+    "alert": "台股不足19.7pp；現金+債券超標28.6pp"
   },
   "penetration_canonical": {
     "updated_at": "2026-07-18",
@@ -984,5 +984,98 @@
   "allianz_a_value": 5062369,
   "allianz_b_value": 2702970,
   "_updated_by": "safe_update.py",
-  "_updated_at": "2026-07-29 00:10"
+  "_updated_at": "2026-07-29 00:10",
+  "unrealized_pnl": 117720,
+  "holdings": [
+    {
+      "ticker": "0050",
+      "shares": 2000,
+      "price": 93.7,
+      "cost": 84.9
+    },
+    {
+      "ticker": "006208",
+      "shares": 2000,
+      "price": 214.05,
+      "cost": 196.9
+    },
+    {
+      "ticker": "009816",
+      "shares": 21000,
+      "price": 13.35,
+      "cost": 12.33
+    },
+    {
+      "ticker": "00646",
+      "shares": 1000,
+      "price": 75.55,
+      "cost": 71.6
+    },
+    {
+      "ticker": "00713",
+      "shares": 2000,
+      "price": 60.25,
+      "cost": 54.8
+    },
+    {
+      "ticker": "00878",
+      "shares": 15000,
+      "price": 30.91,
+      "cost": 26.81
+    },
+    {
+      "ticker": "0056",
+      "shares": 1000,
+      "price": 46.73,
+      "cost": 37.15
+    },
+    {
+      "ticker": "00981A",
+      "shares": 6000,
+      "price": 23.85,
+      "cost": 25.52
+    },
+    {
+      "ticker": "00984A",
+      "shares": 10000,
+      "price": 13.4,
+      "cost": 14.56
+    },
+    {
+      "ticker": "00919",
+      "shares": 6000,
+      "price": 28.5,
+      "cost": 29.55
+    },
+    {
+      "ticker": "00918",
+      "shares": 1000,
+      "price": 31.46,
+      "cost": 28.55
+    },
+    {
+      "ticker": "009824",
+      "shares": 10000,
+      "price": 9.68,
+      "cost": 9.93
+    },
+    {
+      "ticker": "009823",
+      "shares": 10000,
+      "price": 10.27,
+      "cost": 10.02
+    },
+    {
+      "ticker": "00888",
+      "shares": 5000,
+      "price": 28.31,
+      "cost": 31.73
+    },
+    {
+      "ticker": "00983D",
+      "shares": 10000,
+      "price": 10.14,
+      "cost": 10.09
+    }
+  ]
 }
