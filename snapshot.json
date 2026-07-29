@@ -460,7 +460,7 @@
     "max_allocation": "機會子彈 ≤ 20% 安全網部位"
   },
   "penetration": {
-    "updated_at": "2026-07-29",
+    "updated_at": "2026-07-30",
     "source": "calc_penetration (auto-calibrated)",
     "targets": {
       "台股市值型目標": 35,
