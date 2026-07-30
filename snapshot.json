@@ -940,7 +940,7 @@
   "moneybook_date": "2026-07-27",
   "total_portfolio_value": 16303141,
   "total_stock_value": 2499320,
-  "allianz_combined": 7765339,
+  "allianz_combined": 7634046,
   "allianz_a_value": 5062369,
   "allianz_b_value": 2702970,
   "_updated_by": "safe_update.py",
@@ -1078,5 +1078,7 @@
       "name": "統一奔騰基金",
       "value": 74620
     }
-  ]
+  ],
+  "allianz_a": 4983244,
+  "allianz_b": 2650802
 }
