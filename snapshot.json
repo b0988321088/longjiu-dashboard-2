@@ -11,7 +11,7 @@
   "working_surplus": 76144,
   "retirement_surplus": 18142,
   "securities_total_market_value": 2517200,
-  "fund_market_value": 1114550,
+  "fund_market_value": 718353,
   "moneybook_total": 3614169,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
@@ -75,7 +75,7 @@
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
   "securities_total": 2517200,
-  "funds_total": 1114550,
+  "funds_total": 718353,
   "last_calibration_sources": {
     "securities": "凱基證券截圖 2026-07-18 02:00",
     "funds": "鉅亨基金截圖 2026-07-18 02:03",
@@ -468,26 +468,26 @@
       "現金目標": 5
     },
     "actual_pct": {
-      "台股市值型成長": 15.0,
-      "美股市值型成長": 34.4,
-      "防守型配息": 12.2,
-      "債券": 19.1,
-      "現金/安全網": 19.3
+      "台股市值型成長": 15.4,
+      "美股市值型成長": 35.2,
+      "防守型配息": 12.5,
+      "債券": 19.6,
+      "現金/安全網": 17.3
     },
     "gaps": {
-      "台股市值型成長": -20.0,
-      "美股市值型成長": 4.4,
-      "防守型配息": -12.8,
-      "債券及安全現金": 28.4
+      "台股市值型成長": -19.6,
+      "美股市值型成長": 5.2,
+      "防守型配息": -12.5,
+      "債券及安全現金": 26.9
     },
     "actual_twd": {
       "台股市值型成長": 2460042,
       "美股市值型成長": 5628586,
       "防守型配息": 2003618,
       "債券": 3125916,
-      "現金/安全網": 3163796
+      "現金/安全網": 2767599
     },
-    "alert": "台股不足20.0pp；現金+債券超標28.4pp"
+    "alert": "台股不足19.6pp；現金+債券超標26.9pp"
   },
   "penetration_canonical": {
     "updated_at": "2026-07-18",
@@ -867,7 +867,7 @@
   "true_value": {
     "total_assets": 16659573
   },
-  "funds": 1114550,
+  "funds": 718353,
   "allianz_a_breakdown": {
     "安聯收益成長": 1806212,
     "M&G入息": 2361295,
