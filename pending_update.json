@@ -1,6 +1,13 @@
 {
-  "generated_at": "2026-07-28 22:59",
-  "changes": {},
+  "generated_at": "2026-07-30 10:03",
+  "changes": {
+    "firstjin_fl65_current_value": {
+      "label": "第一金FL65",
+      "old": 1970471,
+      "new": 1952366,
+      "diff": -18105
+    }
+  },
   "errors": [],
   "warnings": [],
   "applied": false

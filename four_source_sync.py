@@ -116,6 +116,25 @@ except Exception as e:
     print(f"❌ {e}")
     errors.append(f"asset_diff_monitor 失敗: {e}")
 
+# === Step 3c: 產出日報 ===
+print("🔍 Step 3c: 產出日報 ...", end=" ")
+try:
+    import subprocess, os
+    today = snap.get('date', str(date.today()))
+    # 刪除舊日報強制重產
+    for f in [f'daily_report_v2_{today}.html', f'penetration_report_{today}.html']:
+        fp = os.path.join(BASE, f)
+        if os.path.exists(fp): os.remove(fp)
+    r = subprocess.run(['python', 'regenerate_report.py', '--deploy'], capture_output=True, text=True, timeout=120)
+    out = r.stdout + r.stderr
+    if '✅' in out:
+        print(f"✅ OK")
+    else:
+        print(f"⚠️ {out[-100:]}")
+except Exception as e:
+    print(f"❌ {e}")
+    errors.append(f"日報產出失敗: {e}")
+
 # === Step 4: 四源交叉驗證 ===
 print("🔍 Step 4: 四源驗證 ...", end=" ")
 try:
