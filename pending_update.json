@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-07-30 10:03",
+  "generated_at": "2026-07-30 15:23",
   "changes": {
-    "firstjin_fl65_current_value": {
-      "label": "第一金FL65",
-      "old": 1970471,
-      "new": 1952366,
-      "diff": -18105
+    "fund_market_value": {
+      "label": "基金市值",
+      "old": 718353,
+      "new": 699855,
+      "diff": -18498
     }
   },
   "errors": [],

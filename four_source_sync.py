@@ -70,6 +70,9 @@ try:
     ins_ab = snap.get('allianz_combined', 0)
     ins_fl65 = snap.get('firstjin_fl65_current_value', 0)
     insurance = ins_ab + ins_fl65
+    # 同步寫回 snapshot（相容舊腳本）
+    snap['insurance_current_value'] = insurance
+    snap['insurance_total'] = insurance
     funds = snap.get('fund_market_value', 0)
     total = cash + securities + insurance + funds
 
