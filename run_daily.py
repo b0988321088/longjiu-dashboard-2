@@ -165,6 +165,7 @@ def calibrate_sources() -> dict:
         "insurance_total": s_insurance,
         "allianz_ab": s_allianz,
         "firstjin": s_firstjin,
+        "firstjin_label": snap.get("insurance_label_b", "第一金FL65"),
         "rent_monthly": s_rent,
         "securities_total": s_securities,
         "monthly_dividend": monthly_dividend,
@@ -255,6 +256,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     """產出五大章節日報 HTML。"""
     allianz = tv["allianz_ab"] or 7_881_584
     firstjin = tv["firstjin"] or 1_994_698
+    firstjin_label = tv.get("firstjin_label", "第一金FL65")
     insurance_total = tv["insurance_total"] or allianz + firstjin
     monthly_dividend = tv.get("monthly_dividend", 107_116)
     allianz_dividend = tv.get("allianz_dividend", 73_167)
@@ -542,7 +544,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <div class="label">四大戰略重點</div>
 
     <h3>保單維運</h3>
-    <p class="text-lead">保單現值 <strong>{insurance_total:,} TWD</strong>（安聯 A+B {allianz:,} + 第一金 FL65 {firstjin:,}），本月配息合計 <strong>{monthly_dividend:,} TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
+    <p class="text-lead">保單現值 <strong>{insurance_total:,} TWD</strong>（安聯 A+B {allianz:,} + {firstjin_label} {firstjin:,}），本月配息合計 <strong>{monthly_dividend:,} TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
 
     <h3>證券曝險</h3>
     <p class="text-lead">證券總市值 <strong>{tv['securities_total']:,} TWD</strong>（{tv['holdings_count']}檔）。本月已收配息：{tv['sec_dividend_monthly']:,} TWD。前三大：{tv['holdings_top3'][0][0]} {tv['holdings_top3'][0][1]:.1f}%、{tv['holdings_top3'][1][0]} {tv['holdings_top3'][1][1]:.1f}%、{tv['holdings_top3'][2][0]} {tv['holdings_top3'][2][1]:.1f}%。0056 凍結質押中，短期無法加碼。</p>
@@ -577,7 +579,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       </table>
     </div>
 
-    <h3>第一金保單（成本 2,000,000 / 現值 {firstjin:,}）</h3>
+    <h3>{firstjin_label}（成本 2,000,000 / 現值 {firstjin:,}）</h3>
     <div class="table-wrap">
       <table class="mobile-bordered">
         <thead>
