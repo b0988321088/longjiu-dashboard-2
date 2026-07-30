@@ -1,7 +1,7 @@
 {
   "generated_at": "2026-07-28T22:13:00",
   "version": "v5.0.10-true-value-correction",
-  "date": "2026-07-28",
+  "date": "2026-07-30",
   "total_assets": 15966318,
   "total_liabilities": 21165869,
   "net_worth": -5199551,
@@ -63,7 +63,7 @@
   "cc_low": 35000,
   "cc_mid": 38000,
   "cc_high": 42000,
-  "firstjin_fl65_current_value": 1970471,
+  "firstjin_fl65_current_value": 1952366,
   "allianz_ab_current_value": 7634046,
   "firstjin_current_value": 1970471,
   "last_mb_sync": "2026-07-18",
@@ -568,7 +568,7 @@
     "canonical": 141958,
     "updated_at": "2026-07-18"
   },
-  "last_calibrated": "2026-07-28T22:13:00",
+  "last_calibrated": "2026-07-30T10:03:52",
   "rent_monthly_total": 82200,
   "rent_breakdown": {
     "大義街店面": 24000,
