@@ -1342,9 +1342,11 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__MONTHLY_INCOME_TREND__", income_trend)
     html = html.replace("__MONTHLY_EXPENSE_TREND__", expense_trend)
     html = html.replace("__INSURANCE_TREND__", insurance_trend)
-    _cash_runway = int(tv.get("real_liquid_assets", tv.get("bonds_cash", 4_483_408)) - 5_812_576 + 33_000) if tv.get("bonds_cash") else int(tv.get("real_liquid_assets", 4_483_408))
-    html = html.replace("__RUNWAY_MONTHS__", fmt(int(_cash_runway / max(tv.get("monthly_expense", 141_958), 1))))
+    _cash_runway = int(tv.get("cash_total") or tv.get("real_liquid_assets") or 0)
+    _runway_months = int(_cash_runway / max(tv.get("monthly_expense", 141_958), 1))
+    html = html.replace("__RUNWAY_MONTHS__", fmt(_runway_months))
     html = html.replace("__CASH_TOTAL__", fmt(_cash_runway))
+    html = html.replace("__RUNWAY_COVERAGE__", f"{_runway_months:.1f}x")
 
     # Allocation: prefer daily_analysis.json allocation block, fallback to hardcoded known values
     alloc = {}
