@@ -158,14 +158,14 @@ def extract_snapshot(snap: dict) -> dict:
                 _ar = dict(_ar)
                 _ir = dict(_ir) if _ir else {}
                 _total_assets = sum(_ar[k] for k in ["securities","insurance","funds","bonds","cash_total","real_estate"] if k in _ar)
-                _total_liab = 18_197_422
-                # 從 db 拿負債
+                _total_liab = float(snap.get("total_liabilities") or 0) or 18_197_422
+                # 從 db 拿負債（liabilities 表有當日資料才覆蓋）
                 if _lr:
                     _lr = dict(_lr)
-                    _total_liab = sum(_lr.get(k, 0) for k in ["mortgage_yy","mortgage_yydu","mortgage_xz","policy_loan","pledge_loan","credit_card"])
-                    # 直接用 total_liabilities 欄位（如果有的話）
                     if _lr.get("total_liabilities", 0):
                         _total_liab = _lr["total_liabilities"]
+                    else:
+                        _total_liab = sum(_lr.get(k, 0) for k in ["mortgage_yy","mortgage_yydu","mortgage_xz","policy_loan","pledge_loan","credit_card"])
                 
                 insurance_current_from_db = float(_ar.get("insurance", 0))
                 insurance_detail_from_db = _build_insurance_detail(snap, insurance_current_from_db)
@@ -292,6 +292,8 @@ def load_history(snap=None) -> dict:
     try:
         _db = sqlite3.connect(str(_db_path))
         _db.row_factory = sqlite3.Row
+        # 先載入 JSON 歷史存檔（保留每日 insurance_detail，DB 無此欄位）
+        _json_hist = load_json(HISTORY_FILE) if Path(HISTORY_FILE).exists() else {}
         for row in _db.execute("SELECT * FROM assets ORDER BY date"):
             r = dict(row)
             d = r.get("date", "")
@@ -300,7 +302,7 @@ def load_history(snap=None) -> dict:
             history[d] = {
                 "date": d,
                 "total_assets": float(sum(r.get(k, 0) for k in ["securities","insurance","funds","bonds","cash_total","real_estate"])),
-                "total_liabilities": snap.get("total_liabilities", 21_000_000),
+                "total_liabilities": float(r.get("total_liabilities") or 0) if r.get("total_liabilities") else float(_json_hist.get(d, {}).get("total_liabilities") or 0),
                 "net_worth": 0.0,
                 "securities_market": float(r.get("securities", 0)),
                 "insurance_current": float(r.get("insurance", 0)),
@@ -310,7 +312,8 @@ def load_history(snap=None) -> dict:
                 "cash": float(r.get("cash_total", 0)),
                 "bonds": float(r.get("bonds", 0)),
                 "other": 0.0,
-                "insurance_detail": {"【安聯保單A】現值": snap.get("allianz_a_current_value", 5_103_668), **{"  A-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": snap.get("allianz_b_current_value", 2_740_224), **{"  B-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": snap.get("allianz_ab_current_value", 7_843_892), "━第一金FL65現値": snap.get("firstjin_current_value", 1_958_980), "━保單總現値": snap.get("insurance_current_value", 9_802_872)},
+                # 歷史日期保留 JSON 存檔的 insurance_detail，避免被今日 snapshot 覆寫
+                "insurance_detail": _json_hist.get(d, {}).get("insurance_detail") or {"【安聯保單A】現值": snap.get("allianz_a_current_value", 5_103_668), **{"  A-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": snap.get("allianz_b_current_value", 2_740_224), **{"  B-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": snap.get("allianz_ab_current_value", 7_843_892), "━第一金FL65現値": snap.get("firstjin_current_value", 1_958_980), "━保單總現値": snap.get("insurance_current_value", 9_802_872)},
                 "fund_dividend_monthly": float(snap.get("monthly_dividend_total", snap.get("monthly_dividend_breakdown", {}).get("total", 0)) or 129651),
                 "monthly_income": 218_102.0,
                 "monthly_expense": 141_958.0,

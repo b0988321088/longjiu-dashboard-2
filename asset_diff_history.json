@@ -2,7 +2,7 @@
   "2026-07-19": {
     "date": "2026-07-19",
     "total_assets": 22301690.0,
-    "total_liabilities": 21165869,
+    "total_liabilities": 21165869.0,
     "net_worth": 1135821.0,
     "securities_market": 2205230.0,
     "insurance_current": 9633273.0,
@@ -37,7 +37,7 @@
   "2026-07-20": {
     "date": "2026-07-20",
     "total_assets": 18674581.0,
-    "total_liabilities": 21165869,
+    "total_liabilities": 21165869.0,
     "net_worth": -2491288.0,
     "securities_market": 2260230.0,
     "insurance_current": 9633273.0,
@@ -72,7 +72,7 @@
   "2026-07-21": {
     "date": "2026-07-21",
     "total_assets": 19384695.0,
-    "total_liabilities": 21165869,
+    "total_liabilities": 21165869.0,
     "net_worth": -1781174.0,
     "securities_market": 2375390.0,
     "insurance_current": 9633273.0,
@@ -107,7 +107,7 @@
   "2026-07-23": {
     "date": "2026-07-23",
     "total_assets": 16618211.0,
-    "total_liabilities": 21165869,
+    "total_liabilities": 21165869.0,
     "net_worth": -4547658.0,
     "securities_market": 2413760.0,
     "insurance_current": 9766626.0,
@@ -142,7 +142,7 @@
   "2026-07-24": {
     "date": "2026-07-24",
     "total_assets": 16689795.0,
-    "total_liabilities": 21165869,
+    "total_liabilities": 21165869.0,
     "net_worth": -4476074.0,
     "securities_market": 2479320.0,
     "insurance_current": 9802872.0,
@@ -177,7 +177,7 @@
   "2026-07-25": {
     "date": "2026-07-25",
     "total_assets": 16689795.0,
-    "total_liabilities": 21165869,
+    "total_liabilities": 21165869.0,
     "net_worth": -4476074.0,
     "securities_market": 2479320.0,
     "insurance_current": 9802872.0,
@@ -212,7 +212,7 @@
   "2026-07-26": {
     "date": "2026-07-26",
     "total_assets": 16389795.0,
-    "total_liabilities": 21165869,
+    "total_liabilities": 21165869.0,
     "net_worth": -4776074.0,
     "securities_market": 2479320.0,
     "insurance_current": 9802872.0,
@@ -247,7 +247,7 @@
   "2026-07-27": {
     "date": "2026-07-27",
     "total_assets": 16303141.0,
-    "total_liabilities": 21165869,
+    "total_liabilities": 21165869.0,
     "net_worth": -4862728.0,
     "securities_market": 2597360.0,
     "insurance_current": 9802872.0,
@@ -282,7 +282,7 @@
   "2026-07-28": {
     "date": "2026-07-28",
     "total_assets": 16070556.0,
-    "total_liabilities": 21165869,
+    "total_liabilities": 21165869.0,
     "net_worth": -5095313.0,
     "securities_market": 2499320.0,
     "insurance_current": 9724319.0,
@@ -317,7 +317,7 @@
   "2026-07-29": {
     "date": "2026-07-29",
     "total_assets": 15948213.0,
-    "total_liabilities": 21165869,
+    "total_liabilities": 21165869.0,
     "net_worth": -5217656.0,
     "securities_market": 2524290.0,
     "insurance_current": 9586412.0,
@@ -352,7 +352,7 @@
   "2026-07-30": {
     "date": "2026-07-30",
     "total_assets": 15941123.0,
-    "total_liabilities": 21165869,
+    "total_liabilities": 21165869.0,
     "net_worth": -5224746.0,
     "securities_market": 2517200.0,
     "insurance_current": 9586412.0,
@@ -387,8 +387,8 @@
   "2026-07-31": {
     "date": "2026-07-31",
     "total_assets": 15952100.0,
-    "total_liabilities": 18197422.0,
-    "net_worth": -2245322.0,
+    "total_liabilities": 21165869.0,
+    "net_worth": -5213769.0,
     "securities_market": 2517200.0,
     "insurance_current": 9597389.0,
     "insurance_total": 9597389.0,
