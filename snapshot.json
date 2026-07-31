@@ -589,7 +589,7 @@
   },
   "monthly_expense_definition": "生活常規支出（不含旅遊/機票等偶發性費用）",
   "monthly_expense_source": "snapshot canonical baseline ~142K（MB 扣除非生活支出誤分類後吻合）",
-  "cathay_refinance_note": "核贷进行中，预计 8/2 完成，金额待银行确认，利率 2.6%",
+  "cathay_refinance_note": "核貸進行中，順延至 8/4（下周二）撥款，利率 2.6%",
   "policy_pledge_loan": 4000000,
   "policy_pledge_loan_note": "含安联A 2M + 安联B 1M + 第一金 1M",
   "rent_monthly_target": 80100,
