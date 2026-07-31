@@ -667,7 +667,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <h2>5/5｜投資決策框架 Investment Decision Framework</h2>
     <div class="label">決策核心 + 緊急應變分析</div>
 
-    <div id="emergency-llm-analysis" style="background:#fffbeb;border-radius:8px;padding:12px;margin-top:8px;font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-x:auto;color:#1d1d1f;">
+    <div id="emergency-llm-analysis" style="background:transparent;border-radius:8px;padding:0;margin-top:8px;font-size:13px;line-height:1.75;overflow-x:auto;color:#1d1d1f;">
       <!-- LLM 緊急應變分析區塊 -->
             {llm_emergency_analysis}
     </div>
