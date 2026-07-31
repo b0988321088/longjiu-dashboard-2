@@ -271,7 +271,7 @@ def extract_snapshot(snap: dict) -> dict:
         "cash": float(cash),
         "insurance_detail": insurance_detail,
         "fund_dividend_monthly": float(snap.get("monthly_dividend_total", snap.get("monthly_dividend_breakdown", {}).get("total", 0)) or 0),
-        "fund_dividend_conservative": float(snap.get("passive_income", {}).get("fund_dividend_conservative", snap.get("monthly_dividend_total", snap.get("monthly_dividend_breakdown", {}).get("total", 0)) or 0)),
+        "fund_dividend_conservative": float(snap.get("monthly_dividend", snap.get("monthly_dividend_breakdown", {}).get("insurance", 0)) or 0),
         "monthly_income": float(snap.get("monthly_income", 218102)),
         "monthly_expense": float(snap.get("monthly_expense", snap.get("monthly_expense_mb", 141958))),
         "rent_monthly": float(snap.get("rent_monthly_actual", 80100)),
