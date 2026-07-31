@@ -18,6 +18,7 @@ FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS30"
 
 A_THRESHOLD = 5.20   # 模式A 防禦
 B_THRESHOLD = 4.90   # 模式B 布局
+RED_LINE = 5.30      # 風控紅線：長期債券新增買單永久凍結
 CONSECUTIVE_DAYS = 2  # 連續交易日
 
 def fetch_us30y() -> list[tuple[str, float]]:
@@ -105,6 +106,9 @@ def main():
         msgs.append("⛔ 禁令：不加碼美股長久期科技、不新增債券（00983D/PIMCO 維持底倉）")
     else:
         msgs.append("🎯 執行策略：放寬減碼限制，可分批回補優質美股科技、開放債券布局")
+    # 風控紅線檢查：連續2日 ≥5.30% → 債券新增永久凍結
+    if new_mode == "A" and all(v >= RED_LINE for _, v in last2):
+        msgs.append(f"🚫 風控紅線觸發：US30Y 連續{CONSECUTIVE_DAYS}日 ≥{RED_LINE}% — 長期債券相關新增買單【永久凍結】（不受階段影響）")
     print("\n".join(msgs))
     return
 
