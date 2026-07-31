@@ -1076,5 +1076,13 @@
   "firstjin_fund_name": "IL24-安聯AI收益成長多重資產基金-B類型(月配息)-新臺幣",
   "insurance_label_b": "第一金（IL24-安聯AI收益成長）",
   "insurance_current_value": 9597389,
-  "insurance_total": 9597389
+  "insurance_total": 9597389,
+  "pending_income": [
+    {
+      "source": "台電標案合作（上境工程）利潤分成",
+      "amount": null,
+      "note": "本金已回收（押標金退款 800,000 於 7/20 入帳），剩利潤分成待收",
+      "updated": "2026-07-31"
+    }
+  ]
 }
