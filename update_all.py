@@ -61,12 +61,12 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     _fund_tw = _fund_us = _fund_def = 0
     _fb = (snap or {}).get("funds_breakdown", {})
     for _fn, _fval in _fb.items():
-        if "路博邁5G" in _fn or "台新美日台" in _fn:
-            _fund_us += _fval
-        elif "0050連結" in _fn or "統一奔騰" in _fn:
-            _fund_tw += _fval
-        elif "台中銀台灣優息" in _fn:
+        if "台中銀台灣優息" in _fn:
             _fund_def += _fval
+        elif any(k in _fn for k in ["路博邁5G", "台新美日台", "貝萊德", "安聯AI", "聯博", "摩根", "M&G", "安聯收益成長", "安聯美國"]):
+            _fund_us += _fval
+        elif any(k in _fn for k in ["0050連結", "統一奔騰", "安聯台灣科技", "國泰台灣高股息"]):
+            _fund_tw += _fval
         else:
             _fund_tw += _fval
     tw = round(sec * 0.97) + _fund_tw
