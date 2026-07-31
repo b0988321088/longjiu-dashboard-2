@@ -698,12 +698,15 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         + "</tbody></table></div></div>"
     )
 
-    # Cash detail card — 從 MB CSV 讀取銀行明細（動態）
+    # Cash detail card — 從 MB CSV 讀取銀行明細（動態），無 CSV 時 fallback snapshot
     _cash_rows = ""
     try:
         import csv
         from collections import defaultdict as _dd
-        _cp = sorted(Path("Moneybook").glob("Moneybook_帳戶_*_1.csv"))[-1]
+        _cps = sorted(Path("Moneybook").glob("Moneybook_帳戶_*_1.csv")) or sorted(Path("moneybook").glob("Moneybook_帳戶_*_1.csv"))
+        if not _cps:
+            raise FileNotFoundError("Moneybook CSV 未匯入")
+        _cp = _cps[-1]
         _grps = _dd(list)
         with open(str(_cp), encoding="utf-8-sig") as _f:
             for _r in csv.DictReader(_f):
@@ -720,7 +723,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
                     _cash_rows += f"<tr><td style='padding-left:20px'>{n}</td><td class='num'>{fv:,.0f}</td></tr>"
                 _cash_rows += f"<tr style='border-top:1px dashed #888'><td><strong>{_g}</strong></td><td class='num'><strong>{_gt:,.0f}</strong></td></tr>"
     except:
-        _cash_rows = "<tr><td colspan='2'>讀取失敗</td></tr>"
+        _cash_rows = f"<tr><td>現金（snapshot 值，Moneybook 未匯入）</td><td class='num'>{_fmt(ex['cash'])}</td></tr>"
     cash_card = (
         '<div class="card"><h2>💵 現金部位</h2>'
         '<div class="table-wrap"><table><thead><tr><th>項目</th><th class=\'num\'>金額</th></tr></thead><tbody>'
