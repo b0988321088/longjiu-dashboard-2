@@ -112,13 +112,27 @@ for e in _events:
             _p0_dynamic.append(f'<li>{d} — {e.get("item","")} {e.get("amount","")} {st}</li>')
 _p0_html = '\n'.join(_p0_core + _p0_dynamic)
 # 同步更新 dashboard_decisions.json（供 CIO 審計用）
+# ⚠️ 2026-07-31 修復：原邏輯整檔覆寫會清空 decisions（含核准記錄，事發於 3965a8e），改為合併式更新
 try:
-    _dash_decisions = {
-        'last_updated': f'{TODAY}T18:00:00+08:00',
-        'decisions': [{'date': d.get('date',''), 'action': d.get('title',''), 'decision': '核准', 'status': d.get('status',''), 'tags': d.get('tags',''), 'timestamp': TODAY} for d in json.loads((BASE / 'pending_decisions.json').read_text('utf-8')) if '核准' in d.get('status','')],
-        'pending_decisions': [{'date': d.get('date',''), 'action': d.get('title',''), 'status': d.get('status',''), 'tags': d.get('tags','')} for d in json.loads((BASE / 'pending_decisions.json').read_text('utf-8')) if '核准' not in d.get('status','')],
-    }
-    (BASE / 'dashboard_decisions.json').write_text(json.dumps(_dash_decisions, ensure_ascii=False, indent=2), encoding='utf-8')
+    _dash_path = BASE / 'dashboard_decisions.json'
+    _existing = {}
+    try:
+        _existing = json.loads(_dash_path.read_text('utf-8'))
+    except Exception:
+        _existing = {'decisions': [], 'pending_decisions': [], 'meta': {}}
+    _pd = json.loads((BASE / 'pending_decisions.json').read_text('utf-8'))
+    _approved = [{'date': d.get('date',''), 'action': d.get('title',''), 'decision': '核准', 'status': d.get('status',''), 'tags': d.get('tags',''), 'timestamp': TODAY} for d in _pd if '核准' in d.get('status','')]
+    _pending = [{'date': d.get('date',''), 'action': d.get('title',''), 'status': d.get('status',''), 'tags': d.get('tags','')} for d in _pd if '核准' not in d.get('status','')]
+    # 合併：保留既有 decisions（含核准/歷史軌跡），僅更新 pending 與 last_updated
+    _existing['last_updated'] = f'{TODAY}T18:00:00+08:00'
+    _existing['pending_decisions'] = _pending
+    if _approved:
+        _existing.setdefault('decisions', [])
+        for _a in _approved:
+            if not any(d.get('action') == _a['action'] for d in _existing['decisions']):
+                _existing['decisions'].append(_a)
+    _existing.setdefault('meta', {})['updated_at'] = TODAY
+    _dash_path.write_text(json.dumps(_existing, ensure_ascii=False, indent=2), encoding='utf-8')
 except:
     pass
 # 決策追蹤附加至 P0 區塊
