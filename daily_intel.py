@@ -475,18 +475,18 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
         if tw_equity > 0 and (market.get('twii') and "%" in market['twii']):
             twii_pct = float(re.search(r"\(([+-]?\d+\.\d+)%\)", market['twii']).group(1))
             if twii_pct <= -1.0:
-                long_short += f"台股持倉市值型成長 {tw_equity:,.0f} 萬元，今日大盤下跌，短線承壓。"
+                long_short += f"台股持倉市值型成長 {tw_equity:,.0f} TWD，今日大盤下跌，短線承壓。"
             elif twii_pct >= 1.0:
-                long_short += f"台股持倉市值型成長 {tw_equity:,.0f} 萬元，今日大盤上漲，動能轉強。"
+                long_short += f"台股持倉市值型成長 {tw_equity:,.0f} TWD，今日大盤上漲，動能轉強。"
 
         if us_equity > 0 and (market.get('us') and "道瓊" in market['us']):
             us_match = re.search(r"道瓊 [^()]+ \(([+-]?\d+\.\d+)%\)", market['us'])
             if us_match:
                 us_dji_pct = float(us_match.group(1))
                 if us_dji_pct <= -1.0:
-                    long_short += f"美股持倉市值型成長 {us_equity:,.0f} 萬元，今日美股下跌，短期風險增加。"
+                    long_short += f"美股持倉市值型成長 {us_equity:,.0f} TWD，今日美股下跌，短期風險增加。"
                 elif us_dji_pct >= 1.0:
-                    long_short += f"美股持倉市值型成長 {us_equity:,.0f} 萬元，今日美股上漲，可適度樂觀。"
+                    long_short += f"美股持倉市值型成長 {us_equity:,.0f} TWD，今日美股上漲，可適度樂觀。"
         if not long_short:
             long_short = "目前持倉與市場連動正常，無特殊事件。"
         _temp_briefing_lines.append(long_short)

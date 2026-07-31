@@ -2,16 +2,16 @@
   "generated_at": "2026-07-28T22:13:00",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-07-31",
-  "total_assets": 15972085,
+  "total_assets": 15944017,
   "total_liabilities": 21127022,
-  "net_worth": -5154937,
+  "net_worth": -5183005,
   "debt_ratio": "33.9%",
   "monthly_income": 218102,
   "monthly_expense": 141958,
   "working_surplus": 76144,
   "retirement_surplus": 18142,
   "securities_total_market_value": 2719420,
-  "fund_market_value": 718353,
+  "fund_market_value": 690285,
   "moneybook_total": 3614169,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
@@ -75,7 +75,7 @@
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
   "securities_total": 2719420,
-  "funds_total": 718353,
+  "funds_total": 690285,
   "last_calibration_sources": {
     "securities": "凱基證券截圖 2026-07-18 02:00",
     "funds": "鉅亨基金截圖 2026-07-18 02:03",
@@ -105,12 +105,12 @@
   "allianz_policy_a_value": 4997734,
   "allianz_policy_b_value": 2647289,
   "anue_account": {
-    "total_mv": 783700,
+    "total_mv": 690285,
     "total_cost": 563153,
-    "total_pl": 220547,
-    "dividend": 17519,
-    "as_of": "2026-07-18",
-    "note": "自由PAY 3隻 + 一般申購 4隻，當日變化 -349 (-0.04%)"
+    "total_pl": 127132,
+    "dividend": 17620,
+    "as_of": "2026-07-31",
+    "note": "帳戶總覽：含息報酬率 +25.7%，不含息 +22.58%，當日 +0.04%"
   },
   "securities": {
     "total_market_value": 2597360,
@@ -468,11 +468,11 @@
       "現金目標": 5
     },
     "actual_pct": {
-      "台股市值型成長": 17.2,
-      "美股市值型成長": 37.3,
+      "台股市值型成長": 17.3,
+      "美股市值型成長": 37.4,
       "防守型配息": 12.5,
       "債券": 17.1,
-      "現金/安全網": 15.9
+      "現金/安全網": 15.8
     },
     "gaps": {
       "台股市值型成長": -17.8,
@@ -485,7 +485,7 @@
       "美股市值型成長": 5955976,
       "防守型配息": 1997004,
       "債券": 2723627,
-      "現金/安全網": 2540726
+      "現金/安全網": 2512658
     },
     "alert": "台股不足17.8pp；現金+債券超標23.0pp"
   },

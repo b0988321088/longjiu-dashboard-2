@@ -28,7 +28,7 @@ TODAY = dt.today().isoformat()
 OUT = BASE / f"daily_report_v2_{TODAY}.html"
 
 sys.path.insert(0, str(BASE))
-from run_daily import calibrate_sources, render_daily_report, _inject_market_intel
+from run_daily import calibrate_sources, render_daily_report, _inject_market_intel, build_cc_rows
 
 # 1. 載入資料
 tv = calibrate_sources()
@@ -128,7 +128,7 @@ if _decision_rows:
     _p0_html += _decision_rows
     _p0_html += '\n</tbody></table>'
 
-html = render_daily_report(tv, market_intel_text=_market_html, schedule_rows_html=_schedule, p0_tasks_html=_p0_html, llm_emergency_analysis=_emergency_html)
+html = render_daily_report(tv, market_intel_text=_market_html, schedule_rows_html=_schedule, p0_tasks_html=_p0_html, llm_emergency_analysis=_emergency_html, mb_cc_rows=build_cc_rows())
 
 # 5. 注入市場情報 + 緊急應變（雙保險）
 html = _inject_market_intel(html, tv, daily_analysis, _emergency_html)

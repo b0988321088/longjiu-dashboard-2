@@ -1002,6 +1002,66 @@ def _format_content_to_html(text, content_type="market_intel"):
                 _formatted_lines.append(f'<span>{_b}</span>')
     return "\n".join(_formatted_lines)
 
+def build_cc_rows() -> str:
+    """信用卡四大主力列管列：優先讀 MB 帳單 CSV（moneybook/、根目錄、tmp_mb/，取每卡最新一期帳單），
+    無 CSV 時以 snapshot.json 四源校準資料兜底。"""
+    import csv as _csv
+    _rows: list[str] = []
+    _cc_map = {"玉山銀行": "UNI", "台新銀行": "Richart", "永豐銀行": "SPORT", "台北富邦": "momo / J"}
+    # 1) 掃描各目錄的 *帳單*.csv（最新修改者優先）
+    _cands = []
+    for _d in (BASE / "moneybook", BASE, BASE / "tmp_mb"):
+        try:
+            if _d.is_dir():
+                _cands += sorted(_d.glob("*帳單*.csv"), reverse=True)
+        except OSError:
+            pass
+    _cands = sorted(_cands, key=lambda p: p.stat().st_mtime, reverse=True)
+    if _cands:
+        _latest: dict[str, tuple[str, float]] = {}
+        try:
+            with open(_cands[0], "r", encoding="utf-8-sig") as _f:
+                for _r in _csv.DictReader(_f):
+                    _bank = _r.get("金融機構", "")
+                    if _bank in _cc_map:
+                        _due = _r.get("繳費截止日", "") or ""
+                        try:
+                            _amt = float(_r.get("帳單金額", 0) or 0)
+                        except ValueError:
+                            _amt = 0.0
+                        # 只保留每卡繳費截止日最新的那筆
+                        if _bank not in _latest or _due > _latest[_bank][0]:
+                            _latest[_bank] = (_due, _amt)
+            for _bank, (_due, _amt) in _latest.items():
+                if _amt > 0:
+                    _due_md = "/".join(_due.split("/")[1:]) if "/" in _due else _due
+                    _rows.append(f'          <tr><td>{_bank}</td><td>{_cc_map[_bank]}</td><td>{_due_md}</td><td class="num">{int(_amt):,}</td><td>🔄 待扣繳</td></tr>')
+        except Exception:
+            _rows = []
+    # 2) 兜底：snapshot.json 四源校準信用卡資料（credit_card dict，合計=credit_card_pending）
+    if not _rows:
+        try:
+            _snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+            _cc = _snap.get("credit_card") or {}
+            _rev = {
+                "台新Richart": ("台新銀行", "Richart"),
+                "玉山UNI": ("玉山銀行", "UNI"),
+                "永豐SPORT": ("永豐銀行", "SPORT"),
+                "富邦momo": ("台北富邦", "momo / J"),
+                "國泰CUBE": ("國泰世華", "CUBE"),
+            }
+            for _card, (_bank, _cardname) in _rev.items():
+                try:
+                    _amt = float(_cc.get(_card, 0) or 0)
+                except (TypeError, ValueError):
+                    _amt = 0.0
+                _status = "✅ 無欠款" if _amt == 0 else "🔄 待扣繳"
+                _rows.append(f'          <tr><td>{_bank}</td><td>{_cardname}</td><td>—</td><td class="num">{int(_amt):,}</td><td>{_status}</td></tr>')
+        except Exception:
+            pass
+    return "\n".join(_rows)
+
+
 def main():
     print(f"[RUN_DAILY] 日期：{TODAY}")
 
@@ -1085,32 +1145,8 @@ def main():
     except:
         tv['holdings_top3'] = [('00878', 15.0), ('009816', 16.6), ('00984A', 10.4)]
         tv['holdings_count'] = 15
-    # 從 MB 最新帳單 CSV 讀取信用卡資料（只取每卡最新一筆）
-    _mb_cc_rows = ""
-    try:
-        _mb_dir = BASE / "moneybook"
-        _mb_bill = sorted(_mb_dir.glob("*帳單*.csv"), reverse=True)
-        if _mb_bill:
-            import csv
-            _cc_map = {"玉山銀行": "UNI", "台新銀行": "Richart", "永豐銀行": "SPORT", "台北富邦": "momo / J"}
-            _latest = {}
-            with open(_mb_bill[0], "r", encoding="utf-8-sig") as _f:
-                for _r in csv.DictReader(_f):
-                    _bank = _r.get("金融機構","")
-                    if _bank in _cc_map:
-                        _due = _r.get("繳費截止日","")
-                        _amt = float(_r.get("帳單金額",0))
-                        # 只保留每卡繳費截止日最新的那筆
-                        if _bank not in _latest or _due > _latest[_bank][0]:
-                            _latest[_bank] = (_due, _amt)
-            _cc_rows = []
-            for _bank, (_due, _amt) in _latest.items():
-                if _amt > 0:
-                    _due_md = "/".join(_due.split("/")[1:]) if "/" in _due else _due
-                    _cc_rows.append(f'          <tr><td>{_bank}</td><td>{_cc_map[_bank]}</td><td>{_due_md}</td><td class="num">{int(_amt):,}</td><td>🔄 待扣繳</td></tr>')
-            if _cc_rows:
-                _mb_cc_rows = "\n".join(_cc_rows)
-    except: pass
+    # 從 MB 帳單 CSV / snapshot 四源校準資料讀取信用卡四大主力（列管帳戶）
+    _mb_cc_rows = build_cc_rows()
 
     market_intel_text = _format_content_to_html(market_intel_text, content_type="market_intel")
 
