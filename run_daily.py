@@ -1105,6 +1105,31 @@ def main():
 
     market_intel_text = _format_content_to_html(market_intel_text, content_type="market_intel")
 
+    # 從 schedule_events.json 統一讀取排程（P0 + 本週行程）
+    _schedule_rows = ""
+    _p0_html = ""
+    try:
+        _events = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
+        _schedule_rows = "\n".join(
+            f'<tr><td>{e.get("date","")}</td><td>{e.get("item","")}</td><td class="num">{e.get("amount","")}</td><td>{e.get("status","")}</td></tr>'
+            for e in _events
+            if e.get("date","") == "待處理" or ("2026-07-26" <= e.get("date","") <= "2026-08-31")
+        )[:4000]
+        _p0_core = [
+            '<li>7/17（五）— 國泰轉貸面簽/對保（✅ 已執行，8/2 完成低息轉貸）</li>',
+            '<li>8/2（日）— 國泰 2.6% 轉貸完成 — 清償保單借貸</li>',
+        ]
+        _important = ['🔴','🔄','⚠️','⏸️','📋 重要']
+        _p0_dynamic = [
+            f'<li>{e.get("date","")} — {e.get("item","")} {e.get("amount","")} {e.get("status","")}</li>'
+            for e in _events
+            if any(s in (e.get("status","") or "") for s in _important)
+            and (e.get("date","") == "待處理" or "2026-07" <= e.get("date","") <= "2026-08")
+        ]
+        _p0_html = "\n".join(_p0_core + _p0_dynamic)
+    except Exception as _pe:
+        print(f"[WARN] schedule_events.json: {_pe}")
+
     # 日報
     # LLM 緊急應變分析
     emergency_json_path = BASE / "data" / "emergency_llm_analysis.json"
@@ -1114,19 +1139,24 @@ def main():
             emergency_data = json.loads(emergency_json_path.read_text(encoding='utf-8'))
             analysis_content = emergency_data.get("full_report", emergency_data.get("analysis", ""))
             _report_html = _format_content_to_html(analysis_content, content_type="emergency_analysis")
-            # 從 JSON 取出報告日期，製作動態連結
-            _er_date = emergency_data.get("generated_at", "")[:10]
-            _er_link = f"https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_{_er_date}.html"
+            # 從現有檔案找最新緊急應變報告（glob，不寫死日期，避免 404）
+            _er_files = sorted(BASE.glob("emergency_report_2*.html"), reverse=True)
+            _er_link = ""
+            if _er_files:
+                _er_link = f"https://b0988321088.github.io/longjiu-dashboard-2/{_er_files[0].name}"
             llm_emergency_analysis_html = f"""<div class="callout callout-warn">
-            {_report_html}
+            {_report_html}"""
+            if _er_link:
+                llm_emergency_analysis_html += f"""
             <p style="margin-top:8px;text-align:right;font-size:13px">
               <a href="{_er_link}" target="_blank" style="color:#2563eb">📄 查看完整緊急應變報告 →</a>
-            </p>
+            </p>"""
+            llm_emergency_analysis_html += """
             </div>"""
         except Exception as _exc:
             print(f"[WARN] load emergency_llm_analysis.json failed: {_exc}")
 
-    daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text, mb_cc_rows=_mb_cc_rows, llm_emergency_analysis=llm_emergency_analysis_html)
+    daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text, mb_cc_rows=_mb_cc_rows, llm_emergency_analysis=llm_emergency_analysis_html, schedule_rows_html=_schedule_rows, p0_tasks_html=_p0_html)
     daily_html = _inject_market_intel(daily_html, tv, intel_signals, llm_emergency_analysis_html)
 
     # 注入戰略穿透值到日報
