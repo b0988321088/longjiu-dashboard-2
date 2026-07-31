@@ -710,7 +710,7 @@
       "保單B 安聯": 5994
     }
   },
-  "monthly_dividend": 118296,
+  "monthly_dividend": 130930,
   "actual_fj33_dividend": 9356,
   "policy_a_total": 4992334,
   "policy_b_total": 2681959,
@@ -720,7 +720,7 @@
   "policy_a_cumulative_dividend": 943850,
   "policy_b_cumulative_dividend": 687112,
   "allianz_ab_monthly": 95347,
-  "firstjin_monthly": 22949,
+  "firstjin_monthly": 35583,
   "firstjin_dividend": 22949,
   "allianz_cost": 8000000,
   "firstjin_cum_dividend": 85975,
@@ -736,12 +736,12 @@
   "bonds_cash": 10262984,
   "monthly_dividend_breakdown": {
     "allianz": 95347,
-    "firstjin": 22949,
+    "firstjin": 35583,
     "fund": 615,
     "etf": 10740,
-    "total": 129651,
-    "note": "安聯App截圖+第一金月配+FJ33/FR55+MB明細基金+MB明細ETF",
-    "insurance": 118296
+    "total": 142285,
+    "note": "安聯App截圖95,347+第一金平台35,583(FL65 12,634+FJ33 9,356+FR55 13,593)+基金615+ETF 10,740",
+    "insurance": 130930
   },
   "market": {
     "twii": "44,825.78 (+1.34%)"
@@ -891,7 +891,7 @@
     "PIMCO收益增長": 952834
   },
   "allianz_b_current_value": 2647289,
-  "monthly_dividend_total": 129651,
+  "monthly_dividend_total": 142285,
   "relay_stations": {
     "第一站": {
       "流向": "摩根多重收益（FJ33）→ 安聯收益成長（FL65）",
