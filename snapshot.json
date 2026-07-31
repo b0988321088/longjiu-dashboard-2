@@ -5,7 +5,7 @@
   "total_assets": 15921385,
   "total_liabilities": 21127022,
   "net_worth": -5205637,
-  "debt_ratio": "33.9%",
+  "debt_ratio": 42.3,
   "monthly_income": 218102,
   "monthly_expense": 141958,
   "working_surplus": 76144,
@@ -1269,5 +1269,6 @@
       "note": "本金已回收（押標金退款 800,000 於 7/20 入帳），剩利潤分成待收",
       "updated": "2026-07-31"
     }
-  ]
+  ],
+  "debt_ratio_note": "動態計算：負債 21,127,022 / 含不動產總資產 49,938,448"
 }
