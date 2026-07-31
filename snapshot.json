@@ -2,9 +2,9 @@
   "generated_at": "2026-07-28T22:13:00",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-07-31",
-  "total_assets": 15944017,
+  "total_assets": 15921385,
   "total_liabilities": 21127022,
-  "net_worth": -5183005,
+  "net_worth": -5205637,
   "debt_ratio": "33.9%",
   "monthly_income": 218102,
   "monthly_expense": 141958,
@@ -62,9 +62,9 @@
   "cc_low": 35000,
   "cc_mid": 38000,
   "cc_high": 42000,
-  "firstjin_fl65_current_value": 1952366,
+  "firstjin_fl65_current_value": 1929734,
   "allianz_ab_current_value": 7645023,
-  "firstjin_current_value": 1952366,
+  "firstjin_current_value": 1929734,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
   "bank_assets_moneybook": 2936923,
@@ -482,8 +482,8 @@
     },
     "actual_pct": {
       "台股市值型成長": 17.4,
-      "美股市值型成長": 34.6,
-      "防守型配息": 12.5,
+      "美股市值型成長": 34.7,
+      "防守型配息": 12.4,
       "債券": 17.1,
       "現金/安全網": 18.4
     },
@@ -496,7 +496,7 @@
     "actual_twd": {
       "台股市值型成長": 2766920,
       "美股市值型成長": 5521150,
-      "防守型配息": 1996832,
+      "防守型配息": 1974200,
       "債券": 2723627,
       "現金/安全網": 2935488
     },
@@ -702,7 +702,7 @@
     }
   },
   "allianz_ab": 7645023,
-  "firstjin": 1977799,
+  "firstjin": 1929734,
   "dividend_records": {
     "2026-07-21": {
       "FJ33 摩根": 9356,
@@ -723,7 +723,7 @@
   "firstjin_monthly": 22949,
   "firstjin_dividend": 22949,
   "allianz_cost": 8000000,
-  "firstjin_cum_dividend": 73341,
+  "firstjin_cum_dividend": 85975,
   "allianz_cum_dividend": 1630962,
   "firstjin_cost": 2000000,
   "securities_market_value": 2517200,
@@ -765,7 +765,7 @@
   },
   "firstjin_detail": {
     "cost": 2000000,
-    "base_value_before_dividend": 1958980,
+    "base_value_before_dividend": 1929734,
     "dividend_this_month": 22949
   },
   "credit_card": {
@@ -1260,8 +1260,8 @@
   "allianz_b": 2647289,
   "firstjin_fund_name": "IL24-安聯AI收益成長多重資產基金-B類型(月配息)-新臺幣",
   "insurance_label_b": "第一金（IL24-安聯AI收益成長）",
-  "insurance_current_value": 9597389,
-  "insurance_total": 9597389,
+  "insurance_current_value": 9574757,
+  "insurance_total": 9574757,
   "pending_income": [
     {
       "source": "台電標案合作（上境工程）利潤分成",
