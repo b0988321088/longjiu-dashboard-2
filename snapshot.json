@@ -1,10 +1,10 @@
 {
   "generated_at": "2026-07-28T22:13:00",
   "version": "v5.0.10-true-value-correction",
-  "date": "2026-07-30",
-  "total_assets": 15966318,
+  "date": "2026-07-31",
+  "total_assets": 15952100,
   "total_liabilities": 21165869,
-  "net_worth": -5199551,
+  "net_worth": -5213769,
   "debt_ratio": "33.9%",
   "monthly_income": 218102,
   "monthly_expense": 141958,
@@ -63,7 +63,7 @@
   "cc_mid": 38000,
   "cc_high": 42000,
   "firstjin_fl65_current_value": 1952366,
-  "allianz_ab_current_value": 7634046,
+  "allianz_ab_current_value": 7645023,
   "firstjin_current_value": 1952366,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
@@ -102,8 +102,8 @@
     "monthly_expense": 141958,
     "coverage_pct": 139.8
   },
-  "allianz_policy_a_value": 5103668,
-  "allianz_policy_b_value": 2740224,
+  "allianz_policy_a_value": 4997734,
+  "allianz_policy_b_value": 2647289,
   "anue_account": {
     "total_mv": 783700,
     "total_cost": 563153,
@@ -469,25 +469,25 @@
     },
     "actual_pct": {
       "台股市值型成長": 15.4,
-      "美股市值型成長": 35.2,
+      "美股市值型成長": 37.9,
       "防守型配息": 12.5,
-      "債券": 19.6,
-      "現金/安全網": 17.3
+      "債券": 17.1,
+      "現金/安全網": 17.1
     },
     "gaps": {
       "台股市值型成長": -19.6,
-      "美股市值型成長": 5.2,
+      "美股市值型成長": 7.9,
       "防守型配息": -12.5,
-      "債券及安全現金": 26.9
+      "債券及安全現金": 24.2
     },
     "actual_twd": {
       "台股市值型成長": 2460042,
-      "美股市值型成長": 5628586,
-      "防守型配息": 2003618,
-      "債券": 3125916,
-      "現金/安全網": 2767599
+      "美股市值型成長": 6048466,
+      "防守型配息": 1997004,
+      "債券": 2723627,
+      "現金/安全網": 2722961
     },
-    "alert": "台股不足19.6pp；現金+債券超標26.9pp"
+    "alert": "台股不足19.6pp；現金+債券超標24.2pp"
   },
   "penetration_canonical": {
     "updated_at": "2026-07-18",
@@ -634,66 +634,61 @@
   "mortgage_count": 3,
   "note_rent_status": "本月房租全數實收 80,100（大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100）",
   "insurance_breakdown": {
-    "policy_a_total": 5103668,
+    "policy_a_total": 4997734,
     "policy_a_funds": {
       "安聯收益成長": {
-        "value": 1839672,
+        "value": 715842,
         "code": "USDEQ3490",
-        "performance_pct": -0.55
+        "performance_pct": -2.54
       },
       "M&G入息": {
-        "value": 2367954,
+        "value": 1069377,
         "code": "USDEQ5700",
-        "performance_pct": -0.63
+        "performance_pct": -0.68
       },
       "貝萊德世界科技A10": {
-        "value": 502692,
+        "value": 1176673,
         "code": "USDEQ6080",
-        "performance_pct": 9.36
+        "performance_pct": -0.8
       },
       "安聯AI收益成長": {
-        "value": 359165,
+        "value": 352357,
         "code": "USDEQ6270",
-        "performance_pct": 6.46
+        "performance_pct": 2.0
       },
-      "聯博美國成長": {
-        "value": 3344,
-        "code": "USDEQ6330",
-        "performance_pct": -0.27
+      "PIMCO收益增長": {
+        "value": 1683485,
+        "code": "USDEQ6550",
+        "performance_pct": -0.18
       }
     },
     "policy_b_dividend_accumulated": 681118,
     "policy_a_dividend_accumulated": 932128,
-    "policy_b_total": 2740224,
+    "policy_b_total": 2647289,
     "policy_b_funds": {
       "安聯收益成長": {
-        "value": 940794,
+        "value": 504880,
         "code": "USDEQ3490",
-        "performance_pct": -0.55
-      },
-      "M&G入息": {
-        "value": 768482,
-        "code": "USDEQ5700",
-        "performance_pct": -0.61
+        "performance_pct": -2.54
       },
       "貝萊德世界科技A10": {
-        "value": 461803,
+        "value": 656363,
         "code": "USDEQ6080",
-        "performance_pct": 15.75
+        "performance_pct": 2.42
       },
       "安聯AI收益成長": {
-        "value": 543514,
+        "value": 533212,
         "code": "USDEQ6270",
-        "performance_pct": 6.46
+        "performance_pct": 2.0
       },
-      "聯博美國成長": {
-        "value": 1407,
-        "code": "USDEQ6330",
-        "performance_pct": -0.5
+      "PIMCO收益增長": {
+        "value": 952834,
+        "code": "USDEQ6550",
+        "performance_pct": -0.18
       }
     }
   },
-  "allianz_ab": 7634046,
+  "allianz_ab": 7645023,
   "firstjin": 1977799,
   "dividend_records": {
     "2026-07-21": {
@@ -869,21 +864,20 @@
   },
   "funds": 718353,
   "allianz_a_breakdown": {
-    "安聯收益成長": 1806212,
-    "M&G入息": 2361295,
-    "貝萊德世界科技A10": 454128,
-    "安聯AI收益成長": 358309,
-    "聯博美國成長": 3300
+    "安聯收益成長": 715842,
+    "M&G入息": 1069377,
+    "貝萊德世界科技A10": 1176673,
+    "安聯AI收益成長": 352357,
+    "PIMCO收益增長": 1683485
   },
-  "allianz_a_current_value": 4983244,
+  "allianz_a_current_value": 4997734,
   "allianz_b_breakdown": {
-    "安聯收益成長": 923683,
-    "M&G入息": 766321,
-    "貝萊德世界科技A10": 417190,
-    "安聯AI收益成長": 542219,
-    "聯博美國成長": 1389
+    "安聯收益成長": 504880,
+    "貝萊德世界科技A10": 656363,
+    "安聯AI收益成長": 533212,
+    "PIMCO收益增長": 952834
   },
-  "allianz_b_current_value": 2650802,
+  "allianz_b_current_value": 2647289,
   "monthly_dividend_total": 129651,
   "relay_stations": {
     "第一站": {
@@ -925,22 +919,22 @@
       "備註": "女友借款，每月5號還6,000，年底12/5全部清償"
     }
   },
-  "allianz_a_performance": 0.79,
-  "allianz_b_performance": 3.28,
+  "allianz_a_performance": -0.63,
+  "allianz_b_performance": 0.42,
   "allianz_a_monthly": {
-    "total": 5103668,
-    "performance_pct": 0.79
+    "total": 4997734,
+    "performance_pct": -0.63
   },
   "allianz_b_monthly": {
-    "total": 2740224,
-    "performance_pct": 3.28
+    "total": 2647289,
+    "performance_pct": 0.42
   },
   "moneybook_date": "2026-07-27",
   "total_portfolio_value": 16303141,
   "total_stock_value": 2499320,
-  "allianz_combined": 7634046,
-  "allianz_a_value": 5062369,
-  "allianz_b_value": 2702970,
+  "allianz_combined": 7645023,
+  "allianz_a_value": 4997734,
+  "allianz_b_value": 2647289,
   "_updated_by": "safe_update.py",
   "_updated_at": "2026-07-29 00:10",
   "unrealized_pnl": 117720,
@@ -1077,9 +1071,10 @@
       "value": 74620
     }
   ],
-  "allianz_a": 4983244,
-  "allianz_b": 2650802,
+  "allianz_a": 4997734,
+  "allianz_b": 2647289,
   "firstjin_fund_name": "IL24-安聯AI收益成長多重資產基金-B類型(月配息)-新臺幣",
   "insurance_label_b": "第一金（IL24-安聯AI收益成長）",
-  "insurance_current_value": 9586412
+  "insurance_current_value": 9597389,
+  "insurance_total": 9597389
 }

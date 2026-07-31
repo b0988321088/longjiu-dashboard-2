@@ -46,7 +46,38 @@ def _cat_value(db, category: str) -> float:
     return total
 
 def penetration_analysis(snapshot: dict) -> dict:
-    """動態穿透分析 — 從 db 即時計算"""
+    """動態穿透分析 — 優先讀 snapshot.penetration 真值，fallback 到 db 即時計算"""
+    # 優先使用 snapshot 穿透真值（唯一真值來源）
+    _cat_map = {"tw_equity": "台股市值型成長", "us_equity": "美股市值型成長",
+                "defensive": "防守型配息", "bond": "債券", "cash": "現金/安全網"}
+    _snap_pen = (snapshot or {}).get("penetration", {}).get("actual_twd", {})
+    if _snap_pen and _snap_pen.get("台股市值型成長"):
+        actual_twd = {cat: float(_snap_pen.get(key, 0)) for cat, key in _cat_map.items()}
+        total_inv = sum(actual_twd.values()) or 1
+        actual = {cat: actual_twd[cat] / total_inv * 100 for cat in actual_twd}
+        gaps = {cat: actual.get(cat, 0) - TARGETS[cat] for cat in TARGETS}
+        growth_pct = actual.get("tw_equity", 0) + actual.get("us_equity", 0)
+        defense_pct = actual.get("defensive", 0)
+        safety_pct = actual.get("bond", 0) + actual.get("cash", 0)
+        growth_target = TARGETS["tw_equity"] + TARGETS["us_equity"]
+        defense_target = TARGETS["defensive"]
+        safety_target = TARGETS["bond"] + TARGETS["cash"]
+        key_risk, key_action = "", ""
+        max_gap_cat = max(gaps, key=lambda k: abs(gaps[k]))
+        if gaps[max_gap_cat] > 5:
+            key_risk = f"{TARGET_EMOJI[max_gap_cat]}{TARGET_LABELS[max_gap_cat]} 超標 +{gaps[max_gap_cat]:.1f}pp"
+            if max_gap_cat in ("us_equity",):
+                key_action = "等反彈確認後減碼至目標"
+        elif gaps[max_gap_cat] < -5:
+            key_risk = f"{TARGET_EMOJI[max_gap_cat]} {TARGET_LABELS[max_gap_cat]} 不足 {gaps[max_gap_cat]:.1f}pp"
+            if max_gap_cat in ("tw_equity", "defensive"):
+                key_action = f"逢低補碼至目標 {TARGETS[max_gap_cat]:.0f}%"
+        return {
+            "actual": actual, "actual_twd": actual_twd, "gaps": gaps,
+            "growth_pct": growth_pct, "defense_pct": defense_pct, "safety_pct": safety_pct,
+            "growth_target": growth_target, "defense_target": defense_target, "safety_target": safety_target,
+            "raw": actual_twd, "key_risk": key_risk, "key_action": key_action, "total_inv": total_inv,
+        }
     db_path = str(BASE / "dragon_assets.db")
     if not os.path.exists(db_path):
         return {"error": "db not found"}

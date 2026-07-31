@@ -110,8 +110,8 @@ if dash_file.exists():
     data_for_count = json.loads(dash_file.read_text("utf-8"))
     for d in data_for_count.get("decisions", []):
         ts = str(d.get("timestamp", "") or d.get("approved_at", ""))
-        if today in ts and d.get("decision") in ("核准", "approved"):
-            text = d.get("name") or d.get("summary") or d.get("text") or d.get("action", "")
+        if today in ts:
+            text = d.get("summary") or d.get("task") or d.get("name") or d.get("action", "")
             if text and len(text) > 10:
                 decisions_text.append(text)
     for d in data_for_count.get("pending_decisions", []):

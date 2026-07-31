@@ -28,9 +28,10 @@ def _fv(v):
     return v["value"] if isinstance(v, dict) else (v if isinstance(v, (int,float)) else 0)
 
 def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None, snap=None):
+    _fj = int((snap or {}).get("firstjin_fl65_current_value") or (snap or {}).get("firstjin_current_value") or 1_958_980)
     if bond_portion is not None:
         ins_bonds = int(bond_portion)
-        ins_eq = int(ins) - int(bond_portion) - 1_958_980
+        ins_eq = int(ins) - int(bond_portion) - _fj
     elif fund_ratios:
         # 從 snapshot 動態讀取保險基金市值
         if snap:
@@ -40,9 +41,9 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             for k in list(dict.fromkeys(list(_a.keys()) + list(_b.keys()))):
                 fv[k] = _fv(_a.get(k, 0)) + _fv(_b.get(k, 0))
         else:
-            fv = {"安聯收益成長": 2_780_466, "M&G入息": 3_136_436, "安聯AI收益成長": 902_679, "貝萊德科技A10": 964_495, "聯博美國成長": 4_751}
+            fv = {"安聯收益成長": 1_220_722, "M&G入息": 1_069_377, "安聯AI收益成長": 885_569, "貝萊德科技A10": 1_833_036, "PIMCO收益增長": 2_636_319}
         ins_bonds = sum(round(fv[n] * fund_ratios.get(n, 0)) for n in fv)
-        ins_eq = int(ins) - ins_bonds - 1_958_980
+        ins_eq = int(ins) - ins_bonds - _fj
     else:
         # 從 snapshot 動態讀取 + 預設債券比率（安聯收益35%, M&G 55%, AI收益50%）
         if snap:
@@ -51,11 +52,11 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             fv = {}
             for k in list(dict.fromkeys(list(_a.keys()) + list(_b.keys()))):
                 fv[k] = _fv(_a.get(k, 0)) + _fv(_b.get(k, 0))
-            _br = {"安聯收益成長": 0.35, "M&G入息": 0.55, "安聯AI收益成長": 0.50}
+            _br = {"安聯收益成長": 0.35, "M&G入息": 0.55, "安聯AI收益成長": 0.50, "PIMCO收益增長": 0.48}
             ins_bonds = sum(round(fv[n] * _br.get(n, 0)) for n in fv)
         else:
             ins_bonds = round(2_780_466*0.35 + 3_136_436*0.55 + 902_679*0.50)
-        ins_eq = int(ins) - ins_bonds - 1_958_980
+        ins_eq = int(ins) - ins_bonds - _fj
     # 分類基金（鉅亨基金帳戶）
     _fund_tw = _fund_us = _fund_def = 0
     _fb = (snap or {}).get("funds_breakdown", {})
@@ -84,9 +85,10 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     except:
         pass
     total = cash + ins + sec + funds
-    c = cash + total - (tw + us + 1_958_980 + ins_bonds + cash)
+    c = cash + total - (tw + us + _fj + _fund_def + ins_bonds + cash)
     # 防守型加上基金防守部位
-    return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": 1_958_980 + _fund_def, "債券": ins_bonds, "現金/安全網": c}
+    return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": _fj + _fund_def, "債券": ins_bonds, "現金/安全網": c,
+            "_meta": {"ins_eq": ins_eq, "fund_us": _fund_us, "fund_def": _fund_def, "sec_us": round(sec * (1 - (tw - _fund_tw) / sec)) if sec else 0}}
 
 
 def perform_data_validation(data: dict) -> list[str]:
@@ -129,9 +131,13 @@ def main():
             args[{"insurance":"ins","securities":"sec","cash":"cash","funds":"funds"}.get(k,k)] = json.loads(v) if k == "fund_ratios" else int(v)
     pen = calc_penetration(args["cash"], args["ins"], args["sec"], args["funds"], args.get("bond_portion"), args.get("fund_ratios"), snap=snap)
     if args.get("ins"):
-        ins_calc = pen["債券"] + (pen["美股市值型成長"] - round(args.get("sec",0)*0.03)) + pen["防守型配息"]
+        # 保單拆分校驗：債券 + 保險權益 + 第一金 = 保險（不含鉅亨基金分類）
+        _m = pen.get("_meta", {})
+        ins_calc = pen["債券"] + (pen["美股市值型成長"] - _m.get("sec_us", 0) - _m.get("fund_us", 0)) + (pen["防守型配息"] - _m.get("fund_def", 0))
         if abs(ins_calc - args["ins"]) > 100:
             print(f"  ⚠️ 保單校驗失敗：拆分總和 {ins_calc:,} ≠ 保險 {args['ins']:,}")
+        else:
+            print(f"  ✅ 保單拆分校驗通過（債券+權益+第一金 = {ins_calc:,}）")
     # 自動同步腳本到 hermes/scripts/
     try:
         import shutil
@@ -145,17 +151,17 @@ def main():
         pass
     if "--check" in sys.argv or "--check_fund" in sys.argv:
         if "--check_fund" in sys.argv:
-            fv = {"安聯收益成長": 2_780_466, "M&G入息": 3_136_436, "安聯AI收益成長": 902_679, "貝萊德科技A10": 964_495, "聯博美國成長": 4_751}
-            fr = args.get("fund_ratios", {"安聯收益成長":0.35, "M&G入息":0.55, "安聯AI收益成長":0.50, "貝萊德科技A10":0.0, "聯博美國成長":0.0})
+            fv = {"安聯收益成長": 1_220_722, "M&G入息": 1_069_377, "安聯AI收益成長": 885_569, "貝萊德科技A10": 1_833_036, "PIMCO收益增長": 2_636_319}
+            fr = args.get("fund_ratios", {"安聯收益成長":0.35, "M&G入息":0.55, "安聯AI收益成長":0.50, "貝萊德科技A10":0.0, "PIMCO收益增長":0.48})
             tb = sum(round(fv[n]*fr.get(n,0)) for n in fv)
             te = sum(fv[n] for n in fv) - tb
-            ok = "✅" if abs(tb+te+1_958_980-sum(fv.values())-1_958_980) < 100 else "❌"
+            ok = "✅" if abs(tb+te+_fj-sum(fv.values())-_fj) < 100 else "❌"
             print(f"=== 保單校驗 {ok} ===")
             print(f"  債券: {tb:,}  權益: {te:,}  第一金: 1,958,980  總值: {sum(fv.values())+1_958_980:,}")
             return
         print("=== 校驗 ===")
         for k,v in pen.items(): print(f"  {k}: {v:,}")
-        print(f"  總和: {sum(pen.values()):,}  應={args['cash']+args['ins']+args['sec']+args['funds']:,}")
+        print(f"  總和: {sum(v for k, v in pen.items() if k != '_meta'):,}  應={args['cash']+args['ins']+args['sec']+args['funds']:,}")
         return
     # === 配息資料自動校驗（確保 snapshot 內所有配息值一致）===
     try:
@@ -200,9 +206,9 @@ def main():
     snap["allianz_ab"] = snap["allianz_ab_current_value"]
     snap["firstjin_current_value"] = snap.get("firstjin_current_value", sn_f := snap.get("firstjin_fl65_value", 1958980) or 1958980)
     snap.setdefault("penetration",{})["targets"] = {"台股市值型目標": 35, "美股市值型目標": 30, "配息型目標": 25, "債券型目標": 5, "現金目標": 5}
-    snap.setdefault("penetration",{}).setdefault("actual_twd",{}).update(pen)
+    snap.setdefault("penetration",{}).setdefault("actual_twd",{}).update({k: v for k, v in pen.items() if k != "_meta"})
     # 計算實際佔比（分母=台股+美股+防守+債券+現金，不含不動產）
-    _pen_total = sum(pen.values()) or 1
+    _pen_total = sum(v for k, v in pen.items() if k != "_meta") or 1
     snap.setdefault("penetration",{})["actual_pct"] = {
         "台股市值型成長": round(pen["台股市值型成長"] / _pen_total * 100, 1),
         "美股市值型成長": round(pen["美股市值型成長"] / _pen_total * 100, 1),

@@ -254,8 +254,8 @@ def _generate_schedule_html(events: list) -> str:
 def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "", mb_cc_rows: str = "", llm_emergency_analysis: str = "", schedule_rows_html: str = "", p0_tasks_html: str = "", cio_content_html: str = "") -> str:
     _dbs_note_ph = "{_dbs_note}"  # placeholder for dynamic DBS note
     """產出五大章節日報 HTML。"""
-    allianz = tv["allianz_ab"] or 7_881_584
-    firstjin = tv["firstjin"] or 1_994_698
+    allianz = tv["allianz_ab"] or 7_634_046
+    firstjin = tv["firstjin"] or 1_952_366
     firstjin_label = tv.get("firstjin_label", "第一金FL65")
     insurance_total = tv["insurance_total"] or allianz + firstjin
     monthly_dividend = tv.get("monthly_dividend", 107_116)
@@ -1321,11 +1321,31 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
                 total += src_total * weight / max(total_weight, 1)
         return total
 
-    _tw_value = _cat_value("tw_equity")
-    _us_value = _cat_value("us_equity")
-    _def_value = _cat_value("defensive")
-    _bond_value = _cat_value("bond")
-    _cash_value = _cat_value("cash")
+    # 穿透值：優先讀 snapshot.penetration 真值（唯一真值），fallback 到 asset_class 權重計算
+    _pen_vals = None
+    try:
+        import json as _json_io
+        _snap_pen = _json_io.loads((BASE / "snapshot.json").read_text(encoding="utf-8")).get("penetration", {}).get("actual_twd", {})
+        if _snap_pen and _snap_pen.get("台股市值型成長"):
+            _pen_vals = {
+                "tw": float(_snap_pen["台股市值型成長"]),
+                "us": float(_snap_pen["美股市值型成長"]),
+                "def": float(_snap_pen["防守型配息"]),
+                "bond": float(_snap_pen["債券"]),
+                "cash": float(_snap_pen["現金/安全網"]),
+            }
+    except Exception:
+        _pen_vals = None
+
+    if _pen_vals:
+        _tw_value, _us_value, _def_value = _pen_vals["tw"], _pen_vals["us"], _pen_vals["def"]
+        _bond_value, _cash_value = _pen_vals["bond"], _pen_vals["cash"]
+    else:
+        _tw_value = _cat_value("tw_equity")
+        _us_value = _cat_value("us_equity")
+        _def_value = _cat_value("defensive")
+        _bond_value = _cat_value("bond")
+        _cash_value = _cat_value("cash")
 
     _inv_total = max(_tw_value + _us_value + _def_value + _bond_value + _cash_value, 1)
 
@@ -1504,8 +1524,8 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__ALLIANZ_MONTHLY__", fmt(funds2.get("allianz_monthly", tv.get("allianz_ab_monthly", 95_347))))
     html = html.replace("__ALLIANZ_CUM__", fmt(funds2.get("allianz_cum", tv.get("allianz_cum_dividend", 1_630_962))))
     html = html.replace("__ALLIANZ_COST__", fmt(funds2.get("allianz_cost", tv.get("allianz_cost", 8_000_000))))
-    html = html.replace("__POLICY_A_VAL__", fmt(tv.get("allianz_a_current_value", tv.get("allianz_policy_a_value", 5_103_668))))
-    html = html.replace("__POLICY_B_VAL__", fmt(tv.get("allianz_b_current_value", tv.get("allianz_policy_b_value", 2_740_224))))
+    html = html.replace("__POLICY_A_VAL__", fmt(tv.get("allianz_a_current_value", tv.get("allianz_a", tv.get("allianz_policy_a_value", 4_983_244)))))
+    html = html.replace("__POLICY_B_VAL__", fmt(tv.get("allianz_b_current_value", tv.get("allianz_b", tv.get("allianz_policy_b_value", 2_650_802)))))
     html = html.replace("__FIRSTJIN_MONTHLY__", fmt(funds2.get("firstjin_monthly", tv.get("firstjin_monthly", 22_949))))
     html = html.replace("__FIRSTJIN_CUM__", fmt(funds2.get("firstjin_cum", 73_341)))
     html = html.replace("__FIRSTJIN_COST__", fmt(funds2.get("firstjin_cost", 2_000_000)))
@@ -1547,9 +1567,9 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__FIRSTJIN_CUM__", fmt(funds.get("firstjin_cum", 0)))
     html = html.replace("__FIRSTJIN_COST__", fmt(funds.get("firstjin_cost", 2_000_000)))
     # firstjin value uses same as firstjin current value
-    html = html.replace("__FIRSTJIN_VALUE__", fmt(tv.get("firstjin", 0) or funds.get("firstjin_value", 1_958_980)))
+    html = html.replace("__FIRSTJIN_VALUE__", fmt(tv.get("firstjin", 0) or funds.get("firstjin_value", 1_952_366)))
     # allianz value uses snapshot
-    html = html.replace("__ALLIANZ_AB__", fmt(tv.get("allianz_ab", 0) or funds.get("allianz_value", 7_674_293)))
+    html = html.replace("__ALLIANZ_AB__", fmt(tv.get("allianz_ab", 0) or funds.get("allianz_value", 7_634_046)))
     # total monthly = sum of fund monthly + snapshot fallback
     calc_total = (funds.get("allianz_monthly", 0) or 0) + (funds.get("firstjin_monthly", 0) or 0)
     html = html.replace("__TOTAL_MONTHLY__", fmt(calc_total or tv.get("monthly_dividend", 107_116)))
@@ -1558,8 +1578,8 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     _rent_1f = 24_000
     _rent_zjw = 33_000
     _rent_23f = 21_000
-    html = html.replace("__POLICY_A_VAL__", fmt(tv.get("allianz_a_current_value", tv.get("allianz_policy_a_value", 5_103_668))))
-    html = html.replace("__POLICY_B_VAL__", fmt(tv.get("allianz_b_current_value", tv.get("allianz_policy_b_value", 2_740_224))))
+    html = html.replace("__POLICY_A_VAL__", fmt(tv.get("allianz_a_current_value", tv.get("allianz_a", tv.get("allianz_policy_a_value", 4_983_244)))))
+    html = html.replace("__POLICY_B_VAL__", fmt(tv.get("allianz_b_current_value", tv.get("allianz_b", tv.get("allianz_policy_b_value", 2_650_802)))))
     _rent_mgmt = 2_100
     _expense = int(tv.get("monthly_expense", 141_958))
     _mortgage_pmt = 33_724
