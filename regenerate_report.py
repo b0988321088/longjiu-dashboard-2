@@ -131,7 +131,8 @@ try:
         for _a in _approved:
             if not any(d.get('action') == _a['action'] for d in _existing['decisions']):
                 _existing['decisions'].append(_a)
-    _existing.setdefault('meta', {})['updated_at'] = TODAY
+    from datetime import datetime as _dt
+    _existing.setdefault('meta', {})['updated_at'] = _dt.now().isoformat()
     _dash_path.write_text(json.dumps(_existing, ensure_ascii=False, indent=2), encoding='utf-8')
 except:
     pass
