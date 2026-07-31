@@ -11,7 +11,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 BASE = Path(__file__).resolve().parent
-TOKEN_PATH = Path(os.path.expanduser("~/AppData/Local/hermes/google_token.json"))
+TOKEN_PATH = Path(os.path.expanduser("~/.hermes/google_token.json"))
 LEDGER = BASE / "Company_Ledger.md"
 
 SCOPES = ["https://www.googleapis.com/auth/calendar", "https://www.googleapis.com/auth/calendar.events"]
@@ -35,11 +35,16 @@ def parse_events(text: str):
     fixed = [
         ("峨眉初驗", (date(2026, 7, 29), date(2026, 7, 30))),
         ("Notion 訂閱扣款 US$12", (date(2026, 8, 14), date(2026, 8, 14))),
+        ("🚨 國泰核貸撥款+舊貸清償", (date(2026, 8, 2), date(2026, 8, 2))),
+        ("📋 安聯收益成長 T+4 轉換截止", (date(2026, 8, 10), date(2026, 8, 10))),
+        ("📋 M&G入息 T+4 轉換截止", (date(2026, 8, 17), date(2026, 8, 17))),
+        ("📋 安聯AI收益 T+4 轉換截止", (date(2026, 8, 21), date(2026, 8, 21))),
+        ("📋 貝萊德A10 T+4 轉換截止", (date(2026, 8, 24), date(2026, 8, 24))),
     ]
     plus_30 = [
         ("大義街23樓房租 + 管理費", (today.replace(day=min(today.day + 30, 28)),)),
     ]
-    
+
     # 每月固定收支（當月及未來3個月）
     for offset in range(0, 4):
         m = today.month + offset
@@ -47,12 +52,26 @@ def parse_events(text: str):
         m = (m - 1) % 12 + 1
         # 1號：大義街店面 24,000
         events.append({"summary": "🏠 大義街店面房租入帳 $24,000", "start": date(y, m, 1).isoformat(), "end": date(y, m, 1).isoformat()})
+        # 1號：龍七動態月報自動產出
+        events.append({"summary": "📊 龍七動態月報自動產出（09:00）", "start": date(y, m, 1).isoformat(), "end": date(y, m, 1).isoformat()})
+        # 5號：女友還款 6,000
+        events.append({"summary": "🔄 女友還款（每月6,000）", "start": date(y, m, 5).isoformat(), "end": date(y, m, 5).isoformat()})
         # 6號：台電薪資
         events.append({"summary": "💰 台電薪資入帳 $43,144", "start": date(y, m, 6).isoformat(), "end": date(y, m, 6).isoformat()})
         # 20號：洲際W房租
         events.append({"summary": "🏠 洲際W房租入帳 $33,000", "start": date(y, m, 20).isoformat(), "end": date(y, m, 20).isoformat()})
         # 25號：大義街二三樓房租＋管理費
         events.append({"summary": "🏠 大義街二三樓房租 $21,000+$2,100 入帳", "start": date(y, m, 25).isoformat(), "end": date(y, m, 25).isoformat()})
+
+    # 每週六再平衡評估 + 每週日動態週報（未來8週）
+    _sat = today
+    while _sat.weekday() != 5:
+        _sat += timedelta(days=1)
+    for _i in range(8):
+        _d = _sat + timedelta(days=7 * _i)
+        events.append({"summary": "📊 每週六再平衡評估（09:00）", "start": _d.isoformat(), "end": _d.isoformat()})
+        _sun = _d + timedelta(days=1)
+        events.append({"summary": "🧠 動態自我檢討週報產出（19:00）", "start": _sun.isoformat(), "end": _sun.isoformat()})
     
     for summary, dates in fixed:
         if any(d >= today for d in dates):
@@ -99,7 +118,7 @@ def sync():
     # 清空所有舊系統事件（依標記 + 關鍵字雙重清掃）
     import logging
     logger = logging.getLogger('calendar_sync')
-    _CLEAN_KEYWORDS = ['房租', '大義街', '洲際W', '台電薪資', '管理費', '繳款截止', '[calendar_sync]']
+    _CLEAN_KEYWORDS = ['房租', '大義街', '洲際W', '台電薪資', '管理費', '繳款截止', '[calendar_sync]', '動態月報', '再平衡評估', '動態自我檢討週報', '女友還款', '國泰核貸', 'T+4 轉換截止']
     try:
         page_token = None
         deleted = 0
