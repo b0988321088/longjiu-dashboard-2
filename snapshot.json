@@ -2,9 +2,9 @@
   "generated_at": "2026-07-28T22:13:00",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-07-31",
-  "total_assets": 15952100,
-  "total_liabilities": 21165869,
-  "net_worth": -5213769,
+  "total_assets": 15769865,
+  "total_liabilities": 21127022,
+  "net_worth": -5357157,
   "debt_ratio": "33.9%",
   "monthly_income": 218102,
   "monthly_expense": 141958,
@@ -67,11 +67,11 @@
   "firstjin_current_value": 1952366,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
-  "bank_assets_moneybook": 3119158,
-  "bank_assets_memo": "MB 20260718 正數帳戶合計；44帳戶；排除負數",
+  "bank_assets_moneybook": 2936923,
+  "bank_assets_memo": "MB 20260731 正數帳戶合計；排除信用卡溢繳",
   "monthly_expense_mb": 199186,
   "monthly_expense_mb_note": "MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償",
-  "credit_card_pending": 24976,
+  "credit_card_pending": 35811,
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
   "securities_total": 2517200,
@@ -92,7 +92,7 @@
     "0050連結B配息": 42441
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
-  "real_liquid_assets": 3119158,
+  "real_liquid_assets": 2936923,
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
   "passive_income": {
     "fund_dividend_monthly": 17519,
@@ -468,11 +468,11 @@
       "現金目標": 5
     },
     "actual_pct": {
-      "台股市值型成長": 15.4,
-      "美股市值型成長": 37.9,
-      "防守型配息": 12.5,
-      "債券": 17.1,
-      "現金/安全網": 17.1
+      "台股市值型成長": 15.6,
+      "美股市值型成長": 38.4,
+      "防守型配息": 12.7,
+      "債券": 17.3,
+      "現金/安全網": 16.1
     },
     "gaps": {
       "台股市值型成長": -19.6,
@@ -485,7 +485,7 @@
       "美股市值型成長": 6048466,
       "防守型配息": 1997004,
       "債券": 2723627,
-      "現金/安全網": 2722961
+      "現金/安全網": 2540726
     },
     "alert": "台股不足19.6pp；現金+債券超標24.2pp"
   },
@@ -607,7 +607,7 @@
   "securities_tw_growth": 1007090,
   "securities_tw_defense": 1022090,
   "securities_us_growth": 76050,
-  "cash": 3119158,
+  "cash": 2936923,
   "high_yield_savings": 2200410,
   "regular_cash": 1684210,
   "mortgages": [
@@ -719,7 +719,7 @@
   "travel_allowance": 12000,
   "second_salary": 39121,
   "bonus_july": 39121,
-  "cash_total": 3119158,
+  "cash_total": 2936923,
   "bonds_cash": 10262984,
   "monthly_dividend_breakdown": {
     "allianz": 95347,
@@ -756,11 +756,11 @@
     "dividend_this_month": 22949
   },
   "credit_card": {
-    "台新Richart": 14295,
-    "玉山UNI": 6509,
-    "永豐SPORT": 3590,
-    "國泰CUBE": 582,
-    "富邦momo": 0
+    "台新Richart": 12368,
+    "玉山UNI": 18420,
+    "永豐SPORT": 3425,
+    "國泰CUBE": 0,
+    "富邦momo": 1598
   },
   "mortgage_balance": 13159422,
   "updated_by": "moneybook_20260723",

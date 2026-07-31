@@ -261,6 +261,15 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     monthly_dividend = tv.get("monthly_dividend", 107_116)
     allianz_dividend = tv.get("allianz_dividend", 73_167)
     firstjin_dividend = tv.get("firstjin_dividend", 22_949)
+    # 總資產（含不動產）動態計算 — 不再硬編碼
+    try:
+        _re_val = float(json.loads(SNAPSHOT.read_text(encoding="utf-8")).get("real_estate_value", 34_017_063))
+    except Exception:
+        _re_val = 34_017_063
+    _total_with_re = int(tv.get("total_assets", 0) or 0) + int(_re_val)
+    _total_liab = int(tv.get("total_liabilities", 0) or 0)
+    _net_with_re = _total_with_re - _total_liab
+    _liab_ratio = (_total_liab / _total_with_re * 100) if _total_with_re else 0
 
     loans_rows_html = ""
     if tv['mortgage_yy'] > 0:
@@ -498,7 +507,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
           <tr><th>項目</th><th>內容</th><th>影響</th></tr>
         </thead>
         <tbody>
-          <tr><td>總資產</td><td>50,689,930 TWD</td><td>淨資產 28,689,930；負債率 43.4%</td></tr>
+          <tr><td>總資產</td><td>{_total_with_re:,} TWD</td><td>淨資產 {_net_with_re:,}；負債率 {_liab_ratio:.1f}%</td></tr>
           <tr><td>總負債</td><td>{tv['total_liabilities']:,} TWD</td><td>總負債合計（含房貸、保單借貸、質押）</td></tr>
           <tr><td>本月領息</td><td>{monthly_dividend:,} TWD</td><td>保單 {tv['insurance_dividend']:,} + ETF {tv['sec_dividend_monthly']:,} + 基金 {tv['fund_dividend_monthly']:,}</td></tr>
           <tr><td>被動月收</td><td>{monthly_dividend + tv['rent_monthly']:,} TWD</td><td>配息 {monthly_dividend:,} + 房租 {tv['rent_monthly']:,}</td></tr>
