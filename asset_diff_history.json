@@ -28,7 +28,7 @@
       "━第一金FL65現値": 1952366,
       "━保單總現値": 9597389
     },
-    "fund_dividend_monthly": 129651.0,
+    "fund_dividend_monthly": 142285.0,
     "monthly_income": 218102.0,
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,
@@ -63,7 +63,7 @@
       "━第一金FL65現値": 1952366,
       "━保單總現値": 9597389
     },
-    "fund_dividend_monthly": 129651.0,
+    "fund_dividend_monthly": 142285.0,
     "monthly_income": 218102.0,
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,
@@ -98,7 +98,7 @@
       "━第一金FL65現値": 1952366,
       "━保單總現値": 9597389
     },
-    "fund_dividend_monthly": 129651.0,
+    "fund_dividend_monthly": 142285.0,
     "monthly_income": 218102.0,
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,
@@ -133,7 +133,7 @@
       "━第一金FL65現値": 1952366,
       "━保單總現値": 9597389
     },
-    "fund_dividend_monthly": 129651.0,
+    "fund_dividend_monthly": 142285.0,
     "monthly_income": 218102.0,
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,
@@ -168,7 +168,7 @@
       "━第一金FL65現値": 1952366,
       "━保單總現値": 9597389
     },
-    "fund_dividend_monthly": 129651.0,
+    "fund_dividend_monthly": 142285.0,
     "monthly_income": 218102.0,
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,
@@ -203,7 +203,7 @@
       "━第一金FL65現値": 1952366,
       "━保單總現値": 9597389
     },
-    "fund_dividend_monthly": 129651.0,
+    "fund_dividend_monthly": 142285.0,
     "monthly_income": 218102.0,
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,
@@ -238,7 +238,7 @@
       "━第一金FL65現値": 1952366,
       "━保單總現値": 9597389
     },
-    "fund_dividend_monthly": 129651.0,
+    "fund_dividend_monthly": 142285.0,
     "monthly_income": 218102.0,
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,
@@ -273,7 +273,7 @@
       "━第一金FL65現値": 1952366,
       "━保單總現値": 9597389
     },
-    "fund_dividend_monthly": 129651.0,
+    "fund_dividend_monthly": 142285.0,
     "monthly_income": 218102.0,
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,
@@ -308,7 +308,7 @@
       "━第一金FL65現値": 1952366,
       "━保單總現値": 9597389
     },
-    "fund_dividend_monthly": 129651.0,
+    "fund_dividend_monthly": 142285.0,
     "monthly_income": 218102.0,
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,
@@ -343,7 +343,7 @@
       "━第一金FL65現値": 1952366,
       "━保單總現値": 9597389
     },
-    "fund_dividend_monthly": 129651.0,
+    "fund_dividend_monthly": 142285.0,
     "monthly_income": 218102.0,
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,
@@ -378,7 +378,7 @@
       "━第一金FL65現値": 1952366,
       "━保單總現値": 9597389
     },
-    "fund_dividend_monthly": 129651.0,
+    "fund_dividend_monthly": 142285.0,
     "monthly_income": 218102.0,
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,
@@ -386,12 +386,12 @@
   },
   "2026-07-31": {
     "date": "2026-07-31",
-    "total_assets": 15944017.0,
+    "total_assets": 15921385.0,
     "total_liabilities": 21127022.0,
-    "net_worth": -5183005.0,
+    "net_worth": -5205637.0,
     "securities_market": 2719420.0,
-    "insurance_current": 9597389.0,
-    "insurance_total": 9597389.0,
+    "insurance_current": 9574757.0,
+    "insurance_total": 9574757.0,
     "fund_market": 690285.0,
     "real_estate": 0.0,
     "cash": 2936923.0,
@@ -409,10 +409,10 @@
       "  B-安聯AI收益成長": 533212,
       "  B-PIMCO收益增長": 952834,
       "安聯A+B合計": 7645023.0,
-      "━第一金FL65現値": 1952366.0,
-      "━保單總現値": 9597389.0
+      "━第一金FL65現値": 1929734.0,
+      "━保單總現値": 9574757.0
     },
-    "fund_dividend_monthly": 129651.0,
+    "fund_dividend_monthly": 142285.0,
     "monthly_income": 218102.0,
     "monthly_expense": 141958.0,
     "rent_monthly": 80100.0,

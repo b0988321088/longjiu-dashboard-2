@@ -110,7 +110,7 @@ if dash_file.exists():
     data_for_count = json.loads(dash_file.read_text("utf-8"))
     for d in data_for_count.get("decisions", []):
         ts = str(d.get("timestamp", "") or d.get("approved_at", ""))
-        if today in ts:
+        if today in ts and d.get("source") != "auto":
             text = d.get("summary") or d.get("task") or d.get("name") or d.get("action", "")
             if text and len(text) > 10:
                 decisions_text.append(text)

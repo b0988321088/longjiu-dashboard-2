@@ -339,6 +339,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _station_icons = {'已配息': '✅', '轉換完成': '✅', '轉換中': '🔄', '待執行': '⏳', '等待': '⏸️'}
     _station_rows = ""
     for _sn, _sd in _stations.items():
+        if not isinstance(_sd, dict):
+            continue  # 2026-07-31 修復：relay_stations 混入字串型備註鍵，跳過
         _st = _sd.get("狀態", "")
         _icon = ""
         for _k, _v in _station_icons.items():

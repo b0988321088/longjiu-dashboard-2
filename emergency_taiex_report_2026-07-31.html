@@ -1,59 +1,100 @@
-<!DOCTYPE html><html lang="zh-TW"><head><meta charset="utf-8">
-    <title>🚨 台股緊急應變 2026-07-31</title>
-    <style>
-    body{font-family:-apple-system,sans-serif;max-width:800px;margin:20px auto;padding:0 15px;color:#1d1d1f}
-
-    h1{color:#d32f2f;font-size:28px;text-align:center;margin-bottom:20px}
-
-    h3{color:#424242;font-size:20px;margin-top:25px;margin-bottom:10px;border-bottom:1px solid #eeeeee;padding-bottom:5px}
-
-    .alert{background:#ffebee;padding:15px 20px;border-radius:8px;margin:15px 0;font-size:17px;font-weight:600;border-left:5px solid #d32f2f;color:#d32f2f}
-
-    .alert-red{background:#ffebee;border-color:#d32f2f;color:#d32f2f}
-
-    .warn{background:#fff3e0;padding:15px 20px;border-radius:8px;margin:15px 0;border-left:5px solid #f57c00;color:#f57c00}
-
-    table{width:100%;border-collapse:collapse;margin:15px 0}
-
-    th,td{padding:12px;text-align:right;border-bottom:1px solid #e5e5ea}
-
-    th{text-align:left;font-weight:600;background:#f9f9f9}
-
-    ul{list-style-type:disc;margin-left:20px;padding-left:0}
-
-    li{margin-bottom:8px;line-height:1.6}
-
-    b{color:#333}
-
-    .meta{font-size:14px;color:#6e6e73;margin-top:20px;padding-top:15px;border-top:1px solid #e5e5ea;text-align:center}
-
-    </style></head><body>
-    <h1>🚨 台股緊急應變報告</h1>
-    <p class="meta">產生時間：2026-07-31 13:51 ｜ 資料源：Yahoo Finance</p>
-    
-        <div class="alert ">
-            <h3>📈 市場概況：台股加權指數</h3>
-            <p>🟢 正常：43,179.15點 (+3245.85 / +8.13%)</p>
-        </div>
-        
-    <h3>📊 持股關聯分析</h3><p><b>0050.TW (元大台灣50)</b>: 102.85點 (+9.35 / +10.00%)，與大盤走勢一致。</p><p><b>00878.TW (國泰永續高股息)</b>: 32.43點 (+1.68 / +5.46%)，受到較大影響。</p><p><b>009816/00984A (上櫃+ETF)</b>: 由於資料無法即時抓取，請手動關注其相關新聞與走勢。</p>
-    <h3>📊 資產配置</h3>
-    <table><tr><th>資產類別</th><th>金額 TWD</th></tr><tr><th>證券</th><td>2,719,420</td></tr><tr><th>保單</th><td>9,597,389</td></tr><tr><th>基金</th><td>690,285</td></tr><tr><th>現金</th><td>2,936,923</td></tr>
-    <tr><th>合計</th><td>15,944,017</td></tr></table>
-    
-    <h3>🧠 巴菲特/蒙格式建議</h3>
-    <ul>
-        <li><b>安全邊際</b>：市場波動時，優質資產的價格可能被低估，這是建立安全邊際的好時機。評估您持股的內在價值，避免恐慌性拋售。</li>
-        <li><b>管理費侵蝕</b>：長期持有 ETF 需注意管理費對複利效果的侵蝕。定期審視您的投資組合，確保費用合理。</li>
-        <li><b>集中度風險</b>：檢視您的資產配置是否過於集中在某些類別或標的。分散投資可以降低單一事件的衝擊。</li>
-    </ul>
-    
-    
-    <h3>💡 應變行動建議</h3>
-    <ul>
-        <li><b>減碼</b>：若資金有其他更高報酬的用途，或持股已達預設停利點，可考慮適度減碼。</li>
-        <li><b>持有</b>：若持股仍符合長期投資策略，且資金無急用，建議繼續持有，避免追高殺低。</li>
-        <li><b>加碼</b>：若優質資產因市場恐慌而出現明顯折價，且您有閒置資金，可考慮分批加碼。</li>
-    </ul>
-    
-    <p class="meta">⏰ 下次執行：下個交易日 13:00</p></body></html>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>美股緊急應變報告 2026-07-31</title>
+<style>* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif; background:#0a0e1a; color:#e0e0e0; padding:20px; }
+.container { max-width:1200px; margin:0 auto; }
+.header { background:linear-gradient(135deg,#1a1f3a,#0d1b2a); padding:25px; border-radius:12px; margin-bottom:20px; border:1px solid #2a3f5f; }
+.header h1 { color:#ff4444; font-size:24px; margin-bottom:8px; }
+.header h1::before { content:"🚨 "; }
+.header .meta { color:#8899aa; font-size:13px; }
+.alert-bar { background:#3a1a1a; border:1px solid #ff4444; padding:12px 20px; border-radius:8px; margin-bottom:20px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.alert-bar .level { background:#ff4444; color:#fff; padding:4px 12px; border-radius:4px; font-weight:bold; font-size:14px; }
+.alert-bar .msg { color:#ff9999; font-size:14px; }
+.section { background:#111827; border-radius:10px; padding:20px; margin-bottom:20px; border:1px solid #1e293b; }
+.section h2 { color:#60a5fa; font-size:18px; margin-bottom:15px; padding-bottom:8px; border-bottom:1px solid #1e293b; }
+.sec-title { color:#93c5fd; font-size:15px; margin:16px 0 8px; border-left:4px solid #60a5fa; padding-left:10px; }
+.rline { color:#cbd5e1; font-size:13.5px; line-height:1.75; margin-bottom:6px; }
+table { width:100%; border-collapse:collapse; margin-bottom:10px; font-size:13px; }
+th { background:#1a2340; color:#93c5fd; padding:8px 12px; text-align:left; border:1px solid #2a3f5f; }
+td { padding:8px 12px; border:1px solid #1e293b; }
+tr:nth-child(even) { background:#0f172a; }
+tr:nth-child(odd) { background:#111827; }
+.up { color:#22c55e; font-weight:bold; }
+.down { color:#ef4444; font-weight:bold; }
+.risk-box { display:inline-block; padding:4px 10px; border-radius:4px; font-weight:bold; font-size:12px; }
+.risk-high { background:#7f1d1d; color:#fca5a5; }
+.risk-med { background:#713f12; color:#fde68a; }
+.risk-low { background:#14532d; color:#86efac; }
+.footer { text-align:center; color:#475569; font-size:12px; padding:20px; }
+@media (max-width:768px){ body{ padding:10px; } }</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>美股緊急應變分析報告</h1>
+<div class="meta">生成時間：2026-07-31 21:35（台北）｜ 龍九控股 Chief Reporter + 美股危機應變官</div>
+</div>
+<div class="alert-bar">
+<span class="level">⚠️ 警戒</span>
+<span class="msg">AI 財報行情續航、費半兩日 +13.6%；但 AAPL -9.52% 賣事實、US30Y 5.20% 恰觸防禦門檻、8/4 國泰核貸倒數 — 不追高、分批買、留子彈</span>
+</div>
+<div class="section">
+<h2>📈 市場即時數據（2026-07-31 21:33 ET 開盤即時）</h2>
+<table>
+<tr><th>標的</th><th>代碼</th><th>現價</th><th>漲跌</th><th>漲跌幅</th><th>狀態</th></tr>
+<tr><td>S&P 500</td><td>SPX</td><td>7,483.41</td><td class="up">+45.78</td><td class="up">+0.62%</td><td><span class="risk-box risk-low">✅ 上漲</span></td></tr><tr><td>道瓊工業</td><td>DJI</td><td>52,396.78</td><td class="up">+188.72</td><td class="up">+0.36%</td><td><span class="risk-box risk-low">✅ 上漲</span></td></tr><tr><td>納斯達克</td><td>IXIC</td><td>25,408.17</td><td class="up">+285.99</td><td class="up">+1.14%</td><td><span class="risk-box risk-low">✅ 上漲</span></td></tr><tr><td>費城半導體</td><td>SOX</td><td>11,858.19</td><td class="up">+555.20</td><td class="up">+4.91%</td><td><span class="risk-box risk-low">🚀 強漲</span></td></tr><tr><td>TSMC ADR</td><td>TSM</td><td>417.50</td><td class="up">+14.23</td><td class="up">+3.53%</td><td><span class="risk-box risk-low">✅ 上漲</span></td></tr><tr><td>NVIDIA</td><td>NVDA</td><td>198.70</td><td class="up">+3.66</td><td class="up">+1.88%</td><td><span class="risk-box risk-low">✅ 上漲</span></td></tr><tr><td>Tesla</td><td>TSLA</td><td>313.93</td><td class="up">+5.08</td><td class="up">+1.64%</td><td><span class="risk-box risk-low">✅ 上漲</span></td></tr><tr><td>Apple</td><td>AAPL</td><td>301.69</td><td class="down">-31.74</td><td class="down">-9.52%</td><td><span class="risk-box risk-high">⚠️ 財報賣壓</span></td></tr><tr><td>Meta</td><td>META</td><td>554.83</td><td class="up">+15.80</td><td class="up">+2.93%</td><td><span class="risk-box risk-low">✅ 反彈</span></td></tr><tr><td>Amazon</td><td>AMZN</td><td>267.32</td><td class="up">+31.82</td><td class="up">+13.51%</td><td><span class="risk-box risk-low">🚀 財報噴發</span></td></tr><tr><td>S&P 期貨</td><td>ES=F</td><td>7,494.75</td><td class="up">+22.25</td><td class="up">+0.30%</td><td><span class="risk-box risk-low">➖ 平穩</span></td></tr><tr><td>那斯達克期貨</td><td>NQ=F</td><td>28,546.5</td><td class="up">+308.75</td><td class="up">+1.09%</td><td><span class="risk-box risk-low">✅ 走強</span></td></tr><tr><td>VIX 恐慌指數</td><td>VIX</td><td>17.06</td><td class="down">-0.03</td><td class="down">-0.18%</td><td><span class="risk-box risk-high">✅ 降溫</span></td></tr><tr><td>10Y 美債殖利率</td><td>TNX</td><td>4.704%</td><td class="down">+0.041</td><td class="down">+0.88%</td><td><span class="risk-box risk-high">⚠️ 走升</span></td></tr><tr><td>30Y 美債殖利率</td><td>US30Y</td><td>5.20%</td><td class="down">—</td><td class="down">防禦門檻</td><td><span class="risk-box risk-high">🚨 警戒</span></td></tr><tr><td>黃金期貨</td><td>GC=F</td><td>4,101.0</td><td class="down">-59.6</td><td class="down">-1.43%</td><td><span class="risk-box risk-high">➖ 回落</span></td></tr><tr><td>原油 WTI</td><td>CL=F</td><td>85.69</td><td class="up">+2.10</td><td class="up">+2.51%</td><td><span class="risk-box risk-low">⚠️ 中東溢價</span></td></tr>
+</table>
+</div>
+<div class="section">
+<h2>🧠 LLM 六大章節深度分析</h2>
+<p class="rline">🚨 龍九控股 — 美股緊急應變深度分析（21:30 美股開盤）</p>
+<p class="rline">📅 2026-07-31 21:30 ET ｜ Chief Reporter / 美股危機應變官</p>
+<h3 class="sec-title">【一、市場概況｜AI 財報行情續航：費半兩日強彈 +13.6%，三大指數開盤齊漲】</h3>
+<p class="rline">• 開盤即時（21:33 ET）：道瓊 52,396.78（+0.36%／+188.7）、納指 25,408.17（+1.14%／+286.0）、S&P 500 7,483.41（+0.62%／+45.8）— 連續第二日收復 7/29 Fed 鷹派重挫（道瓊單日 -1,100 點，2025/4 以來最差）</p>
+<p class="rline">• 費城半導體 11,858.19（+4.91%）：7/30 大漲 +8.19% 後續強，兩日累計 +13.6%（10,447 → 11,858）；TSMC ADR 417.50（+3.53%）、NVDA 198.70（+1.88%）</p>
+<p class="rline">• 個股強烈分化：AMZN 267.32（+13.51%，財報噴發）vs AAPL 301.69（-9.52%，賣事實）；META 554.83（+2.93%，自 7/30 -8% 反彈）；TSLA 313.93（+1.64%）</p>
+<p class="rline">• 盤前期貨：ES 7,494.75（+0.30%）、NQ 28,546.5（+1.09%）— 科技領漲結構明確</p>
+<p class="rline">• 避險/商品：VIX 17.06（-0.2%）風險偏好回歸；黃金 4,101（-1.43%）回落；原油 WTI 85.69（+2.51%）— 中東衝突溢價再起，通膨反轉風險未解</p>
+<p class="rline">• 債市：10Y 4.704%（+0.88%）走升；30Y（US30Y）最新官方值 5.20%（7/29）恰觸防禦門檻（詳見第六章）</p>
+<h3 class="sec-title">【二、重大事件分析｜四大驅動事件】</h3>
+<p class="rline">1. 🏛️ Fed 7/29 按兵不動但鷹派分裂：連續第 5 次維持 5.25%-5.50%，3 位委員異議（市場一度 price-in 升息風險）；主席 Warsh 面對債市「紅旗」（長債殖利率走高）。7/31 公布 6 月 PCE 3.7%（核心 3.3%）降溫，為盤前期貨提供支撐 — 短期「更高更久」定調，估值靠盈餘撐、不靠降息</p>
+<p class="rline">2. 💻 科技財報超級週：MSFT 業績爆發（+15%，史上單日最大市值增幅，雲端+AI 加速）；盤後 AMZN Q2 大超預期（雲端銷售強勁、2026 資本開支上調至 $2,200 億、AI/晶片業務 $250 億 run rate）→ 今日 +13.5%；AAPL Q3 營收 $1,094 億/獲利 $298 億雖優於預期，但服務收入未達標＋AI 成本上揚、供應鏈拖累展望 → 「sell the news」-9.5%；META 獲利失望 -8% 後今日反彈</p>
+<p class="rline">3. 🔥 半導體報復性反彈：AMD/Micron 大漲、Lam Research 單日 +17%；TSMC 利多簇擁（1.4nm 廠 2027/4 完工、AI 先進封裝對抗 Intel、亞利桑那再加碼 $1,000 億）— 大廠 AI 資本開支「不見放緩」是最強支撐</p>
+<p class="rline">4. ⚠️ 地緣與油價：中東衝突升溫推 WTI 至 85.69（+2.51%），6 月通膨回落恐難延續；川普新一輪關稅（7/24 期限）持續壓抑企業利潤率 — 通膨黏著正是 Fed 鷹派分裂的主因</p>
+<h3 class="sec-title">【三、持倉關聯分析｜逐檔影響】</h3>
+<p class="rline">台股部位（穿透 276.7 萬 TWD，昨收大漲 +8.15%，今日影響待週一 8/3 反映）：</p>
+<p class="rline">• 0050（+21.1% 未實現）／006208（+19.2%）：台股權值與費半高度連動，費半兩日 +13.6% 為 8/3 開盤提供順風；但 AAPL -9.5% 對蘋概鏈是雜音，權值指數開高後防震盪</p>
+<p class="rline">• 00878／00919／00713（防守型配息）：與美股連動低、配息現金流穩定，續建 4 週計畫不受影響；台股若週一高開，依鐵律暫停當週買單、回檔再承接</p>
+<p class="rline">• 00983D（質押套利底倉）：波動極低，與美股風險脫鉤，維持底倉、不加碼</p>
+<p class="rline">• 00646（元大 S&P500）：直接連動 S&P +0.62%，持倉受益，核貸期不加碼</p>
+<p class="rline">美股部位（穿透 552.1 萬 TWD）：</p>
+<p class="rline">• 貝萊德世界科技／安聯 AI 收益成長（美元基金）：直接暴露美股科技/AI，費半 +4.9%、納指 +1.1% 正面；但 AAPL 單日 -9.5% 顯示「財報驗證期」個股波動放大，基金淨值短線震盪難免</p>
+<p class="rline">• 保單基金（合計 957.5 萬）：安聯 A 499.8 萬＋安聯 B 264.7 萬＋第一金連結安聯 AI 收益成長 193.0 萬 — 連動美股 AI/科技，屬長期持有，波動不影響現金流與核貸，續抱</p>
+<p class="rline">• 衛星基金（貝萊德能源/黃金/多重收益等）：能源基金受惠油價 +2.5%，黃金基金隨金價 -1.4% 小回檔，佔比極小、不影響大局</p>
+<h3 class="sec-title">【四、資產配置透視｜結構失衡：美股超標、台股與防守不足】（穿透 actual_twd，總資產 15,921,385 TWD）</h3>
+<p class="rline">• 美股 34.7%（5,521,150）vs 臨時目標 30% → +4.7pp ➖ 超標；核貸期暫緩減碼（避免帳戶流水震盪影響 8/4 撥款授信）</p>
+<p class="rline">• 台股 17.4%（2,766,920）vs 23.5% → -6.1pp ⬆️ 最優先補強缺口，8/3-8/4 回檔分批小額承接</p>
+<p class="rline">• 防守 12.4%（1,974,200）vs 19% → -6.6pp ⬆️ 00878 續建 4 週＋00919/00713 小額跟進</p>
+<p class="rline">• 債券 17.1%（2,723,627）vs 13% → +4.1pp ⛔ 超標暫緩（00983D 暫緩、債券備用金維持現金）</p>
+<p class="rline">• 現金 18.4%（2,935,488）vs 14.5% → +3.9pp 💰 保留（6 個月支出底線約 85-119 萬，現金為底線 2.5-3.5 倍；另為核貸撥款緩衝）</p>
+<h3 class="sec-title">【五、巴菲特/蒙格式建議｜臨時階段紀律：分批、小額、不追高】</h3>
+<p class="rline">✅ 增持（維持原節奏）：00878 續建 4 週（每週小額、配息再投入）；台股 -6.1pp 缺口於 8/3-8/4 回檔時小額承接 0050/006208（每筆 <5 萬）</p>
+<p class="rline">➖ 持有（不動）：美股 34.7% 已超標，今日開盤大漲不追高，8/4 核貸撥款前零新增；00646／貝萊德科技／安聯AI／保單基金全數續抱 — 巴菲特原則：不因單日波動賣出優質資產；AAPL 式單日 -9.5% 正是「持有指數/基金而非個股」的意義</p>
+<p class="rline">⛔ 暫緩：00983D 暫緩新增（質押標的維持底倉）；債券類（PIMCO/00983D）於 US30Y ≥5.20% 防禦模式期間不新增</p>
+<p class="rline">🚫 禁令：單筆 ≥5 萬申購全面暫停；現金 6 個月支出底線（約 85-119 萬）不可動用 — 目前 293.5 萬，安全邊際充足</p>
+<p class="rline">🎯 蒙格式提醒：AMZN 資本開支 $2,200 億＋微軟/谷歌軍備競賽 → AI 利多出盡風險在 9 月後（Truist 亦警告 5-8% 下行空間）；趁波動分批、保留子彈，勝過單筆重押</p>
+<h3 class="sec-title">【六、風控檢查｜US30Y 警戒升級、核貸倒數計時】</h3>
+<p class="rline">• US30Y 現值 5.20%（7/29 官方值）＝ 5.20% 防禦門檻「恰觸及」：7/28 為 5.09% → 目前僅 1 日達標，模式A（連續 2 交易日 ≥5.20%）尚未確立；7/30 官方值未公布，盤中 10Y 4.70%（+0.88%）走升、30Y 估 5.20-5.25% → 若連續確認即正式進入模式A：配息導流 → 逢反彈分批減碼美股科技 → 轉台股高股息</p>
+<p class="rline">• 5.30% 債券凍結紅線：未觸及 → 債券新增未被「永久凍結」，但債券 17.1% 已超標，實務上持續暫緩（25% 債券備用金維持現金）</p>
+<p class="rline">• 國泰核貸階段：核貸進行中、利率 2.6%、順延至 8/4（下週二）撥款＋舊貸清償（排程 🔴 重要）→ 撥款前維持帳戶流水穩定：零大額申購（≥5 萬）、零大額轉帳；8/4 資金到位後再啟動台股補強</p>
+<p class="rline">• 台股 8/3 開盤三情境：① 樂觀（費半續強→跳空高開，鐵律暫停當週買單）② 中性（開高走低→回檔承接視窗）③ 悲觀（AAPL 拖累蘋概＋油價續漲→觀望至 8/4 核貸後再動作）</p>
+<p class="rline">• 總評：系統性風險未解除（長債 5.2%、油價 85+、關稅、Fed 鷹派分裂），短線動能偏多；紀律優先於預測 — 不追高、分批買、留子彈、等核貸</p>
+</div>
+<div class="footer">龍九控股 Chief Reporter + 美股危機應變官 ｜ 自動化管線 2026-07-31 21:35 生成</div>
+</div>
+</body>
+</html>
