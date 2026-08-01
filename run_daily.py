@@ -1390,7 +1390,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__TOTAL_MONTHLY__", fmt(tv.get("monthly_dividend", 0)))
     html = html.replace("__WORKING_INCOME__", fmt(tv.get("monthly_income", 0)))
     html = html.replace("__WORKING_SURPLUS__", f"+{fmt(tv.get('working_surplus', 0))}")
-    _retire_income = tv.get("monthly_dividend", 107_116) + tv.get("rent_monthly", 80_100)
+    _retire_income = tv.get("dividend_month_expected", 100_000) + tv.get("rent_monthly", 80_100)  # 常態：配息保守 + 房租應收
     _retire_expense = tv.get("monthly_expense", 141_958)
     html = html.replace("__RETIREMENT_INCOME__", fmt(_retire_income))
     html = html.replace("__RETIREMENT_SURPLUS__", f"+{fmt(_retire_income - _retire_expense)}")
@@ -1507,12 +1507,46 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     # 累計配息
     html = html.replace("__ALLIANZ_CUM__", fmt(tv.get("allianz_cum_dividend", 1_630_962)))
     html = html.replace("__FIRSTJIN_CUM__", fmt(tv.get("firstjin_cum_dividend", 85_975)))
-    # 被動收入文字（動態）
+    # 被動收入文字（動態：主數字=常態預估，附註當月實收）
     _div_actual = tv.get("monthly_dividend", 0) or 0
-    _rent_got2 = tv.get("rent_monthly", 0) or 0
+    _rent_got2 = 0
+    _rent_recv2 = tv.get("rent_received_records", {}) or {}
+    _mp2 = date.today().strftime("%Y-%m")
+    for _d2, _items2 in _rent_recv2.items():
+        if str(_d2).startswith(_mp2):
+            _rent_got2 += sum(v for v in _items2.values())
     _div_exp = tv.get("dividend_month_expected", 100_000)
-    html = html.replace("__PASSIVE_TXT__", f"配息 {_div_actual:,} + 房租 {_rent_got2:,} = {_div_actual + _rent_got2:,} TWD")
-    html = html.replace("__PASSIVE_NOTE__", f"房租應收 80,100（1樓24,000+23樓21,000+洲際W33,000+管理費2,100），配息保守預估 {_div_exp:,}/月；顯示為當月實際已收")
+    _rent_exp = tv.get("rent_monthly", 80_100) or 80_100
+    _salary_exp = tv.get("salary", 43_144) or 43_144
+    # 常態月收 = 薪水 + 配息保守預估 + 房租應收
+    _passive_norm = float(_salary_exp) + float(_div_exp) + float(_rent_exp)
+    html = html.replace("__PASSIVE_TXT__", f"薪水 {_salary_exp:,} + 配息保守 {_div_exp:,} + 房租應收 {_rent_exp:,.0f} = {_passive_norm:,.0f} TWD")
+    html = html.replace("__PASSIVE_NOTE__", f"房租應收 80,100（1樓24,000+23樓21,000+洲際W33,000+管理費2,100），配息保守預估 {_div_exp:,}/月，台電薪水 {_salary_exp:,}；當月實際已收 {_div_actual + _rent_got2:,}（配息{_div_actual:,}+房租{_rent_got2:,}）")
+    # 覆蓋率（常態月收 / 月支出）
+    _exp_v = tv.get("monthly_expense", 141_958) or 141_958
+    _cov = _passive_norm / _exp_v * 100
+    html = html.replace("__PASSIVE_COVERAGE__", f"{_cov:.1f}%")
+    # 進度條（堆疊棒狀圖：藍色=配息、青綠=房租、黃=薪水，按佔比）
+    _sal_pct = float(_salary_exp) / _passive_norm * 100
+    _div_pct = float(_div_exp) / _passive_norm * 100
+    _rent_pct = 100 - _sal_pct - _div_pct
+    _fill_w = min(_cov, 100)
+    if _passive_norm > 0 and _fill_w > 0:
+        _sal_w = _fill_w * _sal_pct / 100
+        _div_w = _fill_w * _div_pct / 100
+        _rent_w = _fill_w * _rent_pct / 100
+        _bar_html = (
+            f'<div style="width: {_sal_w:.1f}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-yellow-600 font-bold" title="薪水">薪水 {_sal_pct:.0f}%</div>'
+            f'<div style="width: {_div_w:.1f}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 font-bold" title="配息">配息 {_div_pct:.0f}%</div>'
+            f'<div style="width: {_rent_w:.1f}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-teal-600 font-bold" title="房租">房租 {_rent_pct:.0f}%</div>'
+        )
+        if _cov < 100:
+            _bar_html += f'<div style="width: {100 - _fill_w:.1f}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-slate-500 justify-center bg-slate-700 font-bold"></div>'
+        _legend = f'<div class="flex gap-3 text-[10px] text-slate-400 mt-1"><span class="text-yellow-400">▮ 薪水 {_sal_pct:.0f}%</span><span class="text-blue-400">▮ 配息 {_div_pct:.0f}%</span><span class="text-teal-400">▮ 房租 {_rent_pct:.0f}%</span><span class="text-slate-500">▮ 覆蓋 {_cov:.0f}%</span></div>'
+    else:
+        _bar_html = f'<div style="width: 3%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-red-500 font-bold"></div>'
+        _legend = f'<div class="flex gap-3 text-[10px] text-slate-400 mt-1"><span class="text-slate-500">尚未入帳，覆蓋 0%</span></div>'
+    html = html.replace("__PASSIVE_BAR__", _bar_html + _legend)
 
     # === 銀行卡片（動態：從 Moneybook 帳戶 CSV 讀真實餘額）===
     _bank_cards = []
