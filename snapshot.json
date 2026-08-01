@@ -91,9 +91,9 @@
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
   "passive_income": {
     "fund_dividend_monthly": 0,
-    "fund_dividend_conservative": 100000,
+    "fund_dividend_conservative": 130930,
     "rent_monthly": 80100,
-    "total_conservative": 180100,
+    "total_conservative": 211030,
     "monthly_expense": 141958,
     "coverage_pct": 148.7
   },
@@ -683,7 +683,7 @@
       }
     }
   },
-  "allianz_ab": 7645023,
+  "allianz_ab": 7696568,
   "firstjin": 1881453,
   "dividend_records": {
     "2026-07-21": {
@@ -692,7 +692,7 @@
       "保單B 安聯": 5994
     }
   },
-  "monthly_dividend": 0,
+  "monthly_dividend": 130930,
   "actual_fj33_dividend": 9356,
   "policy_a_total": 4992334,
   "policy_b_total": 2681959,
@@ -721,9 +721,9 @@
     "firstjin": 35583,
     "fund": 11719,
     "etf": 10740,
-    "total": 142649,
+    "total": 153389,
     "note": "7月實收：保單125,413 + 基金/ETF 11,719 = 137,132（Moneybook 7/31明細）",
-    "insurance": 125413
+    "insurance": 130930
   },
   "market": {
     "twii": "44,825.78 (+1.34%)"
@@ -873,7 +873,7 @@
     "PIMCO收益增長": 952834
   },
   "allianz_b_current_value": 2664006,
-  "monthly_dividend_total": 100000,
+  "monthly_dividend_total": 153389,
   "relay_stations": {
     "第一站": {
       "流向": "摩根多重收益（FJ33）→ 安聯收益成長（FL65）",
