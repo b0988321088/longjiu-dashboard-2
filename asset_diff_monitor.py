@@ -121,6 +121,12 @@ def extract_snapshot(snap: dict) -> dict:
     """從 dragon_assets.db 讀取（fallback 到 snapshot.json）"""
     import sqlite3
     _db_path = Path(__file__).resolve().parent / "dragon_assets.db"
+    # 當月實際已收配息（8月起為 0，逐筆累積）
+    _today_m = date.today().strftime("%Y-%m")
+    _div_sum_current_month = 0
+    for _d, _items in (snap.get("dividend_records", {}) or {}).items():
+        if str(_d).startswith(_today_m):
+            _div_sum_current_month += sum(_items.values())
     if _db_path.exists():
         try:
             _db = sqlite3.connect(str(_db_path))
@@ -189,20 +195,8 @@ def extract_snapshot(snap: dict) -> dict:
                     "cash": float(snap.get("cash_total", _ar.get("cash_total", 0))),
                     "bonds": float(_ar.get("bonds", 0)),
                     "insurance_detail": insurance_detail_from_db,
-                    "fund_dividend_monthly": float(
-                        snap.get(
-                            "monthly_dividend_total",
-                            snap.get("monthly_dividend_breakdown", {}).get("total", 118296),
-                        )
-                    ),
-                    "fund_dividend_conservative": float(
-                        snap.get(
-                            "passive_income", {}
-                        ).get(
-                            "fund_dividend_conservative",
-                            snap.get("monthly_dividend_total", snap.get("monthly_dividend_breakdown", {}).get("total", 118296)),
-                        )
-                    ),
+                    "fund_dividend_monthly": float(_div_sum_current_month),
+                    "fund_dividend_conservative": float(_div_sum_current_month),
                     "monthly_income": float(
                         snap.get(
                             "monthly_income",
@@ -213,6 +207,7 @@ def extract_snapshot(snap: dict) -> dict:
                     ),
                     "monthly_expense": float(snap.get("monthly_expense", 141_958)),
                     "rent_monthly": float(snap.get("rent_monthly_actual", 80_100)),
+                    "rent_received_records": snap.get("rent_received_records", {}),
                     "cathay_refinance": float(snap.get("cathay_refinance_amount") or 0),
                     "runway_months": float(snap.get("runway_months", 12)),
                 }
@@ -270,11 +265,12 @@ def extract_snapshot(snap: dict) -> dict:
         "other": float(other),
         "cash": float(cash),
         "insurance_detail": insurance_detail,
-        "fund_dividend_monthly": float(snap.get("monthly_dividend_total", snap.get("monthly_dividend_breakdown", {}).get("total", 0)) or 0),
-        "fund_dividend_conservative": float(snap.get("monthly_dividend", snap.get("monthly_dividend_breakdown", {}).get("insurance", 0)) or 0),
+        "fund_dividend_monthly": _div_sum_current_month,
+        "fund_dividend_conservative": _div_sum_current_month,
         "monthly_income": float(snap.get("monthly_income", 218102)),
         "monthly_expense": float(snap.get("monthly_expense", snap.get("monthly_expense_mb", 141958))),
         "rent_monthly": float(snap.get("rent_monthly_actual", 80100)),
+        "rent_received_records": snap.get("rent_received_records", {}),
         "cathay_refinance": float(snap.get("cathay_refinance_amount") or 0),
         "runway_months": float(snap.get("runway_months") or (snap.get("real_liquid_assets", 0) / (snap.get("monthly_expense", 1) or 1))),
     }
@@ -314,7 +310,7 @@ def load_history(snap=None) -> dict:
                 "other": 0.0,
                 # 歷史日期保留 JSON 存檔的 insurance_detail，避免被今日 snapshot 覆寫
                 "insurance_detail": _json_hist.get(d, {}).get("insurance_detail") or {"【安聯保單A】現值": snap.get("allianz_a_current_value", 5_103_668), **{"  A-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": snap.get("allianz_b_current_value", 2_740_224), **{"  B-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": snap.get("allianz_ab_current_value", 7_843_892), "━第一金FL65現値": snap.get("firstjin_current_value", 1_958_980), "━保單總現値": snap.get("insurance_current_value", 9_802_872)},
-                "fund_dividend_monthly": float(snap.get("monthly_dividend_total", snap.get("monthly_dividend_breakdown", {}).get("total", 0)) or 129651),
+                "fund_dividend_monthly": float(snap.get("dividend_month_actual", 0) or 0),
                 "monthly_income": 218_102.0,
                 "monthly_expense": 141_958.0,
                 "rent_monthly": 80_100.0,
@@ -494,9 +490,12 @@ def buffett_advice(history: dict, snap: dict) -> str:
     debt_ratio = ex["total_liabilities"] / ta * 100
     monthly_div = ex["fund_dividend_monthly"]
     monthly_div_conservative = ex.get("fund_dividend_conservative", monthly_div)
-    monthly_rent = ex["rent_monthly"]
-    monthly_rent_received = monthly_rent  # 動態從 snapshot 讀取
-    monthly_rent_pending = 0
+    monthly_rent = ex["rent_monthly"]  # 應收固定 80,100
+    # 動態追蹤當月已收房租（rent_received_records）
+    _rent_recv = ex.get("rent_received_records", {}) or {}
+    _m = date.today().strftime("%Y-%m")
+    monthly_rent_received = sum(v for d, items in _rent_recv.items() if str(d).startswith(_m) for v in items.values())
+    monthly_rent_pending = max(0, monthly_rent - monthly_rent_received)
     monthly_exp = ex["monthly_expense"]
     passive_total = monthly_div_conservative + monthly_rent_received
     passive_coverage = passive_total / monthly_exp * 100 if monthly_exp else 0
@@ -520,7 +519,12 @@ def buffett_advice(history: dict, snap: dict) -> str:
         _detail = "+".join(_parts)
     else:
         _detail = f"大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100"
-    rent_line = f"房租月收 {_fmt(monthly_rent_received)} / 目標 {_fmt(monthly_rent)}（全數實收：{_detail} ✅）"
+    if monthly_rent_received > 0 and monthly_rent_received < monthly_rent:
+        rent_line = f"房租月收 {_fmt(monthly_rent_received)} / 目標 {_fmt(monthly_rent)}（已收 {_fmt(monthly_rent_received)}，待收 {_fmt(monthly_rent_pending)}）"
+    elif monthly_rent_received >= monthly_rent:
+        rent_line = f"房租月收 {_fmt(monthly_rent_received)} / 目標 {_fmt(monthly_rent)}（全數實收：{_detail} ✅）"
+    else:
+        rent_line = f"房租月收 {_fmt(monthly_rent_received)} / 目標 {_fmt(monthly_rent)}（尚未入帳：{_detail}）"
 
     lines = [
         "🧠 在家巴菲特",

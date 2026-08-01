@@ -69,8 +69,6 @@ def calibrate_sources() -> dict:
     s_insurance = snap.get("allianz_combined", 0) + snap.get("firstjin_fl65_current_value", 0)
     s_allianz = snap.get("allianz_ab_current_value") or snap.get("allianz_ab")
     s_firstjin = snap.get("firstjin_current_value") or snap.get("firstjin")
-    s_allianz_a = snap.get("allianz_a_current_value") or snap.get("allianz_a", 0)
-    s_allianz_b = snap.get("allianz_b_current_value") or snap.get("allianz_b", 0)
     s_rent = snap.get("rent_monthly_actual")
     s_securities = snap.get("securities_total_market_value")
 
@@ -107,38 +105,15 @@ def calibrate_sources() -> dict:
         sys.exit(2)
 
     print(f"[CALIBRATE] 三源校準通過")
-    # 真值錨定：本月配息依當月 dividend_records 動態累積（8月起自動歸零重算）
-    _today_m = date.today().strftime("%Y-%m")
-    _div_records = snap.get("dividend_records", {}) or {}
-    _div_sum = 0
-    for _d, _items in _div_records.items():
-        if str(_d).startswith(_today_m):
-            _div_sum += sum(_items.values())
-    # 只顯示當月實際已收到配息，月初為 0（預估欄位僅供規劃參考，不混入「本月已收」）
-    monthly_dividend = _div_sum if _div_sum > 0 else 0
-    # 快取欄位只當無任何來源時使用
+    # 真值錨定：本月保單配息（從 snapshot allianz_ab_monthly + firstjin_monthly 動態計算）
+    monthly_dividend = snap.get("monthly_dividend")
     if monthly_dividend is None:
         monthly_dividend = (snap.get("allianz_ab_monthly", 0) or 0) + (snap.get("firstjin_monthly", 0) or 0)
 
     # 從 monthly_dividend_breakdown 取得證券、基金配息及下次除息資訊
     dividend_breakdown = snap.get("monthly_dividend_breakdown", {})
-    # 當月實際已收配息分類（從 dividend_records 依當月過濾，8月起全為 0）
-    _div_by_type = {"安聯": 0, "第一金": 0, "ETF": 0, "基金": 0, "保單": 0}
-    for _d, _items in _div_records.items():
-        if str(_d).startswith(_today_m):
-            for _k, _v in _items.items():
-                if "安聯" in _k:
-                    _div_by_type["安聯"] += _v
-                    _div_by_type["保單"] += _v
-                elif "第一金" in _k:
-                    _div_by_type["第一金"] += _v
-                    _div_by_type["保單"] += _v
-                elif "ETF" in _k.upper():
-                    _div_by_type["ETF"] += _v
-                elif "基金" in _k:
-                    _div_by_type["基金"] += _v
-    sec_dividend_monthly = _div_by_type["ETF"]
-    fund_dividend_monthly = _div_by_type["基金"]
+    sec_dividend_monthly = dividend_breakdown.get("etf", 0)
+    fund_dividend_monthly = dividend_breakdown.get("fund", 0)
     
     # ETF 除息時程表（HTML）
     _etf_div = snap.get("etf_dividend_schedule", {})
@@ -189,18 +164,14 @@ def calibrate_sources() -> dict:
         "retirement_surplus": s_retire_surplus,
         "insurance_total": s_insurance,
         "allianz_ab": s_allianz,
-        "allianz_a": s_allianz_a,
-        "allianz_b": s_allianz_b,
-        "allianz_a_current_value": s_allianz_a,
-        "allianz_b_current_value": s_allianz_b,
         "firstjin": s_firstjin,
         "firstjin_label": snap.get("insurance_label_b", "第一金FL65"),
         "rent_monthly": s_rent,
         "securities_total": s_securities,
         "monthly_dividend": monthly_dividend,
-        "insurance_dividend": _div_by_type["保單"],
-        "allianz_dividend": _div_by_type["安聯"],
-        "firstjin_dividend": _div_by_type["第一金"],
+        "insurance_dividend": dividend_breakdown.get("allianz", 0) + dividend_breakdown.get("firstjin", 0),
+        "allianz_dividend": snap.get("allianz_ab_monthly", 73_167),
+        "firstjin_dividend": snap.get("firstjin_monthly", 22_949),
         "relay_stations": snap.get("relay_stations", {}),
         "cc_4cards": ["玉山UNI", "台新Richart", "永豐SPORT", "台北富邦momo/J"],
         "loans_2mortgage": ["洲際W房貸", "理財型利息（房貸已清償）"],
@@ -208,14 +179,10 @@ def calibrate_sources() -> dict:
         "total_liabilities": total_liabilities,
         "net_worth": net_worth,
         "bonds_cash": snap.get("penetration", {}).get("actual_twd", {}).get("債券及安全現金", 9_697_196),
-        "penetration": snap.get("penetration", {}),
         "insurance_current_value": s_insurance,
         "funds": snap.get("fund_market_value", snap.get("funds_total", 0)) or 0,
         "cash_total": snap.get("cash_total", 3_614_169),
         "rent_breakdown": snap.get("rent_breakdown", {}),
-        "rent_received_records": snap.get("rent_received_records", {}),
-        "dividend_month_expected": snap.get("dividend_month_expected", 100_000),
-        "funds_breakdown": snap.get("funds_breakdown", {}),
         # Liabilities from snapshot.json
         "mortgage_yy": snap.get("mortgage_yy", 0),
         "mortgage_yydu": snap.get("mortgage_yydu", 0),
@@ -256,30 +223,16 @@ def _diff_to_buffett_bullets(tv: dict, y: dict) -> list[str]:
 
 
 def _fmt_rent_status(tv):
-    """房租金流：應收固定 80,100 + 動態追蹤已收/待收"""
-    rb = tv.get("rent_breakdown", {}) or {}
-    received = tv.get("rent_received_records", {}) or {}
-    _m = date.today().strftime("%Y-%m")
-    _got = sum(v for d, items in received.items() if str(d).startswith(_m) for v in items.values())
-    label_map = {"大義街店面": "大義街1樓", "大義街二三樓": "大義街23樓"}
-    # 完整應收明細
-    detail = []
+    """動態產生房租金流文字"""
+    rb = tv.get("rent_breakdown", {})
+    if not rb:
+        return "大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100 ✅"
+    parts = []
+    label_map = {"大義街店面":"大義街1樓", "大義街二三樓":"大義街23樓"}
     for k, v in rb.items():
         label = label_map.get(k, k)
-        detail.append(f"{label}{v:,}")
-    if not detail:
-        return "大義街1樓24,000+洲際W33,000+大義街23樓23,100+管理費2,100"
-    base = "應收 80,100 = " + "+".join(detail)
-    if _got > 0:
-        got_parts = []
-        for d, items in sorted(received.items()):
-            if str(d).startswith(_m):
-                for k, v in items.items():
-                    label = label_map.get(k, k)
-                    got_parts.append(f"{label}{v:,}")
-        pending = 80_100 - _got
-        return f"{base}｜已收 {'+'.join(got_parts)}（{_got:,}）｜待收 {pending:,}"
-    return f"{base}｜尚未入帳"
+        parts.append(f"{label}{v:,}")
+    return "已全數實收 " + "+".join(parts) + " ✅ "
 
 
 def _generate_schedule_html(events: list) -> str:
@@ -308,18 +261,6 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     monthly_dividend = tv.get("monthly_dividend", 107_116)
     allianz_dividend = tv.get("allianz_dividend", 73_167)
     firstjin_dividend = tv.get("firstjin_dividend", 22_949)
-    # 房租覆蓋率（動態）與基金明細（從 snapshot 讀，不硬編碼）
-    _rent_cov = (tv.get("rent_monthly", 0) or 0) / (tv.get("monthly_expense", 141_958) or 1) * 100
-    # 當月實際已收房租（rent_received_records）
-    _rent_recv = tv.get("rent_received_records", {}) or {}
-    _rm = date.today().strftime("%Y-%m")
-    _rent_got = sum(v for d, items in _rent_recv.items() if str(d).startswith(_rm) for v in items.values())
-    _div_expected = tv.get("dividend_month_expected", 100_000)  # 保守預估
-    _fund_bd = tv.get("funds_breakdown", {}) or {}
-    if _fund_bd:
-        _fund_detail = " / ".join(f"{k} {v:,}" for k, v in _fund_bd.items())
-    else:
-        _fund_detail = f"明細待補（總市值 {tv.get('funds', 0):,}）"
     # 總資產（含不動產）動態計算 — 不再硬編碼
     try:
         _re_val = float(json.loads(SNAPSHOT.read_text(encoding="utf-8")).get("real_estate_value", 34_017_063))
@@ -398,8 +339,6 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _station_icons = {'已配息': '✅', '轉換完成': '✅', '轉換中': '🔄', '待執行': '⏳', '等待': '⏸️'}
     _station_rows = ""
     for _sn, _sd in _stations.items():
-        if not isinstance(_sd, dict):
-            continue  # 2026-07-31 修復：relay_stations 混入字串型備註鍵，跳過
         _st = _sd.get("狀態", "")
         _icon = ""
         for _k, _v in _station_icons.items():
@@ -560,7 +499,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
   <!-- 1/5 財富生命線 -->
   <div class="card">
-    <h1>1/9｜財富生命線 Wealth Baseline</h1>
+    <h1>1/5｜財富生命線 Wealth Baseline</h1>
     <div class="label">資產負債快照</div>
     <div class="table-wrap">
       <table class="mobile-bordered">
@@ -568,10 +507,10 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
           <tr><th>項目</th><th>內容</th><th>影響</th></tr>
         </thead>
         <tbody>
-          <tr><td>總資產</td><td>{tv['total_assets']:,} TWD</td><td>流動資產（不含不動產）；淨資產 {_net_with_re:,}（含不動產）；負債率 {_liab_ratio:.1f}%</td></tr>
+          <tr><td>總資產</td><td>{_total_with_re:,} TWD</td><td>淨資產 {_net_with_re:,}；負債率 {_liab_ratio:.1f}%</td></tr>
           <tr><td>總負債</td><td>{tv['total_liabilities']:,} TWD</td><td>總負債合計（含房貸、保單借貸、質押）</td></tr>
           <tr><td>本月領息</td><td>{monthly_dividend:,} TWD</td><td>保單 {tv['insurance_dividend']:,} + ETF {tv['sec_dividend_monthly']:,} + 基金 {tv['fund_dividend_monthly']:,}</td></tr>
-          <tr><td>被動月收</td><td>{monthly_dividend + _rent_got:,} TWD</td><td>實收：配息 {monthly_dividend:,} + 房租 {_rent_got:,}｜預期：房租 80,100 + 配息保守 {_div_expected:,}</td></tr>
+          <tr><td>被動月收</td><td>{monthly_dividend + tv['rent_monthly']:,} TWD</td><td>配息 {monthly_dividend:,} + 房租 {tv['rent_monthly']:,}</td></tr>
         </tbody>
       </table>
     </div>
@@ -581,7 +520,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   <div class="card">
 
   <div class="card">
-    <h2>2/9｜資產結構 Asset Penetration</h2>
+    <h2>2/5｜資產結構 Asset Penetration</h2>
     <div class="label">對照家族辦公室戰略目標模型（不動產不計入）</div>
     <div class="table-wrap">
       <table class="mobile-bordered">
@@ -603,14 +542,14 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
   <!-- 市場情報 -->
   <div class="card">
-    <h2>3/9｜市場情報 Market Intel</h2>
+    <h2>2/5｜市場情報 Market Intel</h2>
     <div class="label">獵人情報 + 市場搜尋 + 持倉關聯</div>
     <div id="market-intel-block">{market_intel_text}</div>
   </div>
 
   <!-- 戰略異常看板 -->
   <div class="card">
-    <h2>4/9｜戰略異常看板 Strategic Risk Hub</h2>
+    <h2>3/5｜戰略異常看板 Strategic Risk Hub</h2>
     <div class="label">四大戰略重點</div>
 
     <h3>保單維運</h3>
@@ -621,16 +560,16 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     {tv['etf_div_table']}
 
     <h3>房租金流</h3>
-    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 {_rent_cov:.0f}%。{_fmt_rent_status(tv)}{_dbs_note_ph}</p>
+    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 55%。{_fmt_rent_status(tv)}{_dbs_note_ph}</p>
 
     <h3>鉅亨基金部位</h3>
-    <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong>。本月已收配息：{tv['fund_dividend_monthly']:,} TWD。{_fund_detail}</p>
+    <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong>。本月已收配息：{tv['fund_dividend_monthly']:,} TWD。路博邁5G累積 238,955 / 0050不配息 108,047 / 統一奔騰 86,931 / 台新半導體(JPY) 177,662 / 台中銀優息 47,699 / 路博邁5G月配 88,939 / 0050B配息 46,924。淨值反彈 +29,166（+3.81%），今日鉅亨帳戶總覽 {tv.get('funds',0):,}。</p>
   </div>
 
   <!-- 3/5 保單接力引擎 -->
   <div class="card">
-    <h2>5/9｜保單接力引擎 Insurance Relay Engine</h2>
-    <div class="label">四站轉換時序監控</div>
+    <h2>3/5｜保單接力引擎 Insurance Relay Engine</h2>
+    <div class="label">三站轉換時序監控</div>
     <p class="text-lead"><strong>本月配息合計：{monthly_dividend:,} TWD</strong></p>
     {relay_table}
     {_relay_calendar_html}
@@ -665,7 +604,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
   <!-- 4/5 流動性調度站 -->
   <div class="card">
-    <h2>6/9｜流動性調度站 Liquidity Hub</h2>
+    <h2>4/5｜流動性調度站 Liquidity Hub</h2>
     <div class="label">5,000 元過濾器 + 補庫預警</div>
 
     <h3>信用卡四大主力（列管帳戶）</h3>
@@ -700,7 +639,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
   <!-- 5/5 龍九決戰日檢核 -->
   <div class="card">
-    <h2>7/9｜龍九決戰日檢核 Tactical Ops Checklist</h2>
+    <h2>5/5｜龍九決戰日檢核 Tactical Ops Checklist</h2>
     <div class="label">P0 任務置頂 + 行事曆維度聚合</div>
 
     <h3>🚨 P0 任務</h3>
@@ -725,10 +664,10 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
   <!-- 投資決策框架 -->
   <div class="card">
-    <h2>8/9｜投資決策框架 Investment Decision Framework</h2>
+    <h2>5/5｜投資決策框架 Investment Decision Framework</h2>
     <div class="label">決策核心 + 緊急應變分析</div>
 
-    <div id="emergency-llm-analysis" style="background:transparent;border-radius:8px;padding:0;margin-top:8px;font-size:13px;line-height:1.75;overflow-x:auto;color:#1d1d1f;">
+    <div id="emergency-llm-analysis" style="background:#fffbeb;border-radius:8px;padding:12px;margin-top:8px;font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-x:auto;color:#1d1d1f;">
       <!-- LLM 緊急應變分析區塊 -->
             {llm_emergency_analysis}
     </div>
@@ -754,7 +693,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
 </div>
 <div class="card">
-  <h2>9/9｜資產差異分析 Asset Diff</h2>
+  <h2>📊 資產差異分析 Asset Diff</h2>
   <p class="text-lead">
     <a href="https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html" target="_blank">
       開啟今日差異分析 → asset_diff_{TODAY}.html
@@ -1216,33 +1155,21 @@ def main():
     _p0_html = ""
     try:
         _events = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
-        _today_s = date.today().isoformat()
-        # 重要度權重：🔴 重要 > ⚠️ 待確認/還款 > 📋 行程 > ✅ 定期 > 🔄 待處理 > 📋 例行
-        _prio = {'🔴': 0, '⚠️': 1, '📋 重要': 1, '🔄': 2, '📋': 3, '✅': 4}
-        def _ev_key(e):
-            st = e.get("status", "") or ""
-            p = min((v for k, v in _prio.items() if k in st), default=5)
-            d = e.get("date", "")
-            return (p, d if d != "待處理" else "9999-99-99")
-        # 過濾：待處理 或 今天之後（不含過去）
-        _upcoming = [
-            e for e in _events
-            if e.get("date", "") == "待處理" or (e.get("date", "") >= _today_s and e.get("date", "") <= "2026-08-31")
-        ]
-        _upcoming.sort(key=_ev_key)
         _schedule_rows = "\n".join(
             f'<tr><td>{e.get("date","")}</td><td>{e.get("item","")}</td><td class="num">{e.get("amount","")}</td><td>{e.get("status","")}</td></tr>'
-            for e in _upcoming
+            for e in _events
+            if e.get("date","") == "待處理" or ("2026-07-26" <= e.get("date","") <= "2026-08-31")
         )[:4000]
         _p0_core = [
             '<li>7/17（五）— 國泰轉貸面簽/對保（✅ 已執行，8/2 完成低息轉貸）</li>',
             '<li>8/2（日）— 國泰 2.6% 轉貸完成 — 清償保單借貸</li>',
         ]
-        _important = ['🔴', '🔄', '⚠️', '⏸️', '📋 重要']
+        _important = ['🔴','🔄','⚠️','⏸️','📋 重要']
         _p0_dynamic = [
             f'<li>{e.get("date","")} — {e.get("item","")} {e.get("amount","")} {e.get("status","")}</li>'
-            for e in _upcoming
-            if any(s in (e.get("status", "") or "") for s in _important)
+            for e in _events
+            if any(s in (e.get("status","") or "") for s in _important)
+            and (e.get("date","") == "待處理" or "2026-07" <= e.get("date","") <= "2026-08")
         ]
         _p0_html = "\n".join(_p0_core + _p0_dynamic)
     except Exception as _pe:
@@ -1394,77 +1321,6 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     _retire_expense = tv.get("monthly_expense", 141_958)
     html = html.replace("__RETIREMENT_INCOME__", fmt(_retire_income))
     html = html.replace("__RETIREMENT_SURPLUS__", f"+{fmt(_retire_income - _retire_expense)}")
-    # 本週完成清單（從 schedule_events.json 已完成的項目）
-    _done_items = []
-    try:
-        _sch = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
-        for _e in _sch:
-            if any(k in (_e.get("status", "") or "") for k in ["✅ 已", "✅ 完成", "已完成"]):
-                _done_items.append(_e.get("item", ""))
-        # 固定近期完成
-        _done_fixed = [
-            "國泰轉貸面簽/對保（7/17）",
-            "星展舊貸結清（7/13）",
-            "M&G→摩根 轉換定案（8/3 執行）",
-        ]
-        for d in _done_fixed:
-            if d not in _done_items:
-                _done_items.append(d)
-    except Exception:
-        _done_items = ["國泰轉貸面簽/對保（7/17）", "星展舊貸結清（7/13）"]
-    _done_html = "".join(
-        f'<div class="flex items-center gap-1"><span class="text-emerald-400">•</span><span class="text-slate-300">{d}</span></div>'
-        for d in _done_items[:6]
-    ) or '<div class="text-slate-500">（本週尚無完成事項）</div>'
-    html = html.replace("__WEEKLY_DONE__", _done_html)
-
-    # 行事曆（從 schedule_events.json 動態，重要度排序 + 日期順序）
-    _cal_items = []
-    try:
-        _sch2 = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
-        _today_s2 = date.today().isoformat()
-        _prio2 = {'🔴': 0, '⚠️': 1, '📋 重要': 1, '🔄': 2, '📋': 3, '✅': 4}
-        def _cal_key(e):
-            st = e.get("status", "") or ""
-            p = min((v for k, v in _prio2.items() if k in st), default=5)
-            return (p, e.get("date", ""))
-        _up2 = [e for e in _sch2 if e.get("date", "") == "待處理" or (e.get("date", "") >= _today_s2 and e.get("date", "") <= "2026-09-30")]
-        _up2.sort(key=_cal_key)
-        _wd = "一二三四五六日"
-        for _e in _up2[:12]:
-            _d = _e.get("date", "")
-            _item = _e.get("item", "")
-            _st = _e.get("status", "")
-            _amt = _e.get("amount", "")
-            if _d == "待處理":
-                _dsp = "待處理"
-                _cls = "border-red-500/30"
-                _span_cls = "text-amber-400 font-mono font-bold w-14"
-                _item_cls = "text-white font-bold flex-1"
-            elif '🔴' in _st:
-                _dsp = f"{_d[5:].replace('-', '/')}"
-                _cls = "border-red-500/30"
-                _span_cls = "text-amber-400 font-mono font-bold w-14"
-                _item_cls = "text-white font-bold flex-1"
-            elif '⏳' in _st or '✅ 已' in _st:
-                _dsp = f"{_d[5:].replace('-', '/')}"
-                _cls = "border-slate-800"
-                _span_cls = "text-slate-400 font-mono w-14"
-                _item_cls = "text-emerald-400 font-mono flex-1"
-            else:
-                _dsp = f"{_d[5:].replace('-', '/')}"
-                _cls = "border-slate-800"
-                _span_cls = "text-slate-400 font-mono w-14"
-                _item_cls = "text-slate-300 font-mono flex-1"
-            _amt_txt = f" {_amt}" if _amt else ""
-            _cal_items.append(
-                f'<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border {_cls}">'
-                f'<span class="{_span_cls}">{_dsp}</span>'
-                f'<span class="{_item_cls}">{_st} {_item}{_amt_txt}</span></div>'
-            )
-    except Exception as _ce:
-        _cal_items = [f'<div class="text-slate-500">行事曆載入失敗: {_ce}</div>']
-    html = html.replace("__DASH_CALENDAR__", "\n".join(_cal_items))
     # Trend arrows vs yesterday
     snap_dir = BASE / "snapshots"
     yesterday_snap = {}
@@ -1491,153 +1347,6 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__RUNWAY_MONTHS__", fmt(_runway_months))
     html = html.replace("__CASH_TOTAL__", fmt(_cash_runway))
     html = html.replace("__RUNWAY_COVERAGE__", f"{_runway_months:.1f}x")
-
-    # === 動態注入新增 placeholder（銀行餘額 / 流入 / 流出 / 配息）===
-    # 銀行餘額：從 snapshot bank_assets 或 MB 讀取
-    _bank = tv.get("bank_assets_moneybook", {}) or {}
-    _bal = lambda k, d: fmt(_bank.get(k, d))
-    html = html.replace("__TAISHIN_BAL__", _bal("台新銀行", 1_526_346))
-    html = html.replace("__ESUN_BAL__", _bal("玉山銀行", 32_762))
-    html = html.replace("__ESUN_DEBT__", _bal("玉山銀行負債", 6_509))
-    html = html.replace("__FUTURE_BAL__", _bal("將來銀行", 1_081_717))
-    html = html.replace("__DBS_SETTLE__", fmt(tv.get("dbs_settle_amount", 5_759_374)))
-    # 配息（當月實際已收）
-    html = html.replace("__ALLIANZ_DIV__", fmt(tv.get("allianz_dividend", 0) or 0))
-    html = html.replace("__FIRSTJIN_DIV__", fmt(tv.get("firstjin_dividend", 0) or 0))
-    # 累計配息
-    html = html.replace("__ALLIANZ_CUM__", fmt(tv.get("allianz_cum_dividend", 1_630_962)))
-    html = html.replace("__FIRSTJIN_CUM__", fmt(tv.get("firstjin_cum_dividend", 85_975)))
-    # 被動收入文字（動態）
-    _div_actual = tv.get("monthly_dividend", 0) or 0
-    _rent_got2 = tv.get("rent_monthly", 0) or 0
-    _div_exp = tv.get("dividend_month_expected", 100_000)
-    html = html.replace("__PASSIVE_TXT__", f"配息 {_div_actual:,} + 房租 {_rent_got2:,} = {_div_actual + _rent_got2:,} TWD")
-    html = html.replace("__PASSIVE_NOTE__", f"房租應收 80,100（1樓24,000+23樓21,000+洲際W33,000+管理費2,100），配息保守預估 {_div_exp:,}/月；顯示為當月實際已收")
-
-    # === 銀行卡片（動態：從 Moneybook 帳戶 CSV 讀真實餘額）===
-    _bank_cards = []
-    _bank_groups = {}
-    try:
-        import csv as _csv
-        _cps = sorted(Path("moneybook").glob("Moneybook_帳戶_*.csv")) or sorted(Path("Moneybook").glob("Moneybook_帳戶_*.csv"))
-        if _cps:
-            with open(str(_cps[-1]), encoding="utf-8-sig") as _f:
-                for _r in _csv.DictReader(_f):
-                    _b = (_r.get("金融機構/手動新增", "") or "").strip()
-                    _n = (_r.get("帳戶名稱", "") or "").strip()
-                    _v = (_r.get("帳戶金額", "0") or "0").strip().replace(",", "")
-                    try:
-                        _v = float(_v)
-                    except Exception:
-                        continue
-                    if _n and _v >= 5000:
-                        _bank_groups.setdefault(_b, []).append((_v, _n))
-    except Exception:
-        pass
-    # 若 CSV 讀取失敗，fallback 到 snapshot 總現金
-    if not _bank_groups:
-        _bank_groups = {"現金合計": [(float(tv.get("cash_total", tv.get("real_liquid_assets", 0)) or 0), "snapshot 總現金")]}
-    _bank_order = ["台新銀行", "永豐銀行", "星展銀行", "玉山銀行", "將來銀行", "國泰世華", "第一銀行", "台北富邦"]
-    for _g in _bank_order:
-        if _g not in _bank_groups:
-            continue
-        _its = sorted(_bank_groups[_g], key=lambda x: -x[0])
-        _gt = sum(fv for fv, _ in _its)
-        # 水位判斷（以 3 個月支出 425,874 為目標線）
-        _target = 425_874
-        if _gt >= _target:
-            _status = f'<span>🟢 充裕</span>'
-            _status_cls = "text-blue-300"
-            _border = "border-blue-500/20 bg-blue-500/10"
-        elif _gt >= _target * 0.5:
-            _status = f'<span>🟡 尚可</span>'
-            _status_cls = "text-yellow-300"
-            _border = "border-yellow-500/20 bg-yellow-500/10"
-        else:
-            _status = f'<span>🔴 警報</span>'
-            _status_cls = "text-red-400"
-            _border = "border-red-500/20 bg-red-500/10"
-        _detail = "、".join(f"{n} {fv:,.0f}" for fv, n in _its[:3])
-        _extra = f'<p class="text-[10px] text-slate-300 font-mono">明細：{_detail}</p>' if len(_its) > 1 else ""
-        _bank_cards.append(
-            f'<div class="{_border} p-4 rounded-xl space-y-1">'
-            f'<div class="flex justify-between text-xs font-bold {_status_cls}">'
-            f'<span>{_g}</span>{_status}</div>'
-            f'<p class="text-lg font-mono font-black text-white">{_gt:,.0f} TWD</p>'
-            f'{_extra}'
-            f'<p class="text-[10px] text-slate-400">安全線：{_target:,.0f}（3個月支出）</p>'
-            f'</div>'
-        )
-    # 合計卡片
-    _bank_total = sum(sum(fv for fv, _ in v) for v in _bank_groups.values())
-    _bank_cards.append(
-        f'<div class="bg-blue-600/20 border border-blue-500/40 p-4 rounded-xl space-y-1">'
-        f'<div class="flex justify-between text-xs font-bold text-blue-200"><span>🏦 現金合計</span></div>'
-        f'<p class="text-lg font-mono font-black text-white">{_bank_total:,.0f} TWD</p>'
-        f'<p class="text-[10px] text-slate-400">snapshot 總現金：{fmt(tv.get("cash_total", tv.get("real_liquid_assets", 0)))} TWD</p>'
-        f'</div>'
-    )
-    html = html.replace("__BANK_CARDS__", "\n".join(_bank_cards))
-
-    # === 現金流入核對表（動態：依當月實際已收標示已入帳/待入帳）===
-    _m_label = date.today().strftime("%m月")
-    _m_prefix = date.today().strftime("%Y-%m")
-    _div_recv = tv.get("dividend_records", {}) or {}
-    _rent_recv = tv.get("rent_received_records", {}) or {}
-    # 當月已收配息（依日期前綴過濾）
-    _div_this_month = {}
-    for _d, _items in _div_recv.items():
-        if str(_d).startswith(_m_prefix):
-            for _k, _v in _items.items():
-                _div_this_month[_k] = _div_this_month.get(_k, 0) + _v
-    _rent_this_month = {}
-    for _d, _items in _rent_recv.items():
-        if str(_d).startswith(_m_prefix):
-            for _k, _v in _items.items():
-                _rent_this_month[_k] = _rent_this_month.get(_k, 0) + _v
-
-    def _inflow_row(label, amount, expected):
-        """amount=實際已收, expected=應收；0 且未收 → 待入帳"""
-        if amount and amount > 0:
-            badge = '<span class="text-emerald-400">✅ 已入帳</span>'
-            val_cls = 'text-emerald-400 font-bold'
-        else:
-            badge = '<span class="text-amber-400">⏳ 待入帳</span>'
-            val_cls = 'text-slate-400'
-        _exp_txt = f"（應收 {expected:,}）" if expected else ""
-        return (f'<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800">'
-                f'<div class="flex items-center gap-2 text-xs">{badge}<span class="text-slate-300">{label}</span></div>'
-                f'<span class="text-xs font-mono {val_cls}">{amount if amount and amount > 0 else 0:,} TWD{_exp_txt}</span></div>')
-
-    _rows = []
-    # 台電薪水（當月薪資入帳）
-    _salary_amt = 0
-    _rows.append(_inflow_row("台電薪水", _salary_amt, tv.get("salary", 43_144)))
-    # 安聯配息
-    _allianz_got = _div_this_month.get("安聯配息", 0) + _div_this_month.get("保單A 安聯", 0) + _div_this_month.get("保單B 安聯", 0)
-    _rows.append(_inflow_row("安聯配息 A+B", _allianz_got, 0))
-    # 第一金配息
-    _fj_got = _div_this_month.get("第一金配息", 0) + _div_this_month.get("FJ33 摩根", 0)
-    _rows.append(_inflow_row("第一金配息", _fj_got, 0))
-    # 房租 4 筆
-    _rent_map = {
-        "大義街1樓房租": ("大義街店面", 24_000),
-        "洲際W房租": ("洲際W", 33_000),
-        "大義街23樓房租": ("大義街二三樓", 21_000),
-        "管理費": ("管理費", 2_100),
-    }
-    for _label, (_key, _exp) in _rent_map.items():
-        _got = _rent_this_month.get(_key, 0)
-        _rows.append(_inflow_row(_label, _got, _exp))
-    # 合計
-    _total_got = _salary_amt + _allianz_got + _fj_got + sum(v for v in _rent_this_month.values())
-    _rows.append(
-        f'<div class="flex justify-between items-center p-3 bg-blue-500/10 rounded-xl border border-blue-500/30">'
-        f'<div class="flex items-center gap-2 text-xs font-bold text-blue-300"><span>📊 當月已收合計</span></div>'
-        f'<span class="text-xs font-mono font-black text-white">{_total_got:,} TWD</span></div>'
-    )
-    html = html.replace("__CASH_INFLOW_TITLE__", f"{_m_label}現金流入檢對核實")
-    html = html.replace("__CASH_INFLOW__", "\n".join(_rows))
 
     # Allocation: prefer daily_analysis.json allocation block, fallback to hardcoded known values
     alloc = {}
@@ -1889,8 +1598,8 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             return f"{v:.2f}"
         return str(v or "—")
     html = html.replace("__ALLIANZ_RETURN__", fmt_pct(funds2.get("allianz_return", 16.41)))
-    html = html.replace("__ALLIANZ_MONTHLY__", fmt(tv.get("allianz_dividend", 0) or 0))
-    html = html.replace("__ALLIANZ_CUM__", fmt(tv.get("allianz_cum_dividend", 1_630_962)))
+    html = html.replace("__ALLIANZ_MONTHLY__", fmt(funds2.get("allianz_monthly", tv.get("allianz_ab_monthly", 95_347))))
+    html = html.replace("__ALLIANZ_CUM__", fmt(funds2.get("allianz_cum", tv.get("allianz_cum_dividend", 1_630_962))))
     html = html.replace("__ALLIANZ_COST__", fmt(funds2.get("allianz_cost", tv.get("allianz_cost", 8_000_000))))
     html = html.replace("__POLICY_A_VAL__", fmt(tv.get("allianz_a_current_value", tv.get("allianz_a", tv.get("allianz_policy_a_value", 4_983_244)))))
     html = html.replace("__POLICY_B_VAL__", fmt(tv.get("allianz_b_current_value", tv.get("allianz_b", tv.get("allianz_policy_b_value", 2_650_802)))))

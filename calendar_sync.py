@@ -153,5 +153,62 @@ def sync():
 
     logger.info(f"✅ Calendar 同步完成：新增 {created} 個行程")
 
+    # 反向：從 GCal 讀取用戶手動事件，合併回 schedule_events.json
+    try:
+        _pulled = pull_calendar_events(service)
+        if _pulled:
+            _schedule_path = Path(__file__).resolve().parent / "schedule_events.json"
+            _existing = json.loads(_schedule_path.read_text(encoding="utf-8")) if _schedule_path.exists() else []
+            _existing_items = {(e.get("date"), e.get("item")) for e in _existing}
+            _added = 0
+            for _ev in _pulled:
+                if (_ev["date"], _ev["item"]) not in _existing_items:
+                    _existing.append(_ev)
+                    _existing_items.add((_ev["date"], _ev["item"]))
+                    _added += 1
+            if _added:
+                _schedule_path.write_text(json.dumps(_existing, ensure_ascii=False, indent=2), encoding="utf-8")
+                logger.info(f"  合併行事曆手動事件 {_added} 筆 → schedule_events.json")
+    except Exception as e:
+        logger.warning(f'  合併行事曆事件失敗: {e}')
+
+
+def pull_calendar_events(service) -> list:
+    """從 Google Calendar 讀取用戶手動建立的事件（非 [calendar_sync] 標記）
+
+    回傳 [{date, item, amount, status}]，供 schedule_events.json 合併
+    """
+    import logging
+    logger = logging.getLogger('calendar_sync')
+    events_out = []
+    try:
+        page_token = None
+        while True:
+            _evs = service.events().list(calendarId='primary', pageToken=page_token, maxResults=250).execute()
+            for item in _evs.get('items', []):
+                desc = item.get('description', '')
+                summary = item.get('summary', '')
+                # 跳過系統同步事件與重複關鍵字
+                if '[calendar_sync]' in desc:
+                    continue
+                start = item.get('start', {}).get('date') or item.get('start', {}).get('dateTime', '')
+                if not start:
+                    continue
+                date_only = str(start)[:10]
+                if date_only < '2026-07-01':
+                    continue
+                events_out.append({
+                    "date": date_only,
+                    "item": summary.strip(),
+                    "amount": "",
+                    "status": "📋 行程",
+                })
+            page_token = _evs.get('nextPageToken')
+            if not page_token:
+                break
+    except Exception as e:
+        logger.warning(f'  讀取行事曆失敗: {e}')
+    return events_out
+
 if __name__ == "__main__":
     sync()

@@ -1384,7 +1384,7 @@ def run_dragon_nine_monitor():
     print(r5)
     send_telegram_message(r5)
 
-    dash_link = "📎 [查看完整儀表板](https://longjiu-dashboard-2-production.up.railway.app)"
+    dash_link = "📎 [查看完整儀表板](https://b0988321088.github.io/longjiu-dashboard-2/)"
     send_telegram_message(dash_link)
 
     snap_b64 = save_snapshot()

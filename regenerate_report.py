@@ -66,7 +66,7 @@ if _ej.exists():
     _latest_er = _emergency_files[0].stem if _emergency_files else None
     _latest_tr = _taiex_files[0].stem if _taiex_files else None
     if _latest_er:
-        _railway_link = "https://longjiu-dashboard-2-production.up.railway.app/%s.html" % _latest_er
+        _railway_link = "https://b0988321088.github.io/longjiu-dashboard-2/%s.html" % _latest_er
         _emergency_html += '<br><a href="%s" target="_blank" style="display:inline-block;margin-top:10px;color:#34D399;font-weight:bold">📄 檢視完整 LLM 緊急應變報告 →</a>' % _railway_link
     if _latest_tr:
         _github_link = "https://b0988321088.github.io/longjiu-dashboard-2/%s.html" % _latest_tr

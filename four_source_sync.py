@@ -128,9 +128,10 @@ try:
     for f in [f'daily_report_v2_{today}.html', f'penetration_report_{today}.html']:
         fp = os.path.join(BASE, f)
         if os.path.exists(fp): os.remove(fp)
-    r = subprocess.run(['python', 'regenerate_report.py', '--deploy'], capture_output=True, text=True, timeout=120)
+    # 產出（不 deploy，等使用者核准後才推）
+    r = subprocess.run(['python', 'run_daily.py'], capture_output=True, text=True, timeout=120)
     out = r.stdout + r.stderr
-    if '✅' in out:
+    if '✅' in out or '已寫入' in out or os.path.exists(f'daily_report_v2_{today}.html'):
         print(f"✅ OK")
     else:
         print(f"⚠️ {out[-100:]}")
@@ -150,26 +151,45 @@ try:
     snap_fl65 = snap.get('firstjin_fl65_current_value', 0)
     snap_sec = snap.get('securities_total_market_value', 0)
     snap_fund = snap.get('fund_market_value', 0)
+    snap_cash = snap.get('real_liquid_assets', 0)
+    snap_ins_total = snap_ins_ab + snap_fl65
 
     # DB 值
     conn2 = sqlite3.connect('dragon_assets.db')
-    db_row = conn2.execute("SELECT insurance, securities, funds, total_assets FROM assets WHERE date=?", (today,)).fetchone()
+    db_row = conn2.execute("SELECT insurance, securities, funds, cash_total, total_assets FROM assets WHERE date=?", (today,)).fetchone()
     conn2.close()
 
-    # HTML 值
-    import re
-    html_row = re.search(f'{today}.*?<td class=.num.>([0-9,]+)</td>', html)
-    html_insurance = re.findall(r'保單總現値.*?<td class=.num.><b>([0-9,]+)</b></td>', html)
-
-    # 比對
+    # 比對 snapshot vs DB
     checks = [
-        ("snapshot 保單", snap_ins_ab + snap_fl65, db_row[0] if db_row else 0),
-        ("snapshot 證券", snap_sec, db_row[1] if db_row else 0),
-        ("snapshot 基金", snap_fund, db_row[2] if db_row else 0),
+        ("保單", snap_ins_total, db_row[0] if db_row else 0),
+        ("證券", snap_sec, db_row[1] if db_row else 0),
+        ("基金", snap_fund, db_row[2] if db_row else 0),
+        ("現金", snap_cash, db_row[3] if db_row else 0),
     ]
     for name, expected, actual in checks:
         if abs(expected - actual) > 1000:
             print(f"\n  ❌ {name}: snapshot {expected:,} ≠ DB {actual:,}")
+            ok = False
+
+    # 驗證 HTML 報告包含最新數字
+    def _html_has(num: int) -> bool:
+        s = f"{num:,}"
+        return s in html or s in _daily_html
+
+    _daily_html = ""
+    _daily_path = f'daily_report_v2_{today}.html'
+    if os.path.exists(_daily_path):
+        _daily_html = open(_daily_path, encoding='utf-8').read()
+
+    html_checks = [
+        ("差異分析 基金", snap_fund, _html_has(snap_fund)),
+        ("差異分析 證券", snap_sec, _html_has(snap_sec)),
+        ("日報 基金", snap_fund, _html_has(snap_fund)),
+        ("日報 保單總現值", snap_ins_total, _html_has(snap_ins_total)),
+    ]
+    for name, val, present in html_checks:
+        if not present:
+            print(f"\n  ❌ {name} 未含 {val:,}")
             ok = False
 
     if ok:
@@ -178,30 +198,19 @@ try:
         errors.append("四源不一致，請檢查")
 
 except Exception as e:
+    print(f"❌ 驗證異常: {e}")
+    errors.append(f"四源驗證失敗: {e}")
+
+except Exception as e:
     print(f"❌ {e}")
     errors.append(f"驗證失敗: {e}")
 
-# === Step 5: Push 到 GitHub ===
-print("🔍 Step 5: Push GitHub ...", end=" ")
-try:
-    files_to_push = [
-        'snapshot.json', f'asset_diff_{today}.html',
-        'daily_report_v2_{}.html'.format(today)
-    ]
-    for f in files_to_push:
-        if os.path.exists(f):
-            os.system(f'git add "{f}"')
-    
-    result = os.system(
-        f'git commit -m "四源同步 {today} [cioreviewed]" && '
-        f'git push origin clean-main 2>&1'
-    )
-    if result == 0:
-        print("✅ OK")
-    else:
-        print("❌ push 失敗（可能是無變更）")
-except Exception as e:
-    print(f"❌ {e}")
+# === Step 5: Push 到 GitHub（需使用者核准）===
+if errors:
+    print("❌ 有錯誤，停止推送")
+else:
+    print("\n📦 四源同步完成（尚未推送）")
+    print("   請先檢查本地檔案 → 使用者核准 → 再執行 git push")
 
 # === 總結 ===
 print(f"\n{'='*40}")
@@ -217,6 +226,5 @@ if errors:
     sys.exit(1)
 else:
     print(f"✅ 四源同步完成！")
-    print(f"📈 https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{today}.html")
-    print(f"🏠 https://b0988321088.github.io/longjiu-dashboard-2/")
-    print(f"📄 https://b0988321088.github.io/longjiu-dashboard-2/daily_report_v2_{today}.html")
+    print(f"   🔒 尚未推送 — 請傳 MEDIA 給使用者核准後才 git push")
+    print(f"   📄 本地檔案：daily_report_v2_{today}.html / asset_diff_{today}.html / index.html")
