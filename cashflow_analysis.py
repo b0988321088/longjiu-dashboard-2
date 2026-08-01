@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""7月現金流分析"""
+"""現金流分析（7月+8月）"""
 import json
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 hist = json.loads((BASE / "asset_diff_history.json").read_text(encoding="utf-8"))
 
-dates = sorted(d for d in hist if "2026-07" in d)
-print("=== 7月現金流趨勢 ===")
+dates = sorted(d for d in hist if "2026-07" in d or "2026-08" in d)
+print("=== 現金流趨勢（7月-8月）===")
 print(f"{'日期':12s} {'現金':>12s} {'增減':>10s} {'總資產':>12s}")
 print("-" * 46)
 
