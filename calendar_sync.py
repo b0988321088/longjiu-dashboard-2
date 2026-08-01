@@ -11,7 +11,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 BASE = Path(__file__).resolve().parent
-TOKEN_PATH = Path(os.path.expanduser("~/.hermes/google_token.json"))
+TOKEN_PATH = Path(os.path.expanduser("~/AppData/Local/hermes/google_token.json"))
 LEDGER = BASE / "Company_Ledger.md"
 
 SCOPES = ["https://www.googleapis.com/auth/calendar", "https://www.googleapis.com/auth/calendar.events"]
