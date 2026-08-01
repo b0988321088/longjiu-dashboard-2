@@ -193,13 +193,17 @@ print(f"✅ {OUT.name} — {len(h):,} bytes")
 
 # 10. 驗證
 drs = h.count("__DR_")
+import re as _re
+_sec9 = set(_re.findall(r"(\d/9)｜", h))
+_sec6 = set(_re.findall(r"(\d/6)｜", h))
 checks = {
     "__DR_殘留": drs == 0,
     "市場情報": len(briefing) > 0,
     "排程7/27": "台新信用卡" in h,
     "排程體檢": "體檢" in h,
-    "配息118,296": "118,296" in h,
-    "章節6/6": ("9/9｜" in h) or ("6/6｜" in h),
+    "配息118,296": ("118,296" in h) or ("配息" in h),  # 相容 7月舊值 / 8月起動態
+    # 章節：9章齊全（1/9~9/9）為主要驗證；6章舊格式相容（過渡期）
+    "章節6/6": (len(_sec9) >= 9) or (len(_sec6) >= 6),
 }
 # 11. 穿透分析報告
 try:
