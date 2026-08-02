@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-08-02T22:36:52.916798",
+  "generated_at": "2026-08-03T07:00:46.372293",
   "version": "v5.0.10-true-value-correction",
-  "date": "2026-08-02",
+  "date": "2026-08-03",
   "total_assets": 15975619,
   "total_liabilities": 21127022,
   "net_worth": -5151403,
@@ -453,7 +453,7 @@
     "max_allocation": "機會子彈 ≤ 20% 安全網部位"
   },
   "penetration": {
-    "updated_at": "2026-08-02",
+    "updated_at": "2026-08-03",
     "source": "calc_penetration (auto-calibrated)",
     "targets": {
       "台股市值型目標": 20,
@@ -692,7 +692,7 @@
       "保單B 安聯": 5994
     }
   },
-  "monthly_dividend": 130930,
+  "monthly_dividend": 0,
   "actual_fj33_dividend": 9356,
   "policy_a_total": 4992334,
   "policy_b_total": 2681959,
