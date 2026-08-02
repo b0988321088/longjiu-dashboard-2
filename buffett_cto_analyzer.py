@@ -15,8 +15,18 @@ TG_TOKEN = os.environ.get("TG_TOKEN", "")
 TG_CHAT_ID = os.environ.get("TG_CHAT_ID", "") or os.environ.get("TELEGRAM_ALLOWED_USERS", "")
 TODAY = date.today().isoformat()
 
-# 5 類穿透目標（固定，對應 asset_class 分類）
-TARGETS = {"tw_equity": 35, "us_equity": 30, "defensive": 25, "bond": 5, "cash": 5}
+# 5 類穿透目標（動態：以 snapshot.penetration.targets 為單一真值；缺 key 時 fallback 2026-08-02 定案值 20/30/20/15/15）
+try:
+    _snap_tgt = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")).get("penetration", {}).get("targets", {}) or {}
+except Exception:
+    _snap_tgt = {}
+TARGETS = {
+    "tw_equity": _snap_tgt.get("台股市值型目標", 20),
+    "us_equity": _snap_tgt.get("美股市值型目標", 30),
+    "defensive": _snap_tgt.get("配息型目標", 20),
+    "bond": _snap_tgt.get("債券型目標", 15),
+    "cash": _snap_tgt.get("現金目標", 15),
+}
 TARGET_LABELS = {"tw_equity":"台股","us_equity":"美股","defensive":"防守","bond":"債券","cash":"現金"}
 TARGET_EMOJI = {"tw_equity":"🇹🇼","us_equity":"🇺🇸","defensive":"🛡️","bond":"💵","cash":"💰"}
 

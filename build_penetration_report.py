@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate detailed penetration report."""
 import json
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
@@ -17,7 +17,15 @@ tw_v, us_v, def_v, bond_v, cash_pv = p["台股市值型成長"], p["美股市值
 total = tw_v + us_v + def_v + bond_v + cash_pv
 
 # 自動校正 snapshot 穿透數據（供日報第2章使用）
-targets_map = {"台股市值型": 35, "美股市值型": 30, "配息型": 25, "債券型": 5, "現金": 5}
+# targets 以 snapshot 現有值為準（單一真值，禁止硬編碼覆寫）；缺 key 時 fallback 2026-08-02 定案值
+_existing_tgt = snap.get("penetration", {}).get("targets", {}) or {}
+targets_map = {
+    "台股市值型": _existing_tgt.get("台股市值型目標", 20),
+    "美股市值型": _existing_tgt.get("美股市值型目標", 30),
+    "配息型": _existing_tgt.get("配息型目標", 20),
+    "債券型": _existing_tgt.get("債券型目標", 15),
+    "現金": _existing_tgt.get("現金目標", 15),
+}
 actual_map = {"台股市值型成長": tw_v, "美股市值型成長": us_v, "防守型配息": def_v, "債券": bond_v, "現金/安全網": cash_pv}
 actual_pct = {k: round(v / total * 100, 1) for k, v in actual_map.items()}
 gaps = {
@@ -35,9 +43,11 @@ snap["penetration"] = {
     "actual_twd": actual_map,
     "alert": f"台股不足{abs(round(actual_pct['台股市值型成長']-targets_map['台股市值型'],1))}pp；現金+債券超標{abs(round(actual_pct['債券']+actual_pct['現金/安全網']-targets_map['債券型']-targets_map['現金'],1))}pp",
 }
+# 每次管線執行滾動頂層日期（儀表板系統時間/記憶同步統一真值）
+snap["date"] = date.today().isoformat()
+snap["generated_at"] = datetime.now().isoformat()
 (BASE / "snapshot.json").write_text(json.dumps(snap, ensure_ascii=False, indent=2), encoding="utf-8")
 print(f"  穿透數據已自動校正並寫入 snapshot.json")
-
 holdings = snap.get("securities", {}).get("holdings", [])
 today = date.today().isoformat()
 
@@ -50,11 +60,11 @@ def cat_ticker(t):
     if t in ("00983D",): return "bond"
     return "other"
 cats_data = [
-    ("tw", "台股市值型", tw_v, 35, "#3b82f6","0050/006208/009816"),
-    ("us", "美股市值型", us_v, 30, "#06b6d4","00646/009823/009824"),
-    ("def","防守型配息", def_v, 25, "#22c55e","00878/00713/00919等"),
-    ("bond","債券", bond_v, 5, "#f59e0b","00983D"),
-    ("cash","安全現金", cash_pv, 5, "#a855f7","銀行活存"),
+    ("tw", "台股市值型", tw_v, targets_map["台股市值型"], "#3b82f6","0050/006208/009816"),
+    ("us", "美股市值型", us_v, targets_map["美股市值型"], "#06b6d4","00646/009823/009824"),
+    ("def","防守型配息", def_v, targets_map["配息型"], "#22c55e","00878/00713/00919等"),
+    ("bond","債券", bond_v, targets_map["債券型"], "#f59e0b","00983D"),
+    ("cash","安全現金", cash_pv, targets_map["現金"], "#a855f7","銀行活存"),
 ]
 
 lines = []

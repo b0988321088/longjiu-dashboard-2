@@ -20,6 +20,7 @@ REDIRECT_URI = 'http://localhost:63393/'
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.modify",
     "https://www.googleapis.com/auth/gmail.labels",
+    "https://www.googleapis.com/auth/gmail.settings.basic",
     "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/calendar.events",
 ]

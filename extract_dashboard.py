@@ -81,7 +81,7 @@ body{{background:#f5f5f7;padding:16px;color:#1d1d1f}}
 <div class="card"><div class="card-title">💰 總覽</div>
 <div class="row"><span class="label">總資產</span><span class="value">{total}</span></div>
 <div class="row"><span class="label">淨資產</span><span class="value">{net}</span></div></div>
-<div class="card"><div class="card-title">📈 穿透分析 (35/30/25/5/5)</div>
+<div class="card"><div class="card-title">📈 穿透分析 (20/30/20/15/15)</div>
 <div class="row"><span class="label">🇹🇼 台股</span><span class="value">{tw_v}</span></div>
 <div class="bar-wrap"><div class="bar-fill" style="width:{tw_pct}%;background:#2563eb"></div></div>
 <div class="row"><span class="label">🇺🇸 美股</span><span class="value">{us_v}</span></div>

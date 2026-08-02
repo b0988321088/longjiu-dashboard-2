@@ -162,14 +162,15 @@ def calibrate_sources() -> dict:
     _etf_table += "</tbody></table>"
     
     # 下次除息資訊（從 relay_calendar 讀取）
+    next_ex_dividend_list = ""  # 預設空值，防止 relay_calendar.md 缺檔/無匹配時 UnboundLocalError
     try:
         _rc = open(BASE / "relay_calendar.md", encoding="utf-8").read()
         _matches = re.findall(r'\|\s*([^|]+?)\s*\|\s*(\d+/\d+)\(', _rc)
         _filtered = [(n.strip(), d) for n, d in _matches if n.strip() not in ('基金', '基金名稱')]
         if _filtered:
             next_ex_dividend_list = "、".join([f"{n}（{d}）" for n, d in _filtered[:5]])
-    except:
-        pass
+    except Exception as _e:
+        print(f"[WARN] relay_calendar.md 讀取失敗: {_e}")
 
 
     total_assets = snap.get("total_assets")
@@ -831,7 +832,12 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
     _bond_v = _cat2("bond")
     _cash_v = tv.get('cash', tv.get('cash_total', 4_483_408))
 
-    _tgt_tw, _tgt_us, _tgt_def, _tgt_bond, _tgt_cash = 35.0, 30.0, 25.0, 5.0, 5.0
+    _snap_tgt_834 = tv.get("penetration", {}).get("targets", {}) or {}
+    _tgt_tw = _snap_tgt_834.get("台股市值型目標", 20.0)
+    _tgt_us = _snap_tgt_834.get("美股市值型目標", 30.0)
+    _tgt_def = _snap_tgt_834.get("配息型目標", 20.0)
+    _tgt_bond = _snap_tgt_834.get("債券型目標", 15.0)
+    _tgt_cash = _snap_tgt_834.get("現金目標", 15.0)
     _tot = max(_tw_v + _us_v + _def_v + _bond_v + _cash_v, 1) # This needs to be calculated before _fmt_pct and _fmt_gap
     def _fmt_pct(v): return f"{v/_tot*100:.1f}%"
     def _fmt_gap(v, t): return f"{v/_tot*100 - t:+.1f}pp"
@@ -913,10 +919,10 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             current = None
             for line in md_text.splitlines():
                 s = line.strip()
-                if s.startswith('【Buffett'):
+                if s.startswith('【Buffett') or s.startswith('🧓 巴菲特'):
                     current = 'buffett'
                     continue
-                elif s.startswith('【CTO'):
+                elif s.startswith('【CTO') or s.startswith('CTO '):
                     current = 'cto'
                     continue
                 elif s.startswith('【'):
@@ -1290,9 +1296,9 @@ def main():
     _cash_v = _atwd.get("現金/安全網", 0)
     for k, v in [("__DR_TW_V__",f"{_tw_v:,.0f}"),("__DR_US_V__",f"{_us_v:,.0f}"),("__DR_DEF_V__",f"{_def_v:,.0f}"),("__DR_BOND_V__",f"{_bond_v:,.0f}"),("__DR_CASH_V__",f"{_cash_v:,.0f}")]: daily_html = daily_html.replace(k, v)
     for k, v in [("__DR_TW_PCT__",f"{_apct.get('台股市值型成長',0):.1f}%"),("__DR_US_PCT__",f"{_apct.get('美股市值型成長',0):.1f}%"),("__DR_DEF_PCT__",f"{_apct.get('防守型配息',0):.1f}%"),("__DR_BOND_PCT__",f"{_apct.get('債券',0):.1f}%"),("__DR_CASH_PCT__",f"{_apct.get('現金/安全網',0):.1f}%")]: daily_html = daily_html.replace(k, v)
-    for k, v in [("__DR_TW_TGT__",f"{_tgt.get('台股市值型目標',35):.0f}%"),("__DR_US_TGT__",f"{_tgt.get('美股市值型目標',30):.0f}%"),("__DR_DEF_TGT__",f"{_tgt.get('配息型目標',25):.0f}%"),("__DR_BOND_TGT__",f"{_tgt.get('債券型目標',5):.0f}%"),("__DR_CASH_TGT__",f"{_tgt.get('現金目標',5):.0f}%")]: daily_html = daily_html.replace(k, v)
+    for k, v in [("__DR_TW_TGT__",f"{_tgt.get('台股市值型目標',20):.0f}%"),("__DR_US_TGT__",f"{_tgt.get('美股市值型目標',30):.0f}%"),("__DR_DEF_TGT__",f"{_tgt.get('配息型目標',20):.0f}%"),("__DR_BOND_TGT__",f"{_tgt.get('債券型目標',15):.0f}%"),("__DR_CASH_TGT__",f"{_tgt.get('現金目標',15):.0f}%")]: daily_html = daily_html.replace(k, v)
     _pen_total = _tw_v + _us_v + _def_v + _bond_v + _cash_v or 1
-    for k, t, g in [("__DR_TW_GAP__",_tw_v,_tgt.get('台股市值型目標',35)),("__DR_US_GAP__",_us_v,_tgt.get('美股市值型目標',30)),("__DR_DEF_GAP__",_def_v,_tgt.get('配息型目標',25)),("__DR_BOND_GAP__",_bond_v,_tgt.get('債券型目標',5)),("__DR_CASH_GAP__",_cash_v,_tgt.get('現金目標',5))]:
+    for k, t, g in [("__DR_TW_GAP__",_tw_v,_tgt.get('台股市值型目標',20)),("__DR_US_GAP__",_us_v,_tgt.get('美股市值型目標',30)),("__DR_DEF_GAP__",_def_v,_tgt.get('配息型目標',20)),("__DR_BOND_GAP__",_bond_v,_tgt.get('債券型目標',15)),("__DR_CASH_GAP__",_cash_v,_tgt.get('現金目標',15))]:
         _gap = t - _pen_total * g / 100; daily_html = daily_html.replace(k, f"{'+'if _gap>0 else ''}{_gap:,.0f}")
 
     # 證券明細注入
@@ -1757,11 +1763,16 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     bond = _bond_value / _inv_total * 100
     cash = _cash_value / _inv_total * 100
 
-    tw_target = target.get("tw_equity_pct", 35.0)
-    us_target = target.get("us_equity_pct", 30.0)
-    def_target = target.get("defensive_pct", 25.0)
-    bond_target = target.get("bond_pct", 5.0)
-    cash_target = target.get("cash_pct", 5.0)
+    _alloc_tgt = {}
+    try:
+        _alloc_tgt = _json_io.loads((BASE / "snapshot.json").read_text(encoding="utf-8")).get("penetration", {}).get("targets", {}) or {}
+    except Exception:
+        pass
+    tw_target = _alloc_tgt.get("台股市值型目標", 20.0)
+    us_target = _alloc_tgt.get("美股市值型目標", 30.0)
+    def_target = _alloc_tgt.get("配息型目標", 20.0)
+    bond_target = _alloc_tgt.get("債券型目標", 15.0)
+    cash_target = _alloc_tgt.get("現金目標", 15.0)
 
     tw_gap = tw_eq - tw_target
     us_gap = us_eq - us_target
@@ -1849,7 +1860,14 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         from buffett_cto_analyzer import penetration_analysis as _pa, generate_buffett_report as _gr
         _p = _pa(_snap)
         _bl = _gr(_p)
-        _cd = {"tw_equity":("🇹🇼","台股",35),"us_equity":("🇺🇸","美股",30),"defensive":("🛡️","防守",25),"bond":("💵","債券",5),"cash":("💰","現金",5)}
+        _snap_tgt_dyn = _snap.get("penetration", {}).get("targets", {}) or {}
+        _cd = {
+            "tw_equity": ("🇹🇼", "台股", _snap_tgt_dyn.get("台股市值型目標", 20)),
+            "us_equity": ("🇺🇸", "美股", _snap_tgt_dyn.get("美股市值型目標", 30)),
+            "defensive": ("🛡️", "防守", _snap_tgt_dyn.get("配息型目標", 20)),
+            "bond": ("💵", "債券", _snap_tgt_dyn.get("債券型目標", 15)),
+            "cash": ("💰", "現金", _snap_tgt_dyn.get("現金目標", 15)),
+        }
         _h = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-blue-400">💡 穿透現況</span><ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4">'
         for _k,(_e,_l,_t) in _cd.items():
             _v = _p["actual"].get(_k,0)

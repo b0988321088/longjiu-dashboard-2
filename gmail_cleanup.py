@@ -21,10 +21,13 @@ token_path = Path(os.path.expanduser("~/AppData/Local/hermes/google_token.json")
 creds = Credentials.from_authorized_user_file(str(token_path), [
     "https://www.googleapis.com/auth/gmail.modify",
     "https://www.googleapis.com/auth/gmail.labels",
+    "https://www.googleapis.com/auth/gmail.settings.basic",
+    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/calendar.events",
 ])
 if creds.expired and creds.refresh_token:
     creds.refresh(Request())
-    token_path.write_text(creds.to_json(), encoding="utf-8")
+    # 不寫回 token 檔：避免用狹窄 scope 清單覆寫掉其他權限（2026-08-02 修正）
 service = build("gmail", "v1", credentials=creds)
 
 # ── 批次工具函數 ──
@@ -160,8 +163,11 @@ if not DRY_RUN:
     try:
         existing_filters = service.users().settings().filters().list(userId="me").execute().get("filter", [])
         for q, label_name in filters_def:
-            exists = any(label_name in str(f.get("action", {})) for f in existing_filters)
             label_id = label_map.get(label_name)
+            exists = bool(label_id) and any(
+                label_id in (f.get("action", {}).get("addLabelIds", []) or [])
+                for f in existing_filters
+            )
             if not exists and label_id:
                 service.users().settings().filters().create(userId="me", body={
                     "criteria": {"query": q},
@@ -171,8 +177,10 @@ if not DRY_RUN:
             else:
                 print(f"  ℹ️ 過濾器已存在或標籤缺失：{label_name}")
     except Exception as e:
-        print(f"  ⚠️ 建立過濾器失敗：{e}")
-        print(f"  💡 Token 可能缺少 gmail.settings.basic scope，請重新授權")
+        if "insufficient" in str(e).lower() or "403" in str(e):
+            print("  ⏭️ 過濾器管理未授權（gmail.settings.basic）→ 選擇性功能跳過，清理不受影響")
+        else:
+            print(f"  ⚠️ 建立過濾器失敗：{e}")
 
 print(f"\n{'='*40}")
 print(f"✨ Gmail 整理完成！")

@@ -104,11 +104,11 @@ try:
     actual = pen.get("actual_pct", {})
     targets = pen.get("targets", {})
     # 從 snapshot 動態讀取目標值
-    _tgt_tw = targets.get("台股市值型目標", 35)
+    _tgt_tw = targets.get("台股市值型目標", 20)
     _tgt_us = targets.get("美股市值型目標", 30)
-    _tgt_def = targets.get("配息型目標", 25)
-    _tgt_bond = targets.get("債券型目標", 5)
-    _tgt_cash = targets.get("現金目標", 5)
+    _tgt_def = targets.get("配息型目標", 20)
+    _tgt_bond = targets.get("債券型目標", 15)
+    _tgt_cash = targets.get("現金目標", 15)
     for key, tgt, label in [("台股市值型成長", _tgt_tw, "台股"), ("美股市值型成長", _tgt_us, "美股"), ("防守型配息", _tgt_def, "防守")]:
         act = actual.get(key, 0)
         if tgt > 0 and abs(act - tgt) > 5:

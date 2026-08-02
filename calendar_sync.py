@@ -23,7 +23,8 @@ def load_creds():
     creds = Credentials.from_authorized_user_file(str(TOKEN_PATH), SCOPES)
     if creds.expired and creds.refresh_token:
         creds.refresh(Request())
-        TOKEN_PATH.write_text(creds.to_json(), encoding="utf-8")
+        TOKEN_PATH.parent.mkdir(parents=True, exist_ok=True)
+        # 不寫回 token 檔：避免狹窄 scope 覆寫其他權限（2026-08-02 修正）
     return creds
 
 def parse_events(text: str):

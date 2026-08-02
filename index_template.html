@@ -45,9 +45,9 @@
             <p class="text-[10px] text-slate-400">財務總監 (Comptroller) 戰略決策終端</p>
         </div>
         <div class="text-right flex flex-col items-end">
-            <span class="text-xs font-mono text-slate-300">系統時間：2026-08-01</span>
+            <span class="text-xs font-mono text-slate-300">系統時間：__SYSTEM_DATE__</span>
             <span class="text-[10px] text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 mt-1 flex items-center gap-1">
-                ⚠️ 今日 2026/8/1 | 23,424 + 10,300 TWD | 大義街房貸 + 理財型利息 | 待扣款 |
+                ⚠️ __TODAY_ALERT__ |
             </span>
         </div>
     </div>
@@ -166,51 +166,51 @@
     <div id="tab-content-2" class="tab-pane hidden space-y-6">
         <div class="luxury-card p-6 space-y-6">
             <div>
-                <h3 class="text-md font-bold text-white">資產穿透 (35 / 30 / 25 / 5 / 5)</h3>
-                <p class="text-xs text-slate-400">對照家族辦公室戰略目標模型，實時追蹤配置偏離度</p>
+                <h3 class="text-md font-bold text-white">資產穿透（目標：台股 __TW_EQ_TARGET__%｜美股 __US_EQ_TARGET__%｜防守 __DEF_TARGET__%｜債券 __BOND_TARGET__%｜現金 __CASH_TARGET__%）</h3>
+                <p class="text-xs text-slate-400">對照家族辦公室戰略目標模型，實時追蹤配置偏離度（snapshot 穿透真值）</p>
             </div>
             <div class="space-y-4">
                 <div class="space-y-1">
                     <div class="flex justify-between text-xs font-mono">
                         <span class="text-slate-300">1. 台股市值型成長 (0050/006208/009816)</span>
-                        <span class="text-red-400 font-bold">現況 17 / 目標 35 (缺口 -17.6)</span>
+                        <span class="text-red-400 font-bold">現況 __TW_EQ_PCT__ / 目標 __TW_EQ_TARGET__ (缺口 __TW_EQ_GAP__pp)</span>
                     </div>
                     <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden flex">
-                        <div class="bg-red-500 h-full" style="width: 17"></div>
-                        <div class="bg-slate-700 h-full opacity-40" style="width: 12.8%"></div>
+                        <div class="bg-red-500 h-full" style="width: __TW_EQ_PCT__%"></div>
+                        <div class="bg-slate-700 h-full opacity-40" style="width: __TW_EQ_GAP__%"></div>
                     </div>
-                    <span class="text-[10px] text-slate-400 font-mono">市值：2,766,920 TWD</span>
+                    <span class="text-[10px] text-slate-400 font-mono">市值：__TW_EQ_VALUE__ TWD</span>
                 </div>
                 <div class="space-y-1">
                     <div class="flex justify-between text-xs font-mono">
                         <span class="text-slate-300">2. 美股市值型成長 (00646/PIMCO)</span>
-                        <span class="text-amber-500 font-bold">現況 35 / 目標 30 (溢價 +4.7)</span>
+                        <span class="text-amber-500 font-bold">現況 __US_EQ_PCT__ / 目標 __US_EQ_TARGET__ (溢價 __US_EQ_GAP__pp)</span>
                     </div>
                     <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
-                        <div class="bg-amber-500 h-full" style="width: 35"></div>
+                        <div class="bg-amber-500 h-full" style="width: __US_EQ_PCT__%"></div>
                     </div>
-                    <span class="text-[10px] text-slate-400 font-mono">市值：5,521,150 TWD</span>
+                    <span class="text-[10px] text-slate-400 font-mono">市值：__US_EQ_VALUE__ TWD</span>
                 </div>
                 <div class="space-y-1">
                     <div class="flex justify-between text-xs font-mono">
                         <span class="text-slate-300">3. 防守型配息 (0056/00713/00878/安聯)</span>
-                        <span class="text-red-400 font-bold">現況 12 / 目標 25 (缺口 -12.6)</span>
+                        <span class="text-red-400 font-bold">現況 __DEF_PCT__ / 目標 __DEF_TARGET__ (缺口 __DEF_GAP__pp)</span>
                     </div>
                     <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden flex">
-                        <div class="bg-blue-500 h-full" style="width: 12"></div>
-                        <div class="bg-slate-700 h-full opacity-40" style="width: 10.4%"></div>
+                        <div class="bg-blue-500 h-full" style="width: __DEF_PCT__%"></div>
+                        <div class="bg-slate-700 h-full opacity-40" style="width: __DEF_GAP__%"></div>
                     </div>
-                    <span class="text-[10px] text-slate-400 font-mono">市值：1,974,200 TWD</span>
+                    <span class="text-[10px] text-slate-400 font-mono">市值：__DEF_VALUE__ TWD</span>
                 </div>
                 <div class="space-y-1">
                     <div class="flex justify-between text-xs font-mono">
                         <span class="text-slate-300">4. 債券</span>
-                        <span class="text-emerald-400 font-bold">現況 17 / 目標 5 (盈餘 +12.1)</span>
+                        <span class="text-emerald-400 font-bold">現況 __BOND_PCT__ / 目標 __BOND_TARGET__ (盈餘 __BOND_GAP__pp)</span>
                     </div>
                     <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
-                        <div class="bg-emerald-500 h-full" style="width: 17"></div>
+                        <div class="bg-emerald-500 h-full" style="width: __BOND_PCT__%"></div>
                     </div>
-                    <span class="text-[10px] text-slate-400 font-mono">市值：2,723,627 TWD</span>
+                    <span class="text-[10px] text-slate-400 font-mono">市值：__BOND_VALUE__ TWD</span>
                 </div>
             </div>
 
@@ -218,25 +218,21 @@
             <div class="space-y-2">
                 <div class="flex justify-between items-center">
                     <span class="text-slate-300 text-xs">5. 💵 安全現金</span>
-                    <span class="text-sky-400 font-bold text-xs">現況 18 / 目標 5 (盈餘 +13.4)</span>
+                    <span class="text-sky-400 font-bold text-xs">現況 __CASH_PCT__ / 目標 __CASH_TARGET__ (盈餘 __CASH_GAP__pp)</span>
                 </div>
                 <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
-                    <div class="bg-sky-500 h-full" style="width: 18"></div>
+                    <div class="bg-sky-500 h-full" style="width: __CASH_PCT__%"></div>
                 </div>
-                <span class="text-[10px] text-slate-400 font-mono">市值：2,935,488 TWD</span>
+                <span class="text-[10px] text-slate-400 font-mono">市值：__CASH_VALUE__ TWD</span>
             </div>
             <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
                 <span class="text-xs font-bold text-amber-400">🚨 戰略調整警示：</span>
                 <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-                    目前投資部位穿透呈現極高失衡，美股暴露 35 超標；台股 17 低於目標 35%；債券 17 超標</p>
+                    配置偏離度即時追蹤：防守型配息長期低於目標，優先以配息導流補強；美股/債券超標時暫緩新增（依再平衡 SOP 執行）</p>
                 <div class="mt-3 p-3 bg-slate-800/50 rounded border border-slate-700">
-                    <p class="text-xs font-bold text-slate-300 mb-2">📊 市場動態（2026-08-01）</p>
+                    <p class="text-xs font-bold text-slate-300 mb-2">📊 市場動態</p>
                     <ul class="text-xs text-slate-400 space-y-1">
-                                                <li>• <span class="text-white">台股加權</span> — 43,119.75 (+7.98%)</li>
-                        <li>• <span class="text-white">台積電</span> — 2,425.00 (+9.98%)</li>
-                        <li>• <span class="text-white">費半</span> — 11,311.08 (+0.07%)</li>
-                        <li>• <span class="text-white">美股</span> — 道瓊 52,485.03 (+0.53%) / 納指 25,373.85 (+1.00%) / S&P 7,489.72 (+0.70%)</li>
-                        <li>• <span class="text-white">美國 CPI</span> — 美國 6 月 CPI YoY 3.5% (預期 3.8%)；Core 2.6% (預期 2.8%)</li>
+                        __MARKET_ROWS__
                     </ul>
                 </div>
             </div>
@@ -245,7 +241,7 @@
         <!-- 巴菲特視角與基金審查 -->
         <div class="luxury-card p-6 space-y-4">
             <h3 class="text-md font-bold text-white">智慧審查：巴菲特配置哲學與實操</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-blue-400">💡 穿透現況</span><ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4"><li>🇹🇼 <strong>台股</strong>：17%（目標 35%，<span class="text-red-400">-18pp</span>）</li><li>🇺🇸 <strong>美股</strong>：35%（目標 30%，<span class="text-emerald-400">+5pp</span>）</li><li>🛡️ <strong>防守</strong>：12%（目標 25%，<span class="text-red-400">-13pp</span>）</li><li>💵 <strong>債券</strong>：17%（目標 5%，<span class="text-emerald-400">+12pp</span>）</li><li>💰 <strong>現金</strong>：18%（目標 5%，<span class="text-emerald-400">+13pp</span>）</li></ul></div><div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-teal-400">🎯 策略建議</span><ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed"><li>• 建議：逢低補碼至目標 35%</li><li>台股逢低補碼18pp</li><li>美股合理範圍</li><li>防守逢低補碼13pp</li></ul><div class="mt-3 pt-3 border-t border-slate-700"><span class="text-xs font-bold text-amber-400">📝 巴菲特視角</span><ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4 mt-2"><li><strong>能力圈：</strong>台股嚴重不足，逢低補碼至目標水準，聚焦0050/009816</li><li><strong>分散配置：</strong>債券現金過多，可轉投入台股防守型配息</li><li><strong>護城河：</strong>防守型配息不足，補00878/00713建立穩定現金流</li><li><strong>現金子彈：</strong>安全邊際充足，等待台股恐慌時加碼</li></ul></div></div></div>
+            __BUFFETT_DYNAMIC__
         </div>
     </div>
 
