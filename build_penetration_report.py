@@ -142,9 +142,20 @@ for key, name, val, target, color, desc in cats_data:
         w("</tbody></table>")
 w("</div>")
 
-# 3b. 基金明細（鉅亨基金）
+# 3b. 基金明細（鉅亨基金）— 支援扁平/嵌套結構
 _fb = snap.get("funds_breakdown", {})
 if _fb:
+    # 展平嵌套結構 {群組: {name: val}} → {name: val}（跳過小計）
+    _fb_flat = {}
+    for _fn, _fv2 in _fb.items():
+        if isinstance(_fv2, dict):
+            for _sn, _sv in _fv2.items():
+                if _sn == "小計" or not isinstance(_sv, (int, float)):
+                    continue
+                _fb_flat[f"{_fn}-{_sn}"] = _sv
+        elif isinstance(_fv2, (int, float)):
+            _fb_flat[_fn] = _fv2
+    _fb = _fb_flat
     w("<div class='card'><h2>📦 基金穿透（鉅亨基金帳戶）</h2>")
     w("<table><thead><tr><th>基金名稱</th><th class='num'>市值</th><th>穿透分類</th></tr></thead><tbody>")
     _fund_tw = _fund_us = _fund_def = 0
