@@ -1,0 +1,164 @@
+{
+ "DJI": {
+  "symbol": "^DJI",
+  "price": 53147.03,
+  "prev": 52485.03,
+  "chg": 662.0,
+  "pct": 1.26,
+  "state": null,
+  "time_tw": "08-03 21:33"
+ },
+ "SPX": {
+  "symbol": "^GSPC",
+  "price": 7530.86,
+  "prev": 7489.72,
+  "chg": 41.13999999999942,
+  "pct": 0.55,
+  "state": null,
+  "time_tw": "08-03 21:33"
+ },
+ "IXIC": {
+  "symbol": "^IXIC",
+  "price": 25469.088,
+  "prev": 25373.854,
+  "chg": 95.23400000000038,
+  "pct": 0.38,
+  "state": null,
+  "time_tw": "08-03 21:33"
+ },
+ "SOX": {
+  "symbol": "^SOX",
+  "price": 10939.441,
+  "prev": 11311.075,
+  "chg": -371.634,
+  "pct": -3.29,
+  "state": null,
+  "time_tw": "08-03 21:33"
+ },
+ "VIX": {
+  "symbol": "^VIX",
+  "price": 16.0,
+  "prev": 15.99,
+  "chg": 0.009999999999999787,
+  "pct": 0.06,
+  "state": null,
+  "time_tw": "08-03 21:18"
+ },
+ "ES_F": {
+  "symbol": "ES=F",
+  "price": 7563.0,
+  "prev": 7519.25,
+  "chg": 43.75,
+  "pct": 0.58,
+  "state": null,
+  "time_tw": "08-03 21:23"
+ },
+ "NQ_F": {
+  "symbol": "NQ=F",
+  "price": 28467.0,
+  "prev": 28404.25,
+  "chg": 62.75,
+  "pct": 0.22,
+  "state": null,
+  "time_tw": "08-03 21:23"
+ },
+ "YM_F": {
+  "symbol": "YM=F",
+  "price": 53289.0,
+  "prev": 52635.0,
+  "chg": 654.0,
+  "pct": 1.24,
+  "state": null,
+  "time_tw": "08-03 21:23"
+ },
+ "GC_F": {
+  "symbol": "GC=F",
+  "price": 4088.7,
+  "prev": 4107.0,
+  "chg": -18.300000000000182,
+  "pct": -0.45,
+  "state": null,
+  "time_tw": "08-03 21:23"
+ },
+ "CL_F": {
+  "symbol": "CL=F",
+  "price": 79.3,
+  "prev": 84.67,
+  "chg": -5.3700000000000045,
+  "pct": -6.34,
+  "state": null,
+  "time_tw": "08-03 21:23"
+ },
+ "TNX10Y": {
+  "symbol": "^TNX",
+  "price": 4.688,
+  "prev": 4.745,
+  "chg": -0.057000000000000384,
+  "pct": -1.2,
+  "state": null,
+  "time_tw": "08-03 21:18"
+ },
+ "TYX30Y": {
+  "symbol": "^TYX",
+  "price": 5.224,
+  "prev": 5.275,
+  "chg": -0.051000000000000156,
+  "pct": -0.97,
+  "state": null,
+  "time_tw": "08-03 21:18"
+ },
+ "TSM": {
+  "symbol": "TSM",
+  "price": 399.35,
+  "prev": 404.31,
+  "chg": -4.9599999999999795,
+  "pct": -1.23,
+  "state": null,
+  "time_tw": "08-03 21:33"
+ },
+ "NVDA": {
+  "symbol": "NVDA",
+  "price": 198.6,
+  "prev": 200.75,
+  "chg": -2.1500000000000057,
+  "pct": -1.07,
+  "state": null,
+  "time_tw": "08-03 21:33"
+ },
+ "TSLA": {
+  "symbol": "TSLA",
+  "price": 314.08,
+  "prev": 311.21,
+  "chg": 2.8700000000000045,
+  "pct": 0.92,
+  "state": null,
+  "time_tw": "08-03 21:33"
+ },
+ "AAPL": {
+  "symbol": "AAPL",
+  "price": 307.525,
+  "prev": 308.91,
+  "chg": -1.3850000000000477,
+  "pct": -0.45,
+  "state": null,
+  "time_tw": "08-03 21:33"
+ },
+ "META": {
+  "symbol": "META",
+  "price": 570.49,
+  "prev": 556.71,
+  "chg": 13.779999999999973,
+  "pct": 2.48,
+  "state": null,
+  "time_tw": "08-03 21:33"
+ },
+ "AMZN": {
+  "symbol": "AMZN",
+  "price": 282.14,
+  "prev": 271.58,
+  "chg": 10.560000000000002,
+  "pct": 3.89,
+  "state": null,
+  "time_tw": "08-03 21:33"
+ }
+}

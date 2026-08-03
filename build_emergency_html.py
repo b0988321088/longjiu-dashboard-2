@@ -1,0 +1,164 @@
+# -*- coding: utf-8 -*-
+"""美股緊急應變報告 HTML 產生器 — Railway + GitHub 兩版"""
+import json, datetime
+
+BASE = "."
+today = "2026-08-03"
+
+CSS = """:root{--bg:#0d1117;--card:#161b22;--line:#30363d;--tx:#e6edf3;--mut:#8b949e;
+--red:#f85149;--grn:#3fb950;--yel:#d29922;--blu:#58a6ff;--pur:#bc8cff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:'Segoe UI','Noto Sans TC','Microsoft JhengHei',sans-serif;line-height:1.65;padding:24px}
+.wrap{max-width:980px;margin:0 auto}
+header{border:1px solid var(--line);border-radius:12px;padding:22px 26px;background:linear-gradient(135deg,#1a2332,#161b22);margin-bottom:20px}
+header h1{font-size:26px;letter-spacing:1px}
+header .sub{color:var(--mut);margin-top:6px;font-size:14px}
+.alert-bar{margin:14px 0 4px;padding:10px 16px;border-radius:8px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.4);font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 24px;margin-bottom:18px}
+.card h2{font-size:19px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--line);color:var(--blu)}
+.card h2 .tag{float:right;font-size:12px;color:var(--mut);font-weight:400}
+ul{padding-left:22px} li{margin:5px 0}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#21262d;font-size:13px;white-space:nowrap}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pos{color:var(--grn)} .neg{color:var(--red)}
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+.badge.buy{background:rgba(63,185,80,.15);color:var(--grn);border:1px solid var(--grn)}
+.badge.hold{background:rgba(88,166,255,.12);color:var(--blu);border:1px solid var(--blu)}
+.badge.pause{background:rgba(210,153,34,.12);color:var(--yel);border:1px solid var(--yel)}
+.badge.over{background:rgba(248,81,73,.12);color:var(--red);border:1px solid var(--red)}
+.badge.warn{background:rgba(248,81,73,.15);color:var(--red);border:1px solid var(--red)}
+.badge.ok{background:rgba(63,185,80,.12);color:var(--grn);border:1px solid var(--grn)}
+.badge.cred{background:rgba(188,140,255,.12);color:var(--pur);border:1px solid var(--pur)}
+.kpi{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+.kpi .box{flex:1;min-width:150px;background:#21262d;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.kpi .box .lbl{font-size:12px;color:var(--mut)} .kpi .box .val{font-size:20px;font-weight:700;margin-top:2px}
+.risk-line{padding:8px 12px;border-radius:8px;margin:6px 0;background:#21262d;border-left:4px solid var(--blu)}
+footer{color:var(--mut);font-size:12px;text-align:center;margin-top:24px}"""
+
+def posneg(pct):
+    return f"<span class='{'pos' if pct>=0 else 'neg'}'>{'+' if pct>=0 else ''}{pct:.2f}%</span>"
+
+kpi = [
+    ("道瓊", "53,147.03", "+1.26%", "pos"), ("S&P 500", "7,530.86", "+0.55%", "pos"),
+    ("納斯達克", "25,469.09", "+0.38%", "pos"), ("費城半導體", "10,939.44", "-3.29%", "neg"),
+    ("US30Y", "5.224%", "防禦5.20/紅線5.30", "yel"), ("WTI原油", "79.30", "-6.34%", "neg"),
+]
+
+sec1 = """<ul>
+<li><b>道瓊 53,147.03（+662.00，+1.26%）</b>— 突破 5.3 萬點創歷史新高，金融/消費類股領漲。</li>
+<li><b>S&P 500 7,530.86（+41.14，+0.55%）</b>— 續創新高，油價崩跌 + 殖利率回落雙重利多。</li>
+<li><b>納斯達克 25,469.09（+95.23，+0.38%）</b>— 漲幅落後，權重半導體拖累。</li>
+<li><b>費城半導體 10,939.44（-371.63，-3.29%）</b>⚠️ 與大盤嚴重背離，為今日最關鍵風險訊號。</li>
+<li><b>盤前期貨：</b>道瓊期 +1.24% / 標普期 +0.58% / 那斯達克期 +0.22%（NQ 明顯落後）。</li>
+<li><b>VIX 16.00（+0.06%）</b>— 恐慌指數平靜，市場未定性為系統性風險。</li>
+<li><b>黃金 4,088.70（-0.45%）</b>；<b>WTI 原油 79.30（-6.34%）</b>⚠️ 單日重挫，美伊情勢降溫。</li>
+<li><b>美債：</b>10Y 4.688%（-1.2%）、30Y 5.224%（-0.97%，前收 5.275%）。</li>
+<li><b>重要個股：</b>TSM 399.35（-1.23%）、NVDA 198.60（-1.07%）、TSLA 314.08（+0.92%）、AAPL 307.53（-0.45%）、META 570.49（+2.48%）、AMZN 282.14（+3.89%）；半導體重災：MU -5.55%、INTC -4.81%、AMD -3.62%（本週財報）、AVGO -2.71%、ASML -2.31%。</li>
+</ul>"""
+
+events = [
+    ("美伊情勢降溫、油價崩跌（今日主軸）", "WSJ / CNBC / Guardian", "高",
+     "川普取消對伊朗打擊、轉向外交談判，WTI 單日 -6.34% 至 79.3 美元，美債殖利率回落、歐股大漲。意涵：油價下跌=通膨降溫+消費成本減輕，直接利多美股與債券；惟伊朗否認與美談判，地緣反覆風險仍在。殖利率回落緩解 US30Y 防禦壓力（5.275%→5.224%），但 5.20% 門檻仍觸發中。"),
+    ("Fed 鷹派警訊（結構性壓制）", "Reuters / FXStreet / QZ", "高",
+     "紐約 Fed 總裁 Williams 警告「若通膨未降溫，升息仍在選項」；10Y 殖利率挑戰 5% 關卡，30Y 5.22% 處近 20 年高位。前次 CPI 3.5%（低於預期）與 Williams 鷹派言論並存 → 市場對 Fed 路徑定價分歧，高利率環境未解，為長久期科技最大結構性逆風。"),
+    ("半導體全面回檔、與大盤背離（最關鍵）", "IBD / KED Global / TrendForce", "高",
+     "費半 -3.29%，MU -5.55%、INTC -4.81%、AMD -3.62%（本週財報）、AVGO -2.71% 領跌；韓股 Kospi 創紀錄大漲後 -5%。TSMC 利多並存：3nm 月產 18 萬片提前達標、2nm 年底 10 萬片、開發 EMIB 類封裝。判斷為漲多技術回檔+資金輪動（半導體→消費/價值），非 AI 需求轉弱。"),
+    ("本週財報週與季節性", "Investopedia / CNBC / IBD", "中高",
+     "AMD、SpaceX、SanDisk、Eli Lilly 本週發布財報，AMD 為半導體多空試金石；Fundstrat Tom Lee 喊 2027 可能為最佳年份之一，惟 8-9 月為 S&P 全年最弱區間（歷史季節性），短線追高風險上升。"),
+]
+
+holdings = [
+    ("0050 元大台灣50", "—", "—", "台積電權重約五成，TSM ADR -1.23% + 費半 -3.29% → 週二台股開盤承壓（今日台股收 43,436 +0.73% 已部分反映）；帳面 +21%（成本 84.9）", "hold", "持有"),
+    ("006208 富邦台50", "—", "—", "與 0050 同邏輯，費半大跌將拖累週二電子權值；帳面 +19%", "hold", "持有"),
+    ("00878 國泰永續高股息", "32.65", "+0.68%", "高股息防禦屬性，今日台股盤中逆勢上漲；8 月除權息旺季，續建 4 週策略不受美股影響", "buy", "增持"),
+    ("00919 群益精選高息", "29.54", "-0.10%", "平盤、殖利率保護，帳面微正報酬", "hold", "持有"),
+    ("00983D 富邦複合收益", "10.10", "-0.20%", "US30Y 5.224% 仍在 5.20% 防禦門檻上方 → 維持底倉、暫緩新增", "pause", "暫緩"),
+    ("00646 元大S&P500", "76.70", "+0.66%", "S&P +0.55% 續創高，受惠油價崩跌+殖利率回落；美股佔比超標不追高", "hold", "持有"),
+    ("貝萊德科技（保單）", "—", "—", "NVDA -1.07%、AVGO -2.71% → 淨值短線受壓；AI 資本開支長線邏輯未變", "hold", "持有"),
+    ("安聯AI收益成長（保單）", "—", "—", "AI 半導體 -1%~-3% 全面回檔、淨值短線承壓；TSMC 2nm/3nm 擴產與高盛 2027 漲價論支撐基本面", "hold", "持有"),
+    ("保單基金（第一金/安聯）", "—", "—", "配息 SOP 維持 hold；保單 relay 最晚申請日才轉換，無 30 分鐘轉換風險", "hold", "持有"),
+]
+
+alloc = [
+    ("台股市值型成長", "3,281,225", "20.5%", "23.5%", "-3.0pp", "ok", "略低"),
+    ("美股市值型成長", "5,152,391", "32.3%", "30.0%", "+2.3pp", "over", "超標"),
+    ("防守型配息", "1,881,453", "11.8%", "19.0%", "-7.2pp", "warn", "嚴重不足"),
+    ("債券", "2,723,627", "17.0%", "13.0%", "+4.0pp", "over", "超標"),
+    ("現金/安全網", "2,936,923", "18.4%", "14.5%", "+3.9pp", "over", "超標"),
+]
+
+sec5 = """<ul>
+<li><b>增持：</b><span class='badge buy'>00878 續建 4 週</span>（台股逆勢上漲驗證防禦屬性）；防守型配息（00878/00713/0056 等）以每筆 &lt;5 萬元分批補碼，逐步將防守 11.8% 補向 19%，優先處理最大偏離。</li>
+<li><b>持有：</b>0050/006208（台股核心，費半大跌屬技術回檔，不砍倉）；00919（配息保護）；00646/009823（美股超標，靠配息導流自然降槓）；保單基金（hold）。</li>
+<li><b>減碼：</b>美股 32.3% &gt; 30% 目標 — 逢反彈分批小額減碼美股科技（00924 為候選），資金轉往台股高股息；受限單筆≥5萬暫停令，改分批小額執行。</li>
+<li><b>暫緩：</b><span class='badge pause'>00983D 新增</span>（防禦模式+複合債券）；債券類 17.0% 已超標 4pp，不新增；單筆 ≥5 萬元買單全數暫停；不加碼美股長久期科技。</li>
+<li><b>現金紀律：</b>現金 18.4% &gt; 14.5% 目標，惟高於 6 個月生活費底線 3.4 倍（底線 851,748），緩衝充足；若防守補碼使現金降至 15% 以下即停止補碼。</li>
+<li><b>巴菲特視角：</b>費半 -3.29% 與美股創高並存的「分裂盤」正是考驗紀律之時——不因單日波動改變 00878 續建與防守補碼計畫，也不因油價利多追高美股；「別人恐懼我貪婪」僅適用於已規劃的防守缺口，且受限單筆≥5萬暫停令，採小額分批、以時間換空間。</li>
+</ul>"""
+
+sec6 = """<div class="risk-line"><b>US30Y 現值 5.224%</b>（Yahoo Finance ^TYX 即時，前收 5.275%）</div>
+<div class="risk-line" style="border-left-color:var(--yel)">⚠️ <b>5.20% 防禦門檻：仍觸發</b>（5.224% &gt; 5.20% → 模式A 防禦持續：不新增債券、00983D/PIMCO 維持底倉）</div>
+<div class="risk-line" style="border-left-color:var(--grn)">✅ <b>5.30% 凍結紅線：未觸發</b>（5.224% &lt; 5.30%），但差距僅 <b>7.6bp</b>、極度接近；若美伊談判破局或 Fed 轉鷹，30Y 隨時可能越線 → 列為明日首要監控指標</div>
+<div class="risk-line">📉 10Y 4.688%，長短天期利差結構正常；油價崩跌為殖利率回落主因，續航力待觀察</div>
+<div class="risk-line" style="border-left-color:var(--blu)">🏦 <b>國泰核貸狀態：</b>核貸進行中，順延至 8/4（明日週二）撥款，利率 2.6%；撥款前不預支加碼，撥款後依防守補碼計畫小額分批執行</div>
+<div class="risk-line">✅ 三筆永豐房貸正常繳納；大義街房貸已清償；四大信用卡列管正常；配息 SOP hold、無 30 分鐘轉換風險</div>"""
+
+def build(title, filename, subtitle):
+    kpi_html = "".join(
+        f"<div class='box'><div class='lbl'>{l}</div><div class='val' style='color:var(--{c})'>{v}</div><div class='lbl'>{s}</div></div>"
+        for l, v, s, c in kpi)
+    ev_rows = "".join(
+        f"<tr><td><b>{e}</b></td><td>{src}</td><td><span class='badge cred'>{cred}</span></td><td>{imp}</td></tr>"
+        for e, src, cred, imp in events)
+    hd_rows = "".join(
+        f"<tr><td><b>{n}</b></td><td class='num'>{p}</td><td class='num'>{chg}</td><td>{note}</td><td><span class='badge {b}'>{act}</span></td></tr>"
+        for n, p, chg, note, b, act in holdings)
+    al_rows = "".join(
+        f"<tr><td>{n}</td><td class='num'>{v}</td><td class='num'>{a}</td><td class='num'>{t}</td><td class='num {'pos' if '+' in g else 'neg'}'>{g}</td><td><span class='badge {b}'>{s}</span></td></tr>"
+        for n, v, a, t, g, b, s in alloc)
+    html = f"""<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
+<style>{CSS}</style></head><body><div class="wrap">
+
+<header>
+<h1>🐉 龍九控股 — 美股緊急應變報告</h1>
+<div class="sub">📅 {subtitle}｜Chief Reporter + 美股危機應變官｜六大章節完整版</div>
+<div class="alert-bar">⚠️ 費半 -3.29% 與指數創高背離（半導體重挫）｜🛢️ 油價 -6.34%（美伊降溫）｜🌡️ US30Y 5.224%（防禦模式，距 5.30% 紅線僅 7.6bp）｜🛡️ 防守缺口 -7.2pp</div>
+</header>
+
+<div class="kpi">{kpi_html}</div>
+
+<div class="card"><h2>一、市場概況 <span class="tag">Yahoo Finance 即時 21:33 TW（開盤）</span></h2>{sec1}</div>
+
+<div class="card"><h2>二、重大事件分析 <span class="tag">4 大驅動事件</span></h2>
+<table><tr><th style="width:26%">事件</th><th style="width:16%">來源</th><th>可信度</th><th>對龍九持倉之意涵</th></tr>{ev_rows}</table>
+<p style="margin-top:10px;font-size:13px;color:var(--mut)">核心判斷：油價崩跌 + 殖利率回落推升寬基指數創高，惟費半 -3.29% 顯示 AI 半導體漲多回檔+資金輪動；Williams 鷹派言論使高利率環境未解，本週 AMD 財報為半導體多空關鍵。</p></div>
+
+<div class="card"><h2>三、持倉關聯分析 <span class="tag">逐檔檢視</span></h2>
+<table><tr><th>標的</th><th>現價</th><th>今日</th><th>關聯分析</th><th>動作</th></tr>{hd_rows}</table></div>
+
+<div class="card"><h2>四、資產配置透視 <span class="tag">snapshot penetration.actual_twd｜臨時階段目標</span></h2>
+<table><tr><th>類別</th><th>金額 (TWD)</th><th>實際</th><th>目標</th><th>偏離</th><th>狀態</th></tr>{al_rows}</table>
+<ul style="margin-top:10px">
+<li>⚠️ 唯一結構缺口：<b>防守型配息 -7.2pp</b>（11.8% vs 19%），優先處理最大偏離。</li>
+<li>✅ 安全網（債券+現金）合計 35.4%，緩衝充足；現金為 6 個月生活費底線（851,748）之 <b>3.4 倍</b>，runway 27.1 個月。</li>
+<li>美股 +2.3pp、債券 +4.0pp、現金 +3.9pp 超標 → 以「配息導流 + 暫緩新增」自然收斂，不主動砍倉。</li>
+</ul></div>
+
+<div class="card"><h2>五、巴菲特/蒙格式建議 <span class="tag">臨時階段規則：00878續建4週｜00983D暫緩｜單筆≥5萬暫停｜現金底線6個月</span></h2>{sec5}</div>
+
+<div class="card"><h2>六、風控檢查 <span class="tag">US30Y 防禦/凍結紅線｜國泰核貸</span></h2>{sec6}
+<p style="margin-top:10px;font-size:13px;color:var(--mut)">結論：美股「指數創高、半導體重挫」的分裂格局。防守型配息 -7.2pp 仍為唯一結構缺口，00878 續建 4 週、小額分批補防守、00983D 與單筆≥5萬暫緩、現金安全網 3.4 倍充足；明日國泰撥款（利率 2.6%）+ 30Y 殖利率為兩大監控焦點。整體維持「防禦為先、分批再平衡」總基調。</p></div>
+
+<footer>🐉 龍九控股 emergency response ｜ generated {subtitle} ｜ 數據來源：Yahoo Finance 即時、Google News RSS（CNBC/WSJ/Reuters/IBD）、snapshot.json、Company_Ledger.md</footer>
+</div></body></html>"""
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(html)
+    print("written:", filename, len(html), "bytes")
+
+build("龍九控股｜美股緊急應變報告 2026-08-03", f"emergency_report_{today}.html", "2026-08-03 21:35 美股開盤")
+build("龍九控股｜美股緊急應變報告 2026-08-03（GitHub 同步版）", f"emergency_taiex_report_{today}.html", "2026-08-03 21:35 美股開盤（GitHub Pages 同步）")
