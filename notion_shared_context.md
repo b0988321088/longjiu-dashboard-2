@@ -1,11 +1,15 @@
-# Strategic Handbook for 2026-08-02 (Not Found)
+# Strategic Handbook for 2026-08-03
+# 戰略手稿：2026-07-27 00983D策略裁決：方案B
+來源頁面：3aafc735-d433-816a-b911-fe94103334da
+讀取時間：2026-08-03T06:00:36.615137
+
 
 ---
 
 ## Latest Asset Snapshot
-- **Generated At**: 2026-07-28T22:13:00
+- **Generated At**: 2026-08-02T22:36:52.916798
 - **Version**: v5.0.10-true-value-correction
-- **Date**: 2026-08-01
+- **Date**: 2026-08-02
 - **Total Assets**: 15975619
 - **Total Liabilities**: 21127022
 - **Net Worth**: -5151403
@@ -56,7 +60,7 @@
 - **Saa Framework**: {'updated_at': '2026-07-18', 'description': '使用者主觀資產分類框架，用於穿透分析與動態再平衡', 'targets': {'市值型成長': {'target_pct': '30%', 'purpose': '長期資本增值', 'risk': '高', 'rebalance_trigger': '±10%', 'holdings': ['0050', '006208', '009816', '00981A', '00984A', '貝萊德A10', '聯博美國成長', '安聯AI收益成長', '路博邁5G', '台新美日台半導體', '統一奔騰', '00924']}, '債券型/防禦': {'target_pct': '60%', 'purpose': '穩定配息+避險+退休現金流基石', 'risk': '低', 'rebalance_trigger': '±10%', 'holdings': ['安聯保單A', '安聯保單B', '第一金FL65', 'PIMCO', '摩根M&G', '00878', '00919', '00713', '0056', '00646', '009823']}, '流動資金/安全網': {'target_pct': '10%', 'purpose': '生活保底+應急+機會子彈', 'risk': '極低', 'rebalance_trigger': '±5%', 'holdings': ['高利活存', '活期存款', '現金部位']}}, 'note': '目標：成長30% + 防禦60% + 安全網10%。防禦內含配息型高股息+債券+保險保單', 'opportunity_bullet': {'enabled': True, 'trigger_condition': '台股大盤跌幅 >= 15% 或 目標ETF回檔 >= 20%', 'deployment_speed': '分批進場，大跌後第1週進30%、第2週進70%', 'historical_evidence': '台股長年回檔後約2週內反弹', 'exit_condition': '反弹收益達 8-12% 或 1個月內未反弹則撤離', 'max_allocation': '機會子彈 ≤ 20% 安全網部位', 'note': '不是抄底，而是追反弹；嚴格止損'}}
 - **Saa Targets**: {'growth': 0.3, 'defensive': 0.6, 'safety_net': 0.1, 'note': '安全網=機會子彈；防禦=配息+債券+保險；成長=台股+美股權值'}
 - **Tactical Rules**: {'opportunity_bullet_auto': True, 'panic_threshold_pct': 0.15, 'deploy_week1_pct': 0.3, 'deploy_week2_pct': 0.7, 'take_profit_pct': 0.1, 'stop_loss_days': 30, 'note': '單週漲跌15%為觸發點；大跌追反彈，大漲追確認趨勢', 'trigger': '單週漲跌幅 >= 15%', 'max_allocation': '機會子彈 ≤ 20% 安全網部位'}
-- **Penetration**: {'updated_at': '2026-08-01', 'source': 'calc_penetration (auto-calibrated)', 'targets': {'台股市值型目標': 35, '美股市值型目標': 30, '配息型目標': 25, '債券型目標': 5, '現金目標': 5}, 'actual_pct': {'台股市值型成長': 20.5, '美股市值型成長': 32.3, '防守型配息': 11.8, '債券': 17.0, '現金/安全網': 18.4}, 'gaps': {'台股市值型成長': -14.5, '美股市值型成長': 2.3, '防守型配息': -13.2, '債券及安全現金': 25.4}, 'actual_twd': {'台股市值型成長': 3281225, '美股市值型成長': 5152391, '防守型配息': 1881453, '債券': 2723627, '現金/安全網': 2936923}, 'alert': '台股不足14.5pp；現金+債券超標25.4pp'}
+- **Penetration**: {'updated_at': '2026-08-02', 'source': 'calc_penetration (auto-calibrated)', 'targets': {'台股市值型目標': 20, '美股市值型目標': 30, '配息型目標': 20, '債券型目標': 15, '現金目標': 15}, 'actual_pct': {'台股市值型成長': 20.5, '美股市值型成長': 32.3, '防守型配息': 11.8, '債券': 17.0, '現金/安全網': 18.4}, 'gaps': {'台股市值型成長': 0.5, '美股市值型成長': 2.3, '防守型配息': -8.2, '債券及安全現金': 5.4}, 'actual_twd': {'台股市值型成長': 3281225, '美股市值型成長': 5152391, '防守型配息': 1881453, '債券': 2723627, '現金/安全網': 2936923}, 'alert': '台股不足0.5pp；現金+債券超標5.4pp'}
 - **Penetration Canonical**: {'updated_at': '2026-07-18', 'source': 'dashboard screenshot + buffett_cto_analyzer', 'total_invest_assets': 52249106, 'categories': {'台股市值型成長': {'twd': 2065675, 'pct': 7.2, 'target_pct': 40.0, 'status': '嚴重低標'}, '美股市值型成長': {'twd': 13226058, 'pct': 46.1, 'target_pct': 40.0, 'status': '嚴重超標'}, '防守型配息': {'twd': 5307637, 'pct': 18.5, 'target_pct': 30.0, 'status': '不足'}, '債券及安全現金': {'twd': 9697196, 'pct': 33.8, 'target_pct': 25.0, 'status': '超標'}, '現金/安全網': {'twd': 2200410, 'pct': 7.7, 'target_pct': 10.0, 'status': '略低'}, '不動產': {'twd': 34000000, 'pct': 51.1, 'target_pct': 'N/A', 'status': '穩定'}}, 'rebalance_summary': {'growth_drift': '+23.3pp', 'defense_drift': '-41.5pp', 'safety_drift': '-6.7pp', 'action_required': '美股減碼、台股加碼、防禦補足、安全網重建'}, 'opportunity_bullet': {'trigger': '單週漲跌幅 >= 15%', 'current_taiex_1w': '-6.5%', 'status': '監控中，未觸發'}}
 - **Known Issues**: [{'id': 'issue-001', 'type': 'cathay_bank_merge_impact', 'description': '國泰世華銀行併網後，MB 明細出現大量未分類交易（3,060,921 TWD，佔近30天 16.3%）', 'root_cause': '帳戶合併後分類規則未同步，導致消費分類標籤缺失', 'affected_value': '月支出計算', 'raw_mb_30d': 222910, 'canonical': 141958, 'status': 'resolved', 'resolution': '以 snapshot 141,958 為真值；222,910 存入 history 備查', 'resolved_at': '2026-07-18'}]
 - **Monthly Expense History**: {'historical_baseline': 140000, '2026-07-14': 141958, '2026-07-18_mb_raw_30d': 222910, '2026-07-18_mb_classified': 141958, 'note': '222,910 為 MB 近30天未完全分類值（含未分類 3,060,921），不作為真值', 'canonical': 141958, 'updated_at': '2026-07-18'}
@@ -179,11 +183,11 @@
 
 ---
 
-## Schedule Events for 2026-08-02
-- **動態自我檢討週報產出（19:00）**:  (📋 例行)
-- **高雄行程（第二天）**:  (🔴 重要)
-- **國泰轉貸預計完成**:  (📋 行程)
-- **高雄二日遊(兩天一夜)**:  (📋 行程)
+## Schedule Events for 2026-08-03
+- **體檢**: — (📋 重要)
+- **部門活動**: — (📋 行程)
+- **M&G入息 → 摩根JPM 轉換（8/3 提出，搶 8/7 摩根除息）**:  (🔴 重要)
+- **8/3 段部體檢 + 電子信箱認證設定**:  (📋 行程)
 
 ---
 
