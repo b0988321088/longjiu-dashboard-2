@@ -236,17 +236,26 @@ def extract_snapshot(snap: dict) -> dict:
     insurance_detail = _build_insurance_detail(snap, insurance)
 
     # Build display breakdown with JPY funds converted to TWD
+    # 支援兩種結構：扁平 {name: val} 或嵌套 {群組: {name: val}}（自由PAY/一般申購）
     jpy_rate = snap.get('fx_rates', {}).get('jpy_to_twd', 0.2)
     display_funds = {}
     for name, val in snap.get('funds_breakdown', {}).items():
-        if '日元' in name or '日圓' in name or 'JPY' in name.upper():
-            jpy_val = val
-            # Handle already converted values: if val > 1_000_000 assume still JPY
-            twd = round(jpy_val * jpy_rate)
-            display_name = name + '（換算台幣）'
-            display_funds[display_name] = twd
-        else:
-            display_funds[name] = val
+        if isinstance(val, dict):
+            # 嵌套結構：群組內再展平（跳過「小計」聚合值）
+            for sub_name, sub_val in val.items():
+                if sub_name == '小計':
+                    continue  # 小計是聚合值，不重複列
+                if isinstance(sub_val, dict):
+                    continue
+                if '日元' in sub_name or '日圓' in sub_name or 'JPY' in sub_name.upper():
+                    display_funds[f"{name}-{sub_name}（換算台幣）"] = round(float(sub_val) * jpy_rate)
+                else:
+                    display_funds[f"{name}-{sub_name}"] = float(sub_val)
+        elif isinstance(val, (int, float)):
+            if '日元' in name or '日圓' in name or 'JPY' in name.upper():
+                display_funds[name + '（換算台幣）'] = round(float(val) * jpy_rate)
+            else:
+                display_funds[name] = float(val)
     # Add gap fund if present
     for name, val in snap.get('funds_gap_fill', {}).items():
         display_funds[name] = val
@@ -690,9 +699,16 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     charts_html = build_trend_charts(history, ex)
 
     # Fund detail card from screenshot
+    # 最終防護：跳過任何非數值（dict/list）項目，避免 TypeError
+    def _fmt_fund_val(v):
+        if isinstance(v, (int, float)):
+            return f"{v:,.0f}"
+        return str(v)
+
     fund_detail_rows = "".join(
-        f"<tr><td>{k}</td><td class='num'>{v:,.0f}</td><td>{'JPY換算' if '日元' in k else 'TWD'}</td></tr>"
+        f"<tr><td>{k}</td><td class='num'>{_fmt_fund_val(v)}</td><td>{'JPY換算' if '日元' in k else 'TWD'}</td></tr>"
         for k, v in ex.get('fund_breakdown_display', {}).items()
+        if isinstance(v, (int, float))
     )
     fund_card = (
         '<div class="card"><h2>📊 基金部位</h2>'
