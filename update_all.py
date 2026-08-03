@@ -57,10 +57,19 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         else:
             ins_bonds = round(2_780_466*0.35 + 3_136_436*0.55 + 902_679*0.50)
         ins_eq = int(ins) - ins_bonds - _fj
-    # 分類基金（鉅亨基金帳戶）
+    # 分類基金（鉅亨基金帳戶）— 支援扁平 {name: val} 或嵌套 {群組: {name: val}}
     _fund_tw = _fund_us = _fund_def = 0
     _fb = (snap or {}).get("funds_breakdown", {})
+    _fb_flat = {}
     for _fn, _fval in _fb.items():
+        if isinstance(_fval, dict):
+            for _sn, _sv in _fval.items():
+                if _sn == "小計" or not isinstance(_sv, (int, float)):
+                    continue
+                _fb_flat[_sn] = _sv
+        elif isinstance(_fval, (int, float)):
+            _fb_flat[_fn] = _fval
+    for _fn, _fval in _fb_flat.items():
         if "台中銀台灣優息" in _fn:
             _fund_def += _fval
         elif any(k in _fn for k in ["路博邁5G", "台新美日台", "貝萊德", "安聯AI", "聯博", "摩根", "M&G", "安聯收益成長", "安聯美國"]):
