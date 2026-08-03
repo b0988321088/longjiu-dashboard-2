@@ -318,7 +318,17 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _div_expected = tv.get("dividend_month_expected", 100_000)  # 保守預估
     _fund_bd = tv.get("funds_breakdown", {}) or {}
     if _fund_bd:
-        _fund_detail = " / ".join(f"{k} {v:,}" for k, v in _fund_bd.items())
+        # 支援兩種結構：扁平 {name: val} 或嵌套 {群組: {name: val}}
+        _fund_parts = []
+        for _fk, _fv in _fund_bd.items():
+            if isinstance(_fv, dict):
+                for _sk, _sv in _fv.items():
+                    if _sk == "小計" or not isinstance(_sv, (int, float)):
+                        continue
+                    _fund_parts.append(f"{_fk}-{_sk} {_sv:,}")
+            elif isinstance(_fv, (int, float)):
+                _fund_parts.append(f"{_fk} {_fv:,}")
+        _fund_detail = " / ".join(_fund_parts) if _fund_parts else f"明細待補（總市值 {tv.get('funds', 0):,}）"
     else:
         _fund_detail = f"明細待補（總市值 {tv.get('funds', 0):,}）"
     # 總資產（含不動產）動態計算 — 不再硬編碼
