@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-08-04T15:54:26.136899",
+  "generated_at": "2026-08-04T16:20:01.726698",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-04",
-  "total_assets": 16161248,
-  "total_liabilities": 21127022,
-  "net_worth": -5151403,
+  "total_assets": 16240181,
+  "total_liabilities": 21088175,
+  "net_worth": -4847994,
   "debt_ratio": 42.3,
   "monthly_income": 218102,
   "monthly_expense": 141958,
@@ -67,11 +67,11 @@
   "firstjin_current_value": 1934260,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
-  "bank_assets_moneybook": 2835723,
-  "bank_assets_memo": "MB 20260731 正數帳戶合計；排除信用卡溢繳",
+  "bank_assets_moneybook": 2914656,
+  "bank_assets_memo": "MB 20260804 正數帳戶合計；排除信用卡溢繳",
   "monthly_expense_mb": 199186,
   "monthly_expense_mb_note": "MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償",
-  "credit_card_pending": 35811,
+  "credit_card_pending": 37408,
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
   "securities_total": 2720980,
@@ -111,7 +111,7 @@
     }
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
-  "real_liquid_assets": 2835723,
+  "real_liquid_assets": 2914656,
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
   "passive_income": {
     "fund_dividend_monthly": 0,
@@ -504,25 +504,25 @@
     },
     "actual_pct": {
       "台股市值型成長": 9.4,
-      "美股市值型成長": 36.1,
-      "防守型配息": 18.9,
-      "債券": 18.1,
-      "現金/安全網": 17.5
+      "美股市值型成長": 35.9,
+      "防守型配息": 18.8,
+      "債券": 18.0,
+      "現金/安全網": 17.9
     },
     "gaps": {
       "台股市值型成長": -10.6,
-      "美股市值型成長": 6.1,
-      "防守型配息": -1.1,
-      "債券及安全現金": 5.6
+      "美股市值型成長": 5.9,
+      "防守型配息": -1.2,
+      "債券及安全現金": 5.9
     },
     "actual_twd": {
       "台股市值型成長": 1520569.0,
       "美股市值型成長": 5829072.0,
       "防守型配息": 3050058.0,
       "債券": 2925827.0,
-      "現金/安全網": 2835722.0
+      "現金/安全網": 2914655.0
     },
-    "alert": "台股不足10.6pp；現金+債券超標5.6pp"
+    "alert": "台股不足10.6pp；現金+債券超標5.9pp"
   },
   "penetration_canonical": {
     "updated_at": "2026-07-18",
@@ -642,26 +642,26 @@
   "securities_tw_growth": 1007090,
   "securities_tw_defense": 1022090,
   "securities_us_growth": 76050,
-  "cash": 2835723,
+  "cash": 2914656,
   "high_yield_savings": 2200410,
   "regular_cash": 1684210,
   "mortgages": [
     {
       "bank": "永豐銀行",
       "name": "房屋貸款",
-      "balance": 5759374,
+      "balance": 5747502,
       "account": "市政分行"
     },
     {
       "bank": "永豐銀行",
       "name": "房屋貸款",
-      "balance": 4607578,
+      "balance": 5747502,
       "account": "營業部DAWHO"
     },
     {
       "bank": "永豐銀行",
       "name": "房屋貸款",
-      "balance": 2792470,
+      "balance": 5747502,
       "account": "未知"
     }
   ],
@@ -717,7 +717,7 @@
   "travel_allowance": 12000,
   "second_salary": 39121,
   "bonus_july": 39121,
-  "cash_total": 2835723,
+  "cash_total": 2914656,
   "bonds_cash": 10262984,
   "monthly_dividend_breakdown": {
     "allianz": 95347,
@@ -758,10 +758,10 @@
     "台新Richart": 12368,
     "玉山UNI": 18420,
     "永豐SPORT": 3425,
-    "國泰CUBE": 0,
+    "國泰CUBE": 1597,
     "富邦momo": 1598
   },
-  "mortgage_balance": 13159422,
+  "mortgage_balance": 13120575,
   "updated_by": "moneybook_20260723",
   "rent_qiu_en": {
     "name": "邱*恩",
@@ -770,10 +770,10 @@
     "total": 23100,
     "note": "=大義街二三樓，房租21,000+bonus 2,100；房租應收不含bonus"
   },
-  "mortgage": 13159422,
-  "mortgage_yy": 5759374,
-  "mortgage_yydu": 4607578,
-  "mortgage_xz": 2792470,
+  "mortgage": 13120575,
+  "mortgage_yy": 5747502,
+  "mortgage_yydu": 4590782,
+  "mortgage_xz": 2782291,
   "financial_mortgage_interest": 10000,
   "dbs_balance": 17287,
   "financial_mortgage": 3006447,
