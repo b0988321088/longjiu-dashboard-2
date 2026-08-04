@@ -705,11 +705,25 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
             return f"{v:,.0f}"
         return str(v)
 
-    fund_detail_rows = "".join(
-        f"<tr><td>{k}</td><td class='num'>{_fmt_fund_val(v)}</td><td>{'JPY換算' if '日元' in k else 'TWD'}</td></tr>"
-        for k, v in ex.get('fund_breakdown_display', {}).items()
-        if isinstance(v, (int, float))
-    )
+    fund_detail_rows = ""
+    _fb = ex.get("fund_breakdown_display", {}) or {}
+    for _grp, _funds in _fb.items():
+        if not isinstance(_funds, dict):
+            continue
+        _sub = _funds.get("小計")
+        if _sub is None:
+            _sub = sum(v for v in _funds.values() if isinstance(v, (int, float)))
+        fund_detail_rows += (
+            f"<tr style='font-weight:600;background:#f8fafc'><td>{_grp}</td>"
+            f"<td class='num'>{_sub:,.0f}</td><td>TWD</td></tr>"
+        )
+        for _k, _v in _funds.items():
+            if _k == "小計" or not isinstance(_v, (int, float)):
+                continue
+            fund_detail_rows += (
+                f"<tr style='padding-left:18px;font-size:13px;color:#6e6e73'>"
+                f"<td>　{_k}</td><td class='num'>{_v:,.0f}</td><td>TWD</td></tr>"
+            )
     fund_card = (
         '<div class="card"><h2>📊 基金部位</h2>'
         '<div class="table-wrap"><table><thead><tr><th>基金名稱</th><th class=\'num\'>市值</th><th>幣別</th></tr></thead><tbody>'
