@@ -172,15 +172,27 @@ if _fb:
     w(f"<td>🇹🇼 台股 {_fund_tw:,} + 🌎 美股 {_fund_us:,} + 🛡️ 防守型 {_fund_def:,}</td></tr>")
     w("</tbody></table></div>")
 
-# 4. Insurance
-w("<div class='card'><h2>🏦 保險穿透</h2>")
-w("<table><thead><tr><th>項目</th><th class='num'>金額</th></tr></thead><tbody>")
-w(f"<tr><td>安聯保單A</td><td class='num'>4,997,734</td></tr>")
-w(f"<tr><td>安聯保單B</td><td class='num'>2,647,289</td></tr>")
-w(f"<tr><td>第一金FL65</td><td class='num'>1,952,366</td></tr>")
-w(f"<tr style='border-top:2px solid #3b82f6;font-weight:700'><td>保險合計</td><td class='num'>{ins:,}</td></tr>")
+# 4. Insurance（成分動態顯示，2026-08-04 改：不再硬編碼）
+w("<div class='card'><h2>🏦 保險穿透（含成分）</h2>")
+w("<table><thead><tr><th>項目</th><th class='num'>金額</th><th>穿透分類</th></tr></thead><tbody>")
+_bond_ratio = {"安聯收益成長": 0.35, "M&G入息": 0.55, "安聯AI收益成長": 0.50, "PIMCO收益增長": 0.48, "摩根多重收益": 0.45}
+_ins_brk = snap.get("insurance_breakdown", {})
+for _pol, _pfunds in [("安聯保單A", _ins_brk.get("policy_a_funds", {})), ("安聯保單B", _ins_brk.get("policy_b_funds", {}))]:
+    _ps = sum(v for v in _pfunds.values())
+    w(f"<tr><td><b>{_pol}</b></td><td class='num'>{_ps:,}</td><td></td></tr>")
+    for _fn, _fv in sorted(_pfunds.items(), key=lambda x: -x[1]):
+        if _fn in ("貝萊德世界科技A10", "貝萊德科技"):
+            _cls = "美股 100%"
+        else:
+            _br = _bond_ratio.get(_fn, 0.5)
+            _cls = f"債券 {_br*100:.0f}% / 美股 {(1-_br)*100:.0f}%"
+        w(f"<tr style='padding-left:20px;font-size:12px;color:#6e6e73'><td>　{_fn}</td><td class='num'>{_fv:,}</td><td>{_cls}</td></tr>")
+_fj_v = snap.get("firstjin_current_value", 1934260)
+_fj_name = snap.get("firstjin_fund_name", "FJ33-摩根多重收益(美元對沖)A月配")
+w(f"<tr><td><b>第一金FL65（{_fj_name[:32]}…）</b></td><td class='num'>{_fj_v:,}</td><td>防守型配息 100%</td></tr>")
+w(f"<tr style='border-top:2px solid #3b82f6;font-weight:700'><td>保險合計</td><td class='num'>{ins:,}</td><td></td></tr>")
 w("</tbody></table>")
-w("<p style='font-size:12px;color:#64748b;margin-top:8px'>保險成分已透過 fund_ratios 穿透至美股/債券</p>")
+w("<p style='font-size:12px;color:#64748b;margin-top:8px'>成分債券比例：安聯收益成長 35% / M&G入息 55% / 安聯AI收益成長 50% / PIMCO收益增長 48%／貝萊德系列 100% 美股；FL65（摩根多重收益美元對沖）全數防守型配息</p>")
 w("</div>")
 
 # 5. Calculation methodology
