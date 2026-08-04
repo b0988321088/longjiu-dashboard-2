@@ -1413,6 +1413,8 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__DR_CASH_RUNWAY__", _rw_text)
     html = html.replace("__FIRSTJIN__", fmt(tv.get("firstjin", 0)))
     html = html.replace("__TOTAL_MONTHLY__", fmt(tv.get("monthly_dividend", 0)))
+    # 本月保單合計已領配息（2026-08-04 改：不再硬編碼 0，讀保單配息實收）
+    html = html.replace("__DR_POLICY_DIV_TOTAL__", fmt(tv.get("insurance_dividend", 0)))
     html = html.replace("__WORKING_INCOME__", fmt(tv.get("monthly_income", 0)))
     html = html.replace("__WORKING_SURPLUS__", f"+{fmt(tv.get('working_surplus', 0))}")
     _retire_income = tv.get("dividend_month_expected", 100_000) + tv.get("rent_monthly", 80_100)  # 常態：配息保守 + 房租應收
