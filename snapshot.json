@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-04T11:48:39.611712",
+  "generated_at": "2026-08-04T12:32:26.186366",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-04",
-  "total_assets": 16160247,
+  "total_assets": 16160258,
   "total_liabilities": 21127022,
   "net_worth": -5151403,
   "debt_ratio": 42.3,
@@ -10,7 +10,7 @@
   "monthly_expense": 141958,
   "working_surplus": 76144,
   "retirement_surplus": 18142,
-  "securities_total_market_value": 2720980,
+  "securities_total_market_value": 2822080,
   "fund_market_value": 762676,
   "moneybook_total": 3614169,
   "high_yield_savings_total": 2200410,
@@ -67,7 +67,7 @@
   "firstjin_current_value": 1934260,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
-  "bank_assets_moneybook": 2936923,
+  "bank_assets_moneybook": 2835723,
   "bank_assets_memo": "MB 20260731 正數帳戶合計；排除信用卡溢繳",
   "monthly_expense_mb": 199186,
   "monthly_expense_mb_note": "MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償",
@@ -111,7 +111,7 @@
     }
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
-  "real_liquid_assets": 2936923,
+  "real_liquid_assets": 2835723,
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
   "passive_income": {
     "fund_dividend_monthly": 0,
@@ -278,10 +278,10 @@
       },
       {
         "ticker": "00983D",
-        "shares": 10000,
-        "price": 10.09,
+        "shares": 20000,
+        "price": 10.12,
         "cost": 10.09,
-        "value": 100900,
+        "value": 202400,
         "pnl": 200,
         "pnl_pct": 0.2,
         "name": "主動富邦複合收益"
@@ -491,23 +491,23 @@
       "台股市值型成長": 9.4,
       "美股市值型成長": 36.1,
       "防守型配息": 18.9,
-      "債券": 17.5,
-      "現金/安全網": 18.2
+      "債券": 18.1,
+      "現金/安全網": 17.5
     },
     "gaps": {
       "台股市值型成長": -10.6,
       "美股市值型成長": 6.1,
       "防守型配息": -1.1,
-      "債券及安全現金": 5.7
+      "債券及安全現金": 5.6
     },
     "actual_twd": {
       "台股市值型成長": 1525199.0,
       "美股市值型成長": 5825872.0,
       "防守型配息": 3048038.0,
-      "債券": 2824527.0,
-      "現金/安全網": 2936722.0
+      "債券": 2926027.0,
+      "現金/安全網": 2835122.0
     },
-    "alert": "台股不足10.6pp；現金+債券超標5.7pp"
+    "alert": "台股不足10.6pp；現金+債券超標5.6pp"
   },
   "penetration_canonical": {
     "updated_at": "2026-07-18",
@@ -621,13 +621,13 @@
     "00918": 32580,
     "009823": 103300,
     "00888": 127800,
-    "00983D": 101300,
+    "00983D": 202400,
     "00924": 99000
   },
   "securities_tw_growth": 1007090,
   "securities_tw_defense": 1022090,
   "securities_us_growth": 76050,
-  "cash": 2936923,
+  "cash": 2835723,
   "high_yield_savings": 2200410,
   "regular_cash": 1684210,
   "mortgages": [
@@ -702,7 +702,7 @@
   "travel_allowance": 12000,
   "second_salary": 39121,
   "bonus_july": 39121,
-  "cash_total": 2936923,
+  "cash_total": 2835723,
   "bonds_cash": 10262984,
   "monthly_dividend_breakdown": {
     "allianz": 95347,
