@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """美股緊急應變 2026-08-05 00:15 (台北) — 美股 8/4 盤中更新（美東 12:16 ET）
 LLM 分析 JSON + Railway/GitHub 雙版 HTML"""
-import json, datetime
+import json, datetime, os
 
 TODAY = "2026-08-05"
 NOW = "2026-08-05 00:15"
@@ -19,6 +19,7 @@ FULL_REPORT = """【一、市場概況】美股週二(8/4)延續週一大漲、�
 【六、風控檢查】① US30Y 現值 5.191%（Yahoo ^TYX 即時，前收 5.231%）：<5.20% 防禦門檻→模式A防禦解除計數 Day 1/3（連3日 <5.20% 即解除流動性觀察期）；距 5.30% 債券凍結紅線尚有 10.9bp 緩衝，未觸發凍結；惟 Fed 按兵不動＋通膨三年高點，殖利率易反彈，不預設單邊。② 國泰核貸：snapshot(8/4) cathay_refinance_amount 仍為 null、原訂 8/4 撥款未見更新紀錄，第一階段審查至 9/25 到期；流程＝資金停泊→清償保單借貸 400 萬→提高信用分數→台銀築巢優利貸 2.185%（10/1 生效）佈局；審查期內 00983D 暫緩、單筆≥5 萬暫停維持。③ 其他風險：7 月非農將公布（Fed 路徑關鍵）；荷莫茲貨輪遇襲顯示談判反覆、油價恐報復性反彈；英特爾封裝競爭消息反覆；META/AMZN 連日走弱＝AI 巨頭資金輪動至半導體，留意獲利了結擴散；AAPL/AMZN 財報後波動未止。④ 結論：費半 +6.07% 續爆發＋S&P 觸歷史新高，多頭確立但已處高位，防禦紀律照舊——00878 續建 4 週、台股小單低吸、00983D 暫緩、單筆≥5 萬暫停、現金底線充足；US30Y 能否連續 3 日收於 5.20% 下方為未來三日首要監控指標。"""
 
 # ============ 寫入 JSON ============
+os.makedirs("data", exist_ok=True)
 d = {"generated_at": NOW, "source": "美股緊急應變", "full_report": FULL_REPORT}
 with open("data/emergency_llm_analysis.json", "w", encoding="utf-8") as f:
     json.dump(d, f, ensure_ascii=False, indent=2)
