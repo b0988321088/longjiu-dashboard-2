@@ -1192,6 +1192,57 @@
       "summary": "台股1,525,199.0 美股5,825,872.0 防守3,048,038.0 債券2,926,027.0 現金2,835,122.0",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "id": "mem-20260804161949-131",
+      "timestamp": "2026-08-04T16:19:49.336409",
+      "agent": "Hermes",
+      "task": "日報2026-08-04",
+      "summary": "證券2,823,070 保單9,739,779 配息0",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20260804161949-132",
+      "timestamp": "2026-08-04T16:19:49.341954",
+      "agent": "Hermes",
+      "task": "資產穿透2026-08-04",
+      "summary": "台股1,520,569.0 美股5,829,072.0 防守3,050,058.0 債券2,925,827.0 現金2,835,722.0",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "timestamp": "2026-08-04T16:35:59.098393",
+      "action": "核准",
+      "name": "資產架構調整指示卡 8/4 最終版：凍結市值大額單/美股收斂30%/台股單筆≤5萬/資金優先序現金>防守>台股",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1785832559",
+      "summary": "流動性觀察期（US30Y高位+國泰撥款）：解除條件=US30Y連3日<5.20%+負債穩定+現金充足；Dashboard警示上線；00983D 10張已執行"
+    },
+    {
+      "timestamp": "2026-08-04T16:54:05.070332",
+      "action": "核准",
+      "name": "ETF擁擠交易風險控管：熱門ETF禁追漲大額、僅回檔小單；4監控指標(規模暴增/溢價>IOPV/同質化/敘述單一)；檢底層重疊",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1785833645",
+      "summary": "穿透報告新增ETF風險章節；週六/週日prompt+技能+記憶已同步；VIP部位優先不擁擠防守配息"
+    },
+    {
+      "timestamp": "2026-08-04T20:04:02.367077",
+      "action": "核准",
+      "name": "FL65摩根多重收益分類定案：維持防守型配息100%（方案A）",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1785845042",
+      "summary": "第一金FL65底層全數轉FJ33摩根多重收益；穿透維持防守型100%，不拆股債"
     }
   ],
   "pending_decisions": [
@@ -1227,6 +1278,6 @@
     }
   ],
   "meta": {
-    "updated_at": "2026-08-04T13:12:39.508427"
+    "updated_at": "2026-08-04T21:47:34.991457"
   }
 }

@@ -1402,6 +1402,15 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
 
     html = html.replace("__INSURANCE_TOTAL__", fmt(tv.get("insurance_total", 0)))
     html = html.replace("__ALLIANZ_AB__", fmt(tv.get("allianz_ab", 0)))
+    # 現金儲備/跑道動態化（2026-08-04 改：不再硬編碼 2,936,923）
+    _cash_rw = tv.get("cash_total") or tv.get("real_liquid_assets") or 0
+    _exp_rw = tv.get("monthly_expense") or 141_958
+    _rw = (_cash_rw / _exp_rw) if _exp_rw else 0
+    _rw_text = (
+        f"以可動用現金 {_cash_rw:,.0f}（Moneybook 唯一真值）進行除數運算。"
+        f"Runway {int(_rw)} / 覆蓋倍數 {_rw:.1f}x，符合財務安全基準線（6個月）。"
+    )
+    html = html.replace("__DR_CASH_RUNWAY__", _rw_text)
     html = html.replace("__FIRSTJIN__", fmt(tv.get("firstjin", 0)))
     html = html.replace("__TOTAL_MONTHLY__", fmt(tv.get("monthly_dividend", 0)))
     html = html.replace("__WORKING_INCOME__", fmt(tv.get("monthly_income", 0)))
@@ -1886,6 +1895,9 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             _s = f"+{_g:.0f}pp" if _g > 0 else f"{_g:.0f}pp"
             _h += f"<li>{_e} <strong>{_l}</strong>：{_v:.0f}%（目標 {_t}%，<span class=\"{_c}\">{_s}</span>）</li>"
         _h += '</ul></div><div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-teal-400">🎯 策略建議</span><ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed">'
+        _h += ("<li class='text-amber-300'><strong>🚨 指示卡（8/4 逐步架構版）：</strong>"
+               "目標配置為中長期方向，容許數月階段偏離，不強迫貼齊；觀察期凍結市值大額單；"
+               "資金優先序＝現金緩衝＞防守＞台股彈性；兩條底線＝現金 ≥85 萬、US30Y 無連 3 日 <5.20% 不開放市值大額進場</li>")
         for _ln in _bl:
             if "補碼" in _ln or "減碼" in _ln or "合理" in _ln:
                 _h += f"<li>{_ln.replace('  ✅ ','').replace('  ⚠️ ','')}</li>"
@@ -1898,14 +1910,14 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         _bond_g = _p["gaps"].get("bond",0)
         _cash_g = _p["gaps"].get("cash",0)
         if _tw_g < -10:
-            _h += "<li><strong>能力圈：</strong>台股嚴重不足，逢低補碼至目標水準，聚焦0050/009816</li>"
+            _h += "<li><strong>能力圈：</strong>台股市值低配屬逐步架構預期，僅回檔小單分批低吸（單筆≤5萬），不強迫貼齊</li>"
         if _us_g > 5:
-            _h += "<li><strong>安全邊際：</strong>美股超標，優先減碼，保留現金等待機會</li>"
+            _h += "<li><strong>安全邊際：</strong>美股超配不急砍，逢反彈分批減碼收斂至30%目標</li>"
         if _bond_g > 5:
-            _h += "<li><strong>分散配置：</strong>債券現金過多，可轉投入台股防守型配息</li>"
+            _h += "<li><strong>分散配置：</strong>債券已超標，停止新增買進</li>"
         if _def_g < -10:
-            _h += "<li><strong>護城河：</strong>防守型配息不足，補00878/00713建立穩定現金流</li>"
-        _h += "<li><strong>現金子彈：</strong>安全邊際充足，等待台股恐慌時加碼</li>"
+            _h += "<li><strong>護城河：</strong>防守型配息第一優先，00878/00713 分批建倉建立穩定現金流</li>"
+        _h += "<li><strong>現金子彈：</strong>觀察期以現金緩衝優先（底線85萬），大義街撥款後僅做VIP最低100-200萬防守配息</li>"
         _h += "</ul></div>"
         _h += "</div></div>"
         html = html.replace("__BUFFETT_DYNAMIC__", _h)

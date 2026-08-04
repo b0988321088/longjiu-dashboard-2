@@ -14,6 +14,12 @@ logger = get_logger("reminder_agent")
 
 BASE = Path(__file__).resolve().parent
 
+# 2026-08-04 修復：cron 的 script 欄位解析到 hermes/scripts，BASE 指錯目錄
+# 導致讀到 07:18 舊 snapshot（美股38%/防守12%）。固定讀 longjiu_system 真值。
+_REPO = Path("C:/Users/bot/Desktop/longjiu_system")
+if _REPO.exists():
+    BASE = _REPO
+
 # ── Telegram 推播 ──
 def tg_send(text: str):
     env_path = Path.home() / "AppData/Local/hermes/.env"

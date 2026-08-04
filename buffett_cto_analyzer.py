@@ -80,8 +80,10 @@ def penetration_analysis(snapshot: dict) -> dict:
                 key_action = "等反彈確認後減碼至目標"
         elif gaps[max_gap_cat] < -5:
             key_risk = f"{TARGET_EMOJI[max_gap_cat]} {TARGET_LABELS[max_gap_cat]} 不足 {gaps[max_gap_cat]:.1f}pp"
-            if max_gap_cat in ("tw_equity", "defensive"):
-                key_action = f"逢低補碼至目標 {TARGETS[max_gap_cat]:.0f}%"
+            if max_gap_cat == "tw_equity":
+                key_action = "台股市值低配屬逐步架構預期：僅回檔小單分批低吸，不強迫貼齊"
+            elif max_gap_cat == "defensive":
+                key_action = f"防守型第一優先：00878/00713 分批建倉至目標 {TARGETS[max_gap_cat]:.0f}%"
         return {
             "actual": actual, "actual_twd": actual_twd, "gaps": gaps,
             "growth_pct": growth_pct, "defense_pct": defense_pct, "safety_pct": safety_pct,
@@ -123,8 +125,10 @@ def penetration_analysis(snapshot: dict) -> dict:
             key_action = "等反彈確認後減碼至目標"
     elif gaps[max_gap_cat] < -5:
         key_risk = f"{TARGET_EMOJI[max_gap_cat]} {TARGET_LABELS[max_gap_cat]} 不足 {gaps[max_gap_cat]:.1f}pp"
-        if max_gap_cat in ("tw_equity", "defensive"):
-            key_action = f"逢低補碼至目標 {TARGETS[max_gap_cat]:.0f}%"
+        if max_gap_cat == "tw_equity":
+            key_action = "台股市值低配屬逐步架構預期：僅回檔小單分批低吸，不強迫貼齊"
+        elif max_gap_cat == "defensive":
+            key_action = f"防守型第一優先：00878/00713 分批建倉至目標 {TARGETS[max_gap_cat]:.0f}%"
     
     return {
         "actual": actual,
@@ -181,28 +185,49 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
     lines.append(f"  債券佔比 {a.get('bond', 0):.1f}%（目標 {TARGETS['bond']}%）")
     
     lines.append("")
-    lines.append("🎯 策略建議：")
-    for cat in ["tw_equity", "us_equity", "defensive"]:
-        gv = g.get(cat, 0)
-        if gv < -5:
-            lines.append(f"  ✅ {TARGET_LABELS[cat]}逢低補碼{abs(gv):.0f}pp")
-        elif gv > 5:
-            lines.append(f"  ⚠️ {TARGET_LABELS[cat]}減碼{gv:.0f}pp")
-        else:
-            lines.append(f"  ✅ {TARGET_LABELS[cat]}合理範圍")
+    lines.append("🎯 策略建議（逐步架構版，2026-08-04）：")
+    _tw_gv = g.get("tw_equity", 0)
+    _us_gv = g.get("us_equity", 0)
+    _def_gv = g.get("defensive", 0)
+    if _tw_gv < -5:
+        lines.append("  ✅ 台股市值低配屬預期：僅回檔小單分批低吸（單筆≤5萬），不強迫貼齊")
+    elif _tw_gv > 5:
+        lines.append(f"  ⚠️ 台股市值超標 {_tw_gv:.0f}pp：凍結大額單，回檔小單分批")
+    else:
+        lines.append("  ✅ 台股市值合理範圍（維持逐步架構）")
+    if _us_gv > 5:
+        lines.append(f"  ⚠️ 美股超配 {_us_gv:.0f}pp：不急砍，逢反彈分批減碼收斂至30%")
+    elif _us_gv < -5:
+        lines.append("  ✅ 美股低配：觀察期不追高，逢回檔小單")
+    else:
+        lines.append("  ✅ 美股合理範圍")
+    if _def_gv < -5:
+        lines.append("  ✅ 防守型第一優先：00878/00713 分批建倉（單筆<5萬）")
+    elif _def_gv > 5:
+        lines.append("  ⚠️ 防守超標：維持現況，不追高")
+    else:
+        lines.append("  ✅ 防守合理範圍（第一優先維持）")
+    lines.append("  🔒 兩條底線：現金≥85萬；US30Y 無連3日<5.20% 不開放市值大額進場")
     
     return lines
 
 def generate_cto_report(pen: dict, market_text: str = "") -> list:
-    """CTO 技術視角"""
+    """CTO 技術視角（2026-08-04 逐步架構版）"""
     lines = ["CTO 技術視角", "建議動作："]
     for cat in ["tw_equity", "us_equity", "defensive", "bond", "cash"]:
         gv = pen["gaps"].get(cat, 0)
         if abs(gv) > 5:
-            direction = "減碼" if gv > 0 else "補碼"
-            lines.append(f"  {cat}：{direction} {abs(gv):.0f}pp")
+            if cat == "tw_equity":
+                lines.append("  tw_equity：凍結大額單，僅回檔小單分批（單筆≤5萬）")
+            elif cat == "us_equity":
+                lines.append("  us_equity：逢反彈分批減碼，收斂至30%目標")
+            elif cat == "defensive":
+                lines.append("  defensive：第一優先，00878/00713 分批建倉")
+            else:
+                direction = "減碼" if gv > 0 else "補碼"
+                lines.append(f"  {cat}：{direction} {abs(gv):.0f}pp")
     lines.append("")
-    lines.append("再平衡：優先處理最大偏離類別")
+    lines.append("再平衡：逐步架構導向，容許階段偏離；優先守現金底線85萬")
     return lines
 
 def main(**kwargs):

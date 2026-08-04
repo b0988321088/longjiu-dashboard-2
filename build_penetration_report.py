@@ -242,6 +242,24 @@ if _bc_gap > 2:
     w(f"<tr><td><span class='tag over'>P3</span></td><td>債券+現金減碼 {_bc_gap:+.1f}pp</td><td>超標資金轉向台股市值型</td></tr>")
 w("</tbody></table></div>")
 
+# 4.5 ETF 風險評估（2026-08-04 新增：人多的地方有危險）
+w("<div class='card'><h2>⚠️ ETF 風險評估</h2>")
+w("<table><thead><tr><th>族群</th><th class='num'>市值</th><th class='num'>佔證券</th><th>風險標記</th></tr></thead><tbody>")
+_sec_t = snap.get("securities_total_market_value", 1)
+_hd = {h.get("ticker"): h.get("value", 0) for h in snap.get("securities", {}).get("holdings", [])}
+_def_t = sum(v for t, v in _hd.items() if t in ("00878", "00713", "0056", "00919", "00918", "00888"))
+_tw_t = sum(v for t, v in _hd.items() if t in ("0050", "006208", "009816", "00981A", "00984A"))
+_us_t = sum(v for t, v in _hd.items() if t in ("00646", "009823", "009824"))
+_bd_t = _hd.get("00983D", 0)
+w(f"<tr><td>🔴 高股息族群</td><td class='num'>{_def_t:,}</td><td class='num'>{_def_t/_sec_t*100:.1f}%</td><td>擁擠+成分重疊（00878/0056/00919 前十大同籃）</td></tr>")
+w(f"<tr><td>🟡 台股市值</td><td class='num'>{_tw_t:,}</td><td class='num'>{_tw_t/_sec_t*100:.1f}%</td><td>台積電權重 ~50-57%</td></tr>")
+w(f"<tr><td>🟢 美股</td><td class='num'>{_us_t:,}</td><td class='num'>{_us_t/_sec_t*100:.1f}%</td><td>009824 100% 科技</td></tr>")
+w(f"<tr><td>🟢 債券</td><td class='num'>{_bd_t:,}</td><td class='num'>{_bd_t/_sec_t*100:.1f}%</td><td>低風險</td></tr>")
+w("</tbody></table>")
+w("<p style='font-size:12px;color:#64748b'>⚠️ 全組合半導體&科技鏈穿透（估算）：證券 ~107 萬 + 基金 ~32 萬 + 保單底層 ~228 萬 ≈ <strong>367 萬（總資產 ~22.6%）</strong>；半導體純曝險粗估 ~240 萬（~14.8%），主要來源＝保單底層（貝萊德世界科技/安聯AI）+ 台股市值 ETF 台積電權重。建議週報以成分權重精算。</p>")
+w("<p style='font-size:12px;color:#64748b'>🚨 行動建議：00919/00918 停加碼（平準金+重疊度最高）；高股息族群不新增資金；00878 續持（建倉計畫內）；新資金優先現金/債券/00713 低波。</p>")
+w("</div>")
+
 w(f"<p class='meta'>龍九控股 ｜ 穿透分析 v2.1<br>數據源: snapshot.json + calc_penetration</p>")
 w("</body></html>")
 
