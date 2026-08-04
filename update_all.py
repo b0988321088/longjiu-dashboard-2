@@ -78,26 +78,42 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             _fund_tw += _fval
         else:
             _fund_tw += _fval
-    tw = round(sec * 0.97) + _fund_tw
-    us = round(sec * 0.03) + ins_eq + _fund_us
-    # 用 snapshot holdings 精算台/美股比例（取代固定97/3）
-    try:
-        _sec_holdings = (snap or {}).get("securities", {}).get("holdings", [])
-        if _sec_holdings:
-            _us_tickers = {"00646", "009823", "009824"}
-            _us_v = sum(h["shares"] * h.get("price", 30) for h in _sec_holdings if h.get("ticker") in _us_tickers) or 1
-            _total_v = sum(h["shares"] * h.get("price", 30) for h in _sec_holdings) or 1
-            _us_pct = _us_v / _total_v
-            _tw_pct = 1 - _us_pct
-            tw = round(sec * _tw_pct) + _fund_tw
-            us = round(sec * _us_pct) + ins_eq + _fund_us
-    except:
-        pass
+    # 證券 holdings 五桶分類（2026-08-04 修正：高股息ETF 過去被全數掃進台股市值型成長）
+    _SEC_TW = {"0050", "006208", "009816"}               # 台股市值型成長
+    _SEC_US = {"00646", "009823", "009824", "00924"}     # 美股市值型成長（含美股科技 00924）
+    _SEC_DEF = {"00713", "00878", "0056", "00919", "00918", "00888"}  # 防守型配息（高股息低波）
+    _SEC_BOND = {"00983D"}                               # 債券
+    sec_tw = sec_us = sec_def = sec_bond = 0
+    _sec_holdings = (snap or {}).get("securities", {}).get("holdings", [])
+    if _sec_holdings:
+        for h in _sec_holdings:
+            _t = h.get("ticker", "")
+            _v = h.get("shares", 0) * h.get("price", 30)
+            if _t in _SEC_DEF:
+                sec_def += _v
+            elif _t in _SEC_BOND:
+                sec_bond += _v
+            elif _t in _SEC_US:
+                sec_us += _v
+            else:
+                sec_tw += _v  # 含未分類台股（00981A/00984A 主動型）
+        # 防呆：holdings 市值與 sec 差異 >2% 時按比例縮放
+        _sec_sum = sec_tw + sec_us + sec_def + sec_bond
+        if _sec_sum > 0 and sec > 0 and abs(_sec_sum - sec) / sec > 0.02:
+            _k = sec / _sec_sum
+            sec_tw, sec_us, sec_def, sec_bond = (round(sec_tw * _k), round(sec_us * _k),
+                                                 round(sec_def * _k), round(sec_bond * _k))
+    else:
+        sec_tw = sec
+    tw = sec_tw + _fund_tw
+    us = sec_us + ins_eq + _fund_us
     total = cash + ins + sec + funds
-    c = cash + total - (tw + us + _fj + _fund_def + ins_bonds + cash)
-    # 防守型加上基金防守部位
-    return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": _fj + _fund_def, "債券": ins_bonds, "現金/安全網": c,
-            "_meta": {"ins_eq": ins_eq, "fund_us": _fund_us, "fund_def": _fund_def, "sec_us": round(sec * (1 - (tw - _fund_tw) / sec)) if sec else 0}}
+    def_v = sec_def + _fj + _fund_def
+    bond_v = sec_bond + ins_bonds
+    c = total - (tw + us + def_v + bond_v)
+    return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": def_v, "債券": bond_v, "現金/安全網": c,
+            "_meta": {"ins_eq": ins_eq, "fund_us": _fund_us, "fund_def": _fund_def,
+                      "sec_tw": sec_tw, "sec_us": sec_us, "sec_def": sec_def, "sec_bond": sec_bond}}
 
 
 def perform_data_validation(data: dict) -> list[str]:

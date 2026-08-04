@@ -53,10 +53,9 @@ today = date.today().isoformat()
 
 # Classify holdings
 def cat_ticker(t):
-    if t in ("0050","006208","009816"): return "tw"
-    if t in ("00646","009823","009824"): return "us"
+    if t in ("0050","006208","009816","00981A","00984A"): return "tw"
+    if t in ("00646","009823","009824","00924"): return "us"
     if t in ("00713","00878","0056","00919","00918","00888"): return "def"
-    if t in ("00981A","00984A"): return "active"
     if t in ("00983D",): return "bond"
     return "other"
 cats_data = [
@@ -212,13 +211,23 @@ w(f"<b>📌 穿透分母 = {total:,} TWD</b><br>")
 w("（不計入不動產，因不參與流動性配置）")
 w("</div></div>")
 
-# 6. Strategy
+# 6. Strategy（動態：依修正後缺口產生，2026-08-04 改，禁止硬編碼）
+_tw_gap = actual_pct["台股市值型成長"] - targets_map["台股市值型"]
+_us_gap = actual_pct["美股市值型成長"] - targets_map["美股市值型"]
+_def_gap = actual_pct["防守型配息"] - targets_map["配息型"]
+_bc_gap = actual_pct["債券"] + actual_pct["現金/安全網"] - targets_map["債券型"] - targets_map["現金"]
 w("<div class='card'><h2>🧓 再平衡策略建議</h2>")
 w("<table><thead><tr><th>優先</th><th>動作</th><th>理由</th></tr></thead><tbody>")
-w("<tr><td><span class='tag under'>P0</span></td><td>台股補碼 +15.9pp</td><td>逢低分批買 0050/006208</td></tr>")
-w("<tr><td><span class='tag under'>P1</span></td><td>防守型補碼 +13.0pp</td><td>加 00878/00713 抗波動</td></tr>")
-w("<tr><td><span class='tag over'>P2</span></td><td>現金減碼 -14.1pp</td><td>閒置資金投入成長型</td></tr>")
-w("<tr><td><span class='tag over'>P3</span></td><td>債券減碼 -14.3pp</td><td>降息後轉至成長型</td></tr>")
+if _tw_gap < -2:
+    w(f"<tr><td><span class='tag under'>P0</span></td><td>台股市值型補碼 {_tw_gap:+.1f}pp</td><td>逢低分批買 0050/006208/009816（缺口最大）</td></tr>")
+if _us_gap > 2:
+    w(f"<tr><td><span class='tag over'>P1</span></td><td>美股減碼 {_us_gap:+.1f}pp</td><td>逢反彈分批減碼美股科技</td></tr>")
+if _def_gap < -2:
+    w(f"<tr><td><span class='tag under'>P2</span></td><td>防守型補碼 {_def_gap:+.1f}pp</td><td>加 00878/00713 抗波動</td></tr>")
+else:
+    w(f"<tr><td><span class='tag good'>P2</span></td><td>防守型已達標（{actual_pct['防守型配息']:.1f}% vs 目標 {targets_map['配息型']}%）</td><td>維持 00878/00713/00919，不需大補</td></tr>")
+if _bc_gap > 2:
+    w(f"<tr><td><span class='tag over'>P3</span></td><td>債券+現金減碼 {_bc_gap:+.1f}pp</td><td>超標資金轉向台股市值型</td></tr>")
 w("</tbody></table></div>")
 
 w(f"<p class='meta'>龍九控股 ｜ 穿透分析 v2.1<br>數據源: snapshot.json + calc_penetration</p>")

@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-04T08:44:21.013693",
+  "generated_at": "2026-08-04T11:33:51.724426",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-04",
-  "total_assets": 16107440,
+  "total_assets": 16160247,
   "total_liabilities": 21127022,
   "net_worth": -5151403,
   "debt_ratio": 42.3,
@@ -62,9 +62,9 @@
   "cc_low": 35000,
   "cc_mid": 38000,
   "cc_high": 42000,
-  "firstjin_fl65_current_value": 1881453,
+  "firstjin_fl65_current_value": 1934260,
   "allianz_ab_current_value": 7696568,
-  "firstjin_current_value": 1881453,
+  "firstjin_current_value": 1934260,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
   "bank_assets_moneybook": 2936923,
@@ -476,25 +476,25 @@
     },
     "actual_pct": {
       "台股市值型成長": 9.4,
-      "美股市值型成長": 38.8,
-      "防守型配息": 18.5,
+      "美股市值型成長": 38.7,
+      "防守型配息": 18.8,
       "債券": 17.5,
-      "現金/安全網": 15.7
+      "現金/安全網": 15.6
     },
     "gaps": {
       "台股市值型成長": -10.6,
-      "美股市值型成長": 8.8,
-      "防守型配息": -1.5,
-      "債券及安全現金": 3.2
+      "美股市值型成長": 8.7,
+      "防守型配息": -1.2,
+      "債券及安全現金": 3.1
     },
     "actual_twd": {
       "台股市值型成長": 1520798.0,
       "美股市值型成長": 6251441.0,
-      "防守型配息": 2987853.0,
+      "防守型配息": 3040660.0,
       "債券": 2824527.0,
       "現金/安全網": 2522821.0
     },
-    "alert": "台股不足10.6pp；現金+債券超標3.2pp"
+    "alert": "台股不足10.6pp；現金+債券超標3.1pp"
   },
   "penetration_canonical": {
     "updated_at": "2026-07-18",
@@ -659,7 +659,7 @@
     }
   },
   "allianz_ab": 7696568,
-  "firstjin": 1881453,
+  "firstjin": 1934260,
   "dividend_records": {
     "2026-07-21": {
       "FJ33 摩根": 9356,
@@ -722,8 +722,9 @@
   },
   "firstjin_detail": {
     "cost": 2000000,
-    "base_value_before_dividend": 1881453,
-    "dividend_this_month": 0
+    "base_value_before_dividend": 1934260,
+    "dividend_this_month": 0,
+    "conversion": "IL24→FJ33 摩根多重收益(美元對沖)A月配 執行中(8/4申請)"
   },
   "credit_card": {
     "台新Richart": 12368,
@@ -1216,10 +1217,10 @@
   ],
   "allianz_a": 5032562,
   "allianz_b": 2664006,
-  "firstjin_fund_name": "IL24-安聯AI收益成長多重資產基金-B類型(月配息)-新臺幣",
-  "insurance_label_b": "第一金（IL24-安聯AI收益成長）",
-  "insurance_current_value": 9686972,
-  "insurance_total": 9686972,
+  "firstjin_fund_name": "FJ33-摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(每月派息)-美元",
+  "insurance_label_b": "第一金（FJ33-摩根多重收益美元對沖）",
+  "insurance_current_value": 9739779,
+  "insurance_total": 9739779,
   "pending_income": [
     {
       "source": "台電標案合作（上境工程）利潤分成",
@@ -1240,5 +1241,5 @@
   "fund_dividend_monthly": 0,
   "fund_market": 762565,
   "fund_total_market_value": 762565,
-  "insurance": 9686972
+  "insurance": 9739779
 }
