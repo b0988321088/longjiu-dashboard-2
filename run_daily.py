@@ -216,6 +216,7 @@ def calibrate_sources() -> dict:
         "rent_breakdown": snap.get("rent_breakdown", {}),
         "rent_received_records": snap.get("rent_received_records", {}),
         "dividend_records": _div_records,
+        "girlfriend_repayment_records": snap.get("girlfriend_repayment_records", {}),
         "dividend_month_expected": snap.get("dividend_month_expected", 100_000),
         "funds_breakdown": snap.get("funds_breakdown", {}),
         "professional_investor": snap.get("professional_investor", {}),
@@ -1751,8 +1752,12 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     _fj_got = _div_this_month.get("第一金配息", 0) + _div_this_month.get("FJ33 摩根", 0)
     _fj_exp = tv.get("firstjin_monthly", 35_583) or 35_583
     _rows.append(_inflow_row("第一金配息", _fj_got, _fj_exp))
-    # 女友還款（每月5號 6,000）
+    # 女友還款（每月5號 6,000；從 girlfriend_repayment_records 讀當月已收）
+    _gf_records = tv.get("girlfriend_repayment_records", {}) or {}
     _gf_amt = 0
+    for _d, _info in _gf_records.items():
+        if str(_d).startswith(_m_prefix):
+            _gf_amt += _info.get("amount", 0) if isinstance(_info, dict) else _info
     _rows.append(_inflow_row("女友還款", _gf_amt, 6_000))
     # 房租 4 筆
     _rent_map = {

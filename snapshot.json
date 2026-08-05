@@ -1416,5 +1416,12 @@
     "usd_to_twd": 32.4375,
     "jpy_to_twd": 0.215,
     "updated": "2026-08-05"
+  },
+  "girlfriend_repayment_records": {
+    "2026-08": {
+      "amount": 6000,
+      "date": "2026-08-05",
+      "note": "8月還款入帳台新"
+    }
   }
 }
