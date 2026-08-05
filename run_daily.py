@@ -215,6 +215,7 @@ def calibrate_sources() -> dict:
         "cash_total": snap.get("cash_total", 3_614_169),
         "rent_breakdown": snap.get("rent_breakdown", {}),
         "rent_received_records": snap.get("rent_received_records", {}),
+        "dividend_records": _div_records,
         "dividend_month_expected": snap.get("dividend_month_expected", 100_000),
         "funds_breakdown": snap.get("funds_breakdown", {}),
         # Liabilities from snapshot.json
@@ -1711,7 +1712,8 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     _salary_amt = 0
     _rows.append(_inflow_row("台電薪水", _salary_amt, tv.get("salary", 43_144)))
     # 安聯配息（應收 = allianz_ab_monthly）
-    _allianz_got = _div_this_month.get("安聯配息", 0) + _div_this_month.get("保單A 安聯", 0) + _div_this_month.get("保單B 安聯", 0)
+    _allianz_got = (_div_this_month.get("安聯配息", 0) + _div_this_month.get("保單A 安聯", 0)
+                    + _div_this_month.get("保單B 安聯", 0) + _div_this_month.get("安聯保單撥回", 0))
     _allianz_exp = tv.get("allianz_ab_monthly", 95_347) or 95_347
     _rows.append(_inflow_row("安聯配息 A+B", _allianz_got, _allianz_exp))
     # 第一金配息（應收 = firstjin_monthly）

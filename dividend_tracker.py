@@ -36,7 +36,7 @@ def scan_month_dividends(target_month: str):
             cat, memo, amt, d = r[4], r[5], r[7], r[8]
             if not (d or '').startswith(target_month):
                 continue
-            if '配息' not in cat and '配息' not in memo and '股利' not in cat:
+            if '配息' not in cat and '配息' not in memo and '股利' not in cat and '撥回' not in memo:
                 continue
             try:
                 amt = float(amt)
@@ -46,7 +46,7 @@ def scan_month_dividends(target_month: str):
                 continue
             # 分類
             low = memo.lower()
-            if '安聯人壽' in memo:
+            if '安聯人壽' in memo or '安聯保單撥回' in memo:
                 name = '安聯配息'
             elif '第一金人壽' in memo:
                 name = '第一金配息'
@@ -83,10 +83,18 @@ def main():
         for d in sorted(records):
             print(f"  {d}: " + ", ".join(f"{k} {v:,.0f}" for k, v in records[d].items()))
     else:
-        # 當月尚無配息 → 歸零
-        snap["dividend_month_actual"] = 0
-        snap["monthly_dividend"] = 0
-        print(f"ℹ️ 本月({month})尚未收到配息，顯示 0")
+        # 當月無新掃描 → 保留既有 dividend_records（不覆蓋手動/既有紀錄），僅重算
+        dr = snap.get("dividend_records", {}) or {}
+        total = 0
+        for _d, _items in dr.items():
+            if str(_d).startswith(month):
+                total += sum(_items.values())
+        snap["dividend_month_actual"] = total
+        snap["monthly_dividend"] = total
+        if total > 0:
+            print(f"ℹ️ 本月({month})無新掃描，保留既有紀錄: {total:,.0f} TWD")
+        else:
+            print(f"ℹ️ 本月({month})尚未收到配息，顯示 0")
 
     json.dump(snap, open(SNAP_PATH, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
 
