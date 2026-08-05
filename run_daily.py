@@ -220,6 +220,7 @@ def calibrate_sources() -> dict:
         "dividend_month_expected": snap.get("dividend_month_expected", 100_000),
         "funds_breakdown": snap.get("funds_breakdown", {}),
         "professional_investor": snap.get("professional_investor", {}),
+        "rhythm08": snap.get("rhythm08", {}),
         # Liabilities from snapshot.json
         "mortgage_yy": snap.get("mortgage_yy", 0),
         "mortgage_yydu": snap.get("mortgage_yydu", 0),
@@ -1107,6 +1108,54 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 f"</div></div>"
             )
             html += _pi_html
+    except Exception:
+        pass
+
+    # Rhythm-08 韻律零八｜宏觀前置風險燈號（2026-08-05 最終版：14 條規則）
+    try:
+        _r8 = tv.get("rhythm08", {}) or {}
+        if _r8 and _r8.get("enable"):
+            _ind = _r8.get("indicators", {}) or {}
+            _th = _r8.get("thresholds", {}) or {}
+            _tgt = _r8.get("targets", {}) or {}
+            _us30y = _ind.get("us30y") or 0
+            _us_pct = _ind.get("us_equity_actual_pct") or 0
+            _tw_pct = _ind.get("tw_equity_actual_pct") or 0
+            _hi_debt = _ind.get("high_interest_debt_exists", False)
+            _long_bond_pct = _ind.get("long_bond_share_of_bonds_pct") or 0
+            _slogan = _r8.get("slogan", "歷史不會重演，但總會押韻；不恐慌殺盤，但要提前收斂風險曝險，握好現金彈藥。")
+            _lights = []
+            # 1. 高息負債（最高優先）
+            if _hi_debt:
+                _lights.append(("🔴 紅燈", "尚有高息負債 — 凍結全部主動加倉，優先還高息負債（僅允許被動再平衡）"))
+            # 2. 結構債（暫無資料，依 snapshot 判斷）
+            # 3. 長債佔債券比
+            if _long_bond_pct > _tgt.get("long_bond_cap_pct_of_bonds", 40):
+                _lights.append(("🟡 黃燈", f"長債佔債券 {_long_bond_pct}% > {_tgt.get('long_bond_cap_pct_of_bonds', 40)}% — 提高中短期債券比重，降低久期"))
+            # 6/7. 30Y
+            if _us30y >= _th.get("us30y_red", 5.40):
+                _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% ≥ {_th.get('us30y_red')}% — 建議調降長債部位，移往中短期債券"))
+            elif _us30y >= _th.get("us30y_yellow", 5.20):
+                _lights.append(("🟡 黃燈", f"30Y美債 {_us30y}% ≥ {_th.get('us30y_yellow')}% — 停止長債新增買入（00983D凍結）"))
+            # 10. 美股占比
+            if _us_pct > _th.get("us_equity_overweight_yellow", 32):
+                _lights.append(("🟡 黃燈", f"美股實際占比 {_us_pct}% > {_th.get('us_equity_overweight_yellow')}% — 再平衡回落至30%目標"))
+            # 11. 台股占比（目標 15%）
+            if _tw_pct > _th.get("tw_equity_overweight_yellow", 17):
+                _lights.append(("🟡 黃燈", f"台股實際占比 {_tw_pct}% > {_th.get('tw_equity_overweight_yellow')}% — 不建議加碼台股，資金優先給債券、現金"))
+            if not _lights:
+                _lights.append(("🟢 綠燈", "主要指標安全 — 維持現行配置（持續監控 14 條規則）"))
+            _r8_html = (
+                f"<div class='callout callout-blue' style='margin-top:12px'>"
+                f"<h3>🎵 Rhythm-08 韻律零八｜估值利率風險監控（最終版）</h3>"
+                f"<div style='font-size:12.5px;line-height:1.8'>"
+                + "".join(f"<div>{_l[0]} {_l[1]}</div>" for _l in _lights)
+                + f"<div style='margin-top:4px;font-size:11px;color:#6b7280'>台股目標 15%｜美股上限 30%｜長債佔債券 ≤40%｜現金 15%｜優先序：負債＞利率＞估值＞集中度＞個別上限</div>"
+                + f"<div style='margin-top:6px;font-style:italic;color:#6b7280'>「{_slogan}」</div>"
+                f"<div style='font-size:11px;color:#9ca3af'>本模組僅產生警示與建議，不自動下單｜資訊僅供參考，不構成投資建議</div>"
+                f"</div></div>"
+            )
+            html += _r8_html
     except Exception:
         pass
 

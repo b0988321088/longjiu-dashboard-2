@@ -496,10 +496,10 @@
     "updated_at": "2026-08-05",
     "source": "calc_penetration (auto-calibrated)",
     "targets": {
-      "台股市值型目標": 20,
+      "台股市值型目標": 15,
       "美股市值型目標": 30,
       "配息型目標": 20,
-      "債券型目標": 15,
+      "債券型目標": 20,
       "現金目標": 15
     },
     "actual_pct": {
@@ -1423,5 +1423,46 @@
       "date": "2026-08-05",
       "note": "8月還款入帳台新"
     }
+  },
+  "rhythm08": {
+    "enable": true,
+    "rule_set_name": "Rhythm-08 韻律零八｜宏觀前置風險偵測模組（最終版）",
+    "version": "final-20260805",
+    "comment": "不預言金融危機，做前置風險偵測；不恐慌殺盤，不主動擴張風險曝險，握好現金彈藥。只產生警示與操作建議，永不自動下單。",
+    "indicators": {
+      "buffett_index_pct": null,
+      "us30y": 5.21,
+      "us30y_date": "2026-07-30",
+      "ai_magnificent7_share_pct": null,
+      "put_premium_cost_pct": null,
+      "us_equity_actual_pct": 34.0,
+      "tw_equity_actual_pct": 11.3,
+      "long_bond_share_of_bonds_pct": 6.8,
+      "high_interest_debt_exists": true,
+      "inflation_hedge_assets_pct": null,
+      "defensive_hedge_assets_pct": null
+    },
+    "targets": {
+      "tw_equity": 15,
+      "us_equity_cap": 30,
+      "cash": 15,
+      "long_bond_cap_pct_of_bonds": 40,
+      "defensive_hedge_cap": 10,
+      "inflation_hedge_cap": 25
+    },
+    "thresholds": {
+      "buffett_index_yellow": 200,
+      "buffett_index_red": 210,
+      "us30y_yellow": 5.2,
+      "us30y_red": 5.4,
+      "ai_concentration_yellow": 60,
+      "put_premium_red": 4.0,
+      "us_equity_overweight_yellow": 32.0,
+      "tw_equity_overweight_yellow": 17.0
+    },
+    "slogan": "歷史不會重演，但總會押韻；不恐慌殺盤，但要提前收斂風險曝險，握好現金彈藥。",
+    "priority_order": "負債狀態＞利率風險＞估值泡沫＞集中度＞個別標的上限",
+    "rules_count": 14,
+    "last_updated": "2026-08-05"
   }
 }

@@ -34,6 +34,25 @@ def main():
     except Exception:
         print("\n[模式] 未觸發（無 state）")
 
+    # Rhythm-08 韻律零八（2026-08-05 強制執行規則）
+    r8 = snap.get("rhythm08", {}) or {}
+    if r8 and r8.get("enable"):
+        ind = r8.get("indicators", {}) or {}
+        th = r8.get("thresholds", {}) or {}
+        print("\n[Rhythm-08 韻律零八｜宏觀前置風險偵測]")
+        print(f"  巴菲特指數: {ind.get('buffett_index_pct', '待補')}%（黃燈>200 / 紅燈>210）")
+        print(f"  US30Y: {ind.get('us30y')}%（黃燈≥{th.get('us30y_yellow')} / 紅燈≥{th.get('us30y_red')}）")
+        print(f"  AI七巨頭佔美股: {ind.get('ai_magnificent7_share_pct', '待補')}%（黃燈>{th.get('ai_concentration_yellow')}）")
+        print(f"  Put年化保費: {ind.get('put_premium_cost_pct', '待補')}%（紅燈≥{th.get('put_premium_red')}）")
+        print(f"  美股實際占比: {ind.get('us_equity_actual_pct')}%（黃燈>{th.get('us_equity_overweight_yellow')}）")
+        print("  🚨 強制規則：")
+        print("  1. 巴菲特指數>200% → 週報禁止建議主動加碼美股，僅被動再平衡")
+        print("  2. US30Y≥5.2% → 不建議新增00983D；≥5.4% 必須提出降長債久期建議")
+        print("  3. AI七巨頭占比過高 → 提示產業集中泡沫風險，建議往廣義指數分散")
+        print("  4. Put保費年化≥4% → 說明長期耗損，給Collar領圈/提高現金二選項")
+        print("  5. 不恐慌全賣，收斂風險曝險、死守配置上限、握好現金彈藥")
+        print(f"  固定標語: 「{r8.get('slogan','')}」")
+
     # 本週資產變化
     dates = sorted(hist.keys())
     if mode == "weekly":

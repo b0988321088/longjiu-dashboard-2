@@ -1,0 +1,40 @@
+{
+  "rule_set_name": "Rhythm-08 韻律零八｜宏觀前置風險偵測模組（最終版）",
+  "enable": true,
+  "version": "final-20260805",
+  "comment": "歷史不會重演，但總會押韻。不預言金融危機，做前置風險偵測；不恐慌殺盤，不主動擴張風險曝險，握好現金彈藥。本模組只產生警示與操作建議，永遠不自動執行下單。",
+  "source_dependency": [
+    "巴菲特指數",
+    "30年期美債收益率",
+    "美股七大AI巨頭佔美股總部位比重",
+    "Put選擇權年化保費成本",
+    "資產快照：各資產實際占比、目標配置",
+    "負債快照：判斷是否仍存在高息負債",
+    "債券明細：長債佔全部債券之比例",
+    "資產清單：辨識結構債、專業投資人限定商品",
+    "抗通膨分散資產合計占比",
+    "底層穿透持股資料（基金、ETF底層成分）"
+  ],
+  "trigger_list": [
+    {"trigger_condition": "尚有高息負債存在", "alert_level": "紅燈", "system_action": "凍結全部主動加倉，優先還高息負債", "report_note": "負債優先順序最高：貸款撥款後第一優先清償高利息負債；全部負債轉低利後才開放主動加倉；禁止貸款本金直接做債券槓桿"},
+    {"trigger_condition": "偵測多層疊套結構債", "alert_level": "紅燈", "system_action": "禁止新增，建議逐步出清", "report_note": "三層疊套、多層包裝、底層看不懂的專業結構債一律迴避，參考2008流動性風險教訓"},
+    {"trigger_condition": "長債佔全部債券 > 40%", "alert_level": "黃燈", "system_action": "建議提高中短期債券比重，降低整體久期", "report_note": "長天期債券僅小部位持有，不大舉加碼；槓桿僅允許中短期債券並降槓桿倍數"},
+    {"trigger_condition": "巴菲特指數 > 200%", "alert_level": "黃燈", "system_action": "禁止美股主動加碼，僅允許被動再平衡", "report_note": "美股進入歷史高估區，停止主動加碼美股，嚴守30%配置上限"},
+    {"trigger_condition": "巴菲特指數 > 210%", "alert_level": "紅燈", "system_action": "建議美股往30%目標收斂", "report_note": "美股極度高估，向上報酬有限，下行損失空間放大，收斂風險曝險"},
+    {"trigger_condition": "30Y美債收益率 >= 5.20%", "alert_level": "黃燈", "system_action": "停止長債新增買入", "report_note": "凍結長債(00983D等)新增買入，僅持有既有部位"},
+    {"trigger_condition": "30Y美債收益率 >= 5.40%", "alert_level": "紅燈", "system_action": "建議調降長債部位，移往中短期債券", "report_note": "長端利率持續上行，降低組合久期風險"},
+    {"trigger_condition": "美股七大AI巨頭佔美股 > 60%", "alert_level": "黃燈", "system_action": "集中度警示，建議廣義指數分散", "report_note": "資金過度集中AI七大巨頭，建議配置標普500廣義指數稀釋單邊風險"},
+    {"trigger_condition": "Put年化保費 >= 4%", "alert_level": "紅燈", "system_action": "避險成本過高，檢討Put策略", "report_note": "不允許無限期滾動高成本Put；替代方案：Collar領圈策略或拉高現金做天然防禦"},
+    {"trigger_condition": "美股實際占比 > 32%", "alert_level": "黃燈", "system_action": "建議再平衡回落至30%", "report_note": "高估市場環境，美股超配優先收斂"},
+    {"trigger_condition": "台股實際占比 > 17%", "alert_level": "黃燈", "system_action": "不建議繼續加碼台股，資金優先給債券、現金", "report_note": "台股目標調整為15%，不刻意主動往上加倉擴大風險"},
+    {"trigger_condition": "00713+電信類合計 > 總資產10%", "alert_level": "黃燈", "system_action": "不再新增該組標的", "report_note": "00713高息、電信類可分散配置但本質仍為股票，無法完全隔離科技回檔風險"},
+    {"trigger_condition": "抗通膨分散資產整組 > 25%", "alert_level": "黃燈", "system_action": "不再新增該類資產", "report_note": "短債/REITs/黃金/能源/VT/穩定配息基金等合計上限25%，不單一重押"},
+    {"trigger_condition": "底層穿透檢查出隱藏高AI科技曝險", "alert_level": "黃燈", "system_action": "標的真實分散效果不足，提出警示", "report_note": "外表是分散標的但實際科技權重偏高，強制執行底層穿透檢查"}
+  ],
+  "summary_text": "歷史不會重演，但總會押韻。負債狀態＞利率風險＞估值泡沫＞集中度＞個別標的上限。有高息負債先還債凍結加倉；美股嚴守30%；台股目標15%；長債佔債券≤40%；現金15%彈藥。",
+  "output_position": [
+    "週報最前端資產架構調整指示卡",
+    "日報風險提示區",
+    "Amis儀表板宏觀風險燈號面板"
+  ]
+}
