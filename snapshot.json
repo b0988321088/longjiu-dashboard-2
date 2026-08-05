@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-05T15:25:17.635176",
+  "generated_at": "2026-08-05T21:36:21.598953",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-05",
-  "total_assets": 16465917.0,
+  "total_assets": 16575822.0,
   "total_liabilities": 21088175,
   "net_worth": -4847994,
   "debt_ratio": 42.3,
@@ -67,7 +67,7 @@
   "firstjin_current_value": 1931243,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
-  "bank_assets_moneybook": 2914656,
+  "bank_assets_moneybook": 3024561,
   "bank_assets_memo": "MB 20260804 正數帳戶合計；排除信用卡溢繳",
   "monthly_expense_mb": 199186,
   "monthly_expense_mb_note": "MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償",
@@ -110,7 +110,7 @@
     "note": "等值台幣（8/5帳戶總覽真值）；一般申購354,581+自由Pay418,113=合計772,694；台新美日台=日圓600,693×0.215、安聯AI收益B=美元207.85×32.4375換算"
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
-  "real_liquid_assets": 2914656,
+  "real_liquid_assets": 3024561,
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
   "passive_income": {
     "fund_dividend_monthly": 0,
@@ -503,26 +503,26 @@
       "現金目標": 15
     },
     "actual_pct": {
-      "台股市值型成長": 11.4,
-      "美股市值型成長": 34.2,
-      "防守型配息": 18.6,
-      "債券": 18.1,
-      "現金/安全網": 17.7
+      "台股市值型成長": 11.3,
+      "美股市值型成長": 34.0,
+      "防守型配息": 18.5,
+      "債券": 18.0,
+      "現金/安全網": 18.2
     },
     "gaps": {
-      "台股市值型成長": -8.6,
-      "美股市值型成長": 4.2,
-      "防守型配息": -1.4,
-      "債券及安全現金": 5.8
+      "台股市值型成長": -8.7,
+      "美股市值型成長": 4.0,
+      "防守型配息": -1.5,
+      "債券及安全現金": 6.2
     },
     "actual_twd": {
       "台股市值型成長": 1868944.0,
       "美股市值型成長": 5638709.0,
       "防守型配息": 3064618.0,
       "債券": 2980636.0,
-      "現金/安全網": 2913010.0
+      "現金/安全網": 3022915.0
     },
-    "alert": "台股不足8.6pp；現金+債券超標5.8pp"
+    "alert": "台股不足8.7pp；現金+債券超標6.2pp"
   },
   "penetration_canonical": {
     "updated_at": "2026-07-18",
@@ -642,7 +642,7 @@
   "securities_tw_growth": 1007090,
   "securities_tw_defense": 1022090,
   "securities_us_growth": 76050,
-  "cash": 2914656,
+  "cash": 3024561,
   "high_yield_savings": 2200410,
   "regular_cash": 1684210,
   "mortgages": [
@@ -694,7 +694,7 @@
       "保單A 安聯": 11722,
       "保單B 安聯": 5994
     },
-    "2026-08-04": {
+    "2026-08": {
       "安聯保單撥回": 15976
     }
   },
@@ -720,7 +720,7 @@
   "travel_allowance": 12000,
   "second_salary": 39121,
   "bonus_july": 39121,
-  "cash_total": 2914656,
+  "cash_total": 3024561,
   "bonds_cash": 10262984,
   "monthly_dividend_breakdown": {
     "allianz": 95347,
