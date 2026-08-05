@@ -2257,6 +2257,51 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     except Exception:
         html = html.replace("__WEEKLY_CHECKLIST__", '<div class="col-span-2 text-slate-400">載入失敗</div>')
 
+    # Rhythm-08 燈號注入儀表板（2026-08-05 最終版）
+    try:
+        _r8 = tv.get("rhythm08", {}) or {}
+        if _r8 and _r8.get("enable"):
+            _ind = _r8.get("indicators", {}) or {}
+            _th = _r8.get("thresholds", {}) or {}
+            _tgt = _r8.get("targets", {}) or {}
+            _us30y = _ind.get("us30y") or 0
+            _us_pct = _ind.get("us_equity_actual_pct") or 0
+            _tw_pct = _ind.get("tw_equity_actual_pct") or 0
+            _hi_debt = _ind.get("high_interest_debt_exists", False)
+            _long_bond_pct = _ind.get("long_bond_share_of_bonds_pct") or 0
+            _slogan = _r8.get("slogan", "歷史不會重演，但總會押韻；不恐慌殺盤，但要提前收斂風險曝險，握好現金彈藥。")
+            _lights = []
+            if _hi_debt:
+                _lights.append(("🔴", "尚有高息負債 — 凍結主動加倉，優先還高息負債"))
+            if _long_bond_pct > _tgt.get("long_bond_cap_pct_of_bonds", 40):
+                _lights.append(("🟡", f"長債佔債券 {_long_bond_pct}% > 40% — 提高中短期債券比重"))
+            if _us30y >= _th.get("us30y_red", 5.40):
+                _lights.append(("🔴", f"30Y美債 {_us30y}% ≥ 5.4% — 調降長債部位"))
+            elif _us30y >= _th.get("us30y_yellow", 5.20):
+                _lights.append(("🟡", f"30Y美債 {_us30y}% ≥ 5.2% — 停止長債新增"))
+            if _us_pct > _th.get("us_equity_overweight_yellow", 32):
+                _lights.append(("🟡", f"美股 {_us_pct}% > 32% — 再平衡回落30%"))
+            if _tw_pct > _th.get("tw_equity_overweight_yellow", 17):
+                _lights.append(("🟡", f"台股 {_tw_pct}% > 17% — 不建議加碼台股"))
+            if not _lights:
+                _lights.append(("🟢", "主要指標安全 — 維持現行配置"))
+            _r8_panel = (
+                "<div class='bg-slate-900/60 rounded-xl border border-blue-800/40 p-4 mb-4'>"
+                "<div class='text-sm font-bold text-blue-300 mb-2'>🎵 Rhythm-08 韻律零八｜估值利率風險監控</div>"
+                + "".join(f"<div class='text-xs py-0.5'><span class='font-bold'>{_l[0]}</span> {_l[1]}</div>" for _l in _lights)
+                + f"<div class='text-[10px] text-slate-400 mt-2 italic'>「{_slogan}」</div>"
+                "<div class='text-[9px] text-slate-500'>本模組僅產生警示與建議，不自動下單｜資訊僅供參考</div></div>"
+            )
+            # 插到 </main> 或 __RISK 前；無佔位符則 append 到 body 前
+            if "__RISK_PANEL__" in html:
+                html = html.replace("__RISK_PANEL__", _r8_panel)
+            elif "</main>" in html:
+                html = html.replace("</main>", _r8_panel + "</main>")
+            else:
+                html += _r8_panel
+    except Exception:
+        pass
+
     return html
 
 
