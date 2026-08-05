@@ -1710,12 +1710,17 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     # 台電薪水（當月薪資入帳）
     _salary_amt = 0
     _rows.append(_inflow_row("台電薪水", _salary_amt, tv.get("salary", 43_144)))
-    # 安聯配息
+    # 安聯配息（應收 = allianz_ab_monthly）
     _allianz_got = _div_this_month.get("安聯配息", 0) + _div_this_month.get("保單A 安聯", 0) + _div_this_month.get("保單B 安聯", 0)
-    _rows.append(_inflow_row("安聯配息 A+B", _allianz_got, 0))
-    # 第一金配息
+    _allianz_exp = tv.get("allianz_ab_monthly", 95_347) or 95_347
+    _rows.append(_inflow_row("安聯配息 A+B", _allianz_got, _allianz_exp))
+    # 第一金配息（應收 = firstjin_monthly）
     _fj_got = _div_this_month.get("第一金配息", 0) + _div_this_month.get("FJ33 摩根", 0)
-    _rows.append(_inflow_row("第一金配息", _fj_got, 0))
+    _fj_exp = tv.get("firstjin_monthly", 35_583) or 35_583
+    _rows.append(_inflow_row("第一金配息", _fj_got, _fj_exp))
+    # 女友還款（每月5號 6,000）
+    _gf_amt = 0
+    _rows.append(_inflow_row("女友還款", _gf_amt, 6_000))
     # 房租 4 筆
     _rent_map = {
         "大義街1樓房租": ("大義街店面", 24_000),
@@ -1727,7 +1732,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         _got = _rent_this_month.get(_key, 0)
         _rows.append(_inflow_row(_label, _got, _exp))
     # 合計
-    _total_got = _salary_amt + _allianz_got + _fj_got + sum(v for v in _rent_this_month.values())
+    _total_got = _salary_amt + _allianz_got + _fj_got + _gf_amt + sum(v for v in _rent_this_month.values())
     _rows.append(
         f'<div class="flex justify-between items-center p-3 bg-blue-500/10 rounded-xl border border-blue-500/30">'
         f'<div class="flex items-center gap-2 text-xs font-bold text-blue-300"><span>📊 當月已收合計</span></div>'
