@@ -1971,9 +1971,11 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             _s = f"+{_g:.0f}pp" if _g > 0 else f"{_g:.0f}pp"
             _h += f"<li>{_e} <strong>{_l}</strong>：{_v:.0f}%（目標 {_t}%，<span class=\"{_c}\">{_s}</span>）</li>"
         _h += '</ul></div><div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-teal-400">🎯 策略建議</span><ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed">'
-        _h += ("<li class='text-amber-300'><strong>🚨 指示卡（8/4 逐步架構版）：</strong>"
-               "目標配置為中長期方向，容許數月階段偏離，不強迫貼齊；觀察期凍結市值大額單；"
-               "資金優先序＝現金緩衝＞防守＞台股彈性；兩條底線＝現金 ≥85 萬、US30Y 無連 3 日 <5.20% 不開放市值大額進場</li>")
+        _today_s = date.today().strftime("%m/%d")
+        _h += (f"<li class='text-amber-300'><strong>🚨 指示卡（{_today_s} 核心‑衛星保守成長版）：</strong>"
+               "目標配置＝台股20/美股30/防守20/債券15/現金15，為中長期方向，容許數月階段偏離；"
+               "債券鎖短中期投資等級（存續期1-5年，BBB-以上）；平衡基金僅限衛星≤防禦20%；"
+               "兩條底線＝現金 ≥85 萬、US30Y >5.20% 停新增長債；Lombard 橋接需手動開啟且借款≤擔保品4成</li>")
         for _ln in _bl:
             if "補碼" in _ln or "減碼" in _ln or "合理" in _ln:
                 _h += f"<li>{_ln.replace('  ✅ ','').replace('  ⚠️ ','')}</li>"
