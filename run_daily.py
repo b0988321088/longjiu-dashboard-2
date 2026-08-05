@@ -1087,14 +1087,22 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             _pi_mode = _pi.get("mode", "B")
             _pi_opt = _pi.get("mode_options", {}).get(_pi_mode, {})
             _pi_rules = "；".join(_pi_opt.get("rules", [])) if _pi_opt else ""
+            _pi_fo = _pi.get("force_order", [])
+            _pi_fo_txt = " > ".join(_pi_fo[:2]) if isinstance(_pi_fo, list) and _pi_fo else str(_pi.get("force_order",""))
+            _pi_mt = _pi.get("macro_triggers", {}) or {}
+            _pi_fb = _pi.get("forbidden", [])
+            _pi_fb_txt = "；".join(_pi_fb[:2]) if isinstance(_pi_fb, list) and _pi_fb else ""
             _pi_html = (
                 f"<div class='callout callout-warning' style='margin-top:12px'>"
-                f"<h3>🎫 專業投資人風控卡</h3>"
+                f"<h3>🎫 專業投資人風控卡｜核心‑衛星保守成長（零槓桿預設）</h3>"
                 f"<div style='font-size:12.5px;line-height:1.8'>"
-                f"<strong>狀態：</strong>{_pi.get('status','申請中')}｜<strong>啟用模式：</strong>{_pi_mode}｜{_pi_opt.get('name','')}<br/>"
+                f"<strong>狀態：</strong>{_pi.get('status','申請中')}｜<strong>策略：</strong>{_pi.get('strategy','核心-衛星')}<br/>"
                 f"<strong>門檻：</strong>{_pi.get('threshold',0):,}｜現況：金融資產含保單 28,220,311｜<strong>缺口：{_pi.get('gap',0):,}</strong>（可合併配偶）<br/>"
-                f"<strong>強制順序：</strong>{_pi.get('force_order','')}<br/>"
-                f"{'<strong>規則：</strong>' + _pi_rules if _pi_rules else ''}"
+                f"<strong>強制順序：</strong>{_pi_fo_txt}<br/>"
+                f"<strong>🔴 宏觀紅線：</strong>30Y美債 &gt;5.20% → {_pi_mt.get('警戒線_5.20','停止新增長債/平衡基金')}<br/>"
+                f"<strong>🟢 友善線：</strong>&lt;4.80% 才可評估小槓桿（高息全清+現金≥300萬+擔保≤4成）<br/>"
+                f"{'<strong>⛔ 禁止：</strong>' + _pi_fb_txt if _pi_fb_txt else ''}"
+                f"<br/><strong>⚠️ 風險：</strong>{_pi.get('risk_warning','專業投資人不受金融消保法保障')}"
                 f"</div></div>"
             )
             html += _pi_html

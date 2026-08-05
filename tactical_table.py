@@ -152,20 +152,23 @@ def to_markdown(table: dict) -> str:
             f"{r['偏離pp']:+.1f} | {r['建議動作']} | {r['精算金額']:,} | "
             f"{r['階梯等級']} |"
         )
-    # 專業投資人風控卡
+    # 專業投資人風控卡（核心-衛星策略）
     pi = table.get("professional_investor", {}) or {}
     if pi:
-        _mode = pi.get("mode", "B")
-        _opt = pi.get("mode_options", {}).get(_mode, {})
-        _mode_name = _opt.get("name", _mode)
         lines.append("")
-        lines.append("**🎫 專業投資人風控卡**")
-        lines.append(f"- 狀態：{pi.get('status', '申請中')}｜啟用模式：**{_mode}｜{_mode_name}**")
-        lines.append(f"- 門檻：{pi.get('threshold', 30_000_000):,}｜現況：金融資產含保單 28,220,311｜缺口：{pi.get('gap', 0):,}")
-        lines.append(f"- 強制順序：{pi.get('force_order', '')}")
-        lines.append(f"- ⚠️ 風險警示：{pi.get('risk_warning', '專業投資人身分不受金融消保法保障')}")
-        if _opt.get("rules"):
-            lines.append(f"- 規則：{'；'.join(_opt['rules'])}")
+        lines.append("**🎫 專業投資人風控卡｜核心‑衛星保守成長（零槓桿預設）**")
+        lines.append(f"- 狀態：{pi.get('status', '申請中')}｜門檻：{pi.get('threshold', 30_000_000):,}｜現況：金融資產含保單 28,220,311｜缺口：{pi.get('gap', 0):,}（可併配偶）")
+        _fo = pi.get("force_order", [])
+        if isinstance(_fo, list) and _fo:
+            lines.append(f"- 強制順序：{' > '.join(_fo[:2])}")
+        _mt = pi.get("macro_triggers", {})
+        if _mt:
+            lines.append(f"- 🔴 宏觀紅線：30Y美債 >5.20% → {_mt.get('警戒線_5.20','停止新增長債/平衡基金')}")
+            lines.append(f"- 🟢 友善線：<4.80% 才可評估小槓桿（需高息負債全清+現金≥300萬+擔保≤4成）")
+        _fb = pi.get("forbidden", [])
+        if isinstance(_fb, list) and _fb:
+            lines.append(f"- ⛔ 禁止：{'；'.join(_fb[:2])}")
+        lines.append(f"- ⚠️ 風險警示：{pi.get('risk_warning', '專業投資人不受金融消保法保障')}")
     return "\n".join(lines)
 
 def main():
