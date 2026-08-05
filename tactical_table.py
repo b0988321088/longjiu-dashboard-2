@@ -168,6 +168,17 @@ def to_markdown(table: dict) -> str:
         _fb = pi.get("forbidden", [])
         if isinstance(_fb, list) and _fb:
             lines.append(f"- ⛔ 禁止：{'；'.join(_fb[:2])}")
+        # Lombard 橋接還貸（若已定義）
+        _lb = pi.get("lombard_bridge", {}) or {}
+        if _lb:
+            lines.append(f"- 🔁 Lombard橋接：{_lb.get('business_logic','')}")
+            _lb_hl = _lb.get("hard_limits", [])
+            if isinstance(_lb_hl, list) and _lb_hl:
+                lines.append(f"- 🔒 硬性限制：{_lb_hl[0]}；{_lb_hl[1]}")
+                if len(_lb_hl) > 2:
+                    lines.append(f"   {_lb_hl[2]}")
+                    if len(_lb_hl) > 3:
+                        lines.append(f"   {_lb_hl[3]}")
         lines.append(f"- ⚠️ 風險警示：{pi.get('risk_warning', '專業投資人不受金融消保法保障')}")
     return "\n".join(lines)
 
