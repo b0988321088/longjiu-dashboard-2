@@ -761,6 +761,13 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
           {cio_content_html}
         </div>
         <!-- END CIO -->
+
+    <!-- P0-1 目標-對策對照表（動態注入） -->
+    <div class="card" style="margin-top:14px;">
+      <h3>🎯 目標-對策對照表（DAA 動態理財）</h3>
+      <div class="text-sm" style="color:#6e6e73;margin-bottom:8px;">偏離階梯：≤2pp觀察 / 2-5pp戰術觀察 / 5-10pp中等再平衡 / >10pp大規模再平衡</div>
+      __TACTICAL_TABLE__
+    </div>
   </div>
 
 </div>
@@ -1041,6 +1048,35 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
     html = html.replace("{llm_emergency_analysis}", llm_emergency)
     html = html.replace("__BUFFETT_CONTENT__", buf_content)
     html = html.replace("__CTO_TECH__", cto_content)
+
+    # P0-1 目標-對策對照表（動態注入）
+    try:
+        from tactical_table import build_table
+        _us30y = None
+        try:
+            import json as _json
+            _st = _json.loads((Path(__file__).resolve().parent / "us30y_state.json").read_text(encoding="utf-8"))
+            _us30y = _st.get("last_rate")
+        except Exception:
+            pass
+        _tbl = build_table(tv, _us30y)
+        _rows_html = "".join(
+            f"<tr><td>{r['資產分類']}</td><td class='num'>{r['現況占比']}%</td>"
+            f"<td class='num'>{r['目標']}%</td><td class='num'>{r['偏離pp']:+.1f}</td>"
+            f"<td>{r['建議動作']}</td><td class='num'>{r['精算金額']:,}</td>"
+            f"<td>{r['階梯等級']}</td><td style='font-size:11px'>{r['觸發條件']}</td></tr>"
+            for r in _tbl["rows"]
+        )
+        _freeze_note = f"<div style='color:#dc2626;font-size:12px;margin-top:6px'>⛔ US30Y {_us30y:.2f}% &gt; 5.30% → TAA 全域凍結（只觀察）</div>" if _tbl["frozen"] else ""
+        _tactical_html = (
+            f"<table style='width:100%;border-collapse:collapse;font-size:12.5px'>"
+            f"<thead><tr><th>資產分類</th><th class='num'>現況%</th><th class='num'>目標%</th>"
+            f"<th class='num'>偏離pp</th><th>動作</th><th class='num'>精算金額</th><th>階梯</th><th>觸發條件</th></tr></thead>"
+            f"<tbody>{_rows_html}</tbody></table>{_freeze_note}"
+        )
+        html = html.replace("__TACTICAL_TABLE__", _tactical_html)
+    except Exception as _e:
+        html = html.replace("__TACTICAL_TABLE__", f"<div style='color:#999;font-size:12px'>對策表產生失敗: {_e}</div>")
 
     return html
 
