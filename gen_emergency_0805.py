@@ -5,7 +5,18 @@ import json, datetime, io, sys
 today = "2026-08-05"
 now = "2026-08-05 13:05"
 
-full_report = """🚨 龍九控股 — 台股緊急應變深度分析報告（Chief Reporter / 台股危機應變官）
+# --- 動態穿透（從 snapshot 讀，2026-08-05 21:xx 修正：不再硬編碼）---
+import json as _json
+_snap = _json.load(open('snapshot.json', encoding='utf-8'))
+_pen = _snap.get('penetration', {}).get('actual_twd', {})
+_ppct = _snap.get('penetration', {}).get('actual_pct', {})
+_ta = _snap.get('total_assets', 0)
+_amt = lambda k: f"{_pen.get(k, 0):,}"
+_pct = lambda k: _ppct.get(k, 0)
+def _dev(k, tgt):
+    return _ppct.get(k, 0) - tgt
+
+full_report = f"""🚨 龍九控股 — 台股緊急應變深度分析報告（Chief Reporter / 台股危機應變官）
 📅 2026-08-05 13:05（台股午盤）
 
 【一、市場概況】
@@ -22,31 +33,31 @@ full_report = """🚨 龍九控股 — 台股緊急應變深度分析報告（Ch
 3. 通膨降溫（總體面）：美國 6 月 CPI YoY 3.5%（預期 3.8%）、Core 2.6%（預期 2.8%）雙雙低於預期，聯準會降息空間打開，長天期殖利率回落壓力緩解，支撐股市與債券評價；惟 US30Y 仍處 5.21% 高檔，後續仍須盯緊。
 
 【三、持倉關聯分析】
-• 0050（元大台灣50）：大盤 +2.94% 直接受惠；台積電權重逾五成，+3.23% 帶動下預估單日 +3% 上下，為台股市值型部位（1,522,144 TWD）主力貢獻。
+• 0050（元大台灣50）：大盤 +2.94% 直接受惠；台積電權重逾五成，+3.23% 帶動下預估單日 +3% 上下，為台股市值型部位（{_amt('台股市值型成長')} TWD）主力貢獻。
 • 006208（富邦台50）：與 0050 高度同質，受台積電/權值股同步帶動，預估 +3% 上下；低費用累積邏輯不變。
-• 00878（國泰永續高股息）：大漲日資金追逐成長股，高股息族相對落後，預估 +1~2%；惟殖利率保護與防禦屬性使震盪中相對抗跌，屬防守型配息（3,050,365 TWD）之一部。
+• 00878（國泰永續高股息）：大漲日資金追逐成長股，高股息族相對落後，預估 +1~2%；惟殖利率保護與防禦屬性使震盪中相對抗跌，屬防守型配息（{_amt('防守型配息')} TWD）之一部。
 • 00919（群益台灣精選高息）：同屬高股息，走勢與 00878 類似（+1~2%），配息現金流穩定，維持持有。
 • 00983D（美國公債 20 年 ETF）：US30Y 5.21% 仍高於防禦門檻，長債價格續受壓，今日股市大漲分流債市資金，預估平盤至小跌；依臨時規則「00983D 暫緩」，維持不加碼。
-• 美股 ETF（5,787,079 TWD）：費半 +6.55%、納指 +2.59%，AI/半導體權重高的美股 ETF 顯著受惠，預估 +2~4%，為今日帳面增值最大來源。
+• 美股 ETF（{_amt('美股市值型成長')} TWD）：費半 +6.55%、納指 +2.59%，AI/半導體權重高的美股 ETF 顯著受惠，預估 +2~4%，為今日帳面增值最大來源。
 • 保單基金（防守型配息）：與股市連動低、變動有限，持續提供月配息現金流，退休金流穩定。
 
-【四、資產配置透視】（snapshot.json penetration.actual_twd，2026-08-05 15:00 校正）
-總投資部位：16,465,917 TWD（穿透後）
-• 台股市值型成長：1,868,944（11.4%）vs 目標 20% → -8.6pp 低配（逐步架構預期）
-• 美股市值型成長：5,638,709（34.2%）vs 30% → +4.2pp 超配
-• 防守型配息：3,064,618（18.6%）vs 20% → -1.4pp 微低（合理範圍）
-• 債券：2,980,636（18.1%）vs 15% → +3.1pp 超配
-• 現金/安全網：2,913,010（17.7%）vs 15% → +2.7pp 超配（安全邊際充足）
-成長合計 45.6%（台+美）；債券+現金安全網 35.8%，緩衝充裕。
+【四、資產配置透視】（snapshot.json penetration，動態校正）
+總投資部位：{_ta:,} TWD（穿透後）
+• 台股市值型成長：{_amt('台股市值型成長')}（{_pct('台股市值型成長')}%）vs 目標 20% → {_dev('台股市值型成長', 20):+.1f}pp 低配（逐步架構預期）
+• 美股市值型成長：{_amt('美股市值型成長')}（{_pct('美股市值型成長')}%）vs 30% → {_dev('美股市值型成長', 30):+.1f}pp 超配
+• 防守型配息：{_amt('防守型配息')}（{_pct('防守型配息')}%）vs 20% → {_dev('防守型配息', 20):+.1f}pp
+• 債券：{_amt('債券')}（{_pct('債券')}%）vs 15% → {_dev('債券', 15):+.1f}pp
+• 現金/安全網：{_amt('現金/安全網')}（{_pct('現金/安全網')}%）vs 15% → {_dev('現金/安全網', 15):+.1f}pp
+成長合計 {_pct('台股市值型成長')+_pct('美股市值型成長')}%（台+美）；債券+現金安全網 {_pct('債券')+_pct('現金/安全網')}%，緩衝充裕。
 
 【五、巴菲特/蒙格式建議】（臨時階段規則）
 • 00878：續建 4 週（每週小單）✅ 執行中，不因今日大漲改變節奏。
 • 00983D：暫緩 ✅（US30Y ≥ 5.20% 防禦模式，債券不加碼）。
 • 單筆 ≥5 萬：暫停 ✅（核貸審查階段，大額調度延後）。
 • 現金底線：6 個月生活費不動（≥85 萬）✅ 現金 291 萬充足。
-• 台股市值型（0050/006208）：嚴重低配 -14.1pp，惟今日大漲 +2.94% 不宜追價；依「僅回檔小單分批低吸（單筆 ≤5 萬）」原則，等量能確認與回檔再分批，不強迫貼齊。
-• 美股市值型：超配 +5.7pp，逢反彈分批減碼收斂至 30%（不急砍，分批執行）。
-• 核心心法：大漲日最忌 FOMO 追高；安全邊際（現金 18%＋債券 18.2%）優先維持，等更好的價格與 US30Y 回落訊號。
+• 台股市值型（0050/006208）：嚴重低配 {_dev('台股市值型成長', 20):+.1f}pp，惟今日大漲 +2.94% 不宜追價；依「僅回檔小單分批低吸（單筆 ≤5 萬）」原則，等量能確認與回檔再分批，不強迫貼齊。
+• 美股市值型：超配 {_dev('美股市值型成長', 30):+.1f}pp，逢反彈分批減碼收斂至 30%（不急砍，分批執行）。
+• 核心心法：大漲日最忌 FOMO 追高；安全邊際（現金 {_pct('現金/安全網')}%＋債券 {_pct('債券')}%）優先維持，等更好的價格與 US30Y 回落訊號。
 
 【六、風控檢查】
 • US30Y：現值 5.21%（streak=1）→ 已突破 5.20% 防禦門檻（防禦模式啟動），未觸及 5.30% 凍結紅線；「連 3 日 <5.20%」未達成 → 市值大額進場維持凍結。
@@ -125,14 +136,14 @@ kpi_html = """
 <div class="box"><div class="lbl">US30Y</div><div class="val" style="color:var(--yel)">5.21% ｜ 防禦5.20/紅線5.30</div></div>
 """
 
-secs = """
+secs = f"""
 <div class="card"><h2>📌 結論速覽 <span class="tag">TL;DR</span></h2>
 <table>
 <tr><th>項目</th><th>狀態</th><th>行動</th></tr>
-<tr><td>台股市值型（0050/006208）</td><td><span class="badge over">低配 -14.1pp</span></td><td>大漲不追價，回檔小單分批（單筆 ≤5 萬）</td></tr>
+<tr><td>台股市值型（0050/006208）</td><td><span class="badge over">低配 {_dev('台股市值型成長', 20):+.1f}pp</span></td><td>大漲不追價，回檔小單分批（單筆 ≤5 萬）</td></tr>
 <tr><td>00878 防守配息</td><td><span class="badge ok">合理 -0.2pp</span></td><td>續建 4 週，每週小單維持</td></tr>
 <tr><td>00983D 美債 ETF</td><td><span class="badge pause">暫緩</span></td><td>US30Y ≥5.20% 防禦模式，不加碼</td></tr>
-<tr><td>美股 ETF</td><td><span class="badge over">超配 +5.7pp</span></td><td>逢反彈分批減碼收斂至 30%</td></tr>
+<tr><td>美股 ETF</td><td><span class="badge over">超配 {_dev('美股市值型成長', 30):+.1f}pp</span></td><td>逢反彈分批減碼收斂至 30%</td></tr>
 <tr><td>現金底線</td><td><span class="badge ok">291 萬 ≥85 萬</span></td><td>6 個月生活費不動</td></tr>
 <tr><td>國泰核貸</td><td><span class="badge warn">審查階段</span></td><td>8/4 撥款待確認，單筆 ≥5 萬暫停</td></tr>
 </table></div>
@@ -143,12 +154,12 @@ secs = """
 <div class="card"><h2>📊 資產配置透視 <span class="tag">snapshot.json penetration.actual_twd</span></h2>
 <table>
 <tr><th>資產分類</th><th class="num">現況 TWD</th><th class="num">現況 %</th><th class="num">臨時階段目標 %</th><th class="num">偏離 pp</th><th>判定</th></tr>
-<tr><td>台股市值型成長</td><td class="num">1,522,144</td><td class="num">9.4</td><td class="num">23.5</td><td class="num neg">-14.1</td><td><span class="badge over">嚴重低配</span></td></tr>
-<tr><td>美股市值型成長</td><td class="num">5,787,079</td><td class="num">35.7</td><td class="num">30.0</td><td class="num pos">+5.7</td><td><span class="badge over">超配</span></td></tr>
-<tr><td>防守型配息</td><td class="num">3,050,365</td><td class="num">18.8</td><td class="num">19.0</td><td class="num neg">-0.2</td><td><span class="badge ok">合理</span></td></tr>
-<tr><td>債券</td><td class="num">2,946,068</td><td class="num">18.2</td><td class="num">13.0</td><td class="num pos">+5.2</td><td><span class="badge hold">超配(安全網)</span></td></tr>
-<tr><td>現金/安全網</td><td class="num">2,914,655</td><td class="num">18.0</td><td class="num">14.5</td><td class="num pos">+3.5</td><td><span class="badge ok">充足</span></td></tr>
-<tr><th>合計</th><th class="num">16,220,311</th><th class="num">100.0</th><th class="num">100.0</th><th class="num">—</th><th>安全網(債+現金) 36.2%</th></tr>
+<tr><td>台股市值型成長</td><td class="num">{_pen.get('台股市值型成長',0):,}</td><td class="num">{_ppct.get('台股市值型成長',0)}</td><td class="num">20.0</td><td class="num neg">{_dev('台股市值型成長',20):+.1f}</td><td><span class="badge over">低配</span></td></tr>
+<tr><td>美股市值型成長</td><td class="num">{_pen.get('美股市值型成長',0):,}</td><td class="num">{_ppct.get('美股市值型成長',0)}</td><td class="num">30.0</td><td class="num pos">{_dev('美股市值型成長',30):+.1f}</td><td><span class="badge over">超配</span></td></tr>
+<tr><td>防守型配息</td><td class="num">{_pen.get('防守型配息',0):,}</td><td class="num">{_ppct.get('防守型配息',0)}</td><td class="num">20.0</td><td class="num neg">{_dev('防守型配息',20):+.1f}</td><td><span class="badge ok">觀察</span></td></tr>
+<tr><td>債券</td><td class="num">{_pen.get('債券',0):,}</td><td class="num">{_ppct.get('債券',0)}</td><td class="num">15.0</td><td class="num pos">{_dev('債券',15):+.1f}</td><td><span class="badge hold">凍結</span></td></tr>
+<tr><td>現金/安全網</td><td class="num">{_pen.get('現金/安全網',0):,}</td><td class="num">{_ppct.get('現金/安全網',0)}</td><td class="num">15.0</td><td class="num pos">{_dev('現金/安全網',15):+.1f}</td><td><span class="badge ok">充足</span></td></tr>
+<tr><th>合計</th><th class="num">{_ta:,}</th><th class="num">{sum(_ppct.values()):.1f}</th><th class="num">100.0</th><th class="num">—</th><th>安全網(債+現金) {_ppct.get('債券',0)+_ppct.get('現金/安全網',0):.1f}%</th></tr>
 </table></div>
 
 <div class="card"><h2>🛡️ 風控檢查 <span class="tag">紅線</span></h2>

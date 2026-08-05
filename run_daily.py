@@ -133,7 +133,7 @@ def calibrate_sources() -> dict:
                 elif "第一金" in _k:
                     _div_by_type["第一金"] += _v
                     _div_by_type["保單"] += _v
-                elif "ETF" in _k.upper():
+                elif "ETF" in _k.upper() or "股息" in _k or "股利" in _k:
                     _div_by_type["ETF"] += _v
                 elif "基金" in _k:
                     _div_by_type["基金"] += _v
