@@ -185,7 +185,8 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
     lines.append(f"  債券佔比 {a.get('bond', 0):.1f}%（目標 {TARGETS['bond']}%）")
     
     lines.append("")
-    lines.append("🎯 策略建議（逐步架構版，2026-08-04）：")
+    from datetime import date as _d8
+    lines.append(f"🎯 策略建議（核心‑衛星保守成長版，{_d8.today().strftime('%Y-%m-%d')}）：")
     _tw_gv = g.get("tw_equity", 0)
     _us_gv = g.get("us_equity", 0)
     _def_gv = g.get("defensive", 0)
@@ -212,7 +213,7 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
     return lines
 
 def generate_cto_report(pen: dict, market_text: str = "") -> list:
-    """CTO 技術視角（2026-08-04 逐步架構版）"""
+    """CTO 技術視角（核心‑衛星保守成長版，動態日期）"""
     lines = ["CTO 技術視角", "建議動作："]
     for cat in ["tw_equity", "us_equity", "defensive", "bond", "cash"]:
         gv = pen["gaps"].get(cat, 0)
