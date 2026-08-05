@@ -138,14 +138,17 @@ def build_table(snap: dict, us30y: float = None) -> dict:
     }
 
 def to_markdown(table: dict) -> str:
-    """輸出週報可讀的 Markdown 表格"""
-    lines = ["| 資產分類 | 現況% | 目標 | 偏離pp | 動作 | 精算金額 | 階梯 | 觸發/停止 |",
+    """輸出週報可讀的 Markdown 表格（含視覺進度條）"""
+    lines = ["| 資產分類 | 進度視覺 | 現況% | 目標 | 偏離pp | 動作 | 精算金額 | 階梯 |",
              "|---|---|---|---|---|---|---|---|"]
     for r in table["rows"]:
+        # 視覺進度條：現況/目標比例（滿 20 格）
+        _bar_len = max(1, min(20, int(abs(r["現況占比"]) / max(r["目標"], 1) * 20)))
+        _bar = "█" * _bar_len + "░" * (20 - _bar_len)
         lines.append(
-            f"| {r['資產分類']} | {r['現況占比']}% | {r['目標']}% | "
+            f"| {r['資產分類']} | `{_bar}` | {r['現況占比']}% | {r['目標']}% | "
             f"{r['偏離pp']:+.1f} | {r['建議動作']} | {r['精算金額']:,} | "
-            f"{r['階梯等級']} | {r['觸發條件']} / {r['停止條件']} |"
+            f"{r['階梯等級']} |"
         )
     return "\n".join(lines)
 

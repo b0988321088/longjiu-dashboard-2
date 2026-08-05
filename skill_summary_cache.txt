@@ -4,13 +4,11 @@
 • asset-penetration-update-sop：保單/證券資料更新時的穿透分析 SOP。每次收到截圖或新數據時，依基金成分自動拆解股債比例、同步三源。
 • buffett-style-asset-analysis：>
 • code-modification-safety：|
-• computer-use：|
 • daily-deploy-pipeline：日報 + 資產變化對照 + 靜態儀表板 一條龍推送。含 dragon_assets.db 單源、巴菲特動態分析、6/5 變化對照區塊。
 • daily-report-c-mode-review：日報 C 模式審核流程：11 階段完整審核、CIO-Gemini 複審、GitHub Contents API 上傳、日期追蹤、連結推送規範。
 • delegation-protocol：|
 • deploy-checklist：|
 • deployment-output-validation：Post-deployment output decoding — what update_all.py checks mean, what to do when checks flag false alarms, and known dashboard gaps.
-• dogfood："Exploratory QA of web apps: find bugs, evidence, reports."
 • emergency-to-daily-report：|
 • hermes-desktop-plugins：Write desktop app plugins that add UI panes and commands.
 • hermes-themes："Author a Hermes color theme that skins every surface."

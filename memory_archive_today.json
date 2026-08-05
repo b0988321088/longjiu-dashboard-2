@@ -1,9 +1,9 @@
 {
-  "date": "2026-08-04",
+  "date": "2026-08-05",
   "memory_pct": "?",
-  "skills_count": 31,
+  "skills_count": 29,
   "actions": [
-    "技能摘要：31 個已更新",
+    "技能摘要：29 個已更新",
     "請執行 `memory(action='list')` 檢查容量，必要時移除低頻條目",
     "低頻判定：INC記錄(已存ERROR_LOG)、超過1個月未更新的設定、已穩定的決策",
     "INC 記錄：1 條（詳見 error_summary_cache.txt）",

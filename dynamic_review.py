@@ -87,6 +87,22 @@ def main():
     except Exception as _e:
         print(f"\n[目標-對策對照表] 產生失敗: {_e}")
 
+    # P1-4 月戰略檢討（僅 monthly 模式）
+    if mode == "monthly":
+        try:
+            from monthly_strategy_review import build_monthly_review, to_markdown as _md
+            us30y = None
+            try:
+                _st = json.load(open(BASE / "us30y_state.json", encoding="utf-8"))
+                us30y = _st.get("last_rate")
+            except Exception:
+                pass
+            _rev = build_monthly_review(snap, us30y)
+            print(f"\n[月戰略檢討] {_rev['month']}")
+            print(_md(_rev))
+        except Exception as _e:
+            print(f"\n[月戰略檢討] 產生失敗: {_e}")
+
     db.close()
 
 if __name__ == "__main__":
