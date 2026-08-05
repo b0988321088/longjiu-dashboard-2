@@ -86,7 +86,14 @@ def get_fire(snap):
     total = ins+etf+fund+rent
     ideal = 300000
     basic = 141958
-    lines = [f"  被動收入 {total:,} / 理想 {ideal:,}（{total/ideal*100:.1f}%{'🎉' if total>=ideal else '🔄'}）"]
+    # 標示數據月份（monthly_dividend_breakdown 是最近一次實收月份）
+    _note = mdb.get("note", "") or ""
+    _m = ""
+    if "7月" in _note or "2026-07" in _note:
+        _m = "（7月實收）"
+    elif "8月" in _note or "2026-08" in _note:
+        _m = "（8月實收）"
+    lines = [f"  被動收入 {total:,} / 理想 {ideal:,}（{total/ideal*100:.1f}%{'🎉' if total>=ideal else '🔄'}）{_m}"]
     if total < ideal:
         lines.append(f"  缺口 {ideal-total:,}/月 | 基本已超越 {total/basic*100:.1f}% ✅")
     return lines

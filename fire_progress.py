@@ -19,8 +19,12 @@ def calc():
     rent = snap.get("rent_monthly_actual", 80100)
     total_income = insurance_div + etf_div + fund_div + rent
     
+    mdb_note = mdb.get("note", "") or ""
+    _m = ""
+    if "7月" in mdb_note or "2026-07" in mdb_note: _m = "（7月實收）"
+    elif "8月" in mdb_note or "2026-08" in mdb_note: _m = "（8月實收）"
     lines = [
-        f"🎯 **FIRE 進度條**",
+        f"🎯 **FIRE 進度條{_m}**",
         f"被動收入: **{total_income:,} TWD/月**（保單{insurance_div:,}+ETF{etf_div:,}+基金{fund_div:,}+房租{rent:,}）",
         f"",
         f"✅ **基本生活（{TARGET_BASIC:,}）**: {total_income/TARGET_BASIC*100:.1f}% — {'已達標！🎉' if total_income >= TARGET_BASIC else '還差一點'}",
