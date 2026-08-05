@@ -96,6 +96,7 @@ def get_fire(snap):
     cov = total / expense * 100 if expense else 0
     lines = [
         f"  被動收入{_m}：**{total:,}**",
+        f"    （保單 {ins:,} + ETF {etf:,} + 基金 {fund:,} + 房租 {rent:,}）",
         f"  當下真實常態開銷：**{expense:,}**",
         f"  {'🟢' if cov >= 100 else '🔴'}當下覆蓋率：**{cov:.1f}%** {'✅（被動收入已超過真實生活花費）' if cov >= 100 else '⚠️（不足）'}",
         f"  📌長期理想目標（月花費 {ideal_spend:,}）：缺口 **{max(0, ideal_spend-total):,}**/月",

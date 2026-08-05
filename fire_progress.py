@@ -30,7 +30,9 @@ def calc():
     lines = [
         f"🎯 **FIRE 進度{_m}**",
         f"- 被動收入{_m}：**{total_income:,}**",
+        f"  （保單 {insurance_div:,} + ETF {etf_div:,} + 基金 {fund_div:,} + 房租 {rent:,}）",
         f"- 當下真實常態開銷：**{expense:,}**",
+        f"  （monthly_expense 基準：房貸/生活/信用卡常態）",
         f"- {'🟢' if cov >= 100 else '🔴'}當下覆蓋率：**{cov:.1f}%** {'✅（被動收入已超過真實生活花費）' if cov >= 100 else '⚠️（不足）'}",
         f"- 📌長期理想目標（月花費 {TARGET_IDEAL_SPEND:,}）：缺口 **{max(0, TARGET_IDEAL_SPEND-total_income):,}**/月",
     ]
