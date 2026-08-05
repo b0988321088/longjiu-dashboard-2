@@ -179,6 +179,12 @@ def to_markdown(table: dict) -> str:
                     lines.append(f"   {_lb_hl[2]}")
                     if len(_lb_hl) > 3:
                         lines.append(f"   {_lb_hl[3]}")
+            _cw = _lb.get("carry_trade_warning", {}) or {}
+            if _cw:
+                lines.append(f"- ⚠️ 套利警告：{_cw.get('summary','')}（{_cw.get('positioning','')}）")
+                _ag = _cw.get("activation_gates", [])
+                if isinstance(_ag, list) and _ag:
+                    lines.append(f"- 🔓 開啟門檻（全要達成）：{'；'.join(_ag)}")
         lines.append(f"- ⚠️ 風險警示：{pi.get('risk_warning', '專業投資人不受金融消保法保障')}")
     return "\n".join(lines)
 
