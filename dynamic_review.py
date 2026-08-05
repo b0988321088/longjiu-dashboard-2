@@ -65,6 +65,28 @@ def main():
     # 階段狀態
     print(f"\n[階段] 國泰核貸: {snap.get('cathay_refinance_note', '審查中')[:60]}")
     print(f"[現金底線] 現金 {snap.get('real_liquid_assets', 0):,} vs 6個月支出 {snap.get('monthly_expense', 141958) * 6:,.0f}")
+
+    # P0-1 目標-對策對照表（tactical_table.py）
+    try:
+        from tactical_table import build_table, to_markdown
+        us30y = None
+        try:
+            _st = json.load(open(BASE / "us30y_state.json", encoding="utf-8"))
+            us30y = _st.get("last_rate")
+        except Exception:
+            pass
+        _tbl = build_table(snap, us30y)
+        print(f"\n[目標-對策對照表] US30Y={us30y} 凍結={_tbl['frozen']}")
+        print(to_markdown(_tbl))
+        # 儲存快照供閉環追蹤
+        try:
+            from action_loop import save_snapshot
+            save_snapshot(_tbl, snap)
+        except Exception as _e:
+            print(f"  (快照略過: {_e})")
+    except Exception as _e:
+        print(f"\n[目標-對策對照表] 產生失敗: {_e}")
+
     db.close()
 
 if __name__ == "__main__":
