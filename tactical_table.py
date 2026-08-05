@@ -185,6 +185,16 @@ def to_markdown(table: dict) -> str:
                 _ag = _cw.get("activation_gates", [])
                 if isinstance(_ag, list) and _ag:
                     lines.append(f"- 🔓 開啟門檻（全要達成）：{'；'.join(_ag)}")
+            _su = _lb.get("suitable_scenarios", [])
+            if isinstance(_su, list) and _su:
+                lines.append(f"- ✅ 適合情境：{_su[0][:60]}；{_su[1][:50]}")
+            _fb2 = _lb.get("forbidden_scenarios", [])
+            if isinstance(_fb2, list) and _fb2:
+                lines.append(f"- ⛔ 禁止情境：{_fb2[0][:55]}；{_fb2[1][:50]}")
+            _mg = _lb.get("mandatory_gates", [])
+            if isinstance(_mg, list) and _mg:
+                lines.append(f"- 🔒 強制門檻：{'；'.join(_mg)}")
+                lines.append(f"- 🚨 {_lb.get('red_alert_rule','任一不滿足→週報紅色警示，禁止執行')}")
         lines.append(f"- ⚠️ 風險警示：{pi.get('risk_warning', '專業投資人不受金融消保法保障')}")
     return "\n".join(lines)
 
