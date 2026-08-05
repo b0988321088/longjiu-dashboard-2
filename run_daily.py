@@ -1288,8 +1288,9 @@ def main():
             for e in _upcoming
         )[:4000]
         _p0_core = [
-            '<li>7/17（五）— 國泰轉貸面簽/對保（✅ 已執行，8/2 完成低息轉貸）</li>',
-            '<li>8/2（日）— 國泰 2.6% 轉貸完成 — 清償保單借貸</li>',
+            '<li>8/4（二）— 國泰地政設定申請（🔄 3天作業中，8/7 完成寄回）</li>',
+            '<li>8/15（五）— 國泰核貸撥款 1,200萬 @2.6%（🔴 待撥款 → 清償800萬 + 400萬分批建倉）</li>',
+            '<li>8/5 — 安聯配息 A+B 入帳 15,976（✅ 已收）</li>',
         ]
         _important = ['🔴', '🔄', '⚠️', '⏸️', '📋 重要']
         _p0_dynamic = [
@@ -1465,17 +1466,17 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         for _e in _sch:
             if any(k in (_e.get("status", "") or "") for k in ["✅ 已", "✅ 完成", "已完成"]):
                 _done_items.append(_e.get("item", ""))
-        # 固定近期完成
+        # 固定近期完成（保留近一週，過期項移除）
         _done_fixed = [
-            "國泰轉貸面簽/對保（7/17）",
-            "星展舊貸結清（7/13）",
+            "國泰對保完成（8/3）",
+            "國泰地政設定申請（8/4）",
             "M&G→摩根 轉換定案（8/3 執行）",
         ]
         for d in _done_fixed:
             if d not in _done_items:
                 _done_items.append(d)
     except Exception:
-        _done_items = ["國泰轉貸面簽/對保（7/17）", "星展舊貸結清（7/13）"]
+        _done_items = ["國泰對保完成（8/3）", "國泰地政設定申請（8/4）"]
     _done_html = "".join(
         f'<div class="flex items-center gap-1"><span class="text-emerald-400">•</span><span class="text-slate-300">{d}</span></div>'
         for d in _done_items[:6]
