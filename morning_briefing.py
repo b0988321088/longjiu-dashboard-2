@@ -85,6 +85,8 @@ def get_fire(snap):
     rent = snap.get("rent_monthly_actual", 80100)
     total = ins+etf+fund+rent
     expense = snap.get("monthly_expense", 141958)  # 當下真實常態開銷
+    mortgage = snap.get("mortgage_monthly_total", 0) or 0
+    other_expense = max(0, expense - mortgage)
     ideal_spend = 40000  # 長期理想目標月花費
     # 標示數據月份
     _note = mdb.get("note", "") or ""
@@ -98,6 +100,7 @@ def get_fire(snap):
         f"  被動收入{_m}：**{total:,}**",
         f"    （保單 {ins:,} + ETF {etf:,} + 基金 {fund:,} + 房租 {rent:,}）",
         f"  當下真實常態開銷：**{expense:,}**",
+        f"    （房貸 {mortgage:,} + 生活/信用卡 {other_expense:,}）",
         f"  {'🟢' if cov >= 100 else '🔴'}當下覆蓋率：**{cov:.1f}%** {'✅（被動收入已超過真實生活花費）' if cov >= 100 else '⚠️（不足）'}",
         f"  📌長期理想目標（月花費 {ideal_spend:,}）：缺口 **{max(0, ideal_spend-total):,}**/月",
     ]
