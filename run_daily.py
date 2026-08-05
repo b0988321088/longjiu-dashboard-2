@@ -218,6 +218,7 @@ def calibrate_sources() -> dict:
         "dividend_records": _div_records,
         "dividend_month_expected": snap.get("dividend_month_expected", 100_000),
         "funds_breakdown": snap.get("funds_breakdown", {}),
+        "professional_investor": snap.get("professional_investor", {}),
         # Liabilities from snapshot.json
         "mortgage_yy": snap.get("mortgage_yy", 0),
         "mortgage_yydu": snap.get("mortgage_yydu", 0),
@@ -1078,6 +1079,27 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
         html = html.replace("__TACTICAL_TABLE__", _tactical_html)
     except Exception as _e:
         html = html.replace("__TACTICAL_TABLE__", f"<div style='color:#999;font-size:12px'>對策表產生失敗: {_e}</div>")
+
+    # 專業投資人風控卡（snapshot.professional_investor）
+    try:
+        _pi = tv.get("professional_investor", {}) or {}
+        if _pi:
+            _pi_mode = _pi.get("mode", "B")
+            _pi_opt = _pi.get("mode_options", {}).get(_pi_mode, {})
+            _pi_rules = "；".join(_pi_opt.get("rules", [])) if _pi_opt else ""
+            _pi_html = (
+                f"<div class='callout callout-warning' style='margin-top:12px'>"
+                f"<h3>🎫 專業投資人風控卡</h3>"
+                f"<div style='font-size:12.5px;line-height:1.8'>"
+                f"<strong>狀態：</strong>{_pi.get('status','申請中')}｜<strong>啟用模式：</strong>{_pi_mode}｜{_pi_opt.get('name','')}<br/>"
+                f"<strong>門檻：</strong>{_pi.get('threshold',0):,}｜現況：金融資產含保單 28,220,311｜<strong>缺口：{_pi.get('gap',0):,}</strong>（可合併配偶）<br/>"
+                f"<strong>強制順序：</strong>{_pi.get('force_order','')}<br/>"
+                f"{'<strong>規則：</strong>' + _pi_rules if _pi_rules else ''}"
+                f"</div></div>"
+            )
+            html += _pi_html
+    except Exception:
+        pass
 
     return html
 

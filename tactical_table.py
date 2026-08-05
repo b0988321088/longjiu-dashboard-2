@@ -135,6 +135,8 @@ def build_table(snap: dict, us30y: float = None) -> dict:
             "中等再平衡": sum(1 for r in rows if r["階梯等級"] == "中等再平衡"),
             "大規模再平衡": sum(1 for r in rows if r["階梯等級"] == "大規模再平衡"),
         },
+        # 專業投資人二策略管控（snapshot professional_investor）
+        "professional_investor": snap.get("professional_investor", {}),
     }
 
 def to_markdown(table: dict) -> str:
@@ -150,6 +152,20 @@ def to_markdown(table: dict) -> str:
             f"{r['偏離pp']:+.1f} | {r['建議動作']} | {r['精算金額']:,} | "
             f"{r['階梯等級']} |"
         )
+    # 專業投資人風控卡
+    pi = table.get("professional_investor", {}) or {}
+    if pi:
+        _mode = pi.get("mode", "B")
+        _opt = pi.get("mode_options", {}).get(_mode, {})
+        _mode_name = _opt.get("name", _mode)
+        lines.append("")
+        lines.append("**🎫 專業投資人風控卡**")
+        lines.append(f"- 狀態：{pi.get('status', '申請中')}｜啟用模式：**{_mode}｜{_mode_name}**")
+        lines.append(f"- 門檻：{pi.get('threshold', 30_000_000):,}｜現況：金融資產含保單 28,220,311｜缺口：{pi.get('gap', 0):,}")
+        lines.append(f"- 強制順序：{pi.get('force_order', '')}")
+        lines.append(f"- ⚠️ 風險警示：{pi.get('risk_warning', '專業投資人身分不受金融消保法保障')}")
+        if _opt.get("rules"):
+            lines.append(f"- 規則：{'；'.join(_opt['rules'])}")
     return "\n".join(lines)
 
 def main():
