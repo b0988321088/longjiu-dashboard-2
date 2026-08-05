@@ -22,6 +22,33 @@ COMMIT_RAW="${1:-龍九自動更新 ${TODAY}}"
 export PUSH_FORCE_OK=1
 
 # ======================
+# 防呆0.5：同義欄位一致性 + 穿透三報表一致性（2026-08-05 新增）
+# ======================
+echo "🔍 檢查同義欄位一致性..."
+if ! python asset_sync.py > /tmp/asset_sync_check.log 2>&1; then
+    cat /tmp/asset_sync_check.log
+    echo "[ERROR] 同義欄位不一致，中止推送"
+    exit 1
+fi
+if grep -q "❌" /tmp/asset_sync_check.log; then
+    cat /tmp/asset_sync_check.log
+    echo "[ERROR] 同義欄位不一致，中止推送"
+    exit 1
+fi
+
+echo "🔍 檢查穿透三報表一致性..."
+if ! python check_penetration_consistency.py "${TODAY}" > /tmp/pen_consistency.log 2>&1; then
+    cat /tmp/pen_consistency.log
+    echo "[ERROR] 穿透報表不一致，中止推送"
+    exit 1
+fi
+grep -q "✅ 三報表穿透一致" /tmp/pen_consistency.log && echo "✅ 穿透一致性 PASS" || {
+    cat /tmp/pen_consistency.log
+    echo "[ERROR] 穿透報表不一致，中止推送"
+    exit 1
+}
+
+# ======================
 # 防呆1：產出檔案複製（scripts/ → repo 根）
 # ======================
 FILES=(

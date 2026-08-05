@@ -124,8 +124,8 @@ print("🔍 Step 3c: 產出日報 ...", end=" ")
 try:
     import subprocess, os
     today = snap.get('date', str(date.today()))
-    # 刪除舊日報強制重產
-    for f in [f'daily_report_v2_{today}.html', f'penetration_report_{today}.html']:
+    # 刪除舊日報強制重產（穿透報告由 build_penetration_report.py 獨立產出，不在這裡刪）
+    for f in [f'daily_report_v2_{today}.html']:
         fp = os.path.join(BASE, f)
         if os.path.exists(fp): os.remove(fp)
     # 產出（不 deploy，等使用者核准後才推）
@@ -204,6 +204,25 @@ except Exception as e:
 except Exception as e:
     print(f"❌ {e}")
     errors.append(f"驗證失敗: {e}")
+
+# === Step 4b: 同義欄位 + 穿透三報表一致性檢查（2026-08-05 新增防呆）===
+print("🔍 Step 4b: 同義欄位 & 穿透一致性 ...", end=" ")
+try:
+    import subprocess as _sp
+    _c1 = _sp.run(['python', 'asset_sync.py'], capture_output=True, text=True, timeout=30)
+    if '❌' in _c1.stdout or _c1.returncode != 0:
+        print(f"❌ 同義欄位不一致：{_c1.stdout[-200:]}")
+        errors.append("同義欄位不一致（asset_sync.py 抓到）")
+    else:
+        _today_s = snap.get('date', str(date.today()))
+        _c2 = _sp.run(['python', 'check_penetration_consistency.py', _today_s], capture_output=True, text=True, timeout=30)
+        if _c2.returncode != 0 or '❌' in _c2.stdout:
+            print(f"❌ 穿透不一致：{_c2.stdout[-300:]}")
+            errors.append("穿透三報表不一致（check_penetration_consistency.py 抓到）")
+        else:
+            print("✅ OK（同義欄位一致 + 三報表穿透一致）")
+except Exception as e:
+    print(f"⚠️ 檢查異常（不阻擋但記錄）: {e}")
 
 # === Step 5: Push 到 GitHub（需使用者核准）===
 if errors:
