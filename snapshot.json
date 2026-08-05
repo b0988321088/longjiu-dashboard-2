@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-08-05T22:15:04.529665",
+  "generated_at": "2026-08-06T07:00:38.953402",
   "version": "v5.0.10-true-value-correction",
-  "date": "2026-08-05",
+  "date": "2026-08-06",
   "total_assets": 16575822.0,
   "total_liabilities": 21088175,
   "net_worth": -4847994,
@@ -493,7 +493,7 @@
     "max_allocation": "機會子彈 ≤ 20% 安全網部位"
   },
   "penetration": {
-    "updated_at": "2026-08-05",
+    "updated_at": "2026-08-06",
     "source": "calc_penetration (auto-calibrated)",
     "targets": {
       "台股市值型目標": 15,
@@ -510,10 +510,10 @@
       "現金/安全網": 18.2
     },
     "gaps": {
-      "台股市值型成長": -8.7,
+      "台股市值型成長": -3.7,
       "美股市值型成長": 4.0,
       "防守型配息": -1.5,
-      "債券及安全現金": 6.2
+      "債券及安全現金": 1.2
     },
     "actual_twd": {
       "台股市值型成長": 1868944.0,
@@ -522,7 +522,7 @@
       "債券": 2980636.0,
       "現金/安全網": 3022915.0
     },
-    "alert": "台股不足8.7pp；現金+債券超標6.2pp"
+    "alert": "台股不足3.7pp；現金+債券超標1.2pp"
   },
   "penetration_canonical": {
     "updated_at": "2026-07-18",
