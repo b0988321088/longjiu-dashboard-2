@@ -200,7 +200,8 @@ _analysis = {
 (LJ / "data" / "emergency_llm_analysis.json").write_text(
     json.dumps(_analysis, ensure_ascii=False, indent=2), "utf-8")
 print(f"✅ 緊急應變分析已寫入 data/emergency_llm_analysis.json")
-run_step("日報+儀表板", [sys.executable, str(LJ / "run_daily.py")], 120)
+# 2026-08-06 修正：run_daily.py 有停滯風險（buffett_cto_analyzer），改 regenerate_report.py 一鍵管線（含校準/日報/差異/儀表板/驗證/推送）
+run_step("日報+儀表板", [sys.executable, str(LJ / "regenerate_report.py")], 300)
 run_step("差異分析", [sys.executable, str(LJ / "asset_diff_monitor.py")], 60)
 run_step("推送", [sys.executable, str(LJ / "daily_deploy.py")], 300)
 
