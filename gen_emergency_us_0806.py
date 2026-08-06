@@ -1,10 +1,47 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>台股/美股緊急應變報告 2026-08-06 21:30｜龍九控股</title>
-<style>
+# -*- coding: utf-8 -*-
+"""gen_emergency_us_0806.py — 美股緊急應變 8/6 21:30 六章節報告產生器
+產出：data/emergency_llm_analysis.json + emergency_report_2026-08-08.html(Railway) + emergency_taiex_report_2026-08-08.html(GitHub)
+"""
+import json, datetime
+from pathlib import Path
+
+BASE = Path(__file__).resolve().parent
+TODAY = "2026-08-06"
+NOW = "2026-08-06 21:35"
+
+FULL_REPORT = """【一、市場概況】（8/6 21:33 台北 = 美東 9:33 開盤 3 分鐘，Yahoo Finance 即時）
+美股三大指數：道瓊 54,368.04（+0.03%，+18.92）、S&P 500 7,716.47（-0.09%，-7.08）、納斯達克 26,230.18（-0.51%，-133.26）。費城半導體 11,722.25（-2.39%，-286.63）開盤重挫，為今日最弱區塊。盤前期貨：ES 7,751.25（+0.02%）、NQ 29,355.00（-0.88%）、YM 54,598.00（+0.19%），呈「道瓊抗跌、科技走弱」的輪動格局。重要個股：台積電 ADR 409.91（-0.94%）、NVDA 220.44（+0.56% 逆勢翻紅）、TSLA 317.09（-1.39%）、AAPL 314.84（+1.23%）、META 588.96（+0.03%）、AMZN 273.79（+0.42%）。商品：黃金 4,304.3（-0.02% 高檔盤整）、WTI 原油 76.24（+1.36%）。債市：美債 10 年 4.643%（+2.6bp）；30 年 5.193%（+1.9bp），貼近 5.20% 防禦門檻，為全場最大風險焦點。
+
+【二、重大事件分析】
+1) Fed 鷹派重定價、30Y 創 19 年新高：市場開始押注 9 月升息（IBD），Fed 理事 Cook 稱若通膨未緩解準備升息（Reuters），主席 Warsh 維持鷹派溝通（FT），Daly 表示 7 月按兵不動正確。30 年美債殖利率一度觸 5.2% 創 19 年新高（Benzinga）→ 長債殖利率為當前最大系統性風險，直接壓抑債券部位與科技估值。
+2) AI/晶片賣壓延續：亞洲科技股重挫，SK海力士 -10%、三星 -6%、KOSPI -4.6%、日經科技股大跌；JPMorgan 警告避險基金遭「結構性」打擊被迫撤出科技股；7 月約 1.3 兆美元晶片股拋售餘波未平。今晚費半 -2.39% 續跌，但 NVDA +0.56% 逆勢、TSM ADR -0.94% 相對抗跌 → 賣壓集中記憶體/製造，AI 龍頭與價值股分歧，資金轉向價值與防禦（Dow 抗跌、Value Stocks Surge）。
+3) 地緣與商品：荷莫茲海峽重開談判有進展壓抑油價，但烏克蘭無人機襲擊俄羅斯煉油廠推升 WTI +1.36%；金價 4,304 高檔（避險+央行買盤），白銀創 6 月新高。
+4) 財報與貿易：SpaceX 首波解鎖股份有壓力、SanDisk 財報後下跌、Fiserv 重挫、RBI 財報優於預期、軟銀超預期（晶片子公司助攻）；TSM 上調 2026 展望（AI 需求加速）為正向訊號。美擬對中國多晶矽課 15% 關稅並退還 1,000 億美元關稅，貿易政策持續擾動。
+
+【三、持倉關聯分析】
+台股市值型：0050（20.6萬）、006208（46.9萬）、009816（30.8萬）— 台積電權重高，今晚費半 -2.39%、台積 ADR -0.94%，明日台股開盤承壓（今日台股已先跌 0.45%、台積 -1.25%，部分反映）；長線分批策略不變。高股息防守：00878（51.9萬，續建4週）、00919（17.8萬）、00713（12.3萬）、0056（4.9萬）、00918（3.3萬）、00981A（15.7萬）、00984A（14.1萬）、00888（15.7萬）— 防守型 18.5%，震盪中相對抗跌。美股寬基：00646（7.6萬）、009823（10.3萬）— S&P 僅 -0.09%，影響輕微；00924 美國科技巨頭（9.9萬）— 納指 -0.51% 小跌，NVDA/AAPL 上漲部分抵銷。00983D（10.1萬）：8/4 已建首批 1 萬單位，核貸審查期暫緩加碼。保單基金（安聯A 500萬/安聯B 265萬/第一金 193萬，合計 989萬，質借 400萬）：貝萊德世界科技A10（203萬）受半導體賣壓影響、NVDA/AAPL 提供緩衝；安聯AI收益（90萬）波動較大；PIMCO收益增長（271萬）+M&G入息（108萬）+安聯收益成長（125萬）等債券/平衡部位受 30Y 5.19% 高檔壓價，短中期投資等級策略提供緩衝；質借利率 4%，待國泰 2.6% 撥款後清償。台新美日台半導體基金（12.9萬，日圓計價）：SK海力士 -10%、三星 -6% 直接承壓。
+
+【四、資產配置透視】（snapshot penetration.actual_twd，2026-08-06；總投資資產 16,575,822；臨時階段目標：美股30/台股23.5/防守19/債券13/現金14.5）
+台股市值型成長 1,868,944（11.3%）vs 23.5% → 偏離 -12.2pp（約 -202 萬，最大缺口）；美股市值型成長 5,638,709（34.0%）vs 30% → 偏離 +4.0pp（約 +66 萬，超配，已觸上限）；防守型配息 3,064,618（18.5%）vs 19% → 偏離 -0.5pp；債券 2,980,636（18.0%）vs 13% → 偏離 +5.0pp（約 +83 萬，超標）；現金/安全網 3,022,915（18.2%）vs 14.5% → 偏離 +3.7pp（約 +61 萬，超標）。警語：美股 34% 已達 30% 上限，嚴禁超配；台股為唯一大額缺口，靠國泰撥款後 400 萬市值型計畫分批補足。
+
+【五、巴菲特/蒙格式建議】（臨時階段規則：00878續建4週、00983D暫緩、單筆≥5萬暫停、現金底線6個月）
+增持：00878（續建4週，小額、每筆<5萬）；0050/006208/009816 — 僅限國泰 8/15 撥款後 400 萬計畫執行（每週≤50萬、單筆<5萬、分批），台股 -12.2pp 為最大再平衡缺口，回檔正是分批良機。持有：00646、009823、00713、00919、0056、00918、00981A、00888、貝萊德科技、安聯AI、保單基金（質借中不動）— 美股寬基雖超配但屬核心長持，不砍倉。減碼：美股 34.0% 超配 → 不新增，逢明顯反彈可小幅調降超配部分回到 30% 上限內。暫緩：00983D 暫緩加碼；單筆≥5萬申購一律暫停；債券 18.0% 超標 + 30Y 警戒 → 不新增長債/平衡基金（警戒線 5.20% 規則：平衡基金禁止再加碼、維持現有）。
+
+【六、風控檢查】
+US30Y 現值 5.193% vs 5.20% 防禦門檻：未觸發（低 0.7bp），惟 7/30 曾收 5.21%（模式A streak=1）；若收盤 ≥5.20% 連續 2 交易日 → 模式A 防禦正式啟動 → 停止新增存續期>5年債券、平衡基金禁加碼（實務上現已視同警戒執行）。vs 5.30% 債券凍結紅線：緩衝 10.7bp；觸及即長期債券新增買單永久凍結。市場押注 9 月升息，紅線可能數週內測試；債券類 18.0% 超標，維持零加碼。國泰核貸階段：8/3 對保完成 → 8/4 地政設定申請 → 8/7 地政完成寄回 → 8/15 撥款 1,200萬 @2.6%（預計）→ 清償 800萬（理財300+保單質借400+質押100）→ 剩 400萬 依市值型計畫分批（每週≤50萬、單筆<5萬）。審查期規則全部維持：00983D 暫緩、單筆≥5萬暫停、00878 續建4週、現金底線 6 個月（約 85.2 萬）；現金 302 萬為底線 3.5 倍，安全無虞。"""
+
+def write_json():
+    d = {"generated_at": NOW, "source": "美股緊急應變", "full_report": FULL_REPORT}
+    p = BASE / "data" / "emergency_llm_analysis.json"
+    p.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
+    n = len(d["full_report"])
+    print(f"[JSON] {p} written, full_report len = {n} chars")
+    assert n > 1500, f"full_report too short: {n}"
+    # verify
+    chk = json.loads(p.read_text(encoding="utf-8"))
+    print(f"[VERIFY] reload len = {len(chk['full_report'])} -> {'OK' if len(chk['full_report'])>1500 else 'FAIL'}")
+
+CSS = """
 :root{--bg:#0b0f17;--card:#131a26;--line:#1f2937;--txt:#e5e7eb;--mut:#9ca3af;--up:#34d399;--down:#f87171;--acc:#60a5fa;--gold:#fbbf24;--warn:#fb923c;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--txt);font-family:"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;padding:24px;line-height:1.75;}
@@ -41,7 +78,23 @@ li{margin:5px 0;}
 .kpi{flex:1;min-width:150px;background:#0f1626;border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-align:center;}
 .kpi .v{font-size:20px;font-weight:700;margin-top:4px;}
 .kpi .l{color:var(--mut);font-size:12px;}
-</style>
+"""
+
+def pct_cls(v):
+    v = v.replace("%", "").replace("+", "")
+    try:
+        f = float(v)
+    except Exception:
+        return "flat"
+    return "up" if f > 0 else ("down" if f < 0 else "flat")
+
+HTML = """<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>美股緊急應變報告 2026-08-06 21:30｜龍九控股</title>
+<style>__CSS__</style>
 </head>
 <body><div class="wrap">
 
@@ -153,4 +206,18 @@ SpaceX 首波解鎖股份有壓力、SanDisk 財報後下跌、Fiserv 重挫、R
 </div>
 
 <div class="foot">龍九控股內部報告｜僅供決策參考，非投資建議｜資料時間 2026-08-06 21:33 台北｜Yahoo Finance 即時 + Google News + snapshot.json 穿透數據</div>
-</div></body></html>
+</div></body></html>"""
+
+def write_htmls():
+    css_html = HTML.replace("__CSS__", CSS)
+    rail = BASE / f"emergency_report_{TODAY}.html"
+    gh = BASE / f"emergency_taiex_report_{TODAY}.html"
+    rail.write_text(css_html, encoding="utf-8")
+    gh.write_text(css_html.replace("美股緊急應變報告 2026-08-06 21:30｜龍九控股", "台股/美股緊急應變報告 2026-08-06 21:30｜龍九控股"), encoding="utf-8")
+    print(f"[HTML] {rail} ({rail.stat().st_size} bytes)")
+    print(f"[HTML] {gh} ({gh.stat().st_size} bytes)")
+
+if __name__ == "__main__":
+    write_json()
+    write_htmls()
+    print("[DONE]", NOW)
