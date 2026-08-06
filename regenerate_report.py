@@ -59,7 +59,9 @@ _ej = BASE / "data" / "emergency_llm_analysis.json"
 if _ej.exists():
     _d = json.loads(_ej.read_text(encoding="utf-8"))
     _r = _d.get("full_report", _d.get("analysis", ""))
-    _emergency_html = f'<div class="callout callout-warn">{_r.replace(chr(10), "<br>" + chr(10))}</div>'
+    _gen = _d.get("generated_at", "") or ""
+    _note = f'<p style="font-size:12px;color:#6e6e73;margin-bottom:6px">📅 緊急應變資料：{_gen[:16]}（美股時段產出，最新可用；今晚 21:30 自動更新）</p>' if _gen else ""
+    _emergency_html = f'<div class="callout callout-warn">{_note}{_r.replace(chr(10), "<br>" + chr(10))}</div>'
     # 加入緊急應變連結（自動找最新可用檔案）
     _emergency_files = sorted(BASE.glob("emergency_report_2*.html"), reverse=True)
     _taiex_files = sorted(BASE.glob("emergency_taiex_report_2*.html"), reverse=True)

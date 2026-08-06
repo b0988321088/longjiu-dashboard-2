@@ -1400,6 +1400,9 @@ def main():
             emergency_data = json.loads(emergency_json_path.read_text(encoding='utf-8'))
             analysis_content = emergency_data.get("full_report", emergency_data.get("analysis", ""))
             _report_html = _format_content_to_html(analysis_content, content_type="emergency_analysis")
+            _gen2 = emergency_data.get("generated_at", "") or ""
+            _note2 = f'<p style="font-size:12px;color:#6e6e73;margin-bottom:6px">📅 緊急應變資料：{_gen2[:16]}（美股時段產出，最新可用；今晚 21:30 自動更新）</p>' if _gen2 else ""
+            _report_html = _note2 + _report_html
             # 從現有檔案找最新緊急應變報告（glob，不寫死日期，避免 404）
             _er_files = sorted(BASE.glob("emergency_report_2*.html"), reverse=True)
             _er_link = ""
