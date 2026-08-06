@@ -1649,6 +1649,25 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         pass
     _debt_html = "\n".join(_debt_rows) or '<div class="text-slate-500">近 30 天無債務流出排程 ✅</div>'
     html = html.replace("__DEBT_OUTFLOW__", _debt_html)
+
+    # 執行中決策追蹤（2026-08-06：與日報第七章決策追蹤同源 pending_decisions.json）
+    _dec_rows = []
+    try:
+        _pd = json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8"))
+        for _e in _pd:
+            _st = _e.get("status", "")
+            _cls = "border-red-500/30" if any(k in _st for k in ["⏳", "🔄", "⏸️"]) else "border-slate-800"
+            _dsp = str(_e.get("date", ""))[5:].replace("-", "/") if _e.get("date") else "—"
+            _dec_rows.append(
+                f'<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border {_cls}">'
+                f'<span class="text-amber-400 font-mono font-bold w-14">{_dsp}</span>'
+                f'<span class="text-white font-bold flex-1">{_e.get("title","")}</span>'
+                f'<span class="text-slate-300 font-mono">{_st}</span></div>'
+            )
+    except Exception:
+        pass
+    _dec_html = "\n".join(_dec_rows) or '<div class="text-slate-500">無執行中決策</div>'
+    html = html.replace("__DASH_DECISIONS__", _dec_html)
     # Trend arrows vs yesterday
     snap_dir = BASE / "snapshots"
     yesterday_snap = {}
