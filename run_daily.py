@@ -381,14 +381,19 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                     _rc_data[_cur_month][_name] = {'除息日': _ex, 'T+4': _t4}
     except:
         pass
-    # 基金順序
+    # 基金順序（2026-08-06：M&G/安聯AI/A10 已轉出至摩根JPM，未來月份不再顯示排程）
     _rc_funds = ['摩根JPM', '安聯收益成長', 'M&G入息', '安聯AI收益', '貝萊德A10']
+    _rc_out = {'M&G入息': '8/3 轉出→摩根', '安聯AI收益': '8/6 轉出→摩根', '貝萊德A10': '8/6 轉出→摩根'}
     _rc_months = ['8', '9', '10', '11', '12']
     # 動態生成行事曆表格
     _rc_rows = ""
     for _f in _rc_funds:
-        _rc_rows += f"          <tr><td>{_f}</td>"
+        _f_disp = f"{_f}（{_rc_out[_f]}）" if _f in _rc_out else _f
+        _rc_rows += f"          <tr><td>{_f_disp}</td>"
         for _m in _rc_months:
+            if _f in _rc_out:
+                _rc_rows += "<td>已轉出</td>"
+                continue
             _d = _rc_data.get(_m, {}).get(_f, {})
             _ex = _d.get('除息日', '')
             _t4 = _d.get('T+4', '')
@@ -708,8 +713,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     </div>
 
     <div class="callout callout-ok">
-      <strong>✅ 星展資金充足</strong><br>
-      星展戶頭餘額 17,000 TWD，8/1 扣理財型利息 ~10,000，餘裕充足。一般房貸已清償 ✅
+      <strong>✅ 流動資金充足</strong><br>
+      {_dbs_note_ph}
     </div>
   </div>
 
@@ -787,9 +792,9 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 </body>
 </html>"""
 
-    # 動態 DBS note
+    # 動態 DBS note（2026-08-06：去硬編碼 8/1/17,000，改讀校準後現金真值）
     _dbs_cash = tv.get("cash_total", 0)
-    _dbs_str = f"星展餘額 {_dbs_cash:,} TWD，扣理財型利息 ~10,000，{'餘裕充足 ✅' if _dbs_cash > 30000 else '⚠️ 需補資金'}"
+    _dbs_str = f"可動用流動資金 {_dbs_cash:,} TWD（Moneybook 校準），{'餘裕充足 ✅' if _dbs_cash > 30000 else '⚠️ 需補資金'}"
     html = html.replace("{_dbs_note}", _dbs_str)
     return html
     return html
@@ -1229,7 +1234,10 @@ def build_cc_rows() -> str:
             for _bank, (_due, _amt) in _latest.items():
                 if _amt > 0:
                     _due_md = "/".join(_due.split("/")[1:]) if "/" in _due else _due
-                    _rows.append(f'          <tr><td>{_bank}</td><td>{_cc_map[_bank]}</td><td>{_due_md}</td><td class="num">{int(_amt):,}</td><td>🔄 待扣繳</td></tr>')
+                    # 2026-08-06：截止日已過 → 標「已截止」待下期帳單，不再顯示待扣繳
+                    _due_full = _due if "/" in _due else ""
+                    _status = "🔄 待扣繳" if _due_full >= date.today().strftime("%Y/%m/%d") else "⏳ 已截止（待下期帳單）"
+                    _rows.append(f'          <tr><td>{_bank}</td><td>{_cc_map[_bank]}</td><td>{_due_md}</td><td class="num">{int(_amt):,}</td><td>{_status}</td></tr>')
         except Exception:
             _rows = []
     # 2) 兜底：snapshot.json 四源校準信用卡資料（credit_card dict，合計=credit_card_pending）
@@ -1357,21 +1365,22 @@ def main():
             p = min((v for k, v in _prio.items() if k in st), default=5)
             d = e.get("date", "")
             return (p, d if d != "待處理" else "9999-99-99")
-        # 過濾：待處理 或 今天之後（不含過去）
+        from datetime import timedelta as _td
+        _end_s = (date.today() + _td(days=30)).isoformat()
+        _week_s = (date.today() + _td(days=7)).isoformat()
+        # 過濾：待處理 或 今天~+30天（不含過去；2026-08-06 移除寫死 8/31）
         _upcoming = [
             e for e in _events
-            if e.get("date", "") == "待處理" or (e.get("date", "") >= _today_s and e.get("date", "") <= "2026-08-31")
+            if e.get("date", "") == "待處理" or (_today_s <= e.get("date", "") <= _end_s)
         ]
         _upcoming.sort(key=_ev_key)
+        # 本週行程表：只顯示今天~+7天（2026-08-06）
         _schedule_rows = "\n".join(
             f'<tr><td>{e.get("date","")}</td><td>{e.get("item","")}</td><td class="num">{e.get("amount","")}</td><td>{e.get("status","")}</td></tr>'
-            for e in _upcoming
+            for e in _upcoming if e.get("date", "") == "待處理" or e.get("date", "") <= _week_s
         )[:4000]
-        _p0_core = [
-            '<li>8/4（二）— 國泰地政設定申請（🔄 3天作業中，8/7 完成寄回）</li>',
-            '<li>8/15（五）— 國泰核貸撥款 1,200萬 @2.6%（🔴 待撥款 → 清償800萬 + 400萬分批建倉）</li>',
-            '<li>8/5 — 安聯配息 A+B 入帳 15,976（✅ 已收）</li>',
-        ]
+        # 2026-08-06 移除硬編碼過期項（8/4申請中、8/5已收配息）；8/15 撥款已由 schedule_events.json 動態聚合
+        _p0_core = []
         _important = ['🔴', '🔄', '⚠️', '⏸️', '📋 重要']
         _p0_dynamic = [
             f'<li>{e.get("date","")} — {e.get("item","")} {e.get("amount","")} {e.get("status","")}</li>'
@@ -1498,6 +1507,9 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     # System date
     today = date.today().isoformat()
     html = html.replace("__SYSTEM_DATE__", today)
+    # 2026-08-06：行事曆/債務流出視窗改動態（今日~+30天），不再寫死月底
+    from datetime import timedelta as _td
+    _cal_deadline = (date.today() + _td(days=30)).isoformat()
 
     # Snapshot placeholders
     def fmt(v):
@@ -1573,7 +1585,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             st = e.get("status", "") or ""
             p = min((v for k, v in _prio2.items() if k in st), default=5)
             return (p, e.get("date", ""))
-        _up2 = [e for e in _sch2 if e.get("date", "") == "待處理" or (e.get("date", "") >= _today_s2 and e.get("date", "") <= "2026-09-30")]
+        _up2 = [e for e in _sch2 if e.get("date", "") == "待處理" or (_today_s2 <= e.get("date", "") <= _cal_deadline)]
         _up2.sort(key=_cal_key)
         _wd = "一二三四五六日"
         for _e in _up2[:12]:
@@ -1610,6 +1622,33 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     except Exception as _ce:
         _cal_items = [f'<div class="text-slate-500">行事曆載入失敗: {_ce}</div>']
     html = html.replace("__DASH_CALENDAR__", "\n".join(_cal_items))
+
+    # 近期債務流出排程（2026-08-06：從 schedule_events.json 動態，清償/扣款/繳款/利息，今日~+30天）
+    _debt_rows = []
+    try:
+        _sch3 = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
+        _debt_kw = ["清償", "扣款", "繳款", "利息"]
+        _debt_ev = [
+            e for e in _sch3
+            if e.get("date", "") != "待處理"
+            and any(k in (e.get("item", "") or "") for k in _debt_kw)
+            and today <= e.get("date", "") <= _cal_deadline
+        ]
+        _debt_ev.sort(key=lambda e: e.get("date", ""))
+        for _e in _debt_ev[:5]:
+            _amt = _e.get("amount", "") or "—"
+            _amt_txt = f"{_amt} TWD" if _amt.replace(",", "").replace("—", "").isdigit() else _amt
+            _dsp = _e["date"][5:].replace("-", "/")
+            _debt_rows.append(
+                f'<div class="flex justify-between items-center border-b border-slate-800 pb-2">'
+                f'<span class="text-slate-400">{_dsp}</span>'
+                f'<span class="text-yellow-400 font-bold">{_e.get("item","")}</span>'
+                f'<span class="text-white font-bold">{_amt_txt}</span></div>'
+            )
+    except Exception:
+        pass
+    _debt_html = "\n".join(_debt_rows) or '<div class="text-slate-500">近 30 天無債務流出排程 ✅</div>'
+    html = html.replace("__DEBT_OUTFLOW__", _debt_html)
     # Trend arrows vs yesterday
     snap_dir = BASE / "snapshots"
     yesterday_snap = {}
@@ -2195,9 +2234,9 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__CATHAT_SETTLEMENT__", f'{tv.get("mortgage_yy",0):,.0f}')
     html = html.replace("__CATHAY_DEPOSIT__", f'{tv.get("mortgage_yydu",0):,.0f}')
     html = html.replace("__DBS_BALANCE__", f'{tv.get("cash",0):,.0f}')
-        # 動態 DBS note
+    # 動態 DBS note（2026-08-06：同步更新，去除 8/1/星展 舊文案）
     _dbs_cash = tv.get("cash_total", 0)
-    _dbs_str = f"星展餘額 {_dbs_cash:,} TWD，扣理財型利息 ~10,000，{'餘裕充足 ✅' if _dbs_cash > 30000 else '⚠️ 需補資金'}"
+    _dbs_str = f"可動用流動資金 {_dbs_cash:,} TWD（Moneybook 校準），{'餘裕充足 ✅' if _dbs_cash > 30000 else '⚠️ 需補資金'}"
     html = html.replace("{_dbs_note}", _dbs_str)
     html = html.replace("__SINOPAC_BALANCE__", f'{tv.get("cash",0):,.0f}')
     html = html.replace("__SINOPAC_MORTGAGE__", f'{tv.get("mortgage_monthly_total",0):,.0f}')

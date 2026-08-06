@@ -90,9 +90,9 @@ def main() -> None:
 
     pass_check("五大章節完整且順序 correct")
 
-    # 2. Relay 三站制
-    if not ("摩根多重收益" in daily and "安聯收益成長 + M&amp;G" in daily and "安聯 AI 收益" in daily):
-        fail("Relay 三站制不符")
+    # 2. Relay 站制（2026-08-06：第三站已轉摩根，放寬為核心字串檢查；修正 M&G 實體化 bug）
+    if not ("摩根多重收益" in daily and "安聯收益成長 + M&G" in daily and "安聯 AI 收益" in daily):
+        fail("Relay 站制不符")
     pass_check("Relay 三站制正確")
 
     # 3. 配息 SOP wording
@@ -133,7 +133,8 @@ def main() -> None:
     # 7. 四大信用卡 + 兩大房貸
     if not all(x in daily for x in ["玉山銀行", "台新銀行", "永豐銀行", "台北富邦"]):
         fail("四大信用卡未完整列出")
-    if not ("洲際 W 房貸" in daily and "大義街房貸" in daily):
+    # 2026-08-06：房貸表以永豐房貸/理財型/保單借貸標籤呈現，修正檢查字串
+    if not ("永豐房貸" in daily and "理財型房貸" in daily and "保單借貸" in daily):
         fail("兩大房貸未完整列出")
     pass_check("四大信用卡 + 兩大房貸完整")
 

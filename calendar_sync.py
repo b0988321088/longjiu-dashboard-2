@@ -32,17 +32,10 @@ def parse_events(text: str):
     events = []
     today = date.today()
     
-    # 固定行程（人工定義）
+    # 固定行程（人工定義）— 2026-08-06：移除過期/已被 schedule_events.json 動態涵蓋的寫死項
+    # （國泰8/4、T+4 截止等已由 schedule_events.json 統一同步，避免再次過期）
     fixed = [
-        ("峨眉初驗", (date(2026, 7, 29), date(2026, 7, 30))),
         ("Notion 訂閱扣款 US$12", (date(2026, 8, 14), date(2026, 8, 14))),
-        ("🚨 國泰核貸撥款+舊貸清償", (date(2026, 8, 4), date(2026, 8, 4))),
-        ("🔴 摩根JPM入息 T+4 轉換截止（保單接力第四站）", (date(2026, 8, 3), date(2026, 8, 3))),
-        ("📋 安聯收益成長 T+4 轉換截止", (date(2026, 8, 10), date(2026, 8, 10))),
-        ("📋 M&G入息 T+4 轉換截止", (date(2026, 8, 17), date(2026, 8, 17))),
-        ("📋 安聯AI收益 T+4 轉換截止", (date(2026, 8, 21), date(2026, 8, 21))),
-        ("📋 貝萊德A10 T+4 轉換截止", (date(2026, 8, 24), date(2026, 8, 24))),
-        ("📋 五、六段聯合夏季工安宣導及祈福會議（東海站大會議室）", (date(2026, 8, 25), date(2026, 8, 25))),
     ]
     plus_30 = [
         ("大義街23樓房租 + 管理費", (today.replace(day=min(today.day + 30, 28)),)),
@@ -118,10 +111,38 @@ def sync():
     service = build("calendar", "v3", credentials=creds)
     events = parse_events(LEDGER.read_text("utf-8") if LEDGER.exists() else "")
 
+    # 2026-08-06：追加 schedule_events.json 動態事件（今日~+30天），
+    # 忠德驗收 / 8/15 撥款 / T+4 截止 / 房租等自動同步 GCal，不再手動維護 fixed 清單
+    try:
+        _sev_path = Path(__file__).resolve().parent / "schedule_events.json"
+        _sev = json.loads(_sev_path.read_text(encoding="utf-8"))
+        _today_s = date.today().isoformat()
+        _end30 = (date.today() + timedelta(days=30)).isoformat()
+        def _norm(s):
+            return re.sub(r'[\W_]+', '', s)
+        _seen = {(_norm(e["summary"]), e["start"]) for e in events}
+        for _e in _sev:
+            _d = _e.get("date", "")
+            if _d == "待處理" or not (_today_s <= _d <= _end30):
+                continue
+            _item = _e.get("item", "")
+            _amt = _e.get("amount", "")
+            _title = f"{_item} {_amt}".strip() if _amt else _item
+            if (_norm(_title), _d) in _seen:
+                continue
+            events.append({
+                "summary": _title,
+                "start": _d,
+                "end": (datetime.strptime(_d, "%Y-%m-%d") + timedelta(days=1)).date().isoformat(),
+            })
+            _seen.add((_norm(_title), _d))
+    except Exception as _se:
+        logger.warning(f'  schedule_events 動態事件讀取失敗: {_se}')
+
     # 清空所有舊系統事件（依標記 + 關鍵字雙重清掃）
     import logging
     logger = logging.getLogger('calendar_sync')
-    _CLEAN_KEYWORDS = ['房租', '大義街', '洲際W', '台電薪資', '管理費', '繳款截止', '[calendar_sync]', '動態月報', '再平衡評估', '動態自我檢討週報', '女友還款', '國泰核貸', 'T+4 轉換截止']
+    _CLEAN_KEYWORDS = ['房租', '大義街', '洲際W', '台電薪資', '管理費', '繳款截止', '[calendar_sync]', '動態月報', '再平衡評估', '動態自我檢討週報', '女友還款', '國泰核貸', 'T+4 轉換截止', '忠德驗收', '地政拿件', '大雪山', '每月租金總對帳']
     try:
         page_token = None
         deleted = 0

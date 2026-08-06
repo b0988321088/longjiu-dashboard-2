@@ -86,29 +86,27 @@ if _dp.exists():
 # 4. 從 schedule_events.json 統一讀取排程
 _events = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
 
-# 排程表（7-8月 + 待處理）
+# 排程表（本週：今日 ~ +7 天 + 待處理；不再顯示過期/遠期）2026-08-06
+from datetime import timedelta as _td
 _schedule_rows = []
+_sched_end = (dt.today() + _td(days=7)).isoformat()
 for e in _events:
     d = e.get("date","")
-    if d == "待處理" or (d >= "2026-07-26" and d <= "2026-08-31"):
+    if d == "待處理" or (TODAY <= d <= _sched_end):
         _schedule_rows.append(f'<tr><td>{d}</td><td>{e.get("item","")}</td><td class="num">{e.get("amount","")}</td><td>{e.get("status","")}</td></tr>')
 _schedule = "\n".join(_schedule_rows[:20])
 
-# P0 任務（只顯示重要/待處理事件）
-_p0_core = [
-    '<li>7/17（五）— 國泰轉貸面簽/對保（✅ 已執行，待後續流程）</li>',
-    '<li>7/22（三）— 玉山信用卡繳款截止 3,176</li>',
-    '<li>⚠️ <strong>7/23（四）</strong>— 安聯 AI 收益 T+4 轉換截止 ← ⏰ 已過期</li>',
-]
-# 篩選重要事件（只顯示 7-8 月，排除遠期每月重複）
+# P0 任務（只顯示重要/待處理事件）— 2026-08-06 移除硬編碼過期項（7/17、7/22、7/23），全改由 schedule_events.json 動態聚合
+_p0_core = []
+# 篩選重要事件（今日 ~ +30 天 + 待處理；不再顯示已過期月份）2026-08-06
 _important = ['🔴','🔄','⚠️','⏸️','📋 重要']
+_p0_end = (dt.today() + _td(days=30)).isoformat()
 _p0_dynamic = []
 for e in _events:
     d = e.get("date","")
     st = e.get("status","") or ""
     if any(s in st for s in _important):
-        # 只保留 7-8 月 + 待處理
-        if d == "待處理" or ("2026-07" <= d <= "2026-08"):
+        if d == "待處理" or (TODAY <= d <= _p0_end):
             _p0_dynamic.append(f'<li>{d} — {e.get("item","")} {e.get("amount","")} {st}</li>')
 _p0_html = '\n'.join(_p0_core + _p0_dynamic)
 # 同步更新 dashboard_decisions.json（供 CIO 審計用）
@@ -199,8 +197,8 @@ _sec6 = set(_re.findall(r"(\d/6)｜", h))
 checks = {
     "__DR_殘留": drs == 0,
     "市場情報": len(briefing) > 0,
-    "排程7/27": "台新信用卡" in h,
-    "排程體檢": "體檢" in h,
+    "無過期P0": "已過期" not in h,  # 2026-08-06：第七章不應再出現過期標記
+    "排程本週": "本週行程" in h,
     "配息118,296": ("118,296" in h) or ("配息" in h),  # 相容 7月舊值 / 8月起動態
     # 章節：9章齊全（1/9~9/9）為主要驗證；6章舊格式相容（過渡期）
     "章節6/6": (len(_sec9) >= 9) or (len(_sec6) >= 6),
