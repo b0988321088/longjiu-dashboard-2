@@ -110,6 +110,16 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     total = cash + ins + sec + funds
     def_v = sec_def + _fj + _fund_def
     bond_v = sec_bond + ins_bonds
+    # 基金縮放防呆（2026-08-07 修正：外幣換算/匯率調整後明細加總≠funds 真值時，
+    # 按比例縮放基金三類，避免餘數法現金被吃掉）
+    _fund_sum = _fund_tw + _fund_us + _fund_def
+    if _fund_sum > 0 and abs(_fund_sum - funds) / funds > 0.001:
+        _fk = funds / _fund_sum
+        _fund_tw, _fund_us, _fund_def = (round(_fund_tw * _fk), round(_fund_us * _fk),
+                                         round(_fund_def * _fk))
+        tw = sec_tw + _fund_tw
+        us = sec_us + ins_eq + _fund_us
+        def_v = sec_def + _fj + _fund_def
     c = total - (tw + us + def_v + bond_v)
     return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": def_v, "債券": bond_v, "現金/安全網": c,
             "_meta": {"ins_eq": ins_eq, "fund_us": _fund_us, "fund_def": _fund_def,
