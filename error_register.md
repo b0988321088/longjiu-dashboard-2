@@ -38,3 +38,18 @@
 - 時間：2026-08-05
 - 錯誤：四源不一致，請檢查；穿透三報表不一致（check_penetration_consistency.py 抓到）
 - 狀態：⏳ 待處理
+
+## INC-2026-08-07
+- 時間：2026-08-07
+- 錯誤：穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態：⏳ 待處理
+
+## INC-2026-08-07
+- 時間：2026-08-07
+- 錯誤：同義欄位不一致（asset_sync.py 抓到）
+- 狀態：⏳ 待處理
+
+## INC-2026-08-07
+- 時間：2026-08-07
+- 錯誤：穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態：⏳ 待處理

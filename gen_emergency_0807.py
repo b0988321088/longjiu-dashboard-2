@@ -11,6 +11,55 @@ alloc = d.get("allocation", {})
 holdings = d.get("holdings", {})
 us30y = d.get("us30y", {})
 
+# --- 動態穿透覆蓋：強制使用最新 snapshot（2026-08-07 修正：不再用 LLM 時點舊值）---
+try:
+    _snap = json.load(open("snapshot.json", encoding="utf-8"))
+    _pen_twd = _snap.get("penetration", {}).get("actual_twd", {})
+    _pen_pct = _snap.get("penetration", {}).get("actual_pct", {})
+    _tgt = _snap.get("penetration", {}).get("targets", {})
+    _ta = _snap.get("total_assets", 0)
+    _map = [
+        ("台股市值型", "台股市值型成長", "台股市值型目標", 20),
+        ("美股市值型", "美股市值型成長", "美股市值型目標", 30),
+        ("防守型配息", "防守型配息", "配息型目標", 20),
+        ("債券", "債券", "債券型目標", 15),
+        ("現金/安全網", "現金/安全網", "現金目標", 15),
+    ]
+    alloc = {}
+    for _label, _pkey, _tkey, _def_tgt in _map:
+        alloc[_label] = {
+            "twd": _pen_twd.get(_pkey, 0),
+            "pct": _pen_pct.get(_pkey, 0),
+            "target": _tgt.get(_tkey, _def_tgt),
+        }
+    _ta_override = _ta
+
+    # full_report 穿透段重寫（LLM 舊值 → 最新 snapshot 值）
+    import re as _re
+    _seg_start = report.find("【四、資產配置透視】")
+    if _seg_start >= 0:
+        _seg_end = report.find("【五", _seg_start)
+        if _seg_end < 0:
+            _seg_end = len(report)
+        _g_tw = _pen_pct.get("台股市值型成長", 0); _g_us = _pen_pct.get("美股市值型成長", 0)
+        _g_def = _pen_pct.get("防守型配息", 0); _g_bond = _pen_pct.get("債券", 0)
+        _g_cash = _pen_pct.get("現金/安全網", 0)
+        _t_tw = _tgt.get("台股市值型目標", 20); _t_us = _tgt.get("美股市值型目標", 30)
+        _t_def = _tgt.get("配息型目標", 20); _t_bond = _tgt.get("債券型目標", 15)
+        _t_cash = _tgt.get("現金目標", 15)
+        _new_seg = (
+            f"【四、資產配置透視】（snapshot penetration，動態校正 {today}；總投資 {_ta:,}）\n"
+            f"台股市值型成長 {_pen_twd.get('台股市值型成長',0):,}（{_g_tw}%）vs {_t_tw}% → {_g_tw-_t_tw:+.1f}pp"
+            f"；美股市值型成長 {_pen_twd.get('美股市值型成長',0):,}（{_g_us}%）vs {_t_us}% → {_g_us-_t_us:+.1f}pp"
+            f"；防守型配息 {_pen_twd.get('防守型配息',0):,}（{_g_def}%）vs {_t_def}% → {_g_def-_t_def:+.1f}pp"
+            f"；債券 {_pen_twd.get('債券',0):,}（{_g_bond}%）vs {_t_bond}% → {_g_bond-_t_bond:+.1f}pp"
+            f"；現金/安全網 {_pen_twd.get('現金/安全網',0):,}（{_g_cash}%）vs {_t_cash}% → {_g_cash-_t_cash:+.1f}pp"
+            f"。成長合計 {_g_tw+_g_us}%（目標 {_t_tw+_t_us}%）；安全網（債＋現金）{_g_bond+_g_cash}%。\n"
+        )
+        report = report[:_seg_start] + _new_seg + report[_seg_end:]
+except Exception:
+    _ta_override = None
+
 def pct(num, up_is_good=True, invert=False):
     v = float(num)
     cls = "pos" if v > 0 else ("neg" if v < 0 else "")

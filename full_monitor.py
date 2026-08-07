@@ -230,7 +230,7 @@ GLW_STOP_LOSS = 194.85        # 美股防守線（目前未建倉）
 
 # 5. 精算流動性參數（2026-07-08 校正版）
 MONTHLY_MORTGAGE = 99458           # 星展23,424 + 洲際W 65,734 + 理財利息10,300
-MONTHLY_SALARY = 43144             # 月薪（公務員）
+MONTHLY_SALARY = 39727             # 月薪（公務員）
 MONTHLY_TRAVEL_ALLOWANCE = 12000   # 差旅費（屬收入）
 MONTHLY_WORK_INCOME = MONTHLY_SALARY + MONTHLY_TRAVEL_ALLOWANCE  # 工作期收入
 MONTHLY_RENT_INFLOW = 80100        # 大義街47,100 + 洲際W 33,000
@@ -653,7 +653,7 @@ def generate_dragon_nine_report():
     anue_total = sum(item["market_value"] for item in ANUE_FUND)
 
     # 退休前／後月盈餘分開計算
-    pre_retirement_salary = 43144 + 12000  # 薪資 + 差旅
+    pre_retirement_salary = 39727 + 12000  # 薪資 + 差旅
     monthly_expense = 99458 + 38000 + 10000 + 4500  # 房貸 + 信用卡四大主力 + 生活費 + 沙鹿房租
     retirement_surplus = 160100 - monthly_expense  # 退休後確定性收入
     pre_retirement_surplus = 160100 + pre_retirement_salary - monthly_expense  # 退休前含薪資

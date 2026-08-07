@@ -53,7 +53,7 @@ def parse_events(text: str):
         # 5號：女友還款 6,000
         events.append({"summary": "🔄 女友還款（每月6,000）", "start": date(y, m, 5).isoformat(), "end": date(y, m, 5).isoformat()})
         # 6號：台電薪資
-        events.append({"summary": "💰 台電薪資入帳 $43,144", "start": date(y, m, 6).isoformat(), "end": date(y, m, 6).isoformat()})
+        events.append({"summary": "💰 台電薪資入帳 $39,727", "start": date(y, m, 6).isoformat(), "end": date(y, m, 6).isoformat()})
         # 20號：洲際W房租
         events.append({"summary": "🏠 洲際W房租入帳 $33,000", "start": date(y, m, 20).isoformat(), "end": date(y, m, 20).isoformat()})
         # 25號：大義街二三樓房租＋管理費

@@ -217,6 +217,9 @@ def calibrate_sources() -> dict:
         "rent_received_records": snap.get("rent_received_records", {}),
         "dividend_records": _div_records,
         "girlfriend_repayment_records": snap.get("girlfriend_repayment_records", {}),
+        "salary_records": snap.get("salary_records", {}),
+        "salary": snap.get("salary", snap.get("monthly_salary", 39_727)),
+        "monthly_income": snap.get("monthly_income", 219_827),
         "dividend_month_expected": snap.get("dividend_month_expected", 100_000),
         "funds_breakdown": snap.get("funds_breakdown", {}),
         "professional_investor": snap.get("professional_investor", {}),
@@ -1691,6 +1694,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__PASSIVE_INCOME__", f"配息 {dividend:,} + 房租 {rent:,} = {dividend + rent:,} TWD {passive_trend}")
     html = html.replace("__MONTHLY_INCOME_TREND__", income_trend)
     html = html.replace("__MONTHLY_EXPENSE_TREND__", expense_trend)
+    html = html.replace("__MONTHLY_INCOME_TOTAL__", f"{float(tv.get('monthly_income', 219_827) or 219_827):,.0f}")
     html = html.replace("__INSURANCE_TREND__", insurance_trend)
     _cash_runway = int(tv.get("cash_total") or tv.get("real_liquid_assets") or 0)
     _runway_months = int(_cash_runway / max(tv.get("monthly_expense", 141_958), 1))
@@ -1724,10 +1728,17 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     _div_exp = tv.get("dividend_month_expected", 100_000)
     _rent_exp = tv.get("rent_monthly", 80_100) or 80_100
     _salary_exp = tv.get("salary", 43_144) or 43_144
+    # 當月已收薪水（salary_records）
+    _salary_got2 = 0
+    _sr2 = tv.get("salary_records", {}) or {}
+    _m_prefix2 = date.today().strftime("%Y-%m")
+    for _d2, _info2 in _sr2.items():
+        if str(_d2).startswith(_m_prefix2):
+            _salary_got2 += _info2.get("amount", 0) if isinstance(_info2, dict) else _info2
     # 常態月收 = 薪水 + 配息保守預估 + 房租應收
     _passive_norm = float(_salary_exp) + float(_div_exp) + float(_rent_exp)
     html = html.replace("__PASSIVE_TXT__", f"薪水 {_salary_exp:,} + 配息保守 {_div_exp:,} + 房租應收 {_rent_exp:,.0f} = {_passive_norm:,.0f} TWD")
-    html = html.replace("__PASSIVE_NOTE__", f"房租應收 80,100（1樓24,000+23樓21,000+洲際W33,000+管理費2,100），配息保守預估 {_div_exp:,}/月，台電薪水 {_salary_exp:,}；當月實際已收 {_div_actual + _rent_got2:,}（配息{_div_actual:,}+房租{_rent_got2:,}）")
+    html = html.replace("__PASSIVE_NOTE__", f"房租應收 80,100（1樓24,000+23樓21,000+洲際W33,000+管理費2,100），配息保守預估 {_div_exp:,}/月，台電薪水 {_salary_exp:,}；當月實際已收 {_div_actual + _rent_got2 + _salary_got2:,}（薪水{_salary_got2:,}+配息{_div_actual:,}+房租{_rent_got2:,}）")
     # 覆蓋率（常態月收 / 月支出）
     _exp_v = tv.get("monthly_expense", 141_958) or 141_958
     _cov = _passive_norm / _exp_v * 100
@@ -1850,8 +1861,12 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
                 f'<span class="text-xs font-mono {val_cls}">{amount if amount and amount > 0 else 0:,} TWD{_exp_txt}</span></div>')
 
     _rows = []
-    # 台電薪水（當月薪資入帳）
+    # 台電薪水（當月薪資入帳；從 salary_records 讀當月已收）
+    _salary_records = tv.get("salary_records", {}) or {}
     _salary_amt = 0
+    for _d, _info in _salary_records.items():
+        if str(_d).startswith(_m_prefix):
+            _salary_amt += _info.get("amount", 0) if isinstance(_info, dict) else _info
     _rows.append(_inflow_row("台電薪水", _salary_amt, tv.get("salary", 43_144)))
     # 安聯配息（應收 = allianz_ab_monthly）
     _allianz_got = (_div_this_month.get("安聯配息", 0) + _div_this_month.get("保單A 安聯", 0)
@@ -2088,7 +2103,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         _h += '</ul></div><div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-teal-400">🎯 策略建議</span><ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed">'
         _today_s = date.today().strftime("%m/%d")
         _h += (f"<li class='text-amber-300'><strong>🚨 指示卡（{_today_s} 核心‑衛星保守成長版）：</strong>"
-               "目標配置＝台股20/美股30/防守20/債券15/現金15，為中長期方向，容許數月階段偏離；"
+               "目標配置＝台股15/美股30/防守20/債券20/現金15，為中長期方向，容許數月階段偏離；"
                "債券鎖短中期投資等級（存續期1-5年，BBB-以上）；平衡基金僅限衛星≤防禦20%；"
                "兩條底線＝現金 ≥85 萬、US30Y >5.20% 停新增長債；Lombard 橋接需手動開啟且借款≤擔保品4成</li>")
         for _ln in _bl:

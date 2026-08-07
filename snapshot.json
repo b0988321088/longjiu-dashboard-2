@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-08-07T13:13:26.372006",
+  "generated_at": "2026-08-07T16:19:11.898045",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-07",
-  "total_assets": 16575822.0,
+  "total_assets": 16842905,
   "total_liabilities": 21088175,
   "net_worth": -4847994,
   "debt_ratio": 42.3,
-  "monthly_income": 218102,
+  "monthly_income": 214685,
   "monthly_expense": 141958,
   "working_surplus": 76144,
   "retirement_surplus": 18142,
-  "securities_total_market_value": 2887310.0,
-  "fund_market_value": 772694,
+  "securities_total_market_value": 2863400,
+  "fund_market_value": 798867,
   "moneybook_total": 3614169,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
@@ -67,15 +67,15 @@
   "firstjin_current_value": 1931243,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
-  "bank_assets_moneybook": 3024561,
+  "bank_assets_moneybook": 3289381,
   "bank_assets_memo": "MB 20260804 正數帳戶合計；排除信用卡溢繳",
   "monthly_expense_mb": 199186,
   "monthly_expense_mb_note": "MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償",
   "credit_card_pending": 37408,
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
-  "securities_total": 2887310.0,
-  "funds_total": 772694,
+  "securities_total": 2863400,
+  "funds_total": 798867,
   "last_calibration_sources": {
     "securities": "凱基證券截圖 2026-07-18 02:00",
     "funds": "鉅亨基金截圖 2026-07-18 02:03",
@@ -84,33 +84,33 @@
   },
   "funds_breakdown": {
     "一般申購": {
-      "0050連結B": 46033,
-      "台中銀台灣優息": 48081,
+      "台新美日台半導體A日圓": 629996,
+      "台中銀台灣優息": 49286,
+      "路博邁5G T月配": 85806,
+      "0050連結B": 46742,
       "安聯台灣科技": 2917,
-      "安聯AI收益B美元": 6742,
+      "安聯AI收益B美元": 207.85,
       "國泰台灣高股息": 7494,
-      "台新美日台半導體A日圓": 129149,
-      "路博邁台灣5G T月配": 82548,
-      "聯博美國成長AP": 3151,
-      "摩根多重收益美元對沖": 3073,
-      "貝萊德世界黃金A2": 2835,
-      "貝萊德全球股票收益A6": 3211,
-      "貝萊德世界科技A10": 4202,
-      "貝萊德世界能源A10": 5100,
-      "安聯收益成長南非幣": 3532,
+      "聯博美國成長": 3151,
+      "摩根多重": 3073,
+      "貝萊德黃金": 2835,
+      "貝萊德全球股票收益": 3211,
+      "貝萊德科技A10": 4202,
+      "貝萊德能源A10": 5100,
+      "安聯收益成長南非幣": 3531.56,
       "安聯收益成長AMg7": 3552,
-      "施羅德環球收息債南非幣": 1573,
-      "M&G入息A美元避險": 3034
+      "施羅德環球收息南非幣": 1572.61,
+      "M&G入息": 3034
     },
     "自由Pay": {
-      "0050連結A不配息": 105988,
-      "統一奔騰": 88296,
-      "路博邁台灣5G T累積": 223829
+      "0050連結A不配息": 108287,
+      "統一奔騰": 92405,
+      "路博邁5G T累積": 232672
     },
-    "note": "等值台幣（8/5帳戶總覽真值）；一般申購354,581+自由Pay418,113=合計772,694；台新美日台=日圓600,693×0.215、安聯AI收益B=美元207.85×32.4375換算"
+    "note": "一般申購 365,503 + 自由Pay 433,364 = 798,867（8/7 鉅亨真值）"
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
-  "real_liquid_assets": 3024561,
+  "real_liquid_assets": 3289381,
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
   "passive_income": {
     "fund_dividend_monthly": 0,
@@ -131,178 +131,179 @@
     "note": "帳戶總覽：含息報酬率 +25.7%，不含息 +22.58%，當日 +0.04%"
   },
   "securities": {
-    "total_market_value": 2887310.0,
-    "unrealized_pnl": 284570,
-    "unrealized_pnl_pct": 12.3,
+    "total_market_value": 2863400,
+    "unrealized_pnl": 323460,
+    "unrealized_pnl_pct": 12.73,
     "holdings": [
       {
         "ticker": "0050",
         "name": "元大台灣50",
         "shares": 2000,
-        "price": 103.8,
-        "value": 207600.0,
+        "price": 102.85,
+        "value": 205700.0,
         "cost": 84.9,
-        "pnl": 37799.999999999985,
-        "pnl_pct": 22.26,
-        "currency": "TWD"
-      },
-      {
-        "ticker": "0056",
-        "name": "元大高股息",
-        "shares": 1000,
-        "price": 51.45,
-        "value": 51450.0,
-        "cost": 37.15,
-        "pnl": 14300.000000000004,
-        "pnl_pct": 38.49,
+        "pnl": 35900.0,
+        "pnl_pct": 21.14,
         "currency": "TWD"
       },
       {
         "ticker": "006208",
         "name": "富邦台50",
         "shares": 2000,
-        "price": 238.25,
-        "value": 476500.0,
+        "price": 235.35,
+        "value": 470700.0,
         "cost": 196.9,
-        "pnl": 82699.99999999999,
-        "pnl_pct": 21.0,
-        "currency": "TWD"
-      },
-      {
-        "ticker": "00646",
-        "name": "元大S&P500",
-        "shares": 1000,
-        "price": 78.95,
-        "value": 78950.0,
-        "cost": 71.6,
-        "pnl": 7350.000000000008,
-        "pnl_pct": 10.27,
-        "currency": "TWD"
-      },
-      {
-        "ticker": "00713",
-        "name": "元大台灣高息低波",
-        "shares": 2000,
-        "price": 61.1,
-        "value": 122200.0,
-        "cost": 54.8,
-        "pnl": 12600.00000000001,
-        "pnl_pct": 11.5,
-        "currency": "TWD"
-      },
-      {
-        "ticker": "00878",
-        "name": "國泰永續高股息",
-        "shares": 16000,
-        "price": 33.15,
-        "value": 530400.0,
-        "cost": 27.15,
-        "pnl": 96000.0,
-        "pnl_pct": 22.1,
-        "currency": "TWD"
-      },
-      {
-        "ticker": "00888",
-        "name": "永豐台灣ESG",
-        "shares": 5000,
-        "price": 32.09,
-        "value": 160450.00000000003,
-        "cost": 31.73,
-        "pnl": 1800.000000000015,
-        "pnl_pct": 1.13,
-        "currency": "TWD"
-      },
-      {
-        "ticker": "00918",
-        "name": "大華優利高息30",
-        "shares": 1000,
-        "price": 33.66,
-        "value": 33660.0,
-        "cost": 28.55,
-        "pnl": 5109.999999999995,
-        "pnl_pct": 17.9,
-        "currency": "TWD"
-      },
-      {
-        "ticker": "00919",
-        "name": "群益精選高息",
-        "shares": 6000,
-        "price": 29.94,
-        "value": 179640.0,
-        "cost": 29.55,
-        "pnl": 2340.0000000000036,
-        "pnl_pct": 1.32,
+        "pnl": 76900.0,
+        "pnl_pct": 19.53,
         "currency": "TWD"
       },
       {
         "ticker": "009816",
         "name": "凱基台灣TOP50",
         "shares": 21000,
-        "price": 15.0,
-        "value": 315000.0,
+        "price": 14.88,
+        "value": 312480.0,
         "cost": 12.33,
-        "pnl": 56070.0,
-        "pnl_pct": 21.65,
+        "pnl": 53550.0,
+        "pnl_pct": 20.68,
+        "currency": "TWD"
+      },
+      {
+        "ticker": "00646",
+        "name": "元大S&P500",
+        "shares": 1000,
+        "price": 78.25,
+        "value": 78250.0,
+        "cost": 71.6,
+        "pnl": 6650.0,
+        "pnl_pct": 9.29,
+        "currency": "TWD"
+      },
+      {
+        "ticker": "00713",
+        "name": "元大台灣高息低波",
+        "shares": 2000,
+        "price": 61.3,
+        "value": 122600.0,
+        "cost": 54.8,
+        "pnl": 13000.0,
+        "pnl_pct": 11.86,
+        "currency": "TWD"
+      },
+      {
+        "ticker": "00878",
+        "name": "國泰永續高股息",
+        "shares": 16000,
+        "price": 32.81,
+        "value": 524960.0,
+        "cost": 27.15,
+        "pnl": 90560.0,
+        "pnl_pct": 20.85,
+        "currency": "TWD"
+      },
+      {
+        "ticker": "0056",
+        "name": "元大高股息",
+        "shares": 1000,
+        "price": 51.05,
+        "value": 51050.0,
+        "cost": 37.15,
+        "pnl": 13900.0,
+        "pnl_pct": 37.42,
         "currency": "TWD"
       },
       {
         "ticker": "00981A",
         "name": "主動統一台股增長",
         "shares": 6000,
-        "price": 28.46,
-        "value": 170760.0,
+        "price": 28.03,
+        "value": 168180.0,
         "cost": 25.52,
-        "pnl": 17640.000000000007,
-        "pnl_pct": 11.52,
-        "currency": "TWD"
-      },
-      {
-        "ticker": "009823",
-        "name": "群益S&P500",
-        "shares": 10000,
-        "price": 10.7,
-        "value": 107000.0,
-        "cost": 10.02,
-        "pnl": 6799.999999999997,
-        "pnl_pct": 6.79,
-        "currency": "TWD"
-      },
-      {
-        "ticker": "009824",
-        "name": "群益美國科技巨頭",
-        "shares": 10000,
-        "price": 10.3,
-        "value": 103000.0,
-        "cost": 9.93,
-        "pnl": 3700.00000000001,
-        "pnl_pct": 3.73,
-        "currency": "TWD"
-      },
-      {
-        "ticker": "00983D",
-        "name": "主動富邦複合收益",
-        "shares": 20000,
-        "price": 10.14,
-        "value": 202800.0,
-        "cost": 10.11,
-        "pnl": 600.0000000000227,
-        "pnl_pct": 0.3,
+        "pnl": 15060.0,
+        "pnl_pct": 9.84,
         "currency": "TWD"
       },
       {
         "ticker": "00984A",
         "name": "主動安聯台灣高息",
         "shares": 10000,
-        "price": 14.79,
-        "value": 147900.0,
+        "price": 14.87,
+        "value": 148700.0,
         "cost": 14.56,
-        "pnl": 2299.9999999999864,
-        "pnl_pct": 1.58,
+        "pnl": 3100.0,
+        "pnl_pct": 2.13,
+        "currency": "TWD"
+      },
+      {
+        "ticker": "00919",
+        "name": "群益精選高息",
+        "shares": 6000,
+        "price": 29.74,
+        "value": 178440.0,
+        "cost": 29.55,
+        "pnl": 1140.0,
+        "pnl_pct": 0.64,
+        "currency": "TWD"
+      },
+      {
+        "ticker": "00918",
+        "name": "大華優利高息30",
+        "shares": 1000,
+        "price": 33.59,
+        "value": 33590.0,
+        "cost": 28.55,
+        "pnl": 5040.0,
+        "pnl_pct": 17.65,
+        "currency": "TWD"
+      },
+      {
+        "ticker": "009824",
+        "name": "群益美國科技巨頭",
+        "shares": 10000,
+        "price": 10.19,
+        "value": 101900.0,
+        "cost": 9.93,
+        "pnl": 2600.0,
+        "pnl_pct": 2.62,
+        "currency": "TWD"
+      },
+      {
+        "ticker": "009823",
+        "name": "群益S&P500",
+        "shares": 10000,
+        "price": 10.61,
+        "value": 106100.0,
+        "cost": 10.02,
+        "pnl": 5900.0,
+        "pnl_pct": 5.89,
+        "currency": "TWD"
+      },
+      {
+        "ticker": "00888",
+        "name": "永豐台灣ESG",
+        "shares": 5000,
+        "price": 31.71,
+        "value": 158550.0,
+        "cost": 31.73,
+        "pnl": -100.0,
+        "pnl_pct": -0.06,
+        "currency": "TWD"
+      },
+      {
+        "ticker": "00983D",
+        "name": "主動富邦複合收益",
+        "shares": 20000,
+        "price": 10.11,
+        "value": 202200.0,
+        "cost": 10.11,
+        "pnl": 0.0,
+        "pnl_pct": 0.0,
         "currency": "TWD"
       }
     ],
     "date": "2026-08-03",
-    "market_value": 2887310.0
+    "market_value": 2887310.0,
+    "as_of": "2026-08-07"
   },
   "core_watchlist": {
     "updated_at": "2026-07-18",
@@ -503,26 +504,26 @@
       "現金目標": 15
     },
     "actual_pct": {
-      "台股市值型成長": 11.3,
-      "美股市值型成長": 34.0,
-      "防守型配息": 18.5,
-      "債券": 18.0,
-      "現金/安全網": 18.2
+      "台股市值型成長": 9.2,
+      "美股市值型成長": 38.3,
+      "防守型配息": 18.2,
+      "債券": 17.7,
+      "現金/安全網": 16.6
     },
     "gaps": {
-      "台股市值型成長": -3.7,
-      "美股市值型成長": 4.0,
-      "防守型配息": -1.5,
-      "債券及安全現金": 1.2
+      "台股市值型成長": -5.8,
+      "美股市值型成長": 8.3,
+      "防守型配息": -1.8,
+      "債券及安全現金": -0.7
     },
     "actual_twd": {
-      "台股市值型成長": 1868944.0,
-      "美股市值型成長": 5638709.0,
-      "防守型配息": 3064618.0,
-      "債券": 2980636.0,
-      "現金/安全網": 3022915.0
+      "台股市值型成長": 1557683.6099999999,
+      "美股市值型成長": 6448799.41,
+      "防守型配息": 3057213.0,
+      "債券": 2980036.0,
+      "現金/安全網": 2799172.9800000004
     },
-    "alert": "台股不足3.7pp；現金+債券超標1.2pp"
+    "alert": "台股不足5.8pp；現金+債券超標0.7pp"
   },
   "penetration_canonical": {
     "updated_at": "2026-07-18",
@@ -642,7 +643,7 @@
   "securities_tw_growth": 1007090,
   "securities_tw_defense": 1022090,
   "securities_us_growth": 76050,
-  "cash": 3024561,
+  "cash": 3289381,
   "high_yield_savings": 2200410,
   "regular_cash": 1684210,
   "mortgages": [
@@ -695,10 +696,11 @@
       "保單B 安聯": 5994
     },
     "2026-08": {
-      "安聯保單撥回": 15976
+      "安聯保單撥回": 15976,
+      "第一金配息": 13126
     }
   },
-  "monthly_dividend": 15976,
+  "monthly_dividend": 29102,
   "actual_fj33_dividend": 9356,
   "policy_a_total": 4992334,
   "policy_b_total": 2681959,
@@ -714,13 +716,13 @@
   "firstjin_cum_dividend": 85975,
   "allianz_cum_dividend": 1630962,
   "firstjin_cost": 2000000,
-  "securities_market_value": 2517200,
-  "securities_unrealized_pnl": 284570,
-  "monthly_salary": 43144,
+  "securities_market_value": 2863400,
+  "securities_unrealized_pnl": 323460,
+  "monthly_salary": 39727,
   "travel_allowance": 12000,
   "second_salary": 39121,
   "bonus_july": 39121,
-  "cash_total": 3024561,
+  "cash_total": 3289381,
   "bonds_cash": 10262984,
   "monthly_dividend_breakdown": {
     "allianz": 95347,
@@ -1276,15 +1278,15 @@
   "debt_ratio_note": "動態計算：負債 21,127,022 / 含不動產總資產 49,938,448",
   "dividend_month_expected": 100000,
   "dividend_month_expected_note": "8月起依當月dividend_records動態累積，月初顯示保守預估10萬",
-  "dividend_month_actual": 15976,
+  "dividend_month_actual": 29102,
   "rent_received_records": {
     "2026-08-01": {
       "大義街店面": 24000
     }
   },
   "fund_dividend_monthly": 0,
-  "fund_market": 772694,
-  "fund_total_market_value": 772694,
+  "fund_market": 798867,
+  "fund_total_market_value": 798867,
   "insurance": 9891257,
   "professional_investor": {
     "status": "申請中（待8/15貸款撥款後盤點）",
@@ -1398,7 +1400,7 @@
   "policy_pledge_rate_note": "使用者確認 2026-08-05：保單質押利率 4%（原記錄 5% 有誤）",
   "pledge_loan_rate": null,
   "pledge_loan_rate_note": "待確認（凱基/券商對帳單）",
-  "securities_market": 2887310.0,
+  "securities_market": 2863400,
   "allianz_a_funds": {
     "安聯收益成長": 733856,
     "M&G入息": 1076673,
@@ -1464,5 +1466,13 @@
     "priority_order": "負債狀態＞利率風險＞估值泡沫＞集中度＞個別標的上限",
     "rules_count": 14,
     "last_updated": "2026-08-05"
-  }
+  },
+  "salary_records": {
+    "2026-08": {
+      "amount": 39727,
+      "date": "2026-08-06",
+      "note": "台電薪資媒體轉入"
+    }
+  },
+  "salary": 39727
 }
