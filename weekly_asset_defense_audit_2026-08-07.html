@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>龍九控股 · 每週資產防禦審計 2026-08-07</title>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --border:#334155; --txt:#e2e8f0; --sub:#94a3b8;
+          --green:#34d399; --red:#f87171; --amber:#fbbf24; --blue:#60a5fa; --purple:#a78bfa; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--txt); font-family:-apple-system,'Segoe UI','Noto Sans TC',sans-serif; padding:16px; line-height:1.6; }
+  .wrap { max-width:760px; margin:0 auto; }
+  .hero { background:linear-gradient(135deg,#1e293b,#0f172a); border:1px solid var(--border); border-radius:16px; padding:24px; text-align:center; margin-bottom:16px; }
+  .hero h1 { font-size:22px; font-weight:800; }
+  .hero .date { color:var(--sub); font-size:14px; margin-top:6px; }
+  .hero .tag { display:inline-block; background:rgba(52,211,153,.15); color:var(--green); border:1px solid rgba(52,211,153,.3); border-radius:20px; padding:3px 14px; font-size:12px; margin-top:10px; }
+  .kpis { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:16px; }
+  .kpi { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
+  .kpi .label { color:var(--sub); font-size:12px; font-weight:700; }
+  .kpi .val { font-size:22px; font-weight:800; margin-top:4px; }
+  .kpi .delta { font-size:12px; margin-top:2px; }
+  .up { color:var(--green); } .down { color:var(--red); } .warn { color:var(--amber); }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:14px; }
+  .card h2 { font-size:16px; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .card table { width:100%; border-collapse:collapse; font-size:13px; }
+  .card td, .card th { padding:7px 8px; border-bottom:1px solid var(--border); text-align:left; }
+  .card th { color:var(--sub); font-size:11px; text-transform:uppercase; }
+  .num { text-align:right; font-variant-numeric:tabular-nums; font-weight:700; }
+  .ok { color:var(--green); } .bad { color:var(--red); } .mid { color:var(--amber); }
+  .section-title { font-size:14px; font-weight:800; color:var(--purple); margin:10px 0 6px; }
+  .note { color:var(--sub); font-size:12px; margin-top:8px; }
+  .pill { display:inline-block; padding:2px 10px; border-radius:12px; font-size:11px; font-weight:700; }
+  .pill.ok { background:rgba(52,211,153,.15); } .pill.bad { background:rgba(248,113,113,.15); } .pill.mid { background:rgba(251,191,36,.15); }
+  .risk-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .risk-row:last-child { border-bottom:none; }
+  .action { display:flex; gap:10px; align-items:flex-start; padding:9px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .action:last-child { border-bottom:none; }
+  .action .n { background:var(--purple); color:#fff; border-radius:50%; width:22px; height:22px; min-width:22px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; }
+  @media (min-width:640px){ .kpis { grid-template-columns:repeat(4,1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>🐉 龍九控股 · 每週資產防禦審計</h1>
+    <div class="date">📅 2026-08-07（週五）17:00 ・ Hermes 自動化</div>
+    <span class="tag">✅ 12/12 驗證通過・動態計算</span>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="label">總資產</div><div class="val">16,842,905</div><div class="delta up">▲ +921,520（+5.8%）</div></div>
+    <div class="kpi"><div class="label">總負債</div><div class="val">21,088,175</div><div class="delta down">▼ -38,847（-0.18%）</div></div>
+    <div class="kpi"><div class="label">資產淨值</div><div class="val bad">-4,847,994</div><div class="delta up">改善 +357,643（連 2 週）</div></div>
+    <div class="kpi"><div class="label">負債比</div><div class="val">41.46%</div><div class="delta up">▼ 改善（動態計算）</div></div>
+    <div class="kpi"><div class="label">Runway 月數</div><div class="val up">23.2 個月</div><div class="delta up">▲ +2.5 個月</div></div>
+    <div class="kpi"><div class="label">被動覆蓋率</div><div class="val up">148.7%</div><div class="delta">持平</div></div>
+    <div class="kpi"><div class="label">月工作盈餘</div><div class="val up">+76,144</div><div class="delta">收 214,685 / 支 141,958</div></div>
+    <div class="kpi"><div class="label">T+4 隔離</div><div class="val up">579.3%</div><div class="delta">目標 567,832 覆蓋</div></div>
+  </div>
+
+  <div class="card">
+    <h2>📌 一、實相更新｜流動資產細項</h2>
+    <table>
+      <tr><th>項目</th><th class="num">本週</th><th class="num">上週</th><th class="num">變動</th></tr>
+      <tr><td>證券市值</td><td class="num">2,863,400</td><td class="num">2,719,420</td><td class="num up">+143,980</td></tr>
+      <tr><td>保單現值</td><td class="num">9,891,257</td><td class="num">9,574,757</td><td class="num up">+316,500</td></tr>
+      <tr><td>基金市值</td><td class="num">798,867</td><td class="num">690,285</td><td class="num up">+108,582</td></tr>
+      <tr><td>銀行現金(MB)</td><td class="num">3,289,381</td><td class="num">2,936,923</td><td class="num up">+352,458</td></tr>
+      <tr><td>不動產（另計）</td><td class="num">34,017,063</td><td class="num">—</td><td class="num">—</td></tr>
+    </table>
+    <div class="section-title">▸ 本週變動歸因</div>
+    <div class="note">① 保單 +316,500（FL65→FJ33 摩根多重估值上調）② 證券 +143,980（00983D 10 張+回補）③ 基金 +108,582（鉅亨 8/7 真值）④ 現金 +352,458（配息入帳）</div>
+  </div>
+
+  <div class="card">
+    <h2>📊 二、Runway 與被動覆蓋</h2>
+    <table>
+      <tr><th>指標</th><th class="num">數值</th><th>狀態</th></tr>
+      <tr><td>純現金 Runway</td><td class="num">23.2 個月</td><td><span class="pill ok">✅ 充裕</span></td></tr>
+      <tr><td>被動覆蓋率</td><td class="num">148.7%</td><td><span class="pill ok">✅ &gt;100%</span></td></tr>
+      <tr><td>T+4 隔離（目標 567,832）</td><td class="num">579.3%</td><td><span class="pill ok">✅ 充足</span></td></tr>
+      <tr><td>核貸期現金底線（6 個月）</td><td class="num">386%</td><td><span class="pill ok">✅ 遠超標</span></td></tr>
+    </table>
+    <div class="note">現金水位單週回升 +35.2 萬；理論上具無限 Runway（前提保單/ETF 配息穩定）</div>
+  </div>
+
+  <div class="card">
+    <h2>🧓 三、巴菲特視角</h2>
+    <div class="section-title">▎0056 減碼評估</div>
+    <div class="note">持倉 51,050（證券 1.8%）無迫切壓力。穿透歸入高股息擁擠族群（00878/0056/00919 重疊 37.3%）。建議：8/10 配息入帳後可分批轉 00713 低波；不建議除息前賣出。</div>
+    <div class="section-title">▎半導體曝險壓力測試</div>
+    <table>
+      <tr><th>口徑</th><th class="num">曝險</th><th class="num">-30% 損失</th><th>判定</th></tr>
+      <tr><td>全組合科技鏈穿透</td><td class="num">367 萬（22.6%）</td><td class="num">≈72 萬（5.1 個月）</td><td><span class="pill mid">⚠️ &gt;T+4</span></td></tr>
+      <tr><td>可變現直接曝險</td><td class="num">≈139 萬</td><td class="num">≈42 萬（3 個月）</td><td><span class="pill ok">✅ 可承受</span></td></tr>
+    </table>
+    <div class="section-title">▎穿透對照</div>
+    <table>
+      <tr><th>類別</th><th class="num">實際</th><th class="num">目標</th><th>狀態</th></tr>
+      <tr><td>台股市值型</td><td class="num">9.2%</td><td class="num">22-25%</td><td><span class="pill bad">🔴 -12.8~-15.8pp</span></td></tr>
+      <tr><td>美股市值型</td><td class="num">38.3%</td><td class="num">30%</td><td><span class="pill mid">⚠️ +8.3pp</span></td></tr>
+      <tr><td>債券</td><td class="num">17.7%</td><td class="num">12-14%</td><td><span class="pill mid">⚠️ +3.7~+5.7pp</span></td></tr>
+      <tr><td>防守型配息</td><td class="num">18.2%</td><td class="num">18-20%</td><td><span class="pill ok">✅ 達標</span></td></tr>
+      <tr><td>安全現金</td><td class="num">16.6%</td><td class="num">15-20%</td><td><span class="pill ok">✅ 正常</span></td></tr>
+    </table>
+    <div class="section-title">▎市場背景</div>
+    <div class="note">加權 44,225.91（-0.38%）・台積電 2,370（+0.21%）・費半 12,048.69（+0.33%）・外資賣超 422 億・6 月 CPI 3.5%（低於預期）。US30Y 5.27% &lt; 5.30% 紅線（模式 A）。</div>
+  </div>
+
+  <div class="card">
+    <h2>🎯 四、下週行動建議（8/10-14）</h2>
+    <div class="action"><div class="n">1</div><div><b>台股市值型建倉</b>：每週 ≤50 萬分批買 0050/006208/009816，補台股缺口（9.2%→22-25%）；US30Y 5.27% 未觸紅線，債券不加碼。</div></div>
+    <div class="action"><div class="n">2</div><div><b>美股減碼/停購</b>：38.3% 超標 +8.3pp，逢反彈分批減 009824/美股科技；00878 建倉維持、00919/00918 停加碼。</div></div>
+    <div class="action"><div class="n">3</div><div><b>國泰核貸追蹤</b>：撥款後優先清償星展高息舊貸（月省 3,000-5,000）；利差導流建倉；單筆 ≥5 萬須執行長核准。</div></div>
+  </div>
+
+  <div class="card">
+    <h2>🔧 五、風險紅線檢核</h2>
+    <div class="risk-row"><span>US30Y ≥ 5.30% 債券凍結</span><span class="num ok">✅ 5.27% 未觸發（模式 A）</span></div>
+    <div class="risk-row"><span>40,500 停碼線</span><span class="num ok">✅ 未觸發</span></div>
+    <div class="risk-row"><span>85 萬現金底線（核貸期 6 個月）</span><span class="num ok">✅ 386% 遠超標</span></div>
+    <div class="risk-row"><span>5 萬管制（核貸期）</span><span class="num ok">✅ 合規</span></div>
+    <div class="risk-row"><span>Notion 五表同步</span><span class="num ok">✅ master_ledger / fund_station / debt_cashflow / asset_investment / ops_logs</span></div>
+    <div class="note">資料品質：Moneybook 正數合計 3,277,102 vs snapshot 3,614,169（差異=信用卡溢繳/負數帳戶排除），本次以 MB 真值為準。</div>
+  </div>
+
+  <div class="card" style="text-align:center;">
+    <div style="font-size:14px; font-weight:800;">歷史不會重演，但總會押韻；不恐慌殺盤，但要提前收斂風險曝險，握好現金彈藥。</div>
+    <div class="note" style="margin-top:8px;">🐉 Generated by Hermes Agent | 2026-08-07 17:00</div>
+  </div>
+
+</div>
+</body>
+</html>
