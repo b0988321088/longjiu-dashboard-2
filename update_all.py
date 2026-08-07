@@ -64,7 +64,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     for _fn, _fval in _fb.items():
         if isinstance(_fval, dict):
             for _sn, _sv in _fval.items():
-                if _sn == "小計" or not isinstance(_sv, (int, float)):
+                if _sn in ("小計", "匯率調整", "note") or not isinstance(_sv, (int, float)):
                     continue
                 _fb_flat[_sn] = _sv
         elif isinstance(_fval, (int, float)):

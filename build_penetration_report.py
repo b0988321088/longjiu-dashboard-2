@@ -149,7 +149,7 @@ if _fb:
     for _fn, _fv2 in _fb.items():
         if isinstance(_fv2, dict):
             for _sn, _sv in _fv2.items():
-                if _sn == "小計" or not isinstance(_sv, (int, float)):
+                if _sn in ("小計", "匯率調整", "note") or not isinstance(_sv, (int, float)):
                     continue
                 _fb_flat[f"{_fn}-{_sn}"] = _sv
         elif isinstance(_fv2, (int, float)):

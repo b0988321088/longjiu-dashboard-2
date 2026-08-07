@@ -330,7 +330,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         for _fk, _fv in _fund_bd.items():
             if isinstance(_fv, dict):
                 for _sk, _sv in _fv.items():
-                    if _sk == "小計" or not isinstance(_sv, (int, float)):
+                    if _sk in ("小計", "匯率調整", "note") or not isinstance(_sv, (int, float)):
                         continue
                     _fund_parts.append(f"{_fk}-{_sk} {_sv:,}")
             elif isinstance(_fv, (int, float)):
@@ -1140,11 +1140,14 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             # 3. 長債佔債券比
             if _long_bond_pct > _tgt.get("long_bond_cap_pct_of_bonds", 40):
                 _lights.append(("🟡 黃燈", f"長債佔債券 {_long_bond_pct}% > {_tgt.get('long_bond_cap_pct_of_bonds', 40)}% — 提高中短期債券比重，降低久期"))
-            # 6/7. 30Y
+            # 6/7. 30Y 三階段（2026-08-07 手冊：5.20/5.30/5.40）
+            _us30y_freeze = _th.get("us30y", {}).get("taa_global_freeze", 5.30)
             if _us30y >= _th.get("us30y_red", 5.40):
-                _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% ≥ {_th.get('us30y_red')}% — 建議調降長債部位，移往中短期債券"))
+                _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% ≥ {_th.get('us30y_red')}% — Rhythm-08紅燈：調降部分長債00983D，內部轉換至中短債，降低擔保池波動"))
+            elif _us30y > _us30y_freeze:
+                _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% > {_us30y_freeze}% — TAA全域凍結：禁止所有新現金投資擴倉/擴槓桿；舊部位續抱；僅配息被動再平衡+還債"))
             elif _us30y >= _th.get("us30y_yellow", 5.20):
-                _lights.append(("🟡 黃燈", f"30Y美債 {_us30y}% ≥ {_th.get('us30y_yellow')}% — 停止長債新增買入（00983D凍結）"))
+                _lights.append(("🟡 黃燈", f"30Y美債 {_us30y}% ≥ {_th.get('us30y_yellow')}% — 警戒區：台股建倉≤50萬/週、美股停止新增、不新增長債疊債、停泊不疊槓"))
             # 10. 美股占比
             if _us_pct > _th.get("us_equity_overweight_yellow", 32):
                 _lights.append(("🟡 黃燈", f"美股實際占比 {_us_pct}% > {_th.get('us_equity_overweight_yellow')}% — 再平衡回落至30%目標"))
@@ -2351,10 +2354,13 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
                 _lights.append(("🔴", "尚有高息負債 — 凍結主動加倉，優先還高息負債"))
             if _long_bond_pct > _tgt.get("long_bond_cap_pct_of_bonds", 40):
                 _lights.append(("🟡", f"長債佔債券 {_long_bond_pct}% > 40% — 提高中短期債券比重"))
+            _us30y_freeze2 = _th.get("us30y", {}).get("taa_global_freeze", 5.30)
             if _us30y >= _th.get("us30y_red", 5.40):
-                _lights.append(("🔴", f"30Y美債 {_us30y}% ≥ 5.4% — 調降長債部位"))
+                _lights.append(("🔴", f"30Y美債 {_us30y}% ≥ 5.4% — 紅燈：調降長債部位移中短債"))
+            elif _us30y > _us30y_freeze2:
+                _lights.append(("🔴", f"30Y美債 {_us30y}% > 5.30% — TAA全域凍結：禁止新現金擴倉/擴槓桿"))
             elif _us30y >= _th.get("us30y_yellow", 5.20):
-                _lights.append(("🟡", f"30Y美債 {_us30y}% ≥ 5.2% — 停止長債新增"))
+                _lights.append(("🟡", f"30Y美債 {_us30y}% ≥ 5.2% — 警戒區：台股≤50萬/週、美股停購、不疊債"))
             if _us_pct > _th.get("us_equity_overweight_yellow", 32):
                 _lights.append(("🟡", f"美股 {_us_pct}% > 32% — 再平衡回落30%"))
             if _tw_pct > _th.get("tw_equity_overweight_yellow", 17):

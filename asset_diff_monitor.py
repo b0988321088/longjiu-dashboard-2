@@ -243,8 +243,8 @@ def extract_snapshot(snap: dict) -> dict:
         if isinstance(val, dict):
             # 嵌套結構：群組內再展平（跳過「小計」聚合值）
             for sub_name, sub_val in val.items():
-                if sub_name == '小計':
-                    continue  # 小計是聚合值，不重複列
+                if sub_name in ('小計', '匯率調整', 'note'):
+                    continue  # 聚合/調整值，不重複列
                 if isinstance(sub_val, dict):
                     continue
                 if '日元' in sub_name or '日圓' in sub_name or 'JPY' in sub_name.upper():
