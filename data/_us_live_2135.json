@@ -1,0 +1,200 @@
+[
+{
+"sym": "^DJI",
+"name": "Dow Jones Industrial Average",
+"price": 53849.76,
+"prev": 53885.1,
+"chg": -35.34,
+"chg%": -0.07,
+"t": "08-07 13:36 UTC"
+},
+{
+"sym": "^GSPC",
+"name": "S&P 500",
+"price": 7735.31,
+"prev": 7709.96,
+"chg": 25.35,
+"chg%": 0.33,
+"t": "08-07 13:36 UTC"
+},
+{
+"sym": "^IXIC",
+"name": "NASDAQ Composite",
+"price": 26605.43,
+"prev": 26348.35,
+"chg": 257.08,
+"chg%": 0.98,
+"t": "08-07 13:36 UTC"
+},
+{
+"sym": "^SOX",
+"name": "PHLX Semiconductor",
+"price": 12361.17,
+"prev": 12048.69,
+"chg": 312.47,
+"chg%": 2.59,
+"t": "08-07 13:36 UTC"
+},
+{
+"sym": "^VIX",
+"name": "CBOE Volatility Index",
+"price": 15.29,
+"prev": 15.15,
+"chg": 0.14,
+"chg%": 0.92,
+"t": "08-07 13:21 UTC"
+},
+{
+"sym": "^TNX",
+"name": "CBOE Interest Rate 10 Year T",
+"price": 4.62,
+"prev": 4.67,
+"chg": -0.04,
+"chg%": -0.96,
+"t": "08-07 13:21 UTC"
+},
+{
+"sym": "^TYX",
+"name": "Treasury Yield 30 Years",
+"price": 5.19,
+"prev": 5.21,
+"chg": -0.02,
+"chg%": -0.46,
+"t": "08-07 13:21 UTC"
+},
+{
+"sym": "TSM",
+"name": "Taiwan Semiconductor Manufac",
+"price": 421.65,
+"prev": 418.06,
+"chg": 3.59,
+"chg%": 0.86,
+"t": "08-07 13:36 UTC"
+},
+{
+"sym": "NVDA",
+"name": "NVIDIA Corporation",
+"price": 222.13,
+"prev": 218.99,
+"chg": 3.14,
+"chg%": 1.43,
+"t": "08-07 13:36 UTC"
+},
+{
+"sym": "AAPL",
+"name": "Apple Inc.",
+"price": 313.18,
+"prev": 312.41,
+"chg": 0.77,
+"chg%": 0.25,
+"t": "08-07 13:36 UTC"
+},
+{
+"sym": "TSLA",
+"name": "Tesla, Inc.",
+"price": 322.72,
+"prev": 319.53,
+"chg": 3.19,
+"chg%": 1.0,
+"t": "08-07 13:36 UTC"
+},
+{
+"sym": "META",
+"name": "Meta Platforms, Inc.",
+"price": 592.49,
+"prev": 589.9,
+"chg": 2.59,
+"chg%": 0.44,
+"t": "08-07 13:36 UTC"
+},
+{
+"sym": "AMZN",
+"name": "Amazon.com, Inc.",
+"price": 276.08,
+"prev": 272.26,
+"chg": 3.82,
+"chg%": 1.4,
+"t": "08-07 13:36 UTC"
+},
+{
+"sym": "MSFT",
+"name": "Microsoft Corporation",
+"price": 503.44,
+"prev": 499.86,
+"chg": 3.57,
+"chg%": 0.72,
+"t": "08-07 13:36 UTC"
+},
+{
+"sym": "GOOGL",
+"name": "Alphabet Inc.",
+"price": 358.12,
+"prev": 357.75,
+"chg": 0.37,
+"chg%": 0.1,
+"t": "08-07 13:36 UTC"
+},
+{
+"sym": "AVGO",
+"name": "Broadcom Inc.",
+"price": 428.01,
+"prev": 420.56,
+"chg": 7.44,
+"chg%": 1.77,
+"t": "08-07 13:36 UTC"
+},
+{
+"sym": "AMD",
+"name": "Advanced Micro Devices, Inc.",
+"price": 485.53,
+"prev": 489.28,
+"chg": -3.75,
+"chg%": -0.77,
+"t": "08-07 13:36 UTC"
+},
+{
+"sym": "ES=F",
+"name": "E-Mini S&P 500 Sep 26",
+"price": 7758.75,
+"prev": 7734.75,
+"chg": 24.0,
+"chg%": 0.31,
+"t": "08-07 13:26 UTC"
+},
+{
+"sym": "NQ=F",
+"name": "Nasdaq 100 Sep 26",
+"price": 29728.5,
+"prev": 29488.25,
+"chg": 240.25,
+"chg%": 0.81,
+"t": "08-07 13:26 UTC"
+},
+{
+"sym": "YM=F",
+"name": "Mini Dow Jones Indus.-$5 Sep",
+"price": 54071.0,
+"prev": 54013.0,
+"chg": 58.0,
+"chg%": 0.11,
+"t": "08-07 13:26 UTC"
+},
+{
+"sym": "GC=F",
+"name": "Gold Dec 26",
+"price": 4410.3,
+"prev": 4299.6,
+"chg": 110.7,
+"chg%": 2.57,
+"t": "08-07 13:26 UTC"
+},
+{
+"sym": "CL=F",
+"name": "Crude Oil Sep 26",
+"price": 77.08,
+"prev": 77.29,
+"chg": -0.21,
+"chg%": -0.27,
+"t": "08-07 13:26 UTC"
+}
+]
