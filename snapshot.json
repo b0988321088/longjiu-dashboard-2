@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-08T07:00:21.615625",
+  "generated_at": "2026-08-08T11:52:14.091936",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-08",
   "total_assets": 16842905,
@@ -698,10 +698,13 @@
     },
     "2026-08": {
       "安聯保單撥回": 15976,
-      "第一金配息": 13126
+      "第一金配息": 13126,
+      "台灣特品股息": 14990,
+      "聯博美國成長基金配息": 35,
+      "AI收益成長基金B月配(美元)": 46
     }
   },
-  "monthly_dividend": 29102,
+  "monthly_dividend": 44173,
   "actual_fj33_dividend": 9356,
   "policy_a_total": 4992334,
   "policy_b_total": 2681959,
@@ -941,8 +944,8 @@
   "allianz_combined": 7960014,
   "allianz_a_value": 4997734,
   "allianz_b_value": 2647289,
-  "_updated_by": "safe_update.py",
-  "_updated_at": "2026-07-29 00:10",
+  "_updated_by": "Hermes",
+  "_updated_at": "2026-08-08 配息入帳更新",
   "unrealized_pnl": 117720,
   "holdings": [
     {
@@ -1279,7 +1282,7 @@
   "debt_ratio_note": "動態計算：負債 21,127,022 / 含不動產總資產 49,938,448",
   "dividend_month_expected": 100000,
   "dividend_month_expected_note": "8月起依當月dividend_records動態累積，月初顯示保守預估10萬",
-  "dividend_month_actual": 29102,
+  "dividend_month_actual": 44173,
   "rent_received_records": {
     "2026-08-01": {
       "大義街店面": 24000
@@ -1498,5 +1501,8 @@
       "note": "台電薪資媒體轉入"
     }
   },
-  "salary": 39727
+  "salary": 39727,
+  "dividend_records_note": {
+    "2026-08": "台灣特品=8/5國泰世華現金股息14,990(檔名待確認)；聯博35(8/6)；AI收益成長B月配1.43USD@32≈46(8/6)"
+  }
 }
