@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-08T13:02:24.766315",
+  "generated_at": "2026-08-08T13:06:53.739004",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-08",
   "total_assets": 16828156,
@@ -621,7 +621,7 @@
   "passive_income_coverage": 0.6819,
   "passive_income_total": 96798,
   "moneybook_account_csv": "C:/Users/bot/Desktop/龍九系統/Moneybook/Moneybook_帳戶_20260718_1.csv",
-  "real_estate_value": 34017063,
+  "real_estate_value": 0,
   "insurance_total_note": "含配息",
   "runway_months": 27.1,
   "securities_breakdown": {
@@ -936,7 +936,7 @@
   "allianz_a_value": 5183498,
   "allianz_b_value": 2761767,
   "_updated_by": "Hermes",
-  "_updated_at": "2026-08-08 安聯截圖同步",
+  "_updated_at": "2026-08-08 統一不記錄不動產",
   "unrealized_pnl": 117720,
   "holdings": [
     {
@@ -1502,5 +1502,6 @@
     "valid_until": "116/01/21",
     "source": "安聯APP 8/8 12:49 截圖",
     "note": "帳戶總價值 7,945,265 = 保單A 5,183,498 + 保單B 2,761,767；本月累積配息/撥回 4筆共 22,134"
-  }
+  },
+  "real_estate_note_20260808": "使用者裁示：統一不記錄房地產（與差異分析一致），總資產=流動資產，利於掌控現金流"
 }
