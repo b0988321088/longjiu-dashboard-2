@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-08T12:48:20.396415",
+  "generated_at": "2026-08-08T12:50:29.607550",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-08",
-  "total_assets": 16842905,
+  "total_assets": 16828156,
   "total_liabilities": 21088175,
   "net_worth": -4847994,
   "debt_ratio": 42.3,
@@ -63,7 +63,7 @@
   "cc_mid": 38000,
   "cc_high": 42000,
   "firstjin_fl65_current_value": 1931243,
-  "allianz_ab_current_value": 7960014,
+  "allianz_ab_current_value": 7945265,
   "firstjin_current_value": 1931243,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
@@ -121,8 +121,8 @@
     "monthly_expense": 141958,
     "coverage_pct": 148.7
   },
-  "allianz_policy_a_value": 4997734,
-  "allianz_policy_b_value": 2647289,
+  "allianz_policy_a_value": 5183498,
+  "allianz_policy_b_value": 2761767,
   "anue_account": {
     "total_mv": 690285,
     "total_cost": 563153,
@@ -505,26 +505,26 @@
       "現金目標": 15
     },
     "actual_pct": {
-      "台股市值型成長": 9.2,
-      "美股市值型成長": 35.4,
-      "防守型配息": 18.1,
+      "台股市值型成長": 9.3,
+      "美股市值型成長": 35.3,
+      "防守型配息": 18.2,
       "債券": 17.7,
       "現金/安全網": 19.5
     },
     "gaps": {
-      "台股市值型成長": -5.8,
-      "美股市值型成長": 5.4,
-      "防守型配息": -1.9,
+      "台股市值型成長": -5.7,
+      "美股市值型成長": 5.3,
+      "防守型配息": -1.8,
       "債券及安全現金": 2.2
     },
     "actual_twd": {
       "台股市值型成長": 1556969.0,
-      "美股市值型成長": 5959727.0,
+      "美股市值型成長": 5944978.0,
       "防守型配息": 3056792.0,
       "債券": 2980036.0,
       "現金/安全網": 3289381.0
     },
-    "alert": "台股不足5.8pp；現金+債券超標2.2pp"
+    "alert": "台股不足5.7pp；現金+債券超標2.2pp"
   },
   "penetration_canonical": {
     "updated_at": "2026-07-18",
@@ -688,7 +688,7 @@
       "PIMCO收益增長": 962100
     }
   },
-  "allianz_ab": 7960014,
+  "allianz_ab": 7945265,
   "firstjin": 1931243,
   "dividend_records": {
     "2026-07-21": {
@@ -697,14 +697,14 @@
       "保單B 安聯": 5994
     },
     "2026-08": {
-      "安聯保單撥回": 15976,
+      "安聯保單撥回": 22134,
       "第一金配息": 13126,
       "台灣特品股息": 14990,
       "聯博美國成長基金配息": 35,
       "AI收益成長基金B月配(美元)": 46
     }
   },
-  "monthly_dividend": 44173,
+  "monthly_dividend": 50331,
   "actual_fj33_dividend": 9356,
   "policy_a_total": 4992334,
   "policy_b_total": 2681959,
@@ -869,14 +869,14 @@
     "安聯AI收益成長": 357261,
     "PIMCO收益增長": 1727763
   },
-  "allianz_a_current_value": 5197602,
+  "allianz_a_current_value": 5183498,
   "allianz_b_breakdown": {
     "安聯收益成長": 517585,
     "貝萊德世界科技A10": 726300,
     "安聯AI收益成長": 540632,
     "PIMCO收益增長": 977895
   },
-  "allianz_b_current_value": 2762412,
+  "allianz_b_current_value": 2761767,
   "monthly_dividend_total": 153389,
   "relay_stations": {
     "第一站": {
@@ -932,11 +932,11 @@
   "moneybook_date": "2026-07-27",
   "total_portfolio_value": 16303141,
   "total_stock_value": 2499320,
-  "allianz_combined": 7960014,
-  "allianz_a_value": 4997734,
-  "allianz_b_value": 2647289,
+  "allianz_combined": 7945265,
+  "allianz_a_value": 5183498,
+  "allianz_b_value": 2761767,
   "_updated_by": "Hermes",
-  "_updated_at": "2026-08-08 配息入帳更新",
+  "_updated_at": "2026-08-08 安聯截圖同步",
   "unrealized_pnl": 117720,
   "holdings": [
     {
@@ -1256,12 +1256,12 @@
       "currency": "ZAR"
     }
   ],
-  "allianz_a": 5083339,
-  "allianz_b": 2699064,
+  "allianz_a": 5183498,
+  "allianz_b": 2761767,
   "firstjin_fund_name": "FJ33-摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(每月派息)-美元",
   "insurance_label_b": "第一金FL65→FJ33摩根（8/4轉換）",
-  "insurance_current_value": 9891257,
-  "insurance_total": 9891257,
+  "insurance_current_value": 9876508,
+  "insurance_total": 9876508,
   "pending_income": [
     {
       "source": "台電標案合作（上境工程）利潤分成",
@@ -1273,7 +1273,7 @@
   "debt_ratio_note": "動態計算：負債 21,127,022 / 含不動產總資產 49,938,448",
   "dividend_month_expected": 100000,
   "dividend_month_expected_note": "8月起依當月dividend_records動態累積，月初顯示保守預估10萬",
-  "dividend_month_actual": 44173,
+  "dividend_month_actual": 50331,
   "rent_received_records": {
     "2026-08-01": {
       "大義街店面": 24000
@@ -1495,5 +1495,11 @@
   "salary": 39727,
   "dividend_records_note": {
     "2026-08": "台灣特品=8/5國泰世華現金股息14,990(檔名待確認)；聯博35(8/6)；AI收益成長B月配1.43USD@32≈46(8/6)"
+  },
+  "allianz_risk_profile": {
+    "type": "積極型",
+    "valid_until": "116/01/21",
+    "source": "安聯APP 8/8 12:49 截圖",
+    "note": "帳戶總價值 7,945,265 = 保單A 5,183,498 + 保單B 2,761,767；本月累積配息/撥回 4筆共 22,134"
   }
 }
