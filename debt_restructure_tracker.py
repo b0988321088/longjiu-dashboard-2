@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""debt_restructure_tracker.py — 每週日 08:50 追蹤債務重整進度
-讀 snapshot.deployment_plan + pending_decisions.json + schedule_events.json，
-輸出：各階段狀態、下週關鍵節點、待辦事項。
+"""debt_restructure_tracker.py v3 — 龍九動態監測模組（每週日 08:50 cron 輸出）
+五大監測維度：市場利率(Rhythm-08) / 匯率 / PI狀態 / LTV槓桿 / 現金流與債務時程。
 """
-import json, sys
+import json, sys, urllib.request
 from datetime import date, timedelta
 from pathlib import Path
 
 BASE = Path("C:/Users/bot/Desktop/longjiu_system")
 today = date.today()
+
+# -------- 輸入變數 --------
+base_fx = 32.18          # 基準匯率
+ideal_monthly_surplus = 40000
+pessimistic_low = 0
+pessimistic_high = 10000
+PI_STATES = ["未申請", "審核中", "已正式核准"]
 
 def load(name):
     try:
@@ -18,6 +24,36 @@ def load(name):
         print(f"⚠️ {name} 讀取失敗: {e}")
         return {}
 
+def fetch_fred(series_id):
+    """抓取 FRED 最新值（公開 CSV endpoint）"""
+    try:
+        url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        data = urllib.request.urlopen(req, timeout=15).read().decode()
+        lines = [l for l in data.strip().split('\n') if l]
+        if len(lines) >= 2:
+            last = lines[-1].split(',')
+            try:
+                return float(last[1]), last[0]
+            except:
+                return None, None
+    except Exception as e:
+        return None, None
+    return None, None
+
+def fetch_fx():
+    """抓取 USD/TWD 匯率"""
+    try:
+        req = urllib.request.Request("https://open.er-api.com/v6/latest/TWD",
+                                     headers={'User-Agent': 'Mozilla/5.0'})
+        d = json.loads(urllib.request.urlopen(req, timeout=15).read())
+        usd = d.get('rates', {}).get('USD')
+        if usd:
+            return 1 / usd
+    except Exception:
+        pass
+    return None
+
 def main():
     snap = load("snapshot.json")
     pi = snap.get("professional_investor", {})
@@ -25,27 +61,106 @@ def main():
     pending = load("pending_decisions.json")
     events = load("schedule_events.json")
 
-    print("=" * 56)
-    print(f"🔁 龍九債務重整進度追蹤 | {today.isoformat()}（週日）")
-    print("=" * 56)
+    print("=" * 58)
+    print(f"===== 龍九動態監測｜{today.isoformat()} =====")
+    print("=" * 58)
 
-    # 階段狀態
-    timeline = plan.get("timeline", {})
-    strat = plan.get("strategy", {})
-    print("\n【策略：B先A後（2026-08-09 定案）】")
-    if strat:
-        ph1 = strat.get("phase1", {})
-        ph2 = strat.get("phase2", {})
-        print(f"  🔵 第一階段（方案B）: {' / '.join(ph1.get('actions', []))} → 現金 {ph1.get('cash_after','')}")
-        print(f"  🟣 第二階段（方案A）: 條件={' + '.join(ph2.get('conditions', []))} → {' / '.join(ph2.get('actions', []))}")
-    print("\n【階段時程】")
-    for k, v in timeline.items():
-        label = {"phase1": "🔵 第一階段 8/15", "phase1b": "🔵 撥款後先辦兆豐信貸 300萬",
-                 "phase2": "🟣 洲際W轉貸（國泰）"}.get(k, k)
-        print(f"  {label}: {v}")
+    # -------- 1. 市場利率 Rhythm-08 --------
+    us30y, us30y_date = fetch_fred("DGS30")
+    if us30y is None:
+        us30y = snap.get("rhythm08", {}).get("indicators", {}).get("us30y") or 5.21
+        us30y_date = "snapshot 舊值"
+    if us30y > 5.30:
+        rhythm_light = "🔴全域凍結"
+    elif us30y > 5.15:
+        rhythm_light = "🟡滯脹警戒"
+    else:
+        rhythm_light = "🟢安全"
+    print(f"\n【1.市場利率｜Rhythm-08】")
+    print(f"  US30Y = {us30y:.2f}%（{us30y_date}）")
+    print(f"  燈號：{rhythm_light}（🟢安全 / 🟡警戒>5.15 / 🔴全域凍結>5.30）")
+    if rhythm_light == "🟢安全":
+        print(f"  規則：可依 B先A後 時程執行")
+    elif rhythm_light == "🟡滯脹警戒":
+        print(f"  規則：LTV上限強制 ≤30%，停止擴張質押")
+    else:
+        print(f"  規則：禁止新增買債、禁止新增質押借貸；舊部位只監控LTV，不強制全數賣出")
 
-    # 下週關鍵節點（7 天內）
-    print(f"\n【下週關鍵節點（{today.isoformat()} ~ {(today + timedelta(days=7)).isoformat()}）】")
+    # -------- 2. 匯率監測 --------
+    usd_twd = fetch_fx()
+    if usd_twd is None:
+        usd_twd = 32.18
+        fx_note = "（抓取失敗，用基準值）"
+    else:
+        fx_note = ""
+    fx_change = usd_twd - base_fx  # 台幣升 = 負值
+    if fx_change <= -2.5:
+        fx_light = "🔴風險"
+    elif fx_change <= -2.0:
+        fx_light = "🟡警示"
+    else:
+        fx_light = "🟢正常"
+    print(f"\n【2.匯率監測 USD/TWD = {usd_twd:.2f}】{fx_note}")
+    print(f"  階段升幅（相對基準 32.18）：{fx_change:+.2f}")
+    print(f"  燈號：{fx_light}（🟢正常 / 🟡警示≥2.0% / 🔴風險≥2.5%）")
+    if fx_light == "🟡警示":
+        print(f"  動作：停止美元停泊部位繼續加碼")
+    elif fx_light == "🔴風險":
+        print(f"  動作：可部分結匯回台幣活存，不對賭匯率，停泊只求微薄利息")
+
+    # -------- 3. PI 專業投資人狀態 --------
+    pi_status = pi.get("pi_status", "未申請")
+    if pi_status not in PI_STATES:
+        pi_status = "未申請"
+    can_do_lombard = (pi_status == "已正式核准")
+    print(f"\n【3.PI專業投資人狀態】")
+    print(f"  PI_approval_status：{pi_status}")
+    print(f"  ⚠️ 硬性鎖定：PI非【已正式核准】→ 禁止執行任何 Lombard 質押借出作業")
+    if not can_do_lombard:
+        print(f"  → 10/1 國泰洲際W轉增貸前置檢查：PI未核准 → 建議延後轉增貸，避免負債變動干擾PI資產核算")
+    else:
+        print(f"  → 10/1 國泰洲際W轉增貸前置檢查：✅ 可執行")
+
+    # -------- 4. LTV 質押槓桿監控 --------
+    ltv = plan.get("current_ltv", 0)
+    ltv_max = 0.30 if us30y > 5.15 else 0.40
+    env = "滯脹警戒環境(US30Y>5.15)" if us30y > 5.15 else "正常環境"
+    print(f"\n【4.LTV質押槓桿監控】")
+    print(f"  current_LTV_ratio = {ltv*100:.1f}%" if ltv else "  current_LTV_ratio = 0%（尚未質押）")
+    print(f"  環境判斷：{env}")
+    print(f"  允許LTV上限：{ltv_max*100:.0f}%")
+    if ltv <= ltv_max:
+        print(f"  檢核結果：✅ 符合門檻（正常環境≤40% / 滯脹警戒≤30%）")
+    else:
+        print(f"  檢核結果：⚠️ 超出上限 → 需要主動還本降槓桿")
+
+    # -------- 5. 現金流 & 債務重整時程 --------
+    print(f"\n【5.現金流 & 債務重整時程】")
+    print(f"  預估每月可償還結餘(理想)：{ideal_monthly_surplus:,} NTD")
+    print(f"  悲觀場景可償還結餘：{pessimistic_low:,}~{pessimistic_high:,} NTD")
+    print(f"  提醒：降槓桿週期非固定，環境惡化還本速度會顯著拉長")
+
+    # -------- 5b. 階梯式債券配置（B方案 500萬）-------
+    print(f"\n【5b.階梯式債券配置（B方案 500萬）】")
+    print(f"  1-3年投資等級短債階梯（持有至到期，鎖定收益）")
+    print(f"  ├ 1年內  200萬（40%）→ 流動性+再投資")
+    print(f"  ├ 1-2年  150萬（30%）→ 核心收益")
+    print(f"  └ 2-3年  150萬（30%）→ 收益鎖定")
+    print(f"  預期收益：4.5-5.0% → 年收 ~23-25萬")
+    print(f"  淨利差（扣 2.6% 融資）：1.9-2.4%")
+    print(f"  ⚠️ 紀律：>5年凍結（US30Y 5.22% 警戒）；00983D 不新增；持有到期不炒價差")
+
+    # 重大時程檢查
+    print(f"\n  重大時程檢查：")
+    if today >= date(2026, 8, 15):
+        print(f"  ☑ 8-15 國泰撥款：執行清高息壞債 + 400萬停泊配置（已到期）")
+    else:
+        print(f"  ☐ 8-15 國泰撥款：執行清高息壞債 + 400萬停泊配置（還有 {(date(2026,8,15)-today).days} 天）")
+    oct_gate = "✅ 可執行" if can_do_lombard else "🔒 受PI狀態鎖定（未核准→延後）"
+    print(f"  ☐ 10-01 國泰洲際W轉增貸（{oct_gate}）")
+
+    # 下週關鍵節點
+    print(f"\n  下週關鍵節點（{today.isoformat()} ~ {(today+timedelta(days=7)).isoformat()}）：")
     found = False
     if isinstance(events, list):
         for e in events:
@@ -55,38 +170,28 @@ def main():
             except:
                 continue
             if today <= ed <= today + timedelta(days=7):
-                print(f"  📅 {d}: {e.get('item', e.get('title', e.get('summary', '?')))}")
+                print(f"    📅 {d}: {e.get('item', e.get('title', '?'))}")
                 found = True
     if not found:
-        print("  （無）")
+        print("    （無）")
 
-    # Pending 決策狀態
-    print("\n【執行中決策】")
-    pd_list = pending if isinstance(pending, list) else pending.get("decisions", [])
-    for d in pd_list:
-        t = str(d.get("title", ""))
-        if any(k in t for k in ["洲際", "築巢", "信貸", "國泰", "轉貸"]):
-            print(f"  ⏳ {d.get('date','?')} {t}: {d.get('status','?')}")
-
-    # 待辦提醒（依日期）
-    print("\n【待辦提醒】")
-    today_s = today.isoformat()
-    if today >= date(2026, 8, 15):
-        print("  ✅ 8/15 已到：確認國泰撥款 → 清償 800萬 → 買 500萬債券 → 辦兆豐信貸 300萬")
-    else:
-        print(f"  ⏳ 8/15 國泰撥款（還有 {(date(2026,8,15)-today).days} 天）→ 清償800萬→買500萬債券→兆豐信貸300萬")
-    print("  ⏳ 洲際W（第二間）轉貸：直接跟國泰辦理（非台銀築巢）")
-    if today >= date(2026, 9, 25):
-        print("  ✅ 9/25 已到：洲際W轉貸評估")
-    else:
-        print(f"  ⏳ 9/25 洲際W轉貸評估（還有 {(date(2026,9,25)-today).days} 天）")
-
-    # 紀律提醒
-    print("\n【紀律提醒】")
-    print("  🎵 Rhythm-08：US30Y 警戒區（5.2-5.3）→ 台股≤50萬/週・美股停購・長債不疊")
-    print("  💰 500萬債券：短中期 1-3yr 為主，>5yr 凍結；質押等利率<3%確認+成數≤4成")
-    print("  🛡️ 現金底線 85萬（6個月）不可破")
-    print("=" * 56)
+    # -------- 綜合建議 --------
+    print(f"\n【本週綜合建議動作】")
+    n = 1
+    if rhythm_light != "🟢安全":
+        print(f"  {n}. 🎵 Rhythm-08 {rhythm_light}：{'停止擴張質押' if rhythm_light=='🟡滯脹警戒' else '禁止新增買債/質押，只監控LTV'}")
+        n += 1
+    if fx_light != "🟢正常":
+        print(f"  {n}. 💱 匯率{fx_light}：{'停止美元停泊加碼' if fx_light=='🟡警示' else '部分結匯回台幣，不對賭匯率'}")
+        n += 1
+    if not can_do_lombard:
+        print(f"  {n}. 🎫 PI 未核准：禁 Lombard 質押；10/1 轉增貸建議延後")
+        n += 1
+    if today < date(2026, 8, 15):
+        print(f"  {n}. 🔵 8/15 撥款前：台股≤50萬/週・美股停購・長債不疊・現金底線85萬")
+        n += 1
+    print(f"  {n}. 🛡️ 400萬停泊永遠禁止質押（防火牆）；全域凍結≠賣光舊部位")
+    print("=" * 58)
 
 if __name__ == "__main__":
     main()

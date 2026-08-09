@@ -468,7 +468,6 @@ def build_trend_charts(history: dict, current: dict | None = None) -> str:
         ("證券", last.get("securities_market", 0), "#2563eb"),
         ("保單", last.get("insurance_current", 0), "#16a34a"),
         ("基金", last.get("fund_market", 0), "#7c3aed"),
-        ("不動產", last.get("real_estate", 0), "#10b981"),
         ("現金", last.get("cash", 0), "#f59e0b"),
     ]
     bars = []
@@ -493,8 +492,8 @@ def build_trend_charts(history: dict, current: dict | None = None) -> str:
 def buffett_advice(history: dict, snap: dict) -> str:
     rows = compute_changes(history)
     ex = extract_snapshot(snap)
-    # 確保不動產正確
-    ex["real_estate"] = 34_000_000
+    # 2026-08-08 使用者裁示：統一不記錄房地產（與差異分析一致）— 不動產值歸零
+    ex["real_estate"] = 0
     ta = ex["total_assets"] + ex["real_estate"]
     debt_ratio = ex["total_liabilities"] / ta * 100
     monthly_div = ex["fund_dividend_monthly"]
@@ -514,10 +513,9 @@ def buffett_advice(history: dict, snap: dict) -> str:
         f"證券 {ex['securities_market']/alloc_den*100:.1f}% / "
         f"保單 {ex['insurance_current']/alloc_den*100:.1f}% / "
         f"基金 {ex['fund_market']/alloc_den*100:.1f}% / "
-        f"現金 {ex['cash']/alloc_den*100:.1f}% / "
-        f"不動產 {ex['real_estate']/alloc_den*100:.1f}%"
+        f"現金 {ex['cash']/alloc_den*100:.1f}%"
     )
-    real_estate_line = f"不動產 {ex.get('real_estate',0)/10000:.0f} 萬（單獨列出）"
+    real_estate_line = ""
     # 動態租金明細（從 snapshot rent_breakdown 自動產生）
     _rb = snap.get("rent_breakdown", {})
     if _rb:
@@ -539,7 +537,6 @@ def buffett_advice(history: dict, snap: dict) -> str:
         "🧠 在家巴菲特",
         "",
         f"資產結構：{alloc}",
-        real_estate_line,
         rent_line,
         f"負債比率：{debt_ratio:.1f}%",
         f"保守配息：{_fmt(monthly_div_conservative)}（覆蓋率 {passive_coverage:.1f}%）",

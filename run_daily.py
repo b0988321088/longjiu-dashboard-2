@@ -338,11 +338,12 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         _fund_detail = " / ".join(_fund_parts) if _fund_parts else f"明細待補（總市值 {tv.get('funds', 0):,}）"
     else:
         _fund_detail = f"明細待補（總市值 {tv.get('funds', 0):,}）"
-    # 總資產（含不動產）動態計算 — 不再硬編碼
+    # 2026-08-08 使用者裁示：統一不記錄房地產（與差異分析一致，利於掌控現金流）
+    # 總資產 = 流動資產；負債率分母 = 流動總資產（不含不動產）
     try:
-        _re_val = float(json.loads(SNAPSHOT.read_text(encoding="utf-8")).get("real_estate_value", 34_017_063))
+        _re_val = float(json.loads(SNAPSHOT.read_text(encoding="utf-8")).get("real_estate_value", 0))
     except Exception:
-        _re_val = 34_017_063
+        _re_val = 0
     _total_with_re = int(tv.get("total_assets", 0) or 0) + int(_re_val)
     _total_liab = int(tv.get("total_liabilities", 0) or 0)
     _net_with_re = _total_with_re - _total_liab
@@ -591,7 +592,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
           <tr><th>項目</th><th>內容</th><th>影響</th></tr>
         </thead>
         <tbody>
-          <tr><td>總資產</td><td>{tv['total_assets']:,} TWD</td><td>流動資產（不含不動產）；淨資產 {_net_with_re:,}（含不動產）；負債率 {_liab_ratio:.1f}%</td></tr>
+          <tr><td>總資產</td><td>{tv['total_assets']:,} TWD</td><td>流動資產（不記錄不動產）；負債率 {_liab_ratio:.1f}%</td></tr>
           <tr><td>總負債</td><td>{tv['total_liabilities']:,} TWD</td><td>總負債合計（含房貸、保單借貸、質押）</td></tr>
           <tr><td>本月領息</td><td>{monthly_dividend:,} TWD</td><td>保單 {tv['insurance_dividend']:,} + ETF {tv['sec_dividend_monthly']:,} + 基金 {tv['fund_dividend_monthly']:,}</td></tr>
           <tr><td>被動月收</td><td>{monthly_dividend + _rent_got:,} TWD</td><td>實收：配息 {monthly_dividend:,} + 房租 {_rent_got:,}｜預期：房租 80,100 + 配息保守 {_div_expected:,}</td></tr>
@@ -618,7 +619,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         </tbody>
       </table>
     </div>
-    <p class="text-sm" style="color:#6e6e73;margin-top:8px">穿透分母：台股+美股+防守+債券（不計入不動產）；管理費~1.5%，偏高於配息收益率。</p>
+    <p class="text-sm" style="color:#6e6e73;margin-top:8px">穿透分母：台股+美股+防守+債券（不含不動產）；管理費~1.5%，偏高於配息收益率。</p>
   </div>
 
   <div class="card" style="margin-top:4px;padding:10px 14px;background:#f0f4ff;">
@@ -933,10 +934,13 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
     net_worth = tv.get("net_worth", 0)
     snap_dir = BASE / "snapshots"
     yesterday_snap = {}
-    candidates = sorted(snap_dir.glob("snapshot_*.json"), reverse=True)
-    if candidates:
+    # 2026-08-08 修正：先前 glob 最新一份會拿到歷史舊檔（如 7/28），
+    # 造成「vs 昨日」比較到 11 天前的值（配息 118,296 vs 今日 44,173 誤報、009816 誤會）。
+    # 改為只認「昨天日期」的 snapshot 檔；不存在則不比較（空 dict → 該區塊自動隱藏）。
+    _yday_f = snap_dir / f"snapshot_{date.today() - timedelta(days=1)}.json"
+    if _yday_f.exists():
         try:
-            yesterday_snap = json.loads(candidates[0].read_text(encoding="utf-8"))
+            yesterday_snap = json.loads(_yday_f.read_text(encoding="utf-8"))
         except Exception:
             yesterday_snap = {}
     # Buffett/CTO: 優先從 buffett_cto_report_{TODAY}.md 讀取，不手動維護
@@ -1680,10 +1684,14 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     # Trend arrows vs yesterday
     snap_dir = BASE / "snapshots"
     yesterday_snap = {}
-    candidates = sorted(snap_dir.glob("snapshot_*.json"), reverse=True)
-    if candidates:
+    # 2026-08-08 修正：先前 glob 最新一份會拿到歷史舊檔（如 7/28），
+    # 造成「vs 昨日」比較到 11 天前的值（配息 118,296 vs 今日 44,173 誤報、009816 誤會）。
+    # 改為只認「昨天日期」的 snapshot 檔；不存在則不比較（空 dict → 該區塊自動隱藏）。
+    # 註：此函數內有 local import（timedelta as _td），故用 _td 避免 UnboundLocalError。
+    _yday_f = snap_dir / f"snapshot_{date.today() - _td(days=1)}.json"
+    if _yday_f.exists():
         try:
-            yesterday_snap = json.loads(candidates[0].read_text(encoding="utf-8"))
+            yesterday_snap = json.loads(_yday_f.read_text(encoding="utf-8"))
         except Exception:
             yesterday_snap = {}
 
@@ -2136,9 +2144,9 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         print(f"[WARN] Buffett dynamic inject fail: {_e}")
         html = html.replace("__BUFFETT_DYNAMIC__", '<div class="text-xs text-slate-400">📊 分析中</div>')
 
-    # 0050 dividend placeholders
-    html = html.replace("__DIVIDEND_0050__", "待 MB 確認")
-    html = html.replace("__EX_DATE_0050__", "待確認")
+    # 0050 dividend placeholders — 2026-08-08 已確認：0050 7/21 除息 0.6 元（Yahoo/鉅亨核對，縮水補位 00878/00713）
+    html = html.replace("__DIVIDEND_0050__", "0.6 元")
+    html = html.replace("__EX_DATE_0050__", "7/21")
 
     # Fund placeholders for daily report (same logic as dashboard)
     try:
