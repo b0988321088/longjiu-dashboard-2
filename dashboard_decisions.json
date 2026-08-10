@@ -2791,6 +2791,121 @@
       "summary": "台股1,578,518.0 美股5,932,893.0 防守3,133,579.0 債券2,984,711.0 現金2,292,096.0",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "timestamp": "2026-08-10T14:30:00",
+      "summary": "8/15 國泰撥款部署新定案：1,200萬→還理財型200萬→1,000萬買債→質押5成500萬(PI 2.88%)→還高息700萬",
+      "detail": "取代 8/9 B先A後。使用者裁示。撥款順序：①還星展理財型 200萬 @4% 全清 ②剩1,000萬買短中期投資等級債(1-3yr) ③債券質押5成(PI質押利率2.88%<3% gate✅)拉500萬 ④500萬還保單質押400萬+證券質押100萬。結果：4%高息700萬全清，年省息~10萬+債券收息45-50萬。現金229萬>85萬底線✅",
+      "source": "user",
+      "tags": [
+        "債務重組",
+        "8/15",
+        "質押",
+        "部署"
+      ]
+    },
+    {
+      "timestamp": "2026-08-10T14:35:00",
+      "summary": "質押新規則：成數5成(50% LTV)取代4成，但禁疊三層（單層質押）",
+      "detail": "使用者裁示：質押成數上限從4成提高至5成(50% LTV)，但禁止疊三層——質押借出資金不得再投入質押標的循環質押，僅允許單層質押+明確還款用途。更新 snapshot.professional_investor（lombard_bridge.hard_limits / mandatory_gates / macro_triggers.友善線 全部改5成）+ pledge_stack_rule 新增。",
+      "source": "user",
+      "tags": [
+        "質押",
+        "規則",
+        "風險控制"
+      ]
+    },
+    {
+      "timestamp": "2026-08-10T18:30:00",
+      "summary": "負債率雙軌顯示裁示：主40.4%(含不動產)｜流動126.6%(不含不動產監控)",
+      "detail": "使用者裁示：負債率主顯示=含不動產(資產負債表視角40.4%)，括號標註不含不動產流動負債率(126.6%流動性監控)。三報表(日報/差異/穿透)總資產基準=不含不動產；負債率分母含不動產。恢復 snapshot real_estate_value=3,401萬。run_daily._liab_ratio + asset_diff_monitor.debt_ratio 同步雙軌。",
+      "source": "user",
+      "tags": [
+        "負債率",
+        "顯示規則",
+        "報表"
+      ]
+    },
+    {
+      "timestamp": "2026-08-10T19:30:00",
+      "summary": "差異分析總資產扣除房地產(與日報一致)；100萬還星展理財型房貸",
+      "detail": "使用者指出差異分析含房地產導致與日報不一致→asset_diff_monitor兩處total_assets公式移除real_estate，8/10差異=-906,359(-5.4%)。同日現金3,289,381→2,291,498(轉100萬還星展理財型，星展剩2,006,447)；日報星展列註記「8/10已還100萬」。",
+      "source": "user",
+      "tags": [
+        "差異分析",
+        "現金",
+        "還款",
+        "報表"
+      ]
+    },
+    {
+      "timestamp": "2026-08-10T21:30:00",
+      "summary": "cron 讀 scripts 過期副本根治：24 腳本改薄轉發器指向 repo 真值",
+      "detail": "根因：cron script 欄位解析到 hermes/scripts 執行，腳本用 __file__.parent 讀 scripts 過期資料檔(asset_diff_history停8/3、DB停8/4)→固定推播8/3舊資料。根治：scripts 版 24 個腳本改薄轉發器(subprocess執行repo同名檔,cwd=repo)；repo保留完整版單一來源。驗證 penetration_monitor 讀到8/10資料✅。",
+      "source": "system",
+      "tags": [
+        "cron",
+        "架構",
+        "修復"
+      ]
+    },
+    {
+      "timestamp": "2026-08-10T22:30:00",
+      "summary": "gmail_cleanup invalid_scope 修復：SCOPES 縮至 token 既有(gmail.modify+calendar)",
+      "detail": "備份 token 只授權 gmail.modify+calendar，gmail_cleanup 列了 labels/settings.basic/calendar.events→refresh invalid_scope。修法：SCOPES 縮為 token 子集，過濾器(settings.basic)靠 try/except 選擇性跳過。通用鐵則：from_authorized_user_file 的 SCOPES 只能是 token 原授權子集。",
+      "source": "system",
+      "tags": [
+        "gmail",
+        "token",
+        "修復"
+      ]
+    },
+    {
+      "id": "mem-20260810223436-314",
+      "timestamp": "2026-08-10T22:34:36.150436",
+      "agent": "Hermes",
+      "task": "日報2026-08-10",
+      "summary": "證券2,903,340 保單9,935,900 配息47,389",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20260810223436-315",
+      "timestamp": "2026-08-10T22:34:36.160434",
+      "agent": "Hermes",
+      "task": "資產穿透2026-08-10",
+      "summary": "台股1,578,518.0 美股5,932,893.0 防守3,133,579.0 債券2,984,711.0 現金2,292,096.0",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20260810223545-316",
+      "timestamp": "2026-08-10T22:35:45.715546",
+      "agent": "Hermes",
+      "task": "日報2026-08-10",
+      "summary": "證券2,903,340 保單9,935,900 配息47,389",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20260810223545-317",
+      "timestamp": "2026-08-10T22:35:45.729539",
+      "agent": "Hermes",
+      "task": "資產穿透2026-08-10",
+      "summary": "台股1,578,518.0 美股5,932,893.0 防守3,133,579.0 債券2,984,711.0 現金2,292,096.0",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "timestamp": "2026-08-10T22:35:53",
+      "summary": "8/10 兩筆保單轉換：①摩根→M&G（搶8/21 M&G除息）②第一金摩根→安聯；皆T+4約8/14完成",
+      "detail": "使用者8/10提出。摩根→M&G：T+4約8/14完成，8/17為M&G 8/21除息前最後轉換日。第一金保單摩根→安聯：T+4約8/14完成。relay_stations已更新（第四站改轉換中、新增第五站）；M&G自_rc_out移除恢復8/21配息顯示。8/14完成後更新保單成分。",
+      "source": "user",
+      "tags": [
+        "保單",
+        "轉換",
+        "接力"
+      ]
     }
   ],
   "pending_decisions": [
@@ -2826,6 +2941,6 @@
     }
   ],
   "meta": {
-    "updated_at": "2026-08-10T22:11:28.077443"
+    "updated_at": "2026-08-10T22:35:45.729539"
   }
 }
