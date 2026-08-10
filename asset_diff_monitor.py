@@ -163,7 +163,7 @@ def extract_snapshot(snap: dict) -> dict:
                 # 轉為 dict 以支援 .get()
                 _ar = dict(_ar)
                 _ir = dict(_ir) if _ir else {}
-                _total_assets = sum(_ar[k] for k in ["securities","insurance","funds","bonds","cash_total","real_estate"] if k in _ar)
+                _total_assets = sum(_ar[k] for k in ["securities","insurance","funds","bonds","cash_total"] if k in _ar)  # 不含 real_estate（2026-08-10 修正：與日報/穿透一致）
                 _total_liab = float(snap.get("total_liabilities") or 0) or 18_197_422
                 # 從 db 拿負債（liabilities 表有當日資料才覆蓋）
                 if _lr:
@@ -306,7 +306,7 @@ def load_history(snap=None) -> dict:
                 continue
             history[d] = {
                 "date": d,
-                "total_assets": float(sum(r.get(k, 0) for k in ["securities","insurance","funds","bonds","cash_total","real_estate"])),
+                "total_assets": float(sum(r.get(k, 0) for k in ["securities","insurance","funds","bonds","cash_total"])),  # 不含 real_estate（2026-08-10 修正：與日報/穿透一致）
                 "total_liabilities": float(r.get("total_liabilities") or 0) if r.get("total_liabilities") else float(_json_hist.get(d, {}).get("total_liabilities") or 0),
                 "net_worth": 0.0,
                 "securities_market": float(r.get("securities", 0)),
@@ -958,6 +958,7 @@ def push_to_notion(snap: dict) -> None:
         f"｜負債 {ex['total_liabilities']:,.0f}"
         f"｜配息/月 {ex['fund_dividend_monthly']:,.0f}"
         f"｜負債比率 {ex['total_liabilities']/ex['total_assets']*100:.1f}%"
+        f"｜8/10 現金100萬先還星展理財型房貸（餘額2,006,447）"
     )
     payload = {
         "parent": {"database_id": MASTER_DB},

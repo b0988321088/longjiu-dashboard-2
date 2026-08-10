@@ -357,7 +357,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     if tv['mortgage_xz'] > 0:
         loans_rows_html += f"""          <tr><td>永豐銀行</td><td>永豐房貸 (XZ)</td><td>—</td><td class="num">{tv['mortgage_xz']:,}</td><td>—</td></tr>\n"""
     if tv['financial_mortgage'] > 0:
-        loans_rows_html += f"""          <tr><td>星展銀行</td><td>理財型房貸</td><td>—</td><td class="num">{tv['financial_mortgage']:,}</td><td>—</td></tr>\n"""
+        # 2026-08-10 註記：8/10 現金 100 萬先還星展理財型房貸（餘額 3,006,447 → 2,006,447）
+        loans_rows_html += f"""          <tr><td>星展銀行</td><td>理財型房貸</td><td>—</td><td class="num">{tv['financial_mortgage']:,}</td><td>8/10 已還 100 萬</td></tr>\n"""
     if tv['policy_loan'] > 0:
         loans_rows_html += f"""          <tr><td>—</td><td>保單借貸</td><td>—</td><td class="num">{tv['policy_loan']:,}</td><td>—</td></tr>\n"""
     if tv['pledge_loan'] > 0:
