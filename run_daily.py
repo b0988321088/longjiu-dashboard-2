@@ -339,15 +339,17 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     else:
         _fund_detail = f"明細待補（總市值 {tv.get('funds', 0):,}）"
     # 2026-08-08 使用者裁示：統一不記錄房地產（與差異分析一致，利於掌控現金流）
-    # 總資產 = 流動資產；負債率分母 = 流動總資產（不含不動產）— 2026-08-10 使用者裁示
+    # 負債率雙軌（2026-08-10 使用者裁示）：主顯示含不動產（資產負債表視角 40.4%），
+    # 括號標註不含不動產流動負債率（126.6%，流動性監控指標）
     try:
         _re_val = float(json.loads(SNAPSHOT.read_text(encoding="utf-8")).get("real_estate_value", 0))
     except Exception:
         _re_val = 0
-    _total_with_re = int(tv.get("total_assets", 0) or 0)  # 不含不動產（2026-08-10 修正：原 +_re_val 與註解矛盾）
+    _total_with_re = int(tv.get("total_assets", 0) or 0)  # 流動總資產（不含不動產）
     _total_liab = int(tv.get("total_liabilities", 0) or 0)
     _net_with_re = _total_with_re - _total_liab
-    _liab_ratio = (_total_liab / _total_with_re * 100) if _total_with_re else 0
+    _liab_ratio = (_total_liab / (_total_with_re + _re_val) * 100) if (_total_with_re + _re_val) else 0  # 含不動產（主顯示）
+    _liab_ratio_flow = (_total_liab / _total_with_re * 100) if _total_with_re else 0  # 不含不動產（流動監控）
 
     loans_rows_html = ""
     if tv['mortgage_yy'] > 0:
@@ -593,7 +595,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
           <tr><th>項目</th><th>內容</th><th>影響</th></tr>
         </thead>
         <tbody>
-          <tr><td>總資產</td><td>{tv['total_assets']:,} TWD</td><td>流動資產（不記錄不動產）；負債率 {_liab_ratio:.1f}%</td></tr>
+          <tr><td>總資產</td><td>{tv['total_assets']:,} TWD</td><td>流動資產（不記錄不動產）；負債率 {_liab_ratio:.1f}%（含不動產）｜流動負債率 {_liab_ratio_flow:.1f}%（不含不動產）</td></tr>
           <tr><td>總負債</td><td>{tv['total_liabilities']:,} TWD</td><td>總負債合計（含房貸、保單借貸、質押）</td></tr>
           <tr><td>本月領息</td><td>{monthly_dividend:,} TWD</td><td>保單 {tv['insurance_dividend']:,} + ETF {tv['sec_dividend_monthly']:,} + 基金 {tv['fund_dividend_monthly']:,}</td></tr>
           <tr><td>被動月收</td><td>{monthly_dividend + _rent_got:,} TWD</td><td>實收：配息 {monthly_dividend:,} + 房租 {_rent_got:,}｜預期：房租 80,100 + 配息保守 {_div_expected:,}</td></tr>

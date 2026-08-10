@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-08-10T18:30:14.321937",
+  "generated_at": "2026-08-10T20:48:14.017476",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-10",
   "total_assets": 15921797,
   "total_liabilities": 20155123,
   "net_worth": -4233326,
-  "debt_ratio": 126.6,
+  "debt_ratio": 40.4,
   "monthly_income": 214685,
   "monthly_expense": 141958,
   "working_surplus": 76144,
@@ -620,7 +620,7 @@
   "passive_income_coverage": 0.6819,
   "passive_income_total": 96798,
   "moneybook_account_csv": "C:/Users/bot/Desktop/龍九系統/Moneybook/Moneybook_帳戶_20260718_1.csv",
-  "real_estate_value": 0,
+  "real_estate_value": 34017063,
   "insurance_total_note": "含配息",
   "runway_months": 27.1,
   "securities_breakdown": {
@@ -1274,7 +1274,7 @@
       "updated": "2026-07-31"
     }
   ],
-  "debt_ratio_note": "動態計算：負債 20,155,123 / 總資產（不含不動產）15,921,797",
+  "debt_ratio_note": "雙軌：含不動產 40.4%（資產負債表視角）｜不含不動產流動 126.6%（流動性監控）",
   "dividend_month_expected": 100000,
   "dividend_month_expected_note": "8月起依當月dividend_records動態累積，月初顯示保守預估10萬",
   "dividend_month_actual": 47389,
@@ -1606,7 +1606,7 @@
     "source": "安聯APP 8/8 12:49 截圖",
     "note": "帳戶總價值 7,945,265 = 保單A 5,183,498 + 保單B 2,761,767；本月累積配息/撥回 4筆共 22,134"
   },
-  "real_estate_note_20260808": "使用者裁示：統一不記錄房地產（與差異分析一致），總資產=流動資產，利於掌控現金流",
+  "real_estate_note_20260808": "房地產 3,401 萬（大義街店面+二三樓+洲際W）；總資產=流動資產不含房地產，但負債率主顯示含不動產（2026-08-10 雙軌裁示）",
   "exposure_diversification": {
     "created": "2026-08-08",
     "source": "使用者裁示(資產穿透曝險校正指令)",
@@ -1673,5 +1673,7 @@
       "8/15執行鏈嚴格順序：撥款→PI申請+國泰4問(核實掛帳成數)→1,500萬債券階梯→5成質押750萬清償→全低息後才非科技加碼",
       "防護重點：①PI審查期避免資產水位壓低 ②防範建債還貸後現金過低流動性枯竭"
     ]
-  }
+  },
+  "debt_ratio_flow": 126.6,
+  "real_estate": 34017063
 }

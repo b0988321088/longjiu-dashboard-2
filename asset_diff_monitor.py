@@ -495,7 +495,10 @@ def buffett_advice(history: dict, snap: dict) -> str:
     # 2026-08-08 使用者裁示：統一不記錄房地產（與差異分析一致）— 不動產值歸零
     ex["real_estate"] = 0
     ta = ex["total_assets"] + ex["real_estate"]
-    debt_ratio = ex["total_liabilities"] / ta * 100
+    # 2026-08-10 雙軌：主顯示含不動產（資產負債表視角），另計算流動負債率（不含不動產監控）
+    _re_val = float(snap.get("real_estate", snap.get("real_estate_value", 0)) or 0)
+    debt_ratio = ex["total_liabilities"] / (ex["total_assets"] + _re_val) * 100 if (ex["total_assets"] + _re_val) else 0
+    debt_ratio_flow = ex["total_liabilities"] / ex["total_assets"] * 100 if ex["total_assets"] else 0
     monthly_div = ex["fund_dividend_monthly"]
     monthly_div_conservative = ex.get("fund_dividend_conservative", monthly_div)
     monthly_rent = ex["rent_monthly"]  # 應收固定 80,100
@@ -538,7 +541,7 @@ def buffett_advice(history: dict, snap: dict) -> str:
         "",
         f"資產結構：{alloc}",
         rent_line,
-        f"負債比率：{debt_ratio:.1f}%",
+        f"負債比率：{debt_ratio:.1f}%（含不動產）｜流動負債率 {debt_ratio_flow:.1f}%（不含不動產）",
         f"保守配息：{_fmt(monthly_div_conservative)}（覆蓋率 {passive_coverage:.1f}%）",
     ]
 
