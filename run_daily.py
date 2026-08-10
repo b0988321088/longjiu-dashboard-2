@@ -339,12 +339,12 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     else:
         _fund_detail = f"明細待補（總市值 {tv.get('funds', 0):,}）"
     # 2026-08-08 使用者裁示：統一不記錄房地產（與差異分析一致，利於掌控現金流）
-    # 總資產 = 流動資產；負債率分母 = 流動總資產（不含不動產）
+    # 總資產 = 流動資產；負債率分母 = 流動總資產（不含不動產）— 2026-08-10 使用者裁示
     try:
         _re_val = float(json.loads(SNAPSHOT.read_text(encoding="utf-8")).get("real_estate_value", 0))
     except Exception:
         _re_val = 0
-    _total_with_re = int(tv.get("total_assets", 0) or 0) + int(_re_val)
+    _total_with_re = int(tv.get("total_assets", 0) or 0)  # 不含不動產（2026-08-10 修正：原 +_re_val 與註解矛盾）
     _total_liab = int(tv.get("total_liabilities", 0) or 0)
     _net_with_re = _total_with_re - _total_liab
     _liab_ratio = (_total_liab / _total_with_re * 100) if _total_with_re else 0

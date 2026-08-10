@@ -112,9 +112,15 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     bond_v = sec_bond + ins_bonds
     # 基金縮放防呆（2026-08-07 修正：外幣換算/匯率調整後明細加總≠funds 真值時，
     # 按比例縮放基金三類，避免餘數法現金被吃掉）
+    # ⚠️ 2026-08-10 修正：縮放基準排除「匯率調整」鍵（該值為帳面換算誤差，
+    #    不屬於投資分類；若 funds 含它而明細不含 → 縮放會把誤差攤進三類、現金被吃掉）
+    _fx_adj = 0
+    for _grp_k, _grp_v in _fb.items():
+        if isinstance(_grp_v, dict):
+            _fx_adj += _fv(_grp_v.get("匯率調整", 0))
     _fund_sum = _fund_tw + _fund_us + _fund_def
-    if _fund_sum > 0 and abs(_fund_sum - funds) / funds > 0.001:
-        _fk = funds / _fund_sum
+    if _fund_sum > 0 and abs(_fund_sum - (funds - _fx_adj)) / (funds - _fx_adj) > 0.001:
+        _fk = (funds - _fx_adj) / _fund_sum
         _fund_tw, _fund_us, _fund_def = (round(_fund_tw * _fk), round(_fund_us * _fk),
                                          round(_fund_def * _fk))
         tw = sec_tw + _fund_tw

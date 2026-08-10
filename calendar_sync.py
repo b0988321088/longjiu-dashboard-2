@@ -14,7 +14,7 @@ BASE = Path(__file__).resolve().parent
 TOKEN_PATH = Path(os.path.expanduser("~/AppData/Local/hermes/google_token.json"))
 LEDGER = BASE / "Company_Ledger.md"
 
-SCOPES = ["https://www.googleapis.com/auth/calendar", "https://www.googleapis.com/auth/calendar.events"]
+SCOPES = ["https://www.googleapis.com/auth/calendar"]  # calendar 是 calendar.events 的超集（2026-08-10 修正：原同時列 calendar.events 導致備份 token refresh 時 invalid_scope）
 
 def load_creds():
     if not TOKEN_PATH.exists():
@@ -113,29 +113,52 @@ def sync():
 
     # 2026-08-06：追加 schedule_events.json 動態事件（今日~+30天），
     # 忠德驗收 / 8/15 撥款 / T+4 截止 / 房租等自動同步 GCal，不再手動維護 fixed 清單
+    # ⚠️ 2026-08-10 修正：一律讀 longjiu_system 真值（scripts 副本會過期，曾導致 8/15 撥款事件漏同步）
     try:
-        _sev_path = Path(__file__).resolve().parent / "schedule_events.json"
+        _sev_path = Path(os.path.expanduser("~/Desktop/longjiu_system/schedule_events.json"))
+        if not _sev_path.exists():
+            _sev_path = Path(__file__).resolve().parent / "schedule_events.json"  # 兜底
         _sev = json.loads(_sev_path.read_text(encoding="utf-8"))
         _today_s = date.today().isoformat()
         _end30 = (date.today() + timedelta(days=30)).isoformat()
         def _norm(s):
             return re.sub(r'[\W_]+', '', s)
-        _seen = {(_norm(e["summary"]), e["start"]) for e in events}
+        # 2026-08-10 修正：改「日期+類別」去重 — 精確標題比對抓不到同義重複
+        # （例：fixed 的「🏠 大義街二三樓房租 $21,000+$2,100 入帳」vs schedule 的「大義街二三樓房租+管理費入帳」）
+        _CAT_RULES = [
+            ("大義街二三樓", "rent_23f"), ("二三樓房租", "rent_23f"), ("大義街店面", "rent_shop"),
+            ("洲際W", "rent_w"), ("台電薪資", "salary"), ("女友還款", "gf_repay"),
+            ("動態月報", "monthly_report"), ("再平衡評估", "rebalance"), ("動態自我檢討週報", "weekly_review"),
+            ("繳款截止", "cc_pay"), ("每月租金總對帳", "rent_audit"), ("T+4 轉換", "t4_conv"),
+            ("國泰核貸", "cathay"), ("忠德驗收", "zhongde"), ("地政拿件", "land_office"),
+        ]
+        def _cat(s):
+            for kw, c in _CAT_RULES:
+                if kw in s:
+                    return c
+            return None
+        _seen = {(_cat(e["summary"]), e["start"]) for e in events if _cat(e["summary"])}
         for _e in _sev:
             _d = _e.get("date", "")
             if _d == "待處理" or not (_today_s <= _d <= _end30):
                 continue
             _item = _e.get("item", "")
             _amt = _e.get("amount", "")
-            _title = f"{_item} {_amt}".strip() if _amt else _item
-            if (_norm(_title), _d) in _seen:
+            _status = _e.get("status", "")
+            # 2026-08-10 修正：跳過「📋 節日」狀態（Google 內建假日行事曆已有，自建=重複顯示）
+            if "節日" in _status:
                 continue
+            _title = f"{_item} {_amt}".strip() if _amt else _item
+            _c = _cat(_title)
+            if _c and (_c, _d) in _seen:
+                continue  # 同日期同類別已有事件（fixed 優先），跳過避免重複
             events.append({
                 "summary": _title,
                 "start": _d,
                 "end": (datetime.strptime(_d, "%Y-%m-%d") + timedelta(days=1)).date().isoformat(),
             })
-            _seen.add((_norm(_title), _d))
+            if _c:
+                _seen.add((_c, _d))
     except Exception as _se:
         logger.warning(f'  schedule_events 動態事件讀取失敗: {_se}')
 
@@ -175,11 +198,13 @@ def sync():
 
     logger.info(f"✅ Calendar 同步完成：新增 {created} 個行程")
 
-    # 反向：從 GCal 讀取用戶手動事件，合併回 schedule_events.json
+    # 反向：從 GCal 讀取用戶手動事件，合併回 schedule_events.json（longjiu_system 真值）
     try:
         _pulled = pull_calendar_events(service)
         if _pulled:
-            _schedule_path = Path(__file__).resolve().parent / "schedule_events.json"
+            _schedule_path = Path(os.path.expanduser("~/Desktop/longjiu_system/schedule_events.json"))
+            if not _schedule_path.exists():
+                _schedule_path = Path(__file__).resolve().parent / "schedule_events.json"
             _existing = json.loads(_schedule_path.read_text(encoding="utf-8")) if _schedule_path.exists() else []
             _existing_items = {(e.get("date"), e.get("item")) for e in _existing}
             _added = 0

@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-08-10T14:34:55.608508",
+  "generated_at": "2026-08-10T18:30:14.321937",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-10",
-  "total_assets": 16927488,
-  "total_liabilities": 21088175,
-  "net_worth": -4160687,
-  "debt_ratio": 42.3,
+  "total_assets": 15921797,
+  "total_liabilities": 20155123,
+  "net_worth": -4233326,
+  "debt_ratio": 126.6,
   "monthly_income": 214685,
   "monthly_expense": 141958,
   "working_surplus": 76144,
   "retirement_surplus": 18142,
   "securities_total_market_value": 2903340,
-  "fund_market_value": 798867,
+  "fund_market_value": 791059,
   "moneybook_total": 3614169,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
@@ -67,15 +67,15 @@
   "firstjin_current_value": 1990635,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
-  "bank_assets_moneybook": 3289381,
-  "bank_assets_memo": "MB 20260804 正數帳戶合計；排除信用卡溢繳",
+  "bank_assets_moneybook": 2291498,
+  "bank_assets_memo": "Moneybook 2026-08-10 匯入（8/10 轉100萬還星展理財型房貸）",
   "monthly_expense_mb": 199186,
   "monthly_expense_mb_note": "MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償",
-  "credit_card_pending": 37408,
+  "credit_card_pending": 28101,
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
   "securities_total": 2903340.0,
-  "funds_total": 798867,
+  "funds_total": 791059,
   "last_calibration_sources": {
     "securities": "凱基證券截圖 2026-07-18 02:00",
     "funds": "鉅亨基金截圖 2026-07-18 02:03",
@@ -84,34 +84,33 @@
   },
   "funds_breakdown": {
     "一般申購": {
-      "台新美日台半導體A日圓": 135449,
-      "台中銀台灣優息": 49286,
-      "路博邁5G T月配": 85806,
-      "0050連結B": 46742,
-      "安聯台灣科技": 2917,
-      "安聯AI收益B美元": 6742,
-      "國泰台灣高股息": 7494,
-      "聯博美國成長": 3151,
-      "摩根多重": 3073,
-      "貝萊德黃金": 2835,
-      "貝萊德全球股票收益": 3211,
-      "貝萊德科技A10": 4202,
-      "貝萊德能源A10": 5100,
-      "安聯收益成長南非幣": 6145,
-      "安聯收益成長AMg7": 3552,
-      "施羅德環球收息南非幣": 2736,
-      "M&G入息": 3034,
-      "匯率調整": -5972
+      "台新美日台半導體A日圓": 125550,
+      "台中銀台灣優息": 48731,
+      "路博邁5G T月配": 84500,
+      "0050連結B": 47233,
+      "安聯台灣科技": 3076,
+      "安聯AI收益B美元": 6836,
+      "國泰台灣高股息": 7773,
+      "聯博美國成長": 3144,
+      "摩根多重": 3064,
+      "貝萊德黃金": 3229,
+      "貝萊德全球股票收益": 3222,
+      "貝萊德科技A10": 4184,
+      "貝萊德能源A10": 5010,
+      "安聯收益成長南非幣": 7067,
+      "安聯收益成長AMg7": 3537,
+      "施羅德環球收息南非幣": 3142,
+      "M&G入息": 3035,
+      "匯率調整": 598
     },
     "自由Pay": {
-      "0050連結A不配息": 108287,
-      "統一奔騰": 92405,
-      "路博邁5G T累積": 232672
-    },
-    "note": "一般申購 365,503 + 自由Pay 433,364 = 798,867（8/7 鉅亨真值）"
+      "0050連結A不配息": 109419,
+      "統一奔騰": 89548,
+      "路博邁5G T累積": 229161
+    }
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
-  "real_liquid_assets": 3289381,
+  "real_liquid_assets": 2291498,
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
   "passive_income": {
     "fund_dividend_monthly": 0,
@@ -505,26 +504,26 @@
       "現金目標": 15
     },
     "actual_pct": {
-      "台股市值型成長": 9.3,
-      "美股市值型成長": 35.1,
-      "防守型配息": 18.5,
-      "債券": 17.6,
-      "現金/安全網": 19.4
+      "台股市值型成長": 9.9,
+      "美股市值型成長": 37.3,
+      "防守型配息": 19.7,
+      "債券": 18.7,
+      "現金/安全網": 14.4
     },
     "gaps": {
-      "台股市值型成長": -5.7,
-      "美股市值型成長": 5.1,
-      "防守型配息": -1.5,
-      "債券及安全現金": 2.0
+      "台股市值型成長": -5.1,
+      "美股市值型成長": 7.3,
+      "防守型配息": -0.3,
+      "債券及安全現金": -1.9
     },
     "actual_twd": {
-      "台股市值型成長": 1577309.0,
-      "美股市值型成長": 5942653.0,
-      "防守型配息": 3133434.0,
+      "台股市值型成長": 1578518.0,
+      "美股市值型成長": 5932893.0,
+      "防守型配息": 3133579.0,
       "債券": 2984711.0,
-      "現金/安全網": 3289381.0
+      "現金/安全網": 2292096.0
     },
-    "alert": "台股不足5.7pp；現金+債券超標2.0pp"
+    "alert": "台股不足5.1pp；現金+債券超標1.9pp"
   },
   "penetration_canonical": {
     "updated_at": "2026-07-18",
@@ -644,7 +643,7 @@
   "securities_tw_growth": 1007090,
   "securities_tw_defense": 1022090,
   "securities_us_growth": 76050,
-  "cash": 3289381,
+  "cash": 2291498,
   "high_yield_savings": 2200410,
   "regular_cash": 1684210,
   "mortgages": [
@@ -699,12 +698,17 @@
     "2026-08": {
       "安聯保單撥回": 22134,
       "第一金配息": 13126,
-      "台灣特品股息": 14990,
       "聯博美國成長基金配息": 35,
-      "AI收益成長基金B月配(美元)": 46
+      "AI收益成長基金B月配(美元)": 1,
+      "ETF配息 006208": 9490,
+      "ETF配息 0056": 1340,
+      "ETF配息 0050": 1190,
+      "施羅德環球收息配息": 12,
+      "貝萊德科技A10配息": 31,
+      "貝萊德能源A10配息": 30
     }
   },
-  "monthly_dividend": 50331,
+  "monthly_dividend": 130930,
   "actual_fj33_dividend": 9356,
   "policy_a_total": 4992334,
   "policy_b_total": 2681959,
@@ -726,7 +730,7 @@
   "travel_allowance": 12000,
   "second_salary": 39121,
   "bonus_july": 39121,
-  "cash_total": 3289381,
+  "cash_total": 2291498,
   "bonds_cash": 10262984,
   "monthly_dividend_breakdown": {
     "allianz": 95347,
@@ -764,11 +768,11 @@
     "conversion": "IL24→FJ33 摩根多重收益(美元對沖)A月配 已完成(8/4申請)"
   },
   "credit_card": {
+    "台北富邦": 1598,
     "台新Richart": 12368,
-    "玉山UNI": 18420,
-    "永豐SPORT": 3425,
     "國泰CUBE": 1597,
-    "富邦momo": 1598
+    "永豐SPORT": 3425,
+    "玉山UNI": 9154
   },
   "mortgage_balance": 13120575,
   "updated_by": "moneybook_20260723",
@@ -785,11 +789,11 @@
   "mortgage_xz": 2782291,
   "financial_mortgage_interest": 10000,
   "dbs_balance": 17287,
-  "financial_mortgage": 3006447,
-  "financial_mortgage_paid": 790000,
+  "financial_mortgage": 2006447,
+  "financial_mortgage_paid": 1790000,
   "policy_loan": 4000000,
   "pledge_loan": 1000000,
-  "cc_liability": 0,
+  "cc_liability": 28101,
   "sinopac_savings": 10919,
   "sinopac_dawho": 235809,
   "etf_dividend_schedule": {
@@ -861,7 +865,7 @@
   "true_value": {
     "total_assets": 16659573
   },
-  "funds": 765922,
+  "funds": 791059,
   "allianz_a_breakdown": {
     "安聯收益成長": 731605,
     "M&G入息": 1079110,
@@ -1270,10 +1274,10 @@
       "updated": "2026-07-31"
     }
   ],
-  "debt_ratio_note": "動態計算：負債 21,127,022 / 含不動產總資產 49,938,448",
+  "debt_ratio_note": "動態計算：負債 20,155,123 / 總資產（不含不動產）15,921,797",
   "dividend_month_expected": 100000,
   "dividend_month_expected_note": "8月起依當月dividend_records動態累積，月初顯示保守預估10萬",
-  "dividend_month_actual": 50331,
+  "dividend_month_actual": 47389,
   "rent_received_records": {
     "2026-08-01": {
       "大義街店面": 24000
@@ -1527,8 +1531,7 @@
   "girlfriend_repayment_records": {
     "2026-08": {
       "amount": 6000,
-      "date": "2026-08-05",
-      "note": "8月還款入帳台新"
+      "date": "2026-08-05"
     }
   },
   "rhythm08": {
