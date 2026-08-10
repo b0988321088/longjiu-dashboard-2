@@ -166,9 +166,12 @@ def main():
             args[{"insurance":"ins","securities":"sec","cash":"cash","funds":"funds"}.get(k,k)] = json.loads(v) if k == "fund_ratios" else int(v)
     pen = calc_penetration(args["cash"], args["ins"], args["sec"], args["funds"], args.get("bond_portion"), args.get("fund_ratios"), snap=snap)
     if args.get("ins"):
-        # 保單拆分校驗：債券 + 保險權益 + 第一金 = 保險（不含鉅亨基金分類）
+        # 保單拆分校驗：債券 + 保險權益 + 第一金 = 保險（不含鉅亨基金分類與證券部位）
+        # ⚠️ 2026-08-10 修正：原公式漏扣 sec_def/sec_bond，把證券防守/債券誤計入保險拆分
         _m = pen.get("_meta", {})
-        ins_calc = pen["債券"] + (pen["美股市值型成長"] - _m.get("sec_us", 0) - _m.get("fund_us", 0)) + (pen["防守型配息"] - _m.get("fund_def", 0))
+        ins_calc = (pen["債券"] - _m.get("sec_bond", 0)) \
+                 + (pen["美股市值型成長"] - _m.get("sec_us", 0) - _m.get("fund_us", 0)) \
+                 + (pen["防守型配息"] - _m.get("sec_def", 0) - _m.get("fund_def", 0))
         if abs(ins_calc - args["ins"]) > 100:
             print(f"  ⚠️ 保單校驗失敗：拆分總和 {ins_calc:,} ≠ 保險 {args['ins']:,}")
         else:
@@ -186,16 +189,27 @@ def main():
         pass
     if "--check" in sys.argv or "--check_fund" in sys.argv:
         if "--check_fund" in sys.argv:
-            fv = {"安聯收益成長": 1_220_722, "M&G入息": 1_069_377, "安聯AI收益成長": 885_569, "貝萊德科技A10": 1_833_036, "PIMCO收益增長": 2_636_319}
+            # 從 snapshot 動態讀取保險基金明細（安聯A+B），避免硬編碼舊值
+            _a = snap.get("allianz_a_breakdown", {})
+            _b = snap.get("allianz_b_breakdown", {})
+            fv = {}
+            for k in list(dict.fromkeys(list(_a.keys()) + list(_b.keys()))):
+                fv[k] = _fv(_a.get(k, 0)) + _fv(_b.get(k, 0))
+            if not fv:  # 兜底：snapshot 無明細時用預設值
+                fv = {"安聯收益成長": 1_220_722, "M&G入息": 1_069_377, "安聯AI收益成長": 885_569, "貝萊德科技A10": 1_833_036, "PIMCO收益增長": 2_636_319}
             fr = args.get("fund_ratios", {"安聯收益成長":0.35, "M&G入息":0.55, "安聯AI收益成長":0.50, "貝萊德科技A10":0.0, "PIMCO收益增長":0.48})
             tb = sum(round(fv[n]*fr.get(n,0)) for n in fv)
             te = sum(fv[n] for n in fv) - tb
-            ok = "✅" if abs(tb+te+_fj-sum(fv.values())-_fj) < 100 else "❌"
+            _fj = int(snap.get("firstjin_fl65_current_value") or snap.get("firstjin_current_value") or 1_958_980)
+            _ins_total = int(args["ins"])
+            ok = "✅" if abs(tb + te + _fj - _ins_total) < 100 else "❌"
             print(f"=== 保單校驗 {ok} ===")
-            print(f"  債券: {tb:,}  權益: {te:,}  第一金: 1,958,980  總值: {sum(fv.values())+1_958_980:,}")
+            print(f"  債券: {tb:,}  權益: {te:,}  第一金: {_fj:,}  拆分總值: {tb+te+_fj:,}  保險: {_ins_total:,}")
             return
         print("=== 校驗 ===")
-        for k,v in pen.items(): print(f"  {k}: {v:,}")
+        for k,v in pen.items():
+            if k == "_meta": continue
+            print(f"  {k}: {v:,}")
         print(f"  總和: {sum(v for k, v in pen.items() if k != '_meta'):,}  應={args['cash']+args['ins']+args['sec']+args['funds']:,}")
         return
     # === 配息資料自動校驗（確保 snapshot 內所有配息值一致）===
