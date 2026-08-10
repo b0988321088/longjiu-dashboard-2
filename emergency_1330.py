@@ -197,9 +197,23 @@ _analysis = {
         f"數據來源：Yahoo Finance"
     ),
 }
-(LJ / "data" / "emergency_llm_analysis.json").write_text(
-    json.dumps(_analysis, ensure_ascii=False, indent=2), "utf-8")
-print(f"✅ 緊急應變分析已寫入 data/emergency_llm_analysis.json")
+# 2026-08-10 修正：極簡版不得覆寫完整版（曾因測試觸發覆蓋 21:36 美股完整版 3,809字→232字）
+# 判別：完整版 full_report >1500 字（品質鐵則），極簡版 <300 字 → 極簡版只寫「沒有完整版」時
+_jf = LJ / "data" / "emergency_llm_analysis.json"
+_write = True
+try:
+    if _jf.exists():
+        _old = json.loads(_jf.read_text(encoding="utf-8"))
+        _old_len = len(str(_old.get("full_report", "")))
+        if _old_len > 1500:  # 已有完整版（agent 產出），極簡版不覆寫
+            _write = False
+            print(f"⏭️ 既有完整分析 {_old_len} 字（{_old.get('generated_at')}），極簡版跳過覆寫")
+except Exception:
+    pass
+if _write:
+    (LJ / "data" / "emergency_llm_analysis.json").write_text(
+        json.dumps(_analysis, ensure_ascii=False, indent=2), "utf-8")
+    print(f"✅ 緊急應變分析已寫入 data/emergency_llm_analysis.json")
 # 2026-08-06 修正：run_daily.py 有停滯風險（buffett_cto_analyzer），改 regenerate_report.py 一鍵管線（含校準/日報/差異/儀表板/驗證/推送）
 run_step("日報+儀表板", [sys.executable, str(LJ / "regenerate_report.py")], 300)
 run_step("差異分析", [sys.executable, str(LJ / "asset_diff_monitor.py")], 60)
