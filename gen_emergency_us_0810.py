@@ -1,10 +1,49 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>台股/美股緊急應變報告 2026-08-10 21:30｜龍九控股</title>
-<style>
+# -*- coding: utf-8 -*-
+"""gen_emergency_us_0810.py — 美股緊急應變 8/10 21:30 六章節報告產生器
+產出：data/emergency_llm_analysis.json + emergency_report_2026-08-10.html(Railway) + emergency_taiex_report_2026-08-10.html(GitHub)
+資料：Yahoo Finance 即時 (21:36 台北 = 美東 09:36 開盤約 6 分鐘) / Google News RSS / snapshot.json penetration / schedule_events.json 8/15 新計畫
+"""
+import json
+from pathlib import Path
+
+BASE = Path(__file__).resolve().parent
+TODAY = "2026-08-10"
+NOW = "2026-08-10 21:36"
+
+FULL_REPORT = """【一、市場概況】（8/10 21:36 台北 = 美東 09:36 開盤約 6 分鐘，Yahoo Finance 即時）
+美股三大指數小幅低開：道瓊 53,949.80（-0.16%，-87.13）、S&P 500 7,751.69（-0.08%，-5.95）、納斯達克 26,646.24（-0.17%，-44.38）、費城半導體 12,322.48（-0.28%，-34.31）— 地緣風險壓抑風險偏好，惟跌幅溫和未見恐慌。盤前期貨：ES 7,771.50（-0.11%）、NQ 29,808.25（-0.09%）、YM 53,988.00（-0.30%）。重要個股：台積電 ADR 418.32（-0.38% 抗跌）、NVDA 223.66（-0.13% 平穩）、AAPL 305.60（-2.38% 領跌，Jefferies 降評）、AMD 473.97（-1.94%）、TSLA 328.45（-0.04%）、META 596.78（+0.79%）、AMZN 274.17（-0.11%）、MSFT 504.19（+0.84%）、GOOGL 355.69（+0.39%）、AVGO 430.51（+0.64%）。債市：10 年 4.68%（+2bp）、30 年 5.222%（+1.1bp）— 盤中再度站上 5.20% 防禦線，長債壓力未解。商品：黃金 4,392.70（-0.16% 高檔整理）、WTI 79.57（+1.78% 荷姆茲危機驅動）。VIX 15.42（+3.49%）仍處低波動。台股 8/10 收盤：加權指數 44,894.06（+1.51%，+668.15）強漲、6 千金齊亮燈、台積電 2,385（+0.63%）；美元兌台幣約 32.2。
+
+【二、重大事件分析】
+1) 荷姆茲海峽危機升溫（今日最大地緣風險）：Trump 稱美國「只是半協商中」並轉向經濟壓力（Benzinga 8/10），伊朗稱海峽在美國「修正行為」前不會重開（CBS/Al Jazeera 8/10），Bloomberg 指 Hormuz 石油運輸懸而未決 → WTI +1.78% 至 79.57，美股開盤承壓。惟幅度溫和，未見避險失控。
+2) TSMC 7 月營收創歷史新高 NT$467.58B、年增 44.7%（Focus Taiwan/CNBC/Yahoo 8/10）— AI 需求強勁、Q3 展望加速；TSM ADR -0.38% 相對抗跌，為台股明日開盤最強支撐。
+3) NVDA 焦點轉向 8/26 財報指引：上月市值激增 562B 美元（TechStock²），Musk 傳 xAI 獨家採用 Nvidia 晶片（tikr 8/9），分析師目標價上看 238 美元（Finbold）；NVDA -0.13% 等待財報。
+4) AAPL 遭 Jefferies 降評至 Underperform、目標價砍至 263.66 美元（AppleInsider 8/10）→ -2.38% 領跌；Intel 啟動 150 億美元股票發行（S-3 shelf）→ -5%（Reuters/24-7 Wall St）— 半導體個股分化加劇。
+5) Fed：主席 Kevin Warsh 重組聯準會（Axios 8/10）、7 月按兵不動、利率「higher for longer」（CNBC）；8 月通膨預測恐令 FOMC 陷入兩難（Yahoo）→ 30Y 盤中 5.222% 再越 5.20% 防禦線，長債殖利率壓力持續。
+
+【三、持倉關聯分析】
+台股市值型（0050 2,000 股／006208 2,000 股／009816 21,000 股，穿透 157.9 萬）：TSM ADR -0.38% 但 7 月營收創紀錄 +44.7%、台股今日 +1.51% → 明日台股開盤偏多，惟留意費半 -0.28% 小幅拖累；長線分批策略不變。美股部位（00646 1,000 股／009823 10,000 股／009824 美國科技巨頭 10,000 股，穿透 593.3 萬）：納指 -0.17%，MSFT/META/AVGO 逆勢上漲、AAPL -2.38% 拖累，009824 受惠微軟/ Meta 走強，整體影響中性偏正。高股息防守（00878 16,000 股續建 4 週／00919／00713／0056／00918／00981A／00984A／00888，穿透 313.4 萬）：低開環境相對抗跌，防禦定位穩健。00983D（2 萬股，約 20 萬）：核貸審查期暫緩加碼維持（8/4 首批、8/10 已加碼至 2 萬股）。保單基金（安聯 A/B 約 796 萬＋第一金 199 萬＝約 995 萬、質借 400 萬）：貝萊德世界科技 A10 受 NVDA 平穩支撐、AAPL -2.38% 小幅拖累；PIMCO 收益增長／M&G／安聯收益成長等債券平衡部位，受 30Y 再越 5.20% 壓價壓力。台新美日台半導體（12.9 萬）：費半 -0.28% 小幅壓力。整體持倉與市場連動正常，無個別暴險事件。
+
+【四、資產配置透視】（snapshot penetration.actual_twd，2026-08-10；總投資 15,921,797；臨時階段目標：美股30/台股23.5/防守19/債券13/現金14.5）
+台股市值型成長 1,578,518（9.9%）vs 23.5% → -13.6pp（缺口約 216 萬，最大結構缺口）；美股市值型成長 5,932,893（37.3%）vs 30% → +7.3pp（超配約 116 萬，且較 8/7 的 35.4% 續升，嚴禁追高）；防守型配息 3,133,579（19.7%）vs 19% → +0.7pp 合規；債券 2,984,711（18.7%）vs 13% → +5.7pp（超標約 91 萬）；現金/安全網 2,292,096（14.4%）vs 14.5% → -0.1pp 合規（8/10 已償還星展 100 萬）。警語：美股 37.3% 超配擴大，今晚任何反彈都是分批調降機會、嚴禁追高；台股 -13.6pp 為最大缺口，惟 8/15 新計畫 1,200 萬額度全數配置於還款與債券（無直接買股額度），台股補缺將延後至後續再平衡；債券超標 + 30Y 越線 → 現階段維持零加碼，8/15 短中期投資級債（1-3yr）買入依定案計畫執行並於撥款後校準目標。
+
+【五、巴菲特/蒙格式建議】（臨時階段規則：00878續建4週、00983D暫緩、單筆≥5萬暫停、現金底線6個月）
+增持：00878 續建 4 週（小額、每筆<5萬）；台股市值型（0050/006208/009816）— 8/15 新計畫無直接額度，若撥款後現金流改善（質押 500 萬清償高息後月現金流釋放）可小額分批回補 -13.6pp 缺口，不急於今晚追價。持有：00646／009823／009824／00713／00919／0056／00918／00981A／00984A／00888／貝萊德科技／安聯AI／保單基金 — 核心長持，不砍倉；AAPL/AMD 單日個股利空不構成砍倉理由。減碼：美股 37.3% 超配 → 不新增；科技股分化（MSFT/META 強、AAPL/AMD 弱）勿追強砍弱。暫緩：00983D 暫緩加碼；單筆≥5萬申購一律暫停；債券/平衡基金 — 債券 18.7% 超標＋30Y 越線維持零加碼（8/15 依定案計畫執行）。巴菲特視角：荷姆茲地緣緊張＋個股降評造成的開盤小跌，屬噪音非系統性風險；不追逐短期催化劑，專注 8/15 撥款後的部署主軸。
+
+【六、風控檢查】
+US30Y 現值 5.222%（CBOE ^TYX 盤中，+1.1bp）vs 5.20% 防禦門檻：盤中已越線（8/6 收盤 5.213%、8/7 收盤 5.19% 回落 → 今日盤中 5.222% 再越）；若今日收盤 ≥5.20%，近 3 個交易日 2 度越線 → 模式A 防禦正式啟動（停止新增存續期>5年債券、平衡基金禁加碼），實務上已視同警戒執行。vs 5.30% 債券凍結紅線：緩衝 7.8bp；Warsh 鷹派溝通＋8 月通膨預測上修風險下，9 月會議前任何強勁數據都可能再測紅線。國泰核貸階段（8/10 19:14 新計畫定案，a8810cc/49b3497）：8/3 對保 → 8/4 地政設定 → 8/7 地政完成寄回國泰 → 8/12 板橋國泰及地政 → 8/15 撥款 1,200萬 @2.6% → ①償還星展理財型 200萬 @4% 全清（8/10 已先還 100萬）②剩 1,000萬買短中期投資級債券（1-3yr）③債券質押 5 成拉出 500萬（質押成數 4 成改 5 成、禁疊三層）④500萬清償高利貸：保單質押 400萬＋證券質押 100萬 ⑤盤點金融資產申請專業投資人（3,000萬門檻）。審查期規則全數維持：00983D 暫緩、單筆≥5萬暫停、00878 續建 4 週、現金底線 6 個月（約 85.2 萬）；現金 229.2 萬 = 底線 2.7 倍，安全無虞（較 8/7 329 萬下降係因 8/10 償還星展 100 萬）。"""
+
+
+def write_json():
+    d = {"generated_at": NOW, "source": "美股緊急應變 cron (deepseek-v4-flash)", "full_report": FULL_REPORT}
+    p = BASE / "data" / "emergency_llm_analysis.json"
+    p.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
+    n = len(d["full_report"])
+    print(f"[JSON] {p} written, full_report len = {n} chars")
+    assert n > 1500, f"full_report too short: {n}"
+    chk = json.loads(p.read_text(encoding="utf-8"))
+    print(f"[VERIFY] reload len = {len(chk['full_report'])} -> {'OK' if len(chk['full_report'])>1500 else 'FAIL'}")
+
+CSS = """
 :root{--bg:#0b0f17;--card:#131a26;--line:#1f2937;--txt:#e5e7eb;--mut:#9ca3af;--up:#34d399;--down:#f87171;--acc:#60a5fa;--gold:#fbbf24;--warn:#fb923c;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--txt);font-family:"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;padding:24px;line-height:1.75;}
@@ -40,7 +79,15 @@ li{margin:5px 0;}
 .kpi .v{font-size:20px;font-weight:700;margin-top:4px;}
 .kpi .l{color:var(--mut);font-size:12px;}
 .foot{color:var(--mut);font-size:12px;text-align:center;margin:20px 0 8px;}
-</style>
+"""
+
+HTML = """<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>美股緊急應變報告 2026-08-10 21:30｜龍九控股</title>
+<style>__CSS__</style>
 </head>
 <body><div class="wrap">
 
@@ -154,4 +201,20 @@ Axios：主席 Kevin Warsh 重組 Fed；7 月按兵不動（Morningstar）；8 �
 </div>
 
 <div class="foot">龍九控股內部報告｜僅供決策參考，非投資建議｜資料時間 2026-08-10 21:36 台北（開盤約 6 分鐘）｜Yahoo Finance 即時 + Google News RSS + snapshot.json 穿透數據</div>
-</div></body></html>
+</div></body></html>"""
+
+
+def write_htmls():
+    css_html = HTML.replace("__CSS__", CSS)
+    rail = BASE / f"emergency_report_{TODAY}.html"
+    gh = BASE / f"emergency_taiex_report_{TODAY}.html"
+    rail.write_text(css_html, encoding="utf-8")
+    gh.write_text(css_html.replace("美股緊急應變報告 2026-08-10 21:30｜龍九控股", "台股/美股緊急應變報告 2026-08-10 21:30｜龍九控股"), encoding="utf-8")
+    print(f"[HTML] {rail} ({rail.stat().st_size} bytes)")
+    print(f"[HTML] {gh} ({gh.stat().st_size} bytes)")
+
+
+if __name__ == "__main__":
+    write_json()
+    write_htmls()
+    print("[DONE]", NOW)
