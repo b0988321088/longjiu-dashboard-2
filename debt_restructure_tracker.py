@@ -17,6 +17,27 @@ pessimistic_low = 0
 pessimistic_high = 10000
 PI_STATES = ["未申請", "審核中", "已正式核准"]
 
+def load_engine_rules():
+    """讀取 arbitrage_engine_rules.json 規則配置"""
+    try:
+        return json.load(open(BASE / "arbitrage_engine_rules.json", encoding="utf-8"))
+    except Exception:
+        return {}
+
+def calc_net_yield(asset_yield, tax_rate, funding_cost, hedging_cost, friction_cost):
+    """模組一：實質淨收益計算 Net Yield = Yield×(1-Tax) - Cost_funding - Cost_hedging - Cost_friction"""
+    return asset_yield * (1 - tax_rate) - funding_cost - hedging_cost - friction_cost
+
+def net_yield_light(net_yield, rules):
+    """執行閥值判定 Rule 1.1/1.2/1.3"""
+    th = rules.get("execution_thresholds", {})
+    if net_yield >= th.get("green_light", 0.012):
+        return "🟢 GREEN 允許建倉/掛單"
+    elif net_yield >= th.get("yellow_light_min", 0.005):
+        return "🟡 YELLOW 僅靜態保留，不擴張新資金"
+    else:
+        return "🔴 RED 自動拒絕交易"
+
 def load(name):
     try:
         return json.load(open(BASE / name, encoding="utf-8"))
@@ -149,6 +170,52 @@ def main():
     print(f"  預期收益：4.5-5.0% → 年收 ~23-25萬")
     print(f"  淨利差（扣 2.6% 融資）：1.9-2.4%")
     print(f"  ⚠️ 紀律：>5年凍結（US30Y 5.22% 警戒）；00983D 不新增；持有到期不炒價差")
+
+    # -------- 6. 套利引擎（Arbitrage Engine）-------
+    rules = load_engine_rules()
+    fc = rules.get("funding_cost", {})
+    print(f"\n【6.套利引擎｜實質淨收益計算】")
+    print(f"  Net Yield = Yield×(1-Tax) - 融資 - 鎖匯 - 摩擦")
+    # 三個路徑淨利差
+    paths = [
+        ("① 債務重置（清償高息債）", 0.04, 0.0, 0.026, "還債=確定性收益"),
+        ("② 美元MMF/短債（BIL/00865B）", 0.04, 0.0, 0.026, "無Duration風險"),
+        ("③ 階梯投資等級短債（1-3年）", 0.0475, 0.0, 0.026, "持有至到期"),
+    ]
+    for name, y, hedge, fund, note in paths:
+        ny = calc_net_yield(y, 0.0, fund, hedge, fc.get("friction_cost", 0.0015))
+        light = net_yield_light(ny, rules)
+        print(f"  {name}: 淨利差 {ny*100:.2f}% → {light}（{note}）")
+
+    # -------- 7. 熔斷閘門檢查（Safety Breaker）-------
+    print(f"\n【7.熔斷閘門檢查（Safety Breaker）】")
+    breakers = rules.get("risk_breakers", [])
+    cash = snap.get("cash_total", 0)
+    checks = []
+    # US30Y（us30y 為百分比數值 5.22 → 轉 0.0522 比較）
+    us30y_dec = us30y / 100.0
+    if us30y_dec >= 0.053:
+        checks.append(("US30Y", f"{us30y:.2f}% > 5.30%", "🔴 GLOBAL_FREEZE + 停泊退守MMF"))
+    elif us30y_dec >= 0.052:
+        checks.append(("US30Y", f"{us30y:.2f}% ≥ 5.20%", "🟡 美股停購/長債凍結/台股≤50萬"))
+    # 現金
+    if cash < 850000:
+        checks.append(("現金", f"{cash:,.0f} < 85萬", "🔴 HALT_ALL_BUY"))
+    # 美股占比
+    us_ratio = snap.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
+    if us_ratio > 33:
+        checks.append(("美股占比", f"{us_ratio:.1f}% > 33%", "🟡 FREEZE_US_BUY + 逢彈減碼"))
+    # LTV（未質押=0）
+    ltv_val = plan.get("current_ltv", 0)
+    if ltv_val >= 0.38:
+        checks.append(("LTV", f"{ltv_val:.0%} ≥ 38%", "🔴 INJECT_CASH + HALT_EXPANSION"))
+    elif ltv_val >= 0.35:
+        checks.append(("LTV", f"{ltv_val:.0%} ≥ 35%", "🟡 停止新增質押"))
+    if not checks:
+        print("  ✅ 全部閘門通過（無熔斷觸發）")
+    else:
+        for metric, val, action in checks:
+            print(f"  {action}｜{metric}: {val}")
 
     # 重大時程檢查
     print(f"\n  重大時程檢查：")
