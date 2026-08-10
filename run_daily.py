@@ -388,10 +388,10 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                     _rc_data[_cur_month][_name] = {'除息日': _ex, 'T+4': _t4}
     except:
         pass
-    # 基金順序（2026-08-10 更新：M&G 8/10 摩根轉回→仍在保單，恢復顯示 8/21 配息；
-    # 安聯AI/A10 維持 8/6 轉出至摩根JPM，未來月份不顯示排程）
+    # 基金順序（2026-08-10 修正：安聯AI/A10 仍在保單成分（snapshot 實證），
+    # 非「8/6 已轉出」— 移除錯誤標記，恢復顯示配息排程；M&G 8/10 摩根轉回）
     _rc_funds = ['摩根JPM', '安聯收益成長', 'M&G入息', '安聯AI收益', '貝萊德A10']
-    _rc_out = {'安聯AI收益': '8/6 轉出→摩根', '貝萊德A10': '8/6 轉出→摩根'}
+    _rc_out = {}
     _rc_months = ['8', '9', '10', '11', '12']
     # 動態生成行事曆表格
     _rc_rows = ""
