@@ -20,10 +20,10 @@ DRY_RUN = "--dry-run" in sys.argv
 token_path = Path(os.path.expanduser("~/AppData/Local/hermes/google_token.json"))
 creds = Credentials.from_authorized_user_file(str(token_path), [
     "https://www.googleapis.com/auth/gmail.modify",
-    "https://www.googleapis.com/auth/gmail.labels",
-    "https://www.googleapis.com/auth/gmail.settings.basic",
     "https://www.googleapis.com/auth/calendar",
-    "https://www.googleapis.com/auth/calendar.events",
+    # 2026-08-10 修正：移除 gmail.labels/settings.basic/calendar.events —
+    # 備份 token 只授權 gmail.modify+calendar，多列會 refresh invalid_scope。
+    # 過濾器（需 settings.basic）為選擇性功能，未授權時安靜跳過（見下方 try/except）
 ])
 if creds.expired and creds.refresh_token:
     creds.refresh(Request())
