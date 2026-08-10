@@ -46,9 +46,14 @@ NOTION_HEADERS = {
 }
 MASTER_DB = "39dfc735-d433-8153-9712-c8a0ee0ec846"
 
-HISTORY_FILE = Path("asset_diff_history.json")
-SNAP_FILE = Path("snapshot.json")
-OUT_HTML = Path(f"asset_diff_{date.today().isoformat()}.html")
+# 2026-08-10 修正：一律指向 repo 真值（cron 從 scripts 執行時避免讀到過期副本 → 曾推播 8/3 舊資料）
+try:
+    from longjiu_paths import REPO_BASE
+except ImportError:
+    REPO_BASE = Path(__file__).resolve().parent
+HISTORY_FILE = REPO_BASE / "asset_diff_history.json"
+SNAP_FILE = REPO_BASE / "snapshot.json"
+OUT_HTML = REPO_BASE / f"asset_diff_{date.today().isoformat()}.html"
 
 ALERT_DROP_TWD = 100_000
 ALERT_DROP_PCT = 2.0
@@ -120,7 +125,7 @@ def _build_insurance_detail(snap: dict, insurance_total: float) -> dict:
 def extract_snapshot(snap: dict) -> dict:
     """從 dragon_assets.db 讀取（fallback 到 snapshot.json）"""
     import sqlite3
-    _db_path = Path(__file__).resolve().parent / "dragon_assets.db"
+    _db_path = REPO_BASE / "dragon_assets.db"
     # 當月實際已收配息（8月起為 0，逐筆累積）
     _today_m = date.today().strftime("%Y-%m")
     _div_sum_current_month = 0
@@ -290,7 +295,7 @@ def load_history(snap=None) -> dict:
     """從 dragon_assets.db 讀取所有歷史資產記錄"""
     history = {}
     import sqlite3
-    _db_path = Path(__file__).resolve().parent / "dragon_assets.db"
+    _db_path = REPO_BASE / "dragon_assets.db"
     if not _db_path.exists():
         history = load_json(HISTORY_FILE)  # fallback
         return history
@@ -769,7 +774,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
 
     # Securities detail card
     try:
-        _db_sec = sqlite3.connect(str(Path("dragon_assets.db").resolve()))
+        _db_sec = sqlite3.connect(str(REPO_BASE / "dragon_assets.db"))
         _holdings = _db_sec.execute("SELECT ticker, shares, source FROM holdings ORDER BY ticker").fetchall()
         _db_sec.close()
     except:
