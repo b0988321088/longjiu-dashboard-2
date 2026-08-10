@@ -434,13 +434,18 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
             if _k in _st:
                 _icon = _v
                 break
-        _t4 = _sd.get("轉換截止", "—")
+        # 2026-08-10：支援新三站配息接力結構（基金/配息時間/T+4截止）；相容舊結構（基準日/轉換截止/預估入帳）
+        _fund = _sd.get("基金", _sd.get("流向", ""))
+        _payout = _sd.get("配息時間", _sd.get("基準日", "—"))
+        _t4 = _sd.get("T+4截止", _sd.get("轉換截止", "—"))
         _deadline = f"⚠️ {_t4}" if "⚠️" in str(_t4) or any(x in str(_t4) for x in ["7/23","7/24"]) else _t4
-        _station_rows += f"""          <tr><td>{_sn}</td><td>{_sd.get("流向","")}</td><td>{_sd.get("基準日","")}</td><td>{_deadline}</td><td>{_sd.get("預估入帳","")}</td><td>{_icon} {_st}</td></tr>"""
+        _est = _sd.get("預估入帳", "")
+        _est_txt = f"<td>{_est}</td>" if _est else ""
+        _station_rows += f"""          <tr><td>{_sn}</td><td>{_fund}</td><td>{_payout}</td><td>{_deadline}</td>{_est_txt}<td>{_icon} {_st}</td></tr>"""
     relay_table = f"""<div class="table-wrap">
       <table class="mobile-bordered">
         <thead>
-          <tr><th>站別</th><th>流向</th><th>基準日</th><th>轉換截止</th><th>預估入帳</th><th>狀態</th></tr>
+          <tr><th>站別</th><th>基金</th><th>配息時間</th><th>T+4截止</th><th>狀態</th></tr>
         </thead>
         <tbody>
 {_station_rows}
@@ -658,7 +663,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   <!-- 3/5 保單接力引擎 -->
   <div class="card">
     <h2>5/9｜保單接力引擎 Insurance Relay Engine</h2>
-    <div class="label">四站轉換時序監控</div>
+    <div class="label">三站配息接力（月初→月中→月底）</div>
     <p class="text-lead"><strong>本月配息合計：{monthly_dividend:,} TWD</strong></p>
     {relay_table}
     {_relay_calendar_html}
