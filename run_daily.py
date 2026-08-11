@@ -1158,7 +1158,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             if _us30y >= _th.get("us30y_red", 5.40):
                 _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% ≥ {_th.get('us30y_red')}% — Rhythm-08紅燈：調降部分長債00983D，內部轉換至中短債，降低擔保池波動"))
             elif _us30y > _us30y_freeze:
-                _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% > {_us30y_freeze}% — TAA全域凍結：禁止所有新現金投資擴倉/擴槓桿；舊部位續抱；僅配息被動再平衡+還債"))
+                _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% > {_us30y_freeze}% — 警戒線：五因子綜合判斷（US10Y/US30Y/匯率/美債市價/LTV），非直接凍結；LTV低+匯率穩仍可分批建倉"))
             elif _us30y >= _th.get("us30y_yellow", 5.20):
                 _lights.append(("🟡 黃燈", f"30Y美債 {_us30y}% ≥ {_th.get('us30y_yellow')}% — 警戒區：台股建倉≤50萬/週、美股停止新增、不新增長債疊債、停泊不疊槓"))
             # 10. 美股占比
@@ -2375,7 +2375,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             if _us30y >= _th.get("us30y_red", 5.40):
                 _lights.append(("🔴", f"30Y美債 {_us30y}% ≥ 5.4% — 紅燈：調降長債部位移中短債"))
             elif _us30y > _us30y_freeze2:
-                _lights.append(("🔴", f"30Y美債 {_us30y}% > 5.30% — TAA全域凍結：禁止新現金擴倉/擴槓桿"))
+                _lights.append(("🔴", f"30Y美債 {_us30y}% > 5.30% — 警戒線：五因子綜合判斷（非直接凍結），LTV低+匯率穩仍可分批"))
             elif _us30y >= _th.get("us30y_yellow", 5.20):
                 _lights.append(("🟡", f"30Y美債 {_us30y}% ≥ 5.2% — 警戒區：台股≤50萬/週、美股停購、不疊債"))
             if _us_pct > _th.get("us_equity_overweight_yellow", 32):

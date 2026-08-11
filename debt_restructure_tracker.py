@@ -92,14 +92,16 @@ def main():
         us30y = snap.get("rhythm08", {}).get("indicators", {}).get("us30y") or 5.21
         us30y_date = "snapshot 舊值"
     if us30y > 5.30:
-        rhythm_light = "🔴全域凍結"
+        rhythm_light = "🔴警戒(5因子判斷)"
     elif us30y > 5.15:
         rhythm_light = "🟡滯脹警戒"
     else:
         rhythm_light = "🟢安全"
     print(f"\n【1.市場利率｜Rhythm-08】")
     print(f"  US30Y = {us30y:.2f}%（{us30y_date}）")
-    print(f"  燈號：{rhythm_light}（🟢安全 / 🟡警戒>5.15 / 🔴全域凍結>5.30）")
+    print(f"  燈號：{rhythm_light}（🟢安全 / 🟡警戒>5.15 / 🔴警戒>5.30→五因子判斷）")
+    if rhythm_light == "🔴警戒(5因子判斷)":
+        print(f"  五因子：①US10Y ②US30Y ③USD/TWD ④美債組合市價 ⑤實際LTV；10Y回落+匯率穩+LTV低 → 分批買入仍有利")
     if rhythm_light == "🟢安全":
         print(f"  規則：可依 B先A後 時程執行")
     elif rhythm_light == "🟡滯脹警戒":
@@ -190,31 +192,29 @@ def main():
     print(f"  悲觀場景可償還結餘：{pessimistic_low:,}~{pessimistic_high:,} NTD")
     print(f"  提醒：降槓桿週期非固定，環境惡化還本速度會顯著拉長")
 
-    # -------- 5b. 三桶策略（1,200萬 2026-08-11 定案）-------
+    # -------- 5b. 兩層架構（1,200萬最終正式執行版）-------
     dp = snap.get("professional_investor", {}).get("deployment_plan", {})
-    buckets = dp.get("buckets", {})
-    print(f"\n【5b.三桶策略（1,200萬定案）】")
-    if buckets:
-        b1 = buckets.get("safe_reservoir_400w", {})
-        b2 = buckets.get("us_bond_ladder_600w", {})
-        b3 = buckets.get("vip_200w", {})
-        print(f"  🟢 安全水庫 {b1.get('amount', 0):,.0f}：追繳緩衝/流動性/大跌加碼（禁質押）")
-        tr = b2.get("tranches", {})
-        print(f"  🟡 美元債券階梯 {b2.get('amount', 0):,.0f}：1-3yr {tr.get('1-3yr',0):,.0f} / 5-7yr {tr.get('5-7yr',0):,.0f} / 8-10yr {tr.get('8-10yr',0):,.0f}")
-        print(f"  🟠 VIP {b3.get('amount', 0):,.0f}：美金定存/低費ETF（避高手續費）")
-        pr = dp.get("pledge_rules", {})
-        print(f"  🔒 質押上限 {pr.get('initial_pledge_max', 0):,.0f}（LTV {pr.get('ltv_target','33-40%')}）")
-        print(f"  ⚠️ 前置：{pr.get('precondition', 'PI 書面核准')}")
-        print(f"  ❌ 禁止：{' / '.join(dp.get('forbidden_now', []))}")
-        tl = dp.get("traffic_light", {})
-        _red = tl.get('red', '')
-        if isinstance(_red, list):
-            _red = ' / '.join(str(x) for x in _red)
+    print(f"\n【5b.兩層架構（1,200萬正式版）】")
+    if dp.get("status", "").startswith("兩層"):
+        p1 = dp.get("phase1_mmf_parking", {})
+        p2 = dp.get("phase2_bond_ladder", {})
+        p3 = dp.get("phase3_lombard", {})
+        p4 = dp.get("phase4_twd_reservoir_200w", {})
+        al = p2.get("allocation", {})
+        print(f"  P1 停泊：1200萬 → 美元貨幣基金（AUM認列/資金來源整理）")
+        print(f"  P2 建債：四批250萬 → 1000萬（3-7yr {al.get('3-7yr',0):,.0f} + 8-10yr {al.get('8-10yr',0):,.0f}；禁30Y/手續費≤1.5%）")
+        sr = p3.get("staged_rules", {})
+        print(f"  P3 Lombard：初始 {sr.get('initial_350w','350萬')} → 觀察4-8週 → 400-450萬 → 硬上限 {sr.get('hard_cap_500w','500萬')}")
+        pa = p4.get("allocation", {})
+        print(f"  P4 台幣水庫200萬：{list(pa.keys())[0] if pa else '100萬現金'} + 50萬流動 + 50萬彈性ETF")
+        tl = dp.get("ltv_traffic_light", {})
         print(f"  🚦 {tl.get('green','')}")
         print(f"  🚦 {tl.get('yellow','')}")
-        print(f"  🚦 {_red}")
+        print(f"  🚦 {tl.get('orange','')}")
+        print(f"  🚦 {tl.get('red','')}")
+        print(f"  ⚡ 5.30%多因子：{dp.get('us30y_530_multifactor', {}).get('note','')[:80]}")
     else:
-        print(f"  ⚠️ snapshot 無三桶策略資料（舊版）")
+        print(f"  ⚠️ snapshot 非兩層架構版本")
 
     # -------- 6. 套利引擎（Arbitrage Engine）-------
     rules = load_engine_rules()
@@ -240,7 +240,7 @@ def main():
     # US30Y（us30y 為百分比數值 5.22 → 轉 0.0522 比較）
     us30y_dec = us30y / 100.0
     if us30y_dec >= 0.053:
-        checks.append(("US30Y", f"{us30y:.2f}% > 5.30%", "🔴 GLOBAL_FREEZE + 停泊退守MMF"))
+        checks.append(("US30Y", f"{us30y:.2f}% > 5.30%", "🔴 五因子綜合判斷（非直接凍結；10Y回落+匯率穩+LTV低→可分批）"))
     elif us30y_dec >= 0.052:
         checks.append(("US30Y", f"{us30y:.2f}% ≥ 5.20%", "🟡 美股停購/長債凍結/台股≤50萬"))
     # 現金
