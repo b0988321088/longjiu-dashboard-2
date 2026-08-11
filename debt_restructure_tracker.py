@@ -192,29 +192,27 @@ def main():
     print(f"  悲觀場景可償還結餘：{pessimistic_low:,}~{pessimistic_high:,} NTD")
     print(f"  提醒：降槓桿週期非固定，環境惡化還本速度會顯著拉長")
 
-    # -------- 5b. 兩層架構（1,200萬最終正式執行版）-------
+    # -------- 5b. 5-5-2 負債重組（1,200萬最終定稿）-------
     dp = snap.get("professional_investor", {}).get("deployment_plan", {})
-    print(f"\n【5b.兩層架構（1,200萬正式版）】")
-    if dp.get("status", "").startswith("兩層"):
-        p1 = dp.get("phase1_mmf_parking", {})
-        p2 = dp.get("phase2_bond_ladder", {})
-        p3 = dp.get("phase3_lombard", {})
-        p4 = dp.get("phase4_twd_reservoir_200w", {})
-        al = p2.get("allocation", {})
-        print(f"  P1 停泊：1200萬 → 美元貨幣基金（AUM認列/資金來源整理）")
-        print(f"  P2 建債：四批250萬 → 1000萬（3-7yr {al.get('3-7yr',0):,.0f} + 8-10yr {al.get('8-10yr',0):,.0f}；禁30Y/手續費≤1.5%）")
-        sr = p3.get("staged_rules", {})
-        print(f"  P3 Lombard：初始 {sr.get('initial_350w','350萬')} → 觀察4-8週 → 400-450萬 → 硬上限 {sr.get('hard_cap_500w','500萬')}")
-        pa = p4.get("allocation", {})
-        print(f"  P4 台幣水庫200萬：{list(pa.keys())[0] if pa else '100萬現金'} + 50萬流動 + 50萬彈性ETF")
+    print(f"\n【5b.5-5-2 負債重組（1,200萬定稿）】")
+    if dp.get("status", "").startswith("5-5-2"):
+        al = dp.get("allocation", {})
+        lr = dp.get("leverage_rules", {})
+        print(f"  500萬 直接償還 4%+ 高息負債（現金還，不走質押）")
+        print(f"  500萬 美債擔保池（3-7Y 250 + 8-10Y 250；禁30Y/手續費≤1.5%）")
+        print(f"  200萬 台幣防禦水庫（100救火金 + 50流動 + 50彈性ETF）")
+        print(f"  🔒 Lombard 初始 {lr.get('initial_lombard','150-175萬')}（LTV {lr.get('initial_ltv','30-35%')}）→ 清償剩餘4%高利貸")
+        print(f"  📉 高利負債合計下降：{lr.get('high_cost_debt_reduction','650-675萬')}")
+        print(f"  ⏳ 擴額需 {lr.get('expansion_condition','6-12月觀察週')} 全條件達成才評估")
+        print(f"  💰 年省利息：{dp.get('benefit_calc', {}).get('total_saving','23.8萬')}")
         tl = dp.get("ltv_traffic_light", {})
         print(f"  🚦 {tl.get('green','')}")
         print(f"  🚦 {tl.get('yellow','')}")
         print(f"  🚦 {tl.get('orange','')}")
         print(f"  🚦 {tl.get('red','')}")
-        print(f"  ⚡ 5.30%多因子：{dp.get('us30y_530_multifactor', {}).get('note','')[:80]}")
+        print(f"  🛡️ 退路1：匯率壓力→200萬水庫還清Lombard→零槓桿 | 退路2：賣美債純降槓")
     else:
-        print(f"  ⚠️ snapshot 非兩層架構版本")
+        print(f"  ⚠️ snapshot 非 5-5-2 版本")
 
     # -------- 6. 套利引擎（Arbitrage Engine）-------
     rules = load_engine_rules()
