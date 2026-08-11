@@ -206,12 +206,30 @@ def sync():
             if not _schedule_path.exists():
                 _schedule_path = Path(__file__).resolve().parent / "schedule_events.json"
             _existing = json.loads(_schedule_path.read_text(encoding="utf-8")) if _schedule_path.exists() else []
+            # INC-136 修正：以 item 名稱去重（不只 date+item）— GCal 舊日期手動事件
+            # 與 schedule 相同 item 時，以 schedule 日期為真值，不再加回舊日期
             _existing_items = {(e.get("date"), e.get("item")) for e in _existing}
+            _existing_names = {e.get("item") for e in _existing}
+            # INC-136 強化：名稱正規化（去 emoji/括號內容）比對，擋「回診」vs「梧棲看診（回診）」
+            import re as _re
+            def _norm(s):
+                s = _re.sub(r"[\U0001F300-\U0001FAFF\u2600-\u27BF]", "", str(s))
+                s = _re.sub(r"[（(].*?[)）]", "", s)
+                return s.strip()
+            _existing_norm = {_norm(e.get("item")) for e in _existing}
+            _existing_raw = [str(e.get("item")) for e in _existing]
             _added = 0
             for _ev in _pulled:
-                if (_ev["date"], _ev["item"]) not in _existing_items:
+                _ev_norm = _norm(_ev["item"])
+                # 子字串包含比對（用原始 item 保留括號）：GCal「回診」⊂「梧棲看診（回診）」→ 擋住（INC-136）
+                _is_sub = any(_ev_norm in en or en in _ev_norm for en in _existing_norm if en) \
+                    or any(_ev["item"] in raw or raw in _ev["item"] for raw in _existing_raw if raw)
+                if (_ev["date"], _ev["item"]) not in _existing_items and _ev["item"] not in _existing_names \
+                   and _ev_norm not in _existing_norm and not _is_sub:
                     _existing.append(_ev)
                     _existing_items.add((_ev["date"], _ev["item"]))
+                    _existing_names.add(_ev["item"])
+                    _existing_norm.add(_ev_norm)
                     _added += 1
             if _added:
                 _schedule_path.write_text(json.dumps(_existing, ensure_ascii=False, indent=2), encoding="utf-8")
