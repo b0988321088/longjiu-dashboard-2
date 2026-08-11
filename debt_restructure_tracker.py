@@ -129,6 +129,35 @@ def main():
     elif fx_light == "🔴風險":
         print(f"  動作：可部分結匯回台幣活存，不對賭匯率，停泊只求微薄利息")
 
+    # -------- 2c. 台幣單季升值監測（2026-08-11 三桶匯率原則）-------
+    print(f"\n【2c.台幣單季升值監測（三桶匯率紅黃綠燈）】")
+    print(f"  🟡 台幣單季升值>5% → 禁止新增質押 / 暫緩償還剩餘高息舊貸")
+    print(f"  🔴 台幣單季升值>8% → 動用水庫台幣部位還貸，LTV壓回≤35%")
+    print(f"  🛡️ 撤退：匯損使淨利差≈0 → 還部分/全部 Lombard，美債續持有收息")
+    print(f"  💱 400萬水庫保留部分台幣現金（不全換美元）→ 匯率衝擊緩衝")
+
+    # -------- 2b. 日圓套利平倉風險監測（2026-08-11 新增）-------
+    print(f"\n【2b.日圓套利平倉風險（JPY carry unwind）】")
+    try:
+        req = urllib.request.Request("https://open.er-api.com/v6/latest/TWD",
+                                     headers={'User-Agent': 'Mozilla/5.0'})
+        d = json.loads(urllib.request.urlopen(req, timeout=15).read())
+        rates = d.get('rates', {})
+        usd2 = rates.get('USD'); jpy2 = rates.get('JPY')
+        usdjpy = jpy2 / usd2 if usd2 and jpy2 else None
+        if usdjpy:
+            print(f"  USD/JPY: {usdjpy:.2f}")
+            if usdjpy < 150:
+                print(f"  🚨 日圓急升（USD/JPY <150）→ 套利平倉加速，美元資產賣壓大")
+                print(f"  動作：美股/美元資產逢反彈減碼；債券台幣優先")
+            elif usdjpy < 155:
+                print(f"  🟡 日圓明顯升值（150-155）→ 平倉進行中，美元資產波動加")
+                print(f"  動作：不追高美股、債券美元部位降比重")
+            else:
+                print(f"  🟢 日圓溫和（≥155）→ 平倉壓力尚可控")
+    except Exception:
+        print(f"  ⚠️ 日圓匯率抓取失敗")
+
     # -------- 3. PI 專業投資人狀態 --------
     pi_status = pi.get("pi_status", "未申請")
     if pi_status not in PI_STATES:
@@ -161,15 +190,31 @@ def main():
     print(f"  悲觀場景可償還結餘：{pessimistic_low:,}~{pessimistic_high:,} NTD")
     print(f"  提醒：降槓桿週期非固定，環境惡化還本速度會顯著拉長")
 
-    # -------- 5b. 階梯式債券配置（B方案 500萬）-------
-    print(f"\n【5b.階梯式債券配置（B方案 500萬）】")
-    print(f"  1-3年投資等級短債階梯（持有至到期，鎖定收益）")
-    print(f"  ├ 1年內  200萬（40%）→ 流動性+再投資")
-    print(f"  ├ 1-2年  150萬（30%）→ 核心收益")
-    print(f"  └ 2-3年  150萬（30%）→ 收益鎖定")
-    print(f"  預期收益：4.5-5.0% → 年收 ~23-25萬")
-    print(f"  淨利差（扣 2.6% 融資）：1.9-2.4%")
-    print(f"  ⚠️ 紀律：>5年凍結（US30Y 5.22% 警戒）；00983D 不新增；持有到期不炒價差")
+    # -------- 5b. 三桶策略（1,200萬 2026-08-11 定案）-------
+    dp = snap.get("professional_investor", {}).get("deployment_plan", {})
+    buckets = dp.get("buckets", {})
+    print(f"\n【5b.三桶策略（1,200萬定案）】")
+    if buckets:
+        b1 = buckets.get("safe_reservoir_400w", {})
+        b2 = buckets.get("us_bond_ladder_600w", {})
+        b3 = buckets.get("vip_200w", {})
+        print(f"  🟢 安全水庫 {b1.get('amount', 0):,.0f}：追繳緩衝/流動性/大跌加碼（禁質押）")
+        tr = b2.get("tranches", {})
+        print(f"  🟡 美元債券階梯 {b2.get('amount', 0):,.0f}：1-3yr {tr.get('1-3yr',0):,.0f} / 5-7yr {tr.get('5-7yr',0):,.0f} / 8-10yr {tr.get('8-10yr',0):,.0f}")
+        print(f"  🟠 VIP {b3.get('amount', 0):,.0f}：美金定存/低費ETF（避高手續費）")
+        pr = dp.get("pledge_rules", {})
+        print(f"  🔒 質押上限 {pr.get('initial_pledge_max', 0):,.0f}（LTV {pr.get('ltv_target','33-40%')}）")
+        print(f"  ⚠️ 前置：{pr.get('precondition', 'PI 書面核准')}")
+        print(f"  ❌ 禁止：{' / '.join(dp.get('forbidden_now', []))}")
+        tl = dp.get("traffic_light", {})
+        _red = tl.get('red', '')
+        if isinstance(_red, list):
+            _red = ' / '.join(str(x) for x in _red)
+        print(f"  🚦 {tl.get('green','')}")
+        print(f"  🚦 {tl.get('yellow','')}")
+        print(f"  🚦 {_red}")
+    else:
+        print(f"  ⚠️ snapshot 無三桶策略資料（舊版）")
 
     # -------- 6. 套利引擎（Arbitrage Engine）-------
     rules = load_engine_rules()
