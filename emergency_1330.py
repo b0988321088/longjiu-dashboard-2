@@ -28,7 +28,7 @@ def run_step(label, cmd, timeout=120):
 def fetch_etf_data(symbol):
     """從 Yahoo Finance 抓取 ETF 即時數據"""
     try:
-        r = requests.get(f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=2d",
+        r = requests.get(f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=5d",
             headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
         if r.status_code != 200: return None
         d = r.json()
@@ -45,7 +45,7 @@ def fetch_etf_data(symbol):
 def fetch_taiex():
     """從 Yahoo Finance 抓取即時台股指數"""
     try:
-        r = requests.get("https://query1.finance.yahoo.com/v8/finance/chart/%5ETWII?interval=1d&range=2d",
+        r = requests.get("https://query1.finance.yahoo.com/v8/finance/chart/%5ETWII?interval=1d&range=5d",
             headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
         if r.status_code != 200: return None
         d = r.json()
