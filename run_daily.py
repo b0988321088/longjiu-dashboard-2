@@ -1788,10 +1788,12 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     # === 銀行卡片（動態：從 Moneybook 帳戶 CSV 讀真實餘額）===
     _bank_cards = []
     _bank_groups = {}
+    _csv_date_note = ""
     try:
         import csv as _csv
         _cps = sorted(Path("moneybook").glob("Moneybook_帳戶_*.csv")) or sorted(Path("Moneybook").glob("Moneybook_帳戶_*.csv"))
         if _cps:
+            _csv_date_note = f'<p class="text-[10px] text-amber-400/80">資料日期：{_cps[-1].stem.replace("Moneybook_帳戶_", "")}（Moneybook 帳戶 CSV，有新匯出請放入 moneybook/ 目錄）</p>'
             with open(str(_cps[-1]), encoding="utf-8-sig") as _f:
                 for _r in _csv.DictReader(_f):
                     _b = (_r.get("金融機構/手動新增", "") or "").strip()
@@ -1814,8 +1816,8 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             continue
         _its = sorted(_bank_groups[_g], key=lambda x: -x[0])
         _gt = sum(fv for fv, _ in _its)
-        # 水位判斷（以 3 個月支出 425,874 為目標線）
-        _target = 425_874
+        # 水位判斷（安全線 = 月支出 × 3，動態讀 tv，禁硬編碼 INC-127）
+        _target = int(tv.get("monthly_expense", 141_958) or 141_958) * 3
         if _gt >= _target:
             _status = f'<span>🟢 充裕</span>'
             _status_cls = "text-blue-300"
@@ -1848,7 +1850,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         f'<p class="text-[10px] text-slate-400">snapshot 總現金：{fmt(tv.get("cash_total", tv.get("real_liquid_assets", 0)))} TWD</p>'
         f'</div>'
     )
-    html = html.replace("__BANK_CARDS__", "\n".join(_bank_cards))
+    html = html.replace("__BANK_CARDS__", "\n".join(_bank_cards) + _csv_date_note)
 
     # === 現金流入核對表（動態：依當月實際已收標示已入帳/待入帳）===
     _m_label = date.today().strftime("%m月")
