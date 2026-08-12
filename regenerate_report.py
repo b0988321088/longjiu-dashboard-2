@@ -226,7 +226,18 @@ for k, v in checks.items():
 
 # 11. 自動推送到 GitHub（兩個分支）
 import subprocess, shlex, sys
-if ok:
+# ⚠️ INC-138（2026-08-12）：commit 前必須【真的執行】CIO 審查，通過才標 [cioreviewed] 並推送。
+# 舊版無條件塞 [cioreviewed] → 8/10 起審查空轉、未過審的日報照樣上線。
+_cio_ok = False
+try:
+    _cio = subprocess.run([sys.executable, str(BASE / "cio_review.py")],
+                          capture_output=True, text=True, timeout=120, cwd=BASE)
+    if _cio.stdout.strip():
+        print(_cio.stdout.strip())
+    _cio_ok = _cio.returncode == 0
+except Exception as _ce:
+    print(f"⚠️ CIO 審查執行失敗（不推送）: {_ce}")
+if ok and _cio_ok:
     # stage + commit 所有報表檔案
     _msg = f"四源同步 {TODAY} [cioreviewed]"
     subprocess.run(['git', 'add', f'daily_report_v2_{TODAY}.html', f'asset_diff_{TODAY}.html', f'penetration_report_{TODAY}.html', 'index.html', 'snapshot.json', 'dragon_assets.db'], capture_output=True, text=True, cwd=BASE)
@@ -243,6 +254,8 @@ if ok:
         _c = subprocess.run(['curl', '-s', '-o', '/dev/null', '-w', '%{http_code}', f"{_base}/{_f}"], capture_output=True, text=True, timeout=10)
         _code = _c.stdout.strip()
         print(f"  {'✅' if _code == '200' else '❌'} {_f} → {_code}")
+else:
+    print(f"\n⛔ 產出檢查={'✅' if ok else '❌'} / CIO 審查={'✅' if _cio_ok else '❌'} → 未推送（修正後重跑 regenerate_report.py --deploy）")
 # 12. 產出連結清單（不論是否推播都顯示）
 print(f'\n{"="*50}')
 print(f'  龍九控股 — 管線產出完成 {TODAY}')

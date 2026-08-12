@@ -373,7 +373,7 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
         briefing_lines.append("")
         briefing_lines.append("【最新市場消息】")
         for n in news[:3]: # Limit to 3 news items for briefing
-            briefing_lines.append(f"• {n.get('title', '')} ({n.get('url', '').split('/')[2]})")
+            briefing_lines.append(f"• {n.get('title', '')}（來源：{n.get('url', '').split('/')[2]}）")
             if n.get('snippet'):
                 briefing_lines.append(f"  {n['snippet']}")
 

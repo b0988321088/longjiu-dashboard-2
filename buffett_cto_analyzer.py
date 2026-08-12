@@ -214,7 +214,11 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
 
 def generate_cto_report(pen: dict, market_text: str = "") -> list:
     """CTO 技術視角（核心‑衛星保守成長版，動態日期）"""
-    lines = ["CTO 技術視角", "建議動作："]
+    lines = ["CTO 技術視角"]
+    _kr = pen.get("key_risk", "")
+    if _kr:
+        lines.append(f"今日最大風險：{_kr}")
+    lines.append("建議動作：")
     for cat in ["tw_equity", "us_equity", "defensive", "bond", "cash"]:
         gv = pen["gaps"].get(cat, 0)
         if abs(gv) > 5:

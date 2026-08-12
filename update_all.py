@@ -293,7 +293,7 @@ def main():
         hist.setdefault(TODAY, {}).update({"cash": args["cash"], "securities_market": args["sec"],
             "insurance_current": args["ins"], "fund_market": args["funds"], "total_assets": total, "net_worth": net,
             "insurance_detail": {"安聯保單A+B 現值": float(snap["allianz_ab_current_value"]),
-                "第一金保單 FL65 現值": 1958980.0, "保單總現値": float(args["ins"])}})
+                "第一金保單 FL65 現值": float(snap.get("firstjin_current_value", snap.get("firstjin_fl65_value", 1958980))), "保單總現値": float(args["ins"])}})
         save_json(HIST, hist)
     print(f"  ✅ 現金={args['cash']:,}  保險={args['ins']:,}  證券={args['sec']:,}  基金={args['funds']:,}")
     print(f"  總資產={total:,}")

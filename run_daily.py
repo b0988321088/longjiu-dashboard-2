@@ -66,7 +66,7 @@ def calibrate_sources() -> dict:
     s_expense = snap.get("monthly_expense_mb_override") or snap.get("monthly_expense")
     s_work_surplus = snap.get("working_surplus")
     s_retire_surplus = snap.get("retirement_surplus")
-    s_insurance = snap.get("allianz_combined", 0) + snap.get("firstjin_fl65_current_value", 0)
+    s_insurance = snap.get("insurance_current_value") or (snap.get("allianz_combined", 0) + snap.get("firstjin_fl65_current_value", 0))
     s_allianz = snap.get("allianz_ab_current_value") or snap.get("allianz_ab")
     s_firstjin = snap.get("firstjin_current_value") or snap.get("firstjin")
     s_allianz_a = snap.get("allianz_a_current_value") or snap.get("allianz_a", 0)

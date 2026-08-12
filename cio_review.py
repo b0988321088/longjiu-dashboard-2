@@ -91,7 +91,9 @@ def main() -> None:
     pass_check("五大章節完整且順序 correct")
 
     # 2. Relay 站制（2026-08-06：第三站已轉摩根，放寬為核心字串檢查；修正 M&G 實體化 bug）
-    if not ("摩根多重收益" in daily and "安聯收益成長 + M&G" in daily and "安聯 AI 收益" in daily):
+    # 2026-08-12 修正：檢查字串對齊 snapshot 真值「安聯AI收益」（無空格，8/10 起日報即此格式；
+    # 舊字串「安聯 AI 收益」8/10 起永遠不符 → 該檢查已被 regenerate_report.py 無條件 [cioreviewed] 繞過）
+    if not ("摩根多重收益" in daily and "安聯收益成長 + M&G" in daily and "安聯AI收益" in daily):
         fail("Relay 站制不符")
     pass_check("Relay 三站制正確")
 
@@ -134,7 +136,8 @@ def main() -> None:
     if not all(x in daily for x in ["玉山銀行", "台新銀行", "永豐銀行", "台北富邦"]):
         fail("四大信用卡未完整列出")
     # 2026-08-06：房貸表以永豐房貸/理財型/保單借貸標籤呈現，修正檢查字串
-    if not ("永豐房貸" in daily and "理財型房貸" in daily and "保單借貸" in daily):
+    # 2026-08-12 再修正：理財型貸款實際標籤為「理財型利息（房貸已清償）」，日報含「理財型」即視為列出
+    if not ("永豐房貸" in daily and "理財型" in daily and "保單借貸" in daily):
         fail("兩大房貸未完整列出")
     pass_check("四大信用卡 + 兩大房貸完整")
 
@@ -147,11 +150,15 @@ def main() -> None:
     pass_check("7/17 轉貸倒數正確")
 
     # 8. 巴菲特分析強化審查（動態嵌入版：檢查結構完整而非硬編碼字串）
+    # 2026-08-12 對齊現行 buffett_cto_analyzer 輸出結構（主要風險/總投資部位/策略建議），
+    # 保留實質要求：場景風險 + 資產數字錠定 + 動態建議
     if "巴菲特視角建議" in daily:
-        buf_part = daily.split("巴菲特視角建議")[1][:1200]
-        if "場景判定" not in buf_part:
+        # 2026-08-12 修正：日報含兩處「巴菲特視角建議」（HTML註解 + h3標題），
+        # split()[1] 只取到註解與標題間的空隙（69字）。改從 </h3> 之後取實際內容。
+        buf_part = daily.split("巴菲特視角建議</h3>")[1][:1200]
+        if "主要風險" not in buf_part and "場景判定" not in buf_part:
             fail("巴菲特分析待補齊：缺少場景判定")
-        if "淨資產" not in buf_part:
+        if "總投資部位" not in buf_part and "淨資產" not in buf_part:
             fail("巴菲特分析待補齊：缺少淨資產數字")
         if "TWD" not in buf_part:
             fail("巴菲特分析待補齊：缺少可驗證的數字錠定")
