@@ -1791,7 +1791,8 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     _csv_date_note = ""
     try:
         import csv as _csv
-        _cps = sorted(Path("moneybook").glob("Moneybook_帳戶_*.csv")) or sorted(Path("Moneybook").glob("Moneybook_帳戶_*.csv"))
+        # rglob：Moneybook 匯出會放 moneybook/ 根目錄或 Moneybook/日期子目錄（如 20260811/）— INC-139
+        _cps = sorted(Path("moneybook").rglob("Moneybook_帳戶_*.csv")) or sorted(Path("Moneybook").rglob("Moneybook_帳戶_*.csv"))
         if _cps:
             _csv_date_note = f'<p class="text-[10px] text-amber-400/80">資料日期：{_cps[-1].stem.replace("Moneybook_帳戶_", "")}（Moneybook 帳戶 CSV，有新匯出請放入 moneybook/ 目錄）</p>'
             with open(str(_cps[-1]), encoding="utf-8-sig") as _f:
