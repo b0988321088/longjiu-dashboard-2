@@ -1811,14 +1811,17 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     # 若 CSV 讀取失敗，fallback 到 snapshot 總現金
     if not _bank_groups:
         _bank_groups = {"現金合計": [(float(tv.get("cash_total", tv.get("real_liquid_assets", 0)) or 0), "snapshot 總現金")]}
-    _bank_order = ["台新銀行", "永豐銀行", "星展銀行", "玉山銀行", "將來銀行", "國泰世華", "第一銀行", "台北富邦"]
+    _bank_order = ["國泰世華", "台新銀行", "永豐銀行", "玉山銀行", "台北富邦", "第一銀行", "將來銀行", "星展銀行"]
+    # 生活帳戶（只負擔信用卡）：玉山/富邦安全線 4 萬；主要監控國泰+台新（月支出×3）
+    _LIVING_BANK_TARGET = {"玉山銀行": 40_000, "台北富邦": 40_000}
     for _g in _bank_order:
         if _g not in _bank_groups:
             continue
         _its = sorted(_bank_groups[_g], key=lambda x: -x[0])
         _gt = sum(fv for fv, _ in _its)
-        # 水位判斷（安全線 = 月支出 × 3，動態讀 tv，禁硬編碼 INC-127）
-        _target = int(tv.get("monthly_expense", 141_958) or 141_958) * 3
+        # 水位判斷（安全線 = 月支出 × 3，動態讀 tv，禁硬編碼 INC-127；玉山/富邦生活帳戶 4 萬）
+        _target = _LIVING_BANK_TARGET.get(_g, int(tv.get("monthly_expense", 141_958) or 141_958) * 3)
+        _target_note = "（生活帳戶，僅信用卡）" if _g in _LIVING_BANK_TARGET else "（3個月支出）"
         if _gt >= _target:
             _status = f'<span>🟢 充裕</span>'
             _status_cls = "text-blue-300"
@@ -1839,7 +1842,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             f'<span>{_g}</span>{_status}</div>'
             f'<p class="text-lg font-mono font-black text-white">{_gt:,.0f} TWD</p>'
             f'{_extra}'
-            f'<p class="text-[10px] text-slate-400">安全線：{_target:,.0f}（3個月支出）</p>'
+            f'<p class="text-[10px] text-slate-400">安全線：{_target:,.0f}{_target_note}</p>'
             f'</div>'
         )
     # 合計卡片
