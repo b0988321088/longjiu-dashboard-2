@@ -253,7 +253,10 @@ def main() -> None:
     if not run_step("run_daily", [sys.executable, str(BASE / "run_daily.py")]):
         return
     run_step("gen_diff", [sys.executable, str(BASE / "gen_diff.py")])
-    run_step("dashboard", [sys.executable, str(BASE / "extract_dashboard.py")])
+    # ⚠️ 2026-08-12：停用 extract_dashboard.py 覆寫 index.html（會把完整儀表板換成精簡 stub，
+    #    且其 總資產/淨資產/證券 抽取 regex 已失配顯示「—」）。
+    #    正式儀表板 = run_daily.py 產出的完整版（index_template.html，含水位監控/指示卡）。
+    #    extract_dashboard.py 保留供參考，輸出改寫 index_compact.html（不再覆蓋）。
     
     # 1.5 內容保護攔截（推送前自動檢查）
     print("\n[STEP] 內容保護審計")
