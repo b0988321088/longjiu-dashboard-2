@@ -182,7 +182,7 @@ def main():
     try:
         import shutil
         _scripts_dst = Path(os.environ.get("HERMES_SCRIPTS", str(Path.home() / "AppData/Local/hermes/scripts")))
-        for _sf in ["update_all.py", "run_daily.py", "asset_diff_monitor.py", "memory_sync.py", "daily_deploy.py", "penetration_monitor.py", "reminder_agent.py", "weekly_report.py", "gmail_cleanup.py"]:
+        for _sf in ["update_all.py", "run_daily.py", "asset_diff_monitor.py", "memory_sync.py", "daily_deploy.py", "penetration_monitor.py", "reminder_agent.py", "weekly_report.py", "gmail_cleanup.py", "cio_review.py", "daily_checklist.py", "regenerate_report.py", "daily_intel.py", "buffett_cto_analyzer.py", "emergency_1330.py"]:
             _src = BASE / _sf
             _dst = _scripts_dst / _sf
             if _src.exists() and (not _dst.exists() or _src.stat().st_mtime > _dst.stat().st_mtime):
