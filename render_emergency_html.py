@@ -76,7 +76,9 @@ body{{background:var(--bg);color:var(--txt);font-family:"Segoe UI","PingFang TC"
 railway = page("台股緊急應變報告", f"資料時間 {gen_short} 台北｜台股午盤即時分析（六大章節）")
 github = page("台股緊急應變報告（GitHub 版）", f"資料時間 {gen_short} 台北｜台股午盤即時分析（六大章節）")
 
-(BASE / f"emergency_report_{TODAY}.html").write_text(railway, encoding="utf-8")
-(BASE / f"emergency_taiex_report_{TODAY}.html").write_text(github, encoding="utf-8")
-print(f"✅ emergency_report_{TODAY}.html ({len(railway):,} bytes)")
-print(f"✅ emergency_taiex_report_{TODAY}.html ({len(github):,} bytes)")
+p1 = BASE / f"emergency_report_{TODAY}.html"
+p2 = BASE / f"emergency_taiex_report_{TODAY}.html"
+p1.write_text(railway, encoding="utf-8")
+p2.write_text(github, encoding="utf-8")
+print(f"✅ {p1.name} ({p1.stat().st_size:,} bytes)")
+print(f"✅ {p2.name} ({p2.stat().st_size:,} bytes)")
