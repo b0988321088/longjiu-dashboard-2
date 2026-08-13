@@ -192,27 +192,27 @@ def main():
     print(f"  悲觀場景可償還結餘：{pessimistic_low:,}~{pessimistic_high:,} NTD")
     print(f"  提醒：降槓桿週期非固定，環境惡化還本速度會顯著拉長")
 
-    # -------- 5b. 5-5-2 負債重組（1,200萬最終定稿）-------
+    # -------- 5b. 兩層槓桿修正版（8/12 裁決，取代 5-5-2）-------
     dp = snap.get("professional_investor", {}).get("deployment_plan", {})
-    print(f"\n【5b.5-5-2 負債重組（1,200萬定稿）】")
-    if dp.get("status", "").startswith("5-5-2") or dp.get("status", "").startswith("兩層槓桿修正版"):
-        al = dp.get("allocation", {})
-        lr = dp.get("leverage_rules", {})
-        print(f"  500萬 直接償還 4%+ 高息負債（現金還，不走質押）")
-        print(f"  500萬 美債擔保池（3-7Y 250 + 8-10Y 250；禁30Y/手續費≤1.5%）")
-        print(f"  200萬 台幣防禦水庫（100救火金 + 50流動 + 50彈性ETF）")
-        print(f"  🔒 Lombard 初始 {lr.get('initial_lombard','150-175萬')}（LTV {lr.get('initial_ltv','30-35%')}）→ 清償剩餘4%高利貸")
-        print(f"  📉 高利負債合計下降：{lr.get('high_cost_debt_reduction','650-675萬')}")
-        print(f"  ⏳ 擴額需 {lr.get('expansion_condition','6-12月觀察週')} 全條件達成才評估")
-        print(f"  💰 年省利息：{dp.get('benefit_calc', {}).get('total_saving','23.8萬')}")
-        tl = dp.get("ltv_traffic_light", {})
-        print(f"  🚦 {tl.get('green','')}")
-        print(f"  🚦 {tl.get('yellow','')}")
-        print(f"  🚦 {tl.get('orange','')}")
-        print(f"  🚦 {tl.get('red','')}")
-        print(f"  🛡️ 退路1：匯率壓力→200萬水庫還清Lombard→零槓桿 | 退路2：賣美債純降槓")
+    print(f"\n【5b.兩層槓桿修正版（8/12 裁決）】")
+    if dp.get("status", "").startswith("兩層槓桿修正版"):
+        p1 = dp.get("phase1_mandatory", {})
+        p2 = dp.get("phase2_optional", {})
+        print(f"  階段1（強制）：還債 {p1.get('repay_800w','800萬')}｜建債梯 {p1.get('build_ladder','3-7Y 375+8-10Y 125')}｜現金緩衝覆蓋6個月利息")
+        print(f"  完成標準：{p1.get('complete_standard','舊債清除+直債底倉+現金緩衝')}")
+        print(f"  ⛔ 階段1期間禁質押：{p1.get('forbidden','不開第二層槓桿')}")
+        print(f"  階段2（選擇性加分，非強制）：")
+        print(f"    gate1 {p2.get('gate_1','US30Y<5.30%')}｜gate2 {p2.get('gate_2','壓力測試LTV≤50%')[:40]}...")
+        print(f"    gate3 {p2.get('gate_3','觀察1-3日無跳空')}｜gate4 {p2.get('gate_4','借貸成本<債券殖利率')}")
+        print(f"    質押初始LTV≤50%；資金僅限現金流類資產；禁同週建債+質押+再投資")
+        print(f"  🌐 全域凍結：{dp.get('global_freeze','US30Y≥5.30%禁新增質押')}")
+        print(f"  💰 效益：{dp.get('benefit_calc','年省利息32萬')[:60]}")
+        gr = dp.get("gap_rules_0812", {})
+        print(f"  📌 底線：現金≥85萬({gr.get('rule_1_cash_floor','6個月生活費')[:40]})｜被動實收連2月<80%停建債｜直債僅投資級")
+    elif dp.get("status", "").startswith("5-5-2"):
+        print(f"  ⚠️ snapshot 為 5-5-2（舊版，已被 8/12 兩層槓桿版取代）")
     else:
-        print(f"  ⚠️ snapshot 非 5-5-2 版本")
+        print(f"  ⚠️ snapshot 無兩層槓桿版本資料")
 
     # -------- 6. 套利引擎（Arbitrage Engine）-------
     rules = load_engine_rules()
