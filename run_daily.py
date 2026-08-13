@@ -1129,6 +1129,40 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 f"</div></div>"
             )
             html += _pi_html
+            # 8/12 兩層槓桿風控輸出欄位（裁決強制：①單層/雙層成本 ②LTV+模擬 ③利息vs流入 ④到期對照 ⑤US30Y凍結線）
+            try:
+                _dp2 = tv.get("professional_investor", {}).get("deployment_plan", {}) or {}
+                _r8b = tv.get("rhythm08", {}) or {}
+                _us30y_now = (_r8b.get("indicators", {}) or {}).get("us30y") or 0
+                _p1_loan = _dp2.get("total", 12000000) or 12000000
+                _p1_cost_y = _p1_loan * 0.026
+                _p1_cost_m = _p1_cost_y / 12
+                _rent_recv = tv.get("rent_received_records") or {}
+                _rent_got = 0
+                for _rv in (_rent_recv.values() if isinstance(_rent_recv, dict) else []):
+                    if isinstance(_rv, dict):
+                        _rent_got += sum(_rv.values())
+                    elif isinstance(_rv, (int, float)):
+                        _rent_got += _rv
+                _income_m = (tv.get("monthly_dividend") or 0) + _rent_got
+                _freeze = _us30y_now >= 5.30
+                _fz_txt = f"🔴 觸及全域凍結線（{_us30y_now:.2f}% ≥ 5.30%）— 禁止新增債券質押" if _freeze else f"🟢 未觸及凍結線（{_us30y_now:.2f}% &lt; 5.30%）"
+                _lv_html = (
+                    f"<div class='callout callout-warning' style='margin-top:12px'>"
+                    f"<h3>📊 兩層槓桿風控輸出（8/12 裁決強制欄位）</h3>"
+                    f"<div style='font-size:12.5px;line-height:1.8'>"
+                    f"<strong>① 槓桿成本：</strong>單層（階段1）= 1,200萬×2.6% ≈ {_p1_cost_y/10000:.1f}萬/年（月 {_p1_cost_m:,.0f}）；雙層（階段2）= 未啟用（4門檻未全過）<br/>"
+                    f"<strong>② LTV：</strong>實際 0%（未開啟質押 🟢）；雙利空情境模擬（+50bp＋美元貶3%）門檻 ≤50%<br/>"
+                    f"<strong>③ 月度利息流出 vs 現金流入：</strong>流出 {_p1_cost_m:,.0f} vs 流入（配息＋房租實收）{_income_m:,.0f} — {'✅ 覆蓋' if _income_m >= _p1_cost_m else '⚠️ 未覆蓋'}<br/>"
+                    f"<strong>④ 到期對照：</strong>負債＝國泰轉貸（8/15 撥款；償還800萬後剩餘400萬）；債券＝直債梯 3-7Y/8-10Y（建倉後持有到期）— 債券期限內無大額負債到期 ✅<br/>"
+                    f"<strong>⑤ US30Y：</strong>{_us30y_now:.2f}% — {_fz_txt}<br/>"
+                    f"<strong>⑥ 底線規則（8/12 落實）：</strong>現金≥85萬實線（6個月生活費）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/>"
+                    f"<strong>⛔ 資金禁令：</strong>轉貸/質押資金禁止生活消費擴張"
+                    f"</div></div>"
+                )
+                html += _lv_html
+            except Exception:
+                pass
     except Exception:
         pass
 
@@ -1158,7 +1192,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             if _us30y >= _th.get("us30y_red", 5.40):
                 _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% ≥ {_th.get('us30y_red')}% — Rhythm-08紅燈：調降部分長債00983D，內部轉換至中短債，降低擔保池波動"))
             elif _us30y > _us30y_freeze:
-                _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% > {_us30y_freeze}% — 警戒線：五因子綜合判斷（US10Y/US30Y/匯率/美債市價/LTV），非直接凍結；LTV低+匯率穩仍可分批建倉"))
+                _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% ≥ 5.30% — 全域凍結紅線（8/12 裁決）：禁止新增債券質押；已開第二層者停止新增質押＋逐步降LTV"))
             elif _us30y >= _th.get("us30y_yellow", 5.20):
                 _lights.append(("🟡 黃燈", f"30Y美債 {_us30y}% ≥ {_th.get('us30y_yellow')}% — 警戒區：台股建倉≤50萬/週、美股停止新增、不新增長債疊債、停泊不疊槓"))
             # 10. 美股占比
@@ -2381,7 +2415,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             if _us30y >= _th.get("us30y_red", 5.40):
                 _lights.append(("🔴", f"30Y美債 {_us30y}% ≥ 5.4% — 紅燈：調降長債部位移中短債"))
             elif _us30y > _us30y_freeze2:
-                _lights.append(("🔴", f"30Y美債 {_us30y}% > 5.30% — 警戒線：五因子綜合判斷（非直接凍結），LTV低+匯率穩仍可分批"))
+                _lights.append(("🔴", f"30Y美債 {_us30y}% ≥ 5.30% — 全域凍結紅線（8/12 裁決）：禁止新增債券質押；已開第二層者停止新增質押＋逐步降LTV"))
             elif _us30y >= _th.get("us30y_yellow", 5.20):
                 _lights.append(("🟡", f"30Y美債 {_us30y}% ≥ 5.2% — 警戒區：台股≤50萬/週、美股停購、不疊債"))
             if _us_pct > _th.get("us_equity_overweight_yellow", 32):

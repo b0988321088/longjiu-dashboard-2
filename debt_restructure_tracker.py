@@ -195,7 +195,7 @@ def main():
     # -------- 5b. 5-5-2 負債重組（1,200萬最終定稿）-------
     dp = snap.get("professional_investor", {}).get("deployment_plan", {})
     print(f"\n【5b.5-5-2 負債重組（1,200萬定稿）】")
-    if dp.get("status", "").startswith("5-5-2"):
+    if dp.get("status", "").startswith("5-5-2") or dp.get("status", "").startswith("兩層槓桿修正版"):
         al = dp.get("allocation", {})
         lr = dp.get("leverage_rules", {})
         print(f"  500萬 直接償還 4%+ 高息負債（現金還，不走質押）")
