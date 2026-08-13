@@ -52,7 +52,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             fv = {}
             for k in list(dict.fromkeys(list(_a.keys()) + list(_b.keys()))):
                 fv[k] = _fv(_a.get(k, 0)) + _fv(_b.get(k, 0))
-            _br = {"安聯收益成長": 0.35, "M&G入息": 0.55, "安聯AI收益成長": 0.50, "PIMCO收益增長": 0.48}
+            _br = {"安聯收益成長": 0.32, "M&G入息": 0.55, "安聯AI收益成長": 0.50, "PIMCO收益增長": 0.48, "摩根JPM多重收益": 0.467}
             ins_bonds = sum(round(fv[n] * _br.get(n, 0)) for n in fv)
         else:
             ins_bonds = round(2_780_466*0.35 + 3_136_436*0.55 + 902_679*0.50)
