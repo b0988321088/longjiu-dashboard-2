@@ -742,10 +742,10 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     try:
         import csv
         from collections import defaultdict as _dd
-        _cps = sorted(Path("Moneybook").glob("Moneybook_帳戶_*_1.csv")) or sorted(Path("moneybook").glob("Moneybook_帳戶_*_1.csv"))
+        _cps = sorted(Path("Moneybook").rglob("Moneybook_帳戶_*_1.csv"), key=lambda p: p.name) or sorted(Path("moneybook").rglob("Moneybook_帳戶_*_1.csv"), key=lambda p: p.name)
         if not _cps:
             raise FileNotFoundError("Moneybook CSV 未匯入")
-        _cp = _cps[-1]
+        _cp = _cps[-1]  # 2026-08-13 修正：rglob 遞迴含子目錄（Moneybook/20260813/），glob 只找根目錄會讀到舊檔
         _grps = _dd(list)
         with open(str(_cp), encoding="utf-8-sig") as _f:
             for _r in csv.DictReader(_f):
