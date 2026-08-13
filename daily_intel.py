@@ -63,19 +63,32 @@ def _yf_chart(symbol: str, timeout: int = 8) -> dict:
     if not _REQUESTS_OK:
         return {}
     try:
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=1d&interval=1m"
+        # INC-142 修正：range=1d + chartPreviousClose 對台股盤後偶爾回傳錯誤 prev（8/13 取到 8/11 的 45,120.72 → 誤報 +2.00%，實際 +1.11%）
+        # 改 range=5d&interval=1d，從收盤數列自算「前一根收盤」為 prev
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=5d&interval=1d"
         r = _requests.get(url, timeout=timeout, headers=_YF_HEADERS)
         data = r.json()
-        meta = data.get("chart", {}).get("result", [{}])[0].get("meta", {})
+        res = data.get("chart", {}).get("result", [{}])[0]
+        meta = res.get("meta", {})
+        closes = [c for c in (res.get("indicators", {}).get("quote", [{}])[0].get("close") or []) if c is not None]
+        ts = res.get("timestamp") or []
         price = meta.get("regularMarketPrice")
-        prev = meta.get("chartPreviousClose")
-        if price is None or prev is None:
-            return {}
+        if price is None or len(closes) < 2:
+            # fallback：meta chartPreviousClose
+            prev = meta.get("chartPreviousClose")
+            if price is None or prev is None:
+                return {}
+            pct = round((price - prev) / prev * 100, 2)
+            return {"price": price, "prev": prev, "change_pct": pct}
+        # 最後一根日線若為今天（UTC 日期），prev = 倒數第二根；否則 prev = 最後一根
+        import datetime as _dt
+        _last_day = _dt.datetime.utcfromtimestamp(ts[-1]).strftime("%Y-%m-%d") if ts else ""
+        _today = _dt.datetime.utcnow().strftime("%Y-%m-%d")
+        prev = closes[-2] if _last_day == _today else closes[-1]
         pct = round((price - prev) / prev * 100, 2)
         return {"price": price, "prev": prev, "change_pct": pct}
     except Exception as e:
         logger.error(f"Error fetching Yahoo Finance chart for {symbol}: {e}")
-        return {}
         return {}
 
 def fetch_yf_market() -> dict:
@@ -109,7 +122,7 @@ def fetch_yf_market() -> dict:
         "tsm": fmt(tsm),
         "sox": fmt(sox),
         "us": us,
-        "cpi": "美國 6 月 CPI YoY 3.5% (預期 3.8%)；Core 2.6% (預期 2.8%)",
+        "cpi": "美國 7 月 CPI YoY 3.5% (FRED 8/13)；Core 2.8% (FRED 8/13)",
     }
 
 # ===== News fetching with RSS feeds =====
@@ -552,7 +565,7 @@ if __name__ == "__main__":
         "tsm": "900.00 (+1.50%)",
         "sox": "5000.00 (+3.00%)",
         "us": "道瓊 39000.00 (+0.50%) / 納指 17000.00 (+1.00%) / S&P 5200.00 (+0.75%)",
-        "cpi": "美國 6 月 CPI YoY 3.5% (預期 3.8%)；Core 2.6% (預期 2.8%)",
+        "cpi": "美國 7 月 CPI YoY 3.5% (FRED 8/13)；Core 2.8% (FRED 8/13)",
     }
     mock_signals = {
         "sell_signals": ["外資賣超台積電", "科技股展望不佳"],
