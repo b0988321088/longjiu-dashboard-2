@@ -137,7 +137,10 @@ def main() -> None:
         fail("四大信用卡未完整列出")
     # 2026-08-06：房貸表以永豐房貸/理財型/保單借貸標籤呈現，修正檢查字串
     # 2026-08-12 再修正：理財型貸款實際標籤為「理財型利息（房貸已清償）」，日報含「理財型」即視為列出
-    if not ("永豐房貸" in daily and "理財型" in daily and "保單借貸" in daily):
+    # 2026-08-14 三修：理財型房貸已於 8/11 全數清償（snapshot financial_mortgage=0），日報正確不顯示「理財型」；僅 financial_mortgage>0 時才要求該字串
+    _fm = snap.get("financial_mortgage", 0) or 0
+    _need_licai = "理財型" in daily if _fm > 0 else True
+    if not ("永豐房貸" in daily and "保單借貸" in daily and _need_licai):
         fail("兩大房貸未完整列出")
     pass_check("四大信用卡 + 兩大房貸完整")
 
