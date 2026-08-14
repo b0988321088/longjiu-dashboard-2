@@ -208,7 +208,7 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
         lines.append("  ⚠️ 防守超標：維持現況，不追高")
     else:
         lines.append("  ✅ 防守合理範圍（第一優先維持）")
-    lines.append("  🔒 兩條底線：現金≥85萬；US30Y 無連3日<5.20% 不開放市值大額進場")
+    lines.append("  🔒 兩條底線：現金≥70萬；US30Y 無連3日<5.20% 不開放市值大額進場")
     
     return lines
 
@@ -232,7 +232,7 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
                 direction = "減碼" if gv > 0 else "補碼"
                 lines.append(f"  {cat}：{direction} {abs(gv):.0f}pp")
     lines.append("")
-    lines.append("再平衡：逐步架構導向，容許階段偏離；優先守現金底線85萬")
+    lines.append("再平衡：逐步架構導向，容許階段偏離；優先守現金底線70萬")
     return lines
 
 def main(**kwargs):

@@ -208,7 +208,7 @@ def main():
         print(f"  🌐 全域凍結：{dp.get('global_freeze','US30Y≥5.30%禁新增質押')}")
         print(f"  💰 效益：{dp.get('benefit_calc','年省利息32萬')[:60]}")
         gr = dp.get("gap_rules_0812", {})
-        print(f"  📌 底線：現金≥85萬({gr.get('rule_1_cash_floor','6個月生活費')[:40]})｜被動實收連2月<80%停建債｜直債僅投資級")
+        print(f"  📌 底線：現金≥70萬({gr.get('rule_1_cash_floor','6個月生活費')[:40]})｜被動實收連2月<80%停建債｜直債僅投資級")
     elif dp.get("status", "").startswith("5-5-2"):
         print(f"  ⚠️ snapshot 為 5-5-2（舊版，已被 8/12 兩層槓桿版取代）")
     else:
@@ -242,8 +242,8 @@ def main():
     elif us30y_dec >= 0.052:
         checks.append(("US30Y", f"{us30y:.2f}% ≥ 5.20%", "🟡 美股停購/長債凍結/台股≤50萬"))
     # 現金
-    if cash < 850000:
-        checks.append(("現金", f"{cash:,.0f} < 85萬", "🔴 HALT_ALL_BUY"))
+    if cash < 700000:
+        checks.append(("現金", f"{cash:,.0f} < 70萬", "🔴 HALT_ALL_BUY"))
     # 美股占比
     us_ratio = snap.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
     if us_ratio > 33:
@@ -298,7 +298,7 @@ def main():
         print(f"  {n}. 🎫 PI 未核准：禁 Lombard 質押；10/1 轉增貸建議延後")
         n += 1
     if today < date(2026, 8, 15):
-        print(f"  {n}. 🔵 8/15 撥款前：台股≤50萬/週・美股停購・長債不疊・現金底線85萬")
+        print(f"  {n}. 🔵 8/15 撥款前：台股≤50萬/週・美股停購・長債不疊・現金底線70萬")
         n += 1
     print(f"  {n}. 🛡️ 400萬停泊永遠禁止質押（防火牆）；全域凍結≠賣光舊部位")
     print("=" * 58)

@@ -10,7 +10,7 @@
     "friction_cost": 0.0015
   },
   "safety_floors": {
-    "min_cash_twd": 850000,
+    "min_cash_twd": 700000,
     "max_weekly_tw_stock_buy": 500000,
     "target_cash_ratio": 0.15,
     "target_tw_ratio": 0.15,
@@ -63,7 +63,7 @@
     {
       "metric": "CASH",
       "operator": "<",
-      "value": 850000,
+      "value": 700000,
       "level": "CRITICAL",
       "actions": ["HALT_ALL_BUY"]
     },
@@ -80,7 +80,7 @@
     "美股市值型": {"target": 0.30, "tolerance": 0.03, "upper_only": true},
     "防守型配息": {"target": 0.20, "tolerance": 0.03},
     "債券/階梯短債": {"target": 0.20, "tolerance": 0.03},
-    "現金/MMF緩衝": {"target": 0.15, "floor_twd": 850000}
+    "現金/MMF緩衝": {"target": 0.15, "floor_twd": 700000}
   },
   "short_bond_ladder_5m": {
     "total": 5000000,

@@ -2186,7 +2186,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             _h += "<li><strong>分散配置：</strong>債券已超標，停止新增買進</li>"
         if _def_g < -10:
             _h += "<li><strong>護城河：</strong>防守型配息第一優先，00878/00713 分批建倉建立穩定現金流</li>"
-        _h += "<li><strong>現金子彈：</strong>觀察期以現金緩衝優先（底線85萬），大義街撥款後僅做VIP最低100-200萬防守配息</li>"
+        _h += "<li><strong>現金子彈：</strong>觀察期以現金緩衝優先（底線70萬），大義街撥款後僅做VIP最低100-200萬防守配息</li>"
         _h += "</ul></div>"
         _h += "</div></div>"
         html = html.replace("__BUFFETT_DYNAMIC__", _h)
