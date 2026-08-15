@@ -31,7 +31,7 @@ def main():
         ("美股市值型成長", "美股市值型目標", "🇺🇸 美股", "逢反彈分批減碼（單次≤20萬），資金導向防守"),
         ("防守型配息", "配息型目標", "🛡️ 防守", "已達標維持；配息優先導入"),
         ("債券", "債券型目標", "💵 債券", "維持底倉，停止新增（00983D 不追）"),
-        ("現金/安全網", "現金目標", "💰 現金", "守住 85 萬底線，<目標優先回補"),
+        ("現金/安全網", "現金目標", "💰 現金", "守住 70 萬底線，<目標優先回補"),
     ]
     rows = []
     sum_pct = 0
@@ -64,7 +64,7 @@ def main():
     def red(k, ok, txt):
         redlines.append(f"<tr><td>{k}</td><td class='{'ok' if ok else 'bad'}'>{'✅' if ok else '❌'}</td><td>{txt}</td></tr>")
     red("US30Y < 5.30%（債券凍結線）", us30y is None or us30y < 5.30, f"目前 {us30y_txt}（模式A防禦）")
-    red("現金 ≥ 85 萬（6個月開支）", cash >= 851748, f"目前 {cash:,}（需求 851,748）")
+    red("現金 ≥ 70 萬（6個月開支）", cash >= 700000, f"目前 {cash:,}（需求 851,748）")
     red("美股 ≤ 33%（熔斷閾值）", apct.get("美股市值型成長", 0) <= 33, f"目前 {apct.get('美股市值型成長',0):.1f}%")
     red("LTV ≤ 40%（未質押）", True, "目前未質押 ✅")
     red("單筆交易 ≤ 5 萬（台股）", True, "管制中")
@@ -109,7 +109,7 @@ def main():
 
   <div class="cards">
     <div class="card"><div class="k">總資產</div><div class="v">{total:,}</div></div>
-    <div class="card"><div class="k">現金</div><div class="v {'green' if cash>=851748 else 'red'}">{cash:,}</div></div>
+    <div class="card"><div class="k">現金</div><div class="v {'green' if cash>=700000 else 'red'}">{cash:,}</div></div>
     <div class="card"><div class="k">美股超標</div><div class="v {'green' if apct.get('美股市值型成長',0)<=33 else 'red'}">{apct.get('美股市值型成長',0):.1f}%</div></div>
     <div class="card"><div class="k">US30Y</div><div class="v {'amber' if (us30y or 0)>=5.2 else 'green'}">{us30y_txt}</div></div>
     <div class="card"><div class="k">五桶合計</div><div class="v">{sum_pct:.1f}%</div></div>

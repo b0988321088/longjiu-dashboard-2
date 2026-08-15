@@ -1,103 +1,140 @@
 {
-  "system_name": "LongJiu_Arbitrage_Engine",
-  "version": "v1.0.0",
-  "funding_cost": {
-    "cathay_mortgage_rate": 0.026,
-    "min_net_yield_threshold": 0.012,
-    "tax_rate_us_etf_dividend": 0.30,
-    "tax_rate_bond": 0.0,
-    "hedging_cost": 0.0,
-    "friction_cost": 0.0015
+ "system_name": "LongJiu_Arbitrage_Engine",
+ "version": "v1.0.0",
+ "funding_cost": {
+  "cathay_mortgage_rate": 0.026,
+  "min_net_yield_threshold": 0.012,
+  "tax_rate_us_etf_dividend": 0.3,
+  "tax_rate_bond": 0.0,
+  "hedging_cost": 0.0,
+  "friction_cost": 0.0015
+ },
+ "safety_floors": {
+  "min_cash_twd": 700000,
+  "max_weekly_tw_stock_buy": 500000,
+  "target_cash_ratio": 0.15,
+  "target_tw_ratio": 0.15,
+  "target_us_ratio": 0.3,
+  "target_defensive_ratio": 0.2,
+  "target_bond_ratio": 0.2,
+  "note": "2026-08-15 下修：高利活存，底線 70 萬"
+ },
+ "execution_thresholds": {
+  "green_light": 0.012,
+  "yellow_light_min": 0.005,
+  "yellow_light_max": 0.012,
+  "red_light": 0.005
+ },
+ "risk_breakers": [
+  {
+   "metric": "US30Y",
+   "operator": ">=",
+   "value": 0.052,
+   "level": "WARNING",
+   "actions": [
+    "FREEZE_US_STOCKS",
+    "FREEZE_LONG_BONDS",
+    "LIMIT_TW_STOCKS_50K"
+   ]
   },
-  "safety_floors": {
-    "min_cash_twd": 700000,
-    "max_weekly_tw_stock_buy": 500000,
-    "target_cash_ratio": 0.15,
-    "target_tw_ratio": 0.15,
-    "target_us_ratio": 0.30,
-    "target_defensive_ratio": 0.20,
-    "target_bond_ratio": 0.20
+  {
+   "metric": "US30Y",
+   "operator": ">",
+   "value": 0.053,
+   "level": "CRITICAL",
+   "actions": [
+    "GLOBAL_FREEZE",
+    "RETRIV_TO_MMF"
+   ]
   },
-  "execution_thresholds": {
-    "green_light": 0.012,
-    "yellow_light_min": 0.005,
-    "yellow_light_max": 0.012,
-    "red_light": 0.005
+  {
+   "metric": "LTV",
+   "operator": ">=",
+   "value": 0.35,
+   "level": "WARNING",
+   "actions": [
+    "HALT_NEW_PLEDGE"
+   ]
   },
-  "risk_breakers": [
-    {
-      "metric": "US30Y",
-      "operator": ">=",
-      "value": 0.052,
-      "level": "WARNING",
-      "actions": ["FREEZE_US_STOCKS", "FREEZE_LONG_BONDS", "LIMIT_TW_STOCKS_50K"]
-    },
-    {
-      "metric": "US30Y",
-      "operator": ">",
-      "value": 0.053,
-      "level": "CRITICAL",
-      "actions": ["GLOBAL_FREEZE", "RETRIV_TO_MMF"]
-    },
-    {
-      "metric": "LTV",
-      "operator": ">=",
-      "value": 0.35,
-      "level": "WARNING",
-      "actions": ["HALT_NEW_PLEDGE"]
-    },
-    {
-      "metric": "LTV",
-      "operator": ">=",
-      "value": 0.38,
-      "level": "CRITICAL",
-      "actions": ["INJECT_CASH_MARGIN", "HALT_EXPANSION"]
-    },
-    {
-      "metric": "NET_SPREAD",
-      "operator": "<",
-      "value": 0.0,
-      "level": "CRITICAL",
-      "actions": ["HALT_ALL_LEVERAGE", "ACCELERATE_PRINCIPAL_REPAY"]
-    },
-    {
-      "metric": "CASH",
-      "operator": "<",
-      "value": 700000,
-      "level": "CRITICAL",
-      "actions": ["HALT_ALL_BUY"]
-    },
-    {
-      "metric": "US_STOCK_RATIO",
-      "operator": ">",
-      "value": 0.33,
-      "level": "WARNING",
-      "actions": ["FREEZE_US_BUY", "SELL_RALLY_PORTION"]
-    }
-  ],
-  "rebalance_targets": {
-    "台股市值型": {"target": 0.15, "tolerance": 0.03},
-    "美股市值型": {"target": 0.30, "tolerance": 0.03, "upper_only": true},
-    "防守型配息": {"target": 0.20, "tolerance": 0.03},
-    "債券/階梯短債": {"target": 0.20, "tolerance": 0.03},
-    "現金/MMF緩衝": {"target": 0.15, "floor_twd": 700000}
+  {
+   "metric": "LTV",
+   "operator": ">=",
+   "value": 0.38,
+   "level": "CRITICAL",
+   "actions": [
+    "INJECT_CASH_MARGIN",
+    "HALT_EXPANSION"
+   ]
   },
-  "short_bond_ladder_5m": {
-    "total": 5000000,
-    "tranche_1_year": 2000000,
-    "tranche_2_year": 1500000,
-    "tranche_3_year": 1500000,
-    "expected_yield_min": 0.045,
-    "expected_yield_max": 0.050,
-    "net_spread_min": 0.019,
-    "net_spread_max": 0.024
+  {
+   "metric": "NET_SPREAD",
+   "operator": "<",
+   "value": 0.0,
+   "level": "CRITICAL",
+   "actions": [
+    "HALT_ALL_LEVERAGE",
+    "ACCELERATE_PRINCIPAL_REPAY"
+   ]
   },
-  "ltv_limits": {
-    "normal_env": 0.40,
-    "stagflation_warning_env": 0.30
+  {
+   "metric": "CASH",
+   "operator": "<",
+   "value": 700000,
+   "level": "CRITICAL",
+   "actions": [
+    "HALT_ALL_BUY"
+   ]
   },
-  "pi_gate": {
-    "required_status": "已正式核准",
-    "note": "PI非已正式核准 → 禁止任何Lombard質押借出；10/1洲際W轉增貸前置檢查"
+  {
+   "metric": "US_STOCK_RATIO",
+   "operator": ">",
+   "value": 0.33,
+   "level": "WARNING",
+   "actions": [
+    "FREEZE_US_BUY",
+    "SELL_RALLY_PORTION"
+   ]
   }
+ ],
+ "rebalance_targets": {
+  "台股市值型": {
+   "target": 0.15,
+   "tolerance": 0.03
+  },
+  "美股市值型": {
+   "target": 0.3,
+   "tolerance": 0.03,
+   "upper_only": true
+  },
+  "防守型配息": {
+   "target": 0.2,
+   "tolerance": 0.03
+  },
+  "債券/階梯短債": {
+   "target": 0.2,
+   "tolerance": 0.03
+  },
+  "現金/MMF緩衝": {
+   "target": 0.15,
+   "floor_twd": 700000
+  }
+ },
+ "short_bond_ladder_5m": {
+  "total": 5000000,
+  "tranche_1_year": 2000000,
+  "tranche_2_year": 1500000,
+  "tranche_3_year": 1500000,
+  "expected_yield_min": 0.045,
+  "expected_yield_max": 0.05,
+  "net_spread_min": 0.019,
+  "net_spread_max": 0.024
+ },
+ "ltv_limits": {
+  "normal_env": 0.4,
+  "stagflation_warning_env": 0.3
+ },
+ "pi_gate": {
+  "required_status": "已正式核准",
+  "note": "PI非已正式核准 → 禁止任何Lombard質押借出；10/1洲際W轉增貸前置檢查"
+ }
 }

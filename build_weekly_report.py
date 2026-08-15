@@ -64,7 +64,7 @@ def main():
                ("美股市值型成長", "美股市值型目標", "🇺🇸 美股", "逢彈減碼（≤20萬/次）"),
                ("防守型配息", "配息型目標", "🛡️ 防守", "已達標，配息優先導入"),
                ("債券", "債券型目標", "💵 債券", "維持底倉，停止新增"),
-               ("現金/安全網", "現金目標", "💰 現金", "優先回補 ≥85萬")]
+               ("現金/安全網", "現金目標", "💰 現金", "優先回補 ≥70萬")]
     rows3 = ""
     for ak, tk, label, act in BUCKETS:
         a, t = apct.get(ak, 0), targets.get(tk, 0)
@@ -75,10 +75,10 @@ def main():
 
     # ===== 五、風險紅線 =====
     us_ok = apct.get("美股市值型成長", 0) <= 33
-    cash_ok = cash >= 851748
+    cash_ok = cash >= 700000
     us30y_ok = us30y is None or us30y < 5.30
     rows5 = f"""<tr><td>US30Y &lt; 5.30%（債券凍結線）</td><td>{'✅' if us30y_ok else '❌'}</td><td>{us30y_txt}（{mode}）</td></tr>
-    <tr><td>現金 ≥ 85 萬（6個月開支）</td><td>{'✅' if cash_ok else '❌'}</td><td>{cash:,}（需求 851,748）</td></tr>
+    <tr><td>現金 ≥ 70 萬（6個月開支）</td><td>{'✅' if cash_ok else '❌'}</td><td>{cash:,}（需求 851,748）</td></tr>
     <tr><td>美股 ≤ 33%</td><td>{'✅' if us_ok else '❌'}</td><td>{apct.get('美股市值型成長',0):.1f}%</td></tr>
     <tr><td>LTV ≤ 40%</td><td>✅</td><td>未質押</td></tr>
     <tr><td>台股單筆 ≤ 5 萬</td><td>✅</td><td>管制中</td></tr>
@@ -134,7 +134,7 @@ def main():
 
     # ===== 十二、引擎熔斷 =====
     eng = f"""<table><thead><tr><th>閘門</th><th>條件</th><th>目前</th></tr></thead><tbody>
-    <tr><td>HALT_ALL_BUY</td><td>現金 &lt; 85萬</td><td>{'🔴 觸發' if cash < 850000 else '🟢'}</td></tr>
+    <tr><td>HALT_ALL_BUY</td><td>現金 &lt; 70萬</td><td>{'🔴 觸發' if cash < 850000 else '🟢'}</td></tr>
     <tr><td>FREEZE_US_BUY</td><td>美股 &gt; 33%</td><td>{'🟡 觸發' if apct.get('美股市值型成長',0) > 33 else '🟢'}</td></tr>
     <tr><td>US30Y 警戒</td><td>≥5.20%</td><td>{'🟡 觸發' if (us30y or 0) >= 5.20 else '🟢'}</td></tr>
     <tr><td>LTV 熔斷</td><td>&gt;38%</td><td>🟢 0%</td></tr>
@@ -146,7 +146,7 @@ def main():
 <li><b>8/15 國泰撥款 1,200萬</b> → 兩層槓桿版：還債 800萬 → 建債梯（3-7Y 375 + 8-10Y 125）→ 現金緩衝</li>
 <li><b>PI 送件</b>：撥款後盤點資產 3,000萬</li>
 <li><b>美股逢彈減碼</b>（38.7%→30%，≤20萬/次）→ 資金導向防守</li>
-<li><b>現金回補</b>（≥85萬底線）</li>
+<li><b>現金回補</b>（≥70萬底線）</li>
 <li><b>每週六再平衡評估</b>＋保單 JPM 轉換後穿透追蹤</li>
 </ol>"""
 
@@ -241,7 +241,7 @@ li{{margin-bottom:5px;font-size:12.5px;line-height:1.5}}
 <div class="card" style="background:#fefce8;border:1px solid #fde68a"><h2 style="border-color:#f59e0b">⚠️ 執行紀律</h2>
 <ul style="padding-left:18px;margin:0;font-size:12.5px">
 <li>台股單筆 ≤5 萬、回檔小單、不追漲；美股單次調度 ≤20 萬</li>
-<li>現金底線 85 萬（6個月開支）任何操作後不得跌破</li>
+<li>現金底線 70 萬（6個月開支）任何操作後不得跌破</li>
 <li>8/15 前：僅配息導流，暫緩大規模賣出（國泰授信審查）</li>
 <li>兩層槓桿版：階段1 禁質押；階段2 四門檻全過才執行（US30Y&lt;5.30/LTV≤50/觀察1-3日/成本&lt;殖利率）</li>
 </ul></div>

@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-15T07:00:15.723355",
+  "generated_at": "2026-08-15T13:30:52.542802",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-15",
-  "total_assets": 14517659.0,
+  "total_assets": 14517659,
   "total_liabilities": 18148676,
   "net_worth": -3631017.0,
   "debt_ratio": 37.6,
@@ -10,7 +10,7 @@
   "monthly_expense": 141958,
   "working_surplus": 76144,
   "retirement_surplus": 18142,
-  "securities_total_market_value": 2910460.0,
+  "securities_total_market_value": 2910460,
   "fund_market_value": 831883,
   "moneybook_total": 3614169,
   "high_yield_savings_total": 2200410,
@@ -74,7 +74,7 @@
   "credit_card_pending": 28101,
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
-  "securities_total": 2897450,
+  "securities_total": 2910460,
   "funds_total": 831883,
   "last_calibration_sources": {
     "securities": "凱基證券截圖 2026-07-18 02:00",
@@ -738,7 +738,7 @@
   "firstjin_cum_dividend": 99101,
   "allianz_cum_dividend": 1630962,
   "firstjin_cost": 2000000,
-  "securities_market_value": 2897450,
+  "securities_market_value": 2910460,
   "securities_unrealized_pnl": 323460,
   "monthly_salary": 39727,
   "travel_allowance": 12000,
@@ -1309,8 +1309,8 @@
     }
   },
   "fund_dividend_monthly": 0,
-  "fund_market": 815570,
-  "fund_total_market_value": 815570,
+  "fund_market": 831883,
+  "fund_total_market_value": 831883,
   "insurance": 9986190,
   "professional_investor": {
     "status": "申請中（待8/15貸款撥款後盤點）",
@@ -1519,7 +1519,7 @@
   "policy_pledge_rate_note": "使用者確認 2026-08-05：保單質押利率 4%（原記錄 5% 有誤）",
   "pledge_loan_rate": null,
   "pledge_loan_rate_note": "待確認（凱基/券商對帳單）",
-  "securities_market": 2897450,
+  "securities_market": 2910460,
   "allianz_a_funds": 5214511,
   "allianz_b_funds": 2779414,
   "fx_rates": {
@@ -1742,14 +1742,11 @@
   },
   "allianz_total": 8028248,
   "cash_floor_rule": {
-    "rule": "現金底線 = 6 個月開支（動態）",
+    "rule": "現金底線 = 700,000（2026-08-15 使用者裁示下修；高利活存流動性足夠）",
     "monthly_expense": 141958,
-    "six_month_requirement": 851748,
-    "current_cash": 789126,
-    "coverage_months": 5.6,
-    "status": "93% 達標（差 62,622）",
-    "note": "2026-08-13 使用者裁示：理論上現金只需達 6 個月開支；85萬固定底線≈6個月開支(85.2萬)，改用動態標準",
-    "with_reservoir": "現金+200萬水庫 = 2,789,126 → 19.6 個月"
+    "cash_floor": 700000,
+    "previous": 851748,
+    "note": "原 6 個月開支 851,748 下修至 70 萬；高利活存帳戶本身有收益+流動性，緩衝需求降低"
   },
   "career_plan": {
     "status": "2026-08-13 定調：資產公司節稅為主體，AI顧問/房地產管理/台電延伸為附加業務",

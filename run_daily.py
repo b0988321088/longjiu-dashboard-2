@@ -1156,7 +1156,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     f"<strong>③ 月度利息流出 vs 現金流入：</strong>流出 {_p1_cost_m:,.0f} vs 流入（配息＋房租實收）{_income_m:,.0f} — {'✅ 覆蓋' if _income_m >= _p1_cost_m else '⚠️ 未覆蓋'}<br/>"
                     f"<strong>④ 到期對照：</strong>負債＝國泰轉貸（8/15 撥款；償還800萬後剩餘400萬）；債券＝直債梯 3-7Y/8-10Y（建倉後持有到期）— 債券期限內無大額負債到期 ✅<br/>"
                     f"<strong>⑤ US30Y：</strong>{_us30y_now:.2f}% — {_fz_txt}<br/>"
-                    f"<strong>⑥ 底線規則（8/13 動態）：</strong>現金≥6個月開支（{851748:,}，月開支 141,958）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/>"
+                    f"<strong>⑥ 底線規則（8/13 動態）：</strong>現金≥6個月開支（{700000:,}，月開支 141,958）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/>"
                     f"<strong>⛔ 資金禁令：</strong>轉貸/質押資金禁止生活消費擴張"
                     f"</div></div>"
                 )
@@ -2166,7 +2166,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         _h += (f"<li class='text-amber-300'><strong>🚨 指示卡（{_today_s} 核心‑衛星保守成長版）：</strong>"
                "目標配置＝台股15/美股30/防守20/債券20/現金15，為中長期方向，容許數月階段偏離；"
                "債券鎖短中期投資等級（存續期1-5年，BBB-以上）；平衡基金僅限衛星≤防禦20%；"
-               "兩條底線＝現金 ≥85 萬、US30Y >5.20% 停新增長債；Lombard 橋接需手動開啟且借款≤擔保品4成</li>")
+               "兩條底線＝現金 ≥70 萬、US30Y >5.20% 停新增長債；Lombard 橋接需手動開啟且借款≤擔保品4成</li>")
         for _ln in _bl:
             if "補碼" in _ln or "減碼" in _ln or "合理" in _ln:
                 _h += f"<li>{_ln.replace('  ✅ ','').replace('  ⚠️ ','')}</li>"
