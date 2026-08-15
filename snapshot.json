@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-15T22:00:29.617635",
+  "generated_at": "2026-08-16T07:00:39.457055",
   "version": "v5.0.10-true-value-correction",
-  "date": "2026-08-15",
-  "total_assets": 14517659,
+  "date": "2026-08-16",
+  "total_assets": 14554746,
   "total_liabilities": 18148676,
   "net_worth": -3631017.0,
   "debt_ratio": 37.6,
@@ -63,7 +63,7 @@
   "cc_mid": 38000,
   "cc_high": 42000,
   "firstjin_fl65_current_value": 1992265,
-  "allianz_ab_current_value": 7993925,
+  "allianz_ab_current_value": 8031012,
   "firstjin_current_value": 1992265,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
@@ -507,33 +507,33 @@
     "max_allocation": "機會子彈 ≤ 20% 安全網部位"
   },
   "penetration": {
-    "updated_at": "2026-08-15",
+    "updated_at": "2026-08-16",
     "source": "calc_penetration (auto-calibrated)",
     "targets": {
       "台股市值型目標": 15,
       "美股市值型目標": 30,
       "配息型目標": 20,
-      "債券型目標": 20,
-      "現金目標": 15
+      "債券型目標": 30,
+      "現金目標": 5
     },
     "actual_pct": {
       "台股市值型成長": 13.4,
-      "美股市值型成長": 38.7,
-      "防守型配息": 21.5,
+      "美股市值型成長": 38.8,
+      "防守型配息": 21.4,
       "債券": 21.0,
       "現金/安全網": 5.4
     },
     "gaps": {
       "台股市值型成長": -1.6,
-      "美股市值型成長": 8.7,
-      "防守型配息": 1.5,
+      "美股市值型成長": 8.8,
+      "防守型配息": 1.4,
       "債券及安全現金": -8.6
     },
     "actual_twd": {
       "台股市值型成長": 1947494.0,
-      "美股市值型成長": 5613257.0,
+      "美股市值型成長": 5642499.0,
       "防守型配息": 3120352.0,
-      "債券": 3047430.0,
+      "債券": 3055275.0,
       "現金/安全網": 789126.0
     },
     "alert": "台股不足1.6pp；現金+債券超標8.6pp"
@@ -700,7 +700,7 @@
       "PIMCO收益增長": 972361
     }
   },
-  "allianz_ab": 7993925,
+  "allianz_ab": 8031012,
   "firstjin": 1992265,
   "dividend_records": {
     "2026-07-21": {
@@ -899,19 +899,19 @@
   },
   "funds": 791059,
   "allianz_a_breakdown": {
-    "安聯收益成長": 734743,
-    "摩根JPM多重收益": 1984163,
-    "貝萊德世界科技A10": 1197850,
-    "PIMCO收益增長": 1297755
+    "安聯收益成長": 736438,
+    "摩根JPM多重收益": 1990233,
+    "貝萊德世界科技A10": 1212767,
+    "PIMCO收益增長": 1301061
   },
-  "allianz_a_current_value": 5214511,
+  "allianz_a_current_value": 5240499,
   "allianz_b_breakdown": {
-    "安聯收益成長": 518211,
-    "摩根JPM多重收益": 910641,
-    "貝萊德世界科技A10": 371209,
-    "PIMCO收益增長": 979353
+    "安聯收益成長": 519407,
+    "摩根JPM多重收益": 913426,
+    "貝萊德世界科技A10": 375832,
+    "PIMCO收益增長": 981848
   },
-  "allianz_b_current_value": 2779414,
+  "allianz_b_current_value": 2790513,
   "monthly_dividend_total": 153389,
   "relay_stations": {
     "第一站（月初）": {
@@ -961,7 +961,7 @@
   "moneybook_date": "2026-07-27",
   "total_portfolio_value": 16303141,
   "total_stock_value": 2499320,
-  "allianz_combined": 7993925,
+  "allianz_combined": 8031012,
   "allianz_a_value": 5239469,
   "allianz_b_value": 2788779,
   "_updated_by": "Hermes",
@@ -1289,8 +1289,8 @@
   "allianz_b": 2788779,
   "firstjin_fund_name": "FJ33-摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(每月派息)-美元",
   "insurance_label_b": "第一金FL65→FJ33摩根（8/4轉換）",
-  "insurance_current_value": 9986190,
-  "insurance_total": 9986190,
+  "insurance_current_value": 10023277,
+  "insurance_total": 10023277,
   "pending_income": [
     {
       "source": "台電標案合作（上境工程）利潤分成",
@@ -1311,7 +1311,7 @@
   "fund_dividend_monthly": 0,
   "fund_market": 831883,
   "fund_total_market_value": 831883,
-  "insurance": 9986190,
+  "insurance": 10023277,
   "professional_investor": {
     "status": "申請中（待8/15貸款撥款後盤點）",
     "threshold": 30000000,
@@ -1451,7 +1451,13 @@
           "質押初始LTV最高50%，不得打滿上限",
           "質押釋放資金僅限投入現金流類資產：直債、配息ETF、美債梯；禁止配置成長投機類標的",
           "禁止同一周內完成「建債+質押+再投資」全套連續動作"
-        ]
+        ],
+        "status_0815": {
+          "傾向": "暫緩/傾向放棄（使用者 8/15 評估：質押利差 1.5-2% vs 風險不對稱，不值得）",
+          "benefit_vs_risk": "質押 300萬@2.88% 淨利差 ~5.8萬/年，但要扛 LTV/匯率/利率三維風險；黑天鵝吃掉 2-3 年利差",
+          "decision_trigger": "若未來利差明顯擴大（借款成本<2.5% 或債券殖利率>5.5%）再重新評估",
+          "note": "債券梯主力走複委託（省手續費 8-12萬）；不需銀行保管債券"
+        }
       },
       "global_freeze": "US30Y ≥ 5.30%：全域凍結紅線，禁止新增債券質押（已開啟第二層者：停止所有新增質押，啟動逐步降LTV規劃）",
       "fund_ban": "轉貸、質押取得的資金，禁止用於生活消費擴張",
@@ -1461,6 +1467,12 @@
         "rule_1_cash_floor": "緊急預備金守 85 萬實線（=6個月生活費 141,958×6；非僅6個月利息15.6萬）。8/15 建債完成後現金仍須 ≥85 萬，任何時刻不得跌破；低於時優先暫停換匯/建債補回",
         "rule_2_passive_receipt_monitor": "被動實收監控：每月對照 配息/房租實收 vs 常態估算（配息常態153,389/房租80,100）。連續2個月實收 < 常態80% 時：降低建債節奏、暫停階段2質押評估，先補實收缺口",
         "rule_3_bond_credit_rule": "直債信用等級規則：只買 美債＋投資級公司債（BBB-以上）；單一發行人 ≤20%；避開高收益債/新興市場債；建倉前確認發行人與評等"
+      },
+      "vip_strategy_0815": {
+        "目標": "維持銀行 VIP（最低門檻 100-200萬 AUM）",
+        "產品": "高利活存（最佳）/ 美元定存 / 貨幣基金 / 短債 — 保本+收益+計AUM",
+        "avoid": "結構型商品慎選（費用高）；理專推薦債券若手續費>1.5% 不買",
+        "質押": "階段2 暫緩傾向放棄 → 不需為質押多買銀行債"
       }
     },
     "low_risk_arbitrage": {
@@ -1520,8 +1532,8 @@
   "pledge_loan_rate": null,
   "pledge_loan_rate_note": "待確認（凱基/券商對帳單）",
   "securities_market": 2910460,
-  "allianz_a_funds": 5214511,
-  "allianz_b_funds": 2779414,
+  "allianz_a_funds": 5240499,
+  "allianz_b_funds": 2790513,
   "fx_rates": {
     "jpy_to_twd": 0.215,
     "usd_to_twd": 32.4375,
