@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-08-17T22:00:35.949830",
+  "generated_at": "2026-08-18T07:00:23.319799",
   "version": "v5.0.10-true-value-correction",
-  "date": "2026-08-17",
+  "date": "2026-08-18",
   "total_assets": 14474352,
   "total_liabilities": 18148676,
   "net_worth": -3631017.0,
@@ -507,7 +507,7 @@
     "max_allocation": "機會子彈 ≤ 20% 安全網部位"
   },
   "penetration": {
-    "updated_at": "2026-08-17",
+    "updated_at": "2026-08-18",
     "source": "calc_penetration (auto-calibrated)",
     "targets": {
       "台股市值型目標": 15,
