@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-17T07:00:42.486741",
+  "generated_at": "2026-08-17T12:36:11.852405",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-17",
-  "total_assets": 14554746,
+  "total_assets": 14551776,
   "total_liabilities": 18148676,
   "net_worth": -3631017.0,
   "debt_ratio": 37.6,
@@ -67,7 +67,7 @@
   "firstjin_current_value": 1992265,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
-  "bank_assets_moneybook": 789126,
+  "bank_assets_moneybook": 786156,
   "bank_assets_memo": "Moneybook 2026-08-10 匯入（8/10 轉100萬還星展理財型房貸）",
   "monthly_expense_mb": 199186,
   "monthly_expense_mb_note": "MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償",
@@ -111,7 +111,7 @@
     "note": "2026-08-14 鉅亨真值 831,883（一般 377,149 + 自由Pay 454,734）；一般申購明細 8/13 CSV + 截圖 2 檔新值，匯率調整 -1884"
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
-  "real_liquid_assets": 789126,
+  "real_liquid_assets": 786156,
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
   "passive_income": {
     "fund_dividend_monthly": 0,
@@ -534,7 +534,7 @@
       "美股市值型成長": 5642499.0,
       "防守型配息": 3120352.0,
       "債券": 3055275.0,
-      "現金/安全網": 789126.0
+      "現金/安全網": 786156.0
     },
     "alert": "台股不足1.6pp；現金+債券超標8.6pp"
   },
@@ -656,7 +656,7 @@
   "securities_tw_growth": 1007090,
   "securities_tw_defense": 1022090,
   "securities_us_growth": 76050,
-  "cash": 789126,
+  "cash": 786156,
   "high_yield_savings": 2200410,
   "regular_cash": 1684210,
   "mortgages": [
@@ -744,7 +744,7 @@
   "travel_allowance": 12000,
   "second_salary": 39121,
   "bonus_july": 39121,
-  "cash_total": 789126,
+  "cash_total": 786156,
   "bonds_cash": 10262984,
   "monthly_dividend_breakdown": {
     "allianz": 95347,
