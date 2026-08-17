@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-17T13:19:14.682407",
+  "generated_at": "2026-08-17T18:59:48.957415",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-17",
-  "total_assets": 14537226,
+  "total_assets": 14529939,
   "total_liabilities": 18148676,
   "net_worth": -3631017.0,
   "debt_ratio": 37.6,
@@ -62,9 +62,9 @@
   "cc_low": 35000,
   "cc_mid": 38000,
   "cc_high": 42000,
-  "firstjin_fl65_current_value": 1992265,
+  "firstjin_fl65_current_value": 1984978,
   "allianz_ab_current_value": 8031012,
-  "firstjin_current_value": 1992265,
+  "firstjin_current_value": 1984978,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
   "bank_assets_moneybook": 786156,
@@ -532,7 +532,7 @@
     "actual_twd": {
       "台股市值型成長": 1941214.0,
       "美股市值型成長": 5641399.0,
-      "防守型配息": 3114832.0,
+      "防守型配息": 3107545.0,
       "債券": 3053675.0,
       "現金/安全網": 786106.0
     },
@@ -701,7 +701,7 @@
     }
   },
   "allianz_ab": 8031012,
-  "firstjin": 1992265,
+  "firstjin": 1984978,
   "dividend_records": {
     "2026-07-21": {
       "FJ33 摩根": 9356,
@@ -1319,8 +1319,8 @@
   "allianz_b": 2788779,
   "firstjin_fund_name": "FJ33-摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(每月派息)-美元",
   "insurance_label_b": "第一金FL65→FJ33摩根（8/4轉換）",
-  "insurance_current_value": 10023277,
-  "insurance_total": 10023277,
+  "insurance_current_value": 10015990,
+  "insurance_total": 10015990,
   "pending_income": [
     {
       "source": "台電標案合作（上境工程）利潤分成",
@@ -1341,7 +1341,7 @@
   "fund_dividend_monthly": 0,
   "fund_market": 831883,
   "fund_total_market_value": 831883,
-  "insurance": 10023277,
+  "insurance": 10015990,
   "professional_investor": {
     "status": "申請中（待8/15貸款撥款後盤點）",
     "threshold": 30000000,

@@ -848,12 +848,12 @@
   },
   "2026-08-17": {
     "date": "2026-08-17",
-    "total_assets": 14537226.0,
+    "total_assets": 14529939.0,
     "total_liabilities": 18148676.0,
-    "net_worth": -3611450.0,
+    "net_worth": -3618737.0,
     "securities_market": 2895910.0,
-    "insurance_current": 10023277.0,
-    "insurance_total": 10023277.0,
+    "insurance_current": 10015990.0,
+    "insurance_total": 10015990.0,
     "fund_market": 831883.0,
     "real_estate": 0.0,
     "cash": 786156.0,
@@ -871,8 +871,8 @@
       "  B-安聯AI收益成長": 554875,
       "  B-PIMCO收益增長": 972361,
       "安聯A+B合計": 8031012.0,
-      "━第一金FL65現値": 1992265.0,
-      "━保單總現値": 10023277.0
+      "━第一金FL65現値": 1984978.0,
+      "━保單總現値": 10015990.0
     },
     "fund_dividend_monthly": 66457.0,
     "monthly_income": 214685.0,
