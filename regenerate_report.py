@@ -264,7 +264,8 @@ print(f'📰 日報:      https://b0988321088.github.io/longjiu-dashboard-2/{OUT
 print(f'🏠 儀表板:    https://b0988321088.github.io/longjiu-dashboard-2/')
 print(f'📈 差異分析:  https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html')
 print(f'📊 穿透分析:  https://b0988321088.github.io/longjiu-dashboard-2/penetration_report_{TODAY}.html')
-print(f'🚨 緊急應變:  https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_{TODAY}.html')
+_emergency_link = f"emergency_report_{TODAY}.html" if Path(f"emergency_report_{TODAY}.html").exists() else (_latest_er if _latest_er else "無（週末不產出）")
+print(f'🚨 緊急應變:  https://b0988321088.github.io/longjiu-dashboard-2/{_emergency_link}')
 
 import sys
 sys.exit(0 if ok else 1)

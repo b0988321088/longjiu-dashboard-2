@@ -214,7 +214,7 @@ li{{margin-bottom:5px;font-size:12.5px;line-height:1.5}}
 <p style="font-size:13px;margin:0 0 8px">目前 US30Y <b>{us30y_txt}</b> → 模式 <b>{mode}</b></p>
 {rhythm}</div>
 
-<div class="card"><h2>📊 三、穿透對照（目標 15/30/20/20/15）</h2>
+<div class="card"><h2>📊 三、穿透對照（目標 15/30/20/30/5）</h2>
 <table><thead><tr><th>類別</th><th class="num">金額</th><th class="num">實際</th><th class="num">目標</th><th class="num">差距</th><th>燈號</th><th>建議</th></tr></thead><tbody>{rows3}</tbody></table></div>
 
 <div class="card"><h2>🎯 四、下週行動</h2>{act4}</div>

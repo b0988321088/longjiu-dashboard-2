@@ -647,7 +647,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <div class="label">四大戰略重點</div>
 
     <h3>保單維運</h3>
-    <p class="text-lead">保單現值 <strong>{insurance_total:,} TWD</strong>（安聯 A+B {allianz:,} + {firstjin_label} {firstjin:,}），本月配息合計 <strong>{monthly_dividend:,} TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
+    <p class="text-lead">保單現值 <strong>{insurance_total:,} TWD</strong>（安聯 A+B {allianz:,} + {firstjin_label} {firstjin:,}），本月配息合計 <strong>{tv['insurance_dividend']:,} TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
 
     <h3>證券曝險</h3>
     <p class="text-lead">證券總市值 <strong>{tv['securities_total']:,} TWD</strong>（{tv['holdings_count']}檔）。本月已收配息：{tv['sec_dividend_monthly']:,} TWD。前三大：{tv['holdings_top3'][0][0]} {tv['holdings_top3'][0][1]:.1f}%、{tv['holdings_top3'][1][0]} {tv['holdings_top3'][1][1]:.1f}%、{tv['holdings_top3'][2][0]} {tv['holdings_top3'][2][1]:.1f}%。0056 凍結質押中，短期無法加碼。</p>
@@ -664,7 +664,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   <div class="card">
     <h2>5/9｜保單接力引擎 Insurance Relay Engine</h2>
     <div class="label">三站配息接力（月初→月中→月底）</div>
-    <p class="text-lead"><strong>本月配息合計：{monthly_dividend:,} TWD</strong></p>
+    <p class="text-lead"><strong>本月配息合計：{tv['insurance_dividend']:,} TWD</strong></p>
     {relay_table}
     {_relay_calendar_html}
 
