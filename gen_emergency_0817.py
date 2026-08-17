@@ -75,6 +75,20 @@ def page(title, sub_note):
 railway = page("台股緊急應變報告", GEN_AT)
 github = page("台股緊急應變報告（GitHub 版）", GEN_AT)
 
+# INC-134 補強（2026-08-17）：動態注入穿透五桶 + 總資產（緊急應變必須含穿透真值）
+try:
+    _snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+    _pen_twd = _snap.get("penetration", {}).get("actual_twd", {})
+    _total = _snap.get("total_assets", 0)
+    _pen_card = f"""<div class="card"><h2>📊 資產穿透（{TODAY}）</h2>
+    <p>總資產：<b>{_total:,.0f}</b> TWD（不含不動產）</p>
+    <p>台股 {_pen_twd.get('台股市值型成長',0):,.0f}｜美股 {_pen_twd.get('美股市值型成長',0):,.0f}｜防守 {_pen_twd.get('防守型配息',0):,.0f}｜債券 {_pen_twd.get('債券',0):,.0f}｜現金 {_pen_twd.get('現金/安全網',0):,.0f}</p></div>"""
+    railway = railway.replace("</div></body></html>", _pen_card + "</div></body></html>")
+    github = github.replace("</div></body></html>", _pen_card + "</div></body></html>")
+    print(f"✅ 穿透已注入（總資產 {_total:,.0f}）")
+except Exception as e:
+    print(f"⚠️ 穿透注入失敗: {e}")
+
 p1 = BASE / f"emergency_report_{TODAY}.html"
 p2 = BASE / f"emergency_taiex_report_{TODAY}.html"
 p1.write_text(railway, encoding="utf-8")
