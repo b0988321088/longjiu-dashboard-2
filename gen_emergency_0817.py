@@ -79,10 +79,12 @@ github = page("台股緊急應變報告（GitHub 版）", GEN_AT)
 try:
     _snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     _pen_twd = _snap.get("penetration", {}).get("actual_twd", {})
+    _pen_pct = _snap.get("penetration", {}).get("actual_pct", {})
     _total = _snap.get("total_assets", 0)
     _pen_card = f"""<div class="card"><h2>📊 資產穿透（{TODAY}）</h2>
     <p>總資產：<b>{_total:,.0f}</b> TWD（不含不動產）</p>
-    <p>台股 {_pen_twd.get('台股市值型成長',0):,.0f}｜美股 {_pen_twd.get('美股市值型成長',0):,.0f}｜防守 {_pen_twd.get('防守型配息',0):,.0f}｜債券 {_pen_twd.get('債券',0):,.0f}｜現金 {_pen_twd.get('現金/安全網',0):,.0f}</p></div>"""
+    <p>台股 {_pen_pct.get('台股市值型成長',0):.1f}%｜美股 {_pen_pct.get('美股市值型成長',0):.1f}%｜防守 {_pen_pct.get('防守型配息',0):.1f}%｜債券 {_pen_pct.get('債券',0):.1f}%｜現金 {_pen_pct.get('現金/安全網',0):.1f}%</p>
+    <p style="color:var(--mut);font-size:13px">金額：台股 {_pen_twd.get('台股市值型成長',0):,.0f}｜美股 {_pen_twd.get('美股市值型成長',0):,.0f}｜防守 {_pen_twd.get('防守型配息',0):,.0f}｜債券 {_pen_twd.get('債券',0):,.0f}｜現金 {_pen_twd.get('現金/安全網',0):,.0f}</p></div>"""
     railway = railway.replace("</div></body></html>", _pen_card + "</div></body></html>")
     github = github.replace("</div></body></html>", _pen_card + "</div></body></html>")
     print(f"✅ 穿透已注入（總資產 {_total:,.0f}）")

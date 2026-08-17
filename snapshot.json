@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-17T18:59:48.957415",
+  "generated_at": "2026-08-17T20:15:30.016755",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-17",
-  "total_assets": 14529939,
+  "total_assets": 14474352,
   "total_liabilities": 18148676,
   "net_worth": -3631017.0,
   "debt_ratio": 37.6,
@@ -63,7 +63,7 @@
   "cc_mid": 38000,
   "cc_high": 42000,
   "firstjin_fl65_current_value": 1984978,
-  "allianz_ab_current_value": 8031012,
+  "allianz_ab_current_value": 7975425,
   "firstjin_current_value": 1984978,
   "last_mb_sync": "2026-07-18",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
@@ -518,25 +518,25 @@
     },
     "actual_pct": {
       "台股市值型成長": 13.4,
-      "美股市值型成長": 38.8,
-      "防守型配息": 21.4,
-      "債券": 21.0,
+      "美股市值型成長": 35.7,
+      "防守型配息": 21.5,
+      "債券": 24.0,
       "現金/安全網": 5.4
     },
     "gaps": {
       "台股市值型成長": -1.6,
-      "美股市值型成長": 8.8,
-      "防守型配息": 1.4,
-      "債券及安全現金": -8.6
+      "美股市值型成長": 5.7,
+      "防守型配息": 1.5,
+      "債券及安全現金": -5.6
     },
     "actual_twd": {
       "台股市值型成長": 1941214.0,
-      "美股市值型成長": 5641399.0,
+      "美股市值型成長": 5162382.0,
       "防守型配息": 3107545.0,
-      "債券": 3053675.0,
+      "債券": 3477105.0,
       "現金/安全網": 786106.0
     },
-    "alert": "台股不足1.6pp；現金+債券超標8.6pp"
+    "alert": "台股不足1.6pp；現金+債券超標5.6pp"
   },
   "penetration_canonical": {
     "updated_at": "2026-07-18",
@@ -700,7 +700,7 @@
       "PIMCO收益增長": 972361
     }
   },
-  "allianz_ab": 8031012,
+  "allianz_ab": 7975425,
   "firstjin": 1984978,
   "dividend_records": {
     "2026-07-21": {
@@ -929,19 +929,20 @@
   },
   "funds": 791059,
   "allianz_a_breakdown": {
-    "安聯收益成長": 736438,
-    "摩根JPM多重收益": 1990233,
-    "貝萊德世界科技A10": 1212767,
-    "PIMCO收益增長": 1301061
+    "安聯收益成長": 734827,
+    "摩根JPM多重收益": 1986117,
+    "M&G入息": 1118111,
+    "貝萊德世界科技A10": 938686,
+    "PIMCO收益增長": 431415
   },
-  "allianz_a_current_value": 5240499,
+  "allianz_a_current_value": 5209156,
   "allianz_b_breakdown": {
-    "安聯收益成長": 519407,
-    "摩根JPM多重收益": 913426,
-    "貝萊德世界科技A10": 375832,
-    "PIMCO收益增長": 981848
+    "安聯收益成長": 518270,
+    "摩根JPM多重收益": 911537,
+    "M&G入息": 848110,
+    "PIMCO收益增長": 488352
   },
-  "allianz_b_current_value": 2790513,
+  "allianz_b_current_value": 2766269,
   "monthly_dividend_total": 153389,
   "relay_stations": {
     "第一站（月初）": {
@@ -991,7 +992,7 @@
   "moneybook_date": "2026-07-27",
   "total_portfolio_value": 16303141,
   "total_stock_value": 2499320,
-  "allianz_combined": 8031012,
+  "allianz_combined": 7975425,
   "allianz_a_value": 5239469,
   "allianz_b_value": 2788779,
   "_updated_by": "Hermes",
@@ -1319,8 +1320,8 @@
   "allianz_b": 2788779,
   "firstjin_fund_name": "FJ33-摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(每月派息)-美元",
   "insurance_label_b": "第一金FL65→FJ33摩根（8/4轉換）",
-  "insurance_current_value": 10015990,
-  "insurance_total": 10015990,
+  "insurance_current_value": 9960403,
+  "insurance_total": 9960403,
   "pending_income": [
     {
       "source": "台電標案合作（上境工程）利潤分成",
@@ -1341,7 +1342,7 @@
   "fund_dividend_monthly": 0,
   "fund_market": 831883,
   "fund_total_market_value": 831883,
-  "insurance": 10015990,
+  "insurance": 9960403,
   "professional_investor": {
     "status": "申請中（待8/15貸款撥款後盤點）",
     "threshold": 30000000,
@@ -1562,8 +1563,8 @@
   "pledge_loan_rate": null,
   "pledge_loan_rate_note": "待確認（凱基/券商對帳單）",
   "securities_market": 2895910,
-  "allianz_a_funds": 5240499,
-  "allianz_b_funds": 2790513,
+  "allianz_a_funds": 5209156,
+  "allianz_b_funds": 2766269,
   "fx_rates": {
     "jpy_to_twd": 0.215,
     "usd_to_twd": 32.4375,
@@ -1806,7 +1807,7 @@
     },
     "related": "侍親留停（先等9等晉升後評估）→ 留停試營運 → 驗證後離職開公司"
   },
-  "allianz_a_breakdown_note": "2026-08-14 轉換：M&G入息+安聯AI → 摩根JPM多重收益(美元對沖)",
+  "allianz_a_breakdown_note": "2026-08-17 M&G入息轉回（8/14 曾轉出換JPM；8/17 貝萊德科技+部分PIMCO→M&G）",
   "cash_floor": 700000,
   "cash_floor_note": "2026-08-14 裁示：底線由 85 萬調低至 70 萬（≈5個月生活費）；8/15 國泰撥款後現金流陸續進來",
   "vehicles": {

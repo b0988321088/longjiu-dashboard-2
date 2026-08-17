@@ -138,3 +138,8 @@
 - 時間：2026-08-17
 - 錯誤：穿透三報表不一致（check_penetration_consistency.py 抓到）
 - 狀態：⏳ 待處理
+
+## INC-2026-08-17
+- 時間：2026-08-17
+- 錯誤：穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態：⏳ 待處理
