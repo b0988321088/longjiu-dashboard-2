@@ -7,7 +7,7 @@ from pathlib import Path
 from logging_config import get_logger
 logger = get_logger("penetration_monitor")
 
-BASE = Path(__file__).resolve().parent
+BASE = Path(r"C:\Users\bot\Desktop\longjiu_system")  # 2026-08-17 修正：固定指向 repo 真值 DB（原 __file__ parent → cron 讀 scripts 舊副本 8/10 → 重複發假警報）
 db_path = BASE / "dragon_assets.db"
 env_path = Path.home() / "AppData/Local/hermes/.env"
 
