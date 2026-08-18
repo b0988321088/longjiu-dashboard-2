@@ -90,11 +90,11 @@
 90|        print("\n=== 串聯產出（不可中斷）===")
 91|        project_dir = BASE # Assume project_dir is BASE for simplicity
 steps = [
-    ('run_daily.py', ['C:\Users\bot\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe', str(Path('/c/Users/bot/Desktop/龍九系統')/'run_daily.py')]),
-    ('asset_diff_monitor.py', ['C:\Users\bot\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe', str(Path('/c/Users/bot/Desktop/龍九系統')/'asset_diff_monitor.py')]),
-    ('gmail_reader.py', ['C:\Users\bot\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe', str(Path('/c/Users/bot/Desktop/龍九系統')/'gmail_reader.py')]),
-    ('penetration_monitor.py', ['C:\Users\bot\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe', str(Path('/c/Users/bot/Desktop/龍九系統')/'penetration_monitor.py')]),
-    # ('daily_deploy.py', ['C:\Users\bot\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe', str(Path('/c/Users/bot/Desktop/龍九系統')/'daily_deploy.py')]),
+    ('run_daily.py', ['C:\Users\bot\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe', str(Path('/c/Users/bot/Desktop/longjiu_system')/'run_daily.py')]),
+    ('asset_diff_monitor.py', ['C:\Users\bot\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe', str(Path('/c/Users/bot/Desktop/longjiu_system')/'asset_diff_monitor.py')]),
+    ('gmail_reader.py', ['C:\Users\bot\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe', str(Path('/c/Users/bot/Desktop/longjiu_system')/'gmail_reader.py')]),
+    ('penetration_monitor.py', ['C:\Users\bot\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe', str(Path('/c/Users/bot/Desktop/longjiu_system')/'penetration_monitor.py')]),
+    # ('daily_deploy.py', ['C:\Users\bot\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe', str(Path('/c/Users/bot/Desktop/longjiu_system')/'daily_deploy.py')]),
 ]
 94|            ('asset_diff_monitor.py', [sys.executable, str(project_dir/'asset_diff_monitor.py')]),
 95|            ('gmail_reader.py', [sys.executable, str(project_dir/'gmail_reader.py')]),

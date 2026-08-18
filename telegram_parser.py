@@ -1,5 +1,5 @@
 """
-龍九系統最小穩定版 telegram_parser.py
+longjiu_system最小穩定版 telegram_parser.py
 功能：
 1. 將 Hermes 收到的 Telegram 會計相關訊息，轉譯成結構化會計字典
 2. 在 Company_Ledger.md 對應區段追加紀錄
@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 APP_NAME = "longjiu-telegram-parser"
-WORKSPACE = Path("C:/Users/bot/Desktop/龍九系統")
+WORKSPACE = Path("C:/Users/bot/Desktop/longjiu_system")
 LEDGER_PATH = WORKSPACE / "Company_Ledger.md"
 LOG_PATH = WORKSPACE / "logs" / "telegram_events.jsonl"
 

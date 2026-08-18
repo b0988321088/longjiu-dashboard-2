@@ -1,5 +1,5 @@
 """
-lj_test.py — 龍九系統自我測試
+lj_test.py — longjiu_system自我測試
 python lj.py test
 """
 import sys, os, importlib
@@ -26,7 +26,7 @@ def file_exists(f):
     assert os.path.exists(full), f'{f} 不存在'
 
 def main():
-    print('🔍 龍九系統測試')
+    print('🔍 longjiu_system測試')
     print()
     
     print('📦 核心腳本可匯入：')

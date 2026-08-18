@@ -7,7 +7,7 @@ import time
 
 BASE = Path("C:/Users/bot/.hermes")
 MEM = BASE / "memory_store.db"
-REPORT = Path("C:/Users/bot/Desktop/龍九系統/PRESSURE_TEST_LOG.md")
+REPORT = Path("C:/Users/bot/Desktop/longjiu_system/PRESSURE_TEST_LOG.md")
 
 
 def check():

@@ -1,5 +1,5 @@
 """
-lj.py — 龍九系統 CLI 入口
+lj.py — longjiu_system CLI 入口
 用法：
   python lj.py sync      # 四源同步 (safe_update.py + four_source_sync.py)
   python lj.py report    # 產出日報 (regenerate_report.py)
@@ -46,7 +46,7 @@ def fix_cmd(args):
 
 def main():
     if len(sys.argv) < 2:
-        print('龍九系統 CLI 入口')
+        print('longjiu_system CLI 入口')
         print()
         for k, v in CMDS.items():
             print(f'  python lj.py {k:12s}  →  {v.split("#")[-1].strip()}')

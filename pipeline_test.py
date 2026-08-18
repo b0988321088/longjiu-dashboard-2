@@ -3,7 +3,7 @@ import sys
 from datetime import date
 import re
 
-BASE_DIR = "C:/Users/bot/Desktop/龍九系統/"
+BASE_DIR = "C:/Users/bot/Desktop/longjiu_system/"
 TODAY = date.today().isoformat()
 DAILY_REPORT_FILE = os.path.join(BASE_DIR, f"daily_report_v2_{TODAY}.html")
 ASSET_DIFF_FILE = os.path.join(BASE_DIR, f"asset_diff_{TODAY}.html")

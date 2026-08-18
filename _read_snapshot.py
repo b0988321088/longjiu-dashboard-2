@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json, os
 
-os.chdir(r'C:\Users\bot\Desktop\龍九系統')
+os.chdir(r'C:\Users\bot\Desktop\longjiu_system')
 
 print("=== SNAPSHOT ===")
 with open('snapshot.json', 'r', encoding='utf-8') as f:

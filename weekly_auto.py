@@ -3,7 +3,7 @@ import json, os
 from datetime import date, timedelta
 from pathlib import Path
 
-LJ = Path(os.path.expanduser("~/Desktop/龍九系統"))
+LJ = Path(os.path.expanduser("~/Desktop/longjiu_system"))
 TODAY = date.today()
 MONDAY = TODAY - timedelta(days=TODAY.weekday())
 WEEK_LABEL = f"{MONDAY} ~ {TODAY}"

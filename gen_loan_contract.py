@@ -237,6 +237,6 @@ p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
 run = p.add_run('第 3 頁，共 3 頁')
 fmt(run, size=10, color=(0x99, 0x99, 0x99))
 
-out = Path('C:/Users/bot/Desktop/龍九系統/loan_contract_300k_b.docx')
+out = Path('C:/Users/bot/Desktop/longjiu_system/loan_contract_300k_b.docx')
 doc.save(str(out))
 print(f'✅ saved: {out}')

@@ -4,7 +4,7 @@ import requests
 from dotenv import load_dotenv
 from collections import defaultdict
 
-load_dotenv('C:/Users/bot/Desktop/龍九系統/.env')
+load_dotenv('C:/Users/bot/Desktop/longjiu_system/.env')
 token = os.getenv('NOTION_TOKEN')
 headers = {
     'Authorization': f'Bearer {token}',
@@ -57,7 +57,7 @@ def fetch_all_pages(db_id, date_prop=None):
 def archive_page(page_id):
     requests.patch(f'https://api.notion.com/v1/pages/{page_id}', headers=headers, json={'archived': True})
 
-db_map = json.load(open('C:/Users/bot/Desktop/龍九系統/notion_db_ids.json', encoding='utf-8'))
+db_map = json.load(open('C:/Users/bot/Desktop/longjiu_system/notion_db_ids.json', encoding='utf-8'))
 config = {
     'master_ledger': {'date_prop': '更新日期'},
     'debt_cashflow': {'date_prop': '日期'},

@@ -1532,7 +1532,7 @@ def main():
         # 動態取代模板 placeholder
         _cash_val = tv.get("cash_total", tv.get("cash", 3614169))
         _mortgage_total = tv.get("mortgage_monthly_total", tv.get("mortgage_balance", 0))
-        _salary_val = tv.get("salary", 43144)
+        _salary_val = tv.get("salary", 39727)
         index_html = index_html.replace("__DBS_BALANCE__", f"{_cash_val:,.0f}")
         index_html = index_html.replace("__SINOPAC_BALANCE__", f"{_cash_val:,.0f}")
         index_html = index_html.replace("__SINOPAC_MORTGAGE__", f"{_mortgage_total:,.0f}")
@@ -2356,7 +2356,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__SINOPAC_BALANCE__", f'{tv.get("cash",0):,.0f}')
     html = html.replace("__SINOPAC_MORTGAGE__", f'{tv.get("mortgage_monthly_total",0):,.0f}')
     html = html.replace("__RESERVE_POOL__", f'{tv.get("financial_mortgage",0):,.0f}+')
-    html = html.replace("__SALARY__", f'{tv.get("salary",43144):,.0f}')
+    html = html.replace("__SALARY__", f'{tv.get("salary",39727):,.0f}')
     # 新增動態注入
     html = html.replace("__MONTHLY_EXPENSE_PASSIVE__", f"{_expense:,}")
     html = html.replace("__MONTHLY_EXPENSE_DISPLAY__", f"{_expense:,}")

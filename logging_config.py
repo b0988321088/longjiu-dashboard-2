@@ -1,4 +1,4 @@
-"""logging_config.py — 龍九系統統一日誌設定
+"""logging_config.py — longjiu_system統一日誌設定
 用法：from logging_config import get_logger; logger = get_logger(__name__)
 格式：2026-07-23 10:30:00,123 | INFO | script.py | 訊息"""
 

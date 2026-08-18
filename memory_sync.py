@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""每日19:00 記憶同步腳本 v2.0 — 動態讀取龍九系統數據"""
+"""每日19:00 記憶同步腳本 v2.0 — 動態讀取longjiu_system數據"""
 import sqlite3, datetime, json
 from pathlib import Path
 
