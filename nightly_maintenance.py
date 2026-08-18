@@ -10,7 +10,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
-LONGJIU = Path(os.path.expanduser("~/Desktop/龍九系統"))
+LONGJIU = Path(os.path.expanduser("~/Desktop/longjiu_system"))
 TG_TOKEN = os.getenv("TG_TOKEN", "")
 TG_CHAT_ID = os.getenv("TG_CHAT_ID", "")
 
