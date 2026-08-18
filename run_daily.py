@@ -1390,12 +1390,23 @@ def main():
     try:
         import sqlite3
         _sdb = sqlite3.connect(str(BASE / "dragon_assets.db"))
-        _sh = _sdb.execute("SELECT ticker, shares FROM holdings WHERE shares > 0 ORDER BY shares DESC LIMIT 3").fetchall()
+        # 2026-08-18 修正：前三大改按「市值」排序（原 ORDER BY shares 用股數，00983D 20000股誤列第一 39.2%）
+        # 市值 = shares × snapshot 現價，價格從 snapshot securities.holdings 讀（DB cost_price 是成本價非現價）
+        _snap_px = {}
+        try:
+            _snap_h = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")).get("securities", {}).get("holdings", [])
+            _snap_px = {_x.get("ticker"): _x.get("price", 0) for _x in _snap_h}
+        except Exception:
+            pass
+        _sh = _sdb.execute("SELECT ticker, shares FROM holdings WHERE shares > 0").fetchall()
         _cnt = _sdb.execute("SELECT COUNT(*) FROM holdings WHERE shares > 0").fetchone()
         _sdb.close()
-        _stotal = sum(v for _, v in _sh) or 1
-        _hpct = [round(v / _stotal * 100, 1) for _, v in _sh]
-        tv['holdings_top3'] = [(f'{r[0]}', _hpct[i]) for i, r in enumerate(_sh)]
+        _mv = [(r[0], r[1] * _snap_px.get(r[0], 0)) for r in _sh]
+        _mv.sort(key=lambda x: x[1], reverse=True)
+        _top3 = _mv[:3]
+        _stotal = sum(v for _, v in _mv) or 1
+        _hpct = [round(v / _stotal * 100, 1) for _, v in _top3]
+        tv['holdings_top3'] = [(f'{r[0]}', _hpct[i]) for i, r in enumerate(_top3)]
         tv['holdings_count'] = _cnt[0] if _cnt else len(_sh)
     except:
         tv['holdings_top3'] = [('00878', 15.0), ('009816', 16.6), ('00984A', 10.4)]
