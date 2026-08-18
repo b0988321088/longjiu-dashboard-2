@@ -40,3 +40,6 @@ Desktop.ini
 daily_reports_*.txt
 moneybook/
 hunter_logs/
+
+# 影片成品（不推 Pages）
+*.mp4
