@@ -1850,7 +1850,10 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
                         _v = float(_v)
                     except Exception:
                         continue
-                    if _n and _v >= 5000:
+                    # 2026-08-18 修正：門檻 ≥5000 改為 >0，且排除負債類帳戶（貸款/信用/質押）
+                    # 原 ≥5000 漏掉小額帳戶（外幣/iLEO 等 2,885）→ 合計 816,539 ≠ snapshot 819,424
+                    _EXCLUDE_WORDS = ("貸款", "信貸", "房貸", "透支", "信用", "信用卡", "質押")
+                    if _n and _v > 0 and not any(_w in _b or _w in _n for _w in _EXCLUDE_WORDS):
                         _bank_groups.setdefault(_b, []).append((_v, _n))
     except Exception:
         pass
