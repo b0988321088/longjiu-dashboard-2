@@ -27,16 +27,16 @@ for p in parts:
         sections_html += f'<div class="sec"><p>{p.replace(chr(10),"<br>")}</p></div>\n'
 
 KPIS = [
-    ("加權指數", "45,475.09", "+0.79%", "up"),
-    ("台積電 2330", "2,410.00", "+0.63%", "up"),
-    ("費城半導體", "12,098.47", "+0.87%", "up"),
-    ("道瓊", "53,791.85", "-0.34%", "down"),
-    ("納斯達克", "26,445.44", "-0.60%", "down"),
-    ("S&P 500", "7,728.20", "-0.32%", "down"),
-    ("台積電 ADR", "—", "+0.87%", "up"),
-    ("US30Y", "5.232%", "防禦5.20", "warn"),
-    ("US10Y", "4.682%", "前收4.684", "flat"),
-    ("現金", "62.0萬", "底線85.2萬", "warn"),
+    ("道瓊", "53,326.79", "-0.25%", "down"),
+    ("S&P 500", "7,707.06", "-0.49%", "down"),
+    ("納斯達克", "26,360.98", "-1.07%", "down"),
+    ("費城半導體", "12,160.33", "-3.65%", "down"),
+    ("台積電 ADR", "418.32", "-1.88%", "down"),
+    ("NVDA", "221.05", "-1.83%", "down"),
+    ("META", "553.04", "-6.24%", "down"),
+    ("US30Y", "5.32%", "凍結線5.30", "warn"),
+    ("US10Y", "4.74%", "前收4.70", "warn"),
+    ("VIX", "15.82", "+11.0%", "warn"),
 ]
 kpi_html = "".join(
     f'<div class="kpi"><div class="l">{l}</div><div class="v {cls}">{v}</div><div class="l">{s}</div></div>'
@@ -70,11 +70,11 @@ body{{background:var(--bg);color:var(--txt);font-family:"Segoe UI","PingFang TC"
 <div class="sub">{sub_note}</div></div>
 <div class="kpis">{kpi_html}</div>
 {sections_html}
-<div class="foot">龍九控股內部報告｜僅供決策參考，非投資建議｜資料時間 {gen_short} 台北（台股午盤）｜Yahoo Finance 即時 + CNBC + Google News RSS + snapshot.json 穿透數據</div>
+<div class="foot">龍九控股內部報告｜僅供決策參考，非投資建議｜資料時間 {gen_short} 台北（美股開盤）｜Yahoo Finance 即時 + FRED + snapshot.json 穿透數據</div>
 </div></body></html>"""
 
-railway = page("台股緊急應變報告", f"資料時間 {gen_short} 台北｜台股午盤即時分析（六大章節）")
-github = page("台股緊急應變報告（GitHub 版）", f"資料時間 {gen_short} 台北｜台股午盤即時分析（六大章節）")
+railway = page("美股緊急應變報告", f"資料時間 {gen_short} 台北｜美股開盤即時分析（六大章節）")
+github = page("美股緊急應變報告（GitHub 版）", f"資料時間 {gen_short} 台北｜美股開盤即時分析（六大章節）")
 
 p1 = BASE / f"emergency_report_{TODAY}.html"
 p2 = BASE / f"emergency_taiex_report_{TODAY}.html"
