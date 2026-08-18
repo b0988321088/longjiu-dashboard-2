@@ -1860,7 +1860,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     # 若 CSV 讀取失敗，fallback 到 snapshot 總現金
     if not _bank_groups:
         _bank_groups = {"現金合計": [(float(tv.get("cash_total", tv.get("real_liquid_assets", 0)) or 0), "snapshot 總現金")]}
-    _bank_order = ["國泰世華", "台新銀行", "永豐銀行", "玉山銀行", "台北富邦", "第一銀行", "將來銀行", "星展銀行"]
+    _bank_order = ["國泰世華", "台新銀行", "永豐銀行", "玉山銀行", "台北富邦", "將來銀行", "星展銀行"]  # 2026-08-18：移除第一銀行（使用者裁示：平常未使用，不列入水位監控）
     # 生活帳戶（只負擔信用卡）：玉山/富邦安全線 4 萬；主要監控國泰+台新（月支出×3）
     _LIVING_BANK_TARGET = {"玉山銀行": 40_000, "台北富邦": 40_000}
     for _g in _bank_order:
@@ -1894,13 +1894,14 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             f'<p class="text-[10px] text-slate-400">安全線：{_target:,.0f}{_target_note}</p>'
             f'</div>'
         )
-    # 合計卡片
-    _bank_total = sum(sum(fv for fv, _ in v) for v in _bank_groups.values())
+    # 合計卡片 — 2026-08-18：排除第一銀行（使用者裁示平常未使用）；總額以 snapshot 真值為主
+    _bank_total = sum(sum(fv for fv, _ in v) for k, v in _bank_groups.items() if k != "第一銀行")
+    _snap_cash = float(tv.get("cash_total", tv.get("real_liquid_assets", 0)) or 0)
     _bank_cards.append(
         f'<div class="bg-blue-600/20 border border-blue-500/40 p-4 rounded-xl space-y-1">'
         f'<div class="flex justify-between text-xs font-bold text-blue-200"><span>🏦 現金合計</span></div>'
-        f'<p class="text-lg font-mono font-black text-white">{_bank_total:,.0f} TWD</p>'
-        f'<p class="text-[10px] text-slate-400">snapshot 總現金：{fmt(tv.get("cash_total", tv.get("real_liquid_assets", 0)))} TWD</p>'
+        f'<p class="text-lg font-mono font-black text-white">{_snap_cash:,.0f} TWD</p>'
+        f'<p class="text-[10px] text-slate-400">snapshot 總現金：{fmt(_snap_cash)} TWD｜監控卡片合計 {_bank_total:,.0f}（未含第一銀行）</p>'
         f'</div>'
     )
     html = html.replace("__BANK_CARDS__", "\n".join(_bank_cards) + _csv_date_note)
@@ -1923,14 +1924,16 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
                 _rent_this_month[_k] = _rent_this_month.get(_k, 0) + _v
 
     def _inflow_row(label, amount, expected):
-        """amount=實際已收, expected=應收；0 且未收 → 待入帳"""
+        """amount=實際已收, expected=應收；0 且未收 → 待入帳
+        2026-08-18：已入帳列不顯示「應收」（以實際為主）；待入帳列保留應收提醒"""
         if amount and amount > 0:
             badge = '<span class="text-emerald-400">✅ 已入帳</span>'
             val_cls = 'text-emerald-400 font-bold'
+            _exp_txt = ""
         else:
             badge = '<span class="text-amber-400">⏳ 待入帳</span>'
             val_cls = 'text-slate-400'
-        _exp_txt = f"（應收 {expected:,}）" if expected else ""
+            _exp_txt = f"（應收 {expected:,}）" if expected else ""
         return (f'<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800">'
                 f'<div class="flex items-center gap-2 text-xs">{badge}<span class="text-slate-300">{label}</span></div>'
                 f'<span class="text-xs font-mono {val_cls}">{amount if amount and amount > 0 else 0:,} TWD{_exp_txt}</span></div>')
