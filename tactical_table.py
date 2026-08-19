@@ -45,9 +45,9 @@ STRATEGY = {
         "freeze_on_us30y": True,
     },
     "現金/安全網": {
-        "action": "保留", "ticker": "現金",
-        "note": "70萬底線不動；超額等核貸後部署",
-        "stop": "6個月支出底線",
+        "action": "底線制", "ticker": "現金",
+        "note": "2026-08-19裁示：只守70萬安全網，超額全部署收益資產（借款資金不囤現金）",
+        "stop": "70萬底線不破",
         "freeze_on_us30y": False,
     },
 }

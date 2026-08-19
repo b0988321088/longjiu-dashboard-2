@@ -167,3 +167,8 @@
 - 修復：重跑 run_daily → 已收 57,000、待收 23,100
 - check_rule：rent_received_records 更新後必須重跑 run_daily（日報房租金流段動態讀取）
 - 狀態：✅ 已修（98c7b77）
+
+## INC-2026-08-19
+- 時間：2026-08-19
+- 錯誤：穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態：⏳ 待處理

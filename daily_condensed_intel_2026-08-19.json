@@ -9,10 +9,10 @@
   },
   {
     "title": "市場動態：台股加權",
-    "description": "台股加權 今日 44,592.45 (-1.58%)，市場情緒看跌。",
+    "description": "台股加權 今日 44,719.35 (-2.48%)，市場情緒看跌。",
     "holdings_impact": [],
     "sentiment": "negative",
-    "signal_level": "✅ 參考",
+    "signal_level": "🟡 注意",
     "raw_source": "Yahoo Finance - 台股加權"
   },
   {
