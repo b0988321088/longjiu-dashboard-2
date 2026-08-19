@@ -1147,6 +1147,18 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _income_m = (tv.get("monthly_dividend") or 0) + _rent_got
                 _freeze = _us30y_now >= 5.30
                 _fz_txt = f"🔴 觸及全域凍結線（{_us30y_now:.2f}% ≥ 5.30%）— 禁止新增債券質押" if _freeze else f"🟢 未觸及凍結線（{_us30y_now:.2f}% &lt; 5.30%）"
+                # 投資哲學檢核（2026-08-19 定版：核心三支柱 + 4 問）— 用常態被動收入（非當月實收）
+                _philosophy_items = []
+                _inc_m = (tv.get("monthly_dividend_total") or tv.get("monthly_dividend") or 0) + (tv.get("rent_monthly_total") or 0)
+                _exp = tv.get("monthly_expense") or 141958
+                _cov = _inc_m / _exp if _exp else 0
+                _philosophy_items.append(f"現金流覆蓋（常態）{_inc_m:,.0f}/{_exp:,.0f} = {_cov*100:.0f}% {'✅' if _cov >= 1.0 else '🔴'}")
+                _usd_ex = tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
+                _philosophy_items.append(f"美元曝險 {_usd_ex:.1f}%（≤50% {'✅' if _usd_ex <= 50 else '🟡' if _usd_ex <= 55 else '🔴'}）")
+                _cash_now = tv.get("cash_total") or 0
+                _philosophy_items.append(f"現金底線 {_cash_now:,.0f}（≥700,000 {'✅' if _cash_now >= 700000 else '🔴'}）")
+                _philosophy_items.append("利差 2.6%→4.8-6% ✅" if (_us30y_now or 0) < 5.50 else "利差 ⚠️")
+                _philosophy_html = "｜".join(_philosophy_items)
                 _lv_html = (
                     f"<div class='callout callout-warning' style='margin-top:12px'>"
                     f"<h3>📊 兩層槓桿風控輸出（8/12 裁決強制欄位）</h3>"
@@ -1157,6 +1169,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     f"<strong>④ 到期對照：</strong>負債＝國泰轉貸（8/15 撥款；償還800萬後剩餘400萬）；債券＝直債梯 3-7Y/8-10Y（建倉後持有到期）— 債券期限內無大額負債到期 ✅<br/>"
                     f"<strong>⑤ US30Y：</strong>{_us30y_now:.2f}% — {_fz_txt}<br/>"
                     f"<strong>⑥ 底線規則（8/13 動態）：</strong>現金≥6個月開支（{700000:,}，月開支 141,958）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/>"
+                    f"<strong>⑦ 投資哲學檢核（8/19 定版）：</strong>{_philosophy_html}<br/>"
                     f"<strong>⛔ 資金禁令：</strong>轉貸/質押資金禁止生活消費擴張"
                     f"</div></div>"
                 )
