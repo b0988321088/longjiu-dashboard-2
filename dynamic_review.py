@@ -69,7 +69,8 @@ def main():
     # 負債
     row = db.execute("SELECT * FROM liabilities ORDER BY date DESC LIMIT 1").fetchone()
     if row:
-        print(f"\n[負債] 總負債 {row[-2]:,.0f}（房貸 {row[1]:,.0f}+{row[2]:,.0f}+{row[3]:,.0f} 保單借貸 {row[4]:,.0f} 質押 {row[5]:,.0f}）")
+        _lc = {k: (v or 0) for k, v in zip([d[0] for d in db.execute("PRAGMA table_info(liabilities)").fetchall()], row)}
+        print(f"\n[負債] 總負債 {_lc.get('total_liabilities',0):,.0f}（房貸 {_lc.get('mortgage_yy',0):,.0f}+{_lc.get('mortgage_yydu',0):,.0f}+{_lc.get('mortgage_xz',0):,.0f}+國泰{_lc.get('mortgage_cathay',0):,.0f} 保單借貸 {_lc.get('policy_loan',0):,.0f} 質押 {_lc.get('pledge_loan',0):,.0f} 信用卡 {_lc.get('credit_card',0):,.0f}）")
 
     # 被動收入
     print(f"\n[被動收入] 保單 {snap.get('monthly_dividend_total', 0):,.0f} + 房租 {snap.get('rent_monthly_total', 0):,.0f}")
