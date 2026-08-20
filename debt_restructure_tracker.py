@@ -192,13 +192,13 @@ def main():
     print(f"  悲觀場景可償還結餘：{pessimistic_low:,}~{pessimistic_high:,} NTD")
     print(f"  提醒：降槓桿週期非固定，環境惡化還本速度會顯著拉長")
 
-    # -------- 5b. 兩層槓桿修正版（8/12 裁決，取代 5-5-2）-------
+    # -------- 5b. 8/20 定案（富達質押版，取代 8/12 兩層槓桿版）-------
     dp = snap.get("professional_investor", {}).get("deployment_plan", {})
-    print(f"\n【5b.兩層槓桿修正版（8/12 裁決）】")
-    if dp.get("status", "").startswith("兩層槓桿修正版"):
+    print(f"\n【5b.8/20 定案（富達質押版）】")
+    if dp.get("status", "").startswith("兩層槓桿修正版") or dp.get("status", "").startswith("8/20 定案"):
         p1 = dp.get("phase1_mandatory", {})
         p2 = dp.get("phase2_optional", {})
-        print(f"  階段1（強制）：還債 {p1.get('repay_800w','800萬')}｜建債梯 {p1.get('build_ladder','3-7Y 375+8-10Y 125')}｜現金緩衝覆蓋6個月利息")
+        print(f"  8/20 定案：富達 600萬（質押擔保品）＋MMF 600萬（PI認列2週）→ 質押 300萬@2.77% 還安聯 300萬@4.2% → MMF 轉10月標案預備金")
         print(f"  完成標準：{p1.get('complete_standard','舊債清除+直債底倉+現金緩衝')}")
         print(f"  ⛔ 階段1期間禁質押：{p1.get('forbidden','不開第二層槓桿')}")
         print(f"  階段2（選擇性加分，非強制）：")
@@ -210,9 +210,9 @@ def main():
         gr = dp.get("gap_rules_0812", {})
         print(f"  📌 底線：現金≥70萬({gr.get('rule_1_cash_floor','6個月生活費')[:40]})｜被動實收連2月<80%停建債｜直債僅投資級")
     elif dp.get("status", "").startswith("5-5-2"):
-        print(f"  ⚠️ snapshot 為 5-5-2（舊版，已被 8/12 兩層槓桿版取代）")
+        print(f"  ⚠️ snapshot 為舊版（5-5-2 / 兩層槓桿），已被 8/20 定案取代")
     else:
-        print(f"  ⚠️ snapshot 無兩層槓桿版本資料")
+        print(f"  ⚠️ snapshot 無 8/20 定案版本資料")
 
     # -------- 6. 套利引擎（Arbitrage Engine）-------
     rules = load_engine_rules()
@@ -298,7 +298,7 @@ def main():
         print(f"  {n}. 🎫 PI 未核准：禁 Lombard 質押；10/1 轉增貸建議延後")
         n += 1
     if today < date(2026, 8, 15):
-        print(f"  {n}. 🔵 8/15 撥款前：台股≤50萬/週・美股停購・長債不疊・現金底線70萬")
+        print(f"  {n}. 🔵 8/20 定案後：送PI → 買富達600萬+MMF600萬 → PI認列 → 質押還安聯 → MMF轉標案預備金")
         n += 1
     print(f"  {n}. 🛡️ 400萬停泊永遠禁止質押（防火牆）；全域凍結≠賣光舊部位")
     print("=" * 58)

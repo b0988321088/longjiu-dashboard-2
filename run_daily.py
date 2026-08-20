@@ -1129,7 +1129,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 f"</div></div>"
             )
             html += _pi_html
-            # 8/12 兩層槓桿風控輸出欄位（裁決強制：①單層/雙層成本 ②LTV+模擬 ③利息vs流入 ④到期對照 ⑤US30Y凍結線）
+            # 8/20 定案槓桿風控輸出欄位（8/12 裁決強制，2026-08-20 更新為富達質押版）
             try:
                 _dp2 = tv.get("professional_investor", {}).get("deployment_plan", {}) or {}
                 _r8b = tv.get("rhythm08", {}) or {}
@@ -1137,6 +1137,12 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _p1_loan = _dp2.get("total", 12000000) or 12000000
                 _p1_cost_y = _p1_loan * 0.026
                 _p1_cost_m = _p1_cost_y / 12
+                _pledge_loan = 3000000
+                _pledge_rate = 0.0277
+                _pledge_cost_y = _pledge_loan * _pledge_rate
+                _pledge_cost_m = _pledge_cost_y / 12
+                _pledge_collateral = 6000000
+                _fid_mdiv = 45000  # 富達月配估（0.75%/月 × 600萬）
                 _rent_recv = tv.get("rent_received_records") or {}
                 _rent_got = 0
                 for _rv in (_rent_recv.values() if isinstance(_rent_recv, dict) else []):
@@ -1144,7 +1150,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                         _rent_got += sum(_rv.values())
                     elif isinstance(_rv, (int, float)):
                         _rent_got += _rv
-                _income_m = (tv.get("monthly_dividend") or 0) + _rent_got
+                _income_m = (tv.get("monthly_dividend_total") or 0) + (tv.get("rent_monthly_total") or 0)
                 _freeze = _us30y_now >= 5.30
                 _fz_txt = f"🔴 觸及全域凍結線（{_us30y_now:.2f}% ≥ 5.30%）— 禁止新增債券質押" if _freeze else f"🟢 未觸及凍結線（{_us30y_now:.2f}% &lt; 5.30%）"
                 # 投資哲學檢核（2026-08-19 定版：核心三支柱 + 4 問）— 用常態被動收入（非當月實收）
@@ -1162,12 +1168,12 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _philosophy_html = "｜".join(_philosophy_items)
                 _lv_html = (
                     f"<div class='callout callout-warning' style='margin-top:12px'>"
-                    f"<h3>📊 兩層槓桿風控輸出（8/12 裁決強制欄位）</h3>"
+                    f"<h3>📊 槓桿風控輸出（8/20 定案：富達質押版）</h3>"
                     f"<div style='font-size:12.5px;line-height:1.8'>"
-                    f"<strong>① 槓桿成本：</strong>單層（階段1）= 1,200萬×2.6% ≈ {_p1_cost_y/10000:.1f}萬/年（月 {_p1_cost_m:,.0f}）；雙層（階段2）= 未啟用（4門檻未全過）<br/>"
-                    f"<strong>② LTV：</strong>實際 0%（未開啟質押 🟢）；雙利空情境模擬（+50bp＋美元貶3%）門檻 ≤50%<br/>"
-                    f"<strong>③ 月度利息流出 vs 現金流入：</strong>流出 {_p1_cost_m:,.0f} vs 流入（配息＋房租實收）{_income_m:,.0f} — {'✅ 覆蓋' if _income_m >= _p1_cost_m else '⚠️ 未覆蓋'}<br/>"
-                    f"<strong>④ 到期對照：</strong>負債＝國泰轉貸（8/15 撥款；償還800萬後剩餘400萬）；債券＝直債梯 3-7Y/8-10Y（建倉後持有到期）— 債券期限內無大額負債到期 ✅<br/>"
+                    f"<strong>① 槓桿成本：</strong>第一層（國泰轉貸 1,200萬×2.6%）≈ {_p1_cost_y/10000:.1f}萬/年（月 {_p1_cost_m:,.0f}）＋質押層（富達 300萬×2.77%暫定）≈ {_pledge_cost_y/10000:.1f}萬/年（月 {_pledge_cost_m:,.0f}）→ 合計 ~{(_p1_cost_y+_pledge_cost_y)/10000:.1f}萬/年（月 {_p1_cost_m+_pledge_cost_m:,.0f}）<br/>"
+                    f"<strong>② LTV：</strong>質押 {_pledge_loan:,}/{_pledge_collateral:,} = 50%（🟢 綠燈上限）；擔保品富達 -30% 情境 → LTV 71% 🔴 觸追繳區（需銀行書面維持率/補繳天數）<br/>"
+                    f"<strong>③ 月度利息流出 vs 現金流入：</strong>流出 {_p1_cost_m+_pledge_cost_m:,.0f} vs 流入（常態配息＋房租）{_income_m:,.0f}＋富達月配 ~{_fid_mdiv:,} = {_income_m+_fid_mdiv:,.0f} — {'✅ 覆蓋' if (_income_m+_fid_mdiv) >= (_p1_cost_m+_pledge_cost_m) else '⚠️ 未覆蓋'}<br/>"
+                    f"<strong>④ 到期對照：</strong>負債＝國泰轉貸 1,200萬（3年寬限期）＋質押 300萬（富達擔保，基金無到期日）；富達為月配現金流資產，無期限錯配 ✅<br/>"
                     f"<strong>⑤ US30Y：</strong>{_us30y_now:.2f}% — {_fz_txt}<br/>"
                     f"<strong>⑥ 底線規則（8/13 動態）：</strong>現金≥6個月開支（{700000:,}，月開支 141,958）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/>"
                     f"<strong>⑦ 投資哲學檢核（8/19 定版）：</strong>{_philosophy_html}<br/>"
@@ -1206,7 +1212,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             if _us30y >= _th.get("us30y_red", 5.40):
                 _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% ≥ {_th.get('us30y_red')}% — Rhythm-08紅燈：調降部分長債00983D，內部轉換至中短債，降低擔保池波動"))
             elif _us30y > _us30y_freeze:
-                _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% ≥ 5.30% — 全域凍結紅線（8/12 裁決）：禁止新增債券質押；已開第二層者停止新增質押＋逐步降LTV"))
+                _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% ≥ 5.30% — 全域凍結紅線（8/12 裁決）：禁止新增質押；已質押者停止新增質押＋逐步降LTV"))
             elif _us30y >= _th.get("us30y_yellow", 5.20):
                 _lights.append(("🟡 黃燈", f"30Y美債 {_us30y}% ≥ {_th.get('us30y_yellow')}% — 警戒區：台股建倉≤50萬/週、美股停止新增、不新增長債疊債、停泊不疊槓"))
             # 10. 美股占比
@@ -2447,7 +2453,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             if _us30y >= _th.get("us30y_red", 5.40):
                 _lights.append(("🔴", f"30Y美債 {_us30y}% ≥ 5.4% — 紅燈：調降長債部位移中短債"))
             elif _us30y > _us30y_freeze2:
-                _lights.append(("🔴", f"30Y美債 {_us30y}% ≥ 5.30% — 全域凍結紅線（8/12 裁決）：禁止新增債券質押；已開第二層者停止新增質押＋逐步降LTV"))
+                _lights.append(("🔴", f"30Y美債 {_us30y}% ≥ 5.30% — 全域凍結紅線（8/12 裁決）：禁止新增質押；已質押者停止新增質押＋逐步降LTV"))
             elif _us30y >= _th.get("us30y_yellow", 5.20):
                 _lights.append(("🟡", f"30Y美債 {_us30y}% ≥ 5.2% — 警戒區：台股≤50萬/週、美股停購、不疊債"))
             if _us_pct > _th.get("us_equity_overweight_yellow", 32):

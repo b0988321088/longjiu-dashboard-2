@@ -97,64 +97,12 @@
 <!-- 分頁主視窗 -->
 <main class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
 
-    <!-- ═════════ 資產架構調整指示卡（兩層槓桿修正版 2026-08-12）═════════ -->
-    <div class="luxury-card p-6 border-l-4 border-l-amber-500">
-        <div class="flex justify-between items-center mb-3">
-            <h3 class="text-md font-bold text-white flex items-center gap-2">📋 資產架構調整指示卡｜兩層槓桿修正版（1,200萬）</h3>
-            <span class="text-xs bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full font-mono font-bold border border-amber-500/30">8/12 裁決</span>
-        </div>
-        <p class="text-xs text-slate-400 mb-4">核心：優先執行第一層 1,200萬轉貸；第二層債券質押＝選擇性加分題，非強制｜階段1單層即具套息價值｜降低雙層槓桿同時暴露的風險</p>
-        <div class="grid grid-cols-3 gap-3 mb-4">
-            <div class="bg-slate-800/60 rounded-xl p-3 border border-emerald-700/40">
-                <div class="text-xl font-bold text-emerald-400">800萬</div>
-                <div class="text-xs text-slate-300 mt-1">💵 償還高息舊負債</div>
-                <div class="text-[10px] text-slate-500">階段1 優先，驗證銷帳</div>
-            </div>
-            <div class="bg-slate-800/60 rounded-xl p-3 border border-slate-700">
-                <div class="text-xl font-bold text-blue-400">直債梯</div>
-                <div class="text-xs text-slate-300 mt-1">🏦 美元直債到期梯</div>
-                <div class="text-[10px] text-slate-500">3-7Y 375 + 8-10Y 125｜禁30Y｜持有到期</div>
-            </div>
-            <div class="bg-slate-800/60 rounded-xl p-3 border border-slate-700">
-                <div class="text-xl font-bold text-amber-400">選擇性</div>
-                <div class="text-xs text-slate-300 mt-1">🔒 階段2 債券質押</div>
-                <div class="text-[10px] text-slate-500">4門檻全過才做｜LTV≤50%</div>
-            </div>
-        </div>
-        <div class="text-xs text-slate-300 space-y-1 font-mono">
-            <div>💰 年省利息 <b class="text-emerald-400">≈32萬</b>（800萬×4.2%→2.6%）｜🛡️ 現金緩衝 <b class="text-emerald-400">≥6個月利息</b></div>
-            <div>🔒 階段2 質押：US30Y&lt;5.30% ＋ 壓力測試LTV≤50% ＋ 觀察1-3日 ＋ 雙層成本&lt;殖利率 → 才可執行；不達標維持單層</div>
-            <div>⚠️ <b class="text-red-400">US30Y ≥5.30% = 全域凍結紅線</b>，禁止新增債券質押｜轉貸/質押資金禁生活消費</div>
-            <div>📌 <b class="text-emerald-400">底線規則（8/14）：</b>現金≥70萬實線（≈5個月生活費）｜被動實收連2月&lt;常態80%停建債｜直債僅美債＋投資級(BBB-)、單一發行人≤20%</div>
-        </div>
-        <div class="grid grid-cols-3 gap-2 mt-4 text-center text-[11px]">
-            <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-lg py-1.5 text-emerald-400">🟢 LTV≤50%<br><span class="text-slate-500">常態</span></div>
-            <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg py-1.5 text-yellow-400">🟡 50-60%<br><span class="text-slate-500">禁增質押額度</span></div>
-            <div class="bg-red-500/10 border border-red-500/30 rounded-lg py-1.5 text-red-400">🔴 >60%<br><span class="text-slate-500">水庫還款壓回</span></div>
-        </div>
-        <details class="mt-4">
-            <summary class="text-xs text-amber-400 cursor-pointer hover:text-amber-300">📌 執行勾選清單（階段1強制 + 階段2選擇性）</summary>
-            <div class="mt-3 text-xs text-slate-300 space-y-1.5 font-mono">
-                <div class="text-emerald-400 font-bold">【階段1 強制｜不受殖利率紅線約束】</div>
-                <div>⬜ <b>P1-0</b>：1,200萬撥款未入帳 → 禁任何換匯/建債/質押</div>
-                <div>⬜ <b>P1-1 還債</b>：優先償還800萬高息舊債（按利率排序）｜驗證完整銷帳</div>
-                <div>⬜ <b>P1-2 緩衝</b>：台幣現金緩衝 ≥6個月第一層利息支出</div>
-                <div>⬜ <b>P1-3 建債梯</b>：剩餘台幣分批換匯 → 美元直債到期梯（3-7Y 375 + 8-10Y 125；禁30Y；持有到期）</div>
-                <div>⬜ <b>P1-4 完成標準</b>：舊債清除＋直債底倉＋現金緩衝到位；期間嚴格禁止任何質押</div>
-                <div class="text-amber-400 font-bold pt-1">【階段2 選擇性｜4門檻全過才執行，任一不達即終止】</div>
-                <div>⬜ <b>門檻1</b>：US30Y &lt; 5.30%｜<b>門檻2</b>：壓力測試（+50bp + 美元貶3%）LTV≤50%</div>
-                <div>⬜ <b>門檻3</b>：觀察1-3交易日無跳空劇烈波動｜<b>門檻4</b>：雙層成本 &lt; 債券平均到期殖利率</div>
-                <div>⬜ <b>質押約束</b>：LTV≤50%不打滿｜資金僅限現金流類（直債/配息ETF/美債梯）｜禁一周內「建債+質押+再投資」全套</div>
-                <div class="pt-2 text-slate-400">🛡️ 已開第二層後 US30Y≥5.30% → 停止新增質押＋逐步降 LTV｜總資產≥1500萬才重評FCN/第三層</div>
-            </div>
-        </details>
-    </div>
 
     <!-- ================= PAGE 1 ================= -->
     <div id="tab-content-1" class="tab-pane space-y-6"><div style="border:1px solid #f59e0b;background:#fffbeb;border-radius:12px;padding:14px;margin-bottom:14px">
 <h3 style="color:#92400e;font-size:14px;font-weight:800;margin:0 0 6px">📡 資金流向再平衡預判（2026-08-19 核准）</h3>
 <p style="color:#1f2937;font-size:12.5px;margin:0">市場：費半 -5.3%｜黃金 +3.8%｜VIX +3.6% → 科技流出＋避險升溫</p>
-<p style="color:#1f2937;font-size:12px;margin-top:6px;line-height:1.7">①美股逢彈減碼 35.7→30%（≤20萬/次）②台股 00878 每週1,000股 ③台新6%定存停泊（8/20撥款）④建債梯500萬（PI後）⑤黃金衛星2-3% ⑥現金底線70萬 ⑦還債800萬（PI後）</p>
+<p style="color:#1f2937;font-size:12px;margin-top:6px;line-height:1.7">①美股逢彈減碼 35.7→30%（≤20萬/次）②台股 00878 每週1,000股 ③8/20定案：富達全球動能多元600萬+MMF600萬→PI認列2週 ④質押富達5成300萬@2.77%還安聯4.2% ⑤MMF→10月標案預備金5-600萬 ⑥現金底線70萬 ⑦黃金衛星2-3%（≤5%）</p>
 </div>
         <!-- 護城河水位計 -->
         <div class="luxury-card p-6">
@@ -450,9 +398,9 @@
                 <span class="text-xs text-slate-400 font-mono">8/15 執行</span>
             </div>
             <div class="bg-slate-900/60 p-4 rounded-xl space-y-2 border border-slate-800 text-xs">
-                <p class="font-bold text-yellow-500">⚠️ 國泰 2.6% 轉貸（8/4 對保+地政設定 ✅ → 8/7 寄回 → 8/15 撥款）：</p>
+                <p class="font-bold text-yellow-500">✅ 國泰 2.6% 轉貸 1,200萬：8/20 已撥款入帳（Moneybook 確認）→ 8/20 定案配置執行中</p>
                 <p class="text-slate-300 leading-relaxed font-mono">
-                    8/15 撥款 1,200萬 @2.6% → 【8/12 兩層槓桿修正版】階段1：償還800萬高息舊債→現金緩衝≥6月利息→剩餘分批換匯建美元直債到期梯（3-7Y 375 + 8-10Y 125，持有到期）；階段2：質押選擇性（4門檻全過才做，LTV≤50%）；US30Y≥5.30% 全域凍結質押。
+                    8/20 定案：國泰 1,200萬@2.6% 已入帳 → 600萬富達全球動能多元（B股C月配美元）+ 600萬MMF停泊 → PI 認列~2週 → 質押富達5成借300萬@2.77% 還安聯保單借貸300萬@4.2% → MMF轉10月標案預備金5-600萬。US30Y≥5.30% 全域凍結質押。
                 </p>
             </div>
             <div class="text-xs text-slate-400 space-y-1.5 font-mono">
@@ -514,7 +462,7 @@
         </div>
     </div>
 
-<div class='bg-slate-900/60 rounded-xl border border-blue-800/40 p-4 mb-4'><div class='text-sm font-bold text-blue-300 mb-2'>🎵 Rhythm-08 韻律零八｜估值利率風險監控</div><div class='text-xs py-0.5'><span class='font-bold'>🔴</span> 尚有高息負債 — 凍結主動加倉，優先還高息負債</div><div class='text-xs py-0.5'><span class='font-bold'>🔴</span> 30Y美債 5.32% ≥ 5.30% — 全域凍結紅線（8/12 裁決）：禁止新增債券質押；已開第二層者停止新增質押＋逐步降LTV</div><div class='text-xs py-0.5'><span class='font-bold'>🟡</span> 美股 34.0% > 32% — 再平衡回落30%</div><div class='text-[10px] text-slate-400 mt-2 italic'>「歷史不會重演，但總會押韻；不恐慌殺盤，但要提前收斂風險曝險，握好現金彈藥。」</div><div class='text-[9px] text-slate-500'>本模組僅產生警示與建議，不自動下單｜資訊僅供參考</div></div></main>
+<div class='bg-slate-900/60 rounded-xl border border-blue-800/40 p-4 mb-4'><div class='text-sm font-bold text-blue-300 mb-2'>🎵 Rhythm-08 韻律零八｜估值利率風險監控</div><div class='text-xs py-0.5'><span class='font-bold'>🔴</span> 尚有高息負債 — 凍結主動加倉，優先還高息負債</div><div class='text-xs py-0.5'><span class='font-bold'>🔴</span> 30Y美債 5.32% ≥ 5.30% — 全域凍結紅線（8/12 裁決）：禁止新增質押；已質押者停止新增質押＋逐步降LTV</div><div class='text-xs py-0.5'><span class='font-bold'>🟡</span> 美股 34.0% > 32% — 再平衡回落30%</div><div class='text-[10px] text-slate-400 mt-2 italic'>「歷史不會重演，但總會押韻；不恐慌殺盤，但要提前收斂風險曝險，握好現金彈藥。」</div><div class='text-[9px] text-slate-500'>本模組僅產生警示與建議，不自動下單｜資訊僅供參考</div></div></main>
 
 <footer class="max-w-4xl mx-auto px-4 mt-8 text-center text-[10px] text-slate-500">
     龍九資產管理系統 (Dragon 9 Portfolio Terminal) v2.1 | SSoT 真值驗證通過版
@@ -529,7 +477,7 @@
             <span class="text-slate-300">凍結市值標的大額單；美股逢反彈分批減碼收斂至30%；台股市值僅單筆≤5萬、回檔小單分批；資金優先序＝現金緩衝＞防守資產＞台股彈性標的。兩條底線：現金≥70萬；US30Y 無連3日&lt;5.20% 不開放市值大額進場。</span>
         </div>
         <ul class="text-xs text-slate-300 mt-2 space-y-1.5 leading-relaxed list-disc pl-4">
-            <li>✅ <strong>短期（國泰 1,200 萬：8/4 對保+地政設定 ✅ → 8/7 寄回 → 8/15 撥款）</strong>：階段1 撥款後→償還800萬高息舊債→現金緩衝≥6月利息→建美元直債到期梯(3-7Y 375+8-10Y 125)；階段2 質押選擇性(LTV≤50%)（8/12 裁決）</li>
+            <li>✅ <strong>短期（國泰 1,200 萬：8/20 已入帳）</strong>：8/20 定案 → 600萬富達（質押擔保品）＋600萬MMF（PI認列2週）→ 質押富達5成300萬@2.77%還安聯300萬@4.2% → MMF轉10月標案預備金5-600萬</li>
             <li>✅ <strong>中期（逐步架構）</strong>：目標配比（台15/美30/防守20/債20/現金15）為中長期方向，容許數月階段偏離；美股 32-38% 不急砍、反彈才分批出</li>
             <li>✅ <strong>例行機制</strong>：每週六再平衡評估；Hermes 每日監控美債利率觸發模式切換（模式A防禦 ≥5.20% / 模式B布局 <4.90%）</li>
             <li>⛔ 禁令：熱門高股息/市值 ETF 禁追漲大額（擁擠風險，僅回檔小單）；債券 8/15 前停止新增買進（00983D 8/4 已買10張），撥款後依新計畫買 1,000萬；保單底層基金僅季度大檢視</li>
