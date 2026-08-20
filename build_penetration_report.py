@@ -159,7 +159,7 @@ if _fb:
     w("<table><thead><tr><th>基金名稱</th><th class='num'>市值</th><th>穿透分類</th></tr></thead><tbody>")
     _fund_tw = _fund_us = _fund_def = 0
     for _fn, _fv2 in sorted(_fb.items(), key=lambda x: x[1], reverse=True):
-        if "台新美日台" in _fn or "貝萊德" in _fn or "安聯AI" in _fn or "聯博" in _fn or "摩根" in _fn or "M&G" in _fn or "安聯收益成長" in _fn:
+        if "台新美日台" in _fn or "貝萊德" in _fn or "安聯AI" in _fn or "聯博" in _fn or "摩根" in _fn or "M&G" in _fn or "安聯收益成長" in _fn or "富達" in _fn:
             _cat = "🌎 美股"; _fund_us += _fv2
         elif "0050連結" in _fn or "統一奔騰" in _fn or "路博邁" in _fn or "安聯台灣科技" in _fn:
             # 2026-08-13 修正：路博邁台灣5G/安聯台灣科技是台股基金
