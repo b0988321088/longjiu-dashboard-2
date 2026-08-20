@@ -26,7 +26,12 @@ except Exception:
     pass
 
 BASE = Path(__file__).parent.resolve()
-TODAY = date.today().isoformat()
+import json as _json
+try:
+    _snap_date = _json.load(open(BASE / "snapshot.json", encoding="utf-8")).get("date") or date.today().isoformat()
+except Exception:
+    _snap_date = date.today().isoformat()
+TODAY = _snap_date  # 2026-08-21 修正：報告日期跟 snapshot date 一致（跨日時 four_source_sync 會先刪 {today} 日報，若 run_daily 用 date.today 會失配）
 SNAPSHOT = BASE / "snapshot.json"
 RULES = BASE / "DAILY_REPORT_PIPELINE_RULE.md"
 LEDGER = BASE / "Company_Ledger.md"
