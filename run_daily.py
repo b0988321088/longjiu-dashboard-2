@@ -1188,6 +1188,11 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     f"</div></div>"
                 )
                 html += _lv_html
+                try:
+                    from market_indicator_panel import build_panel
+                    html += build_panel()
+                except Exception:
+                    pass
             except Exception:
                 pass
     except Exception:

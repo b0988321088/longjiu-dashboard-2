@@ -15,6 +15,9 @@ def load(p):
     return json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
 
 def main():
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from market_indicator_panel import build_panel
     snap = load("snapshot.json")
     hist = load("asset_diff_history.json")
     decs = load("dashboard_decisions.json")
@@ -250,7 +253,7 @@ li{{margin-bottom:5px;font-size:12.5px;line-height:1.5}}
 </body></html>"""
 
     out = REPO / f"weekly_report_{today}.html"
-    out.write_text(html, encoding="utf-8")
+    out.write_text(html + build_panel() + "\n", encoding="utf-8")
     print(f"✅ {out.name}（{len(html):,} bytes）")
 
 if __name__ == "__main__":
