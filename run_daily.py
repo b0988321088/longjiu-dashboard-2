@@ -627,7 +627,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         <tbody>
           <tr><td>🇹🇼 台股市值型</td><td class="num">__DR_TW_V__ TWD</td><td class="num">__DR_TW_PCT__</td><td class="num">__DR_TW_TGT__</td><td>__DR_TW_GAP__</td></tr>
           <tr><td>🇺🇸 美股市值型</td><td class="num">__DR_US_V__ TWD</td><td class="num">__DR_US_PCT__</td><td class="num">__DR_US_TGT__</td><td>__DR_US_GAP__</td></tr>
-          <tr><td style="padding-left:20px;color:#7dd3fc;font-size:12px">└ 科技股</td><td class="num">__DR_US_TECH_V__ TWD</td><td class="num">__DR_US_TECH_PCT__</td><td></td><td></td></tr>
+          <tr><td style="padding-left:20px;color:#7dd3fc;font-size:12px">└ 科技股</td><td class="num">__DR_US_TECH_V__ TWD</td><td class="num">__DR_US_TECH_PCT__</td><td class="num">__DR_US_TECH_TGT__</td><td>__DR_US_TECH_GAP__</td></tr>
           <tr><td style="padding-left:20px;color:#94a3b8;font-size:12px">└ 非科技</td><td class="num">__DR_US_NT_V__ TWD</td><td class="num">__DR_US_NT_PCT__</td><td></td><td></td></tr>
           <tr><td>🛡️ 防守型配息</td><td class="num">__DR_DEF_V__ TWD</td><td class="num">__DR_DEF_PCT__</td><td class="num">__DR_DEF_TGT__</td><td>__DR_DEF_GAP__</td></tr>
           <tr><td>💵 債券</td><td class="num">__DR_BOND_V__ TWD</td><td class="num">__DR_BOND_PCT__</td><td class="num">__DR_BOND_TGT__</td><td>__DR_BOND_GAP__</td></tr>
@@ -1529,7 +1529,8 @@ def main():
     _atwd2 = _pen.get("actual_twd", {})
     for k, v in [("__DR_TW_PCT__",f"{_apct.get('台股市值型成長',0):.1f}%"),("__DR_US_PCT__",f"{_apct.get('美股市值型成長',0):.1f}%"),("__DR_DEF_PCT__",f"{_apct.get('防守型配息',0):.1f}%"),("__DR_BOND_PCT__",f"{_apct.get('債券',0):.1f}%"),("__DR_CASH_PCT__",f"{_apct.get('現金/安全網',0):.1f}%"),
                  ("__DR_US_TECH_V__",f"{_atwd2.get('美股市值型成長_科技',0):,}"),("__DR_US_TECH_PCT__",f"{_apct.get('美股市值型成長_科技',0):.1f}%"),
-                 ("__DR_US_NT_V__",f"{_atwd2.get('美股市值型成長_非科技',0):,}"),("__DR_US_NT_PCT__",f"{_apct.get('美股市值型成長_非科技',0):.1f}%")]: daily_html = daily_html.replace(k, v)
+                 ("__DR_US_NT_V__",f"{_atwd2.get('美股市值型成長_非科技',0):,}"),("__DR_US_NT_PCT__",f"{_apct.get('美股市值型成長_非科技',0):.1f}%"),
+                 ("__DR_US_TECH_TGT__",f"{_tgt.get('科技曝險目標',15):.0f}%"),("__DR_US_TECH_GAP__",f"{_apct.get('美股市值型成長_科技',0) - _tgt.get('科技曝險目標',15):+.1f}pp")]: daily_html = daily_html.replace(k, v)
     for k, v in [("__DR_TW_TGT__",f"{_tgt.get('台股市值型目標',20):.0f}%"),("__DR_US_TGT__",f"{_tgt.get('美股市值型目標',30):.0f}%"),("__DR_DEF_TGT__",f"{_tgt.get('配息型目標',20):.0f}%"),("__DR_BOND_TGT__",f"{_tgt.get('債券型目標',15):.0f}%"),("__DR_CASH_TGT__",f"{_tgt.get('現金目標',15):.0f}%")]: daily_html = daily_html.replace(k, v)
     _pen_total = _tw_v + _us_v + _def_v + _bond_v + _cash_v or 1
     for k, t, g in [("__DR_TW_GAP__",_tw_v,_tgt.get('台股市值型目標',20)),("__DR_US_GAP__",_us_v,_tgt.get('美股市值型目標',30)),("__DR_DEF_GAP__",_def_v,_tgt.get('配息型目標',20)),("__DR_BOND_GAP__",_bond_v,_tgt.get('債券型目標',15)),("__DR_CASH_GAP__",_cash_v,_tgt.get('現金目標',15))]:
@@ -2131,6 +2132,9 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__US_TECH_VALUE__", fmt(_us_tech_v))
     html = html.replace("__US_NT_PCT__", f"{_us_nt_pct:.1f}")
     html = html.replace("__US_NT_VALUE__", fmt(_us_nt_v))
+    _us_tech_tgt = _alloc_tgt.get("科技曝險目標", 15)
+    html = html.replace("__US_TECH_TGT__", f"{_us_tech_tgt:.0f}")
+    html = html.replace("__US_TECH_GAP__", f"{_us_tech_pct - _us_tech_tgt:+.1f}")
     html = html.replace("__DEF_PCT__", fmt(def_))
     html = html.replace("__DEF_TARGET__", fmt(def_target))
     html = html.replace("__DEF_GAP__", f"{def_gap:+.1f}")

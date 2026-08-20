@@ -22,11 +22,12 @@ total = tw_v + us_v + def_v + bond_v + cash_pv
 _existing_tgt = snap.get("penetration", {}).get("targets", {}) or {}
 targets_map = {
     "台股市值型": _existing_tgt.get("台股市值型目標", 20),
-    "美股市值型": _existing_tgt.get("美股市值型目標", 30),
+    "美股市值型": _existing_tgt.get("美股市值型目標", 40),
     "配息型": _existing_tgt.get("配息型目標", 20),
     "債券型": _existing_tgt.get("債券型目標", 15),
     "現金": _existing_tgt.get("現金目標", 15),
 }
+tech_target = _existing_tgt.get("科技曝險目標", 15)
 actual_map = {"台股市值型成長": tw_v, "美股市值型成長": us_v, "防守型配息": def_v, "債券": bond_v, "現金/安全網": cash_pv,
             "美股市值型成長_科技": us_tech_v, "美股市值型成長_非科技": us_nt_v}
 actual_pct = {k: round(v / total * 100, 1) for k, v in actual_map.items()}
@@ -35,6 +36,7 @@ gaps = {
     "美股市值型成長": round(actual_pct["美股市值型成長"] - targets_map["美股市值型"], 1),
     "防守型配息": round(actual_pct["防守型配息"] - targets_map["配息型"], 1),
     "債券及安全現金": round(actual_pct["債券"] + actual_pct["現金/安全網"] - targets_map["債券型"] - targets_map["現金"], 1),
+    "科技曝險": round(actual_pct.get("美股市值型成長_科技", 0) - tech_target, 1),
 }
 snap["penetration"] = {
     "updated_at": date.today().isoformat(),
@@ -96,7 +98,7 @@ w("</style></head><body>")
 
 w(f"<h1>📊 龍九控股 穿透分析報告（詳細版）</h1>")
 w(f"<p class='meta'>{today} ｜ 穿透分母 = {total:,} TWD</p>")
-w(f"<div class='callout'>🔬 <b>美股科技拆解：</b>科技股 {us_tech_v:,}（{round(us_tech_v/total*100,1)}%）｜非科技 {us_nt_v:,}（{round(us_nt_v/total*100,1)}%）｜合計 {us_v:,}（{round(us_v/total*100,1)}%）<br><span style='color:#94a3b8;font-size:12px'>科技比估計：貝萊德科技100% / 009824 100% / 半導體90% / 富達35% / 安聯AI 35% / 聯博美國成長40% / 安聯收益16% / 00646·009823 32% / 摩根·PIMCO 10% / M&G 7% / 聯博全球多元收益 2.5%</span></div>")
+w(f"<div class='callout'>🔬 <b>美股科技拆解：</b>科技股 {us_tech_v:,}（{round(us_tech_v/total*100,1)}%，目標 ≤{tech_target}%，缺口 {round(us_tech_v/total*100 - tech_target,1):+.1f}pp）｜非科技 {us_nt_v:,}（{round(us_nt_v/total*100,1)}%）｜合計 {us_v:,}（{round(us_v/total*100,1)}%）<br><span style='color:#94a3b8;font-size:12px'>科技比估計：貝萊德科技100% / 009824 100% / 半導體90% / 富達35% / 安聯AI 35% / 聯博美國成長40% / 安聯收益16% / 00646·009823 32% / 摩根·PIMCO 10% / M&G 7% / 聯博全球多元收益 2.5%</span></div>")
 
 # 1. Overview table
 w("<div class='card'><h2>🎯 配置總覽</h2>")
