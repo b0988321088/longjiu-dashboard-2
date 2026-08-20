@@ -157,6 +157,10 @@ _pen = _snap.get("penetration", {})
 _atwd, _apct, _tgt = _pen.get("actual_twd", {}), _pen.get("actual_pct", {}), _pen.get("targets", {})
 for k, v in [("__DR_TW_V__",f"{_atwd.get('台股市值型成長',0):,.0f}"),("__DR_US_V__",f"{_atwd.get('美股市值型成長',0):,.0f}"),("__DR_DEF_V__",f"{_atwd.get('防守型配息',0):,.0f}"),("__DR_BOND_V__",f"{_atwd.get('債券',0):,.0f}"),("__DR_CASH_V__",f"{_atwd.get('現金/安全網',0):,.0f}")]: html = html.replace(k, v)
 for k, v in [("__DR_TW_PCT__",f"{_apct.get('台股市值型成長',0):.1f}%"),("__DR_US_PCT__",f"{_apct.get('美股市值型成長',0):.1f}%"),("__DR_DEF_PCT__",f"{_apct.get('防守型配息',0):.1f}%"),("__DR_BOND_PCT__",f"{_apct.get('債券',0):.1f}%"),("__DR_CASH_PCT__",f"{_apct.get('現金/安全網',0):.1f}%")]: html = html.replace(k, v)
+# 美股科技/非科技子維度（8/21 補：與 run_daily.py L1535-1538 同步，曾造成 __DR_ 殘留擋推送）
+for k, v in [("__DR_US_TECH_V__",f"{_atwd.get('美股市值型成長_科技',0):,.0f}"),("__DR_US_TECH_PCT__",f"{_apct.get('美股市值型成長_科技',0):.1f}%"),
+             ("__DR_US_NT_V__",f"{_atwd.get('美股市值型成長_非科技',0):,.0f}"),("__DR_US_NT_PCT__",f"{_apct.get('美股市值型成長_非科技',0):.1f}%"),
+             ("__DR_US_TECH_TGT__",f"{_tgt.get('科技曝險目標',15):.0f}%"),("__DR_US_TECH_GAP__",f"{_apct.get('美股市值型成長_科技',0) - _tgt.get('科技曝險目標',15):+.1f}pp")]: html = html.replace(k, v)
 for k, v in [("__DR_TW_TGT__",f"{_tgt.get('台股市值型目標',20):.0f}%"),("__DR_US_TGT__",f"{_tgt.get('美股市值型目標',30):.0f}%"),("__DR_DEF_TGT__",f"{_tgt.get('配息型目標',20):.0f}%"),("__DR_BOND_TGT__",f"{_tgt.get('債券型目標',15):.0f}%"),("__DR_CASH_TGT__",f"{_tgt.get('現金目標',15):.0f}%")]: html = html.replace(k, v)
 for k, t, g in [("__DR_TW_GAP__",_apct.get('台股市值型成長',0),_tgt.get('台股市值型目標',20)),("__DR_US_GAP__",_apct.get('美股市值型成長',0),_tgt.get('美股市值型目標',30)),("__DR_DEF_GAP__",_apct.get('防守型配息',0),_tgt.get('配息型目標',20)),("__DR_BOND_GAP__",_apct.get('債券',0),_tgt.get('債券型目標',15)),("__DR_CASH_GAP__",_apct.get('現金/安全網',0),_tgt.get('現金目標',15))]:
     html = html.replace(k, f"{t - g:+.1f}pp")
@@ -209,14 +213,22 @@ checks = {
     "章節6/6": (len(_sec9) >= 9) or (len(_sec6) >= 6),
 }
 # 11. 穿透分析報告
+_pen_file = None
 try:
     # 11. 穿透分析報告（詳細版）
     import subprocess as _sp
     _pen_r = _sp.run([sys.executable, str(BASE / "build_penetration_report.py")], capture_output=True, text=True, timeout=30, cwd=BASE)
     if _pen_r.returncode == 0:
         print(f"  {_pen_r.stdout.strip()}")
+        _m_pen = re.search(r"(penetration_report_[\d-]+\.html)", _pen_r.stdout or "")
+        if _m_pen:
+            _pen_file = _m_pen.group(1)  # 檔名日期=snapshot 日期，非 today（8/21 實踩）
     else:
         print(f"⚠️ 穿透報告略過: {_pen_r.stderr[:100]}")
+    if not _pen_file:  # fallback：glob 最新
+        _pens = sorted(BASE.glob("penetration_report_*.html"), key=lambda p: p.stat().st_mtime, reverse=True)
+        if _pens:
+            _pen_file = _pens[0].name
 except Exception as _e:
     print(f"⚠️ 穿透報告異常: {_e}")
 
@@ -239,20 +251,37 @@ except Exception as _ce:
     print(f"⚠️ CIO 審查執行失敗（不推送）: {_ce}")
 if ok and _cio_ok:
     # stage + commit 所有報表檔案
+    # ⚠️ 8/21 實踩：git add 清單含不存在的檔 → 整批 add 失敗 → 空 commit → Pages 404
     _msg = f"四源同步 {TODAY} [cioreviewed]"
-    subprocess.run(['git', 'add', f'daily_report_v2_{TODAY}.html', f'asset_diff_{TODAY}.html', f'penetration_report_{TODAY}.html', 'index.html', 'snapshot.json', 'dragon_assets.db'], capture_output=True, text=True, cwd=BASE)
-    subprocess.run(['git', 'commit', '-m', _msg, '--allow-empty'], capture_output=True, text=True, cwd=BASE)
+    _push_candidates = [f'daily_report_v2_{TODAY}.html', f'asset_diff_{TODAY}.html', 'index.html', 'snapshot.json', 'dragon_assets.db']
+    if _pen_file:
+        _push_candidates.append(_pen_file)
+    _push_files = [f for f in _push_candidates if (BASE / f).exists()]
+    if _push_files:
+        subprocess.run(['git', 'add'] + _push_files, capture_output=True, text=True, cwd=BASE)
+        _staged = subprocess.run(['git', 'diff', '--cached', '--name-only'], capture_output=True, text=True, cwd=BASE).stdout.strip()
+        if _staged:
+            subprocess.run(['git', 'commit', '-m', _msg], capture_output=True, text=True, cwd=BASE)
+        else:
+            print("⚠️ 無檔案可提交（全部已是最新，跳過 commit）")
+    else:
+        print("⚠️ 無任何報表檔案可推送")
     for _ref in ['clean-main', 'clean-main:main']:
         _r = subprocess.run(['git', 'push', 'origin', _ref, '--force'], capture_output=True, text=True, timeout=30, cwd=BASE)
         _ok = 'Everything up-to-date' in _r.stdout or _r.returncode == 0
         print(f"  {'✅' if _ok else '❌'} 推到 {_ref}")
-    # 驗證上線
+    # 驗證上線（Pages 建置有延遲 → 重試 4 次 × 20s）
     import time
-    time.sleep(30)  # 等 Pages 建置
     _base = f"https://b0988321088.github.io/longjiu-dashboard-2"
-    for _f in [f"daily_report_v2_{TODAY}.html", f"asset_diff_{TODAY}.html", f"penetration_report_{TODAY}.html", "index.html"]:
-        _c = subprocess.run(['curl', '-s', '-o', '/dev/null', '-w', '%{http_code}', f"{_base}/{_f}"], capture_output=True, text=True, timeout=10)
-        _code = _c.stdout.strip()
+    _check_files = [f"daily_report_v2_{TODAY}.html", f"asset_diff_{TODAY}.html", "index.html"] + ([_pen_file] if _pen_file else [])
+    for _f in _check_files:
+        _code = ""
+        for _try in range(4):
+            _c = subprocess.run(['curl', '-s', '-o', '/dev/null', '-w', '%{http_code}', f"{_base}/{_f}"], capture_output=True, text=True, timeout=10)
+            _code = _c.stdout.strip()
+            if _code == '200':
+                break
+            time.sleep(20)
         print(f"  {'✅' if _code == '200' else '❌'} {_f} → {_code}")
 else:
     print(f"\n⛔ 產出檢查={'✅' if ok else '❌'} / CIO 審查={'✅' if _cio_ok else '❌'} → 未推送（修正後重跑 regenerate_report.py --deploy）")
