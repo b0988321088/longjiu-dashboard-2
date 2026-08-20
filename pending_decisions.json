@@ -44,7 +44,7 @@
  {
   "date": "2026-08-21",
   "title": "DAA v3 宏觀動態評估引擎（macro_regime.py）",
-  "status": "🔄 執行中：引擎+面板+週報整合完成（含緊急應變資料整合），本地驗證通過；待 CIO 審查後 push",
+  "status": "✅ 完成：引擎+面板+週報整合+緊急應變，CIO 核准已上線 GitHub Pages（8/21）",
   "tags": "DAA,再平衡,宏觀情境",
   "detail": "8/21 A版定案：SAA 8/20基準+黃金衛星≤5%+現金底線制；引擎不推Lombard/PI/新增美元；4情境評分→targetAllocation數字輸出"
  }
