@@ -14,6 +14,7 @@ sec = snap.get("securities_total_market_value", 2597360)
 funds = snap.get("fund_market_value", 793434)
 p = calc_penetration(cash, ins, sec, funds, snap=snap)
 tw_v, us_v, def_v, bond_v, cash_pv = p["台股市值型成長"], p["美股市值型成長"], p["防守型配息"], p["債券"], p["現金/安全網"]
+us_tech_v, us_nt_v = p.get("美股市值型成長_科技", 0), p.get("美股市值型成長_非科技", 0)
 total = tw_v + us_v + def_v + bond_v + cash_pv
 
 # 自動校正 snapshot 穿透數據（供日報第2章使用）
@@ -26,7 +27,8 @@ targets_map = {
     "債券型": _existing_tgt.get("債券型目標", 15),
     "現金": _existing_tgt.get("現金目標", 15),
 }
-actual_map = {"台股市值型成長": tw_v, "美股市值型成長": us_v, "防守型配息": def_v, "債券": bond_v, "現金/安全網": cash_pv}
+actual_map = {"台股市值型成長": tw_v, "美股市值型成長": us_v, "防守型配息": def_v, "債券": bond_v, "現金/安全網": cash_pv,
+            "美股市值型成長_科技": us_tech_v, "美股市值型成長_非科技": us_nt_v}
 actual_pct = {k: round(v / total * 100, 1) for k, v in actual_map.items()}
 gaps = {
     "台股市值型成長": round(actual_pct["台股市值型成長"] - targets_map["台股市值型"], 1),
@@ -94,6 +96,7 @@ w("</style></head><body>")
 
 w(f"<h1>📊 龍九控股 穿透分析報告（詳細版）</h1>")
 w(f"<p class='meta'>{today} ｜ 穿透分母 = {total:,} TWD</p>")
+w(f"<div class='callout'>🔬 <b>美股科技拆解：</b>科技股 {us_tech_v:,}（{round(us_tech_v/total*100,1)}%）｜非科技 {us_nt_v:,}（{round(us_nt_v/total*100,1)}%）｜合計 {us_v:,}（{round(us_v/total*100,1)}%）<br><span style='color:#94a3b8;font-size:12px'>科技比估計：貝萊德科技100% / 009824 100% / 半導體90% / 富達35% / 安聯AI 35% / 聯博美國成長40% / 安聯收益16% / 00646·009823 32% / 摩根·PIMCO 10% / M&G 7% / 聯博全球多元收益 2.5%</span></div>")
 
 # 1. Overview table
 w("<div class='card'><h2>🎯 配置總覽</h2>")

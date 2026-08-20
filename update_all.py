@@ -29,6 +29,13 @@ def _fv(v):
 
 def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None, snap=None):
     _fj = int((snap or {}).get("firstjin_fl65_current_value") or (snap or {}).get("firstjin_current_value") or 1_958_980)
+    # 2026-08-21：美股科技/非科技拆解（科技比 = 基金淨值中科技曝險佔比；估計值，來源=月報/公開資料）
+    _TECH = {"貝萊德世界科技": 1.0, "貝萊德科技": 1.0, "009824": 1.0, "00924": 1.0, "台新美日台半導體": 0.90,
+             "富達全球動能多元": 0.35, "安聯AI收益成長": 0.35, "聯博美國成長": 0.40, "安聯收益成長": 0.16,
+             "摩根JPM": 0.10, "摩根多重收益": 0.10, "PIMCO收益增長": 0.10, "M&G入息": 0.07, "聯博全球多元收益": 0.025,
+             "00646": 0.32, "009823": 0.32}
+    def _tr(_fn):
+        return next((r for k, r in _TECH.items() if k in _fn), 0.15)
     if bond_portion is not None:
         ins_bonds = int(bond_portion)
         ins_eq = int(ins) - int(bond_portion) - _fj
@@ -43,6 +50,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         else:
             fv = {"安聯收益成長": 1_220_722, "M&G入息": 1_069_377, "安聯AI收益成長": 885_569, "貝萊德科技A10": 1_833_036, "PIMCO收益增長": 2_636_319}
         ins_bonds = sum(round(fv[n] * fund_ratios.get(n, 0)) for n in fv)
+        ins_tech = sum(round(fv[n] * _tr(n)) for n in fv)
         ins_eq = int(ins) - ins_bonds - _fj
     else:
         # 從 snapshot 動態讀取 + 預設債券比率（安聯收益35%, M&G 55%, AI收益50%）
@@ -54,11 +62,13 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
                 fv[k] = _fv(_a.get(k, 0)) + _fv(_b.get(k, 0))
             _br = {"安聯收益成長": 0.32, "M&G入息": 0.55, "安聯AI收益成長": 0.50, "PIMCO收益增長": 0.48, "摩根JPM多重收益": 0.467}
             ins_bonds = sum(round(fv[n] * _br.get(n, 0)) for n in fv)
+            ins_tech = sum(round(fv[n] * _tr(n)) for n in fv)
         else:
             ins_bonds = round(2_780_466*0.35 + 3_136_436*0.55 + 902_679*0.50)
+            ins_tech = round(2_780_466*0.16 + 3_136_436*0.07 + 902_679*0.35)
         ins_eq = int(ins) - ins_bonds - _fj
     # 分類基金（鉅亨基金帳戶）— 支援扁平 {name: val} 或嵌套 {群組: {name: val}}
-    _fund_tw = _fund_us = _fund_def = 0
+    _fund_tw = _fund_us = _fund_def = _fund_us_tech = 0
     _fb = (snap or {}).get("funds_breakdown", {})
     _fb_flat = {}
     for _fn, _fval in _fb.items():
@@ -74,6 +84,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             _fund_def += _fval
         elif any(k in _fn for k in ["台新美日台", "貝萊德", "安聯AI", "聯博", "摩根", "M&G", "安聯收益成長", "安聯美國", "富達"]):
             _fund_us += _fval
+            _fund_us_tech += _fval * _tr(_fn)
         elif any(k in _fn for k in ["0050連結", "統一奔騰", "安聯台灣科技", "路博邁台灣5G", "路博邁5G"]):
             # 2026-08-13 修正：路博邁台灣5G 是台股基金（投資台灣5G股），誤歸美股
             _fund_tw += _fval
@@ -84,7 +95,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     _SEC_US = {"00646", "009823", "009824", "00924"}     # 美股市值型成長（含美股科技 00924）
     _SEC_DEF = {"00713", "00878", "0056", "00919", "00918", "00888"}  # 防守型配息（高股息低波）
     _SEC_BOND = {"00983D"}                               # 債券
-    sec_tw = sec_us = sec_def = sec_bond = 0
+    sec_tw = sec_us = sec_def = sec_bond = sec_us_tech = 0
     _sec_holdings = (snap or {}).get("securities", {}).get("holdings", [])
     if _sec_holdings:
         for h in _sec_holdings:
@@ -96,6 +107,8 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
                 sec_bond += _v
             elif _t in _SEC_US:
                 sec_us += _v
+                _SEC_TECH = {"00646": 0.32, "009823": 0.32, "009824": 1.0, "00924": 1.0}
+                sec_us_tech = sec_us_tech + _v * _SEC_TECH.get(_t, 0.30)
             else:
                 sec_tw += _v  # 含未分類台股（00981A/00984A 主動型）
         # 防呆：holdings 市值與 sec 差異 >2% 時按比例縮放
@@ -124,9 +137,13 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         us = sec_us + ins_eq + _fund_us
         def_v = sec_def + _fj + _fund_def
     c = total - (tw + us + def_v + bond_v)
+    us_tech = _fund_us_tech + ins_tech + sec_us_tech
+    us_non_tech = us - us_tech
     return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": def_v, "債券": bond_v, "現金/安全網": c,
+            "美股市值型成長_科技": round(us_tech), "美股市值型成長_非科技": round(us_non_tech),
             "_meta": {"ins_eq": ins_eq, "fund_us": _fund_us, "fund_def": _fund_def,
-                      "sec_tw": sec_tw, "sec_us": sec_us, "sec_def": sec_def, "sec_bond": sec_bond}}
+                      "sec_tw": sec_tw, "sec_us": sec_us, "sec_def": sec_def, "sec_bond": sec_bond,
+                      "us_tech": round(us_tech), "us_non_tech": round(us_non_tech)}}
 
 
 def perform_data_validation(data: dict) -> list[str]:
