@@ -162,7 +162,7 @@ if _fb:
     _fb = _fb_flat
     w("<div class='card'><h2>📦 基金穿透（鉅亨基金帳戶）</h2>")
     w("<table><thead><tr><th>基金名稱</th><th class='num'>市值</th><th>穿透分類</th></tr></thead><tbody>")
-    _fund_tw = _fund_us = _fund_def = 0
+    _fund_tw = _fund_us = _fund_def = _fund_cash = 0
     for _fn, _fv2 in sorted(_fb.items(), key=lambda x: x[1], reverse=True):
         if "台新美日台" in _fn or "貝萊德" in _fn or "安聯AI" in _fn or "聯博" in _fn or "摩根" in _fn or "M&G" in _fn or "安聯收益成長" in _fn or "富達" in _fn:
             _cat = "🌎 美股"; _fund_us += _fv2
@@ -171,11 +171,13 @@ if _fb:
             _cat = "🇹🇼 台股"; _fund_tw += _fv2
         elif "台中銀台灣優息" in _fn or "國泰台灣高股息" in _fn:
             _cat = "🛡️ 防守型"; _fund_def += _fv2
+        elif "貨幣" in _fn:
+            _cat = "💵 現金類"; _fund_cash += _fv2
         else:
             _cat = "🇹🇼 台股"; _fund_tw += _fv2
         w(f"<tr><td style='max-width:180px'>{_fn}</td><td class='num'>{_fv2:,}</td><td>{_cat}</td></tr>")
     w(f"<tr style='border-top:2px solid #3b82f6;font-weight:700'><td>合計</td><td class='num'>{sum(_fb.values()):,}</td>")
-    w(f"<td>🇹🇼 台股 {_fund_tw:,} + 🌎 美股 {_fund_us:,} + 🛡️ 防守型 {_fund_def:,}</td></tr>")
+    w(f"<td>🇹🇼 台股 {_fund_tw:,} + 🌎 美股 {_fund_us:,} + 🛡️ 防守型 {_fund_def:,} + 💵 現金類 {_fund_cash:,}</td></tr>")
     w("</tbody></table></div>")
 
 # 4. Insurance（成分動態顯示，2026-08-04 改：不再硬編碼）

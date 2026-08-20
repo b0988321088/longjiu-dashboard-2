@@ -68,7 +68,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             ins_tech = round(2_780_466*0.16 + 3_136_436*0.07 + 902_679*0.35)
         ins_eq = int(ins) - ins_bonds - _fj
     # 分類基金（鉅亨基金帳戶）— 支援扁平 {name: val} 或嵌套 {群組: {name: val}}
-    _fund_tw = _fund_us = _fund_def = _fund_us_tech = 0
+    _fund_tw = _fund_us = _fund_def = _fund_us_tech = _fund_cash = 0
     _fb = (snap or {}).get("funds_breakdown", {})
     _fb_flat = {}
     for _fn, _fval in _fb.items():
@@ -88,6 +88,9 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         elif any(k in _fn for k in ["0050連結", "統一奔騰", "安聯台灣科技", "路博邁台灣5G", "路博邁5G"]):
             # 2026-08-13 修正：路博邁台灣5G 是台股基金（投資台灣5G股），誤歸美股
             _fund_tw += _fval
+        elif "貨幣" in _fn:
+            # 2026-08-21：貨幣市場基金（台幣貨基）→ 現金/安全網（餘數法自動落入 c）
+            _fund_cash += _fval
         else:
             _fund_tw += _fval
     # 證券 holdings 五桶分類（2026-08-04 修正：高股息ETF 過去被全數掃進台股市值型成長）
@@ -128,7 +131,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     # 按比例縮放基金三類，避免餘數法現金被吃掉）
     # ⚠️ 2026-08-11 修正：直接對齊 funds 真值（無論匯率調整在明細內或 funds 內，
     #    縮放因子一律 = funds / 明細加總，確保現金/安全網 == cash_total）
-    _fund_sum = _fund_tw + _fund_us + _fund_def
+    _fund_sum = _fund_tw + _fund_us + _fund_def + _fund_cash
     if _fund_sum > 0 and funds > 0 and abs(_fund_sum - funds) / funds > 0.001:
         _fk = funds / _fund_sum
         _fund_tw, _fund_us, _fund_def = (round(_fund_tw * _fk), round(_fund_us * _fk),
