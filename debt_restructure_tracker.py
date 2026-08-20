@@ -175,16 +175,17 @@ def main():
 
     # -------- 4. LTV 質押槓桿監控 --------
     ltv = plan.get("current_ltv", 0)
-    ltv_max = 0.30 if us30y > 5.15 else 0.40
-    env = "滯脹警戒環境(US30Y>5.15)" if us30y > 5.15 else "正常環境"
-    print(f"\n【4.LTV質押槓桿監控】")
-    print(f"  current_LTV_ratio = {ltv*100:.1f}%" if ltv else "  current_LTV_ratio = 0%（尚未質押）")
-    print(f"  環境判斷：{env}")
-    print(f"  允許LTV上限：{ltv_max*100:.0f}%")
-    if ltv <= ltv_max:
-        print(f"  檢核結果：✅ 符合門檻（正常環境≤40% / 滯脹警戒≤30%）")
+    print(f"\n【4.LTV質押槓桿監控｜策略A 燈號（8/20 定版：綠≤53/黃54-58/紅≥59/追繳≥70）】")
+    if ltv <= 0.53:
+        light4 = "🟢 綠燈（LTV≤53%：月淨現金流≥+5萬 且穿透在目標區間 → 維持現狀每週監控）"
+    elif ltv <= 0.58:
+        light4 = "🟡 黃燈（LTV 54~58%：停新增風險資產→重跑壓力測試→確認200萬現金墊可動用→預演解約300萬保單(不執行)→每3天監控）"
+    elif ltv < 0.70:
+        light4 = "🔴 紅燈（LTV≥59%：①動用現金墊還Lombard ②解約300萬保單(3%成本9萬)還債 ③賣部分基金避免強制平倉）"
     else:
-        print(f"  檢核結果：⚠️ 超出上限 → 需要主動還本降槓桿")
+        light4 = "💥 追繳警戒（LTV≥70%：立即執行紅燈全部動作）"
+    print(f"  current_LTV_ratio = {ltv*100:.1f}% → {light4}" if ltv else "  current_LTV_ratio = 0%（尚未質押）→ 🟢")
+    print(f"  質押初始LTV≤50%；擔保池=股票600+平衡300~600（追繳臨界自 -30% 延後至 -40%）")
 
     # -------- 5. 現金流 & 債務重整時程 --------
     print(f"\n【5.現金流 & 債務重整時程】")
@@ -198,7 +199,7 @@ def main():
     if dp.get("status", "").startswith("兩層槓桿修正版") or dp.get("status", "").startswith("8/20 定案"):
         p1 = dp.get("phase1_mandatory", {})
         p2 = dp.get("phase2_optional", {})
-        print(f"  8/20 定案：富達 600萬（質押擔保品）＋MMF 600萬（PI認列2週）→ 質押 300萬@2.77% 還安聯 300萬@4.2% → MMF 轉10月標案預備金")
+        print(f"  8/20 定案：富達600萬已建置＋MMF600萬(8/21買=暴跌回補池＋那瓦爾延遲決策) → PI後質押300-400萬@2.77%(還安聯300@4.2%＋元大100@3.92%選項) → 保單=穿透平衡不解約；標案營運金300萬獨立；平衡型標的傾向00878類(降科技權重,未定)")
         print(f"  完成標準：{p1.get('complete_standard','舊債清除+直債底倉+現金緩衝')}")
         print(f"  ⛔ 階段1期間禁質押：{p1.get('forbidden','不開第二層槓桿')}")
         print(f"  階段2（選擇性加分，非強制）：")

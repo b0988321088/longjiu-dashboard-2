@@ -1171,7 +1171,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     f"<h3>📊 槓桿風控輸出（8/20 定案：富達質押版）</h3>"
                     f"<div style='font-size:12.5px;line-height:1.8'>"
                     f"<strong>① 槓桿成本：</strong>第一層（國泰轉貸 1,200萬×2.6%）≈ {_p1_cost_y/10000:.1f}萬/年（月 {_p1_cost_m:,.0f}）＋質押層（富達 300萬×2.77%暫定）≈ {_pledge_cost_y/10000:.1f}萬/年（月 {_pledge_cost_m:,.0f}）→ 合計 ~{(_p1_cost_y+_pledge_cost_y)/10000:.1f}萬/年（月 {_p1_cost_m+_pledge_cost_m:,.0f}）<br/>"
-                    f"<strong>② LTV：</strong>質押 {_pledge_loan:,}/{_pledge_collateral:,} = 50%（🟢 綠燈上限）；擔保品富達 -30% 情境 → LTV 71% 🔴 觸追繳區（需銀行書面維持率/補繳天數）<br/>"
+                    f"<strong>② LTV：</strong>質押 {_pledge_loan:,}/{_pledge_collateral:,} = 50%（🟢 新燈號≤53%）；擔保品富達 -30% 情境 → LTV 71% 💥 追繳警戒（需銀行書面維持率/補繳天數）<br/>"
                     f"<strong>③ 月度利息流出 vs 現金流入：</strong>流出 {_p1_cost_m+_pledge_cost_m:,.0f} vs 流入（常態配息＋房租）{_income_m:,.0f}＋富達月配 ~{_fid_mdiv:,} = {_income_m+_fid_mdiv:,.0f} — {'✅ 覆蓋' if (_income_m+_fid_mdiv) >= (_p1_cost_m+_pledge_cost_m) else '⚠️ 未覆蓋'}<br/>"
                     f"<strong>④ 到期對照：</strong>負債＝國泰轉貸 1,200萬（3年寬限期）＋質押 300萬（富達擔保，基金無到期日）；富達為月配現金流資產，無期限錯配 ✅<br/>"
                     f"<strong>⑤ US30Y：</strong>{_us30y_now:.2f}% — {_fz_txt}<br/>"
