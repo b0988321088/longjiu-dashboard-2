@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-20T16:48:49.000288",
+  "generated_at": "2026-08-20T20:44:51.587424",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-20",
   "total_assets": 26205683,
@@ -11,7 +11,7 @@
   "working_surplus": 76144,
   "retirement_surplus": 18142,
   "securities_total_market_value": 2826480,
-  "fund_market_value": 801239,
+  "fund_market_value": 6801239,
   "moneybook_total": 3614169,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
@@ -67,15 +67,15 @@
   "firstjin_current_value": 1949745,
   "last_mb_sync": "2026-08-20",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
-  "bank_assets_moneybook": 12814266,
-  "bank_assets_memo": "Moneybook 8/20 匯出：國泰 1,200萬撥款已入帳（8/20 放款撥款 12,000,000）",
+  "bank_assets_moneybook": 6814266,
+  "bank_assets_memo": "Moneybook 8/20 匯出；8/20 富達全球動能多元 600萬 已建置（國泰→富達投信）",
   "monthly_expense_mb": 199186,
   "monthly_expense_mb_note": "MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償",
   "credit_card_pending": 55709,
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
   "securities_total": 2826480,
-  "funds_total": 801239,
+  "funds_total": 6801239,
   "last_calibration_sources": {
     "securities": "凱基證券截圖 2026-07-18 02:00",
     "funds": "鉅亨基金截圖 2026-07-18 02:03",
@@ -108,10 +108,13 @@
       "統一奔騰": 93832,
       "路博邁台灣5G累積": 239219
     },
-    "note": "2026-08-20 鉅亨真值 801,239（一般 359,387 + 自由Pay 441,852）；自由Pay 逐檔真值；一般申購 OCR 確定值+舊值比例縮放，待 CSV 精修"
+    "note": "2026-08-20 鉅亨 801,239 + 富達直購 6,000,000（8/20 建置）＝ 6,801,239",
+    "富達直購": {
+      "富達全球動能多元B股C月配息美元": 6000000
+    }
   },
   "funds_total_note": "鉅亨基金帳戶總覽 783,873；一般申購 361,339 + 自由PAY 422,534",
-  "real_liquid_assets": 12814266,
+  "real_liquid_assets": 6814266,
   "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
   "passive_income": {
     "fund_dividend_monthly": 0,
@@ -518,25 +521,25 @@
     },
     "actual_pct": {
       "台股市值型成長": 7.2,
-      "美股市值型成長": 19.2,
+      "美股市值型成長": 42.1,
       "防守型配息": 11.6,
       "債券": 13.1,
-      "現金/安全網": 48.9
+      "現金/安全網": 26.0
     },
     "gaps": {
       "台股市值型成長": -7.8,
-      "美股市值型成長": -10.8,
+      "美股市值型成長": 12.1,
       "防守型配息": -8.4,
-      "債券及安全現金": 27.0
+      "債券及安全現金": 4.1
     },
     "actual_twd": {
-      "台股市值型成長": 1888032.0,
-      "美股市值型成長": 5039555.0,
-      "防守型配息": 3039073.0,
+      "台股市值型成長": 1889388.0,
+      "美股市值型成長": 11039949.0,
+      "防守型配息": 3039207.0,
       "債券": 3424757.0,
-      "現金/安全網": 12814266.0
+      "現金/安全網": 6812382.0
     },
-    "alert": "台股不足7.8pp；現金+債券超標27.0pp"
+    "alert": "台股不足7.8pp；現金+債券超標4.1pp"
   },
   "penetration_canonical": {
     "updated_at": "2026-07-18",
@@ -656,7 +659,7 @@
   "securities_tw_growth": 1324900,
   "securities_tw_defense": 1037400,
   "securities_us_growth": 283650,
-  "cash": 12814266,
+  "cash": 6814266,
   "high_yield_savings": 2200410,
   "regular_cash": 1684210,
   "mortgages": [
@@ -759,7 +762,7 @@
   "travel_allowance": 12000,
   "second_salary": 39121,
   "bonus_july": 39121,
-  "cash_total": 12814266,
+  "cash_total": 6814266,
   "bonds_cash": 10262984,
   "monthly_dividend_breakdown": {
     "allianz": 95347,
@@ -941,7 +944,7 @@
   "true_value": {
     "total_assets": 16659573
   },
-  "funds": 801239,
+  "funds": 6801239,
   "allianz_a_breakdown": {
     "安聯收益成長": 716722,
     "摩根JPM多重收益": 1955286,
@@ -1357,8 +1360,8 @@
     }
   },
   "fund_dividend_monthly": 0,
-  "fund_market": 801239,
-  "fund_total_market_value": 801239,
+  "fund_market": 6801239,
+  "fund_total_market_value": 6801239,
   "insurance": 9763698,
   "professional_investor": {
     "status": "申請中（8/20 撥款後盤點：金融資產 26,205,683 / 門檻 3,000萬 / 缺口 ~380萬，可併配偶）",
@@ -1877,7 +1880,7 @@
   },
   "securities_bond": 199600,
   "cathay_disbursement": {
-    "status": "✅ 8/20 撥款已入帳 → 8/20 定案配置執行中（富達600萬+MMF600萬→PI認列→質押300萬@2.77%還安聯）",
+    "status": "✅ 8/20 富達 600萬已建置；MMF 600萬待執行 → PI認列 → 質押300萬@2.77%還安聯",
     "expected_date": "2026-08-20",
     "amount": 12000000,
     "rate": 0.026,
@@ -1928,19 +1931,19 @@
       "執行順序": "確認入帳 → 還安聯400萬 → 還元大100萬 → 保留憑證 → 剩餘~700萬台新6%定存 → 送PI"
     },
     "plan_0820_final": {
-      "status": "✅ 定案（2026-08-20 使用者確認）",
+      "status": "✅ 定案（2026-08-20）；富達 600萬 已建置",
       "配置": [
         {
           "標的": "富達基金-全球動能多元基金（B股C月配息美元）",
           "金額": 6000000,
           "性質": "質押擔保品（配息型多元資產）",
-          "時點": "確認後執行"
+          "時點": "✅ 8/20 已建置 600萬"
         },
         {
           "標的": "貨幣型基金 MMF",
           "金額": 6000000,
           "性質": "PI 認列停泊 ~2週 → 轉 10月標案預備金 5-600萬",
-          "時點": "立即"
+          "時點": "待執行（MMF 停泊 PI 認列）"
         }
       ],
       "目的": "PI 認列期間維持金融資產 3,000萬 水位（MMF 600萬停泊），富達 600萬為配置",
@@ -2075,11 +2078,11 @@
     "threshold": 50,
     "logic": "總美元曝險 = 美股桶（保單美股+ETF美股）+ 美元定存 + 美元債券梯，佔總資產 >50% → 黃燈警示",
     "current": {
-      "美股桶": 35.7,
+      "美股桶": 42.1,
       "美元定存": 0,
       "美元債券梯": 0,
-      "合計": 35.7,
-      "狀態": "🟢 未超標（<50%）"
+      "合計": 42.1,
+      "狀態": "🟡 接近上限（>40%）"
     },
     "after_0820": {
       "估算": "撥款後美元定存 1,200萬（8.3%）+ 債券梯 500萬（3.5%）→ 合計 ~47.5%",
@@ -2089,7 +2092,8 @@
       "黃金衛星 ≤5%（美元弱時黃金漲，對沖）",
       "台幣防守（00878/現金底線）",
       "匯率紅黃綠燈（台幣升>5%警示）"
-    ]
+    ],
+    "note": "8/20 富達 600萬（全美元，穿透含股80.75%+債14.03%全計美股桶）已建置 → 美股桶 42.1%；MMF 600萬若建置將再 +22.9% → 超 50% 紅線，需台幣資產平衡"
   },
   "investment_philosophy": {
     "version": "2026-08-19 定版（使用者總結）",
