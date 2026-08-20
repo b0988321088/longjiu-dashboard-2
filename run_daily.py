@@ -2074,6 +2074,8 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
                 "def": float(_snap_pen["防守型配息"]),
                 "bond": float(_snap_pen["債券"]),
                 "cash": float(_snap_pen["現金/安全網"]),
+                "us_tech": float(_snap_pen.get("美股市值型成長_科技", 0)),
+                "us_nt": float(_snap_pen.get("美股市值型成長_非科技", 0)),
             }
     except Exception:
         _pen_vals = None
@@ -2081,6 +2083,8 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     if _pen_vals:
         _tw_value, _us_value, _def_value = _pen_vals["tw"], _pen_vals["us"], _pen_vals["def"]
         _bond_value, _cash_value = _pen_vals["bond"], _pen_vals["cash"]
+        _us_tech_v, _us_nt_v = _pen_vals["us_tech"], _pen_vals["us_nt"]
+        _pen_total_v = _tw_value + _us_value + _def_value + _bond_value + _cash_value
     else:
         _tw_value = _cat_value("tw_equity")
         _us_value = _cat_value("us_equity")
@@ -2121,6 +2125,12 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__US_EQ_TARGET__", fmt(us_target))
     html = html.replace("__US_EQ_GAP__", f"{us_gap:+.1f}")
     html = html.replace("__US_EQ_VALUE__", fmt(_us_value))
+    _us_tech_pct = round(_us_tech_v / _pen_total_v * 100, 1) if _pen_total_v else 0
+    _us_nt_pct = round(_us_nt_v / _pen_total_v * 100, 1) if _pen_total_v else 0
+    html = html.replace("__US_TECH_PCT__", f"{_us_tech_pct:.1f}")
+    html = html.replace("__US_TECH_VALUE__", fmt(_us_tech_v))
+    html = html.replace("__US_NT_PCT__", f"{_us_nt_pct:.1f}")
+    html = html.replace("__US_NT_VALUE__", fmt(_us_nt_v))
     html = html.replace("__DEF_PCT__", fmt(def_))
     html = html.replace("__DEF_TARGET__", fmt(def_target))
     html = html.replace("__DEF_GAP__", f"{def_gap:+.1f}")
