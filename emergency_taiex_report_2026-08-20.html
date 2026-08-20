@@ -1,32 +1,59 @@
-<!DOCTYPE html>
-<html lang="zh-Hant"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>🐉 龍九控股 — 台股緊急應變報告（GitHub 版） 2026-08-20</title>
-<style>:root{--bg:#0d1117;--card:#161b22;--line:#30363d;--tx:#e6edf3;--mut:#8b949e;
---red:#f85149;--grn:#3fb950;--yel:#d29922;--blu:#58a6ff}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--tx);font-family:'Segoe UI','Noto Sans TC','Microsoft JhengHei',sans-serif;line-height:1.7;padding:24px}
-.wrap{max-width:960px;margin:0 auto}
-header{border:1px solid var(--line);border-radius:12px;padding:22px 26px;background:linear-gradient(135deg,#1a2332,#161b22);margin-bottom:20px}
-header h1{font-size:25px;letter-spacing:1px}
-header .sub{color:var(--mut);margin-top:6px;font-size:14px}
-.alert-bar{margin:14px 0 4px;padding:10px 16px;border-radius:8px;background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.4);font-weight:600}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 24px;margin-bottom:16px}
-.card h2{font-size:18px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line);color:var(--blu)}
-.card p{margin:6px 0;font-size:14.5px}
-.kpi{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
-.kpi .box{flex:1;min-width:150px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
-.kpi .box .lbl{font-size:12px;color:var(--mut)} .kpi .box .val{font-size:19px;font-weight:700;margin-top:2px}
-footer{color:var(--mut);font-size:12px;text-align:center;margin-top:22px}</style></head><body><div class="wrap">
-<header>
-<h1>🐉 龍九控股 — 台股緊急應變報告</h1>
-<div class="sub">📅 2026-08-19 21:31｜Chief Reporter + 台股危機應變官｜六大章節完整版｜資料：Yahoo Finance / FRED / briefing（tw.stock.yahoo.com）</div>
-<div class="alert-bar">📈 台股 46,027.70（+0.47%）上漲日｜台積電 2,410（+0.63%）｜ETF 下車潮籌碼洗牌｜US30Y 5.21% 防禦模式（紅線 5.30%）｜無系統性風險</div>
-</header>
-<div class="kpi"><div class='box'><div class='lbl'>台股加權</div><div class='val' style='color:var(--grn)'>46,027.70</div><div class='lbl'>+0.47%</div></div><div class='box'><div class='lbl'>台積電 2330</div><div class='val' style='color:var(--grn)'>2,410.00</div><div class='lbl'>+0.63%</div></div><div class='box'><div class='lbl'>0050</div><div class='val' style='color:var(--grn)'>106.75</div><div class='lbl'>+0.33%</div></div><div class='box'><div class='lbl'>00878</div><div class='val' style='color:var(--red)'>33.70</div><div class='lbl'>-0.50%</div></div><div class='box'><div class='lbl'>費半 SOX</div><div class='val' style='color:var(--red)'>12,417.05</div><div class='lbl'>-0.31%</div></div><div class='box'><div class='lbl'>US30Y</div><div class='val' style='color:var(--yel)'>5.21%</div><div class='lbl'>防禦5.20/紅線5.30</div></div></div>
-<div class="card"><h2>【一、市場概況】</h2><p>美股 8/19 開盤（21:30 台北，Yahoo chart API range=5d 即時）：昨日 8/18 半導體重挫（費半 -4.98%、META -6.24%、TSM ADR -1.88%、NVDA -1.83%）後，今日全面反彈、半導體領漲 — 道瓊 53,439.06（+0.18%）、S&P 500 7,722.45（+0.40%）、納指 26,402.88（+0.43%）、費半 12,102.85（+0.92%）；台積電 ADR 417.72（+1.04%）、NVDA 221.97（+1.01%）、AAPL 310.54（+0.16%）、META 539.43（-0.78%）仍偏弱。恐慌指數 VIX 15.14（-4.42%）回落，美債 10Y 4.64%（-1.38%）走低，顯示昨日的利率恐慌與 AI 拋售壓力緩解、risk-on 回溫。債市關鍵：US30Y 5.31%（us30y_state.json last_rate，模式A streak 5，8/18 盤中 TYX 曾觸 5.32%）— 續居 5.30% 債券凍結紅線之上，長債壓力未解。台股 8/19 收盤延續跌勢：加權 44,582.48（-1.60%，連二跌且擴大，5 日自 8/13 高點 46,021 回吐約 -3.1%）、台積電 2,340（-1.68%）— 台股已先反應美股 8/18 賣壓，今日美股反彈有利 8/20 台股止穩。</p></div><div class="card"><h2>【二、重大事件分析】</h2><p>① 8/18 半導體重挫定性：費半 -4.98% 為近月最大單日跌幅，主因 AI 高估值獲利了結 + US30Y 突破 5.30% 引發長債利率恐慌，資金自高 Beta 科技股撤出；META -6.24% 為族群最弱。② 今日反彈動能：VIX 回落 -4.4% 至 15.14、10Y 降至 4.64%，恐慌自高峰回落，費半 +0.92%、TSM ADR +1.04% 領漲，屬超跌後的技術性修復，非趨勢翻多 — 需觀察收盤能否守穩漲幅。③ 消息面（來源：daily_analysis briefing／tw.stock.yahoo.com，新聞來源標註 Yahoo 台版、無美股原文 feed，深度受限）：馬士基上調全年財測、股價一週大漲約 25% 頻創新高，亞洲航運股跟漲（台日最強）— 全球貨運週期強勁，對防守型航運/傳產類略有支撐；川普尋求最快 11 月會晤金正恩、美韓軍演傳縮短一半，王毅同日抵首爾 — 東北亞地緣風險降溫，對風險資產偏正面；川普家族 World Liberty Financial 獲美國財政部有條件批准銀行執照 — 加密貨幣與傳統金融加速融合，監管動向值得留意；OpenAI 暫緩訓練部分頂尖模型（AI 安全風險）— AI 監管與供給節奏疑慮，為 8/18 拋售的背景因素之一。④ 台股 8/20 展望：美股反彈 + 費半回穩，預期加權有機會止跌，但台積電 ADR 與費半收盤表現為關鍵。</p></div><div class="card"><h2>【三、持倉關聯分析】</h2><p>核心持倉 0050（台股市值型成長）與 00878（防守型配息）— 0050 與台積電連動性高：台積電 8/19 收 2,340（-1.68%）、5 日自 2,435 累計 -3.7%，且昨日 TSM ADR -1.88% 領跌、今日 +1.04% 反彈 — ADR 折溢價與台股現貨價差需留意；若美股收盤守穩，台股 8/20 有望反彈、0050 淨值壓力緩解。00878 防守屬性：8/18 除息 1.01 元已公告（8/18 排程、依去年推算），配息現金流不受股市波動影響，且防禦型資產今日未見資金大舉撤離，仍為波動市況下的穩定器。美股曝險（佔總資產 35.7% 最大宗）集中大型科技股：NVDA/AAPL 今日分別 +1.01%/+0.16%，NVDA 反彈力道較強（AI 主線修復），AAPL 表現溫和；META -0.78% 續弱顯示社交/廣告類 AI 變現疑慮未散。整體持倉與「美股科技 + 台股權值」高度正相關，單一因子（AI 估值修正）即可拖累兩岸倉位 — 這正是 8/18→8/19 兩日台股補跌的傳導路徑，今日美股反彈若持續，台股補跌壓力可望解除。</p></div><div class="card"><h2>【四、資產配置透視】</h2><p>snapshot.json penetration（2026-08-19 更新）：總資產 1,445.6 萬。actual_twd — 台股市值型成長 192.2 萬（13.3%）、美股市值型成長 515.9 萬（35.7%）、防守型配息 308.0 萬（21.3%）、債券 347.5 萬（24.0%）、現金/安全網 81.9 萬（5.7%）。對照臨時階段目標（美股 30／台股 23.5／防守 19／債券 13／現金 14.5）：美股 +5.7pp 超標、台股 -10.2pp 嚴重不足、防守 +2.3pp、債券 +11.0pp 大幅超標、現金 -8.8pp 嚴重不足。官方目標表（台股15/美股30/配息20/債券20/現金15）缺口：台股 -1.7pp、美股 +5.7pp、防守 +1.3pp、債券+現金合計超標 5.3pp。解讀：① 美股超配是 8/18 賣壓下帳面波動的主要來源，但因持有的是長線市值型（0050/00878 為台股側、美股側為大型科技），不建議恐慌減碼 — 波動 5-10% 屬正常區間；② 現金 5.7% 遠低於階段目標 14.5%，緩衝不足是當前最大結構性弱點 — 8/20 國泰 1,200 萬撥款入帳後將大幅改善（見風控章節）；③ 債券 24% 超標係因利率上行推高帳面？實為 US30Y 5.31% 下債券價格承壓、佔比被動上升 — 凍結紅線內不新增債券，以既有票息持有至利率回落。</p></div><div class="card"><h2>【五、巴菲特建議】</h2><p>「別人恐懼時貪婪」— 但貪婪要有紀律：① 8/18 恐慌（VIX 15.8→15.1 回落）屬利率衝擊型修正，非基本面惡化；費半單日 -5% 後隔日反彈，歷史勝率偏高，但**不追漲**，若美股續彈 2-3 日再評估加碼；② 現階段優先順序：不是加碼美股，而是把現金水位補回（階段目標 14.5%）— 巴菲特式做法是先有充足現金，再談逢低買進；③ 若 8/20 後現金到位（國泰 1,200 萬入帳），美股若回測 8/18 低點（S&P 7,691 下方、費半 11,992 下方）可分批承接 0050/美股 ETF，單筆不超過可用資金 1/3；④ 拒絕槓桿與恐慌性停損：8/18 若已減碼者勿急著追回，未減碼者持有即可 — 用時間換取 AI 週期復原；⑤ 0050/00878 的配息與長期複利才是核心，短期波動是持有成本。</p></div><div class="card"><h2>【六、風控檢查】</h2><p>① US30Y 5.31% — 高於 5.20% 防禦線（強化防禦、檢視債券曝險）且高於 5.30% 債券凍結紅線：債券買入全面凍結，既有債券（347.5 萬、24.0%）續抱收息、不攤平不加碼；若 30Y 突破 5.40% 啟動債券部位減碼評估（賣高評等、留短天期）。② 國泰核貸時程（schedule_events.json 最新版）：8/19 地政設定完成 → **8/20 撥款日 1,200 萬入帳**（@2.6%）→ 執行鏈：還債 800 萬（8/24 前清償安聯保單借貸 300 萬@4.2% + 元大證金 100 萬@3.92% 鎖利差、第一金 3.51% 暫緩）＋建債梯 500 萬＋現金緩衝（美元定存目標 ≥4.2%、優先 MMF 停泊）— 撥款後現金佔比將自 5.7% 跳升至約 13-14%，補足緩衝缺口。③ 美股波動監控：VIX 15.14 仍低，但 US30Y 若再上 5.32% 高點須警戒；設定 S&P 7,691（8/18 收）為短期多空分界，費半 11,992 為半導體支撐參考。④ 台股補跌風險：今日美股若收黑，8/20 台股恐續測 44,500 下方，0050 不加碼、觀察 44,000 整數關卡。⑤ 8/20 撥款日操作紀律：確認入帳 → 先還 800 萬高息債（當日執行）→ 建債梯與美元定存不急於一天完成，分批 3-5 個交易日執行，避免集中成交劣化價格。</p></div>
-<footer>🐉 龍九控股 emergency response ｜ generated 2026-08-19 21:31 ｜ 數據來源：Yahoo Finance 即時（13:06）、FRED DGS30（8/13）、daily_analysis.json briefing、snapshot.json penetration.actual_twd</footer>
-<div class="card"><h2>📊 資產穿透（2026-08-20）</h2>
-    <p>總資產：<b>14,455,660</b> TWD（不含不動產）</p>
-    <p>台股 13.3%｜美股 35.7%｜防守 21.3%｜債券 24.0%｜現金 5.7%</p>
-    <p style="color:var(--mut);font-size:13px">金額：台股 1,921,554｜美股 5,159,332｜防守 3,080,245｜債券 3,475,105｜現金 819,424</p></div></div></body></html>
+<!DOCTYPE html><html lang="zh-TW"><head><meta charset="utf-8">
+    <title>🚨 台股緊急應變 2026-08-20</title>
+    <style>
+    body{font-family:-apple-system,sans-serif;max-width:800px;margin:20px auto;padding:0 15px;color:#1d1d1f}
+
+    h1{color:#d32f2f;font-size:28px;text-align:center;margin-bottom:20px}
+
+    h3{color:#424242;font-size:20px;margin-top:25px;margin-bottom:10px;border-bottom:1px solid #eeeeee;padding-bottom:5px}
+
+    .alert{background:#ffebee;padding:15px 20px;border-radius:8px;margin:15px 0;font-size:17px;font-weight:600;border-left:5px solid #d32f2f;color:#d32f2f}
+
+    .alert-red{background:#ffebee;border-color:#d32f2f;color:#d32f2f}
+
+    .warn{background:#fff3e0;padding:15px 20px;border-radius:8px;margin:15px 0;border-left:5px solid #f57c00;color:#f57c00}
+
+    table{width:100%;border-collapse:collapse;margin:15px 0}
+
+    th,td{padding:12px;text-align:right;border-bottom:1px solid #e5e5ea}
+
+    th{text-align:left;font-weight:600;background:#f9f9f9}
+
+    ul{list-style-type:disc;margin-left:20px;padding-left:0}
+
+    li{margin-bottom:8px;line-height:1.6}
+
+    b{color:#333}
+
+    .meta{font-size:14px;color:#6e6e73;margin-top:20px;padding-top:15px;border-top:1px solid #e5e5ea;text-align:center}
+
+    </style></head><body>
+    <h1>🚨 台股緊急應變報告</h1>
+    <p class="meta">產生時間：2026-08-20 13:00 ｜ 資料源：Yahoo Finance</p>
+    
+        <div class="alert ">
+            <h3>📈 市場概況：台股加權指數</h3>
+            <p>🟢 正常：44,746.10點 (+26.75 / +0.06%)</p>
+        </div>
+        
+    <h3>📊 持股關聯分析</h3><p><b>0050.TW (元大台灣50)</b>: 103.40點 (-1.50 / -1.43%)，受到較大影響。</p><p><b>00878.TW (國泰永續高股息)</b>: 32.03點 (-0.35 / -1.08%)，受到較大影響。</p><p><b>009816/00984A (上櫃+ETF)</b>: 由於資料無法即時抓取，請手動關注其相關新聞與走勢。</p>
+    <h3>📊 資產配置</h3>
+    <table><tr><th>資產類別</th><th>金額 TWD</th></tr><tr><th>證券</th><td>2,843,950</td></tr><tr><th>保單</th><td>9,960,403</td></tr><tr><th>基金</th><td>831,883</td></tr><tr><th>現金</th><td>819,424</td></tr>
+    <tr><th>合計</th><td>14,455,660</td></tr></table>
+    
+    <h3>🧠 巴菲特/蒙格式建議</h3>
+    <ul>
+        <li><b>安全邊際</b>：市場波動時，優質資產的價格可能被低估，這是建立安全邊際的好時機。評估您持股的內在價值，避免恐慌性拋售。</li>
+        <li><b>管理費侵蝕</b>：長期持有 ETF 需注意管理費對複利效果的侵蝕。定期審視您的投資組合，確保費用合理。</li>
+        <li><b>集中度風險</b>：檢視您的資產配置是否過於集中在某些類別或標的。分散投資可以降低單一事件的衝擊。</li>
+    </ul>
+    
+    
+    <h3>💡 應變行動建議</h3>
+    <ul>
+        <li><b>減碼</b>：若資金有其他更高報酬的用途，或持股已達預設停利點，可考慮適度減碼。</li>
+        <li><b>持有</b>：若持股仍符合長期投資策略，且資金無急用，建議繼續持有，避免追高殺低。</li>
+        <li><b>加碼</b>：若優質資產因市場恐慌而出現明顯折價，且您有閒置資金，可考慮分批加碼。</li>
+    </ul>
+    
+    <p class="meta">⏰ 下次執行：下個交易日 13:00</p></body></html>
