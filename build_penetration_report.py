@@ -44,12 +44,12 @@ snap["penetration"] = {
     "alert": f"台股不足{abs(round(actual_pct['台股市值型成長']-targets_map['台股市值型'],1))}pp；現金+債券超標{abs(round(actual_pct['債券']+actual_pct['現金/安全網']-targets_map['債券型']-targets_map['現金'],1))}pp",
 }
 # 每次管線執行滾動頂層日期（儀表板系統時間/記憶同步統一真值）
-snap["date"] = date.today().isoformat()
+snap.setdefault("date", date.today().isoformat())
 snap["generated_at"] = datetime.now().isoformat()
 (BASE / "snapshot.json").write_text(json.dumps(snap, ensure_ascii=False, indent=2), encoding="utf-8")
 print(f"  穿透數據已自動校正並寫入 snapshot.json")
 holdings = snap.get("securities", {}).get("holdings", [])
-today = date.today().isoformat()
+today = snap.get("date", date.today().isoformat())
 
 # Classify holdings
 def cat_ticker(t):
