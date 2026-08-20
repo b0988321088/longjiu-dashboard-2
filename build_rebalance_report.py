@@ -78,6 +78,35 @@ def main():
       <li><b>③ 資金禁令（模式A）</b>：不加碼美股長久期科技、不新增債券標的（00983D/PIMCO 維持底倉）</li>
     </ol>"""
 
+    # DAA v3 宏觀情境（macro_regime）— 2026-08-21 整合
+    mr_html = "<div class='note'>⚠️ DAA v3 引擎尚未執行（跑 <code>python macro_regime.py</code> 後顯示情境與 targetAllocation）</div>"
+    try:
+        import macro_regime
+        mr = macro_regime.load_latest()
+        reg = mr.get("情境評分", {})
+        alloc = mr.get("targetAllocation", {}).get("rows", [])
+        tilt = mr.get("板塊輪動", [])
+        reg_rows = "".join(
+            f"<tr><td>{k}</td><td class='num'>{v['score']}</td>"
+            f"<td class='light'>{'🔴' if v['score'] >= 70 else '🟡' if v['score'] >= 50 else '🟢'}</td></tr>"
+            for k, v in reg.items()
+        )
+        alloc_txt = " ｜ ".join(
+            f"{r['資產']} {r['燈號偏移後'] if r['燈號偏移後'] is not None else r['建議金額(±)']}" for r in alloc
+        )
+        tilt_txt = "；".join(f"{t['方向']} {t['偏移']}（{t['金額']:,}元）" for t in tilt)
+        em = mr.get("緊急應變")
+        em_txt = ""
+        if em:
+            em_txt = (f"<br/>🚨 <b>緊急應變：</b>{em['source']}｜{em['generated_at']}｜應變分 {em['應變分']} "
+                      f"{'🔴' if em['應變分'] >= 70 else '🟡' if em['應變分'] >= 50 else '🟢'}｜{em['建議節錄'][:80]}")
+        mr_html = f"""
+  <h2>🧭 DAA v3 宏觀情境（{mr.get('燈號','—')}）</h2>
+  <table><thead><tr><th>情境</th><th class="num">分數</th><th>燈</th></tr></thead><tbody>{reg_rows}</tbody></table>
+  <div class="note">🎯 <b>targetAllocation：</b>{alloc_txt}<br/>🔄 <b>板塊輪動：</b>{tilt_txt}{em_txt}</div>"""
+    except Exception:
+        pass
+
     html = f"""<!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -115,7 +144,7 @@ def main():
     <div class="card"><div class="k">五桶合計</div><div class="v">{sum_pct:.1f}%</div></div>
   </div>
 
-  <h2>📐 五桶偏離評估（目標：台15 / 美30 / 防20 / 債20 / 現金15）</h2>
+  <h2>📐 五桶偏離評估（目標：{targets.get('台股市值型目標','10')} / {targets.get('美股市值型目標','40')} / {targets.get('配息型目標','20')} / {targets.get('債券型目標','25')} / {targets.get('現金目標','5')}，動態讀 snapshot）</h2>
   <table><thead><tr><th>類別</th><th class="num">金額</th><th class="num">實際</th><th class="num">目標</th><th class="num">差距</th><th>燈號</th><th>建議動作</th></tr></thead>
   <tbody>{rows_html}</tbody></table>
 
@@ -124,6 +153,8 @@ def main():
 
   <h2>🚨 風控紅線檢核</h2>
   <table><thead><tr><th>紅線</th><th>狀態</th><th>現況</th></tr></thead><tbody>{redlines_html}</tbody></table>
+
+  {mr_html}
 
   <div class="note">📌 <b>執行紀律</b>：配息導流優先（零摩擦）→ 內部調度逢反彈（≤20萬/次）→ 資金禁令（模式A 不加美股長債）｜台股單筆 ≤5 萬、回檔小單低吸、不追漲｜8/20 定案：富達600萬+MMF600萬→PI認列2週→質押300萬@2.77%還安聯4.2%→MMF轉10月標案預備金</div>
   <div class="footer">龍九控股自動產出｜資料：snapshot {today} + us30y_state｜公式：桶值 ÷ 總資產（不含不動產）</div>

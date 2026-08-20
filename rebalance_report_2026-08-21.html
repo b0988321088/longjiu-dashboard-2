@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>龍九再平衡評估 2026-08-21</title>
+<style>
+  body { background:#0b1220; color:#e2e8f0; font-family:'Segoe UI',system-ui,sans-serif; margin:0; padding:20px; }
+  .wrap { max-width:900px; margin:auto; }
+  h1 { font-size:22px; color:#fff; margin-bottom:4px; }
+  h2 { font-size:15px; color:#94a3b8; margin:28px 0 10px; border-bottom:1px solid #1e293b; padding-bottom:6px; }
+  .sub { color:#64748b; font-size:12px; margin-bottom:18px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin-bottom:8px; }
+  .card { background:#111a2e; border:1px solid #1e293b; border-radius:12px; padding:14px; }
+  .card .k { font-size:11px; color:#64748b; }
+  .card .v { font-size:20px; font-weight:800; color:#60a5fa; margin-top:4px; }
+  .card .v.green { color:#34d399; } .card .v.red { color:#f87171; } .card .v.amber { color:#fbbf24; }
+  table { width:100%; border-collapse:collapse; background:#111a2e; border-radius:12px; overflow:hidden; font-size:13px; }
+  th { background:#1e293b; color:#94a3b8; padding:8px 10px; text-align:left; font-size:11px; }
+  td { padding:8px 10px; border-top:1px solid #1e293b; }
+  .num { text-align:right; font-family:monospace; }
+  .light { text-align:center; font-size:16px; }
+  .action { color:#94a3b8; font-size:11px; }
+  .ok { color:#34d399; } .bad { color:#f87171; }
+  .prio li { margin-bottom:8px; line-height:1.5; }
+  .note { background:#111a2e; border-left:4px solid #fbbf24; border-radius:8px; padding:12px; font-size:12px; color:#94a3b8; margin-top:14px; }
+  .footer { color:#475569; font-size:10px; margin-top:30px; text-align:center; }
+</style></head><body><div class="wrap">
+  <h1>📊 龍九再平衡評估</h1>
+  <div class="sub">2026-08-21｜US30Y 5.28%｜模式：防禦（模式A）｜穿透分母 26,205,683（不含不動產）</div>
+
+  <div class="cards">
+    <div class="card"><div class="k">總資產</div><div class="v">26,205,683</div></div>
+    <div class="card"><div class="k">現金</div><div class="v green">6,814,266</div></div>
+    <div class="card"><div class="k">美股超標</div><div class="v red">42.1%</div></div>
+    <div class="card"><div class="k">US30Y</div><div class="v amber">5.28%</div></div>
+    <div class="card"><div class="k">五桶合計</div><div class="v">100.0%</div></div>
+  </div>
+
+  <h2>📐 五桶偏離評估（目標：10 / 40 / 20 / 25 / 5，動態讀 snapshot）</h2>
+  <table><thead><tr><th>類別</th><th class="num">金額</th><th class="num">實際</th><th class="num">目標</th><th class="num">差距</th><th>燈號</th><th>建議動作</th></tr></thead>
+  <tbody>
+        <tr>
+          <td>🇹🇼 台股 台股市值</td>
+          <td class="num">1,889,388</td>
+          <td class="num">7.2%</td>
+          <td class="num">10%</td>
+          <td class="num">-2.8pp</td>
+          <td class="light">🟡</td>
+          <td class="action">配息導流 + 回檔小單低吸（單筆≤5萬）</td>
+        </tr>
+        <tr>
+          <td>🇺🇸 美股 美股市值</td>
+          <td class="num">11,039,949</td>
+          <td class="num">42.1%</td>
+          <td class="num">40%</td>
+          <td class="num">+2.1pp</td>
+          <td class="light">🟡</td>
+          <td class="action">逢反彈分批減碼（單次≤20萬），資金導向防守</td>
+        </tr>
+        <tr>
+          <td>🛡️ 防守 防守配息</td>
+          <td class="num">3,039,207</td>
+          <td class="num">11.6%</td>
+          <td class="num">20%</td>
+          <td class="num">-8.4pp</td>
+          <td class="light">🔴</td>
+          <td class="action">已達標維持；配息優先導入</td>
+        </tr>
+        <tr>
+          <td>💵 債券 債券</td>
+          <td class="num">3,424,757</td>
+          <td class="num">13.1%</td>
+          <td class="num">25%</td>
+          <td class="num">-11.9pp</td>
+          <td class="light">🔴</td>
+          <td class="action">維持底倉，停止新增（00983D 不追）</td>
+        </tr>
+        <tr>
+          <td>💰 現金 現金/安全網</td>
+          <td class="num">6,812,382</td>
+          <td class="num">26.0%</td>
+          <td class="num">5%</td>
+          <td class="num">+21.0pp</td>
+          <td class="light">🔴</td>
+          <td class="action">守住 70 萬底線，<目標優先回補</td>
+        </tr></tbody></table>
+
+  <h2>🎯 調倉優先順序</h2>
+  
+    <ol class="prio">
+      <li><b>① 配息導流（第一優先｜零摩擦）</b>：每月配息/租金全部導入低配標的（台股高股息），不滾回原持有</li>
+      <li><b>② 內部調度（第二優先｜逢反彈）</b>：逢反彈分批減碼美股（單次≤20萬，4-6週完成），資金導向防守</li>
+      <li><b>③ 資金禁令（模式A）</b>：不加碼美股長久期科技、不新增債券標的（00983D/PIMCO 維持底倉）</li>
+    </ol>
+
+  <h2>🚨 風控紅線檢核</h2>
+  <table><thead><tr><th>紅線</th><th>狀態</th><th>現況</th></tr></thead><tbody><tr><td>US30Y < 5.30%（債券凍結線）</td><td class='ok'>✅</td><td>目前 5.28%（模式A防禦）</td></tr><tr><td>現金 ≥ 70 萬（6個月開支）</td><td class='ok'>✅</td><td>目前 6,814,266（需求 851,748）</td></tr><tr><td>美股 ≤ 33%（熔斷閾值）</td><td class='bad'>❌</td><td>目前 42.1%</td></tr><tr><td>LTV ≤ 40%（未質押）</td><td class='ok'>✅</td><td>目前未質押 ✅</td></tr><tr><td>單筆交易 ≤ 5 萬（台股）</td><td class='ok'>✅</td><td>管制中</td></tr></tbody></table>
+
+  
+  <h2>🧭 DAA v3 宏觀情境（🟡 黃燈）</h2>
+  <table><thead><tr><th>情境</th><th class="num">分數</th><th>燈</th></tr></thead><tbody><tr><td>科技重新定價</td><td class='num'>59.4</td><td class='light'>🟡</td></tr><tr><td>確定收益輪動</td><td class='num'>51.5</td><td class='light'>🟡</td></tr><tr><td>美元信用壓力</td><td class='num'>71.9</td><td class='light'>🔴</td></tr><tr><td>地緣風險</td><td class='num'>49.0</td><td class='light'>🟢</td></tr></tbody></table>
+  <div class="note">🎯 <b>targetAllocation：</b>台股市值型成長 10 ｜ 美股市值型成長 40 ｜ 防守型配息 20 ｜ 債券 25 ｜ 黃金/實質資產(衛星) 4.0 ｜ 台幣現金+短定存 底線 70萬，超額部署收益資產<br/>🔄 <b>板塊輪動：</b>科技 輕度減碼（科技落後＋輪動雙訊號） -2pp（524,114元）；確定收益板塊 承接 +2pp（524,114元）<br/>🚨 <b>緊急應變：</b>美股21:30緊急應變 LLM agent（2026-08-20）｜2026-08-20 21:35:11｜應變分 60 🟡｜五、巴菲特建議】 市場震盪、殖利率高檔、VIX 跳升 — 正是「現金為王、能力圈、長期持有」紀律發酵時點：不因開盤波動砍倉、不追高、不預測。具體行動：① 美股超</div>
+
+  <div class="note">📌 <b>執行紀律</b>：配息導流優先（零摩擦）→ 內部調度逢反彈（≤20萬/次）→ 資金禁令（模式A 不加美股長債）｜台股單筆 ≤5 萬、回檔小單低吸、不追漲｜8/20 定案：富達600萬+MMF600萬→PI認列2週→質押300萬@2.77%還安聯4.2%→MMF轉10月標案預備金</div>
+  <div class="footer">龍九控股自動產出｜資料：snapshot 2026-08-21 + us30y_state｜公式：桶值 ÷ 總資產（不含不動產）</div>
+</div></body></html>
