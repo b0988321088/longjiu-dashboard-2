@@ -168,9 +168,16 @@ if _fb:
             _fb_flat[_fn] = _fv2
     _fb = _fb_flat
     w("<div class='card'><h2>📦 基金穿透（鉅亨基金帳戶）</h2>")
-    w("<table><thead><tr><th>基金名稱</th><th class='num'>市值</th><th>穿透分類</th></tr></thead><tbody>")
+    w("<table><thead><tr><th>基金名稱</th><th class='num'>市值</th><th>穿透分類</th><th>成分拆分</th></tr></thead><tbody>")
     _fund_tw = _fund_us = _fund_def = _fund_cash = 0
     for _fn, _fv2 in sorted(_fb.items(), key=lambda x: x[1], reverse=True):
+        _split = "整筆"
+        if "富達全球動能多元" in _fn:
+            # 成分穿透（月報 2026/6/30）：股 80.75 / 債 14.03 / 現 5.21
+            _split = f"🌎 美股 {round(_fv2*0.8075):,} (80.75%)<br>📈 債券 {round(_fv2*0.1403):,} (14.03%)<br>💵 現金 {round(_fv2*0.0521):,} (5.21%)"
+        elif "聯博全球多元收益" in _fn:
+            # 成分穿透（8/20 使用者提供）：債 55 / 股 45 / 科技 2.5%
+            _split = f"📈 債券 {round(_fv2*0.55):,} (55%)<br>🌎 美股 {round(_fv2*0.45):,} (45%)<br><span style='font-size:11px;color:#94a3b8'>科技 2.5%</span>"
         if "台新美日台" in _fn or "貝萊德" in _fn or "安聯AI" in _fn or "聯博" in _fn or "摩根" in _fn or "M&G" in _fn or "安聯收益成長" in _fn or "富達" in _fn:
             _cat = "🌎 美股"; _fund_us += _fv2
         elif "0050連結" in _fn or "統一奔騰" in _fn or "路博邁" in _fn or "安聯台灣科技" in _fn:
@@ -182,9 +189,9 @@ if _fb:
             _cat = "💵 現金類"; _fund_cash += _fv2
         else:
             _cat = "🇹🇼 台股"; _fund_tw += _fv2
-        w(f"<tr><td style='max-width:180px'>{_fn}</td><td class='num'>{_fv2:,}</td><td>{_cat}</td></tr>")
+        w(f"<tr><td style='max-width:180px'>{_fn}</td><td class='num'>{_fv2:,}</td><td>{_cat}</td><td style='font-size:12px'>{_split}</td></tr>")
     w(f"<tr style='border-top:2px solid #3b82f6;font-weight:700'><td>合計</td><td class='num'>{sum(_fb.values()):,}</td>")
-    w(f"<td>🇹🇼 台股 {_fund_tw:,} + 🌎 美股 {_fund_us:,} + 🛡️ 防守型 {_fund_def:,} + 💵 現金類 {_fund_cash:,}</td></tr>")
+    w(f"<td>🇹🇼 台股 {_fund_tw:,} + 🌎 美股 {_fund_us:,} + 🛡️ 防守型 {_fund_def:,} + 💵 現金類 {_fund_cash:,}</td><td></td></tr>")
     w("</tbody></table></div>")
 
 # 4. Insurance（成分動態顯示，2026-08-04 改：不再硬編碼）
