@@ -528,10 +528,24 @@ def _rebalance_suggestion(snap: dict, regime: dict, light: str) -> dict:
 
 
 def load_latest() -> dict:
-    """讀今日 macro_regime JSON；不存在則即時執行一次並寫入"""
+    """讀今日 macro_regime JSON；不存在則即時執行並寫入。
+    8/21 快取停滯 bug 修復：緊急應變 JSON 的 generated_at 比快取新 → 重算，
+    避免 13:00/21:30 緊急應變更新後 build_panel ⑧ 行仍顯示舊分析（INC-130 同類）。"""
     p = BASE / f"macro_regime_{date.today().isoformat()}.json"
     if p.exists():
-        return json.loads(p.read_text(encoding="utf-8"))
+        try:
+            cached = json.loads(p.read_text(encoding="utf-8"))
+            em = _load_emergency()
+            if em:
+                em_ts = em.get("generated_at", "")
+                cache_ts = (cached.get("緊急應變") or {}).get("generated_at", "")
+                if em_ts and cache_ts and em_ts > cache_ts:
+                    return run()  # 緊急應變更新 → 重算
+                if em_ts and not cache_ts:
+                    return run()
+            return cached
+        except Exception:
+            return run()
     return run()
 
 
