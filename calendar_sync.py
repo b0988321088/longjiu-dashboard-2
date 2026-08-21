@@ -163,8 +163,6 @@ def sync():
         logger.warning(f'  schedule_events 動態事件讀取失敗: {_se}')
 
     # 清空所有舊系統事件（依標記 + 關鍵字雙重清掃）
-    import logging
-    logger = logging.getLogger('calendar_sync')
     _CLEAN_KEYWORDS = ['房租', '大義街', '洲際W', '台電薪資', '管理費', '繳款截止', '[calendar_sync]', '動態月報', '再平衡評估', '動態自我檢討週報', '女友還款', '國泰核貸', 'T+4 轉換截止', '忠德驗收', '地政拿件', '大雪山', '每月租金總對帳']
     try:
         page_token = None
