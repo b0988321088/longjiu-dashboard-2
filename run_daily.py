@@ -522,7 +522,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     # 美元升息影響評估（8/21 使用者核准寫入日報）— 動態讀 snapshot
     _usd_eval = ""
     try:
-        _ue = load_json(REPO_DIR / "snapshot.json").get("usd_hike_evaluation", {})
+        _ue = load_json(BASE / "snapshot.json").get("usd_hike_evaluation", {})
         if _ue:
             _imp = "".join(f"<li>{x}</li>" for x in _ue.get("影響", []))
             _resp = "".join(f"<li>{x}</li>" for x in _ue.get("因應", []))
@@ -542,7 +542,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     # 雙維度資產定位（2026-08-21 使用者定稿）— 防禦維度 vs 收入維度
     _dual_dim = ""
     try:
-        _ddm = load_json(REPO_DIR / "snapshot.json").get("dual_dimension_metric", {})
+        _ddm = load_json(BASE / "snapshot.json").get("dual_dimension_metric", {})
         if _ddm:
             _df = _ddm.get("防禦維度", {}); _inc = _ddm.get("收入維度", {})
             _dc2 = _df.get("組成", {})
