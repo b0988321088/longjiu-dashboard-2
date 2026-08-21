@@ -916,12 +916,12 @@
   },
   "2026-08-21": {
     "date": "2026-08-21",
-    "total_assets": 26205683.0,
+    "total_assets": 26204672.0,
     "total_liabilities": 30176284.0,
-    "net_worth": -3970601.0,
+    "net_worth": -3971612.0,
     "securities_market": 2826480.0,
-    "insurance_current": 9763698.0,
-    "insurance_total": 9763698.0,
+    "insurance_current": 9762687.0,
+    "insurance_total": 9762687.0,
     "fund_market": 6801239.0,
     "real_estate": 0.0,
     "cash": 6814266.0,
@@ -939,8 +939,8 @@
       "  B-M&G入息": 834767,
       "  B-PIMCO收益增長": 483875,
       "安聯A+B合計": 7813953.0,
-      "━第一金FL65現値": 1949745.0,
-      "━保單總現値": 9763698.0
+      "━第一金FL65現値": 1939270.0,
+      "━保單總現値": 9762687.0
     },
     "fund_dividend_monthly": 71295.0,
     "monthly_income": 214685.0,
