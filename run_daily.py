@@ -380,7 +380,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     except Exception:
         _sn2 = {}
     _life = tv.get("monthly_expense") or 141_958
-    _mort = tv.get("mortgage_monthly_total") or 0
+    _mort = _sn2.get("mortgage_monthly_total") or tv.get("mortgage_balance") or 0  # tv 無此 key，從 snapshot 讀
     _sin = _sn2.get("mortgage_sinopac_monthly", 65_735) or 0
     _cat = _sn2.get("mortgage_cathay_monthly", 26_000) or 0
     _ppl = float(_sn2.get("policy_pledge_loan", 4_000_000) or 0)
