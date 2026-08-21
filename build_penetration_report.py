@@ -117,6 +117,19 @@ if _ddm:
       f"<br/>💵 <b>收入引擎 {_inc.get('佔比',0)}%</b>（{_inc.get('公式','')}｜現金流覆蓋）＝ 全配息資產 + 房租 80,100/月"
       f"<br/><span style='color:#64748b;font-size:12px'>核心：配息≠防守，兩維度分離計算、獨立風控；{_def.get('備註','')}</span></div>")
 
+# 四大市場情境門檻對照（2026-08-21 定稿）— 當前情境自動套用
+_ms = snap.get("market_scenario_standards", {})
+if _ms:
+    _cur = next((k for k, v in _ms.get("情境", {}).items() if v.get("當前")), "區間震盪")
+    _sc = _ms.get("情境", {}).get(_cur, {})
+    _v = _ms.get("現況驗證", {})
+    _rows4 = "".join(
+        f"<tr><td>{k}</td><td class='num'>防禦≥{v.get('防禦最低',0)}%</td><td class='num'>收入≥{v.get('收入最低',0)}%</td><td class='num'>LTV≤{v.get('LTV上限',0)}%</td><td style='font-size:11px'>{v.get('策略','')[:22]}</td></tr>"
+        for k, v in _ms.get("情境", {}).items())
+    w(f"<div class='callout' style='border-left:3px solid #0ea5e9'>🎯 <b>四大市場情境門檻（{_ms.get('定稿','')}）— 當前：{_cur} {('✅ 現況全合格' if _v.get('防禦合格') and _v.get('收入合格') and _v.get('LTV合格') else '⚠️ 需調整')}</b>"
+      f"<table style='width:100%;font-size:12px;margin-top:6px;border-collapse:collapse'><tr style='color:#64748b'><th style='text-align:left;padding:3px 6px'>情境</th><th class='num'>防禦最低</th><th class='num'>收入最低</th><th class='num'>LTV上限</th><th style='text-align:left;padding:3px 6px'>策略</th></tr>{_rows4}</table>"
+      f"<span style='color:#64748b;font-size:12px'>現況驗證：防禦 {_v.get('防禦',0)}%（≥{_v.get('防禦門檻',0)}% {'✅' if _v.get('防禦合格') else '❌'}）｜收入 {_v.get('收入',0)}%（≥{_v.get('收入門檻',0)}% {'✅' if _v.get('收入合格') else '❌'}）｜LTV {_v.get('LTV',0)}%（≤{_v.get('LTV上限',0)}% {'✅' if _v.get('LTV合格') else '❌'}）→ {_v.get('結論','')}</span></div>")
+
 # 1. Overview table
 w("<div class='card'><h2>🎯 配置總覽</h2>")
 w("<table><thead><tr><th>類別</th><th class='num'>金額</th><th class='num'>佔比</th><th class='num'>目標</th><th class='num'>缺口</th><th>狀態</th></tr></thead><tbody>")
