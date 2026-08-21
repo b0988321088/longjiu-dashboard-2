@@ -393,7 +393,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _fixed_expense_html = f"""    <div class="callout" style="margin-top:10px;border-left:3px solid #3b82f6">
       <strong>📌 每月固定支出：{_fixed_total:,}</strong><br>
       生活 {_life:,} ｜ 房貸 {_mort:,}（永豐 {_sin:,} + 國泰 {_cat:,}）｜ 保單借貸利息 {_int:,} ｜ 女友還款 {_gf:,}（至12/5）
-      <br/><span style="color:#64748b;font-size:12px">房租收入 {_rent:,} 覆蓋房貸 {_mort - _rent:+,}（淨房貸負擔 {_mort_net:,}）</span>
+      <br/><span style="color:#64748b;font-size:12px">房租收入 {_rent:,} 覆蓋房貸 {_mort_net:+,} 缺口（{_mort/_rent*100:.0f}% 覆蓋）</span>
     </div>
 """
 
