@@ -690,8 +690,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <h3>房租金流</h3>
     <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 {_rent_cov:.0f}%。{_fmt_rent_status(tv)}{_dbs_note_ph}</p>
 
-    <h3>基金部位（鉅亨網 + 國泰直購）</h3>
-    <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong> ＝ 鉅亨網 <strong>{tv.get('funds',0) - tv.get('funds_cathay',0):,}</strong> ＋ 國泰直購 <strong>{tv.get('funds_cathay',0):,}</strong>（富達 600萬；聯博 100萬下單中）。本月已收配息：{tv['fund_dividend_monthly']:,} TWD。{_fund_detail}</p>
+    <h3>基金部位（鉅亨網 + 國泰基金）</h3>
+    <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong> ＝ 鉅亨網 <strong>{tv.get('funds',0) - tv.get('funds_cathay',0):,}</strong> ＋ 國泰基金 <strong>{tv.get('funds_cathay',0):,}</strong>（富達 600萬 + 聯博 100萬 + MMF 500萬停泊）。本月已收配息：{tv['fund_dividend_monthly']:,} TWD。{_fund_detail}</p>
   </div>
 
   <!-- 3/5 保單接力引擎 -->

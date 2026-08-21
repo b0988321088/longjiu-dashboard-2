@@ -29,6 +29,14 @@ def _fv(v):
 
 def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None, snap=None):
     _fj = int((snap or {}).get("firstjin_fl65_current_value") or (snap or {}).get("firstjin_current_value") or 1_958_980)
+    # 2026-08-21：第一金保單已轉 FA81 聯博全球多元收益AD（股債混合）→ 不再整筆防守，
+    # 依 current_fund.穿透比率 拆 股/債/現（估計 55/40/5，待月報確認）
+    _fjd = (snap or {}).get("firstjin_detail", {})
+    _cf_ratios = (_fjd.get("current_fund") or {}).get("穿透比率", {}) or {}
+    _fj_eq_r = float(_cf_ratios.get("股票", 0.55))
+    _fj_br_r = float(_cf_ratios.get("債券", 0.40))
+    _fj_bond = round(_fj * _fj_br_r)
+    _fj_eqv = round(_fj * _fj_eq_r)
     # 2026-08-21：美股科技/非科技拆解（科技比 = 基金淨值中科技曝險佔比；估計值，來源=月報/公開資料）
     _TECH = {"貝萊德世界科技": 1.0, "貝萊德科技": 1.0, "009824": 1.0, "00924": 1.0, "台新美日台半導體": 0.90,
              "富達全球動能多元": 0.35, "安聯AI收益成長": 0.35, "聯博美國成長": 0.40, "安聯收益成長": 0.16,
@@ -68,7 +76,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             ins_tech = round(2_780_466*0.16 + 3_136_436*0.07 + 902_679*0.35)
         ins_eq = int(ins) - ins_bonds - _fj
     # 分類基金（鉅亨基金帳戶）— 支援扁平 {name: val} 或嵌套 {群組: {name: val}}
-    _fund_tw = _fund_us = _fund_def = _fund_us_tech = _fund_cash = 0
+    _fund_tw = _fund_us = _fund_def = _fund_us_tech = _fund_cash = _fund_bonds = 0
     _fb = (snap or {}).get("funds_breakdown", {})
     _fb_flat = {}
     for _fn, _fval in _fb.items():
@@ -80,7 +88,19 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         elif isinstance(_fval, (int, float)):
             _fb_flat[_fn] = _fval
     for _fn, _fval in _fb_flat.items():
-        if "台中銀台灣優息" in _fn or "國泰台灣高股息" in _fn:
+        # 2026-08-21 成分穿透：富達（股80.75/債14.03/現5.21，月報 2026/6/30）與
+        # 聯博全球多元收益（股55/債40/現5，估計待月報）拆股債現，不再整筆丟單一桶
+        if "富達全球動能多元" in _fn:
+            _fund_us += round(_fval * 0.8075)
+            _fund_bonds += round(_fval * 0.1403)
+            _fund_cash += round(_fval * 0.0521)
+            _fund_us_tech += round(_fval * 0.8075 * _tr(_fn))
+        elif "聯博全球多元收益" in _fn:
+            _fund_us += round(_fval * 0.55)
+            _fund_bonds += round(_fval * 0.40)
+            _fund_cash += round(_fval * 0.05)
+            _fund_us_tech += round(_fval * 0.55 * _tr(_fn))
+        elif "台中銀台灣優息" in _fn or "國泰台灣高股息" in _fn:
             _fund_def += _fval
         elif any(k in _fn for k in ["台新美日台", "貝萊德", "安聯AI", "聯博", "摩根", "M&G", "安聯收益成長", "安聯美國", "富達"]):
             _fund_us += _fval
@@ -125,20 +145,24 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     tw = sec_tw + _fund_tw
     us = sec_us + ins_eq + _fund_us
     total = cash + ins + sec + funds
-    def_v = sec_def + _fj + _fund_def
-    bond_v = sec_bond + ins_bonds
+    # 2026-08-21：第一金 FA81 聯博拆分 → 權益/債券各加回；def_v 不再整筆含 _fj
+    ins_eq += _fj_eqv
+    ins_bonds += _fj_bond
+    def_v = sec_def + _fund_def
+    bond_v = sec_bond + ins_bonds + _fund_bonds
     # 基金縮放防呆（2026-08-07 修正：外幣換算/匯率調整後明細加總≠funds 真值時，
     # 按比例縮放基金三類，避免餘數法現金被吃掉）
     # ⚠️ 2026-08-11 修正：直接對齊 funds 真值（無論匯率調整在明細內或 funds 內，
     #    縮放因子一律 = funds / 明細加總，確保現金/安全網 == cash_total）
-    _fund_sum = _fund_tw + _fund_us + _fund_def + _fund_cash
+    _fund_sum = _fund_tw + _fund_us + _fund_def + _fund_cash + _fund_bonds
     if _fund_sum > 0 and funds > 0 and abs(_fund_sum - funds) / funds > 0.001:
         _fk = funds / _fund_sum
-        _fund_tw, _fund_us, _fund_def = (round(_fund_tw * _fk), round(_fund_us * _fk),
-                                         round(_fund_def * _fk))
+        _fund_tw, _fund_us, _fund_def, _fund_bonds = (round(_fund_tw * _fk), round(_fund_us * _fk),
+                                         round(_fund_def * _fk), round(_fund_bonds * _fk))
         tw = sec_tw + _fund_tw
         us = sec_us + ins_eq + _fund_us
-        def_v = sec_def + _fj + _fund_def
+        def_v = sec_def + _fund_def
+        bond_v = sec_bond + ins_bonds + _fund_bonds
     c = total - (tw + us + def_v + bond_v)
     us_tech = _fund_us_tech + ins_tech + sec_us_tech
     us_non_tech = us - us_tech
