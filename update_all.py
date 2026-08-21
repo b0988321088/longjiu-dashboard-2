@@ -91,9 +91,11 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         # 2026-08-21 成分穿透：富達（股80.75/債14.03/現5.21，月報 2026/6/30）與
         # 聯博全球多元收益（股55/債40/現5，估計待月報）拆股債現，不再整筆丟單一桶
         if "富達全球動能多元" in _fn:
-            _fund_us += round(_fval * 0.8075)
+            # 成分穿透（月報 2026/6/30）：股 80.75 / 債 14.03 / 現 5.21
+            # ⚠️ 2026-08-21：基金內部現金 5.21% 併入美股（85.96%），不進現金桶 — 避免污染「現金/安全網」
+            _fund_us += round(_fval * 0.8075) + round(_fval * 0.0521)
             _fund_bonds += round(_fval * 0.1403)
-            _fund_cash += round(_fval * 0.0521)
+            _fund_cash += 0
             _fund_us_tech += round(_fval * 0.8075 * _tr(_fn))
         elif "聯博全球多元收益" in _fn:
             # 8/20 使用者提供（公開說明書+月報）：債券 50-60%（_br 0.55）/ 權益 ~45%（低波動高股息+非傳統）/ 科技 2.5%
