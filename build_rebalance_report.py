@@ -106,7 +106,7 @@ def main():
   <div class="note">🎯 <b>targetAllocation：</b>{alloc_txt}<br/>🔄 <b>板塊輪動：</b>{tilt_txt}{em_txt}</div>"""
         # 避險衛星（黃金+石油，2026-08-21 裁示）現況 vs 目標
         import json as _json
-        _sn = _json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        _sn = _json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
         _hs = _sn.get("hedge_satellite", {})
         _gold_row = next((r for r in alloc if "黃金" in r.get("資產", "")), None)
         _oil_row = next((r for r in alloc if "石油" in r.get("資產", "")), None)
