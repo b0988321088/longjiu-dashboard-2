@@ -519,6 +519,42 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         cio_content.append(f'<span style="display:block">• 流動性管理穩定，補庫警示已處理。</span>')
     cio_content_html = '\n'.join(cio_content)
 
+    # 美元升息影響評估（8/21 使用者核准寫入日報）— 動態讀 snapshot
+    _usd_eval = ""
+    try:
+        _ue = load_json(REPO_DIR / "snapshot.json").get("usd_hike_evaluation", {})
+        if _ue:
+            _imp = "".join(f"<li>{x}</li>" for x in _ue.get("影響", []))
+            _resp = "".join(f"<li>{x}</li>" for x in _ue.get("因應", []))
+            _hed = _ue.get("避險現況", {})
+            _hed_txt = "｜".join(f"{k}：{v}" for k, v in _hed.items())
+            _usd_eval = f"""<div class="callout" style="border-left:3px solid #d97706;margin-top:10px">
+  <h3>💵 美元升息影響評估（{_ue.get('generated_at','')} DAA v3）</h3>
+  <p style="font-size:12px;color:#6e6e73;margin-bottom:6px">{_ue.get('引擎','')}</p>
+  <p style="margin:4px 0"><b>影響：</b></p><ul style="margin:2px 0 8px 18px;padding:0">{_imp}</ul>
+  <p style="margin:4px 0"><b>避險現況：</b>{_hed_txt}</p>
+  <p style="margin:8px 0 2px 0"><b>因應三步驟：</b></p><ul style="margin:2px 0 6px 18px;padding:0">{_resp}</ul>
+  <p style="font-size:11px;color:#94a3b8;margin:2px 0">{_ue.get('note','')}</p>
+</div>"""
+    except Exception:
+        _usd_eval = ""
+
+    # 雙維度資產定位（2026-08-21 使用者定稿）— 防禦維度 vs 收入維度
+    _dual_dim = ""
+    try:
+        _ddm = load_json(REPO_DIR / "snapshot.json").get("dual_dimension_metric", {})
+        if _ddm:
+            _df = _ddm.get("防禦維度", {}); _inc = _ddm.get("收入維度", {})
+            _dc2 = _df.get("組成", {})
+            _dual_dim = f"""<div class="callout" style="border-left:3px solid #8b5cf6;margin-top:10px">
+  <h3>🧭 雙維度資產定位（2026-08-21 定稿）</h3>
+  <p style="margin:4px 0">🛡️ <b>防禦維度 {_df.get('佔比',0)}%</b>（{_df.get('公式','')}｜抗跌/LTV保護）＝ 債券 {_dc2.get('債券類',0):,} + 現金 {_dc2.get('現金/貨幣停泊',0):,} + 低波 {_dc2.get('低波高股息防禦',0):,} + 避險衛星 {_dc2.get('避險衛星(目標)',0):,}（目標）</p>
+  <p style="margin:4px 0">💵 <b>收入引擎 {_inc.get('佔比',0)}%</b>（{_inc.get('公式','')}｜現金流覆蓋）＝ 全配息資產 + 房租 80,100/月</p>
+  <p style="font-size:11px;color:#94a3b8;margin:4px 0">核心：配息≠防守，兩維度分離計算、獨立風控；{_df.get('備註','')}</p>
+</div>"""
+    except Exception:
+        _dual_dim = ""
+
     html = f"""<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -800,6 +836,12 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       <!-- LLM 緊急應變分析區塊 -->
             {llm_emergency_analysis}
     </div>
+
+    <!-- 美元升息影響評估（8/21 核准） -->
+    {_usd_eval}
+
+    <!-- 雙維度資產定位（8/21 定稿） -->
+    {_dual_dim}
 
     <!-- 巴菲特視角建議 (Fallback 或輔助) -->
     <div class="callout callout-bull">

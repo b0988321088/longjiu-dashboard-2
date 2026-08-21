@@ -107,6 +107,16 @@ if _dcm_v:
     _dc = _dcm.get("組成", {})
     w(f"<div class='callout' style='border-left:3px solid #22c55e'>💵 <b>配息資產合計（合併口徑）：</b>{_dcm_v:,}（{_dcm_v/total*100:.1f}%）＝ 防守ETF {_dc.get('防守ETF',0):,} + 保單月配 {_dc.get('保單月配基金',0):,} + 國泰月配 {_dc.get('國泰月配(富達C+聯博AD)',0):,} + 第一金FA81 {_dc.get('第一金FA81',0):,} + 鉅亨月配 {_dc.get('鉅亨月配',0):,}<br><span style='color:#64748b;font-size:12px'>防守桶 4.2% 僅高股息ETF 口徑（8/21 裁示：基金配息合併計算 → 防守/00878 承接凍結）</span></div>")
 
+# 雙維度資產定位框架（2026-08-21 使用者定稿）— 防禦維度 vs 收入維度
+_ddm = snap.get("dual_dimension_metric", {})
+if _ddm:
+    _def = _ddm.get("防禦維度", {}); _inc = _ddm.get("收入維度", {})
+    _dc2 = _def.get("組成", {})
+    w(f"<div class='callout' style='border-left:3px solid #8b5cf6'>🧭 <b>雙維度資產定位（{_ddm.get('定稿','')}）：</b>"
+      f"<br/>🛡️ <b>防禦維度 {_def.get('佔比',0)}%</b>（{_def.get('公式','')}｜抗跌/LTV保護）＝ 債券 {_dc2.get('債券類',0):,} + 現金 {_dc2.get('現金/貨幣停泊',0):,} + 低波 {_dc2.get('低波高股息防禦',0):,} + 避險衛星 {_dc2.get('避險衛星(目標)',0):,}（目標）"
+      f"<br/>💵 <b>收入引擎 {_inc.get('佔比',0)}%</b>（{_inc.get('公式','')}｜現金流覆蓋）＝ 全配息資產 + 房租 80,100/月"
+      f"<br/><span style='color:#64748b;font-size:12px'>核心：配息≠防守，兩維度分離計算、獨立風控；{_def.get('備註','')}</span></div>")
+
 # 1. Overview table
 w("<div class='card'><h2>🎯 配置總覽</h2>")
 w("<table><thead><tr><th>類別</th><th class='num'>金額</th><th class='num'>佔比</th><th class='num'>目標</th><th class='num'>缺口</th><th>狀態</th></tr></thead><tbody>")
