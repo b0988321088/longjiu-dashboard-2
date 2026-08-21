@@ -145,12 +145,12 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
                                                  round(sec_def * _k), round(sec_bond * _k))
     else:
         sec_tw = sec
+    # 2026-08-21：第一金 FA81 聯博拆分 → 權益/債券各加回（⚠️ 必須在 us/tw 計算前，否則 _fj_eqv 掉進現金桶）
+    ins_eq += _fj_eqv
+    ins_bonds += _fj_bond
     tw = sec_tw + _fund_tw
     us = sec_us + ins_eq + _fund_us
     total = cash + ins + sec + funds
-    # 2026-08-21：第一金 FA81 聯博拆分 → 權益/債券各加回；def_v 不再整筆含 _fj
-    ins_eq += _fj_eqv
-    ins_bonds += _fj_bond
     def_v = sec_def + _fund_def
     bond_v = sec_bond + ins_bonds + _fund_bonds
     # 基金縮放防呆（2026-08-07 修正：外幣換算/匯率調整後明細加總≠funds 真值時，
