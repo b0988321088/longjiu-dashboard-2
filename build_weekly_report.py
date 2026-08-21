@@ -28,6 +28,10 @@ def main():
     targets = snap.get("penetration", {}).get("targets", {})
     total = snap.get("total_assets", 0)
     cash = snap.get("cash_total", 0)
+    _pi = snap.get("passive_income", {}) or {}
+    _passive = _pi.get("total_conservative", 183333)
+    _exp = snap.get("monthly_expense", 152781)
+    _cov = round(_passive / _exp * 100) if _exp else 0
     us30y = st.get("last_rate")
     mode = "防禦（A）" if st.get("mode") == "A" else "布局（B）" if st.get("mode") == "B" else "未知"
     us30y_txt = f"{us30y:.2f}%" if us30y else "—"
@@ -85,7 +89,7 @@ def main():
     <tr><td>美股 ≤ 33%</td><td>{'✅' if us_ok else '❌'}</td><td>{apct.get('美股市值型成長',0):.1f}%</td></tr>
     <tr><td>LTV ≤ 40%</td><td>✅</td><td>未質押</td></tr>
     <tr><td>台股單筆 ≤ 5 萬</td><td>✅</td><td>管制中</td></tr>
-    <tr><td>被動實收 ≥ 常態 80%</td><td>✅</td><td>233,489/月 &gt; 153,389×0.8</td></tr>"""
+    <tr><td>被動實收 ≥ 常態 80%</td><td>✅</td><td>{_passive:,}/月 &gt; 153,389×0.8</td></tr>"""
 
     # ===== 六、滯脹測試 =====
     stag_txt = f"US30Y {us30y_txt}" if us30y else "—"
@@ -131,7 +135,7 @@ def main():
     <tr><td>② 匯率</td><td>USD/TWD 基準 32.18</td><td>🟢 波動監控中</td></tr>
     <tr><td>③ PI 資格</td><td>已開啟（snapshot 待更新）</td><td>🟡 撥款後送件</td></tr>
     <tr><td>④ LTV</td><td>未質押</td><td>🟢 0%</td></tr>
-    <tr><td>⑤ 現金流</td><td>被動 233,489/月 vs 開支 152,781</td><td>🟢 覆蓋 164%</td></tr>
+    <tr><td>⑤ 現金流</td><td>被動 {_passive:,}/月 vs 開支 {_exp:,}</td><td>🟢 覆蓋 {_cov}%</td></tr>
     <tr><td>2b 日圓</td><td>USD/JPY 監控（≥155🟢/150-155🟡/&lt;150🚨）</td><td>— 待抓取</td></tr>
     </tbody></table>"""
 
@@ -206,7 +210,7 @@ li{{margin-bottom:5px;font-size:12.5px;line-height:1.5}}
   <div class="kpi"><div class="k">總資產</div><div class="v">{total:,}</div></div>
   <div class="kpi"><div class="k">總負債</div><div class="v red">{snap.get('total_liabilities',0):,}</div></div>
   <div class="kpi"><div class="k">現金</div><div class="v {'green' if cash_ok else 'red'}">{cash:,}</div></div>
-  <div class="kpi"><div class="k">被動月收</div><div class="v green">233,489</div></div>
+  <div class="kpi"><div class="k">被動月收</div><div class="v green">{_passive:,}</div></div>
   <div class="kpi"><div class="k">美股佔比</div><div class="v {'green' if us_ok else 'red'}">{apct.get('美股市值型成長',0):.1f}%</div></div>
 </div>
 
