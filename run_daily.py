@@ -233,6 +233,7 @@ def calibrate_sources() -> dict:
         "mortgage_yy": snap.get("mortgage_yy", 0),
         "mortgage_yydu": snap.get("mortgage_yydu", 0),
         "mortgage_xz": snap.get("mortgage_xz", 0),
+        "mortgage_cathay": snap.get("mortgage_cathay", 0),
         "mortgage_balance": snap.get("mortgage_balance", 0),
         "financial_mortgage": snap.get("financial_mortgage", 0),
         "policy_loan": snap.get("policy_loan", 0),
@@ -363,6 +364,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         loans_rows_html += f"""          <tr><td>永豐銀行</td><td>永豐房貸 (YYDU)</td><td>—</td><td class="num">{tv['mortgage_yydu']:,}</td><td>—</td></tr>\n"""
     if tv['mortgage_xz'] > 0:
         loans_rows_html += f"""          <tr><td>永豐銀行</td><td>永豐房貸 (XZ)</td><td>—</td><td class="num">{tv['mortgage_xz']:,}</td><td>—</td></tr>\n"""
+    if tv['mortgage_cathay'] > 0:
+        loans_rows_html += f"""          <tr><td>國泰世華</td><td>國泰房貸（大義街轉貸 2.6%）</td><td>20日</td><td class="num">{tv['mortgage_cathay']:,}</td><td>9/20起月付 26,000</td></tr>\n"""
     if tv['financial_mortgage'] > 0:
         # 2026-08-10 註記：8/10 現金 100 萬先還星展理財型房貸（餘額 3,006,447 → 2,006,447）
         loans_rows_html += f"""          <tr><td>星展銀行</td><td>理財型房貸</td><td>—</td><td class="num">{tv['financial_mortgage']:,}</td><td>8/10 已還 100 萬</td></tr>\n"""
@@ -370,6 +373,29 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         loans_rows_html += f"""          <tr><td>—</td><td>保單借貸</td><td>—</td><td class="num">{tv['policy_loan']:,}</td><td>—</td></tr>\n"""
     if tv['pledge_loan'] > 0:
         loans_rows_html += f"""          <tr><td>—</td><td>證券質押</td><td>—</td><td class="num">{tv['pledge_loan']:,}</td><td>—</td></tr>\n"""
+
+    # 每月固定支出明細（2026-08-21：房貸校正 永豐65,735+國泰26,000=91,735）
+    try:
+        _sn2 = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
+    except Exception:
+        _sn2 = {}
+    _life = tv.get("monthly_expense") or 141_958
+    _mort = tv.get("mortgage_monthly_total") or 0
+    _sin = _sn2.get("mortgage_sinopac_monthly", 65_735) or 0
+    _cat = _sn2.get("mortgage_cathay_monthly", 26_000) or 0
+    _ppl = float(_sn2.get("policy_pledge_loan", 4_000_000) or 0)
+    _ppr = float(_sn2.get("policy_pledge_rate", 0.04) or 0)
+    _int = round(_ppl * _ppr / 12)
+    _gf = 6000
+    _rent = _sn2.get("rent_monthly_total", 80_100) or 0
+    _fixed_total = _life + _mort + _int + _gf
+    _mort_net = _mort - _rent
+    _fixed_expense_html = f"""    <div class="callout" style="margin-top:10px;border-left:3px solid #3b82f6">
+      <strong>📌 每月固定支出：{_fixed_total:,}</strong><br>
+      生活 {_life:,} ｜ 房貸 {_mort:,}（永豐 {_sin:,} + 國泰 {_cat:,}）｜ 保單借貸利息 {_int:,} ｜ 女友還款 {_gf:,}（至12/5）
+      <br/><span style="color:#64748b;font-size:12px">房租收入 {_rent:,} 覆蓋房貸 {_mort - _rent:+,}（淨房貸負擔 {_mort_net:,}）</span>
+    </div>
+"""
 
     # 從 relay_calendar.md 取得 T+4 轉換截止日 & 完整行事曆
     _rc_text = ""
@@ -731,6 +757,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         </tbody>
       </table>
     </div>
+{_fixed_expense_html}
 
     <div class="callout callout-ok">
       <strong>✅ 流動資金充足</strong><br>
