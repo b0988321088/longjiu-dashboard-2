@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-21T07:00:42.655749",
+  "generated_at": "2026-08-21T09:35:41.201403",
   "version": "v5.0.10-true-value-correction",
-  "date": "2026-08-20",
-  "total_assets": 26205683,
+  "date": "2026-08-21",
+  "total_assets": 26215147,
   "total_liabilities": 30176284,
   "net_worth": 30046462,
   "debt_ratio": 50.1,
@@ -537,12 +537,12 @@
     },
     "actual_twd": {
       "台股市值型成長": 1889388.0,
-      "美股市值型成長": 11039949.0,
+      "美股市值型成長": 11044993.0,
       "防守型配息": 3039207.0,
-      "債券": 3424757.0,
+      "債券": 3429177.0,
       "現金/安全網": 6812382.0,
-      "美股市值型成長_科技": 3985265,
-      "美股市值型成長_非科技": 7054684
+      "美股市值型成長_科技": 3986212,
+      "美股市值型成長_非科技": 7058781
     },
     "alert": "台股不足2.8pp；現金+債券超標9.1pp"
   },
@@ -952,7 +952,7 @@
   "funds": 6801239,
   "allianz_a_breakdown": {
     "安聯收益成長": 716722,
-    "摩根JPM多重收益": 1955286,
+    "摩根JPM多重收益": 1961773,
     "M&G入息": 1100520,
     "貝萊德世界科技A10": 892436,
     "PIMCO收益增長": 427459
@@ -960,7 +960,7 @@
   "allianz_a_current_value": 5092423,
   "allianz_b_breakdown": {
     "安聯收益成長": 505501,
-    "摩根JPM多重收益": 897387,
+    "摩根JPM多重收益": 900364,
     "M&G入息": 834767,
     "PIMCO收益增長": 483875
   },
@@ -1014,7 +1014,7 @@
   "moneybook_date": "20260820_1",
   "total_portfolio_value": 26205683,
   "total_stock_value": 2826480,
-  "allianz_combined": 7813953,
+  "allianz_combined": 7823417,
   "allianz_a_value": 5092423,
   "allianz_b_value": 2721530,
   "_updated_by": "hermes-8/20-MB-sync",
@@ -1342,8 +1342,8 @@
   "allianz_b": 2788779,
   "firstjin_fund_name": "FJ33-摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(每月派息)-美元",
   "insurance_label_b": "第一金FL65→FJ33摩根（8/4轉換）",
-  "insurance_current_value": 9763698,
-  "insurance_total": 9763698,
+  "insurance_current_value": 9773162,
+  "insurance_total": 9773162,
   "pending_income": [
     {
       "source": "台電標案合作（上境工程）利潤分成",
@@ -1367,7 +1367,7 @@
   "fund_dividend_monthly": 0,
   "fund_market": 6801239,
   "fund_total_market_value": 6801239,
-  "insurance": 9763698,
+  "insurance": 9773162,
   "professional_investor": {
     "status": "申請中（8/20 撥款後盤點：金融資產 26,205,683 / 門檻 3,000萬 / 缺口 ~380萬，可併配偶）",
     "threshold": 30000000,
@@ -2444,5 +2444,6 @@
     "目前燈號_20260821": "🟡 黃燈（US30Y 5.28% 在 4.8~5.3 區間）→ 嚴格 SAA ±5pp；巴菲特/VIX/CPI 待外部數據源（None 不觸發）",
     "資料源": "US30Y=Yahoo ^TYX 即時；匯率=open.er-api.com；巴菲特/VIX/CPI=外部數據源（無則該指標不觸發，不阻斷）",
     "輸出格式": "①當前燈號 ②主觸發指標狀態 ③輔助觀察欄位（匯率/黃金/原油/科技曝險，只陳述現況）④配置調整方向（提醒±10%上限）⑤檢查硬性約束"
-  }
+  },
+  "note_allianz_0821": "8/21 上午截圖：帳戶總價值 7,823,417（A 5,098,910+B 2,724,507），本月累積撥回 62,969；摩根JPM兩檔微漲(A +6,487/B +2,977)，其餘7檔與8/20同"
 }
