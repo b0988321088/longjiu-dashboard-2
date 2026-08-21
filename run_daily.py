@@ -1031,8 +1031,9 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             yesterday_snap = json.loads(_yday_f.read_text(encoding="utf-8"))
         except Exception:
             yesterday_snap = {}
-    # Buffett/CTO: 優先從 buffett_cto_report_{TODAY}.md 讀取，不手動維護
-    report_md = BASE / f"buffett_cto_report_{TODAY}.md"
+    # Buffett/CTO: 優先從最新的 buffett_cto_report_*.md 讀取（2026-08-22 修正：原用 {TODAY} 但 TODAY=_snap_date 會讀到舊檔）
+    _candidates = sorted(BASE.glob("buffett_cto_report_*.md"))
+    report_md = _candidates[-1] if _candidates else BASE / f"buffett_cto_report_{TODAY}.md"
     if report_md.exists():
         try:
             md_text = report_md.read_text(encoding='utf-8')
