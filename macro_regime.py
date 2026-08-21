@@ -323,13 +323,21 @@ def target_allocation(snap: dict, light: str, regime: dict) -> dict:
         rows.append({"資產": k, "target": t, "燈號偏移後": round(v, 1),
                      "建議金額(±)": round(abs(v - t) / 100 * total)})
 
-    # 黃金衛星（地緣/美元信用加重時上調，≤5%）
+    # 避險衛星（2026-08-21 使用者裁示：黃金+石油 合併納入避險）
+    # 黃金（地緣/美元信用加重時上調，≤5%）+ 石油/能源（地緣/通膨加重時上調，≤2%）→ 合計 ≤7%
     gold_target = {"🟢 綠燈": 2.0, "🟡 黃燈": 3.0, "🔴 紅燈": 5.0}[light]
     geo, usd = regime.get("地緣風險", {}).get("score"), regime.get("美元信用壓力", {}).get("score")
     if (geo or 0) >= 70 or (usd or 0) >= 70:
         gold_target = min(5.0, gold_target + 1.0)
+    oil_target = {"🟢 綠燈": 0.0, "🟡 黃燈": 1.0, "🔴 紅燈": 2.0}[light]
+    if (geo or 0) >= 70:
+        oil_target = min(2.0, oil_target + 0.5)
     rows.append({"資產": "黃金/實質資產(衛星)", "target": 0, "燈號偏移後": gold_target,
                  "建議金額(±)": round(gold_target / 100 * total)})
+    rows.append({"資產": "石油/能源(避險衛星)", "target": 0, "燈號偏移後": oil_target,
+                 "建議金額(±)": round(oil_target / 100 * total)})
+    rows.append({"資產": "避險衛星合計(黃金+石油)", "target": 0, "燈號偏移後": round(gold_target + oil_target, 1),
+                 "建議金額(±)": round((gold_target + oil_target) / 100 * total), "上限": "≤7%（8/21 裁示）"})
 
     # 現金 = 底線制（無目標%，顯示安全網與超額）
     cash_now = snap.get("penetration", {}).get("actual_pct", {}).get("現金/安全網", 0)

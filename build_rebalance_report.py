@@ -104,6 +104,16 @@ def main():
   <h2>🧭 DAA v3 宏觀情境（{mr.get('燈號','—')}）</h2>
   <table><thead><tr><th>情境</th><th class="num">分數</th><th>燈</th></tr></thead><tbody>{reg_rows}</tbody></table>
   <div class="note">🎯 <b>targetAllocation：</b>{alloc_txt}<br/>🔄 <b>板塊輪動：</b>{tilt_txt}{em_txt}</div>"""
+        # 避險衛星（黃金+石油，2026-08-21 裁示）現況 vs 目標
+        import json as _json
+        _sn = _json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        _hs = _sn.get("hedge_satellite", {})
+        _gold_row = next((r for r in alloc if "黃金" in r.get("資產", "")), None)
+        _oil_row = next((r for r in alloc if "石油" in r.get("資產", "")), None)
+        if _gold_row and _oil_row:
+            mr_html += (f"<div class='note' style='border-left:3px solid #d97706'>🛡️ <b>避險衛星（黃金+石油，合計 ≤7%）：</b>"
+                        f"黃金目標 {_gold_row['燈號偏移後']}%（現況 {_hs.get('黃金現況',0):,}）＋ 石油目標 {_oil_row['燈號偏移後']}%（現況 {_hs.get('石油現況',0):,}）"
+                        f"<br/><span style='color:#64748b;font-size:12px'>{_hs.get('note','')}</span></div>")
     except Exception:
         pass
 
