@@ -282,7 +282,7 @@ def extract_snapshot(snap: dict) -> dict:
         "fund_dividend_monthly": _div_sum_current_month,
         "fund_dividend_conservative": _div_sum_current_month,
         "monthly_income": float(snap.get("monthly_income", 218102)),
-        "monthly_expense": float(snap.get("monthly_expense", snap.get("monthly_expense_mb", 141958))),
+        "monthly_expense": float(snap.get("monthly_expense", snap.get("monthly_expense_mb", 152781))),
         "rent_monthly": float(snap.get("rent_monthly_actual", 80100)),
         "rent_received_records": snap.get("rent_received_records", {}),
         "cathay_refinance": float(snap.get("cathay_refinance_amount") or 0),

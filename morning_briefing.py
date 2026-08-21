@@ -84,7 +84,7 @@ def get_fire(snap):
     fund = mdb.get("fund",0)
     rent = snap.get("rent_monthly_actual", 80100)
     total = ins+etf+fund+rent
-    expense = snap.get("monthly_expense", 141958)  # 當下真實常態開銷
+    expense = snap.get("monthly_expense", 152781)  # 當下真實常態開銷
     mortgage = snap.get("mortgage_monthly_total", 0) or 0
     other_expense = max(0, expense - mortgage)
     ideal_spend = 40000  # 長期理想目標月花費

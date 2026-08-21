@@ -131,7 +131,7 @@ def main():
     <tr><td>② 匯率</td><td>USD/TWD 基準 32.18</td><td>🟢 波動監控中</td></tr>
     <tr><td>③ PI 資格</td><td>已開啟（snapshot 待更新）</td><td>🟡 撥款後送件</td></tr>
     <tr><td>④ LTV</td><td>未質押</td><td>🟢 0%</td></tr>
-    <tr><td>⑤ 現金流</td><td>被動 233,489/月 vs 開支 141,958</td><td>🟢 覆蓋 164%</td></tr>
+    <tr><td>⑤ 現金流</td><td>被動 233,489/月 vs 開支 152,781</td><td>🟢 覆蓋 164%</td></tr>
     <tr><td>2b 日圓</td><td>USD/JPY 監控（≥155🟢/150-155🟡/&lt;150🚨）</td><td>— 待抓取</td></tr>
     </tbody></table>"""
 

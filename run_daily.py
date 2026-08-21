@@ -380,21 +380,21 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         _sn2 = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
     except Exception:
         _sn2 = {}
-    _life = tv.get("monthly_expense") or 141_958
-    _mort = _sn2.get("mortgage_monthly_total") or tv.get("mortgage_balance") or 0  # tv 無此 key，從 snapshot 讀
-    _sin = _sn2.get("mortgage_sinopac_monthly", 65_735) or 0
-    _cat = _sn2.get("mortgage_cathay_monthly", 26_000) or 0
-    _ppl = float(_sn2.get("policy_pledge_loan", 4_000_000) or 0)
-    _ppr = float(_sn2.get("policy_pledge_rate", 0.04) or 0)
-    _int = round(_ppl * _ppr / 12)
-    _gf = 6000
+    _mfe = _sn2.get("monthly_fixed_expense", {}) or {}
+    _life = _mfe.get("生活支出", 28_500)
+    _med = _mfe.get("醫療_常態回診", 15_946)
+    _sin = _mfe.get("房貸_永豐", 65_735) or 0
+    _cat = _mfe.get("房貸_國泰", 26_000) or 0
+    _mort = _sin + _cat
+    _int = _mfe.get("保單借貸利息", 13_333)
+    _yua = _mfe.get("元大證金利息", 3_267)
+    _fixed_total = _mfe.get("合計", _life + _med + _mort + _int + _yua)
     _rent = _sn2.get("rent_monthly_total", 80_100) or 0
-    _fixed_total = _life + _mort + _int + _gf
     _mort_net = _mort - _rent
     _fixed_expense_html = f"""    <div class="callout" style="margin-top:10px;border-left:3px solid #3b82f6">
       <strong>📌 每月固定支出：{_fixed_total:,}</strong><br>
-      生活 {_life:,} ｜ 房貸 {_mort:,}（永豐 {_sin:,} + 國泰 {_cat:,}）｜ 保單借貸利息 {_int:,} ｜ 女友還款 {_gf:,}（至12/5）
-      <br/><span style="color:#64748b;font-size:12px">房租收入 {_rent:,} 覆蓋房貸 {_mort_net:+,} 缺口（{_mort/_rent*100:.0f}% 覆蓋）</span>
+      生活 {_life:,} ｜ 醫療 {_med:,} ｜ 房貸 {_mort:,}（永豐 {_sin:,} + 國泰 {_cat:,}）｜ 保單借貸利息 {_int:,} ｜ 元大證金 {_yua:,}
+      <br/><span style="color:#64748b;font-size:12px">房租收入 {_rent:,} 覆蓋房貸 {_mort_net:+,} 缺口（{_mort/_rent*100:.0f}% 覆蓋）｜女友還款 6,000 為收入（至12/5）</span>
     </div>
 """
 
@@ -1236,7 +1236,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _philosophy_items = []
                 _snap_now = json.loads(Path("snapshot.json").read_text(encoding="utf-8")) if Path("snapshot.json").exists() else {}
                 _inc_m = (_snap_now.get("monthly_dividend_total") or 0) + (_snap_now.get("rent_monthly_total") or 0)
-                _exp = _snap_now.get("monthly_expense") or 141958
+                _exp = _snap_now.get("monthly_expense") or 152781
                 _cov = _inc_m / _exp if _exp else 0
                 _philosophy_items.append(f"現金流覆蓋（常態）{_inc_m:,.0f}/{_exp:,.0f} = {_cov*100:.0f}% {'✅' if _cov >= 1.0 else '🔴'}")
                 _usd_ex = tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
@@ -1254,7 +1254,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     f"<strong>③ 月度利息流出 vs 現金流入：</strong>流出 {_p1_cost_m+_pledge_cost_m:,.0f} vs 流入（常態配息＋房租）{_income_m:,.0f}＋富達月配 ~{_fid_mdiv:,} = {_income_m+_fid_mdiv:,.0f} — {'✅ 覆蓋' if (_income_m+_fid_mdiv) >= (_p1_cost_m+_pledge_cost_m) else '⚠️ 未覆蓋'}<br/>"
                     f"<strong>④ 到期對照：</strong>負債＝國泰轉貸 1,200萬（3年寬限期）＋質押 300萬（富達擔保，基金無到期日）；富達為月配現金流資產，無期限錯配 ✅<br/>"
                     f"<strong>⑤ US30Y：</strong>{_us30y_now:.2f}% — {_fz_txt}<br/>"
-                    f"<strong>⑥ 底線規則（8/13 動態）：</strong>現金≥6個月開支（{700000:,}，月開支 141,958）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/>"
+                    f"<strong>⑥ 底線規則（8/13 動態）：</strong>現金≥6個月開支（{700000:,}，月開支 152,781）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/>"
                     f"<strong>⑦ 投資哲學檢核（8/19 定版）：</strong>{_philosophy_html}<br/>"
                     f"<strong>⛔ 資金禁令：</strong>轉貸/質押資金禁止生活消費擴張"
                     f"</div></div>"
