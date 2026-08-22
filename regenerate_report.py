@@ -247,6 +247,14 @@ if _pen_file:
         (BASE / "index.html").write_text(_idx_html, encoding="utf-8")
     except Exception:
         pass
+# 緊急應變連結（2026-08-22 修正：週末/例假日不產出 → 一律 glob 最新，避免 __TODAY__ 404）
+try:
+    _latest_er = sorted(BASE.glob("emergency_report_2*.html"), key=lambda p: p.stat().st_mtime, reverse=True)
+    _er_name = _latest_er[0].name if _latest_er else f"emergency_report_{TODAY}.html"
+    _idx_html2 = (BASE / "index.html").read_text(encoding="utf-8").replace("__EMERGENCY_REPORT__", _er_name)
+    (BASE / "index.html").write_text(_idx_html2, encoding="utf-8")
+except Exception:
+    pass
 
 ok = all(checks.values())
 for k, v in checks.items():

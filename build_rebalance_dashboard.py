@@ -180,11 +180,14 @@ def main():
         if not _seg:
             _seg = _fr[:600]
         _seg = _seg.replace("【", "<b>【").replace("】", "】</b>")
+        # 緊急應變報告連結：glob 最新（週末不產出，勿硬編碼日期）
+        _ers = sorted(BASE.glob("emergency_report_2*.html"), key=lambda p: p.stat().st_mtime, reverse=True)
+        _er_name = _ers[0].name if _ers else "emergency_report_2026-08-21.html"
         emg_html = f"""
   <div class="card" style="margin-top:14px;border-left:4px solid #f59e0b">
     <h2>🚨 緊急應變併入再平衡（{_em.get('generated_at','')[:16]}）</h2>
     <div style="font-size:12px;color:#cbd5e1;line-height:1.7">{_seg}</div>
-    <div style="margin-top:8px;font-size:12px"><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_2026-08-21.html" style="color:#f59e0b">📄 查看完整緊急應變報告 →</a></div>
+    <div style="margin-top:8px;font-size:12px"><a href="https://b0988321088.github.io/longjiu-dashboard-2/{_er_name}" style="color:#f59e0b">📄 查看完整緊急應變報告 →</a></div>
   </div>"""
     except Exception:
         emg_html = ""
