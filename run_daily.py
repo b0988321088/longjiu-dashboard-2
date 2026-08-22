@@ -575,6 +575,29 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     except Exception:
         _radar_html = ""
 
+    # 產業別穿透（2026-08-22 雙層監控第二層：疊加於五桶之上，不取代）
+    _sector_html = ""
+    try:
+        _sec = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8")).get("sector_penetration", {})
+        if _sec:
+            _rows = ""
+            for _k in ["高科技/半導體", "金融/電信", "醫療/公用事業/不動產", "固收與現金", "實物避險-黃金", "實物避險-石油"]:
+                _v = _sec.get(_k, {})
+                if not _v:
+                    continue
+                _amt = _v.get("金額_估", _v.get("金額", 0)) or 0
+                _pct = _v.get("佔比_估", "")
+                _st = _v.get("狀態", "")
+                _rows += f"<tr><td>{_k}</td><td class='num'>{_amt:,}</td><td class='num'>{_pct}</td><td>{_st}</td></tr>"
+            _sector_html = (
+                "<div class='callout' style='margin-top:10px;border-left:3px solid #f59e0b'>"
+                "<strong>🏭 產業別穿透（Micro 底層｜疊加於五桶，非取代）</strong>"
+                f"<table style='width:100%;font-size:12px;margin-top:6px'><tr><th>產業</th><th>金額</th><th>佔比</th><th>狀態</th></tr>{_rows}</table>"
+                "<span style='color:#64748b;font-size:12px'>紅線：高科技/半導體 ≤30%（當前 18.1%，敏感性 28.5% 若富達全數計科技）｜輪動閥門：科技>30% 或雷達科技轉弱 → 乾粉轉金融/電信/醫療防禦</span></div>"
+            )
+    except Exception:
+        _sector_html = ""
+
     html = f"""<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -858,6 +881,9 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
       <!-- 機構流向雷達（2026-08-22 新增，讀 radar_state.json） -->
       {_radar_html}
+
+      <!-- 產業別穿透（2026-08-22 雙層監控第二層） -->
+      {_sector_html}
     </div>
 
     <!-- 美元升息影響評估（8/21 核准） -->
