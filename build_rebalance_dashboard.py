@@ -182,6 +182,40 @@ def main():
     pledge = s.get("質押計畫", {})
     ltv_txt = "未質押（9/3 PI 後 350萬@2.77%）"
 
+    # ── 產業資金流向（Phase 2：讀 radar_state.sector_flow）──
+    sflow_html = ""
+    try:
+        sf = radar.get("sector_flow", {})
+        if sf:
+            tw_rows = ""
+            for b, v in sorted(sf.get("台股", {}).items(), key=lambda x: -x[1].get("法人淨買賣超", 0)):
+                amt = v.get("法人淨買賣超", 0)
+                if not amt:
+                    continue
+                icon = "🟢" if amt > 0 else ("🔴" if amt < 0 else "⚪")
+                tw_rows += f"<tr><td>{b}</td><td class='num'>{amt/1e6:+.0f}百萬</td><td>{icon} {v.get('方向','')}</td></tr>"
+            us_rows = ""
+            for tk, v in sorted(sf.get("美股", {}).items(), key=lambda x: -(x[1].get("RS_vs_SPY") or -99)):
+                rs = v.get("RS_vs_SPY")
+                rs_txt = f"{rs:+.1f}pp" if rs is not None else "—"
+                us_rows += f"<tr><td>{tk}</td><td class='num'>{v.get('動能%',0):+.1f}%</td><td class='num'>{rs_txt}</td></tr>"
+            tw_sum = sf.get("台股總結", "")
+            us_sum = sf.get("美股總結", "")
+            sflow_html = f"""
+  <div class="card" style="margin-top:14px;border-left:4px solid #8b5cf6">
+    <h2>📡 產業資金流向（{sf.get('generated_at','')[:16]}）</h2>
+    <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px">{tw_sum}｜{us_sum}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div><div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:4px">🇹🇼 台股法人（產業桶）</div>
+      <table><tr><th>產業桶</th><th class="num">法人淨買賣超</th><th>方向</th></tr>{tw_rows}</table></div>
+      <div><div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:4px">🇺🇸 美股板塊（月動能 vs SPY）</div>
+      <table><tr><th>板塊</th><th class="num">動能%</th><th class="num">RS</th></tr>{us_rows}</table></div>
+    </div>
+    <div style="font-size:10.5px;color:var(--sub);margin-top:6px">輪動邏輯：法人流入且產業低配 → 乾粉吸納目標（科技流出→高股息/醫療防禦）</div>
+  </div>"""
+    except Exception:
+        sflow_html = ""
+
     # ── GICS 產業分布（Phase 1，2026-08-22：讀 snapshot.industry_penetration）──
     gics_html = ""
     try:
@@ -355,6 +389,8 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
     <table><tr><th>指標</th><th class="num">現值</th><th class="num">紅線</th><th>狀態</th></tr>{risk_rows}</table>
   </div>
 </div>
+
+{sflow_html}
 
 {gics_html}
 

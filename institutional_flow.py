@@ -88,7 +88,7 @@ def fetch_twse(day=None):
             data = json.loads(http_get(url).decode("utf-8"))
             if data.get("stat") != "OK":
                 continue
-            etfs, total_foreign = {}, 0
+            etfs, etfs_all, total_foreign = {}, {}, 0
             for r in data.get("data", []):
                 if len(r) < 12:
                     continue
@@ -98,9 +98,13 @@ def fetch_twse(day=None):
                 except Exception:
                     continue
                 total_foreign += fnet
+                try:
+                    etfs_all[code] = {"name": r[1].strip(), "法人淨買賣超": int(r[11].replace(",", ""))}
+                except Exception:
+                    pass
                 if code in watch:
                     etfs[code] = fnet
-            return {"date": f"{d:%Y-%m-%d}", "外資總買賣超": total_foreign, "etfs": etfs}
+            return {"date": f"{d:%Y-%m-%d}", "外資總買賣超": total_foreign, "etfs": etfs, "etfs_all": etfs_all}
         except Exception as e:
             return {"error": str(e)[:80], "date": f"{d:%Y-%m-%d}"}
     return {"error": "近 6 日無交易資料", "date": f"{(day or date.today()):%Y-%m-%d}"}
@@ -174,6 +178,110 @@ def fetch_twd():
     except Exception:
         pass
     return {"error": "匯率抓取失敗"}
+
+
+# ─────────────────────────── Phase 2：產業資金流向 ───────────────────────────
+
+# 台股 ETF → 產業桶（名稱關鍵字優先，輔以代碼集）
+_TW_SECTOR_CODES = {
+    "0050": "市值型", "006208": "市值型", "009816": "市值型", "00850": "市值型", "006204": "市值型",
+    "00924": "科技", "00891": "科技", "00895": "科技", "00851": "科技", "00981A": "科技",
+    "0055": "金融", "00635U": "原物料避險", "00642U": "原物料避險", "00738U": "原物料避險",
+    "00679B": "債券", "00795B": "債券", "00937B": "債券", "00751B": "債券",
+    "00878": "高股息防禦", "0056": "高股息防禦", "00919": "高股息防禦", "00918": "高股息防禦",
+    "00713": "高股息防禦", "00929": "高股息防禦", "00934": "高股息防禦", "00936": "高股息防禦",
+    "00940": "高股息防禦", "00944": "高股息防禦", "00900": "高股息防禦",
+}
+
+
+def _tw_sector_bucket(code: str, name: str) -> str:
+    if code in _TW_SECTOR_CODES:
+        return _TW_SECTOR_CODES[code]
+    if any(k in name for k in ["科技", "半導體", "5G", "AI", "伺服器", "機器人", "ICT"]):
+        return "科技"
+    if any(k in name for k in ["金融", "銀行"]):
+        return "金融"
+    if any(k in name for k in ["高息", "高股息", "低波", "永續高息"]):
+        return "高股息防禦"
+    if "債" in name:
+        return "債券"
+    if any(k in name for k in ["黃金", "石油", "原物料", "能源"]):
+        return "原物料避險"
+    return "其他"
+
+
+def aggregate_tw_sector(tw: dict) -> dict:
+    """將 T86 全部 ETF 法人淨買賣超依產業桶彙總（Phase 2）"""
+    agg = {}
+    for code, v in (tw.get("etfs_all") or {}).items():
+        b = _tw_sector_bucket(code, v.get("name", ""))
+        agg.setdefault(b, {"法人淨買賣超": 0, "檔數": 0})
+        agg[b]["法人淨買賣超"] += v.get("法人淨買賣超", 0)
+        agg[b]["檔數"] += 1
+    for b in agg:
+        agg[b]["方向"] = "inflow" if agg[b]["法人淨買賣超"] > 0 else ("outflow" if agg[b]["法人淨買賣超"] < 0 else "neutral")
+    return agg
+
+
+def fetch_us_sector():
+    """美股 SPDR 板塊 ETF 月動能 + relative strength vs SPY（Phase 2，Yahoo 免費）"""
+    SECTOR_ETFS = {"XLK": "科技", "XLF": "金融", "XLV": "醫療", "XLE": "能源", "XLY": "非核心消費",
+                   "XLP": "核心消費", "XLI": "工業", "XLU": "公用", "XLRE": "不動產", "XLB": "原物料"}
+    spy_mom = None
+    try:
+        raw = http_get("https://query1.finance.yahoo.com/v8/finance/chart/SPY?range=1mo&interval=1d")
+        closes = [c for c in json.loads(raw.decode("utf-8"))["chart"]["result"][0]["indicators"]["quote"][0]["close"] if c]
+        if len(closes) >= 2:
+            spy_mom = (closes[-1] - closes[0]) / closes[0] * 100
+    except Exception:
+        pass
+    out = {}
+    for tk, name in SECTOR_ETFS.items():
+        try:
+            raw = http_get(f"https://query1.finance.yahoo.com/v8/finance/chart/{tk}?range=1mo&interval=1d")
+            closes = [c for c in json.loads(raw.decode("utf-8"))["chart"]["result"][0]["indicators"]["quote"][0]["close"] if c]
+            if len(closes) >= 2:
+                mom = (closes[-1] - closes[0]) / closes[0] * 100
+                rs = round(mom - spy_mom, 1) if spy_mom is not None else None
+                out[tk] = {"產業": name, "動能%": round(mom, 1), "RS_vs_SPY": rs,
+                           "方向": "inflow" if mom > 0.5 else ("outflow" if mom < -0.5 else "neutral")}
+        except Exception:
+            continue
+    return {"date": date.today().isoformat(), "spy_動能%": round(spy_mom, 1) if spy_mom is not None else None, "etfs": out}
+
+
+def compute_sector_flow(tw, us_sec, state):
+    """產業資金流向 → 寫入 state['sector_flow']（Phase 2）"""
+    flow = {"generated_at": datetime.now().isoformat()}
+
+    # 台股產業桶
+    tw_sector = aggregate_tw_sector(tw)
+    flow["台股"] = tw_sector
+
+    # 美股板塊
+    us_out = {}
+    for tk, v in (us_sec or {}).get("etfs", {}).items():
+        us_out[f"{v['產業']}({tk})"] = {"動能%": v["動能%"], "RS_vs_SPY": v.get("RS_vs_SPY"), "方向": v["方向"]}
+    flow["美股"] = us_out
+    flow["SPY基準"] = us_sec.get("spy_動能%") if us_sec else None
+
+    # 輪動總結：台股最強/最弱桶 + 美股 RS 最強板塊
+    try:
+        tw_sorted = sorted(tw_sector.items(), key=lambda x: -x[1]["法人淨買賣超"])
+        if tw_sorted:
+            parts = [f"{b} {v['法人淨買賣超']/1e6:+.0f}百萬" for b, v in tw_sorted if v["法人淨買賣超"]]
+            flow["台股總結"] = "法人淨買賣超：" + "，".join(parts)
+    except Exception:
+        pass
+    try:
+        us_sorted = sorted(us_out.items(), key=lambda x: -(x[1]["RS_vs_SPY"] or -99))
+        if us_sorted and us_sorted[0][1]["RS_vs_SPY"] is not None:
+            flow["美股總結"] = f"RS最強 {us_sorted[0][0]}（{us_sorted[0][1]['RS_vs_SPY']:+.1f}pp vs SPY）｜最弱 {us_sorted[-1][0]}"
+    except Exception:
+        pass
+
+    state["sector_flow"] = flow
+    return flow
 
 
 # ─────────────────────────── Signals ───────────────────────────
@@ -265,7 +373,7 @@ def compute_signals(tw, cot, fed, twd, tnx, cfg, state):
     return sig
 
 
-def render_summary(sig, tw, cot, fed):
+def render_summary(sig, tw, cot, fed, sector_flow=None):
     lines = [f"📡 機構流向雷達 {date.today().isoformat()}"]
     reds = [k for k, v in sig.items() if (v.get("color") or "").startswith("🔴")]
     yellows = [k for k, v in sig.items() if (v.get("color") or "").startswith("🟡")]
@@ -275,6 +383,13 @@ def render_summary(sig, tw, cot, fed):
     if tw.get("etfs"):
         etf_txt = "、".join(f"{k} {v/1000:+.0f}千" for k, v in tw["etfs"].items() if v)
         lines.append(f"  追蹤ETF法人：{etf_txt}")
+    # Phase 2：產業資金流向摘要
+    if sector_flow:
+        lines.append("  ── 產業資金流向（Phase 2）──")
+        if sector_flow.get("台股總結"):
+            lines.append(f"  台股：{sector_flow['台股總結']}")
+        if sector_flow.get("美股總結"):
+            lines.append(f"  美股：{sector_flow['美股總結']}")
     return "\n".join(lines)
 
 
@@ -289,14 +404,17 @@ def main():
     fed = fetch_fed()
     twd = fetch_twd()
     tnx = fetch_tnx()
+    us_sec = fetch_us_sector()
 
     sig = compute_signals(tw, cot, fed, twd, tnx, cfg, state)
+    sector_flow = compute_sector_flow(tw, us_sec, state)  # Phase 2：產業資金流向
     state["last_run"] = datetime.now().isoformat()
-    state["data"] = {"twse": tw, "cot": cot, "fed": fed, "twd": twd, "tnx": tnx}
+    state["data"] = {"twse": tw, "cot": cot, "fed": fed, "twd": twd, "tnx": tnx, "us_sector": us_sec}
     state["signals"] = sig
+    state["sector_flow"] = sector_flow
     save_json(BASE / "radar_state.json", state)
 
-    summary = render_summary(sig, tw, cot, fed)
+    summary = render_summary(sig, tw, cot, fed, sector_flow)
     print(summary)
 
     # 黃/紅燈輸出給 cron 判斷（非空即有警示）
