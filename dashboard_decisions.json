@@ -5528,6 +5528,25 @@
         "八大連結",
         "動態化"
       ]
+    },
+    {
+      "timestamp": "2026-08-22T12:36:36",
+      "action": "核准",
+      "name": "GICS 產業穿透三階段（Phase1-3）+ 日報產業摘要模式",
+      "source": "user",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1787373396",
+      "summary": "Phase1 industry_penetration.py（GICS 11產業+權重字典+估算層級L1-L4+實體不動產另計3,401萬）；Phase2 產業資金流向（T86 14,867檔×14桶+美股板塊RS→sector_flow）；Phase3 rotation_engine.py（資金×缺口→乾粉建議+實體資產扣減：不動產目標0）。日報改一行產業摘要（週六詳查），完整版在再平衡儀表板",
+      "detail": "8/22 實踩：①T86 全量寫入 state 膨脹 1.4MB→只存彙總 6KB ②引擎曾建議買 REITs，user 提醒實體不動產 56% 已超配→加實體資產扣減 ③日報嵌圖太大→一行摘要模式。commits 60aad11/30ec9f7/8c111b9/701c5e7",
+      "tags": [
+        "GICS",
+        "產業穿透",
+        "輪動",
+        "資金流向",
+        "Phase1-3"
+      ]
     }
   ],
   "pending_decisions": [
