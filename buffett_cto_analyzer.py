@@ -146,6 +146,22 @@ def penetration_analysis(snapshot: dict) -> dict:
         "total_inv": total_inv,
     }
 
+def _industry_context() -> str:
+    """GICS 產業分布 + 資金流向 + 輪動建議 + 底層風險因子（供 LLM prompt，2026-08-22 加）"""
+    ctx = ""
+    try:
+        snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        gics = snap.get("industry_penetration", {}).get("產業", {})
+        rot = snap.get("rotation_recommendation", {}).get("總結", "")
+        sf = json.loads((BASE / "radar_state.json").read_text(encoding="utf-8")).get("sector_flow", {})
+        top4 = "、".join(f"{k} {v['佔比']:.1f}%" for k, v in sorted(gics.items(), key=lambda x: -x[1]['金額'])[:4] if v['金額'] > 0)
+        ctx = (f"GICS產業：{top4}｜資金流向：{sf.get('台股總結','—')}；{sf.get('美股總結','—')}｜"
+               f"輪動建議：{rot or '—'}｜底層風險因子：美股相關>60%、美元信用債~20%、現金(台幣)~12.8%、科技 17.5%")
+    except Exception:
+        ctx = ""
+    return ctx
+
+
 def generate_buffett_report(pen: dict, market_text: str = "") -> list:
     """巴菲特視角 — LLM 真實分析優先（2026-08-22 升級），失敗 fallback 模板"""
     a, g = pen["actual"], pen["gaps"]
@@ -159,10 +175,11 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
             f"主要偏離：{pen.get('key_risk','—')}｜建議：{pen.get('key_action','—')}\n"
             f"成長 {pen['growth_pct']:.1f}%（目標{pen['growth_target']}%）；防禦 {pen['defense_pct']:.1f}%；安全網 {pen['safety_pct']:.1f}%\n"
             f"結構風險：美元曝險64%（紅線50%）、高科技17.5%（紅線30%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡\n"
+            f"產業與風險因子：{_industry_context()}\n"
             f"{market_text}\n"
             f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（22.1%含 MMF 500萬 已指定標案/質押補救，不可減現金）；"
             f"台股加碼單筆≤5萬、8-12週分批；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
-            f"債券等 US30Y<5.30%；石油 Locked 禁建議；防守合併口徑69.5%已足勿追大額；黃金衛星≤5% PI後分3批。\n"
+            f"債券等 US30Y<5.30%；石油 Locked 禁建議；防守合併口徑69.5%已足勿追大額；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）。\n"
             f"請以巴菲特投資哲學（護城河、安全邊際、能力圈、長期持有、別人恐懼我貪婪）做 3 點具體觀察 + 1 個紀律提醒，200字內，繁體中文，不要重複數字表。"
         )
         _out = ask_llm(_prompt, system="你是巴菲特視角的投資分析師。輸出繁體中文，精簡犀利，有具體觀點。")
@@ -246,11 +263,12 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
             f"五桶：{_fmt}\n"
             f"主要偏離：{pen.get('key_risk','—')}｜建議：{pen.get('key_action','—')}\n"
             f"結構風險：美元曝險64%（紅線50%）、高科技17.5%（紅線30%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡、US30Y 5.32% 貼近5.30%凍結線\n"
+            f"產業與風險因子：{_industry_context()}\n"
             f"{market_text}\n"
             f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（22.1%含 MMF 500萬 已指定標案/質押補救，不可建議減現金）；"
             f"台股加碼單筆≤5萬、8-12週分批（不可建議單筆大額）；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
-            f"債券等 US30Y<5.30%（禁建議買債）；石油 Locked 禁建議；防守合併口徑69.5%已足勿追大額；黃金衛星≤5% PI後分3批。\n"
-            f"請以技術面（動能、趨勢、支撐壓力、風險）給：今日最大風險 + 具體建議動作（含標的/金額節奏，須符合上述約束），150字內，繁體中文。"
+            f"債券等 US30Y<5.30%（禁建議買債）；石油 Locked 禁建議；防守合併口徑69.5%已足勿追大額；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）。\n"
+            f"請以技術面（動能、趨勢、支撐壓力、風險）+ 產業資金流向（哪個產業順勢/逆勢）給：今日最大風險 + 具體建議動作（含標的/金額節奏，須符合上述約束），150字內，繁體中文。"
         )
         _out = ask_llm(_prompt, system="你是技術分析師（CTO）。輸出繁體中文，直接給結論與動作，不要客套。")
         if _out:

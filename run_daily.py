@@ -495,7 +495,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         # LLM 真實分析優先（2026-08-22 升級；快取 data/cio_llm_{TODAY}.json 避免同日重複呼叫）
         _cio_llm = ""
         try:
-            _cio_cache = BASE / "data" / f"cio_llm_{TODAY}.json"
+            _cio_cache = BASE / "data" / f"cio_llm_{date.today().isoformat()}.json"  # 用真實今天（run_daily TODAY=snapshot 日期 8/21，若用它 cache 永不更新）
             if _cio_cache.exists():
                 _cio_llm = json.loads(_cio_cache.read_text(encoding="utf-8")).get("text", "")
             else:
@@ -509,13 +509,31 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                 _cio_pen_us = tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
                 _cio_pen_def = tv.get("penetration", {}).get("actual_pct", {}).get("防守型配息", 0)
                 from llm_analysis import ask_llm
+                # 產業脈絡（GICS + 資金流向 + 輪動，2026-08-22 加）
+                _cio_ictx = ""
+                try:
+                    _snap_c = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+                    _gics_c = _snap_c.get("industry_penetration", {}).get("產業", {})
+                    _rot_c = _snap_c.get("rotation_recommendation", {}).get("總結", "")
+                    _sf_c = json.loads((BASE / "radar_state.json").read_text(encoding="utf-8")).get("sector_flow", {})
+                    _top4 = "、".join(f"{k} {v['佔比']:.1f}%" for k, v in sorted(_gics_c.items(), key=lambda x: -x[1]['金額'])[:4] if v['金額'] > 0)
+                    _cio_ictx = (f"產業：{_top4}｜資金流向：{_sf_c.get('台股總結','—')}；{_sf_c.get('美股總結','—')}｜"
+                                 f"輪動建議：{_rot_c or '—'}｜風險因子：美股相關>60%、美元信用債~20%")
+                except Exception:
+                    pass
                 _cio_prompt = (
                     f"你是龍九控股的 CIO。市場訊號：買訊{len(_cio_b0)}/賣訊{len(_cio_s1)}、加權 {_cio_m0.get('twii','—')}、"
                     f"台積電 {_cio_m0.get('tsm','—')}、配置 台股{_cio_pen_tw:.1f}%/美股{_cio_pen_us:.1f}%/防守{_cio_pen_def:.1f}%、"
-                    f"警訊：{_cio_warn0}。機構雷達：台股🟢/黃金🟢/原油🔴/美債10Y🟡。\n"
-                    f"請給 CIO 戰略觀點：①配置判斷（哪裡該動/哪裡不動）②最大風險 ③下一步具體動作，150字內，繁體中文，直接給結論。"
+                    f"警訊：{_cio_warn0}。機構雷達：台股🟢/黃金🟢/原油🔴/美債10Y🟡。{_cio_ictx}\n"
+                    f"請給 CIO 戰略觀點：①配置判斷（哪裡該動/哪裡不動，須對照產業資金流向）②最大風險（含底層風險因子）"
+                    f"③下一步具體動作（含產業輪動方向），150字內，繁體中文，直接給結論。"
                 )
-                _cio_out = ask_llm(_cio_prompt, system="你是龍九控股 CIO。輸出繁體中文，精簡決策導向。")
+                # 重試 2 次（8/22 實踩：buffett 連打 API 後 CIO 呼叫暫時失敗掉回靜態模板）
+                _cio_out = None
+                for _try_i in range(2):
+                    _cio_out = ask_llm(_cio_prompt, system="你是龍九控股 CIO。輸出繁體中文，精簡決策導向。")
+                    if _cio_out:
+                        break
                 if _cio_out:
                     _cio_llm = _cio_out
                     try:
@@ -523,9 +541,12 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                         _cio_cache.write_text(json.dumps({"text": _cio_llm, "date": TODAY}, ensure_ascii=False), encoding="utf-8")
                     except Exception:
                         pass
+                else:
+                    print("[CIO-DEBUG] ask_llm 回 None（2 次）", file=sys.stderr)
             if _cio_llm:
                 cio_content.append(f'<span style="display:block">{_cio_llm}</span>')
-        except Exception:
+        except Exception as _cio_ex:
+            print(f"[CIO-LLM] {_cio_ex}", file=sys.stderr)
             pass
         if not _cio_llm:
             # 靜態備援：從 daily_analysis.json 取市場訊號做基本判斷
@@ -635,29 +656,50 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     except Exception:
         _sector_html = ""
 
-    # 產業三塊（2026-08-22：日報改「一行摘要」模式 — 使用者確認產業分析週六檢查即可；完整版在再平衡儀表板）
+    # 產業摘要（2026-08-22：GICS 分布圖完整嵌入日報 + 資金流向/輪動一行）
+    _gics_html = ""
     _sector_line = ""
     try:
         _snap_x = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
-        _gics_x = _snap_x.get("industry_penetration", {}).get("產業", {})
+        _gics_x = _snap_x.get("industry_penetration", {})
         _rot_x = _snap_x.get("rotation_recommendation", {})
         _rs_x = json.loads((Path(__file__).resolve().parent / "radar_state.json").read_text(encoding="utf-8"))
         _sf_x = _rs_x.get("sector_flow", {})
-        # 一行摘要：GICS 科技/醫療現況 + 資金流向總結 + 輪動建議
-        _tech_pct = _gics_x.get("資訊科技", {}).get("佔比", 0)
-        _med_pct = _gics_x.get("醫療保健", {}).get("佔比", 0)
+        # GICS 分布圖（表格 + 圖 + 不動產另計）完整嵌入日報
+        if _gics_x and _gics_x.get("產業"):
+            _g_rows = "".join(
+                f"<tr><td>{ind}</td><td style='text-align:right'>{v['金額']:,}</td><td style='text-align:right'>{v['佔比']:.1f}%</td></tr>"
+                for ind, v in sorted(_gics_x["產業"].items(), key=lambda x: -x[1]["金額"]) if v["金額"] > 0)
+            _g_img = ""
+            _g_png = Path(__file__).resolve().parent / f"industry_penetration_{date.today().isoformat()}.png"  # 用真實今天（TODAY=snapshot 日期 8/21 會找不到 8/22 圖）
+            if _g_png.exists():
+                _g_img = (f"<img src='data:image/png;base64,{base64.b64encode(_g_png.read_bytes()).decode('ascii')}' "
+                          f"style='width:100%;border-radius:8px;margin-top:6px'/>")
+            _re_x = _gics_x.get("實體不動產_另計", {})
+            _re_txt = (f"🏠 實體不動產另計：{_re_x.get('金額',0):,}（佔含不動產總資產 {_re_x.get('佔比_含不動產',0):.0f}%）"
+                       if _re_x else "")
+            _gics_html = (
+                "<div class='callout' style='margin-top:10px;border-left:3px solid #3b82f6'>"
+                f"<strong>🏭 GICS 產業分布（{_gics_x.get('日期','')}）</strong>"
+                f"<table style='width:100%;border-collapse:collapse;font-size:12px'><tr><th style='text-align:left'>產業</th>"
+                f"<th style='text-align:right'>金額</th><th style='text-align:right'>佔比</th></tr>{_g_rows}</table>"
+                f"{_g_img}"
+                f"<div style='color:#94a3b8;font-size:11px;margin-top:4px'>{_re_txt}</div>"
+                f"<span style='color:#64748b;font-size:11px'>{_gics_x.get('備註','')}</span></div>")
+        # 資金流向 + 輪動一行
+        _tech_pct = _gics_x.get("產業", {}).get("資訊科技", {}).get("佔比", 0)
+        _med_pct = _gics_x.get("產業", {}).get("醫療保健", {}).get("佔比", 0)
         _rot_sum = _rot_x.get("總結", "")
         _tw_s = _sf_x.get("台股總結", "")
-        _re_x = _snap_x.get("industry_penetration", {}).get("實體不動產_另計", {}).get("金額", 0)
-        _re_x_txt = f"｜🏠 不動產 {_re_x:,}" if _re_x else ""
         _sector_line = (
             "<div class='callout' style='margin-top:10px;border-left:3px solid #8b5cf6'>"
-            f"<strong>🏭 產業摘要（週六再平衡詳查）</strong><br>"
-            f"<span style='font-size:12px'>GICS：科技 {_tech_pct:.1f}%（紅線30）｜醫療 {_med_pct:.1f}%（缺口）{_re_x_txt}<br>"
+            f"<strong>📡 產業資金流向 ＆ 🎯 輪動建議（{_sf_x.get('generated_at','')[:16]}）</strong><br>"
+            f"<span style='font-size:12px'>GICS：科技 {_tech_pct:.1f}%（紅線30）｜醫療 {_med_pct:.1f}%（缺口）<br>"
             f"資金流向：{_tw_s or '—'}<br>"
             f"🎯 {_rot_sum or '—'}"
-            f"<span style='color:#64748b;font-size:11px'>｜<a href='https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{TODAY}.html' style='color:#8b5cf6'>完整產業儀表板 →</a></span></span></div>")
+            f"<span style='color:#64748b;font-size:11px'>｜<a href='https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{date.today().isoformat()}.html' style='color:#8b5cf6'>完整產業儀表板 →</a></span></span></div>")
     except Exception:
+        _gics_html = ""
         _sector_line = ""
 
     # 底層風險因子穿透圖（2026-08-22：每日重新生成 + base64 嵌入日報，隨 snapshot 更新）
@@ -964,7 +1006,10 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       <!-- 產業別穿透（2026-08-22 雙層監控第二層） -->
       {_sector_html}
 
-      <!-- 產業摘要一行版（2026-08-22：週六再平衡詳查，日報只顯示一行） -->
+      <!-- 產業摘要：GICS 分布圖完整版 + 資金流向/輪動一行（2026-08-22） -->
+      {_gics_html}
+
+      <!-- 產業資金流向＆輪動建議一行 -->
       {_sector_line}
 
       <!-- 底層風險因子穿透圖（2026-08-22 每日更新） -->
