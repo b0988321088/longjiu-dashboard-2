@@ -284,6 +284,7 @@ if ok and _cio_ok:
                        capture_output=True, timeout=120)
         _push_candidates.append(f'rebalance_dashboard_{TODAY}.html')
         _push_candidates.append(f'rebalance_summary_{TODAY}.md')
+        _push_candidates.append(f'industry_penetration_{TODAY}.png')
     except Exception:
         pass
     if _pen_file:

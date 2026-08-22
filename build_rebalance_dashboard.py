@@ -17,6 +17,12 @@ def load(p, default=None):
     except Exception:
         return default if default is not None else {}
 
+GICS_COLORS = {
+    "資訊科技": "#3b82f6", "金融": "#22c55e", "醫療保健": "#f43f5e", "核心消費": "#f59e0b",
+    "非核心消費": "#eab308", "工業": "#64748b", "能源": "#8b5cf6", "公用事業": "#14b8a6",
+    "不動產": "#ec4899", "通訊服務": "#06b6d4", "原物料": "#a16207", "固收/現金": "#94a3b8",
+}
+
 def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, sec_rows, dry_cur, risk_rows, ms_html, emg_html, total, cash, monthly_inc, monthly_exp, surplus, usd_pct, tech, us30y):
     """再平衡評估（文字版 md）— 與儀表板同源，每日自動更新（2026-08-22）"""
     lines = [
@@ -82,6 +88,12 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     return out
 
 def main():
+    # GICS 產業穿透（Phase 1：先重算再讀，確保儀表板數字最新）
+    try:
+        import industry_penetration as _ip
+        _ip.main()
+    except Exception:
+        pass
     s = load("snapshot.json", {})
     radar = load("radar_state.json", {})
     pen = s.get("penetration", {})
@@ -169,6 +181,38 @@ def main():
     # ── 質押 ──
     pledge = s.get("質押計畫", {})
     ltv_txt = "未質押（9/3 PI 後 350萬@2.77%）"
+
+    # ── GICS 產業分布（Phase 1，2026-08-22：讀 snapshot.industry_penetration）──
+    gics_html = ""
+    try:
+        _gics = s.get("industry_penetration", {})
+        if _gics and _gics.get("產業"):
+            _rows = ""
+            for ind, v in sorted(_gics["產業"].items(), key=lambda x: -x[1]["金額"]):
+                if v["金額"] <= 0:
+                    continue
+                color = GICS_COLORS.get(ind, "#94a3b8")
+                _w = min(v["佔比"] / 50 * 100, 100)
+                _rows += (f"<tr><td><span style='display:inline-block;width:8px;height:8px;border-radius:2px;"
+                          f"background:{color};margin-right:5px'></span>{ind}</td>"
+                          f"<td class='num'>{v['金額']:,}</td><td class='num'>{v['佔比']:.1f}%</td>"
+                          f"<td style='min-width:90px'><div style='background:#0b1220;border-radius:4px;height:6px'>"
+                          f"<div style='width:{_w:.0f}%;background:{color};height:100%;border-radius:4px'></div></div></td></tr>")
+            _gics_png = BASE / f"industry_penetration_{TODAY}.png"
+            _gics_img = ""
+            if _gics_png.exists():
+                import base64
+                _gics_img = (f"<img src='data:image/png;base64,{base64.b64encode(_gics_png.read_bytes()).decode('ascii')}' "
+                             f"style='width:100%;border-radius:8px;margin-top:8px'/>")
+            gics_html = f"""
+  <div class="card" style="margin-top:14px;border-left:4px solid #3b82f6">
+    <h2>🏭 GICS 產業分布（{_gics.get('日期','')}）</h2>
+    <table><tr><th>產業</th><th class="num">金額</th><th class="num">佔比</th><th>集中度</th></tr>{_rows}</table>
+    {_gics_img}
+    <div style="font-size:10.5px;color:var(--sub);margin-top:6px">{_gics.get('備註','')}</div>
+  </div>"""
+    except Exception:
+        gics_html = ""
 
     # ── 緊急應變（2026-08-22 新增：併入最新緊急應變 LLM 分析，來源 data/emergency_llm_analysis.json）──
     emg_html = ""
@@ -311,6 +355,8 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
     <table><tr><th>指標</th><th class="num">現值</th><th class="num">紅線</th><th>狀態</th></tr>{risk_rows}</table>
   </div>
 </div>
+
+{gics_html}
 
 {emg_html}
 

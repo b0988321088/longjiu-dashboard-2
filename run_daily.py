@@ -635,6 +635,23 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     except Exception:
         _sector_html = ""
 
+    # GICS 產業分布（Phase 1，2026-08-22：讀 snapshot.industry_penetration，表格版嵌入日報）
+    _gics_html = ""
+    try:
+        _gics = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8")).get("industry_penetration", {})
+        if _gics and _gics.get("產業"):
+            _rows = "".join(
+                f"<tr><td>{ind}</td><td style='text-align:right'>{v['金額']:,}</td><td style='text-align:right'>{v['佔比']:.1f}%</td></tr>"
+                for ind, v in sorted(_gics["產業"].items(), key=lambda x: -x[1]["金額"]) if v["金額"] > 0)
+            _gics_html = (
+                "<div class='callout' style='margin-top:10px;border-left:3px solid #3b82f6'>"
+                f"<strong>🏭 GICS 產業分布（{_gics.get('日期','')}）</strong>"
+                f"<table style='width:100%;border-collapse:collapse;font-size:12px'><tr><th style='text-align:left'>產業</th>"
+                f"<th style='text-align:right'>金額</th><th style='text-align:right'>佔比</th></tr>{_rows}</table>"
+                f"<span style='color:#64748b;font-size:11px'>{_gics.get('備註','')}</span></div>")
+    except Exception:
+        _gics_html = ""
+
     # 底層風險因子穿透圖（2026-08-22：每日重新生成 + base64 嵌入日報，隨 snapshot 更新）
     _chart_html = ""
     try:
@@ -938,6 +955,9 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
       <!-- 產業別穿透（2026-08-22 雙層監控第二層） -->
       {_sector_html}
+
+      <!-- GICS 產業分布（Phase 1） -->
+      {_gics_html}
 
       <!-- 底層風險因子穿透圖（2026-08-22 每日更新） -->
       {_chart_html}
