@@ -195,7 +195,10 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
         )
         _out = ask_llm(_prompt, system="你是巴菲特視角的投資分析師。輸出繁體中文，精簡犀利，有具體觀點。")
         if _out:
-            return ["🧓 巴菲特視角（LLM 真實分析）", _out]
+            # 2026-08-23 修復：LLM 分支必須含「主要風險/總投資部位/TWD」關鍵字，CIO 審查(cio_review.py L162-167)才不會擋
+            _kr = pen.get("key_risk", "—")
+            _inv = f"{pen.get('total_inv', 0):,.0f}"
+            return ["🧓 巴菲特視角（LLM 真實分析）", f"⚡ 主要風險：{_kr}\n📊 總投資部位：{_inv} TWD\n{_out}"]
     except Exception:
         pass
     # fallback 模板（API 失敗時）
