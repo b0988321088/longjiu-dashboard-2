@@ -70,6 +70,16 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     except Exception:
         pass
 
+    # 五之二、產業深度討論（2026-08-23：只對有動作產業 ✅/⏸/🔴，LLM 質化）
+    try:
+        _dd = s.get("sector_deep_dive", {})
+        if _dd:
+            lines += ["", "## 五之二、💬 產業深度討論（僅有動作產業）", ""]
+            for _ind, _txt in _dd.items():
+                lines.append(f"### {_ind}\n{_txt}")
+    except Exception:
+        pass
+
     lines += ["", "## 六、乾粉與風險紅線", ""]
     lines.append(f"- 當前乾粉：{dry_cur:,}（現金 − 70萬底線）｜9月：台股 12-24萬分批 + 黃金 131萬預留（PI後）＋ 石油 0（Locked）＋ 債券 0（等利率）")
     for name, val, limit, triggered in [
@@ -107,6 +117,12 @@ def main():
     try:
         import rotation_engine as _re
         _re.main()
+    except Exception:
+        pass
+    # 產業深度討論（2026-08-23 折衷版：只對有動作產業 ✅/⏸/🔴，LLM 質化）
+    try:
+        import sector_deep_dive as _sdd
+        _sdd.main()
     except Exception:
         pass
     s = load("snapshot.json", {})
@@ -219,6 +235,15 @@ def main():
             av_rows = ""
             for r in rot.get("避開", [])[:3]:
                 av_rows += f"<tr><td>{r['產業']}</td><td class='num'>{r.get('現況',0):.1f}%</td><td>{r['動作']}</td><td style='font-size:10.5px'>{r['理由']}</td></tr>"
+            # 產業深度討論（8/23：sector_deep_dive，只對有動作產業）
+            dd_html = ""
+            _dd = s.get("sector_deep_dive", {})
+            for _ind, _txt in _dd.items():
+                dd_html += (f"<div style='margin-top:8px;padding:8px 10px;background:#111a2e;border-radius:6px;"
+                            f"border-left:3px solid #38bdf8'><b style='color:#7dd3fc'>💬 {_ind}</b><br>"
+                            f"<span style='font-size:11.5px;color:var(--txt);line-height:1.6'>{_txt.replace(chr(10),'<br>')}</span></div>")
+            dd_block = (f"<div style='margin-top:10px'><div style='font-size:12px;font-weight:700;color:#94a3b8'>💬 產業深度討論（LLM，僅有動作產業）</div>{dd_html}</div>"
+                        if dd_html else "")
             rot_html = f"""
   <div class="card" style="margin-top:14px;border-left:4px solid #22c55e">
     <h2>🎯 本週交易計畫（{rot.get('日期','')}）</h2>
@@ -228,6 +253,7 @@ def main():
     <table><tr><th>產業</th><th class="num">現況</th><th class="num">目標/紅線</th><th class="num">資金分</th><th>動作</th></tr>{rec_rows}</table></div>
     <div style="margin-top:8px"><div style="font-size:12px;font-weight:700;color:#94a3b8">⏸ 避開/暫緩</div>
     <table><tr><th>產業</th><th class="num">現況</th><th>動作</th><th>理由</th></tr>{av_rows}</table></div>
+    {dd_block}
     <div style="font-size:10.5px;color:var(--sub);margin-top:6px">乾粉=現金−70萬底線+月盈餘50%；單筆≤5萬、分批；8/24 轉換/9/3 PI 前保留緩衝</div>
   </div>"""
     except Exception:
