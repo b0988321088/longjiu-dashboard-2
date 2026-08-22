@@ -28,7 +28,9 @@ def _fv(v):
     return v["value"] if isinstance(v, dict) else (v if isinstance(v, (int,float)) else 0)
 
 def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None, snap=None):
-    _fj = int((snap or {}).get("firstjin_fl65_current_value") or (snap or {}).get("firstjin_current_value") or 1_958_980)
+    _fj = int((snap or {}).get("firstjin_detail", {}).get("base_value_before_dividend")
+              or (snap or {}).get("firstjin_current_value")
+              or (snap or {}).get("firstjin_fl65_current_value") or 1_958_980)  # 8/22 修正：優先讀 firstjin_detail 最新真值（8/21 轉換後 1,992,265）
     # 2026-08-21：第一金保單已轉 FA81 聯博全球多元收益AD（股債混合）→ 不再整筆防守，
     # 依 current_fund.穿透比率 拆 股/債/現（估計 55/40/5，待月報確認）
     _fjd = (snap or {}).get("firstjin_detail", {})
