@@ -263,6 +263,13 @@ if ok and _cio_ok:
     # ⚠️ 8/21 實踩：git add 清單含不存在的檔 → 整批 add 失敗 → 空 commit → Pages 404
     _msg = f"四源同步 {TODAY} [cioreviewed]"
     _push_candidates = [f'daily_report_v2_{TODAY}.html', f'asset_diff_{TODAY}.html', 'index.html', 'snapshot.json', 'dragon_assets.db']
+    # 再平衡儀表板（2026-08-22：每日重跑，build_rebalance_dashboard.py 讀 snapshot+radar_state）
+    try:
+        subprocess.run([sys.executable, str(BASE / "build_rebalance_dashboard.py")], cwd=str(BASE),
+                       capture_output=True, timeout=120)
+        _push_candidates.append(f'rebalance_dashboard_{TODAY}.html')
+    except Exception:
+        pass
     if _pen_file:
         _push_candidates.append(_pen_file)
     _push_files = [f for f in _push_candidates if (BASE / f).exists()]
@@ -299,6 +306,7 @@ print(f'\n{"="*50}')
 print(f'  龍九控股 — 管線產出完成 {TODAY}')
 print(f'{"="*50}')
 print(f'📰 日報:      https://b0988321088.github.io/longjiu-dashboard-2/{OUT.name}')
+print(f'🔄 再平衡儀表板: https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{TODAY}.html')
 print(f'🏠 儀表板:    https://b0988321088.github.io/longjiu-dashboard-2/')
 print(f'📈 差異分析:  https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html')
 print(f'📊 穿透分析:  https://b0988321088.github.io/longjiu-dashboard-2/penetration_report_{TODAY}.html')

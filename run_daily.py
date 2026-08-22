@@ -645,6 +645,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
             "<div class='callout' style='margin-top:10px;border-left:3px solid #22c55e'>"
             f"<strong>🖼 底層風險因子穿透對照圖（{TODAY}，每日更新）</strong><br>"
             f"<img src='data:image/png;base64,{_b64}' style='width:100%;border-radius:8px'/>"
+            f"<br/><a href='https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{TODAY}.html' "
+            f"style='color:#22c55e;font-size:12px'>🔄 開啟每日再平衡儀表板 →</a>"
             "</div>"
         )
     except Exception as _ce:
