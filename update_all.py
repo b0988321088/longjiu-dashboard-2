@@ -304,7 +304,10 @@ def main():
     snap["allianz_ab_current_value"] = snap.get("allianz_a_current_value", 0) + snap.get("allianz_b_current_value", 0) or snap.get("allianz_ab_current_value", sn_a := snap.get("allianz_ab", 0) or sum(snap.get("allianz_a_breakdown", {}).values()) + sum(snap.get("allianz_b_breakdown", {}).values()))
     snap["allianz_ab"] = snap["allianz_ab_current_value"]
     snap["firstjin_current_value"] = snap.get("firstjin_current_value", sn_f := snap.get("firstjin_fl65_value", 1958980) or 1958980)
-    snap.setdefault("penetration",{})["targets"] = {"台股市值型目標": 15, "美股市值型目標": 30, "配息型目標": 20, "債券型目標": 20, "現金目標": 15}
+    # 2026-08-22 修正：不覆寫既有 targets（8/20 SAA 10/40/20/25/5 + 口徑修正註記），只補缺省值
+    _tgt = snap.setdefault("penetration", {}).setdefault("targets", {})
+    for _k, _v in {"台股市值型目標": 10, "美股市值型目標": 40, "配息型目標": 20, "債券型目標": 25, "現金目標": 5}.items():
+        _tgt.setdefault(_k, _v)
     snap.setdefault("penetration",{}).setdefault("actual_twd",{}).update({k: v for k, v in pen.items() if k != "_meta"})
     # 計算實際佔比（分母=台股+美股+防守+債券+現金，不含不動產）
     _pen_total = sum(v for k, v in pen.items() if k != "_meta") or 1

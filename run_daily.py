@@ -557,6 +557,24 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     except Exception:
         _dual_dim = ""
 
+    # 機構流向雷達（2026-08-22：讀 radar_state.json，盤後更新、隔日報生效；f-string 模板需先定義）
+    _radar_html = ""
+    try:
+        _rs = json.loads((Path(__file__).resolve().parent / "radar_state.json").read_text(encoding="utf-8"))
+        _sig = _rs.get("signals", {})
+        if _sig:
+            _items = "".join(
+                f"<span style='display:inline-block;margin:2px 10px 2px 0'>{v.get('color', '⚪')} <b>{k}</b>：{v['note']}</span>"
+                for k, v in _sig.items()
+            )
+            _radar_html = (
+                "<div class='callout' style='margin-top:10px;border-left:3px solid #8b5cf6'>"
+                f"<strong>📡 機構流向雷達</strong>（更新 {str(_rs.get('last_run', ''))[:10]}）<br>{_items}"
+                "<br/><span style='color:#64748b;font-size:12px'>加碼前檢查：個人方向 vs 機構方向；紅燈凍結該資產調度</span></div>"
+            )
+    except Exception:
+        _radar_html = ""
+
     html = f"""<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -837,6 +855,9 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <div id="emergency-llm-analysis" style="background:transparent;border-radius:8px;padding:0;margin-top:8px;font-size:13px;line-height:1.75;overflow-x:auto;color:#1d1d1f;">
       <!-- LLM 緊急應變分析區塊 -->
             {llm_emergency_analysis}
+
+      <!-- 機構流向雷達（2026-08-22 新增，讀 radar_state.json） -->
+      {_radar_html}
     </div>
 
     <!-- 美元升息影響評估（8/21 核准） -->
@@ -888,7 +909,26 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _dbs_cash = tv.get("cash_total", 0)
     _dbs_str = f"可動用流動資金 {_dbs_cash:,} TWD（Moneybook 校準），{'餘裕充足 ✅' if _dbs_cash > 30000 else '⚠️ 需補資金'}"
     html = html.replace("{_dbs_note}", _dbs_str)
-    return html
+
+    # 機構流向雷達（2026-08-22：讀 radar_state.json，盤後更新、隔日報生效）
+    _radar_html = ""
+    try:
+        _rs = json.loads((Path(__file__).resolve().parent / "radar_state.json").read_text(encoding="utf-8"))
+        _sig = _rs.get("signals", {})
+        if _sig:
+            _items = "".join(
+                f"<span style='display:inline-block;margin:2px 10px 2px 0'>{v.get('color', '⚪')} <b>{k}</b>：{v['note']}</span>"
+                for k, v in _sig.items()
+            )
+            _radar_html = (
+                "<div class='callout' style='margin-top:10px;border-left:3px solid #8b5cf6'>"
+                f"<strong>📡 機構流向雷達</strong>（更新 {str(_rs.get('last_run', ''))[:10]}）<br>{_items}"
+                "<br/><span style='color:#64748b;font-size:12px'>加碼前檢查：個人方向 vs 機構方向；紅燈凍結該資產調度</span></div>"
+            )
+    except Exception:
+        _radar_html = ""
+    html = html.replace("{_radar_html}", _radar_html)
+
     return html
 
 
@@ -1150,7 +1190,26 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
         _em = _em.replace("警訊：", "<strong style='color:#ef4444'>警訊：</strong>")
         llm_emergency = _em
 
+    # 機構流向雷達（2026-08-22：讀 radar_state.json，盤後更新、隔日報生效）
+    _radar_html = ""
+    try:
+        _rs = json.loads((BASE / "radar_state.json").read_text(encoding="utf-8"))
+        _sig = _rs.get("signals", {})
+        if _sig:
+            _items = "".join(
+                f"<span style='display:inline-block;margin:2px 10px 2px 0'>{v.get('color', '⚪')} <b>{k}</b>：{v['note']}</span>"
+                for k, v in _sig.items()
+            )
+            _radar_html = (
+                "<div class='callout' style='margin-top:10px;border-left:3px solid #8b5cf6'>"
+                f"<strong>📡 機構流向雷達</strong>（更新 {str(_rs.get('last_run', ''))[:10]}）<br>{_items}"
+                "<br/><span style='color:#64748b;font-size:12px'>加碼前檢查：個人方向 vs 機構方向；紅燈凍結該資產調度</span></div>"
+            )
+    except Exception:
+        _radar_html = ""
+
     html = html.replace("{llm_emergency_analysis}", llm_emergency)
+    html = html.replace("{_radar_html}", _radar_html)
     html = html.replace("__BUFFETT_CONTENT__", buf_content)
     html = html.replace("__CTO_TECH__", cto_content)
 
