@@ -27,6 +27,15 @@ BASE = Path(__file__).resolve().parent
 TODAY = dt.today().isoformat()
 OUT = BASE / f"daily_report_v2_{TODAY}.html"
 
+# 0. 巴菲特/CTO LLM 分析（2026-08-22：今日檔不存在才重跑，避免每次 regenerate 重複呼叫 API）
+if not (BASE / f"buffett_cto_report_{TODAY}.md").exists():
+    try:
+        import subprocess, sys as _sys
+        subprocess.run([_sys.executable, str(BASE / "buffett_cto_analyzer.py")], cwd=str(BASE),
+                       capture_output=True, timeout=180)
+    except Exception:
+        pass
+
 sys.path.insert(0, str(BASE))
 from run_daily import calibrate_sources, render_daily_report, _inject_market_intel, build_cc_rows
 

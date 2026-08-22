@@ -486,38 +486,74 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       </table>
     </div>"""
 
-    # CIO 觀點（外部傳入或靜態備援）
+    # CIO 觀點（外部傳入 / LLM 真實分析 / 靜態備援）
     cio_content = []
     cio_content.append(f'<p><strong>🧑‍💻 CIO 觀點</strong></p>')
     if cio_content_html:
         cio_content.append(cio_content_html)
     else:
-        # 靜態備援：從 daily_analysis.json 取市場訊號做基本判斷
+        # LLM 真實分析優先（2026-08-22 升級；快取 data/cio_llm_{TODAY}.json 避免同日重複呼叫）
+        _cio_llm = ""
         try:
-            _cio_da = json.loads((BASE / "daily_analysis.json").read_text(encoding="utf-8"))
-            _cio_mkt = _cio_da.get("market", {})
-            _cio_sig = _cio_da.get("signals", {})
-            _cio_twii = _cio_mkt.get("twii", "")
-            _cio_tsm = _cio_mkt.get("tsm", "")
-            _cio_buy = _cio_sig.get("buy_signals", [])
-            _cio_sell = _cio_sig.get("sell_signals", [])
-            _cio_sentiment = "⚠️ 謹慎" if len(_cio_sell) > len(_cio_buy) else "✅ 中性偏多" if len(_cio_buy) > 0 else "➡️ 中性"
-            cio_content.append(f'<span style="display:block">• 市場情緒：{_cio_sentiment}（買訊{len(_cio_buy)} / 賣訊{len(_cio_sell)}）</span>')
-            if _cio_twii:
-                cio_content.append(f'<span style="display:block">• 加權指數：{_cio_twii}</span>')
-            if _cio_tsm:
-                cio_content.append(f'<span style="display:block">• 台積電：{_cio_tsm}</span>')
-            _cio_pen_tw = tv.get("penetration", {}).get("actual_pct", {}).get("台股市值型成長", 0)
-            _cio_pen_us = tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
-            _cio_pen_def = tv.get("penetration", {}).get("actual_pct", {}).get("防守型配息", 0)
-            cio_content.append(f'<span style="display:block">• 配置：台股{_cio_pen_tw:.1f}% / 美股{_cio_pen_us:.1f}% / 防守{_cio_pen_def:.1f}%</span>')
-            if _cio_sell:
-                _cio_warn_str = "、".join(_cio_sell[:2])
-                cio_content.append(f'<span style="display:block">• ⚠️ 警訊：{_cio_warn_str}</span>')
+            _cio_cache = BASE / "data" / f"cio_llm_{TODAY}.json"
+            if _cio_cache.exists():
+                _cio_llm = json.loads(_cio_cache.read_text(encoding="utf-8")).get("text", "")
+            else:
+                _cio_da0 = json.loads((BASE / "daily_analysis.json").read_text(encoding="utf-8"))
+                _cio_m0 = _cio_da0.get("market", {})
+                _cio_s0 = _cio_da0.get("signals", {})
+                _cio_b0 = _cio_s0.get("buy_signals", [])
+                _cio_s1 = _cio_s0.get("sell_signals", [])
+                _cio_warn0 = "、".join(_cio_s1[:2]) if _cio_s1 else "無"
+                _cio_pen_tw = tv.get("penetration", {}).get("actual_pct", {}).get("台股市值型成長", 0)
+                _cio_pen_us = tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
+                _cio_pen_def = tv.get("penetration", {}).get("actual_pct", {}).get("防守型配息", 0)
+                from llm_analysis import ask_llm
+                _cio_prompt = (
+                    f"你是龍九控股的 CIO。市場訊號：買訊{len(_cio_b0)}/賣訊{len(_cio_s1)}、加權 {_cio_m0.get('twii','—')}、"
+                    f"台積電 {_cio_m0.get('tsm','—')}、配置 台股{_cio_pen_tw:.1f}%/美股{_cio_pen_us:.1f}%/防守{_cio_pen_def:.1f}%、"
+                    f"警訊：{_cio_warn0}。機構雷達：台股🟢/黃金🟢/原油🔴/美債10Y🟡。\n"
+                    f"請給 CIO 戰略觀點：①配置判斷（哪裡該動/哪裡不動）②最大風險 ③下一步具體動作，150字內，繁體中文，直接給結論。"
+                )
+                _cio_out = ask_llm(_cio_prompt, system="你是龍九控股 CIO。輸出繁體中文，精簡決策導向。")
+                if _cio_out:
+                    _cio_llm = _cio_out
+                    try:
+                        (BASE / "data").mkdir(exist_ok=True)
+                        _cio_cache.write_text(json.dumps({"text": _cio_llm, "date": TODAY}, ensure_ascii=False), encoding="utf-8")
+                    except Exception:
+                        pass
+            if _cio_llm:
+                cio_content.append(f'<span style="display:block">{_cio_llm}</span>')
         except Exception:
-            cio_content.append(f'<span style="display:block">• 本日市場無重大異常。</span>')
-            cio_content.append(f'<span style="display:block">• 資產配置持續檢視，注意防禦型補碼時機。</span>')
-        cio_content.append(f'<span style="display:block">• 流動性管理穩定，補庫警示已處理。</span>')
+            pass
+        if not _cio_llm:
+            # 靜態備援：從 daily_analysis.json 取市場訊號做基本判斷
+            try:
+                _cio_da = json.loads((BASE / "daily_analysis.json").read_text(encoding="utf-8"))
+                _cio_mkt = _cio_da.get("market", {})
+                _cio_sig = _cio_da.get("signals", {})
+                _cio_twii = _cio_mkt.get("twii", "")
+                _cio_tsm = _cio_mkt.get("tsm", "")
+                _cio_buy = _cio_sig.get("buy_signals", [])
+                _cio_sell = _cio_sig.get("sell_signals", [])
+                _cio_sentiment = "⚠️ 謹慎" if len(_cio_sell) > len(_cio_buy) else "✅ 中性偏多" if len(_cio_buy) > 0 else "➡️ 中性"
+                cio_content.append(f'<span style="display:block">• 市場情緒：{_cio_sentiment}（買訊{len(_cio_buy)} / 賣訊{len(_cio_sell)}）</span>')
+                if _cio_twii:
+                    cio_content.append(f'<span style="display:block">• 加權指數：{_cio_twii}</span>')
+                if _cio_tsm:
+                    cio_content.append(f'<span style="display:block">• 台積電：{_cio_tsm}</span>')
+                _cio_pen_tw = tv.get("penetration", {}).get("actual_pct", {}).get("台股市值型成長", 0)
+                _cio_pen_us = tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
+                _cio_pen_def = tv.get("penetration", {}).get("actual_pct", {}).get("防守型配息", 0)
+                cio_content.append(f'<span style="display:block">• 配置：台股{_cio_pen_tw:.1f}% / 美股{_cio_pen_us:.1f}% / 防守{_cio_pen_def:.1f}%</span>')
+                if _cio_sell:
+                    _cio_warn_str = "、".join(_cio_sell[:2])
+                    cio_content.append(f'<span style="display:block">• ⚠️ 警訊：{_cio_warn_str}</span>')
+            except Exception:
+                cio_content.append(f'<span style="display:block">• 本日市場無重大異常。</span>')
+                cio_content.append(f'<span style="display:block">• 資產配置持續檢視，注意防禦型補碼時機。</span>')
+            cio_content.append(f'<span style="display:block">• 流動性管理穩定，補庫警示已處理。</span>')
     cio_content_html = '\n'.join(cio_content)
 
     # 美元升息影響評估（8/21 使用者核准寫入日報）— 動態讀 snapshot

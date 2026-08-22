@@ -147,9 +147,31 @@ def penetration_analysis(snapshot: dict) -> dict:
     }
 
 def generate_buffett_report(pen: dict, market_text: str = "") -> list:
-    """動態生成巴菲特文字"""
-    lines = []
+    """巴菲特視角 — LLM 真實分析優先（2026-08-22 升級），失敗 fallback 模板"""
     a, g = pen["actual"], pen["gaps"]
+    try:
+        from llm_analysis import ask_llm
+        _fmt = "、".join(f"{TARGET_LABELS[c]} {a.get(c,0):.1f}%（目標{TARGETS[c]}%，{g.get(c,0):+.1f}pp）"
+                         for c in ["tw_equity", "us_equity", "defensive", "bond", "cash"])
+        _prompt = (
+            f"你是巴菲特（波克夏董事長）。以下是龍九控股資產穿透資料（總投資 {pen['total_inv']/1e4:.0f}萬台幣）：\n"
+            f"五桶：{_fmt}\n"
+            f"主要偏離：{pen.get('key_risk','—')}｜建議：{pen.get('key_action','—')}\n"
+            f"成長 {pen['growth_pct']:.1f}%（目標{pen['growth_target']}%）；防禦 {pen['defense_pct']:.1f}%；安全網 {pen['safety_pct']:.1f}%\n"
+            f"結構風險：美元曝險64%（紅線50%）、高科技17.5%（紅線30%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡\n"
+            f"{market_text}\n"
+            f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（22.1%含 MMF 500萬 已指定標案/質押補救，不可減現金）；"
+            f"台股加碼單筆≤5萬、8-12週分批；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
+            f"債券等 US30Y<5.30%；石油 Locked 禁建議；防守合併口徑69.5%已足勿追大額；黃金衛星≤5% PI後分3批。\n"
+            f"請以巴菲特投資哲學（護城河、安全邊際、能力圈、長期持有、別人恐懼我貪婪）做 3 點具體觀察 + 1 個紀律提醒，200字內，繁體中文，不要重複數字表。"
+        )
+        _out = ask_llm(_prompt, system="你是巴菲特視角的投資分析師。輸出繁體中文，精簡犀利，有具體觀點。")
+        if _out:
+            return ["🧓 巴菲特視角（LLM 真實分析）", _out]
+    except Exception:
+        pass
+    # fallback 模板（API 失敗時）
+    lines = []
     
     lines.append("🧓 巴菲特式思考（動態穿透模型）")
     if pen["key_risk"]:
@@ -213,7 +235,29 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
     return lines
 
 def generate_cto_report(pen: dict, market_text: str = "") -> list:
-    """CTO 技術視角（核心‑衛星保守成長版，動態日期）"""
+    """CTO 技術視角 — LLM 真實分析優先（2026-08-22 升級），失敗 fallback 模板"""
+    a, g = pen["actual"], pen["gaps"]
+    try:
+        from llm_analysis import ask_llm
+        _fmt = "、".join(f"{TARGET_LABELS[c]} {a.get(c,0):.1f}%（目標{TARGETS[c]}%，{g.get(c,0):+.1f}pp）"
+                         for c in ["tw_equity", "us_equity", "defensive", "bond", "cash"])
+        _prompt = (
+            f"你是龍九控股的 CTO（技術分析師）。以下為資產穿透資料（總投資 {pen['total_inv']/1e4:.0f}萬）：\n"
+            f"五桶：{_fmt}\n"
+            f"主要偏離：{pen.get('key_risk','—')}｜建議：{pen.get('key_action','—')}\n"
+            f"結構風險：美元曝險64%（紅線50%）、高科技17.5%（紅線30%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡、US30Y 5.32% 貼近5.30%凍結線\n"
+            f"{market_text}\n"
+            f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（22.1%含 MMF 500萬 已指定標案/質押補救，不可建議減現金）；"
+            f"台股加碼單筆≤5萬、8-12週分批（不可建議單筆大額）；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
+            f"債券等 US30Y<5.30%（禁建議買債）；石油 Locked 禁建議；防守合併口徑69.5%已足勿追大額；黃金衛星≤5% PI後分3批。\n"
+            f"請以技術面（動能、趨勢、支撐壓力、風險）給：今日最大風險 + 具體建議動作（含標的/金額節奏，須符合上述約束），150字內，繁體中文。"
+        )
+        _out = ask_llm(_prompt, system="你是技術分析師（CTO）。輸出繁體中文，直接給結論與動作，不要客套。")
+        if _out:
+            return ["CTO 技術視角（LLM 真實分析）", _out]
+    except Exception:
+        pass
+    # fallback 模板
     lines = ["CTO 技術視角"]
     _kr = pen.get("key_risk", "")
     if _kr:
@@ -247,20 +291,24 @@ def main(**kwargs):
     # 3. 市場情報
     market = snap.get("market", {})
     tw_idx = market.get("twii", "N/A")
-    
-    # 4. 產生報告
-    buffett = generate_buffett_report(pen)
-    
-    # 補入市場情報摘要
+    _mkt_txt = ""
     try:
         import sqlite3
         _db = sqlite3.connect(str(BASE / "dragon_assets.db"))
         _r = _db.execute("SELECT buy_count, sell_count, hunter_count, tw_index, tw_change, sox, summary FROM market_intel WHERE date=? ORDER BY timestamp DESC LIMIT 1", (TODAY,)).fetchone()
         _db.close()
         if _r:
-            buffett.insert(1, f"📊 市場：加權 {_r[3]:,.0f} ({_r[4]:+.2f}%) | SOX {_r[5]:,.0f} | Hunter {_r[2]}筆 (買{_r[0]}/賣{_r[1]})")
-    except: pass
-    cto = generate_cto_report(pen)
+            _mkt_txt = f"市場：加權 {_r[3]:,.0f} ({_r[4]:+.2f}%) | SOX {_r[5]:,.0f} | Hunter {_r[2]}筆 (買{_r[0]}/賣{_r[1]})"
+    except Exception:
+        pass
+
+    # 4. 產生報告（LLM 真實分析優先）
+    buffett = generate_buffett_report(pen, _mkt_txt)
+
+    # 補入市場情報摘要（模板 fallback 時）
+    if _mkt_txt and len(buffett) < 4:
+        buffett.insert(1, f"📊 {_mkt_txt}")
+    cto = generate_cto_report(pen, _mkt_txt)
     
     report = "\n".join(buffett) + "\n\n" + "\n".join(cto)
     print(report)
