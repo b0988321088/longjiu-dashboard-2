@@ -197,7 +197,7 @@ if _index_tpl.exists():
     _cash_v = tv.get("cash_total", tv.get("cash", 3614169))
     _mortgage_v = tv.get("mortgage_monthly_total", tv.get("mortgage_balance", 0))
     _salary_v = tv.get("salary", 39727)
-    for ph, val in [("__DBS_BALANCE__", f"{_cash_v:,.0f}"), ("__SINOPAC_BALANCE__", f"{_cash_v:,.0f}"),
+    for ph, val in [("__TODAY__", TODAY), ("__DBS_BALANCE__", f"{_cash_v:,.0f}"), ("__SINOPAC_BALANCE__", f"{_cash_v:,.0f}"),
                     ("__SINOPAC_MORTGAGE__", f"{_mortgage_v:,.0f}"), ("__RESERVE_POOL__", f"{tv.get('financial_mortgage',2000000):,.0f}"),
                     ("__SALARY__", f"{_salary_v:,.0f}"), ("__MORTGAGE_PAYMENT__", f"{int(_mortgage_v/3):,.0f}")]:
         _index_html = _index_html.replace(ph, val)
