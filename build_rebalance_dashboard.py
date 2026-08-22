@@ -106,6 +106,25 @@ def main():
     pledge = s.get("質押計畫", {})
     ltv_txt = "未質押（9/3 PI 後 350萬@2.77%）"
 
+    # ── 緊急應變（2026-08-22 新增：併入最新緊急應變 LLM 分析，來源 data/emergency_llm_analysis.json）──
+    emg_html = ""
+    try:
+        _em = load("data/emergency_llm_analysis.json", {})
+        _fr = _em.get("full_report", "")
+        _i = _fr.find("六、風控檢查")
+        _seg = _fr[_i:_i+900] if _i > -1 else ""
+        if not _seg:
+            _seg = _fr[:600]
+        _seg = _seg.replace("【", "<b>【").replace("】", "】</b>")
+        emg_html = f"""
+  <div class="card" style="margin-top:14px;border-left:4px solid #f59e0b">
+    <h2>🚨 緊急應變併入再平衡（{_em.get('generated_at','')[:16]}）</h2>
+    <div style="font-size:12px;color:#cbd5e1;line-height:1.7">{_seg}</div>
+    <div style="margin-top:8px;font-size:12px"><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_2026-08-21.html" style="color:#f59e0b">📄 查看完整緊急應變報告 →</a></div>
+  </div>"""
+    except Exception:
+        emg_html = ""
+
     # ── 里程碑 ──
     milestones = [
         ("8/24（一）", "保單轉換 300萬 決策（科技→債，T+4 截止）", "high"),
@@ -225,6 +244,8 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
     <table><tr><th>指標</th><th class="num">現值</th><th class="num">紅線</th><th>狀態</th></tr>{risk_rows}</table>
   </div>
 </div>
+
+{emg_html}
 
 <div class="card" style="margin-top:14px"><h2>🗓 里程碑時程</h2>{ms_html}</div>
 
