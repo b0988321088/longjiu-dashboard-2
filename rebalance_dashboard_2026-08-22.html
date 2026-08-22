@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-TW"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>龍九再平衡儀表板 2026-08-22</title>
+<style>
+:root { --bg:#0f172a; --card:#1e293b; --line:#334155; --txt:#e2e8f0; --sub:#94a3b8; --grn:#22c55e; --red:#ef4444; --yel:#f59e0b; --blu:#3b82f6; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--txt); font-family:'Segoe UI','Microsoft JhengHei',sans-serif; padding:20px; }
+.wrap { max-width:1100px; margin:0 auto; }
+h1 { font-size:22px; font-weight:800; }
+.sub { color:var(--sub); font-size:13px; margin:4px 0 16px; }
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:16px; }
+.kpi { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+.kpi .k { color:var(--sub); font-size:11px; }
+.kpi .v { font-size:20px; font-weight:800; font-family:Consolas,monospace; }
+.kpi .v.red { color:var(--red); } .kpi .v.green { color:var(--grn); } .kpi .v.yellow { color:var(--yel); }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media (max-width:800px) { .grid { grid-template-columns:1fr; } }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+.card h2 { font-size:14px; font-weight:800; margin-bottom:10px; color:#f8fafc; }
+.bucket { margin-bottom:12px; }
+.bucket-head { display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px; }
+.bucket-name { font-weight:700; }
+.gap { font-weight:800; } .gap.green { color:var(--grn); } .gap.yellow { color:var(--yel); } .gap.red { color:var(--red); }
+.bar-track { position:relative; height:14px; background:#0b1220; border-radius:7px; }
+.bar-fill { height:100%; border-radius:7px; opacity:.85; }
+.bar-target { position:absolute; top:-3px; width:2px; height:20px; background:#fff; }
+.bucket-twd { font-size:11px; color:var(--sub); text-align:right; margin-top:2px; }
+.rcards { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; }
+.rcard { border-top:3px solid var(--line); }
+.r-signal { font-size:22px; }
+.r-name { font-weight:800; font-size:13px; margin:4px 0; }
+.r-note { font-size:11px; color:var(--sub); line-height:1.5; }
+.acards { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.acard { border-left:3px solid var(--line); }
+.a-head { display:flex; justify-content:space-between; font-size:13px; }
+.tag { font-size:10px; background:#0b1220; border:1px solid var(--line); padding:1px 6px; border-radius:8px; color:var(--sub); }
+.a-light { font-size:11px; color:var(--sub); margin:3px 0; }
+.a-desc { font-size:12px; color:#cbd5e1; line-height:1.55; }
+table { width:100%; border-collapse:collapse; font-size:12.5px; }
+th { text-align:left; color:var(--sub); font-weight:600; padding:6px 8px; border-bottom:1px solid var(--line); }
+td { padding:7px 8px; border-bottom:1px solid #263449; }
+.num { font-family:Consolas,monospace; text-align:right; }
+.drybar { display:flex; height:26px; border-radius:8px; overflow:hidden; margin:10px 0; font-size:11px; font-weight:700; color:#fff; }
+.drybar div { display:flex; align-items:center; justify-content:center; }
+.ms { display:flex; gap:10px; padding:8px 10px; border-radius:8px; margin-bottom:6px; font-size:12.5px; }
+.ms-high { background:#3f1d1d; border:1px solid #7f1d1d; }
+.ms-mid { background:#1e293b; border:1px solid var(--line); }
+.ms-date { font-weight:800; color:var(--yel); white-space:nowrap; }
+.foot { margin-top:16px; color:var(--sub); font-size:11px; text-align:center; }
+</style></head><body><div class="wrap">
+<h1>🔄 龍九再平衡儀表板</h1>
+<div class="sub">2026-08-22（週六）｜修正後 DAA 口徑 + 機構流向雷達｜本週動作：<b style="color:var(--grn)">台股慢慢買</b>，其餘按兵不動</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="k">總資產（流動）</div><div class="v">26,194,822</div></div>
+  <div class="kpi"><div class="k">現金</div><div class="v">800,272</div></div>
+  <div class="kpi"><div class="k">月盈餘</div><div class="v green">+73,137</div></div>
+  <div class="kpi"><div class="k">收入/支出</div><div class="v">225,918 <small style="font-size:11px">/ 152,781</small></div></div>
+  <div class="kpi"><div class="k">美元曝險</div><div class="v red">64%</div></div>
+  <div class="kpi"><div class="k">高科技</div><div class="v yellow">17.5%</div></div>
+</div>
+
+<div class="grid">
+  <div class="card"><h2>📊 五桶穿透 vs 目標</h2>
+        <div class="bucket">
+          <div class="bucket-head"><span class="bucket-name">台股</span><span class="bucket-val">7.2% <small>/ 目標 10%</small></span><span class="gap yellow">-2.8pp</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:13.1%;background:#3b82f6"></div><div class="bar-target" style="left:18.2%"></div></div>
+          <div class="bucket-twd">189 萬</div>
+        </div>
+        <div class="bucket">
+          <div class="bucket-head"><span class="bucket-name">美股</span><span class="bucket-val">44.0% <small>/ 目標 40%</small></span><span class="gap yellow">+4.0pp</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:80.0%;background:#ef4444"></div><div class="bar-target" style="left:72.7%"></div></div>
+          <div class="bucket-twd">1153 萬</div>
+        </div>
+        <div class="bucket">
+          <div class="bucket-head"><span class="bucket-name">防守</span><span class="bucket-val">4.2% <small>/ 目標 20%</small></span><span class="gap red">-15.8pp</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:7.6%;background:#22c55e"></div><div class="bar-target" style="left:36.4%"></div></div>
+          <div class="bucket-twd">109 萬</div>
+        </div>
+        <div class="bucket">
+          <div class="bucket-head"><span class="bucket-name">債券</span><span class="bucket-val">22.5% <small>/ 目標 25%</small></span><span class="gap yellow">-2.5pp</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:40.9%;background:#f59e0b"></div><div class="bar-target" style="left:45.5%"></div></div>
+          <div class="bucket-twd">589 萬</div>
+        </div>
+        <div class="bucket">
+          <div class="bucket-head"><span class="bucket-name">現金</span><span class="bucket-val">22.1% <small>/ 目標 5%</small></span><span class="gap red">+17.1pp</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:40.2%;background:#94a3b8"></div><div class="bar-target" style="left:9.1%"></div></div>
+          <div class="bucket-twd">580 萬</div>
+        </div></div>
+  <div class="card"><h2>📡 機構流向雷達</h2><div class="rcards">
+        <div class="card rcard" style="border-top:3px solid #22c55e">
+          <div class="r-signal">🟢🔥</div>
+          <div class="r-name">台股</div>
+          <div class="r-note">外資淨買超 3.2億（連3日）— 台股慢慢買順勢＋台幣強升，升級強烈綠燈</div>
+        </div>
+        <div class="card rcard" style="border-top:3px solid #22c55e">
+          <div class="r-signal">🟢🔥</div>
+          <div class="r-name">黃金</div>
+          <div class="r-note">淨多單 222,189 週增 1.9% — 順勢＋台幣強升，升級強烈綠燈</div>
+        </div>
+        <div class="card rcard" style="border-top:3px solid #ef4444">
+          <div class="r-signal">🔴</div>
+          <div class="r-name">原油</div>
+          <div class="r-note">淨多單 -17,451 週減 -175.6% — 聰明錢撤離</div>
+        </div>
+        <div class="card rcard" style="border-top:3px solid #f59e0b">
+          <div class="r-signal">🟡</div>
+          <div class="r-name">美債10年</div>
+          <div class="r-note">10Y殖利率月動能 +2.4%（上行，債券觀望）</div>
+        </div>
+        <div class="card rcard" style="border-top:3px solid #64748b">
+          <div class="r-signal">⚪</div>
+          <div class="r-name">台幣</div>
+          <div class="r-note">USD/TWD 31.82 週變化 -0.53%</div>
+        </div></div></div>
+</div>
+
+<div class="grid" style="margin-top:14px">
+  <div class="card"><h2>🎯 動作建議（執行紀律）</h2><div class="acards">
+        <div class="card acard">
+          <div class="a-head"><b>台股慢慢買</b><span class="tag">✅ 主動</span></div>
+          <div class="a-light">🟢🔥 順勢</div>
+          <div class="a-desc">每週 1.5-2萬 0050/006208 × 8-12 週，單筆≤5萬；配息流+結餘</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>美股逢彈減</b><span class="tag">被動</span></div>
+          <div class="a-light">⏸ 等待</div>
+          <div class="a-desc">44.0%→40%，費半弱不砍低點；反彈日減碼 ≤20萬/次達標即停</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>債券補碼</b><span class="tag">待命</span></div>
+          <div class="a-light">⏸ 等兩條件</div>
+          <div class="a-desc">質押完成 + US30Y<5.30%；經理人代管不買單一純債ETF</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>防守</b><span class="tag">不動作</span></div>
+          <div class="a-light">🟢 已足</div>
+          <div class="a-desc">合併口徑 69.5% 無缺口；勿被單看 4.2% 誤導</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>現金</b><span class="tag">不動作</span></div>
+          <div class="a-light">🟢 底線制</div>
+          <div class="a-desc">800,272 ≥ 70萬 ✅；MMF 500萬已指定標案/質押補救</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>石油衛星</b><span class="tag">凍結</span></div>
+          <div class="a-light">🔴 Locked</div>
+          <div class="a-desc">COT 機構撤離（-175.6%）；維持延後建倉</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>黃金衛星</b><span class="tag">待PI</span></div>
+          <div class="a-light">🟢 順勢</div>
+          <div class="a-desc">PI 後 131萬 分 3 批 50/30/20；台幣計價 00635U</div>
+        </div></div></div>
+  <div class="card"><h2>🏭 產業別穿透（雙層 Micro）</h2>
+    <table><tr><th>產業</th><th class="num">金額</th><th class="num">佔比</th><th>狀態</th></tr><tr><td>高科技/半導體</td><td class='num'>4,593,162</td><td class='num'>17.5</td><td>🟡 未達新紅線30%（舊紅線15%仍超2.5pp）；8/24轉換後回落</td></tr><tr><td>金融/電信</td><td class='num'>1,833,638</td><td class='num'>7.0</td><td></td></tr><tr><td>醫療/公用事業/不動產</td><td class='num'>1,702,663</td><td class='num'>6.5</td><td></td></tr><tr><td>固收與現金</td><td class='num'>11,687,099</td><td class='num'>44.6</td><td></td></tr><tr><td>實物避險-黃金</td><td class='num'>0</td><td class='num'>—</td><td>⏳ PI 後分 3 批（50/30/20）</td></tr><tr><td>實物避險-石油</td><td class='num'>0</td><td class='num'>—</td><td>🔴 Locked（radar_state 標記，機構撤離中）</td></tr></table>
+    <div style="font-size:11px;color:var(--sub);margin-top:8px">紅線：高科技 ≤30%（當前 17.5%）｜輪動閥門：科技>30% 或雷達科技轉弱 → 乾粉轉金融/電信/醫療防禦</div>
+  </div>
+</div>
+
+<div class="grid" style="margin-top:14px">
+  <div class="card"><h2>💰 9月台幣乾粉分配</h2>
+    <div class="drybar">
+      <div style="width:38%;background:var(--blu)">台股 12-24萬</div>
+      <div style="width:55%;background:var(--yel)">黃金 131萬（PI後）</div>
+      <div style="width:0%;background:var(--red)"></div>
+      <div style="width:7%;background:var(--sub)">其他</div>
+    </div>
+    <div style="font-size:12px;color:#cbd5e1;line-height:1.7">
+      當前乾粉 <b>100,272</b>（現金 − 70萬底線）｜9月新增：月盈餘 6-11萬 + 台幣配息 + 8/31 贖回超底線部分<br>
+      石油 🔴 Locked（0）｜債券 ⏸ 等質押+US30Y&lt;5.30%（0）
+    </div>
+  </div>
+  <div class="card"><h2>🛡️ 質押 / 風險紅線</h2>
+    <div style="font-size:12.5px;color:#cbd5e1;margin-bottom:8px">📌 未質押（9/3 PI 後 350萬@2.77%）</div>
+    <table><tr><th>指標</th><th class="num">現值</th><th class="num">紅線</th><th>狀態</th></tr><tr><td>US30Y 凍結線</td><td class='num'>5.19%</td><td class='num'>≥5.30% 🔴</td><td>🟢 安全</td></tr><tr><td>美元曝險</td><td class='num'>64%</td><td class='num'>紅線 50%</td><td>🔴 觸發</td></tr><tr><td>高科技</td><td class='num'>17.5%</td><td class='num'>紅線 30%</td><td>🟢 安全</td></tr><tr><td>現金底線</td><td class='num'>800,272</td><td class='num'>≥70萬</td><td>🟢 安全</td></tr><tr><td>總質押 LTV</td><td class='num'>完成後 20.4%</td><td class='num'>安全值 ≤35%</td><td>🟢 安全</td></tr></table>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px"><h2>🗓 里程碑時程</h2><div class='ms ms-high'><span class='ms-date'>8/24（一）</span><span class='ms-txt'>保單轉換 300萬 決策（科技→債，T+4 截止）</span></div><div class='ms ms-mid'><span class='ms-date'>8/31</span><span class='ms-txt'>安聯B 贖回（補現金 + 抵借款 100萬）</span></div><div class='ms ms-high'><span class='ms-date'>9/3 前</span><span class='ms-txt'>PI 認列 → 質押 350萬@2.77% 還債</span></div><div class='ms ms-mid'><span class='ms-date'>9月中</span><span class='ms-txt'>富達/聯博首次配息入帳 → 更新配息基準</span></div><div class='ms ms-mid'><span class='ms-date'>10月</span><span class='ms-txt'>洲際W 轉貸國泰（要求全額吸收規費）＋ 標案</span></div></div>
+
+<div class="foot">資料來源：snapshot.json（2026-08-22）+ radar_state.json（機構流向雷達）｜build_rebalance_dashboard.py 動態生成</div>
+</div></body></html>
