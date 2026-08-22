@@ -5509,6 +5509,25 @@
         "分析升級",
         "硬性約束"
       ]
+    },
+    {
+      "timestamp": "2026-08-22T11:54:31",
+      "action": "核准",
+      "name": "再平衡儀表板/評估每日自動化 + 緊急應變併入再平衡 + 八大連結動態化",
+      "source": "user",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1787370871",
+      "summary": "再平衡儀表板（HTML 深色指揮中心）與再平衡評估（MD 文字版）每日自動更新（regenerate 管線）；緊急應變併入再平衡討論（讀 data/emergency_llm_analysis.json 風控檢查章節）；八大連結動態化（穿透 __PEN_REPORT__、緊急應變 __EMERGENCY_REPORT__ 一律 glob 最新，穿透檔名改今天日期）",
+      "detail": "8/22 實踩：穿透檔名用 snapshot.date 落後一天→連結404；緊急應變週末不產出→__TODAY__ 404。修正後八大連結全 200。commit 0786eec",
+      "tags": [
+        "再平衡",
+        "儀表板",
+        "緊急應變",
+        "八大連結",
+        "動態化"
+      ]
     }
   ],
   "pending_decisions": [
