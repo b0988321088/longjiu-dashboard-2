@@ -197,6 +197,10 @@ _TW_SECTOR_CODES = {
 def _tw_sector_bucket(code: str, name: str) -> str:
     if code in _TW_SECTOR_CODES:
         return _TW_SECTOR_CODES[code]
+    # 個股/ETF 名稱關鍵字分類（依順序檢查，先專有名詞後通用）
+    for kw_bucket, kws in _TW_NAME_KW:
+        if any(k in name for k in kws):
+            return kw_bucket
     if any(k in name for k in ["科技", "半導體", "5G", "AI", "伺服器", "機器人", "ICT"]):
         return "科技"
     if any(k in name for k in ["金融", "銀行"]):
@@ -210,8 +214,29 @@ def _tw_sector_bucket(code: str, name: str) -> str:
     return "其他"
 
 
+# 個股名稱 → 產業桶（T86 含全部上市櫃，名稱關鍵字分類；順序=優先權）
+_TW_NAME_KW = [
+    ("台積電", ["台積電", "積電"]),
+    ("科技", ["聯發科", "鴻海", "廣達", "緯創", "英業達", "仁寶", "和碩", "日月光", "聯電", "台達電",
+               "大立光", "瑞昱", "聯詠", "矽力", "力積電", "南亞科", "華邦電", "旺宏", "群創", "友達",
+               "佳世達", "研華", "光寶", "台光電", "欣興", "景碩", "譜瑞", "祥碩", "創意", "世芯"]),
+    ("通訊服務", ["中華電", "遠傳", "台灣大", "台灣大哥大"]),
+    ("金融", ["金控", "銀行", "證券", "保險", "產險", "壽險", "租賃", "票券"]),
+    ("生技醫療", ["生技", "藥", "醫", "美時", "葡萄王", "大樹", "合一"]),
+    ("航運", ["長榮", "陽明", "萬海", "華航", "長榮航", "星宇"]),
+    ("鋼鐵", ["中鋼", "鋼鐵", "豐興", "東和"]),
+    ("塑化", ["台塑", "南亞", "台化", "台塑化", "塑膠", "石化"]),
+    ("食品", ["統一", "味全", "大成", "卜蜂", "佳格", "聯華食"]),
+    ("能源", ["台電", "綠能", "中興電", "士電", "華城"]),
+    ("汽車", ["裕隆", "和泰", "中華車", "三陽", "東陽"]),
+    ("營建", ["台泥", "亞泥", "潤泰", "興富發", "遠雄", "國建", "皇翔"]),
+    ("百貨", ["遠百", "特力", "統一超", "全家"]),
+    ("不動產", ["信義", "永慶", "愛山林"]),
+]
+
+
 def aggregate_tw_sector(tw: dict) -> dict:
-    """將 T86 全部 ETF 法人淨買賣超依產業桶彙總（Phase 2）"""
+    """將 T86 全部標的（ETF+個股）法人淨買賣超依產業桶彙總（Phase 2）"""
     agg = {}
     for code, v in (tw.get("etfs_all") or {}).items():
         b = _tw_sector_bucket(code, v.get("name", ""))
@@ -409,7 +434,9 @@ def main():
     sig = compute_signals(tw, cot, fed, twd, tnx, cfg, state)
     sector_flow = compute_sector_flow(tw, us_sec, state)  # Phase 2：產業資金流向
     state["last_run"] = datetime.now().isoformat()
-    state["data"] = {"twse": tw, "cot": cot, "fed": fed, "twd": twd, "tnx": tnx, "us_sector": us_sec}
+    # 瘦身：etfs_all（14,867 筆）不寫入 state，只保留彙總結果，避免 radar_state 膨脹
+    _tw_slim = {k: v for k, v in tw.items() if k != "etfs_all"}
+    state["data"] = {"twse": _tw_slim, "cot": cot, "fed": fed, "twd": twd, "tnx": tnx, "us_sector": us_sec}
     state["signals"] = sig
     state["sector_flow"] = sector_flow
     save_json(BASE / "radar_state.json", state)
