@@ -41,8 +41,8 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     _fj_eqv = round(_fj * _fj_eq_r)
     # 2026-08-21：美股科技/非科技拆解（科技比 = 基金淨值中科技曝險佔比；估計值，來源=月報/公開資料）
     _TECH = {"貝萊德世界科技": 1.0, "貝萊德科技": 1.0, "009824": 1.0, "00924": 1.0, "台新美日台半導體": 0.90,
-             "富達全球動能多元": 0.35, "安聯AI收益成長": 0.35, "聯博美國成長": 0.40, "安聯收益成長": 0.16,
-             "摩根JPM": 0.10, "摩根多重收益": 0.10, "PIMCO收益增長": 0.10, "M&G入息": 0.07, "聯博全球多元收益": 0.025,
+             "富達全球動能多元": 0.35, "安聯AI收益成長": 0.35, "聯博美國成長": 0.40, "安聯收益成長": 0.15,
+             "摩根JPM": 0.10, "摩根多重收益": 0.10, "PIMCO收益增長": 0.167, "M&G入息": 0.07, "聯博全球多元收益": 0.10,
              "00646": 0.32, "009823": 0.32}
     def _tr(_fn):
         return next((r for k, r in _TECH.items() if k in _fn), 0.15)
@@ -100,11 +100,13 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             _fund_cash += 0
             _fund_us_tech += round(_fval * 0.8075 * _tr(_fn))
         elif "聯博全球多元收益" in _fn:
-            # 8/20 使用者提供（公開說明書+月報）：債券 50-60%（_br 0.55）/ 權益 ~45%（低波動高股息+非傳統）/ 科技 2.5%
+            # 8/20 使用者提供（公開說明書+月報）：債券 50-60%（_br 0.55）/ 權益 ~45%（低波動高股息+非傳統）
+            # 8/23 前10大持股真值更新：NVDA2.31+AAPL2.14+AVGO1.21+MSFT1.21+GOOGL1.06≈7.93% 科技（淨值口徑，僅前10大）
+            # → 科技 2.5% 過低，保守估 10%（含前10大以外）
             _fund_us += round(_fval * 0.45)
             _fund_bonds += round(_fval * 0.55)
             _fund_cash += 0
-            _fund_us_tech += round(_fval * 0.025)
+            _fund_us_tech += round(_fval * 0.10)
         elif "台中銀台灣優息" in _fn or "國泰台灣高股息" in _fn:
             _fund_def += _fval
         elif any(k in _fn for k in ["台新美日台", "貝萊德", "安聯AI", "聯博", "摩根", "M&G", "安聯收益成長", "安聯美國", "富達"]):
