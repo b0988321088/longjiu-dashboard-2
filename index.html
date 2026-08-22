@@ -74,6 +74,48 @@
     </div>
 </div>
 
+<!-- 📡 即時資料（2026-08-23 C方案第一階段：JS 讀 snapshot.json，開頁即最新） -->
+<div class="mb-4 p-4 rounded-xl bg-slate-900/70 border border-blue-700/40">
+    <div class="flex items-center gap-2 mb-2">
+        <span class="text-blue-400 font-bold text-sm">📡 即時資料</span>
+        <span class="text-[10px] text-slate-500">開頁自動讀取 snapshot.json（最新真值，無需重跑管線）</span>
+    </div>
+    <div id="live-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-slate-200">
+        <div class="p-2 bg-slate-800/60 rounded-lg text-slate-400">載入中…</div>
+    </div>
+    <p class="text-[10px] text-slate-500 mt-2">資料時間：<span id="live-time">—</span>｜快照版可能較舊，以即時資料為準</p>
+</div>
+<script>
+(function(){
+  var g = document.getElementById('live-grid');
+  if(!g) return;
+  fetch('snapshot.json', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(s){
+    function fmt(n){ return (n==null?0:n).toLocaleString('zh-TW'); }
+    function cell(l,v,c){ return '<div class="flex items-center justify-between p-2 bg-slate-800/60 rounded-lg"><span class="text-slate-300">'+l+'</span><b class="'+(c||'text-slate-100')+'">'+v+'</b></div>'; }
+    var ta = s.total_assets||0, tl = s.total_liabilities||0, na = ta - tl;
+    var pen = (s.industry_penetration||{}).產業 || {};
+    var tech = pen.資訊科技 ? pen.資訊科技.佔比 : null;
+    var tp = ((s.rotation_recommendation||{}).交易計畫||[]).map(function(p){
+        return p.產業 + (p.金額>0 ? ' '+(p.金額/10000).toFixed(0)+'萬' : '—');
+    }).join('｜') || '—';
+    var def = (s.defensive_combined_metric||{}).佔比;
+    g.innerHTML =
+        cell('總資產', fmt(ta)) +
+        cell('淨資產', fmt(na), na>=0?'text-emerald-400':'text-red-400') +
+        cell('現金', fmt(s.cash_total)) +
+        cell('證券', fmt(s.securities_total)) +
+        cell('科技%', tech!=null?tech.toFixed(1)+'%':'—', tech!=null&&tech>30?'text-red-400':'text-slate-100') +
+        cell('防守合併', def!=null?def.toFixed(1)+'%':'—') +
+        cell('交易計畫', tp) +
+        cell('負債', fmt(s.total_liabilities));
+    var t = document.getElementById('live-time');
+    if(t) t.textContent = ((s.industry_penetration||{}).日期 || s.last_updated || '—');
+  }).catch(function(e){
+    g.innerHTML = '<div class="p-2 bg-red-900/30 rounded-lg text-red-400 col-span-4">即時資料載入失敗（snapshot.json 不可用）— 顯示快照版</div>';
+  });
+})();
+</script>
+
 <!-- 🚨 風險提示（2026-08-04 最終版） -->
 <div class="mb-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/40">
     <div class="flex items-center gap-2 mb-1">
