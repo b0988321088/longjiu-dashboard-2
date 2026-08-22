@@ -17,6 +17,70 @@ def load(p, default=None):
     except Exception:
         return default if default is not None else {}
 
+def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, sec_rows, dry_cur, risk_rows, ms_html, emg_html, total, cash, monthly_inc, monthly_exp, surplus, usd_pct, tech, us30y):
+    """再平衡評估（文字版 md）— 與儀表板同源，每日自動更新（2026-08-22）"""
+    lines = [
+        f"# 🔄 龍九再平衡評估（{TODAY}）",
+        "",
+        f"> 資料：snapshot.json（資料日期 {s.get('date','—')}）+ radar_state.json + data/emergency_llm_analysis.json",
+        "",
+        "## 一、五桶偏離 vs 目標（修正後口徑）",
+        "",
+        "| 桶 | 現況 | 目標 | 偏離 | 動作 |",
+        "|---|---|---|---|---|",
+    ]
+    action_map = {"台股": "✅ 慢慢買", "美股": "⏸ 逢彈減", "防守": "🟢 已足", "債券": "⏸ 等利率", "現金": "🟢 底線制"}
+    for name, act, t, twd, _c in buckets:
+        gap = act - t
+        lines.append(f"| {name} | {act:.1f}% | {t}% | {gap:+.1f}pp | {action_map.get(name, '—')} |")
+
+    lines += ["", "## 二、機構流向雷達", ""]
+    for k in ["台股", "黃金", "原油", "美債10年", "台幣"]:
+        v = radar.get("signals", {}).get(k, {})
+        locked = "（🔒LOCKED）" if v.get("locked") else ""
+        lines.append(f"- {v.get('color','⚪')} {k}{locked}: {v.get('note','—')}")
+
+    lines += ["", "## 三、緊急應變重點（併入再平衡）", ""]
+    try:
+        _em = load("data/emergency_llm_analysis.json", {})
+        _fr = _em.get("full_report", "")
+        _i = _fr.find("六、風控檢查")
+        if _i > -1:
+            lines.append(_fr[_i:_i+700])
+        lines.append(f"（來源：{_em.get('generated_at','')[:16]}）")
+    except Exception:
+        lines.append("無緊急應變資料")
+
+    lines += ["", "## 四、動作建議（執行紀律）", ""]
+    for name, light, desc, tag in actions:
+        lines.append(f"- **{name}**（{tag}）：{desc}")
+
+    lines += ["", "## 五、乾粉與風險紅線", ""]
+    lines.append(f"- 當前乾粉：{dry_cur:,}（現金 − 70萬底線）｜9月：台股 12-24萬分批 + 黃金 131萬預留（PI後）＋ 石油 0（Locked）＋ 債券 0（等利率）")
+    for name, val, limit, triggered in [
+        ("US30Y", f"{us30y:.2f}%" if us30y else "—", "≥5.30%", us30y and us30y >= 5.30),
+        ("美元曝險", f"{usd_pct:.0f}%", "紅線 50%", usd_pct > 50),
+        ("高科技", f"{tech:.1f}%", "紅線 30%", tech > 30),
+        ("現金底線", f"{cash:,}", "≥70萬", cash < 700000),
+    ]:
+        st = "🔴 觸發" if triggered else "🟢 安全"
+        lines.append(f"- {name} {val}（{limit}）：{st}")
+
+    lines += ["", "## 六、里程碑時程", ""]
+    for d, t2, lv in [("8/24（一）", "保單轉換 300萬 決策（科技→債，T+4 截止）", "high"),
+                      ("8/31", "安聯B 贖回（補現金 + 抵借款 100萬）", "mid"),
+                      ("9/3 前", "PI 認列 → 質押 350萬@2.77% 還債", "high"),
+                      ("9月中", "富達/聯博首次配息入帳 → 更新配息基準", "mid"),
+                      ("10月", "洲際W 轉貸國泰（要求全額吸收規費）＋ 標案", "mid")]:
+        lines.append(f"- {d}：{t2}")
+
+    lines += ["", "## 七、結論", f"**本週動作：只有「台股慢慢買」是主動項（每週 1.5-2萬 × 8-12 週），其餘全數按兵不動。**",
+              "最大等待：8/24 保單轉換決策 → 9/3 PI → 質押還債（4.2%→2.77%）。", ""]
+    out = BASE / f"rebalance_summary_{TODAY}.md"
+    out.write_text("\n".join(lines), encoding="utf-8")
+    print(f"✅ 再平衡評估已產出: {out}")
+    return out
+
 def main():
     s = load("snapshot.json", {})
     radar = load("radar_state.json", {})
@@ -255,6 +319,10 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
     out = BASE / f"rebalance_dashboard_{TODAY}.html"
     out.write_text(html, encoding="utf-8")
     print(f"✅ 再平衡儀表板已產出: {out}（{len(html)//1024} KB）")
+
+    # 再平衡評估（文字版）— 與儀表板同源
+    build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, sec_rows, dry_cur, risk_rows, ms_html, emg_html,
+                     total, cash, monthly_inc, monthly_exp, surplus, usd_pct, tech, us30y)
 
 if __name__ == "__main__":
     main()
