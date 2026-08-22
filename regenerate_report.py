@@ -240,6 +240,13 @@ try:
             _pen_file = _pens[0].name
 except Exception as _e:
     print(f"⚠️ 穿透報告異常: {_e}")
+# 穿透報告連結（2026-08-22 修正：檔名=snapshot 日期非 today，__PEN_REPORT__ 用實際最新檔名）
+if _pen_file:
+    try:
+        _idx_html = (BASE / "index.html").read_text(encoding="utf-8").replace("__PEN_REPORT__", _pen_file)
+        (BASE / "index.html").write_text(_idx_html, encoding="utf-8")
+    except Exception:
+        pass
 
 ok = all(checks.values())
 for k, v in checks.items():
@@ -309,7 +316,7 @@ print(f'📰 日報:      https://b0988321088.github.io/longjiu-dashboard-2/{OUT
 print(f'🔄 再平衡儀表板: https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{TODAY}.html')
 print(f'🏠 儀表板:    https://b0988321088.github.io/longjiu-dashboard-2/')
 print(f'📈 差異分析:  https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html')
-print(f'📊 穿透分析:  https://b0988321088.github.io/longjiu-dashboard-2/penetration_report_{TODAY}.html')
+print(f'📊 穿透分析:  https://b0988321088.github.io/longjiu-dashboard-2/{_pen_file or f"penetration_report_{TODAY}.html"}')
 _emergency_link = f"emergency_report_{TODAY}.html" if Path(f"emergency_report_{TODAY}.html").exists() else (_latest_er if _latest_er else "無（週末不產出）")
 print(f'🚨 緊急應變:  https://b0988321088.github.io/longjiu-dashboard-2/{_emergency_link}')
 
