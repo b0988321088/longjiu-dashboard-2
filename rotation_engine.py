@@ -168,7 +168,7 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
         })
         used += amt
     plan.append({"產業": "現金保留", "標的": "台幣活存/MMF", "金額": max(int((dry - used) / 1000) * 1000, 0),
-                 "節奏": "等 8/24 轉換 + 9/3 PI 再動", "理由": "乾粉餘額緩衝"})
+                 "節奏": "9/3 PI 認證後再評估（8/24 保單轉換為保單內部互轉，不動現金；防守凍結＋醫療由保單涵蓋）", "理由": "乾粉餘額緩衝"})
     return plan
 
 
