@@ -94,6 +94,12 @@ def main():
         _ip.main()
     except Exception:
         pass
+    # 輪動引擎（Phase 3：資金流向 × 產業缺口 → 乾粉建議）
+    try:
+        import rotation_engine as _re
+        _re.main()
+    except Exception:
+        pass
     s = load("snapshot.json", {})
     radar = load("radar_state.json", {})
     pen = s.get("penetration", {})
@@ -181,6 +187,32 @@ def main():
     # ── 質押 ──
     pledge = s.get("質押計畫", {})
     ltv_txt = "未質押（9/3 PI 後 350萬@2.77%）"
+
+    # ── 本週乾粉輪動建議（Phase 3：讀 snapshot.rotation_recommendation）──
+    rot_html = ""
+    try:
+        rot = s.get("rotation_recommendation", {})
+        if rot and rot.get("建議"):
+            rec_rows = ""
+            for r in rot.get("建議", []):
+                tgt_txt = f"目標 {r.get('目標')}%" if r.get("目標") else f"紅線 {r.get('紅線')}%"
+                rec_rows += (f"<tr><td><b>{r['產業']}</b><br><span style='font-size:10px;color:var(--sub)'>{'、'.join(r.get('標的', []))}</span></td>"
+                             f"<td class='num'>{r.get('現況', 0):.1f}%</td><td class='num'>{tgt_txt}</td>"
+                             f"<td class='num'>{r.get('資金分數', 0):+d}</td><td>{r['動作']}</td></tr>")
+            av_rows = ""
+            for r in rot.get("避開", [])[:3]:
+                av_rows += f"<tr><td>{r['產業']}</td><td class='num'>{r.get('現況',0):.1f}%</td><td>{r['動作']}</td><td style='font-size:10.5px'>{r['理由']}</td></tr>"
+            rot_html = f"""
+  <div class="card" style="margin-top:14px;border-left:4px solid #22c55e">
+    <h2>🎯 本週乾粉輪動建議（{rot.get('日期','')}）</h2>
+    <div style="font-size:13px;font-weight:800;color:#4ade80;margin-bottom:8px">{rot.get('總結','')}</div>
+    <table><tr><th>產業</th><th class="num">現況</th><th class="num">目標/紅線</th><th class="num">資金分</th><th>動作</th></tr>{rec_rows}</table>
+    <div style="margin-top:8px"><div style="font-size:12px;font-weight:700;color:#94a3b8">⏸ 避開/暫緩</div>
+    <table><tr><th>產業</th><th class="num">現況</th><th>動作</th><th>理由</th></tr>{av_rows}</table></div>
+    <div style="font-size:10.5px;color:var(--sub);margin-top:6px">引擎：資金流向（Phase2 雷達）× 產業缺口（Phase1 GICS）｜科技貼近紅線或流出時乾粉自動轉向</div>
+  </div>"""
+    except Exception:
+        rot_html = ""
 
     # ── 產業資金流向（Phase 2：讀 radar_state.sector_flow）──
     sflow_html = ""
@@ -389,6 +421,8 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
     <table><tr><th>指標</th><th class="num">現值</th><th class="num">紅線</th><th>狀態</th></tr>{risk_rows}</table>
   </div>
 </div>
+
+{rot_html}
 
 {sflow_html}
 
