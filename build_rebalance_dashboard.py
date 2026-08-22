@@ -120,7 +120,8 @@ def main():
     surplus = monthly_inc - monthly_exp
     coverage = monthly_inc / monthly_exp * 100 if monthly_exp else 0
     usd_pct = s.get("usd_exposure_pct", 64.0)
-    tech = s.get("sector_penetration", {}).get("高科技/半導體", {}).get("佔比_估", 17.5)
+    tech = (s.get("industry_penetration", {}).get("產業", {}).get("資訊科技", {}).get("佔比")
+            or s.get("sector_penetration", {}).get("高科技/半導體", {}).get("佔比_估", 17.5))  # 8/22 修正：以 GICS 21.1% 為主（與 GICS 區塊一致）
     us30y = load("us30y_state.json", {}).get("last_rate")
 
     # ── 五桶 ──
@@ -159,12 +160,13 @@ def main():
           <div class="r-note">{v.get('note', '—')}</div>
         </div>"""
 
-    # ── 動作建議 ──
+    # ── 動作建議（8/22：防守合併口徑動態讀）──
+    _def_pct = s.get("defensive_combined_metric", {}).get("佔比", 69.5)
     actions = [
         ("台股慢慢買", "🟢🔥 順勢", "每週 1.5-2萬 0050/006208 × 8-12 週，單筆≤5萬；配息流+結餘", "✅ 主動"),
         ("美股逢彈減", "⏸ 等待", "44.0%→40%，費半弱不砍低點；反彈日減碼 ≤20萬/次達標即停", "被動"),
         ("債券補碼", "⏸ 等兩條件", "質押完成 + US30Y<5.30%；經理人代管不買單一純債ETF", "待命"),
-        ("防守", "🟢 已足", "合併口徑 69.5% 無缺口；勿被單看 4.2% 誤導", "不動作"),
+        ("防守", "🟢 已足", f"合併口徑 {_def_pct}% 無缺口；勿被單看 4.2% 誤導", "不動作"),
         ("現金", "🟢 底線制", f"{cash:,} ≥ 70萬 ✅；MMF 500萬已指定標案/質押補救", "不動作"),
         ("石油衛星", "🔴 Locked", "COT 機構撤離（-175.6%）；維持延後建倉", "凍結"),
         ("黃金衛星", "🟢 順勢", "PI 後 131萬 分 3 批 50/30/20；台幣計價 00635U", "待PI"),
@@ -323,14 +325,15 @@ def main():
     except Exception:
         emg_html = ""
 
-    # ── 里程碑 ──
+    # ── 里程碑（8/22：8/24 轉換讀 snapshot 確認版）──
+    _p24 = s.get("cathay_disbursement", {}).get("plan_0820_final", {}).get("再平衡組合_聯博", {}).get("保單轉換_確認版_0822", {})
+    _p24_txt = "保單轉換 300萬 執行（" + " + ".join(f"{k.split(' ')[0]} {v//10000}萬" for k, v in (_p24.get("標的", {}) or {}).items()) + "）" if _p24.get("標的") else "保單轉換 300萬 決策（科技→債，T+4 截止）"
     milestones = [
-        ("8/24（一）", "保單轉換 300萬 決策（科技→債，T+4 截止）", "high"),
+        ("8/24（一）", _p24_txt, "high"),
         ("8/31", "安聯B 贖回（補現金 + 抵借款 100萬）", "mid"),
         ("9/3 前", "PI 認列 → 質押 350萬@2.77% 還債", "high"),
-        ("9月中", "富達/聯博首次配息入帳 → 更新配息基準", "mid"),
-        ("10月", "洲際W 轉貸國泰（要求全額吸收規費）＋ 標案", "mid"),
-    ]
+        ("9月中", "富達/聯博首次配息 → 更新配息基準", "mid"),
+        ("10月", "洲際W 轉貸國泰（要求全額吸收規費）＋ 標案", "mid")]
     ms_html = ""
     for d, t, lv in milestones:
         cls = "ms-high" if lv == "high" else "ms-mid"
