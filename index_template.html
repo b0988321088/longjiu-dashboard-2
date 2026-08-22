@@ -151,6 +151,40 @@
 })();
 </script>
 
+<script>
+/* C 方案階段3（2026-08-23）：交易計畫 + 決策追蹤 JS 即時渲染，失敗保留快照版 */
+(function(){
+  var tp = document.getElementById('trade-plan');
+  if(tp){
+    fetch('snapshot.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(s){
+      var rot = s.rotation_recommendation||{};
+      var plan = rot.交易計畫||[];
+      if(!plan.length) return;
+      var h = '<div style="font-size:12px;color:#92400e;font-weight:800;margin-bottom:6px">🎯 本週交易計畫（'+rot.日期+'｜即時）</div>';
+      h += '<div style="font-size:11.5px;color:#b45309;margin-bottom:6px">'+(rot.總結||'')+'</div>';
+      h += '<table style="width:100%;border-collapse:collapse;font-size:11.5px"><tr style="color:#92400e"><th style="text-align:left">產業</th><th>買什麼</th><th style="text-align:right">金額</th><th>節奏</th></tr>';
+      plan.forEach(function(p){
+        h += '<tr><td>'+p.產業+'</td><td>'+(p.標的||'')+'</td><td style="text-align:right"><b>'+(p.金額>0?p.金額.toLocaleString('zh-TW'):'—')+'</b></td><td style="font-size:10.5px">'+(p.節奏||'')+'</td></tr>';
+      });
+      h += '</table>';
+      tp.innerHTML = h;
+    }).catch(function(){});
+  }
+  var dt = document.getElementById('decision-track');
+  if(dt){
+    fetch('pending_decisions.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(list){
+      if(!list || !list.length) return;
+      var h = '<h3 class="text-md font-bold text-white">📋 執行中決策追蹤（即時）</h3><div class="space-y-2 text-xs">';
+      list.forEach(function(d){
+        var t = d.item||d.title||'';
+        h += '<div class="flex gap-2"><span class="text-slate-500 w-16 shrink-0">'+(d.date||'')+'</span><span class="text-slate-300">'+t+'</span><span class="text-slate-500">'+(d.status||'')+'</span></div>';
+      });
+      h += '</div>';
+      dt.innerHTML = h;
+    }).catch(function(){});
+  }
+})();
+</script>
 <!-- 🚨 風險提示（2026-08-23 更新） -->
 <div class="mb-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/40">
     <div class="flex items-center gap-2 mb-1">
@@ -197,7 +231,7 @@
 
 
     <!-- ================= PAGE 1 ================= -->
-    <div id="tab-content-1" class="tab-pane space-y-6"><div style="border:1px solid #f59e0b;background:#fffbeb;border-radius:12px;padding:14px;margin-bottom:14px">
+    <div id="tab-content-1" class="tab-pane space-y-6"><div id="trade-plan" style="border:1px solid #f59e0b;background:#fffbeb;border-radius:12px;padding:14px;margin-bottom:14px">
 <h3 style="color:#92400e;font-size:14px;font-weight:800;margin:0 0 6px">📡 機構流向雷達 ＆ 🎯 本週交易計畫（2026-08-23 統籌版）</h3>
 <p style="color:#1f2937;font-size:12.5px;margin:0">燈號：台股🟢🔥（外資淨買超連3日+台幣強升）｜黃金🟢🔥（COT淨多單週增）｜原油🔴（機構撤離，Locked）｜美債10年🟡（動能+2.4%貼近凍結線）</p>
 <p style="color:#1f2937;font-size:12px;margin-top:6px;line-height:1.7">🎯 交易計畫（統籌）：乾粉 136,000 全現金保留（防守凍結＋醫療由 8/24 保單健康科學A2 50萬涵蓋＋PI 前不動本金）｜8/24 保單轉換 300萬（PIMCO 120+M&G 100+醫療 50+黃金 30）｜9/3 PI 質押 350萬還債｜台股慢慢買 每週 1.5-2萬（0050/006208，配息流+結餘非乾粉）｜黃金衛星 PI 後 131萬 分3批</p>
@@ -500,7 +534,7 @@
         </div>
 
 <!-- 執行中決策追蹤（2026-08-06：與日報第七章決策追蹤同源 pending_decisions.json） -->
-        <div class="luxury-card p-6 space-y-4">
+        <div class="luxury-card p-6 space-y-4" id="decision-track">
             <h3 class="text-md font-bold text-white">📋 執行中決策追蹤</h3>
             <div class="space-y-3 text-xs">
             __DASH_DECISIONS__
