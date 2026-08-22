@@ -103,11 +103,14 @@ def calc_industry_penetration(snap: dict) -> dict:
     acc = {g: 0.0 for g in GICS}
     acc["固收/現金"] = 0.0
     src_notes = {}
+    other_contrib = {}  # 未分類組成：{來源: 金額}（2026-08-23 透明化）
+    unmatched = {}      # 未匹配基金/持倉：{名稱: 金額}
 
     def _add(w: dict, value: float, label: str):
         _src = w.pop("_src", "L4") if "_src" in w else "L4"
         for ind, wt in w.items():
             if ind == "其他":
+                other_contrib[label] = other_contrib.get(label, 0) + value * wt
                 continue  # 不歸類
             amt = value * wt
             acc[ind] = acc.get(ind, 0) + amt
@@ -135,6 +138,8 @@ def calc_industry_penetration(snap: dict) -> dict:
         w = _match_fund(name)
         if w and v:
             _add(dict(w), v, name)
+        elif v:
+            unmatched[name] = v  # 未匹配 → 未分類
 
     # 3) 保單基金（A/B breakdown）
     for bd_key in ["allianz_a_breakdown", "allianz_b_breakdown"]:
@@ -144,6 +149,8 @@ def calc_industry_penetration(snap: dict) -> dict:
             w = _match_fund(name)
             if w and v:
                 _add(dict(w), v, f"保單-{name}")
+            elif v:
+                unmatched[f"保單-{name}"] = v
 
     # 4) 第一金 FA81（聯博全球多元收益）— 2026-08-22 修正：讀 firstjin_detail 最新值（8/21 轉換後 1,992,265），舊 firstjin_fl65_current_value 是 FL65 時期市值
     fj = (snap.get("firstjin_detail", {}).get("base_value_before_dividend")
@@ -167,10 +174,16 @@ def calc_industry_penetration(snap: dict) -> dict:
         "佔比_含不動產": (re_val / (total + re_val) * 100) if (total + re_val) else 0,
         "note": "兩間房（大義街 1F店面24,000+2-3F住宅21,000、洲際W 33,000，+管理費2,100=80,100/月）；GICS 分母為流動金融資產（8/10 雙軌裁示），實體不動產另行計列",
     }
+    # 未分類組成明細（2026-08-23 透明化：各基金「其他」權重 + 未匹配持倉）
+    _unc_contrib = sorted(other_contrib.items(), key=lambda x: -x[1])[:12]
+    _unc_contrib += sorted(unmatched.items(), key=lambda x: -x[1])[:6]
+    unc_detail = {k: round(v) for k, v in _unc_contrib if v > 0}
+
     return {
         "日期": TODAY,
         "總資產": total,
         "產業": {k: {"金額": round(acc[k]), "佔比": round(pct[k], 1)} for k in acc},
+        "未分類組成": unc_detail,
         "實體不動產_另計": re_note,
         "估算層級": {k: sorted(v)[:3] for k, v in src_notes.items()},
         "備註": "L1=公開月報權重 L2=公開成分權重 L3=指數基準 L4=名稱/類型推估；基金產業比重為估算（月報待精確化）",
