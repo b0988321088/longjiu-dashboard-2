@@ -73,17 +73,23 @@ def penetration_analysis(snapshot: dict) -> dict:
         defense_target = TARGETS["defensive"]
         safety_target = TARGETS["bond"] + TARGETS["cash"]
         key_risk, key_action = "", ""
-        max_gap_cat = max(gaps, key=lambda k: abs(gaps[k]))
+        max_gap_cat = max([k for k in gaps if k != "cash"], key=lambda k: abs(gaps[k]))
         if gaps[max_gap_cat] > 5:
             key_risk = f"{TARGET_EMOJI[max_gap_cat]}{TARGET_LABELS[max_gap_cat]} 超標 +{gaps[max_gap_cat]:.1f}pp"
             if max_gap_cat in ("us_equity",):
                 key_action = "等反彈確認後減碼至目標"
         elif gaps[max_gap_cat] < -5:
-            key_risk = f"{TARGET_EMOJI[max_gap_cat]} {TARGET_LABELS[max_gap_cat]} 不足 {gaps[max_gap_cat]:.1f}pp"
-            if max_gap_cat == "tw_equity":
-                key_action = "台股市值低配屬逐步架構預期：僅回檔小單分批低吸，不強迫貼齊"
-            elif max_gap_cat == "defensive":
-                key_action = f"防守型第一優先：00878/00713 分批建倉至目標 {TARGETS[max_gap_cat]:.0f}%"
+            if max_gap_cat == "defensive":
+                # 2026-08-23：防守單看 4.2% 誤導（8/22 裁示合併口徑 69.7% 已足）
+                key_risk = "🛡️ 防守合併口徑 69.7% 已足（單看 4.2% 僅高股息ETF）；承接凍結"
+            else:
+                key_risk = f"{TARGET_EMOJI[max_gap_cat]} {TARGET_LABELS[max_gap_cat]} 不足 {gaps[max_gap_cat]:.1f}pp"
+                if max_gap_cat == "tw_equity":
+                    key_action = "台股市值低配屬逐步架構預期：僅回檔小單分批低吸，不強迫貼齊"
+        # 2026-08-23：現金超標 → 階段性停泊說明（8/22 裁示：底線制取代 5% 目標；不當風險警報）
+        if gaps.get("cash", 0) > 5:
+            _cash_note = "💰 現金 22.1% 為階段性停泊（MMF 500萬已指定標案/質押補救；底線制 ≥70萬 ✅）"
+            key_risk = (key_risk + "｜" + _cash_note) if key_risk else _cash_note
         return {
             "actual": actual, "actual_twd": actual_twd, "gaps": gaps,
             "growth_pct": growth_pct, "defense_pct": defense_pct, "safety_pct": safety_pct,
@@ -118,18 +124,23 @@ def penetration_analysis(snapshot: dict) -> dict:
     safety_target = TARGETS["bond"] + TARGETS["cash"]  # 10
     
     key_risk, key_action = "", ""
-    max_gap_cat = max(gaps, key=lambda k: abs(gaps[k]))
+    max_gap_cat = max([k for k in gaps if k != "cash"], key=lambda k: abs(gaps[k]))
     if gaps[max_gap_cat] > 5:
         key_risk = f"{TARGET_EMOJI[max_gap_cat]}{TARGET_LABELS[max_gap_cat]} 超標 +{gaps[max_gap_cat]:.1f}pp"
         if max_gap_cat in ("us_equity",):
             key_action = "等反彈確認後減碼至目標"
     elif gaps[max_gap_cat] < -5:
-        key_risk = f"{TARGET_EMOJI[max_gap_cat]} {TARGET_LABELS[max_gap_cat]} 不足 {gaps[max_gap_cat]:.1f}pp"
-        if max_gap_cat == "tw_equity":
-            key_action = "台股市值低配屬逐步架構預期：僅回檔小單分批低吸，不強迫貼齊"
-        elif max_gap_cat == "defensive":
-            key_action = f"防守型第一優先：00878/00713 分批建倉至目標 {TARGETS[max_gap_cat]:.0f}%"
-    
+        if max_gap_cat == "defensive":
+            key_risk = "🛡️ 防守合併口徑 69.7% 已足（單看 4.2% 僅高股息ETF）；承接凍結"
+        else:
+            key_risk = f"{TARGET_EMOJI[max_gap_cat]} {TARGET_LABELS[max_gap_cat]} 不足 {gaps[max_gap_cat]:.1f}pp"
+            if max_gap_cat == "tw_equity":
+                key_action = "台股市值低配屬逐步架構預期：僅回檔小單分批低吸，不強迫貼齊"
+    # 2026-08-23：現金超標 → 階段性停泊說明
+    if gaps.get("cash", 0) > 5:
+        _cash_note = "💰 現金 22.1% 為階段性停泊（MMF 500萬已指定標案/質押補救；底線制 ≥70萬 ✅）"
+        key_risk = (key_risk + "｜" + _cash_note) if key_risk else _cash_note
+
     return {
         "actual": actual,
         "actual_twd": actual_twd,
@@ -342,7 +353,7 @@ def main(**kwargs):
             v = pen["actual"].get(cat, 0)
             t = TARGETS[cat]
             gv = pen["gaps"].get(cat, 0)
-            msg += f"{TARGET_EMOJI[cat]} {v:.1f}%（目標{t}%、{'✅' if abs(gv)<=5 else '+'+str(gv)[:4] if gv>0 else str(gv)[:4]}pp）\n"
+            msg += f"{TARGET_EMOJI[cat]} {v:.1f}%（目標{t}%、{gv:+.1f}pp）\n"
         msg += f"\n{pen['key_risk']}\n{pen['key_action']}"
         try:
             requests.post(f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage",
