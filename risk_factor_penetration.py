@@ -31,7 +31,8 @@ TODAY = date.today().isoformat()
 def load(p):
     return json.loads((BASE / p).read_text(encoding="utf-8"))
 
-def main():
+def build_chart():
+    """產生底層風險因子穿透對照圖 PNG，回傳 Path（run_daily 每日重生成 + base64 嵌入日報）"""
     s = load("snapshot.json")
     pen = s.get("penetration", {})
     atwd, apct, tgt = pen.get("actual_twd", {}), pen.get("actual_pct", {}), pen.get("targets", {})
@@ -44,8 +45,8 @@ def main():
     targets = [tgt.get(k, 0) for k in ["台股市值型目標", "美股市值型目標", "配息型目標", "債券型目標", "現金目標"]]
     twd_v = [atwd.get(b, 0) for b in buckets]
 
-    # 美元曝險（8/22 分析值：美股桶 44% 全美元 + 債券桶美元基金 ~60% + MMF 500萬 美元 + 保單美元平衡）
-    usd_pct = 64.0  # 8/22 分析：紅線 50%，超 14pp
+    # 美元曝險（8/22 分析值 64%：美股桶全美元 + 債券桶美元基金 + MMF 美元 + 保單美元平衡）
+    usd_pct = float(s.get("usd_exposure_pct", 64.0))  # snapshot.usd_exposure_pct 可覆寫
     usd_twd = total * usd_pct / 100
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 10), dpi=130)
@@ -111,6 +112,10 @@ def main():
     fig.savefig(out, bbox_inches="tight")
     plt.close(fig)
     print(f"✅ 穿透圖已產出: {out}")
+    return out
+
+def main():
+    build_chart()
 
 if __name__ == "__main__":
     main()

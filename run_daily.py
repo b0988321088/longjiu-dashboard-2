@@ -12,6 +12,7 @@ import json
 import os
 import re
 import sys
+import base64
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from logging_config import get_logger
@@ -598,6 +599,21 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     except Exception:
         _sector_html = ""
 
+    # 底層風險因子穿透圖（2026-08-22：每日重新生成 + base64 嵌入日報，隨 snapshot 更新）
+    _chart_html = ""
+    try:
+        import risk_factor_penetration as _rfp
+        _png = _rfp.build_chart()
+        _b64 = base64.b64encode(_png.read_bytes()).decode("ascii")
+        _chart_html = (
+            "<div class='callout' style='margin-top:10px;border-left:3px solid #22c55e'>"
+            f"<strong>🖼 底層風險因子穿透對照圖（{TODAY}，每日更新）</strong><br>"
+            f"<img src='data:image/png;base64,{_b64}' style='width:100%;border-radius:8px'/>"
+            "</div>"
+        )
+    except Exception as _ce:
+        _chart_html = f"<!-- 穿透圖生成失敗: {_ce} -->"
+
     html = f"""<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -884,6 +900,9 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
       <!-- 產業別穿透（2026-08-22 雙層監控第二層） -->
       {_sector_html}
+
+      <!-- 底層風險因子穿透圖（2026-08-22 每日更新） -->
+      {_chart_html}
     </div>
 
     <!-- 美元升息影響評估（8/21 核准） -->
