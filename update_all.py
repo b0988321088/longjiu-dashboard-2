@@ -314,7 +314,10 @@ def main():
         _tgt.setdefault(_k, _v)
     snap.setdefault("penetration",{}).setdefault("actual_twd",{}).update({k: v for k, v in pen.items() if k != "_meta"})
     # 計算實際佔比（分母=台股+美股+防守+債券+現金，不含不動產）
-    _pen_total = sum(v for k, v in pen.items() if k != "_meta") or 1
+    # ⚠️ 2026-08-23 修正：不得 sum 全部 pen items — 美股市值型成長_科技/_非科技 是美股拆解，
+    #    sum 會把美股重複計入分母（26.2M+11.5M=37.7M）→ 五桶% 全錯（美股 43.9%→30.5%）
+    _bucket_keys = ["台股市值型成長", "美股市值型成長", "防守型配息", "債券", "現金/安全網"]
+    _pen_total = sum(pen.get(k, 0) for k in _bucket_keys) or 1
     snap.setdefault("penetration",{})["actual_pct"] = {
         "台股市值型成長": round(pen["台股市值型成長"] / _pen_total * 100, 1),
         "美股市值型成長": round(pen["美股市值型成長"] / _pen_total * 100, 1),
