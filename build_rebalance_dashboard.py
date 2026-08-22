@@ -274,6 +274,10 @@ def main():
   <div class="card" style="margin-top:14px;border-left:4px solid #3b82f6">
     <h2>🏭 GICS 產業分布（{_gics.get('日期','')}）</h2>
     <table><tr><th>產業</th><th class="num">金額</th><th class="num">佔比</th><th>集中度</th></tr>{_rows}</table>
+    <div style="margin-top:6px;padding:6px 10px;background:#0b1220;border-radius:8px;font-size:11.5px;color:#e2e8f0">
+      🏠 <b>實體不動產另計：{_gics.get('實體不動產_另計',{}).get('金額',0):,}</b>
+      （佔含不動產總資產 {_gics.get('實體不動產_另計',{}).get('佔比_含不動產',0):.0f}%）— 大義街+洲際W 兩間房，租金 80,100/月
+    </div>
     {_gics_img}
     <div style="font-size:10.5px;color:var(--sub);margin-top:6px">{_gics.get('備註','')}</div>
   </div>"""

@@ -155,10 +155,18 @@ def calc_industry_penetration(snap: dict) -> dict:
     acc["固收/現金"] += cash
 
     pct = {k: (v / total * 100 if total else 0) for k, v in acc.items()}
+    # 實體不動產（2026-08-22：GICS 分母=流動資產，不動產另行計列 — 避免誤讀為 0）
+    re_val = snap.get("real_estate_value", 0)
+    re_note = {
+        "金額": re_val,
+        "佔比_含不動產": (re_val / (total + re_val) * 100) if (total + re_val) else 0,
+        "note": "兩間房（大義街 1F店面24,000+2-3F住宅21,000、洲際W 33,000，+管理費2,100=80,100/月）；GICS 分母為流動金融資產（8/10 雙軌裁示），實體不動產另行計列",
+    }
     return {
         "日期": TODAY,
         "總資產": total,
         "產業": {k: {"金額": round(acc[k]), "佔比": round(pct[k], 1)} for k in acc},
+        "實體不動產_另計": re_note,
         "估算層級": {k: sorted(v)[:3] for k, v in src_notes.items()},
         "備註": "L1=公開月報權重 L2=公開成分權重 L3=指數基準 L4=名稱/類型推估；基金產業比重為估算（月報待精確化）",
     }
