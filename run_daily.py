@@ -635,70 +635,30 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     except Exception:
         _sector_html = ""
 
-    # GICS 產業分布（Phase 1，2026-08-22：讀 snapshot.industry_penetration，表格+圖嵌入日報）
-    _gics_html = ""
+    # 產業三塊（2026-08-22：日報改「一行摘要」模式 — 使用者確認產業分析週六檢查即可；完整版在再平衡儀表板）
+    _sector_line = ""
     try:
-        _snap_g = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
-        _gics = _snap_g.get("industry_penetration", {})
-        if _gics and _gics.get("產業"):
-            _rows = "".join(
-                f"<tr><td>{ind}</td><td style='text-align:right'>{v['金額']:,}</td><td style='text-align:right'>{v['佔比']:.1f}%</td></tr>"
-                for ind, v in sorted(_gics["產業"].items(), key=lambda x: -x[1]["金額"]) if v["金額"] > 0)
-            _gics_img = ""
-            _gics_png = Path(__file__).resolve().parent / f"industry_penetration_{TODAY}.png"
-            if _gics_png.exists():
-                _gics_img = (f"<img src='data:image/png;base64,{base64.b64encode(_gics_png.read_bytes()).decode('ascii')}' "
-                             f"style='width:100%;border-radius:8px;margin-top:6px'/>")
-            _re = _gics.get("實體不動產_另計", {})
-            _re_txt = (f"🏠 實體不動產另計：{_re.get('金額',0):,}（佔含不動產總資產 {_re.get('佔比_含不動產',0):.0f}%）"
-                       if _re else "")
-            _gics_html = (
-                "<div class='callout' style='margin-top:10px;border-left:3px solid #3b82f6'>"
-                f"<strong>🏭 GICS 產業分布（{_gics.get('日期','')}）</strong>"
-                f"<table style='width:100%;border-collapse:collapse;font-size:12px'><tr><th style='text-align:left'>產業</th>"
-                f"<th style='text-align:right'>金額</th><th style='text-align:right'>佔比</th></tr>{_rows}</table>"
-                f"{_gics_img}"
-                f"<div style='color:#94a3b8;font-size:11px;margin-top:4px'>{_re_txt}</div>"
-                f"<span style='color:#64748b;font-size:11px'>{_gics.get('備註','')}</span></div>")
+        _snap_x = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
+        _gics_x = _snap_x.get("industry_penetration", {}).get("產業", {})
+        _rot_x = _snap_x.get("rotation_recommendation", {})
+        _rs_x = json.loads((Path(__file__).resolve().parent / "radar_state.json").read_text(encoding="utf-8"))
+        _sf_x = _rs_x.get("sector_flow", {})
+        # 一行摘要：GICS 科技/醫療現況 + 資金流向總結 + 輪動建議
+        _tech_pct = _gics_x.get("資訊科技", {}).get("佔比", 0)
+        _med_pct = _gics_x.get("醫療保健", {}).get("佔比", 0)
+        _rot_sum = _rot_x.get("總結", "")
+        _tw_s = _sf_x.get("台股總結", "")
+        _re_x = _snap_x.get("industry_penetration", {}).get("實體不動產_另計", {}).get("金額", 0)
+        _re_x_txt = f"｜🏠 不動產 {_re_x:,}" if _re_x else ""
+        _sector_line = (
+            "<div class='callout' style='margin-top:10px;border-left:3px solid #8b5cf6'>"
+            f"<strong>🏭 產業摘要（週六再平衡詳查）</strong><br>"
+            f"<span style='font-size:12px'>GICS：科技 {_tech_pct:.1f}%（紅線30）｜醫療 {_med_pct:.1f}%（缺口）{_re_x_txt}<br>"
+            f"資金流向：{_tw_s or '—'}<br>"
+            f"🎯 {_rot_sum or '—'}"
+            f"<span style='color:#64748b;font-size:11px'>｜<a href='https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{TODAY}.html' style='color:#8b5cf6'>完整產業儀表板 →</a></span></span></div>")
     except Exception:
-        _gics_html = ""
-
-    # 產業資金流向（Phase 2：讀 radar_state.sector_flow，摘要嵌入日報）
-    _sflow_html = ""
-    try:
-        _rs = json.loads((Path(__file__).resolve().parent / "radar_state.json").read_text(encoding="utf-8"))
-        _sf = _rs.get("sector_flow", {})
-        if _sf:
-            _tw_s = _sf.get("台股總結", "")
-            _us_s = _sf.get("美股總結", "")
-            _sflow_html = (
-                "<div class='callout' style='margin-top:10px;border-left:3px solid #8b5cf6'>"
-                f"<strong>📡 產業資金流向（{_sf.get('generated_at','')[:16]}）</strong><br>"
-                f"<span style='font-size:12px'>{_tw_s}<br>{_us_s}</span></div>")
-    except Exception:
-        _sflow_html = ""
-
-    # 本週乾粉輪動建議（Phase 3：讀 snapshot.rotation_recommendation，嵌入日報）
-    _rot_html = ""
-    try:
-        _snap_r = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
-        _rot = _snap_r.get("rotation_recommendation", {})
-        if _rot and _rot.get("建議"):
-            _rot_rows = "".join(
-                f"<tr><td>{r['產業']}</td><td style='text-align:right'>{r.get('現況',0):.1f}%</td>"
-                f"<td style='text-align:right'>{r.get('資金分數',0):+d}</td><td>{r['動作']}</td>"
-                f"<td style='font-size:11px'>{'、'.join(r.get('標的',[]))}</td></tr>"
-                for r in _rot.get("建議", []))
-            _rot_av = "、".join(f"{r['產業']}({r['動作']})" for r in _rot.get("避開", [])[:3])
-            _rot_html = (
-                "<div class='callout' style='margin-top:10px;border-left:3px solid #22c55e'>"
-                f"<strong>🎯 本週乾粉輪動建議（{_rot.get('日期','')}）</strong><br>"
-                f"<b style='color:#16a34a'>{_rot.get('總結','')}</b>"
-                f"<table style='width:100%;border-collapse:collapse;font-size:12px'><tr><th style='text-align:left'>產業</th>"
-                f"<th style='text-align:right'>現況</th><th style='text-align:right'>資金分</th><th>動作</th><th>標的</th></tr>{_rot_rows}</table>"
-                f"<span style='color:#64748b;font-size:11px'>避開：{_rot_av}</span></div>")
-    except Exception:
-        _rot_html = ""
+        _sector_line = ""
 
     # 底層風險因子穿透圖（2026-08-22：每日重新生成 + base64 嵌入日報，隨 snapshot 更新）
     _chart_html = ""
@@ -1004,14 +964,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       <!-- 產業別穿透（2026-08-22 雙層監控第二層） -->
       {_sector_html}
 
-      <!-- GICS 產業分布（Phase 1） -->
-      {_gics_html}
-
-      <!-- 產業資金流向（Phase 2） -->
-      {_sflow_html}
-
-      <!-- 本週乾粉輪動建議（Phase 3） -->
-      {_rot_html}
+      <!-- 產業摘要一行版（2026-08-22：週六再平衡詳查，日報只顯示一行） -->
+      {_sector_line}
 
       <!-- 底層風險因子穿透圖（2026-08-22 每日更新） -->
       {_chart_html}
