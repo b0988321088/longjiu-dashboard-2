@@ -145,8 +145,10 @@ def calc_industry_penetration(snap: dict) -> dict:
             if w and v:
                 _add(dict(w), v, f"保單-{name}")
 
-    # 4) 第一金 FA81（聯博全球多元收益）
-    fj = snap.get("firstjin_fl65_current_value") or snap.get("firstjin_current_value") or 0
+    # 4) 第一金 FA81（聯博全球多元收益）— 2026-08-22 修正：讀 firstjin_detail 最新值（8/21 轉換後 1,992,265），舊 firstjin_fl65_current_value 是 FL65 時期市值
+    fj = (snap.get("firstjin_detail", {}).get("base_value_before_dividend")
+          or snap.get("firstjin_current_value")
+          or snap.get("firstjin_fl65_current_value") or 0)
     if fj:
         _add(dict(_FUND_IND["聯博全球多元收益"]), fj, "第一金FA81聯博")
 
@@ -155,6 +157,9 @@ def calc_industry_penetration(snap: dict) -> dict:
     acc["固收/現金"] += cash
 
     pct = {k: (v / total * 100 if total else 0) for k, v in acc.items()}
+    # 未分類（各基金「其他」權重 + 未匹配持倉）— 誠實標註，讓產業加總 = 總資產（2026-08-22）
+    acc["未分類(其他權重)"] = max(total - sum(v for k, v in acc.items() if k != "未分類(其他權重)"), 0)
+    pct["未分類(其他權重)"] = acc["未分類(其他權重)"] / total * 100 if total else 0
     # 實體不動產（2026-08-22：GICS 分母=流動資產，不動產另行計列 — 避免誤讀為 0）
     re_val = snap.get("real_estate_value", 0)
     re_note = {
