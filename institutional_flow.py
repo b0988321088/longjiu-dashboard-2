@@ -107,8 +107,8 @@ def fetch_twse(day=None):
 
 
 def fetch_cftc():
-    """CFTC COT 非商業淨多單（Socrata API 6dca-aqww，取代已下架的新舊 txt 檔）。
-    黃金/原油抓最新+前一期算週增減；美債10年 TFF 資料至 2022（v1 標待接）。回傳 {date, contracts}"""
+    """CFTC COT 非商業淨多單（Socrata API 6dca-aqww Legacy - Futures Only）。
+    黃金/原油抓最新+前一期算週增減；美債10年 CFTC 公開資料僅至 2022-02-01（改用 fetch_tnx 殖利率動能代理）。回傳 {date, contracts}"""
     ctx = SSL_CTX
     api = "https://publicreporting.cftc.gov/resource/6dca-aqww.json"
     specs = {
@@ -133,6 +133,21 @@ def fetch_cftc():
         except Exception as e:
             contracts[key] = {"error": str(e)[:60]}
     return {"date": contracts.get("黃金", {}).get("date"), "contracts": contracts}
+
+
+def fetch_tnx():
+    """10年美債殖利率動能（Yahoo ^TNX range=1mo）— 代理美債10年聰明錢方向（CFTC 公開資料僅至2022）。
+    殖利率↓ = 債券價格↑ = 聰明錢買債 → 債券綠燈。回傳 {date, last, momentum}"""
+    try:
+        raw = http_get("https://query1.finance.yahoo.com/v8/finance/chart/%5ETNX?range=1mo&interval=1d")
+        d = json.loads(raw.decode("utf-8"))
+        closes = d["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+        closes = [c for c in closes if c]
+        if len(closes) >= 2:
+            return {"date": date.today().isoformat(), "last": closes[-1], "momentum": (closes[-1] - closes[0]) / closes[0] * 100}
+    except Exception:
+        pass
+    return {"error": "TNX 抓取失敗"}
 
 
 def fetch_fed():
@@ -163,7 +178,7 @@ def fetch_twd():
 
 # ─────────────────────────── Signals ───────────────────────────
 
-def compute_signals(tw, cot, fed, twd, cfg, state):
+def compute_signals(tw, cot, fed, twd, tnx, cfg, state):
     """三色燈號。回傳 {signals: {類別: {color, note}}, summary}"""
     sig = {}
     c = cfg
@@ -190,8 +205,8 @@ def compute_signals(tw, cot, fed, twd, cfg, state):
         state.setdefault("twse", {})["外資連日"] = streak[-3:]
     sig["台股"] = {"color": tw_sig, "note": tw_note}
 
-    # 避險衛星（黃金/原油）+ 債券：COT 聰明錢方向
-    for key in ["黃金", "原油", "美債10年"]:
+    # 避險衛星（黃金/原油）：COT 聰明錢方向（美債10年改用 TNX 動能，見下方）
+    for key in ["黃金", "原油"]:
         cc = cot.get("contracts", {}).get(key)
         if not cc or cc.get("error"):
             sig[key] = {"color": "⚪", "note": "COT 資料待接（美債10年 CFTC 僅至2022）" if key == "美債10年" else "COT 無資料"}
@@ -208,6 +223,20 @@ def compute_signals(tw, cot, fed, twd, cfg, state):
         else:
             sig[key] = {"color": "🟡", "note": f"淨多單 {cc['net']:,} 週減 {chg*100:.1f}% — 觀望"}
         state.setdefault("cot", {})[key] = {"net": cc["net"], "date": cc["date"]}
+
+    # 美債10年：CFTC 公開資料僅至 2022 → 用 10Y 殖利率動能代理（殖利率↓=買債=順勢）
+    if tnx.get("momentum") is not None:
+        mom = tnx["momentum"]
+        if mom <= -2.0:
+            sig["美債10年"] = {"color": "🟢", "note": f"10Y殖利率月動能 {mom:+.1f}%（債價↑ 買債順勢）"}
+        elif mom <= 0:
+            sig["美債10年"] = {"color": "🟢", "note": f"10Y殖利率月動能 {mom:+.1f}%（緩步下行，偏順勢）"}
+        elif mom <= 3.0:
+            sig["美債10年"] = {"color": "🟡", "note": f"10Y殖利率月動能 {mom:+.1f}%（上行，債券觀望）"}
+        else:
+            sig["美債10年"] = {"color": "🔴", "note": f"10Y殖利率月動能 {mom:+.1f}%（急升，債券承壓）"}
+    else:
+        sig["美債10年"] = {"color": "⚪", "note": "TNX 資料待接"}
 
     # Fed 流動性
     if fed.get("total_assets"):
@@ -259,10 +288,11 @@ def main():
     cot = fetch_cftc()
     fed = fetch_fed()
     twd = fetch_twd()
+    tnx = fetch_tnx()
 
-    sig = compute_signals(tw, cot, fed, twd, cfg, state)
+    sig = compute_signals(tw, cot, fed, twd, tnx, cfg, state)
     state["last_run"] = datetime.now().isoformat()
-    state["data"] = {"twse": tw, "cot": cot, "fed": fed, "twd": twd}
+    state["data"] = {"twse": tw, "cot": cot, "fed": fed, "twd": twd, "tnx": tnx}
     state["signals"] = sig
     save_json(BASE / "radar_state.json", state)
 
