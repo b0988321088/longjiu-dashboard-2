@@ -46,6 +46,23 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
         locked = "（🔒LOCKED）" if v.get("locked") else ""
         lines.append(f"- {v.get('color','⚪')} {k}{locked}: {v.get('note','—')}")
 
+    # 二之一、資金訊號 × 投資狀況 × 動作（2026-08-23 核准：對照表嵌評估開頭）
+    sig_action = {
+        "台股": ("台股（7.2% 低配 -2.8pp）", "✅ 慢慢買：每週 1.5-2萬 0050/006208（單筆≤5萬）"),
+        "黃金": ("避險衛星（黃金≤5%）", "⏸ PI 後 131萬分3批 50/30/20；勿追高（今 +4.4%）"),
+        "原油": ("避險衛星（石油≤2%）", "⛔ 凍結：COT 機構撤離，延後建倉"),
+        "美債10年": ("債券（22.6% vs 目標25%）", "⏸ 等 US30Y<5.30% 才新增"),
+        "台幣": ("全資產（匯率）", "⚪ 中性：台幣走升，台股順勢加分"),
+    }
+    lines += ["", "## 二之一、資金訊號 × 投資狀況 × 動作", "",
+              "| 資金訊號 | 流向 | 影響資產（現況） | 建議動作 |", "|---|---|---|---|"]
+    for k in ["台股", "黃金", "原油", "美債10年", "台幣"]:
+        v = radar.get("signals", {}).get(k, {})
+        color = v.get("color", "⚪")
+        _a, _act = sig_action.get(k, ("—", "—"))
+        _note = v.get("note", "—").split("—")[0].strip()[:20]
+        lines.append(f"| {color} {k} | {_note} | {_a} | {_act} |")
+
     lines += ["", "## 三、緊急應變重點（併入再平衡）", ""]
     try:
         _em = load("data/emergency_llm_analysis.json", {})
