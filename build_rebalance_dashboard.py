@@ -61,7 +61,16 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     for name, light, desc, tag in actions:
         lines.append(f"- **{name}**（{tag}）：{desc}")
 
-    lines += ["", "## 五、乾粉與風險紅線", ""]
+    lines += ["", "## 五、🎯 本週交易計畫（明確買什麼）", ""]
+    try:
+        _rot = s.get("rotation_recommendation", {})
+        for p in _rot.get("交易計畫", []):
+            if p.get("金額", 0) > 0:
+                lines.append(f"- 買 **{p['標的']}** {p['金額']:,} 元｜{p['節奏']}（{p['理由']}）")
+    except Exception:
+        pass
+
+    lines += ["", "## 六、乾粉與風險紅線", ""]
     lines.append(f"- 當前乾粉：{dry_cur:,}（現金 − 70萬底線）｜9月：台股 12-24萬分批 + 黃金 131萬預留（PI後）＋ 石油 0（Locked）＋ 債券 0（等利率）")
     for name, val, limit, triggered in [
         ("US30Y", f"{us30y:.2f}%" if us30y else "—", "≥5.30%", us30y and us30y >= 5.30),
@@ -72,7 +81,7 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
         st = "🔴 觸發" if triggered else "🟢 安全"
         lines.append(f"- {name} {val}（{limit}）：{st}")
 
-    lines += ["", "## 六、里程碑時程", ""]
+    lines += ["", "## 七、里程碑時程", ""]
     for d, t2, lv in [("8/24（一）", "保單轉換 300萬 決策（科技→債，T+4 截止）", "high"),
                       ("8/31", "安聯B 贖回（補現金 + 抵借款 100萬）", "mid"),
                       ("9/3 前", "PI 認列 → 質押 350萬@2.77% 還債", "high"),
@@ -80,7 +89,7 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
                       ("10月", "洲際W 轉貸國泰（要求全額吸收規費）＋ 標案", "mid")]:
         lines.append(f"- {d}：{t2}")
 
-    lines += ["", "## 七、結論", f"**本週動作：只有「台股慢慢買」是主動項（每週 1.5-2萬 × 8-12 週），其餘全數按兵不動。**",
+    lines += ["", "## 八、結論", f"**本週動作：只有「台股慢慢買」是主動項（每週 1.5-2萬 × 8-12 週），其餘全數按兵不動。**",
               "最大等待：8/24 保單轉換決策 → 9/3 PI → 質押還債（4.2%→2.77%）。", ""]
     out = BASE / f"rebalance_summary_{TODAY}.md"
     out.write_text("\n".join(lines), encoding="utf-8")
