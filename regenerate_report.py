@@ -203,6 +203,10 @@ if _index_tpl.exists():
         _index_html = _index_html.replace(ph, val)
     (BASE / "index.html").write_text(_index_html, encoding="utf-8")
     print(f"✅ index.html ({len(_index_html):,} bytes)")
+    # 2026-08-23：刷新重要連結區（週報/月報/緊急/巴菲特/圖表指向最新檔，避免 __TODAY__ 壞連結；舊檔保留）
+    _lk = subprocess.run([sys.executable, str(BASE / "update_dashboard_links.py")], capture_output=True, text=True, timeout=30)
+    if _lk.stdout.strip():
+        print(_lk.stdout.strip().splitlines()[-1])
 
 h = OUT.read_text(encoding="utf-8")
 print(f"✅ {OUT.name} — {len(h):,} bytes")

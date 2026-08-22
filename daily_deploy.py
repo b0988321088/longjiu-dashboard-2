@@ -269,6 +269,11 @@ def main() -> None:
         print("[STOP] 內容保護未通過，停止推送。修復後重試。")
         return
     
+    # 1.6 刷新主儀表板重要連結（2026-08-23：週報/月報/緊急/巴菲特/圖表指向最新檔，舊檔保留）
+    _lk = subprocess.run([sys.executable, str(BASE / "update_dashboard_links.py")], capture_output=True, text=True, timeout=30)
+    if _lk.stdout.strip():
+        print(_lk.stdout.strip().splitlines()[-1])
+    
     # 2. 檢查
     if checklist_failed():
         print("[STOP] 檢查未過，停止推送")
