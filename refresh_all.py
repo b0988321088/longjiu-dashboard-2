@@ -39,9 +39,10 @@ def main() -> int:
     print("=" * 50)
 
     ok = True
-    ok &= _step("1/3 產業穿透重算", "industry_penetration.py")
-    ok &= _step("2/3 再平衡儀表板+評估（含輪動引擎+深度討論）", "build_rebalance_dashboard.py")
-    ok &= _step("3/3 主儀表板連結刷新", "update_dashboard_links.py")
+    ok &= _step("0/4 五桶穿透重算（update_all）", "update_all.py")
+    ok &= _step("1/4 產業穿透重算", "industry_penetration.py")
+    ok &= _step("2/4 再平衡儀表板+評估（含輪動引擎+深度討論）", "build_rebalance_dashboard.py")
+    ok &= _step("3/4 主儀表板連結刷新", "update_dashboard_links.py")
 
     if "--push" in sys.argv:
         print("\n▶ git commit + push")
