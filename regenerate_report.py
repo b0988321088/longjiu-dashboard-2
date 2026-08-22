@@ -42,13 +42,22 @@ from run_daily import calibrate_sources, render_daily_report, _inject_market_int
 # 1. 載入資料
 tv = calibrate_sources()
 
-# 2. 補 holdings_top3 + count
+# 2. 補 holdings_top3 + count（2026-08-23 修正：按市值排序+市值佔比，與 run_daily.py L1717 一致；
+#    原 ORDER BY shares 用股數 → 00983D 20,000股誤列第一 18.3%（8/22-23 日報實踩））
 db = sqlite3.connect(str(BASE / "dragon_assets.db"))
-rows = db.execute("SELECT ticker, shares FROM holdings WHERE shares > 0 ORDER BY shares DESC").fetchall()
+rows = db.execute("SELECT ticker, shares FROM holdings WHERE shares > 0").fetchall()
 db.close()
-total = sum(v for _, v in rows) or 1
-pcts = [round(v / total * 100, 1) for _, v in rows]
-tv["holdings_top3"] = [(r[0], pcts[i]) for i, r in enumerate(rows[:3])]
+# 市值 = shares × snapshot 現價（DB cost_price 是成本價非現價）
+try:
+    _snap_h = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")).get("securities", {}).get("holdings", [])
+    _snap_px = {_x.get("ticker"): _x.get("price", 0) for _x in _snap_h}
+except Exception:
+    _snap_px = {}
+_mv = [(r[0], r[1] * _snap_px.get(r[0], 0)) for r in rows]
+_mv.sort(key=lambda x: x[1], reverse=True)
+_stotal = sum(v for _, v in _mv) or 1
+pcts = [round(v / _stotal * 100, 1) for _, v in _mv]
+tv["holdings_top3"] = [(r[0], pcts[i]) for i, r in enumerate(_mv[:3])]
 tv["holdings_count"] = len(rows)
 
 # 3. 載入市場情報

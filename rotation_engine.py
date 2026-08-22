@@ -137,15 +137,20 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
     # 分配比例：醫療 40% / 高股息防禦 40% / 金融 20%（高股息=台股法人流入最強+防守優先裁示）
     alloc = {"醫療保健": 0.40, "高股息防禦": 0.40, "金融": 0.20}
     tickers = {"醫療保健": "00786(醫療)、00970B(醫療債)", "高股息防禦": "00878、00713、0056",
-               "金融": "0055(金融)、00878(含金融)"}
+               "金融": "0055(金融)"}
     reasons = {
         "醫療保健": "資金流入(美股XLV RS最強) + 低配缺口",
         "高股息防禦": "台股法人 +29百萬流入（最強）+ 防守優先裁示",
         "金融": "資金中性 + 金融 7.3% 穩健",
     }
-    # 高股息防禦直接納入（台股資金流入最強 + 8/20 防守優先）；其餘看 rec 建議
+    # 2026-08-23 修正：高股息防禦（00878/00713/0056）不再直接納入 —
+    # 8/21 裁示「防守承接凍結」（defensive_combined_metric 69.7% 已足），引擎須讀 snapshot 狀態
+    _dcm = snap.get("defensive_combined_metric", {}) or {}
+    _def_frozen = "凍結" in str(_dcm.get("裁示", "")) or float(_dcm.get("佔比", 0) or 0) >= 60
     rec_inds = {r["產業"] for r in rec.get("建議", [])}
-    target_inds = ["高股息防禦"] + [i for i in ["醫療保健", "金融"] if i in rec_inds]
+    target_inds = [i for i in ["醫療保健", "金融"] if i in rec_inds]
+    if not _def_frozen:
+        target_inds.insert(0, "高股息防禦")  # 防守合併未足（<60%）才買高股息
     used = 0
     for ind in target_inds:
         ratio = alloc.get(ind, 0.20)
