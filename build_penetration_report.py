@@ -53,7 +53,7 @@ snap["generated_at"] = datetime.now().isoformat()
 (BASE / "snapshot.json").write_text(json.dumps(snap, ensure_ascii=False, indent=2), encoding="utf-8")
 print(f"  穿透數據已自動校正並寫入 snapshot.json")
 holdings = snap.get("securities", {}).get("holdings", [])
-today = snap.get("date", date.today().isoformat())
+today = date.today().isoformat()  # 2026-08-22 修正：統一用今天（與日報/差異/週報一致）；原 snapshot.date 導致檔名落後一天、連結 404
 
 # Classify holdings
 def cat_ticker(t):
