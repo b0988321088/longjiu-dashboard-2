@@ -20,7 +20,7 @@ GICS_TARGETS = {
     "醫療保健": {"目標": 8.0, "note": "防禦缺口補強"},
     "核心消費": {"目標": 5.0, "note": "防禦缺口補強"},
     "公用事業": {"目標": 3.0, "note": "防禦缺口補強"},
-    "不動產": {"目標": 3.0, "note": "防禦缺口補強"},
+    "不動產": {"目標": 0.0, "note": "實體不動產 3,401萬 已超配（佔含不動產總資產 56%）— REITs 不建議加碼"},
     "非核心消費": {"目標": 5.0, "note": ""},
     "工業": {"目標": 5.0, "note": ""},
     "通訊服務": {"目標": 4.0, "note": ""},
@@ -130,6 +130,11 @@ def build_recommendation(industry_pen: dict, sector_flow: dict) -> dict:
 def main():
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     radar = json.loads((BASE / "radar_state.json").read_text(encoding="utf-8"))
+    # 實體資產扣減（2026-08-22：持有實體不動產 → 金融 REITs 目標歸零，避免引擎建議加碼已超配資產）
+    re_val = snap.get("real_estate_value", 0)
+    if re_val > 0:
+        GICS_TARGETS["不動產"]["目標"] = 0.0
+        GICS_TARGETS["不動產"]["note"] = f"實體不動產 {re_val/1e4:.0f}萬 已超配（含不動產總資產 {re_val/(snap.get('total_assets',0)+re_val)*100:.0f}%）— REITs 不建議加碼"
     rec = build_recommendation(snap.get("industry_penetration", {}), radar.get("sector_flow", {}))
     snap["rotation_recommendation"] = rec
     (BASE / "snapshot.json").write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
