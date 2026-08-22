@@ -691,13 +691,21 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         _med_pct = _gics_x.get("產業", {}).get("醫療保健", {}).get("佔比", 0)
         _rot_sum = _rot_x.get("總結", "")
         _tw_s = _sf_x.get("台股總結", "")
+        # 明確交易計畫（買什麼/金額/節奏 — 2026-08-22 使用者要求日報也要）
+        _tp_rows = ""
+        for _p in _rot_x.get("交易計畫", []):
+            if _p.get("金額", 0) <= 0:
+                continue
+            _tp_rows += (f"<tr><td>{_p['產業']}</td><td>{_p['標的']}</td>"
+                         f"<td style='text-align:right'><b>{_p['金額']:,}</b></td><td style='font-size:11px'>{_p['節奏']}</td></tr>")
         _sector_line = (
-            "<div class='callout' style='margin-top:10px;border-left:3px solid #8b5cf6'>"
-            f"<strong>📡 產業資金流向 ＆ 🎯 輪動建議（{_sf_x.get('generated_at','')[:16]}）</strong><br>"
-            f"<span style='font-size:12px'>GICS：科技 {_tech_pct:.1f}%（紅線30）｜醫療 {_med_pct:.1f}%（缺口）<br>"
-            f"資金流向：{_tw_s or '—'}<br>"
-            f"🎯 {_rot_sum or '—'}"
-            f"<span style='color:#64748b;font-size:11px'>｜<a href='https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{date.today().isoformat()}.html' style='color:#8b5cf6'>完整產業儀表板 →</a></span></span></div>")
+            "<div class='callout' style='margin-top:10px;border-left:3px solid #22c55e'>"
+            f"<strong>🎯 本週交易計畫（{_rot_x.get('日期','')}）</strong><br>"
+            f"<b style='color:#16a34a'>{_rot_sum or '—'}</b>"
+            f"<table style='width:100%;border-collapse:collapse;font-size:12px'><tr><th style='text-align:left'>產業</th>"
+            f"<th>買什麼</th><th style='text-align:right'>金額</th><th>節奏</th></tr>{_tp_rows}</table>"
+            f"<span style='color:#64748b;font-size:11px'>GICS：科技 {_tech_pct:.1f}%（紅線30）｜醫療 {_med_pct:.1f}%（缺口）｜"
+            f"<a href='https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{date.today().isoformat()}.html' style='color:#22c55e'>完整儀表板 →</a></span></div>")
     except Exception:
         _gics_html = ""
         _sector_line = ""
