@@ -5547,6 +5547,25 @@
         "資金流向",
         "Phase1-3"
       ]
+    },
+    {
+      "timestamp": "2026-08-22T16:01:57",
+      "action": "核准",
+      "name": "交易計畫明確化（買什麼/金額/節奏）+ LLM 分析產業脈絡整合",
+      "source": "user",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1787385717",
+      "summary": "rotation_engine 新增 build_trade_plan：乾粉=現金−70萬底線+月盈餘50%，醫療40%/高股息防禦40%/金融20%，輸出交易計畫(標的00878/00713/0056+00786/00970B 各54K×5批+現金28K)，同步日報/儀表板/評估md三處。巴菲特/CTO/CIO prompt 加產業脈絡(GICS+資金流向+輪動+風險因子)，CIO 加重試2次",
+      "detail": "user 稱讚『從底層風險因子推演』。實踩：①高股息防禦映射金融→GICS缺口小漏掉→直接納入 ②CIO 掉回靜態模板誤判LLM掛→查cache檔名發現TODAY=snapshot日期陷阱 ③三報表都要交易計畫，缺一使用者會發現。commits 749df70/afa05b1/a90086f",
+      "tags": [
+        "交易計畫",
+        "LLM",
+        "產業脈絡",
+        "rotation",
+        "CIO"
+      ]
     }
   ],
   "pending_decisions": [
