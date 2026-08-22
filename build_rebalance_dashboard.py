@@ -188,11 +188,17 @@ def main():
     pledge = s.get("質押計畫", {})
     ltv_txt = "未質押（9/3 PI 後 350萬@2.77%）"
 
-    # ── 本週乾粉輪動建議（Phase 3：讀 snapshot.rotation_recommendation）──
+    # ── 本週乾粉輪動建議（Phase 3：讀 snapshot.rotation_recommendation + 交易計畫）──
     rot_html = ""
     try:
         rot = s.get("rotation_recommendation", {})
         if rot and rot.get("建議"):
+            # 交易計畫（明確買什麼/金額/節奏）
+            tp_rows = ""
+            for p in rot.get("交易計畫", []):
+                tp_rows += (f"<tr><td><b>{p['產業']}</b></td><td>{p['標的']}</td>"
+                            f"<td class='num' style='color:#4ade80'>{p['金額']:,}</td>"
+                            f"<td style='font-size:11px'>{p['節奏']}</td></tr>")
             rec_rows = ""
             for r in rot.get("建議", []):
                 tgt_txt = f"目標 {r.get('目標')}%" if r.get("目標") else f"紅線 {r.get('紅線')}%"
@@ -204,12 +210,14 @@ def main():
                 av_rows += f"<tr><td>{r['產業']}</td><td class='num'>{r.get('現況',0):.1f}%</td><td>{r['動作']}</td><td style='font-size:10.5px'>{r['理由']}</td></tr>"
             rot_html = f"""
   <div class="card" style="margin-top:14px;border-left:4px solid #22c55e">
-    <h2>🎯 本週乾粉輪動建議（{rot.get('日期','')}）</h2>
+    <h2>🎯 本週交易計畫（{rot.get('日期','')}）</h2>
     <div style="font-size:13px;font-weight:800;color:#4ade80;margin-bottom:8px">{rot.get('總結','')}</div>
-    <table><tr><th>產業</th><th class="num">現況</th><th class="num">目標/紅線</th><th class="num">資金分</th><th>動作</th></tr>{rec_rows}</table>
+    <table><tr><th>產業</th><th>買什麼</th><th class="num">金額</th><th>節奏</th></tr>{tp_rows}</table>
+    <div style="margin-top:8px"><div style="font-size:12px;font-weight:700;color:#94a3b8">📊 產業判斷</div>
+    <table><tr><th>產業</th><th class="num">現況</th><th class="num">目標/紅線</th><th class="num">資金分</th><th>動作</th></tr>{rec_rows}</table></div>
     <div style="margin-top:8px"><div style="font-size:12px;font-weight:700;color:#94a3b8">⏸ 避開/暫緩</div>
     <table><tr><th>產業</th><th class="num">現況</th><th>動作</th><th>理由</th></tr>{av_rows}</table></div>
-    <div style="font-size:10.5px;color:var(--sub);margin-top:6px">引擎：資金流向（Phase2 雷達）× 產業缺口（Phase1 GICS）｜科技貼近紅線或流出時乾粉自動轉向</div>
+    <div style="font-size:10.5px;color:var(--sub);margin-top:6px">乾粉=現金−70萬底線+月盈餘50%；單筆≤5萬、分批；8/24 轉換/9/3 PI 前保留緩衝</div>
   </div>"""
     except Exception:
         rot_html = ""

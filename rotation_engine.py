@@ -127,6 +127,45 @@ def build_recommendation(industry_pen: dict, sector_flow: dict) -> dict:
     return {"日期": TODAY, "建議": top, "避開": avoid, "全產業": rows, "總結": summary}
 
 
+def build_trade_plan(rec: dict, snap: dict) -> list:
+    """明確交易計畫（2026-08-22：使用者要求「講清楚買什麼」）
+    乾粉 = 現金 − 70萬底線 + 月盈餘（保守取一半）；依建議優先序分配金額 + 分批節奏"""
+    cash = snap.get("cash_total", 0)
+    surplus = snap.get("monthly_income", 225918) - snap.get("monthly_expense", 152781)
+    dry = max(cash - 700000, 0) + surplus * 0.5  # 保守可動用
+    plan = []
+    # 分配比例：醫療 40% / 高股息防禦 40% / 金融 20%（高股息=台股法人流入最強+防守優先裁示）
+    alloc = {"醫療保健": 0.40, "高股息防禦": 0.40, "金融": 0.20}
+    tickers = {"醫療保健": "00786(醫療)、00970B(醫療債)", "高股息防禦": "00878、00713、0056",
+               "金融": "0055(金融)、00878(含金融)"}
+    reasons = {
+        "醫療保健": "資金流入(美股XLV RS最強) + 低配缺口",
+        "高股息防禦": "台股法人 +29百萬流入（最強）+ 防守優先裁示",
+        "金融": "資金中性 + 金融 7.3% 穩健",
+    }
+    # 高股息防禦直接納入（台股資金流入最強 + 8/20 防守優先）；其餘看 rec 建議
+    rec_inds = {r["產業"] for r in rec.get("建議", [])}
+    target_inds = ["高股息防禦"] + [i for i in ["醫療保健", "金融"] if i in rec_inds]
+    used = 0
+    for ind in target_inds:
+        ratio = alloc.get(ind, 0.20)
+        amt = int(dry * ratio / 1000) * 1000
+        if amt < 10000:
+            amt = 10000
+        batch = max(amt // 10000, 1)
+        plan.append({
+            "產業": ind,
+            "標的": tickers.get(ind, ""),
+            "金額": amt,
+            "節奏": f"分 {batch} 批 × {amt//batch//1000}千/週（單筆≤5萬）",
+            "理由": reasons.get(ind, ""),
+        })
+        used += amt
+    plan.append({"產業": "現金保留", "標的": "台幣活存/MMF", "金額": max(int((dry - used) / 1000) * 1000, 0),
+                 "節奏": "等 8/24 轉換 + 9/3 PI 再動", "理由": "乾粉餘額緩衝"})
+    return plan
+
+
 def main():
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     radar = json.loads((BASE / "radar_state.json").read_text(encoding="utf-8"))
@@ -136,6 +175,7 @@ def main():
         GICS_TARGETS["不動產"]["目標"] = 0.0
         GICS_TARGETS["不動產"]["note"] = f"實體不動產 {re_val/1e4:.0f}萬 已超配（含不動產總資產 {re_val/(snap.get('total_assets',0)+re_val)*100:.0f}%）— REITs 不建議加碼"
     rec = build_recommendation(snap.get("industry_penetration", {}), radar.get("sector_flow", {}))
+    rec["交易計畫"] = build_trade_plan(rec, snap)
     snap["rotation_recommendation"] = rec
     (BASE / "snapshot.json").write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"✅ rotation_recommendation 已寫入 snapshot（{TODAY}）")
