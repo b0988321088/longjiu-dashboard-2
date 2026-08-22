@@ -5489,6 +5489,26 @@
         "避險衛星",
         "現金底線"
       ]
+    },
+    {
+      "timestamp": "2026-08-22T09:28:56",
+      "action": "核准",
+      "name": "巴菲特/CTO/CIO 升級 LLM 真實分析（llm_analysis.py）",
+      "source": "user",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1787362136",
+      "summary": "使用者發現巴菲特/CTO/CIO 三區塊只是模板格式化非真分析，核准升級為 DeepSeek LLM 真實分析：llm_analysis.py 統一呼叫（讀 hermes .env key）；巴菲特/CTO 於 buffett_cto_analyzer LLM 優先、CIO 於 run_daily LLM 優先+日快取；prompt 內建硬性約束（現金不動/台股≤5萬/美股≤20萬/全台幣/債券等利率/石油Locked/衛星≤5%）防止 LLM 建議違反裁示；API 失敗自動 fallback 模板",
+      "detail": "8/22 實踩：無約束時 CTO 建議「減現金500萬/台股+300萬/兌美元轉日圓」全違反裁示；加硬性約束後合規。regenerate 自動鏈：buffett_cto_report 當日檔缺才跑，避免重複燒 API。commit 8de2559",
+      "tags": [
+        "LLM",
+        "巴菲特",
+        "CTO",
+        "CIO",
+        "分析升級",
+        "硬性約束"
+      ]
     }
   ],
   "pending_decisions": [
