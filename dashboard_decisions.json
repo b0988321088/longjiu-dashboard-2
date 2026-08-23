@@ -1,5 +1,5 @@
 {
- "last_updated": "2026-08-23T23:12:14",
+ "last_updated": "2026-08-23T23:26:31",
  "decisions": [
   {
    "id": "mem-20260823043543-0",
@@ -5806,6 +5806,16 @@
    "status": "✅ 核准執行",
    "tags": "三階段目標,結婚評估,還款checkpoint,財務規劃",
    "source": "user_approval"
+  },
+  {
+   "id": "mem-20260823232631-0",
+   "timestamp": "2026-08-23T23:26:31",
+   "agent": "Hermes",
+   "task": "BCP 12% PPLI 案列為不碰（紅旗全中）",
+   "summary": "Boulevard Capital Partners 12% 固定收益 PPLI 案：查證後紅旗全中（稀缺性/資格門檻/12%承諾/CRS規避說法/本金保證互斥/PPLI不隔離信用風險/牌照未證實）→ 列為不碰。教訓：12%超額報酬=本金全損風險交換；現有架構7-9%雖低但結構安全。已存 fact #484 紅旗清單供未來對照。",
+   "status": "✅ 不碰（高風險結案）",
+   "tags": "詐騙防範,BCP,高收益紅旗,投資紀律",
+   "source": "user_decision"
   }
  ],
  "pending_decisions": [
