@@ -178,35 +178,45 @@ def main():
     print("=" * 60)
 
 def report_from_db(rows):
-    """從 DB rows 產出趨勢報告（數字與日報一致）"""
+    """從 DB rows 產出趨勢報告（數字與日報一致）
+    2026-08-23 改淨值口徑：借款入帳（如國泰 1,200萬 8/20）資產負債同步增，總資產會誤報 +81%；
+    以淨值（總資產−總負債）計算變動/異常/結論。"""
     rows = sorted(rows, key=lambda r: r["date"])
     print("=" * 60)
     print(f"📊 龍九控股資產趨勢（dragon_assets.db 真值，最近 {len(rows)} 天）")
     print(f"📅 查詢日: {date.today()}")
     print("=" * 60)
-    print(f"{'日期':<12} {'總資產':>14} {'現金':>12} {'證券':>12} {'變動':>12} {'%':>7}")
+    print(f"{'日期':<12} {'總資產':>14} {'負債':>12} {'淨值':>12} {'現金':>12} {'淨值變動':>12} {'%':>7}")
     prev = None
     anomalies = []
     for r in rows:
         t = float(r["total_assets"] or 0)
+        liab_raw = r.get("total_liabilities")
+        if liab_raw in (None, ""):
+            nw = None  # 負債缺資料（歷史日）→ 淨值不計算，避免假爆增
+        else:
+            nw = t - float(liab_raw)
         cash = float(r["cash_total"] or 0)
-        sec = float(r["securities"] or 0)
         d = r["date"][:10]
+        if nw is None:
+            print(f"{d:<12} {t:>14,.0f} {'缺資料':>12} {'?':>12} {cash:>12,.0f} {'(負債缺)':>12}")
+            continue
         if prev is not None:
-            diff = t - prev
-            pct = diff / prev * 100
+            diff = nw - prev
+            pct = diff / abs(prev) * 100 if prev else 0
             flag = "🔴" if abs(pct) >= 5 else ""
             if abs(pct) >= 5:
                 anomalies.append((d, pct))
-            print(f"{d:<12} {t:>14,.0f} {cash:>12,.0f} {sec:>12,.0f} {diff:>+12,.0f} {pct:>+6.1f}% {flag}")
+            print(f"{d:<12} {t:>14,.0f} {float(liab_raw):>12,.0f} {nw:>12,.0f} {cash:>12,.0f} {diff:>+12,.0f} {pct:>+6.1f}% {flag}")
         else:
-            print(f"{d:<12} {t:>14,.0f} {cash:>12,.0f} {sec:>12,.0f} {'(基準)':>12}")
-        prev = t
+            print(f"{d:<12} {t:>14,.0f} {float(liab_raw):>12,.0f} {nw:>12,.0f} {cash:>12,.0f} {'(基準)':>12}")
+        prev = nw
 
     latest, earliest = rows[-1], rows[0]
-    net_change = float(latest["total_assets"]) - float(earliest["total_assets"])
-    net_pct = net_change / float(earliest["total_assets"]) * 100
-    print(f"\n▶ 期間淨變動: {net_change:+,.0f}（{net_pct:+.1f}%）")
+    def _nw(r): return float(r["total_assets"] or 0) - float(r.get("total_liabilities") or 0)
+    net_change = _nw(latest) - _nw(earliest)
+    net_pct = net_change / abs(_nw(earliest)) * 100 if _nw(earliest) else 0
+    print(f"\n▶ 期間淨值變動: {net_change:+,.0f}（{net_pct:+.1f}%）")
 
     print("\n▶ 主要類別變動（最新 vs 最舊）：")
     for label, key in [("現金", "cash_total"), ("證券", "securities"),
@@ -218,14 +228,14 @@ def report_from_db(rows):
             print(f"   {label}: {v0:,.0f} → {v1:,.0f}（{dd:+,.0f}）")
 
     if anomalies:
-        print("\n🚨 異常提醒（單日變動 ≥±5%）：")
+        print("\n🚨 異常提醒（單日淨值變動 ≥±5%）：")
         for d, p in anomalies:
             print(f"   {d}: {p:+.1f}%")
     else:
-        print("\n✅ 無異常（單日變動皆 <±5%）")
+        print("\n✅ 無異常（單日淨值變動皆 <±5%）")
 
     trend = "上升" if net_change > 0 else ("下降" if net_change < 0 else "持平")
-    print(f"\n📌 結論：最近 {len(rows)} 天資產{trend}（{net_change:+,.0f}，{net_pct:+.1f}%）。")
+    print(f"\n📌 結論：最近 {len(rows)} 天淨值{trend}（{net_change:+,.0f}，{net_pct:+.1f}%）。")
     print("=" * 60)
 
 if __name__ == "__main__":
