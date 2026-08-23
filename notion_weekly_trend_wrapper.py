@@ -192,8 +192,8 @@ def report_from_db(rows):
     for r in rows:
         t = float(r["total_assets"] or 0)
         liab_raw = r.get("total_liabilities")
-        if liab_raw in (None, ""):
-            nw = None  # 負債缺資料（歷史日）→ 淨值不計算，避免假爆增
+        if liab_raw in (None, "", 0):  # 缺資料（龍九恆有房貸/借款，0 = 未記錄）→ 淨值不計算
+            nw = None
         else:
             nw = t - float(liab_raw)
         cash = float(r["cash_total"] or 0)
