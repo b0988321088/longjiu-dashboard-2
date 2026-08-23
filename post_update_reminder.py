@@ -56,8 +56,16 @@ def main():
             pending.append(f"{d[5:]} {item[:60]}")
             if any(k in item for k in ("🔴", "⚠️", "核准", "確認", "執行", "申請", "準備", "簽", "回報")):
                 need_action.append(f"{d[5:]} {item[:50]}")
-    # ④ 結論：明確回答「還需要做什麼嗎？」
-    if need_action:
+    # ④ 結論：明確回答「還需要做什麼嗎？」+ SSoT 一致性
+    import subprocess
+    sso = subprocess.run(["python", os.path.join(REPO, "sso_t_consistency.py")],
+                         capture_output=True, text=True, timeout=60)
+    sso_out = sso.stdout.strip().splitlines()
+    sso_conflict = "🔴 DATA CONFLICT" in sso.stdout
+    if sso_conflict:
+        lines.append("🔴 DATA CONFLICT — 真值不一致，禁止「無需操作」結論")
+        lines.extend("  " + l for l in sso_out[:3])
+    elif need_action:
         lines.append("📌 需要你做：")
         lines.extend("  • " + a for a in need_action[:3])
     else:
