@@ -1950,24 +1950,33 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     _retire_expense = tv.get("monthly_expense", 141_958)
     html = html.replace("__RETIREMENT_INCOME__", fmt(_retire_income))
     html = html.replace("__RETIREMENT_SURPLUS__", f"+{fmt(_retire_income - _retire_expense)}")
-    # 本週完成清單（從 schedule_events.json 已完成的項目）
+    # 本週完成清單（2026-08-23 修正：移除 8/3-8/4 硬編碼舊事；只取近 7 天真實完成）
     _done_items = []
     try:
         _sch = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
+        _wk_ago = (date.today() - timedelta(days=7)).isoformat()
+        _today_s = date.today().isoformat()
         for _e in _sch:
-            if any(k in (_e.get("status", "") or "") for k in ["✅ 已", "✅ 完成", "已完成"]):
+            _st = _e.get("status", "") or ""
+            _dt = str(_e.get("date", ""))
+            # 只保留：status 已完成 + 日期在近 7 天（排除未來日期與 8/10 舊配息）
+            if any(k in _st for k in ["✅ 已", "✅ 完成", "已完成", "已入帳"]) and _wk_ago <= _dt <= _today_s:
                 _done_items.append(_e.get("item", ""))
-        # 固定近期完成（保留近一週，過期項移除）
-        _done_fixed = [
-            "國泰對保完成（8/3）",
-            "國泰地政設定申請（8/4）",
-            "M&G→摩根 轉換定案（8/3 執行）",
-        ]
-        for d in _done_fixed:
-            if d not in _done_items:
-                _done_items.append(d)
+        # 決策核准項（dashboard_decisions.json 近 7 天，task 非空 + status 含核准）
+        try:
+            _dd = json.loads((BASE / "dashboard_decisions.json").read_text(encoding="utf-8"))
+            _dlist = _dd.get("decisions", []) if isinstance(_dd, dict) else _dd
+            for _d in _dlist:
+                _ts = str(_d.get("timestamp", ""))[:10]
+                _t = str(_d.get("task", "") or _d.get("summary", "") or "").strip()
+                if _ts >= _wk_ago and "核准" in str(_d.get("status", "")) and _t and "日報" not in _t and "穿透" not in _t:
+                    _done_items.append((_t.split(" 2026")[0] if " 2026" in _t else _t)[:28])
+        except Exception:
+            pass
     except Exception:
-        _done_items = ["國泰對保完成（8/3）", "國泰地政設定申請（8/4）"]
+        _done_items = []
+    # 去重保留序
+    _seen = set(); _done_items = [x for x in _done_items if not (x in _seen or _seen.add(x))]
     _done_html = "".join(
         f'<div class="flex items-center gap-1"><span class="text-emerald-400">•</span><span class="text-slate-300">{d}</span></div>'
         for d in _done_items[:6]
