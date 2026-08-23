@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>龍九控股 動態自我檢討週報（戰術版+AI獲利輔助）2026-08-23</title>
+<style>
+:root { --bg:#0f172a; --card:#1e293b; --border:#334155; --txt:#e2e8f0; --sub:#94a3b8; --green:#34d399; --red:#f87171; --amber:#fbbf24; --blue:#60a5fa; --purple:#a78bfa; }
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { max-width:100%; overflow-x:hidden; }
+body { background:var(--bg); color:var(--txt); font-family:-apple-system,'Segoe UI','Noto Sans TC',sans-serif; padding:12px; line-height:1.55; }
+.wrap { max-width:860px; margin:0 auto; }
+.hero { background:linear-gradient(135deg,#1e293b,#0f172a); border:1px solid var(--border); border-radius:14px; padding:18px 14px; text-align:center; margin-bottom:12px; }
+.hero h1 { font-size:19px; font-weight:800; word-break:break-word; }
+.hero .date { color:var(--sub); font-size:13px; margin-top:4px; }
+.hero .tag { display:inline-block; background:rgba(251,191,36,.15); color:var(--amber); border:1px solid rgba(251,191,36,.3); border-radius:20px; padding:2px 12px; font-size:11px; margin-top:8px; }
+.hero .tag.blue { background:rgba(96,165,250,.15); color:var(--blue); border-color:rgba(96,165,250,.3); }
+.hero .tag.red { background:rgba(248,113,113,.15); color:var(--red); border-color:rgba(248,113,113,.3); }
+.kpis { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:12px; }
+.kpi { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; min-width:0; }
+.kpi .label { color:var(--sub); font-size:11px; font-weight:700; }
+.kpi .val { font-size:19px; font-weight:800; margin-top:2px; word-break:break-all; overflow-wrap:anywhere; }
+.kpi .delta { font-size:11px; margin-top:2px; word-break:break-all; }
+.up { color:var(--green); } .down { color:var(--red); } .warn { color:var(--amber); }
+.card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:12px; min-width:0; overflow:hidden; }
+.card h2 { font-size:15px; font-weight:800; margin-bottom:10px; display:flex; align-items:center; gap:6px; word-break:break-word; }
+.card h3 { font-size:13px; font-weight:800; margin:10px 0 6px; color:var(--blue); }
+.card table { width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed; }
+.card td, .card th { padding:6px 5px; border-bottom:1px solid var(--border); text-align:left; word-break:break-all; overflow-wrap:anywhere; vertical-align:top; }
+.card th { color:var(--sub); font-size:10px; text-transform:uppercase; }
+.num { text-align:right; font-variant-numeric:tabular-nums; font-weight:700; white-space:nowrap; }
+.pill { display:inline-block; padding:1px 8px; border-radius:10px; font-size:10px; font-weight:700; white-space:normal; word-break:break-all; }
+.pill.ok { background:rgba(52,211,153,.15); color:var(--green); }
+.pill.bad { background:rgba(248,113,113,.15); color:var(--red); }
+.pill.mid { background:rgba(251,191,36,.15); color:var(--amber); }
+.pill.info { background:rgba(96,165,250,.15); color:var(--blue); }
+.pill.purple { background:rgba(167,139,250,.15); color:var(--purple); }
+.action { display:flex; gap:8px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px; }
+.action:last-child { border-bottom:none; }
+.action .n { background:var(--purple); color:#fff; border-radius:50%; width:20px; height:20px; min-width:20px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; margin-top:1px; }
+.action div:last-child { word-break:break-all; overflow-wrap:anywhere; }
+.risk-row { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px; }
+.risk-row:last-child { border-bottom:none; }
+.risk-row span:first-child { word-break:break-all; overflow-wrap:anywhere; flex:1; }
+.risk-row span:last-child { text-align:right; word-break:break-all; }
+.note { color:var(--sub); font-size:11.5px; margin-top:6px; word-break:break-all; overflow-wrap:anywhere; }
+.callout { border-radius:10px; padding:10px 12px; font-size:12.5px; margin-top:10px; word-break:break-all; overflow-wrap:anywhere; }
+.callout.red { background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.4); }
+.callout.amber { background:rgba(251,191,36,.1); border:1px solid rgba(251,191,36,.4); }
+.callout.green { background:rgba(52,211,153,.1); border:1px solid rgba(52,211,153,.4); }
+.callout.blue { background:rgba(96,165,250,.1); border:1px solid rgba(96,165,250,.4); }
+.slogan { text-align:center; font-weight:800; color:var(--purple); padding:10px; border:1px dashed var(--purple); border-radius:10px; margin-top:10px; font-size:12px; word-break:break-word; }
+.why { font-size:12px; padding:6px 0; border-bottom:1px dashed var(--border); }
+.why b { color:var(--blue); }
+@media (min-width:640px){ .kpis { grid-template-columns:repeat(4,1fr); } }
+@media (max-width:400px){ .kpis { grid-template-columns:1fr 1fr; } .kpi .val { font-size:16px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hero">
+  <h1>🐉 龍九控股 動態自我檢討週報（戰術版 + AI獲利輔助）</h1>
+  <div class="date">📅 2026-08-23（週日）・ 涵蓋 8/16 → 8/23 ・ 數據截止 8/21 收盤 + 8/23 快照</div>
+  <span class="tag">🟡 中度輪動｜可信度 8/10（完整執行調幅，併警戒區約束）</span>
+  <span class="tag blue">🎯 8/20 國泰 1,200 萬撥款 ✅ → 8/21 富達600＋MMF500＋聯博100 全數到位（PI 認列期停泊）</span>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="label">總資產（流動）</div><div class="val">26,194,822</div><div class="delta up">▲ +11,640,076（8/20 撥款 1,200 萬部署）</div></div>
+  <div class="kpi"><div class="label">總負債</div><div class="val">30,176,284</div><div class="delta warn">▲ +12,027,608（國泰 1,200 萬新貸入帳・既定轉貸）</div></div>
+  <div class="kpi"><div class="label">淨值（流動口徑）</div><div class="val">-3,981,462</div><div class="delta warn">▼ 因新貸入帳暫擴（轉貸重組期）</div></div>
+  <div class="kpi"><div class="label">現金（Moneybook）</div><div class="val">800,272</div><div class="delta up">底線 70 萬 ✅ 超 100,272（8/15 裁示下修）</div></div>
+  <div class="kpi"><div class="label">US30Y</div><div class="val warn">5.28%</div><div class="delta">🔴 防禦警戒區（5.20-5.30）・凍結線 5.30% 差 2bp</div></div>
+  <div class="kpi"><div class="label">台股大盤（本週）</div><div class="val down">45,224.29</div><div class="delta down">▼ -1.38%（回檔・結構分歧：金融強/電子弱）</div></div>
+  <div class="kpi"><div class="label">常態月收入（8/22 基準）</div><div class="val">225,918</div><div class="delta">薪資 39,727＋房租 80,100＋配息 97,233＋其他</div></div>
+  <div class="kpi"><div class="label">美元曝險</div><div class="val warn">54-64%</div><div class="delta down">🔴 超 50% 紅/黃線（口徑差異）→ 新增美元只管控</div></div>
+</div>
+
+<!-- ============ 模組 0：資產架構調整指示卡（置頂） ============ -->
+<div class="card">
+  <h2>🎯 模組 0｜資產架構調整指示卡（全報第一眼）</h2>
+  <table>
+    <tr><th style="width:13%">類別</th><th style="width:10%">現在佔比</th><th style="width:12%">戰略目標區間</th><th style="width:17%">戰術目標區間</th><th style="width:10%">動作</th><th style="width:21%">執行細節</th><th style="width:17%">💡 完整分層原因</th></tr>
+    <tr>
+      <td>台股市值型成長</td>
+      <td class="num">7.2%<br><span class="pill mid">相較戰略中樞低配 2.8pp</span></td>
+      <td class="num">10%（5-15%，硬上限 15%）</td>
+      <td class="num">10-13%<br><span class="pill mid">相較戰略區間中樞上浮 3pp，🟡中度輪動標準調幅</span></td>
+      <td><span class="pill info">增持（慢慢買）</span></td>
+      <td>每週 1.5-2 萬 0050/006208 × 8-12 週，單筆 ≤5 萬；AI 理論精算 73.3 萬（缺口 2.8pp）→ 階段約束採慢慢買，不強求短期到位</td>
+      <td>👇 見下方三層</td>
+    </tr>
+    <tr>
+      <td>美股市值型成長</td>
+      <td class="num">43.9%<br><span class="pill bad">超配 +3.9pp</span></td>
+      <td class="num">40%</td>
+      <td class="num">37-40%<br><span class="pill mid">相較戰略區間中樞下浮 3pp，🟡中度輪動標準調幅</span></td>
+      <td><span class="pill bad">減碼</span></td>
+      <td>逢反彈分批減碼收斂至 40%，單次 ≤20 萬分批；8/21 已核准科技減碼 101.8 萬（15.2%→~11.3%）；AI 理論精算 102.2 萬</td>
+      <td>👇 見下方三層</td>
+    </tr>
+    <tr>
+      <td>防守型配息（高股息ETF口徑）</td>
+      <td class="num">4.2%<br><span class="pill mid">單看缺口 15.8pp（合併口徑 69.5% 已足）</span></td>
+      <td class="num">20%（合併口徑 ≥60%）</td>
+      <td class="num">20-23%<br><span class="pill mid">相較戰略區間中樞上浮 3pp，🟡中度輪動標準調幅</span></td>
+      <td><span class="pill ok">承接（除息後）</span></td>
+      <td>00878 8/18 已除息（1.01 元）→ 除息後低吸窗口開啟，週 1,000-1,200 股 ≤5 萬；乾粉交易計畫：高股息防禦 40%；AI 理論 414 萬屬口徑缺口，非真實缺口</td>
+      <td>👇 見下方三層</td>
+    </tr>
+    <tr>
+      <td>債券</td>
+      <td class="num">22.6%<br><span class="pill mid">相較戰略中樞低配 2.4pp</span></td>
+      <td class="num">25%</td>
+      <td class="num">25%<br><span class="pill ok">🟢觀察訊號：戰術目標與戰略完全一致（防禦模式約束）</span></td>
+      <td><span class="pill bad">凍結新增</span></td>
+      <td>停止新增買進；等質押完成（PI 9/3 前）＋US30Y &lt;5.30% 才補碼；00983D 永久凍結；警戒區不主動大筆新增</td>
+      <td>👇 見下方三層</td>
+    </tr>
+    <tr>
+      <td>現金/安全網</td>
+      <td class="num">22.1%<br><span class="pill ok">底線制取代 5% 目標</span></td>
+      <td class="num">底線制 70 萬</td>
+      <td class="num">底線制 70 萬<br><span class="pill ok">🟢觀察訊號：與戰略一致</span></td>
+      <td><span class="pill ok">保留</span></td>
+      <td>800,272 ≥ 70 萬 ✅（超 100,272）；22.1% 含 MMF 500 萬停泊乾粉（PI 認列期）非超配；超額部署收益資產，不囤現金</td>
+      <td>👇 見下方三層</td>
+    </tr>
+    <tr>
+      <td>避險衛星（黃金/石油）</td>
+      <td class="num">~0%<br><span class="pill info">8/24 黃金 30 萬轉換待生效</span></td>
+      <td class="num">≤7%（黃金≤5%＋石油≤2%）</td>
+      <td class="num">≤7%<br><span class="pill ok">🟢觀察訊號：與戰略一致（待 PI）</span></td>
+      <td><span class="pill info">待 PI 建倉</span></td>
+      <td>PI 後 131 萬分 3 批（50/30/20）：00635U 黃金 ~105 萬＋00642U 石油 ~26 萬，台幣計價不增美元曝險；石油 COT 撤離 → 凍結延後；單次 ≤20 萬逢回檔</td>
+      <td>👇 見下方三層</td>
+    </tr>
+  </table>
+
+  <h3>💡「為什麼」分層書寫（配置偏差數據 → 板塊資金輪動訊號 → 核貸/利率階段約束）</h3>
+  <div class="why"><b>① 配置偏差數據：</b>美股 43.9% 超配 +3.9pp 為最大偏離（AI 理論減碼 102.2 萬，8/21 已核准科技減碼 101.8 萬執行中）；台股 7.2% 相較戰略中樞低配 2.8pp（缺口 73.3 萬，慢慢買）；防守 4.2% 單看缺口 15.8pp 惟合併口徑 69.5% 已足（8/22 裁示勿誤導）；債券 22.6% 相較戰略中樞低配 2.4pp（凍結中）；現金 22.1% 含 MMF 500 萬停泊乾粉（底線制，非超配）；美元曝險 54-64% 超 50% 紅/黃線。</div>
+  <div class="why"><b>② 板塊資金輪動訊號：</b>🟡 中度輪動（可信度 8/10）——確定收益板塊承接：金融 2881 +6.77%、高股息 00919 +1.52%/00713 +1.48%、法人流入高股息防禦 +2,899 萬、外資 ETF 買超 00878/00919；科技流出：法人 -7,473 萬、鴻海 -3.73%、美股 XLK RS -0.8；外資連 3 日買超（3.2 億/日，小額）；台幣強升 31.82；單日脈衝（8/21 翻紅 +290 點、2881 單日 +4.69%）已扣分 → 台股/防守戰術上浮 3pp、美股/科技下浮 3pp。</div>
+  <div class="why"><b>③ 核貸/利率階段約束：</b>國泰 1,200 萬 8/20 撥款 ✅ → 8/21 富達 600＋MMF 500＋聯博 100 全數到位 → PI 認列期（9/3 前）停泊不動本金；US30Y 5.28% 防禦警戒區（5.20-5.30）→ 債券停止新增（距凍結線僅 2bp）；現金底線 70 萬優先於一切加碼；8/24 保單轉換 300 萬（PIMCO120＋M&G100＋醫療50＋黃金30）→ 降科技/美元集中。</div>
+
+  <div class="callout amber">🚨 擁擠風險短句：人多的地方有危險，熱門ETF有擁擠交易風險，資金集中湧入一旦情緒反轉容易放大回檔；00878/00919 除息前後資金卡位，禁止大筆追漲，僅限回檔小額分批承接；檢視底層持股重疊避免表面分散實質集中。監控 4 指標：規模暴增／持續明顯溢價(&gt;IOPV)／交易同質化／市場敘述單一；任一標的出現 → 收斂新增。</div>
+
+  <div class="callout amber">📌 週報精簡版：利率環境偏緊（5.28% 防禦警戒區），暫不適合大額布局市值型標的；美股持續減碼收斂超配部位（逢反彈 ≤20 萬/批）；台股市值僅慢慢買（單筆 ≤5 萬）；資金優先鞏固現金與防守部位。進場限制解除需同時滿足：US30Y 連續 3 日 &lt;5.20% + 負債結構穩定 + 現金安全墊充足（目前未滿足）。</div>
+
+  <h3>💰 本週調度資金總額預估（AI 精算 × 階段約束）</h3>
+  <table>
+    <tr><th>項目</th><th class="num">AI 理論精算</th><th class="num">階段約束後實際區間</th><th>說明</th></tr>
+    <tr><td>美股減碼</td><td class="num">1,021,598</td><td class="num">0-40 萬（1-2 批）</td><td>單次 ≤20 萬分批；逢反彈才執行，無反彈不強賣；科技減碼 101.8 萬為保單內部轉換已核准</td></tr>
+    <tr><td>台股慢慢買</td><td class="num">733,455（缺口全額）</td><td class="num">1.5-2 萬/週</td><td>0050/006208 × 8-12 週，單筆 ≤5 萬；警戒區週額度 ≤50 萬</td></tr>
+    <tr><td>00878 除息後承接</td><td class="num">—</td><td class="num">≤5 萬/週</td><td>週 1,000-1,200 股；乾粉交易計畫高股息防禦 40%</td></tr>
+    <tr><td>債券</td><td class="num">628,676（理論）</td><td class="num">0</td><td>凍結；等質押完成＋US30Y &lt;5.30%</td></tr>
+    <tr><td>避險衛星</td><td class="num">1,309,741（PI 後）</td><td class="num">0（本週）</td><td>PI 認列後分 3 批 50/30/20；8/24 黃金 30 萬為保單轉換非新資金</td></tr>
+    <tr><td class="num" style="font-weight:800">合計預估</td><td class="num" style="font-weight:800">—</td><td class="num" style="font-weight:800">2-47 萬</td><td>保守執行，以觸發條件為準；現金底線 70 萬優先</td></tr>
+  </table>
+
+  <div class="slogan">🔒 AI 僅輸出數據分析、配置建議、買賣節奏、風險預警，絕不產生自動下單指令；所有操作需人工審核確認後執行，禁止任何全自動代操邏輯。操作建議優先級：國泰核貸授信管制 ＞ 5.30% 債券凍結紅線 ＞ 戰術浮動邊界 ＞ AI 順勢配置建議。</div>
+</div>
+
+<!-- ============ 模組 1：數據動態回顧 ============ -->
+<div class="card">
+  <h2>1️⃣ 數據動態回顧（8/16 → 8/21 收盤）</h2>
+  <table>
+    <tr><th>項目</th><th class="num">7 日前</th><th class="num">今日</th><th class="num">增減</th><th>歸因</th></tr>
+    <tr><td>總資產（流動）</td><td class="num">14,554,746</td><td class="num">26,194,822</td><td class="num up">+11,640,076</td><td>國泰 1,200 萬撥款部署（人為調度・既定計畫）</td></tr>
+    <tr><td>總負債</td><td class="num">18,148,676</td><td class="num">30,176,284</td><td class="num warn">+12,027,608</td><td>國泰 1,200 萬新貸入帳（人為調度・2.6% 低息承接高息債）</td></tr>
+    <tr><td>證券市值</td><td class="num">2,910,460</td><td class="num">2,826,480</td><td class="num down">-83,980</td><td>台股回檔 -1.38%＋00878 除息 1.01 元（不可控波動）</td></tr>
+    <tr><td>保單現值</td><td class="num">10,023,277</td><td class="num">9,766,831</td><td class="num down">-256,446</td><td>第一金 FL65 轉聯博＋估值調整（人為調度＋不可控波動）</td></tr>
+    <tr><td>基金市值</td><td class="num">831,883</td><td class="num">12,801,239</td><td class="num up">+11,969,356</td><td>富達 600＋MMF 500＋聯博 100 到位（人為調度）</td></tr>
+    <tr><td>現金</td><td class="num">789,126</td><td class="num">800,272</td><td class="num up">+11,146</td><td>撥款 1,200 萬進出後淨額（人為調度）</td></tr>
+  </table>
+  <div class="callout blue">📌 歸因結論：本週 +1,164 萬增量主因為 <b>可規避／人為可控</b> 的撥款部署（8/20 定案執行，方向正確）；證券 -8.4 萬為 <b>不可控波動</b>（市場回檔＋00878 機械性除息）；保單 -25.6 萬為轉換調度。無違紀操作；現金 80.0 萬守住 70 萬底線 ✅。</div>
+</div>
+
+<!-- ============ 模組 2：策略自我檢討 ============ -->
+<div class="card">
+  <h2>2️⃣ 策略自我檢討</h2>
+  <h3>✅ 做對（人為操作正確）</h3>
+  <div class="action"><span class="n">1</span><div><b>撥款部署執行到位</b>：8/20 撥款入帳 → 8/21 富達 600 萬＋MMF 500 萬＋聯博 100 萬全數到位（T+2 8/23 入帳），資金停泊不閒置，PI 認列期維持金融資產水位（~2,822 萬，逼近 3,000 萬門檻）——人為可控・正面。</div></div>
+  <div class="action"><span class="n">2</span><div><b>科技超紅線減碼核准執行</b>：科技 15.2% 超紅線 → 8/21 核准減碼 101.8 萬（貝萊德科技A10 89.8 萬轉 PIMCO/M&amp;G＋鉅亨半導體 12 萬贖回）→ 科技 ~11.3%，提前收斂集中風險。</div></div>
+  <div class="action"><span class="n">3</span><div><b>新資金優先累積型裁示</b>：8/21 裁示停止新增月配級別（避免本金侵蝕），既有月配不強制贖回——防守架構品質提升。</div></div>
+  <div class="action"><span class="n">4</span><div><b>口徑修正防誤導</b>：8/22 修正防守為合併口徑 ≥60%（69.5% 已足）、現金 5% 由底線制取代，避免 4.2%/22.1% 單看誤導決策。</div></div>
+  <div class="action"><span class="n">5</span><div><b>除息週紀律</b>：00878 8/18 除息週未追高、未大筆買入，符合「除息前不追高」節奏；外資 ETF 買超 00878/00919 時未跟風追漲。</div></div>
+  <h3>❌ 待優化（人為操作失誤／可改善）</h3>
+  <div class="action"><span class="n">1</span><div><b>美股 ETF 超配 +3.9pp 收斂未啟動</b>：本週減碼集中在保單科技轉換（101.8 萬），美股 ETF 桶 0 批減碼。<b>改善</b>：下週設定批次觸發（美股 ETF 單日反彈 +1% 即啟動一批 ≤20 萬），Truist 5-8% 下行警示下不延遲。</div></div>
+  <div class="action"><span class="n">2</span><div><b>00878 除息後低吸未執行</b>：8/18 除息後窗口已開啟（含除息 -4.06%），本週資金忙於撥款部署未承接。<b>改善</b>：下週啟動乾粉交易計畫（高股息防禦 40%），週 1,000-1,200 股 ≤5 萬。</div></div>
+  <div class="action"><span class="n">3</span><div><b>美元曝險超線</b>：54-64% 超 50% 紅/黃線（富達 600 萬＋聯博 100 萬美元計價推升）。<b>改善</b>：新增美元投資只管控不推薦（引擎已鎖），衛星/防守優先台幣計價（00635U 等）；PI 後質押還款降低槓桿。</div></div>
+  <div class="action"><span class="n">4</span><div><b>台股 7.2% 低配推進緩慢</b>：外資連 3 日買超（小額 3.2 億/日）未積極低吸。<b>改善</b>：下週回檔小單（單筆 ≤5 萬、週 1.5-2 萬），慢慢買向 10%，不追高。</div></div>
+  <div class="callout green">✅ 歸因分離：本週重大變動全為 <b>人為可控</b> 的撥款部署（既定計畫、執行到位）；證券端 -8.4 萬為 <b>純市場波動</b>（不可控）。無重大操作失誤，待優化屬「執行節奏偏慢」（美股 ETF 減碼／00878 低吸未啟動）。</div>
+</div>
+
+<!-- ============ 模組 3：全域環境變化判斷 ============ -->
+<div class="card">
+  <h2>3️⃣ 全域環境變化判斷</h2>
+
+  <h3>子模組 1｜宏觀利率</h3>
+  <table>
+    <tr><th>項目</th><th>數值</th><th>狀態</th></tr>
+    <tr><td>US30Y 水位</td><td class="num">5.28%（8/21-23，上週 5.24% ▲ +4bp）</td><td><span class="pill bad">🔴 防禦警戒區</span></td></tr>
+    <tr><td>三門檻檢核</td><td>4.90% 解鎖（未達）｜5.20% 防禦（已觸發）｜5.30% 債券凍結（未觸發，差 2bp）</td><td><span class="pill mid">警戒</span></td></tr>
+    <tr><td>驅動因素</td><td>美債供給壓力（財政部擴大債券回購仍未能壓低長端）＋美伊情勢推升油價（WTI 87.1）；10Y 4.74% 上行、月動能 +2.4%</td><td><span class="pill info">供給＋地緣</span></td></tr>
+  </table>
+
+  <h3>子模組 2｜市場流動性 ＆ 板塊資金輪動</h3>
+  <table>
+    <tr><th style="width:12%">訊號等級</th><th style="width:21%">流入板塊</th><th style="width:21%">流出板塊</th><th style="width:13%">輪動類型</th><th style="width:19%">佐證數據</th><th style="width:14%">噪音過濾說明</th></tr>
+    <tr>
+      <td><span class="pill mid">🟡 中度輪動</span></td>
+      <td>確定收益（金融 2881 +6.77%、高股息 00919 +1.52%/00713 +1.48%、法人流入高股息防禦 +2,899 萬、外資 ETF 買超 00878/00919）；美股醫療 XLV +9.5%（RS +7.1）、能源 XLE +7.5%</td>
+      <td>科技/電子（法人 -7,473 萬、2317 -3.73%、XLK RS -0.8）；食品 -2,901 萬；塑化 -2,495 萬；公用 XLU -6.9%；0050 外資賣超 -189.5 萬</td>
+      <td>科技 → 確定收益（高股息＋金融）資金遷移</td>
+      <td>TAIEX 45,224.29（-1.38% 回檔）；外資連 3 日買超 3.2 億/日（小額）；台幣 31.82 強升（週 -0.53%）；00878 8/18 除息 1.01 元；2881 單日 +4.69%</td>
+      <td>①單日消息脈衝行情（8/21 翻紅 +290 點、2881 單日 +4.69% — 單一日行情不構成持續趨勢，需連續 3 日法人數據驗證）②外資買超金額小（3.2 億 vs 上週單日 756 億），連續性有、強度弱</td>
+    </tr>
+  </table>
+  <div class="callout blue">📊 本週輪動可信度：8 / 10。扣分規則：單日消息脈衝(-2)、全市場普漲普跌(0，本週結構分歧非普漲普跌)、無連續 3 日法人數據驗證(0，有連 3 日惟小額)；基礎滿分 10 分。<b>→ ≥8 分：完整執行戰術目標調倉（調幅 ±3pp，併警戒區分批約束）。</b></div>
+
+  <h3>子模組 3｜題材與總體訊號（每條綁定配置啟示 + 反向風險連動）</h3>
+  <div class="action"><span class="n">1</span><div><b>美伊情勢新發展推升油價（WTI 87.1）</b> → 配置啟示：地緣風險支撐黃金避險邏輯（黃金 20 日 +11.5%），衛星配置維持；<b>反向風險</b>：油價續升 → 通膨/殖利率壓力 → 30Y 逼近 5.30 凍結線，債券持續警戒。</div></div>
+  <div class="action"><span class="n">2</span><div><b>長天期美債殖利率居高（US30Y 5.28%、10Y 4.74% 上行）</b> → 配置啟示：債券新增凍結維持、美股減碼不延遲；<b>反向風險</b>：突破 5.30% → 全域 TAA 凍結（含質押部署時程），為當前最大系統性風險。</div></div>
+  <div class="action"><span class="n">3</span><div><b>台股收復季線緩步墊高＋外資連 3 日買超（小額）＋台幣強升</b> → 配置啟示：台股慢慢買（戰術上浮 3pp 至 13%）；<b>反向風險</b>：金額小驗證弱，外資轉賣超即回檔風險 → 僅回檔小單、單筆 ≤5 萬。</div></div>
+  <div class="action"><span class="n">4</span><div><b>確定收益輪動確立（金融＋高股息法人流入）</b> → 配置啟示：防守/配息優先承接，00878 除息後低吸窗口開啟；<b>反向風險</b>：熱門高股息擁擠交易（00878/00919），禁止大筆追漲，僅回檔小額分批。</div></div>
+  <div class="action"><span class="n">5</span><div><b>科技流出＋8/21 核准科技減碼 101.8 萬（15.2%→~11.3%）</b> → 配置啟示：科技集中風險收斂中；<b>反向風險</b>：Truist 5-8% 下行警示 — 即便資金流入科技仍壓低美股減碼速度、<b>不延遲減碼</b>。</div></div>
+  <div class="action"><span class="n">6</span><div><b>黃金 20 日 +11.5%（4,624）＋COT 淨多單 222,189 週增 1.9%</b> → 配置啟示：PI 後 131 萬分 3 批（50/30/20）建衛星，台幣計價 00635U；<b>反向風險</b>：短線過熱（今 +4.4%）勿追高，逢回檔分批、單次 ≤20 萬。</div></div>
+  <div class="action"><span class="n">7</span><div><b>川普 50% 關稅／加美貿易戰升溫（8/23）</b> → 配置啟示：貿易風險升 → 現金緩衝優先序再提高；<b>反向風險</b>：風險資產波動加大，觸發「暫停所有權值大額加碼」條件之一。</div></div>
+
+  <h3>子模組 4｜個人里程碑【階段約束權威來源】</h3>
+  <table>
+    <tr><th style="width:34%">里程碑</th><th style="width:22%">狀態</th><th>約束效力</th></tr>
+    <tr><td>國泰核貸 1,200 萬 @2.6%</td><td>✅ <b>8/20 撥款入帳</b>（Moneybook 確認）</td><td>撥款後部署完成：8/21 富達 600＋MMF 500＋聯博 100 全數到位；三年寬限期；9/20 起月繳 26,000 付息</td></tr>
+    <tr><td>PI 認列（專業投資人）</td><td>⏳ 進行中（8/20 送件 → 9/3 前）</td><td>期間 MMF 停泊不動本金；認列後 → 質押富達 350 萬@2.77% 還安聯 300 萬@4.2%＋元大 50 萬@3.92%</td></tr>
+    <tr><td>科技減碼 101.8 萬</td><td>✅ 8/21 核准執行</td><td>貝萊德科技A10 89.8 萬轉 PIMCO/M&amp;G＋鉅亨半導體 12 萬贖回；科技 15.2% → ~11.3%</td></tr>
+    <tr><td>保單轉換</td><td>✅ 8/21 FL65→聯博；⏳ 8/24 轉換 300 萬生效</td><td>8/24：PIMCO 120＋M&amp;G 100＋醫療 50＋黃金 30 → 降科技/美元集中；8/31 安聯B 贖回（補現金＋抵借款 100 萬）</td></tr>
+    <tr><td>避險衛星 131 萬</td><td>🟢 8/21 核准（PI 後執行）</td><td>00635U 黃金 ~105 萬＋00642U 石油 ~26 萬，分 3 批 50/30/20；石油 COT 撤離 → 凍結延後</td></tr>
+    <tr><td>單筆 5 萬管制（台股）</td><td>🔒 持續生效</td><td>台股市值僅單筆 ≤5 萬、回檔小額分批低吸；週額度 ≤50 萬（警戒區）</td></tr>
+    <tr><td>美股減碼</td><td>🔒 持續生效</td><td>單次調度 ≤20 萬分批；核貸完成（8/20）後觸發條件已滿足 → 逢反彈啟動</td></tr>
+    <tr><td>債券凍結</td><td>🔒 持續生效</td><td>停止新增買進；US30Y ≥5.30% 全域凍結（含部署買債）；等質押＋US30Y &lt;5.30% 才補碼</td></tr>
+    <tr><td>現金底線</td><td>🔒 強制生效</td><td>70 萬（8/15 裁示下修，原 85 萬；8/19 重申）；800,272 ✅ 超 100,272</td></tr>
+    <tr><td>00983D</td><td>🔒 永久凍結</td><td>不買不賣不攤平（持 20,000 股 @10.08）</td></tr>
+  </table>
+  <div class="note">📅 除息行事曆：本週 <b>8/18 = 00878 除息（季配 1.01 元，✅ 已除息）</b>；下週 8/24-8/28 無除息；9 月：00919 9/16、00981A 9/16、00918 9/18、00713 9/19、009824 9 月。9 月中：富達/聯博首次配息入帳 → 更新配息基準。</div>
+</div>
+
+<!-- ============ 模組 4：下週策略動態修正 ============ -->
+<div class="card">
+  <h2>4️⃣ 下週策略動態修正（承接 0 號指示卡 + 環境）</h2>
+  <table>
+    <tr><th style="width:13%">標的</th><th style="width:14%">上週操作</th><th style="width:20%">下週調整動作</th><th style="width:18%">觸發執行條件</th><th style="width:18%">暫停操作門檻</th><th style="width:17%">背後邏輯</th></tr>
+    <tr>
+      <td>00878（15,000 股・48.57 萬）</td>
+      <td>除息週：除息前不追高</td>
+      <td><b>除息後低吸承接</b>：週 1,000-1,200 股 ≤5 萬；乾粉交易計畫高股息防禦 40% 第一順位</td>
+      <td>8/18 已除息 ✅（1.01 元）＋高股息板塊低吸窗口（法人流入 +2,899 萬）</td>
+      <td>單日 &gt;3% 當週停買；溢價 &gt;IOPV 收斂新增</td>
+      <td>除息後低吸＝領息＋低成本；00919/00713 本週轉強（+1.5%）確認高股息資金回流</td>
+    </tr>
+    <tr>
+      <td>0050/006208（21.0/48.0 萬）</td>
+      <td>回檔小單觀望</td>
+      <td>慢慢買：每週 1.5-2 萬 × 8-12 週（單筆 ≤5 萬），不追高</td>
+      <td>外資連 2 日買超（✅ 本週連 3 日）＋指數回檔（✅ -1.38%）</td>
+      <td>單日 &gt;3%；外資轉賣超當週暫停</td>
+      <td>外資連 3 日小額買超＋台幣強升；本週回檔即低吸窗口；戰術上浮 3pp 至 13% 但慢慢買</td>
+    </tr>
+    <tr>
+      <td>00983D／債券</td>
+      <td>00983D 凍結；債券停買</td>
+      <td>00983D 永久凍結；債券新增凍結，等質押＋US30Y &lt;5.30% 才補碼</td>
+      <td>質押完成（PI 認列 9/3 前）＋US30Y 連續 3 日 &lt;5.20% 或回落至 5.30% 內並穩定</td>
+      <td>US30Y ≥5.30% 全域凍結；00983D 永久凍結</td>
+      <td>5.28% 距凍結線僅 2bp；債券補碼以經理人代管為主，不買單一純債 ETF</td>
+    </tr>
+    <tr>
+      <td>美股（穿透 1,150.0 萬・43.9%）</td>
+      <td>科技減碼 101.8 萬核准（保單轉換）</td>
+      <td>逢反彈分批減碼收斂至 40%；單次 ≤20 萬分批；優先科技</td>
+      <td>核貸完成（8/20 撥款 ✅ 已滿足）＋美股反彈（單日 +1%）</td>
+      <td>US30Y 急升或二次探底；單日大跌不殺低（改反彈批次）</td>
+      <td>超配 +3.9pp；AI 精算 102.2 萬受階段約束 → 每週 1-2 批（20-40 萬）；Truist 警示不延遲</td>
+    </tr>
+    <tr>
+      <td>防守配息 ETF（00713/00919/0056/00918）</td>
+      <td>除息週觀望</td>
+      <td>除息後低吸：00878 &gt; 00919 &gt; 00713 &gt; 0056；乾粉高股息防禦 40%</td>
+      <td>高股息防禦法人流入（✅ +2,899 萬）＋回檔小單窗口</td>
+      <td>單日 &gt;3%；00713 RS 連 2 週走弱降順位（本週 +1.48% 轉強 → 恢復順位）</td>
+      <td>確定收益輪動確立；資金優先順序：現金緩衝＞防守資產＞台股彈性標的</td>
+    </tr>
+    <tr>
+      <td>避險衛星（00635U/00642U）</td>
+      <td>待 PI 建倉定案（8/21 核准）</td>
+      <td>PI 後 131 萬分 3 批（50/30/20）；00635U 台幣計價優先；石油凍結</td>
+      <td>PI 認列（9/3 前）＋黃金回檔（不追 +11.5% 高位）</td>
+      <td>黃金短線過熱（單日 &gt;4% 不追）；石油 COT 未轉正不建倉</td>
+      <td>黃金 COT 淨多單增（+1.9%）＋台幣強升；美元曝險超線 → 台幣計價衛星為替代配置</td>
+    </tr>
+    <tr>
+      <td>現金/安全網（800,272）</td>
+      <td>保留（底線 70 萬）</td>
+      <td>維持 ≥70 萬；超額部署收益資產（MMF 500 萬停泊至 PI 認列）</td>
+      <td>—（被動守線）</td>
+      <td>低於 70 萬 → 停止一切新增投資</td>
+      <td>乾粉 100,272（現金−底線）；PI 認列後質押還款釋放現金流</td>
+    </tr>
+  </table>
+  <div class="callout green">🔗 全域邏輯鏈斷鏈檢核：<b>資金輪動訊號</b>（確定收益板塊流入、科技流出、外資連 3 日小額買超、台幣強升、可信度 8/10）→ <b>戰術目標調整</b>（台股 10-13% 上浮 3pp、美股 37-40% 下浮 3pp、防守 20-23% 上浮 3pp，完整執行調幅）→ <b>標的操作</b>（00878 除息後承接／0050 外資連 2 日＋回檔慢慢買／美股 ≤20 萬分批減碼／債券凍結等質押／衛星 PI 後分批）——完整串聯 ✅ 無斷鏈。</div>
+  <div class="callout amber">📌 AI 波段擇時標準節奏：① 高股息板塊短期流出 → 開啟回檔低吸週期（本週法人流入 +2,899 萬 → 00878 除息後低吸啟動）② 權值單日大漲脈衝 → 當週暫停追高，需外資連 2 日買超才分批補倉（8/21 翻紅 +290 點屬單日脈衝，追高禁區）③ 當週 ETF 除息 → 除息前不追高，等待除息後低吸窗口（8/18 00878 已適用 ✅，本週無新除息）。</div>
+</div>
+
+<!-- ============ 模組 5：風險紅線逐條檢核 ============ -->
+<div class="card">
+  <h2>5️⃣ 風險紅線逐條檢核</h2>
+  <div class="risk-row"><span>① 現金底線 70 萬（8/15 裁示下修，原 85 萬）：現金 800,272</span><span><span class="pill ok">✅ 安全</span>（超 100,272；乾粉 100,272）</span></div>
+  <div class="risk-row"><span>② 債券 5.30% 全域凍結紅線：US30Y 5.28%</span><span><span class="pill ok">✅ 未觸發</span>（差 2bp；5.20% 防禦已生效 → 警戒區停買）</span></div>
+  <div class="risk-row"><span>③ 階段管制（國泰授信）：8/20 撥款 ✅ → 部署完成</span><span><span class="pill ok">✅ 撥款後階段</span>（PI 認列期停泊；質押 350 萬待 PI 後；單筆 5 萬/美股 20 萬分批持續）</span></div>
+  <div class="risk-row"><span>④ 美股超配 +3.9pp（最大偏離）</span><span><span class="pill mid">⚠️ 待處理</span>（逢反彈分批減碼收斂 40%；科技減碼 101.8 萬已核准）</span></div>
+  <div class="risk-row"><span>⑤ 戰術目標偏離 ≥3pp：台股（7.2% vs 戰術 13% = -5.8pp）、美股（43.9% vs 37-40% = +3.9~6.9pp）</span><span><span class="pill mid">⚠️ 黃色觀察</span>「順勢調整幅度過大，存在反向回調風險」→ 分批放慢</span></div>
+  <div class="risk-row"><span>⑥ 可信度 &lt;7 分且偏移 ≥3pp → 紅色強警示</span><span><span class="pill ok">✅ 未觸發</span>（8/10；惟外資買超金額小，維持分批節奏）</span></div>
+  <div class="risk-row"><span>⑦ 與上週戰術目標變動 &gt;2pp：美股 27-30% → 37-40%、台股 15-18% → 10-13%、債券 30% → 25%</span><span><span class="pill mid">⚠️ 觀察</span>（8/22 口徑修正所致，非輪動訊號；監控反向回調）</span></div>
+  <div class="risk-row"><span>⑧ 00878 除息（8/18 已除息 1.01 元，本週 -4.06% 含機械性除息）</span><span><span class="pill mid">⚠️ 監控貼息/填息</span>；貼息 → 低吸窗口延長</span></div>
+  <div class="risk-row"><span>⑨ 擁擠交易（00878/00919/熱門高股息）：監控規模暴增/溢價&gt;IOPV/交易同質化/敘述單一</span><span><span class="pill mid">⚠️ 監控中</span>（禁止大筆追漲，僅回檔小額承接）</span></div>
+  <div class="risk-row"><span>⑩ 00983D 虧損部位</span><span><span class="pill ok">✅ 永久凍結</span>（不攤平、不買不賣）</span></div>
+  <div class="risk-row"><span>⑪ 美元曝險 54-64% 超 50% 紅/黃線（富達 600＋聯博 100 美元計價推升）</span><span><span class="pill bad">🔴 紅色警示</span>（新增美元投資只管控不推薦；衛星/防守優先台幣計價）</span></div>
+  <div class="risk-row"><span>⑫ 科技穿透曝險 ~11.3-13.8%（8/21 減碼 101.8 萬後，紅線 30%）</span><span><span class="pill ok">✅ 安全</span>（集中風險收斂中）</span></div>
+  <div class="risk-row"><span>⑬ 總股票曝險（台+美穿透）51.1%（上限 55%）</span><span><span class="pill ok">✅ 未超限</span></span></div>
+  <div class="callout red">🔴 AI 拐點前置風險預警（提前 1-2 週）：<b>US30Y 距凍結線僅 2bp</b>——10Y 4.74% 上行＋美伊油價推升，若突破 5.30% → 全域 TAA 凍結、債券補碼與質押部署時程延後，為最大系統性風險；<b>科技流出確認</b>（法人 -7,473 萬、鴻海 -3.73%）→ 8/21 減碼 101.8 萬執行中，若費半轉弱反彈減碼窗口恐消失，不延遲；<b>00878 除息後 -4.06%</b> → 監控貼息/填息；<b>黃金 20 日 +11.5% 短線過熱</b> → 衛星 131 萬僅逢回檔分批，禁止追高；<b>美元曝險超 50% 紅/黃線</b> → 新增美元投資凍結；<b>外資買超金額小（3.2 億/日）</b> → 若轉賣超，台股低吸暫停。</div>
+  <div class="note">🚦 彙總：✅ 安全 7 項（①②③⑥⑩⑫⑬）／⚠️ 待處理 5 項（④⑤⑦⑧⑨）／🔴 紅色 1 項（⑪ 美元曝險）。</div>
+</div>
+
+<div class="card">
+  <h2>📋 AI 獲利輔助全域模組（本週套用摘要）</h2>
+  <div class="action"><span class="n">1</span><div><b>AI 真假輪動過濾</b>：輸入法人 3 日買超（3.2 億/日）＋板塊成交（高股息防禦 +2,899 萬/科技 -7,473 萬）＋RS（2881 +6.77%、XLK -0.8）＋ETF 申贖（外資買 00878/00919、賣 0050）＋單日催化標籤（8/21 翻紅 +290 點、2881 +4.69%）→ 判為「科技 → 確定收益」結構性遷移；單日脈衝降權重（扣 2 分）；僅連續 3 日同向為有效順勢（✅ 外資連 3 日，惟金額小）；輸出避坑：易追高脈衝行情（2881/8-21 大漲），分批放慢已套用。</div></div>
+  <div class="action"><span class="n">2</span><div><b>AI 動態戰術權重</b>：🟡中度輪動(±3pp)＋可信度 8/10(完整執行)＋防禦警戒區(5.28%)＋PI 認列期 → 台股戰術 10-13%（慢慢買 ≤5 萬/筆）、美股 37-40%（≤20 萬/批）、防守 20-23%（00878 除息後低吸）、債券 25%（凍結）；未破 ±4pp 邊界、未破台股 28% 硬鎖與 15% 硬上限。</div></div>
+  <div class="action"><span class="n">3</span><div><b>AI 板塊內 ETF 強弱精選</b>：承接順序 = 00878（8/18 已除息 → 低吸）&gt; 00919（+1.52%）&gt; 00713（+1.48% 轉強恢復順位）&gt; 0056；暫停條件：單日 &gt;3%；0050 需外資連 2 日買超＋回檔（✅ 本週連 3 日）。</div></div>
+  <div class="action"><span class="n">4</span><div><b>AI 拐點前置預警</b>：US30Y 逼近凍結線（差 2bp）／科技流出確認／00878 貼息監控／黃金過熱／美元曝險超線／外資買超金額小 — 6 項已輸出（見模組 5 紅色 callout）。</div></div>
+  <div class="action"><span class="n">5</span><div><b>AI 長線再平衡</b>：防禦模式（≥5.20% 警戒）→ 放緩美股布局、高股息防禦優先級提升、債券新增凍結 ✅ 已套用；美股持續超配＋科技資金流出 → 強制分批減碼規劃 ✅（含科技 101.8 萬核准）；低配＋資金流入（台股）→ 週期性低吸計畫 ✅（每週 1.5-2 萬 × 8-12 週）。</div></div>
+  <div class="action"><span class="n">6</span><div><b>AI 宏觀系統風險對衝</b>：30Y 高檔（5.28% 距凍結 2bp）＋美伊油價＋貿易戰升溫 → 風險等級維持「防禦警戒」；美元曝險超線 → 新增美元投資凍結；未觸發「多重利空疊加」之全面暫停（VIX 15.13 回落、恐慌未至）。</div></div>
+  <div class="callout red">⛔ 禁止執行清單（永久鎖死）：不產生任何券商 API 自動下單/全權代操指令；不推薦高頻短線隔日交易；不突破戰略上下限、現金 70 萬底線、各標的暫停門檻；不忽略月底窗飾、單日脈衝噪音直接給激進加減碼建議。</div>
+</div>
+
+<div class="slogan">🐉 一句話總結：🟡 中度輪動（確定收益承接、科技流出、外資連 3 日小額買超、可信度 8/10）｜調度節點：8/20 國泰 1,200 萬撥款 → 8/21 富達600＋MMF500＋聯博100 到位，PI 認列期（9/3 前）停泊｜操作方向：台股慢慢買（≤5 萬/筆）、美股逢反彈減碼（≤20 萬/批）、00878 除息後低吸、債券凍結等質押、現金守 70 萬底線。</div>
+
+<div class="note" style="text-align:center; margin-top:10px;">🐉 龍九控股・動態自我檢討週報（戰術版+AI獲利輔助）2026-08-23 ・ 資料來源：snapshot.json / Yahoo Finance（0050/006208/0056/00878/00919/00713/2330/2317/2891/2881 本週 5d 表現）/ radar_state 法人籌碼 / us30y_state.json / ETF除息行事曆 ・ AI 僅供決策輔助，所有操作需人工審核</div>
+
+</div>
+</body>
+</html>
