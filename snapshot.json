@@ -658,7 +658,7 @@
  "monthly_expense_source": "snapshot canonical baseline ~142K（MB 扣除非生活支出誤分類後吻合）",
  "cathay_refinance_note": "大義街轉貸（國泰 1,200萬 @2.6%）：✅ 8/20 撥款已入帳（Moneybook 確認 12,000,000）；三年寬限期。8/20 定案：600萬富達全球動能多元（B股C月配美元）＋600萬MMF停泊 → PI認列~2週 → 質押富達5成借300萬@2.77%還安聯保單借貸300萬@4.2% → MMF轉10月標案預備金5-600萬。洲際W 預計 10月 直接向國泰轉貸，兩間一起三年寬限期",
  "policy_pledge_loan": 4000000,
- "policy_pledge_loan_note": "含安联A 2M + 安联B 1M + 第一金 1M；利率 4%（2026-08-05 使用者確認）",
+ "policy_pledge_loan_note": "含安聯A 2M + 安聯B 1M + 第一金 1M；利率 4%（2026-08-05 使用者確認）；用途：5-6月為達國泰 VIP AUM 500萬門檻（放兩個月）借款，VIP 已由 8/21 MMF 500萬（國泰台灣貨基）自然達成，借款使命完成待 9/3 質押 350萬@2.77% 還掉（2026-08-23 使用者確認）",
  "rent_monthly_target": 80100,
  "rent_monthly_gap": 56100,
  "passive_income_coverage": 0.6819,
