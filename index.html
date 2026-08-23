@@ -183,6 +183,24 @@
       dt.innerHTML = h;
     }).catch(function(){});
   }
+  var wn = document.getElementById('weekly-nw');
+  if(wn){
+    fetch('snapshot.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(s){
+      var bd = s.net_worth_weekly_breakdown;
+      if(bd && bd.net_worth_change !== undefined){
+        var fmt = function(v){var s2=v>=0?'+':'';return s2+Math.round(v).toLocaleString('zh-TW');};
+        var col = bd.net_worth_change>=0 ? '#16a34a' : '#dc2626';
+        var h = '<div style="font-size:12px;color:#5b21b6;font-weight:800;margin-bottom:6px">📡 本週淨資產變動拆解（'+bd.period+'｜即時）</div>';
+        h += '<div style="font-size:12.5px">淨資產變動：<b style="color:'+col+'">'+fmt(bd.net_worth_change)+'</b></div>';
+        h += '<div style="font-size:11.5px;color:#6b7280;margin-left:8px">├─ 市場性：'+fmt(bd.market)+' 🟡（市場波動）</div>';
+        if(bd.transaction !== undefined) h += '<div style="font-size:11.5px;color:#6b7280;margin-left:8px">├─ 帳務/交易性：'+fmt(bd.transaction)+'</div>';
+        h += '<div style="font-size:11.5px;color:#2563eb;margin-left:8px">└─ 資金成本：'+fmt(bd.cost_of_capital)+' 🔵（固定）</div>';
+        h += '<div style="font-size:11.5px;margin-top:6px;padding:6px 8px;background:#eef2ff;border-radius:6px">判斷：<b>'+(bd.judgment||'')+'</b></div>';
+        h += '<div style="font-size:10.5px;color:#6b7280;margin-top:4px">→ 週看「變動來源」；月/季才看資金效率（資產增長 vs 資金成本）</div>';
+        wn.innerHTML = h;
+      }
+    }).catch(function(){});
+  }
 })();
 </script>
 <!-- 🚨 風險提示（2026-08-23 更新） -->
@@ -235,6 +253,11 @@
 <h3 style="color:#92400e;font-size:14px;font-weight:800;margin:0 0 6px">📡 機構流向雷達 ＆ 🎯 本週交易計畫（2026-08-23 統籌版）</h3>
 <p style="color:#1f2937;font-size:12.5px;margin:0">燈號：台股🟢🔥（外資淨買超連3日+台幣強升）｜黃金🟢🔥（COT淨多單週增）｜原油🔴（機構撤離，Locked）｜美債10年🟡（動能+2.4%貼近凍結線）</p>
 <p style="color:#1f2937;font-size:12px;margin-top:6px;line-height:1.7">🎯 交易計畫（統籌）：乾粉 136,000 全現金保留（防守凍結＋醫療由 8/24 保單健康科學A2 50萬涵蓋＋PI 前不動本金）｜8/24 保單轉換 300萬（PIMCO 120+M&G 100+醫療 50+黃金 30）｜9/3 PI 質押 350萬還債｜台股慢慢買 每週 1.5-2萬（0050/006208，配息流+結餘非乾粉）｜黃金衛星 PI 後 131萬 分3批</p>
+</div>
+        <!-- 📡 本週淨資產 vs 資金成本（2026-08-23） -->
+        <div id="weekly-nw" style="border:1px solid #8b5cf6;background:#f5f3ff;border-radius:12px;padding:14px;margin-bottom:14px">
+<h3 style="color:#5b21b6;font-size:14px;font-weight:800;margin:0 0 6px">📡 本週淨資產 vs 資金成本</h3>
+<p style="color:#6b7280;font-size:11.5px;margin:0">載入中…（讀取 snapshot + 資產歷史）</p>
 </div>
         <!-- 護城河水位計 -->
         <div class="luxury-card p-6">
