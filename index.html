@@ -53,7 +53,7 @@
     </div>
 </header>
 
-<!-- 🔗 重要連結（2026-08-23 更新：9報表+2圖表；每日檔用 __TODAY__，其餘由 update_dashboard_links.py 自動刷新最新檔） -->
+<!-- 🔗 重要連結（2026-08-23 更新：9報表+2圖表；每日檔用 2026-08-23，其餘由 update_dashboard_links.py 自動刷新最新檔） -->
 <div class="mb-4 p-4 rounded-xl bg-slate-900/70 border border-slate-700/60">
     <div class="flex items-center gap-2 mb-3">
         <span class="text-slate-200 font-bold text-sm">🔗 重要連結</span>
@@ -63,10 +63,10 @@
         <a href="daily_report_v2_2026-08-23.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📰 日報</a>
         <a href="asset_diff_2026-08-23.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📈 差異分析</a>
         <a href="rebalance_dashboard_2026-08-23.html" class="text-xs bg-slate-800/80 hover:bg-emerald-600/30 border border-emerald-700 rounded-lg px-3 py-2 text-emerald-200 transition">🔄 再平衡儀表板</a>
-        <a href="__PEN_REPORT__" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📊 穿透分析</a>
-        <a href="weekly_report_2026-08-22.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📋 週報</a>
+        <a href="penetration_report_2026-08-23.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📊 穿透分析</a>
+        <a href="weekly_report_2026-08-23.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📋 週報</a>
         <a href="dynamic_monthly_review_2026-07.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📅 月報（7月）</a>
-        <a href="__EMERGENCY_REPORT__" class="text-xs bg-slate-800/80 hover:bg-red-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">🚨 緊急應變</a>
+        <a href="emergency_report_2026-08-21.html" class="text-xs bg-slate-800/80 hover:bg-red-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">🚨 緊急應變</a>
         <a href="rebalance_summary_2026-08-23.md" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📌 再平衡評估</a>
         <a href="buffett_cto_report_2026-08-23.md" class="text-xs bg-slate-800/80 hover:bg-purple-600/30 border border-purple-700 rounded-lg px-3 py-2 text-purple-200 transition">🧠 巴菲特/CTO</a>
         <a href="industry_penetration_2026-08-23.png" class="text-xs bg-slate-800/80 hover:bg-teal-600/30 border border-teal-700 rounded-lg px-3 py-2 text-teal-200 transition">🖼 產業穿透圖</a>
@@ -201,7 +201,8 @@
     <div class="flex items-center gap-2 mb-2">
         <span class="text-emerald-400 font-bold text-sm">✅ 本週完成清單</span>
     </div>
-    <div class="grid grid-cols-2 gap-2 text-xs"><div class="flex items-center gap-1"><span class="text-emerald-400">•</span><span class="text-slate-300">國泰1,200萬核貸撥款後，優先償還安聯保單借貸 300萬</span></div><div class="flex items-center gap-1"><span class="text-emerald-400">•</span><span class="text-slate-300">國泰VIP 最低資格維持（不為 VIP 多放資金）</span></div><div class="flex items-center gap-1"><span class="text-emerald-400">•</span><span class="text-slate-300">DAA v3 宏觀動態評估引擎定案 A 版</span></div><div class="flex items-center gap-1"><span class="text-emerald-400">•</span><span class="text-slate-300">8/21 核准：科技 15.2% 超紅線 → 減碼 101.8萬</span></div><div class="flex items-center gap-1"><span class="text-emerald-400">•</span><span class="text-slate-300">8/21 核准：PI 後撥 131萬 建避險衛星（黃金+石油）</span></div><div class="flex items-center gap-1"><span class="text-emerald-400">•</span><span class="text-slate-300">系統升級全套核准（產業深度討論/對照表/儀表板 JS 化）</span></div><div class="flex items-center gap-1"><span class="text-emerald-400">•</span><span class="text-slate-300">✅ 0050 配息確認 0.6元（7/21除息，8/10發放）</span></div><div class="flex items-center gap-1"><span class="text-emerald-400">•</span><span class="text-slate-300">國泰對保完成（8/3）</span></div><div class="flex items-center gap-1"><span class="text-emerald-400">•</span><span class="text-slate-300">國泰地政設定申請（8/4）</span></div><div class="flex items-center gap-1"><span class="text-emerald-400">•</span><span class="text-slate-300">M&G→摩根 轉換定案（8/3 執行）</span></div>
+    <div class="grid grid-cols-2 gap-2 text-xs">
+    <div class="text-slate-500">（本週尚無完成事項）</div>
 </div>
 
 <!-- 頂層導航 -->
