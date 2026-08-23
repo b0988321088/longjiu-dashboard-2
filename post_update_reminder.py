@@ -43,21 +43,29 @@ def main():
         flag = "🔴" if us30y >= red else ("🟡" if us30y >= 5.15 else "🟢")
         lines.append(f"US30Y {us30y:.2f}% {flag}（凍結線 {red}%）")
 
-    # ③ 近期待辦（schedule_events 未來 14 天）
+    # ③ 近期待辦（schedule_events 未來 14 天）+ 需要使用者動作的
     evs = rd("schedule_events.json")
     if isinstance(evs, dict):
         evs = evs.get("events", evs.get("items", []))
     pending = []
+    need_action = []
     for e in evs:
         d = str(e.get("date", ""))
         if d and d >= today and d <= (datetime.date.today() + datetime.timedelta(days=14)).strftime("%Y-%m-%d"):
-            pending.append(f"{d[5:]} {str(e.get('item',''))[:60]}")
+            item = str(e.get("item", ""))
+            pending.append(f"{d[5:]} {item[:60]}")
+            if any(k in item for k in ("🔴", "⚠️", "核准", "確認", "執行", "申請", "準備", "簽", "回報")):
+                need_action.append(f"{d[5:]} {item[:50]}")
+    # ④ 結論：明確回答「還需要做什麼嗎？」
+    if need_action:
+        lines.append("📌 需要你做：")
+        lines.extend("  • " + a for a in need_action[:3])
+    else:
+        lines.append("📌 需要你做：無（🟢 綠燈，目前沒有需要你介入的事項）")
     if pending:
-        lines.append("📌 近期待辦：")
-        lines.extend("  • " + p for p in pending[:5])
+        lines.append("📌 近期待辦（未來事件）：")
+        lines.extend("  • " + p for p in pending[:4])
 
-    # ④ 結論
-    lines.append("🚦 狀態：🟢 綠燈，無需操作（有異常系統會主動通知）")
     print("\n".join(lines))
 
 if __name__ == "__main__":
