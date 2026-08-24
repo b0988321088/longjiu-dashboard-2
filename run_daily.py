@@ -1410,7 +1410,23 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             f"<th class='num'>偏離pp</th><th>動作</th><th class='num'>精算金額</th><th>階梯</th><th>觸發條件</th></tr></thead>"
             f"<tbody>{_rows_html}</tbody></table>{_freeze_note}"
         )
-        html = html.replace("__TACTICAL_TABLE__", _tactical_html)
+        # 2026-08-24：產業/衛星動態（DAA 依市場狀況調整比例：黃金/健康/科技等）
+        _sat_html = ""
+        _sat_rows = ""
+        for _s in _tbl.get("衛星動態", []):
+            _sat_rows += (
+                f"<tr><td>{_s['產業']}</td><td>{_s['動作']}</td>"
+                f"<td style='font-size:11px'>{_s['標的']}</td></tr>"
+            )
+        if _sat_rows:
+            _sat_html = (
+                "<div class='callout' style='margin-top:8px;border-left:3px solid #f59e0b'>"
+                "<strong>📡 產業/衛星動態調整（依市場狀況）</strong>"
+                "<table style='width:100%;border-collapse:collapse;font-size:12px;margin-top:4px'>"
+                "<tr><th style='text-align:left'>產業/衛星</th><th>動作</th><th>標的</th></tr>"
+                f"{_sat_rows}</table></div>"
+            )
+        html = html.replace("__TACTICAL_TABLE__", _tactical_html + _sat_html)
     except Exception as _e:
         html = html.replace("__TACTICAL_TABLE__", f"<div style='color:#999;font-size:12px'>對策表產生失敗: {_e}</div>")
 

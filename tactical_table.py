@@ -180,11 +180,52 @@ def build_table(snap: dict, us30y: float = None) -> dict:
             "是否交易": trade,
         })
 
+    # 2026-08-24：產業/衛星動態（使用者要求：DAA 依市場狀況調整比例，如增加黃金/健康）
+    _sat = []
+    try:
+        _rot = snap.get("rotation_recommendation", {}) or {}
+        for _x in (_rot.get("全產業", []) or []):
+            if _x.get("動作") and _x.get("動作") != "維持現況":
+                _sat.append({
+                    "產業": _x.get("產業", ""),
+                    "現況": _x.get("現況", 0),
+                    "目標": _x.get("目標"),
+                    "資金分數": _x.get("資金分數", 0),
+                    "動作": _x.get("動作", ""),
+                    "標的": "、".join(_x.get("標的", []) or []) or "—",
+                })
+        # 黃金衛星：讀機構雷達（COT 黃金 🟢 → 00635U 建議）— 使用者「增加黃金」
+        _radar = {}
+        try:
+            import json as _j
+            _radar = _j.loads((Path(__file__).resolve().parent / "radar_state.json").read_text(encoding="utf-8"))
+        except Exception:
+            _radar = snap.get("radar_state", {}) or {}
+        _gold_sig = ""
+        for _sig in (_radar.get("signals", []) or []):
+            if "黃金" in str(_sig):
+                _gold_sig = str(_sig)
+        if _gold_sig:
+            _cot_g = ((_radar.get("data", {}) or {}).get("cot", {}) or {}).get("contracts", {}).get("黃金", {})
+            if not _cot_g:
+                _cot_g = (_radar.get("cot", {}) or {}).get("contracts", {}).get("黃金", {})
+            _gold_net = _cot_g.get("net", 0)
+            _gold_d = "🟢 順勢（COT 淨多單週增）" if _gold_sig == "黃金" else f"⚪ {_gold_sig}"
+            _sat.append({
+                "產業": "黃金衛星",
+                "現況": None, "目標": 5, "資金分數": 1,
+                "動作": _gold_d + f"（COT 淨多 {_gold_net:,}）",
+                "標的": "00635U（PI 後分批 40/30/20，單次≤20萬）",
+            })
+    except Exception:
+        pass
+
     return {
         "date": date.today().isoformat(),
         "us30y": us30y,
         "frozen": frozen,
         "rows": rows,
+        "衛星動態": _sat,
         "summary": {
             "觀察": sum(1 for r in rows if r["階梯等級"] == "觀察"),
             "戰術觀察": sum(1 for r in rows if r["階梯等級"] == "戰術觀察"),
