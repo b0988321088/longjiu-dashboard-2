@@ -63,6 +63,7 @@ def main():
     sal_exp, sal_act, rent_exp, rent_got, div_exp, div_act = _sal_exp, _sal, _rent_exp, _rent_got, _div_exp, _div_act
     gf_act, exp_total, act_total, rent_gap = _gf, _exp_total, _act_total, _rent_exp - _rent_got
     passive_act, coverage, expense = _passive_act, _coverage, _expense
+    div_norm = snap.get("monthly_dividend_total", 153389) or 153389  # 常態全月基準（含月底撥回）
     etf_div = mdb.get("etf", 0)
     fund_div = mdb.get("fund", 0)
     rent = snap.get("rent_monthly_actual", 80100)
@@ -112,6 +113,7 @@ td{{padding:8px 6px;border-top:1px solid #e5e5ea}}
 <tr><td>台電薪水</td><td class="num">{sal_exp:,}</td><td class="num">{sal_act:,}</td><td class="num">{sal_act-sal_exp:+,}</td></tr>
 <tr><td>租金（已收）</td><td class="num">{rent_exp:,}</td><td class="num">{rent_got:,}</td><td class="num">{rent_got-rent_exp:+,}</td></tr>
 <tr><td>配息（實收）</td><td class="num">{div_exp:,}</td><td class="num">{div_act:,}</td><td class="num">{div_act-div_exp:+,}</td></tr>
+<tr><td style="font-size:11px;color:#6e6e73">配息常態（全月基準）</td><td class="num">—</td><td class="num">{div_norm:,}</td><td class="num">⏳ 月底補齊</td></tr>
 <tr><td>女友還款</td><td class="num">6,000</td><td class="num">{gf_act:,}</td><td class="num">{gf_act-6000:+,}</td></tr>
 <tr style="font-weight:700;border-top:2px solid #2563eb"><td>合計</td><td class="num">{exp_total:,}</td><td class="num">{act_total:,}</td><td class="num">{act_total-exp_total:+,}</td></tr>
 </tbody></table>
