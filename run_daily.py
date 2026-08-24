@@ -680,7 +680,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                        if _re_x else "")
             _gics_html = (
                 "<div class='callout' style='margin-top:10px;border-left:3px solid #3b82f6'>"
-                f"<strong>🏭 GICS 產業分布（{_gics_x.get('日期','')}）</strong>"
+                f"<strong>🏭 GICS 產業分布（{_gics_x.get('日期','')}）<span style='font-size:10px;color:#64748b'>（產業穿透口徑：全資產產業佔比，與「美股科技紅線」不同）</span></strong>"
                 f"<table style='width:100%;border-collapse:collapse;font-size:12px'><tr><th style='text-align:left'>產業</th>"
                 f"<th style='text-align:right'>金額</th><th style='text-align:right'>佔比</th></tr>{_g_rows}</table>"
                 f"{_g_img}"

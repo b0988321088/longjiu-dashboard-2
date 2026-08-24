@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-24T16:53:10.567709",
+  "generated_at": "2026-08-24T17:11:54.872106",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-24",
   "total_assets": 26182721,
@@ -3063,5 +3063,6 @@
       "估算月配息增加": "PIMCO ~0.4-0.5%/月 + 黃金A10 ~0.3-0.5%/月 ≈ 月增 0.6-1.0萬（含本金風險）"
     }
   },
-  "securities_current_value": 2825170
+  "securities_current_value": 2825170,
+  "funds_cathay_market_value": 11974337
 }

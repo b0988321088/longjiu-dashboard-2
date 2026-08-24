@@ -98,7 +98,7 @@ w("</style></head><body>")
 
 w(f"<h1>📊 龍九控股 穿透分析報告（詳細版）</h1>")
 w(f"<p class='meta'>{today} ｜ 穿透分母 = {total:,} TWD</p>")
-w(f"<div class='callout'>🔬 <b>美股科技拆解：</b>科技股 {us_tech_v:,}（{round(us_tech_v/total*100,1)}%，目標 ≤{tech_target}%，缺口 {round(us_tech_v/total*100 - tech_target,1):+.1f}pp）｜非科技 {us_nt_v:,}（{round(us_nt_v/total*100,1)}%）｜合計 {us_v:,}（{round(us_v/total*100,1)}%）<br><span style='color:#94a3b8;font-size:12px'>科技比估計：貝萊德科技100% / 009824 100% / 半導體90% / 富達35% / 安聯AI 35% / 聯博美國成長40% / 安聯收益16% / 00646·009823 32% / 摩根·PIMCO 10% / M&G 7% / 聯博全球多元收益 2.5%</span></div>")
+w(f"<div class='callout'>🔬 <b>美股科技拆解（美股科技紅線口徑）：</b>科技股 {us_tech_v:,}（{round(us_tech_v/total*100,1)}%，目標 ≤{tech_target}%，缺口 {round(us_tech_v/total*100 - tech_target,1):+.1f}pp）｜非科技 {us_nt_v:,}（{round(us_nt_v/total*100,1)}%）｜合計 {us_v:,}（{round(us_v/total*100,1)}%）<br><span style='color:#94a3b8;font-size:12px'>⚠️ 此為「美股桶科技紅線」口徑；另有「產業穿透」口徑（GICS 全資產科技產業佔比，見日報產業區塊），兩者不同勿混淆。科技比估計：貝萊德科技100% / 009824 100% / 半導體90% / 富達35% / 安聯AI 35% / 聯博美國成長40% / 安聯收益16% / 00646·009823 32% / 摩根·PIMCO 10% / M&G 7% / 聯博全球多元收益 2.5%</span></div>")
 
 # 配息資產合併口徑（2026-08-21 使用者裁示：基金也有配息，防守應合併計算 → 承接凍結）
 _dcm = snap.get("defensive_combined_metric", {})
