@@ -128,7 +128,7 @@ td{{padding:8px 6px;border-top:1px solid #e5e5ea}}
             v = fval["value"] if isinstance(fval, dict) else fval
             html += f'<tr><td>{pname}</td><td>{fname}</td><td class="num">{v:,.0f}</td></tr>'
     html += f"""<tr style="border-top:2px solid #2563eb;font-weight:700"><td>安聯A+B</td><td></td><td class="num">{ab:,.0f}</td></tr>
-<tr><td>第一金FL65</td><td></td><td class="num">{fj:,.0f}</td></tr>
+<tr><td>第一金FA81聯博</td><td></td><td class="num">{fj:,.0f}</td></tr>
 <tr style="font-weight:700"><td>保單總值</td><td></td><td class="num">{snap.get('insurance_current_value', 0):,.0f}</td></tr>
 </tbody></table></div>
 

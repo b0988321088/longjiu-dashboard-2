@@ -118,7 +118,7 @@ def _build_insurance_detail(snap: dict, insurance_total: float) -> dict:
     for _n, _v in _ins_brk.get("policy_b_funds", {}).items():
         d[f"  B-{_n}"] = _extract(_v)
     d["安聯A+B合計"] = float(snap.get("allianz_ab_current_value", 7_843_892))
-    d["━第一金FL65現値"] = float(snap.get("firstjin_current_value", 1_958_980))
+    d["━第一金FA81聯博現値"] = float(snap.get("firstjin_current_value", 1_958_980))
     d["━保單總現値"] = insurance_total
     return d
 
@@ -323,7 +323,7 @@ def load_history(snap=None) -> dict:
                 "bonds": float(r.get("bonds", 0)),
                 "other": 0.0,
                 # 歷史日期保留 JSON 存檔的 insurance_detail，避免被今日 snapshot 覆寫
-                "insurance_detail": _json_hist.get(d, {}).get("insurance_detail") or {"【安聯保單A】現值": snap.get("allianz_a_current_value", 5_103_668), **{"  A-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": snap.get("allianz_b_current_value", 2_740_224), **{"  B-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": snap.get("allianz_ab_current_value", 7_843_892), "━第一金FL65現値": snap.get("firstjin_current_value", 1_958_980), "━保單總現値": snap.get("insurance_current_value", 9_802_872)},
+                "insurance_detail": _json_hist.get(d, {}).get("insurance_detail") or {"【安聯保單A】現值": snap.get("allianz_a_current_value", 5_103_668), **{"  A-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": snap.get("allianz_b_current_value", 2_740_224), **{"  B-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": snap.get("allianz_ab_current_value", 7_843_892), "━第一金FA81聯博現値": snap.get("firstjin_current_value", 1_958_980), "━保單總現値": snap.get("insurance_current_value", 9_802_872)},
                 "fund_dividend_monthly": float(snap.get("dividend_month_actual", 0) or 0),
                 "monthly_income": 218_102.0,
                 "monthly_expense": 141_958.0,
