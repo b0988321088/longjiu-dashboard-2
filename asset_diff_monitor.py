@@ -880,12 +880,13 @@ def build_telegram_text(rows: list[dict], snap: dict) -> str:
     flag = "\n🚨 異常警示已觸發，請查看詳細 HTML。" if d_total < -ALERT_DROP_TWD or d_total_pct < -ALERT_DROP_PCT else ""
 
     ex = extract_snapshot(snap)
-    total_with_re = ex['total_assets'] + 34_000_000
+    total_no_re = ex['total_assets']  # 2026-08-24 修正：資產佔比用不含不動產總資產（與資產變化表/日報一致）
+    total_with_re = total_no_re + (snap.get('real_estate_value', 34_017_063) or 34_017_063)  # 負債率主顯示 = 含不動產（雙軌制）
     alloc = (
-        f"資產佔比：證券 {_pct(ex['securities_market'], total_with_re)} / "
-        f"保單 {_pct(ex['insurance_current'], total_with_re)} / "
-        f"基金 {_pct(ex['fund_market'], total_with_re)} / "
-        f"現金 {_pct(ex['cash'], total_with_re)}"
+        f"資產佔比：證券 {_pct(ex['securities_market'], total_no_re)} / "
+        f"保單 {_pct(ex['insurance_current'], total_no_re)} / "
+        f"基金 {_pct(ex['fund_market'], total_no_re)} / "
+        f"現金 {_pct(ex['cash'], total_no_re)}"
     )
 
     return (
