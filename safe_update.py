@@ -23,7 +23,7 @@ RANGES = {
     'allianz_combined': (7_000_000, 8_500_000),    # 安聯A+B
     'allianz_a_value': (4_500_000, 5_500_000),      # 安聯A
     'allianz_b_value': (2_200_000, 3_200_000),      # 安聯B
-    'firstjin_fl65_current_value': (1_800_000, 2_200_000),  # 第一金FL65
+    'firstjin_fl65_current_value': (1_800_000, 2_200_000),  # 第一金FA81聯博
     'securities_total_market_value': (2_000_000, 3_000_000),  # 證券
     'fund_market_value': (600_000, 900_000),         # 基金
     'real_liquid_assets': (2_500_000, 4_500_000),    # 現金
@@ -33,7 +33,7 @@ LABELS = {
     'allianz_combined': '安聯保單A+B',
     'allianz_a_value': '保單A',
     'allianz_b_value': '保單B',
-    'firstjin_fl65_current_value': '第一金FL65',
+    'firstjin_fl65_current_value': '第一金FA81聯博',
     'securities_total_market_value': '證券市值',
     'fund_market_value': '基金市值',
     'real_liquid_assets': '現金',

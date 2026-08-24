@@ -138,7 +138,7 @@ def backup_asset():
     summary = (
         f'💰 資產快照 {date.today()}\n'
         f'安聯A+B: {ins_ab:,}\n'
-        f'第一金FL65: {ins_fl65:,}\n'
+        f'第一金FA81聯博: {ins_fl65:,}\n'
         f'保單合計: {ins_ab+ins_fl65:,}\n'
         f'證券: {snap.get("securities_total_market_value",0):,}\n'
         f'基金: {snap.get("fund_market_value",0):,}\n'

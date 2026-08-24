@@ -201,7 +201,7 @@ def calibrate_sources() -> dict:
         "allianz_a_current_value": s_allianz_a,
         "allianz_b_current_value": s_allianz_b,
         "firstjin": s_firstjin,
-        "firstjin_label": snap.get("insurance_label_b", "第一金FL65"),
+        "firstjin_label": snap.get("insurance_label_b", "第一金FA81聯博"),
         "rent_monthly": s_rent,
         "securities_total": s_securities,
         "monthly_dividend": monthly_dividend,
@@ -319,7 +319,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     """產出五大章節日報 HTML。"""
     allianz = tv["allianz_ab"] or 7_634_046
     firstjin = tv["firstjin"] or 1_952_366
-    firstjin_label = tv.get("firstjin_label", "第一金FL65")
+    firstjin_label = tv.get("firstjin_label", "第一金FA81聯博")
     insurance_total = tv["insurance_total"] or allianz + firstjin
     monthly_dividend = tv.get("monthly_dividend", 107_116)
     allianz_dividend = tv.get("allianz_dividend", 73_167)

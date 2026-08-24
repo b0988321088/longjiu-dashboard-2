@@ -52,7 +52,7 @@ def main():
     for _k, _v in (snap.get("girlfriend_repayment_records", {}) or {}).items():
         if str(_k).startswith(ym):
             _gf += _v.get("amount", 0) if isinstance(_v, dict) else (_v if isinstance(_v, (int, float)) else 0)
-    _expense = snap.get("monthly_expense", 141958) or 141958
+    _expense = snap.get("monthly_expense", 162781) or 162781
     _rent_exp = snap.get("rent_monthly_total", 80100) or 80100
     _sal_exp, _div_exp = 39727, 100000
     _exp_total = _sal_exp + _rent_exp + _div_exp + 6000
