@@ -150,8 +150,10 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
     _def_frozen = "凍結" in str(_dcm.get("裁示", "")) or float(_dcm.get("佔比", 0) or 0) >= 60
     rec_inds = {r["產業"] for r in rec.get("建議", [])}
     # 醫療保健：由 8/24 保單轉換（健康科學A2 50萬）涵蓋，不佔乾粉現金；台股無純醫療ETF
-    target_inds = [i for i in ["金融"] if i in rec_inds]
-    if not _def_frozen:
+    # 2026-08-24 修正：防守凍結（合併≥60% 或 PI 前）→ 金融 0055 也凍結，乾粉全現金保留（統籌版 136,000）
+    target_inds = []
+    if not _def_frozen and not (snap.get("professional_investor", {}) or {}).get("status", "").startswith("認列"):
+        target_inds = [i for i in ["金融"] if i in rec_inds]
         target_inds.insert(0, "高股息防禦")  # 防守合併未足（<60%）才買高股息
     used = 0
     for ind in target_inds:
