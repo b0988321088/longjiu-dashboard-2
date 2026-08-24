@@ -84,6 +84,14 @@ def build_table(snap: dict, us30y: float = None) -> dict:
     }
 
     frozen = bool(us30y is not None and us30y > 5.30)
+    # 2026-08-24：戰術觀察（2-5pp）也給「紀律內可執行金額」（非 0，否則對策表無用）
+    DISCIPLINE_AMOUNT = {
+        "台股市值型成長": 20000,   # 慢慢買每週 1.5-2萬（PI 後 9/3 恢復）
+        "美股市值型成長": 200000,  # 逢彈減碼 ≤20萬/次
+        "防守型配息": 0,           # 合併口徑已足 → 承接凍結
+        "債券": 500000,            # PI 後建債梯（3-7Y 375萬+8-10Y 125萬）
+        "現金/安全網": 0,          # 底線制（70萬安全網）
+    }
     rows = []
     for asset, (tgt_key, pct_key) in target_map.items():
         tgt = targets.get(tgt_key, 0)
@@ -92,12 +100,26 @@ def build_table(snap: dict, us30y: float = None) -> dict:
         dev = cur - tgt
         ladder = get_ladder(dev)
 
-        # 精算調整金額：偏離 × 總資產
-        adj_amount = round(abs(dev) / 100 * total) if ladder["trade"] else 0
+        # 精算調整金額：中等以上 = 偏離×總資產；戰術觀察 = 紀律內金額
+        if ladder["trade"]:
+            adj_amount = round(abs(dev) / 100 * total)
+        else:
+            adj_amount = DISCIPLINE_AMOUNT.get(asset, 0)
 
         strat = STRATEGY.get(asset, {})
+        # 2026-08-24：防守合併口徑已足（≥60%）→ 承接凍結（覆蓋 -15.8pp 的誤導金額）
+        if asset == "防守型配息":
+            _dcm = snap.get("defensive_combined_metric", {}) or {}
+            if "凍結" in str(_dcm.get("裁示", "")) or float(_dcm.get("佔比", 0) or 0) >= 60:
+                action, trade, amount = "承接凍結", False, 0
+                note = f"防守合併口徑 {_dcm.get('佔比', 0)}% ≥60% 已足 → 不增持（8/22 裁示）"
+            else:
+                action = strat.get("action", "觀察")
+                trade = ladder["trade"]
+                amount = adj_amount
+                note = strat.get("note", "")
         # US30Y 凍結：債券類直接凍結；其他保留觀察
-        if frozen and strat.get("freeze_on_us30y"):
+        elif frozen and strat.get("freeze_on_us30y"):
             action, trade, amount = "凍結", False, 0
             note = f"US30Y {us30y:.2f}% > 5.30% → TAA凍結（只觀察）"
         elif frozen:
