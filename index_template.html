@@ -185,7 +185,7 @@
   }
   var wn = document.getElementById('weekly-nw');
   if(wn){
-    fetch('snapshot.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(s){
+    fetch('snapshot.json?v='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(s){
       var bd = s.net_worth_weekly_breakdown;
       if(bd && bd.net_worth_change !== undefined){
         var fmt = function(v){var s2=v>=0?'+':'';return s2+Math.round(v).toLocaleString('zh-TW');};
@@ -198,8 +198,12 @@
         h += '<div style="font-size:11.5px;margin-top:6px;padding:6px 8px;background:#eef2ff;border-radius:6px">判斷：<b>'+(bd.judgment||'')+'</b></div>';
         h += '<div style="font-size:10.5px;color:#6b7280;margin-top:4px">→ 週看「變動來源」；月/季才看資金效率（資產增長 vs 資金成本）</div>';
         wn.innerHTML = h;
+      } else {
+        wn.innerHTML = '<div style="font-size:12px;color:#dc2626;font-weight:700">⚠️ 資料未就緒（snapshot 缺 net_worth_weekly_breakdown）</div>';
       }
-    }).catch(function(){});
+    }).catch(function(e){
+      wn.innerHTML = '<div style="font-size:12px;color:#dc2626;font-weight:700">⚠️ 讀取失敗：'+(e.message||'網路錯誤')+'</div>';
+    });
   }
 })();
 </script>
