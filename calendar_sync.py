@@ -35,7 +35,7 @@ def parse_events(text: str):
     # 固定行程（人工定義）— 2026-08-06：移除過期/已被 schedule_events.json 動態涵蓋的寫死項
     # （國泰8/4、T+4 截止等已由 schedule_events.json 統一同步，避免再次過期）
     fixed = [
-        ("Notion 訂閱扣款 US$12", (date(2026, 8, 14), date(2026, 8, 14))),
+        # 2026-08-24：Notion 訂閱已取消（移除扣款事件）
     ]
     plus_30 = [
         ("大義街23樓房租 + 管理費", (today.replace(day=min(today.day + 30, 28)),)),

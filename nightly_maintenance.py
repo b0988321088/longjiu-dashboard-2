@@ -95,7 +95,8 @@ def review_decisions():
         if pending:
             results.append(f"⏳ Pending ({len(pending)} 項)：")
             for p in pending:
-                results.append(f"  ⏸️ {p.get('text', p.get('id','?'))[:60]}")
+                # 2026-08-24 修正：dashboard_decisions 用 action 欄位（非 text/id）
+                results.append(f"  ⏸️ {p.get('action', p.get('text', p.get('id','?')))[:60]}")
     except Exception as e:
         results.append(f"⚠️ 決策讀取失敗: {e}")
     
@@ -185,19 +186,11 @@ def tomorrow_priorities():
     # 自動判斷明日應辦事項
     priorities = []
     
-    # 8/14 Notion 扣款提醒（如果接近）
-    if today.month == 8 and today.day >= 7 or (today.month == 7 and today.day >= 28):
-        priorities.append("🔴 Notion 訂閱 8/14 扣款 US$12 - 確認方案")
+    # 2026-08-24 使用者確認：Notion 訂閱已取消（不再提醒）；信用卡全部自動扣繳（不再提醒截止日，改由 reminder_agent 餘額警示）
     
     # 月底房租待收
     if today.day >= 25:
         priorities.append("🟡 確認大義街23樓 21,000 + 管理費 2,100 入帳")
-    
-    # 信用卡繳款
-    cc_schedule = [(22, "玉山 3,176"), (27, "台新 1,000")]
-    for day, name in cc_schedule:
-        if today.day <= day <= today.day + 3:
-            priorities.append(f"🟡 {name} 信用卡繳款截止")
     
     # 機會子彈監控
     priorities.append("🟢 監控台股單週跌幅，距 ±10% 觸發線")
