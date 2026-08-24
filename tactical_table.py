@@ -67,6 +67,49 @@ def get_ladder(dev_pct: float) -> dict:
     return {"level": "大規模再平衡", "priority": "P0", "trade": True,
             "desc": "優先等級拉高，下週必須處理"}
 
+def _dynamic_amount(snap: dict, asset: str, ladder: dict, dev: float, total: float) -> dict:
+    """2026-08-24：DAA 金額全動態（不硬編碼）— 讀 snapshot 裁示/計畫/引擎狀態。
+    債券：由基金經理人調整（PIMCO/M&G），不另建債梯（8/24 裁示）。
+    台股/美股：讀 rebalance_plan_0819 核准額度；防守：合併口徑；現金：底線制。"""
+    _rp = snap.get("rebalance_plan_0819", {}) or {}
+    _rot = snap.get("rotation_recommendation", {}) or {}
+    _dcm = snap.get("defensive_combined_metric", {}) or {}
+
+    # 防守：合併口徑 ≥60% 或裁示凍結 → 0（呼叫端再覆寫動作）
+    if asset == "防守型配息":
+        if "凍結" in str(_dcm.get("裁示", "")) or float(_dcm.get("佔比", 0) or 0) >= 60:
+            return {"金額": 0, "說明": f"合併 {_dcm.get('佔比',0)}% ≥60% 凍結"}
+        return {"金額": round(abs(dev) / 100 * total), "說明": "合併未足，偏離×總資產"}
+    # 現金：底線制 → 超額即待部署（金額 = 超額部分）
+    if asset == "現金/安全網":
+        _floor = snap.get("cash_floor_rule", {}).get("floor", 700000) if isinstance(snap.get("cash_floor_rule"), dict) else 700000
+        _cash_excess = max(0, (snap.get("cash_total", 0) or 0) - _floor)
+        return {"金額": _cash_excess, "說明": f"底線制：超額 {_cash_excess:,} 待部署（MMF 停泊）"}
+    # 債券：經理人調整（不建債梯，8/24 裁示）
+    if asset == "債券":
+        return {"金額": 0, "說明": "基金經理人調整（PIMCO/M&G/00983D），不另建債梯"}
+    # 台股：讀 rebalance_plan 慢慢買額度（字串解析 or 數字）
+    if asset == "台股市值型成長":
+        _plan = str(_rp.get("台股慢慢買", _rp.get("台股", "")))
+        import re as _re
+        _m = _re.search(r"(\d+(?:\.\d+)?)\s*萬", _plan)
+        if _m:
+            return {"金額": round(float(_m.group(1)) * 10000), "說明": f"慢慢買額度（{_plan[:20]}）"}
+        # rotation 交易計畫找台股標的
+        for _p in (_rot.get("交易計畫", []) or []):
+            if _p.get("金額", 0) > 0 and any(k in str(_p.get("產業", "")) for k in ["台股", "現金"]):
+                return {"金額": int(_p.get("金額", 0)), "說明": "rotation 交易計畫"}
+        return {"金額": 0, "說明": "慢慢買暫緩（PI 後恢復）"}
+    # 美股：讀 rebalance_plan 減碼額度
+    if asset == "美股市值型成長":
+        _plan = str(_rp.get("美股減碼", _rp.get("美股", "")))
+        import re as _re
+        _m = _re.search(r"(\d+(?:\.\d+)?)\s*萬", _plan)
+        if _m:
+            return {"金額": round(float(_m.group(1)) * 10000), "說明": f"逢彈減碼（{_plan[:20]}）"}
+        return {"金額": 200000, "說明": "逢彈減碼 ≤20萬/次（8/19 核准）"}
+    return {"金額": 0, "說明": ""}
+
 def build_table(snap: dict, us30y: float = None) -> dict:
     pen = snap.get("penetration", {})
     apct = pen.get("actual_pct", {})
@@ -84,14 +127,6 @@ def build_table(snap: dict, us30y: float = None) -> dict:
     }
 
     frozen = bool(us30y is not None and us30y > 5.30)
-    # 2026-08-24：戰術觀察（2-5pp）也給「紀律內可執行金額」（非 0，否則對策表無用）
-    DISCIPLINE_AMOUNT = {
-        "台股市值型成長": 20000,   # 慢慢買每週 1.5-2萬（PI 後 9/3 恢復）
-        "美股市值型成長": 200000,  # 逢彈減碼 ≤20萬/次
-        "防守型配息": 0,           # 合併口徑已足 → 承接凍結
-        "債券": 0,                # 2026-08-24：不做債梯（PIMCO M級120+M&G 115 已涵蓋；00983D 底倉）
-        "現金/安全網": 0,          # 底線制（70萬安全網）
-    }
     rows = []
     for asset, (tgt_key, pct_key) in target_map.items():
         tgt = targets.get(tgt_key, 0)
@@ -100,11 +135,10 @@ def build_table(snap: dict, us30y: float = None) -> dict:
         dev = cur - tgt
         ladder = get_ladder(dev)
 
-        # 精算調整金額：中等以上 = 偏離×總資產；戰術觀察 = 紀律內金額
-        if ladder["trade"]:
-            adj_amount = round(abs(dev) / 100 * total)
-        else:
-            adj_amount = DISCIPLINE_AMOUNT.get(asset, 0)
+        # 2026-08-24：金額全動態（不硬編碼）— 從 snapshot 裁示/計畫/引擎狀態讀取
+        _dyn = _dynamic_amount(snap, asset, ladder, dev, total)
+        adj_amount = _dyn["金額"]
+        _dyn_note = _dyn["說明"]
 
         strat = STRATEGY.get(asset, {})
         # 2026-08-24：防守合併口徑已足（≥60%）→ 承接凍結（覆蓋 -15.8pp 的誤導金額）
@@ -141,7 +175,7 @@ def build_table(snap: dict, us30y: float = None) -> dict:
             "優先級": ladder["priority"],
             "建議動作": action,
             "精算金額": amount,
-            "觸發條件": ladder["desc"],
+            "觸發條件": (ladder["desc"] + "｜" + _dyn_note) if _dyn_note else ladder["desc"],
             "停止條件": strat.get("stop", ""),
             "是否交易": trade,
         })
