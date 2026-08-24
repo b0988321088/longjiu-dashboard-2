@@ -213,7 +213,7 @@ if _fb:
         else:
             _cat = "🇹🇼 台股"; _fund_tw += _fv2
         w(f"<tr><td style='max-width:180px'>{_fn}</td><td class='num'>{_fv2:,}</td><td>{_cat}</td><td style='font-size:12px'>{_split}</td></tr>")
-    w(f"<tr style='border-top:2px solid #3b82f6;font-weight:700'><td>合計</td><td class='num'>{sum(_fb.values()):,}</td>")
+    w(f"<tr style='border-top:2px solid #3b82f6;font-weight:700'><td>合計</td><td class='num'>{snap.get('fund_market', sum(_fb.values())):,}</td>")
     w(f"<td>🇹🇼 台股 {_fund_tw:,} + 🌎 美股 {_fund_us:,} + 🛡️ 防守型 {_fund_def:,} + 💵 現金類 {_fund_cash:,}</td><td></td></tr>")
     w("</tbody></table></div>")
 
