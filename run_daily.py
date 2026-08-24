@@ -1388,6 +1388,14 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
         except Exception:
             pass
         _tbl = build_table(tv, _us30y)
+        # 2026-08-24：tv 缺 defensive_combined_metric → 補 snapshot 值（防守合併凍結判斷）
+        if "defensive_combined_metric" not in tv or not tv.get("defensive_combined_metric"):
+            try:
+                _snap_x = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
+                tv["defensive_combined_metric"] = _snap_x.get("defensive_combined_metric", {})
+                _tbl = build_table(tv, _us30y)
+            except Exception:
+                pass
         _rows_html = "".join(
             f"<tr><td>{r['資產分類']}</td><td class='num'>{r['現況占比']}%</td>"
             f"<td class='num'>{r['目標']}%</td><td class='num'>{r['偏離pp']:+.1f}</td>"
