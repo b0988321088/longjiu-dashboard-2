@@ -38,7 +38,25 @@ def tg_send(text: str):
 alerts = []
 today = date.today()
 
-# ── 1. 信用卡繳款提醒（3天內，2026-08-24 修正：全部自動扣繳 → 已扣繳不提醒） ──
+# ── 1. 信用卡繳款提醒（3天內，2026-08-24 修正：全部自動扣繳 → 已扣繳/餘額夠不提醒） ──
+def _cc_balance(bank_key):
+    """讀 Moneybook 帳戶 CSV 找該銀行扣款帳戶餘額（2026-08-24：確認扣款帳戶錢夠即可）"""
+    try:
+        mb_dir = BASE / "moneybook"
+        for _ac in sorted(mb_dir.glob("*帳戶*.csv"), reverse=True):
+            with open(_ac, "r", encoding="utf-8-sig") as _f:
+                for _r in csv.DictReader(_f):
+                    _name = f"{_r.get('金融機構','')} {_r.get('帳戶名稱','')}"
+                    if bank_key in _name and "信用卡" not in _name and "放款" not in _name:
+                        _amt = str(_r.get("帳戶金額", "0")).replace(",", "").replace('"', "")
+                        try:
+                            return int(float(_amt))
+                        except:
+                            pass
+    except Exception:
+        pass
+    return None
+
 try:
     mb_dir = BASE / "moneybook"
     bills = sorted(mb_dir.glob("*帳單*.csv"), reverse=True)
@@ -72,13 +90,17 @@ try:
         for bank, (due_dt, amt) in _latest.items():
             days_left = (due_dt - today).days
             if 0 <= days_left <= 3:
-                # 已自動扣繳（明細有該銀行卡款扣繳）→ 不提醒
                 _paid_key = {"玉山銀行": "玉山", "台新銀行": "台新", "永豐銀行": "永豐", "台北富邦": "富邦"}[bank]
                 if _paid_key in _paid:
-                    continue
+                    continue  # 已扣繳不提醒
+                # 未扣繳 → 檢查扣款帳戶餘額（2026-08-24 使用者：「只要確認裡面的錢夠就好了」）
+                _acct_bal = _cc_balance(_paid_key)
+                if _acct_bal is not None and _acct_bal >= amt:
+                    continue  # 餘額足夠 → 自動扣繳會處理，不提醒
                 card = _cc_map[bank]
                 level = "🔴" if days_left == 0 else "🟡"
-                alerts.append(f"{level} {bank} {card} **{amt:,}元** {days_left}天後到期（未偵測到扣繳）")
+                _bal_txt = f"（扣款帳戶餘額 {_acct_bal:,} 不足！）" if _acct_bal is not None else ""
+                alerts.append(f"{level} {bank} {card} **{amt:,}元** {days_left}天後到期{_bal_txt}")
 except Exception as e:
     alerts.append(f"⚠️ 信用卡讀取錯誤: {e}")
 
