@@ -43,6 +43,26 @@ def main():
     # 被動收入
     mdb = snap.get("monthly_dividend_breakdown", {})
     ins_div = mdb.get("allianz", 0) + mdb.get("firstjin", 0)
+
+    # 現金流審查變數（2026-08-24 新增：實際 = snapshot 真值口徑）
+    _sal = snap.get("salary", 39727) or 39727
+    _rent_got = sum(v for d, items in (snap.get("rent_received_records", {}) or {}).items() if str(d).startswith(ym) for v in (items.values() if isinstance(items, dict) else [items]))
+    _div_act = sum(v for k, v in (snap.get("dividend_records", {}) or {}).items() if str(k).startswith(ym) for v in (v.values() if isinstance(v, dict) else [v])) or snap.get("dividend_month_actual", 0) or 0
+    _gf = 0
+    for _k, _v in (snap.get("girlfriend_repayment_records", {}) or {}).items():
+        if str(_k).startswith(ym):
+            _gf += _v.get("amount", 0) if isinstance(_v, dict) else (_v if isinstance(_v, (int, float)) else 0)
+    _expense = snap.get("monthly_expense", 141958) or 141958
+    _rent_exp = snap.get("rent_monthly_total", 80100) or 80100
+    _sal_exp, _div_exp = 39727, 100000
+    _exp_total = _sal_exp + _rent_exp + _div_exp + 6000
+    _act_total = _sal + _rent_got + _div_act + _gf
+    _passive_act = _div_act + _rent_got
+    _coverage = _passive_act / _expense * 100 if _expense else 0
+    # HTML 卡別名（對齊模板變數名）
+    sal_exp, sal_act, rent_exp, rent_got, div_exp, div_act = _sal_exp, _sal, _rent_exp, _rent_got, _div_exp, _div_act
+    gf_act, exp_total, act_total, rent_gap = _gf, _exp_total, _act_total, _rent_exp - _rent_got
+    passive_act, coverage, expense = _passive_act, _coverage, _expense
     etf_div = mdb.get("etf", 0)
     fund_div = mdb.get("fund", 0)
     rent = snap.get("rent_monthly_actual", 80100)
@@ -86,6 +106,18 @@ td{{padding:8px 6px;border-top:1px solid #e5e5ea}}
 <tr><td>房租收入</td><td class="num">{rent:,}</td></tr>
 <tr style="font-weight:700;border-top:2px solid #2563eb"><td>合計</td><td class="num">{total_income:,}</td></tr>
 </tbody></table></div>
+
+<div class="card"><h2>💵 現金流審查（{ym}，2026-08-24 新增）</h2>
+<table><thead><tr><th>項目</th><th class="num">預期</th><th class="num">實際</th><th class="num">差異</th></tr></thead><tbody>
+<tr><td>台電薪水</td><td class="num">{sal_exp:,}</td><td class="num">{sal_act:,}</td><td class="num">{sal_act-sal_exp:+,}</td></tr>
+<tr><td>租金（已收）</td><td class="num">{rent_exp:,}</td><td class="num">{rent_got:,}</td><td class="num">{rent_got-rent_exp:+,}</td></tr>
+<tr><td>配息（實收）</td><td class="num">{div_exp:,}</td><td class="num">{div_act:,}</td><td class="num">{div_act-div_exp:+,}</td></tr>
+<tr><td>女友還款</td><td class="num">6,000</td><td class="num">{gf_act:,}</td><td class="num">{gf_act-6000:+,}</td></tr>
+<tr style="font-weight:700;border-top:2px solid #2563eb"><td>合計</td><td class="num">{exp_total:,}</td><td class="num">{act_total:,}</td><td class="num">{act_total-exp_total:+,}</td></tr>
+</tbody></table>
+<p style="font-size:12px;color:#6e6e73;margin-top:6px">預期 = snapshot 月收入口徑（配息保守 100,000）｜實際 = snapshot 真值（dividend_records 合計 + rent_received_records）｜待收租金 = {rent_gap:,}｜一次性收入（環保標結餘等）不計常態</p>
+<p style="font-size:12.5px;margin-top:8px"><strong>覆蓋率：</strong>被動（配息 {div_act:,} + 租金 {rent_got:,} = {passive_act:,}） vs 月開支 {expense:,} = {coverage:.0f}% {'✅' if coverage >= 100 else '🔴'}</p>
+</div>
 
 <div class="card"><h2>保單組合（{last_d}）</h2>
 <table><thead><tr><th>保單</th><th>基金</th><th class="num">現值</th></tr></thead><tbody>"""
