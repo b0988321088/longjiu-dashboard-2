@@ -659,7 +659,7 @@ if (location.hash) hashTab();
         h += '<div style="font-size:11.5px;color:#6b7280;margin-left:8px">├─ 市場性：'+fmt(bd.market)+' 🟡（市場波動）</div>';
         if(bd.transaction !== undefined) h += '<div style="font-size:11.5px;color:#6b7280;margin-left:8px">├─ 帳務/交易性：'+fmt(bd.transaction)+'</div>';
         h += '<div style="font-size:11.5px;color:#2563eb;margin-left:8px">└─ 資金成本：'+fmt(bd.cost_of_capital)+' 🔵（固定）</div>';
-        h += '<div style="font-size:11.5px;margin-top:6px;padding:6px 8px;background:#eef2ff;border-radius:6px">判斷：<b>'+(bd.judgment||'')+'</b></div>';
+        h += '<div style="font-size:11.5px;margin-top:6px;padding:6px 8px;background:#eef2ff;border-radius:6px;color:#1f2937">判斷：<b>'+(bd.judgment||'')+'</b></div>';
         h += '<div style="font-size:10.5px;color:#6b7280;margin-top:4px">→ 週看「變動來源」；月/季才看資金效率（資產增長 vs 資金成本）</div>';
         wn.innerHTML = h;
       } else {
