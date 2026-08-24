@@ -15,10 +15,11 @@ BASE = Path(__file__).resolve().parent
 SYNONYM_GROUPS = {
     # 保險總值
     "insurance_total": ["insurance_total", "insurance_current_value", "insurance"],
-    # 證券總值
-    "securities_total": ["securities_total_market_value", "securities_total", "securities_market"],
-    # 基金總值（5 個 key）
-    "funds_total": ["fund_market", "fund_market_value", "funds_total", "fund_total_market_value"],
+    # 證券總值（含 8/24 新增 securities_current_value）
+    "securities_total": ["securities_total_market_value", "securities_total", "securities_market", "securities_current_value"],
+    # 基金總值（5 個 key + 國泰基金市值 8/24 新增）
+    "funds_total": ["fund_market", "fund_market_value", "funds_total", "fund_total_market_value", "funds"],
+    "funds_cathay": ["funds_cathay", "funds_cathay_market_value"],
     # 現金總值（4 個 key）
     "cash_total": ["cash_total", "cash", "real_liquid_assets", "bank_assets_moneybook"],
     # 安聯 A+B
