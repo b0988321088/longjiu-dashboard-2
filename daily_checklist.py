@@ -58,7 +58,10 @@ def main() -> None:
     results.append(check("四大信用卡列管", cc_ok))
 
     # 4. 兩大房貸帳戶（2026-08-12 INC-138 同款修正：實際標籤「理財型」非「理財型房貸」）
-    loan_ok = all(x in daily for x in ["永豐房貸 (YY)", "永豐房貸 (YYDU)", "永豐房貸 (XZ)", "理財型", "保單借貸", "證券質押"])
+    # 2026-08-24：理財型房貸已清償（financial_mortgage=0）時不再要求「理財型」，與 cio_review 8/14 放寬邏輯一致
+    _fm = (snap or {}).get("financial_mortgage", 0) or 0
+    _need_licai = "理財型" if _fm > 0 else ""
+    loan_ok = all(x in daily for x in ["永豐房貸 (YY)", "永豐房貸 (YYDU)", "永豐房貸 (XZ)", _need_licai, "保單借貸", "證券質押"])
     results.append(check("房貸帳戶（大義街已清償 ✅）", loan_ok))
 
     # 5. 保單現值對齊 snapshot.json
