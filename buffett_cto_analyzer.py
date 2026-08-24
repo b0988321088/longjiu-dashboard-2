@@ -367,7 +367,7 @@ def main(**kwargs):
     (BASE / f"buffett_cto_report_{TODAY}.md").write_text(report, encoding="utf-8")
     print(f"\n✅ Report saved to buffett_cto_report_{TODAY}.md")
     
-    # 6. Telgram 推（摘要）
+    # 6. Telgram 推（摘要 + 本週交易計畫，2026-08-24 新增）
     if TG_TOKEN and TG_CHAT_ID:
         msg = f"🧓 Buffett/CTO 動態分析 {TODAY}\n"
         for cat in ["tw_equity", "us_equity", "defensive", "bond", "cash"]:
@@ -376,6 +376,21 @@ def main(**kwargs):
             gv = pen["gaps"].get(cat, 0)
             msg += f"{TARGET_EMOJI[cat]} {v:.1f}%（目標{t}%、{gv:+.1f}pp）\n"
         msg += f"\n{pen['key_risk']}\n{pen['key_action']}"
+        # 本週交易計畫（rotation_engine build_trade_plan）
+        try:
+            import json as _json
+            _snap = _json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+            _sf = {}
+            if (BASE / "radar_state.json").exists():
+                _sf = _json.loads((BASE / "radar_state.json").read_text(encoding="utf-8")).get("sector_flow", {})
+            from rotation_engine import build_recommendation, build_trade_plan
+            _rec = build_recommendation(_snap, _sf)
+            _plan = build_trade_plan(_rec, _snap)
+            msg += "\n\n🎯 本週交易計畫："
+            for p in _plan:
+                msg += f"\n  {p['產業']}: {p['金額']:,}（{p['節奏']}）"
+        except Exception as _e:
+            msg += f"\n\n⚠️ 交易計畫讀取失敗：{_e}"
         try:
             requests.post(f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage",
                          json={"chat_id": TG_CHAT_ID, "text": msg}, timeout=10)
