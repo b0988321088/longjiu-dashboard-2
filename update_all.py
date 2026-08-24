@@ -100,11 +100,11 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             _fund_cash += 0
             _fund_us_tech += round(_fval * 0.8075 * _tr(_fn))
         elif "聯博全球多元收益" in _fn:
-            # 8/20 使用者提供（公開說明書+月報）：債券 50-60%（_br 0.55）/ 權益 ~45%（低波動高股息+非傳統）
-            # 8/23 前10大持股真值更新：NVDA2.31+AAPL2.14+AVGO1.21+MSFT1.21+GOOGL1.06≈7.93% 科技（淨值口徑，僅前10大）
-            # → 科技 2.5% 過低，保守估 10%（含前10大以外）
-            _fund_us += round(_fval * 0.45)
-            _fund_bonds += round(_fval * 0.55)
+            # 8/24 月報真值（使用者提供 PDF）：股票 34.63% + 其他 4.00%（選擇權策略）= 38.63% 權益；債券 61.37%
+            # 前5大持股全科技 8.03%（NVDA2.28+AAPL2.00+GOOGL1.60+AVGO1.15+MSFT1.00）→ 科技保守估 10%
+            # ⚠️ AD 月配級別配息來源可能為本金；信評 BB+B = 46.7% 高收益債
+            _fund_us += round(_fval * 0.3863)
+            _fund_bonds += round(_fval * 0.6137)
             _fund_cash += 0
             _fund_us_tech += round(_fval * 0.10)
         elif "台中銀台灣優息" in _fn or "國泰台灣高股息" in _fn:
