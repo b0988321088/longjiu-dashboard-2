@@ -173,6 +173,24 @@ def _industry_context() -> str:
     return ctx
 
 
+def _llm_cached(name: str, prompt: str, system: str, max_tokens: int = 450) -> str | None:
+    """2026-08-24 優化：LLM 快取（同日同款不重複呼叫）+ 降 max_tokens，省 DeepSeek 用量"""
+    import hashlib
+    _ck = hashlib.md5(prompt.encode("utf-8")).hexdigest()[:12]
+    _cf = BASE / "data" / f"{name}_{TODAY}_{_ck}.json"
+    if _cf.exists():
+        try:
+            return json.loads(_cf.read_text(encoding="utf-8")).get("out")
+        except Exception:
+            pass
+    from llm_analysis import ask_llm
+    _out = ask_llm(prompt, system=system, max_tokens=max_tokens)
+    if _out:
+        (BASE / "data").mkdir(exist_ok=True)
+        _cf.write_text(json.dumps({"out": _out}, ensure_ascii=False), encoding="utf-8")
+    return _out
+
+
 def generate_buffett_report(pen: dict, market_text: str = "") -> list:
     """巴菲特視角 — LLM 真實分析優先（2026-08-22 升級），失敗 fallback 模板"""
     a, g = pen["actual"], pen["gaps"]
@@ -193,7 +211,7 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
             f"債券等 US30Y<5.30%；石油 Locked 禁建議；防守合併口徑69.5%已足勿追大額；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）。\n"
             f"請以巴菲特投資哲學（護城河、安全邊際、能力圈、長期持有、別人恐懼我貪婪）做 3 點具體觀察 + 1 個紀律提醒，200字內，繁體中文，不要重複數字表。"
         )
-        _out = ask_llm(_prompt, system="你是巴菲特視角的投資分析師。輸出繁體中文，精簡犀利，有具體觀點。")
+        _out = _llm_cached("buffett", _prompt, "你是巴菲特視角的投資分析師。輸出繁體中文，精簡犀利，有具體觀點。")
         if _out:
             # 2026-08-23 修復：LLM 分支必須含「主要風險/總投資部位/TWD」關鍵字，CIO 審查(cio_review.py L162-167)才不會擋
             _kr = pen.get("key_risk", "—")
@@ -284,7 +302,7 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
             f"債券等 US30Y<5.30%（禁建議買債）；石油 Locked 禁建議；防守合併口徑69.5%已足勿追大額；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）。\n"
             f"請以技術面（動能、趨勢、支撐壓力、風險）+ 產業資金流向（哪個產業順勢/逆勢）給：今日最大風險 + 具體建議動作（含標的/金額節奏，須符合上述約束），150字內，繁體中文。"
         )
-        _out = ask_llm(_prompt, system="你是技術分析師（CTO）。輸出繁體中文，直接給結論與動作，不要客套。")
+        _out = _llm_cached("cto", _prompt, "你是技術分析師（CTO）。輸出繁體中文，直接給結論與動作，不要客套。")
         if _out:
             return ["CTO 技術視角（LLM 真實分析）", _out]
     except Exception:
