@@ -36,8 +36,10 @@ def main():
     steps = [
         ("同義欄位驗證", f"python asset_sync.py"),
         ("日報", f"python run_daily.py"),
-        ("緊急應變", f"python gen_emergency_{today[5:7]}{today[8:10]}.py"),
+        # 順序：emergency_1330（精簡台股版）先 → gen_emergency（LLM 完整版）最後覆蓋
+        # （2026-08-24 血淚：順序相反會讓精簡 2,649 bytes 覆蓋完整 8,617 → 使用者看到「沒內容」）
         ("台股緊急應變", f"python emergency_1330.py"),
+        ("緊急應變完整版", f"python gen_emergency_{today[5:7]}{today[8:10]}.py"),
         ("穿透報告", f"python build_penetration_report.py"),
         ("四源同步", f"python four_source_sync.py"),
         ("同義欄位複驗", f"python asset_sync.py"),
