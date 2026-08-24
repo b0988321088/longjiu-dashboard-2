@@ -152,6 +152,16 @@ def generate_emergency_report(taiex_data=None, etf_0050_data=None, etf_00878_dat
     (LJ / f"emergency_taiex_report_{today}.html").write_text(html, "utf-8")
     print(f"✅ 緊急應變報告已產出至 emergency_taiex_report_{today}.html")
     # 同時存一份給 Railway 用的命名（LLM agent 版命名格式）
+    # INC-134 穿透注入（2026-08-24 修正：13:00 台股版缺穿透真值 → check 失敗）
+    try:
+        import json as _json
+        _snap = _json.loads((LJ / "snapshot.json").read_text(encoding="utf-8"))
+        _pp = _snap.get("penetration", {}).get("actual_pct", {})
+        _tt = _snap.get("total_assets", 0)
+        _pen_card = f"<h3>📊 資產穿透（{today}）</h3><p>總資產 <b>{_tt:,.0f}</b> TWD｜台股 {_pp.get('台股市值型成長',0):.1f}%｜美股 {_pp.get('美股市值型成長',0):.1f}%｜防守 {_pp.get('防守型配息',0):.1f}%｜債券 {_pp.get('債券',0):.1f}%｜現金 {_pp.get('現金/安全網',0):.1f}%</p>"
+        html = html.replace("</body>", _pen_card + "</body>")
+    except Exception as _e:
+        print(f"⚠️ 穿透注入失敗: {_e}")
     (LJ / f"emergency_report_{today}.html").write_text(html, "utf-8")
     print(f"✅ Railway 版已同步至 emergency_report_{today}.html")
 
