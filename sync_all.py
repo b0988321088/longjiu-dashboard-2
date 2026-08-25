@@ -36,7 +36,7 @@ def main():
     # v4 檢查 0：儀表板模板硬編碼檢查（2026-08-25：改口徑後 index_template.html 殘留舊值 → 儀表板顯示舊數字）
     try:
         _tpl = (BASE / "index_template.html").read_text(encoding="utf-8")
-        _stale = ["152,781", "141,958", "73,137", "27,319", "156,835", "151,958"]
+        _stale = ["152,781", "141,958", "73,137", "27,319", "156,835", "151,958", "143.9%", "144%", "800,272"]
         _hits = [s for s in _stale if s in _tpl]
         if _hits:
             print(f"  ⚠️ index_template.html 殘留舊口徑硬編碼: {_hits} — 儀表板會顯示舊數字，請修正 template（改 monthly_expense 後必查）")
