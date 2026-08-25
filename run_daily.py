@@ -986,7 +986,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       </ul>
     </div>
 
-    <h3>本週行程 + 繳款 / 配息排程</h3>
+    <h3>本週行程 + 繳款 / 配息排程（🔁 配息接力時間表）</h3>
     <div class="table-wrap">
       <table class="mobile-bordered">
         <thead>
@@ -996,6 +996,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 {schedule_rows_html}
         </tbody>
       </table>
+      <p class="text-sm" style="color:#6e6e73;margin-top:6px">🔁 配息接力時間表：💰 = 配息基準日（基準日+12天左右入帳）、🔴 = T+4 轉換截止（除息前4工作日）。三站依配息時間循環領息：月初（摩根 9/8）→ 月中（安聯 9/14 / M&G 9/18）→ 月底（AI 9/24 / PIMCO 9/28 / A10+聯博 9/29）。</p>
     </div>
   </div>
 
