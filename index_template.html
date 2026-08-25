@@ -656,7 +656,7 @@ if (location.hash) hashTab();
         var fmt = function(v){var s2=v>=0?'+':'';return s2+Math.round(v).toLocaleString('zh-TW');};
         var col = bd.net_worth_change>=0 ? '#16a34a' : '#dc2626';
         var h = '<div style="font-size:12px;color:#5b21b6;font-weight:800;margin-bottom:6px">📡 本週淨資產變動拆解（'+bd.period+'｜即時）</div>';
-        h += '<div style="font-size:12.5px">淨資產變動：<b style="color:'+col+'">'+fmt(bd.net_worth_change)+'</b></div>';
+        h += '<div style="font-size:12.5px;color:#1f2937">淨資產變動：<b style="color:'+col+'">'+fmt(bd.net_worth_change)+'</b></div>';
         h += '<div style="font-size:11.5px;color:#6b7280;margin-left:8px">├─ 市場性：'+fmt(bd.market)+' 🟡（市場波動）</div>';
         if(bd.transaction !== undefined) h += '<div style="font-size:11.5px;color:#6b7280;margin-left:8px">├─ 帳務/交易性：'+fmt(bd.transaction)+'</div>';
         h += '<div style="font-size:11.5px;color:#2563eb;margin-left:8px">└─ 資金成本：'+fmt(bd.cost_of_capital)+' 🔵（固定）</div>';
