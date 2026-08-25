@@ -1486,13 +1486,13 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                         _rent_got += sum(_rv.values())
                     elif isinstance(_rv, (int, float)):
                         _rent_got += _rv
-                _income_m = (tv.get("monthly_dividend_total") or 0) + (tv.get("rent_monthly_total") or 0)
+                _income_m = (tv.get("dividend_month_expected") or 100000) + (tv.get("rent_monthly_total") or 0)
                 _freeze = _us30y_now >= 5.30
                 _fz_txt = f"🔴 觸及全域凍結線（{_us30y_now:.2f}% ≥ 5.30%）— 禁止新增債券質押" if _freeze else f"🟢 未觸及凍結線（{_us30y_now:.2f}% &lt; 5.30%）"
                 # 投資哲學檢核（2026-08-19 定版：核心三支柱 + 4 問）— 用常態被動收入（非當月實收）
                 _philosophy_items = []
                 _snap_now = json.loads(Path("snapshot.json").read_text(encoding="utf-8")) if Path("snapshot.json").exists() else {}
-                _inc_m = (_snap_now.get("monthly_dividend_total") or 0) + (_snap_now.get("rent_monthly_total") or 0)
+                _inc_m = (_snap_now.get("dividend_month_expected") or 100000) + (_snap_now.get("rent_monthly_total") or 0)
                 _exp = _snap_now.get("monthly_expense") or 162781
                 _cov = _inc_m / _exp if _exp else 0
                 _philosophy_items.append(f"現金流覆蓋（常態）{_inc_m:,.0f}/{_exp:,.0f} = {_cov*100:.0f}% {'✅' if _cov >= 1.0 else '🔴'}")
