@@ -2834,6 +2834,9 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
                 + f"<div class='text-[10px] text-slate-400 mt-2 italic'>「{_slogan}」</div>"
                 "<div class='text-[9px] text-slate-500'>本模組僅產生警示與建議，不自動下單｜資訊僅供參考</div></div>"
             )
+            # 去重保險（2026-08-25）：注入前先移除既有 Rhythm-08 面板，防止模板/舊 HTML 殘留造成重複顯示
+            import re as _re_r8
+            html = _re_r8.sub(r"<div class='bg-slate-900/60[^>]*>.*?🎵 Rhythm-08.*?</div></div>", "", html, flags=_re_r8.S)
             # 插到 </main> 或 __RISK 前；無佔位符則 append 到 body 前
             if "__RISK_PANEL__" in html:
                 html = html.replace("__RISK_PANEL__", _r8_panel)
