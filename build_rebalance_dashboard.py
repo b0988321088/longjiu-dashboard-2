@@ -149,7 +149,7 @@ def main():
     total = s.get("total_assets", 0)
     cash = s.get("cash_total", 0)
     monthly_inc = s.get("monthly_income", 225918)
-    monthly_exp = s.get("monthly_expense", 152781)
+    monthly_exp = s.get("monthly_expense", 162781)
     surplus = monthly_inc - monthly_exp
     coverage = monthly_inc / monthly_exp * 100 if monthly_exp else 0
     usd_pct = s.get("usd_exposure_pct", 64.0)

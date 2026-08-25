@@ -30,7 +30,7 @@ def main():
     cash = snap.get("cash_total", 0)
     _pi = snap.get("passive_income", {}) or {}
     _passive = _pi.get("total_conservative", 183333)
-    _exp = snap.get("monthly_expense", 152781)
+    _exp = snap.get("monthly_expense", 162781)
     _cov = round(_passive / _exp * 100) if _exp else 0
     us30y = st.get("last_rate")
     mode = "防禦（A）" if st.get("mode") == "A" else "布局（B）" if st.get("mode") == "B" else "未知"
