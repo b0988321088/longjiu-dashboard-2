@@ -32,7 +32,18 @@ def run(label, cmd, timeout=300, stop_on_fail=True):
 
 def main():
     today = sys.argv[1] if len(sys.argv) > 1 else datetime.date.today().strftime("%Y-%m-%d")
-    print(f"🔁 龍九一鍵同步 v3（{today}）")
+    print(f"🔁 龍九一鍵同步 v4（{today}）")
+    # v4 檢查 0：儀表板模板硬編碼檢查（2026-08-25：改口徑後 index_template.html 殘留舊值 → 儀表板顯示舊數字）
+    try:
+        _tpl = (BASE / "index_template.html").read_text(encoding="utf-8")
+        _stale = ["152,781", "141,958", "73,137", "27,319", "156,835", "151,958"]
+        _hits = [s for s in _stale if s in _tpl]
+        if _hits:
+            print(f"  ⚠️ index_template.html 殘留舊口徑硬編碼: {_hits} — 儀表板會顯示舊數字，請修正 template（改 monthly_expense 後必查）")
+        else:
+            print("  ✅ 儀表板模板無舊口徑硬編碼")
+    except Exception as e:
+        print(f"  ⚠️ 儀表板模板檢查失敗: {e}")
     # v3 自動修復 1：snapshot.date 同步為 today（2026-08-25 血淚：date 停在 8/24 → four_source 檢查舊日期 → 假失敗）
     try:
         sp = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
