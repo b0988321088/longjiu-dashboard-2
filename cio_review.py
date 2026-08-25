@@ -172,11 +172,12 @@ def main() -> None:
     pass_check("巴菲特分析完整（場景判定 + 建議部位 + 淨資產數字）")
 
     # 8.5 CTO 技術視角強化審查
+    # 2026-08-25：LLM 生成可能用「具體動作」或「建議動作」標籤，兩者皆為有效動作段，容許任一
     if "CTO" in daily and "今日最大風險" not in daily:
         fail("CTO 分析待補齊：缺少今日最大風險")
-    if "CTO" in daily and "建議動作" not in daily:
+    if "CTO" in daily and "建議動作" not in daily and "具體動作" not in daily:
         fail("CTO 分析待補齊：缺少建議動作")
-    pass_check("CTO 分析完整（今日最大風險 + 建議動作）")
+    pass_check("CTO 分析完整（今日最大風險 + 建議/具體動作）")
 
     # 8.6 場景驅動分析
     analysis = read_json(DAILY_ANALYSIS)

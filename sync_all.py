@@ -4,7 +4,7 @@
 v2 修正：①加入 asset_sync.py（同義欄位驗證，2026-08-24 血淚：漏欄位不抓）②輸出完整（非只 tail）③失敗即停
 用法：python sync_all.py [date]
 """
-import subprocess, sys, datetime
+import subprocess, sys, datetime, json, re
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
@@ -32,7 +32,29 @@ def run(label, cmd, timeout=300, stop_on_fail=True):
 
 def main():
     today = sys.argv[1] if len(sys.argv) > 1 else datetime.date.today().strftime("%Y-%m-%d")
-    print(f"🔁 龍九一鍵同步 v2（{today}）")
+    print(f"🔁 龍九一鍵同步 v3（{today}）")
+    # v3 自動修復 1：snapshot.date 同步為 today（2026-08-25 血淚：date 停在 8/24 → four_source 檢查舊日期 → 假失敗）
+    try:
+        sp = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        if sp.get("date") != today:
+            old = sp.get("date")
+            sp["date"] = today
+            (BASE / "snapshot.json").write_text(json.dumps(sp, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
+            print(f"  🔧 snapshot.date {old} → {today}")
+    except Exception as e:
+        print(f"  ⚠️ snapshot.date 修復失敗: {e}")
+    # v3 自動修復 2：確保 gen_emergency_{MMDD}.py 存在（2026-08-25：缺檔 → 緊急應變完整版 can't open file）
+    _mm = today[5:7] + today[8:10]
+    _ge = BASE / f"gen_emergency_{_mm}.py"
+    if not _ge.exists():
+        _srcs = sorted(BASE.glob("gen_emergency_*.py"))
+        if _srcs:
+            _txt = _srcs[-1].read_text(encoding="utf-8")
+            _new_txt = re.sub(r'(TODAY\s*=\s*")[\d-]+(")', rf"\g<1>{today}\g<2>", _txt)
+            _ge.write_text(_new_txt, encoding="utf-8", newline="\n")
+            print(f"  🔧 建立 gen_emergency_{_mm}.py（複製 {_srcs[-1].name}，TODAY={today}）")
+        else:
+            print("  ⚠️ 無 gen_emergency_*.py 可複製")
     steps = [
         ("同義欄位驗證", f"python asset_sync.py"),
         ("日報", f"python run_daily.py"),
