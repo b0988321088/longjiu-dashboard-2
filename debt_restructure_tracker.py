@@ -86,7 +86,7 @@ def main():
     print(f"===== 龍九動態監測｜{today.isoformat()} =====")
     print("=" * 58)
 
-    # -------- 1. 市場利率 Rhythm-08 --------
+    # -------- 1. 市場利率 Rhythm-08（2026-08-25：紅線狀態切換才完整輸出，平常靜音）--------
     us30y, us30y_date = fetch_fred("DGS30")
     if us30y is None:
         us30y = snap.get("rhythm08", {}).get("indicators", {}).get("us30y") or 5.21
@@ -97,17 +97,33 @@ def main():
         rhythm_light = "🟡滯脹警戒"
     else:
         rhythm_light = "🟢安全"
-    print(f"\n【1.市場利率｜Rhythm-08】")
-    print(f"  US30Y = {us30y:.2f}%（{us30y_date}）")
-    print(f"  燈號：{rhythm_light}（🟢安全 / 🟡警戒>5.15 / 🔴警戒>5.30→五因子判斷）")
-    if rhythm_light == "🔴警戒(5因子判斷)":
-        print(f"  五因子：①US10Y ②US30Y ③USD/TWD ④美債組合市價 ⑤實際LTV；10Y回落+匯率穩+LTV低 → 分批買入仍有利")
-    if rhythm_light == "🟢安全":
-        print(f"  規則：可依 B先A後 時程執行")
-    elif rhythm_light == "🟡滯脹警戒":
-        print(f"  規則：LTV上限強制 ≤30%，停止擴張質押")
-    else:
-        print(f"  規則：禁止新增買債、禁止新增質押借貸；舊部位只監控LTV，不強制全數賣出")
+    # 狀態切換偵測：平常靜音（儀表板已涵蓋），燈號切換才完整輸出 + 更新狀態檔
+    _r8_state_path = BASE / "data" / "rhythm_push_state.json"
+    _prev_light = None
+    try:
+        _r8_st = json.loads(_r8_state_path.read_text(encoding="utf-8"))
+        _prev_light = _r8_st.get("last_light")
+    except Exception:
+        _prev_light = None
+    _r8_changed = (_prev_light != rhythm_light)
+    if _r8_changed:
+        print(f"\n【1.市場利率｜Rhythm-08】🚨 燈號切換：{_prev_light or '初始'} → {rhythm_light}")
+        print(f"  US30Y = {us30y:.2f}%（{us30y_date}）")
+        print(f"  燈號：{rhythm_light}（🟢安全 / 🟡警戒>5.15 / 🔴警戒>5.30→五因子判斷）")
+        if rhythm_light == "🔴警戒(5因子判斷)":
+            print(f"  五因子：①US10Y ②US30Y ③USD/TWD ④美債組合市價 ⑤實際LTV；10Y回落+匯率穩+LTV低 → 分批買入仍有利")
+        if rhythm_light == "🟢安全":
+            print(f"  規則：可依 B先A後 時程執行")
+        elif rhythm_light == "🟡滯脹警戒":
+            print(f"  規則：LTV上限強制 ≤30%，停止擴張質押")
+        else:
+            print(f"  規則：禁止新增買債、禁止新增質押借貸；舊部位只監控LTV，不強制全數賣出")
+        try:
+            with open(_r8_state_path, "w", encoding="utf-8", newline="\n") as _f:
+                json.dump({"last_light": rhythm_light, "us30y": round(us30y, 2), "date": today.isoformat()}, _f, ensure_ascii=False, indent=1)
+        except Exception:
+            pass
+    # 燈號未變：Rhythm-08 段落靜音（詳細見儀表板 Rhythm-08 卡片）
 
     # -------- 2. 匯率監測 --------
     usd_twd = fetch_fx()
