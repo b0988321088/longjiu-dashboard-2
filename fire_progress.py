@@ -7,7 +7,7 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 TARGET_IDEAL_SPEND = 40_000  # 長期理想目標月花費
-TARGET_EXPENSE = 141_958  # 當下真實常態開銷
+TARGET_EXPENSE = 162_781  # 當下真實常態開銷
 
 def calc():
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))

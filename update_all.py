@@ -289,7 +289,7 @@ def main():
             _pi = snap.get("passive_income", {})
             _pi["fund_dividend_conservative"] = _expected_ins
             _pi["total_conservative"] = _expected_ins + _pi.get("rent_monthly", 80100)
-            _pi["coverage_pct"] = round(_pi["total_conservative"] / _pi.get("monthly_expense", 152781) * 100, 1)
+            _pi["coverage_pct"] = round(_pi["total_conservative"] / _pi.get("monthly_expense", 162781) * 100, 1)
             snap["passive_income"] = _pi
             save_json(SNAP, snap)
             print(f"  ✅ 配息資料自動校驗完成（allianz={_az:,} + firstjin={_fj:,} = {_expected_ins:,}）")

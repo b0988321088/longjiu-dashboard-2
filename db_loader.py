@@ -33,10 +33,10 @@ def load_tv(date_str: str = None) -> dict:
         + tv.get('rent_1f', 0) + tv.get('rent_other', 0)
         + tv.get('dividend_total', 0) + tv.get('interest', 0)
     )
-    tv['working_surplus'] = tv.get('monthly_income', 218_102) - 141_958
+    tv['working_surplus'] = tv.get('monthly_income', 218_102) - 162_781
     tv['retirement_surplus'] = (
         tv.get('dividend_total', 69_044) + tv.get('rent_1f', 0) + tv.get('rent_other', 0)
-        - 141_958
+        - 162_781
     )
     return tv
 

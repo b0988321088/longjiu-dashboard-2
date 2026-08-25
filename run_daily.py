@@ -325,7 +325,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     allianz_dividend = tv.get("allianz_dividend", 73_167)
     firstjin_dividend = tv.get("firstjin_dividend", 22_949)
     # 房租覆蓋率（動態）與基金明細（從 snapshot 讀，不硬編碼）
-    _rent_cov = (tv.get("rent_monthly", 0) or 0) / (tv.get("monthly_expense", 141_958) or 1) * 100
+    _rent_cov = (tv.get("rent_monthly", 0) or 0) / (tv.get("monthly_expense", 162781) or 1) * 100
     # 當月實際已收房租（rent_received_records）
     _rent_recv = tv.get("rent_received_records", {}) or {}
     _rm = date.today().strftime("%Y-%m")
@@ -847,6 +847,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
           <tr><td>被動月收</td><td>{monthly_dividend + _rent_got:,} TWD</td><td>實收：配息 {monthly_dividend:,} + 房租 {_rent_got:,}｜預期：房租 80,100 + 配息保守 {_div_expected:,}</td></tr>
         </tbody>
       </table>
+      <p style="font-size:11px;color:#6e6e73;margin-top:6px">📌 口徑速記：月支出 162,781（v4 定版）｜配息 153,389（合計）/ 100,000（保守）/ 97,233（實收）｜被動保守 183,333（配息+房租）</p>
     </div>
   </div>
 
@@ -1491,7 +1492,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _philosophy_items = []
                 _snap_now = json.loads(Path("snapshot.json").read_text(encoding="utf-8")) if Path("snapshot.json").exists() else {}
                 _inc_m = (_snap_now.get("monthly_dividend_total") or 0) + (_snap_now.get("rent_monthly_total") or 0)
-                _exp = _snap_now.get("monthly_expense") or 152781
+                _exp = _snap_now.get("monthly_expense") or 162781
                 _cov = _inc_m / _exp if _exp else 0
                 _philosophy_items.append(f"現金流覆蓋（常態）{_inc_m:,.0f}/{_exp:,.0f} = {_cov*100:.0f}% {'✅' if _cov >= 1.0 else '🔴'}")
                 _usd_ex = tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
@@ -1509,7 +1510,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     f"<strong>③ 月度利息流出 vs 現金流入：</strong>流出 {_p1_cost_m+_pledge_cost_m:,.0f} vs 流入（常態配息＋房租）{_income_m:,.0f}＋富達月配 ~{_fid_mdiv:,} = {_income_m+_fid_mdiv:,.0f} — {'✅ 覆蓋' if (_income_m+_fid_mdiv) >= (_p1_cost_m+_pledge_cost_m) else '⚠️ 未覆蓋'}<br/>"
                     f"<strong>④ 到期對照：</strong>負債＝國泰轉貸 1,200萬（3年寬限期）＋質押 300萬（富達擔保，基金無到期日）；富達為月配現金流資產，無期限錯配 ✅<br/>"
                     f"<strong>⑤ US30Y：</strong>{_us30y_now:.2f}% — {_fz_txt}<br/>"
-                    f"<strong>⑥ 底線規則（8/13 動態）：</strong>現金≥6個月開支（{700000:,}，月開支 152,781）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/>"
+                    f"<strong>⑥ 底線規則（8/13 動態）：</strong>現金≥6個月開支（{700000:,}，月開支 {_exp:,.0f}）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/>"
                     f"<strong>⑦ 投資哲學檢核（8/19 定版）：</strong>{_philosophy_html}<br/>"
                     f"<strong>⛔ 資金禁令：</strong>轉貸/質押資金禁止生活消費擴張"
                     f"</div></div>"
@@ -1964,7 +1965,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__ALLIANZ_AB__", fmt(tv.get("allianz_ab", 0)))
     # 現金儲備/跑道動態化（2026-08-04 改：不再硬編碼 2,936,923）
     _cash_rw = tv.get("cash_total") or tv.get("real_liquid_assets") or 0
-    _exp_rw = tv.get("monthly_expense") or 141_958
+    _exp_rw = tv.get("monthly_expense") or 162781
     _rw = (_cash_rw / _exp_rw) if _exp_rw else 0
     _rw_text = (
         f"以可動用現金 {_cash_rw:,.0f}（Moneybook 唯一真值）進行除數運算。"
@@ -1978,7 +1979,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__WORKING_INCOME__", fmt(tv.get("monthly_income", 0)))
     html = html.replace("__WORKING_SURPLUS__", f"+{fmt(tv.get('working_surplus', 0))}")
     _retire_income = tv.get("dividend_month_expected", 100_000) + tv.get("rent_monthly", 80_100)  # 常態：配息保守 + 房租應收
-    _retire_expense = tv.get("monthly_expense", 141_958)
+    _retire_expense = tv.get("monthly_expense", 162781)
     html = html.replace("__RETIREMENT_INCOME__", fmt(_retire_income))
     html = html.replace("__RETIREMENT_SURPLUS__", f"+{fmt(_retire_income - _retire_expense)}")
     # 本週完成清單（2026-08-23 修正：移除 8/3-8/4 硬編碼舊事；只取近 7 天真實完成）
@@ -2134,7 +2135,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__MONTHLY_INCOME_TOTAL__", f"{float(tv.get('monthly_income', 219_827) or 219_827):,.0f}")
     html = html.replace("__INSURANCE_TREND__", insurance_trend)
     _cash_runway = int(tv.get("cash_total") or tv.get("real_liquid_assets") or 0)
-    _runway_months = int(_cash_runway / max(tv.get("monthly_expense", 141_958), 1))
+    _runway_months = int(_cash_runway / max(tv.get("monthly_expense", 162781), 1))
     html = html.replace("__RUNWAY_MONTHS__", fmt(_runway_months))
     html = html.replace("__CASH_TOTAL__", fmt(_cash_runway))
     html = html.replace("__RUNWAY_COVERAGE__", f"{_runway_months:.1f}x")
@@ -2175,9 +2176,9 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     # 常態月收 = 薪水 + 配息保守預估 + 房租應收
     _passive_norm = float(_salary_exp) + float(_div_exp) + float(_rent_exp)
     html = html.replace("__PASSIVE_TXT__", f"薪水 {_salary_exp:,} + 配息保守 {_div_exp:,} + 房租應收 {_rent_exp:,.0f} = {_passive_norm:,.0f} TWD")
-    html = html.replace("__PASSIVE_NOTE__", f"房租應收 80,100（1樓24,000+23樓21,000+洲際W33,000+管理費2,100），配息保守預估 {_div_exp:,}/月，台電薪水 {_salary_exp:,}；當月實際已收 {_div_actual + _rent_got2 + _salary_got2:,}（薪水{_salary_got2:,}+配息{_div_actual:,}+房租{_rent_got2:,}）")
+    html = html.replace("__PASSIVE_NOTE__", f"房租應收 80,100（1樓24,000+23樓21,000+洲際W33,000+管理費2,100），配息保守預估 {_div_exp:,}/月，台電薪水 {_salary_exp:,}；當月實際已收 {_div_actual + _rent_got2 + _salary_got2:,}（薪水{_salary_got2:,}+配息{_div_actual:,}+房租{_rent_got2:,}）；口徑速記：月支出 162,781（v4 定版）｜配息 153,389（合計）/100,000（保守）/97,233（實收）｜被動保守 183,333（配息+房租）")
     # 覆蓋率（常態月收 / 月支出）
-    _exp_v = tv.get("monthly_expense", 141_958) or 141_958
+    _exp_v = tv.get("monthly_expense", 162781) or 162781
     _cov = _passive_norm / _exp_v * 100
     html = html.replace("__PASSIVE_COVERAGE__", f"{_cov:.1f}%")
     # 進度條（堆疊棒狀圖：藍色=配息、青綠=房租、黃=薪水，按佔比）
@@ -2241,7 +2242,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         _its = sorted(_bank_groups[_g], key=lambda x: -x[0])
         _gt = sum(fv for fv, _ in _its)
         # 水位判斷（安全線 = 月支出 × 3，動態讀 tv，禁硬編碼 INC-127；玉山/富邦生活帳戶 4 萬）
-        _target = _LIVING_BANK_TARGET.get(_g, int(tv.get("monthly_expense", 141_958) or 141_958) * 3)
+        _target = _LIVING_BANK_TARGET.get(_g, int(tv.get("monthly_expense", 162781) or 162781) * 3)
         _target_note = "（生活帳戶，僅信用卡）" if _g in _LIVING_BANK_TARGET else "（3個月支出）"
         if _gt >= _target:
             _status = f'<span>🟢 充裕</span>'
@@ -2694,7 +2695,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__POLICY_A_VAL__", fmt(tv.get("allianz_a_current_value", tv.get("allianz_a", tv.get("allianz_policy_a_value", 4_983_244)))))
     html = html.replace("__POLICY_B_VAL__", fmt(tv.get("allianz_b_current_value", tv.get("allianz_b", tv.get("allianz_policy_b_value", 2_650_802)))))
     _rent_mgmt = 2_100
-    _expense = int(tv.get("monthly_expense", 141_958))
+    _expense = int(tv.get("monthly_expense", 162781))
     _mortgage_pmt = 33_724
     _rent_total = _rent_1f + _rent_zjw + _rent_23f + _rent_mgmt
     _rent_received = _rent_1f + _rent_zjw + _rent_23f + _rent_mgmt  # 80,100 全數實收

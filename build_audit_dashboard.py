@@ -15,7 +15,7 @@ TA = s["total_assets"]; TL = s["total_liabilities"]; RE = s.get("real_estate_val
 INS = s["insurance_current_value"]; SEC = s["securities_total_market_value"]; FUND = s["fund_market_value"]
 CASH = s["cash_total"]; RENT = s.get("rent_monthly_total", 80100)
 DIV = s.get("monthly_dividend_total", 153389); DIV_ACT = s.get("dividend_month_actual", 97233)
-EXP = s.get("monthly_expense", 156835); FIXED = s.get("monthly_fixed_expense", {}).get("合計", 156835)
+EXP = s.get("monthly_expense", 162781); FIXED = s.get("monthly_fixed_expense", {}).get("合計", 162781)
 MORT = 91735; POL_INT = 13333; GF = 6000
 pen = s["penetration"]["actual_pct"]; twd = s["penetration"]["actual_twd"]; tgt = s["penetration"]["targets"]
 us30y = us.get("last_rate"); mode = us.get("mode_label", us.get("mode", "—"))

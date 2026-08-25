@@ -87,7 +87,7 @@ def calculate_budget_status(expenses):
     lines.append("")
     lines.append("## 現金流影響")
     lines.append("")
-    monthly_expense_expected = snap.get("monthly_expense", 156835) if "snap" in dir() else 156835
+    monthly_expense_expected = snap.get("monthly_expense", 162781) if "snap" in dir() else 162781
     lines.append("- 信用卡四大主力：{:,.0f} TWD".format(total_actual))
     lines.append("- 月支出基线：{:,} TWD".format(monthly_expense_expected))
     lines.append("- 預算衝擊：{:+,.0f} TWD".format(variance))
