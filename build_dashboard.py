@@ -66,8 +66,31 @@ def main():
         if old in tpl:
             tpl = tpl.replace(old, new)
             hits += 1
+
+    # ── 八大連結動態化（2026-08-26：模板連結寫死 8/21-23 → glob 最新檔名）──
+    import glob as _glob
+    _link_map = {
+        "__ASSET_DIFF__": "asset_diff_*.html",
+        "__BUFFETT_MD__": "buffett_cto_report_*.md",
+        "__DAILY_REPORT__": "daily_report_v2_*.html",
+        "__EMERGENCY__": "emergency_report_*.html",
+        "__INDUSTRY_PNG__": "industry_penetration_*.png",
+        "__PEN_REPORT__": "penetration_report_*.html",
+        "__REBALANCE_DASH__": "rebalance_dashboard_*.html",
+        "__REBALANCE_MD__": "rebalance_summary_*.md",
+        "__RISK_PNG__": "risk_factor_penetration_*.png",
+        "__WEEKLY__": "weekly_report_*.html",
+    }
+    _link_hits = 0
+    for _ph, _pat in _link_map.items():
+        if _ph in tpl:
+            _fs = sorted(_glob.glob(str(BASE / _pat)))
+            if _fs:
+                _new = str(_fs[-1]).replace("\\", "/").split("/")[-1]  # Windows glob 回傳 str
+                tpl = tpl.replace(_ph, _new)
+                _link_hits += 1
     (BASE / "index.html").write_text(tpl, encoding="utf-8")
-    print(f"✅ 儀表板注入完成（{hits} 組值已更新）｜現金 {_fmt(cash)} / 保單 {_fmt(ins)} / 配息 {_fmt(div_total)} / 租金 {_fmt(rent_got)}")
+    print(f"✅ 儀表板注入完成（{hits} 組值 + {_link_hits} 連結動態化）｜現金 {_fmt(cash)} / 保單 {_fmt(ins)} / 配息 {_fmt(div_total)} / 租金 {_fmt(rent_got)}")
 
 if __name__ == "__main__":
     main()
