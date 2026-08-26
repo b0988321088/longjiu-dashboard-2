@@ -847,7 +847,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
           <tr><td>被動月收</td><td>{monthly_dividend + _rent_got:,} TWD</td><td>實收：配息 {monthly_dividend:,} + 房租 {_rent_got:,}｜預期：房租 80,100 + 配息保守 {_div_expected:,}</td></tr>
         </tbody>
       </table>
-      <p style="font-size:11px;color:#6e6e73;margin-top:6px">📌 口徑速記：月支出 162,781（v4 定版）｜配息 153,389（合計）/ 100,000（保守）/ 97,233（實收）｜被動保守 183,333（配息+房租）</p>
+      <p style="font-size:11px;color:#6e6e73;margin-top:6px">📌 口徑速記：月支出 162,781（v4 定版）｜配息 153,389（合計）/ 100,000（保守）/ {monthly_dividend:,}（實收）｜被動保守 183,333（配息+房租）</p>
       <p style="font-size:11px;color:#b45309;margin-top:2px">⚠️ 配息為截至今日實收，月底前依配息接力時程陸續補齊（撥回入帳後覆蓋率更高）</p>
     </div>
   </div>
