@@ -1057,6 +1057,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       <div class="text-sm" style="color:#6e6e73;margin-bottom:8px;">偏離階梯：≤2pp觀察 / 2-5pp戰術觀察 / 5-10pp中等再平衡 / >10pp大規模再平衡</div>
       __TACTICAL_TABLE__
       __WEEKLY_OPS__
+      __PERF_TRACK__
     </div>
   </div>
 
@@ -1460,6 +1461,23 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             html = html.replace("__WEEKLY_OPS__", "")
     except Exception:
         html = html.replace("__WEEKLY_OPS__", "")
+
+    # 2026-08-26：績效追蹤（讀 snapshot.operation_performance）
+    try:
+        _perf = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8")).get("operation_performance", {})
+        if _perf and _perf.get("基準"):
+            _b = _perf["基準"]
+            _tp = "｜".join(f"{t2.get('日期','')} {t2.get('項目','')[:25]}" for t2 in _perf.get("追蹤點", []))
+            html = html.replace("__PERF_TRACK__",
+                f"<div style='background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin:12px 0'>"
+                f"<div style='font-weight:800;color:#78350f;margin-bottom:8px'>📈 操作績效追蹤（基準 {_b.get('日期','')}）</div>"
+                f"<div style='font-size:12px;color:#92400e'>月配息常態 {_b.get('月配息常態估算',0):,}｜總資產 {_b.get('總資產',0):,}｜淨資產 {_b.get('淨資產',0):,}｜覆蓋率 {_b.get('覆蓋率',0)}%</div>"
+                f"<div style='font-size:12px;color:#92400e;margin-top:4px'>⏳ 追蹤點：{_tp}</div>"
+                f"<div style='font-size:11px;color:#b45309;margin-top:4px'>⚠️ 失敗訊號：{('、'.join(_perf.get('失敗訊號', [])))}</div></div>")
+        else:
+            html = html.replace("__PERF_TRACK__", "")
+    except Exception:
+        html = html.replace("__PERF_TRACK__", "")
 
     # 專業投資人風控卡（snapshot.professional_investor）
     try:
