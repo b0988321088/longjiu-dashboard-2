@@ -59,6 +59,24 @@ def main():
     # ② 同步同義欄位 + 重算總資產
     from asset_sync import sync_snapshot_keys
     snap = sync_snapshot_keys(snap)
+
+    # 2026-08-26 血淚：--securities 更新時必須同步縮放 holdings dict（否則 4 源比對 DB 舊值覆蓋）
+    if args.get("securities"):
+        _sec = snap.get("securities", {})
+        if isinstance(_sec, dict):
+            _holds = _sec.get("holdings", [])
+            _hsum = sum(h.get("shares", 0) * h.get("price", 0) for h in _holds)
+            if _hsum > 0:
+                _scale = float(args["securities"]) / _hsum
+                for h in _holds:
+                    if h.get("shares"):
+                        h["price"] = round(h.get("price", 0) * _scale, 4)
+                _sec["holdings"] = _holds
+                snap["securities"] = _sec
+
+    # 2026-08-26：securities 必須是 dict（含 holdings），勿設成 int（會讓 calc_penetration 崩潰）
+    if not isinstance(snap.get("securities"), dict):
+        print("⚠️ securities 非 dict（結構受損），已忽略數值覆寫；請用 git 恢復 snapshot.json")
     snap["total_assets"] = (snap.get("insurance_total", 0) or 0) + (snap.get("securities_total_market_value", 0) or 0) \
         + (snap.get("fund_market", 0) or 0) + (snap.get("cash_total", 0) or 0)
 
