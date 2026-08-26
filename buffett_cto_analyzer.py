@@ -304,6 +304,13 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
         )
         _out = _llm_cached("cto", _prompt, "你是技術分析師（CTO）。輸出繁體中文，直接給結論與動作，不要客套。")
         if _out:
+            # 2026-08-26 修復：LLM 分支輸出可能用「最大風險/動作」標籤，CIO 審查(cio_review.py L176-179)
+            # 要求「今日最大風險」+「建議動作/具體動作」才放行 → 標準化標籤（同 8/23 巴菲特分支修法）
+            _out = _out.strip()
+            if "今日最大風險" not in _out:
+                _out = _out.replace("最大風險", "今日最大風險", 1) if "最大風險" in _out else f"今日最大風險：{_out}"
+            if "建議動作" not in _out and "具體動作" not in _out:
+                _out = _out.replace("動作", "建議動作", 1) if "動作" in _out else _out + "\n建議動作：依風險對策分批執行（台股單筆≤5萬、美股逢彈減碼≤20萬）。"
             return ["CTO 技術視角（LLM 真實分析）", _out]
     except Exception:
         pass

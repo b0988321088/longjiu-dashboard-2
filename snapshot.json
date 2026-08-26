@@ -796,13 +796,13 @@
  "cash_total": 817539,
  "bonds_cash": 10262984,
  "monthly_dividend_breakdown": {
-  "allianz": 95347,
-  "firstjin": 35583,
-  "fund": 11719,
-  "etf": 10740,
-  "total": 153389,
-  "note": "7月實收：保單125,413 + 基金/ETF 11,719 = 137,132（Moneybook 7/31明細）",
-  "insurance": 130930
+  "allianz": 62969,
+  "firstjin": 13126,
+  "insurance": 76095,
+  "etf": 19656,
+  "fund": 1482,
+  "total": 97233,
+  "note": "8月實收：保單 76,095（安聯62,969+第一金13,126）+ ETF 19,656 + 基金 1,482 = 97,233（8/24 Moneybook）；月底安聯還有一次撥回"
  },
  "market": {
   "twii": "44,825.78 (+1.34%)"
