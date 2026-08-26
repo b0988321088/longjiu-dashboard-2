@@ -78,6 +78,7 @@ def main():
         ("同義欄位複驗", f"python asset_sync.py"),
         ("一致性檢查", f"python check_penetration_consistency.py {today}"),
         ("再平衡報告", f"python build_rebalance_report.py"),
+        ("儀表板注入", "python build_dashboard.py"),
         ("週報", f"python build_weekly_report.py"),
     ]
     ok = True
