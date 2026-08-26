@@ -1056,6 +1056,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       <h3>🎯 目標-對策對照表（DAA 動態理財）</h3>
       <div class="text-sm" style="color:#6e6e73;margin-bottom:8px;">偏離階梯：≤2pp觀察 / 2-5pp戰術觀察 / 5-10pp中等再平衡 / >10pp大規模再平衡</div>
       __TACTICAL_TABLE__
+      __WEEKLY_OPS__
     </div>
   </div>
 
@@ -1438,6 +1439,27 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
         html = html.replace("__TACTICAL_TABLE__", _tactical_html + _sat_html)
     except Exception as _e:
         html = html.replace("__TACTICAL_TABLE__", f"<div style='color:#999;font-size:12px'>對策表產生失敗: {_e}</div>")
+
+    # 2026-08-26：本週操作執行紀錄（讀 snapshot.weekly_ops_closure_0826）
+    try:
+        _ops = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8")).get("weekly_ops_closure_0826", {})
+        if _ops and _ops.get("執行清單"):
+            _ops_html = "".join(
+                f"<div style='padding:5px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;margin:3px 0'>"
+                f"<b style='color:#16a34a'>✅</b> {x.get('項目','')} <span style='color:#64748b'>({x.get('金額','')})</span>"
+                f"<span style='float:right;color:#64748b'>{x.get('狀態','')}</span></div>"
+                for x in _ops.get("執行清單", [])
+            )
+            _ops_close = "｜".join(_ops.get("閉環", {}).get("待追蹤", []))
+            html = html.replace("__WEEKLY_OPS__",
+                f"<div style='background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin:12px 0'>"
+                f"<div style='font-weight:800;color:#0f172a;margin-bottom:8px'>📋 本週操作執行紀錄（{_ops.get('期間','')}）</div>"
+                f"{_ops_html}"
+                f"<div style='font-size:12px;color:#64748b;margin-top:6px'>📌 閉環待追蹤：{_ops_close}</div></div>")
+        else:
+            html = html.replace("__WEEKLY_OPS__", "")
+    except Exception:
+        html = html.replace("__WEEKLY_OPS__", "")
 
     # 專業投資人風控卡（snapshot.professional_investor）
     try:

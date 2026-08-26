@@ -517,8 +517,15 @@
         </div>
 
 <!-- 行事曆一覽表（2026-08-26：JS 動態讀 schedule_events.json，與日報同源；失敗保留快照版） -->
+        <!-- 本週操作執行紀錄（2026-08-26：JS 讀 snapshot.json weekly_ops_closure） -->
         <div class="luxury-card p-6 space-y-4">
-            <h3 class="text-md font-bold text-white">龍九控股行事曆（近期待辦事項）</h3>
+            <h3 class="text-md font-bold text-white">📋 本週操作執行紀錄</h3>
+            <div class="space-y-2 text-xs" id="weekly-ops">
+            <div class="p-3 bg-slate-900/30 rounded border border-slate-800 text-slate-400">載入中...</div>
+            </div>
+        </div>
+
+
             <div class="space-y-3 text-xs" id="calendar-events">
             <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">08/24</span><span class="text-white font-bold flex-1">🔴 今日執行 🔁 保單轉換 300萬（8/24 定案執行）：貝萊德科技A10 + 摩根JPM股部分 → PIMCO 120萬 + M&G 100萬 + 健康科學A2(醫療) 50萬 + 黃金A10 30萬（T+4 免現金免稅：降科技/建黃金/補醫療） 300萬</span></div>
 <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">待處理</span><span class="text-white font-bold flex-1">⚠️ 還款中 女友借款（每月還6,000，預計12/5清償） 300,000</span></div>
@@ -700,6 +707,27 @@ if (location.hash) hashTab();
       });
       if(html){ document.getElementById('calendar-events').innerHTML = html; }
     }).catch(function(){ /* 保留快照版 */ });
+})();
+</script>
+
+<script>
+// 2026-08-26：本週操作執行紀錄（讀 snapshot.json weekly_ops_closure）
+(function(){
+  var host = location.href.split('/').slice(0,3).join('/');
+  var base = location.pathname.split('/').slice(0,-1).join('/');
+  fetch(host + base + '/snapshot.json?_t=' + Date.now(), {cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(snap){
+      var w = snap.weekly_ops_closure_0826;
+      if(!w || !w.執行清單) return;
+      var html = '';
+      w.執行清單.forEach(function(x){
+        html += '<div class="flex items-center gap-2 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-emerald-400 font-mono w-6">✅</span><span class="text-slate-300 flex-1">' + x.項目 + '</span><span class="text-slate-400 font-mono">' + (x.金額||'') + '</span></div>';
+      });
+      html += '<div class="pt-2 border-t border-slate-700 text-slate-400">📌 閉環待追蹤：' + (w.閉環 ? w.閉環.待追蹤.join('｜') : '') + '</div>';
+      var el = document.getElementById('weekly-ops');
+      if(el) el.innerHTML = html;
+    }).catch(function(){ /* 保留快照 */ });
 })();
 </script>
 </body>
