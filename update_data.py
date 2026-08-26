@@ -77,6 +77,21 @@ def main():
     # 2026-08-26：securities 必須是 dict（含 holdings），勿設成 int（會讓 calc_penetration 崩潰）
     if not isinstance(snap.get("securities"), dict):
         print("⚠️ securities 非 dict（結構受損），已忽略數值覆寫；請用 git 恢復 snapshot.json")
+
+    # 2026-08-26 血淚：--funds_cathay 更新時必須同步 funds_breakdown.國泰直購（穿透報告讀 breakdown 逐檔）
+    # 用法：--cathay_funds='{"富達全球動能多元B股C月配息美元":5969297,"聯博全球多元收益AD美元月配":999779,"國泰台灣貨幣市場基金":5000904}'
+    if args.get("cathay_funds"):
+        try:
+            _cf = json.loads(args["cathay_funds"])
+            _fb = snap.get("funds_breakdown", {})
+            _cat = _fb.get("國泰直購", {})
+            for _k, _v in _cf.items():
+                _cat[_k] = _v
+            _fb["國泰直購"] = _cat
+            snap["funds_breakdown"] = _fb
+            print(f"✅ funds_breakdown 國泰直購已同步（{len(_cf)} 檔）")
+        except Exception as _e:
+            print(f"⚠️ cathay_funds 解析失敗: {_e}")
     snap["total_assets"] = (snap.get("insurance_total", 0) or 0) + (snap.get("securities_total_market_value", 0) or 0) \
         + (snap.get("fund_market", 0) or 0) + (snap.get("cash_total", 0) or 0)
 
