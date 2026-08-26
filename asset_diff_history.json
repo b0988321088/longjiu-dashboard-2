@@ -877,12 +877,12 @@
   },
   "2026-08-26": {
     "date": "2026-08-26",
-    "total_assets": 26174570.0,
+    "total_assets": 26164189.0,
     "total_liabilities": 30176284.0,
-    "net_worth": -4001714.0,
+    "net_worth": -4012095.0,
     "securities_market": 2841630.0,
-    "insurance_current": 9766831.0,
-    "insurance_total": 9766831.0,
+    "insurance_current": 9756450.0,
+    "insurance_total": 9756450.0,
     "fund_market": 12748570.0,
     "real_estate": 0.0,
     "cash": 817539.0,
@@ -901,7 +901,7 @@
       "  B-PIMCO收益增長": 482240,
       "安聯A+B合計": 7827561.0,
       "━第一金FA81聯博現値": 1928889.0,
-      "━保單總現値": 9766831.0
+      "━保單總現値": 9756450.0
     },
     "fund_dividend_monthly": 97233.0,
     "monthly_income": 225918.0,
