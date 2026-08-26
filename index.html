@@ -516,10 +516,10 @@
             </div>
         </div>
 
-<!-- 行事曆一覽表 -->
+<!-- 行事曆一覽表（2026-08-26：JS 動態讀 schedule_events.json，與日報同源；失敗保留快照版） -->
         <div class="luxury-card p-6 space-y-4">
             <h3 class="text-md font-bold text-white">龍九控股行事曆（近期待辦事項）</h3>
-            <div class="space-y-3 text-xs">
+            <div class="space-y-3 text-xs" id="calendar-events">
             <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">08/24</span><span class="text-white font-bold flex-1">🔴 今日執行 🔁 保單轉換 300萬（8/24 定案執行）：貝萊德科技A10 + 摩根JPM股部分 → PIMCO 120萬 + M&G 100萬 + 健康科學A2(醫療) 50萬 + 黃金A10 30萬（T+4 免現金免稅：降科技/建黃金/補醫療） 300萬</span></div>
 <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">待處理</span><span class="text-white font-bold flex-1">⚠️ 還款中 女友借款（每月還6,000，預計12/5清償） 300,000</span></div>
 <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/05</span><span class="text-slate-300 font-mono flex-1">🔄 還款中 女友還款（每月6,000） 6,000</span></div>
@@ -671,6 +671,35 @@ if (location.hash) hashTab();
       wn.innerHTML = '<div style="font-size:12px;color:#dc2626;font-weight:700">⚠️ 讀取失敗：'+(e.message||'網路錯誤')+'</div>';
     });
   }
+})();
+</script>
+<script>
+// 2026-08-26：行事曆 JS 動態化（讀 schedule_events.json，與日報同源；失敗保留快照版）
+(function(){
+  var host = location.href.split('/').slice(0,3).join('/');
+  var base = location.pathname.split('/').slice(0,-1).join('/');
+  fetch(host + base + '/schedule_events.json?_t=' + Date.now(), {cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(data){
+      var evs = Array.isArray(data) ? data : (data.events || []);
+      var today = new Date();
+      var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+      var limit = new Date(today); limit.setDate(limit.getDate() + 30);
+      var limitStr = limit.getFullYear() + '-' + String(limit.getMonth()+1).padStart(2,'0') + '-' + String(limit.getDate()).padStart(2,'0');
+      evs = evs.filter(function(e){ return e.date >= todayStr && e.date <= limitStr; })
+               .sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+      if(!evs.length){ return; }
+      var html = '';
+      evs.slice(0,12).forEach(function(e){
+        var d = e.date.split('-').slice(1).join('/');
+        var item = e.item || '';
+        var status = e.status || '';
+        var cls = 'bg-slate-900/30 rounded border border-slate-800';
+        if(status.indexOf('今日') >= 0 || status.indexOf('🔴') >= 0) cls = 'bg-slate-900/30 rounded border border-red-500/30';
+        html += '<div class="flex items-center gap-3 p-2 ' + cls + '"><span class="text-slate-400 font-mono w-14">' + d + '</span><span class="text-slate-300 font-mono flex-1">' + status + ' ' + item + '</span></div>';
+      });
+      if(html){ document.getElementById('calendar-events').innerHTML = html; }
+    }).catch(function(){ /* 保留快照版 */ });
 })();
 </script>
 </body>
