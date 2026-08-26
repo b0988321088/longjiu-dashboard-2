@@ -86,7 +86,7 @@ def penetration_card():
     tw_stock = pp.get("台股市值型成長", 0)
     alert_txt = (
         f"⚠️ 美股成長 {us_stock:.1f}% 超標 +{us_stock - 30:.1f}pp｜台股 {tw_stock:.1f}% 不足 -{23.5 - tw_stock:.1f}pp"
-        f"｜今晚費半 -2.83% 主曝險來源（美元曝險 {usd}% 超紅線 50%）"
+        f"｜美元曝險 {usd}% 超紅線 50%，靠新增資金補台股/防守稀釋"
     )
     return f"""<div class="sec"><h2>📊 資產穿透真值（{TODAY} snapshot）</h2>
 <p>總資產 <b>{tt:,.0f}</b> 元｜美元曝險 <b class="warn">{usd}%</b>（紅線 50%）｜目標：美股30/台股23.5/防守19/債券13/現金14.5</p>
@@ -94,19 +94,25 @@ def penetration_card():
 <div class="alert">{alert_txt}</div></div>"""
 
 def build():
-    gen, report = load_report()
+    _jd = json.loads((BASE / "data" / "emergency_llm_analysis.json").read_text(encoding="utf-8"))
+    gen, report = _jd.get("generated_at", NOW), _jd.get("full_report", "")
     secs = split_sections(report)
     n = len(report)
     print(f"[JSON] full_report len = {n} chars (generated_at={gen})")
     assert n > 1500, f"full_report too short: {n}"
 
-    kpis = [
-        ("道瓊 (DIA)", "53,529.39", "+0.21%", "up"), ("S&P 500 (SPY)", "7,682.92", "-0.11%", "down"),
-        ("納斯達克 (QQQ)", "26,163.48", "-0.48%", "down"), ("費城半導體 (SOXX)", "11,653.44", "-2.83%", "down"),
-        ("台積電 ADR", "416.68", "+0.79%", "up"), ("NVDA", "210.81", "-4.06%", "down"),
-        ("AAPL", "313.25", "+1.04%", "up"), ("META", "565.75", "+4.06%", "up"),
-        ("US30Y", "5.19%", "警戒5.20/凍結5.30", "warn"), ("台股加權", "45,169.46", "+0.91%", "up"),
-    ]
+    # 2026-08-26 修正：KPI 優先讀 JSON market_snapshot（動態、與本次分析同步），無則 fallback
+    _ms = _jd.get("market_snapshot", {})
+    if _ms:
+        kpis = [(k, v.get("value", ""), v.get("chg", ""), v.get("cls", "flat")) for k, v in _ms.items()]
+    else:
+        kpis = [
+            ("道瓊 (DIA)", "53,519.77", "-0.11%", "down"), ("S&P 500 (SPY)", "7,671.39", "-0.08%", "down"),
+            ("納斯達克 (QQQ)", "26,119.87", "-0.12%", "down"), ("費城半導體 (SOXX)", "11,598.80", "+0.09%", "up"),
+            ("台積電 ADR", "419.86", "+0.59%", "up"), ("NVDA", "212.52", "-0.25%", "down"),
+            ("AAPL", "309.54", "-0.12%", "down"), ("META", "585.60", "+2.73%", "up"),
+            ("US30Y", "5.23%", "警戒5.20/凍結5.30", "warn"), ("台股加權", "45,832.62", "+1.47%", "up"),
+        ]
 
     kpis_html = '<div class="kpis">' + "".join(
         f'<div class="kpi"><div class="l">{l}</div><div class="v {c}">{v}</div><div class="l">{s}</div></div>'
