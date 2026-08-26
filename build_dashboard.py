@@ -53,6 +53,14 @@ def main():
         "78,000": _fmt(rent_got),          # 租金已收
         "162,781": _fmt(expense),          # 月支出
     }
+    # ── 銀行水位（2026-08-26：模板寫死各銀行餘額 → 從 snapshot cash_detail 動態）──
+    cd = snap.get("cash_detail", {}) or {}
+    taiwan = (cd.get("敦南Richart子帳戶", 0) or 0) + (cd.get("文心綜活儲存款-薪轉", 0) or 0) + (cd.get("敦南Richart數位一般", 0) or 0) + (cd.get("敦南Richart外幣", 0) or 0)
+    rep["499,316"] = _fmt(taiwan)          # 台新合計
+    rep["139,446"] = _fmt(cd.get("文心綜活儲存款-薪轉", 177765) or 0)  # 文心薪轉
+    rep["97,353"] = _fmt(cd.get("敦南Richart數位一般", 90524) or 0)   # Richart一般
+    rep["50,104"] = _fmt(cd.get("數位活儲", 44116) or 0)              # 玉山
+    rep["20260821_1"] = "20260826_1"       # 資料日期
     hits = 0
     for old, new in rep.items():
         if old in tpl:
