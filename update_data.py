@@ -60,6 +60,14 @@ def main():
     from asset_sync import sync_snapshot_keys
     snap = sync_snapshot_keys(snap)
 
+    # 2026-08-26 檢討修正：--allianz/--firstjin 更新時 → 保險總值自動重算（不需另傳 --insurance）
+    if args.get("allianz") or args.get("firstjin"):
+        _az = snap.get("allianz_combined", 0) or 0
+        _fj = snap.get("firstjin_fl65_current_value", snap.get("firstjin_current_value", 0)) or 0
+        snap["insurance_total"] = _az + _fj
+        snap = sync_snapshot_keys(snap)
+        print(f"✅ 保險總值自動重算: {_az:,} + {_fj:,} = {snap['insurance_total']:,}")
+
     # 2026-08-26 血淚：--securities 更新時必須同步縮放 holdings dict（否則 4 源比對 DB 舊值覆蓋）
     if args.get("securities"):
         _sec = snap.get("securities", {})
@@ -95,16 +103,22 @@ def main():
     snap["total_assets"] = (snap.get("insurance_total", 0) or 0) + (snap.get("securities_total_market_value", 0) or 0) \
         + (snap.get("fund_market", 0) or 0) + (snap.get("cash_total", 0) or 0)
 
-    # ③ 重算穿透
+    # ③ 重算穿透（保留既有 keys，如科技拆解）
     from update_all import calc_penetration
     pen = calc_penetration(snap["cash_total"], snap["insurance_total"], snap["securities_total_market_value"],
                            snap["fund_market"], bond_portion=None, fund_ratios=None, snap=snap)
     total = snap["total_assets"]
-    snap["penetration"] = {
+    _old_pen = snap.get("penetration", {}) or {}
+    _new_pen = {
         "actual_twd": {k: pen[k] for k in ["台股市值型成長", "美股市值型成長", "防守型配息", "債券", "現金/安全網"]},
         "actual_pct": {k: round(pen[k] / total * 100, 1) for k in ["台股市值型成長", "美股市值型成長", "防守型配息", "債券", "現金/安全網"]},
-        "targets": snap.get("penetration", {}).get("targets", {"台股市值型目標": 10, "美股市值型目標": 40, "配息型目標": 20, "債券型目標": 25, "現金目標": 5}),
+        "targets": _old_pen.get("targets", {"台股市值型目標": 10, "美股市值型目標": 40, "配息型目標": 20, "債券型目標": 25, "現金目標": 5}),
     }
+    # 保留既有延伸 key（科技拆解/防禦維度等）
+    for _k in ["美股市值型成長_科技", "美股市值型成長_非科技"]:
+        if _k in _old_pen.get("actual_pct", {}):
+            _new_pen["actual_pct"][_k] = _old_pen["actual_pct"][_k]
+    snap["penetration"] = _new_pen
 
     # ④ 驗證
     from asset_sync import verify_synonyms
@@ -118,6 +132,26 @@ def main():
         return 1
 
     SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    # 2026-08-26 檢討修正：同步 DB assets 當日列（4 源比對根因：snapshot 更新但 DB 舊 → sync_all 失敗還原）
+    try:
+        import sqlite3
+        _db = sqlite3.connect(BASE / "dragon_assets.db")
+        _today = datetime.date.today().isoformat()
+        _tot = snap.get("total_assets", 0) or 0
+        _row = (_today, snap.get("cash_total", 0), 0, snap.get("securities_total_market_value", 0),
+                snap.get("insurance_total", 0), snap.get("fund_market", 0), _tot, snap.get("total_liabilities", 0))
+        _cur = _db.execute("SELECT 1 FROM assets WHERE date=?", (_today,)).fetchone()
+        if _cur:
+            _db.execute("UPDATE assets SET cash_total=?, securities=?, insurance=?, funds=?, total_assets=?, total_liabilities=? WHERE date=?",
+                        (_row[1], _row[3], _row[4], _row[5], _row[6], _row[7], _today))
+        else:
+            _db.execute("INSERT INTO assets (date, cash_total, bonds, securities, insurance, funds, total_assets, total_liabilities) VALUES (?,?,?,?,?,?,?,?)", _row)
+        _db.commit()
+        print(f"✅ DB assets {_today} 已同步（4 源一致）")
+    except Exception as _e:
+        print(f"⚠️ DB 同步失敗: {_e}")
+
     print("✅ 資料更新完成：")
     for c in changed:
         print(f"  {c}")
