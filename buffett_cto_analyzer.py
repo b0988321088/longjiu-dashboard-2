@@ -398,6 +398,19 @@ def main(**kwargs):
                 msg += f"\n  {p['產業']}: {p['金額']:,}（{p['節奏']}）"
         except Exception as _e:
             msg += f"\n\n⚠️ 交易計畫讀取失敗：{_e}"
+        # 本週操作執行紀錄（2026-08-26：通知也註記操作紀錄）
+        try:
+            import json as _json
+            _ops = _json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")).get("weekly_ops_closure_0826", {})
+            if _ops and _ops.get("執行清單"):
+                msg += f"\n\n📋 本週操作執行紀錄（{_ops.get('期間','')}）："
+                for x in _ops.get("執行清單", []):
+                    msg += f"\n  ✅ {x.get('項目','')}（{x.get('金額','')}）"
+                _close = _ops.get("閉環", {}).get("待追蹤", [])
+                if _close:
+                    msg += "\n📌 閉環待追蹤：" + "｜".join(_close)
+        except Exception:
+            pass
         try:
             requests.post(f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage",
                          json={"chat_id": TG_CHAT_ID, "text": msg}, timeout=10)
