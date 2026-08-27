@@ -28,7 +28,8 @@ TODAY = dt.today().isoformat()
 OUT = BASE / f"daily_report_v2_{TODAY}.html"
 
 # 0. 巴菲特/CTO LLM 分析（2026-08-22：今日檔不存在才重跑，避免每次 regenerate 重複呼叫 API）
-if not (BASE / f"buffett_cto_report_{TODAY}.md").exists():
+# 2026-08-28：--skip-llm = 跳過 LLM 分析（台股 13:00 緊急應變用 — 盤中不需要重算早上已算的巴菲特/CTO）
+if "--skip-llm" not in sys.argv and not (BASE / f"buffett_cto_report_{TODAY}.md").exists():
     try:
         import subprocess, sys as _sys
         subprocess.run([_sys.executable, str(BASE / "buffett_cto_analyzer.py")], cwd=str(BASE),

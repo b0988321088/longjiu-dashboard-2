@@ -361,7 +361,9 @@ def main():
     print(f"  ✅ 現金={args['cash']:,}  保險={args['ins']:,}  證券={args['sec']:,}  基金={args['funds']:,}")
     print(f"  總資產={total:,}")
     # === 串聯產出管線（不可中斷）===
-    if "--penetrate" not in sys.argv:
+    # 2026-08-28：--no-pipeline = 只做資料同步（snapshot→DB），不產日報/差異/部署
+    #（晚報 evening_sync 使用，避免 run_daily 觸發 buffett/cto LLM 重跑）
+    if "--penetrate" not in sys.argv and "--no-pipeline" not in sys.argv:
         print("\n=== 串聯產出（不可中斷）===")
         steps = [
             ("run_daily.py", [sys.executable, str(BASE/"run_daily.py")]),
