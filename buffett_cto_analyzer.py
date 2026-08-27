@@ -173,16 +173,37 @@ def _industry_context() -> str:
     return ctx
 
 
-def _llm_cached(name: str, prompt: str, system: str, max_tokens: int = 450) -> str | None:
-    """2026-08-24 優化：LLM 快取（同日同款不重複呼叫）+ 降 max_tokens，省 DeepSeek 用量"""
+def _data_fingerprint() -> str:
+    """2026-08-27：快取數據指紋 = snapshot.json 內容 hash。
+    數據沒變 → 指紋相同 → 開發模式可沿用當天快取（零 API 成本）。"""
     import hashlib
+    try:
+        _raw = (BASE / "snapshot.json").read_text(encoding="utf-8")
+        return hashlib.md5(_raw.encode("utf-8")).hexdigest()[:8]
+    except Exception:
+        return "x"
+
+
+def _llm_cached(name: str, prompt: str, system: str, max_tokens: int = 450) -> str | None:
+    """2026-08-24 優化：LLM 快取（同日同款不重複呼叫）+ 降 max_tokens，省 DeepSeek 用量
+    2026-08-27 強化：檔名加數據指紋；HERMES_DEV_MODE=1 且數據未變時沿用當天最新快取（開發驗證免重付費）"""
+    import hashlib, os
     _ck = hashlib.md5(prompt.encode("utf-8")).hexdigest()[:12]
-    _cf = BASE / "data" / f"{name}_{TODAY}_{_ck}.json"
+    _fp = _data_fingerprint()
+    _cf = BASE / "data" / f"{name}_{TODAY}_{_fp}_{_ck}.json"
     if _cf.exists():
         try:
             return json.loads(_cf.read_text(encoding="utf-8")).get("out")
         except Exception:
             pass
+    # 開發模式：snapshot 未變 + 當天已有同類快取 → 沿用，不呼叫 API
+    if os.environ.get("HERMES_DEV_MODE") == "1":
+        _same = sorted((BASE / "data").glob(f"{name}_{TODAY}_{_fp}_*.json"))
+        if _same:
+            try:
+                return json.loads(_same[-1].read_text(encoding="utf-8")).get("out")
+            except Exception:
+                pass
     from llm_analysis import ask_llm
     _out = ask_llm(prompt, system=system, max_tokens=max_tokens)
     if _out:

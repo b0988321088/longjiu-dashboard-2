@@ -1,5 +1,5 @@
 """每日費用監控 — 查 DeepSeek 餘額 + 估算剩餘天數"""
-import json, csv, os, subprocess
+import json, csv, os, subprocess, sys
 from datetime import date, datetime
 from pathlib import Path
 from logging_config import get_logger
@@ -73,7 +73,11 @@ history = load_history()
 # 計算今日花費
 prev_balance = float(history[-1]["balance_cny"]) if history else balance
 daily_cost = max(prev_balance - balance, 0) if history else 0
-save_entry(balance, daily_cost)
+# 2026-08-27：--no-log 模式（晨間批次用）只更新 daily_analysis.json，不寫 cost_log，
+# 讓 09:00 ds_balance_alert 獨佔記錄時點（避免記錄時點漂移導致日耗歸因失準）
+NO_LOG = "--no-log" in sys.argv
+if not NO_LOG:
+    save_entry(balance, daily_cost)
 
 # 輸出報告
 report = f"📊 **AI費用日報 {TODAY}**\n\n"

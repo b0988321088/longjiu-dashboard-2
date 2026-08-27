@@ -188,6 +188,24 @@ for i in range(1, 7):
     html = html.replace(f"{i}/5｜", f"{i}/6｜")
 html = html.replace("5/6｜投資決策框架", "6/6｜投資決策框架")
 
+# 8b. DS 成本燈號注入（2026-08-27：成本可視化，🟢≤10 / 🟡10-20 / 🔴>20 CNY）
+try:
+    _dc = daily_analysis.get("deepseek_cost", {})
+    _bal = float(_dc.get("balance", 0) or 0)
+    _day = float(_dc.get("daily_cost", 0) or 0)
+    _light = "🟢" if _day <= 10 else ("🟡" if _day <= 20 else "🔴")
+    _cost_html = (
+        f'<div style="margin:14px 0;padding:10px 14px;border-radius:10px;background:#f8fafc;'
+        f'border:1px solid #e2e8f0;font-size:13px;color:#475569">'
+        f'☕ <b>DS 成本</b> {_light} 今日 {_day:.1f} CNY｜餘額 {_bal:.1f} CNY（≈{_bal*4.2:.0f} 台幣）'
+        f'<span style="color:#94a3b8">（月預算上限 400 CNY）</span></div>')
+    if "</body>" in html:
+        html = html.replace("</body>", _cost_html + "</body>")
+    else:
+        html += _cost_html
+except Exception:
+    pass
+
 # 9. 寫入
 OUT.write_text(html, encoding="utf-8")
 

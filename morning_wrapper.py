@@ -8,20 +8,21 @@ logger = get_logger("morning_wrapper")
 BASE = Path(__file__).resolve().parent
 
 scripts = [
-    ("cost_monitor.py", 3),
+    ("cost_monitor.py --no-log", 3),
     ("calendar_sync.py", 3),
     ("notion_context_loader.py", 2),
     ("update_all.py", 3),
 ]
 
 for name, wait in scripts:
-    path = BASE / name
+    cmd_parts = name.split()
+    path = BASE / cmd_parts[0]
     if not path.exists():
         logger.warning(f"⚠️ 跳過 {name}：不存在")
         continue
     print(f"▶ 執行 {name}...")
     try:
-        r = subprocess.run([sys.executable, str(path)], capture_output=True, text=True, timeout=180)
+        r = subprocess.run([sys.executable, str(path)] + cmd_parts[1:], capture_output=True, text=True, timeout=180)
         if r.returncode == 0:
             print(f"  ✅ {name} 成功")
         else:

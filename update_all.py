@@ -231,13 +231,18 @@ def main():
         else:
             print(f"  ✅ 保單拆分校驗通過（債券+權益+第一金 = {ins_calc:,}）")
     # 自動同步腳本到 hermes/scripts/
+    # 2026-08-27 修正：hermes 版若是「薄轉發器」（wrapper 轉發 repo）→ 跳過，避免覆蓋破壞架構
     try:
         import shutil
         _scripts_dst = Path(os.environ.get("HERMES_SCRIPTS", str(Path.home() / "AppData/Local/hermes/scripts")))
         for _sf in ["update_all.py", "run_daily.py", "asset_diff_monitor.py", "memory_sync.py", "daily_deploy.py", "penetration_monitor.py", "reminder_agent.py", "weekly_report.py", "gmail_cleanup.py", "cio_review.py", "daily_checklist.py", "regenerate_report.py", "daily_intel.py", "buffett_cto_analyzer.py", "emergency_1330.py"]:
             _src = BASE / _sf
             _dst = _scripts_dst / _sf
-            if _src.exists() and (not _dst.exists() or _src.stat().st_mtime > _dst.stat().st_mtime):
+            if not _src.exists():
+                continue
+            if _dst.exists() and "薄轉發器" in _dst.read_text(encoding="utf-8", errors="ignore")[:300]:
+                continue  # wrapper 檔不覆蓋
+            if not _dst.exists() or _src.stat().st_mtime > _dst.stat().st_mtime:
                 shutil.copy2(str(_src), str(_dst))
     except Exception:
         pass

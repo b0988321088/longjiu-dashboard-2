@@ -1,2 +1,0 @@
-from full_monitor import generate_dragon_five_report
-print(generate_dragon_five_report())
