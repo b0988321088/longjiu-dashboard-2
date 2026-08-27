@@ -111,8 +111,8 @@ def _num(v, default=0):
 
 
 def render_health_score(snap: dict) -> dict:
-    """健康度分數 0-100（六維度加權）→ (分數, 燈號, 明細)。
-    2026-08-27 設計：覆蓋25/防禦20/曝險15/現金15/利率15/LTV10。"""
+    """健康度分數 0-100（五維度加權）→ (分數, 燈號, 明細)。
+    2026-08-27 定版：覆蓋30/防禦25/曝險20/現金15/LTV10（US30Y 為市場環境，非個人健康指標 → 移除計分）"""
     expense = snap.get("monthly_expense", 162781)
     rent = snap.get("rent_monthly_total", 80100) or 0
     income = (snap.get("dividend_month_expected") or 100000) + rent
@@ -137,30 +137,20 @@ def render_health_score(snap: dict) -> dict:
     floor = _num(snap.get("cash_floor_rule", {}).get("cash_floor", 700000), 700000)
     cash_score = 100 if cash >= floor else 0
 
-    # US30Y（凍結 5.30）— 優先讀 us30y_state.json（最新真值），fallback snapshot
-    try:
-        _us = json.loads((Path(__file__).resolve().parent / "us30y_state.json").read_text(encoding="utf-8"))
-        _us30y = _us.get("last_rate", _us.get("rate", None))
-    except Exception:
-        _us30y = None
-    us30y = _num(_us30y if _us30y is not None else snap.get("rhythm08", {}).get("indicators", {}).get("us30y", 5.19), 5.19)
-    rate_score = 100 if us30y < 5.20 else (50 if us30y < 5.30 else 0)
-
     # LTV（質押後 ~20.4%，上限 35）
     ltv = _num(snap.get("policy_pledge", {}).get("ltv", 20.4), 20.4)
     ltv_score = 100 if ltv <= 35 else (50 if ltv <= 50 else 0)
 
-    score = round(min(cov / 150 * 100, 100) * 0.25 + def_score * 0.20 + usd_score * 0.15 + cash_score * 0.15 + rate_score * 0.15 + ltv_score * 0.10)
+    score = round(min(cov / 150 * 100, 100) * 0.30 + def_score * 0.25 + usd_score * 0.20 + cash_score * 0.15 + ltv_score * 0.10)
     light = "🟢" if score >= 80 else ("🟡" if score >= 60 else "🔴")
     # 標準分 = 各維度 0-100 制原始得分；權重分 = 標準分 × 權重（加總 = 總分）
     _cov_std = round(min(cov / 150 * 100, 100))
     detail = {
         "分數": score, "燈號": light,
-        "覆蓋": round(cov), "覆蓋標準": _cov_std, "覆蓋分": round(_cov_std * 0.25),
-        "防禦": defense, "防禦標準": def_score, "防禦分": round(def_score * 0.20),
-        "曝險": usd, "曝險標準": usd_score, "曝險分": round(usd_score * 0.15),
+        "覆蓋": round(cov), "覆蓋標準": _cov_std, "覆蓋分": round(_cov_std * 0.30),
+        "防禦": defense, "防禦標準": def_score, "防禦分": round(def_score * 0.25),
+        "曝險": usd, "曝險標準": usd_score, "曝險分": round(usd_score * 0.20),
         "現金": cash, "現金標準": cash_score, "現金分": cash_score * 0.15,
-        "利率": us30y, "利率標準": rate_score, "利率分": rate_score * 0.15,
         "LTV": ltv, "LTV標準": ltv_score, "LTV分": ltv_score * 0.10,
     }
     return detail
@@ -173,11 +163,10 @@ def render_health_card(snap: dict) -> str:
     _def_txt = f"{d['防禦']:.0f}%" if d["防禦"] <= 100 else "✅ 充足"
     # (名稱, 現況, 目標, 權重分/權重) — 現況 vs 目標 → 得分
     rows = [
-        ("現金流覆蓋", f"{d['覆蓋']}%", "≥100%", d["覆蓋分"], 25),
-        ("防禦維度", _def_txt, "≥50%", d["防禦分"], 20),
-        ("美元曝險", f"{d['曝險']:.1f}%", "≤50%", d["曝險分"], 15),
+        ("現金流覆蓋", f"{d['覆蓋']}%", "≥100%", d["覆蓋分"], 30),
+        ("防禦維度", _def_txt, "≥50%", d["防禦分"], 25),
+        ("美元曝險", f"{d['曝險']:.1f}%", "≤50%", d["曝險分"], 20),
         ("現金底線", f"{d['現金']:,.0f}", "≥700,000", d["現金分"], 15),
-        ("US30Y", f"{d['利率']:.2f}%", "<5.20%", d["利率分"], 15),
         ("LTV", f"{d['LTV']:.1f}%", "≤35%", d["LTV分"], 10),
     ]
     bar = "".join(
