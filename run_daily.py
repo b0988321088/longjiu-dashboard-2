@@ -1532,10 +1532,16 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 # 投資哲學檢核（2026-08-19 定版：核心三支柱 + 4 問）— 用常態被動收入（非當月實收）
                 _philosophy_items = []
                 _snap_now = json.loads(Path("snapshot.json").read_text(encoding="utf-8")) if Path("snapshot.json").exists() else {}
+                # 2026-08-27：共享組件統一覆蓋率口徑（與儀表板一致）
                 _inc_m = (_snap_now.get("dividend_month_expected") or 100000) + (_snap_now.get("rent_monthly_total") or 0)
                 _exp = _snap_now.get("monthly_expense") or 162781
                 _cov = _inc_m / _exp if _exp else 0
-                _philosophy_items.append(f"現金流覆蓋（常態）{_inc_m:,.0f}/{_exp:,.0f} = {_cov*100:.0f}% {'✅' if _cov >= 1.0 else '🔴'}")
+                try:
+                    from report_components import render_coverage as _rc
+                    _cov_txt = _rc(_snap_now, "passive")
+                    _philosophy_items.append(_cov_txt)
+                except Exception:
+                    _philosophy_items.append(f"現金流覆蓋（常態）{_inc_m:,.0f}/{_exp:,.0f} = {_cov*100:.0f}% {'✅' if _cov >= 1.0 else '🔴'}")
                 _usd_ex = tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
                 _philosophy_items.append(f"美元曝險 {_usd_ex:.1f}%（≤50% {'✅' if _usd_ex <= 50 else '🟡' if _usd_ex <= 55 else '🔴'}）")
                 _cash_now = tv.get("cash_total") or 0

@@ -99,6 +99,13 @@ def main():
         tpl = tpl.replace("__TODAY_STATUS__", "🟢 今日狀態：無需人工操作")
         tpl = tpl.replace("__TODAY__", date.today().isoformat())
 
+    # ── 健康度卡（2026-08-27：共享組件 report_components.render_health_card）──
+    try:
+        from report_components import render_health_card as _rhc
+        tpl = tpl.replace("__HEALTH_CARD__", _rhc(snap))
+    except Exception:
+        tpl = tpl.replace("__HEALTH_CARD__", "")
+
     # ── 八大連結動態化（2026-08-26：模板連結寫死 8/21-23 → glob 最新檔名）──
     import glob as _glob
     _link_map = {

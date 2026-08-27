@@ -66,6 +66,8 @@ def main():
         ("一致性檢查", f"python check_penetration_consistency.py {today}"),
         ("再平衡報告", f"python build_rebalance_report.py"),
         ("儀表板注入", "python build_dashboard.py"),
+        # 2026-08-27：共享渲染組件自測（report_components 異常 → 報表數字不一致）
+        ("組件自測", "python -c \"from report_components import render_health_score; import json; print('✅ 組件正常 健康度', render_health_score(json.load(open('snapshot.json',encoding='utf-8')))['分數'])\""),
         ("週報", f"python build_weekly_report.py"),
     ]
     ok = True
