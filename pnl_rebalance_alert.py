@@ -13,6 +13,10 @@ BASE = Path(__file__).resolve().parent
 SNAP = BASE / "snapshot.json"
 THRESHOLD = 20.0  # 獲利門檻 %
 
+# 核心長抱部位（2026-08-27 使用者裁示：不因獲利>20% 觸發賣出建議）
+# 台50 指數核心：0050/006208/009816（大盤長抱，僅超配>5pp 或科技紅線才評估）
+CORE_HOLD = {"0050", "006208", "009816"}
+
 
 def main():
     if not SNAP.exists():
@@ -30,15 +34,26 @@ def main():
         return  # 靜默
 
     over.sort(key=lambda x: -(x.get("pnl_pct") or 0))
-    lines = ["🔴 **獲利超標提醒：以下部位已賺 >20%，強制進行再平衡評估**"]
-    for h in over:
-        lines.append(
-            f"- {h.get('ticker','?')} {h.get('name','?')}："
-            f"**+{h.get('pnl_pct',0):.1f}%**（+{h.get('pnl',0):,.0f} 元，市值 {h.get('value',0):,.0f}）"
-        )
-    total_pnl = sum(h.get("pnl", 0) for h in over)
-    lines.append(f"\n合計未實現獲利：+{total_pnl:,.0f} 元")
-    lines.append("📌 建議：依再平衡紀律評估——大盤指數型（0050/006208/009816）可部分獲利了結轉防守，或續抱至超配觸發；高股息（0056）達 +40% 優先檢視。")
+    core = [h for h in over if h.get("ticker") in CORE_HOLD]
+    others = [h for h in over if h.get("ticker") not in CORE_HOLD]
+
+    lines = ["🔴 **獲利超標提醒：以下部位已賺 >20%**"]
+    if core:
+        lines.append("\n✅ **核心長抱（不賣，僅超配>5pp 或科技紅線才評估）：**")
+        for h in core:
+            lines.append(
+                f"- {h.get('ticker','?')} {h.get('name','?')}："
+                f"**+{h.get('pnl_pct',0):.1f}%**（+{h.get('pnl',0):,.0f} 元，市值 {h.get('value',0):,.0f}）"
+            )
+    if others:
+        lines.append("\n⚠️ **建議再平衡評估（非核心，可考慮部分獲利了結）：**")
+        for h in others:
+            lines.append(
+                f"- {h.get('ticker','?')} {h.get('name','?')}："
+                f"**+{h.get('pnl_pct',0):.1f}%**（+{h.get('pnl',0):,.0f} 元，市值 {h.get('value',0):,.0f}）"
+            )
+    if others:
+        lines.append("\n📌 依再平衡紀律評估是否部分獲利了結；核心長抱部位續抱。")
     print("\n".join(lines))
 
 
