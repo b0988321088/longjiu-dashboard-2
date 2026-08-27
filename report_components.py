@@ -164,18 +164,19 @@ def render_health_card(snap: dict) -> str:
     d = render_health_score(snap)
     # 防禦維度：可能是金額（>100）→ 顯示「充足」避免怪數字
     _def_txt = f"{d['防禦']:.0f}%" if d["防禦"] <= 100 else "✅ 充足"
+    # (名稱, 數值, 加權分, 權重) — 加權分/權重 → 全部加總 = 總分
     rows = [
-        ("現金流覆蓋", f"{d['覆蓋']}%", d["覆蓋分"]),
-        ("防禦維度", _def_txt, d["防禦分"]),
-        ("美元曝險", f"{d['曝險']:.0f}%", d["曝險分"]),
-        ("現金底線", f"{d['現金']:,.0f}", d["現金分"]),
-        ("US30Y", f"{d['利率']:.2f}%", d["利率分"]),
-        ("LTV", f"{d['LTV']:.1f}%", d["LTV分"]),
+        ("現金流覆蓋", f"{d['覆蓋']}%", d["覆蓋分"], 25),
+        ("防禦維度", _def_txt, d["防禦分"], 20),
+        ("美元曝險", f"{d['曝險']:.0f}%", d["曝險分"], 15),
+        ("現金底線", f"{d['現金']:,.0f}", d["現金分"], 15),
+        ("US30Y", f"{d['利率']:.2f}%", d["利率分"], 15),
+        ("LTV", f"{d['LTV']:.1f}%", d["LTV分"], 10),
     ]
     bar = "".join(
         f'<div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0">'
-        f'<span style="color:#6e6e73">{n}</span><span style="color:#1f2937">{v} <b>{p}/100</b></span></div>'
-        for n, v, p in rows
+        f'<span style="color:#6e6e73">{n}</span><span style="color:#1f2937">{v} <b>{p}/{w}</b></span></div>'
+        for n, v, p, w in rows
     )
     return (
         f'<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;margin:8px 0">'
