@@ -35,6 +35,31 @@ def run(name: str) -> None:
         print(f"▶ {name} ⏰ 逾時")
 
 
+# ── 今日行動卡（2026-08-27：讀 schedule_events 需動作事件 → 有才輸出，無動作靜默）──
+try:
+    import json as _j
+    from datetime import timedelta as _td_imp
+    _evs = _j.loads((REPO / "schedule_events.json").read_text(encoding="utf-8"))
+    if isinstance(_evs, dict):
+        _evs = _evs.get("events", _evs.get("items", []))
+    _td = date.today().isoformat()
+    _wk = (date.today() + _td_imp(days=3)).isoformat()
+    _ACT = ("🔴", "📞", "📋", "📡", "🏦", "🔍", "📅")
+    _today_act = [e for e in _evs if str(e.get("date", "")) == _td and str(e.get("item", "")).startswith(_ACT)]
+    _soon = sorted([e for e in _evs if _td < str(e.get("date", "")) <= _wk and str(e.get("item", "")).startswith(_ACT)],
+                   key=lambda x: str(x.get("date", "")))
+    if _today_act:
+        print("🌅 龍九今日行動卡")
+        for e in _today_act[:2]:
+            print(f"  🔴 今天：{str(e.get('item',''))[:70]}")
+    elif _soon:
+        print("🌅 龍九今日行動卡：今日無需操作")
+        for e in _soon[:2]:
+            print(f"  📌 近 3 天：{str(e.get('date',''))[5:]} {str(e.get('item',''))[:66]}")
+    print("")
+except Exception:
+    pass
+
 # 每天固定
 run("reminder_agent.py")
 run("decision_auto_close.py")

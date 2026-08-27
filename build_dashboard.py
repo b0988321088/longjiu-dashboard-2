@@ -5,6 +5,7 @@
 用法：python build_dashboard.py（sync_all 已整合為步驟）
 """
 import json, re
+from datetime import date, timedelta
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
@@ -66,6 +67,31 @@ def main():
         if old in tpl:
             tpl = tpl.replace(old, new)
             hits += 1
+
+    # ── 今日狀態列動態化（2026-08-27：取代硬編碼，讀 schedule_events；含保單轉換等決策事件）──
+    try:
+        _evs = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
+        if isinstance(_evs, dict):
+            _evs = _evs.get("events", _evs.get("items", []))
+        _td = date.today().isoformat()
+        _wk = (date.today() + timedelta(days=7)).isoformat()
+        _ACT = ("🔴", "📞", "📋", "📡", "🏦", "🔍", "📅")  # 需動作事件前綴
+        _today_act = [e for e in _evs if str(e.get("date","")) == _td and str(e.get("item","")).startswith(_ACT)]
+        _next = sorted([e for e in _evs if _td < str(e.get("date","")) <= _wk and str(e.get("item","")).startswith(_ACT)],
+                       key=lambda x: str(x.get("date","")))
+        _parts = []
+        if _today_act:
+            _parts.append(f"🔴 今日要做：{str(_today_act[0].get('item',''))[:52]}")
+        else:
+            _parts.append("🟢 今日無需操作")
+        if _next:
+            _n = _next[0]
+            _parts.append(f"下一個：{str(_n.get('date',''))[5:]} {str(_n.get('item',''))[:48]}")
+        tpl = tpl.replace("__TODAY_STATUS__", " | ".join(_parts))
+        tpl = tpl.replace("__TODAY__", _td)
+    except Exception:
+        tpl = tpl.replace("__TODAY_STATUS__", "🟢 今日狀態：無需人工操作")
+        tpl = tpl.replace("__TODAY__", date.today().isoformat())
 
     # ── 八大連結動態化（2026-08-26：模板連結寫死 8/21-23 → glob 最新檔名）──
     import glob as _glob
