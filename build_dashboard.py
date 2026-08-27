@@ -68,7 +68,7 @@ def main():
             tpl = tpl.replace(old, new)
             hits += 1
 
-    # ── 今日狀態列動態化（2026-08-27：取代硬編碼，讀 schedule_events；含保單轉換等決策事件）──
+    # ── 今日狀態列動態化（2026-08-27：今日 + 近3天 + 下一個；含保單轉換等決策事件）──
     try:
         _evs = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
         if isinstance(_evs, dict):
@@ -77,17 +77,23 @@ def main():
         _wk = (date.today() + timedelta(days=7)).isoformat()
         _ACT = ("🔴", "📞", "📋", "📡", "🏦", "🔍", "📅")  # 需動作事件前綴
         _today_act = [e for e in _evs if str(e.get("date","")) == _td and str(e.get("item","")).startswith(_ACT)]
+        _soon3 = sorted([e for e in _evs if _td < str(e.get("date","")) <= (date.today() + timedelta(days=3)).isoformat() and str(e.get("item","")).startswith(_ACT)],
+                        key=lambda x: str(x.get("date","")))
         _next = sorted([e for e in _evs if _td < str(e.get("date","")) <= _wk and str(e.get("item","")).startswith(_ACT)],
                        key=lambda x: str(x.get("date","")))
         _parts = []
         if _today_act:
-            _parts.append(f"🔴 今日要做：{str(_today_act[0].get('item',''))[:52]}")
+            for e in _today_act[:2]:
+                _parts.append(f"🔴 今日要做：{str(e.get('item',''))[:48]}")
         else:
             _parts.append("🟢 今日無需操作")
+        if _soon3:
+            _d3 = " ｜ ".join(f"{str(e.get('date',''))[5:]} {str(e.get('item',''))[:26]}" for e in _soon3[:3])
+            _parts.append(f"📌 近 3 天：{_d3}")
         if _next:
-            _n = _next[0]
-            _parts.append(f"下一個：{str(_n.get('date',''))[5:]} {str(_n.get('item',''))[:48]}")
-        tpl = tpl.replace("__TODAY_STATUS__", " | ".join(_parts))
+            _n = next((e for e in _next if str(e.get("date","")) > (date.today() + timedelta(days=3)).isoformat()), None) or _next[0]
+            _parts.append(f"⏭ 下一個：{str(_n.get('date',''))[5:]} {str(_n.get('item',''))[:44]}")
+        tpl = tpl.replace("__TODAY_STATUS__", "<br>".join(_parts))
         tpl = tpl.replace("__TODAY__", _td)
     except Exception:
         tpl = tpl.replace("__TODAY_STATUS__", "🟢 今日狀態：無需人工操作")
