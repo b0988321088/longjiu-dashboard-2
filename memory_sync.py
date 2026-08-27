@@ -108,6 +108,9 @@ data_for_count = {"decisions": []}
 dash_file = LONGJIU / "dashboard_decisions.json"
 if dash_file.exists():
     data_for_count = json.loads(dash_file.read_text("utf-8"))
+    # ⚠️ 相容：可能被寫成純 list（2026-08-27 bug）→ 包回 dict
+    if not isinstance(data_for_count, dict):
+        data_for_count = {"decisions": data_for_count if isinstance(data_for_count, list) else []}
     for d in data_for_count.get("decisions", []):
         ts = str(d.get("timestamp", "") or d.get("approved_at", ""))
         if today in ts and d.get("source") != "auto":
