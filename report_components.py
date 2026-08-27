@@ -162,9 +162,11 @@ def render_health_score(snap: dict) -> dict:
 def render_health_card(snap: dict) -> str:
     """健康度卡（HTML 片段）— 儀表板/日報共用。"""
     d = render_health_score(snap)
+    # 防禦維度：可能是金額（>100）→ 顯示「充足」避免怪數字
+    _def_txt = f"{d['防禦']:.0f}%" if d["防禦"] <= 100 else "✅ 充足"
     rows = [
         ("現金流覆蓋", f"{d['覆蓋']}%", d["覆蓋分"]),
-        ("防禦維度", f"{d['防禦']:.0f}%", d["防禦分"]),
+        ("防禦維度", _def_txt, d["防禦分"]),
         ("美元曝險", f"{d['曝險']:.0f}%", d["曝險分"]),
         ("現金底線", f"{d['現金']:,.0f}", d["現金分"]),
         ("US30Y", f"{d['利率']:.2f}%", d["利率分"]),
