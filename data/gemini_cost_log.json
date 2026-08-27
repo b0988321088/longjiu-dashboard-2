@@ -4,9 +4,9 @@
   "source": "Google AI Studio 帳單",
   "note": "7月 Gemini 實際 = NT$953（介面顯示 USD 為誤，實為新台幣）",
   "2026-08": {
-    "note": "8/27 使用者確認：Credit balance = USD 366（非台幣！專案幣別為 USD）。8/1 剩 USD 399 → 8/27 剩 USD 366 = 8月花 ~USD 33/月（≈1,056 台幣，與 7 月 953 台幣量級一致）",
-    "source": "Google AI Studio Billing（截圖 OCR + 使用者確認幣別）",
-    "credit_balance_usd": 366
+    "note": "8/27 使用者確認：Credit balance = NT$366（台幣，專案幣別 TWD；介面/記錄易誤判 USD）。8 月用量低（成本優化後 CIO 審查減頻）",
+    "source": "Google AI Studio Billing（截圖 + 使用者確認）",
+    "credit_balance_twd": 366
   },
-  "currency": "USD"
+  "currency": "TWD"
 }
