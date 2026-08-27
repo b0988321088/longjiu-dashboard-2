@@ -12,7 +12,10 @@ def add_memory(agent: str, task: str, summary: str, status: str = "completed"):
     path = Path(__file__).resolve().parent / "dashboard_decisions.json"
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-    except:
+        # ⚠️ 2026-08-27 相容：檔案可能被寫成純 list → 包回 dict（.setdefault 在 list 會炸）
+        if not isinstance(data, dict):
+            data = {"decisions": data if isinstance(data, list) else []}
+    except Exception:
         data = {"decisions": [], "meta": {"version": 1}}
     
     entry = {

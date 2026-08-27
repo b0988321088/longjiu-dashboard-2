@@ -77,6 +77,9 @@ def main():
 
     # 決策回顧（近 14 天）
     dec = json.load(open(BASE / "dashboard_decisions.json", encoding="utf-8"))
+    # ⚠️ 2026-08-27 相容：檔案可能被寫成純 list → 包回 dict
+    if not isinstance(dec, dict):
+        dec = {"decisions": dec if isinstance(dec, list) else []}
     recent = [x for x in dec.get("decisions", []) if x.get("timestamp", "")[:10] >= (date.today() - timedelta(days=14)).isoformat()]
     print(f"\n[近14天決策/事件 {len(recent)} 筆]")
     for x in recent[-10:]:

@@ -76,6 +76,8 @@ def review_decisions():
     
     try:
         d = json.loads(dec_file.read_text(encoding="utf-8"))
+        if not isinstance(d, dict):
+            d = {"decisions": d if isinstance(d, list) else []}
         decisions = d.get("decisions", [])
         today = date.today().isoformat()
         
@@ -140,8 +142,10 @@ def gaps_analysis():
     dec_file = LONGJIU / "dashboard_decisions.json"
     if dec_file.exists():
         d = json.loads(dec_file.read_text(encoding="utf-8"))
+        if not isinstance(d, dict):
+            d = {"decisions": d if isinstance(d, list) else []}
         decisions = d.get("decisions", [])
-        recent_decs = [dec for dec in decisions if dec.get("approved_at", "")[:10] >= (date.today() - __import__('datetime').timedelta(days=7)).isoformat()]
+        recent_decs = [dec for dec in decisions if dec.get("approved_at", "")[:10] >= (date.today() - __import__("datetime").timedelta(days=7)).isoformat()]
         
         # 統計核准 vs 延後
         approved = sum(1 for dec in recent_decs if dec.get("action") == "核准" or "核准" in str(dec.get("status","")))

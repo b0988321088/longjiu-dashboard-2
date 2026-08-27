@@ -637,6 +637,8 @@ def main():
     dec_file = REPO / "dashboard_decisions.json"
     if dec_file.exists():
         existing_decisions = json.loads(dec_file.read_text(encoding="utf-8"))
+        if not isinstance(existing_decisions, dict):
+            existing_decisions = {"decisions": existing_decisions if isinstance(existing_decisions, list) else []}
         for d in existing_decisions.get("decisions", []):
             # Add 'context', 'reasoning', 'outcome', 'tags', 'link' if not present in dashboard_decisions.json
             # For simplicity now, we assume these are empty if not explicitly available.

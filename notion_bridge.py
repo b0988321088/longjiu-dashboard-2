@@ -154,6 +154,9 @@ def sync_notion_to_local() -> dict:
     dec_file = LJ / "dashboard_decisions.json"
     if dec_file.exists():
         existing = json.loads(dec_file.read_text(encoding="utf-8"))
+    # ⚠️ 2026-08-27 相容：檔案可能被寫成純 list → 包回 dict
+    if not isinstance(existing, dict):
+        existing = {"pending_decisions": [], "decisions": existing if isinstance(existing, list) else []}
     else:
         existing = {"pending_decisions": [], "decisions": []}
     
