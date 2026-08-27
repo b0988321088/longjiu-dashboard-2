@@ -1,11 +1,12 @@
 {
   "2026-07": 953,
-  "updated": "2026-08-01",
+  "updated": "2026-08-27",
   "source": "Google AI Studio 帳單",
   "note": "7月 Gemini 實際 = NT$953（介面顯示 USD 為誤，實為新台幣）",
   "2026-08": {
-    "note": "7月帳單確認：Google Cloud 使用費 NT$953（7/8儲400 + 7/23儲1000全消耗，超用1,001待8月收費）",
-    "source": "Google AI Studio Billing 交易明細",
-    "ending_balance": -1001
-  }
+    "note": "8/27 使用者確認：Credit balance = USD 366（非台幣！專案幣別為 USD）。8/1 剩 USD 399 → 8/27 剩 USD 366 = 8月花 ~USD 33/月（≈1,056 台幣，與 7 月 953 台幣量級一致）",
+    "source": "Google AI Studio Billing（截圖 OCR + 使用者確認幣別）",
+    "credit_balance_usd": 366
+  },
+  "currency": "USD"
 }
