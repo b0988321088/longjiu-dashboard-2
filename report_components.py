@@ -171,20 +171,19 @@ def render_health_card(snap: dict) -> str:
     d = render_health_score(snap)
     # 防禦維度：可能是金額（>100）→ 顯示「充足」避免怪數字
     _def_txt = f"{d['防禦']:.0f}%" if d["防禦"] <= 100 else "✅ 充足"
-    # (名稱, 狀況值, 標準分/100, 權重分/權重) — 標準分 = 該指標 0-100 制；權重分加總 = 總分
+    # (名稱, 現況, 目標, 權重分/權重) — 現況 vs 目標 → 得分
     rows = [
-        ("現金流覆蓋", f"{d['覆蓋']}%", d["覆蓋標準"], d["覆蓋分"], 25),
-        ("防禦維度", _def_txt, d["防禦標準"], d["防禦分"], 20),
-        ("美元曝險", f"{d['曝險']:.1f}%", d["曝險標準"], d["曝險分"], 15),
-        ("現金底線", f"{d['現金']:,.0f}", d["現金標準"], d["現金分"], 15),
-        ("US30Y", f"{d['利率']:.2f}%", d["利率標準"], d["利率分"], 15),
-        ("LTV", f"{d['LTV']:.1f}%", d["LTV標準"], d["LTV分"], 10),
+        ("現金流覆蓋", f"{d['覆蓋']}%", "≥100%", d["覆蓋分"], 25),
+        ("防禦維度", _def_txt, "≥50%", d["防禦分"], 20),
+        ("美元曝險", f"{d['曝險']:.1f}%", "≤50%", d["曝險分"], 15),
+        ("現金底線", f"{d['現金']:,.0f}", "≥700,000", d["現金分"], 15),
+        ("US30Y", f"{d['利率']:.2f}%", "<5.20%", d["利率分"], 15),
+        ("LTV", f"{d['LTV']:.1f}%", "≤35%", d["LTV分"], 10),
     ]
     bar = "".join(
         f'<div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0">'
-        f'<span style="color:#6e6e73">{n}</span><span style="color:#1f2937">{v} <b>{s}/100</b>'
-        f'<span style="color:#94a3b8;font-weight:400"> → {p}/{w}</span></span></div>'
-        for n, v, s, p, w in rows
+        f'<span style="color:#6e6e73">{n}</span><span style="color:#1f2937">{v}（目標 {t}）<b>{p}/{w}</b></span></div>'
+        for n, v, t, p, w in rows
     )
     return (
         f'<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;margin:8px 0">'
