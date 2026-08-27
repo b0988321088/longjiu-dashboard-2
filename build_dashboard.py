@@ -89,6 +89,10 @@ def main():
                 _new = str(_fs[-1]).replace("\\", "/").split("/")[-1]  # Windows glob 回傳 str
                 tpl = tpl.replace(_ph, _new)
                 _link_hits += 1
+            else:
+                # 2026-08-27 fallback：找不到檔案 → 指向儀表板首頁（不留死佔位符）
+                tpl = tpl.replace(_ph, "index.html")
+                _link_hits += 1
     (BASE / "index.html").write_text(tpl, encoding="utf-8")
     print(f"✅ 儀表板注入完成（{hits} 組值 + {_link_hits} 連結動態化）｜現金 {_fmt(cash)} / 保單 {_fmt(ins)} / 配息 {_fmt(div_total)} / 租金 {_fmt(rent_got)}")
 

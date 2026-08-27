@@ -54,25 +54,12 @@ def main():
             print(f"  🔧 snapshot.date {old} → {today}")
     except Exception as e:
         print(f"  ⚠️ snapshot.date 修復失敗: {e}")
-    # v3 自動修復 2：確保 gen_emergency_{MMDD}.py 存在（2026-08-25：缺檔 → 緊急應變完整版 can't open file）
-    _mm = today[5:7] + today[8:10]
-    _ge = BASE / f"gen_emergency_{_mm}.py"
-    if not _ge.exists():
-        _srcs = sorted(BASE.glob("gen_emergency_*.py"))
-        if _srcs:
-            _txt = _srcs[-1].read_text(encoding="utf-8")
-            _new_txt = re.sub(r'(TODAY\s*=\s*")[\d-]+(")', rf"\g<1>{today}\g<2>", _txt)
-            _ge.write_text(_new_txt, encoding="utf-8", newline="\n")
-            print(f"  🔧 建立 gen_emergency_{_mm}.py（複製 {_srcs[-1].name}，TODAY={today}）")
-        else:
-            print("  ⚠️ 無 gen_emergency_*.py 可複製")
+    # （2026-08-27：gen_emergency_*.py 已刪除，此自動建立邏輯移除；緊急應變僅 emergency_1330.py）
     steps = [
         ("同義欄位驗證", f"python asset_sync.py"),
         ("日報", f"python run_daily.py"),
-        # 順序：emergency_1330（精簡台股版）先 → gen_emergency（LLM 完整版）最後覆蓋
-        # （2026-08-24 血淚：順序相反會讓精簡 2,649 bytes 覆蓋完整 8,617 → 使用者看到「沒內容」）
+        # 2026-08-27：gen_emergency_*.py 已刪除（一次性腳本清理），緊急應變僅用 emergency_1330.py（cron 13:00）
         ("台股緊急應變", f"python emergency_1330.py"),
-        ("緊急應變完整版", f"python gen_emergency_{today[5:7]}{today[8:10]}.py"),
         ("穿透報告", f"python build_penetration_report.py"),
         ("四源同步", f"python four_source_sync.py"),
         ("同義欄位複驗", f"python asset_sync.py"),
