@@ -152,14 +152,16 @@ def render_health_score(snap: dict) -> dict:
 
     score = round(min(cov / 150 * 100, 100) * 0.25 + def_score * 0.20 + usd_score * 0.15 + cash_score * 0.15 + rate_score * 0.15 + ltv_score * 0.10)
     light = "🟢" if score >= 80 else ("🟡" if score >= 60 else "🔴")
+    # 標準分 = 各維度 0-100 制原始得分；權重分 = 標準分 × 權重（加總 = 總分）
+    _cov_std = round(min(cov / 150 * 100, 100))
     detail = {
         "分數": score, "燈號": light,
-        "覆蓋": round(cov), "覆蓋分": round(min(cov / 150 * 100, 100) * 0.25),
-        "防禦": defense, "防禦分": round(def_score * 0.20),
-        "曝險": usd, "曝險分": round(usd_score * 0.15),
-        "現金": cash, "現金分": cash_score * 0.15,
-        "利率": us30y, "利率分": rate_score * 0.15,
-        "LTV": ltv, "LTV分": ltv_score * 0.10,
+        "覆蓋": round(cov), "覆蓋標準": _cov_std, "覆蓋分": round(_cov_std * 0.25),
+        "防禦": defense, "防禦標準": def_score, "防禦分": round(def_score * 0.20),
+        "曝險": usd, "曝險標準": usd_score, "曝險分": round(usd_score * 0.15),
+        "現金": cash, "現金標準": cash_score, "現金分": cash_score * 0.15,
+        "利率": us30y, "利率標準": rate_score, "利率分": rate_score * 0.15,
+        "LTV": ltv, "LTV標準": ltv_score, "LTV分": ltv_score * 0.10,
     }
     return detail
 
@@ -169,19 +171,20 @@ def render_health_card(snap: dict) -> str:
     d = render_health_score(snap)
     # 防禦維度：可能是金額（>100）→ 顯示「充足」避免怪數字
     _def_txt = f"{d['防禦']:.0f}%" if d["防禦"] <= 100 else "✅ 充足"
-    # (名稱, 數值, 加權分, 權重) — 加權分/權重 → 全部加總 = 總分
+    # (名稱, 狀況值, 標準分/100, 權重分/權重) — 標準分 = 該指標 0-100 制；權重分加總 = 總分
     rows = [
-        ("現金流覆蓋", f"{d['覆蓋']}%", d["覆蓋分"], 25),
-        ("防禦維度", _def_txt, d["防禦分"], 20),
-        ("美元曝險", f"{d['曝險']:.0f}%", d["曝險分"], 15),
-        ("現金底線", f"{d['現金']:,.0f}", d["現金分"], 15),
-        ("US30Y", f"{d['利率']:.2f}%", d["利率分"], 15),
-        ("LTV", f"{d['LTV']:.1f}%", d["LTV分"], 10),
+        ("現金流覆蓋", f"{d['覆蓋']}%", d["覆蓋標準"], d["覆蓋分"], 25),
+        ("防禦維度", _def_txt, d["防禦標準"], d["防禦分"], 20),
+        ("美元曝險", f"{d['曝險']:.1f}%", d["曝險標準"], d["曝險分"], 15),
+        ("現金底線", f"{d['現金']:,.0f}", d["現金標準"], d["現金分"], 15),
+        ("US30Y", f"{d['利率']:.2f}%", d["利率標準"], d["利率分"], 15),
+        ("LTV", f"{d['LTV']:.1f}%", d["LTV標準"], d["LTV分"], 10),
     ]
     bar = "".join(
         f'<div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0">'
-        f'<span style="color:#6e6e73">{n}</span><span style="color:#1f2937">{v} <b>{p}/{w}</b></span></div>'
-        for n, v, p, w in rows
+        f'<span style="color:#6e6e73">{n}</span><span style="color:#1f2937">{v} <b>{s}/100</b>'
+        f'<span style="color:#94a3b8;font-weight:400"> → {p}/{w}</span></span></div>'
+        for n, v, s, p, w in rows
     )
     return (
         f'<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;margin:8px 0">'
