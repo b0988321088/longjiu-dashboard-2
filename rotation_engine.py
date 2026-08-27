@@ -95,6 +95,19 @@ def build_recommendation(industry_pen: dict, sector_flow: dict) -> dict:
             priority = 3
             action = "✅ 乾粉優先吸納"
             reason = f"資金流入（{fs:+d}）+ 低配 {cur:.1f}% vs 目標 {tgt:.0f}%（缺口 {gap:.1f}pp）"
+            # 2026-08-27：帶出雷達具體產業明細（使用者要看到「買食品」而非抽象「核心消費」）
+            try:
+                _tw_flow = (sector_flow.get("台股") or {})
+                _det = []
+                for _k, _v in _tw_flow.items():
+                    if TW_FLOW_TO_GICS.get(_k) == g and isinstance(_v, dict):
+                        _amt = _v.get("法人淨買賣超", 0) or 0
+                        if abs(_amt) >= 5e6:
+                            _det.append(f"{_k} {_amt/1e6:+.0f}M")
+                if _det:
+                    reason += f"｜{('、'.join(_det[:3]))}"
+            except Exception:
+                pass
         elif gap is not None and gap > 2 and fs == 0:
             priority = 1
             action = "🟡 觀察（資金中性）"
