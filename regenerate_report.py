@@ -214,22 +214,12 @@ import subprocess
 _diff_ok = subprocess.run(["python", str(BASE / "asset_diff_monitor.py")], capture_output=True, text=True, timeout=60)
 print(_diff_ok.stdout.split(chr(10))[-2] if _diff_ok.stdout else f"差異分析 exit={_diff_ok.returncode}")
 
-# 9c. 自動更新儀表板
-from run_daily import _inject_dashboard
-_index_tpl = BASE / "index_template.html"
-if _index_tpl.exists():
-    _index_html = _index_tpl.read_text(encoding="utf-8")
-    _index_html = _inject_dashboard(_index_html, tv, daily_analysis)
-    # 動態取代 placeholder
-    _cash_v = tv.get("cash_total", tv.get("cash", 3614169))
-    _mortgage_v = tv.get("mortgage_monthly_total", tv.get("mortgage_balance", 0))
-    _salary_v = tv.get("salary", 39727)
-    for ph, val in [("__TODAY__", TODAY), ("__DBS_BALANCE__", f"{_cash_v:,.0f}"), ("__SINOPAC_BALANCE__", f"{_cash_v:,.0f}"),
-                    ("__SINOPAC_MORTGAGE__", f"{_mortgage_v:,.0f}"), ("__RESERVE_POOL__", f"{tv.get('financial_mortgage',2000000):,.0f}"),
-                    ("__SALARY__", f"{_salary_v:,.0f}"), ("__MORTGAGE_PAYMENT__", f"{int(_mortgage_v/3):,.0f}")]:
-        _index_html = _index_html.replace(ph, val)
-    (BASE / "index.html").write_text(_index_html, encoding="utf-8")
-    print(f"✅ index.html ({len(_index_html):,} bytes)")
+# 9c. 自動更新儀表板（2026-08-27 根治：統一呼叫 build_dashboard.py，舊邏輯漏連結佔位符）
+import subprocess as _sp9c
+_r9c = _sp9c.run([sys.executable, str(BASE / "build_dashboard.py")], cwd=BASE,
+                 capture_output=True, text=True, timeout=120)
+if _r9c.stdout:
+    print(_r9c.stdout.strip().splitlines()[-1] if _r9c.stdout.strip() else "✅ index.html")
     # 2026-08-23：刷新重要連結區（週報/月報/緊急/巴菲特/圖表指向最新檔，避免 __TODAY__ 壞連結；舊檔保留）
     _lk = subprocess.run([sys.executable, str(BASE / "update_dashboard_links.py")], capture_output=True, text=True, timeout=30)
     if _lk.stdout.strip():

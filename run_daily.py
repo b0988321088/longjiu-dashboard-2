@@ -1925,26 +1925,14 @@ def main():
 
     OUT_DAILY.write_text(daily_html, encoding="utf-8")
     print(f"[RUN_DAILY] 日報產出：{OUT_DAILY}")
-    # 靜態儀表板：由 index_template.html 注入動態數據
-    if INDEX_TEMPLATE.exists():
-        index_html = INDEX_TEMPLATE.read_text(encoding="utf-8")
-        try:
-            intel_text2 = mi_mod.load_latest_hunter()
-            intel_signals2 = mi_mod.parse_hunter_signals(intel_text2)
-        except Exception:
-            intel_signals2 = {}
-        index_html = _inject_dashboard(index_html, tv, intel_signals2)
-        # 動態取代模板 placeholder
-        _cash_val = tv.get("cash_total", tv.get("cash", 3614169))
-        _mortgage_total = tv.get("mortgage_monthly_total", tv.get("mortgage_balance", 0))
-        _salary_val = tv.get("salary", 39727)
-        index_html = index_html.replace("__DBS_BALANCE__", f"{_cash_val:,.0f}")
-        index_html = index_html.replace("__SINOPAC_BALANCE__", f"{_cash_val:,.0f}")
-        index_html = index_html.replace("__SINOPAC_MORTGAGE__", f"{_mortgage_total:,.0f}")
-        index_html = index_html.replace("__RESERVE_POOL__", f"{tv.get('financial_mortgage',2000000):,.0f}")
-        index_html = index_html.replace("__SALARY__", f"{_salary_val:,.0f}")
-        OUT_INDEX.write_text(index_html, encoding="utf-8")
-        print(f"[RUN_DAILY] 儀表板產出：{OUT_INDEX}")
+    # 靜態儀表板：統一由 build_dashboard.py 產出（2026-08-27 根治：run_daily 舊邏輯只取代數值、漏連結佔位符 → 儀表板連結失效）
+    try:
+        import subprocess as _sp
+        _r = _sp.run([sys.executable, str(BASE / "build_dashboard.py")], cwd=BASE, capture_output=True, text=True, timeout=120)
+        if _r.stdout:
+            print(_r.stdout.strip().splitlines()[-1] if _r.stdout.strip() else "[RUN_DAILY] 儀表板產出")
+    except Exception as _e:
+        print(f"[RUN_DAILY] 儀表板產出失敗：{_e}")
 
     # === 寫入記憶 ===
     try:
