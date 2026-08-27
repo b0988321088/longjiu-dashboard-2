@@ -124,7 +124,12 @@ def render_health_score(snap: dict) -> dict:
     def_score = 100 if defense >= 50 else (60 if defense >= 40 else 0)
 
     # 美元曝險（口徑：美股桶+美元定存+美元債券梯+保單美元債 ≈54%）
-    usd = _num(snap.get("usd_exposure_monitor", {}).get("current", 54), 54)
+    _usd_m = snap.get("usd_exposure_monitor", {}).get("current", {})
+    if isinstance(_usd_m, dict):
+        # ⚠️ 2026-08-27 實踩：current 是 dict，_num 會取第一個值(美股桶42.1)漏掉「合計54.4」→ 滿分誤判
+        usd = _num(_usd_m.get("合計", _usd_m.get("美股桶", 54)), 54)
+    else:
+        usd = _num(_usd_m, 54)
     usd_score = 100 if usd <= 50 else (50 if usd <= 60 else 0)
 
     # 現金底線（70萬）
