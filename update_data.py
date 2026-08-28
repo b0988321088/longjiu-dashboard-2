@@ -68,6 +68,24 @@ def main():
         snap = sync_snapshot_keys(snap)
         print(f"✅ 保險總值自動重算: {_az:,} + {_fj:,} = {snap['insurance_total']:,}")
 
+    # 2026-08-28 檢討：--cash_detail 支援（Moneybook 帳戶明細 → 銀行水位 + 現金自動重算）
+    # 用法：--cash_detail='{"敦南Richart子帳戶":310031,"文心綜活儲存款-薪轉":100000,...}'
+    if args.get("cash_detail"):
+        try:
+            _cd = json.loads(args["cash_detail"])
+            if isinstance(_cd, dict):
+                snap["cash_detail"] = _cd
+                # 現金總額 = 台幣帳戶合計（排除外幣/信用卡/房貸負值）
+                _exclude = ["外幣", "信用卡", "房貸", "卡"]
+                _cash_sum = sum(v for k, v in _cd.items()
+                                if isinstance(v, (int, float)) and v > 0
+                                and not any(x in k for x in _exclude))
+                snap["cash_total"] = _cash_sum
+                snap = sync_snapshot_keys(snap)
+                print(f"✅ cash_detail 已更新（{len(_cd)} 帳戶，現金自動重算 {_cash_sum:,}）")
+        except Exception as _e:
+            print(f"⚠️ cash_detail 解析失敗: {_e}")
+
     # 2026-08-26 血淚：--securities 更新時必須同步縮放 holdings dict（否則 4 源比對 DB 舊值覆蓋）
     if args.get("securities"):
         _sec = snap.get("securities", {})
