@@ -24,9 +24,13 @@ def main():
     firstjin = snap.get("firstjin_fl65_current_value", snap.get("firstjin_current_value", 0)) or 0
     cum_div = snap.get("firstjin_cum_dividend", 111513) or 0
     mdb = snap.get("monthly_dividend_breakdown", {}) or {}
-    div_ins = mdb.get("insurance", 0) or 0
-    div_total = mdb.get("total", 0) or 0
-    firstjin_div = mdb.get("firstjin", 0) or 0
+    # 2026-08-29 修正：配息一律用 dividend_records 當月實收（mdb 是常態預估口徑，
+    # 之前用 mdb 覆蓋模板實收值 → 第一金顯示 35,583 常態被標「已入帳」，實收應為 25,538）
+    _dr = snap.get("dividend_records", {}).get("2026-08", {}) or {}
+    firstjin_div = sum(v for k, v in _dr.items() if "第一金" in k and isinstance(v, (int, float))) or 0
+    az_div = _dr.get("安聯保單撥回", 0) or 0
+    div_ins = az_div + firstjin_div
+    div_total = sum(v for k, v in _dr.items() if isinstance(v, (int, float))) or 0
     expense = snap.get("monthly_expense", 162781) or 162781
     salary = 39727
 
@@ -44,10 +48,12 @@ def main():
     rep = {
         "9,682,433": _fmt(ins),            # 保單總值
         "7,753,544": _fmt(allianz),        # 安聯 A+B
+        "2,723,839": _fmt(snap.get("allianz_b", 0) or 0),  # 保單B 現值（2026-08-29 補：漏掉沒替換）
         "1,928,889": _fmt(firstjin),       # 第一金現值
         "111,513": _fmt(cum_div),          # 第一金累計配息
-        "88,507": _fmt(div_ins),           # 保單配息合計
+        "88,507": _fmt(div_ins),           # 保單配息合計（實收）
         "25,538": _fmt(firstjin_div),      # 第一金本月領息
+        "63,027": _fmt(az_div),            # 安聯本月領息（2026-08-29 補：原寫死舊值）
         "815,066": _fmt(cash),             # 現金
         "227,372": _fmt(got_total),        # 當月已收合計
         "109,645": _fmt(div_total),        # 配息實收
