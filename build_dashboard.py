@@ -60,8 +60,10 @@ def main():
     rep["499,316"] = _fmt(taiwan)          # 台新合計
     rep["139,446"] = _fmt(cd.get("文心綜活儲存款-薪轉", 177765) or 0)  # 文心薪轉
     rep["97,353"] = _fmt(cd.get("敦南Richart數位一般", 90524) or 0)   # Richart一般
-    rep["50,104"] = _fmt(cd.get("數位活儲", 44116) or 0)              # 玉山
-    rep["20260821_1"] = "20260826_1"       # 資料日期
+    # 2026-08-28 修正：銀行水位全動態（Moneybook 8/27 帳戶）
+    rep["177,599"] = _fmt((cd.get("營業部DAWHO活期儲蓄存款", 0) or 0) + (cd.get("市政分行活期儲蓄存款", 0) or 0))  # 永豐合計
+    rep["50,104"] = _fmt(cd.get("臺幣綜存", 40950) or 0)              # 玉山（臺幣綜存）
+    rep["20260821_1"] = "20260828_1"       # 資料日期
     hits = 0
     for old, new in rep.items():
         if old in tpl:
