@@ -45,7 +45,7 @@ def main():
 
     # ① 更新主 key
     KEYMAP = {
-        "cash": "cash_total", "securities": "securities_total_market_value",
+        "cash": "cash_total", "securities": "securities_total",
         "funds": "funds_total", "insurance": "insurance_total",
         "funds_cathay": "funds_cathay",
         "allianz": "allianz_combined", "firstjin": "firstjin_fl65_current_value",
