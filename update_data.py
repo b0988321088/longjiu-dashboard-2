@@ -139,8 +139,13 @@ def main():
         _db = sqlite3.connect(BASE / "dragon_assets.db")
         _today = datetime.date.today().isoformat()
         _tot = snap.get("total_assets", 0) or 0
-        _row = (_today, snap.get("cash_total", 0), 0, snap.get("securities_total_market_value", 0),
-                snap.get("insurance_total", 0), snap.get("fund_market", 0), _tot, snap.get("total_liabilities", 0))
+        _row = (_today, snap.get("cash_total", 0), 0, snap.get("securities_total", 0),
+                snap.get("insurance_total", 0), snap.get("funds_total", 0), _tot, snap.get("total_liabilities", 0))
+        # 2026-08-28 防呆：檢查「昨天列」是否已被誤寫成今天值（資產變動基準被覆蓋的根因）
+        _ytd = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
+        _yrow = _db.execute("SELECT total_assets FROM assets WHERE date=?", (_ytd,)).fetchone()
+        if _yrow and abs(_yrow[0] - _tot) < 1000 and _ytd != _today:
+            print(f"⚠️ 警示：DB {_ytd} 列 = 今天值（{_yrow[0]:,.0f}）→ 歷史基準可能被覆蓋！asset_diff 對比會失真")
         _cur = _db.execute("SELECT 1 FROM assets WHERE date=?", (_today,)).fetchone()
         if _cur:
             _db.execute("UPDATE assets SET cash_total=?, securities=?, insurance=?, funds=?, total_assets=?, total_liabilities=? WHERE date=?",
