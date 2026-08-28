@@ -114,6 +114,8 @@ def main():
         "__ASSET_DIFF__": "asset_diff_*.html",
         "__BUFFETT_MD__": "buffett_cto_report_*.md",
         "__DAILY_REPORT__": "daily_report_v2_*.html",
+        "__CEO_DASH__": "ceo_dashboard_*.html",
+        "__AUDIT_DASH__": "audit_dashboard_*.html",
         "__EMERGENCY__": "emergency_report_*.html",
         "__INDUSTRY_PNG__": "industry_penetration_*.png",
         "__PEN_REPORT__": "penetration_report_*.html",
