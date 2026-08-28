@@ -55,7 +55,8 @@ def main():
         "25,538": _fmt(firstjin_div),      # 第一金本月領息
         "63,027": _fmt(az_div),            # 安聯本月領息（2026-08-29 補：原寫死舊值）
         "815,066": _fmt(cash),             # 現金
-        "227,372": _fmt(got_total),        # 當月已收合計
+        "227,372": _fmt(got_total),        # 當月已收合計（說明欄）
+        "199,960": _fmt(got_total),        # 📊 當月已收合計卡片（2026-08-29 補：漏替換 → 舊值 199,960 殘留）
         "109,645": _fmt(div_total),        # 配息實收
         "78,000": _fmt(rent_got),          # 租金已收
         "162,781": _fmt(expense),          # 月支出
@@ -70,6 +71,59 @@ def main():
     rep["177,599"] = _fmt((cd.get("營業部DAWHO活期儲蓄存款", 0) or 0) + (cd.get("市政分行活期儲蓄存款", 0) or 0))  # 永豐合計
     rep["50,104"] = _fmt(cd.get("臺幣綜存", 40950) or 0)              # 玉山（臺幣綜存）
     rep["20260821_1"] = "20260828_1"       # 資料日期
+    # ── 資產穿透卡五桶市值（2026-08-29 補：快照版 fallback 全部寫死舊值）──
+    _ptwd = snap.get("penetration", {}).get("actual_twd", {}) or {}
+    _ppct = snap.get("penetration", {}).get("actual_pct", {}) or {}
+    _gaps = snap.get("penetration", {}).get("gaps", {}) or {}
+    _tgt = snap.get("penetration", {}).get("targets", {}) or {}
+    rep["1,889,388"] = _fmt(_ptwd.get("台股市值型成長", 0))        # 台股市值
+    rep["11,499,725"] = _fmt(_ptwd.get("美股市值型成長", 0))       # 美股市值
+    rep["1,089,462"] = _fmt(_ptwd.get("防守型配息", 0))            # 防守市值
+    rep["5,917,259"] = _fmt(_ptwd.get("債券", 0))                  # 債券市值
+    rep["5,798,988"] = _fmt(_ptwd.get("現金/安全網", 0))           # 現金市值
+    rep["3,735,174"] = _fmt(_ptwd.get("美股市值型成長_科技", 0))   # 科技市值
+    rep["7,764,551"] = _fmt(_ptwd.get("美股市值型成長_非科技", 0)) # 非科技市值
+    # 科技/非科技文字（⚠️ 必須在市值替換前，因整句 key 含市值數字，市值先被換掉就匹配不到）
+    _tch = _ppct.get("美股市值型成長_科技", 0); _ntch = _ppct.get("美股市值型成長_非科技", 0)
+    _tech_gap = _tch - 15
+    _tech_txt_old = "🔬 科技 14.3%（3,735,174 TWD）｜非科技 29.6%（7,764,551 TWD）｜科技目標 ≤15%（缺口 -0.7pp）"
+    _tech_txt_new = f"🔬 科技 {_tch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_科技',0))} TWD）｜非科技 {_ntch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_非科技',0))} TWD）｜科技目標 ≤15%（{'缺口' if _tech_gap<0 else '溢價'} {_tech_gap:+.1f}pp）"
+    # 兩階段：先用 temp 佔位保護整句 → 再換市值 → 最後還原整句
+    _TECH_PH = "@@TECH_TXT@@"
+    tpl = tpl.replace(_tech_txt_old, _TECH_PH)
+    rep["@@TECH_TXT@@"] = _tech_txt_new
+    _t_act = _ppct.get("台股市值型成長", 0); _t_tgt = _tgt.get("台股市值型目標", 10)
+    _t_gap = _t_act - _t_tgt
+    _t_col = "text-red-400" if _t_gap < 0 else "text-emerald-400"
+    rep["現況 7 / 目標 10 (缺口 -2.8pp)"] = f"現況 {_t_act:.0f} / 目標 {_t_tgt:.0f} ({'缺口' if _t_gap<0 else '溢價'} {_t_gap:+.1f}pp)"
+    rep["style=\"width: 7%\"</div>"] = f"style=\"width: {min(_t_act/55*100,100):.0f}%\"</div>"
+    rep["style=\"width: -2.8%\"></div>"] = f"style=\"width: {min(max(_t_gap,0)/55*100,100):.0f}%\"></div>"
+    _u_act = _ppct.get("美股市值型成長", 0); _u_tgt = _tgt.get("美股市值型目標", 40)
+    _u_gap = _u_act - _u_tgt
+    rep["現況 44 / 目標 40 (溢價 +3.9pp)"] = f"現況 {_u_act:.0f} / 目標 {_u_tgt:.0f} ({'溢價' if _u_gap>0 else '缺口'} {_u_gap:+.1f}pp)"
+    rep["style=\"width: 44%\"></div>"] = f"style=\"width: {min(_u_act/55*100,100):.0f}%\"</div>"
+    _d_act = _ppct.get("防守型配息", 0); _d_tgt = _tgt.get("配息型目標", 20)
+    _d_gap = _d_act - _d_tgt
+    rep["現況 4 / 目標 20 (缺口 -15.8pp)"] = f"現況 {_d_act:.0f} / 目標 {_d_tgt:.0f} ({'缺口' if _d_gap<0 else '溢價'} {_d_gap:+.1f}pp)"
+    rep["style=\"width: 4%\"></div>"] = f"style=\"width: {min(_d_act/55*100,100):.0f}%\"</div>"
+    rep["style=\"width: -15.8%\"></div>"] = f"style=\"width: {min(max(_d_gap,0)/55*100,100):.0f}%\"></div>"
+    _b_act = _ppct.get("債券", 0); _b_tgt = _tgt.get("債券型目標", 25)
+    _b_gap = _b_act - _b_tgt
+    rep["現況 23 / 目標 25 (盈餘 -2.4pp)"] = f"現況 {_b_act:.0f} / 目標 {_b_tgt:.0f} ({'盈餘' if _b_gap>0 else '缺口'} {_b_gap:+.1f}pp)"
+    rep["style=\"width: 23%\"></div>"] = f"style=\"width: {min(_b_act/55*100,100):.0f}%\"</div>"
+    _c_act = _ppct.get("現金/安全網", 0); _c_tgt = _tgt.get("現金目標", 5)
+    _c_gap = _c_act - _c_tgt
+    rep["現況 22 / 目標 5 (盈餘 +17.1pp)"] = f"現況 {_c_act:.0f} / 目標 {_c_tgt:.0f} ({'盈餘' if _c_gap>0 else '缺口'} {_c_gap:+.1f}pp)"
+    rep["style=\"width: 22%\"></div>"] = f"style=\"width: {min(_c_act/55*100,100):.0f}%\"</div>"
+    # 科技/非科技文字
+    _tch = _ppct.get("美股市值型成長_科技", 0); _ntch = _ppct.get("美股市值型成長_非科技", 0)
+    _tech_gap = _tch - 15
+    rep["🔬 科技 14.3%（3,735,174 TWD）｜非科技 29.6%（7,764,551 TWD）｜科技目標 ≤15%（缺口 -0.7pp）"] = \
+        f"🔬 科技 {_tch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_科技',0))} TWD）｜非科技 {_ntch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_非科技',0))} TWD）｜科技目標 ≤15%（{'缺口' if _tech_gap<0 else '溢價'} {_tech_gap:+.1f}pp）"
+    # 安聯配息卡（8/29 補：舊 62,969 → 76,931）
+    rep["62,969"] = _fmt(az_div)
+    # 保單A 現值（8/29 補：舊 5,103,722 → 5,083,230）
+    rep["5,103,722"] = _fmt(snap.get("allianz_a", 0) or 0)
     hits = 0
     for old, new in rep.items():
         if old in tpl:
