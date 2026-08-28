@@ -1,26 +1,4 @@
 {
   "pending_decisions": [],
-  "decisions": [
-    {
-      "id": "mem-20260828143518-0",
-      "timestamp": "2026-08-28T14:35:18.491590",
-      "agent": "Hermes",
-      "task": "日報2026-08-28",
-      "summary": "證券2,890,310 保單9,680,424 配息109,645",
-      "status": "completed",
-      "source": "auto"
-    },
-    {
-      "id": "mem-20260828143518-1",
-      "timestamp": "2026-08-28T14:35:18.492590",
-      "agent": "Hermes",
-      "task": "資產穿透2026-08-28",
-      "summary": "台股1,967,791.0 美股11,305,539.3 防守1,024,413.1 債券6,067,795.0 現金5,775,581.6000000015",
-      "status": "completed",
-      "source": "auto"
-    }
-  ],
-  "meta": {
-    "updated_at": "2026-08-28T14:35:18.492590"
-  }
+  "decisions": []
 }
