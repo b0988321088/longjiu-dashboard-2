@@ -70,7 +70,10 @@ def main():
     # 2026-08-28 修正：銀行水位全動態（Moneybook 8/27 帳戶）
     rep["177,599"] = _fmt((cd.get("營業部DAWHO活期儲蓄存款", 0) or 0) + (cd.get("市政分行活期儲蓄存款", 0) or 0))  # 永豐合計
     rep["50,104"] = _fmt(cd.get("臺幣綜存", 40950) or 0)              # 玉山（臺幣綜存）
-    rep["20260821_1"] = "20260828_1"       # 資料日期
+    rep["20260821_1"] = "20260829_1"       # 資料日期（8/29 Moneybook）
+    # 現金合計卡「監控卡片合計」（2026-08-29 補：原寫死 799,612 殘留 → 動態算 cash_detail 正數，排除外幣 key）
+    _mon = sum(v for k, v in cd.items() if isinstance(v, (int, float)) and v > 0 and "外幣" not in k)
+    rep["799,612"] = _fmt(_mon)
     # ── 資產穿透卡五桶市值（2026-08-29 補：快照版 fallback 全部寫死舊值）──
     _ptwd = snap.get("penetration", {}).get("actual_twd", {}) or {}
     _ppct = snap.get("penetration", {}).get("actual_pct", {}) or {}

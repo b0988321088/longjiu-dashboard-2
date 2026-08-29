@@ -70,8 +70,8 @@ def main():
         ("再平衡報告", f"python build_rebalance_report.py"),
         ("儀表板注入", "python build_dashboard.py"),
         # 2026-08-29：產出後驗證 index.html 無配息舊值殘留（build_dashboard rep dict 漏替換防呆）
-        # 清單 = 配息口徑舊值 + 穿透卡五桶舊市值 + 保單A舊值 + 當月已收舊值（8/29 血淚全量盤點）
-        ("儀表板產出驗證", "python -c \"import re; h=open('index.html',encoding='utf-8').read(); stale=[s for s in ['35,583','63,027','2,723,839','7,753,544','88,507','109,645','143.9%','144%','199,960','62,969','5,103,722','1,889,388','11,499,725','1,089,462','5,917,259','5,798,988','3,735,174','7,764,551','14.3%','-0.7pp'] if s in h]; print('❌ 儀表板殘留舊值: '+str(stale) if stale else '✅ 儀表板無舊值殘留'); import sys; sys.exit(1 if stale else 0)\""),
+        # 清單 = 配息口徑舊值 + 穿透卡五桶舊市值 + 保單A舊值 + 當月已收舊值（8/29 血淚全量盤點）+ 監控卡片合計舊值
+        ("儀表板產出驗證", "python -c \"import re; h=open('index.html',encoding='utf-8').read(); stale=[s for s in ['35,583','63,027','2,723,839','7,753,544','88,507','109,645','143.9%','144%','199,960','62,969','5,103,722','1,889,388','11,499,725','1,089,462','5,917,259','5,798,988','3,735,174','7,764,551','14.3%','-0.7pp','799,612','815,066','20260821_1'] if s in h]; print('❌ 儀表板殘留舊值: '+str(stale) if stale else '✅ 儀表板無舊值殘留'); import sys; sys.exit(1 if stale else 0)\""),
         # 2026-08-27：共享渲染組件自測（report_components 異常 → 報表數字不一致）
         ("組件自測", "python -c \"from report_components import render_health_score; import json; print('✅ 組件正常 健康度', render_health_score(json.load(open('snapshot.json',encoding='utf-8')))['分數'])\""),
         ("週報", f"python build_weekly_report.py"),
