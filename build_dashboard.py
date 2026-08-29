@@ -67,6 +67,24 @@ def main():
     rep["499,316"] = _fmt(taiwan)          # 台新合計
     rep["139,446"] = _fmt(cd.get("文心綜活儲存款-薪轉", 177765) or 0)  # 文心薪轉
     rep["97,353"] = _fmt(cd.get("敦南Richart數位一般", 90524) or 0)   # Richart一般
+    # 管理費入帳狀態（2026-08-29：模板寫死「待入帳 0（應收 2,100）」→ 依 rent_received_records 動態）
+    _fee = 0
+    for k, v in (snap.get("rent_received_records", {}) or {}).items():
+        if str(k).startswith("2026-08") and isinstance(v, dict) and "管理費" in v:
+            _fee = v["管理費"] or 0
+    if _fee > 0:
+        rep["<span class=\"text-amber-400\">⏳ 待入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-slate-400\">0 TWD（應收 2,100）</span>"] = \
+            f"<span class=\"text-emerald-400\">✅ 已入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-emerald-400 font-bold\">2,100 TWD</span>"
+    else:
+        rep["<span class=\"text-amber-400\">⏳ 待入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-slate-400\">0 TWD（應收 2,100）</span>"] = \
+            f"<span class=\"text-amber-400\">⏳ 待入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-slate-400\">0 TWD（應收 2,100）</span>"
+    # 流動性調度 tab 銀行卡（2026-08-29 補：原 6 卡全寫死 → 動態）
+    rep["27,738"] = _fmt((cd.get("活期儲蓄存款", 0) or 0) + (cd.get("數位存款帳戶２類", 0) or 0))  # 國泰世華（活期+數位2類）
+    rep["44,116"] = _fmt(cd.get("數位活儲", 44116) or 0)             # 台北富邦
+    rep["739"] = _fmt(cd.get("Digital Savings Acco", 739) or 0)      # 將來銀行
+    rep["458,343"] = _fmt(round((snap.get("monthly_expense", 162781) or 162781) * 3))  # 安全線 3個月支出（162,781×3=488,343）
+    rep["20,776"] = _fmt(cd.get("活期儲蓄存款", 0) or 0)              # 國泰明細 活期儲蓄
+    rep["6,960"] = _fmt(cd.get("數位存款帳戶２類", 2) or 0)           # 國泰明細 數位2類
     # 2026-08-28 修正：銀行水位全動態（Moneybook 8/27 帳戶）
     rep["177,599"] = _fmt((cd.get("營業部DAWHO活期儲蓄存款", 0) or 0) + (cd.get("市政分行活期儲蓄存款", 0) or 0))  # 永豐合計
     rep["50,104"] = _fmt(cd.get("臺幣綜存", 40950) or 0)              # 玉山（臺幣綜存）
