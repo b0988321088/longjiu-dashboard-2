@@ -61,6 +61,57 @@ def main():
         "78,000": _fmt(rent_got),          # 租金已收
         "162,781": _fmt(expense),          # 月支出
     }
+    # ── 雷達＋本週投資計劃（2026-08-29：模板寫死 8/23 舊版 → 讀 radar_state.json 動態）──
+    try:
+        import json as _json
+        from pathlib import Path as _Path
+        _rd_path = _Path(__file__).resolve().parent / "radar_state.json"
+        if _rd_path.exists():
+            _rd = _json.loads(_rd_path.read_text(encoding="utf-8"))
+            _sig = _rd.get("signals", {}) or {}
+            _signals_txt = "｜".join(
+                f"{k}{v.get('color','')}" for k, v in _sig.items() if v.get("color")
+            )
+            _pn = _rd.get("policy_notes", {}) or {}
+            _policy_txt = ""
+            _titles = {"新聞1_華許升息": "華許放鷹（升息）", "新聞2_美委石油協議": "美委石油協議", "新聞3_伊朗戰爭SPR": "伊朗戰爭SPR"}
+            for _k, _v in _pn.items():
+                if isinstance(_v, dict):
+                    _c = _v.get("內容", "")
+                    _imp = _v.get("對資產影響", "")
+                    _t = _titles.get(_k, _k)
+                    if _c:
+                        _policy_txt += (("｜" if _policy_txt else "") + f"{_t}：{_imp or _c[:30]}")
+                elif isinstance(_v, str) and _v and _k in ("原油綜合判斷", "債券升息敏感度"):
+                    _policy_txt += (("｜" if _policy_txt else "") + _v[:45])
+            if not _policy_txt:
+                _policy_txt = "無重大政策變動"
+            # 本週計劃（同 institutional_flow 結論邏輯，精簡版）
+            _pen2 = snap.get("penetration", {}).get("actual_pct", {}) or {}
+            _dry2 = snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
+            _usd2 = snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
+            _plan = []
+            _plan.append(f"台股慢慢買 0050/006208 每週1.5-2萬（缺口 -{10-_pen2.get('台股市值型成長',7.5):.1f}pp）")
+            _plan.append("防守合併已足凍結；債券等 US30Y<5.30%")
+            _plan.append(f"乾粉 {_dry2/10000:.1f}萬 優先非核心消費（0051 回檔-5%）")
+            _plan.append("9/2 保單轉換截止（PIMCO120+M&G80-100+醫療50+黃金30）；8/26已轉80萬 8/30生效")
+            if _usd2 > 55:
+                _plan.append(f"美元曝險 {_usd2}% 超標→美股減碼")
+            _plan.append("9/3 PI→質押350萬還債")
+            rep["__RADAR_DATE__"] = _rd.get("last_run", "2026-08-29")[:10]
+            rep["__RADAR_SIGNALS__"] = _signals_txt
+            rep["__RADAR_PLAN__"] = "｜".join(_plan)
+            rep["__RADAR_POLICY__"] = _policy_txt
+        else:
+            rep["__RADAR_DATE__"] = "2026-08-29"
+            rep["__RADAR_SIGNALS__"] = "雷達資料缺（radar_state.json 不存在）"
+            rep["__RADAR_PLAN__"] = "待雷達更新"
+            rep["__RADAR_POLICY__"] = "無"
+    except Exception as _e:
+        rep["__RADAR_DATE__"] = "2026-08-29"
+        rep["__RADAR_SIGNALS__"] = f"雷達讀取失敗: {_e}"
+        rep["__RADAR_PLAN__"] = "待雷達更新"
+        rep["__RADAR_POLICY__"] = "無"
     # ── 銀行水位（2026-08-26：模板寫死各銀行餘額 → 從 snapshot cash_detail 動態）──
     cd = snap.get("cash_detail", {}) or {}
     taiwan = (cd.get("敦南Richart子帳戶", 0) or 0) + (cd.get("文心綜活儲存款-薪轉", 0) or 0) + (cd.get("敦南Richart數位一般", 0) or 0) + (cd.get("敦南Richart外幣", 0) or 0)
