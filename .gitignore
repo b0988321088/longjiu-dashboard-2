@@ -43,3 +43,5 @@ hunter_logs/
 
 # 影片成品（不推 Pages）
 *.mp4
+node_modules/
+*.map
