@@ -31,6 +31,24 @@
             -webkit-text-fill-color: transparent;
         }
         .tab-pane.hidden { display: none; }
+        /* 2026-08-29：tab 改錨點導航（零 JS 依賴，手機瀏覽器相容）— 全 tab 垂直顯示 */
+        .btn-tab-link {
+            flex: 1 1 0%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-align: center;
+            white-space: nowrap;
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        .btn-tab-link:hover { color: #fff; background: rgba(59, 130, 246, 0.1); }
+        .btn-tab-link:focus { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3); }
+        .tab-pane { margin-bottom: 28px; padding-bottom: 28px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .tab-pane:last-child { border-bottom: none; }
     </style>
 </head>
 <body class="min-h-screen pb-12">
@@ -177,21 +195,21 @@
 <!-- 頂層導航 -->
 <nav class="max-w-4xl mx-auto px-4 mt-6">
     <div class="bg-slate-950 p-1.5 rounded-xl flex justify-between gap-1 border border-slate-800 text-xs font-bold overflow-x-auto">
-        <button type="button" id="btn-tab-1" onclick="switchTab(1)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 bg-blue-600 text-white shadow">
+        <a id="btn-tab-1" href="#tab-content-1" class="btn-tab-link">
             💰 財富生命線
-        </button>
-        <button type="button" id="btn-tab-2" onclick="switchTab(2)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        </a>
+        <a id="btn-tab-2" href="#tab-content-2" class="btn-tab-link">
             🛡️ 戰略異常中心
-        </button>
-        <button type="button" id="btn-tab-3" onclick="switchTab(3)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        </a>
+        <a id="btn-tab-3" href="#tab-content-3" class="btn-tab-link">
             🔄 保單接力引擎
-        </button>
-        <button type="button" id="btn-tab-4" onclick="switchTab(4)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        </a>
+        <a id="btn-tab-4" href="#tab-content-4" class="btn-tab-link">
             🏦 流動性調度
-        </button>
-        <button type="button" id="btn-tab-5" onclick="switchTab(5)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        </a>
+        <a id="btn-tab-5" href="#tab-content-5" class="btn-tab-link">
             📋 戰術任務
-        </button>
+        </a>
     </div>
 </nav>
 
@@ -285,7 +303,7 @@
     </div>
 
     <!-- ================= PAGE 2 ================= -->
-    <div id="tab-content-2" class="tab-pane hidden space-y-6">
+    <div id="tab-content-2" class="tab-pane space-y-6">
         <div class="luxury-card p-6 space-y-6" id="pen-card">
             <div>
                 <h3 class="text-md font-bold text-white">資產穿透（目標：台股 10%｜美股 40%｜防守 20%｜債券 25%｜現金 5%）</h3>
@@ -373,7 +391,7 @@
     </div>
 
     <!-- ================= PAGE 3 ================= -->
-    <div id="tab-content-3" class="tab-pane hidden space-y-6">
+    <div id="tab-content-3" class="tab-pane space-y-6">
         <div class="luxury-card p-6 space-y-4">
             <div class="flex justify-between items-center">
                 <div>
@@ -453,7 +471,7 @@
     </div>
 
     <!-- ================= PAGE 4 ================= -->
-    <div id="tab-content-4" class="tab-pane hidden space-y-6">
+    <div id="tab-content-4" class="tab-pane space-y-6">
         <div class="luxury-card p-6 space-y-6">
             <div>
                 <h3 class="text-md font-bold text-white">房貸往來行庫水位監控 (3-6個月安全防線)</h3>
@@ -497,7 +515,7 @@
     </div>
 
     <!-- ================= PAGE 5 ================= -->
-    <div id="tab-content-5" class="tab-pane hidden space-y-6">
+    <div id="tab-content-5" class="tab-pane space-y-6">
                 <div class="luxury-card p-6 border-l-4 border-red-500 space-y-4">
             <div class="flex justify-between items-start">
                 <div>
