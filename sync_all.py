@@ -68,7 +68,12 @@ def main():
         ("同義欄位複驗", f"python asset_sync.py"),
         ("一致性檢查", f"python check_penetration_consistency.py {today}"),
         ("再平衡報告", f"python build_rebalance_report.py"),
+        # 2026-08-29：再平衡儀表板（雷達+政策面+本週投資計劃）— 之前 sync_all 漏跑，導致雷達更新後儀表板舊
+        ("再平衡儀表板", f"python build_rebalance_dashboard.py"),
         ("儀表板注入", "python build_dashboard.py"),
+        # 2026-08-29 v4：雷達資料同步驗證（radar_state.json 存在 + 政策面非空 + 三處產出含雷達結論）
+        #     血淚：institutional_flow.py 讀 policy_notes 用 .get("內容") 但結構是新聞dict → 政策面空白沒人發現
+        ("雷達同步驗證", "python -c \"import json; r=json.load(open('radar_state.json',encoding='utf-8')); pn=r.get('policy_notes') or {}; assert pn.get('新聞1_華許升息') or pn.get('原油綜合判斷'), '❌ radar_state.policy_notes 空白'; sig=r.get('signals') or {}; assert sig, '❌ radar_state.signals 空白'; print('✅ 雷達資料完整（signals', len(sig), '項 + 政策面', len(pn), '筆）')\""),
         # 2026-08-29：產出後驗證 index.html 無配息舊值殘留（build_dashboard rep dict 漏替換防呆）
         # 清單 = 配息口徑舊值 + 穿透卡五桶舊市值 + 保單A舊值 + 當月已收舊值（8/29 血淚全量盤點）+ 監控卡片合計舊值
         # ⚠️ 2026-08-29 v2 血淚：JS 內硬編碼 fallback（Script 6 入帳清單 ['房租已收', 78000] / || 62969）不在 rep dict 範圍 —
