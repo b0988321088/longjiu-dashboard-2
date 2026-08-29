@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>龍九資產管理系統（極簡版）</title>
+<style>
+/* 2026-08-29 極簡版：零依賴、零 JS、零 CDN — 任何瀏覽器 100% 顯示 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0f172a; color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", Arial, sans-serif; padding: 12px; }
+h1 { font-size: 20px; color: #fff; text-align: center; margin: 8px 0 4px; }
+.sub { text-align: center; color: #94a3b8; font-size: 12px; margin-bottom: 12px; }
+.card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.card h2 { font-size: 15px; color: #60a5fa; margin-bottom: 8px; }
+.row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e293b; font-size: 14px; }
+.row:last-child { border-bottom: none; }
+.row .label { color: #94a3b8; }
+.row .value { color: #fff; font-weight: bold; font-family: "SF Mono", Consolas, monospace; }
+.big { font-size: 24px; font-weight: 900; color: #4ade80; text-align: center; padding: 8px 0; }
+.tag { display: inline-block; background: #0ea5e9; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-bottom: 6px; }
+.note { color: #64748b; font-size: 11px; margin-top: 4px; }
+h3 { font-size: 13px; color: #e2e8f0; margin: 8px 0 4px; }
+</style>
+</head>
+<body>
+
+<h1>🀄 龍九資產管理系統</h1>
+<div class="sub">極簡版 v1（2026-08-29）｜財務總監 戰略決策終端</div>
+
+<!-- 核心總覽 -->
+<div class="card">
+  <span class="tag">💰 總資產</span>
+  <div class="big">26,145,540 TWD</div>
+  <div class="row"><span class="label">現金</span><span class="value">772,607</span></div>
+  <div class="row"><span class="label">保險（安聯+第一金）</span><span class="value">9,718,338</span></div>
+  <div class="row"><span class="label">基金（國泰+鉅亨）</span><span class="value">11,938,456</span></div>
+  <div class="row"><span class="label">證券（凱基）</span><span class="value">2,841,630</span></div>
+  <div class="note">資料日期 2026-08-29｜Moneybook 8/29 匯出</div>
+</div>
+
+<!-- 當月收入 -->
+<div class="card">
+  <span class="tag">📊 8 月已收</span>
+  <div class="big">243,434 TWD</div>
+  <div class="row"><span class="label">薪水</span><span class="value">39,727</span></div>
+  <div class="row"><span class="label">配息（安聯+第一金）</span><span class="value">123,607</span></div>
+  <div class="row"><span class="label">房租（收滿）</span><span class="value">80,100</span></div>
+  <div class="note">配息：安聯 76,931 + 第一金 25,538 + 其他 21,138</div>
+</div>
+
+<!-- 保單接力 -->
+<div class="card">
+  <span class="tag">🔄 保單接力引擎</span>
+  <h3>總現值市值</h3>
+  <div class="big">9,718,338 TWD</div>
+  <div class="row"><span class="label">安聯 A（QL18610694）</span><span class="value">5,083,230</span></div>
+  <div class="row"><span class="label">安聯 B（QL18488224）</span><span class="value">2,708,228</span></div>
+  <div class="row"><span class="label">A+B 合計</span><span class="value">7,791,458</span></div>
+  <div class="row"><span class="label">累計配息</span><span class="value">1,630,962</span></div>
+  <div class="row"><span class="label">本月配息（安聯）</span><span class="value">76,931</span></div>
+  <div class="row"><span class="label">第一金保單現值</span><span class="value">1,928,889</span></div>
+  <div class="row"><span class="label">第一金累計配息</span><span class="value">111,513</span></div>
+  <div class="row"><span class="label">第一金本月配息</span><span class="value">25,538</span></div>
+  <div class="note">8/29 定案：PIMCO 120 + M&G 80-100 + 醫療 50 + 黃金 30（9/2 截止）</div>
+</div>
+
+<!-- 流動性調度 -->
+<div class="card">
+  <span class="tag">🏦 流動性調度</span>
+  <h3>安全線（月支出 162,781 × 3）</h3>
+  <div class="big">488,343 TWD</div>
+  <div class="row"><span class="label">國泰世華</span><span class="value">27,962</span></div>
+  <div class="row"><span class="label">台新銀行</span><span class="value">511,604</span></div>
+  <div class="row"><span class="label">永豐 DAWHO+市政</span><span class="value">111,765</span></div>
+  <div class="row"><span class="label">玉山</span><span class="value">50,104</span></div>
+  <div class="row"><span class="label">富邦</span><span class="value">44,116</span></div>
+  <div class="row"><span class="label">將來銀行</span><span class="value">739</span></div>
+  <div class="row"><span class="label">監控合計</span><span class="value">749,706</span></div>
+  <div class="note">國泰 = 生活帳戶安全線 4 萬｜主要監控國泰+台新（月支出×3）</div>
+</div>
+
+<!-- 戰術任務 -->
+<div class="card">
+  <span class="tag">📋 戰術任務</span>
+  <h3>P0 戰略任務（8/20-21 已執行）</h3>
+  <div class="row"><span class="label">國泰轉貸 1,200 萬 @2.6%</span><span class="value">✅ 已入帳</span></div>
+  <div class="row"><span class="label">富達 600 + MMF 500 + 聯博 100</span><span class="value">✅ 到位</span></div>
+  <div class="row"><span class="label">9/3 PI 認證 → 質押 350 萬還債</span><span class="value">⏳ 待執行</span></div>
+  <h3>近期節點</h3>
+  <div class="row"><span class="label">8/31 確認 8/26 保單轉換生效</span><span class="value">📌</span></div>
+  <div class="row"><span class="label">9/1 洲際W 轉貸（國泰詹理專）</span><span class="value">📌</span></div>
+  <div class="row"><span class="label">9/2 摩根轉換截止</span><span class="value">⏰</span></div>
+  <div class="row"><span class="label">9/3 PI 認證</span><span class="value">🔑</span></div>
+</div>
+
+<!-- 風險提示 -->
+<div class="card">
+  <span class="tag">🚨 風險提示</span>
+  <div class="row"><span class="label">US30Y</span><span class="value">5.28%（距凍結線 0.02pp）</span></div>
+  <div class="row"><span class="label">健康度</span><span class="value">82/100 🟢</span></div>
+  <div class="row"><span class="label">美元曝險</span><span class="value">54.4%（唯一弱項）</span></div>
+  <div class="row"><span class="label">LTV</span><span class="value">20.4% ✅</span></div>
+  <div class="note">現金底線 70 萬強制生效｜債券凍結紅線 US30Y ≥ 5.30%</div>
+</div>
+
+<div class="sub" style="margin-top:16px;">龍九資產管理系統 (Dragon9 Portfolio Terminal) v2.1｜SSoT 真值證通過</div>
+
+</body>
+</html>
