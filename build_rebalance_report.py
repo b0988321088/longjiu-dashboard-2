@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """build_rebalance_report.py — 再平衡評估網頁（動態讀 snapshot，2026-08-14 建立）"""
-import json, datetime, re, sys
+import json, datetime, re, sys, os
 
 REPO = r"C:\Users\bot\Desktop\longjiu_system"
 today = datetime.date.today().strftime("%Y-%m-%d")
@@ -117,6 +117,64 @@ def main():
     except Exception:
         pass
 
+    # 機構流向雷達 + 政策面 + 本週投資計劃（2026-08-29：動態讀 radar_state.json）
+    try:
+        radar = json.load(open(os.path.join(REPO, "radar_state.json"), encoding="utf-8"))
+    except Exception:
+        radar = {}
+    _sig = radar.get("signals", {}) or {}
+    _radar_cards = "".join(
+        f'<div class="card"><div class="k">{k}</div><div class="v {("green" if v.get("color","").startswith("🟢") else "red" if v.get("color","").startswith("🔴") else "amber")}">{v.get("color","—")}</div><div style="font-size:10px;color:#64748b;margin-top:4px">{v.get("note","")[:36]}</div></div>'
+        for k, v in _sig.items()
+    )
+    # 政策面
+    _pn = radar.get("policy_notes", {}) or {}
+    _titles = {"新聞1_華許升息": "華許放鷹（升息）", "新聞2_美委石油協議": "美委石油協議", "新聞3_伊朗戰爭SPR": "伊朗戰爭SPR"}
+    _pol_items = []
+    for _k, _v in _pn.items():
+        if isinstance(_v, dict):
+            _c = _v.get("內容", "")
+            _imp = _v.get("對資產影響", "")
+            if _c:
+                _pol_items.append(f"<li><b>{_titles.get(_k,_k)}</b>：{_imp or _c[:40]}</li>")
+        elif isinstance(_v, str) and _v and _k in ("原油綜合判斷", "債券升息敏感度"):
+            _pol_items.append(f"<li><b>{_k}</b>：{_v[:50]}</li>")
+    _pol_html = "".join(_pol_items) if _pol_items else "<li>無重大政策變動</li>"
+    # 本週投資計劃（結論引擎，與雷達一致）
+    _pen3 = apct
+    _dry3 = snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
+    _usd3 = snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
+    _hs3 = snap.get("hedge_satellite", {}) or {}
+    _rot3 = (snap.get("rotation_recommendation", {}) or {}).get("建議", [{}])[0]
+    _def3 = snap.get("defensive_combined_metric", {}).get("佔比", 69.2)
+    _tw3 = _pen3.get("台股市值型成長", 7.5); _us3 = _pen3.get("美股市值型成長", 43.4)
+    _plan_items = []
+    _plan_items.append(f"🟢 台股（{_tw3:.1f}% vs 目標10%，缺口 {_tw3-10:+.1f}pp）→ 0050/006208 每週1.5-2萬慢慢買（外資連3買+台幣強升）")
+    if _us3 > 45:
+        _plan_items.append(f"🔴 美股（{_us3:.1f}% vs 目標40%，超配 {_us3-40:+.1f}pp）→ 逢彈減碼 ≤20萬/次")
+    else:
+        _plan_items.append(f"⏸️ 美股（{_us3:.1f}% vs 目標40%）超配 {_us3-40:+.1f}pp 未達減碼觸發（>45%）→ 續持")
+    _plan_items.append(f"⏸️ 防守（合併口徑 {_def3:.1f}% 已足）→ 凍結不追（00878/00713 不加碼）")
+    _plan_items.append("⏸️ 債券 23.1% 接近目標25% → 等 US30Y<5.30% 才新增（華許升息1碼估 -0.5~-1.5%）")
+    _plan_items.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry3/10000:.1f}萬 優先「{_rot3.get('產業','—')}」（{_rot3.get('動作','')}）")
+    if _hs3.get("黃金延後_0829"):
+        _plan_items.append("⏸️ 避險衛星：黃金A10 32萬 8/30 生效（保單內）；00635U ~105萬 延後（華許放鷹+金價偏高）→ 等回檔")
+    else:
+        _plan_items.append(f"🟢 避險衛星：黃金現況 {_hs3.get('黃金現況',0):,} → PI 後 00635U 分批 ≤20萬/次")
+    if _usd3 > 55:
+        _plan_items.append(f"🔴 美元曝險 {_usd3}% 超標（>55%）→ 美股減碼/美元定存到期轉台幣")
+    else:
+        _plan_items.append(f"🟡 美元曝險 {_usd3}% （目標≤50%）→ 未達減碼閾值，續觀察")
+    _plan_items.append("🔴 9/2 前：保單轉換截止（PIMCO120+M&G80-100+醫療50+黃金30）→ 8/26已轉80萬 8/30生效，剩餘本週內完成")
+    _plan_items.append("🔍 9/3 PI 認列 → 質押350萬@2.77% 還安聯300+元大50（高息→低息，月省利息）")
+    _plan_items.append(f"📊 產業輪動：買「{_rot3.get('產業','—')}」（{_rot3.get('標的','')}）｜避開「公用事業」")
+    _plan_html = "".join(f"<li>{p}</li>" for p in _plan_items)
+    _radar_block = f"""
+  <h2>📡 機構流向雷達（{radar.get('last_run','—')[:10]}）</h2>
+  <div class="cards">{_radar_cards}</div>
+  <div class="note" style="border-left-color:#3b82f6">🏛️ <b>政策面：</b><ul style="margin:6px 0 0 16px">{_pol_html}</ul></div>
+  <div class="note" style="border-left-color:#10b981">📋 <b>本週投資計劃：</b><ol style="margin:6px 0 0 16px">{_plan_html}</ol></div>
+"""
     html = f"""<!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -145,6 +203,8 @@ def main():
 </style></head><body><div class="wrap">
   <h1>📊 龍九再平衡評估</h1>
   <div class="sub">{today}｜US30Y {us30y_txt}｜模式：{mode}｜穿透分母 {total:,}（不含不動產）</div>
+
+  {_radar_block}
 
   <div class="cards">
     <div class="card"><div class="k">總資產</div><div class="v">{total:,}</div></div>

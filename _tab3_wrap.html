@@ -1,0 +1,13 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>tab3 shot</title></head><body>
+<iframe id="f" src="https://b0988321088.github.io/longjiu-dashboard-2/index.html?v=TAB3SHOT" style="width:390px;height:2400px;border:0"></iframe>
+<script>
+setTimeout(function(){
+  try {
+    var f = document.getElementById('f');
+    var d = f.contentDocument;
+    var btn = d.getElementById('btn-tab-3');
+    if (btn) btn.click();
+    setTimeout(function(){ document.title = 'DONE'; }, 800);
+  } catch(e) { document.title = 'ERR'; }
+}, 3000);
+</script></body></html>
