@@ -30,9 +30,7 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .tab-pane.hidden { display: none; }
-    
-        /* 2026-08-29 最終版：全部 tab 垂直顯示（手機瀏覽器相容） */
+        /* 2026-08-29 最終版：全部 tab 垂直顯示（手機瀏覽器相容），移除 .hidden 類和 JS 切換邏輯 */
         .tab-pane { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
         .tab-pane:last-child { border-bottom: none; }
 </style>
@@ -49,9 +47,9 @@
             <p class="text-[10px] text-slate-400">財務總監 (Comptroller) 戰略決策終端</p>
         </div>
         <div class="text-right flex flex-col items-end">
-            <span class="text-xs font-mono text-slate-300">系統時間：__TODAY__</span>
+            <span class="text-xs font-mono text-slate-300">系統時間：2026-08-29</span>
             <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20 mt-1 flex flex-col items-end gap-0.5 leading-relaxed">
-                __TODAY_STATUS__
+                🟢 今日無需操作<br>📌 近 3 天：08-31 🔍 確認 8/26 保單轉換生效（T+4 8/30） ｜ 09-01 📋 標案前置：建明+謝技師 風險檢查清單（墊款上限/ ｜ 09-01 🔴 洲際W 轉貸：國泰詹理專洽談啟動（≤2.5%+3<br>⏭ 下一個：09-02 🔴 摩根多重收益 9/8 除息 T+4 截止（除息前最後轉換日）
             </span>
         </div>
     </div>
@@ -64,19 +62,19 @@
         <span class="text-[10px] text-slate-500">報表入口（9報表+2圖表）｜GitHub Pages</span>
     </div>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <a href="__DAILY_REPORT__" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📰 日報</a>
-        <a href="__CEO_DASH__" class="text-xs bg-slate-800/80 hover:bg-cyan-600/30 border border-cyan-700 rounded-lg px-3 py-2 text-cyan-200 transition">📈 CEO 儀表板</a>
-        <a href="__AUDIT_DASH__" class="text-xs bg-slate-800/80 hover:bg-indigo-600/30 border border-indigo-700 rounded-lg px-3 py-2 text-indigo-200 transition">📊 審計儀表板</a>
-        <a href="__ASSET_DIFF__" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📈 差異分析</a>
-        <a href="__REBALANCE_DASH__" class="text-xs bg-slate-800/80 hover:bg-emerald-600/30 border border-emerald-700 rounded-lg px-3 py-2 text-emerald-200 transition">🔄 再平衡儀表板</a>
-        <a href="__PEN_REPORT__" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📊 穿透分析</a>
-        <a href="__WEEKLY__" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📋 週報</a>
+        <a href="daily_report_v2_2026-08-29.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📰 日報</a>
+        <a href="ceo_dashboard_2026-08-28.html" class="text-xs bg-slate-800/80 hover:bg-cyan-600/30 border border-cyan-700 rounded-lg px-3 py-2 text-cyan-200 transition">📈 CEO 儀表板</a>
+        <a href="audit_dashboard_2026-08-28.html" class="text-xs bg-slate-800/80 hover:bg-indigo-600/30 border border-indigo-700 rounded-lg px-3 py-2 text-indigo-200 transition">📊 審計儀表板</a>
+        <a href="asset_diff_2026-08-29.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📈 差異分析</a>
+        <a href="rebalance_dashboard_2026-08-29.html" class="text-xs bg-slate-800/80 hover:bg-emerald-600/30 border border-emerald-700 rounded-lg px-3 py-2 text-emerald-200 transition">🔄 再平衡儀表板</a>
+        <a href="penetration_report_2026-08-29.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📊 穿透分析</a>
+        <a href="weekly_report_2026-08-29.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📋 週報</a>
         <a href="dynamic_monthly_review_2026-07.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📅 月報（7月）</a>
-        <a href="__EMERGENCY__" class="text-xs bg-slate-800/80 hover:bg-red-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">🚨 緊急應變</a>
-        <a href="__REBALANCE_MD__" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📌 再平衡評估</a>
-        <a href="__BUFFETT_MD__" class="text-xs bg-slate-800/80 hover:bg-purple-600/30 border border-purple-700 rounded-lg px-3 py-2 text-purple-200 transition">🧠 巴菲特/CTO</a>
-        <a href="__INDUSTRY_PNG__" class="text-xs bg-slate-800/80 hover:bg-teal-600/30 border border-teal-700 rounded-lg px-3 py-2 text-teal-200 transition">🖼 產業穿透圖</a>
-        <a href="__RISK_PNG__" class="text-xs bg-slate-800/80 hover:bg-teal-600/30 border border-teal-700 rounded-lg px-3 py-2 text-teal-200 transition">🖼 風險因子圖</a>
+        <a href="emergency_report_2026-08-29.html" class="text-xs bg-slate-800/80 hover:bg-red-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">🚨 緊急應變</a>
+        <a href="rebalance_summary_2026-08-29.md" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📌 再平衡評估</a>
+        <a href="buffett_cto_report_2026-08-29.md" class="text-xs bg-slate-800/80 hover:bg-purple-600/30 border border-purple-700 rounded-lg px-3 py-2 text-purple-200 transition">🧠 巴菲特/CTO</a>
+        <a href="industry_penetration_2026-08-29.png" class="text-xs bg-slate-800/80 hover:bg-teal-600/30 border border-teal-700 rounded-lg px-3 py-2 text-teal-200 transition">🖼 產業穿透圖</a>
+        <a href="risk_factor_penetration_2026-08-29.png" class="text-xs bg-slate-800/80 hover:bg-teal-600/30 border border-teal-700 rounded-lg px-3 py-2 text-teal-200 transition">🖼 風險因子圖</a>
     </div>
 </div>
 
@@ -181,19 +179,19 @@
 <!-- 頂層導航 -->
 <nav class="max-w-4xl mx-auto px-4 mt-6">
     <div class="bg-slate-950 p-1.5 rounded-xl flex justify-between gap-1 border border-slate-800 text-xs font-bold overflow-x-auto">
-        <button type="button" id="btn-tab-1" onclick="switchTab(1)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 bg-blue-600 text-white shadow">
+        <button type="button" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 bg-blue-600 text-white shadow">
             💰 財富生命線
         </button>
-        <button type="button" id="btn-tab-2" onclick="switchTab(2)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        <button type="button" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             🛡️ 戰略異常中心
         </button>
-        <button type="button" id="btn-tab-3" onclick="switchTab(3)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        <button type="button" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             🔄 保單接力引擎
         </button>
-        <button type="button" id="btn-tab-4" onclick="switchTab(4)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        <button type="button" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             🏦 流動性調度
         </button>
-        <button type="button" id="btn-tab-5" onclick="switchTab(5)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        <button type="button" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             📋 戰術任務
         </button>
     </div>
@@ -204,7 +202,7 @@
 
 
     <!-- ================= PAGE 1 ================= -->
-    <div id="tab-content-1" class="tab-pane space-y-6">__HEALTH_CARD__<div id="trade-plan" style="border:1px solid #f59e0b;background:#fffbeb;border-radius:12px;padding:14px;margin-bottom:14px">
+    <div id="tab-content-1" class="tab-pane space-y-6"><div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;margin:8px 0"><div style="font-weight:800;color:#14532d;margin-bottom:4px">🩺 龍九健康度：<span style="font-size:16px">82/100</span> 🟢</div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">現金流覆蓋</span><span style="color:#1f2937">111%（目標 ≥100%）<b>22/30</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">防禦維度</span><span style="color:#1f2937">✅ 充足（目標 ≥50%）<b>25/25</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">美元曝險</span><span style="color:#1f2937">54.4%（目標 ≤50%）<b>10/20</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">現金底線</span><span style="color:#1f2937">772,607（目標 ≥700,000）<b>15.0/15</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">LTV</span><span style="color:#1f2937">20.4%（目標 ≤35%）<b>10.0/10</b></span></div><div style="font-size:10.5px;color:#166534;margin-top:4px">唯一弱項：美元曝險（下一階段降）</div></div><div id="trade-plan" style="border:1px solid #f59e0b;background:#fffbeb;border-radius:12px;padding:14px;margin-bottom:14px">
 <h3 style="color:#92400e;font-size:14px;font-weight:800;margin:0 0 6px">📡 機構流向雷達 ＆ 🎯 本週交易計畫（2026-08-23 統籌版）</h3>
 <p style="color:#1f2937;font-size:12.5px;margin:0">燈號：台股🟢🔥（外資淨買超連3日+台幣強升）｜黃金🟢🔥（COT淨多單週增）｜原油🔴（機構撤離，Locked）｜美債10年🟡（動能+2.4%貼近凍結線）</p>
 <p style="color:#1f2937;font-size:12px;margin-top:6px;line-height:1.7">🎯 交易計畫（統籌）：乾粉 136,000 全現金保留（防守凍結＋醫療由 8/24 保單健康科學A2 50萬涵蓋＋PI 前不動本金）｜8/24 保單轉換 300萬（PIMCO 120+M&G 100+醫療 50+黃金 30）｜9/3 PI 質押 350萬還債｜台股慢慢買 每週 1.5-2萬（0050/006208，配息流+結餘非乾粉）｜黃金衛星 PI 後 131萬 分3批</p>
@@ -235,7 +233,7 @@
                         <div style="width: 18.1%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-yellow-600 font-bold" title="薪水">薪水 18%</div><div style="width: 45.5%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 font-bold" title="配息">配息 45%</div><div style="width: 36.4%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-teal-600 font-bold" title="房租">房租 36%</div><div class="flex gap-3 text-[10px] text-slate-400 mt-1"><span class="text-yellow-400">▮ 薪水 18%</span><span class="text-blue-400">▮ 配息 45%</span><span class="text-teal-400">▮ 房租 36%</span><span class="text-slate-500">▮ 覆蓋 135%</span></div>
                     </div>
                 </div>
-                <p class="text-xs text-slate-400 italic">*被動收入說明：房租應收 80,100（1樓24,000+23樓21,000+洲際W33,000+管理費2,100），配息保守預估 100,000/月，台電薪水 39,727；當月實際已收 <span data-k="got_total2">227,372</span>（薪水39,727+配息<span data-k="div_total">109,645</span>+房租<span data-k="rent_got">78,000</span>）</p>
+                <p class="text-xs text-slate-400 italic">*被動收入說明：房租應收 80,100（1樓24,000+23樓21,000+洲際W33,000+管理費2,100），配息保守預估 100,000/月，台電薪水 39,727；當月實際已收 <span data-k="got_total2">243,434</span>（薪水39,727+配息<span data-k="div_total">123,607</span>+房租<span data-k="rent_got">80,100</span>）</p>
             </div>
         </div>
 
@@ -283,13 +281,13 @@
                 <div class="bg-blue-500 h-full rounded-full" style="width: 88%"></div>
             </div>
             <p class="text-xs text-slate-400 leading-relaxed">
-                以可動用現金 <span data-k="cash_total">815,066</span>（Moneybook 唯一真值）進行除數運算。Runway 5 / 覆蓋倍數 5.0x，符合財務安全基準線（6個月）。
+                以可動用現金 <span data-k="cash_total">772,607</span>（Moneybook 唯一真值）進行除數運算。Runway 5 / 覆蓋倍數 5.0x，符合財務安全基準線（6個月）。
             </p>
         </div>
     </div>
 
     <!-- ================= PAGE 2 ================= -->
-    <div id="tab-content-2" class="tab-pane space-y-6">
+    <div class="tab-pane space-y-6">
         <div class="luxury-card p-6 space-y-6" id="pen-card">
             <div>
                 <h3 class="text-md font-bold text-white">資產穿透（目標：台股 10%｜美股 40%｜防守 20%｜債券 25%｜現金 5%）</h3>
@@ -299,45 +297,45 @@
                 <div class="space-y-1">
                     <div class="flex justify-between text-xs font-mono">
                         <span class="text-slate-300">1. 台股市值型成長 (0050/006208/009816)</span>
-                        <span class="text-red-400 font-bold">現況 7 / 目標 10 (缺口 -2.8pp)</span>
+                        <span class="text-red-400 font-bold">現況 8 / 目標 10 (缺口 -2.5pp)</span>
                     </div>
                     <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden flex">
                         <div class="bg-red-500 h-full" style="width: 7%"></div>
-                        <div class="bg-slate-700 h-full opacity-40" style="width: -2.8%"></div>
+                        <div class="bg-slate-700 h-full opacity-40" style="width: 0%"></div>
                     </div>
-                    <span class="text-[10px] text-slate-400 font-mono">市值：<span data-k="pen_tw">1,889,388</span> TWD</span>
+                    <span class="text-[10px] text-slate-400 font-mono">市值：<span data-k="pen_tw">1,967,791</span> TWD</span>
                 </div>
                 <div class="space-y-1">
                     <div class="flex justify-between text-xs font-mono">
                         <span class="text-slate-300">2. 美股市值型成長 (00646/PIMCO)</span>
-                        <span class="text-amber-500 font-bold">現況 44 / 目標 40 (溢價 +3.9pp)</span>
+                        <span class="text-amber-500 font-bold">現況 43 / 目標 40 (溢價 +3.4pp)</span>
                     </div>
                     <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
-                        <div class="bg-amber-500 h-full" style="width: 44%"></div>
+                        <div class="bg-amber-500 h-full" style="width: 79%"</div>
                     </div>
-                    <span class="text-[10px] text-slate-400 font-mono">市值：<span data-k="pen_us">11,499,725</span> TWD</span>
-                    <span class="text-[10px] text-cyan-400/80 font-mono">🔬 科技 14.3%（<span data-k="pen_tech">3,735,174</span> TWD）｜非科技 29.6%（<span data-k="pen_nontech">7,764,551</span> TWD）｜科技目標 ≤15%（缺口 -0.7pp）</span>
+                    <span class="text-[10px] text-slate-400 font-mono">市值：<span data-k="pen_us">11,342,962</span> TWD</span>
+                    <span class="text-[10px] text-cyan-400/80 font-mono">🔬 科技 14.3%（<span data-k="pen_tech">3,808,842</span> TWD）｜非科技 29.6%（<span data-k="pen_nontech">7,534,121</span> TWD）｜科技目標 ≤15%（缺口 -0.7pp）</span>
                 </div>
                 <div class="space-y-1">
                     <div class="flex justify-between text-xs font-mono">
                         <span class="text-slate-300">3. 防守型配息 (0056/00713/00878/安聯)</span>
-                        <span class="text-red-400 font-bold">現況 4 / 目標 20 (缺口 -15.8pp)</span>
+                        <span class="text-red-400 font-bold">現況 4 / 目標 20 (缺口 -16.1pp)</span>
                     </div>
                     <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden flex">
-                        <div class="bg-blue-500 h-full" style="width: 4%"></div>
-                        <div class="bg-slate-700 h-full opacity-40" style="width: -15.8%"></div>
+                        <div class="bg-blue-500 h-full" style="width: 7%"</div>
+                        <div class="bg-slate-700 h-full opacity-40" style="width: 0%"></div>
                     </div>
-                    <span class="text-[10px] text-slate-400 font-mono">市值：<span data-k="pen_def">1,089,462</span> TWD</span>
+                    <span class="text-[10px] text-slate-400 font-mono">市值：<span data-k="pen_def">1,024,413</span> TWD</span>
                 </div>
                 <div class="space-y-1">
                     <div class="flex justify-between text-xs font-mono">
                         <span class="text-slate-300">4. 債券</span>
-                        <span class="text-emerald-400 font-bold">現況 23 / 目標 25 (盈餘 -2.4pp)</span>
+                        <span class="text-emerald-400 font-bold">現況 23 / 目標 25 (缺口 -1.9pp)</span>
                     </div>
                     <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
-                        <div class="bg-emerald-500 h-full" style="width: 23%"></div>
+                        <div class="bg-emerald-500 h-full" style="width: 42%"</div>
                     </div>
-                    <span class="text-[10px] text-slate-400 font-mono">市值：<span data-k="pen_bond">5,917,259</span> TWD</span>
+                    <span class="text-[10px] text-slate-400 font-mono">市值：<span data-k="pen_bond">6,035,589</span> TWD</span>
                 </div>
             </div>
 
@@ -348,9 +346,9 @@
                     <span class="text-sky-400 font-bold text-xs">現況 22 / 目標 5 (盈餘 +17.1pp)</span>
                 </div>
                 <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
-                    <div class="bg-sky-500 h-full" style="width: 22%"></div>
+                    <div class="bg-sky-500 h-full" style="width: 40%"</div>
                 </div>
-                <span class="text-[10px] text-slate-400 font-mono">市值：<span data-k="pen_cash">5,798,988</span> TWD</span>
+                <span class="text-[10px] text-slate-400 font-mono">市值：<span data-k="pen_cash">5,774,785</span> TWD</span>
             </div>
             <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
                 <span class="text-xs font-bold text-amber-400">🚨 戰略調整警示：</span>
@@ -377,7 +375,7 @@
     </div>
 
     <!-- ================= PAGE 3 ================= -->
-    <div id="tab-content-3" class="tab-pane space-y-6">
+    <div class="tab-pane space-y-6">
         <div class="luxury-card p-6 space-y-4">
             <div class="flex justify-between items-center">
                 <div>
@@ -386,7 +384,7 @@
                 </div>
                 <div class="text-right">
                     <span class="text-xs text-slate-400 block">總現值市值</span>
-                    <span class="text-lg font-black text-white font-mono"><span data-k="ins_total">9,682,433</span> TWD</span>
+                    <span class="text-lg font-black text-white font-mono"><span data-k="ins_total">9,718,338</span> TWD</span>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
@@ -396,11 +394,11 @@
                         <span class="text-emerald-400">16.41</span>
                     </div>
                     <div class="text-xs text-slate-400 font-mono space-y-1">
-                        <p>保單A QL18610694：<span class="text-white"><span data-k="allianz_a">5,103,722</span></span></p>
-                        <p>保單B QL18488224：<span class="text-white"><span data-k="allianz_b">2,723,839</span></span></p>
-                        <p>A+B合計：<span class="text-white font-bold"><span data-k="allianz_ab">7,753,544</span> TWD</span>（成本：8,000,000）</p>
+                        <p>保單A QL18610694：<span class="text-white"><span data-k="allianz_a">5,083,230</span></span></p>
+                        <p>保單B QL18488224：<span class="text-white"><span data-k="allianz_b">2,708,228</span></span></p>
+                        <p>A+B合計：<span class="text-white font-bold"><span data-k="allianz_ab">7,791,458</span> TWD</span>（成本：8,000,000）</p>
                         <p>累計配息：<span data-k="cum_div">1,630,962</span></p>
-                        <p class="text-white">本月領息：<span data-k="az_div">63,027</span></p>
+                        <p class="text-white">本月領息：<span data-k="az_div">76,931</span></p>
                     </div>
                 </div>
                 <div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2">
@@ -409,7 +407,7 @@
                         <span class="text-emerald-400">+2.61%</span>
                     </div>
                     <div class="text-xs text-slate-400 font-mono space-y-1">
-                        <p>現值：<span data-k="firstjin">1,928,889</span> (成本：2M)</p>
+                        <p>現值：<span data-k="firstjin">1,926,880</span> (成本：2M)</p>
                         <p>累計配息：<span data-k="fj_cum">111,513</span></p>
                         <p class="text-white">本月領息：<span data-k="fj_div">25,538</span></p>
                     </div>
@@ -417,7 +415,7 @@
             </div>
             <div class="flex justify-between items-center p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
                 <span class="text-xs font-bold text-blue-300">本月保單合計已領配息</span>
-                <span class="text-md font-black text-blue-400 font-mono"><span data-k="div_ins">88,507</span> TWD</span>
+                <span class="text-md font-black text-blue-400 font-mono"><span data-k="div_ins">102,469</span> TWD</span>
             </div>
         </div>
 
@@ -457,20 +455,20 @@
     </div>
 
     <!-- ================= PAGE 4 ================= -->
-    <div id="tab-content-4" class="tab-pane space-y-6">
+    <div class="tab-pane space-y-6">
         <div class="luxury-card p-6 space-y-6">
             <div>
                 <h3 class="text-md font-bold text-white">房貸往來行庫水位監控 (3-6個月安全防線)</h3>
                 <p class="text-xs text-slate-400">針對主要貸款扣款帳戶進行水位透視，防範扣款失敗造成的信用風險</p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="border-red-500/20 bg-red-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-red-400"><span>國泰世華</span><span>🔴 警報</span></div><p class="text-lg font-mono font-black text-white"><span data-k="cathay">27,738</span> TWD</p><p class="text-[10px] text-slate-300 font-mono">明細：活期儲蓄存款 <span data-k="cathay_d1">20,776</span>、活期儲蓄存款 <span data-k="cathay_d2">6,960</span>、數位存款帳戶２類 2</p><p class="text-[10px] text-slate-400">安全線：<span data-k="safe_line">458,343</span>（3個月支出）</p></div>
-<div class="border-blue-500/20 bg-blue-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-blue-300"><span>台新銀行</span><span>🟢 充裕</span></div><p class="text-lg font-mono font-black text-white"><span data-k="taiwan">499,316</span> TWD</p><p class="text-[10px] text-slate-300 font-mono">明細：敦南Richart子帳戶 <span data-k="richart_sub">246,879</span>、文心綜活儲存款-薪轉 <span data-k="wenxin">139,446</span>、敦南Richart數位一般帳戶 <span data-k="richart_gen">97,353</span></p><p class="text-[10px] text-slate-400">安全線：<span data-k="safe_line">458,343</span>（3個月支出）</p></div>
-<div class="border-red-500/20 bg-red-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-red-400"><span>永豐銀行</span><span>🔴 警報</span></div><p class="text-lg font-mono font-black text-white"><span data-k="sinopac">177,599</span> TWD</p><p class="text-[10px] text-slate-300 font-mono">明細：營業部DAWHO活期儲蓄存款 <span data-k="dawho">166,673</span>、市政分行活期儲蓄存款 <span data-k="shizheng">10,926</span>、營業部DAWHO外幣組合存款-美金 0</p><p class="text-[10px] text-slate-400">安全線：<span data-k="safe_line">458,343</span>（3個月支出）</p></div>
-<div class="border-blue-500/20 bg-blue-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-blue-300"><span>玉山銀行</span><span>🟢 充裕</span></div><p class="text-lg font-mono font-black text-white"><span data-k="yushan">50,104</span> TWD</p><p class="text-[10px] text-slate-400">安全線：40,000（生活帳戶，僅信用卡）</p></div>
+            <div class="border-red-500/20 bg-red-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-red-400"><span>國泰世華</span><span>🔴 警報</span></div><p class="text-lg font-mono font-black text-white"><span data-k="cathay">27,962</span> TWD</p><p class="text-[10px] text-slate-300 font-mono">明細：活期儲蓄存款 <span data-k="cathay_d1">27,960</span>、活期儲蓄存款 <span data-k="cathay_d2">2</span>、數位存款帳戶２類 2</p><p class="text-[10px] text-slate-400">安全線：<span data-k="safe_line">488,343</span>（3個月支出）</p></div>
+<div class="border-blue-500/20 bg-blue-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-blue-300"><span>台新銀行</span><span>🟢 充裕</span></div><p class="text-lg font-mono font-black text-white"><span data-k="taiwan">511,604</span> TWD</p><p class="text-[10px] text-slate-300 font-mono">明細：敦南Richart子帳戶 <span data-k="richart_sub">246,879</span>、文心綜活儲存款-薪轉 <span data-k="wenxin">100,000</span>、敦南Richart數位一般帳戶 <span data-k="richart_gen">100,000</span></p><p class="text-[10px] text-slate-400">安全線：<span data-k="safe_line">488,343</span>（3個月支出）</p></div>
+<div class="border-red-500/20 bg-red-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-red-400"><span>永豐銀行</span><span>🔴 警報</span></div><p class="text-lg font-mono font-black text-white"><span data-k="sinopac">111,765</span> TWD</p><p class="text-[10px] text-slate-300 font-mono">明細：營業部DAWHO活期儲蓄存款 <span data-k="dawho">166,673</span>、市政分行活期儲蓄存款 <span data-k="shizheng">10,926</span>、營業部DAWHO外幣組合存款-美金 0</p><p class="text-[10px] text-slate-400">安全線：<span data-k="safe_line">488,343</span>（3個月支出）</p></div>
+<div class="border-blue-500/20 bg-blue-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-blue-300"><span>玉山銀行</span><span>🟢 充裕</span></div><p class="text-lg font-mono font-black text-white"><span data-k="yushan">40,950</span> TWD</p><p class="text-[10px] text-slate-400">安全線：40,000（生活帳戶，僅信用卡）</p></div>
 <div class="border-blue-500/20 bg-blue-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-blue-300"><span>台北富邦</span><span>🟢 充裕</span></div><p class="text-lg font-mono font-black text-white"><span data-k="fubon">44,116</span> TWD</p><p class="text-[10px] text-slate-400">安全線：40,000（生活帳戶，僅信用卡）</p></div>
-<div class="border-red-500/20 bg-red-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-red-400"><span>將來銀行</span><span>🔴 警報</span></div><p class="text-lg font-mono font-black text-white"><span data-k="jianglai">739</span> TWD</p><p class="text-[10px] text-slate-400">安全線：<span data-k="safe_line">458,343</span>（3個月支出）</p></div>
-<div class="bg-blue-600/20 border border-blue-500/40 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-blue-200"><span>🏦 現金合計</span></div><p class="text-lg font-mono font-black text-white"><span data-k="cash_total">815,066</span> TWD</p><p class="text-[10px] text-slate-400">snapshot 總現金：<span data-k="cash_total">815,066</span> TWD｜監控卡片合計 <span data-k="mon_sum">799,612</span>（未含第一銀行）</p></div><p class="text-[10px] text-amber-400/80">資料日期：20260821_1（Moneybook 帳戶 CSV，有新匯出請放入 moneybook/ 目錄）</p>
+<div class="border-red-500/20 bg-red-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-red-400"><span>將來銀行</span><span>🔴 警報</span></div><p class="text-lg font-mono font-black text-white"><span data-k="jianglai">739</span> TWD</p><p class="text-[10px] text-slate-400">安全線：<span data-k="safe_line">488,343</span>（3個月支出）</p></div>
+<div class="bg-blue-600/20 border border-blue-500/40 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-blue-200"><span>🏦 現金合計</span></div><p class="text-lg font-mono font-black text-white"><span data-k="cash_total">772,607</span> TWD</p><p class="text-[10px] text-slate-400">snapshot 總現金：<span data-k="cash_total">772,607</span> TWD｜監控卡片合計 <span data-k="mon_sum">749,706</span>（未含第一銀行）</p></div><p class="text-[10px] text-amber-400/80">資料日期：20260829_1（Moneybook 帳戶 CSV，有新匯出請放入 moneybook/ 目錄）</p>
             </div>
         </div>
 
@@ -479,15 +477,15 @@
                     <h3 class="text-md font-bold text-white">08月現金流入檢對核實</h3>
                     <div class="space-y-3" id="income-list">
             <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">台電薪水</span></div><span class="text-xs font-mono text-emerald-400 font-bold">39,727 TWD</span></div>
-<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">安聯配息 A+B</span></div><span class="text-xs font-mono text-emerald-400 font-bold"><span data-k="az_div2">62,969</span> TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">安聯配息 A+B</span></div><span class="text-xs font-mono text-emerald-400 font-bold"><span data-k="az_div2">76,931</span> TWD</span></div>
 <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">第一金配息</span></div><span class="text-xs font-mono text-emerald-400 font-bold"><span data-k="fj_div">25,538</span> TWD</span></div>
 <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">ETF/基金配息（006208/0056/0050/00984A/00888等）</span></div><span class="text-xs font-mono text-emerald-400 font-bold"><span data-k="etf_div">21,138</span> TWD</span></div>
 <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">女友還款</span></div><span class="text-xs font-mono text-emerald-400 font-bold">6,000 TWD</span></div>
 <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">大義街1樓房租</span></div><span class="text-xs font-mono text-emerald-400 font-bold">24,000 TWD</span></div>
 <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">大義街二三樓房租</span></div><span class="text-xs font-mono text-emerald-400 font-bold">21,000 TWD</span></div>
 <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">洲際W房租</span></div><span class="text-xs font-mono text-emerald-400 font-bold">33,000 TWD</span></div>
-<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-amber-400">⏳ 待入帳</span><span class="text-slate-300">管理費</span></div><span class="text-xs font-mono text-slate-400">0 TWD（應收 2,100）</span></div>
-<div class="flex justify-between items-center p-3 bg-blue-500/10 rounded-xl border border-blue-500/30"><div class="flex items-center gap-2 text-xs font-bold text-blue-300"><span>📊 當月已收合計</span></div><span class="text-xs font-mono font-black text-white"><span data-k="got_total">199,960</span> TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">管理費</span></div><span class="text-xs font-mono text-emerald-400 font-bold">2,100 TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-blue-500/10 rounded-xl border border-blue-500/30"><div class="flex items-center gap-2 text-xs font-bold text-blue-300"><span>📊 當月已收合計</span></div><span class="text-xs font-mono font-black text-white"><span data-k="got_total">243,434</span> TWD</span></div>
             </div>
         </div>
 
@@ -501,7 +499,7 @@
     </div>
 
     <!-- ================= PAGE 5 ================= -->
-    <div id="tab-content-5" class="tab-pane space-y-6">
+    <div class="tab-pane space-y-6">
                 <div class="luxury-card p-6 border-l-4 border-red-500 space-y-4">
             <div class="flex justify-between items-start">
                 <div>
@@ -606,31 +604,7 @@
 </div>
 
 <!-- SPA 切換邏輯與極簡動態控制 -->
-<script>
-function switchTab(num) {
-    // 隱藏所有分頁（ES5 寫法，相容舊 WebView — 2026-08-29 修正）
-    var panes = document.querySelectorAll('.tab-pane');
-    for (var i = 0; i < panes.length; i++) { panes[i].classList.add('hidden'); }
-    // 移除導航按鈕活動樣式
-    var btns = document.querySelectorAll('nav button');
-    for (var j = 0; j < btns.length; j++) {
-        btns[j].className = "flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white";
-    }
-
-    // 顯示目標分頁
-    document.getElementById('tab-content-' + num).classList.remove('hidden');
-    // 設定活動按鈕
-    document.getElementById('btn-tab-' + num).className = "flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 bg-blue-600 text-white shadow";
-}
-// 支援 hash 切換分頁
-function hashTab() {
-    var h = location.hash.replace('#tab','');
-    if (h) switchTab(parseInt(h));
-}
-window.addEventListener('hashchange', hashTab);
-// 頁面載入時檢查 hash
-if (location.hash) hashTab();
-</script>
+<!-- 原有 SPA 切換邏輯與極簡動態控制已移除，改為垂直顯示 -->
 
 <script>
 /* C 方案階段3（2026-08-23）：交易計畫 + 決策追蹤 JS 即時渲染，失敗保留快照版 */

@@ -30,9 +30,7 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .tab-pane.hidden { display: none; }
-    
-        /* 2026-08-29 最終版：全部 tab 垂直顯示（手機瀏覽器相容） */
+        /* 2026-08-29 最終版：全部 tab 垂直顯示（手機瀏覽器相容），移除 .hidden 類和 JS 切換邏輯 */
         .tab-pane { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
         .tab-pane:last-child { border-bottom: none; }
 </style>
@@ -181,19 +179,19 @@
 <!-- 頂層導航 -->
 <nav class="max-w-4xl mx-auto px-4 mt-6">
     <div class="bg-slate-950 p-1.5 rounded-xl flex justify-between gap-1 border border-slate-800 text-xs font-bold overflow-x-auto">
-        <button type="button" id="btn-tab-1" onclick="switchTab(1)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 bg-blue-600 text-white shadow">
+        <button type="button" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 bg-blue-600 text-white shadow">
             💰 財富生命線
         </button>
-        <button type="button" id="btn-tab-2" onclick="switchTab(2)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        <button type="button" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             🛡️ 戰略異常中心
         </button>
-        <button type="button" id="btn-tab-3" onclick="switchTab(3)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        <button type="button" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             🔄 保單接力引擎
         </button>
-        <button type="button" id="btn-tab-4" onclick="switchTab(4)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        <button type="button" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             🏦 流動性調度
         </button>
-        <button type="button" id="btn-tab-5" onclick="switchTab(5)" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        <button type="button" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             📋 戰術任務
         </button>
     </div>
@@ -289,7 +287,7 @@
     </div>
 
     <!-- ================= PAGE 2 ================= -->
-    <div id="tab-content-2" class="tab-pane space-y-6">
+    <div class="tab-pane space-y-6">
         <div class="luxury-card p-6 space-y-6" id="pen-card">
             <div>
                 <h3 class="text-md font-bold text-white">資產穿透（目標：台股 10%｜美股 40%｜防守 20%｜債券 25%｜現金 5%）</h3>
@@ -324,7 +322,7 @@
                         <span class="text-red-400 font-bold">現況 4 / 目標 20 (缺口 -16.1pp)</span>
                     </div>
                     <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden flex">
-                        <div class="bg-blue-500 h-full" style="width: 7%"</div>
+                        <div class="bg-blue-500 h-full" style="width: 14%"</div>
                         <div class="bg-slate-700 h-full opacity-40" style="width: 0%"></div>
                     </div>
                     <span class="text-[10px] text-slate-400 font-mono">市值：<span data-k="pen_def">1,024,413</span> TWD</span>
@@ -377,7 +375,7 @@
     </div>
 
     <!-- ================= PAGE 3 ================= -->
-    <div id="tab-content-3" class="tab-pane space-y-6">
+    <div class="tab-pane space-y-6">
         <div class="luxury-card p-6 space-y-4">
             <div class="flex justify-between items-center">
                 <div>
@@ -457,7 +455,7 @@
     </div>
 
     <!-- ================= PAGE 4 ================= -->
-    <div id="tab-content-4" class="tab-pane space-y-6">
+    <div class="tab-pane space-y-6">
         <div class="luxury-card p-6 space-y-6">
             <div>
                 <h3 class="text-md font-bold text-white">房貸往來行庫水位監控 (3-6個月安全防線)</h3>
@@ -501,7 +499,7 @@
     </div>
 
     <!-- ================= PAGE 5 ================= -->
-    <div id="tab-content-5" class="tab-pane space-y-6">
+    <div class="tab-pane space-y-6">
                 <div class="luxury-card p-6 border-l-4 border-red-500 space-y-4">
             <div class="flex justify-between items-start">
                 <div>
@@ -606,31 +604,7 @@
 </div>
 
 <!-- SPA 切換邏輯與極簡動態控制 -->
-<script>
-function switchTab(num) {
-    // 隱藏所有分頁（ES5 寫法，相容舊 WebView — 2026-08-29 修正）
-    var panes = document.querySelectorAll('.tab-pane');
-    for (var i = 0; i < panes.length; i++) { panes[i].classList.add('hidden'); }
-    // 移除導航按鈕活動樣式
-    var btns = document.querySelectorAll('nav button');
-    for (var j = 0; j < btns.length; j++) {
-        btns[j].className = "flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white";
-    }
-
-    // 顯示目標分頁
-    document.getElementById('tab-content-' + num).classList.remove('hidden');
-    // 設定活動按鈕
-    document.getElementById('btn-tab-' + num).className = "flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 bg-blue-600 text-white shadow";
-}
-// 支援 hash 切換分頁
-function hashTab() {
-    var h = location.hash.replace('#tab','');
-    if (h) switchTab(parseInt(h));
-}
-window.addEventListener('hashchange', hashTab);
-// 頁面載入時檢查 hash
-if (location.hash) hashTab();
-</script>
+<!-- 原有 SPA 切換邏輯與極簡動態控制已移除，改為垂直顯示 -->
 
 <script>
 /* C 方案階段3（2026-08-23）：交易計畫 + 決策追蹤 JS 即時渲染，失敗保留快照版 */
