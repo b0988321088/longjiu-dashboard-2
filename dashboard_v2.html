@@ -33,6 +33,21 @@
         /* 2026-08-29 最終版：全部 tab 垂直顯示（手機瀏覽器相容），移除 .hidden 類和 JS 切換邏輯 */
         .tab-pane { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
         .tab-pane:last-child { border-bottom: none; }
+
+        /* 純 CSS 分頁切換（radio hack，零 JS — 2026-08-29 手機相容根治） */
+        .tab-radio { display: none; }
+        .tab-panel { display: none; }
+        #tab-r1:checked ~ main #panel-1 { display: block; }
+        #tab-r2:checked ~ main #panel-2 { display: block; }
+        #tab-r3:checked ~ main #panel-3 { display: block; }
+        #tab-r4:checked ~ main #panel-4 { display: block; }
+        #tab-r5:checked ~ main #panel-5 { display: block; }
+        .tab-label { cursor: pointer; }
+        #tab-r1:checked ~ nav label[for="tab-r1"],
+        #tab-r2:checked ~ nav label[for="tab-r2"],
+        #tab-r3:checked ~ nav label[for="tab-r3"],
+        #tab-r4:checked ~ nav label[for="tab-r4"],
+        #tab-r5:checked ~ nav label[for="tab-r5"] { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
 </style>
 </head>
 <body class="min-h-screen pb-12">
@@ -177,32 +192,41 @@
 </div>
 
 <!-- 頂層導航 -->
+
+<!-- 純 CSS 分頁切換（radio hack，零 JS，手機相容 2026-08-29） -->
+<input type="radio" name="tab" id="tab-r1" class="tab-radio" checked>
+<input type="radio" name="tab" id="tab-r2" class="tab-radio">
+<input type="radio" name="tab" id="tab-r3" class="tab-radio">
+<input type="radio" name="tab" id="tab-r4" class="tab-radio">
+<input type="radio" name="tab" id="tab-r5" class="tab-radio">
+
 <nav class="max-w-4xl mx-auto px-4 mt-6">
     <div class="bg-slate-950 p-1.5 rounded-xl flex justify-between gap-1 border border-slate-800 text-xs font-bold overflow-x-auto">
-        <button type="button" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 bg-blue-600 text-white shadow">
+        <label for="tab-r1" class="tab-label flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 bg-blue-600 text-white shadow">
             💰 財富生命線
-        </button>
-        <button type="button" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        </label>
+        <label for="tab-r2" class="tab-label flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             🛡️ 戰略異常中心
-        </button>
-        <button type="button" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        </label>
+        <label for="tab-r3" class="tab-label flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             🔄 保單接力引擎
-        </button>
-        <button type="button" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        </label>
+        <label for="tab-r4" class="tab-label flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             🏦 流動性調度
-        </button>
-        <button type="button" class="flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+        </label>
+        <label for="tab-r5" class="tab-label flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             📋 戰術任務
-        </button>
+        </label>
     </div>
 </nav>
+
 
 <!-- 分頁主視窗 -->
 <main class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
 
 
     <!-- ================= PAGE 1 ================= -->
-    <div id="tab-content-1" class="tab-pane space-y-6"><div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;margin:8px 0"><div style="font-weight:800;color:#14532d;margin-bottom:4px">🩺 龍九健康度：<span style="font-size:16px">82/100</span> 🟢</div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">現金流覆蓋</span><span style="color:#1f2937">111%（目標 ≥100%）<b>22/30</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">防禦維度</span><span style="color:#1f2937">✅ 充足（目標 ≥50%）<b>25/25</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">美元曝險</span><span style="color:#1f2937">54.4%（目標 ≤50%）<b>10/20</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">現金底線</span><span style="color:#1f2937">772,607（目標 ≥700,000）<b>15.0/15</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">LTV</span><span style="color:#1f2937">20.4%（目標 ≤35%）<b>10.0/10</b></span></div><div style="font-size:10.5px;color:#166534;margin-top:4px">唯一弱項：美元曝險（下一階段降）</div></div><div id="trade-plan" style="border:1px solid #f59e0b;background:#fffbeb;border-radius:12px;padding:14px;margin-bottom:14px">
+    <div id="panel-1" class="tab-panel space-y-6"><div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;margin:8px 0"><div style="font-weight:800;color:#14532d;margin-bottom:4px">🩺 龍九健康度：<span style="font-size:16px">82/100</span> 🟢</div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">現金流覆蓋</span><span style="color:#1f2937">111%（目標 ≥100%）<b>22/30</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">防禦維度</span><span style="color:#1f2937">✅ 充足（目標 ≥50%）<b>25/25</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">美元曝險</span><span style="color:#1f2937">54.4%（目標 ≤50%）<b>10/20</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">現金底線</span><span style="color:#1f2937">772,607（目標 ≥700,000）<b>15.0/15</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">LTV</span><span style="color:#1f2937">20.4%（目標 ≤35%）<b>10.0/10</b></span></div><div style="font-size:10.5px;color:#166534;margin-top:4px">唯一弱項：美元曝險（下一階段降）</div></div><div id="trade-plan" style="border:1px solid #f59e0b;background:#fffbeb;border-radius:12px;padding:14px;margin-bottom:14px">
 <h3 style="color:#92400e;font-size:14px;font-weight:800;margin:0 0 6px">📡 機構流向雷達 ＆ 🎯 本週交易計畫（2026-08-23 統籌版）</h3>
 <p style="color:#1f2937;font-size:12.5px;margin:0">燈號：台股🟢🔥（外資淨買超連3日+台幣強升）｜黃金🟢🔥（COT淨多單週增）｜原油🔴（機構撤離，Locked）｜美債10年🟡（動能+2.4%貼近凍結線）</p>
 <p style="color:#1f2937;font-size:12px;margin-top:6px;line-height:1.7">🎯 交易計畫（統籌）：乾粉 136,000 全現金保留（防守凍結＋醫療由 8/24 保單健康科學A2 50萬涵蓋＋PI 前不動本金）｜8/24 保單轉換 300萬（PIMCO 120+M&G 100+醫療 50+黃金 30）｜9/3 PI 質押 350萬還債｜台股慢慢買 每週 1.5-2萬（0050/006208，配息流+結餘非乾粉）｜黃金衛星 PI 後 131萬 分3批</p>
@@ -287,7 +311,7 @@
     </div>
 
     <!-- ================= PAGE 2 ================= -->
-    <div class="tab-pane space-y-6">
+    <div id="panel-2" class="tab-panel space-y-6">
         <div class="luxury-card p-6 space-y-6" id="pen-card">
             <div>
                 <h3 class="text-md font-bold text-white">資產穿透（目標：台股 10%｜美股 40%｜防守 20%｜債券 25%｜現金 5%）</h3>
@@ -375,7 +399,7 @@
     </div>
 
     <!-- ================= PAGE 3 ================= -->
-    <div class="tab-pane space-y-6">
+    <div id="panel-3" class="tab-panel space-y-6">
         <div class="luxury-card p-6 space-y-4">
             <div class="flex justify-between items-center">
                 <div>
@@ -455,7 +479,7 @@
     </div>
 
     <!-- ================= PAGE 4 ================= -->
-    <div class="tab-pane space-y-6">
+    <div id="panel-4" class="tab-panel space-y-6">
         <div class="luxury-card p-6 space-y-6">
             <div>
                 <h3 class="text-md font-bold text-white">房貸往來行庫水位監控 (3-6個月安全防線)</h3>
@@ -499,7 +523,7 @@
     </div>
 
     <!-- ================= PAGE 5 ================= -->
-    <div class="tab-pane space-y-6">
+    <div id="panel-5" class="tab-panel space-y-6">
                 <div class="luxury-card p-6 border-l-4 border-red-500 space-y-4">
             <div class="flex justify-between items-start">
                 <div>
