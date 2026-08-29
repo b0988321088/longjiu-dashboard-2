@@ -31,7 +31,11 @@
             -webkit-text-fill-color: transparent;
         }
         .tab-pane.hidden { display: none; }
-    </style>
+    
+        /* 2026-08-29 最終版：全部 tab 垂直顯示（手機瀏覽器相容） */
+        .tab-pane { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .tab-pane:last-child { border-bottom: none; }
+</style>
 </head>
 <body class="min-h-screen pb-12">
 
@@ -285,7 +289,7 @@
     </div>
 
     <!-- ================= PAGE 2 ================= -->
-    <div id="tab-content-2" class="tab-pane hidden space-y-6">
+    <div id="tab-content-2" class="tab-pane space-y-6">
         <div class="luxury-card p-6 space-y-6" id="pen-card">
             <div>
                 <h3 class="text-md font-bold text-white">資產穿透（目標：台股 10%｜美股 40%｜防守 20%｜債券 25%｜現金 5%）</h3>
@@ -373,7 +377,7 @@
     </div>
 
     <!-- ================= PAGE 3 ================= -->
-    <div id="tab-content-3" class="tab-pane hidden space-y-6">
+    <div id="tab-content-3" class="tab-pane space-y-6">
         <div class="luxury-card p-6 space-y-4">
             <div class="flex justify-between items-center">
                 <div>
@@ -453,7 +457,7 @@
     </div>
 
     <!-- ================= PAGE 4 ================= -->
-    <div id="tab-content-4" class="tab-pane hidden space-y-6">
+    <div id="tab-content-4" class="tab-pane space-y-6">
         <div class="luxury-card p-6 space-y-6">
             <div>
                 <h3 class="text-md font-bold text-white">房貸往來行庫水位監控 (3-6個月安全防線)</h3>
@@ -497,7 +501,7 @@
     </div>
 
     <!-- ================= PAGE 5 ================= -->
-    <div id="tab-content-5" class="tab-pane hidden space-y-6">
+    <div id="tab-content-5" class="tab-pane space-y-6">
                 <div class="luxury-card p-6 border-l-4 border-red-500 space-y-4">
             <div class="flex justify-between items-start">
                 <div>
