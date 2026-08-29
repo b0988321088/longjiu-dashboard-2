@@ -71,7 +71,13 @@ def main():
         ("儀表板注入", "python build_dashboard.py"),
         # 2026-08-29：產出後驗證 index.html 無配息舊值殘留（build_dashboard rep dict 漏替換防呆）
         # 清單 = 配息口徑舊值 + 穿透卡五桶舊市值 + 保單A舊值 + 當月已收舊值（8/29 血淚全量盤點）+ 監控卡片合計舊值
-        ("儀表板產出驗證", "python -c \"import re; h=open('index.html',encoding='utf-8').read(); stale=[s for s in ['35,583','63,027','2,723,839','7,753,544','88,507','109,645','143.9%','144%','199,960','62,969','5,103,722','1,889,388','11,499,725','1,089,462','5,917,259','5,798,988','3,735,174','7,764,551','14.3%','-0.7pp','799,612','815,066','20260821_1','27,738','499,316','458,343','20,776','6,960','0 TWD（應收 2,100）'] if s in h]; print('❌ 儀表板殘留舊值: '+str(stale) if stale else '✅ 儀表板無舊值殘留'); import sys; sys.exit(1 if stale else 0)\""),
+        # ⚠️ 2026-08-29 v2 血淚：JS 內硬編碼 fallback（Script 6 入帳清單 ['房租已收', 78000] / || 62969）不在 rep dict 範圍 —
+        #     build_dashboard 只 rep HTML 顯示值，JS 陣列內的數字是獨立硬編碼！驗證清單必須同時含「JS 內舊值」（78,000/62,969）
+        (f"儀表板產出驗證", "python -c \"import re; h=open('index.html',encoding='utf-8').read(); stale=[s for s in ['35,583','63,027','2,723,839','7,753,544','88,507','109,645','143.9%','144%','199,960','62,969','78000','78,000','5,103,722','1,889,388','11,499,725','1,089,462','5,917,259','5,798,988','3,735,174','7,764,551','14.3%','-0.7pp','799,612','815,066','20260821_1','27,738','499,316','458,343','20,776','6,960','0 TWD（應收 2,100）'] if s in h]; print('❌ 儀表板殘留舊值: '+str(stale) if stale else '✅ 儀表板無舊值殘留'); import sys; sys.exit(1 if stale else 0)\""),
+        # 2026-08-29 v3 血淚：儀表板 HTML 巢狀結構檢查（4 處 <div style="width:N%"</div> 缺 > → 手機瀏覽器吞掉後 3 分頁；
+        #     正則標籤平衡抓不到巢狀錯誤，需 HTMLParser 嚴格追蹤開閉順序）
+        ("儀表板結構檢查", "python check_dashboard_structure.py index.html"),
+
         # 2026-08-27：共享渲染組件自測（report_components 異常 → 報表數字不一致）
         ("組件自測", "python -c \"from report_components import render_health_score; import json; print('✅ 組件正常 健康度', render_health_score(json.load(open('snapshot.json',encoding='utf-8')))['分數'])\""),
         ("週報", f"python build_weekly_report.py"),
