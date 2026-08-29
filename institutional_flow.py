@@ -448,6 +448,15 @@ def main():
     alerts = [f"{k}：{v['note']}" for k, v in sig.items() if v["color"].startswith(("🔴", "🟡"))]
     if alerts:
         print("\n⚠️ ALERTS:\n" + "\n".join("  " + a for a in alerts))
+    # 政策面標註（2026-08-29：使用者提供貝森特會議升息可能 → 原油政策利空 vs COT 機械綠燈矛盾）
+    try:
+        _pn = (state.get("policy_notes") or {})
+        if _pn:
+            print("\n🏛️ 政策面標註:\n  " + _pn.get("內容", ""))
+            if _pn.get("與雷達衝突"):
+                print("  ⚠️ " + _pn["與雷達衝突"])
+    except Exception:
+        pass
     return 0
 
 
