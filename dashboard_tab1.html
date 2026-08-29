@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>龍九資產管理系統 — 財富生命線</title>
+<style>
+        body {
+            background-color: #0f172a;
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+        }
+        .luxury-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        .luxury-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(59, 130, 246, 0.2);
+            box-shadow: 0 15px 30px -5px rgba(59, 130, 246, 0.1);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* 2026-08-29 最終版：全部 tab 垂直顯示（手機瀏覽器相容），移除 .hidden 類和 JS 切換邏輯 */
+        .tab-pane { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .tab-pane:last-child { border-bottom: none; }
+
+        /* 純 CSS 分頁切換（radio hack，零 JS — 2026-08-29 手機相容根治） */
+        .tab-radio { display: none; }
+        .tab-panel { display: none; }
+        #tab-r1:checked ~ main #panel-1 { display: block; }
+        #tab-r2:checked ~ main #panel-2 { display: block; }
+        #tab-r3:checked ~ main #panel-3 { display: block; }
+        #tab-r4:checked ~ main #panel-4 { display: block; }
+        #tab-r5:checked ~ main #panel-5 { display: block; }
+        .tab-label { cursor: pointer; }
+        #tab-r1:checked ~ nav label[for="tab-r1"],
+        #tab-r2:checked ~ nav label[for="tab-r2"],
+        #tab-r3:checked ~ nav label[for="tab-r3"],
+        #tab-r4:checked ~ nav label[for="tab-r4"],
+        #tab-r5:checked ~ nav label[for="tab-r5"] { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
+
+        .tab-panel { display: block !important; }
+        .tab-label { display: none; }
+        .tab-radio { display: none; }
+        body { background: #0f172a; color: #f1f5f9; }
+        .luxury-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; }
+</style>
+</head>
+<body class="min-h-screen pb-12">
+<div class="max-w-4xl mx-auto px-4 py-4">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <a href="dashboard_v2.html" style="color:#60a5fa;text-decoration:none;font-size:13px;font-weight:bold;">⬅ 回首頁</a>
+        <span style="color:#94a3b8;font-size:12px;">💰 財富生命線｜龍九資產管理系統 v2.1</span>
+    </div>
+    <main>
+    <!-- ================= PAGE 1 ================= -->
+    <div id="panel-1" class="content-area"><div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;margin:8px 0"><div style="font-weight:800;color:#14532d;margin-bottom:4px">🩺 龍九健康度：<span style="font-size:16px">82/100</span> 🟢</div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">現金流覆蓋</span><span style="color:#1f2937">111%（目標 ≥100%）<b>22/30</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">防禦維度</span><span style="color:#1f2937">✅ 充足（目標 ≥50%）<b>25/25</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">美元曝險</span><span style="color:#1f2937">54.4%（目標 ≤50%）<b>10/20</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">現金底線</span><span style="color:#1f2937">772,607（目標 ≥700,000）<b>15.0/15</b></span></div><div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0"><span style="color:#6e6e73">LTV</span><span style="color:#1f2937">20.4%（目標 ≤35%）<b>10.0/10</b></span></div><div style="font-size:10.5px;color:#166534;margin-top:4px">唯一弱項：美元曝險（下一階段降）</div></div><div id="trade-plan" style="border:1px solid #f59e0b;background:#fffbeb;border-radius:12px;padding:14px;margin-bottom:14px">
+<h3 style="color:#92400e;font-size:14px;font-weight:800;margin:0 0 6px">📡 機構流向雷達 ＆ 🎯 本週交易計畫（2026-08-23 統籌版）</h3>
+<p style="color:#1f2937;font-size:12.5px;margin:0">燈號：台股🟢🔥（外資淨買超連3日+台幣強升）｜黃金🟢🔥（COT淨多單週增）｜原油🔴（機構撤離，Locked）｜美債10年🟡（動能+2.4%貼近凍結線）</p>
+<p style="color:#1f2937;font-size:12px;margin-top:6px;line-height:1.7">🎯 交易計畫（統籌）：乾粉 136,000 全現金保留（防守凍結＋醫療由 8/24 保單健康科學A2 50萬涵蓋＋PI 前不動本金）｜8/24 保單轉換 300萬（PIMCO 120+M&G 100+醫療 50+黃金 30）｜9/3 PI 質押 350萬還債｜台股慢慢買 每週 1.5-2萬（0050/006208，配息流+結餘非乾粉）｜黃金衛星 PI 後 131萬 分3批</p>
+</div>
+        <!-- 📡 本週淨資產 vs 資金成本（2026-08-23） -->
+        <div id="weekly-nw" style="border:1px solid #8b5cf6;background:#f5f3ff;border-radius:12px;padding:14px;margin-bottom:14px">
+<h3 style="color:#5b21b6;font-size:14px;font-weight:800;margin:0 0 6px">📡 本週淨資產 vs 資金成本</h3>
+<p style="color:#6b7280;font-size:11.5px;margin:0">載入中…（讀取 snapshot + 資產歷史）</p>
+</div>
+        <!-- 護城河水位計 -->
+        <div class="luxury-card p-6">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-md font-bold text-white flex items-center gap-2">財務安全護城河水位</h3>
+                    <p class="text-xs text-slate-400">被動收入（租金 + 配息）覆蓋當前支出能力</p>
+                </div>
+                <span class="text-xs bg-teal-500/20 text-teal-400 px-3 py-1 rounded-full font-mono font-bold border border-teal-500/30">
+                    🛡️ 護城河極度穩固
+                </span>
+            </div>
+            <div class="space-y-4">
+                <div class="relative pt-1">
+                    <div class="flex mb-2 items-center justify-between text-xs font-mono">
+                        <div>被動安全月收入：<span class="text-teal-400 font-bold">薪水 39,727 + 配息保守 100,000 + 房租應收 80,100 = 219,827 TWD</span> / 162,781 TWD <span class="text-xs">→</span></div>
+                        <div class="text-right text-teal-400 font-bold">135.0% 覆蓋</div>
+                    </div>
+                    <div class="overflow-hidden h-4 text-xs flex rounded-full bg-slate-800">
+                        <div style="width: 18.1%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-yellow-600 font-bold" title="薪水">薪水 18%</div><div style="width: 45.5%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 font-bold" title="配息">配息 45%</div><div style="width: 36.4%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-teal-600 font-bold" title="房租">房租 36%</div><div class="flex gap-3 text-[10px] text-slate-400 mt-1"><span class="text-yellow-400">▮ 薪水 18%</span><span class="text-blue-400">▮ 配息 45%</span><span class="text-teal-400">▮ 房租 36%</span><span class="text-slate-500">▮ 覆蓋 135%</span></div>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 italic">*被動收入說明：房租應收 80,100（1樓24,000+23樓21,000+洲際W33,000+管理費2,100），配息保守預估 100,000/月，台電薪水 39,727；當月實際已收 <span data-k="got_total2">243,434</span>（薪水39,727+配息<span data-k="div_total">123,607</span>+房租<span data-k="rent_got">80,100</span>）</p>
+            </div>
+        </div>
+
+        <!-- 月度流量透視卡 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="luxury-card p-5 space-y-3">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">工作期月盈餘分析</h4>
+                <div class="flex justify-between items-baseline border-b border-slate-800 pb-2">
+                    <span class="text-xs text-slate-300">月預期總收入</span>
+                    <span class="text-sm font-bold text-white">225,918 TWD</span>
+                </div>
+                <div class="flex justify-between items-baseline border-b border-slate-800 pb-2">
+                    <span class="text-xs text-slate-300">月經常性總支出</span>
+                    <span class="text-sm font-bold text-slate-400">162,781 TWD</span> <span class="text-xs">→</span>
+                </div>
+                <div class="flex justify-between items-baseline pt-1">
+                    <span class="text-xs text-emerald-400 font-bold">工作期淨盈餘</span>
+                    <span class="text-lg font-black text-emerald-400">+63,137 TWD</span>
+                </div>
+            </div>
+            <div class="luxury-card p-5 space-y-3">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">退休後流動性估算</h4>
+                <div class="flex justify-between items-baseline border-b border-slate-800 pb-2">
+                    <span class="text-xs text-slate-300">被動月固定收入（常態）</span>
+                    <span class="text-sm font-bold text-white">180,100 TWD</span>
+                </div>
+                <div class="flex justify-between items-baseline border-b border-slate-800 pb-2">
+                    <span class="text-xs text-slate-300">退休維持月支出</span>
+                    <span class="text-sm font-bold text-slate-400">162,781 TWD</span> <span class="text-xs">→</span>
+                </div>
+                <div class="flex justify-between items-baseline pt-1">
+                    <span class="text-xs text-blue-400 font-bold">安全退休盈餘</span>
+                    <span class="text-lg font-black text-blue-400">+17,319 TWD</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 流動性 Runway -->
+        <div class="luxury-card p-5 flex flex-col justify-between">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">現金儲備 Runway</span>
+                <span class="text-sm font-bold text-blue-400 font-mono">20</span>
+            </div>
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden mb-3">
+                <div class="bg-blue-500 h-full rounded-full" style="width: 88%"></div>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed">
+                以可動用現金 <span data-k="cash_total">772,607</span>（Moneybook 唯一真值）進行除數運算。Runway 5 / 覆蓋倍數 5.0x，符合財務安全基準線（6個月）。
+            </p>
+        </div>
+    </div>
+
+    </main>
+    <div style="display:flex;justify-content:space-between;margin-top:20px;padding-top:12px;border-top:1px solid #1e293b;flex-wrap:wrap;gap:8px;">
+        <span></span>
+        <a href="dashboard_tab2.html" style="color:#60a5fa;text-decoration:none;font-size:13px;">下一頁 ➡</a>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>龍九資產管理系統 — 戰術任務</title>
+<style>
+        body {
+            background-color: #0f172a;
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+        }
+        .luxury-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        .luxury-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(59, 130, 246, 0.2);
+            box-shadow: 0 15px 30px -5px rgba(59, 130, 246, 0.1);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* 2026-08-29 最終版：全部 tab 垂直顯示（手機瀏覽器相容），移除 .hidden 類和 JS 切換邏輯 */
+        .tab-pane { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .tab-pane:last-child { border-bottom: none; }
+
+        /* 純 CSS 分頁切換（radio hack，零 JS — 2026-08-29 手機相容根治） */
+        .tab-radio { display: none; }
+        .tab-panel { display: none; }
+        #tab-r1:checked ~ main #panel-1 { display: block; }
+        #tab-r2:checked ~ main #panel-2 { display: block; }
+        #tab-r3:checked ~ main #panel-3 { display: block; }
+        #tab-r4:checked ~ main #panel-4 { display: block; }
+        #tab-r5:checked ~ main #panel-5 { display: block; }
+        .tab-label { cursor: pointer; }
+        #tab-r1:checked ~ nav label[for="tab-r1"],
+        #tab-r2:checked ~ nav label[for="tab-r2"],
+        #tab-r3:checked ~ nav label[for="tab-r3"],
+        #tab-r4:checked ~ nav label[for="tab-r4"],
+        #tab-r5:checked ~ nav label[for="tab-r5"] { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
+
+        .tab-panel { display: block !important; }
+        .tab-label { display: none; }
+        .tab-radio { display: none; }
+        body { background: #0f172a; color: #f1f5f9; }
+        .luxury-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; }
+</style>
+</head>
+<body class="min-h-screen pb-12">
+<div class="max-w-4xl mx-auto px-4 py-4">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <a href="dashboard_v2.html" style="color:#60a5fa;text-decoration:none;font-size:13px;font-weight:bold;">⬅ 回首頁</a>
+        <span style="color:#94a3b8;font-size:12px;">📋 戰術任務｜龍九資產管理系統 v2.1</span>
+    </div>
+    <main>
+    <!-- ================= PAGE 5 ================= -->
+    <div id="panel-5" class="content-area">
+                <div class="luxury-card p-6 border-l-4 border-red-500 space-y-4">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded font-mono font-bold">P0 戰略任務</span>
+                    <h3 class="text-md font-bold text-white mt-1">✅ 8/20 國泰轉貸 1,200萬 @2.6% 已入帳 → 8/21 富達600+MMF500+聯博100 全數到位 → 9/3 PI 質押350萬還高息</h3>
+                </div>
+                <span class="text-xs text-slate-400 font-mono">8/20-8/21 執行完成</span>
+            </div>
+            <div class="bg-slate-900/60 p-4 rounded-xl space-y-2 border border-slate-800 text-xs">
+                <p class="font-bold text-yellow-500">✅ 執行狀態：大義街 1,200萬@2.6% 8/20 入帳；8/21 富達600萬 + MMF 500萬 + 聯博100萬 全數到位（T+2 8/23 入帳）</p>
+                <p class="text-slate-300 leading-relaxed font-mono">
+                    8/22 現況：PI 認證 9/3 前（自身淨資產含不動產 3,004萬 達標）→ 質押富達 350萬@2.77% 還安聯 300萬@4.2% + 元大 50萬@3.92% → MMF 500萬 = 標案 300 + 補救 200。8/24 保單轉換 300萬（PIMCO 120+M&G 100+醫療 50+黃金 30）。8/31 安聯B 贖回（抵借款 100萬，淨回流 ~172萬）。
+                </p>
+            </div>
+            <div class="text-xs text-slate-400 space-y-1.5 font-mono">
+                <p>• 8/10（一）安聯收益成長 T+4 轉換截止（FL65）</p>
+                <p>• ✅ M&G（8/3）、安聯AI/A10（8/6）已全數轉換至摩根JPM</p>
+            </div>
+        </div>
+
+<!-- 行事曆一覽表（2026-08-26：JS 動態讀 schedule_events.json，與日報同源；失敗保留快照版） -->
+        <!-- 本週操作執行紀錄（2026-08-26：JS 讀 snapshot.json weekly_ops_closure） -->
+        <div class="luxury-card p-6 space-y-4">
+            <h3 class="text-md font-bold text-white">📋 本週操作執行紀錄</h3>
+            <div class="space-y-2 text-xs" id="weekly-ops">
+            <div class="p-3 bg-slate-900/30 rounded border border-slate-800 text-slate-400">載入中...</div>
+            </div>
+        </div>
+
+
+            <div class="space-y-3 text-xs" id="calendar-events">
+            <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">08/24</span><span class="text-white font-bold flex-1">🔴 今日執行 🔁 保單轉換 300萬（8/24 定案執行）：貝萊德科技A10 + 摩根JPM股部分 → PIMCO 120萬 + M&G 100萬 + 健康科學A2(醫療) 50萬 + 黃金A10 30萬（T+4 免現金免稅：降科技/建黃金/補醫療） 300萬</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">待處理</span><span class="text-white font-bold flex-1">⚠️ 還款中 女友借款（每月還6,000，預計12/5清償） 300,000</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/05</span><span class="text-slate-300 font-mono flex-1">🔄 還款中 女友還款（每月6,000） 6,000</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">08/25</span><span class="text-slate-300 font-mono flex-1">📋 行程 五、六段聯合夏季工安宣導及祈福會議（東海站大會議室）</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">08/26</span><span class="text-slate-300 font-mono flex-1">📋 行程 每月租金總對帳</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">08/27</span><span class="text-slate-300 font-mono flex-1">📋 節日 中元節 —</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/01</span><span class="text-amber-300 font-mono flex-1">🍽️ 聚餐 回台中聚餐（沙鹿火車站集合，下午 5:30）</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/01</span><span class="text-slate-300 font-mono flex-1">📋 例行 龍七動態月報自動產出（09:00）</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/06</span><span class="text-slate-300 font-mono flex-1">📋 例行 動態自我檢討週報產出（19:00）</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/20</span><span class="text-slate-300 font-mono flex-1">📋 每月20日 💰 國泰房貸繳款（大義街1,200萬@2.6%寬限期） 26,000</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/01</span><span class="text-emerald-400 font-mono flex-1">✅ 已入帳 大義街店面房租入帳 24,000（已收）</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/06</span><span class="text-slate-300 font-mono flex-1">✅ 定期 台電薪資入帳 39,727</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">待處理</span><span class="text-white font-bold flex-1">✅ 完成 ✅ 0050 配息確認 0.6元（7/21除息，8/10發放） —</span></div>
+            </div>
+        </div>
+
+<!-- 執行中決策追蹤（2026-08-06：與日報第七章決策追蹤同源 pending_decisions.json） -->
+        <div class="luxury-card p-6 space-y-4" id="decision-track">
+            <h3 class="text-md font-bold text-white">📋 執行中決策追蹤</h3>
+            <div class="space-y-3 text-xs">
+            <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">09/25</span><span class="text-white font-bold flex-1">洲際W轉貸</span><span class="text-slate-300 font-mono">🔄 評估中：直接跟國泰辦理第二間房子轉貸</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">08/21</span><span class="text-white font-bold flex-1">買聯博全球多元收益 AD美元月配（8/20 定案分批）</span><span class="text-slate-300 font-mono">🔄 執行中：8/21 下單，從 MMF 贖回轉申購；分批加碼觀察穿透後再進</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">08/21</span><span class="text-white font-bold flex-1">質押富達 350萬@2.77% → 還安聯300萬@4.2% + 元大50萬@3.92%</span><span class="text-slate-300 font-mono">🔄 待 PI 認證（9/3前）→ 銀行書面 → 執行；防守 00878 承接已凍結（配息資產 69.5% 合併口徑）</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">08/21</span><span class="text-white font-bold flex-1">科技 -2pp 再平衡（DAA v3 板塊輪動建議 524,093）</span><span class="text-slate-300 font-mono">⏸️ 凍結：科技 13.8% 紅線下 + 配息資產合併 69.5% → 防守/科技承接皆凍結</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">08/21</span><span class="text-white font-bold flex-1">避險衛星建倉（黃金+石油，8/21 評估核准）</span><span class="text-slate-300 font-mono">🔄 待 PI 認證後（9/3前）從 MMF 500萬 撥 ~131萬：00635U 黃金 ~105萬 + 00642U 石油 ~26萬</span></div>
+            </div>
+        </div>
+
+<!-- 機會子彈規則與煞尾 -->
+        <div class="luxury-card p-6 bg-gradient-to-br from-slate-900 to-blue-950/40 border border-blue-950 space-y-4">
+            <h3 class="text-md font-bold text-white flex items-center gap-2">
+                🎯 機會子彈鐵律 (Opportunity Bullet)
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+                <div class="p-3 bg-red-500/10 rounded border border-red-500/20">
+                    <p class="font-bold text-red-400">🟢 超漲回調規則：</p>
+                    <p class="text-slate-300 mt-1">個股/ETF 週漲幅 > 20%：觸發超漲賣出獲利了結。回收資金重新配置。</p>
+                </div>
+                <div class="p-3 bg-emerald-500/10 rounded border border-emerald-500/20">
+                    <p class="font-bold text-emerald-400">🔴 超跌加碼規則：</p>
+                    <p class="text-slate-300 mt-1">週跌幅 > 20%：動用將來 200萬高利活存加碼。平時不預測市場，冷靜執行價格訊號。</p>
+                </div>
+            </div>
+            <div class="border-t border-slate-800 pt-3 text-center">
+                <p class="text-xs text-slate-400 italic">「不相信主觀預測，只對應客觀價格訊號而行。」— 龍九家族辦公室</p>
+            </div>
+            </div>
+
+    </main>
+    <div style="display:flex;justify-content:space-between;margin-top:20px;padding-top:12px;border-top:1px solid #1e293b;flex-wrap:wrap;gap:8px;">
+        <a href="dashboard_tab4.html" style="color:#60a5fa;text-decoration:none;font-size:13px;">⬅ 上一頁</a>
+        <span></span>
+    </div>
+</div>
+</body>
+</html>

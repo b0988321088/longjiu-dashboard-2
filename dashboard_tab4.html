@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>龍九資產管理系統 — 流動性調度</title>
+<style>
+        body {
+            background-color: #0f172a;
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+        }
+        .luxury-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        .luxury-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(59, 130, 246, 0.2);
+            box-shadow: 0 15px 30px -5px rgba(59, 130, 246, 0.1);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* 2026-08-29 最終版：全部 tab 垂直顯示（手機瀏覽器相容），移除 .hidden 類和 JS 切換邏輯 */
+        .tab-pane { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .tab-pane:last-child { border-bottom: none; }
+
+        /* 純 CSS 分頁切換（radio hack，零 JS — 2026-08-29 手機相容根治） */
+        .tab-radio { display: none; }
+        .tab-panel { display: none; }
+        #tab-r1:checked ~ main #panel-1 { display: block; }
+        #tab-r2:checked ~ main #panel-2 { display: block; }
+        #tab-r3:checked ~ main #panel-3 { display: block; }
+        #tab-r4:checked ~ main #panel-4 { display: block; }
+        #tab-r5:checked ~ main #panel-5 { display: block; }
+        .tab-label { cursor: pointer; }
+        #tab-r1:checked ~ nav label[for="tab-r1"],
+        #tab-r2:checked ~ nav label[for="tab-r2"],
+        #tab-r3:checked ~ nav label[for="tab-r3"],
+        #tab-r4:checked ~ nav label[for="tab-r4"],
+        #tab-r5:checked ~ nav label[for="tab-r5"] { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
+
+        .tab-panel { display: block !important; }
+        .tab-label { display: none; }
+        .tab-radio { display: none; }
+        body { background: #0f172a; color: #f1f5f9; }
+        .luxury-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; }
+</style>
+</head>
+<body class="min-h-screen pb-12">
+<div class="max-w-4xl mx-auto px-4 py-4">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <a href="dashboard_v2.html" style="color:#60a5fa;text-decoration:none;font-size:13px;font-weight:bold;">⬅ 回首頁</a>
+        <span style="color:#94a3b8;font-size:12px;">🏦 流動性調度｜龍九資產管理系統 v2.1</span>
+    </div>
+    <main>
+    <!-- ================= PAGE 4 ================= -->
+    <div id="panel-4" class="content-area">
+        <div class="luxury-card p-6 space-y-6">
+            <div>
+                <h3 class="text-md font-bold text-white">房貸往來行庫水位監控 (3-6個月安全防線)</h3>
+                <p class="text-xs text-slate-400">針對主要貸款扣款帳戶進行水位透視，防範扣款失敗造成的信用風險</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="border-red-500/20 bg-red-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-red-400"><span>國泰世華</span><span>🔴 警報</span></div><p class="text-lg font-mono font-black text-white"><span data-k="cathay">27,962</span> TWD</p><p class="text-[10px] text-slate-300 font-mono">明細：活期儲蓄存款 <span data-k="cathay_d1">27,960</span>、活期儲蓄存款 <span data-k="cathay_d2">2</span>、數位存款帳戶２類 2</p><p class="text-[10px] text-slate-400">安全線：<span data-k="safe_line">488,343</span>（3個月支出）</p></div>
+<div class="border-blue-500/20 bg-blue-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-blue-300"><span>台新銀行</span><span>🟢 充裕</span></div><p class="text-lg font-mono font-black text-white"><span data-k="taiwan">511,604</span> TWD</p><p class="text-[10px] text-slate-300 font-mono">明細：敦南Richart子帳戶 <span data-k="richart_sub">246,879</span>、文心綜活儲存款-薪轉 <span data-k="wenxin">100,000</span>、敦南Richart數位一般帳戶 <span data-k="richart_gen">100,000</span></p><p class="text-[10px] text-slate-400">安全線：<span data-k="safe_line">488,343</span>（3個月支出）</p></div>
+<div class="border-red-500/20 bg-red-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-red-400"><span>永豐銀行</span><span>🔴 警報</span></div><p class="text-lg font-mono font-black text-white"><span data-k="sinopac">111,765</span> TWD</p><p class="text-[10px] text-slate-300 font-mono">明細：營業部DAWHO活期儲蓄存款 <span data-k="dawho">166,673</span>、市政分行活期儲蓄存款 <span data-k="shizheng">10,926</span>、營業部DAWHO外幣組合存款-美金 0</p><p class="text-[10px] text-slate-400">安全線：<span data-k="safe_line">488,343</span>（3個月支出）</p></div>
+<div class="border-blue-500/20 bg-blue-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-blue-300"><span>玉山銀行</span><span>🟢 充裕</span></div><p class="text-lg font-mono font-black text-white"><span data-k="yushan">40,950</span> TWD</p><p class="text-[10px] text-slate-400">安全線：40,000（生活帳戶，僅信用卡）</p></div>
+<div class="border-blue-500/20 bg-blue-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-blue-300"><span>台北富邦</span><span>🟢 充裕</span></div><p class="text-lg font-mono font-black text-white"><span data-k="fubon">44,116</span> TWD</p><p class="text-[10px] text-slate-400">安全線：40,000（生活帳戶，僅信用卡）</p></div>
+<div class="border-red-500/20 bg-red-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-red-400"><span>將來銀行</span><span>🔴 警報</span></div><p class="text-lg font-mono font-black text-white"><span data-k="jianglai">739</span> TWD</p><p class="text-[10px] text-slate-400">安全線：<span data-k="safe_line">488,343</span>（3個月支出）</p></div>
+<div class="bg-blue-600/20 border border-blue-500/40 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-blue-200"><span>🏦 現金合計</span></div><p class="text-lg font-mono font-black text-white"><span data-k="cash_total">772,607</span> TWD</p><p class="text-[10px] text-slate-400">snapshot 總現金：<span data-k="cash_total">772,607</span> TWD｜監控卡片合計 <span data-k="mon_sum">749,706</span>（未含第一銀行）</p></div><p class="text-[10px] text-amber-400/80">資料日期：20260829_1（Moneybook 帳戶 CSV，有新匯出請放入 moneybook/ 目錄）</p>
+            </div>
+        </div>
+
+        <!-- 月度流入核對表 -->
+        <div class="luxury-card p-6 space-y-4">
+                    <h3 class="text-md font-bold text-white">08月現金流入檢對核實</h3>
+                    <div class="space-y-3" id="income-list">
+            <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">台電薪水</span></div><span class="text-xs font-mono text-emerald-400 font-bold">39,727 TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">安聯配息 A+B</span></div><span class="text-xs font-mono text-emerald-400 font-bold"><span data-k="az_div2">76,931</span> TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">第一金配息</span></div><span class="text-xs font-mono text-emerald-400 font-bold"><span data-k="fj_div">25,538</span> TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">ETF/基金配息（006208/0056/0050/00984A/00888等）</span></div><span class="text-xs font-mono text-emerald-400 font-bold"><span data-k="etf_div">21,138</span> TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">女友還款</span></div><span class="text-xs font-mono text-emerald-400 font-bold">6,000 TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">大義街1樓房租</span></div><span class="text-xs font-mono text-emerald-400 font-bold">24,000 TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">大義街二三樓房租</span></div><span class="text-xs font-mono text-emerald-400 font-bold">21,000 TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">洲際W房租</span></div><span class="text-xs font-mono text-emerald-400 font-bold">33,000 TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">管理費</span></div><span class="text-xs font-mono text-emerald-400 font-bold">2,100 TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-blue-500/10 rounded-xl border border-blue-500/30"><div class="flex items-center gap-2 text-xs font-bold text-blue-300"><span>📊 當月已收合計</span></div><span class="text-xs font-mono font-black text-white"><span data-k="got_total">243,434</span> TWD</span></div>
+            </div>
+        </div>
+
+        <!-- 近期流出排程 -->
+        <div class="luxury-card p-6 space-y-4">
+            <h3 class="text-md font-bold text-white">近期重要債務流出排程</h3>
+            <div class="space-y-3 font-mono text-xs" id="debt-schedule">
+                <div class="text-slate-400">載入中...</div>
+            </div>
+        </div>
+    </div>
+
+    </main>
+    <div style="display:flex;justify-content:space-between;margin-top:20px;padding-top:12px;border-top:1px solid #1e293b;flex-wrap:wrap;gap:8px;">
+        <a href="dashboard_tab3.html" style="color:#60a5fa;text-decoration:none;font-size:13px;">⬅ 上一頁</a>
+        <a href="dashboard_tab5.html" style="color:#60a5fa;text-decoration:none;font-size:13px;">下一頁 ➡</a>
+    </div>
+</div>
+</body>
+</html>

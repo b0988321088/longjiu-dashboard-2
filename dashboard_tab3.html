@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>龍九資產管理系統 — 保單接力引擎</title>
+<style>
+        body {
+            background-color: #0f172a;
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+        }
+        .luxury-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        .luxury-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(59, 130, 246, 0.2);
+            box-shadow: 0 15px 30px -5px rgba(59, 130, 246, 0.1);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* 2026-08-29 最終版：全部 tab 垂直顯示（手機瀏覽器相容），移除 .hidden 類和 JS 切換邏輯 */
+        .tab-pane { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .tab-pane:last-child { border-bottom: none; }
+
+        /* 純 CSS 分頁切換（radio hack，零 JS — 2026-08-29 手機相容根治） */
+        .tab-radio { display: none; }
+        .tab-panel { display: none; }
+        #tab-r1:checked ~ main #panel-1 { display: block; }
+        #tab-r2:checked ~ main #panel-2 { display: block; }
+        #tab-r3:checked ~ main #panel-3 { display: block; }
+        #tab-r4:checked ~ main #panel-4 { display: block; }
+        #tab-r5:checked ~ main #panel-5 { display: block; }
+        .tab-label { cursor: pointer; }
+        #tab-r1:checked ~ nav label[for="tab-r1"],
+        #tab-r2:checked ~ nav label[for="tab-r2"],
+        #tab-r3:checked ~ nav label[for="tab-r3"],
+        #tab-r4:checked ~ nav label[for="tab-r4"],
+        #tab-r5:checked ~ nav label[for="tab-r5"] { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
+
+        .tab-panel { display: block !important; }
+        .tab-label { display: none; }
+        .tab-radio { display: none; }
+        body { background: #0f172a; color: #f1f5f9; }
+        .luxury-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; }
+</style>
+</head>
+<body class="min-h-screen pb-12">
+<div class="max-w-4xl mx-auto px-4 py-4">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <a href="dashboard_v2.html" style="color:#60a5fa;text-decoration:none;font-size:13px;font-weight:bold;">⬅ 回首頁</a>
+        <span style="color:#94a3b8;font-size:12px;">🔄 保單接力引擎｜龍九資產管理系統 v2.1</span>
+    </div>
+    <main>
+    <!-- ================= PAGE 3 ================= -->
+    <div id="panel-3" class="content-area">
+        <div class="luxury-card p-6 space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-md font-bold text-white">保單接力引擎總覽</h3>
+                    <p class="text-xs text-slate-400">摩根JPM = 承接站（M&G/安聯AI/A10 已轉入）｜8/24 再轉換 300萬：PIMCO 120 + M&G 100 + 醫療 50 + 黃金 30（降科技/建黃金/補醫療）</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs text-slate-400 block">總現值市值</span>
+                    <span class="text-lg font-black text-white font-mono"><span data-k="ins_total">9,718,338</span> TWD</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex justify-between text-xs font-bold text-slate-300">
+                        <span>安聯收益成長</span>
+                        <span class="text-emerald-400">16.41</span>
+                    </div>
+                    <div class="text-xs text-slate-400 font-mono space-y-1">
+                        <p>保單A QL18610694：<span class="text-white"><span data-k="allianz_a">5,083,230</span></span></p>
+                        <p>保單B QL18488224：<span class="text-white"><span data-k="allianz_b">2,708,228</span></span></p>
+                        <p>A+B合計：<span class="text-white font-bold"><span data-k="allianz_ab">7,791,458</span> TWD</span>（成本：8,000,000）</p>
+                        <p>累計配息：<span data-k="cum_div">1,630,962</span></p>
+                        <p class="text-white">本月領息：<span data-k="az_div">76,931</span></p>
+                    </div>
+                </div>
+                <div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex justify-between text-xs font-bold text-slate-300">
+                        <span>第一金配息</span>
+                        <span class="text-emerald-400">+2.61%</span>
+                    </div>
+                    <div class="text-xs text-slate-400 font-mono space-y-1">
+                        <p>現值：<span data-k="firstjin">1,926,880</span> (成本：2M)</p>
+                        <p>累計配息：<span data-k="fj_cum">111,513</span></p>
+                        <p class="text-white">本月領息：<span data-k="fj_div">25,538</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                <span class="text-xs font-bold text-blue-300">本月保單合計已領配息</span>
+                <span class="text-md font-black text-blue-400 font-mono"><span data-k="div_ins">102,469</span> TWD</span>
+            </div>
+        </div>
+
+        <!-- 接力時序進度條 -->
+        <div class="luxury-card p-6 space-y-6">
+            <div>
+                <h3 class="text-md font-bold text-white">配息接力戰略時序</h3>
+                <p class="text-xs text-slate-400">無縫配息時程規劃，排除資金零空窗期</p>
+            </div>
+            <div class="space-y-4" id="relay-schedule">
+                <div class="relative pl-6 border-l-2 border-emerald-500">
+                    <div class="absolute -left-1.5 top-1.5 w-3 h-3 bg-emerald-500 rounded-full"></div>
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-xs font-bold text-emerald-400">【第一站 9/8】摩根多重收益（美元對沖）A股穩定月配</h4>
+                        <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">基準 9/08｜T+4截止 9/2</span>
+                    </div>
+                    <p class="text-xs text-slate-300 mt-1">⏰ 9/2 前最後轉換日（除息前）；8/26 已轉 80萬（黃金A10 32 + 健康A10 48）。</p>
+                </div>
+                <div class="relative pl-6 border-l-2 border-blue-500">
+                    <div class="absolute -left-1.5 top-1.5 w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-xs font-bold text-blue-400">【第二站 9/14】安聯收益成長（境外）+ M&G 入息</h4>
+                        <span class="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded">基準 9/14｜✅ 維持</span>
+                    </div>
+                    <p class="text-xs text-slate-300 mt-1">✅ 兩標的維持不轉換（8/26 裁示）；FA81 聯博已接替 FL65 為月配站。</p>
+                </div>
+                <div class="relative pl-6 border-l-2 border-emerald-500">
+                    <div class="absolute -left-1.5 top-1.5 w-3 h-3 bg-emerald-500 rounded-full"></div>
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-xs font-bold text-emerald-400">【第三站 9/24-29】安聯AI台幣 / PIMCO M / 聯博AD</h4>
+                        <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">基準 9/24-29</span>
+                    </div>
+                    <p class="text-xs text-slate-300 mt-1">9/24 安聯AI HB(台幣避險)+安聯收益B｜9/28 PIMCO收益增長M級(USDEQ6550)｜9/29 聯博AD(美元)+貝萊德科技/健康/黃金。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </main>
+    <div style="display:flex;justify-content:space-between;margin-top:20px;padding-top:12px;border-top:1px solid #1e293b;flex-wrap:wrap;gap:8px;">
+        <a href="dashboard_tab2.html" style="color:#60a5fa;text-decoration:none;font-size:13px;">⬅ 上一頁</a>
+        <a href="dashboard_tab4.html" style="color:#60a5fa;text-decoration:none;font-size:13px;">下一頁 ➡</a>
+    </div>
+</div>
+</body>
+</html>
