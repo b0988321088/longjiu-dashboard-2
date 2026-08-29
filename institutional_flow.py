@@ -474,6 +474,55 @@ def main():
                 print(f"  ⚠️ {_pn['與雷達衝突']}")
     except Exception as e:
         print(f"  ⚠️ 政策面標註讀取失敗: {e}")
+    # 📋 本週投資計劃（2026-08-29：整合所有變數 → 行動結論）
+    try:
+        import json as _json
+        _snap = {}
+        _sp = BASE / "snapshot.json"
+        if _sp.exists():
+            _snap = _json.loads(_sp.read_text(encoding="utf-8"))
+        _pen = _snap.get("penetration", {}).get("actual_pct", {})
+        def _ap(k, d=0):
+            return _pen.get(k, d)
+        _dry = _snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
+        _usd = _snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
+        _hs = _snap.get("hedge_satellite", {})
+        _conv = _snap.get("insurance_conversion_0826b", {})
+
+        print("\n📋 本週投資計劃（整合雷達+政策+穿透+資金+節點）:")
+        lines = []
+        # ① 台股（🟢🔥 順勢）
+        lines.append("🟢 台股慢慢買：0050/006208 每週 1.5-2萬（外資連3買+台幣強升，缺口 -2.5pp）")
+        # ② 美股（超配 +3.4pp，但觸發制未達）
+        if _ap("美股市值型成長", 0) > 45:
+            lines.append("🔴 美股超配 >5pp → 逢彈減碼 ≤20萬/次")
+        else:
+            lines.append("⏸️ 美股 +3.4pp 未達減碼觸發（>45%才減）→ 續持不動作")
+        # ③ 防守（合併口徑已足）
+        lines.append("⏸️ 防守合併 69.2% 已足 → 凍結不追（00878/00713 不加碼）")
+        # ④ 債券（US30Y 5.28% 距紅線 0.02pp）
+        lines.append("⏸️ 債券 23.1% 接近目標 → 等 US30Y<5.30% 才新增；升息1碼估 -0.5~-1.5%")
+        # ⑤ 現金/乾粉
+        lines.append(f"💰 乾粉 {_dry/10000:.1f}萬 → 優先 非核心消費（0051 回檔-5%再進）；現金底線 70萬")
+        # ⑥ 保單轉換（9/2 截止）
+        lines.append("🔴 9/2 前：保單轉換截止（PIMCO 120 + M&G 80-100 + 醫療50 + 黃金30）；8/26 已轉 80萬 8/30 生效")
+        # ⑦ 科技→PIMCO 轉換（8/26b 暫緩）
+        if _conv.get("狀態", "").startswith("⏳"):
+            lines.append("⏳ 科技A10 89萬→PIMCO 暫緩（等雷達定案）→ 本週評估是否執行")
+        # ⑧ 避險衛星
+        if _hs.get("黃金延後_0829"):
+            lines.append("⏸️ 黃金衛星 00635U 延後（華許放鷹壓抑金價+20日+11.6%偏高）→ 等回檔/利率明朗")
+        else:
+            lines.append("🟢 黃金衛星 PI 後分批 ≤20萬/次")
+        # ⑨ 美元曝險
+        if _usd > 55:
+            lines.append(f"🔴 美元曝險 {_usd}% 超標 → 美股減碼/美元定存到期轉台幣")
+        # ⑩ PI / 質押
+        lines.append("🔍 9/3 PI 認列 → 質押 350萬@2.77% 還安聯300+元大50（節省利息）")
+        for l in lines:
+            print("  " + l)
+    except Exception as e:
+        print(f"  ⚠️ 本週投資計劃產生失敗: {e}")
     return 0
 
 
