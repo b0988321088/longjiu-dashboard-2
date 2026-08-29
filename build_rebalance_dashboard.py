@@ -46,6 +46,21 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
         locked = "（🔒LOCKED）" if v.get("locked") else ""
         lines.append(f"- {v.get('color','⚪')} {k}{locked}: {v.get('note','—')}")
 
+    # 二之二、政策面標註（2026-08-29：Jackson Hole 華許放鷹 + 原油新聞）
+    _pn = radar.get("policy_notes") or {}
+    if _pn:
+        lines += ["", "## 二之二、政策面（Jackson Hole / 原油新聞）", ""]
+        lines.append(f"> {_pn.get('會議正名','')}｜{_pn.get('來源','')}")
+        for k in ["新聞1_華許升息", "新聞2_美委石油協議", "新聞3_伊朗戰爭SPR"]:
+            v = _pn.get(k, {})
+            if v:
+                lines.append(f"- **{k.replace('新聞1_','① ').replace('新聞2_','② ').replace('新聞3_','③ ')}**：{v.get('內容','')}")
+                lines.append(f"  - 影響：{v.get('對資產影響','')}")
+        if _pn.get("原油綜合判斷"):
+            lines.append(f"- 🛢️ **原油綜合判斷**：{_pn['原油綜合判斷']}")
+        if _pn.get("債券升息敏感度"):
+            lines.append(f"- 💵 **債券升息敏感度**：{_pn['債券升息敏感度']}")
+
     # 二之一、資金訊號 × 投資狀況 × 動作（2026-08-23 核准：對照表嵌評估開頭）
     sig_action = {
         "台股": ("台股（7.2% 低配 -2.8pp）", "✅ 慢慢買：每週 1.5-2萬 0050/006208（單筆≤5萬）"),
@@ -192,6 +207,34 @@ def main():
           <div class="r-name">{k}{locked}</div>
           <div class="r-note">{v.get('note', '—')}</div>
         </div>"""
+
+    # ── 政策面標註（2026-08-29：Jackson Hole 華許放鷹 + 美委石油協議 + 伊朗戰爭 SPR）──
+    _pn = radar.get("policy_notes") or {}
+    if _pn:
+        _pn_html = f"""
+        <div class="card" style="border:1px solid #f59e0b;background:linear-gradient(135deg,#1a1408,#131a26)">
+          <h2>🏛️ 政策面（Jackson Hole / 原油新聞）</h2>
+          <div style="font-size:11px;color:#9ca3af;margin-bottom:8px">{_pn.get('會議正名','')}｜{_pn.get('來源','')}</div>"""
+        for k in ["新聞1_華許升息", "新聞2_美委石油協議", "新聞3_伊朗戰爭SPR"]:
+            v = _pn.get(k, {})
+            if v:
+                _pn_html += f"""
+          <div style="margin-bottom:8px;padding:8px 10px;background:#0b0f17;border-radius:8px;border-left:3px solid #f59e0b">
+            <div style="font-weight:700;font-size:12px;color:#fbbf24">{k.replace('新聞1_','① ').replace('新聞2_','② ').replace('新聞3_','③ ')}</div>
+            <div style="font-size:11px;color:#e5e7eb;margin-top:3px">{v.get('內容','')}</div>
+            <div style="font-size:10px;color:#9ca3af;margin-top:3px">影響：{v.get('對資產影響','')}</div>
+          </div>"""
+        if _pn.get("原油綜合判斷"):
+            _pn_html += f"""
+          <div style="padding:8px 10px;background:#ef44441a;border-radius:8px;border-left:3px solid #ef4444;font-size:11px;color:#fca5a5;margin-top:4px">
+            🛢️ 原油綜合判斷：{_pn['原油綜合判斷']}</div>"""
+        if _pn.get("債券升息敏感度"):
+            _pn_html += f"""
+          <div style="padding:8px 10px;background:#3b82f61a;border-radius:8px;border-left:3px solid #3b82f6;font-size:11px;color:#93c5fd;margin-top:4px">
+            💵 債券升息敏感度：{_pn['債券升息敏感度']}</div>"""
+        _pn_html += "</div>"
+    else:
+        _pn_html = ""
 
     # ── 動作建議（8/22：防守合併口徑動態讀）──
     _def_pct = s.get("defensive_combined_metric", {}).get("佔比", 69.5)
@@ -460,6 +503,7 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
 <div class="grid">
   <div class="card"><h2>📊 五桶穿透 vs 目標</h2>{bar_rows}</div>
   <div class="card"><h2>📡 機構流向雷達</h2><div class="rcards">{radar_cards}</div></div>
+  {_pn_html}
 </div>
 
 <div class="grid" style="margin-top:14px">
