@@ -452,11 +452,28 @@ def main():
     try:
         _pn = (state.get("policy_notes") or {})
         if _pn:
-            print("\n🏛️ 政策面標註:\n  " + _pn.get("內容", ""))
+            print("\n🏛️ 政策面標註:")
+            for _k, _v in _pn.items():
+                if isinstance(_v, dict):
+                    _c = _v.get("內容", "")
+                    _imp = _v.get("對資產影響", "")
+                    if _c:
+                        print(f"  📰 {_k.replace('新聞','').replace('_',' ')}: {_c}")
+                    if _imp:
+                        print(f"     💡 影響: {_imp}")
+                elif isinstance(_v, str) and _v and _k not in ("來源", "記錄時間", "會議正名", "原油綜合判斷", "債券升息敏感度", "與雷達衝突"):
+                    print(f"  📌 {_k}: {_v}")
+            # 會議正名/來源/時間
+            if _pn.get("會議正名"):
+                print(f"  🗓️ {_pn['會議正名']}")
+            if _pn.get("原油綜合判斷"):
+                print(f"  🛢️ {_pn['原油綜合判斷']}")
+            if _pn.get("債券升息敏感度"):
+                print(f"  💵 {_pn['債券升息敏感度']}")
             if _pn.get("與雷達衝突"):
-                print("  ⚠️ " + _pn["與雷達衝突"])
-    except Exception:
-        pass
+                print(f"  ⚠️ {_pn['與雷達衝突']}")
+    except Exception as e:
+        print(f"  ⚠️ 政策面標註讀取失敗: {e}")
     return 0
 
 
