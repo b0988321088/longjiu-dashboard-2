@@ -255,6 +255,7 @@ def main():
         "__REBALANCE_MD__": "rebalance_summary_*.md",
         "__RISK_PNG__": "risk_factor_penetration_*.png",
         "__WEEKLY__": "weekly_report_*.html",
+        "__WEEKLY_REVIEW__": "dynamic_weekly_review_*.html",
     }
     _link_hits = 0
     for _ph, _pat in _link_map.items():
