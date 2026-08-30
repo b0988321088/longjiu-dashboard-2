@@ -42,7 +42,7 @@ def main():
     if days:
         f, l = hist[days[0]], hist[days[-1]]
         pairs = [("總資產", "total_assets"), ("總負債", "total_liabilities"), ("證券市值", "securities_market"),
-                 ("保單現值", "insurance_current"), ("基金市值", "fund_market"), ("現金", "cash"), ("房租", "rent")]
+                 ("保單現值", "insurance_current"), ("基金市值", "fund_market"), ("現金", "cash")]
         for label, k in pairs:
             a, b = f.get(k, 0), l.get(k, 0)
             diff = b - a
@@ -63,6 +63,17 @@ def main():
         if abs(d_fund) > 10000: cause.append(f"基金 {d_fund:+,.0f}（淨值波動）")
         attrib = "；".join(cause) if cause else "小幅波動"
         attrib_html = f"<p style='font-size:12px;color:#6e6e73;margin:8px 0 0'>🔍 歸因：{attrib}｜總資產變化 {d_total:+,.0f}</p>"
+    # 2026-08-30 修正：租金為收入非資產（原資產表「房租」列顯示 0 誤導 → 改顯示已收）
+    try:
+        import json as _json
+        _snap = _json.load(open(str(Path(__file__).resolve().parent / "snapshot.json"), encoding="utf-8"))
+        _rr = _snap.get("rent_received_records", {}) or {}
+        _rent_got = sum(v for d in _rr.values() for v in (d.values() if isinstance(d, dict) else [d]) if isinstance(v, (int, float)))
+        _rent_break = _snap.get("rent_breakdown", {})
+        _rent_txt = " + ".join(f"{k} {v:,}" for k, v in _rent_break.items()) or "—"
+        attrib_html += f"<p style='font-size:12px;color:#2d6a4f;margin:4px 0 0'>🏠 本週租金已收：{_rent_got:,}/月（{_rent_txt}）</p>"
+    except Exception:
+        pass
     else:
         attrib_html = ""
 
