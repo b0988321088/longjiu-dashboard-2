@@ -2211,7 +2211,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     # 常態月收 = 薪水 + 配息保守預估 + 房租應收
     _passive_norm = float(_salary_exp) + float(_div_exp) + float(_rent_exp)
     html = html.replace("__PASSIVE_TXT__", f"薪水 {_salary_exp:,} + 配息保守 {_div_exp:,} + 房租應收 {_rent_exp:,.0f} = {_passive_norm:,.0f} TWD")
-    html = html.replace("__PASSIVE_NOTE__", f"房租應收 80,100（1樓24,000+23樓21,000+洲際W33,000+管理費2,100），配息保守預估 {_div_exp:,}/月，台電薪水 {_salary_exp:,}；當月實際已收 {_div_actual + _rent_got2 + _salary_got2:,}（薪水{_salary_got2:,}+配息{_div_actual:,}+房租{_rent_got2:,}）；口徑速記：月支出 162,781（v4 定版）｜配息 153,389（合計）/100,000（保守）/97,233（實收）｜被動保守 183,333（配息+房租）")
+    html = html.replace("__PASSIVE_NOTE__", f"房租應收 80,100（1樓24,000+23樓21,000+洲際W33,000+管理費2,100），配息保守預估 {_div_exp:,}/月，台電薪水 {_salary_exp:,}；當月實際已收 {_div_actual + _rent_got2 + _salary_got2:,}（薪水{_salary_got2:,}+配息{_div_actual:,}+房租{_rent_got2:,}）；口徑速記：月支出 162,781（v4 定版）｜配息 153,389（合計）/100,000（保守）/{_div_actual:,}（實收）｜被動保守 183,333（配息+房租）")
     # 覆蓋率（常態月收 / 月支出）
     _exp_v = tv.get("monthly_expense", 162781) or 162781
     _cov = _passive_norm / _exp_v * 100
