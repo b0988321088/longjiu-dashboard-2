@@ -233,7 +233,8 @@ def score_income_rotation(fx: dict, us30y: float | None) -> dict:
 
 
 def score_usd_credit(fx: dict) -> dict:
-    """美元信用壓力：長債殖利率上行 → 供給壓力/美元信用受質疑 → 黃金避險"""
+    """美元信用壓力：長債殖利率上行 → 供給壓力/美元信用受質疑 → 黃金避險
+    2026-08-30 擴充：債務清洗情境（debasement）監測 — DXY 走弱 + breakeven 通膨預期升 + 黃金 COT 淨多 → 清洗訊號"""
     gold = fx.get("gold")
     s_gold = _score_linear(gold["ret_20d_pct"] if gold else None, -2, 12)  # -2%→0, +12%→100
     us10 = fx.get("us10y")
@@ -245,13 +246,20 @@ def score_usd_credit(fx: dict) -> dict:
     s_fx = None
     if fx2:
         s_fx = _score_linear(fx2["ret_20d_pct"], 3, -3)      # 美元走強(台幣貶)→信用壓力減；美元走弱→壓力增
-    parts = [p for p in (s_gold, s_ten, s_abs, s_fx) if p is not None]
+    # ── 2026-08-30 債務清洗監測（選用指標，雷達未提供則跳過）──
+    dxy = fx.get("dxy")                                       # 美元指數：走弱 = 清洗訊號
+    s_dxy = _score_linear(dxy["ret_20d_pct"], 1, -3) if dxy else None  # +1%→0, -3%→100
+    brk = fx.get("breakeven10y")                              # 10Y 通膨預期：升 = 沖銷訊號
+    s_brk = _score_linear(brk["last"] if brk else None, 2.0, 3.0) if brk else None  # 2.0→0, 3.0→100
+    parts = [p for p in (s_gold, s_ten, s_abs, s_fx, s_dxy, s_brk) if p is not None]
     score = sum(parts) / len(parts) if parts else None
     return {
         "score": round(score, 1) if score is not None else None,
         "細項": {"黃金20日": gold["ret_20d_pct"] if gold else None, "黃金分": s_gold,
                  "10Y": ten_abs, "10Y月變動pp": ten_move, "10Y趨勢分": s_ten, "10Y絕對分": s_abs,
-                 "美元月變動": fx2["ret_20d_pct"] if fx2 else None, "匯率分": s_fx},
+                 "美元月變動": fx2["ret_20d_pct"] if fx2 else None, "匯率分": s_fx,
+                 "DXY月變動": dxy["ret_20d_pct"] if dxy else None, "DXY分": s_dxy,
+                 "10Y breakeven": brk["last"] if brk else None, "breakeven分": s_brk},
     }
 
 
