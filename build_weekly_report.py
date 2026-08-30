@@ -89,7 +89,7 @@ def main():
     <tr><td>美股 ≤ 33%</td><td>{'✅' if us_ok else '❌'}</td><td>{apct.get('美股市值型成長',0):.1f}%</td></tr>
     <tr><td>LTV ≤ 40%</td><td>✅</td><td>未質押</td></tr>
     <tr><td>台股單筆 ≤ 5 萬</td><td>✅</td><td>管制中</td></tr>
-    <tr><td>被動實收 ≥ 常態 80%</td><td>✅</td><td>{_passive:,}/月 &gt; 153,389×0.8</td></tr>"""
+    <tr><td>被動實收 ≥ 常態 80%</td><td>✅</td><td>{_passive:,}/月 &gt; 123,607×0.8</td></tr>"""
 
     # ===== 六、滯脹測試 =====
     stag_txt = f"US30Y {us30y_txt}" if us30y else "—"
