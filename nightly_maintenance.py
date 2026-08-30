@@ -192,9 +192,28 @@ def tomorrow_priorities():
     
     # 2026-08-24 使用者確認：Notion 訂閱已取消（不再提醒）；信用卡全部自動扣繳（不再提醒截止日，改由 reminder_agent 餘額警示）
     
-    # 月底房租待收
-    if today.day >= 25:
-        priorities.append("🟡 確認大義街23樓 21,000 + 管理費 2,100 入帳")
+    # 2026-08-30 修正：動態讀 rent_received_records（硬編碼 21,000/2,100 過時 → 只提醒未收）
+    try:
+        import json as _json
+        from pathlib import Path as _Path
+        _snap = _json.load(open(str(_Path(__file__).resolve().parent / "snapshot.json"), encoding="utf-8"))
+        _rr = _snap.get("rent_received_records", {}) or {}
+        _rb = _snap.get("rent_breakdown", {}) or {}
+        _got = {}
+        for _d, _items in _rr.items():
+            if _items and isinstance(_items, dict):
+                for _k, _v in _items.items():
+                    _got[_k] = _got.get(_k, 0) + _v
+            elif isinstance(_items, (int, float)):
+                _got["其他"] = _got.get("其他", 0) + _items
+        _missing = {k: v for k, v in _rb.items() if _got.get(k, 0) < v}
+        if _missing:
+            _mtxt = " + ".join(f"{k} {v:,}" for k, v in _missing.items())
+            priorities.append(f"🟡 租金待收：{_mtxt}")
+        else:
+            priorities.append("✅ 租金已全收（80,100/月）")
+    except Exception:
+        pass
     
     # 機會子彈監控
     priorities.append("🟢 監控台股單週跌幅，距 ±10% 觸發線")
