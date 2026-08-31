@@ -3731,5 +3731,9 @@
     "⏳ 台股慢慢買（PI 後恢復）"
    ]
   }
+ },
+ "cash_source": {
+  "date": "2026-08-31",
+  "note": "Moneybook 帳戶 CSV 匯入（cash_detail）"
  }
 }

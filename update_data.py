@@ -95,6 +95,8 @@ def main():
                                 and not any(x in k for x in _exclude))
                 snap["cash_total"] = _cash_sum
                 snap = sync_snapshot_keys(snap)
+                # 2026-08-31：現金來源標記（asset_diff_monitor 顯示「已匯入」用；Moneybook 目錄被 sync_all 清理後無法靠檔案判斷）
+                snap["cash_source"] = {"date": datetime.date.today().isoformat(), "note": "Moneybook 帳戶 CSV 匯入（cash_detail）"}
                 print(f"✅ cash_detail 已更新（{len(_cd)} 帳戶，現金自動重算 {_cash_sum:,}）")
         except Exception as _e:
             print(f"⚠️ cash_detail 解析失敗: {_e}")

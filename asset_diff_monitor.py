@@ -762,7 +762,13 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
                     _cash_rows += f"<tr><td style='padding-left:20px'>{n}</td><td class='num'>{fv:,.0f}</td></tr>"
                 _cash_rows += f"<tr style='border-top:1px dashed #888'><td><strong>{_g}</strong></td><td class='num'><strong>{_gt:,.0f}</strong></td></tr>"
     except:
-        _cash_rows = f"<tr><td>現金（snapshot 值，Moneybook 未匯入）</td><td class='num'>{_fmt(ex['cash'])}</td></tr>"
+        # 2026-08-31 修正：Moneybook/ 目錄常被 sync_all 清理（含個資）→ 無法靠檔案判斷匯入狀態。
+        # 改用 snapshot.cash_source 標記（update_data.py --cash_detail 自動寫）→ 顯示「已匯入」避免誤導
+        _csrc = snap.get("cash_source", {}) or {}
+        if _csrc.get("date"):
+            _cash_rows = f"<tr><td>現金（Moneybook {_csrc.get('date','')} 已匯入，snapshot 值）</td><td class='num'>{_fmt(ex['cash'])}</td></tr>"
+        else:
+            _cash_rows = f"<tr><td>現金（snapshot 值，Moneybook 未匯入）</td><td class='num'>{_fmt(ex['cash'])}</td></tr>"
     cash_card = (
         '<div class="card"><h2>💵 現金部位</h2>'
         '<div class="table-wrap"><table><thead><tr><th>項目</th><th class=\'num\'>金額</th></tr></thead><tbody>'
