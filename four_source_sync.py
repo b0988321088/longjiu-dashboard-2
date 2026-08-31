@@ -96,7 +96,7 @@ except Exception as e:
 print("🔍 Step 3a: 同步儀表板 ...", end=" ")
 try:
     import subprocess
-    s = subprocess.run(['python', 'scripts/update_dashboard.py'], capture_output=True, text=True, timeout=30)
+    s = subprocess.run([sys.executable, os.path.join(BASE, 'build_dashboard.py')], capture_output=True, text=True, timeout=60, cwd=BASE)
     out = s.stdout + s.stderr
     if '✅' in out or 'OK' in out:
         print("✅ OK")
@@ -109,7 +109,7 @@ except Exception as e:
 print("🔍 Step 3: 產出報告 ...", end=" ")
 try:
     import subprocess
-    r = subprocess.run(['python', 'asset_diff_monitor.py'], capture_output=True, text=True, timeout=60)
+    r = subprocess.run([sys.executable, os.path.join(BASE, 'asset_diff_monitor.py')], capture_output=True, text=True, timeout=90, cwd=BASE)
     out = r.stdout + r.stderr
     if '✅' in out or 'Telegram 200' in out:
         print(f"✅ OK")
@@ -129,12 +129,16 @@ try:
         fp = os.path.join(BASE, f)
         if os.path.exists(fp): os.remove(fp)
     # 產出（不 deploy，等使用者核准後才推）
-    r = subprocess.run(['python', 'run_daily.py'], capture_output=True, text=True, timeout=120)
+    # ⚠️ 8/31 修正①：BASE 是 str（非 Path）→ 用 os.path.join 勿用 '/' 運算子（TypeError 根因）
+    # ⚠️ 8/31 修正②：subprocess 用 'python' 在 MSYS bash 環境找不到 → 改用 sys.executable + cwd
+    r = subprocess.run([sys.executable, os.path.join(BASE, 'run_daily.py')], capture_output=True, text=True, timeout=180, cwd=BASE)
     out = r.stdout + r.stderr
-    if '✅' in out or '已寫入' in out or os.path.exists(f'daily_report_v2_{today}.html'):
+    _fp = os.path.join(BASE, f'daily_report_v2_{today}.html')
+    if '✅' in out or '已寫入' in out or os.path.exists(_fp):
         print(f"✅ OK")
     else:
         print(f"⚠️ {out[-100:]}")
+        errors.append(f"日報產出失敗: {out[-200:]}")
 except Exception as e:
     print(f"❌ {e}")
     errors.append(f"日報產出失敗: {e}")
