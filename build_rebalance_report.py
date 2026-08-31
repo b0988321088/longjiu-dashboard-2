@@ -78,6 +78,23 @@ def main():
       <li><b>③ 資金禁令（模式A）</b>：不加碼美股長久期科技、不新增債券標的（00983D/PIMCO 維持底倉）</li>
     </ol>"""
 
+    # 🔴 Fed 升息情境（2026-09-01 整合：snapshot.fed_hike_monitor_0901）
+    fed_html = ""
+    try:
+        _fh = snap.get("fed_hike_monitor_0901", {}) or {}
+        if _fh:
+            _sig = "｜".join(_fh.get("觸發訊號", [])[:2])
+            _cfg = "｜".join(_fh.get("對應配置", [])[:4])
+            fed_html = f"""
+    <div class="card"><h2>🔴 Fed 升息情境（{_fh.get('決策','')[:40]}）</h2>
+    <div class="callout" style="border-left:3px solid #dc2626;padding:8px 10px;background:#fef2f2;border-radius:6px;margin-bottom:8px">
+      <b>觸發訊號：</b>{_sig}<br>
+      <b>再平衡調整：</b>{_cfg}<br>
+      <b style="color:#dc2626">升息下五桶動作：美股超配 → 逢彈減碼優先執行（訊號增強）；債券 -2.0pp → 升息中不補（等利率見頂）；現金/MMF → 避風港不動；台股缺口 → 回檔才買（不追反彈）</b>
+    </div></div>"""
+    except Exception:
+        fed_html = ""
+
     # DAA v3 宏觀情境（macro_regime）— 2026-08-21 整合
     mr_html = "<div class='note'>⚠️ DAA v3 引擎尚未執行（跑 <code>python macro_regime.py</code> 後顯示情境與 targetAllocation）</div>"
     try:
@@ -223,6 +240,8 @@ def main():
 
   <h2>🚨 風控紅線檢核</h2>
   <table><thead><tr><th>紅線</th><th>狀態</th><th>現況</th></tr></thead><tbody>{redlines_html}</tbody></table>
+
+  {fed_html}
 
   {mr_html}
 
