@@ -46,3 +46,6 @@ hunter_logs/
 node_modules/
 *.map
 moneybook_tmp/
+
+# OCR 暫存（含個資文字）
+_ocr_*
