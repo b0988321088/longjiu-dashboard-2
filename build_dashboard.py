@@ -55,9 +55,11 @@ def main():
         "25,538": _fmt(firstjin_div),      # 第一金本月領息
         "63,027": _fmt(az_div),            # 安聯本月領息（2026-08-29 補：原寫死舊值）
         "815,066": _fmt(cash),             # 現金
+        "772,607": _fmt(cash),             # 現金（2026-08-31 補：8/30 template 值 → 777,767）
         "227,372": _fmt(got_total),        # 當月已收合計（說明欄）
         "199,960": _fmt(got_total),        # 📊 當月已收合計卡片（2026-08-29 補：漏替換 → 舊值 199,960 殘留）
         "109,645": _fmt(div_total),        # 配息實收
+        "123,607": _fmt(div_total),        # 配息實收（2026-08-31 補：8/30 template 值 → 138,627）
         "78,000": _fmt(rent_got),          # 租金已收
         "162,781": _fmt(expense),          # 月支出
     }
@@ -139,7 +141,8 @@ def main():
     # 2026-08-28 修正：銀行水位全動態（Moneybook 8/27 帳戶）
     rep["177,599"] = _fmt((cd.get("營業部DAWHO活期儲蓄存款", 0) or 0) + (cd.get("市政分行活期儲蓄存款", 0) or 0))  # 永豐合計
     rep["50,104"] = _fmt(cd.get("臺幣綜存", 40950) or 0)              # 玉山（臺幣綜存）
-    rep["20260821_1"] = "20260829_1"       # 資料日期（8/29 Moneybook）
+    rep["20260821_1"] = "20260831_1"       # 資料日期（8/31 Moneybook）
+    rep["20260829_1"] = "20260831_1"       # 資料日期（2026-08-31 補：8/30 template 殘留 8/29）
     # 現金合計卡「監控卡片合計」（2026-08-29 補：原寫死 799,612 殘留 → 動態算 cash_detail 正數，排除外幣 key）
     _mon = sum(v for k, v in cd.items() if isinstance(v, (int, float)) and v > 0 and "外幣" not in k)
     rep["799,612"] = _fmt(_mon)
@@ -201,6 +204,23 @@ def main():
         if old in tpl:
             tpl = tpl.replace(old, new)
             hits += 1
+
+    # ── data-k 自動注入（2026-08-31 治本：template 的 <span data-k="KEY">顯示值</span> 直接對 snapshot，
+    #    不再依賴 rep 舊值字串清單 — 8/31 血淚：cash_total 772,607 殘留只因 rep 沒列 772,607）──
+    import re as _re
+    _data_k_map = {
+        "cash_total": cash,        # 現金（snapshot.cash_total）
+        "div_total": div_total,    # 配息實收
+        "got_total2": got_total,   # 當月已收合計（說明欄）
+        "got_total": got_total,    # 當月已收合計卡片（2026-08-31 補：template 用 data-k="got_total"）
+        "rent_got": rent_got,      # 租金已收
+        "mon_sum": _mon,           # 監控卡片合計（現金正數排除外幣）
+    }
+    for _dk, _dv in _data_k_map.items():
+        _pat = _re.compile(r'(<span data-k="%s">)[^<]*(</span>)' % _dk)
+        tpl, _n = _pat.subn(lambda m: m.group(1) + _fmt(_dv) + m.group(2), tpl)
+        if _n:
+            hits += _n
 
     # ── 今日狀態列動態化（2026-08-27：今日 + 近3天 + 下一個；含保單轉換等決策事件）──
     try:
