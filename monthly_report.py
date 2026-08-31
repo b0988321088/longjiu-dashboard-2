@@ -69,6 +69,16 @@ def main():
     rent = snap.get("rent_monthly_actual", 80100)
     total_income = ins_div + etf_div + fund_div + rent
 
+    # 投資績效（2026-08-31 新增：淨資產變化 + 扣專案收入 → 常態績效）
+    _net_first = (hist.get(first_d, {}).get("total_assets", 0) or 0) - (hist.get(first_d, {}).get("total_liabilities", 0) or 0)
+    _net_last = (hist.get(last_d, {}).get("total_assets", 0) or 0) - (hist.get(last_d, {}).get("total_liabilities", 0) or 0)
+    _net_chg = _net_last - _net_first
+    _proj = 0
+    for _pk, _pv in (snap.get("project_income_records", {}) or {}).items():
+        if str(_pk).startswith(ym):
+            _proj += (_pv.get("amount", 0) if isinstance(_pv, dict) else (_pv if isinstance(_pv, (int, float)) else 0))
+    net_first, net_last, net_chg, proj, normal = _net_first, _net_last, _net_chg, _proj, _net_chg - _proj
+
     # 保單組合變動（7/31 明細）
     brk = snap.get("insurance_breakdown", {})
     pa = brk.get("policy_a_funds", {})
@@ -119,6 +129,15 @@ td{{padding:8px 6px;border-top:1px solid #e5e5ea}}
 </tbody></table>
 <p style="font-size:12px;color:#6e6e73;margin-top:6px">預期 = snapshot 月收入口徑（配息保守 100,000）｜實際 = snapshot 真值（dividend_records 合計 + rent_received_records）｜待收租金 = {rent_gap:,}｜一次性收入（環保標結餘等）不計常態</p>
 <p style="font-size:12.5px;margin-top:8px"><strong>覆蓋率：</strong>被動（配息 {div_act:,} + 租金 {rent_got:,} = {passive_act:,}） vs 月開支 {expense:,} = {coverage:.0f}% {'✅' if coverage >= 100 else '🔴'}</p>
+</div>
+
+<div class="card"><h2>📈 投資績效（{ym}，2026-08-31 新增）</h2>
+<table><thead><tr><th>項目</th><th class="num">金額</th><th>說明</th></tr></thead><tbody>
+<tr><td>淨資產變化（資產−負債）</td><td class="num" style="color:{'#16a34a' if net_chg>=0 else '#dc2626'};font-weight:700">{net_chg:+,}</td><td>{first_d} {net_first:,.0f} → {last_d} {net_last:,.0f}</td></tr>
+<tr><td>− 專案收入（非常態）</td><td class="num">{proj:+,}</td><td>project_income_records（{ym}）</td></tr>
+<tr><td style="font-weight:700">常態績效（扣專案）</td><td class="num" style="font-weight:700;color:{'#16a34a' if normal>=0 else '#dc2626'}">{normal:+,}</td><td>薪水+配息+租金 − 消費 − 利息 − 手續費</td></tr>
+</tbody></table>
+<p style="font-size:12px;color:#6e6e73;margin-top:6px">借貸不創造淨值（資產/負債同步增）；市值波動為未實現。細項拆解（市值/配息/利息/手續費）見動態月報。</p>
 </div>
 
 <div class="card"><h2>保單組合（{last_d}）</h2>
