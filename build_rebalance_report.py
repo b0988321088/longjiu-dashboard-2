@@ -86,11 +86,11 @@ def main():
             _sig = "｜".join(_fh.get("觸發訊號", [])[:2])
             _cfg = "｜".join(_fh.get("對應配置", [])[:4])
             fed_html = f"""
-    <div class="card"><h2 style="color:#f87171">🔴 Fed 升息情境（{_fh.get('決策','')[:40]}）</h2>
-    <div class="callout" style="border-left:3px solid #dc2626;padding:8px 10px;background:#1e1b2e;border-radius:6px;margin-bottom:8px;color:#fca5a5">
-      <b>觸發訊號：</b>{_sig}<br>
-      <b>再平衡調整：</b>{_cfg}<br>
-      <b style="color:#f87171">升息下五桶動作：美股超配 → 逢彈減碼優先執行（訊號增強）；債券 -2.0pp → 升息中不補（等利率見頂）；現金/MMF → 避風港不動；台股缺口 → 回檔才買（不追反彈）</b>
+    <div class="card"><h2 style="color:#dc2626">🔴 Fed 升息情境（{_fh.get('決策','')[:40]}）</h2>
+    <div class="callout" style="border-left:4px solid #dc2626;padding:10px 12px;background:#fee2e2;border-radius:6px;margin-bottom:8px;color:#111827">
+      <b style="color:#991b1b">觸發訊號：</b><span style="color:#111827">{_sig}</span><br>
+      <b style="color:#991b1b">再平衡調整：</b><span style="color:#111827">{_cfg}</span><br>
+      <b style="color:#991b1b">升息下五桶動作：</b><span style="color:#111827">美股超配 → 逢彈減碼優先執行（訊號增強）；債券 -2.0pp → 升息中不補（等利率見頂）；現金/MMF → 避風港不動；台股缺口 → 回檔才買（不追反彈）</span>
     </div></div>"""
     except Exception:
         fed_html = ""
