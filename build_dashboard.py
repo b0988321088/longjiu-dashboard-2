@@ -276,6 +276,8 @@ def main():
         "__RISK_PNG__": "risk_factor_penetration_*.png",
         "__WEEKLY__": "weekly_report_*.html",
         "__WEEKLY_REVIEW__": "dynamic_weekly_review_*.html",
+        "__MONTHLY_REVIEW__": "dynamic_monthly_review_*.html",
+        "__MONTHLY_REPORT__": "monthly_report_*.html",
     }
     _link_hits = 0
     for _ph, _pat in _link_map.items():
