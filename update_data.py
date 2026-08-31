@@ -56,6 +56,19 @@ def main():
             snap[KEYMAP[k]] = int(v.replace(",", ""))
             changed.append(f"{KEYMAP[k]}={int(v.replace(',', '')):,}")
 
+    # 2026-08-31 血淚：--cash 更新後必須檢查 cash_detail（銀行水位卡資料源）— 8/31 現金更新但 cash_detail 停 8/27 → 儀表板舊值
+    if args.get("cash"):
+        _cd2 = snap.get("cash_detail", {}) or {}
+        # cash_total 含外幣 → 比對用全部正數（不含外幣會誤報，8/31 驗證：外幣 3,598 是 cash_total 一部分）
+        _cd_sum = sum(v for k, v in _cd2.items() if isinstance(v, (int, float)) and v > 0)
+        _cash_new = int(args["cash"].replace(",", ""))
+        if not _cd2:
+            print("⚠️ snapshot 無 cash_detail！儀表板銀行水位卡會空白 — 請用 --cash_detail='{...帳戶明細...}' 補上")
+        elif abs(_cd_sum - _cash_new) > 100:
+            print(f"⚠️ cash_detail 合計 {_cd_sum:,} ≠ cash_total {_cash_new:,}（差 {_cash_new - _cd_sum:+,}）— 儀表板銀行水位卡會顯示舊值！請用 --cash_detail 同步 8/31 帳戶 CSV")
+        else:
+            print(f"✅ cash_detail 合計 {_cd_sum:,} 與 cash_total 一致")
+
     # ② 同步同義欄位 + 重算總資產
     from asset_sync import sync_snapshot_keys
     snap = sync_snapshot_keys(snap)
@@ -143,7 +156,15 @@ def main():
                     _bucket[_k] = _bucket.get(_k, 0) + _v
                 _dr[_ym] = _bucket
             snap["dividend_records"] = _dr
-            print(f"✅ dividend_records 已補記（{sum(len(v) for v in _dv.values())} 筆）→ 之後跑 dividend_tracker.py 重算 dividend_month_actual")
+            print(f"✅ dividend_records 已補記（{sum(len(v) for v in _dv.values())} 筆）")
+            # 2026-08-31 核准：補記後自動重算 dividend_month_actual（不再只提示手動跑）
+            try:
+                import subprocess as _sp
+                _r = _sp.run([sys.executable, str(BASE / "dividend_tracker.py")], capture_output=True, text=True, cwd=str(BASE), timeout=120)
+                _line = [l for l in (_r.stdout or "").splitlines() if "保留既有" in l or "已更新" in l]
+                print(f"  🔁 dividend_tracker: {_line[-1] if _line else '完成'}")
+            except Exception as _e:
+                print(f"  ⚠️ dividend_tracker 自動重算失敗（手動跑 python dividend_tracker.py）: {_e}")
         except Exception as _e:
             print(f"⚠️ dividend 解析失敗: {_e}")
 
