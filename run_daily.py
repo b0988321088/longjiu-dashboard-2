@@ -1441,9 +1441,10 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
     except Exception as _e:
         html = html.replace("__TACTICAL_TABLE__", f"<div style='color:#999;font-size:12px'>對策表產生失敗: {_e}</div>")
 
-    # 2026-08-26：本週操作執行紀錄（讀 snapshot.weekly_ops_closure_0826）
+    # 2026-08-26：本週操作執行紀錄（讀 snapshot.weekly_ops_closure_*，最新優先 — 8/31 加 _0831）
     try:
-        _ops = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8")).get("weekly_ops_closure_0826", {})
+        _snap_ops = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
+        _ops = _snap_ops.get("weekly_ops_closure_0831", {}) or _snap_ops.get("weekly_ops_closure_0826", {})
         if _ops and _ops.get("執行清單"):
             _ops_html = "".join(
                 f"<div style='padding:5px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;margin:3px 0'>"
