@@ -45,12 +45,14 @@ def scan_month_dividends(target_month: str):
             if amt <= 0:
                 continue
             # 分類
+            # ⚠️ 保單配息（安聯/第一金）跳過：以 App 累積應收為準（2026-09-01 定案），
+            # 由真值日看 App「本月累積配息/撥回」手動記入 dividend_records。
+            # tracker 若掃保單，尾批（如基準日 8/27、9/1 才入帳的 13,962）會被記進
+            # 次月 → 與當月 App 應收重複計算。tracker 只負責 ETF/基金（實收制）。
+            if any(k in memo for k in INSURANCE_KEYS) or '安聯保單撥回' in memo:
+                continue
             low = memo.lower()
-            if '安聯人壽' in memo or '安聯保單撥回' in memo:
-                name = '安聯配息'
-            elif '第一金人壽' in memo:
-                name = '第一金配息'
-            elif any(k in low for k in ETF_CODES):
+            if any(k in low for k in ETF_CODES):
                 # 找代碼
                 code = next((c for c in ETF_CODES if c in low), 'ETF')
                 name = f'ETF {code.upper()}'
