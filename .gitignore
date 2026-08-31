@@ -45,3 +45,4 @@ hunter_logs/
 *.mp4
 node_modules/
 *.map
+moneybook_tmp/
