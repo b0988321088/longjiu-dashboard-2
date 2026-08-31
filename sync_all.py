@@ -57,6 +57,19 @@ def main():
             print(f"  🔧 snapshot.date {old} → {today}")
     except Exception as e:
         print(f"  ⚠️ snapshot.date 修復失敗: {e}")
+    # 2026-08-31 血淚：total_assets 必須 = 保險+證券+基金+現金 動態重算（禁止差額法 — 上次只加現金差額漏 sec/fund → 穿透檢查抓「總資產不一致」）
+    # 手動改 snapshot 後跑 sync_all 也會自動校正
+    try:
+        sp2 = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        _ta = (sp2.get("insurance_total", 0) or 0) + (sp2.get("securities_total_market_value", 0) or 0) \
+            + (sp2.get("fund_market", 0) or 0) + (sp2.get("cash_total", 0) or 0)
+        if abs((sp2.get("total_assets", 0) or 0) - _ta) > 1:
+            _old_ta = sp2.get("total_assets")
+            sp2["total_assets"] = _ta
+            (BASE / "snapshot.json").write_text(json.dumps(sp2, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
+            print(f"  🔧 total_assets 自動重算 {_old_ta:,} → {_ta:,}（= ins+sec+fund+cash）")
+    except Exception as e:
+        print(f"  ⚠️ total_assets 重算失敗: {e}")
     # （2026-08-27：gen_emergency_*.py 已刪除，此自動建立邏輯移除；緊急應變僅 emergency_1330.py）
     steps = [
         ("同義欄位驗證", f"python asset_sync.py"),
@@ -94,6 +107,18 @@ def main():
             ok = False
             break  # 失敗即停（避免在錯誤資料上繼續）
     print(f"\n{'✅ 全部完成（10 步驟）' if ok else '⚠️ 有步驟失敗（見上）'}")
+
+    # 2026-08-31 血淚：Moneybook 解壓目錄含身分證欄位（曾被 commit 進 git！）→ 每次同步後強制清理
+    for _d in ["moneybook_tmp", "moneybook", "mb_tmp"]:
+        _p = BASE / _d
+        if _p.exists():
+            try:
+                import shutil
+                shutil.rmtree(_p)
+                print(f"🧹 已清理個資目錄 {_d}/（含身分證欄位，勿 commit）")
+            except Exception as _e:
+                print(f"⚠️ 清理 {_d}/ 失敗: {_e}")
+
     return 0 if ok else 1
 
 if __name__ == "__main__":

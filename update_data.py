@@ -76,7 +76,7 @@ def main():
             if isinstance(_cd, dict):
                 snap["cash_detail"] = _cd
                 # 現金總額 = 台幣帳戶合計（排除外幣/信用卡/房貸負值）
-                _exclude = ["外幣", "信用卡", "房貸", "卡"]
+                _exclude = ["外幣", "信用卡", "房貸", "卡", "房屋貸款", "貸款", "透支", "質押"]
                 _cash_sum = sum(v for k, v in _cd.items()
                                 if isinstance(v, (int, float)) and v > 0
                                 and not any(x in k for x in _exclude))
@@ -85,6 +85,67 @@ def main():
                 print(f"✅ cash_detail 已更新（{len(_cd)} 帳戶，現金自動重算 {_cash_sum:,}）")
         except Exception as _e:
             print(f"⚠️ cash_detail 解析失敗: {_e}")
+
+    # 2026-08-31 檢討：--mortgage 支援（Moneybook 帳戶 CSV 房貸真值 → 4 筆結構：3 永豐 + 1 國泰）
+    # 用法：--mortgage='{"市政分行":5736000,"營業部DAWHO":4574264,"未知":2772280,"國泰":12000000}'
+    # 只更新前 3 筆永豐 + 國泰第 4 筆；total_liabilities 用差額法（只動 mortgage 部分）
+    if args.get("mortgage"):
+        try:
+            _mg = json.loads(args["mortgage"])
+            _mort = snap.get("mortgages", [])
+            _keys = ["市政分行", "營業部DAWHO", "未知"]
+            _old_mb = snap.get("mortgage_balance", 0) or 0
+            _m_new = []
+            for i, _k in enumerate(_keys):
+                if _k in _mg and i < len(_mort):
+                    _mort[i]["balance"] = int(_mg[_k])
+                    _m_new.append(int(_mg[_k]))
+            # 國泰（第 4 筆，key「國泰」）
+            _cat_val = int(_mg.get("國泰", 0) or 0)
+            if _cat_val and len(_mort) >= 4:
+                _mort[3]["balance"] = _cat_val
+            _new_mb = sum(m["balance"] for m in _mort)
+            snap["mortgages"] = _mort
+            if len(_mort) >= 3:
+                snap["mortgage_yy"] = _mort[0]["balance"]
+                snap["mortgage_yydu"] = _mort[1]["balance"]
+                snap["mortgage_xz"] = _mort[2]["balance"]
+            snap["mortgage_balance"] = _new_mb
+            snap["mortgage"] = _new_mb
+            if _old_mb:
+                snap["total_liabilities"] = (snap.get("total_liabilities", 0) or 0) - (_old_mb - _new_mb)
+            print(f"✅ mortgage 已更新：{_new_mb:,}（total_liabilities 差額同步）")
+        except Exception as _e:
+            print(f"⚠️ mortgage 解析失敗: {_e}")
+
+    # 2026-08-31 檢討：--credit_card 支援（帳戶 CSV 負值加總 → pending + dict）
+    # 用法：--credit_card='{"玉山Unicard":-10775,"台新Richart":-3554,"永豐":-16848,"國泰CUBE":-18232}'
+    if args.get("credit_card"):
+        try:
+            _cc = json.loads(args["credit_card"])
+            if isinstance(_cc, dict):
+                _pending = abs(sum(v for v in _cc.values() if v < 0))
+                snap["credit_card_pending"] = _pending
+                snap["credit_card"] = _cc
+                print(f"✅ credit_card 已更新：pending {_pending:,}（{len(_cc)} 卡）")
+        except Exception as _e:
+            print(f"⚠️ credit_card 解析失敗: {_e}")
+
+    # 2026-08-31 檢討：--dividend 支援（補記 dividend_records 單筆 → 重跑 dividend_tracker）
+    # 用法：--dividend='{"2026-08":{"基金配息 M&G入息":25,"台灣特品現金股息":14990}}'
+    if args.get("dividend"):
+        try:
+            _dv = json.loads(args["dividend"])
+            _dr = snap.get("dividend_records", {})
+            for _ym, _items in _dv.items():
+                _bucket = _dr.get(_ym, {})
+                for _k, _v in _items.items():
+                    _bucket[_k] = _bucket.get(_k, 0) + _v
+                _dr[_ym] = _bucket
+            snap["dividend_records"] = _dr
+            print(f"✅ dividend_records 已補記（{sum(len(v) for v in _dv.values())} 筆）→ 之後跑 dividend_tracker.py 重算 dividend_month_actual")
+        except Exception as _e:
+            print(f"⚠️ dividend 解析失敗: {_e}")
 
     # 2026-08-26 血淚：--securities 更新時必須同步縮放 holdings dict（否則 4 源比對 DB 舊值覆蓋）
     if args.get("securities"):
