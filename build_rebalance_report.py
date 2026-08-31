@@ -130,7 +130,7 @@ def main():
         if _gold_row and _oil_row:
             mr_html += (f"<div class='note' style='border-left:3px solid #d97706'>🛡️ <b>避險衛星（黃金+石油，合計 ≤7%）：</b>"
                         f"黃金目標 {_gold_row['燈號偏移後']}%（現況 {_hs.get('黃金現況',0):,}）＋ 石油目標 {_oil_row['燈號偏移後']}%（現況 {_hs.get('石油現況',0):,}）"
-                        f"<br/><span style='color:#64748b;font-size:12px'>{_hs.get('note','')}</span></div>")
+                        f"<br/><span style='color:#cbd5e1;font-size:12px'>{_hs.get('note','')}</span></div>")
     except Exception:
         pass
 
@@ -141,7 +141,7 @@ def main():
         radar = {}
     _sig = radar.get("signals", {}) or {}
     _radar_cards = "".join(
-        f'<div class="card"><div class="k">{k}</div><div class="v {("green" if v.get("color","").startswith("🟢") else "red" if v.get("color","").startswith("🔴") else "amber")}">{v.get("color","—")}</div><div style="font-size:10px;color:#64748b;margin-top:4px">{v.get("note","")[:36]}</div></div>'
+        f'<div class="card"><div class="k">{k}</div><div class="v {("green" if v.get("color","").startswith("🟢") else "red" if v.get("color","").startswith("🔴") else "amber")}">{v.get("color","—")}</div><div style="font-size:10px;color:#cbd5e1;margin-top:4px">{v.get("note","")[:36]}</div></div>'
         for k, v in _sig.items()
     )
     # 政策面
@@ -216,7 +216,7 @@ def main():
   .ok {{ color:#34d399; }} .bad {{ color:#f87171; }}
   .prio li {{ margin-bottom:8px; line-height:1.5; }}
   .note {{ background:#111a2e; border-left:4px solid #fbbf24; border-radius:8px; padding:12px; font-size:12px; color:#cbd5e1; margin-top:14px; }}
-  .footer {{ color:#94a3b8; font-size:10px; margin-top:30px; text-align:center; }}
+  .footer {{ color:#cbd5e1; font-size:10px; margin-top:30px; text-align:center; }}
 </style></head><body><div class="wrap">
   <h1>📊 龍九再平衡評估</h1>
   <div class="sub">{today}｜US30Y {us30y_txt}｜模式：{mode}｜穿透分母 {total:,}（不含不動產）</div>
