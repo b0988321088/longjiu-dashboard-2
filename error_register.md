@@ -317,3 +317,13 @@
 - 時間：2026-08-31
 - 錯誤：四源不一致，請檢查；穿透三報表不一致（check_penetration_consistency.py 抓到）
 - 狀態：⏳ 待處理
+
+## INC-2026-08-31
+- 時間：2026-08-31
+- 錯誤：四源驗證失敗: [Errno 2] No such file or directory: 'asset_diff_2026-09-01.html'；穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態：⏳ 待處理
+
+## INC-2026-08-31
+- 時間：2026-08-31
+- 錯誤：穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態：⏳ 待處理
