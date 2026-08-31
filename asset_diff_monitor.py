@@ -763,9 +763,38 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
                 _cash_rows += f"<tr style='border-top:1px dashed #888'><td><strong>{_g}</strong></td><td class='num'><strong>{_gt:,.0f}</strong></td></tr>"
     except:
         # 2026-08-31 修正：Moneybook/ 目錄常被 sync_all 清理（含個資）→ 無法靠檔案判斷匯入狀態。
-        # 改用 snapshot.cash_source 標記（update_data.py --cash_detail 自動寫）→ 顯示「已匯入」避免誤導
+        # 改用 snapshot.cash_source 標記（update_data.py --cash_detail 自動寫）→ 顯示「已匯入」+ 每間銀行明細
         _csrc = snap.get("cash_source", {}) or {}
-        if _csrc.get("date"):
+        _cd = snap.get("cash_detail", {}) or {}
+        if _csrc.get("date") and _cd:
+            # 機構 → 帳戶關鍵字映射（cash_detail 是扁平 {帳戶: 金額}）
+            _BANK_MAP = [
+                ("台新銀行", ["敦南Richart", "文心綜活", "北台中活儲", "民權活儲", "北台中外幣"]),
+                ("玉山銀行", ["臺幣綜存"]),
+                ("永豐銀行", ["市政分行", "營業部DAWHO"]),
+                ("台北富邦", ["數位活儲"]),
+                ("將來銀行", ["Digital Savings"]),
+                ("第一銀行", ["iLEO", "金如意"]),
+                ("國泰世華", ["活期儲蓄存款", "數位存款帳戶"]),
+            ]
+            _used = set()
+            for _g, _kws in _BANK_MAP:
+                # ⚠️ 8/31 bug：關鍵字「活期儲蓄存款」會誤匹配「營業部DAWHO活期儲蓄存款」（永豐）→ 重複計入
+                # 修法：排除已分組 key（_used）
+                _items = [(k, v) for k, v in _cd.items() if isinstance(v, (int, float)) and v > 0 and k not in _used and any(w in k for w in _kws)]
+                if not _items:
+                    continue
+                _gt = sum(v for _, v in _items)
+                for _k, _v in sorted(_items, key=lambda x: -x[1]):
+                    _used.add(_k)
+                    _cash_rows += f"<tr><td style='padding-left:20px'>{_k}</td><td class='num'>{_v:,.0f}</td></tr>"
+                _cash_rows += f"<tr style='border-top:1px dashed #888'><td><strong>{_g}</strong></td><td class='num'><strong>{_gt:,.0f}</strong></td></tr>"
+            # 未分組殘留帳戶（避免漏列）
+            for _k, _v in sorted(_cd.items(), key=lambda x: -x[1]):
+                if _k not in _used and isinstance(_v, (int, float)) and _v > 0:
+                    _cash_rows += f"<tr><td style='padding-left:20px'>{_k}</td><td class='num'>{_v:,.0f}</td></tr>"
+            _cash_rows += f"<tr><td style='color:#64748b;font-size:11px'>來源：Moneybook {_csrc.get('date','')} 帳戶 CSV（cash_detail）</td><td></td></tr>"
+        elif _csrc.get("date"):
             _cash_rows = f"<tr><td>現金（Moneybook {_csrc.get('date','')} 已匯入，snapshot 值）</td><td class='num'>{_fmt(ex['cash'])}</td></tr>"
         else:
             _cash_rows = f"<tr><td>現金（snapshot 值，Moneybook 未匯入）</td><td class='num'>{_fmt(ex['cash'])}</td></tr>"
