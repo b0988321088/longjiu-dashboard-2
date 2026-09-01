@@ -239,11 +239,17 @@ def main():
             _evs = _evs.get("events", _evs.get("items", []))
         _td = date.today().isoformat()
         _wk = (date.today() + timedelta(days=7)).isoformat()
-        _ACT = ("🔴", "📞", "📋", "📡", "🏦", "🔍", "📅")  # 需動作事件前綴
-        # 2026-09-01 修正：✅ 已完成/已送出的事件不顯示在「今日/近3天/下一個」
+        _ACT = ("🔴", "📞", "🏦")  # 需動作事件前綴（2026-09-01 收緊：排除 📋例行/🔍確認/📡 等觀察級）
+        # 2026-09-01 修正：✅ 已完成/已送出的事件不顯示；觀察/評估/準備性質不當「今日要做」
+        _soft_kw = ("觀察", "評估", "洽談", "準備", "前置", "戰略", "查證")
         def _is_active(e):
             _s = str(e.get("status", ""))
-            return str(e.get("item", "")).startswith(_ACT) and "✅" not in _s and "已完成" not in _s and "已送出" not in _s
+            _it = str(e.get("item", ""))
+            if "✅" in _s or "已完成" in _s or "已送出" in _s:
+                return False
+            if any(k in _it for k in _soft_kw):
+                return False
+            return _it.startswith(_ACT)
         _today_act = [e for e in _evs if str(e.get("date","")) == _td and _is_active(e)]
         _soon3 = sorted([e for e in _evs if _td < str(e.get("date","")) <= (date.today() + timedelta(days=3)).isoformat() and _is_active(e)],
                         key=lambda x: str(x.get("date","")))
