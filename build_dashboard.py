@@ -494,6 +494,24 @@ def main():
                 break
     tpl = tpl.replace("__INCOME_LIST__", "".join(_inc_parts))
 
+    # ── 執行中決策追蹤靜態生成（2026-09-01：decision-track 不再硬編碼 8/21 快照 → 讀 pending_decisions）──
+    try:
+        _pd3 = json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8"))
+        _dt_html = []
+        for _d in (_pd3 if isinstance(_pd3, list) else [])[:6]:
+            _d_date = str(_d.get("date", ""))[5:].replace("-", "/")
+            _d_tt = str(_d.get("title", "") or "")[:44]
+            _d_st = str(_d.get("status", "") or "")[:64]
+            _dt_html.append(
+                f'<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30">'
+                f'<span class="text-amber-400 font-mono font-bold w-14">{_d_date}</span>'
+                f'<span class="text-white font-bold flex-1">{_d_tt}</span>'
+                f'<span class="text-slate-300 font-mono">{_d_st}</span></div>'
+            )
+        tpl = tpl.replace("__DECISION_TRACK__", "".join(_dt_html) if _dt_html else '<div class="text-slate-400">無執行中決策</div>')
+    except Exception:
+        tpl = tpl.replace("__DECISION_TRACK__", '<div class="text-slate-400">決策追蹤暫無資料</div>')
+
     # ── 八大連結動態化（2026-08-26：模板連結寫死 8/21-23 → glob 最新檔名）──
     import glob as _glob
     _link_map = {
