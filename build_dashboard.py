@@ -425,13 +425,13 @@ def main():
     _inc_parts = []
     _inc_row = (
         '<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800">'
-        '<div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span>'
+        '<div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已收</span>'
         '<span class="text-slate-300">{label}</span></div>'
         '<span class="text-xs font-mono text-emerald-400 font-bold">{amt}</span></div>'
     )
     _pend_row = (
         '<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800">'
-        '<div class="flex items-center gap-2 text-xs"><span class="text-amber-400">⏳ 待入帳</span>'
+        '<div class="flex items-center gap-2 text-xs"><span class="text-amber-400">⏳ 待收</span>'
         '<span class="text-slate-300">{label}</span></div>'
         '<span class="text-xs font-mono text-amber-400 font-bold">{amt}</span>'
         '<span class="text-[10px] text-slate-500">{note}</span></div>'
@@ -463,7 +463,7 @@ def main():
     if not _has_inc:
         _inc_parts = ['<div class="text-slate-400">本月尚無入帳</div>']
     else:
-        _inc_parts[0] = f'<div class="text-xs font-bold text-emerald-400 mb-1 mt-1">✅ 已入帳（{_fmt(_inc_total)} TWD）</div>'
+        _inc_parts[0] = f'<div class="text-xs font-bold text-emerald-400 mb-1 mt-1">✅ 已收（{_fmt(_inc_total)} TWD）</div>'
     # 待入帳段
     _pend2 = []
     if salary <= 0:
@@ -476,7 +476,7 @@ def main():
             _pend2.append((_k4 + "房租", _v4 - _g4, ""))
     if _pend2:
         _pend_total = sum(x[1] for x in _pend2)
-        _inc_parts.append(f'<div class="text-xs font-bold text-amber-400 mt-2 mb-1">⏳ 待入帳（{_fmt(_pend_total)} TWD）</div>')
+        _inc_parts.append(f'<div class="text-xs font-bold text-amber-400 mt-2 mb-1">⏳ 待收（{_fmt(_pend_total)} TWD）</div>')
         for _pl, _pv, _pn in _pend2:
             _inc_parts.append(_pend_row.format(label=_pl, amt=f"{_fmt(_pv)} TWD", note=_pn))
     tpl = tpl.replace("__INCOME_LIST__", "".join(_inc_parts))

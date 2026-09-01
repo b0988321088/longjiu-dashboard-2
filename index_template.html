@@ -709,13 +709,13 @@
       if(items.length===0){ ih = '<div class="text-slate-400">本月尚無入帳</div>'; }
       else {
         var _incT = 0; items.forEach(function(x){ _incT += x[1]; });
-        ih += '<div class="text-xs font-bold text-emerald-400 mb-1 mt-1">✅ 已入帳（' + Number(_incT).toLocaleString('en-US') + ' TWD）</div>';
-        items.forEach(function(x){ ih += '<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">' + x[0] + '</span></div><span class="text-xs font-mono text-emerald-400 font-bold">' + Number(x[1]).toLocaleString('en-US') + ' TWD</span></div>'; });
+        ih += '<div class="text-xs font-bold text-emerald-400 mb-1 mt-1">✅ 已收（' + Number(_incT).toLocaleString('en-US') + ' TWD）</div>';
+        items.forEach(function(x){ ih += '<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已收</span><span class="text-slate-300">' + x[0] + '</span></div><span class="text-xs font-mono text-emerald-400 font-bold">' + Number(x[1]).toLocaleString('en-US') + ' TWD</span></div>'; });
       }
       if(pend.length){
         var _pendT = 0; pend.forEach(function(x){ _pendT += x[1]; });
-        ih += '<div class="text-xs font-bold text-amber-400 mt-2 mb-1">⏳ 待入帳（' + Number(_pendT).toLocaleString('en-US') + ' TWD）</div>';
-        pend.forEach(function(x){ ih += '<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-amber-400">⏳ 待入帳</span><span class="text-slate-300">' + x[0] + '</span></div><span class="text-xs font-mono text-amber-400 font-bold">' + Number(x[1]).toLocaleString('en-US') + ' TWD</span><span class="text-[10px] text-slate-500">' + x[2] + '</span></div>'; });
+        ih += '<div class="text-xs font-bold text-amber-400 mt-2 mb-1">⏳ 待收（' + Number(_pendT).toLocaleString('en-US') + ' TWD）</div>';
+        pend.forEach(function(x){ ih += '<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-amber-400">⏳ 待收</span><span class="text-slate-300">' + x[0] + '</span></div><span class="text-xs font-mono text-amber-400 font-bold">' + Number(x[1]).toLocaleString('en-US') + ' TWD</span><span class="text-[10px] text-slate-500">' + x[2] + '</span></div>'; });
       }
       var ie = document.getElementById('income-list');
       if(ie) ie.innerHTML = ih;
