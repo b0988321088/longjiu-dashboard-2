@@ -705,6 +705,8 @@
       if(_gf<=0) pend.push(['女友還款', 6000, '9/5 入帳']);
       var rb = snap.rent_breakdown||{};
       for(var k4 in rb){ var g4 = _rrecv[k4]||0; if(g4 < rb[k4]) pend.push([k4+'房租', rb[k4]-g4, '']); }
+      var fjExp = (snap.firstjin_dividend_expected||{})[_ym2]||{};
+      if(fjExp.amount>0 && !pend.some(function(p){return p[0].indexOf('第一金')>=0;})) pend.push(['第一金 FA81 配息', fjExp.amount, (fjExp.note||'').slice(0,40)]);
       var ih = '';
       if(items.length===0){ ih = '<div class="text-slate-400">本月尚無入帳</div>'; }
       else {

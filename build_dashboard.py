@@ -479,6 +479,19 @@ def main():
         _inc_parts.append(f'<div class="text-xs font-bold text-amber-400 mt-2 mb-1">⏳ 待收（{_fmt(_pend_total)} TWD）</div>')
         for _pl, _pv, _pn in _pend2:
             _inc_parts.append(_pend_row.format(label=_pl, amt=f"{_fmt(_pv)} TWD", note=_pn))
+    # 第一金配息（2026-09-01：FA81 8/31 基準日 → 9 月入帳；App 應收推估，待確認）
+    _fj_exp = (snap.get("firstjin_dividend_expected", {}) or {}).get(_today_m, {}) or {}
+    _fj_amt = _fj_exp.get("amount", 0) or 0
+    if _fj_amt > 0 and not any("第一金" in str(x[0]) for x in _pend2):
+        _fj_note = _fj_exp.get("note", "")[:40]
+        _inc_parts.append(_pend_row.format(label="第一金 FA81 配息", amt=f"{_fmt(_fj_amt)} TWD", note=_fj_note))
+        _inc_parts[0 if not _has_inc else -1] = _inc_parts[0 if not _has_inc else -1]  # noop 保留
+        # 更新待收段標題合計
+        for _k_i, _p in enumerate(_inc_parts):
+            if "⏳ 待收（" in _p:
+                _inc_parts[_k_i] = _inc_parts[_k_i].replace("）</div>", "）</div>").replace(
+                    f"{_fmt(_pend_total)} TWD", f"{_fmt(_pend_total + _fj_amt)} TWD")
+                break
     tpl = tpl.replace("__INCOME_LIST__", "".join(_inc_parts))
 
     # ── 八大連結動態化（2026-08-26：模板連結寫死 8/21-23 → glob 最新檔名）──
