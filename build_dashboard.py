@@ -228,6 +228,39 @@ def main():
         "got_total": got_total,    # 當月已收合計卡片（2026-08-31 補：template 用 data-k="got_total"）
         "rent_got": rent_got,      # 租金已收
         "mon_sum": _mon,           # 監控卡片合計（現金正數排除外幣）
+        # 2026-09-01 補齊：與 template JS V 表對齊（39 key 全注入 → 靜態 fallback 也是最新值）
+        "ins_total": ins,
+        "allianz_a": snap.get("allianz_a", 0) or 0,
+        "allianz_b": snap.get("allianz_b", 0) or 0,
+        "allianz_ab": allianz,
+        "firstjin": firstjin,
+        "cum_div": snap.get("allianz_cum_dividend", 0) or 0,
+        "fj_cum": snap.get("firstjin_cum_dividend", 0) or 0,
+        "az_div": az_div, "az_div2": az_div,
+        "fj_div": firstjin_div,
+        "div_ins": div_ins,
+        "etf_div": sum(v for k, v in _dr.items() if any(t in k for t in ("ETF", "基金", "聯博")) and isinstance(v, (int, float))) or 0,
+        "safe_line": int(expense) * 3,
+        "pen_tw": _ptwd.get("台股市值型成長", 0),
+        "pen_us": _ptwd.get("美股市值型成長", 0),
+        "pen_def": _ptwd.get("防守型配息", 0),
+        "pen_bond": _ptwd.get("債券", 0),
+        "pen_cash": _ptwd.get("現金/安全網", 0),
+        "pen_tech": _ptwd.get("美股市值型成長_科技", 0),
+        "pen_nontech": _ptwd.get("美股市值型成長_非科技", 0),
+        "cathay": (cd.get("活期儲蓄存款", 0) or 0) + (cd.get("數位存款帳戶２類", 0) or 0),
+        "cathay_d1": cd.get("活期儲蓄存款", 0) or 0,
+        "cathay_d2": cd.get("數位存款帳戶２類", 0) or 0,
+        "taiwan": (cd.get("敦南Richart子帳戶", 0) or 0) + (cd.get("文心綜活儲存款-薪轉", 0) or 0) + (cd.get("敦南Richart數位一般", 0) or 0),
+        "richart_sub": cd.get("敦南Richart子帳戶", 0) or 0,
+        "wenxin": cd.get("文心綜活儲存款-薪轉", 0) or 0,
+        "richart_gen": cd.get("敦南Richart數位一般", 0) or 0,
+        "sinopac": (cd.get("營業部DAWHO活期儲蓄存款", 0) or 0) + (cd.get("市政分行活期儲蓄存款", 0) or 0),
+        "dawho": cd.get("營業部DAWHO活期儲蓄存款", 0) or 0,
+        "shizheng": cd.get("市政分行活期儲蓄存款", 0) or 0,
+        "yushan": cd.get("臺幣綜存", 0) or 0,
+        "fubon": cd.get("數位活儲", 0) or 0,
+        "jianglai": cd.get("Digital Savings Acco", 0) or 0,
     }
     for _dk, _dv in _data_k_map.items():
         _pat = _re.compile(r'(<span data-k="%s">)[^<]*(</span>)' % _dk)
@@ -277,6 +310,38 @@ def main():
         tpl = tpl.replace("__HEALTH_CARD__", _rhc(snap))
     except Exception:
         tpl = tpl.replace("__HEALTH_CARD__", "")
+
+    # ── 戰略異常中心動態化（2026-09-01：雷達/交易計畫/政策面不再硬編碼 8/29 快照）──
+    try:
+        _rs = json.loads((BASE / "radar_state.json").read_text(encoding="utf-8"))
+        _sig = _rs.get("signals", {}) or {}
+        _sig_str = "｜".join(f"{k}{v.get('color', '⚪')} {v.get('note', '')}" for k, v in _sig.items())
+        tpl = tpl.replace("__RADAR_SIG__", f"（雷達更新 {str(_rs.get('last_run', ''))[:10]}）{_sig_str}")
+        _pn = _rs.get("policy_notes", {}) or {}
+        _pol_items = []
+        for _k in _pn:
+            if str(_k).startswith("新聞"):
+                _c = (_pn[_k].get("內容", "") or "")[:56]
+                _imp = (_pn[_k].get("對資產影響", "") or "")[:42]
+                _pol_items.append(f"{_c}（{_imp}）")
+        _pol_str = "｜".join(_pol_items) if _pol_items else "無重大政策事件"
+        _src = _pn.get("來源", "") or ""
+        tpl = tpl.replace("__POLICY_NOTES__", f"🏛️ 政策面（{_src}）：{_pol_str}")
+    except Exception as _e:
+        tpl = tpl.replace("__RADAR_SIG__", "雷達暫無資料").replace("__POLICY_NOTES__", "政策面暫無資料")
+
+    # 交易計畫（2026-09-01：從 pending_decisions 動態，非 8/29 統籌版快照）
+    try:
+        _pd = json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8"))
+        _plan_items = []
+        for _d in (_pd if isinstance(_pd, list) else [])[:6]:
+            _st = str(_d.get("status", "") or "").replace("：", ":")[:26]
+            _tt = str(_d.get("title", "") or "")[:26]
+            _plan_items.append(f"{_st} {_tt}")
+        _plan_str = "｜".join(_plan_items) if _plan_items else "無執行中決策"
+        tpl = tpl.replace("__TRADE_PLAN__", f"🎯 本週交易計畫（動態）：{_plan_str}")
+    except Exception:
+        tpl = tpl.replace("__TRADE_PLAN__", "交易計畫暫無資料")
 
     # ── 八大連結動態化（2026-08-26：模板連結寫死 8/21-23 → glob 最新檔名）──
     import glob as _glob
