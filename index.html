@@ -337,7 +337,7 @@
     <div id="panel-2" class="tab-panel space-y-6">
         <div class="luxury-card p-6 space-y-6" id="pen-card">
             <div class="text-slate-400">載入中...</div>
-        
+        </div>
 
         <!-- 巴菲特視角與基金審查 -->
         <div class="luxury-card p-6 space-y-4">
@@ -447,8 +447,18 @@
         <!-- 月度流入核對表 -->
         <div class="luxury-card p-6 space-y-4">
                     <h3 class="text-md font-bold text-white">9月現金流入檢對核實</h3>
-                    <div class="space-y-3" id="income-list">
-            <div class="text-slate-400">載入中...</div>
+                    <div class="space-y-3 font-mono text-xs" id="income-list">
+                <div class="text-slate-400">載入中...</div>
+            </div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">安聯配息 A+B</span></div><span class="text-xs font-mono text-emerald-400 font-bold"><span data-k="az_div2">16,664</span> TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">第一金配息</span></div><span class="text-xs font-mono text-emerald-400 font-bold"><span data-k="fj_div">0</span> TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">ETF/基金配息（006208/0056/0050/00984A/00888等）</span></div><span class="text-xs font-mono text-emerald-400 font-bold"><span data-k="etf_div">0</span> TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">女友還款</span></div><span class="text-xs font-mono text-emerald-400 font-bold">6,000 TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">大義街1樓房租</span></div><span class="text-xs font-mono text-emerald-400 font-bold">24,000 TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">大義街二三樓房租</span></div><span class="text-xs font-mono text-emerald-400 font-bold">21,000 TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">洲際W房租</span></div><span class="text-xs font-mono text-emerald-400 font-bold">33,000 TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">管理費</span></div><span class="text-xs font-mono text-emerald-400 font-bold">2,100 TWD</span></div>
+<div class="flex justify-between items-center p-3 bg-blue-500/10 rounded-xl border border-blue-500/30"><div class="flex items-center gap-2 text-xs font-bold text-blue-300"><span>📊 當月已收合計</span></div><span class="text-xs font-mono font-black text-white"><span data-k="got_total">40,664</span> TWD</span></div>
             </div>
         </div>
 
@@ -688,17 +698,13 @@
         var de = document.getElementById('debt-schedule');
         if(de) de.innerHTML = dh;
       }
-      // ② 入帳清單（dividend_records 當月 + 房租 + 薪水 + 女友還款，2026-09-01：全部讀當月 records，未入帳不顯示）
+      // ② 入帳清單（dividend_records 當月 + 房租，2026-09-01 修正：不再寫死 8 月）
       var _n2 = new Date(); var _ym2 = _n2.getFullYear()+'-'+String(_n2.getMonth()+1).padStart(2,'0');
       var dr = (snap.dividend_records || {})[_ym2] || {};
-      var _amtOf = function(o){ return (typeof o==='object') ? (o.amount||0) : (o||0); };
-      var _salary = 0; for(var ks in (snap.salary_records||{})){ if(ks.indexOf(_ym2)===0) _salary += _amtOf(snap.salary_records[ks]); }
-      var _gf = 0; for(var kg in (snap.girlfriend_repayment_records||{})){ if(kg.indexOf(_ym2)===0) _gf += _amtOf(snap.girlfriend_repayment_records[kg]); }
-      var items = [];
-      if(_salary>0) items.push(['台電薪水', _salary]);
+      var items = [['台電薪水', 39727]];
       for(var kd in dr){ if(typeof dr[kd]==='number' && dr[kd]>0) items.push([kd, dr[kd]]); }
       for(var kk in (snap.rent_received_records||{})){ if(kk.indexOf(_ym2)===0){ var vv = snap.rent_received_records[kk]; if(typeof vv==='number' && vv>0) items.push(['房租已收', vv]); } }
-      if(_gf>0) items.push(['女友還款', _gf]);
+      items.push(['女友還款', 6000]);
       var ih = '';
       items.forEach(function(x){
         ih += '<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">' + x[0] + '</span></div><span class="text-xs font-mono text-emerald-400 font-bold">' + Number(x[1]).toLocaleString('en-US') + ' TWD</span></div>';
@@ -742,8 +748,8 @@
       var divIns = azDiv + fjDiv;
       var divTotal = 0; for(var k4 in dr){ if(typeof dr[k4]==='number') divTotal += dr[k4]; }
       var _salaryA = 0;
-      for(var _ks in (s.salary_records||{})){ if(_ks.indexOf(_ym)===0){ var _sv = s.salary_records[_ks]; _salaryA += (typeof _sv==='object') ? (_sv.amount||0) : (_sv||0); } }
-      var gotTotal = _salaryA + divTotal + rentGot;
+for(var _ks in (s.salary_records||{})){ if(_ks.indexOf(_ym)===0){ var _sv = s.salary_records[_ks]; _salaryA += (typeof _sv==='object') ? (_sv.amount||0) : (_sv||0); } }
+var gotTotal = _salaryA + divTotal + rentGot;
       var exp = s.monthly_expense || 162781;
       var safeLine = Math.round(exp * 3);
       var monSum = 0;
