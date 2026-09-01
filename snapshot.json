@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-09-01T11:09:27.306019",
+  "generated_at": "2026-09-01T11:12:09.327670",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-31",
-  "total_assets": 26091992,
+  "total_assets": 26146842,
   "total_liabilities": 30138253,
   "net_worth": -4011817,
   "debt_ratio": 50.1,
@@ -10,7 +10,7 @@
   "monthly_expense": 162781,
   "working_surplus": 73137,
   "retirement_surplus": 30552,
-  "securities_total_market_value": 2874590,
+  "securities_total_market_value": 2929440,
   "fund_market_value": 12745676,
   "moneybook_total": 3614169,
   "high_yield_savings_total": 2200410,
@@ -83,7 +83,7 @@
   "credit_card_pending": 49409,
   "mb_source": "Moneybook_明細_20260718.zip",
   "monthly_expense_snapshot_original": 141958,
-  "securities_total": 2874590,
+  "securities_total": 2929440,
   "funds_total": 12745676,
   "last_calibration_sources": {
     "securities": "凱基證券截圖 2026-07-18 02:00",
@@ -563,19 +563,19 @@
       "現金目標": 5
     },
     "actual_pct": {
-      "台股市值型成長": 7.6,
-      "美股市值型成長": 43.4,
+      "台股市值型成長": 7.5,
+      "美股市值型成長": 43.3,
       "防守型配息": 3.9,
       "債券": 23.0,
-      "現金/安全網": 22.1,
+      "現金/安全網": 22.2,
       "美股市值型成長_科技": 14.8,
-      "美股市值型成長_非科技": 28.6
+      "美股市值型成長_非科技": 28.5
     },
     "gaps": {
-      "台股市值型成長": -2.4,
-      "美股市值型成長": 3.4,
+      "台股市值型成長": -2.5,
+      "美股市值型成長": 3.3,
       "防守型配息": -16.1,
-      "債券及安全現金": 15.1,
+      "債券及安全現金": 15.2,
       "科技曝險": -0.2
     },
     "actual_twd": {
@@ -583,11 +583,11 @@
       "美股市值型成長": 11323245.0,
       "防守型配息": 1026391.0,
       "債券": 6013798.0,
-      "現金/安全網": 5756242.0,
+      "現金/安全網": 5811092.0,
       "美股市值型成長_科技": 3866284,
       "美股市值型成長_非科技": 7456961
     },
-    "alert": "台股不足2.4pp；現金+債券超標15.1pp"
+    "alert": "台股不足2.5pp；現金+債券超標15.2pp"
   },
   "penetration_canonical": {
     "updated_at": "2026-07-18",
@@ -688,21 +688,22 @@
   "insurance_total_note": "含配息",
   "runway_months": 27.1,
   "securities_breakdown": {
-    "0050": 211400,
-    "006208": 484200,
-    "009816": 247040,
-    "00646": 76600,
-    "00713": 123500,
-    "00878": 495900,
-    "0056": 54200,
-    "00981A": 233360,
-    "00888": 155800,
-    "00984A": 190500,
-    "00919": 34590,
-    "00918": 104000,
-    "009824": 99400,
-    "009823": 166300,
-    "00983D": 197800
+    "0050": 216800,
+    "006208": 497100,
+    "009816": 253760,
+    "00646": 76500,
+    "00713": 124600,
+    "00878": 504750,
+    "0056": 54900,
+    "00981A": 242800,
+    "00984A": 159000,
+    "00919": 193140,
+    "00918": 35140,
+    "009824": 99700,
+    "009823": 103800,
+    "00888": 170450,
+    "00983D": 197000,
+    "00401A": 0
   },
   "securities_tw_growth": 942640,
   "securities_tw_defense": 1391850,
@@ -808,7 +809,7 @@
   "firstjin_cum_dividend": 111513,
   "allianz_cum_dividend": 1630962,
   "firstjin_cost": 2000000,
-  "securities_market_value": 2874590,
+  "securities_market_value": 2929440,
   "securities_unrealized_pnl": 363040,
   "monthly_salary": 39727,
   "travel_allowance": 12000,
@@ -1085,7 +1086,7 @@
   },
   "moneybook_date": "20260820_1",
   "total_portfolio_value": 26205683,
-  "total_stock_value": 2826480,
+  "total_stock_value": 2929440,
   "allianz_combined": 7758201,
   "allianz_a_value": 5083230,
   "allianz_b_value": 2708228,
@@ -1458,7 +1459,7 @@
   "policy_pledge_rate_note": "使用者確認 2026-08-05：保單質押利率 4%（原記錄 5% 有誤）",
   "pledge_loan_rate": null,
   "pledge_loan_rate_note": "待確認（凱基/券商對帳單）",
-  "securities_market": 2874590,
+  "securities_market": 2929440,
   "allianz_a_funds": 5083230,
   "allianz_b_funds": 2708228,
   "fx_rates": {
@@ -3140,7 +3141,7 @@
       "估算月配息增加": "PIMCO ~0.4-0.5%/月 + 黃金A10 ~0.3-0.5%/月 ≈ 月增 0.6-1.0萬（含本金風險）"
     }
   },
-  "securities_current_value": 2874590,
+  "securities_current_value": 2929440,
   "funds_cathay_market_value": 11941284,
   "decision_0824_pm": {
     "裁示": "PI 未核 → 現金/加倉全部暫緩（含黃金衛星 00635U、00878、台股慢慢買）；美元曝險由保單調整處理",
