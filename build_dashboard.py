@@ -261,6 +261,12 @@ def main():
         _done_kw = ("✅", "已完成")
         _today_pending = [e for e in _evs if str(e.get("date","")) == _td and any(k in str(e.get("status","")) for k in _pending_kw)]
         _today_done = [e for e in _evs if str(e.get("date","")) == _td and any(k in str(e.get("status","")) for k in _done_kw) and str(e.get("item",""))]
+        # 2026-09-01：今日完成只顯示大事（保單轉換/質押/還款/撥款等），例行（房租入帳/報表產出）不列
+        _routine_kw = ("房租入帳", "月報產出", "週報產出", "例行", "動態月報", "覆蓋率重估")
+        _today_done = [e for e in _today_done if not any(k in str(e.get("item","")) for k in _routine_kw)]
+        # 大事優先排序（保單/轉換/質押/還款/撥款）
+        _priority = ("保單", "轉換", "質押", "還款", "撥款", "配息")
+        _today_done.sort(key=lambda e: 0 if any(p in str(e.get("item","")) for p in _priority) else 1)
         for e in _today_act[:2]:
             _parts.append(f"🔴 今日要做：{str(e.get('item',''))[:48]}")
         for e in _today_pending[:2]:
