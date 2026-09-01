@@ -383,6 +383,44 @@ def main():
     except Exception:
         tpl = tpl.replace("__P0_TASK__", "").replace("__TACTICAL_PLAN__", "")
 
+    # ── 穿透卡靜態渲染（2026-09-01：pen-card 不再依賴 JS「載入中」→ build 直接生成五桶，無 JS 也顯示）──
+    _ptwd_p = snap.get("penetration", {}).get("actual_twd", {}) or {}
+    _ppct_p = snap.get("penetration", {}).get("actual_pct", {}) or {}
+    _tgt_p = snap.get("penetration", {}).get("targets", {}) or {}
+    _defs_p = [
+        ("台股市值型成長", "台股", "台股市值型目標", "#3b82f6"),
+        ("美股市值型成長", "美股", "美股市值型目標", "#ef4444"),
+        ("防守型配息", "防守", "配息型目標", "#22c55e"),
+        ("債券", "債券", "債券型目標", "#f59e0b"),
+        ("現金/安全網", "現金", "現金目標", "#94a3b8"),
+    ]
+    _pen_parts = [
+        '<h3 class="text-md font-bold text-white">資產穿透（snapshot 真值）</h3>',
+        f'<p class="text-xs text-slate-400">目標：台股 {_tgt_p.get("台股市值型目標", 10)}%｜美股 {_tgt_p.get("美股市值型目標", 40)}%｜防守 {_tgt_p.get("配息型目標", 20)}%｜債券 {_tgt_p.get("債券型目標", 25)}%｜現金 {_tgt_p.get("現金目標", 5)}%</p><div class="space-y-3 mt-3">',
+    ]
+    for _k, _lb, _tkey, _col in _defs_p:
+        _act = _ppct_p.get(_k)
+        if _act is None:
+            continue
+        _t = _tgt_p.get(_tkey, 0) or 0
+        _twd = _ptwd_p.get(_k, 0) or 0
+        _gap = _act - _t
+        _gcls = "text-green-400" if abs(_gap) <= 2 else ("text-yellow-400" if abs(_gap) <= 5 else "text-red-400")
+        _w = min(_act / 55 * 100, 100); _tw = min(_t / 55 * 100, 100)
+        _pen_parts.append(
+            f'<div><div class="flex justify-between text-xs"><span class="text-slate-300">{_lb}</span>'
+            f'<span class="text-slate-100"><b>{_act:.1f}%</b> / 目標 {_t}% <span class="{_gcls}">({"+" if _gap > 0 else ""}{_gap:.1f}pp)</span></span></div>'
+            f'<div class="relative h-2 bg-slate-800 rounded-full mt-1"><div class="absolute h-2 rounded-full" style="width:{_w:.0f}%;background:{_col}"></div>'
+            f'<div class="absolute h-2 border-l-2 border-white/60" style="left:{_tw:.0f}%"></div></div>'
+            f'<div class="text-[10px] text-slate-500 mt-0.5">市值：{_twd / 1e4:.0f} 萬 TWD</div></div>'
+        )
+    if _ppct_p.get("美股市值型成長_科技") is not None:
+        _pen_parts.append(
+            f'<div class="text-[11px] text-slate-400 pt-2 border-t border-slate-700/50">🔬 美股科技 {_ppct_p.get("美股市值型成長_科技", 0):.1f}%（{(_ptwd_p.get("美股市值型成長_科技", 0) or 0) / 1e4:.0f}萬）｜非科技 {_ppct_p.get("美股市值型成長_非科技", 0):.1f}%（{(_ptwd_p.get("美股市值型成長_非科技", 0) or 0) / 1e4:.0f}萬）｜科技目標 ≤15%</div>'
+        )
+    _pen_parts.append("</div>")
+    tpl = tpl.replace("__PEN_CARD__", "".join(_pen_parts))
+
     # ── 八大連結動態化（2026-08-26：模板連結寫死 8/21-23 → glob 最新檔名）──
     import glob as _glob
     _link_map = {
