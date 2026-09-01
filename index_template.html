@@ -687,17 +687,34 @@
         var de = document.getElementById('debt-schedule');
         if(de) de.innerHTML = dh;
       }
-      // ② 入帳清單（dividend_records 當月 + 房租，2026-09-01 修正：不再寫死 8 月）
+      // ② 入帳清單（2026-09-01 定案：✅已入帳 + ⏳待入帳兩段，全部讀當月 records，未入帳不列已收）
       var _n2 = new Date(); var _ym2 = _n2.getFullYear()+'-'+String(_n2.getMonth()+1).padStart(2,'0');
       var dr = (snap.dividend_records || {})[_ym2] || {};
-      var items = [['台電薪水', 39727]];
+      var _amtOf = function(o){ return (typeof o==='object') ? (o.amount||0) : (o||0); };
+      var _salary = 0; for(var ks in (snap.salary_records||{})){ if(ks.indexOf(_ym2)===0) _salary += _amtOf(snap.salary_records[ks]); }
+      var _gf = 0; for(var kg in (snap.girlfriend_repayment_records||{})){ if(kg.indexOf(_ym2)===0) _gf += _amtOf(snap.girlfriend_repayment_records[kg]); }
+      var items = [];
+      if(_salary>0) items.push(['台電薪水', _salary]);
       for(var kd in dr){ if(typeof dr[kd]==='number' && dr[kd]>0) items.push([kd, dr[kd]]); }
-      for(var kk in (snap.rent_received_records||{})){ if(kk.indexOf(_ym2)===0){ var vv = snap.rent_received_records[kk]; if(typeof vv==='number' && vv>0) items.push(['房租已收', vv]); } }
-      items.push(['女友還款', 6000]);
+      var _rrecv = {};
+      for(var kk in (snap.rent_received_records||{})){ if(kk.indexOf(_ym2)===0){ var rv = snap.rent_received_records[kk]; if(typeof rv==='object'){ for(var k2 in rv){ _rrecv[k2]=(_rrecv[k2]||0)+rv[k2]; } } else if(typeof rv==='number'){ _rrecv['房租']=(_rrecv['房租']||0)+rv; } } }
+      for(var k3 in _rrecv){ if(_rrecv[k3]>0) items.push([k3+'房租', _rrecv[k3]]); }
+      if(_gf>0) items.push(['女友還款', _gf]);
+      var pend = [];
+      if(_salary<=0) pend.push(['台電薪水', 39727, '9/6 入帳']);
+      if(_gf<=0) pend.push(['女友還款', 6000, '9/5 入帳']);
+      var rb = snap.rent_breakdown||{};
+      for(var k4 in rb){ var g4 = _rrecv[k4]||0; if(g4 < rb[k4]) pend.push([k4+'房租', rb[k4]-g4, '']); }
       var ih = '';
-      items.forEach(function(x){
-        ih += '<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">' + x[0] + '</span></div><span class="text-xs font-mono text-emerald-400 font-bold">' + Number(x[1]).toLocaleString('en-US') + ' TWD</span></div>';
-      });
+      if(items.length===0){ ih = '<div class="text-slate-400">本月尚無入帳</div>'; }
+      else {
+        ih += '<div class="text-xs font-bold text-emerald-400 mb-1 mt-1">✅ 已入帳</div>';
+        items.forEach(function(x){ ih += '<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-emerald-400">✅ 已入帳</span><span class="text-slate-300">' + x[0] + '</span></div><span class="text-xs font-mono text-emerald-400 font-bold">' + Number(x[1]).toLocaleString('en-US') + ' TWD</span></div>'; });
+      }
+      if(pend.length){
+        ih += '<div class="text-xs font-bold text-amber-400 mt-2 mb-1">⏳ 待入帳</div>';
+        pend.forEach(function(x){ ih += '<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800"><div class="flex items-center gap-2 text-xs"><span class="text-amber-400">⏳ 待入帳</span><span class="text-slate-300">' + x[0] + '</span></div><span class="text-xs font-mono text-amber-400 font-bold">' + Number(x[1]).toLocaleString('en-US') + ' TWD</span><span class="text-[10px] text-slate-500">' + x[2] + '</span></div>'; });
+      }
       var ie = document.getElementById('income-list');
       if(ie) ie.innerHTML = ih;
     }).catch(function(){ /* 保留快照版 */ });

@@ -421,7 +421,7 @@ def main():
     _pen_parts.append("</div>")
     tpl = tpl.replace("__PEN_CARD__", "".join(_pen_parts))
 
-    # ── 月度流入核對清單靜態生成（2026-09-01：income-list 不再依賴 JS「載入中」→ build 直接生成當月入帳）──
+    # ── 月度流入核對清單靜態生成（2026-09-01 定案：✅已入帳 + ⏳待入帳兩段，build 生成 + JS 開頁同邏輯）──
     _inc_parts = []
     _inc_row = (
         '<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800">'
@@ -429,19 +429,52 @@ def main():
         '<span class="text-slate-300">{label}</span></div>'
         '<span class="text-xs font-mono text-emerald-400 font-bold">{amt}</span></div>'
     )
+    _pend_row = (
+        '<div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-slate-800">'
+        '<div class="flex items-center gap-2 text-xs"><span class="text-amber-400">⏳ 待入帳</span>'
+        '<span class="text-slate-300">{label}</span></div>'
+        '<span class="text-xs font-mono text-amber-400 font-bold">{amt}</span>'
+        '<span class="text-[10px] text-slate-500">{note}</span></div>'
+    )
+    _inc_parts.append('<div class="text-xs font-bold text-emerald-400 mb-1 mt-1">✅ 已入帳</div>')
+    _has_inc = False
     if salary > 0:
-        _inc_parts.append(_inc_row.format(label="台電薪水", amt=f"{_fmt(salary)} TWD"))
+        _inc_parts.append(_inc_row.format(label="台電薪水", amt=f"{_fmt(salary)} TWD")); _has_inc = True
     for _k, _v in _dr.items():
         if isinstance(_v, (int, float)) and _v > 0:
-            _inc_parts.append(_inc_row.format(label=_k, amt=f"{_fmt(_v)} TWD"))
-    if rent_got > 0:
-        _inc_parts.append(_inc_row.format(label="房租已收", amt=f"{_fmt(rent_got)} TWD"))
+            _inc_parts.append(_inc_row.format(label=_k, amt=f"{_fmt(_v)} TWD")); _has_inc = True
+    # 當月房租已收明細（rent_received_records）
+    _rent_recv = {}
+    for _d, _v in (snap.get("rent_received_records", {}) or {}).items():
+        if str(_d).startswith(_today_m):
+            if isinstance(_v, dict):
+                for _k2, _v2 in _v.items():
+                    _rent_recv[_k2] = _rent_recv.get(_k2, 0) + (_v2 or 0)
+            elif isinstance(_v, (int, float)):
+                _rent_recv["房租"] = _rent_recv.get("房租", 0) + _v
+    for _k3, _v3 in _rent_recv.items():
+        if _v3 > 0:
+            _inc_parts.append(_inc_row.format(label=_k3 + "房租", amt=f"{_fmt(_v3)} TWD")); _has_inc = True
     _gf_inc = sum(v for k, v in (snap.get("girlfriend_repayment_records", {}) or {}).items()
                   if str(k).startswith(_today_m) and isinstance(v, (int, float))) or 0
     if _gf_inc > 0:
-        _inc_parts.append(_inc_row.format(label="女友還款", amt=f"{_fmt(_gf_inc)} TWD"))
-    if not _inc_parts:
-        _inc_parts = ['<div class="text-slate-400">本月尚無入帳紀錄</div>']
+        _inc_parts.append(_inc_row.format(label="女友還款", amt=f"{_fmt(_gf_inc)} TWD")); _has_inc = True
+    if not _has_inc:
+        _inc_parts = ['<div class="text-slate-400">本月尚無入帳</div>']
+    # 待入帳段
+    _pend2 = []
+    if salary <= 0:
+        _pend2.append(("台電薪水", snap.get("monthly_salary", 39727) or 39727, "9/6 入帳"))
+    if _gf_inc <= 0:
+        _pend2.append(("女友還款", 6000, "9/5 入帳"))
+    for _k4, _v4 in (snap.get("rent_breakdown", {}) or {}).items():
+        _g4 = _rent_recv.get(_k4, 0)
+        if _g4 < _v4:
+            _pend2.append((_k4 + "房租", _v4 - _g4, ""))
+    if _pend2:
+        _inc_parts.append('<div class="text-xs font-bold text-amber-400 mt-2 mb-1">⏳ 待入帳</div>')
+        for _pl, _pv, _pn in _pend2:
+            _inc_parts.append(_pend_row.format(label=_pl, amt=f"{_fmt(_pv)} TWD", note=_pn))
     tpl = tpl.replace("__INCOME_LIST__", "".join(_inc_parts))
 
     # ── 八大連結動態化（2026-08-26：模板連結寫死 8/21-23 → glob 最新檔名）──
