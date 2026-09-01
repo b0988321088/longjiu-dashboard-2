@@ -23,7 +23,14 @@ def main():
     if LOG.exists():
         try:
             data = json.loads(LOG.read_text(encoding="utf-8"))
-            aug = data.get("2026-08", {})
+            # 2026-09-01 修正：月份動態化（原寫死 2026-08 → 9 月起讀不到）
+            _cm = date.today().strftime("%Y-%m")
+            aug = data.get(_cm, {})
+            if not (isinstance(aug, dict) and aug.get("balance_twd") is not None):
+                # fallback：讀最新月份的 key
+                _mm = [k for k in data.keys() if isinstance(k, str) and len(k) == 7]
+                if _mm:
+                    aug = data.get(max(_mm), {})
             if isinstance(aug, dict) and aug.get("balance_twd") is not None:
                 bal = float(aug["balance_twd"])
             upd = data.get("updated", "")

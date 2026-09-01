@@ -84,11 +84,13 @@ def get_fire(snap):
     fund = mdb.get("fund",0)
     rent = snap.get("rent_monthly_actual", 80100)
     # 2026-08-24 修正：租金用「當月已收」（rent_received_records 加總），非應收 80,100
+    # 2026-09-01 修正：月份動態化（原寫死 2026-08 → 9 月起顯示 0）
+    _tm = date.today().strftime("%Y-%m") if 'date' in dir() else __import__('datetime').date.today().strftime("%Y-%m")
     try:
         _rr = snap.get("rent_received_records", {}) or {}
         _rent_got = 0
         for _k, _v in _rr.items():
-            if str(_k).startswith("2026-08"):
+            if str(_k).startswith(_tm):
                 if isinstance(_v, dict):
                     _rent_got += sum(x for x in _v.values() if isinstance(x, (int, float)))
                 elif isinstance(_v, (int, float)):

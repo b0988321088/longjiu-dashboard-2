@@ -130,7 +130,7 @@ def main():
     # 管理費入帳狀態（2026-08-29：模板寫死「待入帳 0（應收 2,100）」→ 依 rent_received_records 動態）
     _fee = 0
     for k, v in (snap.get("rent_received_records", {}) or {}).items():
-        if str(k).startswith("2026-08") and isinstance(v, dict) and "管理費" in v:
+        if str(k).startswith(_today_m) and isinstance(v, dict) and "管理費" in v:
             _fee = v["管理費"] or 0
     if _fee > 0:
         rep["<span class=\"text-amber-400\">⏳ 待入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-slate-400\">0 TWD（應收 2,100）</span>"] = \
