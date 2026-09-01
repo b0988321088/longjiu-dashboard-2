@@ -239,42 +239,20 @@ def main():
             _evs = _evs.get("events", _evs.get("items", []))
         _td = date.today().isoformat()
         _wk = (date.today() + timedelta(days=7)).isoformat()
-        _ACT = ("🔴", "📞", "🏦")  # 需動作事件前綴（2026-09-01 收緊：排除 📋例行/🔍確認/📡 等觀察級）
-        # 2026-09-01 修正：✅ 已完成/已送出的事件不顯示；觀察/評估/準備性質不當「今日要做」
-        _soft_kw = ("觀察", "評估", "洽談", "準備", "前置", "戰略", "查證")
-        def _is_active(e):
-            _s = str(e.get("status", ""))
-            _it = str(e.get("item", ""))
-            if "✅" in _s or "已完成" in _s or "已送出" in _s:
-                return False
-            if any(k in _it for k in _soft_kw):
-                return False
-            return _it.startswith(_ACT)
+        # 2026-09-01 定案：優先級由資料欄位 importance 宣告（high=硬性要做 / medium=觀察 / low=例行），不再關鍵字猜
+        _is_active = lambda e: str(e.get("importance", "")) == "high" and "✅" not in str(e.get("status", "")) and "已完成" not in str(e.get("status", ""))
         _today_act = [e for e in _evs if str(e.get("date","")) == _td and _is_active(e)]
         _soon3 = sorted([e for e in _evs if _td < str(e.get("date","")) <= (date.today() + timedelta(days=3)).isoformat() and _is_active(e)],
                         key=lambda x: str(x.get("date","")))
         _next = sorted([e for e in _evs if _td < str(e.get("date","")) <= _wk and _is_active(e)],
                        key=lambda x: str(x.get("date","")))
         _parts = []
-        # 2026-09-01 定案：今日狀態列 = 「今日要做」（每天的重點清單 + 完成狀態），例行不列
-        _routine_kw = ("房租入帳", "月報產出", "週報產出", "例行", "動態月報", "覆蓋率重估")
-        _priority_kw = ("保單", "轉換", "質押", "還款", "撥款", "配息", "截止", "除息", "繳款")
-        # 今日重點 = 緊急事件（🔴 非軟性）+ 大事事件（含已完成/執行中，讓使用者對照完成狀態）
-        _today_key = []
-        for e in _evs:
-            if not isinstance(e, dict) or str(e.get("date","")) != _td:
-                continue
-            _it = str(e.get("item",""))
-            if any(k in _it for k in _routine_kw):
-                continue
-            _is_key = (str(_it).startswith(_ACT) and not any(k in _it for k in _soft_kw)) or any(k in _it for k in _priority_kw)
-            if _is_key:
-                _today_key.append(e)
-        _today_key.sort(key=lambda e: 0 if any(p in str(e.get("item","")) for p in _priority_kw) else 1)
+        # 今日重點 = importance=high 且日期=今天（含已完成，讓使用者對照完成狀態）
+        _today_key = [e for e in _evs if isinstance(e, dict) and str(e.get("date","")) == _td and str(e.get("importance","")) == "high" and str(e.get("item",""))]
         for e in _today_key[:3]:
             _st = str(e.get("status",""))
             _icon = "✅" if ("✅" in _st or "已完成" in _st) else ("🔄" if ("執行中" in _st or "待確認" in _st) else "⏳")
-            _st_short = _st.replace("✅","").replace("已完成","已完成").strip()[:14]
+            _st_short = _st.strip()[:14]
             _parts.append(f"🔴 今日要做：{str(e.get('item',''))[:40]}（{_icon} {_st_short}）")
         if not _parts:
             _parts.append("🟢 今日無重點事項")
