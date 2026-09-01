@@ -225,6 +225,13 @@ if _r9c.stdout:
     _lk = subprocess.run([sys.executable, str(BASE / "update_dashboard_links.py")], capture_output=True, text=True, timeout=30)
     if _lk.stdout.strip():
         print(_lk.stdout.strip().splitlines()[-1])
+    # 9c2. 儀表板同步檢查（2026-09-01：產出後自動驗證無舊值/佔位符/月份寫死 → 一次更新全同步）
+    _sync = subprocess.run([sys.executable, str(BASE / "check_dashboard_sync.py")],
+                           capture_output=True, text=True, timeout=60)
+    if _sync.returncode == 0:
+        print("✅ " + _sync.stdout.strip().splitlines()[-1])
+    else:
+        print("⚠️ 儀表板同步檢查 FAIL（檢查 index.html 舊值/佔位符）: " + _sync.stdout.strip()[:200])
 
 h = OUT.read_text(encoding="utf-8")
 print(f"✅ {OUT.name} — {len(h):,} bytes")
