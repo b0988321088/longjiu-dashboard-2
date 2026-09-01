@@ -227,6 +227,7 @@ def main():
         "got_total2": got_total,   # 當月已收合計（說明欄）
         "got_total": got_total,    # 當月已收合計卡片（2026-08-31 補：template 用 data-k="got_total"）
         "rent_got": rent_got,      # 租金已收
+        "salary_got": salary,      # 薪水已收（當月 salary_records；未入帳 = 0）
         "mon_sum": _mon,           # 監控卡片合計（現金正數排除外幣）
         # 2026-09-01 補齊：與 template JS V 表對齊（39 key 全注入 → 靜態 fallback 也是最新值）
         "ins_total": ins,
