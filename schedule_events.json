@@ -11,7 +11,7 @@
     "item": "大義街二三樓房租+管理費入帳",
     "amount": "21,000+管理費2,100",
     "status": "⏳ 待入帳",
-    "importance": "high"
+    "importance": "low"
   },
   {
     "date": "2026-08-25",
@@ -40,7 +40,7 @@
     "item": "大義街店面房租入帳（24,000，每月 1 日）",
     "amount": "24,000（已收）",
     "status": "✅ 已入帳（8/31 收 24,000）",
-    "importance": "high"
+    "importance": "low"
   },
   {
     "date": "2026-09-01",
@@ -61,7 +61,7 @@
     "item": "台電薪資入帳",
     "amount": "39,727",
     "status": "✅ 定期",
-    "importance": "high"
+    "importance": "low"
   },
   {
     "date": "2026-09-06",
@@ -183,7 +183,7 @@
     "date": "2027-02-01",
     "item": "🎯 留職停薪申請前夕總檢（2027/2 領年終→申請留職停薪試跑，非離職）：系統獨立性（不靠公職授信/12個月無薪資模擬）＋轉貸重組確認",
     "status": "📌 戰略轉型",
-    "importance": "high"
+    "importance": "low"
   },
   {
     "date": "2026-10-31",

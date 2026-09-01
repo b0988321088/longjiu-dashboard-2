@@ -252,7 +252,7 @@ def main():
         for e in _today_key[:3]:
             _st = str(e.get("status",""))
             _icon = "✅" if ("✅" in _st or "已完成" in _st) else ("🔄" if ("執行中" in _st or "待確認" in _st) else "⏳")
-            _st_short = _st.strip()[:14]
+            _st_short = _st.lstrip("✅ ").strip()[:14]
             _parts.append(f"🔴 今日要做：{str(e.get('item',''))[:40]}（{_icon} {_st_short}）")
         if not _parts:
             _parts.append("🟢 今日無重點事項")
