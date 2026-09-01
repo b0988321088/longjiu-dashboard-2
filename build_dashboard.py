@@ -240,10 +240,14 @@ def main():
         _td = date.today().isoformat()
         _wk = (date.today() + timedelta(days=7)).isoformat()
         _ACT = ("🔴", "📞", "📋", "📡", "🏦", "🔍", "📅")  # 需動作事件前綴
-        _today_act = [e for e in _evs if str(e.get("date","")) == _td and str(e.get("item","")).startswith(_ACT)]
-        _soon3 = sorted([e for e in _evs if _td < str(e.get("date","")) <= (date.today() + timedelta(days=3)).isoformat() and str(e.get("item","")).startswith(_ACT)],
+        # 2026-09-01 修正：✅ 已完成/已送出的事件不顯示在「今日/近3天/下一個」
+        def _is_active(e):
+            _s = str(e.get("status", ""))
+            return str(e.get("item", "")).startswith(_ACT) and "✅" not in _s and "已完成" not in _s and "已送出" not in _s
+        _today_act = [e for e in _evs if str(e.get("date","")) == _td and _is_active(e)]
+        _soon3 = sorted([e for e in _evs if _td < str(e.get("date","")) <= (date.today() + timedelta(days=3)).isoformat() and _is_active(e)],
                         key=lambda x: str(x.get("date","")))
-        _next = sorted([e for e in _evs if _td < str(e.get("date","")) <= _wk and str(e.get("item","")).startswith(_ACT)],
+        _next = sorted([e for e in _evs if _td < str(e.get("date","")) <= _wk and _is_active(e)],
                        key=lambda x: str(x.get("date","")))
         _parts = []
         if _today_act:
