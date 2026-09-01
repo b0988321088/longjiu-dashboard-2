@@ -126,6 +126,10 @@ def main():
         rep["__RADAR_POLICY__"] = "無"
     # ── 銀行水位（2026-08-26：模板寫死各銀行餘額 → 從 snapshot cash_detail 動態）──
     cd = snap.get("cash_detail", {}) or {}
+    # 2026-09-01 修正：資料日期動態（moneybook/ 最新帳戶 CSV 檔名；無則用 snapshot 日期）
+    import glob as _glob_mb
+    _mb_csv = sorted(_glob_mb.glob(str(BASE / "moneybook" / "Moneybook_帳戶_*.csv")))
+    _data_date = str(_mb_csv[-1]).replace("\\", "/").split("/")[-1].replace("Moneybook_帳戶_", "").replace(".csv", "") if _mb_csv else "20260901"
     taiwan = (cd.get("敦南Richart子帳戶", 0) or 0) + (cd.get("文心綜活儲存款-薪轉", 0) or 0) + (cd.get("敦南Richart數位一般", 0) or 0) + (cd.get("敦南Richart外幣", 0) or 0)
     rep["499,316"] = _fmt(taiwan)          # 台新合計
     rep["139,446"] = _fmt(cd.get("文心綜活儲存款-薪轉", 177765) or 0)  # 文心薪轉
@@ -151,9 +155,8 @@ def main():
     # 2026-08-28 修正：銀行水位全動態（Moneybook 8/27 帳戶）
     rep["177,599"] = _fmt((cd.get("營業部DAWHO活期儲蓄存款", 0) or 0) + (cd.get("市政分行活期儲蓄存款", 0) or 0))  # 永豐合計
     rep["50,104"] = _fmt(cd.get("臺幣綜存", 40950) or 0)              # 玉山（臺幣綜存）
-    rep["20260821_1"] = "20260831_1"       # 資料日期（8/31 Moneybook）
-    rep["20260829_1"] = "20260831_1"       # 資料日期（2026-08-31 補：8/30 template 殘留 8/29）
-    # 現金合計卡「監控卡片合計」（2026-08-29 補：原寫死 799,612 殘留 → 動態算 cash_detail 正數，排除外幣 key）
+    rep["20260821_1"] = _data_date      # 資料日期（動態：moneybook/ 最新帳戶 CSV）
+    rep["20260829_1"] = _data_date      # 資料日期（2026-09-01 修正：動態，不再寫死 8/31）    # 現金合計卡「監控卡片合計」（2026-08-29 補：原寫死 799,612 殘留 → 動態算 cash_detail 正數，排除外幣 key）
     _mon = sum(v for k, v in cd.items() if isinstance(v, (int, float)) and v > 0 and "外幣" not in k)
     rep["799,612"] = _fmt(_mon)
     # ── 資產穿透卡五桶市值（2026-08-29 補：快照版 fallback 全部寫死舊值）──
