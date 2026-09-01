@@ -346,6 +346,42 @@ def main():
     # ── 月度流入標題動態化（2026-09-01：原寫死「08月現金流入檢對核實」→ 當月）──
     tpl = tpl.replace("__INCOME_TITLE__", str(int(_today_m[5:])) + "月現金流入檢對核實")
 
+    # ── 戰術任務動態化（2026-09-01：P0 任務 + 本週計畫從 pending_decisions 生成，非 8/29 快照）──
+    try:
+        _pd2 = json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8"))
+        _lst = _pd2 if isinstance(_pd2, list) else []
+        if _lst:
+            _p0 = _lst[0]
+            _p0_st = str(_p0.get("status", "") or "")[:90]
+            _p0_tt = str(_p0.get("title", "") or "")[:90]
+            _p0_dt = str(_p0.get("detail", "") or "")[:150]
+            _p0_html = (
+                '<div class="luxury-card p-6 border-l-4 border-red-500 space-y-4">'
+                '<div class="flex justify-between items-start">'
+                '<div><span class="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded font-mono font-bold">P0 戰略任務</span>'
+                f'<h3 class="text-md font-bold text-white mt-1">✅ {_p0_st}｜{_p0_tt}</h3></div>'
+                f'<span class="text-xs text-slate-400 font-mono">{str(_p0.get("date", ""))[:10]}</span></div>'
+                '<div class="bg-slate-900/60 p-4 rounded-xl space-y-2 border border-slate-800 text-xs">'
+                f'<p class="font-bold text-yellow-500">✅ 執行狀態：{_p0_st[:60]}</p>'
+                f'<p class="text-slate-300 leading-relaxed font-mono">{_p0_dt}</p></div></div>'
+            )
+            tpl = tpl.replace("__P0_TASK__", _p0_html)
+            _tact_rows = []
+            for _d in _lst[:6]:
+                _st = str(_d.get("status", "") or "").replace("：", ":")[:34]
+                _tt = str(_d.get("title", "") or "")[:26]
+                _tact_rows.append(
+                    f'<div class="p-2 bg-slate-900/40 rounded border border-slate-800 flex justify-between">'
+                    f'<span class="text-slate-300">{_tt}</span><span class="text-amber-400 font-mono">{_st}</span></div>'
+                )
+            tpl = tpl.replace("__TACTICAL_PLAN__",
+                '<div class="luxury-card p-6 space-y-4"><h3 class="text-md font-bold text-white">🗓️ 本週計畫（動態）</h3>'
+                '<div class="space-y-2 text-xs">' + "".join(_tact_rows) + '</div></div>')
+        else:
+            tpl = tpl.replace("__P0_TASK__", "").replace("__TACTICAL_PLAN__", "")
+    except Exception:
+        tpl = tpl.replace("__P0_TASK__", "").replace("__TACTICAL_PLAN__", "")
+
     # ── 八大連結動態化（2026-08-26：模板連結寫死 8/21-23 → glob 最新檔名）──
     import glob as _glob
     _link_map = {
