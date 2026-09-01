@@ -3,6 +3,7 @@
 整合進 regenerate_report.py（產出後自動跑）；也可獨立執行：python check_dashboard_sync.py
 失敗 exit 1（regenerate 會印警告），全過 exit 0。"""
 import datetime
+import json
 import re
 import sys
 from pathlib import Path
@@ -61,6 +62,25 @@ if not (0 < html.find('id="tab-r1"') < html.find("<main")):
 _p4, _p5, _m2 = html.find('id="panel-4"'), html.find('id="panel-5"'), html.find("</main>")
 if not (0 < _m2 and _p4 > 0 and _p5 > 0 and _p4 < _m2 and _p5 < _m2):
     fails.append("panel-4/5 不在 main 內（分頁打不開）")
+
+# 8. 收入核對清單兩段制（2026-09-01：✅已收 + ⏳待收 + 各自合計）
+if "✅ 已收（" not in html:
+    fails.append("收入清單缺「✅ 已收（合計）」段")
+if "⏳ 待收（" not in html:
+    fails.append("收入清單缺「⏳ 待收（合計）」段")
+
+# 9. 穿透卡非載入中（2026-09-01：build 靜態渲染，不依賴 JS）
+_i_pen = html.find('id="pen-card"')
+if _i_pen < 0 or "資產穿透" not in html[_i_pen:_i_pen + 300]:
+    fails.append("穿透卡未靜態渲染（資產穿透缺失）")
+
+# 10. 債物流出含沙鹿（2026-09-01：snapshot debt_schedule）
+try:
+    _snap_now = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+    if not any("沙鹿" in str(d.get("項目", "")) for d in _snap_now.get("debt_schedule", [])):
+        fails.append("debt_schedule 缺沙鹿租屋")
+except Exception:
+    pass
 
 if fails:
     print("❌ 儀表板同步檢查失敗:")
