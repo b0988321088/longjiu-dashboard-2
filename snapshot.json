@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-09-01T11:20:54.910333",
+  "generated_at": "2026-09-01T11:25:35.592149",
   "version": "v5.0.10-true-value-correction",
   "date": "2026-08-31",
-  "total_assets": 26101608,
+  "total_assets": 26073380,
   "total_liabilities": 30138253,
   "net_worth": -4011817,
   "debt_ratio": 50.1,
@@ -71,9 +71,9 @@
   "cc_low": 35000,
   "cc_mid": 38000,
   "cc_high": 42000,
-  "firstjin_fl65_current_value": 1926880,
+  "firstjin_fl65_current_value": 1921517,
   "allianz_ab_current_value": 7712967,
-  "firstjin_current_value": 1926880,
+  "firstjin_current_value": 1921517,
   "last_mb_sync": "2026-08-20",
   "last_mb_sync_note": "pending SCB payoff update + 0050 dividend confirmation",
   "bank_assets_moneybook": 753388,
@@ -564,28 +564,28 @@
     },
     "actual_pct": {
       "台股市值型成長": 7.6,
-      "美股市值型成長": 43.3,
+      "美股市值型成長": 43.2,
       "防守型配息": 3.9,
       "債券": 23.0,
       "現金/安全網": 22.3,
       "美股市值型成長_科技": 14.8,
-      "美股市值型成長_非科技": 28.5
+      "美股市值型成長_非科技": 28.4
     },
     "gaps": {
       "台股市值型成長": -2.4,
-      "美股市值型成長": 3.3,
+      "美股市值型成長": 3.2,
       "防守型配息": -16.1,
       "債券及安全現金": 15.3,
       "科技曝險": -0.2
     },
     "actual_twd": {
       "台股市值型成長": 1972316.0,
-      "美股市值型成長": 11295756.0,
+      "美股市值型成長": 11270819.0,
       "防守型配息": 1026391.0,
-      "債券": 5996053.0,
+      "債券": 5992762.0,
       "現金/安全網": 5811092.0,
       "美股市值型成長_科技": 3855123,
-      "美股市值型成長_非科技": 7440633
+      "美股市值型成長_非科技": 7415696
     },
     "alert": "台股不足2.4pp；現金+債券超標15.3pp"
   },
@@ -756,11 +756,11 @@
       "M&G入息": 578768,
       "PIMCO收益增長": 1425755
     },
-    "firstjin_total": 1949745,
+    "firstjin_total": 1921517,
     "note": "2026-09-01 安聯截圖真值（A 5,033,488 總覽 + B 2,679,479 明細 = 7,712,967；A 單成分按總值縮放待明細；B 單明細 安聯收益成長495,810/摩根179,146/M&G578,768/PIMCO1,425,755）"
   },
   "allianz_ab": 7712967,
-  "firstjin": 1926880,
+  "firstjin": 1921517,
   "dividend_records": {
     "2026-08": {
       "安聯保單撥回": 76931,
@@ -847,7 +847,7 @@
   },
   "firstjin_detail": {
     "cost": 2000000,
-    "base_value_before_dividend": 1926880,
+    "base_value_before_dividend": 1921517,
     "dividend_this_month": 0,
     "conversion": "FJ33 摩根投資基金-多重收益-JPM多重收益(美元對沖)-A股(每月派息) 100% 轉換（9/1 申請，原 FA81 聯博AD月配美元；趕 9/8 摩根配息 T+4 截止）",
     "conversion_history": [
@@ -1421,10 +1421,10 @@
   ],
   "allianz_a": 5033488,
   "allianz_b": 2679479,
-  "firstjin_fund_name": "FJ33 摩根投資基金-多重收益-JPM多重收益(美元對沖)-A股(每月派息)",
+  "firstjin_fund_name": "FA81 聯博AD月配(美元)（9/1 申請轉 FJ33 摩根月配，T+4 生效中）",
   "insurance_label_b": "第一金FA81聯博（原FL65，8/21轉換）",
-  "insurance_current_value": 9673104,
-  "insurance_total": 9673104,
+  "insurance_current_value": 9644876,
+  "insurance_total": 9644876,
   "pending_income": [
     {
       "source": "台電標案合作（上境工程）利潤分成",
@@ -1454,7 +1454,7 @@
   "fund_dividend_monthly": 0,
   "fund_market": 12745676,
   "fund_total_market_value": 12745676,
-  "insurance": 9673104,
+  "insurance": 9644876,
   "professional_investor": {
     "pi_status": "審核中",
     "note": "8/21 申請（聯博100萬+MMF500萬入帳後送件）；**14 個工作天**（9/1 使用者確認）→ 預期 9/10 核可；核可前禁 Lombard 質押",
