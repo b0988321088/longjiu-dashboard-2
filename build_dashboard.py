@@ -330,7 +330,7 @@ def main():
     except Exception as _e:
         tpl = tpl.replace("__RADAR_SIG__", "雷達暫無資料").replace("__POLICY_NOTES__", "政策面暫無資料")
 
-    # 交易計畫（2026-09-01：從 pending_decisions 動態，非 8/29 統籌版快照）
+    # ── 交易計畫（2026-09-01：從 pending_decisions 動態，非 8/29 統籌版快照）──
     try:
         _pd = json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8"))
         _plan_items = []
@@ -342,6 +342,9 @@ def main():
         tpl = tpl.replace("__TRADE_PLAN__", f"🎯 本週交易計畫（動態）：{_plan_str}")
     except Exception:
         tpl = tpl.replace("__TRADE_PLAN__", "交易計畫暫無資料")
+
+    # ── 月度流入標題動態化（2026-09-01：原寫死「08月現金流入檢對核實」→ 當月）──
+    tpl = tpl.replace("__INCOME_TITLE__", str(int(_today_m[5:])) + "月現金流入檢對核實")
 
     # ── 八大連結動態化（2026-08-26：模板連結寫死 8/21-23 → glob 最新檔名）──
     import glob as _glob
