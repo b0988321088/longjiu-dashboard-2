@@ -438,11 +438,12 @@ def main():
     )
     _inc_parts.append('<div class="text-xs font-bold text-emerald-400 mb-1 mt-1">✅ 已入帳</div>')
     _has_inc = False
+    _inc_total = 0
     if salary > 0:
-        _inc_parts.append(_inc_row.format(label="台電薪水", amt=f"{_fmt(salary)} TWD")); _has_inc = True
+        _inc_parts.append(_inc_row.format(label="台電薪水", amt=f"{_fmt(salary)} TWD")); _has_inc = True; _inc_total += salary
     for _k, _v in _dr.items():
         if isinstance(_v, (int, float)) and _v > 0:
-            _inc_parts.append(_inc_row.format(label=_k, amt=f"{_fmt(_v)} TWD")); _has_inc = True
+            _inc_parts.append(_inc_row.format(label=_k, amt=f"{_fmt(_v)} TWD")); _has_inc = True; _inc_total += _v
     # 當月房租已收明細（rent_received_records）
     _rent_recv = {}
     for _d, _v in (snap.get("rent_received_records", {}) or {}).items():
@@ -454,13 +455,15 @@ def main():
                 _rent_recv["房租"] = _rent_recv.get("房租", 0) + _v
     for _k3, _v3 in _rent_recv.items():
         if _v3 > 0:
-            _inc_parts.append(_inc_row.format(label=_k3 + "房租", amt=f"{_fmt(_v3)} TWD")); _has_inc = True
+            _inc_parts.append(_inc_row.format(label=_k3 + "房租", amt=f"{_fmt(_v3)} TWD")); _has_inc = True; _inc_total += _v3
     _gf_inc = sum(v for k, v in (snap.get("girlfriend_repayment_records", {}) or {}).items()
                   if str(k).startswith(_today_m) and isinstance(v, (int, float))) or 0
     if _gf_inc > 0:
-        _inc_parts.append(_inc_row.format(label="女友還款", amt=f"{_fmt(_gf_inc)} TWD")); _has_inc = True
+        _inc_parts.append(_inc_row.format(label="女友還款", amt=f"{_fmt(_gf_inc)} TWD")); _has_inc = True; _inc_total += _gf_inc
     if not _has_inc:
         _inc_parts = ['<div class="text-slate-400">本月尚無入帳</div>']
+    else:
+        _inc_parts[0] = f'<div class="text-xs font-bold text-emerald-400 mb-1 mt-1">✅ 已入帳（{_fmt(_inc_total)} TWD）</div>'
     # 待入帳段
     _pend2 = []
     if salary <= 0:
@@ -472,7 +475,8 @@ def main():
         if _g4 < _v4:
             _pend2.append((_k4 + "房租", _v4 - _g4, ""))
     if _pend2:
-        _inc_parts.append('<div class="text-xs font-bold text-amber-400 mt-2 mb-1">⏳ 待入帳</div>')
+        _pend_total = sum(x[1] for x in _pend2)
+        _inc_parts.append(f'<div class="text-xs font-bold text-amber-400 mt-2 mb-1">⏳ 待入帳（{_fmt(_pend_total)} TWD）</div>')
         for _pl, _pv, _pn in _pend2:
             _inc_parts.append(_pend_row.format(label=_pl, amt=f"{_fmt(_pv)} TWD", note=_pn))
     tpl = tpl.replace("__INCOME_LIST__", "".join(_inc_parts))
