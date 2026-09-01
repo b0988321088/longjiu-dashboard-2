@@ -250,16 +250,18 @@ def main():
         _next = sorted([e for e in _evs if _td < str(e.get("date","")) <= _wk and _is_active(e)],
                        key=lambda x: str(x.get("date","")))
         _parts = []
-        # 2026-09-01 修正：今日狀態列 = 需動作 + 執行中/待確認（保單轉換 T+4 必須提醒，不能只顯示「無需操作」）
+        # 2026-09-01 修正：今日狀態列 = 需動作 + 執行中/待確認 + 今日完成，全列（保單轉換等大事必須顯示）
         _pending_kw = ("執行中", "待確認", "已送出", "還款中", "待入帳")
+        _done_kw = ("✅", "已完成")
         _today_pending = [e for e in _evs if str(e.get("date","")) == _td and any(k in str(e.get("status","")) for k in _pending_kw)]
-        if _today_act:
-            for e in _today_act[:2]:
-                _parts.append(f"🔴 今日要做：{str(e.get('item',''))[:48]}")
-        elif _today_pending:
-            for e in _today_pending[:2]:
-                _parts.append(f"📌 執行中：{str(e.get('item',''))[:40]}（{str(e.get('status',''))[:12]}）")
-        else:
+        _today_done = [e for e in _evs if str(e.get("date","")) == _td and any(k in str(e.get("status","")) for k in _done_kw) and str(e.get("item",""))]
+        for e in _today_act[:2]:
+            _parts.append(f"🔴 今日要做：{str(e.get('item',''))[:48]}")
+        for e in _today_pending[:2]:
+            _parts.append(f"📌 執行中：{str(e.get('item',''))[:40]}（{str(e.get('status',''))[:12]}）")
+        for e in _today_done[:2]:
+            _parts.append(f"✅ 今日完成：{str(e.get('item',''))[:48]}")
+        if not _parts:
             _parts.append("🟢 今日無需操作")
         if _soon3:
             _d3 = " ｜ ".join(f"{str(e.get('date',''))[5:]} {str(e.get('item',''))[:26]}" for e in _soon3[:3])
