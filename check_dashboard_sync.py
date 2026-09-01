@@ -48,6 +48,20 @@ for kw in ["龍九健康度", "雷達更新", "本週交易計畫（動態）", 
 if "sys-date" not in html:
     fails.append("系統時間非 JS 動態")
 
+# 7. 分頁結構（2026-09-01 血淚：改 template 少閉合 → 全分頁失效 → 必驗）
+for i in range(1, 6):
+    if f'id="tab-r{i}"' not in html:
+        fails.append(f"radio tab-r{i} 缺失")
+    if f'id="panel-{i}"' not in html:
+        fails.append(f"panel-{i} 缺失")
+    if f"#tab-r{i}:checked ~ main #panel-{i}" not in html:
+        fails.append(f"CSS 切換規則 tab-r{i} 缺失")
+if not (0 < html.find('id="tab-r1"') < html.find("<main")):
+    fails.append("radio 不在 main 前（CSS ~ 選擇器失效）")
+_p4, _p5, _m2 = html.find('id="panel-4"'), html.find('id="panel-5"'), html.find("</main>")
+if not (0 < _m2 and _p4 > 0 and _p5 > 0 and _p4 < _m2 and _p5 < _m2):
+    fails.append("panel-4/5 不在 main 內（分頁打不開）")
+
 if fails:
     print("❌ 儀表板同步檢查失敗:")
     for f in fails:
