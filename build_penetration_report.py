@@ -199,8 +199,10 @@ if _fb:
             # 成分穿透（月報 2026/6/30）：股 80.75 / 債 14.03 / 現 5.21（現金併入美股，不污染現金桶）
             _split = f"🌎 美股 {round(_fv2*0.8596):,} (85.96% 含現金5.21%)<br>📈 債券 {round(_fv2*0.1403):,} (14.03%)"
         elif "聯博全球多元收益" in _fn:
-            # 成分穿透（8/20 使用者提供）：債 55 / 股 45 / 科技 2.5%
-            _split = f"📈 債券 {round(_fv2*0.55):,} (55%)<br>🌎 美股 {round(_fv2*0.45):,} (45%)<br><span style='font-size:11px;color:#94a3b8'>科技 2.5%</span>"
+            # 成分穿透（2026-09-01 統一：8/24 月報真值 股38.63/債61.37，與第一金 FA81 同口徑 — 原硬編碼 55/45 修正）
+            _ab_c = (snap.get("fund_components_09", {}).get("聯博全球多元AD", {}) or {})
+            _ab_b = float(_ab_c.get("債", 0.6137)); _ab_e = float(_ab_c.get("股", 0.3863))
+            _split = f"📈 債券 {round(_fv2*_ab_b):,} ({_ab_b*100:.0f}%)<br>🌎 美股 {round(_fv2*_ab_e):,} ({_ab_e*100:.0f}%)<br><span style='font-size:11px;color:#94a3b8'>科技 2.5%</span>"
         if "台新美日台" in _fn or "貝萊德" in _fn or "安聯AI" in _fn or "聯博" in _fn or "摩根" in _fn or "M&G" in _fn or "安聯收益成長" in _fn or "富達" in _fn:
             _cat = "🌎 美股"; _fund_us += _fv2
         elif "0050連結" in _fn or "統一奔騰" in _fn or "路博邁" in _fn or "安聯台灣科技" in _fn:
@@ -242,7 +244,7 @@ _fj_er = float(_fj_ratios.get("股票", 0.45))
 w(f"<tr><td><b>第一金FA81（{_fj_name[:32]}…）</b></td><td class='num'>{_fj_v:,}</td><td>債券 {_fj_br*100:.0f}% / 美股 {_fj_er*100:.0f}%</td></tr>")
 w(f"<tr style='border-top:2px solid #3b82f6;font-weight:700'><td>保險合計</td><td class='num'>{ins:,}</td><td></td></tr>")
 w("</tbody></table>")
-w("<p style='font-size:12px;color:#64748b;margin-top:8px'>成分債券比例：安聯收益成長 35% / M&G入息 55% / 安聯AI收益成長 50% / PIMCO收益增長 48%／貝萊德系列 100% 美股；第一金FA81（聯博全球多元收益）債券55%/美股45%（8/21 轉換）</p>")
+w("<p style='font-size:12px;color:#64748b;margin-top:8px'>成分債券比例：安聯收益成長 35% / M&G入息 55% / 安聯AI收益成長 50% / PIMCO收益增長 48%／貝萊德系列 100% 美股；第一金FA81（聯博全球多元收益）債券61%/美股39%（8/24 月報真值，8/21 轉換）</p>")
 w("</div>")
 
 # 5. Calculation methodology
@@ -261,7 +263,7 @@ w("• 安聯收益成長 → 32% 債券 / 68% 美股（晨星 32.07%）<br>")
 w("• 摩根JPM多重收益 → 47% 債券 / 53% 美股（晨星 46.69%，8/14 取代 M&G/安聯AI）<br>")
 w("• PIMCO收益增長 → 48% 債券 / 52% 美股（有效權重，2026/3 資產配置）<br>")
 w("• 貝萊德A10 → 100% 美股<br>")
-w("• 第一金FA81（聯博全球多元收益）→ 債券55%/美股45%（8/21 轉換）<br>")
+w("• 第一金FA81（聯博全球多元收益）→ 債券61%/美股39%（8/24 月報真值，8/21 轉換）<br>")
 w("• （M&G入息 55% / 安聯AI 50% — 2026-08-14 已轉出，保留僅供回溯）<br><br>")
 w("<b>Step 3：匯總</b><br>")
 w("台股 = 證券台股（保險無台股部位）<br>")
