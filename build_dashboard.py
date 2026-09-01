@@ -26,18 +26,25 @@ def main():
     mdb = snap.get("monthly_dividend_breakdown", {}) or {}
     # 2026-08-29 修正：配息一律用 dividend_records 當月實收（mdb 是常態預估口徑，
     # 之前用 mdb 覆蓋模板實收值 → 第一金顯示 35,583 常態被標「已入帳」，實收應為 25,538）
-    _dr = snap.get("dividend_records", {}).get("2026-08", {}) or {}
+    # 2026-09-01 修正：月份動態化（原寫死 2026-08 → 9月仍顯示 8 月配息 138,627）
+    import datetime as _dt
+    _today_m = _dt.date.today().strftime("%Y-%m")
+    _dr = snap.get("dividend_records", {}).get(_today_m, {}) or {}
     firstjin_div = sum(v for k, v in _dr.items() if "第一金" in k and isinstance(v, (int, float))) or 0
     az_div = _dr.get("安聯保單撥回", 0) or 0
     div_ins = az_div + firstjin_div
     div_total = sum(v for k, v in _dr.items() if isinstance(v, (int, float))) or 0
     expense = snap.get("monthly_expense", 162781) or 162781
-    salary = 39727
+    # 薪水（當月已收，salary_records 動態）
+    salary = 0
+    for k, v in (snap.get("salary_records", {}) or {}).items():
+        if str(k).startswith(_today_m):
+            salary += (v.get("amount", 0) if isinstance(v, dict) else v) or 0
 
-    # 租金已收（8 月）
+    # 租金已收（當月）
     rent_got = 0
     for k, v in (snap.get("rent_received_records", {}) or {}).items():
-        if str(k).startswith("2026-08"):
+        if str(k).startswith(_today_m):
             if isinstance(v, dict):
                 rent_got += sum(x for x in v.values() if isinstance(x, (int, float)))
             elif isinstance(v, (int, float)):
