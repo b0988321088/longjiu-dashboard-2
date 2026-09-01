@@ -16,6 +16,9 @@ def _fmt(n):
 def main():
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     tpl = (BASE / "index_template.html").read_text(encoding="utf-8")
+    # 2026-09-01 修正：系統時間寫死（原模板 2026-08-29）→ 動態當天
+    import datetime as _dt
+    tpl = tpl.replace("系統時間：2026-08-29", "系統時間：" + _dt.date.today().strftime("%Y-%m-%d"))
 
     # ── 從 snapshot 計算真值 ──
     cash = snap.get("cash_total", 0) or 0
