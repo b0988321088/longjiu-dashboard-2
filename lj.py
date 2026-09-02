@@ -6,6 +6,7 @@ lj.py — longjiu_system CLI 入口
   python lj.py slide     # 產出簡報 (slide_engine.py)
   python lj.py alert     # 配置偏離檢查 (allocation_alert.py)
   python lj.py check     # 系統健康檢查 (preflight_check.py)
+  python lj.py query     # 一鍵查詢關鍵財務欄位（snapshot 真值總覽）
   python lj.py fix KEY=VALUE  # 快速修正單一欄位 (safe_update.py)
 """
 import sys, os
@@ -44,16 +45,36 @@ def fix_cmd(args):
     cmd = f'python {BASE}/safe_update.py --plan ' + ' '.join(pairs)
     os.system(cmd)
 
+def query_cmd():
+    """lj.py query — 一鍵查詢關鍵財務欄位（snapshot 真值總覽，2026-09-02 新增）"""
+    import json
+    snap = json.load(open(os.path.join(BASE, 'snapshot.json'), encoding='utf-8'))
+    pen = snap.get('penetration', {}).get('actual_pct', {})
+    liab = snap.get('total_liabilities', snap.get('負債總額', 0))
+    print(f"📅 {snap.get('date', '?')}  總資產 {snap.get('total_assets', 0):,.0f} | 負債 {liab:,.0f}")
+    print(f"現金 {snap.get('cash_total', 0):,.0f} | 證券 {snap.get('securities_total_market_value', 0):,.0f}"
+          f" | 基金 {snap.get('fund_market', 0):,.0f} | 保險 {snap.get('insurance_total', 0):,.0f}")
+    print(f"安聯 A {snap.get('allianz_a', 0):,.0f} + B {snap.get('allianz_b', 0):,.0f}"
+          f" | 第一金 {snap.get('insurance_breakdown', {}).get('firstjin_total', 0):,.0f}")
+    print(f"國泰基金 {snap.get('funds_cathay', 0):,.0f} | 鉅亨 {snap.get('fund_market', 0) - snap.get('funds_cathay', 0):,.0f}")
+    print(f"穿透: 台股 {pen.get('台股市值型成長', 0)}% | 美股 {pen.get('美股市值型成長', 0)}%"
+          f" | 防守 {pen.get('防守型配息', 0)}% | 債券 {pen.get('債券', 0)}% | 現金 {pen.get('現金/安全網', 0)}%")
+    print(f"本月配息已收 {snap.get('monthly_dividend', snap.get('dividend_month_actual', 0)):,.0f}"
+          f" | 房租已收 {snap.get('rent_got', 0):,.0f}")
+
+
 def main():
     if len(sys.argv) < 2:
         print('longjiu_system CLI 入口')
         print()
         for k, v in CMDS.items():
             print(f'  python lj.py {k:12s}  →  {v.split("#")[-1].strip()}')
+        print(f'  python lj.py query   →  一鍵查詢關鍵財務欄位')
         print(f'  python lj.py fix ...  →  快速修正欄位')
         print()
         print('範例：')
         print('  python lj.py check')
+        print('  python lj.py query')
         print('  python lj.py fix allianz_combined=7765339')
         return
 
@@ -61,7 +82,9 @@ def main():
     if cmd in ('--help', '-h') or cmd == '':
         os.system(f'python {sys.argv[0]}')
         return
-    if cmd in CMDS:
+    if cmd == 'query':
+        query_cmd()
+    elif cmd in CMDS:
         if cmd == 'backup' and len(sys.argv) > 2:
             # backup 支援動態參數
             args = ' '.join(f'"{a}"' for a in sys.argv[2:])
