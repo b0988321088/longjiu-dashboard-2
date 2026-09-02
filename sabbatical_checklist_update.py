@@ -33,6 +33,26 @@ def traffic_light(coverage, stress_cov):
         return "🟡 基本安全＋水庫防守（正常達標但壓力情境 <100%）"
     return "🔴 尚未達留停安全（覆蓋率或壓力情境未達）"
 
+# 2027/2 財務驗收等級（2026-09-02 定案）：
+# 判斷權重：當月 < 3個月趨勢 < 壓力情境 < 現金水位
+# A = 正常≥150 + 壓力≥100 + 3月趨勢無惡化 + 現金≥70萬安全網
+# B = 正常≥120 但未全達 A（延後/先補水庫）
+# C = 正常<120 或 壓力明顯<100 且無改善趨勢
+def acceptance_level(coverage, stress_cov, cash, months, trend):
+    cash_ok = cash >= 700000
+    trend_ok = len(months) >= 3 and all(
+        trend[m]["生活費覆蓋率"] >= trend.get(months[i-1], {}).get("生活費覆蓋率", 0) - 2
+        for i, m in enumerate(months[1:], 1) if m in trend and months[i-1] in trend
+    ) if months else False
+    if coverage >= 150 and stress_cov >= 100 and cash_ok and trend_ok:
+        return "A級 🟢 可以放心留停"
+    if coverage >= 150:
+        why = "壓力情境未破 100%" if stress_cov < 100 else ("現金水位不足" if not cash_ok else "趨勢未滿 3 個月")
+        return f"B級 🟡 可以留但先降風險（{why}）"
+    if coverage >= 120:
+        return "B級 🟡 持續改善中（尚未達 150%，延後或先補水庫）"
+    return "C級 🔴 繼續留台電，先修財務結構"
+
 def compute_kpis(snap):
     exp = snap.get("monthly_expense", 162781)
     pi = snap.get("passive_income", {})
@@ -78,12 +98,18 @@ def main():
                  "壓力情境覆蓋率": cl["記錄"][m].get("壓力情境覆蓋率"),
                  "被動現金流": cl["記錄"][m].get("被動現金流")} for m in months}
     cl["趨勢_近3月"] = trend
+    # 2027/2 財務驗收等級（權重：當月 < 趨勢 < 壓力 < 現金水位）
+    lvl = acceptance_level(kpis["生活費覆蓋率"], kpis["壓力情境覆蓋率"], kpis["現金水位"], months, trend)
+    cl["驗收等級"] = {"月份": month, "等級": lvl, "權重": "當月 < 3個月趨勢 < 壓力情境 < 現金水位"} 
+    kpis["驗收等級"] = lvl
+    cl["記錄"][month] = kpis
 
     SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"✅ 留停驗收表 {month} 已更新（寫回 snapshot.sabbatical_checklist）")
     print(f"   被動 {kpis['被動現金流']:,} / 必要生活費 {kpis['每月必要生活費']:,} → 覆蓋率 {kpis['生活費覆蓋率']}%")
     print(f"   壓力情境 {kpis['壓力情境覆蓋率']}%｜極端缺口 {kpis['極端情境']['缺口']:,}/月 → 水庫撐 {kpis['極端情境']['水庫撐月數']} 個月")
     print(f"   {kpis['紅綠燈']}")
+    print(f"   驗收等級：{kpis.get('驗收等級', lvl)}")
     if len(months) >= 2:
         covs = [cl["記錄"][m].get("生活費覆蓋率") for m in months]
         print(f"   覆蓋率趨勢: " + " → ".join(f"{m[2:]}月 {c}%" for m, c in zip(months, covs)))
