@@ -1,0 +1,3 @@
+#!/bin/bash
+# Git post-commit hook (active via core.hooksPath=.githooks)
+python "$(dirname "$0")/post-commit.py"
