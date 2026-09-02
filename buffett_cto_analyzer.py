@@ -419,10 +419,12 @@ def main(**kwargs):
                 msg += f"\n  {p['產業']}: {p['金額']:,}（{p['節奏']}）"
         except Exception as _e:
             msg += f"\n\n⚠️ 交易計畫讀取失敗：{_e}"
-        # 本週操作執行紀錄（2026-08-26：通知也註記操作紀錄）
+        # 本週操作執行紀錄（動態讀取最新 weekly_ops_closure_*）
         try:
             import json as _json
-            _ops = _json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")).get("weekly_ops_closure_0826", {})
+            _snap_data = _json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+            _ops_keys = sorted([k for k in _snap_data.keys() if k.startswith("weekly_ops_closure_")])
+            _ops = _snap_data.get(_ops_keys[-1], {}) if _ops_keys else {}
             if _ops and _ops.get("執行清單"):
                 msg += f"\n\n📋 本週操作執行紀錄（{_ops.get('期間','')}）："
                 for x in _ops.get("執行清單", []):
