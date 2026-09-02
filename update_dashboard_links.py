@@ -26,6 +26,7 @@ _LINK_PATTERNS = [
     ("weekly_report_", ".html", None),
     ("dynamic_monthly_review_", ".html", "month"),
     ("emergency_report_", ".html", None),
+    ("retirement_plan_", ".html", None),
     ("rebalance_summary_", ".md", None),
     ("buffett_cto_report_", ".md", None),
     ("industry_penetration_", ".png", None),
