@@ -26,21 +26,21 @@ else:
 
 # 定義一個清理函數，在腳本退出時檢查並還原
 def cleanup_on_exit():
-    # 這裡的 os.system("exit_code") 不會返回實際的退出碼，
-    # 需要判斷整個腳本的成功或失敗。
-    # 暫時以 errors 列表是否為空作為判斷依據。
-    if errors: # 如果 errors 列表非空，表示同步失敗
-        print(f"❌ 同步失敗，還原 {SNAPSHOT_FILE} ...", end=" ")
+    # 2026-09-02 核准：同步失敗「不自動還原」snapshot —
+    # 自動還原曾吃掉手動/代理未提交的改動（9/2 上午實踩 2 次險況），
+    # 改為保留現況 + 保留備份檔，由人工決定是否還原。
+    if errors:  # errors 列表非空 = 同步失敗
+        print(f"❌ 同步失敗（不自動還原 snapshot）")
         if os.path.exists(SNAPSHOT_BACKUP_FILE):
-            os.system(f"cp {SNAPSHOT_BACKUP_FILE} {SNAPSHOT_FILE}")
-            print("✅ OK")
+            print(f"   ⚠️ 備份保留: {SNAPSHOT_BACKUP_FILE}")
+            print(f"   ⚠️ 如需手動還原: cp {SNAPSHOT_BACKUP_FILE} {SNAPSHOT_FILE}")
         else:
-            print(f"⚠️ {SNAPSHOT_BACKUP_FILE} 不存在，無法還原")
+            print(f"   ⚠️ {SNAPSHOT_BACKUP_FILE} 不存在，無法提供備份")
     else:
         print(f"✅ 同步成功，不需還原 {SNAPSHOT_FILE}")
 
-    # 清理備份文件
-    if os.path.exists(SNAPSHOT_BACKUP_FILE):
+    # 清理備份文件（僅成功時；失敗時保留供人工還原）
+    if not errors and os.path.exists(SNAPSHOT_BACKUP_FILE):
         os.system(f"rm {SNAPSHOT_BACKUP_FILE}")
 
 # 註冊清理函數，確保無論腳本如何退出都能執行

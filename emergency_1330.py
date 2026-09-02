@@ -153,15 +153,30 @@ def generate_emergency_report(taiex_data=None, etf_0050_data=None, etf_00878_dat
     print(f"✅ 緊急應變報告已產出至 emergency_taiex_report_{today}.html")
     # 同時存一份給 Railway 用的命名（LLM agent 版命名格式）
     # INC-134 穿透注入（2026-08-24 修正：13:00 台股版缺穿透真值 → check 失敗）
+    # 2026-09-02 核准：改「即時重算」穿透（calc_penetration），不讀快取 actual_pct —
+    # 快取在 sync_all 內由穿透報告步驟才寫入，順序顛倒時會用到上一輪舊值（9/2 實踩 3 次）
     try:
         import json as _json
+        from update_all import calc_penetration as _calc_pen
         _snap = _json.loads((LJ / "snapshot.json").read_text(encoding="utf-8"))
-        _pp = _snap.get("penetration", {}).get("actual_pct", {})
         _tt = _snap.get("total_assets", 0)
-        _pen_card = f"<h3>📊 資產穿透（{today}）</h3><p>總資產 <b>{_tt:,.0f}</b> TWD｜台股 {_pp.get('台股市值型成長',0):.1f}%｜美股 {_pp.get('美股市值型成長',0):.1f}%｜防守 {_pp.get('防守型配息',0):.1f}%｜債券 {_pp.get('債券',0):.1f}%｜現金 {_pp.get('現金/安全網',0):.1f}%</p>"
+        _pen = _calc_pen(_snap.get("cash_total", 0) or 0, _snap.get("insurance_total", 0) or 0,
+                         _snap.get("securities_total_market_value", 0) or 0, _snap.get("fund_market", 0) or 0,
+                         snap=_snap)
+        _p = {k: (round(v / _tt * 100, 1) if _tt else 0) for k, v in _pen.items() if k != "_meta"}
+        _pen_card = f"<h3>📊 資產穿透（{today}）</h3><p>總資產 <b>{_tt:,.0f}</b> TWD｜台股 {_p.get('台股市值型成長',0):.1f}%｜美股 {_p.get('美股市值型成長',0):.1f}%｜防守 {_p.get('防守型配息',0):.1f}%｜債券 {_p.get('債券',0):.1f}%｜現金 {_p.get('現金/安全網',0):.1f}%</p>"
         html = html.replace("</body>", _pen_card + "</body>")
     except Exception as _e:
-        print(f"⚠️ 穿透注入失敗: {_e}")
+        # fallback：讀快取 actual_pct（重算失敗時仍可用）
+        try:
+            import json as _json2
+            _snap2 = _json2.loads((LJ / "snapshot.json").read_text(encoding="utf-8"))
+            _pp = _snap2.get("penetration", {}).get("actual_pct", {})
+            _tt = _snap2.get("total_assets", 0)
+            _pen_card = f"<h3>📊 資產穿透（{today}）</h3><p>總資產 <b>{_tt:,.0f}</b> TWD｜台股 {_pp.get('台股市值型成長',0):.1f}%｜美股 {_pp.get('美股市值型成長',0):.1f}%｜防守 {_pp.get('防守型配息',0):.1f}%｜債券 {_pp.get('債券',0):.1f}%｜現金 {_pp.get('現金/安全網',0):.1f}%</p>"
+            html = html.replace("</body>", _pen_card + "</body>")
+        except Exception as _e2:
+            print(f"⚠️ 穿透注入失敗: {_e2}")
     (LJ / f"emergency_report_{today}.html").write_text(html, "utf-8")
     print(f"✅ Railway 版已同步至 emergency_report_{today}.html")
 
