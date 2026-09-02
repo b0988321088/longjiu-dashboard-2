@@ -24,6 +24,11 @@ ta = snap.get("total_assets", 0)
 tl = snap.get("total_liabilities", 0)
 life = snap.get("lifestyle_manifesto", {}).get("items", [])
 manifesto_title = snap.get("lifestyle_manifesto", {}).get("title", "理想生活宣言")
+# 留停壓力測試/驗收表用別名（2026-09-02）
+expense = fire_cost
+div_c = div_conservative
+cash = snap.get("cash_total", 794992)
+liab_cost = 16600  # 保單借貸 13,333 + 元大證金 3,267（利息口徑）
 
 # 退休目標（使用者設定）：退休生活費 38,000/月；理想 FIRE 月花費 40,000
 RETIRE_BUDGET = 38000
@@ -69,7 +74,7 @@ th{{color:#94a3b8;font-weight:600;font-size:12px}}
 ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 .tag{{display:inline-block;background:#334155;color:#e2e8f0;border-radius:6px;padding:2px 8px;font-size:12px;margin-right:6px}}
 .callout{{background:#1e3a5f40;border-left:3px solid #38bdf8;padding:10px 14px;border-radius:6px;font-size:13px}}
-</style></head><body>
+.red{{color:#ef4444}}.green{{color:#22c55e}}.amber{{color:#f59e0b}}</style></head><body>
 <h1>🏖️ 退休規劃報告</h1>
 <p class="meta">產出：{TODAY} ｜ 資料源：snapshot.json（動態讀取）｜ 被動收入 = 保單配息 {div_conservative:,} + 房租 {rent:,}</p>
 
@@ -109,6 +114,34 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><td>③ 扣除房產淨資產 ≥ 0</td><td>2029-30</td><td>富達解約免罰 +45,000/月 + 債券疊卷套利；高息清零 + 還債進度 → 被動 &gt; 支出、淨資產轉正（現況 {net_worth:,}）</td></tr>
 </table>
 <p class="callout">關鍵：決策 A（轉型）/ B（延長）/ C（回台電）<b>不影響退休基本盤</b> — 被動收入已覆蓋支出（129.6%），三步驟的財務關卡是「職業轉換的安全網」，退休規劃獨立運作（財務三桶分離）。</p></div>
+
+<!-- 留停壓力測試（2026-09-02 定位提升：留停=人生財務系統壓力測試） -->
+<div class="card"><h2>🧪 留停壓力測試（2027/2 留停 = 財務系統驗證，非單純職涯測試）</h2>
+<table>
+<tr><th>情境</th><th>假設</th><th>月被動</th><th>覆蓋率</th><th>判定</th></tr>
+<tr><td>🟢 正常</td><td>配息/房租/支出正常</td><td>{fire_income:,}</td><td>{fire_cov:.1f}%</td><td class="amber">🟡 基本安全（120-150%）</td></tr>
+<tr><td>🟡 壓力</td><td>配息 −20% ＋ 洲際W 空置</td><td>{div_c*0.8 + rent - 33000:,.0f}</td><td class="red">{((div_c*0.8 + rent - 33000)/expense*100):.1f}%</td><td class="red">🔴 &lt;100% → 靠現金水庫</td></tr>
+<tr><td>🔴 極端</td><td>配息 −30% ＋ 一間無租 ＋ 大型支出 30萬</td><td>{div_c*0.7 + rent - 33000:,.0f}</td><td class="red">{((div_c*0.7 + rent - 33000)/expense*100):.1f}%</td><td class="red">🔴 缺口 {expense - (div_c*0.7 + rent - 33000):,.0f}/月 → 現金水庫撐 {max(1, round((cash-300000)/(expense-(div_c*0.7+rent-33000))))} 個月</td></tr>
+</table>
+<p class="callout">覆蓋率三層：🟢 &gt;150% 非常安全｜🟡 120-150% 基本安全｜🔴 &lt;120% 不能完全依賴資產（<b>不含一次性資本利得</b>）。<br>
+現況 <b class="amber">{fire_cov:.1f}% = 基本安全</b>；壓力情境會跌破 100% — 這是留停前要改善的重點（降負債成本/提高房租淨現金流）。<br>
+2027/8-9 雙軌判斷：財務穩定 × 職涯成立 → 第二職涯；財務穩但職涯觀望 → 延長測試；任一不成立 → 回台電（保留台電）。</p></div>
+
+<div class="card"><h2>📋 留停驗收表（2026-09 起每月記錄）</h2>
+<table>
+<tr><th>指標</th><th>目的</th><th>2026-09 基準</th></tr>
+<tr><td>每月必要生活費</td><td>真正的最低需求</td><td>{expense:,}</td></tr>
+<tr><td>被動現金流</td><td>不靠薪水的收入</td><td>{fire_income:,}</td></tr>
+<tr><td>房租淨現金流</td><td>扣除房貸/成本</td><td>{rent - 26000:,}</td></tr>
+<tr><td>投資現金流</td><td>配息等</td><td>{div_c:,}</td></tr>
+<tr><td>現金/貨幣基金水位</td><td>安全墊</td><td>{cash:,}</td></tr>
+<tr><td>每月負債成本</td><td>資金壓力</td><td>{liab_cost:,}（利息口徑）</td></tr>
+<tr><td>生活費覆蓋率</td><td>核心 KPI</td><td class="{('red' if fire_cov<120 else 'amber')}">{fire_cov:.1f}%</td></tr>
+<tr><td>壓力情境覆蓋率</td><td>真正安全度</td><td class="red">壓力 {((div_c*0.8+rent-33000)/expense*100):.1f}% / 極端 {((div_c*0.7+rent-33000)/expense*100):.1f}%</td></tr>
+<tr><td>第二職涯收入</td><td>工作能力驗證</td><td>0（10月起記錄）</td></tr>
+<tr><td>第二職涯工時</td><td>時間效率</td><td>0（10月起記錄）</td></tr>
+</table>
+<p class="callout">每月 1 日更新一列；2027/2 留停前累積 6 個月基準，留停後對照「無薪資」版本。答案：「資產能養我到什麼程度？」</p></div>
 
 <div class="card"><h2>🗺️ 三階段目標進度</h2>
 <ul>
