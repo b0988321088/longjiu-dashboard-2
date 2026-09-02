@@ -74,9 +74,11 @@ def main():
     steps = [
         ("同義欄位驗證", f"python asset_sync.py"),
         ("日報", f"python run_daily.py"),
-        # 2026-08-27：gen_emergency_*.py 已刪除（一次性腳本清理），緊急應變僅用 emergency_1330.py（cron 13:00）
-        ("台股緊急應變", f"python emergency_1330.py"),
+        # 2026-09-02 血淚：緊急應變必須在穿透報告「之後」執行 — emergency_1330.py 讀的是
+        # snapshot.penetration.actual_pct 快取，穿透報告才寫入；順序反了會用到上一輪舊值
+        # → check_penetration_consistency 擋推送（上午實踩 3 次）
         ("穿透報告", f"python build_penetration_report.py"),
+        ("台股緊急應變", f"python emergency_1330.py"),
         ("四源同步", f"python four_source_sync.py"),
         ("同義欄位複驗", f"python asset_sync.py"),
         ("一致性檢查", f"python check_penetration_consistency.py {today}"),
