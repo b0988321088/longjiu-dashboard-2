@@ -15,10 +15,14 @@ import re
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
-import feedparser # Added for RSS feed parsing
-from logging_config import get_logger
-
-import feedparser # Added for RSS feed parsing
+# 2026-09-03 加固：feedparser 非核心依賴（僅 RSS 新聞擷取用），缺模組時降級跳過
+# 避免 cron 直跑環境缺套件時整條 run_daily/regenerate 管線在 import 階段全掛
+try:
+    import feedparser  # Added for RSS feed parsing
+    _FEEDPARSER_OK = True
+except Exception:
+    feedparser = None  # type: ignore[assignment]
+    _FEEDPARSER_OK = False
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -135,6 +139,9 @@ def _fetch_news(queries: list[str], limit: int = 3) -> list[dict]:
     
     results = []
     today = date.today()
+
+    if not _FEEDPARSER_OK:
+        return results  # feedparser 不可用 → RSS 新聞略過（不影響主管線）
 
     # 把查詢拆成單詞，任一匹配即可
     _kw = set()
