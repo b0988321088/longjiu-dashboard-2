@@ -3,7 +3,7 @@
 from pathlib import Path
 import shutil, subprocess, json
 
-BASE = Path(__file__).resolve().parent.parent.parent
+BASE = Path(__file__).resolve().parent.parent
 TARGET = Path.home() / "AppData/Local/hermes/scripts"
 
 SCRIPTS = [
