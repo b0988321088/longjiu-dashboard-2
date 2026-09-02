@@ -151,15 +151,12 @@ def sync_notion_to_local() -> dict:
         )
     
     # 合併到 dashboard_decisions.json
+    # ⚠️ 2026-09-02 事故修復：舊邏輯把正常 dict 誤判走 else → 清空 pending 重寫（17:00 空寫事故）
+    # 改用 decision_json.load_decisions（dict 保留原內容、純 list 才包回 dict）+ 空寫防護寫入
     dec_file = LJ / "dashboard_decisions.json"
-    if dec_file.exists():
-        existing = json.loads(dec_file.read_text(encoding="utf-8"))
-    # ⚠️ 2026-08-27 相容：檔案可能被寫成純 list → 包回 dict
-    if not isinstance(existing, dict):
-        existing = {"pending_decisions": [], "decisions": existing if isinstance(existing, list) else []}
-    else:
-        existing = {"pending_decisions": [], "decisions": []}
-    
+    from decision_json import load_decisions, safe_save_decisions
+    existing = load_decisions(dec_file)
+
     for d in all_decisions:
         # 去重：避免同一決策重複寫入
         dup = False
@@ -170,8 +167,8 @@ def sync_notion_to_local() -> dict:
         if not dup:
             existing.setdefault("decisions", []).append(d)
             result["decisions_imported"] += 1
-    
-    dec_file.write_text(json.dumps(existing, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    safe_save_decisions(dec_file, existing)
     
     return result
 

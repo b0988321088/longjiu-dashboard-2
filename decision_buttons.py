@@ -108,7 +108,8 @@ def record_decision(action: str, summary: str) -> dict:
     )
     if not is_dup:
         decs["decisions"].append(event)
-    DECISIONS_FILE.write_text(json.dumps(decs, ensure_ascii=False, indent=2), encoding="utf-8")
+    from decision_json import safe_save_decisions
+    safe_save_decisions(DECISIONS_FILE, decs)
 
     # 2) ops_logs.md
     ts = now.strftime("%H:%M")

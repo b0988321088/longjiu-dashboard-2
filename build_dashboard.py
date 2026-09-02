@@ -109,7 +109,7 @@ def main():
             _plan.append("9/2 保單轉換截止（PIMCO120+M&G80-100+醫療50+黃金30）；8/26已轉80萬 8/30生效")
             if _usd2 > 55:
                 _plan.append(f"美元曝險 {_usd2}% 超標→美股減碼")
-            _plan.append("9/3 PI→質押350萬還債")
+            _plan.append("PI 核可(9/10)→質押350萬還債；9/3 起追銀行進度")
             rep["__RADAR_DATE__"] = _rd.get("last_run", "2026-08-29")[:10]
             rep["__RADAR_SIGNALS__"] = _signals_txt
             rep["__RADAR_PLAN__"] = "｜".join(_plan)

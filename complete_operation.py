@@ -56,7 +56,8 @@ def main():
                 "status": f"✅ 已完成（{otype}）" + (f"｜{note}" if note else ""),
                 "tags": f"{otype},操作閉環"
             })
-            (BASE / "dashboard_decisions.json").write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
+            from decision_json import safe_save_decisions
+            safe_save_decisions(BASE / "dashboard_decisions.json", d)
             print("✅ ② 決策追蹤已補登")
     except Exception as e:
         print(f"⚠️ 決策補登失敗: {e}")
