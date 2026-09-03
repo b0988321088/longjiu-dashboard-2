@@ -176,4 +176,3 @@ else:
     msg = f"✅ **無待辦提醒 — {today}**\n所有項目正常。"
 
 print(msg)
-tg_send(msg)

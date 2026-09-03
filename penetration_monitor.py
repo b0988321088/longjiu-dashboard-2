@@ -56,14 +56,4 @@ else:
 
 print(msg)
 
-if TG_TOKEN and TG_CHAT_ID:
-    # 2026-09-03 修正：cron 環境無 requests → 改 stdlib urllib，任何直譯器可跑
-    try:
-        import urllib.request
-        req = urllib.request.Request(
-            f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage",
-            data=json.dumps({"chat_id": TG_CHAT_ID, "text": msg}).encode(),
-            headers={"Content-Type": "application/json"})
-        urllib.request.urlopen(req, timeout=10)
-    except Exception:
-        pass
+# 移除 TG_TOKEN and TG_CHAT_ID 區塊，讓 cronjob 處理投遞

@@ -84,7 +84,7 @@ def main():
         alerts.append("🇹🇼 週一 → 台股慢慢買 0050/006208（每週 1.5-2萬）")
 
     if alerts:
-        _tg_send("📡 龍九進場提醒 " + today.isoformat() + "\n" + "\n".join(alerts))
+        print("📡 龍九進場提醒 " + today.isoformat() + "\n" + "\n".join(alerts))
     else:
         print("✅ 無進場條件觸發（安靜）")
 
