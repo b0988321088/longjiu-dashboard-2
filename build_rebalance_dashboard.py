@@ -10,6 +10,7 @@ from pathlib import Path
 
 BASE = Path(__file__).parent.resolve()
 TODAY = date.today().isoformat()
+_WD = "一二三四五六日"[date.fromisoformat(TODAY).weekday()]  # 2026-09-03 修：星期動態算，勿寫死週六
 
 def load(p, default=None):
     try:
@@ -538,7 +539,7 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
 .foot {{ margin-top:16px; color:var(--sub); font-size:11px; text-align:center; }}
 </style></head><body><div class="wrap">
 <h1>🔄 龍九再平衡儀表板</h1>
-<div class="sub">{TODAY}（週六）｜修正後 DAA 口徑 + 機構流向雷達｜本週動作：<b style="color:var(--grn)">台股慢慢買</b>，其餘按兵不動</div>
+<div class="sub">{TODAY}（週{_WD}）｜修正後 DAA 口徑 + 機構流向雷達｜本週動作：<b style="color:var(--grn)">台股慢慢買</b>，其餘按兵不動</div>
 
 <div class="kpis">
   <div class="kpi"><div class="k">總資產（流動）</div><div class="v">{total:,}</div></div>
