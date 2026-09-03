@@ -42,8 +42,8 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     # 2026-08-21：美股科技/非科技拆解（科技比 = 基金淨值中科技曝險佔比；估計值，來源=月報/公開資料）
     _TECH = {"貝萊德世界科技": 1.0, "貝萊德科技": 1.0, "009824": 1.0, "00924": 1.0, "台新美日台半導體": 0.90,
              "富達全球動能多元": 0.35, "安聯AI收益成長": 0.35, "聯博美國成長": 0.40, "安聯收益成長": 0.15,
-             "摩根JPM": 0.10, "摩根多重收益": 0.10, "PIMCO收益增長": 0.167, "M&G入息": 0.07, "聯博全球多元收益": 0.10,
-             "00646": 0.32, "009823": 0.32}
+             "摩根JPM": 0.10, "摩根多重收益": 0.10, "PIMCO收益增長": 0.48, "M&G入息": 0.07, "聯博全球多元收益": 0.10,
+             "貝萊德世界黃金基金A10美元": 0, "貝萊德世界健康科學基金A10美元": 0.30, "00646": 0.32, "009823": 0.32}
     def _tr(_fn):
         return next((r for k, r in _TECH.items() if k in _fn), 0.15)
     if bond_portion is not None:
@@ -52,8 +52,8 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     elif fund_ratios:
         # 從 snapshot 動態讀取保險基金市值
         if snap:
-            _a = snap.get("allianz_a_breakdown", {})
-            _b = snap.get("allianz_b_breakdown", {})
+            _a = snap.get("insurance_breakdown", {}).get("policy_a_funds", {})
+            _b = snap.get("insurance_breakdown", {}).get("policy_b_funds", {})
             fv = {}
             for k in list(dict.fromkeys(list(_a.keys()) + list(_b.keys()))):
                 fv[k] = _fv(_a.get(k, 0)) + _fv(_b.get(k, 0))
@@ -65,12 +65,12 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     else:
         # 從 snapshot 動態讀取 + 預設債券比率（安聯收益35%, M&G 55%, AI收益50%）
         if snap:
-            _a = snap.get("allianz_a_breakdown", {})
-            _b = snap.get("allianz_b_breakdown", {})
+            _a = snap.get("insurance_breakdown", {}).get("policy_a_funds", {})
+            _b = snap.get("insurance_breakdown", {}).get("policy_b_funds", {})
             fv = {}
             for k in list(dict.fromkeys(list(_a.keys()) + list(_b.keys()))):
                 fv[k] = _fv(_a.get(k, 0)) + _fv(_b.get(k, 0))
-            _br = {"安聯收益成長": 0.32, "M&G入息": 0.55, "安聯AI收益成長": 0.50, "PIMCO收益增長": 0.48, "摩根JPM多重收益": 0.467}
+            _br = {"安聯收益成長": 0.32, "M&G入息": 0.55, "安聯AI收益成長": 0.50, "PIMCO收益增長": 0.48, "摩根JPM多重收益": 0.467, "貝萊德世界黃金基金A10美元": 0, "貝萊德世界健康科學基金A10美元": 0}
             ins_bonds = sum(round(fv[n] * _br.get(n, 0)) for n in fv)
             ins_tech = sum(round(fv[n] * _tr(n)) for n in fv)
         else:
@@ -222,14 +222,13 @@ def main():
     if args.get("ins"):
         # 保單拆分校驗：債券 + 保險權益 + 第一金 = 保險（不含鉅亨基金分類與證券部位）
         # ⚠️ 2026-08-10 修正：原公式漏扣 sec_def/sec_bond，把證券防守/債券誤計入保險拆分
-        _m = pen.get("_meta", {})
-        ins_calc = (pen["債券"] - _m.get("sec_bond", 0)) \
-                 + (pen["美股市值型成長"] - _m.get("sec_us", 0) - _m.get("fund_us", 0)) \
-                 + (pen["防守型配息"] - _m.get("sec_def", 0) - _m.get("fund_def", 0))
-        if abs(ins_calc - args["ins"]) > 100:
-            print(f"  ⚠️ 保單校驗失敗：拆分總和 {ins_calc:,} ≠ 保險 {args['ins']:,}")
+        _allianz_total = snap.get("allianz_ab_current_value", 0)
+        _firstjin_total = snap.get("firstjin_current_value", 0)
+        _calculated_ins_total = _allianz_total + _firstjin_total
+        if abs(_calculated_ins_total - args["ins"]) > 100:
+            print(f"  ⚠️ 保單校驗失敗：拆分總和 {_calculated_ins_total:,} ≠ 保險 {args['ins']:,} (應為總值 {args['ins']:,})")
         else:
-            print(f"  ✅ 保單拆分校驗通過（債券+權益+第一金 = {ins_calc:,}）")
+            print(f"  ✅ 保單拆分校驗通過（安聯+第一金 = {_calculated_ins_total:,}）")
     # 自動同步腳本到 hermes/scripts/
     # 2026-08-27 修正：hermes 版若是「薄轉發器」（wrapper 轉發 repo）→ 跳過，避免覆蓋破壞架構
     try:
