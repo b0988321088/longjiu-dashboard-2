@@ -456,8 +456,9 @@ def main():
     for _k3, _v3 in _rent_recv.items():
         if _v3 > 0:
             _inc_parts.append(_inc_row.format(label=_k3 + "房租", amt=f"{_fmt(_v3)} TWD")); _has_inc = True; _inc_total += _v3
-    _gf_inc = sum(v for k, v in (snap.get("girlfriend_repayment_records", {}) or {}).items()
-                  if str(k).startswith(_today_m) and isinstance(v, (int, float))) or 0
+    _gf_inc = sum((v.get("amount", 0) if isinstance(v, dict) else v)
+                  for k, v in (snap.get("girlfriend_repayment_records", {}) or {}).items()
+                  if str(k).startswith(_today_m)) or 0
     if _gf_inc > 0:
         _inc_parts.append(_inc_row.format(label="女友還款", amt=f"{_fmt(_gf_inc)} TWD")); _has_inc = True; _inc_total += _gf_inc
     if not _has_inc:
