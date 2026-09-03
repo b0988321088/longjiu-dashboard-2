@@ -39,13 +39,20 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     _fj_bond = round(_fj * _fj_br_r)
     _fj_eqv = round(_fj * _fj_eq_r)
 
-    _TECH = {\"貝萊德世界科技\": 1.0, \"貝萊德科技\": 1.0, \"009824\": 1.0, \"00924\": 1.0, \"台新美日台半導體\": 0.90,
-             \"富達全球動能多元\": 0.35, \"安聯AI收益成長\": 0.35, \"聯博美國成長\": 0.40, \"安聯收益成長\": 0.20,
-             \"摩根JPM\": 0.15, \"摩根多重收益\": 0.15, \"PIMCO收益增長\": 0.20, \"M&G入息\": 0.15, \"聯博全球多元收益\": 0.15,
-             \"貝萊德世界黃金基金A10美元\": 0, \"貝萊德世界健康科學基金A10美元\": 0.30, \"00646\": 0.32, \"009823\": 0.32}
+    _TECH = {"貝萊德世界科技": 1.0, "貝萊德科技": 1.0, "009824": 1.0, "00924": 1.0, "台新美日台半導體": 0.90,
+             "富達全球動能多元": 0.35, "安聯AI收益成長": 0.35, "聯博美國成長": 0.40, "安聯收益成長": 0.20,
+             "摩根JPM": 0.15, "摩根多重收益": 0.15, "PIMCO收益增長": 0.20, "M&G入息": 0.15, "聯博全球多元收益": 0.15,
+             "貝萊德世界黃金基金A10美元(總報酬穩定配息)": 0, "貝萊德世界健康科學基金A10美元(總報酬穩定配息)": 0.30, "00646": 0.32, "009823": 0.32}
 
     def _match_fund_key(_full_name, _lookup_dict):
         \"\"\"模糊匹配基金名稱\"\"\"
+        for _k in _lookup_dict:
+            if _k in _full_name:
+                return _k
+        return None
+
+    def _match_fund_key(_full_name, _lookup_dict):
+        """模糊匹配基金名稱"""
         for _k in _lookup_dict:
             if _k in _full_name:
                 return _k
@@ -79,7 +86,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             fv = {}
             for k in list(dict.fromkeys(list(_a.keys()) + list(_b.keys()))):
                 fv[k] = _fv(_a.get(k, 0)) + _fv(_b.get(k, 0))
-            _br = {\"安聯收益成長\": 0.35, \"M&G入息\": 0.55, \"安聯AI收益成長\": 0.50, \"PIMCO收益增長\": 0.48, \"摩根JPM多重收益\": 0.50, \"貝萊德世界黃金基金A10美元\": 0, \"貝萊德世界健康科學基金A10美元\": 0, \"第一金FA81（聯博-全球多元收益基金 AD月配級別美元…）\": 0.61}
+            _br = {"安聯收益成長": 0.35, "M&G入息": 0.55, "安聯AI收益成長": 0.50, "PIMCO收益增長": 0.48, "摩根JPM多重收益": 0.50, "貝萊德世界黃金基金A10美元(總報酬穩定配息)": 0, "貝萊德世界健康科學基金A10美元(總報酬穩定配息)": 0, "第一金FA81（聯博-全球多元收益基金 AD月配級別美元…）": 0.61}
             ins_bonds = sum(round(fv[n] * _br.get(_match_fund_key(n, _br), 0)) for n in fv)
             ins_tech = sum(round(fv[n] * _tr(n)) for n in fv)
         else:
