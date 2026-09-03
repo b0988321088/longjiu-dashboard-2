@@ -1,0 +1,4 @@
+-File 把计 'C:UsersbotDesktoplongjiu_systemocr_win.ps1' ま计ぃ叫 -File 把计﹚瞷Τ '.ps1' 郎隔畖
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
+
