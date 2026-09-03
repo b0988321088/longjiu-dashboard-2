@@ -112,15 +112,27 @@ def _build_insurance_detail(snap: dict, insurance_total: float) -> dict:
     _aa_val = float(snap.get("allianz_a_current_value", snap.get("allianz_policy_a_value", 5_103_668)))
     _ab_val = float(snap.get("allianz_b_current_value", snap.get("allianz_policy_b_value", 2_740_224)))
     d = {"【安聯保單A】現值": _aa_val}
+    _aa_ratios = _build_insurance_fund_ratios(_ins_brk.get("policy_a_funds", {}), _aa_val)
     for _n, _v in _ins_brk.get("policy_a_funds", {}).items():
-        d[f"  A-{_n}"] = _extract(_v)
+        _pct = f" ({_aa_ratios.get(_n, 0):.1f}%) " if _aa_ratios.get(_n, 0) > 0 else ""
+        d[f"  A-{_n}{_pct}"] = _extract(_v)
     d["【安聯保單B】現值"] = _ab_val
+    _ab_ratios = _build_insurance_fund_ratios(_ins_brk.get("policy_b_funds", {}), _ab_val)
     for _n, _v in _ins_brk.get("policy_b_funds", {}).items():
-        d[f"  B-{_n}"] = _extract(_v)
+        _pct = f" ({_ab_ratios.get(_n, 0):.1f}%) " if _ab_ratios.get(_n, 0) > 0 else ""
+        d[f"  B-{_n}{_pct}"] = _extract(_v)
     d["安聯A+B合計"] = float(snap.get("allianz_ab_current_value", 7_843_892))
     d["━第一金FA81聯博現値"] = float(snap.get("firstjin_current_value", 1_958_980))
     d["━保單總現値"] = insurance_total
     return d
+
+def _build_insurance_fund_ratios(policy_funds: dict, policy_total_value: float) -> dict:
+    """計算保險基金在該保單總值中的比例"""
+    ratios = {}
+    if policy_total_value > 0:
+        for fund_name, fund_value in policy_funds.items():
+            ratios[fund_name] = (fund_value / policy_total_value) * 100
+    return ratios
 
 def extract_snapshot(snap: dict) -> dict:
     """從 dragon_assets.db 讀取（fallback 到 snapshot.json）"""
