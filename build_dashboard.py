@@ -211,7 +211,7 @@ def main():
     # 安聯配息卡（8/29 補：舊 62,969 → 76,931）
     rep["62,969"] = _fmt(az_div)
     # 保單A 現值（8/29 補：舊 5,103,722 → 5,083,230）
-    rep["5,103,722"] = _fmt(snap.get("allianz_a", 0) or 0)
+
     hits = 0
     for old, new in rep.items():
         if old in tpl:
@@ -231,8 +231,8 @@ def main():
         "mon_sum": _mon,           # 監控卡片合計（現金正數排除外幣）
         # 2026-09-01 補齊：與 template JS V 表對齊（39 key 全注入 → 靜態 fallback 也是最新值）
         "ins_total": ins,
-        "allianz_a": snap.get("allianz_a", 0) or 0,
-        "allianz_b": snap.get("allianz_b", 0) or 0,
+        "allianz_a": snap.get("allianz_policy_a_value", 0) or 0,
+        "allianz_b": snap.get("allianz_policy_b_value", 0) or 0,
         "allianz_ab": allianz,
         "firstjin": firstjin,
         "cum_div": snap.get("allianz_cum_dividend", 0) or 0,
