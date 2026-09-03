@@ -3,19 +3,24 @@
 比對 日報 / 穿透報告 / 緊急應變 三檔是否包含 snapshot 的穿透真值。
 任一報表缺少真值 → 印出差異並回傳 exit code 1（阻止推送）。
 
+預設檢查「當天產出組」；2026-09-04 起不再用 snapshot.date：
+snapshot 的 date = 資料日可能停留多日 → 檢查器天天回頭查舊檔，
+舊檔不會更新 → 同一條 ❌ 每日重複推 = 噪音（8/25 原則：重複狀態通知不推）。
+緊急應變只在應變日產出（台股 13:00 / 美股 21:30 觸發）→ 缺檔為正常，不擋；
+只有「存在但內容不符」才算失敗。
+
 用法：python check_penetration_consistency.py [date]
 """
+import datetime
 import json
-import re
 import sys
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 
 def main():
-    today = sys.argv[1] if len(sys.argv) > 1 else json.loads(
-        (BASE / "snapshot.json").read_text(encoding="utf-8")).get("date", "")
-    today = today or ""
+    # 預設 = 當天（晨間 07:00 重產後的今日報表）
+    today = sys.argv[1] if len(sys.argv) > 1 else datetime.date.today().isoformat()
     files = {
         "日報": BASE / f"daily_report_v2_{today}.html",
         "穿透報告": BASE / f"penetration_report_{today}.html",
@@ -48,6 +53,10 @@ def main():
 
     for name, path in files.items():
         if not path.exists():
+            if name == "緊急應變":
+                # 非應變日無緊急報告 = 正常 → 不擋（只擋「存在但內容不符」）
+                print(f"  {name}: ➖ 檔案不存在（非應變日正常，跳過）")
+                continue
             print(f"  {name}: ❌ 檔案不存在")
             errors.append(f"{name} 檔案不存在")
             continue
