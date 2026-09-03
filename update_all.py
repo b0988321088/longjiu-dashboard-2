@@ -44,8 +44,16 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
              "富達全球動能多元": 0.35, "安聯AI收益成長": 0.35, "聯博美國成長": 0.40, "安聯收益成長": 0.20,
              "摩根JPM": 0.15, "摩根多重收益": 0.15, "PIMCO收益增長": 0.20, "M&G入息": 0.15, "聯博全球多元收益": 0.15,
              "貝萊德世界黃金基金A10美元": 0, "貝萊德世界健康科學基金A10美元": 0.30, "00646": 0.32, "009823": 0.32}
+    def _match_fund_key(_full_name, _lookup_dict):
+        """模糊匹配基金名稱"""
+        for _k in _lookup_dict:
+            if _k in _full_name:
+                return _k
+        return None
+
     def _tr(_fn):
-        return next((r for k, r in _TECH.items() if k in _fn), 0.15)
+        _matched_key = _match_fund_key(_fn, _TECH)
+        return _TECH.get(_matched_key, 0.15) if _matched_key else 0.15
     if bond_portion is not None:
         ins_bonds = int(bond_portion)
         ins_eq = int(ins) - int(bond_portion) - _fj
@@ -71,7 +79,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             for k in list(dict.fromkeys(list(_a.keys()) + list(_b.keys()))):
                 fv[k] = _fv(_a.get(k, 0)) + _fv(_b.get(k, 0))
             _br = {"安聯收益成長": 0.35, "M&G入息": 0.55, "安聯AI收益成長": 0.50, "PIMCO收益增長": 0.48, "摩根JPM多重收益": 0.50, "貝萊德世界黃金基金A10美元": 0, "貝萊德世界健康科學基金A10美元": 0, "第一金FA81（聯博-全球多元收益基金 AD月配級別美元…）": 0.61}
-            ins_bonds = sum(round(fv[n] * _br.get(n, 0)) for n in fv)
+            ins_bonds = sum(round(fv[n] * _br.get(_match_fund_key(n, _br), 0)) for n in fv)
             ins_tech = sum(round(fv[n] * _tr(n)) for n in fv)
         else:
             ins_bonds = round(2_780_466*0.35 + 3_136_436*0.55 + 902_679*0.50)
