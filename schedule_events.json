@@ -57,10 +57,10 @@
   "importance": "high"
  },
  {
-  "date": "2026-09-06",
+  "date": "2026-09-05",
   "item": "台電薪資入帳",
   "amount": "39,727",
-  "status": "✅ 定期",
+  "status": "⏳ 待入帳（未收到）",
   "importance": "low"
  },
  {

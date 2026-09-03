@@ -109,6 +109,20 @@ def generate_emergency_report(taiex_data=None, etf_0050_data=None, etf_00878_dat
     </ul>
     """
     
+    # 2026-09-03 血淚：極簡版 HTML 也不得覆寫完整版 — sync_all 的台股緊急應變步驟
+    # 跑 emergency_1330.py 會用 stub 蓋掉 agent 產的 9.4KB 完整 HTML（JSON 有防護、HTML 沒有）
+    _skip_html = False
+    try:
+        _jf_html = LJ / "data" / "emergency_llm_analysis.json"
+        if _jf_html.exists():
+            _old_html = json.loads(_jf_html.read_text(encoding="utf-8"))
+            if len(str(_old_html.get("full_report", ""))) > 1500:
+                _skip_html = True
+    except Exception:
+        pass
+    if _skip_html:
+        print("⏭️ 既有完整分析（full_report>1500），極簡版 HTML 跳過覆寫")
+
     html = f'''<!DOCTYPE html><html lang="zh-TW"><head><meta charset="utf-8">
     <title>🚨 台股緊急應變 {today}</title>
     <style>
@@ -149,8 +163,11 @@ def generate_emergency_report(taiex_data=None, etf_0050_data=None, etf_00878_dat
     {buffett_advice}
     {action_recommendation}
     <p class="meta">⏰ 下次執行：下個交易日 13:00</p></body></html>'''
-    (LJ / f"emergency_taiex_report_{today}.html").write_text(html, "utf-8")
-    print(f"✅ 緊急應變報告已產出至 emergency_taiex_report_{today}.html")
+    if not _skip_html:
+        (LJ / f"emergency_taiex_report_{today}.html").write_text(html, "utf-8")
+        print(f"✅ 緊急應變報告已產出至 emergency_taiex_report_{today}.html")
+    else:
+        print(f"ℹ️ 保留既有 emergency_taiex_report_{today}.html（完整版）")
     # 同時存一份給 Railway 用的命名（LLM agent 版命名格式）
     # INC-134 穿透注入（2026-08-24 修正：13:00 台股版缺穿透真值 → check 失敗）
     # 2026-09-02 核准：改「即時重算」穿透（calc_penetration），不讀快取 actual_pct —
@@ -177,8 +194,11 @@ def generate_emergency_report(taiex_data=None, etf_0050_data=None, etf_00878_dat
             html = html.replace("</body>", _pen_card + "</body>")
         except Exception as _e2:
             print(f"⚠️ 穿透注入失敗: {_e2}")
-    (LJ / f"emergency_report_{today}.html").write_text(html, "utf-8")
-    print(f"✅ Railway 版已同步至 emergency_report_{today}.html")
+    if not _skip_html:
+        (LJ / f"emergency_report_{today}.html").write_text(html, "utf-8")
+        print(f"✅ Railway 版已同步至 emergency_report_{today}.html")
+    else:
+        print(f"ℹ️ 保留既有 emergency_report_{today}.html（完整版）")
 
 
 ts = datetime.now().strftime("%H%M")

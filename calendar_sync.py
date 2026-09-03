@@ -52,8 +52,9 @@ def parse_events(text: str):
         events.append({"summary": "📊 龍七動態月報自動產出（09:00）", "start": date(y, m, 1).isoformat(), "end": date(y, m, 1).isoformat()})
         # 5號：女友還款 6,000
         events.append({"summary": "🔄 女友還款（每月6,000）", "start": date(y, m, 5).isoformat(), "end": date(y, m, 5).isoformat()})
-        # 6號：台電薪資
-        events.append({"summary": "💰 台電薪資入帳 $39,727", "start": date(y, m, 6).isoformat(), "end": date(y, m, 6).isoformat()})
+        # 6號：台電薪資（2026-09 特例：9/6 為週日，發薪提前至 9/5）
+        _sal_d = 5 if (y, m) == (2026, 9) else 6
+        events.append({"summary": "💰 台電薪資入帳 $39,727", "start": date(y, m, _sal_d).isoformat(), "end": date(y, m, _sal_d).isoformat()})
         # 20號：洲際W房租
         events.append({"summary": "🏠 洲際W房租入帳 $33,000", "start": date(y, m, 20).isoformat(), "end": date(y, m, 20).isoformat()})
         # 25號：大義街二三樓房租＋管理費
