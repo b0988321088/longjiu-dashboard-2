@@ -137,8 +137,12 @@ def _emergency_signal(em: dict | None) -> dict | None:
             return float(str(v).replace("%", "").replace(",", ""))
         except Exception:
             return None
-    vix = _f((ms.get("VIX") or {}).get("value"))
-    us30 = _f((ms.get("US30Y") or {}).get("value"))
+    def _gv(_key):
+        # 兼容巢狀 {value:X} 與扁平 X 兩種 market_snapshot 形狀（2026-09-03 13:04 緊急應變寫扁平 → build_weekly 崩潰）
+        _v = ms.get(_key)
+        return _f(_v.get("value") if isinstance(_v, dict) else _v)
+    vix = _gv("VIX")
+    us30 = _gv("US30Y")
     if vix is not None and vix >= 25:
         score += 8
     if us30 is not None and us30 >= 5.30:
