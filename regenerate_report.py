@@ -210,6 +210,17 @@ except Exception:
 # 9. 寫入
 OUT.write_text(html, encoding="utf-8")
 
+# 9a. 淨資產拆解自動更新（2026-09-03：儀表板 net_worth_weekly_breakdown 從 DB 真值算，
+#     冪等 — 已是最新窗口即略過；週五深度審查 LLM 覆核可再細分成本）
+try:
+    import subprocess as _sp9a
+    _nw = _sp9a.run([sys.executable, str(BASE / "weekly_nw_breakdown.py")], cwd=BASE,
+                    capture_output=True, text=True, timeout=60)
+    if _nw.stdout.strip():
+        print("📡 " + _nw.stdout.strip().splitlines()[-1])
+except Exception as _e9a:
+    print(f"⚠️ 淨資產拆解略過（不擋管線）: {_e9a}")
+
 # 9b. 自動產出差異分析
 import subprocess
 _diff_ok = subprocess.run(["python", str(BASE / "asset_diff_monitor.py")], capture_output=True, text=True, timeout=60)
