@@ -28,14 +28,16 @@ def get_deepseek_balance() -> float | None:
     if not api_key:
         return None
     try:
-        r = __import__("requests").get("https://api.deepseek.com/user/balance",
-            headers={"Authorization": f"Bearer {api_key}"}, timeout=10)
-        d = r.json()
+        # 2026-09-03 修正：cron 環境無 requests → 改 stdlib urllib（09:00 假警報 0.00 CNY 根因）
+        import urllib.request
+        req = urllib.request.Request("https://api.deepseek.com/user/balance",
+            headers={"Authorization": f"Bearer {api_key}"})
+        d = json.loads(urllib.request.urlopen(req, timeout=10).read().decode())
         for bi in d["balance_infos"]:
             if bi["currency"] == "CNY":
                 return float(bi["total_balance"])
         return 0.0
-    except:
+    except Exception:
         return None
 
 def load_history() -> list:
@@ -68,6 +70,10 @@ def estimate_days(balance: float, history: list) -> int:
 
 # === 主流程 ===
 balance = get_deepseek_balance()
+if balance is None:
+    # 2026-09-03：查詢失敗（無 key/無網路/API 錯誤）→ 保留上次記錄、不寫 0/999，避免假警報
+    print("⚠️ DeepSeek 餘額查詢失敗（略過本次，保留上次記錄）")
+    sys.exit(0)
 history = load_history()
 
 # 計算今日花費
