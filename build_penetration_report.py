@@ -227,11 +227,20 @@ _ins_brk = snap.get("insurance_breakdown", {})
 for _pol, _pfunds in [("安聯保單A", _ins_brk.get("policy_a_funds", {})), ("安聯保單B", _ins_brk.get("policy_b_funds", {}))]:
     _ps = sum(v for v in _pfunds.values())
     w(f"<tr><td><b>{_pol}</b></td><td class='num'>{_ps:,}</td><td></td></tr>")
-    for _fn, _fv in sorted(_pfunds.items(), key=lambda x: -x[1]):
-        if _fn in ("貝萊德世界科技A10", "貝萊德科技"):
+    for _fn_orig, _fv in sorted(_pfunds.items(), key=lambda x: -x[1]):
+        _fn = _fn_orig
+        if "黃金基金" in _fn_orig or "黃金" in _fn_orig:
+            _fn = f"黃金投資 ({_fn_orig})"
+        elif "健康科學基金" in _fn_orig or "健康科學" in _fn_orig:
+            _fn = f"健康科學投資 ({_fn_orig})"
+        if _fn_orig in ("貝萊德世界科技A10", "貝萊德科技"):
             _cls = "美股 100%"
+        elif "黃金基金" in _fn_orig or "黃金" in _fn_orig:
+            _cls = "黃金 100%"
+        elif "健康科學基金" in _fn_orig or "健康科學" in _fn_orig:
+            _cls = "健康科學 100%"
         else:
-            _br = _bond_ratio.get(_fn, 0.5)
+            _br = _bond_ratio.get(_fn_orig, 0.5)
             _cls = f"債券 {_br*100:.0f}% / 美股 {(1-_br)*100:.0f}%"
         w(f"<tr style='padding-left:20px;font-size:12px;color:#6e6e73'><td>　{_fn}</td><td class='num'>{_fv:,}</td><td>{_cls}</td></tr>")
 _fj_v = (snap.get("firstjin_detail", {}).get("base_value_before_dividend")
@@ -244,7 +253,7 @@ _fj_er = float(_fj_ratios.get("股票", 0.45))
 w(f"<tr><td><b>第一金FA81（{_fj_name[:32]}…）</b></td><td class='num'>{_fj_v:,}</td><td>債券 {_fj_br*100:.0f}% / 美股 {_fj_er*100:.0f}%</td></tr>")
 w(f"<tr style='border-top:2px solid #3b82f6;font-weight:700'><td>保險合計</td><td class='num'>{ins:,}</td><td></td></tr>")
 w("</tbody></table>")
-w("<p style='font-size:12px;color:#64748b;margin-top:8px'>成分債券比例：安聯收益成長 35% / M&G入息 55% / 安聯AI收益成長 50% / PIMCO收益增長 48%／貝萊德系列 100% 美股；第一金FA81（聯博全球多元收益）債券61%/美股39%（8/24 月報真值，8/21 轉換）</p>")
+w("<p style='font-size:12px;color:#64748b;margin-top:8px'>成分債券比例：安聯收益成長 35% / M&G入息 55% / 安聯AI收益成長 50% / PIMCO收益增長 48%／貝萊德世界科技 100% 美股／貝萊德世界黃金 100% 黃金／貝萊德世界健康科學 100% 健康科學；第一金FA81（聯博全球多元收益）債券61%/美股39%（8/24 月報真值，8/21 轉換）</p>")
 w("</div>")
 
 # 5. Calculation methodology
