@@ -41,8 +41,8 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     _fj_eqv = round(_fj * _fj_eq_r)
     # 2026-08-21：美股科技/非科技拆解（科技比 = 基金淨值中科技曝險佔比；估計值，來源=月報/公開資料）
     _TECH = {"貝萊德世界科技": 1.0, "貝萊德科技": 1.0, "009824": 1.0, "00924": 1.0, "台新美日台半導體": 0.90,
-             "富達全球動能多元": 0.35, "安聯AI收益成長": 0.35, "聯博美國成長": 0.40, "安聯收益成長": 0.15,
-             "摩根JPM": 0.10, "摩根多重收益": 0.10, "PIMCO收益增長": 0.48, "M&G入息": 0.07, "聯博全球多元收益": 0.10,
+             "富達全球動能多元": 0.35, "安聯AI收益成長": 0.35, "聯博美國成長": 0.40, "安聯收益成長": 0.20,
+             "摩根JPM": 0.15, "摩根多重收益": 0.15, "PIMCO收益增長": 0.20, "M&G入息": 0.15, "聯博全球多元收益": 0.15,
              "貝萊德世界黃金基金A10美元": 0, "貝萊德世界健康科學基金A10美元": 0.30, "00646": 0.32, "009823": 0.32}
     def _tr(_fn):
         return next((r for k, r in _TECH.items() if k in _fn), 0.15)
@@ -70,7 +70,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             fv = {}
             for k in list(dict.fromkeys(list(_a.keys()) + list(_b.keys()))):
                 fv[k] = _fv(_a.get(k, 0)) + _fv(_b.get(k, 0))
-            _br = {"安聯收益成長": 0.32, "M&G入息": 0.55, "安聯AI收益成長": 0.50, "PIMCO收益增長": 0.48, "摩根JPM多重收益": 0.467, "貝萊德世界黃金基金A10美元": 0, "貝萊德世界健康科學基金A10美元": 0}
+            _br = {"安聯收益成長": 0.35, "M&G入息": 0.55, "安聯AI收益成長": 0.50, "PIMCO收益增長": 0.48, "摩根JPM多重收益": 0.50, "貝萊德世界黃金基金A10美元": 0, "貝萊德世界健康科學基金A10美元": 0, "第一金FA81（聯博-全球多元收益基金 AD月配級別美元…）": 0.61}
             ins_bonds = sum(round(fv[n] * _br.get(n, 0)) for n in fv)
             ins_tech = sum(round(fv[n] * _tr(n)) for n in fv)
         else:
