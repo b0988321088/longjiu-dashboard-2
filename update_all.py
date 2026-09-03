@@ -55,9 +55,10 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         _matched_key = _match_fund_key(_fn, _TECH)
         return _TECH.get(_matched_key, 0.15) if _matched_key else 0.15
 
-    # 新增黃金和健康基金的累積變數
+    # 新增黃金和健康基金的累積變數（衛星：避險桶，不屬美股主桶）
     _fund_gold = 0
     _fund_health = 0
+    _sat_tech = 0
 
     if bond_portion is not None:
         ins_bonds = int(bond_portion)
@@ -85,8 +86,10 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
 
             if "黃金基金" in n or "黃金" in n:
                 _fund_gold += fv[n]
+                _sat_tech += round(fv[n] * _tech_ratio)
             elif "健康科學基金" in n or "健康科學" in n:
                 _fund_health += fv[n]
+                _sat_tech += round(fv[n] * _tech_ratio)
         
         ins_bonds = ins_bonds_calculated
         ins_tech = ins_tech_calculated
@@ -113,8 +116,10 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
 
                 if "黃金基金" in n or "黃金" in n:
                     _fund_gold += fv[n]
+                    _sat_tech += round(fv[n] * _tech_ratio)
                 elif "健康科學基金" in n or "健康科學" in n:
                     _fund_health += fv[n]
+                    _sat_tech += round(fv[n] * _tech_ratio)
             
             ins_bonds = ins_bonds_calculated
             ins_tech = ins_tech_calculated
@@ -192,8 +197,13 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         sec_tw = sec
     ins_eq += _fj_eqv
     ins_bonds += _fj_bond
+    # 衛星（黃金/健康基金）在保單內、債券比 0 → 落在 ins_eq（美股主桶）；但現金
+    # 餘數法已排除衛星（見 c = total - (tw+us+def+bond+衛星)）→ 若不同步從美股
+    # 扣回，衛星被雙重扣除（2026-09-03 實證：908,606 蒸發 → 五桶≠總資產、
+    # 美股虛胖 48.0% / 現金虛瘦 19.5%）。衛星為獨立避險桶，不屬美股。
+    _satellite = round(_fund_gold) + round(_fund_health)
     tw = sec_tw + _fund_tw
-    us = sec_us + ins_eq + _fund_us
+    us = sec_us + ins_eq + _fund_us - _satellite
     total = cash + ins + sec + funds
     def_v = sec_def + _fund_def
     bond_v = sec_bond + ins_bonds + _fund_bonds
@@ -205,13 +215,15 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         # 新增黃金和健康基金的獨立分類
         _fund_gold *= _fk
         _fund_health *= _fk
+        _sat_tech = round(_sat_tech * _fk)
+        _satellite = round(_fund_gold) + round(_fund_health)
 
         tw = sec_tw + _fund_tw
-        us = sec_us + ins_eq + _fund_us
+        us = sec_us + ins_eq + _fund_us - _satellite
         def_v = sec_def + _fund_def
         bond_v = sec_bond + ins_bonds + _fund_bonds
     c = total - (tw + us + def_v + bond_v + _fund_gold + _fund_health) # 從總資產中扣除
-    us_tech = _fund_us_tech + ins_tech + sec_us_tech
+    us_tech = _fund_us_tech + ins_tech + sec_us_tech - round(_sat_tech)
     us_non_tech = us - us_tech
     return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": def_v, "債券": bond_v, "現金/安全網": c,
             "黃金": round(_fund_gold), "健康": round(_fund_health),

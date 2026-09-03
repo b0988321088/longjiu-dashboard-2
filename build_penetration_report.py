@@ -15,7 +15,10 @@ funds = snap.get("fund_market_value", 793434)
 p = calc_penetration(cash, ins, sec, funds, snap=snap)
 tw_v, us_v, def_v, bond_v, cash_pv = p["台股市值型成長"], p["美股市值型成長"], p["防守型配息"], p["債券"], p["現金/安全網"]
 us_tech_v, us_nt_v = p.get("美股市值型成長_科技", 0), p.get("美股市值型成長_非科技", 0)
-total = tw_v + us_v + def_v + bond_v + cash_pv
+sat_gold_v, sat_health_v = p.get("黃金", 0), p.get("健康", 0)
+# 2026-09-03 修正：衛星（黃金/健康）已從美股主桶移出獨立回報（calc_penetration）→
+# 分母須含衛星。舊寫法只加五桶 → 分母短少 908,606 → 全 pct 灌高（美股 42.8 誤顯 44.4）
+total = tw_v + us_v + def_v + bond_v + cash_pv + sat_gold_v + sat_health_v
 
 # 自動校正 snapshot 穿透數據（供日報第2章使用）
 # targets 以 snapshot 現有值為準（單一真值，禁止硬編碼覆寫）；缺 key 時 fallback 2026-08-02 定案值
