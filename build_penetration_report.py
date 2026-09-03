@@ -222,27 +222,26 @@ if _fb:
 # 4. Insurance（成分動態顯示，2026-08-04 改：不再硬編碼）
 w("<div class='card'><h2>🏦 保險穿透（含成分）</h2>")
 w("<table><thead><tr><th>項目</th><th class='num'>金額</th><th>穿透分類</th></tr></thead><tbody>")
-_bond_ratio = {"安聯收益成長": 0.35, "M&G入息": 0.55, "安聯AI收益成長": 0.50, "PIMCO收益增長": 0.48, "摩根多重收益": 0.45, "黃金投資": 0, "健康科學投資": 0}
+_bond_ratio = {"安聯收益成長": 0.35, "M&G入息": 0.55, "安聯AI收益成長": 0.50, "PIMCO收益增長": 0.48, "摩根多重收益": 0.45, "貝萊德世界黃金基金A10美元(總報酬穩定配息)": 0, "貝萊德世界健康科學基金A10美元(總報酬穩定配息)": 0}
 _ins_brk = snap.get("insurance_breakdown", {})
 for _pol, _pfunds in [("安聯保單A", _ins_brk.get("policy_a_funds", {})), ("安聯保單B", _ins_brk.get("policy_b_funds", {}))]:
     _ps = sum(v for v in _pfunds.values())
     w(f"<tr><td><b>{_pol}</b></td><td class='num'>{_ps:,}</td><td></td></tr>")
     for _fn_orig, _fv in sorted(_pfunds.items(), key=lambda x: -x[1]):
-        _fn = _fn_orig
-        if "黃金基金" in _fn_orig or "黃金" in _fn_orig:
-            _fn = f"黃金投資 ({_fn_orig})"
-        elif "健康科學基金" in _fn_orig or "健康科學" in _fn_orig:
-            _fn = f"健康科學投資 ({_fn_orig})"
-        if _fn_orig in ("貝萊德世界科技A10", "貝萊德科技"):
+        _fn_display = _fn_orig
+        _cls = ""
+        if "貝萊德世界科技A10" in _fn_orig or "貝萊德科技" in _fn_orig:
             _cls = "美股 100%"
         elif "黃金基金" in _fn_orig or "黃金" in _fn_orig:
+            _fn_display = f"黃金投資 ({_fn_orig})"
             _cls = "黃金 100%"
         elif "健康科學基金" in _fn_orig or "健康科學" in _fn_orig:
+            _fn_display = f"健康科學投資 ({_fn_orig})"
             _cls = "健康科學 100%"
         else:
             _br = _bond_ratio.get(_fn_orig, 0.5)
             _cls = f"債券 {_br*100:.0f}% / 美股 {(1-_br)*100:.0f}%"
-        w(f"<tr style='padding-left:20px;font-size:12px;color:#6e6e73'><td>　{_fn}</td><td class='num'>{_fv:,}</td><td>{_cls}</td></tr>")
+        w(f"<tr style='padding-left:20px;font-size:12px;color:#6e6e73'><td>　{_fn_display}</td><td class='num'>{_fv:,}</td><td>{_cls}</td></tr>")
 _fj_v = (snap.get("firstjin_detail", {}).get("base_value_before_dividend")
          or snap.get("firstjin_current_value") or 1992265)
 _fj_name = (snap.get("firstjin_detail", {}).get("current_fund", {}).get("name")
@@ -253,7 +252,7 @@ _fj_er = float(_fj_ratios.get("股票", 0.45))
 w(f"<tr><td><b>第一金FA81（{_fj_name[:32]}…）</b></td><td class='num'>{_fj_v:,}</td><td>債券 {_fj_br*100:.0f}% / 美股 {_fj_er*100:.0f}%</td></tr>")
 w(f"<tr style='border-top:2px solid #3b82f6;font-weight:700'><td>保險合計</td><td class='num'>{ins:,}</td><td></td></tr>")
 w("</tbody></table>")
-w("<p style='font-size:12px;color:#64748b;margin-top:8px'>成分債券比例：安聯收益成長 35% / M&G入息 55% / 安聯AI收益成長 50% / PIMCO收益增長 48%／摩根多重收益 45%／貝萊德世界科技 100% 美股／黃金投資 100% 黃金／健康科學投資 100% 健康科學；第一金FA81（聯博全球多元收益）債券61%/美股39%（8/24 月報真值，8/21 轉換）</p>")
+w("<p style='font-size:12px;color:#64748b;margin-top:8px'>成分債券比例：安聯收益成長 35% / M&G入息 55% / 安聯AI收益成長 50% / PIMCO收益增長 48%／摩根多重收益 45%／貝萊德世界科技 100% 美股／貝萊德世界黃金基金A10美元(總報酬穩定配息) 100% 黃金／貝萊德世界健康科學基金A10美元(總報酬穩定配息) 100% 健康科學；第一金FA81（聯博全球多元收益）債券61%/美股39%（8/24 月報真值，8/21 轉換）</p>")
 w("</div>")
 
 # 5. Calculation methodology
