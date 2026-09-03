@@ -116,9 +116,9 @@ def _build_insurance_detail(snap: dict, insurance_total: float) -> dict:
     for _n, _v in _ins_brk.get("policy_a_funds", {}).items():
         _pct = f" ({_aa_ratios.get(_n, 0):.1f}%) " if _aa_ratios.get(_n, 0) > 0 else ""
         _label = _n
-        if "黃金基金" in _n:
+        if "黃金基金" in _n or "黃金" in _n:
             _label = f"黃金投資 ({_n})"
-        elif "健康科學基金" in _n:
+        elif "健康科學基金" in _n or "健康科學" in _n:
             _label = f"健康科學投資 ({_n})"
         d[f"  A-{_label}{_pct}"] = _extract(_v)
     d["【安聯保單B】現值"] = _ab_val
@@ -126,9 +126,9 @@ def _build_insurance_detail(snap: dict, insurance_total: float) -> dict:
     for _n, _v in _ins_brk.get("policy_b_funds", {}).items():
         _pct = f" ({_ab_ratios.get(_n, 0):.1f}%) " if _ab_ratios.get(_n, 0) > 0 else ""
         _label = _n
-        if "黃金基金" in _n:
+        if "黃金基金" in _n or "黃金" in _n:
             _label = f"黃金投資 ({_n})"
-        elif "健康科學基金" in _n:
+        elif "健康科學基金" in _n or "健康科學" in _n:
             _label = f"健康科學投資 ({_n})"
         d[f"  B-{_label}{_pct}"] = _extract(_v)
     d["安聯A+B合計"] = float(snap.get("allianz_ab_current_value", 7_843_892))
