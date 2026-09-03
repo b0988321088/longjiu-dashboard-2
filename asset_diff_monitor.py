@@ -702,7 +702,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
                 _rows += f"<tr style='border-top:2px solid #888'><td><b>{_lb}</b></td><td class='num'><b>{_fmt(v)}</b></td></tr>"
             else:
                 _sty = "" if k.startswith("【") else " style=\"padding-left:24px;font-size:13px;color:#6e6e73\""
-                _lb = ("<b>" + k.replace(chr(0x3010),"").replace(chr(0x3011),"").strip() + "</b>") if k.startswith(chr(0x3010)) else k.strip()
+                _lb = ("<b>" + k.replace(chr(0x3010),"").replace(chr(0x3011),"").strip() + "</b>") if k.startswith(chr(0x3010)) else k
                 _rows += f"<tr{_sty}><td>{_lb}</td><td class='num'>{_fmt(v)}</td></tr>"
         detail_table = (
             '<div class="card"><h2>🛡️ 保單明細（最新）</h2>'
