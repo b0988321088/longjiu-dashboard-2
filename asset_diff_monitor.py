@@ -104,6 +104,14 @@ def _pct(v, base):
 
 
 # ---------- snapshot parsing ----------
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler('asset_diff_debug.log')
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 def _build_insurance_detail(snap: dict, insurance_total: float) -> dict:
     """統一建構保險明細"""
     def _extract(v):
@@ -115,25 +123,25 @@ def _build_insurance_detail(snap: dict, insurance_total: float) -> dict:
     _aa_ratios = _build_insurance_fund_ratios(_ins_brk.get("policy_a_funds", {}), _aa_val)
     for _n, _v in _ins_brk.get("policy_a_funds", {}).items():
         _pct = f" ({_aa_ratios.get(_n, 0):.1f}%) " if _aa_ratios.get(_n, 0) > 0 else ""
-        print(f"DEBUG: Fund name: {_n}, original label: {_n}") # DEBUG
+        logger.debug(f"Fund name: {_n}, original label: {_n}") # DEBUG
         _label = _n # Original label
         if "黃金基金" in _n or "黃金" in _n:
             _label = f"黃金投資 ({_n})"
         elif "健康科學基金" in _n or "健康科學" in _n:
             _label = f"健康科學投資 ({_n})"
-        print(f"DEBUG: Final label: {_label}") # DEBUG
+        logger.debug(f"Final label: {_label}") # DEBUG
         d[f"  A-{_label}{_pct}"] = _extract(_v)
     d["【安聯保單B】現值"] = _ab_val
     _ab_ratios = _build_insurance_fund_ratios(_ins_brk.get("policy_b_funds", {}), _ab_val)
     for _n, _v in _ins_brk.get("policy_b_funds", {}).items():
         _pct = f" ({_ab_ratios.get(_n, 0):.1f}%) " if _ab_ratios.get(_n, 0) > 0 else ""
-        print(f"DEBUG: Fund name: {_n}, original label: {_n}") # DEBUG
+        logger.debug(f"Fund name: {_n}, original label: {_n}") # DEBUG
         _label = _n # Original label
         if "黃金基金" in _n or "黃金" in _n:
             _label = f"黃金投資 ({_n})"
         elif "健康科學基金" in _n or "健康科學" in _n:
             _label = f"健康科學投資 ({_n})"
-        print(f"DEBUG: Final label: {_label}") # DEBUG
+        logger.debug(f"Final label: {_label}") # DEBUG
         d[f"  B-{_label}{_pct}"] = _extract(_v)
     d["安聯A+B合計"] = float(snap.get("allianz_ab_current_value", 7_843_892))
     d["━第一金FA81聯博現値"] = float(snap.get("firstjin_current_value", 1_958_980))
