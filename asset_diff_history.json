@@ -880,15 +880,15 @@
   },
   "2026-09-04": {
     "date": "2026-09-04",
-    "total_assets": 26030093.0,
+    "total_assets": 26047230.0,
     "total_liabilities": 30122869.0,
-    "net_worth": -4092776.0,
+    "net_worth": -4075639.0,
     "securities_market": 2918760.0,
     "insurance_current": 9577924.0,
     "insurance_total": 9577924.0,
     "fund_market": 12732362.0,
     "real_estate": 0.0,
-    "cash": 801047.0,
+    "cash": 818184.0,
     "other": 0.0,
     "insurance_detail": {
       "【安聯保單A】現值": 4998456.0,
@@ -910,7 +910,7 @@
       "━第一金FJ33摩根月配現値": 1904419.0,
       "━保單總現値": 9577924.0
     },
-    "fund_dividend_monthly": 16664.0,
+    "fund_dividend_monthly": 24158.0,
     "monthly_income": 225918.0,
     "monthly_expense": 162781.0,
     "rent_monthly": 80100.0,
