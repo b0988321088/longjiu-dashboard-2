@@ -630,46 +630,16 @@ def main():
     ingester.ingest_policy_vault(default_policies(snapshot), DB_MAP["master_ledger"], DB_MAP["debt_cashflow"])
     ingester.ingest_collateral_hub(parse_ledger_loans())
 
-    # Ingest Daily Asset Snapshot
-    ingester.ingest_daily_asset_snapshot(snapshot)
-
-    # Ingest Major Decision Records from dashboard_decisions.json
-    dec_file = REPO / "dashboard_decisions.json"
-    if dec_file.exists():
-        existing_decisions = json.loads(dec_file.read_text(encoding="utf-8"))
-        if not isinstance(existing_decisions, dict):
-            existing_decisions = {"decisions": existing_decisions if isinstance(existing_decisions, list) else []}
-        for d in existing_decisions.get("decisions", []):
-            # Add 'context', 'reasoning', 'outcome', 'tags', 'link' if not present in dashboard_decisions.json
-            # For simplicity now, we assume these are empty if not explicitly available.
-            decision_data = {
-                "text": d.get("text", ""),
-                "approved_at": d.get("approved_at", TODAY),
-                "source": d.get("source", "Hermes"),
-                "context": d.get("context", ""),
-                "reasoning": d.get("reasoning", ""),
-                "outcome": d.get("outcome", ""),
-                "tags": d.get("tags", []),
-                "link": d.get("link", ""),
-            }
-            ingester.ingest_decision_record(decision_data)
-
-    # Ingest Agent Analysis Results (example: CIO summary)
-    cio_summary_text = load_daily_report_cio() # Re-add this helper if needed, or get summary from relevant source
-    if cio_summary_text and cio_summary_text != "今日日報未發現明確 CIO 摘要。" and cio_summary_text != "今日日報未找到，無 CIO 摘要。":
-        analysis_data = {
-            "date": TODAY,
-            "title": f"CIO Daily Review Summary {TODAY}",
-            "agent": "CIO",
-            "analysis_type": "Daily Review",
-            "summary": cio_summary_text,
-            "raw_output_link": f"file://{REPO}/daily_report_v2_{TODAY}.md",
-            "sentiment": "Neutral", # Placeholder
-        }
-        ingester.ingest_analysis_result(analysis_data)
-
-    # Original ingest_ops_logs removed as analysis results will be handled by ingest_analysis_result
-    # ingester.ingest_ops_logs([...]) # This call will be removed
+    # ── 2026-09-04 修正：以下 3 段為舊設計殘留（期待從未建立的英文欄位 DB），
+    #    每次執行都印 [SKIP] DB ID not found，被 CEO 分析誤判為「Notion 同步錯誤」。
+    #    實際功能已由新版管道接管並正常寫入中文欄位 DB：
+    #      · 每日資產快照 → notion_knowledge.write_snapshot / notion_bridge.push_daily_snapshot（龍九每日資產快照）
+    #      · 決策記錄     → notion_decision_logger.log_decision（龍九分析記錄）
+    #      · Agent 分析   → notion_knowledge.write_analysis / notion_ai_summary（龍九分析記錄）
+    #    故停用此 3 段呼叫；五表核心同步（master_ledger/fund_station/debt_cashflow/ops_logs/asset_investment）不受影響。
+    # ingester.ingest_daily_asset_snapshot(snapshot)
+    # ingester.ingest_decision_record(decision_data)
+    # ingester.ingest_agent_analysis(analysis_data)
 
     asset_names = [
         "凱基證券 台股持倉",
