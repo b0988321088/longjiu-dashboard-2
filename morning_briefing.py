@@ -120,6 +120,8 @@ def get_fire(snap):
         f"  當下真實常態開銷：**{expense:,}**",
         f"    （房貸 {mortgage:,} + 生活/信用卡 {other_expense:,}）",
         f"  {'🟢' if cov >= 100 else '🔴'}當下覆蓋率：**{cov:.1f}%** {'✅（被動收入已超過真實生活花費）' if cov >= 100 else '⚠️（不足）'}",
+        # 2026-09-04：月初當月應收偏低時，附常態對照避免誤讀
+        f"  📌常態對照（配息 {snap.get('dividend_month_expected', 100_000):,} + 房租 {snap.get('rent_monthly_actual', 80_100):,} 全月應收）：**{(snap.get('dividend_month_expected', 100_000) or 0) + (snap.get('rent_monthly_actual', 80_100) or 0):,}**/月（覆蓋 {((snap.get('dividend_month_expected', 100_000) or 0) + (snap.get('rent_monthly_actual', 80_100) or 0)) / expense * 100:.1f}%）",
         f"  📌長期理想目標（月花費 {ideal_spend:,}）：缺口 **{max(0, ideal_spend-total):,}**/月",
     ]
     return lines
