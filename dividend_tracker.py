@@ -122,7 +122,7 @@ def main():
                     "etf": _by2["etf"], "fund": _by2["fund"], "total": total})
     snap["monthly_dividend_total"] = total
 
-    json.dump(snap, open(SNAP_PATH, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    json.dump(snap, open(SNAP_PATH, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
 
 if __name__ == "__main__":
