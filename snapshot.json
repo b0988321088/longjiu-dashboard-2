@@ -164,7 +164,9 @@
   "monthly_expense": 162781,
   "coverage_pct": 129.6,
   "note": "8/30 修正：實收 123,607 + 租金 80,100；保守 100,000 + 租金 80,100 = 180,100（覆蓋 110.6%）",
-  "girlfriend_repayment": 6000
+  "girlfriend_repayment": 6000,
+  "dividend_actual_sum": 123607,
+  "rent_monthly_actual": 80100
  },
  "allianz_policy_a_value": 4998456,
  "allianz_policy_b_value": 2675049,
