@@ -520,6 +520,7 @@ def main():
     # ── 八大連結動態化（2026-08-26：模板連結寫死 8/21-23 → glob 最新檔名）──
     import glob as _glob
     _link_map = {
+        "__RADAR_REPORT__": "radar_report_*.html",
         "__ASSET_DIFF__": "asset_diff_*.html",
         "__BUFFETT_MD__": "buffett_cto_report_*.md",
         "__DAILY_REPORT__": "daily_report_v2_*.html",
