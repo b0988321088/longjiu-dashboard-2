@@ -76,9 +76,9 @@ def load_loans(snap, adj_costs=None):
     return loans
 
 
-def funding_cost_report(snap, adj_costs=None):
+def funding_cost_report(snap, adj_costs=None, rate_overrides=None):
     """輸出資金成本儀表板文字：負債表 + 加權成本 + 配息殖利率 + 淨利差燈號"""
-    loans = load_loans(snap, adj_costs)
+    loans = load_loans(snap, rate_overrides)
     total_bal = sum(l["balance"] for l in loans)
     total_m = sum(l["monthly"] for l in loans)
     total_pay = sum(l["payment"] for l in loans)
@@ -89,7 +89,12 @@ def funding_cost_report(snap, adj_costs=None):
         + (snap.get("fund_market_value") or snap.get("funds_total") or 0) \
         + (snap.get("insurance_total") or 0)
     div_m = snap.get("dividend_month_expected") or 100000   # 保守常態月配息
-    div_yield = div_m * 12 / inv if inv else 0
+    div_actual = adj_costs.get("配息實收") if adj_costs else None  # 當月實際實收（校正檔帶入）
+    rent_m = adj_costs.get("房租實收") if adj_costs else (snap.get("passive_income", {}).get("rent_monthly") or 80100)
+    if div_actual:
+        div_yield = div_actual * 12 / inv if inv else 0
+    else:
+        div_yield = div_m * 12 / inv if inv else 0
 
     spread = div_yield - wacc
     if spread >= 0.012:
@@ -99,14 +104,15 @@ def funding_cost_report(snap, adj_costs=None):
     else:
         light = "🔴 利差為負 → 配息不足以 cover 利息，停止加槓桿"
     pay_ok = "✅ 配息可 cover 利息" if div_m >= total_m else "⚠️ 月配息 < 月利息"
-    # 現金流兩層：實際月付 vs 配息 vs 被動收入(含房租)
-    rent = snap.get("passive_income", {}).get("rent_monthly") or 80100
-    passive = div_m + rent
+    # 現金流兩層：實際月付 vs 配息(實際優先) vs 被動收入(含房租)
+    div_base = div_actual if div_actual else div_m
+    div_tag = "8月實收" if div_actual else "保守"
+    passive = div_base + rent_m
     if passive >= total_pay:
-        cash_ok = f"✅ 被動收入(配息{div_m:,.0f}+房租{rent:,.0f}) {passive:,.0f} > 實際月付 {total_pay:,.0f} → 償債後剩 {passive-total_pay:,.0f}/月"
+        cash_ok = f"✅ 被動收入(配息{div_base:,.0f}+房租{rent_m:,.0f}) {passive:,.0f} > 實際月付 {total_pay:,.0f} → 償債後剩 {passive-total_pay:,.0f}/月"
     else:
         cash_ok = f"⚠️ 被動收入 {passive:,.0f} < 實際月付 {total_pay:,.0f}（含本利攤還）→ 需其他收入補 {total_pay-passive:,.0f}/月"
-    div_cover_pay = f"⚠️ 純配息 {div_m:,.0f} < 實際月付 {total_pay:,.0f}（永豐本利攤還所致）" if div_m < total_pay else f"✅ 純配息 {div_m:,.0f} ≥ 實際月付 {total_pay:,.0f}"
+    div_cover_pay = f"⚠️ 純配息{div_tag} {div_base:,.0f} < 實際月付 {total_pay:,.0f}（永豐本利攤還所致）" if div_base < total_pay else f"✅ 純配息{div_tag} {div_base:,.0f} ≥ 實際月付 {total_pay:,.0f}"
 
     L = ["\n⚖️ 資金成本儀表板（借貸總成本 vs 投資現金流）", "-" * 58]
     L.append("  借款                     餘額    利率    實際月付(含本)  其中利息")
@@ -116,7 +122,8 @@ def funding_cost_report(snap, adj_costs=None):
     L.append(f"  {'合計':26s} {total_bal/10000:>6.0f}萬        {total_pay:>10,.0f}    利息 {total_m:>8,.0f}")
     L.append(f"  加權平均資金成本 = {wacc*100:.2f}%/年｜⚠️ 永豐為本利攤還：實際月付 {total_pay:,.0f} > 純利息 {total_m:,.0f}")
     L.append(f"  投資市值（股票+基金+保單） {inv/10000:,.0f}萬")
-    L.append(f"  保守月配息 {div_m:,.0f} → 配息殖利率 {div_yield*100:.2f}%/年")
+    src_tag = f"當月實收 {div_actual:,.0f}" if div_actual else f"保守常態 {div_m:,.0f}"
+    L.append(f"  配息 {src_tag} → 配息殖利率 {div_yield*100:.2f}%/年")
     L.append(f"  淨利差 = {div_yield*100:.2f}% − {wacc*100:.2f}% = {spread*100:+.2f}pp")
     L.append(f"  判斷：{light}")
     L.append(f"  利息層：{pay_ok}（月配息 {div_m:,.0f} vs 純月息 {total_m:,.0f}）")
@@ -149,7 +156,8 @@ def main():
     adj_interest = a.get("利息", {}) or {}         # {"房貸":x,"保單借貸":y}
     adj_fees = a.get("手續費", {}) or {}           # {類: 金額}
     project = a.get("專案收入", 0)
-    adj_costs = a.get("資金成本", {})   # {"永豐房貸（洲際W 3筆）": 0.025, ...} 利率覆蓋
+    adj_costs = a  # 整個月份校正 dict：含 "資金成本"(利率覆蓋) + "配息實收" + "房租實收"
+    rate_overrides = a.get("資金成本", {})
 
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     db = sqlite3.connect(str(BASE / "dragon_assets.db"))
@@ -226,7 +234,7 @@ def main():
     print("=" * 58)
     if project:
         print(f"📦 專案收入(非常態) {project:+,.0f}（另計不混入）")
-    print(funding_cost_report(snap, adj_costs))
+    print(funding_cost_report(snap, adj_costs, rate_overrides))
     print("口徑：借貸不計績效（投入列帳面、漲跌才計）；配息當月實收；市值含未實現")
 
 
