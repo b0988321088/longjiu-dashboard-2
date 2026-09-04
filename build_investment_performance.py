@@ -52,7 +52,8 @@ def db_asset_on(db, date):
 # 利率對照（負債結構穩定；變動時改 investment_performance_adjust.json 的 "資金成本")
 DEFAULT_LOANS = [
     # balance_keys: 多 key = 加總（永豐 3 筆分帳號，勿用 mortgage=含國泰 25,082,544）
-    {"name": "永豐房貸（洲際W 3筆 2.5%）", "balance_keys": ["mortgage_yy", "mortgage_yydu", "mortgage_xz"], "rate": 0.025},
+    # monthly_payment: 實際月付；None = 純付息（月付=利息）。永豐本利攤還 65,735（含本金）
+    {"name": "永豐房貸（洲際W 本利攤還 2.5%）", "balance_keys": ["mortgage_yy", "mortgage_yydu", "mortgage_xz"], "rate": 0.025, "monthly_payment": 65735},
     {"name": "國泰轉貸（大義街 2.6%）", "balance_keys": ["mortgage_cathay"], "rate": 0.026},
     {"name": "保單借貸（4%）", "balance_keys": ["policy_pledge_loan"], "rate": 0.040},
     {"name": "元大質押（3.92%）", "balance_keys": ["pledge_loan"], "rate": 0.0392},
@@ -60,7 +61,7 @@ DEFAULT_LOANS = [
 
 
 def load_loans(snap, adj_costs=None):
-    """讀 snapshot 負債餘額 + 利率 → [(name, balance, rate, monthly_interest)]"""
+    """讀 snapshot 負債餘額 + 利率 → [(name, balance, rate, monthly_interest, monthly_payment)]"""
     adj_costs = adj_costs or {}
     loans = []
     for dl in DEFAULT_LOANS:
@@ -69,7 +70,9 @@ def load_loans(snap, adj_costs=None):
             continue
         rate = adj_costs.get(dl["name"], dl["rate"])
         monthly = bal * rate / 12
-        loans.append({"name": dl["name"], "balance": bal, "rate": rate, "monthly": monthly})
+        pay = dl.get("monthly_payment") or monthly   # None→純付息
+        loans.append({"name": dl["name"], "balance": bal, "rate": rate,
+                      "monthly": monthly, "payment": pay})
     return loans
 
 
@@ -78,6 +81,7 @@ def funding_cost_report(snap, adj_costs=None):
     loans = load_loans(snap, adj_costs)
     total_bal = sum(l["balance"] for l in loans)
     total_m = sum(l["monthly"] for l in loans)
+    total_pay = sum(l["payment"] for l in loans)
     wacc = total_m * 12 / total_bal if total_bal else 0
 
     # 投資市值（股票+基金+保單）
@@ -95,17 +99,29 @@ def funding_cost_report(snap, adj_costs=None):
     else:
         light = "🔴 利差為負 → 配息不足以 cover 利息，停止加槓桿"
     pay_ok = "✅ 配息可 cover 利息" if div_m >= total_m else "⚠️ 月配息 < 月利息"
+    # 現金流兩層：實際月付 vs 配息 vs 被動收入(含房租)
+    rent = snap.get("passive_income", {}).get("rent_monthly") or 80100
+    passive = div_m + rent
+    if passive >= total_pay:
+        cash_ok = f"✅ 被動收入(配息{div_m:,.0f}+房租{rent:,.0f}) {passive:,.0f} > 實際月付 {total_pay:,.0f} → 償債後剩 {passive-total_pay:,.0f}/月"
+    else:
+        cash_ok = f"⚠️ 被動收入 {passive:,.0f} < 實際月付 {total_pay:,.0f}（含本利攤還）→ 需其他收入補 {total_pay-passive:,.0f}/月"
+    div_cover_pay = f"⚠️ 純配息 {div_m:,.0f} < 實際月付 {total_pay:,.0f}（永豐本利攤還所致）" if div_m < total_pay else f"✅ 純配息 {div_m:,.0f} ≥ 實際月付 {total_pay:,.0f}"
 
     L = ["\n⚖️ 資金成本儀表板（借貸總成本 vs 投資現金流）", "-" * 58]
+    L.append("  借款                     餘額    利率    實際月付(含本)  其中利息")
     for l in loans:
-        L.append(f"  {l['name']:26s} {l['balance']/10000:>7.0f}萬 @{l['rate']*100:>4.2f}% → {l['monthly']:>8,.0f}/月")
-    L.append(f"  {'有息負債合計':26s} {total_bal/10000:>7.0f}萬            {total_m:>8,.0f}/月")
-    L.append(f"  加權平均資金成本 = {wacc*100:.2f}%/年")
+        flag = "（本利攤還）" if l["payment"] > l["monthly"] else ""
+        L.append(f"  {l['name']:26s} {l['balance']/10000:>6.0f}萬 {l['rate']*100:>4.2f}% {l['payment']:>10,.0f} {flag:8s} {l['monthly']:>8,.0f}")
+    L.append(f"  {'合計':26s} {total_bal/10000:>6.0f}萬        {total_pay:>10,.0f}    利息 {total_m:>8,.0f}")
+    L.append(f"  加權平均資金成本 = {wacc*100:.2f}%/年｜⚠️ 永豐為本利攤還：實際月付 {total_pay:,.0f} > 純利息 {total_m:,.0f}")
     L.append(f"  投資市值（股票+基金+保單） {inv/10000:,.0f}萬")
     L.append(f"  保守月配息 {div_m:,.0f} → 配息殖利率 {div_yield*100:.2f}%/年")
     L.append(f"  淨利差 = {div_yield*100:.2f}% − {wacc*100:.2f}% = {spread*100:+.2f}pp")
     L.append(f"  判斷：{light}")
-    L.append(f"  現金流：{pay_ok}（月配息 {div_m:,.0f} vs 月息 {total_m:,.0f}）")
+    L.append(f"  利息層：{pay_ok}（月配息 {div_m:,.0f} vs 純月息 {total_m:,.0f}）")
+    L.append(f"  現金流層：{div_cover_pay}")
+    L.append(f"  現金流層：{cash_ok}")
     L.append(f"  註：房貸利息為居住成本；純投資槓桿 = 國泰+保單+元大（若看套利）")
     return "\n".join(L)
 
