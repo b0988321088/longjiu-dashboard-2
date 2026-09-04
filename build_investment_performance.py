@@ -47,6 +47,69 @@ def db_asset_on(db, date):
     return r
 
 
+
+# ── 資金成本儀表板（2026-09-04 使用者核准加入）──
+# 利率對照（負債結構穩定；變動時改 investment_performance_adjust.json 的 "資金成本")
+DEFAULT_LOANS = [
+    # balance_keys: 多 key = 加總（永豐 3 筆分帳號，勿用 mortgage=含國泰 25,082,544）
+    {"name": "永豐房貸（洲際W 3筆 2.5%）", "balance_keys": ["mortgage_yy", "mortgage_yydu", "mortgage_xz"], "rate": 0.025},
+    {"name": "國泰轉貸（大義街 2.6%）", "balance_keys": ["mortgage_cathay"], "rate": 0.026},
+    {"name": "保單借貸（4%）", "balance_keys": ["policy_pledge_loan"], "rate": 0.040},
+    {"name": "元大質押（3.92%）", "balance_keys": ["pledge_loan"], "rate": 0.0392},
+]
+
+
+def load_loans(snap, adj_costs=None):
+    """讀 snapshot 負債餘額 + 利率 → [(name, balance, rate, monthly_interest)]"""
+    adj_costs = adj_costs or {}
+    loans = []
+    for dl in DEFAULT_LOANS:
+        bal = sum(snap.get(k, 0) or 0 for k in dl["balance_keys"])
+        if bal <= 0:
+            continue
+        rate = adj_costs.get(dl["name"], dl["rate"])
+        monthly = bal * rate / 12
+        loans.append({"name": dl["name"], "balance": bal, "rate": rate, "monthly": monthly})
+    return loans
+
+
+def funding_cost_report(snap, adj_costs=None):
+    """輸出資金成本儀表板文字：負債表 + 加權成本 + 配息殖利率 + 淨利差燈號"""
+    loans = load_loans(snap, adj_costs)
+    total_bal = sum(l["balance"] for l in loans)
+    total_m = sum(l["monthly"] for l in loans)
+    wacc = total_m * 12 / total_bal if total_bal else 0
+
+    # 投資市值（股票+基金+保單）
+    inv = (snap.get("securities_total_market_value") or snap.get("securities_total") or 0) \
+        + (snap.get("fund_market_value") or snap.get("funds_total") or 0) \
+        + (snap.get("insurance_total") or 0)
+    div_m = snap.get("dividend_month_expected") or 100000   # 保守常態月配息
+    div_yield = div_m * 12 / inv if inv else 0
+
+    spread = div_yield - wacc
+    if spread >= 0.012:
+        light = "🟢 利差充足（≥1.2%）→ 現金流安全、套利空間存在"
+    elif spread >= 0:
+        light = "🟡 利差偏薄（0~1.2%）→ 付息可、擴槓桿謹慎"
+    else:
+        light = "🔴 利差為負 → 配息不足以 cover 利息，停止加槓桿"
+    pay_ok = "✅ 配息可 cover 利息" if div_m >= total_m else "⚠️ 月配息 < 月利息"
+
+    L = ["\n⚖️ 資金成本儀表板（借貸總成本 vs 投資現金流）", "-" * 58]
+    for l in loans:
+        L.append(f"  {l['name']:26s} {l['balance']/10000:>7.0f}萬 @{l['rate']*100:>4.2f}% → {l['monthly']:>8,.0f}/月")
+    L.append(f"  {'有息負債合計':26s} {total_bal/10000:>7.0f}萬            {total_m:>8,.0f}/月")
+    L.append(f"  加權平均資金成本 = {wacc*100:.2f}%/年")
+    L.append(f"  投資市值（股票+基金+保單） {inv/10000:,.0f}萬")
+    L.append(f"  保守月配息 {div_m:,.0f} → 配息殖利率 {div_yield*100:.2f}%/年")
+    L.append(f"  淨利差 = {div_yield*100:.2f}% − {wacc*100:.2f}% = {spread*100:+.2f}pp")
+    L.append(f"  判斷：{light}")
+    L.append(f"  現金流：{pay_ok}（月配息 {div_m:,.0f} vs 月息 {total_m:,.0f}）")
+    L.append(f"  註：房貸利息為居住成本；純投資槓桿 = 國泰+保單+元大（若看套利）")
+    return "\n".join(L)
+
+
 def main():
     today = datetime.date.today()
     if len(sys.argv) > 1:
@@ -70,6 +133,7 @@ def main():
     adj_interest = a.get("利息", {}) or {}         # {"房貸":x,"保單借貸":y}
     adj_fees = a.get("手續費", {}) or {}           # {類: 金額}
     project = a.get("專案收入", 0)
+    adj_costs = a.get("資金成本", {})   # {"永豐房貸（洲際W 3筆）": 0.025, ...} 利率覆蓋
 
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     db = sqlite3.connect(str(BASE / "dragon_assets.db"))
@@ -146,6 +210,7 @@ def main():
     print("=" * 58)
     if project:
         print(f"📦 專案收入(非常態) {project:+,.0f}（另計不混入）")
+    print(funding_cost_report(snap, adj_costs))
     print("口徑：借貸不計績效（投入列帳面、漲跌才計）；配息當月實收；市值含未實現")
 
 
