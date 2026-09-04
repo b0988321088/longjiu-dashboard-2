@@ -1,33 +1,43 @@
 # -*- coding: utf-8 -*-
-"""build_investment_performance.py — 投資績效月報（2026-09-04 建立，9/4 使用者裁示）
+"""build_investment_performance.py — 投資績效月報 v2（2026-09-04 定版）
 
-核心：每月一個乾淨的「投資績效」主數字，借貸帳面徹底分離。
-  投資績效(月) = 真實市值變化(剔除當月新增投入) + 配息實收 − 投資利息 − 申購手續費
+核心：每月投資績效細分為 股票/基金/保單 三類，貸款資金單獨標示。
+
+  每類損益 = 真實市值變化（帳面 − 當類新增投入）＋ 當類配息 − 當類費用
+  總績效   = 三類損益合計 − 投資利息（房貸利息+保單借貸利息）− 申購手續費
 
 口徑鐵則：
-  · 借貸不創造淨值：轉貸撥款買資產 = 資產/負債同步增加 → 列「資金調度」，不計績效
-  · 市值變化 = 月底投資市值 − 月初投資市值 − 當月新增投入本金（申購/買入）
-  · 非常態收入（專案）獨立列示，不混入投資績效
-
-資料源（自動優先）：
-  dragon_assets.db assets 表：securities+funds+insurance 每月起訖
-  snapshot.json：dividend_records（當月配息實收）、fund_purchase_fees（手續費）
-
-校正檔（investment_performance_adjust.json，每月申購本金寫這裡）：
-  {"2026-08": {"新增投入": 12000000, "市值變化": 235000, "配息": 139000,
-               "利息": 42000, "手續費": 15000, "專案收入": 332342, "備註": "..."}}
-
-db 無月初基準的月份（如 2026-07，系統 7/19 才開始追蹤）→ 需校正檔帶入，否則無法算整月。
+  · 借貸不創造淨值：轉貸撥款 = 負債同步增加。貸款投入的金額列「新增投入」，
+    顯示於帳面但不計績效 → 貸款買的資產若漲跌，只有「漲跌部分」進績效
+  · 配息自動分類：安聯/第一金 → 保單；ETF配息/台灣特品 → 股票；其餘基金名 → 基金
+  · 校正檔帶入每月新增投入（分三類 + 資金來源），db 有月初基準後可全自動算市值
 
 用法：
-  python build_investment_performance.py            # 預設最近完整月
-  python build_investment_performance.py 2026-08    # 指定 YYYY-MM
+  python build_investment_performance.py            # 最近完整月
+  python build_investment_performance.py 2026-08
 """
 import json, sys, sqlite3, datetime
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 ADJ_FILE = BASE / "investment_performance_adjust.json"
+
+CLASS_KEYS = ["股票", "基金", "保單"]
+
+
+def classify_dividend(name):
+    """配息 key → 類別：安聯/第一金→保單；ETF/台灣特品→股票；其他基金→基金"""
+    if "安聯" in name or "第一金" in name:
+        return "保單"
+    if name.startswith("ETF") or "台灣特品" in name:
+        return "股票"
+    return "基金"
+
+
+def load_adjust():
+    if ADJ_FILE.exists():
+        return json.loads(ADJ_FILE.read_text(encoding="utf-8"))
+    return {}
 
 
 def db_asset_on(db, date):
@@ -47,14 +57,19 @@ def main():
         y, m = prev.year, prev.month
 
     month_start = datetime.date(y, m, 1)
-    month_end = (datetime.date(y, m + 1, 1) - datetime.timedelta(days=1)) if m < 12 else datetime.date(y + 1, 1, 1) - datetime.timedelta(days=1)
+    month_end = (datetime.date(y, m + 1, 1) - datetime.timedelta(days=1))
     prev_end = month_start - datetime.timedelta(days=1)
     mk = f"{y:04d}-{m:02d}"
 
-    adj = {}
-    if ADJ_FILE.exists():
-        adj = json.loads(ADJ_FILE.read_text(encoding="utf-8"))
+    adj = load_adjust()
     a = adj.get(mk, {}) or {}
+    adj_invest = a.get("新增投入", {}) or {}       # {類: 金額}
+    adj_src = a.get("資金來源", {}) or {}          # {類: "國泰轉貸 1,200萬"}
+    adj_mv = a.get("市值變化", {}) or {}           # {類: 真實市值變化(已剔投入)} 校正優先
+    adj_div = a.get("配息", {}) or {}              # {類: 金額} 校正優先，否則自動分類
+    adj_interest = a.get("利息", {}) or {}         # {"房貸":x,"保單借貸":y}
+    adj_fees = a.get("手續費", {}) or {}           # {類: 金額}
+    project = a.get("專案收入", 0)
 
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     db = sqlite3.connect(str(BASE / "dragon_assets.db"))
@@ -62,62 +77,76 @@ def main():
     start_row = db_asset_on(db, prev_end.isoformat())
     db.close()
 
-    # ── 自動：投資市值起訖 ──
-    auto_mv_chg = None
-    start_note = ""
+    mv_reliable = a.get("市值可靠", True)   # false=月初基準不足/投入時點未知，只列現金型報酬
+
+    # ── 各類帳面市值起訖（db 自動） ──
+    mv0 = mv1 = None
+    db_start_note = ""
     if end_row:
-        end_mv = end_row[1] + end_row[2] + end_row[3]
+        mv1 = {"股票": end_row[1], "基金": end_row[2], "保單": end_row[3]}
         if start_row:
-            start_mv = start_row[1] + start_row[2] + start_row[3]
-            auto_mv_chg = end_mv - start_mv
-            start_note = f"{start_row[0]}"
+            mv0 = {"股票": start_row[1], "基金": start_row[2], "保單": start_row[3]}
+            db_start_note = start_row[0]
         else:
-            start_note = f"（db 自 {end_row[0]} 起，無月初基準）"
+            db_start_note = f"（db 自 {end_row[0]} 起，無月初基準）"
 
-    # ── 校正檔優先（月報審查值：市值變化=已剔除新增投入的真實值），其次自動 ──
-    if "市值變化" in a:
-        pure_mv = a["市值變化"]               # 真實市值變化（校正檔已剔除投入）
-        extra = a.get("新增投入", 0)           # 僅供顯示參考
-        mv_chg_total = pure_mv + extra         # 帳面總變化（顯示用）
-    elif auto_mv_chg is not None:
-        mv_chg_total = auto_mv_chg
-        extra = a.get("新增投入", 0)
-        pure_mv = mv_chg_total - extra         # 真實市值變化（自動模式需扣投入）
-    else:
-        print(f"⚠️ {mk}: 無 db 月初基準亦無校正檔 → 無法算投資績效")
-        print("  請在 investment_performance_adjust.json 填 {月份:{市值變化, 新增投入, 配息, 利息, 手續費}}")
-        return
-    div = a.get("配息")
-    if div is None:
-        dr = (snap.get("dividend_records") or {}).get(mk, {}) or {}
-        div = sum(v for v in dr.values() if isinstance(v, (int, float))) if dr else 0
-    interest = a.get("利息", 0)
-    fees = a.get("手續費")
-    if fees is None:
-        fees = sum(v for k, v in (snap.get("fund_purchase_fees") or {}).items()
-                   if str(k)[:7] == mk and isinstance(v, (int, float)))
-    project = a.get("專案收入", 0)
+    # ── 配息自動分類（若校正未帶） ──
+    auto_div = {"股票": 0, "基金": 0, "保單": 0}
+    dr = (snap.get("dividend_records") or {}).get(mk, {}) or {}
+    for k, v in dr.items():
+        if isinstance(v, (int, float)):
+            auto_div[classify_dividend(k)] += v
 
-    perf = pure_mv + div - interest - fees
+    # ── 利息（校正帶入，fallback 月報慣例） ──
+    interest_total = sum(adj_interest.values()) if adj_interest else 0
 
-    # ── 輸出 ──
-    L = []
-    L.append(f"📊 投資績效月報 {y:04d}-{m:02d}")
-    L.append("=" * 44)
-    L.append(f"📈 投資市值（證券+基金+保單）")
-    L.append(f"   帳面變化 {mv_chg_total:>12,.0f}")
-    L.append(f"   − 新增投入 {extra:>12,.0f}")
-    L.append(f"   ＝ 真實市值變化 {pure_mv:>+12,.0f}")
-    L.append(f"💰 配息實收      {div:>+12,.0f}")
-    L.append(f"💸 投資利息      {-interest:>+12,.0f}")
-    L.append(f"🧾 申購手續費    {-fees:>+12,.0f}")
+    print(f"\n📊 投資績效月報 {y:04d}-{m:02d}（細分版：股票/基金/保單）")
+    print(f"基準：{db_start_note or '校正檔'} → {end_row[0] if end_row else '校正檔'}")
+    print("=" * 58)
+
+    grand = 0
+    for c in CLASS_KEYS:
+        inv = adj_invest.get(c, 0)
+        src = adj_src.get(c, "")
+        div = adj_div.get(c, auto_div[c])
+        fee = adj_fees.get(c, 0)
+        print(f"\n■ {c}")
+        if mv_reliable:
+            # 真實市值變化：校正優先，其次 帳面−投入
+            if c in adj_mv:
+                real_mv = adj_mv[c]
+                gross_mv = real_mv + inv
+            elif mv0 and mv1:
+                gross_mv = mv1[c] - mv0[c]
+                real_mv = gross_mv - inv
+            else:
+                print(f"  ⚠️ 無基準 → 市值變化需校正檔，先以 0 計")
+                real_mv = 0; gross_mv = 0
+            print(f"  市值：帳面 {gross_mv:+,.0f}")
+            if inv:
+                print(f"     − 新增投入 {inv:,.0f}" + (f"（{src}）" if src else "（自有資金）"))
+            print(f"     ＝ 真實市值變化 {real_mv:+,.0f}")
+        else:
+            real_mv = 0
+            print(f"  市值：本月基準不足/投入時點未知 → 不計（見備註）")
+        print(f"  ＋ 配息實收 {div:+,.0f}")
+        if fee:
+            print(f"  − 手續費 {-fee:,.0f}")
+        sub = real_mv + div - fee
+        grand += sub
+        print(f"  ＝ {c}損益 {sub:+,.0f}" + ("（含市值）" if real_mv else "（現金型：不含市值）"))
+
+    print("\n" + "-" * 58)
+    print(f"三類損益合計        {grand:+,.0f}")
+    if interest_total:
+        print(f"− 投資利息(合計)    {-interest_total:,.0f}" + (f"（{json.dumps(adj_interest, ensure_ascii=False)}）" if adj_interest else ""))
+    print("=" * 58)
+    perf = grand - interest_total
+    print(f"🎯 投資績效（月）= {perf:+,.0f} ＝ {(perf/10000):+.1f} 萬")
+    print("=" * 58)
     if project:
-        L.append(f"📦 專案收入(非常態) {project:>+12,.0f}  ← 另計不混入")
-    L.append("=" * 44)
-    L.append(f"🎯 投資績效（月）= {perf:+,.0f}  ＝  {(perf/10000):+.1f} 萬")
-    L.append("=" * 44)
-    L.append(f"口徑：借貸不計（資產/負債同步）；配息為當月實收；市值含未實現損益")
-    print("\n".join(L))
+        print(f"📦 專案收入(非常態) {project:+,.0f}（另計不混入）")
+    print("口徑：借貸不計績效（投入列帳面、漲跌才計）；配息當月實收；市值含未實現")
 
 
 if __name__ == "__main__":
