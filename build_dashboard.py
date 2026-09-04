@@ -268,6 +268,10 @@ def main():
         tpl, _n = _pat.subn(lambda m: m.group(1) + _fmt(_dv) + m.group(2), tpl)
         if _n:
             hits += _n
+    # ── 2026-09-04：純文字/手動行事曆殘留值正規化（data-k 注入只涵蓋 span；公式行與事件列金額需隨 monthly_salary 自動更新）──
+    _ms = int(snap.get("monthly_salary", 42560) or 42560)
+    tpl = tpl.replace("39,727", f"{_ms:,}")
+    tpl = tpl.replace("219,827", f"{_ms + 100000 + 80100:,}")
 
     # ── 今日狀態列動態化（2026-08-27：今日 + 近3天 + 下一個；含保單轉換等決策事件）──
     try:
