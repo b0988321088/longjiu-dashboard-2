@@ -98,6 +98,30 @@ def main():
         else:
             print(f"ℹ️ 本月({month})尚未收到配息，顯示 0")
 
+    # 2026-09-04 防復發（35,583/130,930 誤值三犯）：五欄一致鐵則自動校準。
+    # monthly_dividend_total / monthly_dividend_breakdown 一律由當月 dividend_records
+    # 重算（分類規則同 run_daily _div_by_type：安聯→保單/第一金→保單/ETF→etf/其他→基金），
+    # 防止任何流程把「常態月配」(allianz_ab_monthly+firstjin_monthly=130,930) 寫回當月欄位。
+    _bd = snap.setdefault("monthly_dividend_breakdown", {})
+    if isinstance(_bd, dict):
+        _by2 = {"allianz": 0, "firstjin": 0, "etf": 0, "fund": 0}
+        for _d2, _items2 in (snap.get("dividend_records", {}) or {}).items():
+            if not str(_d2).startswith(month):
+                continue
+            for _k2, _v2 in _items2.items():
+                if "安聯" in _k2:
+                    _by2["allianz"] += _v2
+                elif "第一金" in _k2:
+                    _by2["firstjin"] += _v2
+                elif "etf" in _k2.lower():
+                    _by2["etf"] += _v2
+                else:
+                    _by2["fund"] += _v2
+        _bd.update({"allianz": _by2["allianz"], "firstjin": _by2["firstjin"],
+                    "insurance": _by2["allianz"] + _by2["firstjin"],
+                    "etf": _by2["etf"], "fund": _by2["fund"], "total": total})
+    snap["monthly_dividend_total"] = total
+
     json.dump(snap, open(SNAP_PATH, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
 
 

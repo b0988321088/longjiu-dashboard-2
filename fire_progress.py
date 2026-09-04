@@ -3,6 +3,8 @@
 每日自動計算被動收入 vs 實際開銷覆蓋率"""
 
 import json
+import re
+from datetime import date
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
@@ -17,6 +19,17 @@ def calc():
     etf_div = mdb.get("etf", 0)
     fund_div = mdb.get("fund", 0)
     rent = snap.get("rent_monthly_actual", 80100)
+    # 2026-09-04：租金用「當月已收」加總（同 morning_briefing），非應收 80,100
+    _tm = date.today().strftime("%Y-%m")
+    _rent_got = 0
+    for _k, _v in (snap.get("rent_received_records", {}) or {}).items():
+        if str(_k).startswith(_tm):
+            if isinstance(_v, dict):
+                _rent_got += sum(x for x in _v.values() if isinstance(x, (int, float)))
+            elif isinstance(_v, (int, float)):
+                _rent_got += _v
+    if _rent_got > 0:
+        rent = _rent_got
     total_income = insurance_div + etf_div + fund_div + rent
     expense = snap.get("monthly_expense", TARGET_EXPENSE)
     mortgage = snap.get("mortgage_monthly_total", 0) or 0
@@ -24,10 +37,12 @@ def calc():
 
     mdb_note = mdb.get("note", "") or ""
     _m = ""
-    if "7月" in mdb_note or "2026-07" in mdb_note:
-        _m = "（7月實收）"
-    elif "8月" in mdb_note or "2026-08" in mdb_note:
-        _m = "（8月實收）"
+    # 2026-09-04 動態化：note 含「N月」就標（原只認 7月/8月）
+    _mm = re.search(r"(\d{1,2})月", mdb_note)
+    if _mm:
+        _n = _mm.group(1)
+        _cur_m = str(date.today().month)
+        _m = f"（{_n}月）" if _n == _cur_m else f"（{_n}月實收）"
     cov = total_income / expense * 100 if expense else 0
     lines = [
         f"🎯 **FIRE 進度{_m}**",

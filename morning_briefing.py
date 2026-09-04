@@ -104,13 +104,15 @@ def get_fire(snap):
     mortgage = snap.get("mortgage_monthly_total", 0) or 0
     other_expense = max(0, expense - mortgage)
     ideal_spend = 40000  # 長期理想目標月花費
-    # 標示數據月份
+    # 標示數據月份（2026-09-04 動態化：原本只認 7月/8月 → 9月後無標示誤導）
+    # note 含「N月」就標；N=當月 →「（N月）」當月應收制，N=歷史月 →「（N月實收）」
     _note = mdb.get("note", "") or ""
     _m = ""
-    if "7月" in _note or "2026-07" in _note:
-        _m = "（7月實收）"
-    elif "8月" in _note or "2026-08" in _note:
-        _m = "（8月實收）"
+    _mm = re.search(r"(\d{1,2})月", _note)
+    if _mm:
+        _n = _mm.group(1)
+        _cur_m = str(date.today().month)
+        _m = f"（{_n}月）" if _n == _cur_m else f"（{_n}月實收）"
     cov = total / expense * 100 if expense else 0
     lines = [
         f"  被動收入{_m}：**{total:,}**",
