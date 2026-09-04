@@ -762,6 +762,21 @@
     "安聯",
     "四源"
    ]
+  },
+  {
+   "id": "usr-20260904-4",
+   "timestamp": "2026-09-04T08:08:53.591850",
+   "date": "2026-09-04",
+   "source": "user",
+   "decision": "核准",
+   "status": "✅ 已完成",
+   "task": "配息誤值三犯根治",
+   "summary": "FIRE 130,930=常態月配誤值三犯；breakdown/月總額改當月 dividend_records 驅動(9月16,664應收制)+tracker每日自癒+月份標籤動態化。commit 2471a0d。",
+   "tags": [
+    "系統維護",
+    "配息",
+    "記帳口徑"
+   ]
   }
  ],
  "meta": {
