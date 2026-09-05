@@ -43,6 +43,10 @@ def main():
     for k, v in (snap.get("salary_records", {}) or {}).items():
         if str(k).startswith(_today_m):
             salary += (v.get("amount", 0) if isinstance(v, dict) else v) or 0
+    monthly_salary_from_snap = snap.get("page1", {}).get("actual_cash_flow", {}).get("income", {}).get("台電薪水_固定", 43000) or 43000
+    _conservative_monthly_dividend = 155000 # 您的記憶中9月起月配~155K
+    rent_monthly_actual_from_snap = snap.get("rent_monthly_actual", 80100) or 80100
+    
 
     # 租金已收（當月）
     rent_got = 0
@@ -269,9 +273,17 @@ def main():
         if _n:
             hits += _n
     # ── 2026-09-04：純文字/手動行事曆殘留值正規化（data-k 注入只涵蓋 span；公式行與事件列金額需隨 monthly_salary 自動更新）──
-    _ms = int(snap.get("monthly_salary", 42560) or 42560)
-    tpl = tpl.replace("39,727", f"{_ms:,}")
-    tpl = tpl.replace("219,827", f"{_ms + 100000 + 80100:,}")
+    _ms = monthly_salary_from_snap # Use the corrected snap value for display
+    _passive_income_forecast = monthly_salary_from_snap + _conservative_monthly_dividend + rent_monthly_actual_from_snap
+    tpl = tpl.replace("39,727", f"{_ms:,}") # This is salary alone, based on snap
+    tpl = tpl.replace("219,827", f"{_passive_income_forecast:,}") # This is salary + conservative dividend + rent
+
+    # 護城河覆蓋率計算
+    _pure_passive_income_actual = div_total + rent_got
+    _coverage_pct = (_pure_passive_income_actual / expense) * 100
+    tpl = tpl.replace("135.0% 覆蓋", f"{_coverage_pct:.1f}% 覆蓋") # 更新覆蓋率
+    tpl = tpl.replace("薪水 42,560 + 配息保守 100,000 + 房租應收 80,100 = 222,660 TWD",
+                      f"薪水 {_fmt(monthly_salary_from_snap)} + 配息保守 {_fmt(_conservative_monthly_dividend)} + 房租應收 {_fmt(rent_monthly_actual_from_snap)} = {_fmt(_passive_income_forecast)} TWD")
 
     # ── 今日狀態列動態化（2026-08-27：今日 + 近3天 + 下一個；含保單轉換等決策事件）──
     try:
