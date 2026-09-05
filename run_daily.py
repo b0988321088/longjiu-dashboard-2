@@ -727,6 +727,39 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     except Exception as _ce:
         _chart_html = f"<!-- 穿透圖生成失敗: {_ce} -->"
 
+    # 系統工作日誌（2026-09-05：work_log.json 動態，應辦/完成分色；與儀表板 work-log 卡同源）
+    _worklog_html = ""
+    try:
+        _wl = json.loads((Path(__file__).resolve().parent / "work_log.json").read_text(encoding="utf-8"))
+        if isinstance(_wl, list) and _wl:
+            def _wl_esc(_s: str) -> str:
+                return _s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            def _wl_row(_d: dict) -> str:
+                _c = _d.get("category", "")
+                _ic = "📋" if _c == "應辦" else ("✅" if _c == "完成" else "•")
+                _cl = "#b45309" if _c == "應辦" else ("#059669" if _c == "完成" else "#64748b")
+                _dh = ""
+                _de = str(_d.get("detail", "") or "").strip()
+                if _de:
+                    _dh = f'<div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">{_wl_esc(_de)}</div>'
+                return (f'<div style="border-left:3px solid {_cl};padding:2px 0 2px 10px;margin:6px 0">'
+                        f'<span style="color:{_cl};font-weight:800">{_ic}</span> '
+                        f'<span style="color:#1d1d1f;font-weight:600">{_wl_esc(str(_d.get("item", "")))}</span>{_dh}</div>')
+            _wl_todos = [d for d in _wl if d.get("category") == "應辦"]
+            _wl_dones = [d for d in _wl if d.get("category") == "完成"]
+            _wl_parts = []
+            if _wl_todos:
+                _wl_parts.append(f'<div style="font-size:12px;color:#b45309;font-weight:800;margin:4px 0 0">📋 應辦（{len(_wl_todos)}）</div>'
+                                 + "".join(_wl_row(d) for d in _wl_todos))
+            if _wl_dones:
+                _wl_dones_r = list(reversed(_wl_dones[-8:]))
+                _wl_parts.append(f'<div style="font-size:12px;color:#059669;font-weight:800;margin:8px 0 0">✅ 完成（近 {len(_wl_dones_r)} 筆 / 共 {len(_wl_dones)}）</div>'
+                                 + "".join(_wl_row(d) for d in _wl_dones_r))
+            if _wl_parts:
+                _worklog_html = '<div class="callout callout-info">' + "".join(_wl_parts) + "</div>"
+    except Exception as _wle:
+        _worklog_html = f"<!-- work_log 讀取失敗: {_wle} -->"
+
     html = f"""<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -1000,6 +1033,10 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       </table>
       <p class="text-sm" style="color:#6e6e73;margin-top:6px">🔁 配息接力時間表：💰 = 配息基準日（基準日+12天左右入帳）、🔴 = T+4 轉換截止（除息前4工作日）。三站依配息時間循環領息：月初（摩根 9/8）→ 月中（安聯 9/14 / M&G 9/18）→ 月底（AI 9/24 / PIMCO 9/28 / A10+聯博 9/29）。</p>
     </div>
+
+    <h3>🛠️ 系統工作日誌（收工登錄）</h3>
+    <div class="label">work_log.json 動態讀取 — 應辦 / 完成分色（2026-09-05 起，與儀表板同源）</div>
+    {_worklog_html}
   </div>
 
   <!-- 投資決策框架 -->
