@@ -52,5 +52,11 @@
     "category": "完成",
     "item": "觀望 gate 定調(9/5核准閉環)：全面觀望至 PI質押款到位+Fed 9/11 CPI/9/16；行動儀表板三層動態化(今天/該做/3天)+完整分析保留；決策/技能/記憶/行事曆同步",
     "detail": "commits 9d925621/4e046d69/10e9cc36"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "Hermes 儲存健康維護（9/5 核准 A 案）：hermes 目錄 13G→6.7G；updates.backup_keep 5→2；週日 DB 保養擴充為 5 步自動輪替",
+    "detail": "刪 9/2-9/3 舊 state.db 備份 5 項 ~6.1G（保留 bak-20260904）+7/22 快照；optimize-storage 後 state.db 1.1G→643M；新增 scripts/prune_state_db_backups.py（留最新 2 份、DB quick_check 異常防呆）；記憶 md 備份守留 14 份；技能 hermes-storage-maintenance 建檔"
   }
 ]
