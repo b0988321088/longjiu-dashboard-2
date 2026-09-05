@@ -531,8 +531,9 @@ def main():
             import datetime as _dt
             _rows = []
             for _l in lines:
-                _act = _l[:3].strip() or "📋"
-                _body = _l[3:].strip() if len(_l) > 3 else _l
+                _parts = _l.split(" ", 1)
+                _act = _parts[0].strip() or "📋"
+                _body = _parts[1].strip() if len(_parts) > 1 else _l
                 _cat = _body.split("（", 1)[0].strip()
                 _rows.append({"動作": _act, "類別": _cat, "內容": _body})
             _st = load_json(BASE / "radar_state.json", {})
