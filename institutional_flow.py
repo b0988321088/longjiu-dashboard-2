@@ -533,7 +533,10 @@ def main():
         # ⑨ 負債/質押
         lines.append("🔍 9/10 PI 認列 → 質押350萬@2.77% 撥款（銀行 2-4 週）到位後才啟動後續部署；到位前全面觀望（唯一推進 = PI/質押流程）")
         # ⑩ 產業輪動
-        lines.append(f"📊 產業輪動：買「{_rot5.get('產業','—')}」（{_rot5.get('標的','')}）｜避開「公用事業」")
+        if _gate:
+            lines.append(f"⏸️ 產業輪動：目標「{_rot5.get('產業','—')}」→ 乾粉保留，等觀望 gate 解除後再啟動")
+        else:
+            lines.append(f"📊 產業輪動：買「{_rot5.get('產業','—')}」（{_rot5.get('標的','')}）｜避開「公用事業」")
         for l in lines:
             print("  " + l)
         # 2026-09-05：結構化存 radar_state.weekly_plan（主儀表板「本週動作與執行清單」動態讀取）
