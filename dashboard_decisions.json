@@ -1454,6 +1454,16 @@
    "status": "✅ 已完成",
    "task": "美元債分批條件單掛載（CPI/FOMC 定調後觸發）",
    "summary": "9/5 核准對策：現在不買（升息押注60% price-in+美元曝險超紅線54.4%+gate）；9/16 定調後用存量美元(400萬停泊 BIL/MMF 部分)分批轉中短天期投資級債(PIMCO/M&G)，不換新匯不增美元曝險；長債存續期≤5-7Y；長天期鎖利留 2029 質押套利。已掛 pending_decisions + 行動儀表板本週該做。"
+  },
+  {
+   "id": "usr-20260905-4",
+   "timestamp": "2026-09-05T20:56:10.828882",
+   "date": "2026-09-05",
+   "source": "user",
+   "decision": "核准",
+   "status": "✅ 已完成",
+   "task": "週六評估改全源整合：新增 📊 全源整合對照區塊（DAA/資金/五桶/雷達/政策/緊急/gate 並陳）",
+   "summary": "9/5 使用者核准：判斷前必須整合所有資料源，避免偏頗。週六 cron f5e412363a17 prompt 重寫：必讀資料由 4 源擴至 9 源（補 macro_regime DAA v3、tactical_table、rotation 乾粉、pending/gate、us30y_state）；輸出新增區塊0 全源整合對照（來源→訊號→衝突→裁定）；結論須交代依據/排除來源。衝突鏈：裁示/gate＞紅線＞戰術＞引擎；政策 vs 機械燈號矛盾降級 🟡。rebalance-monitoring-sop 同步。下週六 9/12 生效。"
   }
  ],
  "meta": {
