@@ -518,14 +518,28 @@ def main():
             lines.append(f"🔴 美元曝險 {_usd}% 超標（>55%）→ 美股減碼/美元定存到期轉台幣")
         else:
             lines.append(f"🟡 美元曝險 {_usd}% （目標≤50%）→ 未達減碼閾值，續觀察")
-        # ⑧ 保單轉換
-        lines.append("🔴 9/2 前：保單轉換截止（PIMCO120+M&G80-100+醫療50+黃金30）→ 8/26已轉80萬 8/30生效，剩餘本週內完成")
+        # ⑧ 保單轉換（9/1 已全數送出 — 追蹤入帳）
+        lines.append("✅ 保單轉換 9/1 已送出（安聯 PIMCO +50萬、貝萊德科技A10 90萬→摩根月配）→ 追蹤 9/8 除息 T+4 入帳")
         # ⑨ 負債/質押
-        lines.append("🔍 9/3 PI 認列 → 質押350萬@2.77% 還安聯300+元大50（高息→低息，月省利息）")
+        lines.append("🔍 9/10 PI 認列 → 質押350萬@2.77% 還安聯300+元大50（高息→低息，升息前鎖低成本）")
         # ⑩ 產業輪動
         lines.append(f"📊 產業輪動：買「{_rot5.get('產業','—')}」（{_rot5.get('標的','')}）｜避開「公用事業」")
         for l in lines:
             print("  " + l)
+        # 2026-09-05：結構化存 radar_state.weekly_plan（主儀表板「本週動作與執行清單」動態讀取）
+        try:
+            import datetime as _dt
+            _rows = []
+            for _l in lines:
+                _act = _l[:3].strip() or "📋"
+                _body = _l[3:].strip() if len(_l) > 3 else _l
+                _cat = _body.split("（", 1)[0].strip()
+                _rows.append({"動作": _act, "類別": _cat, "內容": _body})
+            _st = load_json(BASE / "radar_state.json", {})
+            _st["weekly_plan"] = {"日期": _dt.date.today().isoformat(), "rows": _rows}
+            save_json(BASE / "radar_state.json", _st)
+        except Exception as _e2:
+            print(f"  ⚠️ weekly_plan 存檔失敗: {_e2}")
     except Exception as e:
         print(f"  ⚠️ 本週投資計劃產生失敗: {e}")
     return 0

@@ -586,6 +586,28 @@
       tp.innerHTML = h;
     }).catch(function(){});
   }
+  var wpa = document.getElementById('trade-plan');
+  /* 2026-09-05：本週動作與執行清單 = radar_state.json.weekly_plan 動態（雷達每天 16:15 更新；取代舊交易計畫單一渲染） */
+  if(wpa){
+    fetch('radar_state.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(rs){
+      var wp = rs && rs.weekly_plan;
+      if(!wp || !wp.rows || !wp.rows.length) return;
+      var h = '<div style="font-size:12px;color:#92400e;font-weight:800;margin-bottom:6px">📋 本週動作與執行清單（'+wp.日期+'｜即時・小動作原則・再平衡+DAA+情報彙整）</div>';
+      wp.rows.forEach(function(x){
+        var col = '#1f2937';
+        var a = x.動作 || '';
+        if(a.indexOf('🔴')===0) col='#dc2626';
+        else if(a.indexOf('⏸️')===0) col='#6b7280';
+        else if(a.indexOf('💰')===0) col='#b45309';
+        else if(a.indexOf('📊')===0 || a.indexOf('🔍')===0) col='#1d4ed8';
+        else if(a.indexOf('🟢')===0) col='#166534';
+        h += '<div style="font-size:12px;line-height:1.75;border-bottom:1px dashed #fde68a;padding:2px 0">'
+           + '<b style="color:'+col+'">'+a+'</b> <span style="color:#78350f;font-weight:700">'+(x.類別||'')+'</span> '
+           + '<span style="color:#1f2937">'+(x.內容||'')+'</span></div>';
+      });
+      wpa.innerHTML = h;
+    }).catch(function(){});
+  }
   var dt = document.getElementById('decision-track');
   if(dt){
     fetch('pending_decisions.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(list){
