@@ -534,7 +534,12 @@ def main():
                 _parts = _l.split(" ", 1)
                 _act = _parts[0].strip() or "📋"
                 _body = _parts[1].strip() if len(_parts) > 1 else _l
-                _cat = _body.split("（", 1)[0].strip()
+                _CATS = ("台股", "美股", "防守", "債券", "現金", "避險衛星",
+                         "美元曝險", "保單轉換", "質押", "PI", "產業輪動")
+                _cat = next((_c for _c in _CATS if _body.startswith(_c)),
+                            _body.split("（", 1)[0].strip())
+                if _body.startswith(_cat):
+                    _body = _body[len(_cat):].strip()
                 _rows.append({"動作": _act, "類別": _cat, "內容": _body})
             _st = load_json(BASE / "radar_state.json", {})
             _st["weekly_plan"] = {"日期": _dt.date.today().isoformat(), "rows": _rows}
