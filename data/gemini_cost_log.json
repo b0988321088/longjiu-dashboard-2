@@ -12,7 +12,8 @@
   "2026-09": {
     "topup_twd": 1000,
     "date": "2026-09-05",
-    "note": "9/5 使用者儲值 NT$1,000（提前，原訂 9/7）；8月 credit 366 + 儲值 1000 = 1,366 − 9月用量（低，實測生成 200 等級），以 AI Studio 帳單為準",
-    "credit_balance_twd": 1366
+    "topup_reason": "8月 credit 366 已於 9/4 前用罄（DS 斷線期 fallback 至 Gemini 燒完）→ 今天儲值 NT$1,000",
+    "credit_balance_twd": 1000,
+    "note": "儲值前餘額已歸零（使用者 9/5 確認）；9/5 起從 1,000 扣（今日用量低：實測生成等級），最終以 AI Studio 帳單為準"
   }
 }
