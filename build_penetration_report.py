@@ -133,6 +133,31 @@ if _ms:
       f"<table style='width:100%;font-size:12px;margin-top:6px;border-collapse:collapse'><tr style='color:#64748b'><th style='text-align:left;padding:3px 6px'>情境</th><th class='num'>防禦最低</th><th class='num'>收入最低</th><th class='num'>LTV上限</th><th style='text-align:left;padding:3px 6px'>策略</th></tr>{_rows4}</table>"
       f"<span style='color:#64748b;font-size:12px'>現況驗證：防禦 {_v.get('防禦',0)}%（≥{_v.get('防禦門檻',0)}% {'✅' if _v.get('防禦合格') else '❌'}）｜收入 {_v.get('收入',0)}%（≥{_v.get('收入門檻',0)}% {'✅' if _v.get('收入合格') else '❌'}）｜LTV {_v.get('LTV',0)}%（≤{_v.get('LTV上限',0)}% {'✅' if _v.get('LTV合格') else '❌'}）→ {_v.get('結論','')}</span></div>")
 
+# 現況質押借款快照（2026-09-05 加：LTV 現況透明化 — 勿誤讀情境表為「無質押」）
+_pl_a = float(snap.get("policy_pledge_loan") or 0)
+_pl_a_r = snap.get("policy_pledge_rate") or 0
+_pl_b = float(snap.get("pledge_loan") or 0)
+_pl_b_r = snap.get("pledge_loan_rate")
+_pl_b_n = str(snap.get("pledge_loan_rate_note") or "待核對")
+_ins_col = float(snap.get("insurance_current_value") or 0)
+_sec_col = float((snap.get("securities") or {}).get("total_market_value") or 0)
+_rows_pl = ""
+if _pl_a > 0:
+    _rows_pl += (f"<tr><td>保單質押（安聯A 200萬+安聯B 100萬+第一金 100萬）</td>"
+                 f"<td class='num'>{_pl_a:,.0f}</td><td class='num'>{_pl_a_r*100:.1f}%</td>"
+                 f"<td class='num'>{(_pl_a/_ins_col*100 if _ins_col else 0):.1f}%</td>"
+                 f"<td>待 PI 質押撥款後償還 300萬</td></tr>")
+if _pl_b > 0:
+    _rows_pl += (f"<tr><td>券商質押（snapshot pledge_loan；計畫列元大 50萬 — 金額不一致待核對）</td>"
+                 f"<td class='num'>{_pl_b:,.0f}</td>"
+                 f"<td class='num'>{('%.2f' % (_pl_b_r*100)) + '%' if _pl_b_r else '⚠️ 待確認'}</td>"
+                 f"<td class='num'>{(_pl_b/_sec_col*100 if _sec_col else 0):.1f}%</td>"
+                 f"<td>⚠️ {_pl_b_n}</td></tr>")
+if _rows_pl:
+    w(f"<div class='callout' style='border-left:3px solid #ef4444'>🔒 <b>現況質押借款（2026-09-05 透明化 — 既有質押非 0，情境表 LTV 為規則上限非現況）</b>"
+      f"<table style='width:100%;font-size:12px;margin-top:6px;border-collapse:collapse'><tr style='color:#64748b'><th style='text-align:left;padding:3px 6px'>項目</th><th class='num'>借款</th><th class='num'>利率</th><th class='num'>LTV(佔擔保)</th><th>狀態</th></tr>{_rows_pl}</table>"
+      f"<span style='color:#64748b;font-size:12px'>PI 富達質押 350萬@2.77% 尚未撥款（9/10 認列後送件）；情境表 LTV 上限：當前『區間震盪』≤52%。房貸（大義街國泰 1,200萬@2.6%、洲際W 永豐 1,312萬@2.5%）屬不動產貸款，不計入質押。</span></div>")
+
 # 1. Overview table
 w("<div class='card'><h2>🎯 配置總覽</h2>")
 w("<table><thead><tr><th>類別</th><th class='num'>金額</th><th class='num'>佔比</th><th class='num'>目標</th><th class='num'>缺口</th><th>狀態</th></tr></thead><tbody>")
