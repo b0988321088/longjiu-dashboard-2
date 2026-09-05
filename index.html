@@ -587,24 +587,56 @@
     }).catch(function(){});
   }
   var wpa = document.getElementById('trade-plan');
-  /* 2026-09-05：本週動作與執行清單 = radar_state.json.weekly_plan 動態（雷達每天 16:15 更新；取代舊交易計畫單一渲染） */
+  /* 2026-09-05 v2：行動儀表板 — 本週該做(過濾動作) + 今天行事曆 + 未來3天行程（全動態） */
   if(wpa){
-    fetch('radar_state.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(rs){
-      var wp = rs && rs.weekly_plan;
+    var _t0 = new Date();
+    var _pad = function(n){ return (n<10?'0':'')+n; };
+    var _ds = function(d){ return d.getFullYear()+'-'+_pad(d.getMonth()+1)+'-'+_pad(d.getDate()); };
+    var _today = _ds(_t0);
+    var _dow = ['日','一','二','三','四','五','六'][_t0.getDay()];
+    Promise.all([
+      fetch('radar_state.json',{cache:'no-store'}).then(function(r){return r.json();}).catch(function(){return {};}),
+      fetch('schedule_events.json',{cache:'no-store'}).then(function(r){return r.json();}).catch(function(){return {};})
+    ]).then(function(res){
+      var rs = res[0] || {}, cal = res[1] || {};
+      var wp = rs.weekly_plan;
+      var evs = (Array.isArray(cal) ? cal : (cal.events || []));
       if(!wp || !wp.rows || !wp.rows.length) return;
-      var h = '<div style="font-size:12px;color:#92400e;font-weight:800;margin-bottom:6px">📋 本週動作與執行清單（'+wp.日期+'｜即時・小動作原則・再平衡+DAA+情報彙整）</div>';
-      wp.rows.forEach(function(x){
-        var col = '#1f2937';
-        var a = x.動作 || '';
-        if(a.indexOf('🔴')===0) col='#dc2626';
-        else if(a.indexOf('⏸️')===0) col='#6b7280';
-        else if(a.indexOf('💰')===0) col='#b45309';
-        else if(a.indexOf('📊')===0 || a.indexOf('🔍')===0) col='#1d4ed8';
-        else if(a.indexOf('🟢')===0) col='#166534';
-        h += '<div style="font-size:12px;line-height:1.75;border-bottom:1px dashed #fde68a;padding:2px 0">'
-           + '<b style="color:'+col+'">'+a+'</b> <span style="color:#78350f;font-weight:700">'+(x.類別||'')+'</span> '
-           + '<span style="color:#1f2937">'+(x.內容||'')+'</span></div>';
+      var h = '<div style="font-size:12.5px;color:#92400e;font-weight:800;margin-bottom:4px">📋 行動儀表板（'+_today.slice(5)+' 週'+_dow+'｜即時）</div>';
+      var rows = wp.rows;
+      // A 本週該做：過濾掉觀察/凍結
+      var doRows = rows.filter(function(x){ var a=x.動作||''; return a.indexOf('⏸️')!==0 && a.indexOf('🟡')!==0; });
+      var hold = rows.filter(function(x){ var a=x.動作||''; return a.indexOf('⏸️')===0 || a.indexOf('🟡')===0; });
+      h += '<div style="font-size:11px;font-weight:800;color:#14532d;margin:5px 0 2px">🎯 本週該做</div>';
+      doRows.forEach(function(x){
+        var col='#1f2937'; var a=x.動作||'';
+        if(a.indexOf('🔴')===0) col='#dc2626'; else if(a.indexOf('💰')===0) col='#b45309';
+        h += '<div style="font-size:12.5px;line-height:1.75;border-bottom:1px dashed #fde68a"><b style="color:'+col+'">'+(x.動作||'')+'</b><span style="color:#1f2937"> '+(x.類別||'')+(x.內容||'')+'</span></div>';
       });
+      if(hold.length) h += '<div style="font-size:10.5px;color:#6b7280;margin-top:3px">⏸️ 觀望中：'+hold.map(function(x){return x.類別;}).join('、')+'</div>';
+      // B 今天
+      var todayEv = evs.filter(function(e){ return e.date===_today && (e.status||'').indexOf('✅')!==0; });
+      h += '<div style="font-size:11px;font-weight:800;color:#1e40af;margin:7px 0 2px">📌 今天（'+_today.slice(5)+' 週'+_dow+'）要做</div>';
+      if(todayEv.length){
+        todayEv.forEach(function(e){
+          h += '<div style="font-size:12px;line-height:1.7">'+(e.importance==='high'?'🔴 ':'')+'<span style="color:#1f2937">'+(e.item||'')+'</span>'+(e.time?' <span style="color:#6b7280">'+e.time+'</span>':'')+'</div>';
+        });
+      } else {
+        h += '<div style="font-size:12px;color:#6b7280">今天無強制行程'+( _t0.getDay()===6 ? '（週六：16:00 再平衡評估自動產出，傍晚檢視本清單即可）' : (_t0.getDay()===0 ? '（週日：19:00 動態自我檢討週報）' : '（台股交易日：依上列 🎯 節奏）') )+'</div>';
+      }
+      // C 未來3天
+      var soon = [];
+      for(var i=1;i<=3;i++){
+        var dd = new Date(_t0.getTime()+i*86400000);
+        var ds = _ds(dd);
+        evs.forEach(function(e){ if(e.date===ds){ soon.push({d:ds.slice(5)+' 週'+['日','一','二','三','四','五','六'][dd.getDay()], e:e}); } });
+      }
+      if(soon.length){
+        h += '<div style="font-size:11px;font-weight:800;color:#92400e;margin:7px 0 2px">📅 未來 3 天行程</div>';
+        soon.slice(0,7).forEach(function(s){
+          h += '<div style="font-size:12px;line-height:1.7"><span style="color:#78350f;font-weight:700">'+s.d+'</span> '+(s.e.importance==='high'?'🔴 ':'')+'<span style="color:#1f2937">'+(s.e.item||'')+'</span></div>';
+        });
+      }
       wpa.innerHTML = h;
     }).catch(function(){});
   }
