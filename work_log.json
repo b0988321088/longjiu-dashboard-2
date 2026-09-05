@@ -1,0 +1,50 @@
+[
+  {
+    "date": "2026-09-05",
+    "category": "應辦",
+    "item": "週六再平衡正式評估（16:00 cron 產出後檢視）",
+    "detail": ""
+  },
+  {
+    "date": "2026-09-05",
+    "category": "應辦",
+    "item": "watchdog v6.5 待真實卡死事件實戰驗證（合成測試已過）",
+    "detail": ""
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "儀表板政策面更新上線：8月非農 16.2萬超預期 + Fed 9/15-16 升息押注 60%+（9/11 CPI 定案）",
+    "detail": "commit ec3907a9；護城河半成品還原（薪水動態 42,560）"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "Gemini 儲值完成 → API 200 + fallback chain 有值（原訂 9/7 提前）",
+    "detail": ""
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "delegation 切回 Gemini：雙 AI 獨立診斷/檢查機制恢復（實測 2.64s）",
+    "detail": "過渡期 deepseek-v4-pro 08:42-10:10"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "watchdog v6.5 上線（INC-147：三缺陷 + tool_executor dump 誤報防護）",
+    "detail": "備份 .bak-20260905-v64；T1-T3 + dry-run 全過"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "錯誤登記 INC-146/147 + 技能同步 ×6（gateway/delegation/error-register/cron-session-reset）",
+    "detail": "含 §24 補遺：斷線期使用者求救視角"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "CIO(Gemini) 獨立複查 → PII 衛生鐵則升級通用版（任何新資料源全檢）",
+    "detail": "消毒層裁示：不做（進料管好 > 出料洗）"
+  }
+]
