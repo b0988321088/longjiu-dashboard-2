@@ -216,12 +216,18 @@ def write_dashboard_html(mk, class_rows, interest_total, grand, perf, project,
     # ── 保單真實累計績效 ──
     L.append('<div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px">')
     L.append('<h3 style="font-size:15px;font-weight:800;margin:0 0 2px;color:#1d1d1f">📋 保單真實累計績效<span style="font-size:10px;background:#064e3b;color:#fff;border-radius:6px;padding:2px 7px;vertical-align:middle;margin-left:6px">真實績效 = 累計配息 + (現值 − 原始成本)</span></h3>')
-    L.append('<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="color:#6b7280;border-bottom:2px solid #e5e7eb"><th style="text-align:left;padding:5px 8px">保單</th><th style="text-align:right;padding:5px 8px">投入成本</th><th style="text-align:right;padding:5px 8px">目前現值</th><th style="text-align:right;padding:5px 8px">本金損益</th><th style="text-align:right;padding:5px 8px">累計配息</th><th style="text-align:right;padding:5px 8px">真實績效</th></tr>')
+    L.append('<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="color:#6b7280;border-bottom:2px solid #e5e7eb"><th style="text-align:left;padding:5px 8px">保單</th><th style="text-align:left;padding:5px 8px">持有期間</th><th style="text-align:right;padding:5px 8px">投入成本</th><th style="text-align:right;padding:5px 8px">目前現值</th><th style="text-align:right;padding:5px 8px">本金損益</th><th style="text-align:right;padding:5px 8px">累計配息</th><th style="text-align:right;padding:5px 8px">真實績效</th></tr>')
+    PERIOD = {"安聯": "約2年", "第一金": "3-4個月"}
     for nm, cost, cur, cd, real, pl in pol_rows:
         col = "#16a34a" if real >= 0 else "#dc2626"
-        L.append(f'<tr><td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;font-weight:700">{T(nm)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{_fmt(cost)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{_fmt(cur)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;color:#dc2626">{_fmt(pl, True)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;color:#16a34a">{_fmt(cd, True)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;font-weight:800;color:{col}">{_fmt(real, True)}</td></tr>')
-    L.append(f'<tr style="background:#f9fafb"><td style="padding:6px 8px;font-weight:700">合計</td><td style="padding:6px 8px;text-align:right;font-weight:700">{_fmt(sum(r[1] for r in pol_rows))}</td><td style="padding:6px 8px;text-align:right;font-weight:700">{_fmt(sum(r[2] for r in pol_rows))}</td><td style="padding:6px 8px;text-align:right;font-weight:700;color:#dc2626">{_fmt(sum(r[5] for r in pol_rows), True)}</td><td style="padding:6px 8px;text-align:right;font-weight:700;color:#16a34a">{_fmt(sum(r[4] for r in pol_rows), True)}</td><td style="padding:6px 8px;text-align:right;font-weight:900;color:#16a34a">{_fmt(real_sum, True)}</td></tr></table>')
-    L.append(f'<div style="font-size:11px;color:#065f46;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;margin-top:8px">✅ <b>判定（2026-09-05 核准標準）</b>：月配息估 {_fmt(ins_div_m)} ＞ 保單借貸月息 {_fmt(pledge_m)}，且累計本金+配息 {_fmt(real_sum)} 為正 → <b>{cov}</b></div></div>')
+        pd = next((PERIOD[k] for k in PERIOD if nm.startswith(k)), "—")
+        L.append(f'<tr><td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;font-weight:700">{T(nm)}</td><td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;font-size:11px;color:#6b7280">{pd}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{_fmt(cost)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{_fmt(cur)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;color:#dc2626">{_fmt(pl, True)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;color:#16a34a">{_fmt(cd, True)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;font-weight:800;color:{col}">{_fmt(real, True)}</td></tr>')
+    L.append(f'<tr style="background:#f9fafb"><td style="padding:6px 8px;font-weight:700">合計</td><td style="padding:6px 8px">—</td><td style="padding:6px 8px;text-align:right;font-weight:700">{_fmt(sum(r[1] for r in pol_rows))}</td><td style="padding:6px 8px;text-align:right;font-weight:700">{_fmt(sum(r[2] for r in pol_rows))}</td><td style="padding:6px 8px;text-align:right;font-weight:700;color:#dc2626">{_fmt(sum(r[5] for r in pol_rows), True)}</td><td style="padding:6px 8px;text-align:right;font-weight:700;color:#16a34a">{_fmt(sum(r[4] for r in pol_rows), True)}</td><td style="padding:6px 8px;text-align:right;font-weight:900;color:#16a34a">{_fmt(real_sum, True)}</td></tr></table>')
+    L.append(f'<div style="font-size:11px;color:#065f46;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;margin-top:8px">✅ <b>判定（2026-09-05 核准標準）</b>：月配息估 {_fmt(ins_div_m)} ＞ 保單借貸月息 {_fmt(pledge_m)}，且累計本金+配息 {_fmt(real_sum)} 為正 → <b>{cov}</b></div>')
+    dr8 = (snap.get("dividend_records") or {}).get(mk, {}) or {}
+    _d_allianz = sum(_v for _k, _v in dr8.items() if "安聯" in _k and isinstance(_v, (int, float)))
+    _d_first = sum(_v for _k, _v in dr8.items() if "第一金" in _k and isinstance(_v, (int, float)))
+    L.append(f'<div style="font-size:10.5px;color:#94a3b8;margin-top:6px">📌 <b>跨保單比較要看持有期間</b>（安聯約2年 vs FJ33 3-4個月，累計配息不可直接比）。當月檢核口徑（{mk} 配息：安聯 {_fmt(_d_allianz)} / 第一金 {_fmt(_d_first)} vs 當月淨值變化）以左欄「保單損益」為準</div></div>')
     # ── 國泰轉貸專區 ──
     L.append('<div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px">')
     L.append('<h3 style="font-size:15px;font-weight:800;margin:0 0 2px;color:#1d1d1f">🏦 國泰轉貸 1,200萬 專區</h3>')
@@ -233,6 +239,26 @@ def write_dashboard_html(mk, class_rows, interest_total, grand, perf, project,
     L.append(f'<tr style="background:#f9fafb"><td style="padding:6px 8px;font-weight:700">合計 {_fmt(cur12)} vs 投入 12,000,000</td><td style="padding:6px 8px;text-align:right;font-weight:900;color:{"#dc2626" if pl12 < 0 else "#16a34a"}">{_fmt(pl12, True)}</td></tr></table>')
     ok12 = "✅ 配息可 cover 利息（本金+配息 > 借貸成本）" if cathay_div >= cathay_m else "⚠️ 配息不足 cover 利息"
     L.append(f'<div style="font-size:11px;color:#065f46;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;margin-top:8px">富達月配息估 {_fmt(cathay_div)} vs 國泰月息 {_fmt(cathay_m)}（12M×2.6%）→ {ok12}</div></div>')
+    # ── 鉅亨網基金（2026-09-05 補：基金檢核含鉅亨，非只有國泰直購）──
+    _fb = snap.get("funds_breakdown", {}) or {}
+    _jh_rows = []
+    for _grp in ("一般申購", "自由Pay"):
+        _g = _fb.get(_grp, {}) or {}
+        _s = sum(_v for _k, _v in _g.items() if _k != "note" and isinstance(_v, (int, float)))
+        _n = sum(1 for _k in _g if _k != "note" and isinstance(_g[_k], (int, float)))
+        if _s:
+            _jh_rows.append((_grp, _n, _s))
+    _jh_total = sum(_r[2] for _r in _jh_rows)
+    if _jh_total:
+        L.append('<div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px">')
+        L.append('<h3 style="font-size:15px;font-weight:800;margin:0 0 2px;color:#1d1d1f">📦 鉅亨網基金（非國泰管道）</h3>')
+        L.append('<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">與國泰轉貸分開列｜市值與當月配息已含在左欄「基金損益」</div>')
+        L.append('<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="color:#6b7280;border-bottom:2px solid #e5e7eb"><th style="text-align:left;padding:5px 8px">群組</th><th style="text-align:right;padding:5px 8px">檔數</th><th style="text-align:right;padding:5px 8px">市值</th></tr>')
+        for _nm, _n, _s in _jh_rows:
+            L.append(f'<tr><td style="padding:6px 8px;border-bottom:1px solid #f3f4f6">{T(_nm)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{_n}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{_fmt(_s)}</td></tr>')
+        L.append(f'<tr style="background:#f9fafb"><td style="padding:6px 8px;font-weight:700">合計</td><td style="padding:6px 8px;text-align:right;font-weight:700">{sum(_r[1] for _r in _jh_rows)}檔</td><td style="padding:6px 8px;text-align:right;font-weight:700">{_fmt(_jh_total)}</td></tr></table>')
+        _fund_div8 = sum(r["div"] for r in class_rows if r["c"] == "基金")
+        L.append(f'<div style="font-size:10.5px;color:#94a3b8;margin-top:6px">基金類當月配息 {_fmt(_fund_div8)}（鉅亨小額月配 + 國泰基金配息）｜snapshot {snap.get("date", "")} 真值</div></div>')
     L.append('<div style="font-size:10.5px;color:#94a3b8;text-align:center;padding:8px 0 20px">投資績效月報 v3（2026-09-04 定版，9/5 加保單真實績效+國泰專區）｜build_investment_performance.py 自動產生</div>')
     L.append('</div></body></html>')
     Path(BASE / "investment_performance.html").write_text("\n".join(L), encoding="utf-8")
