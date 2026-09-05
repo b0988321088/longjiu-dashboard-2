@@ -530,6 +530,7 @@ def main():
         "__INDUSTRY_PNG__": "industry_penetration_*.png",
         "__PEN_REPORT__": "penetration_report_*.html",
         "__REBALANCE_DASH__": "rebalance_dashboard_*.html",
+        "__REBALANCE_EVAL__": "rebalance_eval_*.html",
         "__REBALANCE_MD__": "rebalance_summary_*.md",
         "__RISK_PNG__": "risk_factor_penetration_*.png",
         "__WEEKLY__": "weekly_report_*.html",

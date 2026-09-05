@@ -1,0 +1,202 @@
+<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>龍九再平衡評估（全源整合版）2026-09-05</title><style>
+*{box-sizing:border-box}body{font-family:-apple-system,'Segoe UI','Noto Sans TC',sans-serif;background:#0b1220;color:#e2e8f0;margin:0;padding:18px;line-height:1.75;font-size:15px}
+.page{max-width:960px;margin:0 auto}
+h1{font-size:20px;font-weight:900;color:#fff;margin:6px 0 12px}
+h2{font-size:17px;font-weight:800;color:#7dd3fc;margin:22px 0 8px;padding:8px 12px;background:rgba(56,189,248,.08);border-left:4px solid #38bdf8;border-radius:6px}
+h3{font-size:15px;font-weight:800;color:#fcd34d;margin:14px 0 6px}
+blockquote{margin:8px 0;padding:8px 14px;background:#111c33;border-left:4px solid #f59e0b;border-radius:6px;color:#cbd5e1}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13.5px;background:#0f1a30;border-radius:8px;overflow:hidden}
+th{background:#16264a;color:#93c5fd;font-weight:800;text-align:left;padding:7px 10px;border:1px solid #24365c}
+td{padding:6px 10px;border:1px solid #1e3054;color:#e2e8f0;vertical-align:top}
+tr:nth-child(even) td{background:#0d172b}
+ul,ol{margin:6px 0;padding-left:22px}
+li{margin:3px 0}
+code{background:#1e293b;padding:1px 5px;border-radius:4px;font-size:13px}
+strong{color:#fff}
+hr{border:none;border-top:1px solid #1e3054;margin:18px 0}
+a{color:#7dd3fc}
+.foot{margin-top:22px;padding-top:10px;border-top:1px solid #1e3054;font-size:11.5px;color:#64748b}
+</style></head>
+<body><div class="page">
+<div style="font-size:11.5px;color:#64748b;margin-bottom:4px">🔄 龍九控股 · 每週六正式再平衡評估（全源整合版）· 2026-09-05</div>
+<h1>🔄 龍九再平衡評估（2026-09-05 週六）</h1>
+<blockquote>
+<p>資料：snapshot.json（資料日 9/4，總資產 26,047,230）＋ radar_state（16:15）＋ macro_regime/tactical_table 9/5 ＋ emergency（9/4 21:38）＋ pending_decisions。<strong>本評估為 9/5 升息警戒 gate 裁示後之最終版</strong>（08:35 早版產於裁示前，其「台股主動慢慢買」已被 gate 覆蓋）。</p>
+</blockquote>
+<h2>0. 📊 全源整合對照</h2>
+<table>
+<thead>
+<tr>
+<th>來源</th>
+<th>訊號/燈號</th>
+<th>建議</th>
+<th>衝突</th>
+<th>裁定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>使用者裁示（9/5 gate）</td>
+<td>⏳ 全面觀望</td>
+<td>只推 PI/質押流程，不新增投入</td>
+<td>—</td>
+<td><strong>最高優先，全場適用</strong></td>
+</tr>
+<tr>
+<td>macro_regime</td>
+<td>🟡 黃燈｜美元信用壓力 75.1／地緣 73.8／科技 63.7</td>
+<td>黃金+4.0%、石油+1.5%；科技減 2.2pp</td>
+<td>⚠️ 石油 vs radar Locked；黃金 vs 🟡+政策</td>
+<td>黃金/石油建議<strong>壓制為 0</strong>（詳下）</td>
+</tr>
+<tr>
+<td>資金訊號 rotation</td>
+<td>醫療 ✅吸納（+2, 缺口6.6pp）｜公用/消費 ⏸</td>
+<td>乾粉優先醫療保健</td>
+<td>—</td>
+<td>醫療由 8/24 保單轉換涵蓋，乾粉保留等 gate 解除</td>
+</tr>
+<tr>
+<td>五桶偏離</td>
+<td>台 -2.6／美 +4.1／防守合併 69.2% 足／債 -6.8／現金超底線</td>
+<td>—</td>
+<td>—</td>
+<td>見 §1</td>
+</tr>
+<tr>
+<td>雷達燈號</td>
+<td>台股 🟢（外資 4.8億連3日）／黃金 🟡／原油 🔴／美債 🔴／台幣 ⚪</td>
+<td>台股順勢慢慢買</td>
+<td>⚠️ <strong>🟢 vs 非農→升息 60%+</strong></td>
+<td><strong>降級 🟡 觀望</strong>（政策優先於機械燈號）</td>
+</tr>
+<tr>
+<td>policy_notes</td>
+<td>非農 16.2萬超預期；9/11 CPI 定升息；華許鷹派</td>
+<td>升息壓抑債券/黃金，升 1 碼債 -0.5~-1.5%</td>
+<td>—</td>
+<td>與 gate 同向，強化觀望</td>
+</tr>
+<tr>
+<td>緊急風控（9/4）</td>
+<td>US30Y 5.24-5.27 警戒區；VIX 14；零質押</td>
+<td>債不加碼不贖回；台股跳空 45,800-46,000 才買</td>
+<td>—</td>
+<td>併入 §3/§4 條件單</td>
+</tr>
+<tr>
+<td>gate&amp;條件單</td>
+<td>PI 9/10 認列；美元債條件單 ⏳ 待 9/16</td>
+<td>質押 350萬@2.77% 照常</td>
+<td>—</td>
+<td>PI/質押照走（gate 唯一主動項）</td>
+</tr>
+</tbody>
+</table>
+<h2>1. 五桶偏離（修正後口徑）</h2>
+<table>
+<thead>
+<tr>
+<th>桶</th>
+<th>現況</th>
+<th>目標</th>
+<th>偏離</th>
+<th>動作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>台股</td>
+<td>7.4% (194萬)</td>
+<td>10%</td>
+<td>-2.6pp</td>
+<td>⏸️ 觀望：僅大跌 -5% 才 ≤5萬/次</td>
+</tr>
+<tr>
+<td>美股</td>
+<td>44.1% (1,149萬)</td>
+<td>40%</td>
+<td>+4.1pp</td>
+<td>⏸️ 續持（未達 &gt;45% 減碼觸發）；費半反彈中不追高</td>
+</tr>
+<tr>
+<td>防守</td>
+<td>4.4%</td>
+<td>20%</td>
+<td>-15.6pp</td>
+<td>🟢 合併口徑 <strong>69.2% 已足</strong> → 承接凍結（勿被單看 4.4% 誤導）</td>
+</tr>
+<tr>
+<td>債券</td>
+<td>18.2%</td>
+<td>25%</td>
+<td>-6.8pp</td>
+<td>⏸️ 等 US30Y&lt;5.30%（含保單債全口徑 ~23%）</td>
+</tr>
+<tr>
+<td>現金</td>
+<td>22.4% (81.8萬+MMF500萬)</td>
+<td>底線制70萬</td>
+<td>超額</td>
+<td>🟢 底線守；乾粉 10.0萬 <strong>保留不部署</strong></td>
+</tr>
+</tbody>
+</table>
+<h2>2. 雷達燈號 + 政策面</h2>
+<p>🟢台股（機械）→ <strong>政策降級 🟡</strong>｜🟡黃金 淨多單週減 -6.3%｜🔴原油 -62.8% 機構撤離（Locked）｜🔴美債10Y 月動能 +3.4%｜⚪台幣 31.62。
+🏛️ <strong>政策面主導</strong>：8月非農 16.2萬超預期 → 9月升息押注 60%+；9/11 CPI 為定案關鍵，9/15-16 FOMC 解除。升息環境下：債券（保單債 48-55% 權重＋00983D）估 -0.5~-1.5%、黃金短線承壓（9/5 盤中 -1.88% 失守 4,400）。</p>
+<h2>3. 緊急應變重點</h2>
+<p>① US30Y 5.24~5.27% <strong>警戒區</strong>（5.20-5.30，未破凍結線）→ 債券不加碼不贖回；破 5.30 → 凍結＋質押 gate 檢查。② 台股週一：夜盤 -300 vs 日盤 +693，跳空至 <strong>45,800-46,000 才啟動買進（≤5萬）</strong>，否則觀望。③ VIX 14.07 低檔＝現貨未恐慌，無系統風險、無賣出訊號。④ 現金 ≥70萬 ✅，<strong>目前零質押無追繳風險</strong>。⑤ 淨值 -408萬為結構議題，靠還債+轉貸逐年收斂，與單日波動無關。</p>
+<h2>4. 本週動作清單（gate 期：其餘全數按兵不動）</h2>
+<ul>
+<li>✅ <strong>唯一主動：推進 PI/質押流程</strong> — 9/10 認列 → 350萬@2.77% 還安聯300+元大50（銀行 2-4 週）；升息前鎖定低成本<strong>不延後</strong>，質押息 2.77% 仍 &lt; 債券 4.8-5% 利差。</li>
+<li>🔔 <strong>條件單（不主動執行）</strong>：9/11 CPI 高 → 台股停/縮量至最低節奏；FOMC 9/16 升息 → 不接刀等 2-3 天，大跌 -5% 才分批 0050/006208 ≤5萬/次；按兵不動 → 恢復慢慢買節奏。</li>
+<li>⏸️ 台股慢慢買（原每週 1.5-2萬）→ <strong>暫停</strong>，等 gate 解除。</li>
+<li>⏸️ 黃金衛星：保單黃金A10 32萬已生效；00635U 剩餘 99萬 <strong>延後</strong>（升息環境＋金價高位＋雷達 🟡）。排除 macro 引擎 +4%（+104萬）建議 — 與雷達/政策/gate 三方衝突。</li>
+<li>⛔ 石油 Locked 維持（排除 macro +1.5%/+39萬 — 引擎未讀 policy_notes，COT -62.8%＋升息壓油價需求）。</li>
+<li>⏸️ 美股：超配但未達減碼觸發；8/19 逢彈減碼案（≤20萬/次）保留為被動待命，gate 期不主動。</li>
+<li>📋 追蹤：保單轉換 9/8 除息 T+4 入帳（PIMCO+50萬／貝萊德科技A10 90萬→摩根月配）；洲際W 轉貸國泰 10月底-11月評估。</li>
+</ul>
+<h2>5. 風險紅線檢查</h2>
+<table>
+<thead>
+<tr>
+<th>紅線</th>
+<th>現況</th>
+<th>狀態</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>US30Y 5.30 凍結線</td>
+<td>5.24-5.27 警戒區</td>
+<td>🟡 未破；破線→債券凍結+質押 gate</td>
+</tr>
+<tr>
+<td>美元曝險 ≤50%</td>
+<td>54.4%（8/24 轉換後重估；snapshot 欄位 64.0% 舊值）</td>
+<td>🔴 超標 → 不新增美元（存量美元債條件單等 9/16）</td>
+</tr>
+<tr>
+<td>科技紅線 30%</td>
+<td>GICS 18.5%</td>
+<td>🟢</td>
+</tr>
+<tr>
+<td>現金 ≥70萬</td>
+<td>81.8萬</td>
+<td>🟢</td>
+</tr>
+<tr>
+<td>質押 LTV</td>
+<td>零質押；PI 後 350萬（總質押 ≤35% 制）</td>
+<td>🟢</td>
+</tr>
+</tbody>
+</table>
+<h2>6. 結論</h2>
+<p><strong>全面觀望（9/5 gate）至 9/16 FOMC — 唯一推進 PI/質押（9/10 認列 350萬@2.77% 還債），其餘全按兵不動，僅台股大跌 -5% 觸發 ≤5萬 小單。</strong> 主要依據：使用者 9/5 觀望 gate＋policy_notes（非農/升息）＋emergency 風控；排除來源：雷達台股機械 🟢（政策矛盾降級）、macro_regime 黃金/石油加碼建議（與雷達 Locked/🟡＋政策三方衝突）、tactical 台股增持精算（gate 期間保留）— 因政策面與機械/引擎訊號矛盾時，依 9/5 鐵則一律降級觀望、兩面已並陳。</p>
+<div class="foot">本頁由 rebalance_md2html.py 自動產生（來源 rebalance_summary_2026-09-05.md）· 數據動態讀取，勿當固定基準</div>
+</div></body></html>
