@@ -134,6 +134,111 @@ def funding_cost_report(snap, adj_costs=None, rate_overrides=None):
     return "\n".join(L)
 
 
+def _fmt(v, signed=False):
+    return f"{v:+,.0f}" if signed else f"{v:,.0f}"
+
+
+def write_dashboard_html(mk, class_rows, interest_total, grand, perf, project,
+                         loans, pol_rows, real_sum, ins_div_m, pledge_m, cov,
+                         ct_items, cur12, cost12, cathay_div, cathay_m, snap):
+    """投資績效儀表板 HTML（2026-09-05：整併進 build 腳本，cron 每月自動重產不掉區塊）"""
+    wacc = sum(l["monthly"] for l in loans) * 12 / sum(l["balance"] for l in loans) if loans else 0
+    total_m = sum(l["monthly"] for l in loans)
+    total_pay = sum(l["payment"] for l in loans)
+    inv = (snap.get("securities_total_market_value") or snap.get("securities_total") or 0) \
+        + (snap.get("fund_market_value") or snap.get("funds_total") or 0) \
+        + (snap.get("insurance_total") or 0)
+    div_actual = sum(r["div"] for r in class_rows)
+    div_yield = div_actual * 12 / inv if inv else 0
+    spread = div_yield - wacc
+    if spread >= 0.012:
+        light = "🟢 利差充足（≥1.2%）→ 現金流安全、套利空間存在"
+    elif spread >= 0:
+        light = "🟡 利差偏薄（0~1.2%）→ 付息可、擴槓桿謹慎"
+    else:
+        light = "🔴 利差為負 → 停止加槓桿"
+    T = lambda s: s.replace("<", "&lt;")
+    L = []
+    L.append('<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8">')
+    L.append('<meta name="viewport" content="width=device-width,initial-scale=1">')
+    L.append('<title>📊 龍九投資績效月報</title>')
+    L.append("<style>body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;background:#f5f5f7;margin:0;padding:16px}</style></head><body><div style=\"max-width:720px;margin:0 auto\">")
+    L.append('<div style="background:linear-gradient(135deg,#064e3b,#065f46);border-radius:14px;padding:16px 18px;color:#fff;margin-bottom:12px">')
+    L.append(f'<h1 style="font-size:18px;font-weight:900;margin:0 0 4px">📊 龍九投資績效月報（{mk}）</h1>')
+    L.append(f'<div style="font-size:11.5px;color:#a7f3d0">基準月 2026-08（Baseline）｜每月同尺比較：投資賺多少 ⇄ 借貸付多少</div>')
+    L.append('<div style="font-size:11px;color:#86efac;margin-top:4px">📌 左欄＝投資收益（三類損益，貸款錢剔除不計績效）｜右欄＝借貸利息（月成本）｜下方＝勝負判定</div></div>')
+    L.append('<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:stretch">')
+    # ── 左欄 投資收益 ──
+    L.append('<div style="flex:1.15;min-width:300px;background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px">')
+    perf_col = "#16a34a" if perf >= 0 else "#dc2626"
+    L.append(f'<div style="display:flex;justify-content:space-between;align-items:baseline"><h3 style="font-size:15px;font-weight:800;margin:0;color:#1d1d1f">📈 投資收益</h3><div style="font-size:24px;font-weight:900;color:{perf_col}">{perf/10000:+.1f} 萬</div></div>')
+    L.append(f'<div style="font-size:11px;color:#94a3b8;margin:2px 0 10px">{mk}｜市值變化+配息−利息−手續費｜轉貸 1,200 萬已剔除</div>')
+    L.append('<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="color:#6b7280;border-bottom:2px solid #e5e7eb"><th style="text-align:left;padding:5px 8px">類別</th><th style="text-align:right;padding:5px 8px">市值變化</th><th style="text-align:right;padding:5px 8px">配息</th><th style="text-align:right;padding:5px 8px">費用</th><th style="text-align:right;padding:5px 8px">損益</th></tr>')
+    icons = {"股票": "📈", "基金": "💰", "保單": "🛡️"}
+    for r in class_rows:
+        c = r["c"]
+        col = "#16a34a" if r["sub"] >= 0 else "#dc2626"
+        L.append(f'<tr><td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;font-weight:700">{icons.get(c, c)} {T(c)}</td>'
+                 f'<td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{_fmt(r["real_mv"], True)}</td>'
+                 f'<td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{_fmt(r["div"], True)}</td>'
+                 f'<td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;color:#6b7280">{_fmt(r["fee"], True)}</td>'
+                 f'<td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;font-weight:800;color:{col}">{_fmt(r["sub"], True)}</td></tr>')
+    L.append(f'<tr style="background:#f9fafb"><td style="padding:6px 8px;font-weight:700">三類合計</td><td style="padding:6px 8px;text-align:right;font-weight:700">{_fmt(sum(r["real_mv"] for r in class_rows), True)}</td>'
+             f'<td style="padding:6px 8px;text-align:right;font-weight:700">{_fmt(sum(r["div"] for r in class_rows), True)}</td>'
+             f'<td style="padding:6px 8px;text-align:right;font-weight:700;color:#dc2626">{_fmt(-sum(r["fee"] for r in class_rows), True)}</td>'
+             f'<td style="padding:6px 8px;text-align:right;font-weight:900">{_fmt(grand, True)}</td></tr>')
+    L.append(f'<tr><td style="padding:6px 8px" colspan="4">投資利息（8月當月計入：永豐房貸 28,000 + 保單借貸 14,000）</td><td style="padding:6px 8px;text-align:right;color:#dc2626;font-weight:700">{_fmt(-interest_total, True)}</td></tr></table>')
+    if project:
+        L.append(f'<div style="font-size:10.5px;color:#94a3b8;margin-top:6px">📦 專案收入(非常態) {_fmt(project)}（另計不混入）</div>')
+    L.append('</div>')
+    # ── 右欄 借貸利息 ──
+    L.append('<div style="flex:1;min-width:260px;background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px">')
+    L.append(f'<div style="display:flex;justify-content:space-between;align-items:baseline"><h3 style="font-size:15px;font-weight:800;margin:0;color:#1d1d1f">🏦 借貸利息（月成本）</h3><div style="font-size:24px;font-weight:900;color:#dc2626">{_fmt(-total_m)}<span style="font-size:12px;color:#9ca3af">利息/月</span></div></div>')
+    L.append(f'<div style="font-size:11px;color:#94a3b8;margin:2px 0 10px">若含還本：實際月付 {_fmt(total_pay)}（利息 {_fmt(total_m)} + 本金 {_fmt(total_pay - total_m)}，永豐本利攤還）</div>')
+    L.append('<table style="width:100%;font-size:12px;border-collapse:collapse"><tr style="color:#6b7280"><th style="text-align:left;padding:4px 8px">借款</th><th style="text-align:right;padding:4px 8px">餘額</th><th style="text-align:right;padding:4px 8px">利率</th><th style="text-align:right;padding:4px 8px">月利息</th></tr>')
+    for l in loans:
+        flag = "（本利攤還）" if l["payment"] > l["monthly"] else ""
+        L.append(f'<tr><td style="padding:4px 8px;border-bottom:1px solid #f3f4f6">{T(l["name"])}{flag}</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{l["balance"]/10000:.0f}萬</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{l["rate"]*100:.2f}%</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{_fmt(l["monthly"])}</td></tr>')
+    L.append(f'<tr style="background:#f9fafb;font-weight:800"><td style="padding:5px 8px">合計</td><td style="padding:5px 8px;text-align:right">{sum(l["balance"] for l in loans)/10000:.0f}萬</td><td style="padding:5px 8px;text-align:right">加權 {wacc*100:.2f}%</td><td style="padding:5px 8px;text-align:right">{_fmt(total_m)}</td></tr></table>')
+    L.append('<div style="background:#fef2f2;border-radius:8px;padding:7px 9px;margin-top:8px;font-size:11px;color:#991b1b">⚠️ 永豐是<b>本利攤還</b>：月付含本金 → 別只拿利息比現金流</div></div>')
+    L.append('</div>')
+    # ── 勝負判定 ──
+    L.append('<div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px">')
+    L.append('<h3 style="font-size:15px;font-weight:800;margin:0 0 2px;color:#1d1d1f">⚖️ 勝負判定：投資收益 vs 借貸利息</h3>')
+    L.append('<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">')
+    L.append(f'<div style="flex:1;min-width:130px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 12px;text-align:center"><div style="font-size:11px;color:#166534">加權資金成本</div><div style="font-size:22px;font-weight:900;color:#166534">{wacc*100:.2f}%</div><div style="font-size:10px;color:#166534">月息 {_fmt(total_m)}</div></div>')
+    L.append(f'<div style="flex:1;min-width:130px;background:#eff6ff;border:1px solid #93c5fd;border-radius:10px;padding:10px 12px;text-align:center"><div style="font-size:11px;color:#1e40af">配息殖利率(當月實收)</div><div style="font-size:22px;font-weight:900;color:#1e40af">{div_yield*100:.2f}%</div><div style="font-size:9.5px;color:#1e40af">實收 {_fmt(div_actual)}</div></div>')
+    spread_col = "#16a34a" if spread >= 0 else "#dc2626"
+    L.append(f'<div style="flex:1;min-width:130px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 12px;text-align:center"><div style="font-size:11px;color:#166534">淨利差</div><div style="font-size:22px;font-weight:900;color:{spread_col}">{spread*100:+.2f}pp</div><div style="font-size:9.5px;color:#166534">{light}</div></div>')
+    L.append('</div>')
+    L.append(f'<div style="font-size:11px;color:#374151;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px">✅ 投資面：配息殖利率 {div_yield*100:.2f}% − 資金成本 {wacc*100:.2f}% = 淨利差 {spread*100:+.2f}pp（{light.split("→")[0]}）</div>')
+    L.append('</div>')
+    # ── 保單真實累計績效 ──
+    L.append('<div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px">')
+    L.append('<h3 style="font-size:15px;font-weight:800;margin:0 0 2px;color:#1d1d1f">📋 保單真實累計績效<span style="font-size:10px;background:#064e3b;color:#fff;border-radius:6px;padding:2px 7px;vertical-align:middle;margin-left:6px">真實績效 = 累計配息 + (現值 − 原始成本)</span></h3>')
+    L.append('<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="color:#6b7280;border-bottom:2px solid #e5e7eb"><th style="text-align:left;padding:5px 8px">保單</th><th style="text-align:right;padding:5px 8px">投入成本</th><th style="text-align:right;padding:5px 8px">目前現值</th><th style="text-align:right;padding:5px 8px">本金損益</th><th style="text-align:right;padding:5px 8px">累計配息</th><th style="text-align:right;padding:5px 8px">真實績效</th></tr>')
+    for nm, cost, cur, cd, real, pl in pol_rows:
+        col = "#16a34a" if real >= 0 else "#dc2626"
+        L.append(f'<tr><td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;font-weight:700">{T(nm)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{_fmt(cost)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{_fmt(cur)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;color:#dc2626">{_fmt(pl, True)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;color:#16a34a">{_fmt(cd, True)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;font-weight:800;color:{col}">{_fmt(real, True)}</td></tr>')
+    L.append(f'<tr style="background:#f9fafb"><td style="padding:6px 8px;font-weight:700">合計</td><td style="padding:6px 8px;text-align:right;font-weight:700">{_fmt(sum(r[1] for r in pol_rows))}</td><td style="padding:6px 8px;text-align:right;font-weight:700">{_fmt(sum(r[2] for r in pol_rows))}</td><td style="padding:6px 8px;text-align:right;font-weight:700;color:#dc2626">{_fmt(sum(r[5] for r in pol_rows), True)}</td><td style="padding:6px 8px;text-align:right;font-weight:700;color:#16a34a">{_fmt(sum(r[4] for r in pol_rows), True)}</td><td style="padding:6px 8px;text-align:right;font-weight:900;color:#16a34a">{_fmt(real_sum, True)}</td></tr></table>')
+    L.append(f'<div style="font-size:11px;color:#065f46;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;margin-top:8px">✅ <b>判定（2026-09-05 核准標準）</b>：月配息估 {_fmt(ins_div_m)} ＞ 保單借貸月息 {_fmt(pledge_m)}，且累計本金+配息 {_fmt(real_sum)} 為正 → <b>{cov}</b></div></div>')
+    # ── 國泰轉貸專區 ──
+    L.append('<div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px">')
+    L.append('<h3 style="font-size:15px;font-weight:800;margin:0 0 2px;color:#1d1d1f">🏦 國泰轉貸 1,200萬 專區</h3>')
+    L.append('<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">借貸資金：投入列帳面、漲跌才計績效｜snapshot 最新真值</div>')
+    L.append('<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="color:#6b7280;border-bottom:2px solid #e5e7eb"><th style="text-align:left;padding:5px 8px">標的</th><th style="text-align:right;padding:5px 8px">目前市值</th></tr>')
+    for k, v in ct_items:
+        L.append(f'<tr><td style="padding:6px 8px;border-bottom:1px solid #f3f4f6">{T(k)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{_fmt(v)}</td></tr>')
+    pl12 = cur12 - cost12
+    L.append(f'<tr style="background:#f9fafb"><td style="padding:6px 8px;font-weight:700">合計 {_fmt(cur12)} vs 投入 12,000,000</td><td style="padding:6px 8px;text-align:right;font-weight:900;color:{"#dc2626" if pl12 < 0 else "#16a34a"}">{_fmt(pl12, True)}</td></tr></table>')
+    ok12 = "✅ 配息可 cover 利息（本金+配息 > 借貸成本）" if cathay_div >= cathay_m else "⚠️ 配息不足 cover 利息"
+    L.append(f'<div style="font-size:11px;color:#065f46;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;margin-top:8px">富達月配息估 {_fmt(cathay_div)} vs 國泰月息 {_fmt(cathay_m)}（12M×2.6%）→ {ok12}</div></div>')
+    L.append('<div style="font-size:10.5px;color:#94a3b8;text-align:center;padding:8px 0 20px">投資績效月報 v3（2026-09-04 定版，9/5 加保單真實績效+國泰專區）｜build_investment_performance.py 自動產生</div>')
+    L.append('</div></body></html>')
+    Path(BASE / "investment_performance.html").write_text("\n".join(L), encoding="utf-8")
+    print("📄 investment_performance.html 已自動產生")
+
+
 def main():
     today = datetime.date.today()
     if len(sys.argv) > 1:
@@ -194,6 +299,7 @@ def main():
     print("=" * 58)
 
     grand = 0
+    class_rows = []
     for c in CLASS_KEYS:
         inv = adj_invest.get(c, 0)
         src = adj_src.get(c, "")
@@ -223,6 +329,7 @@ def main():
             print(f"  − 手續費 {-fee:,.0f}")
         sub = real_mv + div - fee
         grand += sub
+        class_rows.append({"c": c, "real_mv": real_mv, "div": div, "fee": fee, "sub": sub})
         print(f"  ＝ {c}損益 {sub:+,.0f}" + ("（含市值）" if real_mv else "（現金型：不含市值）"))
 
     print("\n" + "-" * 58)
@@ -277,6 +384,19 @@ def main():
     print(f"  月配息估 {_cathay_div:,.0f}（富達） vs 國泰月息 {_cathay_m:,.0f} → "
           f"{'✅ 配息可 cover 利息（本金+配息 > 借貸成本）' if _cathay_div >= _cathay_m else '⚠️ 配息不足 cover 利息'}")
     print("口徑：借貸不計績效（投入列帳面、漲跌才計）；配息當月實收；市值含未實現；本金錨=原始成本")
+
+    # ── 儀表板 HTML 自動產生（2026-09-05：整合進 build，cron 每月重產不掉區塊）──
+    try:
+        pol_rows = [(_nm, _cost, _cur, _cd, _cd + (_cur - _cost), _cur - _cost)
+                    for _nm, _cost, _cur, _cd in _pols]
+        ct_items = sorted((_k, _v) for _k, _v in _ct.items()
+                          if _k != "note" and isinstance(_v, (int, float)))
+        write_dashboard_html(mk, class_rows, interest_total, grand, perf, project,
+                             load_loans(snap, rate_overrides), pol_rows, _real_sum,
+                             _ins_div_m, _pledge_m, _cov, ct_items, _cur12, _cost12,
+                             _cathay_div, _cathay_m, snap)
+    except Exception as _e:
+        print(f"⚠️ HTML 產生失敗（console 輸出仍可用）：{_e}")
 
 
 if __name__ == "__main__":
