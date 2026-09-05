@@ -586,19 +586,6 @@
       tp.innerHTML = h;
     }).catch(function(){});
   }
-  var dt = document.getElementById('decision-track');
-  if(dt){
-    fetch('pending_decisions.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(list){
-      if(!list || !list.length) return;
-      var h = '<h3 class="text-md font-bold text-white">📋 執行中決策追蹤（即時）</h3><div class="space-y-2 text-xs">';
-      list.forEach(function(d){
-        var t = d.item||d.title||'';
-        h += '<div class="flex gap-2"><span class="text-slate-500 w-16 shrink-0">'+(d.date||'')+'</span><span class="text-slate-300">'+t+'</span><span class="text-slate-500">'+(d.status||'')+'</span></div>';
-      });
-      h += '</div>';
-      dt.innerHTML = h;
-    }).catch(function(){});
-  }
   var wn = document.getElementById('weekly-nw');
   if(wn){
     fetch('snapshot.json?v='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(s){
@@ -902,16 +889,28 @@ var gotTotal = _salaryA + divTotal + rentGot;
       wpa.innerHTML = h;
     }).catch(function(){});
   }
-  var dt = document.getElementById('decision-track');
+  var dt = document.getElementById('decision-list');
   if(dt){
+    /* 2026-09-05 v3：pending_decisions.json 即時 — 只顯示執行中（排除已閉環）、日期新→舊、上限8；失敗保留靜態版 */
     fetch('pending_decisions.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(list){
       if(!list || !list.length) return;
-      var h = '<h3 class="text-md font-bold text-white">📋 執行中決策追蹤（即時）</h3><div class="space-y-2 text-xs">';
-      list.forEach(function(d){
-        var t = d.item||d.title||'';
-        h += '<div class="flex gap-2"><span class="text-slate-500 w-16 shrink-0">'+(d.date||'')+'</span><span class="text-slate-300">'+t+'</span><span class="text-slate-500">'+(d.status||'')+'</span></div>';
+      var esc = function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+      var active = list.filter(function(x){
+        var s = String(x.status||'');
+        return s.indexOf('✅')<0 && s.indexOf('已完成')<0 && s.indexOf('已定案')<0 && s.indexOf('閉環')<0 && s.indexOf('已送出')<0;
       });
-      h += '</div>';
+      active.sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); });
+      var h = '<div style="font-size:11px;color:#64748b;margin-bottom:4px">執行中 '+active.length+' 筆（即時 · 已閉環不顯示）</div>';
+      active.slice(0,8).forEach(function(d){
+        var s = String(d.status||'');
+        var ic = '🔴';
+        if(s.indexOf('🟡')>=0||s.indexOf('⏳')>=0||s.indexOf('警戒')>=0||s.indexOf('觀望')>=0||s.indexOf('凍結')>=0||s.indexOf('🟢')>=0) ic='🟡';
+        h += '<div class="flex items-center gap-2 p-2 bg-slate-900/30 rounded border border-red-500/20">'
+          + '<span class="text-amber-400 font-mono w-14 shrink-0">'+esc((d.date||'').slice(5))+'</span>'
+          + '<span class="text-white font-bold flex-1">'+ic+' '+esc(d.title||d.item||'')+'</span>'
+          + '<span class="text-slate-400 font-mono text-[11px] hidden md:inline max-w-[36%] truncate">'+esc(s.slice(0,44))+'</span></div>';
+      });
+      if(!active.length) h += '<div class="text-slate-400">無執行中決策</div>';
       dt.innerHTML = h;
     }).catch(function(){});
   }
