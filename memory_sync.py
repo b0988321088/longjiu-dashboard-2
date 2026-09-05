@@ -252,3 +252,27 @@ print(f"🏷️  實體：{ents}")
 print(f"🔗 連結：{links}")
 
 conn.close()
+
+# ═══ Step 7: AppData DB 鏡像（2026-09-05 併入本 script — 根治 19:00 agent 靜默失能）═══
+# 背景：mirror_appdata.py 曾不在 cron scripts 目錄 → AppData 版靜止 8/12→9/5 而 job 仍回報 ok。
+# 現在每日 19:05 同步後自動鏡像今日事實到 AppData（fact_store 工具目標）；失敗 = exit 1 → cron 警示。
+import sys as _sys, subprocess as _sp, os as _os
+_MIRROR = "C:/Users/bot/AppData/Local/hermes/scripts/mirror_appdata.py"
+if _os.path.exists(_MIRROR):
+    try:
+        _r = _sp.run([_sys.executable, _MIRROR, today], capture_output=True, text=True,
+                     encoding="utf-8", errors="replace", timeout=120)
+        if _r.stdout:
+            print(_r.stdout.rstrip())
+        if _r.stderr:
+            print("⚠️ mirror stderr:", _r.stderr[-400:])
+        if _r.returncode != 0:
+            print(f"⚠️ AppData 鏡像失敗（rc={_r.returncode}）")
+            _sys.exit(1)
+        print("✅ AppData 鏡像完成")
+    except Exception as _e:
+        print(f"⚠️ AppData 鏡像例外: {_e}")
+        _sys.exit(1)
+else:
+    print(f"⚠️ 找不到 mirror_appdata.py（{_MIRROR}）— AppData 鏡像無法執行")
+    _sys.exit(1)
