@@ -236,7 +236,47 @@ def main():
     if project:
         print(f"📦 專案收入(非常態) {project:+,.0f}（另計不混入）")
     print(funding_cost_report(snap, adj_costs, rate_overrides))
-    print("口徑：借貸不計績效（投入列帳面、漲跌才計）；配息當月實收；市值含未實現")
+
+    # ── 保單真實累計績效（2026-09-05 核准：配息 vs 本金；本金錨 = 原始成本）──
+    _pols = [
+        ("安聯 A+B", snap.get("allianz_cost", 8000000), snap.get("allianz_ab_current_value", 0) or 0, snap.get("allianz_cum_dividend", 0) or 0),
+        ("第一金 FJ33", snap.get("firstjin_cost", 2000000), snap.get("firstjin_current_value", 0) or 0, snap.get("firstjin_cum_dividend", 0) or 0),
+    ]
+    print("\n📋 保單真實累計績效（真實績效 = 累計配息 + (現值 − 原始成本)）")
+    print("-" * 58)
+    _real_sum = 0
+    for _nm, _cost, _cur, _cd in _pols:
+        _pl = _cur - _cost
+        _real = _cd + _pl
+        _real_sum += _real
+        print(f"  {_nm:12s} 投入 {_cost:>9,.0f}｜現值 {_cur:>9,.0f}｜本金 {_pl:>+10,.0f}｜累計配息 {_cd:>9,.0f}｜真實績效 {_real:>+10,.0f}")
+    print(f"  {'合計':12s} 投入 10,000,000｜真實累計績效 {_real_sum:+,.0f}")
+    _ins_div_m = (snap.get("allianz_ab_monthly", 0) or 0) + (snap.get("firstjin_monthly", 0) or 0)
+    try:
+        _loans = load_loans(snap, rate_overrides)
+        _pledge_m = next((_l["monthly"] for _l in _loans if "保單借貸" in _l["name"]), 14000)
+    except Exception:
+        _pledge_m = 14000
+    _cov = ("✅ 月配息可持續且累計本金+配息為正 → 保單健康（本金+配息 > 借貸成本）"
+            if (_ins_div_m >= _pledge_m and _real_sum > 0) else "⚠️ 需檢視：配息或本金覆蓋不足")
+    print(f"  月配息估 {_ins_div_m:,.0f} vs 保單借貸月息 {_pledge_m:,.0f}｜{_cov}")
+
+    # ── 國泰轉貸 1,200萬 專區（2026-09-05：成本 vs 現值，統一最新真值）──
+    _ct = (snap.get("funds_breakdown", {}) or {}).get("國泰直購", {}) or {}
+    _cur12 = sum(_v for _k, _v in _ct.items() if _k != "note" and isinstance(_v, (int, float)))
+    _cost12 = 12000000
+    print("\n🏦 國泰轉貸 1,200萬 專區（借貸資金：投入帳面、漲跌才計績效）")
+    print("-" * 58)
+    for _k, _v in sorted(_ct.items()):
+        if _k != "note" and isinstance(_v, (int, float)):
+            print(f"  {_k:26s} {_v:>12,.0f}")
+    if _cur12:
+        print(f"  {'合計現值':26s} {_cur12:>12,.0f}  vs 投入 12,000,000 → 損益 {_cur12 - _cost12:+,.0f}（9/3 報價）")
+    _cathay_m = 26000     # 12M @2.6% → 月息 ~26,000
+    _cathay_div = 45000   # 富達月配估 0.75%/月 × 600萬（與 run_daily 同源）
+    print(f"  月配息估 {_cathay_div:,.0f}（富達） vs 國泰月息 {_cathay_m:,.0f} → "
+          f"{'✅ 配息可 cover 利息（本金+配息 > 借貸成本）' if _cathay_div >= _cathay_m else '⚠️ 配息不足 cover 利息'}")
+    print("口徑：借貸不計績效（投入列帳面、漲跌才計）；配息當月實收；市值含未實現；本金錨=原始成本")
 
 
 if __name__ == "__main__":

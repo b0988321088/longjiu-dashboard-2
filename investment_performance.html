@@ -1,101 +1,12 @@
 <!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>📊 龍九投資績效月報</title>
-<style>body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;background:#f5f5f7;margin:0;padding:16px}</style></head>
+<style>body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;background:#f5f5f7;margin:0;padding:16px}
+.card{background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+pre{font-family:ui-monospace,'SF Mono',Consolas,monospace;font-size:11.5px;line-height:1.7;white-space:pre-wrap;word-break:break-all;margin:0;color:#1f2937}</style></head>
 <body><div style="max-width:720px;margin:0 auto">
 <div style="background:linear-gradient(135deg,#064e3b,#065f46);border-radius:14px;padding:16px 18px;color:#fff;margin-bottom:12px">
-<h1 style="font-size:18px;font-weight:900;margin:0 0 4px">📊 龍九投資績效月報</h1>
-<div style="font-size:11.5px;color:#a7f3d0">基準月 2026-08（Baseline）｜每月同尺比較：投資賺多少 ⇄ 借貸付多少</div>
-<div style="font-size:11px;color:#86efac;margin-top:4px">📌 左欄＝投資收益（三類損益，貸款錢剔除不計績效）｜右欄＝借貸利息（月成本）｜下方＝勝負判定</div></div>
-
-<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:stretch">
-
-<!-- ───────── 左欄：投資收益（8月基準）───────── -->
-<div style="flex:1.15;min-width:300px;background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px">
-  <div style="display:flex;justify-content:space-between;align-items:baseline">
-    <h3 style="font-size:15px;font-weight:800;margin:0;color:#1d1d1f">📈 投資收益
-      <span style="font-size:10px;background:#064e3b;color:#fff;border-radius:6px;padding:2px 7px;vertical-align:middle">基準月</span></h3>
-    <div style="font-size:24px;font-weight:900;color:#16a34a">+41.6 萬</div>
-  </div>
-  <div style="font-size:11px;color:#94a3b8;margin:2px 0 10px">2026-08｜市值變化+配息−利息−手續費｜轉貸 1,200 萬已剔除</div>
-  <table style="width:100%;font-size:12.5px;border-collapse:collapse">
-    <tr style="color:#6b7280;border-bottom:2px solid #e5e7eb">
-      <th style="text-align:left;padding:5px 8px">類別</th><th style="text-align:right;padding:5px 8px">市值變化</th>
-      <th style="text-align:right;padding:5px 8px">配息</th><th style="text-align:right;padding:5px 8px">費用</th>
-      <th style="text-align:right;padding:5px 8px">損益</th></tr>
-    <tr><td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;font-weight:700">📈 股票</td>
-      <td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">+155,170<br><span style="font-size:10px;color:#9ca3af">8/1 271.9萬→8/31 287.5萬（8月無買賣）</span></td>
-      <td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">+34,646</td>
-      <td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;color:#6b7280">0</td>
-      <td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;font-weight:800;color:#16a34a">+189,816</td></tr>
-    <tr><td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;font-weight:700">💰 基金</td>
-      <td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">+39,000<br><span style="font-size:10px;color:#9ca3af">帳面+12,039,000−投入12,000,000(轉貸)</span></td>
-      <td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">+1,454</td>
-      <td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;color:#dc2626">-15,000</td>
-      <td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;font-weight:800;color:#16a34a">+25,454</td></tr>
-    <tr><td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;font-weight:700">🛡️ 保單</td>
-      <td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">+140,000<br><span style="font-size:10px;color:#9ca3af">淨值波動(無新增投入)</span></td>
-      <td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">+102,527</td>
-      <td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;color:#6b7280">0</td>
-      <td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;font-weight:800;color:#16a34a">+242,527</td></tr>
-    <tr style="background:#f9fafb"><td style="padding:6px 8px;font-weight:700">三類合計</td><td style="padding:6px 8px;text-align:right;font-weight:700">+334,170</td>
-      <td style="padding:6px 8px;text-align:right;font-weight:700">+138,627</td><td style="padding:6px 8px;text-align:right;font-weight:700;color:#dc2626">-15,000</td>
-      <td style="padding:6px 8px;text-align:right;font-weight:900">+457,797</td></tr>
-    <tr><td style="padding:6px 8px" colspan="4">投資利息 <span style="font-size:10px;color:#9ca3af">（8月當月計入：永豐房貸 28,000 + 保單借貸 14,000；國泰 9/20 才起付、元大未滿月故未計入）</span></td>
-      <td style="padding:6px 8px;text-align:right;color:#dc2626;font-weight:700">-42,000</td></tr>
-  </table>
-  <div style="font-size:10.5px;color:#94a3b8;margin-top:6px">🔍 基金帳面 +1,203.9 萬幾乎全是 8/20 轉貸買入 → 貸款錢看得見、績效只算真漲跌 +3.9 萬</div>
-</div>
-
-<!-- ───────── 右欄：借貸利息（月成本）───────── -->
-<div style="flex:1;min-width:260px;background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px">
-  <div style="display:flex;justify-content:space-between;align-items:baseline">
-    <h3 style="font-size:15px;font-weight:800;margin:0;color:#1d1d1f">🏦 借貸利息（月成本）</h3>
-    <div style="font-size:24px;font-weight:900;color:#dc2626">-69,855<span style="font-size:12px;color:#9ca3af">利息/月</span></div>
-  </div>
-  <div style="font-size:11px;color:#94a3b8;margin:2px 0 10px">全年利息成本 83.8萬｜若含還本：實際月付 108,335（利息 69,855 + 本金 38,480，永豐本利攤還）</div>
-  <table style="width:100%;font-size:12px;border-collapse:collapse">
-    <tr style="color:#6b7280"><th style="text-align:left;padding:4px 8px">借款</th><th style="text-align:right;padding:4px 8px">餘額</th><th style="text-align:right;padding:4px 8px">利率</th><th style="text-align:right;padding:4px 8px">月付(含本)</th><th style="text-align:right;padding:4px 8px">月利息</th></tr>
-    <tr><td style="padding:4px 8px;border-bottom:1px solid #f3f4f6">永豐房貸（本利攤還）</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6">1,308萬</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6">2.50%</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6;font-weight:700">65,735</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6">27,255<br><span style="font-size:10px;color:#9ca3af">本金 38,480</span></td></tr>
-    <tr><td style="padding:4px 8px;border-bottom:1px solid #f3f4f6">國泰轉貸（寬限付息）</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6">1,200萬</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6">2.60%</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6;font-weight:700">26,000</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6">26,000</td></tr>
-    <tr><td style="padding:4px 8px;border-bottom:1px solid #f3f4f6">保單借貸</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6">400萬</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6">4.00%</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6;font-weight:700">13,333</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6">13,333</td></tr>
-    <tr><td style="padding:4px 8px;border-bottom:1px solid #f3f4f6">元大質押</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6">100萬</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6">3.92%</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6;font-weight:700">3,267</td><td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f3f4f6">3,267</td></tr>
-    <tr style="background:#f9fafb;font-weight:800"><td style="padding:5px 8px">合計</td><td style="padding:5px 8px;text-align:right">3,008萬</td><td style="padding:5px 8px;text-align:right">加權 2.79%</td><td style="padding:5px 8px;text-align:right">108,335</td><td style="padding:5px 8px;text-align:right">69,855</td></tr>
-  </table>
-  <div style="background:#fef2f2;border-radius:8px;padding:7px 9px;margin-top:8px;font-size:11px;color:#991b1b">
-    ⚠️ 永豐是<b>本利攤還</b>：月付 65,735 含本金 38,480 → 別只拿利息 27,255 比現金流<br>
-    💡 純投資槓桿利息（國泰+保單+元大）= 42,600/月，看套利用這個</div>
-</div>
-</div>
-
-<!-- ───────── 下方：勝負判定 ───────── -->
-<div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px">
-<h3 style="font-size:15px;font-weight:800;margin:0 0 2px;color:#1d1d1f">⚖️ 勝負判定：投資收益 vs 借貸利息</h3>
-<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">判斷規則：別記個別利率，記加權成本一個數 → 對照配息殖利率看利差</div>
-<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
-  <div style="flex:1;min-width:130px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 12px;text-align:center">
-    <div style="font-size:11px;color:#166534">加權資金成本</div>
-    <div style="font-size:22px;font-weight:900;color:#166534">2.79%</div>
-    <div style="font-size:10px;color:#166534">月息 69,855</div></div>
-  <div style="flex:1;min-width:130px;background:#eff6ff;border:1px solid #93c5fd;border-radius:10px;padding:10px 12px;text-align:center">
-    <div style="font-size:11px;color:#1e40af">配息殖利率(8月實收)</div>
-    <div style="font-size:22px;font-weight:900;color:#1e40af">5.88%</div>
-    <div style="font-size:9.5px;color:#1e40af">保守常態 4.76%</div></div>
-  <div style="flex:1;min-width:130px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 12px;text-align:center">
-    <div style="font-size:11px;color:#166534">淨利差(8月實收)</div>
-    <div style="font-size:22px;font-weight:900;color:#16a34a">+3.09pp</div>
-    <div style="font-size:9.5px;color:#166534">保守 +1.97pp 🟢</div></div>
-</div>
-<div style="font-size:11px;color:#374151;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px">
-✅ <b>投資面（利息 vs 報酬）</b>：8月實收殖利率 5.88% − 資金成本 2.79% = 淨利差 +3.09pp 🟢（保守 100,000 亦有 +1.97pp）→ 借貸投資划算
-</div>
-<div style="font-size:11px;color:#065f46;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;margin-top:6px">
-✅ <b>現金流面（8月實際進帳 vs 償債月付）</b>：配息/ETF/股息實收 <b>123,607</b> ＞ 償債月付 <b>108,335</b>（多 15,272）→ 純配息就蓋得住本利攤還<br>
-✅ 含房租：被動收入 <b>203,707</b>（配息 123,607 + 房租 80,100）→ 償債後每月剩 <b>95,372</b>，且覆蓋總支出 162,781 的 125%
-</div>
-<div style="font-size:10px;color:#94a3b8;margin-top:6px">📋 8月實收 123,607 = 安聯 62,969 + 第一金 25,538 + ETF 19,656 + 台灣特品 14,990 + 基金 ~454（snapshot dividend_source_notes）｜保守 100,000 為剔除台灣特品一次性後的常態月配息｜房租實收 80,100（rent_received_records 8月全收齊）</div>
-<div style="font-size:10.5px;color:#94a3b8;margin-top:6px">燈號：🟢利差≥1.2% 可續 / 🟡0~1.2% 謹慎 / 🔴<0 停槓桿｜每月 1 日自動更新與基準月同尺比較</div>
-</div>
-
-<div style="font-size:10.5px;color:#94a3b8;text-align:center;padding:8px 0 20px">投資績效月報 v3（2026-09-04 定版）｜基準月 2026-08｜build_investment_performance.py 動態產生｜cron 每月 1 日 09:00 自動更新</div>
+<h1 style="font-size:18px;font-weight:900;margin:0 0 4px">📊 龍九投資績效月報（2026-08）</h1>
+<div style="font-size:12px;opacity:.85">重新產生 2026-09-05 10:42｜含保單真實累計績效 + 國泰轉貸專區（2026-09-05 核准版）</div></div>
+<div class="card"><pre><br>📊 投資績效月報 2026-08（細分版：股票/基金/保單）<br>基準：（db 自 2026-08-31 起，無月初基準） → 2026-08-31<br>==========================================================<br><br>■ 股票<br>  市值：帳面 +155,170<br>     ＝ 真實市值變化 +155,170<br>  ＋ 配息實收 +34,646<br>  ＝ 股票損益 +189,816（含市值）<br><br>■ 基金<br>  市值：帳面 +12,039,000<br>     − 新增投入 12,000,000（國泰轉貸 1,200萬（8/20 撥款買富達600+MMF500+聯博100））<br>     ＝ 真實市值變化 +39,000<br>  ＋ 配息實收 +1,454<br>  − 手續費 -15,000<br>  ＝ 基金損益 +25,454（含市值）<br><br>■ 保單<br>  市值：帳面 +140,000<br>     ＝ 真實市值變化 +140,000<br>  ＋ 配息實收 +102,527<br>  ＝ 保單損益 +242,527（含市值）<br><br>----------------------------------------------------------<br>三類損益合計        +457,797<br>− 投資利息(合計)    -42,000（{&quot;房貸&quot;: 28000, &quot;保單借貸&quot;: 14000}）<br>==========================================================<br>🎯 投資績效（月）= +415,797 ＝ +41.6 萬<br>==========================================================<br>📦 專案收入(非常態) +332,342（另計不混入）<br><br>⚖️ 資金成本儀表板（借貸總成本 vs 投資現金流）<br>----------------------------------------------------------<br>  借款                     餘額    利率    實際月付(含本)  其中利息<br>  永豐房貸（洲際W 本利攤還 2.5%）          1308萬 2.50%     65,735 （本利攤還）     27,255<br>  國泰轉貸（大義街 2.6%）               1200萬 2.60%     26,000            26,000<br>  保單借貸（4%）                      400萬 4.00%     13,333            13,333<br>  元大質押（3.92%）                   100萬 3.92%      3,267             3,267<br>  合計                           3008萬           108,335    利息   69,855<br>  加權平均資金成本 = 2.79%/年｜⚠️ 永豐為本利攤還：實際月付 108,335 &gt; 純利息 69,855<br>  投資市值（股票+基金+保單） 2,523萬<br>  配息 當月實收 123,607 → 配息殖利率 5.88%/年<br>  淨利差 = 5.88% − 2.79% = +3.09pp<br>  判斷：🟢 利差充足（≥1.2%）→ 現金流安全、套利空間存在<br>  利息層：✅ 配息可 cover 利息（月配息 100,000 vs 純月息 69,855）<br>  現金流層：✅ 純配息8月實收 123,607 ≥ 實際月付 108,335<br>  現金流層：✅ 被動收入(配息123,607+房租80,100) 203,707 &gt; 實際月付 108,335 → 償債後剩 95,372/月<br>  註：房貸利息為居住成本；純投資槓桿 = 國泰+保單+元大（若看套利）<br><br>📋 保單真實累計績效（真實績效 = 累計配息 + (現值 − 原始成本)）<br>----------------------------------------------------------<br>  安聯 A+B       投入 8,000,000｜現值 7,673,505｜本金   -326,495｜累計配息 1,630,962｜真實績效 +1,304,467<br>  第一金 FJ33     投入 2,000,000｜現值 1,904,419｜本金    -95,581｜累計配息   111,513｜真實績效    +15,932<br>  合計           投入 10,000,000｜真實累計績效 +1,320,399<br>  月配息估 130,930 vs 保單借貸月息 13,333｜✅ 月配息可持續且累計本金+配息為正 → 保單健康（本金+配息 &gt; 借貸成本）<br><br>🏦 國泰轉貸 1,200萬 專區（借貸資金：投入帳面、漲跌才計績效）<br>----------------------------------------------------------<br>  國泰台灣貨幣市場基金                    5,002,941<br>  富達全球動能多元B股C月配息美元              5,925,574<br>  聯博全球多元收益AD美元月配                  986,977<br>  合計現值                         11,915,492  vs 投入 12,000,000 → 損益 -84,508（9/3 報價）<br>  月配息估 45,000（富達） vs 國泰月息 26,000 → ✅ 配息可 cover 利息（本金+配息 &gt; 借貸成本）<br>口徑：借貸不計績效（投入列帳面、漲跌才計）；配息當月實收；市值含未實現；本金錨=原始成本<br></pre></div>
 </div></body></html>
