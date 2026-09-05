@@ -47,15 +47,18 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
         locked = "（🔒LOCKED）" if v.get("locked") else ""
         lines.append(f"- {v.get('color','⚪')} {k}{locked}: {v.get('note','—')}")
 
-    # 二之二、政策面標註（2026-08-29：Jackson Hole 華許放鷹 + 原油新聞）
+    # 二之二、政策面標註（2026-09-05：動態讀 新聞* 鍵，不再鎖死 8/29 舊新聞名）
     _pn = radar.get("policy_notes") or {}
     if _pn:
-        lines += ["", "## 二之二、政策面（Jackson Hole / 原油新聞）", ""]
-        lines.append(f"> {_pn.get('會議正名','')}｜{_pn.get('來源','')}")
-        for k in ["新聞1_華許升息", "新聞2_美委石油協議", "新聞3_伊朗戰爭SPR"]:
+        _news_keys = [k for k in _pn if str(k).startswith("新聞")]
+        _nums = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"]
+        lines += ["", "## 二之二、政策面", ""]
+        lines.append(f"> {_pn.get('來源','')}（{_pn.get('記錄時間','')}）")
+        for _i, k in enumerate(_news_keys):
             v = _pn.get(k, {})
             if v:
-                lines.append(f"- **{k.replace('新聞1_','① ').replace('新聞2_','② ').replace('新聞3_','③ ')}**：{v.get('內容','')}")
+                _n = _nums[_i] if _i < len(_nums) else f"{_i+1}. "
+                lines.append(f"- **{_n}{str(k).split('_',1)[-1]}**：{v.get('內容','')}")
                 lines.append(f"  - 影響：{v.get('對資產影響','')}")
         if _pn.get("原油綜合判斷"):
             lines.append(f"- 🛢️ **原油綜合判斷**：{_pn['原油綜合判斷']}")
@@ -214,14 +217,16 @@ def main():
     if _pn:
         _pn_html = f"""
         <div class="card" style="border:1px solid #f59e0b;background:linear-gradient(135deg,#1a1408,#131a26)">
-          <h2>🏛️ 政策面（Jackson Hole / 原油新聞）</h2>
-          <div style="font-size:11px;color:#9ca3af;margin-bottom:8px">{_pn.get('會議正名','')}｜{_pn.get('來源','')}</div>"""
-        for k in ["新聞1_華許升息", "新聞2_美委石油協議", "新聞3_伊朗戰爭SPR"]:
+          <h2>🏛️ 政策面</h2>
+          <div style="font-size:11px;color:#9ca3af;margin-bottom:8px">{_pn.get('來源','')}（{_pn.get('記錄時間','')}）</div>"""
+        _nums = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"]
+        for _i, k in enumerate([_kk for _kk in _pn if str(_kk).startswith("新聞")]):
             v = _pn.get(k, {})
             if v:
+                _n = _nums[_i] if _i < len(_nums) else f"{_i+1}. "
                 _pn_html += f"""
           <div style="margin-bottom:8px;padding:8px 10px;background:#0b0f17;border-radius:8px;border-left:3px solid #f59e0b">
-            <div style="font-weight:700;font-size:12px;color:#fbbf24">{k.replace('新聞1_','① ').replace('新聞2_','② ').replace('新聞3_','③ ')}</div>
+            <div style="font-weight:700;font-size:12px;color:#fbbf24">{_n}{str(k).split('_',1)[-1]}</div>
             <div style="font-size:11px;color:#e5e7eb;margin-top:3px">{v.get('內容','')}</div>
             <div style="font-size:10px;color:#9ca3af;margin-top:3px">影響：{v.get('對資產影響','')}</div>
           </div>"""
