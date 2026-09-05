@@ -220,6 +220,31 @@ def build_table(snap: dict, us30y: float = None) -> dict:
     except Exception:
         pass
 
+    # ── 2026-09-05 觀望 gate 覆寫（使用者裁示：質押到位 + 9/11 CPI / 9/16 FOMC 前全面不投入）──
+    # pending_decisions 的「升息警戒決策」在 ⏳ 觀望中 → 買進類動作全部凍結為觀望
+    try:
+        import json as _j2
+        _pd = _j2.loads((Path(__file__).resolve().parent / "pending_decisions.json").read_text(encoding="utf-8"))
+        _gate_on = any(
+            ("升息警戒" in str(e.get("title", "")) and ("⏳" in str(e.get("status", "")) or "觀望" in str(e.get("status", ""))))
+            for e in (_pd if isinstance(_pd, list) else [])
+        )
+    except Exception:
+        _gate_on = False
+    if _gate_on:
+        _GATE_NOTE = "9/5 觀望 gate：9/16 FOMC 定調前不投入（gate 解除後自動恢復原節奏）"
+        for _r in rows:
+            _a = str(_r.get("建議動作", ""))
+            if any(_b in _a for _b in ("增持", "加碼", "買進", "承接")):
+                _r["建議動作"] = "⏸️ 觀望(gate)"
+                _r["精算金額"] = 0
+                _r["是否交易"] = False
+                _r["觸發條件"] = str(_r.get("觸發條件", "")) + "｜" + _GATE_NOTE
+            elif "現金" in str(_r.get("資產分類", "")):
+                _r["建議動作"] = "底線制·乾粉保留"
+                _r["精算金額"] = 0
+                _r["觸發條件"] = "超額乾粉保留，等 gate 解除後優先醫療保健｜" + _GATE_NOTE
+
     return {
         "date": date.today().isoformat(),
         "us30y": us30y,
