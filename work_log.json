@@ -58,5 +58,11 @@
     "category": "完成",
     "item": "Hermes 儲存健康維護（9/5 核准 A 案）：hermes 目錄 13G→6.7G；updates.backup_keep 5→2；週日 DB 保養擴充為 5 步自動輪替",
     "detail": "刪 9/2-9/3 舊 state.db 備份 5 項 ~6.1G（保留 bak-20260904）+7/22 快照；optimize-storage 後 state.db 1.1G→643M；新增 scripts/prune_state_db_backups.py（留最新 2 份、DB quick_check 異常防呆）；記憶 md 備份守留 14 份；技能 hermes-storage-maintenance 建檔"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "Hermes 三優化閉環（9/5 核准）：技能庫瘦身 253→233（.archive 停用層 20）+ 描述索引 -19% + 薪資 sweep 42,560×19 檔 + 健康度卡驗證一致 + 記憶壓縮 96→94%",
+    "detail": "新技能 hermes-context-cost-control / hermes-storage-maintenance；skill-library-audit 自身修正（cron 16:00、薪資對照表）；日報兩支技能 desc 去重；fact_store 過時薪資事實更新；⚠️ 月收入口徑兩版待統一（217,518 差旅 vs 228,751 定版，以 snapshot.monthly_income 為準）"
   }
 ]
