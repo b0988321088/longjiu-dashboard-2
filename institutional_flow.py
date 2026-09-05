@@ -495,8 +495,18 @@ def main():
         _tw5 = _pen5.get("台股市值型成長", 7.5); _us5 = _pen5.get("美股市值型成長", 43.4)
         _def5 = _snap.get("defensive_combined_metric", {}).get("佔比", 69.2)
         _rot5 = (_snap.get("rotation_recommendation", {}) or {}).get("建議", [{}])[0]
-        # ① 台股
-        lines.append(f"🟢 台股（{_tw5:.1f}% vs 目標10%，缺口 {_tw5-10:+.1f}pp）→ 0050/006208 每週1.5-2萬慢慢買（外資連3買+台幣強升）")
+        # ① 台股（2026-09-05：觀望 gate — PI質押款到位 + Fed 數據/重大事件前不投入）
+        try:
+            _pd = json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8"))
+            _gate = any("升息警戒" in (x.get("title") or "")
+                        and str(x.get("status", "")).startswith("⏳")
+                        for x in (_pd if isinstance(_pd, list) else []))
+        except Exception:
+            _gate = False
+        if _gate:
+            lines.append(f"⏸️ 台股（{_tw5:.1f}% vs 目標10%）→ 觀望：等 PI 質押款到位（9/10 認列→銀行 2-4 週）+ Fed 9/11 CPI/9/16 定調；僅大跌 -5% 才小單 ≤5萬")
+        else:
+            lines.append(f"🟢 台股（{_tw5:.1f}% vs 目標10%，缺口 {_tw5-10:+.1f}pp）→ 0050/006208 每週1.5-2萬慢慢買（外資連3買+台幣強升）")
         # ② 美股
         if _us5 > 45:
             lines.append(f"🔴 美股（{_us5:.1f}% vs 目標40%，超配 {_us5-40:+.1f}pp）→ 逢彈減碼 ≤20萬/次")
@@ -521,7 +531,7 @@ def main():
         # ⑧ 保單轉換（9/1 已全數送出 — 追蹤入帳）
         lines.append("✅ 保單轉換 9/1 已送出（安聯 PIMCO +50萬、貝萊德科技A10 90萬→摩根月配）→ 追蹤 9/8 除息 T+4 入帳")
         # ⑨ 負債/質押
-        lines.append("🔍 9/10 PI 認列 → 質押350萬@2.77% 還安聯300+元大50（高息→低息，升息前鎖低成本）")
+        lines.append("🔍 9/10 PI 認列 → 質押350萬@2.77% 撥款（銀行 2-4 週）到位後才啟動後續部署；到位前全面觀望（唯一推進 = PI/質押流程）")
         # ⑩ 產業輪動
         lines.append(f"📊 產業輪動：買「{_rot5.get('產業','—')}」（{_rot5.get('標的','')}）｜避開「公用事業」")
         for l in lines:
