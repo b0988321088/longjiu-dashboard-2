@@ -227,12 +227,7 @@ def extract_snapshot(snap: dict) -> dict:
                     "fund_dividend_monthly": float(_div_sum_current_month),
                     "fund_dividend_conservative": float(_div_sum_current_month),
                     "monthly_income": float(
-                        snap.get(
-                            "monthly_income",
-                            _ir.get("salary", 43_144) + _ir.get("travel_allowance", 12_000)
-                            if _ir
-                            else 218_102,
-                        )
+                        snap.get("monthly_income", 228_751)
                     ),
                     "monthly_expense": float(snap.get("monthly_expense", 162781)),
                     "rent_monthly": float(snap.get("rent_monthly_actual", 80_100)),
@@ -349,7 +344,7 @@ def load_history(snap=None) -> dict:
                 # 歷史日期保留 JSON 存檔的 insurance_detail，避免被今日 snapshot 覆寫
                 "insurance_detail": _json_hist.get(d, {}).get("insurance_detail") or {"【安聯保單A】現值": snap.get("allianz_a_current_value", 5_103_668), **{"  A-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": snap.get("allianz_b_current_value", 2_740_224), **{"  B-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": snap.get("allianz_ab_current_value", 7_843_892), f"━第一金{snap.get('firstjin_short_label', 'FA81聯博')}現値": snap.get("firstjin_current_value", 1_958_980), "━保單總現値": snap.get("insurance_current_value", 9_802_872)},
                 "fund_dividend_monthly": float(snap.get("dividend_month_actual", 0) or 0),
-                "monthly_income": 218_102.0,
+                "monthly_income": 228_751.0,
                 "monthly_expense": 162781.0,
                 "rent_monthly": 80_100.0,
                 "cathay_refinance": 0.0,

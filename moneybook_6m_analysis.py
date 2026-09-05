@@ -126,7 +126,7 @@ print("\n" + "=" * 60)
 print("6個月平均月現金流估算")
 print("=" * 60)
 
-monthly_salary = 43_144
+monthly_salary = 42_560
 monthly_travel = 12_000
 monthly_rent = 80_100
 monthly_interest = 2_858

@@ -144,7 +144,7 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
     """明確交易計畫（2026-08-22：使用者要求「講清楚買什麼」）
     乾粉 = 現金 − 70萬底線 + 月盈餘（保守取一半）；依建議優先序分配金額 + 分批節奏"""
     cash = snap.get("cash_total", 0)
-    surplus = snap.get("monthly_income", 225918) - snap.get("monthly_expense", 162781)
+    surplus = snap.get("monthly_income", 228751) - snap.get("monthly_expense", 162781)
     dry = max(cash - 700000, 0) + surplus * 0.5  # 保守可動用
     plan = []
     # 分配比例：醫療 40% / 高股息防禦 40% / 金融 20%（高股息=台股法人流入最強+防守優先裁示）

@@ -167,7 +167,7 @@ def main():
     apct, atwd, tgt = pen.get("actual_pct", {}), pen.get("actual_twd", {}), pen.get("targets", {})
     total = s.get("total_assets", 0)
     cash = s.get("cash_total", 0)
-    monthly_inc = s.get("monthly_income", 225918)
+    monthly_inc = s.get("monthly_income", 228751)
     monthly_exp = s.get("monthly_expense", 162781)
     surplus = monthly_inc - monthly_exp
     coverage = monthly_inc / monthly_exp * 100 if monthly_exp else 0

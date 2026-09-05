@@ -64,5 +64,11 @@
     "category": "完成",
     "item": "Hermes 三優化閉環（9/5 核准）：技能庫瘦身 253→233（.archive 停用層 20）+ 描述索引 -19% + 薪資 sweep 42,560×19 檔 + 健康度卡驗證一致 + 記憶壓縮 96→94%",
     "detail": "新技能 hermes-context-cost-control / hermes-storage-maintenance；skill-library-audit 自身修正（cron 16:00、薪資對照表）；日報兩支技能 desc 去重；fact_store 過時薪資事實更新；⚠️ 月收入口徑兩版待統一（217,518 差旅 vs 228,751 定版，以 snapshot.monthly_income 為準）"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "月收入基準統一 228,751（9/5 口徑裁示）：snapshot.monthly_income 225,918→228,751、盈餘→75,970、RULE 檔同步",
+    "detail": "裁示：薪水 42,560 常態（非 43,000）、維持 228,751 定版公式（42,560+80,100+配息實收 97,233+女友還款 6,000+利息 2,858）、差旅 12,000 領現金不計；程式 fallback 全清（run_daily/asset_diff 挖出 43_144+差旅 fallback/db_loader/rotation_engine/build_rebalance/moneybook_6m）；三源校準通過；技能 8 檔 217,518→228,751（Gemini 429 中斷由父代理親驗補修）；CIO 審查由 DS V4 Pro 暫代（Gemini 9/7 儲值）"
   }
 ]

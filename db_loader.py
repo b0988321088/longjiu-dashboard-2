@@ -33,7 +33,7 @@ def load_tv(date_str: str = None) -> dict:
         + tv.get('rent_1f', 0) + tv.get('rent_other', 0)
         + tv.get('dividend_total', 0) + tv.get('interest', 0)
     )
-    tv['working_surplus'] = tv.get('monthly_income', 218_102) - 162_781
+    tv['working_surplus'] = tv.get('monthly_income', 228_751) - 162_781
     tv['retirement_surplus'] = (
         tv.get('dividend_total', 69_044) + tv.get('rent_1f', 0) + tv.get('rent_other', 0)
         - 162_781
@@ -69,7 +69,7 @@ def seed_from_snapshot(snap_path: str = "snapshot.json") -> int:
     db.execute('''INSERT OR REPLACE INTO income
         (date, salary, travel_allowance, rent_1f, rent_other, interest, dividend_total)
         VALUES (?,?,?,?,?,?,?)''',
-        (today, 43_144, 12_000, 24_000, 56_100, liab.get('interest',0), 69_044))
+        (today, 42_560, 12_000, 24_000, 56_100, liab.get('interest',0), 69_044))
     db.commit()
     db.close()
     return today

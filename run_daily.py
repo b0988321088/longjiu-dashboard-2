@@ -225,8 +225,8 @@ def calibrate_sources() -> dict:
         "dividend_records": _div_records,
         "girlfriend_repayment_records": snap.get("girlfriend_repayment_records", {}),
         "salary_records": snap.get("salary_records", {}),
-        "salary": snap.get("salary", snap.get("monthly_salary", 39_727)),
-        "monthly_income": snap.get("monthly_income", 219_827),
+        "salary": snap.get("salary", snap.get("monthly_salary", 42_560)),
+        "monthly_income": snap.get("monthly_income", 228_751),
         "dividend_month_expected": snap.get("dividend_month_expected", 100_000),
         "funds_breakdown": snap.get("funds_breakdown", {}),
         "professional_investor": snap.get("professional_investor", {}),
@@ -2169,7 +2169,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     html = html.replace("__PASSIVE_INCOME__", f"配息 {dividend:,} + 房租 {rent:,} = {dividend + rent:,} TWD {passive_trend}")
     html = html.replace("__MONTHLY_INCOME_TREND__", income_trend)
     html = html.replace("__MONTHLY_EXPENSE_TREND__", expense_trend)
-    html = html.replace("__MONTHLY_INCOME_TOTAL__", f"{float(tv.get('monthly_income', 219_827) or 219_827):,.0f}")
+    html = html.replace("__MONTHLY_INCOME_TOTAL__", f"{float(tv.get('monthly_income', 228_751) or 228_751):,.0f}")
     html = html.replace("__INSURANCE_TREND__", insurance_trend)
     _cash_runway = int(tv.get("cash_total") or tv.get("real_liquid_assets") or 0)
     _runway_months = int(_cash_runway / max(tv.get("monthly_expense", 162781), 1))
@@ -2202,7 +2202,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
             _rent_got2 += sum(v for v in _items2.values())
     _div_exp = tv.get("dividend_month_expected", 100_000)
     _rent_exp = tv.get("rent_monthly", 80_100) or 80_100
-    _salary_exp = tv.get("salary", 43_144) or 43_144
+    _salary_exp = tv.get("salary", 42_560) or 42_560
     # 當月已收薪水（salary_records）
     _salary_got2 = 0
     _sr2 = tv.get("salary_records", {}) or {}
@@ -2355,7 +2355,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     for _d, _info in _salary_records.items():
         if str(_d).startswith(_m_prefix):
             _salary_amt += _info.get("amount", 0) if isinstance(_info, dict) else _info
-    _rows.append(_inflow_row("台電薪水", _salary_amt, tv.get("salary", 43_144)))
+    _rows.append(_inflow_row("台電薪水", _salary_amt, tv.get("salary", 42_560)))
     # 安聯配息（應收 = allianz_ab_monthly）
     _allianz_got = (_div_this_month.get("安聯配息", 0) + _div_this_month.get("保單A 安聯", 0)
                     + _div_this_month.get("保單B 安聯", 0) + _div_this_month.get("安聯保單撥回", 0))
