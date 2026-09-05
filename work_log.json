@@ -148,5 +148,11 @@
   "category": "應辦",
   "item": "券商質押金額/利率核對（凱基/元大對帳單）",
   "detail": "snapshot pledge_loan=100萬(利率 null 待確認) vs 還債計畫『元大50萬@3.92%』不一致；月支出元大證金利息 3,267 ≈ 100萬@3.92%"
+ },
+ {
+  "date": "2026-09-06",
+  "category": "完成",
+  "item": "夜間儀表板同步 cron 修復（22:15 COMMIT FAIL, INC-148）",
+  "detail": "根因：nightly_maintenance 30日保留清理刪 db 2026-08-05 列、落在晚報 commit(83dd12d6) 後又不 commit → db 髒；同步腳本全樹 status 誤判變更、只 stage 7 JSON → commit 空集失敗。修：判定限定自身檔案集（scoped porcelain）；db 清理補 commit eb62d082 雙分支已推；新增技能 cron-git-commit-scope"
  }
 ]
