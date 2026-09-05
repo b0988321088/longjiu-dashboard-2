@@ -1444,6 +1444,16 @@
    "status": "✅ 已完成",
    "task": "行動儀表板每晚 22:15 自動同步（nightly_dashboard_sync.py + cron 100511d07594 no_agent）",
    "summary": "每天 22:15（22:00 晚報後）自動 commit+push 7 個儀表板 JSON（radar_state/schedule_events/work_log/snapshot/pending_decisions/dashboard_decisions/us30y_state）；無變更靜默、有變更 commit[cioreviewed]+push clean-main&main、失敗才推 TG。行動儀表板(client-side)每天固定更新，不需等 agent 手動推。"
+  },
+  {
+   "id": "usr-20260905-3",
+   "timestamp": "2026-09-05T20:54:40.311388",
+   "date": "2026-09-05",
+   "source": "user",
+   "decision": "核准",
+   "status": "✅ 已完成",
+   "task": "美元債分批條件單掛載（CPI/FOMC 定調後觸發）",
+   "summary": "9/5 核准對策：現在不買（升息押注60% price-in+美元曝險超紅線54.4%+gate）；9/16 定調後用存量美元(400萬停泊 BIL/MMF 部分)分批轉中短天期投資級債(PIMCO/M&G)，不換新匯不增美元曝險；長債存續期≤5-7Y；長天期鎖利留 2029 質押套利。已掛 pending_decisions + 行動儀表板本週該做。"
   }
  ],
  "meta": {
