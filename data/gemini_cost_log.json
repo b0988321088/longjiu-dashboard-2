@@ -1,6 +1,6 @@
 {
   "2026-07": 953,
-  "updated": "2026-08-27",
+  "updated": "2026-09-05",
   "source": "Google AI Studio 帳單",
   "note": "7月 Gemini 實際 = NT$953（介面顯示 USD 為誤，實為新台幣）",
   "2026-08": {
@@ -8,5 +8,11 @@
     "source": "Google AI Studio Billing（截圖 + 使用者確認）",
     "credit_balance_twd": 366
   },
-  "currency": "TWD"
+  "currency": "TWD",
+  "2026-09": {
+    "topup_twd": 1000,
+    "date": "2026-09-05",
+    "note": "9/5 使用者儲值 NT$1,000（提前，原訂 9/7）；8月 credit 366 + 儲值 1000 = 1,366 − 9月用量（低，實測生成 200 等級），以 AI Studio 帳單為準",
+    "credit_balance_twd": 1366
+  }
 }
