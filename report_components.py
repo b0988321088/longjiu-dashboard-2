@@ -118,9 +118,13 @@ def render_health_score(snap: dict) -> dict:
     income = (snap.get("dividend_month_expected") or 100000) + rent
     cov = income / expense * 100 if expense else 0
 
-    # 防禦維度（雙維度框架 8/21：情境門檻）
+    # 防禦維度（雙維度框架 8/21：情境門檻）— 讀「佔比」，勿誤取金額欄（2026-09-05 修正：_num 曾取到合計 14,086,561）
     ddm = snap.get("dual_dimension_metric", {})
-    defense = _num(ddm.get("防禦維度", ddm.get("防禦", 50)), 50)
+    _dd_def = ddm.get("防禦維度", ddm.get("防禦", {})) if isinstance(ddm, dict) else {}
+    try:
+        defense = float(_dd_def.get("佔比", _dd_def.get("合計", 53.9)))
+    except Exception:
+        defense = 53.9
     def_score = 100 if defense >= 50 else (60 if defense >= 40 else 0)
 
     # 美元曝險（口徑：美股桶+美元定存+美元債券梯+保單美元債 ≈54%）
@@ -137,8 +141,16 @@ def render_health_score(snap: dict) -> dict:
     floor = _num(snap.get("cash_floor_rule", {}).get("cash_floor", 700000), 700000)
     cash_score = 100 if cash >= floor else 0
 
-    # LTV（質押後 ~20.4%，上限 35）
-    ltv = _num(snap.get("policy_pledge", {}).get("ltv", 20.4), 20.4)
+    # LTV（2026-09-05 定版口徑1：質押借款/擔保品現值 — 讀 snapshot 真值，移除寫死 20.4）
+    # 質押借款 = 保單質押 policy_pledge_loan(400萬@4%) + 券商質押 pledge_loan(~100萬)
+    # 擔保品現值 = 保單現值 insurance_current_value + 證券市值 securities.total_market_value
+    _pl_loan = float(snap.get("policy_pledge_loan") or 0) + float(snap.get("pledge_loan") or 0)
+    _pl_col = (float(snap.get("insurance_current_value") or 0)
+               + float((snap.get("securities") or {}).get("total_market_value") or 0))
+    ltv = (_pl_loan / _pl_col * 100) if _pl_col > 0 else 0.0
+    _pl_total_asset = float(snap.get("total_assets") or 0)
+    _pl_ratio_total = (_pl_loan / _pl_total_asset * 100) if _pl_total_asset > 0 else 0.0
+    # 健康線 ≤35（保守）；銀行監看 50 起 / 55 黃 / 60 紅
     ltv_score = 100 if ltv <= 35 else (50 if ltv <= 50 else 0)
 
     score = round(min(cov / 150 * 100, 100) * 0.30 + def_score * 0.25 + usd_score * 0.20 + cash_score * 0.15 + ltv_score * 0.10)
@@ -151,7 +163,9 @@ def render_health_score(snap: dict) -> dict:
         "防禦": defense, "防禦標準": def_score, "防禦分": round(def_score * 0.25),
         "曝險": usd, "曝險標準": usd_score, "曝險分": round(usd_score * 0.20),
         "現金": cash, "現金標準": cash_score, "現金分": cash_score * 0.15,
+        "支出": expense, "收入": income,
         "LTV": ltv, "LTV標準": ltv_score, "LTV分": ltv_score * 0.10,
+        "總質押率": _pl_ratio_total,
     }
     return detail
 
@@ -167,18 +181,28 @@ def render_health_card(snap: dict) -> str:
         ("防禦維度", _def_txt, "≥50%", d["防禦分"], 25),
         ("美元曝險", f"{d['曝險']:.1f}%", "≤50%", d["曝險分"], 20),
         ("現金底線", f"{d['現金']:,.0f}", "≥700,000", d["現金分"], 15),
-        ("LTV", f"{d['LTV']:.1f}%", "≤35%", d["LTV分"], 10),
+        ("LTV", f"{d['LTV']:.1f}%", "≤35%（質押/擔保品）", d["LTV分"], 10),
     ]
     bar = "".join(
         f'<div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0">'
         f'<span style="color:#6e6e73">{n}</span><span style="color:#1f2937">{v}（目標 {t}）<b>{p}/{w}</b></span></div>'
         for n, v, t, p, w in rows
     )
+    _weak = []
+    if d["曝險分"] < 15:
+        _weak.append("美元曝險")
+    if d.get("LTV分", 10) < 10:
+        _weak.append("質押LTV")
+    _weak_txt = ("唯一弱項：" + "、".join(_weak)) if _weak else "六維度全數達標"
+    _note = (f'<div style="font-size:9.5px;color:#14532d;margin-top:2px;line-height:1.6">'
+             f'口徑：覆蓋=保守常態（配息100,000+房租80,100=180,100）÷月支出 {d["支出"]:,.0f}（snapshot.dividend_month_expected+rent_monthly_total÷monthly_expense，8月實收基準134%見日報）｜'
+             f'防禦=dual_dimension_metric.防禦維度.佔比（{d["防禦"]:.1f}%）｜曝險=usd_exposure_monitor.current.合計（{d["曝險"]:.1f}%）｜'
+             f'現金=cash_total {d["現金"]:,.0f}≥cash_floor 700,000｜LTV=(policy_pledge_loan+pledge_loan)÷(insurance_current_value+securities)（{d["LTV"]:.1f}%，目標≤35；銀行監看50起/55黃/60紅）｜總質押率 {d["總質押率"]:.1f}%（借款÷總資產）</div>')
     return (
         f'<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;margin:8px 0">'
         f'<div style="font-weight:800;color:#14532d;margin-bottom:4px">🩺 龍九健康度：<span style="font-size:16px">{d["分數"]}/100</span> {d["燈號"]}</div>'
         f'{bar}'
-        f'<div style="font-size:10.5px;color:#166534;margin-top:4px">{"唯一弱項：美元曝險（下一階段降）" if d["曝險分"] < 15 else "六維度全數達標"}</div></div>'
+        f'<div style="font-size:10.5px;color:#166534;margin-top:4px">{_weak_txt}</div>{_note}</div>'
     )
 
 
