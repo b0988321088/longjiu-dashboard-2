@@ -128,8 +128,17 @@ def build_recommendation(industry_pen: dict, sector_flow: dict) -> dict:
                      "資金分數": fs, "動作": action, "理由": reason,
                      "標的": INDUSTRY_TICKERS.get(g, [])})
 
+    # 2026-09-06 修正：已由保單轉換涵蓋的產業（醫療保健 8/24 轉換 50萬）不得列為「乾粉優先吸納」
+    # — 標的欄已註「涵蓋」= 不需新增現金；避免輸出「建議買醫療」與實際狀態矛盾
+    for r in rows:
+        _tk_str = "".join(str(t) for t in r.get("標的", []))
+        if r["動作"].startswith("✅") and ("涵蓋" in _tk_str or "已轉換" in _tk_str):
+            r["動作"] = "✅ 已涵蓋（保單轉換）— 不需新增"
+            r["理由"] = r["理由"] + "｜但 8/24 已由保單轉換涵蓋，非現金缺口"
+
     rows.sort(key=lambda r: -r["資金分數"] * 2 + (r.get("目標") or 0) - (r.get("現況") or 0))
-    top = [r for r in rows if r["動作"].startswith("✅")]
+    # top = 真正建議「吸納」者；「已涵蓋」是狀態說明，不列入購買建議
+    top = [r for r in rows if r["動作"].startswith("✅ 乾粉")]
     avoid = [r for r in rows if r["動作"].startswith("🔴") or r["動作"].startswith("⏸")]
 
     summary = "本週乾粉："
