@@ -180,21 +180,15 @@ def main():
 def report_from_db(rows):
     """從 DB rows 產出趨勢報告（數字與日報一致）
     2026-08-23 改淨值口徑：借款入帳（如國泰 1,200萬 8/20）資產負債同步增，總資產會誤報 +81%；
-    以淨值（總資產−總負債）計算變動/異常/結論。
-    2026-09-06 增基準變動日處理：資產或負債單日跳變 ≥10%（借款入帳/帳務重述，如 8/20
-    大義街1,200萬、8/11 負債重述）→ 該日標記 ⚠️基準變動、不列入 ±5% 異常；期間另印同口徑
-    淨值變動（剔除跳進基準變動日的單日變動）；保險/基金類別附註非純市值損益。"""
+    以淨值（總資產−總負債）計算變動/異常/結論。"""
     rows = sorted(rows, key=lambda r: r["date"])
     print("=" * 60)
     print(f"📊 龍九控股資產趨勢（dragon_assets.db 真值，最近 {len(rows)} 天）")
     print(f"📅 查詢日: {date.today()}")
     print("=" * 60)
     print(f"{'日期':<12} {'總資產':>14} {'負債':>12} {'淨值':>12} {'現金':>12} {'淨值變動':>12} {'%':>7}")
-    prev = None          # 前一有效列淨值
-    prev_ta = None       # 前一有效列總資產
-    prev_liab = None     # 前一有效列總負債
+    prev = None
     anomalies = []
-    structural_days = []  # 基準變動日：資產/負債結構性入帳或帳務重述（如 8/20 大義街1,200萬入帳）
     for r in rows:
         t = float(r["total_assets"] or 0)
         liab_raw = r.get("total_liabilities")
@@ -207,47 +201,24 @@ def report_from_db(rows):
         if nw is None:
             print(f"{d:<12} {t:>14,.0f} {'缺資料':>12} {'?':>12} {cash:>12,.0f} {'(負債缺)':>12}")
             continue
-        structural = False
-        if prev is not None:
-            ta_jump = abs(t - prev_ta) / prev_ta * 100 if prev_ta else 0.0
-            liab_jump = (abs(float(liab_raw) - prev_liab) / prev_liab * 100
-                         if prev_liab else 0.0)
-            # 資產或負債單日跳變 ≥10% = 基準變動（借款/撥款入帳、帳務重述），非市場損益
-            structural = ta_jump >= 10 or liab_jump >= 10
-        if structural:
-            structural_days.append(d)
         if prev is not None:
             diff = nw - prev
             pct = diff / abs(prev) * 100 if prev else 0
-            is_anom = abs(pct) >= 5 and not structural
-            flag = "🔴" if is_anom else ("⚠️基準變動" if structural else "")
-            if is_anom:
+            flag = "🔴" if abs(pct) >= 5 else ""
+            if abs(pct) >= 5:
                 anomalies.append((d, pct))
             print(f"{d:<12} {t:>14,.0f} {float(liab_raw):>12,.0f} {nw:>12,.0f} {cash:>12,.0f} {diff:>+12,.0f} {pct:>+6.1f}% {flag}")
         else:
             print(f"{d:<12} {t:>14,.0f} {float(liab_raw):>12,.0f} {nw:>12,.0f} {cash:>12,.0f} {'(基準)':>12}")
-        prev, prev_ta, prev_liab = nw, t, float(liab_raw)
+        prev = nw
 
     latest, earliest = rows[-1], rows[0]
     def _nw(r): return float(r["total_assets"] or 0) - float(r.get("total_liabilities") or 0)
     net_change = _nw(latest) - _nw(earliest)
     net_pct = net_change / abs(_nw(earliest)) * 100 if _nw(earliest) else 0
-    # 同口徑：剔除「跳進基準變動日的單日變動」，避免結構入帳/帳務重述被當成績效
-    excl_change = 0.0
-    for i in range(len(rows) - 1):
-        if rows[i + 1]["date"][:10] in structural_days:
-            continue
-        excl_change += _nw(rows[i + 1]) - _nw(rows[i])
-    has_ex = len(structural_days) > 0 and excl_change != net_change
-    if has_ex:
-        excl_pct = excl_change / abs(_nw(earliest)) * 100 if _nw(earliest) else 0
-        print(f"\n▶ 期間淨值變動: {net_change:+,.0f}（{net_pct:+.1f}%，含 {len(structural_days)} 個基準變動日）")
-        print(f"  ↳ 同口徑（不含基準變動日）: {excl_change:+,.0f}（{excl_pct:+.1f}%）")
-    else:
-        print(f"\n▶ 期間淨值變動: {net_change:+,.0f}（{net_pct:+.1f}%）")
+    print(f"\n▶ 期間淨值變動: {net_change:+,.0f}（{net_pct:+.1f}%）")
 
     print("\n▶ 主要類別變動（最新 vs 最舊）：")
-    cat_notes = []
     for label, key in [("現金", "cash_total"), ("證券", "securities"),
                        ("保險", "insurance"), ("基金", "funds"), ("負債", "total_liabilities")]:
         v1 = float(latest.get(key) or 0)
@@ -255,29 +226,16 @@ def report_from_db(rows):
         dd = v1 - v0
         if abs(dd) > 100:
             print(f"   {label}: {v0:,.0f} → {v1:,.0f}（{dd:+,.0f}）")
-            if key in ("insurance", "funds"):
-                cat_notes.append(label)
-    if cat_notes:
-        print("  ※ " + "、".join(cat_notes) + " 類別含配息撥回/保單轉換/T+4重估與帳務校準，非純市值損益；")
-        print("    負債增減含借款入帳與償還（基準變動日），非費用。")
 
     if anomalies:
-        print("\n🚨 異常提醒（單日淨值變動 ≥±5%，基準變動日已排除）：")
+        print("\n🚨 異常提醒（單日淨值變動 ≥±5%）：")
         for d, p in anomalies:
             print(f"   {d}: {p:+.1f}%")
     else:
-        print("\n✅ 無異常（單日淨值變動皆 <±5%，基準變動日已排除）")
-    if structural_days:
-        print("  🧱 基準變動日（資產/負債結構性入帳或帳務重述，非市場損益）："
-              + "、".join(structural_days))
+        print("\n✅ 無異常（單日淨值變動皆 <±5%）")
 
     trend = "上升" if net_change > 0 else ("下降" if net_change < 0 else "持平")
-    if has_ex:
-        t2 = "上升" if excl_change > 0 else ("下降" if excl_change < 0 else "持平")
-        print(f"\n📌 結論：最近 {len(rows)} 天含基準變動淨值{trend} {net_change:+,.0f}（{net_pct:+.1f}%）；"
-              f"同口徑{t2} {excl_change:+,.0f}（{excl_pct:+.1f}%）— 以同口徑為準。")
-    else:
-        print(f"\n📌 結論：最近 {len(rows)} 天淨值{trend}（{net_change:+,.0f}，{net_pct:+.1f}%）。")
+    print(f"\n📌 結論：最近 {len(rows)} 天淨值{trend}（{net_change:+,.0f}，{net_pct:+.1f}%）。")
     print("=" * 60)
 
 if __name__ == "__main__":
