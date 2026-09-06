@@ -249,7 +249,7 @@ def main():
         _dry4 = s.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
         _usd4 = s.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
         _hs4 = s.get("hedge_satellite", {}) or {}
-        _rot4 = (s.get("rotation_recommendation", {}) or {}).get("建議", [{}])[0]
+        _rot4 = ((s.get("rotation_recommendation", {}) or {}).get("建議") or [{}])[0]
         _def4 = s.get("defensive_combined_metric", {}).get("佔比", 69.2)
         _tw = _pen4.get('台股市值型成長', 7.5); _us = _pen4.get('美股市值型成長', 43.4)
         _plan_lines = []
@@ -265,7 +265,10 @@ def main():
         # ④ 債券
         _plan_lines.append("⏸️ 債券 23.1% 接近目標25% → 等 US30Y<5.30% 才新增（華許升息1碼估 -0.5~-1.5%）")
         # ⑤ 現金/乾粉
-        _plan_lines.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry4/10000:.1f}萬 優先「{_rot4.get('產業','—')}」（{_rot4.get('動作','')}）")
+        if _rot4.get("產業"):
+            _plan_lines.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry4/10000:.1f}萬 優先「{_rot4.get('產業','—')}」（{_rot4.get('動作','')}）")
+        else:
+            _plan_lines.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry4/10000:.1f}萬 保留（9/5 Gate：CPI/FOMC 前零新增）")
         # ⑥ 避險衛星
         if _hs4.get("黃金延後_0829"):
             _plan_lines.append("⏸️ 避險衛星：黃金A10 32萬 8/30 生效（保單內）；00635U ~105萬 延後（華許放鷹+金價偏高）→ 等回檔")
@@ -279,9 +282,12 @@ def main():
         # ⑧ 保單轉換（9/2 截止）
         _plan_lines.append("🔴 9/2 前：保單轉換截止（PIMCO120+M&G80-100+醫療50+黃金30）→ 8/26已轉80萬 8/30生效，剩餘本週內完成")
         # ⑨ 負債/質押
-        _plan_lines.append("🔍 9/3 PI 認列 → 質押350萬@2.77% 還安聯300+元大50（高息→低息，月省利息）")
+        _plan_lines.append("🔍 9/10 PI 認列 → 質押350萬@2.77% 還安聯300+元大50（高息→低息，月省利息；不受 Gate 限制）")
         # ⑩ 產業輪動
-        _plan_lines.append(f"📊 產業輪動：買「{_rot4.get('產業','—')}」（{_rot4.get('標的','')}）｜避開「公用事業」")
+        if _rot4.get("產業"):
+            _plan_lines.append(f"📊 產業輪動：買「{_rot4.get('產業','—')}」（{_rot4.get('標的','')}）｜避開「公用事業」")
+        else:
+            _plan_lines.append("📊 產業輪動：無新增建議（醫療已涵蓋；其餘資金流出）→ 乾粉保留等 Gate")
         _plan_html = "".join(f"<div style=\"margin-bottom:6px;font-size:11px;color:#d1fae5\">{p}</div>" for p in _plan_lines)
         _plan_html = f"""
         <div class="card" style="border:1px solid #10b981;background:linear-gradient(135deg,#06281a,#131a26)">

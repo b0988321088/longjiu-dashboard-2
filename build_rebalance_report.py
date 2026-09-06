@@ -162,7 +162,7 @@ def main():
     _dry3 = snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
     _usd3 = snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
     _hs3 = snap.get("hedge_satellite", {}) or {}
-    _rot3 = (snap.get("rotation_recommendation", {}) or {}).get("建議", [{}])[0]
+    _rot3 = ((snap.get("rotation_recommendation", {}) or {}).get("建議") or [{}])[0]
     _def3 = snap.get("defensive_combined_metric", {}).get("佔比", 69.2)
     _tw3 = _pen3.get("台股市值型成長", 7.5); _us3 = _pen3.get("美股市值型成長", 43.4)
     _plan_items = []
@@ -173,7 +173,10 @@ def main():
         _plan_items.append(f"⏸️ 美股（{_us3:.1f}% vs 目標40%）超配 {_us3-40:+.1f}pp 未達減碼觸發（>45%）→ 續持")
     _plan_items.append(f"⏸️ 防守（合併口徑 {_def3:.1f}% 已足）→ 凍結不追（00878/00713 不加碼）")
     _plan_items.append("⏸️ 債券 23.1% 接近目標25% → 等 US30Y<5.30% 才新增（華許升息1碼估 -0.5~-1.5%）")
-    _plan_items.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry3/10000:.1f}萬 優先「{_rot3.get('產業','—')}」（{_rot3.get('動作','')}）")
+    if _rot3.get("產業"):
+        _plan_items.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry3/10000:.1f}萬 優先「{_rot3.get('產業','—')}」（{_rot3.get('動作','')}）")
+    else:
+        _plan_items.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry3/10000:.1f}萬 保留（9/5 Gate：CPI/FOMC 前零新增）")
     if _hs3.get("黃金延後_0829"):
         _plan_items.append("⏸️ 避險衛星：黃金A10 32萬 8/30 生效（保單內）；00635U ~105萬 延後（華許放鷹+金價偏高）→ 等回檔")
     else:
@@ -182,9 +185,11 @@ def main():
         _plan_items.append(f"🔴 美元曝險 {_usd3}% 超標（>55%）→ 美股減碼/美元定存到期轉台幣")
     else:
         _plan_items.append(f"🟡 美元曝險 {_usd3}% （目標≤50%）→ 未達減碼閾值，續觀察")
-    _plan_items.append("🔴 9/2 前：保單轉換截止（PIMCO120+M&G80-100+醫療50+黃金30）→ 8/26已轉80萬 8/30生效，剩餘本週內完成")
-    _plan_items.append("🔍 9/3 PI 認列 → 質押350萬@2.77% 還安聯300+元大50（高息→低息，月省利息）")
-    _plan_items.append(f"📊 產業輪動：買「{_rot3.get('產業','—')}」（{_rot3.get('標的','')}）｜避開「公用事業」")
+    _plan_items.append("🔍 9/10 PI 認列 → 質押350萬@2.77% 還安聯300+元大50（高息→低息，月省利息；不受 Gate 限制）")
+    if _rot3.get("產業"):
+        _plan_items.append(f"📊 產業輪動：買「{_rot3.get('產業','—')}」（{_rot3.get('標的','')}）｜避開「公用事業」")
+    else:
+        _plan_items.append("📊 產業輪動：無新增建議（醫療已涵蓋；其餘資金流出）→ 乾粉保留等 Gate")
     _plan_html = "".join(f"<li>{p}</li>" for p in _plan_items)
     _radar_block = f"""
   <h2>📡 機構流向雷達（{radar.get('last_run','—')[:10]}）</h2>

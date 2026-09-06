@@ -494,7 +494,7 @@ def main():
         _pen5 = _snap.get("penetration", {}).get("actual_pct", {}) or {}
         _tw5 = _pen5.get("台股市值型成長", 7.5); _us5 = _pen5.get("美股市值型成長", 43.4)
         _def5 = _snap.get("defensive_combined_metric", {}).get("佔比", 69.2)
-        _rot5 = (_snap.get("rotation_recommendation", {}) or {}).get("建議", [{}])[0]
+        _rot5 = ((_snap.get("rotation_recommendation", {}) or {}).get("建議") or [{}])[0]
         # ① 台股（2026-09-05：觀望 gate — PI質押款到位 + Fed 數據/重大事件前不投入）
         try:
             _pd = json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8"))
@@ -517,7 +517,10 @@ def main():
         # ④ 債券
         lines.append("⏸️ 債券 23.1% 接近目標25% → 等 US30Y<5.30% 才新增（華許升息1碼估 -0.5~-1.5%）")
         # ⑤ 現金/乾粉
-        lines.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry/10000:.1f}萬 優先「{_rot5.get('產業','—')}」（{_rot5.get('動作','')}）")
+        if _rot5.get("產業") and not _gate:
+            lines.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry/10000:.1f}萬 優先「{_rot5.get('產業','—')}」（{_rot5.get('動作','')}）")
+        else:
+            lines.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry/10000:.1f}萬 保留（9/5 Gate：CPI/FOMC 前零新增）")
         # ⑥ 避險衛星
         if _hs.get("黃金延後_0829"):
             lines.append("⏸️ 避險衛星：黃金A10 32萬 8/30 生效（保單內）；00635U ~105萬 延後（華許放鷹+金價偏高）→ 等回檔")
