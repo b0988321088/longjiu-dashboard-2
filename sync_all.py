@@ -85,6 +85,10 @@ def main():
         ("再平衡報告", f"python build_rebalance_report.py"),
         # 2026-08-29：再平衡儀表板（雷達+政策面+本週投資計劃）— 之前 sync_all 漏跑，導致雷達更新後儀表板舊
         ("再平衡儀表板", f"python build_rebalance_dashboard.py"),
+        # 2026-09-06：雷達週計畫重產 — institutional_flow.py 更新 radar_state.weekly_plan
+        #     （行動儀表板 JS 即時讀取）。血淚：rotation_engine 修正後沒人重跑 → weekly_plan 殘留舊建議
+        #     （「乾粉優先醫療」），使用者抓包；加此步驟確保 sync_all 後行動儀表板與引擎同步
+        ("雷達週計畫重產", f"python institutional_flow.py"),
         ("儀表板注入", "python build_dashboard.py"),
         # 2026-08-29 v4：雷達資料同步驗證（radar_state.json 存在 + 政策面非空 + 三處產出含雷達結論）
         #     血淚：institutional_flow.py 讀 policy_notes 用 .get("內容") 但結構是新聞dict → 政策面空白沒人發現
