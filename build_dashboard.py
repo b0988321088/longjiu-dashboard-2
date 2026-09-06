@@ -517,6 +517,40 @@ def main():
     except Exception:
         tpl = tpl.replace("__DECISION_TRACK__", '<div class="text-slate-400">決策追蹤暫無資料</div>')
 
+    # ── 下週工作清單（2026-09-06：讀 schedule_events 未來 7 天，每天自動滑動）──
+    try:
+        import datetime as _dt_nw
+        _se = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
+        _today = _dt_nw.date.today()
+        _cutoff = _today + _dt_nw.timedelta(days=7)
+        _imp_color = {"high": "#f87171", "medium": "#fbbf24", "low": "#94a3b8"}
+        _wd = "一二三四五六日"
+        _nw_rows = []
+        for _e in sorted(_se, key=lambda x: str(x.get("date", ""))):
+            _dstr = str(_e.get("date", ""))[:10]
+            try:
+                _d = _dt_nw.date.fromisoformat(_dstr)
+            except Exception:
+                continue
+            if not (_today <= _d <= _cutoff):
+                continue
+            _imp = _e.get("importance", "medium")
+            _c = _imp_color.get(_imp, "#94a3b8")
+            _label = f"{_d.month}/{_d.day} ({_wd[_d.weekday()]})"
+            _item = str(_e.get("item", "")).replace("｜", " ｜ ")
+            _nw_rows.append(
+                f'<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px dashed #1f2937;font-size:12px;line-height:1.55">'
+                f'<span style="color:{_c};font-weight:800;white-space:nowrap;min-width:74px">{_label}</span>'
+                f'<span style="color:#e2e8f0;flex:1">{_item}</span></div>'
+            )
+        if _nw_rows:
+            _nw_html = "".join(_nw_rows)
+        else:
+            _nw_html = '<div style="color:#9ca3af;font-size:12px">下週暫無排定事項</div>'
+        tpl = tpl.replace("__NEXT_WEEK__", _nw_html)
+    except Exception as _e:
+        tpl = tpl.replace("__NEXT_WEEK__", f'<div style="color:#9ca3af;font-size:12px">下週清單載入失敗（{_e}）</div>')
+
     # ── 八大連結動態化（2026-08-26：模板連結寫死 8/21-23 → glob 最新檔名）──
     import glob as _glob
     _link_map = {
