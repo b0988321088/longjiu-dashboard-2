@@ -1,11 +1,11 @@
 """
-大轉向資產配置策略 v4 — 2026-09-06 更新：市場敘事對齊現況（台股收復46,551 / 匯率31.62 / 10yr 4.78）
-+ 對齊 9/6 核准資金框架（500萬MMF標案預備金、質押350萬@2.77%、美債ladder延10月）
+大轉向資產配置策略 v5 — 2026-09-06：市場快照改執行時自動抓取（Yahoo chart API），
+根治「腳本寫死舊值」；策略框架對齊 9/6 核准（500萬MMF、質押350萬@2.77%、ladder延10月）
 """
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
-import json, os
+import json, os, datetime, urllib.request
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 SNAP = json.load(open(f'{BASE}/snapshot.json', encoding='utf-8'))
@@ -17,6 +17,52 @@ TOTAL = INS + SEC + FUND + CASH
 p = SNAP.get('penetration',{}).get('actual_pct',{})
 USD_EXP = SNAP.get('usd_exposure_pct')
 USD_EXP_TXT = f'{USD_EXP}%' if isinstance(USD_EXP,(int,float)) else '~64%'
+
+# ── 市場快照執行時抓取（v5：取代寫死 as-of 值；失敗 fallback + 印警告）──
+def _fetch_chart(sym, host="query1"):
+    u = f"https://{host}.finance.yahoo.com/v8/finance/chart/{sym}?interval=1d&range=1mo"
+    req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
+    d = json.loads(urllib.request.urlopen(req, timeout=12).read())
+    r = d["chart"]["result"][0]
+    ts = r.get("timestamp", [])
+    q = r["indicators"]["quote"][0]
+    closes = [x for x in q.get("close", []) if x is not None]
+    return ts, closes
+
+def _asof(ts):
+    return datetime.datetime.utcfromtimestamp(ts[-1]).strftime("%m/%d") if ts else "?"
+
+def fetch_market():
+    fb = {"taiex": 46551.13, "fx": 31.62, "y10": 4.78, "y30": 5.25,
+          "asof": "09/04", "w_low": 45857.66, "prev_w": 46128.47, "chg1d_pct": 1.51}
+    try:
+        out = {}
+        for key, sym in [("taiex", "%5ETWII"), ("fx", "USDTWD%3DX"), ("y10", "%5ETNX"), ("y30", "%5ETYX")]:
+            try:
+                ts, c = _fetch_chart(sym)
+            except Exception:
+                ts, c = _fetch_chart(sym, host="query2")  # 備援主機
+            if not c or len(c) < 2:
+                raise RuntimeError(f"{sym} 資料不足")
+            out[key] = c[-1]
+            if key == "taiex":
+                out["asof"] = _asof(ts)
+                out["chg1d_pct"] = (c[-1] - c[-2]) / c[-2] * 100
+                out["prev_w"] = c[0]          # 一個月前首日
+                out["w_low"] = min(c)          # 近一月低點
+        return out
+    except Exception as e:
+        print(f"⚠️ 市場抓取失敗，fallback 9/6 寫死值：{e}")
+        return dict(fb)
+
+M = fetch_market()
+TAIEX = M["taiex"]; FX = M["fx"]; Y10 = M["y10"]; Y30 = M["y30"]
+ASOF = M["asof"]; W_LOW = M["w_low"]; PREV_W = M["prev_w"]; CHG1D = M["chg1d_pct"]
+# 台幣方向：32.38 為 7/29 波段高點基準
+FX_BASE = 32.38
+FX_MOVE = (FX_BASE - FX) / FX_BASE * 100
+FX_NOTE = "台幣偏強" if FX_MOVE > 0 else "台幣偏弱"
+Y30_STATE = "已達 5.30 凍結線，新增質押全域凍結" if Y30 >= 5.30 else (f"{Y30:.2f}% 警戒區（5.20-5.30），未觸發凍結" if Y30 >= 5.20 else "警戒線下，質押空間開放")
 
 prs = Presentation()
 prs.slide_width = Inches(13.33); prs.slide_height = Inches(7.5)
@@ -50,40 +96,43 @@ def B(s, items, top=1.9):
 # === S1: 封面 ===
 s = ns()
 T(s, '大轉向資產配置策略', 1.5)
-ST(s, 'USD/TWD 31.62  ×  台股 46,551（9/2 -784 → 9/4 收復）  ×  10yr 4.78%', 2.5)
+ST(s, f'USD/TWD {FX:.2f}  ×  台股 {TAIEX:,.0f}（{ASOF} 收盤）  ×  10yr {Y10:.2f}%', 2.5)
 B(s, [
-    '數據基準：2026-09-06 ｜ 台股 9/4 收盤 ｜ 匯率/殖利率 9/5-9/6',
+    f'數據基準：{ASOF} 最新收盤（執行時自動抓取）｜ 龍九控股策略框架 9/6 核准',
     '',
     '龍九控股 ｜ Chief Secretary + CIO 聯合分析'
 ], 3.5)
 
-# === S2: 市場現況 ===
+# === S2: 市場現況（資料驅動）===
 s = ns()
-T(s, '即時市場：9/2 重挫 784 點 → 9/4 已收復 46,551')
-ST(s, '一週內的震盪已收復 — 並非趨勢性崩跌')
+T(s, f'即時市場：台股 {TAIEX:,.0f}（{CHG1D:+.2f}%）')
+recover = (TAIEX / W_LOW - 1) * 100 if W_LOW else 0
+if TAIEX >= PREV_W * 0.98:
+    trend_line = '台股位處近一月高檔區 — 無系統性風險'
+elif recover > 3:
+    trend_line = f'自低點已回升 {recover:.1f}% — 跌勢收復中'
+else:
+    trend_line = '近一月仍在低檔整理 — 維持觀望'
+ST(s, f'{trend_line} ｜ 近一月低點 {W_LOW:,.0f}')
 B(s, [
-    '📉 9/2 台股一度重挫 784 點（46,949→46,165），恐慌情緒蔓延',
-    '     證交所澄清：維持率健康，無大規模斷頭風險',
-    '     融資斷頭謠言未成真，9/3 續探 45,857 後止穩',
+    f'📈 台股最新收盤 {TAIEX:,.0f}（單日 {CHG1D:+.2f}%），asof {ASOF}',
+    '     證交所維持率健康，無大規模斷頭風險',
     '',
-    '📈 9/4 強彈 +693 點收復 46,551 — 跌勢一週內完全收復',
-    '     台股回到 8 月底水位，系統性風險未發生',
+    f'💵 USD/TWD {FX:.2f} — {FX_NOTE}（較 7/29 高點 32.38 {FX_MOVE:+.1f}%）',
+    '     美元資產以台幣計價估值波動 — 長期配置不因短期匯率調整',
     '',
-    '💵 USD/TWD 31.62（台幣偏強）— 7/29 曾見 32.38，如今台幣升值 ~2.3%',
-    '     美元資產以台幣計價估值回吐 — 但長期配置不因短期匯率調整',
-    '',
-    '📡 10yr 4.78% / 30yr 5.25%（警戒 5.20 上方、未達 5.30 凍結線）',
+    f'📡 10yr {Y10:.2f}% / 30yr {Y30:.2f}% — {Y30_STATE}',
     '     觀望至 9/11 CPI + 9/16 FOMC，方向明朗前不加碼不恐慌'
 ])
 
 # === S3: 匯率 ===
 s = ns()
-T(s, '匯率 31.62 — 台幣偏強，美元曝險的雙面刃')
-ST(s, f'美元曝險 {USD_EXP_TXT}（>55% 監控線）→ 台幣升值 = 估值回吐風險')
+T(s, f'匯率 {FX:.2f} — {FX_NOTE}，美元曝險的雙面刃')
+ST(s, f'美元曝險 {USD_EXP_TXT}（>55% 監控線）→ 台幣{"升值" if FX_MOVE>0 else "貶值"} = {"估值回吐風險" if FX_MOVE>0 else "估值增益"}')
 B(s, [
     '🔵 美股ETF + 安聯保單 + 美元基金合計曝險已超監控線',
-    '     7/29 匯率 32.38 時是「保護傘」；如今 31.62 = 回吐風險',
-    '     台幣若續強，美元資產以台幣計價縮水（未實現）',
+    f'     7/29 高點 32.38 → 如今 {FX:.2f}（{FX_NOTE} {FX_MOVE:+.1f}%）',
+    f'     台幣若{"續強，美元資產以台幣計價縮水" if FX_MOVE>0 else "轉弱，美元資產估值回升"}（未實現）',
     '',
     '💡 9/6 核准：500 萬 MMF（國泰貨基）= 10 月標案預備金',
     '     不換匯、不買債 → 保留台幣流動性，當標案+升息雙重緩衝',
@@ -182,7 +231,7 @@ s = ns()
 T(s, '三種情境 × 觀望期的準備')
 ST(s, 'A:升息 ｜ B:高原 ｜ C:降息 — 9/11 CPI 與 9/16 FOMC 決定方向')
 B(s, [
-    '🔴 情境A：升息（30yr 5.25 警戒區，CPI 9/11 關鍵）',
+    f'🔴 情境A：升息（30yr {Y30:.2f}% 警戒區，CPI 9/11 關鍵）',
     '     500 萬 MMF 緩衝 ✅ 00983D 短債抗跌 ✅ 質押新增凍結（≥5.30 線）✅',
     '',
     '🟡 情境B：高原（利率不動，最可能）',
@@ -244,11 +293,11 @@ s = ns()
 T(s, '結論：觀望不是靜止 — 三個訊號前都已就位')
 ST(s, '低利債務 + 現金緩衝 + 配息覆蓋 → 等訊號再出手')
 B(s, [
-    '💰 匯率 31.62：台幣偏強 → 不再加碼美元曝險，等 10 月重評估',
+    f'💰 匯率 {FX:.2f}：{FX_NOTE} → 不再加碼美元曝險，等 10 月重評估',
     '',
     '🏠 債務 ~2.6%：比市場低 4pp+，9/10 質押 350 萬@2.77% 再降成本',
     '',
-    '📈 台股 46,551：9/2 -784 已一週收復 → 無系統風險，不恐慌不追高',
+    f'📈 台股 {TAIEX:,.0f}（{ASOF} 收盤，單日 {CHG1D:+.2f}%）→ 無系統風險，不恐慌不追高',
     '',
     '🎯 9/6 核准框架：500 萬 MMF 標案預備金（不換匯不買債）→',
     '     9/11 CPI → 9/16 FOMC → 9/25 轉貸 → 10 月標案 → ladder 重評估',
@@ -258,4 +307,4 @@ B(s, [
 ])
 
 prs.save(f'{BASE}/大轉向資產配置策略_final.pptx')
-print('✅ 完成！11 頁（v4.1：2026-09-06 + 明確行動指示頁）')
+print('✅ 完成！11 頁（v5：市場快照執行時自動抓取，asof ' + ASOF + '）')
