@@ -537,6 +537,7 @@ def main():
         "__WEEKLY_REVIEW__": "dynamic_weekly_review_*.html",
         "__MONTHLY_REVIEW__": "dynamic_monthly_review_*.html",
         "__MONTHLY_REPORT__": "monthly_report_*.html",
+        "__REFINANCE_PPTX__": "大轉向資產配置策略_final.pptx",
     }
     _link_hits = 0
     for _ph, _pat in _link_map.items():
