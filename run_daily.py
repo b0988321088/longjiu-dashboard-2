@@ -689,6 +689,12 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         # 資金流向 + 輪動一行
         _tech_pct = _gics_x.get("產業", {}).get("資訊科技", {}).get("佔比", 0)
         _med_pct = _gics_x.get("產業", {}).get("醫療保健", {}).get("佔比", 0)
+        # 2026-09-06：醫療缺口可能已由 8/24 保單轉換涵蓋（rotation 全產業動作「✅ 已涵蓋」）→ 標籤勿寫死「缺口」
+        _med_note = "（缺口）"
+        for _rr in (_rot_x.get("全產業") or []):
+            if _rr.get("產業") == "醫療保健" and str(_rr.get("動作", "")).startswith("✅"):
+                _med_note = "（✅ 已涵蓋 8/24 保單轉換，不新增現金）"
+                break
         _rot_sum = _rot_x.get("總結", "")
         _tw_s = _sf_x.get("台股總結", "")
         # 明確交易計畫（買什麼/金額/節奏 — 2026-08-22 使用者要求日報也要）
@@ -704,7 +710,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
             f"<b style='color:#16a34a'>{_rot_sum or '—'}</b>"
             f"<table style='width:100%;border-collapse:collapse;font-size:12px'><tr><th style='text-align:left'>產業</th>"
             f"<th>買什麼</th><th style='text-align:right'>金額</th><th>節奏</th></tr>{_tp_rows}</table>"
-            f"<span style='color:#64748b;font-size:11px'>GICS：科技 {_tech_pct:.1f}%（紅線30）｜醫療 {_med_pct:.1f}%（缺口）｜"
+            f"<span style='color:#64748b;font-size:11px'>GICS：科技 {_tech_pct:.1f}%（紅線30）｜醫療 {_med_pct:.1f}%{_med_note}｜"
             f"<a href='https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{date.today().isoformat()}.html' style='color:#22c55e'>完整儀表板 →</a></span></div>")
     except Exception:
         _gics_html = ""

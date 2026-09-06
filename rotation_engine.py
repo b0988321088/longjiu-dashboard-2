@@ -144,6 +144,11 @@ def build_recommendation(industry_pen: dict, sector_flow: dict) -> dict:
     summary = "本週乾粉："
     if top:
         summary += "優先 " + "、".join(r["產業"] for r in top[:3])
+    else:
+        # 2026-09-06：無吸納標的（觀望 Gate / 已由保單涵蓋）→ 輸出「保留」語意，
+        # 勿留空造成「本週乾粉：；避開…」殘句（日報/CIO prompt 直接讀總結）
+        _cov = [r["產業"] for r in rows if r["動作"].startswith("✅ 已涵蓋")]
+        summary += "保留（無新增吸納標的" + (f"；{'、'.join(_cov)}已由保單涵蓋" if _cov else "") + "）"
     summary += "；避開 " + ("、".join(r["產業"] for r in avoid[:3]) if avoid else "無")
 
     return {"日期": TODAY, "建議": top, "避開": avoid, "全產業": rows, "總結": summary}
