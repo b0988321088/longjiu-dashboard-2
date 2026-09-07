@@ -997,32 +997,71 @@ var gotTotal = _salaryA + divTotal + rentGot;
   }
   var cl = document.getElementById('cio-list');
   if(cl){
-    /* 2026-09-07：CIO 戰略審查即時渲染（cio_review.json）；失敗保留 __CIO_REVIEW__ 靜態快照 */
+    /* 2026-09-07 v2：CIO 戰略審查結構化渲染（structured 優先）＋待核事項跨期去重；失敗保留 __CIO_REVIEW__ 靜態快照 */
     fetch('cio_review.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
       var revs = (j && j.reviews) || [];
       if(!revs.length) return;
       revs.sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); });
       var esc6 = function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
-      var fmt6 = function(t){
+      var norm6 = function(s){ return String(s||'').replace(/[\s，,。．.：:、｜|（）()【】]/g,''); };
+      var badge = function(t,c){ return '<span style="display:inline-block;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px;background:'+c+'22;color:'+c+';border:1px solid '+c+'55;margin-right:6px;vertical-align:1px">'+esc6(t)+'</span>'; };
+      var sect = function(ico,title,color,items){
+        if(!items || !items.length) return '';
+        var body = items.map(function(s){ return '<div style="padding:3px 0 3px 10px;border-left:2px solid '+color+'55;color:#e2e8f0;line-height:1.65">'+esc6(s)+'</div>'; }).join('');
+        return '<div style="margin-top:9px"><div class="cio-h" style="color:'+color+';margin-top:0">'+ico+' '+esc6(title)+'（'+items.length+'）</div>'+body+'</div>';
+      };
+      var fmtTxt = function(t){
         var s = esc6(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
         return s.split('\n').map(function(ln){
-          var L = ln.trim();
-          if(!L) return '';
+          var L = ln.trim(); if(!L) return '';
           if(/^🧠 Part B/.test(L)) return '<div class="cio-h cio-h2">'+L+'</div>';
           if(/^📌 結論/.test(L)) return '<div class="cio-h cio-h3">'+L+'</div>';
           if(/^(📋 Part A|✅ 已核准|⏳ 已核准待執行|⏸️ 延後|⏳ Pending|⚠️|❗)/.test(L)) return '<div class="cio-h">'+L+'</div>';
           return '<div>'+ln+'</div>';
         }).join('');
       };
-      var wrap = function(d, full){
+      /* 待核事項跨期去重（只看最近 8 期） */
+      var seen6 = {}, dedup = [];
+      revs.slice(0,8).forEach(function(d){
+        (d.action_items||[]).forEach(function(a){
+          var k = norm6(a.item); if(!k) return;
+          if(seen6[k]){ seen6[k].last = d.date; seen6[k].n++; }
+          else { seen6[k] = {item:a.item, due:a.due||'', tag:a.tag||'追蹤', first:d.date, last:d.date, n:1}; dedup.push(seen6[k]); }
+        });
+      });
+      var cardStructured = function(d){
+        var st = d.structured || {};
+        var oB = (st.objections||[]).map(function(o){
+          var c = o.type==='質疑' ? '#f87171' : (o.type==='風險' ? '#fb7185' : (o.type==='提醒' ? '#fbbf24' : '#60a5fa'));
+          return '<div style="padding:5px 8px;margin-top:5px;background:rgba(15,23,42,0.5);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:#e2e8f0;line-height:1.65">'+badge(o.type||'意見',c)+esc6(o.text||'')+'</div>';
+        }).join('');
+        var h = '<div class="text-white font-bold text-[13px]">📅 '+esc6(d.date||'')+'（'+esc6(d.weekday||'')+'）</div>';
+        h += sect('✅','已核准','#34d399',st.approved);
+        h += sect('⏳','已核准待執行','#fbbf24',st.pending_exec);
+        h += sect('⏸️','延後 / 凍結','#94a3b8',st.frozen);
+        h += sect('📌','Pending 關鍵','#93c5fd',st.pending_notes);
+        if(oB) h += '<div style="margin-top:10px"><div class="cio-h cio-h2" style="margin-top:0">🧠 Part B：對策反抗</div>'+oB+'</div>';
+        if(st.conclusion) h += '<div style="margin-top:10px;padding:8px 10px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:8px;color:#d1fae5;line-height:1.7">📌 <b>結論</b>：'+esc6(st.conclusion)+'</div>';
+        if(d.text) h += '<details class="cio-old" style="margin-top:8px"><summary>📄 看全文（'+esc6(d.text.length)+' 字）</summary><div class="cio-body" style="margin-top:4px">'+fmtTxt(d.text)+'</div></details>';
+        return '<div class="cio-card" style="margin-top:10px">'+h+'</div>';
+      };
+      var cardText = function(d, full){
         var head = '<div class="text-white font-bold text-[13px]">📅 '+esc6(d.date||'')+'（'+esc6(d.weekday||'')+'）</div>';
-        var body = '<div class="cio-body" style="'+(full?'':'max-height:150px;overflow:hidden;')+'margin-top:4px">'+fmt6(d.text||'')+'</div>';
-        return head + body;
+        return '<div class="cio-card" style="margin-top:10px">'+head+'<div class="cio-body" style="'+(full?'':'max-height:150px;overflow:hidden;')+'margin-top:4px">'+fmtTxt(d.text||'')+'</div></div>';
       };
       var h = '';
+      if(dedup.length){
+        h += '<div class="cio-card" style="margin-top:0;border:1px solid rgba(248,113,113,0.4)"><div class="text-red-300 font-bold text-[13px]">🔴 待核 / 待辦事項（跨期去重 '+dedup.length+' 項）</div>';
+        dedup.forEach(function(a){
+          var t = a.tag==='核對' ? '#fbbf24' : (a.tag==='執行' ? '#f87171' : (a.tag==='決策' ? '#c084fc' : '#60a5fa'));
+          var span = a.first===a.last ? esc6(String(a.first).slice(5)) : esc6(String(a.first).slice(5))+'→'+esc6(String(a.last).slice(5))+(a.n>1?' ×'+a.n:'');
+          h += '<div style="padding:5px 8px;margin-top:5px;background:rgba(15,23,42,0.5);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:#fecaca;line-height:1.65">'+badge(a.tag,t)+(a.due?'<span style="color:#fca5a5;font-weight:700;margin-right:6px">⏰ '+esc6(String(a.due).slice(5))+'</span>':'')+esc6(a.item)+'<span style="color:#64748b;font-size:10px;margin-left:6px">'+span+'</span></div>';
+        });
+        h += '</div>';
+      }
       revs.slice(0,8).forEach(function(d,i){
-        if(i===0){ h += '<div class="cio-card">'+wrap(d,true)+'</div>'; }
-        else { h += '<details class="cio-old"><summary>📅 '+esc6(d.date||'')+'（'+esc6(d.weekday||'')+'） 歷史審查</summary>'+wrap(d,false)+'</details>'; }
+        if(d.structured){ h += cardStructured(d); }
+        else { h += (i===0) ? cardText(d,true) : '<details class="cio-old"><summary>📅 '+esc6(d.date||'')+'（'+esc6(d.weekday||'')+'） 歷史審查</summary>'+cardText(d,false)+'</details>'; }
       });
       cl.innerHTML = h;
       var cu6 = document.getElementById('cio-updated');

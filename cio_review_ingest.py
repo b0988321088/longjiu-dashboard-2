@@ -63,8 +63,13 @@ def main():
     for p in files:
         entry = parse_md(p)
         if entry:
-            merged[entry["date"]] = entry
-            # 用檔案修改時間當更新時間戳
+            # 安全網模式：CIO agent 已寫 structured 的 date 不覆蓋（只補缺 date）
+            _ex = merged.get(entry["date"])
+            if _ex is None:
+                merged[entry["date"]] = entry
+            elif not _ex.get("structured") and not _ex.get("text"):
+                _ex["text"] = entry["text"]
+            # 更新時間戳
             try:
                 ts = datetime.fromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
             except Exception:
