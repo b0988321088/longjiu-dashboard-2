@@ -517,6 +517,28 @@ def main():
     except Exception:
         tpl = tpl.replace("__DECISION_TRACK__", '<div class="text-slate-400">決策追蹤暫無資料</div>')
 
+    # ── CIO 戰略審查靜態 fallback（2026-09-07：讀 cio_review.json 最新一則；JS 開頁即時覆蓋）──
+    try:
+        import html as _html
+        _cio = json.loads((BASE / "cio_review.json").read_text(encoding="utf-8"))
+        _crl = sorted([r for r in (_cio.get("reviews") or []) if r.get("date")],
+                      key=lambda r: str(r["date"]), reverse=True)
+        if _crl:
+            _c0 = _crl[0]
+            _cio_txt = _html.escape(str(_c0.get("text", ""))[:1600])
+            _cio_txt = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", _cio_txt).replace("\n", "<br>")
+            tpl = tpl.replace(
+                "__CIO_REVIEW__",
+                f'<div class="cio-card"><div class="text-white font-bold text-[13px]">'
+                f'📅 {_c0.get("date")}（{_c0.get("weekday", "")}）最近一次審查（離線快照）</div>'
+                f'<div class="cio-body" style="max-height:200px;overflow:hidden;margin-top:4px">{_cio_txt}</div>'
+                f'<div class="text-slate-500 mt-2" style="font-size:10.5px">▲ 展開較舊審查需連線讀 cio_review.json（即時模式）</div></div>',
+            )
+        else:
+            tpl = tpl.replace("__CIO_REVIEW__", '<div class="text-slate-400">CIO 審查資料尚未產生（每週一/三 18:30 後出現）</div>')
+    except Exception:
+        tpl = tpl.replace("__CIO_REVIEW__", '<div class="text-slate-400">CIO 審查資料尚未產生（每週一/三 18:30 後出現）</div>')
+
     # ── 下週工作清單（2026-09-06：讀 schedule_events 未來 7 天，每天自動滑動）──
     try:
         import datetime as _dt_nw

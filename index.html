@@ -42,12 +42,24 @@
         #tab-r3:checked ~ main #panel-3 { display: block; }
         #tab-r4:checked ~ main #panel-4 { display: block; }
         #tab-r5:checked ~ main #panel-5 { display: block; }
+        #tab-r6:checked ~ main #panel-6 { display: block; }
+        /* CIO 審查卡片（2026-09-07） */
+        .cio-card{background:rgba(15,23,42,0.55);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:12px 14px;}
+        .cio-h{font-weight:800;color:#93c5fd;margin:10px 0 3px;font-size:12.5px;}
+        .cio-h2{color:#fbbf24;margin-top:14px;}
+        .cio-h3{color:#34d399;margin-top:14px;}
+        .cio-body{white-space:pre-wrap;word-break:break-word;color:#cbd5e1;line-height:1.7;}
+        details.cio-old{background:rgba(15,23,42,0.35);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:8px 12px;}
+        details.cio-old summary{cursor:pointer;font-weight:700;color:#94a3b8;font-size:12px;user-select:none;}
+        details.cio-old[open] summary{color:#e2e8f0;margin-bottom:6px;}
+        details.cio-old summary::-webkit-details-marker{display:none;}
         .tab-label { cursor: pointer; }
         #tab-r1:checked ~ nav label[for="tab-r1"],
         #tab-r2:checked ~ nav label[for="tab-r2"],
         #tab-r3:checked ~ nav label[for="tab-r3"],
         #tab-r4:checked ~ nav label[for="tab-r4"],
-        #tab-r5:checked ~ nav label[for="tab-r5"] { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
+        #tab-r5:checked ~ nav label[for="tab-r5"],
+        #tab-r6:checked ~ nav label[for="tab-r6"] { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
 </style>
 </head>
 <body class="min-h-screen pb-12">
@@ -224,6 +236,7 @@
 <input type="radio" name="tab" id="tab-r3" class="tab-radio">
 <input type="radio" name="tab" id="tab-r4" class="tab-radio">
 <input type="radio" name="tab" id="tab-r5" class="tab-radio">
+<input type="radio" name="tab" id="tab-r6" class="tab-radio">
 
 <nav class="max-w-4xl mx-auto px-4 mt-6">
     <div class="bg-slate-950 p-1.5 rounded-xl flex justify-between gap-1 border border-slate-800 text-xs font-bold overflow-x-auto">
@@ -241,6 +254,9 @@
         </label>
         <label for="tab-r5" class="tab-label flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
             📋 戰術任務
+        </label>
+        <label for="tab-r6" class="tab-label flex-1 py-2 px-3 rounded-lg text-center whitespace-nowrap transition-all duration-200 text-slate-400 hover:text-white">
+            🧑‍💻 CIO 審查
         </label>
     </div>
 </nav>
@@ -538,6 +554,22 @@
                 <p class="text-xs text-slate-400 italic">「不相信主觀預測，只對應客觀價格訊號而行。」— 龍九家族辦公室</p>
             </div>
             </div>
+
+    <!-- ================= PAGE 6（CIO 戰略審查 2026-09-07） ================= -->
+    <div id="panel-6" class="tab-panel space-y-6">
+        <div class="luxury-card p-6 space-y-4">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <h3 class="text-md font-bold text-white">🧑‍💻 CIO 戰略審查（每週一/三 18:30）</h3>
+                    <p class="text-xs text-slate-400 mt-1">對策反抗者復盤：決策實相 + 質疑 + 風險提醒。最新一則全展開，歷史可點開。</p>
+                </div>
+                <span class="text-[10px] text-slate-500 shrink-0" id="cio-updated"></span>
+            </div>
+            <div class="space-y-3 text-xs" id="cio-list">
+                <div class="cio-card"><div class="text-white font-bold text-[13px]">📅 2026-09-07（一）最近一次審查（離線快照）</div><div class="cio-body" style="max-height:200px;overflow:hidden;margin-top:4px">【龍九控股：18:30 戰略審計與決策復盤】2026-09-07（一）<br><br>📋 Part A：今日決策實相<br>本日無新核准（9/7 僅 13:01 例行補寫 9/6 日報/穿透檔組）。決策檔共 167 筆，其中 9 筆為真決策：<br><br>✅ 已核准（8 筆已完成）<br>• 9/4 ×4：穿透檢查器基準修正(查當天產出組)、watchdog v6.4 WARN 僅狀態切換才推、安聯同義欄位校正 9,287、配息誤值三犯根治(9月16,664應收制)<br>• 9/5 ×4：8月績效基準修正(撤銷誤登99,000→+41.6萬)、儀表板22:15自動同步、美元債分批條件單掛載、週六評估改全源整合(9源)<br><br>⏳ 已核准待執行（1 筆，唯一未結）：<br>• <b>usr-20260906-1</b>：美債 5 階 ladder 延至 10 月標案結果；500萬 MMF(國泰貨基)不換匯不買債；國泰基金質押 600萬擔保→300萬@2.77% 固定，還 4%+ 保單借貸<br><br>⏸️ 延後/凍結（無獨立延後欄位，落在 pending）：科技紅線凍結、配息 69.5% 合併防守、00878 承接、石油 Locked、美元債 ladder→10月、全面觀望至 9/11 CPI / 9/16 FOMC<br><br>⏳ Pending 13 筆關鍵 5 條：<br>1. 摩根月配 9/8 除息（8/29 與 9/1 兩筆疑同一單）→ T+4 交割應已完成<br>2. PI 認列 <b>9/10</b> → 銀行書面 → 質押 350萬@2.77% 還安聯300+元大50<br>3. snapshot pledge_loan <b>100萬(利率null) vs 元大50萬@3.92%</b> 不一致，待使用者核對<br>4. 500萬 MMF 待 10 月標案結果（9/6 已覆蓋 9/5 條目，未結案）<br>5. 洲際W 9/25 到期，轉貸評估中（10月底/11月辦，最差續 2.5% 不急）<br><br>🧠 Part B：CIO 對策反抗意見<br><b>1. 質疑｜質押鏈時序是最大執行風險</b>：一切繫於 9/10 PI 認列。認列當天須<b>立即送銀行書面鎖 2.77%</b>，別等 9/16 FOMC——撥款需 2-4 週(≈10月上中旬)，若撞上升息重定價，2.77% 條件可能失效。這是核准案裡唯一的「可執行」動作，不是觀望項。<br><br><b>2. 質疑｜款項用途未明前禁止撥款還債</b>：pledge_loan 100萬 vs 還債計畫元大 50萬@3.92% 落差未釐清（月息 3,267 ≈ 100萬@3.92%，snapshot 那筆可能是真帳），若先撥款照 350萬=安聯300+元大50 配置，可能錯帳。<b>9/9 前必須定版</b>，否則 9/10 認列後無法執行還款步驟。<br><br><b>3. 質疑｜決策軌跡被稀釋，實相失真</b>：167 筆中 158 筆是 run log（日報/資產穿透成對），真決策僅 9 筆；9/6 21:11-21:16 同一組值重複寫入 <b>6 次(12筆)</b>、9/7 13:01 又補寫 → 夜間管線疑似重試風暴。建議：run log 與 user decision 分離、寫入去重；否則「決策實相」愈來愈難讀，且重試風暴本身值得查（違反 9/4 管線只跑一次紀律）。<br><br><b>4. 提醒｜9/16 定調 ≠ 解除 ladder 延後，勿混用資金</b>：FOMC 後可動的是<b>存量美元 400萬停泊</b>（BIL/MMF→PIMCO/M&amp;G 中短債，不增曝險、存續期≤5-7Y）；5 階 ladder 直債仍等 10 月標案。兩者資金來源不同，儀表板需分列，避免把同一筆錢算兩次。<br><br><b>5. 提醒｜9/8-9/16 四道關卡</b>：9/8 摩根除息（週三審計確認交割+配息資格並合併結案那兩筆 pending）→ 9/10 PI 認列 → 9/11 CPI → 9</div><div class="text-slate-500 mt-2" style="font-size:10.5px">▲ 展開較舊審查需連線讀 cio_review.json（即時模式）</div></div>
+            </div>
+        </div>
+    </div>
 
             </main>
 
@@ -962,6 +994,40 @@ var gotTotal = _salaryA + divTotal + rentGot;
     }).catch(function(e){
       wn.innerHTML = '<div style="font-size:12px;color:#dc2626;font-weight:700">⚠️ 讀取失敗：'+(e.message||'網路錯誤')+'</div>';
     });
+  }
+  var cl = document.getElementById('cio-list');
+  if(cl){
+    /* 2026-09-07：CIO 戰略審查即時渲染（cio_review.json）；失敗保留 <div class="cio-card"><div class="text-white font-bold text-[13px]">📅 2026-09-07（一）最近一次審查（離線快照）</div><div class="cio-body" style="max-height:200px;overflow:hidden;margin-top:4px">【龍九控股：18:30 戰略審計與決策復盤】2026-09-07（一）<br><br>📋 Part A：今日決策實相<br>本日無新核准（9/7 僅 13:01 例行補寫 9/6 日報/穿透檔組）。決策檔共 167 筆，其中 9 筆為真決策：<br><br>✅ 已核准（8 筆已完成）<br>• 9/4 ×4：穿透檢查器基準修正(查當天產出組)、watchdog v6.4 WARN 僅狀態切換才推、安聯同義欄位校正 9,287、配息誤值三犯根治(9月16,664應收制)<br>• 9/5 ×4：8月績效基準修正(撤銷誤登99,000→+41.6萬)、儀表板22:15自動同步、美元債分批條件單掛載、週六評估改全源整合(9源)<br><br>⏳ 已核准待執行（1 筆，唯一未結）：<br>• <b>usr-20260906-1</b>：美債 5 階 ladder 延至 10 月標案結果；500萬 MMF(國泰貨基)不換匯不買債；國泰基金質押 600萬擔保→300萬@2.77% 固定，還 4%+ 保單借貸<br><br>⏸️ 延後/凍結（無獨立延後欄位，落在 pending）：科技紅線凍結、配息 69.5% 合併防守、00878 承接、石油 Locked、美元債 ladder→10月、全面觀望至 9/11 CPI / 9/16 FOMC<br><br>⏳ Pending 13 筆關鍵 5 條：<br>1. 摩根月配 9/8 除息（8/29 與 9/1 兩筆疑同一單）→ T+4 交割應已完成<br>2. PI 認列 <b>9/10</b> → 銀行書面 → 質押 350萬@2.77% 還安聯300+元大50<br>3. snapshot pledge_loan <b>100萬(利率null) vs 元大50萬@3.92%</b> 不一致，待使用者核對<br>4. 500萬 MMF 待 10 月標案結果（9/6 已覆蓋 9/5 條目，未結案）<br>5. 洲際W 9/25 到期，轉貸評估中（10月底/11月辦，最差續 2.5% 不急）<br><br>🧠 Part B：CIO 對策反抗意見<br><b>1. 質疑｜質押鏈時序是最大執行風險</b>：一切繫於 9/10 PI 認列。認列當天須<b>立即送銀行書面鎖 2.77%</b>，別等 9/16 FOMC——撥款需 2-4 週(≈10月上中旬)，若撞上升息重定價，2.77% 條件可能失效。這是核准案裡唯一的「可執行」動作，不是觀望項。<br><br><b>2. 質疑｜款項用途未明前禁止撥款還債</b>：pledge_loan 100萬 vs 還債計畫元大 50萬@3.92% 落差未釐清（月息 3,267 ≈ 100萬@3.92%，snapshot 那筆可能是真帳），若先撥款照 350萬=安聯300+元大50 配置，可能錯帳。<b>9/9 前必須定版</b>，否則 9/10 認列後無法執行還款步驟。<br><br><b>3. 質疑｜決策軌跡被稀釋，實相失真</b>：167 筆中 158 筆是 run log（日報/資產穿透成對），真決策僅 9 筆；9/6 21:11-21:16 同一組值重複寫入 <b>6 次(12筆)</b>、9/7 13:01 又補寫 → 夜間管線疑似重試風暴。建議：run log 與 user decision 分離、寫入去重；否則「決策實相」愈來愈難讀，且重試風暴本身值得查（違反 9/4 管線只跑一次紀律）。<br><br><b>4. 提醒｜9/16 定調 ≠ 解除 ladder 延後，勿混用資金</b>：FOMC 後可動的是<b>存量美元 400萬停泊</b>（BIL/MMF→PIMCO/M&amp;G 中短債，不增曝險、存續期≤5-7Y）；5 階 ladder 直債仍等 10 月標案。兩者資金來源不同，儀表板需分列，避免把同一筆錢算兩次。<br><br><b>5. 提醒｜9/8-9/16 四道關卡</b>：9/8 摩根除息（週三審計確認交割+配息資格並合併結案那兩筆 pending）→ 9/10 PI 認列 → 9/11 CPI → 9</div><div class="text-slate-500 mt-2" style="font-size:10.5px">▲ 展開較舊審查需連線讀 cio_review.json（即時模式）</div></div> 靜態快照 */
+    fetch('cio_review.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
+      var revs = (j && j.reviews) || [];
+      if(!revs.length) return;
+      revs.sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); });
+      var esc6 = function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+      var fmt6 = function(t){
+        var s = esc6(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+        return s.split('\n').map(function(ln){
+          var L = ln.trim();
+          if(!L) return '';
+          if(/^🧠 Part B/.test(L)) return '<div class="cio-h cio-h2">'+L+'</div>';
+          if(/^📌 結論/.test(L)) return '<div class="cio-h cio-h3">'+L+'</div>';
+          if(/^(📋 Part A|✅ 已核准|⏳ 已核准待執行|⏸️ 延後|⏳ Pending|⚠️|❗)/.test(L)) return '<div class="cio-h">'+L+'</div>';
+          return '<div>'+ln+'</div>';
+        }).join('');
+      };
+      var wrap = function(d, full){
+        var head = '<div class="text-white font-bold text-[13px]">📅 '+esc6(d.date||'')+'（'+esc6(d.weekday||'')+'）</div>';
+        var body = '<div class="cio-body" style="'+(full?'':'max-height:150px;overflow:hidden;')+'margin-top:4px">'+fmt6(d.text||'')+'</div>';
+        return head + body;
+      };
+      var h = '';
+      revs.slice(0,8).forEach(function(d,i){
+        if(i===0){ h += '<div class="cio-card">'+wrap(d,true)+'</div>'; }
+        else { h += '<details class="cio-old"><summary>📅 '+esc6(d.date||'')+'（'+esc6(d.weekday||'')+'） 歷史審查</summary>'+wrap(d,false)+'</details>'; }
+      });
+      cl.innerHTML = h;
+      var cu6 = document.getElementById('cio-updated');
+      if(cu6 && j.updated) cu6.textContent = '資料更新：'+esc6(j.updated);
+    }).catch(function(){}); /* 失敗保留靜態快照 */
   }
 })();
 </script>

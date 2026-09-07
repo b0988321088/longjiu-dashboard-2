@@ -50,7 +50,7 @@ if "sys-date" not in html:
     fails.append("系統時間非 JS 動態")
 
 # 7. 分頁結構（2026-09-01 血淚：改 template 少閉合 → 全分頁失效 → 必驗）
-for i in range(1, 6):
+for i in range(1, 7):
     if f'id="tab-r{i}"' not in html:
         fails.append(f"radio tab-r{i} 缺失")
     if f'id="panel-{i}"' not in html:
@@ -59,9 +59,9 @@ for i in range(1, 6):
         fails.append(f"CSS 切換規則 tab-r{i} 缺失")
 if not (0 < html.find('id="tab-r1"') < html.find("<main")):
     fails.append("radio 不在 main 前（CSS ~ 選擇器失效）")
-_p4, _p5, _m2 = html.find('id="panel-4"'), html.find('id="panel-5"'), html.find("</main>")
-if not (0 < _m2 and _p4 > 0 and _p5 > 0 and _p4 < _m2 and _p5 < _m2):
-    fails.append("panel-4/5 不在 main 內（分頁打不開）")
+_p4, _p5, _p6, _m2 = html.find('id="panel-4"'), html.find('id="panel-5"'), html.find('id="panel-6"'), html.find("</main>")
+if not (0 < _m2 and _p4 > 0 and _p5 > 0 and _p6 > 0 and _p4 < _m2 and _p5 < _m2 and _p6 < _m2):
+    fails.append("panel-4/5/6 不在 main 內（分頁打不開）")
 
 # 8. 收入核對清單兩段制（2026-09-01：✅已收 + ⏳待收 + 各自合計）
 if "✅ 已收（" not in html:
