@@ -1,176 +1,206 @@
 [
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "週六再平衡正式評估（16:00 cron 產出後檢視）",
-  "detail": "16:03 產出 → 使用者 9/5 檢視 OK 閉環（觀望 gate：只推 PI/質押，9/11 CPI/9/16 FOMC 前全面觀望）"
- },
- {
-  "date": "2026-09-05",
-  "category": "應辦",
-  "item": "watchdog v6.5 待真實卡死事件實戰驗證（合成測試已過）",
-  "detail": ""
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "儀表板政策面更新上線：8月非農 16.2萬超預期 + Fed 9/15-16 升息押注 60%+（9/11 CPI 定案）",
-  "detail": "commit ec3907a9；護城河半成品還原（薪水動態 42,560）"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "Gemini 儲值完成 → API 200 + fallback chain 有值（原訂 9/7 提前）",
-  "detail": ""
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "delegation 切回 Gemini：雙 AI 獨立診斷/檢查機制恢復（實測 2.64s）",
-  "detail": "過渡期 deepseek-v4-pro 08:42-10:10"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "watchdog v6.5 上線（INC-147：三缺陷 + tool_executor dump 誤報防護）",
-  "detail": "備份 .bak-20260905-v64；T1-T3 + dry-run 全過"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "錯誤登記 INC-146/147 + 技能同步 ×6（gateway/delegation/error-register/cron-session-reset）",
-  "detail": "含 §24 補遺：斷線期使用者求救視角"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "CIO(Gemini) 獨立複查 → PII 衛生鐵則升級通用版（任何新資料源全檢）",
-  "detail": "消毒層裁示：不做（進料管好 > 出料洗）"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "觀望 gate 定調(9/5核准閉環)：全面觀望至 PI質押款到位+Fed 9/11 CPI/9/16；行動儀表板三層動態化(今天/該做/3天)+完整分析保留；決策/技能/記憶/行事曆同步",
-  "detail": "commits 9d925621/4e046d69/10e9cc36"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "Hermes 儲存健康維護（9/5 核准 A 案）：hermes 目錄 13G→6.7G；updates.backup_keep 5→2；週日 DB 保養擴充為 5 步自動輪替",
-  "detail": "刪 9/2-9/3 舊 state.db 備份 5 項 ~6.1G（保留 bak-20260904）+7/22 快照；optimize-storage 後 state.db 1.1G→643M；新增 scripts/prune_state_db_backups.py（留最新 2 份、DB quick_check 異常防呆）；記憶 md 備份守留 14 份；技能 hermes-storage-maintenance 建檔"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "Hermes 三優化閉環（9/5 核准）：技能庫瘦身 253→233（.archive 停用層 20）+ 描述索引 -19% + 薪資 sweep 42,560×19 檔 + 健康度卡驗證一致 + 記憶壓縮 96→94%",
-  "detail": "新技能 hermes-context-cost-control / hermes-storage-maintenance；skill-library-audit 自身修正（cron 16:00、薪資對照表）；日報兩支技能 desc 去重；fact_store 過時薪資事實更新；⚠️ 月收入口徑兩版待統一（217,518 差旅 vs 228,751 定版，以 snapshot.monthly_income 為準）"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "月收入基準統一 228,751（9/5 口徑裁示）：snapshot.monthly_income 225,918→228,751、盈餘→75,970、RULE 檔同步",
-  "detail": "裁示：薪水 42,560 常態（非 43,000）、維持 228,751 定版公式（42,560+80,100+配息實收 97,233+女友還款 6,000+利息 2,858）、差旅 12,000 領現金不計；程式 fallback 全清（run_daily/asset_diff 挖出 43_144+差旅 fallback/db_loader/rotation_engine/build_rebalance/moneybook_6m）；三源校準通過；技能 8 檔 217,518→228,751（Gemini 429 中斷由父代理親驗補修）；CIO 審查由 DS V4 Pro 暫代（Gemini 9/7 儲值）"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "代辦①記憶第二輪壓縮：memory 82→78%、user profile 94→86%（8+6 條整併，零事實刪除）",
-  "detail": "新 session 生效；技能/審計技能同步"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "代辦②C方案腳本3份去重：舊 clone longjiu-dashboard-2（8/2 凍結、6.3MB、25支腳本重複、零本地引用）移除",
-  "detail": "移至 龍九備份/longjiu-dashboard-2_stale_20260802_clone（可復原）；腳本回歸 repo+cron 兩份常態"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "代辦③技能雙份 drift 分工 v1：rebalance-sop↔system、screenshot-update-sop↔data-pipeline-automation 互加 🔗 分工 banner",
-  "detail": "不退休任何一支（0字面重複）；規則→sop/架構→system/管線→data-pipeline/進入點→screenshot；skill-library-audit 閉環註記"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "代辦④日報接 work_log：run_daily ch7 新增 🛠️ 系統工作日誌動態區塊（應辦/完成分色、近8筆）",
-  "detail": "全量重產驗證通過（章節1/9~9/9齊全、穿透佔位符殘留0）；cron 副本 md5 同步；未動章節編號"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "決策追蹤卡 v3：移除模板重複 JS 區塊，只顯示執行中（排除已閉環）+日期新→舊+上限8+狀態燈號",
-  "detail": "index_template 去重一份重複 fetch；兩卡（工作誌/決策）皆 client-side 即時讀 JSON"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "再平衡評估全源整合改版：cron f5e4 必讀 4→9 源 + 📊 全源整合對照區塊（DAA宏觀/資金/五桶/雷達/政策/緊急/gate）",
-  "detail": "20:58 全源整合版實跑成功；summary md + HTML 深色版上線；儀表板 📌 再平衡評估 按鈕改指 rebalance_eval（含產出後自動回寫步驟）"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "美元債分批條件單掛載（9/16 FOMC 定調後觸發；存量美元轉中短債，不換新匯）",
-  "detail": "進 pending_decisions + 行動儀表板本週該做；9/11 CPI 高→等FOMC／低→續觀望"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "兩自動化建立：行動儀表板每晚 22:15 自動同步（nightly_dashboard_sync.py, cron 100511d07594）+ 每日 21:40 收工登錄（cron 2a44a680bec1）",
-  "detail": "22:15 同步 7 個儀表板 JSON 無變更靜默；21:40 從 dashboard_decisions 自動補登當日完成"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "穿透 LTV 現況透明化：情境表後新增現況質押區塊（保單質押 400萬@4% + 券商 ~100萬 待核）；評估紅線檢查改讀質押真值",
-  "detail": "抓出兩版評估誤報「LTV=0 無追繳風險」（只算新 PI 未撥款）；券商質押金額/利率核對進待辦"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "交易計劃 gate 化：tactical_table.py 新增觀望 gate 覆寫層（自動讀 pending 升息警戒 → 買進類動作凍結為觀望、金額0）",
-  "detail": "gate 解除自動恢復原節奏；日報 ch8 對策表重產為觀望版（台股/防守 0、現金乾粉保留）"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "9/7 就醫+特休兩條去重合併（schedule 91→90）；日報 ch7/ch8 重產 exit0",
-  "detail": "同日報 ch7 工作誌更新（完成15/應辦1）；附帶修 work_log 明細含『穿透佔位符』字樣造成重產檢查誤判"
- },
- {
-  "date": "2026-09-05",
-  "category": "完成",
-  "item": "8月投資績效基準修正（股票新增投入撤銷 99,000）",
-  "detail": "使用者確認8月無股票買賣 → 撤銷績效頁誤登股票新增投入 99,000；股票市值變化 56,000→155,170 追平月報帳面；損益合計 457,797；績效 +31.7萬→+41.6萬。四源同步 commit ac5131b6 已推送 "
- },
- {
-  "date": "2026-09-05",
-  "category": "應辦",
-  "item": "券商質押金額/利率核對（凱基/元大對帳單）",
-  "detail": "snapshot pledge_loan=100萬(利率 null 待確認) vs 還債計畫『元大50萬@3.92%』不一致；月支出元大證金利息 3,267 ≈ 100萬@3.92%"
- },
- {
-  "date": "2026-09-06",
-  "category": "完成",
-  "item": "夜間儀表板同步 cron 修復（22:15 COMMIT FAIL, INC-148）",
-  "detail": "根因：nightly_maintenance 30日保留清理刪 db 2026-08-05 列、落在晚報 commit(83dd12d6) 後又不 commit → db 髒；同步腳本全樹 status 誤判變更、只 stage 7 JSON → commit 空集失敗。修：判定限定自身檔案集（scoped porcelain）；db 清理補 commit eb62d082 雙分支已推；新增技能 cron-git-commit-scope"
- },
- {
-  "date": "2026-09-06",
-  "category": "完成",
-  "item": "美債中短 ladder 延後至 10 月標案結果（500萬 MMF 標案預備金不動）",
-  "detail": "9/6 核准資金框架：①500萬台幣 MMF(國泰貨基=10月標案預備金)不換匯不買債，留台幣流動性當標案+升息還債雙重緩衝 ②美債 5 階 ladder(2027-2031)延至 10 月標案結果：沒標到→重評估(匯率/美元曝險64%>5"
- },
- {
-  "date": "2026-09-07",
-  "category": "完成",
-  "item": "日報2026-09-06",
-  "detail": "證券2,918,760.0 保單9,577,924 配息24,158"
- },
- {
-  "date": "2026-09-07",
-  "category": "完成",
-  "item": "資產穿透2026-09-06",
-  "detail": "台股1,940,321.0 美股11,491,337.0 防守1,146,525.0 債券4,738,723.0 現金5,821,718.0"
- }
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "週六再平衡正式評估（16:00 cron 產出後檢視）",
+    "detail": "16:03 產出 → 使用者 9/5 檢視 OK 閉環（觀望 gate：只推 PI/質押，9/11 CPI/9/16 FOMC 前全面觀望）"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "應辦",
+    "item": "watchdog v6.5 待真實卡死事件實戰驗證（合成測試已過）",
+    "detail": ""
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "儀表板政策面更新上線：8月非農 16.2萬超預期 + Fed 9/15-16 升息押注 60%+（9/11 CPI 定案）",
+    "detail": "commit ec3907a9；護城河半成品還原（薪水動態 42,560）"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "Gemini 儲值完成 → API 200 + fallback chain 有值（原訂 9/7 提前）",
+    "detail": ""
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "delegation 切回 Gemini：雙 AI 獨立診斷/檢查機制恢復（實測 2.64s）",
+    "detail": "過渡期 deepseek-v4-pro 08:42-10:10"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "watchdog v6.5 上線（INC-147：三缺陷 + tool_executor dump 誤報防護）",
+    "detail": "備份 .bak-20260905-v64；T1-T3 + dry-run 全過"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "錯誤登記 INC-146/147 + 技能同步 ×6（gateway/delegation/error-register/cron-session-reset）",
+    "detail": "含 §24 補遺：斷線期使用者求救視角"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "CIO(Gemini) 獨立複查 → PII 衛生鐵則升級通用版（任何新資料源全檢）",
+    "detail": "消毒層裁示：不做（進料管好 > 出料洗）"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "觀望 gate 定調(9/5核准閉環)：全面觀望至 PI質押款到位+Fed 9/11 CPI/9/16；行動儀表板三層動態化(今天/該做/3天)+完整分析保留；決策/技能/記憶/行事曆同步",
+    "detail": "commits 9d925621/4e046d69/10e9cc36"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "Hermes 儲存健康維護（9/5 核准 A 案）：hermes 目錄 13G→6.7G；updates.backup_keep 5→2；週日 DB 保養擴充為 5 步自動輪替",
+    "detail": "刪 9/2-9/3 舊 state.db 備份 5 項 ~6.1G（保留 bak-20260904）+7/22 快照；optimize-storage 後 state.db 1.1G→643M；新增 scripts/prune_state_db_backups.py（留最新 2 份、DB quick_check 異常防呆）；記憶 md 備份守留 14 份；技能 hermes-storage-maintenance 建檔"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "Hermes 三優化閉環（9/5 核准）：技能庫瘦身 253→233（.archive 停用層 20）+ 描述索引 -19% + 薪資 sweep 42,560×19 檔 + 健康度卡驗證一致 + 記憶壓縮 96→94%",
+    "detail": "新技能 hermes-context-cost-control / hermes-storage-maintenance；skill-library-audit 自身修正（cron 16:00、薪資對照表）；日報兩支技能 desc 去重；fact_store 過時薪資事實更新；⚠️ 月收入口徑兩版待統一（217,518 差旅 vs 228,751 定版，以 snapshot.monthly_income 為準）"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "月收入基準統一 228,751（9/5 口徑裁示）：snapshot.monthly_income 225,918→228,751、盈餘→75,970、RULE 檔同步",
+    "detail": "裁示：薪水 42,560 常態（非 43,000）、維持 228,751 定版公式（42,560+80,100+配息實收 97,233+女友還款 6,000+利息 2,858）、差旅 12,000 領現金不計；程式 fallback 全清（run_daily/asset_diff 挖出 43_144+差旅 fallback/db_loader/rotation_engine/build_rebalance/moneybook_6m）；三源校準通過；技能 8 檔 217,518→228,751（Gemini 429 中斷由父代理親驗補修）；CIO 審查由 DS V4 Pro 暫代（Gemini 9/7 儲值）"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "代辦①記憶第二輪壓縮：memory 82→78%、user profile 94→86%（8+6 條整併，零事實刪除）",
+    "detail": "新 session 生效；技能/審計技能同步"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "代辦②C方案腳本3份去重：舊 clone longjiu-dashboard-2（8/2 凍結、6.3MB、25支腳本重複、零本地引用）移除",
+    "detail": "移至 龍九備份/longjiu-dashboard-2_stale_20260802_clone（可復原）；腳本回歸 repo+cron 兩份常態"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "代辦③技能雙份 drift 分工 v1：rebalance-sop↔system、screenshot-update-sop↔data-pipeline-automation 互加 🔗 分工 banner",
+    "detail": "不退休任何一支（0字面重複）；規則→sop/架構→system/管線→data-pipeline/進入點→screenshot；skill-library-audit 閉環註記"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "代辦④日報接 work_log：run_daily ch7 新增 🛠️ 系統工作日誌動態區塊（應辦/完成分色、近8筆）",
+    "detail": "全量重產驗證通過（章節1/9~9/9齊全、穿透佔位符殘留0）；cron 副本 md5 同步；未動章節編號"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "決策追蹤卡 v3：移除模板重複 JS 區塊，只顯示執行中（排除已閉環）+日期新→舊+上限8+狀態燈號",
+    "detail": "index_template 去重一份重複 fetch；兩卡（工作誌/決策）皆 client-side 即時讀 JSON"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "再平衡評估全源整合改版：cron f5e4 必讀 4→9 源 + 📊 全源整合對照區塊（DAA宏觀/資金/五桶/雷達/政策/緊急/gate）",
+    "detail": "20:58 全源整合版實跑成功；summary md + HTML 深色版上線；儀表板 📌 再平衡評估 按鈕改指 rebalance_eval（含產出後自動回寫步驟）"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "美元債分批條件單掛載（9/16 FOMC 定調後觸發；存量美元轉中短債，不換新匯）",
+    "detail": "進 pending_decisions + 行動儀表板本週該做；9/11 CPI 高→等FOMC／低→續觀望"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "兩自動化建立：行動儀表板每晚 22:15 自動同步（nightly_dashboard_sync.py, cron 100511d07594）+ 每日 21:40 收工登錄（cron 2a44a680bec1）",
+    "detail": "22:15 同步 7 個儀表板 JSON 無變更靜默；21:40 從 dashboard_decisions 自動補登當日完成"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "穿透 LTV 現況透明化：情境表後新增現況質押區塊（保單質押 400萬@4% + 券商 ~100萬 待核）；評估紅線檢查改讀質押真值",
+    "detail": "抓出兩版評估誤報「LTV=0 無追繳風險」（只算新 PI 未撥款）；券商質押金額/利率核對進待辦"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "交易計劃 gate 化：tactical_table.py 新增觀望 gate 覆寫層（自動讀 pending 升息警戒 → 買進類動作凍結為觀望、金額0）",
+    "detail": "gate 解除自動恢復原節奏；日報 ch8 對策表重產為觀望版（台股/防守 0、現金乾粉保留）"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "9/7 就醫+特休兩條去重合併（schedule 91→90）；日報 ch7/ch8 重產 exit0",
+    "detail": "同日報 ch7 工作誌更新（完成15/應辦1）；附帶修 work_log 明細含『穿透佔位符』字樣造成重產檢查誤判"
+  },
+  {
+    "date": "2026-09-05",
+    "category": "完成",
+    "item": "8月投資績效基準修正（股票新增投入撤銷 99,000）",
+    "detail": "使用者確認8月無股票買賣 → 撤銷績效頁誤登股票新增投入 99,000；股票市值變化 56,000→155,170 追平月報帳面；損益合計 457,797；績效 +31.7萬→+41.6萬。四源同步 commit ac5131b6 已推送 "
+  },
+  {
+    "date": "2026-09-05",
+    "category": "應辦",
+    "item": "券商質押金額/利率核對（凱基/元大對帳單）",
+    "detail": "snapshot pledge_loan=100萬(利率 null 待確認) vs 還債計畫『元大50萬@3.92%』不一致；月支出元大證金利息 3,267 ≈ 100萬@3.92%"
+  },
+  {
+    "date": "2026-09-06",
+    "category": "完成",
+    "item": "夜間儀表板同步 cron 修復（22:15 COMMIT FAIL, INC-148）",
+    "detail": "根因：nightly_maintenance 30日保留清理刪 db 2026-08-05 列、落在晚報 commit(83dd12d6) 後又不 commit → db 髒；同步腳本全樹 status 誤判變更、只 stage 7 JSON → commit 空集失敗。修：判定限定自身檔案集（scoped porcelain）；db 清理補 commit eb62d082 雙分支已推；新增技能 cron-git-commit-scope"
+  },
+  {
+    "date": "2026-09-06",
+    "category": "完成",
+    "item": "美債中短 ladder 延後至 10 月標案結果（500萬 MMF 標案預備金不動）",
+    "detail": "9/6 核准資金框架：①500萬台幣 MMF(國泰貨基=10月標案預備金)不換匯不買債，留台幣流動性當標案+升息還債雙重緩衝 ②美債 5 階 ladder(2027-2031)延至 10 月標案結果：沒標到→重評估(匯率/美元曝險64%>5"
+  },
+  {
+    "date": "2026-09-07",
+    "category": "完成",
+    "item": "日報2026-09-06",
+    "detail": "證券2,918,760.0 保單9,577,924 配息24,158"
+  },
+  {
+    "date": "2026-09-07",
+    "category": "完成",
+    "item": "資產穿透2026-09-06",
+    "detail": "台股1,940,321.0 美股11,491,337.0 防守1,146,525.0 債券4,738,723.0 現金5,821,718.0"
+  },
+  {
+    "date": "2026-09-08",
+    "category": "完成",
+    "item": "全資產盤點批次（11圖+CSV+Moneybook ZIP 9/8）",
+    "detail": "現金828,578(國泰20,776誤列排除)/證券2,945,710(凱基9/8)/基金12,716,091(鉅亨839,976+國泰直購11,876,115)/保險9,670,858(安聯7,768,211+第一金1,902,647)；總資產26,161,237；日報/差異/穿透/儀表板/週報全重產並推送"
+  },
+  {
+    "date": "2026-09-08",
+    "category": "完成",
+    "item": "PI 專業投資人核定（9/8 提前，原預期 9/10）",
+    "detail": "國泰通知核定 → snapshot pi_status=✅已核定 → 質押簽約細節待定（這幾天）→ 簽約/設定/撥款 2-4 週 → 還債 10 月初（安聯300+元大50）"
+  },
+  {
+    "date": "2026-09-08",
+    "category": "完成",
+    "item": "韓國首爾 9/23-27 行程全取消",
+    "detail": "schedule_events 5筆刪除 + Google 日曆同步 + 決策記錄；9/24 特休(中秋)保留；9/23 童綜合就醫提醒 cron 已移除"
+  },
+  {
+    "date": "2026-09-08",
+    "category": "完成",
+    "item": "TG 斷線檢討（9/8 上午 ~6h）",
+    "detail": "gateway 11:03-13:37 重啟 10+ 次 + 3 次 SIGKILL + 13:25 hermes update 觸發 → 已記錄技能 §30，update 前通知等 5 待改項留待處理"
+  },
+  {
+    "date": "2026-09-08",
+    "category": "修正",
+    "item": "DS 儲值提醒誤植更正",
+    "detail": "9/5 使用者說『禮拜二儲值』實指 Google Gemini（9/5 已儲 NT$1,000 不需再儲）→ DS 9/8 一次性提醒為誤植；DS 每日 watchdog 暫停（餘額 66.57 CNY 約 2 週餘裕）；教訓已記錄技能"
+  }
 ]
