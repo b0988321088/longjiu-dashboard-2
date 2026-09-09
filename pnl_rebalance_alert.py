@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""pnl_rebalance_alert.py — 獲利 >20% 強制提醒（2026-08-27 使用者裁示）
+"""pnl_rebalance_alert.py — 獲利 >50% 強制提醒（2026-08-27 裁示；9/9 調 20→50）
 
-規則：任一證券部位報酬率 ≥ 20% → 輸出提醒（TG 主動通知「強制再平衡評估」）
-無任何部位 ≥20% → 靜默（watchdog 模式）
+任一證券部位報酬率 ≥ 50% → 輸出提醒（TG 主動通知「強制再平衡評估」）
+無任何部位 ≥50% → 靜默（watchdog 模式）
 
 資料源：snapshot.json securities.holdings（成本 vs 現價 = 真值）
 """
@@ -11,9 +11,9 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 SNAP = BASE / "snapshot.json"
-THRESHOLD = 20.0  # 獲利門檻 %
+THRESHOLD = 50.0  # 獲利門檻 %（9/9 使用者裁示 20→50）
 
-# 繼續持有部位（2026-08-27 使用者裁示：不因獲利>20% 觸發賣出建議）
+# 繼續持有部位（2026-08-27 使用者裁示：不因獲利>50% 觸發賣出建議）
 # 核心長抱（台50 指數核心）：僅超配>5pp 或科技紅線才評估
 CORE_HOLD = {"0050", "006208", "009816"}
 # 質押中續抱：0056（8/27 裁示：質押狀況下繼續放著，不賣）
@@ -40,7 +40,7 @@ def main():
     pledged = [h for h in over if h.get("ticker") in PLEDGED_HOLD]
     others = [h for h in over if h.get("ticker") not in CORE_HOLD and h.get("ticker") not in PLEDGED_HOLD]
 
-    lines = ["🔴 **獲利超標提醒：以下部位已賺 >20%**"]
+    lines = ["🔴 **獲利超標提醒：以下部位已賺 >50%**"]
     if core:
         lines.append("\n✅ **核心長抱（不賣，僅超配>5pp 或科技紅線才評估）：**")
         for h in core:
