@@ -126,6 +126,21 @@ def sync():
             _c = _cat(_title)
             if _c and (_c, _d) in _seen:
                 continue  # 同日期同類別已有事件（fixed 優先），跳過避免重複
+            # 2026-09-09：支援時段事件 — schedule_events 可帶 "time":"13:00"（+duration_min，預設60）
+            _tm = str(_e.get("time", "") or "").strip()
+            if _tm:
+                try:
+                    _dur = int(_e.get("duration_min", 60) or 60)
+                    _dt = datetime.fromisoformat(f"{_d}T{_tm}:00")
+                    events.append({
+                        "summary": _title,
+                        "start": _dt.isoformat(),
+                        "end": (_dt + timedelta(minutes=_dur)).isoformat(),
+                        "timed": True,
+                    })
+                    continue
+                except ValueError:
+                    logger.warning(f'  time 欄位格式錯誤（{_d} {_tm}），改全天')
             events.append({
                 "summary": _title,
                 "start": _d,
@@ -162,9 +177,13 @@ def sync():
         body = {
             "summary": ev["summary"],
             "description": "[calendar_sync]",
-            "start": {"date": ev["start"]},
-            "end": {"date": ev["end"]},
         }
+        if ev.get("timed"):
+            body["start"] = {"dateTime": ev["start"], "timeZone": "Asia/Taipei"}
+            body["end"] = {"dateTime": ev["end"], "timeZone": "Asia/Taipei"}
+        else:
+            body["start"] = {"date": ev["start"]}
+            body["end"] = {"date": ev["end"]}
         service.events().insert(calendarId="primary", body=body).execute()
         created += 1
 
