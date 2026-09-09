@@ -83,7 +83,29 @@ def main():
            "reviews": reviews}
     OUT.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"cio_review.json 已更新：{len(reviews)} 筆（最新 {reviews[0]['date']}）") if __import__("os").environ.get("CIO_INGEST_VERBOSE") else None
-    # 成功預設靜默（cron no_agent 空 stdout = 不推送）
+
+    # 2026-09-09：自動 push（僅內容有變更時），確保 18:45 收錄後線上儀表板立即讀到新審查，
+    # 不等到 22:00 夜間批次（否則 18:45→22:00 之間線上顯示舊審查）。
+    # 成功靜默；失敗才印 ERR（cron 空 stdout = 不推送）。
+    try:
+        import subprocess
+        _chk = subprocess.run(["git", "diff", "--quiet", "--", "cio_review.json"],
+                              capture_output=True, cwd=str(BASE), timeout=60)
+        if _chk.returncode != 0:
+            _cmds = [
+                ["git", "add", "cio_review.json"],
+                ["git", "commit", "-m", "data: cio_review.json 收錄更新（CIO 審查） [cioreviewed]"],
+                ["git", "push", "origin", "clean-main"],
+                ["git", "push", "origin", "clean-main:main"],
+            ]
+            for _c in _cmds:
+                _r = subprocess.run(_c, capture_output=True, cwd=str(BASE), timeout=120)
+                if _r.returncode != 0:
+                    print(f"ERR: ingest push 失敗 {' '.join(_c[:2])}: {(_r.stderr or _r.stdout).decode('utf-8','ignore')[-300:]}")
+                    return 1
+    except Exception as _e:
+        print(f"ERR: ingest push 例外: {_e}")
+        return 1
     return 0
 
 
