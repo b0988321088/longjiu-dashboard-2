@@ -525,15 +525,34 @@ def main():
                       key=lambda r: str(r["date"]), reverse=True)
         if _crl:
             _c0 = _crl[0]
-            _cio_txt = _html.escape(str(_c0.get("text", ""))[:1600])
-            _cio_txt = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", _cio_txt).replace("\n", "<br>")
-            tpl = tpl.replace(
-                "__CIO_REVIEW__",
-                f'<div class="cio-card"><div class="text-white font-bold text-[13px]">'
-                f'📅 {_c0.get("date")}（{_c0.get("weekday", "")}）最近一次審查（離線快照）</div>'
-                f'<div class="cio-body" style="max-height:200px;overflow:hidden;margin-top:4px">{_cio_txt}</div>'
-                f'<div class="text-slate-500 mt-2" style="font-size:10.5px">▲ 展開較舊審查需連線讀 cio_review.json（即時模式）</div></div>',
-            )
+            _st = _c0.get("structured") or {}
+            def _cio_sec(ico, title, color, items):
+                if not items:
+                    return ""
+                _body = "".join(
+                    f'<div style="padding:3px 0 3px 10px;border-left:2px solid {color}55;color:#e2e8f0;line-height:1.65">{_html.escape(str(s))}</div>'
+                    for s in items
+                )
+                return f'<div style="margin-top:9px"><div class="cio-h" style="color:{color};margin-top:0">{ico} {_html.escape(title)}（{len(items)}）</div>{_body}</div>'
+            _h = f'<div class="cio-card"><div class="text-white font-bold text-[13px]">📅 {_c0.get("date")}（{_c0.get("weekday", "")}）最近一次審查（結構化快照）</div>'
+            _h += _cio_sec("✅", "已核准", "#34d399", _st.get("approved"))
+            _h += _cio_sec("⏳", "已核准待執行", "#fbbf24", _st.get("pending_exec"))
+            _h += _cio_sec("⏸️", "延後 / 凍結", "#94a3b8", _st.get("frozen"))
+            _h += _cio_sec("📌", "Pending 關鍵", "#93c5fd", _st.get("pending_notes"))
+            _objs = _st.get("objections") or []
+            if _objs:
+                _ob = "".join(
+                    f'<div style="padding:5px 8px;margin-top:5px;background:rgba(15,23,42,0.5);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:#e2e8f0;line-height:1.65"><span style="display:inline-block;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px;background:{"#f87171" if (o.get("type")=="質疑") else ("#fb7185" if (o.get("type")=="風險") else ("#fbbf24" if (o.get("type")=="提醒") else "#60a5fa"))}22;color:{"#f87171" if (o.get("type")=="質疑") else ("#fb7185" if (o.get("type")=="風險") else ("#fbbf24" if (o.get("type")=="提醒") else "#60a5fa"))};border:1px solid {"#f87171" if (o.get("type")=="質疑") else ("#fb7185" if (o.get("type")=="風險") else ("#fbbf24" if (o.get("type")=="提醒") else "#60a5fa"))}55;margin-right:6px">{_html.escape(str(o.get("type","意見")))}</span>{_html.escape(str(o.get("text","")))}</div>'
+                    for o in _objs
+                )
+                _h += f'<div style="margin-top:10px"><div class="cio-h cio-h2" style="margin-top:0">🧠 Part B：對策反抗</div>{_ob}</div>'
+            if _st.get("conclusion"):
+                _h += f'<div style="margin-top:10px;padding:8px 10px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:8px;color:#d1fae5;line-height:1.7">📌 <b>結論</b>：{_html.escape(str(_st.get("conclusion")))}</div>'
+            _full = _html.escape(str(_c0.get("text", "")))
+            _full = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", _full).replace("\n", "<br>")
+            _h += f'<details class="cio-old" style="margin-top:8px"><summary>📄 看全文（{len(_full)} 字）</summary><div class="cio-body" style="margin-top:4px">{_full}</div></details>'
+            _h += '</div>'
+            tpl = tpl.replace("__CIO_REVIEW__", _h)
         else:
             tpl = tpl.replace("__CIO_REVIEW__", '<div class="text-slate-400">CIO 審查資料尚未產生（每週一/三 18:30 後出現）</div>')
     except Exception:
