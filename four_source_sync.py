@@ -69,7 +69,9 @@ try:
     securities = snap.get('securities_total_market_value', 0)
     ins_ab = snap.get('allianz_combined', 0)
     ins_fl65 = snap.get('firstjin_fl65_current_value', 0)
-    insurance = ins_ab + ins_fl65
+    # 2026-09-10 修正：DB 口徑 = snapshot.insurance_total（含保單配息應收，A+B+FL65 少 94,706）
+    # 舊寫法寫入 DB 會與 snapshot.total_assets 差 94,706 → Step 4 保單不一致 ❌
+    insurance = snap.get('insurance_total', 0) or (ins_ab + ins_fl65)
     # 同步寫回 snapshot（相容舊腳本）
     snap['insurance_current_value'] = insurance
     snap['insurance_total'] = insurance

@@ -130,13 +130,13 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     lines += ["", "## 七、里程碑時程", ""]
     for d, t2, lv in [("8/24（一）", "保單轉換 300萬 決策（科技→債，T+4 截止）", "high"),
                       ("8/31", "安聯B 贖回（補現金 + 抵借款 100萬）", "mid"),
-                      ("9/3 前", "PI 認列 → 質押 350萬@2.77% 還債", "high"),
+                      ("9/11", "板橋國泰質押簽約：350萬@2.8% 還安聯300+元大50", "high"),
                       ("9月中", "富達/聯博首次配息入帳 → 更新配息基準", "mid"),
                       ("10月", "洲際W 轉貸國泰（要求全額吸收規費）＋ 標案", "mid")]:
         lines.append(f"- {d}：{t2}")
 
     lines += ["", "## 八、結論", f"**本週動作：只有「台股慢慢買」是主動項（每週 1.5-2萬 × 8-12 週），其餘全數按兵不動。**",
-              "最大等待：8/24 保單轉換決策 → 9/3 PI → 質押還債（4.2%→2.77%）。", ""]
+              "最大等待：9/11(五)13:00 板橋國泰質押簽約 → 撥款 2-4 週 → 還債（4.2%→2.8%）。", ""]
     out = BASE / f"rebalance_summary_{TODAY}.md"
     out.write_text("\n".join(lines), encoding="utf-8")
     print(f"✅ 再平衡評估已產出: {out}")
@@ -280,9 +280,9 @@ def main():
         else:
             _plan_lines.append(f"🟡 美元曝險 {_usd4}% （目標≤50%）→ 未達減碼閾值，續觀察")
         # ⑧ 保單轉換（9/2 截止）
-        _plan_lines.append("🔴 9/2 前：保單轉換截止（PIMCO120+M&G80-100+醫療50+黃金30）→ 8/26已轉80萬 8/30生效，剩餘本週內完成")
+        _plan_lines.append("✅ 保單轉換 9/10 送出（安聯＋第一金同步）→ 轉入 M&G入息A美元避險月配，T+4 預期 9/16 生效")
         # ⑨ 負債/質押
-        _plan_lines.append("🔍 9/10 PI 認列 → 質押350萬@2.77% 還安聯300+元大50（高息→低息，月省利息；不受 Gate 限制）")
+        _plan_lines.append("🔍 質押：PI 已核定（9/8）→ 9/11(五)13:00 板橋國泰簽約 700萬池×50%=350萬@2.8%固定（撥款2-4週）→ 還安聯300+元大50（高息→低息；不受 Gate 限制）")
         # ⑩ 產業輪動
         if _rot4.get("產業"):
             _plan_lines.append(f"📊 產業輪動：買「{_rot4.get('產業','—')}」（{_rot4.get('標的','')}）｜避開「公用事業」")
@@ -334,7 +334,7 @@ def main():
 
     # ── 質押 ──
     pledge = s.get("質押計畫", {})
-    ltv_txt = "未質押（9/3 PI 後 350萬@2.77%）"
+    ltv_txt = "未質押（9/11 簽約後 350萬@2.8%）"
 
     # ── 本週乾粉輪動建議（Phase 3：讀 snapshot.rotation_recommendation + 交易計畫）──
     rot_html = ""
@@ -375,7 +375,7 @@ def main():
     <div style="margin-top:8px"><div style="font-size:12px;font-weight:700;color:#94a3b8">⏸ 避開/暫緩</div>
     <table><tr><th>產業</th><th class="num">現況</th><th>動作</th><th>理由</th></tr>{av_rows}</table></div>
     {dd_block}
-    <div style="font-size:10.5px;color:var(--sub);margin-top:6px">乾粉=現金−70萬底線+月盈餘50%；單筆≤5萬、分批；8/24 轉換/9/3 PI 前保留緩衝</div>
+    <div style="font-size:10.5px;color:var(--sub);margin-top:6px">乾粉=現金−70萬底線+月盈餘50%；單筆≤5萬、分批；保單轉換/質押撥款前保留緩衝</div>
   </div>"""
     except Exception:
         rot_html = ""
@@ -478,7 +478,7 @@ def main():
     milestones = [
         ("8/24（一）", _p24_txt, "high"),
         ("8/31", "安聯B 贖回（補現金 + 抵借款 100萬）", "mid"),
-        ("9/3 前", "PI 認列 → 質押 350萬@2.77% 還債", "high"),
+        ("9/11", "板橋國泰質押簽約：350萬@2.8% 還安聯300+元大50", "high"),
         ("9月中", "富達/聯博首次配息 → 更新配息基準", "mid"),
         ("10月", "洲際W 轉貸國泰（要求全額吸收規費）＋ 標案", "mid")]
     ms_html = ""

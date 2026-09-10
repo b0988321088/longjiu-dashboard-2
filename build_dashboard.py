@@ -20,6 +20,20 @@ def main():
     import datetime as _dt
     tpl = tpl.replace("系統時間：2026-08-29", "系統時間：" + _dt.date.today().strftime("%Y-%m-%d"))
 
+    # 2026-09-10 資金在途（贖回在途款）：未入帳前不沖銷資產（使用者 9/10 指正）
+    _pr = snap.get("pending_redemption") or {}
+    if _pr:
+        _pending_note = (
+            '<span class="font-bold text-sky-300">💰 資金在途（' + str(_pr.get("贖回日", "")) + '）：</span>'
+            '<span class="text-slate-300">' + str(_pr.get("項目", "")) + " "
+            + _fmt(_pr.get("金額", 0)) + " 已送贖回，款項在途（預期 " + str(_pr.get("入帳日_預期", "")) + " 入帳）。"
+            + "⚠️ 入帳前不沖銷資產：仍計入基金市值，總資產維持 " + _fmt(snap.get("total_assets", 0))
+            + "；實際入帳後才 基金→現金 轉列（以實際入帳金額為準）。</span>"
+        )
+    else:
+        _pending_note = ""
+    tpl = tpl.replace("__PENDING_REDEMPTION__", _pending_note)
+
     # ── 從 snapshot 計算真值 ──
     cash = snap.get("cash_total", 0) or 0
     ins = snap.get("insurance_total", 0) or 0
@@ -103,13 +117,13 @@ def main():
             _dry2 = snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
             _usd2 = snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
             _plan = []
-            _plan.append(f"台股慢慢買 0050/006208 每週1.5-2萬（缺口 -{10-_pen2.get('台股市值型成長',7.5):.1f}pp）")
+            _plan.append(f"⏸️ 台股觀望（缺口 -{10-_pen2.get('台股市值型成長',7.5):.1f}pp）：等質押撥款(9/11簽約→2-4週)+Fed 9/11 CPI / 9/16 FOMC")
             _plan.append("防守合併已足凍結；債券等 US30Y<5.30%")
             _plan.append(f"乾粉 {_dry2/10000:.1f}萬 優先非核心消費（0051 回檔-5%）")
-            _plan.append("9/2 保單轉換截止（PIMCO120+M&G80-100+醫療50+黃金30）；8/26已轉80萬 8/30生效")
+            _plan.append("✅ 保單轉換 9/10 送出（安聯＋第一金同步）→ 轉入 M&G入息A美元避險月配，T+4 9/16 生效")
             if _usd2 > 55:
                 _plan.append(f"美元曝險 {_usd2}% 超標→美股減碼")
-            _plan.append("PI 核可(9/10)→質押350萬還債；9/3 起追銀行進度")
+            _plan.append("🔍 質押：PI 已核定(9/8)→9/11(五)13:00 板橋國泰簽約 700萬池×50%=350萬@2.8%固定（撥款2-4週）")
             rep["__RADAR_DATE__"] = _rd.get("last_run", "2026-08-29")[:10]
             rep["__RADAR_SIGNALS__"] = _signals_txt
             rep["__RADAR_PLAN__"] = "｜".join(_plan)

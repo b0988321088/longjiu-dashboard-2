@@ -156,7 +156,7 @@ if _pl_b > 0:
 if _rows_pl:
     w(f"<div class='callout' style='border-left:3px solid #ef4444'>🔒 <b>現況質押借款（2026-09-05 透明化 — 既有質押非 0，情境表 LTV 為規則上限非現況）</b>"
       f"<table style='width:100%;font-size:12px;margin-top:6px;border-collapse:collapse'><tr style='color:#64748b'><th style='text-align:left;padding:3px 6px'>項目</th><th class='num'>借款</th><th class='num'>利率</th><th class='num'>LTV(佔擔保)</th><th>狀態</th></tr>{_rows_pl}</table>"
-      f"<span style='color:#64748b;font-size:12px'>PI 富達質押 350萬@2.77% 尚未撥款（9/10 認列後送件）；情境表 LTV 上限：當前『區間震盪』≤52%。房貸（大義街國泰 1,200萬@2.6%、洲際W 永豐 1,312萬@2.5%）屬不動產貸款，不計入質押。</span></div>")
+      f"<span style='color:#64748b;font-size:12px'>PI 質押 350萬@2.8% 尚未撥款（PI 已核定 9/8；9/11 板橋國泰簽約後送件、撥款 2-4 週）；情境表 LTV 上限：當前『區間震盪』≤52%。房貸（大義街國泰 1,200萬@2.6%、洲際W 永豐 1,312萬@2.5%）屬不動產貸款，不計入質押。</span></div>")
 
 # 1. Overview table
 w("<div class='card'><h2>🎯 配置總覽</h2>")

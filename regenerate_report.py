@@ -223,8 +223,15 @@ except Exception as _e9a:
 
 # 9b. 自動產出差異分析
 import subprocess
-_diff_ok = subprocess.run(["python", str(BASE / "asset_diff_monitor.py")], capture_output=True, text=True, timeout=60)
+_diff_ok = subprocess.run([sys.executable, str(BASE / "asset_diff_monitor.py")], cwd=BASE, capture_output=True, text=True, timeout=120)
+if _diff_ok.returncode != 0:
+    # 2026-09-10：差異分析在管線內偶發 exit=1（stdout/stderr 皆空；單獨執行 RC=0）
+    # → 自動重試一次，確保每次管線都產出當日差異分析，不留舊檔
+    print(f"⏳ 差異分析 exit={_diff_ok.returncode} → 自動重試一次")
+    _diff_ok = subprocess.run([sys.executable, str(BASE / "asset_diff_monitor.py")], cwd=BASE, capture_output=True, text=True, timeout=120)
 print(_diff_ok.stdout.split(chr(10))[-2] if _diff_ok.stdout else f"差異分析 exit={_diff_ok.returncode}")
+if _diff_ok.returncode != 0:
+    print("  ⚠️ 差異分析重試仍失敗（改用既有檔案，請人工確認 asset_diff_" + TODAY + ".html）")
 
 # 9c. 自動更新儀表板（2026-08-27 根治：統一呼叫 build_dashboard.py，舊邏輯漏連結佔位符）
 import subprocess as _sp9c
