@@ -280,5 +280,23 @@
   "category": "完成",
   "item": "第一金保單轉換登記：FJ33 摩根多重收益 → M&G入息A(美元避險月配)F（9/10 完成申請）",
   "detail": "使用者 9/10 於第一金線上完成第二站轉換（100%）：轉出 FJ33 摩根多重收益(美元對沖)A月配（原 1,902,345）→ 轉入 M&G入息基金A(美元避險月配)F（D01）。依 8/10 鐵則僅登記不動成分（T+4 預期 9/16 生效後才更新 firstjin 成分+四源+穿透）。已更新：snapshot.firstjin_detail.conversion + conversion_history（第3筆）、relay_stations 第一站基金（改標安聯A+B 持有、第一金 9/16 轉出）與備註；schedule_events 新增 2 筆（9/10 🔄 完成申請、9/16 📌 T+4 生效→更新成分）+ calendar_sync 已推 GCal（9/10、9/16 皆驗證存在）。配息判讀：9/8 摩根基準日已先領（第一站不受影響，安聯A+B 仍持摩根JPM 1,058,321）；M&G 9月 T+4 截止 9/14、基準日約 9/18 → 9/16 生效應可涵蓋（生效後確認）。⚠️ 月中站集中度上升：第一金 1.9M 由月初站移往 M&G（月中站）。儀表板/報表同步：index_template.html 敘事（資金鏈現況/✅清單/接力總覽副標/第一金卡註記/第一站+第二站）、pending_decisions + dashboard_decisions 新增追蹤、index.html + 5 報表重產（check_dashboard_sync 全過）；commit 6272cf4b 已推 clean-main+main，線上 index.html/日報驗證含新內容（HTTP 200）。"
+ },
+ {
+  "date": "2026-09-10",
+  "category": "完成",
+  "item": "日報2026-09-10",
+  "detail": "證券2,948,510 保單9,661,253 配息86,473"
+ },
+ {
+  "date": "2026-09-10",
+  "category": "完成",
+  "item": "資產穿透2026-09-10",
+  "detail": "台股1,982,782 美股11,741,488 防守1,158,281 債券4,519,087 現金857,885"
+ },
+ {
+  "date": "2026-09-10",
+  "category": "完成",
+  "item": "儀表板＋雷達同步2026-09-10",
+  "detail": "index.html 已含 9/10 資料；radar_report_2026-09-10.html 產出"
  }
 ]
