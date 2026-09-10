@@ -256,5 +256,29 @@
   "category": "完成",
   "item": "資產穿透2026-09-09",
   "detail": "台股1,980,680.0 美股11,530,176.0 防守1,156,465.0 債券4,751,300.0 現金5,833,013.0"
+ },
+ {
+  "date": "2026-09-10",
+  "category": "完成",
+  "item": "安聯保單轉換申請送出（→M&G 入息，主要目的：領月配息）",
+  "detail": "9/10 於安聯 App 送出，主要目的＝取回月配息現金流（M&G 入息A美元避險月配，債約55%）；附帶降權益波動（9/11 CPI 前防守）。T+4 預期 9/16 生效，屆時更新 snapshot + 四源同步 + 穿透重算。⚠️ M&G 為美元避險基金，不降匯率曝險；月配含本金返還成分（8/21 配息級別原則）"
+ },
+ {
+  "date": "2026-09-10",
+  "category": "計畫",
+  "item": "安聯保單轉換計畫（→ 0056 台幣化，預計 9/17）",
+  "detail": "使用者計畫於 9/17 申請安聯保單轉換（美元→ 0056 NTDET0130 台幣化），主要目的：降低美元曝險。屆時需提供轉出明細/金額、轉入 0056 金額。生效後更新 snapshot + 四源同步 + 穿透重算（防守桶↑/美元曝險↓）。"
+ },
+ {
+  "date": "2026-09-10",
+  "category": "完成",
+  "item": "Watchdog v6.7（INC-151）— 已結束 session 不再推 ⚠️ 殘留警報",
+  "detail": "9/10 08:45:12 session 被重置（session_reset）後，watchdog 仍在 08:46:46 推「已達 264 則（+15）」殘留警報 — active_sessions() 只濾 archived/hidden、不濾 ended_at。修法：active_sessions() 帶出 ended_at（舊 schema 無此欄 → NULL 容忍），WARN/runaway 分支跳過 ended session（仍保留 counts 歷史計數、pop warned_n、act log 記「WARN 跳過」）；CRIT/AUTO（失敗訊號驅動）刻意不動 — ended 但仍被 mirror/routing 殘留寫入而卡死仍須能自動重置（9/10 08:45-08:47 舊 sid 還吃了 3 則訊息）。驗證：沙箱 29 檢查（新增情境 I ended 靜默+計數保留 / J ended+新失敗仍重置）全 PASS；真實 dry-run 靜默 + act log 有跳過紀錄。備份 session_bloat_watch.py.bak-20260910-v66；技能/§19c 已同步。"
+ },
+ {
+  "date": "2026-09-10",
+  "category": "完成",
+  "item": "第一金保單轉換登記：FJ33 摩根多重收益 → M&G入息A(美元避險月配)F（9/10 完成申請）",
+  "detail": "使用者 9/10 於第一金線上完成第二站轉換（100%）：轉出 FJ33 摩根多重收益(美元對沖)A月配（原 1,902,345）→ 轉入 M&G入息基金A(美元避險月配)F（D01）。依 8/10 鐵則僅登記不動成分（T+4 預期 9/16 生效後才更新 firstjin 成分+四源+穿透）。已更新：snapshot.firstjin_detail.conversion + conversion_history（第3筆）、relay_stations 第一站基金（改標安聯A+B 持有、第一金 9/16 轉出）與備註；schedule_events 新增 2 筆（9/10 🔄 完成申請、9/16 📌 T+4 生效→更新成分）+ calendar_sync 已推 GCal（9/10、9/16 皆驗證存在）。配息判讀：9/8 摩根基準日已先領（第一站不受影響，安聯A+B 仍持摩根JPM 1,058,321）；M&G 9月 T+4 截止 9/14、基準日約 9/18 → 9/16 生效應可涵蓋（生效後確認）。⚠️ 月中站集中度上升：第一金 1.9M 由月初站移往 M&G（月中站）。"
  }
 ]

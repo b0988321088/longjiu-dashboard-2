@@ -236,7 +236,7 @@ if _fb:
         elif "0050連結" in _fn or "統一奔騰" in _fn or "路博邁" in _fn or "安聯台灣科技" in _fn:
             # 2026-08-13 修正：路博邁台灣5G/安聯台灣科技是台股基金
             _cat = "🇹🇼 台股"; _fund_tw += _fv2
-        elif "台中銀台灣優息" in _fn or "國泰台灣高股息" in _fn:
+        elif any(_k in _fn for _k in ["台中銀台灣優息", "國泰台灣高股息", "元大台灣高股息", "高股息ETF連結"]):
             _cat = "🛡️ 防守型"; _fund_def += _fv2
         elif "貨幣" in _fn:
             _cat = "💵 現金類"; _fund_cash += _fv2

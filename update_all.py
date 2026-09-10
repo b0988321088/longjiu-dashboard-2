@@ -157,7 +157,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             _fund_bonds += round(_fval * 0.6137)
             _fund_cash += 0
             _fund_us_tech += round(_fval * 0.10)
-        elif "台中銀台灣優息" in _fn or "國泰台灣高股息" in _fn:
+        elif any(_k in _fn for _k in ["台中銀台灣優息", "國泰台灣高股息", "元大台灣高股息", "高股息ETF連結"]):
             _fund_def += _fval
         elif any(_k in _fn for _k in ["台新美日台", "貝萊德", "安聯AI", "聯博", "摩根", "M&G", "安聯收益成長", "投資型保單"]):
             _fund_us += _fval
