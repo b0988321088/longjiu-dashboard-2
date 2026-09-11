@@ -75,7 +75,7 @@ def build_panel(snap: dict | None = None) -> str:
     rows.append("<div style='font-size:12.5px;line-height:1.9'>")
     rows.append(
         f"<strong>① 主觸發：</strong>US30Y {main['US30Y']:.2f}% ｜ VIX {main['VIX']:.1f} ｜ "
-        f"巴菲特 —｜CPI —（後三者待數據源，None 不觸發）<br/>"
+        f"巴菲特 —｜CPI —（後三者待數據源，不觸發）<br/>"
     )
     rows.append(
         f"<strong>② 情境評分：</strong>科技重新定價 {reg['科技重新定價']['score']} {_score_light(reg['科技重新定價']['score'])} ｜ "
