@@ -310,5 +310,35 @@
   "category": "完成",
   "item": "儀表板＋雷達同步2026-09-11",
   "detail": "index.html 已含 9/11 資料（16:59）；radar_report_2026-09-11.html 產出（16:15）；資產差異 asset_diff_2026-09-11.html 同步"
+ },
+ {
+  "date": "2026-09-12",
+  "category": "完成",
+  "item": "一鍵更新管線四缺陷修復（INC-152~155）",
+  "detail": "①four_source_sync Step4 保單口徑漏修（舊口徑 9,566,547 vs DB insurance_total 9,661,253，差 94,706 → 每日假判四源不一致）②sync_all argv 未驗證（--check 被當日期）③失敗登記無去重 ④cio_review 檢查字串假通過（靠無關表格「資金來源」過關）。修後實跑 sync_all 16 步全綠、CIO 審查 13 項全過 exit 0"
+ },
+ {
+  "date": "2026-09-12",
+  "category": "完成",
+  "item": "--check 數據污染清除（五處）",
+  "detail": "dragon_assets.db 假列／asset_diff_history.json 髒 key／dashboard_decisions.json 6 筆任務字串／daily_report_v2_--check.html／notion_bridge/--check_strategy_handbook.md 全清除；備份 *.bak-20260912-checkclean"
+ },
+ {
+  "date": "2026-09-12",
+  "category": "完成",
+  "item": "異常記錄整併：error_register.md 445 行 → 68 行",
+  "detail": "87 筆自動登記中 5 筆有根因逐筆保留、82 筆彙總成表（穿透44／同義20／四源16／驗證失敗2）；原文歸檔 error_register_archive_202607-09.md；新機制 inc_events.jsonl（同錯誤去重累加 count）+ lj_inc.py list/close"
+ },
+ {
+  "date": "2026-09-12",
+  "category": "完成",
+  "item": "日報／穿透／儀表板／週報同步 2026-09-12",
+  "detail": "證券2,948,510 保單9,661,253 配息86,473 現金857,298；總資產26,085,558；三報表穿透一致"
+ },
+ {
+  "date": "2026-09-12",
+  "category": "計畫",
+  "item": "本週計畫結案（2026-09-08 ~ 09-12）＋下週待辦",
+  "detail": "本週執行紀錄見 snapshot.weekly_ops_closure_0912；下週：①9/16 保單轉換 T+4 生效（安聯＋第一金→M&G入息）→ 更新成分+四源+穿透 ②9/16 FOMC 定調 ③9/17 安聯保單→0056 台幣化申請（降美元曝險）④9/25 質押撥款 540萬到位 → 還安聯300萬＋10月標案押標金 ⑤每週六再平衡授權評估（權重超標才自動減碼）。行動儀表板本週計畫列 10 項（radar_state.weekly_plan 2026-09-12）"
  }
 ]

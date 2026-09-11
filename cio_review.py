@@ -90,12 +90,18 @@ def main() -> None:
 
     pass_check("五大章節完整且順序 correct")
 
-    # 2. Relay 站制（2026-08-06：第三站已轉摩根，放寬為核心字串檢查；修正 M&G 實體化 bug）
-    # 2026-08-12 修正：檢查字串對齊 snapshot 真值「安聯AI收益」（無空格，8/10 起日報即此格式；
-    # 舊字串「安聯 AI 收益」8/10 起永遠不符 → 該檢查已被 regenerate_report.py 無條件 [cioreviewed] 繞過）
-    if not ("摩根多重收益" in daily and "安聯收益成長 + M&G" in daily and "安聯AI收益" in daily):
-        fail("Relay 站制不符")
-    pass_check("Relay 三站制正確")
+    # 2. Relay 站制（2026-09-12 修正：改為對照 snapshot.relay_stations 真值，逐站驗「基金」字串）
+    # 舊寫法對「整份日報」找 3 個固定長字串（摩根多重收益／安聯收益成長 + M&G／安聯AI收益）→
+    # 會被 LLM 生成的段落（巴菲特/CTO/CIO）意外滿足或意外失效，閘門隨機過／隨機擋（INC-155 同類）。
+    _rs = snap.get("relay_stations") or {}
+    _stations = [k for k in _rs if k.startswith("第") and isinstance(_rs.get(k), dict)]
+    if len(_stations) < 3:
+        fail(f"Relay 站制不符：snapshot.relay_stations 站數不足（{len(_stations)}）")
+    _missing = [f"{k}:{_rs[k].get('基金', '')}" for k in _stations
+                if _rs[k].get("基金") and _rs[k]["基金"] not in daily]
+    if _missing:
+        fail(f"Relay 站制不符：日報缺站別基金字串 {_missing}")
+    pass_check(f"Relay 三站制正確（{len(_stations)} 站，對照 snapshot 真值）")
 
     # 3. 配息 SOP wording
     if "T+4" not in daily or ("hold" not in daily.lower() and "hold住" not in daily and "Hold" not in daily and "最晚轉換申請日" not in daily):
@@ -124,8 +130,17 @@ def main() -> None:
     pass_check("無 Railway / dashboard.py / 旗艦版連結")
 
     # 6. Market 情報附來源標記 + 可信度評分檔案存在
-    if "來源" not in daily:
+    # 2026-09-12 修正（INC-155）：舊寫法 `"來源" not in daily` 是全檔 2 字元搜尋，
+    # 靠無關表格的「資金來源」意外通過；重跑管線後該字串消失就擋推（假失敗）。
+    # 改為只認 market-intel-block 區塊：必須非空 + 含來源標記。
+    _i = daily.find('id="market-intel-block"')
+    _j = daily.find("戰略異常看板", _i) if _i >= 0 else -1
+    _mi_txt = re.sub(r"<[^>]+>", " ", daily[_i:(_j if _j > _i else _i + 4000)]) if _i >= 0 else ""
+    if len(_mi_txt.strip()) < 50:
+        fail("Market 情報區塊為空或不存在")
+    elif not any(_s in _mi_txt for _s in ("FRED", "來源", "資料來源", "新聞")):
         fail("Market 情報缺少來源標記")
+    pass_check("Market 情報附來源標記（market-intel-block 非空且有來源）")
     mi = Path(BASE / "market_intel.py")
     if mi.exists() and mi.read_text(encoding="utf-8").count("可信度") >= 3:
         pass_check("Market 情報附可信度標記（market_intel.py）")

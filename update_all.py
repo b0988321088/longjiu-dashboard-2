@@ -42,7 +42,8 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     _TECH = {"貝萊德世界科技": 1.0, "貝萊德科技": 1.0, "009824": 1.0, "00924": 1.0, "台新美日台半導體": 0.90,
              "富達全球動能多元": 0.35, "安聯AI收益成長": 0.35, "聯博美國成長": 0.40, "安聯收益成長": 0.20,
              "摩根JPM": 0.15, "摩根多重收益": 0.15, "PIMCO收益增長": 0.20, "M&G入息": 0.15, "聯博全球多元收益": 0.15,
-             "貝萊德世界黃金基金A10美元(總報酬穩定配息)": 0, "貝萊德世界健康科學基金A10美元(總報酬穩定配息)": 0.30, "00646": 0.32, "009823": 0.32}
+             "貝萊德世界黃金基金A10美元(總報酬穩定配息)": 0, "貝萊德世界健康科學基金A10美元(總報酬穩定配息)": 0.30, "00646": 0.32, "009823": 0.32,
+             "貝萊德智慧數據收益成長B11": 0.65}
 
     def _match_fund_key(_full_name, _lookup_dict):
         """模糊匹配基金名稱"""
@@ -157,6 +158,11 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             _fund_bonds += round(_fval * 0.6137)
             _fund_cash += 0
             _fund_us_tech += round(_fval * 0.10)
+        elif "貝萊德智慧數據收益成長B11" in _fn: # 新增貝萊德B11的處理邏輯
+            _fund_us += round(_fval * 0.65) # 股票部分 (美股)
+            _fund_bonds += round(_fval * 0.33) # 債券部分
+            _fund_cash += round(_fval * 0.02) # 現金及其他
+            _fund_us_tech += round(_fval * 0.65 * _tr(_fn)) # 股票部分乘以科技比率
         elif any(_k in _fn for _k in ["台中銀台灣優息", "國泰台灣高股息", "元大台灣高股息", "高股息ETF連結"]):
             _fund_def += _fval
         elif any(_k in _fn for _k in ["台新美日台", "貝萊德", "安聯AI", "聯博", "摩根", "M&G", "安聯收益成長", "投資型保單"]):

@@ -7,6 +7,18 @@ v2 修正：①加入 asset_sync.py（同義欄位驗證，2026-08-24 血淚：�
 import subprocess, sys, datetime, json, re
 from pathlib import Path
 
+def _validate_date_format(date_str):
+    try:
+        # Strict YYYY-MM-DD format check
+        parsed_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+        # Round-trip check to ensure no partial matches like '2026-09-12extra'
+        if parsed_date.strftime("%Y-%m-%d") == date_str:
+            return date_str
+    except ValueError:
+        pass
+    return None
+
+
 BASE = Path(__file__).resolve().parent
 
 def run(label, cmd, timeout=300, stop_on_fail=True):
@@ -31,7 +43,15 @@ def run(label, cmd, timeout=300, stop_on_fail=True):
         return False
 
 def main():
-    today = sys.argv[1] if len(sys.argv) > 1 else datetime.date.today().strftime("%Y-%m-%d")
+    if len(sys.argv) > 1:
+        today_arg = sys.argv[1]
+        today = _validate_date_format(today_arg)
+        if today is None:
+            print(f"❌ 無效的日期參數 '{today_arg}'. 請使用 YYYY-MM-DD 格式 (例如: 2026-09-12).")
+            sys.exit(2)
+    else:
+        today = datetime.date.today().strftime("%Y-%m-%d")
+
     print(f"🔁 龍九一鍵同步 v4（{today}）")
     # v4 檢查 0：儀表板模板硬編碼檢查（2026-08-25：改口徑後 index_template.html 殘留舊值 → 儀表板顯示舊數字）
     # ⚠️ 2026-08-29：勿把「rep dict 錨點值」（35,583/63,027/2,723,839 等）加入此清單 —

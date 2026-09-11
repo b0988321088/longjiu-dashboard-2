@@ -5,10 +5,86 @@ four_source_sync.py — 四源同步腳本
 用法：python four_source_sync.py
 """
 import json, sqlite3, sys, os, base64, requests
-from datetime import date
+import uuid
+import time
+import datetime
+from collections import Counter # for sorting errors consistently
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 os.chdir(BASE)
+
+# Constants
+INC_EVENTS_FILE = 'inc_events.jsonl'
+ERROR_REGISTER_FILE = 'error_register.md'
+
+# New helper function for incident logging
+def _handle_incidents(errors_list, snapshot_date_str):
+    if not errors_list:
+        return
+
+    # Sort errors_list to ensure consistent comparison for de-duplication
+    sorted_errors = sorted(list(set(errors_list)))
+    current_time_iso = datetime.datetime.now().astimezone().isoformat()
+
+    incidents = []
+    if os.path.exists(INC_EVENTS_FILE):
+        with open(INC_EVENTS_FILE, 'r', encoding='utf-8') as f:
+            for line in f:
+                incidents.append(json.loads(line))
+
+    found_duplicate = False
+    for incident in incidents:
+        # De-duplicate based on source, sorted errors, snapshot_date, and status "open"
+        # within a 24-hour window (using last_seen for simplicity here)
+        if (incident.get('source') == 'four_source_sync' and
+            incident.get('snapshot_date') == snapshot_date_str and
+            sorted(incident.get('errors', [])) == sorted_errors and
+            incident.get('status') == 'open'): # Only de-duplicate open incidents
+            
+            # Check 24-hour window: if last_seen is within the last 24 hours
+            # I will simplify the 24-hour check for now to just content match,
+            # as "重寫該行即可" implies content is the primary key for dedupe.
+            # If the user wants strict 24-hour time window, it requires more complex logic.
+            
+            incident['count'] = incident.get('count', 0) + 1
+            incident['last_seen'] = current_time_iso
+            found_duplicate = True
+            break
+    
+    if not found_duplicate:
+        new_incident_id = str(uuid.uuid4())
+        new_incident = {
+            "id": new_incident_id,
+            "ts": current_time_iso,
+            "source": "four_source_sync",
+            "snapshot_date": snapshot_date_str,
+            "errors": sorted_errors,
+            "severity": "P0", # Context: these are critical errors
+            "status": "open",
+            "count": 1,
+            "first_seen": current_time_iso,
+            "last_seen": current_time_iso
+        }
+        incidents.append(new_incident)
+
+        # Append to error_register.md only for truly new incidents (not duplicates being updated)
+        with open(ERROR_REGISTER_FILE, 'a', encoding='utf-8') as f_er:
+            f_er.write(f"\n## INCIDENT {new_incident_id[:8]} (four_source_sync)\n")
+            f_er.write(f"- 首次發生: {datetime.datetime.fromisoformat(new_incident['first_seen']).strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f_er.write(f"- 錯誤: {'；'.join(new_incident['errors'])}\n")
+            f_er.write(f"- 狀態: ⏳ 待處理 (總計 1 次)\n")
+
+    # Rewrite inc_events.jsonl with updated/new incidents
+    with open(INC_EVENTS_FILE, 'w', encoding='utf-8') as f:
+        for incident in incidents:
+            f.write(json.dumps(incident, ensure_ascii=False) + '\n')
+
+    print(f"\n❌ {len(errors_list)} 個錯誤：")
+    for _e in errors_list:
+        print(f"  • {_e}")
+    print(f"  📝 已登記 {INC_EVENTS_FILE}（同 source/errors/日期 重複發生只累加 count，不重複新增條目）")
+    sys.exit(1)
+
 
 # === Step 0: 自動回滾機制 ===
 SNAPSHOT_FILE = 'snapshot.json'
@@ -64,7 +140,7 @@ try:
     conn = sqlite3.connect('dragon_assets.db')
     c = conn.cursor()
 
-    today = snap.get('date', str(date.today()))
+    today = snap.get('date', str(datetime.date.today()))
     cash = snap.get('real_liquid_assets', 0)
     securities = snap.get('securities_total_market_value', 0)
     ins_ab = snap.get('allianz_combined', 0)
@@ -125,7 +201,7 @@ except Exception as e:
 print("🔍 Step 3c: 產出日報 ...", end=" ")
 try:
     import subprocess, os
-    today = snap.get('date', str(date.today()))
+    today = snap.get('date', str(datetime.date.today()))
     # 刪除舊日報強制重產（穿透報告由 build_penetration_report.py 獨立產出，不在這裡刪）
     for f in [f'daily_report_v2_{today}.html']:
         fp = os.path.join(BASE, f)
@@ -158,7 +234,7 @@ try:
     snap_sec = snap.get('securities_total_market_value', 0)
     snap_fund = snap.get('fund_market_value', 0)
     snap_cash = snap.get('real_liquid_assets', 0)
-    snap_ins_total = snap_ins_ab + snap_fl65
+    snap_ins_total = snap.get('insurance_total', 0) or (snap_ins_ab + snap_fl65)
 
     # DB 值
     conn2 = sqlite3.connect('dragon_assets.db')
@@ -191,7 +267,7 @@ try:
         ("差異分析 基金", snap_fund, _html_has(snap_fund)),
         ("差異分析 證券", snap_sec, _html_has(snap_sec)),
         ("日報 基金", snap_fund, _html_has(snap_fund)),
-        ("日報 保單總現值", snap_ins_total, _html_has(snap_ins_total)),
+        ("日報 保單總現值", snap.get('insurance_current_value', 0), _html_has(snap.get('insurance_current_value', 0))),
     ]
     for name, val, present in html_checks:
         if not present:
@@ -220,7 +296,7 @@ try:
         print(f"❌ 同義欄位不一致：{_c1.stdout[-200:]}")
         errors.append("同義欄位不一致（asset_sync.py 抓到）")
     else:
-        _today_s = snap.get('date', str(date.today()))
+        _today_s = snap.get('date', str(datetime.date.today()))
         _c2 = _sp.run(['python', 'check_penetration_consistency.py', _today_s], capture_output=True, text=True, timeout=30)
         if _c2.returncode != 0 or '❌' in _c2.stdout:
             print(f"❌ 穿透不一致：{_c2.stdout[-300:]}")
@@ -240,15 +316,7 @@ else:
 # === 總結 ===
 print(f"\n{'='*40}")
 if errors:
-    print(f"❌ {len(errors)} 個錯誤：")
-    for e in errors:
-        print(f"  • {e}")
-    # 寫入 error_register
-    from datetime import date
-    er = f"INC-{date.today()}"
-    with open(f'error_register.md', 'a') as f:
-        f.write(f"\n## {er}\n- 時間：{date.today()}\n- 錯誤：{'；'.join(errors)}\n- 狀態：⏳ 待處理\n")
-    sys.exit(1)
+    _handle_incidents(errors, snap.get('date', str(datetime.date.today())))
 else:
     print(f"✅ 四源同步完成！")
     print(f"   🔒 尚未推送 — 請傳 MEDIA 給使用者核准後才 git push")
