@@ -302,8 +302,8 @@
  {
   "date": "2026-09-11",
   "category": "完成",
-  "item": "國泰質押對保簽約完成（540萬@2.77%）",
-  "detail": "9/11(五)13:00 板橋國泰質押對保完成；擔保池1,200萬(富達600+聯博100+貝萊德B11 500)×4.5成=540萬@2.77%，約兩週撥款(約9/25)；用途還安聯300萬+10月標案押標金"
+  "item": "9/11 國泰質押核定（540萬@2.77%）— 未對保、未撥款",
+  "detail": "2026-09-12 使用者更正：9/11 僅完成質押額度核定，未對保、未撥款。擔保池 1,200萬(富達600+聯博100+貝萊德B11 500)×4.5成=540萬@2.77%（池市值 1,177.4萬 → LTV 45.9%）；對保/簽約待辦 → 對保後約 2 週才撥款。用途：還安聯 300萬@4.2% + 餘 240萬作 10月標案押標金"
  },
  {
   "date": "2026-09-11",
@@ -340,5 +340,29 @@
   "category": "計畫",
   "item": "本週計畫結案（2026-09-08 ~ 09-12）＋下週待辦",
   "detail": "本週執行紀錄見 snapshot.weekly_ops_closure_0912；下週：①9/16 保單轉換 T+4 生效（安聯＋第一金→M&G入息）→ 更新成分+四源+穿透 ②9/16 FOMC 定調 ③9/17 安聯保單→0056 台幣化申請（降美元曝險）④9/25 質押撥款 540萬到位 → 還安聯300萬＋10月標案押標金 ⑤每週六再平衡授權評估（權重超標才自動減碼）。行動儀表板本週計畫列 10 項（radar_state.weekly_plan 2026-09-12）"
+ },
+ {
+  "date": "2026-09-12",
+  "category": "完成",
+  "item": "watchdog v6.8（INC-157）：純額度訊號（429/RESOURCE_EXHAUSTED）不再自動重置，只推 45m 節流警報",
+  "detail": "訊號拆 hard/quota（count_delta 新增 loop_only/require_any；state errq_size/errq_count）；狀態檔已播種基準（errq_count=26）避免首窗假警報；沙箱 36 檢查全 PASS + 真實 429 行重播驗證（stdout 只有警報、spawn 0 次）；9/12 02:52:48 cron 靜默正常"
+ },
+ {
+  "date": "2026-09-12",
+  "category": "完成",
+  "item": "備援鏈擴充（config fallback_providers）：DS 400 → 4 個 Gemini 模型依序（各自獨立 free-tier 額度桶）",
+  "detail": "gemini-2.5-flash → 3.5-flash-lite → 3.6-flash → 3.1-flash-lite；legacy fallback_model 已移除（單一真值）；4 個模型實測 generateContent HTTP 200；改動經 hermes_cli config API 寫入（config.yaml.bak-20260912-pre-fallbackchain）；gateway 讀到新鏈（mid-uptime 生效，免重啟）；INC-157"
+ },
+ {
+  "date": "2026-09-12",
+  "category": "完成",
+  "item": "決策建檔：500萬高息負債清償優先（保單質押400萬@4% + 券商質押100萬）",
+  "detail": "Notion ⚡執行中 + pending_decisions（第16筆，日報第5章可見）+ dashboard_decisions source=user（第19筆）；資金來源=9/25 國泰質押撥款 540萬@2.77%；月省息約 16,600"
+ },
+ {
+  "date": "2026-09-12",
+  "category": "完成",
+  "item": "附帶裁示：10月標案押標金延至 9 月底評估",
+  "detail": "使用者：先把能做的做好、以優化為主 → 撥款不預留押標金餘額；落地 snapshot.ruling_20260912 ⑥ + 標案押標金_1010.裁示_0912 + pending/dashboard/Notion；待 9 月底評估時決定資金來源（現金流滾存/其他部位/縮小標案）"
  }
 ]
