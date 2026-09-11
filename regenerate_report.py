@@ -308,7 +308,7 @@ for k, v in checks.items():
     print(f"  {'✅' if v else '❌'} {k}")
 
 # 11. 自動推送到 GitHub（兩個分支）
-import subprocess, shlex, sys
+import subprocess, sys
 # ⚠️ INC-138（2026-08-12）：commit 前必須【真的執行】CIO 審查，通過才標 [cioreviewed] 並推送。
 # 舊版無條件塞 [cioreviewed] → 8/10 起審查空轉、未過審的日報照樣上線。
 _cio_ok = False
@@ -352,7 +352,7 @@ if ok and _cio_ok:
         print(f"  {'✅' if _ok else '❌'} 推到 {_ref}")
     # 驗證上線（Pages 建置有延遲 → 重試 4 次 × 20s）
     import time
-    _base = f"https://b0988321088.github.io/longjiu-dashboard-2"
+    _base = "https://b0988321088.github.io/longjiu-dashboard-2"
     _check_files = [f"daily_report_v2_{TODAY}.html", f"asset_diff_{TODAY}.html", "index.html"] + ([_pen_file] if _pen_file else [])
     for _f in _check_files:
         _code = ""
@@ -371,7 +371,7 @@ print(f'  龍九控股 — 管線產出完成 {TODAY}')
 print(f'{"="*50}')
 print(f'📰 日報:      https://b0988321088.github.io/longjiu-dashboard-2/{OUT.name}')
 print(f'🔄 再平衡儀表板: https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{TODAY}.html')
-print(f'🏠 儀表板:    https://b0988321088.github.io/longjiu-dashboard-2/')
+print('🏠 儀表板:    https://b0988321088.github.io/longjiu-dashboard-2/')
 print(f'📈 差異分析:  https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html')
 print(f'📊 穿透分析:  https://b0988321088.github.io/longjiu-dashboard-2/{_pen_file or f"penetration_report_{TODAY}.html"}')
 _emergency_link = f"emergency_report_{TODAY}.html" if Path(f"emergency_report_{TODAY}.html").exists() else (_latest_er if _latest_er else "無（週末不產出）")

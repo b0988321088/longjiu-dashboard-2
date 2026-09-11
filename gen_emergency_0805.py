@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """台股緊急應變 2026-08-05 — 產出 LLM 分析 JSON + Railway/GitHub 兩版 HTML"""
-import json, datetime, io, sys
+import json, io
 
 today = "2026-08-05"
 now = "2026-08-05 13:05"

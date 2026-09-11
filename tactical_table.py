@@ -286,7 +286,7 @@ def to_markdown(table: dict) -> str:
         _mt = pi.get("macro_triggers", {})
         if _mt:
             lines.append(f"- 🔴 宏觀紅線：30Y美債 >5.20% → {_mt.get('警戒線_5.20','停止新增長債/平衡基金')}")
-            lines.append(f"- 🟢 友善線：<4.80% 才可評估小槓桿（需高息負債全清+現金≥300萬+擔保≤4成）")
+            lines.append("- 🟢 友善線：<4.80% 才可評估小槓桿（需高息負債全清+現金≥300萬+擔保≤4成）")
         _fb = pi.get("forbidden", [])
         if isinstance(_fb, list) and _fb:
             lines.append(f"- ⛔ 禁止：{'；'.join(_fb[:2])}")

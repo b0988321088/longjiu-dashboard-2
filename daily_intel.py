@@ -12,8 +12,7 @@ from __future__ import annotations
 import json
 import os
 import re
-import sys
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
 # 2026-09-03 加固：feedparser 非核心依賴（僅 RSS 新聞擷取用），缺模組時降級跳過
 # 避免 cron 直跑環境缺套件時整條 run_daily/regenerate 管線在 import 階段全掛

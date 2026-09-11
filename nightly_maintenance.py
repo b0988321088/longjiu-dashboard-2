@@ -5,8 +5,8 @@
 3. 列出明日優先改善清單
 4. 通知 Telegram
 """
-import json, os, sqlite3, shutil
-from datetime import date, datetime
+import json, os, sqlite3
+from datetime import date
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent

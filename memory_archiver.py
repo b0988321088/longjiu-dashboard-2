@@ -33,8 +33,8 @@ if Path(__file__).parent.parent.parent / "skills":
         result["actions"].append(f"技能摘要失敗：{e}")
 
 # 2. 記憶容量提醒
-result["actions"].append(f"請執行 `memory(action='list')` 檢查容量，必要時移除低頻條目")
-result["actions"].append(f"低頻判定：INC記錄(已存ERROR_LOG)、超過1個月未更新的設定、已穩定的決策")
+result["actions"].append("請執行 `memory(action='list')` 檢查容量，必要時移除低頻條目")
+result["actions"].append("低頻判定：INC記錄(已存ERROR_LOG)、超過1個月未更新的設定、已穩定的決策")
 
 # 3. ERROR_LOG 摘要
 try:

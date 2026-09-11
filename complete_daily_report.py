@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """補完 2026-07-18 日報缺口章節：證券穿透、資產配置缺口、信用卡刷出策略、巴菲特/CTO、差異說明"""
-import re
 from pathlib import Path
 
 BASE = Path(__file__).parent.resolve()

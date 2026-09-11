@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """call_ds_pro.py — L3 任務：透過 terminal 調用 DS V4 Pro，繞過 delegation 限制"""
-import json, os, sys, requests
+import sys, requests
 from pathlib import Path
 
 # 從 hermes .env 讀取 API key

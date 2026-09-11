@@ -7,7 +7,7 @@ import json, sys
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
 
 C = {
@@ -45,7 +45,6 @@ def add_text(s, text, l, t, w, h, sz=14, bold=False, clr='text', align='l'):
     tf = tb.text_frame; tf.word_wrap = True
     tf.auto_size = None  # 不自動調整框大小
     # 設定垂直置中 + 允許縮小
-    from pptx.oxml.ns import qn
     bodyPr = tf._txBody.bodyPr
     bodyPr.set('autofit', 'shrink')
     p = tf.paragraphs[0]; p.text = text

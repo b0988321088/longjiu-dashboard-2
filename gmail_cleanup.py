@@ -8,7 +8,7 @@
 
 Token 路徑：~/AppData/Local/hermes/google_token.json
 """
-import json, os, sys, time
+import os, sys
 from pathlib import Path
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -183,4 +183,4 @@ if not DRY_RUN:
             print(f"  ⚠️ 建立過濾器失敗：{e}")
 
 print(f"\n{'='*40}")
-print(f"✨ Gmail 整理完成！")
+print("✨ Gmail 整理完成！")

@@ -1,7 +1,6 @@
 import os
 import json
 import csv
-import re
 from pathlib import Path
 from datetime import datetime
 

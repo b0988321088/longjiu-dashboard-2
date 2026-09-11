@@ -3,7 +3,7 @@
 使用者 9/11 核准手動補跑（cron monitor 於 9/10 判 no_change 漏掉美股收盤那根）。
 產出：data/emergency_llm_analysis.json（日報第6章注入源）+ 兩份 HTML。
 """
-import json, datetime, re
+import json, datetime
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
@@ -106,7 +106,7 @@ FULL = f"""🚨 緊急應變報告（2026-09-11 盤中｜手動補跑）
 SUMMARY = f"台股 -2.21%（46,142）＋美股連四黑（費半 -2.66%）＋油價破百（WTI 102.38）＋US30Y 5.36% 突破 5.30 凍結紅線。台股部位 {fmt_tw_equity_pct}% 粗估 -4.4 萬，影響有限；現金底線 ✅。結論：事件驅動的風險重定價，非景氣轉折 — 全面觀望，等今晚 CPI 與 9/16 FOMC。"
 
 chapters = {
-    "一、市場概況": f"台股 46,142.16（-2.21%）盤中走弱，台積電 2,425（-1.02%）；美股連四日收黑，S&P -0.58%、納指 -0.65%、費半 -2.66%；VIX 17.84（+8.38%）；WTI 102.38（+6.59%）、Brent 107.45 破百；US30Y 5.36%（+1.42%）；USD/TWD 31.64。",
+    "一、市場概況": "台股 46,142.16（-2.21%）盤中走弱，台積電 2,425（-1.02%）；美股連四日收黑，S&P -0.58%、納指 -0.65%、費半 -2.66%；VIX 17.84（+8.38%）；WTI 102.38（+6.59%）、Brent 107.45 破百；US30Y 5.36%（+1.42%）；USD/TWD 31.64。",
     "二、重大事件分析": "中東地緣與荷莫茲海峽管制威脅推升油價，通膨預期回燃帶動殖利率跳升，AI／半導體高估值估值修正；今晚美東 8 月 CPI 公布為升息警戒開關。性質為事件驅動的風險重定價，非景氣轉折。",
     "三、持倉關聯分析": f"台股 {fmt_tw_equity_pct}%（{fmt_tw_equity_twd}）粗估 -4.4 萬；美股 {fmt_us_equity_pct}%（科技 {fmt_us_equity_tech_pct}%／非科技 {fmt_us_equity_nontech_pct}%）昨收已反映；債券 {fmt_bond_pct}% 價格承壓；現金／安全網 {fmt_cash_safetynet_pct}%（含國泰貨幣市場基金 5,003,846）；保單 {fmt_insurance_total} 配息目的不動；黃金淨多單週減 6.3%、石油淨多單週減 62.8%。",
     "四、資產配置透視": f"台股 {fmt_tw_equity_pct}%（目標 10%，{float(fmt_tw_equity_pct)-10:.1f}pp）｜美股 {fmt_us_equity_pct}%（目標 40%，{float(fmt_us_equity_pct)-40:.1f}pp）｜防守 {fmt_defensive_pct}%（目標 20%）｜債券 {fmt_bond_pct}%（目標 25%）｜現金 {fmt_cash_safetynet_pct}%（目標 5%）。美股超標＋現金停泊未部署；逢跌加碼的三個前提（撥款／Fed 資料／US30Y 回落）皆未成立。",

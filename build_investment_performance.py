@@ -130,7 +130,7 @@ def funding_cost_report(snap, adj_costs=None, rate_overrides=None):
     L.append(f"  利息層：{pay_ok}（月配息 {div_m:,.0f} vs 純月息 {total_m:,.0f}）")
     L.append(f"  現金流層：{div_cover_pay}")
     L.append(f"  現金流層：{cash_ok}")
-    L.append(f"  註：房貸利息為居住成本；純投資槓桿 = 國泰+保單+元大（若看套利）")
+    L.append("  註：房貸利息為居住成本；純投資槓桿 = 國泰+保單+元大（若看套利）")
     return "\n".join(L)
 
 
@@ -165,7 +165,7 @@ def write_dashboard_html(mk, class_rows, interest_total, grand, perf, project,
     L.append("<style>body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;background:#f5f5f7;margin:0;padding:16px}</style></head><body><div style=\"max-width:720px;margin:0 auto\">")
     L.append('<div style="background:linear-gradient(135deg,#064e3b,#065f46);border-radius:14px;padding:16px 18px;color:#fff;margin-bottom:12px">')
     L.append(f'<h1 style="font-size:18px;font-weight:900;margin:0 0 4px">📊 龍九投資績效月報（{mk}）</h1>')
-    L.append(f'<div style="font-size:11.5px;color:#a7f3d0">基準月 2026-08（Baseline）｜每月同尺比較：投資賺多少 ⇄ 借貸付多少</div>')
+    L.append('<div style="font-size:11.5px;color:#a7f3d0">基準月 2026-08（Baseline）｜每月同尺比較：投資賺多少 ⇄ 借貸付多少</div>')
     L.append('<div style="font-size:11px;color:#86efac;margin-top:4px">📌 左欄＝投資收益（三類損益，貸款錢剔除不計績效）｜右欄＝借貸利息（月成本）｜下方＝勝負判定</div></div>')
     L.append('<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:stretch">')
     # ── 左欄 投資收益 ──
@@ -341,7 +341,7 @@ def main():
                 gross_mv = mv1[c] - mv0[c]
                 real_mv = gross_mv - inv
             else:
-                print(f"  ⚠️ 無基準 → 市值變化需校正檔，先以 0 計")
+                print("  ⚠️ 無基準 → 市值變化需校正檔，先以 0 計")
                 real_mv = 0; gross_mv = 0
             print(f"  市值：帳面 {gross_mv:+,.0f}")
             if inv:
@@ -349,7 +349,7 @@ def main():
             print(f"     ＝ 真實市值變化 {real_mv:+,.0f}")
         else:
             real_mv = 0
-            print(f"  市值：本月基準不足/投入時點未知 → 不計（見備註）")
+            print("  市值：本月基準不足/投入時點未知 → 不計（見備註）")
         print(f"  ＋ 配息實收 {div:+,.0f}")
         if fee:
             print(f"  − 手續費 {-fee:,.0f}")

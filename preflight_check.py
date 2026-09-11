@@ -6,7 +6,7 @@ preflight_check.py — 數據更新前檢查腳本
   python preflight_check.py           # 只檢查，不動任何檔案
   python preflight_check.py --sync    # 檢查後跑 four_source_sync.py（需使用者核准）
 """
-import json, sqlite3, os, re, sys
+import json, sqlite3, os, sys
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 os.chdir(BASE)
@@ -22,7 +22,7 @@ snap = json.load(open('snapshot.json', encoding='utf-8'))
 today = snap.get('date', '?')
 
 print(f"\n📅 日期：{today}")
-print(f"📋 snapshot 關鍵數字：")
+print("📋 snapshot 關鍵數字：")
 print(f"   保單 A+B:      {snap.get('allianz_combined', 0):>12,}")
 print(f"   第一金 FL65:   {snap.get('firstjin_fl65_current_value', 0):>12,}")
 print(f"   保單合計:      {(snap.get('allianz_combined', 0) + snap.get('firstjin_fl65_current_value', 0)):>12,}")
@@ -66,32 +66,32 @@ if db_row:
             print(f"   • {d}")
         issues.extend(diffs)
     else:
-        print(f"\n✅ snapshot 與 DB 一致")
+        print("\n✅ snapshot 與 DB 一致")
 
 else:
     print(f"\n⚠️  DB 無 {today} 資料，需新增")
 
 # 3. 檢查關鍵值合理性
-print(f"\n🔎 合理性檢查：")
+print("\n🔎 合理性檢查：")
 
 snap_fl65 = snap.get('firstjin_fl65_current_value', 0)
 if snap_fl65 < 100000:
     print(f"   ⚠️ 第一金 FL65 值異常偏低：{snap_fl65:,}")
-    issues.append(f"FL65 偏低")
+    issues.append("FL65 偏低")
 
 snap_ab = snap.get('allianz_combined', 0)
 if snap_ab < 5000000:
     print(f"   ⚠️ 安聯 A+B 異常：{snap_ab:,}")
-    issues.append(f"安聯偏低")
+    issues.append("安聯偏低")
 
 snap_total = snap_ins + snap_sec + snap_fund + snap_cash
 if snap_total < 10000000:
     print(f"   ⚠️ 總流動資產偏低：{snap_total:,}")
-    issues.append(f"總資產偏低")
+    issues.append("總資產偏低")
 
 if snap_total > 50000000:
     print(f"   ⚠️ 總流動資產異常高：{snap_total:,}（可能含不動產）")
-    issues.append(f"總資產偏高（可能含不動產）")
+    issues.append("總資產偏高（可能含不動產）")
 
 # 4. 檢查緊急應變深色背景
 html_files = [f for f in os.listdir('.') if f.startswith('daily_report') and f.endswith('.html')]
@@ -109,9 +109,9 @@ if issues:
     print(f"⚠️ 發現 {len(issues)} 個問題：")
     for i, issue in enumerate(issues, 1):
         print(f"  {i}. {issue}")
-    print(f"\n建議：修正後再跑同步")
+    print("\n建議：修正後再跑同步")
 else:
-    print(f"✅ 無異常，可安全同步")
+    print("✅ 無異常，可安全同步")
 
 # 6. --sync 模式（需使用者核准後執行）
 if "--sync" in sys.argv:

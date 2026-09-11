@@ -3,7 +3,7 @@
 """debt_restructure_tracker.py v3 — 龍九動態監測模組（每週日 08:50 cron 輸出）
 五大監測維度：市場利率(Rhythm-08) / 匯率 / PI狀態 / LTV槓桿 / 現金流與債務時程。
 """
-import json, sys, urllib.request
+import json, urllib.request
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -111,13 +111,13 @@ def main():
         print(f"  US30Y = {us30y:.2f}%（{us30y_date}）")
         print(f"  燈號：{rhythm_light}（🟢安全 / 🟡警戒>5.15 / 🔴警戒>5.30→五因子判斷）")
         if rhythm_light == "🔴警戒(5因子判斷)":
-            print(f"  五因子：①US10Y ②US30Y ③USD/TWD ④美債組合市價 ⑤實際LTV；10Y回落+匯率穩+LTV低 → 分批買入仍有利")
+            print("  五因子：①US10Y ②US30Y ③USD/TWD ④美債組合市價 ⑤實際LTV；10Y回落+匯率穩+LTV低 → 分批買入仍有利")
         if rhythm_light == "🟢安全":
-            print(f"  規則：可依 B先A後 時程執行")
+            print("  規則：可依 B先A後 時程執行")
         elif rhythm_light == "🟡滯脹警戒":
-            print(f"  規則：LTV上限強制 ≤30%，停止擴張質押")
+            print("  規則：LTV上限強制 ≤30%，停止擴張質押")
         else:
-            print(f"  規則：禁止新增買債、禁止新增質押借貸；舊部位只監控LTV，不強制全數賣出")
+            print("  規則：禁止新增買債、禁止新增質押借貸；舊部位只監控LTV，不強制全數賣出")
         try:
             with open(_r8_state_path, "w", encoding="utf-8", newline="\n") as _f:
                 json.dump({"last_light": rhythm_light, "us30y": round(us30y, 2), "date": today.isoformat()}, _f, ensure_ascii=False, indent=1)
@@ -143,19 +143,19 @@ def main():
     print(f"  階段升幅（相對基準 32.18）：{fx_change:+.2f}")
     print(f"  燈號：{fx_light}（🟢正常 / 🟡警示≥2.0% / 🔴風險≥2.5%）")
     if fx_light == "🟡警示":
-        print(f"  動作：停止美元停泊部位繼續加碼")
+        print("  動作：停止美元停泊部位繼續加碼")
     elif fx_light == "🔴風險":
-        print(f"  動作：可部分結匯回台幣活存，不對賭匯率，停泊只求微薄利息")
+        print("  動作：可部分結匯回台幣活存，不對賭匯率，停泊只求微薄利息")
 
     # -------- 2c. 台幣單季升值監測（2026-08-11 三桶匯率原則）-------
-    print(f"\n【2c.台幣單季升值監測（三桶匯率紅黃綠燈）】")
-    print(f"  🟡 台幣單季升值>5% → 禁止新增質押 / 暫緩償還剩餘高息舊貸")
-    print(f"  🔴 台幣單季升值>8% → 動用水庫台幣部位還貸，LTV壓回≤35%")
-    print(f"  🛡️ 撤退：匯損使淨利差≈0 → 還部分/全部 Lombard，美債續持有收息")
-    print(f"  💱 400萬水庫保留部分台幣現金（不全換美元）→ 匯率衝擊緩衝")
+    print("\n【2c.台幣單季升值監測（三桶匯率紅黃綠燈）】")
+    print("  🟡 台幣單季升值>5% → 禁止新增質押 / 暫緩償還剩餘高息舊貸")
+    print("  🔴 台幣單季升值>8% → 動用水庫台幣部位還貸，LTV壓回≤35%")
+    print("  🛡️ 撤退：匯損使淨利差≈0 → 還部分/全部 Lombard，美債續持有收息")
+    print("  💱 400萬水庫保留部分台幣現金（不全換美元）→ 匯率衝擊緩衝")
 
     # -------- 2b. 日圓套利平倉風險監測（2026-08-11 新增）-------
-    print(f"\n【2b.日圓套利平倉風險（JPY carry unwind）】")
+    print("\n【2b.日圓套利平倉風險（JPY carry unwind）】")
     try:
         req = urllib.request.Request("https://open.er-api.com/v6/latest/TWD",
                                      headers={'User-Agent': 'Mozilla/5.0'})
@@ -166,32 +166,32 @@ def main():
         if usdjpy:
             print(f"  USD/JPY: {usdjpy:.2f}")
             if usdjpy < 150:
-                print(f"  🚨 日圓急升（USD/JPY <150）→ 套利平倉加速，美元資產賣壓大")
-                print(f"  動作：美股/美元資產逢反彈減碼；債券台幣優先")
+                print("  🚨 日圓急升（USD/JPY <150）→ 套利平倉加速，美元資產賣壓大")
+                print("  動作：美股/美元資產逢反彈減碼；債券台幣優先")
             elif usdjpy < 155:
-                print(f"  🟡 日圓明顯升值（150-155）→ 平倉進行中，美元資產波動加")
-                print(f"  動作：不追高美股、債券美元部位降比重")
+                print("  🟡 日圓明顯升值（150-155）→ 平倉進行中，美元資產波動加")
+                print("  動作：不追高美股、債券美元部位降比重")
             else:
-                print(f"  🟢 日圓溫和（≥155）→ 平倉壓力尚可控")
+                print("  🟢 日圓溫和（≥155）→ 平倉壓力尚可控")
     except Exception:
-        print(f"  ⚠️ 日圓匯率抓取失敗")
+        print("  ⚠️ 日圓匯率抓取失敗")
 
     # -------- 3. PI 專業投資人狀態 --------
     pi_status = pi.get("pi_status", "未申請")
     if pi_status not in PI_STATES:
         pi_status = "未申請"
     can_do_lombard = (pi_status == "已正式核准")
-    print(f"\n【3.PI專業投資人狀態】")
+    print("\n【3.PI專業投資人狀態】")
     print(f"  PI_approval_status：{pi_status}")
-    print(f"  ⚠️ 硬性鎖定：PI非【已正式核准】→ 禁止執行任何 Lombard 質押借出作業")
+    print("  ⚠️ 硬性鎖定：PI非【已正式核准】→ 禁止執行任何 Lombard 質押借出作業")
     if not can_do_lombard:
-        print(f"  → 10/1 國泰洲際W轉增貸前置檢查：PI未核准 → 建議延後轉增貸，避免負債變動干擾PI資產核算")
+        print("  → 10/1 國泰洲際W轉增貸前置檢查：PI未核准 → 建議延後轉增貸，避免負債變動干擾PI資產核算")
     else:
-        print(f"  → 10/1 國泰洲際W轉增貸前置檢查：✅ 可執行")
+        print("  → 10/1 國泰洲際W轉增貸前置檢查：✅ 可執行")
 
     # -------- 4. LTV 質押槓桿監控 --------
     ltv = plan.get("current_ltv", 0)
-    print(f"\n【4.LTV質押槓桿監控｜策略A 燈號（8/20 定版：綠≤53/黃54-58/紅≥59/追繳≥70）】")
+    print("\n【4.LTV質押槓桿監控｜策略A 燈號（8/20 定版：綠≤53/黃54-58/紅≥59/追繳≥70）】")
     if ltv <= 0.53:
         light4 = "🟢 綠燈（LTV≤53%：月淨現金流≥+5萬 且穿透在目標區間 → 維持現狀每週監控）"
     elif ltv <= 0.58:
@@ -212,41 +212,41 @@ def main():
         print(f"  壓力情境：跌20% → LTV {_loan/(_pool*0.8)*100:.1f}%｜跌30% → LTV {_loan/(_pool*0.7)*100:.1f}%"
               f"｜追繳線70% 需再跌 {100-_loan/0.7/_pool*100:.1f}%")
     else:
-        print(f"  質押初始LTV≤50%；擔保池=股票600+平衡300~600（追繳臨界自 -30% 延後至 -40%）")
+        print("  質押初始LTV≤50%；擔保池=股票600+平衡300~600（追繳臨界自 -30% 延後至 -40%）")
 
     # -------- 5. 現金流 & 債務重整時程 --------
-    print(f"\n【5.現金流 & 債務重整時程】")
+    print("\n【5.現金流 & 債務重整時程】")
     print(f"  預估每月可償還結餘(理想)：{ideal_monthly_surplus:,} NTD")
     print(f"  悲觀場景可償還結餘：{pessimistic_low:,}~{pessimistic_high:,} NTD")
-    print(f"  提醒：降槓桿週期非固定，環境惡化還本速度會顯著拉長")
+    print("  提醒：降槓桿週期非固定，環境惡化還本速度會顯著拉長")
 
     # -------- 5b. 8/20 定案（富達質押版，取代 8/12 兩層槓桿版）-------
     dp = snap.get("professional_investor", {}).get("deployment_plan", {})
-    print(f"\n【5b.8/20 定案（富達質押版）】")
+    print("\n【5b.8/20 定案（富達質押版）】")
     if dp.get("status", "").startswith("兩層槓桿修正版") or dp.get("status", "").startswith("8/20 定案"):
         p1 = dp.get("phase1_mandatory", {})
         p2 = dp.get("phase2_optional", {})
-        print(f"  8/20 定案：富達600萬已建置＋MMF600萬(8/21買=暴跌回補池＋那瓦爾延遲決策) → PI後質押300-400萬@2.77%(還安聯300@4.2%＋元大100@3.92%選項) → 保單=穿透平衡不解約；標案營運金300萬獨立；平衡型標的傾向00878類(降科技權重,未定)")
+        print("  8/20 定案：富達600萬已建置＋MMF600萬(8/21買=暴跌回補池＋那瓦爾延遲決策) → PI後質押300-400萬@2.77%(還安聯300@4.2%＋元大100@3.92%選項) → 保單=穿透平衡不解約；標案營運金300萬獨立；平衡型標的傾向00878類(降科技權重,未定)")
         print(f"  完成標準：{p1.get('complete_standard','舊債清除+直債底倉+現金緩衝')}")
         print(f"  ⛔ 階段1期間禁質押：{p1.get('forbidden','不開第二層槓桿')}")
-        print(f"  階段2（選擇性加分，非強制）：")
+        print("  階段2（選擇性加分，非強制）：")
         print(f"    gate1 {p2.get('gate_1','US30Y<5.30%')}｜gate2 {p2.get('gate_2','壓力測試LTV≤50%')[:40]}...")
         print(f"    gate3 {p2.get('gate_3','觀察1-3日無跳空')}｜gate4 {p2.get('gate_4','借貸成本<債券殖利率')}")
-        print(f"    質押初始LTV≤50%；資金僅限現金流類資產；禁同週建債+質押+再投資")
+        print("    質押初始LTV≤50%；資金僅限現金流類資產；禁同週建債+質押+再投資")
         print(f"  🌐 全域凍結：{dp.get('global_freeze','US30Y≥5.30%禁新增質押')}")
         print(f"  💰 效益：{dp.get('benefit_calc','年省利息32萬')[:60]}")
         gr = dp.get("gap_rules_0812", {})
         print(f"  📌 底線：現金≥70萬({gr.get('rule_1_cash_floor','6個月生活費')[:40]})｜被動實收連2月<80%停建債｜直債僅投資級")
     elif dp.get("status", "").startswith("5-5-2"):
-        print(f"  ⚠️ snapshot 為舊版（5-5-2 / 兩層槓桿），已被 8/20 定案取代")
+        print("  ⚠️ snapshot 為舊版（5-5-2 / 兩層槓桿），已被 8/20 定案取代")
     else:
-        print(f"  ⚠️ snapshot 無 8/20 定案版本資料")
+        print("  ⚠️ snapshot 無 8/20 定案版本資料")
 
     # -------- 6. 套利引擎（Arbitrage Engine）-------
     rules = load_engine_rules()
     fc = rules.get("funding_cost", {})
-    print(f"\n【6.套利引擎｜實質淨收益計算】")
-    print(f"  Net Yield = Yield×(1-Tax) - 融資 - 鎖匯 - 摩擦")
+    print("\n【6.套利引擎｜實質淨收益計算】")
+    print("  Net Yield = Yield×(1-Tax) - 融資 - 鎖匯 - 摩擦")
     # 三個路徑淨利差
     paths = [
         ("① 債務重置（清償高息債）", 0.04, 0.0, 0.026, "還債=確定性收益"),
@@ -259,7 +259,7 @@ def main():
         print(f"  {name}: 淨利差 {ny*100:.2f}% → {light}（{note}）")
 
     # -------- 7. 熔斷閘門檢查（Safety Breaker）-------
-    print(f"\n【7.熔斷閘門檢查（Safety Breaker）】")
+    print("\n【7.熔斷閘門檢查（Safety Breaker）】")
     breakers = rules.get("risk_breakers", [])
     cash = snap.get("cash_total", 0)
     checks = []
@@ -289,9 +289,9 @@ def main():
             print(f"  {action}｜{metric}: {val}")
 
     # 重大時程檢查
-    print(f"\n  重大時程檢查：")
+    print("\n  重大時程檢查：")
     if today >= date(2026, 8, 15):
-        print(f"  ☑ 8-15 國泰撥款：執行清高息壞債 + 400萬停泊配置（已到期）")
+        print("  ☑ 8-15 國泰撥款：執行清高息壞債 + 400萬停泊配置（已到期）")
     else:
         print(f"  ☐ 8-15 國泰撥款：執行清高息壞債 + 400萬停泊配置（還有 {(date(2026,8,15)-today).days} 天）")
     oct_gate = "✅ 可執行" if can_do_lombard else "🔒 受PI狀態鎖定（未核准→延後）"
@@ -314,7 +314,7 @@ def main():
         print("    （無）")
 
     # -------- 綜合建議 --------
-    print(f"\n【本週綜合建議動作】")
+    print("\n【本週綜合建議動作】")
     n = 1
     if rhythm_light != "🟢安全":
         print(f"  {n}. 🎵 Rhythm-08 {rhythm_light}：{'停止擴張質押' if rhythm_light=='🟡滯脹警戒' else '禁止新增買債/質押，只監控LTV'}")

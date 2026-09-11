@@ -184,7 +184,7 @@ def main():
             if new and actual_count != expected_count:
                 failed_patches.append((f, old[:60], f"Expected {expected_count} matches for new string, got {actual_count}"))
             elif not new and old in content:
-                failed_patches.append((f, old[:60], f"Expected old string to be deleted, but it's still present"))
+                failed_patches.append((f, old[:60], "Expected old string to be deleted, but it's still present"))
             else:
                 print(f"✅ {f} (patched)")
 

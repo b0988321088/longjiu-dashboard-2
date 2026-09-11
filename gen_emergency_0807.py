@@ -35,7 +35,6 @@ try:
     _ta_override = _ta
 
     # full_report 穿透段重寫（LLM 舊值 → 最新 snapshot 值）
-    import re as _re
     _seg_start = report.find("【四、資產配置透視】")
     if _seg_start >= 0:
         _seg_end = report.find("【五", _seg_start)

@@ -216,7 +216,6 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
     """巴菲特視角 — LLM 真實分析優先（2026-08-22 升級），失敗 fallback 模板"""
     a, g = pen["actual"], pen["gaps"]
     try:
-        from llm_analysis import ask_llm
         _fmt = "、".join(f"{TARGET_LABELS[c]} {a.get(c,0):.1f}%（目標{TARGETS[c]}%，{g.get(c,0):+.1f}pp）"
                          for c in ["tw_equity", "us_equity", "defensive", "bond", "cash"])
         _prompt = (
@@ -321,7 +320,6 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
     """CTO 技術視角 — LLM 真實分析優先（2026-08-22 升級），失敗 fallback 模板"""
     a, g = pen["actual"], pen["gaps"]
     try:
-        from llm_analysis import ask_llm
         _fmt = "、".join(f"{TARGET_LABELS[c]} {a.get(c,0):.1f}%（目標{TARGETS[c]}%，{g.get(c,0):+.1f}pp）"
                          for c in ["tw_equity", "us_equity", "defensive", "bond", "cash"])
         _prompt = (

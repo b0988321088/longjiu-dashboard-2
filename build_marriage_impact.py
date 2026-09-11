@@ -5,7 +5,7 @@
 import sys, json
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from presentation_engine import SlideDeck, GREEN, RED, GOLD, BLUE, PURPLE, GRAY, WHITE, TEXT
+from presentation_engine import SlideDeck, GREEN, RED, GOLD, BLUE, GRAY, WHITE, TEXT
 
 d = SlideDeck()
 

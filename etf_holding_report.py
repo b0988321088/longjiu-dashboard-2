@@ -96,7 +96,7 @@ def build_report(holdings):
     w("</style></head><body>")
 
     # Header
-    w(f"<h1 style='font-size:20px;font-weight:800;margin:4px 0 12px'>📊 龍九持股ETF報告</h1>")
+    w("<h1 style='font-size:20px;font-weight:800;margin:4px 0 12px'>📊 龍九持股ETF報告</h1>")
     w(f"<p style='font-size:13px;color:#6e6e73;margin:-8px 0 12px'>{TODAY}</p>")
 
     # ── 總覽卡片 ──

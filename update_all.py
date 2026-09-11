@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """龍九資產統一更新入口。"""
-import json, sqlite3, sys, subprocess
+import json, sys
 from pathlib import Path
 from datetime import date
 

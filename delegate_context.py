@@ -5,7 +5,6 @@
 
 import json
 from pathlib import Path
-from datetime import date
 
 BASE = Path(__file__).resolve().parent
 CACHE = BASE / "notion_context_cache.json"

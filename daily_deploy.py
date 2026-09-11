@@ -13,7 +13,6 @@ import json
 import os
 import subprocess
 import sys
-import base64
 from datetime import date
 from pathlib import Path
 from logging_config import get_logger
@@ -292,7 +291,7 @@ def main() -> None:
             # [WARN] Gemini 審查未通過，繼續推送 (暫時解除阻擋)
             pass
         else:
-            print(f"[OK] Gemini 審查通過")
+            print("[OK] Gemini 審查通過")
     except Exception as _ge:
         print(f"[WARN] Gemini 審查執行失敗：{_ge}，繼續推送（降級）")
     

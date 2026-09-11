@@ -1,7 +1,7 @@
 """Hunter 情報 — 純腳本版（0 Token）
 只抓 Yahoo Finance 即時數據，格式推送 Telegram"""
 
-import json, os, requests, re
+import json, requests
 from datetime import date, datetime
 from pathlib import Path
 from logging_config import get_logger

@@ -11,7 +11,6 @@ longjiu_system最小穩定版 telegram_parser.py
 from __future__ import annotations
 
 import json
-import os
 import re
 from datetime import datetime
 from pathlib import Path

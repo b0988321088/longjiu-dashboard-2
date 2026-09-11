@@ -69,8 +69,8 @@ def main():
         print()
         for k, v in CMDS.items():
             print(f'  python lj.py {k:12s}  →  {v.split("#")[-1].strip()}')
-        print(f'  python lj.py query   →  一鍵查詢關鍵財務欄位')
-        print(f'  python lj.py fix ...  →  快速修正欄位')
+        print('  python lj.py query   →  一鍵查詢關鍵財務欄位')
+        print('  python lj.py fix ...  →  快速修正欄位')
         print()
         print('範例：')
         print('  python lj.py check')

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """台股緊急應變 2026-08-10 — LLM 分析 → data/emergency_llm_analysis.json + emergency_report_2026-08-10.html"""
-import json, datetime, re
+import json, re
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent

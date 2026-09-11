@@ -3,7 +3,7 @@ t_navigation.py
 龍九控股 — T+n 工作日導航规则（含 15:00 截止、假日扣除）
 """
 
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta
 from typing import Optional
 
 # 2026 台灣國定/紀念日

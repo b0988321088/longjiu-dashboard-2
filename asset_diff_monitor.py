@@ -5,7 +5,7 @@ asset_diff_monitor.py — 資產每日變化監控 + 趨勢 + 巴菲特建議
 """
 from __future__ import annotations
 
-import json, sys, sqlite3
+import json, sqlite3
 import os
 import urllib.request
 import urllib.error
@@ -426,7 +426,6 @@ def compute_changes(history: dict) -> list[dict]:
 
 # ---------- charts ----------
 def build_trend_charts(history: dict, current: dict | None = None) -> str:
-    import json as _cj
     dates = sorted(history.keys())
     rows = [history[d] for d in dates[-14:]]
     if not rows:
@@ -552,7 +551,7 @@ def buffett_advice(history: dict, snap: dict) -> str:
             _parts.append(f"{label}{_v:,}")
         _detail = "+".join(_parts)
     else:
-        _detail = f"大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100"
+        _detail = "大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100"
     if monthly_rent_received > 0 and monthly_rent_received < monthly_rent:
         rent_line = f"房租月收 {_fmt(monthly_rent_received)} / 目標 {_fmt(monthly_rent)}（已收 {_fmt(monthly_rent_received)}，待收 {_fmt(monthly_rent_pending)}）"
     elif monthly_rent_received >= monthly_rent:
@@ -1064,7 +1063,6 @@ def main() -> int:
     send_telegram(tg)
 
     try:
-        import subprocess
         if OUT_HTML.exists():
             # 用 requests 直接發送文件（不依賴 scripts/telegram_send_document.py）
             _url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendDocument"

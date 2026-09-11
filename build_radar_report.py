@@ -4,7 +4,7 @@
 內容：燈號 / 追蹤ETF法人 / 產業資金流向（台股+美股）/ 政策面 / 凍結資產
 由 radar_push.py（每日16:15）與 radar_weekly.py（週六08:30）在雷達更新後呼叫。
 """
-import json, datetime
+import json
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent

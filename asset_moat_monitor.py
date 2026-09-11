@@ -1,7 +1,6 @@
 """Asset Moat Monitor — 計算資產護城河指標（Task 1）"""
 from __future__ import annotations
 
-from typing import Any
 
 
 class AssetMoatMonitor:

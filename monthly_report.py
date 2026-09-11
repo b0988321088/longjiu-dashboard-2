@@ -4,7 +4,6 @@
 用法：python monthly_report.py 2026-07
 """
 import json, sys
-from datetime import date
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
@@ -157,7 +156,7 @@ td{{padding:8px 6px;border-top:1px solid #e5e5ea}}
         v = pen.get(k, 0)
         p = pct.get(k, 0)
         html += f'<tr><td>{label}</td><td class="num">{v:,.0f}</td><td class="num">{p:.1f}%</td></tr>'
-    html += f"""</tbody></table></div>
+    html += """</tbody></table></div>
 
 <div class="card"><h2>本月重點</h2>
 <ul style="font-size:14px;line-height:1.8;margin:0;padding-left:20px">

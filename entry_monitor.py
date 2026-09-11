@@ -10,7 +10,7 @@
   PI 質押：PI 認列 → 質押富達 350萬 還債（安聯300+元大50）
   保單轉換：8/25 執行（PIMCO M120/M&G 115/健康25/黃金A10 15）
 """
-import json, os, sys, datetime
+import json, os, datetime
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent

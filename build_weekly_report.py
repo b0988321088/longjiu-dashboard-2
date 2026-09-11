@@ -186,7 +186,7 @@ def main():
     if not dec_rows:
         dec_rows = "<li>本週重大決策：8/14 保單 JPM 轉換穿透更新（詳見穿透分析）</li>"
 
-    rhythm = f"""<table><thead><tr><th>燈號</th><th>範圍</th><th>規則</th></tr></thead><tbody>
+    rhythm = """<table><thead><tr><th>燈號</th><th>範圍</th><th>規則</th></tr></thead><tbody>
     <tr><td>🟢</td><td>&lt;5.20%</td><td>解凍；可分批建倉</td></tr>
     <tr><td>🟡</td><td>5.20-5.30%</td><td>警戒：台股≤50萬/週、美股停購、長債凍結、LTV≤30%</td></tr>
     <tr><td>🔴</td><td>≥5.30%</td><td>五因子綜合判斷（非直接凍結）；LTV低+匯率穩仍可分批</td></tr>

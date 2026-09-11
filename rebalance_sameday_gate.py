@@ -8,7 +8,6 @@
 強制重跑方式：先刪除 rebalance_summary_{today}.md 再手動 run。
 純 stdlib；輸出禁止時間戳。
 """
-import sys
 from datetime import date
 from pathlib import Path
 

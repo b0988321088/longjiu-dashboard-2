@@ -4,7 +4,7 @@
 v2 修正：①加入 asset_sync.py（同義欄位驗證，2026-08-24 血淚：漏欄位不抓）②輸出完整（非只 tail）③失敗即停
 用法：python sync_all.py [date]
 """
-import subprocess, sys, datetime, json, re
+import subprocess, sys, datetime, json
 from pathlib import Path
 
 def _validate_date_format(date_str):
@@ -97,23 +97,23 @@ def main():
         #     但 run_daily.py 的 `intel_text`、`timedelta` 遮蔽、`monthly_income` 重複 key
         #     全靠人工看才發現；此步讓它們在產報前就被自動擋下。
         ("靜態閘門", "python static_gate.py"),
-        ("同義欄位驗證", f"python asset_sync.py"),
-        ("日報", f"python run_daily.py"),
+        ("同義欄位驗證", "python asset_sync.py"),
+        ("日報", "python run_daily.py"),
         # 2026-09-02 血淚：緊急應變必須在穿透報告「之後」執行 — emergency_1330.py 讀的是
         # snapshot.penetration.actual_pct 快取，穿透報告才寫入；順序反了會用到上一輪舊值
         # → check_penetration_consistency 擋推送（上午實踩 3 次）
-        ("穿透報告", f"python build_penetration_report.py"),
-        ("台股緊急應變", f"python emergency_1330.py"),
-        ("四源同步", f"python four_source_sync.py"),
-        ("同義欄位複驗", f"python asset_sync.py"),
+        ("穿透報告", "python build_penetration_report.py"),
+        ("台股緊急應變", "python emergency_1330.py"),
+        ("四源同步", "python four_source_sync.py"),
+        ("同義欄位複驗", "python asset_sync.py"),
         ("一致性檢查", f"python check_penetration_consistency.py {today}"),
-        ("再平衡報告", f"python build_rebalance_report.py"),
+        ("再平衡報告", "python build_rebalance_report.py"),
         # 2026-08-29：再平衡儀表板（雷達+政策面+本週投資計劃）— 之前 sync_all 漏跑，導致雷達更新後儀表板舊
-        ("再平衡儀表板", f"python build_rebalance_dashboard.py"),
+        ("再平衡儀表板", "python build_rebalance_dashboard.py"),
         # 2026-09-06：雷達週計畫重產 — institutional_flow.py 更新 radar_state.weekly_plan
         #     （行動儀表板 JS 即時讀取）。血淚：rotation_engine 修正後沒人重跑 → weekly_plan 殘留舊建議
         #     （「乾粉優先醫療」），使用者抓包；加此步驟確保 sync_all 後行動儀表板與引擎同步
-        ("雷達週計畫重產", f"python institutional_flow.py"),
+        ("雷達週計畫重產", "python institutional_flow.py"),
         ("儀表板注入", "python build_dashboard.py"),
         # 2026-08-29 v4：雷達資料同步驗證（radar_state.json 存在 + 政策面非空 + 三處產出含雷達結論）
         #     血淚：institutional_flow.py 讀 policy_notes 用 .get("內容") 但結構是新聞dict → 政策面空白沒人發現
@@ -122,14 +122,14 @@ def main():
         # 清單 = 配息口徑舊值 + 穿透卡五桶舊市值 + 保單A舊值 + 當月已收舊值（8/29 血淚全量盤點）+ 監控卡片合計舊值
         # ⚠️ 2026-08-29 v2 血淚：JS 內硬編碼 fallback（Script 6 入帳清單 ['房租已收', 78000] / || 62969）不在 rep dict 範圍 —
         #     build_dashboard 只 rep HTML 顯示值，JS 陣列內的數字是獨立硬編碼！驗證清單必須同時含「JS 內舊值」（78,000/62,969）
-        (f"儀表板產出驗證", "python -c \"import re; h=open('index.html',encoding='utf-8').read(); stale=[s for s in ['35,583','63,027','2,723,839','7,753,544','88,507','109,645','143.9%','144%','199,960','62,969','78000','78,000','5,103,722','1,889,388','11,499,725','1,089,462','5,917,259','5,798,988','3,735,174','7,764,551','14.3%','-0.7pp','799,612','815,066','20260821_1','20260829_1','772,607','123,607','27,738','499,316','458,343','20,776','6,960','0 TWD（應收 2,100）'] if s in h]; print('❌ 儀表板殘留舊值: '+str(stale) if stale else '✅ 儀表板無舊值殘留'); import sys; sys.exit(1 if stale else 0)\""),
+        ("儀表板產出驗證", "python -c \"import re; h=open('index.html',encoding='utf-8').read(); stale=[s for s in ['35,583','63,027','2,723,839','7,753,544','88,507','109,645','143.9%','144%','199,960','62,969','78000','78,000','5,103,722','1,889,388','11,499,725','1,089,462','5,917,259','5,798,988','3,735,174','7,764,551','14.3%','-0.7pp','799,612','815,066','20260821_1','20260829_1','772,607','123,607','27,738','499,316','458,343','20,776','6,960','0 TWD（應收 2,100）'] if s in h]; print('❌ 儀表板殘留舊值: '+str(stale) if stale else '✅ 儀表板無舊值殘留'); import sys; sys.exit(1 if stale else 0)\""),
         # 2026-08-29 v3 血淚：儀表板 HTML 巢狀結構檢查（4 處 <div style="width:N%"</div> 缺 > → 手機瀏覽器吞掉後 3 分頁；
         #     正則標籤平衡抓不到巢狀錯誤，需 HTMLParser 嚴格追蹤開閉順序）
         ("儀表板結構檢查", "python check_dashboard_structure.py index.html"),
 
         # 2026-08-27：共享渲染組件自測（report_components 異常 → 報表數字不一致）
         ("組件自測", "python -c \"from report_components import render_health_score; import json; print('✅ 組件正常 健康度', render_health_score(json.load(open('snapshot.json',encoding='utf-8')))['分數'])\""),
-        ("週報", f"python build_weekly_report.py"),
+        ("週報", "python build_weekly_report.py"),
     ]
     ok = True
     for label, cmd in steps:

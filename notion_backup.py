@@ -11,7 +11,7 @@ notion_backup.py — 龍九 Notion 備份系統
   python notion_backup.py snap 保單 "安聯A 5,062,369" screenshot.jpg
   python notion_backup.py report
 """
-import sys, os, json, base64, io
+import sys, os, json
 from pathlib import Path
 from datetime import date
 import requests

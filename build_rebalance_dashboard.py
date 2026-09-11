@@ -4,7 +4,7 @@
 資料全部動態讀 snapshot.json + radar_state.json，每週六可重跑。
 輸出：rebalance_dashboard_{date}.html
 """
-import json, os
+import json
 from datetime import date
 from pathlib import Path
 
@@ -135,7 +135,7 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
                       ("10月", "洲際W 轉貸國泰（要求全額吸收規費）＋ 標案", "mid")]:
         lines.append(f"- {d}：{t2}")
 
-    lines += ["", "## 八、結論", f"**本週動作：只有「台股慢慢買」是主動項（每週 1.5-2萬 × 8-12 週），其餘全數按兵不動。**",
+    lines += ["", "## 八、結論", "**本週動作：只有「台股慢慢買」是主動項（每週 1.5-2萬 × 8-12 週），其餘全數按兵不動。**",
               "最大等待：9/11 申購貝萊德B11 500萬 → 過戶(~9/16) 後整池質押 540萬@2.77% → 撥款 ~9/25 → 還債（4.2%→2.77%）。", ""]
     out = BASE / f"rebalance_summary_{TODAY}.md"
     out.write_text("\n".join(lines), encoding="utf-8")

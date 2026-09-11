@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """龍九決策自動記錄器 — 每次重要裁決自動寫入 Notion"""
-import os, json, requests, datetime, sys
+import os, requests, datetime, sys
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
@@ -72,7 +72,7 @@ def complete(decision_id):
             json={"properties": {"狀態": {"select": {"name": "✅ 已完成"}}}},
             timeout=10,
         )
-        print(f"✅ 決策狀態 → ✅ 已完成")
+        print("✅ 決策狀態 → ✅ 已完成")
     except:
         pass
 

@@ -6,8 +6,8 @@
 - 待辦決策（未處理超過3天）
 - 記憶容量（>80% 時提醒歸檔）"""
 
-import json, csv, os, sqlite3
-from datetime import date, datetime, timedelta
+import json, csv
+from datetime import date, datetime
 from pathlib import Path
 from logging_config import get_logger
 logger = get_logger("reminder_agent")

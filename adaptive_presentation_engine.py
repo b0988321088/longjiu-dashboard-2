@@ -163,7 +163,7 @@ def create_adaptive_presentation(title="龍九控股自適應簡報", date="2026
     subtitle_placeholder.text = "市場輪動趨勢明確，防禦性資產配置重要性提升。"
 
     prs.save(os.path.join(os.path.dirname(os.path.abspath(__file__)), "adaptive_presentation_demo.pptx"))
-    print(f"簡報 'adaptive_presentation_demo.pptx' 已更新成功。")
+    print("簡報 'adaptive_presentation_demo.pptx' 已更新成功。")
 
 if __name__ == "__main__":
     create_adaptive_presentation()

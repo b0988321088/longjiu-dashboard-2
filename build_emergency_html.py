@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """美股緊急應變報告 HTML 產生器 — Railway + GitHub 兩版"""
-import json, datetime
 
 BASE = "."
 today = "2026-08-03"

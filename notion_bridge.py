@@ -1,7 +1,7 @@
 """Notion 雙向橋接 v0.1 — 祕書處管線
 功能：讀取 Notion「戰略手稿」頁面 → 寫入本地決策 db
 """
-import json, os, re, requests
+import os, requests
 from datetime import date, datetime
 from pathlib import Path
 from logging_config import get_logger
@@ -211,7 +211,7 @@ def push_daily_snapshot(tv: dict) -> str:
 
 if __name__ == "__main__":
     r = sync_notion_to_local()
-    print(f"📡 Notion 橋接報告")
+    print("📡 Notion 橋接報告")
     print(f"找到頁面：{r['pages_found']}")
     print(f"匯入決策：{r['decisions_imported']}")
     for e in r.get("errors", []):
@@ -219,4 +219,4 @@ if __name__ == "__main__":
     
     if r["pages_found"] > 0:
         print(f"\n✅ 已寫入 notion_bridge/{date.today()}_strategy_handbook.md")
-        logger.info(f"✅ 決策已合併至 dashboard_decisions.json")
+        logger.info("✅ 決策已合併至 dashboard_decisions.json")

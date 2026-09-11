@@ -5,7 +5,7 @@
 若 DB 無資料，fallback 查詢 Notion master_ledger。
 輸出：淨資產趨勢、主要變動來源、異常提醒（±5%）、一句話結論。
 """
-import json, os, sys, sqlite3, urllib.request
+import json, sys, sqlite3, urllib.request
 from datetime import date, timedelta
 from pathlib import Path
 

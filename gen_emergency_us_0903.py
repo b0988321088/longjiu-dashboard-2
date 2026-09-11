@@ -3,7 +3,7 @@
 產出：emergency_report_2026-09-03.html (Railway 版) + emergency_taiex_report_2026-09-03.html (GitHub 版)
 含 INC-134 穿透注入（任何產生 emergency_report_{today}.html 的腳本都必須含穿透卡）
 """
-import json, re, datetime
+import json, re
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent

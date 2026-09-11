@@ -1,7 +1,7 @@
 """穿透異常偵測 — 純腳本版（0 Token）
 比對 assets 表近2天數據，單項變動 > 5% 推送警報"""
 
-import sqlite3, json, os
+import sqlite3, json
 from datetime import date
 from pathlib import Path
 from logging_config import get_logger

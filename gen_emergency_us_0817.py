@@ -2,7 +2,7 @@
 """美股緊急應變 8/17 21:37 — 從 data/emergency_llm_analysis.json 渲染兩版 HTML
 產出：emergency_report_2026-08-17.html (Railway 版) + emergency_taiex_report_2026-08-17.html (GitHub 版)
 """
-import json, re, datetime
+import json, re
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent

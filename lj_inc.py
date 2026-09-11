@@ -2,7 +2,6 @@ import json
 import os
 import sys
 import datetime
-import uuid
 
 INC_EVENTS_FILE = 'inc_events.jsonl'
 

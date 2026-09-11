@@ -77,7 +77,7 @@ def check_conditions(d, _all_decisions=None):
     try:
         dt = datetime.strptime(d_date, "%Y-%m-%d").date()
         if (today - dt).days > 30 and "待執行" in status:
-            return True, f"超過30天未執行，自動歸檔"
+            return True, "超過30天未執行，自動歸檔"
     except:
         pass
 

@@ -7,7 +7,7 @@ Google Token 重新授權（自管理 PKCE，手機可操作）
 3. 授權後跳轉 localhost（無法連線正常），複製整段 URL
 4. 執行 python reauth_google.py "<貼上的URL>" → 完成
 """
-import base64, hashlib, json, os, re, secrets, sys, urllib.parse
+import base64, hashlib, json, re, secrets, sys, urllib.parse
 from pathlib import Path
 
 import requests
@@ -59,7 +59,7 @@ def main():
         print(url)
         print("\n授權後瀏覽器跳轉 localhost（顯示無法連線是正常的）")
         print("複製網址列整段 URL，執行：")
-        print(f'python reauth_google.py "<貼上URL>"')
+        print('python reauth_google.py "<貼上URL>"')
         return
 
     # 用 callback URL 換 token

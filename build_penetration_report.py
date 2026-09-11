@@ -54,7 +54,7 @@ snap["penetration"] = {
 snap.setdefault("date", date.today().isoformat())
 snap["generated_at"] = datetime.now().isoformat()
 (BASE / "snapshot.json").write_text(json.dumps(snap, ensure_ascii=False, indent=2), encoding="utf-8")
-print(f"  穿透數據已自動校正並寫入 snapshot.json")
+print("  穿透數據已自動校正並寫入 snapshot.json")
 holdings = snap.get("securities", {}).get("holdings", [])
 today = date.today().isoformat()  # 2026-08-22 修正：統一用今天（與日報/差異/週報一致）；原 snapshot.date 導致檔名落後一天、連結 404
 
@@ -99,7 +99,7 @@ w(".callout{background:#1e3a5f40;border-left:3px solid #3b82f6;padding:10px 14px
 w("@media(max-width:640px){table{font-size:12px}th,td{padding:6px 4px}}")
 w("</style></head><body>")
 
-w(f"<h1>📊 龍九控股 穿透分析報告（詳細版）</h1>")
+w("<h1>📊 龍九控股 穿透分析報告（詳細版）</h1>")
 w(f"<p class='meta'>{today} ｜ 穿透分母 = {total:,} TWD</p>")
 w(f"<div class='callout'>🔬 <b>美股科技拆解（美股科技紅線口徑）：</b>科技股 {us_tech_v:,}（{round(us_tech_v/total*100,1)}%，目標 ≤{tech_target}%，缺口 {round(us_tech_v/total*100 - tech_target,1):+.1f}pp）｜非科技 {us_nt_v:,}（{round(us_nt_v/total*100,1)}%）｜合計 {us_v:,}（{round(us_v/total*100,1)}%）<br><span style='color:#94a3b8;font-size:12px'>⚠️ 此為「美股桶科技紅線」口徑；另有「產業穿透」口徑（GICS 全資產科技產業佔比，見日報產業區塊），兩者不同勿混淆。科技比估計：貝萊德科技100% / 009824 100% / 半導體90% / 富達35% / 安聯AI 35% / 聯博美國成長40% / 安聯收益16% / 00646·009823 32% / 摩根·PIMCO 10% / M&G 7% / 聯博全球多元收益 2.5%</span></div>")
 
@@ -176,7 +176,7 @@ w("<div class='card'><h2>📈 配置比例 vs 目標</h2>")
 for key, name, val, target, color, desc in cats_data:
     pct = val / total * 100
     w(f"<div style='font-size:13px;font-weight:600;margin-top:12px'>{name}</div>")
-    w(f"<div style='display:flex;justify-content:space-between;font-size:12px;color:#94a3b8'>")
+    w("<div style='display:flex;justify-content:space-between;font-size:12px;color:#94a3b8'>")
     w(f"<span>實際 {pct:.1f}%</span><span>目標 {target}%</span></div>")
     w(f"<div class='bar-wrap'><div class='bar-fill' style='width:{pct:.1f}%;background:{color}'></div></div>")
     w(f"<div style='font-size:11px;color:#64748b'>{desc}</div>")
@@ -348,7 +348,7 @@ w("<p style='font-size:12px;color:#64748b'>⚠️ 全組合半導體&科技鏈�
 w("<p style='font-size:12px;color:#64748b'>🚨 行動建議：00919/00918 停加碼（平準金+重疊度最高）；高股息族群不新增資金；00878 續持（建倉計畫內）；新資金優先現金/債券/00713 低波。</p>")
 w("</div>")
 
-w(f"<p class='meta'>龍九控股 ｜ 穿透分析 v2.1<br>數據源: snapshot.json + calc_penetration</p>")
+w("<p class='meta'>龍九控股 ｜ 穿透分析 v2.1<br>數據源: snapshot.json + calc_penetration</p>")
 w("</body></html>")
 
 out_path = BASE / f"penetration_report_{today}.html"

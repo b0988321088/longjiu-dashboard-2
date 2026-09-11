@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """build_rebalance_report.py — 再平衡評估網頁（動態讀 snapshot，2026-08-14 建立）"""
-import json, datetime, re, sys, os
+import json, datetime, os
 
 REPO = r"C:\Users\bot\Desktop\longjiu_system"
 today = datetime.date.today().strftime("%Y-%m-%d")
@@ -122,7 +122,6 @@ def main():
   <table><thead><tr><th>情境</th><th class="num">分數</th><th>燈</th></tr></thead><tbody>{reg_rows}</tbody></table>
   <div class="note">🎯 <b>targetAllocation：</b>{alloc_txt}<br/>🔄 <b>板塊輪動：</b>{tilt_txt}{em_txt}</div>"""
         # 避險衛星（黃金+石油，2026-08-21 裁示）現況 vs 目標
-        import json as _json
         _sn = load()
         _hs = _sn.get("hedge_satellite", {})
         _gold_row = next((r for r in alloc if "黃金" in r.get("資產", "")), None)

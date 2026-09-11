@@ -1,5 +1,4 @@
 import csv
-from collections import defaultdict
 
 DETAIL_PATH = "C:/Users/bot/AppData/Local/hermes/cache/documents/doc_4e6c8d47a6db_Moneybook_明細_20260714_1.csv"
 ACCOUNT_PATH = "C:/Users/bot/AppData/Local/hermes/cache/documents/doc_7f2cdffd6ca1_Moneybook_帳戶_20260714_1.csv"
@@ -35,8 +34,8 @@ with open(DETAIL_PATH, encoding='utf-8-sig') as f:
 for d in dividends:
     print(f"  {d[0]} | {d[1]} | {d[3][:45]} | {d[4]:>10,.0f}")
 print(f"  CSV配息合計：{sum(d[4] for d in dividends):>10,.0f} TWD")
-print(f"  → 僅含小額零散配息，安聯/第一金大額未進明細")
-print(f"  → 月均配息估算：保守 80K / 中間 91K / 偏高 100K")
+print("  → 僅含小額零散配息，安聯/第一金大額未進明細")
+print("  → 月均配息估算：保守 80K / 中間 91K / 偏高 100K")
 
 # ===== 3. 房租 =====
 print("\n【房租收入】")
@@ -100,7 +99,7 @@ total_4 = sum(all_4)
 count_4 = len(all_4)
 avg_4 = total_4 / count_4 if count_4 > 0 else 0
 print(f"  四大卡合計月均（清理離群值）：{avg_4:>8,.0f} TWD/月")
-print(f"  → 月均區間：保守 20K / 中間 27K / 偏高 35K")
+print("  → 月均區間：保守 20K / 中間 27K / 偏高 35K")
 
 # ===== 5. 帳戶快照 =====
 print("\n【帳戶快照 2026-07-14】")
@@ -181,9 +180,9 @@ print(f"月盈餘（偏高，配息高+費用低）：{surplus_high:>+10,.0f} TW
 print(f"月盈餘含獎金（中間）：         {surplus_bonus_mid:>+10,.0f} TWD")
 
 # ===== 7. 真值備註 =====
-print(f"\n【真值備註】")
-print(f"配息明細 CSV 僅抓到小額零散配息（CSV期間 11,614 TWD）")
-print(f"大額配息（安聯~55K + 第一金~13K）未進明細 CSV，可能走其他帳戶/自動扣繳")
-print(f"房租未進明細 CSV，為帳戶層級轉帳或現金流動")
-print(f"信用卡明細 CSV 僅 30 天部分消費，完整帳單請參考 Moneybook_帳單 CSV")
-print(f"  四大主力卡月均帳單：~38K TWD/月（4卡合計近期實繳34K+波動中位）")
+print("\n【真值備註】")
+print("配息明細 CSV 僅抓到小額零散配息（CSV期間 11,614 TWD）")
+print("大額配息（安聯~55K + 第一金~13K）未進明細 CSV，可能走其他帳戶/自動扣繳")
+print("房租未進明細 CSV，為帳戶層級轉帳或現金流動")
+print("信用卡明細 CSV 僅 30 天部分消費，完整帳單請參考 Moneybook_帳單 CSV")
+print("  四大主力卡月均帳單：~38K TWD/月（4卡合計近期實繳34K+波動中位）")

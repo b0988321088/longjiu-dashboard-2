@@ -138,12 +138,12 @@ def do_plan(args):
             print(f"     新值：{c['new']:,}")
 
     if warnings:
-        print(f"\n  ⚠️  注意事項：")
+        print("\n  ⚠️  注意事項：")
         for w in warnings:
             print(f"    {w}")
     
     if errors:
-        print(f"\n  ❌  錯誤（已阻止）：")
+        print("\n  ❌  錯誤（已阻止）：")
         for e in errors:
             print(f"    {e}")
         print("\n  → 請修正後重試")
@@ -161,7 +161,7 @@ def do_plan(args):
     
     print(f"\n{'='*55}")
     print(f"  ⏸️  已暫存至 {PENDING_FILE}")
-    print(f"  核准後執行：python safe_update.py --apply")
+    print("  核准後執行：python safe_update.py --apply")
     print(f"{'='*55}")
 
 def do_apply():
@@ -194,10 +194,10 @@ def do_apply():
     snap['last_calibrated'] = f"{today}T{datetime.datetime.now().strftime('%H:%M:%S')}"
 
     save_snapshot(snap)
-    print(f"\n  ✅ snapshot.json 已更新")
+    print("\n  ✅ snapshot.json 已更新")
 
     # 自動四源同步
-    print(f"\n  🔄 執行四源同步...")
+    print("\n  🔄 執行四源同步...")
     ret = os.system('python four_source_sync.py')
     
     if ret != 0:
@@ -205,13 +205,13 @@ def do_apply():
         sys.exit(1)
 
     # CIO 審查
-    print(f"\n  🔍 CIO 審查...")
+    print("\n  🔍 CIO 審查...")
     cio_ret = os.system('python cio_review.py 2>&1')
     if cio_ret != 0:
         print(f"  ⚠️  CIO 審查有警訊（exit={cio_ret}）— 請手動確認")
 
     # 強制 commit 加 [cioreviewed]
-    print(f"\n  📤 Git push...")
+    print("\n  📤 Git push...")
     os.system('git add snapshot.json')
     os.system(f'git commit -m "safe_update {today} [cioreviewed]" 2>&1')
     os.system('git push origin clean-main 2>&1')
@@ -219,7 +219,7 @@ def do_apply():
     pending['applied'] = True
     pending['applied_at'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
     save_pending(pending)
-    print(f"\n  ✅ 全部完成！")
+    print("\n  ✅ 全部完成！")
 
 def main():
     if len(sys.argv) < 2:

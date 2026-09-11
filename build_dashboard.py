@@ -170,10 +170,10 @@ def main():
             _fee = v["管理費"] or 0
     if _fee > 0:
         rep["<span class=\"text-amber-400\">⏳ 待入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-slate-400\">0 TWD（應收 2,100）</span>"] = \
-            f"<span class=\"text-emerald-400\">✅ 已入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-emerald-400 font-bold\">2,100 TWD</span>"
+            "<span class=\"text-emerald-400\">✅ 已入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-emerald-400 font-bold\">2,100 TWD</span>"
     else:
         rep["<span class=\"text-amber-400\">⏳ 待入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-slate-400\">0 TWD（應收 2,100）</span>"] = \
-            f"<span class=\"text-amber-400\">⏳ 待入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-slate-400\">0 TWD（應收 2,100）</span>"
+            "<span class=\"text-amber-400\">⏳ 待入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-slate-400\">0 TWD（應收 2,100）</span>"
     # 流動性調度 tab 銀行卡（2026-08-29 補：原 6 卡全寫死 → 動態）
     rep["27,738"] = _fmt((cd.get("活期儲蓄存款", 0) or 0) + (cd.get("數位存款帳戶２類", 0) or 0))  # 國泰世華（活期+數位2類）
     rep["44,116"] = _fmt(cd.get("數位活儲", 44116) or 0)             # 台北富邦

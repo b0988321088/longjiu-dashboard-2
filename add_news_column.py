@@ -1,6 +1,5 @@
 import sqlite3
 import os
-from datetime import date
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE, "dragon_assets.db")

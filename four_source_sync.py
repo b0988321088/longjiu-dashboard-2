@@ -4,11 +4,9 @@ four_source_sync.py — 四源同步腳本
 
 用法：python four_source_sync.py
 """
-import json, sqlite3, sys, os, base64, requests
+import json, sqlite3, sys, os
 import uuid
-import time
 import datetime
-from collections import Counter # for sorting errors consistently
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 os.chdir(BASE)
@@ -72,7 +70,7 @@ def _handle_incidents(errors_list, snapshot_date_str):
             f_er.write(f"\n## INCIDENT {new_incident_id[:8]} (four_source_sync)\n")
             f_er.write(f"- 首次發生: {datetime.datetime.fromisoformat(new_incident['first_seen']).strftime('%Y-%m-%d %H:%M:%S')}\n")
             f_er.write(f"- 錯誤: {'；'.join(new_incident['errors'])}\n")
-            f_er.write(f"- 狀態: ⏳ 待處理 (總計 1 次)\n")
+            f_er.write("- 狀態: ⏳ 待處理 (總計 1 次)\n")
 
     # Rewrite inc_events.jsonl with updated/new incidents
     with open(INC_EVENTS_FILE, 'w', encoding='utf-8') as f:
@@ -106,7 +104,7 @@ def cleanup_on_exit():
     # 自動還原曾吃掉手動/代理未提交的改動（9/2 上午實踩 2 次險況），
     # 改為保留現況 + 保留備份檔，由人工決定是否還原。
     if errors:  # errors 列表非空 = 同步失敗
-        print(f"❌ 同步失敗（不自動還原 snapshot）")
+        print("❌ 同步失敗（不自動還原 snapshot）")
         if os.path.exists(SNAPSHOT_BACKUP_FILE):
             print(f"   ⚠️ 備份保留: {SNAPSHOT_BACKUP_FILE}")
             print(f"   ⚠️ 如需手動還原: cp {SNAPSHOT_BACKUP_FILE} {SNAPSHOT_FILE}")
@@ -190,7 +188,7 @@ try:
     r = subprocess.run([sys.executable, os.path.join(BASE, 'asset_diff_monitor.py')], capture_output=True, text=True, timeout=90, cwd=BASE)
     out = r.stdout + r.stderr
     if '✅' in out or 'Telegram 200' in out:
-        print(f"✅ OK")
+        print("✅ OK")
     else:
         print(f"⚠️ 可能有問題: {out[-100:]}")
 except Exception as e:
@@ -213,7 +211,7 @@ try:
     out = r.stdout + r.stderr
     _fp = os.path.join(BASE, f'daily_report_v2_{today}.html')
     if '✅' in out or '已寫入' in out or os.path.exists(_fp):
-        print(f"✅ OK")
+        print("✅ OK")
     else:
         print(f"⚠️ {out[-100:]}")
         errors.append(f"日報產出失敗: {out[-200:]}")
@@ -318,6 +316,6 @@ print(f"\n{'='*40}")
 if errors:
     _handle_incidents(errors, snap.get('date', str(datetime.date.today())))
 else:
-    print(f"✅ 四源同步完成！")
-    print(f"   🔒 尚未推送 — 請傳 MEDIA 給使用者核准後才 git push")
+    print("✅ 四源同步完成！")
+    print("   🔒 尚未推送 — 請傳 MEDIA 給使用者核准後才 git push")
     print(f"   📄 本地檔案：daily_report_v2_{today}.html / asset_diff_{today}.html / index.html")

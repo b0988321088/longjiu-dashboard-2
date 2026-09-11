@@ -3,7 +3,7 @@
 每日 08:30 動態推送：行事曆比對 + Gmail入帳 + 資產變化 + 市場情報 + FIRE
 """
 
-import json, csv, subprocess, re, sqlite3
+import json, subprocess, re
 from datetime import date, timedelta
 from pathlib import Path
 

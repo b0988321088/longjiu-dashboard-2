@@ -124,7 +124,7 @@ def main():
         pass
     table = build_table(snap, us30y)
     result = compare(table, snap)
-    print(f"\n=== 行動閉環追蹤 ===")
+    print("\n=== 行動閉環追蹤 ===")
     if result.get("status") == "first_run":
         print("首次執行，已儲存基準快照")
         return

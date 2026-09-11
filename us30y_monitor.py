@@ -14,7 +14,7 @@
   5.28 → 靜默漏報。兩個原因：① 只讀 FRED（落後）② 紅線檢查寫在模式切換分支，
   模式維持時直接 return，永遠不會觸發。
 """
-import json, subprocess, sys
+import json, subprocess
 from datetime import date, datetime, timezone, timedelta
 from pathlib import Path
 

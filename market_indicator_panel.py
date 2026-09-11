@@ -99,8 +99,8 @@ def build_panel(snap: dict | None = None) -> str:
         f"壓力情境：富達-30%＋聯博-20% → LTV 70% 💥<br/>"
     )
     rows.append(
-        f"<strong>⑦ 執行紀律：</strong>動態偏移 ≤±10%｜±5pp 再平衡閾值｜週六正式評估｜"
-        f"個人硬性約束 &gt; 市場訊號（台股≤15%／質押≤50%／PI 執行案照舊／現金底線70萬／美元只控新增）"
+        "<strong>⑦ 執行紀律：</strong>動態偏移 ≤±10%｜±5pp 再平衡閾值｜週六正式評估｜"
+        "個人硬性約束 &gt; 市場訊號（台股≤15%／質押≤50%／PI 執行案照舊／現金底線70萬／美元只控新增）"
     )
     rows.append("</div></div>")
     return "\n".join(rows)

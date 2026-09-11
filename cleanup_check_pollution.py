@@ -186,9 +186,9 @@ def advise_error_register():
         print(f"  ⚠️ {ERROR_REGISTER_PATH} 不存在。")
         return
     
-    print(f"  📄 error_register.md 舊格式條目仍會被記錄，但新的將會使用 inc_events.jsonl 機制。")
+    print("  📄 error_register.md 舊格式條目仍會被記錄，但新的將會使用 inc_events.jsonl 機制。")
     print(f"  建議手動審查 {ERROR_REGISTER_PATH}，移除所有與 '--check' 相關的條目，")
-    print(f"  並考慮定期清理重複或已解決的舊條目。")
+    print("  並考慮定期清理重複或已解決的舊條目。")
 
 def main():
     apply_changes = '--apply' in sys.argv

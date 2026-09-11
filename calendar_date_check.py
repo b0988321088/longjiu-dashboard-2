@@ -4,7 +4,7 @@
 在 calendar_sync.py 前執行：列出未來 7 天事件 + 檢查可疑日期。
 用法：python calendar_date_check.py [--fix]
 """
-import json, sys
+import json
 from datetime import date, timedelta
 from pathlib import Path
 

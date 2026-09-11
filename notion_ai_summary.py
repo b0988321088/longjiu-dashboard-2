@@ -8,7 +8,7 @@ Notion AI 自動摘要腳本 — 取代 Hermes 輕量查詢 cron
   python notion_ai_summary.py decisions  # 決策清單
 """
 import json, os, requests, sys
-from datetime import datetime, date, timedelta
+from datetime import date, timedelta
 from pathlib import Path
 
 BASE = Path(__file__).parent.resolve()
@@ -124,8 +124,8 @@ def daily_summary():
         lines.append("📌 今日無新決策")
     
     # master_ledger: 本週資產
-    lines.append(f"\n📊 資產狀態：請至 Notion master_ledger 查看")
-    lines.append(f"\n💡 使用 Notion AI：直接在搜尋框問「本週資產變化」")
+    lines.append("\n📊 資產狀態：請至 Notion master_ledger 查看")
+    lines.append("\n💡 使用 Notion AI：直接在搜尋框問「本週資產變化」")
     
     return "\n".join(lines)
 
@@ -134,7 +134,7 @@ def weekly_review():
     """週報：從共享知識層讀取本週資產快照 + 分析記錄"""
     week_ago = (date.today() - timedelta(days=7)).isoformat()
     try:
-        from notion_knowledge import query_latest, _db_id
+        from notion_knowledge import query_latest
         # 讀取本週資產快照
         snaps = query_latest("NOTION_DAILY_SNAPSHOT_DB_ID", limit=7)
         # 讀取本週分析記錄
@@ -167,7 +167,7 @@ def weekly_review():
     else:
         lines.append("📝 分析記錄：尚無記錄")
     
-    lines.append(f"\n💡 所有代理共享：notion_knowledge.py 自動寫入")
+    lines.append("\n💡 所有代理共享：notion_knowledge.py 自動寫入")
     return "\n".join(lines)
 
 

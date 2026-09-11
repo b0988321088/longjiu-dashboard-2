@@ -112,7 +112,7 @@ def main():
     print(f"   驗收等級：{kpis.get('驗收等級', lvl)}")
     if len(months) >= 2:
         covs = [cl["記錄"][m].get("生活費覆蓋率") for m in months]
-        print(f"   覆蓋率趨勢: " + " → ".join(f"{m[2:]}月 {c}%" for m, c in zip(months, covs)))
+        print("   覆蓋率趨勢: " + " → ".join(f"{m[2:]}月 {c}%" for m, c in zip(months, covs)))
 
 if __name__ == "__main__":
     main()

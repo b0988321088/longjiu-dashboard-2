@@ -1,6 +1,6 @@
 """每日費用監控 — 查 DeepSeek 餘額 + 估算剩餘天數"""
-import json, csv, os, subprocess, sys
-from datetime import date, datetime
+import json, csv, os, sys
+from datetime import date
 from pathlib import Path
 from logging_config import get_logger
 logger = get_logger("cost_monitor")
@@ -91,7 +91,7 @@ report += f"DeepSeek 餘額：**{balance:.2f} CNY**（約 {balance*4.2:.0f} 台�
 if daily_cost > 0:
     report += f"今日花費：**{daily_cost:.2f} CNY**（約 {daily_cost*4.2:.0f} 台幣）\n"
 else:
-    report += f"今日花費：無\n"
+    report += "今日花費：無\n"
 
 remaining = estimate_days(balance, history)
 if remaining < 30:
@@ -107,7 +107,7 @@ if history:
     report += f"近7日總花費：{week_total:.2f} CNY\n"
 
 # 每月固定支出
-report += f"\n---\n📋 **每月固定支出：**\n"
+report += "\n---\n📋 **每月固定支出：**\n"
 for name, cost in MONTHLY_FIXED.items():
     report += f"  {name}: ${cost:.0f} USD/月（約 {cost*32:.0f} 台幣）\n"
 report += f"  Gemini API: NT${GEMINI_MONTHLY_COST_TWD:.0f}/月（約 {GEMINI_MONTHLY_COST_TWD/32:.1f} USD）\n"

@@ -9,7 +9,6 @@ mb_extract.py — Moneybook ZIP 自動解壓+校準
   4. 如有差異，建議更新
 """
 import sys, os, csv, json, pyzipper
-from pathlib import Path
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 SNAPSHOT = f'{BASE}/snapshot.json'

@@ -19,7 +19,7 @@ institutional_flow.py — 機構流向雷達 (Institutional Flow Radar)
   🟡 黃：個人策略與機構反向（暫停自動加碼，日報載明理由）
   🔴 紅：機構大規模撤離但個人擬加碼（凍結該資產調度）
 """
-import json, os, re, ssl, sys, urllib.request
+import json, re, ssl, sys, urllib.request
 from datetime import datetime, date, timedelta
 from pathlib import Path
 
@@ -332,7 +332,7 @@ def compute_signals(tw, cot, fed, twd, tnx, cfg, state):
         elif buy_days >= c["twse"]["外資連續買超_綠"]:
             tw_sig, tw_note = "🟢", f"外資淨買超 {fnet/1e8:.1f}億（連{buy_days}日）— 台股慢慢買順勢"
         elif sum(1 for v in streak[-3:] if v < 0) >= c["twse"]["外資連續賣超_黃"]:
-            tw_sig, tw_note = "🟡", f"外資連賣 — 台股加碼暫緩，等方向"
+            tw_sig, tw_note = "🟡", "外資連賣 — 台股加碼暫緩，等方向"
         else:
             tw_sig, tw_note = "⚪", f"外資淨買超 {fnet/1e8:.1f}億 — 中性"
         state.setdefault("twse", {})["外資連日"] = streak[-3:]

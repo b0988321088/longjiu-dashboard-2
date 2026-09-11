@@ -44,7 +44,7 @@ def kpi(label, val, sub, color="#3b82f6"):
   <div style="font-size:23px;font-weight:800;color:{color}">{val}</div>
   <div style="font-size:11px;color:#94a3b8;margin-top:4px">{sub}</div></div>"""
 
-W = lambda n: f'style="padding:6px 10px;border-bottom:1px solid #e5e7eb"'
+W = lambda n: 'style="padding:6px 10px;border-bottom:1px solid #e5e7eb"'
 H = lambda t: f"<th style='text-align:left;font-size:12px;color:#6e6e73;padding:6px 10px;border-bottom:2px solid #3b82f6'>{t}</th>"
 
 rows = f"""
@@ -54,7 +54,7 @@ rows = f"""
 
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
 {kpi("總資產", f"{TA:,}", "不含不動產", "#1d1d1f")}
-{kpi("淨值", f"{net_worth:,}", f"資產+不動產−負債", "#3b82f6")}
+{kpi("淨值", f"{net_worth:,}", "資產+不動產−負債", "#3b82f6")}
 {kpi("負債比", f"{debt_ratio:.1f}%", f"負債 {TL:,}", "#d97706")}
 {kpi("純現金", f"{CASH:,}", f"底線 70萬 {cash_ok}", "#22c55e" if CASH>=700000 else "#ef4444")}
 {kpi("Runway", f"{runway:.1f} 月", f"現金 / 月支出 {EXP:,}")}
@@ -97,7 +97,7 @@ for k, t, tk in [("台股市值型成長","台股","台股市值型目標"),("�
     a = pen.get(k, 0); v = twd.get(k, 0); tt = tgt.get(tk)
     diff = a - tt
     mark = (f"<span style='color:#ef4444;font-weight:700'>超 {diff:+.1f}pp</span>" if diff > 1 else
-            f"<span style='color:#22c55e'>✅ 目標內</span>" if abs(diff) <= 1 else
+            "<span style='color:#22c55e'>✅ 目標內</span>" if abs(diff) <= 1 else
             f"<span style='color:#d97706'>缺 {abs(diff):.1f}pp</span>")
     gap_v = f"{v - tt/100*TA:+,.0f}" if tt else "—"
     rows += f"<tr><td {W(0)}>{t}</td><td {W(0)} style='text-align:right'>{v:,}</td><td {W(0)} style='text-align:right;font-weight:700'>{a:.1f}%</td><td {W(0)} style='text-align:right'>{tt}%</td><td {W(0)} style='text-align:right;font-size:12px'>{mark}（{gap_v}）</td></tr>"
@@ -181,7 +181,7 @@ rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W
 """
 for x in recent:
     rows += f"<tr><td {W(0)} style='white-space:nowrap'>{x.get('timestamp','')[:10]}</td><td {W(0)}>{x.get('name','')}</td><td {W(0)} style='text-align:right;font-size:12px;color:#6e6e73'>{x.get('status','')}</td></tr>"
-rows += f"""</table></div>
+rows += """</table></div>
 <div style="font-size:11px;color:#94a3b8;margin-top:12px;text-align:center">龍九控股自動化審計儀表板（完整版）｜ 下次審計：2026-08-28 17:00 ｜ build_audit_dashboard.py 動態產生</div>
 </div>"""
 
