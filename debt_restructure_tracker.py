@@ -201,7 +201,18 @@ def main():
     else:
         light4 = "💥 追繳警戒（LTV≥70%：立即執行紅燈全部動作）"
     print(f"  current_LTV_ratio = {ltv*100:.1f}% → {light4}" if ltv else "  current_LTV_ratio = 0%（尚未質押）→ 🟢")
-    print(f"  質押初始LTV≤50%；擔保池=股票600+平衡300~600（追繳臨界自 -30% 延後至 -40%）")
+    # 擔保池組成／借款金額一律從 snapshot 讀（2026-09-11：原為舊版硬編碼「股票600+平衡300~600」，
+    # 會讓 9/11 新質押（池 1,177 萬 × 4.5 成 = 540 萬）在週報顯示成舊計畫）
+    _pool = plan.get("pool_market_value") or 0
+    _loan = plan.get("loan_amount") or 0
+    _rate = plan.get("rate")
+    if _pool and _loan:
+        print(f"  擔保池 {_pool:,}｜借款 {_loan:,}｜利率 {(_rate*100 if _rate else 0):.2f}%"
+              f"｜撥款 {plan.get('disbursement_eta', '—')}")
+        print(f"  壓力情境：跌20% → LTV {_loan/(_pool*0.8)*100:.1f}%｜跌30% → LTV {_loan/(_pool*0.7)*100:.1f}%"
+              f"｜追繳線70% 需再跌 {100-_loan/0.7/_pool*100:.1f}%")
+    else:
+        print(f"  質押初始LTV≤50%；擔保池=股票600+平衡300~600（追繳臨界自 -30% 延後至 -40%）")
 
     # -------- 5. 現金流 & 債務重整時程 --------
     print(f"\n【5.現金流 & 債務重整時程】")
