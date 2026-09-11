@@ -88,7 +88,7 @@ def penetration_analysis(snapshot: dict) -> dict:
                     key_action = "台股市值低配屬逐步架構預期：僅回檔小單分批低吸，不強迫貼齊"
         # 2026-08-23：現金超標 → 階段性停泊說明（8/22 裁示：底線制取代 5% 目標；不當風險警報）
         if gaps.get("cash", 0) > 5:
-            _cash_note = "💰 現金 22.1% 為階段性停泊（MMF 500萬已指定標案/質押補救；底線制 ≥70萬 ✅）"
+            _cash_note = "💰 現金 22.1% 為階段性停泊（MMF 500萬贖回款已轉申購貝萊德B11 500萬（質押擔保池擴充）；底線制 ≥70萬 ✅）"
             key_risk = (key_risk + "｜" + _cash_note) if key_risk else _cash_note
         return {
             "actual": actual, "actual_twd": actual_twd, "gaps": gaps,
@@ -138,7 +138,7 @@ def penetration_analysis(snapshot: dict) -> dict:
                 key_action = "台股市值低配屬逐步架構預期：僅回檔小單分批低吸，不強迫貼齊"
     # 2026-08-23：現金超標 → 階段性停泊說明
     if gaps.get("cash", 0) > 5:
-        _cash_note = "💰 現金 22.1% 為階段性停泊（MMF 500萬已指定標案/質押補救；底線制 ≥70萬 ✅）"
+        _cash_note = "💰 現金 22.1% 為階段性停泊（MMF 500萬贖回款已轉申購貝萊德B11 500萬（質押擔保池擴充）；底線制 ≥70萬 ✅）"
         key_risk = (key_risk + "｜" + _cash_note) if key_risk else _cash_note
 
     return {
@@ -227,7 +227,7 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
             f"結構風險：美元曝險64%（紅線50%）、高科技17.5%（紅線30%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡\n"
             f"產業與風險因子：{_industry_context()}\n"
             f"{market_text}\n"
-            f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（22.1%含 MMF 500萬 已指定標案/質押補救，不可減現金）；"
+            f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（22.1%含 MMF 500萬贖回款已轉申購貝萊德B11 500萬（質押擔保池擴充），不可減現金）；"
             f"台股加碼單筆≤5萬、8-12週分批；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
             f"債券等 US30Y<5.30%；石油 Locked 禁建議；防守合併口徑69.5%已足勿追大額；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）。\n"
             f"請以巴菲特投資哲學（護城河、安全邊際、能力圈、長期持有、別人恐懼我貪婪）做 3 點具體觀察 + 1 個紀律提醒，200字內，繁體中文，不要重複數字表。"
@@ -304,6 +304,19 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
     
     return lines
 
+def us30y_note() -> str:
+    """US30Y 單一真值 = us30y_state.json（2026-09-11 修：原為 f-string 寫死 5.32%，
+    會把過期值餵給 LLM 並在日報留下舊數字）。每次呼叫重讀，確保最新。"""
+    try:
+        _st = json.loads((BASE / "us30y_state.json").read_text(encoding="utf-8"))
+        _r = float(_st["last_rate"])
+        _d = _st.get("last_date", "")
+    except Exception:
+        return "US30Y 資料無法取得（us30y_state.json 缺漏或格式異常）"
+    _pos = "已站上" if _r >= 5.30 else ("貼近" if _r >= 5.20 else "未觸及")
+    return f"US30Y {_r:.2f}%（{_d} 收盤）{_pos}5.30% 凍結線"
+
+
 def generate_cto_report(pen: dict, market_text: str = "") -> list:
     """CTO 技術視角 — LLM 真實分析優先（2026-08-22 升級），失敗 fallback 模板"""
     a, g = pen["actual"], pen["gaps"]
@@ -315,10 +328,10 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
             f"你是龍九控股的 CTO（技術分析師）。以下為資產穿透資料（總投資 {pen['total_inv']/1e4:.0f}萬）：\n"
             f"五桶：{_fmt}\n"
             f"主要偏離：{pen.get('key_risk','—')}｜建議：{pen.get('key_action','—')}\n"
-            f"結構風險：美元曝險64%（紅線50%）、高科技17.5%（紅線30%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡、US30Y 5.32% 貼近5.30%凍結線\n"
+            f"結構風險：美元曝險64%（紅線50%）、高科技17.5%（紅線30%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡、{us30y_note()}\n"
             f"產業與風險因子：{_industry_context()}\n"
             f"{market_text}\n"
-            f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（22.1%含 MMF 500萬 已指定標案/質押補救，不可建議減現金）；"
+            f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（22.1%含 MMF 500萬贖回款已轉申購貝萊德B11 500萬（質押擔保池擴充），不可建議減現金）；"
             f"台股加碼單筆≤5萬、8-12週分批（不可建議單筆大額）；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
             f"債券等 US30Y<5.30%（禁建議買債）；石油 Locked 禁建議；防守合併口徑69.5%已足勿追大額；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）。\n"
             f"請以技術面（動能、趨勢、支撐壓力、風險）+ 產業資金流向（哪個產業順勢/逆勢）給：今日最大風險 + 具體建議動作（含標的/金額節奏，須符合上述約束），150字內，繁體中文。"

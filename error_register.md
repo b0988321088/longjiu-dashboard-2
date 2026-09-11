@@ -398,3 +398,23 @@
 - 錯誤：Session 膨脹監控（watchdog v6.6）對已結束（session_reset 於 08:45:12）的 session 推殘留 ⚠️「已達 264 則」警報 — active_sessions() 未過濾 ended_at
 - 修正：watchdog v6.7（INC-151）WARN/runaway 跳過 ended session，CRIT/AUTO 不動；沙箱 29 檢查全 PASS、真實 dry-run 靜默
 - 狀態：✅ 已修正
+
+## INC-2026-09-11
+- 時間：2026-09-11
+- 錯誤：四源不一致，請檢查；同義欄位不一致（asset_sync.py 抓到）
+- 狀態：⏳ 待處理
+
+## INC-2026-09-11
+- 時間：2026-09-11
+- 錯誤：四源不一致，請檢查；穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態：⏳ 待處理
+
+## INC-2026-09-11
+- 時間：2026-09-11
+- 錯誤：四源不一致，請檢查；穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態：⏳ 待處理
+
+## INC-2026-09-11
+- 時間：2026-09-11
+- 錯誤：四源不一致，請檢查；穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態：⏳ 待處理

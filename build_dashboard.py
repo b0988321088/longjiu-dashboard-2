@@ -34,6 +34,21 @@ def main():
         _pending_note = ""
     tpl = tpl.replace("__PENDING_REDEMPTION__", _pending_note)
 
+    # 2026-09-11 修：US30Y 曾寫死「5.22%（8/28 收盤）」→ 改動態讀 us30y_state.json
+    try:
+        _st30 = json.loads((BASE / "us30y_state.json").read_text(encoding="utf-8"))
+        _r30 = float(_st30["last_rate"])
+        _d30 = _st30.get("last_date", "")
+    except Exception:
+        _r30, _d30 = None, ""
+    if _r30 is None:
+        _us30y_line = "US30Y 資料無法取得（us30y_state.json 缺漏）"
+    elif _r30 >= 5.30:
+        _us30y_line = f"US30Y {_r30:.2f}%（{_d30} 收盤，已站上 5.30% 債券凍結紅線 {_r30 - 5.30:.2f}pp）"
+    else:
+        _us30y_line = f"US30Y {_r30:.2f}%（{_d30} 收盤，距 5.30% 債券凍結紅線 {5.30 - _r30:.2f}pp）"
+    tpl = tpl.replace("__US30Y_LINE__", _us30y_line)
+
     # ── 從 snapshot 計算真值 ──
     cash = snap.get("cash_total", 0) or 0
     ins = snap.get("insurance_total", 0) or 0
@@ -123,7 +138,7 @@ def main():
             _plan.append("✅ 保單轉換 9/10 送出（安聯＋第一金同步）→ 轉入 M&G入息A美元避險月配，T+4 9/16 生效")
             if _usd2 > 55:
                 _plan.append(f"美元曝險 {_usd2}% 超標→美股減碼")
-            _plan.append("🔍 質押：PI 已核定(9/8)→9/11(五)13:00 板橋國泰簽約 700萬池×50%=350萬@2.8%固定（撥款2-4週）")
+            _plan.append("🔍 質押：9/11 申購貝萊德B11 500萬（未質押）→ B11 過戶(~9/16) 後整池 1,200萬×4.5成=540萬@2.77% 質押（撥款~9/25）")
             rep["__RADAR_DATE__"] = _rd.get("last_run", "2026-08-29")[:10]
             rep["__RADAR_SIGNALS__"] = _signals_txt
             rep["__RADAR_PLAN__"] = "｜".join(_plan)

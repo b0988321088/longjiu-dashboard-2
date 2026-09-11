@@ -10,8 +10,50 @@ BASE = Path(__file__).resolve().parent
 NOW = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 DATE = datetime.date.today().isoformat()
 
-FULL = """🚨 緊急應變報告（2026-09-11 盤中｜手動補跑）
-產出時間：__NOW__ ｜ 觸發：台股盤中 -2.21% + 美股連四黑（費半 -2.66%）+ 油價破百 + US30Y 突破 5.30%
+# --- Load snapshot data ---
+snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+pen = snap.get("penetration", {}).get("actual_pct", {})
+pen_twd = snap.get("penetration", {}).get("actual_twd", {})
+total_assets = snap.get("total_assets", 0)
+cash_total = snap.get("cash_total", 0) or 0
+insurance_total = snap.get("insurance_total", 0) or 0
+pledge_loan_amt = snap.get("cathay_pledge_0911", {}).get("可貸金額", 0) or 0
+
+tw_equity_pct = pen.get("台股市值型成長", 0)
+tw_equity_twd = pen_twd.get("台股市值型成長", 0)
+us_equity_pct = pen.get("美股市值型成長", 0)
+us_equity_twd = pen_twd.get("美股市值型成長", 0)
+bond_pct = pen.get("債券", 0)
+bond_twd = pen_twd.get("債券", 0)
+cash_safetynet_pct = pen.get("現金/安全網", 0)
+cash_safetynet_twd = pen_twd.get("現金/安全網", 0)
+defensive_pct = pen.get("防守型配息", 0)
+defensive_twd = pen_twd.get("防守型配息", 0)
+
+# Pre-format all dynamic values
+fmt_total_assets = f"{total_assets:,.0f}"
+fmt_cash_total = f"{cash_total:,.0f}"
+fmt_insurance_total = f"{insurance_total:,.0f}"
+fmt_pledge_loan_amt = f"{pledge_loan_amt:,.0f}"
+
+fmt_tw_equity_pct = f"{tw_equity_pct:.1f}"
+fmt_tw_equity_twd = f"{tw_equity_twd:,.0f}"
+fmt_us_equity_pct = f"{us_equity_pct:.1f}"
+fmt_us_equity_tech_pct = f"{pen.get('美股市值型成長_科技',0):.1f}"
+fmt_us_equity_nontech_pct = f"{pen.get('美股市值型成長_非科技',0):.1f}"
+fmt_bond_pct = f"{bond_pct:.1f}"
+fmt_cash_safetynet_pct = f"{cash_safetynet_pct:.1f}"
+fmt_defensive_pct = f"{defensive_pct:.1f}"
+
+fmt_allianz_combined = f"{snap.get('allianz_combined',0):,.0f}"
+fmt_firstjin_value = f"{snap.get('firstjin_fl65_current_value', snap.get('firstjin_current_value',0)):,.0f}"
+
+fmt_usd_exposure_pct = f'{snap.get("usd_exposure_pct",0):.1f}'
+fmt_usd_exposure_diff = f'{snap.get("usd_exposure_pct",0)-50:.1f}'
+
+# --- Dynamic content for FULL report ---
+FULL = f"""🚨 緊急應變報告（2026-09-11 盤中｜手動補跑）
+產出時間：{NOW} ｜ 觸發：台股盤中 -2.21% + 美股連四黑（費半 -2.66%）+ 油價破百 + US30Y 突破 5.30%
 
 【一、市場概況】
 ・台股：加權 46,142.16（-2.21%），開盤 46,651.21 後一路走弱；台積電 2,425 元（-1.02%），盤中一度下殺 35 元逼近月線。8 月營收首度突破 5,000 億創歷史新高，股價卻不漲反跌 → 典型「基本面利多、外部風險主導」。
@@ -27,49 +69,49 @@ FULL = """🚨 緊急應變報告（2026-09-11 盤中｜手動補跑）
 4. 台股結構差異：台積電基本面續強、卻是外資與國際風險主導短線，權值股拖累指數。
 5. 判讀：這是「事件驅動的風險重定價」，不是景氣轉折。真正要盯的是今晚 CPI 與 9/16 FOMC，而非今天的指數點位。
 
-【三、持倉關聯分析】（真值：snapshot 2026-09-11，總資產 26,161,227）
-・台股部位 7.6%（1,980,680 元）→ 大盤 -2.2% 粗估 -4.4 萬（未實現，占總資產 -0.17%），傷害有限。
-・美股部位 44.9%（科技 12.4% / 非科技 32.5%）→ 費半 -2.66%、納指 -0.65%，已反映在昨收；今日台股時段美股休市。
-・債券 17.3%：30Y 5.36% 續壓價格，中短天期較抗；不因單日跳升加碼或砍倉。
-・現金／安全網 22.4%：含國泰貨幣市場基金 5,003,846（贖回在途，9/16 入帳）＋銀行現金 857,298 → 底線 70 萬 ✅。
-・保單 9,661,253（安聯 A+B 7,664,202 + 第一金 1,902,345）：淨值型受波動影響，但持有目的是配息現金流，不動。
+【三、持倉關聯分析】（真值：snapshot {DATE}，總資產 {fmt_total_assets}）
+・台股部位 {fmt_tw_equity_pct}%（{fmt_tw_equity_twd} 元）→ 大盤 -2.2% 粗估 -4.4 萬（未實現，占總資產 -0.17%），傷害有限。
+・美股部位 {fmt_us_equity_pct}%（科技 {fmt_us_equity_tech_pct}% / 非科技 {fmt_us_equity_nontech_pct}%）→ 費半 -2.66%、納指 -0.65%，已反映在昨收；今日台股時段美股休市。
+・債券 {fmt_bond_pct}%：30Y 5.36% 續壓價格，中短天期較抗；不因單日跳升加碼或砍倉。
+・現金／安全網 {fmt_cash_safetynet_pct}%：含銀行現金 {fmt_cash_total} → 底線 70 萬 ✅。
+・保單 {fmt_insurance_total}（安聯 A+B {fmt_allianz_combined} + 第一金 {fmt_firstjin_value}）：淨值型受波動影響，但持有目的是配息現金流，不動。
 ・黃金 CFTC 淨多單 228,124（週減 -6.3%）；石油淨多單 -24,651（週減 -62.8%，聰明錢撤離）→ 油價漲勢由地緣風險溢價驅動，不是趨勢性做多。
 
 【四、資產配置透視】
-・實際 vs 目標：台股 7.6%（目標 10%，-2.4pp）｜美股 44.9%（目標 40%，+4.9pp）｜防守 4.4%（目標 20%）｜債券 17.3%（目標 25%）｜現金 22.4%（目標 5%，階段性停泊）。
+・實際 vs 目標：台股 {fmt_tw_equity_pct}%（目標 10%，{float(fmt_tw_equity_pct)-10:.1f}pp）｜美股 {fmt_us_equity_pct}%（目標 40%，{float(fmt_us_equity_pct)-40:.1f}pp）｜防守 {fmt_defensive_pct}%（目標 20%）｜債券 {fmt_bond_pct}%（目標 25%）｜現金 {fmt_cash_safetynet_pct}%（目標 5%，階段性停泊）。
 ・美股超標與現金超額是一體兩面：贖回資金停泊未部署、台股部位偏低的鏡像。
-・目前不具備「逢跌加碼」的紀律條件：① 質押撥款未到位（今天才簽約、撥款 2-4 週）② Fed 新資料未落地（今晚 CPI、9/16 FOMC）③ US30Y 已破 5.30 凍結線，債券不進場。
+・目前不具備「逢跌加碼」的紀律條件：① 質押撥款未到位（已完成質押設定、等待撥款 ~9/25）② Fed 新資料未落地（今晚 CPI、9/16 FOMC）③ US30Y 已破 5.30 凍結線，債券不進場。
 
 【五、巴菲特視角建議】
 ・價格與價值分離：台積電營收創高、股價下跌，跌的原因是利率與油價，不是獲利轉弱 → 這種下跌不構成賣出理由，也不構成急著買進的理由。
-・不追高、不殺低：部位是零槓桿現貨、無追繳風險，現金 22.4% 就是最大緩衝，不需要為單日行情調整。
+・不追高、不殺低：部位是零槓桿現貨、無追繳風險，現金 {fmt_cash_total} 就是最大緩衝，不需要為單日行情調整。
 ・唯一被授權的動作仍是「台股慢慢買（0050／006208）」，但前提是質押撥款到位＋Fed 資料落地 → 今天不做。
 ・安全邊際來自「等」：油價破百若持續 → 通膨路徑惡化 → 升息 → 估值再壓；反之 CPI 溫和、殖利率回落才是進場訊號。
 
 【六、風控檢查】
 ・🔴 US30Y 5.36% 突破 5.30% 凍結紅線（Yahoo ^TYX 9/10 收盤；FRED 官方值待公布）→ 債券 ladder 凍結、不加碼不贖回；若連 3 日站上 5.30，需重新檢視質押買債套利前提（CPI 低於 3% 未成立）。
 ・🔴 油價 102-107（破百）：通膨傳導是今晚 CPI 之外的最大變數。
-・🟡 美元曝險 64.1%（超 50% 紅線 14pp）：台幣本日走貶，續觀察、不急調整。
+・🟡 美元曝險 {fmt_usd_exposure_pct}%（超 50% 紅線 {fmt_usd_exposure_diff}pp）：台幣本日走貶，續觀察、不急調整。
 ・🟡 地緣風險 43.6（荷莫茲海峽）：緊急防範雷達監控中，石油部位 Locked 不參與。
-・✅ 現金底線 857,298 元 ≥ 700,000 元；零槓桿、無追繳。
-・✅ 保單：淨值 60% 為主風險，還債＝修保單路徑執行中；今天 13:00 板橋國泰質押簽約 350 萬 @2.8% 固定（撥款 2-4 週，屬銀行作業、不受市場 gate 影響）。
+・✅ 現金底線 {fmt_cash_total} 元 ≥ 700,000 元；零槓桿、無追繳。
+・✅ 保單：淨值 60% 為主風險，還債＝修保單路徑執行中；9/11 已完成貝萊德 B11 500萬申購（MMF 贖回款轉入），並完成整池 1,200萬×4.5成 = {fmt_pledge_loan_amt} @2.77% 質押設定，等待銀行撥款（約 ~9/25 入帳，屬銀行作業、不受市場 gate 影響）。
 ・⛔ 今日禁令：質押／轉貸資金禁止生活消費擴張；未達 gate 前不新增美元、不建債梯、不追台股。
 
 【行動摘要】
-1. 今天 13:00 質押簽約照常（銀行作業）；撥款到位後，部署仍等 US30Y 回落 5.30 以下或 9/16 FOMC 定調。
+1. 質押設定已完成（1,200萬×4.5成 = {fmt_pledge_loan_amt} @2.77%），等待銀行撥款（~9/25 入帳）；撥款到位後，部署仍等 US30Y 回落 5.30 以下或 9/16 FOMC 定調。
 2. 今晚 CPI 是第一個開關：高於預期 → 維持全面觀望；低於預期 → 殖利率回落才考慮台股第一批（0050／006208）。
 3. 9/16：FOMC + 國泰 MMF 贖回款 5,003,846 入帳（入帳後才 基金→現金 轉列）。
-4. 系統缺口（待修）：美股應變只在 21:30 開盤時點檢查，昨晚收盤那根沒有第二輪檢核 → 建議新增「美股收盤檢核」。""".replace("__NOW__", NOW)
+4. 系統缺口（待修）：美股應變只在 21:30 開盤時點檢查，昨晚收盤那根沒有第二輪檢核 → 建議新增「美股收盤檢核」。"""
 
-SUMMARY = "台股 -2.21%（46,142）＋美股連四黑（費半 -2.66%）＋油價破百（WTI 102.38）＋US30Y 5.36% 突破 5.30 凍結紅線。台股部位 7.6% 粗估 -4.4 萬，影響有限；現金底線 ✅。結論：事件驅動的風險重定價，非景氣轉折 — 全面觀望，等今晚 CPI 與 9/16 FOMC。"
+SUMMARY = f"台股 -2.21%（46,142）＋美股連四黑（費半 -2.66%）＋油價破百（WTI 102.38）＋US30Y 5.36% 突破 5.30 凍結紅線。台股部位 {fmt_tw_equity_pct}% 粗估 -4.4 萬，影響有限；現金底線 ✅。結論：事件驅動的風險重定價，非景氣轉折 — 全面觀望，等今晚 CPI 與 9/16 FOMC。"
 
 chapters = {
-    "一、市場概況": "台股 46,142.16（-2.21%）盤中走弱，台積電 2,425（-1.02%）；美股連四日收黑，S&P -0.58%、納指 -0.65%、費半 -2.66%；VIX 17.84（+8.38%）；WTI 102.38（+6.59%）、Brent 107.45 破百；US30Y 5.36%（+1.42%）；USD/TWD 31.64。",
+    "一、市場概況": f"台股 46,142.16（-2.21%）盤中走弱，台積電 2,425（-1.02%）；美股連四日收黑，S&P -0.58%、納指 -0.65%、費半 -2.66%；VIX 17.84（+8.38%）；WTI 102.38（+6.59%）、Brent 107.45 破百；US30Y 5.36%（+1.42%）；USD/TWD 31.64。",
     "二、重大事件分析": "中東地緣與荷莫茲海峽管制威脅推升油價，通膨預期回燃帶動殖利率跳升，AI／半導體高估值估值修正；今晚美東 8 月 CPI 公布為升息警戒開關。性質為事件驅動的風險重定價，非景氣轉折。",
-    "三、持倉關聯分析": "台股 7.6%（1,980,680）粗估 -4.4 萬；美股 44.9%（科技 12.4%／非科技 32.5%）昨收已反映；債券 17.3% 價格承壓；現金／安全網 22.4%（含在途 MMF 5,003,846）；保單 9,661,253 配息目的不動；黃金淨多單週減 6.3%、石油淨多單週減 62.8%。",
-    "四、資產配置透視": "台股 7.6%（目標 10%）｜美股 44.9%（目標 40%，+4.9pp）｜防守 4.4%（目標 20%）｜債券 17.3%（目標 25%）｜現金 22.4%（目標 5%）。美股超標＋現金停泊未部署；逢跌加碼的三個前提（撥款／Fed 資料／US30Y 回落）皆未成立。",
-    "五、巴菲特視角建議": "台積電營收創高而股價下跌＝價格與價值分離，跌因利率與油價而非獲利；不追高不殺低，現金 22.4% 為最大緩衝；唯一授權動作台股慢慢買仍需等撥款與 Fed 資料；安全邊際來自等待。",
-    "六、風控檢查": "US30Y 5.36% 破 5.30 凍結紅線（債券凍結）；油價破百為通膨傳導變數；美元曝險 64.1% 超線續觀察；地緣 43.6 監控中；現金底線 857,298 ≥ 70 萬 ✅；今日 13:00 質押簽約照常（銀行作業）。",
+    "三、持倉關聯分析": f"台股 {fmt_tw_equity_pct}%（{fmt_tw_equity_twd}）粗估 -4.4 萬；美股 {fmt_us_equity_pct}%（科技 {fmt_us_equity_tech_pct}%／非科技 {fmt_us_equity_nontech_pct}%）昨收已反映；債券 {fmt_bond_pct}% 價格承壓；現金／安全網 {fmt_cash_safetynet_pct}%（含國泰貨幣市場基金 5,003,846）；保單 {fmt_insurance_total} 配息目的不動；黃金淨多單週減 6.3%、石油淨多單週減 62.8%。",
+    "四、資產配置透視": f"台股 {fmt_tw_equity_pct}%（目標 10%，{float(fmt_tw_equity_pct)-10:.1f}pp）｜美股 {fmt_us_equity_pct}%（目標 40%，{float(fmt_us_equity_pct)-40:.1f}pp）｜防守 {fmt_defensive_pct}%（目標 20%）｜債券 {fmt_bond_pct}%（目標 25%）｜現金 {fmt_cash_safetynet_pct}%（目標 5%）。美股超標＋現金停泊未部署；逢跌加碼的三個前提（撥款／Fed 資料／US30Y 回落）皆未成立。",
+    "五、巴菲特視角建議": f"台積電營收創高而股價下跌＝價格與價值分離，跌因利率與油價而非獲利；不追高不殺低，現金 {fmt_cash_total} 為最大緩衝；唯一授權動作台股慢慢買仍需等撥款與 Fed 資料；安全邊際來自等待。",
+    "六、風控檢查": f"US30Y 5.36% 破 5.30 凍結紅線（債券凍結）；油價破百為通膨傳導變數；美元曝險 {fmt_usd_exposure_pct}% 超線續觀察；地緣 43.6 監控中；現金底線 {fmt_cash_total} ≥ 70 萬 ✅；質押設定已完成、等待銀行撥款（{fmt_pledge_loan_amt} @2.77%，~9/25 入帳）。",
 }
 
 market_snapshot = {

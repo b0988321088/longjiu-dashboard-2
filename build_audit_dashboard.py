@@ -67,7 +67,7 @@ rows = f"""
 <table style="width:100%;font-size:13px;border-collapse:collapse">
 <tr>{H('項目')}{H('金額')}{H('佔比')}{H('本週變動歸因')}</tr>
 <tr><td {W(0)}>保險</td><td {W(0)} style="text-align:right;font-weight:700">{INS:,}</td><td {W(0)} style="text-align:right">{INS/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">安聯 13:32 7,827,561 + 第一金 FA81 1,939,270</td></tr>
-<tr><td {W(0)}>基金</td><td {W(0)} style="text-align:right;font-weight:700">{FUND:,}</td><td {W(0)} style="text-align:right">{FUND/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">鉅亨 801,239 + 國泰 1,200萬（富達600/聯博100/MMF500）</td></tr>
+<tr><td {W(0)}>基金</td><td {W(0)} style="text-align:right;font-weight:700">{FUND:,}</td><td {W(0)} style="text-align:right">{FUND/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">鉅亨 841,052 + 國泰 1,200萬（富達600/聯博100/貝萊德B11 500）</td></tr>
 <tr><td {W(0)}>證券</td><td {W(0)} style="text-align:right;font-weight:700">{SEC:,}</td><td {W(0)} style="text-align:right">{SEC/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">16 檔；00888 配息 3,496 入帳</td></tr>
 <tr><td {W(0)}>現金</td><td {W(0)} style="text-align:right;font-weight:700">{CASH:,}</td><td {W(0)} style="text-align:right">{CASH/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">8/21 扣 MMF 500萬+聯博 101.5萬 → Moneybook 真值</td></tr>
 <tr><td {W(0)}>總資產</td><td {W(0)} style="text-align:right;font-weight:800">{TA:,}</td><td {W(0)}></td><td {W(0)} style="color:#6e6e73;font-size:12px">8/20 撥款 1,200萬 → 部署 600萬富達 + T+2 600萬</td></tr>
@@ -170,7 +170,7 @@ rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W
 <h3 style="font-size:14px;font-weight:800;margin:0 0 8px">🗓️ 下週行動建議</h3>
 <ol style="font-size:13px;line-height:1.95;margin:0;padding-left:20px;color:#1d1d1f">
 <li><b>8/25（二）T+2 入帳確認</b>：聯博 100萬 + MMF 500萬 入帳 → 四源同步（現金 800,272 → 基金 12,801,239）</li>
-<li><b>9/11 質押簽約</b>（13:00 板橋國泰）：700萬池(富達600+聯博100)×50% = 350萬@2.8%（先拿書面鎖率）→ 還安聯 300萬 + 元大 50萬（撥款 2-4 週）；避險衛星 00635U 黃金 ~105萬 延後（華許放鷹+金價偏高，等回檔）</li>
+<li><b>9/11 未質押</b>：先把 MMF 500萬贖回款投入<b>貝萊德B11 500萬</b>（申購中、待過戶）→ 之後整池（富達600+聯博100+B11 500）1,200萬×4.5成 = <b>540萬@2.77%</b> 質押（撥款 ~9/25）→ 還安聯 300萬@4.2% + 餘 240萬標案押標金；避險衛星 00635U 黃金 ~105萬 延後（華許放鷹+金價偏高，等回檔）</li>
 <li>MMF 剩餘 ~369萬 → 依「累積型優先」原則轉配置（006208/0050 台幣 + 全球累積 ETF）＋補債券缺口（00983D）→ 壓回美元曝險 &lt;60%</li>
 </ol></div></div>
 

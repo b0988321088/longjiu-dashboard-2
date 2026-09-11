@@ -1558,11 +1558,11 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _p1_loan = _dp2.get("total", 12000000) or 12000000
                 _p1_cost_y = _p1_loan * 0.026
                 _p1_cost_m = _p1_cost_y / 12
-                _pledge_loan = 3500000
-                _pledge_rate = 0.028
+                _pledge_loan = 5400000
+                _pledge_rate = 0.0277
                 _pledge_cost_y = _pledge_loan * _pledge_rate
                 _pledge_cost_m = _pledge_cost_y / 12
-                _pledge_collateral = 7000000
+                _pledge_collateral = 11773599
                 _fid_mdiv = 45000  # 富達月配估（0.75%/月 × 600萬）
                 _rent_recv = tv.get("rent_received_records") or {}
                 _rent_got = 0
@@ -1595,12 +1595,12 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _philosophy_html = "｜".join(_philosophy_items)
                 _lv_html = (
                     f"<div class='callout callout-warning' style='margin-top:12px'>"
-                    f"<h3>📊 槓桿風控輸出（8/20 定案：富達質押版）</h3>"
+                    f"<h3>📊 槓桿風控輸出（9/11 定案：整池質押版）</h3>"
                     f"<div style='font-size:12.5px;line-height:1.8'>"
-                    f"<strong>① 槓桿成本：</strong>第一層（國泰轉貸 1,200萬×2.6%）≈ {_p1_cost_y/10000:.1f}萬/年（月 {_p1_cost_m:,.0f}）＋質押層（富達600+聯博100 池×50%=350萬@2.8%固定）≈ {_pledge_cost_y/10000:.1f}萬/年（月 {_pledge_cost_m:,.0f}）→ 合計 ~{(_p1_cost_y+_pledge_cost_y)/10000:.1f}萬/年（月 {_p1_cost_m+_pledge_cost_m:,.0f}）<br/>"
-                    f"<strong>② LTV：</strong>質押 {_pledge_loan:,}/{_pledge_collateral:,} = 50%（🟢 新燈號≤53%）；擔保品富達 -30% 情境 → LTV 71% 💥 追繳警戒（需銀行書面維持率/補繳天數）<br/>"
+                    f"<strong>① 槓桿成本：</strong>第一層（國泰轉貸 1,200萬×2.6%）≈ {_p1_cost_y/10000:.1f}萬/年（月 {_p1_cost_m:,.0f}）＋質押層（富達600+聯博100+貝萊德B11 500 池1,200萬×4.5成=540萬@2.77%）≈ {_pledge_cost_y/10000:.1f}萬/年（月 {_pledge_cost_m:,.0f}）→ 合計 ~{(_p1_cost_y+_pledge_cost_y)/10000:.1f}萬/年（月 {_p1_cost_m+_pledge_cost_m:,.0f}）<br/>"
+                    f"<strong>② LTV：</strong>質押 {_pledge_loan:,}/{_pledge_collateral:,} = 45.9%（🟢 安全值≤53%）；池 -30% 情境 → LTV 65.5%（🟡 距追繳線 70% 尚有 4.5pp）<br/>"
                     f"<strong>③ 月度利息流出 vs 現金流入：</strong>流出 {_p1_cost_m+_pledge_cost_m:,.0f} vs 流入（常態配息＋房租）{_income_m:,.0f}＋富達月配 ~{_fid_mdiv:,} = {_income_m+_fid_mdiv:,.0f} — {'✅ 覆蓋' if (_income_m+_fid_mdiv) >= (_p1_cost_m+_pledge_cost_m) else '⚠️ 未覆蓋'}<br/>"
-                    f"<strong>④ 到期對照：</strong>負債＝國泰轉貸 1,200萬（3年寬限期）＋質押 350萬（富達600+聯博100 擔保，基金無到期日）；富達為月配現金流資產，無期限錯配 ✅<br/>"
+                    f"<strong>④ 到期對照：</strong>負債＝國泰轉貸 1,200萬（3年寬限期）＋質押 540萬（富達600+聯博100+貝萊德B11 500 擔保，基金無到期日）；富達為月配現金流資產，無期限錯配 ✅<br/>"
                     f"<strong>⑤ US30Y：</strong>{_us30y_now:.2f}% — {_fz_txt}<br/>"
                     f"<strong>⑥ 底線規則（8/13 動態）：</strong>現金≥6個月開支（{700000:,}，月開支 {_exp:,.0f}）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/>"
                     f"<strong>⑦ 投資哲學檢核（8/19 定版）：</strong>{_philosophy_html}<br/>"
