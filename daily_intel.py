@@ -511,6 +511,22 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
         _temp_briefing_lines.append(long_short)
     except Exception as e:
         _temp_briefing_lines.append(f"持倉關聯分析錯誤: {e}")
+    # 2026-09-12：補「情報重點（3-5 條・含持倉關聯）」（來源 compile_intel 濃縮情報）
+    # 週六/日無情報同步 → 3/9 只剩行情與訊號，情報段空白；有濃縮檔就補上。
+    try:
+        _ci_p = BASE / f"daily_condensed_intel_{datetime.now().date().isoformat()}.json"
+        if _ci_p.exists():
+            _ci = json.loads(_ci_p.read_text(encoding="utf-8"))
+            if _ci:
+                _temp_briefing_lines.append("")
+                _temp_briefing_lines.append("【情報重點（含持倉關聯）】")
+                for _x in _ci[:5]:
+                    _imp = (f"（影響：{'/'.join(_x.get('holdings_impact') or [])}）"
+                            if _x.get("holdings_impact") else "")
+                    _temp_briefing_lines.append(
+                        f"{_x.get('signal_level','')} {_x.get('title','')}：{_x.get('description','')}{_imp}")
+    except Exception as _e:
+        logger.warning(f"condensed intel 注入失敗：{_e}")
     briefing = "\n".join(_temp_briefing_lines)
 
     # Old news fetching block moved earlier. Keep initializations.

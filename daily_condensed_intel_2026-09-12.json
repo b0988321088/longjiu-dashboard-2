@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "title": "Hunter 情報",
+    "description": "2. 台積電大跌 -2.23%",
+    "holdings_impact": [
+      "0050"
+    ],
+    "sentiment": "negative",
+    "signal_level": "🔴 重要 (負面)",
+    "raw_source": "C:\\Users\\bot\\Desktop\\longjiu_system\\hunter_logs\\intel_20260912_0059.txt"
+  },
+  {
+    "title": "市場動態：台股加權",
+    "description": "台股加權 今日 46,184.85 (-2.12%)，市場情緒看跌。",
+    "holdings_impact": [],
+    "sentiment": "negative",
+    "signal_level": "🟡 注意",
+    "raw_source": "Yahoo Finance - 台股加權"
+  },
+  {
+    "title": "市場動態：台積電",
+    "description": "台積電 今日 2,410.00 (-1.63%)，市場情緒看跌。",
+    "holdings_impact": [
+      "0050"
+    ],
+    "sentiment": "negative",
+    "signal_level": "✅ 參考",
+    "raw_source": "Yahoo Finance - 台積電"
+  },
+  {
+    "title": "市場動態：費半",
+    "description": "費半 今日 11,840.99 (+1.95%)，市場情緒看漲。",
+    "holdings_impact": [],
+    "sentiment": "positive",
+    "signal_level": "✅ 參考",
+    "raw_source": "Yahoo Finance - 費半"
+  }
+]

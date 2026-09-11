@@ -70,6 +70,22 @@ if da_path.exists():
     except Exception as e:
         print(f"[WARN] daily_analysis.json: {e}")
 briefing = daily_analysis.get("briefing", "")
+# 2026-09-12 修：3/9 市場情報只有自動行情 + 賣出訊號（週六無情報同步 → 內容過少）。
+# 補上 compile_intel 的濃縮情報（3-5 條・含持倉關聯）— 來源 daily_condensed_intel_<today>.json。
+try:
+    _ci_p = BASE / f"daily_condensed_intel_{TODAY}.json"
+    if _ci_p.exists():
+        _ci = json.loads(_ci_p.read_text(encoding="utf-8"))
+        if _ci and "【情報重點（含持倉關聯）】" not in briefing:
+            _ci_lines = ["", "【情報重點（含持倉關聯）】"]
+            for _x in _ci[:5]:
+                _imp = (f"（影響：{'/'.join(_x.get('holdings_impact') or [])}）"
+                        if _x.get("holdings_impact") else "")
+                _ci_lines.append(
+                    f"{_x.get('signal_level','')} {_x.get('title','')}：{_x.get('description','')}{_imp}")
+            briefing = (briefing.rstrip() + "\n" + "\n".join(_ci_lines)) if briefing.strip() else "\n".join(_ci_lines[1:])
+except Exception as _e:
+    print(f"[WARN] condensed intel 注入失敗：{_e}")
 _market_html = f"<pre style='font-size:14px;line-height:1.6;white-space:pre-wrap'>{briefing}</pre>"
 
 # 3b. 載入緊急應變分析

@@ -41,6 +41,14 @@ def analyze_market_intel():
     market_data = {}
     if market_intel_file.exists():
         market_data = json.loads(market_intel_file.read_text(encoding="utf-8")).get("market_data", {})
+    # 2026-09-12 修：hunter_cache 由「情報同步（整點，週一~五 6-17）」寫入 → 週六/日無快取
+    # → 週末日報 3/9 只剩自動行情、情報段空白。缺檔時直接抓即時行情補上（純腳本、0 token）。
+    if not market_data:
+        try:
+            from hunter_intel import get_yf_market
+            market_data = get_yf_market() or {}
+        except Exception as e:
+            logger.warning(f"即時行情 fallback 失敗：{e}")
 
     # 2. 處理市場數據，生成第一批情報
     if market_data:
@@ -77,8 +85,9 @@ def analyze_market_intel():
                 })
 
     # 3. 處理 compile_intel.py 原有的訊號
-    #db = sqlite3.connect(str(BASE / "dragon_assets.db")) # db connection moved to compile_intel
-    txts = sorted(glob.glob(str(BASE / "hunter_logs" / f"intel_{today.replace(chr(45),chr(45))}_*.txt")))
+    # 2026-09-12 修：hunter_logs 檔名為 intel_YYYYMMDD_HHMM.txt（無 dash），
+    # 原 pattern f"intel_{today}_*.txt"（today 帶 dash）永遠匹配不到 → Hunter 情報段全空。
+    txts = sorted(glob.glob(str(BASE / "hunter_logs" / f"intel_{today.replace('-', '')}_*.txt")))
     
     # 原始的 sig 填充邏輯
     sig = {"sell": [], "buy": []}
@@ -116,6 +125,17 @@ def analyze_market_intel():
                     })
         except Exception as e:
             print(f"Error processing {f}: {e}")
+
+    # 2026-09-12 修：先去重再篩選（hunter_logs 每小時一份、內容近相同 → 同一句重複佔滿 5 個名額，
+    # 把「市場動態」等其他情報擠掉；9/12 實證 5/5 全是同一句「台積電大跌 -2.23%」）。
+    _seen, _dedup = set(), []
+    for _i in condensed_intel:
+        _k = (_i.get("title", ""), _i.get("description", ""))
+        if _k in _seen:
+            continue
+        _seen.add(_k)
+        _dedup.append(_i)
+    condensed_intel = _dedup
 
     # 4. 篩選並濃縮至 3-5 條
     # 優先級：🔴 > 🟡 > ✅
@@ -165,7 +185,7 @@ def compile_intel(force_refresh=False):
     summary_text = "\n".join([f"{item['signal_level']} {item['title']} - {item['description']} (影響持股: {','.join(item['holdings_impact'])})" for item in condensed_intel_list])
     
     # 這裡的 hunter_count, buy_count, sell_count 需要從 sig 計算
-    hunter_count_val = len(glob.glob(str(BASE / "hunter_logs" / f"intel_{today.replace(chr(45),chr(45))}_*.txt")))
+    hunter_count_val = len(glob.glob(str(BASE / "hunter_logs" / f"intel_{today.replace('-', '')}_*.txt")))
     buy_count_val = len(sig["buy"])
     sell_count_val = len(sig["sell"])
 
