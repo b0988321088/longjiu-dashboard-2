@@ -203,8 +203,8 @@ def main():
     # 科技/非科技文字（⚠️ 必須在市值替換前，因整句 key 含市值數字，市值先被換掉就匹配不到）
     _tch = _ppct.get("美股市值型成長_科技", 0); _ntch = _ppct.get("美股市值型成長_非科技", 0)
     _tech_gap = _tch - 15
-    _tech_txt_old = "🔬 科技 14.3%（3,735,174 TWD）｜非科技 29.6%（7,764,551 TWD）｜科技目標 ≤15%（缺口 -0.7pp）"
-    _tech_txt_new = f"🔬 科技 {_tch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_科技',0))} TWD）｜非科技 {_ntch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_非科技',0))} TWD）｜科技目標 ≤15%（{'缺口' if _tech_gap<0 else '溢價'} {_tech_gap:+.1f}pp）"
+    _tech_txt_old = "🔬 科技 14.3%（3,735,174 TWD）｜非科技 29.6%（7,764,551 TWD）｜科技目標 ≤20%（缺口 -0.7pp）"
+    _tech_txt_new = f"🔬 科技 {_tch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_科技',0))} TWD）｜非科技 {_ntch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_非科技',0))} TWD）｜科技目標 ≤20%（{'缺口' if _tech_gap<0 else '溢價'} {_tech_gap:+.1f}pp）"
     # 兩階段：先用 temp 佔位保護整句 → 再換市值 → 最後還原整句
     _TECH_PH = "@@TECH_TXT@@"
     tpl = tpl.replace(_tech_txt_old, _TECH_PH)
@@ -235,8 +235,8 @@ def main():
     # 科技/非科技文字
     _tch = _ppct.get("美股市值型成長_科技", 0); _ntch = _ppct.get("美股市值型成長_非科技", 0)
     _tech_gap = _tch - 15
-    rep["🔬 科技 14.3%（3,735,174 TWD）｜非科技 29.6%（7,764,551 TWD）｜科技目標 ≤15%（缺口 -0.7pp）"] = \
-        f"🔬 科技 {_tch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_科技',0))} TWD）｜非科技 {_ntch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_非科技',0))} TWD）｜科技目標 ≤15%（{'缺口' if _tech_gap<0 else '溢價'} {_tech_gap:+.1f}pp）"
+    rep["🔬 科技 14.3%（3,735,174 TWD）｜非科技 29.6%（7,764,551 TWD）｜科技目標 ≤20%（缺口 -0.7pp）"] = \
+        f"🔬 科技 {_tch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_科技',0))} TWD）｜非科技 {_ntch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_非科技',0))} TWD）｜科技目標 ≤20%（{'缺口' if _tech_gap<0 else '溢價'} {_tech_gap:+.1f}pp）"
     # 安聯配息卡（8/29 補：舊 62,969 → 76,931）
     rep["62,969"] = _fmt(az_div)
     # 保單A 現值（8/29 補：舊 5,103,722 → 5,083,230）
@@ -449,7 +449,7 @@ def main():
         )
     if _ppct_p.get("美股市值型成長_科技") is not None:
         _pen_parts.append(
-            f'<div class="text-[11px] text-slate-400 pt-2 border-t border-slate-700/50">🔬 美股科技 {_ppct_p.get("美股市值型成長_科技", 0):.1f}%（{(_ptwd_p.get("美股市值型成長_科技", 0) or 0) / 1e4:.0f}萬）｜非科技 {_ppct_p.get("美股市值型成長_非科技", 0):.1f}%（{(_ptwd_p.get("美股市值型成長_非科技", 0) or 0) / 1e4:.0f}萬）｜科技目標 ≤15%</div>'
+            f'<div class="text-[11px] text-slate-400 pt-2 border-t border-slate-700/50">🔬 美股科技 {_ppct_p.get("美股市值型成長_科技", 0):.1f}%（{(_ptwd_p.get("美股市值型成長_科技", 0) or 0) / 1e4:.0f}萬）｜非科技 {_ppct_p.get("美股市值型成長_非科技", 0):.1f}%（{(_ptwd_p.get("美股市值型成長_非科技", 0) or 0) / 1e4:.0f}萬）｜科技目標 ≤20%</div>'
         )
     _pen_parts.append("</div>")
     tpl = tpl.replace("__PEN_CARD__", "".join(_pen_parts))
@@ -532,7 +532,12 @@ def main():
     try:
         _pd3 = json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8"))
         _dt_html = []
-        for _d in (_pd3 if isinstance(_pd3, list) else [])[:6]:
+        # 2026-09-12：原取「清單前 6 筆」（=最舊 6 筆）→ 新裁決永遠看不到儀表板。
+        # 改為：剔除已結案 → 依日期新→舊 → 取最新 8 筆（日報第5章仍列全部）。
+        _pd3_rows = [r for r in (_pd3 if isinstance(_pd3, list) else [])
+                     if isinstance(r, dict) and "已結案" not in str(r.get("status", ""))]
+        _pd3_rows.sort(key=lambda r: str(r.get("date", "")), reverse=True)
+        for _d in _pd3_rows[:8]:
             _d_date = str(_d.get("date", ""))[5:].replace("-", "/")
             _d_tt = str(_d.get("title", "") or "")[:44]
             _d_st = str(_d.get("status", "") or "")[:64]
