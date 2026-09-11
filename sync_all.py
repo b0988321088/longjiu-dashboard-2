@@ -92,6 +92,11 @@ def main():
         print(f"  ⚠️ total_assets 重算失敗: {e}")
     # （2026-08-27：gen_emergency_*.py 已刪除，此自動建立邏輯移除；緊急應變僅 emergency_1330.py）
     steps = [
+        # 2026-09-12 新增（INC-156）：致命類靜態閘門 — F821 未定義名稱／F823 先用後賦值／
+        #     F811 重複定義／F601 重複 dict key。血淚：同日全庫掃描 341 筆中僅 7 筆會炸，
+        #     但 run_daily.py 的 `intel_text`、`timedelta` 遮蔽、`monthly_income` 重複 key
+        #     全靠人工看才發現；此步讓它們在產報前就被自動擋下。
+        ("靜態閘門", "python static_gate.py"),
         ("同義欄位驗證", f"python asset_sync.py"),
         ("日報", f"python run_daily.py"),
         # 2026-09-02 血淚：緊急應變必須在穿透報告「之後」執行 — emergency_1330.py 讀的是

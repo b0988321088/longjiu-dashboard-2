@@ -4,8 +4,11 @@
 每週日 19:00 自動產出推送"""
 
 import json
+import logging
 from datetime import date, timedelta
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 BASE = Path(__file__).resolve().parent
 TODAY = date.today()

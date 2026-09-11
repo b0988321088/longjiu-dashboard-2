@@ -190,7 +190,6 @@ def calibrate_sources() -> dict:
         "fund_dividend_monthly": fund_dividend_monthly,
         "next_ex_dividend_list": next_ex_dividend_list,
         "etf_div_table": _etf_table,
-        "monthly_income": s_income,
         "monthly_expense": s_expense,
         "working_surplus": s_work_surplus,
         "retirement_surplus": s_retire_surplus,
@@ -2010,6 +2009,12 @@ def _load_latest_hunter() -> str:
         return ""
 
 
+# ⚠️ DEAD CODE（2026-09-12 稽核確認）：本函式（約 920 行）在整個 repo 內「零呼叫點」。
+#   - 線上儀表板注入的實際執行者是 build_dashboard.py（run_daily 只產日報 HTML），
+#     所以 sync_all 顯示的「儀表板注入完成（43 組值 + 16 連結動態化）」來自 build_dashboard.py。
+#   - 此區塊內已知潛伏 bug（ruff F821/F823）：`intel_text` 未定義、`timedelta` 被下方
+#     local import 遮蔽（UnboundLocalError）、fmt_pct 重複定義 3 次。
+#   - 若要復活此函式，必須先修上述三項並補上呼叫點；要刪除請走審查流程（勿直接刪）。
 def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) -> str:
     """Inject dynamic values into index_template.html placeholders."""
     if not html:
@@ -2066,7 +2071,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
     _done_items = []
     try:
         _sch = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
-        _wk_ago = (date.today() - timedelta(days=7)).isoformat()
+        _wk_ago = (date.today() - _td(days=7)).isoformat()
         _today_s = date.today().isoformat()
         for _e in _sch:
             _st = _e.get("status", "") or ""
@@ -2593,7 +2598,7 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
 
     # Parse foreign sell from hunter intel
     try:
-        hunter_for_foreign = intel_text or ""
+        hunter_for_foreign = (da.get("briefing", "") if isinstance(da, dict) else "") or ""
         foreign_m = re.search(r"外資[賣買]超\s*([0-9,.]+)\s*億", hunter_for_foreign)
         if foreign_m:
             fval = foreign_m.group(1).replace(",", "")
@@ -2710,10 +2715,6 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         except Exception:
             return "→"
 
-    def fmt_pct(v):
-        if isinstance(v, (int, float)):
-            return f"{v:.2f}"
-        return str(v or "—")
     html = html.replace("__ALLIANZ_RETURN__", fmt_pct(funds2.get("allianz_return", 16.41)))
     html = html.replace("__ALLIANZ_MONTHLY__", fmt(tv.get("allianz_dividend", 0) or 0))
     html = html.replace("__ALLIANZ_CUM__", fmt(tv.get("allianz_cum_dividend", 1_630_962)))
@@ -2749,10 +2750,6 @@ def _inject_dashboard(html: str, tv: dict, intel_signals: dict | None = None) ->
         except Exception:
             return "→"
 
-    def fmt_pct(v):
-        if isinstance(v, (int, float)):
-            return f"{v:.2f}"
-        return str(v or "—")
     html = html.replace("__ALLIANZ_RETURN__", fmt_pct(funds.get("allianz_return", 0)))
     html = html.replace("__ALLIANZ_MONTHLY__", fmt(funds.get("allianz_monthly", 0)))
     html = html.replace("__ALLIANZ_CUM__", fmt(funds.get("allianz_cum", 0)))

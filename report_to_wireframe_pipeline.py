@@ -4,8 +4,6 @@
 功能：讀取 5 張日報文字，抽出關鍵數值/狀態，產出 Framework-Ready JSON。
 """
 import json, re, os
-from datetime import datetime
-
 from datetime import datetime, date
 BASE = os.path.dirname(__file__)
 TODAY = date.today().isoformat()

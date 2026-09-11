@@ -642,7 +642,7 @@ def load_daily_analysis() -> dict:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception as e:
-        logger.error(f"Error fetching Yahoo Finance chart for {symbol}: {e}")
+        logger.error(f"daily_analysis.json 解析失敗: {e}")
         return {}
 
 

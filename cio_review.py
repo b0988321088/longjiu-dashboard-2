@@ -39,13 +39,6 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
-def read_json(path: Path) -> dict:
-    if not path.exists():
-        return {}
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
 def fail(msg: str) -> None:
     print(f"[CIO 審查] 不通過：{msg}")
     sys.exit(3)
