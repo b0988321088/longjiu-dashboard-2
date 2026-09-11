@@ -13,6 +13,7 @@
 | 未經核准直接推送 | 2026-07-30 | 待檢討 | 標籤動態化+FL65 更新後未先傳本地檔給使用者確認即 git push |
 | 一鍵管線三缺陷 | 2026-09-12 | 已修（INC-152/153/154） | 保單口徑漏修／argv 未驗證／登記無去重；9/12 已修並跑通 16 步 |
 | CIO 閘門檢查字串假通過 | 2026-09-12 | 已修（INC-155） | cio_review.py 兩處整份日報 substring 搜尋：「來源」靠無關表格「資金來源」過關；Relay 站制找「摩根多重收益」但日報是「摩根JPM多重收益」→ 隨機過／隨機擋。已改為區塊化 + 資料驅動（snapshot.relay_stations） |
+| 全庫靜態稽核 9 筆真 bug | 2026-09-12 | 已修（INC-156） | 341 筆掃描中 9 筆會炸/靜默算錯（重複 dict key、未定義名稱、timedelta 被 local import 遮蔽…），5 筆藏在 run_daily `_inject_dashboard` 920 行死函式內。已新增 `static_gate.py` 接為 sync_all 第 1 步自動擋 |
 
 ## 二、有根因與 check_rule 的歷史事件（逐筆保留）
 
