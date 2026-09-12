@@ -14,6 +14,8 @@
 | 一鍵管線三缺陷 | 2026-09-12 | 已修（INC-152/153/154） | 保單口徑漏修／argv 未驗證／登記無去重；9/12 已修並跑通 16 步 |
 | CIO 閘門檢查字串假通過 | 2026-09-12 | 已修（INC-155） | cio_review.py 兩處整份日報 substring 搜尋：「來源」靠無關表格「資金來源」過關；Relay 站制找「摩根多重收益」但日報是「摩根JPM多重收益」→ 隨機過／隨機擋。已改為區塊化 + 資料驅動（snapshot.relay_stations） |
 | 全庫靜態稽核 9 筆真 bug | 2026-09-12 | 已修（INC-156） | 341 筆掃描中 9 筆會炸/靜默算錯（重複 dict key、未定義名稱、timedelta 被 local import 遮蔽…），5 筆藏在 run_daily `_inject_dashboard` 920 行死函式內。已新增 `static_gate.py` 接為 sync_all 第 1 步自動擋 |
+| 儀表板「本週完成清單」永不更新 | 2026-09-13 | 已修（INC-161） | 該區塊是 template 手工寫死的 10 行（停在 9/1），管線從不重寫；真值 work_log.json 只餵工作日誌卡。改為 build_dashboard 靜態層（近 7 天「完成」）+ 前端 JS 即時層；順修退休規劃連結被 rebuild 還原（改 glob 動態）。commit 0a22f202 |
+| CEO 儀表板 4 張表只剩表頭 | 2026-09-13 | 已修（INC-162） | 9/11 週五三合一 cron 被 gateway 中斷 → ceo_analysis JSON 缺 資產變化/資金流動/里程碑/雙維度，而 build_ceo_dashboard 全靠該 JSON。改為 DB 週 pair／weekly_ops_closure／schedule_events／dual_dimension_metric 現算，LLM 只補文字；加空表驗收 + 指定日期補產。9/11 報告已回補上線 |
 
 ## 二、有根因與 check_rule 的歷史事件（逐筆保留）
 
