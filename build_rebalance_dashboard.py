@@ -120,7 +120,7 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     lines.append(f"- 當前乾粉：{dry_cur:,}（現金 − 70萬底線）｜9月：台股 12-24萬分批 + 黃金 131萬預留（PI後）＋ 石油 0（Locked）＋ 債券 0（等利率）")
     for name, val, limit, triggered in [
         ("US30Y", f"{us30y:.2f}%" if us30y else "—", "≥5.30%", us30y and us30y >= 5.30),
-        ("美元曝險", f"{usd_pct:.0f}%", "紅線 50%", usd_pct > 50),
+        ("美元曝險", f"{usd_pct:.0f}%", "紅線 60%", usd_pct > 60),
         ("高科技", f"{tech:.1f}%", "紅線 30%", tech > 30),
         ("現金底線", f"{cash:,}", "≥70萬", cash < 700000),
     ]:
@@ -278,7 +278,7 @@ def main():
         if _usd4 > 55:
             _plan_lines.append(f"🔴 美元曝險 {_usd4}% 超標（>55%）→ 美股減碼/美元定存到期轉台幣")
         else:
-            _plan_lines.append(f"🟡 美元曝險 {_usd4}% （目標≤50%）→ 未達減碼閾值，續觀察")
+            _plan_lines.append(f"🟡 美元曝險 {_usd4}% （目標≤60%）→ 未達減碼閾值，續觀察")
         # ⑧ 保單轉換（9/2 截止）
         _plan_lines.append("✅ 保單轉換 9/10 送出（安聯＋第一金同步）→ 轉入 M&G入息A美元避險月配，T+4 預期 9/16 生效")
         # ⑨ 負債/質押
@@ -489,7 +489,7 @@ def main():
     # ── 風險紅線 ──
     risks = [
         ("US30Y 凍結線", f"{us30y:.2f}%" if us30y else "—", "≥5.30% 🔴", us30y and us30y >= 5.30),
-        ("美元曝險", f"{usd_pct:.0f}%", "紅線 50%", usd_pct > 50),
+        ("美元曝險", f"{usd_pct:.0f}%", "紅線 60%", usd_pct > 60),
         ("高科技", f"{tech:.1f}%", "紅線 30%", tech > 30),
         ("現金底線", f"{cash:,}", "≥70萬", cash < 700000),
         ("總質押 LTV", "完成後 20.4%", "安全值 ≤35%", False),

@@ -364,5 +364,11 @@
   "category": "完成",
   "item": "附帶裁示：10月標案押標金延至 9 月底評估",
   "detail": "使用者：先把能做的做好、以優化為主 → 撥款不預留押標金餘額；落地 snapshot.ruling_20260912 ⑥ + 標案押標金_1010.裁示_0912 + pending/dashboard/Notion；待 9 月底評估時決定資金來源（現金流滾存/其他部位/縮小標案）"
+ },
+ {
+  "date": "2026-09-12",
+  "category": "完成",
+  "item": "日報 3/9 市場情報自動修復：hunter_logs pattern 帶 dash → 永遠 0 筆；濃縮情報 5/5 重複；週六無快取",
+  "detail": "使用者反映『第三張內容怎麼那麼少』→ 追出三因：①compile_intel glob f'intel_{today}_*.txt'（today 帶 dash）永不匹配 hunter_logs 的 intel_YYYYMMDD_HHMM.txt ②5 份每小時 log 同句重複佔滿 5 個名額 ③hunter_cache 由週一~五整點 cron 寫入，週六日缺檔。修：pattern 去 dash、濃縮前去重、缺快取時 fallback 即時行情(hunter_intel.get_yf_market)、日報/daily_intel 加『情報重點（含持倉關聯）』區塊。結果：濃縮情報 0 → 4 條、3/9 內文 304 → 515 字；commit 8c1a7f95 已推送"
  }
 ]

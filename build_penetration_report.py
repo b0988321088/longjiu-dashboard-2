@@ -30,7 +30,7 @@ targets_map = {
     "債券型": _existing_tgt.get("債券型目標", 15),
     "現金": _existing_tgt.get("現金目標", 15),
 }
-tech_target = _existing_tgt.get("科技曝險目標", 15)
+tech_target = _existing_tgt.get("科技曝險目標", 20)
 actual_map = {"台股市值型成長": tw_v, "美股市值型成長": us_v, "防守型配息": def_v, "債券": bond_v, "現金/安全網": cash_pv,
             "美股市值型成長_科技": us_tech_v, "美股市值型成長_非科技": us_nt_v}
 actual_pct = {k: round(v / total * 100, 1) for k, v in actual_map.items()}

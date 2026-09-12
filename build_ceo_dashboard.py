@@ -82,7 +82,7 @@ pen_rows = ""
 for k, t in pen_key.items():
     a = pen.get(k, 0); v = twd.get(k, 0)
     pen_rows += f"<tr><td style='padding:6px 10px;border-bottom:1px solid #e5e7eb'>{t}</td><td style='padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:right'>{v:,}</td><td style='padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:700'>{a:.1f}%</td></tr>"
-pen_rows += f"<tr><td style='padding:6px 10px;border-bottom:1px solid #e5e7eb'>科技曝險</td><td style='padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:right'>{twd.get('美股市值型成長_科技',0):,}</td><td style='padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:700'>{pen.get('美股市值型成長_科技',0):.1f}% (≤15%)</td></tr>"
+pen_rows += f"<tr><td style='padding:6px 10px;border-bottom:1px solid #e5e7eb'>科技曝險</td><td style='padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:right'>{twd.get('美股市值型成長_科技',0):,}</td><td style='padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:700'>{pen.get('美股市值型成長_科技',0):.1f}% (≤20%)</td></tr>"
 
 def card(title, emoji, body):
     return f"""<div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:14px">

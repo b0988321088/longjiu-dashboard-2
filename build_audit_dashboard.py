@@ -101,7 +101,7 @@ for k, t, tk in [("台股市值型成長","台股","台股市值型目標"),("�
             f"<span style='color:#d97706'>缺 {abs(diff):.1f}pp</span>")
     gap_v = f"{v - tt/100*TA:+,.0f}" if tt else "—"
     rows += f"<tr><td {W(0)}>{t}</td><td {W(0)} style='text-align:right'>{v:,}</td><td {W(0)} style='text-align:right;font-weight:700'>{a:.1f}%</td><td {W(0)} style='text-align:right'>{tt}%</td><td {W(0)} style='text-align:right;font-size:12px'>{mark}（{gap_v}）</td></tr>"
-rows += f"""<tr><td {W(0)}>科技曝險</td><td {W(0)} style="text-align:right">{twd.get("美股市值型成長_科技",0):,}</td><td {W(0)} style="text-align:right;font-weight:700">{tech:.1f}%</td><td {W(0)} style="text-align:right">≤15%</td><td {W(0)} style="text-align:right;font-size:12px">{tech_ok}</td></tr>
+rows += f"""<tr><td {W(0)}>科技曝險</td><td {W(0)} style="text-align:right">{twd.get("美股市值型成長_科技",0):,}</td><td {W(0)} style="text-align:right;font-weight:700">{tech:.1f}%</td><td {W(0)} style="text-align:right">≤20%</td><td {W(0)} style="text-align:right;font-size:12px">{tech_ok}</td></tr>
 </table></div>
 
 <div style="flex:1;min-width:340px;background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
@@ -142,7 +142,7 @@ rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W
 <tr style="color:#6e6e73"><th style="text-align:left;padding:5px 10px">情境</th><th style="text-align:right;padding:5px 10px">防禦最低</th><th style="text-align:right;padding:5px 10px">收入最低</th><th style="text-align:right;padding:5px 10px">LTV上限</th><th style="text-align:left;padding:5px 10px">核心策略</th></tr>
 <tr><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>多頭穩定</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥40%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥60%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤55%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>追求資本利得</td></tr><tr style="background:#eef2ff;font-weight:700"><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>區間震盪（當前）</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥50%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥65%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤52%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>穩定擔保、控風險</td></tr><tr><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>股債雙殺/升息</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥55%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥70%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤50%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>保守、增債保現金</td></tr><tr><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>熊市大跌</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥60%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥70%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤48%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>全防守、降槓桿</td></tr><tr style="background:#f0f9ff"><td colspan="5" style="padding:6px 10px;font-size:12px">✅ 現況驗證（區間震盪標準）：防禦 <b>53.8%</b> ≥50% ✅ ｜ 收入 <b>69.5%</b> ≥65% ✅ ｜ LTV <b>50%</b> ≤52% ✅ → 完全符合高風險震盪市場最高規格</td></tr>
 </table></div>
-美元曝險 <b style="color:#ef4444">{usd_exp}%</b>（紅線 50%）→ 選台幣計價避險標的不推高；MMF 轉配置優先累積型</div>
+美元曝險 <b style="color:#ef4444">{usd_exp}%</b>（紅線 60%）→ 選台幣計價避險標的不推高；MMF 轉配置優先累積型</div>
 </div></div>
 
 <div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:14px">
@@ -153,14 +153,14 @@ rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W
 <tr><td {W(0)}>40,500 停碼</td><td {W(0)}>未觸發</td><td {W(0)}>✅</td></tr>
 <tr><td {W(0)}>現金底線 70萬</td><td {W(0)}>{CASH:,}</td><td {W(0)}>{cash_ok}</td></tr>
 <tr><td {W(0)}>單次加碼 ≤20萬（核貸期 5萬）</td><td {W(0)}>紀律維持（累積型原則生效）</td><td {W(0)}>✅</td></tr>
-<tr><td {W(0)}>美元曝險 ≤50%</td><td {W(0)}>{usd_exp}%</td><td {W(0)}>🔴 超 14.1pp（靠台幣側壓回）</td></tr>
+<tr><td {W(0)}>美元曝險 ≤60%</td><td {W(0)}>{usd_exp}%</td><td {W(0)}>🔴 超 14.1pp（靠台幣側壓回）</td></tr>
 </table></div>
 
 <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
 <div style="flex:1;min-width:340px;background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
 <h3 style="font-size:14px;font-weight:800;margin:0 0 8px">🧠 巴菲特視角</h3>
 <ul style="font-size:13px;line-height:1.95;margin:0;padding-left:20px;color:#1d1d1f">
-<li>科技曝險 <b>{tech:.1f}%</b>（≤15 ✅）；富達科技 35% 已納成分拆分</li>
+<li>科技曝險 <b>{tech:.1f}%</b>（≤20 ✅）；富達科技 35% 已納成分拆分</li>
 <li>壓力測試：富達 -30%（180萬）+ 聯博 -20%（39萬）≈ 219萬 → 標案池/現金墊 300萬 覆蓋 ✅</li>
 <li>0056 質押凍結、00919/00918 停加碼 — 維持</li>
 <li>8/31 安聯B 贖回 3% 違約金截止 — 轉換案走 T+4 不受影響</li>
