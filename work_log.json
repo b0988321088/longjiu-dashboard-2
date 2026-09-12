@@ -388,5 +388,11 @@
   "category": "完成",
   "item": "裁示：US30Y 監控維持週一~五 08:45，不開放週六日",
   "detail": "使用者：『不用六日，不用監控』→ us30y_monitor.py cron（70e436a95327，45 8 * * 1-5）維持不變，不加週末排程。週末日報的 US30Y 沿用最近一個交易日的 us30y_state 值（卡片標示來源日期），不倒推為當日行情；週末若需最新值由人工手動跑一次。"
+ },
+ {
+  "date": "2026-09-12",
+  "category": "完成",
+  "item": "雷達儀表板同步 2026-09-12（16:15 cron 自動）",
+  "detail": "機構流向雷達 radar_report_2026-09-12.html 與儀表板 index.html 同步產出並推送 GitHub Pages（commit 648d107a [cioreviewed]）。"
  }
 ]
