@@ -394,5 +394,11 @@
   "category": "完成",
   "item": "雷達儀表板同步 2026-09-12（16:15 cron 自動）",
   "detail": "機構流向雷達 radar_report_2026-09-12.html 與儀表板 index.html 同步產出並推送 GitHub Pages（commit 648d107a [cioreviewed]）。"
+ },
+ {
+  "date": "2026-09-12",
+  "category": "完成",
+  "item": "修「差異分析異常」誤報：asset_diff_monitor.py cash_source 字串格式導致 AttributeError",
+  "detail": "晚報 22:00 標⚠️差異分析異常（實為腳本 exit 1，非資產異常）。根因：snapshot.cash_source 有兩種格式（update_data.py 寫 dict{date,note}、手動/其他流程寫純字串）→ 讀取端直接 _csrc.get('date') → AttributeError: 'str' object has no attribute 'get'（Moneybook CSV 未匯入 fallback 路徑）。修法：讀取端加型別防禦（str/non-dict → 包成 dict）+ snapshot.cash_source 正規化為 dict{date:2026-09-09,note}。驗證：重跑 asset_diff_monitor.py EXIT=0、報告重生（含銀行明細）、Telegram 200、commit 80f55e46 已推 Pages。附註：9/10~9/12 三日資產數字完全相同（+0）＝上游無新資料（基金淨值日 9/10、Moneybook 最近匯入 9/9），非計算錯誤"
  }
 ]
