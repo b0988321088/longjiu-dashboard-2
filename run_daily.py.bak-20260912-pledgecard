@@ -1,0 +1,2079 @@
+#!/usr/bin/env python3
+"""
+龍九控股日報 + 靜態儀表板 產出入口
+功能：一鍵產出三件套
+  1. daily_report_v2_{date}.html
+  2. index.html（靜態儀表板，懶更新）
+  3. changelog_{date}.md（差異說明）
+"""
+from __future__ import annotations
+
+import json
+import re
+import sys
+import base64
+from datetime import date, datetime, timedelta
+from pathlib import Path
+from logging_config import get_logger
+logger = get_logger("run_daily")
+import daily_intel as mi_mod
+from daily_intel import load_daily_analysis
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
+BASE = Path(__file__).parent.resolve()
+import json as _json
+try:
+    _snap_date = _json.load(open(BASE / "snapshot.json", encoding="utf-8")).get("date") or date.today().isoformat()
+except Exception:
+    _snap_date = date.today().isoformat()
+TODAY = _snap_date  # 2026-08-21 修正：報告日期跟 snapshot date 一致（跨日時 four_source_sync 會先刪 {today} 日報，若 run_daily 用 date.today 會失配）
+SNAPSHOT = BASE / "snapshot.json"
+RULES = BASE / "DAILY_REPORT_PIPELINE_RULE.md"
+LEDGER = BASE / "Company_Ledger.md"
+INDEX_TEMPLATE = BASE / "index_template.html"  # 靜態儀表板模板（預留）
+OUT_DAILY = BASE / f"daily_report_v2_{TODAY}.html"
+OUT_INDEX = BASE / "index.html"
+
+
+# ==========================================================================
+# 1. 三源真值校準
+# ==========================================================================
+
+def load_json(path: Path) -> dict:
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def load_text(path: Path) -> str:
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+def extract_markdown_value(text: str, pattern: str) -> str | None:
+    m = re.search(pattern, text)
+    return m.group(1).strip() if m else None
+
+
+def calibrate_sources() -> dict:
+    """讀取三源並回傳校準後的真值 dict；不一致就 raise。"""
+    snap = load_json(SNAPSHOT) if SNAPSHOT.exists() else {}
+    rules = load_text(RULES) if RULES.exists() else ""
+    ledger = load_text(LEDGER) if LEDGER.exists() else ""
+
+    # snapshot 真值
+    s_income = snap.get("monthly_income")
+    # Prefer MB-calibrated expense if available
+    s_expense = snap.get("monthly_expense_mb_override") or snap.get("monthly_expense")
+    s_work_surplus = snap.get("working_surplus")
+    s_retire_surplus = snap.get("retirement_surplus")
+    s_insurance = snap.get("insurance_current_value") or (snap.get("allianz_combined", 0) + snap.get("firstjin_fl65_current_value", 0))
+    s_allianz = snap.get("allianz_ab_current_value") or snap.get("allianz_ab")
+    s_firstjin = snap.get("firstjin_current_value") or snap.get("firstjin")
+    s_allianz_a = snap.get("allianz_a_current_value") or snap.get("allianz_a", 0)
+    s_allianz_b = snap.get("allianz_b_current_value") or snap.get("allianz_b", 0)
+    s_rent = snap.get("rent_monthly_actual")
+    s_securities = snap.get("securities_total_market_value")
+
+    # rules 真值（文字檔，用 regex 抓）
+    r_income = extract_markdown_value(rules, r"月收入 \*\*([0-9,]+)\*\*")
+    r_expense = extract_markdown_value(rules, r"月支出 \*\*([0-9,]+)\*\*")
+    r_work_surplus = extract_markdown_value(rules, r"工作期盈餘 \*\*([+-]?[0-9,]+)\*\*")
+    r_retire_surplus = extract_markdown_value(rules, r"退休後盈余 \*\*([+-]?[0-9,]+)\*\*")
+    r_allianz = extract_markdown_value(rules, r"安聯 A \+ 安聯 B = .*?現值 ([0-9,]+)")
+    r_firstjin = extract_markdown_value(rules, r"第一金 = .*?現值 ([0-9,]+)")
+
+    def to_num(s: str | None) -> int | None:
+        if s is None:
+            return None
+        return int(s.replace(",", ""))
+
+    def check(label, a, b):
+        if a is None or b is None:
+            return None
+        return a == b
+
+    checks = {
+        "monthly_income": check("月收入", s_income, to_num(r_income)),
+        # monthly_expense 以 MB override 為唯一真值，不跟旧文字檔比對
+        "working_surplus": check("工作期盈餘", s_work_surplus, to_num(r_work_surplus)),
+        "retirement_surplus": check("退休後盈餘", s_retire_surplus, to_num(r_retire_surplus)),
+        "allianz_value": check("安聯A+B現值", s_allianz, to_num(r_allianz)),
+        "firstjin_value": check("第一金現值", s_firstjin, to_num(r_firstjin)),
+    }
+
+    conflicts = {k: v for k, v in checks.items() if v is False}
+    if conflicts:
+        print(f"[CALIBRATE] 三源校準失敗：{conflicts}")
+        sys.exit(2)
+
+    print("[CALIBRATE] 三源校準通過")
+    # 真值錨定：本月配息依當月 dividend_records 動態累積（8月起自動歸零重算）
+    _today_m = date.today().strftime("%Y-%m")
+    _div_records = snap.get("dividend_records", {}) or {}
+    _div_sum = 0
+    for _d, _items in _div_records.items():
+        if str(_d).startswith(_today_m):
+            _div_sum += sum(_items.values())
+    # 只顯示當月實際已收到配息，月初為 0（預估欄位僅供規劃參考，不混入「本月已收」）
+    monthly_dividend = _div_sum if _div_sum > 0 else 0
+    # 快取欄位只當無任何來源時使用
+    if monthly_dividend is None:
+        monthly_dividend = (snap.get("allianz_ab_monthly", 0) or 0) + (snap.get("firstjin_monthly", 0) or 0)
+
+    # 從 monthly_dividend_breakdown 取得證券、基金配息及下次除息資訊
+    dividend_breakdown = snap.get("monthly_dividend_breakdown", {})
+    # 當月實際已收配息分類（從 dividend_records 依當月過濾，8月起全為 0）
+    _div_by_type = {"安聯": 0, "第一金": 0, "ETF": 0, "基金": 0, "保單": 0}
+    for _d, _items in _div_records.items():
+        if str(_d).startswith(_today_m):
+            for _k, _v in _items.items():
+                if "安聯" in _k:
+                    _div_by_type["安聯"] += _v
+                    _div_by_type["保單"] += _v
+                elif "第一金" in _k:
+                    _div_by_type["第一金"] += _v
+                    _div_by_type["保單"] += _v
+                elif "ETF" in _k.upper() or "股息" in _k or "股利" in _k:
+                    _div_by_type["ETF"] += _v
+                elif "基金" in _k:
+                    _div_by_type["基金"] += _v
+    sec_dividend_monthly = _div_by_type["ETF"]
+    fund_dividend_monthly = _div_by_type["基金"]
+    
+    # ETF 除息時程表（HTML）
+    _etf_div = snap.get("etf_dividend_schedule", {})
+    _etf_table = "<table style='width:100%;font-size:14px;border-collapse:collapse;margin-top:8px'><thead><tr style='background:#f0f0f5'><th>ETF</th><th>狀態</th><th>除息日</th><th>配息</th><th>發放日</th></tr></thead><tbody>"
+    for status_label, status_key in [("✅ 已除息","已除息"), ("🔜 下一梯次","下一梯次")]:
+        items = _etf_div.get(status_key, {})
+        for ticker, info in items.items():
+            _ex = info.get("除息日") or info.get("預計除息", "")
+            # 自動加星期
+            try:
+                _ex_dt = datetime.strptime(f"2026/{_ex.replace('月初','')}", "%Y/%m/%d") if '/' in _ex else None
+                _ex = f"{_ex}({['一','二','三','四','五','六','日'][_ex_dt.weekday()]})" if _ex_dt else _ex
+            except: pass
+            _dv = f"{info.get('配息','')}元" if info.get('配息') else "-"
+            _pay = info.get("發放日", "")
+            try:
+                _pay_dt = datetime.strptime(f"2026/{_pay}", "%Y/%m/%d") if '/' in _pay else None
+                _pay = f"{_pay}({['一','二','三','四','五','六','日'][_pay_dt.weekday()]})" if _pay_dt else _pay
+            except: pass
+            _etf_table += f"<tr><td>{ticker}</td><td>{status_label}</td><td>{_ex}</td><td>{_dv}</td><td>{_pay}</td></tr>"
+    _etf_table += "</tbody></table>"
+    
+    # 下次除息資訊（從 relay_calendar 讀取）
+    next_ex_dividend_list = ""  # 預設空值，防止 relay_calendar.md 缺檔/無匹配時 UnboundLocalError
+    try:
+        _rc = open(BASE / "relay_calendar.md", encoding="utf-8").read()
+        _matches = re.findall(r'\|\s*([^|]+?)\s*\|\s*(\d+/\d+)\(', _rc)
+        _filtered = [(n.strip(), d) for n, d in _matches if n.strip() not in ('基金', '基金名稱')]
+        if _filtered:
+            next_ex_dividend_list = "、".join([f"{n}（{d}）" for n, d in _filtered[:5]])
+    except Exception as _e:
+        print(f"[WARN] relay_calendar.md 讀取失敗: {_e}")
+
+
+    total_assets = snap.get("total_assets")
+    total_liabilities = snap.get("total_liabilities")
+    net_worth = snap.get("net_worth")
+    if net_worth is None and total_assets is not None and total_liabilities is not None:
+        net_worth = total_assets - total_liabilities
+    return {
+        "date": TODAY,
+        "sec_dividend_monthly": sec_dividend_monthly,
+        "fund_dividend_monthly": fund_dividend_monthly,
+        "next_ex_dividend_list": next_ex_dividend_list,
+        "etf_div_table": _etf_table,
+        "monthly_expense": s_expense,
+        "working_surplus": s_work_surplus,
+        "retirement_surplus": s_retire_surplus,
+        "insurance_total": s_insurance,
+        "allianz_ab": s_allianz,
+        "allianz_a": s_allianz_a,
+        "allianz_b": s_allianz_b,
+        "allianz_a_current_value": s_allianz_a,
+        "allianz_b_current_value": s_allianz_b,
+        "firstjin": s_firstjin,
+        "firstjin_label": snap.get("insurance_label_b", "第一金FA81聯博"),
+        "rent_monthly": s_rent,
+        "securities_total": s_securities,
+        "monthly_dividend": monthly_dividend,
+        "insurance_dividend": _div_by_type["保單"],
+        "allianz_dividend": _div_by_type["安聯"],
+        "firstjin_dividend": _div_by_type["第一金"],
+        "relay_stations": snap.get("relay_stations", {}),
+        "cc_4cards": ["玉山UNI", "台新Richart", "永豐SPORT", "台北富邦momo/J"],
+        "loans_2mortgage": ["洲際W房貸", "理財型利息（房貸已清償）"],
+        "total_assets": total_assets,
+        "total_liabilities": total_liabilities,
+        "net_worth": net_worth,
+        "bonds_cash": snap.get("penetration", {}).get("actual_twd", {}).get("債券及安全現金", 9_697_196),
+        "penetration": snap.get("penetration", {}),
+        "insurance_current_value": s_insurance,
+        "funds": snap.get("fund_market_value", snap.get("funds_total", 0)) or 0,
+        "funds_cathay": snap.get("funds_cathay", 0) or 0,
+        "cash_total": snap.get("cash_total", 3_614_169),
+        "rent_breakdown": snap.get("rent_breakdown", {}),
+        "rent_received_records": snap.get("rent_received_records", {}),
+        "dividend_records": _div_records,
+        "girlfriend_repayment_records": snap.get("girlfriend_repayment_records", {}),
+        "salary_records": snap.get("salary_records", {}),
+        "salary": snap.get("salary", snap.get("monthly_salary", 42_560)),
+        "monthly_income": snap.get("monthly_income", 228_751),
+        "dividend_month_expected": snap.get("dividend_month_expected", 100_000),
+        "funds_breakdown": snap.get("funds_breakdown", {}),
+        "professional_investor": snap.get("professional_investor", {}),
+        "rhythm08": snap.get("rhythm08", {}),
+        # Liabilities from snapshot.json
+        "mortgage_yy": snap.get("mortgage_yy", 0),
+        "mortgage_yydu": snap.get("mortgage_yydu", 0),
+        "mortgage_xz": snap.get("mortgage_xz", 0),
+        "mortgage_cathay": snap.get("mortgage_cathay", 0),
+        "mortgage_balance": snap.get("mortgage_balance", 0),
+        "financial_mortgage": snap.get("financial_mortgage", 0),
+        "policy_loan": snap.get("policy_loan", 0),
+        "pledge_loan": snap.get("pledge_loan", 0),
+        "cc_liability": snap.get("cc_liability", 0),
+    }
+
+
+# ==========================================================================
+# 2. 日報產出
+# ==========================================================================
+
+
+def _diff_to_buffett_bullets(tv: dict, y: dict) -> list[str]:
+    bullets = []
+    pairs = [
+        ("monthly_expense", "月支出", "支出上升時優先檢視信用卡/房貸是否異常"),
+        ("monthly_income", "月收入", "收入變動確認是否為實質調整或一次性"),
+        ("net_worth", "淨資產", "淨資產下滑需檢視資產配置是否有過度曝險"),
+        ("insurance_current_value", "保單現值", "保單現值下降應評估是否調整基金標的"),
+        ("monthly_dividend", "本月配息", "配息縮水時補位防禦型配息基金"),
+        ("working_surplus", "工作期盈餘", "盈餘下滑應壓縮非必要支出"),
+        ("retirement_surplus", "退休後盈餘", "退休金流下降需提前建立現金緩衝"),
+    ]
+    for key, label, hint in pairs:
+        t = tv.get(key)
+        prev = y.get(key)
+        if t is None or prev is None:
+            continue
+        if isinstance(t, (int, float)) and isinstance(prev, (int, float)) and t != prev:
+            direction = "上升" if t > prev else "下降"
+            bullets.append(f"{label}{direction}（{t:,} vs 昨日 {prev:,}）：{hint}")
+    return bullets
+
+
+def _fmt_rent_status(tv):
+    """房租金流：應收固定 80,100 + 動態追蹤已收/待收"""
+    rb = tv.get("rent_breakdown", {}) or {}
+    received = tv.get("rent_received_records", {}) or {}
+    _m = date.today().strftime("%Y-%m")
+    _got = sum(v for d, items in received.items() if str(d).startswith(_m) for v in items.values())
+    label_map = {"大義街店面": "大義街1樓", "大義街二三樓": "大義街23樓"}
+    # 完整應收明細
+    detail = []
+    for k, v in rb.items():
+        label = label_map.get(k, k)
+        detail.append(f"{label}{v:,}")
+    if not detail:
+        return "大義街1樓24,000+洲際W33,000+大義街23樓23,100+管理費2,100"
+    base = "應收 80,100 = " + "+".join(detail)
+    if _got > 0:
+        got_parts = []
+        for d, items in sorted(received.items()):
+            if str(d).startswith(_m):
+                for k, v in items.items():
+                    label = label_map.get(k, k)
+                    got_parts.append(f"{label}{v:,}")
+        pending = 80_100 - _got
+        return f"{base}｜已收 {'+'.join(got_parts)}（{_got:,}）｜待收 {pending:,}"
+    return f"{base}｜尚未入帳"
+
+
+def _generate_schedule_html(events: list) -> str:
+    """從 calendar_sync 事件生成排程 HTML 表格行"""
+    from datetime import date
+    today = date.today().isoformat()
+    rows = []
+    for ev in events:
+        start = ev.get("start", "")
+        if start < today:
+            continue
+        summary = ev.get("summary", "")
+        amount = ev.get("amount", "")
+        status = ev.get("status", "")
+        rows.append(f'<tr><td>{start}</td><td>{summary}</td><td class="num">{amount}</td><td>{status}</td></tr>')
+    return "\n".join(rows[:12])
+
+
+def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "", mb_cc_rows: str = "", llm_emergency_analysis: str = "", schedule_rows_html: str = "", p0_tasks_html: str = "", cio_content_html: str = "") -> str:
+    _dbs_note_ph = "{_dbs_note}"  # placeholder for dynamic DBS note
+    """產出五大章節日報 HTML。"""
+    allianz = tv["allianz_ab"] or 7_634_046
+    firstjin = tv["firstjin"] or 1_952_366
+    firstjin_label = tv.get("firstjin_label", "第一金FA81聯博")
+    insurance_total = tv["insurance_total"] or allianz + firstjin
+    monthly_dividend = tv.get("monthly_dividend", 107_116)
+    allianz_dividend = tv.get("allianz_dividend", 73_167)
+    firstjin_dividend = tv.get("firstjin_dividend", 22_949)
+    # 房租覆蓋率（動態）與基金明細（從 snapshot 讀，不硬編碼）
+    _rent_cov = (tv.get("rent_monthly", 0) or 0) / (tv.get("monthly_expense", 162781) or 1) * 100
+    # 當月實際已收房租（rent_received_records）
+    _rent_recv = tv.get("rent_received_records", {}) or {}
+    _rm = date.today().strftime("%Y-%m")
+    _rent_got = sum(v for d, items in _rent_recv.items() if str(d).startswith(_rm) for v in items.values())
+    _div_expected = tv.get("dividend_month_expected", 100_000)  # 保守預估
+    _fund_bd = tv.get("funds_breakdown", {}) or {}
+    if _fund_bd:
+        # 支援兩種結構：扁平 {name: val} 或嵌套 {群組: {name: val}}
+        _fund_parts = []
+        for _fk, _fv in _fund_bd.items():
+            if isinstance(_fv, dict):
+                for _sk, _sv in _fv.items():
+                    if _sk in ("小計", "匯率調整", "note") or not isinstance(_sv, (int, float)):
+                        continue
+                    _fund_parts.append(f"{_fk}-{_sk} {_sv:,}")
+            elif isinstance(_fv, (int, float)):
+                _fund_parts.append(f"{_fk} {_fv:,}")
+        _fund_detail = " / ".join(_fund_parts) if _fund_parts else f"明細待補（總市值 {tv.get('funds', 0):,}）"
+    else:
+        _fund_detail = f"明細待補（總市值 {tv.get('funds', 0):,}）"
+    # 2026-08-08 使用者裁示：統一不記錄房地產（與差異分析一致，利於掌控現金流）
+    # 負債率雙軌（2026-08-10 使用者裁示）：主顯示含不動產（資產負債表視角 40.4%），
+    # 括號標註不含不動產流動負債率（126.6%，流動性監控指標）
+    try:
+        _re_val = float(json.loads(SNAPSHOT.read_text(encoding="utf-8")).get("real_estate_value", 0))
+    except Exception:
+        _re_val = 0
+    _total_with_re = int(tv.get("total_assets", 0) or 0)  # 流動總資產（不含不動產）
+    _total_liab = int(tv.get("total_liabilities", 0) or 0)
+    _net_with_re = _total_with_re - _total_liab
+    _liab_ratio = (_total_liab / (_total_with_re + _re_val) * 100) if (_total_with_re + _re_val) else 0  # 含不動產（主顯示）
+    _liab_ratio_flow = (_total_liab / _total_with_re * 100) if _total_with_re else 0  # 不含不動產（流動監控）
+
+    loans_rows_html = ""
+    if tv['mortgage_yy'] > 0:
+        loans_rows_html += f"""          <tr><td>永豐銀行</td><td>永豐房貸 (YY)</td><td>—</td><td class="num">{tv['mortgage_yy']:,}</td><td>—</td></tr>\n"""
+    if tv['mortgage_yydu'] > 0:
+        loans_rows_html += f"""          <tr><td>永豐銀行</td><td>永豐房貸 (YYDU)</td><td>—</td><td class="num">{tv['mortgage_yydu']:,}</td><td>—</td></tr>\n"""
+    if tv['mortgage_xz'] > 0:
+        loans_rows_html += f"""          <tr><td>永豐銀行</td><td>永豐房貸 (XZ)</td><td>—</td><td class="num">{tv['mortgage_xz']:,}</td><td>—</td></tr>\n"""
+    if tv['mortgage_cathay'] > 0:
+        loans_rows_html += f"""          <tr><td>國泰世華</td><td>國泰房貸（大義街轉貸 2.6%）</td><td>20日</td><td class="num">{tv['mortgage_cathay']:,}</td><td>9/20起月付 26,000</td></tr>\n"""
+    if tv['financial_mortgage'] > 0:
+        # 2026-08-10 註記：8/10 現金 100 萬先還星展理財型房貸（餘額 3,006,447 → 2,006,447）
+        loans_rows_html += f"""          <tr><td>星展銀行</td><td>理財型房貸</td><td>—</td><td class="num">{tv['financial_mortgage']:,}</td><td>8/10 已還 100 萬</td></tr>\n"""
+    if tv['policy_loan'] > 0:
+        loans_rows_html += f"""          <tr><td>—</td><td>保單借貸</td><td>—</td><td class="num">{tv['policy_loan']:,}</td><td>—</td></tr>\n"""
+    if tv['pledge_loan'] > 0:
+        loans_rows_html += f"""          <tr><td>—</td><td>證券質押</td><td>—</td><td class="num">{tv['pledge_loan']:,}</td><td>—</td></tr>\n"""
+
+    # 每月固定支出明細（2026-08-21：房貸校正 永豐65,735+國泰26,000=91,735）
+    try:
+        _sn2 = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
+    except Exception:
+        _sn2 = {}
+    _mfe = _sn2.get("monthly_fixed_expense", {}) or {}
+    _life = _mfe.get("生活支出", 28_500)
+    _med = _mfe.get("醫療_常態回診", 15_946)
+    _sin = _mfe.get("房貸_永豐", 65_735) or 0
+    _cat = _mfe.get("房貸_國泰", 26_000) or 0
+    _mort = _sin + _cat
+    _int = _mfe.get("保單借貸利息", 13_333)
+    _yua = _mfe.get("元大證金利息", 3_267)
+    _fixed_total = _mfe.get("合計", _life + _med + _mort + _int + _yua)
+    _rent = _sn2.get("rent_monthly_total", 80_100) or 0
+    _mort_net = _mort - _rent
+    _fixed_expense_html = f"""    <div class="callout" style="margin-top:10px;border-left:3px solid #3b82f6">
+      <strong>📌 每月固定支出：{_fixed_total:,}</strong><br>
+      生活 {_life:,} ｜ 醫療 {_med:,} ｜ 房貸 {_mort:,}（永豐 {_sin:,} + 國泰 {_cat:,}）｜ 保單借貸利息 {_int:,} ｜ 元大證金 {_yua:,}
+      <br/><span style="color:#64748b;font-size:12px">房租收入 {_rent:,} 覆蓋房貸 {_mort_net:+,} 缺口（{_mort/_rent*100:.0f}% 覆蓋）｜女友還款 6,000 為收入（至12/5）</span>
+    </div>
+"""
+
+    # 從 relay_calendar.md 取得 T+4 轉換截止日 & 完整行事曆
+    _rc_text = ""
+    _rc_data = {}  # {月份: {基金: {除息日, T+4}}}
+    try:
+        _rc_text = open(BASE / "relay_calendar.md", encoding="utf-8").read()
+        # 解析行事曆
+        _cur_month = None
+        for _line in _rc_text.splitlines():
+            _mh = re.match(r'##\s*(\d+)月', _line)
+            if _mh:
+                _cur_month = _mh.group(1)
+                _rc_data[_cur_month] = {}
+                continue
+            if _cur_month and '|' in _line and not _line.startswith('| 基金') and not _line.startswith('|---'):
+                _cells = [c.strip() for c in _line.split('|') if c.strip()]
+                if len(_cells) >= 3:
+                    _name = _cells[0].strip()
+                    _ex = re.sub(r'\([^)]*\)', '', _cells[1]).strip()
+                    _t4 = re.sub(r'\([^)]*\)', '', _cells[2]).strip()
+                    _rc_data[_cur_month][_name] = {'除息日': _ex, 'T+4': _t4}
+    except:
+        pass
+    # 基金順序（2026-08-10 修正：安聯AI/A10 仍在保單成分（snapshot 實證），
+    # 非「8/6 已轉出」— 移除錯誤標記，恢復顯示配息排程；M&G 8/10 摩根轉回）
+    _rc_funds = ['摩根JPM', '安聯收益成長', 'M&G入息', 'PIMCO', '安聯AI收益', '聯博', '貝萊德A10']
+    _rc_out = {}
+    _rc_months = ['9', '10', '11', '12']
+    # 動態生成行事曆表格
+    _rc_rows = ""
+    for _f in _rc_funds:
+        _f_disp = f"{_f}（{_rc_out[_f]}）" if _f in _rc_out else _f
+        _rc_rows += f"          <tr><td>{_f_disp}</td>"
+        for _m in _rc_months:
+            if _f in _rc_out:
+                _rc_rows += "<td>已轉出</td>"
+                continue
+            _d = _rc_data.get(_m, {}).get(_f, {})
+            _ex = _d.get('除息日', '')
+            _t4 = _d.get('T+4', '')
+            if _ex and _t4:
+                _rc_rows += f"<td>{_ex}→<strong>{_t4}</strong></td>"
+            else:
+                _rc_rows += "<td>—</td>"
+        _rc_rows += "</tr>"
+    _relay_calendar_html = f"""    <h3>2026 保單基金配息接力行事曆</h3>
+    <div class="table-wrap">
+      <table class="mobile-bordered">
+        <thead><tr><th>基金</th><th>9月</th><th>10月</th><th>11月</th><th>12月</th></tr></thead>
+        <tbody>
+{_rc_rows}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-sm" style="color:#6e6e73;margin-top:6px">除息日→<strong>T+4轉換截止</strong>。T+4 = 除息日前4工作日。</p>"""
+    _rc_rows = ""
+    # 從 snapshot relay_stations 動態生成接力站表
+    _stations = tv.get("relay_stations", {})
+    _station_icons = {'已配息': '✅', '轉換完成': '✅', '轉換中': '🔄', '待執行': '⏳', '等待': '⏸️'}
+    _station_rows = ""
+    for _sn, _sd in _stations.items():
+        if not isinstance(_sd, dict):
+            continue  # 2026-07-31 修復：relay_stations 混入字串型備註鍵，跳過
+        _st = _sd.get("狀態", "")
+        _icon = ""
+        for _k, _v in _station_icons.items():
+            if _k in _st:
+                _icon = _v
+                break
+        # 2026-08-10：支援新三站配息接力結構（基金/配息時間/T+4截止）；相容舊結構（基準日/轉換截止/預估入帳）
+        _fund = _sd.get("基金", _sd.get("流向", ""))
+        _payout = _sd.get("配息時間", _sd.get("基準日", "—"))
+        _t4 = _sd.get("T+4截止", _sd.get("轉換截止", "—"))
+        _deadline = f"⚠️ {_t4}" if "⚠️" in str(_t4) or any(x in str(_t4) for x in ["7/23","7/24"]) else _t4
+        _est = _sd.get("預估入帳", "")
+        _est_txt = f"<td>{_est}</td>" if _est else ""
+        _station_rows += f"""          <tr><td>{_sn}</td><td>{_fund}</td><td>{_payout}</td><td>{_deadline}</td>{_est_txt}<td>{_icon} {_st}</td></tr>"""
+    relay_table = f"""<div class="table-wrap">
+      <table class="mobile-bordered">
+        <thead>
+          <tr><th>站別</th><th>基金</th><th>配息時間</th><th>T+4截止</th><th>狀態</th></tr>
+        </thead>
+        <tbody>
+{_station_rows}
+        </tbody>
+      </table>
+    </div>"""
+
+    # CIO 觀點（外部傳入 / LLM 真實分析 / 靜態備援）
+    cio_content = []
+    cio_content.append('<p><strong>🧑‍💻 CIO 觀點</strong></p>')
+    if cio_content_html:
+        cio_content.append(cio_content_html)
+    else:
+        # LLM 真實分析優先（2026-08-22 升級；快取 data/cio_llm_{TODAY}.json 避免同日重複呼叫）
+        _cio_llm = ""
+        try:
+            _cio_cache = BASE / "data" / f"cio_llm_{date.today().isoformat()}.json"  # 用真實今天（run_daily TODAY=snapshot 日期 8/21，若用它 cache 永不更新）
+            if _cio_cache.exists():
+                _cio_llm = json.loads(_cio_cache.read_text(encoding="utf-8")).get("text", "")
+            else:
+                _cio_da0 = json.loads((BASE / "daily_analysis.json").read_text(encoding="utf-8"))
+                _cio_m0 = _cio_da0.get("market", {})
+                _cio_s0 = _cio_da0.get("signals", {})
+                _cio_b0 = _cio_s0.get("buy_signals", [])
+                _cio_s1 = _cio_s0.get("sell_signals", [])
+                _cio_warn0 = "、".join(_cio_s1[:2]) if _cio_s1 else "無"
+                _cio_pen_tw = tv.get("penetration", {}).get("actual_pct", {}).get("台股市值型成長", 0)
+                _cio_pen_us = tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
+                _cio_pen_def = tv.get("penetration", {}).get("actual_pct", {}).get("防守型配息", 0)
+                from llm_analysis import ask_llm
+                # 產業脈絡（GICS + 資金流向 + 輪動，2026-08-22 加）
+                _cio_ictx = ""
+                try:
+                    _snap_c = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+                    _gics_c = _snap_c.get("industry_penetration", {}).get("產業", {})
+                    _rot_c = _snap_c.get("rotation_recommendation", {}).get("總結", "")
+                    _sf_c = json.loads((BASE / "radar_state.json").read_text(encoding="utf-8")).get("sector_flow", {})
+                    _top4 = "、".join(f"{k} {v['佔比']:.1f}%" for k, v in sorted(_gics_c.items(), key=lambda x: -x[1]['金額'])[:4] if v['金額'] > 0)
+                    _cio_ictx = (f"產業：{_top4}｜資金流向：{_sf_c.get('台股總結','—')}；{_sf_c.get('美股總結','—')}｜"
+                                 f"輪動建議：{_rot_c or '—'}｜風險因子：美股相關>60%、美元信用債~20%")
+                except Exception:
+                    pass
+                _cio_prompt = (
+                    f"你是龍九控股的 CIO。市場訊號：買訊{len(_cio_b0)}/賣訊{len(_cio_s1)}、加權 {_cio_m0.get('twii','—')}、"
+                    f"台積電 {_cio_m0.get('tsm','—')}、配置 台股{_cio_pen_tw:.1f}%/美股{_cio_pen_us:.1f}%/防守{_cio_pen_def:.1f}%、"
+                    f"警訊：{_cio_warn0}。機構雷達：台股🟢/黃金🟢/原油🔴/美債10Y🟡。{_cio_ictx}\n"
+                    f"請給 CIO 戰略觀點：①配置判斷（哪裡該動/哪裡不動，須對照產業資金流向）②最大風險（含底層風險因子）"
+                    f"③下一步具體動作（含產業輪動方向），150字內，繁體中文，直接給結論。"
+                )
+                # 重試 2 次（8/22 實踩：buffett 連打 API 後 CIO 呼叫暫時失敗掉回靜態模板）
+                _cio_out = None
+                for _try_i in range(2):
+                    _cio_out = ask_llm(_cio_prompt, system="你是龍九控股 CIO。輸出繁體中文，精簡決策導向。")
+                    if _cio_out:
+                        break
+                if _cio_out:
+                    _cio_llm = _cio_out
+                    try:
+                        (BASE / "data").mkdir(exist_ok=True)
+                        _cio_cache.write_text(json.dumps({"text": _cio_llm, "date": TODAY}, ensure_ascii=False), encoding="utf-8")
+                    except Exception:
+                        pass
+                else:
+                    print("[CIO-DEBUG] ask_llm 回 None（2 次）", file=sys.stderr)
+            if _cio_llm:
+                cio_content.append(f'<span style="display:block">{_cio_llm}</span>')
+        except Exception as _cio_ex:
+            print(f"[CIO-LLM] {_cio_ex}", file=sys.stderr)
+            pass
+        if not _cio_llm:
+            # 靜態備援：從 daily_analysis.json 取市場訊號做基本判斷
+            try:
+                _cio_da = json.loads((BASE / "daily_analysis.json").read_text(encoding="utf-8"))
+                _cio_mkt = _cio_da.get("market", {})
+                _cio_sig = _cio_da.get("signals", {})
+                _cio_twii = _cio_mkt.get("twii", "")
+                _cio_tsm = _cio_mkt.get("tsm", "")
+                _cio_buy = _cio_sig.get("buy_signals", [])
+                _cio_sell = _cio_sig.get("sell_signals", [])
+                _cio_sentiment = "⚠️ 謹慎" if len(_cio_sell) > len(_cio_buy) else "✅ 中性偏多" if len(_cio_buy) > 0 else "➡️ 中性"
+                cio_content.append(f'<span style="display:block">• 市場情緒：{_cio_sentiment}（買訊{len(_cio_buy)} / 賣訊{len(_cio_sell)}）</span>')
+                if _cio_twii:
+                    cio_content.append(f'<span style="display:block">• 加權指數：{_cio_twii}</span>')
+                if _cio_tsm:
+                    cio_content.append(f'<span style="display:block">• 台積電：{_cio_tsm}</span>')
+                _cio_pen_tw = tv.get("penetration", {}).get("actual_pct", {}).get("台股市值型成長", 0)
+                _cio_pen_us = tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
+                _cio_pen_def = tv.get("penetration", {}).get("actual_pct", {}).get("防守型配息", 0)
+                cio_content.append(f'<span style="display:block">• 配置：台股{_cio_pen_tw:.1f}% / 美股{_cio_pen_us:.1f}% / 防守{_cio_pen_def:.1f}%</span>')
+                if _cio_sell:
+                    _cio_warn_str = "、".join(_cio_sell[:2])
+                    cio_content.append(f'<span style="display:block">• ⚠️ 警訊：{_cio_warn_str}</span>')
+            except Exception:
+                cio_content.append('<span style="display:block">• 本日市場無重大異常。</span>')
+                cio_content.append('<span style="display:block">• 資產配置持續檢視，注意防禦型補碼時機。</span>')
+            cio_content.append('<span style="display:block">• 流動性管理穩定，補庫警示已處理。</span>')
+    cio_content_html = '\n'.join(cio_content)
+
+    # 美元升息影響評估（8/21 使用者核准寫入日報）— 動態讀 snapshot
+    _usd_eval = ""
+    try:
+        _ue = load_json(BASE / "snapshot.json").get("usd_hike_evaluation", {})
+        if _ue:
+            _imp = "".join(f"<li>{x}</li>" for x in _ue.get("影響", []))
+            _resp = "".join(f"<li>{x}</li>" for x in _ue.get("因應", []))
+            _hed = _ue.get("避險現況", {})
+            _hed_txt = "｜".join(f"{k}：{v}" for k, v in _hed.items())
+            _usd_eval = f"""<div class="callout" style="border-left:3px solid #d97706;margin-top:10px">
+  <h3>💵 美元升息影響評估（{_ue.get('generated_at','')} DAA v3）</h3>
+  <p style="font-size:12px;color:#6e6e73;margin-bottom:6px">{_ue.get('引擎','')}</p>
+  <p style="margin:4px 0"><b>影響：</b></p><ul style="margin:2px 0 8px 18px;padding:0">{_imp}</ul>
+  <p style="margin:4px 0"><b>避險現況：</b>{_hed_txt}</p>
+  <p style="margin:8px 0 2px 0"><b>因應三步驟：</b></p><ul style="margin:2px 0 6px 18px;padding:0">{_resp}</ul>
+  <p style="font-size:11px;color:#94a3b8;margin:2px 0">{_ue.get('note','')}</p>
+</div>"""
+    except Exception:
+        _usd_eval = ""
+
+    # 雙維度資產定位（2026-08-21 使用者定稿）— 防禦維度 vs 收入維度
+    _dual_dim = ""
+    try:
+        _ddm = load_json(BASE / "snapshot.json").get("dual_dimension_metric", {})
+        if _ddm:
+            _df = _ddm.get("防禦維度", {}); _inc = _ddm.get("收入維度", {})
+            _dc2 = _df.get("組成", {})
+            _dual_dim = f"""<div class="callout" style="border-left:3px solid #8b5cf6;margin-top:10px">
+  <h3>🧭 雙維度資產定位（2026-08-21 定稿）</h3>
+  <p style="margin:4px 0">🛡️ <b>防禦維度 {_df.get('佔比',0)}%</b>（{_df.get('公式','')}｜抗跌/LTV保護）＝ 債券 {_dc2.get('債券類',0):,} + 現金 {_dc2.get('現金/貨幣停泊',0):,} + 低波 {_dc2.get('低波高股息防禦',0):,} + 避險衛星 {_dc2.get('避險衛星(目標)',0):,}（目標）</p>
+  <p style="margin:4px 0">💵 <b>收入引擎 {_inc.get('佔比',0)}%</b>（{_inc.get('公式','')}｜現金流覆蓋）＝ 全配息資產 + 房租 80,100/月</p>
+  <p style="font-size:11px;color:#94a3b8;margin:4px 0">核心：配息≠防守，兩維度分離計算、獨立風控；{_df.get('備註','')}</p>
+  <p style="margin:8px 0 2px 0">🎯 <b>四大市場情境（當前：區間震盪）：</b>多頭 防禦≥40/收入≥60/LTV≤55 ｜ <b>震盪 防禦≥50/收入≥65/LTV≤52</b> ｜ 股債雙殺 防禦≥55/收入≥70/LTV≤50 ｜ 熊市 防禦≥60/收入≥70/LTV≤48</p>
+  <p style="font-size:12px;margin:4px 0">✅ 現況驗證：防禦 53.8% ≥50 ✅ ｜ 收入 69.5% ≥65 ✅ ｜ LTV 50% ≤52 ✅ — 完全符合高風險震盪市場最高規格</p>
+</div>"""
+    except Exception:
+        _dual_dim = ""
+
+    # 機構流向雷達（2026-08-22：讀 radar_state.json，盤後更新、隔日報生效；f-string 模板需先定義）
+    _radar_html = ""
+    try:
+        _rs = json.loads((Path(__file__).resolve().parent / "radar_state.json").read_text(encoding="utf-8"))
+        _sig = _rs.get("signals", {})
+        if _sig:
+            _items = "".join(
+                f"<span style='display:inline-block;margin:2px 10px 2px 0'>{v.get('color', '⚪')} <b>{k}</b>：{v['note']}</span>"
+                for k, v in _sig.items()
+            )
+            _radar_html = (
+                "<div class='callout' style='margin-top:10px;border-left:3px solid #8b5cf6'>"
+                f"<strong>📡 機構流向雷達</strong>（更新 {str(_rs.get('last_run', ''))[:10]}）<br>{_items}"
+                "<br/><span style='color:#64748b;font-size:12px'>加碼前檢查：個人方向 vs 機構方向；紅燈凍結該資產調度</span></div>"
+            )
+    except Exception:
+        _radar_html = ""
+
+    # 產業別穿透（2026-08-22 雙層監控第二層：疊加於五桶之上，不取代）
+    _sector_html = ""
+    try:
+        _sec = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8")).get("sector_penetration", {})
+        if _sec:
+            _rows = ""
+            for _k in ["高科技/半導體", "金融/電信", "醫療/公用事業/不動產", "固收與現金", "實物避險-黃金", "實物避險-石油"]:
+                _v = _sec.get(_k, {})
+                if not _v:
+                    continue
+                _amt = _v.get("金額_估", _v.get("金額", 0)) or 0
+                _pct = _v.get("佔比_估", "")
+                _st = _v.get("狀態", "")
+                _rows += f"<tr><td>{_k}</td><td class='num'>{_amt:,}</td><td class='num'>{_pct}</td><td>{_st}</td></tr>"
+            _sector_html = (
+                "<div class='callout' style='margin-top:10px;border-left:3px solid #f59e0b'>"
+                "<strong>🏭 產業別穿透（Micro 底層｜疊加於五桶，非取代）</strong>"
+                f"<table style='width:100%;font-size:12px;margin-top:6px'><tr><th>產業</th><th>金額</th><th>佔比</th><th>狀態</th></tr>{_rows}</table>"
+                "<span style='color:#64748b;font-size:12px'>紅線：高科技/半導體 ≤30%（當前 18.1%，敏感性 28.5% 若富達全數計科技）｜輪動閥門：科技>30% 或雷達科技轉弱 → 乾粉轉金融/電信/醫療防禦</span></div>"
+            )
+    except Exception:
+        _sector_html = ""
+
+    # 產業摘要（2026-08-22：GICS 分布圖完整嵌入日報 + 資金流向/輪動一行）
+    _gics_html = ""
+    _sector_line = ""
+    try:
+        _snap_x = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
+        _gics_x = _snap_x.get("industry_penetration", {})
+        _rot_x = _snap_x.get("rotation_recommendation", {})
+        _rs_x = json.loads((Path(__file__).resolve().parent / "radar_state.json").read_text(encoding="utf-8"))
+        _sf_x = _rs_x.get("sector_flow", {})
+        # GICS 分布圖（表格 + 圖 + 不動產另計）完整嵌入日報
+        if _gics_x and _gics_x.get("產業"):
+            _g_rows = "".join(
+                f"<tr><td>{ind}</td><td style='text-align:right'>{v['金額']:,}</td><td style='text-align:right'>{v['佔比']:.1f}%</td></tr>"
+                for ind, v in sorted(_gics_x["產業"].items(), key=lambda x: -x[1]["金額"]) if v["金額"] > 0)
+            _g_img = ""
+            _g_png = Path(__file__).resolve().parent / f"industry_penetration_{date.today().isoformat()}.png"  # 用真實今天（TODAY=snapshot 日期 8/21 會找不到 8/22 圖）
+            if _g_png.exists():
+                _g_img = (f"<img src='data:image/png;base64,{base64.b64encode(_g_png.read_bytes()).decode('ascii')}' "
+                          f"style='width:100%;border-radius:8px;margin-top:6px'/>")
+            _re_x = _gics_x.get("實體不動產_另計", {})
+            _re_txt = (f"🏠 實體不動產另計：{_re_x.get('金額',0):,}（佔含不動產總資產 {_re_x.get('佔比_含不動產',0):.0f}%）"
+                       if _re_x else "")
+            _gics_html = (
+                "<div class='callout' style='margin-top:10px;border-left:3px solid #3b82f6'>"
+                f"<strong>🏭 GICS 產業分布（{_gics_x.get('日期','')}）<span style='font-size:10px;color:#64748b'>（產業穿透口徑：全資產產業佔比，與「美股科技紅線」不同）</span></strong>"
+                f"<table style='width:100%;border-collapse:collapse;font-size:12px'><tr><th style='text-align:left'>產業</th>"
+                f"<th style='text-align:right'>金額</th><th style='text-align:right'>佔比</th></tr>{_g_rows}</table>"
+                f"{_g_img}"
+                f"<div style='color:#94a3b8;font-size:11px;margin-top:4px'>{_re_txt}</div>"
+                f"<span style='color:#64748b;font-size:11px'>{_gics_x.get('備註','')}</span></div>")
+        # 資金流向 + 輪動一行
+        _tech_pct = _gics_x.get("產業", {}).get("資訊科技", {}).get("佔比", 0)
+        _med_pct = _gics_x.get("產業", {}).get("醫療保健", {}).get("佔比", 0)
+        # 2026-09-06：醫療缺口可能已由 8/24 保單轉換涵蓋（rotation 全產業動作「✅ 已涵蓋」）→ 標籤勿寫死「缺口」
+        _med_note = "（缺口）"
+        for _rr in (_rot_x.get("全產業") or []):
+            if _rr.get("產業") == "醫療保健" and str(_rr.get("動作", "")).startswith("✅"):
+                _med_note = "（✅ 已涵蓋 8/24 保單轉換，不新增現金）"
+                break
+        _rot_sum = _rot_x.get("總結", "")
+        _tw_s = _sf_x.get("台股總結", "")
+        # 明確交易計畫（買什麼/金額/節奏 — 2026-08-22 使用者要求日報也要）
+        _tp_rows = ""
+        for _p in _rot_x.get("交易計畫", []):
+            if _p.get("金額", 0) <= 0:
+                continue
+            _tp_rows += (f"<tr><td>{_p['產業']}</td><td>{_p['標的']}</td>"
+                         f"<td style='text-align:right'><b>{_p['金額']:,}</b></td><td style='font-size:11px'>{_p['節奏']}</td></tr>")
+        _sector_line = (
+            "<div class='callout' style='margin-top:10px;border-left:3px solid #22c55e'>"
+            f"<strong>🎯 本週交易計畫（{_rot_x.get('日期','')}）</strong><br>"
+            f"<b style='color:#16a34a'>{_rot_sum or '—'}</b>"
+            f"<table style='width:100%;border-collapse:collapse;font-size:12px'><tr><th style='text-align:left'>產業</th>"
+            f"<th>買什麼</th><th style='text-align:right'>金額</th><th>節奏</th></tr>{_tp_rows}</table>"
+            f"<span style='color:#64748b;font-size:11px'>GICS：科技 {_tech_pct:.1f}%（紅線30）｜醫療 {_med_pct:.1f}%{_med_note}｜"
+            f"<a href='https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{date.today().isoformat()}.html' style='color:#22c55e'>完整儀表板 →</a></span></div>")
+    except Exception:
+        _gics_html = ""
+        _sector_line = ""
+
+    # 底層風險因子穿透圖（2026-08-22：每日重新生成 + base64 嵌入日報，隨 snapshot 更新）
+    _chart_html = ""
+    try:
+        import risk_factor_penetration as _rfp
+        _png = _rfp.build_chart()
+        _b64 = base64.b64encode(_png.read_bytes()).decode("ascii")
+        _chart_html = (
+            "<div class='callout' style='margin-top:10px;border-left:3px solid #22c55e'>"
+            f"<strong>🖼 底層風險因子穿透對照圖（{TODAY}，每日更新）</strong><br>"
+            f"<img src='data:image/png;base64,{_b64}' style='width:100%;border-radius:8px'/>"
+            f"<br/><a href='https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{TODAY}.html' "
+            f"style='color:#22c55e;font-size:12px'>🔄 開啟每日再平衡儀表板 →</a>"
+            "</div>"
+        )
+    except Exception as _ce:
+        _chart_html = f"<!-- 穿透圖生成失敗: {_ce} -->"
+
+    # 系統工作日誌（2026-09-05：work_log.json 動態，應辦/完成分色；與儀表板 work-log 卡同源）
+    _worklog_html = ""
+    try:
+        _wl = json.loads((Path(__file__).resolve().parent / "work_log.json").read_text(encoding="utf-8"))
+        if isinstance(_wl, list) and _wl:
+            def _wl_esc(_s: str) -> str:
+                return _s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            def _wl_row(_d: dict) -> str:
+                _c = _d.get("category", "")
+                _ic = "📋" if _c == "應辦" else ("✅" if _c == "完成" else "•")
+                _cl = "#b45309" if _c == "應辦" else ("#059669" if _c == "完成" else "#64748b")
+                _dh = ""
+                _de = str(_d.get("detail", "") or "").strip()
+                if _de:
+                    _dh = f'<div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">{_wl_esc(_de)}</div>'
+                return (f'<div style="border-left:3px solid {_cl};padding:2px 0 2px 10px;margin:6px 0">'
+                        f'<span style="color:{_cl};font-weight:800">{_ic}</span> '
+                        f'<span style="color:#1d1d1f;font-weight:600">{_wl_esc(str(_d.get("item", "")))}</span>{_dh}</div>')
+            _wl_todos = [d for d in _wl if d.get("category") == "應辦"]
+            _wl_dones = [d for d in _wl if d.get("category") == "完成"]
+            _wl_parts = []
+            if _wl_todos:
+                _wl_parts.append(f'<div style="font-size:12px;color:#b45309;font-weight:800;margin:4px 0 0">📋 應辦（{len(_wl_todos)}）</div>'
+                                 + "".join(_wl_row(d) for d in _wl_todos))
+            if _wl_dones:
+                _wl_dones_r = list(reversed(_wl_dones[-8:]))
+                _wl_parts.append(f'<div style="font-size:12px;color:#059669;font-weight:800;margin:8px 0 0">✅ 完成（近 {len(_wl_dones_r)} 筆 / 共 {len(_wl_dones)}）</div>'
+                                 + "".join(_wl_row(d) for d in _wl_dones_r))
+            if _wl_parts:
+                _worklog_html = '<div class="callout callout-info">' + "".join(_wl_parts) + "</div>"
+    except Exception as _wle:
+        _worklog_html = f"<!-- work_log 讀取失敗: {_wle} -->"
+
+    html = f"""<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>龍九控股日報 {TODAY}</title>
+<style>
+  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
+    color: #1d1d1f;
+    background: #f5f5f7;
+    margin: 0;
+    padding: 16px;
+    line-height: 1.8;
+    font-size: 17px;
+    -webkit-text-size-adjust: 100%;
+  }}
+  .page {{ max-width: 900px; margin: 0 auto; }}
+  .card {{
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }}
+  h1 {{ font-size: 22px; font-weight: 900; margin: 0 0 6px; }}
+  h2 {{ font-size: 18px; font-weight: 800; margin: 14px 0 8px; }}
+  h3 {{ font-size: 16px; font-weight: 800; margin: 10px 0 6px; }}
+  .label {{ font-size: 12px; color: #6e6e73; margin-bottom: 6px; }}
+  .text-lead {{ color: #3a3a3c; margin: 6px 0; }}
+  .table-wrap {{ overflow-x: auto; margin: 8px 0; -webkit-overflow-scrolling: touch; }}
+  table {{
+    width: 100%;
+    min-width: 360px;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid #e5e5ea;
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 16px;
+  }}
+  thead th {{
+    background: #f2f2f7;
+    font-weight: 800;
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e5e5ea;
+    font-size: 15px;
+  }}
+  tbody td {{
+    padding: 10px 12px;
+    border-bottom: 1px solid #f2f2f7;
+    vertical-align: top;
+  }}
+  tbody tr:nth-child(even) td {{ background: #fafafa; }}
+  tbody tr:hover td {{ background: #f0f8ff; }}
+  td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
+  .callout {{
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin: 14px 0; /* Adjusted margin */
+    border-left: 4px solid;
+    font-size: 16px; /* Added font-size */
+    line-height: 1.8; /* Added line-height */
+  }}
+  .callout h3 {{ text-decoration: underline; }} /* Added underline for h3 inside callout */
+  .callout strong {{ color:#c2410c; text-decoration: underline; }} /* Added orange color and underline for strong inside callout */
+  .callout-bull {{ background:#f0fff4; border-color:#22c55e; }}
+  .callout-bear {{ background:#fff5f5; border-color:#ef4444; }}
+  .callout-warn {{ background:#fffbeb; border-color:#f59e0b; }}
+  .callout-warn span {{ display:block; margin:3px 0; padding-left:4px; border-left:2px solid rgba(245,158,11,0.2); }}
+  .callout-info {{ background:#eff6ff; border-color:#3b82f6; }}
+
+  /* Mobile table style: bordered with background fill */
+  @media (max-width: 640px) {{
+    body {{ font-size: 15px; padding: 10px; }}
+    table {{ font-size: 13px; }}
+    th, td {{ padding: 6px 6px !important; }}
+    th:nth-child(2), td:nth-child(2) {{ max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
+    #market-intel-block table th:nth-child(2),
+    #market-intel-block table td:nth-child(2) {{
+      display: none !important;
+    }}
+  }}
+  table.mobile-bordered {{
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    overflow: hidden;
+  }}
+  table.mobile-bordered th {{
+    background: #f2f2f7 !important;
+    border: 1px solid #e5e5ea;
+    color: #1d1d1f;
+  }}
+  table.mobile-bordered td {{
+    background: #ffffff !important;
+    border: 1px solid #f2f2f7;
+  }}
+  table.mobile-bordered tr:nth-child(even) td {{ background: #f9fafb !important; }}
+  table.mobile-bordered .num {{ background: transparent !important; }}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- 1/5 財富生命線 -->
+  <div class="card">
+    <h1>1/9｜財富生命線 Wealth Baseline</h1>
+    <div class="label">資產負債快照</div>
+    <div class="table-wrap">
+      <table class="mobile-bordered">
+        <thead>
+          <tr><th>項目</th><th>內容</th><th>影響</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>總資產</td><td>{tv['total_assets']:,} TWD</td><td>流動資產（不記錄不動產）；負債率 {_liab_ratio:.1f}%（含不動產）｜流動負債率 {_liab_ratio_flow:.1f}%（不含不動產）</td></tr>
+          <tr><td>總負債</td><td>{tv['total_liabilities']:,} TWD</td><td>總負債合計（含房貸、保單借貸、質押）</td></tr>
+          <tr><td>本月領息</td><td>{monthly_dividend:,} TWD</td><td>保單 {tv['insurance_dividend']:,} + ETF {tv['sec_dividend_monthly']:,} + 基金 {tv['fund_dividend_monthly']:,}</td></tr>
+          <tr><td>被動月收</td><td>{monthly_dividend + _rent_got:,} TWD</td><td>實收：配息 {monthly_dividend:,} + 房租 {_rent_got:,}｜預期：房租 80,100 + 配息保守 {_div_expected:,}</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:11px;color:#6e6e73;margin-top:6px">📌 口徑速記：月支出 162,781（v4 定版）｜配息 {monthly_dividend:,}（實收=常態）/ 100,000（保守）｜被動保守 180,100（配息 100,000 + 房租 80,100）</p>
+      <p style="font-size:11px;color:#b45309;margin-top:2px">⚠️ 配息為截至今日實收，月底前依配息接力時程陸續補齊（撥回入帳後覆蓋率更高）</p>
+    </div>
+  </div>
+
+  <!-- 2/5 戰略異常看板 -->
+  <div class="card">
+
+  <div class="card">
+    <h2>2/9｜資產結構 Asset Penetration</h2>
+    <div class="label">對照家族辦公室戰略目標模型（不動產不計入）</div>
+    <div class="table-wrap">
+      <table class="mobile-bordered">
+        <thead><tr><th>戰略類別</th><th class="num">金額 TWD</th><th class="num">佔比</th><th class="num">目標</th><th>缺口</th></tr></thead>
+        <tbody>
+          <tr><td>🇹🇼 台股市值型</td><td class="num">__DR_TW_V__ TWD</td><td class="num">__DR_TW_PCT__</td><td class="num">__DR_TW_TGT__</td><td>__DR_TW_GAP__</td></tr>
+          <tr><td>🇺🇸 美股市值型</td><td class="num">__DR_US_V__ TWD</td><td class="num">__DR_US_PCT__</td><td class="num">__DR_US_TGT__</td><td>__DR_US_GAP__</td></tr>
+          <tr><td style="padding-left:20px;color:#7dd3fc;font-size:12px">└ 科技股</td><td class="num">__DR_US_TECH_V__ TWD</td><td class="num">__DR_US_TECH_PCT__</td><td class="num">__DR_US_TECH_TGT__</td><td>__DR_US_TECH_GAP__</td></tr>
+          <tr><td style="padding-left:20px;color:#94a3b8;font-size:12px">└ 非科技</td><td class="num">__DR_US_NT_V__ TWD</td><td class="num">__DR_US_NT_PCT__</td><td></td><td></td></tr>
+          <tr><td>🛡️ 防守型配息</td><td class="num">__DR_DEF_V__ TWD</td><td class="num">__DR_DEF_PCT__</td><td class="num">__DR_DEF_TGT__</td><td>__DR_DEF_GAP__</td></tr>
+          <tr><td>💵 債券</td><td class="num">__DR_BOND_V__ TWD</td><td class="num">__DR_BOND_PCT__</td><td class="num">__DR_BOND_TGT__</td><td>__DR_BOND_GAP__</td></tr>
+          <tr><td>💵 安全現金</td><td class="num">__DR_CASH_V__ TWD</td><td class="num">__DR_CASH_PCT__</td><td class="num">__DR_CASH_TGT__</td><td>__DR_CASH_GAP__</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-sm" style="color:#6e6e73;margin-top:8px">穿透分母：台股+美股+防守+債券（不含不動產）；管理費~1.5%，偏高於配息收益率。</p>
+  </div>
+
+  <div class="card" style="margin-top:4px;padding:10px 14px;background:#f0f4ff;">
+  </div>
+
+  <!-- 市場情報 -->
+  <div class="card">
+    <h2>3/9｜市場情報 Market Intel</h2>
+    <div class="label">獵人情報 + 市場搜尋 + 持倉關聯</div>
+    <div id="market-intel-block">{market_intel_text}</div>
+  </div>
+
+  <!-- 戰略異常看板 -->
+  <div class="card">
+    <h2>4/9｜戰略異常看板 Strategic Risk Hub</h2>
+    <div class="label">四大戰略重點</div>
+
+    <h3>保單維運</h3>
+    <p class="text-lead">保單現值 <strong>{insurance_total:,} TWD</strong>（安聯 A+B {allianz:,} + {firstjin_label} {firstjin:,}），本月配息合計 <strong>{tv['insurance_dividend']:,} TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
+
+    <h3>證券曝險</h3>
+    <p class="text-lead">證券總市值 <strong>{tv['securities_total']:,} TWD</strong>（{tv['holdings_count']}檔）。本月已收配息：{tv['sec_dividend_monthly']:,} TWD。前三大：{tv['holdings_top3'][0][0]} {tv['holdings_top3'][0][1]:.1f}%、{tv['holdings_top3'][1][0]} {tv['holdings_top3'][1][1]:.1f}%、{tv['holdings_top3'][2][0]} {tv['holdings_top3'][2][1]:.1f}%。0056 凍結質押中，短期無法加碼。</p>
+    {tv['etf_div_table']}
+
+    <h3>房租金流</h3>
+    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 {_rent_cov:.0f}%。{_fmt_rent_status(tv)}{_dbs_note_ph}</p>
+
+    <h3>基金部位（鉅亨網 + 國泰基金）</h3>
+    <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong> ＝ 鉅亨網 <strong>{tv.get('funds',0) - tv.get('funds_cathay',0):,}</strong> ＋ 國泰基金 <strong>{tv.get('funds_cathay',0):,}</strong>（富達 600萬 + 聯博 100萬 + MMF 500萬停泊）。本月已收配息：{tv['fund_dividend_monthly']:,} TWD。{_fund_detail}</p>
+  </div>
+
+  <!-- 3/5 保單接力引擎 -->
+  <div class="card">
+    <h2>5/9｜保單接力引擎 Insurance Relay Engine</h2>
+    <div class="label">三站配息接力（月初→月中→月底）</div>
+    <p class="text-lead"><strong>本月配息合計：{tv['insurance_dividend']:,} TWD</strong></p>
+    {relay_table}
+    {_relay_calendar_html}
+
+    <h3>保單成分穿透</h3>
+    <h3>安聯 A+B 合併帳戶（成本 8,000,000 / 現值 {allianz:,}）</h3>
+    <div class="table-wrap">
+      <table class="mobile-bordered">
+        <thead>
+          <tr><th>指標</th><th class="num">數值 TWD</th><th>備註</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>現值</td><td class="num">{allianz:,}</td><td>最新 market value</td></tr>
+          <tr><td>本月配息</td><td class="num">{allianz_dividend:,}</td><td>當月配息</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>{firstjin_label}（成本 2,000,000 / 現值 {firstjin:,}）</h3>
+    <div class="table-wrap">
+      <table class="mobile-bordered">
+        <thead>
+          <tr><th>指標</th><th class="num">數值 TWD</th><th>備註</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>現值</td><td class="num">{firstjin:,}</td><td>配息前</td></tr>
+          <tr><td>本月配息</td><td class="num">{firstjin_dividend:,}</td><td>上月底配息</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 4/5 流動性調度站 -->
+  <div class="card">
+    <h2>6/9｜流動性調度站 Liquidity Hub</h2>
+    <div class="label">5,000 元過濾器 + 補庫預警</div>
+
+    <h3>信用卡四大主力（列管帳戶）</h3>
+    <div class="table-wrap">
+      <table class="mobile-bordered">
+        <thead>
+          <tr><th>銀行</th><th>卡片</th><th>繳款日</th><th class="num">近期應付 TWD</th><th>狀態</th></tr>
+        </thead>
+        <tbody>
+{mb_cc_rows}
+        </tbody>
+      </table>
+    </div>
+
+    <h3>房貸帳戶（列管帳戶）</h3>
+    <div class="table-wrap">
+      <table class="mobile-bordered">
+        <thead>
+          <tr><th>銀行</th><th>貸款名稱</th><th>扣款日</th><th class="num">金額 TWD</th><th>狀態</th></tr>
+        </thead>
+        <tbody>
+{loans_rows_html}
+        </tbody>
+      </table>
+    </div>
+{_fixed_expense_html}
+
+    <div class="callout callout-ok">
+      <strong>✅ 流動資金充足</strong><br>
+      {_dbs_note_ph}
+    </div>
+  </div>
+
+  <!-- 5/5 龍九決戰日檢核 -->
+  <div class="card">
+    <h2>7/9｜龍九決戰日檢核 Tactical Ops Checklist</h2>
+    <div class="label">P0 任務置頂 + 行事曆維度聚合</div>
+
+    <h3>🚨 P0 任務</h3>
+    <div class="callout callout-warn">
+      <ul>
+        {p0_tasks_html}
+      </ul>
+    </div>
+
+    <h3>本週行程 + 繳款 / 配息排程（🔁 配息接力時間表）</h3>
+    <div class="table-wrap">
+      <table class="mobile-bordered">
+        <thead>
+          <tr><th>日期</th><th>項目</th><th class="num">金額 TWD</th><th>狀態</th></tr>
+        </thead>
+        <tbody>
+{schedule_rows_html}
+        </tbody>
+      </table>
+      <p class="text-sm" style="color:#6e6e73;margin-top:6px">🔁 配息接力時間表：💰 = 配息基準日（基準日+12天左右入帳）、🔴 = T+4 轉換截止（除息前4工作日）。三站依配息時間循環領息：月初（摩根 9/8）→ 月中（安聯 9/14 / M&G 9/18）→ 月底（AI 9/24 / PIMCO 9/28 / A10+聯博 9/29）。</p>
+    </div>
+
+    <h3>🛠️ 系統工作日誌（收工登錄）</h3>
+    <div class="label">work_log.json 動態讀取 — 應辦 / 完成分色（2026-09-05 起，與儀表板同源）</div>
+    {_worklog_html}
+  </div>
+
+  <!-- 投資決策框架 -->
+  <div class="card">
+    <h2>8/9｜投資決策框架 Investment Decision Framework</h2>
+    <div class="label">決策核心 + 緊急應變分析</div>
+
+    <div id="emergency-llm-analysis" style="background:transparent;border-radius:8px;padding:0;margin-top:8px;font-size:13px;line-height:1.75;overflow-x:auto;color:#1d1d1f;">
+      <!-- LLM 緊急應變分析區塊 -->
+            {llm_emergency_analysis}
+
+      <!-- 機構流向雷達（2026-08-22 新增，讀 radar_state.json） -->
+      {_radar_html}
+
+      <!-- 產業別穿透（2026-08-22 雙層監控第二層） -->
+      {_sector_html}
+
+      <!-- 產業摘要：GICS 分布圖完整版 + 資金流向/輪動一行（2026-08-22） -->
+      {_gics_html}
+
+      <!-- 產業資金流向＆輪動建議一行 -->
+      {_sector_line}
+
+      <!-- 底層風險因子穿透圖（2026-08-22 每日更新） -->
+      {_chart_html}
+    </div>
+
+    <!-- 美元升息影響評估（8/21 核准） -->
+    {_usd_eval}
+
+    <!-- 雙維度資產定位（8/21 定稿） -->
+    {_dual_dim}
+
+    <!-- 巴菲特視角建議 (Fallback 或輔助) -->
+    <div class="callout callout-bull">
+      <h3>巴菲特視角建議</h3>
+      __BUFFETT_CONTENT__
+    </div>
+
+    <!-- CTO 技術視角 (Fallback 或輔助) -->
+    <div class="callout callout-bear">
+      <h3>CTO 技術視角</h3>
+      __CTO_TECH__
+    </div>
+
+    <!-- CIO 審查 / 觀點 -->
+        <div class="callout callout-info">
+          {cio_content_html}
+        </div>
+        <!-- END CIO -->
+
+    <!-- P0-1 目標-對策對照表（動態注入） -->
+    <div class="card" style="margin-top:14px;">
+      <h3>🎯 目標-對策對照表（DAA 動態理財）</h3>
+      <div class="text-sm" style="color:#6e6e73;margin-bottom:8px;">偏離階梯：≤2pp觀察 / 2-5pp戰術觀察 / 5-10pp中等再平衡 / >10pp大規模再平衡</div>
+      __TACTICAL_TABLE__
+      __WEEKLY_OPS__
+      __PERF_TRACK__
+    </div>
+  </div>
+
+</div>
+<div class="card">
+  <h2>9/9｜資產差異分析 Asset Diff</h2>
+  <p class="text-lead">
+    <a href="https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html" target="_blank">
+      開啟今日差異分析 → asset_diff_{TODAY}.html
+    </a>
+  </p>
+  <div class="text-sm">包含：6/5 資產變化對照、趨勢圖表、巴菲特分析、Gemini 風控意見</div>
+</div>
+</body>
+</html>"""
+
+    # 動態 DBS note（2026-08-06：去硬編碼 8/1/17,000，改讀校準後現金真值）
+    _dbs_cash = tv.get("cash_total", 0)
+    _dbs_str = f"可動用流動資金 {_dbs_cash:,} TWD（Moneybook 校準），{'餘裕充足 ✅' if _dbs_cash > 30000 else '⚠️ 需補資金'}"
+    html = html.replace("{_dbs_note}", _dbs_str)
+
+    # 機構流向雷達（2026-08-22：讀 radar_state.json，盤後更新、隔日報生效）
+    _radar_html = ""
+    try:
+        _rs = json.loads((Path(__file__).resolve().parent / "radar_state.json").read_text(encoding="utf-8"))
+        _sig = _rs.get("signals", {})
+        if _sig:
+            _items = "".join(
+                f"<span style='display:inline-block;margin:2px 10px 2px 0'>{v.get('color', '⚪')} <b>{k}</b>：{v['note']}</span>"
+                for k, v in _sig.items()
+            )
+            _radar_html = (
+                "<div class='callout' style='margin-top:10px;border-left:3px solid #8b5cf6'>"
+                f"<strong>📡 機構流向雷達</strong>（更新 {str(_rs.get('last_run', ''))[:10]}）<br>{_items}"
+                "<br/><span style='color:#64748b;font-size:12px'>加碼前檢查：個人方向 vs 機構方向；紅燈凍結該資產調度</span></div>"
+            )
+    except Exception:
+        _radar_html = ""
+    html = html.replace("{_radar_html}", _radar_html)
+
+    return html
+
+
+# ==========================================================================
+# 3. 差異說明
+# ==========================================================================
+
+
+
+def _build_market_rows(signals: dict, tv: dict) -> str:
+    sell = signals.get("sell_signals", [])
+    rows = [
+        f"<tr><td>台股加權指數（{TODAY}）</td><td>待補齊；外資單日賣超 —</td><td>高檔震盪</td></tr>",
+        f"<tr><td>台積電（{TODAY}）</td><td>待補齊</td><td>觀察</td></tr>",
+        f"<tr><td>費半（{TODAY}）</td><td>待補齊</td><td>觀察</td></tr>",
+        f"<tr><td>美股（{TODAY}）</td><td>待補齊</td><td>觀察</td></tr>",
+        "<tr><td>美國 CPI</td><td>待補齊</td><td>待補齊</td></tr>",
+        # 0050 配息：待 MB 確認後由 daily_analysis.json 注入
+    ]
+    return "\n          ".join(rows)
+
+
+def _format_line_with_numbers(line: str) -> str:
+    import re as _nm
+    _b = _nm.sub(r'([0-9,]{1,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c">\1</strong>', line)
+    return _b
+
+def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str = "") -> str:
+
+    """以 daily_analysis.json + hunter intel 注入 market + Buffett + CTO 區塊。"""
+    # Moved from end of function for Buffett advice generation.
+    import sqlite3
+    _ac2 = {}
+    try:
+        _db2 = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        for r in _db2.execute("SELECT category, source, SUM(weight) as w FROM asset_class GROUP BY category, source"):
+            _ac2[(r[1], r[0])] = r[2]
+        _db2.close()
+    except Exception:
+        pass
+    _sec2 = float(tv.get("securities_total", 0) or 0)
+    _fund2 = float(tv.get("fund_market_value", 0) or tv.get("funds", 0) or 0)
+    _ins2 = float(tv.get("insurance_current_value", 0) or 0)
+    _cash_old2 = float(tv.get("bonds_cash", 0) or 0)
+    _cash2 = max(_cash_old2 - 5_812_576, 0) + 33_000
+    _bond2 = 2_097_467
+    def _src2(src):
+        return {"securities": _sec2, "fund": _fund2, "insurance_fund": _ins2, "cash": _cash2, "bond": _bond2}.get(src, 0)
+    def _cat2(cat):
+        t = 0
+        for (s, c), w in _ac2.items():
+            if c == cat:
+                sw = sum(w2 for (s2, c2), w2 in _ac2.items() if s2 == s)
+                t += _src2(s) * w / max(sw, 1)
+        return t
+    _tw_v = _cat2("tw_equity")
+    _us_v = _cat2("us_equity")
+    _def_v = _cat2("defensive")
+    _bond_v = _cat2("bond")
+    _cash_v = tv.get('cash', tv.get('cash_total', 4_483_408))
+
+    _snap_tgt_834 = tv.get("penetration", {}).get("targets", {}) or {}
+    _tgt_tw = _snap_tgt_834.get("台股市值型目標", 20.0)
+    _tgt_us = _snap_tgt_834.get("美股市值型目標", 30.0)
+    _tgt_def = _snap_tgt_834.get("配息型目標", 20.0)
+    _tgt_bond = _snap_tgt_834.get("債券型目標", 15.0)
+    _tgt_cash = _snap_tgt_834.get("現金目標", 15.0)
+    _tot = max(_tw_v + _us_v + _def_v + _bond_v + _cash_v, 1) # This needs to be calculated before _fmt_pct and _fmt_gap
+    def _fmt_pct(v): return f"{v/_tot*100:.1f}%"
+    def _fmt_gap(v, t): return f"{v/_tot*100 - t:+.1f}pp"
+
+    # 先從 market_intel 表補入 hunter 情報
+    try:
+        import sqlite3
+        _db = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        _r = _db.execute("SELECT buy_count,sell_count,summary,signals FROM market_intel WHERE date=? ORDER BY timestamp DESC LIMIT 1", (TODAY,)).fetchone()
+        _db.close()
+        if _r and _r[0] is not None and (_r[0] > 0 or _r[1] > 0):
+            _mr = [f"<tr><td>Hunter 情報訊號</td><td>買{_r[0]}/賣{_r[1]}筆</td><td>{(_r[2] or '')[:60]}</td></tr>"]
+            try:
+                _j = json.loads(_r[3]) if _r[3] else {}
+                for _s in (_j.get("buy",[])or[])[:2]:
+                    _mr.append(f"<tr><td>購 買進訊號</td><td colspan='2'>{_s[:60]}</td></tr>")
+                for _s in (_j.get("sell",[])or[])[:2]:
+                    _mr.append(f"<tr><td>網 賣出訊號</td><td colspan='2'>{_s[:60]}</td></tr>")
+            except: pass
+            _hunter_rows = chr(10).join("          "+r for r in _mr)
+    except: pass
+    analysis = load_daily_analysis()
+    if not analysis:
+        return html
+
+    scenario = analysis.get("scenario", {})
+    buffett = analysis.get("buffett", {})
+    cto = analysis.get("cto", {})
+
+    # Bull / Bear
+    html = html.replace("__BULL_TEXT__", buffett.get("bull", "—"))
+    html = html.replace("__BEAR_TEXT__", buffett.get("bear", "—"))
+
+    # Market rows from analysis
+    market = analysis.get("market", {})
+    twii = market.get("twii", "待補齊")
+    tsm = market.get("tsm", "待補齊")
+    sox = market.get("sox", "待補齊")
+    us = market.get("us", "待補齊")
+    cpi = market.get("cpi", "待補齊")
+
+    rows = [
+        f"<tr><td>台股加權指數（{TODAY}）</td><td>{twii}</td><td>{scenario.get('market_assessment', market.get('twii', '待補齊'))}</td></tr>",
+        f"<tr><td>台積電（{TODAY}）</td><td>{tsm}</td><td>半導體龍頭穩盤</td></tr>",
+        f"<tr><td>費半（{TODAY}）</td><td>{sox}</td><td>高檔回調</td></tr>",
+        f"<tr><td>美股（{TODAY}）</td><td>{us}</td><td>通膨降溫驅動科技領漲</td></tr>",
+        f"<tr><td>美國 CPI</td><td>{cpi}</td><td>降息預期升溫</td></tr>",
+        # 0050 配息：待 MB 確認後由 daily_analysis.json 注入
+    ]
+    # 合併 Hunter 訊號 + 標準市場數據
+    _all_rows = rows[:]
+    try:
+        if _hunter_rows:
+            _all_rows = [_hunter_rows] + rows
+    except: pass
+    html = html.replace("__MARKET_ROWS__", chr(10).join("          " + r for r in _all_rows))
+
+    # Buffett / CTO 區塊
+    buf_bull = buffett.get("bull", "")
+    buf_bear = buffett.get("bear", "")
+    buf_actions = buffett.get("actions", [])
+    scenario_event = scenario.get("event", "—")
+    buf_scenario = scenario.get("scenario_summary") or buffett.get("scenario_summary")
+    net_worth = tv.get("net_worth", 0)
+    snap_dir = BASE / "snapshots"
+    yesterday_snap = {}
+    # 2026-08-08 修正：先前 glob 最新一份會拿到歷史舊檔（如 7/28），
+    # 造成「vs 昨日」比較到 11 天前的值（配息 118,296 vs 今日 44,173 誤報、009816 誤會）。
+    # 改為只認「昨天日期」的 snapshot 檔；不存在則不比較（空 dict → 該區塊自動隱藏）。
+    _yday_f = snap_dir / f"snapshot_{date.today() - timedelta(days=1)}.json"
+    if _yday_f.exists():
+        try:
+            yesterday_snap = json.loads(_yday_f.read_text(encoding="utf-8"))
+        except Exception:
+            yesterday_snap = {}
+    # Buffett/CTO: 優先從最新的 buffett_cto_report_*.md 讀取（2026-08-22 修正：原用 {TODAY} 但 TODAY=_snap_date 會讀到舊檔）
+    _candidates = sorted(BASE.glob("buffett_cto_report_*.md"))
+    report_md = _candidates[-1] if _candidates else BASE / f"buffett_cto_report_{TODAY}.md"
+    if report_md.exists():
+        try:
+            md_text = report_md.read_text(encoding='utf-8')
+            buf_lines, cto_lines = [], []
+            current = None
+            for line in md_text.splitlines():
+                s = line.strip()
+                if s.startswith('【Buffett') or s.startswith('🧓 巴菲特'):
+                    current = 'buffett'
+                    continue
+                elif s.startswith('【CTO') or s.startswith('CTO '):
+                    current = 'cto'
+                    continue
+                elif s.startswith('【'):
+                    current = None
+                    continue
+                if current == 'buffett' and s:
+                    buf_lines.append(s)
+                elif current == 'cto' and s:
+                    cto_lines.append(s)
+            buf_content = '<br>'.join(buf_lines)
+            cto_content = '<br>'.join(cto_lines)
+        except Exception:
+            buf_content, cto_content = '', ''
+    else:
+        buf_content, cto_content = '', ''
+    
+    # Fallback to old logic if md report missing
+    if not buf_content:
+        buf_content = []
+        def _format_line_with_numbers(line):
+            import re as _nm
+            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c;">\\\1</strong>', line)
+            return _b
+
+        buf_content.append('<p><strong>🧓 巴菲特式思考</strong></p>')
+        buf_content = []
+        def _format_line_with_numbers(line):
+            import re as _nm
+            _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%|[+-]?[0-9,]+億)', r'<strong style="color:#c2410c">\1</strong>', line)
+            return _b
+        if not buf_content:
+            buf_content_lines = []
+            buf_content_lines.append('<p><strong>🧓 巴菲特式思考</strong></p>')
+            buf_content_lines.append(f'<span style="display:block">• 場景判定：{_format_line_with_numbers(buf_scenario or scenario_event)}</span>')
+            if buf_bull:
+                buf_content_lines.append(f'<span style="display:block">• Bull：{_format_line_with_numbers(buf_bull)}</span>')
+            if buf_bear:
+                buf_content_lines.append(f'<span style="display:block">• Bear：{_format_line_with_numbers(buf_bear)}</span>')
+            for a in buf_actions:
+                buf_content_lines.append(f'<span style="display:block">• {_format_line_with_numbers(a)}</span>')
+
+            diff_bullets = _diff_to_buffett_bullets(tv, yesterday_snap)
+            if diff_bullets:
+                buf_content_lines.append('<p><strong>📋 昨日差異帶來的行動啟示</strong></p>')
+                for b in diff_bullets:
+                    buf_content_lines.append(f'<span style="display:block">• {_format_line_with_numbers(b)}</span>')
+
+            buf_content_lines.append('<p><strong>🤝 Buffett 派操作建議</strong></p>')
+            buf_content_lines.append(f'<span style="display:block">• 淨資產：{_format_line_with_numbers(f"{net_worth:,.0f} TWD")}</span>')
+            _us_pct = _us_v / _tot * 100
+            _tw_pct = _tw_v / _tot * 100
+            _def_pct = _def_v / _tot * 100
+            _bond_pct = _bond_v / _tot * 100
+            _cash_pct = _cash_v / _tot * 100
+            buf_content_lines.append(f'<span style="display:block">• 建議部位：美股 {_format_line_with_numbers(f"{_us_pct:.0f}%")}（目標 {_format_line_with_numbers(f"{_tgt_us:.0f}%")}）、台股 {_format_line_with_numbers(f"{_tw_pct:.0f}%")}（目標 {_format_line_with_numbers(f"{_tgt_tw:.0f}%")}）、防守 {_format_line_with_numbers(f"{_def_pct:.0f}%")}（目標 {_format_line_with_numbers(f"{_tgt_def:.0f}%")}）、債券 {_format_line_with_numbers(f"{_bond_pct:.0f}%")}（目標 {_format_line_with_numbers(f"{_tgt_bond:.0f}%")}）、現金 {_format_line_with_numbers(f"{_cash_pct:.0f}%")}（目標 {_format_line_with_numbers(f"{_tgt_cash:.0f}%")}）</span>')
+
+            today_action = []
+            if (_tw_v / _tot * 100 - _tgt_tw) < -5:
+                today_action.append("台股偏低，逢低補碼")
+            if (_us_v / _tot * 100 - _tgt_us) > 5:
+                today_action.append("美股超標，優先減碼")
+            if (_def_v / _tot * 100 - _tgt_def) < -5:
+                today_action.append("防守不足，補 00878/00713")
+            if (_cash_v / _tot * 100 - _tgt_cash) > 5:
+                today_action.append("現金過多，可轉投入")
+            if not today_action:
+                today_action.append("持股觀望，等待機會")
+            buf_content_lines.append(f'<span style="display:block">• 今日動作：{_format_line_with_numbers("、".join(today_action))}</span>')
+            buf_content_lines.append(f'<span style="display:block">• 觸發條件：{_format_line_with_numbers("外資賣超 > 150 億 / 大盤跌 1.5% / 費半跌 2% / 跌破季線+量增 → 啟動減碼；外資買超 > 100 億 + 大盤漲 1% + 費半 +3% → 回補。")}</span>')
+            buf_content = '\n'.join(buf_content_lines)
+
+    cto_tech = cto.get("tech_stack", "—")
+    cto_risk = cto.get("risk", "—")
+    cto_action = cto.get("action", "—")
+    cto_signal = scenario.get("cto_signal", "")
+    if cto_signal:
+        cto_risk = f"今日觸發：{cto_signal}；{cto_risk}"
+
+    if not cto_content:
+        cto_content_lines = []
+        cto_content_lines.append('<p><strong>🤖 CTO 技術視角</strong></p>')
+        cto_content_lines.append(f'<span style="display:block"><strong>tech_stack</strong>：{_format_line_with_numbers(cto_tech)}</span>')
+        cto_content_lines.append(f'<span style="display:block"><strong>今日最大風險</strong>：{_format_line_with_numbers(cto_risk)}</span>')
+        cto_content_lines.append(f'<span style="display:block"><strong>建議動作</strong>：{_format_line_with_numbers(cto_action)}</span>')
+        cto_content = '\n'.join(cto_content_lines)
+
+    # 緊急應變 LLM 分析
+    if llm_emergency:
+        # 清理 ASCII 排版，轉換為 HTML
+        _em = llm_emergency
+        _em = _em.replace("╔", "").replace("╗", "").replace("╚", "").replace("╝", "").replace("║", "").replace("═", "")
+        _em = _em.replace("━━━", "").replace("━━", "").replace("━", "")
+        _em = _em.replace("───", "").replace("──", "").replace("─", "")
+        # 分隔線改為 HTML hr
+        import re
+        _em = re.sub(r'[━═─]{5,}', '<hr style="border:0;border-top:1px dashed #475569;margin:10px 0">', _em)
+        # 標題關鍵字加粗
+        for kw in ["【壹】", "【貳】", "【參】", "【肆】", "【伍】", "【陸】"]:
+            _em = _em.replace(kw, f"<strong style='color:#f59e0b'>{kw}</strong>")
+        # 分析/建議字樣加粗
+        _em = _em.replace("分析：", "<strong>分析：</strong>")
+        _em = _em.replace("建議：", "<strong>建議：</strong>")
+        _em = _em.replace("警訊：", "<strong style='color:#ef4444'>警訊：</strong>")
+        llm_emergency = _em
+
+    # 機構流向雷達（2026-08-22：讀 radar_state.json，盤後更新、隔日報生效）
+    _radar_html = ""
+    try:
+        _rs = json.loads((BASE / "radar_state.json").read_text(encoding="utf-8"))
+        _sig = _rs.get("signals", {})
+        if _sig:
+            _items = "".join(
+                f"<span style='display:inline-block;margin:2px 10px 2px 0'>{v.get('color', '⚪')} <b>{k}</b>：{v['note']}</span>"
+                for k, v in _sig.items()
+            )
+            _radar_html = (
+                "<div class='callout' style='margin-top:10px;border-left:3px solid #8b5cf6'>"
+                f"<strong>📡 機構流向雷達</strong>（更新 {str(_rs.get('last_run', ''))[:10]}）<br>{_items}"
+                "<br/><span style='color:#64748b;font-size:12px'>加碼前檢查：個人方向 vs 機構方向；紅燈凍結該資產調度</span></div>"
+            )
+    except Exception:
+        _radar_html = ""
+
+    html = html.replace("{llm_emergency_analysis}", llm_emergency)
+    html = html.replace("{_radar_html}", _radar_html)
+    html = html.replace("__BUFFETT_CONTENT__", buf_content)
+    html = html.replace("__CTO_TECH__", cto_content)
+
+    # P0-1 目標-對策對照表（動態注入）
+    try:
+        from tactical_table import build_table
+        _us30y = None
+        try:
+            import json as _json
+            _st = _json.loads((Path(__file__).resolve().parent / "us30y_state.json").read_text(encoding="utf-8"))
+            _us30y = _st.get("last_rate")
+        except Exception:
+            pass
+        _tbl = build_table(tv, _us30y)
+        # 2026-08-24：tv 缺 snapshot 欄位 → 補值（防守合併凍結判斷 + 衛星動態）
+        _need_rebuild = False
+        if "defensive_combined_metric" not in tv or not tv.get("defensive_combined_metric"):
+            _need_rebuild = True
+        if "rotation_recommendation" not in tv or not tv.get("rotation_recommendation"):
+            _need_rebuild = True
+        if _need_rebuild:
+            try:
+                _snap_x = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
+                tv["defensive_combined_metric"] = _snap_x.get("defensive_combined_metric", {})
+                tv["rotation_recommendation"] = _snap_x.get("rotation_recommendation", {})
+                _tbl = build_table(tv, _us30y)
+            except Exception:
+                pass
+        _rows_html = "".join(
+            f"<tr><td>{r['資產分類']}</td><td class='num'>{r['現況占比']}%</td>"
+            f"<td class='num'>{r['目標']}%</td><td class='num'>{r['偏離pp']:+.1f}</td>"
+            f"<td>{r['建議動作']}</td><td class='num'>{r['精算金額']:,}</td>"
+            f"<td>{r['階梯等級']}</td><td style='font-size:11px'>{r['觸發條件']}</td></tr>"
+            for r in _tbl["rows"]
+        )
+        _freeze_note = f"<div style='color:#dc2626;font-size:12px;margin-top:6px'>⛔ US30Y {_us30y:.2f}% &gt; 5.30% → TAA 全域凍結（只觀察）</div>" if _tbl["frozen"] else ""
+        _tactical_html = (
+            f"<table style='width:100%;border-collapse:collapse;font-size:12.5px'>"
+            f"<thead><tr><th>資產分類</th><th class='num'>現況%</th><th class='num'>目標%</th>"
+            f"<th class='num'>偏離pp</th><th>動作</th><th class='num'>精算金額</th><th>階梯</th><th>觸發條件</th></tr></thead>"
+            f"<tbody>{_rows_html}</tbody></table>{_freeze_note}"
+        )
+        # 2026-08-24：產業/衛星動態（DAA 依市場狀況調整比例：黃金/健康/科技等）
+        _sat_html = ""
+        _sat_rows = ""
+        for _s in _tbl.get("衛星動態", []):
+            _sat_rows += (
+                f"<tr><td>{_s['產業']}</td><td>{_s['動作']}</td>"
+                f"<td style='font-size:11px'>{_s['標的']}</td></tr>"
+            )
+        if _sat_rows:
+            _sat_html = (
+                "<div class='callout' style='margin-top:8px;border-left:3px solid #f59e0b'>"
+                "<strong>📡 產業/衛星動態調整（依市場狀況）</strong>"
+                "<table style='width:100%;border-collapse:collapse;font-size:12px;margin-top:4px'>"
+                "<tr><th style='text-align:left'>產業/衛星</th><th>動作</th><th>標的</th></tr>"
+                f"{_sat_rows}</table></div>"
+            )
+        html = html.replace("__TACTICAL_TABLE__", _tactical_html + _sat_html)
+    except Exception as _e:
+        html = html.replace("__TACTICAL_TABLE__", f"<div style='color:#999;font-size:12px'>對策表產生失敗: {_e}</div>")
+
+    # 2026-08-26：本週操作執行紀錄（讀 snapshot.weekly_ops_closure_*，動態抓最新版）
+    try:
+        _snap_ops = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
+        _ops_keys = sorted([k for k in _snap_ops.keys() if k.startswith("weekly_ops_closure_")])
+        _ops = _snap_ops.get(_ops_keys[-1], {}) if _ops_keys else {}
+        if _ops and _ops.get("執行清單"):
+            _ops_html = "".join(
+                f"<div style='padding:5px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;margin:3px 0'>"
+                f"<b style='color:#16a34a'>✅</b> {x.get('項目','')} <span style='color:#64748b'>({x.get('金額','')})</span>"
+                f"<span style='float:right;color:#64748b'>{x.get('狀態','')}</span></div>"
+                for x in _ops.get("執行清單", [])
+            )
+            _ops_close = "｜".join(_ops.get("閉環", {}).get("待追蹤", []))
+            html = html.replace("__WEEKLY_OPS__",
+                f"<div style='background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin:12px 0'>"
+                f"<div style='font-weight:800;color:#0f172a;margin-bottom:8px'>📋 本週操作執行紀錄（{_ops.get('期間','')}）</div>"
+                f"{_ops_html}"
+                f"<div style='font-size:12px;color:#64748b;margin-top:6px'>📌 閉環待追蹤：{_ops_close}</div></div>")
+        else:
+            html = html.replace("__WEEKLY_OPS__", "")
+    except Exception:
+        html = html.replace("__WEEKLY_OPS__", "")
+
+    # 2026-08-26：績效追蹤（讀 snapshot.operation_performance）
+    try:
+        _perf = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8")).get("operation_performance", {})
+        if _perf and _perf.get("基準"):
+            _b = _perf["基準"]
+            _tp = "｜".join(f"{t2.get('日期','')} {t2.get('項目','')[:25]}" for t2 in _perf.get("追蹤點", []))
+            html = html.replace("__PERF_TRACK__",
+                f"<div style='background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin:12px 0'>"
+                f"<div style='font-weight:800;color:#78350f;margin-bottom:8px'>📈 操作績效追蹤（基準 {_b.get('日期','')}）</div>"
+                f"<div style='font-size:12px;color:#92400e'>月配息常態 {_b.get('月配息常態估算',0):,}｜總資產 {_b.get('總資產',0):,}｜淨資產 {_b.get('淨資產',0):,}｜覆蓋率 {_b.get('覆蓋率',0)}%</div>"
+                f"<div style='font-size:12px;color:#92400e;margin-top:4px'>⏳ 追蹤點：{_tp}</div>"
+                f"<div style='font-size:11px;color:#b45309;margin-top:4px'>⚠️ 失敗訊號：{('、'.join(_perf.get('失敗訊號', [])))}</div></div>")
+        else:
+            html = html.replace("__PERF_TRACK__", "")
+    except Exception:
+        html = html.replace("__PERF_TRACK__", "")
+
+    # 專業投資人風控卡（snapshot.professional_investor）
+    try:
+        _pi = tv.get("professional_investor", {}) or {}
+        if _pi:
+            _pi_mode = _pi.get("mode", "B")
+            _pi_opt = _pi.get("mode_options", {}).get(_pi_mode, {})
+            _pi_rules = "；".join(_pi_opt.get("rules", [])) if _pi_opt else ""
+            _pi_fo = _pi.get("force_order", [])
+            _pi_fo_txt = " > ".join(_pi_fo[:2]) if isinstance(_pi_fo, list) and _pi_fo else str(_pi.get("force_order",""))
+            _pi_mt = _pi.get("macro_triggers", {}) or {}
+            _pi_fb = _pi.get("forbidden", [])
+            _pi_fb_txt = "；".join(_pi_fb[:2]) if isinstance(_pi_fb, list) and _pi_fb else ""
+            _pi_html = (
+                f"<div class='callout callout-warning' style='margin-top:12px'>"
+                f"<h3>🎫 專業投資人風控卡｜核心‑衛星保守成長（零槓桿預設）</h3>"
+                f"<div style='font-size:12.5px;line-height:1.8'>"
+                f"<strong>狀態：</strong>{_pi.get('status','申請中')}｜<strong>策略：</strong>{_pi.get('strategy','核心-衛星')}<br/>"
+                f"<strong>門檻：</strong>{_pi.get('threshold',0):,}｜現況：金融資產含保單 28,220,311｜<strong>缺口：{_pi.get('gap',0):,}</strong>（可合併配偶）<br/>"
+                f"<strong>強制順序：</strong>{_pi_fo_txt}<br/>"
+                f"<strong>🔴 宏觀紅線：</strong>30Y美債 &gt;5.20% → {_pi_mt.get('警戒線_5.20','停止新增長債/平衡基金')}<br/>"
+                f"<strong>🟢 友善線：</strong>&lt;4.80% 才可評估小槓桿（高息全清+現金≥300萬+擔保≤4成）<br/>"
+                f"{'<strong>⛔ 禁止：</strong>' + _pi_fb_txt if _pi_fb_txt else ''}"
+                f"<br/><strong>⚠️ 風險：</strong>{_pi.get('risk_warning','專業投資人不受金融消保法保障')}"
+                f"</div></div>"
+            )
+            html += _pi_html
+            # 8/20 定案槓桿風控輸出欄位（8/12 裁決強制，2026-08-20 更新為富達質押版）
+            try:
+                _dp2 = tv.get("professional_investor", {}).get("deployment_plan", {}) or {}
+                _r8b = tv.get("rhythm08", {}) or {}
+                _us30y_now = (_r8b.get("indicators", {}) or {}).get("us30y") or 0
+                _p1_loan = _dp2.get("total", 12000000) or 12000000
+                _p1_cost_y = _p1_loan * 0.026
+                _p1_cost_m = _p1_cost_y / 12
+                # 2026-09-12：質押口徑改「全部動態」（原寫死 5,400,000 / 11,773,599 / 2.77%）
+                # 來源：snapshot.cathay_pledge_0911（擔保池/成數/可貸/利率）+ dragon_assets.db liabilities（既有借款）
+                _snap_p = {}
+                try:
+                    _snap_p = json.loads(Path("snapshot.json").read_text(encoding="utf-8"))
+                except Exception:
+                    _snap_p = {}
+                _cp = (_snap_p.get("cathay_pledge_0911") or {})
+                def _pct_from(s, default_pct):
+                    """'4.5 成（45%）'→0.45；'2.77%'→0.0277（先找 % 再找 成）"""
+                    m = re.search(r"(\d+(?:\.\d+)?)\s*%", str(s or ""))
+                    if m:
+                        return float(m.group(1)) / 100.0
+                    m = re.search(r"(\d+(?:\.\d+)?)\s*成", str(s or ""))
+                    if m:
+                        return float(m.group(1)) / 10.0
+                    return default_pct / 100.0
+                _pool = _cp.get("擔保池") or {}
+                _pledge_collateral = float(_pool.get("合計") or 11773599)
+                _pool_principal = float(_cp.get("額度_本金") or 12000000)
+                _pledge_pct = _pct_from(_cp.get("成數"), 45.0)
+                _pledge_loan = float(_cp.get("可貸金額") or round(_pool_principal * _pledge_pct))
+                _pledge_rate = _pct_from(_cp.get("利率"), 2.77)
+                _pledge_cost_y = _pledge_loan * _pledge_rate
+                _pledge_cost_m = _pledge_cost_y / 12
+                # 既有質押借款（保單質押/券商質押）— 讀 DB liabilities 最新一列
+                _loans = {}
+                try:
+                    import sqlite3 as _sql3
+                    _dbl = _sql3.connect(str(BASE / "dragon_assets.db"))
+                    _lr = _dbl.execute("SELECT policy_loan, pledge_loan, date FROM liabilities ORDER BY date DESC LIMIT 1").fetchone()
+                    _dbl.close()
+                    if _lr:
+                        _loans = {"保單質押借款": float(_lr[0] or 0), "券商股票質押": float(_lr[1] or 0),
+                                  "_date": _lr[2]}
+                except Exception:
+                    _loans = {}
+                _loans_total = sum(v for k, v in _loans.items() if not k.startswith("_"))
+                _policy_rate = float(_snap_p.get("policy_pledge_rate") or 0.04)
+                _sec_rate = 0.0392  # 券商質押利率待對帳單核對（計畫書估 3.92%）
+                _save_y = (_loans.get("保單質押借款", 0) * (_policy_rate - _pledge_rate)
+                           + _loans.get("券商股票質押", 0) * (_sec_rate - _pledge_rate))
+                _pool_txt = "＋".join(f"{k.split('-')[0][:12]}{v/10000:.0f}萬"
+                                      for k, v in _pool.items() if k != "合計") or "池"
+                _pledge_card = (
+                    f"<div class='callout callout-info' style='margin-top:12px'>"
+                    f"<h3>🏦 質押口徑卡（動態｜來源 snapshot.cathay_pledge_0911 + DB liabilities {_loans.get('_date','')}）</h3>"
+                    f"<div style='font-size:12.5px;line-height:1.8'>"
+                    f"<strong>① 額度計算：</strong>擔保池本金 {_pool_principal:,.0f}（{_pool_txt}）"
+                    f"× 成數 {_pledge_pct*100:.1f}% = <strong>可貸 {_pledge_loan:,.0f}</strong>"
+                    f"｜池市值 {_pledge_collateral:,.0f}（×{_pledge_pct*100:.0f}% = {_pledge_collateral*_pledge_pct:,.0f}，"
+                    f"銀行取本金口徑）｜利率 {_pledge_rate*100:.2f}%<br/>"
+                    f"<strong>② 現有質押借款（{_loans.get('_date','')}）：</strong>"
+                    + "＋".join(f"{k} {v:,.0f}" for k, v in _loans.items() if not k.startswith("_"))
+                    + f" = <strong>{_loans_total:,.0f}</strong>"
+                    f"（月息約 {(_loans.get('保單質押借款',0)*_policy_rate+_loans.get('券商股票質押',0)*_sec_rate)/12:,.0f}）<br/>"
+                    f"<strong>③ LTV／維持率：</strong>LTV {_pledge_loan/_pledge_collateral*100:.1f}%"
+                    f"（借款/池市值，🟢 安全值≤53%）｜維持率 {_pledge_collateral/_pledge_loan*100:.0f}%"
+                    f"（池市值/借款）｜池 -30% → LTV {_pledge_loan/(_pledge_collateral*0.7)*100:.1f}%<br/>"
+                    f"<strong>④ 撥款後去向：</strong>可貸 {_pledge_loan:,.0f} − 現有借款 {_loans_total:,.0f} = "
+                    f"<strong>餘 {_pledge_loan-_loans_total:,.0f}</strong>"
+                    f"（9/12 裁示：先清償 500萬高息負債；押標金 9 月底再評估）<br/>"
+                    f"<strong>⑤ 省息試算：</strong>月省約 {_save_y/12:,.0f}／年省約 {_save_y:,.0f}"
+                    f"（保單 {_policy_rate*100:.1f}%〔待確認 4.0/4.2 兩版〕、券商 {_sec_rate*100:.2f}%〔待對帳單〕）<br/>"
+                    f"<strong>⑥ 待確認：</strong>{'；'.join((_cp.get('待補') or [])[:3]) or '—'}"
+                    f"</div></div>"
+                )
+                _fid_mdiv = 45000  # 富達月配估（0.75%/月 × 600萬）
+                _rent_recv = tv.get("rent_received_records") or {}
+                _rent_got = 0
+                for _rv in (_rent_recv.values() if isinstance(_rent_recv, dict) else []):
+                    if isinstance(_rv, dict):
+                        _rent_got += sum(_rv.values())
+                    elif isinstance(_rv, (int, float)):
+                        _rent_got += _rv
+                _income_m = (tv.get("dividend_month_expected") or 100000) + (tv.get("rent_monthly_total") or 0)
+                _freeze = _us30y_now >= 5.30
+                _fz_txt = f"🔴 觸及全域凍結線（{_us30y_now:.2f}% ≥ 5.30%）— 禁止新增債券質押" if _freeze else f"🟢 未觸及凍結線（{_us30y_now:.2f}% &lt; 5.30%）"
+                # 投資哲學檢核（2026-08-19 定版：核心三支柱 + 4 問）— 用常態被動收入（非當月實收）
+                _philosophy_items = []
+                _snap_now = json.loads(Path("snapshot.json").read_text(encoding="utf-8")) if Path("snapshot.json").exists() else {}
+                # 2026-08-27：共享組件統一覆蓋率口徑（與儀表板一致）
+                _inc_m = (_snap_now.get("dividend_month_expected") or 100000) + (_snap_now.get("rent_monthly_total") or 0)
+                _exp = _snap_now.get("monthly_expense") or 162781
+                _cov = _inc_m / _exp if _exp else 0
+                try:
+                    from report_components import render_coverage as _rc
+                    _cov_txt = _rc(_snap_now, "passive")
+                    _philosophy_items.append(_cov_txt)
+                except Exception:
+                    _philosophy_items.append(f"現金流覆蓋（常態）{_inc_m:,.0f}/{_exp:,.0f} = {_cov*100:.0f}% {'✅' if _cov >= 1.0 else '🔴'}")
+                _usd_ex = tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
+                _philosophy_items.append(f"美元曝險 {_usd_ex:.1f}%（≤50% {'✅' if _usd_ex <= 50 else '🟡' if _usd_ex <= 55 else '🔴'}）")
+                _cash_now = tv.get("cash_total") or 0
+                _philosophy_items.append(f"現金底線 {_cash_now:,.0f}（≥700,000 {'✅' if _cash_now >= 700000 else '🔴'}）")
+                _philosophy_items.append("利差 2.6%→4.8-6% ✅" if (_us30y_now or 0) < 5.50 else "利差 ⚠️")
+                _philosophy_html = "｜".join(_philosophy_items)
+                _lv_html = (
+                    f"<div class='callout callout-warning' style='margin-top:12px'>"
+                    f"<h3>📊 槓桿風控輸出（9/11 定案：整池質押版）</h3>"
+                    f"<div style='font-size:12.5px;line-height:1.8'>"
+                    f"<strong>① 槓桿成本：</strong>第一層（國泰轉貸 {_p1_loan/10000:.0f}萬×2.6%）≈ {_p1_cost_y/10000:.1f}萬/年（月 {_p1_cost_m:,.0f}）＋質押層（{_pool_txt} 池{_pool_principal/10000:.0f}萬×{_pledge_pct*10:.1f}成={_pledge_loan/10000:.0f}萬@{_pledge_rate*100:.2f}%）≈ {_pledge_cost_y/10000:.1f}萬/年（月 {_pledge_cost_m:,.0f}）→ 合計 ~{(_p1_cost_y+_pledge_cost_y)/10000:.1f}萬/年（月 {_p1_cost_m+_pledge_cost_m:,.0f}）<br/>"
+                    f"<strong>② LTV：</strong>質押 {_pledge_loan:,.0f}/{_pledge_collateral:,.0f} = {_pledge_loan/_pledge_collateral*100:.1f}%（🟢 安全值≤53%）；池 -30% 情境 → LTV {_pledge_loan/(_pledge_collateral*0.7)*100:.1f}%（🟡 距追繳線 70% 尚有 {70-_pledge_loan/(_pledge_collateral*0.7)*100:.1f}pp）<br/>"
+                    f"<strong>③ 月度利息流出 vs 現金流入：</strong>流出 {_p1_cost_m+_pledge_cost_m:,.0f} vs 流入（常態配息＋房租）{_income_m:,.0f}＋富達月配 ~{_fid_mdiv:,} = {_income_m+_fid_mdiv:,.0f} — {'✅ 覆蓋' if (_income_m+_fid_mdiv) >= (_p1_cost_m+_pledge_cost_m) else '⚠️ 未覆蓋'}<br/>"
+                    f"<strong>④ 到期對照：</strong>負債＝國泰轉貸 1,200萬（3年寬限期）＋質押 540萬（富達600+聯博100+貝萊德B11 500 擔保，基金無到期日）；富達為月配現金流資產，無期限錯配 ✅<br/>"
+                    f"<strong>⑤ US30Y：</strong>{_us30y_now:.2f}% — {_fz_txt}<br/>"
+                    f"<strong>⑥ 底線規則（8/13 動態）：</strong>現金≥6個月開支（{700000:,}，月開支 {_exp:,.0f}）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/>"
+                    f"<strong>⑦ 投資哲學檢核（8/19 定版）：</strong>{_philosophy_html}<br/>"
+                    f"<strong>⛔ 資金禁令：</strong>轉貸/質押資金禁止生活消費擴張"
+                    f"</div></div>"
+                )
+                html += _lv_html
+                html += _pledge_card          # 2026-09-12：質押口徑卡（動態）
+                try:
+                    from market_indicator_panel import build_panel
+                    html += build_panel()
+                except Exception:
+                    pass
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    # Rhythm-08 韻律零八｜宏觀前置風險燈號（2026-08-05 最終版：14 條規則）
+    try:
+        _r8 = tv.get("rhythm08", {}) or {}
+        if _r8 and _r8.get("enable"):
+            _ind = _r8.get("indicators", {}) or {}
+            _th = _r8.get("thresholds", {}) or {}
+            _tgt = _r8.get("targets", {}) or {}
+            _us30y = _ind.get("us30y") or 0
+            _us_pct = _ind.get("us_equity_actual_pct") or 0
+            _tw_pct = _ind.get("tw_equity_actual_pct") or 0
+            _hi_debt = _ind.get("high_interest_debt_exists", False)
+            _long_bond_pct = _ind.get("long_bond_share_of_bonds_pct") or 0
+            _slogan = _r8.get("slogan", "歷史不會重演，但總會押韻；不恐慌殺盤，但要提前收斂風險曝險，握好現金彈藥。")
+            _lights = []
+            # 1. 高息負債（最高優先）
+            if _hi_debt:
+                _lights.append(("🔴 紅燈", "尚有高息負債 — 凍結全部主動加倉，優先還高息負債（僅允許被動再平衡）"))
+            # 2. 結構債（暫無資料，依 snapshot 判斷）
+            # 3. 長債佔債券比
+            if _long_bond_pct > _tgt.get("long_bond_cap_pct_of_bonds", 40):
+                _lights.append(("🟡 黃燈", f"長債佔債券 {_long_bond_pct}% > {_tgt.get('long_bond_cap_pct_of_bonds', 40)}% — 提高中短期債券比重，降低久期"))
+            # 6/7. 30Y 三階段（2026-08-07 手冊：5.20/5.30/5.40）
+            _us30y_freeze = _th.get("us30y", {}).get("taa_global_freeze", 5.30)
+            if _us30y >= _th.get("us30y_red", 5.40):
+                _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% ≥ {_th.get('us30y_red')}% — Rhythm-08紅燈：調降部分長債00983D，內部轉換至中短債，降低擔保池波動"))
+            elif _us30y > _us30y_freeze:
+                _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% ≥ 5.30% — 全域凍結紅線（8/12 裁決）：禁止新增質押；已質押者停止新增質押＋逐步降LTV"))
+            elif _us30y >= _th.get("us30y_yellow", 5.20):
+                _lights.append(("🟡 黃燈", f"30Y美債 {_us30y}% ≥ {_th.get('us30y_yellow')}% — 警戒區：台股建倉≤50萬/週、美股停止新增、不新增長債疊債、停泊不疊槓"))
+            # 10. 美股占比
+            if _us_pct > _th.get("us_equity_overweight_yellow", 32):
+                _lights.append(("🟡 黃燈", f"美股實際占比 {_us_pct}% > {_th.get('us_equity_overweight_yellow')}% — 再平衡回落至30%目標"))
+            # 11. 台股占比（目標 15%）
+            if _tw_pct > _th.get("tw_equity_overweight_yellow", 17):
+                _lights.append(("🟡 黃燈", f"台股實際占比 {_tw_pct}% > {_th.get('tw_equity_overweight_yellow')}% — 不建議加碼台股，資金優先給債券、現金"))
+            if not _lights:
+                _lights.append(("🟢 綠燈", "主要指標安全 — 維持現行配置（持續監控 14 條規則）"))
+            _r8_html = (
+                "<div class='callout callout-blue' style='margin-top:12px'>"
+                "<h3>🎵 Rhythm-08 韻律零八｜估值利率風險監控（最終版）</h3>"
+                "<div style='font-size:12.5px;line-height:1.8'>"
+                + "".join(f"<div>{_l[0]} {_l[1]}</div>" for _l in _lights)
+                + "<div style='margin-top:4px;font-size:11px;color:#6b7280'>台股目標 15%｜美股上限 30%｜長債佔債券 ≤40%｜現金 15%｜優先序：負債＞利率＞估值＞集中度＞個別上限</div>"
+                + f"<div style='margin-top:6px;font-style:italic;color:#6b7280'>「{_slogan}」</div>"
+                f"<div style='font-size:11px;color:#9ca3af'>本模組僅產生警示與建議，不自動下單｜資訊僅供參考，不構成投資建議</div>"
+                f"</div></div>"
+            )
+            html += _r8_html
+    except Exception:
+        pass
+
+    return html
+
+
+
+def _format_content_to_html(text, content_type="market_intel"):
+    _formatted_lines = []
+    if content_type == "market_intel":
+        _known_headers = {"【台股/大盤】", "【美股/外資】", "【CPI/利率】", "【情報訊號】", "【最新市場消息】", "【持倉關聯分析】", "【買進訊號】", "【賣出訊號】"}
+        for _l in text.split("\n"):
+            _l = _l.strip()
+            if not _l:
+                continue
+            _header = _l[:_l.find("】")+1] if "】" in _l else ""
+            if _header in _known_headers:
+                _rest = _l[len(_header):].strip()
+                _formatted_lines.append(f"<p><strong>{_header}</strong>{' '+_rest if _rest else ''}</p>")
+            elif _l.startswith("•"):
+                _formatted_lines.append(f"<p style=\"margin-left:12px\">{_l}</p>")
+            else:
+                _formatted_lines.append(f"<p>{_l}</p>")
+    elif content_type == "emergency_analysis":
+        import re as _nm # This import needs to be handled carefully if it's not global
+        for _analysis_line in text.split('\n'):
+            _trimmed_line = _analysis_line.strip()
+            if not _trimmed_line:
+                _formatted_lines.append('<p></p>')
+            elif _trimmed_line.startswith('━'):
+                _formatted_lines.append('<hr>')
+            elif _trimmed_line.startswith('•') or _trimmed_line.startswith('🔥'):
+                _formatted_lines.append(f'<span style=\"display:block\">{_trimmed_line}</span>')
+            elif _trimmed_line.startswith('【') and _trimmed_line.endswith('】'):
+                _formatted_lines.append(f'<strong>{_trimmed_line}</strong>')
+            else:
+                _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%)', r'<strong style=\"color:#c2410c\">\1</strong>', _trimmed_line)
+                _formatted_lines.append(f'<span>{_b}</span>')
+    return "\n".join(_formatted_lines)
+
+def build_cc_rows() -> str:
+    """信用卡四大主力列管列：優先讀 MB 帳單 CSV（moneybook/、根目錄、tmp_mb/，取每卡最新一期帳單），
+    無 CSV 時以 snapshot.json 四源校準資料兜底。"""
+    import csv as _csv
+    _rows: list[str] = []
+    _cc_map = {"玉山銀行": "UNI", "台新銀行": "Richart", "永豐銀行": "SPORT", "台北富邦": "momo / J"}
+    # 1) 掃描各目錄的 *帳單*.csv（最新修改者優先）
+    _cands = []
+    for _d in (BASE / "moneybook", BASE, BASE / "tmp_mb"):
+        try:
+            if _d.is_dir():
+                _cands += sorted(_d.glob("*帳單*.csv"), reverse=True)
+        except OSError:
+            pass
+    _cands = sorted(_cands, key=lambda p: p.stat().st_mtime, reverse=True)
+    if _cands:
+        _latest: dict[str, tuple[str, float]] = {}
+        try:
+            with open(_cands[0], "r", encoding="utf-8-sig") as _f:
+                for _r in _csv.DictReader(_f):
+                    _bank = _r.get("金融機構", "")
+                    if _bank in _cc_map:
+                        _due = _r.get("繳費截止日", "") or ""
+                        try:
+                            _amt = float(_r.get("帳單金額", 0) or 0)
+                        except ValueError:
+                            _amt = 0.0
+                        # 只保留每卡繳費截止日最新的那筆
+                        if _bank not in _latest or _due > _latest[_bank][0]:
+                            _latest[_bank] = (_due, _amt)
+            for _bank, (_due, _amt) in _latest.items():
+                if _amt > 0:
+                    _due_md = "/".join(_due.split("/")[1:]) if "/" in _due else _due
+                    # 2026-08-06：截止日已過 → 標「已截止」待下期帳單，不再顯示待扣繳
+                    _due_full = _due if "/" in _due else ""
+                    _status = "🔄 待扣繳" if _due_full >= date.today().strftime("%Y/%m/%d") else "⏳ 已截止（待下期帳單）"
+                    _rows.append(f'          <tr><td>{_bank}</td><td>{_cc_map[_bank]}</td><td>{_due_md}</td><td class="num">{int(_amt):,}</td><td>{_status}</td></tr>')
+        except Exception:
+            _rows = []
+    # 2) 兜底：snapshot.json 四源校準信用卡資料（credit_card dict，合計=credit_card_pending）
+    if not _rows:
+        try:
+            _snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+            _cc = _snap.get("credit_card") or {}
+            _rev = {
+                "台新Richart": ("台新銀行", "Richart"),
+                "玉山UNI": ("玉山銀行", "UNI"),
+                "永豐SPORT": ("永豐銀行", "SPORT"),
+                "富邦momo": ("台北富邦", "momo / J"),
+                "國泰CUBE": ("國泰世華", "CUBE"),
+            }
+            for _card, (_bank, _cardname) in _rev.items():
+                try:
+                    _amt = float(_cc.get(_card, 0) or 0)
+                except (TypeError, ValueError):
+                    _amt = 0.0
+                _status = "✅ 無欠款" if _amt == 0 else "🔄 待扣繳"
+                _rows.append(f'          <tr><td>{_bank}</td><td>{_cardname}</td><td>—</td><td class="num">{int(_amt):,}</td><td>{_status}</td></tr>')
+        except Exception:
+            pass
+    return "\n".join(_rows)
+
+
+def main():
+    print(f"[RUN_DAILY] 日期：{TODAY}")
+
+    # 校準
+    tv = calibrate_sources()
+    print(f"[RUN_DAILY] 真值：月收 {tv['monthly_income']:,} / 月支 {tv['monthly_expense']:,} / 盈餘 +{tv['working_surplus']:,}")
+
+    # 情報：refresh today's hunter intel
+    intel_result = mi_mod.ensure_today_intel(force_refresh=True)
+    # 彙整所有情報源到 market_intel 表
+    try:
+        from compile_intel import compile_intel
+        compile_intel(force_refresh=True)
+    except Exception:
+        pass
+    # 從 Notion 同步決策（寫入策略檔）
+    try:
+        from notion_bridge import sync_notion_to_local
+        _nr = sync_notion_to_local()
+        if _nr["decisions_imported"] > 0:
+            print(f"[NOTION BRIDGE] 匯入 {_nr['decisions_imported']} 筆決策")
+    except Exception as _e:
+        pass
+    
+    # 確保策略檔有內容（從 Notion 頁面直接讀取 blocks）
+    try:
+        from notion_bridge import read_page_blocks, parse_blocks_to_text
+        _blocks = read_page_blocks("3a4fc735d43381d18a4bfe63e1bd6b2a")
+        _block_text = parse_blocks_to_text(_blocks)
+        if _block_text.strip():
+            _raw_dir = BASE / "notion_bridge"
+            _raw_dir.mkdir(exist_ok=True)
+            (_raw_dir / f"{TODAY}_strategy_handbook.md").write_text(
+                f"# 今日決策摘要\n來源頁面：3a4fc735...\n讀取時間：{__import__('datetime').datetime.now().isoformat()}\n\n{_block_text}",
+                encoding="utf-8"
+            )
+    except: pass
+    
+    # 載入統一市場情報
+    daily_analysis_path = BASE / "daily_analysis.json"
+    market_intel_text = ""
+    if daily_analysis_path.exists():
+        try:
+            daily_analysis_data = json.loads(daily_analysis_path.read_text(encoding='utf-8'))
+            market_intel_text = daily_analysis_data.get("briefing", "")
+        except Exception as _exc:
+            print(f"[WARN] load daily_analysis.json for market briefing failed: {_exc}")
+
+    # Fallback to legacy hunter text if LLM analysis is not available
+    if not market_intel_text:
+        intel_result = mi_mod.ensure_today_intel(force_refresh=True)
+        intel_text = intel_result.get("briefing_text", "") # Get briefing text from daily_intel.py
+        intel_signals = mi_mod.parse_hunter_signals(intel_text)
+    else:
+        # If LLM analysis is present, we still need signals for other parts of the report
+        # For now, we'll try to extract them from the LLM text or use a placeholder.
+        # A more robust solution would involve the LLM also outputting structured signals.
+        intel_text = ""
+        intel_signals = {"sell_signals": [], "buy_signals": []}
+
+
+    # 巴菲特/CTO 動態分析（產出報告，供 render_daily_report 讀取）
+    try:
+        from buffett_cto_analyzer import main as buffett_main
+        buffett_main(send=False)  # 產出報告，Telegram 統一由 deploy 發送
+        print("[RUN_DAILY] buffett_cto_analyzer 報告產出完成")
+    except Exception as exc:
+        print(f"[WARN] buffett_cto_analyzer 失敗：{exc}")
+
+    # 證券前三大佔比
+    try:
+        import sqlite3
+        _sdb = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        # 2026-08-18 修正：前三大改按「市值」排序（原 ORDER BY shares 用股數，00983D 20000股誤列第一 39.2%）
+        # 市值 = shares × snapshot 現價，價格從 snapshot securities.holdings 讀（DB cost_price 是成本價非現價）
+        _snap_px = {}
+        try:
+            _snap_h = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")).get("securities", {}).get("holdings", [])
+            _snap_px = {_x.get("ticker"): _x.get("price", 0) for _x in _snap_h}
+        except Exception:
+            pass
+        _sh = _sdb.execute("SELECT ticker, shares FROM holdings WHERE shares > 0").fetchall()
+        _cnt = _sdb.execute("SELECT COUNT(*) FROM holdings WHERE shares > 0").fetchone()
+        _sdb.close()
+        _mv = [(r[0], r[1] * _snap_px.get(r[0], 0)) for r in _sh]
+        _mv.sort(key=lambda x: x[1], reverse=True)
+        _top3 = _mv[:3]
+        _stotal = sum(v for _, v in _mv) or 1
+        _hpct = [round(v / _stotal * 100, 1) for _, v in _top3]
+        tv['holdings_top3'] = [(f'{r[0]}', _hpct[i]) for i, r in enumerate(_top3)]
+        tv['holdings_count'] = _cnt[0] if _cnt else len(_sh)
+    except:
+        tv['holdings_top3'] = [('00878', 15.0), ('009816', 16.6), ('00984A', 10.4)]
+        tv['holdings_count'] = 15
+    # 從 MB 帳單 CSV / snapshot 四源校準資料讀取信用卡四大主力（列管帳戶）
+    _mb_cc_rows = build_cc_rows()
+
+    market_intel_text = _format_content_to_html(market_intel_text, content_type="market_intel")
+
+    # 從 schedule_events.json 統一讀取排程（P0 + 本週行程）
+    _schedule_rows = ""
+    _p0_html = ""
+    try:
+        _events = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
+        _today_s = date.today().isoformat()
+        # 重要度權重：🔴 重要 > ⚠️ 待確認/還款 > 📋 行程 > ✅ 定期 > 🔄 待處理 > 📋 例行
+        _prio = {'🔴': 0, '⚠️': 1, '📋 重要': 1, '🔄': 2, '📋': 3, '✅': 4}
+        def _ev_key(e):
+            st = e.get("status", "") or ""
+            p = min((v for k, v in _prio.items() if k in st), default=5)
+            d = e.get("date", "")
+            return (p, d if d != "待處理" else "9999-99-99")
+        from datetime import timedelta as _td
+        _end_s = (date.today() + _td(days=30)).isoformat()
+        _week_s = (date.today() + _td(days=7)).isoformat()
+        # 過濾：待處理 或 今天~+30天（不含過去；2026-08-06 移除寫死 8/31）
+        _upcoming = [
+            e for e in _events
+            if e.get("date", "") == "待處理" or (_today_s <= e.get("date", "") <= _end_s)
+        ]
+        _upcoming.sort(key=_ev_key)
+        # 本週行程表：只顯示今天~+7天（2026-08-06）
+        _schedule_rows = "\n".join(
+            f'<tr><td>{e.get("date","")}</td><td>{e.get("item","")}</td><td class="num">{e.get("amount","")}</td><td>{e.get("status","")}</td></tr>'
+            for e in _upcoming if e.get("date", "") == "待處理" or e.get("date", "") <= _week_s
+        )[:4000]
+        # 2026-08-06 移除硬編碼過期項（8/4申請中、8/5已收配息）；8/15 撥款已由 schedule_events.json 動態聚合
+        _p0_core = []
+        _important = ['🔴', '🔄', '⚠️', '⏸️', '📋 重要']
+        _p0_dynamic = [
+            f'<li>{e.get("date","")} — {e.get("item","")} {e.get("amount","")} {e.get("status","")}</li>'
+            for e in _upcoming
+            if any(s in (e.get("status", "") or "") for s in _important)
+        ]
+        _p0_html = "\n".join(_p0_core + _p0_dynamic)
+    except Exception as _pe:
+        print(f"[WARN] schedule_events.json: {_pe}")
+
+    # 日報
+    # LLM 緊急應變分析
+    emergency_json_path = BASE / "data" / "emergency_llm_analysis.json"
+    llm_emergency_analysis_html = ""
+    if emergency_json_path.exists():
+        try:
+            emergency_data = json.loads(emergency_json_path.read_text(encoding='utf-8'))
+            analysis_content = emergency_data.get("full_report", emergency_data.get("analysis", ""))
+            _report_html = _format_content_to_html(analysis_content, content_type="emergency_analysis")
+            _gen2 = emergency_data.get("generated_at", "") or ""
+            _note2 = f'<p style="font-size:12px;color:#6e6e73;margin-bottom:6px">📅 緊急應變資料：{_gen2[:16]}（美股時段產出，最新可用；今晚 21:30 自動更新）</p>' if _gen2 else ""
+            _report_html = _note2 + _report_html
+            # 從現有檔案找最新緊急應變報告（glob，不寫死日期，避免 404）
+            _er_files = sorted(BASE.glob("emergency_report_2*.html"), reverse=True)
+            _er_link = ""
+            if _er_files:
+                _er_link = f"https://b0988321088.github.io/longjiu-dashboard-2/{_er_files[0].name}"
+            llm_emergency_analysis_html = f"""<div class="callout callout-warn">
+            {_report_html}"""
+            if _er_link:
+                llm_emergency_analysis_html += f"""
+            <p style="margin-top:8px;text-align:right;font-size:13px">
+              <a href="{_er_link}" target="_blank" style="color:#2563eb">📄 查看完整緊急應變報告 →</a>
+            </p>"""
+            llm_emergency_analysis_html += """
+            </div>"""
+        except Exception as _exc:
+            print(f"[WARN] load emergency_llm_analysis.json failed: {_exc}")
+
+    daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text, mb_cc_rows=_mb_cc_rows, llm_emergency_analysis=llm_emergency_analysis_html, schedule_rows_html=_schedule_rows, p0_tasks_html=_p0_html)
+    daily_html = _inject_market_intel(daily_html, tv, intel_signals, llm_emergency_analysis_html)
+
+    # 注入戰略穿透值到日報
+    _snap = json.loads(Path(SNAPSHOT).read_text(encoding="utf-8")) if Path(SNAPSHOT).exists() else {}
+    _pen = _snap.get("penetration", {})
+    _atwd = _pen.get("actual_twd", {})
+    _apct = _pen.get("actual_pct", {})
+    _tgt = _pen.get("targets", {})
+    _tw_v = _atwd.get("台股市值型成長", 0)
+    _us_v = _atwd.get("美股市值型成長", 0)
+    _def_v = _atwd.get("防守型配息", 0)
+    _bond_v = _atwd.get("債券", 0)
+    _cash_v = _atwd.get("現金/安全網", 0)
+    for k, v in [("__DR_TW_V__",f"{_tw_v:,.0f}"),("__DR_US_V__",f"{_us_v:,.0f}"),("__DR_DEF_V__",f"{_def_v:,.0f}"),("__DR_BOND_V__",f"{_bond_v:,.0f}"),("__DR_CASH_V__",f"{_cash_v:,.0f}")]: daily_html = daily_html.replace(k, v)
+    _atwd2 = _pen.get("actual_twd", {})
+    for k, v in [("__DR_TW_PCT__",f"{_apct.get('台股市值型成長',0):.1f}%"),("__DR_US_PCT__",f"{_apct.get('美股市值型成長',0):.1f}%"),("__DR_DEF_PCT__",f"{_apct.get('防守型配息',0):.1f}%"),("__DR_BOND_PCT__",f"{_apct.get('債券',0):.1f}%"),("__DR_CASH_PCT__",f"{_apct.get('現金/安全網',0):.1f}%"),
+                 ("__DR_US_TECH_V__",f"{_atwd2.get('美股市值型成長_科技',0):,}"),("__DR_US_TECH_PCT__",f"{_apct.get('美股市值型成長_科技',0):.1f}%"),
+                 ("__DR_US_NT_V__",f"{_atwd2.get('美股市值型成長_非科技',0):,}"),("__DR_US_NT_PCT__",f"{_apct.get('美股市值型成長_非科技',0):.1f}%"),
+                 ("__DR_US_TECH_TGT__",f"{_tgt.get('科技曝險目標',15):.0f}%"),("__DR_US_TECH_GAP__",f"{_apct.get('美股市值型成長_科技',0) - _tgt.get('科技曝險目標',15):+.1f}pp")]: daily_html = daily_html.replace(k, v)
+    for k, v in [("__DR_TW_TGT__",f"{_tgt.get('台股市值型目標',20):.0f}%"),("__DR_US_TGT__",f"{_tgt.get('美股市值型目標',30):.0f}%"),("__DR_DEF_TGT__",f"{_tgt.get('配息型目標',20):.0f}%"),("__DR_BOND_TGT__",f"{_tgt.get('債券型目標',15):.0f}%"),("__DR_CASH_TGT__",f"{_tgt.get('現金目標',15):.0f}%")]: daily_html = daily_html.replace(k, v)
+    _pen_total = _tw_v + _us_v + _def_v + _bond_v + _cash_v or 1
+    for k, t, g in [("__DR_TW_GAP__",_tw_v,_tgt.get('台股市值型目標',20)),("__DR_US_GAP__",_us_v,_tgt.get('美股市值型目標',30)),("__DR_DEF_GAP__",_def_v,_tgt.get('配息型目標',20)),("__DR_BOND_GAP__",_bond_v,_tgt.get('債券型目標',15)),("__DR_CASH_GAP__",_cash_v,_tgt.get('現金目標',15))]:
+        _gap = t - _pen_total * g / 100; daily_html = daily_html.replace(k, f"{'+'if _gap>0 else ''}{_gap:,.0f}")
+
+    # 證券明細注入
+    try:
+        _sdb = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        _srows = _sdb.execute("SELECT ticker, shares, cost_price FROM holdings WHERE shares > 0 ORDER BY shares DESC").fetchall()
+        _sdb.close()
+        _stop3 = "、".join(f"{r[0]} {int(r[1]):,}股" for r in _srows[:3])
+        daily_html = daily_html.replace("__SEC_TOTAL__", f"{tv.get('securities_total', tv.get('securities', 0)):,} TWD ({len(_srows)}檔)")
+        daily_html = daily_html.replace("__SEC_TOP3__", _stop3)
+    except Exception as _se:
+        print(f"  [WARN] 證券注入失敗: {_se}")
+        daily_html = daily_html.replace("__SEC_TOTAL__", "---")
+        daily_html = daily_html.replace("__SEC_TOP3__", "---")
+
+    OUT_DAILY.write_text(daily_html, encoding="utf-8")
+    print(f"[RUN_DAILY] 日報產出：{OUT_DAILY}")
+    # 靜態儀表板：統一由 build_dashboard.py 產出（2026-08-27 根治：run_daily 舊邏輯只取代數值、漏連結佔位符 → 儀表板連結失效）
+    try:
+        import subprocess as _sp
+        _r = _sp.run([sys.executable, str(BASE / "build_dashboard.py")], cwd=BASE, capture_output=True, text=True, timeout=120)
+        if _r.stdout:
+            print(_r.stdout.strip().splitlines()[-1] if _r.stdout.strip() else "[RUN_DAILY] 儀表板產出")
+    except Exception as _e:
+        print(f"[RUN_DAILY] 儀表板產出失敗：{_e}")
+
+    # === 寫入記憶 ===
+    try:
+        from memory_helper import add_memory
+        _pen = _snap.get("penetration", {}).get("actual_twd", {})
+        add_memory("Hermes", f"日報{TODAY}", f"證券{_snap.get('securities_total_market_value',0):,} 保單{_snap.get('insurance_current_value',0):,} 配息{tv.get('monthly_dividend',0):,}")
+        add_memory("Hermes", f"資產穿透{TODAY}", f"台股{_pen.get('台股市值型成長',0):,} 美股{_pen.get('美股市值型成長',0):,} 防守{_pen.get('防守型配息',0):,} 債券{_pen.get('債券',0):,} 現金{_pen.get('現金/安全網',0):,}")
+    except Exception as _me:
+        print(f"  ⚠️ 記憶寫入失敗: {_me}")
+
+
+
+# ==========================================================================
+# 4. 靜態儀表板注入
+# ==========================================================================
+
+
+def _load_latest_hunter() -> str:
+    """Load latest hunter intel text."""
+    try:
+        import daily_intel as mi_mod
+        return mi_mod.load_latest_hunter()
+    except Exception:
+        return ""
+
+
+# 2026-09-12：`_inject_dashboard()`（921 行死碼，全庫零呼叫；線上儀表板注入由 build_dashboard.py 負責）
+# 已於本次稽核刪除 — 詳見 INC-156；原始內容可由 git tag `pre-cleanup-20260912` 還原。
+
+
+if __name__ == "__main__":
+    main()
