@@ -119,7 +119,12 @@ if _dp.exists():
     try:
         _dd = json.loads(_dp.read_text(encoding="utf-8"))
         for _d in _dd:
-            _decision_rows += f'<tr><td>{_d.get("date","")}</td><td>{_d.get("title","")}</td><td>{_d.get("status","")}</td></tr>'
+            # 2026-09-12：pending 條目可帶 "card"（決策卡檔名）→ 第4欄出連結（目標 _blank）
+            _card = str(_d.get("card", "") or "").strip()
+            _card_td = (f'<td><a href="{_card}" target="_blank" style="color:#2563eb;text-decoration:underline">📑 決策卡</a></td>'
+                        if _card else '<td>—</td>')
+            _decision_rows += (f'<tr><td>{_d.get("date","")}</td><td>{_d.get("title","")}</td>'
+                               f'<td>{_d.get("status","")}</td>{_card_td}</tr>')
     except:
         pass
 
@@ -177,7 +182,7 @@ except:
 # 決策追蹤附加至 P0 區塊
 if _decision_rows:
     _p0_html += '\n<p style="margin-top:12px;font-weight:700;color:#3b82f6">📋 執行中決策追蹤</p>'
-    _p0_html += '\n<table style="width:100%;font-size:13px;border-collapse:collapse"><thead><tr style="background:#f0f0f5"><th>日期</th><th>決策</th><th>狀態</th></tr></thead><tbody>'
+    _p0_html += '\n<table style="width:100%;font-size:13px;border-collapse:collapse"><thead><tr style="background:#f0f0f5"><th>日期</th><th>決策</th><th>狀態</th><th>決策卡</th></tr></thead><tbody>'
     _p0_html += _decision_rows
     _p0_html += '\n</tbody></table>'
 
