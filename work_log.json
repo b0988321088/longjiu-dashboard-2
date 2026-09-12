@@ -400,5 +400,11 @@
   "category": "完成",
   "item": "修「差異分析異常」誤報：asset_diff_monitor.py cash_source 字串格式導致 AttributeError",
   "detail": "晚報 22:00 標⚠️差異分析異常（實為腳本 exit 1，非資產異常）。根因：snapshot.cash_source 有兩種格式（update_data.py 寫 dict{date,note}、手動/其他流程寫純字串）→ 讀取端直接 _csrc.get('date') → AttributeError: 'str' object has no attribute 'get'（Moneybook CSV 未匯入 fallback 路徑）。修法：讀取端加型別防禦（str/non-dict → 包成 dict）+ snapshot.cash_source 正規化為 dict{date:2026-09-09,note}。驗證：重跑 asset_diff_monitor.py EXIT=0、報告重生（含銀行明細）、Telegram 200、commit 80f55e46 已推 Pages。附註：9/10~9/12 三日資產數字完全相同（+0）＝上游無新資料（基金淨值日 9/10、Moneybook 最近匯入 9/9），非計算錯誤"
+ },
+ {
+  "date": "2026-09-12",
+  "category": "完成",
+  "item": "保單B 轉換決策卡產出 + 決策登錄（0056:0050=75:25，分批、每站保留站長）",
+  "detail": "使用者：先動保單B（2,669,945）。限制：轉成台股連結基金後失去月配三站接力 → 方案設計為「每站保留一檔月配站長」：批1 安聯收益成長 496,370+健康 239,831=736,201（→0056 552,151／0050 184,050）；批2（1個月後）摩根 30%=181,353；合計 917,554（B 的 34%），保留 66%（摩根 423,158／M&G 164,599／PIMCO 996,604＋黃金 168,030）。效果：台股 7.6→8.5%、美股 57.2→54.7%、防守 4.4→7.1%、債券 23.6→22.6%、美元曝險 54.4→估 50.9%、新增季配估 +5,257/月。已確認保單內有台股連結基金/轉換免費/配息比照ETF。新增 build_policy_transfer_card.py（snapshot 驅動、可重跑）、Notion ⚡執行中、pending 17 筆、dashboard user 20 筆；commit a47572cd 已推 Pages"
  }
 ]
