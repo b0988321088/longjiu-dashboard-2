@@ -783,7 +783,17 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         # 2026-08-31 修正：Moneybook/ 目錄常被 sync_all 清理（含個資）→ 無法靠檔案判斷匯入狀態。
         # 改用 snapshot.cash_source 標記（update_data.py --cash_detail 自動寫）→ 顯示「已匯入」+ 每間銀行明細
         _csrc = snap.get("cash_source", {}) or {}
+        # 2026-09-12：cash_source 有兩種寫法 — update_data.py 寫 dict{"date","note"}，
+        # 但手動/其他流程寫成純字串 → 原碼直接 _csrc.get("date") 會
+        # AttributeError: 'str' object has no attribute 'get' → 腳本 exit 1
+        # → 22:00 晚報誤報「⚠️ 差異分析異常」（實測重現；非資產異常）。
+        if isinstance(_csrc, str):
+            _csrc = {"date": _csrc, "note": _csrc}
+        elif not isinstance(_csrc, dict):
+            _csrc = {}
         _cd = snap.get("cash_detail", {}) or {}
+        if not isinstance(_cd, dict):
+            _cd = {}
         if _csrc.get("date") and _cd:
             # 機構 → 帳戶關鍵字映射（cash_detail 是扁平 {帳戶: 金額}）
             _BANK_MAP = [
