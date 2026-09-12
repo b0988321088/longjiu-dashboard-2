@@ -541,10 +541,18 @@ def main():
             _d_date = str(_d.get("date", ""))[5:].replace("-", "/")
             _d_tt = str(_d.get("title", "") or "")[:44]
             _d_st = str(_d.get("status", "") or "")[:64]
+            # 2026-09-12：pending 條目可帶 "card" 欄位（決策卡檔名）→ 標題變可點連結
+            _d_card = str(_d.get("card", "") or "").strip()
+            if _d_card:
+                _tt_html = (f'<a href="{_d_card}" target="_blank" '
+                            f'class="text-white font-bold flex-1 underline decoration-sky-400/60 '
+                            f'hover:text-sky-300">📑 {_d_tt}</a>')
+            else:
+                _tt_html = f'<span class="text-white font-bold flex-1">{_d_tt}</span>'
             _dt_html.append(
                 f'<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30">'
                 f'<span class="text-amber-400 font-mono font-bold w-14">{_d_date}</span>'
-                f'<span class="text-white font-bold flex-1">{_d_tt}</span>'
+                f'{_tt_html}'
                 f'<span class="text-slate-300 font-mono">{_d_st}</span></div>'
             )
         tpl = tpl.replace("__DECISION_TRACK__", "".join(_dt_html) if _dt_html else '<div class="text-slate-400">無執行中決策</div>')
