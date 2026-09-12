@@ -892,6 +892,38 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     # Gemini 風控嵌入
     _gemini_block = _load_gemini_block()
 
+    # 🕒 資料新鮮度卡（2026-09-12）：各資料源 as-of 與距今天數 —
+    # 讓「數字沒動」一眼看出是上游沒新資料，不是程式壞掉（同日 INC-159/160 的誤解來源）。
+    _fresh_card = ""
+    try:
+        _df = snap.get("data_freshness", {}) or {}
+        _frows = []
+        for _src, _d in _df.items():
+            if _src in ("note", "updated_at"):
+                continue
+            if not _d:
+                _frows.append(f"<tr><td>{_src}</td><td class='num'>待確認</td><td>⚪ 需補 as-of</td></tr>")
+                continue
+            try:
+                _age = (date.today() - date.fromisoformat(str(_d)[:10])).days
+            except Exception:
+                _age = None
+            _lk = "🟢" if (_age is not None and _age <= 1) else ("🟡" if (_age is not None and _age <= 3) else ("🔴" if _age is not None else "⚪"))
+            _frows.append(
+                f"<tr><td>{_src}</td><td class='num'>{_d}</td>"
+                f"<td>{_lk} {str(_age) + ' 天前' if _age is not None else '—'}</td></tr>")
+        if _frows:
+            _fresh_card = (
+                '<div class="card"><h2>🕒 資料新鮮度（各源 as-of）</h2>'
+                '<div class="table-wrap"><table><thead><tr><th>資料源</th><th class="num">資料日期</th><th>距今日</th></tr></thead><tbody>'
+                + "".join(_frows)
+                + "</tbody></table></div>"
+                + (f"<div class='text-sm' style='margin-top:6px'>{_df.get('note','')}</div>" if _df.get("note") else "")
+                + "</div>"
+            )
+    except Exception as _fe:
+        _fresh_card = ""
+
     body = "\n".join([
         f'<div class="card"><h1>📈 資產變化對照 {today}</h1><div class="text-sm">資產監控 / 趨勢 / 巴菲特分析 / Gemini 風控</div></div>',
         f'<div class="card"><h2>📋 資產變化明細（近 7 日）</h2><div class="table-wrap"><table><thead>{table_header}</thead><tbody>',
@@ -902,6 +934,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         fund_card,
         sec_card,
         cash_card,
+        _fresh_card,
 f'<div class="card"><h2>🚨 監控警示</h2><div class="text-sm">{alert_header}</div><ul style="list-style:none;padding:0;">{alerts_html}</ul></div>',
         f'<div class="card"><h2>🧠 在家巴菲特</h2><pre style="font-size:15px;line-height:1.8;white-space:pre-wrap;">{buffett_md}</pre></div>',
         _gemini_block,
