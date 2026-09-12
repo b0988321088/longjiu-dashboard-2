@@ -1552,7 +1552,14 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             try:
                 _dp2 = tv.get("professional_investor", {}).get("deployment_plan", {}) or {}
                 _r8b = tv.get("rhythm08", {}) or {}
-                _us30y_now = (_r8b.get("indicators", {}) or {}).get("us30y") or 0
+                _us30y_now = 0
+                try:
+                    _u3s = json.loads((BASE / "us30y_state.json").read_text(encoding="utf-8"))
+                    _us30y_now = _u3s.get("last_rate") or 0
+                except Exception:
+                    _us30y_now = 0
+                if not _us30y_now:
+                    _us30y_now = (_r8b.get("indicators", {}) or {}).get("us30y") or 0
                 _p1_loan = _dp2.get("total", 12000000) or 12000000
                 _p1_cost_y = _p1_loan * 0.026
                 _p1_cost_m = _p1_cost_y / 12
@@ -1653,7 +1660,11 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 except Exception:
                     _philosophy_items.append(f"現金流覆蓋（常態）{_inc_m:,.0f}/{_exp:,.0f} = {_cov*100:.0f}% {'✅' if _cov >= 1.0 else '🔴'}")
                 _usd_ex = tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
-                _philosophy_items.append(f"美元曝險 {_usd_ex:.1f}%（≤50% {'✅' if _usd_ex <= 50 else '🟡' if _usd_ex <= 55 else '🔴'}）")
+                # 2026-09-12：上限改讀 snapshot（裁示②：50%→60%），原寫死 50/55 會誤標紅燈
+                _usd_cap = float((_snap_now.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)
+                _philosophy_items.append(
+                    f"美元曝險 {_usd_ex:.1f}%（≤{_usd_cap:.0f}% "
+                    f"{'✅' if _usd_ex <= _usd_cap else '🟡' if _usd_ex <= _usd_cap + 5 else '🔴'}）")
                 _cash_now = tv.get("cash_total") or 0
                 _philosophy_items.append(f"現金底線 {_cash_now:,.0f}（≥700,000 {'✅' if _cash_now >= 700000 else '🔴'}）")
                 _philosophy_items.append("利差 2.6%→4.8-6% ✅" if (_us30y_now or 0) < 5.50 else "利差 ⚠️")
@@ -1691,9 +1702,20 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             _ind = _r8.get("indicators", {}) or {}
             _th = _r8.get("thresholds", {}) or {}
             _tgt = _r8.get("targets", {}) or {}
-            _us30y = _ind.get("us30y") or 0
-            _us_pct = _ind.get("us_equity_actual_pct") or 0
-            _tw_pct = _ind.get("tw_equity_actual_pct") or 0
+            # 2026-09-12：改用「即時/最新」來源（原讀 snapshot.rhythm08 舊指標：us30y 停在 9/10、
+            # 美股實際占比 34%(舊 SAA)、台股 11.3%，與現行穿透口徑不符 → 使用者反映「監控卡沒更新」）
+            try:
+                _u3 = json.loads((BASE / "us30y_state.json").read_text(encoding="utf-8"))
+                _us30y = _u3.get("last_rate") or _ind.get("us30y") or 0
+            except Exception:
+                _us30y = _ind.get("us30y") or 0
+            _pn = (tv.get("penetration", {}) or {})
+            _pa = _pn.get("actual_pct", {}) or {}
+            _pt = _pn.get("targets", {}) or {}
+            _us_pct = _pa.get("美股市值型成長") or _ind.get("us_equity_actual_pct") or 0
+            _tw_pct = _pa.get("台股市值型成長") or _ind.get("tw_equity_actual_pct") or 0
+            _us_tgt = _pt.get("美股市值型目標") or 30
+            _tw_tgt = _pt.get("台股市值型目標") or 15
             _hi_debt = _ind.get("high_interest_debt_exists", False)
             _long_bond_pct = _ind.get("long_bond_share_of_bonds_pct") or 0
             _slogan = _r8.get("slogan", "歷史不會重演，但總會押韻；不恐慌殺盤，但要提前收斂風險曝險，握好現金彈藥。")
@@ -1713,12 +1735,12 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _lights.append(("🔴 紅燈", f"30Y美債 {_us30y}% ≥ 5.30% — 全域凍結紅線（8/12 裁決）：禁止新增質押；已質押者停止新增質押＋逐步降LTV"))
             elif _us30y >= _th.get("us30y_yellow", 5.20):
                 _lights.append(("🟡 黃燈", f"30Y美債 {_us30y}% ≥ {_th.get('us30y_yellow')}% — 警戒區：台股建倉≤50萬/週、美股停止新增、不新增長債疊債、停泊不疊槓"))
-            # 10. 美股占比
-            if _us_pct > _th.get("us_equity_overweight_yellow", 32):
-                _lights.append(("🟡 黃燈", f"美股實際占比 {_us_pct}% > {_th.get('us_equity_overweight_yellow')}% — 再平衡回落至30%目標"))
-            # 11. 台股占比（目標 15%）
-            if _tw_pct > _th.get("tw_equity_overweight_yellow", 17):
-                _lights.append(("🟡 黃燈", f"台股實際占比 {_tw_pct}% > {_th.get('tw_equity_overweight_yellow')}% — 不建議加碼台股，資金優先給債券、現金"))
+            # 10. 美股占比（目標＝穿透目標）
+            if _us_pct > _us_tgt + 5:
+                _lights.append(("🟡 黃燈", f"美股實際占比 {_us_pct}% > 目標 {_us_tgt}%（超配 {_us_pct-_us_tgt:+.1f}pp）— 逢彈減碼回落至目標"))
+            # 11. 台股占比（目標＝穿透目標）
+            if _tw_pct > _tw_tgt + 5:
+                _lights.append(("🟡 黃燈", f"台股實際占比 {_tw_pct}% > 目標 {_tw_tgt}%（超配 {_tw_pct-_tw_tgt:+.1f}pp）— 不建議加碼台股"))
             if not _lights:
                 _lights.append(("🟢 綠燈", "主要指標安全 — 維持現行配置（持續監控 14 條規則）"))
             _r8_html = (
@@ -1726,7 +1748,11 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 "<h3>🎵 Rhythm-08 韻律零八｜估值利率風險監控（最終版）</h3>"
                 "<div style='font-size:12.5px;line-height:1.8'>"
                 + "".join(f"<div>{_l[0]} {_l[1]}</div>" for _l in _lights)
-                + "<div style='margin-top:4px;font-size:11px;color:#6b7280'>台股目標 15%｜美股上限 30%｜長債佔債券 ≤40%｜現金 15%｜優先序：負債＞利率＞估值＞集中度＞個別上限</div>"
+                + (f"<div style='margin-top:4px;font-size:11px;color:#6b7280'>"
+                   f"台股目標 {_tw_tgt}%｜美股目標 {_us_tgt}%｜防守 {_pt.get('配息型目標', 20)}%｜"
+                   f"債券 {_pt.get('債券型目標', 25)}%｜現金 {_pt.get('現金目標', 5)}%｜"
+                   f"科技 ≤{_pt.get('科技曝險目標', 20)}%｜長債佔債券 ≤40%｜"
+                   f"優先序：負債＞利率＞估值＞集中度＞個別上限</div>")
                 + f"<div style='margin-top:6px;font-style:italic;color:#6b7280'>「{_slogan}」</div>"
                 f"<div style='font-size:11px;color:#9ca3af'>本模組僅產生警示與建議，不自動下單｜資訊僅供參考，不構成投資建議</div>"
                 f"</div></div>"
