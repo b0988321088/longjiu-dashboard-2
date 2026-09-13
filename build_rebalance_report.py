@@ -158,38 +158,15 @@ def main():
             _pol_items.append(f"<li><b>{_k}</b>：{_v[:50]}</li>")
     _pol_html = "".join(_pol_items) if _pol_items else "<li>無重大政策變動</li>"
     # 本週投資計劃（結論引擎，與雷達一致）
-    _pen3 = apct
-    _dry3 = snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
-    _usd3 = snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
-    _hs3 = snap.get("hedge_satellite", {}) or {}
-    _rot3 = ((snap.get("rotation_recommendation", {}) or {}).get("建議") or [{}])[0]
-    _def3 = snap.get("defensive_combined_metric", {}).get("佔比", 69.2)
-    _tw3 = _pen3.get("台股市值型成長", 7.5); _us3 = _pen3.get("美股市值型成長", 43.4)
-    _plan_items = []
-    _plan_items.append(f"🟢 台股（{_tw3:.1f}% vs 目標10%，缺口 {_tw3-10:+.1f}pp）→ 0050/006208 每週1.5-2萬慢慢買（外資連3買+台幣強升）")
-    if _us3 > 45:
-        _plan_items.append(f"🔴 美股（{_us3:.1f}% vs 目標40%，超配 {_us3-40:+.1f}pp）→ 逢彈減碼 ≤20萬/次")
-    else:
-        _plan_items.append(f"⏸️ 美股（{_us3:.1f}% vs 目標40%）超配 {_us3-40:+.1f}pp 未達減碼觸發（>45%）→ 續持")
-    _plan_items.append(f"⏸️ 防守（合併口徑 {_def3:.1f}% 已足）→ 凍結不追（00878/00713 不加碼）")
-    _plan_items.append("⏸️ 債券 23.1% 接近目標25% → 等 US30Y<5.30% 才新增（華許升息1碼估 -0.5~-1.5%）")
-    if _rot3.get("產業"):
-        _plan_items.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry3/10000:.1f}萬 優先「{_rot3.get('產業','—')}」（{_rot3.get('動作','')}）")
-    else:
-        _plan_items.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry3/10000:.1f}萬 保留（9/5 Gate：CPI/FOMC 前零新增）")
-    if _hs3.get("黃金延後_0829"):
-        _plan_items.append("⏸️ 避險衛星：黃金A10 32萬 8/30 生效（保單內）；00635U ~105萬 延後（華許放鷹+金價偏高）→ 等回檔")
-    else:
-        _plan_items.append(f"🟢 避險衛星：黃金現況 {_hs3.get('黃金現況',0):,} → PI 後 00635U 分批 ≤20萬/次")
-    if _usd3 > 55:
-        _plan_items.append(f"🔴 美元曝險 {_usd3}% 超標（>55%）→ 美股減碼/美元定存到期轉台幣")
-    else:
-        _plan_items.append(f"🟡 美元曝險 {_usd3}% （目標≤60%）→ 未達減碼閾值，續觀察")
-    _plan_items.append(_pf.pledge_status_line())
-    if _rot3.get("產業"):
-        _plan_items.append(f"📊 產業輪動：買「{_rot3.get('產業','—')}」（{_rot3.get('標的','')}）｜避開「公用事業」")
-    else:
-        _plan_items.append("📊 產業輪動：無新增建議（醫療已涵蓋；其餘資金流出）→ 乾粉保留等 Gate")
+    # 本週投資計劃（2026-09-13 INC-163：單一來源 = radar_state.weekly_plan.rows，禁止貼死字串）
+    try:
+        _wp3 = json.loads((__import__("pathlib").Path(REPO) / "radar_state.json").read_text(encoding="utf-8")).get("weekly_plan", {}) or {}
+        _wp3_rows = [r for r in (_wp3.get("rows") or []) if r.get("內容")]
+        if not _wp3_rows:
+            raise ValueError("radar_state.weekly_plan.rows 為空（請先跑 institutional_flow.py）")
+        _plan_items = [f"{r.get('動作','')} <b>{r.get('類別','')}</b>：{r.get('內容','')}" for r in _wp3_rows]
+    except Exception as _e_wp:
+        _plan_items = [f"⚠️ 本週投資計劃讀取失敗：{_e_wp}"]
     _plan_html = "".join(f"<li>{p}</li>" for p in _plan_items)
     _radar_block = f"""
   <h2>📡 機構流向雷達（{radar.get('last_run','—')[:10]}）</h2>

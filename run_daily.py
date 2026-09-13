@@ -608,7 +608,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   <p style="margin:4px 0">💵 <b>收入引擎 {_inc.get('佔比',0)}%</b>（{_inc.get('公式','')}｜現金流覆蓋）＝ 全配息資產 + 房租 80,100/月</p>
   <p style="font-size:11px;color:#94a3b8;margin:4px 0">核心：配息≠防守，兩維度分離計算、獨立風控；{_df.get('備註','')}</p>
   <p style="margin:8px 0 2px 0">🎯 <b>四大市場情境（當前：區間震盪）：</b>多頭 防禦≥40/收入≥60/LTV≤55 ｜ <b>震盪 防禦≥50/收入≥65/LTV≤52</b> ｜ 股債雙殺 防禦≥55/收入≥70/LTV≤50 ｜ 熊市 防禦≥60/收入≥70/LTV≤48</p>
-  <p style="font-size:12px;margin:4px 0">✅ 現況驗證：防禦 53.8% ≥50 ✅ ｜ 收入 69.5% ≥65 ✅ ｜ LTV 50% ≤52 ✅ — 完全符合高風險震盪市場最高規格</p>
+  <p style="font-size:12px;margin:4px 0">📐 現況對照（震盪標準 防禦≥50／收入≥65）：防禦 {_df.get('佔比',0):.1f}% {'✅' if _df.get('佔比',0)>=50 else '⚠️ 未達'} ｜ 收入 {_inc.get('佔比',0):.1f}% {'✅' if _inc.get('佔比',0)>=65 else '⚠️ 未達'}｜LTV 見第八章風險紅線（動態）</p>
 </div>"""
     except Exception:
         _dual_dim = ""
