@@ -436,5 +436,11 @@
   "category": "完成",
   "item": "省錢分流方案 E：每日 AI 成本帳上線（no_agent，cron 0aa33e190bae 22:30）",
   "detail": "新增 daily_token_account.py（longjiu_system + hermes/scripts 兩份，零 API）：讀 logs/agent.log(+.1) 今日 API call 行 → 每模型 in/cached/out 與 NT$ 估價（DS 尖峰×2、快取價 $0.007/M；Gemini 無尖離峰）＋ cron/usage_audit.jsonl 今日 fires（ts 為 UTC，+8h 換台北日）＋ cost_log.csv 算 DS 餘額與剩餘天數。輸出：各模型金額、DS/Gemini 分帳與 Gemini 佔比（目標 <30%）、cron 佔比與耗最多 job（上界）、DS 餘額。實測今日：DS NT$23.6／Gemini NT$42.2（佔 64%）／合計 NT$65.8，cron 2 fires ≈NT$8.4，DS 餘額 17.72 CNY 約剩 2.1 天 — 建立分流後可對比的基線。技能 screenshot-update-sop 日排程表、ai-api-cost-monitoring 方案表/費率、error_register INC-158 已同步。至此省錢分流 A/B/C/D/E 五項全部落地"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "完成",
+  "item": "INC-159 P0 三修：預算資料源、radar 提交範圍、每週 DB 保養路徑",
+  "detail": "使用者核准 P0-1/2/3。(1) budget_daily_check._latest() 改跨目錄＋檔名日期取最新 → 修掉台新 P1 假警報（資料日 7/27→9/02；台新 -35.2%✅、玉山 +5.7%✅、四卡循環 25,494→15,793 即 -58.4%；僅永豐 P2 帳單 16,613）；commit 1e004407 已推。(2) radar_push.py 由 git add -A 改白名單（radar_state.json / radar_report_{TODAY}.html / index.html）+ add 失敗即 return → 髒檔誘餌驗證：新 commit 97884836 只含雷達兩檔，BUDGET 報告等髒檔未被掃入；並確認 9/13 被掃的 582 檔皆為單日 LLM 快取、對報告指標零影響（唯一成本風險是當日快取被刪）。備份 radar_push.py.bak-20260913。(3) weekly_db_maintenance.sh 用 cygpath -m 取原生路徑＋找不到即 exit 1 → 手跑 SH_RC=0、log 見 done、備份輪替釋放 3,061MB（原 05:00 失敗為 MSYS 路徑被轉成「多一層 c」的 Windows 形式）。文檔：error_register INC-159、技能 cron-git-commit-scope / hermes-cron-windows-debug / hermes-storage-maintenance 已同步。待辦：P1-4 snapshot 卡片口徑比對、P1-5 快取防護規則、P2 卡片欄位同步（需核准）"
  }
 ]
