@@ -453,12 +453,12 @@
   "date": "2026-09-13",
   "category": "完成",
   "item": "INC-160 負債口徑單一真值化（P2）：卡片/負債/淨值改由明細推導，修掉 6 個不一致數字與 78,099 殘差",
-  "detail": "使用者裁示「用最新資料就好」＋「沒有循環利息、每月全額自動扣繳」。根因：total_liabilities/net_worth/cc_liability 全系統無計算來源（純手寫）→ 同時存在 66,999/66,699/28,101/32,502/71,799 五個卡片數字，總負債含 78,099 不明殘差。修法：新增 asset_sync.rebuild_liabilities()（冪等）由明細推導 cc_liability=credit_card 負值合計、total_liabilities=房貸(含國泰 25,082,544)+保單借貸 4,000,000+質押 1,000,000+卡 34,025、net_worth、負債率雙軌，並寫 liabilities_build_up 對帳明細；update_data.py 每次更新自動重建＋同步 DB assets/liabilities 兩表；CLI python asset_sync.py --rebuild-liabilities。口徑：預算報告去「循環」、警示基準改帳單金額 vs 月預算；Moneybook 匯出改跨目錄取檔名日期最新（修台新假 P1）。結果：pending/cc_liability 34,025、total_liabilities 30,116,569（明細可完全解釋）、net_worth -4,319,011（最終值，含女友借款剩餘本金 288,000；屬帳務口徑修正非市場變動）、負債率 50.6%/流動 116.6%；snapshot=DB=日報 HTML 一致、差異分析更新、CIO 審查通過、四連結 200。女友借款已核可計入（見同日第 77 筆）。技能 financial-report-calibration 新增「信用卡口徑與負債模型」節、assessment 文件補『已套用』章"
+  "detail": "使用者裁示「用最新資料就好」＋「沒有循環利息、每月全額自動扣繳」。根因：total_liabilities/net_worth/cc_liability 全系統無計算來源（純手寫）→ 同時存在 66,999/66,699/28,101/32,502/71,799 五個卡片數字，總負債含 78,099 不明殘差。修法：新增 asset_sync.rebuild_liabilities()（冪等）由明細推導 cc_liability=credit_card 負值合計、total_liabilities=房貸(含國泰 25,082,544)+保單借貸 4,000,000+質押 1,000,000+卡 34,025、net_worth、負債率雙軌，並寫 liabilities_build_up 對帳明細；update_data.py 每次更新自動重建＋同步 DB assets/liabilities 兩表；CLI python asset_sync.py --rebuild-liabilities。口徑：預算報告去「循環」、警示基準改帳單金額 vs 月預算；Moneybook 匯出改跨目錄取檔名日期最新（修台新假 P1）。結果：pending/cc_liability 34,025、total_liabilities 30,116,569（明細可完全解釋）、net_worth 待定（見第 78 筆方向修正）；snapshot=DB=日報 HTML 一致、差異分析更新、CIO 審查通過、四連結 200。女友借款已核可計入（見同日第 77 筆）。技能 financial-report-calibration 新增「信用卡口徑與負債模型」節、assessment 文件補『已套用』章"
  },
  {
   "date": "2026-09-13",
   "category": "完成",
-  "item": "INC-161 快取防護（耐久鏡像 + 每日稽核）＋ INC-160 追加：女友借款改列剩餘本金 288,000（計入總負債）",
+  "item": "INC-161 快取防護（耐久鏡像 + 每日稽核）＋ INC-160 追加：女友借款改列剩餘本金 288,000（（原誤列總負債，見第 78 筆修正））",
   "detail": "依使用者核准順序 2a→1→2b。2a：_llm_cached 同日同腳本快取沿用改預設 + 新增 cache/llm_archive/ 耐久鏡像（在 data/ 之外）→ 模擬 582 整批刪除情境實測仍 0 成本（四情境：首次1次API／精確命中0次／刪 data 後鏡像沿用0次／雙刪才重呼叫）。1：女友借款（實為「借出款」）以剩餘本金追蹤 → personal_loan_remaining()＝金額−月還款×已還期數（7/25起、每月5號6,000、最後清償12/5）→ 9/13 剩 288,000，實測 11/30=276,000、12/5=0。（同日稍後修正：此款為應收款非負債，見第 78 筆）；CLI --rebuild-liabilities 加 DB 同步（assets.total_liabilities＋liabilities 表，寫執行日列、歷史列不動，已還原誤覆蓋的 9/12 列）。2b：closing_log.cache_audit() 每日 21:40 記錄 data/ 快取清單並與前次比對，有刪除才告警（含當日快取紅旗），三情境實測通過（首跑建基準無告警／刪檔後正確列出）。文件：error_register INC-160/161、技能 financial-report-calibration＋hermes-storage-maintenance"
  },
  {
