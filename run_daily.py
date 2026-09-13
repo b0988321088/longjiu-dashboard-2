@@ -2008,6 +2008,21 @@ def main():
         print(f"[WARN] schedule_events.json: {_pe}")
 
     # 日報
+    # 從 daily_intel_report_{TODAY}.json 讀取市場情報
+    intel_report_path = BASE / f"daily_intel_report_{TODAY}.json"
+    if intel_report_path.exists():
+        try:
+            _intel_report = json.loads(intel_report_path.read_text(encoding="utf-8"))
+            market_intel_text = _intel_report.get("briefing", "")
+            intel_signals = _intel_report.get("signals", {})
+        except Exception as _e:
+            print(f"[WARN] daily_intel_report.json 解析失敗: {_e}")
+            market_intel_text = "市場情報載入失敗"
+            intel_signals = {}
+    else:
+        market_intel_text = "市場情報待補齊"
+        intel_signals = {}
+
     # LLM 緊急應變分析
     emergency_json_path = BASE / "data" / "emergency_llm_analysis.json"
     llm_emergency_analysis_html = ""
@@ -2019,7 +2034,6 @@ def main():
             _gen2 = emergency_data.get("generated_at", "") or ""
             _note2 = f'<p style="font-size:12px;color:#6e6e73;margin-bottom:6px">📅 緊急應變資料：{_gen2[:16]}（美股時段產出，最新可用；今晚 21:30 自動更新）</p>' if _gen2 else ""
             _report_html = _note2 + _report_html
-            # 從現有檔案找最新緊急應變報告（glob，不寫死日期，避免 404）
             _er_files = sorted(BASE.glob("emergency_report_2*.html"), reverse=True)
             _er_link = ""
             if _er_files:
@@ -2036,7 +2050,7 @@ def main():
         except Exception as _exc:
             print(f"[WARN] load emergency_llm_analysis.json failed: {_exc}")
 
-    daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text, mb_cc_rows=_mb_cc_rows, llm_emergency_analysis=llm_emergency_analysis_html, schedule_rows_html=_schedule_rows, p0_tasks_html=_p0_html)
+    daily_html = render_daily_report(tv, intel_text=market_intel_text, intel_signals=intel_signals, llm_emergency_analysis=llm_emergency_analysis_html, schedule_rows_html=_schedule_rows, p0_tasks_html=_p0_html)
     daily_html = _inject_market_intel(daily_html, tv, intel_signals, llm_emergency_analysis_html)
 
     # 注入戰略穿透值到日報

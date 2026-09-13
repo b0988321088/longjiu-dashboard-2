@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
 龍九控股 日報情報補給
 - 優先使用 Yahoo Finance API 抓取即時市場數據
-- 備援使用 web_search
-- 產出 hunter_logs/intel_YYYYMMDD_HHMM.txt
 - 產出 daily_analysis.json（結構化分析）
+- 產出 daily_intel_report_YYYYMMDD.json（統一情報來源）
 - 供日報讀取
 """
 from __future__ import annotations
@@ -14,14 +13,15 @@ import os
 import re
 from datetime import date, datetime
 from pathlib import Path
+
 try:
     import feedparser
     _FEEDPARSER_OK = True
 except Exception:
-    feedparser = None
+    feedparser = None  # type: ignore[assignment]
     _FEEDPARSER_OK = False
-from logging_config import get_logger
 
+from logging_config import get_logger
 logger = get_logger(__name__)
 
 try:
@@ -37,18 +37,13 @@ except Exception:
     _REQUESTS_OK = False
 
 BASE = Path(__file__).parent.resolve()
-HUNTER_DIR = BASE / "hunter_logs"
-
-def ensure_dir() -> None:
-    HUNTER_DIR.mkdir(exist_ok=True)
-
-def _now_ts() -> str:
-    return datetime.now().strftime("%H%M")
 
 def _today_str() -> str:
     return date.today().isoformat().replace("-", "")
 
+# ===== Yahoo Finance API =====
 _YF_HEADERS = {"User-Agent": "Mozilla/5.0"}
+
 _YF_SYMBOLS = {
     "twii": "^TWII",
     "tsm": "2330.TW",
@@ -70,11 +65,13 @@ def _yf_chart(symbol: str, timeout: int = 8) -> dict:
         closes = [c for c in (res.get("indicators", {}).get("quote", [{}])[0].get("close") or []) if c is not None]
         ts = res.get("timestamp") or []
         price = meta.get("regularMarketPrice")
+        
         if price is None or len(closes) < 2:
             price = meta.get("chartPreviousClose") or 0.0
             prev = closes[-1] if closes else 0.0
             pct = round((price - prev) / prev * 100, 2) if prev else 0.0
             return {"price": price, "prev": prev, "change_pct": pct}
+        
         import datetime as _dt
         _last_day = _dt.datetime.utcfromtimestamp(ts[-1]).strftime("%Y-%m-%d") if ts else ""
         _today = _dt.datetime.utcnow().strftime("%Y-%m-%d")
@@ -116,6 +113,7 @@ def fetch_yf_market() -> dict:
         "cpi": "美國 7 月 CPI YoY 3.5% (FRED 8/13)；Core 2.8% (FRED 8/13)",
     }
 
+# ===== News fetching with RSS feeds =====
 def _fetch_news(queries: list[str], limit: int = 3) -> list[dict]:
     RSS_FEEDS = {
         "cnyes": "https://tw.stock.yahoo.com/rss",
@@ -145,6 +143,7 @@ def _fetch_news(queries: list[str], limit: int = 3) -> list[dict]:
             continue
     return results
 
+# ===== Signal classification =====
 def classify_from_yf(market: dict) -> dict:
     sell, buy = [], []
     for key, val in market.items():
@@ -157,8 +156,8 @@ def classify_from_yf(market: dict) -> dict:
         if key == "twii" and pct <= -1.5: sell.append(f"台股加權大跌 {pct}%")
         if key == "sox" and pct <= -2.0: sell.append(f"費半跌 {pct}%")
         if key == "tsm" and pct <= -2.0: sell.append(f"台積電大跌 {pct}%")
-        if key == "twii" and pct >= 1.0: sell.append(f"台股大漲 {pct}%")
-        if key == "sox" and pct >= 3.0: sell.append(f"費半大漲 {pct}%")
+        if key == "twii" and pct >= 1.0: buy.append(f"台股大漲 {pct}%")
+        if key == "sox" and pct >= 3.0: buy.append(f"費半大漲 {pct}%")
     return {"sell_signals": sell[:5], "buy_signals": buy[:5]}
 
 def classify(text: str) -> dict:
@@ -172,21 +171,12 @@ def classify(text: str) -> dict:
             buy.append(line.strip())
     return {"sell_signals": sell[:5], "buy_signals": buy[:5]}
 
-def render_intel_text(intel_text: str, signals: dict) -> str:
-    today = date.today().isoformat()
-    now = datetime.now().strftime("%H%M")
-    lines = ["情報timestamp：" + today, "=" * 60, "【P1 賣出訊號】"]
-    lines.append("\n".join(f"{i}. {s}" for i, s in enumerate(signals["sell_signals"], 1)) if signals["sell_signals"] else "（無）")
-    lines.append("【P1 買進訊號】")
-    lines.append("\n".join(f"{i}. {s}" for i, s in enumerate(signals["buy_signals"], 1)) if signals["buy_signals"] else "（無）")
-    return "\n".join(lines)
-
 def build_analysis(intel_text: str, signals: dict, market_override: dict | None = None) -> dict:
-    today = date.today().isoformat().replace("-", "")
+    today = _today_str()
     market = market_override if market_override else fetch_yf_market()
     twii_pct, tsm_pct, sox_pct = None, None, None
     def pct(text):
-        m = re.search(r"\(([+-]?[0-9.]+)%\)", str(text))
+        m = re.search(r"\(([+-]?\d+\.\d+)%\)", str(text))
         return float(m.group(1)) if m else None
     twii_pct, tsm_pct, sox_pct = pct(market.get("twii","")), pct(market.get("tsm","")), pct(market.get("sox",""))
     
@@ -217,8 +207,10 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
     return {"date": today, "generated_at": datetime.now().isoformat(), "market": market, "buffett": buffett, "cto": cto, "signals": signals, "news": news, "scenario_summary": scenario_summary, "briefing": briefing}
 
 def ensure_today_intel(force_refresh: bool = False) -> dict:
-    ensure_dir()
+    # today = _today_str() # already defined in build_analysis
+    # ensure_dir() # not needed as we don't write to hunter_logs anymore
     today = _today_str()
+
     market = fetch_yf_market()
     signals = classify_from_yf(market)
     
@@ -238,9 +230,7 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
     return {"briefing_text": analysis["briefing"]}
 
 def load_latest_hunter() -> str:
-    ensure_dir()
-    files = sorted(HUNTER_DIR.glob("intel_*.txt"), key=os.path.getmtime, reverse=True)
-    return files[0].read_text(encoding="utf-8") if files else ""
+    return "" # hunter_logs not used anymore
 
 def load_daily_analysis() -> dict:
     path = BASE / "daily_analysis.json"
