@@ -121,6 +121,41 @@ def scan_cron_audit(today: str):
     return fires, total, per_job
 
 
+def scan_failures(today: str):
+    """今日 DS 內容風控（CER）與 Gemini 429 次數（去重：session+秒+attempt），
+    用於追蹤「DS 被擋 → Gemini 代答」造成的成本外溢（INC-172/174）。"""
+    import re
+    pat = re.compile(
+        r"^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}),\d+ WARNING \[([^\]]+)\] "
+        r"agent\.conversation_loop: API call failed \(attempt (\d)/\d\) error_type=\S+ .*?"
+        r"provider=(\S+) .*?model=(\S+) summary=(.*)$")
+    seen = set()
+    cer = q429 = 0
+    for name in ("errors.log", "errors.log.1", "agent.log", "agent.log.1"):
+        p = HERMES / "logs" / name
+        if not p.exists():
+            continue
+        try:
+            for line in p.open(encoding="utf-8", errors="ignore"):
+                if today not in line[:12] or "API call failed" not in line:
+                    continue
+                m = pat.match(line)
+                if not m:
+                    continue
+                key = (m.group(3), m.group(2), m.group(4), m.group(5), m.group(6))
+                if key in seen:
+                    continue
+                seen.add(key)
+                s = m.group(7)
+                if "Content Exists Risk" in s:
+                    cer += 1
+                elif "429" in s or "RESOURCE_EXHAUSTED" in s:
+                    q429 += 1
+        except Exception:
+            pass
+    return cer, q429
+
+
 def job_names() -> dict:
     p = CRON_DIR / "jobs.json"
     try:
@@ -223,6 +258,9 @@ def main() -> None:
 
         t = "、".join(f"{short(k)} {tok_fmt(v)}" for k, v in top)
         lines.append(f"・其中 cron {fires} 次 fire ≈ NT${cron_usd*USD_TWD:.1f}（估上界，未計快取）｜最多：{t}")
+    cer, q429 = scan_failures(today)
+    lines.append(f"・失敗：DS 內容風控(CER) {cer} 次、Gemini 429 {q429} 次"
+                 + ("（CER → Gemini 代答＝成本外溢主因）" if cer else ""))
     bal = ds_balance_line()
     if bal:
         lines.append("・" + bal)
