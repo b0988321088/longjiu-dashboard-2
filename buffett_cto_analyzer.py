@@ -201,20 +201,44 @@ def _llm_cached(name: str, prompt: str, system: str, max_tokens: int = 450) -> s
             return json.loads(_cf.read_text(encoding="utf-8")).get("out")
         except Exception:
             pass
-    # 開發模式：snapshot 未變 + 當天已有同類快取 → 沿用，不呼叫 API
-    if os.environ.get("HERMES_DEV_MODE") == "1":
-        _same = sorted((BASE / "data").glob(f"{name}_{TODAY}_{_fp}_*.json"))
-        if _same:
-            try:
-                return json.loads(_same[-1].read_text(encoding="utf-8")).get("out")
-            except Exception:
-                pass
+    # 2026-09-13 INC-159 2a：同日同數據沿用 → 預設啟用（原僅 HERMES_DEV_MODE=1）
+    # 讓「當日快取被誤刪」（一天內曾刪 582 檔，含當日 2 檔）不再造成重複付費。
+    # 安全條件：只沿用「同一腳本哈希」的快取（＝同樣的 prompt 組法），避免改了程式
+    # 還吃舊答案；數據指紋 _fp 相同才沿用（snapshot 未變）。
+    _cands = sorted((BASE / "data").glob(f"{name}_{TODAY}_{_fp}_{_script_hash}_*.json"))
+    for _pick in reversed(_cands):
+        try:
+            _cached = json.loads(_pick.read_text(encoding="utf-8")).get("out")
+            if _cached:
+                print(f"♻️ 同日快取沿用（{_pick.name}）— 未重複呼叫 API")
+                return _cached
+        except Exception:
+            pass
+    # 2026-09-13 INC-159 2a②：耐久鏡像（cache/llm_archive/，不在 data/ 內）
+    # 上面兩層都在 data/ → 若當日檔被整批刪除（9/13 曾刪 582 檔，含當日 2 檔）就救不回。
+    # 鏡像寫在 data/ 之外，任何只掃 data/ 的清理都不會動到 → 同日重跑 0 成本。
+    _mir = BASE / "cache" / "llm_archive"
+    for _pick in [ _mir / _cf.name ] + sorted(_mir.glob(f"{name}_{TODAY}_{_fp}_{_script_hash}_*.json")):
+        try:
+            if _pick.exists():
+                _cached = json.loads(_pick.read_text(encoding="utf-8")).get("out")
+                if _cached:
+                    print(f"♻️ 快取鏡像沿用（{_pick.name}）— 未重複呼叫 API")
+                    return _cached
+        except Exception:
+            pass
     from llm_analysis import ask_llm
     _out = ask_llm(prompt, system=system, max_tokens=max_tokens)
     if _out:
         (BASE / "data").mkdir(exist_ok=True)
-        print(f"DEBUG: Attempting to write cache to: {_cf}") # DEBUG: Add print statement
         _cf.write_text(json.dumps({"out": _out}, ensure_ascii=False), encoding="utf-8")
+        try:
+            (BASE / "cache").mkdir(exist_ok=True)
+            _mir.mkdir(exist_ok=True)
+            (_mir / _cf.name).write_text(
+                json.dumps({"out": _out}, ensure_ascii=False), encoding="utf-8")
+        except Exception:
+            pass
     return _out
 
 

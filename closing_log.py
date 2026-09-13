@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -28,6 +29,59 @@ PENDING = BASE / "pending_decisions.json"
 DONE_MARKERS = ("完成", "completed", "✅", "done")
 TODO_MARKERS = ("待辦",)
 DEDUP_CHARS = 25
+
+# ── 快取增刪稽核（2026-09-13 INC-159 2b）────────────────────────
+# 背景：一天內有 582 檔 data/ 快取被刪（含 2 檔當日），來源無法定位（已排除所有既有腳本）。
+# 不做常駐 watch，改為每天 21:40 記錄一次「檔案清單」，隔天一比就能知道哪天被刪、刪了什麼。
+DATA_DIR = BASE / "data"
+CACHE_AUDIT_STATE = DATA_DIR / ".cache_audit_state.json"
+CACHE_AUDIT_LOG = DATA_DIR / ".cache_audit.log"
+CACHE_NAME_RE = re.compile(r"_(\d{4}-\d{2}-\d{2})_")
+
+
+def _cache_list() -> list[str]:
+    if not DATA_DIR.exists():
+        return []
+    return sorted(p.name for p in DATA_DIR.iterdir()
+                  if p.is_file() and CACHE_NAME_RE.search(p.name))
+
+
+def cache_audit() -> None:
+    """記錄今日快取清單 + 與上次比對（刪除即告警）。"""
+    cur = _cache_list()
+    prev: list[str] = []
+    if CACHE_AUDIT_STATE.exists():
+        try:
+            prev = json.loads(CACHE_AUDIT_STATE.read_text(encoding="utf-8")).get("files", []) or []
+        except Exception:
+            prev = []
+    today = dt.date.today().isoformat()
+    removed = sorted(set(prev) - set(cur))
+    added = sorted(set(cur) - set(prev))
+    n_today = sum(1 for f in cur if f"_{today}_" in f)
+    try:
+        with CACHE_AUDIT_LOG.open("a", encoding="utf-8") as fh:
+            fh.write(f"{dt.datetime.now():%Y-%m-%d %H:%M} total={len(cur)} today={n_today} "
+                     f"removed={len(removed)} added={len(added)}\n")
+            for r in removed:
+                fh.write(f"    - {r}\n")
+        CACHE_AUDIT_STATE.write_text(
+            json.dumps({"ts": dt.datetime.now().isoformat(timespec="seconds"),
+                        "files": cur}, ensure_ascii=False), encoding="utf-8")
+    except Exception as e:
+        print(f"⚠️ 快取稽核寫入失敗：{e}")
+        return
+    if not prev:
+        return  # 首次建立基準，不告警
+    if removed:
+        same_day = [r for r in removed if f"_{today}_" in r]
+        msg = (f"⚠️ [快取稽核] data/ 偵測到 {len(removed)} 個快取檔被刪"
+               f"（總數 {len(prev)}→{len(cur)}）")
+        if same_day:
+            msg += f"\n  🚨 含**當日**快取 {len(same_day)} 個（會造成同日重算）：" + "、".join(same_day[:5])
+        msg += "\n  刪除清單（前 10）：" + "、".join(removed[:10])
+        msg += "\n  （規則：禁刪 `_{TODAY}_` 當日快取；完整記錄見 data/.cache_audit.log）"
+        print(msg)
 
 
 def norm_status(s) -> str:
@@ -84,6 +138,7 @@ def collect_today() -> list[dict]:
 
 
 def main() -> None:
+    cache_audit()   # 2026-09-13 INC-159 2b：先做快取增刪稽核（每日一行，異常才輸出）
     if not WORKLOG.exists():
         print("⚠️ 收工登錄失敗：找不到 work_log.json")
         sys.exit(2)
