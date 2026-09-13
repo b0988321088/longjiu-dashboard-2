@@ -271,6 +271,18 @@ _analysis = {
     ),
 }
 
+_prev_txt = ""
+try:
+    _prev = json.loads((LJ / "data" / "emergency_llm_analysis.json").read_text(encoding="utf-8"))
+    _prev_txt = str((_prev or {}).get("full_report", ""))
+except Exception:
+    _prev_txt = ""
+_new_txt = _analysis["full_report"]
+# 2026-09-13 INC-169：極簡版（<1500）不得覆蓋既有較完整分析（sync_all/非盤中重跑時曾把
+# 六大章節完整分析蓋成 225 字元極簡版 → 日報第八章緊急應變資料消失）
+if _prev_txt and len(_prev_txt) > max(1500, len(_new_txt)) and "六大章節" not in _new_txt and len(_new_txt) < 1500:
+    _write = False
+    print(f"⏭️ 既有完整分析 {len(_prev_txt)} 字元 > 本次極簡版 {len(_new_txt)} 字元 → 不覆寫（INC-169 防呆）")
 if _write:
     # 修改 full_report 內容，加入 LLM 分析摘要
     _analysis["full_report"] = (
