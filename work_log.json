@@ -406,5 +406,23 @@
   "category": "完成",
   "item": "保單B 轉換決策卡產出 + 決策登錄（0056:0050=75:25，分批、每站保留站長）",
   "detail": "使用者：先動保單B（2,669,945）。限制：轉成台股連結基金後失去月配三站接力 → 方案設計為「每站保留一檔月配站長」：批1 安聯收益成長 496,370+健康 239,831=736,201（→0056 552,151／0050 184,050）；批2（1個月後）摩根 30%=181,353；合計 917,554（B 的 34%），保留 66%（摩根 423,158／M&G 164,599／PIMCO 996,604＋黃金 168,030）。效果：台股 7.6→8.5%、美股 57.2→54.7%、防守 4.4→7.1%、債券 23.6→22.6%、美元曝險 54.4→估 50.9%、新增季配估 +5,257/月。已確認保單內有台股連結基金/轉換免費/配息比照ETF。新增 build_policy_transfer_card.py（snapshot 驅動、可重跑）、Notion ⚡執行中、pending 17 筆、dashboard user 20 筆；commit a47572cd 已推 Pages"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "完成",
+  "item": "watchdog v6.9（INC-158）：備援代答不再誤判卡死、停止腰斬進行中對話",
+  "detail": "9/13 15:09/15:19/15:30/15:46 四次自動重置全屬誤殺 — 四顆 session 的每筆 DeepSeek 400 都在 1-5 秒後由 Gemini 完成該輪（agent.log 同 sid 非 DS 的 API call # 數 8/6/5/7 ≥ CER 數，turn 皆 text_response），v6.3 last_fail_seen 連續失敗判準一律判 dead。真因＝payload 內容觸發 DS 過濾庫（財務資料+15.8 萬 token 工具輸出；新 session 6 分鐘內照樣被擋），重置治不了、只腰斬工作（使用者因此反覆「繼續未完成的工作」）。修法：新增 fallback_completed_since(sid, fail_dt) 前置關卡（失敗行後 15 分鐘內非 deepseek 成功 API call → 一律 alive 只推 ⚠️，persistent 不得覆蓋；沒有這種行才重置），⚠️ 文案加「建議改 Gemini 主模型或另開對話」。驗證：沙箱 43 檢查全 PASS（新 M/N/O）、真 agent.log 重播四顆全命中、真實 dry-run 靜默 exit 0；備份 .bak-20260913-v68、docstring 升 v6.9、gateway §19c + 技能版本史 + error_register INC-158 已同步"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "完成",
+  "item": "watchdog v6.10：CIO（Gemini）複審缺口一次補完（尾掃描擴讀 + 長期備援代答升級告警）",
+  "detail": "CIO 複審 v6.9（deleg_ef2fb51a，53s，gemini-2.5-flash）：5 PASS / 2 PARTIAL / 0 FAIL。缺口① 長期備援代答無升級機制 → 新增 note_fb_escalation()：同一 sid 連續靠備援代答 ≥3h 推 ❗ 升級告警（建議該對話 /model gemini-2.5-flash 或另開新對話），同 sid 6h 節流（state fb_since/fb_escalated），只通知永不自動重置。缺口② 尾 2MB 掃描量是硬假設（agent.log 15 分鐘內長超 2MB 或剛輪替 → 漏掉備援證據 → 誤判真卡死白重置）→ 新增 _scan_fb_window()：從檔尾擴讀 2MB→8MB→…→32MB 直到讀到早於 fail_dt 的行或讀完整檔，並回頭讀輪替檔 agent.log.1。驗證：沙箱擴至 50 檢查全 PASS（新增 P 尾窗不足擴讀、Q 4h 升級+6h 節流、R 未滿 3h 不升級）；真 agent.log 重播今日四顆被誤殺 session 仍全命中備援證據（0.05s/3.1MB）；真實 dry-run 靜默 exit 0。備份 .bak-20260913-v69；docstring 升 v6.10；技能 session-bloat-watchdog + gateway §19c + error_register INC-158 已同步"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "完成",
+  "item": "省錢分流方案 A/B/D 落地（watchdog v6.11 + context 成本紀律 + DS 餘額門檻改版）",
+  "detail": "背景：9/13 實測 fallback 代答（DS 被內容過濾擋→Gemini 吃 15.8 萬 token 全 context）單日 NT$41.7，同 token 走 DS 快取價（$0.007/M）只要 NT$5（8 倍差）；全站當日約 NT$60（DS 17.9 / Gemini 42.1）。使用者核准 A/B/D 三項：A1 watchdog v6.11 ❗升級門檻 3h→連續 2 輪 fallback（節流 6h→2h，state fb_rounds 同一失敗不重複計、閒置>6h 歸零），文案引導 /new 開新對話（DS 接手、成本約 1/8）或 /model gemini-2.5-flash；沙箱 53 檢查全 PASS（新增 Q5/Q6/Q7）、真 dry-run 靜默 exit 0、備份 .bak-20260913-v610。B 每輪 context 成本紀律（大輸出寫檔不進 context、重任務 subagent 隔離、長對話及早 /new）寫入 hermes-context-cost-control 技能。D ds_balance_alert.py v2：門檻 50CNY/7天→≤12CNY 或自算剩餘≤2天（近 3 筆餘額差額算日耗，不信 cost_monitor 0 天哨兵；可用 LJ_DS_BAL_THRESHOLD/LJ_DS_DAYS_THRESHOLD 覆寫測試），訊息含 ¥100 建議與「DS 斷線→全走 Gemini 成本×2-3」理由；已同步兩份（longjiu_system + hermes/scripts）並 resume cron 5b2209a814db（下次 9/14 09:00）。待核：C cron 減量（候選 晨間自動化22 / 收工登錄15.8 / 技能審查14.9 / budgeting13.2，估月省 NT$100-150）與 E 每日 token 帳。docstring/技能×3/error_register INC-158 已同步"
  }
 ]
