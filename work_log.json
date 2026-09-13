@@ -551,5 +551,11 @@
   "category": "修正",
   "item": "INC-171：市場漲跌%被算成「一週漲跌」— Yahoo range=5d 的 chartPreviousClose 是區間前收盤",
   "detail": "daily_intel.py 取 meta['chartPreviousClose'] 當昨收，但 range=5d 時那是「5 日前」收盤 → 台股顯示 -2.41%（實 -1.61%）、費半 +4.16%（實 +1.81%）、道瓊 -2.07%（實 +0.98%）。修法：改讀 meta['previousClose']（真昨收），退回 closes[-2]；重跑後 twii -1.61%／sox +1.81%／道瓊 +0.98% 全對。教訓：Yahoo chart API 的 prev 欄位隨 range 而異，勿一律當昨收。"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "完成",
+  "item": "2026-09-13 全日改動總表（17 項 INC-155~171／5 大類／8 個 commit）",
+  "detail": "【治理/省錢】watchdog v6.9/6.10/6.11（INC-158 備援不誤殺、CIO 複審缺口補完）＋省錢分流 A/B/C/D/E（三支 agent cron 改 no_agent、每日 AI 成本帳 cron 0aa33e190bae）＋INC-159 P0 三修。\n【口徑】INC-160 負債單一真值化（修 6 個不一致 + 78,099 殘差）＋INC-161 快取耐久鏡像/每日稽核＋女友借款口徑定案（應收款 290,500 不併總資產，commit 5fccba3e）。\n【報表/儀表板】INC-163 再平衡產出器停擺（IndentationError，頁面卡 8/29）→ 週計畫改單源 radar_state.weekly_plan；INC-164 現金口徑（MMF 已轉 B11）→ 857,298（3.3%）；INC-165 全量表：B11 官方 62.58/32.65/4.77 → 美股 57.2→44.8%、防守配息 4.4→17.3%、防禦維度 48.9%、美元曝險 79.2%；INC-166 儀表板「🚨風險提示」四段改動態注入；INC-167 負債重建丟利率鍵 → 質押月省息 868→4,135；全報表 sync_all 10 步驟同步（乾粉改現算 15.7萬）。\n【LLM/市場資料】INC-168 CIO prompt 補債券/現金真值＋禁自算護欄（LLM 曾自編現金 25.1%）、雷達燈號與風險因子改動態；INC-169 sync_all 的 emergency_1330 極簡版覆蓋六大章節（日報第八章資料消失）→ 單向保護＋補產 2,364 字元完整版；INC-170 日報第八章「加權 0 | SOX 0」→ market_intel fallback；INC-171 Yahoo range=5d 的 chartPreviousClose 被當昨收 → 漲跌%誤差（台股 -2.41% 實 -1.61%、費半 +4.16% 實 +1.81%）→ 改 previousClose。\n【技能】dashboard-single-source／fund-component-penetration／emergency-to-daily-report／asset-sync-verification／yahoo-finance-data-fetch／longjiu-daily-report／data-pipeline-automation／longjiu-error-register（INC 至 171）。\n【commit】7966c194→618bf199→c6242973→ca58aebf→2da8cd79→587d5086→0c5d8292→edc0e199。"
  }
 ]
