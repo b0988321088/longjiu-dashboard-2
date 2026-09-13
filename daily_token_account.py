@@ -131,29 +131,31 @@ def scan_failures(today: str):
         r"provider=(\S+) .*?model=(\S+) summary=(.*)$")
     seen = set()
     cer = q429 = 0
-    for name in ("errors.log", "errors.log.1", "agent.log", "agent.log.1"):
+    errors = []
+    for name in ("errors.log", "errors.log.1", "errors.log.2", "agent.log", "agent.log.1"):
         p = HERMES / "logs" / name
         if not p.exists():
             continue
         try:
             for line in p.open(encoding="utf-8", errors="ignore"):
-                if today not in line[:12] or "API call failed" not in line:
+                if not line.startswith(today) or "API call failed" not in line:
                     continue
                 m = pat.match(line)
                 if not m:
                     continue
-                key = (m.group(3), m.group(2), m.group(4), m.group(5), m.group(6))
+                s = m.group(7)
+                # 去重鍵要含 summary：同一秒同 attempt 可能是 CER 與 429 兩筆不同事件
+                key = (m.group(3), m.group(2), m.group(4), m.group(5), m.group(6), s[:120])
                 if key in seen:
                     continue
                 seen.add(key)
-                s = m.group(7)
                 if "Content Exists Risk" in s:
                     cer += 1
                 elif "429" in s or "RESOURCE_EXHAUSTED" in s:
                     q429 += 1
-        except Exception:
-            pass
-    return cer, q429
+        except Exception as e:
+            errors.append(f"{name}: {type(e).__name__}")   # 不靜默吞錯，回報讓帳面可稽核
+    return cer, q429, errors
 
 
 def job_names() -> dict:
@@ -258,8 +260,9 @@ def main() -> None:
 
         t = "、".join(f"{short(k)} {tok_fmt(v)}" for k, v in top)
         lines.append(f"・其中 cron {fires} 次 fire ≈ NT${cron_usd*USD_TWD:.1f}（估上界，未計快取）｜最多：{t}")
-    cer, q429 = scan_failures(today)
-    lines.append(f"・失敗：DS 內容風控(CER) {cer} 次、Gemini 429 {q429} 次"
+    cer, q429, _failerr = scan_failures(today)
+    _err_note = f"（讀取失敗：{_failerr}）" if _failerr else ""
+    lines.append(f"・失敗：DS 內容風控(CER) {cer} 次、Gemini 429 {q429} 次{_err_note}"
                  + ("（CER → Gemini 代答＝成本外溢主因）" if cer else ""))
     bal = ds_balance_line()
     if bal:
