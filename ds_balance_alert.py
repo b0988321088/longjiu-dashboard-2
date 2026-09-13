@@ -1,8 +1,12 @@
 """DeepSeek 餘額警報 — no_agent watchdog（2026-09-13 門檻改版 v2）。
 
 先跑 cost_monitor.py 更新 cost_log.csv / daily_analysis.json（維持歷史記錄），
-再依門檻決定輸出：**餘額 <= 12 CNY 或自算剩餘天數 <= 2** → 印出警報（傳送）；
+再依門檻決定輸出：**餘額 <= 30 CNY 或自算剩餘天數 <= 3** → 印出警報（傳送）；
 否則靜默（不發訊息）。
+
+2026-09-14 門檻再調（INC-172 附帶）：12 CNY / 2 天太貼底 —— 9/14 實測餘額 17.72 CNY
+（剩 ~2.1 天）而完全沒響，等於要「幾乎斷線」才提醒。改成 30 CNY / 3 天，提前量足夠
+（30 CNY ≈ 3.6 天日耗），且仍不會天天發（日耗 ~8.4 CNY 時約每 1.5 天內只會在最後 3 天內觸發）。
 
 2026-09-13 改版理由（省錢分流方案 D）：
 - 舊門檻 50 CNY / 7 天 → 天天發（9/8 起 job 被 pause），變噪音後反而沒人看。
@@ -24,8 +28,8 @@ COST = LJ / "cost_monitor.py"
 DA = LJ / "daily_analysis.json"
 LOG = LJ / "cost_log.csv"
 
-THRESHOLD_BALANCE_CNY = float(os.environ.get("LJ_DS_BAL_THRESHOLD", 12.0))
-THRESHOLD_DAYS = float(os.environ.get("LJ_DS_DAYS_THRESHOLD", 2.0))
+THRESHOLD_BALANCE_CNY = float(os.environ.get("LJ_DS_BAL_THRESHOLD", 30.0))
+THRESHOLD_DAYS = float(os.environ.get("LJ_DS_DAYS_THRESHOLD", 3.0))
 MONTHLY_BUDGET_CNY = 400.0
 BUDGET_WARN_RATIO = 0.8
 TOPUP_CNY = 100

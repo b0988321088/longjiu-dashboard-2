@@ -156,6 +156,33 @@ for p in [R / "data" / ".cache_audit.log", R / "data" / ".cache_audit_state.json
     print(f"  {ok(p.exists())} {p.name}")
 print(f"  .cache_audit.log 末行: {(R/'data'/'.cache_audit.log').read_text(encoding='utf-8').strip().splitlines()[-1] if (R/'data'/'.cache_audit.log').exists() else '-'}")
 
+# ── 8) 手動 fire 誤認領排程時點（2026-09-14 INC-172）────────
+# 手動 fire（cronjob run / CLI cron run）會把「下一個排程時點」寫成該執行列的 scheduled_instant
+# 並標 completed → 到點時 tick 用 completed_occurrence() 判定已完成而跳過（該次排程靜默消失）。
+# 判準：status='completed' 且 scheduled_instant 在「未來」= 不可能成立的狀態（零誤報）。
+print("=== 8) 手動 fire 認領排程時點 ===")
+try:
+    import datetime as _dt
+    _ex = sqlite3.connect(H / "cron" / "executions.db")
+    _now = _dt.datetime.now(_dt.timezone.utc).isoformat()
+    _names = {str(j.get("id")): (j.get("name") or "") for j in jobs if isinstance(j, dict)}
+    _row = _ex.execute(
+        "SELECT job_id, started_at, scheduled_instant FROM executions "
+        "WHERE status='completed' AND scheduled_instant IS NOT NULL AND scheduled_instant > ? "
+        "ORDER BY scheduled_instant", (_now,)).fetchall()
+    if _row:
+        for _jid, _start, _inst in _row:
+            print(f"  ❌ {str(_jid)[:12]} {_names.get(str(_jid), '')[:26]}"
+                  f"｜{str(_start)[:16]} 手動執行即標記完成未來時點 {_inst}")
+            fail.append(f"排程時點被吃掉：{_jid} @ {_inst}")
+        print("     └ 修法：python release_claimed_occurrences.py --fix（釋放後補跑該次產出）")
+    else:
+        print("  ✅ 沒有『未來時點已標完成』的執行列")
+    _ex.close()
+except Exception as _e:
+    print(f"  ❌ 讀取 executions.db 失敗 {_e}")
+    fail.append("executions.db 讀取失敗")
+
 print()
 print("=" * 46)
 print(f"閉環稽核結果：{'全部通過 ✅' if not fail else '❌ 有問題：' + str(fail)}")

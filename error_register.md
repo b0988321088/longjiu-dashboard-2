@@ -114,6 +114,17 @@
 - check_rule：借款登錄**必須含利率欄位**（0% 也要明寫）；本金與未收利息分開列示；有清償日者一律加算「結清金額」
 - 狀態：✅ 已完成
 
+## INC-2026-09-14（INC-172）手動 fire 誤認領排程時點 → 正式排程靜默消失（5 個 job 中彈）
+- 時間：2026-09-14（9/13 收工檢查時發現；9/13 白天為驗證 no_agent 轉換手動 run 過 5 支）
+- 症狀：閉環稽核全綠、`jobs.json` 看起來完全正常，但 9/13 21:40 收工登錄與 22:30 AI 成本帳**當晚真的沒跑**，executions 連一筆列都沒有（同分鐘的 watchdog job 正常 tick，證明 scheduler 活著）
+- 根因：手動 fire（工具 `cronjob(action='run')` **或** CLI `hermes cron run`）都會把 job 的「**下一個**排程時點」寫進該執行列的 `scheduled_instant` 並標 completed → 到點時 tick 用 `cron/occurrences.py::completed_occurrence()` 判定「已完成」→ 跳過並把 next_run_at 推進到再下一次；`mark_job_run()` 事後又把 next_run_at 重算回正常值，痕跡被掩蓋（`cron/jobs.py::claim_job_for_fire` 的 `manual` 判斷未成立，實測 claim 當下 `manual_run_at=None`）
+- 影響：5 個時點被吃掉 —— 收工登錄 9/13 21:40、AI 成本帳 9/13 22:30、預算檢查 9/17 18:30、法人雷達 9/14 16:15、美股緊急應變 9/14 21:30
+- 修法：① 備份 executions.db 後清掉 5 筆 direct 列的 `scheduled_instant`（保留歷史列），用 `completed_occurrence()` 複驗全數釋放 ② `_audit_closeout.py` 新增**第 8 類**：「status='completed' 且 scheduled_instant 在未來」= ❌（零誤報；已做乾淨/人造假列/移除三態實測）③ 新增 `release_claimed_occurrences.py`（偵測 → 備份 → 釋放，預設 dry-run、`--fix` 才動手）④ 新增 `closeout_check.py`（收工檢查一鍵：認領偵測＋閉環稽核＋補跑清單）⑤ 補跑 `closing_log.py`（補上 9/13 缺的快取稽核快照 total=21 added=20）與 9/13 全日成本帳（NT$498.0、Gemini 佔 81%）
+- check_rule：**驗證 cron 相關腳本一律 shell 直跑 `python <script>.py`**（完全不碰 cron 帳務）；需驗 cron 引擎本身（no_agent 交付格式）才手動 fire，且 fire 後必跑認領偵測；每日收工一律用 `closeout_check.py`
+- 附帶（9/14）：DS 餘額 17.72 CNY（剩 ~2.1 天）而舊門檻 12 CNY/2 天完全沒響 → 門檻改 **30 CNY / 3 天**
+- 上游：回報草稿 `_upstream_report_cron_manual_fire_claim.md`（工具與 CLI 兩條路徑都會認領，與 `trigger_job()` 戳 `manual_run_at` 的設計意圖不一致）
+- 狀態：✅ 已完成（本機 commit；待使用者指示推送）
+
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
 | 錯誤類型 | 次數 | 首次 | 最後 | 處置 |
