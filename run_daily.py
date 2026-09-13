@@ -1916,17 +1916,12 @@ def main():
         except Exception as _exc:
             print(f"[WARN] load daily_analysis.json for market briefing failed: {_exc}")
 
-    # Fallback to legacy hunter text if LLM analysis is not available
     if not market_intel_text:
         intel_result = mi_mod.ensure_today_intel(force_refresh=True)
-        intel_text = intel_result.get("briefing_text", "") # Get briefing text from daily_intel.py
-        intel_signals = mi_mod.parse_hunter_signals(intel_text)
-    else:
-        # If LLM analysis is present, we still need signals for other parts of the report
-        # For now, we'll try to extract them from the LLM text or use a placeholder.
-        # A more robust solution would involve the LLM also outputting structured signals.
-        intel_text = ""
-        intel_signals = {"sell_signals": [], "buy_signals": []}
+        market_intel_text = intel_result.get("briefing_text", "")
+    
+    intel_signals = mi_mod.classify_from_yf(load_daily_analysis().get("market", {}))
+    market_intel_text = _format_content_to_html(market_intel_text, content_type="market_intel")
 
 
     # 巴菲特/CTO 動態分析（產出報告，供 render_daily_report 讀取）
