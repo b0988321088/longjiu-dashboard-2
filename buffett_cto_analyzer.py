@@ -31,8 +31,8 @@ TARGETS = {
     "cash": _snap_tgt.get("現金目標", 5),
     "tech_exposure": _tech_cap_snap,
 }
-TARGET_LABELS = {"tw_equity":"台股","us_equity":"美股","defensive":"防守","bond":"債券","cash":"現金"}
-TARGET_EMOJI = {"tw_equity":"🇹🇼","us_equity":"🇺🇸","defensive":"🛡️","bond":"💵","cash":"💰"}
+TARGET_LABELS = {"tw_equity":"台股","us_equity":"美股","defensive":"防守","bond":"債券","cash":"現金", "tech_exposure":"科技"}
+TARGET_EMOJI = {"tw_equity":"🇹🇼","us_equity":"🇺🇸","defensive":"🛡️","bond":"💵","cash":"💰", "tech_exposure":"💻"}
 
 def _cat_value(db, category: str) -> float:
     """從 asset_class 表計算某分類的穿透市值 (同 _cat2 in run_daily.py)"""
@@ -192,9 +192,10 @@ def _llm_cached(name: str, prompt: str, system: str, max_tokens: int = 450) -> s
     """2026-08-24 優化：LLM 快取（同日同款不重複呼叫）+ 降 max_tokens，省 DeepSeek 用量
     2026-08-27 強化：檔名加數據指紋；HERMES_DEV_MODE=1 且數據未變時沿用當天最新快取（開發驗證免重付費）"""
     import hashlib, os
-    _ck = hashlib.md5(prompt.encode("utf-8")).hexdigest()[:12]
+    _script_hash = hashlib.md5(Path(__file__).read_bytes()).hexdigest()[:8] # 新增：腳本本身的哈希值
+    _ck = hashlib.md5(f"{prompt}{system}{max_tokens}".encode("utf-8")).hexdigest()[:12] # 更新：快取鍵納入 system 和 max_tokens
     _fp = _data_fingerprint()
-    _cf = BASE / "data" / f"{name}_{TODAY}_{_fp}_{_ck}.json"
+    _cf = BASE / "data" / f"{name}_{TODAY}_{_fp}_{_script_hash}_{_ck}.json" # 更新：新的快取檔名格式
     if _cf.exists():
         try:
             return json.loads(_cf.read_text(encoding="utf-8")).get("out")
@@ -212,6 +213,7 @@ def _llm_cached(name: str, prompt: str, system: str, max_tokens: int = 450) -> s
     _out = ask_llm(prompt, system=system, max_tokens=max_tokens)
     if _out:
         (BASE / "data").mkdir(exist_ok=True)
+        print(f"DEBUG: Attempting to write cache to: {_cf}") # DEBUG: Add print statement
         _cf.write_text(json.dumps({"out": _out}, ensure_ascii=False), encoding="utf-8")
     return _out
 
