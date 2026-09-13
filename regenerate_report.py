@@ -345,7 +345,12 @@ if ok and _cio_ok:
     # stage + commit 所有報表檔案
     # ⚠️ 8/21 實踩：git add 清單含不存在的檔 → 整批 add 失敗 → 空 commit → Pages 404
     _msg = f"四源同步 {TODAY} [cioreviewed]"
-    _push_candidates = [f'daily_report_v2_{TODAY}.html', f'asset_diff_{TODAY}.html', 'index.html', 'snapshot.json', 'dragon_assets.db']
+    _push_candidates = [f'daily_report_v2_{TODAY}.html', f'asset_diff_{TODAY}.html', 'index.html', 'snapshot.json', 'dragon_assets.db',
+                        # 2026-09-13：補齊儀表板會連到的今日產物（血淚：buffett_cto_report_{TODAY}.md 不在清單 → Pages 404「連結失效」）
+                        f'buffett_cto_report_{TODAY}.md', f'risk_factor_penetration_{TODAY}.png', f'macro_regime_{TODAY}.json',
+                        'work_log.json', 'pending_decisions.json', 'schedule_events.json', 'radar_state.json',
+                        'cio_review.json', 'dashboard_decisions.json', 'us30y_state.json',
+                        '大轉向資產配置策略.html']
     # 再平衡儀表板（2026-08-22：每日重跑，build_rebalance_dashboard.py 讀 snapshot+radar_state）
     try:
         subprocess.run([sys.executable, str(BASE / "build_rebalance_dashboard.py")], cwd=str(BASE),
@@ -358,6 +363,21 @@ if ok and _cio_ok:
     if _pen_file:
         _push_candidates.append(_pen_file)
     _push_files = [f for f in _push_candidates if (BASE / f).exists()]
+    # 2026-09-13：再掃 index.html 的所有本機連結，凡「已改動/未追蹤」者一併納入（治本：新增產物忘了加清單 → Pages 404）
+    try:
+        import re as _re2
+        _idx = (BASE / "index.html").read_text(encoding="utf-8")
+        _st = subprocess.run(['git', 'status', '--porcelain', '--untracked-files=all'],
+                             capture_output=True, text=True, cwd=BASE).stdout
+        _dirty = {ln[3:].strip().strip('"') for ln in _st.splitlines() if ln.strip()}
+        for _h in sorted(set(_re2.findall(r'href="([^"]+)"', _idx))):
+            if not _h or _h.startswith(("http", "#", "mailto")) or "/" in _h:
+                continue
+            if (BASE / _h).exists() and _h in _dirty and _h not in _push_files:
+                _push_files.append(_h)
+                print(f"  ➕ 連結目標補推: {_h}")
+    except Exception as _le:
+        print(f"⚠️ 連結掃描略過: {_le}")
     if _push_files:
         subprocess.run(['git', 'add'] + _push_files, capture_output=True, text=True, cwd=BASE)
         _staged = subprocess.run(['git', 'diff', '--cached', '--name-only'], capture_output=True, text=True, cwd=BASE).stdout.strip()

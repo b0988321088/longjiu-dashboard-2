@@ -1659,7 +1659,9 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     _philosophy_items.append(_cov_txt)
                 except Exception:
                     _philosophy_items.append(f"現金流覆蓋（常態）{_inc_m:,.0f}/{_exp:,.0f} = {_cov*100:.0f}% {'✅' if _cov >= 1.0 else '🔴'}")
-                _usd_ex = tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
+                # 2026-09-13：口徑統一 = usd_exposure_monitor.current.合計（與儀表板/穿透圖同源；原用美股桶會與儀表板不一致）
+                _mon = (_snap_now.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {}
+                _usd_ex = float(_mon.get("合計") or tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0))
                 # 2026-09-12：上限改讀 snapshot（裁示②：50%→60%），原寫死 50/55 會誤標紅燈
                 _usd_cap = float((_snap_now.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)
                 _philosophy_items.append(

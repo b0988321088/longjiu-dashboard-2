@@ -45,8 +45,10 @@ def build_chart():
     targets = [tgt.get(k, 0) for k in ["台股市值型目標", "美股市值型目標", "配息型目標", "債券型目標", "現金目標"]]
     twd_v = [atwd.get(b, 0) for b in buckets]
 
-    # 美元曝險（8/22 分析值 64%：美股桶全美元 + 債券桶美元基金 + MMF 美元 + 保單美元平衡）
-    usd_pct = float(s.get("usd_exposure_pct", 64.0))  # snapshot.usd_exposure_pct 可覆寫
+    # 美元曝險（2026-09-13：單一真值來源 = snapshot.usd_exposure_monitor.current.合計；紅線讀 threshold = 60）
+    _usd_m = (s.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {}
+    usd_pct = float(_usd_m.get("合計") or s.get("usd_exposure_pct", 0) or 0)
+    _usd_cap = float((s.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)
     usd_twd = total * usd_pct / 100
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 10), dpi=130)
@@ -71,32 +73,44 @@ def build_chart():
     ax.pie([usd_pct, 100 - usd_pct], labels=["美元", "台幣"], autopct="%.0f%%",
            colors=["#ef4444", "#22c55e"], startangle=90,
            explode=(0.04, 0))
-    ax.set_title(f"幣別曝險（美元 {usd_twd/1e4:.0f}萬）｜紅線 50%", fontsize=13, fontweight="bold")
-    ax.text(0, -1.35, "⚠️ 超紅線 14pp — 新增資金一律台幣", ha="center", fontsize=11, color="#dc2626")
+    ax.set_title(f"幣別曝險（美元 {usd_twd/1e4:.0f}萬）｜紅線 {_usd_cap:.0f}%", fontsize=13, fontweight="bold")
+    _gap = usd_pct - _usd_cap
+    _gap_txt = (f"⚠️ 超紅線 {_gap:.1f}pp — 新增資金一律台幣" if _gap > 0
+                else f"✅ 未超線（餘裕 {-_gap:.1f}pp）— 仍以台幣新生資金為主")
+    ax.text(0, -1.35, _gap_txt, ha="center", fontsize=11, color=("#dc2626" if _gap > 0 else "#16a34a"))
 
-    # Panel 3: 底層因子集中度
+    # Panel 3: 底層因子集中度（2026-09-13：改由 snapshot 現算，不再寫死 8/22 值）
     ax = axes[1][0]
-    factors = ["美股相關（直接+平衡底層）", "美元信用債", "台股", "現金（台幣）", "黃金/新興/REITs"]
-    vals = [60, 20, 7.2, 12.8, 0]
+    _mon_c = (s.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {}
+    _gold = sum(v for k, v in (s.get("insurance_breakdown", {}) or {}).get("policy_a_funds", {}).items() if "黃金" in k) \
+        + sum(v for k, v in (s.get("insurance_breakdown", {}) or {}).get("policy_b_funds", {}).items() if "黃金" in k)
+    factors = ["美股相關（含保單底層）", "美元信用債（保單+基金）", "台股", "現金/安全網", "黃金/避險衛星"]
+    vals = [apct.get("美股市值型成長", 0), _mon_c.get("保單美元債券", 0),
+            apct.get("台股市值型成長", 0), apct.get("現金/安全網", 0), round(_gold / total * 100, 2)]
     colors = ["#ef4444", "#f97316", "#3b82f6", "#22c55e", "#94a3b8"]
     ax.barh(factors, vals, color=colors)
     for i, v in enumerate(vals):
         ax.text(v + 0.8, i, f"{v:.1f}%", va="center", fontsize=10, fontweight="bold")
-    ax.set_title("底層風險因子集中度（% 流動資產，8/22 拆解）", fontsize=13, fontweight="bold")
-    ax.set_xlim(0, 75)
+    ax.set_title(f"底層風險因子集中度（% 總資產，{str(pen.get('updated_at',''))}）", fontsize=13, fontweight="bold")
+    ax.set_xlim(0, max(75, max(vals) * 1.25))
     ax.invert_yaxis()
 
-    # Panel 4: 集中風險警示
+    # Panel 4: 集中風險警示（2026-09-13：全數現算）
     ax = axes[1][1]
     ax.axis("off")
+    _tech = apct.get("美股市值型成長_科技", 0)
+    _tech_cap = float(tgt.get("科技曝險目標") or 20)
+    _tw = apct.get("台股市值型成長", 0)
+    _tw_tgt = float(tgt.get("台股市值型目標") or 10)
+    _cash_b = apct.get("現金/安全網", 0)
+    _inc_dim = ((s.get("dual_dimension_metric", {}) or {}).get("收入維度", {}) or {}).get("佔比", 0)
     risks = [
-        "[紅] 美元曝險 64%（紅線 50%）— 台幣升5%資產縮水3%",
-        "[紅] 美股相關 >60% — 平衡基金底層重疊",
-        "[黃] 科技 13.8%（上限 15%）— 8/24 保單轉換持續稀釋",
-        "[黃] 新興市場 0% ｜ 黃金 0%（PI 後建衛星）",
-        "[黃] 台股 7.2%（目標 10%）— 慢慢買補缺口",
-        "[OK] 現金 22.1% = 戰術停泊乾粉（底線制 70萬）",
-        "[OK] 防守合併口徑 69.5% 無缺口（勿被 4.2% 誤導）",
+        f"[{'🔴' if usd_pct > _usd_cap else '✅'}] 美元曝險 {usd_pct:.1f}%（紅線 {_usd_cap:.0f}%，台幣40/美金60）— 台幣升5%資產縮水",
+        f"[{'🔴' if apct.get('美股市值型成長',0) > 60 else '🟡'}] 美股相關 {apct.get('美股市值型成長',0):.1f}% — 平衡基金底層重疊",
+        f"[{'🟡' if _tech <= _tech_cap else '🔴'}] 科技 {_tech:.1f}%（目標 ≤{_tech_cap:.0f}%）",
+        f"[{'🟡' if _tw < _tw_tgt else '✅'}] 台股 {_tw:.1f}%（目標 {_tw_tgt:.0f}%）— 慢慢買補缺口",
+        f"[OK] 現金/安全網 {_cash_b:.1f}%（底線制 70萬）",
+        f"[OK] 收入引擎合併口徑 {_inc_dim:.1f}% 無缺口（勿被防守桶單獨數字誤導）",
         "",
         "執行紀律：",
         "1) 新增資金全台幣（唯一解美元之路）",

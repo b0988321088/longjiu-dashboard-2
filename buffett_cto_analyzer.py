@@ -336,7 +336,7 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
             f"你是龍九控股的 CTO（技術分析師）。以下為資產穿透資料（總投資 {pen['total_inv']/1e4:.0f}萬）：\n"
             f"五桶：{_fmt}\n"
             f"主要偏離：{pen.get('key_risk','—')}｜建議：{pen.get('key_action','—')}\n"
-            f"結構風險：美元曝險64%（紅線60%）、高科技17.5%（紅線30%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡、{us30y_note()}\n"
+            f"結構風險：美元曝險{_usd_exp:.1f}%（紅線{_usd_cap:.0f}%）、高科技{_tech_exp:.1f}%（紅線{_tech_cap:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡、{us30y_note()}\n"
             f"產業與風險因子：{_industry_context()}\n"
             f"{market_text}\n"
             f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（22.1%含 MMF 500萬贖回款已轉申購貝萊德B11 500萬（質押擔保池擴充），不可建議減現金）；"

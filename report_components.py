@@ -134,7 +134,7 @@ def render_health_score(snap: dict) -> dict:
         usd = _num(_usd_m.get("合計", _usd_m.get("美股桶", 54)), 54)
     else:
         usd = _num(_usd_m, 54)
-    usd_score = 100 if usd <= 50 else (50 if usd <= 60 else 0)
+    usd_score = 100 if usd <= 60 else (50 if usd <= 65 else 0)  # 2026-09-12 裁示②：紅線 50→60（黃 60-65、紅 >65）
 
     # 現金底線（70萬）
     cash = _num(snap.get("cash_total", 0), 0)
@@ -176,10 +176,11 @@ def render_health_card(snap: dict) -> str:
     # 防禦維度：可能是金額（>100）→ 顯示「充足」避免怪數字
     _def_txt = f"{d['防禦']:.0f}%" if d["防禦"] <= 100 else "✅ 充足"
     # (名稱, 現況, 目標, 權重分/權重) — 現況 vs 目標 → 得分
+    _usd_cap = float((snap.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)  # 2026-09-13：目標讀 snapshot（裁示② 50→60）
     rows = [
         ("現金流覆蓋", f"{d['覆蓋']}%", "≥100%", d["覆蓋分"], 30),
         ("防禦維度", _def_txt, "≥50%", d["防禦分"], 25),
-        ("美元曝險", f"{d['曝險']:.1f}%", "≤50%", d["曝險分"], 20),
+        ("美元曝險", f"{d['曝險']:.1f}%", f"≤{_usd_cap:.0f}%（美金）", d["曝險分"], 20),
         ("現金底線", f"{d['現金']:,.0f}", "≥700,000", d["現金分"], 15),
         ("LTV", f"{d['LTV']:.1f}%", "≤50%（質押/擔保品）", d["LTV分"], 10),
     ]

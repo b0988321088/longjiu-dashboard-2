@@ -161,11 +161,13 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             _fund_bonds += round(_fval * 0.6137)
             _fund_cash += 0
             _fund_us_tech += round(_fval * 0.10)
-        elif "貝萊德智慧數據收益成長B11" in _fn: # 新增貝萊德B11的處理邏輯
-            _fund_us += round(_fval * 0.65) # 股票部分 (美股)
-            _fund_bonds += round(_fval * 0.33) # 債券部分
-            _fund_cash += round(_fval * 0.02) # 現金及其他
-            _fund_us_tech += round(_fval * 0.65 * _tr(_fn)) # 股票部分乘以科技比率
+        elif "貝萊德智慧數據收益成長基金B11美元" in _fn or "貝萊德智慧數據收益成長" in _fn:
+            # 依 BlackRock B11 Class Factsheet（Dynamic High Income Fund / Systematic Global Income & Growth）
+            # 股權 65% / 債券 33% / 現金 2%（平衡型多元收益分配）
+            _fund_us += round(_fval * 0.65)
+            _fund_bonds += round(_fval * 0.33)
+            _fund_cash += round(_fval * 0.02)
+            _fund_us_tech += round(_fval * 0.65 * 0.25)  # 科技股佔股票部位約 25%
         elif any(_k in _fn for _k in ["台中銀台灣優息", "國泰台灣高股息", "元大台灣高股息", "高股息ETF連結"]):
             _fund_def += _fval
         elif any(_k in _fn for _k in ["台新美日台", "貝萊德", "安聯AI", "聯博", "摩根", "M&G", "安聯收益成長", "投資型保單"]):
