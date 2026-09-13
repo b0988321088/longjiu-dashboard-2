@@ -148,11 +148,11 @@ def classify_from_yf(market: dict) -> dict:
             pct = float(re.search(r"\(([+-]?\d+\.\d+)%\)", val).group(1))
         except Exception:
             continue
-        if key == "twii" and pct <= -1.5: sell.append(f"台股加權大跌 {pct}%")
-        if key == "sox" and pct <= -2.0: sell.append(f"費半跌 {pct}%")
-        if key == "tsm" and pct <= -2.0: sell.append(f"台積電大跌 {pct}%")
-        if key == "twii" and pct >= 1.0: buy.append(f"台股大漲 {pct}%")
-        if key == "sox" and pct >= 3.0: buy.append(f"費半大漲 {pct}%")
+        if key == "twii" and pct <= -1.5: sell.append(f"台股加權大跌 {pct:.2f}%")
+        if key == "sox" and pct <= -2.0: sell.append(f"費半跌 {pct:.2f}%")
+        if key == "tsm" and pct <= -2.0: sell.append(f"台積電大跌 {pct:.2f}%")
+        if key == "twii" and pct >= 1.0: buy.append(f"台股大漲 {pct:.2f}%")
+        if key == "sox" and pct >= 3.0: buy.append(f"費半大漲 {pct:.2f}%")
     return {"sell_signals": sell[:5], "buy_signals": buy[:5]}
 
 def classify(text: str) -> dict:
@@ -169,11 +169,6 @@ def classify(text: str) -> dict:
 def build_analysis(intel_text: str, signals: dict, market_override: dict | None = None) -> dict:
     today = _today_str()
     market = market_override if market_override else fetch_yf_market()
-    twii_pct, tsm_pct, sox_pct = None, None, None
-    def pct(text):
-        m = re.search(r"\(([+-]?[0-9.]+)%\)", str(text))
-        return float(m.group(1)) if m else None
-    twii_pct, tsm_pct, sox_pct = pct(market.get("twii","")), pct(market.get("tsm","")), pct(market.get("sox",""))
     
     sell_desc = "; ".join(signals.get("sell_signals", [])[:2]) or "無賣出訊號"
     buy_desc = "; ".join(signals.get("buy_signals", [])[:2]) or "無買進訊號"
@@ -191,12 +186,47 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
     if signals.get("sell_signals"):
         briefing_lines.append("【賣出訊號】")
         for s in signals["sell_signals"][:3]: briefing_lines.append(f"• {s}")
+    else:
+        briefing_lines.append("【賣出訊號】")
+        briefing_lines.append("無")
+
+    briefing_lines.append("")
     if signals.get("buy_signals"):
         briefing_lines.append("【買進訊號】")
         for s in signals["buy_signals"][:3]: briefing_lines.append(f"• {s}")
+    else:
+        briefing_lines.append("【買進訊號】")
+        briefing_lines.append("無")
+
     if news:
         briefing_lines.append("\n【最新市場消息】")
         for n in news[:3]: briefing_lines.append(f"• {n.get('title', '')} (來源：{n.get('url', '').split('/')[2]})")
+
+    # 持倉關聯分析與濃縮情報
+    briefing_lines.append("\n【持倉關聯分析】")
+    try:
+        snap = json.loads((BASE / "snapshot.json").read_text(encoding='utf-8'))
+        pen = snap.get('penetration', {}).get('actual_twd', {})
+        tw_equity = pen.get('台股市值型成長', 0)
+        us_equity = pen.get('美股市值型成長', 0)
+        long_short = ""
+        if tw_equity > 0 and (market.get('twii') and "%" in market['twii']):
+            twii_pct = float(re.search(r"\(([+-]?\d+\.\d+)%\)", market['twii']).group(1))
+            if twii_pct <= -1.0:
+                long_short += f"台股持倉市值型成長 {tw_equity:,.0f} TWD，今日大盤下跌 {twii_pct:.2f}%，短線承壓。"
+            elif twii_pct >= 1.0:
+                long_short += f"台股持倉市值型成長 {tw_equity:,.0f} TWD，今日大盤上漲 {twii_pct:.2f}%，動能轉強。"
+
+        if not long_short:
+            long_short = "目前持倉與市場連動正常，無特殊事件。"
+        briefing_lines.append(long_short)
+    except Exception as e:
+        briefing_lines.append(f"持倉關聯分析錯誤: {e}")
+
+    condensed_intel_text = _load_condensed_intel()
+    if condensed_intel_text:
+        briefing_lines.append("\n【情報重點（含持倉關聯）】")
+        briefing_lines.append(condensed_intel_text)
 
     briefing = "\n".join(briefing_lines)
     return {"date": today, "generated_at": datetime.now().isoformat(), "market": market, "buffett": buffett, "cto": cto, "signals": signals, "news": news, "scenario_summary": scenario_summary, "briefing": briefing}
