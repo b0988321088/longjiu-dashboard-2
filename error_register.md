@@ -69,6 +69,14 @@
 - E 項（9/13 完成）：`daily_token_account.py`（no_agent，cron 0aa33e190bae 22:30）＝本機算今日 AI 成本帳 — 各模型 NT$（DS 尖峰×2/快取價）、DS/Gemini 分帳與 **Gemini 佔比（目標 <30%）**、cron 佔比與耗最多 job、DS 餘額與剩餘天數；資料源 agent.log(+.1)／usage_audit.jsonl／cost_log.csv，零 API。基線 9/13：DS NT$23.6、Gemini NT$42.2（佔 64%）、合計 NT$65.8
 - 省錢分流方案 A/B/C/D/E 五項全部落地（9/13）
 
+## INC-2026-09-13（INC-159）資料源/提交範圍/排程路徑三修（P0）
+- 時間：2026-09-13 16:2x（使用者核准 P0-1/2/3）
+- 錯誤①：預算報告讀到舊資料 → 誤報「台新 P1 超支 117.3%」。根因：`budget_daily_check._latest()` 只掃 repo 兩個目錄且取字典序第一個 → repo 僅有 7/27 匯出、最新 9/02 匯出在 `hermes/cache/documents/mb_0902/`。修法：跨目錄（含 cache 子目錄）蒐集並以**檔名日期最大**者為準；資料品質警語去硬編碼。驗證：資料日 7/27→2026-09-02，台新 −35.2% ✅、玉山 +5.7% ✅、四卡循環 25,494→15,793（−58.4%），僅剩永豐 P2（帳單 16,613 高於預算）。commit 1e004407
+- 錯誤②：`radar_push.py` 用 `git add -A` → 9/13 一次把 **582 個無關的 `data/buffett_*`/`data/cto_*` 快取刪除**＋其他流程 6 檔掃進「auto: 雷達儀表板同步」commit（9573bedf）。影響面：該批快取為單日 LLM 快取，分析器只讀當日 → **對任何報告指標數字零影響**；唯一成本風險是同日快取被刪會讓同日重跑多付 NT$2-3（當日快取現為 0 檔）。修法：改白名單 add（`radar_state.json`/`radar_report_{TODAY}.html`/`index.html`）+ add 失敗即 return。驗證：髒檔誘餌測試 — 新 commit 97884836 只含 radar_report/radar_state 兩檔，BUDGET 報告等髒檔仍留在工作區未提交
+- 錯誤③：每週日 DB 保養 job 9/13 05:00 失敗（`can't open file 'C:\c\Users\...\main.py'`）→ 本週 optimize-storage 未跑。根因：bash `$HOME`（MSYS `/c/...`）作為參數傳給原生 python.exe 被轉成 `C:\c\...`。修法：`HOME_WIN="$(cygpath -m "$HOME")"` 拼原生路徑，找不到即 exit 1（不再 fallback 被封鎖的 hermes shim）。驗證：手跑 SH_RC=0、log 見 done，備份輪替釋放 3,061 MB，index 已 compact 故 optimize 秒回
+- check_rule：① 讀檔類腳本一律「跨目錄 + 以檔名日期取最新」，不可只掃 repo ② cron 自動 commit 一律白名單自身產物，並用髒檔誘餌驗證 ③ bash 呼叫原生 exe 的路徑參數一律 `cygpath -m` ④ 清快取禁刪當日檔
+- 狀態：✅ 已修正（P0-1/2/3）；P1-4 snapshot 卡片口徑比對與 P2 待核
+
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
 | 錯誤類型 | 次數 | 首次 | 最後 | 處置 |
