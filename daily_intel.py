@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 龍九控股 日報情報補給
 - 優先使用 Yahoo Finance API 抓取即時市場數據
@@ -18,7 +18,7 @@ try:
     import feedparser
     _FEEDPARSER_OK = True
 except Exception:
-    feedparser = None  # type: ignore[assignment]
+    feedparser = None
     _FEEDPARSER_OK = False
 
 from logging_config import get_logger
@@ -41,9 +41,7 @@ BASE = Path(__file__).parent.resolve()
 def _today_str() -> str:
     return date.today().isoformat().replace("-", "")
 
-# ===== Yahoo Finance API =====
 _YF_HEADERS = {"User-Agent": "Mozilla/5.0"}
-
 _YF_SYMBOLS = {
     "twii": "^TWII",
     "tsm": "2330.TW",
@@ -63,21 +61,20 @@ def _yf_chart(symbol: str, timeout: int = 8) -> dict:
         res = data.get("chart", {}).get("result", [{}])[0]
         meta = res.get("meta", {})
         closes = [c for c in (res.get("indicators", {}).get("quote", [{}])[0].get("close") or []) if c is not None]
-        ts = res.get("timestamp") or []
         price = meta.get("regularMarketPrice")
-        
-        if price is None or len(closes) < 2:
-            price = meta.get("chartPreviousClose") or 0.0
-            prev = closes[-1] if closes else 0.0
-            pct = round((price - prev) / prev * 100, 2) if prev else 0.0
-            return {"price": price, "prev": prev, "change_pct": pct}
-        
-        import datetime as _dt
-        _last_day = _dt.datetime.utcfromtimestamp(ts[-1]).strftime("%Y-%m-%d") if ts else ""
-        _today = _dt.datetime.utcnow().strftime("%Y-%m-%d")
-        prev = closes[-2] if _last_day == _today else closes[-1]
-        pct = round((price - prev) / prev * 100, 2)
-        return {"price": price, "prev": prev, "change_pct": pct}
+        prev = meta.get("chartPreviousClose")
+        if not closes:
+            return {}
+        if price is None:
+            price = closes[-1]
+        if prev is None and len(closes) >= 2:
+            prev = closes[-2]
+        elif prev is None:
+            prev = price
+
+        change = price - prev
+        change_pct = (change / prev * 100) if prev else 0.0
+        return {"price": price, "prev": prev, "change_pct": change_pct}
     except Exception as e:
         logger.error(f"Error fetching Yahoo Finance chart for {symbol}: {e}")
         return {}
@@ -113,7 +110,6 @@ def fetch_yf_market() -> dict:
         "cpi": "美國 7 月 CPI YoY 3.5% (FRED 8/13)；Core 2.8% (FRED 8/13)",
     }
 
-# ===== News fetching with RSS feeds =====
 def _fetch_news(queries: list[str], limit: int = 3) -> list[dict]:
     RSS_FEEDS = {
         "cnyes": "https://tw.stock.yahoo.com/rss",
@@ -143,7 +139,6 @@ def _fetch_news(queries: list[str], limit: int = 3) -> list[dict]:
             continue
     return results
 
-# ===== Signal classification =====
 def classify_from_yf(market: dict) -> dict:
     sell, buy = [], []
     for key, val in market.items():
@@ -176,7 +171,7 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
     market = market_override if market_override else fetch_yf_market()
     twii_pct, tsm_pct, sox_pct = None, None, None
     def pct(text):
-        m = re.search(r"\(([+-]?\d+\.\d+)%\)", str(text))
+        m = re.search(r"\(([+-]?[0-9.]+)%\)", str(text))
         return float(m.group(1)) if m else None
     twii_pct, tsm_pct, sox_pct = pct(market.get("twii","")), pct(market.get("tsm","")), pct(market.get("sox",""))
     
@@ -207,8 +202,6 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
     return {"date": today, "generated_at": datetime.now().isoformat(), "market": market, "buffett": buffett, "cto": cto, "signals": signals, "news": news, "scenario_summary": scenario_summary, "briefing": briefing}
 
 def ensure_today_intel(force_refresh: bool = False) -> dict:
-    # today = _today_str() # already defined in build_analysis
-    # ensure_dir() # not needed as we don't write to hunter_logs anymore
     today = _today_str()
 
     market = fetch_yf_market()
@@ -230,7 +223,7 @@ def ensure_today_intel(force_refresh: bool = False) -> dict:
     return {"briefing_text": analysis["briefing"]}
 
 def load_latest_hunter() -> str:
-    return "" # hunter_logs not used anymore
+    return ""
 
 def load_daily_analysis() -> dict:
     path = BASE / "daily_analysis.json"
