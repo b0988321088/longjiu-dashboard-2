@@ -36,11 +36,18 @@ API_RE = re.compile(
     r"^(\d{4}-\d{2}-\d{2}) (\d{2}):\d{2}:\d{2}.*API call #\d+: model=(\S+) provider=(\S+) "
     r"in=(\d+) out=(\d+) total=\d+ latency=\S+ cache=(\d+)/(\d+)")
 PRICE = {  # model: (in, out, cache_hit, is_deepseek)
-    "deepseek-v4-flash": (0.22, 0.66, 0.007, True),
-    "deepseek-v4-pro": (0.66, 1.98, 0.021, True),
-    "gemini-2.5-flash": (0.30, 2.50, 0.075, False),
-    "gemini-3.5-flash-lite": (0.30, 2.50, 0.075, False),
-    "gemini-2.5-flash-lite": (0.30, 2.50, 0.075, False),
+    # ── DeepSeek（2026-09-14 查官方定價頁；此為 off-peak 價，尖峰由 cost_usd 的 peak 係數 ×2 處理）──
+    # 官方頁：deepseek-flash cache hit $0.003 / miss $0.15 / out $0.60；pro $0.022 / $0.66 / $1.98
+    "deepseek-flash": (0.15, 0.60, 0.003, True),
+    "deepseek-v4-flash": (0.15, 0.60, 0.003, True),          # 舊名（已退役，由 V4.1-Flash 服務、同價）
+    "deepseek-v4-flash-vision-exp": (0.15, 0.60, 0.003, True),
+    "deepseek-v4-pro": (0.66, 1.98, 0.022, True),
+    # ── Gemini（2026-09-14 查官方定價頁 ai.google.dev/gemini-api/docs/pricing）──
+    "gemini-3.6-flash": (0.75, 3.75, 0.075, False),
+    "gemini-3.5-flash-lite": (0.30, 2.50, 0.03, False),
+    "gemini-3.1-flash-lite": (0.25, 1.50, 0.025, False),
+    "gemini-2.5-flash": (0.30, 2.50, 0.03, False),
+    "gemini-2.5-flash-lite": (0.10, 0.40, 0.01, False),
 }
 
 
@@ -129,7 +136,9 @@ def job_names() -> dict:
 
 
 def cost_usd(model: str, tok: collections.Counter) -> float:
-    pin, pout, pcache, is_ds = PRICE.get(model, (0.22, 0.66, 0.007, True))
+    # 未知模型用 DS 價保守估；DS/Gemini 一律看模型名稱（缺價表的 Gemini 模型才不會被誤當 DS）
+    pin, pout, pcache, _ = PRICE.get(model, (0.15, 0.60, 0.003, True))
+    is_ds = model.startswith("deepseek")
     miss = max(0, tok["in"] - tok["cached"])
     usd = miss / 1e6 * pin + tok["cached"] / 1e6 * pcache + tok["out"] / 1e6 * pout
     if is_ds and tok.get("peak_calls"):
@@ -180,7 +189,7 @@ def main() -> None:
     for model, tok in sorted(per.items(), key=lambda kv: -cost_usd(kv[0], kv[1])):
         usd = cost_usd(model, tok)
         usd_total += usd
-        if PRICE.get(model, (0, 0, 0, True))[3]:
+        if model.startswith("deepseek"):
             ds_usd += usd
         else:
             gem_usd += usd
