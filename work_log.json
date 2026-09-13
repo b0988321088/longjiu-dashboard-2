@@ -538,5 +538,18 @@
   "category": "修正",
   "item": "INC-169：日報第八章緊急應變資料消失 — sync_all 的 emergency_1330.py 極簡版覆蓋六大章節完整分析",
   "detail": "使用者反映「日報第八章特別是緊急應變的部分資料都不見了」。查證：data/emergency_llm_analysis.json 於 21:41 被 emergency_1330.py（sync_all 的『台股緊急應變』步驟）寫成 225 字元極簡版（【三、資產配置】空白、僅制式建議），覆蓋掉 21:30 美股緊急應變 cron 的完整分析 → 日報第八章只剩骨架。驗證：git 歷史今日版本分別 225/500 字元（9/11 為 2188 字元完整版）。修法：①emergency_1330.py 加防呆 — 既有 full_report 較長（>1500）且本次為極簡版時『不覆寫』②已手動補跑美股緊急應變 cron（dff67a1d02bd）重產六大章節完整分析並重推日報。教訓：任何『極簡版/fallback 產出』都不得覆蓋較完整的既有產物（單向保護：只允許同級或更完整覆蓋）。"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "修正",
+  "item": "INC-170：日報第八章「📊 市場：加權 0 (+0.00%) | SOX 0」— market_intel 上游缺值 → 加 fallback",
+  "detail": "使用者反映第八章資料不見時發現：`buffett_cto_analyzer` 從 dragon_assets.db market_intel 讀 tw_index/tw_change/sox，但該表自 9/10 起這三欄皆為 0（compile_intel 上游 daily_intel 缺值）→ 日報顯示「加權 0 / SOX 0」。修法：值為 0 時退回 daily_analysis.json 的市場字串（有值）；驗證日報改顯示「加權 46,184.85 (-1.61%) | SOX 11,824.00 (+1.81%)」。market_intel 上游寫入（compile_intel）列後續追。",
+  "category_2": ""
+ },
+ {
+  "date": "2026-09-13",
+  "category": "修正",
+  "item": "INC-171：市場漲跌%被算成「一週漲跌」— Yahoo range=5d 的 chartPreviousClose 是區間前收盤",
+  "detail": "daily_intel.py 取 meta['chartPreviousClose'] 當昨收，但 range=5d 時那是「5 日前」收盤 → 台股顯示 -2.41%（實 -1.61%）、費半 +4.16%（實 +1.81%）、道瓊 -2.07%（實 +0.98%）。修法：改讀 meta['previousClose']（真昨收），退回 closes[-2]；重跑後 twii -1.61%／sox +1.81%／道瓊 +0.98% 全對。教訓：Yahoo chart API 的 prev 欄位隨 range 而異，勿一律當昨收。"
  }
 ]

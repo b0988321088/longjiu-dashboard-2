@@ -441,7 +441,23 @@ def main(**kwargs):
         _r = _db.execute("SELECT buy_count, sell_count, hunter_count, tw_index, tw_change, sox, summary FROM market_intel WHERE date=? ORDER BY timestamp DESC LIMIT 1", (TODAY,)).fetchone()
         _db.close()
         if _r:
-            _mkt_txt = f"市場：加權 {_r[3]:,.0f} ({_r[4]:+.2f}%) | SOX {_r[5]:,.0f} | Hunter {_r[2]}筆 (買{_r[0]}/賣{_r[1]})"
+            # 2026-09-13 INC-170：market_intel 的 tw_index/sox 自 9/10 起多為 0（compile_intel 上游缺值）
+            # → 值為 0 時退回 daily_analysis.json 市場字串，避免日報出現「加權 0 (+0.00%) | SOX 0」
+            _tw_i = float(_r[3] or 0); _tw_c = float(_r[4] or 0); _sox_v = float(_r[5] or 0)
+            if _tw_i == 0 or _sox_v == 0:
+                try:
+                    _da_m = json.loads((BASE / "daily_analysis.json").read_text(encoding="utf-8")).get("market", {}) or {}
+                except Exception:
+                    _da_m = {}
+                _tw_txt = str(_da_m.get("twii", "") or "").strip()
+                _sox_txt = str(_da_m.get("sox", "") or "").strip()
+                _bits = [f"市場：加權 {_tw_txt or '—'}"]
+                if _sox_txt:
+                    _bits.append(f"SOX {_sox_txt}")
+                _bits.append(f"Hunter {_r[2]}筆 (買{_r[0]}/賣{_r[1]})")
+                _mkt_txt = " | ".join(_bits)
+            else:
+                _mkt_txt = f"市場：加權 {_tw_i:,.0f} ({_tw_c:+.2f}%) | SOX {_sox_v:,.0f} | Hunter {_r[2]}筆 (買{_r[0]}/賣{_r[1]})"
     except Exception:
         pass
 

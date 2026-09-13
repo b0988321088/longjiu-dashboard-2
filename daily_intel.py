@@ -72,8 +72,12 @@ def _yf_chart(symbol: str, timeout: int = 8) -> dict:
         elif prev is None:
             prev = price
 
-        change = price - prev
-        change_pct = (change / prev * 100) if prev else 0.0
+        # 2026-09-13 INC-171：range=5d 時 meta.chartPreviousClose 是「區間起點前」的收盤（約 5 日前），
+        # 拿它當昨收 → 漲跌%被算成「一週漲跌」（實測 TWII -2.41% 應 -1.61%、SOX +4.16% 應 +1.81%）。
+        # 正確來源：meta.previousClose（真昨收）→ 退回 closes[-2]。
+        prev_true = meta.get("previousClose") or (closes[-2] if len(closes) >= 2 else prev)
+        change = price - prev_true
+        change_pct = (change / prev_true * 100) if prev_true else 0.0
         return {"price": price, "prev": prev, "change_pct": change_pct}
     except Exception as e:
         logger.error(f"Error fetching Yahoo Finance chart for {symbol}: {e}")
