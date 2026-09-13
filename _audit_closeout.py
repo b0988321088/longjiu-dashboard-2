@@ -65,17 +65,19 @@ T, T_fallback = resolve_T(db)
 print(f"  基準日 T = {T}" + ("（今日尚未落庫 → 退回最新已落庫日）" if T_fallback else ""))
 d13 = db.execute("select total_assets,total_liabilities from assets where date=?", (T,)).fetchone()
 l13 = db.execute("select total_liabilities,credit_card from liabilities where date=?", (T,)).fetchone()
-# 歷史列未被污染：前一列 assets 負債必須等於 liabilities 表同列（原寫死 9/12/30160643 → 2026-09-14 改為動態）
-prev_date = db.execute("select max(date) from assets where date < ?", (T,)).fetchone()[0]
-prev_a = db.execute("select total_liabilities from assets where date=?", (prev_date,)).fetchone()
-prev_l = db.execute("select total_liabilities from liabilities where date=?", (prev_date,)).fetchone()
+# 歷史列未被污染：兩表所有「同日都有列」的日期，總負債必須相同
+# （原寫死 9/12/30160643 單日值 → 2026-09-14 改為全歷史動態；liabilities 表本來就只在變動日落列）
+hist_days = db.execute("select count(*) from liabilities l join assets a on a.date=l.date").fetchone()[0]
+hist_bad = db.execute(
+    "select l.date, l.total_liabilities, a.total_liabilities from liabilities l "
+    "join assets a on a.date = l.date where l.total_liabilities != a.total_liabilities").fetchall()
 html = (R / f"daily_report_v2_{T}.html").read_text(encoding="utf-8")
 checks = [
     ("snapshot 負債 = DB assets = DB liabilities", s["total_liabilities"] == int(d13[1]) == l13[0]),
     ("snapshot 負債 = 日報 HTML", f"{s['total_liabilities']:,}" in html),
     ("snapshot 淨值 = asset_diff_history", int(h[T]["net_worth"]) == s["net_worth"]),
     ("信用卡 34,025 一致", s["cc_liability"] == l13[1] == 34025),
-    ("歷史列未被污染（assets = liabilities）", bool(prev_a and prev_l and prev_a[0] == prev_l[0] and prev_a[0] > 0)),
+    (f"歷史列未被污染（{hist_days} 個重疊日 assets = liabilities）", hist_days > 0 and not hist_bad),
     ("應收款備忘 290,500", s["receivables_total"] == 290500 and s["receivables"]["女友借款"] == 290500),
     ("負債拆解可完全解釋", sum([s["liabilities_build_up"]["房貸_含國泰"],
                               s["liabilities_build_up"]["保單借貸"],
