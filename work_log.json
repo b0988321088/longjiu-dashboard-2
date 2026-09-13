@@ -587,5 +587,11 @@
   "category": "修正",
   "item": "INC-174：失敗統計未去重 + 誤判 429 成因（「額度耗盡 61 次」→ 速率上限 57 次）",
   "detail": "【觸發】使用者：「額度耗盡61次這個也太扯檢查一下」。\n【更正】① 數字：未去重，實際 **57** 件（同一事件在 errors.log／agent.log 各記一次，又有 WARNING＋traceback＋retry 多行）② 成因：不是餘額耗盡，是**每分鐘輸入 token 速率上限**。\n【證據】錯誤 body：Quota exceeded for metric: ...generate_content_paid_tier_input_token_count, limit: 1000000, model=gemini-2.5-flash（3.6-flash 2M、3.5-flash-lite 4M/分）＋「Please retry in ~59s」＝分鐘窗重置；我們每個 request 約 22 萬 token → 2.5-flash 每分鐘只容許 4-5 次呼叫。真正沒錢才會有的 `prepayment credits are depleted` 只在 9/5 儲值前（01:29／08:57）出現過，之後 0 次。\n【影響】無使用者可見故障：Fallback chain was exhausted = 0 次。\n【check_rule】失敗統計一律去重（session＋秒＋attempt）並讀 error body；429 要分「速率上限」vs「餘額耗盡」；回報影響前先查全鏈失敗計數。"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "修正",
+  "item": "Notion 決策狀態寫入修復（狀態併入摘要）＋兩個附帶 bug；DS 取代本輪 CIO 審查",
+  "detail": "【問題】Notion 分析庫（實際 85 筆，非我先前誤稱的 1400 筆 — 那是 dashboard_decisions.json 的行數）沒有「狀態」屬性 → notion_decision_logger.py 的 status 參數從未寫入（只印 stdout）；complete() 更是 PATCH 不存在的屬性＝永遠失敗的無效碼。\n【修法】新增 _with_status()：狀態自動併進摘要（冪等；**先讓出空間再截斷**，確保狀態行不被切掉）；log_decision()/complete() 都走它。附帶修：cio_opslog_sync 執行狀態 '已完成'→'完成'（止住同義選項增殖）；notion_ai_summary 讀不存在的「時間戳記」→ 改讀 created_time（修前「今日決策」會列全部歷史）。\n【審查】本輪 Gemini 對 >8k token 請求一律 429（實測 ≤1.7k 可過；委派子代理每次約 42k tokens）→ 經使用者核可改用 DS（deepseek-v4-flash, temp=0）直呼 API 審查 → 結論「核准」6 項全過；依其建議 #2 補上截斷保護，回歸測試 8/8（含 1995/2000 字邊界）。\n【驗證】E2E：寫測試頁→讀回摘要含狀態行→complete() 追加→測試頁已封存。\n【待辦】分析庫無自動清理機制（僅 7/18 手動清過重複；現存 3 組重複殘留）→ 另案提案。"
  }
 ]

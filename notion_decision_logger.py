@@ -32,14 +32,20 @@ STATUS_PREFIX = "狀態："
 
 def _with_status(summary, status, today):
     """把狀態併進摘要文字（分析庫沒有「狀態」屬性，見 decision-governance 技能）。
-    冪等：同一狀態行已存在就不重複附加；輸出上限 2000 字元（Notion rich_text 單段限制）。"""
+    冪等：同一狀態行已存在就不重複附加。
+    ⚠️ 狀態行一定保留：先讓出空間再截斷，避免摘要接近 2000 字時把剛附加的狀態行切掉
+    （CIO 審查 2026-09-14 建議 #2）。"""
     summary = summary or ""
     if not status:
         return summary[:2000]
     line = f"{STATUS_PREFIX}{status}（{today}）"
-    if line not in summary:
-        summary = (summary.rstrip() + "\n" + line) if summary.strip() else line
-    return summary[:2000]
+    if line in summary:
+        return summary[:2000]
+    head = summary.rstrip()
+    if not head:
+        return line[:2000]
+    room = max(0, 2000 - len(line) - 1)      # 留 1 字元給換行
+    return (head[:room] + "\n" + line)[:2000]
 
 
 def log_decision(title, summary, detail="", tags="", status="⚡ 執行中"):
