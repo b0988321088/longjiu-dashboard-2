@@ -1,0 +1,971 @@
+{
+ "generated": "2026-09-14",
+ "index_count": 237,
+ "index_bytes": 27798,
+ "never_used_count": 119,
+ "never_used_bytes": 12692,
+ "used": [
+  [
+   "longjiu-error-register",
+   57
+  ],
+  [
+   "gmail-management",
+   40
+  ],
+  [
+   "ai-api-cost-monitoring",
+   29
+  ],
+  [
+   "google-workspace",
+   28
+  ],
+  [
+   "daily-deploy-pipeline",
+   28
+  ],
+  [
+   "memory-activation-strategy",
+   27
+  ],
+  [
+   "screenshot-update-sop",
+   25
+  ],
+  [
+   "screenshot-data-extraction",
+   24
+  ],
+  [
+   "daily-report-deploy",
+   23
+  ],
+  [
+   "calendar-management",
+   21
+  ],
+  [
+   "hermes-agent",
+   17
+  ],
+  [
+   "asset-penetration-update-sop",
+   17
+  ],
+  [
+   "moneybook-processing",
+   16
+  ],
+  [
+   "deploy-checklist",
+   14
+  ],
+  [
+   "decision-governance",
+   14
+  ],
+  [
+   "notion",
+   13
+  ],
+  [
+   "longjiu-gmail-pipeline",
+   13
+  ],
+  [
+   "mb-zip-extraction",
+   13
+  ],
+  [
+   "rebalance-monitoring-sop",
+   13
+  ],
+  [
+   "debt-restructure-execution",
+   13
+  ],
+  [
+   "himalaya",
+   12
+  ],
+  [
+   "dashboard-single-source",
+   11
+  ],
+  [
+   "report-regeneration-pipeline",
+   10
+  ],
+  [
+   "screenshot-identification",
+   10
+  ],
+  [
+   "professional-presentation",
+   9
+  ],
+  [
+   "deployment-output-validation",
+   9
+  ],
+  [
+   "dynamic-asset-allocation",
+   9
+  ],
+  [
+   "daily-report-pipeline",
+   8
+  ],
+  [
+   "emergency-to-daily-report",
+   8
+  ],
+  [
+   "longjiu-cashflow-analysis",
+   8
+  ],
+  [
+   "insurance-relay-calendar",
+   8
+  ],
+  [
+   "data-pipeline-automation",
+   7
+  ],
+  [
+   "longjiu-adaptive-presentation",
+   7
+  ],
+  [
+   "passive-income-display-rules",
+   7
+  ],
+  [
+   "investment-philosophy",
+   7
+  ],
+  [
+   "longjiu-income-calculation",
+   7
+  ],
+  [
+   "macro-regime-daa-v3",
+   7
+  ],
+  [
+   "longjiu-dashboard-deploy",
+   6
+  ],
+  [
+   "team-memory",
+   6
+  ],
+  [
+   "longjiu-delivery-protocol",
+   6
+  ],
+  [
+   "financial-report-calibration",
+   6
+  ],
+  [
+   "cioreview-sop",
+   6
+  ],
+  [
+   "hermes-gateway-troubleshooting",
+   6
+  ],
+  [
+   "family-finance",
+   5
+  ],
+  [
+   "email",
+   5
+  ],
+  [
+   "longjiu-daily-report",
+   5
+  ],
+  [
+   "systematic-debugging",
+   5
+  ],
+  [
+   "report-editing-safety",
+   5
+  ],
+  [
+   "user-delivery-workflow",
+   5
+  ],
+  [
+   "skill-library-audit",
+   5
+  ],
+  [
+   "taiwan-fund-research",
+   5
+  ],
+  [
+   "yahoo-finance-data-fetch",
+   5
+  ],
+  [
+   "pipeline-sync-patterns",
+   5
+  ],
+  [
+   "session-bloat-watchdog",
+   5
+  ],
+  [
+   "computer-use",
+   4
+  ],
+  [
+   "software-development/longjiu-dashboard-deploy",
+   4
+  ],
+  [
+   "longjiu-notion-finance-hub",
+   4
+  ],
+  [
+   "requesting-code-review",
+   4
+  ],
+  [
+   "plan",
+   4
+  ],
+  [
+   "longjiu-daily-governance",
+   4
+  ],
+  [
+   "asset-management-architecture",
+   4
+  ],
+  [
+   "hermes-workflow-sop",
+   4
+  ],
+  [
+   "windows-msys-path-wrapper",
+   4
+  ],
+  [
+   "asset-diff-monitor-patterns",
+   4
+  ],
+  [
+   "buffett-style-asset-analysis",
+   4
+  ],
+  [
+   "github-contents-api-fallback",
+   4
+  ],
+  [
+   "local-video-editing",
+   4
+  ],
+  [
+   "rebalance-monitoring-system",
+   4
+  ],
+  [
+   "cron-script-validation",
+   4
+  ],
+  [
+   "longjiu-pipeline-governance",
+   4
+  ],
+  [
+   "fund-component-breakdown",
+   4
+  ],
+  [
+   "institutional-flow-radar",
+   4
+  ],
+  [
+   "moneybook-reconciliation",
+   4
+  ],
+  [
+   "radar-data-sync",
+   4
+  ],
+  [
+   "data-contract",
+   3
+  ],
+  [
+   "ocr-and-documents",
+   3
+  ],
+  [
+   "daily-report-c-mode-review",
+   3
+  ],
+  [
+   "cron-optimization-plan",
+   3
+  ],
+  [
+   "hermes-cron-windows-debug",
+   3
+  ],
+  [
+   "travel-video-pipeline",
+   3
+  ],
+  [
+   "delivery-protocol",
+   3
+  ],
+  [
+   "python-rendering-pitfalls",
+   3
+  ],
+  [
+   "fund-component-penetration",
+   3
+  ],
+  [
+   "asset-defense-positioning",
+   3
+  ],
+  [
+   "pre-delivery-review",
+   3
+  ],
+  [
+   "dashboard-sync-optimization",
+   3
+  ],
+  [
+   "comfyui",
+   2
+  ],
+  [
+   "heartmula",
+   2
+  ],
+  [
+   "dragon-economic-filing",
+   2
+  ],
+  [
+   "report-formatting-rules",
+   2
+  ],
+  [
+   "google-oauth-token-reauth",
+   2
+  ],
+  [
+   "ai-video-pipeline",
+   2
+  ],
+  [
+   "ktv-short-video",
+   2
+  ],
+  [
+   "longjiu-asset-reporting",
+   2
+  ],
+  [
+   "asset-sync-verification",
+   2
+  ],
+  [
+   "delegation-protocol",
+   2
+  ],
+  [
+   "code-modification-safety",
+   2
+  ],
+  [
+   "humanizer",
+   2
+  ],
+  [
+   "dynamic-report-review-sop",
+   2
+  ],
+  [
+   "asset-diff-rendering-pitfalls",
+   2
+  ],
+  [
+   "monthly-truth-day",
+   2
+  ],
+  [
+   "hermes-context-cost-control",
+   2
+  ],
+  [
+   "monitor-noise-governance",
+   2
+  ],
+  [
+   "cron-git-commit-scope",
+   2
+  ],
+  [
+   "longjiu-calendar-sync",
+   2
+  ],
+  [
+   "claude-code",
+   1
+  ],
+  [
+   "hunter-intel-readable-format",
+   1
+  ],
+  [
+   "daily-report-styler",
+   1
+  ],
+  [
+   "asset-diff-daily-web",
+   1
+  ],
+  [
+   "youtube-content",
+   1
+  ],
+  [
+   "debt-restructure-arbitrage-engine",
+   1
+  ],
+  [
+   "agent-delegation-strategy",
+   1
+  ],
+  [
+   "cron-session-reset",
+   1
+  ],
+  [
+   "radar-report-sync",
+   1
+  ],
+  [
+   "gics-industry-penetration",
+   1
+  ],
+  [
+   "dashboard-mobile-pitfalls",
+   1
+  ],
+  [
+   "fix-duplicate-cron-alerts",
+   1
+  ],
+  [
+   "refinance-deck-v5-pipeline",
+   1
+  ],
+  [
+   "longjiu-closeout-audit",
+   1
+  ],
+  [
+   "hermes-storage-maintenance",
+   1
+  ],
+  [
+   "cio-pre-delivery-review",
+   1
+  ]
+ ],
+ "never_used": [
+  {
+   "name": "investment-due-diligence-red-flags",
+   "bytes": 198
+  },
+  {
+   "name": "investment-offer-red-flags",
+   "bytes": 191
+  },
+  {
+   "name": "video-studio-pipeline",
+   "bytes": 181
+  },
+  {
+   "name": "holdings-os",
+   "bytes": 177
+  },
+  {
+   "name": "character-consistency-in-ai-animation",
+   "bytes": 174
+  },
+  {
+   "name": "personal-investment-os",
+   "bytes": 170
+  },
+  {
+   "name": "business-strategy-planning",
+   "bytes": 170
+  },
+  {
+   "name": "monthly-rollover-calibration",
+   "bytes": 168
+  },
+  {
+   "name": "true-value-calibration",
+   "bytes": 167
+  },
+  {
+   "name": "ad-hoc-testing-with-mocks",
+   "bytes": 164
+  },
+  {
+   "name": "longjiu-v2-sot-system",
+   "bytes": 161
+  },
+  {
+   "name": "ai-video-cost-governance",
+   "bytes": 160
+  },
+  {
+   "name": "andrej-karpathy-perspective",
+   "bytes": 159
+  },
+  {
+   "name": "asset-ledger-reporting",
+   "bytes": 159
+  },
+  {
+   "name": "insurance-protection-review",
+   "bytes": 158
+  },
+  {
+   "name": "huashu-nuwa",
+   "bytes": 155
+  },
+  {
+   "name": "elon-musk-perspective",
+   "bytes": 155
+  },
+  {
+   "name": "multi-agent-coordination",
+   "bytes": 154
+  },
+  {
+   "name": "financial-intel-summarization",
+   "bytes": 153
+  },
+  {
+   "name": "sun-yuchen-perspective",
+   "bytes": 152
+  },
+  {
+   "name": "zhang-yiming-perspective",
+   "bytes": 151
+  },
+  {
+   "name": "ilya-sutskever-perspective",
+   "bytes": 149
+  },
+  {
+   "name": "static-dashboard-live-rendering",
+   "bytes": 149
+  },
+  {
+   "name": "patch-tool-best-practices",
+   "bytes": 147
+  },
+  {
+   "name": "taiwan-wealth-dashboard",
+   "bytes": 146
+  },
+  {
+   "name": "financial-daily-briefing",
+   "bytes": 146
+  },
+  {
+   "name": "monthly-income-caliber",
+   "bytes": 142
+  },
+  {
+   "name": "naval-perspective",
+   "bytes": 141
+  },
+  {
+   "name": "munger-perspective",
+   "bytes": 141
+  },
+  {
+   "name": "steve-jobs-perspective",
+   "bytes": 141
+  },
+  {
+   "name": "longjiu-workflow-best-practices",
+   "bytes": 134
+  },
+  {
+   "name": "data-quality-checklist",
+   "bytes": 134
+  },
+  {
+   "name": "trump-perspective",
+   "bytes": 132
+  },
+  {
+   "name": "financial-content-creation",
+   "bytes": 131
+  },
+  {
+   "name": "daily-report-html-restructure",
+   "bytes": 130
+  },
+  {
+   "name": "skill-compound-plan",
+   "bytes": 130
+  },
+  {
+   "name": "longjiu-presentation-templates",
+   "bytes": 128
+  },
+  {
+   "name": "delegation-safety",
+   "bytes": 127
+  },
+  {
+   "name": "taleb-perspective",
+   "bytes": 126
+  },
+  {
+   "name": "mrbeast-perspective",
+   "bytes": 126
+  },
+  {
+   "name": "zhangxuefeng-perspective",
+   "bytes": 126
+  },
+  {
+   "name": "notion-workspace-ops",
+   "bytes": 124
+  },
+  {
+   "name": "rent-data-dynamic-workflow",
+   "bytes": 121
+  },
+  {
+   "name": "daily-briefing-system",
+   "bytes": 120
+  },
+  {
+   "name": "feynman-perspective",
+   "bytes": 119
+  },
+  {
+   "name": "paul-graham-perspective",
+   "bytes": 118
+  },
+  {
+   "name": "three-source-verification",
+   "bytes": 118
+  },
+  {
+   "name": "longjiu-pipeline-optimization",
+   "bytes": 116
+  },
+  {
+   "name": "python-script-debugging-and-rss-fetching",
+   "bytes": 108
+  },
+  {
+   "name": "delegation-guidelines",
+   "bytes": 105
+  },
+  {
+   "name": "no-hardcode-mandate",
+   "bytes": 104
+  },
+  {
+   "name": "x-mastery-mentor",
+   "bytes": 104
+  },
+  {
+   "name": "daily-briefing-and-fire",
+   "bytes": 102
+  },
+  {
+   "name": "github-push-protection-recovery",
+   "bytes": 99
+  },
+  {
+   "name": "three-source-auto-sync",
+   "bytes": 99
+  },
+  {
+   "name": "financial-reporting-automation",
+   "bytes": 98
+  },
+  {
+   "name": "streamlit-dashboard-deployment",
+   "bytes": 98
+  },
+  {
+   "name": "python-pptx-chart-localization",
+   "bytes": 98
+  },
+  {
+   "name": "hermes-agent-skill-authoring",
+   "bytes": 93
+  },
+  {
+   "name": "document-to-action-items",
+   "bytes": 91
+  },
+  {
+   "name": "team-mindset-and-evolution",
+   "bytes": 91
+  },
+  {
+   "name": "node-inspect-debugger",
+   "bytes": 88
+  },
+  {
+   "name": "popular-web-designs",
+   "bytes": 87
+  },
+  {
+   "name": "hermes-desktop-plugins",
+   "bytes": 87
+  },
+  {
+   "name": "product-price-monitor",
+   "bytes": 87
+  },
+  {
+   "name": "architecture-diagram",
+   "bytes": 86
+  },
+  {
+   "name": "competitor-news-monitor",
+   "bytes": 86
+  },
+  {
+   "name": "weekly-review-planning",
+   "bytes": 86
+  },
+  {
+   "name": "portfolio-tracking",
+   "bytes": 86
+  },
+  {
+   "name": "baoyu-infographic",
+   "bytes": 85
+  },
+  {
+   "name": "blocked-page-recovery",
+   "bytes": 85
+  },
+  {
+   "name": "meeting-action-items",
+   "bytes": 85
+  },
+  {
+   "name": "grounded-citations",
+   "bytes": 84
+  },
+  {
+   "name": "email-inbox-triage",
+   "bytes": 84
+  },
+  {
+   "name": "inspecting-hermes-desktop-dom",
+   "bytes": 83
+  },
+  {
+   "name": "test-driven-development",
+   "bytes": 82
+  },
+  {
+   "name": "reddit-reading",
+   "bytes": 82
+  },
+  {
+   "name": "github-repo-management",
+   "bytes": 80
+  },
+  {
+   "name": "github-issues",
+   "bytes": 80
+  },
+  {
+   "name": "codebase-inspection",
+   "bytes": 80
+  },
+  {
+   "name": "github-pr-workflow",
+   "bytes": 79
+  },
+  {
+   "name": "claude-design",
+   "bytes": 78
+  },
+  {
+   "name": "jupyter-live-kernel",
+   "bytes": 78
+  },
+  {
+   "name": "ascii-video",
+   "bytes": 77
+  },
+  {
+   "name": "blogwatcher",
+   "bytes": 77
+  },
+  {
+   "name": "github-code-review",
+   "bytes": 76
+  },
+  {
+   "name": "songwriting-and-ai-music",
+   "bytes": 76
+  },
+  {
+   "name": "design-md",
+   "bytes": 76
+  },
+  {
+   "name": "airtable",
+   "bytes": 75
+  },
+  {
+   "name": "github-auth",
+   "bytes": 75
+  },
+  {
+   "name": "yuanbao",
+   "bytes": 75
+  },
+  {
+   "name": "obsidian",
+   "bytes": 75
+  },
+  {
+   "name": "hermes-themes",
+   "bytes": 74
+  },
+  {
+   "name": "rss-feeds",
+   "bytes": 74
+  },
+  {
+   "name": "openhue",
+   "bytes": 73
+  },
+  {
+   "name": "excalidraw",
+   "bytes": 72
+  },
+  {
+   "name": "dogfood",
+   "bytes": 72
+  },
+  {
+   "name": "nano-pdf",
+   "bytes": 72
+  },
+  {
+   "name": "songsee",
+   "bytes": 71
+  },
+  {
+   "name": "pretext",
+   "bytes": 70
+  },
+  {
+   "name": "docx",
+   "bytes": 70
+  },
+  {
+   "name": "opencode",
+   "bytes": 70
+  },
+  {
+   "name": "simplify-code",
+   "bytes": 69
+  },
+  {
+   "name": "manim-video",
+   "bytes": 69
+  },
+  {
+   "name": "sketch",
+   "bytes": 69
+  },
+  {
+   "name": "ascii-art",
+   "bytes": 68
+  },
+  {
+   "name": "spike",
+   "bytes": 68
+  },
+  {
+   "name": "maps",
+   "bytes": 68
+  },
+  {
+   "name": "petdex",
+   "bytes": 68
+  },
+  {
+   "name": "tui-widgets",
+   "bytes": 67
+  },
+  {
+   "name": "github",
+   "bytes": 67
+  },
+  {
+   "name": "box",
+   "bytes": 66
+  },
+  {
+   "name": "powerpoint",
+   "bytes": 66
+  },
+  {
+   "name": "codex",
+   "bytes": 65
+  },
+  {
+   "name": "pdf",
+   "bytes": 64
+  },
+  {
+   "name": "gif-search",
+   "bytes": 64
+  },
+  {
+   "name": "touchdesigner-mcp",
+   "bytes": 63
+  },
+  {
+   "name": "p5js",
+   "bytes": 62
+  },
+  {
+   "name": "xlsx",
+   "bytes": 62
+  }
+ ]
+}
