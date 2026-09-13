@@ -118,5 +118,12 @@
   "tags": "保單轉換,台股連結基金,0056,0050,配息接力",
   "detail": "轉出合計 917,554（B 的 34%），保單內部標的轉換（非提領）→ 保單價值不變、B 的 100萬保單借貸 LTV 不受影響。保留站長：第一站摩根 423,158／第二站M&G 164,599／第三站PIMCO 996,604+黃金 168,030 = B 的 66%。效果：台股 7.6→8.5%、美股 57.2→54.7%、防守 4.4→7.1%、債券 23.6→22.6%、美元曝險 54.4→估 50.9%、新增季配估 +5,257/月。決策卡：policyB_conversion_card_2026-09-12.html",
   "card": "policyB_conversion_card_2026-09-12.html"
+ },
+ {
+  "date": "2026-09-14",
+  "title": "AI 成本治理：context 瘦身 + CER 監控（L1/L4 定案）",
+  "status": "🔄 執行中（9/14 上線）：threshold 0.30／prune 120k／CER 監控已上線；驗證點 9/15 比對 in= 分布與成本帳。未完成＝DS 儲值（8.02 CNY ≈0.8 天，歸零後全流量走 Gemini 12 倍單價）",
+  "tags": "成本治理,compression,DS儲值,CER",
+  "detail": "決策依據：hermes prompt-size（系統提示 52,641 B，技能索引 31,195 B＝55%；工具 schema 35,661 B/21 工具）、agent.log 拆解（9/13：1,807 呼叫／172 turn、p50 context 250k、390M tokens、cache 命中 99%）。省錢槓桿排序：①DS 儲值（12 倍單價差）②context 尺寸 ③呼叫數 ④技能索引（≈0）。回退法：hermes config set compression.threshold 0.5。"
  }
 ]

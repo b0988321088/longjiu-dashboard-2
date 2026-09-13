@@ -77,6 +77,12 @@
       "action": "第一金保單轉換：FJ33 摩根多重收益 → M&G入息A(美元避險月配)F（100%，9/10 完成申請）",
       "status": "⏳ 待生效（T+4 預期 9/16）：9/10 使用者於第一金線上完成申請；生效後才更新 firstjin 成分 + 四源同步 + 穿透重算（8/10 鐵則：提出≠完成，不提前改成分）",
       "tags": "保單,轉換,第一金,M&G入息,配息接力"
+    },
+    {
+        "date": "2026-09-14",
+        "action": "AI 成本治理：context 瘦身（compression threshold 0.30 ＋ 舊工具輸出修剪 120k）＋ CER 監控",
+        "status": "🔄 執行中（9/14 01:30 上線，new session 生效）：驗證點 9/15 比對 agent.log in= p50/p90 與每日成本帳；未完成項＝DS 儲值（餘額 8.02 CNY ≈0.8 天，歸零後全流量走 12 倍單價的 Gemini）",
+        "tags": "成本治理,compression,DS儲值,CER"
     }
   ],
   "decisions": [
@@ -3112,6 +3118,17 @@
       "summary": "台股1,982,782.0 美股11,681,193.0 防守4,525,781.0 債券6,136,220.0 現金861,724.0",
       "status": "completed",
       "source": "auto"
+    },
+    {
+        "id": "dec-20260914-costgov-329",
+      "date": "2026-09-14",
+      "decision": "核准",
+        "timestamp": "2026-09-14T01:22:30+08:00",
+        "agent": "Hermes",
+        "task": "L1/L4 成本治理定案（使用者授權代決：你幫我決定就好了）",
+        "summary": "實測推翻固定成本假設：每次呼叫固定前綴 42k 只占 10-20%，真主體是對話 context（p50 180-345k/呼叫、84-98% 呼叫 >64k、9/13 單日 390M tokens、壓縮門檻 500k）。決定：①技能索引歸檔不做（119 個從未載入全歸檔僅省 11.5% 固定成本 ≈NT$0/天，且會誤刪事件驅動技能）②改打 context：threshold 0.5→0.30、proactive_prune_tokens 0→120000、min_result_chars 8000→6000③CER 無法源頭修（受控實驗 5 組全過）→改監控（每日成本帳加 CER/429 去重計數）",
+        "status": "completed",
+        "source": "user"
     }
   ],
   "meta": {
