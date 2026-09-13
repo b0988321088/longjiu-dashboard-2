@@ -113,7 +113,9 @@ def daily_summary():
     for p in ops:
         name = _extract_title(p)
         status = _extract_text(p, "執行狀態")
-        ts = _extract_text(p, "時間戳記")[:10] if _extract_text(p, "時間戳記") else ""
+        # ops_logs 沒有「時間戳記」屬性（2026-09-14 修）：改讀頁面 created_time，
+        # 否則 ts 永遠為空 → `or not ts` 會讓「今日決策」列出全部歷史紀錄。
+        ts = (p.get("created_time") or "")[:10] or (_extract_text(p, "時間戳記") or "")[:10]
         if today in ts or not ts:
             dec_lines.append(f"  {status} {name}")
     

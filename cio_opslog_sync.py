@@ -42,7 +42,7 @@ chunks = [summary[i:i + 1900] for i in range(0, len(summary), 1900)] or [""]
 props = {
     "事件名稱": {"title": [{"text": {"content": name}}]},
     "來源系統": {"select": {"name": "CIO Adversarial Review"}},
-    "執行狀態": {"select": {"name": "已完成"}},
+    "執行狀態": {"select": {"name": "完成"}},
     "事件分類": {"select": {"name": "戰略審計"}},
     "CIO摘要": {"rich_text": [{"text": {"content": c}} for c in chunks]},
 }

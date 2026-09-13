@@ -27,8 +27,23 @@ HEADERS = {
     "Content-Type": "application/json",
 }
 
+STATUS_PREFIX = "狀態："
+
+
+def _with_status(summary, status, today):
+    """把狀態併進摘要文字（分析庫沒有「狀態」屬性，見 decision-governance 技能）。
+    冪等：同一狀態行已存在就不重複附加；輸出上限 2000 字元（Notion rich_text 單段限制）。"""
+    summary = summary or ""
+    if not status:
+        return summary[:2000]
+    line = f"{STATUS_PREFIX}{status}（{today}）"
+    if line not in summary:
+        summary = (summary.rstrip() + "\n" + line) if summary.strip() else line
+    return summary[:2000]
+
+
 def log_decision(title, summary, detail="", tags="", status="⚡ 執行中"):
-    """寫入一筆決策記錄到 Notion"""
+    """寫入一筆決策記錄到 Notion（狀態併入摘要）"""
     if not TOKEN or not DB_ID:
         print("⚠️ Notion 未設定，略過")
         return ""
@@ -40,7 +55,7 @@ def log_decision(title, summary, detail="", tags="", status="⚡ 執行中"):
             "名稱": {"title": [{"text": {"content": f"{today} {title}"}}]},
             "日期": {"date": {"start": today}},
             "類型": {"select": {"name": "決策記錄"}},
-            "摘要": {"rich_text": [{"text": {"content": (summary or "")[:2000]}}]},
+            "摘要": {"rich_text": [{"text": {"content": _with_status(summary, status, today)}}]},
             "原始報告": {"rich_text": [{"text": {"content": (detail or "")[:2000]}}]},
             "相關資產": {"rich_text": [{"text": {"content": (tags or "")[:2000]}}]},
         },
@@ -61,20 +76,34 @@ def log_decision(title, summary, detail="", tags="", status="⚡ 執行中"):
         print(f"⚠️ Notion 異常: {e}")
         return ""
 
+
 def complete(decision_id):
-    """將決策標記為已完成"""
+    """將決策標記為已完成 — 分析庫沒有「狀態」屬性，故把完成狀態併進摘要（冪等）。"""
     if not decision_id:
         return
     try:
-        requests.patch(
+        r = requests.get(f"https://api.notion.com/v1/pages/{decision_id}",
+                         headers=HEADERS, timeout=10)
+        if r.status_code != 200:
+            print(f"⚠️ 讀取頁面失敗: {r.status_code}")
+            return
+        cur = "".join(t.get("plain_text", "") for t in
+                      r.json().get("properties", {}).get("摘要", {}).get("rich_text", []))
+        today = datetime.date.today().isoformat()
+        new = _with_status(cur, "✅ 已完成", today)
+        if new == cur:
+            print("ℹ️ 摘要已含完成狀態，略過")
+            return
+        p = requests.patch(
             f"https://api.notion.com/v1/pages/{decision_id}",
             headers=HEADERS,
-            json={"properties": {"狀態": {"select": {"name": "✅ 已完成"}}}},
+            json={"properties": {"摘要": {"rich_text": [{"text": {"content": new}}]}}},
             timeout=10,
         )
-        print("✅ 決策狀態 → ✅ 已完成")
-    except:
-        pass
+        print("✅ 決策狀態 → 摘要追加「✅ 已完成」" if p.status_code == 200
+              else f"⚠️ 狀態更新失敗: {p.status_code} {p.text[:80]}")
+    except Exception as e:
+        print(f"⚠️ 狀態更新異常: {e}")
 
 if __name__ == "__main__":
     # CLI mode: python notion_decision_logger.py "title" "summary" "detail" "tags" "status"
