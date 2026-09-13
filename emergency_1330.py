@@ -1,7 +1,7 @@
 """龍九台股緊急應變 13:00 — 刷新情報 + 彙整 + 三份產出"""
-import subprocess, sys, json
+import subprocess, sys, json, re
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, date
 import requests # Added for Yahoo Finance API call
 
 LJ = Path.home() / "Desktop" / "longjiu_system"
@@ -217,6 +217,33 @@ run_step("更新 snapshot", [sys.executable, "-c",
     f"import json; p=r'{LJ}/snapshot.json'; s=json.loads(open(p).read()); print('snapshot 已讀取')"], 15)
 
 # 寫入緊急應變分析 JSON（供日報第5章讀取）
+# 新增：動態讀取 buffett_cto_report，注入 LLM 分析
+def _get_llm_analysis_snippet(today_str: str) -> str:
+    cto_report_path = LJ / f"buffett_cto_report_{today_str}.md"
+    if not cto_report_path.exists():
+        return "LLM 分析報告缺失，請確認 buffett_cto_analyzer.py 已執行。"
+    try:
+        content = cto_report_path.read_text(encoding="utf-8")
+        buffett_match = re.search(r"巴菲特式思考（動態穿透模型）\n(.*?)CTO 技術視角", content, re.DOTALL)
+        cto_match = re.search(r"CTO 技術視角\n(.*?)再平衡", content, re.DOTALL)
+        
+        snippet = ""
+        if buffett_match:
+            snippet += "【巴菲特式思考】\n" + buffett_match.group(1).strip() + "\n\n"
+        if cto_match:
+            snippet += "【CTO 技術視角】\n" + cto_match.group(1).strip() + "\n\n"
+            
+        snippet = re.sub(r"• 主要偏離：💻 科技 不足 -[0-9.]+pp", "", snippet)
+        snippet = re.sub(r"• 總投資部位：[0-9,]+ TWD", "", snippet)
+        snippet = "\n".join(line.strip() for line in snippet.splitlines() if line.strip())
+        return snippet.strip()
+    except Exception as e:
+        print(f"⚠️ 讀取/解析 buffett_cto_report_{today_str}.md 失敗: {e}")
+        return "LLM 分析報告讀取失敗。"
+
+today_str = date.today().isoformat()
+cto_report_snippet = _get_llm_analysis_snippet(today_str)
+
 _ts = datetime.now().strftime("%Y-%m-%d %H:%M")
 _snap = json.loads((LJ / "snapshot.json").read_text("utf-8"))
 _sec = _snap.get("securities_total_market_value", 0)
@@ -237,25 +264,23 @@ _analysis = {
         f"📅 {_ts}\n\n"
         f"【一、市場概況】\n{_taiex_line}\n{_0050_line}\n{_00878_line}\n\n"
         f"【二、持倉關聯】\n證券市值 {_sec:,} TWD\n\n"
-        f"【三、資產配置】\n請參閱完整報告\n\n"
+        f"【三、資產配置】\n{cto_report_snippet}\n\n"
         f"【四、應變建議】\n市場波動時保持理性，避免恐慌性交易。\n"
         f"數據來源：Yahoo Finance"
     ),
 }
-# 2026-08-10 修正：極簡版不得覆寫完整版（曾因測試觸發覆蓋 21:36 美股完整版 3,809字→232字）
-# 判別：完整版 full_report >1500 字（品質鐵則），極簡版 <300 字 → 極簡版只寫「沒有完整版」時
-_jf = LJ / "data" / "emergency_llm_analysis.json"
-_write = True
-try:
-    if _jf.exists():
-        _old = json.loads(_jf.read_text(encoding="utf-8"))
-        _old_len = len(str(_old.get("full_report", "")))
-        if _old_len > 1500:  # 已有完整版（agent 產出），極簡版不覆寫
-            _write = False
-            print(f"⏭️ 既有完整分析 {_old_len} 字（{_old.get('generated_at')}），極簡版跳過覆寫")
-except Exception:
-    pass
+
 if _write:
+    # 修改 full_report 內容，加入 LLM 分析摘要
+    _analysis["full_report"] = (
+        f"🚨 龍九控股 — 台股緊急應變報告 🚨\n"
+        f"📅 {_ts}\n\n"
+        f"【一、市場概況】\n{_taiex_line}\n{_0050_line}\n{_00878_line}\n\n"
+        f"【二、持倉關聯】\n證券市值 {_sec:,} TWD\n\n"
+        f"【三、資產配置】\n{cto_report_snippet}\n\n"
+        f"【四、應變建議】\n市場波動時保持理性，避免恐慌性交易。\n"
+        f"數據來源：Yahoo Finance"
+    )
     (LJ / "data" / "emergency_llm_analysis.json").write_text(
         json.dumps(_analysis, ensure_ascii=False, indent=2), "utf-8")
     print("✅ 緊急應變分析已寫入 data/emergency_llm_analysis.json")

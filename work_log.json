@@ -424,5 +424,17 @@
   "category": "完成",
   "item": "省錢分流方案 A/B/D 落地（watchdog v6.11 + context 成本紀律 + DS 餘額門檻改版）",
   "detail": "背景：9/13 實測 fallback 代答（DS 被內容過濾擋→Gemini 吃 15.8 萬 token 全 context）單日 NT$41.7，同 token 走 DS 快取價（$0.007/M）只要 NT$5（8 倍差）；全站當日約 NT$60（DS 17.9 / Gemini 42.1）。使用者核准 A/B/D 三項：A1 watchdog v6.11 ❗升級門檻 3h→連續 2 輪 fallback（節流 6h→2h，state fb_rounds 同一失敗不重複計、閒置>6h 歸零），文案引導 /new 開新對話（DS 接手、成本約 1/8）或 /model gemini-2.5-flash；沙箱 53 檢查全 PASS（新增 Q5/Q6/Q7）、真 dry-run 靜默 exit 0、備份 .bak-20260913-v610。B 每輪 context 成本紀律（大輸出寫檔不進 context、重任務 subagent 隔離、長對話及早 /new）寫入 hermes-context-cost-control 技能。D ds_balance_alert.py v2：門檻 50CNY/7天→≤12CNY 或自算剩餘≤2天（近 3 筆餘額差額算日耗，不信 cost_monitor 0 天哨兵；可用 LJ_DS_BAL_THRESHOLD/LJ_DS_DAYS_THRESHOLD 覆寫測試），訊息含 ¥100 建議與「DS 斷線→全走 Gemini 成本×2-3」理由；已同步兩份（longjiu_system + hermes/scripts）並 resume cron 5b2209a814db（下次 9/14 09:00）。待核：C cron 減量（候選 晨間自動化22 / 收工登錄15.8 / 技能審查14.9 / budgeting13.2，估月省 NT$100-150）與 E 每日 token 帳。docstring/技能×3/error_register INC-158 已同步"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "完成",
+  "item": "省錢分流方案 C：三支 agent cron 改 no_agent 零成本（含修 regenerate_report.py 連結 bug）",
+  "detail": "提案更正：原提的 monitor gate 對此類「輸入每天變」的 job 無效（gate 永遠放行）→ 正解是 no_agent 化，因工作早已被腳本做完。實作：(1) morning_deploy.py 取代 07:00 晨間自動化（6f4e4b91262c，原 13 天 NT$22）：跑 regenerate_report.py（含產出檢查/CIO 審查/commit/push/Pages 驗證）後抽日報/差異分析/儀表板三連結+snapshot 資料日與現金/保單/配息，失敗非零碼告警；順手修上游 bug — regenerate_report.py 418 行緊急應變連結印成 WindowsPath 清單（_latest_er 在 320 行被 rebound，應用 _er_name）。(2) closing_log.py 取代 21:40 收工登錄（2a44a680bec1，NT$15.8）：讀 dashboard_decisions 今日完成項+pending 待辦，item 前 25 字元去重（含前綴重複）append work_log.json，寫前備份/寫後驗證/失敗還原。(3) budget_weekly_alert.py 取代週四 18:30 budgeting（cccd9faf5428，NT$13.2）：跑 budget_daily_check.py（自算超支率與 P1/P2 並寫 MD），只在異常時輸出摘要。三支各在 longjiu_system+hermes/scripts 兩份、cron deliver=origin。實測：預算摘要 ✓、收工登錄去重/備份/靜默 ✓、晨間真跑 4 連結 200+緊急應變連結已修 ✓、DRY 防禦（WindowsPath 過濾）✓、cron 觸發驗證已送。估省 NT$112/月（cron 16.5→12.5/日）。技能 screenshot-update-sop 日排程表、ai-api-cost-monitoring 方案表、error_register INC-158 已同步"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "完成",
+  "item": "省錢分流方案 E：每日 AI 成本帳上線（no_agent，cron 0aa33e190bae 22:30）",
+  "detail": "新增 daily_token_account.py（longjiu_system + hermes/scripts 兩份，零 API）：讀 logs/agent.log(+.1) 今日 API call 行 → 每模型 in/cached/out 與 NT$ 估價（DS 尖峰×2、快取價 $0.007/M；Gemini 無尖離峰）＋ cron/usage_audit.jsonl 今日 fires（ts 為 UTC，+8h 換台北日）＋ cost_log.csv 算 DS 餘額與剩餘天數。輸出：各模型金額、DS/Gemini 分帳與 Gemini 佔比（目標 <30%）、cron 佔比與耗最多 job（上界）、DS 餘額。實測今日：DS NT$23.6／Gemini NT$42.2（佔 64%）／合計 NT$65.8，cron 2 fires ≈NT$8.4，DS 餘額 17.72 CNY 約剩 2.1 天 — 建立分流後可對比的基線。技能 screenshot-update-sop 日排程表、ai-api-cost-monitoring 方案表/費率、error_register INC-158 已同步。至此省錢分流 A/B/C/D/E 五項全部落地"
  }
 ]

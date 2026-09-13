@@ -103,8 +103,8 @@ if _ej.exists():
     # 加入緊急應變連結（自動找最新可用檔案）
     _emergency_files = sorted(BASE.glob("emergency_report_2*.html"), reverse=True)
     _taiex_files = sorted(BASE.glob("emergency_taiex_report_2*.html"), reverse=True)
-    _latest_er = _emergency_files[0].stem if _emergency_files else None
-    _latest_tr = _taiex_files[0].stem if _taiex_files else None
+    _latest_er = _emergency_files[0].name if _emergency_files else None
+    _latest_tr = _taiex_files[0].name if _taiex_files else None
     if _latest_er:
         _railway_link = "https://b0988321088.github.io/longjiu-dashboard-2/%s.html" % _latest_er
         _emergency_html += '<br><a href="%s" target="_blank" style="display:inline-block;margin-top:10px;color:#34D399;font-weight:bold">📄 檢視完整 LLM 緊急應變報告 →</a>' % _railway_link
@@ -415,7 +415,7 @@ print(f'🔄 再平衡儀表板: https://b0988321088.github.io/longjiu-dashboard
 print('🏠 儀表板:    https://b0988321088.github.io/longjiu-dashboard-2/')
 print(f'📈 差異分析:  https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html')
 print(f'📊 穿透分析:  https://b0988321088.github.io/longjiu-dashboard-2/{_pen_file or f"penetration_report_{TODAY}.html"}')
-_emergency_link = f"emergency_report_{TODAY}.html" if Path(f"emergency_report_{TODAY}.html").exists() else (_latest_er if _latest_er else "無（週末不產出）")
+_emergency_link = _er_name  # v6 修正 2026-09-13：_latest_er 在 320 行已被 rebound 成 Path 清單，這裡必須用 _er_name（檔名字串），否則印出 WindowsPath 清單
 print(f'🚨 緊急應變:  https://b0988321088.github.io/longjiu-dashboard-2/{_emergency_link}')
 
 import sys

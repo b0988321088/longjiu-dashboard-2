@@ -55,6 +55,20 @@
 - 修正：watchdog v6.7（INC-151）WARN/runaway 跳過 ended session，CRIT/AUTO 不動；沙箱 29 檢查全 PASS、真實 dry-run 靜默
 - 狀態：✅ 已修正
 
+## INC-2026-09-13（INC-158）watchdog v6.9 — 備援代答被誤判「卡死」，四次自動重置腰斬進行中對話
+- 時間：2026-09-13 15:09 / 15:19 / 15:30 / 15:46（同日 4/4 用盡日上限）
+- 錯誤：Session 膨脹監控連續自動重置四顆**正常工作中**的 Telegram session，使用者需反覆說「繼續未完成的優化」
+- 根因：v6.3 的 `last_fail_seen`「45 分鐘內連續失敗 = dead」判準，遇上「DS 內容過濾每輪都擋、但 Gemini fallback 每輪都救回」的對話一律判死。實證：四顆的 CER 後 1-5 秒都有同 sid 的 Gemini `API call #N` 成功回傳（8/6/5/7 輪 ≥ CER 數），turn 皆 `Turn ended reason=text_response`。真因是 payload 內容觸發 DS 過濾庫（財務資料 + 15.8 萬 token 工具輸出；新 session 開不到 6 分鐘照樣被擋）→ 重置治不了，只腰斬工作
+- 修正：watchdog v6.9（INC-158）dead 判定前加 `fallback_completed_since()` 前置關卡 — 失敗行後 15 分鐘內有非 deepseek 的 `API call #` 成功回傳 → 一律 alive 只推 ⚠️（persistent 不得覆蓋）；沒有這種行（備援也掛）才照舊判 dead 重置。⚠️ 文案加「連續 45 分鐘以上擋同一對話 → 建議改用 Gemini 主模型或開新對話」
+- 驗證：沙箱 43 檢查全 PASS（新增情境 M 9/13 誤殺重現、N 備援也掛仍重置、O persistent 不覆蓋）；真 agent.log 重播四顆全部命中備援證據；真實 dry-run 靜默（stdout 空、exit 0）。備份 `session_bloat_watch.py.bak-20260913-v68`
+- check_rule：CER 之後的卡死判準要看「備援有沒有真的回完（非 DS 的 `API call #`）」，不是「有沒有新訊息」也不是「有沒有啟動 fallback」；內容觸發型 CER（新 session 數分鐘內再犯）**不可用重置處理**
+- CIO 複審（Gemini，deleg_ef2fb51a，2026-09-13 15:58）：**5 PASS / 2 PARTIAL / 0 FAIL**。缺口①「長期備援代答無升級機制」、缺口②「尾 2MB 掃描量是硬假設，agent.log 15 分鐘內長超 2MB 或輪替會漏證據 → 誤判卡死」→ 當日一次補完為 **v6.10**：⑬ `_scan_fb_window()` 擴讀（2MB→8MB→…→32MB）＋回頭讀 `agent.log.1`；⑭ `note_fb_escalation()` 連續備援代答 ≥3h → ❗ 升級告警（建議該對話 `/model gemini-2.5-flash` 或另開對話）、6h 節流、只通知不重置。沙箱擴至 **50 檢查全 PASS**（新增 P 尾窗不足擴讀、Q 4h 升級+節流、R 未滿 3h 不升級）；真 log 重播四顆仍全命中（耗時 0.05s／3.1MB）；dry-run 靜默 exit 0。備份 `.bak-20260913-v69`
+- 狀態：✅ 已修正（v6.9 → v6.10 → v6.11，CIO 複審缺口 + 省錢分流已補完）
+- 後續（9/13 省錢分流方案，使用者核准 A/B/D）：A1 watchdog ❗ 門檻 3h→連續 2 輪（v6.11）；B 每輪 context 成本紀律寫入 `hermes-context-cost-control` 技能；D `ds_balance_alert.py` 門檻改 ≤12 CNY/≤2 天（自算日耗、可覆寫測試）＋ cron 5b2209a814db resume
+- C 項（9/13 核准後執行）：三支 agent cron 改 no_agent 零成本 — 晨間自動化→`morning_deploy.py`（順修 regenerate_report.py 緊急應變連結印 WindowsPath 清單的上游 bug）、收工登錄→`closing_log.py`、週四 budgeting→`budget_weekly_alert.py`；各在 longjiu_system + hermes/scripts 兩份；估省 NT$112/月（cron 16.5→12.5/日）。**更正原提案：monitor gate 對此類「輸入每天變」的 job 無效，正解是 no_agent 化**
+- E 項（9/13 完成）：`daily_token_account.py`（no_agent，cron 0aa33e190bae 22:30）＝本機算今日 AI 成本帳 — 各模型 NT$（DS 尖峰×2/快取價）、DS/Gemini 分帳與 **Gemini 佔比（目標 <30%）**、cron 佔比與耗最多 job、DS 餘額與剩餘天數；資料源 agent.log(+.1)／usage_audit.jsonl／cost_log.csv，零 API。基線 9/13：DS NT$23.6、Gemini NT$42.2（佔 64%）、合計 NT$65.8
+- 省錢分流方案 A/B/C/D/E 五項全部落地（9/13）
+
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
 | 錯誤類型 | 次數 | 首次 | 最後 | 處置 |
