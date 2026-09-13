@@ -53,7 +53,7 @@ checks = [
     ("snapshot 淨值 = asset_diff_history", int(h[T]["net_worth"]) == s["net_worth"]),
     ("信用卡 34,025 一致", s["cc_liability"] == l13[1] == 34025),
     ("9/12 歷史列未被污染", d12 == 30160643),
-    ("應收款備忘 288,000", s["receivables_total"] == 288000 and s["receivables"]["女友借款"] == 288000),
+    ("應收款備忘 290,500", s["receivables_total"] == 290500 and s["receivables"]["女友借款"] == 290500),
     ("負債拆解可完全解釋", sum([s["liabilities_build_up"]["房貸_含國泰"],
                               s["liabilities_build_up"]["保單借貸"],
                               s["liabilities_build_up"]["券商質押"],
@@ -73,7 +73,7 @@ try:
     num = [
         ("線上負債 = 本機", live["total_liabilities"] == s["total_liabilities"]),
         ("線上淨值 = 本機", live["net_worth"] == s["net_worth"]),
-        ("線上有應收款欄位", live.get("receivables_total") == 288000),
+        ("線上有應收款欄位", live.get("receivables_total") == 290500),
     ]
     for name, res in num:
         print(f"  {ok(res)} {name}")

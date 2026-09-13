@@ -96,8 +96,14 @@ PERSONAL_LOAN_PAYDAY_DEFAULT = 5  # 每月 5 號還款（info 沒寫時用）
 def personal_loan_remaining(info: dict, today=None) -> float:
     """女友借款「剩餘本金」=（原始金額 − 月還款 × 已過還款期數）。
 
-    例：300,000（7/25 起、每月 5 號還 6,000）→ 9/13 已過 8/5、9/5 兩期 → 剩 288,000；
-    12/5 最後一期後歸零（之後自動從負債表消失）。寫死 300,000 會一路錯到清償。
+    例：300,000（7/25 起、每月 5 號還 6,000、5% 年息）→ 9/13 已過 8/5、9/5 兩期
+    → 本金 288,000 ＋ 未收利息 2,500（月息 1,250 × 2 期）= **290,500**；
+    12/5 最後一期後歸零（之後自動從應收款消失）。寫死 300,000 會一路錯到清償。
+
+    2026-09-13 補（使用者明示「出款 300,000 含 5% 年利率、已還兩期都沒有算到利息」）：
+    6,000 還款**不含利息**（且使用者裁示 6,000 維持全列收入、不拆帳）→ 利息按月累計為
+    「未收利息」，12/5 清償時一併回收。月息 = 原始金額 × 年息 ÷ 12（單利）× 已過期數
+    （利率欄讀 `snapshot.personal_loans.*.利率`，無此欄或 0% → 不計息）。
     """
     import datetime as _dt
     import re as _re
@@ -131,7 +137,15 @@ def personal_loan_remaining(info: dict, today=None) -> float:
         m += 1
         if m > 12:
             m, y = 1, y + 1
-    return max(0.0, amt - pay * n)
+    _principal = max(0.0, amt - pay * n)
+    if _principal <= 0:
+        return 0.0
+    # 未收利息：月息 = 原始金額 × 年息 ÷ 12（單利，以原始金額計）× 已過期數
+    _m = _re.search(r"([\d.]+)\s*%", str(info.get("利率") or ""))
+    _rate = float(_m.group(1)) if _m else 0.0
+    if _rate <= 0:
+        return _principal
+    return _principal + (amt * _rate / 100.0 / 12.0) * n
 
 
 def cc_unpaid(snap: dict) -> int:
@@ -140,6 +154,40 @@ def cc_unpaid(snap: dict) -> int:
     if not isinstance(cc, dict):
         return 0
     return int(abs(sum(v for v in cc.values() if isinstance(v, (int, float)) and v < 0)))
+
+
+def personal_loan_clearance(info: dict) -> float:
+    """最後清償日應結清金額 = 本金餘（扣到清償日當期為止）＋ 累計未收利息。
+
+    例：300,000／6,000／5% 年息、12/5 清償 → 5 期（8/5…12/5）→ 本金 270,000
+    ＋利息 6,250 = **276,250**。純供備忘明細，不影響資產/負債口徑。
+    """
+    import datetime as _dt
+    import re as _re
+    amt = float(info.get("金額") or 0)
+    pay = float(info.get("月還款") or 0)
+    d0s, dfs = str(info.get("日期") or ""), str(info.get("最後清償") or "").strip()
+    if not (amt and pay and d0s and dfs):
+        return 0.0
+    try:
+        d0, df = _dt.date.fromisoformat(d0s), _dt.date.fromisoformat(dfs)
+    except Exception:
+        return 0.0
+    payday = int(_re.sub(r"\D", "", str(info.get("還款日") or "")) or PERSONAL_LOAN_PAYDAY_DEFAULT)
+    n, y, m = 0, d0.year, d0.month
+    while (y, m) <= (df.year, df.month):
+        try:
+            pd = _dt.date(y, m, payday)
+        except ValueError:
+            pd = None
+        if pd and d0 < pd <= df:
+            n += 1
+        m += 1
+        if m > 12:
+            m, y = 1, y + 1
+    _m = _re.search(r"([\d.]+)\s*%", str(info.get("利率") or ""))
+    _rate = float(_m.group(1)) if _m else 0.0
+    return max(0.0, amt - pay * n) + (amt * _rate / 100.0 / 12.0) * n
 
 
 def rebuild_receivables(snap: dict) -> dict:
@@ -159,10 +207,26 @@ def rebuild_receivables(snap: dict) -> dict:
                 if _r > 0:
                     detail[_k] = int(_r)
     total = sum(detail.values())
+    _clr, _brk = {}, {}
+    if isinstance(pl, dict):
+        for _k, _v in pl.items():
+            if not isinstance(_v, dict):
+                continue
+            if detail.get(_k):
+                _prin = int(personal_loan_remaining({**_v, "利率": "0%"}))   # 同函式、利率歸零 → 只取本金
+                _brk[_k] = {"本金": _prin, "未收利息": detail[_k] - _prin,
+                            "結清日": str(_v.get("最後清償") or ""),
+                            "結清金額": int(personal_loan_clearance(_v))}
+            _c = int(personal_loan_clearance(_v))
+            if _c > 0:
+                _clr[_k] = _c
     snap["receivables"] = detail
     snap["receivables_total"] = total
+    snap["receivables_clearance"] = _clr
+    snap["receivables_breakdown"] = _brk
     snap["receivables_note"] = (
-        f"借出款（應收款，非負債）：{detail}；每月 5 號回收 6,000，12/5 歸零；"
+        f"借出款（應收款，非負債）：{detail}（明細見 receivables_breakdown：本金＋未收利息）；"
+        f"每月 5 號回收 6,000，最後清償日結清 {_clr}；"
         f"{'已併入 total_assets（使用者裁示）' if RECEIVABLES_IN_ASSETS else '使用者 2026-09-13 裁示「不併」：僅列備忘，未計入 total_assets'}")
     if RECEIVABLES_IN_ASSETS:
         _base = int(snap.get("total_assets") or 0) - int(snap.get("_assets_incl_receivables") or 0)
