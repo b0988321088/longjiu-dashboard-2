@@ -243,62 +243,26 @@ def main():
     else:
         _pn_html = ""
 
-    # ── 本週投資計劃（2026-08-29 v2：全資產面結論 — 五桶+衛星+負債+輪動+節點）──
-    try:
-        _pen4 = s.get("penetration", {}).get("actual_pct", {}) or {}
-        _atwd4 = s.get("penetration", {}).get("actual_twd", {}) or {}
-        _dry4 = s.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
-        _usd4 = s.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
-        _hs4 = s.get("hedge_satellite", {}) or {}
-        _rot4 = ((s.get("rotation_recommendation", {}) or {}).get("建議") or [{}])[0]
-        _def4 = s.get("defensive_combined_metric", {}).get("佔比", 69.2)
-        _tw = _pen4.get('台股市值型成長', 7.5); _us = _pen4.get('美股市值型成長', 43.4)
-        _plan_lines = []
-        # ① 台股（缺口）
-        _plan_lines.append(f"🟢 台股（{_tw:.1f}% vs 目標10%，缺口 {_tw-10:+.1f}pp）→ 0050/006208 每週1.5-2萬慢慢買（外資連3買+台幣強升）")
-        # ② 美股（超配）
-        if _us > 45:
-            _plan_lines.append(f"🔴 美股（{_us:.1f}% vs 目標40%，超配 {_us-40:+.1f}pp）→ 逢彈減碼 ≤20萬/次")
-        else:
-            _plan_lines.append(f"⏸️ 美股（{_us:.1f}% vs 目標40%）超配 {_us-40:+.1f}pp 未達減碼觸發（>45%）→ 續持")
-        # ③ 防守（合併口徑）
-        _plan_lines.append(f"⏸️ 防守（合併口徑 {_def4:.1f}% 已足）→ 凍結不追（00878/00713 不加碼）")
-        # ④ 債券
-        _plan_lines.append("⏸️ 債券 23.1% 接近目標25% → 等 US30Y<5.30% 才新增（華許升息1碼估 -0.5~-1.5%）")
-        # ⑤ 現金/乾粉
-        if _rot4.get("產業"):
-            _plan_lines.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry4/10000:.1f}萬 優先「{_rot4.get('產業','—')}」（{_rot4.get('動作','')}）")
-        else:
-            _plan_lines.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry4/10000:.1f}萬 保留（9/5 Gate：CPI/FOMC 前零新增）")
-        # ⑥ 避險衛星
-        if _hs4.get("黃金延後_0829"):
-            _plan_lines.append("⏸️ 避險衛星：黃金A10 32萬 8/30 生效（保單內）；00635U ~105萬 延後（華許放鷹+金價偏高）→ 等回檔")
-        else:
-            _plan_lines.append(f"🟢 避險衛星：黃金現況 {_hs4.get('黃金現況',0):,} → PI 後 00635U 分批 ≤20萬/次")
-        # ⑦ 美元曝險
-        if _usd4 > 55:
-            _plan_lines.append(f"🔴 美元曝險 {_usd4}% 超標（>55%）→ 美股減碼/美元定存到期轉台幣")
-        else:
-            _plan_lines.append(f"🟡 美元曝險 {_usd4}% （目標≤60%）→ 未達減碼閾值，續觀察")
-        # ⑧ 保單轉換（9/2 截止）
-        _plan_lines.append("✅ 保單轉換 9/10 送出（安聯＋第一金同步）→ 轉入 M&G入息A美元避險月配，T+4 預期 9/16 生效")
-        # ⑨ 負債/質押
-        _plan_lines.append(_pf.pledge_status_line())
-        # ⑩ 產業輪動
-        if _rot4.get("產業"):
-            _plan_lines.append(f"📊 產業輪動：買「{_rot4.get('產業','—')}」（{_rot4.get('標的','')}）｜避開「公用事業」")
-        else:
-            _plan_lines.append("📊 產業輪動：無新增建議（醫療已涵蓋；其餘資金流出）→ 乾粉保留等 Gate")
-        _plan_html = "".join(f"<div style=\"margin-bottom:6px;font-size:11px;color:#d1fae5\">{p}</div>" for p in _plan_lines)
-        _plan_html = f"""
-        <div class="card" style="border:1px solid #10b981;background:linear-gradient(135deg,#06281a,#131a26)">
-          <h2>📋 本週投資計劃（8/29 全資產面結論）</h2>
-          {_plan_html}
-        </div>"""
-    except Exception as _e2:
-        _plan_html = f"<div class='card'><h2>📋 本週投資計劃</h2><div style='font-size:11px;color:#f87171'>產生失敗: {_e2}</div></div>"
+    _plan_html = ""
+        # 讀取並構建 HTML
+        html = load_text(INDEX_TEMPLATE)
+        html = html.replace("{_pn_html}", _pn_html)
 
-    # ── 動作建議（8/22：防守合併口徑動態讀）──
+        # ── 本週投資計劃（2026-09-13 v3：動態全資產面結論）──
+        try:
+            _plan_html = ""
+            _rs = json.loads((Path(__file__).resolve().parent / "radar_state.json").read_text(encoding="utf-8"))
+            _rows = (_rs.get("weekly_plan", {}) or {}).get("rows") or []
+            for r in _rows:
+                _plan_html += f"<div style='margin-bottom:6px;font-size:11px;color:#d1fae5'>{r.get('動作','')} <b>{r.get('類別','')}</b>：{r.get('內容','')}</div>"
+        
+            html = html.replace('<h2>📋 本週投資計劃（8/29 全資產面結論）</h2>', f'<h2>📋 本週投資計劃（{TODAY} 全資產面結論）</h2>')
+            html = html.replace('{_plan_html}', _plan_html)
+        except Exception as _e2:
+            _plan_html = f"<div class='card'><h2>📋 本週投資計劃</h2><div style='color:#999'>產生失敗: {_e2}</div></div>"
+            html = html.replace('{_plan_html}', _plan_html)
+        
+        # ── 動作建議（8/22：防守合併口徑動態讀）──
     _def_pct = s.get("defensive_combined_metric", {}).get("佔比", 69.5)
     actions = [
         ("台股慢慢買", "🟢🔥 順勢", "每週 1.5-2萬 0050/006208 × 8-12 週，單筆≤5萬；配息流+結餘", "✅ 主動"),
