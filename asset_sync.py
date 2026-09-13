@@ -257,10 +257,17 @@ def rebuild_liabilities(snap: dict) -> dict:
 
     total = int(mort) + int(pol) + int(ple) + unpaid + int(per)
     snap["total_liabilities"] = total
+    # 2026-09-13 INC-167：利率鍵曾在重建時遺失 → pledge_status 讀到 0% → 質押「月省息」被算成 868（應 4,135）；
+    # 這裡一律保留舊值／回填預設（保單 4%、券商 3.92%），禁止讓利率隨重建消失。
+    _lb_prev = snap.get("liabilities_build_up") or {}
+    _r_policy = float(_lb_prev.get("保單借貸利率") or snap.get("policy_pledge_rate") or 0.04)
+    _r_broker = float(_lb_prev.get("券商質押利率") or snap.get("pledge_loan_rate") or 0.0392)
     snap["liabilities_build_up"] = {
         "房貸_含國泰": int(mort),
         "保單借貸": int(pol),
+        "保單借貸利率": _r_policy,
         "券商質押": int(ple),
+        "券商質押利率": _r_broker,
         "信用卡_當期未繳_全額扣繳": unpaid,
         "個人借款_借出款_列應收款非負債": _per_detail,
         "total": total,

@@ -514,5 +514,17 @@
   "category": "完成",
   "item": "技能更新：dashboard-single-source／fund-component-penetration／longjiu-error-register（INC-163~165 登記）",
   "detail": "①dashboard-single-source 新增「再平衡儀表板貼死清單」段（含清理後必跑 ast.parse 的教訓）②fund-component-penetration 新增「平衡型收益基金（RR3）分類鐵則」＋「現金口徑定版」③longjiu-error-register 登記 INC-163/164/165 並更新 INC 範圍。另更正環境事實：龍九腳本直接 python 可跑（有 requests/dotenv），uv --no-project 缺套件勿用於管線。"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "修正",
+  "item": "INC-166：儀表板「🚨 風險提示」區塊寫死 8/23 舊文字 → 四個段落全改動態注入（__RISK_FUNDS__/__RISK_RULES__/__RISK_NODE__/__RISK_CHAIN__）",
+  "detail": "使用者追問「確認都已經修正並閉環了嗎」時發現：區塊還寫「9/1 保單轉換送出（T+4 9/5 生效）」「現金不動（PI 認證前不動本金）」「美股逢彈減碼≤20萬/次」「關鍵節點 9/11 申購B11→還安聯300萬」等已失效文字。修法：模板四段改佔位符，build_dashboard 由 radar_state.weekly_plan.rows（操作規範/資金鏈）、us30y_state（凍結線）、schedule_events（未來 3 節點）、pledge_status（質押狀態）動態組；驗證 index.html 舊字串 0、佔位符 0。"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "修正",
+  "item": "INC-167：liabilities_build_up 重建時遺失利率鍵 → 質押「月省息」被算成 868（真值 4,135）",
+  "detail": "9/13 負債重建（INC-160）重建 dict 時只留金額、沒留利率 → pledge_status 讀 lb['券商質押利率'] 得 0 → 顯示「券商質押 100萬@0.00%」「月息 13,333→12,465 月省 868」。修法：asset_sync.rebuild_liabilities 保留／回填 保單借貸利率 4%＋券商質押利率 3.92%，並加註禁止讓利率隨重建消失；重建後驗證 月息 16,600→12,465、月省 4,135、券商 3.92%。"
  }
 ]

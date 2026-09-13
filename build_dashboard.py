@@ -147,6 +147,47 @@ def main():
             if not _plan:
                 _plan = ["待雷達更新"]
             rep["__RADAR_DATE__"] = _rd.get("last_run", "2026-08-29")[:10]
+
+            # ── 風險提示區塊動態化（2026-09-13 INC-166：原為 8/23 寫死文字，已與現況矛盾）──
+            _rows2 = ((_rd.get("weekly_plan", {}) or {}).get("rows") or [])
+            def _row_of(_cat):
+                for _r in _rows2:
+                    if (_r.get("類別") or "").strip() == _cat:
+                        return _r
+                return {}
+            _brief2 = lambda _t: ((_t or "").split("→")[0].strip())
+            try:
+                import pledge_status as _pf_d
+                _pl2 = _pf_d.pledge_status_line(style="short")
+            except Exception:
+                _pl2 = "質押狀態未知"
+            rep["__RISK_FUNDS__"] = (
+                "— 美債殖利率高檔為主要風險；國泰 1,200萬@2.6% 8/20 撥款"
+                f"（配置：富達600＋聯博100＋貝萊德B11 500）；{_pl2}")
+            _rules = [f"{_r.get('動作','')}{(_r.get('類別') or '').strip()}：{_brief2(_r.get('內容',''))}"
+                      for _r in _rows2[:5]]
+            rep["__RISK_RULES__"] = (("操作規範：" + "；".join(_rules) +
+                                      f"；現金底線 {snap.get('cash_floor', 700000):,} 強制生效")
+                                     if _rules else "操作規範：待雷達更新")
+            try:
+                _ev2 = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
+                _fut = []
+                for _e in (_ev2 if isinstance(_ev2, list) else _ev2.get("events", [])):
+                    _ds = str(_e.get("date", ""))[:10]
+                    try:
+                        _dd = date.fromisoformat(_ds)
+                    except Exception:
+                        continue
+                    if _dd >= date.today():
+                        _fut.append((_dd, str(_e.get("item", ""))[:38]))
+                _fut.sort()
+                _nodes = "｜".join(f"{_d.strftime('%m/%d')} {_t}" for _d, _t in _fut[:3]) or "無近期節點"
+            except Exception as _e2n:
+                _nodes = f"（schedule_events 讀取失敗：{_e2n}）"
+            rep["__RISK_NODE__"] = ("凍結紅線：US30Y ≥5.30% 全面凍結債券配置、提高現金水位。"
+                                    f"關鍵節點：{_nodes}")
+            _chain = [x for x in [_row_of("保單轉換").get("內容", ""), _row_of("質押").get("內容", "")] if x]
+            rep["__RISK_CHAIN__"] = "📌 資金鏈現況：" + ("；".join(_chain) if _chain else "待雷達更新")
             rep["__RADAR_SIGNALS__"] = _signals_txt
             rep["__RADAR_PLAN__"] = "｜".join(_plan)
             rep["__RADAR_POLICY__"] = _policy_txt
