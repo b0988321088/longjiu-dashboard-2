@@ -459,6 +459,12 @@
   "date": "2026-09-13",
   "category": "完成",
   "item": "INC-161 快取防護（耐久鏡像 + 每日稽核）＋ INC-160 追加：女友借款改列剩餘本金 288,000（計入總負債）",
-  "detail": "依使用者核准順序 2a→1→2b。2a：_llm_cached 同日同腳本快取沿用改預設 + 新增 cache/llm_archive/ 耐久鏡像（在 data/ 之外）→ 模擬 582 整批刪除情境實測仍 0 成本（四情境：首次1次API／精確命中0次／刪 data 後鏡像沿用0次／雙刪才重呼叫）。1：女友借款計入 → asset_sync.personal_loan_remaining()＝金額−月還款×已還期數（7/25起、每月5號6,000、最後清償12/5）→ 9/13 剩 288,000，實測 11/30=276,000、12/5=0；total_liabilities 30,404,569、淨值 -4,319,011、負債率 50.6%/流動 116.6%；CLI --rebuild-liabilities 加 DB 同步（assets.total_liabilities＋liabilities 表，寫執行日列、歷史列不動，已還原誤覆蓋的 9/12 列）。2b：closing_log.cache_audit() 每日 21:40 記錄 data/ 快取清單並與前次比對，有刪除才告警（含當日快取紅旗），三情境實測通過（首跑建基準無告警／刪檔後正確列出）。文件：error_register INC-160/161、技能 financial-report-calibration＋hermes-storage-maintenance"
+  "detail": "依使用者核准順序 2a→1→2b。2a：_llm_cached 同日同腳本快取沿用改預設 + 新增 cache/llm_archive/ 耐久鏡像（在 data/ 之外）→ 模擬 582 整批刪除情境實測仍 0 成本（四情境：首次1次API／精確命中0次／刪 data 後鏡像沿用0次／雙刪才重呼叫）。1：女友借款（實為「借出款」）以剩餘本金追蹤 → personal_loan_remaining()＝金額−月還款×已還期數（7/25起、每月5號6,000、最後清償12/5）→ 9/13 剩 288,000，實測 11/30=276,000、12/5=0。（同日稍後修正：此款為應收款非負債，見第 78 筆）；CLI --rebuild-liabilities 加 DB 同步（assets.total_liabilities＋liabilities 表，寫執行日列、歷史列不動，已還原誤覆蓋的 9/12 列）。2b：closing_log.cache_audit() 每日 21:40 記錄 data/ 快取清單並與前次比對，有刪除才告警（含當日快取紅旗），三情境實測通過（首跑建基準無告警／刪檔後正確列出）。文件：error_register INC-160/161、技能 financial-report-calibration＋hermes-storage-maintenance"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "修正",
+  "item": "方向修正：「女友借款」是應收款（資產）不是負債 —— 負債 30,116,569／淨值 -4,031,011 定版",
+  "detail": "使用者提問「我拿我自己的錢借給女朋友這樣算是負債嗎」→ 查 snapshot.personal_loans 備註「女友每月 5 號還 6,000、12/5 清償」且系統把 6,000 記為使用者收入（build_dashboard 女友還款列、calendar_sync 5 號事件）→ 確認是「借出去」的錢＝應收款資產，先前誤列負債（方向反了）。修正：INCLUDE_PERSONAL_LOANS=False（負債不含借出款）；新增 asset_sync.rebuild_receivables() 用剩餘本金寫入 snapshot.receivables / receivables_total = 288,000，預設只列備忘、不併入 total_assets（RECEIVABLES_IN_ASSETS=False，改 True 即併入）。定版：total_liabilities 30,116,569（房貸 25,082,544＋保單 4,000,000＋質押 1,000,000＋卡 34,025）、net_worth -4,031,011、負債率 50.1%/流動 115.5%、週拆解 +44,074（全屬帳務口徑修正）。四源同步：snapshot＝DB（9/13 兩表）＝asset_diff_history＝日報；技能 financial-report-calibration 加「借款方向先確認」判準"
  }
 ]
