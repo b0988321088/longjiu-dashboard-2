@@ -125,6 +125,24 @@
 - 上游：回報草稿 `_upstream_report_cron_manual_fire_claim.md`（工具與 CLI 兩條路徑都會認領，與 `trigger_job()` 戳 `manual_run_at` 的設計意圖不一致）
 - 狀態：✅ 已完成（本機 commit；待使用者指示推送）
 
+## INC-2026-09-14（INC-173）AI 成本估算高估 1.6 倍 — 單價表三處錯誤（使用者質疑「四百多是真的假的」）
+- 時間：2026-09-14（使用者問「9月13號我花了四百多塊是真的假的」時查出）
+- 錯誤：`daily_token_account.py` 算出 9/13 當日成本 **NT$498**，實際約 **NT$313**（高估 1.6 倍）；連帶「Gemini 佔比」與各模型金額全部偏高
+- 根因：`PRICE` 表三處錯誤 —— ① DS 快取單價寫 $0.007（官方 **$0.003**）② **Gemini 快取單價寫 $0.075，但 2.5-flash / 3.5-flash-lite 官方是 $0.03**（$0.075 是 3.6-flash 的價）③ `gemini-3.6-flash` / `gemini-3.1-flash-lite` 不在表內 → 走預設值（DS 價）**且被 `PRICE[3]` 誤判為 DS**（還套了 DS 尖峰 ×2）。快取輸入是這類長 context 的主要成本項（9/13 光 cached 就 136M tokens），單價錯 2.5 倍＝總額錯 2 倍
+- 修法：依官方定價頁（DS pricing + Gemini pricing，**2026-09-14 查證**）重寫 `PRICE`（補 deepseek-flash 新名、3.6-flash、3.1-flash-lite、2.5-flash-lite）；`cost_usd()` 的 DS/Gemini 判定改 `model.startswith("deepseek")`，不再依賴 PRICE 預設值
+- 交叉檢查（修後）：DS 端用 balance API 差額對帳（9/11→9/14 餘額差 16.5 CNY ≈ NT$69 vs 估算 NT$88 → 同量級）；Gemini 端估算 9/5 至今 ≈ NT$338（9/5 儲值 1,000 → 餘額應剩 ~660，待使用者 AI Studio 核對）
+- check_rule：① 改價表後**必須用餘額／帳單交叉檢查**，不能只看估算自洽 ② **新增模型必須同時進 PRICE**，否則預設值會把它當 DS ③ Gemini 快取價與 DS 快取價差異大（0.03 vs 0.003），長 context 日務必分開算
+- 狀態：✅ 已修（本機 commit fc5c2665，未推）
+
+## INC-2026-09-14（INC-174）失敗統計未去重 + 誤判 429 成因（「額度耗盡 61 次」）
+- 時間：2026-09-14（使用者：「額度耗盡61次這個也太扯檢查一下」）
+- 錯誤：對使用者報告「Gemini 額度耗盡 61 次」——① 數字錯（未去重，實際 **57** 件）② **成因說錯**：不是餘額耗盡，是**每分鐘輸入 token 速率上限**
+- 根因：① `grep 429 | 抽 provider 欄位` 沒去重（同一事件在 errors.log／agent.log 各記一次，又有 WARNING＋ERROR traceback＋retry 多行）② 只讀 summary 就下結論，沒讀錯誤 body 的 `quotaMetric`
+- 正確認知（錯誤 body 直證）：`Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_paid_tier_input_token_count, limit: 1000000, model=gemini-2.5-flash`（3.6-flash 限 2M、3.5-flash-lite 限 4M/分）＋「Please retry in ~59s」＝分鐘窗重置；**我們的 request 一次約 22 萬 token → 2.5-flash 每分鐘只容許 4-5 次呼叫**，忙碌時段必撞。真正沒錢才會出現的 `prepayment credits are depleted` 只在 **9/5 儲值前**出現過（01:29／08:57），之後 0 次
+- 影響：無使用者可見故障 —— `Fallback chain was exhausted` = 0 次（每則訊息都有回覆）；但 429 會拖慢、並讓 fallback 鏈換模型重試
+- check_rule：① 失敗事件統計**一律去重**（session＋秒＋attempt）並看清 error body ② 429 必須分辨「速率上限」（quotaMetric=input_token_count / retry in ~60s）vs「餘額耗盡」（prepayment credits are depleted）③ 回報「使用者受影響」前先查全鏈失敗計數
+- 狀態：✅ 已釐清並更正（本機紀錄）
+
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
 | 錯誤類型 | 次數 | 首次 | 最後 | 處置 |

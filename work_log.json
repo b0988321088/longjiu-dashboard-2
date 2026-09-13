@@ -575,5 +575,17 @@
   "category": "完成",
   "item": "收工檢查自動化上線：closeout_check.py 轉發器 + cron 22:40（no_agent，全綠靜默）",
   "detail": "CIO 審查核准本批 7 筆 commit（gemini-2.5-flash，逐項 6 項全過、無風險）→ 標 [cioreviewed] 推送 clean-main/main（遠端 = 4c9caf6d，兩分支與本機一致）。\n新 job d6282d33346a 每日 22:40 跑 closeout_check.py --silent-ok：排程認領偵測 + 閉環稽核（8 類）+ 補跑清單；全綠完全不輸出（no_agent = cron 不推送），只有出問題才吐整份報告。\n時間選 22:40 的理由：22:00 evening_sync（git add -A 提交全部）+ 22:15 儀表板同步之後，工作區乾淨、當日 DB 列與 Pages 都已就位；21:40 收工登錄會改的 data/.cache_audit_state.json 已列入稽核白名單（BENIGN_DIRTY）。\n轉發器依 hermes/scripts 慣例（cron 只解析 HERMES_HOME/scripts/，不吃 workdir 路徑），檔內含『薄轉發器』標記 → post-commit 全量鏡像會跳過，不會被 repo 真身覆蓋。"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "修正",
+  "item": "INC-173：AI 成本估算高估 1.6 倍 — 單價表三處錯誤（9/13 NT$498 → NT$313）",
+  "detail": "【觸發】使用者問「9月13號我花了四百多塊是真的假的」→ 複算後發現是我高估。\n【根因】daily_token_account.py 的 PRICE 表三處錯：① DS 快取 $0.007（官方 $0.003）② Gemini 快取 $0.075，但 2.5-flash/3.5-flash-lite 官方是 $0.03（0.075 是 3.6-flash 的價）③ gemini-3.6-flash / 3.1-flash-lite 不在表內 → 用預設值（DS 價）且被誤判為 DS。快取輸入是長 context 的主要成本項（9/13 cached 136M tokens），單價錯 2.5 倍＝總額錯 2 倍。\n【修法】依官方定價頁（DS + Gemini，9/14 查證）重寫 PRICE（補 deepseek-flash 新名、3.6-flash、3.1-flash-lite、2.5-flash-lite）；cost_usd 的 DS/Gemini 判定改 model.startswith('deepseek')。修正後 9/13 = NT$312.7（DS 48.2 / Gemini 264.5，Gemini 85%）、9/14 至今 NT$7.6。\n【交叉檢查】DS 端用 balance API 差額對帳（9/11→9/14 差 16.5 CNY ≈ NT$69 vs 估算 NT$88，同量級）；Gemini 端估算 9/5 至今 ≈ NT$338（9/5 儲 1,000 → 餘額應剩 ~660，待 AI Studio 核對）。\n【check_rule】改價表後必須用餘額/帳單交叉檢查；新增模型必須同時進 PRICE，否則會被當 DS。"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "修正",
+  "item": "INC-174：失敗統計未去重 + 誤判 429 成因（「額度耗盡 61 次」→ 速率上限 57 次）",
+  "detail": "【觸發】使用者：「額度耗盡61次這個也太扯檢查一下」。\n【更正】① 數字：未去重，實際 **57** 件（同一事件在 errors.log／agent.log 各記一次，又有 WARNING＋traceback＋retry 多行）② 成因：不是餘額耗盡，是**每分鐘輸入 token 速率上限**。\n【證據】錯誤 body：Quota exceeded for metric: ...generate_content_paid_tier_input_token_count, limit: 1000000, model=gemini-2.5-flash（3.6-flash 2M、3.5-flash-lite 4M/分）＋「Please retry in ~59s」＝分鐘窗重置；我們每個 request 約 22 萬 token → 2.5-flash 每分鐘只容許 4-5 次呼叫。真正沒錢才會有的 `prepayment credits are depleted` 只在 9/5 儲值前（01:29／08:57）出現過，之後 0 次。\n【影響】無使用者可見故障：Fallback chain was exhausted = 0 次。\n【check_rule】失敗統計一律去重（session＋秒＋attempt）並讀 error body；429 要分「速率上限」vs「餘額耗盡」；回報影響前先查全鏈失敗計數。"
  }
 ]
