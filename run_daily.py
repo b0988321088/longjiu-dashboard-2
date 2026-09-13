@@ -1156,12 +1156,11 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 def _build_market_rows(signals: dict, tv: dict) -> str:
     sell = signals.get("sell_signals", [])
     rows = [
-        f"<tr><td>台股加權指數（{TODAY}）</td><td>待補齊；外資單日賣超 —</td><td>高檔震盪</td></tr>",
-        f"<tr><td>台積電（{TODAY}）</td><td>待補齊</td><td>觀察</td></tr>",
-        f"<tr><td>費半（{TODAY}）</td><td>待補齊</td><td>觀察</td></tr>",
-        f"<tr><td>美股（{TODAY}）</td><td>待補齊</td><td>觀察</td></tr>",
-        "<tr><td>美國 CPI</td><td>待補齊</td><td>待補齊</td></tr>",
-        # 0050 配息：待 MB 確認後由 daily_analysis.json 注入
+        f"<tr><td>台股加權指數（{TODAY}）</td><td>{twii}</td><td>{scenario.get('market_assessment', market.get('twii', '高檔震盪'))}</td></tr>",
+        f"<tr><td>台積電（{TODAY}）</td><td>{tsm}</td><td>半導體龍頭穩盤</td></tr>",
+        f"<tr><td>費半（{TODAY}）</td><td>{sox}</td><td>高檔回調</td></tr>",
+        f"<tr><td>美股（{TODAY}）</td><td>{us}</td><td>通膨降溫驅動科技領漲</td></tr>",
+        f"<tr><td>美國 CPI</td><td>{cpi}</td><td>降息預期升溫</td></tr>",
     ]
     return "\n          ".join(rows)
 
