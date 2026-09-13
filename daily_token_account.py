@@ -132,12 +132,13 @@ def scan_failures(today: str):
     seen = set()
     cer = q429 = 0
     errors = []
-    for name in ("errors.log", "errors.log.1", "errors.log.2", "agent.log", "agent.log.1"):
+    for name in ("errors.log", "errors.log.1", "errors.log.2", "agent.log", "agent.log.1", "agent.log.2"):
         p = HERMES / "logs" / name
         if not p.exists():
             continue
         try:
             for line in p.open(encoding="utf-8", errors="ignore"):
+                # 格式假設（Hermes log 固定格式）：行首即 YYYY-MM-DD 時間戳；格式變更需同步調整
                 if not line.startswith(today) or "API call failed" not in line:
                     continue
                 m = pat.match(line)
@@ -154,7 +155,8 @@ def scan_failures(today: str):
                 elif "429" in s or "RESOURCE_EXHAUSTED" in s:
                     q429 += 1
         except Exception as e:
-            errors.append(f"{name}: {type(e).__name__}")   # 不靜默吞錯，回報讓帳面可稽核
+            # 不靜默吞錯，回報讓帳面可稽核（僅型別與訊息前段，不含路徑細節）
+            errors.append(f"{name}: {type(e).__name__} {str(e)[:60]}")
     return cer, q429, errors
 
 
