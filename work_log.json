@@ -1,12 +1,6 @@
 [
  {
   "date": "2026-09-05",
-  "category": "完成",
-  "item": "週六再平衡正式評估（16:00 cron 產出後檢視）",
-  "detail": "16:03 產出 → 使用者 9/5 檢視 OK 閉環（觀望 gate：只推 PI/質押，9/11 CPI/9/16 FOMC 前全面觀望）"
- },
- {
-  "date": "2026-09-05",
   "category": "應辦",
   "item": "watchdog v6.5 待真實卡死事件實戰驗證（合成測試已過）",
   "detail": ""
@@ -599,5 +593,11 @@
   "category": "決策",
   "item": "L1/L4 成本治理定案：改打 context 尺寸（不改技能索引）；compression 參數調整上線",
   "detail": "【量測推翻原假設】固定前綴 42,372 tokens 只占每次呼叫 10-20%；真主體是對話 context。\nagent.log in= 分布（8/27-9/14）：p50 71k-345k、>64k 占 55-98%、max ~500k、9/13 單日 390M tokens。\nlog 實證壓縮門檻 threshold=500,000、壓完 ~68k（messages 688→89）。\n【hermes prompt-size】系統提示 52,641 B（技能索引 31,195 B＝55%、memory 4,441 B、profile 2,892 B）；\n工具 schema 35,661 B / 21 工具（file 5.4k、delegation 4.4k、skills 3.6k、terminal 3.4k、memory 3.3k、\nbrowser-use 3.0k、code_execution 3.0k、web 1.9k、clarify 1.6k、vision 0.8k）→ 每個都在用；\ncomputer_use/image_gen/tts/kanban 根本沒進 schema（關掉無效）。\n【決定①不做】技能索引歸檔：237 個索引技能中 119 個（46%）兩個月內從未被載入\n（state.db tool_calls → function.name=skill_view → arguments.name；DB 內是跳脫 JSON，需兩層 json.loads），\n但全歸檔只省 ~4,882 tokens/呼叫＝固定成本 11.5% ≈ NT$0.01-0.1/天\n（固定前綴幾乎全在快取：DS $0.003/M、Gemini $0.03/M），且會誤刪事件驅動技能\n（投資紅旗清單 198 B 為索引第一名卻尚未被觸發）。清單存 data/skill_archive_candidates.json 以備日後。\n【決定②做】compression 兩段式（hermes config set；patch 工具禁改 Hermes config，\n備份 config.yaml.bak-20260914_011836）：threshold 0.5→0.30（500k→314k 才壓縮）、\nproactive_prune_tokens 0→120000（無 LLM 修剪舊工具輸出：lossless 去重→摘要非尾段大結果→截斷巨量 tool_call 參數）、\nproactive_prune_min_result_chars 8000→6000。語意：觸發點＝threshold×視窗（DS v4-flash 1,048,576）、\n尾段預算＝threshold_tokens×target_ratio。\n【決定③不動】watchdog TOK_GROWTH_CRIT=500k：門檻降到 314k 後該成長率不可能達成 → 規則自然失效不誤觸；\n震盪失效模式已有訊息數 WARN(250) 與失敗訊號 CRIT 守住，避免改敏感腳本造成回歸。\n【待用戶執行】DeepSeek 儲值：餘額 8.02 CNY ≈ 0.8 天，歸零後全流量走 Gemini（單價 12 倍，\n9/13 已實證 Gemini 佔當日 85% 花費）。\n【驗收方式】隔日比對 agent.log 的 in= p50/p90 與每日 AI 成本帳（daily_token_account.py，\n今日新增 CER/429 去重計數）；config 變更只對新進程/新 session 生效。\n【L1 附帶結論】CER 無法由內容類別預測（受控實驗 P1-P5 全過：純技術/去識別財務摘要/合成帳號保單號/\n敏感金流情境/80k 技術長文），且 CER 前的訊息內容正常 → DS 端間歇性判定，不可從來源修；\n改為監控（每日成本帳）＋降低暴露（context 瘦身）。"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "完成",
+  "item": "Session watchdog v6.13：尺寸規則不再清理已輪替的死 session（INC-175）",
+  "detail": "【現象】01:44 又收到「🚨 已達死重 → 已自動備份並重置」（今日 2/8），使用者問「為什麼又突然跳出這個」。\n【鑑識】該窗 act log 無 signal 行（err_delta=0/hard=0）→ 純尺寸規則（CRIT_AUTO_MIN=550、無失敗訊號那條）觸發；被重置的是上一顆已輪替 session 20260914_001256_62a38170（00:12:56 起 76 分鐘長到 1,074 則＝工具回覆 535＋助理 509＋使用者 29）。\n同日 00:43:48 同因（9/13 21:01 的 665 則 session）；00:58 那窗是純額度（quota 12/hard 0）→ v6.8 正常只警報。與 9/13 的四顆 CER 誤殺（INC-158）不同因。\n【影響】零 — 刪的是已輪替的舊 session，routing/mirror 命中 0（沒停 gateway、沒腰斬對話），訊息全文備份在 scripts/rescue/rescued_20260914-014417.json（945KB）。\n【修法 v6.13】①尺寸規則加 gateway_residue(sid) 前置關卡（查 gateway_routing.entry_json + sessions.json mirror）：已 ended 且無殘留 → 只寫 act log、不重置不推播 ②尺寸規則文案 🚨→ℹ️（「已達死重門檻（550+ 則、本窗無失敗訊號）」）③查詢失敗回 True（保守）。失敗訊號路徑刻意不受此限。\n【驗證】沙箱 61 檢查全 PASS（新增 S ended+無殘留→靜默不刪、T routing 殘留→仍重置、U 活的死重→仍重置）；真實 dry-run 靜默 exit 0；備份 .bak-20260914-v612；技能與 gateway §19c 已同步。\n【附帶釐清】我先前提的「ended_at 一度被判 ended 又復活」是誤判 — rescue 備份的 SELECT 本來就沒選 ended_at 欄，故顯示 None，非狀態矛盾。"
  }
 ]

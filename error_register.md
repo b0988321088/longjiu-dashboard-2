@@ -143,6 +143,14 @@
 - check_rule：① 失敗事件統計**一律去重**（session＋秒＋attempt）並看清 error body ② 429 必須分辨「速率上限」（quotaMetric=input_token_count / retry in ~60s）vs「餘額耗盡」（prepayment credits are depleted）③ 回報「使用者受影響」前先查全鏈失敗計數
 - 狀態：✅ 已釐清並更正（本機紀錄）
 
+## INC-2026-09-14（INC-175）watchdog 尺寸規則清理「已輪替的死 session」→ 假事故通知
+- 時間：2026-09-14 01:44（使用者：「為什麼又突然跳出這個？」；今日自動重置 2/8 次）
+- 錯誤：收到「🚨 已達死重 → 已自動備份並重置」，讀起來像又一起 session 中毒事故，實際是純尺寸規則清理
+- 根因：`session_bloat_watch.py` v6.12 的純尺寸規則（`CRIT_AUTO_MIN=550`、無失敗訊號那條）對**已 ended 的 session** 仍會動作（v6.7 的 ended 豁免只蓋 WARN/runaway，CRIT/AUTO 刻意不跳過）。被重置的 `20260914_001256_62a38170` 是 00:12:56 那顆**已輪替**的 session，76 分鐘長到 1,074 則（工具回覆 535＋助理 509＋使用者 29 → 工具密集日每呼叫約 2 則訊息），跨過 550 門檻。同日 00:43:48 那顆同因（9/13 21:01、665 則）。與 9/13 四顆 CER 誤殺（INC-158）不同因 — 本窗 act log 無 `signal:` 行（hard=0），CER 路徑完全沒觸發
+- 影響：零使用者影響 — 刪的是已輪替的舊 session，routing/mirror 命中 0（未停 gateway、未腰斬對話），訊息全文備份於 `scripts/rescue/rescued_20260914-014417.json`（945KB）。實質代價＝一則嚇人通知 + 白刪一份舊 transcript
+- check_rule：① 「已達死重」通知**先看 act log 有無 `signal:` 行** — 有 = 失敗訊號（查 CER），沒有 = 純尺寸清理 ② 尺寸規則的候選要先確認 `ended_at` 與 gateway 殘留（routing/mirror），兩者皆無 = 死 session 不會再長大，不需重置 ③ 通知文案要區分「事故（🚨）」與「例行清理（ℹ️）」，避免使用者每次都要問一次
+- 狀態：✅ 已修（v6.13）— `gateway_residue(sid)` 前置關卡 + 尺寸規則文案降為 ℹ️；沙箱 61 檢查全 PASS（新增 S/T/U）、真實 dry-run 靜默；技能與 gateway §19c 已同步
+
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
 | 錯誤類型 | 次數 | 首次 | 最後 | 處置 |
