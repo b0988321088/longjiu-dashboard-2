@@ -89,7 +89,7 @@ def verify_synonyms(snap: dict) -> list:
 #   信用卡負債 = credit_card dict 負值合計（當期未繳，將被全額扣掉）
 # ─────────────────────────────────────────────────────────────
 INCLUDE_PERSONAL_LOANS = False   # 2026-09-13 修正：personal_loans 是「借出去的錢」＝應收款（資產），**不是負債**
-RECEIVABLES_IN_ASSETS = False    # 應收款是否併入 total_assets（保守預設 False：只做備忘，不改變總資產口徑）
+RECEIVABLES_IN_ASSETS = False    # 使用者 2026-09-13 裁示「不併」：應收款只列備忘，**不併入 total_assets**（維持 False，勿擅自改）
 PERSONAL_LOAN_PAYDAY_DEFAULT = 5  # 每月 5 號還款（info 沒寫時用）
 
 
@@ -163,7 +163,7 @@ def rebuild_receivables(snap: dict) -> dict:
     snap["receivables_total"] = total
     snap["receivables_note"] = (
         f"借出款（應收款，非負債）：{detail}；每月 5 號回收 6,000，12/5 歸零；"
-        f"{'已併入 total_assets' if RECEIVABLES_IN_ASSETS else '目前僅列備忘，未計入 total_assets'}")
+        f"{'已併入 total_assets（使用者裁示）' if RECEIVABLES_IN_ASSETS else '使用者 2026-09-13 裁示「不併」：僅列備忘，未計入 total_assets'}")
     if RECEIVABLES_IN_ASSETS:
         _base = int(snap.get("total_assets") or 0) - int(snap.get("_assets_incl_receivables") or 0)
         snap["_assets_incl_receivables"] = total
