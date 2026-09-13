@@ -159,37 +159,53 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
     乾粉 = 現金 − 70萬底線 + 月盈餘（保守取一半）；依建議優先序分配金額 + 分批節奏"""
     cash = snap.get("cash_total", 0)
     surplus = snap.get("monthly_income", 228751) - snap.get("monthly_expense", 162781)
-    dry = max(cash - 700000, 0) + surplus * 0.5  # 保守可動用
+    dry = max(cash - snap.get("cash_floor", 700000), 0) + surplus * 0.5  # 保守可動用（底線讀 snapshot）
     plan = []
     
-    # 2026-09-13 最新動態交易計畫（使用者裁示：反映質押、還款、擔保池擴充與台幣ETF補強）
-    plan.append({
-        "產業": "質押與還款",
-        "標的": "清償保單/券商高息負債",
-        "金額": 5000000,
-        "節奏": "待國泰質押撥款到位後執行（預計9/25）",
-        "理由": "國泰質押540萬@2.77%核定後撥款清償高息"
-    })
-    plan.append({
-        "產業": "擔保池擴充",
-        "標的": "貝萊德B11",
-        "金額": 5000000,
-        "節奏": "MMF贖回款轉申購（9/11已建倉）",
-        "理由": "擴充擔保池以支援540萬質押額度"
-    })
-    plan.append({
-        "產業": "台幣補強",
-        "標的": "券商ETF（00878/00713/0050/006208）",
-        "金額": 190000,
-        "節奏": "10月標案未得標則分批買入00713",
-        "理由": "壓低美元曝險至60%以下，補強台幣資產"
-    })
+    # 2026-09-13：改為全動態（禁止寫死文字/金額）— 資料源＝snapshot + 資金輪動引擎輸出
+    import pledge_status
+    pf = pledge_status.pledge_facts(snap)
+
+    # ① 債務優化：質押撥款 → 清償高息負債（金額/撥款狀態/月省息全部由 snapshot 算）
+    if pf["清償目標"] > 0:
+        plan.append({
+            "產業": "債務優化",
+            "標的": f"清償保單/券商高息負債（{pf['清償目標萬']}）",
+            "金額": int(pf["清償目標"]),
+            "節奏": ("質押已撥款 → 立即執行" if pf["已撥款"]
+                     else "質押撥款到位即執行（"
+                          + (f"預估 {pf['撥款預估日']}" if pf["撥款預估日"] else "對保後約 2 週") + "）"),
+            "理由": (f"質押 {pf['可貸萬']}@{pf['利率文字']}：月息 {pf['月息_舊']:,.0f} → "
+                     f"{pf['月息_新']:,.0f}，月省 {pf['月省息']:,.0f}（{pf['裁示日']} 裁示）"),
+        })
+
+    # ② 產業吸納：資金輪動引擎「建議」中動作 ✅ 者；金額由乾粉平均分配（單筆 ≤5 萬節奏）
+    buys = [r for r in rec.get("建議", []) if str(r.get("動作", "")).startswith("✅")]
+    used = 0
+    if buys:
+        alloc = int(dry / len(buys) / 1000) * 1000
+        for r in buys:
+            amt = max(alloc, 10000)
+            batch = max(amt // 50000, 1)
+            plan.append({
+                "產業": r.get("產業", ""),
+                "標的": "、".join(r.get("標的") or []) or "—",
+                "金額": amt,
+                "節奏": f"分 {batch} 批（單筆 ≤5 萬）",
+                "理由": r.get("理由", ""),
+            })
+            used += amt
+
+    # ③ 現金保留：乾粉餘額（動態）；節奏讀防守合併口徑裁示
+    _dcm = snap.get("defensive_combined_metric", {}) or {}
+    _dcm_note = (f"防守合併 {_dcm.get('佔比', 0):.1f}%（{_dcm.get('裁示', '')}）"
+                 if _dcm else "現金底線制")
     plan.append({
         "產業": "現金保留",
         "標的": "台幣活存/MMF",
-        "金額": max(int((dry) / 1000) * 1000, 0),
-        "節奏": "防守凍結＋醫療由保單涵蓋；底線制維持",
-        "理由": "乾粉餘額緩衝"
+        "金額": max(int((dry - used) / 1000) * 1000, 0),
+        "節奏": f"守住現金底線 {snap.get('cash_floor', 700000):,}；{_dcm_note}",
+        "理由": "乾粉餘額緩衝（底線制，不借錢囤現金）",
     })
     return plan
 

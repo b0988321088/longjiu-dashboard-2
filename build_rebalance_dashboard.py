@@ -5,6 +5,7 @@
 輸出：rebalance_dashboard_{date}.html
 """
 import json
+import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
 from datetime import date
 from pathlib import Path
 
@@ -130,13 +131,13 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     lines += ["", "## 七、里程碑時程", ""]
     for d, t2, lv in [("8/24（一）", "保單轉換 300萬 決策（科技→債，T+4 截止）", "high"),
                       ("8/31", "安聯B 贖回（補現金 + 抵借款 100萬）", "mid"),
-                      ("9/11", "先申購貝萊德B11 500萬（未質押）→ 過戶後整池 1,200萬×4.5成=540萬@2.77%質押", "high"),
+                      ("9/11", f"整池質押 {_pf.pledge_status_line(style='short')}", "high"),
                       ("9月中", "富達/聯博首次配息入帳 → 更新配息基準", "mid"),
                       ("10月", "洲際W 轉貸國泰（要求全額吸收規費）＋ 標案", "mid")]:
         lines.append(f"- {d}：{t2}")
 
     lines += ["", "## 八、結論", "**本週動作：只有「台股慢慢買」是主動項（每週 1.5-2萬 × 8-12 週），其餘全數按兵不動。**",
-              "最大等待：9/11 申購貝萊德B11 500萬 → 過戶(~9/16) 後整池質押 540萬@2.77% → 撥款 ~9/25 → 還債（4.2%→2.77%）。", ""]
+              f"最大等待：整池質押 {_pf.pledge_status_line(style='short')} → 撥款到位即清償高息負債。", ""]
     out = BASE / f"rebalance_summary_{TODAY}.md"
     out.write_text("\n".join(lines), encoding="utf-8")
     print(f"✅ 再平衡評估已產出: {out}")
@@ -282,7 +283,7 @@ def main():
         # ⑧ 保單轉換（9/2 截止）
         _plan_lines.append("✅ 保單轉換 9/10 送出（安聯＋第一金同步）→ 轉入 M&G入息A美元避險月配，T+4 預期 9/16 生效")
         # ⑨ 負債/質押
-        _plan_lines.append("🔍 質押：9/11 先申購貝萊德B11 500萬（未質押）→ B11 過戶(~9/16) 後整池 1,200萬×4.5成=540萬@2.77% 質押（撥款~9/25）→ 還安聯300萬@4.2%＋餘240萬標案押標金（元大50萬待確認）")
+        _plan_lines.append(_pf.pledge_status_line())
         # ⑩ 產業輪動
         if _rot4.get("產業"):
             _plan_lines.append(f"📊 產業輪動：買「{_rot4.get('產業','—')}」（{_rot4.get('標的','')}）｜避開「公用事業」")
@@ -334,7 +335,7 @@ def main():
 
     # ── 質押 ──
     pledge = s.get("質押計畫", {})
-    ltv_txt = "未質押（9/11 先申購B11 500萬；整池質押 540萬@2.77%，撥款~9/25）"
+    ltv_txt = f"未質押（{_pf.pledge_status_line(style='card')}）"
 
     # ── 本週乾粉輪動建議（Phase 3：讀 snapshot.rotation_recommendation + 交易計畫）──
     rot_html = ""
@@ -478,7 +479,7 @@ def main():
     milestones = [
         ("8/24（一）", _p24_txt, "high"),
         ("8/31", "安聯B 贖回（補現金 + 抵借款 100萬）", "mid"),
-        ("9/11", "先申購貝萊德B11 500萬（未質押）→ 過戶後整池 1,200萬×4.5成=540萬@2.77%質押", "high"),
+        ("9/11", f"整池質押 {_pf.pledge_status_line(style='short')}", "high"),
         ("9月中", "富達/聯博首次配息 → 更新配息基準", "mid"),
         ("10月", "洲際W 轉貸國泰（要求全額吸收規費）＋ 標案", "mid")]
     ms_html = ""

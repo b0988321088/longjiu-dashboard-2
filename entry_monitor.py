@@ -11,6 +11,7 @@
   保單轉換：8/25 執行（PIMCO M120/M&G 115/健康25/黃金A10 15）
 """
 import json, os, datetime
+import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
@@ -45,7 +46,7 @@ def main():
     pi = snap.get("pi_status", {}) or {}
     pi_done = pi.get("認列") in (True, "✅", "已認列") or "認列" in str(pi.get("status", ""))
     if pi_done:
-        alerts.append("🎯 PI 已認列 → 執行鏈啟動：\n├ 台股慢慢買 0050/006208（每週 1.5-2萬）\n├ 質押富達 350萬@2.77% 還安聯300+元大50\n└ 黃金衛星 00635U 第一批 ≤20萬")
+        alerts.append("🎯 PI 已認列 → 執行鏈啟動：\n├ 台股分批 0050/006208（單筆 ≤5萬）\n├ " + _pf.pledge_status_line(style="short") + "\n└ 黃金衛星 00635U 分批 ≤20萬")
     else:
         _days = (datetime.date(2026, 9, 3) - today).days
         if 0 <= _days <= 3:

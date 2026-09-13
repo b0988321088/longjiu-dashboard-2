@@ -3,6 +3,7 @@
 根治「腳本寫死舊值」；策略框架對齊 9/11 定案（MMF 500萬轉申購貝萊德B11 500萬、整池質押540萬@2.77%、ladder延10月）
 """
 from pptx import Presentation
+import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 import json, os, datetime, urllib.request
@@ -249,7 +250,7 @@ s = ns()
 T(s, '執行時間表：9-10 月關鍵節點')
 ST(s, '核准框架一次到位，等待 CPI / FOMC / 標案三訊號')
 B(s, [
-    '📅 9/11：申購貝萊德B11 500萬（未質押）→ 過戶後整池質押 540 萬@2.77%（撥款 ~9/25）還安聯 300 + 餘240萬押標金',
+    '📅 質押：' + _pf.pledge_status_line(),
     '',
     '📅 9/11：CPI 公布 → 9/16 FOMC → 決定觀望期結束後方向',
     '     升息確定 → 500 萬 MMF 轉還債安全墊（不換匯不買債）',
@@ -268,7 +269,7 @@ s = ns()
 T(s, '✅ 明確行動指示：接下來做這 5 件事')
 ST(s, '核准框架 → 到期前完成 ｜ 您本人 2 件｜龍九自動盯 2 件｜建明 1 件')
 B(s, [
-    '1️⃣ 【您】9/11 申購貝萊德B11 500萬（未質押）→ 過戶後整池質押 540 萬@2.77%',
+    '1️⃣ 【您】' + _pf.pledge_status_line(style='card'),
     '      還安聯 300 萬 → 保單借貸成本 4.2% 降至 2.77%',
     '',
     '2️⃣ 【您】9/25 前 → 洲際W 1,312 萬轉貸定案（9/25 到期）',

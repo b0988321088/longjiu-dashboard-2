@@ -696,12 +696,15 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         _rot_sum = _rot_x.get("總結", "")
         _tw_s = _sf_x.get("台股總結", "")
         # 明確交易計畫（買什麼/金額/節奏 — 2026-08-22 使用者要求日報也要）
+        # 2026-09-13：改讀 snapshot.rotation_recommendation.交易計畫（動態；禁止貼死文字）
         _tp_rows = ""
-        for _p in _rot_x.get("交易計畫", []):
-            if _p.get("金額", 0) <= 0:
-                continue
-            _tp_rows += (f"<tr><td>{_p['產業']}</td><td>{_p['標的']}</td>"
-                         f"<td style='text-align:right'><b>{_p['金額']:,}</b></td><td style='font-size:11px'>{_p['節奏']}</td></tr>")
+        for _p in (_rot_x.get("交易計畫") or []):
+            _tp_rows += (f"<tr><td>{_p.get('產業','')}</td><td>{_p.get('標的','')}</td>"
+                         f"<td style='text-align:right'><b>{_p.get('金額',0):,}</b></td>"
+                         f"<td style='font-size:11px'>{_p.get('節奏','')}</td></tr>")
+        if not _tp_rows:
+            _tp_rows = ("<tr><td colspan='4' style='color:#64748b;font-size:11px'>"
+                        "本週無新增交易計畫（依輪動引擎現況）</td></tr>")
         _sector_line = (
             "<div class='callout' style='margin-top:10px;border-left:3px solid #22c55e'>"
             f"<strong>🎯 本週交易計畫（{_rot_x.get('日期','')}）</strong><br>"
@@ -709,10 +712,12 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
             f"<table style='width:100%;border-collapse:collapse;font-size:12px'><tr><th style='text-align:left'>產業</th>"
             f"<th>買什麼</th><th style='text-align:right'>金額</th><th>節奏</th></tr>{_tp_rows}</table>"
             f"<span style='color:#64748b;font-size:11px'>GICS：科技 {_tech_pct:.1f}%（紅線30）｜醫療 {_med_pct:.1f}%{_med_note}｜"
-            f"<a href='https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{date.today().isoformat()}.html' style='color:#22c55e'>完整儀表板 →</a></span></div>")
-    except Exception:
+            f"<a href='https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{TODAY}.html' style='color:#22c55e'>完整儀表板 →</a></span></div>")
+    except Exception as _tpe:
+        # 2026-09-13：例外不寫進日報（避免殘留除錯文字），改印 stdout 供 log 追
         _gics_html = ""
         _sector_line = ""
+        print(f"⚠️ GICS/交易計畫區塊產生失敗：{type(_tpe).__name__}: {_tpe}")
 
     # 底層風險因子穿透圖（2026-08-22：每日重新生成 + base64 嵌入日報，隨 snapshot 更新）
     _chart_html = ""
@@ -1482,7 +1487,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
     except Exception as _e:
         html = html.replace("__TACTICAL_TABLE__", f"<div style='color:#999;font-size:12px'>對策表產生失敗: {_e}</div>")
 
-    # 2026-08-26：本週操作執行紀錄（讀 snapshot.weekly_ops_closure_*，動態抓最新版）
+    # 2026-09-13：本週操作執行紀錄改回動態（讀 snapshot.weekly_ops_closure_* 最新版）
     try:
         _snap_ops = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
         _ops_keys = sorted([k for k in _snap_ops.keys() if k.startswith("weekly_ops_closure_")])
@@ -1502,8 +1507,9 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 f"<div style='font-size:12px;color:#64748b;margin-top:6px'>📌 閉環待追蹤：{_ops_close}</div></div>")
         else:
             html = html.replace("__WEEKLY_OPS__", "")
-    except Exception:
+    except Exception as _woe:
         html = html.replace("__WEEKLY_OPS__", "")
+        print(f"⚠️ 本週操作執行紀錄產生失敗：{type(_woe).__name__}: {_woe}")
 
     # 2026-08-26：績效追蹤（讀 snapshot.operation_performance）
     try:

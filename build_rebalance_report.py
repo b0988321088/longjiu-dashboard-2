@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """build_rebalance_report.py — 再平衡評估網頁（動態讀 snapshot，2026-08-14 建立）"""
 import json, datetime, os
+import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
 
 REPO = r"C:\Users\bot\Desktop\longjiu_system"
 today = datetime.date.today().strftime("%Y-%m-%d")
@@ -184,7 +185,7 @@ def main():
         _plan_items.append(f"🔴 美元曝險 {_usd3}% 超標（>55%）→ 美股減碼/美元定存到期轉台幣")
     else:
         _plan_items.append(f"🟡 美元曝險 {_usd3}% （目標≤60%）→ 未達減碼閾值，續觀察")
-    _plan_items.append("🔍 質押：9/11 先申購貝萊德B11 500萬（未質押）→ B11 過戶(~9/16) 後整池 1,200萬×4.5成=540萬@2.77% 質押（撥款~9/25）→ 還安聯300萬@4.2%＋餘240萬標案押標金（元大50萬待確認）")
+    _plan_items.append(_pf.pledge_status_line())
     if _rot3.get("產業"):
         _plan_items.append(f"📊 產業輪動：買「{_rot3.get('產業','—')}」（{_rot3.get('標的','')}）｜避開「公用事業」")
     else:
@@ -249,7 +250,7 @@ def main():
 
   {mr_html}
 
-  <div class="note">📌 <b>執行紀律</b>：配息導流優先（零摩擦）→ 內部調度逢反彈（≤20萬/次）→ 資金禁令（模式A 不加美股長債）｜台股單筆 ≤5 萬、回檔小單低吸、不追漲｜9/11 定案：500萬MMF 贖回轉申購貝萊德B11 500萬（未質押）→ 整池1,200萬×4.5成=質押540萬@2.77%→還安聯300萬@4.2%＋餘240萬標案押標金（撥款~9/25；元大50萬待確認）</div>
+  <div class="note">📌 <b>執行紀律</b>：配息導流優先（零摩擦）→ 內部調度逢反彈（≤20萬/次）→ 資金禁令（模式A 不加美股長債）｜台股單筆 ≤5 萬、回檔小單低吸、不追漲｜質押（動態）：{_pf.pledge_status_line()}</div>
   <div class="footer">龍九控股自動產出｜資料：snapshot {today} + us30y_state｜公式：桶值 ÷ 總資產（不含不動產）</div>
 </div></body></html>"""
 

@@ -129,16 +129,21 @@ def main():
                 _policy_txt = "無重大政策變動"
             # 本週計劃（同 institutional_flow 結論邏輯，精簡版）
             _pen2 = snap.get("penetration", {}).get("actual_pct", {}) or {}
+            _tg2 = snap.get("penetration", {}).get("targets", {}) or {}
             _dry2 = snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
             _usd2 = snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
-            _plan = []
-            _plan.append(f"⏸️ 台股觀望（缺口 -{10-_pen2.get('台股市值型成長',7.5):.1f}pp）：等質押撥款(9/11簽約→2-4週)+Fed 9/11 CPI / 9/16 FOMC")
-            _plan.append("防守合併已足凍結；債券等 US30Y<5.30%")
-            _plan.append(f"乾粉 {_dry2/10000:.1f}萬 優先非核心消費（0051 回檔-5%）")
-            _plan.append("✅ 保單轉換 9/10 送出（安聯＋第一金同步）→ 轉入 M&G入息A美元避險月配，T+4 9/16 生效")
+            # 2026-09-13：本週計劃改讀 radar_state.weekly_plan.rows（單一來源＝institutional_flow 產出）
+            # 原為 7 行貼死文字（含「9/11簽約」「Fed 9/11 CPI / 9/16 FOMC」等過期日期）
+            _plan = [f"{r.get('動作','')} {r.get('類別','')}：{r.get('內容','')}"
+                     for r in ((_rd.get("weekly_plan", {}) or {}).get("rows") or []) if r.get("內容")]
+            _plan.append(f"📊 台股穿透 {_pen2.get('台股市值型成長', 0):.1f}%（目標 {_tg2.get('台股市值型目標', 10)}%，缺口 {_tg2.get('台股市值型目標', 10) - _pen2.get('台股市值型成長', 0):+.1f}pp）")
+            _plan.append(f"💰 乾粉 {_dry2/10000:.1f}萬（現金底線 {snap.get('cash_floor', 700000):,} 守）")
             if _usd2 > 55:
-                _plan.append(f"美元曝險 {_usd2}% 超標→美股減碼")
-            _plan.append("🔍 質押：9/11 申購貝萊德B11 500萬（未質押）→ B11 過戶(~9/16) 後整池 1,200萬×4.5成=540萬@2.77% 質押（撥款~9/25）")
+                _plan.append(f"🔴 美元曝險 {_usd2}% 超標（目標≤60%）→ 美股減碼")
+            else:
+                _plan.append(f"🟡 美元曝險 {_usd2}%（目標≤60%）→ 續觀察")
+            if not _plan:
+                _plan = ["待雷達更新"]
             rep["__RADAR_DATE__"] = _rd.get("last_run", "2026-08-29")[:10]
             rep["__RADAR_SIGNALS__"] = _signals_txt
             rep["__RADAR_PLAN__"] = "｜".join(_plan)

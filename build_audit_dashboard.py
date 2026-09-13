@@ -3,6 +3,7 @@
 與文字審計報告同等內容：實相+變動歸因 / Runway 三口徑 / 巴菲特視角 / 行動 / 紅線 / 決策
 """
 import json, datetime, os
+import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
 
 REPO = os.path.dirname(os.path.abspath(__file__))
 today = datetime.date.today().strftime("%Y-%m-%d")
@@ -170,7 +171,7 @@ rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W
 <h3 style="font-size:14px;font-weight:800;margin:0 0 8px">🗓️ 下週行動建議</h3>
 <ol style="font-size:13px;line-height:1.95;margin:0;padding-left:20px;color:#1d1d1f">
 <li><b>8/25（二）T+2 入帳確認</b>：聯博 100萬 + MMF 500萬 入帳 → 四源同步（現金 800,272 → 基金 12,801,239）</li>
-<li><b>9/11 未質押</b>：先把 MMF 500萬贖回款投入<b>貝萊德B11 500萬</b>（申購中、待過戶）→ 之後整池（富達600+聯博100+B11 500）1,200萬×4.5成 = <b>540萬@2.77%</b> 質押（撥款 ~9/25）→ 還安聯 300萬@4.2% + 餘 240萬標案押標金；避險衛星 00635U 黃金 ~105萬 延後（華許放鷹+金價偏高，等回檔）</li>
+<li><b>質押（動態）</b>：{_pf.pledge_status_line()}</li>
 <li>MMF 剩餘 ~369萬 → 依「累積型優先」原則轉配置（006208/0050 台幣 + 全球累積 ETF）＋補債券缺口（00983D）→ 壓回美元曝險 &lt;60%</li>
 </ol></div></div>
 

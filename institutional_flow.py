@@ -503,38 +503,52 @@ def main():
                         for x in (_pd if isinstance(_pd, list) else []))
         except Exception:
             _gate = False
+        # 2026-09-13：目標與門檻一律讀 snapshot（原寫死 10%/40%/45%）
+        import pledge_status as _ps
+        _tgt5 = (_snap.get("penetration", {}).get("targets", {}) or {})
+        _tw_t = _tgt5.get("台股市值型目標", 10)
+        _us_t = _tgt5.get("美股市值型目標", 40)
+        _rh8 = _snap.get("rhythm08", {}) or {}
+        _us30_v = (_rh8.get("indicators", {}) or {}).get("us30y")
+        _us30_gate = ((_rh8.get("thresholds", {}) or {}).get("us30y", {}) or {}).get("taa_global_freeze", 5.3)
         if _gate:
-            lines.append(f"⏸️ 台股觀望（{_tw5:.1f}% vs 目標10%）→ 等質押撥款(9/11簽約→2-4週)+Fed 9/11 CPI / 9/16 FOMC；僅大跌 -5% 才小單 ≤5萬")
+            lines.append(f"⏸️ 台股觀望（{_tw5:.1f}% vs 目標{_tw_t}%）→ {_ps.pledge_status_line(_snap, style='short')}；US30Y {_us30_v}%（凍結線 {_us30_gate}%）；僅大跌 -5% 才小單 ≤5萬")
         else:
-            lines.append(f"🟢 台股（{_tw5:.1f}% vs 目標10%，缺口 {_tw5-10:+.1f}pp）→ 0050/006208 每週1.5-2萬慢慢買（外資連3買+台幣強升）")
+            lines.append(f"🟢 台股（{_tw5:.1f}% vs 目標{_tw_t}%，缺口 {_tw5-_tw_t:+.1f}pp）→ 0050/006208 分批慢慢買（單筆 ≤5萬）")
         # ② 美股
-        if _us5 > 45:
-            lines.append(f"🔴 美股（{_us5:.1f}% vs 目標40%，超配 {_us5-40:+.1f}pp）→ 逢彈減碼 ≤20萬/次")
+        if _us5 > _us_t + 5:
+            lines.append(f"🔴 美股（{_us5:.1f}% vs 目標{_us_t}%，超配 {_us5-_us_t:+.1f}pp）→ 逢彈減碼 ≤20萬/次")
         else:
-            lines.append(f"⏸️ 美股（{_us5:.1f}% vs 目標40%）超配 {_us5-40:+.1f}pp 未達減碼觸發（>45%）→ 續持")
+            lines.append(f"⏸️ 美股（{_us5:.1f}% vs 目標{_us_t}%）超配 {_us5-_us_t:+.1f}pp 未達減碼觸發（>{_us_t+5}%）→ 續持")
         # ③ 防守
         lines.append(f"⏸️ 防守（合併口徑 {_def5:.1f}% 已足）→ 凍結不追（00878/00713 不加碼）")
-        # ④ 債券
-        lines.append("⏸️ 債券 23.1% 接近目標25% → 等 US30Y<5.30% 才新增（華許升息1碼估 -0.5~-1.5%）")
+        # ④ 債券（比例與目標讀 snapshot，原寫死 23.1%/25%）
+        _bond5 = _pen5.get("債券", 0); _bond_t = _tgt5.get("債券型目標", 25)
+        lines.append(f"⏸️ 債券 {_bond5:.1f}%（目標 {_bond_t}%）→ 等 US30Y 回落凍結線 {_us30_gate}% 以下才新增")
         # ⑤ 現金/乾粉
+        _cash5 = _pen5.get("現金/安全網", 0)
+        _floor5 = _snap.get("cash_floor", 700000)
         if _rot5.get("產業") and not _gate:
-            lines.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry/10000:.1f}萬 優先「{_rot5.get('產業','—')}」（{_rot5.get('動作','')}）")
+            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；乾粉 {_dry/10000:.1f}萬 優先「{_rot5.get('產業','—')}」（{_rot5.get('動作','')}）")
         else:
-            lines.append(f"💰 現金 22.1% → 底線70萬守；乾粉 {_dry/10000:.1f}萬 保留（9/5 Gate：CPI/FOMC 前零新增）")
+            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；乾粉 {_dry/10000:.1f}萬 保留（觀望 gate 未解除前零新增）")
         # ⑥ 避險衛星
         if _hs.get("黃金延後_0829"):
             lines.append("⏸️ 避險衛星：黃金A10 32萬 8/30 生效（保單內）；00635U ~105萬 延後（華許放鷹+金價偏高）→ 等回檔")
         else:
             lines.append(f"🟢 避險衛星：黃金現況 {_hs.get('黃金現況',0):,} → PI 後 00635U 分批 ≤20萬/次")
         # ⑦ 美元曝險
-        if _usd > 55:
-            lines.append(f"🔴 美元曝險 {_usd}% 超標（>55%）→ 美股減碼/美元定存到期轉台幣")
+        _usd_cfg = _snap.get("usd_exposure_monitor", {}) or {}
+        _usd_raw = _usd_cfg.get("target") or _usd_cfg.get("threshold") or 60
+        _usd_t = _usd_raw if not isinstance(_usd_raw, dict) else _usd_raw.get("合計", 60)
+        if _usd > float(_usd_t):
+            lines.append(f"🔴 美元曝險 {_usd}% 超標（目標 ≤{_usd_t}%）→ 美股減碼/美元定存到期轉台幣")
         else:
-            lines.append(f"🟡 美元曝險 {_usd}% （目標≤60%）→ 未達減碼閾值，續觀察")
+            lines.append(f"🟡 美元曝險 {_usd}%（目標 ≤{_usd_t}%）→ 未達減碼閾值，續觀察")
         # ⑧ 保單轉換（9/10 安聯＋第一金同步轉入 M&G入息）
         lines.append("✅ 保單轉換 9/10 送出（安聯＋第一金同步轉入 M&G入息A美元避險月配，T+4 預期 9/16 生效）；9/1 安聯 PIMCO+50萬、貝萊德科技A10 90萬→摩根 已完成")
         # ⑨ 負債/質押
-        lines.append("🔍 質押：9/11 未質押 — 先以 MMF 500萬贖回款申購貝萊德B11 500萬（申購中）；整池(富達600+聯博100+B11 500)1,200萬×4.5成 = 540萬@2.77% 質押，待 B11 過戶後送件、撥款約2週（≈9/25）到位後才啟動後續部署；到位前全面觀望")
+        lines.append(_ps.pledge_status_line(_snap) + "；到位前全面觀望")
         # ⑩ 產業輪動
         if _gate:
             lines.append(f"⏸️ 產業輪動：目標「{_rot5.get('產業','—')}」→ 乾粉保留，等觀望 gate 解除後再啟動")
