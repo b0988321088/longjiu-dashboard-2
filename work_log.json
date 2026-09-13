@@ -484,5 +484,35 @@
   "category": "修正",
   "item": "關閉 cron 1422af3c2905 稽核誤報（19:05 記憶同步為 9/9 已核准之刻意 pause）",
   "detail": "閉環稽核 _audit_closeout.py 報「cron 意外停用：1422af3c2905 記憶同步 19:05」→ 查證：該 job 與 b18b41e13102（19:00）跑同一支 memory_sync.py，2026-09-09 已核准 pause 19:05 消除重複推播，paused_at=2026-09-09T19:08:37、last_status=ok，屬刻意停用非故障。修法：稽核加 INTENTIONAL_PAUSED 白名單（列 ℹ️ + 印停用原因，不列 fail）；另確認 19:00 job 健康（executions.db 9/12 completed、AppData memory_store.db 更新於 9/12 19:00）。"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "修正",
+  "item": "INC-163：再平衡儀表板產出器停擺（IndentationError）→ 本週投資計劃/動作建議改單源 radar_state.weekly_plan",
+  "detail": "使用者抓包 rebalance_dashboard_2026-09-13.html 標題仍寫「8/29 全資產面結論」、美股卡 44.0%→40%。根因：20:46 一輪「移除貼死字串」把 build_dashboard 的 INDEX_TEMPLATE 邏輯誤貼進 build_rebalance_dashboard.py → IndentationError 第248行 → 腳本整支死掉、Pages 永遠停在 19:58 舊檔。修法：兩區塊改讀 radar_state.weekly_plan.rows、標題日期取 rows 日期、副標題與 md §二之一/§八全部動態；驗證 ast OK＋舊字串 0＋radar 10/10 列入頁；commit 7966c194。"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "修正",
+  "item": "INC-164：現金口徑把「已轉申購的 MMF 500萬」算成現金（22.1%）→ 真值＝台幣活存 857,298（3.7%）",
+  "detail": "使用者裁示「以 850,000 那一筆為主，因為 MMF 已經購買新的基金了，現在在轉換中」。buffett_cto_analyzer.py 4 處硬編碼「現金22.1%含MMF」寫進 LLM prompt（含硬性約束），8/22 穿透註記也寫「現金桶 5,798,988＝活存+MMF」→ 同一筆 500萬 同時算基金與現金。修法：新增 cash_caliber_note() 單一來源、清除 4 處硬編碼（grep 22.1%=0）；snapshot/radar 舊註記同步清理；build_rebalance_report 週計畫改單源。commit 618bf199。"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "完成",
+  "item": "INC-165 定版：B11＝RR3 平衡型收益基金 → 五桶美股 57.2→44.8%、防守型配息 4.4→17.3%、防禦維度 48.9%、美元曝險 79.2%",
+  "detail": "使用者指正「B11 應該屬於 RR3 的防守類配型資產」→ 查證官方（MoneyDJ 基本資料＋BlackRock TW）：BGF Systematic Global Income & Growth Fund，基金類型 平衡型(balance)／RR3，投資策略 2/3 股＋1/3 債。修法：update_all B11 改官方單一口徑 62.58/32.65/4.77（權益＋內部現金→防守型配息、債券→債券桶、_fund_cash+=0 修掉內部現金污染現金桶）；重建五桶/雙維度（新增「配息型基金權益 3,367,500」）/美元曝險（B11 全額計入，避免換桶後假性下降）；update_data 補回被丟掉的 gaps/alert/updated_at/source。驗證：五桶+衛星+現金＝總資產 26,085,558（差0）。"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "完成",
+  "item": "全報表/儀表板同步（sync_all 10 步驟全過）＋ 擋下的 3 個問題修復",
+  "detail": "①靜態閘門擋 run_daily.py 8 個 F821（_build_market_rows 引用不存在的 twii/scenario/tsm/sox/us/cpi；render_daily_report 的 intel_text 未定義）→ 修好後閘門通過 ②執行環境：uv --no-project 缺 requests → 改用 python（實測可用）③乾粉口徑矛盾（現金3.3%卻寫乾粉10.0萬＝8/22舊值）→ 三處讀取端改現算 = 現金857,298−70萬 = 15.7萬，snapshot 同步。產出：日報/穿透/再平衡儀表板+評估/週報/儀表板皆重產；線上 cache-bust 驗證 44.8/17.3/48.9/79.2 到位、5,798,988=0、佔位符=0、乾粉15.7萬；健康度 93→62（曝險 79.2% 超線 0/20、防禦 48.9% 未達60 → 15/25）。commit 2da8cd79。"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "完成",
+  "item": "技能更新：dashboard-single-source／fund-component-penetration／longjiu-error-register（INC-163~165 登記）",
+  "detail": "①dashboard-single-source 新增「再平衡儀表板貼死清單」段（含清理後必跑 ast.parse 的教訓）②fund-component-penetration 新增「平衡型收益基金（RR3）分類鐵則」＋「現金口徑定版」③longjiu-error-register 登記 INC-163/164/165 並更新 INC 範圍。另更正環境事實：龍九腳本直接 python 可跑（有 requests/dotenv），uv --no-project 缺套件勿用於管線。"
  }
 ]
