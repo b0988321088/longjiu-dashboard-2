@@ -18,14 +18,18 @@ TODAY = date.today().isoformat()
 # 5 類穿透目標（動態：以 snapshot.penetration.targets 為單一真值；缺 key 時 fallback 2026-08-02 定案值 20/30/20/15/15）
 try:
     _snap_tgt = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")).get("penetration", {}).get("targets", {}) or {}
+    # 2026-09-12 裁示②：科技曝險目標 15% → 20%。其他目標保持 8/2 裁示值。
+    _tech_cap_snap = float(_snap_tgt.get("科技曝險目標", 20))
 except Exception:
     _snap_tgt = {}
+    _tech_cap_snap = 20
 TARGETS = {
-    "tw_equity": _snap_tgt.get("台股市值型目標", 20),
-    "us_equity": _snap_tgt.get("美股市值型目標", 30),
+    "tw_equity": _snap_tgt.get("台股市值型目標", 10),
+    "us_equity": _snap_tgt.get("美股市值型目標", 40),
     "defensive": _snap_tgt.get("配息型目標", 20),
-    "bond": _snap_tgt.get("債券型目標", 15),
-    "cash": _snap_tgt.get("現金目標", 15),
+    "bond": _snap_tgt.get("債券型目標", 25),
+    "cash": _snap_tgt.get("現金目標", 5),
+    "tech_exposure": _tech_cap_snap,
 }
 TARGET_LABELS = {"tw_equity":"台股","us_equity":"美股","defensive":"防守","bond":"債券","cash":"現金"}
 TARGET_EMOJI = {"tw_equity":"🇹🇼","us_equity":"🇺🇸","defensive":"🛡️","bond":"💵","cash":"💰"}
@@ -218,12 +222,18 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
     try:
         _fmt = "、".join(f"{TARGET_LABELS[c]} {a.get(c,0):.1f}%（目標{TARGETS[c]}%，{g.get(c,0):+.1f}pp）"
                          for c in ["tw_equity", "us_equity", "defensive", "bond", "cash"])
+
+        _usd_exp = (snapshot.get("usd_exposure_monitor", {}) or {}).get("current", {}).get("合計", 0)
+        _usd_cap = float((snapshot.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)
+        _tech_exp = (snapshot.get("penetration", {}) or {}).get("actual_pct", {}).get("美股市值型成長_科技", 0)
+        _tech_cap = TARGETS["tech_exposure"]
+
         _prompt = (
             f"你是巴菲特（波克夏董事長）。以下是龍九控股資產穿透資料（總投資 {pen['total_inv']/1e4:.0f}萬台幣）：\n"
             f"五桶：{_fmt}\n"
             f"主要偏離：{pen.get('key_risk','—')}｜建議：{pen.get('key_action','—')}\n"
             f"成長 {pen['growth_pct']:.1f}%（目標{pen['growth_target']}%）；防禦 {pen['defense_pct']:.1f}%；安全網 {pen['safety_pct']:.1f}%\n"
-            f"結構風險：美元曝險64%（紅線60%）、高科技17.5%（紅線30%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡\n"
+            f"結構風險：美元曝險{_usd_exp:.1f}%（紅線{_usd_cap:.0f}%）、高科技{_tech_exp:.1f}%（紅線{_tech_cap:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡\n"
             f"產業與風險因子：{_industry_context()}\n"
             f"{market_text}\n"
             f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（22.1%含 MMF 500萬贖回款已轉申購貝萊德B11 500萬（質押擔保池擴充），不可減現金）；"
