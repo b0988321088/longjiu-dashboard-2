@@ -88,7 +88,8 @@ def verify_synonyms(snap: dict) -> list:
 # 口徑（使用者 2026-09-13 明示）：無循環利息、每月全額自動扣繳 →
 #   信用卡負債 = credit_card dict 負值合計（當期未繳，將被全額扣掉）
 # ─────────────────────────────────────────────────────────────
-INCLUDE_PERSONAL_LOANS = True    # 2026-09-13 使用者核可：女友借款計入總負債（用剩餘本金，非原始金額）
+INCLUDE_PERSONAL_LOANS = False   # 2026-09-13 修正：personal_loans 是「借出去的錢」＝應收款（資產），**不是負債**
+RECEIVABLES_IN_ASSETS = False    # 應收款是否併入 total_assets（保守預設 False：只做備忘，不改變總資產口徑）
 PERSONAL_LOAN_PAYDAY_DEFAULT = 5  # 每月 5 號還款（info 沒寫時用）
 
 
@@ -141,6 +142,35 @@ def cc_unpaid(snap: dict) -> int:
     return int(abs(sum(v for v in cc.values() if isinstance(v, (int, float)) and v < 0)))
 
 
+def rebuild_receivables(snap: dict) -> dict:
+    """借出去的錢＝應收款（資產），用剩餘本金追蹤（≠ 負債）。
+
+    2026-09-13 修正：`personal_loans.女友借款 300,000` 是「我借給女友」的錢（她每月 5 號
+    還 6,000、12/5 清償），對我方是**應收款**，先前誤列為負債（方向反了）。
+    預設只做備忘（RECEIVABLES_IN_ASSETS=False）→ 不改變 total_assets 口徑；
+    要併入總資產時把旗標改 True 即可（屆時 net_worth 會 +應收餘額）。
+    """
+    pl = snap.get("personal_loans") or {}
+    detail = {}
+    if isinstance(pl, dict):
+        for _k, _v in pl.items():
+            if isinstance(_v, dict):
+                _r = personal_loan_remaining(_v)
+                if _r > 0:
+                    detail[_k] = int(_r)
+    total = sum(detail.values())
+    snap["receivables"] = detail
+    snap["receivables_total"] = total
+    snap["receivables_note"] = (
+        f"借出款（應收款，非負債）：{detail}；每月 5 號回收 6,000，12/5 歸零；"
+        f"{'已併入 total_assets' if RECEIVABLES_IN_ASSETS else '目前僅列備忘，未計入 total_assets'}")
+    if RECEIVABLES_IN_ASSETS:
+        _base = int(snap.get("total_assets") or 0) - int(snap.get("_assets_incl_receivables") or 0)
+        snap["_assets_incl_receivables"] = total
+        snap["total_assets"] = _base + total
+    return snap
+
+
 def rebuild_liabilities(snap: dict) -> dict:
     """由明細重建 cc_liability / total_liabilities / net_worth（冪等）。"""
     unpaid = cc_unpaid(snap)
@@ -168,10 +198,10 @@ def rebuild_liabilities(snap: dict) -> dict:
         "保單借貸": int(pol),
         "券商質押": int(ple),
         "信用卡_當期未繳_全額扣繳": unpaid,
-        "個人借款_剩餘本金": _per_detail,
+        "個人借款_借出款_列應收款非負債": _per_detail,
         "total": total,
         "note": ("2026-09-13 建立：負債改由明細推導（原為手寫值，曾出現 78,099 不明殘差）；"
-                 "個人借款用剩餘本金（每月 5 號還 6,000，12/5 歸零）"),
+                 "借給女友的錢＝應收款（見 snapshot.receivables），不計入負債"),
     }
     snap["net_worth"] = int(snap.get("total_assets") or 0) - total
     # 負債率雙軌（2026-08-10 使用者裁示格式）：含不動產主顯示 / 不含不動產流動監控
@@ -187,6 +217,7 @@ if __name__ == "__main__":
         # 唯一入口：由明細重建 cc_liability / total_liabilities / net_worth / 負債率雙軌，
         # 並同步 DB assets.total_liabilities + liabilities 表（避免 snapshot/DB 再度分岔）
         snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        snap = rebuild_receivables(snap)
         snap = rebuild_liabilities(snap)
         (BASE / "snapshot.json").write_text(
             json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -216,6 +247,10 @@ if __name__ == "__main__":
         print(f"✅ 負債重建：房貸 {bu['房貸_含國泰']:,} + 保單 {bu['保單借貸']:,}"
               f" + 質押 {bu['券商質押']:,} + 信用卡 {bu['信用卡_當期未繳_全額扣繳']:,}"
               f" = {snap['total_liabilities']:,}")
+        if snap.get("receivables_total"):
+            print(f"ℹ️ 應收款（借出款，非負債）：{snap['receivables']}"
+                  f" 合計 {snap['receivables_total']:,}"
+                  f"｜{'已併入總資產' if RECEIVABLES_IN_ASSETS else '僅列備忘、未計入總資產'}")
         print(f"   淨值 {snap['net_worth']:,}｜負債率 {snap['debt_ratio']}%（含不動產）"
               f"／{snap['debt_ratio_flow']}%（流動）")
         _sys.exit(0)
