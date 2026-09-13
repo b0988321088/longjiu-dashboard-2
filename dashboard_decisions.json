@@ -79,10 +79,10 @@
       "tags": "保單,轉換,第一金,M&G入息,配息接力"
     },
     {
-        "date": "2026-09-14",
-        "action": "AI 成本治理：context 瘦身（compression threshold 0.30 ＋ 舊工具輸出修剪 120k）＋ CER 監控",
-        "status": "🔄 執行中（9/14 01:30 上線，new session 生效）：驗證點 9/15 比對 agent.log in= p50/p90 與每日成本帳；未完成項＝DS 儲值（餘額 8.02 CNY ≈0.8 天，歸零後全流量走 12 倍單價的 Gemini）",
-        "tags": "成本治理,compression,DS儲值,CER"
+      "date": "2026-09-14",
+      "action": "AI 成本治理：context 瘦身 + CER 監控（L1/L4 定案）",
+      "status": "🔄 執行中（9/14 上線）：threshold 0.30／prune 120k／CER 監控已上線；驗證點 9/15 比對 in= 分布與成本帳。未完成＝DS 儲值（8.02 CNY ≈0.8 天，歸零後全流量走 Gemini 12 倍單價）",
+      "tags": "成本治理,compression,DS儲值,CER"
     }
   ],
   "decisions": [
@@ -3120,19 +3120,19 @@
       "source": "auto"
     },
     {
-        "id": "dec-20260914-costgov-329",
+      "id": "dec-20260914-costgov-329",
       "date": "2026-09-14",
       "decision": "核准",
-        "timestamp": "2026-09-14T01:22:30+08:00",
-        "agent": "Hermes",
-        "task": "L1/L4 成本治理定案（使用者授權代決：你幫我決定就好了）",
-        "summary": "實測推翻固定成本假設：每次呼叫固定前綴 42k 只占 10-20%，真主體是對話 context（p50 180-345k/呼叫、84-98% 呼叫 >64k、9/13 單日 390M tokens、壓縮門檻 500k）。決定：①技能索引歸檔不做（119 個從未載入全歸檔僅省 11.5% 固定成本 ≈NT$0/天，且會誤刪事件驅動技能）②改打 context：threshold 0.5→0.30、proactive_prune_tokens 0→120000、min_result_chars 8000→6000③CER 無法源頭修（受控實驗 5 組全過）→改監控（每日成本帳加 CER/429 去重計數）",
-        "status": "completed",
-        "source": "user"
+      "timestamp": "2026-09-14T01:22:30+08:00",
+      "agent": "Hermes",
+      "task": "L1/L4 成本治理定案（使用者授權代決：你幫我決定就好了）",
+      "summary": "實測推翻固定成本假設：每次呼叫固定前綴 42k 只占 10-20%，真主體是對話 context（p50 180-345k/呼叫、84-98% 呼叫 >64k、9/13 單日 390M tokens、壓縮門檻 500k）。決定：①技能索引歸檔不做（119 個從未載入全歸檔僅省 11.5% 固定成本 ≈NT$0/天，且會誤刪事件驅動技能）②改打 context：threshold 0.5→0.30、proactive_prune_tokens 0→120000、min_result_chars 8000→6000③CER 無法源頭修（受控實驗 5 組全過）→改監控（每日成本帳加 CER/429 去重計數）",
+      "status": "completed",
+      "source": "user"
     }
   ],
   "meta": {
-    "updated_at": "2026-09-13T23:48:13.918738"
+    "updated_at": "2026-09-14T07:00:18.615850"
   },
-  "last_updated": "2026-09-13T18:00:00+08:00"
+  "last_updated": "2026-09-14T18:00:00+08:00"
 }
