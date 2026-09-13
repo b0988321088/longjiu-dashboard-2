@@ -526,7 +526,7 @@ __WEEK_DONE__
 
 <!-- 系統工作日誌（2026-09-05：work_log.json 動態 — 應辦/完成事項） -->
         <div class="luxury-card p-6 space-y-4" id="work-log">
-            <h3 class="text-md font-bold text-white">🛠️ 系統工作日誌（應辦 / 完成）</h3>
+            <h3 class="text-md font-bold text-white">🛠️ 系統工作日誌（未閉環 · 新→舊）</h3>
             <div class="text-xs text-slate-500">載入中…</div>
         </div>
 
@@ -934,7 +934,7 @@ var gotTotal = _salaryA + divTotal + rentGot;
       var esc = function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
       var active = list.filter(function(x){
         var s = String(x.status||'');
-        return s.indexOf('✅')<0 && s.indexOf('已完成')<0 && s.indexOf('已定案')<0 && s.indexOf('閉環')<0 && s.indexOf('已送出')<0;
+        return ['✅','☑','已完成','已結案','已定案','閉環','已送出','已核定'].every(function(k){ return s.indexOf(k)<0; });
       });
       active.sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); });
       var h = '<div style="font-size:11px;color:#64748b;margin-bottom:4px">執行中 '+active.length+' 筆（即時 · 已閉環不顯示）</div>';
@@ -953,21 +953,29 @@ var gotTotal = _salaryA + divTotal + rentGot;
   }
   var wl = document.getElementById('work-log');
   if(wl){
-    /* 2026-09-05：work_log.json 動態（應辦/完成），與決策追蹤同模式；失敗保留靜態版 */
+    /* 2026-09-13 v2（使用者：日誌太多 → 簡化）：只列「未閉環」事項、日期新→舊；已完成(閉環)不列此卡
+       （頁首「✅ 本週完成清單」已承接完成事項）；失敗保留載入中提示 */
     fetch('work_log.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(list){
       if(!list || !list.length) return;
-      var todo = list.filter(function(x){return (x.category||'')==='應辦';});
-      var done = list.filter(function(x){return (x.category||'')==='完成';});
-      var row = function(d, icon){
-        var dt = (d.date||'').slice(5);
-        return '<div class="flex items-center gap-2 p-2 bg-slate-900/30 rounded border border-slate-800">'
-          + '<span class="text-slate-400 font-mono w-14 shrink-0">'+dt+'</span>'
-          + '<span class="text-slate-200 flex-1">'+icon+' '+(d.item||'')+'</span></div>';
-      };
-      var h = '<h3 class="text-md font-bold text-white">🛠️ 系統工作日誌（即時）</h3><div class="space-y-2">';
-      if(todo.length){ h += '<div style="font-size:11px;color:#fbbf24;font-weight:800;margin:2px 0 4px">📋 應辦（'+todo.length+'）</div>'; todo.forEach(function(d){ h += row(d,'📋'); }); }
-      if(done.length){ h += '<div style="font-size:11px;color:#34d399;font-weight:800;margin:8px 0 4px">✅ 完成（'+done.length+'）</div>'; done.forEach(function(d){ h += row(d,'✅'); }); }
-      h += '</div>';
+      var wesc = function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+      var CLOSED_CAT = ['完成','計畫','結案','閉環'];
+      var open = list.filter(function(x){ var c=String(x.category||''); return c && CLOSED_CAT.indexOf(c)<0; });
+      open.reverse();  /* 同日：後登錄者較新 */
+      open.sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); });
+      var h = '<h3 class="text-md font-bold text-white">🛠️ 系統工作日誌（未閉環 '+open.length+' 筆 · 新→舊）</h3>';
+      if(open.length){
+        h += '<div class="space-y-2">';
+        open.slice(0,12).forEach(function(d){
+          h += '<div class="flex items-start gap-2 p-2 bg-slate-900/30 rounded border border-slate-800">'
+             + '<span class="text-slate-400 font-mono w-14 shrink-0">'+wesc((d.date||'').slice(5))+'</span>'
+             + '<span class="text-slate-200 flex-1">📋 '+wesc(d.item||'')
+             + (d.detail ? '<span class="text-slate-500"> — '+wesc(d.detail)+'</span>' : '')+'</span></div>';
+        });
+        h += '</div>';
+      } else {
+        h += '<div class="text-slate-400 text-xs">目前無未閉環事項</div>';
+      }
+      h += '<div class="text-[11px] text-slate-500 mt-1">已閉環事項不列此卡 → 見頁首「✅ 本週完成清單」；完整歷史見日報「系統工作日誌」段</div>';
       wl.innerHTML = h;
     }).catch(function(){});
   }

@@ -534,8 +534,10 @@ def main():
         _dt_html = []
         # 2026-09-12：原取「清單前 6 筆」（=最舊 6 筆）→ 新裁決永遠看不到儀表板。
         # 改為：剔除已結案 → 依日期新→舊 → 取最新 8 筆（日報第5章仍列全部）。
+        # 2026-09-13：閉環判定與前端 JS 對齊（單一口徑），否則靜態層與即時層顯示不同筆數。
+        _closed_kw = ("✅", "☑", "已完成", "已結案", "已定案", "閉環", "已送出", "已核定")
         _pd3_rows = [r for r in (_pd3 if isinstance(_pd3, list) else [])
-                     if isinstance(r, dict) and "已結案" not in str(r.get("status", ""))]
+                     if isinstance(r, dict) and not any(_kw in str(r.get("status", "")) for _kw in _closed_kw)]
         _pd3_rows.sort(key=lambda r: str(r.get("date", "")), reverse=True)
         for _d in _pd3_rows[:8]:
             _d_date = str(_d.get("date", ""))[5:].replace("-", "/")
