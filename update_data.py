@@ -220,6 +220,22 @@ def main():
     for _k in ["美股市值型成長_科技", "美股市值型成長_非科技"]:
         if _k in _old_pen.get("actual_pct", {}):
             _new_pen["actual_pct"][_k] = _old_pen["actual_pct"][_k]
+    # ③-a 現算 gaps/alert/updated_at/source（2026-09-13 INC-165：重建穿透時原本整批丟掉這些 key，
+    #     下游 build_dashboard / memory_sync 會讀 gaps → 一律現算補回，禁止手寫）
+    _tgt = _new_pen["targets"]
+    _ap = _new_pen["actual_pct"]
+    _new_pen["gaps"] = {
+        "台股市值型成長": round(_ap["台股市值型成長"] - _tgt.get("台股市值型目標", 10), 1),
+        "美股市值型成長": round(_ap["美股市值型成長"] - _tgt.get("美股市值型目標", 40), 1),
+        "防守型配息": round(_ap["防守型配息"] - _tgt.get("配息型目標", 20), 1),
+        "債券": round(_ap["債券"] - _tgt.get("債券型目標", 25), 1),
+        "債券及安全現金": round(_ap["債券"] + _ap["現金/安全網"] - _tgt.get("債券型目標", 25) - _tgt.get("現金目標", 5), 1),
+        "科技曝險": round(_ap.get("美股市值型成長_科技", 0) - 20, 1),
+    }
+    _new_pen["alert"] = ("；".join(f"{_k} {'超標' if _v > 0 else '不足'}{abs(_v)}pp"
+                                   for _k, _v in _new_pen["gaps"].items() if abs(_v) >= 1.5) or "各桶均在容忍範圍")
+    _new_pen["updated_at"] = datetime.date.today().isoformat()
+    _new_pen["source"] = "update_all.calc_penetration（四源同步）"
     snap["penetration"] = _new_pen
 
     # ③b 負債由明細推導（2026-09-13 INC-159 P2）：cc_liability/total_liabilities/net_worth 禁手寫

@@ -162,12 +162,16 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             _fund_cash += 0
             _fund_us_tech += round(_fval * 0.10)
         elif "貝萊德智慧數據收益成長基金B11美元" in _fn or "貝萊德智慧數據收益成長" in _fn:
-            # 依 BlackRock B11 Class Factsheet（Dynamic High Income Fund / Systematic Global Income & Growth）
-            # 股權 65% / 債券 33% / 現金 2%（平衡型多元收益分配）
-            _fund_us += round(_fval * 0.65)
-            _fund_bonds += round(_fval * 0.33)
-            _fund_cash += round(_fval * 0.02)
-            _fund_us_tech += round(_fval * 0.65 * 0.25)  # 科技股佔股票部位約 25%
+            # 2026-09-13 使用者核定（INC-165）：B11 = BlackRock BGF Systematic Global Income & Growth Fund B11 USD
+            # 官方基本資料＝全球型／平衡型(balance)／RR3／月配／美元 → 不得當「美股市值型成長」部位計超配。
+            # 成分單一口徑 = 官方月報 funds_breakdown 國泰直購 components.asset_class：股 62.58 / 債 32.65 / 現 4.77
+            # 分類：權益部位＋內部現金 → 防守型配息桶（RR3 收益型）｜債券部位 → 債券桶
+            # ⚠️ 內部現金不得進現金桶（8/21 裁示）；現金桶為餘數法 → 若丟進 _fund_cash 就會被算成現金
+            _b11_eq, _b11_br, _b11_cs = 0.6258, 0.3265, 0.0477
+            _fund_def += round(_fval * _b11_eq) + round(_fval * _b11_cs)
+            _fund_bonds += round(_fval * _b11_br)
+            _fund_cash += 0
+            _fund_us_tech += round(_fval * _b11_eq * 0.25)  # 科技佔權益部位約 25%（對齊 MSCI World IT 基準）
         elif any(_k in _fn for _k in ["台中銀台灣優息", "國泰台灣高股息", "元大台灣高股息", "高股息ETF連結"]):
             _fund_def += _fval
         elif any(_k in _fn for _k in ["台新美日台", "貝萊德", "安聯AI", "聯博", "摩根", "M&G", "安聯收益成長", "投資型保單"]):
