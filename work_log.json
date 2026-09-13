@@ -448,5 +448,11 @@
   "category": "完成",
   "item": "P1-4 信用卡口徑評估（發現 6 個不一致口徑 + 負債 78,099 殘差）+ P1-5 快取刪除來源追查",
   "detail": "P1-4（只診斷未改數，產出 card_caliber_assessment_2026-09-13.md）：同一組信用卡有 6 個數字 — snapshot.credit_card 66,999（8/20 期）／credit_card_pending 66,699／cc_liability 28,101（無程式寫入點，疑手寫）／cc_unbilled 32,502（已是 9/02 帳單最新）／dragon_assets.db liabilities.credit_card 71,799（9/8 寫入，現行 db_loader 預設 39,865）／預算報告循環 15,793（9/02）。且 total_liabilities 30,160,643 有 78,099 未標示殘差（房貸 25,082,544+保單 4,000,000+質押 1,000,000=30,082,544），女友借款 300,000 未計入 → 無法由 snapshot 欄位重建總負債。下游讀者：asset_diff_monitor／monthly_report／build_ceo_dashboard／build_audit_dashboard／build_weekly_report／notion_weekly_trend_wrapper／run_daily（cc_liability）／dynamic_review（DB credit_card）。結論：P2 不可只換資料源，須先做①口徑定版（cc_cycle_due / cc_unbilled / cc_liability_total）②單一寫入者③對帳 78,099④四源驗證。P1-5：582 檔快取刪除來源未定位 — 已排除 nightly_maintenance／weekly_db_maintenance／sync_all／four_source_sync／cleanup_check_pollution，state.db 近 2 日無刪除指令，dir mtime 已被本 session 暫存檔覆蓋；防護規則已入技能 hermes-storage-maintenance（禁刪當日快取）"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "完成",
+  "item": "INC-160 負債口徑單一真值化（P2）：卡片/負債/淨值改由明細推導，修掉 6 個不一致數字與 78,099 殘差",
+  "detail": "使用者裁示「用最新資料就好」＋「沒有循環利息、每月全額自動扣繳」。根因：total_liabilities/net_worth/cc_liability 全系統無計算來源（純手寫）→ 同時存在 66,999/66,699/28,101/32,502/71,799 五個卡片數字，總負債含 78,099 不明殘差。修法：新增 asset_sync.rebuild_liabilities()（冪等）由明細推導 cc_liability=credit_card 負值合計、total_liabilities=房貸(含國泰 25,082,544)+保單借貸 4,000,000+質押 1,000,000+卡 34,025、net_worth、負債率雙軌，並寫 liabilities_build_up 對帳明細；update_data.py 每次更新自動重建＋同步 DB assets/liabilities 兩表；CLI python asset_sync.py --rebuild-liabilities。口徑：預算報告去「循環」、警示基準改帳單金額 vs 月預算；Moneybook 匯出改跨目錄取檔名日期最新（修台新假 P1）。結果：pending/cc_liability 34,025、total_liabilities 30,116,569（明細可完全解釋）、net_worth -4,031,011（Δ+44,074，帳務口徑修正非市場變動）、負債率 50.1%/流動 115.5%；snapshot=DB=日報 HTML 一致、差異分析更新、CIO 審查通過、四連結 200。待使用者一句話：女友借款 300,000 是否計入（現不計入）。技能 financial-report-calibration 新增「信用卡口徑與負債模型」節、assessment 文件補『已套用』章"
  }
 ]

@@ -165,20 +165,20 @@ def calculate_budget_status(expenses, bill_date, cycle, acct):
     lines.append("")
     lines.append("## 信用卡明細")
     lines.append("")
-    lines.append("| 信用卡 | 月預算 | 最新一期帳單 | 當期循環未繳 | 差異(循環-預算) | 超支率 | 警示 |")
+    lines.append("| 信用卡 | 月預算 | 最新一期帳單 | 當期未繳(全額扣繳) | 差異(帳單-預算) | 消費速度 | 警示 |")
     lines.append("|--------|------:|------------:|------------:|--------------:|------:|------|")
     for card in CARDS:
         budget = BUDGET[card]
         stmt = expenses.get(card, 0) if expenses else 0
         cur = cycle.get(card, 0) if cycle else 0
-        pct = _pct(cur, budget)
+        pct = _pct(stmt, budget)
         lines.append("| {} | {:,} | {:,} | {:,} | {:+,} | {:+.1f}% | {} |".format(
-            card, budget, stmt, cur, cur - budget, pct, _level(pct)))
+            card, budget, stmt, cur, stmt - budget, pct, _level(pct)))
     lines.append("| **四卡合計** | **{:,}** | **{:,}** | **{:,}** | — | — | — |".format(
         total_budget, total_stmt, total_cycle))
     lines.append("")
-    lines.append("> 帳本基準（Company_Ledger.md / snapshot 2026-09-10）：四卡月均 **{:,}**（區間 {:,}–{:,}）；當期循環合計 {:+,} TWD（{:+.1f}%）".format(
-        LEDGER_BUDGET, LEDGER_BAND[0], LEDGER_BAND[1], total_cycle - LEDGER_BUDGET, _pct(total_cycle, LEDGER_BUDGET)))
+    lines.append("> 帳本基準（Company_Ledger.md / snapshot 2026-09-10）：四卡月均 **{:,}**（區間 {:,}–{:,}）；**本期帳單合計 {:+,} TWD（{:+.1f}%）**".format(
+        LEDGER_BUDGET, LEDGER_BAND[0], LEDGER_BAND[1], total_stmt - LEDGER_BUDGET, _pct(total_stmt, LEDGER_BUDGET)))
     lines.append("")
     lines.append("## 異常警示")
     lines.append("")
@@ -187,22 +187,19 @@ def calculate_budget_status(expenses, bill_date, cycle, acct):
         budget = BUDGET[card]
         cur = cycle.get(card, 0) if cycle else 0
         stmt = expenses.get(card, 0) if expenses else 0
-        pct = _pct(cur, budget)
+        pct = _pct(stmt, budget)
         if pct >= 20:
-            alerts.append("- 🚨 **P1** {} 超支 {:.1f}%（循環 {:,} vs 預算 {:,}；最新帳單 {:,}）".format(
-                card, pct, cur, budget, stmt))
+            alerts.append("- 🚨 **P1** {} 本期帳單 {:,} 超預算 {:.1f}%（預算 {:,}；當期未繳 {:,}）".format(
+                card, stmt, pct, budget, cur))
         elif pct >= 10:
-            alerts.append("- ⚠️ **P2** {} 超支 {:.1f}%（循環 {:,} vs 預算 {:,}）".format(card, pct, cur, budget))
-        elif stmt > budget * 1.2:
-            alerts.append("- ⚠️ **P2** {} 上期帳單 {:,} 高於預算 {:,}（{:.1f}%），本期循環已回落".format(
-                card, stmt, budget, _pct(stmt, budget)))
-    tot_pct = _pct(total_cycle, LEDGER_BUDGET)
+            alerts.append("- ⚠️ **P2** {} 本期帳單 {:,} 超預算 {:.1f}%（預算 {:,}）".format(card, stmt, pct, budget))
+    tot_pct = _pct(total_stmt, LEDGER_BUDGET)
     if tot_pct >= 20:
-        alerts.append("- 🚨 **P1** 四卡循環合計 {:+,} TWD（{:+.1f}%）超帳本基準 {:,} TWD".format(
-            total_cycle - LEDGER_BUDGET, tot_pct, LEDGER_BUDGET))
+        alerts.append("- 🚨 **P1** 四卡本期帳單合計 {:+,} TWD（{:+.1f}%）超帳本基準 {:,} TWD；當期未繳（將全額扣繳）{:,} TWD".format(
+            total_stmt - LEDGER_BUDGET, tot_pct, LEDGER_BUDGET, total_cycle))
     elif tot_pct >= 10:
-        alerts.append("- ⚠️ **P2** 四卡循環合計 {:+,} TWD（{:+.1f}%）高於帳本基準".format(
-            total_cycle - LEDGER_BUDGET, tot_pct))
+        alerts.append("- ⚠️ **P2** 四卡本期帳單合計 {:+,} TWD（{:+.1f}%）高於帳本基準".format(
+            total_stmt - LEDGER_BUDGET, tot_pct))
     if bill_date and _age(bill_date) > 14:
         alerts.append("- 🚨 **P1（資料品質）** 帳單匯出資料日 {}，已 {} 天未更新；循環數據以帳戶 CSV {} 為準".format(
             bill_date, _age(bill_date), acct.get("date", "?")))
@@ -214,7 +211,7 @@ def calculate_budget_status(expenses, bill_date, cycle, acct):
     lines.append("## 現金流影響")
     lines.append("")
     other = acct.get("other", 0)
-    lines.append("- 四卡當期循環未繳：{:,} TWD".format(total_cycle))
+    lines.append("- 四卡當期未繳（每月全額自動扣繳，無循環利息）：{:,} TWD".format(total_cycle))
     if other:
         lines.append("- 其他卡（國泰 CUBE 等）當期未繳：{:,} TWD；**全部卡費合計 {:,} TWD**".format(
             other, total_cycle + other))

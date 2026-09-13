@@ -222,6 +222,14 @@ def main():
             _new_pen["actual_pct"][_k] = _old_pen["actual_pct"][_k]
     snap["penetration"] = _new_pen
 
+    # ③b 負債由明細推導（2026-09-13 INC-159 P2）：cc_liability/total_liabilities/net_worth 禁手寫
+    from asset_sync import rebuild_liabilities
+    snap = rebuild_liabilities(snap)
+    _bu = snap.get("liabilities_build_up", {})
+    print(f"✅ 負債重建：房貸 {_bu.get('房貸_含國泰',0):,} + 保單 {_bu.get('保單借貸',0):,}"
+          f" + 質押 {_bu.get('券商質押',0):,} + 信用卡 {_bu.get('信用卡_當期未繳_全額扣繳',0):,}"
+          f" = {snap.get('total_liabilities',0):,}（淨值 {snap.get('net_worth',0):,}）")
+
     # ④ 驗證
     from asset_sync import verify_synonyms
     issues = verify_synonyms(snap)
@@ -256,6 +264,25 @@ def main():
             _db.execute("INSERT INTO assets (date, cash_total, bonds, securities, insurance, funds, total_assets, total_liabilities) VALUES (?,?,?,?,?,?,?,?)", _row)
         _db.commit()
         print(f"✅ DB assets {_today} 已同步（4 源一致）")
+        # 2026-09-13 INC-159 P2：liabilities 表同步（原為手寫值 71,799，與 snapshot 不一致）
+        try:
+            _lc = _db.execute("SELECT COUNT(*) FROM liabilities WHERE date=?", (_today,)).fetchone()[0]
+            _lrow = (snap.get("mortgage_yy", 0), snap.get("mortgage_yydu", 0),
+                     snap.get("mortgage_xz", 0), snap.get("policy_loan", 0),
+                     snap.get("pledge_loan", 0), snap.get("cc_liability", 0),
+                     snap.get("total_liabilities", 0), snap.get("mortgage_cathay", 0))
+            if _lc:
+                _db.execute("""UPDATE liabilities SET mortgage_yy=?, mortgage_yydu=?, mortgage_xz=?,
+                    policy_loan=?, pledge_loan=?, credit_card=?, total_liabilities=?, mortgage_cathay=?
+                    WHERE date=?""", _lrow + (_today,))
+            else:
+                _db.execute("""INSERT INTO liabilities (mortgage_yy, mortgage_yydu, mortgage_xz,
+                    policy_loan, pledge_loan, credit_card, total_liabilities, mortgage_cathay, date)
+                    VALUES (?,?,?,?,?,?,?,?,?)""", _lrow + (_today,))
+            _db.commit()
+            print(f"✅ DB liabilities {_today} 已同步（信用卡 {snap.get('cc_liability',0):,}／總負債 {snap.get('total_liabilities',0):,}）")
+        except Exception as _le:
+            print(f"⚠️ DB liabilities 同步失敗: {_le}")
     except Exception as _e:
         print(f"⚠️ DB 同步失敗: {_e}")
 

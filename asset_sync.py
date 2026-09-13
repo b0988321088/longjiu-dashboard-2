@@ -79,7 +79,76 @@ def verify_synonyms(snap: dict) -> list:
             issues.append(f"{master}: {vals}")
     return issues
 
+
+# ─────────────────────────────────────────────────────────────
+# 負債模型（2026-09-13 INC-159 P2）：負債由組成明細推導，禁手寫
+# 背景：total_liabilities / net_worth / cc_liability 原本全系統沒有任何計算來源
+# （grep 全 repo 無 assignment）→ 每次靠手寫，導致 78,099 無法解釋的殘差、
+# cc_liability 停在 28,101、DB 與 snapshot 卡片金額不一致。
+# 口徑（使用者 2026-09-13 明示）：無循環利息、每月全額自動扣繳 →
+#   信用卡負債 = credit_card dict 負值合計（當期未繳，將被全額扣掉）
+# ─────────────────────────────────────────────────────────────
+INCLUDE_PERSONAL_LOANS = False   # 女友借款 300,000 是否計入總負債（待使用者裁示，目前維持不計入）
+
+
+def cc_unpaid(snap: dict) -> int:
+    """信用卡當期未繳 = credit_card dict 負值合計。"""
+    cc = snap.get("credit_card") or {}
+    if not isinstance(cc, dict):
+        return 0
+    return int(abs(sum(v for v in cc.values() if isinstance(v, (int, float)) and v < 0)))
+
+
+def rebuild_liabilities(snap: dict) -> dict:
+    """由明細重建 cc_liability / total_liabilities / net_worth（冪等）。"""
+    unpaid = cc_unpaid(snap)
+    snap["credit_card_pending"] = unpaid
+    snap["cc_liability"] = unpaid
+
+    mort = snap.get("mortgage_balance") or snap.get("mortgage") or 0
+    pol = snap.get("policy_loan") or 0
+    ple = snap.get("pledge_loan") or 0
+    per = 0
+    if INCLUDE_PERSONAL_LOANS:
+        pl = snap.get("personal_loans") or {}
+        if isinstance(pl, dict):
+            per = sum((v or {}).get("金額", 0) if isinstance(v, dict) else 0
+                      for v in pl.values())
+
+    total = int(mort) + int(pol) + int(ple) + unpaid + int(per)
+    snap["total_liabilities"] = total
+    snap["liabilities_build_up"] = {
+        "房貸_含國泰": int(mort),
+        "保單借貸": int(pol),
+        "券商質押": int(ple),
+        "信用卡_當期未繳_全額扣繳": unpaid,
+        "女友借款_未計入": 0 if INCLUDE_PERSONAL_LOANS else 300000,
+        "total": total,
+        "note": "2026-09-13 建立：負債改由明細推導（原為手寫值，曾出現 78,099 不明殘差）",
+    }
+    snap["net_worth"] = int(snap.get("total_assets") or 0) - total
+    # 負債率雙軌（2026-08-10 使用者裁示格式）：含不動產主顯示 / 不含不動產流動監控
+    _ta = float(snap.get("total_assets") or 0)
+    _re = float(snap.get("real_estate_value") or 0)
+    snap["debt_ratio"] = round(total / (_ta + _re) * 100, 1) if (_ta + _re) else 0
+    snap["debt_ratio_flow"] = round(total / _ta * 100, 1) if _ta else 0
+    return snap
+
 if __name__ == "__main__":
+    import sys as _sys
+    if "--rebuild-liabilities" in _sys.argv:
+        # 唯一入口：由明細重建 cc_liability / total_liabilities / net_worth / 負債率雙軌
+        snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        snap = rebuild_liabilities(snap)
+        (BASE / "snapshot.json").write_text(
+            json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
+        bu = snap["liabilities_build_up"]
+        print(f"✅ 負債重建：房貸 {bu['房貸_含國泰']:,} + 保單 {bu['保單借貸']:,}"
+              f" + 質押 {bu['券商質押']:,} + 信用卡 {bu['信用卡_當期未繳_全額扣繳']:,}"
+              f" = {snap['total_liabilities']:,}")
+        print(f"   淨值 {snap['net_worth']:,}｜負債率 {snap['debt_ratio']}%（含不動產）"
+              f"／{snap['debt_ratio_flow']}%（流動）")
+        _sys.exit(0)
     # 自檢
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     issues = verify_synonyms(snap)

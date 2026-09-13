@@ -5,7 +5,7 @@
  "total_assets": 26085558,
  "total_liabilities": 30116569,
  "net_worth": -4031011,
- "debt_ratio": 50.2,
+ "debt_ratio": 50.1,
  "monthly_income": 228751,
  "monthly_expense": 162781,
  "working_surplus": 75970,
@@ -1804,7 +1804,7 @@
    "防護重點：①PI審查期避免資產水位壓低 ②防範建債還貸後現金過低流動性枯竭"
   ]
  },
- "debt_ratio_flow": 115.2,
+ "debt_ratio_flow": 115.5,
  "real_estate": 34017063,
  "financial_mortgage_note": "理財型房貸 2,006,447 已於 2026-08-11 全數清償 ✅",
  "fund_watchlist": {

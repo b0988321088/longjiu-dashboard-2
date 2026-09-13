@@ -79,6 +79,17 @@
 - P1-4（2026-09-13 完成，只診斷未改數）：產出 `card_caliber_assessment_2026-09-13.md`。**重大發現：同一組信用卡在系統內有 6 個不一致的口徑** —— snapshot.credit_card 66,999（8/20期）／credit_card_pending 66,699／cc_liability 28,101（無程式寫入點，疑手寫）／cc_unbilled 32,502（已是 9/02 帳單 ✅）／DB liabilities.credit_card 71,799（9/8 寫入，現行 db_loader 預設值卻是 39,865）／預算報告循環 15,793（9/02）。且 **total_liabilities 30,160,643 有 78,099 未標示殘差**（房貸 25,082,544＋保單 4,000,000＋質押 1,000,000＝30,082,544），女友借款 300,000 未計入 → 無法由 snapshot 欄位完整重建總負債。結論：P2 不可只「換資料源」，須先做口徑定版＋單一寫入者＋對帳 78,099＋四源驗證
 - P1-5（2026-09-13 完成）：582 檔快取刪除**來源未定位**。已排除：nightly_maintenance（只清 hunter_logs）、weekly_db_maintenance（只清 rescue/DB/記憶備份）、sync_all（清個資目錄）、four_source_sync（刪當日報 HTML 後重產）、cleanup_check_pollution（只刪污染檔）；state.db 近 2 日訊息查無刪除指令（僅本 session 的鑑識命令）；dir mtime 已被本 session 的暫存檔操作覆蓋無法回溯。防護已入技能 hermes-storage-maintenance（禁刪 `_{TODAY}_` 快取）
 
+## INC-2026-09-13（INC-160）負債口徑單一真值化（P2 完成）
+- 時間：2026-09-13 16:3x（使用者裁示：「用最新資料就好」＋「沒有循環利息、每月全額自動扣繳」）
+- 錯誤：同一組信用卡在系統內有 6 個不一致數字（66,999／66,699／28,101／32,502／71,799／34,025），且 `total_liabilities`（30,160,643）含 **78,099 未標示殘差**、`cc_liability`（28,101）與 DB `liabilities.credit_card`（71,799）皆與 snapshot 不一致
+- 根因：**`total_liabilities` / `net_worth` / `cc_liability` 全系統無任何計算來源**（grep 全 repo 無 assignment）→ 純手寫，必然漂移；`cc_liability` 無寫入點、`db_loader` 的 liabilities 預設值（39,865）也早已失效
+- 修法（單一真值）：新增 `asset_sync.rebuild_liabilities()`（冪等）— 由明細推導 `cc_liability`＝`credit_card` 負值合計、`total_liabilities`＝房貸(含國泰)+保單借貸+質押+信用卡、`net_worth`、負債率雙軌，並寫 `liabilities_build_up` 對帳明細；`update_data.py` 每次更新自動重建＋同步 DB `assets`/`liabilities` 兩表；CLI `python asset_sync.py --rebuild-liabilities`
+- 口徑定版（使用者明示無循環利息、全額扣繳）：預算報告「循環」字樣移除，警示基準改 **帳單金額 vs 月預算**（消費速度），「當期未繳(全額扣繳)」保留為現金流資訊
+- 套用結果：卡片 9/02（玉山 11,175／台新 4,383／永豐 235／國泰 18,232）→ pending/cc_liability **34,025**；total_liabilities **30,116,569**（明細可完全解釋）；net_worth −4,031,011（Δ **+44,074**）；負債率 50.1%／流動 115.5%；DB 兩表同步；asset_diff_history 9/13 條目補上並註記「帳務口徑修正非市場變動」
+- 驗證：snapshot＝DB＝日報 HTML（30,116,569）；差異分析即時更新為 50.1%；CIO 審查全部通過、四連結 200
+- 待使用者一句話：女友借款 300,000 是否計入總負債（現不計入；計入則 30,416,569／淨值 −4,331,011）
+- 狀態：✅ 已完成（P2）
+
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
 | 錯誤類型 | 次數 | 首次 | 最後 | 處置 |
