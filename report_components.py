@@ -118,14 +118,20 @@ def render_health_score(snap: dict) -> dict:
     income = (snap.get("dividend_month_expected") or 100000) + rent
     cov = income / expense * 100 if expense else 0
 
-    # 防禦維度（雙維度框架 8/21：情境門檻）— 讀「佔比」，勿誤取金額欄（2026-09-05 修正：_num 曾取到合計 14,086,561）
+    # 防禦維度（雙維度框架 8/21：情境門檻）— 讀「佔比」，含 ±3% 公差與分階段計分
     ddm = snap.get("dual_dimension_metric", {})
     _dd_def = ddm.get("防禦維度", ddm.get("防禦", {})) if isinstance(ddm, dict) else {}
     try:
         defense = float(_dd_def.get("佔比", _dd_def.get("合計", 53.9)))
     except Exception:
         defense = 53.9
-    def_score = 100 if defense >= 50 else (60 if defense >= 40 else 0)
+    # 分階段計分：目標 50%，公差 ±3% (47%~53% 滿分 100)；偏離每 1% 扣 10 分，最低 0 分
+    if 47.0 <= defense <= 53.0:
+        def_score = 100
+    elif defense < 47.0:
+        def_score = max(0, int(100 - (47.0 - defense) * 10))
+    else:
+        def_score = max(0, int(100 - (defense - 53.0) * 10))
 
     # 美元曝險（口徑：美股桶+美元定存+美元債券梯+保單美元債 ≈54%）
     _usd_m = snap.get("usd_exposure_monitor", {}).get("current", {})
