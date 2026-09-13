@@ -699,6 +699,7 @@ def main():
         "__PEN_REPORT__": "penetration_report_*.html",
         "__REBALANCE_DASH__": "rebalance_dashboard_*.html",
         "__REBALANCE_EVAL__": "rebalance_eval_*.html",
+        "__RATE_HIKE_REPORT__": "rate_hike_dashboard_*.html",
         "__REBALANCE_MD__": "rebalance_summary_*.md",
         "__RISK_PNG__": "risk_factor_penetration_*.png",
         "__WEEKLY__": "weekly_report_*.html",
