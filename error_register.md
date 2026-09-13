@@ -76,6 +76,8 @@
 - 錯誤③：每週日 DB 保養 job 9/13 05:00 失敗（`can't open file 'C:\c\Users\...\main.py'`）→ 本週 optimize-storage 未跑。根因：bash `$HOME`（MSYS `/c/...`）作為參數傳給原生 python.exe 被轉成 `C:\c\...`。修法：`HOME_WIN="$(cygpath -m "$HOME")"` 拼原生路徑，找不到即 exit 1（不再 fallback 被封鎖的 hermes shim）。驗證：手跑 SH_RC=0、log 見 done，備份輪替釋放 3,061 MB，index 已 compact 故 optimize 秒回
 - check_rule：① 讀檔類腳本一律「跨目錄 + 以檔名日期取最新」，不可只掃 repo ② cron 自動 commit 一律白名單自身產物，並用髒檔誘餌驗證 ③ bash 呼叫原生 exe 的路徑參數一律 `cygpath -m` ④ 清快取禁刪當日檔
 - 狀態：✅ 已修正（P0-1/2/3）；P1-4 snapshot 卡片口徑比對與 P2 待核
+- P1-4（2026-09-13 完成，只診斷未改數）：產出 `card_caliber_assessment_2026-09-13.md`。**重大發現：同一組信用卡在系統內有 6 個不一致的口徑** —— snapshot.credit_card 66,999（8/20期）／credit_card_pending 66,699／cc_liability 28,101（無程式寫入點，疑手寫）／cc_unbilled 32,502（已是 9/02 帳單 ✅）／DB liabilities.credit_card 71,799（9/8 寫入，現行 db_loader 預設值卻是 39,865）／預算報告循環 15,793（9/02）。且 **total_liabilities 30,160,643 有 78,099 未標示殘差**（房貸 25,082,544＋保單 4,000,000＋質押 1,000,000＝30,082,544），女友借款 300,000 未計入 → 無法由 snapshot 欄位完整重建總負債。結論：P2 不可只「換資料源」，須先做口徑定版＋單一寫入者＋對帳 78,099＋四源驗證
+- P1-5（2026-09-13 完成）：582 檔快取刪除**來源未定位**。已排除：nightly_maintenance（只清 hunter_logs）、weekly_db_maintenance（只清 rescue/DB/記憶備份）、sync_all（清個資目錄）、four_source_sync（刪當日報 HTML 後重產）、cleanup_check_pollution（只刪污染檔）；state.db 近 2 日訊息查無刪除指令（僅本 session 的鑑識命令）；dir mtime 已被本 session 的暫存檔操作覆蓋無法回溯。防護已入技能 hermes-storage-maintenance（禁刪 `_{TODAY}_` 快取）
 
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
