@@ -10,6 +10,7 @@ from pathlib import Path
 from logging_config import get_logger
 logger = get_logger("budget_daily_check")
 import csv
+import os
 import re
 
 BASE = Path(__file__).resolve().parent
@@ -33,8 +34,29 @@ SAFETY_LINE = 40000  # 玉山/富邦生活帳戶安全線
 
 
 def _latest(pattern):
-    files = list(BASE.glob(pattern)) + list((BASE / "moneybook").glob(pattern))
-    return sorted(files, key=lambda p: p.name, reverse=True)[0] if files else None
+    """v2（2026-09-13 INC-159）：跨目錄蒐集後取「檔名日期最大」者。
+
+    原版只掃 BASE 與 BASE/moneybook 且用「字典序第一個」→ repo 只放 7/27 匯出、
+    最新 9/02 匯出在 hermes cache 裡，於是永遠讀到舊檔 → 台新被誤報 P1 超支 117%
+    （實際循環 4,383、−35%）。修法：納入 cache/documents（含子目錄）並以檔名日期取最新。
+    """
+    dirs = [BASE, BASE / "moneybook", BASE / "tmp_mb",
+            Path.home() / "AppData" / "Local" / "hermes" / "cache" / "documents"]
+    files = []
+    for d in dirs:
+        if not d.exists():
+            continue
+        files += list(d.glob(pattern))
+        files += list(d.glob("*" + os.sep + pattern))
+        files += list(d.glob("*" + os.sep + "*" + os.sep + pattern))
+    if not files:
+        return None
+
+    def _key(p):
+        m = re.search(r"(\d{4})(\d{2})(\d{2})", p.name)
+        return (m.group(1) + m.group(2) + m.group(3)) if m else "00000000"
+
+    return max(files, key=lambda p: (_key(p), p.stat().st_mtime))
 
 
 def _date_from_name(p):
@@ -182,7 +204,7 @@ def calculate_budget_status(expenses, bill_date, cycle, acct):
         alerts.append("- ⚠️ **P2** 四卡循環合計 {:+,} TWD（{:+.1f}%）高於帳本基準".format(
             total_cycle - LEDGER_BUDGET, tot_pct))
     if bill_date and _age(bill_date) > 14:
-        alerts.append("- 🚨 **P1（資料品質）** 帳單 CSV 資料日 {}，已 {} 天未更新，8/9 月帳單缺失；循環數據以帳戶 CSV {} 為準".format(
+        alerts.append("- 🚨 **P1（資料品質）** 帳單匯出資料日 {}，已 {} 天未更新；循環數據以帳戶 CSV {} 為準".format(
             bill_date, _age(bill_date), acct.get("date", "?")))
     if not alerts:
         lines.append("- ✅ 無異常，四大主力皆在預算範圍內")
