@@ -15,14 +15,17 @@
 ----
     python closeout_check.py            # 檢查（不動任何東西）
     python closeout_check.py --fix      # 順便釋放被誤認領的時點（先備份 executions.db）
-    python closeout_check.py --quiet    # 全綠時只印一行摘要（cron watchdog 用）
+    python closeout_check.py --quiet    # 全綠時只印一行摘要
+    python closeout_check.py --silent-ok  # 全綠完全不輸出（cron watchdog 用；有問題才吐整份報告）
 
 exit code：0 = 全部通過；1 = 有問題（或仍有未釋放的認領）。
 """
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime as dt
+import io
 import subprocess
 import sys
 from pathlib import Path
@@ -72,32 +75,43 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="龍九每日收工檢查（一鍵）")
     ap.add_argument("--fix", action="store_true", help="釋放被誤認領的排程時點")
     ap.add_argument("--quiet", action="store_true", help="全綠時只印摘要")
+    ap.add_argument("--silent-ok", action="store_true",
+                    help="全綠時完全不輸出（cron watchdog 用：只有出問題才吐報告）")
     args = ap.parse_args()
 
     stamp = dt.datetime.now().strftime("%Y-%m-%d %H:%M")
-    if not args.quiet:
+    buf = io.StringIO()
+    sink = contextlib.redirect_stdout(buf) if args.silent_ok else contextlib.nullcontext()
+    with sink:
+        if not (args.quiet or args.silent_ok):
+            print("=" * 52)
+            print(f"龍九收工檢查　{stamp}")
+            print("=" * 52)
+
+        left_claims = step_claims(args.fix, args.quiet or args.silent_ok)
+        rc, concl, out = step_audit(args.quiet or args.silent_ok)
+
+        problems = []
+        if left_claims:
+            problems.append(f"未釋放的排程認領 {left_claims} 筆")
+        if "全部通過" not in concl:
+            problems.append(concl.replace("閉環稽核結果：", ""))
+
+        print()
         print("=" * 52)
-        print(f"龍九收工檢查　{stamp}")
+        if not problems:
+            print(f"收工檢查：全部通過 ✅　（{stamp}）")
+        else:
+            print("收工檢查：❌ 有問題")
+            for x in problems:
+                print(f"  - {x}")
         print("=" * 52)
 
-    left_claims = step_claims(args.fix, args.quiet)
-    rc, concl, out = step_audit(args.quiet)
-
-    problems = []
-    if left_claims:
-        problems.append(f"未釋放的排程認領 {left_claims} 筆")
-    if "全部通過" not in concl:
-        problems.append(concl.replace("閉環稽核結果：", ""))
-
-    print()
-    print("=" * 52)
-    if not problems:
-        print(f"收工檢查：全部通過 ✅　（{stamp}）")
-    else:
-        print("收工檢查：❌ 有問題")
-        for x in problems:
-            print(f"  - {x}")
-    print("=" * 52)
+    if args.silent_ok:
+        if not problems:
+            return 0                      # 全綠 → 靜默（cron 不推送）
+        print(buf.getvalue().rstrip())    # 有問題 → 完整報告整份吐出
+        return 1
     return 0 if not problems else 1
 
 
