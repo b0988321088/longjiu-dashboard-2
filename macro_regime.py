@@ -312,8 +312,8 @@ def target_allocation(snap: dict, light: str, regime: dict) -> dict:
     total = snap.get("total_assets", 0)
     s = {
         "台股市值型成長": {"target": tgt.get("台股市值型目標", 10), "cap": HARD["台股上限"]},
-        "美股市值型成長": {"target": tgt.get("美股市值型目標", 40), "drift": 10},
-        "防守型配息": {"target": tgt.get("配息型目標", 20), "drift": 10},
+        "美股市值型成長": {"target": tgt.get("美股市值型目標", 30), "drift": 10},
+        "防守型配息": {"target": tgt.get("配息型目標", 30), "drift": 10},
         "債券": {"target": tgt.get("債券型目標", 25), "drift": 10},
     }
     if light == "🟢 綠燈":
@@ -514,7 +514,7 @@ def _rebalance_suggestion(snap: dict, regime: dict, light: str) -> dict:
     usd = regime.get("美元信用壓力", {}).get("score") or 0
     out = []
     for label, cur_k, tgt_k, action, base, mult_src, mult_max in [
-        ("美股", "美股市值型成長", "美股市值型目標", "減碼" if apct.get("美股市值型成長", 0) > tgt.get("美股市值型目標", 40) else "觀望",
+        ("美股", "美股市值型成長", "美股市值型目標", "減碼" if apct.get("美股市值型成長", 0) > tgt.get("美股市值型目標", 30) else "觀望",
          "20萬/次", tech, 1.5),
         ("防守配息", "防守型配息", "配息型目標", "增持", "0", rot, 1.3),
         ("債券", "債券", "債券型目標", "增持", "0", usd, 1.3),
