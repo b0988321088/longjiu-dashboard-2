@@ -316,7 +316,8 @@ def main():
 
     # ── 乾粉 ──
     dry = s.get("乾粉執行_0926", {}).get("戰術乾粉總額", {})
-    dry_cur = dry.get("當前", 0)
+    # 2026-09-13：乾粉 = 台幣現金 − 底線（現算；舊值 10.0萬 為 8/22 口徑，現金已 857,298）
+    dry_cur = max(0, (s.get("cash_total") or s.get("cash") or 0) - s.get("cash_floor", 700000)) or dry.get("當前", 0)
 
     # ── 質押 ──
     pledge = s.get("質押計畫", {})

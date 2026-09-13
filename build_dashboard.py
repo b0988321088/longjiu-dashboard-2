@@ -130,7 +130,9 @@ def main():
             # 本週計劃（同 institutional_flow 結論邏輯，精簡版）
             _pen2 = snap.get("penetration", {}).get("actual_pct", {}) or {}
             _tg2 = snap.get("penetration", {}).get("targets", {}) or {}
-            _dry2 = snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
+            # 2026-09-13：乾粉 = 台幣現金 − 現金底線（現算；原讀 乾粉執行_0926 的 8/22 舊值會與現金 % 矛盾）
+            _dry2 = max(0, (snap.get("cash_total") or snap.get("cash") or 0) - snap.get("cash_floor", 700000)) \
+                or snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
             _usd2 = snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
             # 2026-09-13：本週計劃改讀 radar_state.weekly_plan.rows（單一來源＝institutional_flow 產出）
             # 原為 7 行貼死文字（含「9/11簽約」「Fed 9/11 CPI / 9/16 FOMC」等過期日期）

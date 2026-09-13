@@ -484,7 +484,12 @@ def main():
         _pen = _snap.get("penetration", {}).get("actual_pct", {})
         def _ap(k, d=0):
             return _pen.get(k, d)
-        _dry = _snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
+        # 2026-09-13：乾粉改「台幣現金 − 底線」現算（原讀 乾粉執行_0926.當前=100,272 是 8/22 口徑；
+        # 現金已 800,272 → 857,298、MMF 500萬已轉 B11 → 舊值會與同行現金 % 自相矛盾）
+        _floor_dry = _snap.get("cash_floor", 700000)
+        _dry = max(0, (_snap.get("cash_total") or _snap.get("cash") or 0) - _floor_dry)
+        if not _dry:
+            _dry = _snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
         _usd = _snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
         _hs = _snap.get("hedge_satellite", {})
         _conv = _snap.get("insurance_conversion_0826b", {})

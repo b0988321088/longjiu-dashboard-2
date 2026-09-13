@@ -1154,15 +1154,22 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
 
 def _build_market_rows(signals: dict, tv: dict) -> str:
-    sell = signals.get("sell_signals", [])
-    rows = [
-        f"<tr><td>台股加權指數（{TODAY}）</td><td>{twii}</td><td>{scenario.get('market_assessment', market.get('twii', '高檔震盪'))}</td></tr>",
-        f"<tr><td>台積電（{TODAY}）</td><td>{tsm}</td><td>半導體龍頭穩盤</td></tr>",
-        f"<tr><td>費半（{TODAY}）</td><td>{sox}</td><td>高檔回調</td></tr>",
-        f"<tr><td>美股（{TODAY}）</td><td>{us}</td><td>通膨降溫驅動科技領漲</td></tr>",
-        f"<tr><td>美國 CPI</td><td>{cpi}</td><td>降息預期升溫</td></tr>",
-    ]
-    return "\n          ".join(rows)
+    """市場簡表（2026-09-13 修復 static_gate F821）：原函數引用不存在的全域
+    twii/scenario/market/tsm/sox/us/cpi（且無任何呼叫端）→ 改為從 tv 的市場資料
+    動態取值，缺值就略過該列，禁止再寫死指數數字。"""
+    _m = {}
+    if isinstance(tv, dict):
+        _m = tv.get("market") or tv.get("market_intel") or {}
+    if not isinstance(_m, dict) or not _m:
+        return ""
+    _rows = []
+    for _label, _k in [("台股加權指數", "twii"), ("台積電", "tsm"), ("費半", "sox"),
+                       ("美股", "us"), ("美國 CPI", "cpi")]:
+        _v = _m.get(_k)
+        if _v in (None, ""):
+            continue
+        _rows.append(f"<tr><td>{_label}（{TODAY}）</td><td>{_v}</td><td>{_m.get(_k + '_note', '')}</td></tr>")
+    return "\n          ".join(_rows)
 
 
 def _format_line_with_numbers(line: str) -> str:
@@ -2044,7 +2051,7 @@ def main():
         except Exception as _exc:
             print(f"[WARN] load emergency_llm_analysis.json failed: {_exc}")
 
-    daily_html = render_daily_report(tv, intel_text=intel_text, intel_signals=intel_signals, market_intel_text=market_intel_text, llm_emergency_analysis=llm_emergency_analysis_html, schedule_rows_html=_schedule_rows, p0_tasks_html=_p0_html)
+    daily_html = render_daily_report(tv, intel_text="", intel_signals=intel_signals, market_intel_text=market_intel_text, llm_emergency_analysis=llm_emergency_analysis_html, schedule_rows_html=_schedule_rows, p0_tasks_html=_p0_html)
     daily_html = _inject_market_intel(daily_html, tv, intel_signals, llm_emergency_analysis_html)
 
     # 注入戰略穿透值到日報
