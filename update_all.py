@@ -172,6 +172,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             _fund_bonds += round(_fval * _b11_br)
             _fund_cash += 0
             _fund_us_tech += round(_fval * _b11_eq * 0.25)  # 科技佔權益部位約 25%（對齊 MSCI World IT 基準）
+            _fund_us -= _fval # 扣除 B11 總市值，避免重複計入美股市值型
         elif any(_k in _fn for _k in ["台中銀台灣優息", "國泰台灣高股息", "元大台灣高股息", "高股息ETF連結"]):
             _fund_def += _fval
         elif any(_k in _fn for _k in ["台新美日台", "貝萊德", "安聯AI", "聯博", "摩根", "M&G", "安聯收益成長", "投資型保單"]):
