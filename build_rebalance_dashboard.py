@@ -25,7 +25,7 @@ GICS_COLORS = {
     "不動產": "#ec4899", "通訊服務": "#06b6d4", "原物料": "#a16207", "固收/現金": "#94a3b8",
 }
 
-def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, sec_rows, dry_cur, risk_rows, ms_html, emg_html, total, cash, monthly_inc, monthly_exp, surplus, usd_pct, tech, us30y):
+def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, sec_rows, dry_cur, risk_rows, ms_html, emg_html, total, cash, monthly_inc, monthly_exp, surplus, usd_pct, tech, us30y, plan_rows=None):
     """再平衡評估（文字版 md）— 與儀表板同源，每日自動更新（2026-08-22）"""
     lines = [
         f"# 🔄 龍九再平衡評估（{TODAY}）",
@@ -67,11 +67,18 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
             lines.append(f"- 💵 **債券升息敏感度**：{_pn['債券升息敏感度']}")
 
     # 二之一、資金訊號 × 投資狀況 × 動作（2026-08-23 核准：對照表嵌評估開頭）
+    # 2026-09-13：現況/動作文字改由 buckets（snapshot）＋ plan_rows（radar_state.weekly_plan）推導，禁止貼死
+    _bkt = {n: (a, t) for n, a, t, _twd2, _c2 in buckets}
+    _row_of = {(_r.get("類別") or "").strip(): (_r.get("內容") or "") for _r in (plan_rows or [])}
+    _brief = lambda _t: ((_t.split("→")[0] or _t).strip() if _t else "")
+    _tw_p, _tw_t = _bkt.get("台股", (0, 0))
+    _bd_p, _bd_t = _bkt.get("債券", (0, 0))
     sig_action = {
-        "台股": ("台股（7.2% 低配 -2.8pp）", "✅ 慢慢買：每週 1.5-2萬 0050/006208（單筆≤5萬）"),
-        "黃金": ("避險衛星（黃金≤5%）", "⏸ PI 後 131萬分3批 50/30/20；勿追高（今 +4.4%）"),
+        "台股": (f"台股（{_tw_p:.1f}% {'低配' if _tw_p < _tw_t else '超配'} {_tw_p - _tw_t:+.1f}pp）",
+                 _brief(_row_of.get("台股")) or "⏸ 等訊號"),
+        "黃金": ("避險衛星（黃金≤5%）", _brief(_row_of.get("避險衛星")) or "⏸ 分批；勿追高"),
         "原油": ("避險衛星（石油≤2%）", "⛔ 凍結：COT 機構撤離，延後建倉"),
-        "美債10年": ("債券（22.6% vs 目標25%）", "⏸ 等 US30Y<5.30% 才新增"),
+        "美債10年": (f"債券（{_bd_p:.1f}% vs 目標{_bd_t}%）", _brief(_row_of.get("債券")) or "⏸ 等 US30Y<5.30% 才新增"),
         "台幣": ("全資產（匯率）", "⚪ 中性：台幣走升，台股順勢加分"),
     }
     lines += ["", "## 二之一、資金訊號 × 投資狀況 × 動作", "",
@@ -136,7 +143,9 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
                       ("10月", "洲際W 轉貸國泰（要求全額吸收規費）＋ 標案", "mid")]:
         lines.append(f"- {d}：{t2}")
 
-    lines += ["", "## 八、結論", "**本週動作：只有「台股慢慢買」是主動項（每週 1.5-2萬 × 8-12 週），其餘全數按兵不動。**",
+    _act_rows = [(_r.get("類別") or "").strip() for _r in (plan_rows or []) if (_r.get("動作") or "").startswith("🟢")]
+    _concat = "、".join(_act_rows) if _act_rows else "無（全數按兵不動，等質押撥款）"
+    lines += ["", "## 八、結論", f"**本週動作：主動項 = {_concat}；其餘按兵不動。**",
               f"最大等待：整池質押 {_pf.pledge_status_line(style='short')} → 撥款到位即清償高息負債。", ""]
     out = BASE / f"rebalance_summary_{TODAY}.md"
     out.write_text("\n".join(lines), encoding="utf-8")
@@ -243,36 +252,48 @@ def main():
     else:
         _pn_html = ""
 
-    _plan_html = ""
-        # 讀取並構建 HTML
-        html = load_text(INDEX_TEMPLATE)
-        html = html.replace("{_pn_html}", _pn_html)
-
-        # ── 本週投資計劃（2026-09-13 v3：動態全資產面結論）──
+    # ── 本週投資計劃（2026-09-13 v3：動態全資產面結論）──
+    # 單一來源 = radar_state.weekly_plan.rows（institutional_flow.py 每日產出），禁止貼死字串
+    _plan_rows = []
+    try:
+        _rs = json.loads((Path(__file__).resolve().parent / "radar_state.json").read_text(encoding="utf-8"))
+        _wp = _rs.get("weekly_plan", {}) or {}
+        _plan_rows = [r for r in (_wp.get("rows") or []) if r.get("內容")]
+        _date_lbl = str(_wp.get("日期") or TODAY).split("T")[0]
         try:
-            _plan_html = ""
-            _rs = json.loads((Path(__file__).resolve().parent / "radar_state.json").read_text(encoding="utf-8"))
-            _rows = (_rs.get("weekly_plan", {}) or {}).get("rows") or []
-            for r in _rows:
-                _plan_html += f"<div style='margin-bottom:6px;font-size:11px;color:#d1fae5'>{r.get('動作','')} <b>{r.get('類別','')}</b>：{r.get('內容','')}</div>"
-        
-            html = html.replace('<h2>📋 本週投資計劃（8/29 全資產面結論）</h2>', f'<h2>📋 本週投資計劃（{TODAY} 全資產面結論）</h2>')
-            html = html.replace('{_plan_html}', _plan_html)
-        except Exception as _e2:
-            _plan_html = f"<div class='card'><h2>📋 本週投資計劃</h2><div style='color:#999'>產生失敗: {_e2}</div></div>"
-            html = html.replace('{_plan_html}', _plan_html)
-        
+            _y, _m, _d = _date_lbl.split("-")
+            _plan_title_date = f"{int(_m)}/{int(_d)}"
+        except Exception:
+            _plan_title_date = _date_lbl
+        if not _plan_rows:
+            raise ValueError("radar_state.weekly_plan.rows 為空（請先跑 institutional_flow.py）")
+        _plan_html = "".join(
+            f"<div style=\"margin-bottom:6px;font-size:11px;color:#d1fae5\">"
+            f"{r.get('動作','')} <b>{r.get('類別','')}</b>：{r.get('內容','')}</div>"
+            for r in _plan_rows
+        )
+        _plan_html = f"""
+        <div class="card" style="border:1px solid #10b981;background:linear-gradient(135deg,#06281a,#131a26)">
+          <h2>📋 本週投資計劃（{_plan_title_date} 全資產面結論）</h2>
+          {_plan_html}
+        </div>"""
+    except Exception as _e2:
+        _plan_html = (f"<div class='card' style='border:1px solid #ef4444'><h2>📋 本週投資計劃</h2>"
+                      f"<div style='font-size:11px;color:#f87171'>產生失敗: {_e2}</div></div>")
+
+    # ── 動作建議（8/22：防守合併口徑動態讀）──
         # ── 動作建議（8/22：防守合併口徑動態讀）──
     _def_pct = s.get("defensive_combined_metric", {}).get("佔比", 69.5)
-    actions = [
-        ("台股慢慢買", "🟢🔥 順勢", "每週 1.5-2萬 0050/006208 × 8-12 週，單筆≤5萬；配息流+結餘", "✅ 主動"),
-        ("美股逢彈減", "⏸ 等待", "44.0%→40%，費半弱不砍低點；反彈日減碼 ≤20萬/次達標即停", "被動"),
-        ("債券補碼", "⏸ 等兩條件", "質押完成 + US30Y<5.30%；經理人代管不買單一純債ETF", "待命"),
-        ("防守", "🟢 已足", f"合併口徑 {_def_pct}% 無缺口；勿被單看 4.2% 誤導", "不動作"),
-        ("現金", "🟢 底線制", f"{cash:,} ≥ 70萬 ✅；MMF 500萬已指定標案/質押補救", "不動作"),
-        ("石油衛星", "🔴 Locked", "COT 機構撤離（-175.6%）；維持延後建倉", "凍結"),
-        ("黃金衛星", "🟢 順勢", "PI 後 131萬 分 3 批 50/30/20；台幣計價 00635U", "待PI"),
-    ]
+    # 同源：動作建議卡直接由 radar_state.weekly_plan.rows 推導（禁止另寫一份貼死數字）
+    _tag_of = {"🟢": "主動", "🔴": "觸發", "⏸️": "待命", "💰": "守線", "✅": "已執行", "🔍": "追蹤", "📊": "情報"}
+    actions = [((_r.get("類別") or "—").strip(), (_r.get("動作") or "⚪").strip(),
+                (_r.get("內容") or "").strip(), _tag_of.get((_r.get("動作") or "").strip(), "參考"))
+               for _r in _plan_rows]
+    if not actions:
+        actions = [("—", "⚪", "radar_state.weekly_plan 無資料", "待更新")]
+    _active = [a[0] for a in actions if a[1].startswith("🟢")]
+    _action_txt = (f"<b style=\"color:var(--grn)\">{'、'.join(_active)}</b>，其餘按兵不動" if _active
+                   else "全數按兵不動（等質押撥款）")
     action_cards = ""
     for name, light, desc, tag in actions:
         action_cards += f"""
@@ -515,7 +536,7 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
 .foot {{ margin-top:16px; color:var(--sub); font-size:11px; text-align:center; }}
 </style></head><body><div class="wrap">
 <h1>🔄 龍九再平衡儀表板</h1>
-<div class="sub">{TODAY}（週{_WD}）｜修正後 DAA 口徑 + 機構流向雷達｜本週動作：<b style="color:var(--grn)">台股慢慢買</b>，其餘按兵不動</div>
+<div class="sub">{TODAY}（週{_WD}）｜修正後 DAA 口徑 + 機構流向雷達｜本週動作：{_action_txt}</div>
 
 <div class="kpis">
   <div class="kpi"><div class="k">總資產（流動）</div><div class="v">{total:,}</div></div>
@@ -579,7 +600,7 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
 
     # 再平衡評估（文字版）— 與儀表板同源
     build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, sec_rows, dry_cur, risk_rows, ms_html, emg_html,
-                     total, cash, monthly_inc, monthly_exp, surplus, usd_pct, tech, us30y)
+                     total, cash, monthly_inc, monthly_exp, surplus, usd_pct, tech, us30y, plan_rows=_plan_rows)
 
 if __name__ == "__main__":
     main()
