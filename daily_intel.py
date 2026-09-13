@@ -78,10 +78,9 @@ def _yf_chart(symbol: str, timeout: int = 8) -> dict:
         price = meta.get("regularMarketPrice")
         if price is None or len(closes) < 2:
             # fallback：meta chartPreviousClose
-            prev = meta.get("chartPreviousClose")
-            if price is None or prev is None:
-                return {}
-            pct = round((price - prev) / prev * 100, 2)
+            price = meta.get("chartPreviousClose") or 0.0 # 確保是數字
+            prev = closes[-1] if closes else 0.0 # 確保是數字
+            pct = round((price - prev) / prev * 100, 2) if prev else 0.0
             return {"price": price, "prev": prev, "change_pct": pct}
         # 最後一根日線若為今天（UTC 日期），prev = 倒數第二根；否則 prev = 最後一根
         import datetime as _dt
@@ -105,11 +104,11 @@ def fetch_yf_market() -> dict:
     def fmt(d):
         if not d:
             return "—"
-        p = d.get("price", "—")
-        c = d.get("change_pct", "—")
-        if isinstance(p, (int, float)) and isinstance(c, (int, float)):
-            return f"{p:,.2f} ({c:+.2f}%)"
-        return str(p)
+        p = d.get("price")
+        c = d.get("change_pct")
+        if p is None or c is None:
+            return "—"
+        return f"{p:,.2f} ({c:+.2f}%)"
 
     us_parts = []
     if dji:
