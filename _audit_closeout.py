@@ -121,13 +121,18 @@ print("=== 4) git 狀態 ===")
 st = subprocess.run(["git", "status", "--porcelain"], cwd=R, capture_output=True, text=True).stdout.strip().splitlines()
 sb = subprocess.run(["git", "status", "-sb"], cwd=R, capture_output=True, text=True).stdout.splitlines()[0]
 print(f"  {sb}")
-tracked_all = [x for x in st if not x.startswith("??")]
-untracked = [x[3:] for x in st if x.startswith("??")]
-benign = [x for x in tracked_all if x[3:].replace("\\", "/") in BENIGN_DIRTY]
-tracked = [x for x in tracked_all if x not in benign]
+# 注意：本機 git 的 porcelain 是「<1 碼狀態><空白><路徑>」（非標準 XY+空白），字元切片會切錯 →
+# 一律用 git diff --name-only 取「已追蹤且被改動」的精準路徑，porcelain 只用於顯示未追蹤清單。
+_dirty = (
+    subprocess.run(["git", "diff", "--name-only"], cwd=R, capture_output=True, text=True).stdout.split()
+    + subprocess.run(["git", "diff", "--cached", "--name-only"], cwd=R, capture_output=True, text=True).stdout.split()
+)
+benign = [p for p in _dirty if p.replace("\\", "/") in BENIGN_DIRTY]
+tracked = [p for p in _dirty if p.replace("\\", "/") not in BENIGN_DIRTY]
+untracked = [x.split(" ", 1)[1] for x in st if x.startswith("??")]
 print(f"  {ok(not tracked)} 已追蹤檔案無未提交變更（{len(tracked)} 筆）")
 if benign:
-    print(f"  ℹ️ 由排程每日更新、當下尚未提交的狀態檔（不列 fail）：{[x[3:] for x in benign]}")
+    print(f"  ℹ️ 由排程每日更新、當下尚未提交的狀態檔（不列 fail）：{benign}")
 print(f"  未追蹤（備份/暫存，預期）：{untracked}")
 if tracked:
     fail.append(f"未提交: {tracked}")
