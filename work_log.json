@@ -478,5 +478,11 @@
   "category": "修正",
   "item": "女友借款補計 5% 年息：應收款 288,000 → 290,500（含未收利息 2,500）",
   "detail": "使用者明示「出款 300,000 含 5% 年利率；每月還 6,000，已還兩期都沒有算到利息」。修正 snapshot.personal_loans.利率 0%→5%、加月息 1,250 與利息備註；asset_sync.personal_loan_remaining() 改回 本金餘＋未收利息（月息＝原始金額×年息÷12×已過期數）；新增 personal_loan_clearance() 算 12/5 結清額 276,250（本金 270,000＋利息 6,250）；snapshot 新增 receivables_breakdown／receivables_clearance；裁示 6,000/月 維持全列收入不拆帳。驗證：9/13=290,500、10/5=285,750、11/5=281,000、12/5 結清後=0；負債 30,116,569／淨值 -4,031,011 不變"
+ },
+ {
+  "date": "2026-09-13",
+  "category": "修正",
+  "item": "關閉 cron 1422af3c2905 稽核誤報（19:05 記憶同步為 9/9 已核准之刻意 pause）",
+  "detail": "閉環稽核 _audit_closeout.py 報「cron 意外停用：1422af3c2905 記憶同步 19:05」→ 查證：該 job 與 b18b41e13102（19:00）跑同一支 memory_sync.py，2026-09-09 已核准 pause 19:05 消除重複推播，paused_at=2026-09-09T19:08:37、last_status=ok，屬刻意停用非故障。修法：稽核加 INTENTIONAL_PAUSED 白名單（列 ℹ️ + 印停用原因，不列 fail）；另確認 19:00 job 健康（executions.db 9/12 completed、AppData memory_store.db 更新於 9/12 19:00）。"
  }
 ]

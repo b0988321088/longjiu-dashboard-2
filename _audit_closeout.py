@@ -120,6 +120,10 @@ print("=== 6) cron jobs ===")
 jp = H / "cron" / "jobs.json"
 data = json.loads(jp.read_text(encoding="utf-8"))
 jobs = data["jobs"] if isinstance(data, dict) else data
+# 刻意停用白名單（2026-09-13）：稽核只認「意外」停用，已核准的收斂/去重停用列 ℹ️ 不列 fail
+INTENTIONAL_PAUSED = {
+    "1422af3c2905": "9/9 核准：記憶同步重複 cron 收斂，19:00 b18b41e13102 為唯一每日同步",
+}
 for j in jobs:
     if not isinstance(j, dict):
         continue
@@ -134,12 +138,16 @@ for j in jobs:
         sched = sched.get("expr") or sched.get("run_at") or str(sched)[:20]
     if en is False and kind == "once":
         mark = "ℹ️"   # 歷史一次性排程（已完成，停用正常）
+    elif en is False and jid in INTENTIONAL_PAUSED:
+        mark = "ℹ️"   # 已核准的刻意停用（非意外）
     elif en is False:
         mark = "❌"
         fail.append(f"cron 意外停用：{jid} {name}")
     else:
         mark = "✅"
     print(f"  {mark} {jid:13s} {name:34s} no_agent={str(na):5s} {str(sched)[:12]:12s} {scr}")
+    if en is False and jid in INTENTIONAL_PAUSED:
+        print(f"       └ 刻意停用：{INTENTIONAL_PAUSED[jid]}")
 
 # ── 7) 快取稽核 / watchdog 檔案 ────────────────────────────
 print("=== 7) 監控與稽核檔 ===")
