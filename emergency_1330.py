@@ -256,6 +256,7 @@ if etf_0050_data:
 _00878_line = ""
 if etf_00878_data:
     _00878_line = f"00878：{etf_00878_data['close']:,.2f}（{etf_00878_data['change']:+.2f} / {etf_00878_data['pct']:+.2f}%）"
+_write = True
 _analysis = {
     "generated_at": _ts,
     "source": "台股緊急應變",

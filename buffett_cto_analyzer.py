@@ -246,20 +246,21 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
     """巴菲特視角 — LLM 真實分析優先（2026-08-22 升級），失敗 fallback 模板"""
     a, g = pen["actual"], pen["gaps"]
     try:
+        _snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
         _fmt = "、".join(f"{TARGET_LABELS[c]} {a.get(c,0):.1f}%（目標{TARGETS[c]}%，{g.get(c,0):+.1f}pp）"
                          for c in ["tw_equity", "us_equity", "defensive", "bond", "cash"])
 
-        _usd_exp = (snapshot.get("usd_exposure_monitor", {}) or {}).get("current", {}).get("合計", 0)
-        _usd_cap = float((snapshot.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)
-        _tech_exp = (snapshot.get("penetration", {}) or {}).get("actual_pct", {}).get("美股市值型成長_科技", 0)
-        _tech_cap = TARGETS["tech_exposure"]
+        _usd_exp_val = (_snap.get("usd_exposure_monitor", {}) or {}).get("current", {}).get("合計", 0)
+        _usd_cap_val = float((_snap.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)
+        _tech_exp_val = (_snap.get("penetration", {}) or {}).get("actual_pct", {}).get("美股市值型成長_科技", 0)
+        _tech_cap_val = TARGETS["tech_exposure"]
 
         _prompt = (
             f"你是巴菲特（波克夏董事長）。以下是龍九控股資產穿透資料（總投資 {pen['total_inv']/1e4:.0f}萬台幣）：\n"
             f"五桶：{_fmt}\n"
             f"主要偏離：{pen.get('key_risk','—')}｜建議：{pen.get('key_action','—')}\n"
             f"成長 {pen['growth_pct']:.1f}%（目標{pen['growth_target']}%）；防禦 {pen['defense_pct']:.1f}%；安全網 {pen['safety_pct']:.1f}%\n"
-            f"結構風險：美元曝險{_usd_exp:.1f}%（紅線{_usd_cap:.0f}%）、高科技{_tech_exp:.1f}%（紅線{_tech_cap:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡\n"
+            f"結構風險：美元曝險{_usd_exp_val:.1f}%（紅線{_usd_cap_val:.0f}%）、高科技{_tech_exp_val:.1f}%（紅線{_tech_cap_val:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡\n"
             f"產業與風險因子：{_industry_context()}\n"
             f"{market_text}\n"
             f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（22.1%含 MMF 500萬贖回款已轉申購貝萊德B11 500萬（質押擔保池擴充），不可減現金）；"
@@ -356,13 +357,18 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
     """CTO 技術視角 — LLM 真實分析優先（2026-08-22 升級），失敗 fallback 模板"""
     a, g = pen["actual"], pen["gaps"]
     try:
+        _snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
         _fmt = "、".join(f"{TARGET_LABELS[c]} {a.get(c,0):.1f}%（目標{TARGETS[c]}%，{g.get(c,0):+.1f}pp）"
                          for c in ["tw_equity", "us_equity", "defensive", "bond", "cash"])
+        _usd_exp_val = (_snap.get("usd_exposure_monitor", {}) or {}).get("current", {}).get("合計", 0)
+        _usd_cap_val = float((_snap.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)
+        _tech_exp_val = (_snap.get("penetration", {}) or {}).get("actual_pct", {}).get("美股市值型成長_科技", 0)
+        _tech_cap_val = TARGETS["tech_exposure"]
         _prompt = (
             f"你是龍九控股的 CTO（技術分析師）。以下為資產穿透資料（總投資 {pen['total_inv']/1e4:.0f}萬）：\n"
             f"五桶：{_fmt}\n"
             f"主要偏離：{pen.get('key_risk','—')}｜建議：{pen.get('key_action','—')}\n"
-            f"結構風險：美元曝險{_usd_exp:.1f}%（紅線{_usd_cap:.0f}%）、高科技{_tech_exp:.1f}%（紅線{_tech_cap:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡、{us30y_note()}\n"
+            f"結構風險：美元曝險{_usd_exp_val:.1f}%（紅線{_usd_cap_val:.0f}%）、高科技{_tech_exp_val:.1f}%（紅線{_tech_cap_val:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡、{us30y_note()}\n"
             f"產業與風險因子：{_industry_context()}\n"
             f"{market_text}\n"
             f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（22.1%含 MMF 500萬贖回款已轉申購貝萊德B11 500萬（質押擔保池擴充），不可建議減現金）；"
