@@ -232,6 +232,11 @@ if _fb:
             _ab_c = (snap.get("fund_components_09", {}).get("聯博全球多元AD", {}) or {})
             _ab_b = float(_ab_c.get("債", 0.6137)); _ab_e = float(_ab_c.get("股", 0.3863))
             _split = f"📈 債券 {round(_fv2*_ab_b):,} ({_ab_b*100:.0f}%)<br>🌎 美股 {round(_fv2*_ab_e):,} ({_ab_e*100:.0f}%)<br><span style='font-size:11px;color:#94a3b8'>科技 2.5%</span>"
+        elif "貝萊德智慧數據收益成長基金B11美元" in _fn or "貝萊德智慧數據收益成長" in _fn:
+            # 2026-09-13 使用者核定（INC-165）：B11 顯示成分拆分
+            _b11_eq, _b11_br, _b11_cs = 0.6258, 0.3265, 0.0477
+            _split = f"🛡️ 防守型 {round(_fv2*(_b11_eq+_b11_cs)):,} ({round((_b11_eq+_b11_cs)*100,1)}% 含現金)<br>📈 債券 {round(_fv2*_b11_br):,} ({round(_b11_br*100,1)}%)"
+            _cat = "🛡️ 防守型"; _fund_def += _fv2 # 這裡的 _fund_def += _fv2 僅用於最下面的合計行，不影響實際五桶比例
         if "台新美日台" in _fn or "貝萊德" in _fn or "安聯AI" in _fn or "聯博" in _fn or "摩根" in _fn or "M&G" in _fn or "安聯收益成長" in _fn or "富達" in _fn:
             _cat = "🌎 美股"; _fund_us += _fv2
         elif "0050連結" in _fn or "統一奔騰" in _fn or "路博邁" in _fn or "安聯台灣科技" in _fn:
