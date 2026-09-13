@@ -1,4 +1,9 @@
-"""閉環稽核（2026-09-13）：數字一致性、部署、cron、鏡像、殘留檢查。"""
+"""閉環稽核（2026-09-14 v2）：數字一致性、部署、cron、鏡像、殘留、排程認領檢查。
+
+基準日 T 動態化（2026-09-14）：預設今天；DB 尚無今天資料（上午跑／假日）→ 退回最新已落庫日。
+可用 LJ_AUDIT_DATE=YYYY-MM-DD 覆寫（補跑歷史稽核用）。
+"""
+import datetime as _dtime
 import json
 import os
 import re
@@ -9,9 +14,22 @@ from pathlib import Path
 
 R = Path.home() / "Desktop" / "longjiu_system"
 H = Path(os.environ["LOCALAPPDATA"]) / "hermes"
-T = "2026-09-13"
 ok = lambda b: "✅" if b else "❌"
 fail = []
+# 預期由其他排程每日更新的狀態檔（髒了不算 fail）：21:40 收工登錄會改 .cache_audit_state.json
+BENIGN_DIRTY = {"data/.cache_audit_state.json"}
+
+
+def resolve_T(db):
+    """回傳 (基準日, 是否為 fallback)。今天資料尚未落庫時退回最新已落庫日。"""
+    want = os.environ.get("LJ_AUDIT_DATE") or _dtime.date.today().isoformat()
+    if db.execute("select 1 from assets where date=?", (want,)).fetchone():
+        return want, False
+    latest = (db.execute("select max(date) from assets").fetchone() or [None])[0]
+    return (latest or want), True
+
+
+T = os.environ.get("LJ_AUDIT_DATE") or _dtime.date.today().isoformat()
 
 # ── 1) 舊數字殘留（全 repo 報告/資料）────────────────────────
 print("=== 1) 舊數字殘留掃描 ===")
@@ -43,16 +61,21 @@ print("=== 2) 四源一致 ===")
 s = json.loads((R / "snapshot.json").read_text(encoding="utf-8"))
 h = json.loads((R / "asset_diff_history.json").read_text(encoding="utf-8"))
 db = sqlite3.connect(R / "dragon_assets.db")
+T, T_fallback = resolve_T(db)
+print(f"  基準日 T = {T}" + ("（今日尚未落庫 → 退回最新已落庫日）" if T_fallback else ""))
 d13 = db.execute("select total_assets,total_liabilities from assets where date=?", (T,)).fetchone()
 l13 = db.execute("select total_liabilities,credit_card from liabilities where date=?", (T,)).fetchone()
-d12 = db.execute("select total_liabilities from assets where date='2026-09-12'").fetchone()[0]
+# 歷史列未被污染：前一列 assets 負債必須等於 liabilities 表同列（原寫死 9/12/30160643 → 2026-09-14 改為動態）
+prev_date = db.execute("select max(date) from assets where date < ?", (T,)).fetchone()[0]
+prev_a = db.execute("select total_liabilities from assets where date=?", (prev_date,)).fetchone()
+prev_l = db.execute("select total_liabilities from liabilities where date=?", (prev_date,)).fetchone()
 html = (R / f"daily_report_v2_{T}.html").read_text(encoding="utf-8")
 checks = [
     ("snapshot 負債 = DB assets = DB liabilities", s["total_liabilities"] == int(d13[1]) == l13[0]),
     ("snapshot 負債 = 日報 HTML", f"{s['total_liabilities']:,}" in html),
     ("snapshot 淨值 = asset_diff_history", int(h[T]["net_worth"]) == s["net_worth"]),
     ("信用卡 34,025 一致", s["cc_liability"] == l13[1] == 34025),
-    ("9/12 歷史列未被污染", d12 == 30160643),
+    ("歷史列未被污染（assets = liabilities）", bool(prev_a and prev_l and prev_a[0] == prev_l[0] and prev_a[0] > 0)),
     ("應收款備忘 290,500", s["receivables_total"] == 290500 and s["receivables"]["女友借款"] == 290500),
     ("負債拆解可完全解釋", sum([s["liabilities_build_up"]["房貸_含國泰"],
                               s["liabilities_build_up"]["保單借貸"],
@@ -96,9 +119,13 @@ print("=== 4) git 狀態 ===")
 st = subprocess.run(["git", "status", "--porcelain"], cwd=R, capture_output=True, text=True).stdout.strip().splitlines()
 sb = subprocess.run(["git", "status", "-sb"], cwd=R, capture_output=True, text=True).stdout.splitlines()[0]
 print(f"  {sb}")
-tracked = [x for x in st if not x.startswith("??")]
+tracked_all = [x for x in st if not x.startswith("??")]
 untracked = [x[3:] for x in st if x.startswith("??")]
+benign = [x for x in tracked_all if x[3:].replace("\\", "/") in BENIGN_DIRTY]
+tracked = [x for x in tracked_all if x not in benign]
 print(f"  {ok(not tracked)} 已追蹤檔案無未提交變更（{len(tracked)} 筆）")
+if benign:
+    print(f"  ℹ️ 由排程每日更新、當下尚未提交的狀態檔（不列 fail）：{[x[3:] for x in benign]}")
 print(f"  未追蹤（備份/暫存，預期）：{untracked}")
 if tracked:
     fail.append(f"未提交: {tracked}")
