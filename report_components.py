@@ -118,6 +118,12 @@ def render_health_score(snap: dict) -> dict:
     income = (snap.get("dividend_month_expected") or 100000) + rent
     cov = income / expense * 100 if expense else 0
 
+    # 現金流覆蓋（2026-09-13 修正：>=100% 即為 100 分，100%~150% 為超額加分區間）
+    if cov >= 100.0:
+        _cov_std = min(100, int(90 + (cov - 100.0) / 50.0 * 10))  # 100%給90分，150%以上給100分
+    else:
+        _cov_std = max(0, int(cov / 100.0 * 90))
+
     # 防禦維度（雙維度框架 8/21：情境門檻）— 讀「佔比」，含 ±3% 公差與分階段計分
     ddm = snap.get("dual_dimension_metric", {})
     _dd_def = ddm.get("防禦維度", ddm.get("防禦", {})) if isinstance(ddm, dict) else {}
@@ -134,13 +140,20 @@ def render_health_score(snap: dict) -> dict:
         def_score = max(0, int(100 - (defense - 53.0) * 10))
 
     # 美元曝險（口徑：美股桶+美元定存+美元債券梯+保單美元債 ≈54%）
+    # 2026-09-13 修正：目標 60%，公差 ±5% (60%~65% 漸進扣分)；超標採用酌量線性扣分，不再一刀切 0 分
     _usd_m = snap.get("usd_exposure_monitor", {}).get("current", {})
     if isinstance(_usd_m, dict):
-        # ⚠️ 2026-08-27 實踩：current 是 dict，_num 會取第一個值(美股桶42.1)漏掉「合計54.4」→ 滿分誤判
         usd = _num(_usd_m.get("合計", _usd_m.get("美股桶", 54)), 54)
     else:
         usd = _num(_usd_m, 54)
-    usd_score = 100 if usd <= 60 else (50 if usd <= 65 else 0)  # 2026-09-12 裁示②：紅線 50→60（黃 60-65、紅 >65）
+    
+    if usd <= 60.0:
+        usd_score = 100
+    elif usd <= 75.0:
+        # 60%~75% 之間線性遞減（每超 1% 扣 4 分，60% 給 100 分，75% 給 40 分）
+        usd_score = max(20, int(100 - (usd - 60.0) * 4))
+    else:
+        usd_score = max(0, int(40 - (usd - 75.0) * 5))
 
     # 現金底線（70萬）
     cash = _num(snap.get("cash_total", 0), 0)
