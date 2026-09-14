@@ -48,10 +48,23 @@ def load_history() -> list:
 
 def save_entry(balance: float, daily_cost: float):
     history = load_history()
-    today_exists = any(r.get("date") == TODAY for r in history)
-    if today_exists:
-        return  # 當天已記錄
-    
+    today_rows = [r for r in history if r.get("date") == TODAY]
+    if today_rows:
+        # 2026-09-14：當天已有記錄時，只有「餘額跳升（儲值）」才再寫一列。
+        # 同日單純下降（多次查詢/日報與 watchdog 都跑）仍略過 → 保留「09:00 獨佔記錄時點」的日耗歸因設計。
+        # 背景：使用者當天儲值後 cost_log 不入帳 → 下游（ds_balance_alert / 日報 / daily_token_account）
+        # 一律讀尾筆 → 餘額顯示舊值，隔天 09:00 發「建議儲值」假警報。
+        try:
+            last_bal = float(today_rows[-1].get("balance_cny") or 0)
+        except (TypeError, ValueError):
+            last_bal = 0.0
+        if balance <= last_bal:
+            return
+        with open(LOG, "a", encoding="utf-8", newline="") as f:
+            w = csv.writer(f)
+            w.writerow([TODAY, f"{balance:.2f}", "0.00", f"儲值（{last_bal:.2f}→{balance:.2f}）"])
+        return
+
     with open(LOG, "a", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
         if not LOG.exists() or os.path.getsize(LOG) == 0:
