@@ -343,3 +343,8 @@
 
 - `--check` 參數被當成日期寫入：snapshot.date / dragon_assets.db assets 假列 / asset_diff_history.json key / dashboard_decisions.json 任務字串 / daily_report_v2_--check.html / notion_bridge/--check_strategy_handbook.md
 - 已清除並備份為 `*.bak-20260912-checkclean`；防護 = INC-153（sync_all.py argv 嚴格驗證，非法即 exit 2）
+
+## INCIDENT 10020915 (four_source_sync)
+- 首次發生: 2026-09-14 20:19:14
+- 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)
