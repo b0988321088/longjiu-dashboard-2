@@ -1,10 +1,49 @@
 #!/usr/bin/env python3
 """Git post-commit hook (active): ① scripts 同步到 hermes/scripts/ ② [cioreviewed] 決策軌跡"""
 from pathlib import Path
-import shutil, subprocess, json
+import os, shutil, subprocess, json, sys
 
 BASE = Path(__file__).resolve().parent.parent
-TARGET = Path.home() / "AppData/Local/hermes/scripts"
+
+
+def _hermes_dir() -> Path | None:
+    """解析 Hermes 資料目錄（Home 下的 AppData/Local/hermes）。
+
+    2026-09-14 INC：原本直接用 Path.home() → 在 HOME 被污染的環境（實測：我的 Python 沙箱
+    把 HOME 指向 C:\\...\\Temp\\xxx）會把鏡像寫到不存在的路徑，同步「靜默失敗」
+    （traceback 之後照樣 exit 0），repo 改了、cron 端腳本卻是舊的。
+    改為多來源解析：HERMES_HOME 環境變數 → USERPROFILE → 固定路徑 → Path.home()，
+    取第一個「真的存在」的；全都不存在就大聲失敗，不再靜默。
+    """
+    cands: list[Path] = []
+    env = os.environ.get("HERMES_HOME")
+    if env:
+        cands.append(Path(env))
+    for key in ("USERPROFILE", "HOME"):
+        h = os.environ.get(key)
+        if h:
+            cands.append(Path(h) / "AppData/Local/hermes")
+    cands.append(Path(r"C:\Users\bot\AppData\Local\hermes"))
+    cands.append(Path.home() / "AppData/Local/hermes")
+    for c in cands:
+        try:
+            if c.is_dir():
+                return c
+        except OSError:
+            continue
+    return None
+
+
+HERMES = _hermes_dir()
+if HERMES is None:
+    print(
+        "  ❌ post-commit 中止：找不到 Hermes 資料目錄（HOME=%s USERPROFILE=%s）"
+        % (os.environ.get("HOME"), os.environ.get("USERPROFILE")),
+        file=sys.stderr,
+    )
+    print("     → 本次 commit 的 scripts 鏡像未同步，cron 端可能仍跑舊版邏輯", file=sys.stderr)
+    sys.exit(1)
+TARGET = HERMES / "scripts"
 
 SCRIPTS = [
     "update_all.py", "run_daily.py", "daily_intel.py",
@@ -12,6 +51,8 @@ SCRIPTS = [
     "pre_push_audit.py", "budget_daily_check.py", "calendar_sync.py",
     "notion_bridge.py", "cost_monitor.py", "penetration_monitor.py",
     "compile_intel.py", "sync_all.py", "decision_json.py",
+    # 2026-09-14（P2）：auto_record.py 是自動化路徑的落紀錄 helper，cron/鏡像端腳本會呼叫它
+    "auto_record.py", "cio_approve.py",
 ]
 
 
@@ -59,7 +100,7 @@ try:
         _hash = subprocess.run(
             ["git", "log", "-1", "--format=%h"], capture_output=True, text=True, cwd=BASE
         ).stdout.strip()
-        _trail_dir = Path.home() / "AppData/Local/hermes/data"
+        _trail_dir = HERMES / "data"
         _trail_dir.mkdir(parents=True, exist_ok=True)
         _tf = _trail_dir / "decision_commits.jsonl"
         with open(_tf, "a", encoding="utf-8") as f:

@@ -36,6 +36,10 @@ def main():
 
     # 3) git commit + 雙分支 push
     g = run(["git", "add", "-A"], timeout=60)
+    # P1（2026-09-14）：add -A 會掃進別人未提交的程式改動 → commit 前先排除程式檔
+    g = run([sys.executable, os.path.join(BASE, "auto_record.py"), "--clean-stage"], timeout=180)
+    if (g.stdout or "").strip():
+        print(g.stdout.strip())
     c = run(["git", "commit", "-m", f"auto: 週六雷達儀表板同步 {TODAY}"], timeout=60)
     if c.returncode != 0 and "nothing to commit" not in (c.stdout or "") + (c.stderr or ""):
         print(f"⚠️ git commit 失敗：{(c.stderr or '')[-200:]}")

@@ -40,6 +40,11 @@ msg = f"auto: 一鍵更新 {today}（sync_all 10步✅ total {snap.get('total_as
 r = run(["git", "add", "-A"])
 if r.returncode != 0:
     print(f"  ⚠️ git add: {r.stderr[:100]}")
+# P1（2026-09-14）：add -A 會掃進別人未提交的程式改動 → commit 前先排除程式檔
+# （auto_record 會拒收含程式檔的紀錄，留著＝push 被閘門擋下）
+r = run([sys.executable, str(BASE / "auto_record.py"), "--clean-stage"])
+if (r.stdout or "").strip():
+    print("  " + r.stdout.strip())
 r = run(["git", "commit", "-m", msg, "--allow-empty"])
 print("  commit:", (r.stdout or r.stderr).strip().splitlines()[-1:] if (r.stdout or r.stderr) else "（無變更）")
 # P2（2026-09-14）：commit 後先落 RECORD（auto_record 做結構檢查）再 push；未過 → 不推

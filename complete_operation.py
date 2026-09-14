@@ -70,6 +70,8 @@ def main():
     # ④ git 推送
     try:
         subprocess.run(["git", "add", "-A"], cwd=BASE, check=True)
+        # P1（2026-09-14）：add -A 會掃進別人未提交的程式改動 → commit 前先排除程式檔
+        subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--clean-stage"], cwd=BASE, check=True)
         subprocess.run(["git", "commit", "-m", f"ops: {item} 完成閉環"], cwd=BASE, check=True)
         # P2（2026-09-14）：commit 後先落 RECORD 再 push（原靠 commit message 自打 [cioreviewed]）。
         # auto_record 未過 → check=True 直接拋出 → 不會 push（寧可斷、不要無審上線）。

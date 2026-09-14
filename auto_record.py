@@ -9,6 +9,7 @@
 
 用法：
   python auto_record.py --script evening_sync.py [--commit <sha>] [--check "cmd"]... [--dry-run]
+  python auto_record.py --clean-stage      # git add -A 型路徑：commit 前把程式檔 unstage
 
 內建 deterministic 檢查（任一失敗 → 不落地、exit 3 → push 被閘門擋下＝寧可斷、不要無審上線）：
   ① 變更清單不得含程式檔（.py/.sh/.bat/.ps1/.cmd/.toml/.yml/.yaml/.js/.ts/.sql、
@@ -72,6 +73,26 @@ def changed_files(base: Path, commit: str) -> list[tuple[str, str]]:
     return out
 
 
+def clean_stage(base: Path) -> int:
+    """staging 去程式檔（給 `git add -A` 型路徑在 commit 前呼叫）。
+
+    理由（2026-09-14）：`git add -A` 會把工作區「所有」變更掃進本 job 的 commit（包含
+    別人留下的未提交程式改動）→ auto_record 判定「含程式檔」→ 不落紀錄 → 該班次斷推
+    （22:00 晚報是第一線受害者）。這裡只排除程式檔、保留資料/報表，並把排除清單印出來。
+    """
+    raw = run(["git", "diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"], base).stdout
+    staged = [x for x in raw.split("\0") if x.strip()]
+    code = [f for f in staged if CODE_RE.search(f)]
+    if not code:
+        return 0
+    p = run(["git", "restore", "--staged", "--"] + code, base)
+    if p.returncode != 0:
+        print(f"❌ clean-stage 失敗（無法 unstage 程式檔）：{p.stderr.strip()[:160]}", file=sys.stderr)
+        return 4
+    print(f"⚠️ clean-stage：已排除 {len(code)} 個程式檔（不進本 job 的 commit）→ {', '.join(code[:6])}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--script", default="unknown", help="呼叫端腳本名（寫進 reviewer：AUTO-checker:<script>）")
@@ -79,9 +100,13 @@ def main() -> int:
     ap.add_argument("--check", action="append", default=[], help="額外 deterministic 檢查指令（可重複）")
     ap.add_argument("--note", default="", help="附加備註")
     ap.add_argument("--dry-run", action="store_true", help="只印出將寫入的內容，不動任何檔")
+    ap.add_argument("--clean-stage", action="store_true",
+                    help="只做 staging 去程式檔（git add -A 型路徑在 commit 前呼叫），不落紀錄")
     a = ap.parse_args()
 
     base = base_dir()
+    if a.clean_stage:
+        return clean_stage(base)
     sha = run(["git", "rev-parse", f"{a.commit}^{{commit}}"], base)
     if sha.returncode != 0:
         print(f"❌ 找不到 commit {a.commit}", file=sys.stderr)

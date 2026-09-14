@@ -50,6 +50,11 @@ def main() -> int:
         changed = [l.strip() for l in r.stdout.splitlines() if l.strip()]
         if changed:
             subprocess.run(["git", "add", "-A"], cwd=str(BASE))
+            # P1（2026-09-14）：add -A 會掃進別人未提交的程式改動 → commit 前先排除程式檔
+            _cs = subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--clean-stage"],
+                                 cwd=str(BASE), capture_output=True, text=True)
+            if (_cs.stdout or "").strip():
+                print(f"  {_cs.stdout.strip()}")
             subprocess.run(["git", "commit", "-m",
                             "sync: refresh_all 一鍵同步（穿透+再平衡+深度討論+連結）"],
                            cwd=str(BASE), capture_output=True)

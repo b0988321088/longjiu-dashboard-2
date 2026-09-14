@@ -25,6 +25,10 @@ def main():
 
     # 2) git 無檔案變動則不 push（HTML 基準頁固定，每月績效以文字推送為主）
     g = run(["git", "add", "-A"], timeout=60)
+    # P1（2026-09-14）：add -A 會掃進別人未提交的程式改動 → commit 前先排除程式檔
+    g = run([sys.executable, os.path.join(BASE, "auto_record.py"), "--clean-stage"], timeout=180)
+    if (g.stdout or "").strip():
+        out_lines.append(g.stdout.strip())
     c = run(["git", "commit", "-m", "auto: 投資績效月報更新"], timeout=60)
     if c.returncode == 0 or "nothing to commit" in (c.stdout or "") + (c.stderr or ""):
         # P2（2026-09-14）：有真的 commit → 先落 RECORD（auto_record 結構檢查）再推；未過不推

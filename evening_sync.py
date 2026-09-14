@@ -31,6 +31,12 @@ def main():
     lines.append("✅ 儀表板連結更新" if ok3 else "⚠️ 儀表板異常")
     # 4) git 提交 + 推送雙分支（晚報原本功能）
     g = subprocess.run(["git", "add", "-A"], cwd=BASE, capture_output=True, text=True, timeout=60)
+    # P1（2026-09-14）：`add -A` 會把工作區「所有」變更（含別人未提交的程式改動）掃進本 job 的
+    # commit → auto_record 判定含程式檔 → 不落紀錄 → 22:00 晚報斷推。commit 前先排除程式檔。
+    _cs = subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--clean-stage"],
+                         cwd=BASE, capture_output=True, text=True, timeout=180)
+    if (_cs.stdout or "").strip():
+        lines.append(_cs.stdout.strip())
     g2 = subprocess.run(["git", "commit", "-m", f"auto: 晚報校準 {TODAY}"],
                         cwd=BASE, capture_output=True, text=True, timeout=60)
     committed = g2.returncode == 0

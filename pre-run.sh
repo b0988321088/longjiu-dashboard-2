@@ -96,6 +96,9 @@ COMMIT_MSG="${COMMIT_RAW}"
 echo "[OK] commit message: ${COMMIT_MSG}"
 
 git add -A
+# P1（2026-09-14）：add -A 會掃進別人未提交的程式改動 → commit 前先排除程式檔
+# （auto_record 會拒收含程式檔的紀錄，留著＝push 被閘門擋下）
+python auto_record.py --clean-stage
 COMMITTED=0
 if git diff --cached --quiet; then
     echo "[WARN] 無變更，跳過 commit"
