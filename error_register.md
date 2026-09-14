@@ -182,6 +182,22 @@
   ② hook 內的例外一律不得「印完 traceback 就 exit 0」——沒同步＝靜默漂移，必須非零碼或有告警
   ③ 沙箱（execute_code）與終端（terminal）的 HOME/USERPROFILE 可能不同 → **會動 git 的動作走 terminal**
 
+## INC-2026-09-14（INC-178）CIO 審查子代理在生產 repo 內建分支/commit（幾乎污染推送範圍）
+- 時間：2026-09-14 14:54~14:55（`deleg_05cb92b4` 審查 `480de6fb` 時）
+- 現象：審查子代理**直接在真 repo** 建測試分支（`test-invalid-html` 等）、commit 測試檔
+  （`test.json`／`test.html`），並在工作區留下 `test.sh`／`test_forwarder.py`／`test_range.json`／
+  `test_script.py`／`test_short_sha.json`；其中一道指令被 Hermes 安全層擋下（denied by user）
+- 影響：① **審查者改動被審對象 = 方法論失效**（裁判下場踢球）② 若 commit 落在 clean-main，
+  下次 push 會把未審內容一起推出去 ③ 殘檔 `test*.json` 會被 22:00 `evening_sync` 的 `git add -A`
+  掃進當晚 commit（成為上線資料）
+- 事後查核：HEAD=`clean-main`、tip=`a75ece6f`（我的 commit）、無殘留分支、5 個殘檔已刪、
+  工作區乾淨 → **未污染**；該子代理已停、重送審查時已在 prompt 寫明硬限制
+- check_rule：
+  ① 審查/稽核型子代理**一律唯讀**對待被審 repo；要實測就 clone 到 `%TEMP%` 暫存目錄
+  ② 送審 prompt 必寫「禁止在 repo 內建分支/commit/reset/checkout」與「不得留下 test* 檔」
+  ③ 每次審查結束後查三件事：`git branch --show-current` 是否為預期分支、tip 有無被改、
+     `git status` 有無 test*/殘檔
+
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
 | 錯誤類型 | 次數 | 首次 | 最後 | 處置 |
