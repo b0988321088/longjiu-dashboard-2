@@ -347,7 +347,9 @@
 ## INCIDENT 10020915 (four_source_sync)
 - 首次發生: 2026-09-14 20:19:14
 - 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
-- 狀態: ⏳ 待處理 (總計 1 次)
+- 狀態: ✅ 已結案（2026-09-14 23:00）— 觸發源為當晚 B11 現值入帳後的重生成空窗；重生成後
+  `check_penetration_consistency.py` 三報表一致、當晚兩次閉環稽核「全部通過 ✅」。非系統缺陷，
+  是產出時序問題：**改資產 → 必須重生成 → 再跑稽核**，中間態不得當成品質訊號。
 ## INC-2026-09-14（INC-185）cio_review 禁字表 `dashboard.py` 子字串誤中 → 擋下整支日報；改「引用形式才擋」
 
 - 現象：當晚 CIO 審查報 `偵測到禁止連結/字串：['dashboard.py']` → 日報推不上去。文案寫「對齊 us30y_monitor.py 與 build_rate_hike_dashboard.py」。
@@ -368,3 +370,17 @@
   ③ 加矛盾處理規則：單元與 E2E 結論不一致時**以 E2E 為準**、該項 `pass=null` 記 findings，不得只憑該項 REJECT。
 - check_rule：① 審查結論互相矛盾時，**先重跑同一條指令驗環境，不要先改程式**（本次差一步就把已驗證正確的防線改壞）；② REJECT 必須有至少一項 E2E 實測支撐；③ 派工指令本身就是待測物的一部分——它壞掉會製造假缺陷。
 
+
+
+## INC-2026-09-14（INC-187）`asset_diff_monitor` 重建 `asset_diff_history.json` → 非 DB 日期被丟棄、檔案必變動
+
+- 現象：水管重跑後 `asset_diff_history.json` 出現 **35 行純刪除**，閉環稽核先報 ❌「未提交」。
+- 查明：被刪的是 `2026-08-14` 那筆。`load_history()` 的設計是**從 `dragon_assets.db` 的 `assets` 表重建**整份歷史
+  （JSON 只當 `insurance_detail`／`total_liabilities` 的補充來源），而 DB 只有 25 筆（2026-08-15 ~ 09-14）
+  → JSON 每次重建都會收斂到 DB 真值，DB 沒有的舊日期自然消失。**非資料遺失**（8/14 不在 DB、全 repo 無下游依賴）。
+- 兩個必須記住的連帶事實：
+  1. `asset_diff_history.json` 平常由「晚報校準」job 提交（非產出管線的 `_push_candidates`）；**任何人手動跑
+     `asset_diff_monitor.py` 後，該檔都會變動 → 必須補提交，否則收工稽核 ❌**。
+  2. 這支 monitor 的重跑會**改寫歷史檔**（冪等但會收斂），所以「重跑管線」不是零副作用動作。
+- check_rule：跑完 `asset_diff_monitor.py`／`regenerate_report.py` 後，先 `git status` 看有沒有
+  `asset_diff_history.json` 未提交，再跑閉環稽核——否則會把「自己造成的未提交」誤判成系統問題。

@@ -755,5 +755,11 @@
   "category": "完成",
   "item": "CIO 重審：首輪 REJECT 經查為派工指令轉義瑕疵（INC-186）",
   "detail": "首輪審查在『防線仍在』單元項得到 False 並 REJECT，但同輪 E2E 負向測試是 exit 3（有擋下）→ 矛盾。主辦方重跑同一條指令得 True，證實是子代理多層引號把樣本變成帶字面反斜線的 href=\\\"dashboard.py\\\"（該輪 5 次語法錯誤）。程式不動，改派工法：樣本一律 heredoc、期望值逐字給定、矛盾時以 E2E 為準且不得單項 REJECT。已重送重審。"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "完成",
+  "item": "水管測試（端到端）：排程腳本 + 全產出管線實跑",
+  "detail": "① 每週 DB 保養 rc=0（14s，9/13 失敗為修法落地前的舊帳）② 收工檢查 全部通過 ✅（連兩次）③ 全管線 regenerate_report.py rc=0：產出→CIO 審查全過→落 RECORD→推送雙分支 3322f370→4 URL 200 ④ 補提交 asset_diff_history.json（35 行刪除查明為 JSON 收斂到 DB 真值，非遺失）→ eaa068d5 ⑤ 終態：稽核 ✅、收工檢查 ✅、Pages 六檔內容一致（前次 ❌ 為 CDN 30-60s 快取）。"
  }
 ]
