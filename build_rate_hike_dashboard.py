@@ -124,7 +124,18 @@ def bond_delta(step):
 
 TECH_DELTA = TECH * EQUITY_STRESS
 TW_DELTA = TW_EQ * TW_EQUITY_STRESS
-USD_EXPOSURE_PCT = 0.792
+# 2026-09-14：移除寫死 0.792，改讀 snapshot.usd_exposure_monitor.current.合計（口徑定案＝引擎口徑 59.0%）
+def _usd_exposure_pct():
+    try:
+        _s = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        _v = ((_s.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {}).get("合計")
+        if _v:
+            return float(_v) / 100.0
+    except Exception:
+        pass
+    return 0.59
+
+USD_EXPOSURE_PCT = _usd_exposure_pct()
 USD_ASSETS = TOTAL * USD_EXPOSURE_PCT
 FX_GAIN = USD_ASSETS * TWD_DEPRECIATION
 CASH_GAIN_PER_STEP = CASH * 0.0025 / 12
