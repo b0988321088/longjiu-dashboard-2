@@ -52,3 +52,9 @@ _ocr_*
 
 # 審查落地檔（.git/CIO_APPROVED 才是正式紀錄；這裡只是落地時的暫存 JSON）
 .cio_review*.json
+
+# 工具備份（各工具寫入前的自動備份；留在磁碟、不入庫，避免 add -A 掃進 commit）
+*.bak-*
+
+# LLM 呼叫快取／耐久鏡像（本機留檔即可；分析結果另存於日報與 DB）
+cache/llm_archive/
