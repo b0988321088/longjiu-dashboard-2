@@ -14,7 +14,7 @@
 用法：
   python auto_push.py --script evening_sync.py --auto-stage --commit "auto: 晚報校準 2026-09-14"
   python auto_push.py --script radar_push.py --own radar_state.json "radar_report_*.html"   # 已自行 commit，只補紀錄＋推
-  python auto_push.py --script regenerate_report.py --record skip      # 已走真 CIO 審查，不自動落紀錄
+  python auto_push.py --script regenerate_report.py                    # 日報/儀表板路徑：純資料/報表，走 auto_record 落 RECORD（INC-183）
 
 參數：
   --script NAME       呼叫端腳本名（寫進 RECORD reviewer，並寫入 AUTO_PUSH.log）

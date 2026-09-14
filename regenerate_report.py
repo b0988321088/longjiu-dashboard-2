@@ -385,10 +385,13 @@ if ok and _cio_ok:
         _staged = subprocess.run(['git', 'diff', '--cached', '--name-only'], capture_output=True, text=True, cwd=BASE).stdout.strip()
         if _staged:
             subprocess.run(['git', 'commit', '-m', _msg], capture_output=True, text=True, cwd=BASE)
-            # 2026-09-14：紀錄已由上面的真 CIO 審查（cio_review.py + cio_approve）負責，
-            # 這裡只做「範圍紀錄覆蓋檢查＋重試推送＋遠端 sha 驗證」→ --record skip。
-            _ar = subprocess.run([sys.executable, str(BASE / "auto_push.py"), "--script", "regenerate_report.py",
-                                  "--record", "skip"], capture_output=True, text=True, timeout=900, cwd=BASE)
+            # 2026-09-14（INC-183）：此處原本寫 --record skip，但檔案內沒有任何地方替這顆 commit 落紀錄
+            # （cio_review.py 只是本地規則檢查、不寫紀錄；cio_approve 從未被呼叫；原先是靠 [cioreviewed]
+            # 標籤通道，v4.2 對本路徑收掉標籤後就沒人補位）→ 閘門逐 commit 驗 tree 必然擋下，
+            # 07:00 morning_deploy 變成「產出完成但不部署」。改走預設 auto：由 auto_push → auto_record
+            # 的 deterministic 檢查把關；範圍內若含程式檔一律拒推（exit 3）＝我們要的 fail-closed。
+            _ar = subprocess.run([sys.executable, str(BASE / "auto_push.py"), "--script", "regenerate_report.py"],
+                                  capture_output=True, text=True, timeout=900, cwd=BASE)
             print((_ar.stdout or "").strip() or (_ar.stderr or "").strip())
             if _ar.returncode != 0:
                 print(f"⚠️ 未推送上線（rc={_ar.returncode}）")
