@@ -76,3 +76,13 @@ INC-172 手動 fire 吃排程時點｜INC-173 成本高估 1.6 倍｜INC-174 失
 ---
 
 *產出：Hermes（9/14 收工整理）。資料來源：git log、`work_log.json`（9 筆）、`error_register.md`、`PUSH_LANE.log`、`dashboard_decisions.json`*
+
+---
+
+## 七、收工後追加（14:00 之後）
+
+- **DS 儲值入帳修復**（`bf7b076e`）：使用者儲值 8.02 → 198.25 CNY；查出 `cost_monitor.save_entry()` 見當天已有記錄就早退 → 當天儲值永不入帳 → 隔天 09:00 會發「建議儲值」假警報。改為「同日跳升（儲值）破例寫一列、同日下降仍略過」；沙箱 4 案例＋實跑驗證、`ds_balance_alert` 恢復靜默。
+- **收工稽核去硬編碼**（`2bc6c17f`）：22:40 每晚假 ❌（信用卡寫死 34,025，真值 9/14 已 60,810；應收款寫死 290,500）→ 三處改跨源動態比對（含 GitHub Pages 線上那條，CIO 首輪 REJECT 指出）。
+- **INC-176：`cio_approve.py --range-base` 替未審 commit 背書**（`9d765476`）：自踩自修 —— 記錄範圍現在必須是審查 JSON 真的有涵蓋的 commit（認 `reviewed_tree`），未涵蓋者列示略過，全未命中拒寫；被 REJECT 的 tree 改寫 commit 讓它不進推送範圍。
+- **今日總計**：本日累計 **52 個 commit**（`738d8cb5` → `9d765476`，此數字不含本記錄本身的 commit），clean-main ＝ main ＝ `9d765476`；INC 共 5 筆（172/173/174/175/176）。
+- **CIO 審查**：本日共 6 輪（v2→v4.1 五輪＋成本/稽核各輪），其中 2 輪 REJECT（都是真問題：v2 的 HEAD-only 驗證、稽核漏改 Pages 那行），全部修完才推。
