@@ -1,30 +1,54 @@
 #!/usr/bin/env bash
-# 強制推送前審查：commit message 必須含 [cioreviewed] 才准推
-# 臨時例外：允許 [skipreview]（僅限緊急修復）
-set -e
+# 龍九 pre-push 閘門 v2（2026-09-14 強化）
+# 規則：待推 HEAD 的「樹狀內容」(tree hash) 必須有 CIO 審查通過紀錄，否則拒絕推送。
+#   - 用 tree hash（不是 commit hash）：只改 commit message（例如補標籤）不會讓審查失效；
+#     但只要檔案內容有任何變動 → tree 改變 → 舊紀錄失效，必須重新送審（這是重點）。
+#   - 紀錄檔：<git-dir>/CIO_APPROVED（tab 分隔、append-only）
+#       TS <TAB> TREE <TAB> COMMIT <TAB> VERDICT <TAB> REVIEWER <TAB> NOTE
+#   - 產生方式（CIO 審查通過後才寫）：
+#       python cio_approve.py --verdict APPROVE --reviewer "CIO-Gemini" [--result <review.json>]
+#   - 緊急例外：[skipreview]（會寫入 PUSH_SKIPREVIEW.log 留痕）
+# 舊版只檢查 commit message 的 [cioreviewed] 標籤 → 可自我宣告，v2 起以紀錄檔為準。
+set -u
 
-COMMIT_MSG=$(git log -1 --pretty=%B)
-BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "HEAD")
+GITDIR=$(git rev-parse --git-dir 2>/dev/null || echo .git)
+APPROVE_FILE="$GITDIR/CIO_APPROVED"
+HEAD_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo UNKNOWN)
+HEAD_TREE=$(git rev-parse "HEAD^{tree}" 2>/dev/null || echo NONE)
+COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null || echo "")
 
-# 允許 merge commit
-if echo "$COMMIT_MSG" | grep -q "^Merge"; then
-    exit 0
+# merge commit 免審（只合併既有已審內容）
+case "$COMMIT_MSG" in
+  Merge*) exit 0 ;;
+esac
+
+if [ -f "$APPROVE_FILE" ] && awk -F'\t' -v t="$HEAD_TREE" '$2==t && $4=="APPROVE"{f=1} END{exit !f}' "$APPROVE_FILE"; then
+  echo "✅ CIO 審查紀錄比對通過（tree $(echo "$HEAD_TREE" | cut -c1-12)）"
+  exit 0
 fi
 
-# 允許 skipreview
-if echo "$COMMIT_MSG" | grep -q "\[skipreview\]"; then
-    exit 0
+if printf '%s' "$COMMIT_MSG" | grep -q "\[skipreview\]"; then
+  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ)	commit=$HEAD_COMMIT	tree=$HEAD_TREE	skipreview" >> "$GITDIR/PUSH_SKIPREVIEW.log"
+  echo "⚠️ 已用 [skipreview] 緊急放行（留痕於 $GITDIR/PUSH_SKIPREVIEW.log）"
+  exit 0
 fi
 
-# 必須有 cioreviewed
-if ! echo "$COMMIT_MSG" | grep -q "\[cioreviewed\]"; then
-    echo ""
-    echo "╔══════════════════════════════════════════════╗"
-    echo "║  ❌ 推送被擋：缺少 CIO 審查標記            ║"
-    echo "║                                             ║"
-    echo "║  commit message 需包含 [cioreviewed]        ║"
-    echo "║  緊急情況可用 [skipreview]                  ║"
-    echo "╚══════════════════════════════════════════════╝"
-    echo ""
-    exit 1
-fi
+cat <<EOF
+
+╔══════════════════════════════════════════════╗
+║  ❌ 推送被擋：查無 CIO 審查通過紀錄         ║
+╚══════════════════════════════════════════════╝
+  待推內容 tree : $HEAD_TREE
+  commit        : $HEAD_COMMIT
+  審查紀錄檔    : $APPROVE_FILE（沒有這個 tree 的 APPROVE）
+
+  正確流程：
+    1) 送 CIO 審查（delegate_task，指定檢查項目）
+    2) CIO APPROVE 後落地紀錄：
+         python cio_approve.py --verdict APPROVE --reviewer "CIO-Gemini" [--result <review.json>]
+    3) 再 git push
+
+  ⚠️ 內容有任何改動 → tree 改變 → 需重新送審（改 message 不影響）
+  緊急例外：[skipreview]（留痕）
+EOF
+exit 1
