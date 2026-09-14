@@ -122,7 +122,7 @@
   {
     "date": "2026-09-14",
     "title": "AI 成本治理：context 瘦身 + CER 監控（L1/L4 定案）",
-    "status": "🔄 執行中（9/14 上線）：threshold 0.30／prune 120k／CER 監控已上線；驗證點 9/15 比對 in= 分布與成本帳。未完成＝DS 儲值（8.02 CNY ≈0.8 天，歸零後全流量走 Gemini 12 倍單價）",
+    "status": "🔄 執行中（9/14 上線）：threshold 0.30／prune 120k／CER 監控已上線；驗證點 9/15 比對 in= 分布與成本帳。✅ 9/14 DS 已儲值（8.02→198.25 CNY ≈NT$938，約 13 天）→ 本條未完成項閉環；附帶修掉 cost_monitor 當天儲值不入帳（commit bf7b076e，待 CIO 複審後推送）",
     "tags": "成本治理,compression,DS儲值,CER",
     "detail": "決策依據：hermes prompt-size（系統提示 52,641 B，技能索引 31,195 B＝55%；工具 schema 35,661 B/21 工具）、agent.log 拆解（9/13：1,807 呼叫／172 turn、p50 context 250k、390M tokens、cache 命中 99%）。省錢槓桿排序：①DS 儲值（12 倍單價差）②context 尺寸 ③呼叫數 ④技能索引（≈0）。回退法：hermes config set compression.threshold 0.5。"
   }

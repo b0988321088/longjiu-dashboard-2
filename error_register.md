@@ -123,7 +123,7 @@
 - check_rule：**驗證 cron 相關腳本一律 shell 直跑 `python <script>.py`**（完全不碰 cron 帳務）；需驗 cron 引擎本身（no_agent 交付格式）才手動 fire，且 fire 後必跑認領偵測；每日收工一律用 `closeout_check.py`
 - 附帶（9/14）：DS 餘額 17.72 CNY（剩 ~2.1 天）而舊門檻 12 CNY/2 天完全沒響 → 門檻改 **30 CNY / 3 天**
 - 上游：回報草稿 `_upstream_report_cron_manual_fire_claim.md`（工具與 CLI 兩條路徑都會認領，與 `trigger_job()` 戳 `manual_run_at` 的設計意圖不一致）
-- 狀態：✅ 已完成（本機 commit；待使用者指示推送）
+- 狀態：✅ 已完成並推送（9/14 全數 commit 已上 clean-main＋main；本行原寫「待推送」已更正）
 
 ## INC-2026-09-14（INC-173）AI 成本估算高估 1.6 倍 — 單價表三處錯誤（使用者質疑「四百多是真的假的」）
 - 時間：2026-09-14（使用者問「9月13號我花了四百多塊是真的假的」時查出）
@@ -132,7 +132,7 @@
 - 修法：依官方定價頁（DS pricing + Gemini pricing，**2026-09-14 查證**）重寫 `PRICE`（補 deepseek-flash 新名、3.6-flash、3.1-flash-lite、2.5-flash-lite）；`cost_usd()` 的 DS/Gemini 判定改 `model.startswith("deepseek")`，不再依賴 PRICE 預設值
 - 交叉檢查（修後）：DS 端用 balance API 差額對帳（9/11→9/14 餘額差 16.5 CNY ≈ NT$69 vs 估算 NT$88 → 同量級）；Gemini 端估算 9/5 至今 ≈ NT$338（9/5 儲值 1,000 → 餘額應剩 ~660，待使用者 AI Studio 核對）
 - check_rule：① 改價表後**必須用餘額／帳單交叉檢查**，不能只看估算自洽 ② **新增模型必須同時進 PRICE**，否則預設值會把它當 DS ③ Gemini 快取價與 DS 快取價差異大（0.03 vs 0.003），長 context 日務必分開算
-- 狀態：✅ 已修（本機 commit fc5c2665，未推）
+- 狀態：✅ 已修（本機 commit fc5c2665，已推送 clean-main＋main；本行原寫「未推」已更正）
 
 ## INC-2026-09-14（INC-174）失敗統計未去重 + 誤判 429 成因（「額度耗盡 61 次」）
 - 時間：2026-09-14（使用者：「額度耗盡61次這個也太扯檢查一下」）

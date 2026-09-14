@@ -72,17 +72,24 @@ hist_bad = db.execute(
     "select l.date, l.total_liabilities, a.total_liabilities from liabilities l "
     "join assets a on a.date = l.date where l.total_liabilities != a.total_liabilities").fetchall()
 html = (R / f"daily_report_v2_{T}.html").read_text(encoding="utf-8")
+# 2026-09-14：以下兩個檢查原寫死 34,025（信用卡）與 290,500（應收款）→ 真值一變就每晚假 ❌
+# （cc 9/14 已由 34,025→60,810；應收款 10/5 起每月累計 1,250 利息也會變）。改為跨源一致＋內部可重建，
+# 數值仍印在檢查名上供人眼比對變動，但不再用凍結常數判定（違反 no-hardcode-mandate）。
+_cc = int(s["cc_liability"])
+_rec = int(s["receivables_total"])
+_bup = s["liabilities_build_up"]
+_bd = (s.get("receivables_breakdown") or {})["女友借款"]
 checks = [
     ("snapshot 負債 = DB assets = DB liabilities", s["total_liabilities"] == int(d13[1]) == l13[0]),
     ("snapshot 負債 = 日報 HTML", f"{s['total_liabilities']:,}" in html),
     ("snapshot 淨值 = asset_diff_history", int(h[T]["net_worth"]) == s["net_worth"]),
-    ("信用卡 34,025 一致", s["cc_liability"] == l13[1] == 34025),
+    (f"信用卡當期未繳三源一致（{_cc:,}）", _cc == l13[1] == _bup["信用卡_當期未繳_全額扣繳"]),
     (f"歷史列未被污染（{hist_days} 個重疊日 assets = liabilities）", hist_days > 0 and not hist_bad),
-    ("應收款備忘 290,500", s["receivables_total"] == 290500 and s["receivables"]["女友借款"] == 290500),
-    ("負債拆解可完全解釋", sum([s["liabilities_build_up"]["房貸_含國泰"],
-                              s["liabilities_build_up"]["保單借貸"],
-                              s["liabilities_build_up"]["券商質押"],
-                              s["liabilities_build_up"]["信用卡_當期未繳_全額扣繳"]]) == s["total_liabilities"]),
+    (f"應收款備忘可重建（{_rec:,}）", _rec == s["receivables"]["女友借款"] == _bd["本金"] + _bd["未收利息"]),
+    ("負債拆解可完全解釋", sum([_bup["房貸_含國泰"],
+                              _bup["保單借貸"],
+                              _bup["券商質押"],
+                              _bup["信用卡_當期未繳_全額扣繳"]]) == s["total_liabilities"]),
 ]
 for name, res in checks:
     print(f"  {ok(res)} {name}")
@@ -98,7 +105,8 @@ try:
     num = [
         ("線上負債 = 本機", live["total_liabilities"] == s["total_liabilities"]),
         ("線上淨值 = 本機", live["net_worth"] == s["net_worth"]),
-        ("線上有應收款欄位", live.get("receivables_total") == 290500),
+        # 2026-09-14（CIO REJECT 指出）：原 `== 290500` 寫死 → 10/5 起利息累計後線上檢查會假 ❌
+        (f"線上應收款 = 本機（{s['receivables_total']:,}）", live.get("receivables_total") == s["receivables_total"]),
     ]
     for name, res in num:
         print(f"  {ok(res)} {name}")
