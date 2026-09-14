@@ -4,7 +4,7 @@
 
 取代原 agent cron「龍九晨間自動化」（6f4e4b91262c，13 天 NT$22 ≈ 每月 NT$50）。
 工作內容本來就是機械動作：regenerate_report.py 自己會做完整套 —
-三源/產出檢查 → CIO 審查 → git commit([cioreviewed]) → push clean-main + main
+三源/產出檢查 → CIO 審查 → 落 RECORD（auto_record）→ push clean-main + main
 → Pages 上線驗證（4 次重試），最後印出所有連結。本腳本只負責：
   1. 跑 regenerate_report.py（cwd = longjiu_system）
   2. 抽出連結（日報／差異分析／儀表板）＋ 檢查/CIO 結果，組成精簡訊息交付

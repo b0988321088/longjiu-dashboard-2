@@ -220,10 +220,13 @@ def do_apply():
         print(f"\n  ⛔ CIO 審查未通過（exit={cio_ret}）→ 不 commit、不 push。修正資料後重跑 --apply。")
         sys.exit(1)
 
-    # 強制 commit 加 [cioreviewed]
+    # P2（2026-09-14）：改走 RECORD 通道（原為自打 [cioreviewed]）
     print("\n  📤 Git push...")
     os.system('git add snapshot.json')
-    os.system(f'git commit -m "safe_update {today} [cioreviewed]" 2>&1')
+    os.system(f'git commit -m "safe_update {today}" 2>&1')
+    if os.system(f'"{sys.executable}" auto_record.py --script safe_update.py') != 0:
+        print("  ⛔ 落紀錄未通過 → 不推送（寧可斷、不要無審上線）")
+        sys.exit(1)
     os.system('git push origin clean-main 2>&1')
     
     pending['applied'] = True

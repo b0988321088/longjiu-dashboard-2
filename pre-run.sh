@@ -4,7 +4,7 @@
 # 功能：
 #   1. 產出檔案複製到 repo 根目錄（日報/差異/穿透/儀表板）
 #   2. 檢查檔案存在，缺失即 exit 1（避免空推送）
-#   3. commit 自動補 [cioreviewed] 標籤
+#   3. commit 後由 auto_record 落 RECORD 紀錄（P2/2026-09-14 起，不再自打標籤）
 #   4. 雙分支推送（clean-main 為主 + main 備援）
 #   5. GitHub Pages HTTP 200 驗證
 # 用法：
@@ -90,21 +90,31 @@ if [ "${MISSING}" = "1" ]; then
 fi
 
 # ======================
-# 防呆3：commit 自動補 [cioreviewed]
+# 防呆3：commit（P2/2026-09-14：不再自動補 [cioreviewed]；改由 auto_record 落 RECORD 紀錄）
 # ======================
-if [[ "${COMMIT_RAW}" != *"[cioreviewed]"* ]]; then
-    COMMIT_MSG="[cioreviewed] ${COMMIT_RAW}"
-else
-    COMMIT_MSG="${COMMIT_RAW}"
-fi
+COMMIT_MSG="${COMMIT_RAW}"
 echo "[OK] commit message: ${COMMIT_MSG}"
 
 git add -A
+COMMITTED=0
 if git diff --cached --quiet; then
     echo "[WARN] 無變更，跳過 commit"
 else
     git commit -m "${COMMIT_MSG}"
     echo "[OK] commit 完成"
+    COMMITTED=1
+fi
+
+# ======================
+# 防呆3b：落 RECORD（auto_record；未過 → 不推送）
+# ======================
+if [ "${COMMITTED}" = "1" ]; then
+    if python auto_record.py --script pre-run.sh; then
+        echo "[OK] 已落 RECORD"
+    else
+        echo "[ABORT] auto_record 未通過 → 不推送（寧可斷、不要無審上線）"
+        exit 1
+    fi
 fi
 
 # ======================

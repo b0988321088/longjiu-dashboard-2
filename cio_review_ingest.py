@@ -10,6 +10,7 @@
 """
 import json
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -94,7 +95,9 @@ def main():
         if _chk.returncode != 0:
             _cmds = [
                 ["git", "add", "cio_review.json"],
-                ["git", "commit", "-m", "data: cio_review.json 收錄更新（CIO 審查） [cioreviewed]"],
+                ["git", "commit", "-m", "data: cio_review.json 收錄更新（CIO 審查）"],
+                # P2（2026-09-14）：先落 RECORD（auto_record 結構檢查）再 push
+                [sys.executable, str(BASE / "auto_record.py"), "--script", "cio_review_ingest.py"],
                 ["git", "push", "origin", "clean-main"],
                 ["git", "push", "origin", "clean-main:main"],
             ]

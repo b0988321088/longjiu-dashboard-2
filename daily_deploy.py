@@ -110,13 +110,20 @@ def github_push(filepath: str) -> bool:
         text=True,
     )
     result = subprocess.run(
-        ["git", "commit", "-m", f"auto: {filepath} {TODAY} [cioreviewed]"],
+        ["git", "commit", "-m", f"auto: {filepath} {TODAY}"],
         cwd=BASE,
         capture_output=True,
         text=True,
     )
     if result.returncode != 0:
         print(f"  git commit: {result.stderr[:200]}")
+    # P2（2026-09-14）：改走 RECORD 通道 —— 先由 auto_record 落 tree 紀錄再 push；
+    # 未過 → 直接不推（閘門也會擋），避免自打 [cioreviewed] 標籤。
+    _ar = subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--script", "daily_deploy.py"],
+                         cwd=BASE, capture_output=True, text=True, timeout=300)
+    if _ar.returncode != 0:
+        print(f"  ⛔ 落紀錄未通過 → 不推送：{((_ar.stdout or '') + (_ar.stderr or ''))[-200:]}")
+        return False
     result = subprocess.run(
         ["git", "push", "origin", GITHUB_BRANCH],
         cwd=BASE,

@@ -11,7 +11,7 @@
 2. 保留並提醒（不自動刪，等使用者裁決）：
    - 過期但 status 有追蹤語意（🔴 重要 / ⏸️ 暫緩 / ⏳ 待 / 🟡 評估 / 📌 / pipeline / 📋 重要 / 空白）
    - 去重：只推「新增」的過期未完成（state 檔比對），同一批不重複吵（8/25 定案：僅狀態切換才推）
-3. 有刪除 → git commit + push 雙分支（commit 帶 [cioreviewed]＝v4 閘門的 TAG 通道，只准純資料；
+3. 有刪除 → git commit → auto_record 落 RECORD → push 雙分支（P2/2026-09-14 起；原為自打 [cioreviewed]；
    逐筆留痕 .git/PUSH_LANE.log）；無新增提醒 → 靜默 0 輸出
 
 用法：
@@ -126,18 +126,26 @@ def main():
     # commit + push（僅有變更時）
     if changed:
         r = git("commit", "-am",
-                f"[cron] 每週事件清理：刪除 {len(auto_del)} 筆過期事件（git 可回溯） [cioreviewed]")
+                f"[cron] 每週事件清理：刪除 {len(auto_del)} 筆過期事件（git 可回溯）")
         if r.returncode == 0:
-            # 2026-09-14：移除 PUSH_FORCE_OK（那是舊 .git/hooks/pre-push 的逃生門，現行 .githooks 閘門不看它 → 死碼，
-            #             留著會讓人誤以為走過特許通道）。本路徑推送內容只有 snapshot/行事曆資料 → 走 v4 的 TAG 通道
-            #             （純資料允許；逐筆留痕 PUSH_LANE.log）。main 改 --force-with-lease，避免遠端分歧時無聲回捲。
-            p1 = git("push", "origin", "clean-main")
-            p2 = git("push", "origin", "clean-main:main", "--force-with-lease")
-            push_note = ""
-            if p1.returncode != 0:
-                push_note += f"\n⚠️ push clean-main 失敗: {p1.stderr.strip()[:200]}"
-            if p2.returncode != 0:
-                push_note += f"\n⚠️ push main 失敗: {p2.stderr.strip()[:200]}"
+            # 2026-09-14：移除 PUSH_FORCE_OK（舊 .git/hooks/pre-push 的逃生門，現行 .githooks 閘門不看它 → 死碼）。
+            # P2（2026-09-14）：改走 RECORD 通道 —— commit 後先由 auto_record 做 deterministic
+            #   結構檢查（不得含程式檔／JSON 可解析／HTML 未截斷／工作區乾淨）並落 tree 紀錄；
+            #   未過 → 不落紀錄 → push 被閘門擋下（寧可斷、不要無審上線）。main 用 --force-with-lease。
+            ar = subprocess.run([sys.executable, str(BASE / "auto_record.py"),
+                                 "--script", "schedule_events_weekly_clean.py"],
+                                cwd=str(BASE), capture_output=True, text=True, timeout=300)
+            if ar.returncode != 0:
+                push_note = (f"\n⚠️ 落紀錄未通過 → 未推送（push 會被閘門擋下）："
+                             f"{((ar.stdout or '') + (ar.stderr or ''))[-200:]}")
+            else:
+                p1 = git("push", "origin", "clean-main")
+                p2 = git("push", "origin", "clean-main:main", "--force-with-lease")
+                push_note = ""
+                if p1.returncode != 0:
+                    push_note += f"\n⚠️ push clean-main 失敗: {p1.stderr.strip()[:200]}"
+                if p2.returncode != 0:
+                    push_note += f"\n⚠️ push main 失敗: {p2.stderr.strip()[:200]}"
         else:
             push_note = f"\n⚠️ commit 失敗: {r.stderr.strip()[:200]}"
 

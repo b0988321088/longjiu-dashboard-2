@@ -31,14 +31,23 @@ def main():
     lines.append("✅ 儀表板連結更新" if ok3 else "⚠️ 儀表板異常")
     # 4) git 提交 + 推送雙分支（晚報原本功能）
     g = subprocess.run(["git", "add", "-A"], cwd=BASE, capture_output=True, text=True, timeout=60)
-    g2 = subprocess.run(["git", "commit", "-m", f"auto: 晚報校準 {TODAY} [cioreviewed]"],
+    g2 = subprocess.run(["git", "commit", "-m", f"auto: 晚報校準 {TODAY}"],
                         cwd=BASE, capture_output=True, text=True, timeout=60)
+    committed = g2.returncode == 0
     if g2.returncode != 0 and "nothing to commit" not in g2.stdout:
         lines.append(f"⚠️ commit: {g2.stderr[-100:]}")
+    # P2（2026-09-14）：資料路徑改走 RECORD 通道 —— commit 後先落紀錄再 push。
+    # 原本靠 commit message 自打 [cioreviewed]，那條只證明「作者自己說審過了」；
+    # 現由 auto_record 做 deterministic 結構檢查（不得含程式檔/JSON 可解析/HTML 未截斷/工作區乾淨）
+    # 並寫入綁 tree 的紀錄，未過 → 不落紀錄 → push 被閘門擋下（寧可斷、不要無審上線）。
+    if committed:
+        r = subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--script", "evening_sync.py"],
+                           cwd=BASE, capture_output=True, text=True, timeout=300)
+        lines.append("✅ 已落 RECORD（auto_record）" if r.returncode == 0
+                     else f"⚠️ 落紀錄失敗（push 會被擋）：{(r.stdout + r.stderr)[-120:]}")
     p1 = subprocess.run(["git", "push", "origin", "clean-main"], cwd=BASE, capture_output=True, text=True, timeout=120)
-    p2 = subprocess.run(["git", "push", "--force", "origin", "clean-main:main"],
-                        cwd=BASE, capture_output=True, text=True, timeout=120,
-                        env={**__import__("os").environ, "PUSH_FORCE_OK": "1"})
+    p2 = subprocess.run(["git", "push", "origin", "clean-main:main", "--force-with-lease"],
+                        cwd=BASE, capture_output=True, text=True, timeout=120)
     lines.append("✅ GitHub 推送完成（雙分支）" if p1.returncode == 0 and p2.returncode == 0 else "⚠️ push 異常")
     lines.append("")
     lines.append(f"📰 日報：https://b0988321088.github.io/longjiu-dashboard-2/daily_report_v2_{TODAY}.html")

@@ -70,9 +70,14 @@ def main():
     # ④ git 推送
     try:
         subprocess.run(["git", "add", "-A"], cwd=BASE, check=True)
-        subprocess.run(["git", "commit", "-m", f"ops: {item} 完成閉環 [cioreviewed]"], cwd=BASE, check=True)
+        subprocess.run(["git", "commit", "-m", f"ops: {item} 完成閉環"], cwd=BASE, check=True)
+        # P2（2026-09-14）：commit 後先落 RECORD 再 push（原靠 commit message 自打 [cioreviewed]）。
+        # auto_record 未過 → check=True 直接拋出 → 不會 push（寧可斷、不要無審上線）。
+        subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--script", "complete_operation.py"],
+                       cwd=BASE, check=True)
         subprocess.run(["git", "push", "origin", "clean-main"], cwd=BASE, check=True)
-        subprocess.run(["git", "push", "origin", "clean-main:main", "--force"], cwd=BASE, check=True)
+        # P2：改用 --force-with-lease（裸 --force 在遠端分歧時會無聲回捲 main）+ 走 RECORD 通道
+        subprocess.run(["git", "push", "origin", "clean-main:main", "--force-with-lease"], cwd=BASE, check=True)
         print("✅ ④ 已推送（雙分支）")
     except Exception as e:
         print(f"⚠️ 推送失敗: {e}")

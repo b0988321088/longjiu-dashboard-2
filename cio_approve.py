@@ -161,11 +161,17 @@ def main() -> int:
     ap.add_argument("--reviewer", default="CIO", help="審查者標記（例：CIO-Gemini）")
     ap.add_argument("--note", default="", help="備註（例：改動摘要）")
     ap.add_argument("--result", help="CIO 審查回傳的 JSON 檔路徑")
+    ap.add_argument("--commit", help="指定要記錄的 commit（預設 HEAD）；寫入該 commit 的 tree 一筆（P2 自動化路徑用）")
     ap.add_argument("--range-base", help="把 <base>..HEAD 之間「審查 JSON 有列到」的 commit tree 寫入紀錄（只會記錄真的被審過的那些）")
     ap.add_argument("--force", action="store_true", help="略過 result 檢查（僅供人工補登，需自行負責）")
     a = ap.parse_args()
 
     commit, tree = head()
+    if a.commit:
+        # P2（2026-09-14）：自動化路徑要記錄「自己剛做的那個 commit」，
+        # 當下不一定有正確的 upstream base 可用（--range-base 不適用）→ 直接指定 commit 最穩。
+        commit = git("rev-parse", f"{a.commit}^{{commit}}")
+        tree = git("rev-parse", f"{commit}^{{tree}}")
 
     if a.status:
         rows = [r for r in read_rows(approve_file()) if len(r) >= 4 and r[1] == tree]

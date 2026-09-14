@@ -43,14 +43,33 @@ code_files() {
 
 BAD=""
 CHECKED=0
+SEEN=" "
 
 check_one() {
   local c="$1" tree msg
   tree=$(git rev-parse "$c^{tree}" 2>/dev/null) || tree="UNKNOWN"
-  msg=$(git log -1 --pretty=%B "$c" 2>/dev/null || echo "")
+  # v4.2：只認「主旨行(%s)」——原本整段訊息(%B)比對，commit 內文提到 [cioreviewed] 也會被
+  #       誤判成走了 TAG 通道（實測：P2 這顆 commit 的內文講到該標籤就被判 TAG-BLOCKED-CODE），
+  #       通道判定必須看「作者是否真的下了那個標籤」＝主旨行。
+  msg=$(git log -1 --pretty=%s "$c" 2>/dev/null || echo "")
   CHECKED=$((CHECKED + 1))
-  if [ -f "$APPROVE_FILE" ] && awk -F'\t' -v t="$tree" '$2==t && $4=="APPROVE"{f=1} END{exit !f}' "$APPROVE_FILE"; then
-    log_lane "RECORD" "$c" "$tree"; return 0
+  if [ -f "$APPROVE_FILE" ]; then
+    rev=$(awk -F'\t' -v t="$tree" '$2==t && $4=="APPROVE"{print $5; exit}' "$APPROVE_FILE")
+    if [ -n "$rev" ]; then
+      case "$rev" in
+        AUTO-checker:*)
+          # v4.2（2026-09-14）：AUTO-checker 只證明「deterministic 結構檢查通過」，
+          # 不得涵蓋程式檔（程式/邏輯改動必須走真 CIO 審查）→ 擋下。
+          cf=$(code_files "$c")
+          if [ -n "$cf" ]; then
+            log_lane "AUTO-BLOCKED-CODE" "$c" "$tree"
+            BAD="$BAD  - commit ${c:0:12}  tree ${tree:0:12}  AUTO-checker 紀錄但含程式檔（v4.2 禁止 AUTO 背書程式）\n      → $(printf '%s' "$cf" | tr '\n' ' ')\n"
+            return 1
+          fi
+          ;;
+      esac
+      log_lane "RECORD" "$c" "$tree"; return 0
+    fi
   fi
   local cf
   if printf '%s' "$msg" | grep -q "\[cioreviewed\]"; then
@@ -84,7 +103,13 @@ check_range() {
     commits=$(git rev-list "$remote_sha..$local_sha" 2>/dev/null)
   fi
   [ -z "$commits" ] && return 0
-  for c in $commits; do check_one "$c" || true; done
+  # v4.2：同一次 push 推多個 ref（clean-main + main）會讓同一批 commit 被檢查兩次
+  # → 紀錄檔出現重複行、訊息把 1 筆說成 2 筆（稽核誤判「重複通道紀錄」）。用 SEEN 去重。
+  for c in $commits; do
+    case "$SEEN" in *" $c "*) continue;; esac
+    SEEN="$SEEN$c "
+    check_one "$c" || true
+  done
 }
 
 # 由 git 透過 stdin 提供：<local_ref> <local_sha> <remote_ref> <remote_sha>

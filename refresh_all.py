@@ -51,12 +51,19 @@ def main() -> int:
         if changed:
             subprocess.run(["git", "add", "-A"], cwd=str(BASE))
             subprocess.run(["git", "commit", "-m",
-                            "sync: refresh_all 一鍵同步（穿透+再平衡+深度討論+連結） [cioreviewed]"],
+                            "sync: refresh_all 一鍵同步（穿透+再平衡+深度討論+連結）"],
                            cwd=str(BASE), capture_output=True)
-            for branch in [["git", "push", "origin", "clean-main"],
-                           ["git", "push", "origin", "clean-main:main", "--force-with-lease"]]:
-                p = subprocess.run(branch, cwd=str(BASE), capture_output=True, text=True)
-                print(f"  {'✅' if p.returncode == 0 else '❌'} {' '.join(branch[2:4])}: {p.stderr.strip()[-100:] if p.returncode else ''}")
+            # P2（2026-09-14）：先去 RECORD，未過就不推（原靠自打 [cioreviewed]）
+            ar = subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--script", "refresh_all.py"],
+                                cwd=str(BASE), capture_output=True, text=True)
+            if ar.returncode != 0:
+                print(f"  ❌ 落紀錄未通過 → 跳過 push：{((ar.stdout or '') + (ar.stderr or ''))[-200:]}")
+            else:
+                print("  ✅ 已落 RECORD")
+                for branch in [["git", "push", "origin", "clean-main"],
+                               ["git", "push", "origin", "clean-main:main", "--force-with-lease"]]:
+                    p = subprocess.run(branch, cwd=str(BASE), capture_output=True, text=True)
+                    print(f"  {'✅' if p.returncode == 0 else '❌'} {' '.join(branch[2:4])}: {p.stderr.strip()[-100:] if p.returncode else ''}")
         else:
             print("  ℹ️ 無變更，跳過 push")
 

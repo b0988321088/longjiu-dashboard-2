@@ -345,7 +345,7 @@ except Exception as _ce:
 if ok and _cio_ok:
     # stage + commit 所有報表檔案
     # ⚠️ 8/21 實踩：git add 清單含不存在的檔 → 整批 add 失敗 → 空 commit → Pages 404
-    _msg = f"四源同步 {TODAY} [cioreviewed]"
+    _msg = f"四源同步 {TODAY}"
     _push_candidates = [f'daily_report_v2_{TODAY}.html', f'asset_diff_{TODAY}.html', 'index.html', 'snapshot.json', 'dragon_assets.db',
                         # 2026-09-13：補齊儀表板會連到的今日產物（血淚：buffett_cto_report_{TODAY}.md 不在清單 → Pages 404「連結失效」）
                         f'buffett_cto_report_{TODAY}.md', f'risk_factor_penetration_{TODAY}.png', f'macro_regime_{TODAY}.json',
@@ -379,16 +379,28 @@ if ok and _cio_ok:
                 print(f"  ➕ 連結目標補推: {_h}")
     except Exception as _le:
         print(f"⚠️ 連結掃描略過: {_le}")
+    _recorded = False
     if _push_files:
         subprocess.run(['git', 'add'] + _push_files, capture_output=True, text=True, cwd=BASE)
         _staged = subprocess.run(['git', 'diff', '--cached', '--name-only'], capture_output=True, text=True, cwd=BASE).stdout.strip()
         if _staged:
             subprocess.run(['git', 'commit', '-m', _msg], capture_output=True, text=True, cwd=BASE)
+            # P2（2026-09-14）：改走 RECORD 通道 —— 上面 cio_review.py 已真的跑過，
+            # 這裡再由 auto_record 落「綁 tree」的紀錄（內建結構檢查：不得含程式檔／
+            # JSON 可解析／HTML 未截斷／工作區乾淨）。未過 → 不推送（寧可斷、不要無審上線）。
+            _ar = subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--script", "regenerate_report.py"],
+                                 capture_output=True, text=True, timeout=300, cwd=BASE)
+            print(_ar.stdout.strip() or _ar.stderr.strip())
+            _recorded = _ar.returncode == 0
+            if not _recorded:
+                print("  ⛔ 落紀錄未通過 → 不推送")
         else:
             print("⚠️ 無檔案可提交（全部已是最新，跳過 commit）")
     else:
         print("⚠️ 無任何報表檔案可推送")
-    for _ref in ['clean-main', 'clean-main:main']:
+    if not _recorded:
+        print("  ℹ️ 未取得 RECORD（無新內容或落紀錄失敗）→ 跳過 push")
+    for _ref in ([] if not _recorded else ['clean-main', 'clean-main:main']):
         # 2026-09-14：--force → --force-with-lease（main 是 clean-main 鏡像，正常必為 fast-forward；
         #              --force 在遠端分歧時會無聲回捲，lease 版會直接拒絕）
         _r = subprocess.run(['git', 'push', 'origin', _ref, '--force-with-lease'], capture_output=True, text=True, timeout=30, cwd=BASE)
