@@ -225,6 +225,35 @@ except Exception as _e:
     print(f"  ❌ 讀取 executions.db 失敗 {_e}")
     fail.append("executions.db 讀取失敗")
 
+# ── 9) 決策狀態一致（2026-09-14 新增）──────────────────────
+# 觸發：CIO 抓到「DS 儲值已入帳，待辦狀態沒回收」。兩份決策檔語意不同但同一件事會同時存在，
+# 一旦只在其中一份回收狀態，日報／CIO 復盤就會用過期前提（dashboard_decisions.json 是 CIO Part A 的輸入）。
+# 判準：同標題項在 pending_decisions.json 已標結案標記，dashboard_decisions.json 的 pending 不得仍無結案標記。
+print("=== 9) 決策狀態一致（pending_decisions.json ↔ dashboard_decisions.json）===")
+try:
+    _pd_std = json.loads((R / "pending_decisions.json").read_text(encoding="utf-8"))
+    _pd_dash = json.loads((R / "dashboard_decisions.json").read_text(encoding="utf-8"))["pending_decisions"]
+    _CLOSED = ("✅", "已結案", "已定案", "已閉環", "已完成")
+    _std = {x.get("title"): str(x.get("status", "")) for x in _pd_std if isinstance(x, dict)}
+    _drift = []
+    for _e in _pd_dash:
+        if not isinstance(_e, dict):
+            continue
+        _new = _std.get(_e.get("action"))
+        if _new is None:
+            continue
+        if any(_m in _new for _m in _CLOSED) and not any(_m in str(_e.get("status", "")) for _m in _CLOSED):
+            _drift.append(_e.get("action"))
+    if _drift:
+        for _t in _drift:
+            print(f"  ❌ {str(_t)[:52]}｜pending_decisions.json 已結案，dashboard_decisions.json 仍列未完成")
+        fail.append(f"決策狀態未回收: {_drift}")
+    else:
+        print(f"  ✅ 已結案項目狀態一致（比對 {len(_std)} 筆）")
+except Exception as _e:
+    print(f"  ❌ 決策檔讀取失敗 {_e}")
+    fail.append("決策檔讀取失敗")
+
 print()
 print("=" * 46)
 print(f"閉環稽核結果：{'全部通過 ✅' if not fail else '❌ 有問題：' + str(fail)}")
