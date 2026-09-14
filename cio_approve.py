@@ -69,6 +69,12 @@ def is_approved(tree: str) -> bool:
     return any(len(r) >= 4 and r[1] == tree and r[3] == "APPROVE" for r in read_rows(approve_file()))
 
 
+def has_upstream() -> bool:
+    p = subprocess.run(["git", "rev-parse", "--verify", "--quiet", "@{u}"],
+                       capture_output=True, text=True)
+    return p.returncode == 0 and bool(p.stdout.strip())
+
+
 def extract_verdict(obj) -> tuple[str | None, list[str]]:
     """從各種 CIO 回傳 JSON 形狀中挖出 verdict 與 blocking 項目。"""
     blocks: list[str] = []
@@ -100,6 +106,7 @@ def main() -> int:
     ap.add_argument("--reviewer", default="CIO", help="審查者標記（例：CIO-Gemini）")
     ap.add_argument("--note", default="", help="備註（例：改動摘要）")
     ap.add_argument("--result", help="CIO 審查回傳的 JSON 檔路徑")
+    ap.add_argument("--range-base", help="把 <base>..HEAD 之間所有 commit 的 tree 一併寫入紀錄（審查涵蓋整個推送範圍時用）")
     ap.add_argument("--force", action="store_true", help="略過 result 檢查（僅供人工補登，需自行負責）")
     a = ap.parse_args()
 
@@ -112,10 +119,22 @@ def main() -> int:
         print(f"紀錄檔      = {approve_file()}")
         if is_approved(tree):
             r = rows[-1]
-            print(f"✅ 已通過審查（{r[3]} by {r[4] if len(r) > 4 else '?'} @ {r[0]}）")
-            return 0
-        print("❌ 尚無此 tree 的 APPROVE 紀錄 → push 會被擋")
-        return 1
+            print(f"✅ HEAD 已通過審查（{r[3]} by {r[4] if len(r) > 4 else '?'} @ {r[0]}）")
+        else:
+            print("❌ HEAD 尚無 APPROVE 紀錄 → push 會被擋")
+        up = git("rev-parse", "--verify", "--quiet", "@{u}") if has_upstream() else ""
+        if up:
+            pend = git("rev-list", f"{up}..HEAD").split()
+            print(f"\n未推送 commit（相對 @{{u}}）：{len(pend)} 筆")
+            allok = bool(pend)
+            for c in pend:
+                t = git("rev-parse", f"{c}^{{tree}}")
+                ok = is_approved(t)
+                allok = allok and ok
+                print(f"  {'✅' if ok else '❌'} {c[:12]}  tree {t[:12]}")
+            print("✅ 範圍內全部已審" if allok else "❌ 範圍內有未審 commit → push 會被擋（可用 --range-base <base> 一次寫入）")
+            return 0 if allok else 1
+        return 0 if is_approved(tree) else 1
 
     verdict = (a.verdict or "").upper() or None
     blocks: list[str] = []
@@ -142,15 +161,30 @@ def main() -> int:
     ts = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     reviewer = clean(a.reviewer) or "UNKNOWN"
     note = clean(a.note)
-    line = "\t".join([ts, tree, commit, "APPROVE", reviewer, note])
-    # 寫入前自我檢查：欄位數必須為 6（防注入破壞格式）
-    if len(line.split("\t")) != 6:
-        print("❌ 紀錄行欄位數異常，拒寫（sanitize 失效）", file=sys.stderr)
-        return 2
+
+    targets = [(commit, tree)]
+    if a.range_base:
+        cs = git("rev-list", f"{a.range_base}..HEAD").split()
+        if cs:
+            targets = [(c, git("rev-parse", f"{c}^{{tree}}")) for c in cs]
+        else:
+            print(f"⚠️ {a.range_base}..HEAD 之間沒有 commit，只寫入 HEAD", file=sys.stderr)
+
+    written: list[tuple[str, str]] = []
     with approve_file().open("a", encoding="utf-8") as f:
-        f.write(line + "\n")
-    print(f"✅ 已寫入審查紀錄：tree {tree[:12]} commit {commit[:12]} by {reviewer}")
-    print(f"   {approve_file()}")
+        for c, t in targets:
+            t = t.split()[0]
+            line = "\t".join([ts, t, c, "APPROVE", reviewer, note])
+            # 寫入前自我檢查：欄位數必須為 6（防注入破壞格式）
+            if len(line.split("\t")) != 6:
+                print("❌ 紀錄行欄位數異常，拒寫（sanitize 失效）", file=sys.stderr)
+                return 2
+            f.write(line + "\n")
+            written.append((c[:12], t[:12]))
+
+    for c, t in written:
+        print(f"✅ 已寫入審查紀錄：commit {c} tree {t} by {reviewer}")
+    print(f"   共 {len(written)} 筆 → {approve_file()}")
     return 0
 
 
