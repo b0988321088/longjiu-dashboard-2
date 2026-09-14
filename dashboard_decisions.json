@@ -3338,6 +3338,15 @@
       "summary": "9/14 使用者定案：本輪加碼走「黃金／健康」而非提前跑保單B 批2（0050/0056）。進場條件已成立：COMEX 黃金 4,333、距 20 日高 -6.6%、近 5 日 -2.2%（8/29 曾因 20 日 +11.6% 偏高延後）。分批 5 批、單次 ≤20 萬、逢回檔；目標 ~92 萬（黃金上限 5%＝129.7 萬、現況 37.9 萬＝1.46%）。轉入 USDEQ6730 貝萊德黃金A10／USDEQ5680 貝萊德健康A10（保單內部轉換）。⚠️ 待定案：資金來源（建議 PIMCO 超配部位，債券桶 31.3% vs 目標 25%）。",
       "status": "🔄 執行中（批1 條件成立、資金來源待定案）",
       "source": "user"
+    },
+    {
+      "id": "dec-20260914-inc184-353",
+      "timestamp": "2026-09-14T19:25:00+08:00",
+      "agent": "Hermes",
+      "task": "INC-184：管線 JSON 寫入 indent 不一致治本（6 腳本修正＋閉環稽核第 10 類）",
+      "summary": "起點＝手動 append schedule_events.json 造成 1066 行假 diff。用 round-trip 位元比對定出 canonical indent（schedule_events／pending_decisions／dashboard_decisions=2；snapshot／work_log／radar_state=1），掃全 repo 寫入者抓到 6 處不符並全數改回：build_penetration_report.py:57、safe_update.py:46、sabbatical_checklist_update.py:107（snapshot 2→1，即長期「跑完穿透就整檔 churn」的元兇）、schedule_events_weekly_clean.py:121（未爆但下週日必爆）、_canonicalize_stale_records{,2}.py。閉環稽核新增第 10 類「管線 JSON 寫入 indent 一致」：掃 json.dump 呼叫、邊界比對解析寫入目標，不符即 ❌（修完 6 處後零誤報；負向測試雙向命中；首版 4 處假陽性已收緊）。另更正 2 支技能（原筆記把病因寫反、且誤指換行；autocrlf 實測與 diff 無關）。",
+      "status": "✅ 已執行（程式改動等 CIO 審查後推送）",
+      "source": "user"
     }
   ],
   "meta": {

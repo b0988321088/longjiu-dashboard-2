@@ -305,6 +305,30 @@
   ② 看到「產出檢查 ✅ / 推送 ⚠️ 未推送上線」要當**失敗**處理，不是完成；
   ③ 排程路徑（`morning_deploy.py` 07:00）的推送結果要看 `AUTO_PUSH.log` 的 rc 與遠端 sha，不看 stdout 有沒有跑完。
 
+## INC-2026-09-14（INC-184）管線 JSON 寫入 indent 不一致 → 上千行假 diff（並更正一則把病因寫反的技能筆記）
+
+- 現象：用腳本 append 2 筆事件到 `schedule_events.json`，diff 爆成 **1066 行**（539+/527-），真正的 2 筆改動被淹沒。
+- 根因：①該檔 canonical = **indent 2**，但技能筆記寫「必須用 indent=1 + LF 寫回」→ 照著寫就整檔重排。
+  ②筆記把病因歸給「沒有用 indent=1」，方向與事實相反：實測同一份 append，`indent=1` → 1066 行、`indent=2` → 12 行。
+  ③換行**不是**因素：`core.autocrlf=true`，實測把 JSON 寫成 LF 後 `git diff --stat` 零變化 → 筆記的「LF 寫回」是多餘叮嚀。
+- 量測法（canonical 判定，不信筆記）：**round-trip 位元比對** — load → `json.dumps(indent=N)` → 與原檔逐位元比對，唯一為 True 者即 canonical：
+  `schedule_events` / `pending_decisions` / `dashboard_decisions` = **2**；`snapshot` / `work_log` / `radar_state` = **1**。
+- 全 repo 掃描（寫入者 × canonical）共 **6 個腳本用錯 indent**，其中 4 個在線上：
+  - `build_penetration_report.py:57` snapshot 2→1（**元兇**：長期「跑完穿透就整檔 churn、得靠 rotation_engine 收尾還原」的來源）
+  - `safe_update.py:46` snapshot 2→1（線上；每次存檔都重排）
+  - `sabbatical_checklist_update.py:107` snapshot 2→1
+  - `_canonicalize_stale_records2.py:22` dashboard_decisions 1→2
+  - `schedule_events_weekly_clean.py:121` schedule_events 1→2（**未爆但下週日必爆**：週日 08:00 cron 一旦真的刪到過期事件就會製造 1066 行）
+  - `_canonicalize_stale_records.py:60` pending_decisions 1→2
+- 防護：閉環稽核新增**第 10 類「管線 JSON 寫入 indent 一致」** — 掃 repo 內 .py 的 `json.dump` 呼叫，解析寫入目標（字面檔名／同檔常數／僅看呼叫本身含續行 2 行），indent 與 canonical 不符即 ❌。
+- 實測：修完 6 處 → 第 10 類 ✅ 零誤報；負向測試（放入 `_tmp_badindent_test.py`）→ 雙向命中（`snapshot indent=2`、`dashboard_decisions indent=1`）。
+  檢查器第一版有 **4 處假陽性**：`rebalance_snapshot.json`／`tactical_table_*.json` 被 `snapshot.json` **子字串**誤中，`safe_update.py:54` 因 ±8 行上下文誤歸屬 → 已改為**邊界比對**＋只看呼叫本身。
+- check_rule：
+  ① 改管線 JSON 前先 **round-trip 量 canonical**，別信筆記（本次的錯誤源頭就是筆記本身）；
+  ② `git diff --stat` 行數爆掉時**先懷疑 indent**，不要先去追換行／編碼；
+  ③ 新增寫入腳本照 canonical indent；`python _audit_closeout.py` 第 10 類會擋；
+  ④ 稽核規則上線前必做**負向測試**（注入錯誤看它叫不叫）＋**假陽性盤點**（字串比對一律改邊界比對）。
+
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
 | 錯誤類型 | 次數 | 首次 | 最後 | 處置 |
