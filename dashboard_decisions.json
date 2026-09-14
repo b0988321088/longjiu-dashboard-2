@@ -3311,6 +3311,15 @@
       "agent": "Hermes",
       "task": "推送可靠度治本：auto_push.py 統一出口（使用者在 TG 指示「不要有腳本走一走又送不上去的狀況」）",
       "summary": "新增 auto_push.py 為唯一推送出口：範圍紀錄覆蓋（含程式檔→拒推 exit 3）／push 重試 3 次／git ls-remote 驗證遠端 sha；15 條推送路徑全部遷移。修 safe_update.py「不看回傳碼、只推 clean-main」。commit 75dd120f（CIO 重審 APPROVE）＋INC-182；正式環境實跑 evening_sync 17s 完成並驗證遠端 sha。"
+    },
+    {
+      "id": "dec-20260914-cioreviewfix-349",
+      "timestamp": "2026-09-14T19:05:00+08:00",
+      "agent": "Hermes",
+      "task": "CIO 18:30 復盤查核與資料層修正（使用者指示：執行修正並記錄）",
+      "summary": "CIO 三項『不能拖』逐條實證：①決策狀態未回收＝真，但位置在 dashboard_decisions.json 內嵌 pending（CIO Part A 輸入），非 pending_decisions.json（該檔 14:30 已結案）→ 已回收＋加註【最終值】②9/16 FOMC 判準系統早已寫死（us30y_monitor RED_LINE=5.30 連2日／市值線連3日<5.20）→ 補『9/16 落點→動作』4 種對照③240萬押標金與540萬還債紀錄一致（不預留、9月底評估），540萬清償500萬後餘40萬、實際缺口200萬。另更正 CIO 兩處失準：P2 遷移已於今日 16:55 提前完成（9/15 無此條）、投資面非零動作（9/14 真值日四源同步）。通道稽核實證：遷移後 100% RECORD。",
+      "status": "completed",
+      "source": "user"
     }
   ],
   "meta": {

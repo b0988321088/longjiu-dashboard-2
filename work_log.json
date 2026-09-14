@@ -671,5 +671,11 @@
   "category": "完成",
   "item": "推送可靠度治本：新增 auto_push.py 統一推送出口（範圍紀錄覆蓋／重試 3 次／git ls-remote 遠端 sha 驗證／--own 守門／退出碼分級），15 條推送路徑全部遷移；INC-182",
   "detail": "修『腳本走完卻沒送上去』三根因（範圍有未落紀錄 commit 只印⚠️／push 一次失敗即放棄／完全無遠端驗證）。clone 三情境實測＋正式環境實跑 evening_sync 17s 完成（✅ 補落 RECORD → ✅ 已推送並驗證遠端 sha）；closeout_check 的 range-missing 改為逐顆複核避免誤掛 24h。commit 75dd120f（CIO 重審 APPROVE）"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "完成",
+  "item": "CIO 18:30 復盤查核：3 項『不能拖』逐條實證 — 決策狀態回收（DS 儲值閉環）／9/16 FOMC 判準寫死／240萬押標金紀錄一致性；另更正 CIO 兩處失準（P2 已提前完成、投資面非零動作）",
+  "detail": "① 狀態漂移真因＝dashboard_decisions.json 內嵌 pending（CIO Part A 的輸入）未回收；standalone pending_decisions.json 14:30 已結案 → 已回收並加註【最終值】。② FOMC 判準系統早已寫死：us30y_monitor.py RED_LINE=5.30 連2交易日→債券新增永久凍結（red_line_since 9/10、last_rate 5.354）、市值線需連3日<5.20 才解凍；補『9/16 落點→動作』4 種對照進 pending 升息警戒。③ 押標金240萬紀錄內部一致（不預留、9月底評估）：540萬清償500萬後餘40萬 → 實際缺口200萬（扣9/14真值可動現金88.6萬）。④ 通道稽核實證：PUSH_LANE.log 今日 66 RECORD／4 TAG，4筆TAG皆在 auto_push 16:51 遷移前；遷移後 100% RECORD、零 REFUSED/OWN-DIRTY。⑤ 新增稽核第9類『決策狀態一致』（commit 2308c32f）防再漂移。"
  }
 ]
