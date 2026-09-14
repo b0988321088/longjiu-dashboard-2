@@ -47,17 +47,15 @@ def main():
     c = run(["git", "commit", "-m", f"auto: 雷達儀表板同步 {TODAY}"], timeout=60)
     if c.returncode != 0 and "nothing to commit" not in (c.stdout or "") + (c.stderr or ""):
         print(f"⚠️ git commit 失敗：{(c.stderr or '')[-200:]}")
-    # P2（2026-09-14）：有真的 commit → 先落 RECORD（auto_record 結構檢查）再推
-    if c.returncode == 0:
-        ar = run([sys.executable, os.path.join(BASE, "auto_record.py"), "--script", "radar_push.py",
-                  "--own", "radar_state.json", "radar_report_*.html", "index.html"], timeout=300)
-        if ar.returncode != 0:
-            print(f"⚠️ 落紀錄未通過 → 不推送：{((ar.stdout or '') + (ar.stderr or ''))[-200:]}")
-            return
-    p1 = run(["git", "push", "origin", "clean-main"], timeout=180)
-    p2 = run(["git", "push", "origin", "clean-main:main", "--force-with-lease"], timeout=180)
-    if p1.returncode != 0 or p2.returncode != 0:
-        print(f"⚠️ GitHub push 失敗：{((p1.stderr or '') + (p2.stderr or ''))[-300:]}")
+    # 2026-09-14：紀錄＋推送統一走 auto_push.py（範圍紀錄覆蓋／重試／遠端 sha 驗證）。
+    # --own：本 job 產出（radar_state/雷達報告/儀表板）若沒進 commit → 直接擋下，
+    # 不再出現「推成功但線上其實是舊的」。
+    ap = run([sys.executable, os.path.join(BASE, "auto_push.py"), "--script", "radar_push.py",
+              "--own", "radar_state.json", "radar_report_*.html", "index.html"], timeout=600)
+    ap_out = ((ap.stdout or "") + (ap.stderr or "")).strip()
+    if ap.returncode != 0:
+        print(f"⚠️ 未推送上線（rc={ap.returncode}）：{ap_out[-300:]}")
+        return
 
     # 4) 黃/紅燈才輸出摘要（TG 推）；全綠安靜
     if "⚠️ ALERTS" in out:

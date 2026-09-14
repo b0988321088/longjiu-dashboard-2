@@ -132,20 +132,13 @@ def main():
             # P2（2026-09-14）：改走 RECORD 通道 —— commit 後先由 auto_record 做 deterministic
             #   結構檢查（不得含程式檔／JSON 可解析／HTML 未截斷／工作區守門）並落 tree 紀錄；
             #   未過 → 不落紀錄 → push 被閘門擋下（寧可斷、不要無審上線）。main 用 --force-with-lease。
-            ar = subprocess.run([sys.executable, str(BASE / "auto_record.py"),
+            ap = subprocess.run([sys.executable, str(BASE / "auto_push.py"),
                                  "--script", "schedule_events_weekly_clean.py"],
-                                cwd=str(BASE), capture_output=True, text=True, timeout=300)
-            if ar.returncode != 0:
-                push_note = (f"\n⚠️ 落紀錄未通過 → 未推送（push 會被閘門擋下）："
-                             f"{((ar.stdout or '') + (ar.stderr or ''))[-200:]}")
-            else:
-                p1 = git("push", "origin", "clean-main")
-                p2 = git("push", "origin", "clean-main:main", "--force-with-lease")
-                push_note = ""
-                if p1.returncode != 0:
-                    push_note += f"\n⚠️ push clean-main 失敗: {p1.stderr.strip()[:200]}"
-                if p2.returncode != 0:
-                    push_note += f"\n⚠️ push main 失敗: {p2.stderr.strip()[:200]}"
+                                cwd=str(BASE), capture_output=True, text=True, timeout=600)
+            push_note = ""
+            if ap.returncode != 0:
+                push_note = (f"\n⚠️ 未推送上線（rc={ap.returncode}）："
+                             f"{((ap.stdout or '') + (ap.stderr or ''))[-200:]}")
         else:
             push_note = f"\n⚠️ commit 失敗: {r.stderr.strip()[:200]}"
 

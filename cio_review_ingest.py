@@ -96,16 +96,19 @@ def main():
             _cmds = [
                 ["git", "add", "cio_review.json"],
                 ["git", "commit", "-m", "data: cio_review.json 收錄更新（CIO 審查）"],
-                # P2（2026-09-14）：先落 RECORD（auto_record 結構檢查）再 push
-                [sys.executable, str(BASE / "auto_record.py"), "--script", "cio_review_ingest.py"],
-                ["git", "push", "origin", "clean-main"],
-                ["git", "push", "origin", "clean-main:main"],
             ]
             for _c in _cmds:
                 _r = subprocess.run(_c, capture_output=True, cwd=str(BASE), timeout=120)
                 if _r.returncode != 0:
-                    print(f"ERR: ingest push 失敗 {' '.join(_c[:2])}: {(_r.stderr or _r.stdout).decode('utf-8','ignore')[-300:]}")
+                    print(f"ERR: ingest commit 失敗 {' '.join(_c[:2])}: {(_r.stderr or _r.stdout).decode('utf-8','ignore')[-300:]}")
                     return 1
+            # 2026-09-14：紀錄＋推送統一走 auto_push.py（範圍紀錄覆蓋／重試 3 次／遠端 sha 驗證）
+            _ap = subprocess.run([sys.executable, str(BASE / "auto_push.py"), "--script", "cio_review_ingest.py"],
+                                 capture_output=True, cwd=str(BASE), timeout=600)
+            if _ap.returncode != 0:
+                _o = ((_ap.stdout or b"") + (_ap.stderr or b"")).decode("utf-8", "ignore")
+                print(f"ERR: ingest 未推送上線（rc={_ap.returncode}）: {_o[-300:]}")
+                return 1
     except Exception as _e:
         print(f"ERR: ingest push 例外: {_e}")
         return 1

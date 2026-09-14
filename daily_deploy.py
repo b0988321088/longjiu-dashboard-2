@@ -124,25 +124,14 @@ def github_push(filepath: str) -> bool:
     if _ar.returncode != 0:
         print(f"  ⛔ 落紀錄未通過 → 不推送：{((_ar.stdout or '') + (_ar.stderr or ''))[-200:]}")
         return False
-    result = subprocess.run(
-        ["git", "push", "origin", GITHUB_BRANCH],
-        cwd=BASE,
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        # Common failure: remote branched ahead but local claims clean; force-push as fallback
-        if "non-fast-forward" in result.stderr or "Updates were rejected" in result.stderr or "failed to push" in result.stderr:
-            result = subprocess.run(
-                ["git", "push", "origin", f"HEAD:{GITHUB_BRANCH}", "--force-with-lease"],
-                cwd=BASE,
-                capture_output=True,
-                text=True,
-            )
-    ok = result.returncode == 0
-    print(f"  push {filepath} via git: {result.returncode}")
+    # 2026-09-14：推送統一走 auto_push.py（範圍紀錄覆蓋／重試 3 次／遠端 sha 驗證）。
+    # 本檔每次只 commit 單一資料檔（純資料路徑）→ --record auto 會自動補落 RECORD。
+    ap = subprocess.run([sys.executable, str(BASE / "auto_push.py"), "--script", "daily_deploy.py"],
+                        cwd=BASE, capture_output=True, text=True, timeout=600)
+    ok = ap.returncode == 0
+    print(f"  push {filepath} via auto_push: {'ok' if ok else 'FAIL（rc=%d）' % ap.returncode}")
     if not ok:
-        print(f"  {result.stderr[:300]}")
+        print(f"  {((ap.stdout or '') + (ap.stderr or '')).strip()[-300:]}")
     return ok
 
 

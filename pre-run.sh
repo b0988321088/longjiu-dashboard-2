@@ -109,24 +109,14 @@ else
 fi
 
 # ======================
-# 防呆3b：落 RECORD（auto_record；未過 → 不推送）
+# 防呆3b+4：紀錄＋推送（auto_push.py：範圍紀錄覆蓋／失敗重試 3 次／遠端 sha 驗證）
 # ======================
-if [ "${COMMITTED}" = "1" ]; then
-    if python auto_record.py --script pre-run.sh; then
-        echo "[OK] 已落 RECORD"
-    else
-        echo "[ABORT] auto_record 未通過 → 不推送（寧可斷、不要無審上線）"
-        exit 1
-    fi
+if python auto_push.py --script pre-run.sh; then
+    echo "[OK] 已推送並驗證遠端 sha"
+else
+    echo "[ABORT] 未推送上線 — 詳見上方訊息（閘門／重試／遠端驗證）"
+    exit 1
 fi
-
-# ======================
-# 防呆4：雙分支推送
-# ======================
-git push origin clean-main
-echo "[OK] clean-main 推送完成"
-git push origin clean-main:main --force-with-lease
-echo "[OK] main 備援推送完成"
 
 # ======================
 # 防呆5：GitHub Pages HTTP 200 驗證

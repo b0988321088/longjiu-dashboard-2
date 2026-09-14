@@ -39,19 +39,13 @@ print(c.stdout.strip() or c.stderr.strip())
 if c.returncode != 0:
     print("COMMIT FAIL"); sys.exit(1)
 
-# P2（2026-09-14）：改走 RECORD 通道 —— commit 後先落紀錄再 push。
-# 本檔只 stage 7 個 JSON 資料檔 → auto_record 的 deterministic 檢查（不得含程式檔／
-# JSON 可解析／工作區守門）正好對得上；未過 → 不落紀錄 → 閘門擋下（寧可斷、不要無審上線）。
-r = subprocess.run([sys.executable, "auto_record.py", "--script", "nightly_dashboard_sync.py"],
+# 2026-09-14：紀錄＋推送統一走 auto_push.py —— 確保「推送範圍內每顆 commit 都有審查紀錄」、
+# push 失敗自動重試 3 次、並用 git ls-remote 驗證遠端 sha 真的前進（不再是「按了就算成功」）。
+# 未完成 → 非零退出（cron 才看得到失敗，不會靜默地以為推上去了）。
+r = subprocess.run([sys.executable, "auto_push.py", "--script", "nightly_dashboard_sync.py"],
                    cwd=REPO, capture_output=True, text=True, encoding="utf-8")
 print((r.stdout or "").strip() or (r.stderr or "").strip())
 if r.returncode != 0:
-    print("RECORD FAIL（不推送）"); sys.exit(1)
+    print(f"未推送上線（rc={r.returncode}）"); sys.exit(1)
 
-for ref in ("clean-main", "clean-main:main"):
-    p = git("push", "origin", ref)
-    print(f"push {ref}: {p.stdout.strip()[:120] or p.stderr.strip()[:120]}")
-    if p.returncode != 0:
-        print("PUSH FAIL", ref); sys.exit(1)
-
-print(f"OK: 已推送 {today} 儀表板同步")
+print(f"OK: 已推送並驗證 {today} 儀表板同步")

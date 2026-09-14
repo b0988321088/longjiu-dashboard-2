@@ -49,26 +49,15 @@ def main() -> int:
         r = subprocess.run(["git", "status", "--short"], cwd=str(BASE), capture_output=True, text=True)
         changed = [l.strip() for l in r.stdout.splitlines() if l.strip()]
         if changed:
-            subprocess.run(["git", "add", "-A"], cwd=str(BASE))
-            # P1（2026-09-14）：add -A 會掃進別人未提交的程式改動 → commit 前先排除程式檔
-            _cs = subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--clean-stage"],
-                                 cwd=str(BASE), capture_output=True, text=True)
-            if (_cs.stdout or "").strip():
-                print(f"  {_cs.stdout.strip()}")
-            subprocess.run(["git", "commit", "-m",
-                            "sync: refresh_all 一鍵同步（穿透+再平衡+深度討論+連結）"],
-                           cwd=str(BASE), capture_output=True)
-            # P2（2026-09-14）：先去 RECORD，未過就不推（原靠自打 [cioreviewed]）
-            ar = subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--script", "refresh_all.py"],
-                                cwd=str(BASE), capture_output=True, text=True)
-            if ar.returncode != 0:
-                print(f"  ❌ 落紀錄未通過 → 跳過 push：{((ar.stdout or '') + (ar.stderr or ''))[-200:]}")
-            else:
-                print("  ✅ 已落 RECORD")
-                for branch in [["git", "push", "origin", "clean-main"],
-                               ["git", "push", "origin", "clean-main:main", "--force-with-lease"]]:
-                    p = subprocess.run(branch, cwd=str(BASE), capture_output=True, text=True)
-                    print(f"  {'✅' if p.returncode == 0 else '❌'} {' '.join(branch[2:4])}: {p.stderr.strip()[-100:] if p.returncode else ''}")
+            # 2026-09-14：commit／紀錄／推送統一走 auto_push.py
+            ap = subprocess.run([sys.executable, str(BASE / "auto_push.py"), "--script", "refresh_all.py",
+                                 "--auto-stage", "--commit",
+                                 "sync: refresh_all 一鍵同步（穿透+再平衡+深度討論+連結）"],
+                                cwd=str(BASE), capture_output=True, text=True, timeout=900)
+            for _l in (((ap.stdout or "") + (ap.stderr or "")).strip().splitlines())[-4:]:
+                print(f"  {_l}")
+            if ap.returncode != 0:
+                print(f"  ❌ 未推送上線（rc={ap.returncode}）")
         else:
             print("  ℹ️ 無變更，跳過 push")
 

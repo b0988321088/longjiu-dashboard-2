@@ -30,31 +30,17 @@ def main():
     ok3 = run("build_dashboard.py", 120)
     lines.append("✅ 儀表板連結更新" if ok3 else "⚠️ 儀表板異常")
     # 4) git 提交 + 推送雙分支（晚報原本功能）
-    g = subprocess.run(["git", "add", "-A"], cwd=BASE, capture_output=True, text=True, timeout=60)
-    # P1（2026-09-14）：`add -A` 會把工作區「所有」變更（含別人未提交的程式改動）掃進本 job 的
-    # commit → auto_record 判定含程式檔 → 不落紀錄 → 22:00 晚報斷推。commit 前先排除程式檔。
-    _cs = subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--clean-stage"],
-                         cwd=BASE, capture_output=True, text=True, timeout=180)
-    if (_cs.stdout or "").strip():
-        lines.append(_cs.stdout.strip())
-    g2 = subprocess.run(["git", "commit", "-m", f"auto: 晚報校準 {TODAY}"],
-                        cwd=BASE, capture_output=True, text=True, timeout=60)
-    committed = g2.returncode == 0
-    if g2.returncode != 0 and "nothing to commit" not in g2.stdout:
-        lines.append(f"⚠️ commit: {g2.stderr[-100:]}")
-    # P2（2026-09-14）：資料路徑改走 RECORD 通道 —— commit 後先落紀錄再 push。
-    # 原本靠 commit message 自打 [cioreviewed]，那條只證明「作者自己說審過了」；
-    # 現由 auto_record 做 deterministic 結構檢查（不得含程式檔/JSON 可解析/HTML 未截斷/工作區守門）
-    # 並寫入綁 tree 的紀錄，未過 → 不落紀錄 → push 被閘門擋下（寧可斷、不要無審上線）。
-    if committed:
-        r = subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--script", "evening_sync.py"],
-                           cwd=BASE, capture_output=True, text=True, timeout=300)
-        lines.append("✅ 已落 RECORD（auto_record）" if r.returncode == 0
-                     else f"⚠️ 落紀錄失敗（push 會被擋）：{(r.stdout + r.stderr)[-120:]}")
-    p1 = subprocess.run(["git", "push", "origin", "clean-main"], cwd=BASE, capture_output=True, text=True, timeout=120)
-    p2 = subprocess.run(["git", "push", "origin", "clean-main:main", "--force-with-lease"],
-                        cwd=BASE, capture_output=True, text=True, timeout=120)
-    lines.append("✅ GitHub 推送完成（雙分支）" if p1.returncode == 0 and p2.returncode == 0 else "⚠️ push 異常")
+    # 4) commit + 紀錄 + 推送，統一走 auto_push.py
+    #    （確保推送範圍內每顆 commit 都有審查紀錄、push 失敗自動重試、並驗證遠端 sha 真的前進）
+    ap = subprocess.run([sys.executable, str(BASE / "auto_push.py"), "--script", "evening_sync.py",
+                         "--auto-stage", "--commit", f"auto: 晚報校準 {TODAY}"],
+                        cwd=BASE, capture_output=True, text=True, timeout=900)
+    ap_out = ((ap.stdout or "") + (ap.stderr or "")).strip()
+    for _l in ap_out.splitlines()[-4:]:
+        lines.append("  " + _l)
+    pushed = ap.returncode == 0
+    lines.append("✅ 已推送並驗證（雙分支 clean-main＋main）" if pushed
+                 else f"⚠️ 未推送上線（rc={ap.returncode}）— 線上可能仍是舊版，詳見上方訊息")
     lines.append("")
     lines.append(f"📰 日報：https://b0988321088.github.io/longjiu-dashboard-2/daily_report_v2_{TODAY}.html")
     lines.append(f"📊 差異：https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html")

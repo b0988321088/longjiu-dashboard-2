@@ -31,6 +31,7 @@ import argparse
 import contextlib
 import datetime as dt
 import io
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -40,6 +41,7 @@ LANE_LOG = REPO / ".git" / "PUSH_LANE.log"   # pre-push 閘門的逐筆通道留
 WARN_LOG = REPO / ".git" / "AUTO_WARN.log"   # auto_record 的警告留痕（INC-180 起）
 sys.path.insert(0, str(REPO))
 import release_claimed_occurrences as rco  # noqa: E402
+import auto_push as apush  # noqa: E402  （複核 range-missing 是否已補紀錄）
 
 
 def step_claims(fix: bool, quiet: bool) -> int:
@@ -136,6 +138,7 @@ def step_auto_warns(quiet: bool) -> list:
     counts: dict = {}
     last: dict = {}
     missed: list = []
+    resolved: list = []
     for ln in WARN_LOG.read_text(encoding="utf-8", errors="ignore").splitlines():
         parts = ln.split("\t")
         if len(parts) < 5:
@@ -150,12 +153,21 @@ def step_auto_warns(quiet: bool) -> list:
         counts[kind] = counts.get(kind, 0) + 1
         last[kind] = f"{parts[1]} {parts[2]}｜{parts[4][:70]}"
         if kind == "range-missing":
-            missed.append(f"{parts[1]} {parts[2]}｜{parts[4][:70]}")
+            # 逐顆複核：被點名的 commit 若之後已補上審查紀錄 → 視為已解決，不列問題
+            # （否則一筆「當下落後、稍後補齊」的正常過程會在稽核裡掛 24 小時）
+            shas = re.findall(r"\b[0-9a-f]{7,40}\b", parts[4])
+            unresolved = [s for s in shas if not apush.tree_approved(REPO, s)]
+            if unresolved:
+                missed.append(f"{parts[1]} {parts[2]}｜{parts[4][:70]}")
+            else:
+                resolved.append(f"{parts[1]} {parts[2]}")
     if not quiet:
         used = "、".join(f"{k}×{v}" for k, v in sorted(counts.items())) or "無警告"
         print(f"④ auto_record 警告（近 24h）：{used}")
         for k in sorted(last):
             print(f"   - {k} 最後：{last[k]}")
+        if resolved:
+            print(f"   （range-missing 已補紀錄、不列問題：{len(resolved)} 筆）")
     for x in missed:
         problems.append(f"推送範圍有 commit 無審查紀錄（該次 push 會被擋）：{x}")
     return problems

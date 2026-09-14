@@ -37,29 +37,14 @@ print("  ✅ 10 步全數完成")
 step("git add + commit + push（雙分支）")
 today = datetime.date.today().isoformat()
 msg = f"auto: 一鍵更新 {today}（sync_all 10步✅ total {snap.get('total_assets',0):,.0f}）"
-r = run(["git", "add", "-A"])
+# 2026-09-14：commit／紀錄／推送統一走 auto_push.py（範圍紀錄覆蓋／重試／遠端 sha 驗證）
+r = run([sys.executable, str(BASE / "auto_push.py"), "--script", "update_and_deploy.py",
+         "--auto-stage", "--commit", msg])
+out = ((r.stdout or "") + (r.stderr or "")).strip()
+print("\n".join(out.splitlines()[-5:]))
 if r.returncode != 0:
-    print(f"  ⚠️ git add: {r.stderr[:100]}")
-# P1（2026-09-14）：add -A 會掃進別人未提交的程式改動 → commit 前先排除程式檔
-# （auto_record 會拒收含程式檔的紀錄，留著＝push 被閘門擋下）
-r = run([sys.executable, str(BASE / "auto_record.py"), "--clean-stage"])
-if (r.stdout or "").strip():
-    print("  " + r.stdout.strip())
-r = run(["git", "commit", "-m", msg, "--allow-empty"])
-print("  commit:", (r.stdout or r.stderr).strip().splitlines()[-1:] if (r.stdout or r.stderr) else "（無變更）")
-# P2（2026-09-14）：commit 後先落 RECORD（auto_record 做結構檢查）再 push；未過 → 不推
-r = run([sys.executable, str(BASE / "auto_record.py"), "--script", "update_and_deploy.py"])
-if r.returncode != 0:
-    print(f"  ❌ 落紀錄未通過（不推）：{((r.stdout or '') + (r.stderr or ''))[-200:]}")
+    print(f"  ❌ 未推送上線（rc={r.returncode}）")
     sys.exit(1)
-r = run(["git", "push", "origin", "clean-main"])
-if r.returncode != 0:
-    print(f"  ❌ push clean-main 失敗: {r.stderr[:200]}")
-    sys.exit(1)
-r = run(["git", "push", "origin", "clean-main:main"])
-if r.returncode != 0:
-    print(f"  ❌ push main 失敗: {r.stderr[:200]}")
-    sys.exit(1)
-print("  ✅ 雙分支推送完成")
+print("  ✅ 雙分支推送完成（遠端 sha 已驗證）")
 
 print("\n🎉 全部完成：snapshot → 儀表板 → 日報 → 差異分析 → 穿透 → 週報 → GitHub（clean-main + main）")

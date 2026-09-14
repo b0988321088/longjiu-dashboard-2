@@ -385,27 +385,21 @@ if ok and _cio_ok:
         _staged = subprocess.run(['git', 'diff', '--cached', '--name-only'], capture_output=True, text=True, cwd=BASE).stdout.strip()
         if _staged:
             subprocess.run(['git', 'commit', '-m', _msg], capture_output=True, text=True, cwd=BASE)
-            # P2（2026-09-14）：改走 RECORD 通道 —— 上面 cio_review.py 已真的跑過，
-            # 這裡再由 auto_record 落「綁 tree」的紀錄（內建結構檢查：不得含程式檔／
-            # JSON 可解析／HTML 未截斷／工作區守門）。未過 → 不推送（寧可斷、不要無審上線）。
-            _ar = subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--script", "regenerate_report.py"],
-                                 capture_output=True, text=True, timeout=300, cwd=BASE)
-            print(_ar.stdout.strip() or _ar.stderr.strip())
+            # 2026-09-14：紀錄已由上面的真 CIO 審查（cio_review.py + cio_approve）負責，
+            # 這裡只做「範圍紀錄覆蓋檢查＋重試推送＋遠端 sha 驗證」→ --record skip。
+            _ar = subprocess.run([sys.executable, str(BASE / "auto_push.py"), "--script", "regenerate_report.py",
+                                  "--record", "skip"], capture_output=True, text=True, timeout=900, cwd=BASE)
+            print((_ar.stdout or "").strip() or (_ar.stderr or "").strip())
+            if _ar.returncode != 0:
+                print(f"⚠️ 未推送上線（rc={_ar.returncode}）")
             _recorded = _ar.returncode == 0
             if not _recorded:
-                print("  ⛔ 落紀錄未通過 → 不推送")
+                print("  ⛔ 未推送上線（見上方 auto_push 訊息）")
         else:
             print("⚠️ 無檔案可提交（全部已是最新，跳過 commit）")
     else:
         print("⚠️ 無任何報表檔案可推送")
-    if not _recorded:
-        print("  ℹ️ 未取得 RECORD（無新內容或落紀錄失敗）→ 跳過 push")
-    for _ref in ([] if not _recorded else ['clean-main', 'clean-main:main']):
-        # 2026-09-14：--force → --force-with-lease（main 是 clean-main 鏡像，正常必為 fast-forward；
-        #              --force 在遠端分歧時會無聲回捲，lease 版會直接拒絕）
-        _r = subprocess.run(['git', 'push', 'origin', _ref, '--force-with-lease'], capture_output=True, text=True, timeout=30, cwd=BASE)
-        _ok = 'Everything up-to-date' in _r.stdout or _r.returncode == 0
-        print(f"  {'✅' if _ok else '❌'} 推到 {_ref}")
+    # 推送與遠端 sha 驗證已在 auto_push.py 內完成（含重試與 ls-remote 覆核）
     # 驗證上線（Pages 建置有延遲 → 重試 4 次 × 20s）
     import time
     _base = "https://b0988321088.github.io/longjiu-dashboard-2"

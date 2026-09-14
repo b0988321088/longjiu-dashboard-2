@@ -31,18 +31,12 @@ def main():
         out_lines.append(g.stdout.strip())
     c = run(["git", "commit", "-m", "auto: 投資績效月報更新"], timeout=60)
     if c.returncode == 0 or "nothing to commit" in (c.stdout or "") + (c.stderr or ""):
-        # P2（2026-09-14）：有真的 commit → 先落 RECORD（auto_record 結構檢查）再推；未過不推
-        if c.returncode == 0:
-            ar = run([sys.executable, os.path.join(BASE, "auto_record.py"),
-                      "--script", "investment_perf_monthly.py"], timeout=300)
-            if ar.returncode != 0:
-                out_lines.append("⚠️ 落紀錄未通過 → 本月不推（避免無審上線）")
-                print("\n".join(out_lines))
-                return
-        p1 = run(["git", "push", "origin", "clean-main"], timeout=180)
-        p2 = run(["git", "push", "origin", "clean-main:main", "--force-with-lease"], timeout=180)
-        if p1.returncode != 0 or p2.returncode != 0:
-            out_lines.append("⚠️ GitHub push 失敗（月報線上未更新，文字已附上）")
+        # 2026-09-14：紀錄＋推送統一走 auto_push.py（範圍紀錄覆蓋／重試／遠端 sha 驗證）
+        ap = run([sys.executable, os.path.join(BASE, "auto_push.py"),
+                  "--script", "investment_perf_monthly.py"], timeout=600)
+        if ap.returncode != 0:
+            out_lines.append(f"⚠️ 未推送上線（rc={ap.returncode}）："
+                             f"{((ap.stdout or '') + (ap.stderr or '')).strip()[-160:]}")
 
     print("\n".join(out_lines))
 

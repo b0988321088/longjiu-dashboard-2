@@ -34,25 +34,15 @@ def main():
     if d.returncode != 0:
         print(f"⚠️ 儀表板雷達同步失敗：{(d.stderr or '')[-200:]}")
 
-    # 3) git commit + 雙分支 push
-    g = run(["git", "add", "-A"], timeout=60)
-    # P1（2026-09-14）：add -A 會掃進別人未提交的程式改動 → commit 前先排除程式檔
-    g = run([sys.executable, os.path.join(BASE, "auto_record.py"), "--clean-stage"], timeout=180)
-    if (g.stdout or "").strip():
-        print(g.stdout.strip())
-    c = run(["git", "commit", "-m", f"auto: 週六雷達儀表板同步 {TODAY}"], timeout=60)
-    if c.returncode != 0 and "nothing to commit" not in (c.stdout or "") + (c.stderr or ""):
-        print(f"⚠️ git commit 失敗：{(c.stderr or '')[-200:]}")
-    # P2（2026-09-14）：有真的 commit → 先落 RECORD（auto_record 結構檢查）再推
-    if c.returncode == 0:
-        ar = run([sys.executable, os.path.join(BASE, "auto_record.py"), "--script", "radar_weekly.py"], timeout=300)
-        if ar.returncode != 0:
-            print(f"⚠️ 落紀錄未通過 → 不推送：{((ar.stdout or '') + (ar.stderr or ''))[-200:]}")
-            return
-    p1 = run(["git", "push", "origin", "clean-main"], timeout=180)
-    p2 = run(["git", "push", "origin", "clean-main:main", "--force-with-lease"], timeout=180)
-    if p1.returncode != 0 or p2.returncode != 0:
-        print(f"⚠️ GitHub push 失敗：{((p1.stderr or '') + (p2.stderr or ''))[-200:]}")
+    # 2026-09-14：commit／紀錄／推送統一走 auto_push.py（add -A → clean-stage → commit →
+    # 範圍紀錄覆蓋 → 重試推送 → 遠端 sha 驗證）
+    ap = run([sys.executable, os.path.join(BASE, "auto_push.py"), "--script", "radar_weekly.py",
+              "--auto-stage", "--commit", f"auto: 週六雷達儀表板同步 {TODAY}"], timeout=900)
+    ap_out = ((ap.stdout or "") + (ap.stderr or "")).strip()
+    if ap_out:
+        print(ap_out[-400:])
+    if ap.returncode != 0:
+        print(f"⚠️ 未推送上線（rc={ap.returncode}）")
 
     # 4) 完整摘要交付 TG
     print(f"📋 週六再平衡 — 機構流向雷達\n{out}")

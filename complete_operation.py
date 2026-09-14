@@ -69,18 +69,13 @@ def main():
 
     # ④ git 推送
     try:
-        subprocess.run(["git", "add", "-A"], cwd=BASE, check=True)
-        # P1（2026-09-14）：add -A 會掃進別人未提交的程式改動 → commit 前先排除程式檔
-        subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--clean-stage"], cwd=BASE, check=True)
-        subprocess.run(["git", "commit", "-m", f"ops: {item} 完成閉環"], cwd=BASE, check=True)
-        # P2（2026-09-14）：commit 後先落 RECORD 再 push（原靠 commit message 自打 [cioreviewed]）。
-        # auto_record 未過 → check=True 直接拋出 → 不會 push（寧可斷、不要無審上線）。
-        subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--script", "complete_operation.py"],
-                       cwd=BASE, check=True)
-        subprocess.run(["git", "push", "origin", "clean-main"], cwd=BASE, check=True)
-        # P2：改用 --force-with-lease（裸 --force 在遠端分歧時會無聲回捲 main）+ 走 RECORD 通道
-        subprocess.run(["git", "push", "origin", "clean-main:main", "--force-with-lease"], cwd=BASE, check=True)
-        print("✅ ④ 已推送（雙分支）")
+        # 2026-09-14：commit／紀錄／推送統一走 auto_push.py（範圍紀錄覆蓋／重試／遠端 sha 驗證）
+        r = subprocess.run([sys.executable, str(BASE / "auto_push.py"), "--script", "complete_operation.py",
+                            "--auto-stage", "--commit", f"ops: {item} 完成閉環"],
+                           cwd=BASE, capture_output=True, text=True, timeout=900)
+        print(((r.stdout or "") + (r.stderr or "")).strip()[-400:])
+        if r.returncode != 0:
+            print(f"⚠️ ④ 未推送上線（rc={r.returncode}）")
     except Exception as e:
         print(f"⚠️ 推送失敗: {e}")
 

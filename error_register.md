@@ -272,6 +272,22 @@
   ③ 交付前複驗「遠端 tree」而非「本機狀態」：
      `git ls-tree -r --name-only origin/<branch> | grep <pattern>`
 
+## INC-2026-09-14（INC-182）推送可靠度：15 條路徑「走了卻送不上去」＋CIO 審查環境誤判 REJECT
+
+- 現象：使用者兩次回報「腳本跑完卻沒送上去」。
+- 根因（三個，全部屬實）：
+  ① 推送範圍裡有別顆「沒落紀錄」的 commit → pre-push 閘門擋下，但腳本只印一句 ⚠️（cron 看起來成功）。
+  ② push 失敗一次就放棄（無重試）；`safe_update.py` 甚至完全不看回傳碼、只推 clean-main（main 永遠落後）。
+  ③ 沒有任何地方驗證「遠端真的前進」——`git push` 回 0 ≠ 線上已是新內容。
+- 修法：新增 `auto_push.py` 作為唯一推送出口（範圍紀錄覆蓋／重試 3 次／`git ls-remote` 驗證／`--own` 守門／退出碼分級），15 條路徑全部遷移。
+- 附帶錯誤（本次自查）：CIO 審查者把 `auto_push.py` 的 fail-closed 判為缺陷並 REJECT —— 它在 clone 裡測，
+  而 `.git/CIO_APPROVED` 不在版控（clone 不帶紀錄），所以整個範圍都顯示「未落紀錄且含程式檔」被拒推＝**設計要的行為**。
+  它手改 CIO_APPROVED 沒生效（TAB 分隔格式）→ 誤判為邏輯缺陷。
+- check_rule：
+  ① 審查用 clone 要落紀錄請用 `cio_approve.py`，不要手改 `CIO_APPROVED`（TAB 分隔，手改易錯＝判為無紀錄）；
+  ② 「clone 內整段範圍未落紀錄」是環境事實，不是缺陷；
+  ③ 被 REJECT 的 tree 一律改寫重審（本次以 `--amend` 產生新 SHA）。
+
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
 | 錯誤類型 | 次數 | 首次 | 最後 | 處置 |

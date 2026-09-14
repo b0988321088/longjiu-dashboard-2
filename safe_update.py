@@ -221,13 +221,18 @@ def do_apply():
         sys.exit(1)
 
     # P2（2026-09-14）：改走 RECORD 通道（原為自打 [cioreviewed]）
-    print("\n  📤 Git push...")
+    print("\n  📤 Git commit + push...")
     os.system('git add snapshot.json')
     os.system(f'git commit -m "safe_update {today}" 2>&1')
-    if os.system(f'"{sys.executable}" auto_record.py --script safe_update.py') != 0:
-        print("  ⛔ 落紀錄未通過 → 不推送（寧可斷、不要無審上線）")
+    # 2026-09-14：紀錄＋推送統一走 auto_push.py（範圍紀錄覆蓋／重試 3 次／遠端 sha 驗證）。
+    # 舊版只 `git push origin clean-main` 且完全不看回傳碼 → main 沒同步、失敗也當成功。
+    _ap = subprocess.run([sys.executable, os.path.join(BASE, 'auto_push.py'),
+                          '--script', 'safe_update.py'], cwd=BASE,
+                         capture_output=True, text=True, timeout=600)
+    print(((_ap.stdout or '') + (_ap.stderr or '')).strip()[-300:])
+    if _ap.returncode != 0:
+        print(f"  ⛔ 未推送上線（rc={_ap.returncode}）")
         sys.exit(1)
-    os.system('git push origin clean-main 2>&1')
     
     pending['applied'] = True
     pending['applied_at'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')

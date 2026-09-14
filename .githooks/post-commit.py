@@ -53,6 +53,8 @@ SCRIPTS = [
     "compile_intel.py", "sync_all.py", "decision_json.py",
     # 2026-09-14（P2）：auto_record.py 是自動化路徑的落紀錄 helper，cron/鏡像端腳本會呼叫它
     "auto_record.py", "cio_approve.py",
+    # 2026-09-14：auto_push.py 是「紀錄＋重試推送＋遠端驗證」的統一出口，各推送路徑都呼叫它
+    "auto_push.py",
 ]
 
 
