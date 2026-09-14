@@ -749,5 +749,11 @@
   "category": "完成",
   "item": "cio_review 禁字表修正（INC-185）：dashboard.py 改「引用形式才擋」",
   "detail": "子字串比對會誤中 build_*_dashboard.py 檔名，且事件紀錄寫到該字串就被自己擋；改為只擋 href/src/action、python 指令、路徑三種引用形式。驗收：單元 7 正 6 負案例 + E2E 負向（真實日報插假連結 → exit 3，防線仍在）+ E2E 正向（真實日報 → 全部通過）。"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "完成",
+  "item": "CIO 重審：首輪 REJECT 經查為派工指令轉義瑕疵（INC-186）",
+  "detail": "首輪審查在『防線仍在』單元項得到 False 並 REJECT，但同輪 E2E 負向測試是 exit 3（有擋下）→ 矛盾。主辦方重跑同一條指令得 True，證實是子代理多層引號把樣本變成帶字面反斜線的 href=\\\"dashboard.py\\\"（該輪 5 次語法錯誤）。程式不動，改派工法：樣本一律 heredoc、期望值逐字給定、矛盾時以 E2E 為準且不得單項 REJECT。已重送重審。"
  }
 ]
