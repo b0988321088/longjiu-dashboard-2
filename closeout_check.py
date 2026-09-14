@@ -12,6 +12,9 @@
 3. **彙總**：印出結論 + 「需補跑的產出」清單（每筆給可直接複製的指令）。
 4. **推送通道稽核**（v4 閘門配套）：`.git/PUSH_LANE.log` 近 24h 各通道使用次數；
    有「例外通道推程式檔」或「自動化以 TAG 推程式被擋」→ 列入問題（前者要補審、後者要遷移該路徑）。
+5. **auto_record 警告稽核**（INC-180 配套）：`.git/AUTO_WARN.log` 近 24h 的 `data-dirty`／
+   `code-dirty`／`range-missing`。前兩類是「別班或有人的未提交變更」（只記錄），
+   `range-missing`（推送範圍內有 commit 無審查紀錄 → 那次 push 必定被閘門擋下）列入問題。
 
 用法
 ----
@@ -34,6 +37,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent
 LANE_LOG = REPO / ".git" / "PUSH_LANE.log"   # pre-push 閘門的逐筆通道留痕（v3 起）
+WARN_LOG = REPO / ".git" / "AUTO_WARN.log"   # auto_record 的警告留痕（INC-180 起）
 sys.path.insert(0, str(REPO))
 import release_claimed_occurrences as rco  # noqa: E402
 
@@ -115,6 +119,48 @@ def step_push_lanes(quiet: bool) -> list:
     return problems
 
 
+def step_auto_warns(quiet: bool) -> list:
+    """④ auto_record 警告稽核（近 24h）：`.git/AUTO_WARN.log`。
+
+    INC-180：警告若只印在 cron 的 stdout 等於沒人看到 → 收進每日收工稽核。
+    kind：data-dirty（他班未提交資料檔）／code-dirty（工作區有人留著未提交程式檔）／
+          range-missing（推送範圍內有 commit 無審查紀錄 → 該次 push 必定被閘門擋下）。
+    只有 range-missing 列入問題（data/code-dirty 是常態，記錄供追蹤）。
+    """
+    problems: list = []
+    if not WARN_LOG.exists():
+        if not quiet:
+            print("④ auto_record 警告：⚪ 尚無 AUTO_WARN.log（INC-180 起才寫）")
+        return problems
+    cut = dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=24)
+    counts: dict = {}
+    last: dict = {}
+    missed: list = []
+    for ln in WARN_LOG.read_text(encoding="utf-8", errors="ignore").splitlines():
+        parts = ln.split("\t")
+        if len(parts) < 5:
+            continue
+        try:
+            ts = dt.datetime.strptime(parts[0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=dt.timezone.utc)
+        except Exception:
+            continue
+        if ts < cut:
+            continue
+        kind = parts[3]
+        counts[kind] = counts.get(kind, 0) + 1
+        last[kind] = f"{parts[1]} {parts[2]}｜{parts[4][:70]}"
+        if kind == "range-missing":
+            missed.append(f"{parts[1]} {parts[2]}｜{parts[4][:70]}")
+    if not quiet:
+        used = "、".join(f"{k}×{v}" for k, v in sorted(counts.items())) or "無警告"
+        print(f"④ auto_record 警告（近 24h）：{used}")
+        for k in sorted(last):
+            print(f"   - {k} 最後：{last[k]}")
+    for x in missed:
+        problems.append(f"推送範圍有 commit 無審查紀錄（該次 push 會被擋）：{x}")
+    return problems
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="龍九每日收工檢查（一鍵）")
     ap.add_argument("--fix", action="store_true", help="釋放被誤認領的排程時點")
@@ -135,6 +181,7 @@ def main() -> int:
         left_claims = step_claims(args.fix, args.quiet or args.silent_ok)
         rc, concl, out = step_audit(args.quiet or args.silent_ok)
         lane_problems = step_push_lanes(args.quiet or args.silent_ok)
+        warn_problems = step_auto_warns(args.quiet or args.silent_ok)
 
         problems = []
         if left_claims:
@@ -142,6 +189,7 @@ def main() -> int:
         if "全部通過" not in concl:
             problems.append(concl.replace("閉環稽核結果：", ""))
         problems.extend(lane_problems)
+        problems.extend(warn_problems)
 
         print()
         print("=" * 52)

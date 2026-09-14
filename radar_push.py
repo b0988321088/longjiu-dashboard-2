@@ -49,7 +49,8 @@ def main():
         print(f"⚠️ git commit 失敗：{(c.stderr or '')[-200:]}")
     # P2（2026-09-14）：有真的 commit → 先落 RECORD（auto_record 結構檢查）再推
     if c.returncode == 0:
-        ar = run([sys.executable, os.path.join(BASE, "auto_record.py"), "--script", "radar_push.py"], timeout=300)
+        ar = run([sys.executable, os.path.join(BASE, "auto_record.py"), "--script", "radar_push.py",
+                  "--own", "radar_state.json", "radar_report_*.html", "index.html"], timeout=300)
         if ar.returncode != 0:
             print(f"⚠️ 落紀錄未通過 → 不推送：{((ar.stdout or '') + (ar.stderr or ''))[-200:]}")
             return

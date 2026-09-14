@@ -9,6 +9,7 @@
 
 用法：
   python auto_record.py --script evening_sync.py [--commit <sha>] [--check "cmd"]... [--dry-run]
+  python auto_record.py --script radar_push.py --own radar_state.json "radar_report_*.html"
   python auto_record.py --clean-stage      # git add -A 型路徑：commit 前把程式檔 unstage
 
 內建 deterministic 檢查（任一失敗 → 不落地、exit 3 → push 被閘門擋下＝寧可斷、不要無審上線）：
@@ -17,9 +18,16 @@
      → 程式/邏輯改動只能走真 CIO 審查，不得由自動化腳本自己落紀錄
   ② 變更的 *.json 必須能 json.loads（防截斷/半寫入的資料上線）
   ③ 變更的 *.html 必須非空且有 </html>（同上）
-  ④ 工作區相對 HEAD 不得有未提交的「已追蹤程式檔」（AUTO 不得替程式變更背書）；
-     未提交的資料/報表檔只記警告（INC-179：紀錄綁的是 commit tree，未提交檔不在推送範圍）
+  ④ 工作區相對 HEAD 的未提交檔只記警告、**不阻擋**（見下方「守門維度」）
+  ④-1 --own 指名的本 job 產出若未提交 → 硬擋（防「產出沒進 commit 卻落了紀錄」的靜默落後）
   ⑤ --check 指定的額外檢查（可重複；exit != 0 視為失敗）
+
+守門維度（INC-179 → INC-180）：紀錄綁的是**該 commit 的 tree**，所以守門只該看「本次推送範圍」。
+  工作區有別班次未提交的檔（整點 cron、別條路徑正在改的 .py）是常態，不影響推送內容的正確性；
+  舊版把「整個工作區必須乾淨」當條件，讓 --clean-stage 的 7 條路徑（它們刻意把別班程式檔留在
+  工作區）在有人手上握一顆未提交 .py 時必定斷推。程式改動的防線改由 ① ＋ pre-push 的
+  AUTO-BLOCKED-CODE 承擔。警告一律寫進 `<git-dir>/AUTO_WARN.log`，由每日收工稽核（closeout_check）
+  讀取，避免「只警告 = 沒人看到」。
 
 界線（不要誤用）：reviewer 記為 AUTO-checker:<script>，只證明「上述結構檢查通過」，
       **不證明設計正確**。程式/邏輯改動走這條會被閘門硬擋（pre-push v4.2：AUTO 紀錄
@@ -29,7 +37,9 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import fnmatch
 import json
+import os
 import re
 import subprocess
 import sys
@@ -94,12 +104,47 @@ def clean_stage(base: Path) -> int:
     return 0
 
 
+def git_dir(base: Path) -> Path:
+    p = run(["git", "rev-parse", "--git-dir"], base)
+    gd = Path(p.stdout.strip()) if p.returncode == 0 and p.stdout.strip() else Path(".git")
+    return gd if gd.is_absolute() else (base / gd)
+
+
+def tree_approved(base: Path, commit: str) -> bool:
+    """該 commit 的 tree 在 CIO_APPROVED 是否已有 APPROVE 紀錄（＝閘門會不會放行）。"""
+    f = git_dir(base) / "CIO_APPROVED"
+    if not f.exists():
+        return False
+    p = run(["git", "rev-parse", f"{commit}^{{tree}}"], base)
+    if p.returncode != 0:
+        return False
+    t = p.stdout.strip()
+    for ln in f.read_text(encoding="utf-8", errors="replace").splitlines():
+        parts = ln.split("\t")
+        if len(parts) >= 5 and parts[1] == t and parts[3] == "APPROVE":
+            return True
+    return False
+
+
+def log_warn(base: Path, commit: str, script: str, kind: str, detail: str) -> None:
+    """警告寫進 <git-dir>/AUTO_WARN.log（append-only）→ 每日收工稽核（closeout_check）讀取。
+    「只印在 stdout 的警告＝沒人看到」，cron 的 stdout 沒人翻。"""
+    try:
+        with open(git_dir(base) / "AUTO_WARN.log", "a", encoding="utf-8") as fh:
+            ts = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            fh.write(f"{ts}\t{commit[:12]}\t{script}\t{kind}\t{detail}\n")
+    except Exception:  # noqa: BLE001 — 警告寫不進去不該擋掉正常紀錄
+        pass
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--script", default="unknown", help="呼叫端腳本名（寫進 reviewer：AUTO-checker:<script>）")
     ap.add_argument("--commit", default="HEAD", help="要落紀錄的 commit（預設 HEAD）")
     ap.add_argument("--check", action="append", default=[], help="額外 deterministic 檢查指令（可重複）")
     ap.add_argument("--note", default="", help="附加備註")
+    ap.add_argument("--own", nargs="+", default=[], metavar="GLOB",
+                    help="本 job 的產出檔（glob，可多個）：這些檔若未提交 → 硬擋（防產出沒進 commit 卻落了紀錄）")
     ap.add_argument("--dry-run", action="store_true", help="只印出將寫入的內容，不動任何檔")
     ap.add_argument("--clean-stage", action="store_true",
                     help="只做 staging 去程式檔（git add -A 型路徑在 commit 前呼叫），不落紀錄")
@@ -147,13 +192,14 @@ def main() -> int:
             if len(txt) < 200 or "</html>" not in txt.lower():
                 problems.append(f"{path} 疑似截斷（{len(txt)} bytes、無 </html>）")
 
-    # ④ 工作區（只看已追蹤檔）：程式檔 dirty 一律擋；資料/報表檔 dirty 只記警告
-    #    2026-09-14 INC-179：原實作「任何已追蹤檔 dirty → 拒收」讓 16:15 雷達每天斷推——
-    #    整點 intel_sync（06:00–17:00 每小時）會改寫 hunter_cache/market_intel_*.json 與
-    #    notion_bridge/*_strategy_handbook.md 卻不提交，16:15 radar_push 落紀錄時正好撞上。
-    #    紀錄綁的是「該 commit 的 tree」，未提交的工作區檔案根本不在推送範圍內 → 對資料檔
-    #    不構成背書風險；程式檔仍硬擋（AUTO 不得替程式變更背書）。
-    warnings: list[str] = []
+    # ④ 工作區（只看已追蹤檔）：只警告、不阻擋 —— 守門維度是「本次推送的 commit tree」，不是工作區。
+    #    2026-09-14 INC-180（INC-179 的檢討）：舊版要求「工作區乾淨」，但 --clean-stage 的 7 條路徑
+    #    （evening_sync／refresh_all／update_and_deploy／complete_operation／investment_perf_monthly／
+    #    radar_weekly／pre-run.sh）本來就會把別班未提交的程式檔留在工作區 → 只要有人手上握一顆未提交的
+    #    .py，這些路徑就必定斷推（clone 實測 22:00 晚報情境 rc=3）。程式改動的防線不靠這裡：
+    #    ①（commit 內含程式檔即擋）＋ pre-push AUTO-BLOCKED-CODE。
+    #    真正該擋的背書風險是「本 job 自己的產出沒進這個 commit」→ 用 --own 指名（見 ④-1）。
+    warnings: list[tuple[str, str]] = []
     dirty_lines = [
         ln for ln in run(["git", "status", "--porcelain", "--untracked-files=no"], base).stdout.splitlines() if ln.strip()
     ]
@@ -166,13 +212,26 @@ def main() -> int:
     dirty_code = sorted({p for p in dirty_paths if CODE_RE.search(p)})
     dirty_data = sorted({p for p in dirty_paths if not CODE_RE.search(p)})
     if dirty_code:
-        problems.append(
-            f"工作區有未提交的已追蹤程式檔：{dirty_code[0][:60]}（AUTO 不替程式變更背書，請先 commit/stash）"
-        )
+        warnings.append((
+            "code-dirty",
+            f"工作區有未提交的程式檔 {len(dirty_code)} 個（不會進本次推送）：{', '.join(dirty_code[:3])}",
+        ))
     if dirty_data:
-        warnings.append(
-            f"他班未提交資料檔 {len(dirty_data)} 個、不在本次推送範圍：{', '.join(dirty_data[:3])}"
-        )
+        warnings.append((
+            "data-dirty",
+            f"他班未提交資料檔 {len(dirty_data)} 個、不在本次推送範圍：{', '.join(dirty_data[:3])}",
+        ))
+
+    # ④-1 本 job 產出守門（--own <glob>）：產出沒進 commit 就落紀錄＝「紀錄說推了、內容還是舊的」
+    if a.own and dirty_paths:
+        own_dirty = sorted({
+            p for p in dirty_paths
+            if any(fnmatch.fnmatch(p, pat) or fnmatch.fnmatch(os.path.basename(p), pat) for pat in a.own)
+        })
+        if own_dirty:
+            problems.append(
+                f"本 job 產出未提交（--own）：{', '.join(own_dirty[:3])} → 產出沒進 commit 就落紀錄＝靜默落後"
+            )
 
     # ⑤ 額外檢查
     for cmd in a.check:
@@ -184,15 +243,18 @@ def main() -> int:
         f"auto_record {a.script} | {len(files)} 檔 | builtin(code/json/html/worktree)"
         f"{f' +{len(a.check)} extra' if a.check else ''} | {dt.datetime.now():%H:%M}"
     )
+    # 警告放 note 前面：cio_approve.clean() 會把 note 截到 120 字，長 --note 會把警告吃掉
+    if warnings:
+        summary += " | ⚠️ " + "；".join(msg for _kind, msg in warnings)
     if a.note:
         summary += f" | {a.note}"
-    if warnings:
-        summary += " | ⚠️ " + "；".join(warnings)
 
     if warnings:
-        print("⚠️ auto_record 警告（不阻擋，僅留痕）：")
-        for w in warnings:
-            print(f"   - {w}")
+        print("⚠️ auto_record 警告（不阻擋，僅留痕 → .git/AUTO_WARN.log）：")
+        for kind, msg in warnings:
+            print(f"   - [{kind}] {msg}")
+            if not a.dry_run:      # dry-run 是探測，不該污染稽核日誌
+                log_warn(base, commit, a.script, kind, msg)
 
     if problems:
         print("❌ auto_record 檢查未通過 → 不落紀錄（push 會被閘門擋下）", file=sys.stderr)
@@ -225,6 +287,21 @@ def main() -> int:
         print(f"⚠️ 落紀錄失敗（rc={r.returncode}）→ push 會被閘門擋下", file=sys.stderr)
         return r.returncode
     print(f"✅ 已落 RECORD：{a.script} → commit {commit[:12]} tree {tree[:12]}")
+
+    # ⑥ 推送範圍自檢（診斷，不阻擋）：origin/<branch>..HEAD 內若有 commit 沒被審查紀錄涵蓋，
+    #    閘門必定擋下（常見成因：落紀錄與 push 之間又插進別的 commit）→ 先講清楚是哪幾顆，
+    #    省掉「push 失敗只看到一句 refs 錯誤」的困惑。
+    try:
+        br = run(["git", "rev-parse", "--abbrev-ref", "HEAD"], base).stdout.strip()
+        rr = run(["git", "rev-list", f"origin/{br}..HEAD"], base) if br and br != "HEAD" else None
+        if rr is not None and rr.returncode == 0:
+            miss = [c for c in rr.stdout.split() if not tree_approved(base, c)]
+            if miss:
+                short = ", ".join(c[:12] for c in miss[:4])
+                print(f"⚠️ 推送範圍內另有 {len(miss)} 顆 commit 無審查紀錄（閘門會擋）：{short}", file=sys.stderr)
+                log_warn(base, commit, a.script, "range-missing", f"{len(miss)} 顆無紀錄：{short}")
+    except Exception as e:  # noqa: BLE001 — 自檢失敗不影響已落地的紀錄
+        print(f"（推送範圍自檢略過：{str(e)[:80]}）")
     return 0
 
 

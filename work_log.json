@@ -647,5 +647,11 @@
   "category": "完成",
   "item": "INC-179 修復：auto_record 工作區守門分流（他班資料檔 dirty 不再斷推雷達）",
   "detail": "16:15 雷達被擋後（資料已補推 e310c630）；檢查④改為 程式檔硬擋／資料檔警告留痕；%TEMP% clone 三情境＋push --dry-run 實測"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "完成",
+  "item": "檢討並修復 INC-180：auto_record ④ 改為只警告＋新增 --own 產出守門＋AUTO_WARN.log 稽核（--clean-stage 7 條路徑不再斷推）",
+  "detail": "clone 8 情境實測（程式檔 dirty 情境舊版 rc3→新版 rc0）＋閘門實跑；closeout_check 新增第 5 步；radar_push 加 --own；5 處下游註解同步"
  }
 ]

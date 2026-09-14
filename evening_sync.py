@@ -44,7 +44,7 @@ def main():
         lines.append(f"⚠️ commit: {g2.stderr[-100:]}")
     # P2（2026-09-14）：資料路徑改走 RECORD 通道 —— commit 後先落紀錄再 push。
     # 原本靠 commit message 自打 [cioreviewed]，那條只證明「作者自己說審過了」；
-    # 現由 auto_record 做 deterministic 結構檢查（不得含程式檔/JSON 可解析/HTML 未截斷/工作區乾淨）
+    # 現由 auto_record 做 deterministic 結構檢查（不得含程式檔/JSON 可解析/HTML 未截斷/工作區守門）
     # 並寫入綁 tree 的紀錄，未過 → 不落紀錄 → push 被閘門擋下（寧可斷、不要無審上線）。
     if committed:
         r = subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--script", "evening_sync.py"],

@@ -387,7 +387,7 @@ if ok and _cio_ok:
             subprocess.run(['git', 'commit', '-m', _msg], capture_output=True, text=True, cwd=BASE)
             # P2（2026-09-14）：改走 RECORD 通道 —— 上面 cio_review.py 已真的跑過，
             # 這裡再由 auto_record 落「綁 tree」的紀錄（內建結構檢查：不得含程式檔／
-            # JSON 可解析／HTML 未截斷／工作區乾淨）。未過 → 不推送（寧可斷、不要無審上線）。
+            # JSON 可解析／HTML 未截斷／工作區守門）。未過 → 不推送（寧可斷、不要無審上線）。
             _ar = subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--script", "regenerate_report.py"],
                                  capture_output=True, text=True, timeout=300, cwd=BASE)
             print(_ar.stdout.strip() or _ar.stderr.strip())

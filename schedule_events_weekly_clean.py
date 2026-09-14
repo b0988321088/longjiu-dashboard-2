@@ -130,7 +130,7 @@ def main():
         if r.returncode == 0:
             # 2026-09-14：移除 PUSH_FORCE_OK（舊 .git/hooks/pre-push 的逃生門，現行 .githooks 閘門不看它 → 死碼）。
             # P2（2026-09-14）：改走 RECORD 通道 —— commit 後先由 auto_record 做 deterministic
-            #   結構檢查（不得含程式檔／JSON 可解析／HTML 未截斷／工作區乾淨）並落 tree 紀錄；
+            #   結構檢查（不得含程式檔／JSON 可解析／HTML 未截斷／工作區守門）並落 tree 紀錄；
             #   未過 → 不落紀錄 → push 被閘門擋下（寧可斷、不要無審上線）。main 用 --force-with-lease。
             ar = subprocess.run([sys.executable, str(BASE / "auto_record.py"),
                                  "--script", "schedule_events_weekly_clean.py"],

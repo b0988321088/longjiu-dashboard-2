@@ -41,7 +41,7 @@ if c.returncode != 0:
 
 # P2（2026-09-14）：改走 RECORD 通道 —— commit 後先落紀錄再 push。
 # 本檔只 stage 7 個 JSON 資料檔 → auto_record 的 deterministic 檢查（不得含程式檔／
-# JSON 可解析／工作區乾淨）正好對得上；未過 → 不落紀錄 → 閘門擋下（寧可斷、不要無審上線）。
+# JSON 可解析／工作區守門）正好對得上；未過 → 不落紀錄 → 閘門擋下（寧可斷、不要無審上線）。
 r = subprocess.run([sys.executable, "auto_record.py", "--script", "nightly_dashboard_sync.py"],
                    cwd=REPO, capture_output=True, text=True, encoding="utf-8")
 print((r.stdout or "").strip() or (r.stderr or "").strip())

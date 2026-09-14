@@ -221,6 +221,38 @@
   ③ 新增守門條件時先模擬「同時段有其他 cron 在寫檔」的競態（本案例：06:00–17:00 每小時
      intel_sync × 16:15 radar）
 
+## INC-2026-09-14（INC-180）INC-179 修復不完整：`--clean-stage` 的 7 條路徑仍會斷推（④ 守門維度選錯）
+
+- 觸發：INC-179 修復後的**自我檢討**（使用者指示「檢討並修復」）
+- 發現：INC-179 只放寬「資料檔 dirty」，仍把「未提交的程式檔」當硬擋條件；但 `--clean-stage`
+  的設計正是把別班未提交的程式檔**留在工作區**（不讓它進本 job 的 commit）→ 這 7 條路徑
+  （`evening_sync`／`refresh_all`／`update_and_deploy`／`complete_operation`／
+  `investment_perf_monthly`／`radar_weekly`／`pre-run.sh`）只要有人手上握一顆未提交 `.py`
+  就必定斷推。**首當其衝是當晚 22:00 `evening_sync`（P2 遷移後第一次跑）**
+- 實測（`%TEMP%` clone，hooks 停用）：模擬 `add -A` → `--clean-stage` → commit → `auto_record`
+  → 舊版 **rc=3**（阻擋，複現）
+- 根因：④ 的守門**維度選錯** —— 紀錄綁的是「該 commit 的 tree」，工作區 dirty 與推送內容無關；
+  真正該防的是「本 job 的產出沒進 commit 卻落了紀錄」（靜默落後）
+- 處置：
+  ① ④ 改為**只警告、不阻擋**，警告分 kind：`data-dirty`（他班資料）／`code-dirty`（有人留著程式）
+  ② 新增 `--own <glob>`：本 job 產出未提交 → **硬擋**（`radar_push.py` 首批使用：
+     `radar_state.json`／`radar_report_*.html`／`index.html`）
+  ③ 警告寫入 `.git/AUTO_WARN.log`；`closeout_check.py` 新增第 5 步「auto_record 警告稽核」
+     （近 24h），`range-missing` 列入問題
+  ④ 新增**推送範圍自檢**：落紀錄後查 `origin/<branch>..HEAD` 有無無紀錄的 commit（閘門必擋）
+     → 直接列出是哪幾顆，省掉「push 失敗只有一句 refs 錯誤」
+  ⑤ 5 處下游註解同步改為「工作區守門」（`evening_sync`／`nightly_dashboard_sync`／
+     `regenerate_report`／`schedule_events_weekly_clean`／`radar_push`）
+- 驗證（clone，8 情境）：乾淨 rc0；資料檔 dirty rc0＋警告；**程式檔 dirty（INC-180 情境）
+  rc0＋警告（舊版 rc3）**；`--own` 命中 rc3；commit 含程式檔仍 rc3；`AUTO_WARN.log` 三類齊；
+  `closeout_check` 讀得到且把 `range-missing` 列為問題；閘門實跑：無紀錄的 commit 被擋、
+  補落紀錄後整段通過
+- check_rule：
+  ① 設守門前先問「要保護的東西邊界在哪」——紀錄綁 tree，就只驗 tree 與推送範圍，別順手驗工作區
+  ② 改 helper 的檢查語意時，對**所有呼叫端**跑一遍情境（本案例 7 條路徑共用同一支）
+  ③ 只印 stdout 的警告＝沒有警告（cron 的 stdout 沒人翻）→ 必須落到稽核會讀的檔案
+  ④ 語意變更後把引用它的註解/文件一起改，否則下一個 agent 會照舊敘述寫錯
+
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
 | 錯誤類型 | 次數 | 首次 | 最後 | 處置 |
