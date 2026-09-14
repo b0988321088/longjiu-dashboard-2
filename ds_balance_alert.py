@@ -33,6 +33,7 @@ THRESHOLD_DAYS = float(os.environ.get("LJ_DS_DAYS_THRESHOLD", 3.0))
 MONTHLY_BUDGET_CNY = 400.0
 BUDGET_WARN_RATIO = 0.8
 TOPUP_CNY = 100
+CNY_TWD = 4.73  # 2026-09-14 使用者確認（200 CNY≈944 TWD）；Yahoo CNYTWD 4.734
 
 
 def read_cost_log():
@@ -110,9 +111,9 @@ def main():
     msgs = []
     if bal <= THRESHOLD_BALANCE_CNY or days <= THRESHOLD_DAYS:
         msgs.append(
-            f"⚠️ DeepSeek 餘額 {bal:.2f} CNY（約 NT${bal*4.2:.0f}），"
+            f"⚠️ DeepSeek 餘額 {bal:.2f} CNY（約 NT${bal*CNY_TWD:.0f}），"
             f"近期日耗 {rate:.1f} CNY → 約剩 {days:.1f} 天。\n"
-            f"建議儲值 ¥{TOPUP_CNY}（約 NT${TOPUP_CNY*4.2:.0f}，可撐約 {TOPUP_CNY/max(rate,0.1):.0f} 天）。\n"
+            f"建議儲值 ¥{TOPUP_CNY}（約 NT${TOPUP_CNY*CNY_TWD:.0f}，可撐約 {TOPUP_CNY/max(rate,0.1):.0f} 天）。\n"
             f"理由：DS 快取價幾乎免費（$0.007/M），同 token 走 Gemini 約貴 8 倍 —— "
             f"DS 一斷線，所有對話被迫走 Gemini，日成本會從 ~NT$18 跳到 NT$40-60。")
     spent = monthly_spend(rows)

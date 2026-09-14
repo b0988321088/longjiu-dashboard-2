@@ -14,7 +14,7 @@
 費率（來源：ai-api-cost-monitoring 技能，2026-08-27 查證官方定價頁；USD/1M）：
   DS V4 Flash 離峰 0.22/0.66、cache-hit 0.007；尖峰 ×2（台灣 09-12、14-18，週一~五）
   Gemini 2.5 Flash / 3.5 Flash-Lite 0.30/2.50、cache-hit 0.075（無尖離峰）
-  USD→NT$ 以 31.5 換算（與技能一致）
+  USD→NT$ 以 31.7、CNY→NT$ 以 4.73 換算（2026-09-14 更新；原 31.5 / 4.2）
 """
 from __future__ import annotations
 
@@ -30,7 +30,8 @@ from pathlib import Path
 HERMES = Path.home() / "AppData" / "Local" / "hermes"
 CRON_DIR = HERMES / "cron"
 LJ = Path.home() / "Desktop" / "longjiu_system"
-USD_TWD = 31.5
+USD_TWD = 31.7  # 2026-09-14 Yahoo USDTWD 31.705（原 31.5）
+CNY_TWD = 4.73  # 2026-09-14 使用者確認（200 CNY≈944 TWD）；Yahoo CNYTWD 4.734
 
 API_RE = re.compile(
     r"^(\d{4}-\d{2}-\d{2}) (\d{2}):\d{2}:\d{2}.*API call #\d+: model=(\S+) provider=(\S+) "
@@ -213,7 +214,7 @@ def ds_balance_line() -> str:
         except Exception:
             rate = 0.0
     days = f"，依近期日耗 {rate:.1f} 約剩 {bal/rate:.1f} 天" if rate > 0 else ""
-    return f"DS 餘額 {bal:.2f} CNY（≈NT${bal*4.2:.0f}）{days}"
+    return f"DS 餘額 {bal:.2f} CNY（≈NT${bal*CNY_TWD:.0f}）{days}"
 
 
 def main() -> None:

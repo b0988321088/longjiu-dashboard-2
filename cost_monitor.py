@@ -9,6 +9,8 @@ ENV = Path(os.path.expanduser("~/AppData/Local/hermes/.env"))
 LJ = Path(os.path.expanduser("~/Desktop/longjiu_system"))
 LOG = LJ / "cost_log.csv"
 TODAY = str(date.today())
+CNY_TWD = 4.73  # 2026-09-14 使用者確認（200 CNY≈944 TWD）；Yahoo CNYTWD 4.734
+USD_TWD = 31.7  # 2026-09-14 Yahoo USDTWD 31.705
 
 # 已知固定支出
 MONTHLY_FIXED = {
@@ -87,9 +89,9 @@ if not NO_LOG:
 
 # 輸出報告
 report = f"📊 **AI費用日報 {TODAY}**\n\n"
-report += f"DeepSeek 餘額：**{balance:.2f} CNY**（約 {balance*4.2:.0f} 台幣）\n"
+report += f"DeepSeek 餘額：**{balance:.2f} CNY**（約 {balance*CNY_TWD:.0f} 台幣）\n"
 if daily_cost > 0:
-    report += f"今日花費：**{daily_cost:.2f} CNY**（約 {daily_cost*4.2:.0f} 台幣）\n"
+    report += f"今日花費：**{daily_cost:.2f} CNY**（約 {daily_cost*CNY_TWD:.0f} 台幣）\n"
 else:
     report += "今日花費：無\n"
 
@@ -109,10 +111,10 @@ if history:
 # 每月固定支出
 report += "\n---\n📋 **每月固定支出：**\n"
 for name, cost in MONTHLY_FIXED.items():
-    report += f"  {name}: ${cost:.0f} USD/月（約 {cost*32:.0f} 台幣）\n"
-report += f"  Gemini API: NT${GEMINI_MONTHLY_COST_TWD:.0f}/月（約 {GEMINI_MONTHLY_COST_TWD/32:.1f} USD）\n"
+    report += f"  {name}: ${cost:.0f} USD/月（約 {cost*USD_TWD:.0f} 台幣）\n"
+report += f"  Gemini API: NT${GEMINI_MONTHLY_COST_TWD:.0f}/月（約 {GEMINI_MONTHLY_COST_TWD/USD_TWD:.1f} USD）\n"
 
-_total_twd = sum(MONTHLY_FIXED.values())*32 + GEMINI_MONTHLY_COST_TWD
+_total_twd = sum(MONTHLY_FIXED.values())*USD_TWD + GEMINI_MONTHLY_COST_TWD
 report += f"\n🔮 **總月費估計：** ~{_total_twd:.0f} 台幣/月\n"
 report += f"  （Notion ${MONTHLY_FIXED['Notion']:.0f} + Gemini NT${GEMINI_MONTHLY_COST_TWD:.0f} + DeepSeek流量）\n"
 

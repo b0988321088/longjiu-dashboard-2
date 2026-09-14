@@ -26,6 +26,7 @@ from datetime import date as dt
 BASE = Path(__file__).resolve().parent
 TODAY = dt.today().isoformat()
 OUT = BASE / f"daily_report_v2_{TODAY}.html"
+CNY_TWD = 4.73  # 2026-09-14 使用者確認（200 CNY≈944 TWD）；Yahoo CNYTWD 4.734
 
 # 0. 巴菲特/CTO LLM 分析（2026-08-22：今日檔不存在才重跑，避免每次 regenerate 重複呼叫 API）
 # 2026-08-28：--skip-llm = 跳過 LLM 分析（台股 13:00 緊急應變用 — 盤中不需要重算早上已算的巴菲特/CTO）
@@ -219,7 +220,7 @@ try:
     _cost_html = (
         f'<div style="margin:14px 0;padding:10px 14px;border-radius:10px;background:#f8fafc;'
         f'border:1px solid #e2e8f0;font-size:13px;color:#475569">'
-        f'☕ <b>DS 成本</b> {_light} 今日 {_day:.1f} CNY｜餘額 {_bal:.1f} CNY（≈{_bal*4.2:.0f} 台幣）'
+        f'☕ <b>DS 成本</b> {_light} 今日 {_day:.1f} CNY｜餘額 {_bal:.1f} CNY（≈{_bal*CNY_TWD:.0f} 台幣）'
         f'<span style="color:#94a3b8">（月預算上限 400 CNY）</span></div>')
     if "</body>" in html:
         html = html.replace("</body>", _cost_html + "</body>")
