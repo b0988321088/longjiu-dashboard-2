@@ -752,6 +752,42 @@ def main():
         tpl = tpl.replace("__WEEK_DONE__", f'<div class="text-slate-400">完成清單載入失敗（{_wde}）</div>')
         tpl = tpl.replace("__WEEK_DONE_RANGE__", "")
 
+    # ── 被動收入結構條（2026-09-14：模板寫死值移除，改由 snapshot 動態計算；INC 對策）──
+    try:
+        _pi = snap.get("passive_income", {}) or {}
+        _sal = float(salary or 0)
+        _div = float(_pi.get("fund_dividend_conservative", 0) or 0) or float(div_total or 0)   # 配息用保守常態口徑（與 passive_income.coverage_pct 一致）
+        _rent = float(_pi.get("rent_monthly", 0) or 0) or float(rent_got or 0)                 # 房租用月常態應收
+        _exp = float(expense or 0) or 162781.0
+        _inc_tot = _sal + _div + _rent
+        if _inc_tot <= 0:
+            raise ValueError("income total <= 0")
+        _pc = lambda x: x / _inc_tot * 100.0
+        _bar = "".join(
+            f'<div style="width: {_pc(v):.1f}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center {cls} font-bold" title="{lab}">{lab} {_pc(v):.0f}%</div>'
+            for lab, v, cls in (("薪水", _sal, "bg-yellow-600"), ("配息", _div, "bg-blue-600"), ("房租", _rent, "bg-teal-600")))
+        _cov = (_div + _rent) / _exp * 100.0
+        _legend = (f'<div class="flex gap-3 text-[10px] text-slate-400 mt-1">'
+                   f'<span class="text-yellow-400">▮ 薪水 {_pc(_sal):.0f}%</span>'
+                   f'<span class="text-blue-400">▮ 配息 {_pc(_div):.0f}%</span>'
+                   f'<span class="text-teal-400">▮ 房租 {_pc(_rent):.0f}%</span>'
+                   f'<span class="text-slate-500">▮ 覆蓋 {_cov:.0f}%</span></div>')
+        tpl = tpl.replace("__INC_BAR__", _bar)
+        tpl = tpl.replace("__INC_LEGEND__", _legend)
+        tpl = tpl.replace("__INC_COV__", f"{_cov:.1f}% 覆蓋")
+        tpl = tpl.replace("__INC_SUMMARY__", f"薪水 {_fmt(_sal)} + 配息保守 {_fmt(_div)} + 房租 {_fmt(_rent)} = {_fmt(_inc_tot)} TWD")
+        tpl = tpl.replace("__INC_EXPENSE__", _fmt(_exp))
+        tpl = tpl.replace("__INC_SALARY__", _fmt(_sal))
+        tpl = tpl.replace("__INC_DIV__", _fmt(_div))
+        tpl = tpl.replace("__INC_RENT__", _fmt(_rent))
+        tpl = tpl.replace("__INC_TOTAL__", _fmt(_inc_tot))
+        print(f"  💰 被動收入結構條：薪水 {_fmt(_sal)} / 配息 {_fmt(_div)} / 房租 {_fmt(_rent)}｜覆蓋 {_cov:.1f}%")
+    except Exception as _ince:
+        for _ph in ("__INC_BAR__", "__INC_LEGEND__", "__INC_COV__", "__INC_SUMMARY__",
+                    "__INC_EXPENSE__", "__INC_SALARY__", "__INC_DIV__", "__INC_RENT__", "__INC_TOTAL__"):
+            tpl = tpl.replace(_ph, "—")
+        print("  ⚠️ 被動收入結構條注入失敗:", _ince)
+
     (BASE / "index.html").write_text(tpl, encoding="utf-8")
     print(f"✅ 儀表板注入完成（{hits} 組值 + {_link_hits} 連結動態化）｜現金 {_fmt(cash)} / 保單 {_fmt(ins)} / 配息 {_fmt(div_total)} / 租金 {_fmt(rent_got)}")
 
