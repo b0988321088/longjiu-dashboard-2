@@ -39,6 +39,26 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
+# 2026-09-14（INC-185）：dashboard.py 的禁用判定改為「**引用形式**才擋」，不再擋散文敘述。
+# 為什麼不能只做邊界比對就收工：事件紀錄本來就會寫到這個字串（實例：work_log 記「…命中
+# dashboard.py → 改措辭…」→ 被渲染進日報 → 舊寫法整支日報推不上去）。禁字表的目的是擋
+# 「回退到舊的獨立儀表板（Railway/Streamlit/dashboard.py）」這條路線，所以要擋的是**引用**：
+#   ① HTML 屬性（href/src/action）指向它 ② 執行指令（python dashboard.py）
+#   ③ 路徑形式（./dashboard.py、/dashboard.py、\dashboard.py）
+# 純文字提到檔名／事後檢討紀錄一律放行（否則每次寫檢討就擋自己）。
+_DASHBOARD_PY_REF_RES = (
+    re.compile(r"""(?:href|src|action)\s*=\s*["'][^"']*dashboard\.py""", re.I),   # ① 連結/資源
+    re.compile(r"""(?<![\w\-.])python3?\s+dashboard\.py""", re.I),               # ② 執行指令
+    re.compile(r"""(?<![\w\-.])[.\\/]{1,2}dashboard\.py"""),                      # ③ 路徑形式
+)
+
+
+def _references_dashboard_py(text: str) -> bool:
+    """True 只在出現「真的引用舊儀表板腳本」的形式（連結／指令／路徑）；散文敘述不算。"""
+    return any(rx.search(text or "") for rx in _DASHBOARD_PY_REF_RES)
+
+
+
 def fail(msg: str) -> None:
     print(f"[CIO 審查] 不通過：{msg}")
     sys.exit(3)
@@ -116,8 +136,15 @@ def main() -> None:
     pass_check("保單現值與 snapshot.json 一致")
 
     # 5. 無禁止連結/字串
-    forbidden = ["railway.app", "dashboard.py", "旗艦", "streamlit"]
+    # 2026-09-14（INC-185）：dashboard.py 由「純子字串比對」改為**邊界比對**。
+    # 舊寫法 `"dashboard.py" in daily` 會讓文案裡的檔名假命中（實例：內文寫「對齊
+    # build_rate_hike_dashboard.py」→ 命中 → 產出檢查 ✅ 卻審查 ❌ → 整支日報推不上去，
+    # 當晚只能改措辭繞過）。改後仍擋「真正引用舊儀表板腳本 dashboard.py」，但不再誤中
+    # build_*_dashboard.py / audit_dashboard.py 這類以字元（[A-Za-z0-9_\-.]）相連的檔名。
+    forbidden = ["railway.app", "旗艦", "streamlit"]
     found = [f for f in forbidden if f in daily or f in idx]
+    if _references_dashboard_py(daily) or _references_dashboard_py(idx):
+        found.append("dashboard.py")
     if found:
         fail(f"偵測到禁止連結/字串：{found}")
     pass_check("無 Railway / dashboard.py / 旗艦版連結")

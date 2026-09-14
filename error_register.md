@@ -348,3 +348,14 @@
 - 首次發生: 2026-09-14 20:19:14
 - 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
 - 狀態: ⏳ 待處理 (總計 1 次)
+## INC-2026-09-14（INC-185）cio_review 禁字表 `dashboard.py` 子字串誤中 → 擋下整支日報；改「引用形式才擋」
+
+- 現象：當晚 CIO 審查報 `偵測到禁止連結/字串：['dashboard.py']` → 日報推不上去。文案寫「對齊 us30y_monitor.py 與 build_rate_hike_dashboard.py」。
+- 根因（兩層）：① `forbidden` 清單用 `in` 做**子字串**比對 → 檔名 `build_*_dashboard.py`／`audit_dashboard.py` 假命中；
+  ② **只改文案修不掉**：事件紀錄本身就會寫到這個字串（work_log 記「…命中 dashboard.py → 改措辭…」被渲染進日報）→ 每次寫檢討就擋自己。
+- 修法（`cio_review.py`）：`dashboard.py` 改**引用形式才擋**（`_references_dashboard_py`）— ① HTML 屬性 `href/src/action` 指向它 ② `python dashboard.py` 指令 ③ 路徑形式 `./`／`/`／`\`；
+  純文字提到檔名或事後檢討紀錄一律放行。`railway.app`／`旗艦`／`streamlit` 維持子字串比對（無同類誤中紀錄）。
+- 驗收（三層，皆實測）：① 單元 7 正 6 負案例全過 ② E2E 負向：真實日報插入 `<a href="dashboard.py">` → **exit 3**（防線還在）③ E2E 正向：真實日報（含散文提到的字串）→ 全部通過、允許推送。
+- check_rule：① 禁字表這類「全域字串比對」的檢查，寫檢討紀錄時會擋到自己 → 判定要綁**形式**（連結／指令／路徑），不是綁字面；
+  ② 改檢查前先拿**現行產出**試跑（本次若只做邊界比對仍會被現行日報擋下，就不算修好）；③ 負向測試必附「防線仍會叫」的證據。
+
