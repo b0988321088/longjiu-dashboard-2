@@ -10,6 +10,8 @@
    → 這些會讓該次正式排程靜默消失（詳見 release_claimed_occurrences.py 檔頭）。
 2. **閉環稽核**：`_audit_closeout.py`（舊值殘留／四源一致／GitHub Pages／git／鏡像／cron／監控檔／認領）。
 3. **彙總**：印出結論 + 「需補跑的產出」清單（每筆給可直接複製的指令）。
+4. **推送通道稽核**（v4 閘門配套）：`.git/PUSH_LANE.log` 近 24h 各通道使用次數；
+   有「例外通道推程式檔」或「自動化以 TAG 推程式被擋」→ 列入問題（前者要補審、後者要遷移該路徑）。
 
 用法
 ----
@@ -31,6 +33,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent
+LANE_LOG = REPO / ".git" / "PUSH_LANE.log"   # pre-push 閘門的逐筆通道留痕（v3 起）
 sys.path.insert(0, str(REPO))
 import release_claimed_occurrences as rco  # noqa: E402
 
@@ -71,6 +74,47 @@ def step_audit(quiet: bool) -> tuple:
     return p.returncode, concl, out
 
 
+def step_push_lanes(quiet: bool) -> list:
+    """③ 推送通道稽核（v4 閘門配套）：看 .git/PUSH_LANE.log 近 24h 各通道使用次數。
+
+    通道：RECORD（CIO 審查紀錄）／TAG（[cioreviewed] 純資料）／SKIPREVIEW／DELETE。
+    問題條件（回傳問題清單）：
+      - SKIPREVIEW-CODE：走例外通道且含程式檔（未經真審就上線）→ 必須回頭補審
+      - TAG-BLOCKED-CODE：自動化想用 TAG 推程式被擋下 → 該路徑需遷移到 RECORD（會靜默斷推，要提早處理）
+    """
+    problems: list = []
+    if not LANE_LOG.exists():
+        if not quiet:
+            print("③ 推送通道：⚪ 尚無 PUSH_LANE.log（閘門 v3 起才寫）")
+        return problems
+    cut = dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=24)
+    counts: dict = {}
+    flagged: list = []
+    for ln in LANE_LOG.read_text(encoding="utf-8", errors="ignore").splitlines():
+        parts = ln.split("\t")
+        if len(parts) < 4:
+            continue
+        try:
+            ts = dt.datetime.strptime(parts[0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=dt.timezone.utc)
+        except Exception:
+            continue
+        if ts < cut:
+            continue
+        lane = parts[1]
+        counts[lane] = counts.get(lane, 0) + 1
+        if lane in ("SKIPREVIEW-CODE", "TAG-BLOCKED-CODE"):
+            flagged.append(f"{lane} {parts[2][:12]}")
+    if not quiet:
+        used = "、".join(f"{k}×{v}" for k, v in sorted(counts.items())) or "無推送"
+        print(f"③ 推送通道（近 24h）：{used}")
+    for f in flagged:
+        if f.startswith("SKIPREVIEW-CODE"):
+            problems.append(f"程式檔走例外通道（未經真審）：{f}")
+        else:
+            problems.append(f"自動化以 TAG 推程式被擋（該路徑需改走 RECORD）：{f}")
+    return problems
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="龍九每日收工檢查（一鍵）")
     ap.add_argument("--fix", action="store_true", help="釋放被誤認領的排程時點")
@@ -90,12 +134,14 @@ def main() -> int:
 
         left_claims = step_claims(args.fix, args.quiet or args.silent_ok)
         rc, concl, out = step_audit(args.quiet or args.silent_ok)
+        lane_problems = step_push_lanes(args.quiet or args.silent_ok)
 
         problems = []
         if left_claims:
             problems.append(f"未釋放的排程認領 {left_claims} 筆")
         if "全部通過" not in concl:
             problems.append(concl.replace("閉環稽核結果：", ""))
+        problems.extend(lane_problems)
 
         print()
         print("=" * 52)

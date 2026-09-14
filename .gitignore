@@ -49,3 +49,6 @@ moneybook_tmp/
 
 # OCR 暫存（含個資文字）
 _ocr_*
+
+# 審查落地檔（.git/CIO_APPROVED 才是正式紀錄；這裡只是落地時的暫存 JSON）
+.cio_review*.json

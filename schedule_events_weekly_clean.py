@@ -125,11 +125,13 @@ def main():
     # commit + push（僅有變更時）
     if changed:
         r = git("commit", "-am",
-                f"[cron] 每週事件清理：刪除 {len(auto_del)} 筆過期事件（git 可回溯）")
+                f"[cron] 每週事件清理：刪除 {len(auto_del)} 筆過期事件（git 可回溯） [cioreviewed]")
         if r.returncode == 0:
-            env_push = {"PUSH_FORCE_OK": "1"}
-            p1 = git_env("push", "origin", "clean-main", env=env_push)
-            p2 = git_env("push", "origin", "clean-main:main", "--force", env=env_push)
+            # 2026-09-14：移除 PUSH_FORCE_OK（那是舊 .git/hooks/pre-push 的逃生門，現行 .githooks 閘門不看它 → 死碼，
+            #             留著會讓人誤以為走過特許通道）。本路徑推送內容只有 snapshot/行事曆資料 → 走 v4 的 TAG 通道
+            #             （純資料允許；逐筆留痕 PUSH_LANE.log）。main 改 --force-with-lease，避免遠端分歧時無聲回捲。
+            p1 = git("push", "origin", "clean-main")
+            p2 = git("push", "origin", "clean-main:main", "--force-with-lease")
             push_note = ""
             if p1.returncode != 0:
                 push_note += f"\n⚠️ push clean-main 失敗: {p1.stderr.strip()[:200]}"

@@ -6,7 +6,13 @@
 #   Lane RECORD     ：該 commit 的 tree hash 在 <git-dir>/CIO_APPROVED 有 APPROVE 紀錄
 #                     （產生方式：CIO 審查通過後 python cio_approve.py --verdict APPROVE ...）
 #   Lane TAG        ：該 commit message 含 [cioreviewed]（自動化腳本沿用；會寫入 PUSH_LANE.log 留痕）
+#                     ★v4（2026-09-14）：TAG 只准推「純資料/報表產出」。變更清單若含程式檔
+#                       （.py .sh .bat .ps1 .cmd .toml .yml .yaml .js .ts .sql、.githooks/*、
+#                        .gitattributes、.gitignore、index_template.html）→ 一律擋下，必須走 RECORD。
+#                       理由：標籤可自打，只該用於每晚重複的資料產出；程式與邏輯改動必須真審。
 #   Lane SKIPREVIEW ：該 commit message 含 [skipreview]（緊急例外，留痕）
+#                     ★v4：若同時含程式檔 → 記為 SKIPREVIEW-CODE（仍放行但大聲留痕，每日稽核會抓）
+#   Lane DELETE     ：刪除分支（無內容上傳）
 # 其餘一律擋下，並列出未通過的 commit 與 tree。
 #
 # 為何保留 TAG 通道：repo 內有 10 條自動化推送路徑（daily_push / update_and_deploy / evening_sync /
@@ -22,6 +28,17 @@ ZERO=0000000000000000000000000000000000000000
 
 log_lane() { printf '%s\t%s\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" "$2" "$3" >> "$LANE_LOG"; }
 
+# v4：程式檔判定（TAG/SKIPREVIEW 通道不得推程式）
+CODE_RE='(\.(py|sh|bat|ps1|cmd|toml|yml|yaml|js|ts|sql)$)|(^\.githooks/)|(^\.gitattributes$)|(^\.gitignore$)|(^index_template\.html$)'
+# 回傳該 commit 相對第一 parent 的變更中屬於「程式檔」者（merge commit 一律保守視為程式變更）
+code_files() {
+  local c="$1" nparents files
+  nparents=$(git rev-list --parents -n1 "$c" 2>/dev/null | wc -w)
+  if [ "${nparents:-0}" -gt 2 ]; then echo "MERGE-COMMIT"; return 0; fi
+  files=$(git diff-tree --no-commit-id --name-only -r "$c" 2>/dev/null)
+  printf '%s\n' "$files" | grep -Ei "$CODE_RE" | head -5
+}
+
 BAD=""
 CHECKED=0
 
@@ -33,11 +50,25 @@ check_one() {
   if [ -f "$APPROVE_FILE" ] && awk -F'\t' -v t="$tree" '$2==t && $4=="APPROVE"{f=1} END{exit !f}' "$APPROVE_FILE"; then
     log_lane "RECORD" "$c" "$tree"; return 0
   fi
+  local cf
   if printf '%s' "$msg" | grep -q "\[cioreviewed\]"; then
+    cf=$(code_files "$c")
+    if [ -n "$cf" ]; then
+      log_lane "TAG-BLOCKED-CODE" "$c" "$tree"
+      BAD="$BAD  - commit ${c:0:12}  tree ${tree:0:12}  [cioreviewed] 但含程式檔（v4 禁止 TAG 推程式）\n      → $(printf '%s' "$cf" | tr '\n' ' ')\n"
+      return 1
+    fi
     log_lane "TAG" "$c" "$tree"; return 0
   fi
   if printf '%s' "$msg" | grep -q "\[skipreview\]"; then
-    log_lane "SKIPREVIEW" "$c" "$tree"; return 0
+    cf=$(code_files "$c")
+    if [ -n "$cf" ]; then
+      log_lane "SKIPREVIEW-CODE" "$c" "$tree"
+      echo "⚠️  例外通道 [skipreview] 含程式檔（未經真審）：$(printf '%s' "$cf" | tr '\n' ' ')" >&2
+    else
+      log_lane "SKIPREVIEW" "$c" "$tree"
+    fi
+    return 0
   fi
   BAD="$BAD  - commit ${c:0:12}  tree ${tree:0:12}  （無審查紀錄、也無 [cioreviewed]/[skipreview]）\n"
   return 1
@@ -74,7 +105,7 @@ if [ "$stdin_used" = "0" ]; then
 fi
 
 if [ -z "$BAD" ]; then
-  echo "✅ 推送閘門 v3：$CHECKED 個 commit 全數通過（紀錄見 $(basename "$LANE_LOG")）"
+  echo "✅ 推送閘門 v4：$CHECKED 個 commit 全數通過（紀錄見 $(basename "$LANE_LOG")）"
   exit 0
 fi
 
@@ -91,5 +122,9 @@ $(printf "$BAD")
     3) 再 git push（紀錄綁 tree：改 message 不影響，改內容要重新送審）
 
   ⚠️ 例外通道：[cioreviewed] / [skipreview]（自動化與緊急用，全部留痕於 $(basename "$LANE_LOG")）
+
+  ★ v4 規則：含程式檔的變更（.py .sh .bat .ps1 .cmd .toml .yml .yaml .js .ts .sql、
+     .githooks/*、.gitattributes、.gitignore、index_template.html）不得走 [cioreviewed] 通道；
+     自動化「資料/報表產出」不受影響。程式改動請送審後用 cio_approve.py 落地。
 EOF
 exit 1

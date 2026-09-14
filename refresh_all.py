@@ -54,7 +54,7 @@ def main() -> int:
                             "sync: refresh_all 一鍵同步（穿透+再平衡+深度討論+連結） [cioreviewed]"],
                            cwd=str(BASE), capture_output=True)
             for branch in [["git", "push", "origin", "clean-main"],
-                           ["git", "push", "origin", "clean-main:main", "--force"]]:
+                           ["git", "push", "origin", "clean-main:main", "--force-with-lease"]]:
                 p = subprocess.run(branch, cwd=str(BASE), capture_output=True, text=True)
                 print(f"  {'✅' if p.returncode == 0 else '❌'} {' '.join(branch[2:4])}: {p.stderr.strip()[-100:] if p.returncode else ''}")
         else:

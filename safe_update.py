@@ -11,7 +11,7 @@ safe_update.py — 安全更新腳本
   # → 套用 pending_update.json 的變更
   # → 自動四源同步 + Git push
 """
-import json, os, sys, datetime
+import json, os, subprocess, sys, datetime
 
 PENDING_FILE = 'pending_update.json'
 SNAPSHOT_FILE = 'snapshot.json'
@@ -204,11 +204,21 @@ def do_apply():
         print(f"\n  ❌ 四源同步失敗（exit={ret}）")
         sys.exit(1)
 
-    # CIO 審查
+    # CIO 審查（INC-138 原則：未過審不 commit、不 push）
     print("\n  🔍 CIO 審查...")
-    cio_ret = os.system('python cio_review.py 2>&1')
+    try:
+        _cio = subprocess.run([sys.executable, os.path.join(BASE, 'cio_review.py')],
+                              capture_output=True, text=True, timeout=120, cwd=BASE)
+        if (_cio.stdout or '').strip():
+            print(_cio.stdout.strip())
+        cio_ret = _cio.returncode
+    except Exception as _ce:
+        print(f"  ⚠️  CIO 審查執行失敗: {_ce}")
+        cio_ret = 1
     if cio_ret != 0:
-        print(f"  ⚠️  CIO 審查有警訊（exit={cio_ret}）— 請手動確認")
+        # 2026-09-14：舊版只印警告照推（等於閘門空轉）→ 改成硬擋，與 regenerate_report.py 一致
+        print(f"\n  ⛔ CIO 審查未通過（exit={cio_ret}）→ 不 commit、不 push。修正資料後重跑 --apply。")
+        sys.exit(1)
 
     # 強制 commit 加 [cioreviewed]
     print("\n  📤 Git push...")

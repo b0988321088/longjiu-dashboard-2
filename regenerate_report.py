@@ -389,7 +389,9 @@ if ok and _cio_ok:
     else:
         print("⚠️ 無任何報表檔案可推送")
     for _ref in ['clean-main', 'clean-main:main']:
-        _r = subprocess.run(['git', 'push', 'origin', _ref, '--force'], capture_output=True, text=True, timeout=30, cwd=BASE)
+        # 2026-09-14：--force → --force-with-lease（main 是 clean-main 鏡像，正常必為 fast-forward；
+        #              --force 在遠端分歧時會無聲回捲，lease 版會直接拒絕）
+        _r = subprocess.run(['git', 'push', 'origin', _ref, '--force-with-lease'], capture_output=True, text=True, timeout=30, cwd=BASE)
         _ok = 'Everything up-to-date' in _r.stdout or _r.returncode == 0
         print(f"  {'✅' if _ok else '❌'} 推到 {_ref}")
     # 驗證上線（Pages 建置有延遲 → 重試 4 次 × 20s）

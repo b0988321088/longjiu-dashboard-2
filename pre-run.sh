@@ -112,7 +112,7 @@ fi
 # ======================
 git push origin clean-main
 echo "[OK] clean-main 推送完成"
-git push origin clean-main:main --force
+git push origin clean-main:main --force-with-lease
 echo "[OK] main 備援推送完成"
 
 # ======================
