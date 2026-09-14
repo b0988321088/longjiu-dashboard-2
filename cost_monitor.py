@@ -12,10 +12,8 @@ TODAY = str(date.today())
 CNY_TWD = 4.73  # 2026-09-14 使用者確認（200 CNY≈944 TWD）；Yahoo CNYTWD 4.734
 USD_TWD = 31.7  # 2026-09-14 Yahoo USDTWD 31.705
 
-# 已知固定支出
-MONTHLY_FIXED = {
-    "Notion": 12.0,  # USD/月
-}
+# 已知固定支出（2026-09-14 使用者確認：Notion 已無訂閱 → 移除 $12/月）
+MONTHLY_FIXED = {}
 # Gemini API 月費（從 Google AI Studio 手動查）
 GEMINI_MONTHLY_COST_TWD = 80.58  # 2026-06-24~07-21
 GEMINI_BALANCE_TWD = 315  # 2026-07-21 截圖餘額
@@ -116,7 +114,9 @@ report += f"  Gemini API: NT${GEMINI_MONTHLY_COST_TWD:.0f}/月（約 {GEMINI_MON
 
 _total_twd = sum(MONTHLY_FIXED.values())*USD_TWD + GEMINI_MONTHLY_COST_TWD
 report += f"\n🔮 **總月費估計：** ~{_total_twd:.0f} 台幣/月\n"
-report += f"  （Notion ${MONTHLY_FIXED['Notion']:.0f} + Gemini NT${GEMINI_MONTHLY_COST_TWD:.0f} + DeepSeek流量）\n"
+_items = " + ".join([f"{n} ${c:.0f}" for n, c in MONTHLY_FIXED.items()]
+                      + [f"Gemini NT${GEMINI_MONTHLY_COST_TWD:.0f}"])
+report += f"  （{_items} + DeepSeek流量）\n"
 
 print(report)
 
