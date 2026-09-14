@@ -101,3 +101,14 @@ INC-172 手動 fire 吃排程時點｜INC-173 成本高估 1.6 倍｜INC-174 失
 - **實測**：純資料 commit 走 `auto_record` 成功落 RECORD（上線路徑端到端）；程式 commit 用 AUTO-checker 背書被閘門擋（AUTO-BLOCKED-CODE）；同 commit 換真 CIO reviewer 即放行；雙 ref 推送只記一行。
 - **稽核**：`closeout_check` 全部通過 ✅、③ 通道 RECORD×27／TAG×4（TAG 為遷移前舊紀錄）。
 - **待觀察**：24h 後確認近 24h 只剩 RECORD、22:00／22:15／07:00 三班 cron `last_status=ok`。
+
+---
+
+## 九、技能修正與記憶更新（收工）
+
+- **修正 3 個技能共 13 處**（今日新規則落地，避免下次照過時步驟操作）：
+  - `cioreview-sop`（7 處）：閘門 v4→**v4.2**（AUTO 不得背書程式／雙 ref 去重／只認主旨行標籤）；RECORD 兩種 reviewer；`--commit` 單筆落地；`--range-base` 只寫審查 JSON 涵蓋者（INC-176）；**P2 完成後的自動化流程**（`auto_record.py` 5 檢查、`--clean-stage`、post-commit 自我驗證）；推送路徑實況改 13 條已遷移；Git 紀律改「程式改動不靠 commit 標籤」。
+  - `longjiu-pipeline-governance`（3 處）：整節「Push hook：commit message 需 [cioreviewed]」改寫為 **v4.2 tree-hash 規則**；Push 行為矩陣加通道說明；`pre-run.sh` 步驟 3／4 改 RECORD ＋ `--force-with-lease`。
+  - `cron-script-validation`（3 處）：「commit 時標 [cioreviewed]」改 RECORD；Example Commands 移除危險指令 `git push --force origin main:clean-main`；新增「直接改 `jobs.json` 是持久的，但要用探針 job 驗證」＋巡檢必掃 `[cioreviewed]`／裸 `--force`。
+- **全息記憶**：更新 push gate 事實為 v4.2＋P2 完成；`nightly_dashboard_sync` 事實移除「自打標籤」。
+- **收工稽核抓到** `hunter_cache/market_intel_2026-09-14.json`、`notion_bridge/2026-09-14_strategy_handbook.md` 未提交（cron 當日產出）→ 走 RECORD 通道補上（`a61f96be`）。

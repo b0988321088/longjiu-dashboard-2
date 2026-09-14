@@ -635,5 +635,11 @@
   "category": "完成",
   "item": "P2 推送通道遷移完成：13 條路徑改走 RECORD、閘門 v4.2、4 commits 推雙分支（8e720e31）",
   "detail": "【4 commits】480de6fb（P2 本體：auto_record.py／cio_approve --commit／閘門 v4.2 AUTO 不得背書程式＋多 ref 去重＋只認主旨標籤／13 條路徑改 RECORD／清 2 處裸 --force＋PUSH_FORCE_OK 死碼／4 支鏡像腳本納版控）→ 80bc1fd7（post-commit 鏡像多來源解析防 HOME 污染＋auto_record --clean-stage 防 add -A 掃進程式檔）→ a75ece6f（post-commit ③ 鏡像自我驗證＋鏡像盤點清單＋INC-177）→ 8e720e31（INC-178）。兩分支＝8e720e31。 【CIO】4 顆各一輪，全部 APPROVE、required_fixes 空；P2 首輪因子代理在真 repo 建分支/commit 被我停掉（INC-178），重送版（限定唯讀/暫存 clone）通過。 【實測】純資料 commit 走 auto_record 落 RECORD 成功（生產路徑端到端）；程式 commit 用 AUTO-checker 被閘門擋（AUTO-BLOCKED-CODE）；換真 CIO reviewer 放行；雙 ref 推送 PUSH_LANE 只記一行（去重）。 【稽核】closeout_check 全部通過、③ RECORD×27／TAG×4（TAG 皆遷移前舊紀錄）。【待觀察】24h 後確認只剩 RECORD＋22:00/22:15/07:00 三班 cron ok。"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "完成",
+  "item": "收工閉環：技能修正 13 處（cioreview-sop 7／longjiu-pipeline-governance 3／cron-script-validation 3）＋全息記憶更新＋稽核缺口補提交",
+  "detail": "① cioreview-sop：閘門 v4.2（AUTO 不得背書程式／雙 ref 去重／只認主旨行）、RECORD 兩種 reviewer、--commit 單筆落地、--range-base 只寫審查涵蓋者、P2 自動化流程（auto_record 5 檢查／--clean-stage／post-commit 自我驗證）、推送路徑實況、Git 紀律改「不靠標籤」。② longjiu-pipeline-governance：整節『commit message 需 [cioreviewed]』改寫為 v4.2 tree-hash 規則、Push 行為矩陣加通道、pre-run.sh 改 RECORD＋--force-with-lease。③ cron-script-validation：標籤改 RECORD、移除危險指令 git push --force origin main:clean-main、新增 jobs.json 直改持久性探針驗證＋巡檢掃 [cioreviewed]/裸 --force。④ 全息記憶 fact 15/606 更新。⑤ 稽核抓到 hunter_cache＋notion_bridge 未提交 → commit a61f96be 走 RECORD 補上。"
  }
 ]
