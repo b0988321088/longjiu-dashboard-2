@@ -3320,6 +3320,15 @@
       "summary": "CIO 三項『不能拖』逐條實證：①決策狀態未回收＝真，但位置在 dashboard_decisions.json 內嵌 pending（CIO Part A 輸入），非 pending_decisions.json（該檔 14:30 已結案）→ 已回收＋加註【最終值】②9/16 FOMC 判準系統早已寫死（us30y_monitor RED_LINE=5.30 連2日／市值線連3日<5.20）→ 補『9/16 落點→動作』4 種對照③240萬押標金與540萬還債紀錄一致（不預留、9月底評估），540萬清償500萬後餘40萬、實際缺口200萬。另更正 CIO 兩處失準：P2 遷移已於今日 16:55 提前完成（9/15 無此條）、投資面非零動作（9/14 真值日四源同步）。通道稽核實證：遷移後 100% RECORD。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "dec-20260914-inc183-351",
+      "timestamp": "2026-09-14T19:10:00+08:00",
+      "agent": "Hermes",
+      "task": "INC-183 推送可靠度修復（使用者指示：執行）",
+      "summary": "重產日報時抓到：regenerate_report.py 呼叫 auto_push.py 卻傳 --record skip，而全檔沒有任何地方替該 commit 落紀錄（cio_review.py 只是本地規則檢查、不寫 CIO_APPROVED；cio_approve.py 從未被呼叫；舊版靠 [cioreviewed] 標籤，v4.2 收掉後沒人補位）→ 閘門必擋、07:00 morning_deploy 變「產出完成但不部署」，畫面只印 ⚠️ rc=4。修法：改走預設 --record auto（範圍含未審程式檔一律拒推 exit 3＝fail-closed），auto_push.py docstring 同步更正，error_register 登記 INC-183；CIO-Gemini 審查 APPROVE（tree 80f28f387eb3）後落地。驗收：直接跑真正的 07:00 路徑 regenerate_report.py，它自己補落 RECORD 94f89d659bce 並推送、ls-remote 遠端 sha 驗證通過（雙分支）；Pages 日報與 commit 版位元一致。",
+      "status": "completed",
+      "source": "user"
     }
   ],
   "meta": {
