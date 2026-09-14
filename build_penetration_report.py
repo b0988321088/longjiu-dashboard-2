@@ -54,7 +54,7 @@ snap["penetration"] = {
 # 每次管線執行滾動頂層日期（儀表板系統時間/記憶同步統一真值）
 snap.setdefault("date", date.today().isoformat())
 snap["generated_at"] = datetime.now().isoformat()
-(BASE / "snapshot.json").write_text(json.dumps(snap, ensure_ascii=False, indent=2), encoding="utf-8")
+(BASE / "snapshot.json").write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")  # INC-184：snapshot canonical=1（原 indent=2 造成全檔假 diff）
 print("  穿透數據已自動校正並寫入 snapshot.json")
 holdings = snap.get("securities", {}).get("holdings", [])
 today = date.today().isoformat()  # 2026-08-22 修正：統一用今天（與日報/差異/週報一致）；原 snapshot.date 導致檔名落後一天、連結 404

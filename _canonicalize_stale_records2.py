@@ -19,7 +19,7 @@ for x in (dec if isinstance(dec, list) else []):
         if isinstance(v, str) and "還安聯300萬@4.2%+元大50萬@3.92%" in v:
             x[k] = v.replace("還安聯300萬@4.2%+元大50萬@3.92%", "全數優先清償 500萬高息負債（保單400萬@4%＋券商100萬@3.92%）")
             n += 1
-DEC.write_text(json.dumps(dec, ensure_ascii=False, indent=1), encoding="utf-8")
+DEC.write_text(json.dumps(dec, ensure_ascii=False, indent=2), encoding="utf-8")  # INC-184：dashboard_decisions canonical=2
 
 # 2) snapshot.fed_hike_monitor_0901
 s = json.loads(SNAP.read_text(encoding="utf-8"))

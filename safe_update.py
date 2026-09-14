@@ -43,7 +43,7 @@ def load_snapshot():
     return json.load(open(SNAPSHOT_FILE, encoding='utf-8'))
 
 def save_snapshot(snap):
-    json.dump(snap, open(SNAPSHOT_FILE, 'w', encoding='utf-8'), ensure_ascii=False, indent=2)
+    json.dump(snap, open(SNAPSHOT_FILE, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)  # INC-184：snapshot canonical=1
 
 def load_pending():
     if os.path.exists(PENDING_FILE):

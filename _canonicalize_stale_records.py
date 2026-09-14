@@ -57,7 +57,7 @@ for x in (pd if isinstance(pd, list) else []):
     if ("350萬@2.8%" in t or "350 line" in t or "700萬池" in t) and "9/12" not in str(x.get("date", "")):
         x["status"] = SUPERSEDED
         n += 1
-PEND.write_text(json.dumps(pd, ensure_ascii=False, indent=1), encoding="utf-8")
+PEND.write_text(json.dumps(pd, ensure_ascii=False, indent=2), encoding="utf-8")  # INC-184：pending_decisions canonical=2
 
 print("snapshot 更新：", changes)
 print(f"pending_decisions 標記取代：{n} 筆")

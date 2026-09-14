@@ -118,7 +118,7 @@ def main():
         del_keys = {key_of(e) for e in auto_del}
         evs = [e for e in evs if key_of(e) not in del_keys]
         json.dump(evs, open(EVENTS, "w", encoding="utf-8"),
-                  ensure_ascii=False, indent=1)
+                  ensure_ascii=False, indent=2)  # INC-184：schedule_events.json canonical=2，用 1 會整檔重排
         changed = True
 
     save_state(cur_review_keys)  # 更新 state = 本次保留全集（含已解決的自動消失）

@@ -104,7 +104,7 @@ def main():
     kpis["驗收等級"] = lvl
     cl["記錄"][month] = kpis
 
-    SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=2), encoding="utf-8")
+    SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")  # INC-184：snapshot canonical=1
     print(f"✅ 留停驗收表 {month} 已更新（寫回 snapshot.sabbatical_checklist）")
     print(f"   被動 {kpis['被動現金流']:,} / 必要生活費 {kpis['每月必要生活費']:,} → 覆蓋率 {kpis['生活費覆蓋率']}%")
     print(f"   壓力情境 {kpis['壓力情境覆蓋率']}%｜極端缺口 {kpis['極端情境']['缺口']:,}/月 → 水庫撐 {kpis['極端情境']['水庫撐月數']} 個月")

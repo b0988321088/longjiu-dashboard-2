@@ -254,6 +254,61 @@ except Exception as _e:
     print(f"  ❌ 決策檔讀取失敗 {_e}")
     fail.append("決策檔讀取失敗")
 
+# ── 10) 管線 JSON 寫入 indent 一致（2026-09-14 新增／INC-184）──────────────
+# 各檔 canonical indent 不同（round-trip 位元比對的唯一解）：
+#   schedule_events / pending_decisions / dashboard_decisions = 2；snapshot / work_log / radar_state = 1
+# 用錯 indent → 整檔重排、上千行假 diff（掩蓋真改動）。這裡掃 repo 內 .py 的 json.dump 呼叫，
+# 解析寫入目標（字面檔名 → 同檔常數 → 鄰近上下文），indent 與 canonical 不符即 ❌。
+_CANON_INDENT = {"schedule_events.json": 2, "pending_decisions.json": 2, "dashboard_decisions.json": 2,
+                 "snapshot.json": 1, "work_log.json": 1, "radar_state.json": 1}
+print("=== 10) 管線 JSON 寫入 indent 一致 ===")
+try:
+    _bad = []
+    for _p in sorted(R.glob("*.py")):
+        if _p.name.startswith("_") and not _p.name.endswith("_report.py"):
+            pass  # 仍要掃 `_xxx.py`（歷史 ad-hoc 腳本也會被重跑），故不跳過
+        try:
+            _lines = _p.read_text(encoding="utf-8", errors="ignore").splitlines()
+        except Exception:
+            continue
+        _const = {}
+        for _l in _lines:
+            _m = re.search(r"(\w+)\s*=\s*[^=\n]*?[\"']([\w\-]+\.json)[\"']", _l)
+            if _m:
+                _const[_m.group(1)] = _m.group(2)
+        for _i, _l in enumerate(_lines):
+            if "json.dump" not in _l:
+                continue
+            # 只看這次呼叫本身（含續行 2 行）。用 ±8 行上下文會把鄰近其他檔案的寫入誤算進來（實測誤判 safe_update.py:54）
+            _seg = "\n".join(_lines[_i:min(len(_lines), _i + 3)])
+            _mm = re.search(r"indent\s*=\s*(\d+)", _seg)
+            if not _mm:
+                continue
+            _ind = int(_mm.group(1))
+            _tgt = None
+            for _f in _CANON_INDENT:
+                # 邊界比對：避免 rebalance_snapshot.json / tactical_table_*.json 被子字串誤中（實測誤判 action_loop/tactical_table）
+                if re.search(r"(?<![\w\-.])" + re.escape(_f), _seg):
+                    _tgt = _f
+                    break
+            if _tgt is None:  # 同檔常數（SNAP / DEC / EVENTS...）→ 檔名
+                for _var, _f in _const.items():
+                    if _f in _CANON_INDENT and re.search(r"(?<![\w.])" + re.escape(_var) + r"(?![\w])", _seg):
+                        _tgt = _f
+                        break
+            if _tgt is None or _ind == _CANON_INDENT[_tgt]:
+                continue
+            _bad.append(f"{_p.name}:{_i + 1} → {_tgt} 用 indent={_ind}（canonical={_CANON_INDENT[_tgt]}）")
+    if _bad:
+        for _b in _bad:
+            print(f"  ❌ {_b}")
+        fail.append(f"JSON 寫入 indent 不符（{len(_bad)} 處）")
+    else:
+        print("  ✅ 掃到的寫入者 indent 與 canonical 一致")
+except Exception as _e:
+    print(f"  ❌ indent 檢查失敗 {_e}")
+    fail.append("indent 檢查失敗")
+
 print()
 print("=" * 46)
 print(f"閉環稽核結果：{'全部通過 ✅' if not fail else '❌ 有問題：' + str(fail)}")
