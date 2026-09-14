@@ -1,54 +1,95 @@
 #!/usr/bin/env bash
-# 龍九 pre-push 閘門 v2（2026-09-14 強化）
-# 規則：待推 HEAD 的「樹狀內容」(tree hash) 必須有 CIO 審查通過紀錄，否則拒絕推送。
-#   - 用 tree hash（不是 commit hash）：只改 commit message（例如補標籤）不會讓審查失效；
-#     但只要檔案內容有任何變動 → tree 改變 → 舊紀錄失效，必須重新送審（這是重點）。
-#   - 紀錄檔：<git-dir>/CIO_APPROVED（tab 分隔、append-only）
-#       TS <TAB> TREE <TAB> COMMIT <TAB> VERDICT <TAB> REVIEWER <TAB> NOTE
-#   - 產生方式（CIO 審查通過後才寫）：
-#       python cio_approve.py --verdict APPROVE --reviewer "CIO-Gemini" [--result <review.json>]
-#   - 緊急例外：[skipreview]（會寫入 PUSH_SKIPREVIEW.log 留痕）
-# 舊版只檢查 commit message 的 [cioreviewed] 標籤 → 可自我宣告，v2 起以紀錄檔為準。
+# 龍九 pre-push 閘門 v3（2026-09-14）
+# 修正 v2 漏洞：只驗 HEAD tree → 改成驗「本次推送範圍內每一個 commit 的 tree」。
+#
+# 放行條件（逐 commit 判定，全部通過才放行）：
+#   Lane RECORD     ：該 commit 的 tree hash 在 <git-dir>/CIO_APPROVED 有 APPROVE 紀錄
+#                     （產生方式：CIO 審查通過後 python cio_approve.py --verdict APPROVE ...）
+#   Lane TAG        ：該 commit message 含 [cioreviewed]（自動化腳本沿用；會寫入 PUSH_LANE.log 留痕）
+#   Lane SKIPREVIEW ：該 commit message 含 [skipreview]（緊急例外，留痕）
+# 其餘一律擋下，並列出未通過的 commit 與 tree。
+#
+# 為何保留 TAG 通道：repo 內有 10 條自動化推送路徑（daily_push / update_and_deploy / evening_sync /
+#   refresh_all / daily_deploy / regenerate_report / complete_operation / cioreview_ingest / safe_update /
+#   cron 任務 prompt 直接下 git push），今晚若全面要求 RECORD 會直接斷 08:30 日報部署。
+#   → RECORD 為正式通道；TAG 為自動化過渡通道（有紀錄可稽核），遷移另行排程。
 set -u
 
 GITDIR=$(git rev-parse --git-dir 2>/dev/null || echo .git)
 APPROVE_FILE="$GITDIR/CIO_APPROVED"
-HEAD_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo UNKNOWN)
-HEAD_TREE=$(git rev-parse "HEAD^{tree}" 2>/dev/null || echo NONE)
-COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null || echo "")
+LANE_LOG="$GITDIR/PUSH_LANE.log"
+ZERO=0000000000000000000000000000000000000000
 
-# merge commit 免審（只合併既有已審內容）
-case "$COMMIT_MSG" in
-  Merge*) exit 0 ;;
-esac
+log_lane() { printf '%s\t%s\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" "$2" "$3" >> "$LANE_LOG"; }
 
-if [ -f "$APPROVE_FILE" ] && awk -F'\t' -v t="$HEAD_TREE" '$2==t && $4=="APPROVE"{f=1} END{exit !f}' "$APPROVE_FILE"; then
-  echo "✅ CIO 審查紀錄比對通過（tree $(echo "$HEAD_TREE" | cut -c1-12)）"
-  exit 0
+BAD=""
+CHECKED=0
+
+check_one() {
+  local c="$1" tree msg
+  tree=$(git rev-parse "$c^{tree}" 2>/dev/null) || tree="UNKNOWN"
+  msg=$(git log -1 --pretty=%B "$c" 2>/dev/null || echo "")
+  CHECKED=$((CHECKED + 1))
+  if [ -f "$APPROVE_FILE" ] && awk -F'\t' -v t="$tree" '$2==t && $4=="APPROVE"{f=1} END{exit !f}' "$APPROVE_FILE"; then
+    log_lane "RECORD" "$c" "$tree"; return 0
+  fi
+  if printf '%s' "$msg" | grep -q "\[cioreviewed\]"; then
+    log_lane "TAG" "$c" "$tree"; return 0
+  fi
+  if printf '%s' "$msg" | grep -q "\[skipreview\]"; then
+    log_lane "SKIPREVIEW" "$c" "$tree"; return 0
+  fi
+  BAD="$BAD  - commit ${c:0:12}  tree ${tree:0:12}  （無審查紀錄、也無 [cioreviewed]/[skipreview]）\n"
+  return 1
+}
+
+check_range() {
+  local local_sha="$1" remote_sha="$2" commits c
+  if [ "$remote_sha" = "$ZERO" ]; then
+    commits=$(git rev-list "$local_sha" --not --remotes 2>/dev/null)
+  else
+    commits=$(git rev-list "$remote_sha..$local_sha" 2>/dev/null)
+  fi
+  [ -z "$commits" ] && return 0
+  for c in $commits; do check_one "$c" || true; done
+}
+
+# 由 git 透過 stdin 提供：<local_ref> <local_sha> <remote_ref> <remote_sha>
+stdin_used=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -z "${local_ref:-}" ] && continue
+  stdin_used=1
+  if [ "$local_sha" = "$ZERO" ]; then
+    log_lane "DELETE" "$remote_ref" "-"   # 刪除分支：無內容上傳
+    continue
+  fi
+  check_range "$local_sha" "${remote_sha:-$ZERO}"
+done
+
+# 手動測試（無 stdin）時，退化成檢查 HEAD 相對上游/遠端
+if [ "$stdin_used" = "0" ]; then
+  HEAD_SHA=$(git rev-parse HEAD 2>/dev/null || echo "")
+  UP=$(git rev-parse --verify --quiet '@{u}' 2>/dev/null || echo "")
+  if [ -n "$UP" ]; then check_range "$HEAD_SHA" "$UP"; else check_range "$HEAD_SHA" "$ZERO"; fi
 fi
 
-if printf '%s' "$COMMIT_MSG" | grep -q "\[skipreview\]"; then
-  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ)	commit=$HEAD_COMMIT	tree=$HEAD_TREE	skipreview" >> "$GITDIR/PUSH_SKIPREVIEW.log"
-  echo "⚠️ 已用 [skipreview] 緊急放行（留痕於 $GITDIR/PUSH_SKIPREVIEW.log）"
+if [ -z "$BAD" ]; then
+  echo "✅ 推送閘門 v3：$CHECKED 個 commit 全數通過（紀錄見 $(basename "$LANE_LOG")）"
   exit 0
 fi
 
 cat <<EOF
 
 ╔══════════════════════════════════════════════╗
-║  ❌ 推送被擋：查無 CIO 審查通過紀錄         ║
+║  ❌ 推送被擋：有 commit 未通過審查           ║
 ╚══════════════════════════════════════════════╝
-  待推內容 tree : $HEAD_TREE
-  commit        : $HEAD_COMMIT
-  審查紀錄檔    : $APPROVE_FILE（沒有這個 tree 的 APPROVE）
-
+$(printf "$BAD")
   正確流程：
     1) 送 CIO 審查（delegate_task，指定檢查項目）
     2) CIO APPROVE 後落地紀錄：
          python cio_approve.py --verdict APPROVE --reviewer "CIO-Gemini" [--result <review.json>]
-    3) 再 git push
+    3) 再 git push（紀錄綁 tree：改 message 不影響，改內容要重新送審）
 
-  ⚠️ 內容有任何改動 → tree 改變 → 需重新送審（改 message 不影響）
-  緊急例外：[skipreview]（留痕）
+  ⚠️ 例外通道：[cioreviewed] / [skipreview]（自動化與緊急用，全部留痕於 $(basename "$LANE_LOG")）
 EOF
 exit 1

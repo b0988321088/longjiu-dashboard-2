@@ -28,6 +28,13 @@ import sys
 from pathlib import Path
 
 
+def clean(value: str, maxlen: int = 120) -> str:
+    """紀錄檔是 tab 分隔的 append-only 文字檔 → 一律清掉 tab/CR/LF 與控制字元。
+    避免 --reviewer/--note 被注入而破壞欄位結構（或偽造出多欄/多列紀錄）。"""
+    out = "".join(ch if (ch.isprintable() and ch not in "\t\r\n") else " " for ch in str(value))
+    return " ".join(out.split())[:maxlen]
+
+
 def git(*args: str) -> str:
     p = subprocess.run(["git", *args], capture_output=True, text=True)
     if p.returncode != 0:
@@ -133,10 +140,16 @@ def main() -> int:
         return 1
 
     ts = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    line = "\t".join([ts, tree, commit, "APPROVE", a.reviewer, a.note.replace("\t", " ")])
+    reviewer = clean(a.reviewer) or "UNKNOWN"
+    note = clean(a.note)
+    line = "\t".join([ts, tree, commit, "APPROVE", reviewer, note])
+    # 寫入前自我檢查：欄位數必須為 6（防注入破壞格式）
+    if len(line.split("\t")) != 6:
+        print("❌ 紀錄行欄位數異常，拒寫（sanitize 失效）", file=sys.stderr)
+        return 2
     with approve_file().open("a", encoding="utf-8") as f:
         f.write(line + "\n")
-    print(f"✅ 已寫入審查紀錄：tree {tree[:12]} commit {commit[:12]} by {a.reviewer}")
+    print(f"✅ 已寫入審查紀錄：tree {tree[:12]} commit {commit[:12]} by {reviewer}")
     print(f"   {approve_file()}")
     return 0
 
