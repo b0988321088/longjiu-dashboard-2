@@ -3291,6 +3291,17 @@
       "summary": "台股2,327,140.0 美股6,357,560.0 防守6,768,390.0 債券8,130,692.0 現金885,890.8163352832",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "id": "dec-20260914-dailyupdate-347",
+      "date": "2026-09-14",
+      "decision": "核准",
+      "timestamp": "2026-09-14T14:25:04+08:00",
+      "agent": "Hermes",
+      "task": "9/14 更新總整理（收工）",
+      "summary": "今日 48 commits（738d8cb5→1cd39d7d），雙分支同步。主線＝推送閘門 v2→v4.1（CIO 每輪真審並走 RECORD）：審查紀錄綁 tree hash、逐 commit 驗推送範圍、程式檔不得走 [cioreviewed] 標籤通道、改名繞過補洞、每日通道稽核。P0：4 處裸 --force→--force-with-lease、週日行事曆收尾補標籤（原靠已失效 PUSH_FORCE_OK，9/20 會斷推）、safe_update 未過審改硬擋。成本：INC-173 高估 1.6 倍修正（9/13 NT$498→313）、INC-174 失敗統計去重（61→57，429 速率上限誤判修正）、匯率校正、Notion 訂閱移除（月固定費 461→81）。監控：INC-172 手動 fire 吃排程時點＋收工檢查 cron 22:40、INC-175 watchdog v6.13。真值：9/14 真值日四源同步（現金 885,890／證券 2,922,190／基金 12,647,084／保單 7,580,361／配息 109,371）、美元曝險口徑定案 59.0%。總整理：DAILY_UPDATES_2026-09-14.md。待辦：P2（已排 9/15，工單 P2_PUSH_LANE_MIGRATION_PLAN.md）、DS 儲值（餘額 8.02 CNY≈0.8 天）。",
+      "status": "completed",
+      "source": "agent"
     }
   ],
   "meta": {

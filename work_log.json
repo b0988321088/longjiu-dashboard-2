@@ -605,5 +605,17 @@
   "category": "修正",
   "item": "推送閘門 v3：CIO 審查紀錄改綁 tree hash（未審 commit 一律擋），CIO 兩項必修項關閉後推送 clean-main＋main",
   "detail": "【問題】舊閘門只看 HEAD commit message 有沒有 [cioreviewed] → 標籤可自打，審查形同自我宣告；倉庫裡「使用者確認後 touch .git/PUSH_APPROVED」那套已被 core.hooksPath 覆蓋、完全失效。\n【修法】.githooks/pre-push 改逐 commit 驗「本次推送範圍」每個 commit 的 tree hash 是否在 <git-dir>/CIO_APPROVED 有 APPROVE 紀錄（Lane RECORD）；保留 [cioreviewed]（TAG）、[skipreview]（SKIPREVIEW）為自動化／緊急過渡通道，一律 append 到 .git/PUSH_LANE.log 留痕。新增 cio_approve.py（--status／--verdict／--result／--range-base）：只有讀到 APPROVE 才寫紀錄，REJECT 拒寫並列出必修項；--reviewer/--note 先 sanitize（擋 tab/CR/LF/控制字元）並在寫入前驗欄位數，防注入破壞 tab 分隔格式；.gitattributes 鎖 .githooks/*、cio_approve.py 為 eol=lf。\n【審查】CIO 首輪對 v2 給 REJECT（①只看 HEAD tree → 多 commit 可夾帶未審內容 ②--reviewer 未擋 tab/換行可注入）→ v3 修完後複審 APPROVE（3 筆 tree 58280111cf4d／02248ee98289／8e1b2df3b736，CIO 自己逐 commit 重算對得上）。落地：python cio_approve.py --result <CIO JSON> --range-base f3e64ec6。\n【驗證】bash 手測與真實路徑 git push --dry-run 皆擋下並列出未審 tree；補紀錄後放行，推 clean-main＋main，ls-remote 兩分支皆 5a0f8b9e；PUSH_LANE.log 三筆 RECORD。\n【殘留】① cio_approve.py 寫紀錄檔仍走 Windows 文字模式（\\r\\n），awk 比對 $2 不受影響，暫不動（改內容＝tree 變＝要重新送審）。② CIO 子代理聲稱已寫審查 JSON，實際檔案不存在 → 子代理自我回報不算證據，一律自己驗存在再落地。③ CIO 非阻擋建議：日後把自動化推送從 TAG 通道遷移到 RECORD。"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "修正",
+  "item": "推送閘門 v4／v4.1 ＋ 推送路徑治理 P0：程式檔不得走標籤通道、每日通道稽核、4 處 --force 退役（9/14 使用者核准）",
+  "detail": "【問題】原閘門（v3）的 [cioreviewed] 標籤通道可自打：全 repo 17 條推送路徑實掃，只有 regenerate_report.py（07:00）與 daily_deploy.py 真的跑過 cio_review.py；safe_update.py 只印警告照推；其餘 13 腳本＋4 條 cron prompt 全靠自打標籤。另發現 4 處對 main 用裸 --force（含我上一輪漏報的 regenerate_report.py），以及 schedule_events_weekly_clean.py 靠已失效的 PUSH_FORCE_OK → 9/20 起會靜默斷推。\n【修法 v4】.githooks/pre-push：TAG（[cioreviewed]）只准推純資料/報表，變更含程式檔（py/sh/bat/ps1/cmd/toml/yml/yaml/js/ts/sql、.githooks/*、.gitattributes、.gitignore、index_template.html）→ 擋下（TAG-BLOCKED-CODE）；merge commit 保守視為程式；[skipreview] 仍放行但含程式檔記 SKIPREVIEW-CODE 並 stderr 警告（不為緊急修復封路）。v4.1 補洞：改用 git diff-tree --name-status -M，改名時舊/新路徑都驗。\n【P0】①4 處 --force → --force-with-lease（regenerate_report/pre-run.sh/refresh_all/schedule_events_weekly_clean）②週日行事曆收尾 commit 補 [cioreviewed] ＋移除死碼 PUSH_FORCE_OK/git_env ③safe_update.py 未過審改硬擋（exit 1，不 commit 不 push）④.gitignore 補 .cio_review*.json。\n【每日稽核】closeout_check.py 新增 ③ 推送通道稽核（讀 .git/PUSH_LANE.log 近 24h）：SKIPREVIEW-CODE 與 TAG-BLOCKED-CODE 列入問題（後者＝某條自動化想用標籤推程式被擋，是斷推前的早期警報）。\n【審查】CIO 首輪對 v4 給 APPROVE（tree 0803ef80，commit 9e5c3321）；v4.1 APPROVE（tree 4a00feb7，commit 1cd39d7d）。兩輪均以 cio_approve.py 落地 RECORD。\n【驗證】實測三通道＋改名案例：純資料 commit 放行、程式 commit 擋下並列檔名、skipreview 含程式檔留痕；b81e4fb8（.py→.deprecated 改名）舊寫法看成資料會放行、新寫法抓到舊路徑。py_compile/bash -n 全過；測試行已自 PUSH_LANE.log 還原。推送後 origin/clean-main = origin/main = 1cd39d7d。\n【待辦】P2（CIO required_fixes）：純資料路徑改「deterministic 檢查 → cio_approve.py 落地（AUTO-checker）→ RECORD」，週報/月報/再平衡改送真 CIO 審查。"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "完成",
+  "item": "9/14 更新總整理（收工）：48 commits、4 筆 INC、閘門 v2→v4.1",
+  "detail": "產出 DAILY_UPDATES_2026-09-14.md（分類：四源同步/報表 12、閘門/治理 10、成本 6、監控/稽核 6、Notion 5、其他 9）。涵蓋：推送閘門 v2→v4.1 演進（659eaa34/17baa7d2/5a0f8b9e/9e5c3321/1cd39d7d，全部走 RECORD）、P0 推送路徑治理（4 處 --force 退役、行事曆收尾補標籤、safe_update 硬擋）、成本治理（INC-173/174、context 尺寸參數、匯率校正、Notion 訂閱移除 461→81）、監控（INC-172/175、收工檢查 22:40）、9/14 真值日四源同步與美元曝險 59.0% 定案、P2 排定 9/15。同步寫入 dashboard_decisions（dec-20260914-dailyupdate-347）＋Notion。"
  }
 ]
