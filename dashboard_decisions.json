@@ -3473,6 +3473,23 @@
       "summary": "台股2,325,670.0 美股6,389,628.0 防守6,738,830.0 債券8,112,913.0 現金885,890.5567452125",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "timestamp": "2026-09-14T23:07:19",
+      "action": "核准",
+      "name": "cio_review 禁字表 dashboard.py 改「引用形式才擋」（INC-185，使用者核准）",
+      "source": "Hermes Telegram Gate",
+      "status": "已完成",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1789398439",
+      "summary": "產出審查閘門的禁字表 dashboard.py 由純子字串比對改為只擋引用形式（href/src/action、python 指令、路徑 ./ / \\）；散文敘述與檢討紀錄放行。",
+      "tags": [
+        "系統",
+        "治理",
+        "禁字表",
+        "CIO閘門"
+      ]
     }
   ],
   "meta": {
