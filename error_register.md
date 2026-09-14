@@ -151,6 +151,18 @@
 - check_rule：① 「已達死重」通知**先看 act log 有無 `signal:` 行** — 有 = 失敗訊號（查 CER），沒有 = 純尺寸清理 ② 尺寸規則的候選要先確認 `ended_at` 與 gateway 殘留（routing/mirror），兩者皆無 = 死 session 不會再長大，不需重置 ③ 通知文案要區分「事故（🚨）」與「例行清理（ℹ️）」，避免使用者每次都要問一次
 - 狀態：✅ 已修（v6.13）— `gateway_residue(sid)` 前置關卡 + 尺寸規則文案降為 ℹ️；沙箱 61 檢查全 PASS（新增 S/T/U）、真實 dry-run 靜默；技能與 gateway §19c 已同步
 
+## INC-2026-09-14（INC-176）`cio_approve.py --range-base` 會替「沒審到的 commit」背書（自查自修）
+- 時間：2026-09-14 14:31（我在落地 cost_monitor 審查紀錄時自踩）
+- 錯誤：`python cio_approve.py --result .cio_review_cost.json --range-base 48d7ad0b` —— 該 JSON **只審了 `bf7b076e`**，但 `48d7ad0b..HEAD` 範圍內還有尚未審查完的 `011d5348`（它的 CIO 審查當時還在飛）→ 工具對**兩筆都寫入 APPROVE 紀錄**，等於替未審 commit 背書；若就這樣 push，閘門會放行未審的程式改動
+- 根因（兩層）：① 工具設計缺陷 — `--range-base` 對 `base..HEAD` **所有** commit 無條件寫同一審查結果（原意是「CIO 審查涵蓋整個範圍時一次寫入」，但沒驗證 JSON 是否真的涵蓋）② 我誤用 — 拿只涵蓋單筆的 JSON 配上整段 range（正是 v4 想關掉的「自我宣告」漏洞，這次由工具端重現）
+- 立即處置：把 `011d5348` 那筆假紀錄自 `.git/CIO_APPROVED` 撤回（備份 `CIO_APPROVED.bak-*`）→ 實測 `git push --dry-run` 立刻改回擋下 `011d5348`（＝閘門與紀錄一致）
+- 修法（`cio_approve.py`）：
+  - 新增 `extract_scope()`：從審查 JSON 挖出涵蓋範圍 —— 認 `reviewed_commit`／**`reviewed_tree`**（CIO 回傳常只有 tree，因為閘門本身綁 tree）／`reviewed_commits[]`（str 或 {commit,tree}）／`reviewed_range`（明示涵蓋整段）
+  - `--range-base` 只寫入「被 JSON 涵蓋」的 commit（commit sha 或 tree sha 皆可命中）；未涵蓋者略過並在 stderr 逐筆列出、回傳碼 1
+  - 完全沒命中 → 拒寫、回傳碼 2；人工補登（無 `--result` 或 `--force`）維持舊行為但明示「對全範圍寫入，需自行負責」
+- 驗證（實跑三案例，測後還原紀錄檔）：① 只有 `reviewed_tree` 的 JSON + 含未審 commit 的範圍 → 只寫 1 筆、明示略過 `011d5348`、rc=1 ✓ ② JSON 含 `reviewed_range` → 全範圍寫入、rc=0 ✓ ③ 假 sha → 拒寫、rc=2 ✓；`py_compile` 過
+- check_rule：① 落地審查紀錄前先確認「JSON 涵蓋的 commit/tree」與「本次要推的範圍」一致，**範圍比審查結果大就是造假紀錄** ② 工具的便利參數要驗證它的前提假設（「一次寫入整段」的前提是「整段都被審過」）③ 發現紀錄與事實不符時，先撤回紀錄再看閘門行為（撤回後仍被擋＝修對了）
+
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
 | 錯誤類型 | 次數 | 首次 | 最後 | 處置 |
