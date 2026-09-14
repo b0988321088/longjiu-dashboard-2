@@ -665,5 +665,11 @@
   "category": "完成",
   "item": "潔癖第二波：untrack LLM 每日輸出 67 檔（data/buffett|cto|cio_llm|ceo_analysis_*.json）＋規則入 .gitignore",
   "detail": "CIO 建議延伸；磁碟檔案保留、分析結果已寫入日報/DB；驗證一律看已提交/遠端狀態（INC-181 教訓）"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "完成",
+  "item": "推送可靠度治本：新增 auto_push.py 統一推送出口（範圍紀錄覆蓋／重試 3 次／git ls-remote 遠端 sha 驗證／--own 守門／退出碼分級），15 條推送路徑全部遷移；INC-182",
+  "detail": "修『腳本走完卻沒送上去』三根因（範圍有未落紀錄 commit 只印⚠️／push 一次失敗即放棄／完全無遠端驗證）。clone 三情境實測＋正式環境實跑 evening_sync 17s 完成（✅ 補落 RECORD → ✅ 已推送並驗證遠端 sha）；closeout_check 的 range-missing 改為逐顆複核避免誤掛 24h。commit 75dd120f（CIO 重審 APPROVE）"
  }
 ]
