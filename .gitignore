@@ -58,3 +58,12 @@ _ocr_*
 
 # LLM 呼叫快取／耐久鏡像（本機留檔即可；分析結果另存於日報與 DB）
 cache/llm_archive/
+
+# LLM 每日輸出（日期檔名，逐日累積；分析結果已寫入日報/DB/報告頁）
+data/buffett_*.json
+data/cto_*.json
+data/cio_llm_*.json
+data/ceo_analysis_*.json
+
+# 同一個 JSON 被拆檔/停用後留下的變體（xxx.json.first／.second／.stale-*）
+data/*.json.*

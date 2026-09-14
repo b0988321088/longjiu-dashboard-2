@@ -659,5 +659,11 @@
   "category": "完成",
   "item": "潔癖：.gitignore 排除工具備份／LLM 快取＋untrack 88 檔；補 INC-181（.gitignore 漏 stage）",
   "detail": "d776e57a（88 刪除，已推）＋600611d4（補 6 行規則，走真 CIO 審查）；clone 實測規則在 committed 狀態生效、正常檔不被誤擋"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "完成",
+  "item": "潔癖第二波：untrack LLM 每日輸出 67 檔（data/buffett|cto|cio_llm|ceo_analysis_*.json）＋規則入 .gitignore",
+  "detail": "CIO 建議延伸；磁碟檔案保留、分析結果已寫入日報/DB；驗證一律看已提交/遠端狀態（INC-181 教訓）"
  }
 ]
