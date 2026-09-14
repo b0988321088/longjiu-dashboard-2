@@ -629,5 +629,11 @@
   "category": "修正",
   "item": "post-commit 鏡像解析硬化＋自我驗證（INC-177）／auto_record --clean-stage 防斷推／鏡像盤點清單",
   "detail": "【問題1 鏡像靜默失敗】post-commit.py 原用 Path.home() 當 hermes 目錄 → HOME 被污染的環境（實測：Python 沙箱把 HOME 指向 Temp）會把 15 檔清單＋全量鏡像寫到不存在路徑、traceback 後仍 exit 0，repo 改了但 cron 端仍是舊的。改為多來源解析（HERMES_HOME→USERPROFILE→HOME→固定路徑→Path.home()，取第一個真的存在的），全不存在則印錯並 exit 1；decision-trail 目錄同步改用同一解析；硬編碼清單補入 auto_record.py／cio_approve.py。實測 env -u USERPROFILE HOME=/tmp/bogus_home 跑 commit → 正確解析並完成鏡像（17 scripts +4）。commit 80bc1fd7。【問題2 複製沒落地（未明原因）】commit 後比對發現 5 支腳本（auto_record/complete_operation/evening_sync/investment_perf_monthly/radar_weekly）在鏡像仍是舊內容，手動重跑 hook 才同步 → 新增 ③ 自我驗證：複製後逐位元讀回比對，不一致就寫 .git/MIRROR_SYNC_FAILED 並 exit 1（大聲失敗，不讓 cron 跑舊版）；正常時清掉標記。【問題3 add -A 掃進程式檔 → 斷推】7 條路徑（evening_sync 22:00/update_and_deploy/refresh_all/complete_operation/investment_perf_monthly/radar_weekly/pre-run.sh）用 git add -A，工作區只要有未提交的 .py 就會被掃進本 job 的 commit → auto_record 判含程式檔 → 不落紀錄 → 該班次斷推。新增 auto_record --clean-stage（commit 前把已 stage 的程式檔 unstage 並印清單），7 條路徑各插一行。實測：stage 測試 JSON＋2 個 .py → 只排除程式檔、保留資料、rc=0。【鏡像盤點（P1-2 決定）】新增 gen_mirror_inventory.py 產出 HERMES_SCRIPTS_INVENTORY.md：受版控 136 支（轉發器 39、一致 92、真漂移 0）、僅鏡像 24 支。實測 24 支**全部無 git 操作**（grep push/commit 0 命中）→ 無斷推風險，決定不強制納入版控，改季度盤點；日後任一支新增 git 操作就立即納入。【本輪 commit】80bc1fd7、本筆留痕 commit；等兩份 CIO 審查通過才推雙分支。"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "完成",
+  "item": "P2 推送通道遷移完成：13 條路徑改走 RECORD、閘門 v4.2、4 commits 推雙分支（8e720e31）",
+  "detail": "【4 commits】480de6fb（P2 本體：auto_record.py／cio_approve --commit／閘門 v4.2 AUTO 不得背書程式＋多 ref 去重＋只認主旨標籤／13 條路徑改 RECORD／清 2 處裸 --force＋PUSH_FORCE_OK 死碼／4 支鏡像腳本納版控）→ 80bc1fd7（post-commit 鏡像多來源解析防 HOME 污染＋auto_record --clean-stage 防 add -A 掃進程式檔）→ a75ece6f（post-commit ③ 鏡像自我驗證＋鏡像盤點清單＋INC-177）→ 8e720e31（INC-178）。兩分支＝8e720e31。 【CIO】4 顆各一輪，全部 APPROVE、required_fixes 空；P2 首輪因子代理在真 repo 建分支/commit 被我停掉（INC-178），重送版（限定唯讀/暫存 clone）通過。 【實測】純資料 commit 走 auto_record 落 RECORD 成功（生產路徑端到端）；程式 commit 用 AUTO-checker 被閘門擋（AUTO-BLOCKED-CODE）；換真 CIO reviewer 放行；雙 ref 推送 PUSH_LANE 只記一行（去重）。 【稽核】closeout_check 全部通過、③ RECORD×27／TAG×4（TAG 皆遷移前舊紀錄）。【待觀察】24h 後確認只剩 RECORD＋22:00/22:15/07:00 三班 cron ok。"
  }
 ]

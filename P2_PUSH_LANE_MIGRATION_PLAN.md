@@ -1,4 +1,10 @@
 # P2 工單：13 條自動化推送路徑遷移 RECORD 通道
+**狀態：✅ 已完成（2026-09-14 14:57）— 4 commits 推雙分支，兩分支＝`8e720e31`**
+**驗收現況**：`closeout_check` ③ 近 24h = RECORD×27／TAG×4（4 筆 TAG 為遷移前的舊紀錄，24h 後自然歸零）；
+推送閘門 v4.2 實測：4 commit × 2 ref → `PUSH_LANE.log` 只寫 4 行（去重生效）；`closeout_check` 全部通過 ✅
+**本輪額外完成**（原計畫外，因驗收時抓到問題）：post-commit 鏡像解析硬化（INC-177）、鏡像自我驗證（commit ③）、
+`auto_record --clean-stage`（add -A 型路徑防斷推）、鏡像盤點清單（P1-2）、INC-178（審查子代理唯讀原則）
+
 
 **排定：2026-09-15（使用者 9/14 核准「排明天一次做完」）**
 **依據：CIO 對 v4 審查的 required_fixes（commit 9e5c3321）+ 14:14 全 repo 掃描結果**

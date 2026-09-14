@@ -86,3 +86,18 @@ INC-172 手動 fire 吃排程時點｜INC-173 成本高估 1.6 倍｜INC-174 失
 - **INC-176：`cio_approve.py --range-base` 替未審 commit 背書**（`9d765476`）：自踩自修 —— 記錄範圍現在必須是審查 JSON 真的有涵蓋的 commit（認 `reviewed_tree`），未涵蓋者列示略過，全未命中拒寫；被 REJECT 的 tree 改寫 commit 讓它不進推送範圍。
 - **今日總計**：本日累計 **52 個 commit**（`738d8cb5` → `9d765476`，此數字不含本記錄本身的 commit），clean-main ＝ main ＝ `9d765476`；INC 共 5 筆（172/173/174/175/176）。
 - **CIO 審查**：本日共 6 輪（v2→v4.1 五輪＋成本/稽核各輪），其中 2 輪 REJECT（都是真問題：v2 的 HEAD-only 驗證、稽核漏改 Pages 那行），全部修完才推。
+
+---
+
+## 八、P2 推送通道遷移（15:00 前完成，原排 9/15）
+
+- **目標**：`PUSH_LANE.log` 只剩 RECORD —— 資料路徑不再靠 commit message 自打 `[cioreviewed]`（那條只證明作者自己說審過了）。
+- **落地 4 顆 commit（`480de6fb` → `80bc1fd7` → `a75ece6f` → `8e720e31`，兩分支＝`8e720e31`）**：
+  - `480de6fb` P2 本體：新增 `auto_record.py`、`cio_approve --commit`、閘門 v4.2（AUTO 不得背書程式／多 ref 去重／只認主旨行標籤）、13 條路徑改走 RECORD、清掉 2 處殘留裸 `--force` 與死碼 `PUSH_FORCE_OK`、4 支僅存於鏡像的腳本納入版控。
+  - `80bc1fd7` P1：post-commit 鏡像目標多來源解析（HOME 被污染不再靜默失敗）＋ `auto_record --clean-stage`（`git add -A` 型 7 條路徑不再掃進別人的未提交程式改動 → 防當晚斷推）。
+  - `a75ece6f`：post-commit ③ 鏡像自我驗證（逐位元讀回比對，不一致就寫標記＋exit 1）＋鏡像盤點清單（受版控 136／僅鏡像 24／真漂移 0）＋INC-177。
+  - `8e720e31`：INC-178（審查子代理在生產 repo 內建分支/commit；已查核未污染）。
+- **CIO 審查**：4 顆各一輪（其中 P2 首輪因子代理違反唯讀被我停掉，重送才通過）；全部 APPROVE、required_fixes 皆空。
+- **實測**：純資料 commit 走 `auto_record` 成功落 RECORD（上線路徑端到端）；程式 commit 用 AUTO-checker 背書被閘門擋（AUTO-BLOCKED-CODE）；同 commit 換真 CIO reviewer 即放行；雙 ref 推送只記一行。
+- **稽核**：`closeout_check` 全部通過 ✅、③ 通道 RECORD×27／TAG×4（TAG 為遷移前舊紀錄）。
+- **待觀察**：24h 後確認近 24h 只剩 RECORD、22:00／22:15／07:00 三班 cron `last_status=ok`。
