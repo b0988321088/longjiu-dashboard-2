@@ -1,5 +1,9 @@
 # P2 工單：13 條自動化推送路徑遷移 RECORD 通道
 **狀態：✅ 已完成（2026-09-14 14:57）— 4 commits 推雙分支，兩分支＝`8e720e31`**
+**16:00 追加（同日晚間，超越本工單原範圍）**：使用者指示「不要有腳本走一走又送不上去的狀況」→ 新增 `auto_push.py` 統一推送出口
+（範圍紀錄覆蓋／push 重試 3 次／`git ls-remote` 遠端 sha 驗證／`--own` 守門／退出碼分級），13 條路徑＋`safe_update.py`＋`daily_deploy.py`＋`regenerate_report.py` 全改走它；commit `75dd120f`（CIO 重審 APPROVE）＋INC-182。
+**最終驗收（2026-09-14 16:56）**：`PUSH_LANE.log` 近 24h = RECORD×64／TAG×4（4 筆為遷移前殘留）；`closeout_check --quiet` 全部通過；三班 `last_status=ok`；正式環境實跑 `evening_sync`（17s）與 `nightly_dashboard_sync` 皆 rc=0 且「✅ 已推送並驗證遠端 sha」。
+**→ 9/15 原排定的「一次做完」項目已提前完成，明日勿重做。**
 **驗收現況**：`closeout_check` ③ 近 24h = RECORD×27／TAG×4（4 筆 TAG 為遷移前的舊紀錄，24h 後自然歸零）；
 推送閘門 v4.2 實測：4 commit × 2 ref → `PUSH_LANE.log` 只寫 4 行（去重生效）；`closeout_check` 全部通過 ✅
 **本輪額外完成**（原計畫外，因驗收時抓到問題）：post-commit 鏡像解析硬化（INC-177）、鏡像自我驗證（commit ③）、
