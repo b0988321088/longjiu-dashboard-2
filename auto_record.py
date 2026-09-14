@@ -17,7 +17,8 @@
      → 程式/邏輯改動只能走真 CIO 審查，不得由自動化腳本自己落紀錄
   ② 變更的 *.json 必須能 json.loads（防截斷/半寫入的資料上線）
   ③ 變更的 *.html 必須非空且有 </html>（同上）
-  ④ 工作區相對 HEAD 不得有「已追蹤檔」的未提交變更（紀錄要對得上要推的內容）
+  ④ 工作區相對 HEAD 不得有未提交的「已追蹤程式檔」（AUTO 不得替程式變更背書）；
+     未提交的資料/報表檔只記警告（INC-179：紀錄綁的是 commit tree，未提交檔不在推送範圍）
   ⑤ --check 指定的額外檢查（可重複；exit != 0 視為失敗）
 
 界線（不要誤用）：reviewer 記為 AUTO-checker:<script>，只證明「上述結構檢查通過」，
@@ -146,10 +147,32 @@ def main() -> int:
             if len(txt) < 200 or "</html>" not in txt.lower():
                 problems.append(f"{path} 疑似截斷（{len(txt)} bytes、無 </html>）")
 
-    # ④ 工作區乾淨（只看已追蹤檔）
-    st = run(["git", "status", "--porcelain", "--untracked-files=no"], base).stdout.strip()
-    if st:
-        problems.append(f"工作區有未提交的已追蹤變更：{st.splitlines()[0][:60]}")
+    # ④ 工作區（只看已追蹤檔）：程式檔 dirty 一律擋；資料/報表檔 dirty 只記警告
+    #    2026-09-14 INC-179：原實作「任何已追蹤檔 dirty → 拒收」讓 16:15 雷達每天斷推——
+    #    整點 intel_sync（06:00–17:00 每小時）會改寫 hunter_cache/market_intel_*.json 與
+    #    notion_bridge/*_strategy_handbook.md 卻不提交，16:15 radar_push 落紀錄時正好撞上。
+    #    紀錄綁的是「該 commit 的 tree」，未提交的工作區檔案根本不在推送範圍內 → 對資料檔
+    #    不構成背書風險；程式檔仍硬擋（AUTO 不得替程式變更背書）。
+    warnings: list[str] = []
+    dirty_lines = [
+        ln for ln in run(["git", "status", "--porcelain", "--untracked-files=no"], base).stdout.splitlines() if ln.strip()
+    ]
+    dirty_paths: list[str] = []
+    for ln in dirty_lines:
+        for p in ln[3:].strip().split(" -> "):  # 改名/複製同時看舊、新路徑
+            p = p.strip().strip('"')
+            if p:
+                dirty_paths.append(p)
+    dirty_code = sorted({p for p in dirty_paths if CODE_RE.search(p)})
+    dirty_data = sorted({p for p in dirty_paths if not CODE_RE.search(p)})
+    if dirty_code:
+        problems.append(
+            f"工作區有未提交的已追蹤程式檔：{dirty_code[0][:60]}（AUTO 不替程式變更背書，請先 commit/stash）"
+        )
+    if dirty_data:
+        warnings.append(
+            f"他班未提交資料檔 {len(dirty_data)} 個、不在本次推送範圍：{', '.join(dirty_data[:3])}"
+        )
 
     # ⑤ 額外檢查
     for cmd in a.check:
@@ -158,11 +181,18 @@ def main() -> int:
             problems.append(f"檢查失敗（{cmd}）：{(p.stdout + p.stderr).strip()[-160:]}")
 
     summary = (
-        f"auto_record {a.script} | {len(files)} 檔 | builtin(code/json/html/clean)"
+        f"auto_record {a.script} | {len(files)} 檔 | builtin(code/json/html/worktree)"
         f"{f' +{len(a.check)} extra' if a.check else ''} | {dt.datetime.now():%H:%M}"
     )
     if a.note:
         summary += f" | {a.note}"
+    if warnings:
+        summary += " | ⚠️ " + "；".join(warnings)
+
+    if warnings:
+        print("⚠️ auto_record 警告（不阻擋，僅留痕）：")
+        for w in warnings:
+            print(f"   - {w}")
 
     if problems:
         print("❌ auto_record 檢查未通過 → 不落紀錄（push 會被閘門擋下）", file=sys.stderr)

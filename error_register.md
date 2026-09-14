@@ -198,6 +198,29 @@
   ③ 每次審查結束後查三件事：`git branch --show-current` 是否為預期分支、tip 有無被改、
      `git status` 有無 test*/殘檔
 
+## INC-2026-09-14（INC-179）`auto_record` 工作區守門太寬 → 16:15 雷達每個平日斷推
+
+- 時間：2026-09-14 16:15（cron `3ae6b2fa73e8` 機構流向雷達-每日法人）
+- 現象：雷達班次 commit 成功（`d30f0074`）但 `auto_record` 回「工作區有未提交的已追蹤變更：
+  `hunter_cache/market_intel_2026-09-14.json`」→ 不落紀錄 → pre-push 閘門擋下 → 雷達資料沒上線
+- 根因：兩條規則互撞 —— ① INC-159 起 `radar_push.py` 只 commit 自己的檔案（避免掃入無關變更）
+  ② P2 的 `auto_record` 檢查 ④ 要求「整個工作區乾淨」。而整點 `intel_sync`（Mon–Fri 06:00–17:00
+  每小時）會改寫 `hunter_cache/market_intel_*.json` 與 `notion_bridge/*_strategy_handbook.md` 卻
+  不提交 → 16:15 落紀錄時**必定**撞到 dirty 檔 → 每個平日都會斷推（不是偶發）
+- 影響：雷達／行動儀表板資料延遲上線，需人工補推；一般稽核看不出，只有 cron 回報才會發現
+- 處置（`auto_record.py` 檢查 ④ 分流）：未提交的**程式檔**仍硬擋（AUTO 不得替程式變更背書）；
+  未提交的**資料/報表檔**只記警告並寫進 RECORD 備註（紀錄綁的是該 commit 的 tree，未提交檔本來
+  就不在推送範圍內，不構成背書風險），每日通道稽核仍看得到
+- 驗證：`%TEMP%` clone（hooks 停用）三情境實測 —— ①乾淨 → rc0 無警告 ②他班 2 個資料檔 dirty →
+  rc0＋警告入備註 ③程式檔 dirty → rc3 擋下；並在 clone 內實跑 `git push --dry-run`：資料 commit
+  在新邏輯下通過閘門（舊邏輯必擋）
+- check_rule：
+  ① 落紀錄的守門條件只綁「本次推送範圍」（commit tree／變更清單），不得綁「整個工作區」——
+     別班次在同檔期寫檔是常態（整點情報同步、每小時 cron）
+  ② 自動化路徑 dirty 分流：資料檔 → 警告留痕；程式檔 → 硬擋（AUTO 不替程式變更背書）
+  ③ 新增守門條件時先模擬「同時段有其他 cron 在寫檔」的競態（本案例：06:00–17:00 每小時
+     intel_sync × 16:15 radar）
+
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
 | 錯誤類型 | 次數 | 首次 | 最後 | 處置 |

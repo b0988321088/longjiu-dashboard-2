@@ -641,5 +641,11 @@
   "category": "完成",
   "item": "收工閉環：技能修正 13 處（cioreview-sop 7／longjiu-pipeline-governance 3／cron-script-validation 3）＋全息記憶更新＋稽核缺口補提交",
   "detail": "① cioreview-sop：閘門 v4.2（AUTO 不得背書程式／雙 ref 去重／只認主旨行）、RECORD 兩種 reviewer、--commit 單筆落地、--range-base 只寫審查涵蓋者、P2 自動化流程（auto_record 5 檢查／--clean-stage／post-commit 自我驗證）、推送路徑實況、Git 紀律改「不靠標籤」。② longjiu-pipeline-governance：整節『commit message 需 [cioreviewed]』改寫為 v4.2 tree-hash 規則、Push 行為矩陣加通道、pre-run.sh 改 RECORD＋--force-with-lease。③ cron-script-validation：標籤改 RECORD、移除危險指令 git push --force origin main:clean-main、新增 jobs.json 直改持久性探針驗證＋巡檢掃 [cioreviewed]/裸 --force。④ 全息記憶 fact 15/606 更新。⑤ 稽核抓到 hunter_cache＋notion_bridge 未提交 → commit a61f96be 走 RECORD 補上。"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "完成",
+  "item": "INC-179 修復：auto_record 工作區守門分流（他班資料檔 dirty 不再斷推雷達）",
+  "detail": "16:15 雷達被擋後（資料已補推 e310c630）；檢查④改為 程式檔硬擋／資料檔警告留痕；%TEMP% clone 三情境＋push --dry-run 實測"
  }
 ]
