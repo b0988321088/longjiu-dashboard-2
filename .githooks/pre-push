@@ -35,8 +35,10 @@ code_files() {
   local c="$1" nparents files
   nparents=$(git rev-list --parents -n1 "$c" 2>/dev/null | wc -w)
   if [ "${nparents:-0}" -gt 2 ]; then echo "MERGE-COMMIT"; return 0; fi
-  files=$(git diff-tree --no-commit-id --name-only -r "$c" 2>/dev/null)
-  printf '%s\n' "$files" | grep -Ei "$CODE_RE" | head -5
+  # --name-status -M：改名/複製時同時檢查「舊路徑與新路徑」，防「把程式檔改名成 .json 就繞過」
+  git diff-tree --no-commit-id --name-status -M -r "$c" 2>/dev/null \
+    | while IFS=$'\t' read -r _st _p1 _p2; do printf '%s\n' "$_p1" "$_p2"; done \
+    | grep -Ei "$CODE_RE" | head -5
 }
 
 BAD=""

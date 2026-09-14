@@ -11,7 +11,8 @@
 2. 保留並提醒（不自動刪，等使用者裁決）：
    - 過期但 status 有追蹤語意（🔴 重要 / ⏸️ 暫緩 / ⏳ 待 / 🟡 評估 / 📌 / pipeline / 📋 重要 / 空白）
    - 去重：只推「新增」的過期未完成（state 檔比對），同一批不重複吵（8/25 定案：僅狀態切換才推）
-3. 有刪除 → git commit + push 雙分支（PUSH_FORCE_OK 預先核准）；無新增提醒 → 靜默 0 輸出
+3. 有刪除 → git commit + push 雙分支（commit 帶 [cioreviewed]＝v4 閘門的 TAG 通道，只准純資料；
+   逐筆留痕 .git/PUSH_LANE.log）；無新增提醒 → 靜默 0 輸出
 
 用法：
   python scripts/schedule_events_weekly_clean.py          # 正式執行（刪除+commit+push）
@@ -148,15 +149,6 @@ def main():
         if auto_del:
             lines.append(f"\n🧹 已自動清理 {len(auto_del)} 筆過期事件（已完成/純提醒，git 可回溯）")
         print("\n".join(lines))
-
-
-def git_env(op, *args, env=None):
-    import os
-    full_env = dict(os.environ)
-    if env:
-        full_env.update(env)
-    return subprocess.run(["git", op, *args], capture_output=True, text=True,
-                          cwd=str(BASE), timeout=120, env=full_env)
 
 
 if __name__ == "__main__":
