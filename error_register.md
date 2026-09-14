@@ -163,6 +163,25 @@
 - 驗證（實跑三案例，測後還原紀錄檔）：① 只有 `reviewed_tree` 的 JSON + 含未審 commit 的範圍 → 只寫 1 筆、明示略過 `011d5348`、rc=1 ✓ ② JSON 含 `reviewed_range` → 全範圍寫入、rc=0 ✓ ③ 假 sha → 拒寫、rc=2 ✓；`py_compile` 過
 - check_rule：① 落地審查紀錄前先確認「JSON 涵蓋的 commit/tree」與「本次要推的範圍」一致，**範圍比審查結果大就是造假紀錄** ② 工具的便利參數要驗證它的前提假設（「一次寫入整段」的前提是「整段都被審過」）③ 發現紀錄與事實不符時，先撤回紀錄再看閘門行為（撤回後仍被擋＝修對了）
 
+## INC-2026-09-14（INC-177）post-commit 鏡像在 HOME 被污染的環境「靜默同步失敗」（自查自修）
+- 時間：2026-09-14 14:33（我在沙箱內 commit 時觸發）
+- 現象：`FileNotFoundError: ...\Temp\costtest_mk240gtz\AppData\Local\hermes\scripts\update_all.py`
+  —— 鏡像目標被解析到暫存目錄，15 檔硬編碼清單＋全量鏡像**全部沒同步**
+- 根因：`post-commit.py` 用 `Path.home()/\"AppData/Local/hermes/scripts\"` 當目標，而我的
+  Python 沙箱 HOME 指向 Temp；且 hook 內例外只印 traceback，**之後仍 exit 0** → repo 改了、
+  cron 端腳本還是舊的，沒有任何告警（與 9/11「18 檔靜默漂移」同一個病灶）
+- 影響：當天剛改的 4 支腳本（radar_push/radar_weekly/nightly_dashboard_sync/investment_perf_monthly）
+  沒進鏡像，若沒比對到，cron 會繼續跑舊版邏輯
+- 處置（commit `80bc1fd7`）：`_hermes_dir()` 多來源解析（HERMES_HOME → USERPROFILE → HOME →
+  固定路徑 → Path.home()，取第一個真的存在的）；全不存在 → 印錯誤 **exit 1**；decision-trail
+  目錄同步改用同一解析；硬編碼清單補入 `auto_record.py`／`cio_approve.py`
+- 驗證：`env -u USERPROFILE HOME=/tmp/bogus_home git commit` 實跑 → 正確解析並完成鏡像
+  （17 scripts, +4 全量修正）、無 traceback
+- check_rule：
+  ① 同步/鏡像/部署類 hook 不得只依賴單一環境變數推導目標路徑（HOME 會被沙箱、CI、排程器換掉）
+  ② hook 內的例外一律不得「印完 traceback 就 exit 0」——沒同步＝靜默漂移，必須非零碼或有告警
+  ③ 沙箱（execute_code）與終端（terminal）的 HOME/USERPROFILE 可能不同 → **會動 git 的動作走 terminal**
+
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
 | 錯誤類型 | 次數 | 首次 | 最後 | 處置 |

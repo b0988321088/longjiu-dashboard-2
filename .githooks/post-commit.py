@@ -91,6 +91,38 @@ for src in sorted(BASE.glob("*.py")):
 
 print(f"  🔁 auto-sync: {ok} scripts -> hermes/scripts/ (+{mirrored} 全量鏡像修正)")
 
+# ③ 自我驗證（2026-09-14）：複製完「讀回來比對」，不一致就大聲失敗。
+#    實測踩過：commit 當下的複製沒有真的落地（5 支腳本在鏡像仍是舊內容，原因未明；
+#    手動重跑 hook 才同步）→ 若沒人比對就會靜默漂移，cron 端跑舊版邏輯（與 9/11 同病灶）。
+#    ⚠️ 這裡 exit 1 會讓 git commit 回非零碼（commit 本身已完成）→ 呼叫端會視為失敗而不推送，
+#       這是刻意的：鏡像沒同步 = cron 會跑錯版本，寧可中斷也要讓人看到。
+_marker = BASE / ".git" / "MIRROR_SYNC_FAILED"
+bad: list[str] = []
+for _name in sorted({*SCRIPTS, *(p.name for p in BASE.glob("*.py"))}):
+    _src = BASE / _name
+    _dst = TARGET / _name
+    if not _src.exists() or not _dst.exists() or _is_forwarder(_dst):
+        continue
+    try:
+        if _src.read_bytes() != _dst.read_bytes():
+            bad.append(_name)
+    except Exception:
+        bad.append(_name)
+if bad:
+    try:
+        _marker.write_text(
+            f"{__import__('datetime').datetime.now().isoformat()} 未同步（{len(bad)}）：{', '.join(bad[:10])}\n",
+            encoding="utf-8",
+        )
+    except Exception:
+        pass
+    print(f"  ❌ 鏡像自我驗證失敗：{len(bad)} 支內容不一致 → {', '.join(bad[:6])}")
+    print(f"     → 已寫入 {_marker.name}；cron 端可能仍是舊版邏輯，請查鏡像目標與權限")
+    sys.exit(1)
+if _marker.exists():
+    _marker.unlink()
+print(f"  ✅ 鏡像自我驗證通過（{len(SCRIPTS)} 硬編碼清單 + 同名檔逐位元比對）")
+
 # 決策軌跡自動化（2026-09-02 CIO 風險2）：[cioreviewed] commit 同步寫入 trail
 try:
     _msg = subprocess.run(
