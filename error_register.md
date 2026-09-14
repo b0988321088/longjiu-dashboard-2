@@ -253,6 +253,25 @@
   ③ 只印 stdout 的警告＝沒有警告（cron 的 stdout 沒人翻）→ 必須落到稽核會讀的檔案
   ④ 語意變更後把引用它的註解/文件一起改，否則下一個 agent 會照舊敘述寫錯
 
+## INC-2026-09-14（INC-181）`.gitignore` 漏 stage → 清潔規則沒上線（驗證看工作區、不是看 commit）
+
+- 時間：2026-09-14 16:33（潔癖 commit `d776e57a` 之後自查）
+- 現象：`d776e57a` 只含 88 個 untrack 刪除，**不含 `.gitignore` 的 6 行規則** → 推上線後
+  `git show origin/clean-main:.gitignore` 搜 `bak-`／`llm_archive` = 0 → 規則等於沒生效，
+  未來 `git add -A` 照樣會把 `*.bak-*` 掃進 commit
+- 根因：`git rm --cached` 有進 staging，但 patch 工具改的 `.gitignore` 沒 `git add` →
+  `git commit`（不帶 `-a`）只提交已 staged 的內容
+- 為什麼自己的驗證沒抓到：驗證指令 `git add -A -n`（空＝不會再掃進）是對**工作區**跑的——
+  工作區的 `.gitignore` 已有規則所以通過，但**已提交/遠端**的版本沒有規則。**驗證對象錯了**
+- 處置：補一顆 `600611d4`（只含 `.gitignore`，走真 CIO 審查）＋複驗改看 `git show HEAD:.gitignore`
+- check_rule：
+  ① 驗「某個檔案/規則是否生效」要看 `git show HEAD:<file>`（或 `git ls-tree`），不要看工作區
+     ——工作區有你剛改的東西，commit 不一定有
+  ② 改完檔一律 `git add` 再 commit（`git commit` 不帶 `-a` 不會帶走未 staged 的修改）；
+     commit 前先看一遍 `git status` 的 staged 清單，不要只看有沒有「M」
+  ③ 交付前複驗「遠端 tree」而非「本機狀態」：
+     `git ls-tree -r --name-only origin/<branch> | grep <pattern>`
+
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
 | 錯誤類型 | 次數 | 首次 | 最後 | 處置 |

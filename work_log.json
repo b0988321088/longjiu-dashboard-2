@@ -653,5 +653,11 @@
   "category": "完成",
   "item": "檢討並修復 INC-180：auto_record ④ 改為只警告＋新增 --own 產出守門＋AUTO_WARN.log 稽核（--clean-stage 7 條路徑不再斷推）",
   "detail": "clone 8 情境實測（程式檔 dirty 情境舊版 rc3→新版 rc0）＋閘門實跑；closeout_check 新增第 5 步；radar_push 加 --own；5 處下游註解同步"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "完成",
+  "item": "潔癖：.gitignore 排除工具備份／LLM 快取＋untrack 88 檔；補 INC-181（.gitignore 漏 stage）",
+  "detail": "d776e57a（88 刪除，已推）＋600611d4（補 6 行規則，走真 CIO 審查）；clone 實測規則在 committed 狀態生效、正常檔不被誤擋"
  }
 ]
