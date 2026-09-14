@@ -677,5 +677,11 @@
   "category": "完成",
   "item": "CIO 18:30 復盤查核：3 項『不能拖』逐條實證 — 決策狀態回收（DS 儲值閉環）／9/16 FOMC 判準寫死／240萬押標金紀錄一致性；另更正 CIO 兩處失準（P2 已提前完成、投資面非零動作）",
   "detail": "① 狀態漂移真因＝dashboard_decisions.json 內嵌 pending（CIO Part A 的輸入）未回收；standalone pending_decisions.json 14:30 已結案 → 已回收並加註【最終值】。② FOMC 判準系統早已寫死：us30y_monitor.py RED_LINE=5.30 連2交易日→債券新增永久凍結（red_line_since 9/10、last_rate 5.354）、市值線需連3日<5.20 才解凍；補『9/16 落點→動作』4 種對照進 pending 升息警戒。③ 押標金240萬紀錄內部一致（不預留、9月底評估）：540萬清償500萬後餘40萬 → 實際缺口200萬（扣9/14真值可動現金88.6萬）。④ 通道稽核實證：PUSH_LANE.log 今日 66 RECORD／4 TAG，4筆TAG皆在 auto_push 16:51 遷移前；遷移後 100% RECORD、零 REFUSED/OWN-DIRTY。⑤ 新增稽核第9類『決策狀態一致』（commit 2308c32f）防再漂移。"
+ },
+ {
+  "date": "2026-09-14",
+  "category": "修正",
+  "item": "INC-183：regenerate_report.py 推送改用 auto_push 預設「落 RECORD」（原 --record skip 沒人補位 → 07:00 產出卻不部署）",
+  "detail": "重產日報時實測：本地 CIO 規則檢查全過、commit 成功，但推送重試 3 次後 rc=4 失敗，畫面只印「未推送上線」。根因：腳本傳 --record skip，卻沒有任何地方替該 commit 落紀錄（cio_review.py 只是本地規則檢查、不寫 CIO_APPROVED；cio_approve 全檔未被呼叫；舊版靠 [cioreviewed] 標籤，v4.2 收掉標籤後就沒人補位）。before/after 對照：同一顆 f25b8cd4 未落紀錄→rc=4；補 auto_record 後同一顆立刻推送成功並通過 ls-remote 驗證。修法：拿掉 --record skip 走預設 auto（含程式檔的 commit 一律拒推＝fail-closed），auto_push.py docstring 同步更正，error_register 登記 INC-183。"
  }
 ]

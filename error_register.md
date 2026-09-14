@@ -288,6 +288,23 @@
   ② 「clone 內整段範圍未落紀錄」是環境事實，不是缺陷；
   ③ 被 REJECT 的 tree 一律改寫重審（本次以 `--amend` 產生新 SHA）。
 
+## INC-2026-09-14（INC-183）`regenerate_report.py` 用 `--record skip` 卻沒人補位 → 07:00 產出完成但不部署
+
+- 現象：手動重產日報時，本地 CIO 規則檢查全過、commit 成功，但推送失敗（auto_push 重試 3 次後 rc=4），
+  而腳本只印一句 ⚠️「未推送上線」→ **cron 看起來像跑完**。
+- 根因：`regenerate_report.py` 呼叫 `auto_push.py ... --record skip`，但**檔案內沒有任何地方替這顆 commit 落紀錄**：
+  ① 註解聲稱「已由真 CIO 審查（cio_review.py + cio_approve）負責」——實際上 `cio_review.py` 只是本地規則檢查、
+  不寫 `CIO_APPROVED`；`cio_approve.py` 在全檔從未被呼叫。
+  ② 舊版是靠 commit message 的 `[cioreviewed]` 標籤走 TAG 通道；2026-09-14 的 v4.2 遷移把此路徑的標籤拿掉、
+  同時加上 `--record skip`，於是「標籤沒了、紀錄也沒人寫」＝閘門必然擋下（與 INC-182 同類：走了卻送不上去）。
+- 修法：改走預設 `--record auto`（拿掉 `--record skip`），由 `auto_push → auto_record` 的 deterministic 檢查把關；
+  範圍內含程式檔一律拒推（exit 3）＝fail-closed。`auto_push.py` docstring 的用法示例同步更正。
+- 實測（before/after 對照，同一顆 commit `f25b8cd4`）：未落紀錄 → 推送失敗 rc=4；補 `auto_record.py --script regenerate_report.py --commit` 後 → 同一顆立刻推送成功並通過 `git ls-remote` 遠端 sha 驗證。
+- check_rule：
+  ① 呼叫 `auto_push.py` 時，**除非呼叫端自己已經落了紀錄**（例如 `daily_deploy` 走完真 CIO 審查），否則不要傳 `--record skip`；
+  ② 看到「產出檢查 ✅ / 推送 ⚠️ 未推送上線」要當**失敗**處理，不是完成；
+  ③ 排程路徑（`morning_deploy.py` 07:00）的推送結果要看 `AUTO_PUSH.log` 的 rc 與遠端 sha，不看 stdout 有沒有跑完。
+
 ## 三、自動登記噪音彙總（2026-07-30 ~ 2026-09-12，已不再逐筆追蹤）
 
 | 錯誤類型 | 次數 | 首次 | 最後 | 處置 |
