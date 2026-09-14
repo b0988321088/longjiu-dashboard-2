@@ -150,6 +150,13 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     out = BASE / f"rebalance_summary_{TODAY}.md"
     out.write_text("\n".join(lines), encoding="utf-8")
     print(f"✅ 再平衡評估已產出: {out}")
+    # 2026-09-14：同步產出手機可讀 HTML（主儀表板「📌 再平衡評估」按鈕 glob rebalance_eval_*.html
+    # 原本無產生器 → 永遠停在 9/5）。md 仍是唯一真值，HTML 由它重生成。
+    try:
+        import build_rebalance_eval_html as _beh
+        _beh.build(TODAY)
+    except Exception as _e:
+        print(f"⚠️ 再平衡評估 HTML 產生失敗（md 已產出，不影響管線）: {_e}")
     return out
 
 def main():
