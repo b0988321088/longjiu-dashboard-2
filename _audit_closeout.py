@@ -63,8 +63,15 @@ h = json.loads((R / "asset_diff_history.json").read_text(encoding="utf-8"))
 db = sqlite3.connect(R / "dragon_assets.db")
 T, T_fallback = resolve_T(db)
 print(f"  基準日 T = {T}" + ("（今日尚未落庫 → 退回最新已落庫日）" if T_fallback else ""))
-d13 = db.execute("select total_assets,total_liabilities from assets where date=?", (T,)).fetchone()
-l13 = db.execute("select total_liabilities,credit_card from liabilities where date=?", (T,)).fetchone()
+d13 = db.execute("select total_assets,total_liabilities from assets where date=?", (T,)).fetchone() or (None, None)
+# 2026-09-15：DB liabilities 只在「負債有變動」的日子落列（唯一寫入入口 asset_sync.py --rebuild-liabilities）。
+# 當天沒有新列時，原本 `l13[0]` 會 TypeError 中斷整份稽核 → 只吐 traceback、沒有結論行（收工檢查變靜默假失敗）。
+# 改為取「≤T 的最新一列」當基準（語意正確：負債當日未變動＝沿用上次落庫值），並在完全查無列時以 fail 回報而非崩潰。
+_lt_row = db.execute("select date from liabilities where date<=? order by date desc limit 1", (T,)).fetchone()
+L_SRC = _lt_row[0] if _lt_row else None
+l13 = (db.execute("select total_liabilities,credit_card from liabilities where date=?", (L_SRC,)).fetchone()
+       if L_SRC else None)
+print(f"  DB 負債基準列 = {L_SRC or '（查無任何列）'}" + ("" if L_SRC == T else f"（T={T} 當日未變動 → 沿用最近落庫列）"))
 # 歷史列未被污染：兩表所有「同日都有列」的日期，總負債必須相同
 # （原寫死 9/12/30160643 單日值 → 2026-09-14 改為全歷史動態；liabilities 表本來就只在變動日落列）
 hist_days = db.execute("select count(*) from liabilities l join assets a on a.date=l.date").fetchone()[0]
@@ -80,10 +87,11 @@ _rec = int(s["receivables_total"])
 _bup = s["liabilities_build_up"]
 _bd = (s.get("receivables_breakdown") or {})["女友借款"]
 checks = [
-    ("snapshot 負債 = DB assets = DB liabilities", s["total_liabilities"] == int(d13[1]) == l13[0]),
+    (f"snapshot 負債 = DB assets = DB liabilities（DB 負債列 = {L_SRC or '無'}）",
+     bool(l13) and d13[1] is not None and s["total_liabilities"] == int(d13[1]) == l13[0]),
     ("snapshot 負債 = 日報 HTML", f"{s['total_liabilities']:,}" in html),
     ("snapshot 淨值 = asset_diff_history", int(h[T]["net_worth"]) == s["net_worth"]),
-    (f"信用卡當期未繳三源一致（{_cc:,}）", _cc == l13[1] == _bup["信用卡_當期未繳_全額扣繳"]),
+    (f"信用卡當期未繳三源一致（{_cc:,}）", bool(l13) and _cc == l13[1] == _bup["信用卡_當期未繳_全額扣繳"]),
     (f"歷史列未被污染（{hist_days} 個重疊日 assets = liabilities）", hist_days > 0 and not hist_bad),
     (f"應收款備忘可重建（{_rec:,}）", _rec == s["receivables"]["女友借款"] == _bd["本金"] + _bd["未收利息"]),
     ("負債拆解可完全解釋", sum([_bup["房貸_含國泰"],
