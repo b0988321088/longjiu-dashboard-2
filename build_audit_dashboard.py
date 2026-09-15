@@ -170,9 +170,9 @@ rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W
 <div style="flex:1;min-width:340px;background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
 <h3 style="font-size:14px;font-weight:800;margin:0 0 8px">🗓️ 下週行動建議</h3>
 <ol style="font-size:13px;line-height:1.95;margin:0;padding-left:20px;color:#1d1d1f">
-<li><b>8/25（二）T+2 入帳確認</b>：聯博 100萬 + MMF 500萬 入帳 → 四源同步（現金 800,272 → 基金 12,801,239）</li>
+<li><b>8/25（二）T+2 入帳確認（歷史）</b>：聯博 100萬 + 台幣貨基 500萬 入帳 → 四源同步（現金 800,272 → 基金 12,801,239）｜後續：該 500 萬 9/9 贖回、9/11 轉申購貝萊德 B11（質押擔保池）</li>
 <li><b>質押（動態）</b>：{_pf.pledge_status_line()}</li>
-<li>MMF 剩餘 ~369萬 → 依「累積型優先」原則轉配置（006208/0050 台幣 + 全球累積 ETF）＋補債券缺口（00983D）→ 壓回美元曝險 &lt;60%</li>
+<li>⛔ 原「MMF 剩餘 ~369萬 轉配置」已作廢（MMF 9/9 贖回、9/11 轉申購 B11）→ 現行補充資金＝現金流滾存＋9 月底評估押標金來源</li>
 </ol></div></div>
 
 <div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08)">

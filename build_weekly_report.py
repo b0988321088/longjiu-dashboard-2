@@ -124,7 +124,7 @@ def main():
 
     # ===== 九、債務時程 =====
     debt_chain = """<table><thead><tr><th>時程</th><th>事件</th><th>狀態</th></tr></thead><tbody>
-    <tr><td><b>8/20</b></td><td>國泰 1,200萬 撥款入帳 → 8/20 定案（富達600萬+MMF600萬）</td><td>✅ 已入帳</td></tr>
+    <tr><td><b>8/20</b></td><td>國泰 1,200萬 撥款入帳 → 8/20 定案（富達600萬＋台幣貨基500萬；⛔ 原記「MMF600萬」已更正）</td><td>✅ 已入帳</td></tr>
     <tr><td>2026-09-11（五）</td><td>申購貝萊德 B11 500萬（MMF 贖回款轉入，<b>未質押</b>）</td><td>✅ 申購完成</td></tr>
     <tr><td>{_pf.pledge_facts()['撥款預估日']}</td><td>{_pf.pledge_status_line(style='card')}</td><td>⏳</td></tr>
     <tr><td>9-10月</td><td>PI 資格送件（資產 3,000萬 盤點）</td><td>⏳</td></tr>
