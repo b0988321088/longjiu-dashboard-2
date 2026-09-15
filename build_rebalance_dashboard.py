@@ -5,6 +5,7 @@
 輸出：rebalance_dashboard_{date}.html
 """
 import json
+import re
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
 from datetime import date
 from pathlib import Path
@@ -18,6 +19,63 @@ def load(p, default=None):
         return json.loads((BASE / p).read_text(encoding="utf-8"))
     except Exception:
         return default if default is not None else {}
+
+def milestones_next(maxn=6):
+    """里程碑時程＝未來事件，讀 schedule_events.json（單一真值）。
+
+    2026-09-15：原寫死「8/24 保單轉換」「8/31 安聯B 贖回」「9/11 質押」「9月中」「10月」等
+    固定日期字串 → 八月事件過了還天天印在儀表板上。改為動態：同日只取一筆（優先 high），
+    依日期排序取前 maxn 天。
+    """
+    evs = load("schedule_events.json", [])
+    if not isinstance(evs, list):
+        return []
+    def _is_high(e):
+        imp = str(e.get("importance") or "")
+        st = str(e.get("status") or "")
+        return imp == "high" or st.startswith(("🔴", "⏳")) or "重要" in st
+    by_day = {}
+    for e in evs:
+        d = str(e.get("date") or "")[:10]
+        if not d or d < TODAY or not e.get("item"):
+            continue
+        if str(e.get("status") or "").startswith("✅"):
+            continue  # 已完成/已結案項目不列里程碑
+        rank = 0 if _is_high(e) else 1
+        if d not in by_day or rank < by_day[d][0]:
+            by_day[d] = (rank, e)
+    out = []
+    for d in sorted(by_day)[:maxn]:
+        rank, e = by_day[d]
+        try:
+            dt = date.fromisoformat(d)
+            lbl = f"{dt.month}/{dt.day}（{'一二三四五六日'[dt.weekday()]}）"
+        except Exception:
+            lbl = d
+        txt = str(e.get("item")).strip()
+        if len(txt) > 78:
+            txt = txt[:77] + "…"
+        out.append((lbl, txt, "high" if rank == 0 else "mid"))
+    return out
+
+def dry_alloc():
+    """乾粉分配表（讀 snapshot.乾粉執行_0926.分配表，禁止寫死金額）。
+
+    回傳 [(標的, 小計原始字串, 數值)]；「12-24萬」取上緣 24萬＝240000，供長條圖比例使用。
+    """
+    rows = (load("snapshot.json", {}) or {}).get("乾粉執行_0926", {}).get("分配表") or []
+    out = []
+    for r in rows:
+        name = str(r.get("標的") or "").strip()
+        amt = str(r.get("小計") or "").strip()
+        if not name:
+            continue
+        nums = [int(x) for x in re.findall(r"\d+", amt.replace(",", ""))] if amt else []
+        val = max(nums) if nums else 0
+        if "萬" in amt:
+            val *= 10000
+        out.append((name, amt or "—", val))
+    return out
 
 GICS_COLORS = {
     "資訊科技": "#3b82f6", "金融": "#22c55e", "醫療保健": "#f43f5e", "核心消費": "#f59e0b",
@@ -125,7 +183,9 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
         pass
 
     lines += ["", "## 六、乾粉與風險紅線", ""]
-    lines.append(f"- 當前乾粉：{dry_cur:,}（現金 − 70萬底線）｜9月：台股 12-24萬分批 + 黃金 131萬預留（PI後）＋ 石油 0（Locked）＋ 債券 0（等利率）")
+    _al_rows = dry_alloc()
+    _al_txt = "｜".join(f"{_n} {_a}" for _n, _a, _v in _al_rows) if _al_rows else "（snapshot 無乾粉分配表）"
+    lines.append(f"- 當前乾粉：{dry_cur:,}（現金 − 70萬底線）｜{_al_txt}")
     for name, val, limit, triggered in [
         ("US30Y", f"{us30y:.2f}%" if us30y else "—", "≥5.30%", us30y and us30y >= 5.30),
         ("美元曝險", f"{usd_pct:.0f}%", "紅線 60%", usd_pct > 60),
@@ -136,12 +196,12 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
         lines.append(f"- {name} {val}（{limit}）：{st}")
 
     lines += ["", "## 七、里程碑時程", ""]
-    for d, t2, lv in [("8/24（一）", "保單轉換 300萬 決策（科技→債，T+4 截止）", "high"),
-                      ("8/31", "安聯B 贖回（補現金 + 抵借款 100萬）", "mid"),
-                      ("9/11", f"整池質押 {_pf.pledge_status_line(style='short')}", "high"),
-                      ("9月中", "富達/聯博首次配息入帳 → 更新配息基準", "mid"),
-                      ("10月", "洲際W 轉貸國泰（要求全額吸收規費）＋ 標案", "mid")]:
+    _ms_rows = milestones_next(6)
+    for d, t2, _lv in _ms_rows:
         lines.append(f"- {d}：{t2}")
+    if not _ms_rows:
+        lines.append("- （schedule_events.json 無未來事件）")
+    lines.append(f"- 整池質押：{_pf.pledge_status_line(style='short')}")
 
     _act_rows = [(_r.get("類別") or "").strip() for _r in (plan_rows or []) if (_r.get("動作") or "").startswith("🟢")]
     _concat = "、".join(_act_rows) if _act_rows else "無（全數按兵不動，等質押撥款）"
@@ -466,19 +526,15 @@ def main():
     except Exception:
         emg_html = ""
 
-    # ── 里程碑（8/22：8/24 轉換讀 snapshot 確認版）──
-    _p24 = s.get("cathay_disbursement", {}).get("plan_0820_final", {}).get("再平衡組合_聯博", {}).get("保單轉換_確認版_0822", {})
-    _p24_txt = "保單轉換 300萬 執行（" + " + ".join(f"{k.split(' ')[0]} {v//10000}萬" for k, v in (_p24.get("標的", {}) or {}).items()) + "）" if _p24.get("標的") else "保單轉換 300萬 決策（科技→債，T+4 截止）"
-    milestones = [
-        ("8/24（一）", _p24_txt, "high"),
-        ("8/31", "安聯B 贖回（補現金 + 抵借款 100萬）", "mid"),
-        ("9/11", f"整池質押 {_pf.pledge_status_line(style='short')}", "high"),
-        ("9月中", "富達/聯博首次配息 → 更新配息基準", "mid"),
-        ("10月", "洲際W 轉貸國泰（要求全額吸收規費）＋ 標案", "mid")]
+    # ── 里程碑（2026-09-15：改讀 schedule_events.json 動態，原寫死 8/24、8/31、9/11、9月中、10月）──
+    milestones = milestones_next(6)
+    milestones.append(("質押", f"整池質押 {_pf.pledge_status_line(style='short')}", "high"))
     ms_html = ""
     for d, t, lv in milestones:
         cls = "ms-high" if lv == "high" else "ms-mid"
         ms_html += f"<div class='ms {cls}'><span class='ms-date'>{d}</span><span class='ms-txt'>{t}</span></div>"
+    if not ms_html:
+        ms_html = "<div class='ms ms-mid'><span class='ms-txt'>（schedule_events.json 無未來事件）</span></div>"
 
     # ── 質押 LTV 真值（2026-09-15 INC-187）──
     # sot-exempt：原寫死「完成後 20.4% / 安全值 35%」＝8 月預估值＋已退役舊門檻（引述用，非生效值）。
@@ -508,6 +564,22 @@ def main():
     for name, val, limit, triggered in risks:
         st = "🔴 觸發" if triggered else "🟢 安全"
         risk_rows += f"<tr><td>{name}</td><td class='num'>{val}</td><td class='num'>{limit}</td><td>{st}</td></tr>"
+
+    # ── 乾粉分配長條圖（2026-09-15：改讀 snapshot.乾粉執行_0926.分配表；原寫死
+    #    「9月新增：月盈餘 6-11萬 + 台幣配息 + 8/31 贖回超底線部分」＝八月底舊敘述，早就不成立）──
+    _al = dry_alloc()
+    _al_tot = sum(v for _n, _a, v in _al) or 0
+    _palette = ["var(--blu)", "var(--yel)", "var(--red)", "var(--sub)"]
+    _drybar_html = ""
+    _al_note_html = ""
+    for _i, (_n, _a, _v) in enumerate(_al):
+        _w = round(_v / _al_tot * 100) if _al_tot else 0
+        _short = _n.split()[0] if _n.split() else _n
+        _drybar_html += f"      <div style=\"width:{_w}%;background:{_palette[_i % len(_palette)]}\">{_short} {_a}</div>\n"
+        _al_note_html += f"      {_n} {_a}<br>\n"
+    if not _drybar_html:
+        _drybar_html = "      <div style=\"width:100%;background:var(--sub)\">（snapshot 無乾粉分配表）</div>\n"
+        _al_note_html = "      （snapshot 無乾粉分配表）<br>\n"
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-TW"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -587,17 +659,12 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
 </div>
 
 <div class="grid" style="margin-top:14px">
-  <div class="card"><h2>💰 9月台幣乾粉分配</h2>
+  <div class="card"><h2>💰 台幣乾粉分配</h2>
     <div class="drybar">
-      <div style="width:38%;background:var(--blu)">台股 12-24萬</div>
-      <div style="width:55%;background:var(--yel)">黃金 131萬（PI後）</div>
-      <div style="width:0%;background:var(--red)"></div>
-      <div style="width:7%;background:var(--sub)">其他</div>
-    </div>
+{_drybar_html}    </div>
     <div style="font-size:12px;color:#cbd5e1;line-height:1.7">
-      當前乾粉 <b>{dry_cur:,}</b>（現金 − 70萬底線）｜9月新增：月盈餘 6-11萬 + 台幣配息 + 8/31 贖回超底線部分<br>
-      石油 🔴 Locked（0）｜債券 ⏸ 等質押+US30Y&lt;5.30%（0）
-    </div>
+      當前乾粉 <b>{dry_cur:,}</b>（現金 − 70萬底線）｜分配表＝snapshot.乾粉執行_0926（單一真值）<br>
+{_al_note_html}    </div>
   </div>
   <div class="card"><h2>🛡️ 質押 / 風險紅線</h2>
     <div style="font-size:12.5px;color:#cbd5e1;margin-bottom:8px">📌 {ltv_txt}</div>

@@ -549,7 +549,11 @@ def main():
     # 待入帳段
     _pend2 = []
     if salary <= 0:
-        _pend2.append(("台電薪水", snap.get("monthly_salary", 39727) or 39727, "9/6 入帳"))
+        # 2026-09-15：原 fallback 寫死 39,727（8 月值）→ 改讀 snapshot.monthly_salary；
+        # 缺值顯示「金額待確認」而非舊薪資
+        _sal_pend = int(snap.get("monthly_salary") or 0)
+        _sal_lbl = "本月入帳" if _sal_pend > 0 else "金額待確認（snapshot.monthly_salary 缺失）"
+        _pend2.append(("台電薪水", _sal_pend, _sal_lbl))
     if _gf_inc <= 0:
         _pend2.append(("女友還款", 6000, "9/5 入帳"))
     for _k4, _v4 in (snap.get("rent_breakdown", {}) or {}).items():

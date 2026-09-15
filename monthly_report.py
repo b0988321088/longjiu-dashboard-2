@@ -44,7 +44,11 @@ def main():
     ins_div = mdb.get("allianz", 0) + mdb.get("firstjin", 0)
 
     # 現金流審查變數（2026-08-24 新增：實際 = snapshot 真值口徑）
-    _sal = snap.get("salary", 39727) or 39727
+    # 2026-09-15：薪資改讀 snapshot（原 fallback 寫死 39,727 為 8 月值，9 月常態調薪 42,560；
+    # 缺值一律 0＋警告，不用歷史常數代替 → 避免靜默顯示舊薪資）
+    _sal = int(snap.get("salary") or snap.get("monthly_salary") or 0)
+    if _sal <= 0:
+        print("⚠️ snapshot.salary / monthly_salary 缺失 — 月報薪資欄位將為 0，請先更新 snapshot")
     _rent_got = sum(v for d, items in (snap.get("rent_received_records", {}) or {}).items() if str(d).startswith(ym) for v in (items.values() if isinstance(items, dict) else [items]))
     _div_act = sum(v for k, v in (snap.get("dividend_records", {}) or {}).items() if str(k).startswith(ym) for v in (v.values() if isinstance(v, dict) else [v])) or snap.get("dividend_month_actual", 0) or 0
     _gf = 0
@@ -53,7 +57,7 @@ def main():
             _gf += _v.get("amount", 0) if isinstance(_v, dict) else (_v if isinstance(_v, (int, float)) else 0)
     _expense = snap.get("monthly_expense", 162781) or 162781
     _rent_exp = snap.get("rent_monthly_total", 80100) or 80100
-    _sal_exp, _div_exp = 39727, 100000
+    _sal_exp, _div_exp = _sal, int(snap.get("dividend_month_expected") or 0)
     _exp_total = _sal_exp + _rent_exp + _div_exp + 6000
     _act_total = _sal + _rent_got + _div_act + _gf
     _passive_act = _div_act + _rent_got
