@@ -941,5 +941,11 @@
   "category": "完成",
   "item": "watchdog v6.15（INC-194）：失敗訊號路徑加寬限窗 — CER 後不再 16 秒腰斬備援回覆",
   "detail": "FAIL_GRACE_SEC=120／GRACE_MAX_DEFERS=2；沙箱 93 檢查全 PASS（+AF 誤殺重現/AG 逾窗仍重置/AH 寬限上限/AI 極新+備援完成只 ⚠️）；真實 log 重播 A/B 對照（v6.14 spawn+🚨 vs v6.15 靜默）；dry-run 靜默 exit 0；備份 .bak-20260916-v614；技能與 §19c 同步"
+ },
+ {
+  "date": "2026-09-16",
+  "category": "完成",
+  "item": "儀表板/日報推送閉環：6 顆 commit 經 CIO 審查後推雙分支，線上與 HEAD 位元一致",
+  "detail": "CIO-Gemini 真審 4 顆含程式檔 commit（build_dashboard 例外防護／cleanup_utils／report_utils 模組化／穿透 SoT+watchdog）全 APPROVE → cio_approve 落 RECORD；2 顆資料 commit 走 [cioreviewed] 標籤通道。閘門 v4 dry-run 6 顆全過 → auto_push 推送並驗證遠端 sha 78c431f8（clean-main＋main）。推送前抓到並還原：INC-195（重產時行情抓失敗→空值覆蓋已上線正確值）、誤刪的 schedule_events_weekly_clean.py（週日 08:00 cron 仍在呼叫）。線上 6 頁全 200 且與 HEAD 位元一致（index/daily_report/asset_diff/penetration/rebalance/weekly_review）。"
  }
 ]
