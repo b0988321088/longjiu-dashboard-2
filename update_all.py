@@ -252,9 +252,39 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     c = total - (tw + us + def_v + bond_v + _fund_gold + _fund_health) # 從總資產中扣除
     us_tech = _fund_us_tech + ins_tech + sec_us_tech - round(_sat_tech)
     us_non_tech = us - us_tech
+    _sot_bt = (snap.get("thresholds_2026_0915") or {}).get("桶目標_pct") or {}
+    _targets = {
+        "台股市值型": _sot_bt.get("台股市值型", 10),
+        "美股市值型": _sot_bt.get("美股市值型", 30),
+        "配息型": _sot_bt.get("配息型", 20),
+        "債券型": _sot_bt.get("債券型", 25),
+        "現金": _sot_bt.get("現金", 5),
+        "科技曝險目標": _sot_bt.get("科技", 20),
+    }
+    _actual_pct = {
+        "台股市值型成長": round(tw / total * 100, 1),
+        "美股市值型成長": round(us / total * 100, 1),
+        "防守型配息": round(def_v / total * 100, 1),
+        "債券": round(bond_v / total * 100, 1),
+        "現金/安全網": round(c / total * 100, 1),
+        "美股市值型成長_科技": round(us_tech / total * 100, 1),
+        "美股市值型成長_非科技": round(us_non_tech / total * 100, 1),
+    }
+    _gaps = {
+        "台股市值型成長": round(_actual_pct["台股市值型成長"] - _targets["台股市值型"], 1),
+        "美股市值型成長": round(_actual_pct["美股市值型成長"] - _targets["美股市值型"], 1),
+        "防守型配息": round(_actual_pct["防守型配息"] - _targets["配息型"], 1),
+        "債券": round(_actual_pct["債券"] - _targets["債券型"], 1),
+        "債券及安全現金": round(_actual_pct["債券"] + _actual_pct["現金/安全網"] - _targets["債券型"] - _targets["現金"], 1),
+        "科技曝險": round(_actual_pct.get("美股市值型成長_科技", 0) - _targets["科技曝險目標"], 1),
+    }
+    _alert = "；".join(f"{_k} {'超標' if _v > 0 else '不足'}{abs(_v)}pp"
+                          for _k, _v in _gaps.items() if abs(_v) >= 1.5) or "各桶均在容忍範圍"
+
     return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": def_v, "債券": bond_v, "現金/安全網": c,
             "黃金": round(_fund_gold), "健康": round(_fund_health),
             "美股市值型成長_科技": round(us_tech), "美股市值型成長_非科技": round(us_non_tech),
+            "alert": _alert,
             "_meta": {"ins_eq": ins_eq, "fund_us": _fund_us, "fund_def": _fund_def,
                       "sec_tw": sec_tw, "sec_us": sec_us, "sec_def": sec_def, "sec_bond": sec_bond,
                       "us_tech": round(us_tech), "us_non_tech": round(us_non_tech)}}
