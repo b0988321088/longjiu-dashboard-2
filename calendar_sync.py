@@ -234,7 +234,15 @@ def sync():
             _existing_norm = {_norm(e.get("item")) for e in _existing}
             _existing_raw = [str(e.get("item")) for e in _existing]
             _added = 0
+            _skipped_past = 0
+            _today = date.today().isoformat()
             for _ev in _pulled:
+                # 2026-09-15：過期的手動事件不再合併回 schedule_events.json
+                # （否則每週清理刪掉、這裡又拉回來，使用者：「已經過期的事件一直放著沒有意思」）
+                # Google 日曆上的原始事件不刪，只是不再灌回系統真值。
+                if str(_ev.get("date", ""))[:10] < _today:
+                    _skipped_past += 1
+                    continue
                 _ev_norm = _norm(_ev["item"])
                 # 子字串包含比對（用原始 item 保留括號）：GCal「回診」⊂「梧棲看診（回診）」→ 擋住（INC-136）
                 _is_sub = any(_ev_norm in en or en in _ev_norm for en in _existing_norm if en) \
@@ -249,6 +257,8 @@ def sync():
             if _added:
                 _schedule_path.write_text(json.dumps(_existing, ensure_ascii=False, indent=2), encoding="utf-8")
                 logger.info(f"  合併行事曆手動事件 {_added} 筆 → schedule_events.json")
+            if _skipped_past:
+                logger.info(f"  略過已過期手動事件 {_skipped_past} 筆（不再灌回 schedule_events.json）")
     except Exception as e:
         logger.warning(f'  合併行事曆事件失敗: {e}')
 
