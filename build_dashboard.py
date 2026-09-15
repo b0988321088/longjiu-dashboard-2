@@ -725,33 +725,40 @@ def main():
                 # 2026-08-27 fallback：找不到檔案 → 指向儀表板首頁（不留死佔位符）
                 tpl = tpl.replace(_ph, "index.html")
                 _link_hits += 1
-    # ── 本週完成清單（2026-09-13：work_log.json「完成」近 7 天 — 原本是寫死靜態清單，永不更新）──
+    # ── 本週完成清單（2026-09-13：work_log.json「完成」近 7 天 — 原本是寫死靜態清單，永不更新）
+    #    2026-09-15（使用者核准）：併入「修正」並以 🔧 區分；項目文字做 HTML 轉義（item 可能含 <p> 等標籤字面）──
     try:
         import datetime as _dtm
+        import html as _html
         _wlog = json.loads((BASE / "work_log.json").read_text(encoding="utf-8"))
         _td = _dtm.date.today()
         _lo = _td - _dtm.timedelta(days=6)
+        _CAT_ICON = {"完成": "✅", "修正": "🔧"}
         _done = []
         for _e in _wlog:
-            if str(_e.get("category", "")) != "完成":
+            _ic = _CAT_ICON.get(str(_e.get("category", "")))
+            if not _ic:
                 continue
             try:
                 _ed = _dtm.date.fromisoformat(str(_e.get("date", ""))[:10])
             except ValueError:
                 continue
             if _lo <= _ed <= _td:
-                _done.append((_ed, str(_e.get("item", ""))))
+                _done.append((_ed, _ic, str(_e.get("item", ""))))
         _done.reverse()  # 同日：後登錄者較新
         _done.sort(key=lambda x: x[0], reverse=True)
-        _wd_rows = [f'<div class="text-slate-300">✅ {d.month}/{d.day} {it}</div>' for d, it in _done]
+        _wd_rows = [f'<div class="text-slate-300">{_ic} {d.month}/{d.day} {_html.escape(it, quote=False)}</div>'
+                    for d, _ic, it in _done]
         _wd_inner = "".join(_wd_rows[:10])
         if len(_wd_rows) > 10:
             _wd_inner += (f'<details><summary style="cursor:pointer;color:#6ee7b7;font-weight:700">顯示其餘 {len(_wd_rows) - 10} 項</summary>'
                           f'<div class="grid grid-cols-1 gap-1.5" style="margin-top:6px">{"".join(_wd_rows[10:])}</div></details>')
         if not _wd_inner:
             _wd_inner = '<div class="text-slate-400">近 7 天無完成紀錄</div>'
+        _n_fix = sum(1 for _d, _i, _t in _done if _i == "🔧")
         tpl = tpl.replace("__WEEK_DONE__", _wd_inner)
-        tpl = tpl.replace("__WEEK_DONE_RANGE__", f"近 7 天 {_lo.month}/{_lo.day}–{_td.month}/{_td.day}｜{len(_done)} 項")
+        tpl = tpl.replace("__WEEK_DONE_RANGE__",
+                          f"近 7 天 {_lo.month}/{_lo.day}–{_td.month}/{_td.day}｜{len(_done)} 項（✅ {len(_done) - _n_fix}｜🔧 {_n_fix}）")
     except Exception as _wde:
         tpl = tpl.replace("__WEEK_DONE__", f'<div class="text-slate-400">完成清單載入失敗（{_wde}）</div>')
         tpl = tpl.replace("__WEEK_DONE_RANGE__", "")

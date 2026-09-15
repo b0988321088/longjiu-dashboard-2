@@ -212,7 +212,7 @@
     <p class="text-[10px] text-amber-300/70 mt-1 border-t border-amber-500/20 pt-1">__RISK_CHAIN__</p>
 </div>
 
-<!-- 本週完成清單（2026-09-13：work_log.json 動態，近 7 天「完成」— 不再手動維護） -->
+<!-- 本週完成清單（2026-09-13：work_log.json 動態，近 7 天「完成」— 不再手動維護；2026-09-15 併入「修正」🔧） -->
 <div class="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20" id="week-done-card">
     <div class="flex items-center gap-2 mb-2">
         <span class="text-emerald-400 font-bold text-sm">✅ 本週完成清單</span>
@@ -959,7 +959,7 @@ var gotTotal = _salaryA + divTotal + rentGot;
     fetch('work_log.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(list){
       if(!list || !list.length) return;
       var wesc = function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
-      var CLOSED_CAT = ['完成','計畫','結案','閉環'];
+      var CLOSED_CAT = ['完成','修正','計畫','結案','閉環'];
       var open = list.filter(function(x){ var c=String(x.category||''); return c && CLOSED_CAT.indexOf(c)<0; });
       open.reverse();  /* 同日：後登錄者較新 */
       open.sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); });
@@ -982,14 +982,17 @@ var gotTotal = _salaryA + divTotal + rentGot;
   }
   var wd = document.getElementById('week-done-list');
   if(wd){
-    /* 2026-09-13：本週完成清單動態（work_log.json「完成」近 7 天；失敗保留 build_dashboard 靜態版） */
+    /* 2026-09-13：本週完成清單動態（work_log.json 近 7 天；失敗保留 build_dashboard 靜態版）
+       2026-09-15：併入「修正」（🔧），與 build_dashboard 同口徑 */
     fetch('work_log.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(list){
       if(!list || !list.length) return;
       var t = new Date(); t.setHours(0,0,0,0);
       var lo = new Date(t.getTime() - 6*86400000);
       var iso = function(d){ var m=d.getMonth()+1, dd=d.getDate(); return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(dd<10?'0':'')+dd; };
+      var CAT_ICON = {'完成':'✅','修正':'🔧'};
+      var ic = function(x){ return CAT_ICON[String(x.category||'')] || ''; };
       var hit = list.filter(function(x){
-        if((x.category||'')!=='完成') return false;
+        if(!ic(x)) return false;
         var ds = String(x.date||'').slice(0,10);
         return ds >= iso(lo) && ds <= iso(t);
       });
@@ -997,7 +1000,7 @@ var gotTotal = _salaryA + divTotal + rentGot;
       hit.reverse();
       hit.sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); });
       var md = function(ds){ return ds.slice(5,7).replace(/^0/,'')+'/'+ds.slice(8,10).replace(/^0/,''); };
-      var rows = hit.map(function(x){ return '<div class="text-slate-300">✅ '+md(String(x.date||''))+' '+esc(x.item||'')+'</div>'; });
+      var rows = hit.map(function(x){ return '<div class="text-slate-300">'+ic(x)+' '+md(String(x.date||''))+' '+esc(x.item||'')+'</div>'; });
       var h = rows.slice(0,10).join('');
       if(rows.length>10){
         h += '<details><summary style="cursor:pointer;color:#6ee7b7;font-weight:700">顯示其餘 '+(rows.length-10)+' 項</summary>'
@@ -1005,7 +1008,11 @@ var gotTotal = _salaryA + divTotal + rentGot;
       }
       wd.innerHTML = h;
       var rg = document.getElementById('week-done-range');
-      if(rg) rg.textContent = '近 7 天 '+md(iso(lo))+'–'+md(iso(t))+'｜'+hit.length+' 項（即時）';
+      if(rg){
+        var cn = hit.filter(function(x){ return String(x.category||'')!=='修正'; }).length;
+        var fn2 = hit.length - cn;
+        rg.textContent = '近 7 天 '+md(iso(lo))+'–'+md(iso(t))+'｜'+hit.length+' 項（✅ '+cn+'｜🔧 '+fn2+'，即時）';
+      }
     }).catch(function(){});
   }
   var wn = document.getElementById('weekly-nw');
