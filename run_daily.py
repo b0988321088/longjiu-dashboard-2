@@ -967,7 +967,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 {_rent_cov:.0f}%。{_fmt_rent_status(tv)}{_dbs_note_ph}</p>
 
     <h3>基金部位（鉅亨網 + 國泰基金）</h3>
-    <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong> ＝ 鉅亨網 <strong>{tv.get('funds',0) - tv.get('funds_cathay',0):,}</strong> ＋ 國泰基金 <strong>{tv.get('funds_cathay',0):,}</strong>（富達 600萬 + 聯博 100萬 + MMF 500萬停泊）。本月已收配息：{tv['fund_dividend_monthly']:,} TWD。{_fund_detail}</p>
+    基金總市值 <strong>{tv.get('funds',0):,} TWD</strong> ＝ 鉅亨網 <strong>{sum(v for k,v in tv.get('funds_breakdown',{}).get('一般申購',{}).items() if k != 'note') + sum(v for k,v in tv.get('funds_breakdown',{}).get('自由Pay',{}).items() if k != 'note'):,}</strong> ＋ 國泰基金 <strong>{sum(v for k,v in tv.get('funds_breakdown',{}).get('國泰直購',{}).items() if k != 'note'):,}</strong>（富達 {tv.get('funds_breakdown',{}).get('國泰直購',{}).get('富達全球動能多元B股C月配息美元',0):,} + 聯博 {tv.get('funds_breakdown',{}).get('國泰直購',{}).get('聯博全球多元收益AD美元月配',0):,} + B11 {tv.get('funds_breakdown',{}).get('國泰直購',{}).get('貝萊德智慧數據收益成長B11-美元-強化穩定月配息',0):,}）。本月已收配息：{tv['fund_dividend_monthly']:,} TWD。
   </div>
 
   <!-- 3/5 保單接力引擎 -->
