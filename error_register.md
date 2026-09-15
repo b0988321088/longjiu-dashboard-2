@@ -487,3 +487,14 @@
 - **根因**：重產腳本對外部行情（Yahoo 加權指數）抓取失敗時，以 `—` 作 fallback 直接寫入產出，沒有「新值比舊值差就保留舊值」的降級防護。00:30 那輪抓得到、00:49 抓不到（同一個交易日、同一個資料源），證明是間歇性抓取失敗而非資料本身變動。
 - **修正**：本次以 `git checkout` 還原兩檔（保留有值版本）再推送；**降級防護（no-downgrade guard）列為待辦**，需另行提案核准後才改程式。
 - **教訓**：①重產類管線要能分辨「新資料」與「抓不到資料」——兩者都表現為「值變了」②推送前的檢查不能只看「有沒有佔位符」，還要看「有沒有把有值變成空值」（no-downgrade）③凡是重產，先 `git diff` 看數字怎麼變，再決定推不推。
+
+## INC-196 — 未完成的清理重構留下兩個「靜默失效」＋週清靜默契約回歸（CIO 初審攔下）
+
+- **日期**：2026-09-16（01:00–02:00 收尾；CIO-Gemini 初審 REJECT、複審通過後推送）
+- **現象**：前一日深夜清理 session 把「行事曆週清」搬進 `scripts/components/cleanup_utils.py` 但**沒收尾**，留下未提交的重構，內含三個缺陷：
+  1. `run_full_cleanup()` 呼叫 `_cleanup_html_banners(apply_changes, current_date_iso)`，但該區域變數已在重構中被刪掉 → **NameError**：全量清理跑到 C 階段就中斷，D～F 與歸檔階段全部不執行（半途而廢）。
+  2. `_fmt_date_event()` 寫 `datetime.date.fromisoformat(...)`，而本檔 `datetime` 這個名字已被 `from datetime import datetime` 綁成**類別** → `datetime.date` 取到的是方法描述子 → **AttributeError 被 `except Exception: return None` 吞掉** → 每一筆事件都被判定「無日期」→ **週清會永遠刪 0 筆、卻看起來一切正常**（純靜默失效）。
+  3. 搬家後第一次改寫時，週清把「🧹 已自動清理 N 筆」摘要也印出來 → 與舊版的「**只有新增的過期未完成才輸出、否則完全靜默**」契約不等價（＝每週只要有刪除就會推播一次噪音）。此點由 CIO 初審判定 REJECT 攔下，修正後複審通過。
+- **附帶發現**：每週一 03:00 的 `weekly-system-cleanup` job 其 script 欄位寫成 `components/cleanup_utils.py --apply` —— Hermes cron 的 script 欄位**只吃 `HERMES_HOME/scripts/` 內的單一檔名、不傳參數**，該路徑也不存在 → 這個 job **從建立到現在從未成功過**（每次都會以 Script not found 失敗）。同時該檔從未被鏡像過去，因為 post-commit 的全量鏡像**只同步「目標已存在」的同名檔**，新增的根目錄腳本不會自動過去。
+- **修正**：①補回 `current_date.isoformat()`；②改用 `date.fromisoformat`（並在該行留註解說明為何不能寫 `datetime.date`）；③週清輸出改回「僅有新增提醒才輸出」，並補一支注入式單元驗證（假 `subprocess`＋假清理函數：情境 A「只清理、無新增」→ stdout 空；情境 B「有新增」→ 輸出提醒）雙向命中；④新增根目錄入口 `weekly_system_cleanup.py`（呼叫 `run_full_cleanup(apply_changes=True)`）、把該 job 的 script 與 workdir 改對、並把新檔加進 post-commit 的鏡像硬編碼清單；⑤順手掃過全部 46 個有 script 的排程，確認已無「指向不存在檔案／帶參數」的 job。
+- **教訓**：①**「不會爆炸的錯」最貴**：`except Exception: return None` 配上寫錯的日期解析，會讓清理邏輯變成永遠 no-op 而不報錯 —— 對「應該要有動作」的管線，要加「本輪動作數為 0 就出聲」的反向檢查 ②同一檔內 `import datetime` 與 `from datetime import datetime` 並存是地雷，`datetime.date` 會取到方法描述子 ③cron script 欄位不吃參數，要帶模式的排程一律做**入口殼**、檔名不要動 ④新增根目錄腳本要**同時**加進鏡像清單，否則 cron 永遠找不到（鏡像只覆蓋已存在的同名檔）⑤重構沒收尾等於埋雷：未提交的半成品比沒做更危險（下一個 session 會以為它是完成品）。
