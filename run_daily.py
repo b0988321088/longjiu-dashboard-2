@@ -41,6 +41,28 @@ OUT_DAILY = BASE / f"daily_report_v2_{TODAY}.html"
 OUT_INDEX = BASE / "index.html"
 
 
+def close_html_tail(html: str) -> str:
+    """把「最後一個 </html> 之後」的殘留內容搬回文件內（2026-09-16 INC-199）。
+
+    render_daily_report 內多個附加區塊（專業投資人風控卡、槓桿風控…）以 `html +=` 直接接在樣板尾端，
+    而樣板尾端已經有 `</body></html>` → 這些區塊實際落在文件之外（9/15、9/16 日報各有約 4.2KB
+    在 `</html>` 之後）。這裡在寫檔前統一收斂：把殘留段插到最後一個 `</body>` 之前，保證關閉標籤在檔尾。
+    沒有殘留、或文件根本沒有 `</html>` 時，原樣回傳（idempotent）。
+    """
+    low = html.lower()
+    i_close = low.rfind("</html>")
+    if i_close < 0:
+        return html
+    tail = html[i_close + len("</html>"):]
+    if not tail.strip():
+        return html
+    head = html[:i_close]
+    j_body = head.lower().rfind("</body>")
+    if j_body >= 0:
+        return head[:j_body] + tail + head[j_body:] + "</html>"
+    return head + tail + "</html>"
+
+
 # ==========================================================================
 # 1. 三源真值校準
 # ==========================================================================
@@ -2114,6 +2136,7 @@ def main():
         daily_html = daily_html.replace("__SEC_TOTAL__", "---")
         daily_html = daily_html.replace("__SEC_TOP3__", "---")
 
+    daily_html = close_html_tail(daily_html)  # INC-199：附加區塊一律收回 </body> 之前
     OUT_DAILY.write_text(daily_html, encoding="utf-8")
     print(f"[RUN_DAILY] 日報產出：{OUT_DAILY}")
     # 靜態儀表板：統一由 build_dashboard.py 產出（2026-08-27 根治：run_daily 舊邏輯只取代數值、漏連結佔位符 → 儀表板連結失效）

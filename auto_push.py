@@ -46,8 +46,17 @@ import sys
 import time
 from pathlib import Path
 
-DEFAULT_REFS = ["clean-main", "clean-main:main"]
+DEFAULT_REFS = ["HEAD:clean-main", "HEAD:main"]
+# 2026-09-16 INC-198：原本是 ["clean-main", "clean-main:main"] —— 來源是**本機分支**，不是 HEAD。
+# HEAD detached（例如 `git checkout <sha>` 看舊版後忘了回來）時，本機分支仍停在舊 commit，
+# 於是「推上去的是舊內容、returncode 卻是 0」，只有第 5 步驗證以 rc=5 現形（看起來像網路問題）。
+# 改為一律推 HEAD：工具的工作就是「把現在的 HEAD 送上兩條正式分支」，再配合推送前安全檢查（見 main()）。
 CODE_RE = r"\.(py|sh|bat|ps1|cmd|toml|yml|yaml|js|ts|sql)$|^\.githooks/|^\.gitattributes$|^\.gitignore$|^index_template\.html$"
+
+
+def dest_of(refspec: str) -> str:
+    """refspec → 目標分支名（'HEAD:clean-main' → 'clean-main'；'clean-main' → 'clean-main'）。"""
+    return refspec.split(":")[-1].strip()
 
 
 def run(args: list[str], cwd: Path, timeout: int = 180) -> subprocess.CompletedProcess:
@@ -157,8 +166,25 @@ def main() -> int:
         print("❌ 讀不到 HEAD", file=sys.stderr)
         return 6
 
+    # 3-0) 推送前安全檢查（2026-09-16 INC-198）——舊版在這裡是啞的：HEAD detached 時照推本機分支的舊內容。
+    if run(["git", "symbolic-ref", "-q", "HEAD"], base).returncode != 0:
+        print("❌ auto_push：HEAD 處於 detached（不在任何分支上）→ 拒絕推送。", file=sys.stderr)
+        print("   修法：git checkout -B clean-main HEAD（先確認是 fast-forward）後重跑。", file=sys.stderr)
+        log(base, f"DETACHED-HEAD\t{a.script}\t{head[:12]}")
+        return 6
+    for _ref in refs:
+        _dst = dest_of(_ref)
+        if run(["git", "rev-parse", "--verify", "--quiet", f"origin/{_dst}"], base).returncode != 0:
+            continue  # 遠端尚無此分支（首次推送）
+        if run(["git", "merge-base", "--is-ancestor", f"origin/{_dst}", "HEAD"], base).returncode != 0:
+            print(f"❌ auto_push：HEAD 不是 origin/{_dst} 的後代（非 fast-forward）→ 拒絕推送，避免把遠端回捲。",
+                  file=sys.stderr)
+            print(f"   若確實要回捲，請人工執行：git push origin HEAD:{_dst}（本工具不代人回捲正式分支）", file=sys.stderr)
+            log(base, f"NOT-FF\t{a.script}\t{_dst}\t{head[:12]}")
+            return 6
+
     # 3) 推送範圍內的紀錄覆蓋（本支的核心價值）
-    primary = refs[0].split(":")[0]
+    primary = dest_of(refs[0])
     rng = run(["git", "rev-list", f"origin/{primary}..HEAD"], base)
     if rng.returncode != 0:
         print(f"⚠️ 讀不到 origin/{primary}（尚未 fetch／遠端不存在）→ 跳過範圍檢查，直接嘗試推送")
