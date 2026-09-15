@@ -168,6 +168,8 @@ def step_auto_warns(quiet: bool) -> list:
             print(f"   - {k} 最後：{last[k]}")
         if resolved:
             print(f"   （range-missing 已補紀錄、不列問題：{len(resolved)} 筆）")
+        if not missed and (counts or resolved):
+            print("   ℹ️ 以上皆為他班／歷史 range 的未提交檔或已補紀錄案件 → 非本次問題（真問題只有 range-missing 未補）")
     for x in missed:
         problems.append(f"推送範圍有 commit 無審查紀錄（該次 push 會被擋）：{x}")
     return problems

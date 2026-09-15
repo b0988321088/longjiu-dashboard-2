@@ -32,7 +32,25 @@ def resolve_T(db):
 T = os.environ.get("LJ_AUDIT_DATE") or _dtime.date.today().isoformat()
 
 # ── 1) 舊數字殘留（全 repo 報告/資料）────────────────────────
+_T_SCAN = T  # 本次基準日（供歷史/現行分類）
 print("=== 1) 舊數字殘留掃描 ===")
+print("  （本區僅供追蹤：命中『歷史歸檔/錯誤帳本』不列為問題；只有出現『現行檔』才算 ❌）")
+
+
+def _is_hist(name: str) -> bool:
+    """歷史歸檔或帳本檔：舊數字本來就該留在裡面（不列為問題）。
+
+    2026-09-15 修正：檔名只有「日期 != 基準日 T」才算歷史歸檔 → 今日日報若殘留舊值仍會亮
+    ⚠️ 現行檔（首版用「檔名含 _20xx-xx-xx 就算歷史」會把今日報告一起放行，等於遮蔽真問題，
+    負向測試抓到）。帳本/封存類無日期可比者一律視為歷史。
+    """
+    for k in ("error_register", "work_log", "card_caliber_assessment", "BUDGET_WEEKLY_REPORT"):
+        if k in name:
+            return True
+    m = re.search(r"(20\d\d-\d\d-\d\d)", name)
+    if m:
+        return m.group(1) != _T_SCAN
+    return False
 stale = {
     "30,404,569": "女友借款誤列負債的中間值",
     "4,319,011": "同上淨值",
@@ -52,7 +70,12 @@ for pat, desc in stale.items():
             continue
         if pat in txt:
             hits.append(f.name)
-    print(f"  {pat:12s} ({desc}) → {hits if hits else '無 ✅'}")
+    if not hits:
+        print(f"  {pat:12s} ({desc}) → 無 ✅")
+    else:
+        _live = [h for h in hits if not _is_hist(h)]
+        _tail = f"⚠️ 現行檔 {_live}" if _live else f"歷史 {len(hits)} 筆（不列問題）"
+        print(f"  {pat:12s} ({desc}) → {_tail}")
     if hits and "error_register" not in " ".join(hits) and "work_log" not in " ".join(hits):
         fail.append(f"舊值殘留 {pat} in {hits}")
 
