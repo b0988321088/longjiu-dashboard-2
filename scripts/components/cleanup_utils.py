@@ -499,10 +499,22 @@ def weekly_calendar_main(dry_run: bool | None = None) -> None:
     cleaned, reminders = res["cleaned"], res["new_reminders"]
 
     push_note = ""
-    if cleaned:
+    # 落版條件看「檔案真的有沒有髒」，不看 cleaned 筆數：state 檔在 apply 時一律會被寫
+    # （新增/消失的待裁決事件都會改 key 集合），只看 cleaned 會漏掉 state 變更 → 永遠 dirty。
+    _tracked_candidates = ["schedule_events.json", "data/calendar_overdue_state.json"]
+    _dirty = False
+    try:
+        _st = subprocess.run(["git", "status", "--porcelain", "--", *_tracked_candidates],
+                             cwd=str(ROOT), capture_output=True, text=True, timeout=60)
+        _dirty = bool(_st.stdout.strip())
+    except Exception as _e_st:
+        logger.info(f"weekly_calendar: git status 檢查失敗（{_e_st}），仍嘗試落版。")
+        _dirty = bool(cleaned)
+
+    if _dirty:
         r = subprocess.run(["git", "commit", "-m",
                             f"[cron] 每週事件清理：刪除 {cleaned} 筆過期事件（git 可回溯）",
-                            "--", "schedule_events.json"],
+                            "--", *_tracked_candidates],
                            cwd=str(ROOT), capture_output=True, text=True, timeout=120)
         if r.returncode == 0:
             ap = subprocess.run([sys.executable, str(ROOT / "auto_push.py"),
@@ -584,6 +596,37 @@ def run_full_cleanup(apply_changes: bool = False):
     results['temp_and_cache_files'] = {'cleaned': cleaned_temp_cache}
 
     logger.info("=== 龍九系統深度清理完成 ===")
+
+    # ── 收尾：真的動過檔就自動落版＋推送（2026-09-16 使用者核准）──
+    # 走 repo 既有的「add -A 型」通路（auto_push --auto-stage：先 git add -A + auto_record --clean-stage，
+    # 再 commit、補紀錄、重試推送、驗遠端 sha）。刻意用 add -A：深度清理的產出散在資料檔、
+    # 備份輪替、文件與 .archive 搬移，逐一列路徑會漏。
+    # ⚠️ 安全閥：若本次清理把程式檔的改動/刪除帶進推送範圍，閘門會 fail-closed 拒絕推送（exit 3）
+    #    並回非零碼 → cron 會出聲要人工 CIO 審查，不會默默把未審程式碼推上線。
+    if apply_changes:
+        try:
+            _st = subprocess.run(["git", "status", "--porcelain"], cwd=str(ROOT),
+                                 capture_output=True, text=True, timeout=60)
+            if _st.stdout.strip():
+                logger.info("深度清理：工作區有變更 → 走 auto_push（落版＋推送）。")
+                _ap = subprocess.run([sys.executable, str(ROOT / "auto_push.py"),
+                                      "--script", "weekly_system_cleanup.py",
+                                      "--auto-stage",
+                                      "--commit", "[cron] 每週系統深度清理（歸檔／備份輪替／淘汰腳本／快取）"],
+                                     cwd=str(ROOT), capture_output=True, text=True, timeout=900)
+                _tail = ((_ap.stdout or "") + (_ap.stderr or "")).strip().splitlines()[-3:]
+                if _ap.returncode == 0:
+                    print("🧹 每週深度清理完成並已推送：" + " / ".join(_tail))
+                else:
+                    print(f"⚠️ 每週深度清理完成但未推送（rc={_ap.returncode}）：" + " / ".join(_tail))
+                    if _ap.returncode == 3:
+                        print("   → 推送範圍含未經 CIO 審查的程式檔改動（例如 ad-hoc 腳本搬進 .archive），"
+                              "依閘門設計停在本地，請人工審查後再推。")
+            else:
+                logger.info("深度清理：工作區無變更，無需落版。")
+        except Exception as _e_push:
+            print(f"⚠️ 每週深度清理落版失敗：{_e_push}")
+
     return results
 
 if __name__ == '__main__':
