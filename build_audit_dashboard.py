@@ -70,7 +70,7 @@ rows = f"""
 <tr><td {W(0)}>保險</td><td {W(0)} style="text-align:right;font-weight:700">{INS:,}</td><td {W(0)} style="text-align:right">{INS/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">安聯 13:32 7,827,561 + 第一金 FA81 1,939,270</td></tr>
 <tr><td {W(0)}>基金</td><td {W(0)} style="text-align:right;font-weight:700">{FUND:,}</td><td {W(0)} style="text-align:right">{FUND/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">鉅亨 841,052 + 國泰 1,200萬（富達600/聯博100/貝萊德B11 500）</td></tr>
 <tr><td {W(0)}>證券</td><td {W(0)} style="text-align:right;font-weight:700">{SEC:,}</td><td {W(0)} style="text-align:right">{SEC/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">16 檔；00888 配息 3,496 入帳</td></tr>
-<tr><td {W(0)}>現金</td><td {W(0)} style="text-align:right;font-weight:700">{CASH:,}</td><td {W(0)} style="text-align:right">{CASH/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">8/21 扣 MMF 500萬+聯博 101.5萬 → Moneybook 真值</td></tr>
+<tr><td {W(0)}>現金</td><td {W(0)} style="text-align:right;font-weight:700">{CASH:,}</td><td {W(0)} style="text-align:right">{CASH/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">8/21 扣 MMF 500萬+聯博 101.5萬（歷史：當日現金推導）→ Moneybook 真值</td></tr>
 <tr><td {W(0)}>總資產</td><td {W(0)} style="text-align:right;font-weight:800">{TA:,}</td><td {W(0)}></td><td {W(0)} style="color:#6e6e73;font-size:12px">8/20 撥款 1,200萬 → 部署 600萬富達 + T+2 600萬</td></tr>
 <tr><td {W(0)}>總負債</td><td {W(0)} style="text-align:right;font-weight:800;color:#ef4444">{TL:,}</td><td {W(0)}></td><td {W(0)} style="color:#6e6e73;font-size:12px">國泰新貸 1,200萬@2.6%（大義街轉貸）＋ 信用卡 54,402</td></tr>
 </table></div>
