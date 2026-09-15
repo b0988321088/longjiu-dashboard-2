@@ -498,3 +498,11 @@
 - **附帶發現**：每週一 03:00 的 `weekly-system-cleanup` job 其 script 欄位寫成 `components/cleanup_utils.py --apply` —— Hermes cron 的 script 欄位**只吃 `HERMES_HOME/scripts/` 內的單一檔名、不傳參數**，該路徑也不存在 → 這個 job **從建立到現在從未成功過**（每次都會以 Script not found 失敗）。同時該檔從未被鏡像過去，因為 post-commit 的全量鏡像**只同步「目標已存在」的同名檔**，新增的根目錄腳本不會自動過去。
 - **修正**：①補回 `current_date.isoformat()`；②改用 `date.fromisoformat`（並在該行留註解說明為何不能寫 `datetime.date`）；③週清輸出改回「僅有新增提醒才輸出」，並補一支注入式單元驗證（假 `subprocess`＋假清理函數：情境 A「只清理、無新增」→ stdout 空；情境 B「有新增」→ 輸出提醒）雙向命中；④新增根目錄入口 `weekly_system_cleanup.py`（呼叫 `run_full_cleanup(apply_changes=True)`）、把該 job 的 script 與 workdir 改對、並把新檔加進 post-commit 的鏡像硬編碼清單；⑤順手掃過全部 46 個有 script 的排程，確認已無「指向不存在檔案／帶參數」的 job。
 - **教訓**：①**「不會爆炸的錯」最貴**：`except Exception: return None` 配上寫錯的日期解析，會讓清理邏輯變成永遠 no-op 而不報錯 —— 對「應該要有動作」的管線，要加「本輪動作數為 0 就出聲」的反向檢查 ②同一檔內 `import datetime` 與 `from datetime import datetime` 並存是地雷，`datetime.date` 會取到方法描述子 ③cron script 欄位不吃參數，要帶模式的排程一律做**入口殼**、檔名不要動 ④新增根目錄腳本要**同時**加進鏡像清單，否則 cron 永遠找不到（鏡像只覆蓋已存在的同名檔）⑤重構沒收尾等於埋雷：未提交的半成品比沒做更危險（下一個 session 會以為它是完成品）。
+
+## INC-197 — 消費端要的 key 只存在於「未提交的工作區」→ 從 HEAD 重跑穿透必 KeyError
+
+- **日期**：2026-09-16 凌晨（查核儀表板佔位符誤報時，順手查出）
+- **現象**：`build_penetration_report.py:63` 寫 `"alert": p["alert"]`（p 來自 `update_all.calc_penetration`），但 **HEAD 的 `update_all.py` 完全沒有 alert**（`git show HEAD:update_all.py | grep -c alert` = 0）→ 從已提交狀態重跑穿透會直接 `KeyError: 'alert'`。當天 03:0x 的「四源同步」之所以成功，是因為工作區有一份**未提交**的修補在跑。
+- **根因**：前一輪重構把 alert 相關計算留在工作區未落版，而 snapshot.json（含 `penetration.alert`）已被提交 → 「資料有值、程式沒有」的錯配狀態。
+- **修正**：把工作區的 `_targets／_actual_pct／_gaps／_alert` 區塊正式落版；目標值一律讀 `snapshot.thresholds_2026_0915.桶目標_pct`（SoT，含科技 20），與 `build_penetration_report.py` 同口徑。實測 `calc_penetration(...)["alert"]` 與 `snapshot.penetration.alert` **逐字相同**；`check_thresholds.py` 全綠（SoT 完整／消費端 5 支皆引用／無舊門檻殘留）。
+- **教訓**：①產出資料的同時要把「產生它的程式」一起落版 —— 否則下一個 session 從 HEAD 重跑必爆 ②改動／依賴某個 key 前，先 `grep` 全 repo 消費端（本例 `build_penetration_report.py:63`，另 `update_data.py` 會把 pen 寫回 snapshot.penetration）③看到「資料檔已提交、程式還在工作區」＝立即落版，不要等下一個流程幫你帶上去。
