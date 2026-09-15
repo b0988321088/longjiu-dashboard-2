@@ -803,5 +803,11 @@
   "category": "完成",
   "item": "9/15 更新總整理（收工）：32 commits、4 筆 INC、寫死日期/金額批次動態化",
   "detail": "今日 32 commits（afcd5fb0→78fd2a04），雙分支同步。晚間主線＝寫死日期/金額批次動態化（薪資 42,560／里程碑＋乾粉改讀 schedule_events 與 snapshot／月配息 100,000 移除／radar 標題日期）＋稽核新增 1b 類＋收工稽核誤報修正（sha_state）。當日 INC：186 穿透五桶被縮放防呆灌大（幽靈扣減 498 萬 ×1.652；真值 台7.5／美40.6／防17.4／債27.6／現3.4）、187 門檻散落 7 處→snapshot.thresholds_2026_0915 單一真值＋check_thresholds.py、188 日報基金部位用反推錯帳（鉅亨真值 822,162；禁 A−B 反推）、189 Contents API 逐檔上傳卡死兩分支（歷史重建）。產物重產：日報／再平衡儀表板＋評估／月報／退休規劃／index.html；index.html 與線上 Pages 逐字一致、無殘留佔位符。"
+ },
+ {
+  "date": "2026-09-15",
+  "category": "修正",
+  "item": "儀表板『本週完成清單』併入修正（🔧）＋未閉環卡排除修正＋item HTML 轉義",
+  "detail": "work_log 的「修正」類（累計 26 筆）原本兩處失真：①不進本週完成清單（漏帳，今日 5 筆修正全隱形）②不被視為閉環 → 被錯誤列在「🛠️ 系統工作日誌（未閉環）」，該卡由 29 筆虛胖。修法：①build_dashboard.py 靜態層改收 完成(✅)/修正(🔧)，item 加 html.escape(quote=False)（item 內含 <p class=\"text-lead\"> 字面，不轉義會注入 DOM）＋範圍標籤分項計數；②index_template.html JS 層同口徑（CAT_ICON）與分項計數；③CLOSED_CAT 補「修正」→ 未閉環卡 29→3 筆（應辦2+決策1）。驗收：AST OK、node --check 9 段 inline script OK、靜態＝JS＝98 項（✅73｜🔧25）、未轉義 0、placeholder 0、以線上頁面抽出的真實 JS 跑 stub DOM → 渲染 98 列（🔧25）、CIO 7 組實測 APPROVE、commit b2bace0747（tree 4c3f36b0）已推雙分支、線上 index.html 與本機逐字一致。"
  }
 ]
