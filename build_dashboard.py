@@ -197,10 +197,25 @@ def main():
             rep["__RADAR_PLAN__"] = "待雷達更新"
             rep["__RADAR_POLICY__"] = "無"
     except Exception as _e:
+        # 2026-09-16 修：原靜默吞例外 → __RISK_*__ 佔位符直接上線（使用者抓包「儀表板壞的」）
+        import traceback as _tb
+        print("  ⚠️ 雷達/風險區塊注入失敗（已用 fallback 文字）:", _e)
+        _tb.print_exc()
         rep["__RADAR_DATE__"] = "2026-08-29"
         rep["__RADAR_SIGNALS__"] = f"雷達讀取失敗: {_e}"
         rep["__RADAR_PLAN__"] = "待雷達更新"
         rep["__RADAR_POLICY__"] = "無"
+        # 風險提示四段 fallback（嚴禁佔位符上線）
+        _plf = "質押狀態未知"
+        try:
+            import pledge_status as _pf_f
+            _plf = _pf_f.pledge_status_line(style="short")
+        except Exception:
+            pass
+        rep.setdefault("__RISK_FUNDS__", f"— 風險區塊資料讀取失敗，請看日報；{_plf}")
+        rep.setdefault("__RISK_RULES__", "操作規範：待雷達更新")
+        rep.setdefault("__RISK_NODE__", "凍結紅線：US30Y ≥5.30% 全面凍結債券配置、提高現金水位。")
+        rep.setdefault("__RISK_CHAIN__", "📌 資金鏈現況：待雷達更新")
     # ── 銀行水位（2026-08-26：模板寫死各銀行餘額 → 從 snapshot cash_detail 動態）──
     cd = snap.get("cash_detail", {}) or {}
     # 2026-09-01 修正：資料日期動態（moneybook/ 最新帳戶 CSV 檔名；無則用 snapshot 日期）
