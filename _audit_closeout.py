@@ -79,6 +79,43 @@ for pat, desc in stale.items():
     if hits and "error_register" not in " ".join(hits) and "work_log" not in " ".join(hits):
         fail.append(f"舊值殘留 {pat} in {hits}")
 
+# ── 1b) 寫死日期/金額掃描（現行 .py；2026-09-15 新增）────────────
+# 背景：使用者實際回報的錯誤都是「程式裡寫死的舊日期／舊金額」——事件過去了還天天印在報表上
+# （薪資 39,727＝8 月值、里程碑 8/24/8/31、計畫標題「8/29 全資產面結論」）。舊數字殘留掃描
+# 只掃產出檔（漏掉生產者），本區掃生產者：現行 .py 內若出現「寫死日期/金額」的輸出字串即列問題。
+# 排除：.archive/、_ 開頭檔、以及含「原/寫死/舊/歷史/INC-/＃」的敘述行（檢討紀錄本來就會寫到舊值）。
+print("=== 1b) 寫死日期/金額掃描（現行 .py）===")
+_HARD_PAT = [
+    (re.compile(r"（\d{1,2}/\d{1,2}[^）」\n]{0,12}結論"), "計畫標題寫死日期"),
+    (re.compile(r"\d+月新增[:：]"), "寫死月份的新增敘述"),
+    (re.compile(r"\d+月台幣乾粉分配"), "寫死月份的乾粉卡標題"),
+    (re.compile(r"(?:月薪|薪資|salary)[^\n\"']{0,12}39,?727"), "寫死舊薪資 39,727"),
+]
+_hard_hits = []
+for _f in sorted(R.rglob("*.py")):
+    if ".archive" in _f.parts or _f.name.startswith("_"):
+        continue
+    try:
+        _lines = _f.read_text(encoding="utf-8", errors="ignore").splitlines()
+    except Exception:
+        continue
+    for _i, _l in enumerate(_lines, 1):
+        if _l.lstrip().startswith("#"):
+            continue  # 純註解行
+        # 敘述行（檢討紀錄本來就會寫到舊值）：含這些字樣不列問題
+        # （不可用單一 '#' 判斷——CSS 顏色如 #22c55e 會把真缺陷誤放行，2026-09-15 自踩）
+        if any(_k in _l for _k in ("寫死", "舊", "歷史", "INC-", "已作廢")):
+            continue
+        for _rx, _desc in _HARD_PAT:
+            if _rx.search(_l):
+                _hard_hits.append(f"{_f.name}:{_i} {_desc}")
+                break
+if _hard_hits:
+    print(f"  ❌ {len(_hard_hits)} 處：" + "；".join(_hard_hits[:6]))
+    fail.append(f"寫死日期/金額 {len(_hard_hits)} 處：{_hard_hits[:3]}")
+else:
+    print("  ✅ 無寫死日期/金額（現行 .py 全數動態）")
+
 # ── 2) 四源一致 ────────────────────────────────────────────
 print("=== 2) 四源一致 ===")
 s = json.loads((R / "snapshot.json").read_text(encoding="utf-8"))

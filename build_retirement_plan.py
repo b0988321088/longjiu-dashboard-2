@@ -12,6 +12,8 @@ TODAY = datetime.date.today().isoformat()
 snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
 
 pi = snap.get("passive_income", {})
+# 2026-09-15：台電月薪（單一真值 snapshot）——原字串寫死 39,727（8 月值），9 月起常態調薪 42,560
+sal = int(snap.get("monthly_salary") or snap.get("salary") or 0)
 fire_income = pi.get("total_conservative", 0)
 fire_cost = pi.get("monthly_expense", 162781)
 fire_cov = pi.get("coverage_pct", 0)
@@ -111,7 +113,7 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <table>
 <tr><th>步驟</th><th>期間</th><th>財務關卡（通過才算數）</th></tr>
 <tr><td>① 債務優化（高息清零）</td><td>現在 ~ 2027/2</td><td>{_pf.pledge_status_line()}；洲際W轉貸 ≤2.5%；築巢 2.185% 生效 → 負債成本逐階下探</td></tr>
-<tr><td>② 留職停薪測試</td><td>2027/2 ~ 2027/8</td><td>薪資 39,727 暫停後，月現金流 = 被動 {fire_income:,} − 支出 {fire_cost:,} = <b style="color:#22c55e">+{fire_income - fire_cost:,}</b>（不含標案收入）；標案收入為增量；目標盈餘 9萬/月還債 70%</td></tr>
+<tr><td>② 留職停薪測試</td><td>2027/2 ~ 2027/8</td><td>薪資 {sal:,} 暫停後，月現金流 = 被動 {fire_income:,} − 支出 {fire_cost:,} = <b style="color:#22c55e">+{fire_income - fire_cost:,}</b>（不含標案收入）；標案收入為增量；目標盈餘 9萬/月還債 70%</td></tr>
 <tr><td>③ 扣除房產淨資產 ≥ 0</td><td>2029-30</td><td>富達解約免罰 +45,000/月 + 債券疊卷套利；高息清零 + 還債進度 → 被動 &gt; 支出、淨資產轉正（現況 {net_worth:,}）</td></tr>
 </table>
 <p class="callout">關鍵：決策 A（轉型）/ B（延長）/ C（回台電）<b>不影響退休基本盤</b> — 被動收入已覆蓋支出（129.6%），三步驟的財務關卡是「職業轉換的安全網」，退休規劃獨立運作（財務三桶分離）。</p></div>

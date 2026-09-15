@@ -1,8 +1,22 @@
 import csv
+import json
+from pathlib import Path
+
+# 2026-09-15：薪資/獎金改讀 snapshot（原字串寫死 39,727＝8 月值、9 月起 42,560）
+_SNAP = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
+_SAL = int(_SNAP.get("monthly_salary") or _SNAP.get("salary") or 0)
+_SAL2 = int(_SNAP.get("second_salary") or 0)
 
 DETAIL_PATH = "C:/Users/bot/AppData/Local/hermes/cache/documents/doc_4e6c8d47a6db_Moneybook_明細_20260714_1.csv"
 ACCOUNT_PATH = "C:/Users/bot/AppData/Local/hermes/cache/documents/doc_7f2cdffd6ca1_Moneybook_帳戶_20260714_1.csv"
 BILL_PATH = "C:/Users/bot/AppData/Local/hermes/cache/documents/doc_8d733459df93_Moneybook_帳單_20260714_1.csv"
+
+for _p in (DETAIL_PATH, ACCOUNT_PATH, BILL_PATH):
+    if not Path(_p).exists():
+        raise SystemExit(
+            "❌ 缺少 Moneybook CSV（快取已清）：%s\n"
+            "   本腳本是 2026-07 的 6 個月現金流回推分析；CSV 由 Moneybook 匯出後放回快取即可重跑。" % _p
+        )
 
 print("=" * 60)
 print("龍九控股 6個月平均現金流回推")
@@ -11,9 +25,9 @@ print("=" * 60)
 
 # ===== 1. 薪資 =====
 print("\n【薪資】")
-print("  固定月薪（台電）：39,727 TWD/月")
+print("  固定月薪（台電）：%s TWD/月（snapshot.monthly_salary）" % format(_SAL, ","))
 print("  差旅津貼：12,000 TWD/月")
-print("  獎金（台電半年一次）：39,121 TWD/次 → 月均 6,520")
+print("  獎金（台電半年一次）：%s TWD/次 → 月均 %s" % (format(_SAL2, ","), format(round(_SAL2 / 6), ",")))
 print("  300K 上境工程：專案投資，不列入薪資")
 
 # ===== 2. 配息 =====
