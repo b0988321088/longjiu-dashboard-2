@@ -97,6 +97,8 @@ def main():
         #     但 run_daily.py 的 `intel_text`、`timedelta` 遮蔽、`monthly_income` 重複 key
         #     全靠人工看才發現；此步讓它們在產報前就被自動擋下。
         ("靜態閘門", "python static_gate.py"),
+        # 2026-09-15 INC-187：門檻單一真值檢查（SoT 完整性 + 消費端引用 + 舊門檻字面殘留）
+        ("門檻SoT檢查", "python check_thresholds.py"),
         ("同義欄位驗證", "python asset_sync.py"),
         ("日報", "python run_daily.py"),
         # 2026-09-02 血淚：緊急應變必須在穿透報告「之後」執行 — emergency_1330.py 讀的是

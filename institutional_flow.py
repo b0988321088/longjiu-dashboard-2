@@ -514,17 +514,63 @@ def main():
         _tw_t = _tgt5.get("台股市值型目標", 10)
         _us_t = _tgt5.get("美股市值型目標", 40)
         _rh8 = _snap.get("rhythm08", {}) or {}
-        _us30_v = (_rh8.get("indicators", {}) or {}).get("us30y")
+        # 2026-09-15 INC-187：真值優先序 — us30y_state（us30y_monitor 每日更新）優於
+        # rhythm08.indicators（人工維護，實測 9/15 仍停在 9/10 的 5.361）→ 避免煞車用過期值判斷
+        try:  # 真值：us30y_state.json（us30y_monitor 每日更新；snapshot 無此鍵、rhythm08 易過期）
+            _us30_v = float(json.loads((BASE / "us30y_state.json").read_text(encoding="utf-8")).get("last_rate"))
+        except Exception:
+            _us30_v = ((_snap.get("us30y_state") or {}).get("last_rate")
+                       or (_rh8.get("indicators", {}) or {}).get("us30y"))
         _us30_gate = ((_rh8.get("thresholds", {}) or {}).get("us30y", {}) or {}).get("taa_global_freeze", 5.3)
         if _gate:
             lines.append(f"⏸️ 台股觀望（{_tw5:.1f}% vs 目標{_tw_t}%）→ {_ps.pledge_status_line(_snap, style='short')}；US30Y {_us30_v}%（凍結線 {_us30_gate}%）；僅大跌 -5% 才小單 ≤5萬")
         else:
             lines.append(f"🟢 台股（{_tw5:.1f}% vs 目標{_tw_t}%，缺口 {_tw5-_tw_t:+.1f}pp）→ 0050/006208 分批慢慢買（單筆 ≤5萬）")
-        # ② 美股
-        if _us5 > _us_t + 5:
-            lines.append(f"🔴 美股（{_us5:.1f}% vs 目標{_us_t}%，超配 {_us5-_us_t:+.1f}pp）→ 逢彈減碼 ≤20萬/次")
+        # ② 美股（2026-09-15 INC-187 使用者核准：門檻收斂 + 可執行性 + 煞車優先序）
+        # ① 觸發帶讀 thresholds SoT（導流帶），不再寫死 +5
+        # ② 減碼只能減「非後收、非保單內、無 CDSC」部位（國泰池 92% 後收、保單內無 CDSC 但屬長線）
+        # ③ 風險煞車（US30Y ≥ 紅線）優先於一切減碼 → 只回報不動作
+        _th5 = (_snap.get("thresholds_2026_0915") or {})
+        _lad5 = (_th5.get("動作階梯_pp") or {})
+        _cap5 = (_th5.get("單桶硬上限_pct") or {})
+        _brake5 = (_th5.get("風險煞車") or {})
+        _us_trig = float(_lad5.get("導流", 6))
+        _us_cap5 = float(_cap5.get("美股市值型", 40))
+        try:
+            _brake_on = bool(_us30_v) and float(_us30_v) >= float(_brake5.get("us30y_pct", 5.30))
+        except Exception:
+            _brake_on = False
+        # 可動部位＝證券美股 ETF + 鉅亨非台股基金（保單內 equity 與國泰後收三檔不可動）
+        _sellable = 0.0
+        try:
+            _SEC_US_T = {"00646", "009823", "009824", "00924"}
+            for _h in ((_snap.get("securities") or {}).get("holdings") or []):
+                if _h.get("ticker") in _SEC_US_T:
+                    _sellable += float(_h.get("shares", 0)) * float(_h.get("price", 30))
+            for _g, _gv in ((_snap.get("funds_breakdown") or {})).items():
+                if not isinstance(_gv, dict):
+                    continue
+                for _fn, _fv in _gv.items():
+                    if not isinstance(_fv, (int, float)):
+                        continue
+                    if any(_k in _fn for _k in ["台灣", "奔騰", "路博邁台灣", "台中銀", "高股息", "優息",
+                                                "0050", "006208", "009816"]):
+                        continue
+                    _sellable += float(_fv) * 0.8   # 保守：非台股基金部位估 8 成可動
+        except Exception:
+            _sellable = 0.0
+        _over_pp = _us5 - _us_t
+        _over_twd = max(0.0, _over_pp) / 100 * float(_snap.get("total_assets", 0) or 0)
+        if _over_pp <= _us_trig:
+            lines.append(f"⏸️ 美股（{_us5:.1f}% vs 目標{_us_t}%）超配 {_over_pp:+.1f}pp ≤ 導流帶 {_us_trig:.0f}pp → 續持")
+        elif _brake_on:
+            lines.append(f"⏸️ 美股（{_us5:.1f}% vs 目標{_us_t}%，超配 {_over_pp:+.1f}pp）→ 煞車中（US30Y {_us30_v}% ≥ {_brake5.get('us30y_pct', 5.30)}%）只回報不動作")
+        elif _over_pp > _us_cap5 - _us_t:
+            lines.append(f"🟡 美股（{_us5:.1f}% vs 目標{_us_t}%）已破單桶硬上限 {_us_cap5:.0f}% → 停新增＋配息導流（不賣後收/保單內）")
+        elif _over_twd > _sellable:
+            lines.append(f"⏸️ 美股（{_us5:.1f}% vs 目標{_us_t}%，超配 {_over_pp:+.1f}pp ≈ {_over_twd:,.0f}）> 可動部位 {_sellable:,.0f} → 停新增＋配息導流（不賣後收/保單內）")
         else:
-            lines.append(f"⏸️ 美股（{_us5:.1f}% vs 目標{_us_t}%）超配 {_us5-_us_t:+.1f}pp 未達減碼觸發（>{_us_t+5}%）→ 續持")
+            lines.append(f"🔴 美股（{_us5:.1f}% vs 目標{_us_t}%，超配 {_over_pp:+.1f}pp）→ 逢彈減碼 ≤20萬/次（可動 {_sellable:,.0f}）")
         # ③ 防守
         lines.append(f"⏸️ 防守（合併口徑 {_def5:.1f}% 已足）→ 凍結不追（00878/00713 不加碼）")
         # ④ 債券（比例與目標讀 snapshot，原寫死 23.1%/25%）

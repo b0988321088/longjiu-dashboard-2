@@ -89,7 +89,14 @@ def main():
     # -------- 1. 市場利率 Rhythm-08（2026-08-25：紅線狀態切換才完整輸出，平常靜音）--------
     us30y, us30y_date = fetch_fred("DGS30")
     if us30y is None:
-        us30y = snap.get("rhythm08", {}).get("indicators", {}).get("us30y") or 5.21
+        # 2026-09-15 INC-187：真值優先序 — us30y_state（us30y_monitor 每日更新）優於
+        # rhythm08.indicators（人工維護；實測 9/15 仍停在 9/10 的 5.361，會讓煞車用過期值判斷）
+        # 真值優先序：us30y_state.json（us30y_monitor 每日寫）> rhythm08.indicators（人工維護、易過期）
+        try:
+            us30y = float(json.loads((BASE / "us30y_state.json").read_text(encoding="utf-8")).get("last_rate"))
+        except Exception:
+            us30y = ((snap.get("us30y_state") or {}).get("last_rate")
+                     or snap.get("rhythm08", {}).get("indicators", {}).get("us30y") or 5.21)
         us30y_date = "snapshot 舊值"
     if us30y > 5.30:
         rhythm_light = "🔴警戒(5因子判斷)"
@@ -263,25 +270,45 @@ def main():
     breakers = rules.get("risk_breakers", [])
     cash = snap.get("cash_total", 0)
     checks = []
+    # 2026-09-15 INC-187：門檻收斂 → 一律讀 snapshot.thresholds_2026_0915。
+    # 原本的 33%（美股）／35%、38%（LTV）／70萬（現金）是 7-8 月舊口徑，
+    # 與現行 桶上限 40%／LTV 綠≤45、黃≤53、追繳 70／現金底線 120萬（生活70+追繳緩衝50）不一致。
+    _th = (snap.get("thresholds_2026_0915") or {})
+    _brake = (_th.get("風險煞車") or {})
+    _ltvb = (_th.get("ltv分級_pct") or {})
+    _cashr = (_th.get("現金_twd") or {})
+    _caps = (_th.get("單桶硬上限_pct") or {})
+    _us30_red = float(_brake.get("us30y_pct", 5.30))
+    _us30_yel = float(_brake.get("us30y_警戒_pct", 5.20))
+    _cash_floor = float(_cashr.get("合計底線", 1200000))
+    _cash_life = float(_cashr.get("生活底線", 700000))
+    _us_cap = float(_caps.get("美股市值型", 40))
     # US30Y（us30y 為百分比數值 5.22 → 轉 0.0522 比較）
     us30y_dec = us30y / 100.0
-    if us30y_dec >= 0.053:
-        checks.append(("US30Y", f"{us30y:.2f}% > 5.30%", "🔴 五因子綜合判斷（非直接凍結；10Y回落+匯率穩+LTV低→可分批）"))
-    elif us30y_dec >= 0.052:
-        checks.append(("US30Y", f"{us30y:.2f}% ≥ 5.20%", "🟡 美股停購/長債凍結/台股≤50萬"))
-    # 現金
-    if cash < 700000:
-        checks.append(("現金", f"{cash:,.0f} < 70萬", "🔴 HALT_ALL_BUY"))
-    # 美股占比
+    if us30y_dec >= _us30_red / 100:
+        checks.append(("US30Y", f"{us30y:.2f}% ≥ {_us30_red:.2f}%", "🔴 五因子綜合判斷（非直接凍結；10Y回落+匯率穩+LTV低→可分批）"))
+    elif us30y_dec >= _us30_yel / 100:
+        checks.append(("US30Y", f"{us30y:.2f}% ≥ {_us30_yel:.2f}%", "🟡 美股停購/長債凍結/台股≤50萬"))
+    # 現金（2026-09-15 INC-187 兩段式：跌破「生活底線」才 HALT_ALL_BUY；
+    # 介於生活底線與「合計底線（生活+追繳緩衝 50 萬）」之間 = 緩衝不足 → 只做導流補足，
+    # 不阻擋既有計畫。理由：擔保池 92% 後收、追繳時賣不掉 → 緩衝只能靠現金。）
+    if cash < _cash_life:
+        checks.append(("現金", f"{cash:,.0f} < 生活底線 {_cash_life:,.0f}", "🔴 HALT_ALL_BUY"))
+    elif cash < _cash_floor:
+        checks.append(("現金", f"{cash:,.0f} < 合計底線 {_cash_floor:,.0f}（缺 {_cash_floor-cash:,.0f}）",
+                       "🟡 追繳緩衝不足 → 配息導流補足，不新增買入"))
+    # 美股占比（對「單桶硬上限」比，不是目標+公差；超標只提停新增＋導流，不要求賣後收/保單內）
     us_ratio = snap.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
-    if us_ratio > 33:
-        checks.append(("美股占比", f"{us_ratio:.1f}% > 33%", "🟡 FREEZE_US_BUY + 逢彈減碼"))
+    if us_ratio > _us_cap:
+        checks.append(("美股占比", f"{us_ratio:.1f}% > {_us_cap:.0f}%（單桶硬上限）", "🟡 FREEZE_US_BUY + 配息導流"))
     # LTV（未質押=0）
     ltv_val = plan.get("current_ltv", 0)
-    if ltv_val >= 0.38:
-        checks.append(("LTV", f"{ltv_val:.0%} ≥ 38%", "🔴 INJECT_CASH + HALT_EXPANSION"))
-    elif ltv_val >= 0.35:
-        checks.append(("LTV", f"{ltv_val:.0%} ≥ 35%", "🟡 停止新增質押"))
+    _ltv_red = float(_ltvb.get("黃上限", 53)) / 100.0
+    _ltv_yel = float(_ltvb.get("綠上限", 45)) / 100.0
+    if ltv_val >= _ltv_red:
+        checks.append(("LTV", f"{ltv_val:.0%} ≥ {_ltv_red:.0%}", "🔴 INJECT_CASH + HALT_EXPANSION"))
+    elif ltv_val >= _ltv_yel:
+        checks.append(("LTV", f"{ltv_val:.0%} ≥ {_ltv_yel:.0%}", "🟡 停止新增質押"))
     if not checks:
         print("  ✅ 全部閘門通過（無熔斷觸發）")
     else:

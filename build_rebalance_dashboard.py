@@ -480,13 +480,29 @@ def main():
         cls = "ms-high" if lv == "high" else "ms-mid"
         ms_html += f"<div class='ms {cls}'><span class='ms-date'>{d}</span><span class='ms-txt'>{t}</span></div>"
 
+    # ── 質押 LTV 真值（2026-09-15 INC-187）──
+    # sot-exempt：原寫死「完成後 20.4% / 安全值 35%」＝8 月預估值＋已退役舊門檻（引述用，非生效值）。
+    # 現行分級讀 thresholds SoT（綠 ≤45／黃 ≤53／追繳 70），且追繳是「各池分別」判定。
+    try:
+        _snap_rb = load("snapshot.json")
+        _cp = (_snap_rb.get("cathay_pledge_0911") or {})
+        _loan_rb = float(_cp.get("可貸金額") or 0)
+        _pool_rb = float(((_cp.get("擔保池") or {}).get("合計")) or 0)
+        _plv = (_loan_rb / _pool_rb * 100) if _pool_rb else 0.0
+        _ltvb = ((_snap_rb.get("thresholds_2026_0915") or {}).get("ltv分級_pct") or {})
+        _pl_txt = f"{_plv:.1f}%（借 {_loan_rb:,.0f}／池 {_pool_rb:,.0f}）"
+        _pl_lim = f"綠 ≤{_ltvb.get('綠上限', 45)}／黃 ≤{_ltvb.get('黃上限', 53)}／追繳 ≥{_ltvb.get('追繳', 70)}"
+        _pl_trig = _plv > float(_ltvb.get("綠上限", 45))
+    except Exception:
+        _pl_txt, _pl_lim, _pl_trig = "—", "綠 ≤45／追繳 ≥70", False
+
     # ── 風險紅線 ──
     risks = [
         ("US30Y 凍結線", f"{us30y:.2f}%" if us30y else "—", "≥5.30% 🔴", us30y and us30y >= 5.30),
         ("美元曝險", f"{usd_pct:.0f}%", "紅線 60%", usd_pct > 60),
         ("高科技", f"{tech:.1f}%", "紅線 30%", tech > 30),
         ("現金底線", f"{cash:,}", "≥70萬", cash < 700000),
-        ("總質押 LTV", "完成後 20.4%", "安全值 ≤35%", False),
+        ("國泰擔保池 LTV", _pl_txt, _pl_lim, _pl_trig),
     ]
     risk_rows = ""
     for name, val, limit, triggered in risks:

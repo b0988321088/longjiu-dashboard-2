@@ -24,14 +24,25 @@ total = tw_v + us_v + def_v + bond_v + cash_pv + sat_gold_v + sat_health_v
 # 自動校正 snapshot 穿透數據（供日報第2章使用）
 # targets 以 snapshot 現有值為準（單一真值，禁止硬編碼覆寫）；缺 key 時 fallback 2026-08-02 定案值
 _existing_tgt = snap.get("penetration", {}).get("targets", {}) or {}
+# 2026-09-15 INC-187：目標值一律以 thresholds_2026_0915（SoT）為準，penetration.targets 僅為
+# 舊檔相容的備援（原 fallback 20/40/20/15/15 是 8 月口徑，與 9/13 裁示衝突 → 已更正為現行值）。
+_sot_bt = (snap.get("thresholds_2026_0915") or {}).get("桶目標_pct") or {}
+
+
+def _tgt_of(_pen_key, _sot_key, _dflt):
+    if _sot_key in _sot_bt:
+        return _sot_bt[_sot_key]
+    return _existing_tgt.get(_pen_key, _dflt)
+
+
 targets_map = {
-    "台股市值型": _existing_tgt.get("台股市值型目標", 20),
-    "美股市值型": _existing_tgt.get("美股市值型目標", 40),
-    "配息型": _existing_tgt.get("配息型目標", 20),
-    "債券型": _existing_tgt.get("債券型目標", 15),
-    "現金": _existing_tgt.get("現金目標", 15),
+    "台股市值型": _tgt_of("台股市值型目標", "台股市值型", 10),
+    "美股市值型": _tgt_of("美股市值型目標", "美股市值型", 30),
+    "配息型": _tgt_of("配息型目標", "防守型配息", 30),
+    "債券型": _tgt_of("債券型目標", "債券", 25),
+    "現金": _tgt_of("現金目標", "現金", 5),
 }
-tech_target = _existing_tgt.get("科技曝險目標", 20)
+tech_target = _sot_bt.get("科技", _existing_tgt.get("科技曝險目標", 20))
 actual_map = {"台股市值型成長": tw_v, "美股市值型成長": us_v, "防守型配息": def_v, "債券": bond_v, "現金/安全網": cash_pv,
             "美股市值型成長_科技": us_tech_v, "美股市值型成長_非科技": us_nt_v}
 actual_pct = {k: round(v / total * 100, 1) for k, v in actual_map.items()}
@@ -52,7 +63,11 @@ snap["penetration"] = {
     "alert": f"台股不足{abs(round(actual_pct['台股市值型成長']-targets_map['台股市值型'],1))}pp；現金+債券超標{abs(round(actual_pct['債券']+actual_pct['現金/安全網']-targets_map['債券型']-targets_map['現金'],1))}pp",
 }
 # 每次管線執行滾動頂層日期（儀表板系統時間/記憶同步統一真值）
-snap.setdefault("date", date.today().isoformat())
+# 2026-09-15 INC-187：由 setdefault 改「每次指派」——原寫法一旦寫入就永不更新，
+# 只有 sync_all.py v3 自動修復會補滾 → 07:00 路徑的 snapshot.date 會落後一天，
+# 害 four_source_sync Step 4b 拿舊日期去比對昨天的報表 → 假「三報表穿透不一致」。
+# 語意與 sync_all.py v3（sp["date"] = today）一致。
+snap["date"] = date.today().isoformat()
 snap["generated_at"] = datetime.now().isoformat()
 (BASE / "snapshot.json").write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")  # INC-184：snapshot canonical=1（原 indent=2 造成全檔假 diff）
 print("  穿透數據已自動校正並寫入 snapshot.json")

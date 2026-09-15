@@ -28,6 +28,13 @@
 - 修後真值（2026-09-15）：台 7.5／美 40.6／防 17.4／債 27.6／現 3.4／黃金 1.4／健康 2.0；七桶加總 = 總資產 25,918,930 ✅；四源同步 ✅、三報表穿透一致 ✅。
 - check_rule：**改動桶別分派邏輯後必須驗「基金明細加總 == fund_market_value（±0.1%）」**，否則縮放防呆會靜默污染全部桶別。驗法：`python -c` 直接呼叫 `calc_penetration` 印出七桶加總比對總資產，並與前一交易日 penetration 對照（單日跳動 >5pp 先查縮放）。
 
+## INC-187 門檻散落 7 處／文字凍結／日期不滾（2026-09-15）
+- 症狀：同一個「桶目標」在 7 個地方各有一份，其中 4 份是 7-8 月舊口徑（債券 15 vs 25、防守 20 vs 30、LTV 安全值 35% vs 現行 53%、美股減碼 33% vs 40%）；日報內文寫舊穿透值（見 INC-186 的表格）；`snapshot.date` 停在昨天害四源檢查假失敗。
+- 根因：①各腳本各自硬編碼門檻（無單一真值）②LLM 快取無「數據指紋」→ snapshot 改了仍沿用當日舊文字 ③`snapshot.date` 用 `setdefault` → 一旦寫入永不滾，只有 sync_all v3 會補。
+- 修法：①建立單一真值 `snapshot.thresholds_2026_0915`（桶目標／動作階梯／單桶硬上限／減碼可執行性／風險煞車／LTV 分級／美元曝險／現金兩段式／衛星／覆蓋率），5 支消費端（allocation_alert、debt_restructure_tracker、institutional_flow、build_rebalance_dashboard、build_penetration_report）一律改讀 ②新增 `check_thresholds.py`（SoT 完整＋消費端引用＋舊門檻字面掃描，`sot-exempt` 可豁免引述行）並接入 sync_all 第 2 步 ③run_daily 的 CIO 快取檔名加 snapshot 指紋、`snapshot.date` 改每次指派 ④US30Y 真值優先序改讀 `us30y_state.json`（us30y_monitor 每日寫；rhythm08.indicators 實測停在 9/10 的 5.361）。
+- 使用者裁示（2026-09-15）：門檻建議值照用；減碼只減「非後收、非保單內、無 CDSC」→ 賣不掉的桶改「停新增＋配息導流」；現金底線加「追繳緩衝 50 萬」（合計 120 萬，現 88.6 萬缺 31.4 萬）；債券不賣。
+- check_rule：①新增/修改任何門檻前先查 `check_thresholds.py`（它會列出殘留字面）②報表內文與表格數字不一致時，先查 LLM 快取指紋而不是先改文案③日期類欄位禁用 `setdefault`。
+
 ## INC-未經核准直接推送（2026-07-30）
 - 時間：05:49
 - 錯誤：標籤動態化 + FL65更新後，未先傳本地檔給使用者確認，直接 git push

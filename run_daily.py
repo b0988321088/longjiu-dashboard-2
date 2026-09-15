@@ -493,7 +493,17 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         # LLM 真實分析優先（2026-08-22 升級；快取 data/cio_llm_{TODAY}.json 避免同日重複呼叫）
         _cio_llm = ""
         try:
-            _cio_cache = BASE / "data" / f"cio_llm_{date.today().isoformat()}.json"  # 用真實今天（run_daily TODAY=snapshot 日期 8/21，若用它 cache 永不更新）
+            # 2026-09-15 INC-186：快取檔名加「數據指紋」— snapshot 一改就換檔名 → 自動重算，
+            # 避免 LLM 分析文字凍結在舊穿透值（實踩：9/14 日報表格已是債券 27.6%／美股 40.6%，
+            # 但內文仍寫 31.3%／24.7% → 同一份日報自相矛盾）。
+            # ⚠️ 不主動刪當日舊快取（data/ 快取增刪有稽核、且誤刪會造成重複付費），舊檔自然失效即可。
+            # 機制對齊 buffett_cto_analyzer._data_fingerprint（同名手法，避免兩套寫法）。
+            try:
+                import hashlib as _hl
+                _cio_fp = _hl.md5((BASE / "snapshot.json").read_bytes()).hexdigest()[:8]
+            except Exception:
+                _cio_fp = "nofp"
+            _cio_cache = BASE / "data" / f"cio_llm_{date.today().isoformat()}_{_cio_fp}.json"  # 用真實今天（run_daily TODAY=snapshot 日期 8/21，若用它 cache 永不更新）
             if _cio_cache.exists():
                 _cio_llm = json.loads(_cio_cache.read_text(encoding="utf-8")).get("text", "")
             else:
