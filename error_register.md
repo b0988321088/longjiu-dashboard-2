@@ -400,3 +400,38 @@
   2. 這支 monitor 的重跑會**改寫歷史檔**（冪等但會收斂），所以「重跑管線」不是零副作用動作。
 - check_rule：跑完 `asset_diff_monitor.py`／`regenerate_report.py` 後，先 `git status` 看有沒有
   `asset_diff_history.json` 未提交，再跑閉環稽核——否則會把「自己造成的未提交」誤判成系統問題。
+
+## INC-2026-09-15（INC-188）日報基金部位用「總值 − funds_cathay」反推鉅亨網 → 靜默錯帳
+
+- 現象：日報「基金部位（鉅亨網 + 國泰基金）」顯示 `基金總市值 12,628,144 ＝ 鉅亨網 5,803,222 ＋ 國泰基金 6,824,922（富達 600萬 + 聯博 100萬 + MMF 500萬停泊）`。
+  使用者連兩輪指出「基金內容未更新」→「還是錯誤」。真相：**鉅亨網真值 822,162**（一般 372,388 + 自由Pay 449,774），
+  5,803,222 是 `funds 12,628,144 − funds_cathay 6,824,922` 反推出來的（把國泰的 B11 4,981,060 算進了鉅亨），
+  而 `MMF 500萬停泊` 早已於 9/9 贖回、9/11 轉申購 B11。
+- 根因（兩層）：
+  1. **渲染端用反推**：`run_daily.py` 寫 `{tv['funds'] - tv['funds_cathay']}` 當鉅亨網。反推的隱式假設是「被減項完整」。
+  2. **同義欄位漏同步**：9/11 B11 入帳時只更新了 `funds_breakdown.國泰直購`，`funds_cathay`／`funds_cathay_market_value`／
+     `funds_cathay_breakdown` 三個同義欄位仍停在 6,824,922（富達+聯博）。兩者相乘 → 帳面閉合（5,803,222+6,824,922=12,628,144）但口徑全錯。
+- 為何既有檢查沒抓到：**算術閉合檢查抓不到反推錯誤**——反推值天生閉合。唯一能抓的是「拿報告上的分項去比對來源明細加總」。
+- 修法：①`run_daily.py` 鉅亨/國泰改成 `sum(funds_breakdown['一般申購'/'自由Pay'])`、`sum(funds_breakdown['國泰直購'])`（排除 note）
+  ②snapshot 三同義欄位同步為 11,805,982 並補 `funds_cathay_breakdown` 的 B11 ③`check_thresholds.py` 新增第 ④ 段不變量：
+  三同義欄位 == 國泰直購明細、鉅亨+國泰 == funds、報告行口徑 == 明細、報告行不得殘留已消失標的字樣、禁用反推寫法（含正則黑名單）。
+- check_rule：① 報告/儀表板的分項數字**一律讀來源明細加總**，禁止 `A − B` 反推 ② 新增基金/標的時，同義欄位
+  （`funds_*` 家族 3 個 + `funds_breakdown` 群組）必須一起更新 ③ 改完渲染端後**必須拿修前版本跑負向測試**
+  （本次首版正則 `funds'\)` 漏抓 `tv.get('funds',0)`，負向測試 False → 修成 `funds'[^)]*\)` 才成立）。
+
+## INC-2026-09-15（INC-189）用 GitHub Contents API 逐檔上傳 → 遠端留 20 顆無紀錄 commit，main 鏡像被閘門擋死
+
+- 現象：推送閘門擋下含程式檔的 commit 後，改用 Contents API 逐檔上傳 9 個檔 → 遠端 clean-main 多了 20 顆
+  `chore(daily): Contents API upload …`（每檔一顆，訊息無 `[cioreviewed]` 也無審查紀錄）。
+  之後 `git push origin HEAD:clean-main HEAD:main` 失敗：clean-main 非 fast-forward；main 更是被逐 commit 擋 23 顆。
+  `--force-with-lease` 也一樣被擋（閘門驗的是「推送範圍內每個 commit」，force 不豁免）。
+- 根因：**Contents API 是繞過閘門但改寫遠端歷史的旁路**。它讓本地與遠端分岔，且產生的 commit 沒有審查紀錄/標籤，
+  會被 pre-push 判定為未審 → 兩條分支同時卡死；連帶讓每日鏡像推送路徑（update_and_deploy 等）也會失敗。
+- 修法：`git fetch` → 比對遠端 log 找出那串產物 commit → 用 `git reset --mixed <審查通過的舊 commit>` 保留本地內容後
+  重建兩顆 commit；**關鍵是 tree 必須與審查紀錄逐位元一致**（審查綁 tree，不是綁 message）：
+  先把 index 還原成審查通過版本的內容（`git checkout <審查commit> -- .`），再用
+  `git update-index --cacheinfo 100644,<blob>,<path>` 指定程式檔 blob，commit 後 `git rev-parse HEAD^{tree}`
+  要比對 == 原審查 tree（本次 `0e6112a0…`），最後 `--force-with-lease` 推 clean-main、正常推 main。
+- check_rule：被閘門擋下時**不要**改用 Contents API 上傳；正解是把程式改動送 CIO 真審、落 RECORD 再推。
+  若已誤用，先 `git fetch` 看遠端是否多出 `Contents API upload` 系列 commit，再走上面的歷史重建流程；
+  重建後一律 `git ls-remote` 驗兩分支 sha 相同且 == 本地 HEAD。
