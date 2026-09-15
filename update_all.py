@@ -106,7 +106,13 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             fv = {}
             for k in list(dict.fromkeys(list(_a.keys()) + list(_b.keys()))):
                 fv[k] = _fv(_a.get(k, 0)) + _fv(_b.get(k, 0))
-            _br = {"安聯收益成長": 0.35, "M&G入息": 0.55, "安聯AI收益成長": 0.50, "PIMCO收益增長": 0.48, "摩根JPM多重收益": 0.50, "貝萊德世界黃金基金A10美元(總報酬穩定配息)": 0, "貝萊德世界健康科學基金A10美元(總報酬穩定配息)": 0, "第一金FA81（聯博-全球多元收益基金 AD月配級別美元…）": 0.61}
+            _br = {"安聯收益成長": 0.35, "M&G入息": 0.55, "安聯AI收益成長": 0.50, "PIMCO收益增長": 0.48, "摩根": 0.45,
+                   "貝萊德世界黃金基金A10美元(總報酬穩定配息)": 0, "貝萊德世界健康科學基金A10美元(總報酬穩定配息)": 0,
+                   "第一金FA81（聯博-全球多元收益基金 AD月配級別美元…）": 0.61}
+            # ⚠️ 2026-09-15（INC-186）：原 key「摩根JPM多重收益」永不匹配 — 保單內實際基金名為
+            # 「摩根投資基金 - 多重收益基金 - JPM多重收益(美元對沖) - A股(穩定月配)」，不含該字串
+            # → 該檔（A+B 合計 2,296,489）債券比被算成 0，債券低估 103 萬、美股虛胖 103 萬。
+            # 比率對齊 fund_components_09 真值：摩根多重收益 股 0.55 / 債 0.45（與第一金 FJ33 同口徑）。
             
             ins_bonds_calculated = 0
             ins_tech_calculated = 0
@@ -172,7 +178,12 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             _fund_bonds += round(_fval * _b11_br)
             _fund_cash += 0
             _fund_us_tech += round(_fval * _b11_eq * 0.25)  # 科技佔權益部位約 25%（對齊 MSCI World IT 基準）
-            _fund_us -= _fval # 扣除 B11 總市值，避免重複計入美股市值型
+            # ⚠️ 2026-09-15 移除幽靈扣減「_fund_us -= _fval」（INC-186）：
+            # B11 已在本分支分派到 _fund_def/_fund_bonds，從未進入 _fund_us（本分支在「貝萊德」
+            # 分支之前，elif 鏈不會再往下走）→ 扣減造成基金明細加總 764 萬 vs fund_market_value
+            # 1,263 萬（差 498 萬）→ 觸發下方縮放防呆 ×1.652，台/美/防/債/金/健全部被灌大
+            # （現金為餘數法不受影響）→ 債券假超標 199 萬、美股假低配 20pp（9/13 真值 44.8 vs 9/14 假 24.7）。
+            # 回歸 INC-165 原意：B11 只要不進美股桶即達標，無需扣減。
         elif any(_k in _fn for _k in ["台中銀台灣優息", "國泰台灣高股息", "元大台灣高股息", "高股息ETF連結"]):
             _fund_def += _fval
         elif any(_k in _fn for _k in ["台新美日台", "貝萊德", "安聯AI", "聯博", "摩根", "M&G", "安聯收益成長", "投資型保單"]):
