@@ -444,3 +444,21 @@
 - check_rule：被閘門擋下時**不要**改用 Contents API 上傳；正解是把程式改動送 CIO 真審、落 RECORD 再推。
   若已誤用，先 `git fetch` 看遠端是否多出 `Contents API upload` 系列 commit，再走上面的歷史重建流程；
   重建後一律 `git ls-remote` 驗兩分支 sha 相同且 == 本地 HEAD。
+
+## INC-191 — schedule_events 過期事件被 calendar_sync 灌回（每週清理形同無效）
+
+- **日期**：2026-09-15（使用者：「裡面有很多已經過期的事件或是已經決定的事件可以把它刪掉」）
+- **現象**：清掉 7 月過期事件後，重跑 `calendar_sync.py` 立刻回魂 20 筆（7/11 台南住宿、7/12 孫子演唱會、7/17 段部上課、7/19 跟媽媽打牌…），事件數 69→73 反覆。
+- **根因**：`calendar_sync.py` 末段「反向合併 GCal 手動事件」僅以 item 名稱去重（INC-136 的修正），**沒有日期過濾** → 只要 Google 日曆上還留著舊的手動事件，每次同步就會寫回 `schedule_events.json`；與 `schedule_events_weekly_clean.py`（週日 08:00 自動刪過期）形成永久迴圈。
+- **修正**：合併迴圈前加日期閘門（`date < today` → skip 並計數），log 新增「略過已過期手動事件 N 筆」；Google 日曆原始事件保留不動。
+- **驗收**：`calendar_sync.py` → 刪 73／新增 73／略過過期 20；`schedule_events.json` = 54 筆，過期僅 3 筆（仍在追蹤語意）。
+- **教訓**：清理腳本只能治標，**「誰把資料寫回來」才是根因**；任何『刪了又出現』的資料，先找反寫入路徑（sync/merge/import）。
+
+## INC-192 — 自寫日誌腳本寫錯 JSON 縮排 → 925 行假 diff（CIO 複審攔下）
+
+- **日期**：2026-09-15
+- **現象**：`_log_calsync_fix_0915.py` 追加 work_log 後，commit 顯示 `work_log.json` 925 行新增／919 行刪除（整檔 churn），行尾同時被寫成 CRLF。
+- **根因**：work_log.json 的 canonical 縮排是 1（`json.dumps(indent=1)`），腳本卻用 2 寫入 → 全檔重排；git autocrlf 再正規化行尾 → 假 diff 掩蓋真改動（真的只有新增 1 筆＝6 行）。
+- **攔截**：CIO-Gemini 複審 V6（閉環稽核第 10 類）判 REJECT。
+- **修正**：work_log.json 還原 canonical 縮排＋明示 `newline="\n"`；腳本同步改正；以 `--amend` 併回未推送的 data commit。
+- **教訓**：①寫任何管線 JSON 前先查該檔 canonical 縮排（schedule_events／pending_decisions／dashboard_decisions＝2；snapshot／work_log／radar_state＝1）②一律明示 `newline="\n"` ③閉環稽核第 10 類會把散文中的「indent 加等號加數字」誤判為違規寫入者，敘述請用文字（已在稽核腳本層留待收緊）。

@@ -917,5 +917,17 @@
   "category": "完成",
   "item": "9/15 儀表板重產＋三顆 commit 推送（清理總收尾）",
   "detail": "本機重產 index.html（placeholder 殘留 0）、閉環稽核全部通過 ✅；推送 c607ab3c（清理資料層）+5ff58057（刪除腳本）+e9b230fc（刪辦事指引），clean-main/main 雙分支同步。備註：使用者已裁示不做資料公開治理（維持公開 Pages），本次不再提。"
+ },
+ {
+  "date": "2026-09-15",
+  "category": "修正",
+  "item": "根因修正：calendar_sync 每輪把手動過期事件灌回 schedule_events（清理無效的真因）",
+  "detail": "現象：7 月過期事件清掉後，一跑 calendar_sync 就整批回魂（本次實測 20 筆 7-8 月手動事件重新寫回 schedule_events.json，82→69→73 反覆）。根因：calendar_sync.py 末段「反向合併 GCal 手動事件」只做去重、不過濾日期，於是「每週清理刪掉 → 下次同步灌回」形成永久迴圈（使用者：「已經過期的事件一直放著沒有意思」）。修正：合併前加日期閘門 —— `str(_ev[\"date\"])[:10] < date.today().isoformat()` 者直接 skip 並計數，log 印「略過已過期手動事件 N 筆」；Google 日曆原始事件不動（只停止灌回系統真值）。驗收：重跑 calendar_sync → 刪 73/新增 73、略過過期 20 筆，schedule_events 維持 54 筆、過期僅剩 3 筆追蹤中事件。"
+ },
+ {
+  "date": "2026-09-15",
+  "category": "修正",
+  "item": "INC-192：自寫日誌腳本把 work_log.json 縮排寫成 2（canonical 1）→ 925/919 行假 diff（CIO V6 攔下）",
+  "detail": "現象：以 _log_calsync_fix_0915.py 追加 work_log 後，commit 顯示 work_log.json 925 行新增／919 行刪除（整檔 churn），且行尾被 Windows 寫成 CRLF。根因：一次性腳本用 indent 2 寫 work_log.json，而 work_log 的 canonical 縮排是 1（json.dumps(indent=1) 才有 1 空格縮排）→ 全檔重排；git autocrlf 再把 LF 正規化，形成「看起來動了整檔」的假 diff，真改動其實只有新增 1 筆（6 行）。CIO-Gemini 複審 V6（閉環稽核第 10 類）判 REJECT 攔下。修正：①work_log.json 還原 canonical 縮排並改明示 newline=\"\\n\"（避免 CRLF）②腳本改 indent=1 + newline=\"\\n\" ③以 --amend 併回原 data commit（未推送），使歷史不留 925 行 churn。驗收：相對前一顆 commit 的 work_log diff = 6 行新增／0 刪除；閉環稽核全部通過。教訓：寫任何管線 JSON 前先查該檔 canonical 縮排（schedule_events／pending_decisions／dashboard_decisions＝2、snapshot／work_log／radar_state＝1），並一律明示 newline=\"\\n\"；另閉環稽核第 10 類會把散文裡的「indent 加等號加數字」字樣誤判為寫入者，敘述時改用文字描述。"
  }
 ]
