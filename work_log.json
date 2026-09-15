@@ -947,5 +947,11 @@
   "category": "完成",
   "item": "儀表板/日報推送閉環：6 顆 commit 經 CIO 審查後推雙分支，線上與 HEAD 位元一致",
   "detail": "CIO-Gemini 真審 4 顆含程式檔 commit（build_dashboard 例外防護／cleanup_utils／report_utils 模組化／穿透 SoT+watchdog）全 APPROVE → cio_approve 落 RECORD；2 顆資料 commit 走 [cioreviewed] 標籤通道。閘門 v4 dry-run 6 顆全過 → auto_push 推送並驗證遠端 sha 78c431f8（clean-main＋main）。推送前抓到並還原：INC-195（重產時行情抓失敗→空值覆蓋已上線正確值）、誤刪的 schedule_events_weekly_clean.py（週日 08:00 cron 仍在呼叫）。線上 6 頁全 200 且與 HEAD 位元一致（index/daily_report/asset_diff/penetration/rebalance/weekly_review）。"
+ },
+ {
+  "date": "2026-09-16",
+  "category": "完成",
+  "item": "儀表板推送閉環＋週清收尾：10 顆 commit 上線、兩支 cron 入口修復、INC-195/196 登錄",
+  "detail": "① 01:4x 推 7 顆（CIO 真審 4 顆含程式檔全 APPROVE、3 顆純資料走標籤）→ 遠端 sha 73810510、線上 6 頁與 HEAD 位元一致 ② 收尾未完成的清理重構：週清邏輯集中 cleanup_utils（單一來源）、根目錄檔保留原檔名當入口殼（cron 不吃參數）、修 NameError 與 datetime.date 靜默失效、恢復『無新增即完全靜默』契約（CIO 初審 REJECT→修正→複審 APPROVE，tree 75c392f8）③ 新增週一 03:00 入口 weekly_system_cleanup.py、修好該 job 的 script/workdir、把新檔加進鏡像清單；掃 46 個 script 排程確認無『指向不存在檔案/帶參數』④ 儀表板風險提示『資料日』動態化（不再寫死 8/23）⑤ INC-195（重產空值覆蓋正確值，推送前攔下）、INC-196（未完成重構三缺陷）登錄 ⑥ 真實週清端到端執行：刪 1 筆已完成過期事件、events 54→53、commit b220ca4c 已推雙分支"
  }
 ]
