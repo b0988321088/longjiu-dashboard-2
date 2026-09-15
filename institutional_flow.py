@@ -494,7 +494,12 @@ def main():
         _hs = _snap.get("hedge_satellite", {})
         _conv = _snap.get("insurance_conversion_0826b", {})
 
-        print("\n📋 本週投資計劃（8/29 全資產面結論 — 五桶+衛星+負債+輪動+節點）:")
+        # 2026-09-15：標題日期改讀單一真值「本次執行即將寫入 radar_state.weekly_plan 的日期」
+        # ⚠️ 不可讀 radar_state.json 檔內的值：本次執行尚未寫檔（寫檔在後段），讀檔會拿到前一次的日期
+        #    → 標題滯後一天（16:15 當下顯示昨天）。真值＝date.today()，與本檔後段寫入 weekly_plan.日期 同一運算式。
+        _plan_title_date = f"{date.today().month}/{date.today().day}"
+
+        print(f"\n📋 本週投資計劃（{_plan_title_date} 全資產面結論 — 五桶+衛星+負債+輪動+節點）:")
         lines = []
         _pen5 = _snap.get("penetration", {}).get("actual_pct", {}) or {}
         _tw5 = _pen5.get("台股市值型成長", 7.5); _us5 = _pen5.get("美股市值型成長", 43.4)
