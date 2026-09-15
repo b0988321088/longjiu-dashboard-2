@@ -953,5 +953,11 @@
   "category": "完成",
   "item": "儀表板推送閉環＋週清收尾：10 顆 commit 上線、兩支 cron 入口修復、INC-195/196 登錄",
   "detail": "① 01:4x 推 7 顆（CIO 真審 4 顆含程式檔全 APPROVE、3 顆純資料走標籤）→ 遠端 sha 73810510、線上 6 頁與 HEAD 位元一致 ② 收尾未完成的清理重構：週清邏輯集中 cleanup_utils（單一來源）、根目錄檔保留原檔名當入口殼（cron 不吃參數）、修 NameError 與 datetime.date 靜默失效、恢復『無新增即完全靜默』契約（CIO 初審 REJECT→修正→複審 APPROVE，tree 75c392f8）③ 新增週一 03:00 入口 weekly_system_cleanup.py、修好該 job 的 script/workdir、把新檔加進鏡像清單；掃 46 個 script 排程確認無『指向不存在檔案/帶參數』④ 儀表板風險提示『資料日』動態化（不再寫死 8/23）⑤ INC-195（重產空值覆蓋正確值，推送前攔下）、INC-196（未完成重構三缺陷）登錄 ⑥ 真實週清端到端執行：刪 1 筆已完成過期事件、events 54→53、commit b220ca4c 已推雙分支"
+ },
+ {
+  "date": "2026-09-16",
+  "category": "完成",
+  "item": "清理收尾（二）：週清落版納入 state 檔 ＋ 週一深度清理收尾自動落版推送（使用者核准）",
+  "detail": "① 週清（週日 08:00）：落版條件由「看刪幾筆」改成「git status --porcelain 看檔案真的髒不髒」（state 檔每次執行都會寫、key 集合會變，只看筆數會永遠 dirty）→ commit 仍路徑限定 schedule_events.json + data/calendar_overdue_state.json ② 週一 03:00 全量深度清理：run_full_cleanup 尾段（僅 apply=True）若工作區有變更 → auto_push --auto-stage（add -A 通路：落版＋補紀錄＋重試＋驗遠端 sha）；閘門 fail-closed：若範圍含未審程式檔（如 ad-hoc 腳本搬進 .archive）→ exit 3 停在本地並回非零碼讓 cron 出聲 ③ 注入式驗證 4 項全過：靜默默約（有清理無新增→stdout 空）、apply=True 確實呼叫 auto_push、apply=False 絕不落版、rc=3 不誤報已推送 ④ commit a8ed9366（CIO 審查中）⑤ 本輪另收：INC-195/196、13+ 顆 commit 上線、儀表板資料日動態化"
  }
 ]
