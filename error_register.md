@@ -506,3 +506,12 @@
 - **根因**：前一輪重構把 alert 相關計算留在工作區未落版，而 snapshot.json（含 `penetration.alert`）已被提交 → 「資料有值、程式沒有」的錯配狀態。
 - **修正**：把工作區的 `_targets／_actual_pct／_gaps／_alert` 區塊正式落版；目標值一律讀 `snapshot.thresholds_2026_0915.桶目標_pct`（SoT，含科技 20），與 `build_penetration_report.py` 同口徑。實測 `calc_penetration(...)["alert"]` 與 `snapshot.penetration.alert` **逐字相同**；`check_thresholds.py` 全綠（SoT 完整／消費端 5 支皆引用／無舊門檻殘留）。
 - **教訓**：①產出資料的同時要把「產生它的程式」一起落版 —— 否則下一個 session 從 HEAD 重跑必爆 ②改動／依賴某個 key 前，先 `grep` 全 repo 消費端（本例 `build_penetration_report.py:63`，另 `update_data.py` 會把 pen 寫回 snapshot.penetration）③看到「資料檔已提交、程式還在工作區」＝立即落版，不要等下一個流程幫你帶上去。
+
+## INC-198 — HEAD 處於 detached：auto_push 推的是「本機分支」而非 HEAD → 遠端停在舊 commit（rc=5 偽裝成網路問題）
+
+- **日期**：2026-09-16（07:47 發現；08:0x 修復）
+- **現象**：07:00 morning 產出完成但線上沒更新；`auto_push.py` 回 `rc=5`「推送後驗證不符（線上是舊的）→ clean-main：遠端 a8ed9366bad7 ≠ 本機 5301e5d19606」，但**手動** `git push origin HEAD:clean-main HEAD:main` 一次就成功。前一日同一 commit 連續 5 次被記為 `REFUSED`／`VERIFY-FAIL`。
+- **根因**：**HEAD 是 detached**。reflog 顯示 `a8ed9366 HEAD@{8}: checkout: moving from clean-main to a8ed9366`，其後 **8 顆 commit 全部落在 detached HEAD**，本機分支完全沒跟上（`clean-main` = a8ed9366、`main` = f8f252b4）。而 `auto_push.py` 預設 refspec 是 `clean-main:main`（**分支名**，不是 HEAD）→ 推送時把遠端 clean-main 從 52e096ae 推進到 **a8ed9366（舊內容）**、`returncode = 0`；第 5 步驗證拿遠端 sha 對 HEAD → 不符 → rc=5。**fail-loud 是對的，但症狀把人指向「網路／閘門」，真因是「本機分支沒跟上 HEAD」。**
+- **修正**：`git checkout -B clean-main HEAD`（FF，a8ed9366→5301e5d1）＋ `git branch -f main HEAD`（FF，f8f252b4→5301e5d1，兩者皆為 HEAD 的祖先，無 rewrite）；覆核 `git push --dry-run` = 0 顆待審、`auto_push.py` rc=0 並驗證遠端 sha 5301e5d1（雙分支）。
+- **待核准（程式改動，尚未做）**：①`auto_push.py` 推送前檢查 `git symbolic-ref -q HEAD`，detached 就拒絕並提示 `checkout -B` ②或把預設 refspec 由分支名改為 `HEAD:...`。兩者都要走真 CIO 審查後才動。
+- **教訓**：①任何 `git checkout <sha>`（哪怕只是為了看舊版）都會 detach HEAD，之後的 commit 全部不會掛在任何分支上 ②推送工具以「分支名」為 refspec 時，「本機分支落後」＝推舊內容，而回傳碼是 0 ③rc=5 不等於網路問題 —— 先跑 `git branch -vv` 比對 `git rev-parse HEAD`，再談重試。
