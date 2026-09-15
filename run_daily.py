@@ -18,6 +18,7 @@ from logging_config import get_logger
 logger = get_logger("run_daily")
 import daily_intel as mi_mod
 from daily_intel import load_daily_analysis
+from scripts.components.report_utils import _fmt_rent_status, _generate_schedule_html
 
 try:
     from dotenv import load_dotenv
