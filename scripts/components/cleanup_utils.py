@@ -17,6 +17,7 @@ import sys
 import pathlib
 import re
 import shutil
+import subprocess
 import datetime
 from datetime import date, datetime, timedelta
 import sys
@@ -27,6 +28,38 @@ logger = get_logger("cleanup_utils")
 
 ROOT = pathlib.Path(__file__).parent.parent.parent.resolve() # 假設 scripts/components 在龍九系統根目錄下
 ARCHIVE_DIR = ROOT / '.archive'
+
+# --- schedule_events_weekly_clean.py 常數與輔助函數 ---
+DONE_MARK = ("✅", "已入帳", "已完成", "已核准", "核准完成", "已進帳", "已送出", "已收")
+PURE_PREFIX = ("📋 行程", "📋 節日", "📋 例行", "📅 ", "❌ 取消", "📋 行程")
+PURE_EXACT = ("📋 行程", "📋 節日", "📋 例行")
+TRACK_MARK = ("🔴", "⏸️", "⏳", "🟡", "📌", "pipeline", "📋 重要")
+
+STATE_CALENDAR_OVERDUE = ROOT / "data" / "calendar_overdue_state.json"
+
+def _load_calendar_overdue_state():
+    if STATE_CALENDAR_OVERDUE.exists():
+        try:
+            return json.load(open(STATE_CALENDAR_OVERDUE, encoding="utf-8"))
+        except Exception:
+            return []
+    return []
+
+def _save_calendar_overdue_state(keys):
+    STATE_CALENDAR_OVERDUE.parent.mkdir(exist_ok=True)
+    json.dump(sorted(keys), open(STATE_CALENDAR_OVERDUE, "w", encoding="utf-8"),
+              ensure_ascii=False, indent=1)
+
+def _key_of_event(e):
+    return f"{e.get('date','')}|{e.get('item','')}"
+
+def _fmt_date_event(d):
+    try:
+        return date.fromisoformat(str(d)[:10])   # ⚠️ 用 date（class），不可寫 datetime.date —— 本檔 datetime 已被 `from datetime import datetime` 綁成類別，datetime.date 取到的是方法描述子 → 例外被吞 → 全部事件被當「無日期」而靜默不清理
+    except Exception:
+        return None
+
+# --- end schedule_events_weekly_clean.py 常數與輔助函數 ---
 
 def _ensure_archive_dir():
     ARCHIVE_DIR.mkdir(exist_ok=True)
@@ -68,31 +101,68 @@ def save_text(filepath, content):
 
 # --- 清理功能 A-F (從 _cleanup_past_0915.py 搬移與重構) ---
 
-def _cleanup_schedule_events(apply_changes: bool, current_date_iso: str):
-    logger.info("執行 A. 清理 schedule_events.json...")
-    p = ROOT / 'schedule_events.json'
-    ev = load_json(p)
-    
-    if not ev:
-        logger.info("schedule_events.json 為空或無法讀取，跳過清理。")
-        return 0, 0
+def _classify_events(evs, current_date: datetime.date):
+    """回傳 (auto_del, review)：與週日 cron 同一份分類規則（單一來源）。"""
+    auto_del, review = [], []
+    for e in evs:
+        d = str(e.get("date", ""))[:10]
+        status = str(e.get("status", "")).strip()
+        ed = _fmt_date_event(d)
+        if ed is None or ed >= current_date:
+            continue  # 無日期 or 未過期 → 不動
+        if any(m in status for m in DONE_MARK):
+            auto_del.append(e)
+        elif any(m in status for m in TRACK_MARK):
+            review.append(e)
+        elif status in PURE_EXACT or status.startswith(("📅", "❌")):
+            auto_del.append(e)
+        else:
+            # 保守：無法歸類的過期 → 進提醒不自動刪
+            review.append(e)
+    return auto_del, review
 
-    # 移除早於 2026-08-01 的過期事件
-    keep = [e for e in ev if str(e.get('date', ''))[:10] >= '2026-08-01']
-    gone = [e for e in ev if str(e.get('date', ''))[:10] < '2026-08-01']
+
+def _cleanup_schedule_events(apply_changes: bool, current_date: datetime.date):
+    logger.info("執行 A. 清理 schedule_events.json (整合 schedule_events_weekly_clean.py 邏輯)...")
+    p = ROOT / 'schedule_events.json'
+    evs = load_json(p)
     
-    if gone:
-        logger.info(f'A. schedule_events: {len(ev)} → {len(keep)}（移除 {len(gone)} 筆 7 月過期事件）')
-        for e in gone:
-            logger.debug(f'    - {e.get("date")} {str(e.get("item"))[:52]}')
+    if not evs:
+        logger.info("schedule_events.json 為空或無法讀取，跳過清理。")
+        return {'cleaned': 0, 'retained': 0, 'new_reminders': []}
+
+    auto_del, review = _classify_events(evs, current_date)
+
+    prev_keys = set(_load_calendar_overdue_state())
+    cur_review_keys = {_key_of_event(e) for e in review}
+    new_review = [e for e in review if _key_of_event(e) not in prev_keys]
+
+    cleaned_count = 0
+    retained_count = len(evs)
+    if auto_del:
+        del_keys = {_key_of_event(e) for e in auto_del}
+        evs = [e for e in evs if _key_of_event(e) not in del_keys]
         if apply_changes:
-            _arch_write_json('removed_schedule_events_2026h1.json', gone)
-            save_json(p, keep, indent=2) # schedule_events.json 縮排為 2
-            logger.info("schedule_events.json 已更新並歸檔舊條目。")
-        return len(gone), len(keep)
-    else:
-        logger.info("沒有 schedule_events 舊條目需要清理。")
-        return 0, len(ev)
+            save_json(p, evs, indent=2) # schedule_events.json 縮排為 2
+        cleaned_count = len(auto_del)
+        retained_count = len(evs)
+
+    if apply_changes:
+        _save_calendar_overdue_state(cur_review_keys)
+
+    reminders = []
+    if new_review:
+        reminders.append(f"📅 行事曆過期未完成（新增 {len(new_review)} 筆，需你裁決 ✅完成/⏸️保留/刪除）：")
+        for e in new_review:
+            reminders.append(f"  • {e.get('date')}｜{e.get('status')}｜{e.get('item','')[:70]}")
+        if cleaned_count > 0:
+            reminders.append(f"\n🧹 已自動清理 {cleaned_count} 筆過期事件（已完成/純提醒，git 可回溯）")
+    elif cleaned_count > 0:
+        # 如果只有自動清理，沒有新增提醒，也提供一個簡短的清理報告
+        reminders.append(f"🧹 已自動清理 {cleaned_count} 筆過期事件（已完成/純提醒，git 可回溯）")
+
+    logger.info(f'A. schedule_events: 自動刪除 {cleaned_count} 筆，保留 {retained_count} 筆，新增提醒 {len(new_review)} 筆。')
+    return {'cleaned': cleaned_count, 'retained': retained_count, 'new_reminders': reminders}
 
 def _cleanup_pending_decisions(apply_changes: bool, current_date_iso: str):
     logger.info("執行 B. 清理 pending_decisions.json / dashboard_decisions.json...")
@@ -392,14 +462,79 @@ def _cleanup_temp_and_cache_files(apply_changes: bool):
     # 更多臨時文件類型可以添加...
     return cleaned_count
 
+def weekly_calendar_main(dry_run: bool | None = None) -> None:
+    """週日 08:00 cron 入口：行事曆過期事件收尾（2026-09-16 從 schedule_events_weekly_clean.py 收編）。
+
+    契約（不可改，cron 靠這個契約判斷健康）：
+    - 自動刪：date<today 且 status 具完成語意／純提醒類（📋 行程/節日/例行、📅、❌）
+    - 保留待裁決：追蹤語意（🔴/⏸️/⏳/🟡/📌/pipeline/📋 重要/無法歸類）
+    - 有變更 → 只 commit schedule_events.json（路徑限定，避免夾帶他人 dirty 檔）→ auto_push 落紀錄並推雙分支
+    - 輸出：只推「新增的過期未完成」；沒有新增就完全靜默（cron 健康時無輸出）
+    """
+    if dry_run is None:
+        dry_run = "--dry-run" in sys.argv
+    today = date.today()
+    evs = load_json(ROOT / "schedule_events.json")
+    if not evs:
+        logger.info("weekly_calendar: schedule_events.json 為空或無法讀取，靜默結束。")
+        return
+    auto_del, review = _classify_events(evs, today)
+    prev_keys = set(_load_calendar_overdue_state())
+    cur_review_keys = {_key_of_event(e) for e in review}
+    new_review = [e for e in review if _key_of_event(e) not in prev_keys]
+
+    if dry_run:
+        print(f"📋 [dry-run] 過期 {len(auto_del) + len(review)} 筆 | "
+              f"將自動刪 {len(auto_del)} | 待裁決 {len(review)}（新增 {len(new_review)}）")
+        print("\n-- 將自動刪除 --")
+        for e in auto_del:
+            print(f"  {e.get('date')} | {e.get('status')} | {str(e.get('item',''))[:50]}")
+        print("\n-- 保留待裁決（新增才推） --")
+        for e in review:
+            tag = "🆕" if _key_of_event(e) in (cur_review_keys - prev_keys) else "  "
+            print(f"  {tag} {e.get('date')} | {e.get('status')} | {str(e.get('item',''))[:50]}")
+        return
+
+    res = _cleanup_schedule_events(True, today)
+    cleaned, reminders = res["cleaned"], res["new_reminders"]
+
+    push_note = ""
+    if cleaned:
+        r = subprocess.run(["git", "commit", "-m",
+                            f"[cron] 每週事件清理：刪除 {cleaned} 筆過期事件（git 可回溯）",
+                            "--", "schedule_events.json"],
+                           cwd=str(ROOT), capture_output=True, text=True, timeout=120)
+        if r.returncode == 0:
+            ap = subprocess.run([sys.executable, str(ROOT / "auto_push.py"),
+                                 "--script", "schedule_events_weekly_clean.py"],
+                                cwd=str(ROOT), capture_output=True, text=True, timeout=600)
+            if ap.returncode != 0:
+                push_note = (f"\n⚠️ 未推送上線（rc={ap.returncode}）："
+                             f"{((ap.stdout or '') + (ap.stderr or ''))[-200:]}")
+        else:
+            push_note = f"\n⚠️ commit 失敗: {(r.stderr or '').strip()[:200]}"
+
+    logger.info(f"weekly_calendar: 刪除 {cleaned} 筆、待裁決 {len(review)} 筆、新增提醒 {len(new_review)} 筆。")
+    # ⚠️ 靜默契約（與舊腳本逐字等價）：只有「新增的過期未完成」才輸出。
+    #    只有自動清理、沒有新增提醒時必須完全靜默 —— cron 的空輸出＝健康、不推播；
+    #    若這裡把 _cleanup_schedule_events 的「🧹 已自動清理」摘要一起印出，每週只要有刪除就會吵一次。
+    if new_review:
+        lines = [f"📅 行事曆過期未完成（新增 {len(new_review)} 筆，需你裁決 ✅完成/⏸️保留/刪除）："]
+        for e in new_review:
+            lines.append(f"  • {e.get('date')}｜{e.get('status')}｜{str(e.get('item',''))[:70]}")
+        if cleaned:
+            lines.append(f"\n🧹 已自動清理 {cleaned} 筆過期事件（已完成/純提醒，git 可回溯）")
+        print("\n".join(lines) + push_note)
+
+
 # --- 主清理入口函數 ---
 def run_full_cleanup(apply_changes: bool = False):
     logger.info(f"=== 開始執行龍九系統深度清理 (apply_changes={apply_changes}) ===")
     
-    current_date_iso = date.today().isoformat()
+    current_date = date.today()
     
     results = {
-        'schedule_events': {'cleaned': 0, 'retained': 0},
+        'schedule_events': {'cleaned': 0, 'retained': 0, 'new_reminders': []},
         'pending_decisions': {'cleaned': 0, 'retained': 0},
         'html_banners': {'updated': 0},
         'old_backups': {'cleaned': 0},
@@ -413,13 +548,13 @@ def run_full_cleanup(apply_changes: bool = False):
     }
 
     # 從 _cleanup_past_0915.py 整合的清理功能
-    gone_se, keep_se = _cleanup_schedule_events(apply_changes, current_date_iso)
-    results['schedule_events'] = {'cleaned': gone_se, 'retained': keep_se}
+    se_res = _cleanup_schedule_events(apply_changes, current_date)
+    results['schedule_events'] = {'cleaned': se_res['cleaned'], 'retained': se_res['retained'], 'new_reminders': se_res['new_reminders']}
     
-    gone_pd, keep_pd = _cleanup_pending_decisions(apply_changes, current_date_iso)
+    gone_pd, keep_pd = _cleanup_pending_decisions(apply_changes, current_date.isoformat())
     results['pending_decisions'] = {'cleaned': gone_pd, 'retained': keep_pd}
 
-    updated_banners = _cleanup_html_banners(apply_changes, current_date_iso)
+    updated_banners = _cleanup_html_banners(apply_changes, current_date.isoformat())
     results['html_banners'] = {'updated': updated_banners}
 
     cleaned_backups = _cleanup_old_backups(apply_changes)
@@ -452,6 +587,11 @@ def run_full_cleanup(apply_changes: bool = False):
     return results
 
 if __name__ == '__main__':
-    # 預設為乾跑模式，除非傳入 --apply 參數
-    _apply = '--apply' in sys.argv
-    run_full_cleanup(apply_changes=_apply)
+    # 模式（2026-09-16 收尾）：
+    #   --weekly-calendar  → 週日 08:00 cron 的行事曆收尾（與 schedule_events_weekly_clean.py 同一份實作）
+    #   --apply            → 全量深度清理（真的動檔）
+    #   （無參數）          → 全量深度清理乾跑，只印 log 不動檔
+    if '--weekly-calendar' in sys.argv:
+        weekly_calendar_main()
+    else:
+        run_full_cleanup(apply_changes=('--apply' in sys.argv))

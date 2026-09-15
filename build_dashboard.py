@@ -147,6 +147,7 @@ def main():
             if not _plan:
                 _plan = ["待雷達更新"]
             rep["__RADAR_DATE__"] = _rd.get("last_run", "2026-08-29")[:10]
+            rep["__RISK_UPDATED__"] = rep["__RADAR_DATE__"]   # 風險提示標籤的資料日＝雷達資料日（不再寫死）
 
             # ── 風險提示區塊動態化（2026-09-13 INC-166：原為 8/23 寫死文字，已與現況矛盾）──
             _rows2 = ((_rd.get("weekly_plan", {}) or {}).get("rows") or [])
@@ -192,7 +193,8 @@ def main():
             rep["__RADAR_PLAN__"] = "｜".join(_plan)
             rep["__RADAR_POLICY__"] = _policy_txt
         else:
-            rep["__RADAR_DATE__"] = "2026-08-29"
+            rep["__RADAR_DATE__"] = "—"
+            rep["__RISK_UPDATED__"] = "—"
             rep["__RADAR_SIGNALS__"] = "雷達資料缺（radar_state.json 不存在）"
             rep["__RADAR_PLAN__"] = "待雷達更新"
             rep["__RADAR_POLICY__"] = "無"
@@ -201,7 +203,8 @@ def main():
         import traceback as _tb
         print("  ⚠️ 雷達/風險區塊注入失敗（已用 fallback 文字）:", _e)
         _tb.print_exc()
-        rep["__RADAR_DATE__"] = "2026-08-29"
+        rep["__RADAR_DATE__"] = "—"
+        rep["__RISK_UPDATED__"] = "—"
         rep["__RADAR_SIGNALS__"] = f"雷達讀取失敗: {_e}"
         rep["__RADAR_PLAN__"] = "待雷達更新"
         rep["__RADAR_POLICY__"] = "無"

@@ -55,6 +55,9 @@ SCRIPTS = [
     "auto_record.py", "cio_approve.py",
     # 2026-09-14：auto_push.py 是「紀錄＋重試推送＋遠端驗證」的統一出口，各推送路徑都呼叫它
     "auto_push.py",
+    # 2026-09-16：每週一 03:00 全量深度清理的 cron 入口（cron script 欄位只吃 scripts 目錄內的
+    # 單一檔名、不吃參數 → 需要一支根目錄入口檔並鏡像過去，否則 job 以 "Script not found" 失敗）
+    "weekly_system_cleanup.py",
 ]
 
 
