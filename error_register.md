@@ -515,3 +515,11 @@
 - **修正**：`git checkout -B clean-main HEAD`（FF，a8ed9366→5301e5d1）＋ `git branch -f main HEAD`（FF，f8f252b4→5301e5d1，兩者皆為 HEAD 的祖先，無 rewrite）；覆核 `git push --dry-run` = 0 顆待審、`auto_push.py` rc=0 並驗證遠端 sha 5301e5d1（雙分支）。
 - **待核准（程式改動，尚未做）**：①`auto_push.py` 推送前檢查 `git symbolic-ref -q HEAD`，detached 就拒絕並提示 `checkout -B` ②或把預設 refspec 由分支名改為 `HEAD:...`。兩者都要走真 CIO 審查後才動。
 - **教訓**：①任何 `git checkout <sha>`（哪怕只是為了看舊版）都會 detach HEAD，之後的 commit 全部不會掛在任何分支上 ②推送工具以「分支名」為 refspec 時，「本機分支落後」＝推舊內容，而回傳碼是 0 ③rc=5 不等於網路問題 —— 先跑 `git branch -vv` 比對 `git rev-parse HEAD`，再談重試。
+
+## INC-199 — 日報附加區塊落在 `</body></html>` 之外（每日約 4.2KB 在文件外，瀏覽器照渲染所以看不出來）
+
+- **日期**：2026-09-16（推送複驗線上日報時發現；同日修復）
+- **現象**：`daily_report_v2_2026-09-16.html`（9/15 同）在**最後一個 `</html>` 之後還有 4,225 字元** —— 「🎫 專業投資人風控卡｜核心‑衛星保守成長」與槓桿風控區塊。瀏覽器把這些當 body 內容渲染（畫面看起來完全正常），但文件結構不合法：外部解析器／摘要器／檢查器讀到的 body 不含這些區塊。
+- **根因**：`render_daily_report()` 內多處 `html += 附加區塊`，而樣板尾端本身已經是 `...</div></body></html>` → 追加內容自然落在關閉標籤之後。**兩條寫檔路徑都受影響**：`run_daily.py`(main) 與 `regenerate_report.py`（07:00 實際走的是後者）。
+- **修正**：新增 `run_daily.close_html_tail()`（把最後一個 `</html>` 之後的殘留**搬回最後一個 `</body>` 之前**；沒有殘留就原樣回傳、冪等），並在兩個寫檔者前呼叫（`OUT_DAILY.write_text` 與 `regenerate_report.OUT.write_text`）。實測：殘留 4,225 → **0**、**總長度不變**、`</body>` 之前前綴逐字不變、結構 `prefix+tail+</body>+</html>`、冪等、`index.html`／穿透報表等乾淨檔完全不動。
+- **教訓**：①「樣板 + 追加」型產生器，追加點要相對**關閉標籤**定位（插到 `</body>` 前），不能相對檔尾 ②HTML 產出檢查不能只做 `"</html>" in text`（`auto_record` 的截斷檢查正是如此）——要問「**最後一個 `</html>` 之後還有沒有東西**」③同一份檔案有多個寫檔者時，收斂要**對每個寫檔者**做：run_daily 補了、regenerate 漏補等於沒補（本次就是先補錯一顆 commit 才發現）。
