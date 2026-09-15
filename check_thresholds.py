@@ -100,7 +100,64 @@ def main() -> int:
     except Exception as _e:
         errs.append(f"穿透完整性檢查執行失敗：{_e}")
 
-    # ④ 舊門檻字面殘留掃描
+    # ④ 基金口徑閉合（2026-09-15 INC-188）
+    #    實踩：日報「基金部位」那行原用 `基金總市值 − funds_cathay` 反推鉅亨網，
+    #    而 funds_cathay 漏了 9/11 申購的 B11 4,981,060 → 印出「鉅亨網 5,803,222 ＋ 國泰基金 6,824,922」，
+    #    兩者相加 7,647,084 ≠ 總值 12,628,144（使用者一眼抓到）。
+    #    反推本身是「隱式假設被減項完整」，被減項漏同步就靜默出錯，且既有檢查全數通過 → 固化成不變量。
+    try:
+        _fb = snap.get("funds_breakdown") or {}
+        def _grp(name):
+            return sum(float(v) for k, v in (_fb.get(name) or {}).items() if k != "note")
+        _ju, _ca = _grp("一般申購") + _grp("自由Pay"), _grp("國泰直購")
+        _fc = snap.get("funds_cathay")
+        _fcm = snap.get("funds_cathay_market_value")
+        _fcb = sum(float(v) for v in (snap.get("funds_cathay_breakdown") or {}).values())
+        _funds = float(snap.get("funds") or snap.get("fund_market_value") or 0)
+        for _label, _val in [("funds_cathay", _fc), ("funds_cathay_market_value", _fcm),
+                             ("sum(funds_cathay_breakdown)", _fcb)]:
+            if _val is None:
+                errs.append(f"基金口徑：snapshot 缺 {_label}")
+            elif abs(float(_val) - _ca) > 1:
+                errs.append(f"基金口徑：{_label}={float(_val):,.0f} ≠ 國泰直購明細 {_ca:,.0f}（同義欄位漏同步）")
+        if _funds and abs(_ju + _ca - _funds) > 1:
+            errs.append(f"基金口徑：鉅亨 {_ju:,.0f} + 國泰 {_ca:,.0f} ＝ {_ju+_ca:,.0f} ≠ funds {_funds:,.0f}（差 {_ju+_ca-_funds:,.0f}）")
+        else:
+            print(f"✅ 基金口徑閉合：鉅亨 {_ju:,.0f} + 國泰 {_ca:,.0f} = funds {_funds:,.0f}")
+        # 反推寫法黑名單（run_daily 等渲染端不得再用 總值−國泰 推鉅亨）
+        # 註：`funds'[^)]*\)` 是為了吃掉 `tv.get('funds',0)` 的 `,0)`；寫成 `funds'\)`
+        #     會漏抓（2026-09-15 負向測試實測 False，差點交出假防線）。
+        _rev = re.compile(r"funds'[^)]*\)\s*[-−]\s*tv\.get\(\s*['\"]funds_cathay"
+                          r"|fund_market[^\n]{0,60}[-−]\s*(?:snap|tv)\.get\(\s*['\"]funds_cathay")
+        for _p in [BASE / "run_daily.py", BASE / "regenerate_report.py", BASE / "build_dashboard.py"]:
+            if _p.exists() and _rev.search(_p.read_text(encoding="utf-8", errors="replace")):
+                errs.append(f"{_p.name} 仍用「基金總值 − funds_cathay」反推鉅亨網（應改讀 funds_breakdown 群組加總）")
+        # 已產出日報的渲染行：不只要「加得起來」，更要「用明細口徑」
+        # （INC-188 的真正病徵＝鉅亨被算成 funds−funds_cathay 而閉合，算術檢查抓不到 →
+        #   必須拿報告上的鉅亨/國泰 逐一比對 snapshot 的群組加總，並檢查已消失的停泊字樣。）
+        import datetime as _dt
+        _rep = BASE / f"daily_report_v2_{_dt.date.today().isoformat()}.html"
+        if _rep.exists():
+            _h = _rep.read_text(encoding="utf-8", errors="replace")
+            _m = re.search(r"基金總市值\s*<strong>([\d,]+)\s*TWD</strong>[^\n]{0,200}?鉅亨網\s*<strong>([\d,]+)</strong>[^\n]{0,80}?國泰基金\s*<strong>([\d,]+)</strong>", _h)
+            if _m:
+                _z, _x, _y = (int(g.replace(",", "")) for g in _m.groups())
+                if abs(_x - _ju) > 1 or abs(_y - _ca) > 1:
+                    errs.append(f"日報基金部位口徑不符明細：鉅亨 {_x:,}（應 {_ju:,.0f}）／國泰 {_y:,}（應 {_ca:,.0f}）"
+                                f" — 疑似又用反推（總值−國泰）")
+                elif _x + _y != _z:
+                    errs.append(f"日報基金部位行不閉合：鉅亨 {_x:,} + 國泰 {_y:,} ＝ {_x+_y:,} ≠ 表頭總值 {_z:,}")
+                else:
+                    print(f"✅ 日報基金部位行：明細口徑且閉合 {_x:,} + {_y:,} = {_z:,}")
+                # 已不在 snapshot 的停泊/標的不得出現在該行（實例：MMF 500萬已轉 B11）
+                _seg = _h[_m.start():_m.start() + 400]
+                for _tok in ("MMF", "貨幣基金"):
+                    if _tok in _seg and not any(_tok in str(k) for k in _fb.get("國泰直購", {})):
+                        errs.append(f"日報基金部位行仍描述「{_tok}」停泊，但 snapshot 國泰直購已無該標的（字樣需同步）")
+    except Exception as _e:
+        errs.append(f"基金口徑閉合檢查執行失敗：{_e}")
+
+    # ⑤ 舊門檻字面殘留掃描
     hits: list[str] = []
     for p in BASE.rglob("*"):
         if not p.is_file() or p.suffix not in (".py", ".json", ".sh"):
