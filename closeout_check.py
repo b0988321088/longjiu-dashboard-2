@@ -12,9 +12,12 @@
 3. **彙總**：印出結論 + 「需補跑的產出」清單（每筆給可直接複製的指令）。
 4. **推送通道稽核**（v4 閘門配套）：`.git/PUSH_LANE.log` 近 24h 各通道使用次數；
    有「例外通道推程式檔」或「自動化以 TAG 推程式被擋」→ 列入問題（前者要補審、後者要遷移該路徑）。
+   2026-09-15 起：點名的 commit 先用 `sha_state()` 複核 —— 已補審查紀錄／已上遠端／已被改寫成
+   孤兒（不在 HEAD 歷史）者列為「已解決 ℹ️」，只有仍在推送範圍內又沒紀錄的才算 ❌。
 5. **auto_record 警告稽核**（INC-180 配套）：`.git/AUTO_WARN.log` 近 24h 的 `data-dirty`／
    `code-dirty`／`range-missing`。前兩類是「別班或有人的未提交變更」（只記錄），
-   `range-missing`（推送範圍內有 commit 無審查紀錄 → 那次 push 必定被閘門擋下）列入問題。
+   `range-missing`（推送範圍內有 commit 無審查紀錄 → 那次 push 必定被閘門擋下）列入問題，
+   但同樣先用 `sha_state()` 複核（被擋後改走 RECORD 重做、舊 commit 變孤兒者不列問題）。
 
 用法
 ----
@@ -42,6 +45,50 @@ WARN_LOG = REPO / ".git" / "AUTO_WARN.log"   # auto_record 的警告留痕（INC
 sys.path.insert(0, str(REPO))
 import release_claimed_occurrences as rco  # noqa: E402
 import auto_push as apush  # noqa: E402  （複核 range-missing 是否已補紀錄）
+
+# 已解決狀態的說明字串（v4.2 收工稽核：只有 pending 才算問題）
+SETTLED_REASON = {
+    "approved": "該 commit 之後已取得審查紀錄",
+    "remote": "已在 origin/<branch>（早就推出去，非在飛）",
+    "obsolete": "已改寫、不在 HEAD 歷史 → 不會再進入任何推送範圍",
+}
+
+
+def _git(*args: str) -> str:
+    p = subprocess.run(["git", *args], cwd=str(REPO), capture_output=True, text=True)
+    return (p.stdout or "").strip()
+
+
+def _is_ancestor(sha: str, ref: str) -> bool:
+    return subprocess.run(["git", "merge-base", "--is-ancestor", sha, ref],
+                          cwd=str(REPO), capture_output=True).returncode == 0
+
+
+def sha_state(sha: str) -> str:
+    """判斷被閘門／稽核點名的 commit 現在該算不算問題（2026-09-15 新增）。
+
+    回傳：
+      approved：tree 在 .git/CIO_APPROVED 有紀錄（真審或 AUTO 補審）→ 已解決
+      remote  ：已是 origin/<branch> 的祖先（那顆早就成功推出去了）→ 已解決
+      pending ：仍在 HEAD 歷史、未上遠端、又沒有紀錄 → ❌ 真問題（未來 push 必被閘門擋）
+      obsolete：已不在 HEAD 歷史（被 amend/rebase 改寫或丟棄）→ ℹ️ 不會再進任何推送範圍
+
+    背景：閘門擋下（TAG-BLOCKED-CODE）或被擋的那次推送範圍（range-missing）若之後改走
+    RECORD 重做成新 commit，舊 commit 就變成孤兒；舊寫法只看 tree_approved，會讓這種
+    「已改寫重做」的案件在稽核裡掛滿 24h（每晚誤報一次），實際上沒有任何東西待處理。
+    """
+    if apush.tree_approved(REPO, sha):
+        return "approved"
+    # 非 commit（例如誤抓到 tree hash）→ 保守視為未解決
+    if subprocess.run(["git", "cat-file", "-t", sha], cwd=str(REPO),
+                      capture_output=True, text=True).stdout.strip() != "commit":
+        return "pending"
+    branch = _git("rev-parse", "--abbrev-ref", "HEAD") or "HEAD"
+    if _is_ancestor(sha, f"origin/{branch}"):
+        return "remote"
+    if _is_ancestor(sha, "HEAD"):
+        return "pending"
+    return "obsolete"
 
 
 def step_claims(fix: bool, quiet: bool) -> int:
@@ -109,15 +156,24 @@ def step_push_lanes(quiet: bool) -> list:
         lane = parts[1]
         counts[lane] = counts.get(lane, 0) + 1
         if lane in ("SKIPREVIEW-CODE", "TAG-BLOCKED-CODE"):
-            flagged.append(f"{lane} {parts[2][:12]}")
+            flagged.append((lane, parts[2], sha_state(parts[2])))
     if not quiet:
         used = "、".join(f"{k}×{v}" for k, v in sorted(counts.items())) or "無推送"
         print(f"③ 推送通道（近 24h）：{used}")
-    for f in flagged:
-        if f.startswith("SKIPREVIEW-CODE"):
-            problems.append(f"程式檔走例外通道（未經真審）：{f}")
+    settled: list = []
+    for lane, sha, st in flagged:
+        tag = f"{lane} {sha[:12]}"
+        if st != "pending":
+            settled.append(f"{tag}｜{SETTLED_REASON[st]}")
+            continue
+        if lane == "SKIPREVIEW-CODE":
+            problems.append(f"程式檔走例外通道（未經真審、仍在推送範圍）：{tag}")
         else:
-            problems.append(f"自動化以 TAG 推程式被擋（該路徑需改走 RECORD）：{f}")
+            problems.append(f"自動化以 TAG 推程式被擋（該路徑需改走 RECORD、仍在推送範圍）：{tag}")
+    if not quiet and settled:
+        print(f"   （已解決、不列問題：{len(settled)} 筆）")
+        for s in settled:
+            print(f"     ℹ️ {s}")
     return problems
 
 
@@ -153,10 +209,10 @@ def step_auto_warns(quiet: bool) -> list:
         counts[kind] = counts.get(kind, 0) + 1
         last[kind] = f"{parts[1]} {parts[2]}｜{parts[4][:70]}"
         if kind == "range-missing":
-            # 逐顆複核：被點名的 commit 若之後已補上審查紀錄 → 視為已解決，不列問題
+            # 逐顆複核：被點名的 commit 若之後已補上審查紀錄／已上遠端／已被改寫 → 視為已解決，不列問題
             # （否則一筆「當下落後、稍後補齊」的正常過程會在稽核裡掛 24 小時）
             shas = re.findall(r"\b[0-9a-f]{7,40}\b", parts[4])
-            unresolved = [s for s in shas if not apush.tree_approved(REPO, s)]
+            unresolved = [s for s in shas if sha_state(s) == "pending"]
             if unresolved:
                 missed.append(f"{parts[1]} {parts[2]}｜{parts[4][:70]}")
             else:
@@ -167,7 +223,7 @@ def step_auto_warns(quiet: bool) -> list:
         for k in sorted(last):
             print(f"   - {k} 最後：{last[k]}")
         if resolved:
-            print(f"   （range-missing 已補紀錄、不列問題：{len(resolved)} 筆）")
+            print(f"   （range-missing 已補紀錄／已改寫、不列問題：{len(resolved)} 筆）")
         if not missed and (counts or resolved):
             print("   ℹ️ 以上皆為他班／歷史 range 的未提交檔或已補紀錄案件 → 非本次問題（真問題只有 range-missing 未補）")
     for x in missed:
