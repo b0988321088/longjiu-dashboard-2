@@ -17,8 +17,17 @@
 | 儀表板「本週完成清單」永不更新 | 2026-09-13 | 已修（INC-161） | 該區塊是 template 手工寫死的 10 行（停在 9/1），管線從不重寫；真值 work_log.json 只餵工作日誌卡。改為 build_dashboard 靜態層（近 7 天「完成」）+ 前端 JS 即時層；順修退休規劃連結被 rebuild 還原（改 glob 動態）。commit 0a22f202 |
 | CEO 儀表板 4 張表只剩表頭 | 2026-09-13 | 已修（INC-162） | 9/11 週五三合一 cron 被 gateway 中斷 → ceo_analysis JSON 缺 資產變化/資金流動/里程碑/雙維度，而 build_ceo_dashboard 全靠該 JSON。改為 DB 週 pair／weekly_ops_closure／schedule_events／dual_dimension_metric 現算，LLM 只補文字；加空表驗收 + 指定日期補產。9/11 報告已回補上線 |
 | 穿透五桶被縮放防呆灌大（債券假超標 199 萬） | 2026-09-15 | 已修（INC-186，待推送） | 9/13 22:56 commit ebf34440 在 B11 分支加入 `_fund_us -= _fval`（498 萬幽靈扣減）→ 基金明細加總 764 萬 ≠ fund_market_value 1,263 萬 → 觸發 update_all.calc_penetration 縮放防呆 ×1.652，台/美/防/債/金/健全部失真（現金為餘數法不受影響）。9/14 起顯示 債券 31.3%/美股 24.7%，真值 23.6%/44.8%。另修 _br 摩根 key 永不匹配（債券低估 103 萬）。修後真值：台 7.5／美 40.6／防 17.4／債 27.6／現 3.4。本機四源+三報表一致 ✅，未推送 |
+| auto_record 遇中文檔名誤擋推送 | 2026-09-15 | 已解（INC-190）｜待程式層根除 | `git diff-tree --name-status`（無 -z、未設 quotepath）→ 中文檔名被轉義成 \345\244\247… → 存在性檢查找不到檔 → 拒落 RECORD、整批不推。以 `git config core.quotepath false` 解除；待辦：auto_record.py:72 加 -z 或 -c core.quotepath=false |
 
 ## 二、有根因與 check_rule 的歷史事件（逐筆保留）
+
+
+## INC-190 auto_record 遇中文檔名誤擋推送（2026-09-15）
+- 症狀：推送 6 顆 commit 時 auto_record 檢查② 回報「大轉向資產配置策略_final.pptx 不存在於工作區」→ 拒落 RECORD → auto_push 整批不推（rc=0 但遠端未前進）。
+- 根因：`auto_record.py:72` 用 `git diff-tree --no-commit-id --name-status -M -r <sha>` 取變更檔清單，**沒有 `-z`、也沒設 `core.quotepath=false`** → 非 ASCII 檔名被 git 轉義成 `"\345\244\247..."` 形式，後續 `Path.exists()` 檢查自然找不到 → 誤判為缺檔。
+- 修法（本次）：`git config core.quotepath false`（repo 層設定，不動程式）；同指令重跑即通過，6 顆 commit 全數補落 RECORD、推送成功（HEAD fb8c6321，雙分支 sha 驗證）。
+- check_rule：① 任何地方解析 git 檔名清單都要 `-z` 或明確設 `core.quotepath=false`；② 見「某檔不存在於工作區」但 `ls` 看得到 → 先懷疑 git 輸出轉義，不要重跑或改資料。
+- 待辦：auto_record.py:72 改加 `-z`（程式層根除），改動須走 CIO 真審。
 
 ## INC-186 穿透五桶被縮放防呆灌大（2026-09-15）
 - 症狀：日報/儀表板顯示「債券 31.3% 超標 4.7pp、美股 24.7% 低配」，但 9/13 同口徑是 23.5%／44.8%；同一份 snapshot 沙盒重算得 23.6%／44.6%。
