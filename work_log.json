@@ -929,5 +929,17 @@
   "category": "修正",
   "item": "INC-192：自寫日誌腳本把 work_log.json 縮排寫成 2（canonical 1）→ 925/919 行假 diff（CIO V6 攔下）",
   "detail": "現象：以 _log_calsync_fix_0915.py 追加 work_log 後，commit 顯示 work_log.json 925 行新增／919 行刪除（整檔 churn），且行尾被 Windows 寫成 CRLF。根因：一次性腳本用 indent 2 寫 work_log.json，而 work_log 的 canonical 縮排是 1（json.dumps(indent=1) 才有 1 空格縮排）→ 全檔重排；git autocrlf 再把 LF 正規化，形成「看起來動了整檔」的假 diff，真改動其實只有新增 1 筆（6 行）。CIO-Gemini 複審 V6（閉環稽核第 10 類）判 REJECT 攔下。修正：①work_log.json 還原 canonical 縮排並改明示 newline=\"\\n\"（避免 CRLF）②腳本改 indent=1 + newline=\"\\n\" ③以 --amend 併回原 data commit（未推送），使歷史不留 925 行 churn。驗收：相對前一顆 commit 的 work_log diff = 6 行新增／0 刪除；閉環稽核全部通過。教訓：寫任何管線 JSON 前先查該檔 canonical 縮排（schedule_events／pending_decisions／dashboard_decisions＝2、snapshot／work_log／radar_state＝1），並一律明示 newline=\"\\n\"；另閉環稽核第 10 類會把散文裡的「indent 加等號加數字」字樣誤判為寫入者，敘述時改用文字描述。"
+ },
+ {
+  "date": "2026-09-15",
+  "category": "修正",
+  "item": "INC-193：膨脹監控門檻改用「有效對話輪次」（watchdog v6.14）",
+  "detail": "現象：使用者重開對話後仍連收 ⚠️（270/1,068 則）＋23:18 被自動清理，而 23:06:52 的請求還沒被回。根因：門檻用 messages 原始列數，但一次工具呼叫＝2 列（空 assistant 佔位＋tool 回傳）→ 那個 2h37m 的對話 1,091 列其實只有 19 則使用者發言＋36 則實質回覆（其餘 491 工具列、403 空佔位、約 141 重複），有效對話僅 55-73 則；同因讓活躍保護（10 分鐘）在距上次活動 11 分鐘時失效。修正：①門檻改 c＝有效對話輪次（WARN 150／AUTO 250）＋原始列數硬上限 1500 ②刪除前加「未回覆請求」關卡（最後一列是 user 且 <60 分鐘→只推 ⏸️ 不清理）③活躍窗 10→30 分鐘；順修 runaway 成長需有上一窗基準。失敗訊號路徑不動。驗收：沙箱 83 檢查全 PASS（新增 V- AE 十情境）、真實 dry-run 靜默 exit 0。"
+ },
+ {
+  "date": "2026-09-16",
+  "category": "完成",
+  "item": "watchdog v6.15（INC-194）：失敗訊號路徑加寬限窗 — CER 後不再 16 秒腰斬備援回覆",
+  "detail": "FAIL_GRACE_SEC=120／GRACE_MAX_DEFERS=2；沙箱 93 檢查全 PASS（+AF 誤殺重現/AG 逾窗仍重置/AH 寬限上限/AI 極新+備援完成只 ⚠️）；真實 log 重播 A/B 對照（v6.14 spawn+🚨 vs v6.15 靜默）；dry-run 靜默 exit 0；備份 .bak-20260916-v614；技能與 §19c 同步"
  }
 ]

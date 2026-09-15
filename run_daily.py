@@ -1235,12 +1235,12 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
     _bond_v = _cat2("bond")
     _cash_v = tv.get('cash', tv.get('cash_total', 4_483_408))
 
-    _snap_tgt_834 = tv.get("penetration", {}).get("targets", {}) or {}
-    _tgt_tw = _snap_tgt_834.get("台股市值型目標", 20.0)
-    _tgt_us = _snap_tgt_834.get("美股市值型目標", 30.0)
-    _tgt_def = _snap_tgt_834.get("配息型目標", 20.0)
-    _tgt_bond = _snap_tgt_834.get("債券型目標", 15.0)
-    _tgt_cash = _snap_tgt_834.get("現金目標", 15.0)
+    _sot_bt = (tv.get("thresholds_2026_0915") or {}).get("桶目標_pct") or {}
+    _tgt_tw = _sot_bt.get("台股市值型", 20.0)
+    _tgt_us = _sot_bt.get("美股市值型", 30.0)
+    _tgt_def = _sot_bt.get("防守型配息", 20.0)
+    _tgt_bond = _sot_bt.get("債券", 15.0)
+    _tgt_cash = _sot_bt.get("現金", 15.0)
     _tot = max(_tw_v + _us_v + _def_v + _bond_v + _cash_v, 1) # This needs to be calculated before _fmt_pct and _fmt_gap
     def _fmt_pct(v): return f"{v/_tot*100:.1f}%"
     def _fmt_gap(v, t): return f"{v/_tot*100 - t:+.1f}pp"

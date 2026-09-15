@@ -56,11 +56,11 @@ gaps = {
 snap["penetration"] = {
     "updated_at": date.today().isoformat(),
     "source": "calc_penetration (auto-calibrated)",
-    "targets": {f"{k}目標": v for k, v in targets_map.items()},
+    "targets": {k: v for k, v in _sot_bt.items()},
     "actual_pct": actual_pct,
     "gaps": gaps,
     "actual_twd": actual_map,
-    "alert": f"台股不足{abs(round(actual_pct['台股市值型成長']-targets_map['台股市值型'],1))}pp；現金+債券超標{abs(round(actual_pct['債券']+actual_pct['現金/安全網']-targets_map['債券型']-targets_map['現金'],1))}pp",
+    "alert": p["alert"],
 }
 # 每次管線執行滾動頂層日期（儀表板系統時間/記憶同步統一真值）
 # 2026-09-15 INC-187：由 setdefault 改「每次指派」——原寫法一旦寫入就永不更新，
