@@ -39,7 +39,7 @@ if "--skip-llm" not in sys.argv and not (BASE / f"buffett_cto_report_{TODAY}.md"
         pass
 
 sys.path.insert(0, str(BASE))
-from run_daily import calibrate_sources, render_daily_report, _inject_market_intel, build_cc_rows
+from run_daily import calibrate_sources, render_daily_report, _inject_market_intel, build_cc_rows, close_html_tail
 
 # 1. 載入資料
 tv = calibrate_sources()
@@ -229,8 +229,8 @@ try:
 except Exception:
     pass
 
-# 9. 寫入
-OUT.write_text(html, encoding="utf-8")
+# 9. 寫入（INC-199：附加區塊原本落在 </body></html> 之後 → 寫檔前收斂回 </body> 之前）
+OUT.write_text(close_html_tail(html), encoding="utf-8")
 
 # 9a. 淨資產拆解自動更新（2026-09-03：儀表板 net_worth_weekly_breakdown 從 DB 真值算，
 #     冪等 — 已是最新窗口即略過；週五深度審查 LLM 覆核可再細分成本）
