@@ -15,6 +15,8 @@
 | 儀表板替換 | `build_dashboard.py:349-351` | `tpl.replace("39,727", monthly_salary)` | 只換金額，不含扣繳明細 |
 | 行事曆薪資入帳 | `calendar_sync.py:55-57` | **寫死 `$39,727`** | 9/4 已調薪 42,560 → **兩處不同步（既有缺口）** |
 | 日報被動月收 | `complete_daily_report.py:290` | 寫死 `160,100 / 82,265 / 69,044` | 已過期快照值 |
+
+> 2026-09-15 執行註記：`complete_daily_report.py` 與 `build_marriage_impact.py` 全 repo／cron 零引用，已於今日移入 `.archive/`（停用可復原）；本列僅存歷史診斷紀錄。
 | 現金流腳本 | `cashflow_analysis.py`、`lj.py` | 讀 `asset_diff_history.json` | 與薪資表無關（月現金趨勢用） |
 | Google 憑證 | `~/AppData/Local/hermes/google_token.json` | scopes＝**calendar + gmail.modify** | ⚠️ **無 Sheets 權限**（見 §三前置） |
 
