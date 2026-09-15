@@ -356,7 +356,7 @@
 
     <h3>🛠️ 系統工作日誌（收工登錄）</h3>
     <div class="label">work_log.json 動態讀取 — 應辦 / 完成分色（2026-09-05 起，與儀表板同源）</div>
-    <div class="callout callout-info"><div style="font-size:12px;color:#b45309;font-weight:800;margin:4px 0 0">📋 應辦（2）</div><div style="border-left:3px solid #b45309;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#b45309;font-weight:800">📋</span> <span style="color:#1d1d1f;font-weight:600">watchdog v6.5 待真實卡死事件實戰驗證（合成測試已過）</span></div><div style="border-left:3px solid #b45309;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#b45309;font-weight:800">📋</span> <span style="color:#1d1d1f;font-weight:600">券商質押金額/利率核對（凱基/元大對帳單）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">snapshot pledge_loan=100萬(利率 null 待確認) vs 還債計畫『元大50萬@3.92%』不一致；月支出元大證金利息 3,267 ≈ 100萬@3.92%</div></div><div style="font-size:12px;color:#059669;font-weight:800;margin:8px 0 0">✅ 完成（近 8 筆 / 共 101）</div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">水管測試（端到端）：排程腳本 + 全產出管線實跑</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">① 每週 DB 保養 rc=0（14s，9/13 失敗為修法落地前的舊帳）② 收工檢查 全部通過 ✅（連兩次）③ 全管線 regenerate_report.py rc=0：產出→CIO 審查全過→落 RECORD→推送雙分支 3322f370→4 URL 200 ④ 補提交 asset_diff_history.json（35 行刪除查明為 JSON 收斂到 DB 真值，非遺失）→ eaa068d5 ⑤ 終態：稽核 ✅、收工檢查 ✅、Pages 六檔內容一致（前次 ❌ 為 CDN 30-60s 快取）。</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">CIO 重審：首輪 REJECT 經查為派工指令轉義瑕疵（INC-186）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">首輪審查在『防線仍在』單元項得到 False 並 REJECT，但同輪 E2E 負向測試是 exit 3（有擋下）→ 矛盾。主辦方重跑同一條指令得 True，證實是子代理多層引號把樣本變成帶字面反斜線的 href=\"dashboard.py\"（該輪 5 次語法錯誤）。程式不動，改派工法：樣本一律 heredoc、期望值逐字給定、矛盾時以 E2E 為準且不得單項 REJECT。已重送重審。</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">cio_review 禁字表修正（INC-185）：dashboard.py 改「引用形式才擋」</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">子字串比對會誤中 build_*_dashboard.py 檔名，且事件紀錄寫到該字串就被自己擋；改為只擋 href/src/action、python 指令、路徑三種引用形式。驗收：單元 7 正 6 負案例 + E2E 負向（真實日報插假連結 → exit 3，防線仍在）+ E2E 正向（真實日報 → 全部通過）。</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">資產穿透2026-09-14（台股2,325,670.0 美股6,389,628.0 防守6,738,830.0 債券8,112,913.0 現金885,890.5567452125）　⚠️ INC-186 瑕疵值（管線計算瑕疵）；9/14 真值（修正後重算）：台 1,938,690／美 10,529,149／防 4,514,065／債 7,160,180</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">台股2,325,670.0 美股6,389,628.0 防守6,738,830.0 債券8,112,913.0 現金885,890.5567452125　⚠️ INC-186 瑕疵值（管線計算瑕疵）；9/14 真值（修正後重算）：台 1,938,690／美 10,529,149／防 4,514,065／債 7,160,180</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">INC-184：管線 JSON 寫入 indent 不一致治本（6 腳本修正＋閉環稽核第 10 類）（起點＝手動 append schedule_events.json 造成 1066 行假 diff。用 round-trip 位元比對定出 canonical indent（schedule_events／pending_decisions／dashboar</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">起點＝手動 append schedule_events.json 造成 1066 行假 diff。用 round-trip 位元比對定出 canonical indent（schedule_events／pending_decisions</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">INC-183 推送可靠度修復（使用者指示：執行）（重產日報時抓到：regenerate_report.py 呼叫 auto_push.py 卻傳 --record skip，而全檔沒有任何地方替該 commit 落紀錄（cio_review.py 只是本地規則檢查、不寫 CIO_APPROVED；cio_approve.py 從未被呼叫；舊版靠 [cior</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">重產日報時抓到：regenerate_report.py 呼叫 auto_push.py 卻傳 --record skip，而全檔沒有任何地方替該 commit 落紀錄（cio_review.py 只是本地規則檢查、不寫 CIO_APPRO</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">CIO 18:30 復盤查核與資料層修正（使用者指示：執行修正並記錄）（CIO 三項『不能拖』逐條實證：①決策狀態未回收＝真，但位置在 dashboard_decisions.json 內嵌 pending（CIO Part A 輸入），非 pending_decisions.json（該檔 14:30 已結案）→ 已回收＋加註【最終值】②9/16 FOMC</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">CIO 三項『不能拖』逐條實證：①決策狀態未回收＝真，但位置在 dashboard_decisions.json 內嵌 pending（CIO Part A 輸入），非 pending_decisions.json（該檔 14:30 已結案</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">9/14 更新總整理（收工）（今日 48 commits（738d8cb5→1cd39d7d），雙分支同步。主線＝推送閘門 v2→v4.1（CIO 每輪真審並走 RECORD）：審查紀錄綁 tree hash、逐 commit 驗推送範圍、程式檔不得走 [cioreviewed] 標籤通道、改名繞過補洞、每日通道稽核。P0：4 處裸 --force→--fo</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">今日 48 commits（738d8cb5→1cd39d7d），雙分支同步。主線＝推送閘門 v2→v4.1（CIO 每輪真審並走 RECORD）：審查紀錄綁 tree hash、逐 commit 驗推送範圍、程式檔不得走 [ciorevi</div></div></div>
+    <div class="callout callout-info"><div style="font-size:12px;color:#b45309;font-weight:800;margin:4px 0 0">📋 應辦（2）</div><div style="border-left:3px solid #b45309;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#b45309;font-weight:800">📋</span> <span style="color:#1d1d1f;font-weight:600">watchdog v6.5 待真實卡死事件實戰驗證（合成測試已過）</span></div><div style="border-left:3px solid #b45309;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#b45309;font-weight:800">📋</span> <span style="color:#1d1d1f;font-weight:600">券商質押金額/利率核對（凱基/元大對帳單）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">snapshot pledge_loan=100萬(利率 null 待確認) vs 還債計畫『元大50萬@3.92%』不一致；月支出元大證金利息 3,267 ≈ 100萬@3.92%</div></div><div style="font-size:12px;color:#059669;font-weight:800;margin:8px 0 0">✅ 完成（近 8 筆 / 共 103）</div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">9/15 更新總整理（收工）：32 commits、4 筆 INC、寫死日期/金額批次動態化</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">今日 32 commits（afcd5fb0→78fd2a04），雙分支同步。晚間主線＝寫死日期/金額批次動態化（薪資 42,560／里程碑＋乾粉改讀 schedule_events 與 snapshot／月配息 100,000 移除／radar 標題日期）＋稽核新增 1b 類＋收工稽核誤報修正（sha_state）。當日 INC：186 穿透五桶被縮放防呆灌大（幽靈扣減 498 萬 ×1.652；真值 台7.5／美40.6／防17.4／債27.6／現3.4）、187 門檻散落 7 處→snapshot.thresholds_2026_0915 單一真值＋check_thresholds.py、188 日報基金部位用反推錯帳（鉅亨真值 822,162；禁 A−B 反推）、189 Contents API 逐檔上傳卡死兩分支（歷史重建）。產物重產：日報／再平衡儀表板＋評估／月報／退休規劃／index.html；index.html 與線上 Pages 逐字一致、無殘留佔位符。</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">9/15 離峰A 治理：P2 推送通道遷移條目補標完成 ＋ Google Sheets 薪資表整合計畫（待核准）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">schedule_events.json 的 9/15 P2 條目改 ✅（9/14 已完成，勿重做）；Google Sheets 條目加註計畫已產出。新增 GSHEETS_CASHFLOW_INTEGRATION_PLAN.md（含零引用死碼 .archive/ 註記）→ 待使用者核准。commit 86f3a0c7。</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">水管測試（端到端）：排程腳本 + 全產出管線實跑</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">① 每週 DB 保養 rc=0（14s，9/13 失敗為修法落地前的舊帳）② 收工檢查 全部通過 ✅（連兩次）③ 全管線 regenerate_report.py rc=0：產出→CIO 審查全過→落 RECORD→推送雙分支 3322f370→4 URL 200 ④ 補提交 asset_diff_history.json（35 行刪除查明為 JSON 收斂到 DB 真值，非遺失）→ eaa068d5 ⑤ 終態：稽核 ✅、收工檢查 ✅、Pages 六檔內容一致（前次 ❌ 為 CDN 30-60s 快取）。</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">CIO 重審：首輪 REJECT 經查為派工指令轉義瑕疵（INC-186）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">首輪審查在『防線仍在』單元項得到 False 並 REJECT，但同輪 E2E 負向測試是 exit 3（有擋下）→ 矛盾。主辦方重跑同一條指令得 True，證實是子代理多層引號把樣本變成帶字面反斜線的 href=\"dashboard.py\"（該輪 5 次語法錯誤）。程式不動，改派工法：樣本一律 heredoc、期望值逐字給定、矛盾時以 E2E 為準且不得單項 REJECT。已重送重審。</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">cio_review 禁字表修正（INC-185）：dashboard.py 改「引用形式才擋」</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">子字串比對會誤中 build_*_dashboard.py 檔名，且事件紀錄寫到該字串就被自己擋；改為只擋 href/src/action、python 指令、路徑三種引用形式。驗收：單元 7 正 6 負案例 + E2E 負向（真實日報插假連結 → exit 3，防線仍在）+ E2E 正向（真實日報 → 全部通過）。</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">資產穿透2026-09-14（台股2,325,670.0 美股6,389,628.0 防守6,738,830.0 債券8,112,913.0 現金885,890.5567452125）　⚠️ INC-186 瑕疵值（管線計算瑕疵）；9/14 真值（修正後重算）：台 1,938,690／美 10,529,149／防 4,514,065／債 7,160,180</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">台股2,325,670.0 美股6,389,628.0 防守6,738,830.0 債券8,112,913.0 現金885,890.5567452125　⚠️ INC-186 瑕疵值（管線計算瑕疵）；9/14 真值（修正後重算）：台 1,938,690／美 10,529,149／防 4,514,065／債 7,160,180</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">INC-184：管線 JSON 寫入 indent 不一致治本（6 腳本修正＋閉環稽核第 10 類）（起點＝手動 append schedule_events.json 造成 1066 行假 diff。用 round-trip 位元比對定出 canonical indent（schedule_events／pending_decisions／dashboar</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">起點＝手動 append schedule_events.json 造成 1066 行假 diff。用 round-trip 位元比對定出 canonical indent（schedule_events／pending_decisions</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">INC-183 推送可靠度修復（使用者指示：執行）（重產日報時抓到：regenerate_report.py 呼叫 auto_push.py 卻傳 --record skip，而全檔沒有任何地方替該 commit 落紀錄（cio_review.py 只是本地規則檢查、不寫 CIO_APPROVED；cio_approve.py 從未被呼叫；舊版靠 [cior</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">重產日報時抓到：regenerate_report.py 呼叫 auto_push.py 卻傳 --record skip，而全檔沒有任何地方替該 commit 落紀錄（cio_review.py 只是本地規則檢查、不寫 CIO_APPRO</div></div></div>
   </div>
 
   <!-- 投資決策框架 -->
@@ -366,47 +366,63 @@
 
     <div id="emergency-llm-analysis" style="background:transparent;border-radius:8px;padding:0;margin-top:8px;font-size:13px;line-height:1.75;overflow-x:auto;color:#1d1d1f;">
       <!-- LLM 緊急應變分析區塊 -->
-            <div class="callout callout-warn"><p style="font-size:12px;color:#6e6e73;margin-bottom:6px">📅 緊急應變資料：2026-09-15 13:06（台股時段產出（13:00），最新可用；今晚 21:30 自動更新）</p>🚨 龍九控股 — 台股緊急應變報告（2026-09-15 收盤｜gate CALM：加權 -0.37%，未達 -1.5% 閘門）<br>
-產出時間：2026-09-15 13:06:54 ｜ 觸發：使用者反映今日跌勢 → 補算；並取代 2026-09-14 21:33 舊版（該版占比為 INC-186 瑕疵值）<br>
+            <div class="callout callout-warn"><p style="font-size:12px;color:#6e6e73;margin-bottom:6px">📅 緊急應變資料：2026-09-15 21:32（美股時段產出（21:30），最新可用；明日 13:00 自動更新）</p>🚨 美股緊急應變報告（2026-09-15 美股開盤｜gate CALM：費半 +1.45% 反彈，未越門檻）<br>
+產出時間：2026-09-15 21:32:35 ｜ 觸發：21:30 monitor gate 由 TRIGGER（9/14 SOX -5.48%）轉 CALM → 常態排程產出<br>
 <br>
 【一、市場概況】<br>
-・台股 9/15 收盤：加權 45,693.02（-0.37%）、台積電 2,390.00（+0.42%）→ 未達緊急閘門（-1.5%），13:00 排程抑制屬正常。<br>
-・ETF：0050 106.50（-1.11%）、00878 34.17（+0.50%）、00713 64.20（+0.55%）→ 市值型小跌、高股息逆勢小漲。<br>
-・美股 9/14 收盤（前一晚）：費半 11,131.28（-5.86%）連兩日重挫、納指 26,186.41（-0.56%）、S&P 7,619.98（-0.48%）、道瓊 52,421.20（-0.29%）、VIX 17.10（+7.95%）；台積電 ADR 418.01（-3.52%）、NVDA 210.96（-3.36%）。<br>
+・美股開盤（21:30 台北／09:30 ET）：道瓊 52,181.36（-0.46%）、S&P 7,606.84（-0.17%）、納指 26,122.17（-0.25%）、費半 11,292.77（+1.45%）← 昨日重挫後首日反彈。<br>
+・個股分歧（反彈集中在超跌半導體）：AMD 506.52（+2.66%）、高通 187.05（+3.83%）、NVDA 213.74（+1.32%）、台積電 ADR 419.34（+0.32%）、博通 345.74（+0.30%）；但蘋果 330.44（-0.79%）、微軟 500.43（-0.99%）、特斯拉 356.03（-0.82%）→ 大型權值反而走弱，指數因此不漲反跌。<br>
+・波動：VIX 16.86（-1.40%）→ 恐慌情緒降溫，昨日跳升的避險需求部分消退。<br>
+・利率（今日真正的主線）：US10Y 5.00%（+3.5bp，正式攻入 5% 關卡）、US30Y 5.37%（+4bp）；TLT 80.64（-0.35%）。30Y 自 9/10 起連續站上 5.30% 凍結紅線。<br>
+・商品匯率：WTI 102.19（+0.79%，中東供給風險未解）、黃金 4,328.00（-0.55%）、USD/TWD 31.83（台幣貶 0.48%）。<br>
+・亞洲今日收盤：台股加權 45,511.49（-0.77%、跌 351 點、量縮至 6,034 億為今年次低）、KOSPI 6,627.26（-0.85%）、台積電 2,385.00（+0.21%）→ 台股是「量縮下跌＋權值持平」，非恐慌賣壓。<br>
 <br>
 【二、重大事件分析】<br>
-半導體全球性撤資延續（費半前一日盤中 -5.51% → 收 -5.86%），但指數層面僅小跌、VIX 17 屬溫和 → 定性為『賣集中度而非賣股市』。<br>
-利率面：US30Y 5.329% 仍在 5.30 凍結紅線上方（模式A 防禦、債券新增永久凍結），9/16 FOMC 前偏鷹。<br>
-台股層級無系統性事件（加權 -0.37%、台積電收紅、高股息 ETF 逆勢上漲）。<br>
+1) 反彈品質不高：費半 +1.45%，但領漲是 AMD／高通這類超跌股，NVDA／TSM 僅小漲、AAPL／MSFT 走弱 → 昨日的「資金離開半導體」今天沒有變成「資金回到權值」，而是科技內部的重新分配。反彈首日不構成趨勢翻轉的證據。<br>
+2) 10Y 攻入 5.00%「危險區」（華爾街劃出的生死線）：市場頭條聚焦 10 年期美債殖利率觸及 5%，30Y 同步 5.37%。這是估值分母端的壓力，也是今天指數不漲、只有超跌股彈的真正原因 — 折現率上升對「久期長的成長股」傷害最大。<br>
+3) 9/16 FOMC 前夜：升息預期已部分消化，但油價 102 美元撐住通膨端（中東供給風險）→ 鷹派尾端風險未消除。決策公布前不新增風險資產是本文最重要的行動結論。<br>
+4) 台股量能警訊：成交 6,034 億為今年次低，投顧點名資金被新股抽走（漢測）＋國際油價與美股收黑 → 跌 351 點但無恐慌特徵，屬「量縮整理」。<br>
+5) gate 狀態轉折：昨日 TRIGGER（SOX -5.48% 偵測值／實測 -5.51%，收 -5.86%）→ 今日 CALM。費半自 9/11 的 11,824.00 至今日 11,292.77，累計 -4.49%，未達「兩日累計 < -8%」的紅燈門檻。<br>
 <br>
-【三、持倉關聯分析】<br>
-・台股桶 7.5%（1,938,690）：0050 今日 -1.11%，帳面衝擊約 -2 萬（估算），高股息成分逆勢。<br>
-・美股桶 40.6%（10,529,149；科技 15.4%／非科技 25.2%）：費半重挫的主要受衝擊面；後收級別（富達、貝萊德 B11）淨值 T+1 揭露。<br>
-・防守型配息 17.4%（4,514,065）：00878／00713 逆勢 +0.5% → 緩衝有效。<br>
-・債券 27.6%（7,160,180）未破 35% 硬上限；黃金 367,192（1.4%）避險衛星待分批加碼、健康 520,135（2.0%）。<br>
+【三、持倉關聯分析】（真值：snapshot 2026-09-15 19:32，總資產 25,918,930）<br>
+・台股 7.5%（1,938,690）：今日 006208 243.50（-1.06%）、009816 15.75（-0.82%）、0050 106.25（-0.61%）、00878 34.20（-0.09%）→ 帳面估算約 -20,550（佔總資產 0.08%），高股息幾乎持平，緩衝有效。<br>
+・美股 40.6%（10,529,149；科技 15.4%／3,989,443、非科技 25.2%／6,539,706）：本部位是昨日費半 -5.86% 的主要受衝擊面。科技部位帳面估算昨日 -233,781、今日回補 57,847，兩日淨 -175,934（總資產 -0.76%）← ⚠️ 估算值、非真值（實際以基金淨值 T+1 揭露為準）。<br>
+・純主題半導體／AI 部位（台新美日台半導體、009824 群益美國科技巨頭、路博邁台灣5G、安聯AI收益成長、貝萊德世界科技A10、安聯台灣科技）約 56.9 萬，佔總資產 2.2% → 主題集中度可控。<br>
+・後收級別：富達全球動能 585.3 萬＋貝萊德 B11 498.1 萬（合計約 10,406,450，約總資產 40.2%）：淨值 T+1 揭露，今晚盤後才見實際影響，非即時報價。<br>
+・防守型配息 17.4%（4,514,065）＋債券 27.6%（7,160,180）：高股息今日幾乎未跌；債券桶受 30Y 上行壓制（TLT -0.35%）但無追繳、無融資維持率壓力。<br>
+・零槓桿、無追繳 → 這一輪波動是帳面數字事件，不是現金流事件。<br>
 <br>
-【四、資產配置透視】<br>
-實際 vs 目標（2026-09-15 真值，INC-186 修正後）：台 7.5%／美 40.6%（科技 15.4%）／防 17.4%／債 27.6%／現 3.4%／黃金 1.4%／健康 2.0%<br>
-・台股 7.5%（目標 10%，-2.5pp）：質押 540 萬待撥款（預估 9/25）後才補，PI 之下不搶進。<br>
-・美股 40.6%（目標 30%，+10.6pp）：已破 40% 單桶硬上限 → 停新增＋配息導流；但 US30Y ≥5.30 風險煞車優先 → 只回報不動作（可減部位多為後收／保單內，賣不掉）。<br>
-・防守 17.4%（目標 30%）：合併口徑與 PI 進度才是主線，承接凍結中。<br>
-・債券 27.6%（目標 25%，+2.6pp）：未達動作門檻（6pp），等 US30Y 回落 5.30 以下才新增。<br>
-・現金 3.4%（合計底線 120 萬＝生活 70 萬＋追繳緩衝 50 萬，缺 31.4 萬）→ 月配導流補足。<br>
+【四、資產配置透視】（9/13 裁示目標：台 10／美 30／科 ≤15／防 30／債 25／現金 5）<br>
+・實際：台股 7.5%（-2.5pp）｜美股 40.6%（+10.6pp，其中科技 15.4% 貼頂 +0.4pp）｜防守型配息 17.4%（-12.6pp）｜債券 27.6%（+2.6pp）｜現金／安全網 3.4%（-1.6pp）。<br>
+・美股 40.6% 已破 40% 單桶硬上線 → 停新增、配息導流（既有裁示），且科技 15.4% 貼 15% 天花板 → 即使看多也無加碼額度。這是「想加而不能加」的紀律，不是看空。<br>
+・最大缺口在防守型配息 -12.6pp：補缺口要靠配息再投入與質押撥款後的現金流（而非賣科技換手），因此優先序仍鎖在 9/25 撥款後的負債清償，而非資產換手。<br>
+・現金 3.4%（885,890）以底線制（70 萬）衡量 ✅ 超額 185,890 → 依 8/19 裁示超額部署收益資產；但今晚為 FOMC 前夜，不新增、不動用。<br>
+・再平衡授權（9/8）：桶權重超標自動減碼的觸發條件為「急跌 >3%」；今日費半 +1.45% 反向，減碼閘門未觸發，無需暫緩回報。<br>
 <br>
 【五、巴菲特視角建議】<br>
-今日不需要你做任何交易：台股未達閘門、美股破上限但煞車生效、債券未破上限。<br>
-該做的是①配息導流把現金補到 120 萬（擔保池 92% 後收，追繳時賣不掉，緩衝只能靠現金）②避險衛星分批（摩根 40 萬＋PIMCO 52.8 萬 → 貝萊德世界黃金A10，9/23 前送批1）。<br>
-防守桶逆勢小漲＝配置有效；不要因費半重挫恐慌調整。<br>
+・今天市場賣的是折現率，不是企業。10Y 站上 5% 的意義是「所有未來的錢都變便宜了」— 這件事比任何單日跌幅重要，而且無法靠換股解決。<br>
+・昨日殺半導體、今日只彈超跌股：這種反彈的品質不高，不需要為它做事，也不需要為昨天的下跌做補償交易。不因反彈追高、不因昨日下跌賣低，是同一件事的兩面。<br>
+・FOMC 前夜最好的部位調整是「不調整」。決策未定前進場，等於用猜測交換手續費與錯價風險。<br>
+・正面訊號要記下來：VIX 16.86 回落、費半止穩、台股量縮下跌而非崩跌 → 系統性風險沒有升溫；這正是防守型配息 17.4%＋債券 27.6% 這個結構要處理的盤。<br>
+・要做的是更新價格清單：等 US30Y 回落 5.30 下方、且 FOMC 定調明朗後，才出現分批補「非科技與防守型」的第一個理由（≤20 萬／次，9/8 授權）。<br>
+・安全邊際：銀行現金 885,890 ≥ 70 萬 ✅ ＋零槓桿、無追繳 → 不必在錯誤的價格被迫做任何事。<br>
 <br>
 【六、風控檢查】<br>
-・US30Y 5.329% ≥ 5.30% → 紅線（新增買入凍結、減碼暫緩）｜模式A 防禦<br>
-・LTV 46% ≥ 45% → 停止新增質押｜追繳線 70%（單池判定）<br>
-・現金 885,890 < 合計底線 1,200,000 → 導流補足（不阻擋既有計畫）<br>
-・美股 40.6% > 40% 硬上限 → 停新增（煞車期不執行減碼）<br>
-・9/16 FOMC：10Y 回落＋匯率穩＋LTV 低才可分批；US30Y 站穩 5.30 上方則續凍結。<br>
+・US30Y 5.37% ≥ 5.30% 凍結紅線（自 9/10 起連續站上，今日再 +4bp 方向不利）→ 債券新增永久凍結，不建債梯、不加長債。<br>
+・新增觀察點 US10Y 5.00%：若站穩 5% 以上，估值壓力將由長端擴散至整體風險資產 → 列入升級條件。<br>
+・急跌閘門：費半今日 +1.45% 未觸發；9/11→9/15 兩日累計 -4.49%，未達 -8% 紅燈。<br>
+・美元曝險 59%（超線）＋台幣貶 0.48% → 匯率順風正在掩蓋部位集中度風險，兩者必須分開評估。<br>
+・質押 5,400,000（擔保池 11,773,599 × 45%、利率 2.77%）：尚未對保、未撥款（估 ~9/25）→ 銀行作業不受殺盤影響；撥款後優先清償 500 萬高息負債（保單質押 400 萬@4.0%＋券商 100 萬），月省息約 1.66 萬。擔保品約 92% 為後收級別（CDSC 3 年）→ 追繳時不可賣出，緩衝只能靠現金，故 70 萬底線不可動用。<br>
+・現金底線 885,890 ≥ 700,000 ✅；零槓桿、無融資維持率、無追繳。<br>
+・地緣：WTI 102.19 美元高位 → 通膨傳導至長端殖利率，續盯。<br>
+・（真值修正）本日 13:00 台股版報告引用加權 45,693.02（-0.37%），與收盤真值 45,511.49（-0.77%、-351 點）不符 → 以本次 Yahoo 收盤真值為準。<br>
 <br>
 【行動摘要】<br>
-①今日不做交易②配息導流補現金至 120 萬③避險衛星批1（9/23 前）④等 9/16 FOMC 落點再談加碼。</div><br><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_2026-09-14.html.html" target="_blank" style="display:inline-block;margin-top:10px;color:#34D399;font-weight:bold">📄 檢視完整 LLM 緊急應變報告 →</a><br><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_taiex_report_2026-09-14.html.html" target="_blank" style="font-size:13px;color:#6e6e73">📊 數據版報告（備援）</a>
+1. 今晚不動作：FOMC 前夜不新增美元、不建債梯、不加科技（科技已貼 15% 上限）。<br>
+2. 明日台股開盤盯半導體型 ETF（0050／006208／009816）是否跟隨費半反彈，不主動加減碼。<br>
+3. 9/16 FOMC 後重評兩件事：US30Y 是否回落 5.30 下方（債券解凍前提）、US10Y 是否站穩 5%。<br>
+4. 質押 540 萬對保（估 ~9/25 撥款）→ 清償 500 萬高息負債，月省息約 1.66 萬。<br>
+5. 升級條件：US30Y ≥ 5.5% 或 費半兩日累計 < -8% 或 US10Y 站穩 5.10% 以上 → 轉紅燈，重評後收基金部位與美元曝險。</div><br><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_2026-09-15.html.html" target="_blank" style="display:inline-block;margin-top:10px;color:#34D399;font-weight:bold">📄 檢視完整 LLM 緊急應變報告 →</a><br><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_taiex_report_2026-09-15.html.html" target="_blank" style="font-size:13px;color:#6e6e73">📊 數據版報告（備援）</a>
 
       <!-- 機構流向雷達（2026-08-22 新增，讀 radar_state.json） -->
       <div class='callout' style='margin-top:10px;border-left:3px solid #8b5cf6'><strong>📡 機構流向雷達</strong>（更新 2026-09-15）<br><span style='display:inline-block;margin:2px 10px 2px 0'>🟡 <b>台股</b>：外資連賣 — 台股加碼暫緩，等方向</span><span style='display:inline-block;margin:2px 10px 2px 0'>🟢 <b>黃金</b>：淨多單 231,960 週增 1.7% — 順勢</span><span style='display:inline-block;margin:2px 10px 2px 0'>🟡 <b>原油</b>：淨多單 -24,784 週減 -0.5% — 觀望</span><span style='display:inline-block;margin:2px 10px 2px 0'>🔴 <b>美債10年</b>：10Y殖利率月動能 +5.6%（急升，債券承壓）</span><span style='display:inline-block;margin:2px 10px 2px 0'>⚪ <b>台幣</b>：USD/TWD 31.81 週變化 +0.99%</span><br/><span style='color:#64748b;font-size:12px'>加碼前檢查：個人方向 vs 機構方向；紅燈凍結該資產調度</span></div>
@@ -459,11 +475,11 @@
     <!-- CIO 審查 / 觀點 -->
         <div class="callout callout-info">
           <p><strong>🧑‍💻 CIO 觀點</strong></p>
-<span style="display:block">①配置：防守與債券合計45%偏高但合理，維持不動；美股40.6%貼近美元曝險上限，不再加碼。台股7.5%偏低，惟法人高股息防禦賣超314百萬、其他賣超93百萬，暫不承接。資訊科技18.4%對應科技僅+5百萬，不追。
+<span style="display:block">①配置：台股7.5%偏低但費半-5.86%、科技僅+5百萬、台積電-6百萬，不追；美股40.6%與美元曝險59%已近上限，不動。防守17.4%＋債券27.6%足矣，高股息防禦-314百萬顯示資金撤防禦，勿加碼。現金3.4%保留為乾粉。
 
-②最大風險：美元曝險59%逼近60%上限，疊加費半-5.86%，科技與美股雙重承壓；能源、食品遭賣超，輪動偏防禦。
+②最大風險：美元曝險59%疊加費半重挫，科技18.4%恐補跌；美債10年🔴、台幣⚪，匯率與利率雙壓。
 
-③動作：凍結美股與科技加碼，台股僅於回檔分批小額；避開公用、消費類；留現金3.4%為乾粉，待賣訊轉正再進。</span>
+③動作：本週不新增，避開公用、消費；能源RS最強可小額關注，惟資金僅-22百萬，觀望。優先監控費半與美元，跌破再加防禦。</span>
         </div>
         <!-- END CIO -->
 
@@ -491,12 +507,12 @@
 </html><div class='callout callout-warning' style='margin-top:12px'><h3>🎫 專業投資人風控卡｜核心‑衛星保守成長（零槓桿預設）</h3><div style='font-size:12.5px;line-height:1.8'><strong>狀態：</strong>申請中｜<strong>策略：</strong>核心-衛星<br/><strong>門檻：</strong>0｜現況：金融資產含保單 28,220,311｜<strong>缺口：0</strong>（可合併配偶）<br/><strong>強制順序：</strong><br/><strong>🔴 宏觀紅線：</strong>30Y美債 &gt;5.20% → 停止新增長債/平衡基金<br/><strong>🟢 友善線：</strong>&lt;4.80% 才可評估小槓桿（高息全清+現金≥300萬+擔保≤4成）<br/><br/><strong>⚠️ 風險：</strong>專業投資人不受金融消保法保障</div></div><div class='callout callout-warning' style='margin-top:12px'><h3>📊 槓桿風控輸出（9/11 定案：整池質押版）</h3><div style='font-size:12.5px;line-height:1.8'><strong>① 槓桿成本：</strong>第一層（國泰轉貸 1200萬×2.6%）≈ 31.2萬/年（月 26,000）＋質押層（富達581萬＋聯博97萬＋貝萊德500萬 池1200萬×4.5成=540萬@2.77%）≈ 15.0萬/年（月 12,465）→ 合計 ~46.2萬/年（月 38,465）<br/><strong>② LTV：</strong>質押 5,400,000/11,773,599 = 45.9%（🟢 安全值≤53%）；池 -30% 情境 → LTV 65.5%（🟡 距追繳線 70% 尚有 4.5pp）<br/><strong>③ 月度利息流出 vs 現金流入：</strong>流出 38,465 vs 流入（常態配息＋房租）100,000＋富達月配 ~45,000 = 145,000 — ✅ 覆蓋<br/><strong>④ 到期對照：</strong>負債＝國泰轉貸 1,200萬（3年寬限期）＋質押 540萬（富達600+聯博100+貝萊德B11 500 擔保，基金無到期日）；富達為月配現金流資產，無期限錯配 ✅<br/><strong>⑤ US30Y：</strong>5.33% — 🔴 觸及全域凍結線（5.33% ≥ 5.30%）— 禁止新增債券質押<br/><strong>⑥ 底線規則（8/13 動態）：</strong>現金≥6個月開支（700,000，月開支 162,781）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/><strong>⑦ 投資哲學檢核（8/19 定版）：</strong>🟢 現金流覆蓋（被動保守）180,100/162,781 = 111%｜美元曝險 59.0%（≤60% ✅）｜現金底線 885,890（≥700,000 ✅）｜利差 2.6%→4.8-6% ✅<br/><strong>⛔ 資金禁令：</strong>轉貸/質押資金禁止生活消費擴張</div></div><div class='callout callout-info' style='margin-top:12px'><h3>🏦 質押口徑卡（動態｜來源 snapshot.cathay_pledge_0911 + DB liabilities 2026-09-15）</h3><div style='font-size:12.5px;line-height:1.8'><strong>① 額度計算：</strong>擔保池本金 12,000,000（富達581萬＋聯博97萬＋貝萊德500萬）× 成數 45.0% = <strong>可貸 5,400,000</strong>｜池市值 11,773,599（×45% = 5,298,120，銀行取本金口徑）｜利率 2.77%<br/><strong>② 現有質押借款（2026-09-15）：</strong>保單質押借款 4,000,000＋券商股票質押 1,000,000 = <strong>5,000,000</strong>（月息約 16,600）<br/><strong>③ LTV／維持率：</strong>LTV 45.9%（借款/池市值，🟢 安全值≤53%）｜維持率 218%（池市值/借款）｜池 -30% → LTV 65.5%<br/><strong>④ 撥款後去向：</strong>可貸 5,400,000 − 現有借款 5,000,000 = <strong>餘 400,000</strong>（9/12 裁示：先清償 500萬高息負債；押標金 9 月底再評估）<br/><strong>⑤ 省息試算：</strong>月省約 5,058／年省約 60,700（保單 4.0%〔待確認 4.0/4.2 兩版〕、券商 3.92%〔待對帳單〕）<br/><strong>⑥ 待確認：</strong>撥款確切日（銀行書面）；銀行書面：維持率/預警線/追繳線/補繳天數；元大證金 50 萬@3.92% 是否一併清（9/9 版含、9/11 版未列）— 待確認</div></div><div class='callout' style='margin-top:12px;border-left:3px solid #ef4444'>
 <h3>🚦 市場指標燈號面板（DAA v3｜2026-08-21 定版）｜目前：🔴 紅燈</h3>
 <div style='font-size:12.5px;line-height:1.9'>
-<strong>① 主觸發：</strong>US30Y 5.33% ｜ VIX 17.1 ｜ 巴菲特 —｜CPI —（後三者待數據源，不觸發）<br/>
-<strong>② 情境評分：</strong>科技重新定價 83.7 🔴 ｜ 確定收益輪動 72.6 🔴 ｜ 美元信用壓力 55.8 🟡 ｜ 地緣風險 56.8 🟡<br/>
-<strong>③ 輔助觀察：</strong>USD/TWD 31.78 ｜ XAU 4345 (20日-1.6%) ｜ WTI 103.2 (20日+22.2%) ｜ GPR — ｜ 席勒PE 40.9 ｜ 科技穿透 15.4% 🟢（目標 ≤20%） ｜ 美元曝險 59.0% 🟡（上限 60%）<br/>
+<strong>① 主觸發：</strong>US30Y 5.37% ｜ VIX 16.9 ｜ 巴菲特 —｜CPI —（後三者待數據源，不觸發）<br/>
+<strong>② 情境評分：</strong>科技重新定價 82.6 🔴 ｜ 確定收益輪動 73.3 🔴 ｜ 美元信用壓力 55.7 🟡 ｜ 地緣風險 53.0 🟡<br/>
+<strong>③ 輔助觀察：</strong>USD/TWD 31.78 ｜ XAU 4332 (20日-3.2%) ｜ WTI 102.2 (20日+21.0%) ｜ GPR — ｜ 席勒PE 40.9 ｜ 科技穿透 15.4% 🟢（目標 ≤20%） ｜ 美元曝險 59.0% 🟡（上限 60%）<br/>
 <strong>④ targetAllocation：</strong>台股市值型成長 10 ｜ 美股市值型成長 22 ｜ 防守型配息 32 ｜ 債券 30 ｜ 黃金/實質資產(衛星) 5.0 ｜ 石油/能源(避險衛星) 2.0 ｜ 避險衛星合計(黃金+石油) 7.0 ｜ 台幣現金+短定存 底線 70萬，超額部署收益資產<br/>
-<strong>⑤ 板塊輪動：</strong>科技/AI/半導體 減碼 -3.6pp（933,081元）；確定收益板塊 加碼 +3.6pp（933,081元）<br/>
-⑧ 緊急應變：台股緊急應變（2026-09-15 補算：gate CALM、使用者反映跌勢；採 INC-186 修正後真值）｜2026-09-15 13:06:54｜應變分 67 🟡｜命中 ['風險', '減碼', '避險', '凍結']｜六、風控檢查】 ・US30Y 5.329% ≥ 5.30% → 紅線（新增買入凍結、減碼暫緩）｜模式A 防禦 ・LTV 46% ≥ 45% <br/>
+<strong>⑤ 板塊輪動：</strong>科技/AI/半導體 減碼 -3.5pp（907,163元）；確定收益板塊 加碼 +3.5pp（907,163元）<br/>
+⑧ 緊急應變：美股開盤緊急應變（2026-09-15 21:30 cron；gate TRIGGER→CALM｜費半 +1.45% 反彈、US10Y 破 5.00%）｜2026-09-15 21:32:35｜應變分 82 🔴｜命中 ['風險', '減碼', '避險', '賣出']｜六、風控檢查】 ・US30Y 5.37% ≥ 5.30% 凍結紅線（自 9/10 起連續站上，今日再 +4bp 方向不利）→ 債券新增永久凍<br/>
 <strong>⑥ 質押比例：</strong>擔保池 1200萬（富達+聯博+貝萊德）× 4.5 成（45%）｜可貸 540萬｜LTV 45.9% 🟢｜壓力情境：富達-30%＋聯博-20% → LTV 70% 💥<br/>
 <strong>⑦ 執行紀律：</strong>動態偏移 ≤±10%｜±5pp 再平衡閾值｜週六正式評估｜個人硬性約束 &gt; 市場訊號（台股≤10%／質押≤45%／PI 執行案照舊／現金底線70萬／美元只控新增）
 </div></div><div class='callout callout-blue' style='margin-top:12px'><h3>🎵 Rhythm-08 韻律零八｜估值利率風險監控（最終版）</h3><div style='font-size:12.5px;line-height:1.8'><div>🔴 紅燈 尚有高息負債 — 凍結全部主動加倉，優先還高息負債（僅允許被動再平衡）</div><div>🔴 紅燈 30Y美債 5.329% ≥ 5.30% — 全域凍結紅線（8/12 裁決）：禁止新增質押；已質押者停止新增質押＋逐步降LTV</div><div>🟡 黃燈 美股實際占比 40.6% > 目標 30%（超配 +10.6pp）— 逢彈減碼回落至目標</div><div style='margin-top:4px;font-size:11px;color:#6b7280'>台股目標 10%｜美股目標 30%｜防守 30%｜債券 25%｜現金 5%｜科技 ≤20%｜長債佔債券 ≤40%｜優先序：負債＞利率＞估值＞集中度＞個別上限</div><div style='margin-top:6px;font-style:italic;color:#6b7280'>「歷史不會重演，但總會押韻；不恐慌殺盤，但要提前收斂風險曝險，握好現金彈藥。」</div><div style='font-size:11px;color:#9ca3af'>本模組僅產生警示與建議，不自動下單｜資訊僅供參考，不構成投資建議</div></div></div>
