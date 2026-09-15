@@ -78,14 +78,16 @@
     "date": "2026-09-15",
     "item": "📋 Google Sheets 勞健保/薪資表 → 龍九儀表板現金流預估整合",
     "status": "📌 戰略轉型",
-    "importance": "low"
+    "importance": "low",
+    "note": "2026-09-15 18:00 已產出整合計畫（GSHEETS_CASHFLOW_INTEGRATION_PLAN.md），待使用者核准後實作"
   },
   {
     "date": "2026-09-15",
     "item": "🔧 P2：13 條自動化推送路徑遷移 RECORD 通道（deterministic 檢查＋cio_approve 落地；工單 P2_PUSH_LANE_MIGRATION_PLAN.md）",
-    "status": "📌 pipeline",
+    "status": "✅ 已完成（2026-09-14 完成：14:57 主體／16:00 auto_push 追加／16:56 最終驗收）",
     "category": "pipeline",
-    "importance": "high"
+    "importance": "high",
+    "note": "9/15 原排定「一次做完」已提前於 9/14 完成，勿重做；真值＝P2_PUSH_LANE_MIGRATION_PLAN.md"
   },
   {
     "date": "2026-09-16",
