@@ -2,7 +2,7 @@
 """Buffett/CTO 穿透分析器（v4 — 動態目標）"""
 from __future__ import annotations
 
-import json, os, sqlite3
+import json, os, sqlite3, sys
 from datetime import date
 from pathlib import Path
 
@@ -91,7 +91,13 @@ def defensive_combined_phrase(snapshot: dict) -> str:
     """
     _pct = defensive_combined_pct(snapshot)
     if _pct is None:
-        return "防守合併口徑以 snapshot 為準勿追大額"
+        # 缺欄位＝真值未知（既不是「不足」也不是「已足」）→ 明確示警，措辭保持中性，
+        # 不留任何「已足」暗示、也不單向導向不作為。
+        # （2026-09-16 審查意見：原 fallback 尾綴「勿追大額」在真值缺失時會傾向不動作。）
+        print("⚠️ snapshot.defensive_combined_metric.佔比 讀取失敗 → prompt 改用中性措辭",
+              file=sys.stderr)
+        return ("防守合併口徑真值讀取失敗（snapshot 缺漏）：不得宣稱防守已足或不足，"
+                "本項須人工確認後再判斷")
     return (f"防守合併口徑{_pct:.1f}%"
             f"{'已足' if _pct >= DCM_FREEZE_THRESHOLD else f'不足（門檻 {DCM_FREEZE_THRESHOLD}%）'}"
             "勿追大額")
