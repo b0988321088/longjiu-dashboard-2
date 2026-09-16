@@ -46,14 +46,19 @@ if re.search(r"\['2026-0\d'\]", html):
     fails.append("JS 月份寫死 (['2026-0X'] 殘留)")
 
 # 3. 已知舊值殘留（非 data-k fallback 的裸舊值 = build 沒跑或 rep 漏）
+#    2026-09-16（INC-208）：**排除 panel-6（CIO 戰略審查頁）**——那一頁是審查者原文引用，
+#    內容不受本系統動態注入控制。實例：審查者的「現況錨點」寫「可動用 772,607」命中此清單
+#    → 每次重產固定 ❌ 誤報（誤報會蓋掉真問題，比沒檢查更糟）。
+_p6 = html.find('id="panel-6"')
+_scan = html[:_p6] if _p6 > 0 else html
 OLD = [
     "753,388", "138,627", "102,469", "123,607", "243,434",
     "225,918", "799,612", "20260829", "20260821_1", "772,607",
     "08月現金流入", "系統時間：2026-08",
 ]
 for v in OLD:
-    for m in re.finditer(re.escape(v), html):
-        ctx = html[max(0, m.start() - 80):m.start() + 80]
+    for m in re.finditer(re.escape(v), _scan):
+        ctx = _scan[max(0, m.start() - 80):m.start() + 80]
         if "data-k=" in ctx or "/*" in ctx or "--" in ctx:
             continue  # data-k fallback / 註解可接受
         fails.append(f"舊值殘留: {v} @ {m.start()}")
