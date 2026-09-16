@@ -229,6 +229,15 @@ def main() -> int:
     ts = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     reviewer = clean(a.reviewer) or "UNKNOWN"
     note = clean(a.note)
+    # 2026-09-16（INC-204，第二版）：無 --result ＝ 沒有審查者原文，屬「自宣告」。
+    # 標記放在 **reviewer 欄**（受控欄位）而不是 note：note 是自由文字，實測會被自己的敘述
+    # （例如「SELF-DECLARED 規則」這幾個字）誤判成自宣告紀錄 → 真審查紀錄被擋（當場踩到）。
+    # reviewer 變成 SELF-DECLARED:<原reviewer>，閘門用 ^SELF-DECLARED: 精確前綴判定。
+    # AUTO-checker 是 deterministic 檢查通道（auto_record.py 本來就不傳 --result），不標記。
+    if not a.result and not reviewer.startswith("AUTO-checker"):
+        reviewer = clean("SELF-DECLARED:" + reviewer)
+        print("⚠️ 未提供 --result（自宣告紀錄）→ reviewer 已標記 SELF-DECLARED:；"
+              "含程式檔的 commit 將無法只靠此紀錄過閘門。", file=sys.stderr)
 
     targets = [(commit, tree)]
     skipped: list[str] = []

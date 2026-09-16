@@ -36,7 +36,10 @@ code_files() {
   nparents=$(git rev-list --parents -n1 "$c" 2>/dev/null | wc -w)
   if [ "${nparents:-0}" -gt 2 ]; then echo "MERGE-COMMIT"; return 0; fi
   # --name-status -M：改名/複製時同時檢查「舊路徑與新路徑」，防「把程式檔改名成 .json 就繞過」
-  git diff-tree --no-commit-id --name-status -M -r "$c" 2>/dev/null \
+  # --root（2026-09-16 INC-204 沙箱發現）：沒有 parent 的根 commit，diff-tree 什麼都不印
+  #   → 程式檔判定會靜默失效（沙箱案例 B 就是這樣漏擋）。加 --root 後根 commit 也照常檢查；
+  #   一般有 parent 的 commit 行為完全不變。
+  git diff-tree --root --no-commit-id --name-status -M -r "$c" 2>/dev/null \
     | while IFS=$'\t' read -r _st _p1 _p2; do printf '%s\n' "$_p1" "$_p2"; done \
     | grep -Ei "$CODE_RE" | head -5
 }
@@ -54,7 +57,23 @@ check_one() {
   msg=$(git log -1 --pretty=%s "$c" 2>/dev/null || echo "")
   CHECKED=$((CHECKED + 1))
   if [ -f "$APPROVE_FILE" ]; then
-    rev=$(awk -F'\t' -v t="$tree" '$2==t && $4=="APPROVE"{print $5; exit}' "$APPROVE_FILE")
+    # v4.3（2026-09-16 INC-204）：自宣告紀錄（reviewer 以 SELF-DECLARED: 開頭 ＝ cio_approve.py
+    # 沒收到 --result）不得替「含程式檔」的 tree 背書。先找非自宣告的 APPROVE；找不到才退回自宣告
+    # （純資料 commit 行為不變）。★標記只在 reviewer 欄比對：第一版寫在 note，結果被 note 裡的
+    # 敘述文字（「SELF-DECLARED 規則」）誤命中，把真審查紀錄擋掉。
+    rev=$(awk -F'\t' -v t="$tree" '$2==t && $4=="APPROVE" && $5 !~ /^SELF-DECLARED:/{print $5; exit}' "$APPROVE_FILE")
+    if [ -z "$rev" ]; then
+      sd=$(awk -F'\t' -v t="$tree" '$2==t && $4=="APPROVE" && $5 ~ /^SELF-DECLARED:/{print $5; exit}' "$APPROVE_FILE")
+      if [ -n "$sd" ]; then
+        cf=$(code_files "$c")
+        if [ -n "$cf" ]; then
+          log_lane "SELF-DECLARED-BLOCKED-CODE" "$c" "$tree"
+          BAD="$BAD  - commit ${c:0:12}  tree ${tree:0:12}  僅有自宣告紀錄（無審查者原文）但含程式檔\n      → $(printf '%s' "$cf" | tr '\n' ' ')\n"
+          return 1
+        fi
+        rev="$sd"
+      fi
+    fi
     if [ -n "$rev" ]; then
       case "$rev" in
         AUTO-checker:*)
