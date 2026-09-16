@@ -13,7 +13,31 @@ html = (BASE / "index.html").read_text(encoding="utf-8")
 fails = []
 
 # 1. 佔位符殘留（build_dashboard 未注入）
-phs = sorted(set(re.findall(r"__[A-Z_]+__", html)))
+# 2026-09-16 INC-166 補修：純子字串比對會把「檢討紀錄散文裡提到的佔位符」當成殘留
+# （例：工作日誌寫「四個段落全改動態注入（__RISK_FUNDS__/__RISK_RULES__/…）」）→ 每天假警報。
+# 只擋「真的留在語法位置」的：①佔位符清單 run（A__/__B__/__C__）②前後緊鄰中日韓字元＝散文。
+_PH = r"__[A-Z_]+__"
+_CJK = re.compile(r"[\u3400-\u9fff\u3000-\u303f\uff00-\uffef]")
+
+
+def _is_prose_list(m):
+    """佔位符被 / 、 , 串成一串（多半是散文列舉）"""
+    return bool(re.match(rf"(?:{_PH}\s*[/、,]\s*)+{_PH}", m.group(0))) and "/" in m.group(0)
+
+
+def _adjacent_cjk(s, i, j):
+    return bool((i > 0 and _CJK.match(s[i - 1])) or (j < len(s) and _CJK.match(s[j])))
+
+
+_prose_spans = [m.span() for m in re.finditer(rf"(?:{_PH}\s*[/、,]\s*){{2,}}{_PH}", html)]
+_bad = []
+for m in re.finditer(_PH, html):
+    if any(a <= m.start() and m.end() <= b for a, b in _prose_spans):
+        continue
+    if _adjacent_cjk(html, m.start(), m.end()):
+        continue
+    _bad.append(m.group(0))
+phs = sorted(set(_bad))
 if phs:
     fails.append(f"佔位符殘留: {phs}")
 
