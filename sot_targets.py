@@ -43,3 +43,25 @@ def bucket_targets(snap: dict) -> dict:
         if _new in sot:
             out[_legacy] = sot[_new]
     return out
+
+
+# 防守（配息資產）合併口徑＝2026-08-21 使用者裁示：基金也有配息，防守應合併計算 →
+# ≥ 凍結承接門檻（SoT `防守合併口徑_pct.凍結承接`，現 60%）即「防守已足、承接凍結」。
+# 2026-09-16 INC-201：金額改為「組成加總」派生（stored 的 `配息資產合計` 曾是人工寫入、
+# 與明細對不上：合計 18,097,158 但組成加總 18,072,925，差 24,233）。
+def defensive_caliber(snap: dict) -> dict:
+    dcm = snap.get("defensive_combined_metric") or {}
+    comp = dcm.get("組成") or {}
+    amt = sum(v for v in comp.values() if isinstance(v, (int, float)))
+    total = snap.get("total_assets") or 0
+    thr = (((snap.get("thresholds_2026_0915") or {}).get("防守合併口徑_pct")) or {}).get("凍結承接")
+    pct = round(amt / total * 100, 1) if total else 0.0
+    return {
+        "金額": amt,
+        "佔比": pct,
+        "門檻": thr,
+        "已足": (thr is not None and pct >= thr),
+        "組成": comp,
+        "stored_佔比": dcm.get("佔比"),
+        "stored_合計": dcm.get("配息資產合計"),
+    }

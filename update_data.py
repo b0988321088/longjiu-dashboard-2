@@ -16,9 +16,12 @@
 import json, sys, shutil, datetime
 from pathlib import Path
 try:
-    from sot_targets import bucket_targets  # INC-201：桶目標 SoT＋舊鍵別名
+    from sot_targets import bucket_targets, defensive_caliber  # INC-201：桶目標／防守合併口徑單一入口
 except Exception:  # 極端情況下（模組缺失）不得讓管線崩潰
     def bucket_targets(_snap):
+        return {}
+
+    def defensive_caliber(_snap):
         return {}
 
 BASE = Path(__file__).resolve().parent
@@ -264,6 +267,12 @@ def main():
         print("⚠️ 已還原 snapshot.backup.json")
         return 1
 
+    # INC-201：防守合併口徑的「合計/佔比」改為組成加總派生後自癒寫回
+    # （原為人工寫入，實測合計 18,097,158 vs 組成加總 18,072,925 已脫節）
+    _dcx = defensive_caliber(snap)
+    if _dcx.get("金額") and isinstance(snap.get("defensive_combined_metric"), dict):
+        snap["defensive_combined_metric"]["配息資產合計"] = _dcx["金額"]
+        snap["defensive_combined_metric"]["佔比"] = _dcx["佔比"]
     SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
 
     # 2026-08-26 檢討修正：同步 DB assets 當日列（4 源比對根因：snapshot 更新但 DB 舊 → sync_all 失敗還原）

@@ -3,6 +3,7 @@
 import json, sys
 from pathlib import Path
 from datetime import date
+from sot_targets import defensive_caliber  # INC-201：防守合併口徑（SoT 門檻）單一入口
 
 BASE = Path(__file__).resolve().parent
 # Cron no_agent 模式：CWD 可能不是 workdir，手動後備路徑
@@ -278,8 +279,21 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         "債券及安全現金": round(_actual_pct["債券"] + _actual_pct["現金/安全網"] - _targets["債券型"] - _targets["現金"], 1),
         "科技曝險": round(_actual_pct.get("美股市值型成長_科技", 0) - _targets["科技曝險目標"], 1),
     }
-    _alert = "；".join(f"{_k} {'超標' if _v > 0 else '不足'}{abs(_v)}pp"
-                          for _k, _v in _gaps.items() if abs(_v) >= 1.5) or "各桶均在容忍範圍"
+    # INC-201：防守「是否足夠」＝合併口徑（8/21 裁示；門檻讀 SoT 凍結承接），
+    # 單桶「防守型配息」目標 30% 僅結構參考 → 不再列入 alert 當行動缺口。
+    _dcx = defensive_caliber(snap)
+    if _dcx.get("門檻") is not None:
+        if _dcx.get("已足"):
+            _def_txt = (f"防守合併口徑 {_dcx['佔比']}%（≥{_dcx['門檻']} 承接凍結 ✅；"
+                        f"單桶 {_actual_pct['防守型配息']}% 僅結構參考）")
+        else:
+            _def_txt = (f"防守合併口徑 {_dcx['佔比']}% 不足 {round(_dcx['門檻'] - _dcx['佔比'], 1)}pp"
+                        f"（<{_dcx['門檻']} 承接解凍）")
+    else:
+        _def_txt = f"防守型配息 {'超標' if _gaps['防守型配息'] > 0 else '不足'}{abs(_gaps['防守型配息'])}pp"
+    _alert = "；".join(
+        [f"{_k} {'超標' if _v > 0 else '不足'}{abs(_v)}pp" for _k, _v in _gaps.items()
+         if abs(_v) >= 1.5 and _k != "防守型配息"] + [_def_txt]) or "各桶均在容忍範圍"
 
     return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": def_v, "債券": bond_v, "現金/安全網": c,
             "黃金": round(_fund_gold), "健康": round(_fund_health),

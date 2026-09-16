@@ -4,6 +4,9 @@ import sys
 
 # 定義檔案路徑
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+from sot_targets import defensive_caliber  # INC-201：防守合併口徑（SoT 門檻）單一入口
 # 預設為 snapshot.json，可以通過命令行參數覆蓋
 SNAPSHOT_FILE = os.path.join(BASE_DIR, 'snapshot.json')
 
@@ -93,7 +96,7 @@ def main():
 
     # 2026-09-15 INC-187：① 防守桶在「合併口徑 ≥ 凍結承接 60%」時不報（8/21 裁示凍結承接，
     # 報它只是噪音）② US30Y ≥ 煞車線時在訊息開頭標註「只回報不動作」，避免被當成下單指示。
-    _def_comb = (snapshot.get("defensive_combined_metric", {}) or {}).get("佔比", 0) or 0
+    _def_comb = (defensive_caliber(snapshot).get("佔比") or 0) or 0
     _freeze_def = float(_def_comb) >= float((((snapshot.get("thresholds_2026_0915") or {})
                                              .get("防守合併口徑_pct") or {}).get("凍結承接", 60)))
     if _freeze_def:

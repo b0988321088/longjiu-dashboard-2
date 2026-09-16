@@ -2,7 +2,7 @@
 """Generate detailed penetration report."""
 import json
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
-from sot_targets import bucket_targets  # INC-201：桶目標 SoT＋舊鍵別名單一入口
+from sot_targets import bucket_targets, defensive_caliber  # INC-201：桶目標／防守合併口徑單一入口
 from datetime import date, datetime
 from pathlib import Path
 
@@ -124,11 +124,16 @@ w(f"<p class='meta'>{today} ｜ 穿透分母 = {total:,} TWD</p>")
 w(f"<div class='callout'>🔬 <b>美股科技拆解（美股科技紅線口徑）：</b>科技股 {us_tech_v:,}（{round(us_tech_v/total*100,1)}%，目標 ≤{tech_target}%，缺口 {round(us_tech_v/total*100 - tech_target,1):+.1f}pp）｜非科技 {us_nt_v:,}（{round(us_nt_v/total*100,1)}%）｜合計 {us_v:,}（{round(us_v/total*100,1)}%）<br><span style='color:#94a3b8;font-size:12px'>⚠️ 此為「美股桶科技紅線」口徑；另有「產業穿透」口徑（GICS 全資產科技產業佔比，見日報產業區塊），兩者不同勿混淆。科技比估計：貝萊德科技100% / 009824 100% / 半導體90% / 富達35% / 安聯AI 35% / 聯博美國成長40% / 安聯收益16% / 00646·009823 32% / 摩根·PIMCO 10% / M&G 7% / 聯博全球多元收益 2.5%</span></div>")
 
 # 配息資產合併口徑（2026-08-21 使用者裁示：基金也有配息，防守應合併計算 → 承接凍結）
+# INC-201：金額改由 sot_targets.defensive_caliber() 從「組成」加總派生（stored 合計會過期）
 _dcm = snap.get("defensive_combined_metric", {})
-_dcm_v = _dcm.get("配息資產合計", 0)
+_dcx = defensive_caliber(snap)
+_dcm_v = _dcx["金額"] or _dcm.get("配息資產合計", 0)
 if _dcm_v:
-    _dc = _dcm.get("組成", {})
-    w(f"<div class='callout' style='border-left:3px solid #22c55e'>💵 <b>配息資產合計（合併口徑）：</b>{_dcm_v:,}（{_dcm_v/total*100:.1f}%）＝ 防守ETF {_dc.get('防守ETF',0):,} + 保單月配 {_dc.get('保單月配基金',0):,} + 國泰月配 {_dc.get('國泰月配(富達C+聯博AD)',0):,} + 第一金FA81 {_dc.get('第一金FA81',0):,} + 鉅亨月配 {_dc.get('鉅亨月配',0):,}<br><span style='color:#64748b;font-size:12px'>防守桶 4.2% 僅高股息ETF 口徑（8/21 裁示：基金配息合併計算 → 防守/00878 承接凍結）</span></div>")
+    _dc = _dcx["組成"] or _dcm.get("組成", {})
+    _freeze = (f"✅ ≥ 凍結承接 {_dcx['門檻']}% → <b>防守已足、承接凍結</b>（00878/00713 不加碼）"
+               if _dcx.get("已足") else
+               f"⚠️ 未達凍結承接 {_dcx['門檻']}%（差 {round(_dcx['門檻'] - _dcx['佔比'], 1)}pp）")
+    w(f"<div class='callout' style='border-left:3px solid #22c55e'>💵 <b>配息資產合計（合併口徑）：</b>{_dcm_v:,}（{_dcm_v/total*100:.1f}%）＝ 防守ETF {_dc.get('防守ETF',0):,} + 保單月配 {_dc.get('保單月配基金',0):,} + 國泰月配 {_dc.get('國泰月配(富達C+聯博AD)',0):,} + 第一金FA81 {_dc.get('第一金FA81',0):,} + 鉅亨月配 {_dc.get('鉅亨月配',0):,}<br/>{_freeze}<br><span style='color:#64748b;font-size:12px'>口徑說明（8/21 裁示）：防守「是否足夠」看<b>合併口徑</b>（基金配息合併計算）；穿透表的「防守型配息」單桶目標 30% 僅為<b>結構參考</b>，兩者差額（約 12pp）不是行動缺口。</span></div>")
 
 # 雙維度資產定位框架（2026-08-21 使用者定稿）— 防禦維度 vs 收入維度
 _ddm = snap.get("dual_dimension_metric", {})
