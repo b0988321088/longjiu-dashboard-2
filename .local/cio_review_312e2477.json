@@ -1,0 +1,33 @@
+{
+  "verdict": "APPROVE",
+  "reviewed_commits": [
+    {
+      "commit": "312e2477eab6acda72d1e9df8b15042a2bfab5b7",
+      "tree": "9cc4be824411ec8f93202b5d903efebdd867319b"
+    }
+  ],
+  "reviewer_note": "非阻斷發現：commit 訊息與程式註解宣稱插入點為『頂層／第 1 章結尾』，實測卡片落在 section-2 卡內層（depth 2），第 2 章標題為 depth 3；視覺位置（1 章後、2 章前）正確。已由後續 error_register 更正紀錄文字。",
+  "checks": [
+    {
+      "name": "commit 與 tree 實查",
+      "pass": true,
+      "evidence": "git cat-file -t = commit；HEAD = 312e2477（clean-main）；rev-parse ^{tree} = 9cc4be82…（type=tree）"
+    },
+    {
+      "name": "卡片插入位置",
+      "pass": true,
+      "evidence": "日報內『投資波動損失檢視』count=1 idx=4526（1.116%）；『1/9｜財富生命線』idx=3516；『2/9｜資產結構』idx=6017 → 卡在 1 章後、2 章前"
+    },
+    {
+      "name": "檢查器排除邏輯（合成 HTML 負向測試）",
+      "pass": true,
+      "evidence": "裸舊值在 panel-6 外 → caught=True；移入 panel-6 內 → caught=False；還原後 git diff --stat index.html 為空"
+    },
+    {
+      "name": "巢狀深度與注入幂等",
+      "pass": true,
+      "evidence": "卡標題 depth=2、2 章標題 depth=3、卡 idx(4520) < 2 章卡 idx(5990) → 卡在 2 章外框『外面』（但非頂層）；4b：html 每次由模板重建、模板無卡、單一注入點、錨點為模板常駐字串 → 重跑仍 1 份，幂等"
+    }
+  ],
+  "findings": "1) 『頂層』宣稱不實（已由 error_register 更正）。2) 渲染檔 div 平衡 +1（126/125）為既有模板問題（09-13/14/15 皆 bal=1 且無卡），非本 commit 引入；_render_light 本身平衡。3) 幂等性依賴『html 每次全新重建』不變量，無防禦式守衛；目前安全。"
+}
