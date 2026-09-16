@@ -10,6 +10,7 @@
 """
 import json
 import re
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -39,6 +40,25 @@ def parse_md(path: Path):
     if len(text) < 60 or text.startswith("[SILENT]"):
         return None
     return {"date": m.group(1), "weekday": m.group(2), "text": text}
+
+
+def _needs_commit(path: Path, base: Path) -> bool:
+    """cio_review.json 是否有東西該 commit（未暫存／已暫存／未追蹤 全部算）。
+
+    2026-09-16（INC-206）：原本用 `git diff --quiet -- cio_review.json`（**只看未暫存變更**）
+    → 若檔案已被 `git add` 但尚未 commit（或狀態是 intent-to-add），判定成「乾淨」
+    → 靜默不 commit 不推，線上儀表板就停在舊審查，且**不會有任何錯誤訊息**。
+    改用 `git status --porcelain`（三態全收）。取捨：寧可多推一次（內容相同時 commit 會
+    因無變更而失敗 → 這裡用 returncode 判斷，失敗即回報），也不要靜默落後。
+    """
+    try:
+        r = subprocess.run(["git", "status", "--porcelain", "--", path.name],
+                           capture_output=True, cwd=str(base), timeout=60)
+    except Exception:
+        return False
+    if r.returncode != 0:
+        return False
+    return bool((r.stdout or b"").strip())
 
 
 def main():
@@ -89,10 +109,7 @@ def main():
     # 不等到 22:00 夜間批次（否則 18:45→22:00 之間線上顯示舊審查）。
     # 成功靜默；失敗才印 ERR（cron 空 stdout = 不推送）。
     try:
-        import subprocess
-        _chk = subprocess.run(["git", "diff", "--quiet", "--", "cio_review.json"],
-                              capture_output=True, cwd=str(BASE), timeout=60)
-        if _chk.returncode != 0:
+        if _needs_commit(OUT, BASE):
             _cmds = [
                 ["git", "add", "cio_review.json"],
                 ["git", "commit", "-m", "data: cio_review.json 收錄更新（CIO 審查）"],
