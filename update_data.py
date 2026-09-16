@@ -15,6 +15,11 @@
 """
 import json, sys, shutil, datetime
 from pathlib import Path
+try:
+    from sot_targets import bucket_targets  # INC-201：桶目標 SoT＋舊鍵別名
+except Exception:  # 極端情況下（模組缺失）不得讓管線崩潰
+    def bucket_targets(_snap):
+        return {}
 
 BASE = Path(__file__).resolve().parent
 SNAP = BASE / "snapshot.json"
@@ -214,7 +219,7 @@ def main():
     _new_pen = {
         "actual_twd": {k: pen[k] for k in ["台股市值型成長", "美股市值型成長", "防守型配息", "債券", "現金/安全網"]},
         "actual_pct": {k: round(pen[k] / total * 100, 1) for k in ["台股市值型成長", "美股市值型成長", "防守型配息", "債券", "現金/安全網"]},
-        "targets": _old_pen.get("targets", {"台股市值型目標": 10, "美股市值型目標": 40, "配息型目標": 20, "債券型目標": 25, "現金目標": 5}),
+        "targets": bucket_targets(snap) or _old_pen.get("targets", {}),
     }
     # 保留既有延伸 key（科技拆解/防禦維度等）
     for _k in ["美股市值型成長_科技", "美股市值型成長_非科技"]:
@@ -225,12 +230,14 @@ def main():
     _tgt = _new_pen["targets"]
     _ap = _new_pen["actual_pct"]
     _new_pen["gaps"] = {
-        "台股市值型成長": round(_ap["台股市值型成長"] - _tgt.get("台股市值型目標", 10), 1),
-        "美股市值型成長": round(_ap["美股市值型成長"] - _tgt.get("美股市值型目標", 40), 1),
-        "防守型配息": round(_ap["防守型配息"] - _tgt.get("配息型目標", 20), 1),
-        "債券": round(_ap["債券"] - _tgt.get("債券型目標", 25), 1),
-        "債券及安全現金": round(_ap["債券"] + _ap["現金/安全網"] - _tgt.get("債券型目標", 25) - _tgt.get("現金目標", 5), 1),
-        "科技曝險": round(_ap.get("美股市值型成長_科技", 0) - 20, 1),
+        # INC-201：一律以 SoT 鍵取值（舊鍵只當備援），fallback 值同步更正為 9/13 裁示口徑
+        "台股市值型成長": round(_ap["台股市值型成長"] - _tgt.get("台股市值型", _tgt.get("台股市值型目標", 10)), 1),
+        "美股市值型成長": round(_ap["美股市值型成長"] - _tgt.get("美股市值型", _tgt.get("美股市值型目標", 30)), 1),
+        "防守型配息": round(_ap["防守型配息"] - _tgt.get("防守型配息", _tgt.get("配息型目標", 30)), 1),
+        "債券": round(_ap["債券"] - _tgt.get("債券", _tgt.get("債券型目標", 25)), 1),
+        "債券及安全現金": round(_ap["債券"] + _ap["現金/安全網"]
+                              - _tgt.get("債券", _tgt.get("債券型目標", 25)) - _tgt.get("現金", _tgt.get("現金目標", 5)), 1),
+        "科技曝險": round(_ap.get("美股市值型成長_科技", 0) - _tgt.get("科技", _tgt.get("科技曝險目標", 20)), 1),
     }
     _new_pen["alert"] = ("；".join(f"{_k} {'超標' if _v > 0 else '不足'}{abs(_v)}pp"
                                    for _k, _v in _new_pen["gaps"].items() if abs(_v) >= 1.5) or "各桶均在容忍範圍")

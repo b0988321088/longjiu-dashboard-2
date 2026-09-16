@@ -256,8 +256,8 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     _targets = {
         "台股市值型": _sot_bt.get("台股市值型", 10),
         "美股市值型": _sot_bt.get("美股市值型", 30),
-        "配息型": _sot_bt.get("配息型", 20),
-        "債券型": _sot_bt.get("債券型", 25),
+        "配息型": _sot_bt.get("防守型配息", _sot_bt.get("配息型", 30)),   # INC-201：SoT 鍵是「防守型配息」
+        "債券型": _sot_bt.get("債券", _sot_bt.get("債券型", 25)),          # INC-201：SoT 鍵是「債券」
         "現金": _sot_bt.get("現金", 5),
         "科技曝險目標": _sot_bt.get("科技", 20),
     }

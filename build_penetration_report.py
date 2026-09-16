@@ -2,6 +2,7 @@
 """Generate detailed penetration report."""
 import json
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
+from sot_targets import bucket_targets  # INC-201：桶目標 SoT＋舊鍵別名單一入口
 from datetime import date, datetime
 from pathlib import Path
 
@@ -56,7 +57,10 @@ gaps = {
 snap["penetration"] = {
     "updated_at": date.today().isoformat(),
     "source": "calc_penetration (auto-calibrated)",
-    "targets": {k: v for k, v in _sot_bt.items()},
+    # INC-201：同時寫入 SoT 鍵與舊鍵別名（sot_targets.bucket_targets）——
+    # 舊鍵別名讓尚未遷移的消費端（build_dashboard/build_rebalance_*/macro_regime/…）不再
+    # 落回各自的硬編碼 fallback（20/25/15/40＝8 月口徑）。
+    "targets": bucket_targets(snap),
     "actual_pct": actual_pct,
     "gaps": gaps,
     "actual_twd": actual_map,
