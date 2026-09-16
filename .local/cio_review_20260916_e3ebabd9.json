@@ -1,0 +1,32 @@
+{
+  "verdict": "APPROVE",
+  "reviewed_commits": [
+    {
+      "commit": "e3ebabd93bdfc2ac8f4d67f22e467ff84eead943",
+      "tree": "78e32ddff1338d6edcbe1868614cf23b8ef1966e"
+    }
+  ],
+  "checks": [
+    {
+      "name": "tree_hash",
+      "pass": true,
+      "evidence": "git rev-parse 'e3ebabd9^{tree}' -> 78e32ddff1338d6edcbe1868614cf23b8ef1966e (matches expected)"
+    },
+    {
+      "name": "selftest",
+      "pass": true,
+      "evidence": "safe_read.py --selftest | tail -1 -> 'SELFTEST ALL PASS'; grep -c PASS -> '20' (both match expected)"
+    },
+    {
+      "name": "sanitization_heredoc",
+      "pass": true,
+      "evidence": "residual_sensitive_tokens = 0; masked_account_no = 55; probes: -23706.00 raw=2 clean=2, -3526.00 raw=1 clean=1, 2026/06/29 raw=46 clean=46 (all match expected)"
+    },
+    {
+      "name": "ast_parse",
+      "pass": true,
+      "evidence": "ast.parse succeeded -> 'AST OK' (matches expected)"
+    }
+  ],
+  "findings": ""
+}

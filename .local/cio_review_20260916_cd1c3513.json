@@ -1,0 +1,27 @@
+{
+  "verdict": "APPROVE",
+  "reviewed_commits": [
+    {
+      "commit": "cd1c3513428661c2d0d2ccde6eb5a791228f421d",
+      "tree": "4731f79a12e9e4eb5b726f49c0cb397ba3b0e6a7"
+    }
+  ],
+  "checks": [
+    {
+      "name": "tree_hash",
+      "pass": true,
+      "evidence": "git rev-parse cd1c3513^{tree} -> 4731f79a12e9e4eb5b726f49c0cb397ba3b0e6a7 (matches expected)"
+    },
+    {
+      "name": "line_count",
+      "pass": true,
+      "evidence": "git show cd1c3513:scripts/components/volatility_monitor.py | wc -l -> 59 (matches expected)"
+    },
+    {
+      "name": "ast_parse",
+      "pass": true,
+      "evidence": "FUNCS = ['get_asset_diff_history', 'inv', 'make_volatility_report']; has make_volatility_report = True; write_calls = 0; IMPORTS = ['datetime', 'io', 'json', 'pathlib']; PARSE = OK"
+    }
+  ],
+  "findings": "All 4 checks passed. Raw outputs: (1) tree hash = 4731f79a12e9e4eb5b726f49c0cb397ba3b0e6a7; (2) wc -l = 59; (3) ast: FUNCS = ['get_asset_diff_history', 'inv', 'make_volatility_report'], has make_volatility_report = True, write_calls = 0, IMPORTS = ['datetime', 'io', 'json', 'pathlib'], PARSE = OK."
+}

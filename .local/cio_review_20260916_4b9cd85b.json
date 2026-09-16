@@ -1,0 +1,17 @@
+{
+  "verdict": "APPROVE",
+  "reviewed_commits": [
+    {
+      "commit": "4b9cd85b7bc62942b617f4b1cb8a24508f7404e3",
+      "tree": "547cace62f0df2221f4bd4c2e7d740ed0e69e786"
+    }
+  ],
+  "checks": [
+    {"name": "tree_hash_matches", "pass": true, "evidence": "git rev-parse 4b9cd85b^{tree}\n547cace62f0df2221f4bd4c2e7d740ed0e69e786"},
+    {"name": "py_compile_clean", "pass": true, "evidence": "... -m py_compile scripts/audit_stdout_pii.py; echo \"rc=$?\"\nrc=0"},
+    {"name": "self_audit_clean", "pass": true, "evidence": "... scripts/audit_stdout_pii.py --file scripts/audit_stdout_pii.py | tail -2\nhits: 0（乾淨）\nVERDICT: ✅ 乾淨"},
+    {"name": "csv_audit_hits", "pass": true, "evidence": "... scripts/audit_stdout_pii.py --file Moneybook_明細_20260727_1.csv | head -3\n稽核輸出檔 Moneybook_明細_20260727_1.csv（29,178 字元）\n  hits: {'account_no': 55}\n    - account_no: '002***********49'"},
+    {"name": "tool_output_masked", "pass": true, "evidence": "... scripts/audit_stdout_pii.py --file Moneybook_明細_20260727_1.csv | grep -cE \"[0-9]{12,}\"\n0"}
+  ],
+  "findings": "全部 5 項檢查通過。--file 模式只讀檔不執行腳本；自稽核 0 hits；CSV 稽核抓到 55 筆 account_no 且已遮罩；grep -cE \"[0-9]{12,}\" 回 0 證明工具自身輸出已遮罩。無風險或建議。"
+}
