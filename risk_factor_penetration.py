@@ -42,7 +42,7 @@ def build_chart():
     buckets = ["台股市值型成長", "美股市值型成長", "防守型配息", "債券", "現金/安全網"]
     labels_cn = ["台股", "美股", "防守", "債券", "現金"]
     actuals = [apct.get(b, 0) for b in buckets]
-    targets = [tgt.get(k, 0) for k in ["台股市值型目標", "美股市值型目標", "配息型目標", "債券型目標", "現金目標"]]
+    targets = [tgt.get(k, 0) for k in ["台股市值型", "美股市值型", "防守型配息", "債券", "現金"]]
     twd_v = [atwd.get(b, 0) for b in buckets]
 
     # 美元曝險（2026-09-13：單一真值來源 = snapshot.usd_exposure_monitor.current.合計；紅線讀 threshold = 60）
