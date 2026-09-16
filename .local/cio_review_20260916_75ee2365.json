@@ -1,0 +1,14 @@
+{
+  "verdict": "APPROVE",
+  "reviewed_commits": [
+    {"commit": "75ee2365aebc24ef939699227ee4d704dbd9b96b", "tree": "1b2fba4df53de054d762d4db7f9811282ad57df0"}
+  ],
+  "checks": [
+    {"name": "CMD1 tree hash", "pass": true, "evidence": "1b2fba4df53de054d762d4db7f9811282ad57df0"},
+    {"name": "CMD2 py_compile", "pass": true, "evidence": "COMPILE_OK"},
+    {"name": "CMD3 三函式實跑", "pass": true, "evidence": "phrase: 防守合併口徑68.5%已足勿追大額 / note: 🛡️ 防守合併口徑 68.5% 已足（單看 17.5% 僅高股息ETF）；承接凍結 / pct: 68.5"},
+    {"name": "CMD4 稽核 1b 寫死掃描", "pass": true, "evidence": "✅ 無寫死日期/金額（現行 .py 全數動態）"},
+    {"name": "CMD5 commit stat", "pass": true, "evidence": "2 檔：_audit_closeout.py(+3)、buffett_cto_analyzer.py(+62/-5)"}
+  ],
+  "findings": "reviewer 原文：去寫死×3 生效、1b 新樣式可命中字面數字，5/5 命令符合預期，判定 PASS。唯一殘留風險（非阻擋）：phrase 的 fallback 字串仍保留『勿追大額』這個源自『已足』分支的方向性指令 → 在 snapshot 缺欄位（真值未知）時傾向往不作為；建議移除。此意見已於後續 commit a7f8f530 採納修正（改為中性示警）。"
+}
