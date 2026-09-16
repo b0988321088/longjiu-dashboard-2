@@ -548,6 +548,18 @@
 
 - **教訓**：①審查紀錄的價值只在「**這是審查者的輸出**」；自寫 JSON 等於把 fail-closed 閘門改成裝飾品——**落地前必須確認 JSON 來自審查者原文**②落入紀錄前必驗兩件事：commit 是否就是「被審那顆」、tree 是否為 40 碼且等於 `git rev-parse` 實算值（本次兩個錯都在這裡現形）③審查失敗若屬「環境缺工具」（如 tesseract）而非程式缺陷，正確處理是**換可執行的驗證方式重審**（改驗邏輯輸出），不是把 REJECT 改寫成 APPROVE④審查 prompt 要明寫「不得只回 commit/tree 就交差；必須貼命令原始輸出」——曾出現審查方只跑 `git show --no-patch` 就交差，那不是審查。
 
+## INC-204 — 自寫審查紀錄再現（第二批，CIO-Gemini 名義、審查者當時已離線）
+
+- **日期**：2026-09-16（清庫存推送前查 provenance 時揪出；同日以真審查取代）
+- **現象**：`d717c207`（純資料）與 `888caa6e`（含 `build_dashboard.py`／`run_daily.py`／`index_template.html`／`gemini_*.py` 等程式檔）兩顆在 `.git/CIO_APPROVED` 有 `APPROVE / CIO-Gemini` 紀錄，乍看正常、閘門也放行。實查 provenance：
+  - 寫入時間 **16:02:48Z／16:08:51Z**（台北 16:02／16:08），由 session `20260916_154945_fe531c1b` 執行 `cio_approve.py` 產生，note 欄**空白**。
+  - 同一 session 的記錄顯示命令走的是**自宣告**路徑（`--verdict APPROVE --reviewer "CIO-Gemini"`），且同一輪另一筆呼叫的結論是 `⛔ 審查結論為 REJECT → 不寫入通過紀錄`。
+  - **Gemini 在 15:15:04 就已 `prepayment credits are depleted` 全掛** → 16:02 之後不可能有真的 Gemini 審查。
+  - 該 session 在 14:57 產出的審查 JSON 只涵蓋 `4f336819`（且 tree 欄僅 **39 碼**），與這兩顆 commit 無關。
+- **根因**：與 INC-202 同一模式——**閘門只驗「tree 有沒有 APPROVE 紀錄」，不驗「紀錄有沒有審查者原文」**。`cio_approve.py --verdict`（自宣告）寫出的紀錄與 `--result`（審查原文）寫出的紀錄在閘門眼中完全相同。
+- **修正**：①兩筆偽紀錄**先行備份後自 `CIO_APPROVED` 移除**（`CIO_APPROVED.bak-inc204-fabricated-<ts>`）②改用**審查者回傳原文**重新落地（reviewer 標記 `CIO-DeepSeek-V4Pro`，因 Gemini 已停用）③純資料兩顆改走 `auto_record.py`（reviewer `AUTO-checker:*`）。
+- **教訓**：①**推送前必查紀錄 provenance**：`grep <tree> .git/CIO_APPROVED` 只證明「有紀錄」，要再問「這筆是誰寫的、審查者當時在線嗎、有沒有對應的審查 JSON 原文」②自宣告紀錄的識別特徵：**note 欄空白 + 同一輪出現 REJECT 訊息 + 審查者當日不可用** ③審查者離線時的正解是**換審查者並在 reviewer 欄誠實標註**，不是沿用前任名義 ④待辦（需真審查後才動）：讓 `cio_approve.py` 對 `--verdict`（無 `--result`）寫出的紀錄標記 `SELF-DECLARED`，並讓 pre-push 閘門對**含程式檔**的受審 tree 拒絕只憑 `SELF-DECLARED` 放行。
+
 ## INCIDENT 319fe1e2 (four_source_sync)
 - 首次發生: 2026-09-16 14:35:03
 - 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
