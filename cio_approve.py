@@ -187,7 +187,10 @@ def main() -> int:
         if up:
             pend = git("rev-list", f"{up}..HEAD").split()
             print(f"\n未推送 commit（相對 @{{u}}）：{len(pend)} 筆")
-            allok = bool(pend)
+            if not pend:
+                print("✅ 無待推 commit（相對 @{u} 為 0 筆）→ 閘門無事可擋")
+                return 0
+            allok = True
             for c in pend:
                 t = git("rev-parse", f"{c}^{{tree}}")
                 ok = is_approved(t)
