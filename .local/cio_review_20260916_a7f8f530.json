@@ -1,0 +1,14 @@
+{
+  "verdict": "APPROVE",
+  "reviewed_commits": [
+    {"commit": "a7f8f5307444bea59f0feb27a64e7981d1487c05", "tree": "fd3f06a5da0a2c725f36903de507a1c57600b0b2"}
+  ],
+  "checks": [
+    {"name": "CMD1 tree hash", "pass": true, "evidence": "fd3f06a5da0a2c725f36903de507a1c57600b0b2"},
+    {"name": "CMD2 py_compile", "pass": true, "evidence": "COMPILE_OK"},
+    {"name": "CMD3 正常路徑不變 + fallback 中性", "pass": true, "evidence": "phrase: 防守合併口徑68.5%已足勿追大額 / empty: '防守合併口徑真值讀取失敗（snapshot 缺漏）：不得宣稱防守已足或不足，本項須人工確認後再判斷' / pct: 68.5；stderr 印讀取失敗警告"},
+    {"name": "CMD4 稽核 1b", "pass": true, "evidence": "✅ 無寫死日期/金額（現行 .py 全數動態）"},
+    {"name": "CMD5 fallback 原始碼逐行", "pass": true, "evidence": "「勿追大額」僅存在於正常路徑尾綴（L103）；fallback 分支無數字、無已足暗示、無不作為引導"}
+  ],
+  "findings": "reviewer 原文：(1) 無殘留——「已足」二字只出現在『不得宣稱…已足或不足』的否定語境，是明確禁止宣稱而非暗示；原尾綴「勿追大額」已自 fallback 移除；fallback 不再單向導向不作為，改為要求人工確認。(2) 不可能餵錯數字——defensive_combined_pct 只會回傳真值 float 或 None，無第三種輸出；fallback 字串不含任何數字；唯一能進 prompt 的數字是正常分支的 live 值。5/5 pass，判定 PASS。"
+}
