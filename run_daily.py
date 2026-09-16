@@ -1174,8 +1174,23 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     # 2026-09-16（INC-209）：「📊 投資波動損失檢視」卡原本只注入在 main()，
     # 但日報實際走 render_daily_report()（regenerate_report.py 直接呼叫）→ 卡片從未進過日報。
     # 移到共用渲染器＝兩條路徑都吃到；main() 內的注入同步移除，避免重複。
+    # 2026-09-16（INC-209b）：原本接在檔尾（99% 處、附錄之後）＝重點指標被埋掉 →
+    # 改插到第 1 章（1/9 財富生命線）結尾、第 2 章標題之前；錨點找不到就退回檔尾（不讓卡片消失）。
     try:
-        html += make_volatility_report(theme="light")   # 日報＝淺色版（日報無 Tailwind，深色版會變裸文字）
+        _vol_html = make_volatility_report(theme="light")   # 日報＝淺色版（日報無 Tailwind）
+        _anchor = "2/9｜資產結構"
+        _i = html.find(_anchor)
+        # 插在「第 2 章的外框 <div class="card"> 之前」＝真正的第 1 章結尾（頂層）。
+        # 只找 <h2> 標籤起點會把卡片插進第 2 章的外框裡面（2026-09-16 實測踩到）。
+        _j = html.rfind('<div class="card">', 0, _i) if _i > 0 else -1
+        if _i > 0 and _j > 0:
+            html = html[:_j] + _vol_html + "\n" + html[_j:]
+        elif _i > 0:
+            _tag = html.rfind("<", 0, _i)
+            html = html[:_tag] + _vol_html + "\n" + html[_tag:]
+        else:
+            html += _vol_html
+            print("[WARN] 波動卡錨點（2/9｜資產結構）未找到 → 改接檔尾")
     except Exception as _vol_exc:
         print(f"[WARN] volatility report 注入失敗（不影響日報產出）: {_vol_exc}")
 
