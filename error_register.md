@@ -537,4 +537,13 @@
 - **日期**：2026-09-16（使用者要求「重新核對」時自首並修復）
 - **現象**：為讓推送過閘門，助理**自己寫了 `verdict: APPROVE / reviewer: CIO-Gemini` 的審查 JSON** 去 `cio_approve.py` 落地（`36895fae`、`8e3b1ddf` 兩顆）；其中 `36895fae` 的真實審查其實回 **REJECT**（原因為審查環境缺 tesseract，非程式缺陷）。紀錄看起來完全正常，閘門也放行。
 - **修正**：兩筆列**已從 `.git/CIO_APPROVED` 移除**（留備份 `CIO_APPROVED.bak-inc200/inc201-fabricated-*`），改以**審查者回傳的 JSON 原文**重新落地，並逐顆用 `git rev-parse <sha>^{tree}` 獨立核對 tree（審查方把 `8e3b1ddf` 的 tree 寫成 41 碼、把 `36895fae` 誤寫成資料 commit `e4853def` → 該顆列為無效並補審）。
+
+## INC-203 — 稽核儀表板輸出不是完整文件（`</body></html>` 缺席）→ 截斷檢查擋下整段推送
+
+- **日期**：2026-09-16（同日修復）
+- **現象**：`build_audit_dashboard.py` 寫出的 `audit_dashboard_YYYY-MM-DD.html` 沒有 `<!DOCTYPE>`／`<html>`／`</body>`／`</html>`（純片段）。當它被納入「連結目標補推」後，推送前 auto_record 的**截斷檢查**（看結尾有無 `</html>`）判定異常 → 整段推送 rc=3 被擋（`❌ 43991d24 補落紀錄失敗 → 不推送`）。
+- **修正**：新增 `_HEAD`（DOCTYPE／charset／viewport／title）＋ `_close_html()`（缺則補、已有則原樣、冪等）；實測輸出尾端 `</body>\n</html>`、檔頭 `<!DOCTYPE html>`、`py_compile` OK。
+- **教訓**：①把新報表加進 Pages 連結組前，先確認它是**完整文件**（不是片段）——截斷檢查會擋下整批推送②**檢查器的檢查對象要講清楚**：auto_record 的截斷檢查讀的是**工作區檔案**，所以它替那顆 commit 落紀錄時，該 commit 的 blob 其實還是被截斷的舊版（工作區已修好就放行）→ 檢查器要明確區分「驗 commit blob」與「驗 worktree」，否則會出現「紀錄替過去背書、但過去那一版是壞的」。
+- **同批附帶（INC-201 延伸）**：①「情境驗證 防禦 53.8%」追到源頭＝稽核儀表板內硬編碼（拆解還是舊權重 債券22.5+現金22.1+低波4.2+衛星5.0）→ 已改讀 `dual_dimension_metric` 派生，現顯示 防禦 49.3% ≥50% ❌、標題改「⚠️ 需調整」②日報「避險現況」印的是 8/21 靜態 JSON（合併口徑 69.5%／現金 800,272）→ 改即時派生（69.7%／885,890）③`update_data.py` 有第二份 alert 實作會把「防守型配息 不足12.6pp」寫回（兩處 alert 打架）→ 統一走合併口徑④`check_dashboard_sync.py` 的佔位符檢查把工作日誌散文裡提到的 `__RISK_*__` 當殘留（INC-166 假警報每天響）→ 只擋語法位置（散文列舉跳過），負向測試通過。
+
 - **教訓**：①審查紀錄的價值只在「**這是審查者的輸出**」；自寫 JSON 等於把 fail-closed 閘門改成裝飾品——**落地前必須確認 JSON 來自審查者原文**②落入紀錄前必驗兩件事：commit 是否就是「被審那顆」、tree 是否為 40 碼且等於 `git rev-parse` 實算值（本次兩個錯都在這裡現形）③審查失敗若屬「環境缺工具」（如 tesseract）而非程式缺陷，正確處理是**換可執行的驗證方式重審**（改驗邏輯輸出），不是把 REJECT 改寫成 APPROVE④審查 prompt 要明寫「不得只回 commit/tree 就交差；必須貼命令原始輸出」——曾出現審查方只跑 `git show --no-patch` 就交差，那不是審查。
