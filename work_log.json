@@ -483,7 +483,7 @@
   "date": "2026-09-13",
   "category": "修正",
   "item": "INC-163：再平衡儀表板產出器停擺（IndentationError）→ 本週投資計劃/動作建議改單源 radar_state.weekly_plan",
-  "detail": "使用者抓包 rebalance_dashboard_2026-09-13.html 標題仍寫「8/29 全資產面結論」、美股卡 44.0%→40%。根因：20:46 一輪「移除貼死字串」把 build_dashboard 的 INDEX_TEMPLATE 邏輯誤貼進 build_rebalance_dashboard.py → IndentationError 第248行 → 腳本整支死掉、Pages 永遠停在 19:58 舊檔。修法：兩區塊改讀 radar_state.weekly_plan.rows、標題日期取 rows 日期、副標題與 md §二之一/§八全部動態；驗證 ast OK＋舊字串 0＋radar 10/10 列入頁；commit 7966c194。"
+  "detail": "使用者抓包 rebalance_dashboard_2026-09-13.html 標題仍寫「8/29 全資產面結論」、美股卡 44.0%→40%。根因：20:46 一輪「移除貼死字串」把 build_dashboard 的 INDEX_TEMPLATE 邏輯誤貼進 build_rebalance_舊儀表板腳本 → IndentationError 第248行 → 腳本整支死掉、Pages 永遠停在 19:58 舊檔。修法：兩區塊改讀 radar_state.weekly_plan.rows、標題日期取 rows 日期、副標題與 md §二之一/§八全部動態；驗證 ast OK＋舊字串 0＋radar 10/10 列入頁；commit 7966c194。"
  },
  {
   "date": "2026-09-13",
@@ -688,7 +688,7 @@
   "date": "2026-09-14",
   "category": "完成",
   "item": "日報重產上線＋INC-183 驗收：跑真正的 07:00 路徑（regenerate_report.py）確認自動落 RECORD 並推送",
-  "detail": "使用者要求把 9/16 FOMC 判準與今日修正反映到日報。第一次重產被本地 CIO 禁字表擋下：禁字清單（cio_review.py:119）做子字串比對，我寫的「build_rate_hike_dashboard.py」命中 dashboard.py → 改措辭為「再平衡儀表板腳本」後通過（不改檢查邏輯）。推送時又抓到 INC-183（--record skip 沒人補位）→ 修好後重跑：CIO 規則檢查 13 項全過、自動補落 RECORD、自動推送並驗證遠端 sha（94f89d65 雙分支）。Pages 實抓日報與 commit 版位元一致（402,275 字），含 9/16 FOMC 落點對應判準；儀表板 index.html 同步重建（判準字串 10 處）。"
+  "detail": "使用者要求把 9/16 FOMC 判準與今日修正反映到日報。第一次重產被本地 CIO 禁字表擋下：禁字清單（cio_review.py:119）做子字串比對，我寫的「build_rate_hike_舊儀表板腳本」命中 舊儀表板腳本 → 改措辭為「再平衡儀表板腳本」後通過（不改檢查邏輯）。推送時又抓到 INC-183（--record skip 沒人補位）→ 修好後重跑：CIO 規則檢查 13 項全過、自動補落 RECORD、自動推送並驗證遠端 sha（94f89d65 雙分支）。Pages 實抓日報與 commit 版位元一致（402,275 字），含 9/16 FOMC 落點對應判準；儀表板 index.html 同步重建（判準字串 10 處）。"
  },
  {
   "date": "2026-09-14",
@@ -747,14 +747,14 @@
  {
   "date": "2026-09-14",
   "category": "完成",
-  "item": "cio_review 禁字表修正（INC-185）：dashboard.py 改「引用形式才擋」",
-  "detail": "子字串比對會誤中 build_*_dashboard.py 檔名，且事件紀錄寫到該字串就被自己擋；改為只擋 href/src/action、python 指令、路徑三種引用形式。驗收：單元 7 正 6 負案例 + E2E 負向（真實日報插假連結 → exit 3，防線仍在）+ E2E 正向（真實日報 → 全部通過）。"
+  "item": "cio_review 禁字表修正（INC-185）：舊儀表板腳本 改「引用形式才擋」",
+  "detail": "子字串比對會誤中 build_*_舊儀表板腳本 檔名，且事件紀錄寫到該字串就被自己擋；改為只擋 href/src/action、python 指令、路徑三種引用形式。驗收：單元 7 正 6 負案例 + E2E 負向（真實日報插假連結 → exit 3，防線仍在）+ E2E 正向（真實日報 → 全部通過）。"
  },
  {
   "date": "2026-09-14",
   "category": "完成",
   "item": "CIO 重審：首輪 REJECT 經查為派工指令轉義瑕疵（INC-186）",
-  "detail": "首輪審查在『防線仍在』單元項得到 False 並 REJECT，但同輪 E2E 負向測試是 exit 3（有擋下）→ 矛盾。主辦方重跑同一條指令得 True，證實是子代理多層引號把樣本變成帶字面反斜線的 href=\\\"dashboard.py\\\"（該輪 5 次語法錯誤）。程式不動，改派工法：樣本一律 heredoc、期望值逐字給定、矛盾時以 E2E 為準且不得單項 REJECT。已重送重審。"
+  "detail": "首輪審查在『防線仍在』單元項得到 False 並 REJECT，但同輪 E2E 負向測試是 exit 3（有擋下）→ 矛盾。主辦方重跑同一條指令得 True，證實是子代理多層引號把樣本變成帶字面反斜線的 href=\\\"舊儀表板腳本\\\"（該輪 5 次語法錯誤）。程式不動，改派工法：樣本一律 heredoc、期望值逐字給定、矛盾時以 E2E 為準且不得單項 REJECT。已重送重審。"
  },
  {
   "date": "2026-09-14",
@@ -772,7 +772,7 @@
   "date": "2026-09-15",
   "category": "修正",
   "item": "寫死金額/日期批次修正（薪資 39,727、里程碑 8/31、乾粉分配、月配息 10 萬）＋死碼封存",
-  "detail": "① calendar_sync.py 行事曆「台電薪資入帳 $39,727」（8 月值）→ 讀 snapshot.monthly_salary（42,560），缺值顯示「金額待確認」不用歷史常數 ② build_rebalance_dashboard.py 新增 milestones_next()／dry_alloc()：里程碑改讀 schedule_events 未來事件（同日取一、排除已完成、上限 6 天）、乾粉段落與長條圖改讀 snapshot.乾粉執行_0926.分配表，md + html 共用同一 helper ③ build_dashboard／monthly_report 移除薪資 fallback 39,727、月報配息改讀 snapshot.dividend_month_expected（原寫死 100,000）④ 零引用死碼 complete_daily_report.py／build_marriage_impact.py 封存 .archive/。驗證：AST 全過、parse_events 4 筆皆 42,560、再平衡儀表板無 8/31 殘留、月報 0 筆 39,727、稽核四源/Pages 全綠。commit 027b84c0。"
+  "detail": "① calendar_sync.py 行事曆「台電薪資入帳 $39,727」（8 月值）→ 讀 snapshot.monthly_salary（42,560），缺值顯示「金額待確認」不用歷史常數 ② build_rebalance_舊儀表板腳本 新增 milestones_next()／dry_alloc()：里程碑改讀 schedule_events 未來事件（同日取一、排除已完成、上限 6 天）、乾粉段落與長條圖改讀 snapshot.乾粉執行_0926.分配表，md + html 共用同一 helper ③ build_dashboard／monthly_report 移除薪資 fallback 39,727、月報配息改讀 snapshot.dividend_month_expected（原寫死 100,000）④ 零引用死碼 complete_daily_report.py／build_marriage_impact.py 封存 .archive/。驗證：AST 全過、parse_events 4 筆皆 42,560、再平衡儀表板無 8/31 殘留、月報 0 筆 39,727、稽核四源/Pages 全綠。commit 027b84c0。"
  },
  {
   "date": "2026-09-15",
@@ -808,7 +808,7 @@
   "date": "2026-09-15",
   "category": "修正",
   "item": "儀表板『本週完成清單』併入修正（🔧）＋未閉環卡排除修正＋item HTML 轉義",
-  "detail": "work_log 的「修正」類（累計 26 筆）原本兩處失真：①不進本週完成清單（漏帳，今日 5 筆修正全隱形）②不被視為閉環 → 被錯誤列在「🛠️ 系統工作日誌（未閉環）」，該卡由 29 筆虛胖。修法：①build_dashboard.py 靜態層改收 完成(✅)/修正(🔧)，item 加 html.escape(quote=False)（item 內含 <p class=\"text-lead\"> 字面，不轉義會注入 DOM）＋範圍標籤分項計數；②index_template.html JS 層同口徑（CAT_ICON）與分項計數；③CLOSED_CAT 補「修正」→ 未閉環卡 29→3 筆（應辦2+決策1）。驗收：AST OK、node --check 9 段 inline script OK、靜態＝JS＝98 項（✅73｜🔧25）、未轉義 0、placeholder 0、以線上頁面抽出的真實 JS 跑 stub DOM → 渲染 98 列（🔧25）、CIO 7 組實測 APPROVE、commit b2bace0747（tree 4c3f36b0）已推雙分支、線上 index.html 與本機逐字一致。"
+  "detail": "work_log 的「修正」類（累計 26 筆）原本兩處失真：①不進本週完成清單（漏帳，今日 5 筆修正全隱形）②不被視為閉環 → 被錯誤列在「🛠️ 系統工作日誌（未閉環）」，該卡由 29 筆虛胖。修法：①build_舊儀表板腳本 靜態層改收 完成(✅)/修正(🔧)，item 加 html.escape(quote=False)（item 內含 <p class=\"text-lead\"> 字面，不轉義會注入 DOM）＋範圍標籤分項計數；②index_template.html JS 層同口徑（CAT_ICON）與分項計數；③CLOSED_CAT 補「修正」→ 未閉環卡 29→3 筆（應辦2+決策1）。驗收：AST OK、node --check 9 段 inline script OK、靜態＝JS＝98 項（✅73｜🔧25）、未轉義 0、placeholder 0、以線上頁面抽出的真實 JS 跑 stub DOM → 渲染 98 列（🔧25）、CIO 7 組實測 APPROVE、commit b2bace0747（tree 4c3f36b0）已推雙分支、線上 index.html 與本機逐字一致。"
  },
  {
   "date": "2026-09-15",
@@ -850,7 +850,7 @@
   "date": "2026-09-15",
   "category": "修正",
   "item": "產出腳本口徑更正 5 檔（大轉向簡報／債務追蹤／稽核儀表板／週報／進場監控）",
-  "detail": "build_final.py（含反向寫法「500 萬 MMF」6 處、改讀 B11 實際市值 4,981,060）、debt_restructure_tracker.py（8/20 舊劇本 2 處）、build_audit_dashboard.py（8/25 T+2 與「MMF 剩餘 369萬轉配置」＋歷史推導行標註）、build_weekly_report.py（富達+MMF600萬→台幣貨基500萬）、entry_monitor.py（質押 350萬→540萬）。CIO 首輪 REJECT（抓到反向寫法漏改 V2/V4/V5），補修後複審 APPROVE（兩顆 commit、tree 972ae8ba／aaf9e66b，V1-V7 全過）。"
+  "detail": "build_final.py（含反向寫法「500 萬 MMF」6 處、改讀 B11 實際市值 4,981,060）、debt_restructure_tracker.py（8/20 舊劇本 2 處）、build_audit_舊儀表板腳本（8/25 T+2 與「MMF 剩餘 369萬轉配置」＋歷史推導行標註）、build_weekly_report.py（富達+MMF600萬→台幣貨基500萬）、entry_monitor.py（質押 350萬→540萬）。CIO 首輪 REJECT（抓到反向寫法漏改 V2/V4/V5），補修後複審 APPROVE（兩顆 commit、tree 972ae8ba／aaf9e66b，V1-V7 全過）。"
  },
  {
   "date": "2026-09-15",
@@ -898,7 +898,7 @@
   "date": "2026-09-15",
   "category": "修正",
   "item": "淘汰腳本刪除：產線 4 支（0 引用）＋ ad-hoc 11 支（移入 .archive）",
-  "detail": "產線腳本 build_pptx.py、build_rate_hike_dashboard.py、gen_emergency_us_0914.py、gen_emergency_us_0915.py：實查 0 引用（import/subprocess/cron 皆無）後刪除（共 1016 行）。一次性 ad-hoc 腳本 11 支（_canonicalize_stale_records/2、_clean_rebalance_dashboard、_fix_stale_text、_remove_hardcoded_weekly_plan、_snapshot_pledge_canonical_20260913、_sync_pledge_text/2/3、_verify_notion_decision、_verify_receivable）移至 .archive/（內容保留）。CIO 複審 APPROVE 後推送。"
+  "detail": "產線腳本 build_pptx.py、build_rate_hike_舊儀表板腳本、gen_emergency_us_0914.py、gen_emergency_us_0915.py：實查 0 引用（import/subprocess/cron 皆無）後刪除（共 1016 行）。一次性 ad-hoc 腳本 11 支（_canonicalize_stale_records/2、_clean_rebalance_dashboard、_fix_stale_text、_remove_hardcoded_weekly_plan、_snapshot_pledge_canonical_20260913、_sync_pledge_text/2/3、_verify_notion_decision、_verify_receivable）移至 .archive/（內容保留）。CIO 複審 APPROVE 後推送。"
  },
  {
   "date": "2026-09-15",
