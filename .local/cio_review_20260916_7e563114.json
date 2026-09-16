@@ -1,0 +1,47 @@
+{
+  "verdict": "APPROVE",
+  "reviewed_commits": [
+    {
+      "commit": "7e563114e1a49460a3735036964adcbbeb5f52c4",
+      "tree": "4ebc2a7e203712b5430e37a5fee67a5059044139"
+    }
+  ],
+  "checks": [
+    {
+      "name": "真檔回歸：含檢查器全過",
+      "pass": true,
+      "evidence": "python check_dashboard_sync.py → ✅ 儀表板同步檢查全過，EXIT=0"
+    },
+    {
+      "name": "誤報源定位",
+      "pass": true,
+      "evidence": "panel-6 pos=78908 len=132670；772,607 出現於 86946 與 125608，兩者皆在排除區；id=panel-6 全檔僅 1 處"
+    },
+    {
+      "name": "負向測試 A：panel-6 前注入裸舊值仍被抓到",
+      "pass": true,
+      "evidence": "純淨位置注入 <p>772,607</p> → ❌ 舊值殘留: 772,607 @ 132，EXIT=1"
+    },
+    {
+      "name": "負向測試 B：panel-6 內注入不抓（排除生效）",
+      "pass": true,
+      "evidence": "於 panel-6 開標籤後注入 → ✅ 檢查全過，EXIT=0"
+    },
+    {
+      "name": "diff 範圍僅 2 檔 +14/-2",
+      "pass": true,
+      "evidence": "check_dashboard_sync.py 9(+)/2(−)、error_register.md 7(+)；diff-tree 確認僅 M 兩檔"
+    },
+    {
+      "name": "排除邊界 fail-safe",
+      "pass": true,
+      "evidence": "_scan = html[:_p6] if _p6 > 0 else html → panel-6 缺失時回退全檔掃描，不削弱檢查"
+    },
+    {
+      "name": "僅第 3 類被限縮，其餘 9 類仍掃全檔",
+      "pass": true,
+      "evidence": "第 1/2/4~9 類仍用完整 html；唯第 3 類改用 _scan"
+    }
+  ],
+  "findings": "修正核心正確：真檔回歸通過、負向測試雙向符合宣告。殘留（非阻斷）實作範圍略廣於註解所述：切斷點在 panel-6 起始，連 footer、再平衡備忘與尾部 6 段 script 一併排除；實測目前無回歸（全檔舊值僅 772,607 落在切斷點後，其餘 10 個舊值在排除區內 0 命中），但未來若 build 在 footer／備忘／尾部 script 留下裸舊值，第 3 類將不再抓到。建議後續收斂為「只排除 panel-6 區段 + <script> 區塊」，保留 footer/備忘 覆蓋。"
+}
