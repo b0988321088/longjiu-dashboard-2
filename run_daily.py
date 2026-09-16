@@ -292,49 +292,6 @@ def _diff_to_buffett_bullets(tv: dict, y: dict) -> list[str]:
     return bullets
 
 
-def _fmt_rent_status(tv):
-    """房租金流：應收固定 80,100 + 動態追蹤已收/待收"""
-    rb = tv.get("rent_breakdown", {}) or {}
-    received = tv.get("rent_received_records", {}) or {}
-    _m = date.today().strftime("%Y-%m")
-    _got = sum(v for d, items in received.items() if str(d).startswith(_m) for v in items.values())
-    label_map = {"大義街店面": "大義街1樓", "大義街二三樓": "大義街23樓"}
-    # 完整應收明細
-    detail = []
-    for k, v in rb.items():
-        label = label_map.get(k, k)
-        detail.append(f"{label}{v:,}")
-    if not detail:
-        return "大義街1樓24,000+洲際W33,000+大義街23樓23,100+管理費2,100"
-    base = "應收 80,100 = " + "+".join(detail)
-    if _got > 0:
-        got_parts = []
-        for d, items in sorted(received.items()):
-            if str(d).startswith(_m):
-                for k, v in items.items():
-                    label = label_map.get(k, k)
-                    got_parts.append(f"{label}{v:,}")
-        pending = 80_100 - _got
-        return f"{base}｜已收 {'+'.join(got_parts)}（{_got:,}）｜待收 {pending:,}"
-    return f"{base}｜尚未入帳"
-
-
-def _generate_schedule_html(events: list) -> str:
-    """從 calendar_sync 事件生成排程 HTML 表格行"""
-    from datetime import date
-    today = date.today().isoformat()
-    rows = []
-    for ev in events:
-        start = ev.get("start", "")
-        if start < today:
-            continue
-        summary = ev.get("summary", "")
-        amount = ev.get("amount", "")
-        status = ev.get("status", "")
-        rows.append(f'<tr><td>{start}</td><td>{summary}</td><td class="num">{amount}</td><td>{status}</td></tr>')
-    return "\n".join(rows[:12])
-
-
 def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "", mb_cc_rows: str = "", llm_emergency_analysis: str = "", schedule_rows_html: str = "", p0_tasks_html: str = "", cio_content_html: str = "") -> str:
     _dbs_note_ph = "{_dbs_note}"  # placeholder for dynamic DBS note
     """產出五大章節日報 HTML。"""
@@ -1925,20 +1882,25 @@ def build_cc_rows() -> str:
         try:
             _snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
             _cc = _snap.get("credit_card") or {}
-            _rev = {
-                "台新Richart": ("台新銀行", "Richart"),
-                "玉山UNI": ("玉山銀行", "UNI"),
-                "永豐SPORT": ("永豐銀行", "SPORT"),
-                "富邦momo": ("台北富邦", "momo / J"),
-                "國泰CUBE": ("國泰世華", "CUBE"),
-            }
-            for _card, (_bank, _cardname) in _rev.items():
-                try:
-                    _amt = float(_cc.get(_card, 0) or 0)
-                except (TypeError, ValueError):
-                    _amt = 0.0
-                _status = "✅ 無欠款" if _amt == 0 else "🔄 待扣繳"
-                _rows.append(f'          <tr><td>{_bank}</td><td>{_cardname}</td><td>—</td><td class="num">{int(_amt):,}</td><td>{_status}</td></tr>')
+            # 2026-09-16：卡別鍵名會隨 snapshot 更新而變（玉山UNI→玉山Unicard、永豐SPORT→永豐…）
+            # → 改以「銀行關鍵字」比對 snapshot.credit_card 的鍵，避免鍵名一改就抓不到金額（全 0 假表）。
+            _banks = (
+                ("玉山銀行", "玉山", "Unicard / UNI"),
+                ("台新銀行", "台新", "Richart"),
+                ("永豐銀行", "永豐", "SPORT"),
+                ("台北富邦", "富邦", "momo / J"),
+                ("國泰世華", "國泰", "CUBE"),
+            )
+            for _bank, _kw, _cardname in _banks:
+                _amt = 0.0
+                for _card, _v in (_cc.items() if isinstance(_cc, dict) else []):
+                    if _kw in str(_card):
+                        try:
+                            _amt += float(_v or 0)
+                        except (TypeError, ValueError):
+                            pass
+                _status = "🔄 待扣繳" if _amt < 0 else ("✅ 無欠款（溢繳）" if _amt > 0 else "✅ 無欠款")
+                _rows.append(f'          <tr><td>{_bank}</td><td>{_cardname}</td><td>—</td><td class="num">{int(abs(_amt)):,}</td><td>{_status}</td></tr>')  # 2026-09-16：snapshot 卡費以「負值＝當期未繳」（asset_sync 口徑）→ 顯示取絕對值
         except Exception:
             pass
     return "\n".join(_rows)
@@ -2120,7 +2082,7 @@ def main():
         except Exception as _exc:
             print(f"[WARN] load emergency_llm_analysis.json failed: {_exc}")
 
-    daily_html = render_daily_report(tv, intel_text="", intel_signals=intel_signals, market_intel_text=market_intel_text, llm_emergency_analysis=llm_emergency_analysis_html, schedule_rows_html=_schedule_rows, p0_tasks_html=_p0_html)
+    daily_html = render_daily_report(tv, intel_text="", intel_signals=intel_signals, market_intel_text=market_intel_text, llm_emergency_analysis=llm_emergency_analysis_html, schedule_rows_html=_schedule_rows, p0_tasks_html=_p0_html, mb_cc_rows=build_cc_rows())  # 2026-09-16：補上信用卡明細（原本走 run_daily 路徑會是空表，四大信用卡檢查必失敗）
     daily_html = _inject_market_intel(daily_html, tv, intel_signals, llm_emergency_analysis_html)
 
     # 注入戰略穿透值到日報

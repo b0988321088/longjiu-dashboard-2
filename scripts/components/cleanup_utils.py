@@ -18,9 +18,9 @@ import pathlib
 import re
 import shutil
 import subprocess
-import datetime
+# 2026-09-16：移除重複的 `import datetime`（F811）— 本檔 datetime 一律由下行綁成「類別」
+# （`datetime.now()/strptime`），需要日期物件時用 `date`（見 _to_date 的說明）。
 from datetime import date, datetime, timedelta
-import sys
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent.resolve()))
 from logging_config import get_logger
 

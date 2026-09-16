@@ -87,8 +87,19 @@ def main() -> None:
     results.append(check("無簡體字（人工審核，已跳自動化）", True))
 
     # 8. 無禁制字串（railway.app 為 LLM 報告主要來源，允許）
-    flags = ["dashboard.py", "streamlit"]
-    found_flags = [f for f in flags if f in daily or f in idx]
+    # 2026-09-16：dashboard.py 改比照 cio_review 的「引用形式才擋」邊界規則
+    # （原本純子字串比對 → build_audit_dashboard.py 這種檔名被誤判成禁字，假警報）
+    found_flags = []
+    try:
+        from cio_review import _references_dashboard_py
+        if _references_dashboard_py(daily) or _references_dashboard_py(idx):
+            found_flags.append("dashboard.py")
+    except Exception as _e:  # 匯入失敗時退回舊行為，不讓檢查整支炸掉
+        print(f"[WARN] cio_review 邊界規則載入失敗，退回子字串比對：{_e}")
+        if "dashboard.py" in daily or "dashboard.py" in idx:
+            found_flags.append("dashboard.py")
+    if "streamlit" in daily or "streamlit" in idx:
+        found_flags.append("streamlit")
     results.append(check(f"無禁止連結/字串 ({found_flags if found_flags else 'OK'})", len(found_flags) == 0))
 
     # 9. Market 情報附可信度標記
