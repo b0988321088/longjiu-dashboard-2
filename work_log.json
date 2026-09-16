@@ -959,5 +959,11 @@
   "category": "完成",
   "item": "清理收尾（二）：週清落版納入 state 檔 ＋ 週一深度清理收尾自動落版推送（使用者核准）",
   "detail": "① 週清（週日 08:00）：落版條件由「看刪幾筆」改成「git status --porcelain 看檔案真的髒不髒」（state 檔每次執行都會寫、key 集合會變，只看筆數會永遠 dirty）→ commit 仍路徑限定 schedule_events.json + data/calendar_overdue_state.json ② 週一 03:00 全量深度清理：run_full_cleanup 尾段（僅 apply=True）若工作區有變更 → auto_push --auto-stage（add -A 通路：落版＋補紀錄＋重試＋驗遠端 sha）；閘門 fail-closed：若範圍含未審程式檔（如 ad-hoc 腳本搬進 .archive）→ exit 3 停在本地並回非零碼讓 cron 出聲 ③ 注入式驗證 4 項全過：靜默默約（有清理無新增→stdout 空）、apply=True 確實呼叫 auto_push、apply=False 絕不落版、rc=3 不誤報已推送 ④ commit a8ed9366（CIO 審查中）⑤ 本輪另收：INC-195/196、13+ 顆 commit 上線、儀表板資料日動態化"
+ },
+ {
+  "date": "2026-09-16",
+  "category": "完成",
+  "item": "質押撥款日口徑統一：9/21 11:00 國泰簽約（對保）→ 撥款預估 10/5（原記 9/25 作廢）",
+  "detail": "使用者指示「同步統一口徑」。真值單點＝snapshot.cathay_pledge_0911（對保／撥款／撥款預估日／新增對保日＋撥款預估日_原保留作廢值）→ 全系統敘述句由 pledge_status.py 派生（日報／儀表板／再平衡／穿透／週報／審計／退休規劃／entry_monitor／institutional_flow 等），故只改單點即全面同步。同步更新：pending_decisions 三張卡（500萬高息清償／升息警戒／質押簽約）、dashboard_decisions 鏡像、schedule_events（9/21 註記＋新增 10/5 撥款預估里程碑）、cio_review 最新一則的已核准待執行（儀表板 P0）。殘留硬編碼（未改，屬程式檔需走真 CIO 審查，排入下次程式批次）：build_final.py L224、debt_restructure_tracker.py L356、entry_monitor.py 檔頭註解、scripts/components/cleanup_utils.py L218（僅 9/13 歷史報告更正橫幅）。"
  }
 ]
