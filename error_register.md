@@ -564,3 +564,11 @@
 - 首次發生: 2026-09-16 14:35:03
 - 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
 - 狀態: ⏳ 待處理 (總計 1 次)
+
+## INC-205 state.db 批次寫入永遠失敗 ＝ WAL 讀快照衝突（2026-09-16）
+- **現象**：`sanitize_state_db.py --apply` 連續兩次死在 `sqlite3.OperationalError: database is locked`，且**每次都是立刻拋出**、退避重試 8 次（3s…24s）全滅；已設 `PRAGMA busy_timeout=180000` 形同無效。
+- **根因**：改寫前的 `apply_mask` 用**同一個長命讀游標**邊掃 227k 列邊寫。WAL 模式下讀游標把快照釘住，gateway 同時持續寫入並推進 WAL → 這條連線要把讀交易升級成寫交易時拿到 **SQLITE_BUSY_SNAPSHOT**（busy handler 對這種衝突不作用）→ 重試只是在撞同一個過期快照，**永遠不會成功**。
+- **判別特徵**：普通鎖競爭「等久一點會過」；快照衝突「等再久都秒退」。看到後者不要再加大 timeout。
+- **修法**：分塊（每 200 列先 `fetchall()` 進記憶體、立刻結束游標）＋每塊 `BEGIN IMMEDIATE` 短交易＋失敗整塊重試 10 次；進 apply 前 `conn.commit()` 清掉掃描殘留的讀交易。修後全程 **0 次鎖重試**。
+- **結果**：4,455 則訊息 / 5,373 欄位遮罩完成（410s），`request_dump` 6 檔，`quick_check: ok`，總耗時 1213s；獨立規則複查真正殘留 **0**（假陽性：pip 版本字串 `pkg@2.77`、`@st.cache_data`、GitHub 帳號 `b0988321088`、git sha 片段、`redeploy:` 時間戳）。
+- **教訓**：①**對 live SQLite 做批次寫入，絕不讓讀游標與寫入交易重疊**（分塊讀→寫）②「一直失敗而且秒退」＝先懷疑快照衝突，不是加大 timeout ③腳本自報的「殘留 0」要用**獨立規則**複查，且複查樣本必須去識別化後才可顯示 ④寬鬆 regex 驗 PII 會製造大量假陽性（版本號、帳號名）；驗證時要同時看**上下文樣式**才能分類。
