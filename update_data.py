@@ -242,8 +242,19 @@ def main():
                               - _tgt.get("債券", _tgt.get("債券型目標", 25)) - _tgt.get("現金", _tgt.get("現金目標", 5)), 1),
         "科技曝險": round(_ap.get("美股市值型成長_科技", 0) - _tgt.get("科技", _tgt.get("科技曝險目標", 20)), 1),
     }
-    _new_pen["alert"] = ("；".join(f"{_k} {'超標' if _v > 0 else '不足'}{abs(_v)}pp"
-                                   for _k, _v in _new_pen["gaps"].items() if abs(_v) >= 1.5) or "各桶均在容忍範圍")
+    # INC-201：與 update_all.calc_penetration 同口徑（防守看合併口徑、門檻讀 SoT），
+    # 否則兩處 alert 會互相打架（誰後寫誰贏）。
+    _dcx2 = defensive_caliber(snap)
+    if _dcx2.get("門檻") is not None:
+        _dtxt = (f"防守合併口徑 {_dcx2['佔比']}%（≥{_dcx2['門檻']} 承接凍結 ✅；單桶 {_ap['防守型配息']}% 僅結構參考）"
+                 if _dcx2.get("已足") else
+                 f"防守合併口徑 {_dcx2['佔比']}% 不足 {round(_dcx2['門檻'] - _dcx2['佔比'], 1)}pp（<{_dcx2['門檻']} 承接解凍）")
+    else:
+        _dtxt = (f"防守型配息 {'超標' if _new_pen['gaps']['防守型配息'] > 0 else '不足'}"
+                 f"{abs(_new_pen['gaps']['防守型配息'])}pp")
+    _new_pen["alert"] = "；".join(
+        [f"{_k} {'超標' if _v > 0 else '不足'}{abs(_v)}pp" for _k, _v in _new_pen["gaps"].items()
+         if abs(_v) >= 1.5 and _k != "防守型配息"] + [_dtxt]) or "各桶均在容忍範圍"
     _new_pen["updated_at"] = datetime.date.today().isoformat()
     _new_pen["source"] = "update_all.calc_penetration（四源同步）"
     snap["penetration"] = _new_pen

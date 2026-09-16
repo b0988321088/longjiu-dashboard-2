@@ -629,7 +629,29 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         if _ue:
             _imp = "".join(f"<li>{x}</li>" for x in _ue.get("影響", []))
             _resp = "".join(f"<li>{x}</li>" for x in _ue.get("因應", []))
-            _hed = _ue.get("避險現況", {})
+            _hed = dict(_ue.get("避險現況", {}) or {})
+            # INC-201：避險現況改為即時派生（stored 是 8/21 靜態值，長期印出「合併口徑 69.5%／現金 800,272」）
+            try:
+                from sot_targets import defensive_caliber  # INC-201：防守合併口徑單一入口
+                _snap_now = load_json(BASE / "snapshot.json")
+                _dx = defensive_caliber(_snap_now)
+                _hs = _snap_now.get("hedge_satellite", {}) or {}
+
+                def _refresh_num(txt, val):
+                    """保留『/ 目標 …』等後綴，只把開頭數字換成即時值"""
+                    return re.sub(r"^[\d,]+", f"{int(val):,}", str(txt))
+
+                if _dx.get("門檻") is not None:
+                    _hed["防守"] = (f"合併口徑 {_dx['佔比']}%"
+                                    f"（{'≥' + str(_dx['門檻']) + '% 已足、承接凍結' if _dx.get('已足') else '未達 ' + str(_dx['門檻']) + '% 凍結門檻'}）")
+                if _hs.get("黃金現況") is not None:
+                    _hed["黃金"] = _refresh_num(_hed.get("黃金", ""), _hs.get("黃金現況", 0))
+                if _hs.get("石油現況") is not None:
+                    _hed["石油"] = _refresh_num(_hed.get("石油", ""), _hs.get("石油現況", 0))
+                if _snap_now.get("cash_total"):
+                    _hed["現金"] = _refresh_num(_hed.get("現金", ""), _snap_now.get("cash_total", 0))
+            except Exception:
+                pass
             _hed_txt = "｜".join(f"{k}：{v}" for k, v in _hed.items())
             _usd_eval = f"""<div class="callout" style="border-left:3px solid #d97706;margin-top:10px">
   <h3>💵 美元升息影響評估（{_ue.get('generated_at','')} DAA v3）</h3>
