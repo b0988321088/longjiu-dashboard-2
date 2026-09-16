@@ -1,0 +1,17 @@
+{
+  "verdict": "APPROVE",
+  "reviewed_commits": [
+    {
+      "commit": "3ab7f888cd8ded0bff9d34630461debb852c3e83",
+      "tree": "8440ce1507d0f6f2288bd27987e9c1aec9b20a3a"
+    }
+  ],
+  "checks": [
+    {"name": "tree", "pass": true, "evidence": "8440ce1507d0f6f2288bd27987e9c1aec9b20a3a"},
+    {"name": "sandbox_7_cases", "pass": true, "evidence": "A PASS(放行) B PASS(已擋) C PASS(放行) D PASS(放行) E PASS(已擋) F PASS(已擋) G PASS(放行)\nPASS=7  FAIL=0\nSANDBOX ALL PASS"},
+    {"name": "prepush_syntax", "pass": true, "evidence": "SYNTAX_OK"},
+    {"name": "cio_approve_ast", "pass": true, "evidence": "AST OK"},
+    {"name": "marker_location", "pass": true, "evidence": "2026-09-16T08:57:19Z|ef02eb2e0ff409ea7d6c0f31babf184151f6be78|f10e0700bd30bba33770ad8cf58b69e6c14d09b9|APPROVE|SELF-DECLARED:TEST|note 裡寫 SELF-DECLARED 也不該被誤判\n2026-09-16T08:57:19Z|ef02eb2e0ff409ea7d6c0f31babf184151f6be78|f10e0700bd30bba33770ad8cf58b69e6c14d09b9|APPROVE|AUTO-checker:probe|auto_record probe"}
+  ],
+  "findings": "5/5 全過。殘留風險：①SELF-DECLARED: 前綴是 writer(cio_approve)／reader(pre-push) 的資料契約，兩檔各自寫死字串，日後改格式會錯位（建議集中單一常數）②--reviewer 只要以 AUTO-checker: 開頭即可繞過標記（信任邊界設計，非漏洞）③真實姓名若恰以 SELF-DECLARED: 開頭會誤判（極端 contrived）。"
+}

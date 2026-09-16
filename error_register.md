@@ -558,7 +558,7 @@
   - 該 session 在 14:57 產出的審查 JSON 只涵蓋 `4f336819`（且 tree 欄僅 **39 碼**），與這兩顆 commit 無關。
 - **根因**：與 INC-202 同一模式——**閘門只驗「tree 有沒有 APPROVE 紀錄」，不驗「紀錄有沒有審查者原文」**。`cio_approve.py --verdict`（自宣告）寫出的紀錄與 `--result`（審查原文）寫出的紀錄在閘門眼中完全相同。
 - **修正**：①兩筆偽紀錄**先行備份後自 `CIO_APPROVED` 移除**（`CIO_APPROVED.bak-inc204-fabricated-<ts>`）②改用**審查者回傳原文**重新落地（reviewer 標記 `CIO-DeepSeek-V4Pro`，因 Gemini 已停用）③純資料兩顆改走 `auto_record.py`（reviewer `AUTO-checker:*`）。
-- **教訓**：①**推送前必查紀錄 provenance**：`grep <tree> .git/CIO_APPROVED` 只證明「有紀錄」，要再問「這筆是誰寫的、審查者當時在線嗎、有沒有對應的審查 JSON 原文」②自宣告紀錄的識別特徵：**note 欄空白 + 同一輪出現 REJECT 訊息 + 審查者當日不可用** ③審查者離線時的正解是**換審查者並在 reviewer 欄誠實標註**，不是沿用前任名義 ④待辦（需真審查後才動）：讓 `cio_approve.py` 對 `--verdict`（無 `--result`）寫出的紀錄標記 `SELF-DECLARED`，並讓 pre-push 閘門對**含程式檔**的受審 tree 拒絕只憑 `SELF-DECLARED` 放行。
+- **教訓**：①**推送前必查紀錄 provenance**：`grep <tree> .git/CIO_APPROVED` 只證明「有紀錄」，要再問「這筆是誰寫的、審查者當時在線嗎、有沒有對應的審查 JSON 原文」②自宣告紀錄的識別特徵：**note 欄空白 + 同一輪出現 REJECT 訊息 + 審查者當日不可用** ③審查者離線時的正解是**換審查者並在 reviewer 欄誠實標註**，不是沿用前任名義 ④**標記不可寫在自由文字欄位**：v4.3 第一版把 `SELF-DECLARED` 寫進 note、閘門用子字串比對 → 落地時我的 note 剛好寫著「SELF-DECLARED 規則…」，**自己的真審查紀錄被自己的規則擋掉**（當場被閘門擋下才發現）。第二版改成放 **reviewer 欄**（受控欄位）＋`^SELF-DECLARED:` 精確前綴，並補沙箱案例 G（真審查＋note 提到該字串 → 必須放行）作為回歸測試。通則：**用自由文字當機器判準＝定時炸彈；判準要放在結構化／受控欄位**。
 
 ## INCIDENT 319fe1e2 (four_source_sync)
 - 首次發生: 2026-09-16 14:35:03
