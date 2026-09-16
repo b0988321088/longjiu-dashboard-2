@@ -151,12 +151,18 @@ if _ms:
     _cur = next((k for k, v in _ms.get("情境", {}).items() if v.get("當前")), "區間震盪")
     _sc = _ms.get("情境", {}).get(_cur, {})
     _v = _ms.get("現況驗證", {})
+    # INC-201：情境驗證的 stored 值（防禦 53.8%）無程式寫入者、與定稿公式不符 → 並列派生值
+    _dd2 = (snap.get("dual_dimension_metric", {}) or {})
+    _def_f = (_dd2.get("防禦維度", {}) or {}).get("佔比")
+    _inc_f = (_dd2.get("收入維度", {}) or {}).get("佔比")
+    _def_f_ok = isinstance(_def_f, (int, float)) and _def_f >= _sc.get("防禦最低", 0)
+    _inc_f_ok = isinstance(_inc_f, (int, float)) and _inc_f >= _sc.get("收入最低", 0)
     _rows4 = "".join(
         f"<tr><td>{k}</td><td class='num'>防禦≥{v.get('防禦最低',0)}%</td><td class='num'>收入≥{v.get('收入最低',0)}%</td><td class='num'>LTV≤{v.get('LTV上限',0)}%</td><td style='font-size:11px'>{v.get('策略','')[:22]}</td></tr>"
         for k, v in _ms.get("情境", {}).items())
     w(f"<div class='callout' style='border-left:3px solid #0ea5e9'>🎯 <b>四大市場情境門檻（{_ms.get('定稿','')}）— 當前：{_cur} {('✅ 現況全合格' if _v.get('防禦合格') and _v.get('收入合格') and _v.get('LTV合格') else '⚠️ 需調整')}</b>"
       f"<table style='width:100%;font-size:12px;margin-top:6px;border-collapse:collapse'><tr style='color:#64748b'><th style='text-align:left;padding:3px 6px'>情境</th><th class='num'>防禦最低</th><th class='num'>收入最低</th><th class='num'>LTV上限</th><th style='text-align:left;padding:3px 6px'>策略</th></tr>{_rows4}</table>"
-      f"<span style='color:#64748b;font-size:12px'>現況驗證：防禦 {_v.get('防禦',0)}%（≥{_v.get('防禦門檻',0)}% {'✅' if _v.get('防禦合格') else '❌'}）｜收入 {_v.get('收入',0)}%（≥{_v.get('收入門檻',0)}% {'✅' if _v.get('收入合格') else '❌'}）｜LTV {_v.get('LTV',0)}%（≤{_v.get('LTV上限',0)}% {'✅' if _v.get('LTV合格') else '❌'}）→ {_v.get('結論','')}</span></div>")
+      f"<span style='color:#64748b;font-size:12px'>現況驗證：防禦 {_v.get('防禦',0)}%（≥{_v.get('防禦門檻',0)}% {'✅' if _v.get('防禦合格') else '❌'}）｜收入 {_v.get('收入',0)}%（≥{_v.get('收入門檻',0)}% {'✅' if _v.get('收入合格') else '❌'}）｜LTV {_v.get('LTV',0)}%（≤{_v.get('LTV上限',0)}% {'✅' if _v.get('LTV合格') else '❌'}）→ {_v.get('結論','')}<br/>⚠️ <b>派生核對（INC-201）</b>：防禦＝dual_dimension 定稿公式 {_def_f}%（≥{_sc.get('防禦最低',0)}% {'✅' if _def_f_ok else '❌'}）｜收入＝{_inc_f}%（≥{_sc.get('收入最低',0)}% {'✅' if _inc_f_ok else '❌'}）；上面 stored 的防禦 {_v.get('防禦',0)}% 無程式寫入者（疑舊人工值）→ 以派生值為準。避險衛星以「目標值 131 萬」計入防禦維度（實況：黃金 32 萬尚未建倉）</span></div>")
 
 # 現況質押借款快照（2026-09-05 加：LTV 現況透明化 — 勿誤讀情境表為「無質押」）
 _pl_a = float(snap.get("policy_pledge_loan") or 0)

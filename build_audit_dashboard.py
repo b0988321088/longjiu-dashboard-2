@@ -21,6 +21,23 @@ MORT = 91735; POL_INT = 13333; GF = 6000
 pen = s["penetration"]["actual_pct"]; twd = s["penetration"]["actual_twd"]; tgt = s["penetration"]["targets"]
 us30y = us.get("last_rate"); mode = us.get("mode_label", us.get("mode", "—"))
 hs = s.get("hedge_satellite", {}); dcm = s.get("defensive_combined_metric", {})
+# INC-201：雙維度與情境門檻改為派生（原為硬編碼 53.8%/69.5%，與 snapshot.dual_dimension_metric 脫節）
+ddm = s.get("dual_dimension_metric", {}) or {}
+dd_def = ddm.get("防禦維度", {}) or {}
+dd_inc = ddm.get("收入維度", {}) or {}
+dd_c = dd_def.get("組成", {}) or {}
+_def_pct = dd_def.get("佔比", "—")
+_inc_pct = dd_inc.get("佔比", "—")
+_ms = s.get("market_scenario_standards", {}) or {}
+_sc_cur = next((k for k, v in (_ms.get("情境") or {}).items() if v.get("當前")), "")
+_sc = (_ms.get("情境") or {}).get(_sc_cur, {}) or {}
+_v = _ms.get("現況驗證", {}) or {}
+_ltv_v = _v.get("LTV")
+_def_ok = isinstance(_def_pct, (int, float)) and _def_pct >= _sc.get("防禦最低", 0)
+_inc_ok = isinstance(_inc_pct, (int, float)) and _inc_pct >= _sc.get("收入最低", 0)
+_ltv_ok = isinstance(_ltv_v, (int, float)) and _ltv_v <= _sc.get("LTV上限", 100)
+_all_ok = _def_ok and _inc_ok and _ltv_ok
+_def_break = " + ".join(f"{k.replace('(目標)','')} {round(v/TA*100,1)}%" for k, v in dd_c.items())
 MORT_MONTHLY = s.get("mortgage_cathay_monthly", 26000) + s.get("mortgage_sinopac_monthly", 65735)
 
 debt_ratio = TL / (TA + RE) * 100
@@ -116,7 +133,7 @@ for name, key in [("保單月配基金","保單月配基金"),("國泰月配(富
     rows += f"<tr><td {W(0)}>{name}</td><td {W(0)} style='text-align:right'>{v:,}</td><td {W(0)} style='text-align:right'>{v/TA*100:.1f}%</td></tr>"
 rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W(0)} style="text-align:right;font-weight:700">{dcm.get("配息資產合計",0):,}</td><td {W(0)} style="text-align:right;font-weight:700">{dcm.get("佔比",0)}%</td></tr>
 </table>
-<div style="font-size:11px;color:#94a3b8;margin-top:6px">防守桶 4.2% 僅高股息ETF 口徑；合併月配基金後 69.5% — 8/21 裁示防守承接凍結</div>
+<div style="font-size:11px;color:#94a3b8;margin-top:6px">防守桶 {pen.get("防守型配息",0)}% 僅高股息ETF 口徑；合併月配基金後 {dcm.get("佔比",0)}% — 8/21 裁示防守承接凍結</div>
 <h3 style="font-size:14px;font-weight:800;margin:16px 0 8px">🛡️ 避險衛星（8/21 核准待 PI）</h3>
 <table style="width:100%;font-size:12.5px;border-collapse:collapse">
 <tr>{H('衛星')}{H('目標')}{H('現況')}{H('缺口')}</tr>
@@ -129,19 +146,19 @@ rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W
 <div style="display:flex;gap:12px;flex-wrap:wrap">
 <div style="flex:1;min-width:220px;background:rgba(255,255,255,.12);border-radius:10px;padding:10px 12px">
 <div style="font-size:12px;opacity:.85">🛡️ 防禦維度合計（抗跌/LTV保護）</div>
-<div style="font-size:26px;font-weight:900">53.8%</div>
-<div style="font-size:11px;opacity:.8">債券 22.5% + 現金 22.1% + 低波 4.2% + 避險衛星 5.0%（目標）</div></div>
+<div style="font-size:26px;font-weight:900">{_def_pct}%</div>
+<div style="font-size:11px;opacity:.8">{_def_break}</div></div>
 <div style="flex:1;min-width:220px;background:rgba(255,255,255,.12);border-radius:10px;padding:10px 12px">
 <div style="font-size:12px;opacity:.85">💵 收入引擎合計（現金流覆蓋）</div>
-<div style="font-size:26px;font-weight:900">69.5%</div>
-<div style="font-size:11px;opacity:.8">全配息資產 + 房租 80,100/月</div></div></div>
+<div style="font-size:26px;font-weight:900">{_inc_pct}%</div>
+<div style="font-size:11px;opacity:.8">全配息資產 + 房租（合併口徑 {dcm.get("佔比",0)}%）</div></div></div>
 <div style="font-size:11px;opacity:.8;margin-top:8px">配息≠防守 ｜ 防禦看波動抵抗、現金流看配息收益 ｜ 兩維度獨立計算、互不取代</div>
 </div>
 <div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:14px">
-<h3 style="font-size:14px;font-weight:800;margin:0 0 8px">🎯 四大市場情境門檻（當前：區間震盪 ✅ 全合格）</h3>
+<h3 style="font-size:14px;font-weight:800;margin:0 0 8px">🎯 四大市場情境門檻（當前：{_sc_cur} {"✅ 全合格" if _all_ok else "⚠️ 需調整"}）</h3>
 <table style="width:100%;font-size:12.5px;border-collapse:collapse">
 <tr style="color:#6e6e73"><th style="text-align:left;padding:5px 10px">情境</th><th style="text-align:right;padding:5px 10px">防禦最低</th><th style="text-align:right;padding:5px 10px">收入最低</th><th style="text-align:right;padding:5px 10px">LTV上限</th><th style="text-align:left;padding:5px 10px">核心策略</th></tr>
-<tr><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>多頭穩定</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥40%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥60%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤55%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>追求資本利得</td></tr><tr style="background:#eef2ff;font-weight:700"><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>區間震盪（當前）</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥50%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥65%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤52%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>穩定擔保、控風險</td></tr><tr><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>股債雙殺/升息</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥55%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥70%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤50%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>保守、增債保現金</td></tr><tr><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>熊市大跌</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥60%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥70%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤48%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>全防守、降槓桿</td></tr><tr style="background:#f0f9ff"><td colspan="5" style="padding:6px 10px;font-size:12px">✅ 現況驗證（區間震盪標準）：防禦 <b>53.8%</b> ≥50% ✅ ｜ 收入 <b>69.5%</b> ≥65% ✅ ｜ LTV <b>50%</b> ≤52% ✅ → 完全符合高風險震盪市場最高規格</td></tr>
+<tr><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>多頭穩定</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥40%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥60%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤55%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>追求資本利得</td></tr><tr style="background:#eef2ff;font-weight:700"><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>區間震盪（當前）</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥50%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥65%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤52%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>穩定擔保、控風險</td></tr><tr><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>股債雙殺/升息</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥55%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥70%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤50%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>保守、增債保現金</td></tr><tr><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>熊市大跌</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥60%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥70%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤48%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>全防守、降槓桿</td></tr><tr style="background:#f0f9ff"><td colspan="5" style="padding:6px 10px;font-size:12px">{"✅" if _all_ok else "⚠️"} 現況驗證（{_sc_cur}標準）：防禦 <b>{_def_pct}%</b> ≥{_sc.get("防禦最低",0)}% {"✅" if _def_ok else "❌"} ｜ 收入 <b>{_inc_pct}%</b> ≥{_sc.get("收入最低",0)}% {"✅" if _inc_ok else "❌"} ｜ LTV <b>{_ltv_v}%</b> ≤{_sc.get("LTV上限",0)}% {"✅" if _ltv_ok else "❌"} → 防禦/收入＝dual_dimension_metric 定稿公式派生（不含未建倉部位調整）</td></tr>
 </table></div>
 美元曝險 <b style="color:#ef4444">{usd_exp}%</b>（紅線 60%）→ 選台幣計價避險標的不推高；MMF 轉配置優先累積型</div>
 </div></div>
