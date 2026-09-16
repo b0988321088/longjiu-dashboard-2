@@ -203,6 +203,26 @@ rows += """</table></div>
 <div style="font-size:11px;color:#94a3b8;margin-top:12px;text-align:center">龍九控股自動化審計儀表板（完整版）｜ 下次審計：2026-08-28 17:00 ｜ build_audit_dashboard.py 動態產生</div>
 </div>"""
 
+_HEAD = ("<!DOCTYPE html>\n<html lang=\"zh-Hant\">\n"
+         "<head><meta charset=\"utf-8\">"
+         "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+         "<title>龍九控股稽核儀表板</title></head>\n<body>\n")
+
+
+def _close_html(html: str) -> str:
+    """確保文件以 </body></html> 收尾（缺則補、已有則原樣）— INC-203。
+    2026-09-16：audit_dashboard 輸出沒有關閉標籤 → auto_record 截斷檢查擋下整段推送。"""
+    h = html.rstrip()
+    if not h.lstrip().lower().startswith("<!doctype"):
+        h = _HEAD + h
+    low = h[-60:].lower()
+    if "</html>" in low:
+        return h + "\n"
+    if "</body>" not in low:
+        h += "\n</body>"
+    return h + "\n</html>\n"
+
+
 out = os.path.join(REPO, f"audit_dashboard_{today}.html")
-open(out, "w", encoding="utf-8").write(rows)
+open(out, "w", encoding="utf-8").write(_close_html(rows))
 print(f"✅ {out}（{os.path.getsize(out):,} bytes）")
