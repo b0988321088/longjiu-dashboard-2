@@ -14,10 +14,26 @@ USD_TWD = 31.7  # 2026-09-14 Yahoo USDTWD 31.705
 
 # 已知固定支出（2026-09-14 使用者確認：Notion 已無訂閱 → 移除 $12/月）
 MONTHLY_FIXED = {}
-# Gemini API 月費（從 Google AI Studio 手動查）
-GEMINI_MONTHLY_COST_TWD = 80.58  # 2026-06-24~07-21
-GEMINI_BALANCE_TWD = 315  # 2026-07-21 截圖餘額
-GEMINI_TOPUP_DATE = "2026-07-08"  # 上次儲值 NT$400
+# Gemini：預付制（Prepay），沒有固定月費 → 不再硬編碼月費/餘額（2026-09-16 移除 80.58/315 等過期常數，
+# 那些值會讓報告說「每月固定 NT$81」而實際早已見底）。真實狀態一律由 gemini_balance_reminder.py 實測 API 回報。
+GEMINI_LOG = LJ / "data" / "gemini_cost_log.json"
+
+
+def gemini_log_balance() -> float | None:
+    """log 內最近一次記錄的 Gemini 餘額（對照用；非即時真值）。"""
+    if not GEMINI_LOG.exists():
+        return None
+    try:
+        data = json.loads(GEMINI_LOG.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    for k in sorted([k for k in data if isinstance(k, str) and len(k) == 7], reverse=True):
+        entry = data.get(k)
+        if isinstance(entry, dict):
+            for bk in ("credit_balance_twd", "balance_twd"):
+                if entry.get(bk) is not None:
+                    return float(entry[bk])
+    return None
 
 def get_deepseek_balance() -> float | None:
     api_key = ""
@@ -123,12 +139,14 @@ if history:
 report += "\n---\n📋 **每月固定支出：**\n"
 for name, cost in MONTHLY_FIXED.items():
     report += f"  {name}: ${cost:.0f} USD/月（約 {cost*USD_TWD:.0f} 台幣）\n"
-report += f"  Gemini API: NT${GEMINI_MONTHLY_COST_TWD:.0f}/月（約 {GEMINI_MONTHLY_COST_TWD/USD_TWD:.1f} USD）\n"
+_g_bal = gemini_log_balance()
+report += ("  Gemini API: 預付制、無月費"
+           + (f"（log 最後記錄餘額 NT${_g_bal:.0f}，即時狀態看 gemini_balance_reminder）\n"
+              if _g_bal is not None else "（餘額見 AI Studio）\n"))
 
-_total_twd = sum(MONTHLY_FIXED.values())*USD_TWD + GEMINI_MONTHLY_COST_TWD
+_total_twd = sum(MONTHLY_FIXED.values())*USD_TWD  # Gemini 為預付制用量計費，不列入固定月費
 report += f"\n🔮 **總月費估計：** ~{_total_twd:.0f} 台幣/月\n"
-_items = " + ".join([f"{n} ${c:.0f}" for n, c in MONTHLY_FIXED.items()]
-                      + [f"Gemini NT${GEMINI_MONTHLY_COST_TWD:.0f}"])
+_items = " + ".join([f"{n} ${c:.0f}" for n, c in MONTHLY_FIXED.items()]) or "無固定月費"
 report += f"  （{_items} + DeepSeek流量）\n"
 
 print(report)

@@ -7,6 +7,7 @@
 import json, re
 from datetime import date, timedelta
 from pathlib import Path
+from scripts.components.volatility_monitor import make_volatility_report
 
 BASE = Path(__file__).resolve().parent
 
@@ -429,6 +430,7 @@ def main():
         tpl = tpl.replace("__POLICY_NOTES__", f"🏛️ 政策面（{_src}）：{_pol_str}")
     except Exception as _e:
         tpl = tpl.replace("__RADAR_SIG__", "雷達暫無資料").replace("__POLICY_NOTES__", "政策面暫無資料")
+    tpl = tpl.replace("__VOLATILITY_REPORT__", make_volatility_report())
 
     # ── 交易計畫（2026-09-01：從 pending_decisions 動態，非 8/29 統籌版快照）──
     try:

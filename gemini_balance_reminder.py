@@ -1,76 +1,114 @@
 """Gemini 餘額提醒（每3天）— no_agent 版。
-每次執行必定輸出一則簡短提醒（每3天一則，不洗版）。
-資料源：longjiu_system/data/gemini_cost_log.json + 2026-08-01 查得之常數。
+
+2026-09-16 改版：不再只讀本地 log 推算（log 停在 9/5 儲值 1,000，會誤報「還很多」）。
+改成每次執行**實測 API**，回報真實狀態：
+  200 → 可用（印出本次回應確認）
+  429 `prepayment credits are depleted` → 已用盡（附儲值連結）
+  401 → key 失效
+儲值頁：https://aistudio.google.com/billing （Prepay 加值，最低 US$5）
+餘額/用量頁：https://aistudio.google.com/usage
 """
 import json
-from datetime import date, timedelta
+import re
+import urllib.error
+import urllib.request
+from datetime import date
 from pathlib import Path
 
 LJ = Path.home() / "Desktop" / "longjiu_system"
 LOG = LJ / "data" / "gemini_cost_log.json"
+ENV = Path.home() / "AppData" / "Local" / "hermes" / ".env"
+PROBE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+TOPUP_URL = "https://aistudio.google.com/billing"
 
-# 最後已知狀態 fallback（log 缺該月份資料時才用）
-BALANCE_TWD = 399
-BALANCE_DATE = date(2026, 8, 1)
-DAILY_BURN_TWD = 34
-TOPUP_SUGGEST_TWD = 1000
+
+def _api_key() -> str:
+    if not ENV.exists():
+        return ""
+    for line in ENV.read_text(encoding="utf-8", errors="ignore").splitlines():
+        if line.strip().startswith("GEMINI_API_KEY="):
+            return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return ""
+
+
+def _flat(text: str) -> str:
+    """錯誤訊息壓成一行（f-string 內不能放反斜線，故獨立成函式）。"""
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def probe() -> tuple[str, str]:
+    """實測 API → (狀態碼, 說明)。狀態碼：ok / depleted / unauthorized / error / no_key。"""
+    key = _api_key()
+    if not key:
+        return "no_key", "GEMINI_API_KEY 未設定"
+    body = json.dumps({
+        "contents": [{"parts": [{"text": "ping"}]}],
+        "generationConfig": {"maxOutputTokens": 1},
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        PROBE_URL, data=body,
+        headers={"Content-Type": "application/json", "x-goog-api-key": key},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            return "ok", f"API 可用（HTTP {resp.status}）"
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", "ignore")
+        if "prepayment credits are depleted" in detail:
+            return "depleted", "預付金已用盡（429 RESOURCE_EXHAUSTED）"
+        if exc.code == 401:
+            return "unauthorized", "憑證失效（401）"
+        return "error", f"HTTP {exc.code}：{_flat(detail)[:120]}"
+    except Exception as exc:  # noqa: BLE001
+        return "error", f"{type(exc).__name__}: {exc}"
+
+
+def log_balance_twd() -> float | None:
+    """log 內最近一次記錄的餘額（僅供對照，不再用來推算剩餘天數）。"""
+    if not LOG.exists():
+        return None
+    try:
+        data = json.loads(LOG.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+    for key in sorted([k for k in data if isinstance(k, str) and len(k) == 7], reverse=True):
+        entry = data.get(key)
+        if isinstance(entry, dict):
+            for bk in ("credit_balance_twd", "balance_twd"):
+                if entry.get(bk) is not None:
+                    return float(entry[bk])
+    return None
 
 
 def main():
     today = date.today()
-    bal = BALANCE_TWD
-    bal_date = BALANCE_DATE
-    log_note = "log 無新異動"
-    if LOG.exists():
-        try:
-            data = json.loads(LOG.read_text(encoding="utf-8"))
-            # 月份動態化：讀最新有餘額的月份 key
-            _mm = [k for k in data.keys() if isinstance(k, str) and len(k) == 7]
-            if _mm:
-                aug = None
-                for _k in sorted(_mm, reverse=True):
-                    _d = data.get(_k, {})
-                    if isinstance(_d, dict):
-                        for _bk in ("credit_balance_twd", "balance_twd"):
-                            if _d.get(_bk) is not None:
-                                aug = _d
-                                break
-                    if aug:
-                        break
-                if aug is None:
-                    aug = data.get(max(_mm), {})
-                # 餘額 key 名稱：credit_balance_twd（9/5 起 log 用）或 balance_twd
-                for _bk in ("credit_balance_twd", "balance_twd"):
-                    if isinstance(aug, dict) and aug.get(_bk) is not None:
-                        bal = float(aug[_bk])
-                        break
-                # 錨定日期：該月份條目自帶的 date；缺省用當月 1 日
-                if isinstance(aug, dict) and aug.get("date"):
-                    try:
-                        bal_date = date.fromisoformat(str(aug["date"]))
-                    except ValueError:
-                        pass
-                else:
-                    bal_date = date(int(max(_mm)[:4]), int(max(_mm)[5:7]), 1)
-            upd = data.get("updated", "")
-            if upd:
-                log_note = f"log 更新於 {upd}"
-        except Exception as e:
-            log_note = f"log 讀取失敗：{e}"
+    state, note = probe()
+    log_bal = log_balance_twd()
 
-    # 估算：剩餘天數以「餘額 / 日耗」為準，末日 = 錨定日期 + 天數（不再從 8/1 起算）
-    days_total = max(int(bal / DAILY_BURN_TWD), 0)
-    end_date = bal_date + timedelta(days=days_total)
-    remaining = max((end_date - today).days, 0)
+    lines = [f"💰 Gemini 狀態（{today.month}/{today.day}，實測 API）："]
 
-    lines = [f"💰 Gemini 費用提醒（{today.month}/{today.day}）："]
-    lines.append(f"- 餘額 NT${bal:.0f}（{bal_date.month}/{bal_date.day} 查得，{log_note}）")
-    lines.append(f"- 日耗約 NT${DAILY_BURN_TWD} → 預估 {end_date.month}/{end_date.day} 用完（剩約 {remaining} 天）")
-    if remaining <= 5:
-        lines.append(f"- ⚠️ 快用完了！建議盡快儲值 NT${TOPUP_SUGGEST_TWD}（約可撐 1 個月）")
-    elif remaining <= 20:
-        lines.append(f"- 接近尾聲，可考慮儲值 NT${TOPUP_SUGGEST_TWD}（約可撐 1 個月）")
-    print("\n".join(lines))
+    if state == "ok":
+        lines.append(f"- ✅ {note}")
+        if log_bal is not None:
+            lines.append(f"- log 最後記錄餘額 NT${log_bal:.0f}（對照用）")
+        lines.append("- 目前 fallback 已改 opencode-free 免費層，Gemini 僅備而不用")
+    elif state == "depleted":
+        lines.append(f"- ⛔ {note}")
+        lines.append("- 已自 fallback / CIO 審查腳本移除（改 opencode-free 免費層 → DeepSeek）")
+        lines.append(f"- 要恢復 Gemini：儲值 {TOPUP_URL}（Prepay 最低 US$5）")
+        lines.append("- 未儲值前這則提醒可停用（`hermes cron`）")
+    elif state == "unauthorized":
+        lines.append(f"- ⛔ {note} → 這把 key 已失效，需在 AI Studio 重新產生")
+        lines.append(f"- {TOPUP_URL}")
+    elif state == "no_key":
+        lines.append(f"- ⚠️ {note}（.env 無 GEMINI_API_KEY）")
+    else:
+        lines.append(f"- ⚠️ 無法判定：{note}（可能是網路或服務中斷，非額度問題）")
+
+    if state != "ok":
+        print("\n".join(lines))
+    else:
+        print("\n".join(lines))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,25 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO-Gemini",
+  "reviewed_at": "2026-09-16T02:19:00+08:00",
+  "round": "複審（初審 REJECT：週清靜默契約回歸 → 已修）",
+  "reviewed_commits": [
+    {
+      "sha": "e234fca7",
+      "tree": "75c392f8e2dc4cce23d728de7bc99bd5b3cca9ee",
+      "verdict": "APPROVE",
+      "findings": [
+        "Silence contract fixed: weekly_calendar_main 的 print 已正確包在 `if new_review:` 內，僅清理而無新增時不輸出，符合『無新增就完全靜默』契約。",
+        "無回歸：_classify_events 分類規則、date<today 條件、state 檔縮排 1、schedule_events.json 縮排 2、commit 只限定 -- schedule_events.json、auto_push 參數皆維持正確。",
+        "無回歸：鏡像檔 hermes/scripts/schedule_events_weekly_clean.py 與 repo 版逐位元相同。",
+        "無回歸：儀表板『資料日』動態化（__RISK_UPDATED__）在 build_dashboard.py 與 index_template.html 皆正確（無值時為 '—'）。",
+        "語法檢查通過；敏感資訊掃描 0 命中。"
+      ]
+    }
+  ],
+  "silence_contract": [
+    "情境 (a) 無新增過期未完成 → weekly_calendar_main 輸出為空。",
+    "情境 (b) 有新增 → 輸出格式化提醒（含清理筆數註記）。"
+  ],
+  "residual_risks": []
+}

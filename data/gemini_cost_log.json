@@ -1,19 +1,24 @@
 {
-  "2026-07": 953,
-  "updated": "2026-09-05",
-  "source": "Google AI Studio 帳單",
-  "note": "7月 Gemini 實際 = NT$953（介面顯示 USD 為誤，實為新台幣）",
-  "2026-08": {
-    "note": "8/27 使用者確認：Credit balance = NT$366（台幣，專案幣別 TWD；介面/記錄易誤判 USD）。8 月用量低（成本優化後 CIO 審查減頻）",
-    "source": "Google AI Studio Billing（截圖 + 使用者確認）",
-    "credit_balance_twd": 366
-  },
-  "currency": "TWD",
-  "2026-09": {
-    "topup_twd": 1000,
-    "date": "2026-09-05",
-    "topup_reason": "8月 credit 366 已於 9/4 前用罄（DS 斷線期 fallback 至 Gemini 燒完）→ 今天儲值 NT$1,000",
-    "credit_balance_twd": 1000,
-    "note": "儲值前餘額已歸零（使用者 9/5 確認）；9/5 起從 1,000 扣（今日用量低：實測生成等級），最終以 AI Studio 帳單為準"
+ "2026-07": 953,
+ "updated": "2026-09-05",
+ "source": "Google AI Studio 帳單",
+ "note": "7月 Gemini 實際 = NT$953（介面顯示 USD 為誤，實為新台幣）",
+ "2026-08": {
+  "note": "8/27 使用者確認：Credit balance = NT$366（台幣，專案幣別 TWD；介面/記錄易誤判 USD）。8 月用量低（成本優化後 CIO 審查減頻）",
+  "source": "Google AI Studio Billing（截圖 + 使用者確認）",
+  "credit_balance_twd": 366
+ },
+ "currency": "TWD",
+ "2026-09": {
+  "topup_twd": 1000,
+  "date": "2026-09-05",
+  "topup_reason": "8月 credit 366 已於 9/4 前用罄（DS 斷線期 fallback 至 Gemini 燒完）→ 今天儲值 NT$1,000",
+  "credit_balance_twd": 1000,
+  "note": "9/5 儲值 NT$1,000 於 9/16 15:15 歸零（逐筆 log 實算 NT$936；CER 每輪由 fallback 全價代答為燒錢主因）。9/16 使用者再儲值後實測恢復 200。fallback 已移出 Gemini → opencode-free 免費層優先，Gemini 僅備而不用。",
+  "depleted_at": "2026-09-16T15:15",
+  "topup_2026_09_16": {
+   "confirmed_by_probe": "2026-09-16T16:0x 實測 60k token 回 HTTP 200",
+   "amount_twd": null
   }
+ }
 }

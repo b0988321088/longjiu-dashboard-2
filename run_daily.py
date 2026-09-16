@@ -19,6 +19,7 @@ logger = get_logger("run_daily")
 import daily_intel as mi_mod
 from daily_intel import load_daily_analysis
 from scripts.components.report_utils import _fmt_rent_status, _generate_schedule_html
+from scripts.components.volatility_monitor import make_volatility_report
 
 try:
     from dotenv import load_dotenv
@@ -2082,7 +2083,9 @@ def main():
         except Exception as _exc:
             print(f"[WARN] load emergency_llm_analysis.json failed: {_exc}")
 
+    _volatility_report_html = make_volatility_report()
     daily_html = render_daily_report(tv, intel_text="", intel_signals=intel_signals, market_intel_text=market_intel_text, llm_emergency_analysis=llm_emergency_analysis_html, schedule_rows_html=_schedule_rows, p0_tasks_html=_p0_html, mb_cc_rows=build_cc_rows())  # 2026-09-16：補上信用卡明細（原本走 run_daily 路徑會是空表，四大信用卡檢查必失敗）
+    daily_html += _volatility_report_html # Inject volatility report after the main report
     daily_html = _inject_market_intel(daily_html, tv, intel_signals, llm_emergency_analysis_html)
 
     # 注入戰略穿透值到日報

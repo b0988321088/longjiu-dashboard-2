@@ -3,26 +3,17 @@
 from __future__ import annotations
 
 import json
-import os
 import re
 from datetime import date
 from pathlib import Path
 from html.parser import HTMLParser
 
-try:
-    from dotenv import load_dotenv
-    load_dotenv(Path.home() / "AppData" / "Local" / "hermes" / ".env")
-except Exception:
-    pass
-
-import requests
+from llm_review_client import generate
 
 
 BASE = Path(__file__).parent.resolve()
 TODAY = date.today().isoformat()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_BASE_URL = os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL_REMOVED = True  # 2026-09-16 Gemini 預付金用盡 → 改走 llm_review_client.generate()
 
 
 def _to_text(html_path: Path) -> str:
@@ -50,7 +41,9 @@ def _to_text(html_path: Path) -> str:
     parser = TE()
     parser.feed(raw)
     txt = " ".join(parser.items)
-    return re.sub(r"\s+", " ", txt).strip()[:4000]
+    # 2026-09-16：4000 字元會把日報後半（巴菲特/CTO 視角）整段切掉 → 審查誤判「區塊缺失」。
+    # 免費層模型實測可吃 168k token，放寬到 24000 字元以涵蓋完整日報。
+    return re.sub(r"\s+", " ", txt).strip()[:24000]
 
 
 def _load_daily_report() -> str:
@@ -64,7 +57,7 @@ def _load_diff() -> str:
     path = BASE / f"diff_{TODAY}.md"
     if not path.exists():
         return ""
-    return path.read_text(encoding="utf-8")[:2000]
+    return path.read_text(encoding="utf-8")[:10000]
 
 
 
@@ -110,9 +103,6 @@ def _load_hunter_intel():
     return chr(10).join(parts) if parts else "（無）"
 
 def review() -> dict:
-    if not GEMINI_API_KEY:
-        return {"status": "skipped", "reason": "GEMINI_API_KEY not set"}
-
     report = _load_daily_report()
     diff = _load_diff()
     hunter = _load_hunter_intel()
@@ -128,64 +118,42 @@ def review() -> dict:
         'JSON：{"status":"approved"/"rejected","issues":[{"point":"","description":""}],"score":1-10,"summary":""}'
     )
 
-    url = f"{GEMINI_BASE_URL}/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": 0.1,
-            "maxOutputTokens": 4096,
-            "responseMimeType": "application/json",
-        },
-    }
-
+    # 2026-09-16：Gemini 預付金用盡（429 prepayment credits depleted）→ 改走 llm_review_client
     try:
-        r = requests.post(url, json=payload, timeout=30, headers={"Content-Type": "application/json"})
-        if r.status_code != 200:
-            return {"status": "error", "reason": f"HTTP {r.status_code}", "detail": r.text[:200]}
-
-        # Unwrap candidates -> parts -> text
-        candidate_texts = []
-        for cand in r.json().get("candidates", []):
-            content = cand.get("content", {})
-            for part in content.get("parts", []):
-                if "text" in part:
-                    candidate_texts.append(part["text"])
-
-        model_text = "\n".join(candidate_texts)
-
-        # Direct parse: responseMimeType="application/json" guarantees JSON
-        try:
-            result = json.loads(model_text)
-            result["_raw"] = model_text[:500]
-            return result
-        except Exception:
-            pass
-
-        # Fallback: strip fences, brace-count
-        clean = re.sub(r"```(?:json)?\s*", "", model_text).strip()
-        start = clean.find("{")
-        if start >= 0:
-            depth = 0
-            end = -1
-            for i, ch in enumerate(clean[start:], start):
-                if ch == "{":
-                    depth += 1
-                elif ch == "}":
-                    depth -= 1
-                    if depth == 0:
-                        end = i
-                        break
-            if end >= 0:
-                try:
-                    result = json.loads(clean[start:end+1])
-                    result["_raw"] = model_text[:500]
-                    return result
-                except Exception:
-                    pass
-
-        return _extract(model_text)
+        model_text = generate(prompt, max_tokens=8192, session_id="cioreview-daily")
     except Exception as exc:
         return {"status": "error", "reason": str(exc)}
+
+    try:
+        result = json.loads(model_text)
+        result["_raw"] = model_text[:500]
+        return result
+    except Exception:
+        pass
+
+    # Fallback: strip fences, brace-count
+    clean = re.sub(r"```(?:json)?\s*", "", model_text).strip()
+    start = clean.find("{")
+    if start >= 0:
+        depth = 0
+        end = -1
+        for i, ch in enumerate(clean[start:], start):
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    end = i
+                    break
+        if end >= 0:
+            try:
+                result = json.loads(clean[start:end + 1])
+                result["_raw"] = model_text[:500]
+                return result
+            except Exception:
+                pass
+
+    return _extract(model_text)
 
 
 if __name__ == "__main__":
