@@ -71,6 +71,54 @@ def cash_caliber_note(snapshot: dict) -> str:
             f"MMF 500萬已於 2026-09-11 轉申購貝萊德B11（計入基金／質押擔保池，不再計現金），不可建議減現金")
 
 
+DCM_FREEZE_THRESHOLD = 60  # 防守承接凍結門檻（2026-09-16 使用者裁示：合併口徑 ≥60% 為判準）
+
+
+def defensive_combined_pct(snapshot: dict):
+    """防守合併口徑真值（%）。讀 snapshot.defensive_combined_metric.佔比，讀不到回 None。"""
+    _pct = ((snapshot or {}).get("defensive_combined_metric") or {}).get("佔比")
+    try:
+        return float(_pct)
+    except (TypeError, ValueError):
+        return None
+
+
+def defensive_combined_phrase(snapshot: dict) -> str:
+    """給 LLM prompt 用的守法約束片語（INC-207：嚴禁寫死百分比）。
+
+    2026-09-16：原 prompt 寫死「防守合併口徑 69.5% 已足勿追大額」（另兩處寫死 69.7%），
+    snapshot 真值已是 68.5 → LLM 被餵舊數字推理（INC-168 同型）。
+    """
+    _pct = defensive_combined_pct(snapshot)
+    if _pct is None:
+        return "防守合併口徑以 snapshot 為準勿追大額"
+    return (f"防守合併口徑{_pct:.1f}%"
+            f"{'已足' if _pct >= DCM_FREEZE_THRESHOLD else f'不足（門檻 {DCM_FREEZE_THRESHOLD}%）'}"
+            "勿追大額")
+
+
+def defensive_combined_note(snapshot: dict, single_pct: float) -> str:
+    """防守判準字串 — 一律由 snapshot.defensive_combined_metric 動態產生（INC-207）。
+
+    2026-09-16 修：此處原本**寫死**「防守合併口徑 69.7% 已足（單看 4.2%）」，
+    真值（snapshot.defensive_combined_metric.佔比）早已是 68.5（單桶 17.5），
+    導致每天產生的分析與 snapshot 對不上，且被寫進決策紀錄（違反『報告數字不得寫死』）。
+    讀不到欄位時回空字串，由呼叫端落回一般「不足 -x.x pp」敘述。
+    """
+    _pct = ((snapshot or {}).get("defensive_combined_metric") or {}).get("佔比")
+    try:
+        _pct = float(_pct)
+    except (TypeError, ValueError):
+        return ""
+    try:
+        _single = float(single_pct)
+    except (TypeError, ValueError):
+        _single = 0.0
+    _judge = "已足" if _pct >= DCM_FREEZE_THRESHOLD else f"不足（門檻 {DCM_FREEZE_THRESHOLD}%）"
+    return (f"🛡️ 防守合併口徑 {_pct:.1f}% {_judge}"
+            f"（單看 {_single:.1f}% 僅高股息ETF）；承接凍結")
+
+
 def penetration_analysis(snapshot: dict) -> dict:
     """動態穿透分析 — 優先讀 snapshot.penetration 真值，fallback 到 db 即時計算"""
     # 優先使用 snapshot 穿透真值（唯一真值來源）
@@ -96,8 +144,11 @@ def penetration_analysis(snapshot: dict) -> dict:
                 key_action = "等反彈確認後減碼至目標"
         elif gaps[max_gap_cat] < -5:
             if max_gap_cat == "defensive":
-                # 2026-08-23：防守單看 4.2% 誤導（8/22 裁示合併口徑 69.7% 已足）
-                key_risk = "🛡️ 防守合併口徑 69.7% 已足（單看 4.2% 僅高股息ETF）；承接凍結"
+                # 2026-08-23：防守單看高股息桶會誤導（8/22 裁示改合併口徑判定）
+                # 2026-09-16（INC-207）：原本這裡寫死「合併口徑 69.7% 已足（單看 4.2%）」→
+                # 改由 defensive_combined_note() 讀 snapshot.defensive_combined_metric 動態產生。
+                key_risk = (defensive_combined_note(snapshot, actual.get("defensive", 0))
+                        or f"{TARGET_EMOJI[max_gap_cat]} {TARGET_LABELS[max_gap_cat]} 不足 {gaps[max_gap_cat]:.1f}pp")
             else:
                 key_risk = f"{TARGET_EMOJI[max_gap_cat]} {TARGET_LABELS[max_gap_cat]} 不足 {gaps[max_gap_cat]:.1f}pp"
                 if max_gap_cat == "tw_equity":
@@ -147,7 +198,8 @@ def penetration_analysis(snapshot: dict) -> dict:
             key_action = "等反彈確認後減碼至目標"
     elif gaps[max_gap_cat] < -5:
         if max_gap_cat == "defensive":
-            key_risk = "🛡️ 防守合併口徑 69.7% 已足（單看 4.2% 僅高股息ETF）；承接凍結"
+            key_risk = (defensive_combined_note(snapshot, actual.get("defensive", 0))
+                        or f"{TARGET_EMOJI[max_gap_cat]} {TARGET_LABELS[max_gap_cat]} 不足 {gaps[max_gap_cat]:.1f}pp")
         else:
             key_risk = f"{TARGET_EMOJI[max_gap_cat]} {TARGET_LABELS[max_gap_cat]} 不足 {gaps[max_gap_cat]:.1f}pp"
             if max_gap_cat == "tw_equity":
@@ -277,7 +329,7 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
             f"{market_text}\n"
             f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（{cash_caliber_note(_snap)}）；"
             f"台股加碼單筆≤5萬、8-12週分批；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
-            f"債券等 US30Y<5.30%；石油 Locked 禁建議；防守合併口徑69.5%已足勿追大額；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）。\n"
+            f"債券等 US30Y<5.30%；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）。\n"
             f"請以巴菲特投資哲學（護城河、安全邊際、能力圈、長期持有、別人恐懼我貪婪）做 3 點具體觀察 + 1 個紀律提醒，200字內，繁體中文，不要重複數字表。"
         )
         _out = _llm_cached("buffett", _prompt, "你是巴菲特視角的投資分析師。輸出繁體中文，精簡犀利，有具體觀點。")
@@ -385,7 +437,7 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
             f"{market_text}\n"
             f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（{cash_caliber_note(_snap)}）；"
             f"台股加碼單筆≤5萬、8-12週分批（不可建議單筆大額）；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
-            f"債券等 US30Y<5.30%（禁建議買債）；石油 Locked 禁建議；防守合併口徑69.5%已足勿追大額；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）。\n"
+            f"債券等 US30Y<5.30%（禁建議買債）；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）。\n"
             f"請以技術面（動能、趨勢、支撐壓力、風險）+ 產業資金流向（哪個產業順勢/逆勢）給：今日最大風險 + 具體建議動作（含標的/金額節奏，須符合上述約束），150字內，繁體中文。"
         )
         _out = _llm_cached("cto", _prompt, "你是技術分析師（CTO）。輸出繁體中文，直接給結論與動作，不要客套。")
