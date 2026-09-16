@@ -597,3 +597,10 @@
 - **修法**：掃描範圍排除 panel-6（`html[:html.find('id="panel-6"')]`）。
 - **驗收**：真檔 ✅ 全過；負向測試雙向——非 CIO 頁注入裸舊值仍被抓到（True）、panel-6 內注入不抓（True）。
 - **教訓**：①**誤報比不檢查更糟**：固定誤報會訓練人忽略警報，真殘留就溜過去 ②檢查器要區分「本系統注入的內容」與「外部引用文字」，前者才歸我們管 ③測試注入點要先確認不受既有跳過規則（`--`／`/*`／`data-k=`）影響，否則會得到假的「測試通過／失敗」。
+
+## INC-209 投資波動損失檢視卡只進儀表板、沒進日報（2026-09-16）
+- **現象**：儀表板有「📊 投資波動損失檢視」卡，日報完全沒有（0 次）——使用者記得下午做過、卻在日報找不到。
+- **根因**：注入點寫在 `run_daily.py::main()`（`daily_html += make_volatility_report()`），但日報實際走 `render_daily_report()`（`regenerate_report.py` 直接呼叫）→ **main() 那條路徑根本沒被走到**，卡片從未進過日報。
+- **並存缺陷**：①`volatility_monitor.BASE = Path(".").resolve()` 吃 CWD，cron 若不在 repo 根目錄就靜默降級成「無歷史資產差異資料」②模組內 5 個 `[DEBUG]` print 會污染管線 stdout ③日報**沒有載入 Tailwind**，直接把儀表板深色卡塞進去會變沒樣式的裸文字。
+- **修法**：注入移到共用渲染器 `render_daily_report()`（`main()` 內移除避免重複）；`make_volatility_report(theme=)` 分 dark（儀表板／Tailwind）與 light（日報／`.card`＋`.callout-bear` 設計系統）；BASE 改 `Path(__file__).resolve().parents[2]`；移除 DEBUG print。
+- **教訓**：①**同一個畫面有兩條產生路徑時，注入要放在「共用渲染器」而不是某條路徑的 main()**——否則只有走那條路徑的產物才有，且不報錯 ②元件路徑一律 `__file__` 推算，`Path(".")` 在 cron 下必爆 ③跨主題注入前先確認目標頁有沒有對應的 CSS 框架。

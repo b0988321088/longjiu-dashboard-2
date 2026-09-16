@@ -1171,6 +1171,14 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         _radar_html = ""
     html = html.replace("{_radar_html}", _radar_html)
 
+    # 2026-09-16（INC-209）：「📊 投資波動損失檢視」卡原本只注入在 main()，
+    # 但日報實際走 render_daily_report()（regenerate_report.py 直接呼叫）→ 卡片從未進過日報。
+    # 移到共用渲染器＝兩條路徑都吃到；main() 內的注入同步移除，避免重複。
+    try:
+        html += make_volatility_report(theme="light")   # 日報＝淺色版（日報無 Tailwind，深色版會變裸文字）
+    except Exception as _vol_exc:
+        print(f"[WARN] volatility report 注入失敗（不影響日報產出）: {_vol_exc}")
+
     return html
 
 
@@ -2083,9 +2091,8 @@ def main():
         except Exception as _exc:
             print(f"[WARN] load emergency_llm_analysis.json failed: {_exc}")
 
-    _volatility_report_html = make_volatility_report()
     daily_html = render_daily_report(tv, intel_text="", intel_signals=intel_signals, market_intel_text=market_intel_text, llm_emergency_analysis=llm_emergency_analysis_html, schedule_rows_html=_schedule_rows, p0_tasks_html=_p0_html, mb_cc_rows=build_cc_rows())  # 2026-09-16：補上信用卡明細（原本走 run_daily 路徑會是空表，四大信用卡檢查必失敗）
-    daily_html += _volatility_report_html # Inject volatility report after the main report
+    # 2026-09-16（INC-209）：波動損失卡已改在 render_daily_report() 內注入（此處移除避免重複）
     daily_html = _inject_market_intel(daily_html, tv, intel_signals, llm_emergency_analysis_html)
 
     # 注入戰略穿透值到日報
