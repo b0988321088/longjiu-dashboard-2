@@ -178,19 +178,30 @@ def sync():
     # 清空所有舊系統事件（依標記 + 關鍵字雙重清掃）
     _CLEAN_KEYWORDS = ['房租', '大義街', '洲際W', '台電薪資', '管理費', '繳款截止', '[calendar_sync]', '動態月報', '再平衡評估', '動態自我檢討週報', '女友還款', '國泰核貸', 'T+4 轉換截止', '忠德驗收', '地政拿件', '大雪山', '每月租金總對帳']
     try:
+        # INC-211（2026-09-17）：①先去空白再比對關鍵字 —— 手動事件常寫成「洲際 W」（中間有空格），
+        #   原本 `'洲際W' in '…洲際 W…'` 不成立 → 永遠刪不掉 → 與系統重建的同名事件並存成重複。
+        # ②改「先收集再刪除」—— 原寫法邊列舉邊刪，刪完才拿舊 listing 的 pageToken 取下一頁，
+        #   分頁會跳過未列出的項目 → 殘留 → 下次同步再建一次 → 重複逐次累積。
         page_token = None
-        deleted = 0
+        _victims = []
         while True:
             _evs = service.events().list(calendarId='primary', pageToken=page_token, maxResults=250).execute()
             for item in _evs.get('items', []):
                 desc = item.get('description','')
                 summary = item.get('summary','')
-                if '[calendar_sync]' in desc or any(kw in summary for kw in _CLEAN_KEYWORDS):
-                    service.events().delete(calendarId='primary', eventId=item['id']).execute()
-                    deleted += 1
+                _summary_c = re.sub(r"\s+", "", summary)
+                if '[calendar_sync]' in desc or any(kw in summary or kw in _summary_c for kw in _CLEAN_KEYWORDS):
+                    _victims.append(item['id'])
             page_token = _evs.get('nextPageToken')
             if not page_token:
                 break
+        deleted = 0
+        for _vid in _victims:
+            try:
+                service.events().delete(calendarId='primary', eventId=_vid).execute()
+                deleted += 1
+            except Exception as _de:
+                logger.warning(f'  單筆刪除失敗（{_vid}）: {_de}')
         if deleted:
             logger.info(f'  刪除 {deleted} 個舊系統事件')
     except Exception as e:
