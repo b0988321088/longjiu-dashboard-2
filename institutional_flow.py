@@ -324,7 +324,11 @@ def compute_signals(tw, cot, fed, twd, tnx, cfg, state):
         tw_note = "無交易日資料（週末/休市）"
     else:
         fnet = tw["外資總買賣超"]
+        _tw_date = tw.get("date", today)
         prev_days = state.get("twse", {}).get("外資連日", [])
+        # 同一交易日重跑（含 TWSE 當日未公布→回退前一日）不重複累加，覆寫最後一筆
+        if state.get("twse", {}).get("外資連日_日期") == _tw_date and prev_days:
+            prev_days = prev_days[:-1]
         streak = (prev_days + [fnet])[-3:] if fnet else prev_days
         buy_days = sum(1 for v in streak[-3:] if v > 0)
         if fnet < c["twse"]["外資單日賣超_紅"]:
@@ -336,6 +340,7 @@ def compute_signals(tw, cot, fed, twd, tnx, cfg, state):
         else:
             tw_sig, tw_note = "⚪", f"外資淨買超 {fnet/1e8:.1f}億 — 中性"
         state.setdefault("twse", {})["外資連日"] = streak[-3:]
+        state["twse"]["外資連日_日期"] = _tw_date
     sig["台股"] = {"color": tw_sig, "note": tw_note}
 
     # 避險衛星（黃金/原油）：COT 聰明錢方向（美債10年改用 TNX 動能，見下方）
