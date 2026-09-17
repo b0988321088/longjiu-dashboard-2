@@ -989,5 +989,17 @@
     "category": "完成",
     "item": "儀表板/稽核儀表板殘留靜態值清理（低優先）",
     "detail": ""
+  },
+  {
+    "date": "2026-09-17",
+    "category": "修正",
+    "item": "INC-211 修復：calendar_sync 清掃改「去空白比對」＋「先收集再刪除」（Google 日曆重複事件累積根因）",
+    "detail": "commit e0e40b6d｜CIO(DS-Pro) 審查 APPROVE、RECORD 落地、推 clean-main+main｜驗證：16 項檢查 ALL PASS（含分頁跳過 bug 重現）"
+  },
+  {
+    "date": "2026-09-17",
+    "category": "修正",
+    "item": "修復 institutional_flow 外資連日 streak 同交易日重跑重複累加（state 新增 外資連日_日期）",
+    "detail": "commit 93c5b246｜CIO(DS-Pro) 審查 APPROVE、RECORD 落地、推 clean-main+main｜驗證：同日重跑長度 1、新交易日正常累加"
   }
 ]
