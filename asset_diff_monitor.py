@@ -37,6 +37,10 @@ if hermes_env.exists():
 NOTION_TOKEN = os.getenv("NOTION_TOKEN", "")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", os.getenv("TG_TOKEN", ""))
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "") or os.getenv("TELEGRAM_ALLOWED_USERS", "")
+# INC-210（2026-09-17）：本機驗證用開關 —— LJ_NO_TELEGRAM=1 時不推 Telegram／Notion、不自動開瀏覽器
+# （核准前本機產出流程：跑管線驗證但不打擾使用者、不寫外部系統、不部署）
+# 值判斷用白名單而非 bool(os.getenv(...))：後者對 LJ_NO_TELEGRAM=0 也會判 True（2026-09-17 審查）
+_RUN_LOCAL = os.getenv("LJ_NO_TELEGRAM", "").strip().lower() in ("1", "true", "yes", "on")
 
 BASE = "https://api.notion.com/v1"
 NOTION_HEADERS = {
@@ -181,7 +185,12 @@ def extract_snapshot(snap: dict) -> dict:
                     _ir = _db.execute("SELECT * FROM income WHERE date = ?", (_latest_date,)).fetchone()
                     _lr = _db.execute("SELECT * FROM liabilities WHERE date = ?", (_latest_date,)).fetchone()
                     _data_date = _latest_date # Update data_date to latest_date
-                    print(f"[INFO] Loaded data for latest date ({_latest_date}) from DB as fallback.")
+                    # INC-210（2026-09-17）：查無當日列時，標籤改用 snapshot.date（管線執行日），
+                    # 而非 DB 最新資料日 —— 原本會讓當日報表整套標成前一天
+                    # （asset_diff_2026-09-17.html 內 title/明細全是 09-16）。數值仍來自 DB 該列。
+                    _data_date = str(snap.get("date") or _latest_date)
+                    # 訊息必須與實際採用的標籤同源（2026-09-17 審查：原本只印 _latest_date，除錯會誤導）
+                    print(f"[INFO] DB 無當日列 → 數值取自最新資料列 {_latest_date}；標籤採用 {_data_date}")
                 else:
                     print("[WARN] No asset data found in DB. Falling back to snapshot.json.")
             
@@ -1103,10 +1112,13 @@ def main() -> int:
 
     today_r = rows[-1]["date"]
     tg = build_telegram_text(rows, snap)
-    send_telegram(tg)
+    if _RUN_LOCAL:
+        print("🧪 LJ_NO_TELEGRAM=1：略過 Telegram 推播（本機驗證用）")
+    else:
+        send_telegram(tg)
 
     try:
-        if OUT_HTML.exists():
+        if OUT_HTML.exists() and not _RUN_LOCAL:
             # 用 requests 直接發送文件（不依賴 scripts/telegram_send_document.py）
             _url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendDocument"
             with open(str(OUT_HTML.resolve()), "rb") as _f:
@@ -1115,14 +1127,17 @@ def main() -> int:
                     print("[telegram] document 200")
     except Exception as e:
         print(f"⚠️ 附件傳送失敗：{e}")
-    except Exception as e:
-        print(f"⚠️ 附件傳送失敗：{e}")
 
-    push_to_notion(snap)
+    # INC-210（2026-09-17 審查建議）：本機驗證模式不得寫外部系統 —— Notion 一併納入 _RUN_LOCAL
+    if _RUN_LOCAL:
+        print("🧪 LJ_NO_TELEGRAM=1：略過 Notion 推播（本機驗證不碰外部系統）")
+    else:
+        push_to_notion(snap)
 
     try:
         import webbrowser
-        webbrowser.open(OUT_HTML.resolve().as_uri())
+        if not _RUN_LOCAL:
+            webbrowser.open(OUT_HTML.resolve().as_uri())
     except Exception:
         pass
     return 0

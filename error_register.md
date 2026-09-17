@@ -613,3 +613,16 @@
   - 教訓：**程式註解與 commit 訊息也是「文件」**——寫「頂層」「真正的」這類絕對詞前要用 depth 量過，否則就是在製造今天 CIO 點名的同一種病（文件與事實脫節）。
   - 幂等性現況：安全，但依賴「html 每次由模板全新重建、模板本身不含卡片」此不變量，**沒有防禦式守衛**（若未來改成讀既有 HTML 再注入 → 會變兩份卡）。
   - div 平衡 +1（126/125）為既有模板問題（9/13、9/14、9/15 皆 bal=1 且無此卡），非本次引入。
+
+---
+
+## INC-2026-09-17（INC-210）晨間產線早於 snapshot 日期滾動 → 日報／差異分析整套標成前一天（同一天上線）
+
+- **症狀**：09-17 07:00 產出並上線的 `daily_report_v2_2026-09-17.html` 內為 `<title>龍九控股日報 2026-09-16</title>`、`asset_diff_2026-09-17.html` 的 title 與明細全停在 09-16（09-17 只出現在檔名）。因為線上與本機雜湊一致，「線上＝本機」比對完全抓不到。
+- **根因**：晨間順序 = `regenerate_report.py`（先產日報，再由 9b 叫 `asset_diff_monitor.py`）→ `build_penetration_report.py`（**才**執行 `snap["date"] = today`，INC-187 的滾動）→ 產出當下 `snapshot.date` 仍是前一天；而 DB 當日列原本要等 22:00 `four_source_sync` Step 2 才寫入，`asset_diff_monitor.extract_snapshot()` 查無當日列時 fallback 取「DB 最新資料日」當標籤 → 兩份都標成 09-16。09-13～09-16 看似正常，是因為那幾份是晚間產物（DB 當日列已存在）。
+- **修法**：①`regenerate_report.py` 新增 0a 日期滾動 —— 必須在 `import run_daily` **之前**（`run_daily.TODAY` 是 import 時定值的模組常數）：滾 `snapshot.date` 並以 `four_source_sync` Step 2 同公式補當日 `assets` 列（`assets.date` 是 PRIMARY KEY → `INSERT OR REPLACE` 冪等，組件不足或總額對不上則拒寫）②`extract_snapshot()` 查無當日列時標籤改用 `snapshot.date`（數值仍取 DB 該列）③新增兩個本機可用開關：`regenerate_report.py --no-push`、`LJ_NO_TELEGRAM=1`（不推 TG、不自動開瀏覽器）。
+- **驗證**：本機重跑 → `🗓️ DB 補列 2026-09-17：資產 25,825,533`、兩份 title 皆 09-17、差異表明細末列 09-17 +0（當日確實無新資料＝誠實呈現）、`index.html` 連結 09-16→09-17 且「投資波動損失檢視」從「今日無資產快照」變成有數字、CIO 審查 13 項全過、`sso_t_consistency.py` 4 項全過、`_audit_closeout.py` 第 1–6 項 ✅（僅第 4 項未提交＝尚未推）。
+- **教訓**：①**「線上＝本機」只證明部署一致，不證明內容是當日的** —— 交付前要多一道「標題日期＝今日」檢查 ②同一真值欄位有兩個滾動寫入者時，先跑的那個必然拿到舊值；日期類真值必須在第一個產出者之前滾動 ③fallback 取「最新可用資料」時，標籤不可跟著 fallback 走，否則缺料會被誤讀成昨日的報表。
+- **推送過程的坑（碼／料同顆必死）**：11 個檔包成同一顆 commit → 閘門 v4 逐 commit 驗 tree，含程式檔的 commit 連同同顆的資料檔整批被擋（`TAG-BLOCKED-CODE`）。改為拆兩顆：資料 8 檔走 `auto_record.py`（AUTO-checker RECORD）→ 推送成功（`e213158e`，clean-main 與 main 同步）；程式 2 檔＋本紀錄另成 code commit 走「delegate 真審查 → `cio_approve.py --result`」再推。
+- **兩輪獨立審查**（deepseek-v4-pro，只讀不寫）：第一輪 APPROVE／8 項發現；依建議修掉 4 項 —— `LJ_NO_TELEGRAM=1` 原本沒涵蓋 `push_to_notion`（**實證：修改前那次本機驗證真的寫進了 Notion**）、fallback console 訊息與實際標籤不同源、`bool(os.getenv())` 對 `"0"` 誤判、重複 except 死碼；接受 2 項不修 —— `created_at` 被 INSERT OR REPLACE 重設（全 repo 無讀取者）、公式與 four_source_sync Step 2 未抽 helper（靠 `_tot != _snap_tot` 拒寫 fail-safe，僅加交叉引用註解）。第二輪再審 APPROVE，逐條實證落地（含用臨時 DB 副本刪除當日列驗證 fallback 標籤）且確認預設 cron 路徑與基線等價。
+- **已知設計取捨**：`--no-push` 只管 git commit/push，子程序（asset_diff_monitor）的外部寫入由 `LJ_NO_TELEGRAM=1` 控制 → **完全本機驗證要兩個開關都帶**（`LJ_NO_TELEGRAM=1 python regenerate_report.py --no-push`）。

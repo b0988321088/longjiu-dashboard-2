@@ -27,6 +27,63 @@ BASE = Path(__file__).resolve().parent
 TODAY = dt.today().isoformat()
 OUT = BASE / f"daily_report_v2_{TODAY}.html"
 CNY_TWD = 4.73  # 2026-09-14 使用者確認（200 CNY≈944 TWD）；Yahoo CNYTWD 4.734
+_NO_PUSH = "--no-push" in sys.argv  # 2026-09-17 INC-210：核准前本機產出用（不 commit/push）
+
+# ============ 0a. 日期滾動（INC-210，2026-09-17） ============
+# 症狀：09-17 07:00 晨間產線產出的日報/差異分析標成 09-16（daily_report_v2_2026-09-17.html
+# 內為 <title>龍九控股日報 2026-09-16</title>、asset_diff_2026-09-17.html 內 title 09-16）。
+# 根因：晨間順序 = regenerate_report（先產日報/差異）→ build_penetration_report（才把
+# snapshot.date 滾到當日，INC-187）→ 產出當下 snapshot.date 還是前一天，且 DB 尚無當日列
+# （DB 當日列原由 22:00 four_source_sync 寫入）→ run_daily.TODAY（= snapshot.date）與
+# asset_diff_monitor 的 DB fallback（最新資料日）都取到前一天。
+# 修法：渲染前先滾 snapshot.date 並補當日 DB 列（assets.date 為 PRIMARY KEY，INSERT OR REPLACE
+# 冪等；公式與 four_source_sync Step 2 相同），與 build_penetration_report / sync_all v3 的
+# `snap["date"] = today` 語意一致。必須在 import run_daily 之前執行 —— run_daily.TODAY 是
+# import 時定值的模組常數。
+# ⚠️ 本檔只能在模組層被呼叫的副作用（_roll_day_to_today）下「當 script 執行」：
+#    import regenerate_report 會連帶寫 snapshot.json 與 DB（2026-09-17 審查指出，現況全 repo
+#    無任何 import 本檔，呼叫端皆 subprocess/run_step）。要 import 請先改造此段。
+# 公式與 four_source_sync.py Step 2（L138-158）逐欄相同 → 日後該處若增減元件，這裡要同步
+#    （守衛 _tot != _snap_tot 會在漂移時拒寫而非寫錯，屬 fail-safe）。
+def _roll_day_to_today(_today: str) -> None:
+    _sp = BASE / "snapshot.json"
+    try:
+        _s = json.loads(_sp.read_text(encoding="utf-8"))
+    except Exception as _e:
+        print(f"⚠️ INC-210 日期滾動略過（snapshot 讀取失敗）: {_e}")
+        return
+    _prev = str(_s.get("date") or "")
+    if _prev != _today:
+        _s["date"] = _today
+        _sp.write_text(json.dumps(_s, ensure_ascii=False, indent=1), encoding="utf-8")
+        print(f"🗓️ INC-210 snapshot.date {_prev or '?'} → {_today}（報告日期對齊當日）")
+    # 補當日 DB 列（缺列時差異分析會拿「最新資料日」當標籤 → 當日報表標成前一天）
+    _cash = _s.get("real_liquid_assets", 0) or 0
+    _sec = _s.get("securities_total_market_value", 0) or 0
+    _ins = _s.get("insurance_total", 0) or ((_s.get("allianz_combined", 0) or 0)
+                                            + (_s.get("firstjin_fl65_current_value", 0) or 0))
+    _fund = _s.get("fund_market_value", 0) or 0
+    _tot = _cash + _sec + _ins + _fund
+    _snap_tot = _s.get("total_assets", 0) or 0
+    if min(_cash, _sec, _ins, _fund) <= 0 or _tot != _snap_tot:
+        print(f"⚠️ INC-210 今日 DB 列未補（組件不完整：現金{_cash:,} 證券{_sec:,} 保單{_ins:,} "
+              f"基金{_fund:,} 合計{_tot:,} vs snapshot {_snap_tot:,}）")
+        return
+    try:
+        _conn = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        _conn.execute(
+            "INSERT OR REPLACE INTO assets "
+            "(date, cash_total, bonds, securities, insurance, funds, real_estate, total_assets, total_liabilities) "
+            "VALUES (?,?,0,?,?,?,0,?,?)",
+            (_today, _cash, _sec, _ins, _fund, _tot, _s.get("total_liabilities", 0) or 0))
+        _conn.commit()
+        _conn.close()
+        print(f"🗓️ INC-210 DB 補列 {_today}：資產 {_tot:,}（差異分析基準對齊當日）")
+    except Exception as _e:
+        print(f"⚠️ INC-210 DB 補列失敗（不擋產線）: {_e}")
+
+
+_roll_day_to_today(TODAY)
 
 # 0. 巴菲特/CTO LLM 分析（2026-08-22：今日檔不存在才重跑，避免每次 regenerate 重複呼叫 API）
 # 2026-08-28：--skip-llm = 跳過 LLM 分析（台股 13:00 緊急應變用 — 盤中不需要重算早上已算的巴菲特/CTO）
@@ -342,7 +399,10 @@ try:
     _cio_ok = _cio.returncode == 0
 except Exception as _ce:
     print(f"⚠️ CIO 審查執行失敗（不推送）: {_ce}")
-if ok and _cio_ok:
+if _NO_PUSH:
+    # INC-210：核准前本機產出（交付鐵則：改完先傳本地檔案，使用者說「推」才 push）
+    print("\n🧪 --no-push：本機檔案已產出，略過 commit/push（核准後再跑一次不帶此參數）")
+elif ok and _cio_ok:
     # stage + commit 所有報表檔案
     # ⚠️ 8/21 實踩：git add 清單含不存在的檔 → 整批 add 失敗 → 空 commit → Pages 404
     _msg = f"四源同步 {TODAY}"
