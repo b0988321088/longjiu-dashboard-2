@@ -1001,5 +1001,11 @@
     "category": "修正",
     "item": "修復 institutional_flow 外資連日 streak 同交易日重跑重複累加（state 新增 外資連日_日期）",
     "detail": "commit 93c5b246｜CIO(DS-Pro) 審查 APPROVE、RECORD 落地、推 clean-main+main｜驗證：同日重跑長度 1、新交易日正常累加"
+  },
+  {
+    "date": "2026-09-18",
+    "category": "修正",
+    "item": "INC-212 修復：session watchdog v6.16（上限警報跨日假警報＋復活殭屍＋連環升級文案）",
+    "detail": "scripts/session_bloat_watch.py（非 git）備份 .bak-20260918-v615｜沙箱 121 檢查 ALL PASS（新增 AJ-AP）＋真實 dry-run 靜默 exit 0｜根因：9/17 CER 306 筆燒完 8 次重置額度，23:05:02 產生的上限警報因 23:08 gateway 重啟延遲到 9/18 00:23 送達；20260908_142511_159fa2 於 21:28:08 刪除後 21:30:20 復活、23:07:06 再度 CER。修法：文案帶產生時間＋跨日免責＋換模型指引；節流改全域 state.last_cap_push；新增 resurrected_since_reset() 復活殭屍守門（不重複重置、改推 🧟、reset_seen 24h 鏡射）；同日第 4 次起 CER_ESCALATE_N 升級文案｜技能 session-bloat-watchdog＋hermes-gateway-troubleshooting §19c 已同步"
   }
 ]
