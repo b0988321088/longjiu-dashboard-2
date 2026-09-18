@@ -71,8 +71,7 @@
       "action": "國泰質押簽約（對保）— 9/21 11:00",
       "status": "⏳ 待簽約：9/21 11:00 國泰對保；540萬@2.77%（擔保池 1,200萬×4.5成）→ 對保後約 2 週撥款（預估 10/5；原記 9/25 已作廢）",
       "tags": "質押,國泰,對保,簽約,撥款,500萬還債"
-    }
-  ],
+    }],
   "decisions": [
     {
       "id": "mem-20260902130117-0",
@@ -4200,6 +4199,41 @@
       "summary": "台股1,952,312.0 美股10,448,107.0 防守4,538,457.0 債券7,301,338.0 現金886,847.0",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "timestamp": "2026-09-18T11:00:00+08:00",
+      "summary": "配息歸屬口徑定調：一律看「入帳日」，不看基準日（第一金 FA81 13,005 入帳 9/7-9/8 → 算 9 月本月領息）",
+      "detail": "使用者原話「看日期入帳」。第一金 FA81 聯博多元AD 基準日 2026-08-28、9/7-9/8 入帳 → 計入 9 月本月領息 13,005；保單本月合計已領 57,925（安聯 44,920 + 第一金 13,005）。累計 124,518 = 111,513 + 13,005 一致。規則已寫入技能 passive-income-display-rules 1b。",
+      "source": "user",
+      "tags": [
+        "配息口徑",
+        "入帳日",
+        "第一金"
+      ]
+    },
+    {
+      "timestamp": "2026-09-18T11:01:00+08:00",
+      "summary": "保單同義欄位分歧修正（分項相加 ≠ 顯示合計）＋清除寫死退路常數＋稽核新增第 11 章不變式",
+      "detail": "allianz_a/b_current_value 與 allianz_policy_a/b_value 分歧（4,925,927/2,627,478 vs 4,957,369/2,655,604），asset_diff 印出分項 7,553,405 ≠ 合計 7,612,973。修法：①snapshot 同步真值 ②asset_diff_monitor.py/run_daily.py 讀取順序改 allianz_policy_* 優先 ③新增 _truth() 取代 6 處寫死退路（5_103_668/2_740_224/7_843_892×2/1_958_980×2/9_802_872/218_102），缺值改大聲警告並以 0 計 ④_audit_closeout.py 第 11 章 5 項不變式。commit 222fd718 已推 clean-main + main。",
+      "source": "user",
+      "tags": [
+        "保單",
+        "資料一致性",
+        "稽核",
+        "no-hardcode"
+      ]
+    },
+    {
+      "timestamp": "2026-09-18T11:02:00+08:00",
+      "summary": "模型鏈治理：CER 快速換手（pii-gate 4→1）、delegation 改 DS-flash + Gemini fallback、Gemini 保留為 CER 逃生門、第三方審查者修復",
+      "detail": "CER=DeepSeek HTTP 400 Content Exists Risk（約 770 筆，內容審核非 payload 壞）。①pii-gate _CER_RETRY_MAX 4→1（每次重試=壓縮+全價重送全程 context）②delegation provider=deepseek/model=deepseek-v4-flash/fallback=gemini-2.5-flash ③Gemini 不刪、餘額提醒 cron 保留（CER 逃生門，實測可用）④CIO 審查者 opencode-free 恆 403 死路 → 改 Pollinations keyless（非 DS 非 Google），並修推理模型空輸出（reasoning_effort low / thinking disabled）。",
+      "source": "user",
+      "tags": [
+        "模型鏈",
+        "CER",
+        "審查者",
+        "pii-gate"
+      ]
     }
   ],
   "meta": {
