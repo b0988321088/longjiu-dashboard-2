@@ -675,3 +675,11 @@
 - **修法②**：建一次性補跑 job `bd2fe73746c8`（`schedule='2026-09-18T21:30:00'`、repeat once、deliver origin、同 prompt+skill）把被吃掉的時點補回，用完自動作廢。
 - **驗證**：驗證器擴到 23 項 ALL PASS（新增 4 組標的判定＋把 CIO 前輪抓到的恆真斷言換成真斷言）；CIO（deepseek-v4-flash，15 api_call）APPROVE、tree `51db6cdaa4c0` 逐字相符；推送後線上實檔標註＝「📅 緊急應變資料：2026-09-18 13:48（美股應變分析；次一交易日 21:30 固定更新）」、**index.html 的 🚨 按鈕已指向 `emergency_report_2026-09-18.html`**（不再停在 9/15）、Pages 三個網址皆 200。
 - **教訓**：①**標籤要描述「分析標的」，不要描述「產出時段」** —— 手動/補跑/延遲三種情境都會讓時段推論翻車 ②同一段文案的兩個欄位（標題與下一班承諾）必須共用同一個判定變數，否則會產出自相矛盾的報表 ③**已清 monitor 的 job，「手動 run」等於真的跑，而且會認領下一個排程時點**（有 monitor 的舊行為是回 no_change）→ 驗證一律用 `LJ_NO_TELEGRAM=1 ... --no-push` 走 shell，動到排程就要補一次性 job。
+
+## INC-2026-09-18（INC-217）審計儀表板標籤／描述寫死 ＋ 同一輪兩次 REJECT（grep 判準命中註解）
+
+- **症狀**：`audit_dashboard_2026-09-18.html` 保險列寫死「第一金 FL65」（該基金 9/16 FJ33→M&G 已生效）、基金列「富達600萬/聯博100萬/貝萊德B11 500萬」為四捨五入近似值（實為 5,877,925／978,870／4,999,218）。
+- **修法（`d5c35ea5`）**：標籤改讀 `snapshot.insurance_label_b`、分項金額由 `funds_cathay_breakdown` 實算並加 `_wan()` 數值防呆；`cio_opslog_sync.py` 加 `--dry-run`（並改為免憑證可用、無憑證時仍 fail-closed rc=2；移除頂部 no-op 死碼；DB_ID 讀檔加 try/except）。
+- **兩次 REJECT、原因相同**：把舊值寫進註解 → 判準 `grep -c "FL65\|富達600萬"` 得 1（第一次）、2（第二次）；兩次渲染輸出其實全對，A/C/D/E/F/G 皆 PASS。
+- **驗證**：CIO 複審 A–H 全 PASS（含免憑證 dry-run rc=0、無憑證 rc=2、三 key 和 = 國泰列示 11,856,013）；假 token 實跑真路徑得 HTTP 401（未建立頁面）；Notion 回讀今日 ops_logs 仍 2 筆。Pages 已驗：M&G入息A／588萬／98萬／500萬、FL65 為 0。
+- **教訓**：**驗收判準以 grep 掃舊值時，註解與說明文字同樣算命中**。修完先自己跑同一條 grep，再送審；prompt 的期望值要寫成「實跑得到的 0」。

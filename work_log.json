@@ -1025,5 +1025,11 @@
     "category": "修正",
     "item": "INC-214b 修復：緊急應變標註改依 source 判定分析標的；手動 run 吃掉當晚排程的補救",
     "detail": "手動觸發 dff67a1d02bd（使用者要求「直接跑一次」）成功產出（JSON 3,828 字、六章節、emergency_report_2026-09-18.html、日報 8/9 更新），但暴露兩坑：①標註只依 generated_at 小時 → 13:48 的美股報告被誤標「台股時段 13:00 產出」②executions.db 記 source=direct、scheduled_instant=當晚 21:30 → 當晚正式排程被吃。修法：改讀 JSON source 判分析標的、_slot 與 _next 共用 _is_us（commit 28deaf7b，tree 51db6cdaa4c0，CIO-DeepSeek-Flash APPROVE）；建一次性補跑 job bd2fe73746c8（2026-09-18T21:30）。驗證：驗證器 23 項 ALL PASS（新增 4 組標的判定、恆真斷言改真斷言）；線上日報標註與 index.html 按鈕均指向 9/18、Pages 200。"
+  },
+  {
+    "date": "2026-09-18",
+    "category": "修正",
+    "item": "INC-217 審計儀表板保險列標籤／基金列描述改讀 snapshot 真值；cio_opslog_sync 加 --dry-run",
+    "detail": "保險列原寫死「第一金 FL65」（該基金 9/16 FJ33→M&G 已生效）→ 改讀 snapshot.insurance_label_b；基金列原「富達600萬/聯博100萬/貝萊德B11 500萬」為近似值 → 由 funds_cathay_breakdown 實算（588萬/98萬/500萬）並加 _wan() 防呆。cio_opslog_sync.py 新增 --dry-run（免憑證可用、無憑證時 fail-closed rc=2、移除 no-op 死碼、DB_ID 讀檔 try/except）。過程：閘門兩次 REJECT（註解殘留舊字面值使 grep 判準=1/2，渲染輸出實全對）→ 改寫註解後 APPROVE d5c35ea5 / tree 7da7436237cb266e334c65f382053dcdcc823fdf，雙分支已推，Pages 驗證通過。"
   }
 ]
