@@ -1019,5 +1019,11 @@
     "category": "修正",
     "item": "INC-214 修復：緊急應變『沒更新』——gate 合法 CALM 但文案承諾不會發生的更新；美股 21:30 改每交易日固定產出",
     "detail": "9/16~9/18 台股 +0.74/+0.96/+1.80%（門檻-1.5）、SPX -0.45/+1.14、SOX +0.63/+3.14（-1.8/-2.5）→ 兩道 monitor 皆正確 CALM、agent 被抑制，內容停在 9/15 21:32；真問題是文案 _next 寫死『今晚 21:30 自動更新／明日 13:00 自動更新』。使用者核准：清空 cron dff67a1d02bd 的 monitor_script（美股 21:30 每交易日固定產完整 LLM 分析，+1.4 CNY/日），台股 13:00 保留 emergency_gate_tw.py。修法：regenerate_report.py 與 run_daily.py 標註改依 generated_at 時段分岔、只承諾真的會發生的排程。驗證：cron 實查 monitor_script=None／emergency_gate_tw.py；產出日報舊字串次數皆 0；遠端 Pages 標註實查正確。"
+  },
+  {
+    "date": "2026-09-18",
+    "category": "修正",
+    "item": "INC-214b 修復：緊急應變標註改依 source 判定分析標的；手動 run 吃掉當晚排程的補救",
+    "detail": "手動觸發 dff67a1d02bd（使用者要求「直接跑一次」）成功產出（JSON 3,828 字、六章節、emergency_report_2026-09-18.html、日報 8/9 更新），但暴露兩坑：①標註只依 generated_at 小時 → 13:48 的美股報告被誤標「台股時段 13:00 產出」②executions.db 記 source=direct、scheduled_instant=當晚 21:30 → 當晚正式排程被吃。修法：改讀 JSON source 判分析標的、_slot 與 _next 共用 _is_us（commit 28deaf7b，tree 51db6cdaa4c0，CIO-DeepSeek-Flash APPROVE）；建一次性補跑 job bd2fe73746c8（2026-09-18T21:30）。驗證：驗證器 23 項 ALL PASS（新增 4 組標的判定、恆真斷言改真斷言）；線上日報標註與 index.html 按鈕均指向 9/18、Pages 200。"
   }
 ]
