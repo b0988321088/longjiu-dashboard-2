@@ -52,9 +52,25 @@ us_light = "🔴" if us30y and us30y >= 5.30 else ("🟡" if us30y and us30y >= 
 tech = pen.get("美股市值型成長_科技", 0)
 tech_ok = "✅ 紅線下" if tech <= 15 else "⚠️ 超標"
 cash_ok = "✅" if CASH >= 700000 else "🔴"
-usd_exp = 64.1
+# INC-215（2026-09-18 週五審計抓到）：美元曝險原寫死 64.1（8/22 舊值 + 舊 50% 紅線），
+# 與 snapshot.usd_exposure_monitor（9/14 定案 engine 口徑 59.0%、門檻已放寬 60%）脫節 →
+# 一律讀 snapshot，門檻/緩衝/判定全部現算。
+_usd_m = s.get("usd_exposure_monitor", {}) or {}
+usd_thr = float(_usd_m.get("threshold") or 60)
+usd_exp = float((_usd_m.get("current") or {}).get("合計") or 0)
+usd_gap = round(usd_exp - usd_thr, 1)
+usd_col = "#22c55e" if usd_exp <= usd_thr else "#ef4444"
+usd_verdict = (f"🟢 未觸線（緩衝 {abs(usd_gap):.1f}pp）" if usd_exp <= usd_thr
+               else f"🔴 超 {usd_gap:.1f}pp（靠台幣側壓回）")
+# Moneybook 真值日期（原寫死 8/21）與下次審計日（原寫死 2026-08-28）
+_mbd = str(s.get("moneybook_date") or "")[:8]
+mb_txt = (f"{int(_mbd[4:6])}/{int(_mbd[6:8])}"
+          if len(_mbd) == 8 and _mbd.isdigit() else "—")
+_next_audit = (datetime.date.fromisoformat(today) + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+LIFE = (s.get("monthly_fixed_expense", {}) or {}).get("生活支出", EXP)
 
-recent = [x for x in d["decisions"] if x.get("timestamp", "")[:10] >= "2026-08-08"][-8:][::-1]
+_dec_from = (datetime.date.fromisoformat(today) - datetime.timedelta(days=14)).isoformat()
+recent = [x for x in d["decisions"] if x.get("timestamp", "")[:10] >= _dec_from][-8:][::-1]
 
 def kpi(label, val, sub, color="#3b82f6"):
     return f"""<div style="flex:1;min-width:170px;background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
@@ -68,7 +84,7 @@ H = lambda t: f"<th style='text-align:left;font-size:12px;color:#6e6e73;padding:
 rows = f"""
 <div style="background:#f5f5f7;font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;padding:20px;max-width:1000px;margin:0 auto">
 <h1 style="font-size:22px;font-weight:900;margin:0 0 2px">🛡️ 龍九控股 每週資產防禦審計儀表板</h1>
-<div style="font-size:13px;color:#6e6e73;margin-bottom:16px">{today} ｜ 真值來源：snapshot.json + Moneybook 8/21 ｜ US30Y {us30y}% {us_light} {mode}</div>
+<div style="font-size:13px;color:#6e6e73;margin-bottom:16px">{today} ｜ 真值來源：snapshot.json + Moneybook {mb_txt} ｜ US30Y {us30y}% {us_light} {mode}</div>
 
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
 {kpi("總資產", f"{TA:,}", "不含不動產", "#1d1d1f")}
@@ -87,7 +103,7 @@ rows = f"""
 <tr><td {W(0)}>保險</td><td {W(0)} style="text-align:right;font-weight:700">{INS:,}</td><td {W(0)} style="text-align:right">{INS/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">安聯 13:32 7,827,561 + 第一金 FA81 1,939,270</td></tr>
 <tr><td {W(0)}>基金</td><td {W(0)} style="text-align:right;font-weight:700">{FUND:,}</td><td {W(0)} style="text-align:right">{FUND/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">鉅亨 841,052 + 國泰 1,200萬（富達600/聯博100/貝萊德B11 500）</td></tr>
 <tr><td {W(0)}>證券</td><td {W(0)} style="text-align:right;font-weight:700">{SEC:,}</td><td {W(0)} style="text-align:right">{SEC/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">16 檔；00888 配息 3,496 入帳</td></tr>
-<tr><td {W(0)}>現金</td><td {W(0)} style="text-align:right;font-weight:700">{CASH:,}</td><td {W(0)} style="text-align:right">{CASH/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">8/21 扣 MMF 500萬+聯博 101.5萬（歷史：當日現金推導）→ Moneybook 真值</td></tr>
+<tr><td {W(0)}>現金</td><td {W(0)} style="text-align:right;font-weight:700">{CASH:,}</td><td {W(0)} style="text-align:right">{CASH/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">Moneybook 銀行帳戶真值（{mb_txt}）；不含 MMF/外幣定存（該部位列基金桶）</td></tr>
 <tr><td {W(0)}>總資產</td><td {W(0)} style="text-align:right;font-weight:800">{TA:,}</td><td {W(0)}></td><td {W(0)} style="color:#6e6e73;font-size:12px">8/20 撥款 1,200萬 → 部署 600萬富達 + T+2 600萬</td></tr>
 <tr><td {W(0)}>總負債</td><td {W(0)} style="text-align:right;font-weight:800;color:#ef4444">{TL:,}</td><td {W(0)}></td><td {W(0)} style="color:#6e6e73;font-size:12px">國泰新貸 1,200萬@2.6%（大義街轉貸）＋ 信用卡 54,402</td></tr>
 </table></div>
@@ -102,7 +118,7 @@ rows = f"""
 <tr><td {W(0)}>全口徑（含房貸/保單息/女友）</td><td {W(0)} style="text-align:right">{DIV+RENT:,} / {FIXED:,}</td><td {W(0)} style="text-align:right;font-weight:700;color:{'#22c55e' if cov_fixed>=100 else '#d97706'}">{cov_fixed:.0f}%</td></tr>
 <tr><td {W(0)}>房租覆蓋房貸</td><td {W(0)} style="text-align:right">{RENT:,} / {MORT_MONTHLY:,}</td><td {W(0)} style="text-align:right;font-weight:700">{rent_cov_mort:.0f}%</td></tr>
 </table>
-<div style="font-size:12px;color:#6e6e73;margin-top:8px">月固定支出 {FIXED:,} ＝ 生活 {EXP:,} + 房貸 {MORT_MONTHLY:,}（永豐 65,735+國泰 26,000）+ 保單息 {POL_INT:,} + 女友 {GF:,}</div>
+<div style="font-size:12px;color:#6e6e73;margin-top:8px">月固定支出 {FIXED:,}（v4 定版）＝ 生活 {LIFE:,} + 房貸 {MORT_MONTHLY:,}（永豐 65,735+國泰 26,000）+ 保單息 {POL_INT:,} + 女友 {GF:,} + 醫療/元大證金等</div>
 </div></div>
 
 <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
@@ -160,7 +176,7 @@ rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W
 <tr style="color:#6e6e73"><th style="text-align:left;padding:5px 10px">情境</th><th style="text-align:right;padding:5px 10px">防禦最低</th><th style="text-align:right;padding:5px 10px">收入最低</th><th style="text-align:right;padding:5px 10px">LTV上限</th><th style="text-align:left;padding:5px 10px">核心策略</th></tr>
 <tr><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>多頭穩定</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥40%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥60%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤55%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>追求資本利得</td></tr><tr style="background:#eef2ff;font-weight:700"><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>區間震盪（當前）</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥50%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥65%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤52%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>穩定擔保、控風險</td></tr><tr><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>股債雙殺/升息</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥55%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥70%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤50%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>保守、增債保現金</td></tr><tr><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>熊市大跌</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥60%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥70%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤48%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>全防守、降槓桿</td></tr><tr style="background:#f0f9ff"><td colspan="5" style="padding:6px 10px;font-size:12px">{"✅" if _all_ok else "⚠️"} 現況驗證（{_sc_cur}標準）：防禦 <b>{_def_pct}%</b> ≥{_sc.get("防禦最低",0)}% {"✅" if _def_ok else "❌"} ｜ 收入 <b>{_inc_pct}%</b> ≥{_sc.get("收入最低",0)}% {"✅" if _inc_ok else "❌"} ｜ LTV <b>{_ltv_v}%</b> ≤{_sc.get("LTV上限",0)}% {"✅" if _ltv_ok else "❌"} → 防禦/收入＝dual_dimension_metric 定稿公式派生（不含未建倉部位調整）</td></tr>
 </table></div>
-美元曝險 <b style="color:#ef4444">{usd_exp}%</b>（紅線 60%）→ 選台幣計價避險標的不推高；MMF 轉配置優先累積型</div>
+美元曝險 <b style="color:{usd_col}">{usd_exp:.1f}%</b>（紅線 {usd_thr:.0f}%）→ 選台幣計價避險標的不推高；MMF 轉配置優先累積型</div>
 </div></div>
 
 <div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:14px">
@@ -171,7 +187,7 @@ rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W
 <tr><td {W(0)}>40,500 停碼</td><td {W(0)}>未觸發</td><td {W(0)}>✅</td></tr>
 <tr><td {W(0)}>現金底線 70萬</td><td {W(0)}>{CASH:,}</td><td {W(0)}>{cash_ok}</td></tr>
 <tr><td {W(0)}>單次加碼 ≤20萬（核貸期 5萬）</td><td {W(0)}>紀律維持（累積型原則生效）</td><td {W(0)}>✅</td></tr>
-<tr><td {W(0)}>美元曝險 ≤60%</td><td {W(0)}>{usd_exp}%</td><td {W(0)}>🔴 超 14.1pp（靠台幣側壓回）</td></tr>
+<tr><td {W(0)}>美元曝險 ≤{usd_thr:.0f}%</td><td {W(0)}>{usd_exp:.1f}%</td><td {W(0)}>{usd_verdict}</td></tr>
 </table></div>
 
 <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
@@ -198,9 +214,9 @@ rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W
 <tr>{H('日期')}{H('決策')}{H('狀態')}</tr>
 """
 for x in recent:
-    rows += f"<tr><td {W(0)} style='white-space:nowrap'>{x.get('timestamp','')[:10]}</td><td {W(0)}>{x.get('name','')}</td><td {W(0)} style='text-align:right;font-size:12px;color:#6e6e73'>{x.get('status','')}</td></tr>"
-rows += """</table></div>
-<div style="font-size:11px;color:#94a3b8;margin-top:12px;text-align:center">龍九控股自動化審計儀表板（完整版）｜ 下次審計：2026-08-28 17:00 ｜ build_audit_dashboard.py 動態產生</div>
+    rows += f"<tr><td {W(0)} style='white-space:nowrap'>{x.get('timestamp','')[:10]}</td><td {W(0)}>{x.get('name') or x.get('task') or x.get('summary','')}</td><td {W(0)} style='text-align:right;font-size:12px;color:#6e6e73'>{x.get('status','')}</td></tr>"
+rows += f"""</table></div>
+<div style="font-size:11px;color:#94a3b8;margin-top:12px;text-align:center">龍九控股自動化審計儀表板（完整版）｜ 下次審計：{_next_audit} 17:00 ｜ build_audit_dashboard.py 動態產生</div>
 </div>"""
 
 _HEAD = ("<!DOCTYPE html>\n<html lang=\"zh-Hant\">\n"
