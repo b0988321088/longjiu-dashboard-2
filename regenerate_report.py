@@ -154,12 +154,14 @@ if _ej.exists():
     _r = _d.get("full_report", _d.get("analysis", ""))
     _gen = _d.get("generated_at", "") or ""
     _hour = int(_gen[11:13]) if len(_gen) >= 13 and _gen[11:13].isdigit() else 0
-    _slot = "台股時段 13:00 產出" if _hour < 15 else "美股時段 21:30 產出"
+    _src = str(_d.get("source", "") or "")
+    _is_us = (("美股" in _src) if ("美股" in _src or "台股" in _src) else (_hour >= 15))
+    _slot = "美股應變分析" if _is_us else "台股應變分析"
     # 2026-09-18 INC-214：原為「今日 13:00 產出 → 今晚 21:30 自動更新 / 21:30 產出 → 明日 13:00 自動更新」，
     # 但 13:00 那條受 emergency_gate_tw.py 守門（CALM 不跑）→ 承諾的更新不會發生，使用者抓到「緊急應變沒更新」。
     # 改為只承諾真的會發生的排程：美股時段 21:30 已改為每交易日固定產出（2026-09-18 使用者核准）。
-    _next = ("未觸發門檻則沿用此份；美股時段 21:30 每交易日固定更新"
-             if _hour < 15 else "最新可用；次一交易日 21:30 固定更新")
+    _next = ("次一交易日 21:30 固定更新" if _is_us
+             else "未觸發門檻則沿用此份；美股時段 21:30 每交易日固定更新")
     _note = f'<p style="font-size:12px;color:#6e6e73;margin-bottom:6px">📅 緊急應變資料：{_gen[:16]}（{_slot}；{_next}）</p>' if _gen else ""
     _emergency_html = f'<div class="callout callout-warn">{_note}{_r.replace(chr(10), "<br>" + chr(10))}</div>'
     # 加入緊急應變連結（自動找最新可用檔案）

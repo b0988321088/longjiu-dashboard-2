@@ -2100,9 +2100,12 @@ def main():
             # 有 emergency_gate_tw.py 守門（CALM 就不跑），且文案與實際時段無關 → 使用者抓到
             # 「緊急應變沒更新」。改為依 generated_at 時段動態、且只承諾真的會發生的排程（21:30 每交易日固定產出）。
             _h2 = int(_gen2[11:13]) if len(_gen2) >= 13 and _gen2[11:13].isdigit() else 0
-            _slot2 = ("台股時段 13:00 產出；未觸發門檻則沿用此份，美股時段 21:30 每交易日固定更新"
-                      if _h2 < 15 else
-                      "美股時段 21:30 產出；最新可用，次一交易日 21:30 固定更新")
+            # 2026-09-18 INC-214b：改成「依 source 判分析標的、標題不再綁時段」，避免手動補跑被誤標
+            # （實例：13:46 手動跑的美股報告被標成「台股時段 13:00 產出」）。時段僅作 fallback。
+            _src2 = str(emergency_data.get("source", "") or "")
+            _is_us2 = ("美股" in _src2) if ("美股" in _src2 or "台股" in _src2) else (_h2 >= 15)
+            _slot2 = ("美股應變分析；最新可用，次一交易日 21:30 固定更新" if _is_us2 else
+                      "台股應變分析；未觸發門檻則沿用此份，美股時段 21:30 每交易日固定更新")
             _note2 = f'<p style="font-size:12px;color:#6e6e73;margin-bottom:6px">📅 緊急應變資料：{_gen2[:16]}（{_slot2}）</p>' if _gen2 else ""
             _report_html = _note2 + _report_html
             _er_files = sorted(BASE.glob("emergency_report_2*.html"), reverse=True)
