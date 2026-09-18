@@ -207,4 +207,8 @@ if __name__ == "__main__":
         text = "❌ 用法：python notion_ai_summary.py [daily|weekly|decisions]"
     
     print(text)
-    _tg_push(text)
+    # ⚠️ 不再自推送 Telegram：本檔由 cron（deliver=origin）執行，stdout 已會被投遞一次；
+    # 舊碼在此再 _tg_push(text) 一次 → 使用者收到兩則一模一樣的週報（2026-09-18 修正）。
+    # 若日後改成非 cron 的手動執行且需要推送，請用 --push 明確開啟。
+    if "--push" in sys.argv:
+        _tg_push(text)
