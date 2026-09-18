@@ -87,6 +87,19 @@ if not SEC_N:
         SEC_N = 0
 SEC_PNL = int(_sec_obj.get("unrealized_pnl", s.get("securities_unrealized_pnl", 0)) or 0)
 CC_PEND = int(s.get("credit_card_pending", 0) or 0)
+# INC-217：保險列標籤與基金列描述改讀 snapshot 真值（原標籤所指之基金代碼已於 9/16 轉換生效、原描述為
+# 四捨五入後的近似金額）→ 標籤取 insurance_label_b、分項金額由 funds_cathay_breakdown 實算。
+FJ_NAME = str(s.get("insurance_label_b") or s.get("firstjin_fund_name") or "第一金保單").split("（")[0].strip()
+_fcb = s.get("funds_cathay_breakdown", {}) or {}
+def _wan(_v):
+    try:
+        _v = float(_v or 0)
+    except (TypeError, ValueError):
+        return "—"
+    return f"{_v / 10000:,.0f}萬" if _v else "—"
+FD = next((_v for _k, _v in _fcb.items() if _k.startswith("富達")), 0)
+LB = next((_v for _k, _v in _fcb.items() if _k.startswith("聯博")), 0)
+BL = next((_v for _k, _v in _fcb.items() if "貝萊德" in _k and "B11" in _k), 0)
 
 _dec_from = (datetime.date.fromisoformat(today) - datetime.timedelta(days=14)).isoformat()
 recent = [x for x in d["decisions"] if x.get("timestamp", "")[:10] >= _dec_from][-8:][::-1]
@@ -119,8 +132,8 @@ rows = f"""
 <h3 style="font-size:14px;font-weight:800;margin:0 0 8px">一、實相更新（本週變動歸因）</h3>
 <table style="width:100%;font-size:13px;border-collapse:collapse">
 <tr>{H('項目')}{H('金額')}{H('佔比')}{H('本週變動歸因')}</tr>
-<tr><td {W(0)}>保險</td><td {W(0)} style="text-align:right;font-weight:700">{INS:,}</td><td {W(0)} style="text-align:right">{INS/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">安聯 {ALLZ:,}（己型+戊型） + 第一金 FL65 {FJ:,}</td></tr>
-<tr><td {W(0)}>基金</td><td {W(0)} style="text-align:right;font-weight:700">{FUND:,}</td><td {W(0)} style="text-align:right">{FUND/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">鉅亨 {FUND_JZ:,}（一般申購+自由Pay） + 國泰 {FUND_CT:,}（富達600萬/聯博100萬/貝萊德B11 500萬月配主力）</td></tr>
+<tr><td {W(0)}>保險</td><td {W(0)} style="text-align:right;font-weight:700">{INS:,}</td><td {W(0)} style="text-align:right">{INS/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">安聯 {ALLZ:,}（己型+戊型） + {FJ_NAME} {FJ:,}</td></tr>
+<tr><td {W(0)}>基金</td><td {W(0)} style="text-align:right;font-weight:700">{FUND:,}</td><td {W(0)} style="text-align:right">{FUND/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">鉅亨 {FUND_JZ:,}（一般申購+自由Pay） + 國泰 {FUND_CT:,}（富達 {_wan(FD)}／聯博 {_wan(LB)}／貝萊德B11 {_wan(BL)} 月配主力）</td></tr>
 <tr><td {W(0)}>證券</td><td {W(0)} style="text-align:right;font-weight:700">{SEC:,}</td><td {W(0)} style="text-align:right">{SEC/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">{SEC_N} 檔；未實現 {SEC_PNL:,}</td></tr>
 <tr><td {W(0)}>現金</td><td {W(0)} style="text-align:right;font-weight:700">{CASH:,}</td><td {W(0)} style="text-align:right">{CASH/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">Moneybook 銀行帳戶真值（{mb_txt}）；不含 MMF/外幣定存（該部位列基金桶）</td></tr>
 <tr><td {W(0)}>總資產</td><td {W(0)} style="text-align:right;font-weight:800">{TA:,}</td><td {W(0)}></td><td {W(0)} style="color:#6e6e73;font-size:12px">8/20 撥款 1,200萬 → 部署 600萬富達 + T+2 600萬</td></tr>

@@ -5,12 +5,10 @@ import argparse as _ap_mod
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
-DB_IDS = json.loads((BASE / "notion_db_ids.json").read_text(encoding="utf-8"))
-DB_ID = DB_IDS.get("ops_logs", "")
-
-token = ""
-for src in [Path(os.environ.get("NOTION_TOKEN", "")), Path.home() / "AppData/Local/hermes/.env", BASE / ".env"]:
-    pass
+try:
+    DB_ID = json.loads((BASE / "notion_db_ids.json").read_text(encoding="utf-8")).get("ops_logs", "")
+except Exception:
+    DB_ID = ""
 
 def _find_token():
     # 1) env
@@ -25,11 +23,6 @@ def _find_token():
                     return line.split("=", 1)[1].strip().strip('"').strip("'")
     return ""
 
-token = _find_token()
-if not token or not DB_ID:
-    print("NO_TOKEN_OR_DBID")
-    sys.exit(2)
-
 _ap = _ap_mod.ArgumentParser(description="寫入 Notion ops_logs（CIO 復盤底稿／審計事件共用）")
 _ap.add_argument("summary", nargs="?", default="")
 _ap.add_argument("name", nargs="?", default="CIO 18:30 戰略審計與決策復盤 2026-09-02")
@@ -37,15 +30,12 @@ _ap.add_argument("--source", default="CIO Adversarial Review", help="來源系�
 _ap.add_argument("--category", default="戰略審計", help="事件分類（select）；審計事件填 審計")
 _ap.add_argument("--status", default="完成")
 _ap.add_argument("--link", default="", help="關聯頁面 URL（選填，空值不寫入）")
+_ap.add_argument("--dry-run", action="store_true", help="只列印將寫入的 properties，不呼叫 Notion API（INC-217）")
 _args = _ap.parse_args()
 summary = _args.summary
 name = _args.name
 
-headers = {
-    "Authorization": f"Bearer {token}",
-    "Content-Type": "application/json",
-    "Notion-Version": "2022-06-28",
-}
+headers = None  # 需 token，於 dry-run 之後才建立
 # 分段寫入（Notion rich_text 單段上限 2000 字元）
 chunks = [summary[i:i + 1900] for i in range(0, len(summary), 1900)] or [""]
 props = {
@@ -57,6 +47,20 @@ props = {
 }
 if _args.link:
     props["關聯頁面"] = {"url": _args.link}
+if _args.dry_run:
+    print(json.dumps({"parent": {"database_id": DB_ID or "<MISSING>"}, "properties": props}, ensure_ascii=False)[:1500])
+    print("[DRY-RUN] 未呼叫 Notion API，未寫入任何頁面")
+    sys.exit(0)
+
+token = _find_token()
+if not token or not DB_ID:
+    print("NO_TOKEN_OR_DBID")
+    sys.exit(2)
+headers = {
+    "Authorization": f"Bearer {token}",
+    "Content-Type": "application/json",
+    "Notion-Version": "2022-06-28",
+}
 url = "https://api.notion.com/v1/pages"
 r = requests.post(url, headers=headers, json={"parent": {"database_id": DB_ID}, "properties": props}, timeout=15)
 print(f"HTTP {r.status_code}")
