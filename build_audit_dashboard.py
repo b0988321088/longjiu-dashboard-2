@@ -176,7 +176,9 @@ rows += f"""<tr><td {W(0)}>科技曝險</td><td {W(0)} style="text-align:right">
 <tr>{H('組成')}{H('金額')}{H('佔比')}</tr>
 """
 dcc = dcm.get("組成", {})
-for name, key in [("保單月配基金","保單月配基金"),("國泰月配(富達C+聯博AD)","國泰月配(富達C+聯博AD)"),("第一金FA81","第一金FA81"),("防守ETF","防守ETF"),("鉅亨月配","鉅亨月配")]:
+_dc_order = ["保單月配基金", "國泰月配(富達C+聯博AD)", "防守ETF", "鉅亨月配"]
+_dc_items = [(k, k) for k in _dc_order if k in dcc] + [(k, k) for k in dcc if k not in _dc_order]
+for name, key in _dc_items:
     v = dcc.get(key, 0)
     rows += f"<tr><td {W(0)}>{name}</td><td {W(0)} style='text-align:right'>{v:,}</td><td {W(0)} style='text-align:right'>{v/TA*100:.1f}%</td></tr>"
 rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W(0)} style="text-align:right;font-weight:700">{dcm.get("配息資產合計",0):,}</td><td {W(0)} style="text-align:right;font-weight:700">{dcm.get("佔比",0)}%</td></tr>

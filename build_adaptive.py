@@ -78,7 +78,7 @@ slides.append({
         f'防守 {DEF:.1f}% vs 目標25% → 缺口13pp，應補',
         f'債券 {BOND:.1f}% → 00983D正確持倉，但比重偏高',
         f'現金 {CASH_PCT:.1f}% vs 目標5% → 超標14pp，應降到160萬',
-        '不動：安聯A+B 776萬、第一金FA81聯博 196萬、美股ETF 540萬',
+        f'不動：安聯A+B {SNAP.get("allianz_combined",0)/10000:.0f}萬、第一金{str(SNAP.get("insurance_label_b") or "M&G入息A").split("（")[0].replace("第一金","")} {SNAP.get("firstjin_current_value",0)/10000:.0f}萬、美股ETF 540萬',
         '該動：台股+65萬、防守+36萬、現金-151萬'
     ]
 })

@@ -133,7 +133,8 @@ if _dcm_v:
     _freeze = (f"✅ ≥ 凍結承接 {_dcx['門檻']}% → <b>防守已足、承接凍結</b>（00878/00713 不加碼）"
                if _dcx.get("已足") else
                f"⚠️ 未達凍結承接 {_dcx['門檻']}%（差 {round(_dcx['門檻'] - _dcx['佔比'], 1)}pp）")
-    w(f"<div class='callout' style='border-left:3px solid #22c55e'>💵 <b>配息資產合計（合併口徑）：</b>{_dcm_v:,}（{_dcm_v/total*100:.1f}%）＝ 防守ETF {_dc.get('防守ETF',0):,} + 保單月配 {_dc.get('保單月配基金',0):,} + 國泰月配 {_dc.get('國泰月配(富達C+聯博AD)',0):,} + 第一金FA81 {_dc.get('第一金FA81',0):,} + 鉅亨月配 {_dc.get('鉅亨月配',0):,}<br/>{_freeze}<br><span style='color:#64748b;font-size:12px'>口徑說明（8/21 裁示）：防守「是否足夠」看<b>合併口徑</b>（基金配息合併計算）；穿透表的「防守型配息」單桶目標 30% 僅為<b>結構參考</b>，兩者差額（約 12pp）不是行動缺口。</span></div>")
+    _fj_dc_key = next((k for k in _dc if str(k).startswith("第一金")), "第一金ID01")
+    w(f"<div class='callout' style='border-left:3px solid #22c55e'>💵 <b>配息資產合計（合併口徑）：</b>{_dcm_v:,}（{_dcm_v/total*100:.1f}%）＝ 防守ETF {_dc.get('防守ETF',0):,} + 保單月配 {_dc.get('保單月配基金',0):,} + 國泰月配 {_dc.get('國泰月配(富達C+聯博AD)',0):,} + {_fj_dc_key} {_dc.get(_fj_dc_key,0):,} + 鉅亨月配 {_dc.get('鉅亨月配',0):,}<br/>{_freeze}<br><span style='color:#64748b;font-size:12px'>口徑說明（8/21 裁示）：防守「是否足夠」看<b>合併口徑</b>（基金配息合併計算）；穿透表的「防守型配息」單桶目標 30% 僅為<b>結構參考</b>，兩者差額（約 12pp）不是行動缺口。</span></div>")
 
 # 雙維度資產定位框架（2026-08-21 使用者定稿）— 防禦維度 vs 收入維度
 _ddm = snap.get("dual_dimension_metric", {})
@@ -311,12 +312,13 @@ _fj_v = (snap.get("firstjin_detail", {}).get("base_value_before_dividend")
 _fj_name = (snap.get("firstjin_detail", {}).get("current_fund", {}).get("name")
             or snap.get("firstjin_fund_name", "FA81 聯博全球多元收益AD月配(美元)"))
 _fj_ratios = (snap.get("firstjin_detail", {}).get("current_fund", {}).get("穿透比率", {})) or {}
+_fj_code = (snap.get("firstjin_detail", {}).get("current_fund", {}) or {}).get("code") or ""
 _fj_br = float(_fj_ratios.get("債券", 0.55))
 _fj_er = float(_fj_ratios.get("股票", 0.45))
-w(f"<tr><td><b>第一金FA81（{_fj_name[:32]}…）</b></td><td class='num'>{_fj_v:,}</td><td>債券 {_fj_br*100:.0f}% / 美股 {_fj_er*100:.0f}%</td></tr>")
+w(f"<tr><td><b>第一金{_fj_code}（{_fj_name[:32]}…）</b></td><td class='num'>{_fj_v:,}</td><td>債券 {_fj_br*100:.0f}% / 美股 {_fj_er*100:.0f}%</td></tr>")
 w(f"<tr style='border-top:2px solid #3b82f6;font-weight:700'><td>保險合計</td><td class='num'>{ins:,}</td><td></td></tr>")
 w("</tbody></table>")
-w("<p style='font-size:12px;color:#64748b;margin-top:8px'>成分債券比例：安聯收益成長 35% / M&G入息 55% / 安聯AI收益成長 50% / PIMCO收益增長 48%／摩根多重收益 45%／貝萊德世界科技 100% 美股／貝萊德世界黃金基金A10美元(總報酬穩定配息) 100% 黃金／貝萊德世界健康科學基金A10美元(總報酬穩定配息) 100% 健康科學；第一金FA81（聯博全球多元收益）債券61%/美股39%（8/24 月報真值，8/21 轉換）</p>")
+w(f"<p style='font-size:12px;color:#64748b;margin-top:8px'>成分債券比例：安聯收益成長 35% / M&G入息 55% / 安聯AI收益成長 50% / PIMCO收益增長 48%／摩根多重收益 45%／貝萊德世界科技 100% 美股／貝萊德世界黃金基金A10美元(總報酬穩定配息) 100% 黃金／貝萊德世界健康科學基金A10美元(總報酬穩定配息) 100% 健康科學；第一金（{_fj_name}）債券 {_fj_br*100:.0f}%／美股 {_fj_er*100:.0f}%（依 snapshot 第一金 current_fund 穿透比率；INC-219 改為動態，原為寫死之舊基金與比率）</p>")
 w("</div>")
 
 # 5. Calculation methodology
@@ -335,8 +337,8 @@ w("• 安聯收益成長 → 32% 債券 / 68% 美股（晨星 32.07%）<br>")
 w("• 摩根JPM多重收益 → 47% 債券 / 53% 美股（晨星 46.69%，8/14 取代 M&G/安聯AI）<br>")
 w("• PIMCO收益增長 → 48% 債券 / 52% 美股（有效權重，2026/3 資產配置）<br>")
 w("• 貝萊德A10 → 100% 美股<br>")
-w("• 第一金FA81（聯博全球多元收益）→ 債券61%/美股39%（8/24 月報真值，8/21 轉換）<br>")
-w("• （M&G入息 55% / 安聯AI 50% — 2026-08-14 已轉出，保留僅供回溯）<br><br>")
+w(f"• 第一金{_fj_code}（{_fj_name[:24]}）→ 債券 {_fj_br*100:.0f}% / 美股 {_fj_er*100:.0f}%（依 snapshot current_fund 穿透比率／fund_components_09；9/16 FJ33→M&G 生效）<br>")
+w("• （安聯AI收益成長 50% — 2026-08-14 已轉出，保留僅供回溯；M&G入息 55% 現仍持有於安聯A/B 與第一金）<br><br>")
 w("<b>Step 3：匯總</b><br>")
 w("台股 = 證券台股（保險無台股部位）<br>")
 w("美股 = 證券美股 + 保險美股穿透<br>")

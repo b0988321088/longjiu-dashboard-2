@@ -152,12 +152,21 @@ def calc_industry_penetration(snap: dict) -> dict:
             elif v:
                 unmatched[f"保單-{name}"] = v
 
-    # 4) 第一金 FA81（聯博全球多元收益）— 2026-08-22 修正：讀 firstjin_detail 最新值（8/21 轉換後 1,992,265），舊 firstjin_fl65_current_value 是 FL65 時期市值
+    # 4) 第一金 — INC-219（2026-09-18）：基金已於 9/16 由 FJ33 轉為 M&G入息，原寫死用「聯博全球多元收益」映射
+    #    會把第一金歸到舊基金產業 → 改依 snapshot firstjin_detail.current_fund 動態選映射。
     fj = (snap.get("firstjin_detail", {}).get("base_value_before_dividend")
           or snap.get("firstjin_current_value")
           or snap.get("firstjin_fl65_current_value") or 0)
+    _fjcf = (snap.get("firstjin_detail", {}) or {}).get("current_fund", {}) or {}
+    _fjnm = str(_fjcf.get("name") or snap.get("firstjin_fund_name") or "")
+    if "M&G" in _fjnm:
+        _fjkey = "M&G入息"
+    elif "摩根" in _fjnm:
+        _fjkey = "摩根JPM多重收益"
+    else:
+        _fjkey = "聯博全球多元收益"
     if fj:
-        _add(dict(_FUND_IND["聯博全球多元收益"]), fj, "第一金FA81聯博")
+        _add(dict(_FUND_IND.get(_fjkey) or _FUND_IND["M&G入息"]), fj, f"第一金{_fjcf.get('code') or _fjkey}")
 
     # 5) 現金（台幣活存 + MMF 已在 fund 貨幣處理；活存單獨加）
     cash = snap.get("cash_total", 0)

@@ -4235,8 +4235,7 @@
         "審查者",
         "pii-gate"
       ]
-    }
-  ,
+    },
     {
       "timestamp": "2026-09-18T19:00:00+08:00",
       "summary": "核准：審計儀表板標籤與描述去寫死（INC-217）＋ cio_opslog_sync 補 --dry-run 閘門",
@@ -4248,9 +4247,22 @@
         "流程閘門",
         "Hermes Telegram Gate"
       ]
-    }],
+    },
+    {
+      "timestamp": "2026-09-18T19:45:00+08:00",
+      "summary": "定案：第一金口徑依最新截圖對齊（保單帳戶價值 1,889,273）",
+      "detail": "使用者指示『依照最新的截圖』。9/18 09:19 第一金 App 截圖：保單帳戶價值 1,889,273、資產配置 100% ID01-M&G入息基金A(美元避險月配)F、累計已給付配息 124,518。修正三處：①firstjin_detail.base_value_before_dividend（三個穿透計算第一順位來源）改為 1,889,273 ②defensive_combined_metric 第一金FA81 與合計/佔比同步（17,695,257 / 68.0%）③current_fund 改為 ID01／M&G入息、穿透比率 股45/債55（fund_components_09）。另 build_penetration_report.py 第一金列標籤與成分比率尾註改為動態讀 snapshot（原寫死舊基金與比率）。",
+      "source": "user",
+      "tags": [
+        "口徑",
+        "第一金",
+        "截圖對齊",
+        "穿透"
+      ]
+    }
+  ],
   "meta": {
-    "updated_at": "2026-09-18T18:45:53.904435"
+    "updated_at": "2026-09-18T20:02:07.131679"
   },
   "last_updated": "2026-09-18T18:00:00+08:00"
 }
