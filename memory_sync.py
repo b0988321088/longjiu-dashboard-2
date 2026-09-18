@@ -132,7 +132,19 @@ new_facts = []
 # 5a: Today's decisions
 if decisions_text:
     summary = "；".join(decisions_text[:8])
-    approved_count = len([d for d in data_for_count.get('decisions', []) if d.get('date')==today and d.get('decision') in ('核准', 'approved')])
+    # INC-218：原判準讀 d['date']/d['decision'] 兩鍵，但本檔實際欄位是 timestamp/action/summary
+    # → 永遠算出 0 筆（把「今日有核准」記成「核准0筆」，污染記憶）。改為：今日、非 auto、
+    # 且文字開頭明示核准者才計數（結案/資產快照不計）。
+    _appr = [
+        d for d in data_for_count.get("decisions", [])
+        if today in str(d.get("timestamp", "") or d.get("approved_at", ""))
+        and d.get("source") != "auto"
+        and any(
+            k in str(d.get("decision") or d.get("action") or d.get("summary") or d.get("name") or "")[:12]
+            for k in ("核准", "approved")
+        )
+    ]
+    approved_count = len(_appr)
     new_facts.append({
         "content": f"{today} 決策摘要：核准{approved_count}筆。{summary}",
         "category": "decision",

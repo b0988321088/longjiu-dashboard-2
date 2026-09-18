@@ -4236,7 +4236,19 @@
         "pii-gate"
       ]
     }
-  ],
+  ,
+    {
+      "timestamp": "2026-09-18T19:00:00+08:00",
+      "summary": "核准：審計儀表板標籤與描述去寫死（INC-217）＋ cio_opslog_sync 補 --dry-run 閘門",
+      "detail": "18:4x 使用者「可以啊繼續執行」核准兩項：①build_audit_dashboard.py 保險列標籤改讀 snapshot.insurance_label_b（原寫死標籤所指基金代碼已於 9/16 轉換生效而過期）、基金列分項由 funds_cathay_breakdown 實算並加數值防呆；②cio_opslog_sync.py 新增 --dry-run（免憑證可用、無憑證時 fail-closed rc=2、移除 no-op 死碼）。CIO 前兩輪 REJECT 唯一原因皆為註解殘留舊字面值觸發 grep 判準（功能全對），第三輪 APPROVE 後落地 d5c35ea5，文件 4e589f74、runtime 資料 4eedddb6 雙分支已推。",
+      "source": "user",
+      "tags": [
+        "審計",
+        "no-hardcode",
+        "流程閘門",
+        "Hermes Telegram Gate"
+      ]
+    }],
   "meta": {
     "updated_at": "2026-09-18T18:45:53.904435"
   },
