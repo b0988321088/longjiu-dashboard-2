@@ -1007,5 +1007,17 @@
     "category": "修正",
     "item": "INC-212 修復：session watchdog v6.16（上限警報跨日假警報＋復活殭屍＋連環升級文案）",
     "detail": "scripts/session_bloat_watch.py（非 git）備份 .bak-20260918-v615｜沙箱 121 檢查 ALL PASS（新增 AJ-AP）＋真實 dry-run 靜默 exit 0｜根因：9/17 CER 306 筆燒完 8 次重置額度，23:05:02 產生的上限警報因 23:08 gateway 重啟延遲到 9/18 00:23 送達；20260908_142511_159fa2 於 21:28:08 刪除後 21:30:20 復活、23:07:06 再度 CER。修法：文案帶產生時間＋跨日免責＋換模型指引；節流改全域 state.last_cap_push；新增 resurrected_since_reset() 復活殭屍守門（不重複重置、改推 🧟、reset_seen 24h 鏡射）；同日第 4 次起 CER_ESCALATE_N 升級文案｜技能 session-bloat-watchdog＋hermes-gateway-troubleshooting §19c 已同步"
+  },
+  {
+    "date": "2026-09-18",
+    "category": "修正",
+    "item": "INC-213 修復：日報 3/9 市場情報永遠落入『市場情報待補齊』（writer 檔名 YYYYMMDD vs reader YYYY-MM-DD）",
+    "detail": "daily_intel.py::_today_str() 產 daily_intel_report_20260918.json（無 dash），run_daily.py 只找 daily_intel_report_2026-09-18.json → 永遠 miss → else 分支寫死 placeholder（9/14、9/15、9/16、9/18 皆中彈；9/17 走 regenerate 路徑才正常）。修法：候選清單 [TODAY.replace('-',''), TODAY] 兩種都試；命中且 briefing 非空才覆蓋並套 _format_content_to_html；未命中／解析失敗／空字串保留既有情報。驗證：唯讀驗證器 19 項 ALL PASS（含舊邏輯 miss 重現）＋本機 regenerate --no-push 重產 3/9=684 字 placeholder=0＋CIO-DeepSeek-Flash APPROVE（tree 4748cbe7f05a）＋遠端 Pages 實檔 3/9=677 字 placeholder=0。commit 89cff905（程式）＋7cdb431d（資料）。"
+  },
+  {
+    "date": "2026-09-18",
+    "category": "修正",
+    "item": "INC-214 修復：緊急應變『沒更新』——gate 合法 CALM 但文案承諾不會發生的更新；美股 21:30 改每交易日固定產出",
+    "detail": "9/16~9/18 台股 +0.74/+0.96/+1.80%（門檻-1.5）、SPX -0.45/+1.14、SOX +0.63/+3.14（-1.8/-2.5）→ 兩道 monitor 皆正確 CALM、agent 被抑制，內容停在 9/15 21:32；真問題是文案 _next 寫死『今晚 21:30 自動更新／明日 13:00 自動更新』。使用者核准：清空 cron dff67a1d02bd 的 monitor_script（美股 21:30 每交易日固定產完整 LLM 分析，+1.4 CNY/日），台股 13:00 保留 emergency_gate_tw.py。修法：regenerate_report.py 與 run_daily.py 標註改依 generated_at 時段分岔、只承諾真的會發生的排程。驗證：cron 實查 monitor_script=None／emergency_gate_tw.py；產出日報舊字串次數皆 0；遠端 Pages 標註實查正確。"
   }
 ]

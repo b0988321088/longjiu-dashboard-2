@@ -647,3 +647,22 @@
 - **修法**：state 新增 `外資連日_日期`；同一交易日重跑時先 `prev_days[:-1]` 再 append（同日覆寫、跨日累加）。
 - **驗證**：唯讀驗證器 16 項 ALL PASS（同日重跑長度 1 且內容不變、新交易日正常累加、無交易日不寫 state、原邏輯大賣超 🔴 不變）；commit `93c5b246` 經 CIO（deepseek-v4-pro）審查 APPROVE、RECORD 落地。修正後 9/17 14:30 實跑：`外資連日 = [-819,683,769, 84,987,982]`、`外資連日_日期 = 2026-09-16`（TWSE 當日未公布回退前一日，未再重複累加）。
 - **教訓**：①**「一天跑多次」的產線，凡 append 型 state 都要存「這筆屬於哪一天」**，否則重跑即膨脹 ②以「連續 N 日」為門檻的燈號，膨脹會直接製造假訊號（此案差一筆就湊滿黃燈）③排查同類問題最快的證據是 `git show <sha>:radar_state.json` 逐版比對陣列，不必重跑。
+
+---
+
+## INC-2026-09-18（INC-213）日報 3/9 市場情報永遠落入「市場情報待補齊」（檔名口徑 YYYYMMDD vs YYYY-MM-DD）
+
+- **症狀**：使用者回報「3/9｜市場情報 Market Intel 未補」。9/14、9/15、9/16、9/18 的 `daily_report_v2_*.html` 該區塊皆為寫死字串「市場情報待補齊」（9/17 正常，因為那顆是另一條路徑產出）。
+- **根因**：`daily_intel.py::_today_str()` 產檔名 `daily_intel_report_YYYYMMDD.json`（無 dash），而 `run_daily.py` 只找 `daily_intel_report_{TODAY}.json`（TODAY = snapshot.date，帶 dash）→ 永遠 miss → else 分支寫 placeholder。該查找由 2026-09-13 `8d5b8c05` 引入，自 9/14 起中彈（真值檔一直都在 repo 根目錄）。
+- **修法**：`run_daily.py` 候選清單改 `[TODAY.replace('-',''), TODAY]` 兩種都試；命中且 `briefing` 非空才覆蓋（並套 `_format_content_to_html`），未命中／解析失敗／空字串時保留先前載入的情報；placeholder 只在「完全沒有情報」時才寫（不被覆蓋鐵則）。
+- **驗證**：唯讀驗證器 19 項 ALL PASS（含 old-path bug 重現：帶 dash 檔不存在 → miss；new-path 命中 20260918、briefing 659 字含來源標記）；本機 `regenerate_report.py --no-push --skip-llm` 重產 → 3/9=684 字、placeholder=0；CIO（deepseek-v4-flash，12 api_call）APPROVE、tree `4748cbe7f05a` 逐字相符；推送後遠端 Pages 實檔複驗 3/9=677 字、placeholder=0。
+- **教訓**：①同一資料集有兩個檔名口徑時，**只檢查 reader 的候選清單看不出問題** —— 要拿 writer 的實際檔名去對 reader 的查找式 ②fallback 不可寫死成「待補齊」字樣：查找失敗時畫面只像「資料還沒來」，掩蓋了程式缺陷。
+
+## INC-2026-09-18（INC-214）緊急應變連 3 交易日未更新：gate 合法 CALM，但文案承諾了不會發生的更新
+
+- **症狀**：使用者回報「緊急應變沒更新」。日報第八章與儀表板 🚨 按鈕都停在 9/15 21:32。
+- **判定（非 gate 故障）**：9/16~9/18 台股 +0.74%／+0.96%／+1.80%（門檻 -1.5%）、SPX -0.45%／+1.14%、SOX +0.63%／+3.14%（-1.8%／-2.5%）→ 兩道 monitor 皆正確 CALM、agent 被抑制。真問題是 `_next` 文案寫死「今晚 21:30 自動更新」／「明日 13:00 自動更新」：13:00 那條有 gate 守門，承諾的更新不會發生。
+- **決策（使用者核准）**：美股 21:30 改為**每交易日固定產出**完整 LLM 分析（清空該 cron 的 `monitor_script`），台股 13:00 保留 `emergency_gate_tw.py` 大跌觸發守門；成本約 +1.4 CNY/日。
+- **修法**：`regenerate_report.py` 與 `run_daily.py` 的第八章標註改為依 `generated_at` 時段分岔，且只承諾真的會發生的排程。
+- **驗證**：cron 實查 `dff67a1d02bd monitor_script=None`、`2cc25e334eae → emergency_gate_tw.py`；產出日報『今晚 21:30 自動更新』與『明日 13:00 自動更新』次數皆 0；遠端 Pages 標註＝「📅 緊急應變資料：2026-09-15 21:32（美股時段 21:30 產出；最新可用；次一交易日 21:30 固定更新）」。
+- **教訓**：**報表文案只能承諾「程式真的會做」的事**。守門機制（monitor 抑制）上線時，所有描述排程行為的敘述都要同步改；否則使用者看到的是「系統壞了」，而不是「今天沒觸發」。
