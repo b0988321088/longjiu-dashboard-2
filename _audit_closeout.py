@@ -186,12 +186,21 @@ try:
 except Exception as e:
     print(f"  ❌ 線上讀取失敗 {e}")
     fail.append("線上讀取失敗")
+import time as _time  # INC-220b：連結檢查重試用（區域匯入，僅此段需要）
 for f in [f"daily_report_v2_{T}.html", "index.html", f"asset_diff_{T}.html", f"penetration_report_{T}.html"]:
-    try:
-        code = urllib.request.urlopen(BASE + f, timeout=20).status
-    except Exception as e:
-        code = getattr(e, "code", "ERR")
-    print(f"  {ok(code == 200)} {f} → {code}")
+    # INC-220b（2026-09-18 實例）：Pages/CDN 在推送後偶有短暫非 200，一次就判 ERR 會產生假 ❌
+    # → 改為最多 2 次嘗試（間隔 5 秒）；仍非 200 才列問題，並標註已重試。
+    code = "ERR"
+    for _attempt in range(2):
+        try:
+            code = urllib.request.urlopen(BASE + f, timeout=20).status
+        except Exception as e:
+            code = getattr(e, "code", "ERR")
+        if code == 200:
+            break
+        if _attempt == 0:
+            _time.sleep(5)
+    print(f"  {ok(code == 200)} {f} → {code}" + ("" if code == 200 else "（已重試仍失敗）"))
     if code != 200:
         fail.append(f"連結 {f} = {code}")
 
@@ -249,8 +258,16 @@ for j in jobs:
     kind = sched.get("kind") if isinstance(sched, dict) else "cron"
     if isinstance(sched, dict):
         sched = sched.get("expr") or sched.get("run_at") or str(sched)[:20]
+    _rep = j.get("repeat") or {}
+    try:
+        _limited_done = (_rep.get("times") is not None
+                         and int(_rep.get("completed") or 0) >= int(_rep.get("times") or 0))
+    except (TypeError, ValueError):
+        _limited_done = False
     if en is False and kind == "once":
         mark = "ℹ️"   # 歷史一次性排程（已完成，停用正常）
+    elif en is False and _limited_done:
+        mark = "ℹ️"   # 限次排程（repeat.times 已跑完 → 自動停用屬正常；2026-09-18 INC-220）
     elif en is False and jid in INTENTIONAL_PAUSED:
         mark = "ℹ️"   # 已核准的刻意停用（非意外）
     elif en is False:
