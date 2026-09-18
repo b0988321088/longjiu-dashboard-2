@@ -91,10 +91,10 @@ def main():
         lines.append(f"- ✅ {note}")
         if log_bal is not None:
             lines.append(f"- log 最後記錄餘額 NT${log_bal:.0f}（對照用）")
-        lines.append("- 目前 fallback 已改 opencode-free 免費層，Gemini 僅備而不用")
+        lines.append("- fallback 鏈（9/18 定案）：DS-pro → Gemini 2.5 Flash；Gemini 僅最後一道，且無快取全價的 3.6-flash 已移出鏈")
     elif state == "depleted":
         lines.append(f"- ⛔ {note}")
-        lines.append("- 已自 fallback / CIO 審查腳本移除（改 opencode-free 免費層 → DeepSeek）")
+        lines.append("- fallback 鏈（9/18 定案）：DS-pro → Gemini 2.5 Flash；免費層 opencode-free 因 403 已移除")
         lines.append(f"- 要恢復 Gemini：儲值 {TOPUP_URL}（Prepay 最低 US$5）")
         lines.append("- 未儲值前這則提醒可停用（`hermes cron`）")
     elif state == "unauthorized":
