@@ -808,8 +808,13 @@
       var _now = new Date();
       var _ym = _now.getFullYear() + '-' + String(_now.getMonth()+1).padStart(2,'0');
       var dr = (s.dividend_records||{})[_ym] || {};
-      var azDiv = dr['安聯保單撥回'] || 0;
-      var fjDiv = (dr['第一金配息']||0) + (dr['第一金FA81配息']||0) || 0;
+      // ⚠️ 配息彙總一律用「子字串比對」（與 build_dashboard.py 同邏輯），不可用固定 key：
+      // 2026-09-18 實踩 — 第一金 9 月 key 改名為「第一金FA81聯博多元AD配息」後，
+      // 舊寫法 dr['第一金配息'] 取不到 → 開頁瞬間把 13,005 覆寫成 0。
+      var azDiv = 0;
+      for(var _ka in dr){ if(_ka.indexOf('安聯')>=0 && typeof dr[_ka]==='number') azDiv += dr[_ka]; }
+      var fjDiv = 0;
+      for(var _kfj in dr){ if(_kfj.indexOf('第一金')>=0 && typeof dr[_kfj]==='number') fjDiv += dr[_kfj]; }
       var rentGot = 0;
       (s.rent_received_records||{}).forEach ? null : null;
       for(var k in (s.rent_received_records||{})){
