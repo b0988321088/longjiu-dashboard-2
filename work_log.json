@@ -1031,5 +1031,12 @@
     "category": "修正",
     "item": "INC-217 審計儀表板保險列標籤／基金列描述改讀 snapshot 真值；cio_opslog_sync 加 --dry-run",
     "detail": "保險列原寫死「第一金 FL65」（該基金 9/16 FJ33→M&G 已生效）→ 改讀 snapshot.insurance_label_b；基金列原「富達600萬/聯博100萬/貝萊德B11 500萬」為近似值 → 由 funds_cathay_breakdown 實算（588萬/98萬/500萬）並加 _wan() 防呆。cio_opslog_sync.py 新增 --dry-run（免憑證可用、無憑證時 fail-closed rc=2、移除 no-op 死碼、DB_ID 讀檔 try/except）。過程：閘門兩次 REJECT（註解殘留舊字面值使 grep 判準=1/2，渲染輸出實全對）→ 改寫註解後 APPROVE d5c35ea5 / tree 7da7436237cb266e334c65f382053dcdcc823fdf，雙分支已推，Pages 驗證通過。"
+  },
+  {
+    "date": "2026-09-18",
+    "category": "修正",
+    "item": "INC-218 記憶同步核准筆數判準修正（永遠 0 → 正確計數）＋9/18 決策與待辦登錄",
+    "detail": "memory_sync.py 核准筆數判準讀 dashboard_decisions.json 已停用的 date/decision 兩鍵 → 每日事實恆為「核准0筆」。改為今日＋source!=auto＋前 12 字含核准/approved 才計數；實測 old=0/new=1，4 組反例全歸零。同步登錄 9/18 核准列（source=user，decisions 449→450、pending 維持 12）、pending_decisions.json 新增「第一金 554 元差額口徑對齊」待確認條目與 INC-218 後續。Notion 已寫入並讀回驗證摘要尾帶狀態行。CIO（deleg_4c77dd6c）APPROVE 後落地 5efd90e9，雙分支已推。",
+    "commit": "5efd90e9"
   }
 ]
