@@ -98,8 +98,9 @@ def calibrate_sources() -> dict:
     s_insurance = snap.get("insurance_current_value") or (snap.get("allianz_combined", 0) + snap.get("firstjin_fl65_current_value", 0))
     s_allianz = snap.get("allianz_ab_current_value") or snap.get("allianz_ab")
     s_firstjin = snap.get("firstjin_current_value") or snap.get("firstjin")
-    s_allianz_a = snap.get("allianz_a_current_value") or snap.get("allianz_a", 0)
-    s_allianz_b = snap.get("allianz_b_current_value") or snap.get("allianz_b", 0)
+    # 2026-09-18：以 allianz_policy_* 為真值來源（舊 allianz_*_current_value 曾分歧）
+    s_allianz_a = snap.get("allianz_policy_a_value") or snap.get("allianz_a_current_value") or snap.get("allianz_a", 0)
+    s_allianz_b = snap.get("allianz_policy_b_value") or snap.get("allianz_b_current_value") or snap.get("allianz_b", 0)
     s_rent = snap.get("rent_monthly_actual")
     s_securities = snap.get("securities_total_market_value")
 

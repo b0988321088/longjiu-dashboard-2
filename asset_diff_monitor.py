@@ -110,13 +110,34 @@ def _pct(v, base):
 # ---------- snapshot parsing ----------
 
 
+def _truth(snap: dict, *keys: str) -> float:
+    """依序取第一個有值的同義欄位；全都缺 → 警告並回 0。
+
+    2026-09-18（CIO 審查 REJECT 指出）：原以寫死數字當退路（5_103_668 / 2_740_224 /
+    7_843_892 / 1_958_980 / 9_802_872），會掩蓋 snapshot 缺值、讓報表無聲印出錯數字
+    —— 正是「分項相加 ≠ 顯示合計」這類事故的成因。缺值必須現形，交由收工稽核第 11 章
+    不變式擋下，不用舊值頂替。
+    """
+    for k in keys:
+        v = snap.get(k)
+        if v in (None, ""):
+            continue
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            continue
+    print(f"⚠️ [asset_diff] snapshot 缺 {'/'.join(keys)} → 以 0 計（請檢查資料來源，勿用寫死值頂替）")
+    return 0.0
+
+
 def _build_insurance_detail(snap: dict, insurance_total: float) -> dict:
     """統一建構保險明細"""
     def _extract(v):
         return v["value"] if isinstance(v, dict) else (v if isinstance(v, (int,float)) else 0)
     _ins_brk = snap.get("insurance_breakdown", {})
-    _aa_val = float(snap.get("allianz_a_current_value", snap.get("allianz_policy_a_value", 5_103_668)))
-    _ab_val = float(snap.get("allianz_b_current_value", snap.get("allianz_policy_b_value", 2_740_224)))
+    # 2026-09-18：改以 allianz_policy_* 為真值來源，並移除寫死退路常數（CIO 審查 REJECT）。
+    _aa_val = _truth(snap, "allianz_policy_a_value", "allianz_a_current_value")
+    _ab_val = _truth(snap, "allianz_policy_b_value", "allianz_b_current_value")
     d = {"【安聯保單A】現值": _aa_val}
     _aa_ratios = _build_insurance_fund_ratios(_ins_brk.get("policy_a_funds", {}), _aa_val)
     for _n, _v in _ins_brk.get("policy_a_funds", {}).items():
@@ -137,8 +158,8 @@ def _build_insurance_detail(snap: dict, insurance_total: float) -> dict:
         elif "健康科學基金" in _n or "健康科學" in _n:
             _label = f"健康科學投資 ({_n})"
         d[f"  B-{_label}{_pct}"] = _extract(_v)
-    d["安聯A+B合計"] = float(snap.get("allianz_ab_current_value", 7_843_892))
-    d[f"━第一金{snap.get('firstjin_short_label', 'FA81聯博')}現値"] = float(snap.get("firstjin_current_value", 1_958_980))
+    d["安聯A+B合計"] = _truth(snap, "allianz_ab_current_value", "allianz_ab")
+    d[f"━第一金{snap.get('firstjin_short_label', 'FA81聯博')}現値"] = _truth(snap, "firstjin_current_value", "firstjin")
     d["━保單總現値"] = insurance_total
     return d
 
@@ -309,8 +330,9 @@ def extract_snapshot(snap: dict) -> dict:
         "insurance_detail": insurance_detail,
         "fund_dividend_monthly": _div_sum_current_month,
         "fund_dividend_conservative": _div_sum_current_month,
-        "monthly_income": float(snap.get("monthly_income", 218102)),
-        "monthly_expense": float(snap.get("monthly_expense", snap.get("monthly_expense_mb", 162781))),
+        # 2026-09-18：原退路寫死 218,102（與定版 228,751 不符 → 缺值時會無聲給錯值）
+        "monthly_income": _truth(snap, "monthly_income"),
+        "monthly_expense": _truth(snap, "monthly_expense", "monthly_expense_mb"),
         "rent_monthly": float(snap.get("rent_monthly_actual", 80100)),
         "rent_received_records": snap.get("rent_received_records", {}),
         "cathay_refinance": float(snap.get("cathay_refinance_amount") or 0),
@@ -351,7 +373,7 @@ def load_history(snap=None) -> dict:
                 "bonds": float(r.get("bonds", 0)),
                 "other": 0.0,
                 # 歷史日期保留 JSON 存檔的 insurance_detail，避免被今日 snapshot 覆寫
-                "insurance_detail": _json_hist.get(d, {}).get("insurance_detail") or {"【安聯保單A】現值": snap.get("allianz_a_current_value", 5_103_668), **{"  A-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": snap.get("allianz_b_current_value", 2_740_224), **{"  B-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": snap.get("allianz_ab_current_value", 7_843_892), f"━第一金{snap.get('firstjin_short_label', 'FA81聯博')}現値": snap.get("firstjin_current_value", 1_958_980), "━保單總現値": snap.get("insurance_current_value", 9_802_872)},
+                "insurance_detail": _json_hist.get(d, {}).get("insurance_detail") or {"【安聯保單A】現值": _truth(snap, "allianz_policy_a_value", "allianz_a_current_value"), **{"  A-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": _truth(snap, "allianz_policy_b_value", "allianz_b_current_value"), **{"  B-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": _truth(snap, "allianz_ab_current_value", "allianz_ab"), f"━第一金{snap.get('firstjin_short_label', 'FA81聯博')}現値": _truth(snap, "firstjin_current_value", "firstjin"), "━保單總現値": _truth(snap, "insurance_current_value")},
                 "fund_dividend_monthly": float(snap.get("dividend_month_actual", 0) or 0),
                 "monthly_income": 228_751.0,
                 "monthly_expense": 162781.0,

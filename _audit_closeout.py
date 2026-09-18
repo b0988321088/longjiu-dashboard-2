@@ -380,6 +380,35 @@ except Exception as _e:
     print(f"  ❌ indent 檢查失敗 {_e}")
     fail.append("indent 檢查失敗")
 
+print("=== 11) 保單同義欄位與分項合計不變式 ===")
+# 2026-09-18 新增。背景：allianz_a/b_current_value 與 allianz_policy_a/b_value 是同一件事
+# 的兩個欄位，曾分歧（4,925,927 vs 4,957,369），而 asset_diff 印出「分項相加 ≠ 顯示合計」
+# （4,957,369-31,442 + 2,655,604-28,126 ≠ 7,612,973）。這種矛盾必須自動擋，不靠人眼。
+try:
+    import json as _json2
+    _snap = _json2.loads((R / "snapshot.json").read_text(encoding="utf-8"))
+    _pa = float(_snap.get("allianz_policy_a_value") or 0)
+    _pb = float(_snap.get("allianz_policy_b_value") or 0)
+    _ab = float(_snap.get("allianz_ab_current_value") or 0)
+    _ca = float(_snap.get("allianz_a_current_value") or 0)
+    _cb = float(_snap.get("allianz_b_current_value") or 0)
+    _ba = sum(v for v in (_snap.get("allianz_a_breakdown") or {}).values() if isinstance(v, (int, float)))
+    _bb = sum(v for v in (_snap.get("allianz_b_breakdown") or {}).values() if isinstance(v, (int, float)))
+    _rows = [
+        (f"同義欄位 A 兩組一致（policy {_pa:,.0f} ≡ current {_ca:,.0f}）", _pa == _ca),
+        (f"同義欄位 B 兩組一致（policy {_pb:,.0f} ≡ current {_cb:,.0f}）", _pb == _cb),
+        (f"分項相加 = A+B 合計（{_pa + _pb:,.0f} ≡ {_ab:,.0f}）", abs((_pa + _pb) - _ab) < 1),
+        (f"子基金加總 = 保單A（{_ba:,.0f}）", abs(_ba - _pa) < 1),
+        (f"子基金加總 = 保單B（{_bb:,.0f}）", abs(_bb - _pb) < 1),
+    ]
+    for _n, _b in _rows:
+        print(f"  {ok(_b)} {_n}")
+        if not _b:
+            fail.append(f"保單不變式：{_n}")
+except Exception as _e:
+    print(f"  ❌ 保單不變式檢查失敗 {_e}")
+    fail.append("保單不變式檢查失敗")
+
 print()
 print("=" * 46)
 print(f"閉環稽核結果：{'全部通過 ✅' if not fail else '❌ 有問題：' + str(fail)}")

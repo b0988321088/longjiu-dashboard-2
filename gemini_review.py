@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CIO-Gemini代理人審查龍九日報。"""
+"""CIO 獨立審查龍九日報（第三方模型，2026-09-16 起不再用 Gemini）。"""
 from __future__ import annotations
 
 import json
@@ -108,7 +108,7 @@ def review() -> dict:
     hunter = _load_hunter_intel()
 
     prompt = (
-        "你是CIO-Gemini代理人。審查龍九日報。\n"
+        "你是CIO獨立審查代理（第三方模型，非日報產出者本人）。審查龍九日報。\n"
         "檢查：五大章節完整、配息SOP(wording)、Relay三站制、"
         "無Railway/dashboard.py/旗艦版連結、保單現值snapshot一致、情報可信度、"
         "Buffett/CTO分析data-driven、diff正確。\n"

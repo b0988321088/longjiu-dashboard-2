@@ -65,7 +65,7 @@ def load_report() -> str:
 def review() -> dict:
     report = load_report()
     prompt = (
-        "你是CIO-Gemini代理人。審查龍九資產變化對照報告。"
+        "你是CIO獨立審查代理（第三方模型，非報告產出者本人）。審查龍九資產變化對照報告。"
         "嚴格檢查：\n"
         "1. 數字計算正確性：覆蓋率必須是房租淨收+保守配息/月支出；cash必須用real_liquid_assets；保單質押=4M；國泰轉貸pending；房租淨收=80,100\n"
         "2. snapshot真值一致性：不硬編碼、不重複計算、金額未確認時只能寫'待確認'\n"
