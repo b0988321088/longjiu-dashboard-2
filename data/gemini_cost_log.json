@@ -1,6 +1,6 @@
 {
  "2026-07": 953,
- "updated": "2026-09-05",
+ "updated": "2026-09-18",
  "source": "Google AI Studio 帳單",
  "note": "7月 Gemini 實際 = NT$953（介面顯示 USD 為誤，實為新台幣）",
  "2026-08": {
@@ -19,6 +19,13 @@
   "topup_2026_09_16": {
    "confirmed_by_probe": "2026-09-16T16:0x 實測 60k token 回 HTTP 200",
    "amount_twd": null
+  },
+  "topup_2026_09_18": {
+   "amount_twd": 1000,
+   "date": "2026-09-18",
+   "confirmed_by_probe": "2026-09-18T08:29 實測 probe-small(8 tok)+probe-60k-token(120,007 tok) 皆 HTTP 200 reply=OK",
+   "note": "9/16 歸零後再儲 NT$1,000。若本次仍於短期內見底，代表 pii-gate/CER 治理未生效，須回頭查 pipeline 而非再儲值。"
   }
- }
+ },
+ "last_probe_ok": "2026-09-18T08:29"
 }
