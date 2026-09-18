@@ -68,6 +68,25 @@ mb_txt = (f"{int(_mbd[4:6])}/{int(_mbd[6:8])}"
           if len(_mbd) == 8 and _mbd.isdigit() else "—")
 _next_audit = (datetime.date.fromisoformat(today) + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
 LIFE = (s.get("monthly_fixed_expense", {}) or {}).get("生活支出", EXP)
+# INC-215b：實相表分項改讀 snapshot 真值（原為寫死金額與舊檔數字：安聯/第一金/鉅亨/信用卡待繳/證券檔數）
+ALLZ = s.get("allianz_ab_current_value", 0)
+FJ = s.get("firstjin_current_value", 0)
+FUND_CT = s.get("funds_cathay_market_value", 0)
+FUND_JZ = FUND - FUND_CT
+# 證券檔數＝snapshot.securities.holdings 長度（DB 兜底）；未實現損益＝securities.unrealized_pnl；
+# 信用卡待繳＝snapshot.credit_card_pending（與 credit_card 四卡合計一致）。
+_sec_obj = s.get("securities", {}) or {}
+SEC_N = len(_sec_obj.get("holdings", []) or [])
+if not SEC_N:
+    try:
+        import sqlite3 as _sq
+        _cx = _sq.connect(os.path.join(REPO, "dragon_assets.db"))
+        SEC_N = int(_cx.execute("SELECT COUNT(*) FROM holdings WHERE category='securities'").fetchone()[0])
+        _cx.close()
+    except Exception:
+        SEC_N = 0
+SEC_PNL = int(_sec_obj.get("unrealized_pnl", s.get("securities_unrealized_pnl", 0)) or 0)
+CC_PEND = int(s.get("credit_card_pending", 0) or 0)
 
 _dec_from = (datetime.date.fromisoformat(today) - datetime.timedelta(days=14)).isoformat()
 recent = [x for x in d["decisions"] if x.get("timestamp", "")[:10] >= _dec_from][-8:][::-1]
@@ -100,12 +119,12 @@ rows = f"""
 <h3 style="font-size:14px;font-weight:800;margin:0 0 8px">一、實相更新（本週變動歸因）</h3>
 <table style="width:100%;font-size:13px;border-collapse:collapse">
 <tr>{H('項目')}{H('金額')}{H('佔比')}{H('本週變動歸因')}</tr>
-<tr><td {W(0)}>保險</td><td {W(0)} style="text-align:right;font-weight:700">{INS:,}</td><td {W(0)} style="text-align:right">{INS/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">安聯 13:32 7,827,561 + 第一金 FA81 1,939,270</td></tr>
-<tr><td {W(0)}>基金</td><td {W(0)} style="text-align:right;font-weight:700">{FUND:,}</td><td {W(0)} style="text-align:right">{FUND/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">鉅亨 841,052 + 國泰 1,200萬（富達600/聯博100/貝萊德B11 500）</td></tr>
-<tr><td {W(0)}>證券</td><td {W(0)} style="text-align:right;font-weight:700">{SEC:,}</td><td {W(0)} style="text-align:right">{SEC/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">16 檔；00888 配息 3,496 入帳</td></tr>
+<tr><td {W(0)}>保險</td><td {W(0)} style="text-align:right;font-weight:700">{INS:,}</td><td {W(0)} style="text-align:right">{INS/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">安聯 {ALLZ:,}（己型+戊型） + 第一金 FL65 {FJ:,}</td></tr>
+<tr><td {W(0)}>基金</td><td {W(0)} style="text-align:right;font-weight:700">{FUND:,}</td><td {W(0)} style="text-align:right">{FUND/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">鉅亨 {FUND_JZ:,}（一般申購+自由Pay） + 國泰 {FUND_CT:,}（富達600萬/聯博100萬/貝萊德B11 500萬月配主力）</td></tr>
+<tr><td {W(0)}>證券</td><td {W(0)} style="text-align:right;font-weight:700">{SEC:,}</td><td {W(0)} style="text-align:right">{SEC/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">{SEC_N} 檔；未實現 {SEC_PNL:,}</td></tr>
 <tr><td {W(0)}>現金</td><td {W(0)} style="text-align:right;font-weight:700">{CASH:,}</td><td {W(0)} style="text-align:right">{CASH/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">Moneybook 銀行帳戶真值（{mb_txt}）；不含 MMF/外幣定存（該部位列基金桶）</td></tr>
 <tr><td {W(0)}>總資產</td><td {W(0)} style="text-align:right;font-weight:800">{TA:,}</td><td {W(0)}></td><td {W(0)} style="color:#6e6e73;font-size:12px">8/20 撥款 1,200萬 → 部署 600萬富達 + T+2 600萬</td></tr>
-<tr><td {W(0)}>總負債</td><td {W(0)} style="text-align:right;font-weight:800;color:#ef4444">{TL:,}</td><td {W(0)}></td><td {W(0)} style="color:#6e6e73;font-size:12px">國泰新貸 1,200萬@2.6%（大義街轉貸）＋ 信用卡 54,402</td></tr>
+<tr><td {W(0)}>總負債</td><td {W(0)} style="text-align:right;font-weight:800;color:#ef4444">{TL:,}</td><td {W(0)}></td><td {W(0)} style="color:#6e6e73;font-size:12px">國泰新貸 1,200萬@2.6%（大義街轉貸）＋ 信用卡 {CC_PEND:,}</td></tr>
 </table></div>
 
 <div style="flex:1;min-width:340px;background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
