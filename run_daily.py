@@ -2066,17 +2066,24 @@ def main():
 
     # 日報
     # 從 daily_intel_report_{TODAY}.json 讀取市場情報
-    intel_report_path = BASE / f"daily_intel_report_{TODAY}.json"
-    if intel_report_path.exists():
+    # 2026-09-18 INC-213：daily_intel.py 的 _today_str() 寫檔名用 YYYYMMDD（無 dash），此處原本只找
+    # YYYY-MM-DD → 永遠 miss → 3/9 被寫成「市場情報待補齊」（9/14、9/15、9/16、9/18 皆中彈）。
+    # 修法：兩種檔名都試；且「已有任何情報」時，placeholder 不得覆蓋（同 8/10 緊急應變覆寫教訓）。
+    _intel_candidates = [
+        BASE / f"daily_intel_report_{TODAY.replace('-', '')}.json",
+        BASE / f"daily_intel_report_{TODAY}.json",
+    ]
+    intel_report_path = next((_p for _p in _intel_candidates if _p.exists()), None)
+    if intel_report_path is not None:
         try:
             _intel_report = json.loads(intel_report_path.read_text(encoding="utf-8"))
-            market_intel_text = _intel_report.get("briefing", "")
-            intel_signals = _intel_report.get("signals", {})
+            _brief = str(_intel_report.get("briefing", "") or "")
+            if _brief.strip():
+                market_intel_text = _format_content_to_html(_brief, content_type="market_intel")
+            intel_signals = _intel_report.get("signals", {}) or intel_signals
         except Exception as _e:
-            print(f"[WARN] daily_intel_report.json 解析失敗: {_e}")
-            market_intel_text = "市場情報載入失敗"
-            intel_signals = {}
-    else:
+            print(f"[WARN] {intel_report_path.name} 解析失敗: {_e}")
+    if not str(market_intel_text or "").strip():
         market_intel_text = "市場情報待補齊"
         intel_signals = {}
 
@@ -2089,7 +2096,14 @@ def main():
             analysis_content = emergency_data.get("full_report", emergency_data.get("analysis", ""))
             _report_html = _format_content_to_html(analysis_content, content_type="emergency_analysis")
             _gen2 = emergency_data.get("generated_at", "") or ""
-            _note2 = f'<p style="font-size:12px;color:#6e6e73;margin-bottom:6px">📅 緊急應變資料：{_gen2[:16]}（美股時段產出，最新可用；今晚 21:30 自動更新）</p>' if _gen2 else ""
+            # 2026-09-18 INC-214：原字串寫死「美股時段產出…今晚 21:30 自動更新」，但 13:00 那條
+            # 有 emergency_gate_tw.py 守門（CALM 就不跑），且文案與實際時段無關 → 使用者抓到
+            # 「緊急應變沒更新」。改為依 generated_at 時段動態、且只承諾真的會發生的排程（21:30 每交易日固定產出）。
+            _h2 = int(_gen2[11:13]) if len(_gen2) >= 13 and _gen2[11:13].isdigit() else 0
+            _slot2 = ("台股時段 13:00 產出；未觸發門檻則沿用此份，美股時段 21:30 每交易日固定更新"
+                      if _h2 < 15 else
+                      "美股時段 21:30 產出；最新可用，次一交易日 21:30 固定更新")
+            _note2 = f'<p style="font-size:12px;color:#6e6e73;margin-bottom:6px">📅 緊急應變資料：{_gen2[:16]}（{_slot2}）</p>' if _gen2 else ""
             _report_html = _note2 + _report_html
             _er_files = sorted(BASE.glob("emergency_report_2*.html"), reverse=True)
             _er_link = ""
