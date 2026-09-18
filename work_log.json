@@ -1038,5 +1038,11 @@
     "item": "INC-218 記憶同步核准筆數判準修正（永遠 0 → 正確計數）＋9/18 決策與待辦登錄",
     "detail": "memory_sync.py 核准筆數判準讀 dashboard_decisions.json 已停用的 date/decision 兩鍵 → 每日事實恆為「核准0筆」。改為今日＋source!=auto＋前 12 字含核准/approved 才計數；實測 old=0/new=1，4 組反例全歸零。同步登錄 9/18 核准列（source=user，decisions 449→450、pending 維持 12）、pending_decisions.json 新增「第一金 554 元差額口徑對齊」待確認條目與 INC-218 後續。Notion 已寫入並讀回驗證摘要尾帶狀態行。CIO（deleg_4c77dd6c）APPROVE 後落地 5efd90e9，雙分支已推。",
     "commit": "5efd90e9"
+  },
+  {
+    "date": "2026-09-18",
+    "category": "修正",
+    "item": "INC-219 第一金口徑依 9/18 截圖對齊（1,889,273）＋去寫死（穿透/產業/稽核/月報/簡報標籤與基金映射）",
+    "detail": "根因：firstjin_detail.base_value_before_dividend 為舊值且是三個穿透計算的第一順位來源（base or firstjin_current_value）→ 舊值蓋真值，造成配息口徑與保單現值差 554、穿透報告基金名仍為摩根。修法：依使用者『依照最新的截圖』對齊 1,889,273、current_fund 改 ID01/M&G入息（債55股45）、組成鍵更名第一金ID01、五處寫死改讀 snapshot（產業映射動態）。CIO APPROVE（交叉驗證：改 name 成摩根→產業差額=兩組權重差×1,889,273 全中）。commit d504eb29 雙分支已推；Pages 實查穿透/稽核/儀表板皆為 1,889,273、舊值 0 筆。"
   }
 ]
