@@ -1062,5 +1062,11 @@
   "category": "應辦",
   "item": "保單/負債寫死退路常數全面清除（低優先，已部分完成）",
   "detail": ""
+ },
+ {
+  "date": "2026-09-19",
+  "category": "修正",
+  "item": "非 ASCII 檔名連結治本：大轉向簡報 HTML/PPTX 改 ASCII 檔名（grand_pivot_deck.*）",
+  "detail": "使用者回報再平衡儀表板 404 後全面掃線上 22 顆按鈕連結：實測全部 200，僅『大轉向簡報』非 ASCII 檔名在未編碼路徑下會 404（Pages 對原始非 ASCII 路徑回 404，瀏覽器 percent-encode 才正常）。處置：git mv 兩檔為 ASCII、舊 HTML 檔名留 meta refresh redirect stub、同步 7 處引用點（index_template/build_dashboard/build_refinance_html/build_final/regenerate_report/links/dashboard_v2）、重建 index.html。驗證：deterministic 驗證器 26 項全過（含 clone 內重跑 build_dashboard.py）、CIO 異質審查 APPROVE（Pollinations GPT-OSS）綁 tree 76677c72、推送後線上 grand_pivot_deck.html/pptx 與 HEAD 位元一致、舊檔名 stub 200。"
  }
 ]
