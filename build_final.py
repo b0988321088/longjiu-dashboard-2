@@ -308,5 +308,5 @@ B(s, [
     '     訊號明朗前不動，訊號一來子彈已就位'
 ])
 
-prs.save(f'{BASE}/大轉向資產配置策略_final.pptx')
+prs.save(f'{BASE}/grand_pivot_deck.pptx')
 print('✅ 完成！11 頁（v5：市場快照執行時自動抓取，asof ' + ASOF + '）')

@@ -730,7 +730,7 @@ def main():
         "__WEEKLY_REVIEW__": "dynamic_weekly_review_*.html",
         "__MONTHLY_REVIEW__": "dynamic_monthly_review_*.html",
         "__MONTHLY_REPORT__": "monthly_report_*.html",
-        "__REFINANCE_PPTX__": "大轉向資產配置策略_final.pptx",
+        "__REFINANCE_PPTX__": "grand_pivot_deck.pptx",
         "__RETIREMENT_HTML__": "retirement_plan_*.html",
     }
     _link_hits = 0

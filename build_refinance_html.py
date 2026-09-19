@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""build_refinance_html.py — 從 大轉向資產配置策略_final.pptx 抽 11 頁內容 → 深色手機友善 HTML。
+"""build_refinance_html.py — 從 grand_pivot_deck.pptx 抽 11 頁內容 → 深色手機友善 HTML。
 用法：python build_refinance_html.py（需先跑 build_final.py 產出 pptx）"""
 import os
 from pptx import Presentation
 from pptx.util import Emu
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-PPTX = os.path.join(BASE, '大轉向資產配置策略_final.pptx')
-OUT = os.path.join(BASE, '大轉向資產配置策略.html')
+PPTX = os.path.join(BASE, 'grand_pivot_deck.pptx')
+OUT = os.path.join(BASE, 'grand_pivot_deck.html')
 
 prs = Presentation(PPTX)
 
@@ -117,7 +117,7 @@ html = f'''<!DOCTYPE html>
     </header>
 
     <div class="dl">
-        <a href="大轉向資產配置策略_final.pptx">⬇ 下載簡報檔（pptx，可編輯）</a>
+        <a href="grand_pivot_deck.pptx">⬇ 下載簡報檔（pptx，可編輯）</a>
     </div>
 {''.join(slides_html)}
     <footer>龍九控股 ｜ 大轉向資產配置策略 v4.1 ｜ 2026-09-06</footer>

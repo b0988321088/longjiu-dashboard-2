@@ -417,7 +417,7 @@ elif ok and _cio_ok:
                         f'buffett_cto_report_{TODAY}.md', f'risk_factor_penetration_{TODAY}.png', f'macro_regime_{TODAY}.json',
                         'work_log.json', 'pending_decisions.json', 'schedule_events.json', 'radar_state.json',
                         'cio_review.json', 'dashboard_decisions.json', 'us30y_state.json',
-                        '大轉向資產配置策略.html']
+                        'grand_pivot_deck.html']
     # 再平衡儀表板（2026-08-22：每日重跑，build_rebalance_dashboard.py 讀 snapshot+radar_state）
     try:
         subprocess.run([sys.executable, str(BASE / "build_rebalance_dashboard.py")], cwd=str(BASE),
