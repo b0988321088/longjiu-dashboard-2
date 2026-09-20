@@ -155,13 +155,30 @@ def fetch_tnx():
 
 
 def fetch_fed():
-    """Fed H.4.1 總資產。回傳 {date, total_assets}"""
+    """Fed H.4.1 總資產（單位：百萬美元／Millions of dollars，週四發布）。
+
+    2026-09-20 修（INC-230）：官網表格已改為 span 式標記，金額不再緊跟 <td>，
+    舊 regex（label 後第一個 <td> 直接接數字）永不命中 → 靜默回「解析失敗」，
+    而呼叫端只在有 total_assets 時才建基準 → 該燈號長期缺值也無告警。
+    正解：先定位 label 那一格，再取「右邊那一格」的文字內容抓第一個金額。
+    """
     try:
         h = http_get("https://www.federalreserve.gov/releases/h41/current/h41.htm").decode("utf-8", errors="ignore")
-        m = re.search(r"Total factors supplying reserve funds.*?<td[^>]*>\s*([\d,]+\.?\d*)", h, re.S)
+        i = h.find("Total factors supplying reserve funds")
+        if i < 0:
+            return {"error": "H.4.1 頁面找不到 Total factors 標籤"}
+        tail = h[i:]
+        j = tail.find("</td>")                      # label 自己那一格
+        cell = tail[j + 5: j + 3000]                # 右側＝本期金額欄
+        cell = re.sub(r"<[^>]+>", " ", cell).replace("&#xa0;", " ").replace("&nbsp;", " ")
+        m = re.search(r"\d[\d,]{4,}", cell)
         if not m:
-            return {"error": "H.4.1 解析失敗"}
-        return {"date": date.today().isoformat(), "total_assets": float(m.group(1).replace(",", ""))}
+            return {"error": "H.4.1 金額欄解析失敗"}
+        _d = re.search(r"([A-Z][a-z]+ \d{1,2}, \d{4})", h)   # 表格發布日
+        return {"date": date.today().isoformat(),
+                "as_of": _d.group(1) if _d else "",
+                "total_assets": float(m.group(0).replace(",", "")),
+                "unit": "million USD"}
     except Exception as e:
         return {"error": str(e)[:80]}
 
@@ -388,7 +405,8 @@ def compute_signals(tw, cot, fed, twd, tnx, cfg, state):
             else:
                 sig["Fed流動性"] = {"color": "🟡", "note": f"資產負債表 {chg*100:+.1f}%"}
         else:
-            sig["Fed流動性"] = {"color": "⚪", "note": f"總資產 {fed['total_assets']/1e9:.0f}B（基準建立中）"}
+            # 單位＝百萬美元，除以 1e3 得十億美元（B）；2026-09-20 修：原換算倍率錯，6,797B 會印成 0B
+            sig["Fed流動性"] = {"color": "⚪", "note": f"總資產 {fed['total_assets']/1e3:,.0f}B（基準建立中）"}
         state["fed"] = {"total_assets": fed["total_assets"], "date": fed["date"]}
 
     # 台幣強升 → 綠燈升級

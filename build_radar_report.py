@@ -137,7 +137,10 @@ def main():
     cot_txt = "｜".join(f"{k} 淨多單 {v.get('net',0):,}（週增 {((v.get('net',0)-(v.get('prev',0) or 0))/abs(v.get('prev',1) or 1)*100):+.1f}%）" for k, v in cot.items()) if cot else "無"
     tnx = d.get("tnx") or {}
     fed = d.get("fed") or {}
-    _fed_txt = fed.get("error") or (f"總資產 {fed.get('total', 0):,.0f}" if fed.get("total") else "無資料")
+    # 鍵名與 institutional_flow.fetch_fed 一致：total_assets（單位百萬美元 → 換算成 B 顯示）；
+    # 2026-09-20 修：原消費端所用鍵名與生產端不符，抓到值也永遠顯示「無資料」。
+    _fed_ta = fed.get("total_assets") or 0
+    _fed_txt = fed.get("error") or (f"總資產 {_fed_ta/1e3:,.0f}B USD（{fed.get('as_of') or fed.get('date','')}）" if _fed_ta else "無資料")
     raw_html = (f"<div style='background:#f9fafb;border-radius:12px;padding:12px 14px;margin-bottom:12px'>"
                 f"<h3 style='font-size:13px;font-weight:800;margin:0 0 6px;color:#1d1d1f'>🗄️ 原始數據</h3>"
                 f"<p style='font-size:11.5px;color:#4b5563;margin:3px 0'>COT（{str((d.get('cot') or {}).get('date',''))[:10]}）：{cot_txt}</p>"
