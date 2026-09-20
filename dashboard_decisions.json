@@ -65,6 +65,12 @@
       "action": "安聯累計現金給付總額對帳（差額 22,180）",
       "status": "📌 待對帳：安聯 App 累計現金給付 1,782,242（A 1,046,391＋B 735,851）− snapshot 同期 dividend_records 記錄 129,100（8月 76,931＋9月 52,169）＝ 差 22,180，疑為 7/28 前未入帳批次",
       "tags": "對帳,安聯,Moneybook"
+    },
+    {
+      "date": "2026-09-21",
+      "action": "台股解凍 → 納入 9/21 再平衡評估",
+      "status": "🔄 執行中：US30Y 5.296 <5.30（9/20 收盤）條件觸及，待 9/21 再平衡評估確認分批節奏（優先 006208／0051、單筆 ≤5萬、警戒區 ≤50萬/週；不追 0050）",
+      "tags": "再平衡,台股,解凍,US30Y,006208,0051"
     }
   ],
   "decisions": [
@@ -4886,23 +4892,32 @@
       "tags": "",
       "timestamp": "2026-09-20"
     },
-    {"timestamp": "2026-09-20T20:40:04", "action": "核准", "name": "台股解凍條件觸及 → 納入 9/21 再平衡評估", "source": "user", "status": "已核准", "category": "決策", "user": "Laing", "idem_key": "hermes-1789908004", "summary": "US30Y 5.296 <5.30（9/20 rebalance_snapshot frozen=false）→ 台股缺口 -2.5pp 納入 9/21 再平衡評估；優先 006208／0051、單筆 ≤5萬、警戒區 ≤50萬/週、不追 0050"}
-  ,
-{
- "timestamp": "2026-09-20T23:20:00",
- "summary": "修正：AI 成本帳改版（DS／Gemini 雙錢包餘額＋近 7 日）與備援熔斷改 log 口徑官方現行價（INC-232）",
- "detail": "使用者 22:00 指示「要能明確監控 Gemini/DS 費用、每天花多少、剩多少餘額」→ 該輪 session 22:31 被中斷，留下未提交的 daily_token_account.py 改版與新檔 fallback_cost_guard.py，22:40 收工檢查回報 ❌ 未提交。接手後完成：①自寫唯讀驗證器 19/19 PASS（cache 欄選配回歸、:free 模型歸零、手算對帳、實跑 Gemini NT$89.0 vs 獨立算法 89.2）②真 CIO 審查兩輪 APPROVE（首輪抓到「預付金用盡」告警用 ASCII 破指示符破壞 Telegram 對齊 → 修正後 --amend 重審）③RECORD tree d3224a8d（commit 76c63f96）＋資料標籤 commit f3d9f2fa，推雙分支（git ls-remote 驗證 clean-main＝main＝本機）④重跑 closeout_check 全綠。新口徑：成本帳含 DS 真值 API 餘額／Gemini 以「儲值−用量」推定＋8-token 探測／近 7 日雙序列／:free 模型計 NT$0；熔斷門檻 US$0.30/天改由 logs 自算（原讀 state.db 低估 2.07x）。9/20 當日花費 NT$119（DS 30／Gemini 89，主因 61 次 CER 風控）。現況：DS ¥115≈10.2 天、Gemini 推定 NT$891≈11.7 天，兩錢包各自結算。",
- "source": "user",
- "tags": [
-  "成本治理",
-  "INC-232",
-  "AI 費用",
-  "cron 修復"
- ]
-}
- ],
+    {
+      "timestamp": "2026-09-20T20:40:04",
+      "action": "核准",
+      "name": "台股解凍條件觸及 → 納入 9/21 再平衡評估",
+      "source": "user",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1789908004",
+      "summary": "US30Y 5.296 <5.30（9/20 rebalance_snapshot frozen=false）→ 台股缺口 -2.5pp 納入 9/21 再平衡評估；優先 006208／0051、單筆 ≤5萬、警戒區 ≤50萬/週、不追 0050"
+    },
+    {
+      "timestamp": "2026-09-20T23:20:00",
+      "summary": "修正：AI 成本帳改版（DS／Gemini 雙錢包餘額＋近 7 日）與備援熔斷改 log 口徑官方現行價（INC-232）",
+      "detail": "使用者 22:00 指示「要能明確監控 Gemini/DS 費用、每天花多少、剩多少餘額」→ 該輪 session 22:31 被中斷，留下未提交的 daily_token_account.py 改版與新檔 fallback_cost_guard.py，22:40 收工檢查回報 ❌ 未提交。接手後完成：①自寫唯讀驗證器 19/19 PASS（cache 欄選配回歸、:free 模型歸零、手算對帳、實跑 Gemini NT$89.0 vs 獨立算法 89.2）②真 CIO 審查兩輪 APPROVE（首輪抓到「預付金用盡」告警用 ASCII 破指示符破壞 Telegram 對齊 → 修正後 --amend 重審）③RECORD tree d3224a8d（commit 76c63f96）＋資料標籤 commit f3d9f2fa，推雙分支（git ls-remote 驗證 clean-main＝main＝本機）④重跑 closeout_check 全綠。新口徑：成本帳含 DS 真值 API 餘額／Gemini 以「儲值−用量」推定＋8-token 探測／近 7 日雙序列／:free 模型計 NT$0；熔斷門檻 US$0.30/天改由 logs 自算（原讀 state.db 低估 2.07x）。9/20 當日花費 NT$119（DS 30／Gemini 89，主因 61 次 CER 風控）。現況：DS ¥115≈10.2 天、Gemini 推定 NT$891≈11.7 天，兩錢包各自結算。",
+      "source": "user",
+      "tags": [
+        "成本治理",
+        "INC-232",
+        "AI 費用",
+        "cron 修復"
+      ]
+    }
+  ],
   "meta": {
-    "updated_at": "2026-09-20T14:11:21.796963"
+    "updated_at": "2026-09-21T07:00:09.497701"
   },
-  "last_updated": "2026-09-20T18:00:00+08:00"
+  "last_updated": "2026-09-21T18:00:00+08:00"
 }
