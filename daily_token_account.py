@@ -33,9 +33,11 @@ LJ = Path.home() / "Desktop" / "longjiu_system"
 USD_TWD = 31.7  # 2026-09-14 Yahoo USDTWD 31.705（原 31.5）
 CNY_TWD = 4.73  # 2026-09-14 使用者確認（200 CNY≈944 TWD）；Yahoo CNYTWD 4.734
 
+# cache 欄位為選配：provider 沒回快取資訊時整行沒有 cache=，舊 regex 會把整筆呼叫漏掉
+# （2026-09-20 實測：當日 53 行 Gemini 呼叫因缺 cache= 全數漏算 → 日帳低估 2.4 倍）。
 API_RE = re.compile(
     r"^(\d{4}-\d{2}-\d{2}) (\d{2}):\d{2}:\d{2}.*API call #\d+: model=(\S+) provider=(\S+) "
-    r"in=(\d+) out=(\d+) total=\d+ latency=\S+ cache=(\d+)/(\d+)")
+    r"in=(\d+) out=(\d+) total=\d+ latency=\S+(?: cache=(\d+)/(\d+))?")
 PRICE = {  # model: (in, out, cache_hit, is_deepseek)
     # ── DeepSeek（2026-09-14 查官方定價頁；此為 off-peak 價，尖峰由 cost_usd 的 peak 係數 ×2 處理）──
     # 官方頁：deepseek-flash cache hit $0.003 / miss $0.15 / out $0.60；pro $0.022 / $0.66 / $1.98
@@ -74,7 +76,7 @@ def scan_agent_log(today: str):
                     if not m:
                         continue
                     model, pin, pout = m.group(3), int(m.group(5)), int(m.group(6))
-                    cached = int(m.group(7))
+                    cached = int(m.group(7) or 0)  # 缺 cache 欄位（無快取資訊）→ 視為 0（全價）
                     hour = int(m.group(2))
                     peak = is_ds_peak(dt.date.fromisoformat(m.group(1)), hour)
                     c = per[model]
