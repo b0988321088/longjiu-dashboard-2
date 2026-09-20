@@ -729,3 +729,14 @@
 - **根因**：15:15 的 `daily_token_account.py` 修正（API_RE cache 選配化）**只 commit、沒有送審也沒有落 RECORD** 就結束該輪工作；pre-push v4.2 逐 commit 驗 tree，推送範圍含「無紀錄的程式 commit」→ `auto_push.py` fail-closed 拒推整段（`--record auto` 也會因範圍含未審程式檔而 exit 3）。即：**一顆未落地紀錄的程式 commit 會無聲挾持下一條自動化推送路徑**（此處是 16:15 雷達；若先遇到就會變成 07:00 日報斷推）。
 - **修法**：①對該 commit 補真 CIO 審查（唯讀驗證器放 `%TEMP%`，6 條指定命令逐條期望值；APPROVE，reviewer 依實際模型記 `CIO-DeepSeek-Flash`）②`python cio_approve.py --commit dde4225957e6 --reviewer "CIO-DeepSeek-Flash" --note …` 落地 tree `3174c1a04cdb` ③資料 commit `2e54bd88`（純資料）走 `auto_record.py --script radar_push.py` 落 tree `bbed2b183bd4` ④`python auto_push.py --script radar_push.py` 推雙分支，`git ls-remote` 驗證 clean-main＝main＝本機 HEAD `2e54bd88`，Pages 雷達報表 200。
 - **教訓**：**「改完程式 → 同一輪就送審＋落地」不可跨輪，因為推送路徑不只你這一條** —— 任何自動化（雷達／日報／夜間同步）都會把本機落後的未審 commit 一起帶進推送範圍而被閘門擋下，症狀會出現在「看似無關」的那條 cron 上。自查方式：收工前跑 `python cio_approve.py --status`，看到 ❌ 就不算收工；`git log origin/clean-main..HEAD` 應為空。
+## 2026-09-20（INC-230）雷達 Fed H.4.1 三重靜默缺陷：解析失敗 → 鍵名不符 → 換算倍率錯
+
+- **症狀**：雷達報告頁與儀表板長期顯示 `Fed H.4.1：H.4.1 解析失敗`（radar_state.json 的 `data.fed` 只有 error dict）；該燈號自建立以來從未真正產生過值。
+- **根因（三個獨立缺陷疊在一起，任一個都會讓它靜默）**：
+  1. `institutional_flow.fetch_fed()` 的 regex 假設「Total factors supplying reserve funds」標籤後的第一個 `<td>` 直接接數字，但 Fed 官網表格已改成 span 式標記（label 與金額各在 span 內，且金額前多一個 `&#xa0;`）→ regex 永不命中，函式只回 `{"error": ...}`，**不丟例外、不告警**；呼叫端 `compute_signals` 只在有 `total_assets` 時才建基準 → 缺值不會被任何人發現。
+  2. 生產端寫的鍵是 `total_assets`，消費端 `build_radar_report.py` 讀的是 `total` → **就算抓到值也永遠顯示「無資料」**（典型「舊鍵／新鍵不對齊」）。
+  3. H.4.1 表的單位是 Millions of dollars，顯示式除以 10 的 9 次方 → 6,796,731 印成 `0B`。
+- **修法**（`31c3f367` tree `716ca1d7`，CIO-DeepSeek-Flash APPROVE）：`fetch_fed()` 改為「定位 label 那一格 → 取右側格的純文字 → 抓第一個金額」，並新增 `as_of`（發布日）與 `unit`；消費端改讀 `total_assets`；顯示改除以 1e3 得十億美元。實跑驗證：舊 regex 對現行頁面命中 False、新函式回 `6,796,731`（as_of September 17, 2026）、燈號 `⚪ 總資產 6,797B`、±1%／-3% 週變化分支仍為 🟢/🔴。
+- **殘留風險（CIO 標記、非阻擋）**：`fetch_fed()` 失敗時仍只回 error dict，**缺值本身沒有告警**；下次要補的是「抓不到就吵」而不是再修解析。
+- **教訓**：**「外部網頁 regex + 靜默 error dict + 消費端鍵名不一致」是最容易長期潛伏的三連擊** —— 抓取失敗不丟例外、失敗值直接進 state、消費端又讀錯鍵，三層都靜默，於是「壞掉」與「正常但無資料」在畫面上長得一模一樣。凡新增抓外部頁面的 fetcher：①失敗要能被呼叫端看見（至少進 summary/告警）②生產端與消費端的鍵名要有自動核對（本案例的修法已把鍵名寫進註解並由驗證器 grep 兩端）③單位換算要有實跑數值斷言（不是看程式碼推）。
+- **附帶**：本次審查判準踩到「註解重述被掃字面值」的坑 —— 修完程式後若在註解寫「原倍率是 1e9」，`grep 1e9` 這類判準就會命中註解而誤判殘留。註解只敘述結論，不要重述被掃的字面值。
