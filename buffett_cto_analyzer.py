@@ -137,6 +137,7 @@ def penetration_analysis(snapshot: dict) -> dict:
         actual = {cat: actual_twd[cat] / total_inv * 100 for cat in actual_twd}
         actual["tech_exposure"] = float((snapshot.get("penetration", {}).get("actual_pct", {})).get("美股市值型成長_科技", 0))
         gaps = {cat: actual.get(cat, 0) - TARGETS[cat] for cat in TARGETS}
+        gaps["tech_exposure"] = actual.get("tech_exposure", 0) - TARGETS["tech_exposure"]
         growth_pct = actual.get("tw_equity", 0) + actual.get("us_equity", 0)
         defense_pct = actual.get("defensive", 0)
         safety_pct = actual.get("bond", 0) + actual.get("cash", 0)
