@@ -18,11 +18,11 @@ TODAY = date.today().isoformat()
 # 5 類穿透目標（動態：以 snapshot.penetration.targets 為單一真值；缺 key 時 fallback 2026-08-02 定案值 20/30/20/15/15）
 try:
     _snap_tgt = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")).get("penetration", {}).get("targets", {}) or {}
-    # 2026-09-12 裁示②：科技曝險目標 15% → 20%。其他目標保持 8/2 裁示值。
-    _tech_cap_snap = float(_snap_tgt.get("科技曝險目標", 20))
+    # 2026-09-20 裁示：科技曝險目標 定版 15%。
+    _tech_cap_snap = float(_snap_tgt.get("科技曝險目標", 15))
 except Exception:
     _snap_tgt = {}
-    _tech_cap_snap = 20
+    _tech_cap_snap = 15
 TARGETS = {
     "tw_equity": _snap_tgt.get("台股市值型目標", 10),
     "us_equity": _snap_tgt.get("美股市值型目標", 40),
@@ -135,6 +135,7 @@ def penetration_analysis(snapshot: dict) -> dict:
         actual_twd = {cat: float(_snap_pen.get(key, 0)) for cat, key in _cat_map.items()}
         total_inv = sum(actual_twd.values()) or 1
         actual = {cat: actual_twd[cat] / total_inv * 100 for cat in actual_twd}
+        actual["tech_exposure"] = float((snapshot.get("penetration", {}).get("actual_pct", {})).get("美股市值型成長_科技", 0))
         gaps = {cat: actual.get(cat, 0) - TARGETS[cat] for cat in TARGETS}
         growth_pct = actual.get("tw_equity", 0) + actual.get("us_equity", 0)
         defense_pct = actual.get("defensive", 0)

@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-weekly_nw_breakdown.py — 儀表板「📡 本週淨資產變動拆解」自動更新（2026-09-03）
+weekly_nw_breakdown.py — 儀表板「📡 本週淨資產變動拆解」自動更新（2026-09-20）
 ============================================================
-背景：snapshot.net_worth_weekly_breakdown 過去靠週五深度審查人工寫入，
-週間顯示舊窗口（8/28 事故：9/3 還在顯示 8/21→8/28）。本腳本從
-dragon_assets.db 每日 assets 列自動算，併入 regenerate_report.py 9a 步驟。
-
-窗口：上一個週五（嚴格早於最新列日期）→ 最新列日期
-      （週五當天跑 = 週五→週五，與 CEO 分析同構）
+背景：儀表板「淨資產變動拆解」原計算窗口為「最近一個週五 → 今天」，若週間跑
+或數據無變化則顯示零，導致判讀困難（9/20 實證）。修正為固定「今天 - 7 天 → 今天」
+的滾動窗口，確保永遠有完整的 7 天數據可供分析。
 
 拆解（方法已用 8/21→8/28 驗證：market -27,510 完全重現）：
   net    = Δ(總資產 − 總負債)
@@ -30,12 +27,6 @@ SNAP = BASE / "snapshot.json"
 DB = BASE / "dragon_assets.db"
 
 
-def friday_anchor(d: datetime.date) -> datetime.date:
-    """最近一個「嚴格早於 d」的週五（d 本身是週五 → 回上一週五）。"""
-    delta = (d.weekday() - 4) % 7
-    return d - datetime.timedelta(days=delta if delta else 7)
-
-
 def main():
     force = "--force" in sys.argv
     con = sqlite3.connect(str(DB))
@@ -51,11 +42,15 @@ def main():
         return
     dates = sorted(rows)
     latest_d = dates[-1]
-    anchor_d = friday_anchor(datetime.date.fromisoformat(latest_d)).isoformat()
-    older = [d for d in dates if d <= anchor_d]
-    anchor = older[-1] if older else dates[0]
+    _latest_date_obj = datetime.date.fromisoformat(latest_d)
+    _anchor_date_obj = _latest_date_obj - datetime.timedelta(days=7)
+    anchor = _anchor_date_obj.isoformat()
+    # 確保 anchor 日期在歷史數據範圍內，否則用最早的數據
+    if anchor < dates[0]:
+        anchor = dates[0]
+    
     if anchor == latest_d:
-        print("僅一列歷史，無法算窗口")
+        print("僅一列歷史或窗口不足 7 天，無法算變動")
         return
 
     L, A = rows[latest_d], rows[anchor]
