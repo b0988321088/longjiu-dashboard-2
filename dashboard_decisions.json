@@ -4885,7 +4885,8 @@
       "status": "✅ 已核准",
       "tags": "",
       "timestamp": "2026-09-20"
-    }
+    },
+    {"timestamp": "2026-09-20T20:40:04", "action": "核准", "name": "台股解凍條件觸及 → 納入 9/21 再平衡評估", "source": "user", "status": "已核准", "category": "決策", "user": "Laing", "idem_key": "hermes-1789908004", "summary": "US30Y 5.296 <5.30（9/20 rebalance_snapshot frozen=false）→ 台股缺口 -2.5pp 納入 9/21 再平衡評估；優先 006208／0051、單筆 ≤5萬、警戒區 ≤50萬/週、不追 0050"}
   ],
   "meta": {
     "updated_at": "2026-09-20T14:11:21.796963"
