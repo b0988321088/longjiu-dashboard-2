@@ -722,3 +722,10 @@
 - **根因**: snapshot.json 科技目標設定不符使用者指令，且 buffett_cto_analyzer.py 未正確傳遞實際科技曝險給 LLM；weekly_nw_breakdown.py 週定義導致數據顯示問題。
 - **修復**: snapshot.json 科技目標設為 15%，buffett_cto_analyzer.py 修正 LLM 提示科技曝險邏輯，weekly_nw_breakdown.py 調整週定義為固定七日視窗。
 - **日期**: 2026-09-20
+
+## 2026-09-20（INC-229）程式 commit 改完沒落地審查紀錄 → 16:15 雷達 cron 整段推送被擋（rc=3）
+
+- **症狀**：`機構流向雷達-每日法人(16:15)` cron 回報「⚠️ 未推送上線（rc=3）：改動必須走真 CIO 審查 － dde4225957e6：daily_token_account.py」。當日雷達報表與儀表板（index.html／radar_report_2026-09-20.html／radar_state.json）已 commit 卻沒上線。
+- **根因**：15:15 的 `daily_token_account.py` 修正（API_RE cache 選配化）**只 commit、沒有送審也沒有落 RECORD** 就結束該輪工作；pre-push v4.2 逐 commit 驗 tree，推送範圍含「無紀錄的程式 commit」→ `auto_push.py` fail-closed 拒推整段（`--record auto` 也會因範圍含未審程式檔而 exit 3）。即：**一顆未落地紀錄的程式 commit 會無聲挾持下一條自動化推送路徑**（此處是 16:15 雷達；若先遇到就會變成 07:00 日報斷推）。
+- **修法**：①對該 commit 補真 CIO 審查（唯讀驗證器放 `%TEMP%`，6 條指定命令逐條期望值；APPROVE，reviewer 依實際模型記 `CIO-DeepSeek-Flash`）②`python cio_approve.py --commit dde4225957e6 --reviewer "CIO-DeepSeek-Flash" --note …` 落地 tree `3174c1a04cdb` ③資料 commit `2e54bd88`（純資料）走 `auto_record.py --script radar_push.py` 落 tree `bbed2b183bd4` ④`python auto_push.py --script radar_push.py` 推雙分支，`git ls-remote` 驗證 clean-main＝main＝本機 HEAD `2e54bd88`，Pages 雷達報表 200。
+- **教訓**：**「改完程式 → 同一輪就送審＋落地」不可跨輪，因為推送路徑不只你這一條** —— 任何自動化（雷達／日報／夜間同步）都會把本機落後的未審 commit 一起帶進推送範圍而被閘門擋下，症狀會出現在「看似無關」的那條 cron 上。自查方式：收工前跑 `python cio_approve.py --status`，看到 ❌ 就不算收工；`git log origin/clean-main..HEAD` 應為空。
