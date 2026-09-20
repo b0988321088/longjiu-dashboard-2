@@ -291,22 +291,9 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
                         f"（<{_dcx['門檻']} 承接解凍）")
     else:
         _def_txt = f"防守型配息 {'超標' if _gaps['防守型配息'] > 0 else '不足'}{abs(_gaps['防守型配息'])}pp"
-    _alerts = []
-    _tech_gap = _gaps.get("科技曝險", 0)
-    _tech_target = _targets.get("科技曝險目標", 15)
-    _actual_tech_pct = _actual_pct.get("美股市值型成長_科技", 0)
-
-    if _actual_tech_pct > (_tech_target + 1.5): # 超標
-        _alerts.append(f"科技曝險 超標{round(_tech_gap, 1)}pp")
-    elif _actual_tech_pct < (_tech_target - 1.5): # 不足
-        _alerts.append(f"科技曝險 不足{round(abs(_tech_gap), 1)}pp")
-
-    # For other gaps (excluding tech_exposure and 防守型配息)
-    for _k, _v in _gaps.items():
-        if abs(_v) >= 1.5 and _k != "防守型配息" and _k != "科技曝險":
-            _alerts.append(f"{_k} {'超標' if _v > 0 else '不足'}{abs(_v)}pp")
-
-    _alert = "；".join(_alerts + [_def_txt]) or "各桶均在容忍範圍"
+    _alert = "；".join(
+        [f"{_k} {'超標' if _v > 0 else '不足'}{abs(_v)}pp" for _k, _v in _gaps.items()
+         if abs(_v) >= 1.5 and _k != "防守型配息"] + [_def_txt]) or "各桶均在容忍範圍"
 
     return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": def_v, "債券": bond_v, "現金/安全網": c,
             "黃金": round(_fund_gold), "健康": round(_fund_health),

@@ -535,17 +535,7 @@ def main():
         if _gate:
             lines.append(f"⏸️ 台股觀望（{_tw5:.1f}% vs 目標{_tw_t}%）→ {_ps.pledge_status_line(_snap, style='short')}；US30Y {_us30_v}%（凍結線 {_us30_gate}%）；僅大跌 -5% 才小單 ≤5萬")
         else:
-            # 2026-09-20：使用者指定標的（snapshot.tw_add_plan）→ 資料驅動；缺值時維持原動態文案
-            _tap = _snap.get("tw_add_plan") or {}
-            if _tap.get("標的"):
-                lines.append(
-                    f"🟡 台股（{_tw5:.1f}% vs 目標{_tw_t}%，缺口 {_tw5-_tw_t:+.1f}pp）→ "
-                    f"{_tap.get('標的')}（{_tap.get('名稱', '')}）×{_tap.get('張數', 0)} 張 "
-                    f"≈{float(_tap.get('預估金額') or 0):,.0f}，分批進場：{_tap.get('批次說明', '')}｜"
-                    f"資金＝{_tap.get('資金來源', '')}｜解凍依據：{_tap.get('解凍依據', '')}｜"
-                    f"停止條件：{_tap.get('停止條件', '')}｜註：{_tap.get('備註', '')}")
-            else:
-                lines.append(f"🟢 台股（{_tw5:.1f}% vs 目標{_tw_t}%，缺口 {_tw5-_tw_t:+.1f}pp）→ 0050/006208 分批慢慢買（單筆 ≤5萬）")
+            lines.append(f"🟢 台股（{_tw5:.1f}% vs 目標{_tw_t}%，缺口 {_tw5-_tw_t:+.1f}pp）→ 0050/006208 分批慢慢買（單筆 ≤5萬）")
         # ② 美股（2026-09-15 INC-187 使用者核准：門檻收斂 + 可執行性 + 煞車優先序）
         # ① 觸發帶讀 thresholds SoT（導流帶），不再寫死 +5
         # ② 減碼只能減「非後收、非保單內、無 CDSC」部位（國泰池 92% 後收、保單內無 CDSC 但屬長線）
@@ -595,19 +585,11 @@ def main():
         lines.append(f"⏸️ 防守（合併口徑 {_def5:.1f}% 已足）→ 凍結不追（00878/00713 不加碼）")
         # ④ 債券（比例與目標讀 snapshot，原寫死 23.1%/25%）
         _bond5 = _pen5.get("債券", 0); _bond_t = _tgt5.get("債券型目標", 25)
-        if _bond5 > _bond_t:
-            lines.append(f"⏸️ 債券 {_bond5:.1f}%（目標 {_bond_t}%）超配 {_bond5-_bond_t:+.1f}pp → 不新增；等 10Y 月動能轉緩（現急升🔴）")
-        else:
-            lines.append(f"⏸️ 債券 {_bond5:.1f}%（目標 {_bond_t}%）→ 等 US30Y 回落凍結線 {_us30_gate}% 以下才新增")
+        lines.append(f"⏸️ 債券 {_bond5:.1f}%（目標 {_bond_t}%）→ 等 US30Y 回落凍結線 {_us30_gate}% 以下才新增")
         # ⑤ 現金/乾粉
         _cash5 = _pen5.get("現金/安全網", 0)
         _floor5 = _snap.get("cash_floor", 700000)
-        _tap5 = _snap.get("tw_add_plan") or {}
-        if _tap5.get("標的"):
-            _remain5 = max(0.0, float(_dry or 0) - float(_tap5.get("預估金額") or 0))
-            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；乾粉 {_dry/10000:.1f}萬 → 指派 {_tap5.get('標的')} "
-                         f"{float(_tap5.get('預估金額') or 0):,.0f}（分 {_tap5.get('批數', 0)} 批），餘 {_remain5:,.0f} 機動")
-        elif _rot5.get("產業") and not _gate:
+        if _rot5.get("產業") and not _gate:
             lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；乾粉 {_dry/10000:.1f}萬 優先「{_rot5.get('產業','—')}」（{_rot5.get('動作','')}）")
         else:
             lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；乾粉 {_dry/10000:.1f}萬 保留（觀望 gate 未解除前零新增）")
@@ -625,16 +607,14 @@ def main():
         else:
             lines.append(f"🟡 美元曝險 {_usd}%（目標 ≤{_usd_t}%）→ 未達減碼閾值，續觀察")
         # ⑧ 保單轉換（9/10 安聯＋第一金同步轉入 M&G入息）
-        lines.append("✅ 保單轉換 9/16 生效完成（安聯＋第一金同步轉入 M&G入息A美元避險月配）；避險衛星批1（保單B 摩根 20萬→貝萊德黃金A10）送件截止 9/23（趕 9/29 基準日）")
+        lines.append("✅ 保單轉換 9/10 送出（安聯＋第一金同步轉入 M&G入息A美元避險月配，T+4 預期 9/16 生效）；9/1 安聯 PIMCO+50萬、貝萊德科技A10 90萬→摩根 已完成")
         # ⑨ 負債/質押
-        lines.append(_ps.pledge_status_line(_snap) + "；質押款到位前不新增槓桿部位（本次台股分批走乾粉）")
+        lines.append(_ps.pledge_status_line(_snap) + "；到位前全面觀望")
         # ⑩ 產業輪動
         if _gate:
             lines.append(f"⏸️ 產業輪動：目標「{_rot5.get('產業','—')}」→ 乾粉保留，等觀望 gate 解除後再啟動")
         else:
-            _tap10 = _snap.get("tw_add_plan") or {}
-            _tail10 = f"｜本週執行：{_tap10.get('標的')} 分批（使用者指定）" if _tap10.get("標的") else ""
-            lines.append(f"📊 產業輪動：買「{_rot5.get('產業','—')}」（{_rot5.get('標的','')}）｜避開「公用事業」{_tail10}")
+            lines.append(f"📊 產業輪動：買「{_rot5.get('產業','—')}」（{_rot5.get('標的','')}）｜避開「公用事業」")
         for l in lines:
             print("  " + l)
         # 2026-09-05：結構化存 radar_state.weekly_plan（主儀表板「本週動作與執行清單」動態讀取）
