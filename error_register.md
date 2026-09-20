@@ -747,3 +747,13 @@
 - **修法**（commit `1ef6a305`，CIO 真審 APPROVE）：`_load()` 取值順序改 **環境變數 → repo .env → Hermes .env**（`HERMES_HOME` 可覆寫），空值不算命中，讀檔失敗 `continue` 下一候選。
 - **驗證**：A/B 差分（不注入環境變數）TOKEN len **0 → 50**；真走 CLI 寫入 Notion 後回讀確認，再封存測試列；`ast` 通過、CRLF 無破壞（134/0）。
 - **教訓**：**「憑證搬家」是全域破壞事件** —— 任何讀 `.env` 的腳本都要一起掃（`_load(`／`dotenv`／`.env`）。且凡「讀不到就印一行再 `return`」的軟失敗（exit 0）＝最危險的靜默失敗，**沒有告警會替你發現**；搬遷類改動至少要對一條路徑做**實寫＋回讀**驗證，不能只看 exit code。
+
+## 2026-09-20（INC-232）改完程式的那輪 session 被中斷 → 程式未提交，22:40 收工檢查 ❌
+
+- **症狀**：`龍九收工檢查 22:40` cron（`d6282d33346a`）回報 `❌ 有問題：["未提交: ['daily_token_account.py']"]`，整封收工報告被推播。
+- **根因**：使用者 22:00 指示「讓我能夠明確的監控 Gemini 與 DS 費用、知道每天花多少錢還剩多少餘額」→ 該輪 session 改了 `daily_token_account.py`（並新建 `fallback_cost_guard.py`、同步 `hermes/scripts/` 鏡像）卻在 22:31 被中斷，**沒有 commit / 沒有送審 / 沒有落地紀錄**。收工檢查 22:40 讀到的就是這個髒工作區（屬 INC-229 同一類：改完程式必須同一輪送審＋落地）。
+- **修法**：①在本機 commit 前先把改動做完整驗證（自寫唯讀驗證器 19 項，含 cache 選配回歸、免費模型歸零、手算對帳、實跑與獨立算法對帳）②真 CIO 審查第一輪 APPROVE 但抓到排版瑕疵（「預付金用盡」告警用 ASCII 破指示符，破壞 Telegram 對齊）→ 修正後 `--amend` 成新 tree 再審（第二輪 APPROVE）③`cio_approve.py --commit` 落 RECORD ④資料檔（work_log.json）走 `[cioreviewed]` 標籤 ⑤`git push` 雙分支、`git ls-remote` 驗證 ⑥重跑 `closeout_check.py` 全綠。
+- **教訓**：
+  1. **session 中斷（`Operation interrupted.`）＝最高風險的工作區狀態**：程式改動留在磁碟但沒進版控，收工檢查會它當成「未提交」，而任何自動化推送路徑也可能把它一起帶進範圍被閘門擋下。中斷後接手的第一件事就是 `git status --porcelain`，不是先看 cron 訊息。
+  2. **「已批准的使用者指示」仍不等於「可交付」**：本輪改動有使用者明確指示，但缺的是 commit／審查／紀錄，三者沒有一項能靠「這是使用者要的」略過。
+  3. 審查抓到的排版瑕疵（ASCII `"- "` vs 全形「　· 」）證明**同輪修正比事後補審便宜**：amend（未推的 commit）＋重審只花 29 秒，若先落紀錄再修就得多跑一輪完整審查。

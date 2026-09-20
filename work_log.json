@@ -1164,5 +1164,11 @@
   "category": "完成",
   "item": "資產穿透2026-09-20（台股1,952,312.0 美股10,259,429.0 防守4,538,457.0 債券7,490,016.0 現金916,984.0）",
   "detail": "台股1,952,312.0 美股10,259,429.0 防守4,538,457.0 債券7,490,016.0 現金916,984.0"
+ },
+ {
+  "date": "2026-09-20",
+  "category": "修正",
+  "item": "INC-232：AI 成本帳改版（每天花多少＋還剩多少餘額）＋備援熔斷改官方現行價（前次 session 中斷，程式未提交致 22:40 收工檢查 ❌）",
+  "detail": "使用者 9/20 指示「讓我能夠明確的監控 Gemini 與 DS 費用、知道每天花多少錢還剩多少餘額」。①daily_token_account.py：新增 DeepSeek /user/balance 真值餘額（失敗退 cost_log.csv）、Gemini 預付推定＋8-token 探測、近 7 日走勢與剩餘天數燈號；PRICE 改官方現行價（gemini-2.5-flash 0.30/2.50/0.03）、模型名含 ':free' 一律計 0（免費層不再憑空長成本）、agent.log.0~.3 跨日彙總。②fallback_cost_guard.py 首次入版控：不再讀 state.db estimated_cost_usd（價目快照 2026-07-28，低估 2.07x），改用同一 PRICE 表從 agent.log 自算備援花費，門檻 US$0.30/天、同日只告警一次。驗證：唯讀驗證器 19/19 PASS（含 cache 選配回歸、免費模型歸零、手算對帳、實跑與獨立 algorithm 對帳 Gemini NT$89 一致）＋真 CIO 審查 APPROVE；commit afeab1ae tree a47f3feb。"
  }
 ]
