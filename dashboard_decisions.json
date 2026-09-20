@@ -4368,6 +4368,19 @@
       "status": "completed",
       "source": "auto"
     }
+  ,
+    {
+      "timestamp": "2026-09-20T12:14:52+08:00",
+      "summary": "核准：watchdog v6.17（INC-200）❗ 升級告警不再對已 /new 收掉的對話推播",
+      "detail": "session_bloat_watch.py v6.17：note_fb_escalation()（v6.11 ❗「連續 2 輪備援代答」升級告警）推播前新增關卡 session_ended(sid)（查 sessions.ended_at）→ 對話已被 /new／自動重置收掉時只寫 act log、不推播、不佔 fb_escalated 節流；保守方向（舊 schema 無欄／查詢失敗／sid 不在表內）回 False 照舊推播。失敗訊號路徑（自動重置，v6.7 鐵則）與 v6.9 ⚠️ 分支刻意不動。實證 9/20：舊對話被擋 24 次 → 11:17:48 /new → 新對話 43 秒又被擋 6 次（每輪 Gemini 代答）→ 11:24:57 再 /new，11:28:17 tick 仍對已結束 3.3 分鐘的 session 推「建議在此對話送 /new」。驗證：沙箱 129 檢查 FAIL 0（新增 AQ/AR）、真實 A/B 重播（v6.16 推 ❗ vs v6.17 靜默）、dry-run 靜默 exit 0。備份 .bak-20260920-v616；技能 session-bloat-watchdog + hermes-gateway-troubleshooting §19c + work_log 第 179 筆已同步；cron 下一 tick 生效。",
+      "source": "user",
+      "tags": [
+        "系統",
+        "watchdog",
+        "INC-200",
+        "session"
+      ]
+    }
   ],
   "meta": {
     "updated_at": "2026-09-20T11:07:27.394792"

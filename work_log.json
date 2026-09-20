@@ -1068,5 +1068,11 @@
   "category": "修正",
   "item": "非 ASCII 檔名連結治本：大轉向簡報 HTML/PPTX 改 ASCII 檔名（grand_pivot_deck.*）",
   "detail": "使用者回報再平衡儀表板 404 後全面掃線上 22 顆按鈕連結：實測全部 200，僅『大轉向簡報』非 ASCII 檔名在未編碼路徑下會 404（Pages 對原始非 ASCII 路徑回 404，瀏覽器 percent-encode 才正常）。處置：git mv 兩檔為 ASCII、舊 HTML 檔名留 meta refresh redirect stub、同步 7 處引用點（index_template/build_dashboard/build_refinance_html/build_final/regenerate_report/links/dashboard_v2）、重建 index.html。驗證：deterministic 驗證器 26 項全過（含 clone 內重跑 build_dashboard.py）、CIO 異質審查 APPROVE（Pollinations GPT-OSS）綁 tree 76677c72、推送後線上 grand_pivot_deck.html/pptx 與 HEAD 位元一致、舊檔名 stub 200。"
+ },
+ {
+  "date": "2026-09-20",
+  "category": "修正",
+  "item": "watchdog v6.17（INC-200）：❗ 升級告警對已被 /new 收掉的對話不再推播",
+  "detail": "session_bloat_watch.py v6.17：note_fb_escalation() 推播前新增 session_ended(sid) 守門（查 sessions.ended_at）→ 對話已被 /new／自動重置收掉時只寫 act log、不推 ❗、不佔 fb_escalated 節流；失敗訊號路徑（自動重置）與 v6.9 ⚠️ 分支刻意不動。實證：9/20 舊對話被擋 24 次→11:17:48 /new→新對話 43 秒又被擋 6 次（每輪 Gemini 代答）→11:24:57 再 /new，11:28:17 tick 仍對已結束 3.3 分鐘的 session 推「建議在此對話送 /new」。驗證：沙箱 129 檢查全 PASS（新增 AQ/AR）、真實 A/B 重播（v6.16 推 ❗ vs v6.17 靜默）、dry-run 靜默 exit 0。備份 .bak-20260920-v616；技能 session-bloat-watchdog 版號/版史/陷阱 + hermes-gateway-troubleshooting §19c 已同步。"
  }
 ]
