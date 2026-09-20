@@ -5,18 +5,31 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 ENV = BASE / ".env"
+# 2026-09-20：Notion 憑證搬到 Hermes 家目錄（~/AppData/Local/hermes/.env），repo 這份已無 NOTION_*；
+# 只讀 repo .env 會靜默印「Notion 未設定」而整批決策無聲不落庫。這裡加後援（HERMES_HOME 可覆寫預設路徑）。
+_HERMES_HOME = Path(os.environ.get("HERMES_HOME") or (Path.home() / "AppData" / "Local" / "hermes"))
+ENV_CANDIDATES = [ENV, _HERMES_HOME / ".env"]
+
 
 def _load(key, default=""):
+    """取值順序：環境變數 → repo .env → Hermes .env。回傳第一個命中的**非空**值。
+
+    行內比對沿用原邏輯（`key in line`）；差異只在「空值不再算命中」——原版遇到
+    `NOTION_TOKEN=`（空）會回空字串並中止，讓後面的候選檔永遠讀不到。
+    """
     v = os.environ.get(key, "")
     if v:
         return v
-    try:
-        with open(ENV) as f:
-            for line in f:
-                if key in line and "=" in line and "YOUR" not in line:
-                    return line.split("=", 1)[1].strip().strip('"')
-    except:
-        pass
+    for path in ENV_CANDIDATES:
+        try:
+            with open(path, encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    if key in line and "=" in line and "YOUR" not in line:
+                        val = line.split("=", 1)[1].strip().strip('"').strip("'")
+                        if val:
+                            return val
+        except Exception:
+            continue
     return default
 
 TOKEN = _load("NOTION_TOKEN")
