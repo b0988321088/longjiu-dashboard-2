@@ -90,5 +90,15 @@
     "status": "📌 待對帳：安聯 App 累計現金給付 1,782,242（A 1,046,391＋B 735,851）− snapshot 同期 dividend_records 記錄 129,100（8月 76,931＋9月 52,169）＝ 差 22,180，疑為 7/28 前未入帳批次",
     "tags": "對帳,安聯,Moneybook",
     "detail": "2026-09-20：snapshot 的 policy_a/b_cumulative_dividend 自 7/28 起未更新（皆為 943,850/687,112），已依 9/20 12:17 App 截圖覆蓋為 1,046,391/735,851（+151,280）。與同期 dividend_records 記錄 129,100 差 22,180 → 下次 Moneybook 匯出時對帳確認（不自行調整 dividend_records，避免重複計）。"
+  },
+  {
+    "id": "INC-2",
+    "title": "00921分批進場計畫",
+    "description": "買入00921共3張，分兩批進場，資金全走乾粉。第一批9/21-9/22市價附近限價1張，第二批回檔-2%（<=23.2）或9/23-24未破月線再2張。停止條件：US30Y >= 5.30 或外資轉連續賣超 或 VIX>25。",
+    "category": "投資決策",
+    "status": "✅ 已核准",
+    "verdict": "APPROVE",
+    "reviewer": "user",
+    "reviewed_at": "2026-09-20T14:01:50.756416"
   }
 ]
