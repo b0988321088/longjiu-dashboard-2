@@ -17,3 +17,6 @@
 {"ts": "2026-09-21T13:20:23", "model": "deepseek-chat", "caller": "run_daily.py", "in": 853, "cached": 384, "out": 205, "ok": true}
 {"ts": "2026-09-21T13:20:26", "model": "deepseek-chat", "caller": "run_daily.py", "in": 488, "cached": 0, "out": 163, "ok": true}
 {"ts": "2026-09-21T13:21:43", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 571, "cached": 384, "out": 882, "ok": true}
+{"ts": "2026-09-21T13:23:47", "model": "deepseek-chat", "caller": "run_daily.py", "in": 828, "cached": 384, "out": 165, "ok": true}
+{"ts": "2026-09-21T13:23:49", "model": "deepseek-chat", "caller": "run_daily.py", "in": 853, "cached": 384, "out": 176, "ok": true}
+{"ts": "2026-09-21T13:23:52", "model": "deepseek-chat", "caller": "run_daily.py", "in": 488, "cached": 0, "out": 176, "ok": true}
