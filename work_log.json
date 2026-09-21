@@ -1206,5 +1206,13 @@
   "category": "完成",
   "item": "資產穿透2026-09-21（台股2,002,124.0 美股10,253,353.0 防守4,522,785.0 債券7,488,546.0 現金912,180.0）",
   "detail": "台股2,002,124.0 美股10,253,353.0 防守4,522,785.0 債券7,488,546.0 現金912,180.0"
+ },
+ {
+  "date": "2026-09-21",
+  "category": "修正",
+  "item": "INC-236：226 顆 commit 卡本機 5 天未上線（推錯 refspec）—— 遠端同步稽核上線",
+  "detail": [
+   "現場：線上 index.html 嵌入總資產停在 25,918,930／9/14 值、雷達/差異/週報連結停在 9/15-9/16，使用者四問後查出 origin/clean-main 停在 5301e5d1（9/16）、本機已到 631565bf → 226 顆未上線。根因：`git push --force origin main:clean-main` 左手寫成本機舊 main 分支，把 9/16 內容當新進度推上 Pages；git push 回 0、輸出像成功，兩邊靜默分岔 5 天。閘門只驗『推送範圍內有無審查紀錄』——推舊 commit 時範圍內無新 commit，所以全綠。修法：①一次性追認 226 顆後 force-with-lease 推 clean-main:clean-main（Pages 全部刷新為 9/21）②auto_push.py DEFAULT_REFS 收斂為 ['HEAD:clean-main']，移除從未維護的本機 main 地雷③closeout_check.py 新增⑤遠端同步稽核：HEAD 必須等於 origin/<branch>，未推送/落後/ detached 一律列問題（cron 22:40 --silent-ok 會吐報告）④error_register 登錄 INC-236。"
+  ]
  }
 ]
