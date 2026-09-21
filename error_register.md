@@ -790,3 +790,14 @@
 - **修法（治本）**：卡片每列改由 snapshot 自身**機器可讀欄位**推導 —— 現金=`cash_source.date`／證券=`securities.price_date`／保單第一金=`firstjin_detail.last_update`／基金淨值日與安聯=`fund_nav_dates`（新增欄位，資料更新流程必寫）；缺值顯示「待補」**不回退舊值**（fail-closed）；卡片底部自證「最新 as-of＋卡片產出日」；`data_freshness` 五個人工日期鍵移除、只保留「其他人工補充來源」。保單列並拆為「第一金 FL65（9/21）」與「安聯 A/B（9/20）」兩列（原合併一列會高估新鮮度）。
 - **驗證**：實跑 `asset_diff_monitor.py` → 現金/證券/第一金 9/21 🟢、安聯 9/20 🟢、基金淨值日 9/18 🟡、無「待補」、底部「最新 as-of 2026-09-21｜卡片產出 2026-09-21」。
 - **教訓**：**人工維護的一致性欄位必然漂移**（同 INC-233 的安全線、INC-234 的輪動名單）→ 任何「顯示資料新舊」的欄位都必須由資料本身的 as-of 推導，缺值要 fail-closed 現形、不得回退舊值；新增此類欄位時必須同時指定**誰來寫**，否則一年後就是下一個 INC。
+
+## INC-236｜226 顆 commit 卡在本機 5 天未上線 —— 只推錯分支一次，Pages 全站吃舊值（2026-09-21）
+- **發現管道**：使用者連續提問「日報好像沒有更新到最新的市場資訊」「流向雷達停在 15 號」「週報也是舊的」「總資產為什麼跟差異分析不一樣」。
+- **症狀**：線上 index.html 嵌入總資產 25,918,930（9/14 值）、連結指向 radar_report_2026-09-15／asset_diff_2026-09-16／weekly_report_2026-09-14；本機同期已產出 9/21 版且 snapshot 真值 26,074,372。`origin/clean-main` 停在 5301e5d1（9/16），本機 `clean-main` 已到 631565bf → **226 顆 commit 未上線**。
+- **根因**：`git push --force origin main:clean-main` —— refspec 左邊寫的是**本機 main 分支**（停在 9/16 的 5301e5d1），不是 HEAD/clean-main。`git push` 回 0、輸出看起來像成功（甚至 `--force` 還印了強制更新），實際上把**舊內容**送上 Pages 正式分支。遠端 sha 從此不再前進，而本機產線照常 commit，兩邊靜默分岔 5 天。
+- **為什麼沒被擋下**：閘門驗的是「推送範圍內每顆 commit 有無審查紀錄」，推的是舊 commit（本來就有紀錄）→ 範圍內無新 commit → 全部通過。**「推得動」與「推對東西」是兩件事**，閘門不驗後者。
+- **修法**：
+  1. 一次性追認 226 顆（`cio_approve.py --result <批次審查JSON> --range-base origin/clean-main`）後 `git push --force-with-lease origin clean-main:clean-main`，遠端前進至 631565bf、連結與嵌入值全部刷新為 9/21。
+  2. **治本**：`auto_push.py` 的 `DEFAULT_REFS` 由 `["HEAD:clean-main", "HEAD:main"]` 收斂為 `["HEAD:clean-main"]` —— 本機 `main` 自 9/16 起從未維護，它只是一個「會把舊內容推上正式分支」的地雷。
+- **驗證**：`origin/clean-main` = 本機 HEAD；`git rev-list --count origin/clean-main..clean-main` = 0；線上 index.html 連結指向 9/21 三份報表。
+- **教訓**：**手寫 refspec 時，左邊永遠只能是 `HEAD` 或與目標同名的分支**；本機存在「同步分支」就是風險源（遲早有人拿它當來源）。推送後必須驗 `git rev-list --count origin/<branch>..HEAD == 0`，不能只看 `git push` 的 returncode —— 這條已寫進 `longjiu-error-register` 的 preflight。
