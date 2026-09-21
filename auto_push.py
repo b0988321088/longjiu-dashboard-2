@@ -46,11 +46,15 @@ import sys
 import time
 from pathlib import Path
 
-DEFAULT_REFS = ["HEAD:clean-main", "HEAD:main"]
+DEFAULT_REFS = ["HEAD:clean-main"]
 # 2026-09-16 INC-198：原本是 ["clean-main", "clean-main:main"] —— 來源是**本機分支**，不是 HEAD。
 # HEAD detached（例如 `git checkout <sha>` 看舊版後忘了回來）時，本機分支仍停在舊 commit，
 # 於是「推上去的是舊內容、returncode 卻是 0」，只有第 5 步驗證以 rc=5 現形（看起來像網路問題）。
-# 改為一律推 HEAD：工具的工作就是「把現在的 HEAD 送上兩條正式分支」，再配合推送前安全檢查（見 main()）。
+# 改為一律推 HEAD：工具的工作就是「把現在的 HEAD 送上正式分支」，再配合推送前安全檢查（見 main()）。
+# 2026-09-21 INC-236：移除 HEAD:main —— local main 停在 5301e5d1（9/16）從未被手動更新；
+#   9/21 误執行 `git push --force origin main:clean-main` 把舊 main 送上 remote clean-main，
+#   Pages 吃了舊值 5 天（226 commit 未上線）。只推 clean-main 即夠（Pages 唯一部署目標），
+#   main 遠端分支保留開發歷史用，本機不再維護。
 CODE_RE = r"\.(py|sh|bat|ps1|cmd|toml|yml|yaml|js|ts|sql)$|^\.githooks/|^\.gitattributes$|^\.gitignore$|^index_template\.html$"
 
 
