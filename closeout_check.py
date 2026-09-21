@@ -18,6 +18,11 @@
    `code-dirty`／`range-missing`。前兩類是「別班或有人的未提交變更」（只記錄），
    `range-missing`（推送範圍內有 commit 無審查紀錄 → 那次 push 必定被閘門擋下）列入問題，
    但同樣先用 `sha_state()` 複核（被擋後改走 RECORD 重做、舊 commit 變孤兒者不列問題）。
+6. **遠端同步稽核**（INC-236 配套）：本機 `HEAD` 必須等於 `origin/<當前分支>`。
+   未推送 commit > 0 或落後遠端 → ❌。理由是閘門只驗「推送範圍內的 commit 有沒有紀錄」，
+   推舊 commit 時範圍內沒有新 commit 所以全綠，於是「本機一路產出、遠端停在五天前」
+   可以完全靜默（Pages 全站吃舊值）。「推得動」不等於「推對東西」，必須單獨量。
+7. **真值一致性**（INC-233）：月支出口徑與儀表板安全線不得漂移（詳見 `step_consistency`）。
 
 用法
 ----
@@ -239,8 +244,65 @@ EXPECT_BANK_MIN = 4          # 3 個月安全線門檻數（國泰／台新／�
 EXPECT_LIFE_MIN = 2          # 生活帳戶門檻數（玉山／台北富邦）
 
 
+def step_remote_sync(quiet: bool) -> list:
+    """⑤ 遠端同步稽核（2026-09-21 INC-236）：本機不得有「推不上去」的 commit 累積。
+
+    INC-236 實例：refspec 左手寫成舊的 local main，把 9/16 的內容當成新進度推上
+    origin/clean-main（git push 回 0、看起來成功），本機 clean-main 卻一路 commit 到
+    5 天後才被使用者發現（Pages 全站吃 9/14-9/16 的舊值、226 顆未上線）。
+    閘門驗的是「推送範圍內每顆 commit 有無審查紀錄」——推舊 commit 時範圍內沒有新
+    commit，所以全部通過。「推得動」與「推對東西」是兩件事，必須另外量。
+
+    檢查（HEAD 必須等於 origin/<當前分支>）：
+      - 未推送 commit 數 > 0 → ❌（並印出最早幾顆，方便直接追）
+      - 落後遠端（origin 有本機沒有的）→ ❌（有人從別處推過、本機該 pull/rebase）
+      - 讀不到 origin/<branch>（未 fetch／無 upstream）→ ⚠️ 印出、不算問題（首次推送情境）
+    """
+    problems: list = []
+    branch = _git("rev-parse", "--abbrev-ref", "HEAD")
+    if not branch or branch == "HEAD":
+        problems.append("遠端同步：HEAD 處於 detached（不在任何分支上）→ 推送會推錯東西")
+        return problems
+    remote_ref = f"origin/{branch}"
+    if subprocess.run(["git", "rev-parse", "--verify", "--quiet", remote_ref],
+                      cwd=str(REPO), capture_output=True, text=True).returncode != 0:
+        if not quiet:
+            print(f"⑤ 遠端同步：⚪ 讀不到 {remote_ref}（未 fetch／尚無 upstream）→ 略過")
+        return problems
+
+    ahead = _git("rev-list", "--count", f"{remote_ref}..HEAD")
+    behind = _git("rev-list", "--count", f"HEAD..{remote_ref}")
+    try:
+        n_ahead, n_behind = int(ahead or 0), int(behind or 0)
+    except ValueError:
+        if not quiet:
+            print(f"⑤ 遠端同步：⚪ 解析 rev-list 失敗（{ahead!r}/{behind!r}）→ 略過")
+        return problems
+
+    if n_ahead == 0 and n_behind == 0:
+        if not quiet:
+            print(f"⑤ 遠端同步：✅ {branch} == {remote_ref}（{_git('rev-parse', '--short', 'HEAD')}）")
+        return problems
+
+    if n_ahead:
+        oldest = _git("log", "--oneline", "--reverse", f"{remote_ref}..HEAD").splitlines()[:3]
+        problems.append(
+            f"遠端同步：{n_ahead} 顆 commit 未推送（{branch} 領先 {remote_ref}）→ Pages 吃舊值"
+        )
+        if not quiet:
+            print(f"⑤ 遠端同步：❌ {n_ahead} 顆未推送")
+            for ln in oldest:
+                print(f"     - {ln}")
+            print(f"   修法：git push --force-with-lease origin {branch}:{branch}")
+    if n_behind:
+        problems.append(f"遠端同步：本機落後 {remote_ref} {n_behind} 顆（別處推過，需 pull/rebase）")
+        if not quiet:
+            print(f"⑤ 遠端同步：❌ 落後 {n_behind} 顆 → git pull --rebase origin {branch}")
+    return problems
+
+
 def step_consistency(quiet: bool) -> list:
-    """⑤ 真值一致性（2026-09-21 INC-233）：月支出口徑與儀表板安全線不得靜默漂移。
+    """⑥ 真值一致性（2026-09-21 INC-233）：月支出口徑與儀表板安全線不得靜默漂移。
 
     檢查：
       - snapshot：monthly_expense_cash + monthly_expense_accrual == monthly_expense（缺欄位／非數字＝❌）
@@ -265,7 +327,7 @@ def step_consistency(quiet: bool) -> list:
         snap = _json.loads(SNAP_FILE.read_text(encoding="utf-8"))
     except Exception as e:                                     # snapshot 壞掉不算本步問題（別班會亮）
         if not quiet:
-            print(f"⑤ 真值一致性：⚪ 無法讀 snapshot（{e}）")
+            print(f"⑥ 真值一致性：⚪ 無法讀 snapshot（{e}）")
         return problems
     try:                        # ① snapshot 側（獨立 try：這裡壞掉不得遮住儀表板檢查）
         if not isinstance(snap, dict):
@@ -298,7 +360,7 @@ def step_consistency(quiet: bool) -> list:
     try:                        # ② 產出側
         if expense is None:
             if not quiet:
-                print("⑤ 真值一致性：⚪ monthly_expense 無法解析，儀表板比對略過")
+                print("⑥ 真值一致性：⚪ monthly_expense 無法解析，儀表板比對略過")
         else:
             safe3 = expense * 3
             want = f"{safe3:,}"
@@ -332,7 +394,7 @@ def step_consistency(quiet: bool) -> list:
         _c = f"{cash:,}" if cash is not None else "—"
         _a = f"{accrual:,}" if accrual is not None else "—"
         _e = f"{expense:,}" if expense is not None else "—"
-        print(f"⑤ 真值一致性：月支出 {_e}（現金 {_c}＋帳上 {_a}）"
+        print(f"⑥ 真值一致性：月支出 {_e}（現金 {_c}＋帳上 {_a}）"
               f"｜{'❌ ' + str(len(problems)) + ' 項' if problems else '✅'}")
     return problems
 
@@ -358,6 +420,7 @@ def main() -> int:
         rc, concl, out = step_audit(args.quiet or args.silent_ok)
         lane_problems = step_push_lanes(args.quiet or args.silent_ok)
         warn_problems = step_auto_warns(args.quiet or args.silent_ok)
+        sync_problems = step_remote_sync(args.quiet or args.silent_ok)
         cons_problems = step_consistency(args.quiet or args.silent_ok)
 
         problems = []
@@ -367,6 +430,7 @@ def main() -> int:
             problems.append(concl.replace("閉環稽核結果：", ""))
         problems.extend(lane_problems)
         problems.extend(warn_problems)
+        problems.extend(sync_problems)
         problems.extend(cons_problems)
 
         print()
