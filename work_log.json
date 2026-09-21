@@ -1170,5 +1170,11 @@
   "category": "修正",
   "item": "INC-232：AI 成本帳改版（每天花多少＋還剩多少餘額）＋備援熔斷改官方現行價（前次 session 中斷，程式未提交致 22:40 收工檢查 ❌）",
   "detail": "使用者 9/20 指示「讓我能夠明確的監控 Gemini 與 DS 費用、知道每天花多少錢還剩多少餘額」。①daily_token_account.py：新增 DeepSeek /user/balance 真值餘額（失敗退 cost_log.csv）、Gemini 預付推定＋8-token 探測、近 7 日走勢與剩餘天數燈號；PRICE 改官方現行價（gemini-2.5-flash 0.30/2.50/0.03）、模型名含 ':free' 一律計 0（免費層不再憑空長成本）、agent.log.0~.3 跨日彙總。②fallback_cost_guard.py 首次入版控：不再讀 state.db estimated_cost_usd（價目快照 2026-07-28，低估 2.07x），改用同一 PRICE 表從 agent.log 自算備援花費，門檻 US$0.30/天、同日只告警一次。驗證：唯讀驗證器 19/19 PASS（含 cache 選配回歸、免費模型歸零、手算對帳、實跑與獨立 algorithm 對帳 Gemini NT$89 一致）＋真 CIO 審查 APPROVE；commit afeab1ae tree a47f3feb。"
+ },
+ {
+  "date": "2026-09-21",
+  "category": "紀錄",
+  "item": "保單轉換登記：安聯第三站已設定轉 PIMCO；第一金（PIMCO）系統錯誤未設定（客服稱 9/22 可完成）",
+  "detail": "使用者 9/21 回報並指示「只記錄、不用處理」。①安聯第三站轉換至 PIMCO 已於 App 設定完成（轉出標的/金額/保單別待截圖補登）②第一金同一轉換因系統錯誤、畫面卡住未設定，客服表示明天(9/22)可完成。已登記：schedule_events 9/21（安聯已提出）、9/22（第一金重試，該日為 9/28 基準日 T+4 最後送件日）、9/25（安聯 T+4 生效確認）＋pending_decisions 兩筆。查證（第一金人壽財富網現售標的 934 檔）：PIMCO 共 22 檔、無「收益增長」；M 級月配僅 FP24 多元收益債券-M級(月收息)、FP26 全球非投等債-M級 → 客服端若無法新增「收益增長」之替代路徑。依 8/10 鐵則：登記不等於完成，T+4 生效後才更新成分/四源/穿透。"
  }
 ]
