@@ -234,58 +234,105 @@ def step_auto_warns(quiet: bool) -> list:
 SNAP_FILE = REPO / "snapshot.json"
 INDEX_FILE = REPO / "index.html"
 LIFE_ACCOUNT_MIN = "40000"   # 玉山／富邦生活帳戶安全線（4 萬，刻意常數；非 3 個月支出）
+EXPECT_SAFE_ANCHORS = 4      # 儀表板 safe_line 錨點數（4 張 3 個月安全線卡）
+EXPECT_BANK_MIN = 4          # 3 個月安全線門檻數（國泰／台新／永豐／將來）
+EXPECT_LIFE_MIN = 2          # 生活帳戶門檻數（玉山／台北富邦）
 
 
 def step_consistency(quiet: bool) -> list:
     """⑤ 真值一致性（2026-09-21 INC-233）：月支出口徑與儀表板安全線不得靜默漂移。
 
     檢查：
-      - snapshot：monthly_expense_cash + monthly_expense_accrual == monthly_expense
-      - snapshot：monthly_fixed_expense.分層 副本與頂層同值（兩份同值資料只改一邊會無聲漂移）
-      - index.html：data-k="safe_line" 顯示值與銀行卡 data-min 門檻 == 月支出×3；不得殘留佔位符
+      - snapshot：monthly_expense_cash + monthly_expense_accrual == monthly_expense（缺欄位／非數字＝❌）
+      - snapshot：若殘留 monthly_fixed_expense.分層 重複來源 → 必須與頂層同值（單一來源＝缺席才正常）
+      - index.html：safe_line 錨點與 data-min 門檻數量必須齊全、值等於月支出×3；不得殘留佔位符
+    原則：畸形值不得讓本步拋例外（否則 cron --silent-ok 只剩 traceback、丟掉整份問題清單）。
     """
     import json as _json
+
+    def _num(v):
+        """寬鬆轉數字：None／布林／空字串／千分位／浮點 → int；真的非數字才回 None（由呼叫端列為問題）。"""
+        if v is None or isinstance(v, bool):
+            return None
+        try:
+            return int(float(str(v).replace(",", "").strip()))
+        except Exception:
+            return None
+
     problems: list = []
+    expense = cash = accrual = None   # 先綁定：畸形 snapshot 時摘要列印也不得 UnboundLocalError
     try:
         snap = _json.loads(SNAP_FILE.read_text(encoding="utf-8"))
     except Exception as e:                                     # snapshot 壞掉不算本步問題（別班會亮）
         if not quiet:
             print(f"⑤ 真值一致性：⚪ 無法讀 snapshot（{e}）")
         return problems
-    expense = int(snap.get("monthly_expense") or 0)
-    cash = snap.get("monthly_expense_cash")
-    accrual = snap.get("monthly_expense_accrual")
-    if cash is None or accrual is None:
-        problems.append("月支出分層欄位缺失（monthly_expense_cash／monthly_expense_accrual）→ 無法驗證現金扣帳口徑")
-    elif int(cash) + int(accrual) != expense:
-        problems.append(f"月支出分層不合：現金扣帳 {cash} + 帳上計息 {accrual} ≠ 月支出 {expense}")
-    lay = ((snap.get("monthly_fixed_expense") or {}).get("分層") or {})
-    if lay:      # 單一來源＝不該有這個副本；有副本就必須同值（2026-09-21 已刪除重複來源，故缺席為正常）
-        for k, v in (("現金扣帳合計", cash), ("帳上計息合計", accrual), ("合計", expense)):
-            if v is not None and int(lay.get(k, -1)) != int(v):
-                problems.append(f"分層副本漂移：monthly_fixed_expense.分層.{k}={lay.get(k)} ≠ {v}")
-    safe3 = expense * 3
-    want = f"{safe3:,}"
-    if INDEX_FILE.exists():
-        html = INDEX_FILE.read_text(encoding="utf-8", errors="replace")
-        # 顯示錨點：模板已改成中性佔位符，只要不等於期望值就是沒注入成功或殘留舊值
-        for v in sorted(set(re.findall(r'data-k="safe_line">([^<]*)<', html))):
-            if v != want:
-                problems.append(f"index.html 安全線錨點為 {v!r}（應為 {want}＝月支出 {expense:,}×3）")
-        # 門檻：先抓任意值再驗格式（只比對純數字會漏掉 488,343 這種同時讓 JS 得 NaN 的寫法）
-        for v in sorted(set(re.findall(r'data-min="([^"]*)"', html))):
-            if v == LIFE_ACCOUNT_MIN:
-                continue
-            if not v.isdigit():
-                problems.append(f"index.html 銀行卡門檻格式錯誤 {v!r}（JS Number() 會得 NaN）")
-            elif int(v) != safe3:
-                problems.append(f"index.html 銀行卡門檻未跟月支出：{v}（應為 {safe3}）")
-        if "__SAFE_LINE_RAW__" in html:
-            problems.append("index.html 殘留未取代佔位符 __SAFE_LINE_RAW__")
+    try:                        # ① snapshot 側（獨立 try：這裡壞掉不得遮住儀表板檢查）
+        if not isinstance(snap, dict):
+            raise TypeError(f"snapshot 根不是物件（{type(snap).__name__}）")
+        expense = _num(snap.get("monthly_expense"))
+        if expense is None:
+            problems.append(f"monthly_expense 不是數字（{snap.get('monthly_expense')!r}）")
+        cash = _num(snap.get("monthly_expense_cash"))
+        accrual = _num(snap.get("monthly_expense_accrual"))
+        if snap.get("monthly_expense_cash") is None or snap.get("monthly_expense_accrual") is None:
+            problems.append("月支出分層欄位缺失（monthly_expense_cash／monthly_expense_accrual）→ 無法驗證現金扣帳口徑")
+        elif cash is None or accrual is None:
+            problems.append(f"月支出分層非數字（現金 {snap.get('monthly_expense_cash')!r}／帳上 {snap.get('monthly_expense_accrual')!r}）")
+        elif expense is not None and cash + accrual != expense:
+            problems.append(f"月支出分層不合：現金扣帳 {cash} + 帳上計息 {accrual} ≠ 月支出 {expense}")
+        mfe = snap.get("monthly_fixed_expense")
+        if mfe is not None and not isinstance(mfe, dict):
+            problems.append(f"monthly_fixed_expense 型別異常（{type(mfe).__name__}）")
+        lay = (mfe or {}).get("分層") if isinstance(mfe, dict) else None
+        if isinstance(lay, dict):   # 單一來源＝不該有這個副本；有副本就必須同值（2026-09-21 已刪除重複來源）
+            for k, v in (("現金扣帳合計", cash), ("帳上計息合計", accrual), ("合計", expense)):
+                if v is None:
+                    continue
+                if _num(lay.get(k)) != v:
+                    problems.append(f"分層副本漂移：monthly_fixed_expense.分層.{k}={lay.get(k)!r} ≠ {v}")
+        elif lay is not None:
+            problems.append(f"monthly_fixed_expense.分層 型別異常（{type(lay).__name__}）")
+    except Exception as e:
+        problems.append(f"真值一致性（snapshot 側）檢查異常：{type(e).__name__}: {e}")
+    try:                        # ② 產出側
+        if expense is None:
+            if not quiet:
+                print("⑤ 真值一致性：⚪ monthly_expense 無法解析，儀表板比對略過")
+        else:
+            safe3 = expense * 3
+            want = f"{safe3:,}"
+            if not INDEX_FILE.exists():
+                problems.append(f"index.html 不存在（無法驗證安全線 {want}）")
+            else:
+                html = INDEX_FILE.read_text(encoding="utf-8", errors="replace")
+                anchors = re.findall(r'data-k="safe_line">([^<]*)<', html)
+                bad = sorted({v for v in anchors if v != want})
+                if bad:
+                    problems.append(f"index.html 安全線錨點為 {bad}（應為 {want}＝月支出 {expense:,}×3）")
+                if len(anchors) != EXPECT_SAFE_ANCHORS:
+                    problems.append(f"index.html 安全線錨點數量 {len(anchors)} ≠ {EXPECT_SAFE_ANCHORS}（元素被刪／結構變動）")
+                mins = re.findall(r'data-min="([^"]*)"', html)
+                bank = [v for v in mins if v != LIFE_ACCOUNT_MIN]
+                life = [v for v in mins if v == LIFE_ACCOUNT_MIN]
+                for v in sorted(set(bank)):
+                    if not v.isdigit():
+                        problems.append(f"index.html 銀行卡門檻格式錯誤 {v!r}（JS Number() 會得 NaN）")
+                    elif int(v) != safe3:
+                        problems.append(f"index.html 銀行卡門檻未跟月支出：{v}（應為 {safe3}）")
+                if len(bank) != EXPECT_BANK_MIN:
+                    problems.append(f"index.html 銀行卡門檻數量 {len(bank)} ≠ {EXPECT_BANK_MIN}")
+                if len(life) != EXPECT_LIFE_MIN:
+                    problems.append(f"index.html 生活帳戶門檻數量 {len(life)} ≠ {EXPECT_LIFE_MIN}")
+                if "__SAFE_LINE_RAW__" in html:
+                    problems.append("index.html 殘留未取代佔位符 __SAFE_LINE_RAW__")
+    except Exception as e:
+        problems.append(f"真值一致性（index.html 側）檢查異常：{type(e).__name__}: {e}")
     if not quiet:
-        _c = f"{int(cash):,}" if cash is not None else "—"
-        _a = f"{int(accrual):,}" if accrual is not None else "—"
-        print(f"⑤ 真值一致性：月支出 {expense:,}（現金 {_c}＋帳上 {_a}）｜安全線 {safe3:,}"
+        _c = f"{cash:,}" if cash is not None else "—"
+        _a = f"{accrual:,}" if accrual is not None else "—"
+        _e = f"{expense:,}" if expense is not None else "—"
+        print(f"⑤ 真值一致性：月支出 {_e}（現金 {_c}＋帳上 {_a}）"
               f"｜{'❌ ' + str(len(problems)) + ' 項' if problems else '✅'}")
     return problems
 
