@@ -37,6 +37,7 @@ CRON_DIR = HERMES / "cron"
 LJ = Path.home() / "Desktop" / "longjiu_system"
 ENV_FILE = HERMES / ".env"
 GEMINI_LOG = LJ / "data" / "gemini_cost_log.json"
+PIPELINE_USAGE = LJ / "logs" / "pipeline_llm_usage.jsonl"  # 管線端（llm_analysis）用量落地檔
 USD_TWD = 31.7  # 2026-09-14 Yahoo USDTWD 31.705（原 31.5）
 CNY_TWD = 4.73  # 2026-09-14 使用者確認（200 CNY≈944 TWD）；Yahoo CNYTWD 4.734
 
@@ -50,6 +51,7 @@ PRICE = {  # model: (in, out, cache_hit, is_deepseek)
     # 官方頁：deepseek-flash cache hit $0.003 / miss $0.15 / out $0.60；pro $0.022 / $0.66 / $1.98
     "deepseek-flash": (0.15, 0.60, 0.003, True),
     "deepseek-v4-flash": (0.15, 0.60, 0.003, True),          # 舊名（已退役，由 V4.1-Flash 服務、同價）
+    "deepseek-chat": (0.15, 0.60, 0.003, True),              # llm_analysis.py 實際送出的模型名
     "deepseek-v4-flash-vision-exp": (0.15, 0.60, 0.003, True),
     "deepseek-v4-pro": (0.66, 1.98, 0.022, True),
     # ── Gemini（2026-09-20 官網 ai.google.dev/gemini-api/docs/pricing 實查）──
@@ -103,6 +105,38 @@ def scan_agent_log_range(days: set[str]) -> dict[str, dict[str, collections.Coun
 def scan_agent_log(today: str) -> dict[str, collections.Counter]:
     """單日（維持舊介面，供其他腳本沿用）。"""
     return scan_agent_log_range({today}).get(today, {})
+
+
+def scan_pipeline_usage(today: str) -> dict:
+    """管線端（程式呼叫、非對話）用量：讀 llm_analysis 落地的 jsonl。
+
+    回傳 {model: Counter(calls/in/cached/out/fail)}，另含 "_meta": {HH:MM: 次數} 供判斷跑了幾輪。
+    背景（2026-09-21）：agent.log 只記 Hermes 端 → 帳面 NT$5 與實帳 NT$36 對不起來。
+    """
+    per: dict = collections.defaultdict(collections.Counter)
+    if not PIPELINE_USAGE.exists():
+        return {}
+    try:
+        with PIPELINE_USAGE.open(encoding="utf-8", errors="replace") as f:
+            for line in f:
+                try:
+                    rec = json.loads(line)
+                except Exception:
+                    continue
+                ts = str(rec.get("ts") or "")
+                if ts[:10] != today:
+                    continue
+                c = per[rec.get("model") or "unknown"]
+                c["calls"] += 1
+                c["in"] += int(rec.get("in") or 0)
+                c["cached"] += int(rec.get("cached") or 0)
+                c["out"] += int(rec.get("out") or 0)
+                if not rec.get("ok", True):
+                    c["fail"] += 1
+                per["_meta"][ts[11:16]] += 1
+    except Exception:
+        return {}
+    return dict(per)
 
 
 def cost_usd(model: str, tok: collections.Counter) -> float:
@@ -380,6 +414,21 @@ def main() -> None:
              f"{'尖峰' if is_ds_peak(today, now.hour) else '離峰'}）"]
     lines.append(f"◆ 今日花費 NT${total_usd*USD_TWD:,.0f}｜DeepSeek NT${ds_usd*USD_TWD:,.0f}／"
                  f"Gemini NT${gem_usd*USD_TWD:,.0f}／免費模型 NT${free_usd*USD_TWD:,.1f}（{free_calls} 次）")
+    # ── 管線端（程式呼叫、非對話）用量：讓「每次更新花多少」可歸因（2026-09-21 新增）──
+    _pu = scan_pipeline_usage(today_s)
+    _prod = {m: c for m, c in _pu.items() if m != "_meta"}
+    if _prod:
+        _pc = sum(c["calls"] for c in _prod.values())
+        _pin = sum(c["in"] for c in _prod.values())
+        _pca = sum(c["cached"] for c in _prod.values())
+        _po = sum(c["out"] for c in _prod.values())
+        _pusd = sum(cost_usd(m, c) for m, c in _prod.items())
+        _pfail = sum(c["fail"] for c in _prod.values())
+        lines.append(f"　· 管線 LLM（程式呼叫）{_pc} 次／in {_pin:,}（cache {_pca:,}）out {_po:,}"
+                     f" ≈ NT${_pusd*USD_TWD:,.1f}｜{len(_pu.get('_meta') or {})} 個時段"
+                     + (f"｜失敗 {_pfail} 次" if _pfail else ""))
+    else:
+        lines.append("　· 管線 LLM（程式呼叫）：今日無紀錄（llm_analysis 落地檔為空）")
     lines.append(f"　· 近 7 日（{hist_days[0][5:]}→{hist_days[-1][5:]}）DS "
                  + " ".join(f"{a:.0f}" for a in ds_hist)
                  + " ｜ Gemini " + " ".join(f"{b:.0f}" for b in gm_hist) + "（NT$）")

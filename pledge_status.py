@@ -22,6 +22,16 @@ def load_snapshot() -> dict:
     return json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
 
 
+def _is_paid(p: dict) -> bool:
+    """「是否已撥款」：優先吃 snapshot 明示布林；沒有布林時才退回文字判斷。
+    （2026-09-21 實踩：純文字判斷下，撥款欄改成「預計 9/29」就讓判斷回 True → 全系統誤報已撥款。）"""
+    flag = p.get("已撥款")
+    if isinstance(flag, bool):
+        return flag
+    txt = str(p.get("撥款") or "")
+    return bool(txt) and ("未撥款" not in txt) and ("預計" not in txt)
+
+
 def _wan(v: float) -> str:
     if v is None:
         return "—"
@@ -60,9 +70,10 @@ def pledge_facts(snap: dict | None = None) -> dict:
         "利率": rate,
         "利率文字": f"{rate_pct}" if isinstance(rate_pct, str) else f"{rate * 100:.2f}%",
         "對保": p.get("對保") or "",
+        "對保摘要": p.get("對保摘要") or "",
         "撥款": p.get("撥款") or "",
         "撥款預估日": p.get("撥款預估日") or "",
-        "已撥款": ("未撥款" not in str(p.get("撥款") or "")) and bool(p.get("撥款")),
+        "已撥款": _is_paid(p),
         "用途": p.get("用途") or "",
         "清償目標": target,
         "清償目標萬": _wan(target),
@@ -91,10 +102,13 @@ def pledge_status_line(snap: dict | None = None, style: str = "full") -> str:
     if f["已撥款"]:
         pay_status = "已撥款"
     else:
-        pay_status = "尚未撥款（對保完成後約 2 週"
-        if f["撥款預估日"]:
-            pay_status += f"，預估 {f['撥款預估日']}"
-        pay_status += "）"
+        # 文字一律由 snapshot 欄位組出（不得再寫死「對保完成後約 2 週」這類會過期的描述）
+        _dj = f.get("對保摘要") or ""
+        if not _dj:
+            _d = str(f.get("對保") or "")
+            _dj = _d.split("（")[0].replace("✅", "").strip() if _d else ""
+        _parts = [x for x in (_dj, (f"預計 {f['撥款預估日']} 撥款" if f["撥款預估日"] else "")) if x]
+        pay_status = "❌ 尚未撥款" + (f"（{'；'.join(_parts)}）" if _parts else "")
     use = (f"用途：優先清償 {f['清償目標萬']}高息負債（保單質押 {_wan(f['保單借貸'])}"
            f"@{f['保單利率'] * 100:.1f}% ＋ 券商質押 {_wan(f['券商質押'])}"
            f"@{f['券商利率'] * 100:.2f}%）— 月息 {f['月息_舊']:,.0f} → {f['月息_新']:,.0f}"
