@@ -372,10 +372,12 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _fixed_total = _mfe.get("合計", _life + _med + _mort + _int + _yua)
     _rent = _sn2.get("rent_monthly_total", 80_100) or 0
     _mort_net = _mort - _rent
+    _cash_out = _sn2.get("monthly_expense_cash", _life + _med + _mort) or 0
+    _accrual = _sn2.get("monthly_expense_accrual", _int + _yua) or 0
     _fixed_expense_html = f"""    <div class="callout" style="margin-top:10px;border-left:3px solid #3b82f6">
-      <strong>📌 每月固定支出：{_fixed_total:,}</strong><br>
+      <strong>📌 每月固定支出：{_fixed_total:,}</strong>（現金扣帳 {_cash_out:,} ＋ 帳上計息 {_accrual:,}）<br>
       生活 {_life:,} ｜ 醫療 {_med:,} ｜ 房貸 {_mort:,}（永豐 {_sin:,} + 國泰 {_cat:,}）｜ 保單借貸利息 {_int:,} ｜ 元大證金 {_yua:,}
-      <br/><span style="color:#64748b;font-size:12px">房租收入 {_rent:,} 覆蓋房貸 {_mort_net:+,} 缺口（{_mort/_rent*100:.0f}% 覆蓋）｜女友還款 6,000 為收入（至12/5）</span>
+      <br/><span style="color:#64748b;font-size:12px">與銀行實際扣款比對請用「現金扣帳」口徑（帳上計息＝保單息＋元大息，不從帳戶扣）｜房租收入 {_rent:,} 覆蓋房貸 {_mort_net:+,} 缺口（{_mort/_rent*100:.0f}% 覆蓋）｜女友還款 6,000 為收入（至12/5）</span>
     </div>
 """
 
