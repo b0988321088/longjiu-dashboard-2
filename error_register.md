@@ -801,3 +801,11 @@
   2. **治本**：`auto_push.py` 的 `DEFAULT_REFS` 由 `["HEAD:clean-main", "HEAD:main"]` 收斂為 `["HEAD:clean-main"]` —— 本機 `main` 自 9/16 起從未維護，它只是一個「會把舊內容推上正式分支」的地雷。
 - **驗證**：`origin/clean-main` = 本機 HEAD；`git rev-list --count origin/clean-main..clean-main` = 0；線上 index.html 連結指向 9/21 三份報表。
 - **教訓**：**手寫 refspec 時，左邊永遠只能是 `HEAD` 或與目標同名的分支**；本機存在「同步分支」就是風險源（遲早有人拿它當來源）。推送後必須驗 `git rev-list --count origin/<branch>..HEAD == 0`，不能只看 `git push` 的 returncode —— 這條已寫進 `longjiu-error-register` 的 preflight。
+
+## INC-237｜常態口徑欄位被寫入「一次性折讓」—— 五份報表被動月收同時低估 3,000（2026-09-22）
+- **發現管道**：使用者提問「查一下我平均三個月的收入與支出生活費」（實算過程中發現 snapshot 租金常態與現金流對不上）→ 使用者裁示「租金收入確定是 80,100，這個月因為維修的關係，所以扣了 3,000」。
+- **根因**：把 **9 月一次性維修費折讓 3,000** 寫進**常態欄位** `rent_monthly_total`（77,100），`rent_breakdown.洲際W` 也一併記成 30,000、`rent_monthly_target` 跟著填 77,100。該欄位被 **5 處**讀取去算被動月收與覆蓋率（`run_daily.py` 1711/1718、`report_components.py`、`monthly_report.py`、`build_audit_dashboard.py`、`dynamic_review.py`）→ 被動月收 177,100（應 **180,100**）、健康度覆蓋顯示 **109%**（應 **111%**）。若沒被發現，下個月不會有人記得改回來 → 永久低估。
+- **附帶缺陷**：`rent_monthly_gap` 停在 56,100（語意應是「當月應收 − 實收」），且**全 repo 零程式讀取** → 錯值不會亮任何紅燈（同 INC-235「人工欄位無人推動」家族）。
+- **修法**：①常態欄位只放常態值（80,100 = 店面24,000 + 二三樓21,000 + 洲際W33,000 + 管理費2,100）②一次性折讓降級為敘述（`rent_monthly_note`、`rent_monthly_gap_note`）③`rent_monthly_gap` 校正為 23,100 並在 note 寫出計算式（9 月應收 77,100 − 實收 54,000）④`notion_shared_context.md` 同步 ⑤技能 `monthly-income-caliber` 新增鐵則：**任何「本月因 X 少收／多收」都不可改常態欄位**。
+- **驗證**：`rent_breakdown` 加總 80,100 == `rent_monthly_total` == `passive_income.rent_monthly`；`passive_income.total_conservative` 180,100；實跑 `report_components.render_health_score` → 覆蓋 **111%**／收入 180,100；`closeout_check.py` 全綠、`clean-main == origin/clean-main`；線上 `snapshot.json`（raw.githubusercontent + GitHub Pages，皆加 cache-bust）皆讀到 80,100／洲際W 33,000。
+- **教訓**：**「一次性」與「常態」必須分欄**。凡欄位名含 `monthly`／`total`／`target` 者只放常態值，單月事件一律寫進 `actual`／`note`／`gap`。判準一句話：**「下個月還要手動改回來的值，就不該進常態欄位。」**
