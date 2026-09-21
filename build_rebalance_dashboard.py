@@ -419,6 +419,16 @@ def main():
                             f"<span style='font-size:11.5px;color:var(--txt);line-height:1.6'>{_txt.replace(chr(10),'<br>')}</span></div>")
             dd_block = (f"<div style='margin-top:10px'><div style='font-size:12px;font-weight:700;color:#94a3b8'>💬 產業深度討論（LLM，僅有動作產業）</div>{dd_html}</div>"
                         if dd_html else "")
+            # 2026-09-21：ETF 類型資金桶另列一行（不計入產業資金分數，避免 ETF 賣壓被誤讀為產業賣壓）
+            etf_html = ""
+            try:
+                for _b, _v in (rot.get("ETF資金") or {}).items():
+                    etf_html += (f"<div style='font-size:10.5px;color:var(--sub);margin-top:4px'>"
+                                 f"ℹ️ ETF資金「{_b}」{_v.get('法人淨買賣超',0)/1e6:+.0f}百萬（{_v.get('方向','')}）"
+                                 f"— {_v.get('說明','')}</div>")
+            except Exception:
+                etf_html = ""
+            _src_ts = str(((rot.get("資料來源") or {}).get("雷達資金流 generated_at")) or "")[:19]
             rot_html = f"""
   <div class="card" style="margin-top:14px;border-left:4px solid #22c55e">
     <h2>🎯 本週交易計畫（{rot.get('日期','')}）</h2>
@@ -428,8 +438,9 @@ def main():
     <table><tr><th>產業</th><th class="num">現況</th><th class="num">目標/紅線</th><th class="num">資金分</th><th>動作</th></tr>{rec_rows}</table></div>
     <div style="margin-top:8px"><div style="font-size:12px;font-weight:700;color:#94a3b8">⏸ 避開/暫緩</div>
     <table><tr><th>產業</th><th class="num">現況</th><th>動作</th><th>理由</th></tr>{av_rows}</table></div>
+    {etf_html}
     {dd_block}
-    <div style="font-size:10.5px;color:var(--sub);margin-top:6px">乾粉=現金−70萬底線+月盈餘50%；單筆≤5萬、分批；保單轉換/質押撥款前保留緩衝</div>
+    <div style="font-size:10.5px;color:var(--sub);margin-top:6px">乾粉=現金−70萬底線+月盈餘50%；單筆≤5萬、分批；保單轉換/質押撥款前保留緩衝{('｜依據雷達資金流 ' + _src_ts) if _src_ts else ''}</div>
   </div>"""
     except Exception:
         rot_html = ""

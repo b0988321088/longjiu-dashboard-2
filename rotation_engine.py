@@ -7,7 +7,7 @@
 輸出：snapshot.rotation_recommendation（儀表板/日報/週六再平衡讀）
 """
 import json
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 BASE = Path(__file__).parent.resolve()
@@ -29,13 +29,19 @@ GICS_TARGETS = {
 }
 
 # 台股資金桶 → GICS 近似映射
+# ⚠️ 2026-09-21 治本：移除「高股息防禦 → 金融」映射（原本把 00878/0056/0073… ETF 賣壓
+#    整包算成「金融股賣壓」，是金融資金分數常年偏負的主因；實測 9/21 高股息 -43百萬
+#    直接把台股金融桶 +74,721 的買超抵銷成負分 → 金融每週被列「避開」）。
+#    ETF 賣壓改由 rec["ETF資金"] 獨立呈現，不計入產業資金分數。
 TW_FLOW_TO_GICS = {
     "科技": "資訊科技", "台積電": "資訊科技", "通訊服務": "通訊服務",
-    "金融": "金融", "高股息防禦": "金融", "生技醫療": "醫療保健",
+    "金融": "金融", "生技醫療": "醫療保健",
     "食品": "核心消費", "塑化": "原物料", "鋼鐵": "原物料", "原物料避險": "原物料",
     "能源": "能源", "汽車": "非核心消費", "百貨": "非核心消費",
     "營建": "工業", "航運": "工業", "不動產": "不動產",
 }
+# 不映射到 GICS 產業的資金桶（結構性/ETF 類型桶，另有 ETF資金 區塊呈現）
+FLOW_NOT_IN_GICS = ["高股息防禦"]
 
 # 美股板塊 ETF → GICS 映射
 US_TK_TO_GICS = {
@@ -61,6 +67,12 @@ INDUSTRY_TICKERS = {
 
 def build_recommendation(industry_pen: dict, sector_flow: dict) -> dict:
     """資金分數 × 缺口分數 → 輪動建議"""
+    # 2026-09-21 防呆：呼叫端若誤傳「整份 snapshot」（血淚：buffett_cto_analyzer 傳 _snap），
+    # 產業現況會全部算成 0% = 最大缺口 → 任何負資金分數產業都被判暫緩/避開。
+    # 這裡自動降階到 industry_penetration，並大聲警告（不靜默）。
+    if isinstance(industry_pen, dict) and "產業" not in industry_pen and "industry_penetration" in industry_pen:
+        print("  ⚠️ build_recommendation 收到整份 snapshot（應傳 industry_penetration）→ 已自動降階修正；請修呼叫端")
+        industry_pen = industry_pen.get("industry_penetration") or {}
     inds = industry_pen.get("產業", {}) if industry_pen else {}
     tw_flow = sector_flow.get("台股", {}) if sector_flow else {}
     us_flow = sector_flow.get("美股", {}) if sector_flow else {}
@@ -151,7 +163,31 @@ def build_recommendation(industry_pen: dict, sector_flow: dict) -> dict:
         summary += "保留（無新增吸納標的" + (f"；{'、'.join(_cov)}已由保單涵蓋" if _cov else "") + "）"
     summary += "；避開 " + ("、".join(r["產業"] for r in avoid[:3]) if avoid else "無")
 
-    return {"日期": TODAY, "建議": top, "避開": avoid, "全產業": rows, "總結": summary}
+    # 2026-09-21：ETF 類型資金桶獨立呈現（不計入任何產業資金分數）
+    etf_flow = {}
+    try:
+        for _b in FLOW_NOT_IN_GICS:
+            _v = (tw_flow or {}).get(_b)
+            if isinstance(_v, dict):
+                etf_flow[_b] = {
+                    "法人淨買賣超": _v.get("法人淨買賣超", 0),
+                    "方向": _v.get("方向", ""),
+                    "說明": "ETF 申贖/換股賣壓，不代表該產業個股資金流向（不計入產業資金分數）",
+                }
+    except Exception:
+        pass
+
+    return {
+        "日期": TODAY, "建議": top, "避開": avoid, "全產業": rows, "總結": summary,
+        "ETF資金": etf_flow,
+        # 2026-09-21 治本：記錄本建議所依據的資金流時間，供一致性守衛比對
+        #     （血淚：雷達刷新 sector_flow 後無人重算 → 名單停在舊資金流，金融被誤列避開）
+        "資料來源": {
+            "雷達資金流 generated_at": (sector_flow or {}).get("generated_at"),
+            "產業現況來源": "snapshot.industry_penetration",
+            "產出時間": datetime.now().isoformat(timespec="seconds"),
+        },
+    }
 
 
 def build_trade_plan(rec: dict, snap: dict) -> list:
@@ -228,6 +264,9 @@ def main():
         print(f"  ✅ {r['產業']}：{r['理由']}｜標的 {r['標的']}")
     for r in rec["避開"][:3]:
         print(f"  {r['動作']} {r['產業']}：{r['理由']}")
+    for _b, _v in (rec.get("ETF資金") or {}).items():
+        print(f"  ℹ️ ETF資金 {_b}：{_v['法人淨買賣超']/1e6:+.0f}百萬（{_v['方向']}）— 不計入產業資金分數")
+    print(f"  🕒 依據雷達資金流：{(rec.get('資料來源') or {}).get('雷達資金流 generated_at')}")
 
 
 if __name__ == "__main__":

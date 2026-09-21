@@ -130,6 +130,16 @@ def _truth(snap: dict, *keys: str) -> float:
     return 0.0
 
 
+def _dig(d: dict, *keys):
+    """安全取嵌套值；任一路徑缺 → None（不拋例外、不給替代值）。"""
+    cur = d
+    for k in keys:
+        if not isinstance(cur, dict):
+            return None
+        cur = cur.get(k)
+    return cur
+
+
 def _build_insurance_detail(snap: dict, insurance_total: float) -> dict:
     """統一建構保險明細"""
     def _extract(v):
@@ -923,36 +933,66 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     # Gemini 風控嵌入
     _gemini_block = _load_gemini_block()
 
-    # 🕒 資料新鮮度卡（2026-09-12）：各資料源 as-of 與距今天數 —
-    # 讓「數字沒動」一眼看出是上游沒新資料，不是程式壞掉（同日 INC-159/160 的誤解來源）。
+    # 🕒 資料新鮮度卡（2026-09-12 建立；2026-09-21 治本：改由機器 as-of 欄位推導）
+    # 血淚（INC-235）：原設計讀 snapshot.data_freshness —— 一個「人工維護」欄位，全系統沒有
+    #   任何腳本會更新它。9/21 資料本體全部更新完成（cash_source.date / securities.price_date /
+    #   firstjin_detail.last_update 皆 9/21），這張卡卻仍停在 9/18、9/17 →
+    #   使用者抓包「我的資料有更新，為什麼新鮮度還在三、四天前」。
+    # 定版：每列一律由 snapshot 自身機器可讀欄位推導；缺值顯示「待補」，
+    #   絕不回退任何人工舊值（fail-closed，同 9/18 _truth 的教訓）。
     _fresh_card = ""
     try:
-        _df = snap.get("data_freshness", {}) or {}
-        _frows = []
-        for _src, _d in _df.items():
-            if _src in ("note", "updated_at"):
-                continue
+        _fnd = snap.get("fund_nav_dates", {}) or {}
+        _src_rows = [
+            ("現金／銀行（Moneybook）", _dig(snap, "cash_source", "date")),
+            ("證券部位", _dig(snap, "securities", "price_date")),
+            ("保單 第一金 FL65（App）", _dig(snap, "firstjin_detail", "last_update")),
+            ("保單 安聯 A/B（App）", _fnd.get("安聯保單內基金（App）")),
+            ("基金 國泰直購（富達/聯博/B11）", _fnd.get("國泰直購（富達/聯博/B11）")),
+            ("基金 鉅亨（一般申購＋自由Pay）", _fnd.get("鉅亨（一般申購＋自由Pay）")),
+        ]
+        # 人工補充來源：data_freshness 內非保留鍵者仍照舊呈現（已不再承載上述六列的日期）
+        _legacy = {k: v for k, v in (snap.get("data_freshness", {}) or {}).items()
+                   if k not in ("note", "updated_at", "deprecated", "機制")}
+        _src_rows += list(_legacy.items())
+
+        _frows, _ages = [], []
+        for _src, _d in _src_rows:
             if not _d:
-                _frows.append(f"<tr><td>{_src}</td><td class='num'>待確認</td><td>⚪ 需補 as-of</td></tr>")
+                _frows.append(f"<tr><td>{_src}</td><td class='num'>待補</td>"
+                              f"<td>⚪ 缺機器欄位（不回退舊值）</td></tr>")
                 continue
+            _iso = str(_d)[:10]
             try:
-                _age = (date.today() - date.fromisoformat(str(_d)[:10])).days
+                _age = (date.today() - date.fromisoformat(_iso)).days
             except Exception:
                 _age = None
-            _lk = "🟢" if (_age is not None and _age <= 1) else ("🟡" if (_age is not None and _age <= 3) else ("🔴" if _age is not None else "⚪"))
+            if _age is not None:
+                _ages.append((_iso, _age))
+            _lk = ("🟢" if (_age is not None and _age <= 1) else
+                   ("🟡" if (_age is not None and _age <= 3) else
+                    ("🔴" if _age is not None else "⚪")))
             _frows.append(
-                f"<tr><td>{_src}</td><td class='num'>{_d}</td>"
+                f"<tr><td>{_src}</td><td class='num'>{_iso}</td>"
                 f"<td>{_lk} {str(_age) + ' 天前' if _age is not None else '—'}</td></tr>")
-        if _frows:
-            _fresh_card = (
-                '<div class="card"><h2>🕒 資料新鮮度（各源 as-of）</h2>'
-                '<div class="table-wrap"><table><thead><tr><th>資料源</th><th class="num">資料日期</th><th>距今日</th></tr></thead><tbody>'
-                + "".join(_frows)
-                + "</tbody></table></div>"
-                + (f"<div class='text-sm' style='margin-top:6px'>{_df.get('note','')}</div>" if _df.get("note") else "")
-                + "</div>"
-            )
+        # 卡片自證：最新 as-of 與產出時間（任何「卡住」一眼可辨）
+        _latest = max(_ages, key=lambda x: x[0])[0] if _ages else "—"
+        _ft_note = ("每列由 snapshot 機器欄位推導（現金=cash_source.date／證券=securities.price_date／"
+                    "保單 firstjin=firstjin_detail.last_update／基金與安聯=fund_nav_dates）；"
+                    "缺值＝待補，不回退舊值。某列 🟡🔴 代表該上游還沒給新資料 —— 差異分析的"
+                    "「數字沒動」看這裡，不是程式異常。")
+        _fresh_card = (
+            '<div class="card"><h2>🕒 資料新鮮度（各源 as-of）</h2>'
+            '<div class="table-wrap"><table><thead><tr><th>資料源</th><th class="num">資料日期</th>'
+            '<th>距今日</th></tr></thead><tbody>'
+            + "".join(_frows)
+            + "</tbody></table></div>"
+            + (f"<div class='text-sm' style='margin-top:6px'>{_ft_note}</div>")
+            + (f"<div class='text-sm' style='margin-top:4px'>最新 as-of {_latest}｜卡片產出 {date.today().isoformat()}</div>")
+            + "</div>"
+        )
     except Exception as _fe:
+        print(f"⚠️ [asset_diff] 新鮮度卡建構失敗：{_fe}")
         _fresh_card = ""
 
     body = "\n".join([

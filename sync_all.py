@@ -116,6 +116,12 @@ def main():
         #     （行動儀表板 JS 即時讀取）。血淚：rotation_engine 修正後沒人重跑 → weekly_plan 殘留舊建議
         #     （「乾粉優先醫療」），使用者抓包；加此步驟確保 sync_all 後行動儀表板與引擎同步
         ("雷達週計畫重產", "python institutional_flow.py"),
+        # 2026-09-21 治本（INC-234）：雷達資金流更新後必須重算產業輪動建議，並以守衛驗證
+        #     ① 建議依據的雷達時間 == 現行 radar_state.sector_flow.generated_at（不得落後）
+        #     ② 產業現況不得全為 0（防呼叫端誤傳整份 snapshot → 全部算成最大缺口）
+        #     血淚：9/21 金融資金分數停在 9/20 的 -3，被誤列「避開」；日報/儀表板/LLM 全複述。
+        #     （institutional_flow.py 內部已在算完 sector_flow 後就地重算，此步純守衛）
+        ("產業輪動一致性", "python check_rotation_freshness.py"),
         ("儀表板注入", "python build_dashboard.py"),
         # 2026-08-29 v4：雷達資料同步驗證（radar_state.json 存在 + 政策面非空 + 三處產出含雷達結論）
         #     血淚：institutional_flow.py 讀 policy_notes 用 .get("內容") 但結構是新聞dict → 政策面空白沒人發現

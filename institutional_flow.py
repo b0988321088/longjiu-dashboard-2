@@ -464,6 +464,22 @@ def main():
     state["sector_flow"] = sector_flow
     save_json(BASE / "radar_state.json", state)
 
+    # ── 2026-09-21 治本（INC-234）：sector_flow 一更新，就地重算產業輪動建議 ──
+    # 血淚：雷達 16:15 刷新 sector_flow 後，全系統沒有任何步驟重算 rotation_recommendation
+    #       （rotation_engine.main() 只在 build_rebalance_dashboard 內被呼叫，時間點在雷達之前）
+    #       → 建議名單停在舊資金流：9/21 金融的資金分數仍是 9/20 的 -3，被誤列「避開」。
+    # 位置必須在「本週投資計劃」之前：weekly_plan 的產業輪動列讀 snapshot.rotation_recommendation。
+    try:
+        import rotation_engine as _rot_eng
+        _snap_rot = load_json(BASE / "snapshot.json", {})
+        _rot_rec = _rot_eng.build_recommendation(_snap_rot.get("industry_penetration", {}), sector_flow)
+        _rot_rec["交易計畫"] = _rot_eng.build_trade_plan(_rot_rec, _snap_rot)
+        _snap_rot["rotation_recommendation"] = _rot_rec
+        save_json(BASE / "snapshot.json", _snap_rot)
+        print(f"  ✅ 產業輪動建議已重算（依據雷達 {str(sector_flow.get('generated_at'))[:19]}）：{_rot_rec['總結']}")
+    except Exception as _rot_err:
+        print(f"  ⚠️ 產業輪動建議重算失敗：{_rot_err}")
+
     summary = render_summary(sig, tw, cot, fed, sector_flow)
     print(summary)
 
@@ -609,8 +625,10 @@ def main():
         _floor5 = _snap.get("cash_floor", 700000)
         if _rot5.get("產業") and not _gate:
             lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；乾粉 {_dry/10000:.1f}萬 優先「{_rot5.get('產業','—')}」（{_rot5.get('動作','')}）")
-        else:
+        elif _gate:
             lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；乾粉 {_dry/10000:.1f}萬 保留（觀望 gate 未解除前零新增）")
+        else:
+            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；乾粉 {_dry/10000:.1f}萬 保留（本週無「低配＋資金流入」標的，等訊號）")
         # ⑥ 避險衛星
         if _hs.get("黃金延後_0829"):
             lines.append("⏸️ 避險衛星：黃金A10 32萬 8/30 生效（保單內）；00635U ~105萬 延後（華許放鷹+金價偏高）→ 等回檔")
@@ -628,11 +646,16 @@ def main():
         lines.append("✅ 保單轉換 9/10 送出（安聯＋第一金同步轉入 M&G入息A美元避險月配，T+4 預期 9/16 生效）；9/1 安聯 PIMCO+50萬、貝萊德科技A10 90萬→摩根 已完成")
         # ⑨ 負債/質押
         lines.append(_ps.pledge_status_line(_snap) + "；到位前全面觀望")
-        # ⑩ 產業輪動
+        # ⑩ 產業輪動（2026-09-21：避開名單與「無優先標的」狀態全部動態讀輪動引擎；
+        #   原寫死「避開「公用事業」」→ 引擎實際避開名單含金融等，日報/儀表板字面與結論不一致）
+        _rot_rec5 = (_snap.get("rotation_recommendation", {}) or {})
+        _rot_avoid5 = "、".join(r.get("產業", "") for r in (_rot_rec5.get("避開") or [])[:3]) or "無"
         if _gate:
-            lines.append(f"⏸️ 產業輪動：目標「{_rot5.get('產業','—')}」→ 乾粉保留，等觀望 gate 解除後再啟動")
+            lines.append(f"⏸️ 產業輪動：乾粉保留（觀望 gate 未解除）｜避開「{_rot_avoid5}」")
+        elif _rot5.get("產業"):
+            lines.append(f"📊 產業輪動：買「{_rot5.get('產業','—')}」（{_rot5.get('標的','')}）｜避開「{_rot_avoid5}」")
         else:
-            lines.append(f"📊 產業輪動：買「{_rot5.get('產業','—')}」（{_rot5.get('標的','')}）｜避開「公用事業」")
+            lines.append(f"📊 產業輪動：本週無「低配＋資金流入」標的 → 乾粉保留｜避開「{_rot_avoid5}」")
         for l in lines:
             print("  " + l)
         # 2026-09-05：結構化存 radar_state.weekly_plan（主儀表板「本週動作與執行清單」動態讀取）

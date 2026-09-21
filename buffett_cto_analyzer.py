@@ -553,7 +553,7 @@ def main(**kwargs):
             if (BASE / "radar_state.json").exists():
                 _sf = _json.loads((BASE / "radar_state.json").read_text(encoding="utf-8")).get("sector_flow", {})
             from rotation_engine import build_recommendation, build_trade_plan
-            _rec = build_recommendation(_snap, _sf)
+            _rec = build_recommendation(_snap.get("industry_penetration", {}), _sf)
             _plan = build_trade_plan(_rec, _snap)
             msg += "\n\n🎯 本週交易計畫："
             for p in _plan:
