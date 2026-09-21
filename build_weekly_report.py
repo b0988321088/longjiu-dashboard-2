@@ -160,11 +160,25 @@ def main():
     <tr><td>淨利差</td><td>&lt;0 虧損</td><td>🟢 正利差</td></tr>
     </tbody></table>"""
 
-    # ===== 四、下週行動 =====
-    act4 = """<ol style="padding-left:18px;margin:0">
-<li><b>8/20 國泰撥款 1,200萬 入帳</b> → 8/20 定案（⛔ 部分已更正）：富達全球動能多元 600萬（質押擔保品）＋MMF 500萬 → 9/11 定案：500萬MMF 贖回轉申購 B11（質押擔保池）→ {_pf.pledge_status_line()}</li>
+    # ===== 四、下週行動（動態讀取 radar_state.weekly_plan.rows，禁止寫死）=====
+    _rs = load("radar_state.json") or {}
+    _wp = _rs.get("weekly_plan", {}) or {}
+    _plan_rows = [r for r in (_wp.get("rows") or []) if r.get("內容")]
+    _plan_date = str(_wp.get("日期") or today).split("T")[0]
+    if _plan_rows:
+        act4_items = ""
+        for _r in _plan_rows:
+            _icon = _r.get("動作", "⚪")
+            _cat = _r.get("類別", "—")
+            _txt = _r.get("內容", "")
+            act4_items += f"<li><b>{_icon} {_cat}</b>：{_txt}</li>"
+        act4 = f"""<div style="font-size:11px;color:#6e6e73;margin-bottom:6px">📋 來源：radar_state.weekly_plan（{_plan_date} 全資產面結論）</div>
+<ol style="padding-left:18px;margin:0">{act4_items}</ol>"""
+    else:
+        act4 = """<ol style="padding-left:18px;margin:0">
+<li><b>質押撥款</b>：{_pf.pledge_status_line()}</li>
 <li><b>PI 送件</b>：撥款後盤點資產 3,000萬</li>
-<li><b>美股逢彈減碼</b>（38.7%→30%，≤20萬/次）→ 資金導向防守</li>
+<li><b>美股逢彈減碼</b>（39.3%→30%，≤10萬/次）→ 資金導向防守</li>
 <li><b>現金回補</b>（≥70萬底線）</li>
 <li><b>每週六再平衡評估</b>＋保單 JPM 轉換後穿透追蹤</li>
 </ol>"""
