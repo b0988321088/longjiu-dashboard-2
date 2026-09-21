@@ -255,23 +255,31 @@ def step_consistency(quiet: bool) -> list:
     expense = int(snap.get("monthly_expense") or 0)
     cash = snap.get("monthly_expense_cash")
     accrual = snap.get("monthly_expense_accrual")
-    if cash is not None and accrual is not None and int(cash) + int(accrual) != expense:
+    if cash is None or accrual is None:
+        problems.append("月支出分層欄位缺失（monthly_expense_cash／monthly_expense_accrual）→ 無法驗證現金扣帳口徑")
+    elif int(cash) + int(accrual) != expense:
         problems.append(f"月支出分層不合：現金扣帳 {cash} + 帳上計息 {accrual} ≠ 月支出 {expense}")
     lay = ((snap.get("monthly_fixed_expense") or {}).get("分層") or {})
-    if lay:
+    if lay:      # 單一來源＝不該有這個副本；有副本就必須同值（2026-09-21 已刪除重複來源，故缺席為正常）
         for k, v in (("現金扣帳合計", cash), ("帳上計息合計", accrual), ("合計", expense)):
             if v is not None and int(lay.get(k, -1)) != int(v):
                 problems.append(f"分層副本漂移：monthly_fixed_expense.分層.{k}={lay.get(k)} ≠ {v}")
     safe3 = expense * 3
+    want = f"{safe3:,}"
     if INDEX_FILE.exists():
         html = INDEX_FILE.read_text(encoding="utf-8", errors="replace")
-        for v in sorted(set(re.findall(r'data-k="safe_line">([0-9,]+)<', html))):
-            if v != f"{safe3:,}":
-                problems.append(f"index.html 安全線殘留 {v}（應為 {safe3:,}＝月支出 {expense:,}×3）")
-        bad = sorted({v for v in re.findall(r'data-min="([0-9]+)"', html)
-                      if v not in (str(safe3), LIFE_ACCOUNT_MIN)})
-        if bad:
-            problems.append(f"index.html 銀行卡門檻未跟月支出：{', '.join(bad)}（應為 {safe3}）")
+        # 顯示錨點：模板已改成中性佔位符，只要不等於期望值就是沒注入成功或殘留舊值
+        for v in sorted(set(re.findall(r'data-k="safe_line">([^<]*)<', html))):
+            if v != want:
+                problems.append(f"index.html 安全線錨點為 {v!r}（應為 {want}＝月支出 {expense:,}×3）")
+        # 門檻：先抓任意值再驗格式（只比對純數字會漏掉 488,343 這種同時讓 JS 得 NaN 的寫法）
+        for v in sorted(set(re.findall(r'data-min="([^"]*)"', html))):
+            if v == LIFE_ACCOUNT_MIN:
+                continue
+            if not v.isdigit():
+                problems.append(f"index.html 銀行卡門檻格式錯誤 {v!r}（JS Number() 會得 NaN）")
+            elif int(v) != safe3:
+                problems.append(f"index.html 銀行卡門檻未跟月支出：{v}（應為 {safe3}）")
         if "__SAFE_LINE_RAW__" in html:
             problems.append("index.html 殘留未取代佔位符 __SAFE_LINE_RAW__")
     if not quiet:

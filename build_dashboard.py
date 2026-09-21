@@ -313,9 +313,12 @@ def main():
         if old in tpl:
             tpl = tpl.replace(old, new)
             hits += 1
-    # 2026-09-21 INC-233：佔位符沒被取代＝模板與鍵名不一致，過去是「靜默留舊值」→ 改為當場大聲失敗
-    if "__SAFE_LINE_RAW__" in tpl:
-        raise RuntimeError("build_dashboard：__SAFE_LINE_RAW__ 未被取代（月支出×3 注入失效，拒絕產出舊值儀表板）")
+    # 2026-09-21 INC-233：佔位符沒被取代＝模板與鍵名不一致，過去是「靜默留舊值」→ 改為當場大聲失敗。
+    # 新增 rep 佔位符時，務必同步登錄這份清單（清單＝強制必須被消耗的佔位符）。
+    _MUST_CONSUME = ("__SAFE_LINE_RAW__",)
+    _leftover = [p for p in _MUST_CONSUME if p in tpl]
+    if _leftover:
+        raise RuntimeError(f"build_dashboard：佔位符未被取代 {_leftover}（注入失效，拒絕產出舊值儀表板）")
 
     # ── data-k 自動注入（2026-08-31 治本：template 的 <span data-k="KEY">顯示值</span> 直接對 snapshot，
     #    不再依賴 rep 舊值字串清單 — 8/31 血淚：cash_total 772,607 殘留只因 rep 沒列 772,607）──
