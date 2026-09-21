@@ -245,7 +245,7 @@ def main():
     rep["27,738"] = _fmt((cd.get("活期儲蓄存款", 0) or 0) + (cd.get("數位存款帳戶２類", 0) or 0))  # 國泰世華（活期+數位2類）
     rep["44,116"] = _fmt(cd.get("數位活儲", 44116) or 0)             # 台北富邦
     rep["739"] = _fmt(cd.get("Digital Savings Acco", 739) or 0)      # 將來銀行
-    rep["458,343"] = _fmt(round((snap.get("monthly_expense", 162781) or 162781) * 3))  # 安全線 3個月支出（162,781×3=488,343）
+    rep["__SAFE_LINE_RAW__"] = str(int(expense) * 3)   # 3 個月安全線門檻（月支出×3；顯示值由下方 data-k="safe_line" 注入）
     rep["20,776"] = _fmt(cd.get("活期儲蓄存款", 0) or 0)              # 國泰明細 活期儲蓄
     rep["6,960"] = _fmt(cd.get("數位存款帳戶２類", 2) or 0)           # 國泰明細 數位2類
     # 2026-08-28 修正：銀行水位全動態（Moneybook 8/27 帳戶）
@@ -313,6 +313,9 @@ def main():
         if old in tpl:
             tpl = tpl.replace(old, new)
             hits += 1
+    # 2026-09-21 INC-233：佔位符沒被取代＝模板與鍵名不一致，過去是「靜默留舊值」→ 改為當場大聲失敗
+    if "__SAFE_LINE_RAW__" in tpl:
+        raise RuntimeError("build_dashboard：__SAFE_LINE_RAW__ 未被取代（月支出×3 注入失效，拒絕產出舊值儀表板）")
 
     # ── data-k 自動注入（2026-08-31 治本：template 的 <span data-k="KEY">顯示值</span> 直接對 snapshot，
     #    不再依賴 rep 舊值字串清單 — 8/31 血淚：cash_total 772,607 殘留只因 rep 沒列 772,607）──

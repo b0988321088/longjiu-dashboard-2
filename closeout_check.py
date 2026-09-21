@@ -231,6 +231,57 @@ def step_auto_warns(quiet: bool) -> list:
     return problems
 
 
+SNAP_FILE = REPO / "snapshot.json"
+INDEX_FILE = REPO / "index.html"
+LIFE_ACCOUNT_MIN = "40000"   # 玉山／富邦生活帳戶安全線（4 萬，刻意常數；非 3 個月支出）
+
+
+def step_consistency(quiet: bool) -> list:
+    """⑤ 真值一致性（2026-09-21 INC-233）：月支出口徑與儀表板安全線不得靜默漂移。
+
+    檢查：
+      - snapshot：monthly_expense_cash + monthly_expense_accrual == monthly_expense
+      - snapshot：monthly_fixed_expense.分層 副本與頂層同值（兩份同值資料只改一邊會無聲漂移）
+      - index.html：data-k="safe_line" 顯示值與銀行卡 data-min 門檻 == 月支出×3；不得殘留佔位符
+    """
+    import json as _json
+    problems: list = []
+    try:
+        snap = _json.loads(SNAP_FILE.read_text(encoding="utf-8"))
+    except Exception as e:                                     # snapshot 壞掉不算本步問題（別班會亮）
+        if not quiet:
+            print(f"⑤ 真值一致性：⚪ 無法讀 snapshot（{e}）")
+        return problems
+    expense = int(snap.get("monthly_expense") or 0)
+    cash = snap.get("monthly_expense_cash")
+    accrual = snap.get("monthly_expense_accrual")
+    if cash is not None and accrual is not None and int(cash) + int(accrual) != expense:
+        problems.append(f"月支出分層不合：現金扣帳 {cash} + 帳上計息 {accrual} ≠ 月支出 {expense}")
+    lay = ((snap.get("monthly_fixed_expense") or {}).get("分層") or {})
+    if lay:
+        for k, v in (("現金扣帳合計", cash), ("帳上計息合計", accrual), ("合計", expense)):
+            if v is not None and int(lay.get(k, -1)) != int(v):
+                problems.append(f"分層副本漂移：monthly_fixed_expense.分層.{k}={lay.get(k)} ≠ {v}")
+    safe3 = expense * 3
+    if INDEX_FILE.exists():
+        html = INDEX_FILE.read_text(encoding="utf-8", errors="replace")
+        for v in sorted(set(re.findall(r'data-k="safe_line">([0-9,]+)<', html))):
+            if v != f"{safe3:,}":
+                problems.append(f"index.html 安全線殘留 {v}（應為 {safe3:,}＝月支出 {expense:,}×3）")
+        bad = sorted({v for v in re.findall(r'data-min="([0-9]+)"', html)
+                      if v not in (str(safe3), LIFE_ACCOUNT_MIN)})
+        if bad:
+            problems.append(f"index.html 銀行卡門檻未跟月支出：{', '.join(bad)}（應為 {safe3}）")
+        if "__SAFE_LINE_RAW__" in html:
+            problems.append("index.html 殘留未取代佔位符 __SAFE_LINE_RAW__")
+    if not quiet:
+        _c = f"{int(cash):,}" if cash is not None else "—"
+        _a = f"{int(accrual):,}" if accrual is not None else "—"
+        print(f"⑤ 真值一致性：月支出 {expense:,}（現金 {_c}＋帳上 {_a}）｜安全線 {safe3:,}"
+              f"｜{'❌ ' + str(len(problems)) + ' 項' if problems else '✅'}")
+    return problems
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="龍九每日收工檢查（一鍵）")
     ap.add_argument("--fix", action="store_true", help="釋放被誤認領的排程時點")
@@ -252,6 +303,7 @@ def main() -> int:
         rc, concl, out = step_audit(args.quiet or args.silent_ok)
         lane_problems = step_push_lanes(args.quiet or args.silent_ok)
         warn_problems = step_auto_warns(args.quiet or args.silent_ok)
+        cons_problems = step_consistency(args.quiet or args.silent_ok)
 
         problems = []
         if left_claims:
@@ -260,6 +312,7 @@ def main() -> int:
             problems.append(concl.replace("閉環稽核結果：", ""))
         problems.extend(lane_problems)
         problems.extend(warn_problems)
+        problems.extend(cons_problems)
 
         print()
         print("=" * 52)
