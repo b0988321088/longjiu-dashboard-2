@@ -11,6 +11,7 @@ import csv
 import json
 import os
 import re
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -25,12 +26,11 @@ DS_URL = "https://api.deepseek.com/user/balance"
 DS_TOPUP = "https://platform.deepseek.com/top_up"
 GM_TOPUP = "https://aistudio.google.com/billing"
 GM_PROBE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
-# 日耗：2026-09-22 起改為動態 —— 從 cost_log.csv（餘額扣款真值）取近 N 筆非儲值日
-# 的中位數。舊版寫死 ¥15.5（9/5-9/17 含 CER 風暴日的平均）會把剩餘天數低估近一半
-# （9/22 實例：寫死 15.5 → 6.1 天 ⛔；實際近 7 日中位數 9.07 → 10.4 天 ⚠️）。
-DS_BURN_WINDOW = 7          # 取近幾筆有效日
-DS_BURN_FLOOR_CNY = 5.0     # 下限保護：中位數低於此值時以 FLOOR 計，避免單日極低把天數吹大
-DS_BURN_FALLBACK_CNY = 10.0  # cost_log.csv 不可讀時的保守值
+# 日耗：2026-09-22 起改為「單一口徑」—— 一律呼叫 cost_rates.ds_burn()（餘額真值法：
+# cost_log.csv 相鄰連續日餘額差、只取正差、近 7 個日曆日平均）。本檔不再自己算：
+# 舊版本檔用「近 7 筆非儲值日中位數」（¥9.1 → 10.4 天），與 ai_cost_watch 的餘額真值均值
+# （¥11.5 → 8.0 天）差 1.2 倍，同一顆錢包兩個結論；三支腳本統一後只剩一種數字。
+DS_BURN_FALLBACK_CNY = 10.0  # cost_rates 不可用時的保守值（僅顯示用，不再當真值）
 CNY_TWD = 4.73
 USD_TWD = 31.7
 
@@ -101,37 +101,21 @@ def gemini_log_balance() -> str:
 
 
 def ds_daily_burn() -> tuple[float, str]:
-    """DeepSeek 日耗（CNY）：cost_log.csv 近 N 筆非儲值日的中位數。
+    """DS 日耗（CNY）＝ cost_rates 單一口徑（2026-09-22 統一定案）。
 
-    為何不用平均、不用 log 估價：① 中位數避開 CER 風暴日（9/11 ¥42）把日耗拉高；
-    ② cost_log.csv 是「餘額扣款」真值，本機 log 估價系統性低估 1.8x（2026-09-18 實證）。
+    本檔不再自己算：以前用 cost_log.csv 的「近 7 筆非儲值日中位數」，與 ai_cost_watch 的
+    「餘額真值均值」差 1.2 倍（9.1 vs 11.5 CNY），同一顆錢包會得出 10.4 天與 8.0 天兩種結論。
+    現在三支腳本一律呼叫 cost_rates.ds_burn()（連續日、只取正差、近 7 個日曆日平均）。
     """
-    vals: list[float] = []
     try:
-        with DS_LOG.open(encoding="utf-8-sig") as fh:
-            rows = [r for r in csv.reader(fh) if r and r[0].strip()]
-    except Exception:  # noqa: BLE001
-        return DS_BURN_FALLBACK_CNY, "fallback（cost_log 不可讀）"
-    for r in reversed(rows[1:]):
-        if len(r) < 3:
-            continue
-        try:
-            v = float(r[2])
-        except ValueError:
-            continue
-        if v <= 0:  # 儲值列與無用量日不計入分母
-            continue
-        vals.append(v)
-        if len(vals) >= DS_BURN_WINDOW:
-            break
-    if not vals:
-        return DS_BURN_FALLBACK_CNY, "fallback（無有效日）"
-    vals.sort()
-    n = len(vals)
-    med = vals[n // 2] if n % 2 else (vals[n // 2 - 1] + vals[n // 2]) / 2
-    if med < DS_BURN_FLOOR_CNY:
-        return DS_BURN_FLOOR_CNY, f"下限 ¥{DS_BURN_FLOOR_CNY:.1f}（近{n}日中位數 ¥{med:.1f}）"
-    return med, f"近{n}日中位數"
+        sys.path.insert(0, str(LJ))
+        from cost_rates import ds_burn  # noqa: PLC0415
+        b = ds_burn()
+        if b.get("ok") and b.get("rate_cny"):
+            return float(b["rate_cny"]), str(b["window"])
+        return DS_BURN_FALLBACK_CNY, f"fallback（{b.get('window') or '無樣本'}）"
+    except Exception as exc:  # noqa: BLE001 — 口徑模組壞掉不該讓錢包查詢整個失敗
+        return DS_BURN_FALLBACK_CNY, f"fallback（{type(exc).__name__}）"
 
 
 def main():

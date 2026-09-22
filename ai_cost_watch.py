@@ -166,36 +166,13 @@ def daily_totals(days: list[str]) -> dict[str, dict]:
     return out
 
 
-def ds_drain_from_csv(hist: dict[str, float]) -> tuple[float | None, int, str]:
-    """DS 真值日耗（CNY）：cost_log.csv 餘額差，只在**連續日曆日**上算。
-
-    為什麼不用 log 估價：本機 log 估價系統性偏低（9/22 實測 log 320 NT$ vs 餘額真值 395 NT$）。
-    為什麼只取連續日：中間缺日時，兩筆餘額差是好幾天的耗用，歸給單日會高估；
-    且與儲值跳升混在一起會算錯金額（2026-09-22 審查 blocking #3）。
-    回傳（平均日耗 CNY, 樣本天數, 視窗說明）。
-    """
-    dates = sorted(hist)
-    drops: list[tuple[str, float]] = []
-    for i in range(1, len(dates)):
-        try:
-            d0 = dt.date.fromisoformat(dates[i - 1])
-            d1 = dt.date.fromisoformat(dates[i])
-        except Exception:
-            continue
-        if (d1 - d0).days != 1:      # 缺日 → 無法歸因到單日，不計
-            continue
-        diff = hist[dates[i - 1]] - hist[dates[i]]
-        if diff <= 0:                # 儲值或持平 → 不是耗用
-            continue
-        drops.append((dates[i], diff))
-    if not drops:
-        return None, 0, "無連續日樣本"
-    cut = (dt.date.today() - dt.timedelta(days=7)).isoformat()
-    recent = [x for x in drops if x[0] >= cut]
-    window = "最近 7 個日曆日"
-    if not recent:                   # 近 7 日內完全沒有可用樣本 → 退回最近 7 筆並誠實標示
-        recent, window = drops[-7:], "最近 7 筆可用樣本（非連續 7 日）"
-    return sum(x[1] for x in recent) / len(recent), len(recent), window
+def _cost_rates():
+    """日耗口徑單一真值模組（cost_rates.py）。載入失敗回 None → 各處退回本地退路。"""
+    try:
+        import cost_rates  # noqa: PLC0415
+        return cost_rates
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def scan_cer_day(date: str) -> tuple[int, int]:
@@ -382,18 +359,22 @@ def build(days_n: int, probe: bool) -> dict:
         ds_bal_cny, ds_src = dta.ds_balance_csv()
     ds_days = None
     ds_daily = None
-    # 日耗優先用「餘額真值」；樣本不足才退回 log 估價（且標記來源，讀者才知道可信度）
-    _ds_drain_cny, _ds_samples, _ds_window = ds_drain_from_csv(bal_hist)
-    if _ds_drain_cny:
-        ds_daily = round(_ds_drain_cny * CNY_TWD)
-        ds_daily_src = f"餘額真值（{_ds_window}，{_ds_samples} 個樣本）"
+    # 日耗一律走 cost_rates 單一口徑（2026-09-22 統一定案）；模組不可用或樣本不足才退回 log 估價
+    _cr = _cost_rates()
+    _dsb = _cr.ds_burn() if _cr else None
+    _ds_rate_exact: float | None = None
+    if _dsb and _dsb.get("ok"):
+        ds_daily = round(_dsb["rate_twd"])
+        _ds_rate_exact = float(_dsb["rate_twd"])   # 顯示取整、算天數用未捨入值（與另兩支一致）
+        ds_daily_src = f"餘額真值（{_dsb['window']}，{_dsb['samples']} 個樣本）"
     elif complete:
         ds_daily = round(sum(int(r.get("ds_twd", 0)) for r in complete[-7:]) / max(1, len(complete[-7:])))
         ds_daily_src = "log 估價（樣本不足，偏低）"
     else:
         ds_daily_src = "無資料"
     if ds_bal_cny is not None and ds_daily:
-        ds_days = round(ds_bal_cny * CNY_TWD / ds_daily, 1)
+        _rate = _ds_rate_exact or ds_daily
+        ds_days = round(ds_bal_cny * CNY_TWD / _rate, 1)
 
     g_top_date, g_top_amt, _g_hhmm = dta.gemini_topup()
     g_used = g_daily = g_bal = g_days = None
@@ -404,8 +385,14 @@ def build(days_n: int, probe: bool) -> dict:
             g_used = to_twd(dta.gemini_used_since(g_top_date, _g_hhmm, per_all))
             g_bal = max(0, round(g_top_amt - g_used))
             _gseries = [int(r.get("gemini_twd", 0)) for r in complete[-7:]]
-            # 用平均而非中位數：中位數在「多數日子為 0、少數日子爆量」時會嚴重低估續航
-            g_daily = round(sum(_gseries) / len(_gseries)) if _gseries else 0
+            # 日耗一律走 cost_rates（近 7 個完整日 log 平均）；模組不可用才退回帳本平均
+            _gburn = _cost_rates()
+            _gb = _gburn.gemini_burn() if _gburn else None
+            if _gb and _gb.get("ok"):
+                g_daily = round(_gb["rate_twd"])
+            else:
+                # 用平均而非中位數：中位數在「多數日子為 0、少數日子爆量」時會嚴重低估續航
+                g_daily = round(sum(_gseries) / len(_gseries)) if _gseries else 0
             g_days = round(g_bal / g_daily, 1) if g_daily else None
     except Exception:
         pass

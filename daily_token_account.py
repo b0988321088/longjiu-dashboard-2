@@ -405,6 +405,14 @@ def main() -> None:
     now = dt.datetime.now()
     today = now.date()
     today_s = today.isoformat()
+    # 日耗口徑單一真值（2026-09-22 統一定案）：DS 餘額真值／Gemini log 平均，三支腳本共用同一實作
+    try:
+        sys.path.insert(0, str(LJ))
+        from cost_rates import ds_burn, gemini_burn  # noqa: PLC0415
+        _rates_ok = True
+    except Exception:  # noqa: BLE001 — 模組缺失時退回「不顯示日耗」，不讓整份帳消失
+        ds_burn = gemini_burn = None  # type: ignore[assignment]
+        _rates_ok = False
     week_days = {(today - dt.timedelta(days=i)).isoformat() for i in range(0, 8)}
     per_range = scan_agent_log_range(week_days | {(today - dt.timedelta(days=i)).isoformat() for i in range(8, 15)})
     per_today = per_range.get(today_s, {})
@@ -467,8 +475,11 @@ def main() -> None:
     if bal is None:
         bal, src = ds_balance_csv()
     if bal is not None:
-        rate_cny = median(ds_hist) / CNY_TWD   # 日耗換算成 ¥（DS 以人民幣計價）；用中位數避開單日尖峰
-        tail = "" if rate_cny <= 0 else f"｜日耗中位數 ¥{rate_cny:.1f} → 約 {bal/rate_cny:.1f} 天"
+        # 日耗一律走 cost_rates 單一口徑（2026-09-22 統一定案：DS 用餘額真值、Gemini 用 log 平均）
+        _dsb = ds_burn() if _rates_ok else None
+        rate_cny = (_dsb or {}).get("rate_cny") or 0.0
+        _basis = (_dsb or {}).get("window", "cost_rates 載入失敗")
+        tail = "" if rate_cny <= 0 else f"｜日耗 ¥{rate_cny:.1f}（{_basis}）→ 約 {bal/rate_cny:.1f} 天"
         flag = ""
         if rate_cny > 0:
             days = bal / rate_cny
@@ -485,8 +496,10 @@ def main() -> None:
     elif up_amt > 0:
         used = gemini_used_since(up_date, up_hhmm, per_range)
         left = up_amt - used * USD_TWD
-        rate_g = median(gm_hist)
-        days_txt = "" if rate_g <= 0 else f"｜日耗中位數 NT${rate_g:,.0f} → 約 {left/rate_g:.1f} 天"
+        _gb = gemini_burn() if _rates_ok else None
+        rate_g = (_gb or {}).get("rate_twd") or 0.0
+        _gbasis = (_gb or {}).get("window", "cost_rates 載入失敗")
+        days_txt = "" if rate_g <= 0 else f"｜日耗 NT${rate_g:,.0f}（{_gbasis}）→ 約 {left/rate_g:.1f} 天"
         flag_g = ""
         if rate_g > 0:
             d_left = left / rate_g
