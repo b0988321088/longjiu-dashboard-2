@@ -17,7 +17,30 @@ import urllib.error
 from datetime import datetime, date, timedelta
 from pathlib import Path
 
-BASE = Path(__file__).resolve().parent.parent   # AppData/Local/hermes
+# 2026-09-22 修正：本檔已被搬進 repo（Desktop/longjiu_system/），
+# 舊寫法 parent.parent 會變成 Desktop/ → memories/ 指到不存在的 C:\Users\bot\Desktop\memories，
+# 導致每日 06:50 備份的日誌與備份目的地全部寫不進去（FileNotFoundError）。
+# 改為「實際含有 memories/ 的那一層」，repo 與 hermes/scripts 兩種位置都成立。
+def _mem_root() -> Path:
+    """找出『真正存放記憶的那一層』。
+
+    2026-09-22 審查修正：只認「目錄下確實有 memories/MEMORY.md」的位置，
+    並優先採 hermes home；若 repo 內出現 memories/ 會直接被排除（不猜、不寫錯位置）。
+    """
+    hermes = Path(os.path.expandvars(r'%LOCALAPPDATA%/hermes'))
+    if (hermes / "memories" / "MEMORY.md").is_file():
+        return hermes
+    local = Path(__file__).resolve().parent
+    if (local / "memories" / "MEMORY.md").is_file():
+        return local
+    # 都不成立 → 明確報錯，不靜默寫到不存在的路徑（原本的 bug 就是這樣發生的）
+    raise FileNotFoundError(
+        "找不到記憶根目錄（需含 memories/MEMORY.md）："
+        f"試過 {hermes} 與 {local}"
+    )
+
+
+BASE = _mem_root()
 MEM_DIR = BASE / "memories"
 BACKUP_DIR = MEM_DIR / "backups"
 LOG_FILE = BACKUP_DIR / "backup_log.txt"
