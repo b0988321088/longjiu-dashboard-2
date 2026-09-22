@@ -5479,8 +5479,89 @@
       "user": "Laing",
       "idem_key": "hermes-1790020085",
       "source": "user"
-    }
-  ],
+    },
+    {
+      "id": "mem-20260922-caliber-single-source",
+      "timestamp": "2026-09-22T11:32:17.809171",
+      "agent": "Hermes",
+      "task": "單一真值口徑紀律（週日/週六雙閘門）",
+      "action": "核准",
+      "name": "報告口徑一律引用單一真值＋口徑比對閘門（週日與週六各一）",
+      "summary": "使用者 9/22 核准：週日動態週報與週六再平衡評估的配置權重/防守合併口徑一律引用 rebalance_eval 檔與 snapshot/sot_targets 真值，禁自行重算；產出後必跑 check_caliber_consistency.py，非 0 不 push。",
+      "detail": "週日：prompt 前插「單一真值口徑」區塊（引用最新 rebalance_eval，fallback 需標 ⚠️）、交付步驟加口徑閘門、回覆需寫「本週未上架」、git add 補 rebalance_snapshot.json（原本停在 9/20、與報表 7.7% 不一致且永不提交）。週六：同紀律＋新增 --vs-snapshot 模式（LLM 手寫報告 vs snapshot 真值，容差 0.05pp），因其產出的 rebalance_eval HTML 就是自己寫的、同檔比對無意義。",
+      "status": "completed",
+      "category": "決策",
+      "tags": [
+        "口徑",
+        "閘門",
+        "日報管線",
+        "CIO審查"
+      ],
+      "user": "Laing",
+      "idem_key": "hermes-1790047937809",
+      "source": "user"
+    },
+    {
+      "id": "mem-20260922-wakegate-fix",
+      "timestamp": "2026-09-22T11:32:17.809171",
+      "agent": "Hermes",
+      "task": "週六 wake-gate 判準修正（16 天靜默事故）",
+      "action": "核准",
+      "name": "週六再平衡 agent 靜默死亡 16 天：gate 判準改看自身 cron 輸出（保留 agent）",
+      "summary": "事故：wake-gate 用 rebalance_summary_{today}.md 存在與否當「今天已跑過」判準，但該檔每天 07:00 由管線產出 → 判準恆真 → agent 自 9/6 起從未喚醒（9/12、9/19 輸出僅 174 bytes），使用者連續兩週沒收到週六簡報。",
+      "detail": "修法（commit 14f279aa）：改看 HERMES_HOME/cron/output/<job_id>/<today>_*.md 且排除 gate-skip/silent 檔頭；讀不到目錄 fail-open＋stderr 示警；silent 判定只掃檔頭。使用者 9/22 裁示「保留」該 agent（成本約 NT$0.5/次），不退役。驗證：6 項實跑（含 cron 實際路徑薄轉發器）全過；9/26 16:00 首跑驗證。",
+      "status": "completed",
+      "category": "決策",
+      "tags": [
+        "cron",
+        "gate",
+        "事故修復",
+        "靜默失敗"
+      ],
+      "user": "Laing",
+      "idem_key": "hermes-1790047937809",
+      "source": "user"
+    },
+    {
+      "id": "mem-20260922-audit-defense-row",
+      "timestamp": "2026-09-22T11:32:17.809171",
+      "agent": "Hermes",
+      "task": "週五審計表防守列口徑標註",
+      "action": "核准",
+      "name": "週五資產防禦審計表：防守列標「單桶僅結構參考」＋門檻改讀 sot_targets 單一入口",
+      "summary": "原本逐桶列只顯示「防守 17.3% 目標 30% 缺 12.7pp（-3,299,527）」，會被誤讀成要補 326 萬。已於同列加註「單桶僅結構參考；合併口徑 67.9% ≥ 60% 已足 → 承接凍結」。",
+      "detail": "一併消滅雙寫：門檻 60 原本在 build_audit_dashboard.py 與週報 prompt 各寫一份，改讀 sot_targets.defensive_caliber（金額由組成加總派生、門檻取自 snapshot）。缺門檻時 stderr 示警＋顯示 \"?\"＋不算已足（不硬編 fallback）。實跑：正常路徑與缺門檻分支（影子模組端到端）皆驗證。",
+      "status": "completed",
+      "category": "決策",
+      "tags": [
+        "審計",
+        "防守口徑",
+        "單一真值"
+      ],
+      "user": "Laing",
+      "idem_key": "hermes-1790047937809",
+      "source": "user"
+    },
+    {
+      "id": "mem-20260922-links-single-source",
+      "timestamp": "2026-09-22T11:32:17.809171",
+      "agent": "Hermes",
+      "task": "儀表板連結設定單一來源＋兩道防再犯檢查",
+      "action": "核准",
+      "name": "links_config.py 統一連結設定＋check_dashboard_sync 新增前綴涵蓋/連結可達兩檢查",
+      "summary": "儀表板「重要連結」按鈕曾每天落後一天（4 顆），根因是 update_dashboard_links 與 build_dashboard 的連結清單各寫一份 → 補 rebalance_eval_ 漏一邊就永遠不更新。",
+      "detail": "修法：新增 links_config.py 為唯一來源（PREFIX_RULES/PLACEHOLDER_PREFIX），兩支腳本同源；缺前綴改 fail-loud（不再靜默回退 .html）。防再犯：第 11 項驗「重要連結區佔位符都在 links_config 且前綴都有副檔名」、第 12 項驗「每個連結目標本機存在且在 git ls-files」（未版控＝Pages 404，正是當天實踩）。負測：假前綴/未版控連結皆被擋。",
+      "status": "completed",
+      "category": "決策",
+      "tags": [
+        "儀表板",
+        "連結",
+        "防再犯"
+      ],
+      "user": "Laing",
+      "idem_key": "hermes-1790047937809",
+      "source": "user"
+    }],
   "meta": {
     "updated_at": "2026-09-22T07:00:11.690000"
   },
