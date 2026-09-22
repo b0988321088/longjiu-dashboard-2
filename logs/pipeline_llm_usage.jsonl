@@ -34,3 +34,5 @@
 {"ts": "2026-09-22T11:07:38", "model": "deepseek-chat", "caller": "review_audit_caliber.py", "in": 3959, "cached": 0, "out": 564, "ok": true}
 {"ts": "2026-09-22T11:09:39", "model": "deepseek-chat", "caller": "review_push_round2.py", "in": 2433, "cached": 0, "out": 581, "ok": true}
 {"ts": "2026-09-22T11:10:45", "model": "deepseek-chat", "caller": "review_push_generic.py", "in": 1331, "cached": 0, "out": 346, "ok": true}
+{"ts": "2026-09-22T11:14:11", "model": "deepseek-chat", "caller": "review_push_generic.py", "in": 2088, "cached": 0, "out": 700, "ok": true}
+{"ts": "2026-09-22T11:15:03", "model": "deepseek-chat", "caller": "review_push_generic.py", "in": 2093, "cached": 0, "out": 411, "ok": true}
