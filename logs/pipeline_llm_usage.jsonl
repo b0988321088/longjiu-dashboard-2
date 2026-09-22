@@ -66,3 +66,5 @@
 {"ts": "2026-09-22T15:08:23", "model": "deepseek-chat", "caller": "run_daily.py", "in": 861, "cached": 384, "out": 165, "ok": true}
 {"ts": "2026-09-22T15:08:26", "model": "deepseek-chat", "caller": "run_daily.py", "in": 497, "cached": 256, "out": 177, "ok": true}
 {"ts": "2026-09-22T15:09:27", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 513, "cached": 379, "out": 726, "ok": true}
+{"ts": "2026-09-22T21:34:38", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 497, "cached": 256, "out": 217, "ok": true}
+{"ts": "2026-09-22T21:35:13", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 513, "cached": 379, "out": 619, "ok": true}
