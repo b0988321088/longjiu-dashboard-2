@@ -433,8 +433,9 @@ def build(days_n: int, probe: bool) -> dict:
     if int(t_rec.get("q429", 0)) >= THRESHOLDS["q429_warn"]:
         alerts.append({"code": "A3", "level": "warn", "msg": f"今日 Gemini 429 {t_rec.get('q429')} 次 ≥ {THRESHOLDS['q429_warn']}"})
     if streak >= THRESHOLDS["cer_streak_warn"] or cer_days >= THRESHOLDS["cer_days_warn"]:
+        _cap_a9 = "（已回溯到帳本起點，實際可能更長）" if streak_capped else ""
         alerts.append({"code": "A9", "level": "warn",
-                       "msg": (f"DS 內容風控（CER）未收斂：連續 {streak} 天、近 7 日有 {cer_days}/7 天出現"
+                       "msg": (f"DS 內容風控（CER）未收斂：連續 {streak} 天{_cap_a9}、近 7 日有 {cer_days}/7 天出現"
                                f"（合計 {cer7} 次）→ 檢查近期 prompt／日報內文是否踩到關鍵詞")})
     _topups, _topup_unresolved = topup_events(led)
     for u in _topup_unresolved:
@@ -442,10 +443,13 @@ def build(days_n: int, probe: bool) -> dict:
                        "msg": (f"儲值無法歸因：{u['from']}→{u['date']} 中間有 {u['gap_days'] - 1} 天無帳本紀錄，"
                                f"餘額上升 {u['amount']} {u['unit']}（≈NT${u['twd']:,}）→ 請人工確認儲值日")})
     if corrections:
+        _shown = corrections[:3]
+        _more = f"，共 {len(corrections)} 筆" if len(corrections) > len(_shown) else ""
         alerts.append({"code": "A10", "level": "warn",
-                       "msg": (f"帳本有 {len(corrections)} 筆『重算值低於已存值』被保留（不靜默下修）："
-                               + "、".join(f"{c['date']} {c['field']} {c['stored']}→{c['recomputed']}" for c in corrections[:3])
-                               + "｜若確認應下修，將該日標 pinned 或直接改帳本值")})
+                       "msg": (f"帳本有『重算值低於已存值』被保留（不靜默下修）："
+                               + "、".join(f"{c['date']} {c['field']} {c['stored']}→{c['recomputed']}" for c in _shown)
+                               + _more
+                               + "｜若確認應下修，用 --pin 凍結該日或直接改帳本值")})
     if ds_days is not None:
         if ds_days < THRESHOLDS["days_critical"]:
             alerts.append({"code": "A6", "level": "critical", "msg": f"DeepSeek 剩餘 {ds_days} 天 < {THRESHOLDS['days_critical']} 天，需立即儲值"})
@@ -584,8 +588,15 @@ def main() -> int:
 
     if a.pin or a.unpin:
         # 讓「下修／凍結」有支援的入口，不必手改 JSON（審查第三輪 blocking #2）
-        led, bad = read_ledger()
         date = a.pin or a.unpin
+        try:  # 先驗格式，避免把 typo 當成一個新日期寫進帳本（審查第四輪建議）
+            _d = dt.date.fromisoformat(date)
+            if _d.isoformat() != date:
+                raise ValueError("需為 YYYY-MM-DD")
+        except Exception as exc:  # noqa: BLE001
+            print(f"❌ 日期格式錯誤：{date!r}（{exc}）→ 請用 YYYY-MM-DD")
+            return 1
+        led, bad = read_ledger()
         if date not in led:
             print(f"❌ 帳本沒有 {date}（現有 {len(led)} 天：{min(led, default='-')} ~ {max(led, default='-')}）")
             return 1
