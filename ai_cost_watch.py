@@ -18,7 +18,7 @@
   A2 DS 內容風控（CER）當日 ≥ 20 次 → 錢正被導去備援
   A3 Gemini 429 當日 ≥ 10 次
   A4 近 7 日總額 ≥ 前 7 日 × 1.5（惡化）
-  A5 CER ≥ 5 次卻沒走免費入口（備援全落付費）→ 風控的代價被付費模型吸收
+  A5 CER ≥ 5 次且免費入口接手率 < 10%（備援幾乎全落付費）→ 風控的代價被付費模型吸收
   A6 DS 剩餘天數 < 7（⛔）／< 14（⚠️）
   A7 Gemini 剩餘天數 < 7（⛔）／< 14（⚠️）；探測「確定失效」才 ⛔，暫時性失敗只 ⚠️
   A8 DS 餘額單日上升 ≥ ¥50 → 判定為儲值事件（記入帳本，不當成花費）
@@ -60,7 +60,10 @@ THRESHOLDS = {
     "cer_days_warn": 5,          # A9：近 7 日出現 CER 的天數門檻
     "q429_warn": 10,             # A3
     "wow_ratio": 1.5,            # A4
-    "cer_min_for_free_check": 5,  # A5：CER 達此數且免費入口 0 次 → 備援全走付費
+    "cer_min_for_free_check": 5,  # A5：CER 達此數才檢查免費入口有沒有接手
+    "free_takeover_min_ratio": 0.10,  # A5/外溢：免費接手次數 ÷ CER 次數 低於此 = 幾乎沒接手
+    "spend_avg_vs_median_ok": 1.5,    # 花費判定：日均 ÷ 中位數 ≤ 此 = 正常
+    "spend_avg_vs_median_high": 3.0,  # 花費判定：> 此 = 異常集中
     "days_critical": 7,          # A6/A7 ⛔
     "days_warn": 14,             # A6/A7 ⚠️
     "topup_jump_cny": 50,        # A8
@@ -189,6 +192,48 @@ def scan_cer_day(date: str) -> tuple[int, int]:
         return 0, 0
 
 
+def free_takeover_miss(rec: dict) -> bool:
+    """當日風控是否「幾乎沒被免費入口接手」＝免費呼叫數 ÷ 當日 CER 次數 < 門檻。
+
+    用比率而非「免費 0 次」（2026-09-22）：只要當天有極少數免費呼叫，整日就會被排除在
+    「外溢成本」之外，低估風控逼出來的付費（實例：CER 61 次、Gemini 188 次 NT$89 的一天，
+    因 1 次免費呼叫被整日排除）。分母固定取當日 CER 次數 —— 看的是「每一輪被擋，免費層有
+    沒有接手」，不是免費層佔全部呼叫的比例（後者在沒風控的日子會誤報）。
+    """
+    cer = int(rec.get("cer", 0) or 0)
+    if cer < THRESHOLDS["cer_min_for_free_check"]:
+        return False
+    return int(rec.get("free_calls", 0) or 0) / cer < THRESHOLDS["free_takeover_min_ratio"]
+
+
+def wallet_spend(recs: list[dict], key: str) -> dict:
+    """單一錢包的花費拆解（合計／日均／中位數／是否正常）。
+
+    判定基準是「日均 ÷ 中位數」：中位數＝常態日，倍數＝被少數日拉抬的程度。
+    中位數 0（多數日子不花錢）時除以 0 無意義 → 改用「集中在幾天」描述，硬報倍數會騙人。
+    門檻在 THRESHOLDS，不寫死金額。
+    """
+    vals = [int(r.get(key, 0) or 0) for r in recs]
+    if not vals:
+        return {"total_twd": 0, "avg_twd": 0.0, "median_twd": 0, "ratio": None,
+                "level": "normal", "top3_share": 0.0, "days": 0, "cer_days": 0}
+    tot = sum(vals)
+    avg = round(tot / len(vals), 1)
+    med = int(statistics.median(vals))
+    top3 = sorted(vals, reverse=True)[:3]
+    share = round(sum(top3) / tot, 2) if tot else 0.0
+    cer_days = sum(1 for r in recs if int(r.get("cer", 0) or 0) >= THRESHOLDS["cer_warn"])
+    if med > 0:
+        ratio = round(avg / med, 2)
+        level = "normal" if ratio <= THRESHOLDS["spend_avg_vs_median_ok"] else (
+            "elevated" if ratio <= THRESHOLDS["spend_avg_vs_median_high"] else "spike")
+    else:
+        ratio = None
+        level = "normal" if not tot else "elevated"
+    return {"total_twd": tot, "avg_twd": avg, "median_twd": med, "ratio": ratio,
+            "level": level, "top3_share": share, "days": len(vals), "cer_days": cer_days}
+
+
 def refresh_ledger(days: list[str], bal_hist: dict[str, float], probe: bool) -> tuple[dict[str, dict], list[str], list[dict]]:
     """把可見日補進帳本。回傳（帳本, 新增日, 被壓下的下修）。
 
@@ -314,6 +359,15 @@ def build(days_n: int, probe: bool) -> dict:
     ds7 = sum(int(r.get("ds_twd", 0)) for r in last7)
     gem7 = sum(int(r.get("gemini_twd", 0)) for r in last7)
     free7 = sum(int(r.get("free_twd", 0)) for r in last7)
+    # 日均口徑：兩邊天數不同（帳本天數不足時 prev7 會少於 7 天）→ 一律用日均比較，不用總額比
+    n7, n7p = len(last7), len(prev7)
+    avg7 = round(s7 / n7, 1) if n7 else 0.0
+    avg7p = round(s7p / n7p, 1) if n7p else 0.0
+    wow_pct = round((avg7 / avg7p - 1) * 100) if avg7p else None
+    breakdown = {"ds": wallet_spend(last7, "ds_twd"), "gemini": wallet_spend(last7, "gemini_twd"),
+                 "free": wallet_spend(last7, "free_twd"),
+                 "free_calls": sum(int(r.get("free_calls", 0) or 0) for r in last7),
+                 "days": n7, "dates": [r.get("date") for r in last7]}
 
     # ── CER 專區（使用者指定要盯的指標）──────────────────────────────
     cer_series = [{"date": r.get("date"), "cer": int(r.get("cer", 0)), "q429": int(r.get("q429", 0)),
@@ -348,10 +402,10 @@ def build(days_n: int, probe: bool) -> dict:
     # 兩個口徑都給，名稱不騙人（審查第二輪 #4、第三輪 #3）：
     #   · paid_backup_on_cer_days_upper_twd：CER 當日**全部** Gemini 花費 → 是**上限**，不是外溢成本
     #     （無法逐筆歸因：同一天可能有與 CER 無關的正常付費任務）
-    #   · spillover_strict_twd：只算「CER ≥ 門檻且免費入口完全沒接手」的日子 → 最接近「風控逼出來的錢」
+    #   · spillover_strict_twd：只算「CER ≥ 門檻且免費入口幾乎沒接手」的日子 → 最接近「風控逼出來的錢」
+    #     （接手率＝免費呼叫數 ÷ 當日 CER 次數，判定見 free_takeover_miss）
     gemini_on_cer_days = sum(x["gemini_twd"] for x in cer_series if x["cer"] > 0)
-    spillover_strict = sum(x["gemini_twd"] for x in cer_series
-                           if x["cer"] >= THRESHOLDS["cer_min_for_free_check"] and x["free_calls"] == 0)
+    spillover_strict = sum(x["gemini_twd"] for x in cer_series if free_takeover_miss(x))
 
     # 餘額 / 剩餘天數
     ds_bal_cny, ds_src = dta.ds_balance_live()
@@ -407,13 +461,16 @@ def build(days_n: int, probe: bool) -> dict:
         if s7p and s7 >= s7p * THRESHOLDS["wow_ratio"]:
             alerts.append({"code": "A4", "level": "warn",
                            "msg": f"近 7 日 NT${s7} ≥ 前 7 日 NT${s7p} × {THRESHOLDS['wow_ratio']}"})
-        # A5：CER 發生的日子若備援全走付費（免費入口 0 次）→ 免費層沒接手，花費會被放大
-        #     （2026-09-20 修正：舊規則用「免費佔比」判斷，但備援平常根本不啟動 → 佔比本來就接近 0，會天天誤報）
+        # A5：CER 發生的日子若免費入口幾乎沒接手 → 免費層沒分攤，花費被付費備援吸收
+        #     （分母固定用當日 CER 次數，故不會像「免費佔全體呼叫佔比」那樣在沒風控的日子誤報）
         for r in complete[-7:]:
-            if int(r.get("cer", 0)) >= THRESHOLDS["cer_min_for_free_check"] and \
-               int(r.get("free_calls", 0)) == 0 and int(r.get("gemini_calls", 0)) > 0:
+            if free_takeover_miss(r) and int(r.get("gemini_calls", 0)) > 0:
+                _fc = int(r.get("free_calls", 0) or 0)
+                _cr_ = max(1, int(r.get("cer", 0) or 0))
                 alerts.append({"code": "A5", "level": "warn",
-                               "msg": f"{r['date']} CER {r.get('cer')} 次但備援全走付費（免費入口 0 次、Gemini {r.get('gemini_calls')} 次）"})
+                               "msg": (f"{r['date']} CER {r.get('cer')} 次但備援幾乎全走付費"
+                                       f"（免費僅 {_fc} 次＝接手率 {_fc / _cr_ * 100:.0f}%、"
+                                       f"Gemini {r.get('gemini_calls')} 次）")})
     t_rec = led.get(today.isoformat(), {})
     if int(t_rec.get("cer", 0)) >= THRESHOLDS["cer_warn"]:
         alerts.append({"code": "A2", "level": "warn", "msg": f"今日 DS 內容風控（CER）{t_rec.get('cer')} 次 ≥ {THRESHOLDS['cer_warn']}"})
@@ -467,10 +524,14 @@ def build(days_n: int, probe: bool) -> dict:
                     "q429": int(r.get("q429", 0))} for r in series],
         "today": {"total_twd": totals[-1] if totals else 0,
                   "cer": int(t_rec.get("cer", 0)), "q429": int(t_rec.get("q429", 0))},
-        "week": {"last7_total": s7, "last7_daily_avg": round(s7 / max(1, len(last7))),
-                 "prev7_total": s7p, "prev7_daily_avg": round(s7p / max(1, len(prev7))),
-                 "wow_pct": (round((s7 / s7p - 1) * 100) if s7p else None),
-                 "median_day": round(med7), "ds": ds7, "gemini": gem7, "free": free7},
+        "week": {"last7_total": s7, "last7_daily_avg": round(s7 / max(1, n7)),
+                 "last7_days": n7,
+                 "prev7_total": s7p, "prev7_daily_avg": round(s7p / max(1, n7p)),
+                 "prev7_days": n7p,
+                 "wow_pct": wow_pct,
+                 "wow_basis": "daily_avg（日均比較；兩邊天數可能不同）",
+                 "median_day": round(med7), "ds": ds7, "gemini": gem7, "free": free7,
+                 "breakdown": breakdown},
         "wallets": {"ds_balance_cny": ds_bal_cny, "ds_balance_twd": (round(ds_bal_cny * CNY_TWD) if ds_bal_cny is not None else None),
                     "ds_source": ds_src, "ds_daily_twd": ds_daily, "ds_daily_src": ds_daily_src,
                     "ds_days_left": ds_days,
@@ -487,7 +548,7 @@ def build(days_n: int, probe: bool) -> dict:
                 "spillover_strict_twd": spillover_strict,
                 "paid_backup_on_cer_days_upper_twd": gemini_on_cer_days,
                 "series": cer_series,
-                "note": ("CER＝DeepSeek 內容風控擋下的呼叫數。spillover_strict_twd＝只算「CER ≥ 門檻且免費入口 0 次」的日子"
+                "note": ("CER＝DeepSeek 內容風控擋下的呼叫數。spillover_strict_twd＝只算「CER ≥ 門檻且免費接手率 < 門檻」的日子"
                          "（推定值，最接近風控逼出來的付費）。paid_backup_on_cer_days_upper_twd＝CER 當日的全部 Gemini 花費"
                          "（僅為上限，含非 CER 任務，不可當成外溢成本）。streak_capped=true 表示已回溯到帳本最早一天，"
                          "真實連續天數可能更長。")},
@@ -517,6 +578,21 @@ def _gov_line(g: dict | None) -> str:
             f"｜基準日前不併入（見 data/cost_baseline.json）")
 
 
+def _spend_verdict(b: dict) -> str:
+    """花費判定文字（基準見 wallet_spend）：正常／偏高／異常集中，並說明錢集中在哪幾天。"""
+    if not b["total_twd"]:
+        return "正常（無花費）"
+    if b["ratio"] is None:
+        return f"集中（多數日 0，{b['top3_share']:.0%} 來自前 3 天）"
+    word = {"normal": "正常", "elevated": "偏高", "spike": "異常集中"}[b["level"]]
+    txt = f"{word}（日均 {b['ratio']:.1f}× 中位數）"
+    if b["top3_share"] >= 0.8:
+        txt += f"｜{b['top3_share']:.0%} 集中在前 3 天"
+        if b["cer_days"]:
+            txt += f"（其中 {b['cer_days']} 天 CER ≥ {THRESHOLDS['cer_warn']}）"
+    return txt
+
+
 def render(d: dict) -> str:
     L: list[str] = []
     L.append(f"📡 AI 費用監控　{d['generated_at'][:16].replace('T', ' ')}")
@@ -525,12 +601,26 @@ def render(d: dict) -> str:
     L.append(_gov_line(d.get("governance")))
     w = d["week"]
     if w["last7_total"]:
-        wow = f"（較前 7 日 {w['wow_pct']:+d}%）" if w["wow_pct"] is not None else ""
+        wow = f"（日均較前 {w['prev7_days']} 日 {w['wow_pct']:+d}%）" if w["wow_pct"] is not None else ""
         L.append(f"◆ 近 7 日　NT${w['last7_total']}｜日均 NT${w['last7_daily_avg']}{wow}")
         L.append(f"　　DS {w['ds']}／Gemini {w['gemini']}／免費 {w['free']}　週中位數日 NT${w['median_day']}")
-        L.append(f"◆ 前 7 日　NT${w['prev7_total']}｜日均 NT${w['prev7_daily_avg']}")
+        _pn = "" if w["prev7_days"] == 7 else f"（帳本僅 {w['prev7_days']} 天）"
+        L.append(f"◆ 前 7 日　NT${w['prev7_total']}{_pn}｜日均 NT${w['prev7_daily_avg']}")
+        bd = w.get("breakdown")
+        if bd and bd["days"]:
+            _span = f"{bd['dates'][0][5:]}~{bd['dates'][-1][5:]}" if bd["dates"] and bd["dates"][0] else ""
+            L.append(f"◆ 花費拆解　近 {bd['days']} 日{('（' + _span + '）') if _span else ''}"
+                     f"　判定＝日均 vs 中位數（{THRESHOLDS['spend_avg_vs_median_ok']}× 內正常、"
+                     f">{THRESHOLDS['spend_avg_vs_median_high']}× 異常）")
+            for label, key in (("DeepSeek", "ds"), ("Gemini　　", "gemini")):
+                b = bd[key]
+                L.append(f"　{label}　NT${b['total_twd']}｜日均 NT${b['avg_twd']}"
+                         f"｜中位數 NT${b['median_twd']}｜{_spend_verdict(b)}")
+            bf = bd["free"]
+            L.append(f"　免費入口　NT${bf['total_twd']}｜{bd['free_calls']} 次呼叫｜"
+                     f"{_spend_verdict(bf)}")
     L.append("")
-    L.append("◆ 日序列（NT$）")
+    L.append(f"◆ 日序列（NT$）　⚠️ = 當日 CER ≥ {THRESHOLDS['cer_warn']} 次（不是花費異常）")
     for r in d["series"]:
         bar = "█" * min(30, int(r["total_twd"] / 10))
         flag = " ⚠️" if r["cer"] >= THRESHOLDS["cer_warn"] else ""
@@ -556,7 +646,8 @@ def render(d: dict) -> str:
         trend = "（前 7 日無紀錄）"
     _cap = "（可能更長，已回溯到帳本起點）" if c.get("streak_capped") else ""
     L.append(f"　今日 {c['today']} 次｜近 7 日 {c['last7_total']} 次{trend}｜出現 {c['days_with_cer']}/7 天｜連續未收斂 {c['streak_days']} 天{_cap}")
-    L.append(f"　風控外溢成本（推定）NT${c['spillover_strict_twd']}（只算 CER≥{THRESHOLDS['cer_min_for_free_check']} 且免費入口 0 次的日子）")
+    L.append(f"　風控外溢成本（推定）NT${c['spillover_strict_twd']}"
+             f"（只算 CER≥{THRESHOLDS['cer_min_for_free_check']} 且免費接手率 <{THRESHOLDS['free_takeover_min_ratio']:.0%} 的日子）")
     L.append(f"　上限值 NT${c['paid_backup_on_cer_days_upper_twd']}（CER 當日 Gemini 全部花費，含非 CER 任務，非外溢）")
     if c["series"]:
         parts = "｜".join(f"{x['date'][5:]} {x['cer']}" for x in c["series"])
