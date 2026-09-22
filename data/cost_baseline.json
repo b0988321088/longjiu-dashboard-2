@@ -1,0 +1,51 @@
+{
+  "baseline_date": "2026-09-22",
+  "cutover_at": "2026-09-22T12:21",
+  "reason": "wallet_status 日耗動態化（寫死 ¥15.5 → 近 7 日中位數）＋ CER/備援治理後重新起算",
+  "rule": "累計自基準日隔日 00:00 起算；基準日當天仍含修改前數字故整日剔除",
+  "ds_balance_cny": 94.51,
+  "ds_balance_source": "API",
+  "gemini_topup": {
+    "date": "2026-09-18",
+    "amount_twd": 1000.0
+  },
+  "gemini_used_twd_since_topup": 108.6,
+  "gemini_left_twd_est": 891.4,
+  "day_of_baseline_pre_cutover": {
+    "ds_twd": 54,
+    "gemini_twd": 0,
+    "free_calls": 6,
+    "cer": 3,
+    "q429": 0,
+    "note": "基準日整日剔除，這裡只是留檔說明當天（含修改前）的規模"
+  },
+  "excluded_history_before_baseline": {
+    "days": 14,
+    "cer": 517,
+    "ds_twd": 610.0,
+    "gem_twd": 980.0
+  },
+  "ds_topups_all_time": [
+    {
+      "date": "2026-07-23",
+      "added_cny": 161.33,
+      "to_cny": 243.17
+    },
+    {
+      "date": "2026-08-20",
+      "added_cny": 192.93,
+      "to_cny": 220.97
+    },
+    {
+      "date": "2026-08-28",
+      "added_cny": 180.51,
+      "to_cny": 240.8
+    },
+    {
+      "date": "2026-09-14",
+      "added_cny": 190.23,
+      "to_cny": 198.25
+    }
+  ],
+  "previous_baseline": "2026-09-22"
+}

@@ -7,6 +7,7 @@
           依錯誤碼判：200 = 可用 / 429 depleted = 用盡 / 401 = key 失效
 輸出：固定短格式（餘額、日耗、剩餘天數、儲值連結）。
 """
+import csv
 import json
 import os
 import re
@@ -24,8 +25,12 @@ DS_URL = "https://api.deepseek.com/user/balance"
 DS_TOPUP = "https://platform.deepseek.com/top_up"
 GM_TOPUP = "https://aistudio.google.com/billing"
 GM_PROBE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
-# 日耗參考（2026-09-18 以真實帳單反推：9/5-9/17 非儲值日平均 ¥15.49/天，含 9/11 異常日 ¥42）
-DS_DAILY_CNY = 15.5
+# 日耗：2026-09-22 起改為動態 —— 從 cost_log.csv（餘額扣款真值）取近 N 筆非儲值日
+# 的中位數。舊版寫死 ¥15.5（9/5-9/17 含 CER 風暴日的平均）會把剩餘天數低估近一半
+# （9/22 實例：寫死 15.5 → 6.1 天 ⛔；實際近 7 日中位數 9.07 → 10.4 天 ⚠️）。
+DS_BURN_WINDOW = 7          # 取近幾筆有效日
+DS_BURN_FLOOR_CNY = 5.0     # 下限保護：中位數低於此值時以 FLOOR 計，避免單日極低把天數吹大
+DS_BURN_FALLBACK_CNY = 10.0  # cost_log.csv 不可讀時的保守值
 CNY_TWD = 4.73
 USD_TWD = 31.7
 
@@ -95,6 +100,40 @@ def gemini_log_balance() -> str:
     return "無記錄"
 
 
+def ds_daily_burn() -> tuple[float, str]:
+    """DeepSeek 日耗（CNY）：cost_log.csv 近 N 筆非儲值日的中位數。
+
+    為何不用平均、不用 log 估價：① 中位數避開 CER 風暴日（9/11 ¥42）把日耗拉高；
+    ② cost_log.csv 是「餘額扣款」真值，本機 log 估價系統性低估 1.8x（2026-09-18 實證）。
+    """
+    vals: list[float] = []
+    try:
+        with DS_LOG.open(encoding="utf-8-sig") as fh:
+            rows = [r for r in csv.reader(fh) if r and r[0].strip()]
+    except Exception:  # noqa: BLE001
+        return DS_BURN_FALLBACK_CNY, "fallback（cost_log 不可讀）"
+    for r in reversed(rows[1:]):
+        if len(r) < 3:
+            continue
+        try:
+            v = float(r[2])
+        except ValueError:
+            continue
+        if v <= 0:  # 儲值列與無用量日不計入分母
+            continue
+        vals.append(v)
+        if len(vals) >= DS_BURN_WINDOW:
+            break
+    if not vals:
+        return DS_BURN_FALLBACK_CNY, "fallback（無有效日）"
+    vals.sort()
+    n = len(vals)
+    med = vals[n // 2] if n % 2 else (vals[n // 2 - 1] + vals[n // 2]) / 2
+    if med < DS_BURN_FLOOR_CNY:
+        return DS_BURN_FLOOR_CNY, f"下限 ¥{DS_BURN_FLOOR_CNY:.1f}（近{n}日中位數 ¥{med:.1f}）"
+    return med, f"近{n}日中位數"
+
+
 def main():
     today = date.today()
     ds_state, ds_val = ds_status()
@@ -104,9 +143,11 @@ def main():
     if ds_state == "ok":
         try:
             cny = float(ds_val)
-            days = cny / DS_DAILY_CNY
+            rate, basis = ds_daily_burn()
+            days = cny / rate
             flag = "⛔" if days < 7 else ("⚠️" if days < 14 else "✅")
-            lines.append(f"- DeepSeek  ¥{cny:.2f}（≈NT${cny * CNY_TWD:,.0f}）｜日耗 ¥{DS_DAILY_CNY:.1f} → 約 {days:.1f} 天 {flag}")
+            lines.append(f"- DeepSeek  ¥{cny:.2f}（≈NT${cny * CNY_TWD:,.0f}）"
+                         f"｜日耗 ¥{rate:.1f}（{basis}）→ 約 {days:.1f} 天 {flag}")
         except ValueError:
             lines.append(f"- DeepSeek  ¥{ds_val}")
     else:

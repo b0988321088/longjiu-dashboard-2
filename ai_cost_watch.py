@@ -505,7 +505,29 @@ def build(days_n: int, probe: bool) -> dict:
                          "（僅為上限，含非 CER 任務，不可當成外溢成本）。streak_capped=true 表示已回溯到帳本最早一天，"
                          "真實連續天數可能更長。")},
         "alerts": alerts,
+        "governance": _gov_snapshot(),
     }
+
+
+def _gov_snapshot() -> dict | None:
+    """治理後累計（基準日規則見 cost_baseline.py）。讀帳本即可，今日那筆帳本已有。"""
+    try:
+        from cost_baseline import since_baseline  # noqa: PLC0415
+        return since_baseline()
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _gov_line(g: dict | None) -> str:
+    if not g:
+        return "◆ 治理後累計：未設基準日（跑 set_cost_baseline.py 建立）"
+    if g.get("pending"):
+        return (f"◆ 治理後累計：基準日 {g['baseline_date'][5:]}（治理修改日）"
+                f"→ 自 {g['start_date'][5:]} 00:00 起算（今日不併入）")
+    return (f"◆ 治理後累計（自 {g['start_date'][5:]} 起，{g['days']} 天）NT${g['total_twd']:,.0f}"
+            f"｜DS NT${g['ds_twd']:,.0f}／Gemini NT${g['gem_twd']:,.0f}"
+            f"／免費 {g['free_calls']} 次｜CER {g['cer']} 次｜{g['calls']:,} 次呼叫"
+            f"｜基準日前不併入（見 data/cost_baseline.json）")
 
 
 def render(d: dict) -> str:
@@ -513,6 +535,7 @@ def render(d: dict) -> str:
     L.append(f"📡 AI 費用監控　{d['generated_at'][:16].replace('T', ' ')}")
     L.append("─" * 52)
     L.append(f"◆ 今日　NT${d['today']['total_twd']}（進行中）｜CER {d['today']['cer']} ｜429 {d['today']['q429']}")
+    L.append(_gov_line(d.get("governance")))
     w = d["week"]
     if w["last7_total"]:
         wow = f"（較前 7 日 {w['wow_pct']:+d}%）" if w["wow_pct"] is not None else ""

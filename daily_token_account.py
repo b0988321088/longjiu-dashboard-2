@@ -372,6 +372,35 @@ def gemini_probe() -> tuple[str, str]:
         return "error", f"{type(exc).__name__}: {exc}"
 
 
+def governance_cumulative(today_s: str, ds_usd: float, gem_usd: float, free_usd: float,
+                          free_calls: int, cer: int, per_today: dict) -> str:
+    """「治理後累計」一行。口徑與基準日規則見 cost_baseline.py（單一真值）。
+
+    為何要切基準日：基準日前的 CER 風暴（累計 517 次）讓備援全價代答，與治理後的常態
+    不同量級；混在同一個「累計」裡會誤導（2026-09-22 使用者指示重新起算）。
+    """
+    try:
+        sys.path.insert(0, str(LJ))
+        from cost_baseline import since_baseline  # noqa: PLC0415
+        acc = since_baseline({
+            "date": today_s,
+            "ds_twd": ds_usd * USD_TWD, "gem_twd": gem_usd * USD_TWD, "free_twd": free_usd * USD_TWD,
+            "free_calls": free_calls, "cer": cer,
+            "calls": sum(int(t.get("calls") or 0) for t in per_today.values()),
+        })
+    except Exception as exc:  # noqa: BLE001 — 累計行壞掉不該讓整份帳消失
+        return f"◆ 治理後累計：讀取失敗（{type(exc).__name__}）"
+    if not acc:
+        return "◆ 治理後累計：未設基準日（跑 set_cost_baseline.py 建立）"
+    if acc.get("pending"):
+        return (f"◆ 治理後累計：基準日 {acc['baseline_date'][5:]}（治理修改日）"
+                f"→ 自 {acc['start_date'][5:]} 00:00 起算（今日不併入）")
+    return (f"◆ 治理後累計（自 {acc['start_date'][5:]} 起，{acc['days']} 天）NT${acc['total_twd']:,.0f}"
+            f"｜DS NT${acc['ds_twd']:,.0f}／Gemini NT${acc['gem_twd']:,.0f}"
+            f"／免費 {acc['free_calls']} 次（NT${acc['free_twd']:,.1f}）｜CER {acc['cer']} 次"
+            f"｜{acc['calls']:,} 次呼叫")
+
+
 def main() -> None:
     now = dt.datetime.now()
     today = now.date()
@@ -479,6 +508,8 @@ def main() -> None:
     err_note = f"（讀取失敗：{_failerr}）" if _failerr else ""
     lines.append(f"◆ 異常：DS 內容風控(CER) {cer} 次、Gemini 429 {q429} 次{err_note}"
                  + ("（CER → 備援代答＝成本外溢主因）" if cer else ""))
+    # ── 治理後累計（自基準日隔日起算；基準日之前的 CER 風暴期只留歷史不併入）──
+    lines.append(governance_cumulative(today_s, ds_usd, gem_usd, free_usd, free_calls, cer, per_today))
     fires, cron_tok, per_job = scan_cron_audit(today_s)
     if fires:
         names = job_names()
