@@ -98,9 +98,14 @@ def main():
         #     全靠人工看才發現；此步讓它們在產報前就被自動擋下。
         ("靜態閘門", "python static_gate.py"),
         # 2026-09-15 INC-187：門檻單一真值檢查（SoT 完整性 + 消費端引用 + 舊門檻字面殘留）
-        ("門檻SoT檢查", "python check_thresholds.py"),
+        # 2026-09-22 INC-238：此步改 --sot-only（不含日報渲染行比對）—— 渲染行比對讀的是
+        #     磁碟上的日報檔，排在產報之前等於拿「上一輪日報」對「本輪 snapshot」，
+        #     基金群組值一變動就必假失敗（且訊息誤導成「疑似又用反推」）。
+        ("門檻SoT檢查", "python check_thresholds.py --sot-only"),
         ("同義欄位驗證", "python asset_sync.py"),
         ("日報", "python run_daily.py"),
+        # INC-238：日報渲染行比對搬到產報之後（此時檔案才是本輪輸出）
+        ("日報口徑閘門", "python check_thresholds.py --report-only"),
         # 2026-09-02 血淚：緊急應變必須在穿透報告「之後」執行 — emergency_1330.py 讀的是
         # snapshot.penetration.actual_pct 快取，穿透報告才寫入；順序反了會用到上一輪舊值
         # → check_penetration_consistency 擋推送（上午實踩 3 次）
@@ -144,12 +149,15 @@ def main():
         ("週報", "python build_weekly_report.py"),
     ]
     ok = True
+    _ran = 0
     for label, cmd in steps:
         r = run(label, cmd)
+        _ran += 1
         if not r:
             ok = False
             break  # 失敗即停（避免在錯誤資料上繼續）
-    print(f"\n{'✅ 全部完成（10 步驟）' if ok else '⚠️ 有步驟失敗（見上）'}")
+    # 2026-09-22 INC-238：步驟數改為動態（原寫死「10 步驟」，實際已 20 步 → 每次輸出都說謊）
+    print(f"\n{'✅ 全部完成' if ok else '⚠️ 有步驟失敗（見上）'}（{_ran}/{len(steps)} 步驟）")
 
     # 2026-08-31 血淚：Moneybook 解壓目錄含身分證欄位（曾被 commit 進 git！）→ 每次同步後強制清理
     for _d in ["moneybook_tmp", "moneybook", "mb_tmp"]:

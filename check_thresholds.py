@@ -9,7 +9,11 @@
       ① 確認 SoT 存在且欄位齊全
       ② 確認各消費端程式真的有引用 SoT（不是口頭說要讀）
       ③ 掃描全庫殘留的舊門檻字面（擋 patch over patch）
-用法：python check_thresholds.py     # 有違規 exit 1
+用法：python check_thresholds.py                # 全檢（有違規 exit 1）
+      python check_thresholds.py --sot-only    # 只驗 SoT／消費端／舊字面／口徑（產報「前」跑）
+      python check_thresholds.py --report-only # 只驗已產出日報的基金部位行（產報「後」跑）
+INC-238：日報渲染行比對讀的是磁碟上的日報檔，只能排在產報之後；排前面會拿上一輪日報
+        對本輪 snapshot → 基金群組值一變動就必假失敗（且訊息誤導成「疑似又用反推」）。
 """
 from __future__ import annotations
 import json
@@ -42,9 +46,91 @@ SKIP_DIRS = {".git", "data", "cache", "node_modules", "__pycache__"}
 SKIP_NAME = re.compile(r"^(_|snapshot_|snapshot\.|.*_archive|.*\.bak|.*backup|.*stale)")
 
 
+_MODE_LABEL = {"all": "全檢", "sot": "SoT／口徑", "report": "日報口徑"}
+
+
+def _mode_name() -> str:
+    """執行模式（2026-09-22 INC-238）：--sot-only／--report-only／預設全檢。"""
+    _a = sys.argv[1:]
+    if "--report-only" in _a:
+        return "report"
+    if "--sot-only" in _a:
+        return "sot"
+    return "all"
+
+
+def check_daily_report_row(snap: dict, errs: list[str]) -> str:
+    """驗證「已產出」日報的基金部位行＝明細口徑且閉合（2026-09-15 INC-188）。
+
+    回傳 "ok"／"no-report"（日報檔不存在）／"no-row"（找不到該行，格式可能已變）。
+    ⚠️ INC-238：本檢查讀的是磁碟上既有的 daily_report_v2_<today>.html，**只能在日報產出後執行**；
+       排在產報之前 = 拿上一輪日報比對本輪 snapshot → 基金群組值一動就必假失敗。
+    """
+    _fb = snap.get("funds_breakdown") or {}
+
+    def _grp(_name):
+        return sum(float(v) for k, v in (_fb.get(_name) or {}).items() if k != "note")
+
+    _ju, _ca = _grp("一般申購") + _grp("自由Pay"), _grp("國泰直購")
+    import datetime as _dt
+    _rep = BASE / f"daily_report_v2_{_dt.date.today().isoformat()}.html"
+    if not _rep.exists():
+        return "no-report"
+    _h = _rep.read_text(encoding="utf-8", errors="replace")
+    _m = re.search(r"基金總市值\s*<strong>([\d,]+)\s*TWD</strong>[^\n]{0,200}?鉅亨網\s*<strong>([\d,]+)</strong>[^\n]{0,80}?國泰基金\s*<strong>([\d,]+)</strong>", _h)
+    if not _m:
+        return "no-row"
+    _z, _x, _y = (int(g.replace(",", "")) for g in _m.groups())
+    if abs(_x - _ju) > 1 or abs(_y - _ca) > 1:
+        errs.append(f"日報基金部位口徑不符明細：鉅亨 {_x:,}（應 {_ju:,.0f}）／國泰 {_y:,}（應 {_ca:,.0f}）"
+                    f" — 疑似又用反推（總值−國泰）")
+    elif _x + _y != _z:
+        errs.append(f"日報基金部位行不閉合：鉅亨 {_x:,} + 國泰 {_y:,} ＝ {_x+_y:,} ≠ 表頭總值 {_z:,}")
+    else:
+        print(f"✅ 日報基金部位行：明細口徑且閉合 {_x:,} + {_y:,} = {_z:,}")
+    # 已不在 snapshot 的停泊/標的不得出現在該行（實例：MMF 500萬已轉 B11）
+    _seg = _h[_m.start():_m.start() + 400]
+    for _tok in ("MMF", "貨幣基金"):
+        if _tok in _seg and not any(_tok in str(k) for k in _fb.get("國泰直購", {})):
+            errs.append(f"日報基金部位行仍描述「{_tok}」停泊，但 snapshot 國泰直購已無該標的（字樣需同步）")
+    return "ok"
+
+
+def _summarize(mode: str, errs: list[str], rep_status: str = "") -> int:
+    print("=" * 50)
+    print(f"  門檻 SoT 一致性檢查（check_thresholds.py｜{_MODE_LABEL.get(mode, mode)}）")
+    print("=" * 50)
+    if errs:
+        for e in errs:
+            print(f"❌ {e}")
+        print(f"\n❌ 檢查未通過（{len(errs)} 項）")
+        return 1
+    if mode != "report":
+        print(f"✅ SoT 完整（{len(REQUIRED_SECTIONS)} 區塊）")
+        print(f"✅ 消費端 {len(CONSUMERS)} 支皆引用 {SOT_KEY}")
+        print("✅ 無舊門檻字面殘留")
+    if mode != "sot":
+        _msg = {"ok": "✅ 日報基金部位行：明細口徑且閉合",
+                "no-report": "⏭️  日報檔不存在 → 未驗渲染行",
+                "no-row": "⚠️ 日報找不到基金部位行（格式變了？未驗）"}
+        print(_msg.get(rep_status, "⏭️  日報渲染行未驗"))
+    return 0
+
+
 def main() -> int:
+    _mode = _mode_name()
+    # --report-only：只驗日報渲染行（產報後跑），其餘區塊不適用（它們與日報無關）
+    if _mode == "report":
+        try:
+            snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        except Exception as e:
+            print(f"❌ snapshot.json 無法解析：{e}")
+            return 1
+        errs: list[str] = []
+        return _summarize(_mode, errs, check_daily_report_row(snap, errs))
     errs: list[str] = []
     warns: list[str] = []
+    _rep_status = ""
 
     # ① SoT 存在且欄位齊全
     try:
@@ -132,28 +218,10 @@ def main() -> int:
         for _p in [BASE / "run_daily.py", BASE / "regenerate_report.py", BASE / "build_dashboard.py"]:
             if _p.exists() and _rev.search(_p.read_text(encoding="utf-8", errors="replace")):
                 errs.append(f"{_p.name} 仍用「基金總值 − funds_cathay」反推鉅亨網（應改讀 funds_breakdown 群組加總）")
-        # 已產出日報的渲染行：不只要「加得起來」，更要「用明細口徑」
-        # （INC-188 的真正病徵＝鉅亨被算成 funds−funds_cathay 而閉合，算術檢查抓不到 →
-        #   必須拿報告上的鉅亨/國泰 逐一比對 snapshot 的群組加總，並檢查已消失的停泊字樣。）
-        import datetime as _dt
-        _rep = BASE / f"daily_report_v2_{_dt.date.today().isoformat()}.html"
-        if _rep.exists():
-            _h = _rep.read_text(encoding="utf-8", errors="replace")
-            _m = re.search(r"基金總市值\s*<strong>([\d,]+)\s*TWD</strong>[^\n]{0,200}?鉅亨網\s*<strong>([\d,]+)</strong>[^\n]{0,80}?國泰基金\s*<strong>([\d,]+)</strong>", _h)
-            if _m:
-                _z, _x, _y = (int(g.replace(",", "")) for g in _m.groups())
-                if abs(_x - _ju) > 1 or abs(_y - _ca) > 1:
-                    errs.append(f"日報基金部位口徑不符明細：鉅亨 {_x:,}（應 {_ju:,.0f}）／國泰 {_y:,}（應 {_ca:,.0f}）"
-                                f" — 疑似又用反推（總值−國泰）")
-                elif _x + _y != _z:
-                    errs.append(f"日報基金部位行不閉合：鉅亨 {_x:,} + 國泰 {_y:,} ＝ {_x+_y:,} ≠ 表頭總值 {_z:,}")
-                else:
-                    print(f"✅ 日報基金部位行：明細口徑且閉合 {_x:,} + {_y:,} = {_z:,}")
-                # 已不在 snapshot 的停泊/標的不得出現在該行（實例：MMF 500萬已轉 B11）
-                _seg = _h[_m.start():_m.start() + 400]
-                for _tok in ("MMF", "貨幣基金"):
-                    if _tok in _seg and not any(_tok in str(k) for k in _fb.get("國泰直購", {})):
-                        errs.append(f"日報基金部位行仍描述「{_tok}」停泊，但 snapshot 國泰直購已無該標的（字樣需同步）")
+        # 日報渲染行比對（INC-188／INC-238）：讀的是磁碟上的日報檔 → 只能在產報「之後」驗。
+        # sync_all 步驟 2 以 --sot-only 跳過此段，日報產出後再以 --report-only 補驗。
+        if _mode != "sot":
+            _rep_status = check_daily_report_row(snap, errs)
     except Exception as _e:
         errs.append(f"基金口徑閉合檢查執行失敗：{_e}")
 
@@ -181,18 +249,7 @@ def main() -> int:
     if hits:
         errs.append(f"殘留舊門檻 {len(hits)} 處：\n" + "\n".join(sorted(set(hits))[:15]))
 
-    print("=" * 50)
-    print("  門檻 SoT 一致性檢查（check_thresholds.py）")
-    print("=" * 50)
-    if errs:
-        for e in errs:
-            print(f"❌ {e}")
-        print(f"\n❌ 檢查未通過（{len(errs)} 項）")
-        return 1
-    print(f"✅ SoT 完整（{len(REQUIRED_SECTIONS)} 區塊）")
-    print(f"✅ 消費端 {len(CONSUMERS)} 支皆引用 {SOT_KEY}")
-    print("✅ 無舊門檻字面殘留")
-    return 0
+    return _summarize(_mode, errs, _rep_status)
 
 
 if __name__ == "__main__":
