@@ -57,16 +57,27 @@ table.t td:first-child{text-align:left;color:#e2e8f0}
 .tl .ev{position:relative;padding:6px 0;font-size:12.5px}
 .tl .ev .src{display:block;font-size:11px;color:#94a3b8;margin-top:1px}
 .tl .ev:before{content:"";position:absolute;left:-14px;top:12px;width:7px;height:7px;border-radius:50%;background:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.14)}
-.muted{color:#94a3b8}</style>
+.muted{color:#94a3b8}
+.chip2{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:999px;background:rgba(148,163,184,.16);color:#cbd5e1;margin-left:6px;white-space:nowrap}
+.chip2.up{background:rgba(16,185,129,.18);color:#6ee7b7}
+.chip2.down{background:rgba(244,63,94,.18);color:#fda4af}
+.wf .head{flex-wrap:wrap}
+.wf .head .rt{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;margin-right:6px}
+.step.sub2 span{font-size:11px;color:#94a3b8}
+details.bg{margin-top:14px;background:rgba(15,23,42,.55);border:1px solid rgba(148,163,184,.16);border-radius:12px;padding:10px 13px}
+details.bg summary{cursor:pointer;font-size:12.5px;font-weight:700;color:#94a3b8}
+details.bg[open] summary{color:#e2e8f0;margin-bottom:8px}
+.period-tag{font-size:10.5px;color:#94a3b8;font-weight:500}</style>
 </head>
 <body>
-<div class="wrap" id="app"><section class="card"><h2>◆ 摘要<em>（靜態版；JS 可用時自動升級為完整圖表）</em></h2><table class="fb"><tbody><tr><th>2026-09 本月投資損益</th><td>+193,415</td></tr><tr><th>　帳面市值變化</th><td>+22,323（總資產）</td></tr><tr><th>　配息實收</th><td>+147,975</td></tr><tr><th>　估值更新</th><td>+178,547</td></tr><tr><th>市場面損益（推定）</th><td>+87,440</td></tr><tr><th>　股票</th><td>市值 +124,790｜配息 +16,340｜損益 +141,130</td></tr><tr><th>　基金</th><td>市值 -46,794｜配息 +57,174｜損益 +10,380</td></tr><tr><th>　保單</th><td>市值 -169,103｜配息 +74,461｜損益 +83,905</td></tr><tr><th>淨利差</th><td>+1.96pp｜🟢 利差充足（≥1.2%）→ 現金流安全、套利空間存在</td></tr></tbody></table></section></div>
-<script type="application/json" id="seed">{"generated_at": "2026-09-22 20:30", "month": "2026-09", "period": {"start": "2026-09-01", "end": "2026-09-22", "prev_end": "2026-08-31", "start_db": "2026-08-31", "start_ref": "2026-08-31"}, "total_assets": {"start": 26126436.0, "end": 26148759.0, "chg": 22323.0}, "mv_reliable": true, "classes": [{"c": "股票", "mv0": 2874590, "mv1": 2999380, "gross": 124790, "invest": 0.0, "src": "", "upd_sum": 0, "mkt": 124790.0, "div": 16340.0, "fee": 0.0, "pnl": 141130.0, "basis": "推導"}, {"c": "基金", "mv0": 12780120, "mv1": 12733326, "gross": -46794, "invest": 0.0, "src": "", "upd_sum": 0, "mkt": -46794.0, "div": 57174.0, "fee": 0.0, "pnl": 10380.0, "basis": "推導"}, {"c": "保單", "mv0": 9718338, "mv1": 9549235, "gross": -169103, "invest": 0.0, "src": "", "upd_sum": -178547.0, "mkt": 9444.0, "div": 74461.0, "fee": 0.0, "pnl": 83905.0, "basis": "推導"}], "grand": {"mkt": 87440.0, "div": 147975.0, "fee": 0.0, "sub": 235415.0}, "interest": {"total": 42000.0, "by": {"房貸": 28000, "保單借貸": 14000}}, "perf": {"gross": 235415.0, "net": 193415.0}, "updates": [{"date": "2026-09-14", "c": "保單", "amount": -178547.0, "as_of": "2026-09-11", "kind": "真值日截圖同步", "reason": "安聯/第一金：前次記錄值 → 9/11 對保日 App 真值（帳務更新，非市場虧損）"}], "loans": [{"name": "永豐房貸（洲際W 本利攤還 2.5%）", "balance": 13082544, "rate": 0.025, "monthly": 27255.300000000003, "payment": 65735}, {"name": "國泰轉貸（大義街 2.6%）", "balance": 12000000, "rate": 0.026, "monthly": 26000.0, "payment": 26000.0}, {"name": "保單借貸（4%）", "balance": 4000000, "rate": 0.04, "monthly": 13333.333333333334, "payment": 13333.333333333334}, {"name": "元大質押（3.92%）", "balance": 1000000, "rate": 0.0392, "monthly": 3266.6666666666665, "payment": 3266.6666666666665}], "funding": {"total_balance": 30082544, "total_monthly_interest": 69855.3, "total_payment": 108335.0, "wacc": 0.0278654491455244, "inv_mv": 25281941.0, "div_base": 100000.0, "div_yield": 0.047464710086935175, "spread": 0.019599260941410776, "light": "ok", "light_txt": "🟢 利差充足（≥1.2%）→ 現金流安全、套利空間存在", "div_source": "保守常態"}, "policies": [{"name": "安聯 A+B", "cost": 8000000.0, "current": 7657517.0, "principal": -342483.0, "cum_div": 1782242.0, "real": 1439759.0}, {"name": "第一金 FJ33", "cost": 2000000.0, "current": 1891718.0, "principal": -108282.0, "cum_div": 133805.0, "real": 25523.0}], "freshness": [{"src": "資產序列（dragon_assets.db）", "date": "2026-09-22"}, {"src": "snapshot 真值日", "date": "2026-09-22"}, {"src": "保單（安聯 App 截圖）", "date": "2026-09-20"}, {"src": "保單（第一金 App 截圖）", "date": "2026-09-18"}], "dividend_raw": {"安聯保單撥回": 52169, "聯博全球多元收益AD基金配息(國泰)": 6761, "路博邁5G基金配息": 733, "基金配息 聯博全球多元收益AD(小額)": 20, "基金配息 聯博美國成長": 34, "基金配息 富達全球動能C": 25, "基金配息 貝萊德健康A10": 26, "基金配息 貝萊德科技A10": 30, "基金配息 貝萊德能源A10": 29, "基金配息 貝萊德黃金A10": 20, "基金配息 貝萊德全球股票收益A6": 5, "富達全球動能多元B基金配息(國泰)": 49120, "ETF配息 00878": 15150, "ETF配息 00983D": 1190, "基金配息 台中銀台灣優息B": 246, "基金配息 摩根JPM": 27, "第一金FA81聯博多元AD配息": 13005, "基金配息 AI收益成長B月配": 1, "基金配息 收益成長AMg7月配": 27, "基金配息 國泰台灣高息基金B": 70, "第一金FJ33摩根JPM配息": 9287}}</script>
+<div class="wrap" id="app"><section class="card"><h2>◆ 摘要<em>（靜態版；JS 可用時自動升級為完整圖表）</em></h2><table class="fb"><tbody><tr><th>2026-09 本月投資損益</th><td>+193,415</td></tr><tr><th>　帳面市值變化</th><td>+22,323（總資產）</td></tr><tr><th>　配息實收</th><td>+147,975</td></tr><tr><th>　本月報酬率</th><td>股票 +4.91%（佔 11.3%）｜基金 +0.08%（佔 50.4%）｜保單 +0.86%（佔 38.3%）</td></tr><tr><th>　估值更新</th><td>+178,547</td></tr><tr><th>市場面損益（推定）</th><td>+87,440</td></tr><tr><th>　股票</th><td>市值 +124,790｜配息 +16,340｜損益 +141,130</td></tr><tr><th>　基金</th><td>市值 -46,794｜配息 +57,174｜損益 +10,380</td></tr><tr><th>　保單</th><td>市值 -169,103｜配息 +74,461｜損益 +83,905</td></tr><tr><th>淨利差</th><td>+1.96pp｜🟢 利差充足（≥1.2%）→ 現金流安全、套利空間存在</td></tr></tbody></table></section></div>
+<script type="application/json" id="seed">{"generated_at": "2026-09-22 20:48", "month": "2026-09", "period": {"start": "2026-09-01", "end": "2026-09-22", "prev_end": "2026-08-31", "start_db": "2026-08-31", "start_ref": "2026-08-31"}, "total_assets": {"start": 26126436.0, "end": 26148759.0, "chg": 22323.0}, "mv_reliable": true, "policy_int": 13333.333333333334, "classes": [{"c": "股票", "mv0": 2874590, "mv1": 2999380, "gross": 124790, "invest": 0.0, "src": "", "upd_sum": 0, "mkt": 124790.0, "div": 16340.0, "fee": 0.0, "pnl": 141130.0, "basis": "推導", "rate": 0.049095697125503115, "rate_ann": 0.5891483655060374, "share": 0.11329305016882481, "div_yield_m": 0.0056842888898938635, "div_yield_y": 0.06821146667872637, "int_cover": null, "policy_int": null}, {"c": "基金", "mv0": 12780120, "mv1": 12733326, "gross": -46794, "invest": 0.0, "src": "", "upd_sum": 0, "mkt": -46794.0, "div": 57174.0, "fee": 0.0, "pnl": 10380.0, "basis": "推導", "rate": 0.0008121989464887654, "rate_ann": 0.009746387357865184, "share": 0.503688796079998, "div_yield_m": 0.004473666913925691, "div_yield_y": 0.05368400296710829, "int_cover": null, "policy_int": null}, {"c": "保單", "mv0": 9718338, "mv1": 9549235, "gross": -169103, "invest": 0.0, "src": "", "upd_sum": -178547.0, "mkt": 9444.0, "div": 74461.0, "fee": 0.0, "pnl": 83905.0, "basis": "推導", "rate": 0.00863367789842255, "rate_ann": 0.10360413478107058, "share": 0.38301815375117726, "div_yield_m": 0.007661906799290167, "div_yield_y": 0.091942881591482, "int_cover": 5.584575, "policy_int": 13333.333333333334}], "grand": {"mkt": 87440.0, "div": 147975.0, "fee": 0.0, "sub": 235415.0}, "total_mv0": 25373048, "rate": 0.00927815215578357, "rate_ann": 0.11133782586940283, "interest": {"total": 42000.0, "by": {"房貸": 28000, "保單借貸": 14000}}, "perf": {"gross": 235415.0, "net": 193415.0}, "updates": [{"date": "2026-09-14", "c": "保單", "amount": -178547.0, "as_of": "2026-09-11", "kind": "真值日截圖同步", "reason": "安聯/第一金：前次記錄值 → 9/11 對保日 App 真值（帳務更新，非市場虧損）"}], "loans": [{"name": "永豐房貸（洲際W 本利攤還 2.5%）", "balance": 13082544, "rate": 0.025, "monthly": 27255.300000000003, "payment": 65735}, {"name": "國泰轉貸（大義街 2.6%）", "balance": 12000000, "rate": 0.026, "monthly": 26000.0, "payment": 26000.0}, {"name": "保單借貸（4%）", "balance": 4000000, "rate": 0.04, "monthly": 13333.333333333334, "payment": 13333.333333333334}, {"name": "元大質押（3.92%）", "balance": 1000000, "rate": 0.0392, "monthly": 3266.6666666666665, "payment": 3266.6666666666665}], "funding": {"total_balance": 30082544, "total_monthly_interest": 69855.3, "total_payment": 108335.0, "wacc": 0.0278654491455244, "inv_mv": 25281941.0, "div_base": 100000.0, "div_yield": 0.047464710086935175, "spread": 0.019599260941410776, "light": "ok", "light_txt": "🟢 利差充足（≥1.2%）→ 現金流安全、套利空間存在", "div_source": "保守常態"}, "policies": [{"name": "安聯 A+B", "cost": 8000000.0, "current": 7657517.0, "principal": -342483.0, "cum_div": 1782242.0, "real": 1439759.0}, {"name": "第一金 FJ33", "cost": 2000000.0, "current": 1891718.0, "principal": -108282.0, "cum_div": 133805.0, "real": 25523.0}], "freshness": [{"src": "資產序列（dragon_assets.db）", "date": "2026-09-22"}, {"src": "snapshot 真值日", "date": "2026-09-22"}, {"src": "保單（安聯 App 截圖）", "date": "2026-09-20"}, {"src": "保單（第一金 App 截圖）", "date": "2026-09-18"}], "dividend_raw": {"安聯保單撥回": 52169, "聯博全球多元收益AD基金配息(國泰)": 6761, "路博邁5G基金配息": 733, "基金配息 聯博全球多元收益AD(小額)": 20, "基金配息 聯博美國成長": 34, "基金配息 富達全球動能C": 25, "基金配息 貝萊德健康A10": 26, "基金配息 貝萊德科技A10": 30, "基金配息 貝萊德能源A10": 29, "基金配息 貝萊德黃金A10": 20, "基金配息 貝萊德全球股票收益A6": 5, "富達全球動能多元B基金配息(國泰)": 49120, "ETF配息 00878": 15150, "ETF配息 00983D": 1190, "基金配息 台中銀台灣優息B": 246, "基金配息 摩根JPM": 27, "第一金FA81聯博多元AD配息": 13005, "基金配息 AI收益成長B月配": 1, "基金配息 收益成長AMg7月配": 27, "基金配息 國泰台灣高息基金B": 70, "第一金FJ33摩根JPM配息": 9287}}</script>
 <script>function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function money(n){ if(n===null||n===undefined||isNaN(n)){ return '—'; } var v=Math.round(n); return v.toLocaleString('en-US'); }
 function sgn(n){ if(n===null||n===undefined||isNaN(n)){ return '—'; } return (n>=0?'+':'') + money(n); }
 function cls(n){ return n>0?'up':(n<0?'down':'neutral'); }
 function pct(n){ return (n>=0?'+':'') + (n*100).toFixed(2) + '%'; }
+var PERIOD_END = '';
 
 function kpi(lbl, val, sub, klass){
   return '<div class="kpi"><div class="lbl">'+esc(lbl)+'</div><div class="val '+(klass||'')+'">'+val+
@@ -74,13 +85,19 @@ function kpi(lbl, val, sub, klass){
 }
 
 function wfRow(c){
-  var h = '<div class="wf"><div class="head"><div class="name">'+esc(c.c)+'</div>'+
+  var h = '<div class="wf"><div class="head"><div class="name">'+esc(c.c)+
+          (c.share!=null?'<span class="chip2">佔 '+(c.share*100).toFixed(1)+'%</span>':'')+'</div>'+
+          '<div class="rt">'+(c.rate!=null?'<span class="chip2 '+cls(c.rate)+'">本月 '+pct(c.rate)+'</span>':'')+
+          (c.rate_ann!=null?'<span class="chip2">年化 '+pct(c.rate_ann)+'</span>':'')+'</div>'+
           '<div class="amt '+cls(c.pnl)+'">'+sgn(c.pnl)+'</div></div>';
+  if(c.mv0!=null){ h += '<div class="step sub2"><span>月初市值 → '+esc(PERIOD_END)+'</span><span class="v">'+money(c.mv0)+' → '+money(c.mv1)+'</span></div>'; }
   h += '<div class="step"><span>帳面市值變化</span><span class="v '+cls(c.gross)+'">'+sgn(c.gross)+'</span></div>';
   if(c.invest){ h += '<div class="step"><span>− 新增投入'+(c.src?'（'+esc(c.src)+'）':'')+'</span><span class="v">'+money(-c.invest)+'</span></div>'; }
   if(c.upd_sum){ h += '<div class="step"><span>− 估值更新</span><span class="v">'+money(-c.upd_sum)+'</span></div>'; }
   h += '<div class="step total"><span>＝ 市場面損益'+(c.basis==='推導'?'（推定）':'')+'</span><span class="v '+cls(c.mkt)+'">'+sgn(c.mkt)+'</span></div>';
   h += '<div class="step"><span>＋ 配息實收</span><span class="v up">'+sgn(c.div)+'</span></div>';
+  if(c.div_yield_m){ h += '<div class="step sub2"><span>配息率（本月配息 ÷ 月初市值）</span><span class="v">'+(c.div_yield_m*100).toFixed(2)+'%/月 ≈ '+(c.div_yield_y*100).toFixed(1)+'%/年</span></div>'; }
+  if(c.int_cover!=null){ h += '<div class="step sub2"><span>配息 vs 借貸月息</span><span class="v">'+money(c.div)+' ÷ '+money(c.policy_int)+' → 覆蓋 '+c.int_cover.toFixed(1)+' 倍</span></div>'; }
   if(c.fee){ h += '<div class="step"><span>− 手續費</span><span class="v">'+money(-c.fee)+'</span></div>'; }
   h += '<div class="step total"><span>＝ '+esc(c.c)+'損益（含市值）</span><span class="v '+cls(c.pnl)+'">'+sgn(c.pnl)+'</span></div>';
   if(c.basis!=='推導'){ h += '<div class="note">基準：'+esc(c.basis)+'</div>'; }
@@ -89,6 +106,7 @@ function wfRow(c){
 
 function render(d){
   var h = [], g = d.grand||{}, f = d.funding||{}, p = d.period||{}, t = d.total_assets||{};
+  PERIOD_END = p.end || '';
   h.push('<header class="top"><div><h1>📈 本月績效<small>'+esc(d.month)+'　'+esc(p.start)+' ~ '+esc(p.end)+
          '（月初基準 '+esc(p.start_db||p.prev_end)+'）｜產生於 '+esc(d.generated_at)+'</small></h1></div>'+
          '<a class="back" href="index.html">← 回主儀表板</a></header>');
@@ -98,6 +116,8 @@ function render(d){
   h.push(kpi('本月投資損益', '<span class="'+cls(d.perf.net)+'">'+sgn(d.perf.net)+'</span>', esc(sub)));
   h.push(kpi('總資產變化', '<span class="'+cls(t.chg)+'">'+sgn(t.chg)+'</span>', '帳面（含未實現、含配息）'));
   h.push(kpi('配息實收（三類）', '<span class="up">'+sgn(g.div)+'</span>', '股票＋基金＋保單'));
+  h.push(kpi('本月報酬率', '<span class="'+(d.rate>=0?'up':'down')+'">'+pct(d.rate)+'</span>',
+             '以月初市值 '+money(d.total_mv0)+' 計（年化＝單月推估 '+pct(d.rate_ann)+'）'));
   h.push(kpi('淨利差（配息−資金成本）', '<span class="'+(f.light==='ok'?'up':(f.light==='bad'?'down':''))+'">'+(f.spread*100).toFixed(2)+'pp</span>',
              '加權資金成本 '+(f.wacc*100).toFixed(2)+'%'));
   h.push('</section>');
@@ -139,7 +159,10 @@ function render(d){
   h.push('</div></div><div class="note">純配息 '+money(f.div_base)+' vs 純月息 '+money(f.total_monthly_interest)+
          '；實際月付含本金攤還 '+money(f.total_payment)+'（永豐房貸為本利攤還）。</div></section>');
 
-  h.push('<section class="card"><h2>◆ 保單真實累計<em>配息 + (現值 − 原始成本)</em></h2>');
+  var _pc = (d.policies||[]).reduce(function(a,x){return a+(x.cost||0);},0),
+      _pr = (d.policies||[]).reduce(function(a,x){return a+(x.real||0);},0);
+  h.push('<details class="bg"><summary>📦 背景資訊（非本月）｜保單自買入累計 — 投入 '+money(_pc)+'｜真實累計 '+sgn(_pr)+'（點開看明細）</summary>'+
+         '<div class="period-tag">⚠️ 不同時間尺度：下面是「自買入至今」的累計口徑，上面全部是本月。月配息基金的現值會被配息搬走，所以「現值 &lt; 成本」是常態，不是虧損 —— 累計要看「累計配息 ＋ (現值 − 成本)」。</div>');
   h.push('<div class="tscroll"><table class="t"><thead><tr><th>保單</th><th>投入</th><th>現值</th><th>本金</th><th>累計配息</th><th>真實績效</th></tr></thead><tbody>');
   var rsum = 0;
   (d.policies||[]).forEach(function(x){
@@ -149,7 +172,7 @@ function render(d){
            '<td class="'+cls(x.real)+'"><b>'+sgn(x.real)+'</b></td></tr>');
   });
   h.push('<tr><td><b>合計</b></td><td>—</td><td>—</td><td>—</td><td>—</td><td class="'+cls(rsum)+'"><b>'+sgn(rsum)+'</b></td></tr>');
-  h.push('</tbody></table></div><div class="note">只讀「現值 − 成本」會看到本金 −4.5%，但月配息基金的配息已入袋；把累計配息加回才是真實績效。</div></section>');
+  h.push('</tbody></table></div><div class="note">只讀「現值 − 成本」會看到本金 −4.5%，但月配息基金的配息已入袋；把累計配息加回才是真實績效。</div></details>');
 
   h.push('<section class="card"><h2>◆ 資料基準<em>各源 as-of（越舊的數字越可能再變）</em></h2><table class="t"><tbody>');
   (d.freshness||[]).forEach(function(x){ h.push('<tr><td>'+esc(x.src)+'</td><td>'+esc(x.date)+'</td></tr>'); });

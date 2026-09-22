@@ -135,6 +135,21 @@ def payload() -> dict:
     grand_div = sum(x["div"] for x in classes)
     grand_fee = sum(x["fee"] for x in classes)
     sub_total = grand_mkt + grand_div - grand_fee
+
+    # ── 本月報酬率／佔比／配息率（2026-09-22 使用者核准：本月頁只談本月，累計移到頁尾折疊）──
+    total_mv0 = sum((x["mv0"] or 0) for x in classes) or 0
+    for x in classes:
+        b0 = x["mv0"] or 0
+        x["rate"] = (x["pnl"] / b0) if b0 else None
+        x["rate_ann"] = (x["rate"] * 12) if x["rate"] is not None else None
+        x["share"] = (b0 / total_mv0) if total_mv0 else None
+        x["div_yield_m"] = (x["div"] / b0) if (b0 and x["div"]) else None
+        x["div_yield_y"] = (x["div_yield_m"] * 12) if x["div_yield_m"] is not None else None
+    # 保單借貸月息 → 配息覆蓋倍數（本月頁該看的槓桿指標）
+    policy_int = sum(l["monthly"] for l in bip.load_loans(snap, rate_overrides) if "保單借貸" in l["name"])
+    for x in classes:
+        x["int_cover"] = ((x["div"] / policy_int) if (x["c"] == "保單" and policy_int and x["div"]) else None)
+        x["policy_int"] = (policy_int if x["c"] == "保單" else None)
     interest_total = sum(_num(v) for v in adj_interest.values())
 
     # 資金成本（結構化；公式與 funding_cost_report 相同）
@@ -175,8 +190,13 @@ def payload() -> dict:
         "total_assets": {"start": total_start, "end": total_end,
                          "chg": (total_end - total_start) if (total_start is not None and total_end is not None) else None},
         "mv_reliable": bool(mv_reliable),
+        # 保單專屬：配息 vs 借貸月息覆蓋（本月頁該看的指標，不是累計本金）
+        "policy_int": policy_int,
         "classes": classes,
         "grand": {"mkt": grand_mkt, "div": grand_div, "fee": grand_fee, "sub": sub_total},
+        "total_mv0": total_mv0,
+        "rate": ((sub_total / total_mv0) if total_mv0 else None),
+        "rate_ann": ((sub_total / total_mv0 * 12) if total_mv0 else None),
         "interest": {"total": interest_total, "by": adj_interest},
         "perf": {"gross": sub_total, "net": sub_total - interest_total},
         "updates": updates,
@@ -205,6 +225,8 @@ def static_fallback(p: dict) -> str:
         (f'{p["month"]} 本月投資損益', nt(p["perf"]["net"]) + "（未扣利息）" if not p["interest"]["total"] else nt(p["perf"]["net"])),
         ("　帳面市值變化", nt(p["total_assets"].get("chg")) + "（總資產）"),
         ("　配息實收", nt(p["grand"]["div"])),
+        ("　本月報酬率", "｜".join(f'{x["c"]} {x["rate"]*100:+.2f}%（佔 {(x["share"] or 0)*100:.1f}%）'
+                                  for x in p["classes"] if x.get("rate") is not None)),
         ("　估值更新", nt(-sum(u["amount"] for u in p["updates"]))),
         ("市場面損益（推定）", nt(p["grand"]["mkt"])),
     ]
@@ -271,6 +293,16 @@ table.t td:first-child{text-align:left;color:#e2e8f0}
 .tl .ev .src{display:block;font-size:11px;color:#94a3b8;margin-top:1px}
 .tl .ev:before{content:"";position:absolute;left:-14px;top:12px;width:7px;height:7px;border-radius:50%;background:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.14)}
 .muted{color:#94a3b8}
+.chip2{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:999px;background:rgba(148,163,184,.16);color:#cbd5e1;margin-left:6px;white-space:nowrap}
+.chip2.up{background:rgba(16,185,129,.18);color:#6ee7b7}
+.chip2.down{background:rgba(244,63,94,.18);color:#fda4af}
+.wf .head{flex-wrap:wrap}
+.wf .head .rt{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;margin-right:6px}
+.step.sub2 span{font-size:11px;color:#94a3b8}
+details.bg{margin-top:14px;background:rgba(15,23,42,.55);border:1px solid rgba(148,163,184,.16);border-radius:12px;padding:10px 13px}
+details.bg summary{cursor:pointer;font-size:12.5px;font-weight:700;color:#94a3b8}
+details.bg[open] summary{color:#e2e8f0;margin-bottom:8px}
+.period-tag{font-size:10.5px;color:#94a3b8;font-weight:500}
 """.strip()
 
 JS = """
@@ -279,6 +311,7 @@ function money(n){ if(n===null||n===undefined||isNaN(n)){ return '—'; } var v=
 function sgn(n){ if(n===null||n===undefined||isNaN(n)){ return '—'; } return (n>=0?'+':'') + money(n); }
 function cls(n){ return n>0?'up':(n<0?'down':'neutral'); }
 function pct(n){ return (n>=0?'+':'') + (n*100).toFixed(2) + '%'; }
+var PERIOD_END = '';
 
 function kpi(lbl, val, sub, klass){
   return '<div class="kpi"><div class="lbl">'+esc(lbl)+'</div><div class="val '+(klass||'')+'">'+val+
@@ -286,13 +319,19 @@ function kpi(lbl, val, sub, klass){
 }
 
 function wfRow(c){
-  var h = '<div class="wf"><div class="head"><div class="name">'+esc(c.c)+'</div>'+
+  var h = '<div class="wf"><div class="head"><div class="name">'+esc(c.c)+
+          (c.share!=null?'<span class="chip2">佔 '+(c.share*100).toFixed(1)+'%</span>':'')+'</div>'+
+          '<div class="rt">'+(c.rate!=null?'<span class="chip2 '+cls(c.rate)+'">本月 '+pct(c.rate)+'</span>':'')+
+          (c.rate_ann!=null?'<span class="chip2">年化 '+pct(c.rate_ann)+'</span>':'')+'</div>'+
           '<div class="amt '+cls(c.pnl)+'">'+sgn(c.pnl)+'</div></div>';
+  if(c.mv0!=null){ h += '<div class="step sub2"><span>月初市值 → '+esc(PERIOD_END)+'</span><span class="v">'+money(c.mv0)+' → '+money(c.mv1)+'</span></div>'; }
   h += '<div class="step"><span>帳面市值變化</span><span class="v '+cls(c.gross)+'">'+sgn(c.gross)+'</span></div>';
   if(c.invest){ h += '<div class="step"><span>− 新增投入'+(c.src?'（'+esc(c.src)+'）':'')+'</span><span class="v">'+money(-c.invest)+'</span></div>'; }
   if(c.upd_sum){ h += '<div class="step"><span>− 估值更新</span><span class="v">'+money(-c.upd_sum)+'</span></div>'; }
   h += '<div class="step total"><span>＝ 市場面損益'+(c.basis==='推導'?'（推定）':'')+'</span><span class="v '+cls(c.mkt)+'">'+sgn(c.mkt)+'</span></div>';
   h += '<div class="step"><span>＋ 配息實收</span><span class="v up">'+sgn(c.div)+'</span></div>';
+  if(c.div_yield_m){ h += '<div class="step sub2"><span>配息率（本月配息 ÷ 月初市值）</span><span class="v">'+(c.div_yield_m*100).toFixed(2)+'%/月 ≈ '+(c.div_yield_y*100).toFixed(1)+'%/年</span></div>'; }
+  if(c.int_cover!=null){ h += '<div class="step sub2"><span>配息 vs 借貸月息</span><span class="v">'+money(c.div)+' ÷ '+money(c.policy_int)+' → 覆蓋 '+c.int_cover.toFixed(1)+' 倍</span></div>'; }
   if(c.fee){ h += '<div class="step"><span>− 手續費</span><span class="v">'+money(-c.fee)+'</span></div>'; }
   h += '<div class="step total"><span>＝ '+esc(c.c)+'損益（含市值）</span><span class="v '+cls(c.pnl)+'">'+sgn(c.pnl)+'</span></div>';
   if(c.basis!=='推導'){ h += '<div class="note">基準：'+esc(c.basis)+'</div>'; }
@@ -301,6 +340,7 @@ function wfRow(c){
 
 function render(d){
   var h = [], g = d.grand||{}, f = d.funding||{}, p = d.period||{}, t = d.total_assets||{};
+  PERIOD_END = p.end || '';
   h.push('<header class="top"><div><h1>📈 本月績效<small>'+esc(d.month)+'　'+esc(p.start)+' ~ '+esc(p.end)+
          '（月初基準 '+esc(p.start_db||p.prev_end)+'）｜產生於 '+esc(d.generated_at)+'</small></h1></div>'+
          '<a class="back" href="index.html">← 回主儀表板</a></header>');
@@ -310,6 +350,8 @@ function render(d){
   h.push(kpi('本月投資損益', '<span class="'+cls(d.perf.net)+'">'+sgn(d.perf.net)+'</span>', esc(sub)));
   h.push(kpi('總資產變化', '<span class="'+cls(t.chg)+'">'+sgn(t.chg)+'</span>', '帳面（含未實現、含配息）'));
   h.push(kpi('配息實收（三類）', '<span class="up">'+sgn(g.div)+'</span>', '股票＋基金＋保單'));
+  h.push(kpi('本月報酬率', '<span class="'+(d.rate>=0?'up':'down')+'">'+pct(d.rate)+'</span>',
+             '以月初市值 '+money(d.total_mv0)+' 計（年化＝單月推估 '+pct(d.rate_ann)+'）'));
   h.push(kpi('淨利差（配息−資金成本）', '<span class="'+(f.light==='ok'?'up':(f.light==='bad'?'down':''))+'">'+(f.spread*100).toFixed(2)+'pp</span>',
              '加權資金成本 '+(f.wacc*100).toFixed(2)+'%'));
   h.push('</section>');
@@ -351,7 +393,10 @@ function render(d){
   h.push('</div></div><div class="note">純配息 '+money(f.div_base)+' vs 純月息 '+money(f.total_monthly_interest)+
          '；實際月付含本金攤還 '+money(f.total_payment)+'（永豐房貸為本利攤還）。</div></section>');
 
-  h.push('<section class="card"><h2>◆ 保單真實累計<em>配息 + (現值 − 原始成本)</em></h2>');
+  var _pc = (d.policies||[]).reduce(function(a,x){return a+(x.cost||0);},0),
+      _pr = (d.policies||[]).reduce(function(a,x){return a+(x.real||0);},0);
+  h.push('<details class="bg"><summary>📦 背景資訊（非本月）｜保單自買入累計 — 投入 '+money(_pc)+'｜真實累計 '+sgn(_pr)+'（點開看明細）</summary>'+
+         '<div class="period-tag">⚠️ 不同時間尺度：下面是「自買入至今」的累計口徑，上面全部是本月。月配息基金的現值會被配息搬走，所以「現值 &lt; 成本」是常態，不是虧損 —— 累計要看「累計配息 ＋ (現值 − 成本)」。</div>');
   h.push('<div class="tscroll"><table class="t"><thead><tr><th>保單</th><th>投入</th><th>現值</th><th>本金</th><th>累計配息</th><th>真實績效</th></tr></thead><tbody>');
   var rsum = 0;
   (d.policies||[]).forEach(function(x){
@@ -361,7 +406,7 @@ function render(d){
            '<td class="'+cls(x.real)+'"><b>'+sgn(x.real)+'</b></td></tr>');
   });
   h.push('<tr><td><b>合計</b></td><td>—</td><td>—</td><td>—</td><td>—</td><td class="'+cls(rsum)+'"><b>'+sgn(rsum)+'</b></td></tr>');
-  h.push('</tbody></table></div><div class="note">只讀「現值 − 成本」會看到本金 −4.5%，但月配息基金的配息已入袋；把累計配息加回才是真實績效。</div></section>');
+  h.push('</tbody></table></div><div class="note">只讀「現值 − 成本」會看到本金 −4.5%，但月配息基金的配息已入袋；把累計配息加回才是真實績效。</div></details>');
 
   h.push('<section class="card"><h2>◆ 資料基準<em>各源 as-of（越舊的數字越可能再變）</em></h2><table class="t"><tbody>');
   (d.freshness||[]).forEach(function(x){ h.push('<tr><td>'+esc(x.src)+'</td><td>'+esc(x.date)+'</td></tr>'); });
