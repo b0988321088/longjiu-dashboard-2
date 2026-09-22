@@ -1,12 +1,6 @@
 [
   {
     "date": "2026-09-05",
-    "category": "應辦",
-    "item": "watchdog v6.5 待真實卡死事件實戰驗證（合成測試已過）",
-    "detail": ""
-  },
-  {
-    "date": "2026-09-05",
     "category": "完成",
     "item": "儀表板政策面更新上線：8月非農 16.2萬超預期 + Fed 9/15-16 升息押注 60%+（9/11 CPI 定案）",
     "detail": "commit ec3907a9；護城河半成品還原（薪水動態 42,560）"
@@ -136,12 +130,6 @@
     "category": "完成",
     "item": "8月投資績效基準修正（股票新增投入撤銷 99,000）",
     "detail": "使用者確認8月無股票買賣 → 撤銷績效頁誤登股票新增投入 99,000；股票市值變化 56,000→155,170 追平月報帳面；損益合計 457,797；績效 +31.7萬→+41.6萬。四源同步 commit ac5131b6 已推送 "
-  },
-  {
-    "date": "2026-09-05",
-    "category": "應辦",
-    "item": "券商質押金額/利率核對（凱基/元大對帳單）",
-    "detail": "snapshot pledge_loan=100萬(利率 null 待確認) vs 還債計畫『元大50萬@3.92%』不一致；月支出元大證金利息 3,267 ≈ 100萬@3.92%"
   },
   {
     "date": "2026-09-06",
@@ -590,12 +578,6 @@
   },
   {
     "date": "2026-09-14",
-    "category": "決策",
-    "item": "L1/L4 成本治理定案：改打 context 尺寸（不改技能索引）；compression 參數調整上線",
-    "detail": "【量測推翻原假設】固定前綴 42,372 tokens 只占每次呼叫 10-20%；真主體是對話 context。\nagent.log in= 分布（8/27-9/14）：p50 71k-345k、>64k 占 55-98%、max ~500k、9/13 單日 390M tokens。\nlog 實證壓縮門檻 threshold=500,000、壓完 ~68k（messages 688→89）。\n【hermes prompt-size】系統提示 52,641 B（技能索引 31,195 B＝55%、memory 4,441 B、profile 2,892 B）；\n工具 schema 35,661 B / 21 工具（file 5.4k、delegation 4.4k、skills 3.6k、terminal 3.4k、memory 3.3k、\nbrowser-use 3.0k、code_execution 3.0k、web 1.9k、clarify 1.6k、vision 0.8k）→ 每個都在用；\ncomputer_use/image_gen/tts/kanban 根本沒進 schema（關掉無效）。\n【決定①不做】技能索引歸檔：237 個索引技能中 119 個（46%）兩個月內從未被載入\n（state.db tool_calls → function.name=skill_view → arguments.name；DB 內是跳脫 JSON，需兩層 json.loads），\n但全歸檔只省 ~4,882 tokens/呼叫＝固定成本 11.5% ≈ NT$0.01-0.1/天\n（固定前綴幾乎全在快取：DS $0.003/M、Gemini $0.03/M），且會誤刪事件驅動技能\n（投資紅旗清單 198 B 為索引第一名卻尚未被觸發）。清單存 data/skill_archive_candidates.json 以備日後。\n【決定②做】compression 兩段式（hermes config set；patch 工具禁改 Hermes config，\n備份 config.yaml.bak-20260914_011836）：threshold 0.5→0.30（500k→314k 才壓縮）、\nproactive_prune_tokens 0→120000（無 LLM 修剪舊工具輸出：lossless 去重→摘要非尾段大結果→截斷巨量 tool_call 參數）、\nproactive_prune_min_result_chars 8000→6000。語意：觸發點＝threshold×視窗（DS v4-flash 1,048,576）、\n尾段預算＝threshold_tokens×target_ratio。\n【決定③不動】watchdog TOK_GROWTH_CRIT=500k：門檻降到 314k 後該成長率不可能達成 → 規則自然失效不誤觸；\n震盪失效模式已有訊息數 WARN(250) 與失敗訊號 CRIT 守住，避免改敏感腳本造成回歸。\n【待用戶執行】DeepSeek 儲值：餘額 8.02 CNY ≈ 0.8 天，歸零後全流量走 Gemini（單價 12 倍，\n9/13 已實證 Gemini 佔當日 85% 花費）。\n【驗收方式】隔日比對 agent.log 的 in= p50/p90 與每日 AI 成本帳（daily_token_account.py，\n今日新增 CER/429 去重計數）；config 變更只對新進程/新 session 生效。\n【L1 附帶結論】CER 無法由內容類別預測（受控實驗 P1-P5 全過：純技術/去識別財務摘要/合成帳號保單號/\n敏感金流情境/80k 技術長文），且 CER 前的訊息內容正常 → DS 端間歇性判定，不可從來源修；\n改為監控（每日成本帳）＋降低暴露（context 瘦身）。"
-  },
-  {
-    "date": "2026-09-14",
     "category": "完成",
     "item": "Session watchdog v6.13：尺寸規則不再清理已輪替的死 session（INC-175）",
     "detail": "【現象】01:44 又收到「🚨 已達死重 → 已自動備份並重置」（今日 2/8），使用者問「為什麼又突然跳出這個」。\n【鑑識】該窗 act log 無 signal 行（err_delta=0/hard=0）→ 純尺寸規則（CRIT_AUTO_MIN=550、無失敗訊號那條）觸發；被重置的是上一顆已輪替 session 20260914_001256_62a38170（00:12:56 起 76 分鐘長到 1,074 則＝工具回覆 535＋助理 509＋使用者 29）。\n同日 00:43:48 同因（9/13 21:01 的 665 則 session）；00:58 那窗是純額度（quota 12/hard 0）→ v6.8 正常只警報。與 9/13 的四顆 CER 誤殺（INC-158）不同因。\n【影響】零 — 刪的是已輪替的舊 session，routing/mirror 命中 0（沒停 gateway、沒腰斬對話），訊息全文備份在 scripts/rescue/rescued_20260914-014417.json（945KB）。\n【修法 v6.13】①尺寸規則加 gateway_residue(sid) 前置關卡（查 gateway_routing.entry_json + sessions.json mirror）：已 ended 且無殘留 → 只寫 act log、不重置不推播 ②尺寸規則文案 🚨→ℹ️（「已達死重門檻（550+ 則、本窗無失敗訊號）」）③查詢失敗回 True（保守）。失敗訊號路徑刻意不受此限。\n【驗證】沙箱 61 檢查全 PASS（新增 S ended+無殘留→靜默不刪、T routing 殘留→仍重置、U 活的死重→仍重置）；真實 dry-run 靜默 exit 0；備份 .bak-20260914-v612；技能與 gateway §19c 已同步。\n【附帶釐清】我先前提的「ended_at 一度被判 ended 又復活」是誤判 — rescue 備份的 SELECT 本來就沒選 ended_at 欄，故顯示 None，非狀態矛盾。"
@@ -872,12 +854,6 @@
   },
   {
     "date": "2026-09-15",
-    "category": "查證",
-    "item": "對保狀態查證：Gmail/本機皆無對保證據 → 維持「未對保」",
-    "detail": "使用者要求查證 9/11 質押是否已對保。查證方式：①Gmail 搜「國泰 質押／對保／撥款／專業投資人／板橋」（after:2026/09/05）→ 僅行銷信與 9/12 消費彙整通知，無銀行對保/撥款通知 ②本機 find 質押/對保/國泰 相關文件截圖 → 無 ③產線腳本 grep「對保完成」→ 無硬編碼。結論：系統內唯一權威為使用者 9/12 更正（9/11 僅完成質押額度核定，未對保）；9/13 日報與週報的「對保完成」為當日產線文字錯誤。現行口徑維持「額度已核定、未對保、預估 ~9/25 撥款」，待使用者向國泰確認或等撥款事實關帳。"
-  },
-  {
-    "date": "2026-09-15",
     "category": "修正",
     "item": "事實衝突處理：9/13 日報＋週報「對保完成」加註更正橫幅",
     "detail": "衝突點：daily_report_v2_2026-09-13.html（1 處「對保完成待撥款」）與 dynamic_weekly_review_2026-09-13.html（4 處「9/11 對保完成」）vs 使用者 9/12 更正「未對保」＋entry_plan.json／entry_monitor.py／notion_shared_context.md 的正確口徑。處理原則比照口徑清查：歷史檔不竄改內容，於 <body> 後插入橘色更正橫幅（「⛔ 2026-09-15 更正：9/11 僅完成質押額度核定、尚未對保」），兩檔各 1 處橫幅。"
@@ -1061,7 +1037,10 @@
     "date": "2026-09-18",
     "category": "應辦",
     "item": "保單/負債寫死退路常數全面清除（低優先，已部分完成）",
-    "detail": ""
+    "detail": [
+      "同義欄位＋寫死退路類已修 6 處。剩餘（依 9/18 盤點）：asset_diff_monitor.py 226/251/274/370 行、run_daily.py 240/245/300/301/1248/1249/1263 行，仍以寫死數字當退路 → 缺值時會無聲給舊值。低優先，但屬「數字可信度」類風險。",
+      "2026-09-22：決策/工作帳本清理時保留本筆（其餘 7 筆未閉環項因過期/分類錯/重複已刪）。"
+    ]
   },
   {
     "date": "2026-09-19",
@@ -1077,81 +1056,9 @@
   },
   {
     "date": "2026-09-20",
-    "category": "更新",
-    "item": "保單截圖真值同步（安聯 7,657,517；保險總值 9,546,790）",
-    "detail": "安聯 App 9/20 12:17 截圖真值：保單A（QL18610694）4,986,867／保單B（QL18488224）2,670,650／合計 7,657,517（+44,544、+0.59%），逐檔 6 檔全漲；保險總值 9,502,246→9,546,790、總資產 26,044,512→26,089,056。9 月配息 131,439→138,688（安聯 44,920→52,169，含 9/14 基準日 A 4,059+B 3,190＝7,249，與 App 本月累積 52,169 閉合）。累計現金給付 A 943,850→1,046,391／B 687,112→735,851（原值自 7/28 起未更新，已以截圖覆蓋）。同步範圍：snapshot 現值/逐檔（短名 allianz_a/b_breakdown＋全名 policy_a/b_funds）/同義欄位/累計給付/配息記錄 → dragon_assets.db → 日報/儀表板/穿透報告/差異分析/週報/再平衡；三源校驗通過、稽核不變式通過、CIO 審查允許推送。備份 snapshot.pre_ins_20260920.json。待對帳：累計給付 +151,280 vs dividend_records 同期記錄 129,100（差 22,180，疑為 7/28 前未入帳批次，等 Moneybook 匯出核對）。卡點：sync_all 儀表板產出驗證把 9/16 CIO 審查全文（歷史引文）內的 772,607 誤判為殘留舊值 → 該步人工補跑，檢查邏輯修正待核准。"
-  },
-  {
-    "date": "2026-09-20",
     "category": "修正",
     "item": "INC-221：儀表板舊值殘留檢查抽成 check_dashboard_stale.py（排除註解/cio-old 歸檔區）",
     "detail": "sync_all 最後一步把 9/16 CIO 審查全文（<details class=\"cio-old\">／JS 註解離線快照）內的『可動用 772,607』誤判為殘留舊值而中止管線。改動：邏輯抽成 check_dashboard_stale.py 單一入口，掃描前排除 HTML 註解、JS 註解、cio-old 歸檔區；<script> 內 JS 硬編碼仍照掃（不放寬）。驗證：正負測試 6/6 PASS（活區塊/JS 陣列注入→命中；cio-old/註解注入→不命中）＋sync_all 10 步驟全過。真 CIO 審查（Pollinations 額度用盡 → 改 Gemini 異質審查）APPROVE 0.9；commit 4647cdf3 tree 12ae092f。"
-  },
-  {
-    "date": "2026-09-20",
-    "category": "更新",
-    "item": "本週投資計劃調整：00921×3 張分 2 批、資金全走乾粉（＋政策面汰換過期 9/5 版）",
-    "detail": "使用者 9/20 指示。解凍依據：US30Y 9/17 收 5.29 < 凍結線 5.30（FRED）＋雷達台股 🟢 外資淨買超 3.8 億（連 3 日）＋9/16 FOMC 升息 1 碼（3.50-3.75→3.75-4.00，DFEDTARU 9/17 起 4.00）利空出盡、台股 9/18 大漲逾 760 點。計畫：①9/21-9/22 限價 2 張（≈47,300）②回檔 ≤23.2 或 10/7 配息發放後補 1 張（≈23,650）；資金＝乾粉（現金 916,397 − 底線 700,000 = 216,397，餘 145,447 機動）；停止條件 US30Y ≥5.30／外資轉賣超／VIX>25。註：00921 已於 9/16 除息 1 元（10/7 發放）→ 本批領不到，下次季配約 12 月。同步清理：radar policy_notes 汰換 9/5 非農/FOMC 待決版 → 9/16 FOMC 升息已成事實＋後續觀察；pending 刪 3 筆已結案（升息警戒/防守口徑定案/AI 成本治理）＋新增『安聯累計給付差額 22,180 待對帳』；schedule_events 刪 7 筆過期/作廢＋1 筆重複 schema 項、新增 3 筆。"
-  },
-  {
-    "timestamp": "2026-09-20T14:01:26",
-    "task_id": "INC-221",
-    "description": "儀表板舊值殘留掃描假陽性修復 (check_dashboard_stale.py)",
-    "detail": "將 sync_all.py 內嵌的舊值掃描邏輯抽離至 check_dashboard_stale.py，並排除 <details> 和 cio-old 區塊的檢查，解決假陽性。",
-    "status": "已完成",
-    "commits": [
-      "e24e6ca7",
-      "d608304f"
-    ],
-    "cost_cny": 0.0
-  },
-  {
-    "timestamp": "2026-09-20T14:01:26",
-    "task_id": "INC-228",
-    "description": "修正巴菲特/CTO科技曝險判斷基準與淨資產變動拆解邏輯",
-    "detail": "將 snapshot.json 科技曝險目標設為 15%，buffett_cto_analyzer.py 調整 LLM 科技曝險判斷與 weekly_nw_breakdown.py 調整淨資產變動拆解為固定七日視窗。",
-    "status": "已完成",
-    "commits": [],
-    "cost_cny": 0.0
-  },
-  {
-    "timestamp": "2026-09-20T14:01:26",
-    "task_id": "INC-200",
-    "description": "watchdog v6.17 警報假陽性修復",
-    "detail": "session_bloat_watch.py 增加 session_ended(sid) 檢查，避免已結束對話觸發備援告警。",
-    "status": "已完成",
-    "commits": [],
-    "cost_cny": 0.0
-  },
-  {
-    "timestamp": "2026-09-20T14:01:50",
-    "task_id": "INC-221",
-    "description": "儀表板舊值殘留掃描假陽性修復 (check_dashboard_stale.py)",
-    "detail": "將 sync_all.py 內嵌的舊值掃描邏輯抽離至 check_dashboard_stale.py，並排除 <details> 和 cio-old 區塊的檢查，解決假陽性。",
-    "status": "已完成",
-    "commits": [
-      "e24e6ca7",
-      "d608304f"
-    ],
-    "cost_cny": 0.0
-  },
-  {
-    "timestamp": "2026-09-20T14:01:50",
-    "task_id": "INC-228",
-    "description": "修正巴菲特/CTO科技曝險判斷基準與淨資產變動拆解邏輯",
-    "detail": "將 snapshot.json 科技曝險目標設為 15%，buffett_cto_analyzer.py 調整 LLM 科技曝險判斷與 weekly_nw_breakdown.py 調整淨資產變動拆解為固定七日視窗。",
-    "status": "已完成",
-    "commits": [],
-    "cost_cny": 0.0
-  },
-  {
-    "timestamp": "2026-09-20T14:01:50",
-    "task_id": "INC-200",
-    "description": "watchdog v6.17 警報假陽性修復",
-    "detail": "session_bloat_watch.py 增加 session_ended(sid) 檢查，避免已結束對話觸發備援告警。",
-    "status": "已完成",
-    "commits": [],
-    "cost_cny": 0.0
   },
   {
     "date": "2026-09-20",
@@ -1170,12 +1077,6 @@
     "category": "修正",
     "item": "INC-232：AI 成本帳改版（每天花多少＋還剩多少餘額）＋備援熔斷改官方現行價（前次 session 中斷，程式未提交致 22:40 收工檢查 ❌）",
     "detail": "使用者 9/20 指示「讓我能夠明確的監控 Gemini 與 DS 費用、知道每天花多少錢還剩多少餘額」。①daily_token_account.py：新增 DeepSeek /user/balance 真值餘額（失敗退 cost_log.csv）、Gemini 預付推定＋8-token 探測、近 7 日走勢與剩餘天數燈號；PRICE 改官方現行價（gemini-2.5-flash 0.30/2.50/0.03）、模型名含 ':free' 一律計 0（免費層不再憑空長成本）、agent.log.0~.3 跨日彙總。②fallback_cost_guard.py 首次入版控：不再讀 state.db estimated_cost_usd（價目快照 2026-07-28，低估 2.07x），改用同一 PRICE 表從 agent.log 自算備援花費，門檻 US$0.30/天、同日只告警一次。驗證：唯讀驗證器 19/19 PASS（含 cache 選配回歸、免費模型歸零、手算對帳、實跑與獨立 algorithm 對帳 Gemini NT$89 一致）＋真 CIO 審查 APPROVE；commit afeab1ae tree a47f3feb。"
-  },
-  {
-    "date": "2026-09-21",
-    "category": "紀錄",
-    "item": "保單轉換登記：安聯第三站已設定轉 PIMCO；第一金（PIMCO）系統錯誤未設定（客服稱 9/22 可完成）",
-    "detail": "使用者 9/21 回報並指示「只記錄、不用處理」。①安聯第三站轉換至 PIMCO 已於 App 設定完成（轉出標的/金額/保單別待截圖補登）②第一金同一轉換因系統錯誤、畫面卡住未設定，客服表示明天(9/22)可完成。已登記：schedule_events 9/21（安聯已提出）、9/22（第一金重試，該日為 9/28 基準日 T+4 最後送件日）、9/25（安聯 T+4 生效確認）＋pending_decisions 兩筆。查證（第一金人壽財富網現售標的 934 檔）：PIMCO 共 22 檔、無「收益增長」；M 級月配僅 FP24 多元收益債券-M級(月收息)、FP26 全球非投等債-M級 → 客服端若無法新增「收益增長」之替代路徑。依 8/10 鐵則：登記不等於完成，T+4 生效後才更新成分/四源/穿透。"
   },
   {
     "date": "2026-09-21",
@@ -1226,6 +1127,25 @@
       "下游：daily_token_account.py（governance_cumulative）與 ai_cost_watch.py（_gov_line，JSON 增 governance 欄）各加一行「◆ 治理後累計」，四條 cron 入口（wallet/digest/guard/close）經 forwarder 全數生效。",
       "驗證：唯讀驗證器（%TEMP%/verify_e54d3d15.py）六項全過——語法閘門、舊 bug 重現、基準日三態（未設檔／待啟動／已過基準日）、四筆儲值事件、兩支呼叫端實際輸出、commit 範圍與通道；CIO-Gemini 跨家審查 APPROVE（tree f9d641451b1f），RECORD 落地後推送 clean-main，遠端 sha 驗證相符。",
       "未竟：三支腳本日耗方法仍不同（wallet_status 中位數 vs daily_token_account log 口徑中位數 vs ai_cost_watch 餘額真值均值），僅口徑各有標示，尚未統一。"
+    ]
+  },
+  {
+    "date": "2026-09-20",
+    "category": "修正",
+    "item": "INC-228 修正巴菲特/CTO 科技曝險判斷基準與淨資產變動拆解邏輯",
+    "detail": [
+      "snapshot.json 科技曝險目標設為 15%；buffett_cto_analyzer.py 調整 LLM 科技曝險判斷；weekly_nw_breakdown.py 淨資產變動拆解改固定七日視窗。",
+      "本筆原以 ad-hoc 腳本寫入、schema 破損（date/category/item 全空、detail 被拆成單字元、重複兩次），2026-09-22 清理時改寫為正常格式保留一筆。"
+    ]
+  },
+  {
+    "date": "2026-09-22",
+    "category": "修正",
+    "item": "決策/工作帳本過期清理（刪 17 筆、補 5 筆欄位）",
+    "detail": [
+      "work_log：刪 7 筆未閉環過期/分類錯/重複項（9/5 watchdog v6.5、9/5 券商質押核對、9/14 成本治理定案、9/15 對保查證、9/20 保單截圖同步、9/20 本週投資計劃、9/21 保單轉換登記）＋刪 6 筆壞 schema 垃圾（INC-221/228/200 各重複兩次）；INC-228 改寫為正常格式保留；9/18 保單寫死退路保留並補上具體行號。",
+      "pending_decisions：刪 4 筆過期/已作廢（8/21 科技-2pp 再平衡、8/21 避險衛星建倉、9/5 美元債條件單、9/5 券商質押核對——後三者已分別被 9/15 黃金分批、9/15 作廢更正、9/12 清償計畫取代）；補 4 筆缺 tags/detail（9/25 M&G T+4、9/25 週五審計驗證、9/26 再平衡首跑、9/27 週報首跑）→ 儀表板「執行中決策追蹤」不再出現空白列。",
+      "另註：pending_decisions 中 4 筆缺欄位與 work_log 的空白列同源於先前手寫條目漏欄位；今後一律走 closing_log.py／pending_decisions 完整欄位（date/title/status/tags/detail）。"
     ]
   }
 ]
