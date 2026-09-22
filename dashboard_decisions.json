@@ -57,7 +57,7 @@
     {
       "date": "2026-09-21",
       "action": "成本帳納入管線 LLM 用量（每次更新可歸因）",
-      "status": "🔄 執行中：程式改動送 CIO 審查（RECORD）後落地",
+      "status": "🔄 執行中：日耗口徑已統一（9/22 482d5866）",
       "tags": "成本帳,系統"
     },
     {
@@ -5736,12 +5736,60 @@
       "status": "completed",
       "source": "auto"
     },
-  {"timestamp": "2026-09-22T15:28:12.758719", "action": "核准", "name": "9/22 資料同步核准（證券 9/22 收盤＋基金 9/21 淨值）", "source": "Hermes Telegram Gate", "status": "已核准", "category": "決策", "user": "Laing", "idem_key": "hermes-1790062092-a", "summary": "核准一次同步：券商持股 15 檔 9/22 收盤（2,999,380）、鉅亨 855,673、國泰直購 11,877,653（皆 9/21 淨值）→ 總資產 26,148,759（e5993fa6）"},
-  {"timestamp": "2026-09-22T15:28:12.758719", "action": "核准", "name": "INC-238 修復指令（使用者：修復並記錄）", "source": "Hermes Telegram Gate", "status": "已核准", "category": "決策", "user": "Laing", "idem_key": "hermes-1790062092-b", "summary": "使用者指示修復 sync_all 日報口徑閘門順序缺陷並記錄 → 64d6fc24（--sot-only/--report-only＋步驟數動態化）＋error_register INC-238＋技能 pipeline-sync-patterns"},
-  {"timestamp": "2026-09-22T15:28:12.758719", "action": "核准", "name": "資料新鮮度卡加『最近匯入』欄", "source": "Hermes Telegram Gate", "status": "已核准", "category": "決策", "user": "Laing", "idem_key": "hermes-1790062092-c", "summary": "使用者反映『基金 as-of 9/21 但剛剛才更新』→ 卡片新增第 4 欄區分 as-of 與匯入日＋snapshot.source_import_dates（478a3e9d）"}
-],
+    {
+      "timestamp": "2026-09-22T15:28:12.758719",
+      "action": "核准",
+      "name": "9/22 資料同步核准（證券 9/22 收盤＋基金 9/21 淨值）",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1790062092-a",
+      "summary": "核准一次同步：券商持股 15 檔 9/22 收盤（2,999,380）、鉅亨 855,673、國泰直購 11,877,653（皆 9/21 淨值）→ 總資產 26,148,759（e5993fa6）"
+    },
+    {
+      "timestamp": "2026-09-22T15:28:12.758719",
+      "action": "核准",
+      "name": "INC-238 修復指令（使用者：修復並記錄）",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1790062092-b",
+      "summary": "使用者指示修復 sync_all 日報口徑閘門順序缺陷並記錄 → 64d6fc24（--sot-only/--report-only＋步驟數動態化）＋error_register INC-238＋技能 pipeline-sync-patterns"
+    },
+    {
+      "timestamp": "2026-09-22T15:28:12.758719",
+      "action": "核准",
+      "name": "資料新鮮度卡加『最近匯入』欄",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1790062092-c",
+      "summary": "使用者反映『基金 as-of 9/21 但剛剛才更新』→ 卡片新增第 4 欄區分 as-of 與匯入日＋snapshot.source_import_dates（478a3e9d）"
+    },
+    {
+      "timestamp": "2026-09-22T21:18:41",
+      "summary": "核准：月報與本月頁整合為單一入口「📊 投資績效（本週/月）」；新增週損益(本週/近7天/上週/前週)、本月每日走勢、7-8-9月同口徑月份統計；累計(自買入)資訊降為頁尾折疊「背景資訊（非本月）」；週損益加口徑警語（僅帳面、不可與月投資績效相加）；月報國泰轉貸/鉅亨基金專區搬入",
+      "detail": "2026-09-22 使用者反饋「看不出本週損益與本月狀況」+「兩份要整合、須列 7/8/9 月績效方便統計」→ 分批完成。commits：243fdba3(報酬率/佔比chip+保單槓桿覆蓋+累計折疊)、50a80f9f(週損益/每日走勢/7-8-9月統計+單一按鈕)、758a6383(口徑警語+國泰/鉅亨專區搬入+缺值防護)。CIO 唯讀審查兩次 APPROVE(0 阻擋)。實績：9 月至今淨 +193,415(日均 +8,792) vs 8 月 +415,797(日均 +13,413) vs 7 月 +123,108(日均 +3,971)；週：本週 +109,282、近7天 +248,901、上週 −55,601(含 9/14 帳務校正 −178,547，剔除後 +122,946)。",
+      "source": "user",
+      "tags": [
+        "投資績效",
+        "報表整合"
+      ]
+    },
+    {
+      "date": "2026-09-22",
+      "action": "投資績效頁整合定案（本頁/週/月 + 7-8-9月統計）",
+      "decision": "核准",
+      "status": "✅ 已核准（2026-09-22）→ 已上線並完成閉環",
+      "tags": "決策,投資績效,報表整合,核准",
+      "timestamp": "2026-09-22"
+    }
+  ],
   "meta": {
-    "updated_at": "2026-09-22T15:09:20.047221"
+    "updated_at": "2026-09-22T21:34:36.589879"
   },
   "last_updated": "2026-09-22T18:00:00+08:00"
 }
