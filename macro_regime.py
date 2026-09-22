@@ -22,6 +22,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
+import market_price  # 2026-09-22 INC-239：Yahoo 取價單一入口（勿自己解 meta/close）
 UA = {"User-Agent": "Mozilla/5.0"}
 TIMEOUT = 8
 EMERGENCY_FILE = BASE / "data" / "emergency_llm_analysis.json"
@@ -56,21 +57,22 @@ def _fetch(url: str) -> str | None:
 
 
 def _yahoo(sym: str) -> dict | None:
-    """回傳 {last, prev, first, ret_1d_pct, ret_20d_pct}；失敗 None"""
-    txt = _fetch(f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=1mo&interval=1d")
-    if not txt:
-        return None
+    """回傳 {last, prev, first, ret_1d_pct, ret_20d_pct}；失敗 None。
+
+    2026-09-22 INC-239：前收改走市場單一入口（日線 timestamp 對齊）。
+    舊碼 `prev = meta.chartPreviousClose or closes[0]` —— range=1mo 時 chartPreviousClose 是
+    「區間起點前」的收盤（≈20 交易日前），所以 ret_1d_pct 其實是「一個月漲跌」。
+    本欄位目前全 repo 無人使用（下游只用 ret_20d_pct），修的是潛在誤導而非輸出值。
+    """
     try:
-        r = json.loads(txt)["chart"]["result"][0]
-        closes = [c for c in r["indicators"]["quote"][0]["close"] if c]
-        if not closes:
+        bars = market_price.fetch_bars(sym, range_="1mo")
+        if len(bars) < 2:
             return None
-        prev = r["meta"].get("chartPreviousClose") or closes[0]
-        first = closes[0]
+        last, prev, first = bars[-1][1], bars[-2][1], bars[0][1]
         return {
-            "last": closes[-1], "prev": prev, "first": first,
-            "ret_1d_pct": (closes[-1] / prev - 1) * 100,
-            "ret_20d_pct": (closes[-1] / first - 1) * 100,
+            "last": last, "prev": prev, "first": first,
+            "ret_1d_pct": (last / prev - 1) * 100,
+            "ret_20d_pct": (last / first - 1) * 100,
         }
     except Exception:
         return None

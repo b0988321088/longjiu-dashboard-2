@@ -835,8 +835,9 @@
 
 - **驗證**：`market_price.fetch_snapshot` → ^TWII **47,800.17 (+0.17%)**、2330.TW **2,460.00 (-0.81%)**、^SOX/^GSPC 為當日盤中值；重跑 `daily_intel.py` → `compile_intel.py` → `regenerate_report.py --no-push` 後：日報 `47,718` 殘留 **0 次**、第 3 章 **47,800.17 (+0.17%)**、情報重點「台股加權 47,800.17 (+0.17%)，市場情緒持平」、CIO 審查全數通過。
 
-- **未修（待複核）**：`macro_regime.py` 仍用 `chartPreviousClose`、`entry_monitor.py`／`institutional_flow.py` 各自解析日線 → 同類欄位風險未全面清除，下次動 DAA/進場監控時一併改用 `market_price`。
+- **後續修正 2（INC-239c，2026-09-22 22:5x）**：`macro_regime._yahoo()` 原用 `meta.chartPreviousClose` 當 prev（range=1mo 時＝區間起點前收盤）→ `ret_1d_pct` 其實是「一個月漲跌」；已改走新增的 `market_price.fetch_bars()`。**複核結果**：`entry_monitor.py`、`institutional_flow.py` 只取 `closes` 算低點／動能，**無前收欄位使用**（不受此類污染），不需改。另新增 `check_yahoo_meta_usage.py`：ast 掃全 repo `.py`，禁止 `previousClose`／`chartPreviousClose` 取值（唯一豁免 market_price.py）→ 把「靠記憶別再犯」換成機械閘門。驗證：合成序列前後對照 ret_1d −52.2%→+1.70%（ret_20d 相同）＋引擎端到端重跑（燈號 🟡、targetAllocation、硬性約束全同，差異僅盤中即時價位移）＋防復發掃 258 支 rc=0。
 
-- **後續修正（同日 INC-239b，2026-09-22 22:3x）**：獨立審查者指出「stale 只回旗標、顯示層沒印出來」＝與原症狀同類（靜默）→ 補上：`daily_intel._fmt_quote()` 與 `hunter_intel.get_yf_market()` 在 stale 時字串尾加「 ⚠️延遲」＋ print WARN（下游 compile_intel 的 `\(([+-]?\d+\.\d+)%\)` regex 不受後綴影響）；驗證＝兩分支實測＋實抓值與已提交 daily_analysis.json 的 twii/tsm 完全相同（正常交易日不誤標）。另補 `dynamic_weekly_review_2026-09-20.html` 頁尾「口徑來源：rebalance_eval_2026-09-20.html」→ `check_caliber_consistency.py` rc 由 1 轉 0（數字本來就 0 差異，缺的只是來源標註）。兩個 commit（ec9034cd、ab9656ef）皆經獨立 CIO 審查 APPROVE（0.90／0.95）後推送、遠端 sha 覆核相符。
+- **後續修正（同日 INC-239b，2026-09-22 22:3x）**：獨立審查者指出「stale 只回旗標、顯示層沒印出來」＝與原症狀同類（靜默）→ 補上：`daily_intel._fmt_quote()` 與 `hunter_intel.get_yf_market()` 在 stale 時字串尾加「 ⚠️延遲」＋ print WARN（下游 compile_intel 的 `\(([+-]?\d+\.\d+)%\)` regex 不受後綴影響）；驗證＝兩分支實測＋實抓值與已提交 daily_analysis.json 的 twii/tsm 完全相同（正常交易日不誤標）。另補 `dynamic_weekly_review_2026-09-20.html` 頁尾「口徑來源：rebalance_eval_2026-09-20.html」→ `check_caliber_consistency.py` rc 由 1 轉 0（數字本來就 0 差異，缺的只是來源標註）。兩個 commit（ec9034cd、ab9656ef）皆經獨立 CIO 審查 APPROVE（0.90／0.95）後推送、遠端 sha 覆核相符。
+
 - **教訓**：**Yahoo 的 meta 欄位不是真值，日線的 (timestamp, close) 才是**；同一個欄位 9 天內修過兩次還是錯 → 修完必須拿「已知的正確答案」對帳（本日正確 +0.17%），不能「有值就放行」。次則：**收盤後取價必須驗新鮮度** —— 當日日線未 roll 時寧可標示延遲，不可靜默退回前一日充當「今日」。
 

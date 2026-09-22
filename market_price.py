@@ -135,6 +135,18 @@ def fetch_snapshot(symbol: str, timeout: int = 10) -> dict:
     }
 
 
+def fetch_bars(symbol: str, range_: str = "1mo", interval: str = "1d",
+               timeout: int = 10) -> list[tuple[date, float]]:
+    """日線序列 [(交易日, 收盤)]（null 已濾、已排序）；失敗回 []。
+
+    給「動能／相對強弱」類計算用（例：ret_20d = bars[-1][1]/bars[0][1] - 1）。
+    一律走這支 —— 不要在別處自己解 `indicators.quote[0].close`：各腳本各解一次，
+    就會有人順手拿 `meta.previousClose` / `meta.chartPreviousClose` 當前收（INC-239 家族）。
+    """
+    res = _get_result(f"{symbol}?interval={interval}&range={range_}", timeout)
+    return _bars(res) if res else []
+
+
 def fmt(s: dict) -> str:
     """→ "47,800.17 (+0.17%)"；缺值回 "—"。"""
     if not s or s.get("price") is None or s.get("change_pct") is None:
