@@ -64,6 +64,8 @@ THRESHOLDS = {
     "free_takeover_min_ratio": 0.10,  # A5/外溢：免費接手次數 ÷ CER 次數 低於此 = 幾乎沒接手
     "spend_avg_vs_median_ok": 1.5,    # 花費判定：日均 ÷ 中位數 ≤ 此 = 正常
     "spend_avg_vs_median_high": 3.0,  # 花費判定：> 此 = 異常集中
+    "spend_top_n": 3,                 # 花費集中度：取前幾大日計算占比
+    "spend_top3_share_warn": 0.8,     # 花費集中度：前 N 大日占比 ≥ 此 = 顯示集中來源
     "days_critical": 7,          # A6/A7 ⛔
     "days_warn": 14,             # A6/A7 ⚠️
     "topup_jump_cny": 50,        # A8
@@ -220,7 +222,7 @@ def wallet_spend(recs: list[dict], key: str) -> dict:
     tot = sum(vals)
     avg = round(tot / len(vals), 1)
     med = int(statistics.median(vals))
-    top3 = sorted(vals, reverse=True)[:3]
+    top3 = sorted(vals, reverse=True)[:THRESHOLDS["spend_top_n"]]
     share = round(sum(top3) / tot, 2) if tot else 0.0
     cer_days = sum(1 for r in recs if int(r.get("cer", 0) or 0) >= THRESHOLDS["cer_warn"])
     if med > 0:
@@ -458,9 +460,12 @@ def build(days_n: int, probe: bool) -> dict:
             if med7 and t >= med7 * THRESHOLDS["day_spike_ratio"] and t >= THRESHOLDS["day_spike_floor_twd"]:
                 alerts.append({"code": "A1", "level": "warn",
                                "msg": f"{r['date']} 單日 NT${t} ≥ 週中位數 NT${med7:.0f} × {THRESHOLDS['day_spike_ratio']}"})
-        if s7p and s7 >= s7p * THRESHOLDS["wow_ratio"]:
+        # A4：與顯示行同一口徑（日均比較）。舊版用總額比 s7/s7p → 前 7 日天數不足時
+        #     等於偷偷把門檻降低（7 天比 6 天，等效約 ×1.29 就觸發），2026-09-22 CIO 提出。
+        if avg7p and avg7 >= avg7p * THRESHOLDS["wow_ratio"]:
             alerts.append({"code": "A4", "level": "warn",
-                           "msg": f"近 7 日 NT${s7} ≥ 前 7 日 NT${s7p} × {THRESHOLDS['wow_ratio']}"})
+                           "msg": (f"近 7 日日均 NT${avg7:.0f} ≥ 前 {n7p} 日日均 NT${avg7p:.0f}"
+                                   f" × {THRESHOLDS['wow_ratio']}（惡化）")})
         # A5：CER 發生的日子若免費入口幾乎沒接手 → 免費層沒分攤，花費被付費備援吸收
         #     （分母固定用當日 CER 次數，故不會像「免費佔全體呼叫佔比」那樣在沒風控的日子誤報）
         for r in complete[-7:]:
@@ -583,11 +588,11 @@ def _spend_verdict(b: dict) -> str:
     if not b["total_twd"]:
         return "正常（無花費）"
     if b["ratio"] is None:
-        return f"集中（多數日 0，{b['top3_share']:.0%} 來自前 3 天）"
+        return f"集中（多數日 0，{b['top3_share']:.0%} 來自前 {THRESHOLDS['spend_top_n']} 天）"
     word = {"normal": "正常", "elevated": "偏高", "spike": "異常集中"}[b["level"]]
     txt = f"{word}（日均 {b['ratio']:.1f}× 中位數）"
-    if b["top3_share"] >= 0.8:
-        txt += f"｜{b['top3_share']:.0%} 集中在前 3 天"
+    if b["top3_share"] >= THRESHOLDS["spend_top3_share_warn"]:
+        txt += f"｜{b['top3_share']:.0%} 集中在前 {THRESHOLDS['spend_top_n']} 天"
         if b["cer_days"]:
             txt += f"（其中 {b['cer_days']} 天 CER ≥ {THRESHOLDS['cer_warn']}）"
     return txt
