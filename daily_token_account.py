@@ -143,7 +143,7 @@ def cost_usd(model: str, tok: collections.Counter) -> float:
     # 免費層一律 0：它們在 provider 端 pricing 就是 0，不可套缺價表的保守估價，
     # 否則會在帳上憑空長出成本（2026-09-20 實測 longcat-2.0:free 被估成 US$0.003）。
     # 兩種命名都要認：`:free` 尾綴（nous portal）與 `-free` 尾綴（opencode 免費層，
-    # 例 nemotron-3-ultra-free；2026-09-22 實測這兩檔被套 DS 價，7 天膨脹 NT$20）。
+    # 例 nemotron-3-ultra-free；2026-09-22 實測這類模型被套缺價表的 DS 價，7 天膨脹 NT$20）。
     if ":free" in model or model.endswith("-free"):
         return 0.0
     # 未知模型用 DS 價保守估；DS/Gemini 一律看模型名稱（缺價表的 Gemini 模型才不會被誤當 DS）

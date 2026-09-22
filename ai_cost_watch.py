@@ -17,7 +17,7 @@
   A1 單日總花費 ≥ 週中位數 × 3 且 ≥ NT$150（絕對下限，避免小額日誤報）
   A2 DS 內容風控（CER）當日 ≥ 20 次 → 錢正被導去備援
   A3 Gemini 429 當日 ≥ 10 次
-  A4 近 7 日總額 ≥ 前 7 日 × 1.5（惡化）
+  A4 近 7 日日均 ≥ 前 N 日日均 × 門檻（惡化；與週比較顯示行同口徑）
   A5 CER ≥ 5 次且免費入口接手率 < 10%（備援幾乎全落付費）→ 風控的代價被付費模型吸收
   A6 DS 剩餘天數 < 7（⛔）／< 14（⚠️）
   A7 Gemini 剩餘天數 < 7（⛔）／< 14（⚠️）；探測「確定失效」才 ⛔，暫時性失敗只 ⚠️
@@ -148,7 +148,7 @@ def ds_balance_history() -> dict[str, float]:
 
 
 def daily_totals(days: list[str]) -> dict[str, dict]:
-    """從 agent.log* 算每日三桶費用（NT$）＋呼叫數。免費層（:free）一律 0。"""
+    """從 agent.log* 算每日三桶費用（NT$）＋呼叫數。免費層（`:free` 與 `-free` 尾綴）一律 0。"""
     per_range = dta.scan_agent_log_range(set(days))
     out: dict[str, dict] = {}
     for date, models in per_range.items():
