@@ -71,6 +71,30 @@ def _is_forwarder(p: Path) -> bool:
 
 
 ok = 0
+# ⓪ 轉發器部署與驗證（2026-09-22）
+#    既有 ①② 對 hermes 端的「薄轉發器」一律跳過（保護轉發層不被真身覆蓋），
+#    代價是：轉發器一旦在 hermes/scripts 遺失或重建，48 個 cron job 會集體
+#    "Script not found"（8/10 曾發生）。故改為 repo/wrappers/ = 轉發器唯一來源，
+#    這裡強制對齊並逐位元驗證；不一致就大聲失敗，不讓 cron 靜默跑不到腳本。
+WRAPPERS_SRC = BASE / "wrappers"
+if WRAPPERS_SRC.is_dir():
+    w_ok, w_bad = 0, []
+    for _src in sorted(WRAPPERS_SRC.glob("*.py")):
+        _dst = TARGET / _src.name
+        try:
+            if (not _dst.exists()) or _dst.read_bytes() != _src.read_bytes():
+                shutil.copy2(_src, _dst)
+                w_ok += 1
+            if _dst.read_bytes() != _src.read_bytes():
+                w_bad.append(_src.name)
+        except Exception as _e:
+            w_bad.append(f"{_src.name}({_e})")
+    print(f"  🔁 wrapper deploy: {w_ok} 支補齊/更新（來源 repo/wrappers/）")
+    if w_bad:
+        print(f"  ❌ 轉發器自我驗證失敗：{len(w_bad)} 支不一致 → {', '.join(w_bad[:6])}")
+        print("     → hermes/scripts 的轉發器與 repo/wrappers/ 不符，cron 可能 Script not found")
+        sys.exit(1)
+
 # ① 硬編碼清單（hermes-only 或缺檔時補齊）
 for name in SCRIPTS:
     src = BASE / name
