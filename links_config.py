@@ -70,6 +70,7 @@ PLACEHOLDER_FIXED = {
     "__DECISION_CARD__": "*_card_*.html",       # 保單轉換卡等：檔名不固定前綴
     "__REFINANCE_PPTX__": "grand_pivot_deck.pptx",  # 固定檔名（無日期）
     "__COST_PAGE__": "cost.html",               # AI 費用頁（固定檔名：永遠指向最新，不產生舊檔）
+    "__MTD_PAGE__": "mtd_performance.html",     # 本月績效頁（固定檔名：每日重產，永遠最新）
 }
 
 

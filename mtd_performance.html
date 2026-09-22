@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📈 龍九本月績效</title>
+<style>*{box-sizing:border-box}
+body{margin:0;background:#0b1120;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:14px}
+a{color:#93c5fd;text-decoration:none}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}
+h1{font-size:19px;font-weight:900;margin:0}
+h1 small{display:block;font-size:11.5px;font-weight:500;color:#94a3b8;margin-top:3px}
+.back{flex:0 0 auto;font-size:11.5px;border:1px solid #334155;border-radius:9px;padding:6px 9px;background:rgba(30,41,59,.7)}
+.card{background:rgba(30,41,59,.55);border:1px solid rgba(148,163,184,.14);border-radius:14px;padding:13px 14px;margin-bottom:11px}
+.card h2{font-size:13.5px;font-weight:800;margin:0 0 10px;display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.card h2 em{font-style:normal;font-size:10.5px;font-weight:500;color:#94a3b8}
+.grid{display:grid;gap:9px}
+.grid>*{min-width:0}
+.tscroll{max-width:100%}
+.k4{grid-template-columns:repeat(2,1fr)}
+.k2{grid-template-columns:1fr}
+@media(min-width:720px){.k4{grid-template-columns:repeat(4,1fr)}.k2{grid-template-columns:1fr 1fr}}
+.kpi{background:rgba(15,23,42,.75);border:1px solid rgba(148,163,184,.16);border-radius:12px;padding:10px 11px}
+.kpi .lbl{font-size:10.5px;color:#94a3b8;letter-spacing:.02em}
+.kpi .val{font-size:20px;font-weight:900;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi .sub{font-size:10.5px;color:#94a3b8;margin-top:2px}
+.up{color:#34d399}.down{color:#fb7185}.neutral{color:#e2e8f0}
+.chip{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 8px;border:1px solid}
+.chip.ok{color:#6ee7b7;border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
+.chip.warn{color:#fcd34d;border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.08)}
+.chip.bad{color:#fda4af;border-color:rgba(251,113,133,.4);background:rgba(251,113,133,.08)}
+.chip.info{color:#a5b4fc;border-color:rgba(129,140,248,.4);background:rgba(129,140,248,.08)}
+.wf{margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(148,163,184,.12)}
+.wf:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.wf .head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.wf .name{font-size:13px;font-weight:800}
+.wf .amt{font-size:15px;font-weight:900;font-variant-numeric:tabular-nums}
+.step{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;color:#cbd5e1;padding:1.5px 0}
+.step .v{font-variant-numeric:tabular-nums}
+.step.total{border-top:1px solid rgba(148,163,184,.2);margin-top:4px;padding-top:5px;font-weight:800;color:#f1f5f9}
+.note{font-size:11px;color:#94a3b8;border-top:1px solid rgba(148,163,184,.12);margin-top:8px;padding-top:8px}
+table.fb,table.t{width:100%;border-collapse:collapse;font-size:12px}
+table.fb th{text-align:left;font-weight:500;color:#94a3b8;padding:6px 8px;border-bottom:1px solid rgba(148,163,184,.14);white-space:nowrap;width:42%}
+table.fb td{padding:6px 8px;border-bottom:1px solid rgba(148,163,184,.14);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+table.t th{text-align:right;font-weight:600;color:#94a3b8;font-size:11px;padding:5px 7px;border-bottom:1px solid rgba(148,163,184,.18)}
+table.t th:first-child{text-align:left}
+table.t td{text-align:right;padding:5px 7px;border-bottom:1px solid rgba(148,163,184,.1);font-variant-numeric:tabular-nums}
+table.t td:first-child{text-align:left;color:#e2e8f0}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tscroll table{min-width:0}
+@media(min-width:720px){.tscroll table{min-width:520px}}
+@media(max-width:430px){table.t{font-size:11px}table.t th,table.t td{padding:4px 5px}}
+.step .v,.wf .amt{white-space:nowrap}
+.tl{position:relative;padding-left:15px}
+.tl:before{content:"";position:absolute;left:4px;top:4px;bottom:4px;width:1px;background:rgba(148,163,184,.25)}
+.tl .ev{position:relative;padding:6px 0;font-size:12.5px}
+.tl .ev .src{display:block;font-size:11px;color:#94a3b8;margin-top:1px}
+.tl .ev:before{content:"";position:absolute;left:-14px;top:12px;width:7px;height:7px;border-radius:50%;background:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.14)}
+.muted{color:#94a3b8}</style>
+</head>
+<body>
+<div class="wrap" id="app"><section class="card"><h2>◆ 摘要<em>（靜態版；JS 可用時自動升級為完整圖表）</em></h2><table class="fb"><tbody><tr><th>2026-09 本月投資損益</th><td>+193,415</td></tr><tr><th>　帳面市值變化</th><td>+22,323（總資產）</td></tr><tr><th>　配息實收</th><td>+147,975</td></tr><tr><th>　估值更新</th><td>+178,547</td></tr><tr><th>市場面損益（推定）</th><td>+87,440</td></tr><tr><th>　股票</th><td>市值 +124,790｜配息 +16,340｜損益 +141,130</td></tr><tr><th>　基金</th><td>市值 -46,794｜配息 +57,174｜損益 +10,380</td></tr><tr><th>　保單</th><td>市值 -169,103｜配息 +74,461｜損益 +83,905</td></tr><tr><th>淨利差</th><td>+1.96pp｜🟢 利差充足（≥1.2%）→ 現金流安全、套利空間存在</td></tr></tbody></table></section></div>
+<script type="application/json" id="seed">{"generated_at": "2026-09-22 20:30", "month": "2026-09", "period": {"start": "2026-09-01", "end": "2026-09-22", "prev_end": "2026-08-31", "start_db": "2026-08-31", "start_ref": "2026-08-31"}, "total_assets": {"start": 26126436.0, "end": 26148759.0, "chg": 22323.0}, "mv_reliable": true, "classes": [{"c": "股票", "mv0": 2874590, "mv1": 2999380, "gross": 124790, "invest": 0.0, "src": "", "upd_sum": 0, "mkt": 124790.0, "div": 16340.0, "fee": 0.0, "pnl": 141130.0, "basis": "推導"}, {"c": "基金", "mv0": 12780120, "mv1": 12733326, "gross": -46794, "invest": 0.0, "src": "", "upd_sum": 0, "mkt": -46794.0, "div": 57174.0, "fee": 0.0, "pnl": 10380.0, "basis": "推導"}, {"c": "保單", "mv0": 9718338, "mv1": 9549235, "gross": -169103, "invest": 0.0, "src": "", "upd_sum": -178547.0, "mkt": 9444.0, "div": 74461.0, "fee": 0.0, "pnl": 83905.0, "basis": "推導"}], "grand": {"mkt": 87440.0, "div": 147975.0, "fee": 0.0, "sub": 235415.0}, "interest": {"total": 42000.0, "by": {"房貸": 28000, "保單借貸": 14000}}, "perf": {"gross": 235415.0, "net": 193415.0}, "updates": [{"date": "2026-09-14", "c": "保單", "amount": -178547.0, "as_of": "2026-09-11", "kind": "真值日截圖同步", "reason": "安聯/第一金：前次記錄值 → 9/11 對保日 App 真值（帳務更新，非市場虧損）"}], "loans": [{"name": "永豐房貸（洲際W 本利攤還 2.5%）", "balance": 13082544, "rate": 0.025, "monthly": 27255.300000000003, "payment": 65735}, {"name": "國泰轉貸（大義街 2.6%）", "balance": 12000000, "rate": 0.026, "monthly": 26000.0, "payment": 26000.0}, {"name": "保單借貸（4%）", "balance": 4000000, "rate": 0.04, "monthly": 13333.333333333334, "payment": 13333.333333333334}, {"name": "元大質押（3.92%）", "balance": 1000000, "rate": 0.0392, "monthly": 3266.6666666666665, "payment": 3266.6666666666665}], "funding": {"total_balance": 30082544, "total_monthly_interest": 69855.3, "total_payment": 108335.0, "wacc": 0.0278654491455244, "inv_mv": 25281941.0, "div_base": 100000.0, "div_yield": 0.047464710086935175, "spread": 0.019599260941410776, "light": "ok", "light_txt": "🟢 利差充足（≥1.2%）→ 現金流安全、套利空間存在", "div_source": "保守常態"}, "policies": [{"name": "安聯 A+B", "cost": 8000000.0, "current": 7657517.0, "principal": -342483.0, "cum_div": 1782242.0, "real": 1439759.0}, {"name": "第一金 FJ33", "cost": 2000000.0, "current": 1891718.0, "principal": -108282.0, "cum_div": 133805.0, "real": 25523.0}], "freshness": [{"src": "資產序列（dragon_assets.db）", "date": "2026-09-22"}, {"src": "snapshot 真值日", "date": "2026-09-22"}, {"src": "保單（安聯 App 截圖）", "date": "2026-09-20"}, {"src": "保單（第一金 App 截圖）", "date": "2026-09-18"}], "dividend_raw": {"安聯保單撥回": 52169, "聯博全球多元收益AD基金配息(國泰)": 6761, "路博邁5G基金配息": 733, "基金配息 聯博全球多元收益AD(小額)": 20, "基金配息 聯博美國成長": 34, "基金配息 富達全球動能C": 25, "基金配息 貝萊德健康A10": 26, "基金配息 貝萊德科技A10": 30, "基金配息 貝萊德能源A10": 29, "基金配息 貝萊德黃金A10": 20, "基金配息 貝萊德全球股票收益A6": 5, "富達全球動能多元B基金配息(國泰)": 49120, "ETF配息 00878": 15150, "ETF配息 00983D": 1190, "基金配息 台中銀台灣優息B": 246, "基金配息 摩根JPM": 27, "第一金FA81聯博多元AD配息": 13005, "基金配息 AI收益成長B月配": 1, "基金配息 收益成長AMg7月配": 27, "基金配息 國泰台灣高息基金B": 70, "第一金FJ33摩根JPM配息": 9287}}</script>
+<script>function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function money(n){ if(n===null||n===undefined||isNaN(n)){ return '—'; } var v=Math.round(n); return v.toLocaleString('en-US'); }
+function sgn(n){ if(n===null||n===undefined||isNaN(n)){ return '—'; } return (n>=0?'+':'') + money(n); }
+function cls(n){ return n>0?'up':(n<0?'down':'neutral'); }
+function pct(n){ return (n>=0?'+':'') + (n*100).toFixed(2) + '%'; }
+
+function kpi(lbl, val, sub, klass){
+  return '<div class="kpi"><div class="lbl">'+esc(lbl)+'</div><div class="val '+(klass||'')+'">'+val+
+         '</div><div class="sub">'+(sub||'')+'</div></div>';
+}
+
+function wfRow(c){
+  var h = '<div class="wf"><div class="head"><div class="name">'+esc(c.c)+'</div>'+
+          '<div class="amt '+cls(c.pnl)+'">'+sgn(c.pnl)+'</div></div>';
+  h += '<div class="step"><span>帳面市值變化</span><span class="v '+cls(c.gross)+'">'+sgn(c.gross)+'</span></div>';
+  if(c.invest){ h += '<div class="step"><span>− 新增投入'+(c.src?'（'+esc(c.src)+'）':'')+'</span><span class="v">'+money(-c.invest)+'</span></div>'; }
+  if(c.upd_sum){ h += '<div class="step"><span>− 估值更新</span><span class="v">'+money(-c.upd_sum)+'</span></div>'; }
+  h += '<div class="step total"><span>＝ 市場面損益'+(c.basis==='推導'?'（推定）':'')+'</span><span class="v '+cls(c.mkt)+'">'+sgn(c.mkt)+'</span></div>';
+  h += '<div class="step"><span>＋ 配息實收</span><span class="v up">'+sgn(c.div)+'</span></div>';
+  if(c.fee){ h += '<div class="step"><span>− 手續費</span><span class="v">'+money(-c.fee)+'</span></div>'; }
+  h += '<div class="step total"><span>＝ '+esc(c.c)+'損益（含市值）</span><span class="v '+cls(c.pnl)+'">'+sgn(c.pnl)+'</span></div>';
+  if(c.basis!=='推導'){ h += '<div class="note">基準：'+esc(c.basis)+'</div>'; }
+  return h+'</div>';
+}
+
+function render(d){
+  var h = [], g = d.grand||{}, f = d.funding||{}, p = d.period||{}, t = d.total_assets||{};
+  h.push('<header class="top"><div><h1>📈 本月績效<small>'+esc(d.month)+'　'+esc(p.start)+' ~ '+esc(p.end)+
+         '（月初基準 '+esc(p.start_db||p.prev_end)+'）｜產生於 '+esc(d.generated_at)+'</small></h1></div>'+
+         '<a class="back" href="index.html">← 回主儀表板</a></header>');
+
+  var sub = (d.interest && d.interest.total) ? '已扣投資利息 '+money(d.interest.total) : '未扣利息（見資金成本卡）';
+  h.push('<section class="grid k4">');
+  h.push(kpi('本月投資損益', '<span class="'+cls(d.perf.net)+'">'+sgn(d.perf.net)+'</span>', esc(sub)));
+  h.push(kpi('總資產變化', '<span class="'+cls(t.chg)+'">'+sgn(t.chg)+'</span>', '帳面（含未實現、含配息）'));
+  h.push(kpi('配息實收（三類）', '<span class="up">'+sgn(g.div)+'</span>', '股票＋基金＋保單'));
+  h.push(kpi('淨利差（配息−資金成本）', '<span class="'+(f.light==='ok'?'up':(f.light==='bad'?'down':''))+'">'+(f.spread*100).toFixed(2)+'pp</span>',
+             '加權資金成本 '+(f.wacc*100).toFixed(2)+'%'));
+  h.push('</section>');
+
+  h.push('<section class="card"><h2>◆ 四段式拆解<em>帳面 → 投入/校正 → 市場 → 配息（每類同一套）</em></h2>');
+  (d.classes||[]).forEach(function(c){ h.push(wfRow(c)); });
+  h.push('<div class="note">市場面＝帳面市值變化 − 新增投入 − 估值更新（推定值，含匯率）。'+
+         '配息實收為本月入帳金額；月配息基金的除息本身會壓低淨值，已由「配息實收」加回，不重複計算。</div>');
+  h.push('</section>');
+
+  if((d.updates||[]).length){
+    h.push('<section class="card"><h2>◆ 估值更新<em>帳務校正事件（不是市場虧損）</em></h2><div class="tl">');
+    d.updates.forEach(function(u){
+      h.push('<div class="ev"><b>'+esc(u.date)+'</b>　'+esc(u.c)+'　'+
+             '<span class="'+cls(u.amount)+'">'+sgn(u.amount)+'</span>'+
+             '<span class="src">'+esc(u.kind)+(u.as_of?('｜真值 as-of '+esc(u.as_of)):'')+(u.reason?('｜'+esc(u.reason)):'')+'</span></div>');
+    });
+    h.push('</div><div class="note">估值更新＝兩次截圖/真值同步之間的差額被歸為「帳務校正」的部分。'+
+           '保單序列本身是截圖之間的差額，內含市場漲跌與前次估值誤差，無法完全分離 —— 本清單只列已確認的事件。</div></section>');
+  }
+
+  h.push('<section class="card"><h2>◆ 資金成本<em>借款利息 vs 投資現金流</em></h2><div class="grid k2"><div>');
+  h.push('<div class="tscroll"><table class="t"><thead><tr><th>借款</th><th>餘額</th><th>利率</th><th>實際月付</th><th>其中利息</th></tr></thead><tbody>');
+  (d.loans||[]).forEach(function(l){
+    h.push('<tr><td>'+esc(l.name)+'</td><td>'+money(l.balance)+'</td><td>'+(l.rate*100).toFixed(2)+'%</td>'+
+           '<td>'+money(l.payment)+'</td><td>'+money(l.monthly)+'</td></tr>');
+  });
+  h.push('<tr><td><b>合計</b></td><td><b>'+money(f.total_balance)+'</b></td><td>—</td><td><b>'+money(f.total_payment)+
+         '</b></td><td><b>'+money(f.total_monthly_interest)+'</b></td></tr></tbody></table></div>');
+  h.push('</div><div>');
+  h.push('<div class="tscroll"><table class="t"><tbody>'+
+    '<tr><td>加權平均資金成本</td><td>'+(f.wacc*100).toFixed(2)+'%/年</td></tr>'+
+    '<tr><td>投資市值（股票＋基金＋保單）</td><td>'+money(f.inv_mv)+'</td></tr>'+
+    '<tr><td>配息（'+esc(f.div_source)+'）</td><td>'+money(f.div_base)+'</td></tr>'+
+    '<tr><td>配息殖利率</td><td>'+(f.div_yield*100).toFixed(2)+'%/年</td></tr>'+
+    '<tr><td><b>淨利差</b></td><td><b>'+(f.spread*100).toFixed(2)+'pp</b></td></tr>'+
+    '</tbody></table></div>');
+  h.push('<div style="margin-top:8px"><span class="chip '+esc(f.light)+'">'+esc(f.light_txt)+'</span></div>');
+  h.push('</div></div><div class="note">純配息 '+money(f.div_base)+' vs 純月息 '+money(f.total_monthly_interest)+
+         '；實際月付含本金攤還 '+money(f.total_payment)+'（永豐房貸為本利攤還）。</div></section>');
+
+  h.push('<section class="card"><h2>◆ 保單真實累計<em>配息 + (現值 − 原始成本)</em></h2>');
+  h.push('<div class="tscroll"><table class="t"><thead><tr><th>保單</th><th>投入</th><th>現值</th><th>本金</th><th>累計配息</th><th>真實績效</th></tr></thead><tbody>');
+  var rsum = 0;
+  (d.policies||[]).forEach(function(x){
+    rsum += x.real;
+    h.push('<tr><td>'+esc(x.name)+'</td><td>'+money(x.cost)+'</td><td>'+money(x.current)+'</td>'+
+           '<td class="'+cls(x.principal)+'">'+sgn(x.principal)+'</td><td>'+money(x.cum_div)+'</td>'+
+           '<td class="'+cls(x.real)+'"><b>'+sgn(x.real)+'</b></td></tr>');
+  });
+  h.push('<tr><td><b>合計</b></td><td>—</td><td>—</td><td>—</td><td>—</td><td class="'+cls(rsum)+'"><b>'+sgn(rsum)+'</b></td></tr>');
+  h.push('</tbody></table></div><div class="note">只讀「現值 − 成本」會看到本金 −4.5%，但月配息基金的配息已入袋；把累計配息加回才是真實績效。</div></section>');
+
+  h.push('<section class="card"><h2>◆ 資料基準<em>各源 as-of（越舊的數字越可能再變）</em></h2><table class="t"><tbody>');
+  (d.freshness||[]).forEach(function(x){ h.push('<tr><td>'+esc(x.src)+'</td><td>'+esc(x.date)+'</td></tr>'); });
+  h.push('</tbody></table><div class="note">本月為「未收月」：月底前市值與配息都會再動，最終版以每月 1 日的月報為準。'+
+         (d.mv_reliable?'':'⚠️ 本月市值基準不足，市場面未計。')+'</div></section>');
+
+  return h.join('');
+}
+
+var seed = {};
+try { seed = JSON.parse(document.getElementById('seed').textContent); } catch(e){ seed = {}; }
+var app = document.getElementById('app');
+try { app.innerHTML = render(seed); } catch(e){ /* 保留靜態摘要 */ }
+if(window.fetch){
+  fetch('mtd_data.json', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(fresh){
+    try { app.innerHTML = render(fresh); } catch(e){}
+  }).catch(function(){});
+}</script>
+</body>
+</html>

@@ -91,7 +91,9 @@ def funding_cost_report(snap, adj_costs=None, rate_overrides=None):
         + (snap.get("insurance_total") or 0)
     div_m = snap.get("dividend_month_expected") or 100000   # 保守常態月配息
     div_actual = adj_costs.get("配息實收") if adj_costs else None  # 當月實際實收（校正檔帶入）
-    rent_m = adj_costs.get("房租實收") if adj_costs else (snap.get("passive_income", {}).get("rent_monthly") or 80100)
+    rent_m = (adj_costs or {}).get("房租實收")
+    if rent_m is None:   # 校正檔有當月區塊但缺此鍵時不可回 None（2026-09-22 修）
+        rent_m = snap.get("passive_income", {}).get("rent_monthly") or 80100
     if div_actual:
         div_yield = div_actual * 12 / inv if inv else 0
     else:
@@ -333,19 +335,29 @@ def main():
         fee = adj_fees.get(c, 0)
         print(f"\n■ {c}")
         if mv_reliable:
-            # 真實市值變化：校正優先，其次 帳面−投入
+            # 估值更新（帳務校正）：本檔與 build_mtd_report.py 共用同一欄位（2026-09-22 加入）
+            upd = 0
+            for u in (a.get("估值更新") or []):
+                if isinstance(u, dict) and (u.get("類") or u.get("類別")) == c:
+                    try:
+                        upd += float(u.get("金額") or 0)
+                    except (TypeError, ValueError):
+                        pass
+            # 真實市值變化：校正優先，其次 帳面−投入−估值更新
             if c in adj_mv:
                 real_mv = adj_mv[c]
                 gross_mv = real_mv + inv
             elif mv0 and mv1:
                 gross_mv = mv1[c] - mv0[c]
-                real_mv = gross_mv - inv
+                real_mv = gross_mv - inv - upd
             else:
                 print("  ⚠️ 無基準 → 市值變化需校正檔，先以 0 計")
                 real_mv = 0; gross_mv = 0
             print(f"  市值：帳面 {gross_mv:+,.0f}")
             if inv:
                 print(f"     − 新增投入 {inv:,.0f}" + (f"（{src}）" if src else "（自有資金）"))
+            if upd:
+                print(f"     − 估值更新 {upd:+,.0f}（帳務校正，見校正檔）")
             print(f"     ＝ 真實市值變化 {real_mv:+,.0f}")
         else:
             real_mv = 0

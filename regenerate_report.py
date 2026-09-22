@@ -329,6 +329,15 @@ try:
         print("  ⚠️ AI 費用頁產出失敗（不影響日報）：" + (_r9c0.stderr or "").strip()[:160])
 except Exception as _e9c0:
     print(f"  ⚠️ AI 費用頁產出異常（不影響日報）: {_e9c0}")
+# 9c1. 本月績效頁（2026-09-22 新增）：mtd_performance.html + mtd_data.json
+#      口徑重用 build_investment_performance.py（同一套四段式），按鈕 __MTD_PAGE__ 指向它。
+try:
+    _r9c1 = _sp9c.run([sys.executable, str(BASE / "build_mtd_report.py"), "--quiet"], cwd=BASE,
+                      capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180)
+    if _r9c1.returncode != 0:
+        print("  ⚠️ 本月績效頁產出失敗（不影響日報）：" + (_r9c1.stderr or "").strip()[:160])
+except Exception as _e9c1:
+    print(f"  ⚠️ 本月績效頁產出異常（不影響日報）: {_e9c1}")
 _r9c = _sp9c.run([sys.executable, str(BASE / "build_dashboard.py")], cwd=BASE,
                  capture_output=True, text=True, timeout=120)
 if _r9c.stdout:
@@ -428,7 +437,9 @@ elif ok and _cio_ok:
                         'cio_review.json', 'dashboard_decisions.json', 'us30y_state.json',
                         'grand_pivot_deck.html',
                         # 2026-09-22：AI 費用頁（固定檔名，按鈕 __COST_PAGE__ 指向它）
-                        'cost.html', 'cost_data.json']
+                        'cost.html', 'cost_data.json',
+                        # 2026-09-22：本月績效頁（固定檔名，按鈕 __MTD_PAGE__ 指向它）
+                        'mtd_performance.html', 'mtd_data.json']
     # 再平衡儀表板（2026-08-22：每日重跑，build_rebalance_dashboard.py 讀 snapshot+radar_state）
     try:
         subprocess.run([sys.executable, str(BASE / "build_rebalance_dashboard.py")], cwd=str(BASE),
