@@ -66,7 +66,7 @@ def run(target, extra=(), shell_script=False, timeout=900):
     return proc.returncode
 
 DEFAULT_MODE = 'digest'
-MODES = {'wallet': [('wallet_status.py', (), False), ('ds_balance_alert.py', (), False), ('gemini_balance_reminder.py', (), False)], 'digest': [('ai_cost_watch.py', (), False)], 'guard': [('fallback_cost_guard.py', (), False)], 'close': [('daily_token_account.py', (), False)]}
+MODES = {'wallet': [('wallet_status.py', (), False), ('ds_balance_alert.py', (), False), ('gemini_balance_reminder.py', (), False)], 'digest': [('ai_cost_watch.py', (), False), ('build_cost_report.py', ('--quiet',), False)], 'guard': [('fallback_cost_guard.py', (), False)], 'close': [('daily_token_account.py', (), False)]}
 
 
 def main():

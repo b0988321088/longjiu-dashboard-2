@@ -320,6 +320,15 @@ if _diff_ok.returncode != 0:
 
 # 9c. 自動更新儀表板（2026-08-27 根治：統一呼叫 build_dashboard.py，舊邏輯漏連結佔位符）
 import subprocess as _sp9c
+# 9c0. AI 費用頁（2026-09-22 新增）：cost.html + cost_data.json，單一真值 data/ai_cost_daily.jsonl
+#      放在 build_dashboard 之前 —— 連結刷新會讀實際存在的檔，先產出再刷連結才不會指向舊狀態。
+try:
+    _r9c0 = _sp9c.run([sys.executable, str(BASE / "build_cost_report.py"), "--quiet"], cwd=BASE,
+                      capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180)
+    if _r9c0.returncode != 0:
+        print("  ⚠️ AI 費用頁產出失敗（不影響日報）：" + (_r9c0.stderr or "").strip()[:160])
+except Exception as _e9c0:
+    print(f"  ⚠️ AI 費用頁產出異常（不影響日報）: {_e9c0}")
 _r9c = _sp9c.run([sys.executable, str(BASE / "build_dashboard.py")], cwd=BASE,
                  capture_output=True, text=True, timeout=120)
 if _r9c.stdout:
@@ -417,7 +426,9 @@ elif ok and _cio_ok:
                         f'buffett_cto_report_{TODAY}.md', f'risk_factor_penetration_{TODAY}.png', f'macro_regime_{TODAY}.json',
                         'work_log.json', 'pending_decisions.json', 'schedule_events.json', 'radar_state.json',
                         'cio_review.json', 'dashboard_decisions.json', 'us30y_state.json',
-                        'grand_pivot_deck.html']
+                        'grand_pivot_deck.html',
+                        # 2026-09-22：AI 費用頁（固定檔名，按鈕 __COST_PAGE__ 指向它）
+                        'cost.html', 'cost_data.json']
     # 再平衡儀表板（2026-08-22：每日重跑，build_rebalance_dashboard.py 讀 snapshot+radar_state）
     try:
         subprocess.run([sys.executable, str(BASE / "build_rebalance_dashboard.py")], cwd=str(BASE),
