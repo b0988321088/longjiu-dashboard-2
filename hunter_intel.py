@@ -35,7 +35,8 @@ def get_yf_market():
         try:
             s = fetch_snapshot(sym, timeout=10)
             if s and s.get("price") is not None and s.get("prev"):
-                results[name] = f"{s['price']:,.2f} ({s['change_pct']:+.2f}%)"
+                _mark = " ⚠️延遲" if s.get("stale") else ""   # INC-239b：盤後取不到當日值要看得見
+                results[name] = f"{s['price']:,.2f} ({s['change_pct']:+.2f}%){_mark}"
         except Exception:
             pass
     return results

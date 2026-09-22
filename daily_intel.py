@@ -81,6 +81,23 @@ def _yf_chart(symbol: str, timeout: int = 8) -> dict:
         "stale": s.get("stale"),
     }
 
+def _fmt_quote(d: dict | None, label: str = "") -> str:
+    """報價字串（2026-09-22 INC-239b）。
+
+    `stale`＝盤後取不到當日值、顯示的其實是「最後交易日收盤」。INC-239 的原始症狀之一就是
+    **靜默把前一日值當成今日** —— 所以這個狀態必須出現在字串裡（看得見），不可只有旗標。
+    """
+    if not d:
+        return "—"
+    p, c = d.get("price"), d.get("change_pct")
+    if p is None or c is None:
+        return "—"
+    s = f"{p:,.2f} ({c:+.2f}%)"
+    if d.get("stale"):
+        s += " ⚠️延遲"
+        print(f"[WARN] {label or '報價'} 盤後未取到當日值 → 顯示最後交易日收盤（{s}）")
+    return s
+
 def fetch_yf_market() -> dict:
     twii = _yf_chart(_YF_SYMBOLS["twii"])
     tsm = _yf_chart(_YF_SYMBOLS["tsm"])
@@ -89,25 +106,16 @@ def fetch_yf_market() -> dict:
     ixic = _yf_chart(_YF_SYMBOLS["us_ixic"])
     gspc = _yf_chart(_YF_SYMBOLS["us_gspc"])
 
-    def fmt(d):
-        if not d:
-            return "—"
-        p = d.get("price")
-        c = d.get("change_pct")
-        if p is None or c is None:
-            return "—"
-        return f"{p:,.2f} ({c:+.2f}%)"
-
     us_parts = []
-    if dji: us_parts.append(f"道瓊 {fmt(dji)}")
-    if ixic: us_parts.append(f"納指 {fmt(ixic)}")
-    if gspc: us_parts.append(f"S&P {fmt(gspc)}")
+    if dji: us_parts.append(f"道瓊 {_fmt_quote(dji, '道瓊')}")
+    if ixic: us_parts.append(f"納指 {_fmt_quote(ixic, '納指')}")
+    if gspc: us_parts.append(f"S&P {_fmt_quote(gspc, 'S&P')}")
     us = " / ".join(us_parts) if us_parts else "—"
 
     return {
-        "twii": fmt(twii),
-        "tsm": fmt(tsm),
-        "sox": fmt(sox),
+        "twii": _fmt_quote(twii, "台股加權"),
+        "tsm": _fmt_quote(tsm, "台積電"),
+        "sox": _fmt_quote(sox, "費半"),
         "us": us,
         "cpi": "美國 7 月 CPI YoY 3.5% (FRED 8/13)；Core 2.8% (FRED 8/13)",
     }
