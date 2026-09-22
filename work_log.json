@@ -1201,5 +1201,15 @@
    "修法：新增機器欄位 snapshot.source_import_dates（匯入流程負責寫；現金/證券/第一金改讀各自 as-of 欄位），卡片加第 4 欄『最近匯入』＋頁腳『最新 as-of／最新匯入』；缺值顯示『—』不回退舊值（沿用 INC-235 fail-closed）。",
    "驗證：正常情況 4 列顯示『今天』、1 列『1 天前』，四欄結構 6 列；source_import_dates 整個移除時不崩、基金列顯示『—』；順帶修掉頁腳 max() 對字串取到首字元的 bug。CIO-Gemini APPROVE；線上 Pages 與 raw repo 兩路皆驗。"
   ]
+ },
+ {
+  "date": "2026-09-22",
+  "category": "完成",
+  "item": "9/22 收工閉環：work_log +6、dashboard_decisions +3（source=user）、Notion +4、memory_sync 4 facts、稽核全綠（2c26ff36）",
+  "detail": [
+   "六步一次到位：①Notion 寫 4 筆（Moneybook 匯入／資料同步核准／INC-238／新鮮度卡）並**回讀驗證**摘要尾端狀態行（✅ 已完成／已核准）②dashboard_decisions.json 追加 3 筆 source=user（文字插入法，驗 decisions 605／pending 16 兩個數字都對，未誤插前一個陣列）③work_log 追加 6 筆（含本筆）④memory_sync.py 實跑（facts=136、written=4）⑤Hermes memory 未動（新知識屬流程→寫進技能 screenshot-update-sop 與 pipeline-sync-patterns）⑥驗證：closeout_check.py 全部通過 ✅、clean-main == origin/clean-main（落後 0）。",
+   "pending_decisions：成本帳條目狀態更新為「🔄 執行中：日耗口徑已統一（9/22 482d5866）」並補 detail。",
+   "儀表板：build_dashboard.py 重跑，完成清單含今日 6 筆、執行中決策追蹤無空白列（grep 空白列 = 0）。"
+  ]
  }
 ]
