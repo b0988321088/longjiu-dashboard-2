@@ -117,34 +117,32 @@ try:
 except Exception:
     pass
 
-# 11. 「重要連結」區的每個佔位符，其前綴必須同時存在於 update_dashboard_links._LINK_PATTERNS
-#     不變式：只有 update_dashboard_links 能在「不整頁重建」的情況下刷新重要連結區；
-#     若某前綴的佔位符在該區、卻不在 _LINK_PATTERNS → 那顆按鈕只能等整頁重建才更新
-#     （2026-09-22 踩到的 rebalance_eval_ 就是這個）。
-#     註：build_dashboard._link_map 的其他前綴（audit_dashboard_/ceo_dashboard_/radar_report_…）
-#     不在重要連結區，本來就靠各自流程的整頁重建更新 → 不算瑕疵，故只驗區塊內者。
+# 11. 「重要連結」區的每個佔位符都必須存在於 links_config.py（單一來源）
+#     2026-09-22 改版：原本是「兩份清單跨檔一致性」檢查（update_dashboard_links._LINK_PATTERNS
+#     ↔ build_dashboard._link_map）。現在兩者都從 links_config 生成 → 不變式簡化為
+#     「模板用到的佔位符，設定表裡一定要有」，否則 build_dashboard 注入不到 → 按鈕壞掉／佔位符殘留。
 _PREFIX_EXEMPT = set()
 try:
-    import importlib.util as _ilu
-    _spec = _ilu.spec_from_file_location("_udl_probe", BASE / "update_dashboard_links.py")
-    _udl = _ilu.module_from_spec(_spec)
-    _spec.loader.exec_module(_udl)  # 只定義常數與函式，main() 有 __name__ 守衛 → 安全
-    _udl_prefixes = {p for p, _e, _r in _udl._LINK_PATTERNS}
-    _bd_src = (BASE / "build_dashboard.py").read_text(encoding="utf-8")
-    _ph2prefix = dict(re.findall(r'"(__[A-Z_]+__)":\s*"([a-z0-9_]+)\*', _bd_src))
+    import sys as _sys2
+    _sys2.path.insert(0, str(BASE))
+    import links_config as _links_cfg
     _tpl = (BASE / "index_template.html").read_text(encoding="utf-8")
     _s = _tpl.find("<!-- 🔗 重要連結")
     _e = _tpl.find("<!-- 🚨", _s) if _s != -1 else -1
     if _s == -1 or _e == -1:
         fails.append("找不到 index_template.html 的「重要連結」區塊（區塊註解被改動？）")
     else:
-        _need = {_ph2prefix[p] for p in re.findall(r"__[A-Z_]+__", _tpl[_s:_e]) if p in _ph2prefix}
-        _miss_prefix = sorted(_need - _udl_prefixes - _PREFIX_EXEMPT)
-        if _miss_prefix:
-            fails.append("重要連結區有前綴未納入 update_dashboard_links._LINK_PATTERNS"
-                         "（該按鈕只能等整頁重建才更新）: " + ", ".join(_miss_prefix))
+        _phs = set(re.findall(r"__[A-Z_]+__", _tpl[_s:_e]))
+        _known = _links_cfg.all_placeholder_keys()
+        _miss = sorted(_phs - _known)
+        if _miss:
+            fails.append("重要連結區有佔位符未納入 links_config（不會被注入／會殘留，按鈕會壞）: "
+                         + ", ".join(_miss))
+        _orphan = sorted(_known - _phs)
+        if _orphan:
+            print(f"  ℹ️ links_config 有 {len(_orphan)} 個佔位符模板未使用（非故障）: " + ", ".join(_orphan))
 except Exception as _e:
-    fails.append(f"連結圖樣一致性檢查無法執行: {_e}")
+    fails.append(f"連結設定一致性檢查無法執行: {_e}")
 
 # 12. 連結可達性（2026-09-22 實踩：連結刷新後指向今天的新檔，但該檔未進版控 → Pages 404）
 #     條件：①本機存在 ②在 git HEAD 樹中（未追蹤＝push 不會帶上去＝線上 404）

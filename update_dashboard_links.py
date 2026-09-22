@@ -17,29 +17,15 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parent
 INDEX = BASE / "index.html"
 
+# 2026-09-22：改由 links_config.py 單一來源提供（與 build_dashboard._link_map 同源）
+# 原本兩份清單各存一份，新增按鈕漏改一邊 → 那顆按鈕永遠停在舊檔（rebalance_eval_ 即此）。
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+import links_config as _links_config
+
 # (檔名前綴, 副檔名, 顯示規則)
-_LINK_PATTERNS = [
-    ("daily_report_v2_", ".html", None),
-    ("asset_diff_", ".html", None),
-    ("rebalance_dashboard_", ".html", None),
-    ("rebalance_eval_", ".html", None),   # 2026-09-22：補上（build_dashboard 的 _link_map 有、這裡漏了 → 按鈕永遠落後）
-    # 2026-09-22 補齊「重要連結區」其餘前綴：這些按鈕原本只能靠整頁重建才會更新，
-    # 一旦產出者跑在 build_dashboard 之後就落後（今日 audit/ceo/weekly_review/monthly/radar 五顆即屬此類）。
-    ("audit_dashboard_", ".html", None),
-    ("ceo_dashboard_", ".html", None),
-    ("dynamic_weekly_review_", ".html", None),
-    ("monthly_report_", ".html", None),
-    ("radar_report_", ".html", None),
-    ("penetration_report_", ".html", None),
-    ("weekly_report_", ".html", None),
-    ("dynamic_monthly_review_", ".html", "month"),
-    ("emergency_report_", ".html", None),
-    ("retirement_plan_", ".html", None),
-    ("rebalance_summary_", ".md", None),
-    ("buffett_cto_report_", ".md", None),
-    ("industry_penetration_", ".png", None),
-    ("risk_factor_penetration_", ".png", None),
-]
+_LINK_PATTERNS = _links_config.link_patterns()
 
 
 def _latest(prefix: str, ext: str) -> str | None:

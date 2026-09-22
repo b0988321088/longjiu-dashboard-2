@@ -716,30 +716,12 @@ def main():
 
     # ── 八大連結動態化（2026-08-26：模板連結寫死 8/21-23 → glob 最新檔名）──
     import glob as _glob
-    _link_map = {
-        "__RADAR_REPORT__": "radar_report_*.html",
-        "__ASSET_DIFF__": "asset_diff_*.html",
-        "__BUFFETT_MD__": "buffett_cto_report_*.md",
-        "__DAILY_REPORT__": "daily_report_v2_*.html",
-        "__DECISION_CARD__": "*_card_*.html",
-        "__CEO_DASH__": "ceo_dashboard_*.html",
-        "__AUDIT_DASH__": "audit_dashboard_*.html",
-        "__EMERGENCY__": "emergency_report_*.html",
-        "__INDUSTRY_PNG__": "industry_penetration_*.png",
-        "__PEN_REPORT__": "penetration_report_*.html",
-        "__REBALANCE_DASH__": "rebalance_dashboard_*.html",
-        "__REBALANCE_EVAL__": "rebalance_eval_*.html",
-        # 2026-09-22 移除 __RATE_HIKE_REPORT__（使用者核准）：index_template.html 的「升息情境」按鈕已撤，
-        # 產生器 build_rate_hike_dashboard.py 在 cleanup_utils.STALE_PY 淘汰名單內 → 留著只會是孤兒佔位符。
-        "__REBALANCE_MD__": "rebalance_summary_*.md",
-        "__RISK_PNG__": "risk_factor_penetration_*.png",
-        "__WEEKLY__": "weekly_report_*.html",
-        "__WEEKLY_REVIEW__": "dynamic_weekly_review_*.html",
-        "__MONTHLY_REVIEW__": "dynamic_monthly_review_*.html",
-        "__MONTHLY_REPORT__": "monthly_report_*.html",
-        "__REFINANCE_PPTX__": "grand_pivot_deck.pptx",
-        "__RETIREMENT_HTML__": "retirement_plan_*.html",
-    }
+    # 2026-09-22：連結設定改由 links_config.py 單一來源提供
+    # （原本與 update_dashboard_links._LINK_PATTERNS 各存一份 → 新增按鈕漏改一邊就永遠停在舊檔）
+    import sys as _sys, pathlib as _pl
+    _sys.path.insert(0, str(_pl.Path(__file__).resolve().parent))
+    import links_config as _lc
+    _link_map = _lc.build_link_map()
     _link_hits = 0
     for _ph, _pat in _link_map.items():
         if _ph in tpl:
