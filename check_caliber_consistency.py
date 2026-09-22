@@ -22,10 +22,11 @@
     0 = 數字一致、來源標註存在，或走在 fallback（無新鮮基準，屬預期行為）
     1 = 數字不一致，或該有來源標註卻沒有（供 delivery 步驟擋下 push）
 """
+import html as H
+import json
 import re
 import sys
 import datetime as dt
-import html as H
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent
@@ -90,7 +91,63 @@ def pick_baseline(weekly_date):
     return earlier[-1] if earlier else cands[-1]
 
 
+def snapshot_expected() -> dict:
+    """從單一真值派生預期口徑：snapshot.json（穿透實際佔比）＋ sot_targets.defensive_caliber（防守合併）。
+
+    2026-09-22 新增。用途：週六再平衡 agent 會**自己寫** rebalance_eval_{date}.html（LLM 產出的百分比），
+    這是唯一能獨立驗證「它寫的數字是否等於真值」的方式（同檔自我比對沒有意義）。
+    """
+    sys.path.insert(0, str(REPO))
+    from sot_targets import defensive_caliber  # INC-201 單一入口
+    s = json.loads((REPO / 'snapshot.json').read_text(encoding='utf-8'))
+    pen = (s.get('penetration') or {}).get('actual_pct') or {}
+    dc = defensive_caliber(s)
+    return {
+        '台股': pen.get('台股市值型成長'),
+        '美股': pen.get('美股市值型成長'),
+        '防守': pen.get('防守型配息'),
+        '債券': pen.get('債券'),
+        '現金': pen.get('現金/安全網'),
+        '防守合併': dc.get('佔比'),
+    }
+
+
+def check_vs_snapshot(path: Path) -> int:
+    """比對指定報告的數字 vs snapshot 真值（獨立於其他報告）。"""
+    if not path.exists():
+        print(f"❌ 檔案不存在：{path}（路徑錯誤不得靜默通過）")
+        return 2
+    exp = snapshot_expected()
+    got = grab(text_of(path))
+    missing = [k for k in KEYS + ['防守合併'] if k not in got]
+    if missing:
+        print(f"❌ 抽取失敗：{'、'.join(missing)} 未能在 {path.name} 取得"
+              "（可能是報告模板措辭改版）→ 無法判定，視為失敗")
+        return 1
+    print(f"報告: {path.name}")
+    print("真值: snapshot.json（穿透實際佔比）＋ sot_targets.defensive_caliber（防守合併）")
+    print(f"\n{'項目':<10}{'報告':>9}{'真值':>9}{'差異':>9}  判定")
+    bad = 0
+    for k in KEYS + ['防守合併']:
+        a = got[k]
+        b = exp.get(k)
+        if not isinstance(b, (int, float)):
+            print(f"{k:<10}{a:>9.2f}{'—':>9}{'—':>9}  ↷ 真值缺，略過")
+            continue
+        d = a - b
+        ok = abs(d) <= TOL_PP
+        bad += 0 if ok else 1
+        print(f"{k:<10}{a:>9.2f}{b:>9.2f}{d:>9.2f}  {'✅ 一致' if ok else f'⚠️ 與真值差 {d:+.2f}pp'}")
+    if bad:
+        print(f"\n❌ 有 {bad} 項與 snapshot 真值不符 → 不要 push，把上述輸出貼進回覆。")
+        return 1
+    print("\n✅ 全部與 snapshot 真值一致")
+    return 0
+
+
 def main() -> int:
+    if len(sys.argv) >= 3 and sys.argv[1] == '--vs-snapshot':
+        return check_vs_snapshot(Path(sys.argv[2]))
     if len(sys.argv) >= 3:
         weekly, base = Path(sys.argv[1]), Path(sys.argv[2])
     else:
