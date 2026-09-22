@@ -62,6 +62,88 @@ def _freshness(snap: dict, mk: str, end_date: str) -> list[dict]:
     return out
 
 
+def month_series(snap, adj_all, today, current):
+    """月份序列：閉月以校正檔（已裁示口徑）為準，當月沿用 MTD 計算結果（不重算 → 零漂移）"""
+    cur_mk = today.strftime("%Y-%m")
+    out = []
+    for mk in sorted(k for k in adj_all if len(k) == 7 and k[4] == "-"):
+        y, m = int(mk[:4]), int(mk[5:7])
+        a = adj_all.get(mk) or {}
+        mstart = dt.date(y, m, 1)
+        mlast = dt.date(y + (1 if m == 12 else 0), (1 if m == 12 else m + 1), 1) - dt.timedelta(days=1)
+        is_cur = (mk == cur_mk)
+        end = min(today, mlast)
+        days = (end - mstart).days + 1
+        reliable = bool(a.get("市值可靠", True))
+        if is_cur and current:
+            rows = [{"c": x["c"], "gross": x["gross"], "invest": x["invest"], "upd": x["upd_sum"],
+                     "mkt": x["mkt"], "div": x["div"], "fee": x["fee"], "pnl": x["pnl"]} for x in current["classes"]]
+            interest = current["interest"]["total"]
+            basis = "即時計算"
+        else:
+            adj_mv = a.get("市值變化") or {}
+            adj_inv = a.get("新增投入") or {}
+            adj_div = a.get("配息") or {}
+            adj_fee = a.get("手續費") or {}
+            dr = (snap.get("dividend_records") or {}).get(mk) or {}
+            auto = {c: 0.0 for c in CLASS_KEYS}
+            for k, v in dr.items():
+                if isinstance(v, (int, float)):
+                    auto[bip.classify_dividend(k)] += float(v)
+            rows = []
+            for c in CLASS_KEYS:
+                mkt = _num(adj_mv.get(c, 0)) if reliable else 0.0
+                inv = _num(adj_inv.get(c, 0))
+                div = _num(adj_div.get(c, auto.get(c, 0)))
+                fee = _num(adj_fee.get(c, 0))
+                rows.append({"c": c, "gross": mkt + inv, "invest": inv, "upd": 0.0,
+                             "mkt": mkt, "div": div, "fee": fee, "pnl": mkt + div - fee})
+            interest = sum(_num(v) for v in (a.get("利息") or {}).values())
+            basis = "校正檔"
+        grand = sum(r["pnl"] for r in rows)
+        net = grand - interest
+        out.append({"month": mk, "label": f"{y}/{m:02d}", "start": mstart.isoformat(), "end": end.isoformat(),
+                    "days": days, "reliable": reliable, "is_current": is_cur, "basis": basis, "rows": rows,
+                    "grand": grand, "interest": interest, "net": net, "div": sum(r["div"] for r in rows),
+                    "net_per_day": (net / days) if days else None})
+    return out
+
+
+def week_buckets(db, today):
+    """週桶（僅帳面市值變化；配息為月配、無逐日歸屬 → 不按週拆，頁面會註明）"""
+    mon = today - dt.timedelta(days=today.weekday())
+    defs = [("本週（週一起）", mon, today), ("近 7 天", today - dt.timedelta(days=6), today),
+            ("上週", mon - dt.timedelta(days=7), mon - dt.timedelta(days=1)),
+            ("前週", mon - dt.timedelta(days=14), mon - dt.timedelta(days=8))]
+    out = []
+    for label, d0, d1 in defs:
+        a = bip.db_asset_on(db, (d0 - dt.timedelta(days=1)).isoformat())
+        b = bip.db_asset_on(db, d1.isoformat())
+        days = (d1 - d0).days + 1
+        if not a or not b:
+            out.append({"label": label, "start": d0.isoformat(), "end": d1.isoformat(), "days": days,
+                        "rows": [], "total": None, "per_day": None})
+            continue
+        rows = [{"c": "股票", "chg": b[1] - a[1]}, {"c": "基金", "chg": b[2] - a[2]}, {"c": "保單", "chg": b[3] - a[3]}]
+        tot = sum(r["chg"] for r in rows)
+        out.append({"label": label, "start": d0.isoformat(), "end": d1.isoformat(), "days": days, "rows": rows,
+                    "total": tot, "per_day": tot / days, "start_db": a[0], "end_db": b[0]})
+    return out
+
+
+def daily_series(db, month_start, today):
+    """本月逐日三類合計帳面變化（未更新日＝沿用前值 → stale 標記）"""
+    prev, out = None, []
+    for r in db.execute("SELECT date, securities, funds, insurance FROM assets WHERE date >= ? AND date <= ? ORDER BY date",
+                        (month_start.isoformat(), today.isoformat())):
+        tot = _num(r[1]) + _num(r[2]) + _num(r[3])
+        gap = (dt.date.fromisoformat(r[0]) - dt.date.fromisoformat(prev[0])).days if prev else 0
+        out.append({"date": r[0], "chg": (tot - prev[1]) if prev else None,
+                    "stale": (prev is not None and gap > 1), "gap": gap})
+        prev = (r[0], tot)
+    return out
+
+
 def payload() -> dict:
     today = dt.date.today()
     mk = f"{today.year:04d}-{today.month:02d}"
@@ -91,6 +173,8 @@ def payload() -> dict:
         return (_num(r[1]), r[0]) if r else (None, None)
     total_end, total_end_date = _db_total(today.isoformat())
     total_start, total_start_date = _db_total(prev_end.isoformat())
+    _weeks = week_buckets(db, today)
+    _daily = daily_series(db, month_start, today)
     db.close()
     if not end_row:
         raise RuntimeError("dragon_assets.db 沒有可用資產列")
@@ -197,6 +281,11 @@ def payload() -> dict:
         "total_mv0": total_mv0,
         "rate": ((sub_total / total_mv0) if total_mv0 else None),
         "rate_ann": ((sub_total / total_mv0 * 12) if total_mv0 else None),
+        # 期間序列（2026-09-22 使用者核准：整合為一頁 + 7/8/9 月並列統計）
+        "months": month_series(snap, adj_all, today, {"classes": classes, "interest": {"total": interest_total},
+                                                     "grand": {"sub": sub_total}}),
+        "weeks": _weeks,
+        "daily": _daily,
         "interest": {"total": interest_total, "by": adj_interest},
         "perf": {"gross": sub_total, "net": sub_total - interest_total},
         "updates": updates,
@@ -227,6 +316,10 @@ def static_fallback(p: dict) -> str:
         ("　配息實收", nt(p["grand"]["div"])),
         ("　本月報酬率", "｜".join(f'{x["c"]} {x["rate"]*100:+.2f}%（佔 {(x["share"] or 0)*100:.1f}%）'
                                   for x in p["classes"] if x.get("rate") is not None)),
+        ("　月份統計（同口徑）", "｜".join(f'{m["label"]} {nt(m["net"])}（{m["days"]}天，日均 {nt(m["net_per_day"])}）'
+                                    for m in (p.get("months") or []))),
+        ("　週變化（僅帳面）", "｜".join(f'{w["label"]} {nt(w["total"])}'
+                                    for w in (p.get("weeks") or []) if w.get("total") is not None)),
         ("　估值更新", nt(-sum(u["amount"] for u in p["updates"]))),
         ("市場面損益（推定）", nt(p["grand"]["mkt"])),
     ]
@@ -303,6 +396,14 @@ details.bg{margin-top:14px;background:rgba(15,23,42,.55);border:1px solid rgba(1
 details.bg summary{cursor:pointer;font-size:12.5px;font-weight:700;color:#94a3b8}
 details.bg[open] summary{color:#e2e8f0;margin-bottom:8px}
 .period-tag{font-size:10.5px;color:#94a3b8;font-weight:500}
+.bars{display:flex;flex-direction:column;gap:3px}
+.bar{display:flex;align-items:center;gap:6px}
+.bar .lb{font-size:10px;color:#94a3b8;width:34px;flex:none}
+.bar .b{height:11px;border-radius:3px;min-width:2px}
+.bar .b.up{background:linear-gradient(90deg,#065f46,#10b981)}
+.bar .b.down{background:linear-gradient(90deg,#7f1d1d,#f43f5e)}
+.bar.stale .lb{color:#64748b;text-decoration:line-through}
+.bar .vv{font-size:10px;color:#94a3b8;margin-left:auto}
 """.strip()
 
 JS = """
@@ -362,6 +463,50 @@ function render(d){
          '配息實收為本月入帳金額；月配息基金的除息本身會壓低淨值，已由「配息實收」加回，不重複計算。</div>');
   h.push('</section>');
 
+  // 週損益（僅帳面市值變化；配息為月配無逐日歸屬）
+  if((d.weeks||[]).length){
+    h.push('<section class="card"><h2>◆ 週損益<em>帳面市值變化（配息為月配，不按週拆）</em></h2>');
+    h.push('<div class="tscroll"><table class="t"><thead><tr><th>期間</th><th>天數</th><th>股票</th><th>基金</th><th>保單</th><th>合計</th><th>日均</th></tr></thead><tbody>');
+    (d.weeks||[]).forEach(function(w){
+      h.push('<tr><td>'+esc(w.label)+'<br><span class="period-tag">'+esc(w.start)+'~'+esc(w.end)+'</span></td><td>'+esc(w.days)+'</td>');
+      if(w.total==null){ h.push('<td colspan="5">資料不足</td></tr>'); return; }
+      (w.rows||[]).forEach(function(r){ h.push('<td class="'+cls(r.chg)+'">'+sgn(r.chg)+'</td>'); });
+      var _adj = (d.updates||[]).filter(function(u){ return u.date>=w.start && u.date<=w.end; });
+      var _tag = _adj.length ? '<span class="chip2 down">含帳務校正 '+sgn(_adj.reduce(function(a,u){return a+u.amount;},0))+'</span>' : '';
+      h.push('<td class="'+cls(w.total)+'"><b>'+sgn(w.total)+'</b>'+_tag+'</td><td class="'+cls(w.per_day)+'">'+sgn(w.per_day)+'</td></tr>');
+    });
+    h.push('</tbody></table></div><div class="note">本週＝週一起算（今日 '+esc(PERIOD_END)+'）；配息是月配、無法按週歸屬，所以週數字只含帳面市值變化。</div></section>');
+  }
+
+  // 本月每日走勢
+  var dl = (d.daily||[]).filter(function(x){ return x.chg!=null; });
+  if(dl.length){
+    var mx = Math.max.apply(null, dl.map(function(x){ return Math.abs(x.chg); })) || 1;
+    h.push('<section class="card"><h2>◆ 本月每日走勢<em>三類合計帳面變化｜日期刪除線＝當日未更新（沿用前值）</em></h2><div class="bars">');
+    dl.forEach(function(x){
+      h.push('<div class="bar'+(x.stale?' stale':'')+'"><span class="lb">'+esc(x.date.slice(5))+'</span>'+
+             '<div class="b '+cls(x.chg)+'" style="width:'+Math.max(2, Math.round(Math.abs(x.chg)/mx*100))+'%"></div>'+
+             '<span class="vv '+cls(x.chg)+'">'+sgn(x.chg)+'</span></div>');
+    });
+    h.push('</div><div class="note">長條長度＝當日三類合計帳面變化（相對本月最大變動）。沒有長條的日子代表資料未更新，不是沒動。</div></section>');
+  }
+
+  // 月份統計（7/8/9 同口徑並列）
+  if((d.months||[]).length){
+    h.push('<section class="card"><h2>◆ 月份統計<em>同口徑並列：閉月讀校正檔、當月即時計算</em></h2>');
+    h.push('<div class="tscroll"><table class="t"><thead><tr><th>月份</th><th>天數</th><th>股票</th><th>基金</th><th>保單</th><th>三類合計</th><th>配息</th><th>利息</th><th>投資績效</th><th>日均</th></tr></thead><tbody>');
+    (d.months||[]).forEach(function(m){
+      h.push('<tr><td>'+esc(m.label)+(m.is_current?' <span class="chip2 up">本月至今</span>':'')+
+             '<br><span class="period-tag">'+esc(m.start)+'~'+esc(m.end)+(m.reliable?'':'｜⚠️ 市值不可靠')+'</span></td><td>'+esc(m.days)+'</td>');
+      (m.rows||[]).forEach(function(r){ h.push('<td class="'+cls(r.pnl)+'">'+sgn(r.pnl)+'</td>'); });
+      h.push('<td class="'+cls(m.grand)+'"><b>'+sgn(m.grand)+'</b></td><td class="up">'+sgn(m.div)+'</td>'+
+             '<td class="down">'+sgn(-m.interest)+'</td><td class="'+cls(m.net)+'"><b>'+sgn(m.net)+'</b></td>'+
+             '<td class="'+cls(m.net_per_day)+'">'+sgn(m.net_per_day)+'</td></tr>');
+    });
+    h.push('</tbody></table></div><div class="note">口徑：三類損益＝帳面市值變化 − 新增投入 − 估值更新 ＋ 配息 − 手續費；投資績效＝三類損益 − 利息。'+
+           '月份長度不同（7 月 31 天、8 月 31 天、9 月未收月）→ 比較請看<b>日均</b>。7 月市值不可靠（db 逐日自 8/24 起、ETF 建倉時點未知）→ 該月只計配息與利息。</div></section>');
+  }
+
   if((d.updates||[]).length){
     h.push('<section class="card"><h2>◆ 估值更新<em>帳務校正事件（不是市場虧損）</em></h2><div class="tl">');
     d.updates.forEach(function(u){
@@ -407,6 +552,7 @@ function render(d){
   });
   h.push('<tr><td><b>合計</b></td><td>—</td><td>—</td><td>—</td><td>—</td><td class="'+cls(rsum)+'"><b>'+sgn(rsum)+'</b></td></tr>');
   h.push('</tbody></table></div><div class="note">只讀「現值 − 成本」會看到本金 −4.5%，但月配息基金的配息已入袋；把累計配息加回才是真實績效。</div></details>');
+  h.push('<div class="note" style="margin-top:10px">📄 完整月報（含 🏦 國泰轉貸專區、鉅亨基金檢核）：<a href="investment_performance.html">點此開啟</a>｜本頁為整合後的投資績效總覽（本週／本月／7-8-9 月）。</div>');
 
   h.push('<section class="card"><h2>◆ 資料基準<em>各源 as-of（越舊的數字越可能再變）</em></h2><table class="t"><tbody>');
   (d.freshness||[]).forEach(function(x){ h.push('<tr><td>'+esc(x.src)+'</td><td>'+esc(x.date)+'</td></tr>'); });
