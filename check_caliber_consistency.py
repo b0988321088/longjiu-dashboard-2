@@ -45,7 +45,11 @@ def text_of(p: Path) -> str:
 
 
 def grab(txt: str) -> dict:
-    """抽出各桶佔比與防守合併口徑。"""
+    """抽出各桶佔比與防守合併口徑。
+
+    ⚠️ 這些正則與「週報／rebalance_eval」的模板措辭耦合：報告模板改版時必須同步這裡，
+    否則 main() 的 missing 檢查會讓閘門直接 rc=1（刻意設計成 fail-loud，不要改成略過）。
+    """
     out = {}
     for k in KEYS:
         if k == '防守':

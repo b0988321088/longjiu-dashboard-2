@@ -28,6 +28,13 @@ _dcx = _defensive_caliber(s)
 DC_PCT = _dcx.get("佔比", 0)
 DC_THR = _dcx.get("門檻")
 DC_OK = bool(_dcx.get("已足"))
+if DC_THR is None:
+    # 2026-09-22 審查修正：不硬編 fallback 60（那會再造一份門檻），改為大聲示警＋顯示 "?"；
+    # 理由：「單一入口缺失」不該靜默用猜的值補上。
+    import sys as _sys
+    print("⚠️ snapshot 缺 thresholds_2026_0915.防守合併口徑_pct.凍結承接 → 防守門檻無法判定", file=_sys.stderr)
+    DC_THR = "?"
+    DC_OK = False
 # INC-201：雙維度與情境門檻改為派生（原為硬編碼 53.8%/69.5%，與 snapshot.dual_dimension_metric 脫節）
 ddm = s.get("dual_dimension_metric", {}) or {}
 dd_def = ddm.get("防禦維度", {}) or {}
