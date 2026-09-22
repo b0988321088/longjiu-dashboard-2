@@ -13,12 +13,18 @@
     python check_caliber_consistency.py                  # 自動：最新週報 vs 其同日基準
     python check_caliber_consistency.py <weekly.html> <rebalance_eval.html>
 
+## 與其他檢查的職責分工（避免重複造輪子）
+- `check_dashboard_sync.py`：儀表板 index.html ↔ snapshot（佔位符殘留、月份寫死、連結可達／已版控）
+- `check_caliber_consistency.py`（本檔）：**週報 vs 再平衡基準** 的數字口徑一致性
+兩者互補，不合併。
+
 ## 離開碼
     0 = 數字一致、來源標註存在，或走在 fallback（無新鮮基準，屬預期行為）
     1 = 數字不一致，或該有來源標註卻沒有（供 delivery 步驟擋下 push）
 """
 import re
 import sys
+import datetime as dt
 import html as H
 from pathlib import Path
 
@@ -60,7 +66,6 @@ def date_of(p: Path):
     m = re.search(r'(\d{4}-\d{2}-\d{2})', p.name)
     if not m:
         return None
-    import datetime as dt
     return dt.date.fromisoformat(m.group(1))
 
 
@@ -111,6 +116,14 @@ def main() -> int:
 
     tw, tb = text_of(weekly), text_of(base)
     aw, ab = grab(tw), grab(tb)
+    # 2026-09-22 審查修正：抽取不到就大聲失敗，不要靜默略過 ——
+    # 否則模板改版（措辭變了）會讓閘門悄悄失效卻回 rc=0，比沒有閘門更危險。
+    missing = [k for k in KEYS + ['防守合併'] if k not in aw or k not in ab]
+    if missing:
+        print(f"❌ 抽取失敗：{'、'.join(missing)} 未能在兩份報告中同時取得"
+              "（可能是報告模板措辭改版）→ 閘門無法判定，視為失敗。")
+        print("   請檢查 grab() 的正則或報告模板，不要放行。")
+        return 1
     print(f"\n{'項目':<10}{'週報':>9}{'基準':>9}{'差異':>9}  判定")
     bad = 0
     for k in KEYS + ['防守合併']:

@@ -21,6 +21,13 @@ MORT = 91735; POL_INT = 13333; GF = 6000
 pen = s["penetration"]["actual_pct"]; twd = s["penetration"]["actual_twd"]; tgt = s["penetration"]["targets"]
 us30y = us.get("last_rate"); mode = us.get("mode_label", us.get("mode", "—"))
 hs = s.get("hedge_satellite", {}); dcm = s.get("defensive_combined_metric", {})
+# INC-201 單一入口：防守合併口徑（金額由「組成」加總派生、門檻取自 snapshot.thresholds_2026_0915）
+# 2026-09-22 審查修正：原本門檻 60 在本檔與週報 prompt 各寫一份 → 正是要消滅的漂移模式，改讀單一來源。
+from sot_targets import defensive_caliber as _defensive_caliber
+_dcx = _defensive_caliber(s)
+DC_PCT = _dcx.get("佔比", 0)
+DC_THR = _dcx.get("門檻")
+DC_OK = bool(_dcx.get("已足"))
 # INC-201：雙維度與情境門檻改為派生（原為硬編碼 53.8%/69.5%，與 snapshot.dual_dimension_metric 脫節）
 ddm = s.get("dual_dimension_metric", {}) or {}
 dd_def = ddm.get("防禦維度", {}) or {}
@@ -171,11 +178,9 @@ for k, t, tk in [("台股市值型成長","台股","台股市值型目標"),("�
     # 原本這列只顯示「缺 12.6pp（-3,265,856）」，會被誤讀成要補 326 萬。
     _note = ""
     if k == "防守型配息":
-        _dcm_pct = dcm.get("佔比", 0)
-        _dcm_ok = isinstance(_dcm_pct, (int, float)) and _dcm_pct >= 60
         _note = (f"<span style='color:#6e6e73;font-weight:400'>｜單桶僅結構參考；"
-                 f"合併口徑 {_dcm_pct}% {'≥' if _dcm_ok else '<'} 60% "
-                 f"{'已足 → 承接凍結' if _dcm_ok else '→ 需檢視'}</span>")
+                 f"合併口徑 {DC_PCT}% {'≥' if DC_OK else '<'} {DC_THR}% "
+                 f"{'已足 → 承接凍結' if DC_OK else '→ 需檢視'}</span>")
     rows += f"<tr><td {W(0)}>{t}</td><td {W(0)} style='text-align:right'>{v:,}</td><td {W(0)} style='text-align:right;font-weight:700'>{a:.1f}%</td><td {W(0)} style='text-align:right'>{tt}%</td><td {W(0)} style='text-align:right;font-size:12px'>{mark}（{gap_v}）{_note}</td></tr>"
 rows += f"""<tr><td {W(0)}>科技曝險</td><td {W(0)} style="text-align:right">{twd.get("美股市值型成長_科技",0):,}</td><td {W(0)} style="text-align:right;font-weight:700">{tech:.1f}%</td><td {W(0)} style="text-align:right">≤20%</td><td {W(0)} style="text-align:right;font-size:12px">{tech_ok}</td></tr>
 </table></div>
