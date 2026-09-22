@@ -24,6 +24,8 @@ except Exception:
 from logging_config import get_logger
 logger = get_logger(__name__)
 
+import market_price  # 2026-09-22 INC-239：Yahoo 取價單一入口（前收用日線 timestamp 對齊）
+
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -52,36 +54,32 @@ _YF_SYMBOLS = {
 }
 
 def _yf_chart(symbol: str, timeout: int = 8) -> dict:
-    if not _REQUESTS_OK:
-        return {}
-    try:
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=5d&interval=1d"
-        r = _requests.get(url, timeout=timeout, headers=_YF_HEADERS)
-        data = r.json()
-        res = data.get("chart", {}).get("result", [{}])[0]
-        meta = res.get("meta", {})
-        closes = [c for c in (res.get("indicators", {}).get("quote", [{}])[0].get("close") or []) if c is not None]
-        price = meta.get("regularMarketPrice")
-        prev = meta.get("chartPreviousClose")
-        if not closes:
-            return {}
-        if price is None:
-            price = closes[-1]
-        if prev is None and len(closes) >= 2:
-            prev = closes[-2]
-        elif prev is None:
-            prev = price
+    """台股/美股即時價 + 漲跌%（2026-09-22 INC-239：改走 market_price 單一入口）。
 
-        # 2026-09-13 INC-171：range=5d 時 meta.chartPreviousClose 是「區間起點前」的收盤（約 5 日前），
-        # 拿它當昨收 → 漲跌%被算成「一週漲跌」（實測 TWII -2.41% 應 -1.61%、SOX +4.16% 應 +1.81%）。
-        # 正確來源：meta.previousClose（真昨收）→ 退回 closes[-2]。
-        prev_true = meta.get("previousClose") or (closes[-2] if len(closes) >= 2 else prev)
-        change = price - prev_true
-        change_pct = (change / prev_true * 100) if prev_true else 0.0
-        return {"price": price, "prev": prev, "change_pct": change_pct}
+    舊版兩個坑（保留紀錄，勿再回頭用）：
+    - INC-171（9/13）：拿 meta.chartPreviousClose 當昨收 —— range=5d/1mo 時它是「區間起點前」的收盤，
+      漲跌% 會變成「一週漲跌」（TWII -2.41% 應 -1.61%、SOX +4.16% 應 +1.81%）。
+    - INC-239（9/22）：改讀 meta.previousClose 後仍然錯 —— ^TWII 的 previousClose 落後一整個交易日
+      （回 47,180.80＝9/18，真正前收 47,718.84）→ 台股 +0.17% 被算成 +1.31%；
+      且收盤後 Yahoo 當日日線未 roll 時會退回 closes[-1]＝前一日，把 9/21 的 47,718.80 標成「今日」。
+    market_price 改以「日線 timestamp 對齊」推前收（天然跳過休市日與 null 缺口），
+    台股收盤後（台北 13:40+）日線未 roll 則改抓 interval=1m 補當日最後成交。
+    """
+    try:
+        s = market_price.fetch_snapshot(symbol, timeout=timeout)
     except Exception as e:
         logger.error(f"Error fetching Yahoo Finance chart for {symbol}: {e}")
         return {}
+    if not s or s.get("price") is None or s.get("change_pct") is None:
+        return {}
+    return {
+        "price": s["price"],
+        "prev": s["prev"],
+        "change_pct": s["change_pct"],
+        "as_of": s.get("as_of"),
+        "used_intraday": s.get("used_intraday"),
+        "stale": s.get("stale"),
+    }
 
 def fetch_yf_market() -> dict:
     twii = _yf_chart(_YF_SYMBOLS["twii"])

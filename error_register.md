@@ -817,4 +817,14 @@
 - **繞法（無需改程式）**：先 `python run_daily.py` 重產日報 → 再 `python sync_all.py <date>`；此時步驟 2 讀到新日報即通過。代價＝日報會多產一次（多一次管線 LLM 呼叫）。
 - **修法（已完成）**：把「日報渲染行比對」從 `check_thresholds.py` 的 ④ 區塊抽成獨立函式 `check_daily_report_row()`，並加執行模式：`--sot-only`（產報前：SoT／消費端／舊字面／口徑，**不讀日報**）、`--report-only`（產報後：只驗日報渲染行）、預設全檢（cron／CI 相容，行為不變）。`sync_all.py` 步驟 2 改 `--sot-only`，並在「日報」之後新增步驟 **「日報口徑閘門」＝`--report-only`**。順帶修掉同一支的寫死「10 步驟」（實際 20 步，每次都說謊）→ 改動態 `（{已跑}/{總} 步驟）`。
 - **驗證**：①`ast.parse` 兩支通過 ②全檢／`--sot-only`／`--report-only` 三模式皆 rc=0 ③負向測試：注入舊值（鉅亨 855,673→840,383）到日報後，`--sot-only` rc=0（證明不再讀日報＝不會假失敗）、`--report-only` rc=1 並印出正確診斷（證明真檢查沒有被削弱）④日報缺檔時 `--report-only` → ⏭️ rc=0 ⑤**端到端**：重跑 `sync_all.py 2026-09-22`，步驟 2 直接通過、新步驟 5「日報口徑閘門 ✅ 日報基金部位行：明細口徑且閉合」、全部 20 步完成。
-- **教訓**：**閘門若拿「另一個步驟的產出」當比對基準，順序就必須排在該步驟之後**；否則它驗的是歷史而非本輪，而且會用誤導性的訊息掩蓋真檢查（真檢查＝渲染端有無用「總值−國泰」反推）。附帶：**任何「N 步驟」文案都不該寫死**，步驟一增一減它立刻變成假訊息。
+- **教訓**：**閘門若拿「另一個步驟的產出」當比對基準，順序就必須排在該步驟之後**；否則它驗的是歷史而非本輪，而且會用誤導性的訊息掩蓋真檢查（真檢查＝渲染端有無用「總值−國泰」反推）。附帶：**任何「N 步驟」文案都不該寫死**，步驟一增一減它立刻變成假訊息。
+
+## INC-239｜Yahoo 對 ^TWII 的 `previousClose` 落後一整個交易日 ＋ 收盤後日線未 roll → 台股漲跌% 與「今日指數」全系統錯一天（2026-09-22）
+- **發現管道**：21:30 美股緊急應變報告附帶發現「第 3 章 market-intel 區塊把 9/21 加權 47,718.80（+1.14%）當今日、同區塊台積電卻是 9/22 的 2,460（-0.81%）」→ 追查後確認是**兩個獨立缺陷疊加**，且污染不只一處。
+- **缺陷 A（取價，錯誤的欄位）**：`hunter_intel.get_yf_market()` 用 `range=1d&interval=1d` 的 `meta.chartPreviousClose` 當前收，而 Yahoo 對 ^TWII 回的 previousClose 是 47,180.80（＝**9/18** 收盤），真正前收是 9/21 的 47,718.84 → 台股 47,800.17 從 **+0.17%** 被寫成 **+1.31%**（誤差 1.14pp＝整整一天）。`daily_intel._yf_chart` 9/13 才修過同一件事（INC-171: chartPreviousClose→previousClose），但同一個 meta 欄位同樣不可信、當時沒有用「已知答案」對帳。
+- **缺陷 B（新鮮度）**：9/22 15:09 產出 intel 時 Yahoo 的 ^TWII **當日日線尚未 roll**（同一輪 2330.TW 已 roll）→ `regularMarketPrice` 為空 → 退回 `closes[-1]`＝9/21 → 第 3 章「加權指數」顯示 9/21 的值，再經 `daily_analysis.json` 擴散到第 4 章「巴菲特視角建議」與「持倉關聯分析」（±1.0% 門檻被誤觸發，敘述還寫成「大盤上漲、動能轉強」）。
+- **污染範圍（4 處）**：①第 3 章 `market-intel-block` ②第 4 章巴菲特 callout（走 `buffett_cto_report_*.md`）③「情報重點」段落（走 hunter_cache → `compile_intel.py` → `daily_condensed_intel_*.json`）④持倉關聯分析文字。
+- **修法**：新增 `market_price.py` 為 Yahoo 取價**單一入口** —— 前收一律用「日線 timestamp 對齊」取（今值 vs **前一個有資料日**的收盤），不再信任 `meta.previousClose`／`closes[-2]`；台股收盤後（台北 13:40+）若當日日線未 roll，改抓 `interval=1m&range=1d` 取當日最後成交補上；美股維持「最新收盤」語意（不動，避免盤中口徑漂移）。`daily_intel._yf_chart`、`hunter_intel.get_yf_market` 改呼叫它。今日已產出的 `buffett_cto_report_2026-09-22.md` 市場行以同一真值人工校正（**不重跑 analyzer**：它會再推一次 Telegram）。
+- **驗證**：`market_price.fetch_snapshot` → ^TWII **47,800.17 (+0.17%)**、2330.TW **2,460.00 (-0.81%)**、^SOX/^GSPC 為當日盤中值；重跑 `daily_intel.py` → `compile_intel.py` → `regenerate_report.py --no-push` 後：日報 `47,718` 殘留 **0 次**、第 3 章 **47,800.17 (+0.17%)**、情報重點「台股加權 47,800.17 (+0.17%)，市場情緒持平」、CIO 審查全數通過。
+- **未修（待複核）**：`macro_regime.py` 仍用 `chartPreviousClose`、`entry_monitor.py`／`institutional_flow.py` 各自解析日線 → 同類欄位風險未全面清除，下次動 DAA/進場監控時一併改用 `market_price`。
+- **教訓**：**Yahoo 的 meta 欄位不是真值，日線的 (timestamp, close) 才是**；同一個欄位 9 天內修過兩次還是錯 → 修完必須拿「已知的正確答案」對帳（本日正確 +0.17%），不能「有值就放行」。次則：**收盤後取價必須驗新鮮度** —— 當日日線未 roll 時寧可標示延遲，不可靜默退回前一日充當「今日」。
