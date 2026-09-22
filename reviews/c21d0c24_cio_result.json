@@ -1,0 +1,6 @@
+{
+  "verdict": "APPROVE",
+  "blocking": [],
+  "confidence": 0.82,
+  "notes": "兩項修正到位：#3 改讀 sot_targets.defensive_caliber 確實消滅雙寫門檻，#4 抽取失敗改 rc=1 符合 fail-loud 原則。以下為非阻擋建議，不影響本 commit 放行：\n\n1. DC_THR 為 None：不 blocking，但建議加 fallback 或顯式斷言。目前 snapshot 缺 thresholds_2026_0915 時會渲染「< None%」，屬顯示層污染而非閘門失效（閘門在 check_caliber_consistency.py，不讀此值）。最小修法：DC_THR = _dcx.get('門檻') or 60，或 None 時直接 raise 讓 build 失敗——後者更符合『單一入口缺失即大聲失敗』的既有精神，且與 #4 的哲學一致。建議下個 commit 處理，不阻擋。\n\n2. 抽取失敗即 rc=1 的誤擋風險：可接受。理由：(a) 兩份報告同含六鍵是閘門的前置契約，措辭變更本就該觸發人工檢視；(b) 誤擋成本是擋 push，漏放成本是靜默失效，不對稱下偏嚴是對的。但建議在 grab() 正則旁加註『此正則與週報/基準模板措辭耦合，改版需同步』，並在 CI 或 delivery log 保留 missing 清單以便快速定位。\n\n3. 前一輪非阻擋建議（容差僅同基準成立、rc≠0 回覆寫『本週未上架』）：不應塞進本 commit。本 commit 主題是 #3/#4 修正，混入無關變更會稀釋 review 焦點。建議獨立 commit，且『本週未上架』屬 delivery 步驟文案，宜與 check 腳本分離。\n\n4. 死碼/殘留：未見。import datetime 提至檔頭正確；dcm 變數仍被 ddm 段落使用，非死碼；DC_PCT/DC_THR/DC_OK 皆被引用。唯一小瑕疵：DC_PCT 預設 0 在 _dcx 缺『佔比』時會顯示 0%，與 DC_THR=None 同屬顯示層防禦不足，一併在 fallback commit 收斂即可。\n\n結論：修正達成原審查意圖，無 blocking，可合。"
+}

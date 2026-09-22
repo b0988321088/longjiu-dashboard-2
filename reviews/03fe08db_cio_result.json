@@ -1,0 +1,12 @@
+{
+  "verdict": "APPROVE",
+  "blocking": [],
+  "confidence": 0.72,
+  "notes": "方向正確：把口頭約定變成機械閘門，且 fallback/路徑錯誤語義清楚。以下為非阻擋但應處理的觀察。\n\n1) 容差與同日漂移：0.05pp 只在「同一份基準」下成立。風險不在四捨五入，而在週日 19:00 跑時基準是當天 07:00 產、若 19:00 前管線重跑過基準（價格/匯率更新），週報引用的是舊基準數字，會出現正當的 0.1pp 級差異而被 rc=1 擋 push。建議：比對前先確認週報內標註的基準檔名/時間戳與實際讀入的 base 一致（或要求週報標註基準 mtime），不一致就降級為 warn 而非 fail。\n2) rc≠0 不 push：合理，但要確保失敗訊息會回到使用者（目前設計有），且不要讓 GitHub Pages 靜默停在舊版而無人察覺——建議 rc=1 時在回覆明確寫「本週未上架」。\n3) 門檻 60 抄兩份：是。build_audit_dashboard.py 硬編 60、prompt 也寫 60，正是本次要消滅的漂移模式。應改讀 sot_targets.defensive_caliber（或既有單一真值），程式與 prompt 都引用同一來源。\n4) 正則脆弱：防守(?!合併) 與 合併口徑 依賴模板措辭，模板改版會靜默抓不到（略過而非報錯），等於閘門失效卻回 rc=0。建議：KEYS 中任一項在兩份文件都應出現，缺漏時視為 fail 或至少 warn，而非 ↷ 略過。\n5) 死碼/重疊：未見未使用 import；但與 check_dashboard_sync.py 職責需釐清——前者比對 dashboard 與 snapshot，本檔比對週報與 rebalance_eval，邊界尚可，建議在 docstring 明列分工避免日後重複。另 date_of 內 import datetime 可提到檔頭。\n\n整體：可合併，但 3) 與 4) 建議在下一輪修掉，否則閘門會在模板演進時靜默失效。",
+  "structured_output": {
+    "verdict": "APPROVE",
+    "blocking": [],
+    "confidence": 0.72,
+    "notes": "方向正確：把口頭約定變成機械閘門，且 fallback/路徑錯誤語義清楚。以下為非阻擋但應處理的觀察。\n\n1) 容差與同日漂移：0.05pp 只在「同一份基準」下成立。風險不在四捨五入，而在週日 19:00 跑時基準是當天 07:00 產、若 19:00 前管線重跑過基準（價格/匯率更新），週報引用的是舊基準數字，會出現正當的 0.1pp 級差異而被 rc=1 擋 push。建議：比對前先確認週報內標註的基準檔名/時間戳與實際讀入的 base 一致（或要求週報標註基準 mtime），不一致就降級為 warn 而非 fail。\n2) rc≠0 不 push：合理，但要確保失敗訊息會回到使用者（目前設計有），且不要讓 GitHub Pages 靜默停在舊版而無人察覺——建議 rc=1 時在回覆明確寫「本週未上架」。\n3) 門檻 60 抄兩份：是。build_audit_dashboard.py 硬編 60、prompt 也寫 60，正是本次要消滅的漂移模式。應改讀 sot_targets.defensive_caliber（或既有單一真值），程式與 prompt 都引用同一來源。\n4) 正則脆弱：防守(?!合併) 與 合併口徑 依賴模板措辭，模板改版會靜默抓不到（略過而非報錯），等於閘門失效卻回 rc=0。建議：KEYS 中任一項在兩份文件都應出現，缺漏時視為 fail 或至少 warn，而非 ↷ 略過。\n5) 死碼/重疊：未見未使用 import；但與 check_dashboard_sync.py 職責需釐清——前者比對 dashboard 與 snapshot，本檔比對週報與 rebalance_eval，邊界尚可，建議在 docstring 明列分工避免日後重複。另 date_of 內 import datetime 可提到檔頭。\n\n整體：可合併，但 3) 與 4) 建議在下一輪修掉，否則閘門會在模板演進時靜默失效。"
+  }
+}

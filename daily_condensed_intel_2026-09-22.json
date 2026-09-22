@@ -1,0 +1,28 @@
+[
+  {
+    "title": "市場動態：費半",
+    "description": "費半 今日 12,433.17 (+4.29%)，市場情緒看漲。",
+    "holdings_impact": [],
+    "sentiment": "positive",
+    "signal_level": "🔴 重要 (正面)",
+    "raw_source": "Yahoo Finance - 費半"
+  },
+  {
+    "title": "市場動態：台股加權",
+    "description": "台股加權 今日 47,800.17 (+1.31%)，市場情緒看漲。",
+    "holdings_impact": [],
+    "sentiment": "positive",
+    "signal_level": "✅ 參考",
+    "raw_source": "Yahoo Finance - 台股加權"
+  },
+  {
+    "title": "市場動態：台積電",
+    "description": "台積電 今日 2,460.00 (-0.81%)，市場情緒持平。",
+    "holdings_impact": [
+      "0050"
+    ],
+    "sentiment": "neutral",
+    "signal_level": "✅ 參考",
+    "raw_source": "Yahoo Finance - 台積電"
+  }
+]

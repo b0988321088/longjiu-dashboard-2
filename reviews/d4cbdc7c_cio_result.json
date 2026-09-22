@@ -1,0 +1,6 @@
+{
+  "verdict": "APPROVE",
+  "blocking": [],
+  "confidence": 0.86,
+  "notes": "1) 缺門檻顯示 \"?\" 足夠，不應 raise：此為審計表渲染層，raise 會讓整張表 build 失敗，反而製造更大的壞畫面；stderr 示警 + DC_OK=False + 顯示 \"?\" 已達成 fail-loud 且不誤導（不再出現「已足」）。2) 不硬編 fallback 正確，與「消滅雙寫」目標一致；\"?\" 對低參與度使用者雖非最佳，但語意上比假門檻安全——建議後續在 \"?\" 旁加一行白話（如「門檻資料缺失，請洽維護」）以降低困惑，屬非阻擋。3) 影子模組測試法（runpy + sys.path 順序）可接受但脆弱：它只覆蓋 DC_THR is None 單一分支，未驗 DC_THR 存在但非數值（如字串/0）、DC_PCT 缺失、以及 \"?\" 與 DC_OK=False 是否同時傳遞到最終 HTML 字串；建議補一條 assert 直接檢查渲染輸出含 \"< ?%\" 且不含「已足」。4) 殘留：check_caliber_consistency.py 的 grab() 正則耦合僅以 docstring 註記，無自動化防護，建議加一個模板 fixture 測試或版本戳，避免改版時靜默漂移。以上皆非阻擋。"
+}

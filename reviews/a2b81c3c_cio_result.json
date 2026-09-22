@@ -1,0 +1,6 @@
+{
+  "verdict": "APPROVE",
+  "blocking": [],
+  "confidence": 0.82,
+  "notes": "1) 容差：0.05pp 對『LLM 手寫 vs 真值』偏嚴但可接受——因為此閘門是 fail-loud 的交付閘門，寧可誤擋（人工看一眼即可）也不要漏放；且 prompt 已要求 agent 直接引用 snapshot 數字，整數四捨五入（如 8% vs 7.7%）被擋屬預期行為，非缺陷。建議後續把 TOL_PP 對本模式放寬到 0.1pp 或在 prompt 明示『勿自行四捨五入』，但非阻擋項。2) grab() 的『關鍵字後 40 字內第一個小數百分比』假設：若 LLM 把『目標』寫在『現況』前，會抓成目標值 → 屬誤擋（false positive），不是漏放，方向安全；且實測①同日管線產物 rc=0 已驗證現行模板順序正確。可接受，但建議在 grab() 或本模式加註『假設現況先於目標』的註解，並在抽取失敗/疑似抓錯時輸出被抓到的原始片段以便人工判讀。3) sys.path.insert(0, REPO) 後 import sot_targets：REPO 為本檔所在目錄，屬同專案模組，無循環匯入（sot_targets 不反向 import 本檔）；唯一風險是 insert(0) 會把 REPO 置於 sys.path 最前，若他處已有同名模組可能被遮蔽——但此為既有 INC-201 單一入口慣例，非本 commit 引入，可接受。4) --vs-snapshot 分支置於 main() 最前且以 sys.argv[1] 精確比對：不影響既有兩模式（既有模式 argv[1] 為檔名，不會等於 '--vs-snapshot'）；唯一邊角是有人把檔名取叫 '--vs-snapshot'，屬理論情形，可忽略。5) 檔頭『用法』docstring 未同步新增本模式用法，屬文件債、非阻擋；建議補一行 `--vs-snapshot <報告檔>` 說明與 rc 語意（0/1/2）。整體：邏輯正確、fail-loud 方向安全、實測四情境覆蓋到位，核准。"
+}
