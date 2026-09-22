@@ -1,15 +1,24 @@
 #!/usr/bin/env python3
 """儀表板同步檢查（2026-09-01 建立）：產出 index.html 後驗證無舊值/佔位符/月份寫死。
-整合進 regenerate_report.py（產出後自動跑）；也可獨立執行：python check_dashboard_sync.py
-失敗 exit 1（regenerate 會印警告），全過 exit 0。"""
+整合進 regenerate_report.py（產出後自動跑）；也可獨立執行：
+  python check_dashboard_sync.py              # 預設：靜態檢查（含連結『本機存在＋已版控』）
+  python check_dashboard_sync.py --post-push  # 推送後：index.html 全部本機連結驗線上 Pages 200
+失敗 exit 1（regenerate 會印警告），全過 exit 0。
+
+2026-09-23（INC-240）兩段制：第 12 條「未進版控」在 commit 前必然成立（今天的檔還沒 commit）
+→ 晨間班會自我誤報。故 commit 前用環境變數 LJ_PREPUSH=1（regenerate 的 9c2/9c3 呼叫）只驗
+本機存在、未版控者列 ℹ️；真正的「連結指向沒上線的檔 → Pages 404」改由推送後 --post-push 驗。"""
 import datetime
 import json
+import os
 import re
 import subprocess
 import sys
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
+POST_PUSH = "--post-push" in sys.argv
+PREPUSH = os.environ.get("LJ_PREPUSH") == "1"
 html = (BASE / "index.html").read_text(encoding="utf-8")
 fails = []
 
@@ -153,6 +162,9 @@ except Exception as _e:
 
 # 12. 連結可達性（2026-09-22 實踩：連結刷新後指向今天的新檔，但該檔未進版控 → Pages 404）
 #     條件：①本機存在 ②在 git HEAD 樹中（未追蹤＝push 不會帶上去＝線上 404）
+#     2026-09-23（INC-240）：②只在「非 commit 前」成立 —— LJ_PREPUSH=1 時今天的檔必然還沒 commit，
+#     拿它當失敗＝每天自我誤報；此時只驗①，未版控者改成 ℹ️ 待本次 commit（真 404 由 --post-push 驗）。
+_pending_untracked = []
 try:
     _tracked = set(subprocess.run(["git", "ls-files"], cwd=str(BASE), capture_output=True,
                                   text=True, encoding="utf-8", errors="replace").stdout.split())
@@ -161,14 +173,83 @@ try:
     for _u in sorted(_rel):
         if not (BASE / _u).exists():
             fails.append(f"連結目標本機不存在: {_u}")
-        elif _u not in _tracked:
+        elif _u not in _tracked and not PREPUSH:
             fails.append(f"連結目標未進版控（Pages 會 404）: {_u}")
+        elif _u not in _tracked:
+            _pending_untracked.append(_u)
+    if _pending_untracked:
+        print(f"  ℹ️ 待本次 commit 進版控 {len(_pending_untracked)} 檔（commit 前必然狀態，非故障；"
+              f"上線後由 --post-push 驗線上 200）")
 except Exception as _e:
     fails.append(f"連結可達性檢查無法執行: {_e}")
+
+# 13. --post-push：推送後對「線上 Pages」逐連結驗 200（2026-09-23 INC-240 新增）
+#     為什麼要拆出來：第 12 條的「未進版控」只能判斷 commit 前的狀態，而 commit 前今天的檔必然
+#     還沒進版控 → 晨間班每天自我誤報。真風險（連結指向沒上線／被 push 漏掉的檔 ＝ 線上 404）
+#     只有推送後才驗得準。原本只驗 4 個檔（日報/差異/index/穿透），現在驗 index.html 全部連結。
+#     ⚠️ 2026-09-23 CIO 審查 REJECT 後的修正（INC-240 補記）：
+#       ①網路異常（ERR）原本只印警告、不進 fails → 22 條全 ERR 也會印「✅ 全過（22 條 200）」＋rc=0
+#         ＝假成功（正是本顆要消滅的病徵）。現在：ERR 與「總預算用盡未驗」都算失敗 → rc≠0。
+#       ②成功訊息原本用 len(_links)（連結數）冒充已驗證數 → 改印實得 200 的條數。
+#       ③總預算由 420s 收到 240s 且**硬停**（逾時後剩下的連結不再嘗試，直接算未驗），
+#         最壞 ≈240s＋最後一條的 10s，不再有 ~630s 的長尾打爆 emergency_1330.py 的 300s 呼叫端。
+import time as _t13
+import urllib.error as _ue13
+import urllib.request as _ur13
+
+_POSTPUSH_BUDGET = int(os.environ.get("LJ_POSTPUSH_BUDGET", "240"))  # 秒；測試可用環境變數縮短
+if POST_PUSH:
+    _t0 = _t13.time()
+    _BASE_URL = "https://b0988321088.github.io/longjiu-dashboard-2"
+    _links = sorted({u for u in re.findall(r'href="([^"]+)"', html)
+                     if not u.startswith(("http", "#", "mailto")) and "/" not in u})
+    _deadline = _t0 + _POSTPUSH_BUDGET
+    _bad_codes, _unknown, _skipped = [], [], []
+    _n200 = 0
+    for _u in _links:
+        if _t13.time() > _deadline:
+            _skipped.append(_u)  # 硬停：逾時後不再嘗試（未驗證 ≠ 通過）
+            continue
+        _code = "ERR"
+        for _try in range(4):
+            try:
+                _rq = _ur13.Request(f"{_BASE_URL}/{_u}", headers={"User-Agent": "longjiu-postpush"})
+                with _ur13.urlopen(_rq, timeout=10) as _rs:
+                    _code = str(_rs.status)
+            except _ue13.HTTPError as _he:
+                _code = str(_he.code)
+            except Exception:
+                _code = "ERR"
+            if _code == "200" or _t13.time() > _deadline:
+                break
+            _t13.sleep(20)
+        _mark = "✅" if _code == "200" else ("⚠️" if _code == "ERR" else "❌")
+        print(f"  {_mark} 線上 {_u} → {_code}")
+        if _code == "200":
+            _n200 += 1
+        elif _code == "ERR":
+            _unknown.append(_u)
+        else:
+            _bad_codes.append(f"{_u} → {_code}")
+    if _unknown:
+        print(f"  ⚠️ 線上無法判定 {len(_unknown)} 條（網路異常，非 404）: " + ", ".join(_unknown[:8]))
+        fails.append(f"線上連結無法判定（網路異常，非 404）{len(_unknown)} 條（未驗證不視為通過）: "
+                     + ", ".join(_unknown[:8]))
+    if _skipped:
+        print(f"  ⚠️ 總預算 {_POSTPUSH_BUDGET}s 用盡，{len(_skipped)} 條未驗")
+        fails.append(f"線上連結未驗（總預算 {_POSTPUSH_BUDGET}s 用盡）{len(_skipped)} 條: "
+                     + ", ".join(_skipped[:8]))
+    if _bad_codes:
+        fails.append(f"線上連結非 200（Pages 404/未上線）{len(_bad_codes)} 個: " + ", ".join(_bad_codes[:8]))
+    _elapsed = int(_t13.time() - _t0)
 
 if fails:
     print("❌ 儀表板同步檢查失敗:")
     for f in fails:
         print("  -", f)
     sys.exit(1)
-print("✅ 儀表板同步檢查全過（無佔位符 / 月份寫死 / 舊值，戰略區塊已注入）")
+if POST_PUSH:
+    print(f"✅ 線上連結驗證全過（實得 {_n200}/{len(_links)} 條 200，耗時 {_elapsed}s）"
+          f"＋ 靜態檢查全過（無佔位符 / 月份寫死 / 舊值）")
+else:
+    print("✅ 儀表板同步檢查全過（無佔位符 / 月份寫死 / 舊值，戰略區塊已注入）")

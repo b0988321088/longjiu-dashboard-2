@@ -107,8 +107,20 @@ def main() -> None:
     extra = [f"{links[i][0]}：{links[i][1]}" for i in ("🔄", "📊", "🚨") if i in links]
     if extra:
         lines.append("　" + "｜".join(extra))
-    bad = [ln.strip() for ln in text.splitlines() if "❌" in ln]
-    lines.append("⛔ 檢查項：" + ("、".join(bad[:5]) if bad else "全部通過（產出檢查＋CIO 審查）"))
+    # 2026-09-23（INC-240）：原本只挑含 ❌ 的行 → 詳情行（"  - …"）被丟掉，訊息只剩光禿禿
+    # 一句「❌ 儀表板同步檢查失敗:」看不出原因（真因藏在下一行）。改為 ❌ 行＋緊接的詳情行一起收。
+    bad, _collect = [], False
+    for _ln in text.splitlines():
+        _s = _ln.strip()
+        if "❌" in _ln:
+            bad.append(_s)
+            _collect = True
+        elif _collect and _s.startswith("- "):
+            if bad and len(bad[-1]) + len(_s) <= 300:
+                bad[-1] += " " + _s
+        else:
+            _collect = False
+    lines.append("⛔ 檢查項：" + ("；".join(bad[:5]) if bad else "全部通過（產出檢查＋CIO 審查）"))
     head = snapshot_head()
     if head:
         lines.append(head)

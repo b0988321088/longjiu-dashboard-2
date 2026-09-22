@@ -298,8 +298,19 @@ if _write:
         json.dumps(_analysis, ensure_ascii=False, indent=2), "utf-8")
     print("✅ 緊急應變分析已寫入 data/emergency_llm_analysis.json")
 # 2026-08-06 修正：run_daily.py 有停滯風險（buffett_cto_analyzer），改 regenerate_report.py 一鍵管線（含校準/日報/差異/儀表板/驗證/推送）
-run_step("日報+儀表板", [sys.executable, str(LJ / "regenerate_report.py")], 300)
-run_step("差異分析", [sys.executable, str(LJ / "asset_diff_monitor.py")], 60)
-run_step("推送", [sys.executable, str(LJ / "daily_deploy.py")], 300)
+# 2026-09-23（INC-240 補記，CIO 審查 REJECT 必修）：
+#   ①日報步驟 300s → 600s。理由：regenerate_report.py 現在推送後會跑「線上連結逐條驗 200」
+#     （`check_dashboard_sync.py --post-push`，內部總預算 240s 硬停）＋ 管線本身約 110s，
+#     300s 會在 Pages 建置較慢時把驗證砍掉，變成「推了但沒驗」。
+#   ②原本完全不理 run_step 的回傳值 → 逾時（TimeoutExpired 會印 ❌ 超時）之後腳本照樣印
+#     「✅ 緊急應變完成」＝假成功。改為收集三個步驟結果，任一失敗就以非 0 結束。
+_ok_report = run_step("日報+儀表板", [sys.executable, str(LJ / "regenerate_report.py")], 600)
+_ok_diff = run_step("差異分析", [sys.executable, str(LJ / "asset_diff_monitor.py")], 60)
+_ok_push = run_step("推送", [sys.executable, str(LJ / "daily_deploy.py")], 600)
 
-print(f"\\n✅ [{datetime.now().strftime('%H%M')}] 緊急應變完成")
+_failed = [n for n, k in (("日報+儀表板", _ok_report), ("差異分析", _ok_diff), ("推送", _ok_push)) if not k]
+if _failed:
+    print(f"\n❌ [{datetime.now().strftime('%H%M')}] 緊急應變未完成（失敗步驟：{'、'.join(_failed)}）")
+    sys.exit(1)
+
+print(f"\n✅ [{datetime.now().strftime('%H%M')}] 緊急應變完成")

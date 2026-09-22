@@ -19,7 +19,7 @@
 7. 章節 1/6→6/6
 8. subprocess asset_diff_monitor.py → 差異分析
 """
-import json, sqlite3, re, sys
+import json, sqlite3, re, sys, os
 from pathlib import Path
 from datetime import date as dt
 
@@ -347,12 +347,18 @@ if _r9c.stdout:
     if _lk.stdout.strip():
         print(_lk.stdout.strip().splitlines()[-1])
     # 9c2. 儀表板同步檢查（2026-09-01：產出後自動驗證無舊值/佔位符/月份寫死 → 一次更新全同步）
+    # 2026-09-23（INC-240）：帶 LJ_PREPUSH=1 —— commit 前「今天的檔還沒進版控」是必然，
+    # 不該當失敗（每天自我誤報）；真 404 改由推送後 check_dashboard_sync.py --post-push 驗。
     _sync = subprocess.run([sys.executable, str(BASE / "check_dashboard_sync.py")],
-                           capture_output=True, text=True, timeout=60)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace",
+                           timeout=120, env={**os.environ, "LJ_PREPUSH": "1"})
     if _sync.returncode == 0:
-        print("✅ " + _sync.stdout.strip().splitlines()[-1])
+        for _l in (_sync.stdout or "").strip().splitlines():
+            print("  " + _l.strip())
     else:
-        print("⚠️ 儀表板同步檢查 FAIL（檢查 index.html 舊值/佔位符）: " + _sync.stdout.strip()[:200])
+        print("⚠️ 儀表板同步檢查 FAIL（檢查 index.html 舊值/佔位符）:")
+        for _l in (_sync.stdout or "").strip().splitlines():
+            print("  " + _l.strip())
 
 h = OUT.read_text(encoding="utf-8")
 print(f"✅ {OUT.name} — {len(h):,} bytes")
@@ -423,6 +429,7 @@ try:
     _cio_ok = _cio.returncode == 0
 except Exception as _ce:
     print(f"⚠️ CIO 審查執行失敗（不推送）: {_ce}")
+_pages_ok = True  # 2026-09-23 INC-240：推送後線上連結驗證（--post-push）結果；False → 本次不視為成功
 if _NO_PUSH:
     # INC-210：核准前本機產出（交付鐵則：改完先傳本地檔案，使用者說「推」才 push）
     print("\n🧪 --no-push：本機檔案已產出，略過 commit/push（核准後再跑一次不帶此參數）")
@@ -461,9 +468,12 @@ elif ok and _cio_ok:
         if _lk2_out:
             print("  🔗 " + _lk2_out[-1])
         _sync2 = subprocess.run([sys.executable, str(BASE / "check_dashboard_sync.py")],
-                                capture_output=True, text=True, timeout=60, cwd=str(BASE))
+                                capture_output=True, text=True, encoding="utf-8", errors="replace",
+                                timeout=120, cwd=str(BASE), env={**os.environ, "LJ_PREPUSH": "1"})
         if _sync2.returncode != 0:
-            print("  ⚠️ 收尾同步檢查 FAIL：" + (_sync2.stdout or "").strip()[:200])
+            print("  ⚠️ 收尾同步檢查 FAIL：")
+            for _l in (_sync2.stdout or "").strip().splitlines():
+                print("    " + _l.strip())
     except Exception as _e:
         print(f"  ⚠️ 收尾重刷連結失敗（不影響本次產出）：{_e}")
     if _pen_file:
@@ -508,19 +518,15 @@ elif ok and _cio_ok:
     else:
         print("⚠️ 無任何報表檔案可推送")
     # 推送與遠端 sha 驗證已在 auto_push.py 內完成（含重試與 ls-remote 覆核）
-    # 驗證上線（Pages 建置有延遲 → 重試 4 次 × 20s）
-    import time
-    _base = "https://b0988321088.github.io/longjiu-dashboard-2"
-    _check_files = [f"daily_report_v2_{TODAY}.html", f"asset_diff_{TODAY}.html", "index.html"] + ([_pen_file] if _pen_file else [])
-    for _f in _check_files:
-        _code = ""
-        for _try in range(4):
-            _c = subprocess.run(['curl', '-s', '-o', '/dev/null', '-w', '%{http_code}', f"{_base}/{_f}"], capture_output=True, text=True, timeout=10)
-            _code = _c.stdout.strip()
-            if _code == '200':
-                break
-            time.sleep(20)
-        print(f"  {'✅' if _code == '200' else '❌'} {_f} → {_code}")
+    # 驗證上線（2026-09-23 INC-240：改呼叫 check_dashboard_sync.py --post-push ——
+    # index.html 全部本機連結逐條驗線上 200，取代原本只驗 4 個檔；有 404 即 rc≠0 → 不假裝成功）
+    _post = subprocess.run([sys.executable, str(BASE / "check_dashboard_sync.py"), "--post-push"],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace",
+                           timeout=900, cwd=str(BASE))
+    print((_post.stdout or "").strip())
+    if _post.returncode != 0:
+        _pages_ok = False
+        print("  ⛔ 線上連結驗證未過（見上方 ❌）→ 本次不視為成功（cron 會發警報）")
 else:
     print(f"\n⛔ 產出檢查={'✅' if ok else '❌'} / CIO 審查={'✅' if _cio_ok else '❌'} → 未推送（修正後重跑 regenerate_report.py --deploy）")
 # 12. 產出連結清單（不論是否推播都顯示）
@@ -536,4 +542,4 @@ _emergency_link = _er_name  # v6 修正 2026-09-13：_latest_er 在 320 行已�
 print(f'🚨 緊急應變:  https://b0988321088.github.io/longjiu-dashboard-2/{_emergency_link}')
 
 import sys
-sys.exit(0 if ok else 1)
+sys.exit(0 if (ok and _pages_ok) else 1)
