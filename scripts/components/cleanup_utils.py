@@ -9,10 +9,12 @@
 4. 刪除過時日期文件。
 5. 刪除淘汰的產線腳本與一次性 ad-hoc 腳本。
 6. 智能清理 .archive 目錄中過期的歸檔檔案。
-7. 識別並刪除未被引用的 .py 檔案（待實作）。
+7. 識別未被引用的 .py 檔案（唯讀：只產清單＋報告，**不自動刪**）。
 8. 清理其他臨時/快取檔案（待實作）。
 """
+import collections
 import json
+import os
 import sys
 import pathlib
 import re
@@ -436,9 +438,109 @@ def _cleanup_archive_dir_smart(apply_changes: bool, days_to_keep: int = 365):
                 logger.debug(f"歸檔檔 {f_path.name} 不符合日期命名模式，跳過自動清理。")
     return cleaned_count
 
+def _collect_reference_texts():
+    """收集『可能引用腳本』的所有文字來源（cron 定義 + repo 內程式/文件 + 技能庫 + hermes scripts）。"""
+    blobs = []
+    # 1) cron 定義（script 欄位與 agent prompt 都算）
+    jobs_json = pathlib.Path(os.path.expandvars(r'%LOCALAPPDATA%/hermes/cron/jobs.json'))
+    if jobs_json.exists():
+        try:
+            blobs.append(jobs_json.read_text(encoding='utf-8', errors='replace'))
+        except OSError as exc:
+            logger.warning(f"讀取 jobs.json 失敗，略過 cron 引用：{exc}")
+    # 2) repo 內文字檔（排除 .git/.archive/__pycache__，並限制單檔大小避免吃記憶體）
+    for pattern in ('**/*.py', '**/*.md', '**/*.json', '**/*.sh', '**/*.bat', '**/*.ps1'):
+        for fp in ROOT.glob(pattern):
+            parts = set(fp.parts)
+            if parts & {'.git', '__pycache__', '.archive', 'node_modules'}:
+                continue
+            try:
+                if fp.stat().st_size > 2_000_000:
+                    continue
+                blobs.append(fp.read_text(encoding='utf-8', errors='replace'))
+            except OSError:
+                continue
+    # 3) 技能庫（SKILL.md 就是操作手冊，會直接寫「python xxx.py」）
+    skills_dir = pathlib.Path(os.path.expandvars(r'%LOCALAPPDATA%/hermes/skills'))
+    if skills_dir.exists():
+        for fp in skills_dir.glob('**/*.md'):
+            try:
+                blobs.append(fp.read_text(encoding='utf-8', errors='replace'))
+            except OSError:
+                continue
+    # 4) hermes scripts 目錄（薄轉發器會寫明轉發目標）
+    hs = pathlib.Path(os.path.expandvars(r'%LOCALAPPDATA%/hermes/scripts'))
+    if hs.exists():
+        for fp in hs.glob('*.py'):
+            try:
+                blobs.append(fp.read_text(encoding='utf-8', errors='replace'))
+            except OSError:
+                continue
+    return blobs
+
+
 def _cleanup_unreferenced_py_scripts(apply_changes: bool):
-    logger.info("執行識別並刪除未被引用的 .py 檔案 (待實作)...")
-    # 這需要靜態分析所有 .py 檔案的 import 語句，複雜度較高，先跳過
+    """識別「沒有任何引用」的 .py（唯讀，只產清單——**不自動刪**）。
+
+    設計原則（為什麼只報告不刪）：
+      · agent 型 cron 任務是「憑慣例呼叫」腳本（prompt 不一定寫檔名），
+        靜態分析看不到這類引用 → 自動刪會誤殺。寧可每週列清單讓人複核。
+      · 判定為零引用 ≠ 沒用；可能是手動工具。
+    """
+    logger.info("執行 G. 識別未被引用的 .py 檔案（唯讀，只報告不刪）...")
+    own_texts = {}
+    for fp in sorted(ROOT.glob('*.py')):
+        try:
+            own_texts[fp] = fp.read_text(encoding='utf-8', errors='replace')
+        except OSError:
+            continue
+    blobs = _collect_reference_texts()
+    joined = "\n".join(blobs)
+    # 一次性聯集正則（單趟掃描）取代「每支檔案各自 replace 整份語料」：
+    # 後者是 O(檔案數 × 語料大小)，實測要 2 分 48 秒；單趟 findall 只需數秒。
+    stems = [fp.stem for fp in own_texts if fp.stem != 'cleanup_utils']
+    pattern = re.compile(r'(?<![\w])(' + '|'.join(re.escape(s) for s in sorted(set(stems), key=len, reverse=True)) + r')(?![\w])')
+    total = collections.Counter(pattern.findall(joined))
+    self_ref = collections.Counter()
+    for fp, txt in own_texts.items():
+        if fp.stem == 'cleanup_utils':
+            continue
+        # 只算「這支檔案提到自己名字」的次數；不能把該檔內提到的其他腳本名也算進來
+        # （否則別支腳本的名字被灌進 self_ref，會把自己的外部引用扣光 → 誤判孤兒）
+        self_ref[fp.stem] += sum(1 for m in pattern.findall(txt) if m == fp.stem)
+
+    orphans, weak = [], []
+    for fp in own_texts:
+        stem = fp.stem
+        if stem == 'cleanup_utils':
+            continue
+        # 扣掉「自己檔案內提到自己名字」的次數（其餘都算外部引用）
+        hits = total.get(stem, 0) - self_ref.get(stem, 0)
+        if hits <= 0:
+            orphans.append(fp.name)
+        elif hits == 1:
+            weak.append(fp.name)
+
+    stamp = datetime.now().strftime('%Y%m%d')
+    lines = [
+        f"# 未被引用的 .py 清單（唯讀報告，未刪除） 產生於 {datetime.now():%Y-%m-%d %H:%M}",
+        "# 判定來源：cron jobs.json（含 agent prompt）＋ repo 程式/文件 ＋ 技能庫 SKILL.md ＋ hermes scripts",
+        "# 零引用 ≠ 沒用：可能是手動工具、或 agent 憑慣例呼叫的腳本。請人工複核後再刪。",
+        "",
+        f"## 完全零引用（{len(orphans)} 支）",
+        *[f"  - {n}" for n in orphans],
+        "",
+        f"## 僅 1 次引用（{len(weak)} 支，疑似弱引用／只有文件提到）",
+        *[f"  - {n}" for n in weak],
+        "",
+    ]
+    if apply_changes:
+        _ensure_archive_dir()
+        _arch_write_text(f'orphan_py_report_{stamp}.txt', "\n".join(lines))
+        logger.info(f"G. 報告已寫入 .archive/orphan_py_report_{stamp}.txt")
+    logger.info(f"G. 零引用 {len(orphans)} 支：" + (', '.join(orphans[:12]) + ('…' if len(orphans) > 12 else '') if orphans else '無'))
+    logger.info(f"G. 僅 1 次引用 {len(weak)} 支：" + (', '.join(weak[:12]) + ('…' if len(weak) > 12 else '') if weak else '無'))
+    # 回傳 0：本函式不刪任何檔案，維持「cleaned」語意誠實
     return 0
 
 def _cleanup_temp_and_cache_files(apply_changes: bool):

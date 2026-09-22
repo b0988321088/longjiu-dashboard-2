@@ -1,0 +1,12 @@
+# 未被引用的 .py 清單（唯讀報告，未刪除） 產生於 2026-09-22 09:49
+# 判定來源：cron jobs.json（含 agent prompt）＋ repo 程式/文件 ＋ 技能庫 SKILL.md ＋ hermes scripts
+# 零引用 ≠ 沒用：可能是手動工具、或 agent 憑慣例呼叫的腳本。請人工複核後再刪。
+
+## 完全零引用（2 支）
+  - eval_00983D.py
+  - t_us30y.py
+
+## 僅 1 次引用（3 支，疑似弱引用／只有文件提到）
+  - build_adaptive.py
+  - build_policy_transfer_card.py
+  - old_weekly_clean.py

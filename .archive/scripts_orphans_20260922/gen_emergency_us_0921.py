@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
-"""台股緊急應變 9/1 13:00 — 從 data/emergency_llm_analysis.json 渲染兩版 HTML
-產出：emergency_report_2026-09-01.html (Railway 版) + emergency_taiex_report_2026-09-01.html (GitHub 版)
-含 INC-134 穿透注入（任何產生 emergency_report_{today}.html 的腳本都必須含穿透卡）
+"""美股緊急應變完整版渲染器（2026-09-21 當日生成器）
+從 data/emergency_llm_analysis.json 渲染兩版 HTML：
+  emergency_report_{date}.html (Railway 版) + emergency_taiex_report_{date}.html (GitHub 版)
+日期自動取自 JSON 的 generated_at；含 INC-134 穿透卡（check_penetration_consistency 必過）
+用法：python gen_emergency_us_0921.py
 """
-import json, re
+import json, re, datetime
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
-TODAY = "2026-09-01"
-NOW = "2026-09-01 13:05"
+TODAY = datetime.date.today().isoformat()
+NOW = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
 CSS = """
 :root{--bg:#0b0f17;--card:#131a26;--line:#1f2937;--txt:#e5e7eb;--mut:#9ca3af;--up:#34d399;--down:#f87171;--acc:#60a5fa;--gold:#fbbf24;--warn:#fb923c;}
@@ -34,19 +36,21 @@ body{background:var(--bg);color:var(--txt);font-family:"Segoe UI","PingFang TC",
 .foot{color:var(--mut);font-size:12px;text-align:center;margin-top:24px;}
 """
 
+
 def load_report():
     d = json.loads((BASE / "data" / "emergency_llm_analysis.json").read_text(encoding="utf-8"))
-    return d.get("generated_at", NOW), d.get("full_report", ""), d.get("market_snapshot", {})
+    gen = d.get("generated_at") or NOW
+    return gen, d.get("full_report", ""), d.get("market_snapshot", {})
+
 
 def split_sections(text):
-    parts = re.split(r"(【[一二三四五六]、[^】]+】)", text)
-    secs = []
-    cur_title, cur_body = None, []
+    parts = re.split(r"(【[一二三四五六七八]、[^】]+】)", text)
+    secs, cur_title, cur_body = [], None, []
     for p in parts:
         p = p.strip()
         if not p:
             continue
-        if re.fullmatch(r"【[一二三四五六]、[^】]+】", p):
+        if re.fullmatch(r"【[一二三四五六七八]、[^】]+】", p):
             if cur_title:
                 secs.append((cur_title, cur_body))
             cur_title, cur_body = p, []
@@ -55,6 +59,38 @@ def split_sections(text):
     if cur_title:
         secs.append((cur_title, cur_body))
     return secs
+
+
+def _fmt(v):
+    if isinstance(v, (int, float)):
+        return f"{v:,.2f}"
+    return str(v)
+
+
+def kpis_from_snapshot(snap):
+    if not snap:
+        return ""
+    _pref = [("加權指數", "TWII"), ("台積電", "TSMC_2330"), ("費半", "SOX"),
+             ("道瓊", "DJI"), ("S&P", "SPX"), ("納指", "IXIC"), ("US30Y", "US30Y")]
+    parts = ['<div class="kpis">']
+    for label, key in _pref:
+        if key not in snap:
+            continue
+        v = snap[key]
+        if isinstance(v, dict):
+            cls = v.get("cls", "flat")
+            parts.append(f'<div class="kpi"><div class="l">{label}</div><div class="v {cls}">{v.get("value","")}</div><div class="l">{v.get("chg","")}</div></div>')
+        else:
+            chg = snap.get(f"{key}_chg_pct")
+            try:
+                cls = "up" if float(chg) > 0 else ("down" if float(chg) < 0 else "flat")
+                chg_s = f"{float(chg):+.2f}%"
+            except (TypeError, ValueError):
+                cls, chg_s = "flat", ("" if chg is None else str(chg))
+            parts.append(f'<div class="kpi"><div class="l">{label}</div><div class="v {cls}">{_fmt(v)}</div><div class="l">{chg_s}</div></div>')
+    parts.append("</div>")
+    return "".join(parts)
+
 
 def pen_card():
     """INC-134 穿透注入：穿透真值卡（snapshot.json penetration.actual_pct）"""
@@ -70,6 +106,7 @@ def pen_card():
         print(f"⚠️ 穿透注入失敗: {_e}")
         return ""
 
+
 def render(kpis_html, sec_html, pen_html, title, sub):
     return f"""<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -79,36 +116,43 @@ def render(kpis_html, sec_html, pen_html, title, sub):
 {kpis_html}
 {pen_html}
 {sec_html}
-<div class="foot">龍九控股內部報告｜僅供決策參考，非投資建議｜資料時間 {NOW} 台北（台股午盤）｜Yahoo Finance chart API 即時 + daily_analysis briefing + us30y_state + snapshot.json 穿透數據</div>
+<div class="foot">龍九控股內部報告｜僅供決策參考，非投資建議｜資料時間 {NOW} 台北｜Yahoo Finance chart API 即時 + FRED DGS30 + us30y_state + Google News RSS + snapshot.json 穿透數據</div>
 </div></body></html>"""
 
+
 def build():
+    global TODAY, NOW
     gen, report, snap = load_report()
+    if gen and len(gen) >= 10:
+        TODAY = gen[:10]
+        NOW = gen
     secs = split_sections(report)
     n = len(report)
     print(f"[JSON] full_report len = {n} chars (generated_at={gen})")
     assert n > 1500, f"full_report too short: {n}"
 
-    cls_map = {"up": "up", "down": "down", "warn": "warn", "flat": "flat"}
-    kpis_html = '<div class="kpis">' + "".join(
-        f'<div class="kpi"><div class="l">{k}</div><div class="v {cls_map.get(v.get("cls","flat"),"flat")}">{v.get("value","")}</div><div class="l">{v.get("chg","")}</div></div>'
-        for k, v in snap.items()) + "</div>"
-
+    kpis_html = kpis_from_snapshot(snap)
     sec_html = ""
     for title, paras in secs:
-        body = "".join(f"<p>{p}</p>" for p in paras if p)
-        sec_html += f'<div class="sec"><h2>{title}</h2>{body}</div>'
-
+        body = []
+        for p in paras:
+            if not p:
+                continue
+            for line in str(p).split("\n"):
+                if line.strip():
+                    body.append(f"<p>{line.strip()}</p>")
+        sec_html += f'<div class="sec"><h2>{title}</h2>' + "".join(body) + "</div>"
     pen_html = pen_card()
+    title = f"美股緊急應變報告 {TODAY}｜龍九控股"
+    sub = f"資料時間 {NOW} 台北｜美股 21:30 班完整分析（六大章節）"
     rail = BASE / f"emergency_report_{TODAY}.html"
     gh = BASE / f"emergency_taiex_report_{TODAY}.html"
-    rail.write_text(render(kpis_html, sec_html, pen_html, f"台股緊急應變報告 {TODAY} 13:00｜龍九控股",
-                           f"資料時間 {gen} 台北｜台股午盤即時分析（六大章節）"), encoding="utf-8")
-    gh.write_text(render(kpis_html, sec_html, pen_html, f"台股/美股緊急應變報告 {TODAY} 13:00｜龍九控股",
-                         f"資料時間 {gen} 台北｜台股午盤即時分析（六大章節）"), encoding="utf-8")
+    rail.write_text(render(kpis_html, sec_html, pen_html, title, sub), encoding="utf-8")
+    gh.write_text(render(kpis_html, sec_html, pen_html, title, sub), encoding="utf-8")
     print(f"[HTML] {rail.name} ({rail.stat().st_size:,} bytes)")
     print(f"[HTML] {gh.name} ({gh.stat().st_size:,} bytes)")
     print("[DONE]", NOW)
+
 
 if __name__ == "__main__":
     build()
