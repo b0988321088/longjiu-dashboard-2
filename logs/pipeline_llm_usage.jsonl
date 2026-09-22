@@ -31,3 +31,6 @@
 {"ts": "2026-09-22T07:00:10", "model": "deepseek-chat", "caller": "buffett_cto_analyzer.py", "in": 820, "cached": 384, "out": 182, "ok": true}
 {"ts": "2026-09-22T07:00:13", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 496, "cached": 256, "out": 175, "ok": true}
 {"ts": "2026-09-22T07:00:38", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 513, "cached": 379, "out": 746, "ok": true}
+{"ts": "2026-09-22T11:07:38", "model": "deepseek-chat", "caller": "review_audit_caliber.py", "in": 3959, "cached": 0, "out": 564, "ok": true}
+{"ts": "2026-09-22T11:09:39", "model": "deepseek-chat", "caller": "review_push_round2.py", "in": 2433, "cached": 0, "out": 581, "ok": true}
+{"ts": "2026-09-22T11:10:45", "model": "deepseek-chat", "caller": "review_push_generic.py", "in": 1331, "cached": 0, "out": 346, "ok": true}
