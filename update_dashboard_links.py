@@ -23,6 +23,13 @@ _LINK_PATTERNS = [
     ("asset_diff_", ".html", None),
     ("rebalance_dashboard_", ".html", None),
     ("rebalance_eval_", ".html", None),   # 2026-09-22：補上（build_dashboard 的 _link_map 有、這裡漏了 → 按鈕永遠落後）
+    # 2026-09-22 補齊「重要連結區」其餘前綴：這些按鈕原本只能靠整頁重建才會更新，
+    # 一旦產出者跑在 build_dashboard 之後就落後（今日 audit/ceo/weekly_review/monthly/radar 五顆即屬此類）。
+    ("audit_dashboard_", ".html", None),
+    ("ceo_dashboard_", ".html", None),
+    ("dynamic_weekly_review_", ".html", None),
+    ("monthly_report_", ".html", None),
+    ("radar_report_", ".html", None),
     ("penetration_report_", ".html", None),
     ("weekly_report_", ".html", None),
     ("dynamic_monthly_review_", ".html", "month"),
