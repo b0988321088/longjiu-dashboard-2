@@ -166,7 +166,17 @@ for k, t, tk in [("台股市值型成長","台股","台股市值型目標"),("�
             "<span style='color:#22c55e'>✅ 目標內</span>" if abs(diff) <= 1 else
             f"<span style='color:#d97706'>缺 {abs(diff):.1f}pp</span>")
     gap_v = f"{v - tt/100*TA:+,.0f}" if tt else "—"
-    rows += f"<tr><td {W(0)}>{t}</td><td {W(0)} style='text-align:right'>{v:,}</td><td {W(0)} style='text-align:right;font-weight:700'>{a:.1f}%</td><td {W(0)} style='text-align:right'>{tt}%</td><td {W(0)} style='text-align:right;font-size:12px'>{mark}（{gap_v}）</td></tr>"
+    # 2026-09-22：防守桶的「缺 Xpp」是【單桶結構口徑】，不是行動缺口。
+    # 使用者 9/16 定案：防守「是否足夠」看合併口徑 ≥60%，單桶 30% 僅結構參考。
+    # 原本這列只顯示「缺 12.6pp（-3,265,856）」，會被誤讀成要補 326 萬。
+    _note = ""
+    if k == "防守型配息":
+        _dcm_pct = dcm.get("佔比", 0)
+        _dcm_ok = isinstance(_dcm_pct, (int, float)) and _dcm_pct >= 60
+        _note = (f"<span style='color:#6e6e73;font-weight:400'>｜單桶僅結構參考；"
+                 f"合併口徑 {_dcm_pct}% {'≥' if _dcm_ok else '<'} 60% "
+                 f"{'已足 → 承接凍結' if _dcm_ok else '→ 需檢視'}</span>")
+    rows += f"<tr><td {W(0)}>{t}</td><td {W(0)} style='text-align:right'>{v:,}</td><td {W(0)} style='text-align:right;font-weight:700'>{a:.1f}%</td><td {W(0)} style='text-align:right'>{tt}%</td><td {W(0)} style='text-align:right;font-size:12px'>{mark}（{gap_v}）{_note}</td></tr>"
 rows += f"""<tr><td {W(0)}>科技曝險</td><td {W(0)} style="text-align:right">{twd.get("美股市值型成長_科技",0):,}</td><td {W(0)} style="text-align:right;font-weight:700">{tech:.1f}%</td><td {W(0)} style="text-align:right">≤20%</td><td {W(0)} style="text-align:right;font-size:12px">{tech_ok}</td></tr>
 </table></div>
 
