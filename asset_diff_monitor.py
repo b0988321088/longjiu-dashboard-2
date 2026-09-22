@@ -943,6 +943,23 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     _fresh_card = ""
     try:
         _fnd = snap.get("fund_nav_dates", {}) or {}
+        # 2026-09-22：as-of（資料基準日）與「匯入日」是兩件事 —— 基金淨值 T+1 公布，
+        #   今天（9/22）匯入的資料 as-of 必然是 9/21，只顯示 as-of 會讓人誤以為「沒更新」
+        #   （使用者：「基金 國泰直購/鉅亨 2026-09-21 🟢 1 天前 —— 這剛剛有更新」）。
+        #   匯入日一律讀機器欄位：現金/證券＝其 as-of 欄位本身、第一金＝firstjin_detail.last_update、
+        #   基金與安聯＝snapshot.source_import_dates[標籤]（匯入流程負責寫），缺值顯示「—」。
+        _sids = snap.get("source_import_dates", {}) or {}
+
+        def _imported_on(_label, _asof):
+            _v = _sids.get(_label)
+            if _v:
+                return str(_v)[:10]
+            if _label.startswith(("現金", "證券")):
+                return str(_asof)[:10] if _asof else None
+            if _label.startswith("保單 第一金"):
+                return str(_asof)[:10] if _asof else None
+            return None
+
         _src_rows = [
             ("現金／銀行（Moneybook）", _dig(snap, "cash_source", "date")),
             ("證券部位", _dig(snap, "securities", "price_date")),
@@ -956,11 +973,21 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
                    if k not in ("note", "updated_at", "deprecated", "機制")}
         _src_rows += list(_legacy.items())
 
-        _frows, _ages = [], []
+        _frows, _ages, _imp_ages = [], [], []
+        _today_iso = date.today().isoformat()
         for _src, _d in _src_rows:
+            _imp = _imported_on(_src, _d)
+            _imp_cell = "—"
+            if _imp:
+                try:
+                    _ia = (date.today() - date.fromisoformat(_imp)).days
+                except Exception:
+                    _ia = None
+                _imp_ages.append(_imp)
+                _imp_cell = f"{_imp}（{'今天' if _ia == 0 else str(_ia) + ' 天前'}）" if _ia is not None else _imp
             if not _d:
                 _frows.append(f"<tr><td>{_src}</td><td class='num'>待補</td>"
-                              f"<td>⚪ 缺機器欄位（不回退舊值）</td></tr>")
+                              f"<td>⚪ 缺機器欄位（不回退舊值）</td><td class='num'>{_imp_cell}</td></tr>")
                 continue
             _iso = str(_d)[:10]
             try:
@@ -974,21 +1001,26 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
                     ("🔴" if _age is not None else "⚪")))
             _frows.append(
                 f"<tr><td>{_src}</td><td class='num'>{_iso}</td>"
-                f"<td>{_lk} {str(_age) + ' 天前' if _age is not None else '—'}</td></tr>")
+                f"<td>{_lk} {str(_age) + ' 天前' if _age is not None else '—'}</td>"
+                f"<td class='num'>{_imp_cell}</td></tr>")
         # 卡片自證：最新 as-of 與產出時間（任何「卡住」一眼可辨）
         _latest = max(_ages, key=lambda x: x[0])[0] if _ages else "—"
+        _latest_imp = max(_imp_ages) if _imp_ages else "—"
         _ft_note = ("每列由 snapshot 機器欄位推導（現金=cash_source.date／證券=securities.price_date／"
                     "保單 firstjin=firstjin_detail.last_update／基金與安聯=fund_nav_dates）；"
-                    "缺值＝待補，不回退舊值。某列 🟡🔴 代表該上游還沒給新資料 —— 差異分析的"
+                    "「資料日期」＝該源 as-of（基金淨值 T+1 公布，今天匯入的資料 as-of 多為昨日），"
+                    "「最近匯入」＝我方收到並寫入的日期（基金＝source_import_dates）。"
+                    "缺值＝待補／—，不回退舊值。某列 🟡🔴 代表該上游還沒給新資料 —— 差異分析的"
                     "「數字沒動」看這裡，不是程式異常。")
         _fresh_card = (
             '<div class="card"><h2>🕒 資料新鮮度（各源 as-of）</h2>'
             '<div class="table-wrap"><table><thead><tr><th>資料源</th><th class="num">資料日期</th>'
-            '<th>距今日</th></tr></thead><tbody>'
+            '<th>距今日</th><th class="num">最近匯入</th></tr></thead><tbody>'
             + "".join(_frows)
             + "</tbody></table></div>"
             + (f"<div class='text-sm' style='margin-top:6px'>{_ft_note}</div>")
-            + (f"<div class='text-sm' style='margin-top:4px'>最新 as-of {_latest}｜卡片產出 {date.today().isoformat()}</div>")
+            + (f"<div class='text-sm' style='margin-top:4px'>最新 as-of {_latest}｜最新匯入 {_latest_imp}"
+               f"（今日 {_today_iso}）｜卡片產出 {_today_iso}</div>")
             + "</div>"
         )
     except Exception as _fe:

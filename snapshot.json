@@ -4738,7 +4738,7 @@
   "國泰直購（富達/聯博/B11）": "2026-09-21",
   "鉅亨（一般申購＋自由Pay）": "2026-09-21",
   "安聯保單內基金（App）": "2026-09-20",
-  "note": "資料更新流程必寫：任一基金淨值/庫存、安聯 App 截圖更新後同步改本欄（ISO 日期）。資產差異分析『🕒 資料新鮮度』卡直接讀本欄＋cash_source.date／securities.price_date／firstjin_detail.last_update，不再讀 data_freshness 人工欄位（INC-235）。"
+  "note": "資料更新流程必寫：任一基金淨值/庫存、安聯 App 截圖更新後同步改本欄（ISO 日期 = 資料基準日 as-of，基金淨值 T+1 公布故通常為昨日）；並同步寫 snapshot.source_import_dates 的匯入日（＝今天）。資產差異分析『🕒 資料新鮮度』卡直接讀本欄＋cash_source.date／securities.price_date／firstjin_detail.last_update／source_import_dates，不再讀 data_freshness 人工欄位（INC-235）。"
  },
  "data_freshness": {
   "note": "2026-09-21 退場：原五個人工日期鍵已移除，改由機器欄位推導（現金=cash_source.date／證券=securities.price_date／保單 firstjin=firstjin_detail.last_update／基金淨值日與安聯=fund_nav_dates）。差異分析『🕒 資料新鮮度』卡不再讀本欄；本欄僅保留尚未有機器欄位的其他人工補充來源（可留空）。",
@@ -4974,5 +4974,10 @@
  },
  "monthly_expense_cash": 146181,
  "monthly_expense_accrual": 16600,
- "rent_0921_note": "9/11 4,500（台新 Richart 卡，原分類『費用/手續費』）使用者 9/21 確認＝租金；本期另有 9/4 4,500（台新敦南Richart）同為租金 → 期間內共兩筆 9,000，常態僅編 4,500/月，差 4,500 待下期 MB 比對（預付或重複）"
+ "rent_0921_note": "9/11 4,500（台新 Richart 卡，原分類『費用/手續費』）使用者 9/21 確認＝租金；本期另有 9/4 4,500（台新敦南Richart）同為租金 → 期間內共兩筆 9,000，常態僅編 4,500/月，差 4,500 待下期 MB 比對（預付或重複）",
+ "source_import_dates": {
+  "基金 國泰直購（富達/聯博/B11）": "2026-09-22",
+  "基金 鉅亨（一般申購＋自由Pay）": "2026-09-22",
+  "note": "各源『匯入日』＝我方收到並寫入 snapshot 的日期，與資料基準日（as-of）分開。資產差異分析『🕒 資料新鮮度』卡第 4 欄讀本欄（現金／證券／第一金改讀其自身 as-of 欄位）。新增／更新任一來源後，匯入流程必須同步寫本欄（缺值卡片顯示「—」，不回退舊值）。"
+ }
 }
