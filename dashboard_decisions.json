@@ -5735,8 +5735,11 @@
       "summary": "台股2,020,672.0 美股10,321,765.0 防守4,535,685.0 債券7,507,843.0 現金867,410.0",
       "status": "completed",
       "source": "auto"
-    }
-  ],
+    },
+  {"timestamp": "2026-09-22T15:28:12.758719", "action": "核准", "name": "9/22 資料同步核准（證券 9/22 收盤＋基金 9/21 淨值）", "source": "Hermes Telegram Gate", "status": "已核准", "category": "決策", "user": "Laing", "idem_key": "hermes-1790062092-a", "summary": "核准一次同步：券商持股 15 檔 9/22 收盤（2,999,380）、鉅亨 855,673、國泰直購 11,877,653（皆 9/21 淨值）→ 總資產 26,148,759（e5993fa6）"},
+  {"timestamp": "2026-09-22T15:28:12.758719", "action": "核准", "name": "INC-238 修復指令（使用者：修復並記錄）", "source": "Hermes Telegram Gate", "status": "已核准", "category": "決策", "user": "Laing", "idem_key": "hermes-1790062092-b", "summary": "使用者指示修復 sync_all 日報口徑閘門順序缺陷並記錄 → 64d6fc24（--sot-only/--report-only＋步驟數動態化）＋error_register INC-238＋技能 pipeline-sync-patterns"},
+  {"timestamp": "2026-09-22T15:28:12.758719", "action": "核准", "name": "資料新鮮度卡加『最近匯入』欄", "source": "Hermes Telegram Gate", "status": "已核准", "category": "決策", "user": "Laing", "idem_key": "hermes-1790062092-c", "summary": "使用者反映『基金 as-of 9/21 但剛剛才更新』→ 卡片新增第 4 欄區分 as-of 與匯入日＋snapshot.source_import_dates（478a3e9d）"}
+],
   "meta": {
     "updated_at": "2026-09-22T15:09:20.047221"
   },

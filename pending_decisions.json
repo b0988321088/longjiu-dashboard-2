@@ -73,9 +73,9 @@
   {
     "date": "2026-09-21",
     "title": "成本帳納入管線 LLM 用量（每次更新可歸因）",
-    "status": "🔄 執行中：程式改動送 CIO 審查（RECORD）後落地",
+    "status": "🔄 執行中：日耗口徑已統一（9/22 482d5866）",
     "tags": "成本帳,系統",
-    "detail": "9/21 核准。現況：agent.log 只記 Hermes 端（今日 NT$5），管線端 llm_analysis 呼叫未入帳 → 實帳 NT$36 無法歸因。改動：llm_analysis 記 token/成本 ＋ 22:30 成本帳加『本次更新花費』。"
+    "detail": "9/21 核准。現況：agent.log 只記 Hermes 端（今日 NT$5），管線端 llm_analysis 呼叫未入帳 → 實帳 NT$36 無法歸因。改動：llm_analysis 記 token/成本 ＋ 22:30 成本帳加『本次更新花費』。｜9/22：三支腳本日耗統一為 cost_rates.py 單一真值（DS ¥11.5／Gemini NT$56）；餘：管線 LLM 用量逐次歸因驗證。"
   },
   {
     "date": "2026-09-22",
