@@ -141,6 +141,13 @@ try:
         _orphan = sorted(_known - _phs)
         if _orphan:
             print(f"  ℹ️ links_config 有 {len(_orphan)} 個佔位符模板未使用（非故障）: " + ", ".join(_orphan))
+        # 2026-09-22 審查補強：佔位符的前綴必須都能在 PREFIX_RULES 查到副檔名，
+        # 否則 build_link_map 會 raise（或舊版會靜默回退成 .html → .md/.png 連結靜默壞掉）
+        _p_missing = sorted({p for p in _links_cfg.PLACEHOLDER_PREFIX.values()
+                             if p not in _links_cfg.PREFIX_RULES})
+        if _p_missing:
+            fails.append("links_config: PLACEHOLDER_PREFIX 的前綴未定義於 PREFIX_RULES"
+                         "（glob 會錯、連結會壞）: " + ", ".join(_p_missing))
 except Exception as _e:
     fails.append(f"連結設定一致性檢查無法執行: {_e}")
 

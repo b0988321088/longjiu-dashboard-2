@@ -20,8 +20,7 @@ INDEX = BASE / "index.html"
 # 2026-09-22：改由 links_config.py 單一來源提供（與 build_dashboard._link_map 同源）
 # 原本兩份清單各存一份，新增按鈕漏改一邊 → 那顆按鈕永遠停在舊檔（rebalance_eval_ 即此）。
 import sys as _sys
-from pathlib import Path as _Path
-_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+_sys.path.insert(0, str(Path(__file__).resolve().parent))
 import links_config as _links_config
 
 # (檔名前綴, 副檔名, 顯示規則)

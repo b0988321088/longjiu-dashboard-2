@@ -78,10 +78,21 @@ def link_patterns():
 
 
 def build_link_map():
-    """給 build_dashboard 用：佔位符 → glob 圖樣。"""
+    """給 build_dashboard 用：佔位符 → glob 圖樣。
+
+    2026-09-22 審查修正（fail-loud）：前綴若不在 PREFIX_RULES，以前會靜默回退成 .html
+    → 對 .md/.png 類（__BUFFETT_MD__ / __REBALANCE_MD__ / __INDUSTRY_PNG__ / __RISK_PNG__）
+    會悄悄產生錯誤圖樣、連結靜默壞掉。改為直接 raise，讓錯誤在產出階段就炸出來。
+    """
+    _missing = sorted({p for p in PLACEHOLDER_PREFIX.values() if p not in PREFIX_RULES})
+    if _missing:
+        raise KeyError(
+            "PLACEHOLDER_PREFIX 使用的前綴未定義於 PREFIX_RULES（會產生錯誤 glob）: "
+            + ", ".join(_missing)
+        )
     m = {}
     for ph, prefix in PLACEHOLDER_PREFIX.items():
-        ext = PREFIX_RULES.get(prefix, (".html", None))[0]
+        ext = PREFIX_RULES[prefix][0]
         m[ph] = f"{prefix}*{ext}"
     m.update(PLACEHOLDER_FIXED)
     return m
