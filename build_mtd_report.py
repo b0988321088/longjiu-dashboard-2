@@ -240,6 +240,21 @@ def payload() -> dict:
     loans = bip.load_loans(snap, rate_overrides)
     total_bal = sum(l["balance"] for l in loans)
     total_m = sum(l["monthly"] for l in loans)
+    # ── 國泰轉貸專區 + 鉅亨基金（2026-09-22 由月報搬入，整合頁吸收月報區塊）──
+    _fb = snap.get("funds_breakdown", {}) or {}
+    _ct = _fb.get("國泰直購", {}) or {}
+    ct_items = sorted((k, _num(v)) for k, v in _ct.items() if k != "note" and isinstance(v, (int, float)))
+    ct_cur = sum(v for _, v in ct_items)
+    ct_cost = 12000000
+    ct_int = sum(l["monthly"] for l in loans if "國泰" in l["name"])
+    _fid = sum(v for k, v in ct_items if "富達" in k)
+    ct_div_est = _fid * 0.0075          # 0.75%/月，與月報同源假設（不寫死金額）
+    jh_rows = []
+    for _grp in ("一般申購", "自由Pay"):
+        _g = _fb.get(_grp, {}) or {}
+        _vals = [_num(v) for k, v in _g.items() if k != "note" and isinstance(v, (int, float))]
+        if _vals:
+            jh_rows.append({"group": _grp, "n": len(_vals), "sum": sum(_vals)})
     total_pay = sum(l["payment"] for l in loans)
     wacc = (total_m * 12 / total_bal) if total_bal else 0
     inv_mv = (_num(snap.get("securities_total_market_value") or snap.get("securities_total"))
@@ -276,6 +291,9 @@ def payload() -> dict:
         "mv_reliable": bool(mv_reliable),
         # 保單專屬：配息 vs 借貸月息覆蓋（本月頁該看的指標，不是累計本金）
         "policy_int": policy_int,
+        "cathay": {"items": ct_items, "cur": ct_cur, "cost": ct_cost, "interest": ct_int,
+                   "div_est": ct_div_est, "pl": ct_cur - ct_cost},
+        "juhang": {"rows": jh_rows, "total": sum(r["sum"] for r in jh_rows), "count": sum(r["n"] for r in jh_rows)},
         "classes": classes,
         "grand": {"mkt": grand_mkt, "div": grand_div, "fee": grand_fee, "sub": sub_total},
         "total_mv0": total_mv0,
@@ -451,8 +469,8 @@ function render(d){
   h.push(kpi('本月投資損益', '<span class="'+cls(d.perf.net)+'">'+sgn(d.perf.net)+'</span>', esc(sub)));
   h.push(kpi('總資產變化', '<span class="'+cls(t.chg)+'">'+sgn(t.chg)+'</span>', '帳面（含未實現、含配息）'));
   h.push(kpi('配息實收（三類）', '<span class="up">'+sgn(g.div)+'</span>', '股票＋基金＋保單'));
-  h.push(kpi('本月報酬率', '<span class="'+(d.rate>=0?'up':'down')+'">'+pct(d.rate)+'</span>',
-             '以月初市值 '+money(d.total_mv0)+' 計（年化＝單月推估 '+pct(d.rate_ann)+'）'));
+  h.push(kpi('本月報酬率', '<span class="'+(d.rate==null?'':(d.rate>=0?'up':'down'))+'">'+(d.rate==null?'—':pct(d.rate))+'</span>',
+             '以月初市值 '+money(d.total_mv0)+' 計（年化＝單月推估 '+(d.rate_ann==null?'—':pct(d.rate_ann))+'）'));
   h.push(kpi('淨利差（配息−資金成本）', '<span class="'+(f.light==='ok'?'up':(f.light==='bad'?'down':''))+'">'+(f.spread*100).toFixed(2)+'pp</span>',
              '加權資金成本 '+(f.wacc*100).toFixed(2)+'%'));
   h.push('</section>');
@@ -475,7 +493,8 @@ function render(d){
       var _tag = _adj.length ? '<span class="chip2 down">含帳務校正 '+sgn(_adj.reduce(function(a,u){return a+u.amount;},0))+'</span>' : '';
       h.push('<td class="'+cls(w.total)+'"><b>'+sgn(w.total)+'</b>'+_tag+'</td><td class="'+cls(w.per_day)+'">'+sgn(w.per_day)+'</td></tr>');
     });
-    h.push('</tbody></table></div><div class="note">本週＝週一起算（今日 '+esc(PERIOD_END)+'）；配息是月配、無法按週歸屬，所以週數字只含帳面市值變化。</div></section>');
+    h.push('</tbody></table></div><div class="note">本週＝週一起算（今日 '+esc(PERIOD_END)+'）。⚠️ 週數字<b>只含帳面市值變化</b>：配息是月配（無法按週歸屬）、且未扣利息，'+
+           '所以<b>不可與「月份統計」的投資績效相加或相除</b>（該欄已扣利息 '+money((d.interest||{}).total)+'）。要看整體請用「近 7 天」當趨勢、月對月請看「月份統計」。</div></section>');
   }
 
   // 本月每日走勢
@@ -500,11 +519,31 @@ function render(d){
              '<br><span class="period-tag">'+esc(m.start)+'~'+esc(m.end)+(m.reliable?'':'｜⚠️ 市值不可靠')+'</span></td><td>'+esc(m.days)+'</td>');
       (m.rows||[]).forEach(function(r){ h.push('<td class="'+cls(r.pnl)+'">'+sgn(r.pnl)+'</td>'); });
       h.push('<td class="'+cls(m.grand)+'"><b>'+sgn(m.grand)+'</b></td><td class="up">'+sgn(m.div)+'</td>'+
-             '<td class="down">'+sgn(-m.interest)+'</td><td class="'+cls(m.net)+'"><b>'+sgn(m.net)+'</b></td>'+
+             '<td class="down">'+(m.interest==null?'—':sgn(-m.interest))+'</td><td class="'+cls(m.net)+'"><b>'+sgn(m.net)+'</b></td>'+
              '<td class="'+cls(m.net_per_day)+'">'+sgn(m.net_per_day)+'</td></tr>');
     });
     h.push('</tbody></table></div><div class="note">口徑：三類損益＝帳面市值變化 − 新增投入 − 估值更新 ＋ 配息 − 手續費；投資績效＝三類損益 − 利息。'+
-           '月份長度不同（7 月 31 天、8 月 31 天、9 月未收月）→ 比較請看<b>日均</b>。7 月市值不可靠（db 逐日自 8/24 起、ETF 建倉時點未知）→ 該月只計配息與利息。</div></section>');
+           '月份長度不同（未收月天數較少）→ 比較請看<b>日均</b>。7 月市值不可靠（db 逐日自 8/24 起、ETF 建倉時點未知）→ 該月只計配息與利息。</div></section>');
+  }
+
+  // 國泰轉貸專區（2026-09-22 由月報搬入）
+  if(d.cathay && (d.cathay.items||[]).length){
+    h.push('<section class="card"><h2>◆ 🏦 國泰轉貸 1,200萬<em>借貸資金：投入列帳面、漲跌才計績效</em></h2>');
+    h.push('<div class="tscroll"><table class="t"><thead><tr><th>標的</th><th>目前市值</th></tr></thead><tbody>');
+    (d.cathay.items||[]).forEach(function(x){ h.push('<tr><td>'+esc(x[0])+'</td><td>'+money(x[1])+'</td></tr>'); });
+    h.push('<tr><td><b>合計 '+money(d.cathay.cur)+' vs 投入 '+money(d.cathay.cost)+'</b></td><td><b class="'+cls(d.cathay.pl)+'">'+sgn(d.cathay.pl)+'</b></td></tr>');
+    h.push('</tbody></table></div><div class="note">富達月配息估 '+money(d.cathay.div_est)+'（市值×0.75%/月）vs 國泰月息 '+money(d.cathay.interest)+
+           ' → '+(d.cathay.div_est>=d.cathay.interest?'✅ 配息可 cover 利息':'⚠️ 配息不足 cover 利息')+
+           '。市值為 snapshot 最新真值（非逐日），配息月配。</div></section>');
+  }
+
+  // 鉅亨網基金（非國泰管道；2026-09-22 由月報搬入）
+  if(d.juhang && (d.juhang.rows||[]).length){
+    h.push('<section class="card"><h2>◆ 📦 鉅亨網基金<em>與國泰轉貸分開列｜市值已含在「基金」類</em></h2>');
+    h.push('<div class="tscroll"><table class="t"><thead><tr><th>群組</th><th>檔數</th><th>市值</th></tr></thead><tbody>');
+    (d.juhang.rows||[]).forEach(function(r){ h.push('<tr><td>'+esc(r.group)+'</td><td>'+esc(r.n)+'</td><td>'+money(r.sum)+'</td></tr>'); });
+    h.push('<tr><td><b>合計</b></td><td><b>'+esc(d.juhang.count)+' 檔</b></td><td><b>'+money(d.juhang.total)+'</b></td></tr>');
+    h.push('</tbody></table></div><div class="note">基金類本月配息 '+money((d.classes||[]).filter(function(x){return x.c==="基金";}).map(function(x){return x.div;})[0]||0)+'（鉅亨小額月配＋國泰基金配息）。</div></section>');
   }
 
   if((d.updates||[]).length){
