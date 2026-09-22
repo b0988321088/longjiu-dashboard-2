@@ -5804,7 +5804,8 @@
       "idem_key": "hermes-1790086048",
       "summary": "09/22 使用者裁示：00921 暫時停止投入 —— 第1批（2 張 ≈47,300）視窗 9/21-9/22 未成交、乾粉未動用；非取消，待重新定案"
     }
-  ],
+  ,
+  {"timestamp": "2026-09-22T22:25:29", "action": "核准", "name": "INC-239 Yahoo 取價修復（^TWII 前收落後一天）", "source": "user", "status": "已核准", "category": "決策", "user": "Laing", "idem_key": "hermes-1790087129", "summary": "09/22 核准：取價單一入口 market_price.py（前收=日線 timestamp 對齊、收盤後補 1m、stale 標示）＋daily_intel/hunter_intel/macro_regime 改用＋防復發閘門 check_yahoo_meta_usage.py＋9/20 週報補口徑來源；4 顆 commit 均經獨立 CIO 審查 APPROVE 後推送"}],
   "meta": {
     "updated_at": "2026-09-22T22:10:17.403192"
   },
