@@ -427,6 +427,23 @@ elif ok and _cio_ok:
         _push_candidates.append(f'industry_penetration_{TODAY}.png')
     except Exception:
         pass
+    # 9c3. 收尾重刷連結（2026-09-22 根因修正）
+    #      根因：步驟 9c 的 update_dashboard_links.py 跑在 #11（穿透報告）與上面
+    #      build_rebalance_dashboard（再平衡儀表板／產業穿透 PNG）**之前** →
+    #      這幾顆按鈕每天必然落後一天，不是「忘了手動改」。
+    #      在全部產出者跑完、組 _push_files 之前再刷一次，並複驗同步檢查。
+    try:
+        _lk2 = subprocess.run([sys.executable, str(BASE / "update_dashboard_links.py")],
+                              capture_output=True, text=True, timeout=30, cwd=str(BASE))
+        _lk2_out = (_lk2.stdout or "").strip().splitlines()
+        if _lk2_out:
+            print("  🔗 " + _lk2_out[-1])
+        _sync2 = subprocess.run([sys.executable, str(BASE / "check_dashboard_sync.py")],
+                                capture_output=True, text=True, timeout=60, cwd=str(BASE))
+        if _sync2.returncode != 0:
+            print("  ⚠️ 收尾同步檢查 FAIL：" + (_sync2.stdout or "").strip()[:200])
+    except Exception as _e:
+        print(f"  ⚠️ 收尾重刷連結失敗（不影響本次產出）：{_e}")
     if _pen_file:
         _push_candidates.append(_pen_file)
     _push_files = [f for f in _push_candidates if (BASE / f).exists()]

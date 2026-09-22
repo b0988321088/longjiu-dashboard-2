@@ -729,7 +729,8 @@ def main():
         "__PEN_REPORT__": "penetration_report_*.html",
         "__REBALANCE_DASH__": "rebalance_dashboard_*.html",
         "__REBALANCE_EVAL__": "rebalance_eval_*.html",
-        "__RATE_HIKE_REPORT__": "rate_hike_dashboard_*.html",
+        # 2026-09-22 移除 __RATE_HIKE_REPORT__（使用者核准）：index_template.html 的「升息情境」按鈕已撤，
+        # 產生器 build_rate_hike_dashboard.py 在 cleanup_utils.STALE_PY 淘汰名單內 → 留著只會是孤兒佔位符。
         "__REBALANCE_MD__": "rebalance_summary_*.md",
         "__RISK_PNG__": "risk_factor_penetration_*.png",
         "__WEEKLY__": "weekly_report_*.html",

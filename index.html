@@ -107,18 +107,20 @@
         <a href="ceo_dashboard_2026-09-18.html" class="text-xs bg-slate-800/80 hover:bg-cyan-600/30 border border-cyan-700 rounded-lg px-3 py-2 text-cyan-200 transition">📈 CEO 儀表板</a>
         <a href="audit_dashboard_2026-09-18.html" class="text-xs bg-slate-800/80 hover:bg-indigo-600/30 border border-indigo-700 rounded-lg px-3 py-2 text-indigo-200 transition">📊 審計儀表板</a>
         <a href="asset_diff_2026-09-22.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📈 差異分析</a>
-        <a href="rebalance_dashboard_2026-09-21.html" class="text-xs bg-slate-800/80 hover:bg-emerald-600/30 border border-emerald-700 rounded-lg px-3 py-2 text-emerald-200 transition">🔄 再平衡儀表板</a>
-        <a href="penetration_report_2026-09-21.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📊 穿透分析</a>
-        <a href="rate_hike_dashboard_2026-09-14.html" class="text-xs bg-slate-800/80 hover:bg-rose-600/30 border border-rose-700 rounded-lg px-3 py-2 text-rose-200 transition">📈 升息情境</a>
+        <a href="rebalance_dashboard_2026-09-22.html" class="text-xs bg-slate-800/80 hover:bg-emerald-600/30 border border-emerald-700 rounded-lg px-3 py-2 text-emerald-200 transition">🔄 再平衡儀表板</a>
+        <a href="penetration_report_2026-09-22.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📊 穿透分析</a>
+        <!-- 2026-09-22 移除「📈 升息情境」按鈕（使用者核准）：該主題已由 rebalance_dashboard 吸收，
+             且產生器 build_rate_hike_dashboard.py 已被 cleanup_utils 列入淘汰名單 → 按鈕永遠停在 9/14（殭屍按鈕）。
+             檔案 rate_hike_dashboard_2026-09-14.html 保留在 repo／Pages 供直連，不刪檔。 -->
         <a href="weekly_report_2026-09-21.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📋 週報</a>
         <a href="dynamic_weekly_review_2026-09-20.html" class="text-xs bg-slate-800/80 hover:bg-amber-600/30 border border-amber-700 rounded-lg px-3 py-2 text-amber-200 transition">🔍 動態檢核週報</a>
         <a href="dynamic_monthly_review_2026-08.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📜 戰略月報</a>
         <a href="monthly_report_2026-09.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📄 彙整月報</a>
         <a href="emergency_report_2026-09-21.html" class="text-xs bg-slate-800/80 hover:bg-red-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">🚨 緊急應變</a>
         <a href="retirement_plan_2026-09-15.html" class="text-xs bg-slate-800/80 hover:bg-teal-600/30 border border-teal-700 rounded-lg px-3 py-2 text-teal-200 transition">🏖️ 退休規劃</a>
-        <a href="rebalance_eval_2026-09-21.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📌 再平衡評估</a>
+        <a href="rebalance_eval_2026-09-22.html" class="text-xs bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 transition">📌 再平衡評估</a>
         <a href="buffett_cto_report_2026-09-22.md" class="text-xs bg-slate-800/80 hover:bg-purple-600/30 border border-purple-700 rounded-lg px-3 py-2 text-purple-200 transition">🧠 巴菲特/CTO</a>
-        <a href="industry_penetration_2026-09-21.png" class="text-xs bg-slate-800/80 hover:bg-teal-600/30 border border-teal-700 rounded-lg px-3 py-2 text-teal-200 transition">🖼 產業穿透圖</a>
+        <a href="industry_penetration_2026-09-22.png" class="text-xs bg-slate-800/80 hover:bg-teal-600/30 border border-teal-700 rounded-lg px-3 py-2 text-teal-200 transition">🖼 產業穿透圖</a>
         <a href="risk_factor_penetration_2026-09-22.png" class="text-xs bg-slate-800/80 hover:bg-teal-600/30 border border-teal-700 rounded-lg px-3 py-2 text-teal-200 transition">🖼 風險因子圖</a>
     </div>
 </div>
@@ -207,7 +209,7 @@
         <span class="text-amber-400 font-bold text-sm">🚨 風險提示</span>
         <span class="text-[10px] text-amber-300/60">資料日 2026-09-21</span>
     </div>
-    <p class="text-xs text-amber-200/90 leading-relaxed">US30Y 5.33%（2026-09-18 收盤，已站上 5.30% 債券凍結紅線 0.03pp） — 美債殖利率高檔為主要風險；國泰 1,200萬@2.6% 8/20 撥款（配置：富達600＋聯博100＋貝萊德B11 500）；質押 540萬@2.77%（❌ 尚未撥款（2026-09-21 對保完成；預計 2026-09-29 撥款））</p>
+    <p class="text-xs text-amber-200/90 leading-relaxed">US30Y 5.30%（2026-09-21 收盤，距 5.30% 債券凍結紅線 0.00pp） — 美債殖利率高檔為主要風險；國泰 1,200萬@2.6% 8/20 撥款（配置：富達600＋聯博100＋貝萊德B11 500）；質押 540萬@2.77%（❌ 尚未撥款（2026-09-21 對保完成；預計 2026-09-29 撥款））</p>
     <p class="text-xs text-amber-200/90 leading-relaxed mt-1">操作規範：🟢台股：（7.7% vs 目標10%，缺口 -2.3pp）；⏸️美股：（39.3% vs 目標30%，超配 +9.3pp）；⏸️防守：（合併口徑 67.9% 已足）；⏸️債券：28.7%（目標 25%）；💰現金：3.5%；現金底線 700,000 強制生效</p>
     <p class="text-[10px] text-amber-300/60 mt-1">凍結紅線：US30Y ≥5.30% 全面凍結債券配置、提高現金水位。關鍵節點：09/22 🍽️ 回台中聚餐（延後：原9/1取消，9/14那週擇日，時間待定）｜09/22 🔴 PIMCO 收益增長M 9/28 除息 T+4 截止（新部位120萬第一｜09/22 🔴 第一金轉換（轉入 PIMCO）補設定 — 9/21 系統錯誤/畫面卡住未</p>
     <p class="text-[10px] text-amber-300/70 mt-1 border-t border-amber-500/20 pt-1">📌 資金鏈現況：9/10 送出（安聯＋第一金同步轉入 M&G入息A美元避險月配，T+4 預期 9/16 生效）；9/1 安聯 PIMCO+50萬、貝萊德科技A10 90萬→摩根 已完成；擔保池 1,200萬（富達600＋聯博100＋貝萊德B11 500）×4.5成 = 540萬@2.77%；❌ 尚未撥款（2026-09-21 對保完成；預計 2026-09-29 撥款） → 用途：優先清償 500萬高息負債（保單質押 400萬@4.0% ＋ 券商質押 100萬@3.92%）— 月息 16,600 → 12,465，月省約 4,135（2026-09-12 裁示；10月標案押標金不預留，9月底評估）；到位前全面觀望</p>
