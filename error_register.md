@@ -809,3 +809,11 @@
 - **修法**：①常態欄位只放常態值（80,100 = 店面24,000 + 二三樓21,000 + 洲際W33,000 + 管理費2,100）②一次性折讓降級為敘述（`rent_monthly_note`、`rent_monthly_gap_note`）③`rent_monthly_gap` 校正為 23,100 並在 note 寫出計算式（9 月應收 77,100 − 實收 54,000）④`notion_shared_context.md` 同步 ⑤技能 `monthly-income-caliber` 新增鐵則：**任何「本月因 X 少收／多收」都不可改常態欄位**。
 - **驗證**：`rent_breakdown` 加總 80,100 == `rent_monthly_total` == `passive_income.rent_monthly`；`passive_income.total_conservative` 180,100；實跑 `report_components.render_health_score` → 覆蓋 **111%**／收入 180,100；`closeout_check.py` 全綠、`clean-main == origin/clean-main`；線上 `snapshot.json`（raw.githubusercontent + GitHub Pages，皆加 cache-bust）皆讀到 80,100／洲際W 33,000。
 - **教訓**：**「一次性」與「常態」必須分欄**。凡欄位名含 `monthly`／`total`／`target` 者只放常態值，單月事件一律寫進 `actual`／`note`／`gap`。判準一句話：**「下個月還要手動改回來的值，就不該進常態欄位。」**
+
+## INC-238｜`sync_all.py` 步驟順序缺陷：門檻閘門讀「上一輪的日報」→ 基金群組值一變動就假失敗（2026-09-22）
+- **發現管道**：9/21 淨值批次匯入（鉅亨 855,673＋國泰直購 11,877,653）後跑 `sync_all.py 2026-09-22`，步驟 2 立刻 ❌「日報基金部位口徑不符明細：鉅亨 840,383（應 855,673）／國泰 11,785,668（應 11,877,653）— 疑似又用反推」，⛔ 中止，後續 8 步全未執行。
+- **根因**：`check_thresholds.py:139` 讀的是**磁碟上既有的** `daily_report_v2_<today>.html`，但 `sync_all.py` 把它排在「日報」步驟**之前**（步驟 2 vs 步驟 4）→ 它驗的其實是**上一輪產出**。snapshot 更新後、日報尚未重產的期間，兩者必然不一致 → 第一步就擋，且錯誤訊息把病徵說成「疑似又用反推」，指向錯的方向。
+- **觸發條件**：只有該行比對的三個基金群組值（基金總市值／鉅亨／國泰）變動才會中；只動現金或證券的更新（同日 Moneybook 匯入）不會踩到 → 所以這條缺陷潛伏到第一次基金淨值更新才現形。
+- **繞法（無需改程式）**：先 `python run_daily.py` 重產日報 → 再 `python sync_all.py <date>`；此時步驟 2 讀到新日報即通過。代價＝日報會多產一次（多一次管線 LLM 呼叫）。
+- **治本（待做）**：把「日報渲染行比對」那段拆成日報之後的子步驟，或改讀本輪剛產出的輸出；「反推寫法黑名單掃描（run_daily/regenerate_report/build_dashboard 原始碼）」與日報無關，留在步驟 2 才是對的位置。
+- **教訓**：**閘門若拿「另一個步驟的產出」當比對基準，順序就必須排在該步驟之後**；否則它驗的是歷史而非本輪，而且會用誤導性的訊息掩蓋真檢查（真檢查＝渲染端有無用「總值−國泰」反推）。
