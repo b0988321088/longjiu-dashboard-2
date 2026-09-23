@@ -131,13 +131,24 @@ def penetration_analysis(snapshot: dict) -> dict:
     _cat_map = {"tw_equity": "台股市值型成長", "us_equity": "美股市值型成長",
                 "defensive": "防守型配息", "bond": "債券", "cash": "現金/安全網"}
     _snap_pen = (snapshot or {}).get("penetration", {}).get("actual_twd", {})
+    _snap_pen_pct = (snapshot or {}).get("penetration", {}).get("actual_pct", {}) or {}
+    _snap_pen_gaps = (snapshot or {}).get("penetration", {}).get("gaps", {}) or {}
     if _snap_pen and _snap_pen.get("台股市值型成長"):
         actual_twd = {cat: float(_snap_pen.get(key, 0)) for cat, key in _cat_map.items()}
         total_inv = sum(actual_twd.values()) or 1
-        actual = {cat: actual_twd[cat] / total_inv * 100 for cat in actual_twd}
-        actual["tech_exposure"] = float((snapshot.get("penetration", {}).get("actual_pct", {})).get("美股市值型成長_科技", 0))
-        gaps = {cat: actual.get(cat, 0) - TARGETS[cat] for cat in TARGETS}
-        gaps["tech_exposure"] = actual.get("tech_exposure", 0) - TARGETS["tech_exposure"]
+        # 2026-09-23 INC-245：佔比一律讀 snapshot.penetration.actual_pct（＝占「總資產」單一口徑）。
+        # 舊版自行用「五桶合計（佔投資部位）」重算 → 美股 40.9%／超標 +10.9pp，與穿透表／日報的
+        # 39.5%／+9.5pp 不一致；同一句裡美股用投資部位、科技用總資產（分母混用），
+        # 使用者正是被這個搞混（「科技只有 15% 為什麼會超標」）。單一真值：不得自行重算。
+        if _snap_pen_pct:
+            actual = {cat: float(_snap_pen_pct.get(key, 0)) for cat, key in _cat_map.items()}
+        else:
+            actual = {cat: actual_twd[cat] / total_inv * 100 for cat in actual_twd}
+        actual["tech_exposure"] = float(_snap_pen_pct.get("美股市值型成長_科技", 0))
+        gaps = {cat: float(_snap_pen_gaps.get(key, actual.get(cat, 0) - TARGETS[cat]))
+                for cat, key in _cat_map.items()}
+        gaps["tech_exposure"] = float(_snap_pen_gaps.get("科技曝險",
+                                                          actual.get("tech_exposure", 0) - TARGETS["tech_exposure"]))
         growth_pct = actual.get("tw_equity", 0) + actual.get("us_equity", 0)
         defense_pct = actual.get("defensive", 0)
         safety_pct = actual.get("bond", 0) + actual.get("cash", 0)

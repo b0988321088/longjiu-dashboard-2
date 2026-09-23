@@ -448,6 +448,27 @@ except Exception as _e:
     print(f"  ❌ 空值守門無法執行 {_e}")
     fail.append("空值守門無法執行（check_report_zero_values）")
 
+print("=== 13) LLM 內文數字可追溯（對得上 snapshot）===")
+# 2026-09-23 INC-245 新增。背景：CTO 內文寫「科技17.5%已破15%紅線」，穿透表卻是 15.3%
+# （模型自行推算/沿用舊值）；同段「美股超配+10.9pp」用了五桶合計當分母，與 +9.5pp 不一致。
+# 閘門：內文「標籤＋純空白/冒號＋數字」的直述句，其 %/pp/金額必須落在 snapshot 的合法值集合內
+# （容許「佔總資產」「佔投資部位」兩種口徑與 GICS 別名）。複合詞與中介詞句子刻意不比，避免假陽性。
+try:
+    import sys as _sys13
+    if str(R) not in _sys13.path:
+        _sys13.path.insert(0, str(R))
+    from check_narrative_numbers import scan as _scan_narr
+    _nhits = _scan_narr(T, R)
+    if _nhits:
+        for _n in _nhits[:6]:
+            print(f"  ❌ {_n}")
+        fail.append(f"內文數字對不上 snapshot（{len(_nhits)} 處）")
+    else:
+        print("  ✅ 內文穿透數字全部可追溯")
+except Exception as _e:
+    print(f"  ❌ 內文數字守門無法執行 {_e}")
+    fail.append("內文數字守門無法執行（check_narrative_numbers）")
+
 print()
 print("=" * 46)
 print(f"閉環稽核結果：{'全部通過 ✅' if not fail else '❌ 有問題：' + str(fail)}")

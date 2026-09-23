@@ -5825,6 +5825,17 @@
       "user": "Laing",
       "idem_key": "hermes-1790155099",
       "summary": "09/23 使用者反映日報科技/非科技金額空白。根因：update_data ③ 重建 penetration 時只把兩個子維度補回 actual_pct，actual_twd 被整批丟掉，renderer 以 .get(key,0) 靜默印 0（calc_penetration 一直有回傳這兩個鍵）。修法：_PEN_KEYS 納入兩子維度（twd+pct 皆現算）、其餘延伸鍵改『現算優先、否則保留舊值』不靜默丟棄、run_daily/regenerate_report 各加缺鍵警示。數字：科技 3,991,270 TWD（15.3%／目標 15%／+0.3pp）、非科技 6,333,937（24.2%），合計＝美股桶 10,325,207。防再發：稽核新增第 12 類 check_report_zero_values.py（金額 0 的儲存格下一格不得是正佔比）——11 案例自測（含 80,100 TWD 等假陽性陷阱）＋把今日日報改回 0 TWD 的負向回歸全數符合預期，真檔 0 命中；22:40 closeout_check 自動跑，模組載入失敗列 fail（fail-closed）。程式 commit 25c7e926（update_data/renderguard）與本次稽核守門 commit 均經 CIO RECORD。"
+    },
+    {
+      "timestamp": "2026-09-23T17:21:49",
+      "action": "修復",
+      "name": "INC-245 CTO 內文口徑統一（不再自行重算＋10.9pp）＋稽核第 13 類『LLM 內文數字守門』",
+      "source": "user",
+      "status": "已完成",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1790155309",
+      "summary": "使用者問『科技曝險只有 15% 為什麼會超標』→ 追出兩層問題：①buffett_cto_analyzer 自行用五桶合計（佔投資部位）重算佔比，美股 40.9%／+10.9pp 與穿透表 39.5%／+9.5pp 不一致，同一句裡分母混用（美股用投資部位、科技用總資產）；②模型自行推算科技 17.5%（真值 15.3%），LLM 內文數字無閘門。修法：該函式佔比/gaps 一律讀 snapshot.penetration.actual_pct/gaps；新增 check_narrative_numbers.py（稽核第 13 類）——內文『標籤＋空白/冒號＋數字』的 %/pp/金額必須落在 snapshot 合法值集合（容許佔總資產、佔投資部位兩口徑與 GICS 別名）。驗證：重跑 CTO 內文改為『高科技15.3%破線、美股+9.5pp』✅；守門自測 10 案例全過（4 真缺陷／6 假陽性陷阱：複合詞 高科技/半導體、中介詞 防守合併68.5%、目標語境、GICS 別名 14.9%、投資部位口徑 40.9%、指數點數 台股47,800.17點）；真檔 0 命中。來源刻意只取當日有效內文（CTO 只取最新快取；emergency 內文僅當日期＝當日），避免常駐假警報。"
     }
   ],
   "meta": {
