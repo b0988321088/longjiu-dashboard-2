@@ -24,6 +24,15 @@ SYNONYM_GROUPS = {
     "cash_total": ["cash_total", "cash", "real_liquid_assets", "bank_assets_moneybook"],
     # 安聯 A+B
     "allianz_combined": ["allianz_combined", "allianz_ab_current_value", "allianz_ab"],
+    # 安聯保單 A／B 個別（2026-09-23 INC-242 新增）
+    # 血淚：A/B 各有 5 個同義鍵，先前只有 3 個在群組內 → update_data --allianz 只改到
+    # allianz_a/b、allianz_a/b_funds、allianz_a/b_current_value，而
+    # allianz_policy_a/b_value 與 top-level policy_a/b_total 留在舊值，
+    # 差異分析「安聯保單A現值」因此顯示 4,986,867（真值 4,986,448）。
+    "allianz_policy_a": ["allianz_a", "allianz_a_funds", "allianz_a_current_value",
+                         "allianz_policy_a_value", "policy_a_total"],
+    "allianz_policy_b": ["allianz_b", "allianz_b_funds", "allianz_b_current_value",
+                         "allianz_policy_b_value", "policy_b_total"],
     # 第一金
     "firstjin_total": ["firstjin_fl65_current_value", "firstjin_current_value", "firstjin"],
 }

@@ -883,3 +883,12 @@
 - **修法**：`_fmt_rent_status` 改讀 `tv["rent_receivable_by_month"][本月]`（缺 → fallback `rent_breakdown`），分母＝當月應收、`pending = max(0, 當月應收 − 已收)`，並移除寫死數字與錯誤 fallback 字串；`run_daily` 新增 `rent_monthly_target`／`rent_receivable_by_month`／`rent_pending` 三個 tv key，覆蓋率與顯示改用常態應收並同時標出「當月已收 / 待收」；月報卡標題改「被動收入（{ym} 實收）」＋加口徑註腳（當月應收/常態/待收）；`asset_moat_monitor` fallback 改用 `rent_monthly_total`。**新增閘門 15**：若有當日日報，其「｜待收 N」必須 == `snapshot.rent_monthly_gap`。
 - **驗證**：①日報房租金流＝「房租月收 **80,100** TWD〔常態應收；當月已收 54,000、待收 23,100〕，覆蓋月支出 **49%**」＋「當月應收 77,100 = 大義街1樓24,000+大義街23樓21,000+洲際W30,000+管理費2,100｜已收 …（54,000）｜待收 **23,100**」，全文再無 26,100／「全數實收」②月報 2026-09＝「被動收入（2026-09 實收）」＋註腳「當月應收 77,100（常態 80,100，差額為一次性折讓）、當月待收 23,100」；2026-08 回溯＝當月應收 80,100、待收 0（不倒退）③負向測試：日報灌回「｜待收 26,100」→ 閘門 15 rc=1 並點名 ④`regenerate_report.py --no-push --skip-llm`、`check_dashboard_sync.py` 皆 rc=0。
 - **教訓**：**「應收」與「已收」在程式裡常被同一個變數名（rent_monthly／monthly_rent）承載**——只要分母用了常態、分子用了當月，就會生出幽靈差額；本次同型共 4 處（INC-241 3 處＋本文 3 處，其中 `_fmt_rent_status` 是唯一在函式內**寫死金額**的，最難及時發現）。修這類問題要「連閘門一起加」：儀表板與日報各一條，數字對不上就擋在產出階段。
+
+## INC-242｜安聯 A/B 同義鍵未登錄（差異分析顯示舊保單現值）(2026-09-23)
+
+- **症狀**：9/23 更新安聯保單（A 4,986,448／B 2,665,769）後，差異分析仍印「安聯保單A現值 4,986,867／B 2,670,650」（9/22 舊值），但同一份報表的「安聯A+B合計」已是 7,652,217 → 同一份報表兩個口徑。
+- **根因**：`asset_sync.SYNONYM_GROUPS` 只登錄 `allianz_combined`；A／B 各自有 5 個同義鍵（`allianz_a`、`allianz_a_funds`、`allianz_a_current_value`、`allianz_policy_a_value`、`policy_a_total`），其中後 2 個**不在任何群組** → 任何更新只同步 3 個，另 2 個永遠停在初寫值；`verify_synonyms` 也因為沒登錄而驗不到。
+- **修法**：新增 `allianz_policy_a`／`allianz_policy_b` 兩個群組（各 5 鍵）；`snapshot` 4 個殘留鍵（`allianz_policy_a_value`／`policy_a_total`／`allianz_policy_b_value`／`policy_b_total`）一併修正。
+- **驗證**：漂移注入（把 2 鍵設 1）→ `verify_synonyms` 抓到 ✅；`sync_snapshot_keys` 全部回 4,986,448 ✅；真實 snapshot `verify_synonyms` 全一致 ✅；另掃全樹舊值（4,986,867／2,670,650／11,877,653／855,673／2,999,380／9,549,235／7,657,517）= 0 筆。
+- **教訓**：新增任何資產明細鍵時，必須同時登錄 `SYNONYM_GROUPS`，否則「改了主鍵、明細報表讀舊鍵」的鬼故事會一再發生（同日 INC-241b 為同類）。
+
