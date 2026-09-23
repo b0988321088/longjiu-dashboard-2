@@ -736,6 +736,38 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         _prio_txt = _prio_x.get("一句話") or "雷達=閘門｜產業=方向｜衝突取保守｜套利不受管"
         _prio_html = (f"<div style='font-size:11px;color:#475569;margin-top:4px'>"
                       f"⚖️ <b>訊號優先序</b>：{_prio_txt}</div>")
+        # 🎯 產業缺口待補清單（2026-09-23 使用者核准）：門檻讀 snapshot 頂層 industry_gap_watch_20260923，
+        # 現況/缺口/資金分數一律由 rotation_recommendation.全產業 即時計算（禁寫死數字）。
+        _gap_html = ""
+        try:
+            _gw_x = (_snap_x.get("industry_gap_watch_20260923") or {})
+            _rows_x = {_r.get("產業"): _r for _r in (_rot_x.get("全產業") or [])}
+            _gap_parts = []
+            for _g in (_gw_x.get("清單") or []):
+                _row = _rows_x.get(_g.get("產業"))
+                if not _row:
+                    continue
+                _cur = _row.get("現況") or 0
+                _tgt = _g.get("目標_pct", _row.get("目標") or 0)
+                _gap = round(_tgt - _cur, 1)
+                _sc = _row.get("資金分數", 0)
+                try:
+                    _thr = int(str(_g.get("資金分數_觸發", ">=1")).lstrip(">= "))
+                except Exception:
+                    _thr = 1
+                if _gap <= 0:
+                    _state = "✅ 已到位"
+                elif _sc >= _thr:
+                    _state = "🟢 可啟動"
+                else:
+                    _state = "⏳ 待觸發"
+                _gap_parts.append(f"{_g.get('產業')} {_gap:+.1f}pp（資金 {_sc}／門檻 {_thr} {_state}）")
+            if _gap_parts:
+                _gap_html = (f"<div style='font-size:11px;color:#475569;margin-top:2px'>"
+                             f"🎯 <b>缺口待補</b>：{'｜'.join(_gap_parts)}</div>")
+        except Exception as _gwe:
+            _gap_html = ""
+            print(f"⚠️ 產業缺口清單產生失敗：{type(_gwe).__name__}: {_gwe}")
         # 明確交易計畫（買什麼/金額/節奏 — 2026-08-22 使用者要求日報也要）
         # 2026-09-13：改讀 snapshot.rotation_recommendation.交易計畫（動態；禁止貼死文字）
         _tp_rows = ""
@@ -754,7 +786,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
             f"<th>買什麼</th><th style='text-align:right'>金額</th><th>節奏</th></tr>{_tp_rows}</table>"
             f"<span style='color:#64748b;font-size:11px'>GICS：科技 {_tech_pct:.1f}%（紅線30）｜醫療 {_med_pct:.1f}%{_med_note}｜"
             f"<a href='https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{TODAY}.html' style='color:#22c55e'>完整儀表板 →</a></span>"
-            f"{_prio_html}</div>")
+            f"{_prio_html}"
+            f"{_gap_html}</div>")
     except Exception as _tpe:
         # 2026-09-13：例外不寫進日報（避免殘留除錯文字），改印 stdout 供 log 追
         _gics_html = ""
