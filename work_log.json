@@ -1301,5 +1301,17 @@
   "category": "完成",
   "item": "使用者核准「訊號優先序」規則落地（INC-248）：雷達＝閘門（決定能不能進）／產業分析＝方向（決定進哪一類）；兩者衝突取較保守者；確定性套利（質押清償高息負債）不受兩者管。寫入 snapshot 頂層 signal_priority_20260923，日報「🎯 本週交易計畫」callout 尾端新增一行「⚖️ 訊號優先序」。程式 commit 333434e9 走 RECORD（CIO-DeepSeek-Flash APPROVE，tree 4c82f680）：首輪 REJECT 為我方驗證器負向對照誤用 HEAD（審查當下 HEAD==被審 commit，自我比對必然 FAIL）之基準缺陷，改釘 parent 333434e9^ 後重審通過、repo tree 未變；教訓已寫入 cioreview-sop 技能。",
   "detail": "使用者核准「訊號優先序」規則落地（INC-248）：雷達＝閘門（決定能不能進）／產業分析＝方向（決定進哪一類）；兩者衝突取較保守者；確定性套利（質押清償高息負債）不受兩者管。寫入 snapshot 頂層 signal_priority_20260923，日報「🎯 本週交易計畫」callout 尾端新增一行「⚖️ 訊號優先序」。程式 commit 333434e9 走 RECORD（CIO-DeepSeek-Flash APPROVE，tree 4c82f680）：首輪 REJECT 為我方驗證器負向對照誤用 HEAD（審查當下 HEAD==被審 commit，自我比對必然 FAIL）之基準缺陷，改釘 parent 333434e9^ 後重審通過、repo tree 未變；教訓已寫入 cioreview-sop 技能。"
+ },
+ {
+  "date": "2026-09-23",
+  "category": "完成",
+  "item": "使用者核准「產業缺口待補清單」落地（INC-249）：日報「🎯 本週交易計畫」callout 尾端新增一行「🎯 缺口待補」，缺口/資金分數由 rotation_recommendation.全產業 即時計算，門檻與動作讀 snapshot 頂層 industry_gap_watch_20260923（清單：核心消費 目標5% 門檻≥1／公用事業 目標3% 門檻≥0／醫療保健 目標8% 門檻≥0）。程式 commit b1117138 走 RECORD（CIO-DeepSeek-Flash APPROVE，tree 9e00bd09，14 項自測 ALL PASS、8 條審查命令全符合）。",
+  "detail": "使用者核准「產業缺口待補清單」落地（INC-249）：日報「🎯 本週交易計畫」callout 尾端新增一行「🎯 缺口待補」，缺口/資金分數由 rotation_recommendation.全產業 即時計算，門檻與動作讀 snapshot 頂層 industry_gap_watch_20260923（清單：核心消費 目標5% 門檻≥1／公用事業 目標3% 門檻≥0／醫療保健 目標8% 門檻≥0）。程式 commit b1117138 走 RECORD（CIO-DeepSeek-Flash APPROVE，tree 9e00bd09，14 項自測 ALL PASS、8 條審查命令全符合）。"
+ },
+ {
+  "date": "2026-09-23",
+  "category": "完成",
+  "item": "Moneybook 9/23 ZIP（8/24–9/23）匯入：現金 866,818→861,818（國泰活期 −5,000 帳務管理費）、信用卡應繳 63,539→45,580（玉山 Unicard +7,635 溢繳不計）、房貸 25,082,544 與明細核對一致、總資產 26,157,497、總負債 30,128,124（流動淨值 -3,970,627）。修復四源同步失敗：緊急應變報告穿透卡停在舊總資產（因 emergency_1330 對完整版 HTML 有 _skip_html 保護）→ 以 snapshot 重算刷新該卡後三報表一致；並同步 data/emergency_llm_analysis.json 內文數字（26,162,497／866,818／距底線 166,818／負債 30,146,083／淨值 -3,983,586）避免日報第6章舊金額。",
+  "detail": "Moneybook 9/23 ZIP（8/24–9/23）匯入：現金 866,818→861,818（國泰活期 −5,000 帳務管理費）、信用卡應繳 63,539→45,580（玉山 Unicard +7,635 溢繳不計）、房貸 25,082,544 與明細核對一致、總資產 26,157,497、總負債 30,128,124（流動淨值 -3,970,627）。修復四源同步失敗：緊急應變報告穿透卡停在舊總資產（因 emergency_1330 對完整版 HTML 有 _skip_html 保護）→ 以 snapshot 重算刷新該卡後三報表一致；並同步 data/emergency_llm_analysis.json 內文數字（26,162,497／866,818／距底線 166,818／負債 30,146,083／淨值 -3,983,586）避免日報第6章舊金額。"
  }
 ]
