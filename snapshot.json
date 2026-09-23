@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-23T12:32:20.501264",
+ "generated_at": "2026-09-23T12:43:26.622828",
  "version": "v5.0.10-true-value-correction",
  "date": "2026-09-23",
  "total_assets": 26149320,
@@ -199,10 +199,10 @@
     "price": 112.45,
     "value": 224900,
     "cost": 169800,
-    "pnl": 53900,
-    "pnl_pct": 31.74,
+    "pnl": 55100,
+    "pnl_pct": 32.45,
     "currency": "TWD",
-    "market_value": 223700
+    "market_value": 224900
    },
    {
     "ticker": "006208",
@@ -211,10 +211,10 @@
     "price": 257.1,
     "value": 514200,
     "cost": 393800,
-    "pnl": 117600,
-    "pnl_pct": 29.86,
+    "pnl": 120400,
+    "pnl_pct": 30.57,
     "currency": "TWD",
-    "market_value": 511400
+    "market_value": 514200
    },
    {
     "ticker": "009816",
@@ -223,10 +223,10 @@
     "price": 16.6,
     "value": 265600,
     "cost": 199840,
-    "pnl": 64480,
-    "pnl_pct": 32.27,
+    "pnl": 65760,
+    "pnl_pct": 32.91,
     "currency": "TWD",
-    "market_value": 264320
+    "market_value": 265600
    },
    {
     "ticker": "00646",
@@ -235,10 +235,10 @@
     "price": 77.5,
     "value": 77500,
     "cost": 71600,
-    "pnl": 6000,
-    "pnl_pct": 8.38,
+    "pnl": 5900,
+    "pnl_pct": 8.24,
     "currency": "TWD",
-    "market_value": 77600
+    "market_value": 77500
    },
    {
     "ticker": "00713",
@@ -247,10 +247,10 @@
     "price": 63.5,
     "value": 127000,
     "cost": 109600,
-    "pnl": 17800,
-    "pnl_pct": 16.24,
+    "pnl": 17400,
+    "pnl_pct": 15.88,
     "currency": "TWD",
-    "market_value": 127400
+    "market_value": 127000
    },
    {
     "ticker": "00878",
@@ -259,10 +259,10 @@
     "price": 35.11,
     "value": 526650,
     "cost": 407550,
-    "pnl": 120600,
-    "pnl_pct": 29.59,
+    "pnl": 119100,
+    "pnl_pct": 29.22,
     "currency": "TWD",
-    "market_value": 528150
+    "market_value": 526650
    },
    {
     "ticker": "0056",
@@ -271,10 +271,10 @@
     "price": 56.55,
     "value": 56550,
     "cost": 37150,
-    "pnl": 19700,
-    "pnl_pct": 53.03,
+    "pnl": 19400,
+    "pnl_pct": 52.22,
     "currency": "TWD",
-    "market_value": 56850
+    "market_value": 56550
    },
    {
     "ticker": "00981A",
@@ -283,10 +283,10 @@
     "price": 30.65,
     "value": 245200,
     "cost": 210560,
-    "pnl": 30640,
-    "pnl_pct": 14.55,
+    "pnl": 34640,
+    "pnl_pct": 16.45,
     "currency": "TWD",
-    "market_value": 241200
+    "market_value": 245200
    },
    {
     "ticker": "00984A",
@@ -295,10 +295,10 @@
     "price": 15.55,
     "value": 155500,
     "cost": 145600,
-    "pnl": 10000,
-    "pnl_pct": 6.87,
+    "pnl": 9900,
+    "pnl_pct": 6.8,
     "currency": "TWD",
-    "market_value": 155600
+    "market_value": 155500
    },
    {
     "ticker": "00919",
@@ -307,10 +307,10 @@
     "price": 32.04,
     "value": 192240,
     "cost": 177300,
-    "pnl": 15660,
-    "pnl_pct": 8.83,
+    "pnl": 14940,
+    "pnl_pct": 8.43,
     "currency": "TWD",
-    "market_value": 192960
+    "market_value": 192240
    },
    {
     "ticker": "00918",
@@ -319,10 +319,10 @@
     "price": 34.03,
     "value": 34030,
     "cost": 28550,
-    "pnl": 5550,
-    "pnl_pct": 19.44,
+    "pnl": 5480,
+    "pnl_pct": 19.19,
     "currency": "TWD",
-    "market_value": 34100
+    "market_value": 34030
    },
    {
     "ticker": "009824",
@@ -331,10 +331,10 @@
     "price": 10.61,
     "value": 106100,
     "cost": 99300,
-    "pnl": 5800,
-    "pnl_pct": 5.84,
+    "pnl": 6800,
+    "pnl_pct": 6.85,
     "currency": "TWD",
-    "market_value": 105100
+    "market_value": 106100
    },
    {
     "ticker": "009823",
@@ -355,10 +355,10 @@
     "price": 36.22,
     "value": 181100,
     "cost": 158650,
-    "pnl": 22150,
-    "pnl_pct": 13.96,
+    "pnl": 22450,
+    "pnl_pct": 14.15,
     "currency": "TWD",
-    "market_value": 180800
+    "market_value": 181100
    },
    {
     "ticker": "00983D",
