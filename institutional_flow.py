@@ -542,7 +542,14 @@ def main():
         lines = []
         _pen5 = _snap.get("penetration", {}).get("actual_pct", {}) or {}
         _tw5 = _pen5.get("台股市值型成長", 7.5); _us5 = _pen5.get("美股市值型成長", 43.4)
-        _def5 = _snap.get("defensive_combined_metric", {}).get("佔比", 69.2)
+        # 2026-09-23 INC-242b v3：防守合併口徑一律走真值派生（原本讀 stored 佔比 → 組成
+        # 分量過期時，這裡會把舊值寫進 radar_state.weekly_plan 再被儀表板注入，
+        # 且 check_dashboard_sync 的舊值檢查會擋推送）。
+        try:
+            from sot_targets import defensive_caliber as _dc5_fn
+            _def5 = _dc5_fn(_snap).get("佔比") or _snap.get("defensive_combined_metric", {}).get("佔比", 69.2)
+        except Exception:
+            _def5 = _snap.get("defensive_combined_metric", {}).get("佔比", 69.2)
         _rot5 = ((_snap.get("rotation_recommendation", {}) or {}).get("建議") or [{}])[0]
         # ① 台股（2026-09-05：觀望 gate — PI質押款到位 + Fed 數據/重大事件前不投入）
         try:
