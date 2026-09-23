@@ -925,3 +925,12 @@
 - **教訓**：①凡改 `do_apply` 行為，verifier 必須有 **--apply 級**覆蓋（純 `--plan` 會讓回歸逃逸——本輪就是這樣被抓）；
   ②「加一個 sync 讓大家一致」聽起來安全，實際上把**方向搞反**（以舊值為 anchor）比不做更危險；
   ③同型範圍過期要**一次全掃**（基金、證券、現金），不要只修眼前那一個。
+
+### INC-242b v3（獨立 CIO 複審發現的 M1／S3，同日）
+
+- **M1（廣播把過期計畫放大）**：`RANGES` 只在 `do_plan` 檢查（`safe_update.py:92-93`），`do_apply` 拿到 `pending_update.json` 就直接套用；v2 把「以新值覆蓋同義群組全員」修成正確行為後，repo 內一份 **2026-07-30 的過期計畫**（`fund_market_value: 718,353 → 699,855`）不再被舊 bug 無害化，而是一鍵灌進 `funds_total` 全部五鍵。
+  - **修法**：新增 `validate_ranges()` 供 `--plan`／`--apply` 共用，`do_apply` 寫入前 fail-closed 重驗；該過期 pending 一併註銷（`applied: true`＋註記原因）。
+  - **驗證（clone 實跑）**：對該 pending 跑 `--apply` → `rc=1`、`snapshot.json` sha 前後相同（`d5b9218e9b446b82`）；7 個 RANGES 鍵以真值驗證零假陽性；`--plan` 回歸不變（同值 rc=0／合法 rc=0／越界 rc=1）。
+- **S3（未登錄群組的鍵靜默寫入）**：`apply_changes` 對不在任何 `SYNONYM_GROUPS` 的鍵只寫單鍵、家族不同步且無提示（INC-242 的原始失效模式）→ 補 `⚠️` 警告。
+- **同群組多鍵 fail-closed**：同一群組一次出現兩鍵且新值不同時，原行為是後寫者勝、先寫者被靜默丟棄，而 `do_apply` 對兩鍵都印 ✅（日誌與落地值不一致）→ 改為 `ValueError` 拒寫；相同值仍放行。
+- **教訓**：①把「值的方向」修正確，會讓原本被 bug 無害化的資料變成有效輸入 → 修方向時要同步檢查**輸入閘門**（本案：範圍只在 plan 檢查）②append-only 的 pending 檔需要 TTL／註銷機制，兩個月前的計畫不該停在「可套用」狀態。

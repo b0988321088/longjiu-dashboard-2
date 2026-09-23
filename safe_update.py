@@ -184,9 +184,31 @@ def apply_changes(snap, changes):
     legacy 鍵（無讀者、語意不明）一律拒寫，避免更新被靜默吸收。
     """
     from asset_sync import SYNONYM_GROUPS, LEGACY_KEYS
+    # 2026-09-23 INC-242b v2 複審（CIO M1／S3）：先全數驗證、再動 snapshot，避免
+    # 中途拋錯時把已處理的鍵留在記憶體（雖然 do_apply 會先 exit，不落檔）。
+    # ① 同一群組在 changes 只允許出現一次：兩鍵同群組且新值不同時，
+    #    下面「往外覆蓋」會變成後寫者勝、先寫者被靜默丟棄，而 do_apply 仍為
+    #    兩個鍵各印一次 ✅（日誌與落地值不一致）→ fail-closed 拒寫。
+    # ② 未登錄任何同義群組的鍵 → 只寫單鍵、家族不同步（INC-242 的原始失效模式）
+    #    → 印警告，讓下一個新增 RANGES 鍵的人先登錄群組。
+    seen_group = {}
     for key, c in changes.items():
         if key in LEGACY_KEYS:
             raise ValueError(f"{key} 是 legacy 鍵（{LEGACY_KEYS[key]}）→ 請改用 canonical 鍵")
+        for _master, members in SYNONYM_GROUPS.items():
+            if key in members:
+                if _master in seen_group and seen_group[_master][1] != c['new']:
+                    raise ValueError(
+                        f"同義群組 {_master} 同時出現兩個鍵且新值不同："
+                        f"{seen_group[_master][0]}={seen_group[_master][1]:,} vs {key}={c['new']:,}"
+                        " → 拒絕套用（同群組請只留一個鍵）")
+                seen_group[_master] = (key, c['new'])
+                break
+        else:
+            print(f"  ⚠️ {key} 未登錄於任何同義群組 → 只寫單鍵、家族不會同步"
+                  "（新增 RANGES 鍵時請先登錄 asset_sync.SYNONYM_GROUPS）")
+
+    for key, c in changes.items():
         new = c['new']
         snap[key] = new
         for _master, members in SYNONYM_GROUPS.items():
@@ -195,6 +217,25 @@ def apply_changes(snap, changes):
                     snap[_k] = new
                 break
     return snap
+
+
+def validate_ranges(changes):
+    """合理範圍檢查（--plan 與 --apply 共用）。
+
+    2026-09-23 INC-242b v2 複審（CIO M1）：範圍原本只在 do_plan 檢查，do_apply 拿到
+    pending_update.json 就直接套用 → 一份過期計畫（repo 內 2026-07-30 的
+    fund_market_value=699,855）會被 v2 的新廣播行為灌進整個同義家族五鍵。
+    凡寫入路徑都必須 fail-closed，過期 pending 一律拒套用。
+    """
+    errs = []
+    for key, c in changes.items():
+        if key not in RANGES:
+            continue
+        lo, hi = RANGES[key]
+        v = c.get('new')
+        if not isinstance(v, (int, float)) or v < lo or v > hi:
+            errs.append(f"{LABELS.get(key, key)}：{v} 超出合理範圍 [{lo:,} ~ {hi:,}]")
+    return errs
 
 
 def do_apply():
@@ -213,6 +254,18 @@ def do_apply():
         sys.exit(1)
 
     print("=" * 55)
+    # 2026-09-23 INC-242b v2 複審（CIO M1）：範圍檢查先前只在 --plan，--apply 會直接
+    # 套用 pending_update.json（repo 內躺著 2026-07-30 的舊計畫 fund_market_value=699,855）
+    # → 補上寫入路徑的 fail-closed 重驗，過期 pending 一律拒套用。
+    _range_errs = validate_ranges(changes)
+    if _range_errs:
+        print("=" * 55)
+        for _e in _range_errs:
+            print(f"  ❌ {_e}")
+        print(f"  ⛔ 待套用變更未通過範圍檢查（pending 可能已過期，"
+              f"generated_at={pending.get('generated_at')}）→ 不套用，請重跑 --plan")
+        sys.exit(1)
+
     print("  🚀 套用變更中...")
     print("=" * 55)
 
