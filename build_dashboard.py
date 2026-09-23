@@ -449,6 +449,64 @@ def main():
         tpl = tpl.replace("__RADAR_SIG__", "雷達暫無資料").replace("__POLICY_NOTES__", "政策面暫無資料")
     tpl = tpl.replace("__VOLATILITY_REPORT__", make_volatility_report())
 
+    # ── 智慧審查：巴菲特配置哲學與實操（動態注入，2026-09-24）──
+    try:
+        import glob as _glob
+        _candidates = sorted(BASE.glob("buffett_cto_report_*.md"))
+        _buffett_md = _candidates[-1] if _candidates else BASE / f"buffett_cto_report_{TODAY}.md"
+        _buf_html = ""
+        if _buffett_md.exists():
+            _md_text = _buffett_md.read_text(encoding="utf-8")
+            _buf_lines, _cto_lines = [], []
+            _current = None
+            for _line in _md_text.splitlines():
+                _s = _line.strip()
+                if _s.startswith("【Buffett") or _s.startswith("🧓 巴菲特"):
+                    _current = "buffett"
+                    continue
+                elif _s.startswith("【CTO") or _s.startswith("CTO "):
+                    _current = "cto"
+                    continue
+                elif _s.startswith("【"):
+                    _current = None
+                    continue
+                if _current == "buffett" and _s:
+                    _buf_lines.append(_s)
+                elif _current == "cto" and _s:
+                    _cto_lines.append(_s)
+            _buf_content = "<br>".join(_buf_lines)
+            _cto_content = "<br>".join(_cto_lines)
+        else:
+            _buf_content, _cto_content = "", ""
+        # 穿透現況從 snapshot 讀
+        _pen = snap.get("penetration", {})
+        _ap = _pen.get("actual_pct", {})
+        _gp = _pen.get("gaps", {})
+        _tw = _pen.get("actual_twd", {})
+        def _pen_li(label, key, target, emoji):
+            _v = _ap.get(key, 0)
+            _g = _v - target
+            _cls = "text-emerald-400" if _g >= 0 else "text-red-400"
+            _sign = "+" if _g >= 0 else ""
+            return f'<li>{emoji} <strong>{label}</strong>：{_v:.1f}%（目標 {target}%，<span class="{_cls}">{_sign}{_g:.1f}pp</span>）</li>'
+        _pen_html = (
+            _pen_li("台股", "台股市值型成長", 10, "🇹🇼")
+            + _pen_li("美股", "美股市值型成長", 30, "🇺🇸")
+            + _pen_li("防守", "防守型配息", 30, "🛡️")
+            + _pen_li("債券", "債券", 25, "💵")
+            + _pen_li("現金", "現金/安全網", 5, "💰")
+        )
+        _buf_card = f'''<div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-teal-400">🎯 策略建議</span><ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed"><li class='text-amber-300'><strong>🚨 指示卡（08/23 核心‑衛星保守成長版）：</strong>目標配置＝台股15/美股30/防守20/債券20/現金15，為中長期方向，容許數月階段偏離；債券鎖短中期投資等級（存續期1-5年，BBB-以上）；平衡基金僅限衛星≤防禦20%；兩條底線＝現金 ≥70 萬、US30Y >5.20% 停新增長債；Lombard 橋接需手動開啟且借款≤擔保品4成</li></ul><div class="mt-3 pt-3 border-t border-slate-700"><span class="text-xs font-bold text-amber-400">📝 巴菲特視角</span><ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4 mt-2">{"".join(f"<li>{l}</li>" for l in _buf_lines[:4])}</ul></div></div>''' if _buf_lines else ""
+        _cto_card = f'''<div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-red-400">⚡ CTO 技術視角</span><ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4">{"".join(f"<li>{l}</li>" for l in _cto_lines[:4])}</ul></div>''' if _cto_lines else ""
+        _buf_html = f'''<div class="luxury-card p-6 space-y-4">
+            <h3 class="text-md font-bold text-white">智慧審查：巴菲特配置哲學與實操</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-blue-400">💡 穿透現況</span><ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4">{_pen_html}</ul></div>{_buf_card}</div>
+            {_cto_card}
+        </div>'''
+        tpl = tpl.replace("__BUFFETT_ANALYSIS__", _buf_html)
+    except Exception as _e:
+        tpl = tpl.replace("__BUFFETT_ANALYSIS__", f"智慧審查載入失敗：{_e}")
+
     # ── 交易計畫（2026-09-01：從 pending_decisions 動態，非 8/29 統籌版快照）──
     try:
         _pd = json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8"))
