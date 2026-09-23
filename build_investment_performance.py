@@ -27,11 +27,14 @@ CLASS_KEYS = ["股票", "基金", "保單"]
 
 
 def classify_dividend(name):
-    """配息 key → 類別：安聯/第一金→保單；ETF/台灣特品→股票；其他基金→基金"""
-    if "安聯" in name or "第一金" in name:
-        return "保單"
+    """配息 key → 類別（2026-09-23 校正，與儀表板三桶同口徑）：
+    ETF／台灣特品→股票；保單（保單／第一金，或安聯但名稱不含「基金」）→保單；其餘基金→基金。
+    舊規則把『安聯』一律歸保單，會讓『基金配息 安聯收益AM…』（8 月 58 元）誤記保單，
+    造成儀表板與投資績效頁對同一月份的口徑差 58 元。"""
     if name.startswith("ETF") or "台灣特品" in name:
         return "股票"
+    if ("保單" in name) or ("第一金" in name) or ("安聯" in name and "基金" not in name):
+        return "保單"
     return "基金"
 
 

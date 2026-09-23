@@ -11,6 +11,22 @@ from scripts.components.volatility_monitor import make_volatility_report
 
 BASE = Path(__file__).resolve().parent
 
+def dividend_bucket(name: str) -> str:
+    """配息條目 → 桶（2026-09-23 與儀表板三桶／投資績效同口徑）：
+
+    ETF → 保單（保單／第一金，或安聯但名稱不含「基金」）→ 基金 → other（一次性，不計入三桶）。
+    順序刻意先認保單代號樣式、再認「基金」，避免名稱含「基金」的保單子帳被誤歸基金；
+    同時避免舊版的『安聯』子字串把『基金配息 安聯收益AM…』誤記保單（8 月保單多 58／合計多 58）。
+    """
+    if "ETF" in name:
+        return "etf"
+    if ("保單" in name) or ("第一金" in name) or ("安聯" in name and "基金" not in name):
+        return "ins"
+    if "基金" in name:
+        return "fund"
+    return "other"
+
+
 def _fmt(n):
     return f"{n:,.0f}"
 
@@ -823,16 +839,7 @@ def main():
         _ms = sorted([m for m in _rec if re.match(r"^\d{4}-\d{2}$", m)])[-_obs_n:]
 
         def _bucket_of(_n):
-            """配息桶分類（2026-09-23 校正）：
-            ETF → 保險（保單撥回：安聯／第一金含保單代號）→ 基金（名稱含「基金」）→ 其他（一次性，不計入三桶）。
-            舊版用『安聯/第一金』直接歸保險，會把『基金配息 安聯收益AM…』誤記保險（8 月保險多 58、基金少 58）。"""
-            if "ETF" in _n:
-                return "etf"
-            if "基金" in _n:
-                return "fund"
-            if ("保單" in _n) or ("安聯" in _n) or ("第一金" in _n):
-                return "ins"
-            return "other"
+            return dividend_bucket(_n)
 
         _rows = []
         _base_tot = 0.0
@@ -863,11 +870,15 @@ def main():
         tpl = tpl.replace("__DIVBASE_N__", str(_obs_n))
         tpl = tpl.replace("__DIVBASE_STATUS__", f"⏳ 第 {_ci}/{_obs_n} 個月")
         tpl = tpl.replace("__DIVBASE_FLOOR__", _fmt(_floor))
+        # 其他項（一次性，不計入三桶）動態列出，勿在模板寫死名稱
+        _other_items = [f"{_m} {_n} {_v:,.0f}" for _m in _ms for _n, _v in (_rec.get(_m) or {}).items()
+                        if isinstance(_v, (int, float)) and _v and _bucket_of(_n) == "other"]
+        _other_txt = "、".join(_other_items) if _other_items else "無（本期僅三桶配息）"
         tpl = tpl.replace("__DIVBASE_NOTE__",
                           f"基準月 {_base_m} 三桶合計 {_fmt(_base_tot)}（內含安聯一次性補入，常態口徑見 monthly_dividend_breakdown）。"
                           f"觀察期 {_base_m}～{_end_m}，檢視點 {_end_m}-01 真值日 → 依三個月逐月實收修正保守底線（現行 {_fmt(_floor)}）。"
                           f"期間判準層不動（使用者 2026-09-23 指示：以 9 月完整估計為基準，走 3 個月再修正）。"
-                          f"註：一次性『台灣特品現金股息』等非配息項目不計入三桶。")
+                          f"註：不計入三桶之其他項＝{_other_txt}。")
         print(f"  🗓️ 被動收入基準觀察卡：基準 {_base_m} 三桶 {_fmt(_base_tot)}｜觀察 {_ci}/{_obs_n} 個月")
     except Exception as _dbe:
         for _ph in ("__DIVBASE_TABLE__", "__DIVBASE_STATUS__", "__DIVBASE_FLOOR__", "__DIVBASE_NOTE__",
