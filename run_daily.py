@@ -108,7 +108,7 @@ def calibrate_sources() -> dict:
     r_income = extract_markdown_value(rules, r"月收入 \*\*([0-9,]+)\*\*")
     r_expense = extract_markdown_value(rules, r"月支出 \*\*([0-9,]+)\*\*")
     r_work_surplus = extract_markdown_value(rules, r"工作期盈餘 \*\*([+-]?[0-9,]+)\*\*")
-    r_retire_surplus = extract_markdown_value(rules, r"退休後盈余 \*\*([+-]?[0-9,]+)\*\*")
+    r_retire_surplus = extract_markdown_value(rules, r"退休後盈餘 \*\*([+-]?[0-9,]+)\*\*")
     r_allianz = extract_markdown_value(rules, r"安聯 A \+ 安聯 B = .*?現值 ([0-9,]+)")
     r_firstjin = extract_markdown_value(rules, r"第一金 = .*?現值 ([0-9,]+)")
 
