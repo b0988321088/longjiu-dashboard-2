@@ -91,6 +91,24 @@ def build_allowed(snap: dict) -> dict:
             if isinstance(_v, (int, float)):
                 twds.add(float(_v))
         allowed[label] = {"pct": pcts, "twd": twds, "gap": gps}
+
+    # ── 2026-09-23 補洞：現金派生口徑（乾粉／餘裕＝現金 − 底線）────────────────
+    # 為什麼：內文常寫「乾粉＝現金 861,818 − 底線 700,000 = 161,818」，這個派生口徑是
+    # 合法的（規則：讀取端一律現算，見 snapshot.乾粉執行_0926），但原本的合法值集合只收
+    # 現金原值 → 正確的派生數字被誤判「對不上 snapshot」。以 snapshot 門檻現算補入，
+    # 不放寬其他檢查（非法金額仍會被擋）。
+    _thr = ((snap or {}).get("thresholds_2026_0915") or {}).get("現金_twd") or {}
+    _cash = (snap or {}).get("cash_total")
+    if isinstance(_cash, (int, float)) and "現金" in allowed:
+        _extras: set[float] = set()
+        for _k in ("生活底線", "追繳緩衝", "合計底線"):
+            _f = _thr.get(_k)
+            if isinstance(_f, (int, float)):
+                _extras.add(float(_f))                  # 底線本身也會被內文引用
+                if _cash - _f > 0:
+                    _extras.add(float(_cash - _f))      # 乾粉／餘裕
+        allowed["現金"]["twd"] |= _extras
+
     for label, gname in LABEL_GICS.items():
         row = gics.get(gname)
         if isinstance(row, dict) and isinstance(row.get("佔比"), (int, float)):
