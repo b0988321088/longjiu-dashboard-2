@@ -426,6 +426,28 @@ except Exception as _e:
     print(f"  ❌ 保單不變式檢查失敗 {_e}")
     fail.append("保單不變式檢查失敗")
 
+print("=== 12) 報告空值守門（金額 0 但佔比 > 0）===")
+# 2026-09-23 INC-244 新增。日報穿透表「└ 科技股／└ 非科技」曾金額欄印 0 TWD 而佔比 15.3%／24.2% 正常
+# （update_data 重建 penetration 時只把子維度補回 actual_pct，actual_twd 被丟掉，renderer `.get(key,0)` 靜默印 0）。
+# 第 1 類「舊值殘留」掃不到這種「空值」症狀：舊值掃描找的是已知舊數字，被丟掉的鍵根本沒有數字可掃。
+# 判定：金額 0 的儲存格「下一格」就是正的佔比 → ❌（用相鄰格，因穿透表同一列還有『目標』百分比欄，
+# 整列比對會把「0 TWD＋目標 3%」誤判，2026-09-23 自測案例抓到）。
+try:
+    import sys as _sys12
+    if str(R) not in _sys12.path:
+        _sys12.path.insert(0, str(R))
+    from check_report_zero_values import scan as _scan_zero
+    _zhits = _scan_zero(T, R)
+    if _zhits:
+        for _z in _zhits[:6]:
+            print(f"  ❌ {_z}")
+        fail.append(f"報告金額 0 但佔比 > 0（{len(_zhits)} 列）")
+    else:
+        print("  ✅ 無『金額 0 ＋ 佔比 > 0』矛盾列")
+except Exception as _e:
+    print(f"  ❌ 空值守門無法執行 {_e}")
+    fail.append("空值守門無法執行（check_report_zero_values）")
+
 print()
 print("=" * 46)
 print(f"閉環稽核結果：{'全部通過 ✅' if not fail else '❌ 有問題：' + str(fail)}")

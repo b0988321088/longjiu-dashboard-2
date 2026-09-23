@@ -5814,6 +5814,17 @@
       "user": "Laing",
       "idem_key": "hermes-1790087129",
       "summary": "09/22 核准：取價單一入口 market_price.py（前收=日線 timestamp 對齊、收盤後補 1m、stale 標示）＋daily_intel/hunter_intel/macro_regime 改用＋防復發閘門 check_yahoo_meta_usage.py＋9/20 週報補口徑來源；4 顆 commit 均經獨立 CIO 審查 APPROVE 後推送"
+    },
+    {
+      "timestamp": "2026-09-23T17:18:19",
+      "action": "修復",
+      "name": "INC-244 日報『科技股／非科技』金額欄 0 TWD（穿透子維度金額被重建流程丟掉）＋稽核第 12 類空值守門",
+      "source": "user",
+      "status": "已完成",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1790155099",
+      "summary": "09/23 使用者反映日報科技/非科技金額空白。根因：update_data ③ 重建 penetration 時只把兩個子維度補回 actual_pct，actual_twd 被整批丟掉，renderer 以 .get(key,0) 靜默印 0（calc_penetration 一直有回傳這兩個鍵）。修法：_PEN_KEYS 納入兩子維度（twd+pct 皆現算）、其餘延伸鍵改『現算優先、否則保留舊值』不靜默丟棄、run_daily/regenerate_report 各加缺鍵警示。數字：科技 3,991,270 TWD（15.3%／目標 15%／+0.3pp）、非科技 6,333,937（24.2%），合計＝美股桶 10,325,207。防再發：稽核新增第 12 類 check_report_zero_values.py（金額 0 的儲存格下一格不得是正佔比）——11 案例自測（含 80,100 TWD 等假陽性陷阱）＋把今日日報改回 0 TWD 的負向回歸全數符合預期，真檔 0 命中；22:40 closeout_check 自動跑，模組載入失敗列 fail（fail-closed）。程式 commit 25c7e926（update_data/renderguard）與本次稽核守門 commit 均經 CIO RECORD。"
     }
   ],
   "meta": {
