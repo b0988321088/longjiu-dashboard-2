@@ -1051,3 +1051,19 @@
 - 修法: (a) retirement_surplus regex 改繁體 → 該點首次真比較（snapshot 17,319 ↔ RULE +17,319，`calibrate_sources()` 仍通過）(b) `check()` 未比對的點一律印 `[CALIBRATE] ⚠️ 校準空轉（來源缺值／regex 未命中，未比對）：[...]`，不阻擋管線 (c) 安聯/第一金兩個 regex 刻意**不**改活：RULE 檔現值仍是 2026-07-11 截圖值（7,846,690／1,994,698），snapshot 現值 7,652,217／1,891,718，改活等於立即 fail-closed 擋掉日報管線 → 列入待對帳項
 - 教訓: ①regex 型校準必須有「命中測試」，否則打錯一個字就等於關掉這道檢查，且回報仍是綠色 ②fail-open 的 None 必須留痕（WARN）——「未比對」不可與「通過」同義 ③要把死 pattern 改活前先確認兩側真值已對齊，否則等同自建煞車（fail-closed 擋整條管線）
 - 狀態: ⏳ 部分修（retirement_surplus 已活；安聯/第一金待 RULE 檔數字對帳後才改活）
+
+## INC-248 ｜ 2026-09-24 ｜ 配息分類四份抄本漂移（8 月 58 元／7 月 22,459 元）
+
+**現象**：同一條「ETF／保單／基金」分類規則在 build_dashboard、build_investment_performance、run_daily、dividend_tracker 各有一份實作，逐次修正只改到其中一兩份 → 兩個已落地的口徑事故：①8 月保單多 58 元（『基金配息 安聯收益AMg7』27＋『安聯收益AM穩定月收』31 被算進保單）②7 月校正檔「股票 22,459」是 7 月動態月報『ETF＋基金配息 22,459』的合計值，與另列的基金 11,719 重複計數。
+
+**根因**：分類規則沒有單一正典（copy-paste drift）；run_daily 舊序把「安聯」判斷放最前面、並以「股息／股利」字樣當 ETF 判準（基金名「國泰台灣高股息B基金配息」誤歸 ETF 桶）。
+
+**處置**
+- 新增正典 `dividend_caliber.py`（bucket_of → etf/ins/fund/oneoff；classify_mb_memo 供 Moneybook 原始明細判 ETF 代碼、排除「連結」基金），四檔全部改為委派、刪除四份抄本。
+- 保守底線 fallback 硬化 3 處（asset_diff_monitor extract_snapshot 兩分支、asset_moat_monitor、build_dashboard 被動收入條）：缺值一律 WARN 以 0 計，禁止靜默沿用當月實收／total。
+- 校正檔對齊：7 月 ETF 10,740／基金 979（保單 130,930 不動，使用者核准 R1）→ 7 月配息 142,649、淨 +100,649；8 月保單 102,469／基金 1,512，總額 138,627 不變。
+- 守門 `check_dividend_caliber.py` 63→66 項（四檔同桶 probe、委派原始碼檢查、全庫「保守鍵 or 退路」掃描、校正檔機械重算）。
+
+**驗證**：唯讀驗證器 24/24 PASS（負向對照釘 parent 710b6d62：舊 run_daily 迴圈 8 月保單 102,527 vs 新 102,469、ETF 34,716 vs 34,646、基金 1,384 vs 1,512）、守門 66/66 PASS、41 個歷史鍵分類零變動。commit 849f9de8（CIO-DeepSeek-Flash APPROVE／tree ad833eb4）＋資料 commit 81497075。
+
+**遺留（另案）**：dividend_tracker 仍空轉（讀 moneybook/ 但最新明細在 tmp_mb/、日期比對用 YYYY-MM 而檔案是 YYYY/MM/DD），且 `if records:` 分支會把當月實收覆蓋成只有 ETF/基金的部分金額 → 未接線，待另案定案再啟用。
