@@ -61,9 +61,15 @@ def make_volatility_report(theme: str = "dark") -> str:
     today = date.today().isoformat()
     cur = R.get(today)
     if not cur:
-        return ("<p style='color:#64748b;font-size:14px'>⚠️ 今日無資產快照，無法計算波動</p>"
-                if theme == "light" else
-                "<p class='text-xs text-slate-400'>⚠️ 今日無資產快照，無法計算波動</p>")
+        # fallback: 用最近一筆資料的日期
+        all_dates = sorted([k for k in R.keys() if k <= today])
+        if all_dates:
+            today = all_dates[-1]
+            cur = R.get(today)
+        if not cur:
+            return ("<p style='color:#64748b;font-size:14px'>⚠️ 無歷史資產差異資料</p>"
+                    if theme == "light" else
+                    "<p class='text-xs text-slate-400'>⚠️ 無歷史資產差異資料</p>")
 
     periods = _periods(R, today)
     try:
