@@ -46,6 +46,11 @@ sc_level = (_sch.get("驗收等級", {}) or {}).get("等級", "") or "（待真�
 sc_level_cls = "green" if sc_level.startswith("A級") else ("amber" if sc_level.startswith("B級") else "red")
 goal_expense = (_sc_t.get("每月必要生活費", {}) or {}).get("goal", "—")
 goal_passive = (_sc_t.get("被動現金流", {}) or {}).get("goal", "—")
+# 成對顯示（2026-09-23）：保守底線＝下緣（風控判斷用）、當月實收＝現況；兩者必須同時出現
+div_actual = float(snap.get("dividend_month_actual") or snap.get("monthly_dividend_total") or 0)
+fire_cov_actual = (div_actual + rent) / expense * 100 if expense else 0.0
+actual_band = "非常安全" if fire_cov_actual >= 150 else ("基本安全" if fire_cov_actual >= 120 else "不能完全依賴資產")
+actual_band_cls = "green" if fire_cov_actual >= 150 else ("amber" if fire_cov_actual >= 120 else "red")
 sc_month = (_sch.get("驗收等級", {}) or {}).get("月份", "")
 _rec = ((_sch.get("記錄", {}) or {}).get(sc_month, {}) or {}) if sc_month else {}
 career_income = _rec.get("第二職涯收入", 0) or 0
@@ -141,19 +146,21 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <div class="card"><h2>🧪 留停壓力測試（2027/2 留停 = 財務系統驗證，非單純職涯測試）</h2>
 <table>
 <tr><th>情境</th><th>假設</th><th>月被動</th><th>覆蓋率</th><th>判定</th></tr>
-<tr><td>🟢 正常</td><td>配息/房租/支出正常</td><td>{fire_income:,}</td><td>{fire_cov:.1f}%</td><td class="{cov_band_cls}">{'🟢' if fire_cov>=150 else ('🟡' if fire_cov>=120 else '🔴')} {cov_band}</td></tr>
+<tr><td>🟢 正常</td><td>配息/房租/支出正常（保守底線）</td><td>{fire_income:,}</td><td>{fire_cov:.1f}%</td><td class="{cov_band_cls}">{'🟢' if fire_cov>=150 else ('🟡' if fire_cov>=120 else '🔴')} {cov_band}</td></tr>
+<tr><td>🟢 正常（當月實收）</td><td>配息實收 {div_actual:,} ＋ 租金 {rent:,}</td><td>{div_actual + rent:,.0f}</td><td>{fire_cov_actual:.1f}%</td><td class="{actual_band_cls}">{'🟢' if fire_cov_actual>=150 else ('🟡' if fire_cov_actual>=120 else '🔴')} {actual_band}</td></tr>
 <tr><td>🟡 壓力</td><td>配息 −20% ＋ 洲際W 空置</td><td>{div_c*0.8 + rent - 33000:,.0f}</td><td class="red">{stress_cov:.1f}%</td><td class="red">🔴 &lt;100% → 靠現金水庫</td></tr>
 <tr><td>🔴 極端</td><td>配息 −30% ＋ 一間無租 ＋ 大型支出 30萬</td><td>{div_c*0.7 + rent - 33000:,.0f}</td><td class="red">{((div_c*0.7 + rent - 33000)/expense*100):.1f}%</td><td class="red">🔴 缺口 {expense - (div_c*0.7 + rent - 33000):,.0f}/月 → 現金水庫撐 {max(1, round((cash-300000)/(expense-(div_c*0.7+rent-33000))))} 個月</td></tr>
 </table>
 <p class="callout">覆蓋率三層：🟢 &gt;150% 非常安全｜🟡 120-150% 基本安全｜🔴 &lt;120% 不能完全依賴資產（<b>不含一次性資本利得</b>）。<br>
-現況 <b class="{cov_band_cls}">{fire_cov:.1f}% = {cov_band}</b>；壓力情境 {stress_cov:.1f}% 未破 100% — 這是留停前要改善的重點（降負債成本/提高房租淨現金流）。<br>
+現況 <b class="{cov_band_cls}">{fire_cov:.1f}% = {cov_band}</b>（保守底線）｜當月實收 <b class="{actual_band_cls}">{fire_cov_actual:.1f}% = {actual_band}</b>；壓力情境 {stress_cov:.1f}% 未破 100% — 這是留停前要改善的重點（降負債成本/提高房租淨現金流）。<br>
 2027/8-9 雙軌判斷：財務穩定 × 職涯成立 → 第二職涯；財務穩但職涯觀望 → 延長測試；任一不成立 → 回台電（保留台電）。</p></div>
 
 <div class="card"><h2>📋 留停驗收表（每月真值日自動更新 · 3個月趨勢）</h2>
 <table>
 <tr><th>指標</th><th>{sc_month or '當月'} 基準</th><th>2027/2 目標</th></tr>
 <tr><td>每月必要生活費</td><td>{expense:,}</td><td>{goal_expense}</td></tr>
-<tr><td>被動現金流</td><td>{fire_income:,}</td><td>{goal_passive}</td></tr>
+<tr><td>被動現金流（保守底線·判準）</td><td>{fire_income:,}（覆蓋 {fire_cov:.1f}%）</td><td>{goal_passive}</td></tr>
+<tr><td>被動現金流（當月實收）</td><td>{div_actual + rent:,.0f}（配息 {div_actual:,}＋租金 {rent:,}，覆蓋 {fire_cov_actual:.1f}%）</td><td>觀察（勿與判準混用）</td></tr>
 <tr><td>生活費覆蓋率</td><td class="{('red' if fire_cov<150 else 'green')}">{fire_cov:.1f}%</td><td>≥150%</td></tr>
 <tr><td>壓力情境覆蓋率</td><td class="red">{stress_cov:.1f}%</td><td>≥100%</td></tr>
 <tr><td>房租淨現金流</td><td>{rent - 26000:,}</td><td>持續改善</td></tr>

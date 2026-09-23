@@ -32,7 +32,11 @@ def main():
     _pi = snap.get("passive_income", {}) or {}
     _passive = _pi.get("total_conservative", 183333)
     _exp = snap.get("monthly_expense", 162781)
-    _cov = round(_passive / _exp * 100) if _exp else 0
+    _cov = (_passive / _exp * 100) if _exp else 0.0
+    # 成對顯示（2026-09-23）：保守底線是下緣、當月實收是現況，兩者必須同時出現
+    _div_act = float(snap.get("dividend_month_actual") or snap.get("monthly_dividend_total") or 0)
+    _rent = float(_pi.get("rent_monthly", 0) or 0)
+    _cov_act = ((_div_act + _rent) / _exp * 100) if (_exp and _div_act) else 0.0
     us30y = st.get("last_rate")
     mode = "防禦（A）" if st.get("mode") == "A" else "布局（B）" if st.get("mode") == "B" else "未知"
     us30y_txt = f"{us30y:.2f}%" if us30y else "—"
@@ -147,7 +151,7 @@ def main():
     <tr><td>② 匯率</td><td>USD/TWD 基準 32.18</td><td>🟢 波動監控中</td></tr>
     <tr><td>③ PI 資格</td><td>已開啟（snapshot 待更新）</td><td>🟡 撥款後送件</td></tr>
     <tr><td>④ LTV</td><td>未質押</td><td>🟢 0%</td></tr>
-    <tr><td>⑤ 現金流</td><td>被動 {_passive:,}/月 vs 開支 {_exp:,}</td><td>🟢 覆蓋 {_cov}%</td></tr>
+    <tr><td>⑤ 現金流</td><td>被動 {_passive:,}/月（保守底線；當月實收配息 {_div_act:,.0f}）vs 開支 {_exp:,}</td><td>🟢 覆蓋 {_cov:.1f}%（保守）｜實收 {_cov_act:.1f}%</td></tr>
     <tr><td>2b 日圓</td><td>USD/JPY 監控（≥155🟢/150-155🟡/&lt;150🚨）</td><td>— 待抓取</td></tr>
     </tbody></table>"""
 
