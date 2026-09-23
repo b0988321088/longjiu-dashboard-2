@@ -1032,3 +1032,12 @@
 - 驗證: 真值三條放行、假值三條（999,999／161,819 差 1 元／1,618,818）仍被擋；守門實跑 exit=0 ✅；驗證器 19/19 ALL_PASS
 - 教訓: 守門的合法值集合必須跟上「派生口徑」；且寫驗證器斷言前先確認工具的比對合約（金額只掃千分位）——否則會自己造出假缺陷
 - 狀態: ✅ 已修（2026-09-23）
+
+## INCIDENT push_window_blocked_evening_cron (process)
+- 首次發生: 2026-09-23 22:00
+- 現象: 22:00 晚報 cron 回報 completed 但 `c7060e8a auto: 晚報校準 2026-09-23`（純報表 index.html）未落紀錄、未上遠端；22:02 人工推送時閘門擋下該 commit（無審查紀錄、也無 [cioreviewed]）
+- 根因: 送審窗口（程式 commit `bf7b9330` commit 完成 → CIO RECORD 落地）期間，晚報自動化推送路徑把該未審程式 commit 納入範圍 → auto_record/auto_push fail-closed 拒推（INC-229 同型），連帶把同一範圍的資料 commit 卡成本地未推
+- 修法: 人工補 `python auto_record.py --commit c7060e8a --script evening_sync.py`（5 項 deterministic 檢查通過）→ 4 顆 commit 全數通過閘門並上線
+- 驗證: 收工稽核 13 類全過「全部通過 ✅」；遠端 clean-main == 本機 HEAD（4debd664）；未推差距 0
+- 教訓: ①程式 commit 與 RECORD 落地之間的窗口，是自動化推送的必擋區——若已知有推送時點（每小時整點／22:00／07:00）臨近，應先完成送審再往下做別的事 ②閘門 fail-closed 是設計而非故障，被擋的資料 commit 可用 auto_record 回補（勿改訊息重推）
+- 狀態: ✅ 已修（2026-09-23）
