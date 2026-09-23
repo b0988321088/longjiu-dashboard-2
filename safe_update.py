@@ -21,18 +21,22 @@ os.chdir(BASE)
 # === 合理範圍檢查 ===
 RANGES = {
     'allianz_combined': (7_000_000, 8_500_000),    # 安聯A+B
-    'allianz_a_value': (4_500_000, 5_500_000),      # 安聯A
-    'allianz_b_value': (2_200_000, 3_200_000),      # 安聯B
+    # 2026-09-23 INC-242b：原鍵名 allianz_a_value／allianz_b_value 是 legacy 帳面鍵
+    # （無報表讀取、亦不在 asset_sync.SYNONYM_GROUPS）→ 走這扇門更新「保單A/B」會被靜默吸收
+    # （5 個 canonical 鍵全部停在舊值）。改指向報表實際讀取的 canonical 鍵。
+    'allianz_policy_a_value': (4_500_000, 5_500_000),  # 安聯A（canonical：allianz_policy_a 群組）
+    'allianz_policy_b_value': (2_200_000, 3_200_000),  # 安聯B（canonical：allianz_policy_b 群組）
     'firstjin_fl65_current_value': (1_800_000, 2_200_000),  # 第一金FA81聯博
     'securities_total_market_value': (2_000_000, 3_000_000),  # 證券
-    'fund_market_value': (600_000, 900_000),         # 基金
+    # 2026-09-23 INC-242b：原 (600_000, 900_000) 是 8 月前的基金總值區間 → 現值 12.7M 會被判超範圍擋下
+    'fund_market_value': (11_000_000, 14_000_000),   # 基金（國泰直購＋鉅亨）
     'real_liquid_assets': (2_500_000, 4_500_000),    # 現金
 }
 
 LABELS = {
     'allianz_combined': '安聯保單A+B',
-    'allianz_a_value': '保單A',
-    'allianz_b_value': '保單B',
+    'allianz_policy_a_value': '保單A',
+    'allianz_policy_b_value': '保單B',
     'firstjin_fl65_current_value': '第一金FA81聯博',
     'securities_total_market_value': '證券市值',
     'fund_market_value': '基金市值',
@@ -187,6 +191,15 @@ def do_apply():
     for key, c in changes.items():
         snap[key] = c['new']
         print(f"  ✅ {c['label']}:  {c['new']:,}")
+
+    # 2026-09-23 INC-242b：套用後一律同步同義鍵群組
+    # （避免只改到家族裡的一鍵、報表實際讀的那一鍵停在舊值＝INC-242 的失效模式）
+    try:
+        from asset_sync import sync_snapshot_keys
+        snap = sync_snapshot_keys(snap)
+        print("  ✅ 同義鍵群組已同步（asset_sync.sync_snapshot_keys）")
+    except Exception as _sym_err:
+        print(f"  ⚠️ 同義鍵同步失敗：{_sym_err}（請手動跑 asset_sync.py 驗證）")
 
     # 更新日期
     today = datetime.date.today().strftime('%Y-%m-%d')

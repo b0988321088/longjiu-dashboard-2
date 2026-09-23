@@ -889,6 +889,15 @@
 - **症狀**：9/23 更新安聯保單（A 4,986,448／B 2,665,769）後，差異分析仍印「安聯保單A現值 4,986,867／B 2,670,650」（9/22 舊值），但同一份報表的「安聯A+B合計」已是 7,652,217 → 同一份報表兩個口徑。
 - **根因**：`asset_sync.SYNONYM_GROUPS` 只登錄 `allianz_combined`；A／B 各自有 5 個同義鍵（`allianz_a`、`allianz_a_funds`、`allianz_a_current_value`、`allianz_policy_a_value`、`policy_a_total`），其中後 2 個**不在任何群組** → 任何更新只同步 3 個，另 2 個永遠停在初寫值；`verify_synonyms` 也因為沒登錄而驗不到。
 - **修法**：新增 `allianz_policy_a`／`allianz_policy_b` 兩個群組（各 5 鍵）；`snapshot` 4 個殘留鍵（`allianz_policy_a_value`／`policy_a_total`／`allianz_policy_b_value`／`policy_b_total`）一併修正。
-- **驗證**：漂移注入（把 2 鍵設 1）→ `verify_synonyms` 抓到 ✅；`sync_snapshot_keys` 全部回 4,986,448 ✅；真實 snapshot `verify_synonyms` 全一致 ✅；另掃全樹舊值（4,986,867／2,670,650／11,877,653／855,673／2,999,380／9,549,235／7,657,517）= 0 筆。
+- **驗證**：漂移注入（把 2 鍵設 1）→ `verify_synonyms` 抓到 ✅；`sync_snapshot_keys` 全部回 4,986,448 ✅；真實 snapshot `verify_synonyms` 全一致 ✅；另掃 **snapshot.json** 舊值（4,986,867／2,670,650／11,877,653／855,673／2,999,380／9,549,235／7,657,517）= 0 筆（**限 snapshot.json**；其他衍生檔如 notion_shared_context.md 需重生 loader 才自癒，勿擴大解釋）。
 - **教訓**：新增任何資產明細鍵時，必須同時登錄 `SYNONYM_GROUPS`，否則「改了主鍵、明細報表讀舊鍵」的鬼故事會一再發生（同日 INC-241b 為同類）。
 
+## INC-242b｜safe_update「保單A/B」登錄在 legacy 鍵（同型的另一扇門）＋基金範圍過期 (2026-09-23)
+
+- **來源**：CIO 對 5d4e5e04 的 SHOULD 項（唯讀審查發現）＋本輪自查。
+- **問題一（同型失效模式換門）**：`safe_update.py` 的 `RANGES`／`LABELS` 把「保單A／保單B」登錄在 **legacy 帳面鍵** `allianz_a_value`／`allianz_b_value`（無任何報表讀取、也不在 `SYNONYM_GROUPS`）→ 走這扇門更新保單 A/B 時，寫入被**靜默吸收**，canonical 5 鍵仍停舊值（與 INC-242 完全同一失效模式，只是入口不同）。
+- **問題二（範圍過期）**：`fund_market_value` 合理範圍仍是 `(600,000, 900,000)`（8 月前口徑）→ 現值 12,731,797 會直接被判超範圍**擋下**，正確的基金更新反而進不來。
+- **修法**：①`RANGES`／`LABELS` 鍵名改指向 canonical `allianz_policy_a_value`／`allianz_policy_b_value`（已於 INC-242 登錄群組）②基金範圍改 `(11,000,000, 14,000,000)` ③`do_apply` 套用後一律呼叫 `asset_sync.sync_snapshot_keys(snap)` 同步同義家族（一般性補洞，失敗只警告不中斷）。
+- **驗證（實跑）**：A) `--plan allianz_policy_a_value=4,986,448` → 「無變更」（鍵存在、不再落 legacy、不再警告「不在 snapshot」）；B) `--plan fund_market_value=12,731,797` → 「無變更」（舊版必被範圍擋）；C) `--plan allianz_policy_a_value=9,999,999` → `❌ 保單A：9,999,999 超出合理範圍 [4,500,000 ~ 5,500,000]`（fail-closed 保留）。
+- **附帶**：`notion_shared_context.md` 重生（7 個舊值 → 0 筆）；INC-242 條目的「全樹 0 筆」宣稱限縮為 snapshot.json；新工具 `sync_securities_close.py`（14:00 收盤覆蓋）納入版控。
+- **待辦（CIO NICE 項，暫緩）**：未登錄同義鍵的機械閘門——純命名樣式啟發式易假陽性（合法非同義鍵如 `securities_market_value`、`moneybook_total`、`allianz_a_value` legacy 家族），先由「群組登錄＋safe_update 同步」處理，等有明確真值優先序再上閘門。
