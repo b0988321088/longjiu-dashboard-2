@@ -572,7 +572,6 @@ def buffett_advice(history: dict, snap: dict) -> str:
     debt_ratio = ex["total_liabilities"] / (ex["total_assets"] + _re_val) * 100 if (ex["total_assets"] + _re_val) else 0
     debt_ratio_flow = ex["total_liabilities"] / ex["total_assets"] * 100 if ex["total_assets"] else 0
     monthly_div = ex["fund_dividend_monthly"]
-    monthly_div_conservative = ex.get("fund_dividend_conservative", monthly_div)
     monthly_rent = ex["rent_monthly"]  # 歷史欄位（房租月收系列），保持原值不動
     # 2026-09-23 INC-241：原本拿 rent_monthly_actual（＝當月已收 54,000）當「目標」，
     # 條件 `received >= monthly_rent` 必然成立 → 只收了 54,000 也宣告「全數實收」。
@@ -602,9 +601,18 @@ def buffett_advice(history: dict, snap: dict) -> str:
     # 保守底線＝配息基本值（passive_income.fund_dividend_conservative）＋房租常態應收；
     # 當月實收＝配息當月實收（ex.fund_dividend_monthly）＋房租當月已收。
     # 站點：原本只印一個數（且拿當月實收配息標成「保守配息」）→ 124.1% 被誤讀成保守口徑。
-    div_conservative = float((snap.get("passive_income", {}) or {}).get("fund_dividend_conservative")
-                             or ex.get("fund_dividend_conservative") or 0) or monthly_div_conservative
-    div_actual = float(ex.get("fund_dividend_monthly") or monthly_div_conservative or 0)
+    # 缺值一律顯式警示並以 0 計：extract_snapshot 的 fund_dividend_conservative／monthly_rent 等同
+    # 當月實收／當月已收，若靜默沿用會讓「保守底線」悄悄變成實收口徑（本類事故根因）。
+    _pi = snap.get("passive_income", {}) or {}
+    _divc_raw = _pi.get("fund_dividend_conservative")
+    if not _divc_raw:
+        print("[WARN] passive_income.fund_dividend_conservative 缺值：保守底線配息以 0 計（不以當月實收冒充）")
+    div_conservative = float(_divc_raw or 0)
+    div_actual = float(ex.get("fund_dividend_monthly") or 0)
+    _rt_raw = ex.get("rent_target") or snap.get("rent_monthly_total")
+    if not _rt_raw:
+        print("[WARN] rent_monthly_total 缺值：保守底線房租以 0 計（不以當月已收冒充）")
+    monthly_rent_target = float(_rt_raw or 0)   # 缺值→0 並已 WARN，不以當月已收冒充常態
     passive_conservative = div_conservative + monthly_rent_target
     passive_actual = div_actual + monthly_rent_received
     passive_coverage = passive_conservative / monthly_exp * 100 if monthly_exp else 0        # 判準＝保守底線
