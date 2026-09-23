@@ -271,6 +271,10 @@ def extract_snapshot(snap: dict) -> dict:
                     ),
                     "monthly_expense": float(snap.get("monthly_expense", 162781)),
                     "rent_monthly": float(snap.get("rent_monthly_actual", 80_100)),
+                    # 2026-09-23 INC-241：常態應收／當月待收／當月應收明細（單一真值）
+                    "rent_target": float(snap.get("rent_monthly_total") or 80_100),
+                    "rent_pending": float(snap.get("rent_monthly_gap") or 0),
+                    "rent_receivable_by_month": snap.get("rent_receivable_by_month", {}),
                     "rent_received_records": snap.get("rent_received_records", {}),
                     "cathay_refinance": float(snap.get("cathay_refinance_amount") or 0),
                     "runway_months": float(snap.get("runway_months", 12)),
@@ -344,6 +348,10 @@ def extract_snapshot(snap: dict) -> dict:
         "monthly_income": _truth(snap, "monthly_income"),
         "monthly_expense": _truth(snap, "monthly_expense", "monthly_expense_mb"),
         "rent_monthly": float(snap.get("rent_monthly_actual", 80100)),
+        # 2026-09-23 INC-241：常態應收／當月待收／當月應收明細（單一真值）
+        "rent_target": float(snap.get("rent_monthly_total") or 80100),
+        "rent_pending": float(snap.get("rent_monthly_gap") or 0),
+        "rent_receivable_by_month": snap.get("rent_receivable_by_month", {}),
         "rent_received_records": snap.get("rent_received_records", {}),
         "cathay_refinance": float(snap.get("cathay_refinance_amount") or 0),
         "runway_months": float(snap.get("runway_months") or (snap.get("real_liquid_assets", 0) / (snap.get("monthly_expense", 1) or 1))),
@@ -565,12 +573,30 @@ def buffett_advice(history: dict, snap: dict) -> str:
     debt_ratio_flow = ex["total_liabilities"] / ex["total_assets"] * 100 if ex["total_assets"] else 0
     monthly_div = ex["fund_dividend_monthly"]
     monthly_div_conservative = ex.get("fund_dividend_conservative", monthly_div)
-    monthly_rent = ex["rent_monthly"]  # 應收固定 80,100
+    monthly_rent = ex["rent_monthly"]  # 歷史欄位（房租月收系列），保持原值不動
+    # 2026-09-23 INC-241：原本拿 rent_monthly_actual（＝當月已收 54,000）當「目標」，
+    # 條件 `received >= monthly_rent` 必然成立 → 只收了 54,000 也宣告「全數實收」。
+    # 現在：常態應收（rent_target）與當月待收（rent_pending＝snapshot.rent_monthly_gap）分開，
+    # 「全數實收」只在待收為 0 時才印，並列出未收項目（當月應收明細 − 已收）。
+    monthly_rent_target = ex.get("rent_target") or monthly_rent
     # 動態追蹤當月已收房租（rent_received_records）
     _rent_recv = ex.get("rent_received_records", {}) or {}
     _m = date.today().strftime("%Y-%m")
     monthly_rent_received = sum(v for d, items in _rent_recv.items() if str(d).startswith(_m) for v in items.values())
-    monthly_rent_pending = max(0, monthly_rent - monthly_rent_received)
+    # 2026-09-23 INC-241：逐項已收（供列出未收項目）＋當月待收讀 snapshot 真值（不自行用常態相減）
+    _rent_recv_month: dict = {}
+    for _d, _items in _rent_recv.items():
+        if not str(_d).startswith(_m):
+            continue
+        if isinstance(_items, dict):
+            for _k, _v in _items.items():
+                _rent_recv_month[_k] = _rent_recv_month.get(_k, 0) + (_v or 0)
+        elif isinstance(_items, (int, float)):
+            _rent_recv_month["房租"] = _rent_recv_month.get("房租", 0) + _items
+    monthly_rent_pending = ex.get("rent_pending")
+    if monthly_rent_pending is None:
+        monthly_rent_pending = max(0, monthly_rent_target - monthly_rent_received)
+    monthly_rent_pending = max(0, monthly_rent_pending)
     monthly_exp = ex["monthly_expense"]
     passive_total = monthly_div_conservative + monthly_rent_received
     passive_coverage = passive_total / monthly_exp * 100 if monthly_exp else 0
@@ -593,12 +619,16 @@ def buffett_advice(history: dict, snap: dict) -> str:
         _detail = "+".join(_parts)
     else:
         _detail = "大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100"
-    if monthly_rent_received > 0 and monthly_rent_received < monthly_rent:
-        rent_line = f"房租月收 {_fmt(monthly_rent_received)} / 目標 {_fmt(monthly_rent)}（已收 {_fmt(monthly_rent_received)}，待收 {_fmt(monthly_rent_pending)}）"
-    elif monthly_rent_received >= monthly_rent:
-        rent_line = f"房租月收 {_fmt(monthly_rent_received)} / 目標 {_fmt(monthly_rent)}（全數實收：{_detail} ✅）"
+    _rrm = (ex.get("rent_receivable_by_month") or {}).get(_m) or snap.get("rent_breakdown", {}) or {}
+    _unpaid = "、".join(f"{_k}{int(_v - _rent_recv_month.get(_k, 0)):,}"
+                        for _k, _v in _rrm.items() if (_v - _rent_recv_month.get(_k, 0)) > 0)
+    if monthly_rent_received > 0 and monthly_rent_pending > 0:
+        rent_line = (f"房租月收 {_fmt(monthly_rent_received)} / 常態應收 {_fmt(monthly_rent_target)}"
+                     f"（待收 {_fmt(monthly_rent_pending)}{'：' + _unpaid if _unpaid else ''}）")
+    elif monthly_rent_received > 0:
+        rent_line = f"房租月收 {_fmt(monthly_rent_received)} / 常態應收 {_fmt(monthly_rent_target)}（全數實收：{_detail} ✅）"
     else:
-        rent_line = f"房租月收 {_fmt(monthly_rent_received)} / 目標 {_fmt(monthly_rent)}（尚未入帳：{_detail}）"
+        rent_line = f"房租月收 0 / 常態應收 {_fmt(monthly_rent_target)}（尚未入帳：{_detail}）"
 
     lines = [
         "🧠 在家巴菲特",

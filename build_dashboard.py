@@ -582,7 +582,11 @@ def main():
         _pend2.append(("台電薪水", _sal_pend, _sal_lbl))
     if _gf_inc <= 0:
         _pend2.append(("女友還款", 6000, "9/5 入帳"))
-    for _k4, _v4 in (snap.get("rent_breakdown", {}) or {}).items():
+    # 當月應收明細（2026-09-23 INC-241）：逐項待收必須用「當月應收」而非常態 rent_breakdown，
+    # 否則一次性折讓（2026-09 洲際W 維修費 −3,000）會變成幽靈待收（26,100 vs 真值 23,100）。
+    # 真值來源：snapshot.rent_receivable_by_month[本月]；缺本月 → fallback 常態 rent_breakdown。
+    _rrb = (snap.get("rent_receivable_by_month", {}) or {}).get(_today_m) or (snap.get("rent_breakdown", {}) or {})
+    for _k4, _v4 in _rrb.items():
         _g4 = _rent_recv.get(_k4, 0)
         if _g4 < _v4:
             _pend2.append((_k4 + "房租", _v4 - _g4, ""))

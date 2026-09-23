@@ -56,7 +56,10 @@ def main():
         if str(_k).startswith(ym):
             _gf += _v.get("amount", 0) if isinstance(_v, dict) else (_v if isinstance(_v, (int, float)) else 0)
     _expense = snap.get("monthly_expense", 162781) or 162781
-    _rent_exp = snap.get("rent_monthly_total", 80100) or 80100
+    # 2026-09-23 INC-241：房租「當月應收」＝ rent_receivable_by_month[當月]（含一次性調整，2026-09 洲際W 折讓 3,000），
+    # 缺本月才退回常態 rent_monthly_total；待收 = 當月應收 − 當月已收（原用常態相減 → 幽靈待收 3,000）
+    _rrb_m = (snap.get("rent_receivable_by_month", {}) or {}).get(ym) or {}
+    _rent_exp = sum(_rrb_m.values()) if _rrb_m else (snap.get("rent_monthly_total", 80100) or 80100)
     _sal_exp, _div_exp = _sal, int(snap.get("dividend_month_expected") or 0)
     _exp_total = _sal_exp + _rent_exp + _div_exp + 6000
     _act_total = _sal + _rent_got + _div_act + _gf

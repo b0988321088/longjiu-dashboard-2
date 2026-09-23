@@ -741,9 +741,11 @@ __WEEK_DONE__
       for(var k3 in _rrecv){ if(_rrecv[k3]>0) items.push([k3+'房租', _rrecv[k3]]); }
       if(_gf>0) items.push(['女友還款', _gf]);
       var pend = [];
-      if(_salary<=0) pend.push(['台電薪水', 39727, '9/6 入帳']);
+      if(_salary<=0) pend.push(['台電薪水', Number(snap.monthly_salary||0), snap.monthly_salary? '本月入帳' : '金額待確認']);
       if(_gf<=0) pend.push(['女友還款', 6000, '9/5 入帳']);
-      var rb = snap.rent_breakdown||{};
+      /* 2026-09-23 INC-241：逐項待收用「當月應收」明細，缺本月才退回常態 rent_breakdown
+         （原本只用常態 → 一次性折讓會變幽靈待收） */
+      var rb = (snap.rent_receivable_by_month||{})[_ym2] || snap.rent_breakdown||{};
       for(var k4 in rb){ var g4 = _rrecv[k4]||0; if(g4 < rb[k4]) pend.push([k4+'房租', rb[k4]-g4, '']); }
       var fjExp = (snap.firstjin_dividend_expected||{})[_ym2]||{};
       if(fjExp.amount>0 && !pend.some(function(p){return p[0].indexOf('第一金')>=0;})) pend.push(['第一金 FA81 配息', fjExp.amount, (fjExp.note||'').slice(0,40)]);

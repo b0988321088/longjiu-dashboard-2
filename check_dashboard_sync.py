@@ -183,6 +183,27 @@ try:
 except Exception as _e:
     fails.append(f"連結可達性檢查無法執行: {_e}")
 
+# 14. 房租待收口徑（2026-09-23 INC-241）
+#     實踩：逐項待收用「常態 rent_breakdown」比對實收 → 一次性折讓（2026-09 洲際W 維修費 3,000）
+#     變成幽靈待收 26,100（真值 23,100），差異分析還宣告「全數實收」（當月只收到 54,000）。
+#     閘門：儀表板 ⏳ 待收清單內「房租」類項目的合計必須 == snapshot.rent_monthly_gap；
+#     且 gap>0 時不得出現「全數實收」字樣。
+try:
+    _snap14 = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+    _gap14 = float(_snap14.get("rent_monthly_gap") or 0)
+    _pend14 = 0.0
+    for _m14 in re.finditer(
+            r"⏳ 待收</span><span class=\"text-slate-300\">([^<]+)</span></div><span[^>]*>([\d,]+) TWD", html):
+        if "房租" in _m14.group(1):
+            _pend14 += float(_m14.group(2).replace(",", ""))
+    if abs(_pend14 - _gap14) > 0.5:
+        fails.append(f"房租待收合計 {_pend14:,.0f} ≠ snapshot.rent_monthly_gap {_gap14:,.0f}"
+                     f"（逐項應收須用 rent_receivable_by_month 當月口徑，勿用常態 rent_breakdown）")
+    if _gap14 > 0 and "全數實收" in html:
+        fails.append("房租尚有未收（rent_monthly_gap>0）卻出現「全數實收」字樣")
+except Exception as _e14:
+    fails.append(f"房租待收口徑檢查無法執行: {_e14}")
+
 # 13. --post-push：推送後對「線上 Pages」逐連結驗 200（2026-09-23 INC-240 新增）
 #     為什麼要拆出來：第 12 條的「未進版控」只能判斷 commit 前的狀態，而 commit 前今天的檔必然
 #     還沒進版控 → 晨間班每天自我誤報。真風險（連結指向沒上線／被 push 漏掉的檔 ＝ 線上 404）
