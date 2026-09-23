@@ -1014,3 +1014,12 @@
 - 首次發生: 2026-09-23 18:25:00
 - 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
 - 狀態: ⏳ 待處理 (總計 1 次)
+
+## INCIDENT sabbatical_stale_caliber (data_consistency)
+- 首次發生: 2026-09-23 21:43（建置 Coast FI 引擎時交叉比對抓到）
+- 錯誤: 留停驗收表 `snapshot.sabbatical_checklist.記錄['2026-09']` 仍以 9/18 已宣告作廢的配息值 130,930 計算 → 生活費覆蓋率 129.6%、壓力情境 93.3%、被動現金流 211,030、投資現金流 130,930、水庫撐 20.6 月；且 B級驗收等級是從這組膨脹數字判出來的（真值 110.6%／78.1% → 應為 C級）
+- 根因: 9/18 只校正了真值鍵 `passive_income.fund_dividend_conservative`（130,930→100,000），沒有回頭重算「已落地的當月記錄」；驗收表只在下一次真值日才重算，形成「事實已改、記錄未改」
+- 修法: 以 9/5 定版口徑重跑 `sabbatical_checklist_update.py 2026-09`；並修 `build_retirement_plan.py` 9 處寫死舊值（129.6%／93.3%／差 33,142／B級／「2026-09 基準」標籤／目標 162,781／244,172／第二職涯收入·工時 0）改為全動態派生
+- 驗證: snapshot diff 僅 `sabbatical_checklist` 一鍵（38 行、無格式 churn）；`retirement_plan_2026-09-23.html` 舊值 grep = 0；C級 正確渲染
+- 教訓: ①校正真值鍵後必須回頭重算所有「已落地的派生記錄」②報告模板禁寫當期數字（一律動態），否則校正只到 JSON 為止 ③下限口徑（保守基本值）要被明確標示為「下緣」，不可當現況 headline——同源誤讀已發生在 PCCR（見 coast-fi-exit-engine 技能）
+- 狀態: ✅ 已修（2026-09-23）

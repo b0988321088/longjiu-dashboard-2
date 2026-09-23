@@ -4423,22 +4423,22 @@
   "記錄": {
    "2026-09": {
     "每月必要生活費": 162781,
-    "被動現金流": 211030,
+    "被動現金流": 180100,
     "房租淨現金流": 54100,
-    "投資現金流": 130930,
-    "現金水位": 794992,
+    "投資現金流": 100000,
+    "現金水位": 861818,
     "每月負債成本": 16600,
-    "生活費覆蓋率": 129.6,
-    "壓力情境覆蓋率": 93.3,
+    "生活費覆蓋率": 110.6,
+    "壓力情境覆蓋率": 78.1,
     "極端情境": {
-     "缺口": 24030,
-     "水庫撐月數": 20.6
+     "缺口": 45681,
+     "水庫撐月數": 12.3
     },
     "第二職涯收入": 0,
     "第二職涯工時": 0,
     "紅綠燈": "🔴 尚未達留停安全（覆蓋率或壓力情境未達）",
     "備註": "每月真值日自動重算；職涯收入/工時由真值日人工帶入",
-    "驗收等級": "B級 🟡 持續改善中（尚未達 150%，延後或先補水庫）"
+    "驗收等級": "C級 🔴 繼續留台電，先修財務結構"
    }
   },
   "目標_2027_02": {
@@ -4489,9 +4489,9 @@
   },
   "趨勢_近3月": {
    "2026-09": {
-    "生活費覆蓋率": 129.6,
-    "壓力情境覆蓋率": 93.3,
-    "被動現金流": 211030
+    "生活費覆蓋率": 110.6,
+    "壓力情境覆蓋率": 78.1,
+    "被動現金流": 180100
    }
   },
   "驗收標準_2027_02": {
@@ -4510,7 +4510,7 @@
   },
   "驗收等級": {
    "月份": "2026-09",
-   "等級": "B級 🟡 持續改善中（尚未達 150%，延後或先補水庫）",
+   "等級": "C級 🔴 繼續留台電，先修財務結構",
    "權重": "當月 < 3個月趨勢 < 壓力情境 < 現金水位"
   }
  },
@@ -5061,5 +5061,179 @@
    }
   ],
   "口徑影響": "現金真值一律以 Moneybook 帳戶 CSV 的台幣活存為準（該交割戶不在連結帳戶清單內，故不影響 cash_total）"
+ },
+ "coast_fi_config": {
+  "version": "v1-2026-09-23",
+  "swr_pct": 4.0,
+  "yield_fi_pct": 5.0,
+  "real_return_pct": 5.0,
+  "target_date": "2027-02-01",
+  "years_to_target": null,
+  "cash_caliber": "net_of_reserve",
+  "stress_dividend_haircut": 0.8,
+  "light_work_incomes": [
+   0,
+   20000,
+   30000
+  ],
+  "targets": {
+   "coast_fi_ratio_pct": 100,
+   "pccr_pct": 120,
+   "runway_days": 540,
+   "maintenance_pct": 180
+  }
+ },
+ "coast_fi_engine": {
+  "asof": "2026-09-23",
+  "current": {
+   "growth_assets": {
+    "tw_growth": 2039487.0,
+    "us_growth": 10325207.0,
+    "re_value": 34017063.0,
+    "mortgage": 25082544.0,
+    "re_net": 8934519.0,
+    "fin_debt": 5000000.0,
+    "total": 21299213.0,
+    "net_after_fin_debt": 16299213.0
+   },
+   "coast": {
+    "fi_target_swr": 48834300.0,
+    "fi_target_yield": 39067440.0,
+    "years_to_target": 0.36,
+    "target_date": "2027-02-01",
+    "real_return_pct": 5.0,
+    "fin_only_capital": 12364694.0,
+    "coast_threshold_swr": 47984040.964307785,
+    "coast_fi_ratio_swr_pct": 44.4,
+    "coast_fi_ratio_fin_only_swr_pct": 25.8,
+    "coast_gap_fin_only_swr": 35619346.964307785,
+    "fv_no_contrib_swr": 21676626.988952156,
+    "gap_fv_swr": 27157673.011047844,
+    "monthly_needed_swr": 6747131.421659915,
+    "coast_threshold_yield": 38387232.77144623,
+    "coast_fi_ratio_yield_pct": 55.5,
+    "coast_fi_ratio_fin_only_yield_pct": 32.2,
+    "coast_gap_fin_only_yield": 26022538.771446228,
+    "fv_no_contrib_yield": 21676626.988952156,
+    "gap_fv_yield": 17390813.011047844,
+    "monthly_needed_yield": 4320624.26214939
+   },
+   "light_work": {
+    "rows": [
+     {
+      "月收": 0.0,
+      "所需年現金流": 1953372,
+      "所需本金": 39067440,
+      "缺口": 26702746,
+      "達成_pct": 31.6
+     },
+     {
+      "月收": 20000.0,
+      "所需年現金流": 1713372,
+      "所需本金": 34267440,
+      "缺口": 21902746,
+      "達成_pct": 36.1
+     },
+     {
+      "月收": 30000.0,
+      "所需年現金流": 1593372,
+      "所需本金": 31867440,
+      "缺口": 19502746,
+      "達成_pct": 38.8
+     }
+    ],
+    "fin_capital": 12364694.0,
+    "yield_pct": 5.0,
+    "expense": 162781.0
+   },
+   "pccr": {
+    "expense": 162781.0,
+    "rent": 80100.0,
+    "dividend_conservative": 100000.0,
+    "dividend_normal": 147975.0,
+    "dividend_actual": 147975.0,
+    "pccr_pct": 121.9,
+    "pccr_conservative_pct": 110.6,
+    "pccr_actual_pct": 140.1,
+    "pccr_normal_headroom": 121.9,
+    "nonpassive": {
+     "girlfriend_repayment": 6000.0
+    },
+    "canonical_source": "monthly_dividend_total（常態）／passive_income.fund_dividend_conservative（保守）"
+   },
+   "runway": {
+    "income_stress": 127100.0,
+    "gap": 35681.0,
+    "vacancy": 33000.0,
+    "cash_full": 861818.0,
+    "reserve": 500000.0,
+    "floor": 1200000.0,
+    "cash_used": 361818.0,
+    "cash_below_floor": true,
+    "runway_days": 304,
+    "cash_caliber": "net_of_reserve",
+    "runway_days_full_cash": 725,
+    "runway_days_net_reserve": 304
+   },
+   "stress": {
+    "pool": 11786060.0,
+    "loan": 5400000.0,
+    "disbursed": false,
+    "ltv_now_pct": 45.8,
+    "maintenance_now_pct": 218.3,
+    "pool_minus30": 8250241.999999999,
+    "ltv_minus30_pct": 65.5,
+    "maintenance_minus30_pct": 152.8,
+    "call_line_pct": 70.0,
+    "drop_to_call_pct": 34.5
+   },
+   "credit": {
+    "locked": false,
+    "items": [
+     {
+      "項目": "大義街轉貸（國泰 1,200萬@2.6%）",
+      "完成": true
+     },
+     {
+      "項目": "洲際W 轉貸（永豐 1,312萬，9/25 到期）",
+      "完成": false
+     },
+     {
+      "項目": "整池質押 540萬@2.77%（撥款後清償 500萬高息）",
+      "完成": false
+     },
+     {
+      "項目": "理財型房貸清償",
+      "完成": true
+     }
+    ]
+   },
+   "status": {
+    "coast": false,
+    "pccr": true,
+    "runway": false,
+    "maintenance": false,
+    "credit": false
+   },
+   "light": "🔴 紅燈",
+   "blockers": [
+    "Coast FI 本金滑行（純金融）25.8% < 100%（含房產 44.4%）",
+    "無薪跑道 304 天 < 540 天",
+    "跌30% 維持率 152.8% < 180%",
+    "授信未鎖定（洲際W 轉貸（永豐 1,312萬，9/25 到期）、整池質押 540萬@2.77%（撥款後清償 500萬高息））"
+   ]
+  },
+  "history": {
+   "2026-09-23": {
+    "light": "🔴 紅燈",
+    "coast_fin_only_pct": 25.8,
+    "coast_with_re_pct": 44.4,
+    "pccr_pct": 121.9,
+    "runway_days": 304,
+    "maintenance_pct": 152.8,
+    "credit_locked": false,
+    "light_work_cap_2w": 21902746
+   }
+  }
  }
 }
