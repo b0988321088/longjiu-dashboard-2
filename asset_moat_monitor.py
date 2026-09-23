@@ -27,7 +27,9 @@ class AssetMoatMonitor:
         else:
             passive_income = float(raw_passive or 0)
         if not passive_income:
-            passive_income = float(snapshot.get("rent_monthly_actual", 0) or 0) + float(snapshot.get("fund_dividend_monthly", 0) or 0)
+            # 2026-09-23 INC-241b：原 fallback 用 rent_monthly_actual（當月已收 54,000）與常態配息相加
+            # → 混口徑且月中被低估；常態口徑應為 rent_monthly_total（80,100）
+            passive_income = float(snapshot.get("rent_monthly_total", 0) or 0) + float(snapshot.get("fund_dividend_monthly", 0) or 0)
         try:
             debt_ratio = float(str(snapshot.get("debt_ratio", "0")).replace("%", "")) / 100
         except (TypeError, ValueError):

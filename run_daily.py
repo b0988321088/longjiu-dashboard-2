@@ -226,6 +226,10 @@ def calibrate_sources() -> dict:
         "firstjin": s_firstjin,
         "firstjin_label": snap.get("insurance_label_b", "第一金FA81聯博"),
         "rent_monthly": s_rent,
+        # 2026-09-23 INC-241b：常態應收／當月應收明細／當月待收（單一真值，供日報與 _fmt_rent_status 用）
+        "rent_monthly_target": snap.get("rent_monthly_total") or s_rent or 0,
+        "rent_receivable_by_month": snap.get("rent_receivable_by_month", {}),
+        "rent_pending": snap.get("rent_monthly_gap", 0),
         "securities_total": s_securities,
         "monthly_dividend": monthly_dividend,
         "insurance_dividend": _div_by_type["保單"],
@@ -304,8 +308,9 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     monthly_dividend = tv.get("monthly_dividend", 107_116)
     allianz_dividend = tv.get("allianz_dividend", 73_167)
     firstjin_dividend = tv.get("firstjin_dividend", 22_949)
-    # 房租覆蓋率（動態）與基金明細（從 snapshot 讀，不硬編碼）
-    _rent_cov = (tv.get("rent_monthly", 0) or 0) / (tv.get("monthly_expense", 162781) or 1) * 100
+    # 房租覆蓋率（2026-09-23 INC-241b：原用 rent_monthly＝當月已收 → 月中覆蓋率被低估為 33%；
+    # 常態口徑應為 80,100/162,781 = 49%）
+    _rent_cov = (tv.get("rent_monthly_target", 0) or 0) / (tv.get("monthly_expense", 162781) or 1) * 100
     # 當月實際已收房租（rent_received_records）
     _rent_recv = tv.get("rent_received_records", {}) or {}
     _rm = date.today().strftime("%Y-%m")
@@ -970,7 +975,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     {tv['etf_div_table']}
 
     <h3>房租金流</h3>
-    <p class="text-lead">房租月收 <strong>{tv['rent_monthly']:,} TWD</strong>，覆蓋月支出 {_rent_cov:.0f}%。{_fmt_rent_status(tv)}{_dbs_note_ph}</p>
+    <p class="text-lead">房租月收 <strong>{tv['rent_monthly_target']:,} TWD</strong>〔常態應收；當月已收 {tv['rent_monthly']:,}、待收 {tv.get('rent_pending', 0):,}〕，覆蓋月支出 {_rent_cov:.0f}%。{_fmt_rent_status(tv)}{_dbs_note_ph}</p>
 
     <h3>基金部位（鉅亨網 + 國泰基金）</h3>
     <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong> ＝ 鉅亨網 <strong>{sum(v for k,v in tv.get('funds_breakdown',{}).get('一般申購',{}).items() if k != 'note') + sum(v for k,v in tv.get('funds_breakdown',{}).get('自由Pay',{}).items() if k != 'note'):,}</strong> ＋ 國泰基金 <strong>{sum(v for k,v in tv.get('funds_breakdown',{}).get('國泰直購',{}).items() if k != 'note'):,}</strong>（富達 {tv.get('funds_breakdown',{}).get('國泰直購',{}).get('富達全球動能多元B股C月配息美元',0):,} + 聯博 {tv.get('funds_breakdown',{}).get('國泰直購',{}).get('聯博全球多元收益AD美元月配',0):,} + B11 {tv.get('funds_breakdown',{}).get('國泰直購',{}).get('貝萊德智慧數據收益成長B11-美元-強化穩定月配息',0):,}）。本月已收配息：{tv['fund_dividend_monthly']:,} TWD。{_fund_detail}</p>

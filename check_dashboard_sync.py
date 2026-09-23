@@ -204,6 +204,24 @@ try:
 except Exception as _e14:
     fails.append(f"房租待收口徑檢查無法執行: {_e14}")
 
+# 15. 日報房租待收口徑（2026-09-23 INC-241b）
+#     日報「房租金流」段落由 scripts/components/report_utils._fmt_rent_status 產生；
+#     原本拿常態 80,100 相減 → 一次性折讓（2026-09 洲際W 3,000）變幽靈待收（26,100 vs 23,100）。
+#     閘門：若有當日日報，「｜待收 N」必須等於 snapshot.rent_monthly_gap。
+try:
+    _dr15 = BASE / f"daily_report_v2_{datetime.date.today().isoformat()}.html"
+    if _dr15.exists():
+        _txt15 = _dr15.read_text(encoding="utf-8")
+        _gap15 = float(json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")).get("rent_monthly_gap") or 0)
+        _ms15 = re.findall(r"｜待收 ([\d,]+)", _txt15)
+        _bad15 = sorted({m for m in _ms15 if abs(float(m.replace(",", "")) - _gap15) > 0.5})
+        if _bad15:
+            fails.append(f"日報房租待收 {'/'.join(_bad15)} ≠ snapshot.rent_monthly_gap {_gap15:,.0f}")
+        elif not _ms15:
+            fails.append("日報找不到「｜待收 N」房租待收字樣（_fmt_rent_status 輸出格式變了？）")
+except Exception as _e15:
+    fails.append(f"日報房租待收口徑檢查無法執行: {_e15}")
+
 # 13. --post-push：推送後對「線上 Pages」逐連結驗 200（2026-09-23 INC-240 新增）
 #     為什麼要拆出來：第 12 條的「未進版控」只能判斷 commit 前的狀態，而 commit 前今天的檔必然
 #     還沒進版控 → 晨間班每天自我誤報。真風險（連結指向沒上線／被 push 漏掉的檔 ＝ 線上 404）

@@ -68,6 +68,7 @@ def main():
     # HTML 卡別名（對齊模板變數名）
     sal_exp, sal_act, rent_exp, rent_got, div_exp, div_act = _sal_exp, _sal, _rent_exp, _rent_got, _div_exp, _div_act
     gf_act, exp_total, act_total, rent_gap = _gf, _exp_total, _act_total, _rent_exp - _rent_got
+    rent_norm = snap.get("rent_monthly_total", 80100) or 80100  # 常態全月應收（INC-241b 註腳用）
     passive_act, coverage, expense = _passive_act, _coverage, _expense
     div_norm = snap.get("monthly_dividend_total", 153389) or 153389  # 常態全月基準（含月底撥回）
     etf_div = mdb.get("etf", 0)
@@ -115,14 +116,15 @@ td{{padding:8px 6px;border-top:1px solid #e5e5ea}}
     html += f"""</tbody></table>
 <p style="font-size:12px;color:#6e6e73;margin-top:6px">流動資產 = 現金 + 證券 + 保單 + 基金（不含不動產；歷史 bonds 口徑差異已排除）</p></div>
 
-<div class="card"><h2>被動收入（月）</h2>
+<div class="card"><h2>被動收入（{ym} 實收）</h2>
 <table><thead><tr><th>來源</th><th class="num">月收</th></tr></thead><tbody>
 <tr><td>保單配息</td><td class="num">{ins_div:,}</td></tr>
 <tr><td>ETF配息</td><td class="num">{etf_div:,}</td></tr>
 <tr><td>基金配息</td><td class="num">{fund_div:,}</td></tr>
 <tr><td>房租收入</td><td class="num">{rent:,}</td></tr>
 <tr style="font-weight:700;border-top:2px solid #2563eb"><td>合計</td><td class="num">{total_income:,}</td></tr>
-</tbody></table></div>
+</tbody></table>
+<p style="font-size:12px;color:#6e6e73;margin-top:6px">口徑：本表為 <strong>當月實收</strong>（配息＝monthly_dividend_breakdown、房租＝rent_received_records）；房租當月應收 {rent_exp:,}（常態 {rent_norm:,}，差額為一次性折讓）、當月待收 {rent_gap:,}，見下方現金流審查</p></div>
 
 <div class="card"><h2>💵 現金流審查（{ym}，2026-08-24 新增）</h2>
 <table><thead><tr><th>項目</th><th class="num">預期</th><th class="num">實際</th><th class="num">差異</th></tr></thead><tbody>

@@ -4,28 +4,29 @@
 from datetime import date, datetime, timedelta
 
 def _fmt_rent_status(tv: dict) -> str:
-    """房租金流：應收固定 80,100 + 動態追蹤已收/待收"""
-    rb = tv.get("rent_breakdown", {}) or {}
-    received = tv.get("rent_received_records", {}) or {}
+    """房租金流：**當月應收**（含一次性調整）＋ 動態追蹤已收/待收。
+
+    2026-09-23 INC-241b：原以常態 80,100 為分母相減（`pending = 80_100 - _got`）→ 一次性折讓
+    （2026-09 洲際W 維修費 3,000）會變成幽靈待收（日報顯示待收 26,100，真值 23,100）；
+    且 fallback 字串把「大義街23樓23,100＋管理費2,100」重複計。改讀
+    `tv["rent_receivable_by_month"][本月]`（缺 → fallback `rent_breakdown`），不再寫死數字。
+    """
     _m = date.today().strftime("%Y-%m")
+    _rb_all = tv.get("rent_receivable_by_month", {}) or {}
+    rb = _rb_all.get(_m) or tv.get("rent_breakdown", {}) or {}
+    received = tv.get("rent_received_records", {}) or {}
     _got = sum(v for d, items in received.items() if str(d).startswith(_m) for v in items.values())
     label_map = {"大義街店面": "大義街1樓", "大義街二三樓": "大義街23樓"}
-    # 完整應收明細
-    detail = []
-    for k, v in rb.items():
-        label = label_map.get(k, k)
-        detail.append(f"{label}{v:,}")
+    detail = [f"{label_map.get(k, k)}{v:,}" for k, v in rb.items()]
     if not detail:
-        return "大義街1樓24,000+洲際W33,000+大義街23樓23,100+管理費2,100"
-    base = "應收 80,100 = " + "+".join(detail)
+        return "（snapshot 缺 rent_receivable_by_month / rent_breakdown，無法列出租金明細）"
+    _due = sum(rb.values())
+    base = f"當月應收 {_due:,} = " + "+".join(detail)
     if _got > 0:
-        got_parts = []
-        for d, items in sorted(received.items()):
-            if str(d).startswith(_m):
-                for k, v in items.items():
-                    label = label_map.get(k, k)
-                    got_parts.append(f"{label}{v:,}")
-        pending = 80_100 - _got
+        got_parts = [f"{label_map.get(k, k)}{v:,}"
+                     for d, items in sorted(received.items())
+                     if str(d).startswith(_m) for k, v in items.items()]
+        pending = max(0, _due - _got)
         return f"{base}｜已收 {'+'.join(got_parts)}（{_got:,}）｜待收 {pending:,}"
     return f"{base}｜尚未入帳"
 

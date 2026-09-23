@@ -872,3 +872,14 @@
 - **修法（單一真值、不硬編碼）**：snapshot 新增 **`rent_receivable_by_month`**（當月應收明細，含一次性調整）＋說明欄；儀表板（Python 靜態生成＋前端 JS）、`asset_diff_monitor`（新增 `rent_target`／`rent_pending`／`rent_receivable_by_month` 三個 key，常態應收與當月待收分開，「全數實收」只在待收為 0 時印，並列出未收項目）、`fire_progress`／`morning_briefing`／`monthly_report` 全部改讀當月應收（缺本月 fallback 常態 `rent_breakdown`／`rent_monthly_total`）。**並新增機械閘門**：`check_dashboard_sync.py` 第 14 條 —— 儀表板 ⏳ 待收清單內「房租」類合計必須 == `snapshot.rent_monthly_gap`，且 gap>0 時不得出現「全數實收」。
 - **驗證**：①儀表板靜態清單＝二三樓 21,000＋管理費 2,100＝**23,100**（與 gap 相符），前端 JS（node 實跑同一段邏輯）同值、幽靈 3,000 消失；同一段 JS 改回舊式（常態相減）會跑出 **26,100**＝原症狀重現 ②差異分析行改為「房租月收 54,000 / 常態應收 80,100（待收 23,100：大義街二三樓21,000、管理費2,100）」③FIRE／晨間簡報常態對照＝「房租 80,100 全月應收 → 180,100/月」④負向測試：在 clone 內把幽靈 3,000 回灌儀表板 → 第 14 條 rc=1 並點名「房租待收合計 26,100 ≠ snapshot.rent_monthly_gap 23,100」⑤`regenerate_report.py --no-push --skip-llm` rc=0、`check_dashboard_sync.py` rc=0。
 - **教訓**：**同一個數字身上掛著兩種語意（當月已收 vs 全月應收）時，欄位名就是地雷** —— `rent_monthly_actual` 被四個下游當成應收用；凡「應收／已收」必須分開命名並由 snapshot 單一真值提供，且**逐項比對一定要用「當月口徑」**（一次性折讓只調當月，不會動常態）。次則：**前端 JS 會覆寫靜態 HTML，修資料口徑時兩邊都要改**（只修 Python 會在開頁瞬間被打回原形）。
+
+## INC-241b｜同型殘留三處（日報房租金流、月報被動收入卡/註腳、asset_moat fallback）（2026-09-23）
+
+- **發現管道**：INC-241 修完後，主動掃「還有誰把『當月已收』當『全月應收』用」＋獨立 CIO 審查點名 `monthly_report`／`asset_moat_monitor`／`run_daily`。
+- **病灶**：
+  - ① `scripts/components/report_utils._fmt_rent_status`：**寫死 `pending = 80_100 - _got`**（常態相減）→ 日報「房租金流」顯示**待收 26,100**（幽靈 3,000），且 fallback 字串把「大義街23樓23,100＋管理費2,100」重複計。同時 `run_daily.py` 的日報行以 `rent_monthly`（＝當月已收 54,000）當「房租月收」，覆蓋率被算成 33%（常態應為 49%）。
+  - ② `monthly_report.py` 被動收入卡標題只寫「被動收入（月）」，看不出是**當月實收**口徑（數字本身與配息欄一致，屬標籤缺陷）；月報房租「當月應收」自 INC-241 起已改用當月明細。
+  - ③ `asset_moat_monitor.py`：`passive_income` 的 fallback 用 `rent_monthly_actual`（當月已收）＋常態配息 → 混口徑（實跑路徑不會走到，仍修）。
+- **修法**：`_fmt_rent_status` 改讀 `tv["rent_receivable_by_month"][本月]`（缺 → fallback `rent_breakdown`），分母＝當月應收、`pending = max(0, 當月應收 − 已收)`，並移除寫死數字與錯誤 fallback 字串；`run_daily` 新增 `rent_monthly_target`／`rent_receivable_by_month`／`rent_pending` 三個 tv key，覆蓋率與顯示改用常態應收並同時標出「當月已收 / 待收」；月報卡標題改「被動收入（{ym} 實收）」＋加口徑註腳（當月應收/常態/待收）；`asset_moat_monitor` fallback 改用 `rent_monthly_total`。**新增閘門 15**：若有當日日報，其「｜待收 N」必須 == `snapshot.rent_monthly_gap`。
+- **驗證**：①日報房租金流＝「房租月收 **80,100** TWD〔常態應收；當月已收 54,000、待收 23,100〕，覆蓋月支出 **49%**」＋「當月應收 77,100 = 大義街1樓24,000+大義街23樓21,000+洲際W30,000+管理費2,100｜已收 …（54,000）｜待收 **23,100**」，全文再無 26,100／「全數實收」②月報 2026-09＝「被動收入（2026-09 實收）」＋註腳「當月應收 77,100（常態 80,100，差額為一次性折讓）、當月待收 23,100」；2026-08 回溯＝當月應收 80,100、待收 0（不倒退）③負向測試：日報灌回「｜待收 26,100」→ 閘門 15 rc=1 並點名 ④`regenerate_report.py --no-push --skip-llm`、`check_dashboard_sync.py` 皆 rc=0。
+- **教訓**：**「應收」與「已收」在程式裡常被同一個變數名（rent_monthly／monthly_rent）承載**——只要分母用了常態、分子用了當月，就會生出幽靈差額；本次同型共 4 處（INC-241 3 處＋本文 3 處，其中 `_fmt_rent_status` 是唯一在函式內**寫死金額**的，最難及時發現）。修這類問題要「連閘門一起加」：儀表板與日報各一條，數字對不上就擋在產出階段。
