@@ -815,6 +815,64 @@ def main():
             tpl = tpl.replace(_ph, "—")
         print("  ⚠️ 被動收入結構條注入失敗:", _ince)
 
+    # ── 被動收入基準觀察小卡（2026-09-23 使用者指示：以 9 月完整估計為基準，走 3 個月再修正）──
+    try:
+        _rec = snap.get("dividend_records", {}) or {}
+        _base_m = "2026-09"                                    # 基準月（使用者 9/23 指定）
+        _obs_n = 3                                             # 觀察月數
+        _ms = sorted([m for m in _rec if re.match(r"^\d{4}-\d{2}$", m)])[-_obs_n:]
+
+        def _bkt(_d, kind):
+            _t = 0.0
+            for _n, _v in (_d or {}).items():
+                if not isinstance(_v, (int, float)):
+                    continue
+                if kind == "ins" and ("安聯" in _n or "第一金" in _n):
+                    _t += _v
+                elif kind == "etf" and "ETF" in _n:
+                    _t += _v
+                elif kind == "fund" and "基金" in _n and "ETF" not in _n:
+                    _t += _v
+            return _t
+
+        _rows = []
+        _base_tot = 0.0
+        for _m in _ms:
+            _d = _rec.get(_m) or {}
+            _i, _e, _f = _bkt(_d, "ins"), _bkt(_d, "etf"), _bkt(_d, "fund")
+            _tot = _i + _e + _f
+            if _m == _base_m:
+                _base_tot = _tot
+                _rows.append(f'<tr class="border-b border-slate-900 font-bold text-teal-400">'
+                             f'<td class="text-left py-1">{_m}（基準）</td><td class="text-right">{_fmt(_i)}</td>'
+                             f'<td class="text-right">{_fmt(_e)}</td><td class="text-right">{_fmt(_f)}</td>'
+                             f'<td class="text-right">{_fmt(_tot)}</td></tr>')
+            else:
+                _rows.append(f'<tr class="border-b border-slate-900 text-slate-300">'
+                             f'<td class="text-left py-1">{_m}</td><td class="text-right">{_fmt(_i)}</td>'
+                             f'<td class="text-right">{_fmt(_e)}</td><td class="text-right">{_fmt(_f)}</td>'
+                             f'<td class="text-right">{_fmt(_tot)}</td></tr>')
+        _mi = (int(_today_m[:4]) - int(_base_m[:4])) * 12 + (int(_today_m[5:7]) - int(_base_m[5:7])) + 1
+        _ci = min(max(_mi, 1), _obs_n)
+        _end_m = f"{int(_base_m[:4]) + (int(_base_m[5:7]) - 1 + _obs_n) // 12}-{(int(_base_m[5:7]) - 1 + _obs_n) % 12 + 1:02d}"
+        _floor = float((snap.get("passive_income", {}) or {}).get("fund_dividend_conservative", 0) or 0)
+        tpl = tpl.replace("__DIVBASE_TABLE__", "".join(_rows) or '<tr><td colspan="5" class="py-2 text-slate-500">無 dividend_records 資料</td></tr>')
+        tpl = tpl.replace("__DIVBASE_BASE_M__", _base_m)
+        tpl = tpl.replace("__DIVBASE_N__", str(_obs_n))
+        tpl = tpl.replace("__DIVBASE_STATUS__", f"⏳ 第 {_ci}/{_obs_n} 個月")
+        tpl = tpl.replace("__DIVBASE_FLOOR__", _fmt(_floor))
+        tpl = tpl.replace("__DIVBASE_NOTE__",
+                          f"基準月 {_base_m} 三桶合計 {_fmt(_base_tot)}（內含安聯一次性補入，常態口徑見 monthly_dividend_breakdown）。"
+                          f"觀察期 {_base_m}～{_end_m}，檢視點 {_end_m}-01 真值日 → 依三個月逐月實收修正保守底線（現行 {_fmt(_floor)}）。"
+                          f"期間判準層不動（使用者 2026-09-23 指示：以 9 月完整估計為基準，走 3 個月再修正）。"
+                          f"註：一次性『台灣特品現金股息』等非配息項目不計入三桶。")
+        print(f"  🗓️ 被動收入基準觀察卡：基準 {_base_m} 三桶 {_fmt(_base_tot)}｜觀察 {_ci}/{_obs_n} 個月")
+    except Exception as _dbe:
+        for _ph in ("__DIVBASE_TABLE__", "__DIVBASE_STATUS__", "__DIVBASE_FLOOR__", "__DIVBASE_NOTE__",
+                    "__DIVBASE_BASE_M__", "__DIVBASE_N__"):
+            tpl = tpl.replace(_ph, "—")
+        print("  ⚠️ 被動收入基準觀察卡注入失敗:", _dbe)
+
     (BASE / "index.html").write_text(tpl, encoding="utf-8")
     print(f"✅ 儀表板注入完成（{hits} 組值 + {_link_hits} 連結動態化）｜現金 {_fmt(cash)} / 保單 {_fmt(ins)} / 配息 {_fmt(div_total)} / 租金 {_fmt(rent_got)}")
 

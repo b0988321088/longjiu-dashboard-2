@@ -309,6 +309,30 @@
             </div>
         </div>
 
+        <!-- 🗓️ 被動收入基準觀察（2026-09-23 使用者指示：以 9 月完整估計為基準，走 3 個月再修正；動態注入勿寫死） -->
+        <div class="luxury-card p-6">
+            <div class="flex justify-between items-center mb-3">
+                <div>
+                    <h3 class="text-md font-bold text-white flex items-center gap-2">🗓️ 被動收入基準觀察</h3>
+                    <p class="text-xs text-slate-400">基準月 2026-09 · 觀察 3 個月｜配息三桶逐月實收（dividend_records 真值）｜現行保守底線 100,000</p>
+                </div>
+                <span class="text-xs bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full font-mono font-bold border border-amber-500/30 whitespace-nowrap">⏳ 第 1/3 個月</span>
+            </div>
+            <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+                <thead><tr class="text-slate-400 border-b border-slate-800">
+                    <th class="text-left py-1 font-normal">月份</th>
+                    <th class="text-right font-normal">保單</th>
+                    <th class="text-right font-normal">ETF</th>
+                    <th class="text-right font-normal">基金</th>
+                    <th class="text-right font-normal">合計</th>
+                </tr></thead>
+                <tbody><tr class="border-b border-slate-900 text-slate-300"><td class="text-left py-1">2026-07</td><td class="text-right">130,930</td><td class="text-right">0</td><td class="text-right">0</td><td class="text-right">130,930</td></tr><tr class="border-b border-slate-900 text-slate-300"><td class="text-left py-1">2026-08</td><td class="text-right">102,527</td><td class="text-right">19,656</td><td class="text-right">1,512</td><td class="text-right">123,695</td></tr><tr class="border-b border-slate-900 font-bold text-teal-400"><td class="text-left py-1">2026-09（基準）</td><td class="text-right">74,461</td><td class="text-right">16,340</td><td class="text-right">57,174</td><td class="text-right">147,975</td></tr></tbody>
+            </table>
+            </div>
+            <p class="text-xs text-slate-400 mt-3 break-words leading-snug">基準月 2026-09 三桶合計 147,975（內含安聯一次性補入，常態口徑見 monthly_dividend_breakdown）。觀察期 2026-09～2026-12，檢視點 2026-12-01 真值日 → 依三個月逐月實收修正保守底線（現行 100,000）。期間判準層不動（使用者 2026-09-23 指示：以 9 月完整估計為基準，走 3 個月再修正）。註：一次性『台灣特品現金股息』等非配息項目不計入三桶。</p>
+        </div>
+
         <!-- 月度流量透視卡 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="luxury-card p-5 space-y-3">

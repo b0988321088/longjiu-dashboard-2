@@ -309,6 +309,30 @@ __WEEK_DONE__
             </div>
         </div>
 
+        <!-- 🗓️ 被動收入基準觀察（2026-09-23 使用者指示：以 9 月完整估計為基準，走 3 個月再修正；動態注入勿寫死） -->
+        <div class="luxury-card p-6">
+            <div class="flex justify-between items-center mb-3">
+                <div>
+                    <h3 class="text-md font-bold text-white flex items-center gap-2">🗓️ 被動收入基準觀察</h3>
+                    <p class="text-xs text-slate-400">基準月 __DIVBASE_BASE_M__ · 觀察 __DIVBASE_N__ 個月｜配息三桶逐月實收（dividend_records 真值）｜現行保守底線 __DIVBASE_FLOOR__</p>
+                </div>
+                <span class="text-xs bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full font-mono font-bold border border-amber-500/30 whitespace-nowrap">__DIVBASE_STATUS__</span>
+            </div>
+            <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+                <thead><tr class="text-slate-400 border-b border-slate-800">
+                    <th class="text-left py-1 font-normal">月份</th>
+                    <th class="text-right font-normal">保單</th>
+                    <th class="text-right font-normal">ETF</th>
+                    <th class="text-right font-normal">基金</th>
+                    <th class="text-right font-normal">合計</th>
+                </tr></thead>
+                <tbody>__DIVBASE_TABLE__</tbody>
+            </table>
+            </div>
+            <p class="text-xs text-slate-400 mt-3 break-words leading-snug">__DIVBASE_NOTE__</p>
+        </div>
+
         <!-- 月度流量透視卡 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="luxury-card p-5 space-y-3">

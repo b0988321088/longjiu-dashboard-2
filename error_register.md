@@ -1042,3 +1042,12 @@
 - 驗證: 收工稽核 13 類全過「全部通過 ✅」；遠端 clean-main == 本機 HEAD（4debd664）；未推差距 0
 - 教訓: ①程式 commit 與 RECORD 落地之間的窗口，是自動化推送的必擋區——若已知有推送時點（每小時整點／22:00／07:00）臨近，應先完成送審再往下做別的事 ②閘門 fail-closed 是設計而非故障，被擋的資料 commit 可用 auto_record 回補（勿改訊息重推）
 - 狀態: ✅ 已修（2026-09-23）
+
+## INCIDENT calibrate_dead_regex (data_consistency)
+- 首次發生: 2026-09-23 22:15（CIO 審查 commit aa0479c6 時以 `python -c` 實跑各 pattern 抓到）
+- 錯誤: `run_daily.calibrate_sources()` 的校準 regex 有 3 個是死 pattern → `extract_markdown_value` 回 None → `check()` 把 None 當「不比對」→ 該校準點靜默空轉：① 退休後盈餘用簡體『退休後盈余』，但 `DAILY_REPORT_PIPELINE_RULE.md:110` 是繁體『退休後盈餘』② 安聯/第一金現值 pattern 的 `.*?` 無 DOTALL，但 RULE 檔第 59/62 行是標題、現值數字在第 60/63 行（跨行）→ 永遠 None
+- 影響: 「三源校準通過」這個訊息對 retirement_surplus／安聯／第一金三個點是空的 —— `snapshot.retirement_surplus` 舊值 30,552 因此在 9/23 之前一路通過校準（同源事故見 INC sabbatical_stale_caliber）
+- 根因: 校準函式 fail-open（None 與「通過」同義）＋ pattern 與文字檔實際格式不一致，且沒有任何測試在驗證「pattern 真的命中」
+- 修法: (a) retirement_surplus regex 改繁體 → 該點首次真比較（snapshot 17,319 ↔ RULE +17,319，`calibrate_sources()` 仍通過）(b) `check()` 未比對的點一律印 `[CALIBRATE] ⚠️ 校準空轉（來源缺值／regex 未命中，未比對）：[...]`，不阻擋管線 (c) 安聯/第一金兩個 regex 刻意**不**改活：RULE 檔現值仍是 2026-07-11 截圖值（7,846,690／1,994,698），snapshot 現值 7,652,217／1,891,718，改活等於立即 fail-closed 擋掉日報管線 → 列入待對帳項
+- 教訓: ①regex 型校準必須有「命中測試」，否則打錯一個字就等於關掉這道檢查，且回報仍是綠色 ②fail-open 的 None 必須留痕（WARN）——「未比對」不可與「通過」同義 ③要把死 pattern 改活前先確認兩側真值已對齊，否則等同自建煞車（fail-closed 擋整條管線）
+- 狀態: ⏳ 部分修（retirement_surplus 已活；安聯/第一金待 RULE 檔數字對帳後才改活）

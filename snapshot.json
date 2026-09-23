@@ -177,7 +177,7 @@
   "total_conservative": 180100,
   "monthly_expense": 162781,
   "coverage_pct": 110.6,
-  "note": "2026-09-18 依 9/5 定版校正：保守配息 100,000（原誤值 130,930＝安聯+第一金常態總額，非保守基本值）＋租金 80,100 = 180,100；覆蓋 110.6%（÷月支出 162,781）。當月實收配息 147,975（9/23 真值，與頂層 dividend_month_actual／monthly_dividend_total 同口徑；本鍵與 dividend_actual_sum 於 2026-09-23 由 9/18 舊值同步）。",
+  "note": "2026-09-18 依 9/5 定版校正：保守配息 100,000（原誤值 130,930＝安聯+第一金常態總額，非保守基本值）＋租金 80,100 = 180,100；覆蓋 110.6%（÷月支出 162,781）。當月實收配息 147,975（9/23 真值，與頂層 dividend_month_actual／monthly_dividend_total 同口徑；本鍵與 dividend_actual_sum 於 2026-09-23 由 9/18 舊值同步）。 2026-09-23 使用者指示：以 2026-09 完整估計為被動收入基準月，觀察 3 個月（~2026-11），2026-12 初檢視後再修正保守底線；期間判準層不動。",
   "girlfriend_repayment": 6000,
   "dividend_actual_sum": 147975,
   "rent_monthly_actual": 80100

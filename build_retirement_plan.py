@@ -36,7 +36,13 @@ liab_cost = 16600  # 保單借貸 13,333 + 元大證金 3,267（利息口徑）
 # 報告仍會念舊數字，形成「JSON 已校正、報告沒跟上」的分歧。
 _sch = snap.get("sabbatical_checklist", {}) or {}
 _sc_t = _sch.get("目標_2027_02", {}) or {}
-stress_cov = (div_c * 0.8 + rent - 33000) / expense * 100 if expense else 0.0
+_stress_income = div_c * 0.8 + rent - 33000          # 壓力情境（配息 −20% ＋ 洲際W 空置）：單一派生
+stress_cov = _stress_income / expense * 100 if expense else 0.0
+_stress_cls = "red" if stress_cov < 100 else "green"
+_stress_txt = (f"🔴 &lt;100% → 靠現金水庫" if stress_cov < 100
+               else f"🟢 覆蓋 {stress_cov:.1f}% ≥100% → 水庫不動")
+_stress_note = (f"壓力情境 {stress_cov:.1f}% 未破 100% — 這是留停前要改善的重點（降負債成本/提高房租淨現金流）"
+                if stress_cov < 100 else f"壓力情境 {stress_cov:.1f}% 已 ≥100% — 通過壓力測試")
 cov_band = "非常安全" if fire_cov >= 150 else ("基本安全" if fire_cov >= 120 else "不能完全依賴資產")
 cov_band_cls = "green" if fire_cov >= 150 else ("amber" if fire_cov >= 120 else "red")
 need_to_150 = max(1.5 * expense - fire_income, 0)
@@ -62,14 +68,12 @@ FIRE_IDEAL = 40000
 retire_cov = fire_income / RETIRE_BUDGET * 100 if RETIRE_BUDGET else 0
 retire_cov_actual = fire_income_actual / RETIRE_BUDGET * 100 if RETIRE_BUDGET else 0
 
-# 壓力情境（配息 −20% ＋ 洲際W 空置）：單一派生，勿在 f-string 內重複內插
-_stress_income = div_c * 0.8 + rent - 33000
-
 # 極端情境（配息 −30% ＋ 一間無租 ＋ 大型支出 30萬）：分母可能 ≤0，先算好避免 ZeroDivisionError
 _ext_income = div_c * 0.7 + rent - 33000
 _ext_cov = (_ext_income / expense * 100) if expense else 0.0
 _ext_gap = expense - _ext_income
 _ext_months = max(1, round((cash - 300000) / _ext_gap)) if _ext_gap > 0 else 0
+_ext_cls = "red" if _ext_gap > 0 else "green"
 _ext_txt = (f"🔴 缺口 {_ext_gap:,.0f}/月 → 現金水庫撐 {_ext_months} 個月"
             if _ext_gap > 0 else "🟢 無缺口（水庫不受壓）")
 
@@ -163,11 +167,11 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><th>情境</th><th>假設</th><th>月被動</th><th>覆蓋率</th><th>判定</th></tr>
 <tr><td>🟢 正常</td><td>配息/房租/支出正常（保守底線）</td><td>{fire_income:,}</td><td>{fire_cov:.1f}%</td><td class="{cov_band_cls}">{'🟢' if fire_cov>=150 else ('🟡' if fire_cov>=120 else '🔴')} {cov_band}</td></tr>
 <tr><td>🟢 正常（當月實收）</td><td>配息實收 {div_actual:,.0f} ＋ 租金 {rent:,}</td><td>{div_actual + rent:,.0f}</td><td>{fire_cov_actual:.1f}%</td><td class="{actual_band_cls}">{'🟢' if fire_cov_actual>=150 else ('🟡' if fire_cov_actual>=120 else '🔴')} {actual_band}</td></tr>
-<tr><td>🟡 壓力</td><td>配息 −20% ＋ 洲際W 空置</td><td>{_stress_income:,.0f}</td><td class="red">{stress_cov:.1f}%</td><td class="red">🔴 &lt;100% → 靠現金水庫</td></tr>
-<tr><td>🔴 極端</td><td>配息 −30% ＋ 一間無租 ＋ 大型支出 30萬</td><td>{_ext_income:,.0f}</td><td class="red">{_ext_cov:.1f}%</td><td class="red">{_ext_txt}</td></tr>
+<tr><td>🟡 壓力</td><td>配息 −20% ＋ 洲際W 空置</td><td>{_stress_income:,.0f}</td><td class="{_stress_cls}">{stress_cov:.1f}%</td><td class="{_stress_cls}">{_stress_txt}</td></tr>
+<tr><td>🔴 極端</td><td>配息 −30% ＋ 一間無租 ＋ 大型支出 30萬</td><td>{_ext_income:,.0f}</td><td class="{_ext_cls}">{_ext_cov:.1f}%</td><td class="{_ext_cls}">{_ext_txt}</td></tr>
 </table>
 <p class="callout">覆蓋率三層：🟢 &gt;150% 非常安全｜🟡 120-150% 基本安全｜🔴 &lt;120% 不能完全依賴資產（<b>不含一次性資本利得</b>）。<br>
-現況 <b class="{cov_band_cls}">{fire_cov:.1f}% = {cov_band}</b>（保守底線）｜當月實收 <b class="{actual_band_cls}">{fire_cov_actual:.1f}% = {actual_band}</b>；壓力情境 {stress_cov:.1f}% 未破 100% — 這是留停前要改善的重點（降負債成本/提高房租淨現金流）。<br>
+現況 <b class="{cov_band_cls}">{fire_cov:.1f}% = {cov_band}</b>（保守底線）｜當月實收 <b class="{actual_band_cls}">{fire_cov_actual:.1f}% = {actual_band}</b>；{_stress_note}。<br>
 2027/8-9 雙軌判斷：財務穩定 × 職涯成立 → 第二職涯；財務穩但職涯觀望 → 延長測試；任一不成立 → 回台電（保留台電）。</p></div>
 
 <div class="card"><h2>📋 留停驗收表（每月真值日自動更新 · 3個月趨勢）</h2>
@@ -177,7 +181,7 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><td>被動現金流（保守底線·判準）</td><td>{fire_income:,}（覆蓋 {fire_cov:.1f}%）</td><td>{goal_passive}</td></tr>
 <tr><td>被動現金流（當月實收）</td><td>{div_actual + rent:,.0f}（配息 {div_actual:,.0f}＋租金 {rent:,}，覆蓋 {fire_cov_actual:.1f}%）</td><td>觀察（勿與判準混用）</td></tr>
 <tr><td>生活費覆蓋率（判準·保守底線）</td><td class="{('red' if fire_cov<150 else 'green')}">{fire_cov:.1f}%</td><td>≥150%</td></tr>
-<tr><td>壓力情境覆蓋率</td><td class="red">{stress_cov:.1f}%</td><td>≥100%</td></tr>
+<tr><td>壓力情境覆蓋率</td><td class="{_stress_cls}">{stress_cov:.1f}%</td><td>≥100%</td></tr>
 <tr><td>房租淨現金流</td><td>{rent - 26000:,}</td><td>持續改善</td></tr>
 <tr><td>投資現金流</td><td>{div_c:,}</td><td>穩定</td></tr>
 <tr><td>現金水位</td><td>{cash:,}</td><td>持續增加</td></tr>
@@ -186,7 +190,7 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><td>第二職涯工時</td><td>{career_hours:,}</td><td>觀察收入/工時</td></tr>
 </table>
 <p class="callout"><b>留停紅綠燈（雙指標同時達標才算）</b>：🟢 正常覆蓋率 ≥150% ＋ 🟢 壓力情境 ≥100% ＝ 財務留停安全。<br>
-現況：正常 {fire_cov:.1f}%（保守底線·判準）／{fire_cov_actual:.1f}%（當月實收） ＋ 壓力 {stress_cov:.1f}% → <b class="red">{sc_light}</b>（保守底線 {cov_band}；水庫防守）。<br>
+現況：正常 {fire_cov:.1f}%（保守底線·判準）／{fire_cov_actual:.1f}%（當月實收） ＋ 壓力 {stress_cov:.1f}% → <b class="{'green' if '🟢' in sc_light else ('amber' if '🟡' in sc_light else 'red')}">{sc_light}</b>（保守底線 {cov_band}；水庫防守）。<br>
 被動收入負責基本生活；標案/顧問只負責驗證第二職涯＋加速還債 — 兩者不綁死，才不會為了急著賺錢跑回現場監工。<br>
 每月 1 日真值日自動重算（sabbatical_checklist_update.py），留存 3 個月趨勢驗證「結構性改善」非單月巧合。</p></div>
 
