@@ -1038,6 +1038,7 @@
 - 現象: 22:00 晚報 cron 回報 completed 但 `c7060e8a auto: 晚報校準 2026-09-23`（純報表 index.html）未落紀錄、未上遠端；22:02 人工推送時閘門擋下該 commit（無審查紀錄、也無 [cioreviewed]）
 - 根因: 送審窗口（程式 commit `bf7b9330` commit 完成 → CIO RECORD 落地）期間，晚報自動化推送路徑把該未審程式 commit 納入範圍 → auto_record/auto_push fail-closed 拒推（INC-229 同型），連帶把同一範圍的資料 commit 卡成本地未推
 - 修法: 人工補 `python auto_record.py --commit c7060e8a --script evening_sync.py`（5 項 deterministic 檢查通過）→ 4 顆 commit 全數通過閘門並上線
+- 根治（2026-09-23）: `auto_push.py` 拒推分支原本直接 `return 3`，未先把「不含程式檔」的 pending commit 補落紀錄 → 一顆未審程式 commit 會連坐同範圍的資料 commit。已改為拒推前先對資料檔 pending commit 跑 `auto_record.py --script <script>(pre-block)`，仍 `return 3` 不推送（fail-closed 不變、程式檔規則不動）。沙盒 A/B 實證：改前両 commit UNRECORD（重現卡死）／改後資料 APPROVED＋程式仍 UNRECORD＋rc=3；commit da41459e；驗證器 22/22 ALL_PASS（前提：工作區乾淨——本行未提交時第 4b 條「工作區乾淨」必 FAIL，CIO 首輪據此正確 REJECT）
 - 驗證: 收工稽核 13 類全過「全部通過 ✅」；遠端 clean-main == 本機 HEAD（4debd664）；未推差距 0
 - 教訓: ①程式 commit 與 RECORD 落地之間的窗口，是自動化推送的必擋區——若已知有推送時點（每小時整點／22:00／07:00）臨近，應先完成送審再往下做別的事 ②閘門 fail-closed 是設計而非故障，被擋的資料 commit 可用 auto_record 回補（勿改訊息重推）
 - 狀態: ✅ 已修（2026-09-23）
