@@ -730,6 +730,12 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                 break
         _rot_sum = _rot_x.get("總結", "")
         _tw_s = _sf_x.get("台股總結", "")
+        # ⚖️ 訊號優先序（2026-09-23 使用者核准）：雷達＝閘門（決定能不能進）／產業分析＝方向（決定進哪一類）
+        # 兩者衝突取較保守者；確定性套利（質押清償高息負債）不受兩者管。讀 snapshot 頂層（不寫死文字）。
+        _prio_x = (_snap_x.get("signal_priority_20260923") or {})
+        _prio_txt = _prio_x.get("一句話") or "雷達=閘門｜產業=方向｜衝突取保守｜套利不受管"
+        _prio_html = (f"<div style='font-size:11px;color:#475569;margin-top:4px'>"
+                      f"⚖️ <b>訊號優先序</b>：{_prio_txt}</div>")
         # 明確交易計畫（買什麼/金額/節奏 — 2026-08-22 使用者要求日報也要）
         # 2026-09-13：改讀 snapshot.rotation_recommendation.交易計畫（動態；禁止貼死文字）
         _tp_rows = ""
@@ -747,7 +753,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
             f"<table style='width:100%;border-collapse:collapse;font-size:12px'><tr><th style='text-align:left'>產業</th>"
             f"<th>買什麼</th><th style='text-align:right'>金額</th><th>節奏</th></tr>{_tp_rows}</table>"
             f"<span style='color:#64748b;font-size:11px'>GICS：科技 {_tech_pct:.1f}%（紅線30）｜醫療 {_med_pct:.1f}%{_med_note}｜"
-            f"<a href='https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{TODAY}.html' style='color:#22c55e'>完整儀表板 →</a></span></div>")
+            f"<a href='https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{TODAY}.html' style='color:#22c55e'>完整儀表板 →</a></span>"
+            f"{_prio_html}</div>")
     except Exception as _tpe:
         # 2026-09-13：例外不寫進日報（避免殘留除錯文字），改印 stdout 供 log 追
         _gics_html = ""
