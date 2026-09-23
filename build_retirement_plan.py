@@ -33,6 +33,25 @@ div_c = div_conservative
 cash = snap.get("cash_total", 794992)
 liab_cost = 16600  # 保單借貸 13,333 + 元大證金 3,267（利息口徑）
 
+# ── 2026-09-23：本檔過去有多處以字面值寫死「當期」數字（覆蓋率／缺口／驗收等級／
+# 基準月標籤／2027/2 目標值），改為一律由 snapshot 動態派生；否則真值校正後
+# 報告仍會念舊數字，形成「JSON 已校正、報告沒跟上」的分歧。
+_sch = snap.get("sabbatical_checklist", {}) or {}
+_sc_t = _sch.get("目標_2027_02", {}) or {}
+stress_cov = (div_c * 0.8 + rent - 33000) / expense * 100 if expense else 0.0
+cov_band = "非常安全" if fire_cov >= 150 else ("基本安全" if fire_cov >= 120 else "不能完全依賴資產")
+cov_band_cls = "green" if fire_cov >= 150 else ("amber" if fire_cov >= 120 else "red")
+need_to_150 = max(1.5 * expense - fire_income, 0)
+sc_level = (_sch.get("驗收等級", {}) or {}).get("等級", "") or "（待真值日重算）"
+sc_level_cls = "green" if sc_level.startswith("A級") else ("amber" if sc_level.startswith("B級") else "red")
+goal_expense = (_sc_t.get("每月必要生活費", {}) or {}).get("goal", "—")
+goal_passive = (_sc_t.get("被動現金流", {}) or {}).get("goal", "—")
+sc_month = (_sch.get("驗收等級", {}) or {}).get("月份", "")
+_rec = ((_sch.get("記錄", {}) or {}).get(sc_month, {}) or {}) if sc_month else {}
+career_income = _rec.get("第二職涯收入", 0) or 0
+career_hours = _rec.get("第二職涯工時", 0) or 0
+sc_light = _rec.get("紅綠燈", "") or "（待真值日重算）"
+
 # 退休目標（使用者設定）：退休生活費 38,000/月；理想 FIRE 月花費 40,000
 RETIRE_BUDGET = 38000
 FIRE_IDEAL = 40000
@@ -116,36 +135,36 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><td>② 留職停薪測試</td><td>2027/2 ~ 2027/8</td><td>薪資 {sal:,} 暫停後，月現金流 = 被動 {fire_income:,} − 支出 {fire_cost:,} = <b style="color:#22c55e">+{fire_income - fire_cost:,}</b>（不含標案收入）；標案收入為增量；目標盈餘 9萬/月還債 70%</td></tr>
 <tr><td>③ 扣除房產淨資產 ≥ 0</td><td>2029-30</td><td>富達解約免罰 +45,000/月 + 債券疊卷套利；高息清零 + 還債進度 → 被動 &gt; 支出、淨資產轉正（現況 {net_worth:,}）</td></tr>
 </table>
-<p class="callout">關鍵：決策 A（轉型）/ B（延長）/ C（回台電）<b>不影響退休基本盤</b> — 被動收入已覆蓋支出（129.6%），三步驟的財務關卡是「職業轉換的安全網」，退休規劃獨立運作（財務三桶分離）。</p></div>
+<p class="callout">關鍵：決策 A（轉型）/ B（延長）/ C（回台電）<b>不影響退休基本盤</b> — 被動收入已覆蓋支出（{fire_cov:.1f}%），三步驟的財務關卡是「職業轉換的安全網」，退休規劃獨立運作（財務三桶分離）。</p></div>
 
 <!-- 留停壓力測試（2026-09-02 定位提升：留停=人生財務系統壓力測試） -->
 <div class="card"><h2>🧪 留停壓力測試（2027/2 留停 = 財務系統驗證，非單純職涯測試）</h2>
 <table>
 <tr><th>情境</th><th>假設</th><th>月被動</th><th>覆蓋率</th><th>判定</th></tr>
-<tr><td>🟢 正常</td><td>配息/房租/支出正常</td><td>{fire_income:,}</td><td>{fire_cov:.1f}%</td><td class="amber">🟡 基本安全（120-150%）</td></tr>
-<tr><td>🟡 壓力</td><td>配息 −20% ＋ 洲際W 空置</td><td>{div_c*0.8 + rent - 33000:,.0f}</td><td class="red">{((div_c*0.8 + rent - 33000)/expense*100):.1f}%</td><td class="red">🔴 &lt;100% → 靠現金水庫</td></tr>
+<tr><td>🟢 正常</td><td>配息/房租/支出正常</td><td>{fire_income:,}</td><td>{fire_cov:.1f}%</td><td class="{cov_band_cls}">{'🟢' if fire_cov>=150 else ('🟡' if fire_cov>=120 else '🔴')} {cov_band}</td></tr>
+<tr><td>🟡 壓力</td><td>配息 −20% ＋ 洲際W 空置</td><td>{div_c*0.8 + rent - 33000:,.0f}</td><td class="red">{stress_cov:.1f}%</td><td class="red">🔴 &lt;100% → 靠現金水庫</td></tr>
 <tr><td>🔴 極端</td><td>配息 −30% ＋ 一間無租 ＋ 大型支出 30萬</td><td>{div_c*0.7 + rent - 33000:,.0f}</td><td class="red">{((div_c*0.7 + rent - 33000)/expense*100):.1f}%</td><td class="red">🔴 缺口 {expense - (div_c*0.7 + rent - 33000):,.0f}/月 → 現金水庫撐 {max(1, round((cash-300000)/(expense-(div_c*0.7+rent-33000))))} 個月</td></tr>
 </table>
 <p class="callout">覆蓋率三層：🟢 &gt;150% 非常安全｜🟡 120-150% 基本安全｜🔴 &lt;120% 不能完全依賴資產（<b>不含一次性資本利得</b>）。<br>
-現況 <b class="amber">{fire_cov:.1f}% = 基本安全</b>；壓力情境會跌破 100% — 這是留停前要改善的重點（降負債成本/提高房租淨現金流）。<br>
+現況 <b class="{cov_band_cls}">{fire_cov:.1f}% = {cov_band}</b>；壓力情境 {stress_cov:.1f}% 未破 100% — 這是留停前要改善的重點（降負債成本/提高房租淨現金流）。<br>
 2027/8-9 雙軌判斷：財務穩定 × 職涯成立 → 第二職涯；財務穩但職涯觀望 → 延長測試；任一不成立 → 回台電（保留台電）。</p></div>
 
 <div class="card"><h2>📋 留停驗收表（每月真值日自動更新 · 3個月趨勢）</h2>
 <table>
-<tr><th>指標</th><th>2026-09 基準</th><th>2027/2 目標</th></tr>
-<tr><td>每月必要生活費</td><td>{expense:,}</td><td>≤162,781</td></tr>
-<tr><td>被動現金流</td><td>{fire_income:,}</td><td>≥244,172（×1.5）</td></tr>
+<tr><th>指標</th><th>{sc_month or '當月'} 基準</th><th>2027/2 目標</th></tr>
+<tr><td>每月必要生活費</td><td>{expense:,}</td><td>{goal_expense}</td></tr>
+<tr><td>被動現金流</td><td>{fire_income:,}</td><td>{goal_passive}</td></tr>
 <tr><td>生活費覆蓋率</td><td class="{('red' if fire_cov<150 else 'green')}">{fire_cov:.1f}%</td><td>≥150%</td></tr>
-<tr><td>壓力情境覆蓋率</td><td class="red">{((div_c*0.8+rent-33000)/expense*100):.1f}%</td><td>≥100%</td></tr>
+<tr><td>壓力情境覆蓋率</td><td class="red">{stress_cov:.1f}%</td><td>≥100%</td></tr>
 <tr><td>房租淨現金流</td><td>{rent - 26000:,}</td><td>持續改善</td></tr>
 <tr><td>投資現金流</td><td>{div_c:,}</td><td>穩定</td></tr>
 <tr><td>現金水位</td><td>{cash:,}</td><td>持續增加</td></tr>
 <tr><td>每月負債成本</td><td>{liab_cost:,}</td><td>持續下降</td></tr>
-<tr><td>第二職涯收入</td><td>0</td><td>不設硬性門檻（負責驗證職涯＋加速還債）</td></tr>
-<tr><td>第二職涯工時</td><td>0</td><td>觀察收入/工時</td></tr>
+<tr><td>第二職涯收入</td><td>{career_income:,}</td><td>不設硬性門檻（負責驗證職涯＋加速還債）</td></tr>
+<tr><td>第二職涯工時</td><td>{career_hours:,}</td><td>觀察收入/工時</td></tr>
 </table>
 <p class="callout"><b>留停紅綠燈（雙指標同時達標才算）</b>：🟢 正常覆蓋率 ≥150% ＋ 🟢 壓力情境 ≥100% ＝ 財務留停安全。<br>
-現況：正常 {fire_cov:.1f}% ＋ 壓力 {((div_c*0.8+rent-33000)/expense*100):.1f}% → <b class="red">🔴 尚未達留停安全</b>（壓力情境未破 100%，屬基本安全＋水庫防守）。<br>
+現況：正常 {fire_cov:.1f}% ＋ 壓力 {stress_cov:.1f}% → <b class="red">{sc_light}</b>（{cov_band}；水庫防守）。<br>
 被動收入負責基本生活；標案/顧問只負責驗證第二職涯＋加速還債 — 兩者不綁死，才不會為了急著賺錢跑回現場監工。<br>
 每月 1 日真值日自動重算（sabbatical_checklist_update.py），留存 3 個月趨勢驗證「結構性改善」非單月巧合。</p></div>
 
@@ -156,8 +175,8 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><td>B級 🟡</td><td>正常 ≥150% 但壓力接近 100%，或現金水位不足；或正常 120-150% 持續改善中</td><td>延後一點／先補水庫</td></tr>
 <tr><td>C級 🔴</td><td>正常未達 120%，或壓力明顯 &lt;100% 且改善無趨勢</td><td>繼續留台電，先修財務結構</td></tr>
 </table>
-<p class="callout">現況（2026-09）：正常 {fire_cov:.1f}% ／ 壓力 {((div_c*0.8+rent-33000)/expense*100):.1f}% ／ 現金 {cash:,} → <b class="amber">B級 🟡 持續改善中</b>（維持 🔴 不准留停，2027/2 再驗收）。<br>
-三件事：① 129.6%→150%（差 33,142/月：降支出/降利息→增淨租金→提高投資現金流）② 壓力 93.3%→100%（買抗波動能力非更高報酬）③ 3個月趨勢（結構性改善 vs 單月配息時間差）。<br>
+<p class="callout">現況（{sc_month}）：正常 {fire_cov:.1f}% ／ 壓力 {stress_cov:.1f}% ／ 現金 {cash:,} → <b class="{sc_level_cls}">{sc_level}</b>（維持 🔴 不准留停，2027/2 再驗收）。<br>
+三件事：① {fire_cov:.1f}%→150%（差 {need_to_150:,.0f}/月：降支出/降利息→增淨租金→提高投資現金流）② 壓力 {stress_cov:.1f}%→100%（買抗波動能力非更高報酬）③ 3個月趨勢（結構性改善 vs 單月配息時間差）。<br>
 核心：2027/2 不是「要不要辭台電」，是「資產系統是否成熟到暫時不依賴薪水」。</p></div>
 
 <div class="card"><h2>🗺️ 三階段目標進度</h2>
