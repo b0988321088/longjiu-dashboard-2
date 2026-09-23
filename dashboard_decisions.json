@@ -6022,7 +6022,9 @@
       "source": "auto"
     }
   ,
-    {"timestamp": "2026-09-23T21:45:00+08:00", "action": "核准", "name": "Coast FI 離職控管引擎上線＋四項口徑定案", "source": "Hermes Telegram Gate", "status": "已核准", "category": "決策", "user": "Laing", "idem_key": "hermes-coastfi-20260923", "summary": "四口徑定案：Coast FI 雙軌(4%法則+配息率)、純金融為主判準含房產並列；PCCR 用9/5定版保守配息；跑道扣追繳緩衝50萬；維持率180%與LTV70%並列。目標日=2027/2留停生效日"}],
+    {"timestamp": "2026-09-23T21:45:00+08:00", "action": "核准", "name": "Coast FI 離職控管引擎上線＋四項口徑定案", "source": "Hermes Telegram Gate", "status": "已完成", "category": "決策", "user": "Laing", "idem_key": "hermes-coastfi-20260923", "summary": "四口徑定案：Coast FI 雙軌(4%法則+配息率)、純金融為主判準含房產並列；PCCR 用9/5定版保守配息；跑道扣追繳緩衝50萬；維持率180%與LTV70%並列。目標日=2027/2留停生效日"},
+  {"timestamp": "2026-09-23T21:50:00+08:00", "action": "修復", "name": "留停驗收表 9 月口徑校正（B級→C級）＋退休規劃報告 9 處寫死值改動態", "source": "user", "status": "已完成", "category": "決策", "user": "Laing", "idem_key": "hermes-sabbatical-caliber-20260923", "summary": "使用者質疑覆蓋率偏低後追查：9/18 只校正真值鍵 fund_dividend_conservative（130,930→100,000），未回頭重算已落地的 9 月記錄 → 覆蓋率 129.6%/壓力 93.3%/水庫 20.6 月 全為作廢值；校正後 110.6%/78.1%/12.3 月，驗收等級 B級→C級。並修 build_retirement_plan.py 9 處寫死舊值改全動態派生。已登記 INC sabbatical_stale_caliber。commit 4dc5f896+9fa5cb4e（CIO APPROVE tree daf1cd0b）"},
+  {"timestamp": "2026-09-23T21:58:00+08:00", "action": "核准", "name": "覆蓋率成對顯示（保守底線＋當月實收）上線三頁", "source": "user", "status": "已完成", "category": "決策", "user": "Laing", "idem_key": "hermes-coverage-pair-20260923", "summary": "使用者指出 110.6% 是下限而非現況 → 定案：任何顯示覆蓋率處必須成對顯示「保守底線＋當月實收」，判準層不動。落地三頁：儀表板結構條 legend、退休規劃頁（壓力測試列＋驗收表兩列＋callout）、週報⑤現金流；精度統一 1 小數。commit 5134cc71+71a99ab2（CIO APPROVE tree df363b4b）。鐵則寫入 monthly-income-caliber 技能"}],
   "meta": {
     "updated_at": "2026-09-23T21:33:47.791414"
   },
