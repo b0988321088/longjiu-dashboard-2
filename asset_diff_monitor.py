@@ -598,8 +598,17 @@ def buffett_advice(history: dict, snap: dict) -> str:
         monthly_rent_pending = max(0, monthly_rent_target - monthly_rent_received)
     monthly_rent_pending = max(0, monthly_rent_pending)
     monthly_exp = ex["monthly_expense"]
-    passive_total = monthly_div_conservative + monthly_rent_received
-    passive_coverage = passive_total / monthly_exp * 100 if monthly_exp else 0
+    # 2026-09-23（成對顯示鐵則）：任何顯示覆蓋率處必須同時給保守底線＋當月實收。
+    # 保守底線＝配息基本值（passive_income.fund_dividend_conservative）＋房租常態應收；
+    # 當月實收＝配息當月實收（ex.fund_dividend_monthly）＋房租當月已收。
+    # 站點：原本只印一個數（且拿當月實收配息標成「保守配息」）→ 124.1% 被誤讀成保守口徑。
+    div_conservative = float((snap.get("passive_income", {}) or {}).get("fund_dividend_conservative")
+                             or ex.get("fund_dividend_conservative") or 0) or monthly_div_conservative
+    div_actual = float(ex.get("fund_dividend_monthly") or monthly_div_conservative or 0)
+    passive_conservative = div_conservative + monthly_rent_target
+    passive_actual = div_actual + monthly_rent_received
+    passive_coverage = passive_conservative / monthly_exp * 100 if monthly_exp else 0        # 判準＝保守底線
+    passive_coverage_actual = passive_actual / monthly_exp * 100 if monthly_exp else 0
 
     alloc_den = max(1, ta)
     alloc = (
@@ -636,7 +645,8 @@ def buffett_advice(history: dict, snap: dict) -> str:
         f"資產結構：{alloc}",
         rent_line,
         f"負債比率：{debt_ratio:.1f}%（含不動產）｜流動負債率 {debt_ratio_flow:.1f}%（不含不動產）",
-        f"保守配息：{_fmt(monthly_div_conservative)}（覆蓋率 {passive_coverage:.1f}%）",
+        f"配息 保守基本值 {_fmt(div_conservative)}｜當月實收 {_fmt(div_actual)}",
+        f"被動收入 保守底線 {_fmt(passive_conservative)}（覆蓋 {passive_coverage:.1f}%）｜當月實收 {_fmt(passive_actual)}（覆蓋 {passive_coverage_actual:.1f}%）",
     ]
 
     if rows:
@@ -678,9 +688,9 @@ def buffett_advice(history: dict, snap: dict) -> str:
     suggestions.append("0050 權重集中台積電 ~57%，可考慮補碼分散")
     suggestions.append("保單 A+B 管理費 1.5% 偏高，定期複檢配息收益率")
     if passive_coverage < 100:
-        suggestions.append(f"被動收入 {_fmt(passive_total)} 可覆蓋月支出 {_fmt(monthly_exp)}")
+        suggestions.append(f"被動收入 保守底線 {_fmt(passive_conservative)} 未覆蓋月支出 {_fmt(monthly_exp)}（覆蓋 {passive_coverage:.1f}%）｜當月實收 {_fmt(passive_actual)}（覆蓋 {passive_coverage_actual:.1f}%）")
     else:
-        suggestions.append(f"被動收入 {_fmt(passive_total)} 已完全覆蓋月支出 {_fmt(monthly_exp)}（覆蓋率 {passive_coverage:.1f}%）")
+        suggestions.append(f"被動收入 保守底線 {_fmt(passive_conservative)} 已覆蓋月支出 {_fmt(monthly_exp)}（覆蓋 {passive_coverage:.1f}%）｜當月實收 {_fmt(passive_actual)}（覆蓋 {passive_coverage_actual:.1f}%）")
     lines += ["", "💡 建議："]
     lines += [f"• {s}" for s in suggestions]
 
