@@ -78,6 +78,22 @@ def update_asset(snap: dict, insurance=None, securities=None, funds=None, cash=N
     snap["total_assets"] = ins + sec + fund + cashv
     return snap
 
+# ─────────────────────────────────────────────────────────────
+# legacy 鍵登錄（2026-09-23 INC-242b v2／CIO F4）
+# 語意不明、全 repo 無任何程式讀取的歷史鍵。為什麼「登錄」而不刪：
+# ① 刪掉會失去「這裡曾有值」的線索；② 登錄後 safe_update.apply_changes 直接拒寫
+# （更新不會再被靜默吸收，正是 INC-242／INC-242b 的失效模式）；
+# ③ 明確標示「勿引用、勿當真值」，避免下一個人誤把它併入 SYNONYM_GROUPS（會把現值覆寫成帳面值）。
+# 真正的成本鍵另有 policy_a_book_value／policy_b_book_value／allianz_ab_book_value（有讀者）。
+# ─────────────────────────────────────────────────────────────
+LEGACY_KEYS = {
+    "allianz_a_value": "安聯A 帳面/歷史值（4,925,927），無讀者；canonical＝allianz_policy_a_value",
+    "allianz_b_value": "安聯B 帳面/歷史值（2,627,478），無讀者；canonical＝allianz_policy_b_value",
+    "allianz_current_value": "安聯舊彙總值（7,553,405），無讀者；canonical＝allianz_combined",
+    "allianz_total": "安聯舊彙總值（8,028,248），無讀者；canonical＝allianz_combined",
+}
+
+
 def verify_synonyms(snap: dict) -> list:
     """檢查同義欄位是否一致，回傳不一致清單"""
     issues = []

@@ -897,7 +897,31 @@
 - **來源**：CIO 對 5d4e5e04 的 SHOULD 項（唯讀審查發現）＋本輪自查。
 - **問題一（同型失效模式換門）**：`safe_update.py` 的 `RANGES`／`LABELS` 把「保單A／保單B」登錄在 **legacy 帳面鍵** `allianz_a_value`／`allianz_b_value`（無任何報表讀取、也不在 `SYNONYM_GROUPS`）→ 走這扇門更新保單 A/B 時，寫入被**靜默吸收**，canonical 5 鍵仍停舊值（與 INC-242 完全同一失效模式，只是入口不同）。
 - **問題二（範圍過期）**：`fund_market_value` 合理範圍仍是 `(600,000, 900,000)`（8 月前口徑）→ 現值 12,731,797 會直接被判超範圍**擋下**，正確的基金更新反而進不來。
-- **修法**：①`RANGES`／`LABELS` 鍵名改指向 canonical `allianz_policy_a_value`／`allianz_policy_b_value`（已於 INC-242 登錄群組）②基金範圍改 `(11,000,000, 14,000,000)` ③`do_apply` 套用後一律呼叫 `asset_sync.sync_snapshot_keys(snap)` 同步同義家族（一般性補洞，失敗只警告不中斷）。
+- **修法**：①`RANGES`／`LABELS` 鍵名改指向 canonical `allianz_policy_a_value`／`allianz_policy_b_value`（已於 INC-242 登錄群組）②基金範圍改 `(11,000,000, 14,000,000)` ③~~`do_apply` 套用後呼叫 `asset_sync.sync_snapshot_keys()`~~ → **CIO 第二輪 REJECT 證實此法有害**（見下方 v2）。
 - **驗證（實跑）**：A) `--plan allianz_policy_a_value=4,986,448` → 「無變更」（鍵存在、不再落 legacy、不再警告「不在 snapshot」）；B) `--plan fund_market_value=12,731,797` → 「無變更」（舊版必被範圍擋）；C) `--plan allianz_policy_a_value=9,999,999` → `❌ 保單A：9,999,999 超出合理範圍 [4,500,000 ~ 5,500,000]`（fail-closed 保留）。
 - **附帶**：`notion_shared_context.md` 重生（7 個舊值 → 0 筆）；INC-242 條目的「全樹 0 筆」宣稱限縮為 snapshot.json；新工具 `sync_securities_close.py`（14:00 收盤覆蓋）納入版控。
 - **待辦（CIO NICE 項，暫緩）**：未登錄同義鍵的機械閘門——純命名樣式啟發式易假陽性（合法非同義鍵如 `securities_market_value`、`moneybook_total`、`allianz_a_value` legacy 家族），先由「群組登錄＋safe_update 同步」處理，等有明確真值優先序再上閘門。
+
+### INC-242b v2（CIO 第二輪 REJECT 後的修正，同日）
+
+- **MUST（F1：`sync_snapshot_keys` 會把剛套用的值回退）**：`sync_snapshot_keys` 的 anchor 是**群組名鍵**本身
+  （`val = snap.get(master)`），群組名鍵不存在時 fallback 到清單第一個非 None 鍵。實測：`allianz_policy_a`
+  群組名鍵不存在 → fallback 命中 **legacy 的 `allianz_a`**；`securities_total`／`funds_total`／`cash_total`
+  群組名鍵存在但仍是**舊值** → 套用新值後被回寫成舊值，而 do_apply 已先印 ✅ 成功
+  → **7 個 RANGES 鍵有 5 個「假成功」**（保單A／保單B／證券／基金／現金），只有 `allianz_combined`、`firstjin_fl65_current_value` 倖免。
+- **修法**：新增 `safe_update.apply_changes(snap, changes)` —— 以**新值為準、往外覆蓋**該鍵所屬群組的全部成員；
+  legacy 鍵一律拒寫（`ValueError` → 印「拒絕套用」並 exit 1）。do_apply 改呼叫它，不再用 `sync_snapshot_keys`。
+- **驗證**：verifier 新增 **--apply 級**（CIO F6 要求）——直接 import `apply_changes` 對 7 個 RANGES 鍵逐一注入新值，
+  斷言「鍵值 == 新值」且「群組全員 == 新值」（無回退）；legacy 鍵寫入被拒；另 clone 內**端到端實跑 `sync_securities_close.py`**。
+- **SHOULD（F2：範圍過期同型未修完）**：`securities_total_market_value` 上限 3,000,000 **低於真值 3,006,770**
+  → 改 `(2,000,000, 4,500,000)`；`real_liquid_assets` 下限 2,500,000 與 9/13 定案現金口徑 866,818 不符
+  → 改 `(300,000, 4,500,000)`（同一顆一起修，避免第三次「改了基金漏了證券」）。
+- **SHOULD（F3：收盤覆蓋只寫主鍵）**：`sync_securities_close.py` 只寫 `price`／`value`，而 `pnl`／`pnl_pct`
+  被 `build_penetration_report.py`／`etf_holding_report.py` 讀取 → value 用新價、pnl 停舊價。
+  已改為同時更新 `market_value`（鏡像鍵）與 `pnl`／`pnl_pct`（= value − cost）；**既有 snapshot 的 15 檔一併校正**。
+- **SHOULD（F4：遺產鍵登錄）**：新增 `asset_sync.LEGACY_KEYS`（`allianz_a_value` 4,925,927／`allianz_b_value` 2,627,478／
+  `allianz_current_value` 7,553,405／`allianz_total` 8,028,248，全 repo 零讀者）——登錄理由：拒寫＋標示勿引用；
+  真正的成本鍵是 `policy_a_book_value`／`policy_b_book_value`／`allianz_ab_book_value`（有讀者）。
+- **教訓**：①凡改 `do_apply` 行為，verifier 必須有 **--apply 級**覆蓋（純 `--plan` 會讓回歸逃逸——本輪就是這樣被抓）；
+  ②「加一個 sync 讓大家一致」聽起來安全，實際上把**方向搞反**（以舊值為 anchor）比不做更危險；
+  ③同型範圍過期要**一次全掃**（基金、證券、現金），不要只修眼前那一個。

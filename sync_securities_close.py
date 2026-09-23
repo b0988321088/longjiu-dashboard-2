@@ -99,6 +99,15 @@ def main() -> int:
             continue
         h["price"] = r["new_price"]
         h["value"] = r["new_value"]
+        # 2026-09-23 INC-242b v2（CIO F3）：只寫 price/value 會讓兄弟鍵停在舊值——
+        # build_penetration_report.py:231-235 與 etf_holding_report.py:41,140-148 讀 h['pnl']／h['pnl_pct']，
+        # value 用新價、pnl 卻用舊價 → 同一張表自相矛盾（與 INC-242 同型的子樹版本）。
+        # market_value 是無讀者的鏡像鍵，一併對齊避免下一個陷阱。
+        h["market_value"] = r["new_value"]
+        _cost = float(h.get("cost") or 0)
+        if _cost:
+            h["pnl"] = int(r["new_value"] - round(_cost))
+            h["pnl_pct"] = round(h["pnl"] / _cost * 100, 2)
     sec["total_market_value"] = total
     sec["unrealized_pnl"] = unrl
     sec["unrealized_pnl_pct"] = unrl_pct

@@ -27,10 +27,13 @@ RANGES = {
     'allianz_policy_a_value': (4_500_000, 5_500_000),  # 安聯A（canonical：allianz_policy_a 群組）
     'allianz_policy_b_value': (2_200_000, 3_200_000),  # 安聯B（canonical：allianz_policy_b 群組）
     'firstjin_fl65_current_value': (1_800_000, 2_200_000),  # 第一金FA81聯博
-    'securities_total_market_value': (2_000_000, 3_000_000),  # 證券
+    # 2026-09-23 INC-242b v2（CIO F2）：原上限 3,000,000 已低於真值 3,006,770 → 正確更新被擋
+    'securities_total_market_value': (2_000_000, 4_500_000),  # 證券
     # 2026-09-23 INC-242b：原 (600_000, 900_000) 是 8 月前的基金總值區間 → 現值 12.7M 會被判超範圍擋下
     'fund_market_value': (11_000_000, 14_000_000),   # 基金（國泰直購＋鉅亨）
-    'real_liquid_assets': (2_500_000, 4_500_000),    # 現金
+    # 2026-09-23 INC-242b v2（CIO F2 同型）：現金口徑 9/13 定案後為台幣活存 866,818
+    # （MMF/外幣另計），原下限 2,500,000 會擋掉每一次正常更新
+    'real_liquid_assets': (300_000, 4_500_000),      # 現金（含未來賣 MMF 回流情境）
 }
 
 LABELS = {
@@ -168,6 +171,32 @@ def do_plan(args):
     print("  核准後執行：python safe_update.py --apply")
     print(f"{'='*55}")
 
+def apply_changes(snap, changes):
+    """套用變更：寫入 key，並把**新值**同步到它所屬的同義群組全部成員。
+
+    2026-09-23 INC-242b v2（CIO 第二輪 REJECT 的 MUST）：
+    不可改用 `asset_sync.sync_snapshot_keys()` —— 它的 anchor 是「群組名鍵」本身
+    （`val = snap.get(master)`），群組名鍵不存在時 fallback 到清單第一個非 None 鍵。
+    對 `allianz_policy_a`（群組名鍵不存在 → fallback 命中 legacy 的 `allianz_a`）以及
+    `securities_total`／`funds_total`／`cash_total`（群組名鍵存在、但仍是**舊值**）而言，
+    它會把剛套用的新值**回退成舊值**，而 do_apply 已先印 ✅ 成功
+    → 實測 7 個 RANGES 鍵有 5 個「假成功」。故改為「以新值為準、往外覆蓋整個群組」。
+    legacy 鍵（無讀者、語意不明）一律拒寫，避免更新被靜默吸收。
+    """
+    from asset_sync import SYNONYM_GROUPS, LEGACY_KEYS
+    for key, c in changes.items():
+        if key in LEGACY_KEYS:
+            raise ValueError(f"{key} 是 legacy 鍵（{LEGACY_KEYS[key]}）→ 請改用 canonical 鍵")
+        new = c['new']
+        snap[key] = new
+        for _master, members in SYNONYM_GROUPS.items():
+            if key in members:
+                for _k in members:
+                    snap[_k] = new
+                break
+    return snap
+
+
 def do_apply():
     """第二階段：套用變更"""
     pending = load_pending()
@@ -188,18 +217,13 @@ def do_apply():
     print("=" * 55)
 
     snap = load_snapshot()
-    for key, c in changes.items():
-        snap[key] = c['new']
-        print(f"  ✅ {c['label']}:  {c['new']:,}")
-
-    # 2026-09-23 INC-242b：套用後一律同步同義鍵群組
-    # （避免只改到家族裡的一鍵、報表實際讀的那一鍵停在舊值＝INC-242 的失效模式）
     try:
-        from asset_sync import sync_snapshot_keys
-        snap = sync_snapshot_keys(snap)
-        print("  ✅ 同義鍵群組已同步（asset_sync.sync_snapshot_keys）")
-    except Exception as _sym_err:
-        print(f"  ⚠️ 同義鍵同步失敗：{_sym_err}（請手動跑 asset_sync.py 驗證）")
+        snap = apply_changes(snap, changes)
+    except ValueError as _e:
+        print(f"  ❌ 拒絕套用：{_e}")
+        sys.exit(1)
+    for key, c in changes.items():
+        print(f"  ✅ {c['label']}:  {c['new']:,}（已同步同義群組）")
 
     # 更新日期
     today = datetime.date.today().strftime('%Y-%m-%d')
