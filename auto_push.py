@@ -200,6 +200,21 @@ def main() -> int:
         bad: list[tuple[str, list[str]]] = [(c, commit_has_code(base, c)) for c in pending]
         blockers = [(c, f) for c, f in bad if f]
         if blockers:
+            # 2026-09-23 INC push_window_blocked_evening_cron（本班實際踩到，22:00 晚報）：
+            # 拒推前先補落「不含程式檔」的 pending commit 紀錄。否則一顆未審程式 commit 會連坐
+            # 同範圍的資料/報表 commit 也沒紀錄 → 下一輪自動化推送再被擋一次（要人工回補才通）。
+            # 只補資料檔 commit、仍然 return 3 不推送 → fail-closed 不變、程式檔規則不動。
+            for _c, _f in bad:
+                if _f:
+                    continue
+                if a.dry_run:
+                    print(f"[dry-run] 將補落 RECORD（資料檔）：{_c[:12]}")
+                    continue
+                _ar = run([sys.executable, str(base / "auto_record.py"), "--script", f"{a.script}(pre-block)",
+                           "--commit", _c], base, timeout=300)
+                _tail = ((_ar.stdout or "") + (_ar.stderr or "")).strip().splitlines()
+                print(f"✅ 拒推前補落 RECORD：{_c[:12]}" if _ar.returncode == 0
+                      else f"⚠️ 拒推前補落紀錄失敗：{_c[:12]}（仍拒推，下次仍會擋）｜{_tail[-1][:140] if _tail else ''}")
             print("❌ 推送範圍內有未落紀錄且含程式檔的 commit → 不推送（程式改動必須走真 CIO 審查）", file=sys.stderr)
             for c, f in blockers:
                 print(f"   - {c[:12]}：{', '.join(f[:4])}", file=sys.stderr)
