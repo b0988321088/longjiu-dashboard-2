@@ -216,6 +216,14 @@ def apply_changes(snap, changes):
                 for _k in members:
                     snap[_k] = new
                 break
+
+    # 2026-09-23 INC-242b v3（CIO S5）：跨群組不變式 —— 動到安聯 A／B 個別現值時，
+    # combined（A+B）必須跟著派生；反之若只給了 combined，這裡會把它拉回 A+B 並印出
+    # 修正訊息（真值方向：A／B 是 App 逐張現值、combined 是派生）。
+    from asset_sync import sync_allianz_combined, verify_cross_group_invariants
+    sync_allianz_combined(snap)
+    for _i in verify_cross_group_invariants(snap):
+        print(f"  ⚠️ {_i}")
     return snap
 
 

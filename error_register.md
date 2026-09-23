@@ -934,3 +934,14 @@
 - **S3（未登錄群組的鍵靜默寫入）**：`apply_changes` 對不在任何 `SYNONYM_GROUPS` 的鍵只寫單鍵、家族不同步且無提示（INC-242 的原始失效模式）→ 補 `⚠️` 警告。
 - **同群組多鍵 fail-closed**：同一群組一次出現兩鍵且新值不同時，原行為是後寫者勝、先寫者被靜默丟棄，而 `do_apply` 對兩鍵都印 ✅（日誌與落地值不一致）→ 改為 `ValueError` 拒寫；相同值仍放行。
 - **教訓**：①把「值的方向」修正確，會讓原本被 bug 無害化的資料變成有效輸入 → 修方向時要同步檢查**輸入閘門**（本案：範圍只在 plan 檢查）②append-only 的 pending 檔需要 TTL／註銷機制，兩個月前的計畫不該停在「可套用」狀態。
+
+### INC-242b v3 補（S5 跨群組不變式＋防守組成自癒，同日）
+
+- **S5 跨群組不變式**：同義群組只保證「群組內一致」，不保證「群組之間自洽」——安聯 `allianz_combined`（A+B 合計）與 `allianz_policy_a_value`／`b_value`（個別）分屬不同群組 → 只改一邊不會同步另一邊，而 `verify_synonyms` 回報「無不一致」（實測：A+B 7,675,892 vs combined 停留在 7,652,217）。
+  - **修法**：新增 `asset_sync.sync_allianz_combined()`（真值方向唯一：A／B＝安聯 App 逐張現值、combined＝派生）＋`verify_cross_group_invariants()`；接入 `safe_update.apply_changes`、`update_data`（步驟②）、`update_asset`（caller 未顯式給 combined 時）。
+  - **驗證**：只改 A → combined 自動變 7,675,769 並印 🔁；只給 combined 且與 A+B 不符 → 拉回 A+B 並印訊息；兩種情境 `verify_cross_group_invariants` 皆為空。
+- **防守組成自癒**：`defensive_combined_metric.組成` 一直是人工維護，而 `合計/佔比` 由它加總派生 → 任一分量過期＝整組數字「一致地錯」。實測 `保單月配基金` 停在 7,553,405（真值 allianz_combined 7,652,217）、國泰月配 6,794,913→6,893,650、防守ETF 1,099,470→1,117,570、第一金ID01 1,889,273→1,891,718；`組成說明` 內亦寫死舊金額，會被當口徑寫進報告。
+  - **修法**：新增 `sot_targets.derive_defensive_components()`／`build_defensive_metric()`；`defensive_caliber()`（20+ 報表／判準入口）改讀派生值；`update_data` 寫回自癒後的組成／合計／佔比／說明。
+  - **結果**：合併口徑 17,695,257 → **17,913,351**、佔比 67.7% → **68.5%**（門檻 60% 仍「已足」，承接凍結不變）；穿透表與審計表已重產。
+  - 鉅亨月配口徑未定 → 保留原值並在 `組成說明` 標註（不猜、不編）。
+- **教訓**：①「群組內一致」≠「群組之間自洽」——合計類欄位必須指定唯一派生方向，否則兩邊各寫各的都會通過檢查 ②人工維護的「組成」是被派生欄位（合計/佔比）的上游，只自癒下游不會修上游 → 自癒要一路做到最上游的真值鍵。

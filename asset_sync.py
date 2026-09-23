@@ -69,6 +69,10 @@ def update_asset(snap: dict, insurance=None, securities=None, funds=None, cash=N
         snap["firstjin_fl65_current_value"] = firstjin
 
     snap = sync_snapshot_keys(snap)
+    # 2026-09-23 INC-242b v3（CIO S5）：caller 未顯式指定 allianz_combined 時，
+    # combined 一律由 A+B 派生，避免只更新 A／B 而 combined 停在舊合計。
+    if allianz_combined is None:
+        sync_allianz_combined(snap, verbose=False)
 
     # 總資產重算 = 保險 + 證券 + 基金 + 現金
     ins = snap.get("insurance_total", 0) or 0
@@ -102,6 +106,53 @@ def verify_synonyms(snap: dict) -> list:
         non_none = [v for v in vals.values() if v is not None]
         if non_none and len(set(non_none)) > 1:
             issues.append(f"{master}: {vals}")
+    return issues
+
+
+# ─────────────────────────────────────────────────────────────
+# 跨群組不變式（2026-09-23 INC-242b v3／CIO S5）
+# 同義群組只保證「群組內一致」，不保證群組之間自洽：安聯 combined（A+B 合計）與
+# A／B 個別現值分屬不同群組 → 只改 A 不會動到 combined（反之亦然），
+# verify_synonyms 也不會報（實測：只改 A → A+B 7,675,892 但 combined 停 7,652,217，
+# 而 verify_synonyms 回報「無不一致」）。
+# 真值方向：A／B＝安聯 App 逐張現值（primary）；combined＝派生（A+B）。
+# ─────────────────────────────────────────────────────────────
+def allianz_ab_from_units(snap: dict):
+    """由 A／B 個別現值算出安聯合計（取不到回 None）。"""
+    a = snap.get("allianz_policy_a_value")
+    b = snap.get("allianz_policy_b_value")
+    if all(isinstance(v, (int, float)) and v for v in (a, b)):
+        return int(a) + int(b)
+    return None
+
+
+def sync_allianz_combined(snap: dict, verbose: bool = True) -> list:
+    """把 allianz_combined 群組同步為 A+B（派生方向唯一）。回傳修正訊息清單。"""
+    msgs = []
+    total = allianz_ab_from_units(snap)
+    if total is None:
+        return msgs
+    before = snap.get("allianz_combined")
+    if isinstance(before, (int, float)) and before != total:
+        msgs.append(f"安聯 combined 由 A+B 派生：{int(before):,} → {total:,}"
+                    f"（A={int(snap['allianz_policy_a_value']):,} + B={int(snap['allianz_policy_b_value']):,}）")
+    for k in SYNONYM_GROUPS.get("allianz_combined", []):
+        snap[k] = total
+    if verbose:
+        for m in msgs:
+            print(f"  🔁 {m}")
+    return msgs
+
+
+def verify_cross_group_invariants(snap: dict) -> list:
+    """跨群組不變式檢查（回傳不一致清單；由呼叫端決定警告或硬擋）。"""
+    issues = []
+    total = allianz_ab_from_units(snap)
+    if total is not None:
+        for k in SYNONYM_GROUPS.get("allianz_combined", []):
+            v = snap.get(k)
+            if isinstance(v, (int, float)) and v != total:
+                issues.append(f"安聯 A+B={total:,} 但 {k}={int(v):,}（跨群組不變式）")
     return issues
 
 

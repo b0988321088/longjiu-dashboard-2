@@ -120,7 +120,10 @@ def main() -> int:
         for k in list(sid):
             if "證券" in k or "securities" in k.lower():
                 sid[k] = date.today().isoformat()
-    SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=2), encoding="utf-8")
+    # 2026-09-23 INC-242b v3：snapshot canonical indent=1（INC-184／閉環稽核第 10 類）。
+    # 原 indent=2 會讓每次收盤覆蓋都把整個 snapshot.json 換格式（實測 5,000 行全檔 churn），
+    # 掩蓋真正的差異；update_data 隨後雖會寫回 1，但中間產出與備份已被污染。
+    SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
     print("✅ snapshot.securities 已覆蓋為收盤價")
 
     r = subprocess.run([sys.executable, str(BASE / "update_data.py"), f"--securities={total}"],

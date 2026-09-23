@@ -16,12 +16,15 @@
 import json, sys, shutil, datetime
 from pathlib import Path
 try:
-    from sot_targets import bucket_targets, defensive_caliber  # INC-201：桶目標／防守合併口徑單一入口
+    from sot_targets import bucket_targets, defensive_caliber, build_defensive_metric  # INC-201／INC-242b v3：桶目標／防守合併口徑單一入口
 except Exception:  # 極端情況下（模組缺失）不得讓管線崩潰
     def bucket_targets(_snap):
         return {}
 
     def defensive_caliber(_snap):
+        return {}
+
+    def build_defensive_metric(_snap, _today=None):
         return {}
 
 BASE = Path(__file__).resolve().parent
@@ -78,8 +81,13 @@ def main():
             print(f"✅ cash_detail 合計 {_cd_sum:,} 與 cash_total 一致")
 
     # ② 同步同義欄位 + 重算總資產
-    from asset_sync import sync_snapshot_keys
+    from asset_sync import sync_snapshot_keys, sync_allianz_combined, verify_cross_group_invariants
     snap = sync_snapshot_keys(snap)
+
+    # 2026-09-23 INC-242b v3（CIO S5）：跨群組不變式 —— combined 一律由 A+B 派生。
+    # 同義群組只保證群組內一致，A/B 個別現值與 combined 分屬不同群組 → 只更新其中一邊
+    # 不會同步另一邊，且 verify_synonyms 不會報（實測：A+B 7,675,892 vs combined 7,652,217）。
+    _az_msgs = sync_allianz_combined(snap)
 
     # 2026-08-26 檢討修正：--allianz/--firstjin 更新時 → 保險總值自動重算（不需另傳 --insurance）
     if args.get("allianz") or args.get("firstjin"):
@@ -278,12 +286,28 @@ def main():
         print("⚠️ 已還原 snapshot.backup.json")
         return 1
 
-    # INC-201：防守合併口徑的「合計/佔比」改為組成加總派生後自癒寫回
-    # （原為人工寫入，實測合計 18,097,158 vs 組成加總 18,072,925 已脫節）
-    _dcx = defensive_caliber(snap)
-    if _dcx.get("金額") and isinstance(snap.get("defensive_combined_metric"), dict):
-        snap["defensive_combined_metric"]["配息資產合計"] = _dcx["金額"]
-        snap["defensive_combined_metric"]["佔比"] = _dcx["佔比"]
+    # 2026-09-23 INC-242b v3（CIO S5）：跨群組不變式（同義群組之間）——警告不硬擋，
+    # 因為步驟②已把 combined 由 A+B 派生；這裡是防「有路徑繞過②」的最後一道提示。
+    _xgi = verify_cross_group_invariants(snap)
+    if _xgi:
+        print("⚠️ 跨群組不變式不一致：")
+        for _i in _xgi:
+            print(f"  {_i}")
+
+    # INC-201 ＋ INC-242b v3：防守合併口徑的「組成／合計／佔比／說明」一律由真值鍵派生後自癒寫回。
+    # 原本只自癒「合計/佔比」，而 `組成` 是人工維護 → 任何一個分量過期，整組數字就「一致地錯」：
+    # 實測 2026-09-23 `保單月配基金` 停在舊安聯 A+B 7,553,405（真值 7,652,217）→ 佔比被低估。
+    _dcm_old = (snap.get("defensive_combined_metric") or {}).get("組成") or {}
+    snap["defensive_combined_metric"] = build_defensive_metric(snap)
+    _dcm_new = snap.get("defensive_combined_metric") or {}
+    if _dcm_old and _dcm_new.get("組成") and _dcm_old != _dcm_new["組成"]:
+        print("🔁 防守組成自癒（真值鍵派生）：")
+        for _k, _n in _dcm_new["組成"].items():
+            _o = _dcm_old.get(_k)
+            if _o != _n:
+                print(f"   {_k}: {_o:,} → {_n:,}" if isinstance(_o, (int, float)) else f"   {_k}: {_o} → {_n:,}")
+    if _dcm_new:
+        print(f"   防守合併口徑 {_dcm_new.get('佔比')}%（{_dcm_new.get('配息資產合計', 0):,}）")
     SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
 
     # 2026-08-26 檢討修正：同步 DB assets 當日列（4 源比對根因：snapshot 更新但 DB 舊 → sync_all 失敗還原）
