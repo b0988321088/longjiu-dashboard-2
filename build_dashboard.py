@@ -822,25 +822,27 @@ def main():
         _obs_n = 3                                             # 觀察月數
         _ms = sorted([m for m in _rec if re.match(r"^\d{4}-\d{2}$", m)])[-_obs_n:]
 
-        def _bkt(_d, kind):
-            _t = 0.0
-            for _n, _v in (_d or {}).items():
-                if not isinstance(_v, (int, float)):
-                    continue
-                if kind == "ins" and ("安聯" in _n or "第一金" in _n):
-                    _t += _v
-                elif kind == "etf" and "ETF" in _n:
-                    _t += _v
-                elif kind == "fund" and "基金" in _n and "ETF" not in _n:
-                    _t += _v
-            return _t
+        def _bucket_of(_n):
+            """配息桶分類（2026-09-23 校正）：
+            ETF → 保險（保單撥回：安聯／第一金含保單代號）→ 基金（名稱含「基金」）→ 其他（一次性，不計入三桶）。
+            舊版用『安聯/第一金』直接歸保險，會把『基金配息 安聯收益AM…』誤記保險（8 月保險多 58、基金少 58）。"""
+            if "ETF" in _n:
+                return "etf"
+            if "基金" in _n:
+                return "fund"
+            if ("保單" in _n) or ("安聯" in _n) or ("第一金" in _n):
+                return "ins"
+            return "other"
 
         _rows = []
         _base_tot = 0.0
         for _m in _ms:
             _d = _rec.get(_m) or {}
-            _i, _e, _f = _bkt(_d, "ins"), _bkt(_d, "etf"), _bkt(_d, "fund")
-            _tot = _i + _e + _f
+            _sum = {"ins": 0.0, "etf": 0.0, "fund": 0.0, "other": 0.0}
+            for _n, _v in _d.items():
+                if isinstance(_v, (int, float)):
+                    _sum[_bucket_of(_n)] += _v
+            _i, _e, _f, _tot = _sum["ins"], _sum["etf"], _sum["fund"], _sum["ins"] + _sum["etf"] + _sum["fund"]
             if _m == _base_m:
                 _base_tot = _tot
                 _rows.append(f'<tr class="border-b border-slate-900 font-bold text-teal-400">'
