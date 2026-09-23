@@ -8,23 +8,18 @@ import json, re
 from datetime import date, timedelta
 from pathlib import Path
 from scripts.components.volatility_monitor import make_volatility_report
+from dividend_caliber import bucket_of
 
 BASE = Path(__file__).resolve().parent
 
 def dividend_bucket(name: str) -> str:
-    """配息條目 → 桶（2026-09-23 與儀表板三桶／投資績效同口徑）：
+    """配息條目 → 儀表板三桶鍵（委派 dividend_caliber.bucket_of，單一口徑）。
 
-    ETF → 保單（保單／第一金，或安聯但名稱不含「基金」）→ 基金 → other（一次性，不計入三桶）。
-    順序刻意先認保單代號樣式、再認「基金」，避免名稱含「基金」的保單子帳被誤歸基金；
-    同時避免舊版的『安聯』子字串把『基金配息 安聯收益AM…』誤記保單（8 月保單多 58／合計多 58）。
+    2026-09-23：本函式原本自帶一份分類規則（與投資績效／日報／追蹤器共 4 份副本）
+    → 已收斂為呼叫正典；一次性項（台灣特品現金股息）在儀表板仍歸 other（另列不計入三桶）。
     """
-    if "ETF" in name:
-        return "etf"
-    if ("保單" in name) or ("第一金" in name) or ("安聯" in name and "基金" not in name):
-        return "ins"
-    if "基金" in name:
-        return "fund"
-    return "other"
+    _b = bucket_of(name)
+    return "other" if _b == "oneoff" else _b
 
 
 def _fmt(n):
@@ -796,9 +791,16 @@ def main():
     try:
         _pi = snap.get("passive_income", {}) or {}
         _sal = float(salary or 0)
-        _div = float(_pi.get("fund_dividend_conservative", 0) or 0) or float(div_total or 0)   # 配息用保守常態口徑（與 passive_income.coverage_pct 一致）
+        # 2026-09-23 INC-248：保守口徑鍵缺值時不得靜默退到「當月實收」——
+        # 原 `or div_total（當月實收）` 會讓圖例的「覆蓋 X%（保守底線）」偷偷變成實收口徑；
+        # 房租同理（rent_got＝當月已收）。缺值一律 WARN 並以 0 計（寧可低估，不得偷換口徑）。
+        _div = float(_pi.get("fund_dividend_conservative", 0) or 0)
+        if "fund_dividend_conservative" not in _pi:
+            print("[WARN] 儀表板：passive_income.fund_dividend_conservative 缺值：配息保守以 0 計（不以當月實收冒充）")
         _div_act = float(snap.get("dividend_month_actual") or snap.get("monthly_dividend_total") or 0)   # 當月實收：成對顯示用（2026-09-23）
-        _rent = float(_pi.get("rent_monthly", 0) or 0) or float(rent_got or 0)                 # 房租用月常態應收
+        _rent = float(_pi.get("rent_monthly", 0) or 0)
+        if "rent_monthly" not in _pi:
+            print("[WARN] 儀表板：passive_income.rent_monthly 缺值：房租常態以 0 計（不以當月已收冒充）")
         _exp = float(expense or 0) or 162781.0
         _inc_tot = _sal + _div + _rent
         if _inc_tot <= 0:

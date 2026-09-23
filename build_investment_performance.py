@@ -19,23 +19,23 @@
 """
 import json, sys, sqlite3, datetime
 from pathlib import Path
+from dividend_caliber import bucket_of
 
 BASE = Path(__file__).resolve().parent
 ADJ_FILE = BASE / "investment_performance_adjust.json"
 
 CLASS_KEYS = ["股票", "基金", "保單"]
 
+_MAP = {"etf": "股票", "oneoff": "股票", "ins": "保單", "fund": "基金"}
+
 
 def classify_dividend(name):
-    """配息 key → 類別（2026-09-23 校正，與儀表板三桶同口徑）：
-    ETF／台灣特品→股票；保單（保單／第一金，或安聯但名稱不含「基金」）→保單；其餘基金→基金。
-    舊規則把『安聯』一律歸保單，會讓『基金配息 安聯收益AM…』（8 月 58 元）誤記保單，
-    造成儀表板與投資績效頁對同一月份的口徑差 58 元。"""
-    if name.startswith("ETF") or "台灣特品" in name:
-        return "股票"
-    if ("保單" in name) or ("第一金" in name) or ("安聯" in name and "基金" not in name):
-        return "保單"
-    return "基金"
+    """配息 key → 類別（委派 dividend_caliber.bucket_of，單一口徑）。
+
+    顯示對照：ETF／一次性（台灣特品）→股票；保單（保單／第一金，或安聯但名稱不含「基金」）→保單；
+    其餘基金→基金。原本自帶的分類規則已移除（舊版把『安聯』一律歸保單，會讓
+    『基金配息 安聯收益AM…』誤記保單）。"""
+    return _MAP[bucket_of(name)]
 
 
 def load_adjust():

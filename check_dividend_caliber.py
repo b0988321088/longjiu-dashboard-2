@@ -74,13 +74,20 @@ dirty = [ln[3:].strip().strip('"') for ln in raw if ln.strip()]
 dirty = [d for d in dirty if not d.endswith("_preview.png")]
 _external = [d for d in dirty if Path(d).name == "dragon_assets.db"]   # 外部 cron 寫入，非本班變更
 dirty = [d for d in dirty if Path(d).name != "dragon_assets.db"]
-allowed = {"build_retirement_plan.py", "retirement_plan_2026-09-23.html", "snapshot.json",
+allowed = {"build_retirement_plan.py", "snapshot.json",
            "DAILY_REPORT_PIPELINE_RULE.md", "snapshot.json.bak", "run_daily.py",
            "notion_shared_context.md", "index_template.html", "build_dashboard.py", "index.html",
            "schedule_events.json", "error_register.md",
-           "asset_diff_monitor.py", "asset_diff_2026-09-23.html",
-           "build_investment_performance.py", "check_dividend_caliber.py", "error_register.md"}
-extra = [d for d in dirty if Path(d).name not in allowed]
+           "dashboard_decisions.json",   # 決策登記（decision-governance 主檔，逐筆新增屬預期）
+           "asset_diff_monitor.py",
+           "build_investment_performance.py", "check_dividend_caliber.py",
+           # 2026-09-23 INC-248 配息口徑收斂：新增正典＋委派檔＋校正檔與重算產物
+           "dividend_caliber.py", "dividend_tracker.py", "asset_moat_monitor.py",
+           "investment_performance_adjust.json", "investment_performance.html",
+           "mtd_data.json", "mtd_performance.html"}
+allowed_prefixes = ("asset_diff_2026-09-", "retirement_plan_2026-09-")   # 逐日產物（日期改版不失效）
+extra = [d for d in dirty if Path(d).name not in allowed
+         and not Path(d).name.startswith(allowed_prefixes)]
 ck("變更範圍僅預期檔案", not extra, str(extra))
 
 # 8) 二階段修正（CIO findings）
@@ -181,6 +188,58 @@ ck("投資績效頁分類器已同口徑",
    and _bip.classify_dividend("ETF配息 00878") == "股票")
 ck("小卡其他項動態列出（2026-08 台灣特品現金股息 14,990）",
    "2026-08 台灣特品現金股息 14,990" in _idx)
+
+# 16) 分類器「單一口徑」守門（2026-09-23 INC-248：同一規則曾有 4 份副本 → 8 月 58 元、7 月 22,459 元兩次漂移）
+import importlib as _il
+_dc = _il.import_module("dividend_caliber")
+_PROBE = ["ETF配息 00878", "安聯保單撥回", "基金配息 安聯收益AMg7",
+          "第一金FL65安聯收益成長配息", "台灣特品現金股息", "基金息pi收益 - 存入"]
+_IPMAP = {"etf": "股票", "oneoff": "股票", "ins": "保單", "fund": "基金"}
+_DBMAP = {"etf": "etf", "oneoff": "other", "ins": "ins", "fund": "fund"}
+ck("四檔分類器同口徑（正典 ↔ 儀表板 ↔ 投資績效）",
+   all(_bd.dividend_bucket(_n) == _DBMAP[_dc.bucket_of(_n)] for _n in _PROBE)
+   and all(_bip.classify_dividend(_n) == _IPMAP[_dc.bucket_of(_n)] for _n in _PROBE))
+for _f in ("run_daily.py", "dividend_tracker.py", "build_dashboard.py", "build_investment_performance.py"):
+    _src = (BASE / _f).read_text(encoding="utf-8")
+    ck(_f + " 已委派正典分類器（無自帶抄本規則）",
+       "dividend_caliber" in _src and 'or ("安聯" in' not in _src and 'if "ETF" in name:' not in _src)
+ck("Moneybook 原始明細：ETF 連結基金不得誤判 ETF（元大0050連結A→基金）",
+   _dc.classify_mb_memo("基金配息 元大0050連結A") == "fund"
+   and _dc.classify_mb_memo("媒體轉入 - 基金配息00981afund") == "etf")
+_p09 = {b: sum(v for k, v in _rec["2026-09"].items() if isinstance(v, (int, float)) and _dc.bucket_of(k) == b)
+        for b in ("ins", "etf", "fund", "oneoff")}
+ck("9 月實跑正典分桶＝74,461／16,340／57,174",
+   (_p09["ins"], _p09["etf"], _p09["fund"]) == (74461, 16340, 57174), str(_p09))
+
+# 17) 保守口徑鍵禁止靜默退路（缺值不得沿用「當月實收／total」冒充保守基本值）
+_flagged = []
+for _p in sorted(BASE.glob("*.py")):
+    _t = open(_p, encoding="utf-8", newline="").read()
+    for _i, _line in enumerate(_t.splitlines(), 1):
+        if "fund_dividend_conservative" not in _line:
+            continue
+        _tail = _line.split("fund_dividend_conservative", 1)[1]
+        if "div_total" in _tail or "_div_sum_current_month" in _tail:
+            _flagged.append(_p.name + ":" + str(_i) + " 實收冒充")
+        elif " or " in _tail and not _tail.split(" or ", 1)[1].strip().startswith("0"):
+            _flagged.append(_p.name + ":" + str(_i) + " or 退路")
+ck("保守口徑鍵無『or 實收／or total』退路", not _flagged, str(_flagged[:6]))
+
+# 18) 校正檔 7／8 月三桶＝逐項重算
+_adj = json.loads((BASE / "investment_performance_adjust.json").read_text(encoding="utf-8"))
+_aug = _adj["2026-08"]["配息"]
+_re08 = {}
+for _k, _v in _rec["2026-08"].items():
+    if isinstance(_v, (int, float)):
+        _c = _bip.classify_dividend(_k)
+        _re08[_c] = _re08.get(_c, 0) + _v
+ck("校正檔 8 月三桶＝dividend_records 逐項重算（58 元歸基金）",
+   _aug["股票"] == _re08.get("股票") and _aug["基金"] == _re08.get("基金")
+   and _aug["保單"] == _re08.get("保單") and sum(_aug.values()) == 138627,
+   "校正 " + str(_aug) + " vs 重算 " + str(_re08))
+ck("校正檔 7 月三桶＝MB 實收拆分（ETF 10,740／基金 979；非 22,459 重複計數）",
+   _adj["2026-07"]["配息"] == {"股票": 10740, "基金": 979, "保單": 130930},
+   str(_adj["2026-07"]["配息"]))
 
 fail = [c for c in checks if not c[1]]
 for name, ok, detail in checks:

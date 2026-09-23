@@ -191,6 +191,14 @@ def extract_snapshot(snap: dict) -> dict:
     for _d, _items in (snap.get("dividend_records", {}) or {}).items():
         if str(_d).startswith(_today_m):
             _div_sum_current_month += sum(_items.values())
+    # 2026-09-23 INC-248：conservative 欄必須來自真值鍵 passive_income.fund_dividend_conservative。
+    # 原本兩條分支都把「當月實收」寫進 conservative 欄 → 下游一旦改讀此 dict，就會拿實收冒充
+    # 保守基本值（與 9/23 保守底線 fallback 事故同根因）。缺值一律顯式警示並以 0 計，不靜默沿用。
+    _div_conservative = (snap.get("passive_income", {}) or {}).get("fund_dividend_conservative")
+    if _div_conservative is None:
+        print("[WARN] passive_income.fund_dividend_conservative 缺值：conservative 欄以 0 計（不以當月實收冒充）")
+        _div_conservative = 0.0
+    _div_conservative = float(_div_conservative or 0)
     if _db_path.exists():
         try:
             _db = sqlite3.connect(str(_db_path))
@@ -265,7 +273,7 @@ def extract_snapshot(snap: dict) -> dict:
                     "bonds": float(_ar.get("bonds", 0)),
                     "insurance_detail": insurance_detail_from_db,
                     "fund_dividend_monthly": float(_div_sum_current_month),
-                    "fund_dividend_conservative": float(_div_sum_current_month),
+                    "fund_dividend_conservative": _div_conservative,
                     "monthly_income": float(
                         snap.get("monthly_income", 228_751)
                     ),
@@ -343,7 +351,7 @@ def extract_snapshot(snap: dict) -> dict:
         "cash": float(cash),
         "insurance_detail": insurance_detail,
         "fund_dividend_monthly": _div_sum_current_month,
-        "fund_dividend_conservative": _div_sum_current_month,
+        "fund_dividend_conservative": _div_conservative,
         # 2026-09-18：原退路寫死 218,102（與定版 228,751 不符 → 缺值時會無聲給錯值）
         "monthly_income": _truth(snap, "monthly_income"),
         "monthly_expense": _truth(snap, "monthly_expense", "monthly_expense_mb"),

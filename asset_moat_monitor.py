@@ -23,13 +23,17 @@ class AssetMoatMonitor:
             liquid_assets = float(liquid_assets.get("total", 0) or liquid_assets.get("value", 0) or 0)
         raw_passive = snapshot.get("passive_income")
         if isinstance(raw_passive, dict):
-            passive_income = float(raw_passive.get("fund_dividend_conservative", 0) or raw_passive.get("total", 0) or 0)
+            # 2026-09-23 INC-248：保守配息只認 fund_dividend_conservative。
+            # 原退路 `or raw_passive["total"]` 語意未定義（可能是實收合計）→ 移除，缺值顯式警示以 0 計。
+            passive_income = raw_passive.get("fund_dividend_conservative")
+            if passive_income is None:
+                print("[WARN] 護城河：passive_income.fund_dividend_conservative 缺值：保守配息以 0 計（不以 total／實收冒充）")
+                passive_income = 0.0
         else:
-            passive_income = float(raw_passive or 0)
+            passive_income = raw_passive or 0
+        passive_income = float(passive_income or 0)
         if not passive_income:
-            # 2026-09-23 INC-241b：原 fallback 用 rent_monthly_actual（當月已收 54,000）與常態配息相加
-            # → 混口徑且月中被低估；常態口徑應為 rent_monthly_total（80,100）
-            passive_income = float(snapshot.get("rent_monthly_total", 0) or 0) + float(snapshot.get("fund_dividend_monthly", 0) or 0)
+            print("[WARN] 護城河：保守配息為 0：維持 0 計（2026-09-23 INC-248 移除「房租常態＋當月實收配息」混口徑退路）")
         try:
             debt_ratio = float(str(snapshot.get("debt_ratio", "0")).replace("%", "")) / 100
         except (TypeError, ValueError):

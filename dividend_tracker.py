@@ -6,6 +6,7 @@
 import json, csv, os, glob
 from datetime import date
 from collections import defaultdict
+from dividend_caliber import bucket_of, classify_mb_memo
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 SNAP_PATH = os.path.join(BASE, "snapshot.json")
@@ -52,10 +53,14 @@ def scan_month_dividends(target_month: str):
             if any(k in memo for k in INSURANCE_KEYS) or '安聯保單撥回' in memo:
                 continue
             low = memo.lower()
-            if any(k in low for k in ETF_CODES):
-                # 找代碼
+            # 2026-09-23：分類一律走正典 dividend_caliber（舊版自帶的「ETF 代碼子字串」規則
+            # 會把「基金配息 元大0050連結A」（ETF 連結基金）誤判成 ETF、「台灣特品現金股息」誤記基金）。
+            _b = classify_mb_memo(memo)
+            if _b == "etf":
                 code = next((c for c in ETF_CODES if c in low), 'ETF')
                 name = f'ETF {code.upper()}'
+            elif _b == "oneoff":
+                name = '台灣特品現金股息'
             else:
                 name = '基金配息'
             records[d][name] = records[d].get(name, 0) + amt
@@ -100,26 +105,36 @@ def main():
 
     # 2026-09-04 防復發（35,583/130,930 誤值三犯）：五欄一致鐵則自動校準。
     # monthly_dividend_total / monthly_dividend_breakdown 一律由當月 dividend_records
-    # 重算（分類規則同 run_daily _div_by_type：安聯→保單/第一金→保單/ETF→etf/其他→基金），
+    # 重算（2026-09-23 起分類一律委派 dividend_caliber.bucket_of，不再自帶抄本規則），
     # 防止任何流程把「常態月配」(allianz_ab_monthly+firstjin_monthly=130,930) 寫回當月欄位。
     _bd = snap.setdefault("monthly_dividend_breakdown", {})
     if isinstance(_bd, dict):
-        _by2 = {"allianz": 0, "firstjin": 0, "etf": 0, "fund": 0}
+        _by2 = {"allianz": 0, "firstjin": 0, "ins_other": 0, "etf": 0, "fund": 0, "oneoff": 0}
         for _d2, _items2 in (snap.get("dividend_records", {}) or {}).items():
             if not str(_d2).startswith(month):
                 continue
             for _k2, _v2 in _items2.items():
-                if "安聯" in _k2:
-                    _by2["allianz"] += _v2
-                elif "第一金" in _k2:
-                    _by2["firstjin"] += _v2
-                elif "etf" in _k2.lower():
+                _b2 = bucket_of(_k2)
+                if _b2 == "ins":
+                    if "安聯" in _k2:
+                        _by2["allianz"] += _v2
+                    elif "第一金" in _k2:
+                        _by2["firstjin"] += _v2
+                    else:
+                        # 保單但非安聯/第一金子帳：不得靜默塞進 fund（insurance 合計仍須正確）
+                        _by2["ins_other"] += _v2
+                elif _b2 == "etf":
                     _by2["etf"] += _v2
+                elif _b2 == "oneoff":
+                    _by2["oneoff"] += _v2
                 else:
                     _by2["fund"] += _v2
+        if _by2["ins_other"]:
+            print(f"[WARN] 保單配息含非安聯/第一金子帳 {_by2['ins_other']:,.0f}：insurance 合計已含，子帳欄未列")
         _bd.update({"allianz": _by2["allianz"], "firstjin": _by2["firstjin"],
-                    "insurance": _by2["allianz"] + _by2["firstjin"],
-                    "etf": _by2["etf"], "fund": _by2["fund"], "total": total})
+                    "insurance": _by2["allianz"] + _by2["firstjin"] + _by2["ins_other"],
+                    "etf": _by2["etf"], "fund": _by2["fund"],
+                    "oneoff": _by2["oneoff"], "total": total})
     snap["monthly_dividend_total"] = total
 
     json.dump(snap, open(SNAP_PATH, "w", encoding="utf-8"), ensure_ascii=False, indent=1)

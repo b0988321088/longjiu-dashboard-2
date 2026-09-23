@@ -20,6 +20,7 @@ import daily_intel as mi_mod
 from daily_intel import load_daily_analysis
 from scripts.components.report_utils import _fmt_rent_status, _generate_schedule_html
 from scripts.components.volatility_monitor import make_volatility_report
+from dividend_caliber import bucket_of
 
 try:
     from dotenv import load_dotenv
@@ -163,19 +164,23 @@ def calibrate_sources() -> dict:
     # 從 monthly_dividend_breakdown 取得證券、基金配息及下次除息資訊
     dividend_breakdown = snap.get("monthly_dividend_breakdown", {})
     # 當月實際已收配息分類（從 dividend_records 依當月過濾，8月起全為 0）
+    # 2026-09-23：分類一律委派 dividend_caliber.bucket_of（單一口徑）。
+    # 舊版本把「安聯」判斷放最前面，會讓『基金配息 安聯收益AMg7』（8 月 58 元）誤入保單桶；
+    # 一次性項（台灣特品現金股息）維持計入 ETF 桶（與投資績效頁『股票』同口徑）。
     _div_by_type = {"安聯": 0, "第一金": 0, "ETF": 0, "基金": 0, "保單": 0}
     for _d, _items in _div_records.items():
         if str(_d).startswith(_today_m):
             for _k, _v in _items.items():
-                if "安聯" in _k:
-                    _div_by_type["安聯"] += _v
+                _b = bucket_of(_k)
+                if _b == "ins":
                     _div_by_type["保單"] += _v
-                elif "第一金" in _k:
-                    _div_by_type["第一金"] += _v
-                    _div_by_type["保單"] += _v
-                elif "ETF" in _k.upper() or "股息" in _k or "股利" in _k:
+                    if "安聯" in _k:
+                        _div_by_type["安聯"] += _v
+                    elif "第一金" in _k:
+                        _div_by_type["第一金"] += _v
+                elif _b == "etf" or _b == "oneoff":
                     _div_by_type["ETF"] += _v
-                elif "基金" in _k:
+                else:
                     _div_by_type["基金"] += _v
     sec_dividend_monthly = _div_by_type["ETF"]
     fund_dividend_monthly = _div_by_type["基金"]
