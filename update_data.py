@@ -227,15 +227,24 @@ def main():
                            snap["fund_market"], bond_portion=None, fund_ratios=None, snap=snap)
     total = snap["total_assets"]
     _old_pen = snap.get("penetration", {}) or {}
+    # 2026-09-23 INC-244：五桶 + 子維度（科技／非科技）一律「現算」寫入。
+    # 血淚：原版只把科技／非科技補回 actual_pct，**actual_twd 沒補** → 日報表格
+    # 「└ 科技股／└ 非科技」金額欄印 0 TWD（% 正確，因為 pct 有保留），
+    # 而 calc_penetration 本來就有回傳這兩個鍵。
+    _PEN_KEYS = ["台股市值型成長", "美股市值型成長", "防守型配息", "債券", "現金/安全網",
+                 "美股市值型成長_科技", "美股市值型成長_非科技"]
     _new_pen = {
-        "actual_twd": {k: pen[k] for k in ["台股市值型成長", "美股市值型成長", "防守型配息", "債券", "現金/安全網"]},
-        "actual_pct": {k: round(pen[k] / total * 100, 1) for k in ["台股市值型成長", "美股市值型成長", "防守型配息", "債券", "現金/安全網"]},
+        "actual_twd": {k: pen[k] for k in _PEN_KEYS if k in pen},
+        "actual_pct": {k: round(pen[k] / total * 100, 1) for k in _PEN_KEYS if k in pen},
         "targets": bucket_targets(snap) or _old_pen.get("targets", {}),
     }
-    # 保留既有延伸 key（科技拆解/防禦維度等）
-    for _k in ["美股市值型成長_科技", "美股市值型成長_非科技"]:
-        if _k in _old_pen.get("actual_pct", {}):
-            _new_pen["actual_pct"][_k] = _old_pen["actual_pct"][_k]
+    # 其餘既有延伸 key（黃金／健康／防禦維度…）：現算有就用現值，沒有才保留舊值（不靜默丟棄）
+    for _k, _v in (_old_pen.get("actual_twd") or {}).items():
+        if _k not in _new_pen["actual_twd"]:
+            _new_pen["actual_twd"][_k] = pen.get(_k, _v)
+    for _k, _v in (_old_pen.get("actual_pct") or {}).items():
+        if _k not in _new_pen["actual_pct"]:
+            _new_pen["actual_pct"][_k] = round(pen[_k] / total * 100, 1) if _k in pen else _v
     # ③-a 現算 gaps/alert/updated_at/source（2026-09-13 INC-165：重建穿透時原本整批丟掉這些 key，
     #     下游 build_dashboard / memory_sync 會讀 gaps → 一律現算補回，禁止手寫）
     _tgt = _new_pen["targets"]

@@ -2140,6 +2140,10 @@ def main():
     _pen = _snap.get("penetration", {})
     _atwd = _pen.get("actual_twd", {})
     _apct = _pen.get("actual_pct", {})
+    # 2026-09-23 INC-244：子維度金額若缺 → 表格印 0 TWD（% 卻正常），先喊出來
+    for _tk in ("美股市值型成長_科技", "美股市值型成長_非科技"):
+        if _tk in _apct and not _atwd.get(_tk):
+            print(f"  ⚠️ 穿透缺 {_tk} 金額（actual_twd）→ 日報該列會顯示 0 TWD；請先跑 update_data.py 重建穿透")
     _tgt = _pen.get("targets", {})
     _tw_v = _atwd.get("台股市值型成長", 0)
     _us_v = _atwd.get("美股市值型成長", 0)

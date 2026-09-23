@@ -259,6 +259,10 @@ html = _inject_market_intel(html, tv, daily_analysis, _emergency_html)
 _snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
 _pen = _snap.get("penetration", {})
 _atwd, _apct, _tgt = _pen.get("actual_twd", {}), _pen.get("actual_pct", {}), _pen.get("targets", {})
+# 2026-09-23 INC-244：穿透子維度金額若缺 → 表格會印 0 TWD（% 卻正常），先喊出來
+for _tk in ("美股市值型成長_科技", "美股市值型成長_非科技"):
+    if _tk in _apct and not _atwd.get(_tk):
+        print(f"  ⚠️ 穿透缺 {_tk} 金額（actual_twd）→ 日報該列會顯示 0 TWD；請先跑 update_data.py 重建穿透")
 for k, v in [("__DR_TW_V__",f"{_atwd.get('台股市值型成長',0):,.0f}"),("__DR_US_V__",f"{_atwd.get('美股市值型成長',0):,.0f}"),("__DR_DEF_V__",f"{_atwd.get('防守型配息',0):,.0f}"),("__DR_BOND_V__",f"{_atwd.get('債券',0):,.0f}"),("__DR_CASH_V__",f"{_atwd.get('現金/安全網',0):,.0f}")]: html = html.replace(k, v)
 for k, v in [("__DR_TW_PCT__",f"{_apct.get('台股市值型成長',0):.1f}%"),("__DR_US_PCT__",f"{_apct.get('美股市值型成長',0):.1f}%"),("__DR_DEF_PCT__",f"{_apct.get('防守型配息',0):.1f}%"),("__DR_BOND_PCT__",f"{_apct.get('債券',0):.1f}%"),("__DR_CASH_PCT__",f"{_apct.get('現金/安全網',0):.1f}%")]: html = html.replace(k, v)
 # 美股科技/非科技子維度（8/21 補：與 run_daily.py L1535-1538 同步，曾造成 __DR_ 殘留擋推送）
