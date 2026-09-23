@@ -38,6 +38,10 @@ LABEL_KEYS = {
     "債券": "債券",
     "現金": "現金/安全網",
 }
+# 標籤字串互為子字串（科技 ⊂ 非科技）→ 前置字元守門，避免把「非科技 6,333,937」算成「科技」的違規
+LABEL_GUARD = {"科技": "(?<!非)"}
+# 同一標籤的「另一種真值口徑」也要放行（例：現金＝活存 real_liquid_assets vs 穿透桶 現金/安全網）
+EXTRA_AMOUNTS = {"現金": ("real_liquid_assets", "cash_total", "bank_assets_moneybook")}
 # 標籤 → GICS 產業名（industry_penetration.產業）
 LABEL_GICS = {"科技": "資訊科技", "資訊科技": "資訊科技", "金融": "金融"}
 
@@ -82,6 +86,10 @@ def build_allowed(snap: dict) -> dict:
         gk = "科技曝險" if key.endswith("_科技") else ("債券及安全現金" if key == "債券" else key)
         if gk in gaps:
             gps.add(float(gaps[gk]))
+        for _x in EXTRA_AMOUNTS.get(label, ()):
+            _v = (snap or {}).get(_x)
+            if isinstance(_v, (int, float)):
+                twds.add(float(_v))
         allowed[label] = {"pct": pcts, "twd": twds, "gap": gps}
     for label, gname in LABEL_GICS.items():
         row = gics.get(gname)
@@ -103,15 +111,16 @@ def scan_text(text: str, allowed: dict, where: str) -> list[str]:
     out: list[str] = []
     # 標籤後只允許空白/冒號（複合詞如「高科技/半導體」自然被排除）
     for label, spec in allowed.items():
-        for m in re.finditer(rf"{re.escape(label)}\s*[:：]?\s*(\d+(?:\.\d+)?)\s*%", text):
+        _g = LABEL_GUARD.get(label, "")
+        for m in re.finditer(rf"{_g}{re.escape(label)}\s*[:：]?\s*(\d+(?:\.\d+)?)\s*%", text):
             val = float(m.group(1))
             if spec["pct"] and not _pct_ok(spec["pct"], val):
                 out.append(f"{where}：{label} {val}% ∉ 合法值 {sorted(spec['pct'])}｜片段 …{_ctx(text, m)}…")
-        for m in re.finditer(rf"{re.escape(label)}\s*[:：]?\s*([+-]?\d+(?:\.\d+)?)\s*pp", text):
+        for m in re.finditer(rf"{_g}{re.escape(label)}\s*[:：]?\s*([+-]?\d+(?:\.\d+)?)\s*pp", text):
             val = float(m.group(1))
             if spec["gap"] and not _pct_ok(spec["gap"], val):
                 out.append(f"{where}：{label} {val:+}pp ∉ 合法值 {sorted(spec['gap'])}｜片段 …{_ctx(text, m)}…")
-        for m in re.finditer(rf"{re.escape(label)}\s*[:：]?\s*(\d{{1,3}}(?:,\d{{3}})+)", text):
+        for m in re.finditer(rf"{_g}{re.escape(label)}\s*[:：]?\s*(\d{{1,3}}(?:,\d{{3}})+)", text):
             _after = text[m.end():m.end() + 4]
             if re.match(r"\s*(?:\.\d|點)", _after):
                 continue  # 指數點數（台股 47,800.17（+81 點））不是部位金額
