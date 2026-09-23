@@ -62,11 +62,16 @@ FIRE_IDEAL = 40000
 retire_cov = fire_income / RETIRE_BUDGET * 100 if RETIRE_BUDGET else 0
 retire_cov_actual = fire_income_actual / RETIRE_BUDGET * 100 if RETIRE_BUDGET else 0
 
+# 壓力情境（配息 −20% ＋ 洲際W 空置）：單一派生，勿在 f-string 內重複內插
+_stress_income = div_c * 0.8 + rent - 33000
+
 # 極端情境（配息 −30% ＋ 一間無租 ＋ 大型支出 30萬）：分母可能 ≤0，先算好避免 ZeroDivisionError
 _ext_income = div_c * 0.7 + rent - 33000
 _ext_cov = (_ext_income / expense * 100) if expense else 0.0
 _ext_gap = expense - _ext_income
 _ext_months = max(1, round((cash - 300000) / _ext_gap)) if _ext_gap > 0 else 0
+_ext_txt = (f"🔴 缺口 {_ext_gap:,.0f}/月 → 現金水庫撐 {_ext_months} 個月"
+            if _ext_gap > 0 else "🟢 無缺口（水庫不受壓）")
 
 # 2029 情境（snapshot/記憶既有定案）
 fuda_2029 = 45000          # 富達 600萬 後收B 2029/8 解約免罰，領滿 ~45K/月
@@ -158,8 +163,8 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><th>情境</th><th>假設</th><th>月被動</th><th>覆蓋率</th><th>判定</th></tr>
 <tr><td>🟢 正常</td><td>配息/房租/支出正常（保守底線）</td><td>{fire_income:,}</td><td>{fire_cov:.1f}%</td><td class="{cov_band_cls}">{'🟢' if fire_cov>=150 else ('🟡' if fire_cov>=120 else '🔴')} {cov_band}</td></tr>
 <tr><td>🟢 正常（當月實收）</td><td>配息實收 {div_actual:,.0f} ＋ 租金 {rent:,}</td><td>{div_actual + rent:,.0f}</td><td>{fire_cov_actual:.1f}%</td><td class="{actual_band_cls}">{'🟢' if fire_cov_actual>=150 else ('🟡' if fire_cov_actual>=120 else '🔴')} {actual_band}</td></tr>
-<tr><td>🟡 壓力</td><td>配息 −20% ＋ 洲際W 空置</td><td>{div_c*0.8 + rent - 33000:,.0f}</td><td class="red">{stress_cov:.1f}%</td><td class="red">🔴 &lt;100% → 靠現金水庫</td></tr>
-<tr><td>🔴 極端</td><td>配息 −30% ＋ 一間無租 ＋ 大型支出 30萬</td><td>{_ext_income:,.0f}</td><td class="red">{_ext_cov:.1f}%</td><td class="red">🔴 缺口 {_ext_gap:,.0f}/月 → 現金水庫撐 {_ext_months} 個月</td></tr>
+<tr><td>🟡 壓力</td><td>配息 −20% ＋ 洲際W 空置</td><td>{_stress_income:,.0f}</td><td class="red">{stress_cov:.1f}%</td><td class="red">🔴 &lt;100% → 靠現金水庫</td></tr>
+<tr><td>🔴 極端</td><td>配息 −30% ＋ 一間無租 ＋ 大型支出 30萬</td><td>{_ext_income:,.0f}</td><td class="red">{_ext_cov:.1f}%</td><td class="red">{_ext_txt}</td></tr>
 </table>
 <p class="callout">覆蓋率三層：🟢 &gt;150% 非常安全｜🟡 120-150% 基本安全｜🔴 &lt;120% 不能完全依賴資產（<b>不含一次性資本利得</b>）。<br>
 現況 <b class="{cov_band_cls}">{fire_cov:.1f}% = {cov_band}</b>（保守底線）｜當月實收 <b class="{actual_band_cls}">{fire_cov_actual:.1f}% = {actual_band}</b>；壓力情境 {stress_cov:.1f}% 未破 100% — 這是留停前要改善的重點（降負債成本/提高房租淨現金流）。<br>

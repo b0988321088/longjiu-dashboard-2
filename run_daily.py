@@ -118,6 +118,12 @@ def calibrate_sources() -> dict:
         return int(s.replace(",", ""))
 
     def check(label, a, b):
+        """回 True/False；任一來源為 None 時回 None（無法比對）。
+
+        2026-09-23 INC calibrate_dead_regex：None 過去與「通過」同義，只要 regex 打錯字
+        （如簡體『退休後盈余』對繁體檔）或 snapshot 缺鍵，該校準點就會靜默空轉、
+        真值分歧永遠攔不到（retirement_surplus 舊值就是這樣藏了一整個月）。
+        故 None 一律列出 WARN 讓空轉看得見，但仍不阻擋 —— 單一來源缺值不該停整條管線。"""
         if a is None or b is None:
             return None
         return a == b
@@ -130,6 +136,10 @@ def calibrate_sources() -> dict:
         "allianz_value": check("安聯A+B現值", s_allianz, to_num(r_allianz)),
         "firstjin_value": check("第一金現值", s_firstjin, to_num(r_firstjin)),
     }
+
+    unresolved = [k for k, v in checks.items() if v is None]
+    if unresolved:
+        print(f"[CALIBRATE] ⚠️ 校準空轉（來源缺值／regex 未命中，未比對）：{unresolved}")
 
     conflicts = {k: v for k, v in checks.items() if v is False}
     if conflicts:
