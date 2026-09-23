@@ -6075,6 +6075,30 @@
       "user": "Laing",
       "idem_key": "hermes-retire-pair-full-20260923",
       "summary": "使用者指出退休規劃頁只顯示單一（保守）數字 → 頁首 KPI／雙條進度圖／達成檢查／流動性估算／三步驟②／紅綠燈／驗收 callout 全面成對顯示（保守底線＋當月實收）。順修：147,975.0 浮點尾巴、移除寫死值、snapshot.retirement_surplus 30552→17319（舊配息 113,233 口徑派生值作廢）、壓力/極端判定與顏色改派生。四顆 commit aa0479c6／a6b354d2／9079462e／a6345df6 全經 CIO RECORD。INC calibrate_dead_regex 登記（校準 regex 空轉使舊值一路綠燈）。"
+    },
+    {
+      "number": 1,
+      "date": "2026-09-23",
+      "status": "⚡ 執行中（至 2026-12-01 檢視點）",
+      "title": "被動收入基準月＝2026-09；三桶逐月觀察三月至 2026-11，再修保守底線；期間判準層不動",
+      "commit": "a6345df6,d462661a,c622985c,69f0cce9",
+      "note": "baseline-20260923"
+    },
+    {
+      "number": 2,
+      "date": "2026-09-23",
+      "status": "✅ 已結案",
+      "title": "配息分類器收斂（儀表板＋投資績效頁同口徑，先判保單代號再判基金，避开两方向陷阱）；差異分析覆蓋率成對顯示",
+      "commit": "d462661a,e726df8e,c622985c,69f0cce9",
+      "note": "div-class-caliber"
+    },
+    {
+      "number": 3,
+      "date": "2026-09-23",
+      "status": "✅ 已結案",
+      "title": "保守底線 fallback 硬化：缺值不再靜默沿用當月實收；改显式 [WARN]＋0",
+      "commit": "69f0cce9",
+      "note": "conservative-harden"
     }
   ],
   "meta": {
