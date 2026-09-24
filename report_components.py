@@ -116,7 +116,9 @@ def render_health_score(snap: dict) -> dict:
     expense = snap.get("monthly_expense", 162781)
     rent = snap.get("rent_monthly_total", 80100) or 0
     income = (snap.get("dividend_month_expected") or 100000) + rent
+    income_act = float(snap.get("monthly_dividend_total", 0) or 0) + rent
     cov = income / expense * 100 if expense else 0
+    cov_act = income_act / expense * 100 if expense else 0
 
     # 現金流覆蓋（2026-09-13 修正：>=100% 即為 100 分，100%~150% 為超額加分區間）
     if cov >= 100.0:
@@ -178,7 +180,7 @@ def render_health_score(snap: dict) -> dict:
     _cov_std = round(min(cov / 150 * 100, 100))
     detail = {
         "分數": score, "燈號": light,
-        "覆蓋": round(cov), "覆蓋標準": _cov_std, "覆蓋分": round(_cov_std * 0.30),
+        "覆蓋": round(cov), "覆蓋實收": round(cov_act), "覆蓋標準": _cov_std, "覆蓋分": round(_cov_std * 0.30),
         "防禦": defense, "防禦標準": def_score, "防禦分": round(def_score * 0.25),
         "曝險": usd, "曝險標準": usd_score, "曝險分": round(usd_score * 0.20),
         "現金": cash, "現金標準": cash_score, "現金分": cash_score * 0.15,
@@ -197,7 +199,7 @@ def render_health_card(snap: dict) -> str:
     # (名稱, 現況, 目標, 權重分/權重) — 現況 vs 目標 → 得分
     _usd_cap = float((snap.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)  # 2026-09-13：目標讀 snapshot（裁示② 50→60）
     rows = [
-        ("現金流覆蓋", f"{d['覆蓋']}%", "≥100%", d["覆蓋分"], 30),
+        ("現金流覆蓋", f"{d['覆蓋']}%／實收 {d['覆蓋實收']}%", "≥100%", d["覆蓋分"], 30),
         ("防禦維度", _def_txt, "≥50%", d["防禦分"], 25),
         ("美元曝險", f"{d['曝險']:.1f}%", f"≤{_usd_cap:.0f}%（美金）", d["曝險分"], 20),
         ("現金底線", f"{d['現金']:,.0f}", "≥700,000", d["現金分"], 15),
