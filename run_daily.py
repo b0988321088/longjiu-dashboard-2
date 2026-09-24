@@ -1651,10 +1651,30 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                           f"月配息保守 {_div_con:,.0f}／實收 {_div_cur:,.0f}｜"
                           f"總資產 {_ta:,.0f}｜淨資產 {_nw:,.0f}｜"
                           f"覆蓋 {_cov_con:.0f}%／實收 {_cov_act:.0f}%</div>")
+            # 動態失敗訊號（2026-09-24：從 snapshot 每月數據即時計算，不再用靜態欄位）
+            _base_div = _b.get('月配息常態估算', 138627)
+            _dr = _snap_p.get('dividend_records', {})
+            _monthly_divs = []
+            for _m in sorted([k for k in _dr if k.startswith('20') and len(k) == 7]):
+                _v = _dr[_m]
+                if isinstance(_v, dict):
+                    _s = sum(v2 if isinstance(v2, (int, float)) else v2.get('amount', 0) for v2 in _v.values())
+                else:
+                    _s = _v if isinstance(_v, (int, float)) else 0
+                _monthly_divs.append((_m, _s))
+            _sig = []
+            if len(_monthly_divs) >= 2 and all(d < _base_div for _, d in _monthly_divs[-2:]):
+                _sig.append("配息連2月<基準")
+            if _cov_con < 100:
+                _sig.append("保守覆蓋<100%")
+            if _nw < _b.get('淨資產', 0) and (_b.get('淨資產', 0) - _nw) > 50000:
+                _sig.append("淨資產較基準下降")
+            _sig_txt = ('、'.join(_sig)) if _sig else "✅ 無（基準後各項指標均改善）"
+            _sig_color = "#16a34a" if not _sig else "#b45309"
             _base_line = (f"<div style='font-weight:800;color:#78350f;margin-bottom:8px'>📈 操作績效追蹤（基準 {_b.get('日期','')}）</div>"
-                          f"<div style='font-size:12px;color:#92400e'>月配息 {_b.get('月配息常態估算',0):,}｜總資產 {_b.get('總資產',0):,}｜淨資產 {_b.get('淨資產',0):,}｜覆蓋 {_b.get('覆蓋率',0)}%</div>"
+                          f"<div style='font-size:12px;color:#92400e'>月配息 {_base_div:,}｜總資產 {_b.get('總資產',0):,}｜淨資產 {_b.get('淨資產',0):,}｜覆蓋 {_b.get('覆蓋率',0)}%</div>"
                           f"<div style='font-size:12px;color:#92400e;margin-top:4px'>⏳ 追蹤點：{_tp}</div>"
-                          f"<div style='font-size:11px;color:#b45309;margin-top:4px'>⚠️ 失敗訊號：{('、'.join(_perf.get('失敗訊號', [])))}</div>")
+                          f"<div style='font-size:11px;color:{_sig_color};margin-top:4px'>⚠️ 失敗訊號：{_sig_txt}</div>")
             html = html.replace("__PERF_TRACK__",
                 f"<div style='background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin:12px 0'>{_base_line}{_cur_line}</div>")
         else:
