@@ -6237,6 +6237,17 @@
       "summary": "台股2,039,487.0 美股10,325,207.0 防守4,532,842.0 債券7,502,404.0 現金862,409.0",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "timestamp": "2026-09-24T23:19:23.772824",
+      "action": "暫停",
+      "name": "第一金保單轉換（轉入 PIMCO）",
+      "source": "user",
+      "status": "⏸️ 暫停",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1790263163",
+      "summary": "9/24 使用者裁示：第一金轉換（轉入 PIMCO）先暫停，停止重試/臨櫃，待重新定案"
     }
   ],
   "meta": {
