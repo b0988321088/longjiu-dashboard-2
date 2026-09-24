@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-24 20:38",
+ "generated_at": "2026-09-24 21:33",
  "days": 14,
  "ledger_rows": 16,
  "backfilled": [],
@@ -136,19 +136,19 @@
   },
   {
    "date": "2026-09-24",
-   "ds_twd": 5,
-   "gemini_twd": 0,
+   "ds_twd": 6,
+   "gemini_twd": 2,
    "free_twd": 0,
-   "total_twd": 5,
-   "calls": 490,
-   "cer": 100,
-   "q429": 2
+   "total_twd": 8,
+   "calls": 555,
+   "cer": 116,
+   "q429": 5
   }
  ],
  "today": {
-  "total_twd": 5,
-  "cer": 100,
-  "q429": 2
+  "total_twd": 8,
+  "cer": 116,
+  "q429": 5
  },
  "week": {
   "last7_total": 464,
@@ -208,15 +208,15 @@
   }
  },
  "wallets": {
-  "ds_balance_cny": 61.95,
+  "ds_balance_cny": 61.87,
   "ds_balance_twd": 293,
   "ds_source": "API",
   "ds_daily_twd": 63,
   "ds_daily_src": "餘額真值（最近 7 個日曆日，8 個樣本）",
   "ds_days_left": 4.7,
-  "gemini_balance_twd": 887,
+  "gemini_balance_twd": 885,
   "gemini_daily_twd": 16,
-  "gemini_days_left": 55.4,
+  "gemini_days_left": 55.3,
   "gemini_probe": "skipped",
   "gemini_probe_detail": "未探測",
   "gemini_topup": {
@@ -245,7 +245,7 @@
  "topups_unresolved": [],
  "ledger_corrections": [],
  "cer": {
-  "today": 100,
+  "today": 116,
   "last7_total": 258,
   "prev7_total": 260,
   "streak_days": 4,
@@ -344,7 +344,7 @@
   {
    "code": "A2",
    "level": "warn",
-   "msg": "今日 DS 內容風控（CER）100 次 ≥ 20"
+   "msg": "今日 DS 內容風控（CER）116 次 ≥ 20"
   },
   {
    "code": "A9",
@@ -361,14 +361,14 @@
   "baseline_date": "2026-09-22",
   "start_date": "2026-09-23",
   "days": 2,
-  "ds_twd": 92.0,
-  "gem_twd": 0.0,
+  "ds_twd": 93.0,
+  "gem_twd": 2.0,
   "free_twd": 0.0,
-  "free_calls": 378,
-  "calls": 2161,
-  "cer": 111,
+  "free_calls": 417,
+  "calls": 2226,
+  "cer": 127,
   "pending": false,
-  "total_twd": 92.0
+  "total_twd": 95.0
  },
  "page": {
   "top_n": 3,

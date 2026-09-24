@@ -247,17 +247,17 @@ td { padding:7px 8px; border-bottom:1px solid #263449; }
 
 
   <div class="card" style="margin-top:14px;border-left:4px solid #f59e0b">
-    <h2>🚨 緊急應變併入再平衡（2026-09-23 21:34）</h2>
+    <h2>🚨 緊急應變併入再平衡（2026-09-24 21:32）</h2>
     <div style="font-size:12px;color:#cbd5e1;line-height:1.7">六、風控檢查】</b>
-・利率紅線：US30Y 5.303% ≥ 5.30%（風險煞車門檻）→ 暫緩加碼／減碼，只回報；連續 2 日站上才升級處理（us30y_state：模式A 防禦、警戒區 5.20-5.30、紅線 false）。US10Y 4.992%（雷達 🔴，月動能 +5.5%）→ 債券不新增、長債不買。
-・匯率紅線：美元曝險 59.0% < 60%，未觸發減碼閾值，但已無新增美元空間 → 新資金走台幣。
-・集中度：科技 15.3%（目標 15%，硬上限 25%）；美股桶 39.5% 距單桶硬上限 40% 僅 0.5pp → 全組合最接近硬上限的一格，減碼壓力最大。
-・流動性：現金 861,818 ≥ 底線 700,000（餘裕 161,818）✅；玉山／富邦生活帳戶安全線 4 萬，主要水位監控國泰＋台新（月支出×3）。
-・負債結構仍是主風險：流動淨值 -3,970,627；保單淨值借貸 400 萬 @4.2% 佔比高，10/5 質押撥款後以 2.77% 置換，是唯一定價有效的降息路徑（「還債＝修保單」不變）。
-・觸發條件（依 9/8 授權）：美股單日回檔 >3% 或 US30Y ≥5.30 連續 2 日 → 暫緩動作並優先回報，不自動進出。
-・決策閘門（9/23 定案）：雷達＝能不能進（台股🟢🔥／黃金🟡／原油🟢🔥／美債10年🔴／Fed流動性🟢🔥），產業＝進哪一類（避開金融、原物料、不動產、醫療；資訊科技維持現況）；衝突取保守；確定性套利不受管。
-・本份為美股開盤 4 分鐘快照（21:34），盤中若翻黑擴大以次一交易日 21:30 版為準。</div>
-    <div style="margin-top:8px;font-size:12px"><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_2026-09-23.html" style="color:#f59e0b">📄 查看完整緊急應變報告 →</a></div>
+・US30Y 紅線（5.30%，連續 2 日）：9/24 盤中 5.404%／9/23 收 5.401% → 條件「幾乎成立」。⚠️ us30y_state.json 仍為 red_line=false、模式 A｜防禦，原因是 9/22（5.29）打斷連續判定、且監控今日較早執行（當時尚無 9/24 報價）。待 9/24 收盤值落地後重跑 us30y_monitor.py 確認；一旦成立＝長期債券新增買單永久凍結＋禁新增質押／擴倉。
+・警戒線 5.20%：早已穿越，模式 A（防禦）維持不變。
+・急跌門檻（單日 -3%）：未觸發（最深費半 -2.04%；台股 -0.28%）。
+・LTV：質押池 45.8%（借款 5,400,000／池市值 11,786,060），綠燈上限 45%、黃上限 53%、追繳線 70% → 落在綠/黃邊界，距追繳尚有 24pp 空間；撥款後 540 萬全數還債（不投入市場），LTV 不因新增部位惡化。
+・現金底線：862,409 vs 底線 1,200,000 → 未達標（缺口 337,591），本表唯一紅字；追繳時的唯一緩衝來源，列為本月第一優先補足項。
+・美元曝險：59% vs 目標 60%（黃 65／紅 70）→ 在目標內；今晚 USD/TWD 31.782、台幣貶 0.32%，反而小幅緩解曝險壓力。
+・國泰質押時程（真值）：對保 9/21 完成 → 預計 9/29 撥款（以銀行書面為準；原記 10/5、9/25 均已作廢）→ 清償 500 萬高息。⚠️ prompt 內「8/15 撥款 → 清償 800 萬 → 400 萬分批」為 7 月舊版，本報告不採用。
+・新聞來源受限（web_search 停用），本節風險數字全部來自可驗證來源（Yahoo chart API／FRED／TWSE BFI82U／snapshot 真值）。</div>
+    <div style="margin-top:8px;font-size:12px"><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_2026-09-24.html" style="color:#f59e0b">📄 查看完整緊急應變報告 →</a></div>
   </div>
 
 <div class="card" style="margin-top:14px"><h2>🗓 里程碑時程</h2><div class='ms ms-high'><span class='ms-date'>9/24（四）</span><span class='ms-txt'>✈️ 濟州島 4天3夜 Day1：德威 TW-690 高雄13:40→濟州17:05；漢拿樹木園夜市（遇雨改蓮洞商圈）；宿濟州市區（INH/SEA&HOT…</span></div><div class='ms ms-high'><span class='ms-date'>9/25（五）</span><span class='ms-txt'>📋 M&G 全轉出 T+4 生效確認（9/21 提出：M&G→PIMCO 700K + M&G→0056 300K）→ 生效後補登保單成分、同步四源/穿透…</span></div><div class='ms ms-high'><span class='ms-date'>9/26（六）</span><span class='ms-txt'>🛡️ 洲際W轉貸完成後 → 保障缺口補足評估（定期壽險/重大疾病險；南山 N451739360 與媽媽討論；旅平險） ｜（轉貸延後 9/9 → 本評估順延…</span></div><div class='ms ms-high'><span class='ms-date'>9/27（日）</span><span class='ms-txt'>✈️ 濟州 Day4 回程：德威 TW-689 濟州11:05→高雄12:40 返家。行前備註：小費(領隊兼導遊)300/日另計、行李限20kg(超重現場…</span></div><div class='ms ms-mid'><span class='ms-date'>9/28（一）</span><span class='ms-txt'>💰 PIMCO 收益增長M 配息基準日（第三站；官方表 V.3：9/28；USDEQ6550 月收息強化級別）</span></div><div class='ms ms-high'><span class='ms-date'>9/29（二）</span><span class='ms-txt'>🏦 質押 540萬 撥款（9/21 對保完成 → 9/29 撥款）→ 清償 500萬高息負債（保單400萬@4%＋券商100萬）</span></div><div class='ms ms-high'><span class='ms-date'>質押</span><span class='ms-txt'>整池質押 質押 540萬@2.77%（❌ 尚未撥款（2026-09-21 對保完成；預計 2026-09-29 撥款））</span></div></div>
