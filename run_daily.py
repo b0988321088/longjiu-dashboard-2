@@ -1632,16 +1632,31 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
 
     # 2026-08-26：績效追蹤（讀 snapshot.operation_performance）
     try:
-        _perf = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8")).get("operation_performance", {})
+        _snap_p = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
+        _perf = _snap_p.get("operation_performance", {})
         if _perf and _perf.get("基準"):
             _b = _perf["基準"]
             _tp = "｜".join(f"{t2.get('日期','')} {t2.get('項目','')[:25]}" for t2 in _perf.get("追蹤點", []))
+            _ta = _snap_p.get('total_assets', 0)
+            _nw = _snap_p.get('net_worth', 0)
+            _div_cur = _snap_p.get('monthly_dividend_total', 0)
+            _exp = _snap_p.get('monthly_expense', 162781)
+            _pi = _snap_p.get('passive_income', {}) or {}
+            _rent = float(_pi.get('rent_monthly', 0) or 0)
+            _div_con = float(_pi.get('fund_dividend_conservative', 0) or 0)
+            _cov_con = (_div_con + _rent) / _exp * 100 if _exp else 0
+            _cov_act = (_div_cur + _rent) / _exp * 100 if _exp else 0
+            _cur_line = (f"<div style='font-size:12px;color:#92400e;margin-top:6px;padding-top:6px;border-top:1px dashed #fbbf24'>"
+                          f"📊 即時（{_snap_p.get('date','')}）："
+                          f"月配息保守 {_div_con:,.0f}／實收 {_div_cur:,.0f}｜"
+                          f"總資產 {_ta:,.0f}｜淨資產 {_nw:,.0f}｜"
+                          f"覆蓋 {_cov_con:.0f}%／實收 {_cov_act:.0f}%</div>")
+            _base_line = (f"<div style='font-weight:800;color:#78350f;margin-bottom:8px'>📈 操作績效追蹤（基準 {_b.get('日期','')}）</div>"
+                          f"<div style='font-size:12px;color:#92400e'>月配息 {_b.get('月配息常態估算',0):,}｜總資產 {_b.get('總資產',0):,}｜淨資產 {_b.get('淨資產',0):,}｜覆蓋 {_b.get('覆蓋率',0)}%</div>"
+                          f"<div style='font-size:12px;color:#92400e;margin-top:4px'>⏳ 追蹤點：{_tp}</div>"
+                          f"<div style='font-size:11px;color:#b45309;margin-top:4px'>⚠️ 失敗訊號：{('、'.join(_perf.get('失敗訊號', [])))}</div>")
             html = html.replace("__PERF_TRACK__",
-                f"<div style='background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin:12px 0'>"
-                f"<div style='font-weight:800;color:#78350f;margin-bottom:8px'>📈 操作績效追蹤（基準 {_b.get('日期','')}）</div>"
-                f"<div style='font-size:12px;color:#92400e'>月配息常態 {_b.get('月配息常態估算',0):,}｜總資產 {_b.get('總資產',0):,}｜淨資產 {_b.get('淨資產',0):,}｜覆蓋率 {_b.get('覆蓋率',0)}%</div>"
-                f"<div style='font-size:12px;color:#92400e;margin-top:4px'>⏳ 追蹤點：{_tp}</div>"
-                f"<div style='font-size:11px;color:#b45309;margin-top:4px'>⚠️ 失敗訊號：{('、'.join(_perf.get('失敗訊號', [])))}</div></div>")
+                f"<div style='background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin:12px 0'>{_base_line}{_cur_line}</div>")
         else:
             html = html.replace("__PERF_TRACK__", "")
     except Exception:
