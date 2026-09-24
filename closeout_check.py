@@ -263,7 +263,12 @@ def step_remote_sync(quiet: bool) -> list:
     if not branch or branch == "HEAD":
         problems.append("遠端同步：HEAD 處於 detached（不在任何分支上）→ 推送會推錯東西")
         return problems
-    remote_ref = f"origin/{branch}"
+    # 2026-09-24 修正（INC-236 補強）：推送目標固定是 clean-main
+    # （auto_push.py DEFAULT_REFS = ["HEAD:clean-main"]），故遠端同步的比對基準一律取
+    # origin/clean-main，不隨當前分支變動 —— 本機常態在 main 上作業（推 HEAD→origin/clean-main），
+    # 拿 origin/main 當基準會誤報（9/24 22:40「main 領先 origin/main 2 顆」即此類）。
+    # 但直接跳過非 clean-main 分支會讓 INC-236（本機一路產出、Pages 吃舊值）失去守門 → 不採跳過。
+    remote_ref = "origin/clean-main"
     if subprocess.run(["git", "rev-parse", "--verify", "--quiet", remote_ref],
                       cwd=str(REPO), capture_output=True, text=True).returncode != 0:
         if not quiet:
@@ -293,11 +298,11 @@ def step_remote_sync(quiet: bool) -> list:
             print(f"⑤ 遠端同步：❌ {n_ahead} 顆未推送")
             for ln in oldest:
                 print(f"     - {ln}")
-            print(f"   修法：git push --force-with-lease origin {branch}:{branch}")
+            print("   修法：git push --force-with-lease origin HEAD:clean-main")
     if n_behind:
         problems.append(f"遠端同步：本機落後 {remote_ref} {n_behind} 顆（別處推過，需 pull/rebase）")
         if not quiet:
-            print(f"⑤ 遠端同步：❌ 落後 {n_behind} 顆 → git pull --rebase origin {branch}")
+            print(f"⑤ 遠端同步：❌ 落後 {n_behind} 顆 → git fetch && git rebase origin/clean-main")
     return problems
 
 
