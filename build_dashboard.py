@@ -490,7 +490,7 @@ def main():
             _sign = "+" if _g >= 0 else ""
             return f'<li>{emoji} <strong>{label}</strong>：{_v:.1f}%（目標 {target}%，<span class="{_cls}">{_sign}{_g:.1f}pp</span>）</li>'
         _pen_html = (
-            _pen_li("台股", "台股市值型成長", 10, "🇹🇼")
+            _pen_li("台股", "台股市值型成長", 10, "")
             + _pen_li("美股", "美股市值型成長", 30, "🇺🇸")
             + _pen_li("防守", "防守型配息", 30, "🛡️")
             + _pen_li("債券", "債券", 25, "💵")
