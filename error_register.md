@@ -1067,3 +1067,18 @@
 **驗證**：唯讀驗證器 24/24 PASS（負向對照釘 parent 710b6d62：舊 run_daily 迴圈 8 月保單 102,527 vs 新 102,469、ETF 34,716 vs 34,646、基金 1,384 vs 1,512）、守門 66/66 PASS、41 個歷史鍵分類零變動。commit 849f9de8（CIO-DeepSeek-Flash APPROVE／tree ad833eb4）＋資料 commit 81497075。
 
 **遺留（另案）**：dividend_tracker 仍空轉（讀 moneybook/ 但最新明細在 tmp_mb/、日期比對用 YYYY-MM 而檔案是 YYYY/MM/DD），且 `if records:` 分支會把當月實收覆蓋成只有 ETF/基金的部分金額 → 未接線，待另案定案再啟用。
+
+## INC-250 ｜ 2026-09-24 ｜ 收工檢查⑤ 兩段式失效＋「已推送」宣稱未落實
+
+**現象**：22:40 cron「龍九收工檢查」回報 ❌『遠端同步：2 顆 commit 未推送（main 領先 origin/main）→ Pages 吃舊值』，但當日 Pages 部署分支 clean-main 與本機 HEAD 位元一致（推的是 HEAD:clean-main，main 自 INC-236 起已移出推送目標）。
+
+**根因（兩層）**
+- ①基準錯置：⑤ 以 `origin/<當前分支>` 為基準，在本機常態分支 main 上必然落後 → 每晚誤報。
+- ②修法過頭使守門失效：接手者改成 `if branch != "clean-main": return`（跳過非 clean-main 分支）。本機常態就在 main 上 → ⑤ 每晚整段跳過，INC-236 的「本機一路產出、Pages 吃舊值」失去唯一守門；且該修法未 commit 即宣稱「已推送、已修復」。
+
+**修法**：比對基準固定為 `origin/clean-main`（推送目標既定），任何分支下都量 HEAD 是否已上線；提示修法改為 `git push --force-with-lease origin HEAD:clean-main`。commit d4cda852（CIO-Pollinations APPROVE／tree e24c2877）。
+
+**驗證**：正向 → `✅ main == origin/clean-main`；負向（remote-tracking ref 退一顆，不動遠端）→ 抓到『1 顆 commit 未推送』；還原後回復 ✅；收工檢查 23:13 全部通過。
+
+**教訓**：①修風控／稽核腳本時，「把告警關掉」與「修正比對基準」是兩件事 —— 前者會靜默掉真正的災難情境 ②條件跳過（early return）在任何分支值上都要問「常態情境會不會走到這裡」 ③未 commit／未驗證前不得宣稱「已推送、已修復」（使用者 2026-08-02 教訓再犯）。
+

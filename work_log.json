@@ -1373,5 +1373,11 @@
   "category": "完成",
   "item": "資產穿透2026-09-24（台股2,039,487.0 美股10,325,207.0 防守4,532,842.0 債券7,502,404.0 現金862,409.0）",
   "detail": "台股2,039,487.0 美股10,325,207.0 防守4,532,842.0 債券7,502,404.0 現金862,409.0"
+ },
+ {
+  "date": "2026-09-24",
+  "category": "修正",
+  "item": "收工檢查⑤ 遠端同步基準改固定 origin/clean-main（修復『main 分支整段跳過』的守門失效）",
+  "detail": "commit d4cda852（CIO-Pollinations APPROVE／tree e24c2877）＋資料 commit f0b321fa。前手為修『main 領先 origin/main』誤報而加 `if branch != clean-main: return`，但本機常態分支就是 main → ⑤ 每晚整段跳過、INC-236（本機產出、Pages 吃舊值）失去守門；改為基準固定 origin/clean-main（推送目標 HEAD:clean-main），任何分支都量 HEAD 是否上線。負向測試（remote-tracking ref 退一顆）抓到 1 顆未推送、還原後 ✅。收工檢查 23:13 全部通過。"
  }
 ]
