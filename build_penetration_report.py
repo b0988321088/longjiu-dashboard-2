@@ -272,16 +272,16 @@ if _fb:
             _cat = "🌎 美股"; _fund_us += _fv2
         elif "0050連結" in _fn or "統一奔騰" in _fn or "路博邁" in _fn or "安聯台灣科技" in _fn:
             # 2026-08-13 修正：路博邁台灣5G/安聯台灣科技是台股基金
-            _cat = "🇹🇼 台股"; _fund_tw += _fv2
+            _cat = "TW 台股"; _fund_tw += _fv2
         elif any(_k in _fn for _k in ["台中銀台灣優息", "國泰台灣高股息", "元大台灣高股息", "高股息ETF連結"]):
             _cat = "🛡️ 防守型"; _fund_def += _fv2
         elif "貨幣" in _fn:
             _cat = "💵 現金類"; _fund_cash += _fv2
         else:
-            _cat = "🇹🇼 台股"; _fund_tw += _fv2
+            _cat = "TW 台股"; _fund_tw += _fv2
         w(f"<tr><td style='max-width:180px'>{_fn}</td><td class='num'>{_fv2:,}</td><td>{_cat}</td><td style='font-size:12px'>{_split}</td></tr>")
     w(f"<tr style='border-top:2px solid #3b82f6;font-weight:700'><td>合計</td><td class='num'>{snap.get('fund_market', sum(_fb.values())):,}</td>")
-    w(f"<td>🇹🇼 台股 {_fund_tw:,} + 🌎 美股 {_fund_us:,} + 🛡️ 防守型 {_fund_def:,} + 💵 現金類 {_fund_cash:,}</td><td></td></tr>")
+    w(f"<td>TW 台股 {_fund_tw:,} + 🌎 美股 {_fund_us:,} + 🛡️ 防守型 {_fund_def:,} + 💵 現金類 {_fund_cash:,}</td><td></td></tr>")
     w("</tbody></table></div>")
 
 # 4. Insurance（成分動態顯示，2026-08-04 改：不再硬編碼）

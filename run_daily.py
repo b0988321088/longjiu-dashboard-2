@@ -994,7 +994,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       <table class="mobile-bordered">
         <thead><tr><th>戰略類別</th><th class="num">金額 TWD</th><th class="num">佔比</th><th class="num">目標</th><th>缺口</th></tr></thead>
         <tbody>
-          <tr><td>🇹🇼 台股市值型</td><td class="num">__DR_TW_V__ TWD</td><td class="num">__DR_TW_PCT__</td><td class="num">__DR_TW_TGT__</td><td>__DR_TW_GAP__</td></tr>
+          <tr><td>TW 台股市值型</td><td class="num">__DR_TW_V__ TWD</td><td class="num">__DR_TW_PCT__</td><td class="num">__DR_TW_TGT__</td><td>__DR_TW_GAP__</td></tr>
           <tr><td>🇺🇸 美股市值型</td><td class="num">__DR_US_V__ TWD</td><td class="num">__DR_US_PCT__</td><td class="num">__DR_US_TGT__</td><td>__DR_US_GAP__</td></tr>
           <tr><td style="padding-left:20px;color:#7dd3fc;font-size:12px">└ 科技股</td><td class="num">__DR_US_TECH_V__ TWD</td><td class="num">__DR_US_TECH_PCT__</td><td class="num">__DR_US_TECH_TGT__</td><td>__DR_US_TECH_GAP__</td></tr>
           <tr><td style="padding-left:20px;color:#94a3b8;font-size:12px">└ 非科技</td><td class="num">__DR_US_NT_V__ TWD</td><td class="num">__DR_US_NT_PCT__</td><td></td><td></td></tr>

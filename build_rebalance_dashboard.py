@@ -469,7 +469,7 @@ def main():
     <h2>📡 產業資金流向（{sf.get('generated_at','')[:16]}）</h2>
     <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px">{tw_sum}｜{us_sum}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div><div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:4px">🇹🇼 台股法人（產業桶）</div>
+      <div><div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:4px">TW 台股法人（產業桶）</div>
       <table><tr><th>產業桶</th><th class="num">法人淨買賣超</th><th>方向</th></tr>{tw_rows}</table></div>
       <div><div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:4px">🇺🇸 美股板塊（月動能 vs SPY）</div>
       <table><tr><th>板塊</th><th class="num">動能%</th><th class="num">RS</th></tr>{us_rows}</table></div>

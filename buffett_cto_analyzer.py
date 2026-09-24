@@ -32,7 +32,7 @@ TARGETS = {
     "tech_exposure": _tech_cap_snap,
 }
 TARGET_LABELS = {"tw_equity":"台股","us_equity":"美股","defensive":"防守","bond":"債券","cash":"現金", "tech_exposure":"科技"}
-TARGET_EMOJI = {"tw_equity":"🇹🇼","us_equity":"🇺🇸","defensive":"🛡️","bond":"💵","cash":"💰", "tech_exposure":"💻"}
+TARGET_EMOJI = {"tw_equity":"TW","us_equity":"🇺🇸","defensive":"🛡️","bond":"💵","cash":"💰", "tech_exposure":"💻"}
 
 def _cat_value(db, category: str) -> float:
     """從 asset_class 表計算某分類的穿透市值 (同 _cat2 in run_daily.py)"""

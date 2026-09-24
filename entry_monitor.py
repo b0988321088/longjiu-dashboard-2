@@ -82,7 +82,7 @@ def main():
 
     # 5. 台股慢慢買例行（PI 後每週）
     if pi_done and today.weekday() == 0:
-        alerts.append("🇹🇼 週一 → 台股慢慢買 0050/006208（每週 1.5-2萬）")
+        alerts.append("TW 週一 → 台股慢慢買 0050/006208（每週 1.5-2萬）")
 
     if alerts:
         print("📡 龍九進場提醒 " + today.isoformat() + "\n" + "\n".join(alerts))
