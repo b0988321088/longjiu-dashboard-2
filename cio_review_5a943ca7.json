@@ -1,0 +1,5 @@
+{
+  "verdict": "APPROVE",
+  "summary": "健康度卡現金流覆蓋顯示雙數值（保守111%／實收140%），report_components.py 計算邏輯安全（除零保護＋snapshot 缺值 fallback），snapshot 驗證通過。",
+  "tree": "b0e3bbe395798dfaa4361aea1cdd97036258f1cc"
+}

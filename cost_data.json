@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-24 07:37",
+ "generated_at": "2026-09-24 18:30",
  "days": 14,
  "ledger_rows": 16,
  "backfilled": [],
@@ -140,14 +140,14 @@
    "gemini_twd": 0,
    "free_twd": 0,
    "total_twd": 4,
-   "calls": 183,
-   "cer": 15,
+   "calls": 385,
+   "cer": 73,
    "q429": 0
   }
  ],
  "today": {
   "total_twd": 4,
-  "cer": 15,
+  "cer": 73,
   "q429": 0
  },
  "week": {
@@ -208,12 +208,12 @@
   }
  },
  "wallets": {
-  "ds_balance_cny": 62.42,
-  "ds_balance_twd": 295,
+  "ds_balance_cny": 62.14,
+  "ds_balance_twd": 294,
   "ds_source": "API",
-  "ds_daily_twd": 60,
-  "ds_daily_src": "餘額真值（最近 7 個日曆日，7 個樣本）",
-  "ds_days_left": 4.9,
+  "ds_daily_twd": 63,
+  "ds_daily_src": "餘額真值（最近 7 個日曆日，8 個樣本）",
+  "ds_days_left": 4.7,
   "gemini_balance_twd": 887,
   "gemini_daily_twd": 16,
   "gemini_days_left": 55.4,
@@ -245,7 +245,7 @@
  "topups_unresolved": [],
  "ledger_corrections": [],
  "cer": {
-  "today": 15,
+  "today": 73,
   "last7_total": 258,
   "prev7_total": 260,
   "streak_days": 4,
@@ -342,6 +342,11 @@
    "msg": "2026-09-20 CER 61 次但備援幾乎全走付費（免費僅 1 次＝接手率 2%、Gemini 188 次）"
   },
   {
+   "code": "A2",
+   "level": "warn",
+   "msg": "今日 DS 內容風控（CER）73 次 ≥ 20"
+  },
+  {
    "code": "A9",
    "level": "warn",
    "msg": "DS 內容風控（CER）未收斂：連續 4 天、近 7 日有 6/7 天出現（合計 258 次）→ 檢查近期 prompt／日報內文是否踩到關鍵詞"
@@ -349,7 +354,7 @@
   {
    "code": "A6",
    "level": "critical",
-   "msg": "DeepSeek 剩餘 4.9 天 < 7 天，需立即儲值"
+   "msg": "DeepSeek 剩餘 4.7 天 < 7 天，需立即儲值"
   }
  ],
  "governance": {
@@ -359,9 +364,9 @@
   "ds_twd": 91.0,
   "gem_twd": 0.0,
   "free_twd": 0.0,
-  "free_calls": 104,
-  "calls": 1854,
-  "cer": 26,
+  "free_calls": 299,
+  "calls": 2056,
+  "cer": 84,
   "pending": false,
   "total_twd": 91.0
  },
