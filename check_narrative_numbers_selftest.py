@@ -115,33 +115,14 @@ def _mut(*specs) -> str:
     return _payload(rows)
 
 
-WARN_CASES: list[tuple[str, str, bool, str | None, int]] = [
-    # (說明, 合成檔內容, 期望出聲?, 期望「不在 allowed」的標籤, 檔名往回幾天)
-    ("完整引擎檔（不得出聲）", _payload(_engine_rows()), False, None, 0),
-    ("整列缺列：拿掉債券列 → 該桶引擎口徑消失（_missing 分支）",
-     _payload([r for r in _engine_rows() if r["資產"] != "債券"]), True, None, 0),
-    ("部分欄位型別錯：債券 燈號偏移後→字串（_partial 分支，其餘 4 列完整）",
-     _mut(("債券", {"燈號偏移後": "30"})), True, None, 0),
-    ("欄位被改名：債券 燈號偏移後→偏移後（_partial 分支，其餘 4 列完整）",
-     _mut(("債券", {"燈號偏移後": _DEL, "偏移後": 30})), True, None, 0),
-    ("壞 JSON", "{oops", True, None, 0),
-    # ── 舊分支補覆蓋（2026-09-25 獨立複審指出這兩條原本沒有專屬案例）──
-    # 關鍵不是「有沒有出聲」（_partial 已經會出聲），而是那個**行為**：新建卻補不到值的
-    # 標籤必須被移出 allowed —— 空集合在 scan_text 內＝跳過比對＝靜默放行（假陰性）。
-    ("三欄位全非數字：新建的 債券 標籤必須被移出 allowed（不得留空集合）",
-     _mut(("債券", {"target": "底線制", "燈號偏移後": None, "建議金額(±)": "N/A"})), True, "債券", 0),
-    ("引擎檔過期 10 天：口徑可能落後，必須出聲",
-     _payload(_engine_rows()), True, None, 10),
-]
-
-
 class _FakeEngineFile:
-    def __init__(self, payload: str, days_ago: int = 0) -> None:
+    def __init__(self, payload: str, days_ago: int = 0, name: str | None = None) -> None:
         import datetime
+        # 檔名日期用「今天往回推」動態產生。寫死日期的後果（獨立複審實測）：本自測會在
+        # 幾天後自己過期 —— 檔齡警示把「不得出聲」的案例誤染紅，且同一案例隱性疊加兩個
+        # 分支＝違反「完整輸入＋單一突變」原則。
         _d = datetime.date.today() - datetime.timedelta(days=days_ago)
-        # 檔名日期用「今天往回推」動態產生：寫死日期會讓這份自測自己過期
-        # （檔齡警示 >=3 天就會誤觸，屆時「不得出聲」的案例會莫名轉紅）。
-        self.name = f"macro_regime_{_d:%Y-%m-%d}.json"
+        self.name = name or f"macro_regime_{_d:%Y-%m-%d}.json"
         self._payload = payload
 
     def read_text(self, **_kw) -> str:
@@ -149,21 +130,59 @@ class _FakeEngineFile:
 
 
 class _FakeBase:
-    def __init__(self, payload: str, days_ago: int = 0) -> None:
-        self._f = _FakeEngineFile(payload, days_ago)
+    """files=[] 用來模擬「找不到任何日期命名的引擎檔」。"""
+
+    def __init__(self, files) -> None:
+        self._files = list(files)
 
     def glob(self, _pattern: str):
-        return [self._f]
+        return list(self._files)
 
 
-def _warn_check(payload: str, days_ago: int = 0) -> tuple[bool, str, dict]:
+_OK = _payload(_engine_rows())
+_MISSING = _payload([r for r in _engine_rows() if r["資產"] != "債券"])
+_PARTIAL = _mut(("債券", {"燈號偏移後": "30"}))
+_RENAMED = _mut(("債券", {"燈號偏移後": _DEL, "偏移後": 30}))
+_BAD3 = _mut(("債券", {"target": "底線制", "燈號偏移後": None, "建議金額(±)": "N/A"}))
+
+WARN_CASES: list[tuple[str, list, bool, str | None, str | None]] = [
+    # (說明, 合成引擎檔清單, 期望出聲?, 期望「不在 allowed」的標籤, 期望「在 allowed」的標籤)
+    # 原則：要測「某分支會出聲」，必須讓其他分支不出聲（完整輸入＋單一突變）。
+    ("完整引擎檔、檔齡 1 天（引擎跑之前的正常空窗）→ 不得出聲",
+     [_FakeEngineFile(_OK, 1)], False, None, "債券"),
+    ("整列缺列：拿掉債券列 → 該桶引擎口徑消失（_missing 分支）",
+     [_FakeEngineFile(_MISSING)], True, None, None),
+    ("部分欄位型別錯：債券 燈號偏移後→字串（_partial 分支，其餘 4 列完整）",
+     [_FakeEngineFile(_PARTIAL)], True, None, None),
+    ("欄位被改名：債券 燈號偏移後→偏移後（_partial 分支，其餘 4 列完整）",
+     [_FakeEngineFile(_RENAMED)], True, None, None),
+    ("壞 JSON", [_FakeEngineFile("{oops")], True, None, None),
+    ("引擎檔過期 10 天：口徑可能落後，必須出聲", [_FakeEngineFile(_OK, 10)], True, None, None),
+    ("檔齡 2 天＝漏跑一次（門檻邊界）→ 必須出聲", [_FakeEngineFile(_OK, 2)], True, None, None),
+    # ── 舊分支補覆蓋（2026-09-25 複審指出這兩條原本沒有專屬案例）──
+    # 關鍵不是「有沒有出聲」（_partial 已經會出聲），而是那個**行為**：新建卻補不到值的標籤
+    # 必須被移出 allowed —— 空集合在 scan_text 內＝跳過比對＝靜默放行（假陰性）。
+    ("三欄位全非數字：新建的 債券 標籤必須被移出 allowed（不得留空集合）",
+     [_FakeEngineFile(_BAD3)], True, "債券", None),
+    # ── 收尾批二：複審的 J_b1/J_b2/N1 三項各補專屬案例（2026-09-26）──
+    ("找不到任何日期命名引擎檔（glob 回空）→ 必須出聲",
+     [], True, None, None),
+    ("壞日期檔名（2026-13-45）與合法檔並存 → 出聲，且合法檔口徑仍須生效",
+     [_FakeEngineFile(_OK, 0), _FakeEngineFile(_OK, 0, name="macro_regime_2026-13-45.json")],
+     True, None, "債券"),
+    ("未來日期檔（今天 +30 天）→ 必須出聲，且仍照用該檔口徑",
+     [_FakeEngineFile(_OK, -30)], True, None, "債券"),
+]
+
+
+def _warn_check(files) -> tuple[bool, str, dict]:
     """回傳 (是否對 stderr 出聲, 訊息, 補完後的 allowed)。"""
     import contextlib
     import io
     _allowed: dict = {}
     _buf = io.StringIO()
     with contextlib.redirect_stderr(_buf):
-        C._engine_calibers(_allowed, base=_FakeBase(payload, days_ago))
+        C._engine_calibers(_allowed, base=_FakeBase(files))
     _msg = _buf.getvalue().strip()
     return bool(_msg), _msg, _allowed
 
@@ -180,13 +199,15 @@ def main() -> int:
         print(f"{'PASS' if ok else 'FAIL'} | {'應放行' if expect_pass else '應擋下'} | {text} | {note}"
               + ("" if ok else f" | hits={hits}"))
     # ── 警示自測：合成引擎檔 → 確認「整列缺列／部分欄位改名」會出聲、正常檔不出聲 ──
-    for note, payload, expect_warn, absent, days_ago in WARN_CASES:
-        got, msg, al = _warn_check(payload, days_ago)
-        ok = (got == expect_warn) and (absent is None or absent not in al)
+    for note, files, expect_warn, absent, present in WARN_CASES:
+        got, msg, al = _warn_check(files)
+        ok = (got == expect_warn) and (absent is None or absent not in al) \
+            and (present is None or present in al)
         if not ok:
             fails += 1
-        _why = "" if ok else (f" | 出聲={got}（期望 {expect_warn}）"
-                              + (f"｜{absent} 仍在 allowed" if (absent and absent in al) else ""))
+        _why = "" if ok else f" | 出聲={got}（期望 {expect_warn}）" + \
+            (f"｜{absent} 仍在 allowed" if (absent and absent in al) else "") + \
+            (f"｜{present} 不在 allowed（該檔口徑應生效）" if (present and present not in al) else "")
         print(f"{'PASS' if ok else 'FAIL'} | {'應出聲' if expect_warn else '不應出聲'} | 警示 | {note}"
               + (f" | {msg.splitlines()[0][:70]}" if msg else "") + _why)
 

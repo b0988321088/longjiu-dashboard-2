@@ -130,8 +130,10 @@ ENGINE_ROWS = {
     # allowed 根本沒有衛星標籤 → 內文引用衛星的值從來沒被掃過（覆蓋缺口，非假陽性）。
     # 刻意「不」註冊 黃金／石油 個別標籤：那兩字會與商品報價（黃金 2,400/oz 這種
     # 千分位數字）碰撞，掃了會生出假陽性；等內文真的出現「黃金 5%」再補。
-    # ⚠️（2026-09-25 獨立複審提醒）引擎檔另有一列『台幣現金+短定存』是刻意非數字
-    # （target='底線制'、燈號偏移後=None）—— 它不在本表，所以被 continue 跳過、零誤報。
+    # ⚠️（2026-09-25 複審提醒、09-26 更正）引擎檔另有 3 列不在本表，皆被 continue 跳過、零誤報：
+    #   ·『台幣現金+短定存』：target='底線制'、燈號偏移後=None（刻意非數字）
+    #   ·『石油/能源(避險衛星)』『黃金/實質資產(衛星)』：是數字，但只映射到避險衛星合計，
+    #     未個別註冊標籤（見上方「黃金／石油 不註冊」的理由：會與商品報價碰撞）
     # 若日後要納入本表，必須同步加「非數字列」白名單，否則新的欄位解析警示會每天誤響。
     # ⚠️ 反向風險（同樣是複審提醒）：若『已註冊列』的 target 改用非數字口徑（例：底線制）
     # 或合法省略『建議金額(±)』→ _partial 會每天響一次。真要用非數字口徑就先把它加進白名單，
@@ -168,8 +170,18 @@ def _engine_calibers(allowed: dict, base: Path = BASE) -> None:
         _files: list[tuple[str, Path]] = []
         for _p in base.glob("macro_regime_*.json"):
             _m = re.fullmatch(r"macro_regime_(\d{4}-\d{2}-\d{2})\.json", _p.name)
-            if _m:
-                _files.append((_m.group(1), _p))
+            if not _m:
+                continue
+            # 2026-09-26 補（獨立複審 J_b1）：日期不合法（例 2026-13-45）原本會讓
+            # date.fromisoformat 抛 ValueError → 被最外層 except 吞掉 → **整個函式放棄**，
+            # 連合法檔的引擎口徑也一起丟（引擎值全變成假陽性）。改為逐檔驗證、跳過壞檔並指名。
+            try:
+                datetime.date.fromisoformat(_m.group(1))
+            except ValueError:
+                print(f"  ⚠️ _engine_calibers：{_p.name} 的檔名日期不合法 → 跳過該檔"
+                      f"（其餘引擎檔照常使用）", file=sys.stderr)
+                continue
+            _files.append((_m.group(1), _p))
         if not _files:
             print(f"  ⚠️ _engine_calibers：{base} 找不到 macro_regime_YYYY-MM-DD.json"
                   f"（無檔或全為非日期命名）→ 引擎口徑未補入，內文引用引擎值時會誤報",
@@ -179,9 +191,16 @@ def _engine_calibers(allowed: dict, base: Path = BASE) -> None:
         _latest_date, _latest_path = _files[-1]
         # 2026-09-25 補（C 批殘留）：選檔已限定日期命名，但沒有「檔齡」檢查 —— 引擎排程若斷了，
         # 守門會安靜地拿舊口徑當合法值，內文引用較新的引擎值就變成假陽性，且查不到根因。
-        # 門檻 3 天：引擎是每日產（含週末），今日檔在引擎跑之前本來就不存在，1-2 天屬正常空窗。
+        # 門檻 2 天（2026-09-26 由 3 收緊）：引擎每日產（含週末 —— 實測 36 檔連續無缺口、
+        # 七個星期全到齊），今日檔在引擎跑之前本就不存在（正常空窗＝1 天），故 age>=2 即代表
+        # 「漏了一次跑」，可早一天發現且無誤響風險。
         _age = (datetime.date.today() - datetime.date.fromisoformat(_latest_date)).days
-        if _age >= 3:
+        if _age < 0:
+            # 2026-09-26 補（獨立複審 J_b2）：未來日期檔會讓 sorted()[-1] 勝出成權威口徑，
+            # 而負的 age 讓檔齡警示永不觸發＝完全靜默。出聲但照用（拒用會讓合法值全變假陽性）。
+            print(f"  ⚠️ _engine_calibers：最新引擎檔日期在未來（{_latest_date}，{-_age} 天後）→ "
+                  f"檔名或系統時鐘有問題，仍採用該檔口徑（請確認引擎 writer）", file=sys.stderr)
+        elif _age >= 2:
             print(f"  ⚠️ _engine_calibers：最新引擎檔是 {_age} 天前（{_latest_date}）→ 引擎口徑可能"
                   f"已落後，內文引用較新的引擎值時會被誤報（引擎排程斷了？）", file=sys.stderr)
         data = json.loads(_latest_path.read_text(encoding="utf-8"))
@@ -231,8 +250,8 @@ def _engine_calibers(allowed: dict, base: Path = BASE) -> None:
             print(f"  ⚠️ _engine_calibers：{_files[-1][1].name} 缺少 ENGINE_ROWS 期望的引擎列 "
                   f"{_missing} → 這些桶的引擎口徑未補入（列名被改名？）", file=sys.stderr)
         if _partial:
-            print(f"  ⚠️ _engine_calibers：引擎欄位無法解析 → {'；'.join(_partial)}",
-                  file=sys.stderr)
+            print(f"  ⚠️ _engine_calibers：{_files[-1][1].name} 引擎欄位無法解析 → "
+                  f"{'；'.join(_partial)}", file=sys.stderr)
         # 空集合在 scan_text 內＝跳過比對＝靜默放行（假陰性）→ 本函式新建卻補不到值的
         # 標籤一律移除並出聲（引擎欄位改名／型別變動時要看得到，不能默默變成不掃）。
         for lab in dict.fromkeys(_created):
