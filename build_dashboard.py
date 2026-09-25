@@ -123,6 +123,7 @@ def main():
         "1,928,889": _fmt(firstjin),       # 第一金現值
         "111,513": _fmt(cum_div),          # 第一金累計配息
         "88,507": _fmt(div_ins),           # 保單配息合計（實收）
+        "102,469": _fmt(div_ins),          # 保單配息合計（實收）— 2026-09-26 補：模板 441 行殘留 8 月舊值
         "25,538": _fmt(firstjin_div),      # 第一金本月領息
         "63,027": _fmt(az_div),            # 安聯本月領息（2026-08-29 補：原寫死舊值）
         "815,066": _fmt(cash),             # 現金
@@ -486,7 +487,7 @@ def main():
     try:
         import glob as _glob
         _candidates = sorted(BASE.glob("buffett_cto_report_*.md"))
-        _buffett_md = _candidates[-1] if _candidates else BASE / f"buffett_cto_report_{TODAY}.md"
+        _buffett_md = _candidates[-1] if _candidates else BASE / f"buffett_cto_report_{date.today().isoformat()}.md"
         _buf_html = ""
         if _buffett_md.exists():
             _md_text = _buffett_md.read_text(encoding="utf-8")
