@@ -83,6 +83,26 @@ GICS_COLORS = {
     "不動產": "#ec4899", "通訊服務": "#06b6d4", "原物料": "#a16207", "固收/現金": "#94a3b8",
 }
 
+def cash_caliber(s):
+    """現金兩口徑（SoT＝thresholds_2026_0915.現金_twd）。
+
+    2026-09-25 INC cash_floor_two_calibers_unlabeled：SoT 內含生活底線／追繳緩衝／合計底線
+    三個子項，各顯示端只取其中一半又不標口徑，造成同一天出現「🟢 安全」與「🔴 缺 33.8 萬」
+    兩個相反判定。改為一律回傳完整欄位、由顯示端並列標示：生活底線看乾粉、合計底線看追繳緩衝。
+    """
+    cw = ((s.get("thresholds_2026_0915") or {}).get("現金_twd") or {})
+    life = float(cw.get("生活底線") or s.get("cash_floor") or 0)
+    buf = float(cw.get("追繳緩衝") or 0)
+    cash = float(s.get("cash_total") or s.get("cash") or 0)
+    total = float(cw.get("合計底線") or (life + buf))
+    return {
+        "cash": cash, "life": life, "buffer": buf, "total": total,
+        "dry": max(0.0, cash - life),
+        "life_ok": cash >= life,
+        "gap": max(0.0, total - cash),
+    }
+
+
 def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, sec_rows, dry_cur, risk_rows, ms_html, emg_html, total, cash, monthly_inc, monthly_exp, surplus, usd_pct, tech, us30y, plan_rows=None):
     """再平衡評估（文字版 md）— 與儀表板同源，每日自動更新（2026-08-22）"""
     lines = [
@@ -185,15 +205,20 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     lines += ["", "## 六、乾粉與風險紅線", ""]
     _al_rows = dry_alloc()
     _al_txt = "｜".join(f"{_n} {_a}" for _n, _a, _v in _al_rows) if _al_rows else "（snapshot 無乾粉分配表）"
-    lines.append(f"- 當前乾粉：{dry_cur:,}（現金 − 70萬底線）｜{_al_txt}")
+    _cw = cash_caliber(s)
+    lines.append(f"- 當前乾粉：{dry_cur:,}（現金 {_cw['cash']:,.0f} − 生活底線 {_cw['life']:,.0f}）｜{_al_txt}")
     for name, val, limit, triggered in [
         ("US30Y", f"{us30y:.2f}%" if us30y else "—", "≥5.30%", us30y and us30y >= 5.30),
         ("美元曝險", f"{usd_pct:.0f}%", "紅線 60%", usd_pct > 60),
         ("高科技", f"{tech:.1f}%", "紅線 30%", tech > 30),
-        ("現金底線", f"{cash:,}", "≥70萬", cash < 700000),
     ]:
         st = "🔴 觸發" if triggered else "🟢 安全"
         lines.append(f"- {name} {val}（{limit}）：{st}")
+    _lif_st = "✅ 達標" if _cw["life_ok"] else "🔴 未達標"
+    _tot_st = ("🟢 達標" if _cw["gap"] <= 0
+               else f"🟡 追繳緩衝不足（缺 {_cw['gap']:,.0f}）→ 配息導流補足、不新增買入")
+    lines.append(f"- 現金｜生活底線 {_cw['life']:,.0f}（底線制；現 {_cw['cash']:,.0f}）：{_lif_st} → 乾粉 {_cw['dry']:,.0f}")
+    lines.append(f"- 現金｜合計底線 {_cw['total']:,.0f}（生活 {_cw['life']:,.0f} ＋ 追繳緩衝 {_cw['buffer']:,.0f}）：{_tot_st}")
 
     lines += ["", "## 七、里程碑時程", ""]
     _ms_rows = milestones_next(6)
@@ -384,7 +409,8 @@ def main():
     # ── 乾粉 ──
     dry = s.get("乾粉執行_0926", {}).get("戰術乾粉總額", {})
     # 2026-09-13：乾粉 = 台幣現金 − 底線（現算；舊值 10.0萬 為 8/22 口徑，現金已 857,298）
-    dry_cur = max(0, (s.get("cash_total") or s.get("cash") or 0) - s.get("cash_floor", 700000)) or dry.get("當前", 0)
+    _cw0 = cash_caliber(s)
+    dry_cur = _cw0["dry"] or dry.get("當前", 0)
 
     # ── 質押 ──
     pledge = s.get("質押計畫", {})
@@ -440,7 +466,7 @@ def main():
     <table><tr><th>產業</th><th class="num">現況</th><th>動作</th><th>理由</th></tr>{av_rows}</table></div>
     {etf_html}
     {dd_block}
-    <div style="font-size:10.5px;color:var(--sub);margin-top:6px">乾粉=現金−70萬底線+月盈餘50%；單筆≤5萬、分批；保單轉換/質押撥款前保留緩衝{('｜依據雷達資金流 ' + _src_ts) if _src_ts else ''}</div>
+    <div style="font-size:10.5px;color:var(--sub);margin-top:6px">乾粉=現金−生活底線（{cash_caliber(s)['life']:,.0f}）+月盈餘50%；單筆≤5萬、分批；保單轉換/質押撥款前保留緩衝{('｜依據雷達資金流 ' + _src_ts) if _src_ts else ''}</div>
   </div>"""
     except Exception:
         rot_html = ""
@@ -564,16 +590,21 @@ def main():
         _pl_txt, _pl_lim, _pl_trig = "—", "綠 ≤45／追繳 ≥70", False
 
     # ── 風險紅線 ──
+    _cw2 = cash_caliber(s)
+    _lif_st2 = "🟢 安全" if _cw2["life_ok"] else "🔴 觸發"
+    _tot_st2 = ("🟢 安全" if _cw2["gap"] <= 0
+                else f"🟡 追繳緩衝不足（缺 {_cw2['gap']:,.0f}）")
     risks = [
-        ("US30Y 凍結線", f"{us30y:.2f}%" if us30y else "—", "≥5.30% 🔴", us30y and us30y >= 5.30),
-        ("美元曝險", f"{usd_pct:.0f}%", "紅線 60%", usd_pct > 60),
-        ("高科技", f"{tech:.1f}%", "紅線 30%", tech > 30),
-        ("現金底線", f"{cash:,}", "≥70萬", cash < 700000),
-        ("國泰擔保池 LTV", _pl_txt, _pl_lim, _pl_trig),
+        ("US30Y 凍結線", f"{us30y:.2f}%" if us30y else "—", "≥5.30% 🔴",
+         "🔴 觸發" if (us30y and us30y >= 5.30) else "🟢 安全"),
+        ("美元曝險", f"{usd_pct:.0f}%", "紅線 60%", "🔴 觸發" if usd_pct > 60 else "🟢 安全"),
+        ("高科技", f"{tech:.1f}%", "紅線 30%", "🔴 觸發" if tech > 30 else "🟢 安全"),
+        (f"現金｜生活底線 {_cw2['life']:,.0f}", f"{_cw2['cash']:,.0f}", f"≥{_cw2['life']:,.0f}", _lif_st2),
+        (f"現金｜合計底線 {_cw2['total']:,.0f}", f"{_cw2['cash']:,.0f}", f"≥{_cw2['total']:,.0f}", _tot_st2),
+        ("國泰擔保池 LTV", _pl_txt, _pl_lim, "🔴 觸發" if _pl_trig else "🟢 安全"),
     ]
     risk_rows = ""
-    for name, val, limit, triggered in risks:
-        st = "🔴 觸發" if triggered else "🟢 安全"
+    for name, val, limit, st in risks:
         risk_rows += f"<tr><td>{name}</td><td class='num'>{val}</td><td class='num'>{limit}</td><td>{st}</td></tr>"
 
     # ── 乾粉分配長條圖（2026-09-15：改讀 snapshot.乾粉執行_0926.分配表；原寫死
@@ -674,7 +705,7 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
     <div class="drybar">
 {_drybar_html}    </div>
     <div style="font-size:12px;color:#cbd5e1;line-height:1.7">
-      當前乾粉 <b>{dry_cur:,}</b>（現金 − 70萬底線）｜分配表＝snapshot.乾粉執行_0926（單一真值）<br>
+      當前乾粉 <b>{dry_cur:,}</b>（現金 {_cw2['cash']:,.0f} − 生活底線 {_cw2['life']:,.0f}；合計底線 {_cw2['total']:,.0f} 含追繳緩衝 {_cw2['buffer']:,.0f}）｜分配表＝snapshot.乾粉執行_0926（單一真值）<br>
 {_al_note_html}    </div>
   </div>
   <div class="card"><h2>🛡️ 質押 / 風險紅線</h2>

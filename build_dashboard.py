@@ -25,6 +25,26 @@ def dividend_bucket(name: str) -> str:
 def _fmt(n):
     return f"{n:,.0f}"
 
+
+def cash_caliber(snap):
+    """現金兩口徑（SoT＝thresholds_2026_0915.現金_twd）。
+
+    2026-09-25 INC cash_floor_two_calibers_unlabeled：SoT 內含生活底線／追繳緩衝／合計底線
+    三個子項，顯示端各取一半又不標口徑 → 同一天出現「🟢 安全」與「🔴 缺 33.8 萬」兩個相反判定。
+    統一在此派生：生活底線看乾粉、合計底線看追繳緩衝是否足夠。
+    """
+    cw = ((snap.get("thresholds_2026_0915") or {}).get("現金_twd") or {})
+    life = float(cw.get("生活底線") or snap.get("cash_floor") or 0)
+    buf = float(cw.get("追繳緩衝") or 0)
+    cash = float(snap.get("cash_total") or snap.get("cash") or 0)
+    total = float(cw.get("合計底線") or (life + buf))
+    return {
+        "cash": cash, "life": life, "buffer": buf, "total": total,
+        "dry": max(0.0, cash - life),
+        "life_ok": cash >= life,
+        "gap": max(0.0, total - cash),
+    }
+
 def main():
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     tpl = (BASE / "index_template.html").read_text(encoding="utf-8")
@@ -142,8 +162,10 @@ def main():
             # 本週計劃（同 institutional_flow 結論邏輯，精簡版）
             _pen2 = snap.get("penetration", {}).get("actual_pct", {}) or {}
             _tg2 = snap.get("penetration", {}).get("targets", {}) or {}
-            # 2026-09-13：乾粉 = 台幣現金 − 現金底線（現算；原讀 乾粉執行_0926 的 8/22 舊值會與現金 % 矛盾）
-            _dry2 = max(0, (snap.get("cash_total") or snap.get("cash") or 0) - snap.get("cash_floor", 700000)) \
+            # 2026-09-13：乾粉 = 台幣現金 − 生活底線（現算；原讀 乾粉執行_0926 的 8/22 舊值會與現金 % 矛盾）
+            # 2026-09-25 INC cash_floor_two_calibers_unlabeled：現金口徑一律由 cash_caliber 派生
+            _cw3 = cash_caliber(snap)
+            _dry2 = _cw3["dry"] \
                 or snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
             _usd2 = snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
             # 2026-09-13：本週計劃改讀 radar_state.weekly_plan.rows（單一來源＝institutional_flow 產出）
@@ -151,7 +173,9 @@ def main():
             _plan = [f"{r.get('動作','')} {r.get('類別','')}：{r.get('內容','')}"
                      for r in ((_rd.get("weekly_plan", {}) or {}).get("rows") or []) if r.get("內容")]
             _plan.append(f"📊 台股穿透 {_pen2.get('台股市值型成長', 0):.1f}%（目標 {_tg2.get('台股市值型目標', 10)}%，缺口 {_tg2.get('台股市值型目標', 10) - _pen2.get('台股市值型成長', 0):+.1f}pp）")
-            _plan.append(f"💰 乾粉 {_dry2/10000:.1f}萬（現金底線 {snap.get('cash_floor', 700000):,} 守）")
+            _plan.append(f"💰 乾粉 {_dry2/10000:.1f}萬（現金 {_cw3['cash']:,.0f} − 生活底線 {_cw3['life']:,.0f} 守；"
+                         + f"合計底線 {_cw3['total']:,.0f} "
+                         + ("🟢 達標" if _cw3['gap'] <= 0 else f"🟡 缺 {_cw3['gap']:,.0f}（配息導流補足）") + "）")
             if _usd2 > 55:
                 _plan.append(f"🔴 美元曝險 {_usd2}% 超標（目標≤60%）→ 美股減碼")
             else:
@@ -179,8 +203,13 @@ def main():
                 f"（配置：富達600＋聯博100＋貝萊德B11 500）；{_pl2}")
             _rules = [f"{_r.get('動作','')}{(_r.get('類別') or '').strip()}：{_brief2(_r.get('內容',''))}"
                       for _r in _rows2[:5]]
-            rep["__RISK_RULES__"] = (("操作規範：" + "；".join(_rules) +
-                                      f"；現金底線 {snap.get('cash_floor', 700000):,} 強制生效")
+            _cw_r = cash_caliber(snap)
+            _cash_rule = (
+                f"；現金 {_cw_r['cash']:,.0f}：生活底線 {_cw_r['life']:,.0f} "
+                + ("✅ 達標" if _cw_r["life_ok"] else "🔴 未達標")
+                + f"／合計底線 {_cw_r['total']:,.0f}（含追繳緩衝 {_cw_r['buffer']:,.0f}）"
+                + ("🟢 達標" if _cw_r["gap"] <= 0 else f" 🟡 缺 {_cw_r['gap']:,.0f}（配息導流補足、不新增買入）"))
+            rep["__RISK_RULES__"] = (("操作規範：" + "；".join(_rules) + _cash_rule)
                                      if _rules else "操作規範：待雷達更新")
             try:
                 _ev2 = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
@@ -317,6 +346,10 @@ def main():
         f"🔬 科技 {_tch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_科技',0))} TWD）｜非科技 {_ntch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_非科技',0))} TWD）｜科技目標 ≤20%（{'缺口' if _tech_gap<0 else '溢價'} {_tech_gap:+.1f}pp）"
     # 安聯配息卡（8/29 補：舊 62,969 → 76,931）
     rep["62,969"] = _fmt(az_div)
+    # 2026-09-25 INC cash_floor_two_calibers_unlabeled：授信觀察期底線文案改由 SoT 派生（模板改為 __CASH_FLOOR_LINE__ 佔位符）
+    _cw_t = cash_caliber(snap)
+    rep["__CASH_FLOOR_LINE__"] = (f"現金 ≥{_cw_t['life']:,.0f}（生活底線；"
+                                  f"合計含追繳緩衝 {_cw_t['total']:,.0f}）")
     # 保單A 現值（8/29 補：舊 5,103,722 → 5,083,230）
 
     hits = 0
@@ -326,7 +359,7 @@ def main():
             hits += 1
     # 2026-09-21 INC-233：佔位符沒被取代＝模板與鍵名不一致，過去是「靜默留舊值」→ 改為當場大聲失敗。
     # 新增 rep 佔位符時，務必同步登錄這份清單（清單＝強制必須被消耗的佔位符）。
-    _MUST_CONSUME = ("__SAFE_LINE_RAW__",)
+    _MUST_CONSUME = ("__SAFE_LINE_RAW__", "__CASH_FLOOR_LINE__")
     _leftover = [p for p in _MUST_CONSUME if p in tpl]
     if _leftover:
         raise RuntimeError(f"build_dashboard：佔位符未被取代 {_leftover}（注入失效，拒絕產出舊值儀表板）")
@@ -496,7 +529,7 @@ def main():
             + _pen_li("債券", "債券", 25, "💵")
             + _pen_li("現金", "現金/安全網", 5, "💰")
         )
-        _buf_card = f'''<div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-teal-400">🎯 策略建議</span><ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed"><li class='text-amber-300'><strong>🚨 指示卡（08/23 核心‑衛星保守成長版）：</strong>目標配置＝台股15/美股30/防守20/債券20/現金15，為中長期方向，容許數月階段偏離；債券鎖短中期投資等級（存續期1-5年，BBB-以上）；平衡基金僅限衛星≤防禦20%；兩條底線＝現金 ≥70 萬、US30Y >5.20% 停新增長債；Lombard 橋接需手動開啟且借款≤擔保品4成</li></ul><div class="mt-3 pt-3 border-t border-slate-700"><span class="text-xs font-bold text-amber-400">📝 巴菲特視角</span><ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4 mt-2">{"".join(f"<li>{l}</li>" for l in _buf_lines[:4])}</ul></div></div>''' if _buf_lines else ""
+        _buf_card = f'''<div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-teal-400">🎯 策略建議</span><ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed"><li class='text-amber-300'><strong>🚨 指示卡（08/23 核心‑衛星保守成長版）：</strong>目標配置＝台股15/美股30/防守20/債券20/現金15，為中長期方向，容許數月階段偏離；債券鎖短中期投資等級（存續期1-5年，BBB-以上）；平衡基金僅限衛星≤防禦20%；兩條底線＝現金 ≥{cash_caliber(snap)['life']:,.0f}（生活底線；合計含追繳緩衝 {cash_caliber(snap)['total']:,.0f}）、US30Y >5.20% 停新增長債；Lombard 橋接需手動開啟且借款≤擔保品4成</li></ul><div class="mt-3 pt-3 border-t border-slate-700"><span class="text-xs font-bold text-amber-400">📝 巴菲特視角</span><ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4 mt-2">{"".join(f"<li>{l}</li>" for l in _buf_lines[:4])}</ul></div></div>''' if _buf_lines else ""
         _cto_card = f'''<div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-red-400">⚡ CTO 技術視角</span><ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4">{"".join(f"<li>{l}</li>" for l in _cto_lines[:4])}</ul></div>''' if _cto_lines else ""
         _buf_html = f'''<div class="luxury-card p-6 space-y-4">
             <h3 class="text-md font-bold text-white">智慧審查：巴菲特配置哲學與實操</h3>
