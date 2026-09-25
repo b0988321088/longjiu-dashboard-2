@@ -242,9 +242,26 @@ kpi1 = kpi("淨資產（含不動產）", f"{net_worth:,}", kpi1_sub, "#1d1d1f")
 kpi2 = kpi("總資產（不含不動產）", f"{TA:,}", kpi2_sub, "#3b82f6")
 kpi3 = kpi("總負債", f"{TL:,}", kpi3_sub, "#ef4444")
 kpi4 = kpi("負債率（含不動產）", f"{TL/(TA+RE)*100:.1f}%", kpi4_sub, "#d97706")
-kpi5 = kpi("現金", f"{CASH:,}", f"底線 70萬 {'✅' if CASH>=700000 else '⚠️'}（餘裕 {(CASH-700000)/10000:.0f}萬）", "#22c55e")
+# 2026-09-25 修正：kpi5 原本寫死單一口徑「底線 70萬」（生活底線）→ 儀表板看不出追繳緩衝缺口，
+# 正是 INC cash_floor_two_calibers_unlabeled 要消滅的誤導模式。改為並列雙口徑（SoT＝thresholds_2026_0915.現金_twd）。
+_cw = ((s.get("thresholds_2026_0915") or {}).get("現金_twd") or {})
+_life = float(_cw.get("生活底線") or s.get("cash_floor") or 0)
+_buf = float(_cw.get("追繳緩衝") or 0)
+_tot = float(_cw.get("合計底線") or (_life + _buf))
+_life_txt = f"生活底線 {_life/10000:.0f}萬 {'✅' if CASH >= _life else '⚠️'}（乾粉 {(CASH - _life)/10000:.1f}萬）"
+_tot_txt = (f"合計底線 {_tot/10000:.0f}萬 {'✅' if CASH >= _tot else f'🔴 缺 {(_tot - CASH)/10000:.1f}萬'}") if _tot else "合計底線 ?"
+kpi5 = kpi("現金", f"{CASH:,}", f"{_life_txt}｜{_tot_txt}", "#22c55e")
 
-pen_card = card("一、穿透分布（目標 台10/美40/防20/債25/現5）", "🎯",
+# 2026-09-25 修正（本週週五審查發現）：原標題寫死「目標 台10/美40/防20/債25/現5」，
+# 與 snapshot.penetration.targets（台10/美30/防30/債25/現5）不一致 → 屬「硬編碼舊值」，
+# 改為一律自 snapshot 讀取（缺值時顯示 ? 且不猜）。
+_pen_tgt = (s.get("penetration") or {}).get("targets") or {}
+def _tgt_pct(_k):
+    _v = _pen_tgt.get(_k)
+    return f"{_v:g}" if isinstance(_v, (int, float)) else "?"
+_pen_tgt_txt = (f"（目標 台{_tgt_pct('台股市值型')}/美{_tgt_pct('美股市值型')}/防{_tgt_pct('防守型配息')}"
+                f"/債{_tgt_pct('債券')}/現{_tgt_pct('現金')}）")
+pen_card = card(f"一、穿透分布{_pen_tgt_txt}", "🎯",
     f"""<table style="width:100%;font-size:13px;border-collapse:collapse"><tr style="color:#6e6e73"><th style="text-align:left;padding:6px 10px">桶</th><th style="text-align:right;padding:6px 10px">金額</th><th style="text-align:right;padding:6px 10px">現況</th></tr>{pen_rows}</table>""")
 dec_card = card("五、今日決策", "⚖️",
     f"""<table style="width:100%;font-size:13px;border-collapse:collapse"><tr style="color:#6e6e73"><th style="text-align:left;padding:5px 10px">類型</th><th style="text-align:left;padding:5px 10px">標的</th><th style="text-align:right;padding:5px 10px">裁決</th></tr>{dec_rows}</table>""")
@@ -280,7 +297,7 @@ html = f"""<div style="background:#f5f5f7;font-family:-apple-system,'PingFang TC
 
 {card("市場事件對持倉影響", "📉", market_html)}
 
-{card("戰略建議（3 條）", "🧭", advice_html)}
+{card(f"戰略建議（{len(A.get('建議') or [])} 條）" if (A.get("建議") or []) else "戰略建議", "🧭", advice_html)}
 
 {dec_card}
 
