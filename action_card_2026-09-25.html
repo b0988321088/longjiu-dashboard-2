@@ -1,0 +1,68 @@
+<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>US30Y 紅線期因應卡</title>
+<style>
+body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;background:#0b1220;color:#e5e7eb;margin:0;padding:18px}
+.wrap{max-width:960px;margin:0 auto}
+.card{background:#111a2e;border:1px solid #1f2b45;border-radius:14px;padding:16px;margin-bottom:14px}
+h1{font-size:21px;margin:0 0 4px;color:#fff}h2{font-size:16px;margin:14px 0 8px;color:#93c5fd}
+.sub{color:#94a3b8;font-size:12.5px;line-height:1.7}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#16223c;color:#cbd5e1;text-align:left;padding:8px;border-bottom:1px solid #24314f;white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid #1b2740;vertical-align:top}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tag{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px}
+.ok{background:#064e3b;color:#6ee7b7}.warn{background:#78350f;color:#fcd34d}
+.bad{background:#7f1d1d;color:#fca5a5}.info{background:#1e3a8a;color:#bfdbfe}
+.note{font-size:12.5px;color:#94a3b8;line-height:1.75}
+.big{font-size:15px;font-weight:800;color:#fff}
+ul{margin:6px 0 0;padding-left:20px}li{margin:5px 0}
+</style></head><body><div class="wrap">
+
+<div class="card"><h1>🔴 US30Y 紅線期因應卡</h1>
+<div class="sub">建立 2026-09-25｜真值來源：snapshot.json（2026-09-25）、us30y_state.json（2026-09-24 收盤）、macro_regime 2026-09-25｜總資產 26,157,497</div></div>
+
+<div class="card"><h2>一、紅線狀態</h2>
+<table><tbody>
+<tr><td>US30Y</td><td class="num"><span class="big">5.461%</span></td><td><span class="tag bad">≥ 紅線 5.3%</span></td></tr>
+<tr><td>連續警戒</td><td class="num">20 日</td><td><span class="tag warn">警戒區 5.2-5.3% 模式Ａ｜防禦</span></td></tr>
+<tr><td>風控煞車</td><td class="num">已觸發</td><td><span class="tag info">只回報不動作（暫緩減碼/加碼）</span></td></tr>
+<tr><td>宏觀燈號</td><td class="num">🔴 紅燈</td><td class="note">情境最高：美元信用壓力 61.9、確定收益輪動 49.5</td></tr>
+</tbody></table>
+<div class="note" style="margin-top:8px">紅線生效＝長期債券新增買單<b>永久凍結</b>＋禁新增質押／擴倉；模式A｜防禦（警戒區 5.20-5.30）｜⛔ 風控紅線 ≥5.3% 已觸發（債券新增永久凍結）</div></div>
+
+<div class="card"><h2>二、判斷鏈：為什麼引擎的清單現在不執行</h2>
+<div class="note">優先序＝<b>使用者裁示 ＞ 風控紅線 ＞ 戰術偏移 ＞ 引擎建議</b>。紅線動作明文「只回報不動作（暫緩減碼／加碼）」且優先於動作階梯與單桶硬上限 → 引擎金額一律降級為觀察。</div>
+<table style="margin-top:8px"><thead><tr><th>引擎今日建議（僅對照）</th><th class="num">金額</th></tr></thead><tbody><tr><td>美股市值型成長</td><td class='num'>2,092,600</td></tr><tr><td>防守型配息</td><td class='num'>523,150</td></tr><tr><td>債券</td><td class='num'>1,307,875</td></tr><tr><td>黃金/實質資產(衛星)</td><td class='num'>1,307,875</td></tr><tr><td>石油/能源(避險衛星)</td><td class='num'>523,150</td></tr><tr><td>避險衛星合計(黃金+石油)</td><td class='num'>1,831,025</td></tr></tbody></table>
+<div class="note" style="margin-top:6px">對應裁示：防守合併口徑 ≥60%（現 68.5%）→ 承接凍結、不加碼配息 ETF；US30Y ≥5.3% → 暫緩先回報。</div></div>
+
+<div class="card"><h2>三、五桶 vs 目標</h2>
+<table><thead><tr><th>桶</th><th class="num">現況</th><th class="num">目標</th><th class="num">偏離</th></tr></thead><tbody><tr><td>台股市值型成長</td><td class='num'>7.8%</td><td class='num'>10%</td><td class='num'>-2.2pp</td></tr><tr><td>美股市值型成長</td><td class='num'>39.5%</td><td class='num'>30%</td><td class='num'>+9.5pp</td></tr><tr><td>防守型配息</td><td class='num'>17.3%</td><td class='num'>30%</td><td class='num'>-12.7pp</td></tr><tr><td>債券</td><td class='num'>28.7%</td><td class='num'>25%</td><td class='num'>+3.7pp</td></tr><tr><td>現金/安全網</td><td class='num'>3.3%</td><td class='num'>5%</td><td class='num'>-1.7pp</td></tr></tbody></table>
+<div class="note" style="margin-top:6px">防守單桶 -12.7pp 僅結構參考（合併口徑已足）；美股 +9.5pp 超標但可減部位多在後收級別（想減也賣不掉）→ 只能停新增＋配息導流。</div></div>
+
+<div class="card"><h2>四、⛔ 凍結清單（不做）</h2><ul>
+<li>不新增任何債券／長天期標的（紅線永久凍結）</li>
+<li>不補台股（解凍條件：US30Y 連續 3 日 &lt; 5.2%；00921 已暫停待重新定案）</li>
+<li>不逢跌接刀、不減美股（急跌門檻單日 -3% 未達 → 只回報）</li>
+<li>不加碼 00878／00713（防守合併口徑已足）</li>
+</ul></div>
+
+<div class="card"><h2>五、✅ 要做（照順序）</h2><ul>
+<li><b>1. 9/29 質押撥款 → 清償 500 萬高息</b>（保單質押 400 萬@4.0%＋券商質押 100 萬@3.92%）；月息 16,600 → 12,465，淨省約 4,135／月，LTV 不惡化（以銀行書面為準）</li>
+<li><b>2. 現金補回合計底線</b>：現金 861,818 vs 合計底線 1,200,000 → 缺 338,182；來源＝月盈餘＋台幣配息導流，<b>不動擔保池、不新增質押、不賣後收</b></li>
+<li><b>3. 保單內部轉換照跑</b>（黃金／健康批次）：保單內轉換、非新增質押或買債，<b>不受紅線限制</b>；生效後同步四源</li>
+<li><b>4. 配息導流照常</b>：配息不滾回原標的，先補現金底線、再往低配走</li>
+<li><b>5. 10 月標案前置（9 月底前定案）</b>：押標金以履約保證函／保證保險（年費約 1%）替代現金，不動現金底線</li>
+</ul></div>
+
+<div class="card"><h2>六、現金兩口徑（本次矛盾根因）</h2>
+<table><thead><tr><th>口徑</th><th class="num">金額</th><th>判定</th></tr></thead><tbody>
+<tr><td>生活底線（8/14 裁示）</td><td class="num">700,000</td><td><span class="tag ok">✅ 現金 861,818 達標</span>｜可動用乾粉 161,818</td></tr>
+<tr><td>合計底線＝生活＋追繳緩衝 500,000</td><td class="num">1,200,000</td><td><span class="tag warn">🟡 缺 338,182 → 配息導流補足、不新增買入</span></td></tr>
+</tbody></table>
+<div class="note" style="margin-top:6px">緩衝依據：擔保池約 92% 為後收級別（追繳時賣不掉）→ 追繳緩衝只能靠現金。兩個口徑都成立，但顯示端須標明口徑，避免「同日一張說 🟢 安全、一張說 🔴 缺 33.8 萬」。</div></div>
+
+<div class="card"><h2>七、解凍條件與監控</h2>
+<div class="note">台股解凍＝US30Y <b>連續 3 日 &lt; 5.2%</b>（優先 006208／0051，單筆 ≤5 萬）；債券另需利率見頂訊號。只要仍 ≥5.3% → 維持本卡。</div>
+<table style="margin-top:8px"><thead><tr><th>日期</th><th>行程</th><th class="num">狀態</th></tr></thead><tbody><tr><td>2026-09-25</td><td>🏝️ 濟州 Day2：ECO LAND 森林小火車(4.5km/30萬坪)→城邑民俗村(贈蜂</td><td class='num'>🏝️ 濟州行</td></tr><tr><td>2026-09-25</td><td>📋 洲際W（永豐 1,312萬）原到期日 — 非決策點：貸款繼續繳、無續約動作；提早轉貸為選</td><td class='num'>📋 續繳（無動作）；轉貸選項等 10 月後</td></tr><tr><td>2026-09-26</td><td>🛡️ 洲際W轉貸完成後 → 保障缺口補足評估（定期壽險/重大疾病險；南山 N45173936</td><td class='num'>🔴 重要</td></tr><tr><td>2026-09-26</td><td>🏝️ 濟州 Day3：精緻美膚彩妝坊(購物站)→韓國文化體驗(辛奇DIY+韓服攝影)→梨湖紅</td><td class='num'>🏝️ 濟州行</td></tr><tr><td>2026-09-27</td><td>✈️ 濟州 Day4 回程：德威 TW-689 濟州11:05→高雄12:40 返家。行前備</td><td class='num'>✈️ 濟州行</td></tr><tr><td>2026-09-28</td><td>💰 PIMCO 收益增長M 配息基準日（第三站；官方表 V.3：9/28；USDEQ6550</td><td class='num'>📅 配息（第三站）</td></tr></tbody></table></div>
+
+</div></body></html>
