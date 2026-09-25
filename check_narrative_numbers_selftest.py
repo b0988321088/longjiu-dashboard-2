@@ -73,6 +73,87 @@ CASES: list[tuple[str, bool, str]] = [
     ("科技目標 ≤20%", True, "中介詞句子不掃"),
 ]
 
+# ── 警示自測（2026-09-25 補）：引擎檔異狀必須出聲、正常檔不得有雜訊 ──
+# 這層是「引擎口徑悄悄消失」的唯一可見點（症狀會顯示成內文數字對不上、指不到根因），
+# 所以把它鎖進自測，而不是只靠人記得看 stderr。
+_DEL = object()          # 代表「把這個鍵整個拿掉」
+
+
+def _engine_rows():
+    return [
+        {"資產": "台股市值型成長", "target": 10, "燈號偏移後": 10, "建議金額(±)": 0},
+        {"資產": "美股市值型成長", "target": 30, "燈號偏移後": 22, "建議金額(±)": 2092600},
+        {"資產": "防守型配息", "target": 30, "燈號偏移後": 32, "建議金額(±)": 523150},
+        {"資產": "債券", "target": 25, "燈號偏移後": 30, "建議金額(±)": 1307875},
+        {"資產": "避險衛星合計(黃金+石油)", "target": 0, "燈號偏移後": 7, "建議金額(±)": 1831025},
+    ]
+
+
+def _payload(rows) -> str:
+    import json
+    return json.dumps({"targetAllocation": {"rows": rows}}, ensure_ascii=False)
+
+
+def _mut(*specs) -> str:
+    """以「完整 5 列」為基底，只突變指定列／欄位。
+
+    為什麼一定要完整列（2026-09-25 獨立複審抓到的假信心）：
+    先前版本「部分欄位型別錯」「欄位被改名」兩案例的 payload 只有單列債券 →
+    光是缺少其餘 4 列就讓 _missing 分支先出聲、案例即判定通過；把 `if _partial:`
+    整段刪掉，自測照樣印 38/38、exit 0。改為完整列＋單一突變後，每個分支才會被
+    獨立觸發（已用變異測試雙向驗證：刪 _partial → FAIL、刪 _missing → FAIL）。
+    """
+    rows = _engine_rows()
+    for asset, changes in specs:
+        for row in rows:
+            if row["資產"] == asset:
+                for k, v in changes.items():
+                    if v is _DEL:
+                        row.pop(k, None)
+                    else:
+                        row[k] = v
+    return _payload(rows)
+
+
+WARN_CASES: list[tuple[str, str, bool]] = [
+    ("完整引擎檔（不得出聲）", _payload(_engine_rows()), False),
+    ("整列缺列：拿掉債券列 → 該桶引擎口徑消失（_missing 分支）",
+     _payload([r for r in _engine_rows() if r["資產"] != "債券"]), True),
+    ("部分欄位型別錯：債券 燈號偏移後→字串（_partial 分支，其餘 4 列完整）",
+     _mut(("債券", {"燈號偏移後": "30"})), True),
+    ("欄位被改名：債券 燈號偏移後→偏移後（_partial 分支，其餘 4 列完整）",
+     _mut(("債券", {"燈號偏移後": _DEL, "偏移後": 30})), True),
+    ("壞 JSON", "{oops", True),
+]
+
+
+class _FakeEngineFile:
+    def __init__(self, payload: str) -> None:
+        self.name = "macro_regime_2026-09-25.json"
+        self._payload = payload
+
+    def read_text(self, **_kw) -> str:
+        return self._payload
+
+
+class _FakeBase:
+    def __init__(self, payload: str) -> None:
+        self._f = _FakeEngineFile(payload)
+
+    def glob(self, _pattern: str):
+        return [self._f]
+
+
+def _warn_check(payload: str) -> tuple[bool, str]:
+    """回傳 (是否對 stderr 出聲, 訊息)。"""
+    import contextlib
+    import io
+    _buf = io.StringIO()
+    with contextlib.redirect_stderr(_buf):
+        C._engine_calibers({}, base=_FakeBase(payload))
+    _msg = _buf.getvalue().strip()
+    return bool(_msg), _msg
+
 
 def main() -> int:
     snap = C._load(BASE / "snapshot.json") or {}
@@ -85,9 +166,19 @@ def main() -> int:
             fails += 1
         print(f"{'PASS' if ok else 'FAIL'} | {'應放行' if expect_pass else '應擋下'} | {text} | {note}"
               + ("" if ok else f" | hits={hits}"))
+    # ── 警示自測：合成引擎檔 → 確認「整列缺列／部分欄位改名」會出聲、正常檔不出聲 ──
+    for note, payload, expect_warn in WARN_CASES:
+        got, msg = _warn_check(payload)
+        ok = got == expect_warn
+        if not ok:
+            fails += 1
+        print(f"{'PASS' if ok else 'FAIL'} | {'應出聲' if expect_warn else '不應出聲'} | 警示 | {note}"
+              + (f" | {msg.splitlines()[0][:80]}" if msg else ""))
+
     # 印 gap（現況缺口）／off（引擎偏移）／pct 三集合：口徑拆分後 gap 不再含引擎值，
     # 只看 gap 會誤以為引擎口徑消失了（收工稽核第 13 類讀的就是這一行）。
-    print(f"--- 內文守門自測：{len(CASES) - fails}/{len(CASES)} 通過"
+    _total = len(CASES) + len(WARN_CASES)
+    print(f"--- 內文守門自測：{_total - fails}/{_total} 通過"
           f"｜債券 gap={sorted(allowed['債券']['gap'])} off={sorted(allowed['債券']['off'])}"
           f" pct={sorted(allowed['債券']['pct'])}")
     if fails:

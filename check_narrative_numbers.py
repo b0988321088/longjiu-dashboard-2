@@ -129,6 +129,9 @@ ENGINE_ROWS = {
     # allowed 根本沒有衛星標籤 → 內文引用衛星的值從來沒被掃過（覆蓋缺口，非假陽性）。
     # 刻意「不」註冊 黃金／石油 個別標籤：那兩字會與商品報價（黃金 2,400/oz 這種
     # 千分位數字）碰撞，掃了會生出假陽性；等內文真的出現「黃金 5%」再補。
+    # ⚠️（2026-09-25 獨立複審提醒）引擎檔另有一列『台幣現金+短定存』是刻意非數字
+    # （target='底線制'、燈號偏移後=None）—— 它不在本表，所以被 continue 跳過、零誤報。
+    # 若日後要納入本表，必須同步加「非數字列」白名單，否則新的欄位解析警示會每天誤響。
     "避險衛星合計(黃金+石油)": ("避險衛星", "衛星"),
 }
 
@@ -171,14 +174,25 @@ def _engine_calibers(allowed: dict, base: Path = BASE) -> None:
         _files.sort()
         data = json.loads(_files[-1][1].read_text(encoding="utf-8"))
         _created: list[str] = []
+        _seen: set[str] = set()
+        _partial: list[str] = []
         for row in ((data.get("targetAllocation") or {}).get("rows") or []):
             name = str(row.get("資產", "")).strip()
             if name not in ENGINE_ROWS:
                 continue
+            _seen.add(name)
             t, off, amt = row.get("target"), row.get("燈號偏移後"), row.get("建議金額(±)")
             _n_pairs = isinstance(t, (int, float)) and isinstance(off, (int, float))
             _n_t = isinstance(t, (int, float))
             _n_amt = isinstance(amt, (int, float))
+            # 只判斷「全非數字」會漏掉半套補入：pct 有值、off 卻無聲消失（欄位型別變了，或
+            # 被改名成別的鍵 → None）。那比全錯更難查，所以逐欄位記錄是哪一個解析失敗。
+            for _fk, _fv, _fok, _what in (
+                    ("target", t, _n_t, "目標值"),
+                    ("燈號偏移後", off, isinstance(off, (int, float)), "戰術偏移／偏移後目標值"),
+                    ("建議金額(±)", amt, _n_amt, "建議金額")):
+                if _fv is None or not _fok:
+                    _partial.append(f"{name}.{_fk}={_fv!r}（{_what} 未補入）")
             for lab in ENGINE_ROWS[name]:
                 spec = allowed.get(lab)
                 if spec is None:
@@ -199,6 +213,17 @@ def _engine_calibers(allowed: dict, base: Path = BASE) -> None:
                 print(f"  ⚠️ _engine_calibers：引擎列『{name}』的 target／燈號偏移後／"
                       f"建議金額(±) 全非數字 → 該列未補入任何口徑（欄位改名或型別變動？）",
                       file=sys.stderr)
+        # 2026-09-25 補（獨立複審殘留 #3）：上面兩層警示只涵蓋「該列的欄位全錯」與「本函式
+        # 新建的標籤補不到值」，仍漏掉兩種同型靜默 —— ①期望的引擎列整個不見（列名被改名）
+        # ②只有部分欄位解析失敗（例：target 還在、燈號偏移後 變成字串）→ 後果都是引擎口徑
+        # 悄悄消失、合法引擎值被誤報成「對不上 snapshot」，而症狀完全指不到根因。
+        _missing = [n for n in ENGINE_ROWS if n not in _seen]
+        if _missing:
+            print(f"  ⚠️ _engine_calibers：{_files[-1][1].name} 缺少 ENGINE_ROWS 期望的引擎列 "
+                  f"{_missing} → 這些桶的引擎口徑未補入（列名被改名？）", file=sys.stderr)
+        if _partial:
+            print(f"  ⚠️ _engine_calibers：引擎欄位無法解析 → {'；'.join(_partial)}",
+                  file=sys.stderr)
         # 空集合在 scan_text 內＝跳過比對＝靜默放行（假陰性）→ 本函式新建卻補不到值的
         # 標籤一律移除並出聲（引擎欄位改名／型別變動時要看得到，不能默默變成不掃）。
         for lab in dict.fromkeys(_created):
