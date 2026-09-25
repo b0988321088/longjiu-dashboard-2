@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from difflib import SequenceMatcher
 from pathlib import Path
 
@@ -90,7 +91,7 @@ def build_allowed(snap: dict) -> dict:
             _v = (snap or {}).get(_x)
             if isinstance(_v, (int, float)):
                 twds.add(float(_v))
-        allowed[label] = {"pct": pcts, "twd": twds, "gap": gps}
+        allowed[label] = {"pct": pcts, "twd": twds, "gap": gps, "off": set()}
 
     # ── 2026-09-23 補洞：現金派生口徑（乾粉／餘裕＝現金 − 底線）────────────────
     # 為什麼：內文常寫「乾粉＝現金 861,818 − 底線 700,000 = 161,818」，這個派生口徑是
@@ -112,7 +113,7 @@ def build_allowed(snap: dict) -> dict:
     for label, gname in LABEL_GICS.items():
         row = gics.get(gname)
         if isinstance(row, dict) and isinstance(row.get("佔比"), (int, float)):
-            allowed.setdefault(label, {"pct": set(), "twd": set(), "gap": set()})
+            allowed.setdefault(label, {"pct": set(), "twd": set(), "gap": set(), "off": set()})
             allowed[label]["pct"].add(float(row["佔比"]))
     _engine_calibers(allowed)
     return allowed
@@ -124,6 +125,11 @@ ENGINE_ROWS = {
     "美股市值型成長": ("美股", "美股市值型成長"),
     "防守型配息": ("防守型配息",),
     "債券": ("債券",),
+    # 2026-09-25 B 批補覆蓋：避險衛星（8/22 裁示 ≤7%＝黃金≤5%+石油≤2%）。修前
+    # allowed 根本沒有衛星標籤 → 內文引用衛星的值從來沒被掃過（覆蓋缺口，非假陽性）。
+    # 刻意「不」註冊 黃金／石油 個別標籤：那兩字會與商品報價（黃金 2,400/oz 這種
+    # 千分位數字）碰撞，掃了會生出假陽性；等內文真的出現「黃金 5%」再補。
+    "避險衛星合計(黃金+石油)": ("避險衛星", "衛星"),
 }
 
 
@@ -137,29 +143,74 @@ def _engine_calibers(allowed: dict, base: Path = BASE) -> None:
       ③ 建議金額 ±（例：美股的金額型建議）
     三者都是合法派生口徑，但合法值集合原本只有「現況缺口」與「穿透真值」
     → 正確的引擎數字被判「對不上 snapshot」。
-    本函式一次補齊三種口徑（不再逐次補單一值），全部讀最新 macro_regime_*.json
+    本函式一次補齊這些口徑（不再逐次補單一值），全部讀最新 macro_regime_*.json
     現算，不在本檔寫死任何數字。
+
+    ── 2026-09-25 補洞 #2（A/B 批加固）────────────────────────────────────
+      · 引擎偏移改存獨立的 off 集合（有號、不翻符號）：原本把 ±delta 都塞進 gap，
+        「幅度對、方向反」的敘述會被放行（詳見 _pp_caliber 的說明）。
+      · 選檔改為「只認 macro_regime_YYYY-MM-DD.json 並取最新日期」：原本用
+        sorted(glob)[-1]（字典序），一旦出現 macro_regime_backup.json 之類的非日期檔
+        就會被當成最新檔（'2' < 'b'）→ 拿錯口徑且無聲。
+      · 缺檔／壞檔／rows 型別不符一律出聲到 stderr：原本 except 靜默 return，症狀會
+        顯示成「內文數字對不上」（假陽性），無法區分是內文錯還是引擎檔壞。
+      · 本函式新建的標籤若補完仍全空就移除並警示：空集合在 scan_text 內是「跳過比對」
+        ＝靜默放行（假陰性），不可留在 allowed 裡。
     """
     try:
-        files = sorted(base.glob("macro_regime_*.json"))
-        if not files:
+        _files: list[tuple[str, Path]] = []
+        for _p in base.glob("macro_regime_*.json"):
+            _m = re.fullmatch(r"macro_regime_(\d{4}-\d{2}-\d{2})\.json", _p.name)
+            if _m:
+                _files.append((_m.group(1), _p))
+        if not _files:
+            print(f"  ⚠️ _engine_calibers：{base} 找不到 macro_regime_YYYY-MM-DD.json"
+                  f"（無檔或全為非日期命名）→ 引擎口徑未補入，內文引用引擎值時會誤報",
+                  file=sys.stderr)
             return
-        data = json.loads(files[-1].read_text(encoding="utf-8"))
+        _files.sort()
+        data = json.loads(_files[-1][1].read_text(encoding="utf-8"))
+        _created: list[str] = []
         for row in ((data.get("targetAllocation") or {}).get("rows") or []):
             name = str(row.get("資產", "")).strip()
             if name not in ENGINE_ROWS:
                 continue
             t, off, amt = row.get("target"), row.get("燈號偏移後"), row.get("建議金額(±)")
+            _n_pairs = isinstance(t, (int, float)) and isinstance(off, (int, float))
+            _n_t = isinstance(t, (int, float))
+            _n_amt = isinstance(amt, (int, float))
             for lab in ENGINE_ROWS[name]:
-                spec = allowed.setdefault(lab, {"pct": set(), "twd": set(), "gap": set()})
-                if isinstance(t, (int, float)) and isinstance(off, (int, float)):
-                    delta = round(float(off) - float(t), 1)
-                    spec["gap"].add(delta)
-                    spec["gap"].add(-delta)                  # 同幅度：內文可能寫成「減碼 Npp」
-                    spec["pct"].add(round(float(off), 1))     # ② 偏移後目標值
-                if isinstance(amt, (int, float)):
-                    spec["twd"].add(float(amt))               # ③ 建議金額
-    except Exception:
+                spec = allowed.get(lab)
+                if spec is None:
+                    spec = {"pct": set(), "twd": set(), "gap": set(), "off": set()}
+                    allowed[lab] = spec
+                    _created.append(lab)
+                spec.setdefault("off", set())
+                if _n_pairs:
+                    spec["off"].add(round(float(off) - float(t), 1))  # ① 有號引擎戰術偏移
+                    spec["pct"].add(round(float(off), 1))             # ② 偏移後目標值
+                if _n_t:
+                    spec["pct"].add(round(float(t), 1))               # ③ 目標值本身
+                if _n_amt:
+                    spec["twd"].add(float(amt))                       # ④ 建議金額
+            if not (_n_pairs or _n_t or _n_amt):
+                # 既有標籤不會走下面的「新建標籤移除」分支 → 這裡必須另外出聲，否則引擎欄位
+                # 改名／型別變動時，症狀只會顯示成「內文數字對不上」（假陽性），查不到根因。
+                print(f"  ⚠️ _engine_calibers：引擎列『{name}』的 target／燈號偏移後／"
+                      f"建議金額(±) 全非數字 → 該列未補入任何口徑（欄位改名或型別變動？）",
+                      file=sys.stderr)
+        # 空集合在 scan_text 內＝跳過比對＝靜默放行（假陰性）→ 本函式新建卻補不到值的
+        # 標籤一律移除並出聲（引擎欄位改名／型別變動時要看得到，不能默默變成不掃）。
+        for lab in dict.fromkeys(_created):
+            if not (allowed[lab]["pct"] or allowed[lab]["twd"]
+                    or allowed[lab]["gap"] or allowed[lab]["off"]):
+                del allowed[lab]
+                print(f"  ⚠️ _engine_calibers：{lab} 未取得任何合法值（欄位型別不符？）"
+                      f"→ 不納入掃描（否則空集合會靜默放行）", file=sys.stderr)
+    except Exception as _e:
+        print(f"  ⚠️ _engine_calibers 略過（{type(_e).__name__}: {_e}）→ 引擎口徑未補入，"
+              f"內文引用引擎值時會誤報；請檢查 {base} 的 macro_regime_*.json",
+              file=sys.stderr)
         return
 
 
@@ -169,6 +220,36 @@ def _pct_ok(vals: set, x: float) -> bool:
 
 def _amt_ok(vals: set, x: float) -> bool:
     return any(abs(x - v) < 1 for v in vals)
+
+
+# ── 2026-09-25 B 批：pp 的語境詞 → 口徑 ──────────────────────────────────────
+# 「引擎戰術偏移」(off) 與「現況缺口」(gap) 是兩個不同意義的有號量，同一標籤可能
+# 符號相反（債券現況低於目標＝負缺口，但引擎要加碼＝正偏移）。修前把 ±delta 都塞進
+# gap 同一個集合，代價是「幅度對、方向反」的敘述會被放行。
+# 語境詞刻意只收「單義」者：
+#   超標/超配/低配 ＝ 描述現況 vs 目標的偏離 → 只能用現況缺口集合
+#   戰術偏移/偏移後 ＝ 描述引擎動作結果   → 只能用引擎偏移集合
+# 缺口/不足/建議/加碼/減碼 一律不收：實測語料裡模型會拿它們講「建議幅度」而非現況
+# 缺口（「缺口：台股 -2.2pp」是現況，「建議收回 9.5pp」是建議），硬套會製造假陽性。
+_CALIBER_WORDS = {
+    "gap": ("超標", "超配", "低配"),
+    "off": ("戰術偏移", "偏移後"),
+}
+
+
+def _pp_caliber(text: str, m: re.Match, pad: int = 24) -> str | None:
+    """從命中點往前找最近的子句，回傳 pp 該用哪個口徑（判不出＝None → 用聯集）。
+
+    以標點切段是必要的：「美股超標 9.5pp、債券 +5pp」若共用視窗，債券的 +5pp 會被
+    鄰句的「超標」污染成現況缺口口徑 → 假陽性。切段後 `債券 +5pp` 只看得到「債券」。
+    """
+    # 切段依據＝標點「或任何數字」。數字必須切，否則沒有標點的相鄰子句會互相污染：
+    # 實測「美股超標 9pp 但債券 +5pp」會把債券的引擎偏移值判成現況缺口 → 新假陽性。
+    # （小數點也在切段字元內，但真正的保險是 \d：整數 pp 沒有小數點可切。）
+    seg = re.split(r"[，。；、,;.／/｜|\n（）()\[\]\d]",
+                   text[max(0, m.start() - pad):m.start()])[-1]
+    hit = {c for c, ws in _CALIBER_WORDS.items() if any(w in seg for w in ws)}
+    return hit.pop() if len(hit) == 1 else None
 
 
 def scan_text(text: str, allowed: dict, where: str) -> list[str]:
@@ -181,9 +262,30 @@ def scan_text(text: str, allowed: dict, where: str) -> list[str]:
             if spec["pct"] and not _pct_ok(spec["pct"], val):
                 out.append(f"{where}：{label} {val}% ∉ 合法值 {sorted(spec['pct'])}｜片段 …{_ctx(text, m)}…")
         for m in re.finditer(rf"{_g}{re.escape(label)}\s*[:：]?\s*([+-]?\d+(?:\.\d+)?)\s*pp", text):
-            val = float(m.group(1))
-            if spec["gap"] and not _pct_ok(spec["gap"], val):
-                out.append(f"{where}：{label} {val:+}pp ∉ 合法值 {sorted(spec['gap'])}｜片段 …{_ctx(text, m)}…")
+            _raw = m.group(1)
+            val = float(_raw)
+            _cal = _pp_caliber(text, m)
+            if _cal == "gap":
+                _vals, _name = spec["gap"], "現況缺口"
+            elif _cal == "off":
+                _vals, _name = spec["off"], "引擎偏移"
+            else:
+                _vals, _name = (spec["gap"] | spec["off"]), "現況缺口∪引擎偏移"
+            if not _vals:
+                # 該口徑尚無值（例：科技沒有引擎列，off 為空）→ 退回聯集。
+                # 修前是「直接比對 gap」，所以在這裡 continue 等於憑空開了一條假陰性通道。
+                _vals, _name = (spec["gap"] | spec["off"]), "現況缺口∪引擎偏移"
+            if not _vals:
+                continue
+            if not _raw.startswith(("+", "-")):
+                _ok = _pct_ok({abs(_v) for _v in _vals}, abs(val))   # 沒寫號＝只比幅度
+            else:
+                _ok = _pct_ok(_vals, val)                            # 寫了號＝必須同號
+            if not _ok:
+                _oname = "現況缺口" if _name == "引擎偏移" else "引擎偏移"
+                _other = sorted(spec["gap"] if _name == "引擎偏移" else spec["off"])
+                out.append(f"{where}：{label} {val:+}pp ∉ 合法{_name}值 {sorted(_vals)}"
+                           f"｜（{_oname}＝{_other}）｜片段 …{_ctx(text, m)}…")
         for m in re.finditer(rf"{_g}{re.escape(label)}\s*[:：]?\s*(\d{{1,3}}(?:,\d{{3}})+)", text):
             _after = text[m.end():m.end() + 4]
             if re.match(r"\s*(?:\.\d|點)", _after):
