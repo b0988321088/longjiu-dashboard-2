@@ -63,8 +63,8 @@ CASES: list[tuple[str, bool, str]] = [
     ("防守型配息 17.3%", True, "穿透真值"),
     ("科技 17.5%", False, "負向：INC-245 原始案例（模型自行推算）"),
     # ── 現金派生口徑（INC-244）──
-    ("現金 861,818", True, "現金原值"),
-    ("現金 161,818", True, "乾粉＝現金 − 生活底線"),
+    # 2026-09-26：原寫死 861,818/161,818（9 月舊現金）→ 現金一更新就讓自測假失敗
+    #   （是「案例落後」不是「守門壞掉」）。改由下方 _cash_cases() 動態讀 snapshot 生成。
     ("現金 1,200,000", True, "合計底線"),
     ("現金 999,999", False, "負向：不存在的現金金額"),
     # ── 守門不該掃的型態（零假陽性合約）──
@@ -72,6 +72,30 @@ CASES: list[tuple[str, bool, str]] = [
     ("防守合併 68.5%", True, "中介詞句子不掃"),
     ("科技目標 ≤20%", True, "中介詞句子不掃"),
 ]
+
+
+def _cash_cases() -> list[tuple[str, bool, str]]:
+    """2026-09-26：動態生成「現金派生口徑」案例（讀 snapshot）。
+
+    原本寫死當期現金與乾粉值 → 每次現金入帳就讓自測亮紅燈，看起來像守門壞掉，
+    實際只是案例落後。改為動態，維持同樣的守門強度（值仍須落在合法集合內）。
+    """
+    import json
+    try:
+        _s = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    _cash = int(_s.get("cash_total") or 0)
+    if not _cash:
+        return []
+    _floor = int(((_s.get("cash_floor_rule") or {}).get("cash_floor")) or 0)
+    _out = [("現金 %s" % format(_cash, ","), True, "現金原值（動態）")]
+    if _floor and _cash > _floor:
+        _out.append(("現金 %s" % format(_cash - _floor, ","), True, "乾粉＝現金 − 生活底線（動態）"))
+    return _out
+
+
+CASES += _cash_cases()
 
 # ── 警示自測（2026-09-25 補）：引擎檔異狀必須出聲、正常檔不得有雜訊 ──
 # 這層是「引擎口徑悄悄消失」的唯一可見點（症狀會顯示成內文數字對不上、指不到根因），
