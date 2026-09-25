@@ -1381,9 +1381,15 @@
   "detail": "commit d4cda852（CIO-Pollinations APPROVE／tree e24c2877）＋資料 commit f0b321fa。前手為修『main 領先 origin/main』誤報而加 `if branch != clean-main: return`，但本機常態分支就是 main → ⑤ 每晚整段跳過、INC-236（本機產出、Pages 吃舊值）失去守門；改為基準固定 origin/clean-main（推送目標 HEAD:clean-main），任何分支都量 HEAD 是否上線。負向測試（remote-tracking ref 退一顆）抓到 1 顆未推送、還原後 ✅。收工檢查 23:13 全部通過。"
  },
  {
-   "date": "2026-09-25",
-   "category": "修正",
-   "item": "現金底線雙口徑標示（修復同日「🟢 安全」與「🔴 缺 33.8 萬」自相矛盾）",
-   "detail": "INC cash_floor_two_calibers_unlabeled：SoT thresholds_2026_0915.現金_twd 內含生活底線/追繳緩衝/合計底線三個子項，顯示端各取一半又不標口徑 → 同日兩份產出給出相反判定。build_dashboard.py 與 build_rebalance_dashboard.py 新增 cash_caliber() 統一派生，md 第六節/HTML 風險紅線/儀表板風險提示並列兩口徑（生活底線→乾粉、合計底線→追繳緩衝缺口）；移除 5 處寫死字面。決策卡 action_card_2026-09-25.html。"
+  "date": "2026-09-25",
+  "category": "修正",
+  "item": "現金底線雙口徑標示（修復同日「🟢 安全」與「🔴 缺 33.8 萬」自相矛盾）",
+  "detail": "INC cash_floor_two_calibers_unlabeled：SoT thresholds_2026_0915.現金_twd 內含生活底線/追繳緩衝/合計底線三個子項，顯示端各取一半又不標口徑 → 同日兩份產出給出相反判定。build_dashboard.py 與 build_rebalance_dashboard.py 新增 cash_caliber() 統一派生，md 第六節/HTML 風險紅線/儀表板風險提示並列兩口徑（生活底線→乾粉、合計底線→追繳緩衝缺口）；移除 5 處寫死字面。決策卡 action_card_2026-09-25.html。"
+ },
+ {
+  "date": "2026-09-25",
+  "category": "應辦",
+  "item": "紅線口徑敘述殘留清理（低優先）",
+  "detail": ""
  }
 ]
