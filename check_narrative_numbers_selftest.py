@@ -115,21 +115,33 @@ def _mut(*specs) -> str:
     return _payload(rows)
 
 
-WARN_CASES: list[tuple[str, str, bool]] = [
-    ("完整引擎檔（不得出聲）", _payload(_engine_rows()), False),
+WARN_CASES: list[tuple[str, str, bool, str | None, int]] = [
+    # (說明, 合成檔內容, 期望出聲?, 期望「不在 allowed」的標籤, 檔名往回幾天)
+    ("完整引擎檔（不得出聲）", _payload(_engine_rows()), False, None, 0),
     ("整列缺列：拿掉債券列 → 該桶引擎口徑消失（_missing 分支）",
-     _payload([r for r in _engine_rows() if r["資產"] != "債券"]), True),
+     _payload([r for r in _engine_rows() if r["資產"] != "債券"]), True, None, 0),
     ("部分欄位型別錯：債券 燈號偏移後→字串（_partial 分支，其餘 4 列完整）",
-     _mut(("債券", {"燈號偏移後": "30"})), True),
+     _mut(("債券", {"燈號偏移後": "30"})), True, None, 0),
     ("欄位被改名：債券 燈號偏移後→偏移後（_partial 分支，其餘 4 列完整）",
-     _mut(("債券", {"燈號偏移後": _DEL, "偏移後": 30})), True),
-    ("壞 JSON", "{oops", True),
+     _mut(("債券", {"燈號偏移後": _DEL, "偏移後": 30})), True, None, 0),
+    ("壞 JSON", "{oops", True, None, 0),
+    # ── 舊分支補覆蓋（2026-09-25 獨立複審指出這兩條原本沒有專屬案例）──
+    # 關鍵不是「有沒有出聲」（_partial 已經會出聲），而是那個**行為**：新建卻補不到值的
+    # 標籤必須被移出 allowed —— 空集合在 scan_text 內＝跳過比對＝靜默放行（假陰性）。
+    ("三欄位全非數字：新建的 債券 標籤必須被移出 allowed（不得留空集合）",
+     _mut(("債券", {"target": "底線制", "燈號偏移後": None, "建議金額(±)": "N/A"})), True, "債券", 0),
+    ("引擎檔過期 10 天：口徑可能落後，必須出聲",
+     _payload(_engine_rows()), True, None, 10),
 ]
 
 
 class _FakeEngineFile:
-    def __init__(self, payload: str) -> None:
-        self.name = "macro_regime_2026-09-25.json"
+    def __init__(self, payload: str, days_ago: int = 0) -> None:
+        import datetime
+        _d = datetime.date.today() - datetime.timedelta(days=days_ago)
+        # 檔名日期用「今天往回推」動態產生：寫死日期會讓這份自測自己過期
+        # （檔齡警示 >=3 天就會誤觸，屆時「不得出聲」的案例會莫名轉紅）。
+        self.name = f"macro_regime_{_d:%Y-%m-%d}.json"
         self._payload = payload
 
     def read_text(self, **_kw) -> str:
@@ -137,22 +149,23 @@ class _FakeEngineFile:
 
 
 class _FakeBase:
-    def __init__(self, payload: str) -> None:
-        self._f = _FakeEngineFile(payload)
+    def __init__(self, payload: str, days_ago: int = 0) -> None:
+        self._f = _FakeEngineFile(payload, days_ago)
 
     def glob(self, _pattern: str):
         return [self._f]
 
 
-def _warn_check(payload: str) -> tuple[bool, str]:
-    """回傳 (是否對 stderr 出聲, 訊息)。"""
+def _warn_check(payload: str, days_ago: int = 0) -> tuple[bool, str, dict]:
+    """回傳 (是否對 stderr 出聲, 訊息, 補完後的 allowed)。"""
     import contextlib
     import io
+    _allowed: dict = {}
     _buf = io.StringIO()
     with contextlib.redirect_stderr(_buf):
-        C._engine_calibers({}, base=_FakeBase(payload))
+        C._engine_calibers(_allowed, base=_FakeBase(payload, days_ago))
     _msg = _buf.getvalue().strip()
-    return bool(_msg), _msg
+    return bool(_msg), _msg, _allowed
 
 
 def main() -> int:
@@ -167,13 +180,15 @@ def main() -> int:
         print(f"{'PASS' if ok else 'FAIL'} | {'應放行' if expect_pass else '應擋下'} | {text} | {note}"
               + ("" if ok else f" | hits={hits}"))
     # ── 警示自測：合成引擎檔 → 確認「整列缺列／部分欄位改名」會出聲、正常檔不出聲 ──
-    for note, payload, expect_warn in WARN_CASES:
-        got, msg = _warn_check(payload)
-        ok = got == expect_warn
+    for note, payload, expect_warn, absent, days_ago in WARN_CASES:
+        got, msg, al = _warn_check(payload, days_ago)
+        ok = (got == expect_warn) and (absent is None or absent not in al)
         if not ok:
             fails += 1
+        _why = "" if ok else (f" | 出聲={got}（期望 {expect_warn}）"
+                              + (f"｜{absent} 仍在 allowed" if (absent and absent in al) else ""))
         print(f"{'PASS' if ok else 'FAIL'} | {'應出聲' if expect_warn else '不應出聲'} | 警示 | {note}"
-              + (f" | {msg.splitlines()[0][:80]}" if msg else ""))
+              + (f" | {msg.splitlines()[0][:70]}" if msg else "") + _why)
 
     # 印 gap（現況缺口）／off（引擎偏移）／pct 三集合：口徑拆分後 gap 不再含引擎值，
     # 只看 gap 會誤以為引擎口徑消失了（收工稽核第 13 類讀的就是這一行）。

@@ -19,6 +19,7 @@
 """
 from __future__ import annotations
 
+import datetime
 import json
 import re
 import sys
@@ -132,6 +133,9 @@ ENGINE_ROWS = {
     # ⚠️（2026-09-25 獨立複審提醒）引擎檔另有一列『台幣現金+短定存』是刻意非數字
     # （target='底線制'、燈號偏移後=None）—— 它不在本表，所以被 continue 跳過、零誤報。
     # 若日後要納入本表，必須同步加「非數字列」白名單，否則新的欄位解析警示會每天誤響。
+    # ⚠️ 反向風險（同樣是複審提醒）：若『已註冊列』的 target 改用非數字口徑（例：底線制）
+    # 或合法省略『建議金額(±)』→ _partial 會每天響一次。真要用非數字口徑就先把它加進白名單，
+    # 不要讓它每天蓋掉真正的異狀（目前 36 份引擎檔的已註冊列全為數字，零風險）。
     "避險衛星合計(黃金+石油)": ("避險衛星", "衛星"),
 }
 
@@ -172,7 +176,15 @@ def _engine_calibers(allowed: dict, base: Path = BASE) -> None:
                   file=sys.stderr)
             return
         _files.sort()
-        data = json.loads(_files[-1][1].read_text(encoding="utf-8"))
+        _latest_date, _latest_path = _files[-1]
+        # 2026-09-25 補（C 批殘留）：選檔已限定日期命名，但沒有「檔齡」檢查 —— 引擎排程若斷了，
+        # 守門會安靜地拿舊口徑當合法值，內文引用較新的引擎值就變成假陽性，且查不到根因。
+        # 門檻 3 天：引擎是每日產（含週末），今日檔在引擎跑之前本來就不存在，1-2 天屬正常空窗。
+        _age = (datetime.date.today() - datetime.date.fromisoformat(_latest_date)).days
+        if _age >= 3:
+            print(f"  ⚠️ _engine_calibers：最新引擎檔是 {_age} 天前（{_latest_date}）→ 引擎口徑可能"
+                  f"已落後，內文引用較新的引擎值時會被誤報（引擎排程斷了？）", file=sys.stderr)
+        data = json.loads(_latest_path.read_text(encoding="utf-8"))
         _created: list[str] = []
         _seen: set[str] = set()
         _partial: list[str] = []
@@ -207,12 +219,9 @@ def _engine_calibers(allowed: dict, base: Path = BASE) -> None:
                     spec["pct"].add(round(float(t), 1))               # ③ 目標值本身
                 if _n_amt:
                     spec["twd"].add(float(amt))                       # ④ 建議金額
-            if not (_n_pairs or _n_t or _n_amt):
-                # 既有標籤不會走下面的「新建標籤移除」分支 → 這裡必須另外出聲，否則引擎欄位
-                # 改名／型別變動時，症狀只會顯示成「內文數字對不上」（假陽性），查不到根因。
-                print(f"  ⚠️ _engine_calibers：引擎列『{name}』的 target／燈號偏移後／"
-                      f"建議金額(±) 全非數字 → 該列未補入任何口徑（欄位改名或型別變動？）",
-                      file=sys.stderr)
+            # （原「該列三欄位全非數字」的彙總訊息已移除：該情境必然讓下面 _partial 逐欄位
+            #   各報一筆、資訊更完整，兩條同時印只是重複。2026-09-25 獨立複審指出刪掉它
+            #   「訊號冗餘、無資訊損失」，故收掉。）
         # 2026-09-25 補（獨立複審殘留 #3）：上面兩層警示只涵蓋「該列的欄位全錯」與「本函式
         # 新建的標籤補不到值」，仍漏掉兩種同型靜默 —— ①期望的引擎列整個不見（列名被改名）
         # ②只有部分欄位解析失敗（例：target 還在、燈號偏移後 變成字串）→ 後果都是引擎口徑
