@@ -114,7 +114,53 @@ def build_allowed(snap: dict) -> dict:
         if isinstance(row, dict) and isinstance(row.get("佔比"), (int, float)):
             allowed.setdefault(label, {"pct": set(), "twd": set(), "gap": set()})
             allowed[label]["pct"].add(float(row["佔比"]))
+    _engine_calibers(allowed)
     return allowed
+
+
+# 標籤 → DAA 引擎 targetAllocation.rows 的資產名（引擎口徑的來源列）
+ENGINE_ROWS = {
+    "台股市值型成長": ("台股", "台股市值型成長"),
+    "美股市值型成長": ("美股", "美股市值型成長"),
+    "防守型配息": ("防守型配息",),
+    "債券": ("債券",),
+}
+
+
+def _engine_calibers(allowed: dict, base: Path = BASE) -> None:
+    """把 DAA 引擎（macro_regime_*.json）的三種口徑一次補進合法值集合。
+
+    ── 2026-09-25 補洞（收工稽核第 13 類 ❌；同型已第四次）──────────────────
+    內文（緊急應變報告、紅線期因應卡）會自然引用引擎的：
+      ① 戰術偏移 ＝ 燈號偏移後 − 目標（例：債券的正偏移，寫成 +Npp）
+      ② 偏移後目標值本身（例：該桶的偏移後權重 N%）
+      ③ 建議金額 ±（例：美股的金額型建議）
+    三者都是合法派生口徑，但合法值集合原本只有「現況缺口」與「穿透真值」
+    → 正確的引擎數字被判「對不上 snapshot」。
+    本函式一次補齊三種口徑（不再逐次補單一值），全部讀最新 macro_regime_*.json
+    現算，不在本檔寫死任何數字。
+    """
+    try:
+        files = sorted(base.glob("macro_regime_*.json"))
+        if not files:
+            return
+        data = json.loads(files[-1].read_text(encoding="utf-8"))
+        for row in ((data.get("targetAllocation") or {}).get("rows") or []):
+            name = str(row.get("資產", "")).strip()
+            if name not in ENGINE_ROWS:
+                continue
+            t, off, amt = row.get("target"), row.get("燈號偏移後"), row.get("建議金額(±)")
+            for lab in ENGINE_ROWS[name]:
+                spec = allowed.setdefault(lab, {"pct": set(), "twd": set(), "gap": set()})
+                if isinstance(t, (int, float)) and isinstance(off, (int, float)):
+                    delta = round(float(off) - float(t), 1)
+                    spec["gap"].add(delta)
+                    spec["gap"].add(-delta)                  # 同幅度：內文可能寫成「減碼 Npp」
+                    spec["pct"].add(round(float(off), 1))     # ② 偏移後目標值
+                if isinstance(amt, (int, float)):
+                    spec["twd"].add(float(amt))               # ③ 建議金額
+    except Exception:
+        return
 
 
 def _pct_ok(vals: set, x: float) -> bool:
@@ -221,4 +267,11 @@ if __name__ == "__main__":
     h = scan(t)
     for line in h:
         print("  ❌", line)
+    if h:
+        # 修復指引（2026-09-25 加）：讓「合法派生口徑被誤判」變成機械動作，
+        # 不再每次都要重新診斷（同型已第四次：科技分母→現金派生→引擎偏移）。
+        print("  ℹ️ 修法：若該數字是合法派生口徑（非模型自行推算），到 build_allowed／"
+              "ENGINE_ROWS＋_engine_calibers 補『來源』，並在 check_narrative_numbers_selftest.py "
+              "加一組正／負向案例；一律修集合、不改內文、不放寬比對。")
+        print("  ℹ️ 自測：python check_narrative_numbers_selftest.py（收工稽核第 13 類會先跑它）")
     print(f"內文數字守門（{t}）：{'✅ 全部可追溯' if not h else f'❌ {len(h)} 處對不上'}")

@@ -458,6 +458,20 @@ try:
     if str(R) not in _sys13.path:
         _sys13.path.insert(0, str(R))
     from check_narrative_numbers import scan as _scan_narr
+    # 守門自測先跑（2026-09-25）：防止「守門被改壞」與「合法集合落後」兩件事互相掩護。
+    # 自測失敗 → 直接算問題（不是內文的錯，是守門本身該修）。
+    import subprocess as _sp13
+    _st = R / "check_narrative_numbers_selftest.py"
+    if _st.exists():
+        _r13 = _sp13.run([_sys13.executable, str(_st)], capture_output=True, text=True)
+        _tail13 = (_r13.stdout or _r13.stderr or "").strip().splitlines()
+        if _r13.returncode != 0:
+            print(f"  ❌ 守門自測失敗：{_tail13[-1] if _tail13 else '（無輸出）'}")
+            fail.append("內文守門自測失敗（守門本身有問題）")
+        else:
+            print(f"  ✅ 守門自測通過（{_tail13[-1].lstrip('- ').strip() if _tail13 else ''}）")
+    else:
+        print("  ⚠️ 找不到 check_narrative_numbers_selftest.py（無法驗守門本身）")
     _nhits = _scan_narr(T, R)
     if _nhits:
         for _n in _nhits[:6]:
