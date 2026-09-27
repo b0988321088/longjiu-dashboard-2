@@ -125,7 +125,10 @@ def main():
 
     print("== 4) 留停門檻邏輯（真 import 呼叫，含變異對照） ==")
     sab = _load("sab", repo / "sabbatical_checklist_update.py")
-    gate, floor = sab.RUNWAY_GATE_DAYS, 700000.0
+    # 現金底線一律走 sabbatical._cash_floor(snap) 的單一來源（snapshot.thresholds_2026_0915.現金_twd.合計底線）；
+    # 僅於 snapshot 門檻缺漏時由該函式回退 → 本檔不得再出現任何當期金額字面值
+    # —— 2026-09-28 CIO 指出：此處寫死會讓「現況三條達標 → 🟢」在底線裁示變動後仍以舊值判定＝假 PASS
+    gate, floor = sab.RUNWAY_GATE_DAYS, sab._cash_floor(snap)
     cash = float(snap.get("cash_total") or 0)
     cov, strc = sc["con"]["coverage"], sc["stress"]["coverage"]
     rw = sc["extreme"]["runway_days"]
@@ -187,6 +190,8 @@ def main():
 
     print("== 7) 逐日產物：新門檻在、舊門檻不在（相對式比對現算值） ==")
     rp = _latest(repo, "retirement_plan_*.html")
+    if rp and rp.stat().st_mtime + 60 < (repo / "snapshot.json").stat().st_mtime:
+        print("  ⚠️  新鮮度：snapshot.json 比最新退休規劃頁新 → 頁面可能尚未按當期真值重產（本節比對可能假紅）")
     if rp:
         t = rp.read_text(encoding="utf-8")
         ck(f"退休規劃頁存在且為最新（{rp.name}）", True)
@@ -201,7 +206,7 @@ def main():
         import re
         _w = re.findall(r'<div class="bar"><div style="width:([\d.]+)%', t)
         # 期望值必須走與頁面同一條四捨五入鏈：頁面先用 round(cov,1) 再換算尺標
-        # （2026-09-28 驗證器初版漏這步 → 110.639/150=73.8 vs 頁面 110.6/150=73.7 假 FAIL）
+        # （2026-09-28 驗證器初版漏這步 → 未四捨五入的覆蓋率換算後與頁面差 0.1pp，假 FAIL）
         _exp_w = [f"{min(round(c, 1) / sab.ACCEL_GATE_PCT * 100, 100):.1f}"
                   for c in (cov, sc["act"]["coverage"])]
         ck("條圖尺標 0–150%：兩條寬度＝現算（且互不相同）",

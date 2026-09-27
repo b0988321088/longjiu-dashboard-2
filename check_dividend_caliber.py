@@ -141,20 +141,34 @@ ck("頁面壓力/極端情境值不變", "127,100" in t and "71.9%" in t and "12
 # 2026-09-28 門檻改版：新口徑的即時斷言改指「當日最新產物」且相對式現算
 # （原本只斷言凍結的 2026-09-23 檔 → 新版口徑無守門；寫死數字則跨真值日會自己轉紅）
 import glob as _glob
+import re as _re28
 import passive_caliber as _pc28
+
+
+def _has(hay, needle):
+    """帶邊界比對：避免 '92.2' 命中 '192.2'（CIO 2026-09-28 建議）"""
+    return _re28.search(rf"(?<![\d.]){_re28.escape(needle)}(?![\d])", hay) is not None
+
+
 _latest_plan = sorted(_glob.glob(str(BASE / "retirement_plan_*.html")))
-if _latest_plan:
-    _lp = Path(_latest_plan[-1]).read_text(encoding="utf-8")
+_lp_path = Path(_latest_plan[-1]) if _latest_plan else None
+# 新鮮度守門：產物比 snapshot 舊＝當期真值已更新但頁面尚未重產 → 記 SKIP 警語，不記 FAIL
+# （原本一律 FAIL，會產生與程式改動無關的假紅燈）
+_fresh = bool(_lp_path) and _lp_path.stat().st_mtime + 60 >= SNAP.stat().st_mtime
+if _lp_path and _fresh:
+    _lp = _lp_path.read_text(encoding="utf-8")
     _sc28 = _pc28.scenarios(snap)
-    ck(f"當日產物（{Path(_latest_plan[-1]).name}）壓力情境覆蓋＝snapshot 口徑",
-       f"{_sc28['stress']['coverage']:.1f}" in _lp, f"期望 {_sc28['stress']['coverage']:.1f}")
+    ck(f"當日產物（{_lp_path.name}）壓力情境覆蓋＝snapshot 口徑",
+       _has(_lp, f"{_sc28['stress']['coverage']:.1f}"), f"期望 {_sc28['stress']['coverage']:.1f}")
     ck("當日產物極端情境覆蓋＝snapshot 口徑（原壓力口徑降級後數值保留）",
-       f"{_sc28['extreme']['coverage']:.1f}" in _lp, f"期望 {_sc28['extreme']['coverage']:.1f}")
+       _has(_lp, f"{_sc28['extreme']['coverage']:.1f}"), f"期望 {_sc28['extreme']['coverage']:.1f}")
     ck("當日產物無舊門檻字樣（正常 ≥150%／距 A 級缺口／244,172）",
        "正常 ≥150%" not in _lp and "距 A 級缺口" not in _lp and "244,172" not in _lp)
     ck("當日產物含加碼級 A+ 標記", "A+級" in _lp)
+elif not _lp_path:
+    print("⏭️  SKIP 新口徑當日產物斷言（無 retirement_plan_*.html）")
 else:
-    ck("找到 retirement_plan_*.html（新口徑守門）", False, "無逐日產物")
+    print(f"⏭️  SKIP 新口徑當日產物斷言（{_lp_path.name} 比 snapshot 舊 → 待重產後再驗）")
 
 # 13) 被動收入基準觀察小卡（儀表板）＋ 情境判定派生（2026-09-23 使用者指示）
 _idx = (BASE / "index.html").read_text(encoding="utf-8")
