@@ -1659,7 +1659,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                           f"📊 即時（{_snap_p.get('date','')}）："
                           f"月配息保守 {_div_con:,.0f}／實收 {_div_cur:,.0f}｜"
                           f"總資產 {_ta:,.0f}｜淨資產 {_nw:,.0f}｜"
-                          f"覆蓋 {_cov_con:.0f}%／實收 {_cov_act:.0f}%<br>"
+                          f"覆蓋 {_cov_con:.1f}%／實收 {_cov_act:.1f}%<br>"
                           f"💰 月盈餘：保守 {_sur_con:+,.0f}／實收 {_sur_act:+,.0f}｜"
                           f"FI 跑道：壓力情境 {_rw_stress_txt}、實收情境 {_rw_act_txt}"
                           f"（判準仍為保守底線 {_div_con:,.0f}）</div>")
