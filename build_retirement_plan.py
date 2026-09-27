@@ -5,6 +5,7 @@
 """
 import json, datetime
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
+import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
@@ -51,12 +52,13 @@ sc_level_cls = "green" if sc_level.startswith("A級") else ("amber" if sc_level.
 goal_expense = (_sc_t.get("每月必要生活費", {}) or {}).get("goal", "—")
 goal_passive = (_sc_t.get("被動現金流", {}) or {}).get("goal", "—")
 # 成對顯示（2026-09-23）：保守底線＝下緣（風控判斷用）、當月實收＝現況；兩者必須同時出現
-div_actual = float(snap.get("dividend_month_actual") or snap.get("monthly_dividend_total") or 0)
-# 2026-09-27：實收口徑的房租改用 passive_income.rent_monthly_actual（真值＝當月入帳加總 77,100）；
-# 原用常態應收 80,100 會把實收情境高估 3,000（9 月洲際W 短收）。保守底線仍用常態 80,100。
-rent_actual = float((snap.get("passive_income") or {}).get("rent_monthly_actual") or rent)
-fire_income_actual = div_actual + rent_actual   # 當月實收口徑＝配息實收＋房租實收（與保守底線成對）
-fire_cov_actual = fire_income_actual / expense * 100 if expense else 0.0
+# 2026-09-27：三情境口徑改由 passive_caliber 單一來源計算（原本這裡自算一份，
+# 導致口徑校正要改多處）。保守底線仍用常態房租 80,100，實收用當月入帳 77,100。
+_SC = _pcal.scenarios(snap)
+div_actual = _SC["div_act"]
+rent_actual = _SC["rent_act"]
+fire_income_actual = _SC["act"]["income"]       # 當月實收＝配息實收＋房租實收
+fire_cov_actual = _SC["act"]["coverage"]
 actual_band = "非常安全" if fire_cov_actual >= 150 else ("基本安全" if fire_cov_actual >= 120 else "不能完全依賴資產")
 actual_band_cls = "green" if fire_cov_actual >= 150 else ("amber" if fire_cov_actual >= 120 else "red")
 sc_month = (_sch.get("驗收等級", {}) or {}).get("月份", "")
@@ -77,9 +79,7 @@ _ext_cov = (_ext_income / expense * 100) if expense else 0.0
 _ext_gap = expense - _ext_income
 _ext_months = max(1, round((cash - 300000) / _ext_gap)) if _ext_gap > 0 else 0
 _ext_cls = "red" if _ext_gap > 0 else "green"
-# ── 2026-09-27：FI 跑道（現金續航）三情境並列（使用者核准：判準不動、實收情境並列）──
-# 為什麼：保守判準 100,000 是「可持續下限」，實收 147,975 才是現況；只顯示保守會讓人
-# 誤以為「每月只流入 18 萬」，與實際 22.5 萬落差 25%。三條線並列 = 判準與現況同時可見。
+# ── FI 跑道（現金續航）：保守/實收/壓力三情境由 passive_caliber 單一來源；極端為本頁專屬 ──
 def _rw_txt(_income):
     _gap = expense - _income
     if _gap <= 0:
@@ -88,9 +88,9 @@ def _rw_txt(_income):
     return f"{_d:,.0f} 天（{_d/30:.1f} 個月）"
 
 
-_rw_normal = _rw_txt(fire_income)
-_rw_actual = _rw_txt(fire_income_actual)
-_rw_stress = _rw_txt(_stress_income)
+_rw_normal = _pcal.runway_text(_SC["con"]["runway_days"])
+_rw_actual = _pcal.runway_text(_SC["act"]["runway_days"])
+_rw_stress = _pcal.runway_text(_SC["stress"]["runway_days"])
 _rw_ext = _rw_txt(_ext_income)
 
 _ext_txt = (f"🔴 缺口 {_ext_gap:,.0f}/月 → 現金水庫撐 {_ext_months} 個月"

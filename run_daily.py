@@ -17,6 +17,7 @@ from pathlib import Path
 from logging_config import get_logger
 logger = get_logger("run_daily")
 import daily_intel as mi_mod
+import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
 from daily_intel import load_daily_analysis
 from scripts.components.report_utils import _fmt_rent_status, _generate_schedule_html
 from scripts.components.volatility_monitor import make_volatility_report
@@ -1642,20 +1643,18 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             _div_cur = _snap_p.get('monthly_dividend_total', 0)
             _exp = _snap_p.get('monthly_expense', 162781)
             _pi = _snap_p.get('passive_income', {}) or {}
-            _rent = float(_pi.get('rent_monthly', 0) or 0)                      # 常態應收（保守底線用）
-            _rent_act = float(_pi.get('rent_monthly_actual') or _rent)          # 當月實收（2026-09-27 校正）
-            _div_con = float(_pi.get('fund_dividend_conservative', 0) or 0)
-            _cov_con = (_div_con + _rent) / _exp * 100 if _exp else 0
-            _cov_act = (_div_cur + _rent_act) / _exp * 100 if _exp else 0
-            # ── 2026-09-27：實收情境盈餘 + 壓力情境 FI 跑道（三條線並列；判準層不動）──
+            # 2026-09-27：改由 passive_caliber 單一來源計算（保守/實收/壓力 + FI 跑道）。
             # 使用者 9/27 指正：實收 225,075 已高於保守 180,100，只顯示保守會低估水位。
-            _cash_now = float(_snap_p.get('cash_total', 0) or 0)
-            _sur_con = _div_con + _rent - _exp
-            _sur_act = _div_cur + _rent_act - _exp
-            _gap_stress = _exp - (_div_con * 0.8 + _rent - 33000)   # 洲際W 空置 33,000（與引擎同口徑）
-            _rw_stress_txt = (f"{_cash_now / _gap_stress * 30:,.0f} 天" if _gap_stress > 0 else "無缺口")
-            _rw_act_txt = ("∞（零缺口）" if _sur_act >= 0
-                           else f"{_cash_now / abs(_sur_act) * 30:,.0f} 天")
+            _sc = _pcal.scenarios(_snap_p)
+            _rent = _sc["rent_norm"]
+            _rent_act = _sc["rent_act"]
+            _div_con = _sc["div_con"]
+            _cov_con = _sc["con"]["coverage"]
+            _cov_act = _sc["act"]["coverage"]
+            _sur_con = _sc["con"]["surplus"]
+            _sur_act = _sc["act"]["surplus"]
+            _rw_stress_txt = _pcal.runway_text(_sc["stress"]["runway_days"])
+            _rw_act_txt = _pcal.runway_text(_sc["act"]["runway_days"])
             _cur_line = (f"<div style='font-size:12px;color:#92400e;margin-top:6px;padding-top:6px;border-top:1px dashed #fbbf24'>"
                           f"📊 即時（{_snap_p.get('date','')}）："
                           f"月配息保守 {_div_con:,.0f}／實收 {_div_cur:,.0f}｜"

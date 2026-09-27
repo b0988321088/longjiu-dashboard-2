@@ -9,6 +9,7 @@ from datetime import date, timedelta
 from pathlib import Path
 from scripts.components.volatility_monitor import make_volatility_report
 from dividend_caliber import bucket_of
+import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
 
 BASE = Path(__file__).resolve().parent
 
@@ -902,13 +903,23 @@ def main():
             f'<div style="width: {_pc(v):.1f}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center {cls} font-bold" title="{lab}">{lab} {_pc(v):.0f}%</div>'
             for lab, v, cls in (("薪水", _sal, "bg-yellow-600"), ("配息", _div, "bg-blue-600"), ("房租", _rent, "bg-teal-600")))
         _cov = (_div + _rent) / _exp * 100.0
-        _cov_act = (_div_act + _rent) / _exp * 100.0 if _div_act else 0.0   # 當月實收覆蓋（成對顯示，2026-09-23）
+        # 2026-09-27：實收口徑與 FI 跑道改由 passive_caliber 單一來源計算。
+        # 原本這條結構條自算一份 → 房租實收校正（80,100→77,100）後僅日報生效，
+        # 儀表板仍顯示常態值，形成兩份數字。
+        _sc = _pcal.scenarios(snap)
+        _cov_act = _sc["act"]["coverage"]   # 當月實收覆蓋（配息實收＋房租實收）
         _legend = (f'<div class="flex gap-3 text-[10px] text-slate-400 mt-1">'
                    f'<span class="text-yellow-400">▮ 薪水 {_pc(_sal):.0f}%</span>'
                    f'<span class="text-blue-400">▮ 配息 {_pc(_div):.0f}%</span>'
                    f'<span class="text-teal-400">▮ 房租 {_pc(_rent):.0f}%</span>'
                    f'<span class="text-slate-500">▮ 覆蓋 {_cov:.1f}%（保守底線）</span>'
-                   f'<span class="text-slate-300">｜當月實收 {_cov_act:.1f}%（配息 {_div_act:,.0f}）</span></div>')
+                   f'<span class="text-slate-300">｜當月實收 {_cov_act:.1f}%'
+                   f'（配息 {_sc["div_act"]:,.0f} ＋ 房租 {_sc["rent_act"]:,.0f}）</span></div>'
+                   f'<div class="flex flex-wrap gap-3 text-[10px] mt-1">'
+                   f'<span class="text-emerald-400">💰 月盈餘：保守 {_pcal.surplus_text(_sc["con"]["surplus"])}'
+                   f'／實收 {_pcal.surplus_text(_sc["act"]["surplus"])}</span>'
+                   f'<span class="text-amber-400">🏁 FI 跑道：壓力情境 {_pcal.runway_text(_sc["stress"]["runway_days"])}'
+                   f'、實收情境 {_pcal.runway_text(_sc["act"]["runway_days"])}</span></div>')
         tpl = tpl.replace("__INC_BAR__", _bar)
         tpl = tpl.replace("__INC_LEGEND__", _legend)
         tpl = tpl.replace("__INC_COV__", f"{_cov:.1f}% 覆蓋（保守底線）｜實收 {_cov_act:.1f}%")

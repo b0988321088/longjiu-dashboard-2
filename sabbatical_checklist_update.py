@@ -7,6 +7,7 @@
 """
 import json, sys, datetime
 from pathlib import Path
+import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
 
 BASE = Path(__file__).resolve().parent
 SNAP = BASE / "snapshot.json"
@@ -56,15 +57,18 @@ def acceptance_level(coverage, stress_cov, cash, months, trend):
 def compute_kpis(snap):
     exp = snap.get("monthly_expense", 162781)
     pi = snap.get("passive_income", {})
-    passive = pi.get("total_conservative", 0) or 0
-    rent = pi.get("rent_monthly", 80100) or 0
-    div_c = pi.get("fund_dividend_conservative", 0) or 0
+    # 2026-09-27：三情境改由 passive_caliber 單一來源計算（原本這裡自算一份，
+    # 且寫死 33,000 空置／80,100 房租 fallback → 與其他報表各說各話）
+    _pcs = _pcal.scenarios(snap)
+    passive = _pcs["con"]["income"]
+    rent = _pcs["rent_norm"]
+    div_c = _pcs["div_con"]
     cash = snap.get("cash_total", 794992) or 0
     rent_net = rent - 26000          # 房租 − 大義街房貸（口徑：9/2 定案）
     liab_cost = 16600                 # 保單借貸 13,333 + 元大證金 3,267（利息）
-    coverage = round(passive / exp * 100, 1) if exp else 0
-    stress = round((div_c * 0.8 + rent - 33000) / exp * 100, 1) if exp else 0
-    extreme_income = div_c * 0.7 + rent - 33000
+    coverage = round(_pcs["con"]["coverage"], 1)
+    stress = round(_pcs["stress"]["coverage"], 1)
+    extreme_income = div_c * 0.7 + rent - _pcs["vacancy"]
     extreme_gap = max(exp - extreme_income, 0)
     extreme_months = round((cash - 300000) / extreme_gap, 1) if extreme_gap > 0 else 999
     return {

@@ -5,6 +5,7 @@
 """
 import json, datetime
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
+import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
 from pathlib import Path
 
 REPO = Path(r"C:\Users\bot\Desktop\longjiu_system")
@@ -30,13 +31,16 @@ def main():
     total = snap.get("total_assets", 0)
     cash = snap.get("cash_total", 0)
     _pi = snap.get("passive_income", {}) or {}
-    _passive = _pi.get("total_conservative", 183333)
-    _exp = snap.get("monthly_expense", 162781)
-    _cov = (_passive / _exp * 100) if _exp else 0.0
-    # 成對顯示（2026-09-23）：保守底線是下緣、當月實收是現況，兩者必須同時出現
-    _div_act = float(snap.get("dividend_month_actual") or snap.get("monthly_dividend_total") or 0)
-    _rent = float(_pi.get("rent_monthly", 0) or 0)
-    _cov_act = ((_div_act + _rent) / _exp * 100) if (_exp and _div_act) else 0.0
+    # 2026-09-27：成對口徑改由 passive_caliber 單一來源（原本自算且 fallback 寫死 183,333）
+    _pcs = _pcal.scenarios(snap)
+    _passive = _pcs["con"]["income"]
+    _exp = _pcs["expense"]
+    _cov = _pcs["con"]["coverage"]
+    _div_act = _pcs["div_act"]
+    _rent = _pcs["rent_norm"]
+    _cov_act = _pcs["act"]["coverage"]
+    _cw = ((snap.get("thresholds_2026_0915") or {}).get("現金_twd") or {})
+    _cf = float(_cw.get("合計底線") or _cw.get("生活底線") or 700000)   # 現金底線（9/27 單一口徑）
     us30y = st.get("last_rate")
     mode = "防禦（A）" if st.get("mode") == "A" else "布局（B）" if st.get("mode") == "B" else "未知"
     us30y_txt = f"{us30y:.2f}%" if us30y else "—"
@@ -98,14 +102,15 @@ def main():
 
     # ===== 五、風險紅線 =====
     us_ok = apct.get("美股市值型成長", 0) <= 33
-    cash_ok = cash >= 700000
+    cash_ok = cash >= _cf
     us30y_ok = us30y is None or us30y < 5.30
+    _act_ok = _div_act >= _pcs["div_con"] * _pcal.STRESS_DIV_RATIO
     rows5 = f"""<tr><td>US30Y &lt; 5.30%（債券凍結線）</td><td>{'✅' if us30y_ok else '❌'}</td><td>{us30y_txt}（{mode}）</td></tr>
-    <tr><td>現金 ≥ 70 萬（6個月開支）</td><td>{'✅' if cash_ok else '❌'}</td><td>{cash:,}（需求 851,748）</td></tr>
+    <tr><td>現金 ≥ {_cf:,.0f}（生活底線）</td><td>{'✅' if cash_ok else '❌'}</td><td>{cash:,}（底線 {_cf:,.0f}）</td></tr>
     <tr><td>美股 ≤ 33%</td><td>{'✅' if us_ok else '❌'}</td><td>{apct.get('美股市值型成長',0):.1f}%</td></tr>
     <tr><td>LTV ≤ 40%</td><td>✅</td><td>未質押</td></tr>
     <tr><td>台股單筆 ≤ 5 萬</td><td>✅</td><td>管制中</td></tr>
-    <tr><td>被動實收 ≥ 常態 80%</td><td>✅</td><td>{_passive:,}/月 &gt; 123,607×0.8</td></tr>"""
+    <tr><td>被動實收 ≥ 保守底線 80%</td><td>{'✅' if _act_ok else '❌'}</td><td>{_div_act:,.0f}/月 ≥ {_pcs['div_con']*_pcal.STRESS_DIV_RATIO:,.0f}（{_pcs['div_con']:,.0f}×0.8）</td></tr>"""
 
     # ===== 六、滯脹測試 =====
     stag_txt = f"US30Y {us30y_txt}" if us30y else "—"
@@ -151,7 +156,7 @@ def main():
     <tr><td>② 匯率</td><td>USD/TWD 基準 32.18</td><td>🟢 波動監控中</td></tr>
     <tr><td>③ PI 資格</td><td>已開啟（snapshot 待更新）</td><td>🟡 撥款後送件</td></tr>
     <tr><td>④ LTV</td><td>未質押</td><td>🟢 0%</td></tr>
-    <tr><td>⑤ 現金流</td><td>被動 {_passive:,}/月（保守底線；當月實收配息 {_div_act:,.0f}）vs 開支 {_exp:,}</td><td>🟢 覆蓋 {_cov:.1f}%（保守）｜實收 {_cov_act:.1f}%</td></tr>
+    <tr><td>⑤ 現金流</td><td>被動 {_passive:,}/月（保守底線；當月實收配息 {_div_act:,.0f}）vs 開支 {_exp:,}</td><td>🟢 覆蓋 {_cov:.1f}%（保守）｜實收 {_cov_act:.1f}%（配息實收＋房租實收）</td></tr>
     <tr><td>2b 日圓</td><td>USD/JPY 監控（≥155🟢/150-155🟡/&lt;150🚨）</td><td>— 待抓取</td></tr>
     </tbody></table>"""
 

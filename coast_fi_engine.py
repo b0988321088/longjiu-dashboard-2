@@ -17,6 +17,7 @@
 import json
 import sys
 import datetime
+import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
@@ -32,7 +33,7 @@ DEFAULT_CONFIG = {
     "years_to_target": None,   # 若要直接給年數（覆蓋 target_date）在此填數字
     "cash_caliber": "net_of_reserve",   # net_of_reserve（扣追繳緩衝，正式口徑）| cash_total
     # 2026-09-27 使用者裁示：追繳緩衝取消（SoT 追繳緩衝 = 0）→ reserve 恆為 0、跑道即全現金口徑。
-    "stress_dividend_haircut": 0.8,     # 配息壓力砍 20%（沿用既有壓力情境口徑）
+    "stress_dividend_haircut": 0.8,     # 配息壓力砍 20%（沿用既有壓力情境口徑；須與 passive_caliber.STRESS_DIV_RATIO 一致）
     "light_work_incomes": [0, 20000, 30000],  # 退休後「簡單工作」月收敏感度
     "targets": {
         "coast_fi_ratio_pct": 100,
@@ -182,13 +183,13 @@ def runway_metric(snap, c):
     """跑道＝現金 / 壓力情境月缺口 × 30。
     為什麼用壓力情境：正常情境下被動收入已 > 支出（分母為負）→ 指標恆為無限大而失效。"""
     pi = snap.get("passive_income") or {}
-    exp = float(snap.get("monthly_expense") or 0)
-    div_c = float(pi.get("fund_dividend_conservative") or 0)
-    rent = float(pi.get("rent_monthly") or 0)
-    rb = snap.get("rent_breakdown") or {}
-    vacancy = float(rb.get("洲際W") or 0)          # 洲際W 空置壓力
-    income_stress = div_c * c["stress_dividend_haircut"] + rent - vacancy
-    gap = max(exp - income_stress, 0)
+    # 2026-09-27：壓力情境收入改由 passive_caliber 單一來源（原本此處自算一份，
+    # 與各報表各自實作 → 口徑校正要改多處，漏一處就出現兩份數字）
+    _pcs = _pcal.scenarios(snap)
+    exp = _pcs["expense"]
+    vacancy = _pcs["vacancy"]                      # 洲際W 空置壓力
+    income_stress = _pcs["stress"]["income"]
+    gap = _pcs["stress"]["gap"]
     thr = snap.get("thresholds_2026_0915") or {}
     cw = thr.get("現金_twd") or {}
     reserve = float(cw.get("追繳緩衝") or 0)
