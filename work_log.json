@@ -1403,5 +1403,29 @@
   "category": "完成",
   "item": "資產穿透2026-09-26（台股2,039,487.0 美股10,325,207.0 防守4,532,842.0 債券7,502,404.0 現金885,509.0）",
   "detail": "台股2,039,487.0 美股10,325,207.0 防守4,532,842.0 債券7,502,404.0 現金885,509.0"
+ },
+ {
+  "date": "2026-09-27",
+  "category": "完成",
+  "item": "現金底線單一口徑化（取消追繳緩衝 50 萬）＋九處顯示端同步",
+  "detail": "使用者裁示「生活底線 70 萬本身即為緩衝，不必另設追繳緩衝」；SoT 合計底線 1,200,000→700,000、追繳緩衝 0；build_dashboard／build_ceo_dashboard／build_rebalance_dashboard／check_narrative_numbers(+selftest)／cron 週報月報緊急應變 prompt 全數同步。現金 884,918 ≥ 700,000 ✅ 達標、餘裕 184,918"
+ },
+ {
+  "date": "2026-09-27",
+  "category": "完成",
+  "item": "FI 跑道三情境並列（保守/實收/壓力）— 退休規劃頁＋日報＋儀表板＋再平衡",
+  "detail": "保守 180,100（110.6%／月盈餘 +17,319）｜當月實收 225,075（138.3%／+62,294）｜壓力 127,100（78.1%／缺口 35,681→跑道 744 天）｜極端 117,100（71.9%／581 天）。判準層依 9/23 規則不動（12 月初檢視）"
+ },
+ {
+  "date": "2026-09-27",
+  "category": "完成",
+  "item": "被動收入口徑單一來源化：新增 passive_caliber.py，六支腳本共用",
+  "detail": "原本保守/實收/壓力三情境與 FI 跑道在 build_dashboard、run_daily、build_retirement_plan、build_rebalance_dashboard、sabbatical_checklist_update、coast_fi_engine 各算一次；改為 scenarios(snap) 單一來源。順修：實收房租真值 77,100（passive_income.rent_monthly_actual 未同步 80,100→高估 3,000）、週報寫死 123,607（被動門檻）與 851,748（現金需求）改讀 SoT"
+ },
+ {
+  "date": "2026-09-27",
+  "category": "完成",
+  "item": "Coast FI 跑道重算 324 → 744 天（追繳緩衝取消後全現金口徑）",
+  "detail": "reserve 0、cash_used 884,918、floor 700,000；coast_fi_engine.py --write 寫回 snapshot.coast_fi_engine.current。另完成日報覆蓋率格式統一（:.0f→:.1f，110.6%/138.3%）"
  }
 ]
