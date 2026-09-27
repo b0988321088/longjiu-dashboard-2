@@ -1,4 +1,4 @@
-"""配息口徑守門（2026-09-23 入庫；2026-09-28 翻新為「全相對式 ＋ 指當日產物」）
+"""配息口徑守門（2026-09-28 翻新為「全相對式 ＋ 指當日產物」）
 
 只讀，不改任何檔案。PASS/FAIL 逐項列出，exit 0 = 全過。
 用途：改動 build_retirement_plan / build_dashboard / asset_diff_monitor / build_investment_performance
@@ -6,7 +6,7 @@
 
 翻新原則（2026-09-28）——本檔不得再出現任何「當期」真值字面值：
   ① 期望值一律由 snapshot ＋ passive_caliber ＋ dividend_caliber 現算；檔名不寫死日期。
-     舊版釘死 retirement_plan_2026-09-23.html 與 9/23 期數字 → 該檔一封存、或真值一動就整檔爆紅。
+     舊版釘死「某一天的凍結稽核產物」與那一期的數字 → 該檔一封存、或真值一動就整檔爆紅。
   ② 逐日產物一律取「最新一份」＋新鮮度守門：產物比 snapshot.json 舊 → 記 SKIP 警語，不記 FAIL
      （避免產生與程式改動無關的假紅燈）。
   ③ 只有兩類可以寫死：已結算月份（歷史不再變動）、「已修掉的錯誤值」封鎖清單（不得回歸）。
@@ -41,7 +41,12 @@ checks = []
 def ck(name, ok, detail=""):
     checks.append((name, bool(ok), detail))
 
+_SKIPS = 0
+
 def skip(msg):
+    """SKIP 一律顯性化：逐日產物未按當期真值重產時，該族斷言不計入分母（但必須看得見）。"""
+    global _SKIPS
+    _SKIPS += 1
     print("⏭️  SKIP " + msg)
 
 def text_of(html):
@@ -125,6 +130,14 @@ if _tree is not None:
         # 模板是單一長字串 → 報「字面值起點行」，再指出命中值供人工定位
         _hits += [f"L{_n.lineno}:{t}" for t in _hit]
     ck("模板無寫死當期真值（AST 常數掃描：字串＋數值）", not _hits, str(sorted(set(_hits))))
+
+# 自查：本檔自身不得出現凍結產物檔名或當期真值字面值（CIO 2026-09-28 建議硬性化）
+_self = Path(__file__).read_text(encoding="utf-8")
+_self_frozen = sorted(set(re.findall(r"(?:retirement_plan|asset_diff|daily_report_v2|"
+                                     r"dynamic_weekly_review)_\d{4}-\d{2}-\d{2}", _self)))
+_self_tok = sorted({t for t in _tok if t in _self})
+ck("本檔自身無凍結產物檔名與當期真值字面值", not _self_frozen and not _self_tok,
+   f"檔名 {_self_frozen}／字面值 {_self_tok}")
 
 # ── 3) snapshot 自洽 ＋ RULE 檔同步（regex 抽值比對，不寫死金額）─────────────
 ck("retirement_surplus == 保守被動 − 月支出",
@@ -389,5 +402,6 @@ fail = [c for c in checks if not c[1]]
 for name, ok, detail in checks:
     print(("✅" if ok else "❌"), name, ("｜" + detail if detail and not ok else ""))
 print(f"\n{len(checks) - len(fail)}/{len(checks)} PASS"
+      + (f"（另 {_SKIPS} 條 SKIP，未計入分母）" if _SKIPS else "")
       + ("" if not fail else f" — FAIL: {[c[0] for c in fail]}"))
 sys.exit(1 if fail else 0)
