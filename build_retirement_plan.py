@@ -92,10 +92,13 @@ _gap_rows = "".join([
     _gap_row("壓力情境覆蓋率", _acc_gaps.get("壓力情境覆蓋率")),
 ])
 _cash_g = _acc_gaps.get("現金水位") or {}
+# 單一來源：餘裕/底線都讀 snapshot（本頁不再自算 cash − 底線，避免頁內第二份實作）
+_cash_margin = _cash_g.get("餘裕") or 0
 _gfloor = _cash_g.get("底線") or 0
-_cash_margin = cash - _gfloor
 _cash_status = (f'<b class="green">餘裕 {_cash_margin:,}</b>' if _cash_margin >= 0
                 else f'<b class="red">不足 {abs(_cash_margin):,}</b>')
+_cash_line = (f'現金 {_cash_g.get("現況", 0):,} 對底線 {_gfloor:,} → {_cash_status}'
+              if _cash_g else '現金水位（待真值日重算）')
 _cash_row = (f'<tr><td>現金水位</td><td>{_cash_g.get("現況", 0):,}</td>'
              f'<td>≥{_cash_g.get("底線", 0):,}</td>'
              f'<td class="{"green" if (_cash_g.get("餘裕") or 0) >= 0 else "red"}">'
@@ -259,7 +262,7 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><td>C級 🔴</td><td>正常未達 120%，或壓力明顯 &lt;100% 且改善無趨勢</td><td>繼續留台電，先修財務結構</td></tr>
 </table>
 <p class="callout" style="border-left-color:#ef4444"><b>📏 距 A 級缺口（基準月 {_acc_month} · 動態讀 snapshot）</b><br>
-生活費覆蓋率還缺 <b class="red">+{_g150:,.0f}</b>／月、壓力情境還缺 <b class="red">+{_gstress:,.0f}</b>／月；現金 {cash:,} 對底線 {_gfloor:,} → {_cash_status}</p>
+生活費覆蓋率還缺 <b class="red">+{_g150:,.0f}</b>／月、壓力情境還缺 <b class="red">+{_gstress:,.0f}</b>／月；{_cash_line}</p>
 <table>
 <tr><th>指標</th><th>現況</th><th>A 級目標</th><th>缺口</th></tr>
 {_gap_rows}{_cash_row}
