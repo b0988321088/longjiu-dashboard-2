@@ -73,6 +73,13 @@ fire_income_actual = _SC["act"]["income"]       # 當月實收＝配息實收＋
 fire_cov_actual = _SC["act"]["coverage"]
 actual_band = "非常安全" if fire_cov_actual >= 150 else ("基本安全" if fire_cov_actual >= 120 else "不能完全依賴資產")
 actual_band_cls = "green" if fire_cov_actual >= 150 else ("amber" if fire_cov_actual >= 120 else "red")
+# ── 2026-09-28：覆蓋率條圖尺標改 0–150%（加碼級＝滿格）──
+# 原寫法 min(覆蓋%,100%) 會把所有 >100% 的覆蓋率夾成滿格：110.6%（保守）與 138.3%（實收）
+# 兩條看起來一樣長，使用者 9/28 提問「綠線藍線一樣長是什麼意思」→ 改為固定尺標＋100% 門檻線。
+_BAR_SCALE = 150.0                        # 滿格＝加碼級理想值 150%
+_BAR_GATE_X = 100.0 / _BAR_SCALE * 100.0  # 100% 留停門檻線位置（%）
+def _bar_w(v):
+    return max(0.0, min(float(v) / _BAR_SCALE * 100.0, 100.0))
 sc_month = (_sch.get("驗收等級", {}) or {}).get("月份", "")
 _rec = ((_sch.get("記錄", {}) or {}).get(sc_month, {}) or {}) if sc_month else {}
 career_income = _rec.get("第二職涯收入", 0) or 0
@@ -194,8 +201,9 @@ h1{{font-size:22px;font-weight:900;margin:8px 0 2px}}
 table{{width:100%;border-collapse:collapse;font-size:13.5px}}
 td,th{{padding:8px 6px;border-bottom:1px solid #334155;text-align:left}}
 th{{color:#94a3b8;font-weight:600;font-size:12px}}
-.bar{{height:8px;background:#334155;border-radius:6px;overflow:hidden;margin-top:4px}}
+.bar{{height:10px;background:#334155;border-radius:6px;overflow:hidden;margin-top:4px;position:relative}}
 .bar>div{{height:100%;background:{cov_color};border-radius:6px}}
+.bar>i{{position:absolute;top:0;height:100%;width:2px;background:#fbbf24}}
 ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 .tag{{display:inline-block;background:#334155;color:#e2e8f0;border-radius:6px;padding:2px 8px;font-size:12px;margin-right:6px}}
 .callout{{background:#1e3a5f40;border-left:3px solid #38bdf8;padding:10px 14px;border-radius:6px;font-size:13px}}
@@ -210,9 +218,11 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
   <div class="card"><div class="stat"><div class="label">FIRE 覆蓋率（保守／實收）</div><div class="val" style="color:{cov_color}">{fire_cov:.1f}% <span style="font-size:15px;color:#94a3b8">／</span> <span class="{actual_band_cls}">{fire_cov_actual:.1f}%</span></div><div class="label" style="margin-top:4px">保守底線（判準）／當月實收</div></div></div>
   <div class="card"><div class="stat"><div class="label">退休生活費覆蓋（38,000 目標）</div><div class="val green">{retire_cov:.0f}% <span style="font-size:15px;color:#94a3b8">／</span> {retire_cov_actual:.0f}%</div><div class="label" style="margin-top:4px">保守底線／當月實收</div></div></div>
 </div>
-<div class="bar" style="margin-bottom:6px"><div style="width:min({fire_cov:.1f}%,100%)"></div></div>
-<div class="bar" style="margin-bottom:6px"><div style="width:min({fire_cov_actual:.1f}%,100%);background:#38bdf8"></div></div>
-<p class="meta" style="margin-bottom:16px">覆蓋率條：上＝保守底線 {fire_cov:.1f}%（判準）｜下＝當月實收 {fire_cov_actual:.1f}%（{actual_band}）</p>
+<div class="label" style="margin-top:12px">保守底線（判準）<b style="color:#e2e8f0"> {fire_cov:.1f}%</b></div>
+<div class="bar"><div style="width:{_bar_w(fire_cov):.1f}%"></div><i style="left:{_BAR_GATE_X:.1f}%"></i></div>
+<div class="label" style="margin-top:10px">當月實收 <b class="{actual_band_cls}"> {fire_cov_actual:.1f}%</b></div>
+<div class="bar"><div style="width:{_bar_w(fire_cov_actual):.1f}%;background:#38bdf8"></div><i style="left:{_BAR_GATE_X:.1f}%"></i></div>
+<p class="meta" style="margin-bottom:16px">尺標 0–{_BAR_SCALE:.0f}%（{_BAR_SCALE:.0f}%＝加碼級理想值滿格）｜黃線＝100% 留停門檻｜上＝保守底線 {fire_cov:.1f}%（判準）、下＝當月實收 {fire_cov_actual:.1f}%（{actual_band}）</p>
 
 <div class="card"><h2>🎯 退休目標達成檢查</h2>
 <table><tr><th>項目</th><th>現況</th><th>狀態</th></tr>
