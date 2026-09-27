@@ -372,10 +372,18 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
 # 逐日產物：命名比對，跨月不失效（舊版 allowed_prefixes 釘死 2026-09）
 _DAILY = re.compile(r"^(asset_diff|retirement_plan|daily_report_v2|rebalance_dashboard|"
                     r"dynamic_weekly_review)_\d{4}-\d{2}-\d{2}\.html$")
-_extra = [d for d in _dirty if Path(d).name not in allowed and not _DAILY.match(Path(d).name)]
-ck("變更範圍僅預期檔案", not _extra, str(_extra))
-if _ext:
-    print("ℹ️  外部排程寫入（非本班變更，不計入範圍檢查）：" + "、".join(_ext))
+# 硬擋＝「未宣告的程式檔異動」，副檔名定義與推送閘門一致：
+# 這才是「改了不該改的」；cron 產出（html／json／log／歸檔）隨時在變，
+# 硬性要求逐一列舉只會製造假紅燈（2026-09-28 實踩：etf_report／hunter_cache／notion_bridge 為他支排程產物）。
+_CODE = re.compile(r"\.(py|sh|bat|ps1|cmd|toml|yml|yaml|js|ts|sql)$|^\.githooks/"
+                   r"|^\.gitattributes$|^\.gitignore$|^index_template\.html$")
+_undeclared = [d for d in _dirty if Path(d).name not in allowed and not _DAILY.match(Path(d).name)]
+_hard = [d for d in _undeclared if _CODE.search(d)]
+ck("變更範圍：無未宣告的程式檔異動", not _hard, str(_hard))
+_other = [d for d in _undeclared if d not in _hard]
+if _other:
+    print(f"ℹ️  其他產出異動（排程／報表產物，非程式檔，另列不計入）：{len(_other)} 檔 ｜ "
+          + "、".join(_other[:10]) + ("…" if len(_other) > 10 else ""))
 
 fail = [c for c in checks if not c[1]]
 for name, ok, detail in checks:
