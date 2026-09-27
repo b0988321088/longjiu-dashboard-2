@@ -80,6 +80,52 @@ def compute_kpis(snap):
         "紅綠燈": traffic_light(coverage, stress),
     }
 
+def sync_acceptance_block(snap, kpis, month):
+    """驗收標準區塊的「當期數字」動態化（2026-09-27 校正）。
+
+    背景：原本這段文字是 2026-09-02 手寫進 snapshot 的，之後 9/23 口徑校正
+    （保守配息 130,930→100,000）沒回頭重算 → 留下作廢值 129.6%/93.3%/差 33,142，
+    且沒有任何腳本會更新它（孤兒死資料，只會被誤讀）。
+    修法：由 passive_caliber 真值即時生成，並同步寫入兩處副本
+    （sabbatical_checklist 與 startup_plan_three_track 存檔），兩份永遠一致。
+    """
+    exp = kpis["每月必要生活費"]
+    con = kpis["生活費覆蓋率"]
+    stress = kpis["壓力情境覆蓋率"]
+    passive = kpis["被動現金流"]
+    gap_150 = round(exp * 1.5 - passive)
+    gap_stress = round(_pcal.scenarios(snap)["stress"]["gap"])
+    if con >= 150 and stress >= 100:
+        verdict = (f"🟢 已達 A 級門檻（正常 {con}% ≥150%、壓力 {stress}% ≥100%）"
+                   f"→ 2027/2 驗收")
+    else:
+        verdict = (f"{kpis['紅綠燈']}（正常 {con}%／壓力 {stress}%；"
+                   f"目標 正常 ≥150%、壓力 ≥100%）→ 持續改善 → 2027/2 再驗收")
+    dyn = {
+        "現況判定": verdict,
+        "現況判定_基準月": month,
+        "焦點三件事": [
+            f"① 生活費覆蓋率 {con}%→150%（差 {gap_150:,}/月：降支出/降利息→增淨租金→提高投資現金流）",
+            f"② 壓力情境 {stress}%→100%（差 {gap_stress:,}/月；買的是抗波動能力，非更高報酬）",
+            "③ 3個月趨勢（結構性改善 vs 單月配息時間差）",
+        ],
+    }
+    targets = [
+        (snap.setdefault("sabbatical_checklist", {}), "驗收標準_2027_02"),
+        ((((snap.get("startup_plan_three_track_0901") or {}).get("final_v2_20260902") or {})
+          ), "2027_02財務驗收_A級B級C級"),
+    ]
+    for holder, key in targets:
+        blk = holder.get(key)
+        if not isinstance(blk, dict):
+            continue
+        blk.pop("現況判定_2026_09", None)      # 移除停滯的過期 key
+        blk.pop("焦點三件事_舊", None)
+        blk.update(dyn)
+        holder[key] = blk
+    return dyn
+
+
 def main():
     month = sys.argv[1] if len(sys.argv) > 1 else datetime.date.today().strftime("%Y-%m")
     snap = json.loads(SNAP.read_text(encoding="utf-8"))
@@ -107,6 +153,9 @@ def main():
     cl["驗收等級"] = {"月份": month, "等級": lvl, "權重": "當月 < 3個月趨勢 < 壓力情境 < 現金水位"} 
     kpis["驗收等級"] = lvl
     cl["記錄"][month] = kpis
+
+    # 驗收標準區塊的當期數字動態化（2026-09-27 校正：原本 9/2 手寫、9/23 校正後成孤兒舊值）
+    dyn = sync_acceptance_block(snap, kpis, month)
 
     SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")  # INC-184：snapshot canonical=1
     print(f"✅ 留停驗收表 {month} 已更新（寫回 snapshot.sabbatical_checklist）")
