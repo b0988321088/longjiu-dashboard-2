@@ -1433,5 +1433,11 @@
     "category": "修正",
     "item": "留停驗收標準區塊當期數字動態化（根除 129.6%/93.3%/差 33,142 殘留）",
     "detail": "snapshot 兩處副本（sabbatical_checklist.驗收標準_2027_02 與 startup_plan_three_track_0901 存檔）的『現況判定_2026_09』與『焦點三件事』原為 9/2 手寫文字，9/23 口徑校正（保守配息 130,930→100,000）後無人重算 → 成孤兒作廢值。新增 sync_acceptance_block()：當期數字由 passive_caliber 真值即時生成，每次真值日重算同步寫入兩處副本；舊 key 改為 現況判定 ＋ 現況判定_基準月。現行值 110.6%／78.1%，150% 缺口 64,072/月、壓力缺口 35,681/月。"
+  },
+  {
+    "date": "2026-09-27",
+    "category": "修正",
+    "item": "驗收標準副本缺塊改為告警 + exit 2（CIO 建議落地）",
+    "detail": "sync_acceptance_block() 原本對缺失副本 isinstance…continue 靜默跳過 → 單邊區塊被刪會造成兩副本無聲漂移（本次 129.6% 殘留的成因模式）。改為收集 missing → stderr ⚠️ 指名缺塊 → sys.exit(2)，主工作（記錄/趨勢/驗收等級/雙副本同步）於 exit 前完成。CIO-DeepSeek-Flash 兩輪 APPROVE（tree 3b19a1109bc8 / 433ea1a53bf2）；驗證器 13 項 ALL PASS 含變異測試。"
   }
 ]
