@@ -52,7 +52,10 @@ goal_expense = (_sc_t.get("每月必要生活費", {}) or {}).get("goal", "—")
 goal_passive = (_sc_t.get("被動現金流", {}) or {}).get("goal", "—")
 # 成對顯示（2026-09-23）：保守底線＝下緣（風控判斷用）、當月實收＝現況；兩者必須同時出現
 div_actual = float(snap.get("dividend_month_actual") or snap.get("monthly_dividend_total") or 0)
-fire_income_actual = div_actual + rent          # 當月實收口徑＝配息實收＋房租（與保守底線成對）
+# 2026-09-27：實收口徑的房租改用 passive_income.rent_monthly_actual（真值＝當月入帳加總 77,100）；
+# 原用常態應收 80,100 會把實收情境高估 3,000（9 月洲際W 短收）。保守底線仍用常態 80,100。
+rent_actual = float((snap.get("passive_income") or {}).get("rent_monthly_actual") or rent)
+fire_income_actual = div_actual + rent_actual   # 當月實收口徑＝配息實收＋房租實收（與保守底線成對）
 fire_cov_actual = fire_income_actual / expense * 100 if expense else 0.0
 actual_band = "非常安全" if fire_cov_actual >= 150 else ("基本安全" if fire_cov_actual >= 120 else "不能完全依賴資產")
 actual_band_cls = "green" if fire_cov_actual >= 150 else ("amber" if fire_cov_actual >= 120 else "red")
@@ -74,6 +77,22 @@ _ext_cov = (_ext_income / expense * 100) if expense else 0.0
 _ext_gap = expense - _ext_income
 _ext_months = max(1, round((cash - 300000) / _ext_gap)) if _ext_gap > 0 else 0
 _ext_cls = "red" if _ext_gap > 0 else "green"
+# ── 2026-09-27：FI 跑道（現金續航）三情境並列（使用者核准：判準不動、實收情境並列）──
+# 為什麼：保守判準 100,000 是「可持續下限」，實收 147,975 才是現況；只顯示保守會讓人
+# 誤以為「每月只流入 18 萬」，與實際 22.5 萬落差 25%。三條線並列 = 判準與現況同時可見。
+def _rw_txt(_income):
+    _gap = expense - _income
+    if _gap <= 0:
+        return f"∞（月盈餘 +{-_gap:,.0f}）"
+    _d = cash / _gap * 30
+    return f"{_d:,.0f} 天（{_d/30:.1f} 個月）"
+
+
+_rw_normal = _rw_txt(fire_income)
+_rw_actual = _rw_txt(fire_income_actual)
+_rw_stress = _rw_txt(_stress_income)
+_rw_ext = _rw_txt(_ext_income)
+
 _ext_txt = (f"🔴 缺口 {_ext_gap:,.0f}/月 → 現金水庫撐 {_ext_months} 個月"
             if _ext_gap > 0 else "🟢 無缺口（水庫不受壓）")
 
@@ -164,11 +183,11 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <!-- 留停壓力測試（2026-09-02 定位提升：留停=人生財務系統壓力測試） -->
 <div class="card"><h2>🧪 留停壓力測試（2027/2 留停 = 財務系統驗證，非單純職涯測試）</h2>
 <table>
-<tr><th>情境</th><th>假設</th><th>月被動</th><th>覆蓋率</th><th>判定</th></tr>
-<tr><td>🟢 正常</td><td>配息/房租/支出正常（保守底線）</td><td>{fire_income:,}</td><td>{fire_cov:.1f}%</td><td class="{cov_band_cls}">{'🟢' if fire_cov>=150 else ('🟡' if fire_cov>=120 else '🔴')} {cov_band}</td></tr>
-<tr><td>🟢 正常（當月實收）</td><td>配息實收 {div_actual:,.0f} ＋ 租金 {rent:,}</td><td>{div_actual + rent:,.0f}</td><td>{fire_cov_actual:.1f}%</td><td class="{actual_band_cls}">{'🟢' if fire_cov_actual>=150 else ('🟡' if fire_cov_actual>=120 else '🔴')} {actual_band}</td></tr>
-<tr><td>🟡 壓力</td><td>配息 −20% ＋ 洲際W 空置</td><td>{_stress_income:,.0f}</td><td class="{_stress_cls}">{stress_cov:.1f}%</td><td class="{_stress_cls}">{_stress_txt}</td></tr>
-<tr><td>🔴 極端</td><td>配息 −30% ＋ 一間無租 ＋ 大型支出 30萬</td><td>{_ext_income:,.0f}</td><td class="{_ext_cls}">{_ext_cov:.1f}%</td><td class="{_ext_cls}">{_ext_txt}</td></tr>
+<tr><th>情境</th><th>假設</th><th>月被動</th><th>覆蓋率</th><th>判定</th><th>現金續航（FI 跑道）</th></tr>
+<tr><td>🟢 正常（保守底線）</td><td>配息/房租/支出正常（保守底線 100,000 判準）</td><td>{fire_income:,}</td><td>{fire_cov:.1f}%</td><td class="{cov_band_cls}">{'🟢' if fire_cov>=150 else ('🟡' if fire_cov>=120 else '🔴')} {cov_band}</td><td>{_rw_normal}</td></tr>
+<tr><td>🟢 正常（當月實收）</td><td>配息實收 {div_actual:,.0f} ＋ 租金 {rent_actual:,.0f}</td><td>{div_actual + rent_actual:,.0f}</td><td>{fire_cov_actual:.1f}%</td><td class="{actual_band_cls}">{'🟢' if fire_cov_actual>=150 else ('🟡' if fire_cov_actual>=120 else '🔴')} {actual_band}</td><td>{_rw_actual}</td></tr>
+<tr><td>🟡 壓力</td><td>配息 −20% ＋ 洲際W 空置</td><td>{_stress_income:,.0f}</td><td class="{_stress_cls}">{stress_cov:.1f}%</td><td class="{_stress_cls}">{_stress_txt}</td><td>{_rw_stress}</td></tr>
+<tr><td>🔴 極端</td><td>配息 −30% ＋ 一間無租 ＋ 大型支出 30萬</td><td>{_ext_income:,.0f}</td><td class="{_ext_cls}">{_ext_cov:.1f}%</td><td class="{_ext_cls}">{_ext_txt}</td><td>{_rw_ext}</td></tr>
 </table>
 <p class="callout">覆蓋率三層：🟢 &gt;150% 非常安全｜🟡 120-150% 基本安全｜🔴 &lt;120% 不能完全依賴資產（<b>不含一次性資本利得</b>）。<br>
 現況 <b class="{cov_band_cls}">{fire_cov:.1f}% = {cov_band}</b>（保守底線）｜當月實收 <b class="{actual_band_cls}">{fire_cov_actual:.1f}% = {actual_band}</b>；{_stress_note}。<br>

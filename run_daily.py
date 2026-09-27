@@ -1642,15 +1642,28 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             _div_cur = _snap_p.get('monthly_dividend_total', 0)
             _exp = _snap_p.get('monthly_expense', 162781)
             _pi = _snap_p.get('passive_income', {}) or {}
-            _rent = float(_pi.get('rent_monthly', 0) or 0)
+            _rent = float(_pi.get('rent_monthly', 0) or 0)                      # 常態應收（保守底線用）
+            _rent_act = float(_pi.get('rent_monthly_actual') or _rent)          # 當月實收（2026-09-27 校正）
             _div_con = float(_pi.get('fund_dividend_conservative', 0) or 0)
             _cov_con = (_div_con + _rent) / _exp * 100 if _exp else 0
-            _cov_act = (_div_cur + _rent) / _exp * 100 if _exp else 0
+            _cov_act = (_div_cur + _rent_act) / _exp * 100 if _exp else 0
+            # ── 2026-09-27：實收情境盈餘 + 壓力情境 FI 跑道（三條線並列；判準層不動）──
+            # 使用者 9/27 指正：實收 225,075 已高於保守 180,100，只顯示保守會低估水位。
+            _cash_now = float(_snap_p.get('cash_total', 0) or 0)
+            _sur_con = _div_con + _rent - _exp
+            _sur_act = _div_cur + _rent_act - _exp
+            _gap_stress = _exp - (_div_con * 0.8 + _rent - 33000)   # 洲際W 空置 33,000（與引擎同口徑）
+            _rw_stress_txt = (f"{_cash_now / _gap_stress * 30:,.0f} 天" if _gap_stress > 0 else "無缺口")
+            _rw_act_txt = ("∞（零缺口）" if _sur_act >= 0
+                           else f"{_cash_now / abs(_sur_act) * 30:,.0f} 天")
             _cur_line = (f"<div style='font-size:12px;color:#92400e;margin-top:6px;padding-top:6px;border-top:1px dashed #fbbf24'>"
                           f"📊 即時（{_snap_p.get('date','')}）："
                           f"月配息保守 {_div_con:,.0f}／實收 {_div_cur:,.0f}｜"
                           f"總資產 {_ta:,.0f}｜淨資產 {_nw:,.0f}｜"
-                          f"覆蓋 {_cov_con:.0f}%／實收 {_cov_act:.0f}%</div>")
+                          f"覆蓋 {_cov_con:.0f}%／實收 {_cov_act:.0f}%<br>"
+                          f"💰 月盈餘：保守 {_sur_con:+,.0f}／實收 {_sur_act:+,.0f}｜"
+                          f"FI 跑道：壓力情境 {_rw_stress_txt}、實收情境 {_rw_act_txt}"
+                          f"（判準仍為保守底線 {_div_con:,.0f}）</div>")
             # 動態失敗訊號（2026-09-24：從 snapshot 每月數據即時計算，不再用靜態欄位）
             _base_div = _b.get('月配息常態估算', 138627)
             _dr = _snap_p.get('dividend_records', {})
