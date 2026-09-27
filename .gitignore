@@ -67,3 +67,7 @@ data/ceo_analysis_*.json
 
 # 同一個 JSON 被拆檔/停用後留下的變體（xxx.json.first／.second／.stale-*）
 data/*.json.*
+
+# 2026-09-27：手動備份命名（*.bak-/舊規則漏掉底線版本）
+*.bak_*
+*.pre_*
