@@ -16,9 +16,9 @@ pi = snap.get("passive_income", {})
 # 2026-09-15：台電月薪（單一真值 snapshot）——原字串寫死 39,727（8 月值），9 月起常態調薪 42,560
 sal = int(snap.get("monthly_salary") or snap.get("salary") or 0)
 fire_income = pi.get("total_conservative", 0)
-fire_cost = pi.get("monthly_expense", 162781)
+fire_cost = pi.get("monthly_expense") or snap.get("monthly_expense") or 0
 fire_cov = pi.get("coverage_pct", 0)
-rent = pi.get("rent_monthly", 80100)
+rent = pi.get("rent_monthly") or 0
 div_conservative = pi.get("fund_dividend_conservative", 0)
 net_worth = snap.get("net_worth", 0)
 debt_ratio = snap.get("debt_ratio", 0)
@@ -29,13 +29,12 @@ manifesto_title = snap.get("lifestyle_manifesto", {}).get("title", "理想生活
 # 留停壓力測試/驗收表用別名（2026-09-02）
 expense = fire_cost
 div_c = div_conservative
-cash = snap.get("cash_total", 794992)
+cash = snap.get("cash_total") or 0
 liab_cost = 16600  # 保單借貸 13,333 + 元大證金 3,267（利息口徑）
-# 現金底線單一來源（9/27 裁示＝70 萬；此處只讀 snapshot，不再寫死）
-_thr_cash = ((snap.get("thresholds_2026_0915") or {}).get("現金_twd") or {})
-_floor_s = float(_thr_cash.get("合計底線")
-                 or (float(_thr_cash.get("生活底線") or 0) + float(_thr_cash.get("追繳緩衝") or 0))
-                 or 700000)
+# 現金底線單一來源（9/27 裁示＝70 萬）：走 sabbatical_checklist_update._cash_floor，
+# 不在此處本地重算、也不留字面值退路（2026-09-28 翻新：寫死掃描必須為空）
+import sabbatical_checklist_update as _sab
+_floor_s = float(_sab._cash_floor(snap) or 0)
 
 # ── 2026-09-23：本檔過去有多處以字面值寫死「當期」數字（覆蓋率／缺口／驗收等級／
 # 基準月標籤／2027/2 目標值），改為一律由 snapshot 動態派生；否則真值校正後
@@ -74,7 +73,7 @@ fire_cov_actual = _SC["act"]["coverage"]
 actual_band = "非常安全" if fire_cov_actual >= 150 else ("基本安全" if fire_cov_actual >= 120 else "不能完全依賴資產")
 actual_band_cls = "green" if fire_cov_actual >= 150 else ("amber" if fire_cov_actual >= 120 else "red")
 # ── 2026-09-28：覆蓋率條圖尺標改 0–150%（加碼級＝滿格）──
-# 原寫法 min(覆蓋%,100%) 會把所有 >100% 的覆蓋率夾成滿格：110.6%（保守）與 138.3%（實收）
+# 原寫法 min(覆蓋%,100%) 會把所有 >100% 的覆蓋率夾成滿格（保守與實收兩條都變滿格、看不出長短差異）
 # 兩條看起來一樣長，使用者 9/28 提問「綠線藍線一樣長是什麼意思」→ 改為固定尺標＋100% 門檻線。
 _BAR_SCALE = 150.0                        # 滿格＝加碼級理想值 150%
 _BAR_GATE_X = 100.0 / _BAR_SCALE * 100.0  # 100% 留停門檻線位置（%）
@@ -258,7 +257,7 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <div class="card"><h2>🧪 留停壓力測試（2027/2 留停 = 財務系統驗證，非單純職涯測試）</h2>
 <table>
 <tr><th>情境</th><th>假設</th><th>月被動</th><th>覆蓋率</th><th>判定</th><th>現金續航（FI 跑道）</th></tr>
-<tr><td>🟢 正常（保守底線）</td><td>配息/房租/支出正常（保守底線 100,000 判準）</td><td>{fire_income:,}</td><td>{fire_cov:.1f}%</td><td class="{cov_band_cls}">{'🟢' if fire_cov>=150 else ('🟡' if fire_cov>=120 else '🔴')} {cov_band}</td><td>{_rw_normal}</td></tr>
+<tr><td>🟢 正常（保守底線）</td><td>配息/房租/支出正常（保守底線 {div_c:,.0f} 判準）</td><td>{fire_income:,}</td><td>{fire_cov:.1f}%</td><td class="{cov_band_cls}">{'🟢' if fire_cov>=150 else ('🟡' if fire_cov>=120 else '🔴')} {cov_band}</td><td>{_rw_normal}</td></tr>
 <tr><td>🟢 正常（當月實收）</td><td>配息實收 {div_actual:,.0f} ＋ 租金 {rent_actual:,.0f}</td><td>{div_actual + rent_actual:,.0f}</td><td>{fire_cov_actual:.1f}%</td><td class="{actual_band_cls}">{'🟢' if fire_cov_actual>=150 else ('🟡' if fire_cov_actual>=120 else '🔴')} {actual_band}</td><td>{_rw_actual}</td></tr>
 <tr><td>🟡 壓力（判準）</td><td>常態配息 −20%（{div_norm:,.0f}→{div_norm*0.8:,.0f}）＋ 洲際W 空置</td><td>{_stress_income:,.0f}</td><td class="{_stress_cls}">{stress_cov:.1f}%</td><td class="{_stress_cls}">{_stress_txt}</td><td>{_rw_stress}</td></tr>
 <tr><td>🔴 極端（參考）</td><td>配息掉到保守值 {div_c:,} 再 −20%（≈常態 −46%）＋ 洲際W 空置</td><td>{_ext_income:,.0f}</td><td class="{_ext_cls}">{_ext_cov:.1f}%</td><td class="{_ext_cls}">{_ext_txt}</td><td>{_rw_ext}</td></tr>

@@ -1457,5 +1457,11 @@
   "category": "修正",
   "item": "留停門檻口徑守門落地 repo（CIO 兩項建議）＋4 條非阻擋建議一次修完",
   "detail": "①新增 tools/verify_ficriteria.py：唯讀、相對式斷言（期望值全部由 snapshot＋passive_caliber 現算，不寫死金額/日期），含 bug 重現（釘死 base b4e0f256 證明舊版雙重打折）與變異對照；原放 %TEMP% 會被清掉 → 新門檻口徑失去回歸保護。②check_dividend_caliber 的新口徑斷言由凍結的 9/23 檔改指「當日最新產物」。③退休規劃頁『覆蓋率三層』補『經驗級距·非留停門檻』，消掉與 A+ 加碼級兩個 150% 的語義混淆。④CIO 首輪 4 條非阻擋建議：現金底線改走 sabbatical._cash_floor(snap)（原本寫死 700000 → 底線裁動會假 PASS）、註解去數字化、當日產物斷言加新鮮度 SKIP 守門、子字串比對改帶邊界（避免 92.2 命中 192.2）。驗證：tools/verify_ficriteria.py 55 PASS / 0 FAIL；check_dividend_caliber 66/70（4 個 FAIL 為 9/23 期既有、與本批無關，待獨立翻新）。"
+ },
+ {
+   "date": "2026-09-28",
+   "category": "修正",
+   "item": "配息口徑守門 check_dividend_caliber.py 翻新為全相對式（50→53 項全綠），並清掉生成器殘留的當期真值寫死",
+   "detail": "①翻新：期望值一律由 snapshot＋passive_caliber＋dividend_caliber 現算；逐日產物改取最新一份＋新鮮度守門（原釘死 retirement_plan_2026-09-23.html 與 9/23 期數字，該檔一封存或真值一動就整檔爆紅）。②allowed_prefixes 由『asset_diff_2026-09-』改為日期 regex（跨月不失效）；外部 cron 寫入（cost/logs/data）另列、不計入變更範圍。③寫死掃描改 AST 常數（字串＋數值）不掃註解——原用純文字比對會把註解裡的舊數字當缺陷（4 個既有 FAIL 之一）。④build_retirement_plan.py 清 6 處：月支出／房租／現金退路寫死當期值→0 或單一來源、現金底線改走 sabbatical._cash_floor（移除本地重算與 700000 字面值）、『保守底線 100,000 判準』改 {div_c:,.0f}、註解去當期數字；重產退休規劃頁 byte-identical（證明行為等價）。⑤新增 3 條儀表板當期真值斷言（常態被動／安全退休盈餘／月支出）：index_template 這兩處既無 data-k 也無 rep 對映，真值一動就靜默說舊話。⑥變異測試 M1/M2/M3/M4/M5/M7/M8 全數抓到；已知界線：同值在同頁重複多次只驗存在與成對，不驗每處次數（M6 單處手改不抓）。驗證：check_dividend_caliber 53/53 PASS；tools/verify_ficriteria.py 55 PASS / 0 FAIL。"
  }
 ]
