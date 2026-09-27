@@ -5103,7 +5103,7 @@
   }
  },
  "coast_fi_engine": {
-  "asof": "2026-09-27",
+  "asof": "2026-09-23",
   "current": {
    "growth_assets": {
     "tw_growth": 2039487.0,
@@ -5118,24 +5118,24 @@
    "coast": {
     "fi_target_swr": 48834300.0,
     "fi_target_yield": 39067440.0,
-    "years_to_target": 0.35,
+    "years_to_target": 0.36,
     "target_date": "2027-02-01",
     "real_return_pct": 5.0,
     "fin_only_capital": 12364694.0,
-    "coast_threshold_swr": 48007458.16885114,
+    "coast_threshold_swr": 47984040.964307785,
     "coast_fi_ratio_swr_pct": 44.4,
     "coast_fi_ratio_fin_only_swr_pct": 25.8,
-    "coast_gap_fin_only_swr": 35642764.16885114,
-    "fv_no_contrib_swr": 21666053.50667728,
-    "gap_fv_swr": 27168246.49332272,
-    "monthly_needed_swr": 6749758.328407932,
-    "coast_threshold_yield": 38405966.53508091,
+    "coast_gap_fin_only_swr": 35619346.964307785,
+    "fv_no_contrib_swr": 21676626.988952156,
+    "gap_fv_swr": 27157673.011047844,
+    "monthly_needed_swr": 6747131.421659915,
+    "coast_threshold_yield": 38387232.77144623,
     "coast_fi_ratio_yield_pct": 55.5,
     "coast_fi_ratio_fin_only_yield_pct": 32.2,
-    "coast_gap_fin_only_yield": 26041272.53508091,
-    "fv_no_contrib_yield": 21666053.50667728,
-    "gap_fv_yield": 17401386.49332272,
-    "monthly_needed_yield": 4323251.168897407
+    "coast_gap_fin_only_yield": 26022538.771446228,
+    "fv_no_contrib_yield": 21676626.988952156,
+    "gap_fv_yield": 17390813.011047844,
+    "monthly_needed_yield": 4320624.26214939
    },
    "light_work": {
     "rows": [
@@ -5184,15 +5184,15 @@
     "income_stress": 127100.0,
     "gap": 35681.0,
     "vacancy": 33000.0,
-    "cash_full": 884918.0,
-    "reserve": 0.0,
-    "floor": 700000.0,
-    "cash_used": 884918.0,
-    "cash_below_floor": false,
-    "runway_days": 744,
+    "cash_full": 861818.0,
+    "reserve": 500000.0,
+    "floor": 1200000.0,
+    "cash_used": 361818.0,
+    "cash_below_floor": true,
+    "runway_days": 304,
     "cash_caliber": "net_of_reserve",
-    "runway_days_full_cash": 744,
-    "runway_days_net_reserve": 744
+    "runway_days_full_cash": 725,
+    "runway_days_net_reserve": 304
    },
    "stress": {
     "pool": 11786060.0,
@@ -5230,13 +5230,14 @@
    "status": {
     "coast": false,
     "pccr": true,
-    "runway": true,
+    "runway": false,
     "maintenance": false,
     "credit": false
    },
    "light": "🔴 紅燈",
    "blockers": [
     "Coast FI 本金滑行（純金融）25.8% < 100%（含房產 44.4%）",
+    "無薪跑道 304 天 < 540 天",
     "跌30% 維持率 152.8% < 180%",
     "授信未鎖定（洲際W 轉貸（永豐 1,312萬，9/25 到期）、整池質押 540萬@2.77%（撥款後清償 500萬高息））"
    ]
@@ -5248,16 +5249,6 @@
     "coast_with_re_pct": 44.4,
     "pccr_pct": 121.9,
     "runway_days": 304,
-    "maintenance_pct": 152.8,
-    "credit_locked": false,
-    "light_work_cap_2w": 21902746
-   },
-   "2026-09-27": {
-    "light": "🔴 紅燈",
-    "coast_fin_only_pct": 25.8,
-    "coast_with_re_pct": 44.4,
-    "pccr_pct": 121.9,
-    "runway_days": 744,
     "maintenance_pct": 152.8,
     "credit_locked": false,
     "light_work_cap_2w": 21902746

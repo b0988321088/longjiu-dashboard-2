@@ -31,6 +31,7 @@ DEFAULT_CONFIG = {
     "target_date": "2027-02-01",   # 目標日＝留停生效日（使用者 2026-09-23 定調：已在規劃退休）
     "years_to_target": None,   # 若要直接給年數（覆蓋 target_date）在此填數字
     "cash_caliber": "net_of_reserve",   # net_of_reserve（扣追繳緩衝，正式口徑）| cash_total
+    # 2026-09-27 使用者裁示：追繳緩衝取消（SoT 追繳緩衝 = 0）→ reserve 恆為 0、跑道即全現金口徑。
     "stress_dividend_haircut": 0.8,     # 配息壓力砍 20%（沿用既有壓力情境口徑）
     "light_work_incomes": [0, 20000, 30000],  # 退休後「簡單工作」月收敏感度
     "targets": {
@@ -383,8 +384,9 @@ def main():
     print(f"跑道口徑：壓力月收入 {r['runway']['income_stress']:,.0f}"
           f"（配息 {r['pccr']['dividend_conservative']:,.0f}×0.8 + 租金 − 洲際W空置 {r['runway']['vacancy']:,.0f}）"
           f" → 月缺口 {r['runway']['gap']:,.0f}")
+    _res_txt = (f" − 追繳緩衝 {r['runway']['reserve']:,.0f}" if r['runway']['reserve'] > 0 else "")
     print(f"  現金可用 {r['runway']['cash_used']:,.0f}（{r['runway']['cash_caliber']}："
-          f"{r['runway']['cash_full']:,.0f} − 追繳緩衝 {r['runway']['reserve']:,.0f}）"
+          f"{r['runway']['cash_full']:,.0f}{_res_txt}）"
           f" → {r['runway']['runway_days']} 天；全現金口徑 {r['runway']['runway_days_full_cash']} 天")
     for it in r["credit"]["items"]:
         print(f"  授信：{it['項目']} → {'✅' if it['完成'] else '❌ 未完成'}")
