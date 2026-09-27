@@ -30,7 +30,10 @@ manifesto_title = snap.get("lifestyle_manifesto", {}).get("title", "理想生活
 expense = fire_cost
 div_c = div_conservative
 cash = snap.get("cash_total") or 0
-liab_cost = 16600  # 保單借貸 13,333 + 元大證金 3,267（利息口徑）
+liab_cost = 16600  # 保單借貸 13,333 ＋ 元大證金 3,267（利息口徑）
+# 大義街房貸月繳單一來源＝snapshot.debt_schedule（原模板寫死 26000；2026-09-28 改動態）
+_dayi = next((float(e.get("金額") or 0) for e in (snap.get("debt_schedule") or [])
+              if "大義街房貸" in str(e.get("項目", ""))), 0.0)
 # 現金底線單一來源（9/27 裁示＝70 萬）：走 sabbatical_checklist_update._cash_floor，
 # 不在此處本地重算、也不留字面值退路（2026-09-28 翻新：寫死掃描必須為空）
 import sabbatical_checklist_update as _sab
@@ -276,7 +279,7 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><td>保守覆蓋率（判準·保守底線）</td><td class="{('red' if fire_cov<100 else 'green')}">{fire_cov:.1f}%</td><td>≥100%（門檻）</td></tr>
 <tr><td>壓力情境覆蓋率（常態配息口徑）</td><td class="{_stress_cls}">{stress_cov:.1f}%</td><td>≥100%（門檻）</td></tr>
 <tr><td>FI 跑道（極端情境口徑）</td><td class="{('green' if (_SC['extreme']['runway_days'] or 0)>=540 else 'red')}">{_rw_ext}</td><td>≥540 天（門檻）</td></tr>
-<tr><td>房租淨現金流</td><td>{rent - 26000:,}</td><td>持續改善</td></tr>
+<tr><td>房租淨現金流</td><td>{rent - _dayi:,.0f}</td><td>持續改善</td></tr>
 <tr><td>投資現金流</td><td>{div_c:,}</td><td>穩定</td></tr>
 <tr><td>現金水位</td><td>{cash:,}</td><td>≥{_floor_s:,.0f}（底線）</td></tr>
 <tr><td>加碼級覆蓋率（理想值·非門檻）</td><td class="{('green' if fire_cov>=150 else 'amber')}">{fire_cov:.1f}%</td><td>≥150%</td></tr>

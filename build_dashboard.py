@@ -410,6 +410,10 @@ def main():
         "yushan": cd.get("臺幣綜存", 0) or 0,
         "fubon": cd.get("數位活儲", 0) or 0,
         "jianglai": cd.get("Digital Savings Acco", 0) or 0,
+        # 2026-09-28：index_template 的「被動月固定收入（常態）」「安全退休盈餘」原本是純文字寫死
+        # （無 data-k、也不在 rep 對映內）→ 真值一動就靜默說舊話；改走注入。
+        "passive_norm": float((snap.get("passive_income") or {}).get("total_conservative") or 0),
+        "retire_surplus": float(snap.get("retirement_surplus") or 0),
     }
     for _dk, _dv in _data_k_map.items():
         _pat = _re.compile(r'(<span data-k="%s">)[^<]*(</span>)' % _dk)
@@ -419,7 +423,9 @@ def main():
     # ── 2026-09-04：純文字/手動行事曆殘留值正規化（data-k 注入只涵蓋 span；公式行與事件列金額需隨 monthly_salary 自動更新）──
     _ms = int(snap.get("monthly_salary", 42560) or 42560)
     tpl = tpl.replace("39,727", f"{_ms:,}")
-    tpl = tpl.replace("219,827", f"{_ms + 100000 + 80100:,}")
+    _pi = snap.get("passive_income") or {}
+    tpl = tpl.replace("219,827",
+                      f"{_ms + float(_pi.get('fund_dividend_conservative') or 0) + float(_pi.get('rent_monthly') or 0):,.0f}")
 
     # ── 今日狀態列動態化（2026-08-27：今日 + 近3天 + 下一個；含保單轉換等決策事件）──
     try:
@@ -943,7 +949,10 @@ def main():
         _rec = snap.get("dividend_records", {}) or {}
         _base_m = "2026-09"                                    # 基準月（使用者 9/23 指定）
         _obs_n = 3                                             # 觀察月數
-        _ms = sorted([m for m in _rec if re.match(r"^\d{4}-\d{2}$", m)])[-_obs_n:]
+        _all_m = sorted([m for m in _rec if re.match(r"^\d{4}-\d{2}$", m)])
+        _ms = _all_m[-_obs_n:]
+        if _base_m in _all_m and _base_m not in _ms:      # 2026-09-28：基準月一律留在窗口內
+            _ms = sorted(set(_ms) | {_base_m})            # （原取「最近 N 個月」，2026-12 起基準月掉出 → 基準列消失、合計歸零）
 
         def _bucket_of(_n):
             return dividend_bucket(_n)

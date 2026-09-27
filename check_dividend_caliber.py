@@ -105,6 +105,11 @@ for _k in ("div_con", "div_norm", "div_act", "rent_norm", "rent_act", "expense",
     _tok.add(f"{SC[_k]:,.0f}")
 # 只留「格式化後不會誤撞」的 token：含千分位，或小數點且長度 ≥5（避開 100／540 這類純整數常數）
 _tok = {t for t in _tok if ("," in t) or ("." in t and len(t) >= 5)}
+# 大義街房貸月繳（現算自 snapshot.debt_schedule）亦屬當期真值 → 不得寫死
+_DAYI = next((float(e.get("金額") or 0) for e in (snap.get("debt_schedule") or [])
+              if "大義街房貸" in str(e.get("項目", ""))), 0.0)
+if _DAYI:
+    _tok.add(f"{_DAYI:,.0f}")
 
 # ── 1) 語法閘門 ────────────────────────────────────────────────────────────
 _tree = None
@@ -116,20 +121,31 @@ except SyntaxError as e:
 
 # ── 2) 當期真值不得以字面值寫死進模板（AST 常數掃描；不看註解）──────────────
 if _tree is not None:
+    def _fold(n):
+        """常數摺疊：字串相加與 f-string 的常數段還原成一個字串，
+        防 `"100" + ",000"`／`f"110{'.6'}"` 這類拼接繞過（CIO 2026-09-28 指出的盲區）。
+        FormattedValue 一律插 '{}' 佔位，避免跨插值誤拼成真值。"""
+        if isinstance(n, ast.Constant):
+            if isinstance(n.value, bool):
+                return ""
+            if isinstance(n.value, str):
+                return n.value
+            if isinstance(n.value, (int, float)):
+                return f"{n.value:,.0f}"
+            return ""
+        if isinstance(n, ast.BinOp) and isinstance(n.op, ast.Add):
+            return _fold(n.left) + _fold(n.right)
+        if isinstance(n, ast.JoinedStr):
+            return "".join("{}" if isinstance(v, ast.FormattedValue) else _fold(v) for v in n.values)
+        return ""
+
     _hits = []
     for _n in ast.walk(_tree):
-        if not isinstance(_n, ast.Constant) or isinstance(_n.value, bool):
+        _txt = _fold(_n)
+        if not _txt:
             continue
-        if isinstance(_n.value, str):
-            _hit = [t for t in _tok if t in _n.value]
-        elif isinstance(_n.value, (int, float)):
-            _f = f"{_n.value:,.0f}"
-            _hit = [_f] if _f in _tok else []
-        else:
-            _hit = []
-        # 模板是單一長字串 → 報「字面值起點行」，再指出命中值供人工定位
-        _hits += [f"L{_n.lineno}:{t}" for t in _hit]
-    ck("模板無寫死當期真值（AST 常數掃描：字串＋數值）", not _hits, str(sorted(set(_hits))))
+        _hits += [f"L{getattr(_n, 'lineno', '?')}:{t}" for t in _tok if t in _txt]
+    ck("模板無寫死當期真值（AST：字串＋數值＋常數摺疊）", not _hits, str(sorted(set(_hits))))
 
 # 自查：本檔自身不得出現凍結產物檔名或當期真值字面值（CIO 2026-09-28 建議硬性化）
 _self = Path(__file__).read_text(encoding="utf-8")
@@ -195,9 +211,12 @@ _itxt = text_of(_idx)
 ck("儀表板被動月固定收入（常態）＝現算保守底線",
    f"被動月固定收入（常態） {SC['con']['income']:,.0f} TWD" in _itxt,
    f"期望 被動月固定收入（常態） {SC['con']['income']:,.0f} TWD")
-ck("儀表板安全退休盈餘＝現算",
-   f"安全退休盈餘 +{SC['con']['surplus']:,.0f} TWD" in _itxt,
-   f"期望 安全退休盈餘 +{SC['con']['surplus']:,.0f} TWD")
+# 2026-09-28：該值已改 data-k 注入（+ 與數字被 span 分開）→ 用正則容忍標籤間空白；
+# 瀏覽器渲染仍是「＋號緊貼數字」（相鄰行內元素不加空白），故不寫成固定字串。
+_sur_txt = f"{SC['con']['surplus']:,.0f}"
+ck("儀表板安全退休盈餘＝現算（標籤＋值成對）",
+   re.search(r"安全退休盈餘\s*\+\s*" + re.escape(_sur_txt) + r"\s*TWD", _itxt) is not None,
+   f"期望 安全退休盈餘 +{_sur_txt} TWD")
 ck("儀表板月支出（月經常性總支出／退休維持月支出）＝現算",
    f"月經常性總支出 {SC['expense']:,.0f}" in _itxt and f"退休維持月支出 {SC['expense']:,.0f}" in _itxt,
    f"期望 {SC['expense']:,.0f}")
@@ -362,6 +381,16 @@ else:
        f"- **Real Liquid Assets**: {int(snap['real_liquid_assets'])}" in _ctx,
        str(snap["real_liquid_assets"]))
 
+# ── 11b) 儀表板模板的當期真值必須走 data-k 注入（2026-09-28 補）────────────────
+# 這兩處原本是純文字寫死、既無 data-k 也不在 rep 對映內 → 真值一動就靜默說舊話。
+_tpl = (BASE / "index_template.html").read_text(encoding="utf-8")
+ck("儀表板模板：常態被動／退休盈餘已改 data-k 注入（非純文字）",
+   'data-k="passive_norm"' in _tpl and 'data-k="retire_surplus"' in _tpl)
+if _pg:
+    ck("頁面房租淨現金流 == 常態租金 − 大義街房繳（snapshot.debt_schedule 現算）",
+       f"房租淨現金流 {SC['rent_norm'] - _DAYI:,.0f}" in _pg,
+       f"期望 房租淨現金流 {SC['rent_norm'] - _DAYI:,.0f}")
+
 # ── 12) 變更範圍（限自身檔案集；外部排程寫入另列，不計入）────────────────────
 _raw = subprocess.run(["git", "status", "--porcelain"], cwd=str(BASE),
                       capture_output=True, text=True).stdout.splitlines()
@@ -389,9 +418,18 @@ _DAILY = re.compile(r"^(asset_diff|retirement_plan|daily_report_v2|rebalance_das
 # 這才是「改了不該改的」；cron 產出（html／json／log／歸檔）隨時在變，
 # 硬性要求逐一列舉只會製造假紅燈（2026-09-28 實踩：etf_report／hunter_cache／notion_bridge 為他支排程產物）。
 _CODE = re.compile(r"\.(py|sh|bat|ps1|cmd|toml|yml|yaml|js|ts|sql)$|^\.githooks/"
-                   r"|^\.gitattributes$|^\.gitignore$|^index_template\.html$")
-_undeclared = [d for d in _dirty if Path(d).name not in allowed and not _DAILY.match(Path(d).name)]
-_hard = [d for d in _undeclared if _CODE.search(d)]
+                   r"|^\.gitattributes$|^\.gitignore$|^index_template\.html$", re.I)
+
+
+def _declared(s):
+    """單一路徑是否已宣告（改名條目會有兩側，逐側判定）"""
+    n = Path(s.strip()).name
+    return n in allowed or bool(_DAILY.match(n))
+
+
+# 改名條目在 porcelain 是 "old -> new"：兩側都要宣告，且任一侧是程式檔就要硬擋
+_undeclared = [d for d in _dirty if not all(_declared(s) for s in d.split("->"))]
+_hard = [d for d in _undeclared if any(_CODE.search(s.strip()) for s in d.split("->"))]
 ck("變更範圍：無未宣告的程式檔異動", not _hard, str(_hard))
 _other = [d for d in _undeclared if d not in _hard]
 if _other:
