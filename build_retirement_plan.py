@@ -31,14 +31,24 @@ expense = fire_cost
 div_c = div_conservative
 cash = snap.get("cash_total", 794992)
 liab_cost = 16600  # 保單借貸 13,333 + 元大證金 3,267（利息口徑）
+# 現金底線單一來源（9/27 裁示＝70 萬；此處只讀 snapshot，不再寫死）
+_thr_cash = ((snap.get("thresholds_2026_0915") or {}).get("現金_twd") or {})
+_floor_s = float(_thr_cash.get("合計底線")
+                 or (float(_thr_cash.get("生活底線") or 0) + float(_thr_cash.get("追繳緩衝") or 0))
+                 or 700000)
 
 # ── 2026-09-23：本檔過去有多處以字面值寫死「當期」數字（覆蓋率／缺口／驗收等級／
 # 基準月標籤／2027/2 目標值），改為一律由 snapshot 動態派生；否則真值校正後
 # 報告仍會念舊數字，形成「JSON 已校正、報告沒跟上」的分歧。
 _sch = snap.get("sabbatical_checklist", {}) or {}
 _sc_t = _sch.get("目標_2027_02", {}) or {}
-_stress_income = div_c * 0.8 + rent - 33000          # 壓力情境（配息 −20% ＋ 洲際W 空置）：單一派生
-stress_cov = _stress_income / expense * 100 if expense else 0.0
+# 2026-09-28：壓力／極端情境一律讀 passive_caliber 單一來源（原本此處自算 div_c×0.8＋空置，
+# 口徑校正要改兩處）。壓力＝常態配息×0.8＋常態租金−空置（正式判準）；極端＝保守配息再打折。
+# 使用者 2026-09-28 裁示：A 級門檻由「正常 ≥150%」改為三條（保守100%＋壓力100%＋跑道540天
+# ＋現金底線），150% 降為加碼級理想值 → 本頁所有門檻文字同步改版。
+_SC = _pcal.scenarios(snap)
+_stress_income = _SC["stress"]["income"]
+stress_cov = _SC["stress"]["coverage"]
 _stress_cls = "red" if stress_cov < 100 else "green"
 _stress_txt = (f"🔴 &lt;100% → 靠現金水庫" if stress_cov < 100
                else f"🟢 覆蓋 {stress_cov:.1f}% ≥100% → 水庫不動")
@@ -46,16 +56,18 @@ _stress_note = (f"壓力情境 {stress_cov:.1f}% 未破 100% — 這是留停前
                 if stress_cov < 100 else f"壓力情境 {stress_cov:.1f}% 已 ≥100% — 通過壓力測試")
 cov_band = "非常安全" if fire_cov >= 150 else ("基本安全" if fire_cov >= 120 else "不能完全依賴資產")
 cov_band_cls = "green" if fire_cov >= 150 else ("amber" if fire_cov >= 120 else "red")
-# 2026-09-27：need_to_150 已移除 — 缺口一律讀 snapshot.驗收標準_2027_02.距A級缺口（單一來源）
+# 2026-09-27：need_to_150 已移除 — 缺口一律讀 snapshot.驗收標準_2027_02（單一來源）
+# 2026-09-28：欄位更名「距門檻缺口」（三條門檻）＋「距加碼級缺口_150」（理想值）
 sc_level = (_sch.get("驗收等級", {}) or {}).get("等級", "") or "（待真值日重算）"
-sc_level_cls = "green" if sc_level.startswith("A級") else ("amber" if sc_level.startswith("B級") else "red")
+# 2026-09-28：新增 A+級（加碼級）標籤 → 綠燈；其餘依原規則
+sc_level_cls = ("green" if sc_level.startswith(("A級", "A+級"))
+                else ("amber" if sc_level.startswith("B級") else "red"))
 goal_expense = (_sc_t.get("每月必要生活費", {}) or {}).get("goal", "—")
 goal_passive = (_sc_t.get("被動現金流", {}) or {}).get("goal", "—")
 # 成對顯示（2026-09-23）：保守底線＝下緣（風控判斷用）、當月實收＝現況；兩者必須同時出現
-# 2026-09-27：三情境口徑改由 passive_caliber 單一來源計算（原本這裡自算一份，
-# 導致口徑校正要改多處）。保守底線仍用常態房租 80,100，實收用當月入帳 77,100。
-_SC = _pcal.scenarios(snap)
+# 2026-09-27：情境口徑改由 passive_caliber 單一來源計算（_SC 已於上方建立，勿重複建）。
 div_actual = _SC["div_act"]
+div_norm = _SC["div_norm"]           # 2026-09-28：壓力情境基準（常態月配）
 rent_actual = _SC["rent_act"]
 fire_income_actual = _SC["act"]["income"]       # 當月實收＝配息實收＋房租實收
 fire_cov_actual = _SC["act"]["coverage"]
@@ -71,8 +83,23 @@ sc_light = _rec.get("紅綠燈", "") or "（待真值日重算）"
 _acc = (_sch.get("驗收標準_2027_02", {}) or {})
 _acc_verdict = _acc.get("現況判定", "") or "（待真值日重算）"
 _acc_month = _acc.get("現況判定_基準月", "") or sc_month
-_acc_gaps = _acc.get("距A級缺口", {}) or {}
+_acc_gaps = _acc.get("距門檻缺口", {}) or {}
+_acc_accel = _acc.get("距加碼級缺口_150", {}) or {}
 _acc_todo = [t for t in (_acc.get("焦點三件事", []) or []) if t]
+
+
+def _runway_gap_row(label, d):
+    """跑道缺口列（鍵名與覆蓋率列不同：現況_天／目標_天／缺口_天）。"""
+    if not d:
+        return ""
+    cur = d.get("現況_天")
+    tv = d.get("目標_天") or 0
+    gap = d.get("缺口_天") or 0
+    cls = "green" if gap <= 0 else "red"
+    cur_txt = "∞（零缺口）" if cur is None else f"{cur:,.0f} 天"
+    gap_txt = "已達標 ✅" if gap <= 0 else f"還缺 {gap:,.0f} 天"
+    return (f'<tr><td>{label}</td><td>{cur_txt}</td><td>≥{tv:,.0f} 天</td>'
+            f'<td class="{cls}">{gap_txt}</td></tr>')
 
 
 def _gap_row(label, d):
@@ -88,8 +115,9 @@ def _gap_row(label, d):
 
 
 _gap_rows = "".join([
-    _gap_row("生活費覆蓋率（保守底線·判準）", _acc_gaps.get("生活費覆蓋率")),
-    _gap_row("壓力情境覆蓋率", _acc_gaps.get("壓力情境覆蓋率")),
+    _gap_row("保守覆蓋率（判準）", _acc_gaps.get("生活費覆蓋率")),
+    _gap_row("壓力情境覆蓋率（常態配息口徑）", _acc_gaps.get("壓力情境覆蓋率")),
+    _runway_gap_row("FI 跑道（極端情境口徑）", _acc_gaps.get("FI 跑道")),
 ])
 _cash_g = _acc_gaps.get("現金水位") or {}
 # 單一來源：餘裕/底線都讀 snapshot（本頁不再自算 cash − 底線，避免頁內第二份實作）
@@ -105,8 +133,10 @@ _cash_row = (f'<tr><td>現金水位</td><td>{_cash_g.get("現況", 0):,}</td>'
              f'{"餘裕" if (_cash_g.get("餘裕") or 0) >= 0 else "不足"} '
              f'{abs(_cash_g.get("餘裕", 0)):,}</td></tr>') if _cash_g else ""
 _acc_todo_html = "<br>".join(_acc_todo) if _acc_todo else "（待真值日重算）"
-_g150 = (_acc_gaps.get("生活費覆蓋率") or {}).get("月缺口") or 0
+_g150 = _acc_accel.get("月缺口") or 0          # 距加碼級（150%）缺口：理想值·非門檻
 _gstress = (_acc_gaps.get("壓力情境覆蓋率") or {}).get("月缺口") or 0
+_gcon = (_acc_gaps.get("生活費覆蓋率") or {}).get("月缺口") or 0
+_stress_gap_txt = "已達標 ✅" if _gstress <= 0 else f"還缺 <b class=\"red\">+{_gstress:,.0f}</b>／月"
 
 # 退休目標（使用者設定）：退休生活費 38,000/月；理想 FIRE 月花費 40,000
 RETIRE_BUDGET = 38000
@@ -114,25 +144,18 @@ FIRE_IDEAL = 40000
 retire_cov = fire_income / RETIRE_BUDGET * 100 if RETIRE_BUDGET else 0
 retire_cov_actual = fire_income_actual / RETIRE_BUDGET * 100 if RETIRE_BUDGET else 0
 
-# 極端情境（配息 −30% ＋ 一間無租 ＋ 大型支出 30萬）：分母可能 ≤0，先算好避免 ZeroDivisionError
-_ext_income = div_c * 0.7 + rent - 33000
-_ext_cov = (_ext_income / expense * 100) if expense else 0.0
-_ext_gap = expense - _ext_income
-_ext_months = max(1, round((cash - 300000) / _ext_gap)) if _ext_gap > 0 else 0
+# 極端情境（配息保守值再 −20% ＋ 洲際W 空置）：單一來源 passive_caliber，
+# 與 FI 跑道同分母（現金續航＝跑道天數÷30）；分母可能為 0，先算好避免 ZeroDivisionError
+_ext_income = _SC["extreme"]["income"]
+_ext_cov = _SC["extreme"]["coverage"]
+_ext_gap = _SC["extreme"]["gap"]
+_ext_months = round(cash / _ext_gap, 1) if _ext_gap > 0 else 0
 _ext_cls = "red" if _ext_gap > 0 else "green"
-# ── FI 跑道（現金續航）：保守/實收/壓力三情境由 passive_caliber 單一來源；極端為本頁專屬 ──
-def _rw_txt(_income):
-    _gap = expense - _income
-    if _gap <= 0:
-        return f"∞（月盈餘 +{-_gap:,.0f}）"
-    _d = cash / _gap * 30
-    return f"{_d:,.0f} 天（{_d/30:.1f} 個月）"
-
-
+# ── FI 跑道（現金續航）：四情境一律由 passive_caliber 單一來源（2026-09-28 移除本頁自算）──
 _rw_normal = _pcal.runway_text(_SC["con"]["runway_days"])
 _rw_actual = _pcal.runway_text(_SC["act"]["runway_days"])
 _rw_stress = _pcal.runway_text(_SC["stress"]["runway_days"])
-_rw_ext = _rw_txt(_ext_income)
+_rw_ext = _pcal.runway_text(_SC["extreme"]["runway_days"])
 
 _ext_txt = (f"🔴 缺口 {_ext_gap:,.0f}/月 → 現金水庫撐 {_ext_months} 個月"
             if _ext_gap > 0 else "🟢 無缺口（水庫不受壓）")
@@ -227,10 +250,11 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><th>情境</th><th>假設</th><th>月被動</th><th>覆蓋率</th><th>判定</th><th>現金續航（FI 跑道）</th></tr>
 <tr><td>🟢 正常（保守底線）</td><td>配息/房租/支出正常（保守底線 100,000 判準）</td><td>{fire_income:,}</td><td>{fire_cov:.1f}%</td><td class="{cov_band_cls}">{'🟢' if fire_cov>=150 else ('🟡' if fire_cov>=120 else '🔴')} {cov_band}</td><td>{_rw_normal}</td></tr>
 <tr><td>🟢 正常（當月實收）</td><td>配息實收 {div_actual:,.0f} ＋ 租金 {rent_actual:,.0f}</td><td>{div_actual + rent_actual:,.0f}</td><td>{fire_cov_actual:.1f}%</td><td class="{actual_band_cls}">{'🟢' if fire_cov_actual>=150 else ('🟡' if fire_cov_actual>=120 else '🔴')} {actual_band}</td><td>{_rw_actual}</td></tr>
-<tr><td>🟡 壓力</td><td>配息 −20% ＋ 洲際W 空置</td><td>{_stress_income:,.0f}</td><td class="{_stress_cls}">{stress_cov:.1f}%</td><td class="{_stress_cls}">{_stress_txt}</td><td>{_rw_stress}</td></tr>
-<tr><td>🔴 極端</td><td>配息 −30% ＋ 一間無租 ＋ 大型支出 30萬</td><td>{_ext_income:,.0f}</td><td class="{_ext_cls}">{_ext_cov:.1f}%</td><td class="{_ext_cls}">{_ext_txt}</td><td>{_rw_ext}</td></tr>
+<tr><td>🟡 壓力（判準）</td><td>常態配息 −20%（{div_norm:,.0f}→{div_norm*0.8:,.0f}）＋ 洲際W 空置</td><td>{_stress_income:,.0f}</td><td class="{_stress_cls}">{stress_cov:.1f}%</td><td class="{_stress_cls}">{_stress_txt}</td><td>{_rw_stress}</td></tr>
+<tr><td>🔴 極端（參考）</td><td>配息掉到保守值 {div_c:,} 再 −20%（≈常態 −46%）＋ 洲際W 空置</td><td>{_ext_income:,.0f}</td><td class="{_ext_cls}">{_ext_cov:.1f}%</td><td class="{_ext_cls}">{_ext_txt}</td><td>{_rw_ext}</td></tr>
 </table>
 <p class="callout">覆蓋率三層：🟢 &gt;150% 非常安全｜🟡 120-150% 基本安全｜🔴 &lt;120% 不能完全依賴資產（<b>不含一次性資本利得</b>）。<br>
+留停門檻＝<b>壓力情境 ≥100%</b>（不是正常 150%）；<b>150% 為加碼級理想值</b>（2026-09-28 使用者裁示降級：壓力情境與跑道指標已直接衡量下檔，150% 屬重複保守）。<br>
 現況 <b class="{cov_band_cls}">{fire_cov:.1f}% = {cov_band}</b>（保守底線）｜當月實收 <b class="{actual_band_cls}">{fire_cov_actual:.1f}% = {actual_band}</b>；{_stress_note}。<br>
 2027/8-9 雙軌判斷：財務穩定 × 職涯成立 → 第二職涯；財務穩但職涯觀望 → 延長測試；任一不成立 → 回台電（保留台電）。</p></div>
 
@@ -240,34 +264,38 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><td>每月必要生活費</td><td>{expense:,}</td><td>{goal_expense}</td></tr>
 <tr><td>被動現金流（保守底線·判準）</td><td>{fire_income:,}（覆蓋 {fire_cov:.1f}%）</td><td>{goal_passive}</td></tr>
 <tr><td>被動現金流（當月實收）</td><td>{div_actual + rent:,.0f}（配息 {div_actual:,.0f}＋租金 {rent:,}，覆蓋 {fire_cov_actual:.1f}%）</td><td>觀察（勿與判準混用）</td></tr>
-<tr><td>生活費覆蓋率（判準·保守底線）</td><td class="{('red' if fire_cov<150 else 'green')}">{fire_cov:.1f}%</td><td>≥150%</td></tr>
-<tr><td>壓力情境覆蓋率</td><td class="{_stress_cls}">{stress_cov:.1f}%</td><td>≥100%</td></tr>
+<tr><td>保守覆蓋率（判準·保守底線）</td><td class="{('red' if fire_cov<100 else 'green')}">{fire_cov:.1f}%</td><td>≥100%（門檻）</td></tr>
+<tr><td>壓力情境覆蓋率（常態配息口徑）</td><td class="{_stress_cls}">{stress_cov:.1f}%</td><td>≥100%（門檻）</td></tr>
+<tr><td>FI 跑道（極端情境口徑）</td><td class="{('green' if (_SC['extreme']['runway_days'] or 0)>=540 else 'red')}">{_rw_ext}</td><td>≥540 天（門檻）</td></tr>
 <tr><td>房租淨現金流</td><td>{rent - 26000:,}</td><td>持續改善</td></tr>
 <tr><td>投資現金流</td><td>{div_c:,}</td><td>穩定</td></tr>
-<tr><td>現金水位</td><td>{cash:,}</td><td>持續增加</td></tr>
+<tr><td>現金水位</td><td>{cash:,}</td><td>≥{_floor_s:,.0f}（底線）</td></tr>
+<tr><td>加碼級覆蓋率（理想值·非門檻）</td><td class="{('green' if fire_cov>=150 else 'amber')}">{fire_cov:.1f}%</td><td>≥150%</td></tr>
 <tr><td>每月負債成本</td><td>{liab_cost:,}</td><td>持續下降</td></tr>
 <tr><td>第二職涯收入</td><td>{career_income:,}</td><td>不設硬性門檻（負責驗證職涯＋加速還債）</td></tr>
 <tr><td>第二職涯工時</td><td>{career_hours:,}</td><td>觀察收入/工時</td></tr>
 </table>
-<p class="callout"><b>留停紅綠燈（雙指標同時達標才算）</b>：🟢 正常覆蓋率 ≥150% ＋ 🟢 壓力情境 ≥100% ＝ 財務留停安全。<br>
-現況：正常 {fire_cov:.1f}%（保守底線·判準）／{fire_cov_actual:.1f}%（當月實收） ＋ 壓力 {stress_cov:.1f}% → <b class="{'green' if '🟢' in sc_light else ('amber' if '🟡' in sc_light else 'red')}">{sc_light}</b>（保守底線 {cov_band}；水庫防守）。<br>
+<p class="callout"><b>留停紅綠燈（2026-09-28 改版：三條同時達標才算）</b>：🟢 保守覆蓋 ≥100% ＋ 🟢 壓力情境 ≥100% ＋ 🟢 跑道 ≥540 天 ＋ 🟢 現金 ≥底線 ＝ 財務留停安全。<br>
+現況：保守 {fire_cov:.1f}%（判準）／{fire_cov_actual:.1f}%（當月實收） ＋ 壓力 {stress_cov:.1f}% ＋ 跑道 {_rw_ext} → <b class="{'green' if '🟢' in sc_light else ('amber' if '🟡' in sc_light else 'red')}">{sc_light}</b>（保守底線 {cov_band}；水庫防守）。<br>
 被動收入負責基本生活；標案/顧問只負責驗證第二職涯＋加速還債 — 兩者不綁死，才不會為了急著賺錢跑回現場監工。<br>
 每月 1 日真值日自動重算（sabbatical_checklist_update.py），留存 3 個月趨勢驗證「結構性改善」非單月巧合。</p></div>
 
 <div class="card"><h2>🎯 2027/2 財務驗收標準（A/B/C 級，判斷權重：當月 &lt; 趨勢 &lt; 壓力 &lt; 現金水位）</h2>
 <table>
 <tr><th>等級</th><th>條件</th><th>行動</th></tr>
-<tr><td>A級 🟢</td><td>正常 ≥150% ＋ 壓力 ≥100% ＋ 3個月趨勢無明顯惡化 ＋ 現金 ≥70萬安全網</td><td>可以放心留停（取得「薪水非生存必需品」選擇權）</td></tr>
-<tr><td>B級 🟡</td><td>正常 ≥150% 但壓力接近 100%，或現金水位不足；或正常 120-150% 持續改善中</td><td>延後一點／先補水庫</td></tr>
-<tr><td>C級 🔴</td><td>正常未達 120%，或壓力明顯 &lt;100% 且改善無趨勢</td><td>繼續留台電，先修財務結構</td></tr>
+<tr><td>A級 🟢</td><td>保守 ≥100% ＋ 壓力 ≥100% ＋ 跑道 ≥540 天 ＋ 現金 ≥底線 ＋ 3個月趨勢無明顯惡化</td><td>可以放心留停（取得「薪水非生存必需品」選擇權）</td></tr>
+<tr><td>A+級 🟦</td><td>再加「保守覆蓋 ≥150%」＝加碼級理想值（<b>非門檻</b>；2026-09-28 由門檻降級）</td><td>緩衝更厚，可加速布局</td></tr>
+<tr><td>B級 🟡</td><td>保守 ≥100% 但壓力 &lt;100%、跑道 &lt;540 天或現金不足</td><td>可以留但先補水庫</td></tr>
+<tr><td>C級 🔴</td><td>保守 &lt;100%（現金流本身不足）</td><td>繼續留台電，先修財務結構</td></tr>
 </table>
-<p class="callout" style="border-left-color:#ef4444"><b>📏 距 A 級缺口（基準月 {_acc_month} · 動態讀 snapshot）</b><br>
-生活費覆蓋率還缺 <b class="red">+{_g150:,.0f}</b>／月、壓力情境還缺 <b class="red">+{_gstress:,.0f}</b>／月；{_cash_line}</p>
+<p class="callout" style="border-left-color:#ef4444"><b>📏 距門檻缺口（基準月 {_acc_month} · 動態讀 snapshot）</b><br>
+保守覆蓋率 {('已達標 ✅' if _gcon <= 0 else '還缺 <b class="red">+' + format(_gcon, ',.0f') + '</b>／月')}、壓力情境 {_stress_gap_txt}；{_cash_line}<br>
+<b>加碼級（理想值·非門檻）</b>：覆蓋 {fire_cov:.1f}% → 150% 還差 <b>{_g150:,.0f}</b>／月 — 不影響留停判定。</p>
 <table>
-<tr><th>指標</th><th>現況</th><th>A 級目標</th><th>缺口</th></tr>
+<tr><th>指標</th><th>現況</th><th>門檻</th><th>缺口</th></tr>
 {_gap_rows}{_cash_row}
 </table>
-<p class="callout">現況（{sc_month}）：正常 {fire_cov:.1f}%（保守底線·判準）／{fire_cov_actual:.1f}%（當月實收） ／ 壓力 {stress_cov:.1f}% ／ 現金 {cash:,} → <b class="{sc_level_cls}">{sc_level}</b><br>
+<p class="callout">現況（{sc_month}）：保守 {fire_cov:.1f}%（判準）／{fire_cov_actual:.1f}%（當月實收） ／ 壓力 {stress_cov:.1f}% ／ 跑道 {_rw_ext} ／ 現金 {cash:,} → <b class="{sc_level_cls}">{sc_level}</b><br>
 {_acc_verdict}<br>
 三件事：<br>{_acc_todo_html}<br>
 核心：2027/2 不是「要不要辭台電」，是「資產系統是否成熟到暫時不依賴薪水」。</p></div>

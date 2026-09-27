@@ -274,10 +274,11 @@ def main():
     surplus = monthly_inc - monthly_exp
     coverage = monthly_inc / monthly_exp * 100 if monthly_exp else 0
     # ── 2026-09-27：被動現金流三情境 + FI 跑道（口徑單一來源 passive_caliber）──
+    # ── 2026-09-28：加第四軌「極端情境」（保守配息再 −20%）＝ FI 跑道分母 ──
     # 注意：「月盈餘」KPI 是含薪資的 monthly_income 口徑，與本卡片的被動口徑不同，不可混用。
     _pcs = _pcal.scenarios(s)
     _passive_card = (
-        '<div class="card"><h2>💰 被動現金流與 FI 跑道（三情境）</h2>'
+        '<div class="card"><h2>💰 被動現金流與 FI 跑道（四情境）</h2>'
         '<table><tr><th>情境</th><th class="num">月被動</th><th class="num">覆蓋率</th>'
         '<th class="num">月盈餘／缺口</th><th class="num">FI 跑道</th></tr>'
         f'<tr><td>🟢 保守底線（判準）</td><td class="num">{_pcs["con"]["income"]:,.0f}</td>'
@@ -288,13 +289,18 @@ def main():
         f'<td class="num">{_pcs["act"]["coverage"]:.1f}%</td>'
         f'<td class="num">{_pcs["act"]["surplus"]:+,.0f}</td>'
         f'<td class="num">{_pcal.runway_text(_pcs["act"]["runway_days"])}</td></tr>'
-        f'<tr><td>🟡 壓力情境</td><td class="num">{_pcs["stress"]["income"]:,.0f}</td>'
+        f'<tr><td>🟡 壓力情境（判準）</td><td class="num">{_pcs["stress"]["income"]:,.0f}</td>'
         f'<td class="num">{_pcs["stress"]["coverage"]:.1f}%</td>'
-        f'<td class="num red">−{_pcs["stress"]["gap"]:,.0f}</td>'
-        f'<td class="num">{_pcal.runway_text(_pcs["stress"]["runway_days"])}</td></tr></table>'
+        f'<td class="num {"red" if _pcs["stress"]["surplus"] < 0 else "green"}">{_pcs["stress"]["surplus"]:+,.0f}</td>'
+        f'<td class="num">{_pcal.runway_text(_pcs["stress"]["runway_days"])}</td></tr>'
+        f'<tr><td>🔴 極端情境（參考）</td><td class="num">{_pcs["extreme"]["income"]:,.0f}</td>'
+        f'<td class="num">{_pcs["extreme"]["coverage"]:.1f}%</td>'
+        f'<td class="num red">{_pcs["extreme"]["surplus"]:+,.0f}</td>'
+        f'<td class="num">{_pcal.runway_text(_pcs["extreme"]["runway_days"])}</td></tr></table>'
         '<div style="font-size:11px;color:var(--sub);margin-top:8px">'
-        '保守底線＝判準層（配息 100,000＋房租常態 80,100）｜當月實收＝配息實收＋房租實收｜'
-        '壓力情境＝配息 −20%＋洲際W 空置。FI 跑道＝現金 ÷ 月缺口；「月盈餘」KPI 為含薪資口徑，與本表不同。</div></div>'
+        '保守底線＝判準層（配息基本值＋房租常態）｜當月實收＝配息實收＋房租實收｜'
+        '壓力情境＝常態配息 −20%＋洲際W 空置（<b>留停判準</b>）｜極端情境＝配息掉到保守值再 −20%＋空置（跑道分母）。'
+        'FI 跑道＝現金 ÷ 月缺口；「月盈餘」KPI 為含薪資口徑，與本表不同。</div></div>' 
     )
     usd_pct = s.get("usd_exposure_pct", 64.0)
     tech = (s.get("industry_penetration", {}).get("產業", {}).get("資訊科技", {}).get("佔比")

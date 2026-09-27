@@ -13,14 +13,20 @@ run_daily 生效，儀表板與退休規劃頁仍用常態 80,100）。這裡集
    缺值時以 0 計，不得用當月實收冒充（沿用 INC-248 對策）。
 2. 當月實收＝ dividend_month_actual（配息實收）＋ passive_income.rent_monthly_actual
    （房租實收，真值＝當月入帳加總）。
-3. 壓力情境＝ 配息保守 × STRESS_DIV_RATIO ＋ 房租常態 − 洲際W 空置額
+3. 壓力情境（正式判準）＝ 常態月配 × STRESS_DIV_RATIO ＋ 房租常態 − 洲際W 空置額
    （空置額讀 snapshot.rent_breakdown.洲際W，不寫死）。
-4. FI 跑道＝ 現金 ÷ 月缺口 × 30 天；無缺口回 None（顯示為 ∞）。
+   2026-09-28 使用者裁示：原本用「保守配息再砍 20%」是雙重打折（100,000 本身已是
+   下緣），等於把下限再打一次 → 判準虛高。改以常態月配（monthly_dividend_total，
+   與 PCCR 正式判準同源）為壓力情境基準。
+4. 極端情境（參考軌，非判準）＝ 保守配息 × STRESS_DIV_RATIO ＋ 房租常態 − 洲際W 空置額。
+   保留原雙重打折口徑，用途：壓力情境若已無缺口，跑道分母會失效 → FI 跑道改用
+   極端情境缺口當分母（現金撐得過「配息掉到保守值再打折＋空置」多久）。
+5. FI 跑道＝ 現金 ÷ 月缺口 × 30 天；無缺口回 None（顯示為 ∞）。
 """
 
 from __future__ import annotations
 
-STRESS_DIV_RATIO = 0.8          # 壓力情境：配息保守再打折
+STRESS_DIV_RATIO = 0.8          # 壓力／極端情境：配息砍 20%
 _FALLBACK_EXPENSE = 162781.0    # 僅在 snapshot 完全缺值時使用（v4 定版月支出）
 _FALLBACK_VACANCY = 33000.0     # 僅在 rent_breakdown 缺值時使用（洲際W 月租）
 
@@ -33,12 +39,14 @@ def _f(v, default=0.0) -> float:
 
 
 def scenarios(snap: dict) -> dict:
-    """回傳三情境（保守 con / 實收 act / 壓力 stress）的月被動、覆蓋率、盈餘、FI 跑道。"""
+    """回傳四情境（保守 con / 實收 act / 壓力 stress / 極端 extreme）的
+    月被動、覆蓋率、盈餘、FI 跑道。"""
     snap = snap or {}
     pi = snap.get("passive_income") or {}
     exp = _f(snap.get("monthly_expense") or pi.get("monthly_expense"), _FALLBACK_EXPENSE)
     cash = _f(snap.get("cash_total"))
     div_con = _f(pi.get("fund_dividend_conservative"))
+    div_norm = _f(snap.get("monthly_dividend_total") or pi.get("fund_dividend_monthly"))
     div_act = _f(snap.get("dividend_month_actual") or snap.get("monthly_dividend_total")
                  or pi.get("dividend_actual_sum"))
     rent_norm = _f(pi.get("rent_monthly"))
@@ -59,12 +67,23 @@ def scenarios(snap: dict) -> dict:
     return {
         "expense": exp,
         "cash": cash,
-        "div_con": div_con, "div_act": div_act,
+        "div_con": div_con, "div_norm": div_norm, "div_act": div_act,
         "rent_norm": rent_norm, "rent_act": rent_act, "vacancy": vacancy,
         "con": _one(div_con + rent_norm),
         "act": _one(div_act + rent_act),
-        "stress": _one(div_con * STRESS_DIV_RATIO + rent_norm - vacancy),
+        "stress": _one(div_norm * STRESS_DIV_RATIO + rent_norm - vacancy),
+        "extreme": _one(div_con * STRESS_DIV_RATIO + rent_norm - vacancy),
     }
+
+
+def runway_ref(sc: dict) -> dict:
+    """FI 跑道的參考情境＝極端情境（雙重打折口徑）。
+    壓力情境（常態口徑）無缺口時分母為 0、跑道失去意義，故跑道一律以極端情境為分母。"""
+    return sc.get("extreme") or sc["stress"]
+
+
+def runway_days(sc: dict):
+    return runway_ref(sc).get("runway_days")
 
 
 def runway_text(days) -> str:
@@ -87,10 +106,11 @@ if __name__ == "__main__":   # 自我檢查：python passive_caliber.py
     import os
     p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "snapshot.json")
     s = scenarios(json.load(open(p, encoding="utf-8")))
-    for k, lab in (("con", "保守底線"), ("act", "當月實收"), ("stress", "壓力情境")):
+    for k, lab in (("con", "保守底線（判準）"), ("act", "當月實收"),
+                   ("stress", "壓力情境（判準）"), ("extreme", "極端情境（參考）")):
         d = s[k]
         print(f"{lab}: 月被動 {d['income']:,.0f}｜覆蓋 {d['coverage']:.1f}%｜"
               f"盈餘 {d['surplus']:+,.0f}｜跑道 {runway_text(d['runway_days'])}")
-    print(f"輸入：配息保守 {s['div_con']:,.0f}／實收 {s['div_act']:,.0f}｜"
+    print(f"輸入：配息保守 {s['div_con']:,.0f}／常態 {s['div_norm']:,.0f}／實收 {s['div_act']:,.0f}｜"
           f"房租常態 {s['rent_norm']:,.0f}／實收 {s['rent_act']:,.0f}｜空置 {s['vacancy']:,.0f}｜"
           f"支出 {s['expense']:,.0f}｜現金 {s['cash']:,.0f}")

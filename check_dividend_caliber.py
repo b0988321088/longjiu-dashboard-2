@@ -92,7 +92,7 @@ ck("變更範圍僅預期檔案", not extra, str(extra))
 
 # 8) 二階段修正（CIO findings）
 ck("極端情境分母已保護（無裸除法）",
-   "_ext_months = max(1, round((cash - 300000) / _ext_gap)) if _ext_gap > 0 else 0" in src
+   '_ext_months = round(cash / _ext_gap, 1) if _ext_gap > 0 else 0' in src
    and "/(expense-(div_c*0.7+rent-33000))" not in src)
 ck("已移除未使用變數 surplus/working_surplus",
    "surplus = snap.get" not in src and "working_surplus = snap.get" not in src)
@@ -133,7 +133,10 @@ ck("共享上下文已重生（實收鍵 147,975／現金 861818／盈餘 17319�
    and "'fund_dividend_monthly': 131439" not in ctx2
    and "'dividend_actual_sum': 131439" not in ctx2
    and "- **Retirement Surplus**: 30552" not in ctx2)
-ck("頁面壓力/極端情境值不變", "127,100" in t and "71.9%" in t and "12 個月" in t)
+# 2026-09-28 門檻改版：壓力情境＝常態配息口徑（165,480／101.7%）、極端情境為跑道參考（127,100／78.1%）
+ck("頁面壓力情境為常態配息口徑（101.7%）", "101.7" in t and "165,480" in t)
+ck("頁面極端情境與跑道保留（127,100／78.1%／744 天）", "127,100" in t and "78.1" in t and "744 天" in t)
+ck("頁面已無舊 A 級 150% 門檻字樣", "正常 ≥150%" not in t and "距 A 級缺口" not in t and "244,172" not in t)
 
 # 13) 被動收入基準觀察小卡（儀表板）＋ 情境判定派生（2026-09-23 使用者指示）
 _idx = (BASE / "index.html").read_text(encoding="utf-8")

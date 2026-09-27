@@ -918,8 +918,10 @@ def main():
                    f'<div class="flex flex-wrap gap-3 text-[10px] mt-1">'
                    f'<span class="text-emerald-400">💰 月盈餘：保守 {_pcal.surplus_text(_sc["con"]["surplus"])}'
                    f'／實收 {_pcal.surplus_text(_sc["act"]["surplus"])}</span>'
-                   f'<span class="text-amber-400">🏁 FI 跑道：壓力情境 {_pcal.runway_text(_sc["stress"]["runway_days"])}'
-                   f'、實收情境 {_pcal.runway_text(_sc["act"]["runway_days"])}</span></div>')
+                   f'<span class="text-amber-400">🏁 FI 跑道（極端情境口徑）：{_pcal.runway_text(_sc["extreme"]["runway_days"])}'
+                   f'、實收情境 {_pcal.runway_text(_sc["act"]["runway_days"])}</span>'
+                   f'<span class="text-amber-300">｜壓力情境覆蓋 {_sc["stress"]["coverage"]:.1f}%'
+                   f'（留停判準 ≥100%）</span></div>')
         tpl = tpl.replace("__INC_BAR__", _bar)
         tpl = tpl.replace("__INC_LEGEND__", _legend)
         tpl = tpl.replace("__INC_COV__", f"{_cov:.1f}% 覆蓋（保守底線）｜實收 {_cov_act:.1f}%")

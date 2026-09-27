@@ -1653,15 +1653,17 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             _cov_act = _sc["act"]["coverage"]
             _sur_con = _sc["con"]["surplus"]
             _sur_act = _sc["act"]["surplus"]
-            _rw_stress_txt = _pcal.runway_text(_sc["stress"]["runway_days"])
+            _rw_ext_txt = _pcal.runway_text(_sc["extreme"]["runway_days"])   # 跑道分母＝極端情境（2026-09-28）
             _rw_act_txt = _pcal.runway_text(_sc["act"]["runway_days"])
+            _cov_stress = _sc["stress"]["coverage"]                          # 留停判準壓力情境
             _cur_line = (f"<div style='font-size:12px;color:#92400e;margin-top:6px;padding-top:6px;border-top:1px dashed #fbbf24'>"
                           f"📊 即時（{_snap_p.get('date','')}）："
                           f"月配息保守 {_div_con:,.0f}／實收 {_div_cur:,.0f}｜"
                           f"總資產 {_ta:,.0f}｜淨資產 {_nw:,.0f}｜"
                           f"覆蓋 {_cov_con:.1f}%／實收 {_cov_act:.1f}%<br>"
                           f"💰 月盈餘：保守 {_sur_con:+,.0f}／實收 {_sur_act:+,.0f}｜"
-                          f"FI 跑道：壓力情境 {_rw_stress_txt}、實收情境 {_rw_act_txt}"
+                          f"FI 跑道（極端情境口徑）：{_rw_ext_txt}、實收情境 {_rw_act_txt}｜"
+                          f"壓力情境覆蓋 {_cov_stress:.1f}%"
                           f"（判準仍為保守底線 {_div_con:,.0f}）</div>")
             # 動態失敗訊號（2026-09-24：從 snapshot 每月數據即時計算，不再用靜態欄位）
             _base_div = _b.get('月配息常態估算', 138627)

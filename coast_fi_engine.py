@@ -6,8 +6,9 @@
   1. 全部讀 snapshot.json（單一真值），本檔不含任何寫死金額／門檻。
      門檻優先序：snapshot.coast_fi_config > DEFAULT_CONFIG（僅為首次預設）。
   2. 質押數據一律走 pledge_status.pledge_facts()（既有唯一來源），不自行重算。
-  3. 與既有「留停驗收表」口徑對齊：被動收入用 passive_income.total_conservative、
-     支出用 monthly_expense、配息壓力用 haircut 0.8 + 洲際W 空置（既有壓力情境口徑）。
+  3. 與既有「留停驗收表」口徑對齊：被動收入一律走 passive_caliber（保守/實收/壓力/極端
+     四軌單一來源）；支出用 monthly_expense。跑道分母自 2026-09-28 起用「極端情境」
+     （保守配息再×0.8 ＋ 洲際W 空置）——壓力情境改常態配息口徑後已無缺口。
   4. 本檔預設 dry-run（只印不寫）；--write 才寫回 snapshot.coast_fi_engine。
 
 用法
@@ -33,7 +34,8 @@ DEFAULT_CONFIG = {
     "years_to_target": None,   # 若要直接給年數（覆蓋 target_date）在此填數字
     "cash_caliber": "net_of_reserve",   # net_of_reserve（扣追繳緩衝，正式口徑）| cash_total
     # 2026-09-27 使用者裁示：追繳緩衝取消（SoT 追繳緩衝 = 0）→ reserve 恆為 0、跑道即全現金口徑。
-    "stress_dividend_haircut": 0.8,     # 配息壓力砍 20%（沿用既有壓力情境口徑；須與 passive_caliber.STRESS_DIV_RATIO 一致）
+    "stress_dividend_haircut": 0.8,     # 配息壓力砍 20%（須與 passive_caliber.STRESS_DIV_RATIO 一致）
+    "runway_ref_scenario": "extreme",   # 跑道分母情境：extreme（極端）| stress（壓力）
     "light_work_incomes": [0, 20000, 30000],  # 退休後「簡單工作」月收敏感度
     "targets": {
         "coast_fi_ratio_pct": 100,
@@ -139,6 +141,9 @@ def pccr_metric(snap, c):
                   or pi.get("fund_dividend_monthly") or 0)            # 常態月配（9月 147,975）
     div_a = float(snap.get("dividend_month_actual") or div_n)          # 當月實收
     rent = float(pi.get("rent_monthly") or 0)
+    # 2026-09-28：實收軌的房租用「當月入帳真值」rent_monthly_actual（77,100），
+    # 與 passive_caliber.act／日報／儀表板同一口徑；原本用常態 80,100 會多出 1.8pp（140.1% vs 138.3%）
+    rent_act = float(pi.get("rent_monthly_actual") or rent)
     h = c["stress_dividend_haircut"]
 
     def cov(x):
@@ -149,7 +154,7 @@ def pccr_metric(snap, c):
         "dividend_conservative": div_c, "dividend_normal": div_n, "dividend_actual": div_a,
         "pccr_pct": cov(div_n * h + rent),              # 正式判準（規格口徑）
         "pccr_conservative_pct": cov(div_c + rent),     # 下緣（留停驗收表口徑）
-        "pccr_actual_pct": cov(div_a + rent),           # 當月實收
+        "pccr_actual_pct": cov(div_a + rent_act),       # 當月實收（房租＝當月入帳真值）
         "pccr_normal_headroom": round((div_n * h + rent) / exp * 100, 1) if exp else 0,
         "nonpassive": {"girlfriend_repayment": float(pi.get("girlfriend_repayment") or 0)},
         "canonical_source": "monthly_dividend_total（常態）／passive_income.fund_dividend_conservative（保守）",
@@ -180,16 +185,21 @@ def light_work_sensitivity(snap, c, ga):
 
 
 def runway_metric(snap, c):
-    """跑道＝現金 / 壓力情境月缺口 × 30。
-    為什麼用壓力情境：正常情境下被動收入已 > 支出（分母為負）→ 指標恆為無限大而失效。"""
+    """跑道＝現金 / 極端情境月缺口 × 30。
+    為什麼用極端情境（2026-09-28 使用者裁示）：壓力情境改用常態配息口徑後已無缺口
+    （分母 0 → 指標恆無限大而失效）；「現金撐得過多久」的實際分母是極端情境
+    （保守配息再×0.8 ＋ 洲際W 空置）。兩條線並列輸出，不二選一。"""
     pi = snap.get("passive_income") or {}
-    # 2026-09-27：壓力情境收入改由 passive_caliber 單一來源（原本此處自算一份，
+    # 2026-09-27：情境收入改由 passive_caliber 單一來源（原本此處自算一份，
     # 與各報表各自實作 → 口徑校正要改多處，漏一處就出現兩份數字）
     _pcs = _pcal.scenarios(snap)
     exp = _pcs["expense"]
     vacancy = _pcs["vacancy"]                      # 洲際W 空置壓力
     income_stress = _pcs["stress"]["income"]
-    gap = _pcs["stress"]["gap"]
+    gap_stress = _pcs["stress"]["gap"]
+    _ref = _pcal.runway_ref(_pcs)                  # 跑道分母＝極端情境
+    income_extreme = _ref["income"]
+    gap = _ref["gap"]
     thr = snap.get("thresholds_2026_0915") or {}
     cw = thr.get("現金_twd") or {}
     reserve = float(cw.get("追繳緩衝") or 0)
@@ -197,7 +207,9 @@ def runway_metric(snap, c):
     cash_full = float(snap.get("cash_total") or 0)
     cash = cash_full - reserve if c["cash_caliber"] == "net_of_reserve" else cash_full
     days = round(cash / gap * 30) if gap > 0 else 999
-    return {"income_stress": income_stress, "gap": gap, "vacancy": vacancy,
+    return {"income_stress": income_stress, "gap_stress": gap_stress,
+            "income_extreme": income_extreme, "gap": gap, "vacancy": vacancy,
+            "scenario": c.get("runway_ref_scenario", "extreme"),
             "cash_full": cash_full, "reserve": reserve, "floor": floor, "cash_used": cash,
             "cash_below_floor": cash_full < floor and floor > 0,
             "runway_days": days, "cash_caliber": c["cash_caliber"],
@@ -326,7 +338,8 @@ def render(r):
     L.append(f"  保守底線 {pc['pccr_conservative_pct']}%（配息基本值 {pc['dividend_conservative']:,.0f}；"
              f"留停驗收表口徑，是下緣不是現況）｜當月實收 {pc['pccr_actual_pct']}%")
     L.append(f"• 無薪安全跑道：{rw['runway_days']} 天 {tri(r['status']['runway'])}"
-             f"（目標 {c['runway_days']} 天 ≈18個月；全現金口徑 {rw['runway_days_full_cash']} 天）")
+             f"（目標 {c['runway_days']} 天 ≈18個月；分母＝極端情境缺口 {rw['gap']:,.0f}/月；"
+             f"全現金口徑 {rw['runway_days_full_cash']} 天）")
     L.append(f"• 跌30% 維持率：{st['maintenance_minus30_pct']}% {tri(r['status']['maintenance'])}"
              f"（目標 {c['maintenance_pct']}%；追繳線 LTV {st['call_line_pct']}%，"
              f"再跌 {st['drop_to_call_pct']}% 觸線{'；撥款後口徑' if not st.get('disbursed') else ''}）")
@@ -382,9 +395,10 @@ def main():
         print(f"配息率口徑（含房產）：門檻 {co['coast_threshold_yield']:,.0f} → 比率 "
               f"{co['coast_fi_ratio_yield_pct']}%；年缺口 {co['gap_fv_yield']:,.0f} → "
               f"每月需投入 {co['monthly_needed_yield']:,.0f}")
-    print(f"跑道口徑：壓力月收入 {r['runway']['income_stress']:,.0f}"
-          f"（配息 {r['pccr']['dividend_conservative']:,.0f}×0.8 + 租金 − 洲際W空置 {r['runway']['vacancy']:,.0f}）"
-          f" → 月缺口 {r['runway']['gap']:,.0f}")
+    print(f"跑道口徑：極端月收入 {r['runway']['income_extreme']:,.0f}"
+          f"（配息保守 {r['pccr']['dividend_conservative']:,.0f}×0.8 + 租金 − 洲際W空置 {r['runway']['vacancy']:,.0f}）"
+          f" → 月缺口 {r['runway']['gap']:,.0f}"
+          f"；壓力情境（常態配息口徑）月收入 {r['runway']['income_stress']:,.0f}、缺口 {r['runway']['gap_stress']:,.0f}")
     _res_txt = (f" − 追繳緩衝 {r['runway']['reserve']:,.0f}" if r['runway']['reserve'] > 0 else "")
     print(f"  現金可用 {r['runway']['cash_used']:,.0f}（{r['runway']['cash_caliber']}："
           f"{r['runway']['cash_full']:,.0f}{_res_txt}）"
