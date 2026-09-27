@@ -263,7 +263,7 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><td>🟡 壓力（判準）</td><td>常態配息 −20%（{div_norm:,.0f}→{div_norm*0.8:,.0f}）＋ 洲際W 空置</td><td>{_stress_income:,.0f}</td><td class="{_stress_cls}">{stress_cov:.1f}%</td><td class="{_stress_cls}">{_stress_txt}</td><td>{_rw_stress}</td></tr>
 <tr><td>🔴 極端（參考）</td><td>配息掉到保守值 {div_c:,} 再 −20%（≈常態 −46%）＋ 洲際W 空置</td><td>{_ext_income:,.0f}</td><td class="{_ext_cls}">{_ext_cov:.1f}%</td><td class="{_ext_cls}">{_ext_txt}</td><td>{_rw_ext}</td></tr>
 </table>
-<p class="callout">覆蓋率三層：🟢 &gt;150% 非常安全｜🟡 120-150% 基本安全｜🔴 &lt;120% 不能完全依賴資產（<b>不含一次性資本利得</b>）。<br>
+<p class="callout">覆蓋率三層（<b>經驗級距·非留停門檻</b>，僅作相對水位參考）：🟢 &gt;150% 非常安全｜🟡 120-150% 基本安全｜🔴 &lt;120% 不能完全依賴資產（<b>不含一次性資本利得</b>）。留停判定請看三條門檻（保守 ≥100%、壓力 ≥100%、跑道 ≥540 天＋現金 ≥底線），150% 另列為加碼級理想值。<br>
 留停門檻＝<b>壓力情境 ≥100%</b>（不是正常 150%）；<b>150% 為加碼級理想值</b>（2026-09-28 使用者裁示降級：壓力情境與跑道指標已直接衡量下檔，150% 屬重複保守）。<br>
 現況 <b class="{cov_band_cls}">{fire_cov:.1f}% = {cov_band}</b>（保守底線）｜當月實收 <b class="{actual_band_cls}">{fire_cov_actual:.1f}% = {actual_band}</b>；{_stress_note}。<br>
 2027/8-9 雙軌判斷：財務穩定 × 職涯成立 → 第二職涯；財務穩但職涯觀望 → 延長測試；任一不成立 → 回台電（保留台電）。</p></div>

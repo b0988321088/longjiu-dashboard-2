@@ -134,8 +134,27 @@ ck("共享上下文已重生（實收鍵 147,975／現金 861818／盈餘 17319�
    and "'dividend_actual_sum': 131439" not in ctx2
    and "- **Retirement Surplus**: 30552" not in ctx2)
 # 本檔 HTML 變數釘死 retirement_plan_2026-09-23.html（凍結的當日稽核產物）→ 斷言只對該檔成立。
-# 留停門檻改版（2026-09-28）的即時守門改放 %TEMP%/verify_ficriteria.py（每次推送前跑），不在此檔。
+# 留停門檻改版（2026-09-28）的完整守門＝tools/verify_ficriteria.py（版控內、相對式斷言，每次推送前跑）；
+# 本檔保留 9/23 期口徑審計與下列「當日產物」即時斷言。
 ck("頁面壓力/極端情境值不變", "127,100" in t and "71.9%" in t and "12 個月" in t)
+
+# 2026-09-28 門檻改版：新口徑的即時斷言改指「當日最新產物」且相對式現算
+# （原本只斷言凍結的 2026-09-23 檔 → 新版口徑無守門；寫死數字則跨真值日會自己轉紅）
+import glob as _glob
+import passive_caliber as _pc28
+_latest_plan = sorted(_glob.glob(str(BASE / "retirement_plan_*.html")))
+if _latest_plan:
+    _lp = Path(_latest_plan[-1]).read_text(encoding="utf-8")
+    _sc28 = _pc28.scenarios(snap)
+    ck(f"當日產物（{Path(_latest_plan[-1]).name}）壓力情境覆蓋＝snapshot 口徑",
+       f"{_sc28['stress']['coverage']:.1f}" in _lp, f"期望 {_sc28['stress']['coverage']:.1f}")
+    ck("當日產物極端情境覆蓋＝snapshot 口徑（原壓力口徑降級後數值保留）",
+       f"{_sc28['extreme']['coverage']:.1f}" in _lp, f"期望 {_sc28['extreme']['coverage']:.1f}")
+    ck("當日產物無舊門檻字樣（正常 ≥150%／距 A 級缺口／244,172）",
+       "正常 ≥150%" not in _lp and "距 A 級缺口" not in _lp and "244,172" not in _lp)
+    ck("當日產物含加碼級 A+ 標記", "A+級" in _lp)
+else:
+    ck("找到 retirement_plan_*.html（新口徑守門）", False, "無逐日產物")
 
 # 13) 被動收入基準觀察小卡（儀表板）＋ 情境判定派生（2026-09-23 使用者指示）
 _idx = (BASE / "index.html").read_text(encoding="utf-8")
