@@ -16,8 +16,9 @@ h1{font-size:22px;font-weight:900;margin:8px 0 2px}
 table{width:100%;border-collapse:collapse;font-size:13.5px}
 td,th{padding:8px 6px;border-bottom:1px solid #334155;text-align:left}
 th{color:#94a3b8;font-weight:600;font-size:12px}
-.bar{height:8px;background:#334155;border-radius:6px;overflow:hidden;margin-top:4px}
+.bar{height:10px;background:#334155;border-radius:6px;overflow:hidden;margin-top:4px;position:relative}
 .bar>div{height:100%;background:#22c55e;border-radius:6px}
+.bar>i{position:absolute;top:0;height:100%;width:2px;background:#fbbf24}
 ul{margin:6px 0;padding-left:18px} li{margin:4px 0}
 .tag{display:inline-block;background:#334155;color:#e2e8f0;border-radius:6px;padding:2px 8px;font-size:12px;margin-right:6px}
 .callout{background:#1e3a5f40;border-left:3px solid #38bdf8;padding:10px 14px;border-radius:6px;font-size:13px}
@@ -32,9 +33,11 @@ ul{margin:6px 0;padding-left:18px} li{margin:4px 0}
   <div class="card"><div class="stat"><div class="label">FIRE 覆蓋率（保守／實收）</div><div class="val" style="color:#22c55e">110.6% <span style="font-size:15px;color:#94a3b8">／</span> <span class="amber">138.3%</span></div><div class="label" style="margin-top:4px">保守底線（判準）／當月實收</div></div></div>
   <div class="card"><div class="stat"><div class="label">退休生活費覆蓋（38,000 目標）</div><div class="val green">474% <span style="font-size:15px;color:#94a3b8">／</span> 592%</div><div class="label" style="margin-top:4px">保守底線／當月實收</div></div></div>
 </div>
-<div class="bar" style="margin-bottom:6px"><div style="width:min(110.6%,100%)"></div></div>
-<div class="bar" style="margin-bottom:6px"><div style="width:min(138.3%,100%);background:#38bdf8"></div></div>
-<p class="meta" style="margin-bottom:16px">覆蓋率條：上＝保守底線 110.6%（判準）｜下＝當月實收 138.3%（基本安全）</p>
+<div class="label" style="margin-top:12px">保守底線（判準）<b style="color:#e2e8f0"> 110.6%</b></div>
+<div class="bar"><div style="width:73.7%"></div><i style="left:66.7%"></i></div>
+<div class="label" style="margin-top:10px">當月實收 <b class="amber"> 138.3%</b></div>
+<div class="bar"><div style="width:92.2%;background:#38bdf8"></div><i style="left:66.7%"></i></div>
+<p class="meta" style="margin-bottom:16px">尺標 0–150%（150%＝加碼級理想值滿格）｜黃線＝100% 留停門檻｜上＝保守底線 110.6%（判準）、下＝當月實收 138.3%（基本安全）</p>
 
 <div class="card"><h2>🎯 退休目標達成檢查</h2>
 <table><tr><th>項目</th><th>現況</th><th>狀態</th></tr>
