@@ -204,7 +204,11 @@ if _pg:
     ck("當日產物含加碼級 A+ 標記（150% 為理想值，非門檻）", "A+級" in _pg)
 
 # ── 5) 儀表板：被動收入基準觀察小卡（自洽 ＋ 現算）────────────────────────────
-_idx = IDX.read_text(encoding="utf-8")
+if IDX.exists():
+    _idx = IDX.read_text(encoding="utf-8")
+else:
+    ck("儀表板產物 index.html 存在（缺檔時不留 traceback，改以具名 FAIL 記）", False, str(IDX))
+    _idx = ""
 ck("儀表板無殘留 __DIVBASE_ 佔位符", "__DIVBASE_" not in _idx)
 # 儀表板顯示的當期真值：標籤＋值成對（無 data-k 注入、也不在 rep 對映的純模板值＝會靜默說舊話）
 _itxt = text_of(_idx)
@@ -387,25 +391,55 @@ _tpl = (BASE / "index_template.html").read_text(encoding="utf-8")
 ck("儀表板模板：常態被動／退休盈餘已改 data-k 注入（非純文字）",
    'data-k="passive_norm"' in _tpl and 'data-k="retire_surplus"' in _tpl)
 # 四審 N1：只驗「存在」不夠（把 fmt(真值) 改成 fmt(0) 照樣過）→ 釘住來源式
-_V_SRC = {
-    "passive_norm": r"passive_norm:\s*fmt\(\(\(s\.passive_income\|\|\{\}\)\.total_conservative\)\|\|0\)",
-    "retire_surplus": r"retire_surplus:\s*fmt\(s\.retirement_surplus\|\|0\)",
+# 五審 N6：整檔 re.search 會被「V 物件外的誘餌註解」騙過 → 改結構式：抽出的 V 區塊內逐鍵取值再驗運算式
+_V_EXPECT = {
+    "passive_norm": r"^fmt\(\(\(s\.passive_income\|\|\{\}\)\.total_conservative\)\|\|0\)$",
+    "retire_surplus": r"^fmt\(s\.retirement_surplus\|\|0\)$",
 }
-_V_SRC_MISS = sorted(k for k, _pat in _V_SRC.items() if re.search(_pat, _tpl) is None)
-ck("儀表板模板：兩鍵在 JS V 對映內且來源式正確（不得改餵常數）", not _V_SRC_MISS, str(_V_SRC_MISS))
-
-# 更強的形式：produced index.html 的 V 區塊必須與模板逐字相同（注入只改資料、不得偷改 JS）
 
 
 def _vblock(_t):
+    """V 區塊（含結尾大括號）：切片必須含 \"      };\"，否則 rindex(\"}\") 會抓到值裡的
+    `(s.passive_income||{})` 那個右大括號、把後半段切掉（2026-09-28 實踩）。"""
     _i = _t.index("var V = {")
-    return _t[_i:_t.index("      };", _i)]
+    return _t[_i:_t.index("      };", _i) + len("      };")]
 
 
+def _vpairs(_block):
+    """V 區塊 → {鍵: 值運算式}；逗號只在括號深度 0 才算分隔（值本身含 fmt(...)）。"""
+    # 先去 JS 行註解：註解裡的「：」會被當成鍵值分隔（2026-09-28 實踩：V 物件內的沿革註解）
+    _body = re.sub(r"//[^\n]*", "", _block[_block.index("{") + 1:_block.rindex("}")])
+    _out, _depth, _cur = {}, 0, ""
+    for _ch in _body:
+        if _ch == "(":
+            _depth += 1
+        elif _ch == ")":
+            _depth -= 1
+        if _ch == "," and _depth == 0:
+            _kv = _cur.split(":", 1)
+            if len(_kv) == 2:
+                _out[_kv[0].strip()] = _kv[1].strip()
+            _cur = ""
+        else:
+            _cur += _ch
+    _kv = _cur.split(":", 1)
+    if len(_kv) == 2:
+        _out[_kv[0].strip()] = _kv[1].strip()
+    return _out
+
+
+_V_PAIRS = _vpairs(_vblock(_tpl))
+_V_BAD = sorted(k for k, _pat in _V_EXPECT.items() if re.match(_pat, _V_PAIRS.get(k, "")) is None)
+ck("儀表板模板：V 區塊內兩鍵來源式正確（結構式；V 物件外的誘餌不算）", not _V_BAD, str(_V_BAD))
+
+# produced index.html 的 V 區塊必須與模板逐字相同（注入只改資料、不得偷改 JS）
 _idx_p = BASE / "index.html"
 if _idx_p.exists():
     ck("儀表板 JS 值對照表：built index.html 與 index_template.html 逐字相同",
        _vblock(_idx_p.read_text(encoding="utf-8")) == _vblock(_tpl))
+else:
+    ck("儀表板 JS 值對照表：built index.html 與 index_template.html 逐字相同", False,
+       f"缺 {_idx_p.name} → 無法比對")
 ck("大義街房繳真值可得（名稱查不到時不得靜默放行）", _DAYI > 0,
    f"snapshot.debt_schedule 查得 {_DAYI:,.0f}；為 0 表示查詢失敗、房租淨現金流保護已失效")
 if _pg:

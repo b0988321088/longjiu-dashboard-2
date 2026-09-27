@@ -5,6 +5,9 @@
 → 比對「相對基準的紅點數」與預期 → 還原 → 逐檔用位元組斷言還原成功。
 
 執行：python tools/check_caliber_mutation.py      （任何工作目錄皆可）
+      注意：product 類案例（M2/M4/M6/M7）指向『最新一份』當日產物；若該產物過期
+      （守門對它記 SKIP），這些案例會顯示 MISMATCH，屬預期 —— 先讓產物新鮮再跑。
+      離開碼：0=全部符合預期、2=有案例 MISMATCH、3=還原失敗（位元組不符）。
 副作用：會在 repo 內暫時改檔（全部 try/finally 還原，還原後逐檔比對 bytes）。
 
 設計規則（CIO 審查要求，逐輪累積）：
@@ -110,6 +113,19 @@ MUT = [
      DAYI_ITEM or "", (DAYI_ITEM or "").replace("房貸", "房X"), 2),
 ]
 
+# ── 跨檔案例：需要同時改兩檔才成形的「假修好」（五審 N6）────────────────────
+# V_PN 是來源式字串（不是當期真值），用來當誘餌與原式比對。
+V_PN = "fmt(((s.passive_income||{}).total_conservative)||0)"
+
+CROSS = [
+    ("M15 誘餌註解（V 物件外）＋V 餵 fmt(0)（兩檔同步；整檔 re.search 會被騙）",
+     [("index_template.html", f"passive_norm: {V_PN}", "passive_norm: fmt(0)"),
+      ("index.html", f"passive_norm: {V_PN}", "passive_norm: fmt(0)"),
+      ("index_template.html", "var V = {", f"// passive_norm: {V_PN}\nvar V = {{"),
+      ("index.html", "var V = {", f"// passive_norm: {V_PN}\nvar V = {{")],
+     1),
+]
+
 BEFORE = git_status()
 base_rc, base_fails, base_skips = run()
 print(f"基準：rc={base_rc} 既有紅={base_fails if base_fails else '（無）'}")
@@ -165,11 +181,41 @@ for name, kind, relpath, old, new, exp in MUT:
         if not same:
             restore_fail.append(relpath)
 
-print(f"\n結果：{ok_all}/{len(MUT)} 案例符合預期")
+for name, edits, exp in CROSS:
+    saved, hit = {}, 0
+    try:
+        for rel, old, new in edits:
+            p = BASE / rel
+            if rel not in saved:
+                saved[rel] = p.read_bytes()
+            txt = p.read_bytes().decode("utf-8")
+            c = txt.count(old)
+            hit += c
+            if c:
+                p.write_bytes(txt.replace(old, new, 1).encode("utf-8"))
+        rc, fails, _ = run()
+        attr = [f for f in fails if f not in base_fails]
+        good = (len(attr) == exp)
+        ok_all += good
+        print(f"[{name}] kind=cross 錨點 x{hit} rc={rc} 注入後紅={len(fails)} 基準紅={len(base_fails)} "
+              f"→ 可歸因 {len(attr)}（期望 {exp}）{'OK' if good else 'MISMATCH'}")
+        for a in attr:
+            print("      ❌", a)
+    finally:
+        for rel, _b in saved.items():
+            (BASE / rel).write_bytes(_b)
+            if (BASE / rel).read_bytes() != _b:
+                restore_fail.append(rel)
+
+print(f"\n結果：{ok_all}/{len(MUT) + len(CROSS)} 案例符合預期")
 if restore_fail:
     print("❌ 還原失敗（位元組不符）：", restore_fail)
     sys.exit(3)
-print("還原檢查：與跑前狀態相同（逐檔位元組斷言通過）"
-      + ("；跑前工作樹本來就非乾淨，見上方跑前清單" if BEFORE.strip() else "；跑前乾淨"))
+if ok_all != len(MUT) + len(CROSS):
+    print(f"❌ 有 {len(MUT) + len(CROSS) - ok_all} 個案例不符合預期（MISMATCH）→ 離開碼 2")
+    sys.exit(2)
+print("工具觸碰檔還原：" + ("與跑前逐位元組相同 ✓（逐檔斷言通過）"
+      + ("；跑前這些檔就有異動，見上方清單" if BEFORE.strip() else "") ))
 _now = git_status()
-print("   git status " + ("逐字相同 ✓" if _now == BEFORE else "⚠️ 與跑前不同：\n" + _now))
+print("   工作樹狀態：" + ("與跑前逐字相同 ✓" if _now == BEFORE
+      else "⚠️ 與跑前不同（可能為其他排程同時寫入，非本工具觸碰檔；請自行判讀）：\n" + _now))

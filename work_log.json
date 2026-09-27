@@ -1480,6 +1480,12 @@
    "date": "2026-09-28",
    "category": "修正",
    "item": "四審非阻擋落實：N1 V 對映來源式斷言＋built 頁＝模板逐字比對、N2 補 M13/M14、N3 變異錨點全面改 snapshot 現算、N4 還原報告不造假",
-   "detail": "①N1：只驗『鍵存在』不夠（把 fmt(真值) 改成 fmt(0) 仍過 61/61）→ 改釘來源式，並新增『built index.html 的 V 區塊必須與 index_template.html 逐字相同』。②N2：變異案例 12→14（M13 打 N1 斷言、M14 打 R3 fail-closed；兩者皆實測命中）。③N3：各案例的錨點／期望值全改由 snapshot 現算（保守底線、常態被動、盈餘、覆蓋率、月支出、大義街月繳與名稱），日後真值變動不會再退化成『錨點 x0』；輸出會先列現算真值供判讀。④N4：跑前非乾淨會列清單警語；還原改逐檔位元組斷言（不只看 git）；尾行改『與跑前狀態相同』，不再宣稱乾淨。⑤自查抓到工具本身的地雷：突變用 write_text 在 Windows 會把 \\n 再轉成 \\r\\n，等於每個案例都偷改整檔換行 → 造成 M5/M8 各多一條假紅；改位元組寫入後 14/14 全數可歸因。驗證：check_dividend_caliber 62/62 PASS、tools/check_caliber_mutation 14/14、verify_ficriteria 55 PASS / 0 FAIL。"
+   "detail": "①N1：只驗『鍵存在』不夠（把 fmt(真值) 改成 fmt(0) 仍過 61/61）→ 改釘來源式，並新增『built index.html 的 V 區塊必須與 index_template.html 逐字相同』。②N2：變異案例 12→14（M13 打 N1 斷言、M14 打 R3 fail-closed；兩者皆實測命中）。③N3：各案例的錨點／期望值全改由 snapshot 現算（保守底線、常態被動、盈餘、覆蓋率、月支出、大義街月繳與名稱），日後真值變動不會再退化成『錨點 x0』；輸出會先列現算真值供判讀。④N4：跑前非乾淨會列清單警語；還原改逐檔位元組斷言（不只看 git）；尾行改『與跑前狀態相同』，不再宣稱乾淨。⑤自查抓到工具本身的地雷：突變用 write_text：read_bytes().decode() 不轉譯換行、write_text 又把每個換行字元再轉一次 → 換行由 CRLF 變 CRCRLF（CR 倍增），等於每個案例都偷改整檔換行 → 造成 M5/M8 各多一條假紅；改位元組寫入後 14/14 全數可歸因。驗證：check_dividend_caliber 62/62 PASS、tools/check_caliber_mutation 14/14、verify_ficriteria 55 PASS / 0 FAIL。"
+ },
+ {
+   "date": "2026-09-28",
+   "category": "修正",
+   "item": "五審非阻擋落實：N5 離開碼、N6 V 來源式改結構式（誘餌防禦）、N7 缺檔不留 traceback、N8 尾行分項、N9 操作說明、N10 更正 EOL 描述",
+   "detail": "①N5：案例 MISMATCH 原本仍回 rc=0（變異測試失敗卻回成功碼）→ 改 exit 2；還原失敗 exit 3。②N6：V 來源式斷言原為整檔 re.search，只要在 V 物件外放一行同式誘餌註解＋V 餵 fmt(0)（兩檔同步）就能騙過 → 改結構式：抽出的 V 區塊內逐鍵取值再驗運算式（先去除 JS 行註解，否則註解裡的冒號會吃掉鍵名）；並補 M15 跨檔案例把那套攻擊納入回歸。順帶修 parser 地雷：_vblock 切片原本不含結尾『};』，害 rindex(\"}\") 抓到值裡 (s.passive_income||{}) 那個括號、後半段被切掉（比對不受影響、解析會壞）。③N7：index.html 缺檔原本 traceback → 改具名 FAIL 並以空字串續行。④N8：尾行分『工具觸碰檔還原』與『工作樹狀態（可能為他排程寫入）』兩句。⑤N9：docstring 補回「產物過期會 MISMATCH 屬預期」＋離開碼定義。⑥N10：更正前筆 EOL 描述（真機制是 CR 倍增，非單純 \\n→\\r\\n）。驗證：check_dividend_caliber 62/62 PASS、tools/check_caliber_mutation 15/15、verify_ficriteria 55 PASS / 0 FAIL。"
  }
 ]
