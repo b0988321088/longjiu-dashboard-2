@@ -1475,5 +1475,11 @@
    "category": "修正",
    "item": "三審非阻擋建議落實：R1 儀表板 JS 即時渲染補兩鍵、R3 大義街查詢 fail-closed、R4 變異測試入版控",
    "detail": "①R1：儀表板 JS 的 V 對映缺 passive_norm／retire_surplus，開頁即時渲染時這兩處會停在被建置時注入的值（本批想封的『靜默說舊話』只封一半）→ 補鍵；並實證：抽 index.html 內同一段 JS 以 Node＋DOM shim 實跑，只改 snapshot、完全不重產頁面 → 值 180,100→177,777、17,319→66,666 跟著動，還原後回原值。②R3：大義街月繳查不到時 _DAYI=0，頁面與期望同為 80,100、照樣 PASS（保護靜默失效）→ 補 _DAYI > 0 fail-closed 斷言。③R4：12 案例變異測試從 %TEMP% 搬進 tools/check_caliber_mutation.py（路徑相對、產物自動指最新一份、基準 SKIP 顯性列出），從 C:/ 執行 12/12 符合預期、還原乾淨。驗證：check_dividend_caliber 61/61 PASS；verify_ficriteria 55 PASS / 0 FAIL。附帶：搬檔時守門的『未宣告程式檔』硬擋抓到我自己的新檔未宣告（工具照設計運作），已於 allowed 以 basename 登記。"
+ },
+ {
+   "date": "2026-09-28",
+   "category": "修正",
+   "item": "四審非阻擋落實：N1 V 對映來源式斷言＋built 頁＝模板逐字比對、N2 補 M13/M14、N3 變異錨點全面改 snapshot 現算、N4 還原報告不造假",
+   "detail": "①N1：只驗『鍵存在』不夠（把 fmt(真值) 改成 fmt(0) 仍過 61/61）→ 改釘來源式，並新增『built index.html 的 V 區塊必須與 index_template.html 逐字相同』。②N2：變異案例 12→14（M13 打 N1 斷言、M14 打 R3 fail-closed；兩者皆實測命中）。③N3：各案例的錨點／期望值全改由 snapshot 現算（保守底線、常態被動、盈餘、覆蓋率、月支出、大義街月繳與名稱），日後真值變動不會再退化成『錨點 x0』；輸出會先列現算真值供判讀。④N4：跑前非乾淨會列清單警語；還原改逐檔位元組斷言（不只看 git）；尾行改『與跑前狀態相同』，不再宣稱乾淨。⑤自查抓到工具本身的地雷：突變用 write_text 在 Windows 會把 \\n 再轉成 \\r\\n，等於每個案例都偷改整檔換行 → 造成 M5/M8 各多一條假紅；改位元組寫入後 14/14 全數可歸因。驗證：check_dividend_caliber 62/62 PASS、tools/check_caliber_mutation 14/14、verify_ficriteria 55 PASS / 0 FAIL。"
  }
 ]

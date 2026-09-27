@@ -386,9 +386,26 @@ else:
 _tpl = (BASE / "index_template.html").read_text(encoding="utf-8")
 ck("儀表板模板：常態被動／退休盈餘已改 data-k 注入（非純文字）",
    'data-k="passive_norm"' in _tpl and 'data-k="retire_surplus"' in _tpl)
-ck("儀表板模板：兩鍵已在 JS 即時渲染 V 對映內（否則兩次 build 之間靜默停在被注入值）",
-   re.search(r"passive_norm\s*:\s*fmt\(", _tpl) is not None
-   and re.search(r"retire_surplus\s*:\s*fmt\(", _tpl) is not None)
+# 四審 N1：只驗「存在」不夠（把 fmt(真值) 改成 fmt(0) 照樣過）→ 釘住來源式
+_V_SRC = {
+    "passive_norm": r"passive_norm:\s*fmt\(\(\(s\.passive_income\|\|\{\}\)\.total_conservative\)\|\|0\)",
+    "retire_surplus": r"retire_surplus:\s*fmt\(s\.retirement_surplus\|\|0\)",
+}
+_V_SRC_MISS = sorted(k for k, _pat in _V_SRC.items() if re.search(_pat, _tpl) is None)
+ck("儀表板模板：兩鍵在 JS V 對映內且來源式正確（不得改餵常數）", not _V_SRC_MISS, str(_V_SRC_MISS))
+
+# 更強的形式：produced index.html 的 V 區塊必須與模板逐字相同（注入只改資料、不得偷改 JS）
+
+
+def _vblock(_t):
+    _i = _t.index("var V = {")
+    return _t[_i:_t.index("      };", _i)]
+
+
+_idx_p = BASE / "index.html"
+if _idx_p.exists():
+    ck("儀表板 JS 值對照表：built index.html 與 index_template.html 逐字相同",
+       _vblock(_idx_p.read_text(encoding="utf-8")) == _vblock(_tpl))
 ck("大義街房繳真值可得（名稱查不到時不得靜默放行）", _DAYI > 0,
    f"snapshot.debt_schedule 查得 {_DAYI:,.0f}；為 0 表示查詢失敗、房租淨現金流保護已失效")
 if _pg:
