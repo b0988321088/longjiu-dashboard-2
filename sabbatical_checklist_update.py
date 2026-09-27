@@ -111,19 +111,23 @@ def sync_acceptance_block(snap, kpis, month):
         ],
     }
     targets = [
-        (snap.setdefault("sabbatical_checklist", {}), "驗收標準_2027_02"),
-        ((((snap.get("startup_plan_three_track_0901") or {}).get("final_v2_20260902") or {})
-          ), "2027_02財務驗收_A級B級C級"),
+        ("sabbatical_checklist", snap.setdefault("sabbatical_checklist", {}), "驗收標準_2027_02"),
+        ("startup_plan_three_track_0901.final_v2_20260902",
+         ((snap.get("startup_plan_three_track_0901") or {}).get("final_v2_20260902") or {}),
+         "2027_02財務驗收_A級B級C級"),
     ]
-    for holder, key in targets:
+    missing = []
+    for label, holder, key in targets:
         blk = holder.get(key)
         if not isinstance(blk, dict):
+            # 2026-09-27：缺塊不可靜默跳過（單邊區塊被刪 → 兩副本無聲漂移，正是本次舊值殘留的成因模式）
+            missing.append(f"{label}.{key}")
             continue
         blk.pop("現況判定_2026_09", None)      # 移除停滯的過期 key
         blk.pop("焦點三件事_舊", None)
         blk.update(dyn)
         holder[key] = blk
-    return dyn
+    return dyn, missing
 
 
 def main():
@@ -155,7 +159,7 @@ def main():
     cl["記錄"][month] = kpis
 
     # 驗收標準區塊的當期數字動態化（2026-09-27 校正：原本 9/2 手寫、9/23 校正後成孤兒舊值）
-    dyn = sync_acceptance_block(snap, kpis, month)
+    dyn, missing = sync_acceptance_block(snap, kpis, month)
 
     SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")  # INC-184：snapshot canonical=1
     print(f"✅ 留停驗收表 {month} 已更新（寫回 snapshot.sabbatical_checklist）")
@@ -166,6 +170,9 @@ def main():
     if len(months) >= 2:
         covs = [cl["記錄"][m].get("生活費覆蓋率") for m in months]
         print("   覆蓋率趨勢: " + " → ".join(f"{m[2:]}月 {c}%" for m, c in zip(months, covs)))
+    if missing:
+        print("⚠️ 驗收標準區塊缺失、未同步（兩副本漂移風險）：" + "、".join(missing), file=sys.stderr)
+        sys.exit(2)          # 主工作已完成，但異常需讓 cron 看見（不靜默）
 
 if __name__ == "__main__":
     main()
