@@ -27,11 +27,11 @@ def _fmt(n):
 
 
 def cash_caliber(snap):
-    """現金兩口徑（SoT＝thresholds_2026_0915.現金_twd）。
+    """現金底線（SoT＝thresholds_2026_0915.現金_twd）。
 
-    2026-09-25 INC cash_floor_two_calibers_unlabeled：SoT 內含生活底線／追繳緩衝／合計底線
-    三個子項，顯示端各取一半又不標口徑 → 同一天出現「🟢 安全」與「🔴 缺 33.8 萬」兩個相反判定。
-    統一在此派生：生活底線看乾粉、合計底線看追繳緩衝是否足夠。
+    2026-09-27 使用者裁示：現金底線＝**單一口徑**生活底線 700,000（取消 9/15 加設的追繳緩衝 50 萬）。
+    2026-09-25 INC cash_floor_two_calibers_unlabeled 的「雙口徑未標示」問題隨此裁示消滅 →
+    顯示端一律單口徑；`single` 旗標保留（buffer<=0 時為 True）供未來恢復多層底線時切換。
     """
     cw = ((snap.get("thresholds_2026_0915") or {}).get("現金_twd") or {})
     life = float(cw.get("生活底線") or snap.get("cash_floor") or 0)
@@ -43,6 +43,7 @@ def cash_caliber(snap):
         "dry": max(0.0, cash - life),
         "life_ok": cash >= life,
         "gap": max(0.0, total - cash),
+        "single": buf <= 0,   # 2026-09-27：單一口徑（追繳緩衝取消）→ 顯示端省略緩衝字樣
     }
 
 def main():
@@ -174,9 +175,8 @@ def main():
             _plan = [f"{r.get('動作','')} {r.get('類別','')}：{r.get('內容','')}"
                      for r in ((_rd.get("weekly_plan", {}) or {}).get("rows") or []) if r.get("內容")]
             _plan.append(f"📊 台股穿透 {_pen2.get('台股市值型成長', 0):.1f}%（目標 {_tg2.get('台股市值型目標', 10)}%，缺口 {_tg2.get('台股市值型目標', 10) - _pen2.get('台股市值型成長', 0):+.1f}pp）")
-            _plan.append(f"💰 乾粉 {_dry2/10000:.1f}萬（現金 {_cw3['cash']:,.0f} − 生活底線 {_cw3['life']:,.0f} 守；"
-                         + f"合計底線 {_cw3['total']:,.0f} "
-                         + ("🟢 達標" if _cw3['gap'] <= 0 else f"🟡 缺 {_cw3['gap']:,.0f}（配息導流補足）") + "）")
+            _plan.append(f"💰 乾粉 {_dry2/10000:.1f}萬（現金 {_cw3['cash']:,.0f} − 現金底線 {_cw3['life']:,.0f} 守 "
+                         + ("🟢 達標" if _cw3['life_ok'] else f"🔴 未達標（缺 {_cw3['life'] - _cw3['cash']:,.0f}）") + "）")
             if _usd2 > 55:
                 _plan.append(f"🔴 美元曝險 {_usd2}% 超標（目標≤60%）→ 美股減碼")
             else:
@@ -206,10 +206,10 @@ def main():
                       for _r in _rows2[:5]]
             _cw_r = cash_caliber(snap)
             _cash_rule = (
-                f"；現金 {_cw_r['cash']:,.0f}：生活底線 {_cw_r['life']:,.0f} "
+                f"；現金 {_cw_r['cash']:,.0f}：現金底線 {_cw_r['life']:,.0f} "
                 + ("✅ 達標" if _cw_r["life_ok"] else "🔴 未達標")
-                + f"／合計底線 {_cw_r['total']:,.0f}（含追繳緩衝 {_cw_r['buffer']:,.0f}）"
-                + ("🟢 達標" if _cw_r["gap"] <= 0 else f" 🟡 缺 {_cw_r['gap']:,.0f}（配息導流補足、不新增買入）"))
+                + (f"（餘裕/乾粉 {_cw_r['dry']:,.0f}）" if _cw_r["life_ok"]
+                   else f"（缺 {_cw_r['life'] - _cw_r['cash']:,.0f}，配息導流補足、不新增買入）"))
             rep["__RISK_RULES__"] = (("操作規範：" + "；".join(_rules) + _cash_rule)
                                      if _rules else "操作規範：待雷達更新")
             try:

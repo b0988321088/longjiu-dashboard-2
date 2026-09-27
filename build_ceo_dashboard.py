@@ -248,9 +248,12 @@ _cw = ((s.get("thresholds_2026_0915") or {}).get("現金_twd") or {})
 _life = float(_cw.get("生活底線") or s.get("cash_floor") or 0)
 _buf = float(_cw.get("追繳緩衝") or 0)
 _tot = float(_cw.get("合計底線") or (_life + _buf))
-_life_txt = f"生活底線 {_life/10000:.0f}萬 {'✅' if CASH >= _life else '⚠️'}（乾粉 {(CASH - _life)/10000:.1f}萬）"
-_tot_txt = (f"合計底線 {_tot/10000:.0f}萬 {'✅' if CASH >= _tot else f'🔴 缺 {(_tot - CASH)/10000:.1f}萬'}") if _tot else "合計底線 ?"
-kpi5 = kpi("現金", f"{CASH:,}", f"{_life_txt}｜{_tot_txt}", "#22c55e")
+# 2026-09-27 使用者裁示：現金底線＝單一口徑生活底線 700,000（取消追繳緩衝 50 萬）→ 單口徑顯示。
+# （2026-09-25 的雙口徑並列需求隨裁示消滅，故 kpi5 不再顯示合計底線。）
+_life_txt = (f"現金底線 {_life/10000:.0f}萬 " + ("✅ 達標" if CASH >= _life else "🔴 未達標")
+             + (f"（餘裕/乾粉 {(CASH - _life)/10000:.1f}萬）" if CASH >= _life
+                else f"（缺 {(_life - CASH)/10000:.1f}萬）"))
+kpi5 = kpi("現金", f"{CASH:,}", _life_txt, "#22c55e")
 
 # 2026-09-25 修正（本週週五審查發現）：原標題寫死「目標 台10/美40/防20/債25/現5」，
 # 與 snapshot.penetration.targets（台10/美30/防30/債25/現5）不一致 → 屬「硬編碼舊值」，

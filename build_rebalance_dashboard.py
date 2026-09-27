@@ -100,6 +100,7 @@ def cash_caliber(s):
         "dry": max(0.0, cash - life),
         "life_ok": cash >= life,
         "gap": max(0.0, total - cash),
+        "single": buf <= 0,   # 2026-09-27：單一口徑（追繳緩衝取消）
     }
 
 
@@ -215,10 +216,8 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
         st = "🔴 觸發" if triggered else "🟢 安全"
         lines.append(f"- {name} {val}（{limit}）：{st}")
     _lif_st = "✅ 達標" if _cw["life_ok"] else "🔴 未達標"
-    _tot_st = ("🟢 達標" if _cw["gap"] <= 0
-               else f"🟡 追繳緩衝不足（缺 {_cw['gap']:,.0f}）→ 配息導流補足、不新增買入")
-    lines.append(f"- 現金｜生活底線 {_cw['life']:,.0f}（底線制；現 {_cw['cash']:,.0f}）：{_lif_st} → 乾粉 {_cw['dry']:,.0f}")
-    lines.append(f"- 現金｜合計底線 {_cw['total']:,.0f}（生活 {_cw['life']:,.0f} ＋ 追繳緩衝 {_cw['buffer']:,.0f}）：{_tot_st}")
+    # 2026-09-27：現金底線單一口徑（追繳緩衝取消）→ 只列一行，不再有「合計底線／追繳緩衝」
+    lines.append(f"- 現金｜現金底線 {_cw['life']:,.0f}（單一口徑；現 {_cw['cash']:,.0f}）：{_lif_st} → 餘裕/乾粉 {_cw['dry']:,.0f}")
 
     lines += ["", "## 七、里程碑時程", ""]
     _ms_rows = milestones_next(6)
@@ -592,15 +591,12 @@ def main():
     # ── 風險紅線 ──
     _cw2 = cash_caliber(s)
     _lif_st2 = "🟢 安全" if _cw2["life_ok"] else "🔴 觸發"
-    _tot_st2 = ("🟢 安全" if _cw2["gap"] <= 0
-                else f"🟡 追繳緩衝不足（缺 {_cw2['gap']:,.0f}）")
     risks = [
         ("US30Y 凍結線", f"{us30y:.2f}%" if us30y else "—", "≥5.30% 🔴",
          "🔴 觸發" if (us30y and us30y >= 5.30) else "🟢 安全"),
         ("美元曝險", f"{usd_pct:.0f}%", "紅線 60%", "🔴 觸發" if usd_pct > 60 else "🟢 安全"),
         ("高科技", f"{tech:.1f}%", "紅線 30%", "🔴 觸發" if tech > 30 else "🟢 安全"),
-        (f"現金｜生活底線 {_cw2['life']:,.0f}", f"{_cw2['cash']:,.0f}", f"≥{_cw2['life']:,.0f}", _lif_st2),
-        (f"現金｜合計底線 {_cw2['total']:,.0f}", f"{_cw2['cash']:,.0f}", f"≥{_cw2['total']:,.0f}", _tot_st2),
+        (f"現金｜底線 {_cw2['life']:,.0f}（單一口徑）", f"{_cw2['cash']:,.0f}", f"≥{_cw2['life']:,.0f}", _lif_st2),
         ("國泰擔保池 LTV", _pl_txt, _pl_lim, "🔴 觸發" if _pl_trig else "🟢 安全"),
     ]
     risk_rows = ""
@@ -705,7 +701,7 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
     <div class="drybar">
 {_drybar_html}    </div>
     <div style="font-size:12px;color:#cbd5e1;line-height:1.7">
-      當前乾粉 <b>{dry_cur:,}</b>（現金 {_cw2['cash']:,.0f} − 生活底線 {_cw2['life']:,.0f}；合計底線 {_cw2['total']:,.0f} 含追繳緩衝 {_cw2['buffer']:,.0f}）｜分配表＝snapshot.乾粉執行_0926（單一真值）<br>
+      當前乾粉 <b>{dry_cur:,}</b>（現金 {_cw2['cash']:,.0f} − 現金底線 {_cw2['life']:,.0f}，單一口徑）｜分配表＝snapshot.乾粉執行_0926（單一真值）<br>
 {_al_note_html}    </div>
   </div>
   <div class="card"><h2>🛡️ 質押 / 風險紅線</h2>

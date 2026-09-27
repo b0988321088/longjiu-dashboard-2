@@ -105,7 +105,8 @@ def build_allowed(snap: dict) -> dict:
         _extras: set[float] = set()
         for _k in ("生活底線", "追繳緩衝", "合計底線"):
             _f = _thr.get(_k)
-            if isinstance(_f, (int, float)):
+            # 2026-09-27：追繳緩衝取消後為 0 → 必須跳過 <=0，否則「0」會變成合法金額（守門被鬆開）
+            if isinstance(_f, (int, float)) and _f > 0:
                 _extras.add(float(_f))                  # 底線本身也會被內文引用
                 if _cash - _f > 0:
                     _extras.add(float(_cash - _f))      # 乾粉／餘裕
