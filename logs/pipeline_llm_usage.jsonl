@@ -206,3 +206,12 @@
 {"ts": "2026-09-27T22:29:15", "model": "deepseek-chat", "caller": "run_daily.py", "in": 482, "cached": 256, "out": 180, "ok": true}
 {"ts": "2026-09-27T22:31:18", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 604, "cached": 384, "out": 1050, "ok": true}
 {"ts": "2026-09-27T22:53:13", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 482, "cached": 256, "out": 164, "ok": true}
+{"ts": "2026-09-27T22:54:50", "model": "deepseek-chat", "caller": "run_daily.py", "in": 822, "cached": 640, "out": 200, "ok": true}
+{"ts": "2026-09-27T22:54:52", "model": "deepseek-chat", "caller": "run_daily.py", "in": 847, "cached": 640, "out": 156, "ok": true}
+{"ts": "2026-09-27T22:54:55", "model": "deepseek-chat", "caller": "run_daily.py", "in": 482, "cached": 256, "out": 189, "ok": true}
+{"ts": "2026-09-27T22:55:17", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 482, "cached": 256, "out": 217, "ok": true}
+{"ts": "2026-09-27T22:55:34", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 604, "cached": 384, "out": 1200, "ok": true}
+{"ts": "2026-09-27T22:56:38", "model": "deepseek-chat", "caller": "run_daily.py", "in": 822, "cached": 640, "out": 173, "ok": true}
+{"ts": "2026-09-27T22:56:40", "model": "deepseek-chat", "caller": "run_daily.py", "in": 847, "cached": 640, "out": 176, "ok": true}
+{"ts": "2026-09-27T22:56:43", "model": "deepseek-chat", "caller": "run_daily.py", "in": 482, "cached": 256, "out": 183, "ok": true}
+{"ts": "2026-09-27T22:58:12", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 604, "cached": 384, "out": 890, "ok": true}
