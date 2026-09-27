@@ -1469,5 +1469,11 @@
    "category": "修正",
    "item": "遺留清單落實：儀表板兩處當期真值改 data-k、基準觀察卡 12 月窗口缺陷、大義街月繳單一來源、守門再硬化",
    "detail": "①index_template『被動月固定收入（常態）』『安全退休盈餘』原本純文字寫死（無 data-k、也不在 rep 對映內）→ 真值一動就靜默說舊話；改外層保留樣式、內層 data-k span 注入，並註冊 passive_norm／retire_surplus；219,827 的替換式同步改讀 snapshot（原寫死保守配息＋租金）。②修 2026-12 才會爆的缺陷：build_dashboard 基準觀察卡原取『最近 N 個月』，基準月 2026-09 到 12 月會掉出窗口 → 基準列消失、合計歸零；改為基準月一律留在窗口內。③build_retirement_plan 房租淨現金流原寫死大義街月繳 → 改讀 snapshot.debt_schedule『國泰大義街房貸』，並把該值納入守門當期真值 token。④守門硬化（CIO 首輪 4 項非阻擋）：程式檔定義加 re.I 與閘門一致、改名條目兩側路徑都判、AST 掃描加常數摺疊（防字串拼接繞過）、SKIP 顯性化。⑤變異測試擴到 12 案例（補 M10 未宣告程式檔、M11 大義街月繳、M12 拼接繞過）→ 12/12 符合預期、基準零紅、還原乾淨。驗證：check_dividend_caliber 59/59 PASS（本次無 SKIP——共享上下文已於 06:30 重生並通過）；tools/verify_ficriteria 55 PASS / 0 FAIL；退休規劃頁重產 byte-identical；index.html 可見文字不變（僅新增 data-k 包裝）。"
+ },
+ {
+   "date": "2026-09-28",
+   "category": "修正",
+   "item": "三審非阻擋建議落實：R1 儀表板 JS 即時渲染補兩鍵、R3 大義街查詢 fail-closed、R4 變異測試入版控",
+   "detail": "①R1：儀表板 JS 的 V 對映缺 passive_norm／retire_surplus，開頁即時渲染時這兩處會停在被建置時注入的值（本批想封的『靜默說舊話』只封一半）→ 補鍵；並實證：抽 index.html 內同一段 JS 以 Node＋DOM shim 實跑，只改 snapshot、完全不重產頁面 → 值 180,100→177,777、17,319→66,666 跟著動，還原後回原值。②R3：大義街月繳查不到時 _DAYI=0，頁面與期望同為 80,100、照樣 PASS（保護靜默失效）→ 補 _DAYI > 0 fail-closed 斷言。③R4：12 案例變異測試從 %TEMP% 搬進 tools/check_caliber_mutation.py（路徑相對、產物自動指最新一份、基準 SKIP 顯性列出），從 C:/ 執行 12/12 符合預期、還原乾淨。驗證：check_dividend_caliber 61/61 PASS；verify_ficriteria 55 PASS / 0 FAIL。附帶：搬檔時守門的『未宣告程式檔』硬擋抓到我自己的新檔未宣告（工具照設計運作），已於 allowed 以 basename 登記。"
  }
 ]

@@ -890,8 +890,11 @@ var gotTotal = _salaryA + divTotal + rentGot;
         pen_tw: fmt(ptwd['台股市值型成長']||0), pen_us: fmt(ptwd['美股市值型成長']||0),
         pen_def: fmt(ptwd['防守型配息']||0), pen_bond: fmt(ptwd['債券']||0),
         pen_cash: fmt(ptwd['現金/安全網']||0),
-        pen_tech: fmt(ptwd['美股市值型成長_科技']||0), pen_nontech: fmt(ptwd['美股市值型成長_非科技']||0)
-      };
+        pen_tech: fmt(ptwd['美股市值型成長_科技']||0), pen_nontech: fmt(ptwd['美股市值型成長_非科技']||0),
+                // 2026-09-28：補常態被動／安全退休盈餘 — 先前不在 V 內，開頁即時渲染時會停在被注入值
+                passive_norm: fmt(((s.passive_income||{}).total_conservative)||0),
+                retire_surplus: fmt(s.retirement_surplus||0)
+              };
       document.querySelectorAll('[data-k]').forEach(function(el){
         var k = el.getAttribute('data-k');
         if(V[k] !== undefined) el.textContent = V[k];

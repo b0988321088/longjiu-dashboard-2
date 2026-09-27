@@ -386,6 +386,11 @@ else:
 _tpl = (BASE / "index_template.html").read_text(encoding="utf-8")
 ck("儀表板模板：常態被動／退休盈餘已改 data-k 注入（非純文字）",
    'data-k="passive_norm"' in _tpl and 'data-k="retire_surplus"' in _tpl)
+ck("儀表板模板：兩鍵已在 JS 即時渲染 V 對映內（否則兩次 build 之間靜默停在被注入值）",
+   re.search(r"passive_norm\s*:\s*fmt\(", _tpl) is not None
+   and re.search(r"retire_surplus\s*:\s*fmt\(", _tpl) is not None)
+ck("大義街房繳真值可得（名稱查不到時不得靜默放行）", _DAYI > 0,
+   f"snapshot.debt_schedule 查得 {_DAYI:,.0f}；為 0 表示查詢失敗、房租淨現金流保護已失效")
 if _pg:
     ck("頁面房租淨現金流 == 常態租金 − 大義街房繳（snapshot.debt_schedule 現算）",
        f"房租淨現金流 {SC['rent_norm'] - _DAYI:,.0f}" in _pg,
@@ -403,6 +408,7 @@ _dirty = [d for d in _dirty if d not in _ext]
 allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "DAILY_REPORT_PIPELINE_RULE.md", "run_daily.py",
            "notion_shared_context.md", "index_template.html", "build_dashboard.py", "index.html",
+           "check_caliber_mutation.py",   # 本守門的變異測試（2026-09-28 從 %TEMP% 搬進版控，置於 tools/）
            "schedule_events.json", "error_register.md",
            "dashboard_decisions.json",   # 決策登記（decision-governance 主檔，逐筆新增屬預期）
            "asset_diff_monitor.py",
