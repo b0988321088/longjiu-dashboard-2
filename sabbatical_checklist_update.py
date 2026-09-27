@@ -101,9 +101,17 @@ def sync_acceptance_block(snap, kpis, month):
     else:
         verdict = (f"{kpis['紅綠燈']}（正常 {con}%／壓力 {stress}%；"
                    f"目標 正常 ≥150%、壓力 ≥100%）→ 持續改善 → 2027/2 再驗收")
+    _floor = float((((snap.get("thresholds_2026_0915") or {}).get("現金_twd") or {}).get("合計底線")) or 0)
+    _cash = float(kpis.get("現金水位") or 0)
     dyn = {
         "現況判定": verdict,
         "現況判定_基準月": month,
+        # 2026-09-27：結構化缺口（退休規劃頁等顯示端直接讀，避免各頁各自再算一份口徑）
+        "距A級缺口": {
+            "生活費覆蓋率": {"現況_pct": con, "目標_pct": 150, "月缺口": gap_150},
+            "壓力情境覆蓋率": {"現況_pct": stress, "目標_pct": 100, "月缺口": gap_stress},
+            "現金水位": {"現況": round(_cash), "底線": round(_floor), "餘裕": round(_cash - _floor)},
+        },
         "焦點三件事": [
             f"① 生活費覆蓋率 {con}%→150%（差 {gap_150:,}/月：降支出/降利息→增淨租金→提高投資現金流）",
             f"② 壓力情境 {stress}%→100%（差 {gap_stress:,}/月；買的是抗波動能力，非更高報酬）",

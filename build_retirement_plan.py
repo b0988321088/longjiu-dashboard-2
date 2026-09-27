@@ -46,7 +46,7 @@ _stress_note = (f"壓力情境 {stress_cov:.1f}% 未破 100% — 這是留停前
                 if stress_cov < 100 else f"壓力情境 {stress_cov:.1f}% 已 ≥100% — 通過壓力測試")
 cov_band = "非常安全" if fire_cov >= 150 else ("基本安全" if fire_cov >= 120 else "不能完全依賴資產")
 cov_band_cls = "green" if fire_cov >= 150 else ("amber" if fire_cov >= 120 else "red")
-need_to_150 = max(1.5 * expense - fire_income, 0)
+# 2026-09-27：need_to_150 已移除 — 缺口一律讀 snapshot.驗收標準_2027_02.距A級缺口（單一來源）
 sc_level = (_sch.get("驗收等級", {}) or {}).get("等級", "") or "（待真值日重算）"
 sc_level_cls = "green" if sc_level.startswith("A級") else ("amber" if sc_level.startswith("B級") else "red")
 goal_expense = (_sc_t.get("每月必要生活費", {}) or {}).get("goal", "—")
@@ -66,6 +66,44 @@ _rec = ((_sch.get("記錄", {}) or {}).get(sc_month, {}) or {}) if sc_month else
 career_income = _rec.get("第二職涯收入", 0) or 0
 career_hours = _rec.get("第二職涯工時", 0) or 0
 sc_light = _rec.get("紅綠燈", "") or "（待真值日重算）"
+# ── 2026-09-27：驗收標準區塊改讀 snapshot 單一來源（由 sabbatical_checklist_update.sync_acceptance_block
+# 生成），本頁不再自己組文字／自己算缺口。同型分歧（JSON 改了、報告還在念舊值）9/23 與 9/27 各踩一次。
+_acc = (_sch.get("驗收標準_2027_02", {}) or {})
+_acc_verdict = _acc.get("現況判定", "") or "（待真值日重算）"
+_acc_month = _acc.get("現況判定_基準月", "") or sc_month
+_acc_gaps = _acc.get("距A級缺口", {}) or {}
+_acc_todo = [t for t in (_acc.get("焦點三件事", []) or []) if t]
+
+
+def _gap_row(label, d):
+    if not d:
+        return ""
+    pv = d.get("現況_pct") or 0
+    tv = d.get("目標_pct") or 0
+    gap = d.get("月缺口") or 0
+    cls = "green" if gap <= 0 else "red"
+    gap_txt = "已達標 ✅" if gap <= 0 else f"+{gap:,.0f}/月"
+    return (f'<tr><td>{label}</td><td>{pv:.1f}%</td><td>≥{tv}%</td>'
+            f'<td class="{cls}">{gap_txt}</td></tr>')
+
+
+_gap_rows = "".join([
+    _gap_row("生活費覆蓋率（保守底線·判準）", _acc_gaps.get("生活費覆蓋率")),
+    _gap_row("壓力情境覆蓋率", _acc_gaps.get("壓力情境覆蓋率")),
+])
+_cash_g = _acc_gaps.get("現金水位") or {}
+_gfloor = _cash_g.get("底線") or 0
+_cash_margin = cash - _gfloor
+_cash_status = (f'<b class="green">餘裕 {_cash_margin:,}</b>' if _cash_margin >= 0
+                else f'<b class="red">不足 {abs(_cash_margin):,}</b>')
+_cash_row = (f'<tr><td>現金水位</td><td>{_cash_g.get("現況", 0):,}</td>'
+             f'<td>≥{_cash_g.get("底線", 0):,}</td>'
+             f'<td class="{"green" if (_cash_g.get("餘裕") or 0) >= 0 else "red"}">'
+             f'{"餘裕" if (_cash_g.get("餘裕") or 0) >= 0 else "不足"} '
+             f'{abs(_cash_g.get("餘裕", 0)):,}</td></tr>') if _cash_g else ""
+_acc_todo_html = "<br>".join(_acc_todo) if _acc_todo else "（待真值日重算）"
+_g150 = (_acc_gaps.get("生活費覆蓋率") or {}).get("月缺口") or 0
+_gstress = (_acc_gaps.get("壓力情境覆蓋率") or {}).get("月缺口") or 0
 
 # 退休目標（使用者設定）：退休生活費 38,000/月；理想 FIRE 月花費 40,000
 RETIRE_BUDGET = 38000
@@ -220,8 +258,15 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><td>B級 🟡</td><td>正常 ≥150% 但壓力接近 100%，或現金水位不足；或正常 120-150% 持續改善中</td><td>延後一點／先補水庫</td></tr>
 <tr><td>C級 🔴</td><td>正常未達 120%，或壓力明顯 &lt;100% 且改善無趨勢</td><td>繼續留台電，先修財務結構</td></tr>
 </table>
-<p class="callout">現況（{sc_month}）：正常 {fire_cov:.1f}%（保守底線·判準）／{fire_cov_actual:.1f}%（當月實收） ／ 壓力 {stress_cov:.1f}% ／ 現金 {cash:,} → <b class="{sc_level_cls}">{sc_level}</b>（維持 🔴 不准留停，2027/2 再驗收）。<br>
-三件事：① 保守底線 {fire_cov:.1f}%→150%（差 {need_to_150:,.0f}/月：降支出/降利息→增淨租金→提高投資現金流）② 壓力 {stress_cov:.1f}%→100%（買抗波動能力非更高報酬）③ 3個月趨勢（結構性改善 vs 單月配息時間差）。<br>
+<p class="callout" style="border-left-color:#ef4444"><b>📏 距 A 級缺口（基準月 {_acc_month} · 動態讀 snapshot）</b><br>
+生活費覆蓋率還缺 <b class="red">+{_g150:,.0f}</b>／月、壓力情境還缺 <b class="red">+{_gstress:,.0f}</b>／月；現金 {cash:,} 對底線 {_gfloor:,} → {_cash_status}</p>
+<table>
+<tr><th>指標</th><th>現況</th><th>A 級目標</th><th>缺口</th></tr>
+{_gap_rows}{_cash_row}
+</table>
+<p class="callout">現況（{sc_month}）：正常 {fire_cov:.1f}%（保守底線·判準）／{fire_cov_actual:.1f}%（當月實收） ／ 壓力 {stress_cov:.1f}% ／ 現金 {cash:,} → <b class="{sc_level_cls}">{sc_level}</b><br>
+{_acc_verdict}<br>
+三件事：<br>{_acc_todo_html}<br>
 核心：2027/2 不是「要不要辭台電」，是「資產系統是否成熟到暫時不依賴薪水」。</p></div>
 
 <div class="card"><h2>🗺️ 三階段目標進度</h2>
