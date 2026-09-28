@@ -89,8 +89,12 @@ def sha_state(sha: str) -> str:
                       capture_output=True, text=True).stdout.strip() != "commit":
         return "pending"
     branch = _git("rev-parse", "--abbrev-ref", "HEAD") or "HEAD"
-    if _is_ancestor(sha, f"origin/{branch}"):
-        return "remote"
+    # 2026-09-28：本地分支 main 的 upstream 是 origin/main（舊線，早已落後），
+    #   但實際部署/推送目標是 origin/clean-main（auto_push 明確推 HEAD:clean-main、Pages 讀 clean-main）。
+    #   只比 origin/main 會把「早就推上 clean-main 的 commit」誤判 pending → 每日假紅。
+    for _ref in (f"origin/{branch}", "origin/clean-main"):
+        if _is_ancestor(sha, _ref):
+            return "remote"
     if _is_ancestor(sha, "HEAD"):
         return "pending"
     return "obsolete"
