@@ -105,11 +105,10 @@ for _k in ("div_con", "div_norm", "div_act", "rent_norm", "rent_act", "expense",
     _tok.add(f"{SC[_k]:,.0f}")
 # 只留「格式化後不會誤撞」的 token：含千分位，或小數點且長度 ≥5（避開 100／540 這類純整數常數）
 _tok = {t for t in _tok if ("," in t) or ("." in t and len(t) >= 5)}
-# 大義街房貸月繳（現算自 snapshot.debt_schedule）亦屬當期真值 → 不得寫死
-_DAYI = next((float(e.get("金額") or 0) for e in (snap.get("debt_schedule") or [])
-              if "大義街房貸" in str(e.get("項目", ""))), 0.0)
-if _DAYI:
-    _tok.add(f"{_DAYI:,.0f}")
+# 房貸月付合計（現算自 snapshot.mortgage_monthly_total）亦屬當期真值 → 不得寫死
+_MORTM = float(snap.get("mortgage_monthly_total") or 0)
+if _MORTM:
+    _tok.add(f"{_MORTM:,.0f}")
 
 # ── 1) 語法閘門 ────────────────────────────────────────────────────────────
 _tree = None
@@ -452,13 +451,24 @@ if _idx_p.exists():
 else:
     ck("儀表板 JS 值對照表：built index.html 與 index_template.html 逐字相同", False,
        f"缺 {_idx_p.name} → 無法比對")
-ck("大義街房繳真值可得（名稱查不到時不得靜默放行）", _DAYI > 0,
-   f"snapshot.debt_schedule 查得 {_DAYI:,.0f}；為 0 表示查詢失敗、房租淨現金流保護已失效")
+# 2026-09-28：留停表 snapshot 記錄的「房租淨現金流」也必須同源（防只改頁面、記錄留舊值）
+_sab_rec = ((snap.get("sabbatical_checklist") or {}).get("記錄") or {})
+if _sab_rec:
+    _rk = sorted(_sab_rec.keys())[-1]
+    _rv = _sab_rec[_rk].get("房租淨現金流")
+    ck(f"留停表記錄（{_rk}）房租淨現金流 == 常態房租收入（口徑與頁面一致）",
+       _rv is not None and abs(float(_rv) - SC['rent_norm']) < 0.5,
+       f"記錄 {_rv} vs 現算 {SC['rent_norm']:,.0f}")
+
+ck("房貸月付合計真值可得（缺值時不得靜默放行）", _MORTM > 0,
+   f"snapshot.mortgage_monthly_total = {_MORTM:,.0f}；為 0 表示查詢失敗、房租淨現金流保護已失效")
 if _pg:
-    ck("頁面房租淨現金流 == 常態租金 − 大義街房繳（snapshot.debt_schedule 現算）",
-       f"房租淨現金流（常態 {SC['rent_norm']:,.0f} − 大義街房繳 {_DAYI:,.0f}）" in _pg
-       and has(_pg, f"{SC['rent_norm'] - _DAYI:,.0f}"),
-       f"期望 房租淨現金流（常態 {SC['rent_norm']:,.0f} − 大義街房繳 {_DAYI:,.0f}）＝{SC['rent_norm'] - _DAYI:,.0f}")
+    # 2026-09-28 使用者裁示：房貸月付已計入月支出（週報同口徑）→ 房租端不再重複扣，
+    # 本列＝常態房租收入本身。
+    ck("頁面房租淨現金流 == 常態房租收入（房貸不重複扣；現算）",
+       f"房租淨現金流（常態房租收入 {SC['rent_norm']:,.0f}" in _pg
+       and has(_pg, f"{SC['rent_norm']:,.0f}"),
+       f"期望 房租淨現金流…（常態房租收入 {SC['rent_norm']:,.0f}），值 {SC['rent_norm']:,.0f}")
 
 # ── 12) 變更範圍（限自身檔案集；外部排程寫入另列，不計入）────────────────────
 _raw = subprocess.run(["git", "status", "--porcelain"], cwd=str(BASE),

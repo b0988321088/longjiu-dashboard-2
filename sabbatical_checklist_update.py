@@ -43,7 +43,7 @@ def targets(exp, cash_floor):
         "現金水位":       {"goal": f"≥{cash_floor:,.0f}（生活底線；餘裕＝乾粉）", "type": "ge", "val": round(cash_floor)},
         "加碼級覆蓋率":   {"goal": f"≥{ACCEL_GATE_PCT}%（理想值·非門檻；原 A 級條件，2026-09-28 降級）",
                           "type": "ge_pct", "val": ACCEL_GATE_PCT},
-        "房租淨現金流":   {"goal": "持續改善", "type": "trend_up"},
+        "房租淨現金流":   {"goal": "維持（＝常態房租收入；房貸月付已列月支出，不重複扣）", "type": "stable"},
         "投資現金流":     {"goal": "穩定", "type": "stable"},
         "每月負債成本":   {"goal": "持續下降", "type": "trend_down"},
         "第二職涯收入":   {"goal": "不設硬性門檻", "type": "observe"},
@@ -114,7 +114,11 @@ def compute_kpis(snap):
     div_c = _pcs["div_con"]
     cash = snap.get("cash_total", 0) or 0
     cash_floor = _cash_floor(snap)
-    rent_net = rent - 26000          # 房租 − 大義街房貸（口徑：9/2 定案）
+    # 2026-09-28 使用者裁示：房貸月付已計入月支出（monthly_fixed_expense 的房貸項），
+    # 在房租端再扣一次＝重複計算；且常態房租 80,100 是兩間房的合計，不應拿去減
+    # 單一間房的貸款。故房租淨現金流 ＝ 常態房租收入本身（房租無直接成本項）。
+    # （同日先前「只扣大義街」與「扣兩筆合計」兩版皆作廢。）
+    rent_net = rent
     liab_cost = 16600                 # 保單借貸 13,333 + 元大證金 3,267（利息）
     coverage = round(_pcs["con"]["coverage"], 1)
     stress = round(_pcs["stress"]["coverage"], 1)
