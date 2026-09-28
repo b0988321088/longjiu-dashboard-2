@@ -1,9 +1,9 @@
 {
   "mode": "A",
-  "streak": 20,
-  "last_rate": 5.461,
-  "last_date": "2026-09-24",
-  "checked_at": "2026-09-25",
+  "streak": 21,
+  "last_rate": 5.504,
+  "last_date": "2026-09-25",
+  "checked_at": "2026-09-28",
   "mode_label": "模式A｜防禦（警戒區 5.20-5.30）｜⛔ 風控紅線 ≥5.3% 已觸發（債券新增永久凍結）",
   "red_line": true,
   "data_source": "FRED+Yahoo",
