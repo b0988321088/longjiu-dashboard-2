@@ -473,6 +473,7 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "DAILY_REPORT_PIPELINE_RULE.md", "run_daily.py",
            "notion_shared_context.md", "index_template.html", "build_dashboard.py", "index.html",
            "check_caliber_mutation.py",   # 本守門的變異測試（2026-09-28 從 %TEMP% 搬進版控，置於 tools/）
+           "verify_ciostatus_pushbase.py",   # cio_approve --status 基準修正的唯讀驗證器（tools/）
            "schedule_events.json", "error_register.md",
            "dashboard_decisions.json",   # 決策登記（decision-governance 主檔，逐筆新增屬預期）
            "asset_diff_monitor.py",
@@ -480,7 +481,9 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "dividend_caliber.py", "dividend_tracker.py", "asset_moat_monitor.py",
            "investment_performance_adjust.json", "investment_performance.html",
            "mtd_data.json", "mtd_performance.html", "passive_caliber.py",
-           "sabbatical_checklist_update.py", "work_log.json", "radar_state.json"}
+           "sabbatical_checklist_update.py", "work_log.json", "radar_state.json",
+           "cio_approve.py",   # 治理工具（--status 比較基準修正，2026-09-28）
+           }
 # 逐日產物：命名比對，跨月不失效（舊版 allowed_prefixes 釘死 2026-09）
 _DAILY = re.compile(r"^(asset_diff|retirement_plan|daily_report_v2|rebalance_dashboard|"
                     r"dynamic_weekly_review)_\d{4}-\d{2}-\d{2}\.html$")

@@ -69,10 +69,27 @@ def is_approved(tree: str) -> bool:
     return any(len(r) >= 4 and r[1] == tree and r[3] == "APPROVE" for r in read_rows(approve_file()))
 
 
-def has_upstream() -> bool:
-    p = subprocess.run(["git", "rev-parse", "--verify", "--quiet", "@{u}"],
+def _rev_quiet(ref: str) -> str:
+    """靜默 rev-parse；不經 git()（該 helper 對不存在的 ref 會 sys.exit，不能用來探測）"""
+    p = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}"],
                        capture_output=True, text=True)
-    return p.returncode == 0 and bool(p.stdout.strip())
+    return p.stdout.strip() if p.returncode == 0 else ""
+
+
+def push_base() -> tuple[str, str]:
+    """--status 的比較基準 (ref 名, sha)。
+
+    2026-09-28（INC-236 遺毒）：推送目標是 clean-main，但本機 main 已退役、
+    upstream 仍指 origin/main（落後數十顆）→ 拿 @{u} 當基準會把「早已推上
+    clean-main」的 commit 全列成未推送，每日收工自查出現假 ❌（實測 51 筆，
+    其中 8 筆是帶 [cioreviewed] 的資料 commit，本來就不寫 tree 紀錄）。
+    優先序：origin/clean-main → origin/main → @{u}。
+    """
+    for ref in ("origin/clean-main", "origin/main", "@{u}"):
+        sha = _rev_quiet(ref)
+        if sha:
+            return ref, sha
+    return "", ""
 
 
 def extract_verdict(obj) -> tuple[str | None, list[str]]:
@@ -183,12 +200,12 @@ def main() -> int:
             print(f"✅ HEAD 已通過審查（{r[3]} by {r[4] if len(r) > 4 else '?'} @ {r[0]}）")
         else:
             print("❌ HEAD 尚無 APPROVE 紀錄 → push 會被擋")
-        up = git("rev-parse", "--verify", "--quiet", "@{u}") if has_upstream() else ""
+        up_ref, up = push_base()
         if up:
             pend = git("rev-list", f"{up}..HEAD").split()
-            print(f"\n未推送 commit（相對 @{{u}}）：{len(pend)} 筆")
+            print(f"\n未推送 commit（相對 {up_ref}）：{len(pend)} 筆")
             if not pend:
-                print("✅ 無待推 commit（相對 @{u} 為 0 筆）→ 閘門無事可擋")
+                print(f"✅ 無待推 commit（相對 {up_ref} 為 0 筆）→ 閘門無事可擋")
                 return 0
             allok = True
             for c in pend:
