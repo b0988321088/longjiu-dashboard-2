@@ -264,14 +264,22 @@ def main():
         rep.setdefault("__RISK_CHAIN__", "📌 資金鏈現況：待雷達更新")
     # ── 銀行水位（2026-08-26：模板寫死各銀行餘額 → 從 snapshot cash_detail 動態）──
     cd = snap.get("cash_detail", {}) or {}
-    # 2026-09-01 修正：資料日期動態（moneybook/ 最新帳戶 CSV 檔名；無則用 snapshot 日期）
+    # 2026-09-28 修正（使用者指正：卡片「資料日期」永遠顯示 9/1）：
+    #   舊寫法 glob moneybook/ 目錄（本機不存在）→ 永遠退回寫死的 "20260901"。
+    #   正解＝讀 snapshot.cash_source.date（update_data.py --cash_detail 匯入 Moneybook 帳戶 CSV 時的匯入日，
+    #   與 asset_diff_monitor「資料新鮮度」卡同源）；缺值才退回 CSV 檔名／snapshot.date。
     import glob as _glob_mb
-    _mb_csv = sorted(_glob_mb.glob(str(BASE / "moneybook" / "Moneybook_帳戶_*.csv")))
-    _data_date = str(_mb_csv[-1]).replace("\\", "/").split("/")[-1].replace("Moneybook_帳戶_", "").replace(".csv", "") if _mb_csv else "20260901"
-    taiwan = (cd.get("敦南Richart子帳戶", 0) or 0) + (cd.get("文心綜活儲存款-薪轉", 0) or 0) + (cd.get("敦南Richart數位一般", 0) or 0) + (cd.get("敦南Richart外幣", 0) or 0)
+    _csrc = snap.get("cash_source") or {}
+    _cash_iso = _csrc.get("date") if isinstance(_csrc, dict) else _csrc
+    _data_date = str(_cash_iso)[:10] if _cash_iso else ""
+    if not _data_date:
+        _mb_csv = sorted(_glob_mb.glob(str(BASE / "moneybook" / "Moneybook_帳戶_*.csv"))) + sorted(_glob_mb.glob(str(BASE / "Moneybook_帳戶_*.csv")))
+        _data_date = (str(_mb_csv[-1]).replace(chr(92), "/").split("/")[-1]
+                      .replace("Moneybook_帳戶_", "").replace(".csv", "")) if _mb_csv else str(snap.get("date") or "—")
+    taiwan = (cd.get("敦南Richart子帳戶", 0) or 0) + (cd.get("文心綜活儲存款-薪轉", 0) or 0) + (cd.get("敦南Richart數位一般帳戶", 0) or 0) + (cd.get("敦南Richart外幣", 0) or 0)
     rep["499,316"] = _fmt(taiwan)          # 台新合計
     rep["139,446"] = _fmt(cd.get("文心綜活儲存款-薪轉", 177765) or 0)  # 文心薪轉
-    rep["97,353"] = _fmt(cd.get("敦南Richart數位一般", 90524) or 0)   # Richart一般
+    rep["97,353"] = _fmt(cd.get("敦南Richart數位一般帳戶", 90524) or 0)   # Richart一般（2026-09-28 key 修正：少「帳戶」二字→少算 119,966）
     # 管理費入帳狀態（2026-08-29：模板寫死「待入帳 0（應收 2,100）」→ 依 rent_received_records 動態）
     _fee = 0
     for k, v in (snap.get("rent_received_records", {}) or {}).items():
@@ -286,8 +294,18 @@ def main():
     # 流動性調度 tab 銀行卡（2026-08-29 補：原 6 卡全寫死 → 動態）
     rep["27,738"] = _fmt((cd.get("活期儲蓄存款", 0) or 0) + (cd.get("數位存款帳戶２類", 0) or 0))  # 國泰世華（活期+數位2類）
     rep["44,116"] = _fmt(cd.get("數位活儲", 44116) or 0)             # 台北富邦
-    rep["739"] = _fmt(cd.get("Digital Savings Acco", 739) or 0)      # 將來銀行
-    rep["__SAFE_LINE_RAW__"] = str(int(expense) * 3)   # 3 個月安全線門檻（月支出×3；顯示值由下方 data-k="safe_line" 注入）
+    # 2026-09-28 使用者裁示：房貸扣款行安全線＝「自身房貸月繳×3」（國泰＝大義街、永豐＝洲際W）；
+    #    其餘（台新薪轉帳戶）仍用月支出×3。值一律讀 snapshot，勿寫死。
+    _cat_loan = float(snap.get("mortgage_cathay_monthly") or 0)
+    _sin_loan = float(snap.get("mortgage_sinopac_monthly") or 0)
+    for _nm, _lv in (("mortgage_cathay_monthly", _cat_loan), ("mortgage_sinopac_monthly", _sin_loan)):
+        if _lv <= 0:   # 2026-09-28（CIO 審查）：缺值不得退成 0 門檻（會把 🔴 誤判成 🟢）→ 退回月支出
+            print(f"  ⚠️ {_nm} 缺值／為 0 → 該行庫安全線退回月支出口徑（{_fmt(expense)}×3）")
+    _cat_loan = _cat_loan or float(expense)
+    _sin_loan = _sin_loan or float(expense)
+    rep["__SAFE_LINE_RAW__"] = str(int(expense) * 3)              # 台新（月支出×3；顯示值由下方 data-k="safe_line" 注入）
+    rep["__SAFE_LINE_CATHAY_RAW__"] = str(int(_cat_loan) * 3)     # 國泰（房貸月繳×3＝3 個月扣款）
+    rep["__SAFE_LINE_SINOPAC_RAW__"] = str(int(_sin_loan) * 3)    # 永豐（房貸月繳×3＝3 個月扣款）
     rep["20,776"] = _fmt(cd.get("活期儲蓄存款", 0) or 0)              # 國泰明細 活期儲蓄
     rep["6,960"] = _fmt(cd.get("數位存款帳戶２類", 2) or 0)           # 國泰明細 數位2類
     # 2026-08-28 修正：銀行水位全動態（Moneybook 8/27 帳戶）
@@ -361,7 +379,7 @@ def main():
             hits += 1
     # 2026-09-21 INC-233：佔位符沒被取代＝模板與鍵名不一致，過去是「靜默留舊值」→ 改為當場大聲失敗。
     # 新增 rep 佔位符時，務必同步登錄這份清單（清單＝強制必須被消耗的佔位符）。
-    _MUST_CONSUME = ("__SAFE_LINE_RAW__", "__CASH_FLOOR_LINE__")
+    _MUST_CONSUME = ("__SAFE_LINE_RAW__", "__SAFE_LINE_CATHAY_RAW__", "__SAFE_LINE_SINOPAC_RAW__", "__CASH_FLOOR_LINE__")
     _leftover = [p for p in _MUST_CONSUME if p in tpl]
     if _leftover:
         raise RuntimeError(f"build_dashboard：佔位符未被取代 {_leftover}（注入失效，拒絕產出舊值儀表板）")
@@ -390,6 +408,10 @@ def main():
         "div_ins": div_ins,
         "etf_div": sum(v for k, v in _dr.items() if any(t in k for t in ("ETF", "基金", "聯博")) and isinstance(v, (int, float))) or 0,
         "safe_line": int(expense) * 3,
+        "safe_line_cathay": int(_cat_loan) * 3,      # 2026-09-28：房貸扣款行各自口徑
+        "safe_line_sinopac": int(_sin_loan) * 3,
+        "cathay_loan": int(_cat_loan),
+        "sinopac_loan": int(_sin_loan),
         "pen_tw": _ptwd.get("台股市值型成長", 0),
         "pen_us": _ptwd.get("美股市值型成長", 0),
         "pen_def": _ptwd.get("防守型配息", 0),
@@ -400,16 +422,15 @@ def main():
         "cathay": (cd.get("活期儲蓄存款", 0) or 0) + (cd.get("數位存款帳戶２類", 0) or 0),
         "cathay_d1": cd.get("活期儲蓄存款", 0) or 0,
         "cathay_d2": cd.get("數位存款帳戶２類", 0) or 0,
-        "taiwan": (cd.get("敦南Richart子帳戶", 0) or 0) + (cd.get("文心綜活儲存款-薪轉", 0) or 0) + (cd.get("敦南Richart數位一般", 0) or 0),
+        "taiwan": (cd.get("敦南Richart子帳戶", 0) or 0) + (cd.get("文心綜活儲存款-薪轉", 0) or 0) + (cd.get("敦南Richart數位一般帳戶", 0) or 0),
         "richart_sub": cd.get("敦南Richart子帳戶", 0) or 0,
         "wenxin": cd.get("文心綜活儲存款-薪轉", 0) or 0,
-        "richart_gen": cd.get("敦南Richart數位一般", 0) or 0,
+        "richart_gen": cd.get("敦南Richart數位一般帳戶", 0) or 0,
         "sinopac": (cd.get("營業部DAWHO活期儲蓄存款", 0) or 0) + (cd.get("市政分行活期儲蓄存款", 0) or 0),
         "dawho": cd.get("營業部DAWHO活期儲蓄存款", 0) or 0,
         "shizheng": cd.get("市政分行活期儲蓄存款", 0) or 0,
         "yushan": cd.get("臺幣綜存", 0) or 0,
         "fubon": cd.get("數位活儲", 0) or 0,
-        "jianglai": cd.get("Digital Savings Acco", 0) or 0,
         # 2026-09-28：index_template 的「被動月固定收入（常態）」「安全退休盈餘」原本是純文字寫死
         # （無 data-k、也不在 rep 對映內）→ 真值一動就靜默說舊話；改走注入。
         "passive_norm": float((snap.get("passive_income") or {}).get("total_conservative") or 0),
@@ -420,6 +441,28 @@ def main():
         tpl, _n = _pat.subn(lambda m: m.group(1) + _fmt(_dv) + m.group(2), tpl)
         if _n:
             hits += _n
+    # ── 銀行水位卡片「靜態狀態」對齊門檻（2026-09-28：卡片顏色/🟢🔴字樣原本手寫，與實際門檻不一致）──
+    #    JS 失敗時的離線快照版也必須說對話（國泰 78,000／永豐 197,205 為房貸口徑）。
+    _bank_state = {
+        "cathay":  ((cd.get("活期儲蓄存款", 0) or 0) + (cd.get("數位存款帳戶２類", 0) or 0), int(_cat_loan) * 3),
+        "taiwan":  (taiwan, int(expense) * 3),
+        "sinopac": ((cd.get("營業部DAWHO活期儲蓄存款", 0) or 0) + (cd.get("市政分行活期儲蓄存款", 0) or 0), int(_sin_loan) * 3),
+        "yushan":  (cd.get("臺幣綜存", 0) or 0, 40000),
+        "fubon":   (cd.get("數位活儲", 0) or 0, 40000),
+    }
+    for _bk, (_bv, _bm) in _bank_state.items():
+        _ok = float(_bv or 0) >= float(_bm or 0)
+        _card = "border-blue-500/20 bg-blue-500/10" if _ok else "border-red-500/20 bg-red-500/10"
+        _txt = "text-blue-300" if _ok else "text-red-400"
+        _bpat = re.compile(
+            r'<div class="border-(?:red|blue)-500/20 bg-(?:red|blue)-500/10 (p-4 rounded-xl space-y-1)">'
+            r'(<div class="flex justify-between text-xs font-bold )text-(?:red-400|blue-300)'
+            r'("><span>[^<]*</span><span class="bank-status" data-val-k="' + _bk + r'"[^>]*>)[^<]*(</span>)')
+        tpl, _n2 = _bpat.subn(
+            lambda m, c=_card, x=_txt, ok=_ok: '<div class="%s %s">%s%s%s%s%s' % (
+                c, m.group(1), m.group(2), x, m.group(3), "🟢 充裕" if ok else "🔴 警報", m.group(4)), tpl)
+        if _n2 != 1:
+            print(f"  ⚠️ 銀行卡狀態對齊異常：{_bk} 命中 {_n2} 次（預期 1）")
     # ── 2026-09-04：純文字/手動行事曆殘留值正規化（data-k 注入只涵蓋 span；公式行與事件列金額需隨 monthly_salary 自動更新）──
     _ms = int(snap.get("monthly_salary", 42560) or 42560)
     tpl = tpl.replace("39,727", f"{_ms:,}")

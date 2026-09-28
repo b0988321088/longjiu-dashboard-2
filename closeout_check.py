@@ -239,8 +239,9 @@ def step_auto_warns(quiet: bool) -> list:
 SNAP_FILE = REPO / "snapshot.json"
 INDEX_FILE = REPO / "index.html"
 LIFE_ACCOUNT_MIN = "40000"   # 玉山／富邦生活帳戶安全線（4 萬，刻意常數；非 3 個月支出）
-EXPECT_SAFE_ANCHORS = 4      # 儀表板 safe_line 錨點數（4 張 3 個月安全線卡）
-EXPECT_BANK_MIN = 4          # 3 個月安全線門檻數（國泰／台新／永豐／將來）
+EXPECT_SAFE_ANCHORS = 1      # 「月支出×3」安全線錨點數（2026-09-28 起只剩台新；國泰／永豐改自身房貸口徑）
+EXPECT_LOAN_SAFE_ANCHORS = 2 # 「房貸月繳×3」安全線錨點數（國泰 safe_line_cathay／永豐 safe_line_sinopac）
+EXPECT_BANK_MIN = 3          # 銀行卡門檻數（國泰／台新／永豐；將來銀行 2026-09-28 移除）
 EXPECT_LIFE_MIN = 2          # 生活帳戶門檻數（玉山／台北富邦）
 
 
@@ -367,32 +368,81 @@ def step_consistency(quiet: bool) -> list:
             if not quiet:
                 print("⑥ 真值一致性：⚪ monthly_expense 無法解析，儀表板比對略過")
         else:
+            # 2026-09-28 使用者裁示：房貸扣款行安全線＝自身房貸月繳×3（國泰／永豐）；台新＝月支出×3。
+            #   期望值一律由 snapshot 現算（禁寫死），真值一動門檻跟著動。
+            _cat_loan = _num(snap.get("mortgage_cathay_monthly"))
+            _sin_loan = _num(snap.get("mortgage_sinopac_monthly"))
+            for _nm, _lv in (("mortgage_cathay_monthly", _cat_loan), ("mortgage_sinopac_monthly", _sin_loan)):
+                if _lv is None or _lv <= 0:
+                    problems.append(f"snapshot 房貸月繳欄位不可用（{_nm}={snap.get(_nm)!r}）→ 無法驗證房貸口徑安全線")
             safe3 = expense * 3
             want = f"{safe3:,}"
+            want_cat = f"{_cat_loan * 3:,}" if _cat_loan is not None else None
+            want_sin = f"{_sin_loan * 3:,}" if _sin_loan is not None else None
             if not INDEX_FILE.exists():
                 problems.append(f"index.html 不存在（無法驗證安全線 {want}）")
             else:
                 html = INDEX_FILE.read_text(encoding="utf-8", errors="replace")
-                anchors = re.findall(r'data-k="safe_line">([^<]*)<', html)
+                def _anchors(key: str) -> list:
+                    return re.findall('data-k="%s">([^<]*)<' % re.escape(key), html)
+                anchors = _anchors("safe_line")           # 月支出×3（台新）
                 bad = sorted({v for v in anchors if v != want})
                 if bad:
                     problems.append(f"index.html 安全線錨點為 {bad}（應為 {want}＝月支出 {expense:,}×3）")
                 if len(anchors) != EXPECT_SAFE_ANCHORS:
                     problems.append(f"index.html 安全線錨點數量 {len(anchors)} ≠ {EXPECT_SAFE_ANCHORS}（元素被刪／結構變動）")
-                mins = re.findall(r'data-min="([^"]*)"', html)
-                bank = [v for v in mins if v != LIFE_ACCOUNT_MIN]
+                for _k, _w, _lbl in (("safe_line_cathay", want_cat, "國泰房貸月繳×3"),
+                                     ("safe_line_sinopac", want_sin, "永豐房貸月繳×3")):
+                    _a = _anchors(_k)
+                    if _w is None:
+                        problems.append(f"index.html {_k} 無法驗證：snapshot 缺房貸月繳值（mortgage_*_monthly）")
+                        continue
+                    _bad2 = sorted({v for v in _a if v != _w})
+                    if _bad2:
+                        problems.append(f"index.html {_k} 錨點為 {_bad2}（應為 {_w}＝{_lbl}）")
+                    if len(_a) != 1:
+                        problems.append(f"index.html {_k} 錨點數量 {len(_a)} ≠ 1（房貸往來行庫卡片被改動）")
+                mins = re.findall('data-min="([^"]*)"', html)
                 life = [v for v in mins if v == LIFE_ACCOUNT_MIN]
+                bank = [v for v in mins if v != LIFE_ACCOUNT_MIN]
+                # data-min 是未加千分位的原始數字（want* 為顯示格式）→ 比對用原始值
+                _allowed = {str(safe3)} | {str(int(x) * 3) for x in (_cat_loan, _sin_loan) if x}
                 for v in sorted(set(bank)):
                     if not v.isdigit():
                         problems.append(f"index.html 銀行卡門檻格式錯誤 {v!r}（JS Number() 會得 NaN）")
-                    elif int(v) != safe3:
-                        problems.append(f"index.html 銀行卡門檻未跟月支出：{v}（應為 {safe3}）")
+                    elif v not in _allowed:
+                        problems.append(f"index.html 銀行卡門檻不在允許集合（月支出×3={want}／國泰房貸×3={want_cat}／"
+                                        f"永豐房貸×3={want_sin}）：{v}")
                 if len(bank) != EXPECT_BANK_MIN:
                     problems.append(f"index.html 銀行卡門檻數量 {len(bank)} ≠ {EXPECT_BANK_MIN}")
                 if len(life) != EXPECT_LIFE_MIN:
                     problems.append(f"index.html 生活帳戶門檻數量 {len(life)} ≠ {EXPECT_LIFE_MIN}")
-                if "__SAFE_LINE_RAW__" in html:
-                    problems.append("index.html 殘留未取代佔位符 __SAFE_LINE_RAW__")
+                # 2026-09-28（CIO 審查）：卡片靜態配色／狀態字樣必須與門檻一致
+                #   （防 build_dashboard 的對齊 regex 靜默失配 → 藍框紅字或假充裕）
+                _cpat = re.compile(
+                    r'<div class="border-(red|blue)-500/20 bg-\1-500/10 p-4 rounded-xl space-y-1">'
+                    r'<div class="flex justify-between text-xs font-bold text-(red-400|blue-300)">'
+                    r'<span>([^<]*)</span><span class="bank-status" data-val-k="([a-z]+)"[^>]*data-min="([0-9]*)"[^>]*>([^<]*)</span>'
+                    r'</div><p class="text-lg[^"]*"><span data-k="\4">([^<]*)</span>')
+                _n_cards = 0
+                for _m in _cpat.finditer(html):
+                    _col, _tcol, _name, _key, _minv, _stext, _val = _m.groups()
+                    _n_cards += 1
+                    _v = _num(_val) or 0
+                    _mn = _num(_minv) or 0
+                    _want_ok = _v >= _mn
+                    if _want_ok != (_col == "blue"):
+                        problems.append(f"index.html {_name} 卡片配色與門檻不一致（餘 {_v:,} vs 門檻 {_mn:,} → 應為 {'🟢' if _want_ok else '🔴'}）")
+                    _want_txt = "🟢 充裕" if _want_ok else "🔴 警報"
+                    if _stext.strip() != _want_txt:
+                        problems.append(f"index.html {_name} 狀態文字 {_stext.strip()!r} ≠ {_want_txt}")
+                    if _tcol != ("blue-300" if _want_ok else "red-400"):
+                        problems.append(f"index.html {_name} 標題配色 {_tcol} 與狀態不符")
+                if _n_cards != 5:
+                    problems.append(f"index.html 行庫卡片數 {_n_cards} ≠ 5（國泰／台新／永豐／玉山／富邦；結構被動過）")
+                for _ph in ("__SAFE_LINE_RAW__", "__SAFE_LINE_CATHAY_RAW__", "__SAFE_LINE_SINOPAC_RAW__"):
+                    if _ph in html:
+                        problems.append(f"index.html 殘留未取代佔位符 {_ph}")
     except Exception as e:
         problems.append(f"真值一致性（index.html 側）檢查異常：{type(e).__name__}: {e}")
     if not quiet:
