@@ -203,6 +203,18 @@ if _pg:
        has(_pg, f"{SC['extreme']['coverage']:.1f}"), f"期望 {SC['extreme']['coverage']:.1f}")
     ck("當日產物含加碼級 A+ 標記（150% 為理想值，非門檻）", "A+級" in _pg)
 
+    # 2026-09-28：當月實收語境的房租必須是實收真值（passive_income.rent_monthly_actual）；
+    # 不得沿用常態 rent_monthly（實踩：實收卡片下方仍寫常態房租 → 明細加總與卡片值自相矛盾）。
+    # 判準：配息用「實收值」時，房租亦必須是實收值；保守語境的配息非實收值 → 不受檢（零誤判）。
+    if SC["div_act"] != SC["div_con"]:
+        _d_act = f"{SC['div_act']:,.0f}"
+        _r_act = f"{SC['rent_act']:,.0f}"
+        _bad_rent = [m.group(0) for m in re.finditer(
+            r"配息(?:實收)?\s*" + re.escape(_d_act) + r"\s*[＋+]\s*(?:房租|租金)(?:實收)?\s*([\d,]+)", _pg)
+            if m.group(1) != _r_act]
+        ck("退休規劃頁：配息用實收值時，房租亦為實收真值（不得混常態）",
+           not _bad_rent, str(_bad_rent[:2]))
+
 # ── 5) 儀表板：被動收入基準觀察小卡（自洽 ＋ 現算）────────────────────────────
 if IDX.exists():
     _idx = IDX.read_text(encoding="utf-8")
@@ -444,8 +456,9 @@ ck("大義街房繳真值可得（名稱查不到時不得靜默放行）", _DAY
    f"snapshot.debt_schedule 查得 {_DAYI:,.0f}；為 0 表示查詢失敗、房租淨現金流保護已失效")
 if _pg:
     ck("頁面房租淨現金流 == 常態租金 − 大義街房繳（snapshot.debt_schedule 現算）",
-       f"房租淨現金流 {SC['rent_norm'] - _DAYI:,.0f}" in _pg,
-       f"期望 房租淨現金流 {SC['rent_norm'] - _DAYI:,.0f}")
+       f"房租淨現金流（常態 {SC['rent_norm']:,.0f} − 大義街房繳 {_DAYI:,.0f}）" in _pg
+       and has(_pg, f"{SC['rent_norm'] - _DAYI:,.0f}"),
+       f"期望 房租淨現金流（常態 {SC['rent_norm']:,.0f} − 大義街房繳 {_DAYI:,.0f}）＝{SC['rent_norm'] - _DAYI:,.0f}")
 
 # ── 12) 變更範圍（限自身檔案集；外部排程寫入另列，不計入）────────────────────
 _raw = subprocess.run(["git", "status", "--porcelain"], cwd=str(BASE),

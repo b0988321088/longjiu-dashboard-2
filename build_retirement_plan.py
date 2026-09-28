@@ -211,11 +211,11 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 .callout{{background:#1e3a5f40;border-left:3px solid #38bdf8;padding:10px 14px;border-radius:6px;font-size:13px}}
 .red{{color:#ef4444}}.green{{color:#22c55e}}.amber{{color:#f59e0b}}</style></head><body>
 <h1>🏖️ 退休規劃報告</h1>
-<p class="meta">產出：{TODAY} ｜ 資料源：snapshot.json（動態讀取）｜ 被動收入 保守底線 = 配息 {div_conservative:,} ＋ 房租 {rent:,} ／ 當月實收 = 配息 {div_actual:,.0f} ＋ 房租 {rent:,}（{sc_month or '當月'}）</p>
+<p class="meta">產出：{TODAY} ｜ 資料源：snapshot.json（動態讀取）｜ 被動收入 保守底線 = 配息 {div_conservative:,} ＋ 房租 {rent:,} ／ 當月實收 = 配息 {div_actual:,.0f} ＋ 房租實收 {rent_actual:,.0f}（{sc_month or '當月'}）</p>
 
 <div class="grid">
   <div class="card"><div class="stat"><div class="label">當月被動收入（保守底線·判準）</div><div class="val green">{fire_income:,}</div><div class="label" style="margin-top:4px">配息 {div_conservative:,} ＋ 房租 {rent:,}</div></div></div>
-  <div class="card"><div class="stat"><div class="label">當月被動收入（當月實收）</div><div class="val" style="color:#38bdf8">{fire_income_actual:,.0f}</div><div class="label" style="margin-top:4px">配息 {div_actual:,.0f} ＋ 房租 {rent:,}（{sc_month or '當月'}）</div></div></div>
+  <div class="card"><div class="stat"><div class="label">當月被動收入（當月實收）</div><div class="val" style="color:#38bdf8">{fire_income_actual:,.0f}</div><div class="label" style="margin-top:4px">配息 {div_actual:,.0f} ＋ 房租實收 {rent_actual:,.0f}（{sc_month or '當月'}）</div></div></div>
   <div class="card"><div class="stat"><div class="label">當下真實開銷</div><div class="val amber">{fire_cost:,}</div></div></div>
   <div class="card"><div class="stat"><div class="label">FIRE 覆蓋率（保守／實收）</div><div class="val" style="color:{cov_color}">{fire_cov:.1f}% <span style="font-size:15px;color:#94a3b8">／</span> <span class="{actual_band_cls}">{fire_cov_actual:.1f}%</span></div><div class="label" style="margin-top:4px">保守底線（判準）／當月實收</div></div></div>
   <div class="card"><div class="stat"><div class="label">退休生活費覆蓋（38,000 目標）</div><div class="val green">{retire_cov:.0f}% <span style="font-size:15px;color:#94a3b8">／</span> {retire_cov_actual:.0f}%</div><div class="label" style="margin-top:4px">保守底線／當月實收</div></div></div>
@@ -234,13 +234,13 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <div class="card"><h2>📊 退休後流動性估算（保守底線 vs 當月實收）</h2>
 <table>
 <tr><th>項目</th><th>保守底線（判準）</th><th>當月實收（現況）</th></tr>
-<tr><td>被動月固定收入（配息＋房租 {rent:,}）</td><td>{fire_income:,}</td><td>{fire_income_actual:,.0f}</td></tr>
+<tr><td>被動月固定收入（配息＋房租：保守 {rent:,}／實收 {rent_actual:,.0f}）</td><td>{fire_income:,}</td><td>{fire_income_actual:,.0f}</td></tr>
 <tr><td>退休維持月支出</td><td>{fire_cost:,}</td><td>{fire_cost:,}</td></tr>
 <tr><td style="color:#22c55e;font-weight:800">安全退休盈餘</td><td style="color:#22c55e;font-weight:800">+{fire_income - fire_cost:,.0f}</td><td style="color:#22c55e;font-weight:800">+{fire_income_actual - fire_cost:,.0f}</td></tr>
 <tr><td>退休生活費目標（使用者設定）</td><td>{RETIRE_BUDGET:,}</td><td>{RETIRE_BUDGET:,}</td></tr>
 <tr><td style="color:#22c55e;font-weight:800">對 {RETIRE_BUDGET:,} 目標的覆蓋</td><td style="color:#22c55e;font-weight:800">{retire_cov:.0f}%（{fire_income:,}）</td><td style="color:#22c55e;font-weight:800">{retire_cov_actual:.0f}%（{fire_income_actual:,.0f}）</td></tr>
 </table>
-<p class="meta">保守底線＝配息基本值 {div_conservative:,}（9/5 定版）＋房租；當月實收＝{sc_month or '當月'}配息實收 {div_actual:,.0f}＋房租。判準一律走保守底線。</p></div>
+<p class="meta">保守底線＝配息基本值 {div_conservative:,}（9/5 定版）＋房租 {rent:,}；當月實收＝{sc_month or '當月'}配息實收 {div_actual:,.0f}＋房租實收 {rent_actual:,.0f}。判準一律走保守底線。</p></div>
 
 <div class="card"><h2>📈 2029 升級情境（富達解約 + 疊卷套利）</h2>
 <p>富達 600 萬（後收 B 股，CDSC 3 年綁）2029/8 解約免罰 → 領滿約 +45,000/月 → 月被動上看 <b style="color:#22c55e">{after_2029:,}</b>。</p>
@@ -275,11 +275,11 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><th>指標</th><th>{sc_month or '當月'} 基準</th><th>2027/2 目標</th></tr>
 <tr><td>每月必要生活費</td><td>{expense:,}</td><td>{goal_expense}</td></tr>
 <tr><td>被動現金流（保守底線·判準）</td><td>{fire_income:,}（覆蓋 {fire_cov:.1f}%）</td><td>{goal_passive}</td></tr>
-<tr><td>被動現金流（當月實收）</td><td>{div_actual + rent:,.0f}（配息 {div_actual:,.0f}＋租金 {rent:,}，覆蓋 {fire_cov_actual:.1f}%）</td><td>觀察（勿與判準混用）</td></tr>
+<tr><td>被動現金流（當月實收）</td><td>{fire_income_actual:,.0f}（配息 {div_actual:,.0f}＋租金 {rent_actual:,.0f}，覆蓋 {fire_cov_actual:.1f}%）</td><td>觀察（勿與判準混用）</td></tr>
 <tr><td>保守覆蓋率（判準·保守底線）</td><td class="{('red' if fire_cov<100 else 'green')}">{fire_cov:.1f}%</td><td>≥100%（門檻）</td></tr>
 <tr><td>壓力情境覆蓋率（常態配息口徑）</td><td class="{_stress_cls}">{stress_cov:.1f}%</td><td>≥100%（門檻）</td></tr>
 <tr><td>FI 跑道（極端情境口徑）</td><td class="{('green' if (_SC['extreme']['runway_days'] or 0)>=540 else 'red')}">{_rw_ext}</td><td>≥540 天（門檻）</td></tr>
-<tr><td>房租淨現金流</td><td>{rent - _dayi:,.0f}</td><td>持續改善</td></tr>
+<tr><td>房租淨現金流（常態 {rent:,} − 大義街房繳 {_dayi:,.0f}）</td><td>{rent - _dayi:,.0f}</td><td>持續改善</td></tr>
 <tr><td>投資現金流</td><td>{div_c:,}</td><td>穩定</td></tr>
 <tr><td>現金水位</td><td>{cash:,}</td><td>≥{_floor_s:,.0f}（底線）</td></tr>
 <tr><td>加碼級覆蓋率（理想值·非門檻）</td><td class="{('green' if fire_cov>=150 else 'amber')}">{fire_cov:.1f}%</td><td>≥150%</td></tr>
