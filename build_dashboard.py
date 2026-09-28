@@ -119,22 +119,10 @@ def main():
 
     # ── replace 模板寫死值（2026-08-26 盤點清單）──
     rep = {
-        "9,682,433": _fmt(ins),            # 保單總值
-        "7,753,544": _fmt(allianz),        # 安聯 A+B
-        "2,723,839": _fmt(snap.get("allianz_b", 0) or 0),  # 保單B 現值（2026-08-29 補：漏掉沒替換）
-        "1,928,889": _fmt(firstjin),       # 第一金現值
         "111,513": _fmt(cum_div),          # 第一金累計配息
-        "88,507": _fmt(div_ins),           # 保單配息合計（實收）
         "102,469": _fmt(div_ins),          # 保單配息合計（實收）— 2026-09-26 補：模板 441 行殘留 8 月舊值
         "25,538": _fmt(firstjin_div),      # 第一金本月領息
-        "63,027": _fmt(az_div),            # 安聯本月領息（2026-08-29 補：原寫死舊值）
-        "815,066": _fmt(cash),             # 現金
         "772,607": _fmt(cash),             # 現金（2026-08-31 補：8/30 template 值 → 777,767）
-        "227,372": _fmt(got_total),        # 當月已收合計（說明欄）
-        "199,960": _fmt(got_total),        # 📊 當月已收合計卡片（2026-08-29 補：漏替換 → 舊值 199,960 殘留）
-        "109,645": _fmt(div_total),        # 配息實收
-        "123,607": _fmt(div_total),        # 配息實收（2026-08-31 補：8/30 template 值 → 138,627）
-        "78,000": _fmt(rent_got),          # 租金已收
         "162,781": _fmt(expense),          # 月支出
     }
     # ── 雷達＋本週投資計劃（2026-08-29：模板寫死 8/23 舊版 → 讀 radar_state.json 動態）──
@@ -277,17 +265,7 @@ def main():
         _data_date = (str(_mb_csv[-1]).replace(chr(92), "/").split("/")[-1]
                       .replace("Moneybook_帳戶_", "").replace(".csv", "")) if _mb_csv else str(snap.get("date") or "—")
     taiwan = (cd.get("敦南Richart子帳戶", 0) or 0) + (cd.get("文心綜活儲存款-薪轉", 0) or 0) + (cd.get("敦南Richart數位一般帳戶", 0) or 0) + (cd.get("敦南Richart外幣", 0) or 0)
-    # 管理費入帳狀態（2026-08-29：模板寫死「待入帳 0（應收 2,100）」→ 依 rent_received_records 動態）
-    _fee = 0
-    for k, v in (snap.get("rent_received_records", {}) or {}).items():
-        if str(k).startswith(_today_m) and isinstance(v, dict) and "管理費" in v:
-            _fee = v["管理費"] or 0
-    if _fee > 0:
-        rep["<span class=\"text-amber-400\">⏳ 待入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-slate-400\">0 TWD（應收 2,100）</span>"] = \
-            "<span class=\"text-emerald-400\">✅ 已入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-emerald-400 font-bold\">2,100 TWD</span>"
-    else:
-        rep["<span class=\"text-amber-400\">⏳ 待入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-slate-400\">0 TWD（應收 2,100）</span>"] = \
-            "<span class=\"text-amber-400\">⏳ 待入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-slate-400\">0 TWD（應收 2,100）</span>"
+    # 2026-09-28：模板管理費列已改寫（舊錨點兩分支皆死碼）→ 整段移除
     # 流動性調度 tab 銀行卡（2026-08-29 補：原 6 卡全寫死 → 動態）
     # 2026-09-28 使用者裁示：房貸扣款行安全線＝「自身房貸月繳×3」（國泰＝大義街、永豐＝洲際W）；
     #    其餘（台新薪轉帳戶）仍用月支出×3。值一律讀 snapshot，勿寫死。
@@ -308,13 +286,6 @@ def main():
     _ppct = snap.get("penetration", {}).get("actual_pct", {}) or {}
     _gaps = snap.get("penetration", {}).get("gaps", {}) or {}
     _tgt = snap.get("penetration", {}).get("targets", {}) or {}
-    rep["1,889,388"] = _fmt(_ptwd.get("台股市值型成長", 0))        # 台股市值
-    rep["11,499,725"] = _fmt(_ptwd.get("美股市值型成長", 0))       # 美股市值
-    rep["1,089,462"] = _fmt(_ptwd.get("防守型配息", 0))            # 防守市值
-    rep["5,917,259"] = _fmt(_ptwd.get("債券", 0))                  # 債券市值
-    rep["5,798,988"] = _fmt(_ptwd.get("現金/安全網", 0))           # 現金市值
-    rep["3,735,174"] = _fmt(_ptwd.get("美股市值型成長_科技", 0))   # 科技市值
-    rep["7,764,551"] = _fmt(_ptwd.get("美股市值型成長_非科技", 0)) # 非科技市值
     # 科技/非科技文字（⚠️ 必須在市值替換前，因整句 key 含市值數字，市值先被換掉就匹配不到）
     _tch = _ppct.get("美股市值型成長_科技", 0); _ntch = _ppct.get("美股市值型成長_非科技", 0)
     _tech_gap = _tch - 15
@@ -323,37 +294,21 @@ def main():
     # 兩階段：先用 temp 佔位保護整句 → 再換市值 → 最後還原整句
     _TECH_PH = "@@TECH_TXT@@"
     tpl = tpl.replace(_tech_txt_old, _TECH_PH)
-    rep["@@TECH_TXT@@"] = _tech_txt_new
     _t_act = _ppct.get("台股市值型成長", 0); _t_tgt = _tgt.get("台股市值型目標", 10)
     _t_gap = _t_act - _t_tgt
     _t_col = "text-red-400" if _t_gap < 0 else "text-emerald-400"
-    rep["現況 7 / 目標 10 (缺口 -2.8pp)"] = f"現況 {_t_act:.0f} / 目標 {_t_tgt:.0f} ({'缺口' if _t_gap<0 else '溢價'} {_t_gap:+.1f}pp)"
-    rep["style=\"width: 7%\"</div>"] = f"style=\"width: {min(_t_act/55*100,100):.0f}%\"</div>"
-    rep["style=\"width: -2.8%\"></div>"] = f"style=\"width: {min(max(_t_gap,0)/55*100,100):.0f}%\"></div>"
     _u_act = _ppct.get("美股市值型成長", 0); _u_tgt = _tgt.get("美股市值型目標", 40)
     _u_gap = _u_act - _u_tgt
-    rep["現況 44 / 目標 40 (溢價 +3.9pp)"] = f"現況 {_u_act:.0f} / 目標 {_u_tgt:.0f} ({'溢價' if _u_gap>0 else '缺口'} {_u_gap:+.1f}pp)"
-    rep["style=\"width: 44%\"></div>"] = f"style=\"width: {min(_u_act/55*100,100):.0f}%\"</div>"
     _d_act = _ppct.get("防守型配息", 0); _d_tgt = _tgt.get("配息型目標", 20)
     _d_gap = _d_act - _d_tgt
-    rep["現況 4 / 目標 20 (缺口 -15.8pp)"] = f"現況 {_d_act:.0f} / 目標 {_d_tgt:.0f} ({'缺口' if _d_gap<0 else '溢價'} {_d_gap:+.1f}pp)"
-    rep["style=\"width: 4%\"></div>"] = f"style=\"width: {min(_d_act/55*100,100):.0f}%\"</div>"
-    rep["style=\"width: -15.8%\"></div>"] = f"style=\"width: {min(max(_d_gap,0)/55*100,100):.0f}%\"></div>"
     _b_act = _ppct.get("債券", 0); _b_tgt = _tgt.get("債券型目標", 25)
     _b_gap = _b_act - _b_tgt
-    rep["現況 23 / 目標 25 (盈餘 -2.4pp)"] = f"現況 {_b_act:.0f} / 目標 {_b_tgt:.0f} ({'盈餘' if _b_gap>0 else '缺口'} {_b_gap:+.1f}pp)"
-    rep["style=\"width: 23%\"></div>"] = f"style=\"width: {min(_b_act/55*100,100):.0f}%\"</div>"
     _c_act = _ppct.get("現金/安全網", 0); _c_tgt = _tgt.get("現金目標", 5)
     _c_gap = _c_act - _c_tgt
-    rep["現況 22 / 目標 5 (盈餘 +17.1pp)"] = f"現況 {_c_act:.0f} / 目標 {_c_tgt:.0f} ({'盈餘' if _c_gap>0 else '缺口'} {_c_gap:+.1f}pp)"
-    rep["style=\"width: 22%\"></div>"] = f"style=\"width: {min(_c_act/55*100,100):.0f}%\"</div>"
     # 科技/非科技文字
     _tch = _ppct.get("美股市值型成長_科技", 0); _ntch = _ppct.get("美股市值型成長_非科技", 0)
     _tech_gap = _tch - 15
-    rep["🔬 科技 14.3%（3,735,174 TWD）｜非科技 29.6%（7,764,551 TWD）｜科技目標 ≤20%（缺口 -0.7pp）"] = \
-        f"🔬 科技 {_tch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_科技',0))} TWD）｜非科技 {_ntch:.1f}%（{_fmt(_ptwd.get('美股市值型成長_非科技',0))} TWD）｜科技目標 ≤20%（{'缺口' if _tech_gap<0 else '溢價'} {_tech_gap:+.1f}pp）"
     # 安聯配息卡（8/29 補：舊 62,969 → 76,931）
-    rep["62,969"] = _fmt(az_div)
     # 2026-09-25 INC cash_floor_two_calibers_unlabeled：授信觀察期底線文案改由 SoT 派生（模板改為 __CASH_FLOOR_LINE__ 佔位符）
     _cw_t = cash_caliber(snap)
     # 2026-09-27：單一口徑（追繳緩衝取消）→ 不再輸出「合計含追繳緩衝」
@@ -364,8 +319,10 @@ def main():
     # 2026-09-28：死錨點自動現形（模板已全面 data-k 化 → 未命中的 rep 鍵＝靜默死碼）
     _dead_anchors = [k for k in rep if not k.startswith("__") and k not in tpl]
     if _dead_anchors:
-        print(f"  ℹ️ rep 未命中錨點 {len(_dead_anchors)} 個（既有遺留；銀行卡區 2026-09-28 已清 11 個）"
-              + "｜前 3：" + ", ".join(sorted(_dead_anchors)[:3]))
+        _KNOWN_DEAD = 0          # 2026-09-28 基線：死錨點全數清完（銀行區 11＋非銀行區 23）；超過基線＝模板改了、rep 沒跟
+        if len(_dead_anchors) > _KNOWN_DEAD:
+            print(f"  ⚠️ rep 未命中錨點 {len(_dead_anchors)} 個（基線 {_KNOWN_DEAD}）→ 模板已改、rep 未同步（死碼）："
+                  + ", ".join(sorted(_dead_anchors)[:5]))
     for old, new in rep.items():
         if old in tpl:
             tpl = tpl.replace(old, new)
