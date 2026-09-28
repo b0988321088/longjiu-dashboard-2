@@ -1459,34 +1459,34 @@
   "detail": "①新增 tools/verify_ficriteria.py：唯讀、相對式斷言（期望值全部由 snapshot＋passive_caliber 現算，不寫死金額/日期），含 bug 重現（釘死 base b4e0f256 證明舊版雙重打折）與變異對照；原放 %TEMP% 會被清掉 → 新門檻口徑失去回歸保護。②check_dividend_caliber 的新口徑斷言由凍結的 9/23 檔改指「當日最新產物」。③退休規劃頁『覆蓋率三層』補『經驗級距·非留停門檻』，消掉與 A+ 加碼級兩個 150% 的語義混淆。④CIO 首輪 4 條非阻擋建議：現金底線改走 sabbatical._cash_floor(snap)（原本寫死 700000 → 底線裁動會假 PASS）、註解去數字化、當日產物斷言加新鮮度 SKIP 守門、子字串比對改帶邊界（避免 92.2 命中 192.2）。驗證：tools/verify_ficriteria.py 55 PASS / 0 FAIL；check_dividend_caliber 66/70（4 個 FAIL 為 9/23 期既有、與本批無關，待獨立翻新）。"
  },
  {
-   "date": "2026-09-28",
-   "category": "修正",
-   "item": "配息口徑守門 check_dividend_caliber.py 翻新為全相對式（50→53 項全綠），並清掉生成器殘留的當期真值寫死",
-   "detail": "①翻新：期望值一律由 snapshot＋passive_caliber＋dividend_caliber 現算；逐日產物改取最新一份＋新鮮度守門（原釘死 retirement_plan_2026-09-23.html 與 9/23 期數字，該檔一封存或真值一動就整檔爆紅）。②allowed_prefixes 由『asset_diff_2026-09-』改為日期 regex（跨月不失效）；外部 cron 寫入（cost/logs/data）另列、不計入變更範圍。③寫死掃描改 AST 常數（字串＋數值）不掃註解——原用純文字比對會把註解裡的舊數字當缺陷（4 個既有 FAIL 之一）。④build_retirement_plan.py 清 6 處：月支出／房租／現金退路寫死當期值→0 或單一來源、現金底線改走 sabbatical._cash_floor（移除本地重算與 700000 字面值）、『保守底線 100,000 判準』改 {div_c:,.0f}、註解去當期數字；重產退休規劃頁 byte-identical（證明行為等價）。⑤新增 3 條儀表板當期真值斷言（常態被動／安全退休盈餘／月支出）：index_template 這兩處既無 data-k 也無 rep 對映，真值一動就靜默說舊話。⑥變異測試 M1/M2/M3/M4/M5/M7/M8 全數抓到；已知界線：同值在同頁重複多次只驗存在與成對，不驗每處次數（M6 單處手改不抓）。驗證：check_dividend_caliber 54/54 PASS（另 1 條 SKIP，未計入分母）；tools/verify_ficriteria.py 55 PASS / 0 FAIL；變異測試 9 案例（M1–M9，扣除基準噪音後可歸因）8 抓到、1 為已知界線。⑦CIO 首輪 REJECT（3 必修）已修：變更範圍 allowlist 不全（他支排程產物 etf_report／hunter_cache／notion_bridge 造成常態假紅）→ 改以「未宣告的程式檔異動」為硬擋、非程式檔列 ℹ️；變異測試 M8 未實作、M2 錨點命中 0、且每案被基準假紅灌水 → 補 M8/M9、修錨點、加基準扣除；calibrate_sources「非決定性」證實為 RULE 檔被 M3 變異後的真實級聯（未變異 rc=0、變異 rc=1，非與數據無關的紅）。⑧檔內凍結產物檔名改中性描述，並新增自查「本檔自身無凍結產物檔名與當期真值字面值」；SKIP 顯性化計入輸出（分母縮小看得見）。"
+  "date": "2026-09-28",
+  "category": "修正",
+  "item": "配息口徑守門 check_dividend_caliber.py 翻新為全相對式（50→53 項全綠），並清掉生成器殘留的當期真值寫死",
+  "detail": "①翻新：期望值一律由 snapshot＋passive_caliber＋dividend_caliber 現算；逐日產物改取最新一份＋新鮮度守門（原釘死 retirement_plan_2026-09-23.html 與 9/23 期數字，該檔一封存或真值一動就整檔爆紅）。②allowed_prefixes 由『asset_diff_2026-09-』改為日期 regex（跨月不失效）；外部 cron 寫入（cost/logs/data）另列、不計入變更範圍。③寫死掃描改 AST 常數（字串＋數值）不掃註解——原用純文字比對會把註解裡的舊數字當缺陷（4 個既有 FAIL 之一）。④build_retirement_plan.py 清 6 處：月支出／房租／現金退路寫死當期值→0 或單一來源、現金底線改走 sabbatical._cash_floor（移除本地重算與 700000 字面值）、『保守底線 100,000 判準』改 {div_c:,.0f}、註解去當期數字；重產退休規劃頁 byte-identical（證明行為等價）。⑤新增 3 條儀表板當期真值斷言（常態被動／安全退休盈餘／月支出）：index_template 這兩處既無 data-k 也無 rep 對映，真值一動就靜默說舊話。⑥變異測試 M1/M2/M3/M4/M5/M7/M8 全數抓到；已知界線：同值在同頁重複多次只驗存在與成對，不驗每處次數（M6 單處手改不抓）。驗證：check_dividend_caliber 54/54 PASS（另 1 條 SKIP，未計入分母）；tools/verify_ficriteria.py 55 PASS / 0 FAIL；變異測試 9 案例（M1–M9，扣除基準噪音後可歸因）8 抓到、1 為已知界線。⑦CIO 首輪 REJECT（3 必修）已修：變更範圍 allowlist 不全（他支排程產物 etf_report／hunter_cache／notion_bridge 造成常態假紅）→ 改以「未宣告的程式檔異動」為硬擋、非程式檔列 ℹ️；變異測試 M8 未實作、M2 錨點命中 0、且每案被基準假紅灌水 → 補 M8/M9、修錨點、加基準扣除；calibrate_sources「非決定性」證實為 RULE 檔被 M3 變異後的真實級聯（未變異 rc=0、變異 rc=1，非與數據無關的紅）。⑧檔內凍結產物檔名改中性描述，並新增自查「本檔自身無凍結產物檔名與當期真值字面值」；SKIP 顯性化計入輸出（分母縮小看得見）。"
  },
  {
-   "date": "2026-09-28",
-   "category": "修正",
-   "item": "遺留清單落實：儀表板兩處當期真值改 data-k、基準觀察卡 12 月窗口缺陷、大義街月繳單一來源、守門再硬化",
-   "detail": "①index_template『被動月固定收入（常態）』『安全退休盈餘』原本純文字寫死（無 data-k、也不在 rep 對映內）→ 真值一動就靜默說舊話；改外層保留樣式、內層 data-k span 注入，並註冊 passive_norm／retire_surplus；219,827 的替換式同步改讀 snapshot（原寫死保守配息＋租金）。②修 2026-12 才會爆的缺陷：build_dashboard 基準觀察卡原取『最近 N 個月』，基準月 2026-09 到 12 月會掉出窗口 → 基準列消失、合計歸零；改為基準月一律留在窗口內。③build_retirement_plan 房租淨現金流原寫死大義街月繳 → 改讀 snapshot.debt_schedule『國泰大義街房貸』，並把該值納入守門當期真值 token。④守門硬化（CIO 首輪 4 項非阻擋）：程式檔定義加 re.I 與閘門一致、改名條目兩側路徑都判、AST 掃描加常數摺疊（防字串拼接繞過）、SKIP 顯性化。⑤變異測試擴到 12 案例（補 M10 未宣告程式檔、M11 大義街月繳、M12 拼接繞過）→ 12/12 符合預期、基準零紅、還原乾淨。驗證：check_dividend_caliber 59/59 PASS（本次無 SKIP——共享上下文已於 06:30 重生並通過）；tools/verify_ficriteria 55 PASS / 0 FAIL；退休規劃頁重產 byte-identical；index.html 可見文字不變（僅新增 data-k 包裝）。"
+  "date": "2026-09-28",
+  "category": "修正",
+  "item": "遺留清單落實：儀表板兩處當期真值改 data-k、基準觀察卡 12 月窗口缺陷、大義街月繳單一來源、守門再硬化",
+  "detail": "①index_template『被動月固定收入（常態）』『安全退休盈餘』原本純文字寫死（無 data-k、也不在 rep 對映內）→ 真值一動就靜默說舊話；改外層保留樣式、內層 data-k span 注入，並註冊 passive_norm／retire_surplus；219,827 的替換式同步改讀 snapshot（原寫死保守配息＋租金）。②修 2026-12 才會爆的缺陷：build_dashboard 基準觀察卡原取『最近 N 個月』，基準月 2026-09 到 12 月會掉出窗口 → 基準列消失、合計歸零；改為基準月一律留在窗口內。③build_retirement_plan 房租淨現金流原寫死大義街月繳 → 改讀 snapshot.debt_schedule『國泰大義街房貸』，並把該值納入守門當期真值 token。④守門硬化（CIO 首輪 4 項非阻擋）：程式檔定義加 re.I 與閘門一致、改名條目兩側路徑都判、AST 掃描加常數摺疊（防字串拼接繞過）、SKIP 顯性化。⑤變異測試擴到 12 案例（補 M10 未宣告程式檔、M11 大義街月繳、M12 拼接繞過）→ 12/12 符合預期、基準零紅、還原乾淨。驗證：check_dividend_caliber 59/59 PASS（本次無 SKIP——共享上下文已於 06:30 重生並通過）；tools/verify_ficriteria 55 PASS / 0 FAIL；退休規劃頁重產 byte-identical；index.html 可見文字不變（僅新增 data-k 包裝）。"
  },
  {
-   "date": "2026-09-28",
-   "category": "修正",
-   "item": "三審非阻擋建議落實：R1 儀表板 JS 即時渲染補兩鍵、R3 大義街查詢 fail-closed、R4 變異測試入版控",
-   "detail": "①R1：儀表板 JS 的 V 對映缺 passive_norm／retire_surplus，開頁即時渲染時這兩處會停在被建置時注入的值（本批想封的『靜默說舊話』只封一半）→ 補鍵；並實證：抽 index.html 內同一段 JS 以 Node＋DOM shim 實跑，只改 snapshot、完全不重產頁面 → 值 180,100→177,777、17,319→66,666 跟著動，還原後回原值。②R3：大義街月繳查不到時 _DAYI=0，頁面與期望同為 80,100、照樣 PASS（保護靜默失效）→ 補 _DAYI > 0 fail-closed 斷言。③R4：12 案例變異測試從 %TEMP% 搬進 tools/check_caliber_mutation.py（路徑相對、產物自動指最新一份、基準 SKIP 顯性列出），從 C:/ 執行 12/12 符合預期、還原乾淨。驗證：check_dividend_caliber 61/61 PASS；verify_ficriteria 55 PASS / 0 FAIL。附帶：搬檔時守門的『未宣告程式檔』硬擋抓到我自己的新檔未宣告（工具照設計運作），已於 allowed 以 basename 登記。"
+  "date": "2026-09-28",
+  "category": "修正",
+  "item": "三審非阻擋建議落實：R1 儀表板 JS 即時渲染補兩鍵、R3 大義街查詢 fail-closed、R4 變異測試入版控",
+  "detail": "①R1：儀表板 JS 的 V 對映缺 passive_norm／retire_surplus，開頁即時渲染時這兩處會停在被建置時注入的值（本批想封的『靜默說舊話』只封一半）→ 補鍵；並實證：抽 index.html 內同一段 JS 以 Node＋DOM shim 實跑，只改 snapshot、完全不重產頁面 → 值 180,100→177,777、17,319→66,666 跟著動，還原後回原值。②R3：大義街月繳查不到時 _DAYI=0，頁面與期望同為 80,100、照樣 PASS（保護靜默失效）→ 補 _DAYI > 0 fail-closed 斷言。③R4：12 案例變異測試從 %TEMP% 搬進 tools/check_caliber_mutation.py（路徑相對、產物自動指最新一份、基準 SKIP 顯性列出），從 C:/ 執行 12/12 符合預期、還原乾淨。驗證：check_dividend_caliber 61/61 PASS；verify_ficriteria 55 PASS / 0 FAIL。附帶：搬檔時守門的『未宣告程式檔』硬擋抓到我自己的新檔未宣告（工具照設計運作），已於 allowed 以 basename 登記。"
  },
  {
-   "date": "2026-09-28",
-   "category": "修正",
-   "item": "四審非阻擋落實：N1 V 對映來源式斷言＋built 頁＝模板逐字比對、N2 補 M13/M14、N3 變異錨點全面改 snapshot 現算、N4 還原報告不造假",
-   "detail": "①N1：只驗『鍵存在』不夠（把 fmt(真值) 改成 fmt(0) 仍過 61/61）→ 改釘來源式，並新增『built index.html 的 V 區塊必須與 index_template.html 逐字相同』。②N2：變異案例 12→14（M13 打 N1 斷言、M14 打 R3 fail-closed；兩者皆實測命中）。③N3：各案例的錨點／期望值全改由 snapshot 現算（保守底線、常態被動、盈餘、覆蓋率、月支出、大義街月繳與名稱），日後真值變動不會再退化成『錨點 x0』；輸出會先列現算真值供判讀。④N4：跑前非乾淨會列清單警語；還原改逐檔位元組斷言（不只看 git）；尾行改『與跑前狀態相同』，不再宣稱乾淨。⑤自查抓到工具本身的地雷：突變用 write_text：read_bytes().decode() 不轉譯換行、write_text 又把每個換行字元再轉一次 → 換行由 CRLF 變 CRCRLF（CR 倍增），等於每個案例都偷改整檔換行 → 造成 M5/M8 各多一條假紅；改位元組寫入後 14/14 全數可歸因。驗證：check_dividend_caliber 62/62 PASS、tools/check_caliber_mutation 14/14、verify_ficriteria 55 PASS / 0 FAIL。"
+  "date": "2026-09-28",
+  "category": "修正",
+  "item": "四審非阻擋落實：N1 V 對映來源式斷言＋built 頁＝模板逐字比對、N2 補 M13/M14、N3 變異錨點全面改 snapshot 現算、N4 還原報告不造假",
+  "detail": "①N1：只驗『鍵存在』不夠（把 fmt(真值) 改成 fmt(0) 仍過 61/61）→ 改釘來源式，並新增『built index.html 的 V 區塊必須與 index_template.html 逐字相同』。②N2：變異案例 12→14（M13 打 N1 斷言、M14 打 R3 fail-closed；兩者皆實測命中）。③N3：各案例的錨點／期望值全改由 snapshot 現算（保守底線、常態被動、盈餘、覆蓋率、月支出、大義街月繳與名稱），日後真值變動不會再退化成『錨點 x0』；輸出會先列現算真值供判讀。④N4：跑前非乾淨會列清單警語；還原改逐檔位元組斷言（不只看 git）；尾行改『與跑前狀態相同』，不再宣稱乾淨。⑤自查抓到工具本身的地雷：突變用 write_text：read_bytes().decode() 不轉譯換行、write_text 又把每個換行字元再轉一次 → 換行由 CRLF 變 CRCRLF（CR 倍增），等於每個案例都偷改整檔換行 → 造成 M5/M8 各多一條假紅；改位元組寫入後 14/14 全數可歸因。驗證：check_dividend_caliber 62/62 PASS、tools/check_caliber_mutation 14/14、verify_ficriteria 55 PASS / 0 FAIL。"
  },
  {
-   "date": "2026-09-28",
-   "category": "修正",
-   "item": "五審非阻擋落實：N5 離開碼、N6 V 來源式改結構式（誘餌防禦）、N7 缺檔不留 traceback、N8 尾行分項、N9 操作說明、N10 更正 EOL 描述",
-   "detail": "①N5：案例 MISMATCH 原本仍回 rc=0（變異測試失敗卻回成功碼）→ 改 exit 2；還原失敗 exit 3。②N6：V 來源式斷言原為整檔 re.search，只要在 V 物件外放一行同式誘餌註解＋V 餵 fmt(0)（兩檔同步）就能騙過 → 改結構式：抽出的 V 區塊內逐鍵取值再驗運算式（先去除 JS 行註解，否則註解裡的冒號會吃掉鍵名）；並補 M15 跨檔案例把那套攻擊納入回歸。順帶修 parser 地雷：_vblock 切片原本不含結尾『};』，害 rindex(\"}\") 抓到值裡 (s.passive_income||{}) 那個括號、後半段被切掉（比對不受影響、解析會壞）。③N7：index.html 缺檔原本 traceback → 改具名 FAIL 並以空字串續行。④N8：尾行分『工具觸碰檔還原』與『工作樹狀態（可能為他排程寫入）』兩句。⑤N9：docstring 補回「產物過期會 MISMATCH 屬預期」＋離開碼定義。⑥N10：更正前筆 EOL 描述（真機制是 CR 倍增，非單純 \\n→\\r\\n）。驗證：check_dividend_caliber 62/62 PASS、tools/check_caliber_mutation 15/15、verify_ficriteria 55 PASS / 0 FAIL。"
+  "date": "2026-09-28",
+  "category": "修正",
+  "item": "五審非阻擋落實：N5 離開碼、N6 V 來源式改結構式（誘餌防禦）、N7 缺檔不留 traceback、N8 尾行分項、N9 操作說明、N10 更正 EOL 描述",
+  "detail": "①N5：案例 MISMATCH 原本仍回 rc=0（變異測試失敗卻回成功碼）→ 改 exit 2；還原失敗 exit 3。②N6：V 來源式斷言原為整檔 re.search，只要在 V 物件外放一行同式誘餌註解＋V 餵 fmt(0)（兩檔同步）就能騙過 → 改結構式：抽出的 V 區塊內逐鍵取值再驗運算式（先去除 JS 行註解，否則註解裡的冒號會吃掉鍵名）；並補 M15 跨檔案例把那套攻擊納入回歸。順帶修 parser 地雷：_vblock 切片原本不含結尾『};』，害 rindex(\"}\") 抓到值裡 (s.passive_income||{}) 那個括號、後半段被切掉（比對不受影響、解析會壞）。③N7：index.html 缺檔原本 traceback → 改具名 FAIL 並以空字串續行。④N8：尾行分『工具觸碰檔還原』與『工作樹狀態（可能為他排程寫入）』兩句。⑤N9：docstring 補回「產物過期會 MISMATCH 屬預期」＋離開碼定義。⑥N10：更正前筆 EOL 描述（真機制是 CR 倍增，非單純 \\n→\\r\\n）。驗證：check_dividend_caliber 62/62 PASS、tools/check_caliber_mutation 15/15、verify_ficriteria 55 PASS / 0 FAIL。"
  },
  {
   "date": "2026-09-28",
@@ -1499,5 +1499,23 @@
   "category": "完成",
   "item": "決策閉環：CIO 18:30 審計四項落實（解凍條件失效／延後項檢視日／押標金獨立追蹤／撥款 B 計畫）",
   "detail": "依使用者「你評估以後再執行」：①台股解凍狀態更正為「⏸ 條件失效」（US30Y 5.504／9/25 收盤、紅線自 9/23、警戒 21 日；原引用 9/20 的 5.296）②恢復條件改雙閘門＝US30Y 連 2 交易日 <5.30 ＋ 500 萬清償完成，統一適用避險衛星／第一金／00921／台股解凍 ③六筆延後項補檢視日（洲際W 10/01、美債 ladder 與押標金 10/02＝撥款入帳後 3 日內、玉山 9/30、永豐 9/29 複查、M&G 與安聯 9/29 前走客服索取書面生效日）④押標金 240 萬獨立成追蹤項、明寫不得預設由同一筆撥款支付（清償後餘 40 萬 vs 需求約 200 萬）⑤撥款 B 計畫＝9/30 未入帳則追對保文件與撥款時程，清償順序券商 100 萬@3.92% 先、保單 400 萬@4% 後。落地：pending 11 筆改寫＋新增 1 筆、schedule_events 新增 4 個檢視點（Google 日曆同步 58 筆）、dashboard_decisions 補登 1 筆、Notion 已寫入、memory_sync 1 筆；四源重產（日報／儀表板／差異／穿透）CIO 檢查全通過；收工稽核 18:47 全部通過。"
+ },
+ {
+  "date": "2026-09-28",
+  "category": "完成",
+  "item": "留停門檻改版（使用者 9/28 裁示）（A 級門檻由「正常覆蓋 ≥150%」改為三條：保守 ≥100%＋壓力情境 ≥100%＋現金跑道 ≥540 天＋現金 ≥底線；150% 降為加碼級 A+（理想值·非門檻）。壓力情境口徑改「常態配息×0.8＋常態租金−洲際W空置」＝165,480／101.7%（原「保守配息再×0.8」雙重打折降為極端情境參考軌 127,1",
+  "detail": "A 級門檻由「正常覆蓋 ≥150%」改為三條：保守 ≥100%＋壓力情境 ≥100%＋現金跑道 ≥540 天＋現金 ≥底線；150% 降為加碼級 A+（理想值·非門檻）。壓力情境口徑改「常態配息×0.8＋常態租金−洲際W空置」＝165,48"
+ },
+ {
+  "date": "2026-09-28",
+  "category": "完成",
+  "item": "日報2026-09-28（證券3,006,890 保單9,543,935 配息147,975）",
+  "detail": "證券3,006,890 保單9,543,935 配息147,975"
+ },
+ {
+  "date": "2026-09-28",
+  "category": "完成",
+  "item": "資產穿透2026-09-28（台股2,039,487.0 美股10,325,207.0 防守4,532,842.0 債券7,502,404.0 現金885,509.0）",
+  "detail": "台股2,039,487.0 美股10,325,207.0 防守4,532,842.0 債券7,502,404.0 現金885,509.0"
  }
 ]
