@@ -490,7 +490,7 @@ __WEEK_DONE__
 <div class="border-red-500/20 bg-red-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-red-400"><span>永豐銀行</span><span class="bank-status" data-val-k="sinopac" data-min="__SAFE_LINE_SINOPAC_RAW__" data-min-k="safe_line_sinopac">🔴 警報</span></div><p class="text-lg font-mono font-black text-white"><span data-k="sinopac">111,765</span> TWD</p><p class="text-[10px] text-slate-300 font-mono">明細：營業部DAWHO活期儲蓄存款 <span data-k="dawho">166,673</span>、市政分行活期儲蓄存款 <span data-k="shizheng">10,926</span>、營業部DAWHO外幣組合存款-美金 0</p><p class="text-[10px] text-slate-400">安全線：<span data-k="safe_line_sinopac">—</span>（房貸月繳 <span data-k="sinopac_loan">65,735</span>×3＝3 個月扣款）</p></div>
 <div class="border-blue-500/20 bg-blue-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-blue-300"><span>玉山銀行</span><span class="bank-status" data-val-k="yushan" data-min="40000">🟢 充裕</span></div><p class="text-lg font-mono font-black text-white"><span data-k="yushan">40,950</span> TWD</p><p class="text-[10px] text-slate-400">安全線：40,000（生活帳戶，僅信用卡）</p></div>
 <div class="border-blue-500/20 bg-blue-500/10 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-blue-300"><span>台北富邦</span><span class="bank-status" data-val-k="fubon" data-min="40000">🟢 充裕</span></div><p class="text-lg font-mono font-black text-white"><span data-k="fubon">44,116</span> TWD</p><p class="text-[10px] text-slate-400">安全線：40,000（生活帳戶，僅信用卡）</p></div>
-<div class="bg-blue-600/20 border border-blue-500/40 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-blue-200"><span>🏦 現金合計</span></div><p class="text-lg font-mono font-black text-white"><span data-k="cash_total">772,607</span> TWD</p><p class="text-[10px] text-slate-400">snapshot 總現金：<span data-k="cash_total">772,607</span> TWD｜監控卡片合計 <span data-k="mon_sum">749,706</span>（未含第一銀行）</p></div><p class="text-[10px] text-amber-400/80">資料日期：<span data-k="cash_source_date">20260829_1</span>（Moneybook 帳戶 CSV 匯入日；有新匯出請放入 moneybook/ 目錄）</p>
+<div class="bg-blue-600/20 border border-blue-500/40 p-4 rounded-xl space-y-1"><div class="flex justify-between text-xs font-bold text-blue-200"><span>🏦 現金合計</span></div><p class="text-lg font-mono font-black text-white"><span data-k="cash_total">772,607</span> TWD</p><p class="text-[10px] text-slate-400">snapshot 總現金：<span data-k="cash_total">772,607</span> TWD ＝ 5 家行庫卡 <span data-k="card_sum">749,706</span> ＋ 其他帳戶 <span data-k="other_sum">22,901</span>（未含外幣／第一銀行）</p></div><p class="text-[10px] text-amber-400/80">資料日期：<span data-k="cash_source_date">20260829_1</span>（Moneybook 帳戶 CSV 匯入日；新匯出 ZIP 直接傳給龍九即入庫）</p>
             </div>
         </div>
 
@@ -571,7 +571,7 @@ __WEEK_DONE__
                 </div>
                 <div class="p-3 bg-emerald-500/10 rounded border border-emerald-500/20">
                     <p class="font-bold text-emerald-400">🔴 超跌加碼規則：</p>
-                    <p class="text-slate-300 mt-1">週跌幅 > 20%：動用將來 200萬高利活存加碼。平時不預測市場，冷靜執行價格訊號。</p>
+                    <p class="text-slate-300 mt-1">週跌幅 > 20%：動用可動用乾粉 <span data-k="dry_powder">184,918</span>（現金 − 70 萬底線）分批加碼。平時不預測市場，冷靜執行價格訊號。</p>
                 </div>
             </div>
             <div class="border-t border-slate-800 pt-3 text-center">
@@ -829,14 +829,17 @@ for(var _ks in (s.salary_records||{})){ if(_ks.indexOf(_ym)===0){ var _sv = s.sa
 var gotTotal = _salaryA + divTotal + rentGot;
       var exp = s.monthly_expense || 162781;
       var safeLine = Math.round(exp * 3);
-      var monSum = 0;
-      for(var k5 in cd){ if(typeof cd[k5]==='number' && cd[k5]>0 && k5.indexOf('外幣')<0) monSum += cd[k5]; }
       var taiwan = (cd['敦南Richart子帳戶']||0)+(cd['文心綜活儲存款-薪轉']||0)+(cd['敦南Richart數位一般帳戶']||0)+(cd['敦南Richart外幣']||0);
       var sinopac = (cd['營業部DAWHO活期儲蓄存款']||0)+(cd['市政分行活期儲蓄存款']||0);
       // 2026-09-28 使用者裁示：房貸扣款行安全線＝自身房貸月繳×3（國泰 26,000／永豐 65,735）
       var _exp3 = Math.round((s.monthly_expense||exp) * 3);
       var cathaySafe = Math.round((s.mortgage_cathay_monthly||0) * 3) || _exp3;   // 缺值→退回月支出×3（與 Python 層同口徑）
       var sinopacSafe = Math.round((s.mortgage_sinopac_monthly||0) * 3) || _exp3;
+      // 2026-09-28：卡片合計／其他帳戶／可動用乾粉（與 Python 層同口徑）
+      var _cardSum = (cd['活期儲蓄存款']||0)+(cd['數位存款帳戶２類']||0)+taiwan+sinopac+(cd['臺幣綜存']||0)+(cd['數位活儲']||0);
+      var _otherSum = Math.max(0, (cash||0) - _cardSum);
+      var _floor = (((s.thresholds_2026_0915||{})["現金_twd"]||{})["生活底線"]) || s.cash_floor || 0;
+      var _dryPowder = Math.max(0, (cash||0) - _floor);
       var pen = s.penetration || {};
       var ptwd = pen.actual_twd || {};
       var ppct = pen.actual_pct || {};
@@ -846,7 +849,8 @@ var gotTotal = _salaryA + divTotal + rentGot;
         allianz_a: fmt(s.allianz_a||0), firstjin: fmt(firstjin),
         cum_div: fmt(s.allianz_cum_dividend||0), az_div: fmt(azDiv), fj_div: fmt(fjDiv),
         div_ins: fmt(divIns), fj_cum: fmt(s.firstjin_cum_dividend||0),
-        cash_total: fmt(cash), mon_sum: fmt(monSum), got_total: fmt(gotTotal),
+        cash_total: fmt(cash), got_total: fmt(gotTotal),
+        card_sum: fmt(_cardSum), other_sum: fmt(_otherSum), dry_powder: fmt(_dryPowder),
         az_div2: fmt(azDiv), etf_div: fmt(etfDiv), div_total: fmt(divTotal),
         got_total2: fmt(gotTotal), rent_got: fmt(rentGot), safe_line: fmt(safeLine),
         safe_line_cathay: fmt(cathaySafe), safe_line_sinopac: fmt(sinopacSafe),

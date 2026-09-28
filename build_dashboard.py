@@ -277,9 +277,6 @@ def main():
         _data_date = (str(_mb_csv[-1]).replace(chr(92), "/").split("/")[-1]
                       .replace("Moneybook_帳戶_", "").replace(".csv", "")) if _mb_csv else str(snap.get("date") or "—")
     taiwan = (cd.get("敦南Richart子帳戶", 0) or 0) + (cd.get("文心綜活儲存款-薪轉", 0) or 0) + (cd.get("敦南Richart數位一般帳戶", 0) or 0) + (cd.get("敦南Richart外幣", 0) or 0)
-    rep["499,316"] = _fmt(taiwan)          # 台新合計
-    rep["139,446"] = _fmt(cd.get("文心綜活儲存款-薪轉", 177765) or 0)  # 文心薪轉
-    rep["97,353"] = _fmt(cd.get("敦南Richart數位一般帳戶", 90524) or 0)   # Richart一般（2026-09-28 key 修正：少「帳戶」二字→少算 119,966）
     # 管理費入帳狀態（2026-08-29：模板寫死「待入帳 0（應收 2,100）」→ 依 rent_received_records 動態）
     _fee = 0
     for k, v in (snap.get("rent_received_records", {}) or {}).items():
@@ -292,8 +289,6 @@ def main():
         rep["<span class=\"text-amber-400\">⏳ 待入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-slate-400\">0 TWD（應收 2,100）</span>"] = \
             "<span class=\"text-amber-400\">⏳ 待入帳</span><span class=\"text-slate-300\">管理費</span></div><span class=\"text-xs font-mono text-slate-400\">0 TWD（應收 2,100）</span>"
     # 流動性調度 tab 銀行卡（2026-08-29 補：原 6 卡全寫死 → 動態）
-    rep["27,738"] = _fmt((cd.get("活期儲蓄存款", 0) or 0) + (cd.get("數位存款帳戶２類", 0) or 0))  # 國泰世華（活期+數位2類）
-    rep["44,116"] = _fmt(cd.get("數位活儲", 44116) or 0)             # 台北富邦
     # 2026-09-28 使用者裁示：房貸扣款行安全線＝「自身房貸月繳×3」（國泰＝大義街、永豐＝洲際W）；
     #    其餘（台新薪轉帳戶）仍用月支出×3。值一律讀 snapshot，勿寫死。
     _cat_loan = float(snap.get("mortgage_cathay_monthly") or 0)
@@ -306,15 +301,8 @@ def main():
     rep["__SAFE_LINE_RAW__"] = str(int(expense) * 3)              # 台新（月支出×3；顯示值由下方 data-k="safe_line" 注入）
     rep["__SAFE_LINE_CATHAY_RAW__"] = str(int(_cat_loan) * 3)     # 國泰（房貸月繳×3＝3 個月扣款）
     rep["__SAFE_LINE_SINOPAC_RAW__"] = str(int(_sin_loan) * 3)    # 永豐（房貸月繳×3＝3 個月扣款）
-    rep["20,776"] = _fmt(cd.get("活期儲蓄存款", 0) or 0)              # 國泰明細 活期儲蓄
-    rep["6,960"] = _fmt(cd.get("數位存款帳戶２類", 2) or 0)           # 國泰明細 數位2類
     # 2026-08-28 修正：銀行水位全動態（Moneybook 8/27 帳戶）
-    rep["177,599"] = _fmt((cd.get("營業部DAWHO活期儲蓄存款", 0) or 0) + (cd.get("市政分行活期儲蓄存款", 0) or 0))  # 永豐合計
-    rep["50,104"] = _fmt(cd.get("臺幣綜存", 40950) or 0)              # 玉山（臺幣綜存）
-    rep["20260821_1"] = _data_date      # 資料日期（動態：moneybook/ 最新帳戶 CSV）
     rep["20260829_1"] = _data_date      # 資料日期（2026-09-01 修正：動態，不再寫死 8/31）    # 現金合計卡「監控卡片合計」（2026-08-29 補：原寫死 799,612 殘留 → 動態算 cash_detail 正數，排除外幣 key）
-    _mon = sum(v for k, v in cd.items() if isinstance(v, (int, float)) and v > 0 and "外幣" not in k)
-    rep["799,612"] = _fmt(_mon)
     # ── 資產穿透卡五桶市值（2026-08-29 補：快照版 fallback 全部寫死舊值）──
     _ptwd = snap.get("penetration", {}).get("actual_twd", {}) or {}
     _ppct = snap.get("penetration", {}).get("actual_pct", {}) or {}
@@ -373,6 +361,11 @@ def main():
     # 保單A 現值（8/29 補：舊 5,103,722 → 5,083,230）
 
     hits = 0
+    # 2026-09-28：死錨點自動現形（模板已全面 data-k 化 → 未命中的 rep 鍵＝靜默死碼）
+    _dead_anchors = [k for k in rep if not k.startswith("__") and k not in tpl]
+    if _dead_anchors:
+        print(f"  ℹ️ rep 未命中錨點 {len(_dead_anchors)} 個（既有遺留；銀行卡區 2026-09-28 已清 11 個）"
+              + "｜前 3：" + ", ".join(sorted(_dead_anchors)[:3]))
     for old, new in rep.items():
         if old in tpl:
             tpl = tpl.replace(old, new)
@@ -387,6 +380,12 @@ def main():
     # ── data-k 自動注入（2026-08-31 治本：template 的 <span data-k="KEY">顯示值</span> 直接對 snapshot，
     #    不再依賴 rep 舊值字串清單 — 8/31 血淚：cash_total 772,607 殘留只因 rep 沒列 772,607）──
     import re as _re
+    # 2026-09-28：5 家行庫卡合計／其他帳戶／可動用乾粉（卡片合計口徑＝畫面上 5 張卡）
+    _card_sum = ((cd.get("活期儲蓄存款", 0) or 0) + (cd.get("數位存款帳戶２類", 0) or 0) + taiwan
+                 + (cd.get("營業部DAWHO活期儲蓄存款", 0) or 0) + (cd.get("市政分行活期儲蓄存款", 0) or 0)
+                 + (cd.get("臺幣綜存", 0) or 0) + (cd.get("數位活儲", 0) or 0))
+    _other_sum = max(0, float(snap.get("cash_total") or 0) - _card_sum)
+    _dry = _cw_t["dry"]
     _data_k_map = {
         "cash_total": cash,        # 現金（snapshot.cash_total）
         "div_total": div_total,    # 配息實收
@@ -394,7 +393,6 @@ def main():
         "got_total": got_total,    # 當月已收合計卡片（2026-08-31 補：template 用 data-k="got_total"）
         "rent_got": rent_got,      # 租金已收
         "salary_got": salary,      # 薪水已收（當月 salary_records；未入帳 = 0）
-        "mon_sum": _mon,           # 監控卡片合計（現金正數排除外幣）
         # 2026-09-01 補齊：與 template JS V 表對齊（39 key 全注入 → 靜態 fallback 也是最新值）
         "ins_total": ins,
         "allianz_a": snap.get("allianz_policy_a_value", 0) or 0,
@@ -408,6 +406,10 @@ def main():
         "div_ins": div_ins,
         "etf_div": sum(v for k, v in _dr.items() if any(t in k for t in ("ETF", "基金", "聯博")) and isinstance(v, (int, float))) or 0,
         "safe_line": int(expense) * 3,
+        # 2026-09-28：現金合計卡（卡片合計 vs 其他帳戶）與可動用乾粉（現金 − 底線）
+        "card_sum": _card_sum,
+        "other_sum": _other_sum,
+        "dry_powder": _dry,
         "safe_line_cathay": int(_cat_loan) * 3,      # 2026-09-28：房貸扣款行各自口徑
         "safe_line_sinopac": int(_sin_loan) * 3,
         "cathay_loan": int(_cat_loan),
