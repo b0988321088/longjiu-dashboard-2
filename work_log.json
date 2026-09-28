@@ -1487,5 +1487,11 @@
    "category": "修正",
    "item": "五審非阻擋落實：N5 離開碼、N6 V 來源式改結構式（誘餌防禦）、N7 缺檔不留 traceback、N8 尾行分項、N9 操作說明、N10 更正 EOL 描述",
    "detail": "①N5：案例 MISMATCH 原本仍回 rc=0（變異測試失敗卻回成功碼）→ 改 exit 2；還原失敗 exit 3。②N6：V 來源式斷言原為整檔 re.search，只要在 V 物件外放一行同式誘餌註解＋V 餵 fmt(0)（兩檔同步）就能騙過 → 改結構式：抽出的 V 區塊內逐鍵取值再驗運算式（先去除 JS 行註解，否則註解裡的冒號會吃掉鍵名）；並補 M15 跨檔案例把那套攻擊納入回歸。順帶修 parser 地雷：_vblock 切片原本不含結尾『};』，害 rindex(\"}\") 抓到值裡 (s.passive_income||{}) 那個括號、後半段被切掉（比對不受影響、解析會壞）。③N7：index.html 缺檔原本 traceback → 改具名 FAIL 並以空字串續行。④N8：尾行分『工具觸碰檔還原』與『工作樹狀態（可能為他排程寫入）』兩句。⑤N9：docstring 補回「產物過期會 MISMATCH 屬預期」＋離開碼定義。⑥N10：更正前筆 EOL 描述（真機制是 CR 倍增，非單純 \\n→\\r\\n）。驗證：check_dividend_caliber 62/62 PASS、tools/check_caliber_mutation 15/15、verify_ficriteria 55 PASS / 0 FAIL。"
+ },
+ {
+  "date": "2026-09-28",
+  "category": "修正",
+  "item": "費用頁（AI 費用）白天地落後推播：digest 產完自動提交＋推送，修「頁面 42 vs 推播 59」",
+  "detail": "①症狀：使用者提問線上費用頁今日 42、13:30 推播今日 59。②真因：digest（13:30／18:30）重產 cost.html／cost_data.json／data/ai_cost_daily.jsonl 只留本機，線上 Pages 要等四源同步（07:00／09:2x／23:15）才更新 → 白天開頁永遠是早上那版（實測線上 generated_at 09:29／today 42，本機已 13:30／59）。③修法：wrappers/cost_watch_digest.py 於 digest 後只 stage 自家三檔、無變更即略過、有變更才 commit（帶 pathspec）並走 auto_push.py 唯一出口（落 RECORD＋驗遠端 sha）；digest rc≠0 仍推送已產出頁面。④驗證：端到端實跑 rc=0（commit ada15116＋遠端 sha 驗證）、線上 generated_at 16:06／今日 62、11/11 唯讀驗證器 PASS、hermes 鏡像逐位元一致；程式 commit 2ddadf3f 經 CIO 審查 APPROVE（tree 72c68ca9bdbf）後落地推送。⑤殘留（非阻斷）：digest 失敗但推送成功時 rc 被 auto_push 的 0 覆蓋（僅 stdout 留警示），待後續保留兩者最差 rc。"
  }
 ]
