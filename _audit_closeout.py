@@ -483,6 +483,43 @@ except Exception as _e:
     print(f"  ❌ 內文數字守門無法執行 {_e}")
     fail.append("內文數字守門無法執行（check_narrative_numbers）")
 
+print("=== 14) no_agent cron 腳本可解析（2026-09-28 INC：新腳本沒部署 → 到點 Script not found）===")
+# 背景：cron 的 script 欄位是相對 HERMES_HOME/scripts 解析。新增 no_agent 腳本時若只把真身
+# 放 repo 根目錄、wrappers/ 沒放同名轉發器 → 首班執行直接 "Script not found"（實例：
+# life_account_alert.py 08:30 生活帳戶水位，9/28 首班失敗）。repo/wrappers/ 是 hermes/scripts
+# 轉發器的唯一來源，post-commit 會部署；這類缺檔 class 5 的固定清單抓不到。
+_na_jobs = [j for j in jobs if isinstance(j, dict) and j.get("no_agent") and j.get("script")]
+_missing = [f"{str(j.get('id',''))[:12]} {j['script']}" for j in _na_jobs
+            if not (H / "scripts" / str(j["script"])).exists()]
+for _m in _missing:
+    print(f"  ❌ cron 指向不存在的腳本：{_m}")
+if _missing:
+    fail.append(f"no_agent cron 腳本缺檔 {len(_missing)} 個")
+else:
+    print(f"  ✅ {len(_na_jobs)} 個 no_agent job 的腳本都在 hermes/scripts")
+
+_wrappers = sorted((R / "wrappers").glob("*.py"))
+
+
+def _norm(p):
+    """CRLF 正規化後的內容（bytes 比較用；此處刻意不用反斜線轉義，避免工具把轉義展開成真控制字元）。"""
+    return p.read_bytes().replace(bytes((13, 10)), bytes((10,)))
+
+
+_wdiff = []
+for _w in _wrappers:
+    _dst = H / "scripts" / _w.name
+    if not _dst.exists():
+        _wdiff.append(f"{_w.name}（未部署）")
+    elif _norm(_w) != _norm(_dst):
+        _wdiff.append(f"{_w.name}（內容不一致）")
+for _m in _wdiff:
+    print(f"  ❌ wrapper 未同步：{_m}")
+if _wdiff:
+    fail.append(f"wrappers 未部署/不一致 {len(_wdiff)} 支")
+else:
+    print(f"  ✅ {len(_wrappers)} 支 wrapper 全部已部署且逐位元一致")
+
 print()
 print("=" * 46)
 print(f"閉環稽核結果：{'全部通過 ✅' if not fail else '❌ 有問題：' + str(fail)}")
