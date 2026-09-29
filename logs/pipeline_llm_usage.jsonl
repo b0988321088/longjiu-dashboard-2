@@ -367,3 +367,15 @@
 {"ts": "2026-09-29T23:30:27", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 490, "cached": 256, "out": 158, "ok": true}
 {"ts": "2026-09-29T23:30:44", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 520, "cached": 384, "out": 641, "ok": true}
 {"ts": "2026-09-29T23:43:55", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 520, "cached": 384, "out": 749, "ok": true}
+{"ts": "2026-09-30T00:45:11", "model": "deepseek-chat", "caller": "run_daily.py", "in": 866, "cached": 256, "out": 176, "ok": true}
+{"ts": "2026-09-30T00:45:12", "model": "deepseek-chat", "caller": "run_daily.py", "in": 891, "cached": 256, "out": 181, "ok": true}
+{"ts": "2026-09-30T00:45:16", "model": "deepseek-chat", "caller": "run_daily.py", "in": 490, "cached": 0, "out": 178, "ok": true}
+{"ts": "2026-09-30T00:45:46", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 490, "cached": 0, "out": 141, "ok": true}
+{"ts": "2026-09-30T00:45:59", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 520, "cached": 0, "out": 663, "ok": true}
+{"ts": "2026-09-30T00:47:45", "model": "deepseek-chat", "caller": "run_daily.py", "in": 866, "cached": 0, "out": 165, "ok": true}
+{"ts": "2026-09-30T00:47:47", "model": "deepseek-chat", "caller": "run_daily.py", "in": 891, "cached": 0, "out": 146, "ok": true}
+{"ts": "2026-09-30T00:47:50", "model": "deepseek-chat", "caller": "run_daily.py", "in": 490, "cached": 0, "out": 181, "ok": true}
+{"ts": "2026-09-30T00:48:49", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 520, "cached": 384, "out": 747, "ok": true}
+{"ts": "2026-09-30T00:50:45", "model": "deepseek-chat", "caller": "run_daily.py", "in": 865, "cached": 256, "out": 169, "ok": true}
+{"ts": "2026-09-30T00:50:47", "model": "deepseek-chat", "caller": "run_daily.py", "in": 890, "cached": 256, "out": 175, "ok": true}
+{"ts": "2026-09-30T00:50:50", "model": "deepseek-chat", "caller": "run_daily.py", "in": 489, "cached": 128, "out": 173, "ok": true}
