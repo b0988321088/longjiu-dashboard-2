@@ -1,0 +1,84 @@
+{
+  "verdict": "REJECT",
+  "reviewer": "CIO-reviewer",
+  "commit": "eb12ac6a",
+  "checked": [
+    "git show --stat HEAD：36 檔 +8030/-7510；程式改動含 update_all/update_data/build_penetration_report/build_dashboard/build_rebalance_dashboard/build_ceo_dashboard/run_daily/institutional_flow/check_thresholds/sot_targets/static_gate/sync_all/snapshot.json/index_template.html",
+    "git diff HEAD^ HEAD -- '*.py' index_template.html：確認 restricted 扣除只出現在 update_all.calc_penetration（total = cash+ins+sec+funds - _rst，唯一扣除點），消費端各自從 snapshot.restricted_cash 讀值",
+    "python static_gate.py → 「✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key）」EXIT=0（22:12、22:16 各跑一次皆通過；降級鏈與 spawn 失敗偵測改動有效）",
+    "python check_thresholds.py --sot-only → 「✅ 穿透完整性：五桶 25,023,738 + 衛星 884,823 + 指定用途款 5,900,000 = 總資產 31,808,561／✅ 基金口徑閉合：鉅亨 874,818 + 國泰 11,779,326 = funds 12,654,144／✅ SoT 完整（9 區塊）／✅ 消費端 5 支皆引用 thresholds_2026_0915／✅ 無舊門檻字面殘留」EXIT=0",
+    "python 實測 calc_penetration（兩寫入者口徑各算一次）：update_data 口徑與 build_penetration_report 口徑回傳五桶完全相同 five=[2,029,878 / 10,235,528 / 4,500,670 / 7,437,894 / 819,768]，差異 [0,0,0,0,0]；衛星 884,823；五桶+衛星+指定款 = 31,808,561 = snapshot.total_assets（真值未動）",
+    "python 實測 pct（分母=總資產 31,808,561）：台股 6.4% / 美股 32.2% / 防守 14.1% / 債券 23.4% / 現金 2.6% —— 只有現金桶改變，其餘與 HEAD^ 的 snapshot.penetration.actual_pct 逐鍵相同（6.4/32.2/14.1/23.4）",
+    "python 實測 calc_penetration 回傳 alert：同一函式內 _actual_pct/_gaps/_alert 用的是扣款後 total=25,908,561 → alert 印「台股 7.8%（不足2.2pp）；美股 39.5%（超標9.5pp）；債券 28.7%（超標3.7pp）」，與同 dict 的 actual_pct 6.4/32.2/23.4 與 gaps -3.6/+2.2/-1.6 矛盾（債券方向相反）；snapshot.penetration.alert 已寫入此錯誤文字",
+    "check_thresholds 不變量負向對照（唯讀四情境模擬）：S1 現況 diff=0.0；S2 快取舊口徑（現金桶未扣）diff=+5,900,000 → 會被擋；S3 雙重扣除 diff=-5,900,000 → 會被擋；S4 指定用途款歸零但現金真值未動 diff=0.0 → 漏抓（不變量無法驗證『真的清償了』）",
+    "grep 消費端稽核：passive_caliber.py:47 仍用 snap.cash_total → 實測極端情境 runway_days=5,649 天（扣指定款後 689 天）；build_audit_dashboard.py:59 runway=CASH/EXP → 41.3 月（應 5.0 月）；rebalance_report/build_rebalance_dashboard 仍顯示 6,719,182；daily_report_v2_2026-09-29.html 出現「可動用流動資金 6,719,182 TWD（Moneybook 校準），餘裕充足 ✅」2 次（第 223、330 行）",
+    "硬編碼掃描 grep '5900000|5,900,000|5_900_000|590萬' --include=*.py：生產管線 0 處寫死金額（僅 apply_pledge_disbursement_0929.py、apply_truth_20260929.py、fix_pledge_rate*_0929.py 等一次性腳本與註解文字）；restricted 一律讀 snapshot.restricted_cash ✓；亦無任何消費端對『已扣過的桶位值』再扣一次（無雙扣）",
+    "唯讀確認：審查開始時 git status 為空；22:15 起偵測到並行 cron/管線在跑（5 個 python.exe、logs/pipeline_llm_usage.jsonl 22:15:27 更新、index.html/daily_report/snapshot 被重寫 4 行），但 snapshot.penetration 內容與審查時一致；本次審查未修改任何 repo 檔案（暫存腳本置於 %TEMP%）"
+  ],
+  "findings": [
+    {
+      "severity": "major",
+      "file": "update_all.py",
+      "line": "235（total = cash + ins + sec + funds - _rst）與 262-296（_actual_pct/_gaps/_alert）",
+      "issue": "calc_penetration 把指定用途款從 total 扣除後，同一個 total 仍被 _actual_pct/_gaps/_alert 當分母 → 回傳與寫入 snapshot 的 alert 文字用的是「扣款後分母」。實測 alert =『台股市值型成長 不足2.2pp；美股市值型成長 超標9.5pp；債券 超標3.7pp；債券及安全現金 超標1.9pp』（即 7.8/39.5/28.7），與同一份 snapshot.penetration 的 actual_pct（6.4/32.2/23.4）與 gaps（-3.6/+2.2/-1.6）自相矛盾，債券甚至方向相反（alert 說超標、真值是低於目標）。此 alert 由兩個寫入者寫進單一真值（build_penetration_report.py:73 \"alert\": p[\"alert\"]；update_data.py:274 另算一份），正是本 commit 聲稱要消滅的舊口徑 7.8/39.4/28.7，仍留在 SoT 內。",
+      "suggest": "在 calc_penetration 內保留總資產口徑分母（例：_caliber_total = total + _rst）供 _actual_pct/_gaps/_alert 使用（只有桶位與乾粉/分母口徑扣款），並在 check_thresholds 增加一條：alert 內出現的 pp 數字必須能在 actual_pct/gaps 找到（防兩口徑再度分岔）。"
+    },
+    {
+      "severity": "major",
+      "file": "run_daily.py",
+      "line": "1226-1228",
+      "issue": "日報仍把指定清償的 590 萬標成可動用：`_dbs_str = f\"可動用流動資金 {_dbs_cash:,} TWD（Moneybook 校準），餘裕充足 ✅\"`，_dbs_cash = tv[\"cash_total\"] = 6,719,182，未扣 restricted、也未標註。實測 daily_report_v2_2026-09-29.html 第 223、330 行各出現一次「可動用流動資金 6,719,182 TWD...餘裕充足 ✅」，與同日儀表板「可動用現金 819,182」、緊急報告「可動用 819,182（真值 6,719,182 − 質押撥款指定清償款 5,900,000）」互相矛盾。",
+      "suggest": "改讀 sot_targets.available_cash(snap)，文案比照 asset_diff_monitor/緊急報告：「可動用 819,182（真值 6,719,182 − 指定清償款 5,900,000，餘裕/乾粉 119,182）」。"
+    },
+    {
+      "severity": "major",
+      "file": "passive_caliber.py / build_audit_dashboard.py",
+      "line": "passive_caliber.py:47,64（cash = snap.get(\"cash_total\")）；build_audit_dashboard.py:17,59,140,161（runway = CASH/EXP）",
+      "issue": "『Runway 排除指定用途款』只改到 build_dashboard 的 Runway 卡。FI 跑道（被動覆蓋四情境，且是留停 A 級門檻『跑道 ≥540 天』的判準，build_retirement_plan.py:284）仍用 raw cash_total：實測極端情境 runway_days = 5,649 天，扣掉指定款後應為 689 天；index.html 同一頁同時出現「Runway 5.0 個月（已扣）」與「FI 跑道（極端情境口徑）：5,649 天」。週五深度審查（cron 18:30）的 build_audit_dashboard『純現金 Runway』= 6,719,182/162,781 ≈ 41.3 個月，應為 5.0 個月。540 天門檻在兩種口徑下都達標（5,649／689 皆 ≥540），故未翻盤，但數字差 4,960 天。",
+      "suggest": "passive_caliber.scenarios 的 cash 改讀 sot_targets.available_cash(snap)（或新增 restricted 參數），build_audit_dashboard 同步；重算退休頁四情境跑道與 540 天門檻結論後再交付。"
+    },
+    {
+      "severity": "minor",
+      "file": "build_rebalance_report.py / build_rebalance_dashboard.py / build_ceo_dashboard.py",
+      "line": "build_rebalance_report.py:19,68,210；build_rebalance_dashboard.py:278,716；build_ceo_dashboard.py:14,251",
+      "issue": "仍直接顯示 cash_total=6,719,182 且無「含指定清償款」標註。rebalance_report 的檢查行寫「現金 ≥ 70 萬（6個月開支）：目前 6,719,182（需求 851,748）」→ 讀者會判 6 個月開支充足，但可動用 819,182 其實低於 851,748 需求（燈號仍綠只因判準寫 700,000）；rebalance_dashboard 同頁 KPI「現金 6,719,182」與乾粉卡「現金 819,182」並存無標註；ceo_dashboard 的現金 KPI 刻意顯示真值但未標註隔離。",
+      "suggest": "顯示真值處一律加註「含指定清償款 590 萬」或並列可動用；6 個月開支判準（build_rebalance_report.py:68）改讀可動用現金。"
+    },
+    {
+      "severity": "minor",
+      "file": "check_thresholds.py",
+      "line": "181-192",
+      "issue": "不變量 ③ 五桶+衛星+指定用途款=總資產 有效（負向對照：快取舊口徑 +5,900,000 被擋、雙重扣除 -5,900,000 被擋），但仍有一個漏抓情境：restricted_cash.金額 被歸零而現金真值未動（誤判已清償）時 diff=0.0 → 靜默通過，590 萬無聲回到可動用。即『能不能歸零』完全信任同一欄位的值，無外部佐證。",
+      "suggest": "restricted_cash 歸零當日加一條交叉驗證：對應負債（保單借貸/券商質押）必須同步減少（重建後的 total_liabilities 或質押欄位差額），否則示警；或要求 snapshot 記『清償佐證』欄位。"
+    },
+    {
+      "severity": "minor",
+      "file": "sot_targets.py / 9 個消費端",
+      "line": "sot_targets.py:145,163；update_all.py:230-238、update_data.py、build_dashboard.py:40-41、build_rebalance_dashboard.py:97-103、build_ceo_dashboard.py:251、build_penetration_report.py:27、institutional_flow.py、run_daily.py:1340、check_thresholds.py:184-186",
+      "issue": "新增的 sot_targets.restricted_cash/available_cash 無人呼叫（dead code），而 9 個消費端各自重寫 `float((snap.get(\"restricted_cash\") or {}).get(\"金額\") or 0)`（同一規則 9 份實作，未來改口徑必漏一處）；其中 6 處 except 只接 (TypeError, ValueError)，若 restricted_cash 被寫成純數字（欄位型別未定義），`(x or {}).get` 會 AttributeError 直接讓該步驟崩。",
+      "suggest": "全部改呼叫 sot_targets.restricted_cash/available_cash（helper 內同時支援 dict 與 number、並在型別異常時明確示警），消除多份實作。"
+    },
+    {
+      "severity": "minor",
+      "file": "run_daily.py",
+      "line": "1330-1350、1490-1502",
+      "issue": "日報「建議部位／今日動作」區塊的四桶來自 dragon_assets.db 權重啟發式（且 _bond2 = 2_097_467 寫死），現金改用「真值−指定款」後 _tot 變成混合口徑：實測 台股 47%／美股 24%／防守 14%／債券 12%／現金 2.9%（現金 819,182 / _tot 28,006,028），與同一份日報的穿透表（6.4／32.2／14.1／23.4／2.6）不一致；扣款後現金% 2.9 ≠ 穿透 2.6（分母非總資產）。",
+      "suggest": "該區塊改讀 snapshot.penetration 的 actual_twd/actual_pct 現算，移除寫死 _bond2；否則至少讓現金% 與穿透同分母。"
+    },
+    {
+      "severity": "info",
+      "file": "emergency_1330.py",
+      "line": "177-183",
+      "issue": "即時重算路徑 `_p = {k: round(v/_tt*100,1) for k,v in _pen.items() if k != \"_meta\"}` 會把字串鍵 alert 也一起做除法 → 必然 TypeError，永遠落入「讀快取 actual_pct」fallback；本日快取口徑正確故輸出無害（緊急報告顯示 6.4/32.2/2.6、可動用 819,182），但重算路徑形同失效。",
+      "suggest": "改為只取五桶+子維度鍵（或排除非數值鍵），讓即時重算真的生效。"
+    },
+    {
+      "severity": "info",
+      "file": "tests/",
+      "line": "—",
+      "issue": "本次口徑變更（新增真值欄 + 12 個檔案的消費端調整）未伴隨任何自動化測試，僅靠 check_thresholds 不變量（該不變量對『快取殘留』有效、對『消費端漏改』無感，本次三個 major 正是漏改型）。",
+      "suggest": "加最小回歸測試：restricted>0 時 ①五桶+衛星+指定款=總資產 ②actual_pct 分母=總資產 ③alert 與 gaps 同分母 ④passive_caliber 跑道已扣指定款。"
+    }
+  ],
+  "summary": "restricted_cash 的核心隔離做對了：唯一扣除點在 update_all.calc_penetration，兩個寫入者（update_data / build_penetration_report）五桶逐鍵相同（差異 0），總資產真值 31,808,561 未動，桶位 % 只有現金桶變 2.6%、其餘維持 6.4/32.2/14.1/23.4，且無任何寫死金額、無雙扣；static_gate 與 check_thresholds --sot-only 皆 EXIT=0 通過。但同一支函式的 alert 仍用扣款後分母，回傳並寫入 snapshot 的架構性文字是 7.8/39.5/28.7（債券方向還相反），與同 dict 的 actual_pct/gaps 自相矛盾，正是本 commit 聲稱已消滅的舊口徑。另有兩個口徑漏改的消費端：日報「可動用流動資金 6,719,182」與 FI 跑道/週五審計「純現金 Runway 5,649 天／41.3 月」仍把指定清償款當可用，前者與同日儀表板 819,182 直接矛盾。三者都屬 major，故 REJECT；修掉這三處（口徑一致化）後本案即可 APPROVE，其餘 minor/info 可一併排程。"
+}

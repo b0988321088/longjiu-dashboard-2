@@ -83,8 +83,15 @@ def _dynamic_amount(snap: dict, asset: str, ladder: dict, dev: float, total: flo
     # 現金：底線制 → 超額即待部署（金額 = 超額部分）
     if asset == "現金/安全網":
         _floor = snap.get("cash_floor_rule", {}).get("floor", 700000) if isinstance(snap.get("cash_floor_rule"), dict) else 700000
-        _cash_excess = max(0, (snap.get("cash_total", 0) or 0) - _floor)
-        return {"金額": _cash_excess, "說明": f"底線制：超額 {_cash_excess:,} 待部署（MMF 停泊）"}
+        # 2026-09-29 使用者核准：超額＝可動用現金（扣指定清償款）− 底線；不得把還債款當可部署資金
+        try:
+            _rst = float((snap.get("restricted_cash") or {}).get("金額") or 0)
+        except (TypeError, ValueError):
+            _rst = 0.0
+        _cash_excess = max(0, (snap.get("cash_total", 0) or 0) - _rst - _floor)
+        return {"金額": _cash_excess,
+                "說明": f"底線制：超額 {_cash_excess:,} 待部署（MMF 停泊）"
+                        + (f"；另指定清償款 {_rst:,.0f} 不列可部署" if _rst else "")}
     # 債券：經理人調整（不建債梯，8/24 裁示）
     if asset == "債券":
         return {"金額": 0, "說明": "基金經理人調整（PIMCO/M&G/00983D），不另建債梯"}

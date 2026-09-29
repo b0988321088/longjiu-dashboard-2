@@ -2063,6 +2063,15 @@ def main():
 
     # 校準
     tv = calibrate_sources()
+    # 2026-09-29 使用者核准：calibrate_sources() 未帶 restricted_cash（指定用途款真值欄）→ 一律補上，
+    # 否則桶位／對策表／Runway 會把質押撥款 590 萬當可動用（同時影響 _cash_v 與 tactical_table.build_table）。
+    if not (tv.get("restricted_cash") or {}).get("金額"):
+        try:
+            tv["restricted_cash"] = json.loads(
+                (Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8")
+            ).get("restricted_cash", {})
+        except Exception as _e_rst:
+            print(f"[WARN] restricted_cash 補值失敗（桶位口徑可能回退舊值）：{_e_rst}")
     print(f"[RUN_DAILY] 真值：月收 {tv['monthly_income']:,} / 月支 {tv['monthly_expense']:,} / 盈餘 +{tv['working_surplus']:,}")
 
     # 情報：refresh today's hunter intel
