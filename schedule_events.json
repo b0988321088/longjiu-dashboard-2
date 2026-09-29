@@ -389,5 +389,13 @@
     "status": "✅ 已完成（已入帳）",
     "note": "使用者 9/30 執行；資金＝質押撥款指定用途款。清償後 pledge_loan 歸零、指定用途款 590萬→490萬、可動用 819,182 不變。apply_policy_repay.py --target securities 入帳。",
     "importance": "high"
+  },
+  {
+    "date": "2026-10-02",
+    "item": "💳 下次 Moneybook 匯入核對：質押款流向（券商清償 100 萬已扣款、保單 200 萬已轉帳待 App 顯示）",
+    "amount": "3000000",
+    "status": "⏳ 待 MB 匯入核對",
+    "note": "使用者 9/30：元大券商質押 100 萬「已扣款」（已入帳，pledge_loan 歸零、指定用途款 590→490 萬）；保單 200 萬已轉帳但 App 未顯示（未入帳）。下次 MB ZIP 到手時核對：①國泰世華活存餘額是否等於 snapshot.cash_detail 該欄（−1,000,000 後）②保單借貸餘額是否已顯示清償 200 萬 ③差異一律以 MB/截圖真值回沖。",
+    "importance": "high"
   }
 ]
