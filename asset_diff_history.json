@@ -1053,7 +1053,7 @@
     "insurance_current": 9453825.0,
     "insurance_total": 9453825.0,
     "fund_market": 12654144.0,
-    "real_estate": 0.0,
+    "real_estate": 34017063.0,
     "cash": 6719182.0,
     "other": 0.0,
     "insurance_detail": {
@@ -1072,9 +1072,9 @@
       "  B-黃金投資 (USDEQ6730 貝萊德世界黃金基金 A10美元(總報酬穩定配息)) (6.0%) ": 157531,
       "安聯A+B合計": 7568341.0,
       "━第一金M&G入息A月配現値": 1885484.0,
-      "━保單總現値": 9453825.0
+      "━保單總現値": 9453825
     },
-    "fund_dividend_monthly": 147975.0,
+    "fund_dividend_monthly": 147975,
     "monthly_income": 228751.0,
     "monthly_expense": 162781.0,
     "rent_monthly": 77100.0,

@@ -1,0 +1,148 @@
+{
+ "verdict": "REJECT",
+ "reviewer": "CIO-subagent（獨立審查｜唯讀、禁推送、禁改 .py）",
+ "commit": "ca361051ba5a3d2911f86bde2c6cf4a8cdc3c28e",
+ "reviewed_commits": [
+  "b4a56abcefb65fb8d5cc54176d961906e9d3157d",
+  "bb6f6f93a033abd8705661fca92109f358aeeba5",
+  "6b4aa009ece7de3f77fa5a5b9090f45550282214",
+  "b9a01808543e95adb3f0a06ffa730bbb707ce197",
+  "e0ce59392f2767d7edf7b58efb95682a16992a52",
+  "1a030adf4f61272a77512ae07087d6fd32eb7052",
+  "3cc54cdfab54f724855a43678fd2bdd0fb197ff8",
+  "3e4a018090d50cff450e2e5fb321d6a32026424c",
+  "ca361051ba5a3d2911f86bde2c6cf4a8cdc3c28e"
+ ],
+ "reviewed_trees": [
+  "894ef4db2b9f0ba3de1f97fd5349752c786b3b26",
+  "3e77ccd917349e24aedf7ec431528f24c9b8f746",
+  "c0fcb9dd36f8cbe6bf382af37015c22d3b1fb6d0",
+  "962cc3467907dd58f6a2b69eaac28d0796e45cd3",
+  "5fe275466302a5c4bda61bc086ffc508806434a9",
+  "a2bf8305e857133297511a6e315dc44cb9e00ad8",
+  "d3da5b46e364d33ef4f0a52316e85854fc5a2a10",
+  "43ce942a3821ef5d67f3310bea4d437b09cdc7ea",
+  "ca98f821887504909acbe22bb2115f2d768cf94f"
+ ],
+ "checked": {
+  "1_push_range": {
+   "cmd": "git rev-list --count origin/clean-main..HEAD ; git log --oneline origin/clean-main..HEAD ; git rev-parse HEAD ; git status --short",
+   "result": "PASS（9 筆，符合預期；工作樹乾淨）",
+   "output": "count=9\nca361051 fix(caliber): 日報哲學檢核閘門＋殘留標註（CIO 第七輪 1 major＋7 minor）\n3e4a018 四源同步 2026-09-29\n3cc54cd fix(caliber): 乾粉/留停閘門收斂＋決策端防復發掃描（CIO 第六輪 2 major）\n1a030ad 四源同步 2026-09-29\ne0ce593 fix(caliber): 決策/評分端全面收斂（CIO 第五輪 3 major）— 指定用途款不得當可動用\nb9a0180 四源同步 2026-09-29\n6b4aa00 fix(caliber): 決策端閘門＋派生欄收斂（CIO 第四輪 2 major＋4 minor 全修）\nbb6f6f9 四源同步 2026-09-29\nb4a56ab fix(caliber): 週報現金口徑＋雙維度派生欄校正（INC-255；線上抽查發現）\nHEAD=ca361051ba5a3d2911f86bde2c6cf4a8cdc3c28e（tree ca98f821887504909acbe22bb2115f2d768cf94f）"
+  },
+  "2_static_gate": {
+   "cmd": "python static_gate.py",
+   "rc": 0,
+   "result": "PASS",
+   "output": "✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key）"
+  },
+  "3_check_thresholds": {
+   "cmd": "python check_thresholds.py",
+   "rc": 0,
+   "result": "PASS",
+   "output": "✅ 雙維度防禦維度自洽：Σ組成 = 合計 12,722,364\n✅ 決策端現金口徑檢查完成（10 支）\n✅ 穿透完整性：五桶 25,023,738 + 衛星 884,823 + 指定用途款 5,900,000 = 總資產 31,808,561\n✅ 基金口徑閉合：鉅亨 874,818 + 國泰 11,779,326 = funds 12,654,144\n✅ 日報基金部位行：明細口徑且閉合 874,818 + 11,779,326 = 12,654,144\n✅ 日報可動用流動資金口徑：819,182（真值 6,719,182 − 指定用途款 5,900,000）\n---- 門檻 SoT 一致性檢查｜全檢 ----\n✅ SoT 完整（9 區塊）｜✅ 消費端 5 支皆引用 thresholds_2026_0915｜✅ 無舊門檻字面殘留｜✅ 日報基金部位行：明細口徑且閉合（RC=0）",
+   "note": "另核對原始碼：check_thresholds.py:190-204 的 _DECISION_ENDPOINTS 名單共 10 支且含 run_daily.py（②a 守門）"
+  },
+  "4_daily_report_hedge_line": {
+   "cmd": "python regenerate_report.py --no-push（審查者唯讀、禁推送故加 --no-push；RC=0）",
+   "result": "PASS",
+   "output": "避險現況：黃金：367,192 / 目標 105萬（已建保單32萬，剩餘PI後）｜石油：4,958 / 目標 26萬（缺口大）｜防守：合併口徑 56.0%（未達 60% 凍結門檻）｜現金：可動用 819,182（帳戶層真值 6,719,182）守底線 70萬",
+   "extra": "800,272 於日報出現 0 次；避險現況『現金』僅一欄（_hed.pop('現金') 後以單一鍵重建）"
+  },
+  "5_bucket_caliber_labels": {
+   "result": "PASS",
+   "output": "桶位列：💵 安全現金（桶位＝餘數法） 819,768 TWD 2.6% 5% -2.4pp\n同頁可動用：現金：可動用 819,182（帳戶層真值 6,719,182）守底線 70萬\n（兩值皆有標口徑；差 586＝總資產進位尾差）"
+  },
+  "6_negative_test": {
+   "cmd": "暫改 snapshot（A：cash_total=719,182／restricted.金額=590,000 → 可動用 129,182；B：cash_total=719,182／restricted=5,900,000 → 可動用 0）→ python regenerate_report.py --no-push → report_components.render_health_score → shutil 還原 → md5 比對 → python check_thresholds.py",
+   "result": "PARTIAL（數值與健康度 PASS；日報缺現金底線 🔴 → 見 findings M1/m2）",
+   "output": "A：避險現況『現金：可動用 129,182（帳戶層真值 719,182）守底線 70萬』（動態 ✅）；HEALTH {\"分數\":55,\"燈號\":\"🔴\",\"現金\":129182.0,\"現金標準\":0,\"現金分\":0.0}\nB：避險現況『現金：可動用 0（帳戶層真值 719,182）』（clamp 生效）；HEALTH {\"分數\":55,\"燈號\":\"🔴\",\"現金\":0.0,\"現金分\":0.0}\n還原：RESTORED md5 34c38ebaec62a0836fde60b1f05c4976 == BASELINE 34c38ebaec62a0836fde60b1f05c4976 → IDENTICAL: True\n還原後 python check_thresholds.py RC=0；git status --short 空（工作樹乾淨）",
+   "gap": "負向情境下日報全頁找不到任何『🔴 未達現金底線』（詳 M1：哲學卡為死碼；m2：可動用流動資金行仍 ✅）"
+  },
+  "7_residual_caliber_sweep": {
+   "cmd": "以 git show HEAD:<file> 取乾淨版掃描 daily_report_v2_2026-09-29.html / emergency_report_2026-09-29.html / index.html / run_daily.py",
+   "result": "PARTIAL",
+   "output": "日報：800,272=0 ✅；6,719,182×9、819,182×9、819,768×4（皆已標口徑）；殘留未標口徑＝work_log『本週完成』清單：現金885,509.0（9/26、9/28、9/29 共 4 處）、現金 884,918（9/27 裁示）、現金6,719,768.0＝帳戶層真值（2 處）\n儀表板 index.html：現況行『現金 819,182：現金底線 700,000 ✅ 達標（餘裕/乾粉 119,182）』✅ 正確；work_log 清單殘留 885,509×3、862,409×2、866,818×2、861,818、6,719,768＝帳戶層真值\n緊急報：僅 6,719,182×3、819,182×2、819,768×1，皆已標口徑 ✅\nrun_daily.py：'800,272' 僅存於 2 行註解（626/645），非執行碼 ✅"
+  },
+  "8_apply_policy_repay": {
+   "cmd": "python apply_policy_repay.py --dry-run --date 2026-09-30 --amount 2000000 --target policy（另有 2026-10-01/100萬 policy、2026-10-02/100萬 securities、--undo 200萬；皆 RC=0，皆未寫檔）",
+   "result": "PASS（邏輯正確；1 缺陷見 m6）",
+   "output": "[DRY-RUN] 2026-09-30 policy 清償 2,000,000：cash_total 6,719,182→4,719,182；total_assets 31,808,561→29,808,561；total_liabilities 36,003,720→34,003,720；net_worth -4,195,159→-4,195,159（不變 ✅）；policy_pledge_loan 4,000,000→2,000,000；policy_loan（同義鍵）4,000,000→2,000,000；restricted 5,900,000→3,900,000\n[DRY-RUN] 2026-10-02 securities 清償 1,000,000：pledge_loan 1,000,000→0；restricted 5,900,000→4,900,000\n[DRY-RUN] --undo 200萬：全項反向回沖、net_worth 不變 ✅\n冪等：同鍵第二次 → 『⚠️ 已記錄過：{...} → 跳過（冪等）』✅\ndry-run 後 snapshot.json md5 不變（34c38eba…）✅",
+   "checks": [
+    "冪等鍵 (date,amount,target) 生效 ✅",
+    "淨值不變 ✅",
+    "total_assets 與負債同步（−2,000,000／−2,000,000）✅",
+    "restricted 遞減 ✅",
+    "--undo 可回沖 ✅",
+    "未寫檔（--dry-run）✅"
+   ]
+  }
+ },
+ "findings": [
+  {
+   "id": "M1",
+   "severity": "major",
+   "title": "本輪唯一 major 修正（run_daily.py:1877『投資哲學檢核』現金底線改 available_cash）落在死碼路徑：日報自 09-29 起完全不輸出該區塊，修正無法被觀察/生效",
+   "evidence": "python regenerate_report.py --no-push 後，daily_report_v2_2026-09-29.html 內『投資哲學檢核』與『槓桿風控輸出』出現次數皆為 0（9/27、9/28 日報各 1 次）。以 sys.settrace('exception') 追蹤 run_daily 幀，實得：'EXC run_daily.py:1823 (_inject_market_intel): TypeError: unsupported operand type(s) for /: str and int'（1823 行 `_pool_txt = \"＋\".join(f\"{_short(k)}{v/10000:.0f}萬\" for k,v in _pool.items() if k != \"合計\")`）。根因：snapshot.cathay_pledge_0911.擔保池 內含字串鍵『資料日』→ v 為 str 除以 10000 拋 TypeError，被 run_daily.py:1907 的 `except Exception: pass` 吞掉，`html += _lv_html`（1903）永不執行，整個槓桿風控卡（含 ⑦ 投資哲學檢核）消失。資料鍵由 af7af243 加入，而 af7af243 是 origin/clean-main 的祖先（git merge-base --is-ancestor 驗證）→ 非本範圍程式碼所致，但本輪的修正正好落在這條不可達路徑上。",
+   "impact": "使用者端看不到任何現金底線檢核；修正前的 fail-open（顯示 cash_total 884,918 ✅）退化成完全不出現，風險更不透明。第七輪 REJECT 的 1 major 實質未修好。",
+   "suggestion": "1823 行改為只取數值項（`if k != '合計' and isinstance(v,(int,float))`）；1907 的裸 except 至少改為印出例外。修後在日報驗證『投資哲學檢核』字樣存在，內容為『現金底線 可動用 819,182（真值 6,719,182；≥700,000 ✅）』。"
+  },
+  {
+   "id": "m2",
+   "severity": "minor",
+   "title": "負向情境日日報無任何現金底線 🔴：『可動用流動資金』行以 30,000 為門檻輸出『餘裕充足 ✅』（假綠）",
+   "evidence": "run_daily.py:1239-1241：`可動用流動資金 {avail:,.0f} TWD（Moneybook 真值 …），{'餘裕充足 ✅' if _dbs_avail > 30000 else '⚠️ 需補資金'}`。負向測試 A（可動用 129,182、底線 700,000）實測該行仍為 ✅；同一情境下 700,000 底線判準在全頁沒有任何燈號（唯一的 ✅/🔴 隨 M1 一同消失）。",
+   "impact": "與任務要求『日報應顯示可動用 129,182 且 🔴』不符；使用者會誤讀為資金充足。",
+   "suggestion": "該行改用底線口徑（cash_caliber(snap)['life_ok'] 或 sot_targets 現金底線）給 ✅/🔴。"
+  },
+  {
+   "id": "m3",
+   "severity": "minor",
+   "title": "rotation_engine 本輪新增的『乾粉 0 → 不進場』分支不可達；可動用低於底線時仍輸出『守住現金底線…』進場列",
+   "evidence": "rotation_engine.py: `dry = max(cash - cash_floor, 0) + surplus * 0.5`，surplus=228,751−162,781=65,970 → dry 恆 ≥32,985>0，`if dry > 0` 永遠成立，else（『不進場（乾粉 0）』）為死碼。負向測試 A 實測日報仍出現『現金保留 台幣活存/MMF 32,000…守住現金底線 700,000』。",
+   "impact": "前輪 cio_review_range_0929d.json 同項 finding 僅形式修補；跌破底線時計畫文字仍宣稱守住底線，與同頁數字矛盾。",
+   "suggestion": "把『既有乾粉』與『月盈餘新增』拆成兩個金額；既有乾粉為 0（或可動用≤底線）時禁止輸出『守住底線』字樣，改為明示底線缺口。"
+  },
+  {
+   "id": "m4",
+   "severity": "minor",
+   "title": "check_thresholds.py ②a 守門的 ✅ 訊息用 for/else 誤寫 → 即使有錯也印『✅ 決策端現金口徑檢查完成（10 支）』",
+   "evidence": "check_thresholds.py:191-204 在迴圈內 append(errs)，迴圈的 else 分支（無 break，恆執行）才印 ✅。以忠實重現測試證實：errs=['rotation_engine.py 仍裸用 cash_total 且未扣指定用途款'] 時仍印出 ✅。errs 仍會由 _summarize（:120-124）轉為 ❌ 並 return 1，故非繞過，只是訊息假綠。",
+   "impact": "人工/自動讀 log 時易誤判該 10 支全部通過；本次審查須自行回歸名單與原始碼。",
+   "suggestion": "✅ 移到 `if not errs:` 之後，或輸出『實際通過 N/10 支』。"
+  },
+  {
+   "id": "m5",
+   "severity": "minor",
+   "title": "日報／儀表板『本週完成』清單殘留未標口徑現金值，且 6,719,768 誤標『帳戶層真值』與同頁 6,719,182 矛盾",
+   "evidence": "git show HEAD:daily_report_v2_2026-09-29.html：『資產穿透2026-09-29（…現金885,509.0）』×2、『資產穿透2026-09-28（…現金885,509.0）』、『現金 884,918 已達標』、『現金6,719,768.0＝帳戶層真值』；index.html：885,509×3、862,409×2、866,818×2、861,818、6,719,768＝帳戶層真值。真值 cash_total＝6,719,182，兩者差 586（桶位餘數法尾差）。",
+   "impact": "違反本案『同頁同名義不得兩值』：同頁同時存在『帳戶層真值 6,719,182』（避險現況）與『帳戶層真值 6,719,768』（work_log），另有完全未標口徑的 885,509/862,409。",
+   "suggestion": "work_log『本週完成』列的現金值改走同一渲染器加註（如『帳戶層真值 6,719,182（餘數法 6,719,768）』），或標『歷史口徑』。"
+  },
+  {
+   "id": "m6",
+   "severity": "minor",
+   "title": "apply_policy_repay.py 的 --undo 無冪等保護；且 undo 後同鍵無法重入",
+   "evidence": "in-memory 實測：同鍵 repay 第二次被冪等擋下 ✅；但 --undo 無任何重複檢查（`if not undo and any(...)`），同一筆重複 --undo 會重複加回（cash 6,719,182→8,719,182 後再 +2,000,000），每次 undo 都 append 一筆 log。另 undo 後原 repay 鍵仍留在 policy_repay_log，同鍵重新 repay 只會被『已記錄過』跳過。",
+   "impact": "人工誤操作會把 200 萬重複沖回（現金與負債同時虛增）；誤沖後無法用同鍵補回。",
+   "suggestion": "undo 亦納入冪等鍵（或 undo 時一併移除原鍵）；寫檔前加『同鍵 undo 已存在 → 拒寫』硬擋。"
+  },
+  {
+   "id": "i7",
+   "severity": "info",
+   "title": "緊急報/日報中的 LLM 敘述段（data/emergency_llm_analysis.json）現金數字為樣板文字，不隨 snapshot 變動",
+   "evidence": "負向測試 A（真值 719,182／可動用 129,182）下日報仍出現『可動用現金（單一口徑）：底線 700,000；可動用 819,182（真值 6,719,182…）→ 達標』與『現金底線（單一口徑）…819,182…達標』（來源檔 data/emergency_llm_analysis.json，未在本推送範圍內）。",
+   "impact": "同頁同名義兩值（129,182 vs 819,182）；清償入帳後若未重跑 LLM 段會殘留過期達標敘述。",
+   "suggestion": "該段數字改以占位符回填，或標註『產生時點口徑』。"
+  },
+  {
+   "id": "i8",
+   "severity": "info",
+   "title": "apply_policy_repay 未對 cash_detail 帳戶餘額設下限",
+   "evidence": "apply() 僅對負債欄與 restricted 做 max(0,…)，`cd[ACC] = int(cd.get(ACC) or 0) - sign*amount` 無下限。",
+   "impact": "帳戶明細可能出現負值列（低機率，撥款先入帳）。",
+   "suggestion": "餘額 < 扣款金額時拒寫並提示。"
+  }
+ ],
+ "summary": "推送範圍 9 筆（origin/clean-main..HEAD，HEAD=ca361051）逐項實測。通過：static_gate RC=0；check_thresholds RC=0 且含『✅ 決策端現金口徑檢查完成（10 支）』（名單含 run_daily.py）、『✅ 雙維度自洽』、『✅ 穿透完整性』；日報避險現況已收斂為單一『現金：可動用 819,182（帳戶層真值 6,719,182）守底線 70萬』、800,272 全庫歸零；桶位列『安全現金（桶位＝餘數法）819,768』與『可動用 819,182』皆標口徑；負向測試（可動用 129,182／0）下避險現況數字正確反應、健康度 55 分 🔴、還原後 md5 完全一致且 check_thresholds RC=0；apply_policy_repay.py 四組 --dry-run 實測（冪等、淨值不變、total_assets 與負債同步、restricted 遞減、--undo 可回沖、未寫檔）全數符合。惟本輪唯一的 major 修正置於死碼路徑：_pool.items() 對擔保池字串鍵『資料日』做除法拋 TypeError，被 run_daily.py:1907 的 except 吞掉，導致整個槓桿風控輸出卡（含 ⑦ 投資哲學檢核現金底線）自 09-29 起完全不渲染（09-28 尚在）→ 修正無法被觀察、日報再無現金底線燈號。另有 5 項 minor（可動用流動資金行 30,000 門檻假綠 ✅、rotation_engine『不進場』分支不可達、check_thresholds for/else 假綠訊息、work_log 殘留未標口徑現金值與 6,719,768 誤標『帳戶層真值』、apply_policy_repay --undo 無冪等）與 2 項 info。依規則（有 major 即不得 APPROVE）→ REJECT。"
+}

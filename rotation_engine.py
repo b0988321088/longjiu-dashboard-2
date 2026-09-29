@@ -197,7 +197,9 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
     from sot_targets import restricted_cash as _rst_fn
     cash = max(0.0, float(snap.get("cash_total") or 0) - _rst_fn(snap))
     surplus = snap.get("monthly_income", 228751) - snap.get("monthly_expense", 162781)
-    dry = max(cash - snap.get("cash_floor", 700000), 0) + surplus * 0.5  # 保守可動用（底線讀 snapshot）
+    # 2026-09-29 CIO minor：可動用 < 底線時不得把月盈餘算成乾粉（否則「乾粉 0 → 不進場」分支永不觸發）
+    _dry_now = max(cash - snap.get("cash_floor", 700000), 0)
+    dry = _dry_now + (surplus * 0.5 if _dry_now > 0 else 0)  # 保守可動用（底線讀 snapshot）
     plan = []
     
     # 2026-09-13：改為全動態（禁止寫死文字/金額）— 資料源＝snapshot + 資金輪動引擎輸出
@@ -240,7 +242,7 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
                  if _dcm else "現金底線制")
     # 2026-09-29 CIO info：可動用 ≤ 底線（乾粉 0）時不得輸出「守住底線」的進場計畫
     _keep = max(int((dry - used) / 1000) * 1000, 0)
-    if dry > 0:
+    if _dry_now > 0:
         plan.append({
             "產業": "現金保留",
             "標的": "台幣活存/MMF",

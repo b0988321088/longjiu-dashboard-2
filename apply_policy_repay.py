@@ -33,7 +33,15 @@ def apply(snap: dict, date: str, amount: int, target: str, undo: bool = False) -
     sign = -1 if undo else 1
     log = snap.setdefault("policy_repay_log", [])
     key = {"日期": date, "金額": amount, "對象": target}
-    if not undo and any(all(x.get(k) == v for k, v in key.items()) for x in log):
+    _same = [x for x in log if all(x.get(k) == v for k, v in key.items())]
+    # 2026-09-29 CIO minor：undo 也要冪等（原可重複 --undo 重複加回）；且沖回後原鍵須可重入
+    if undo:
+        if not any(x.get("動作") != "undo" and not x.get("已沖回") for x in _same):
+            print(f"⚠️ 沒有可沖回的原始紀錄：{key} → 跳過（冪等）")
+            return snap
+        for x in _same:
+            x["已沖回"] = True
+    elif any(x.get("動作") != "undo" and not x.get("已沖回") for x in _same):
         print(f"⚠️ 已記錄過：{key} → 跳過（冪等）")
         return snap
 
@@ -43,6 +51,10 @@ def apply(snap: dict, date: str, amount: int, target: str, undo: bool = False) -
     snap["cash_total"] = int(snap.get("cash_total") or 0) - sign * amount
     cd = snap.setdefault("cash_detail", {})
     cd[ACC] = int(cd.get(ACC) or 0) - sign * amount
+    if cd[ACC] < 0:
+        # 2026-09-29 CIO info：扣款不得讓帳戶欄位變負（多筆/錯帳時顯式警示，不靜默造出負資產）
+        print(f"⚠️ 帳戶「{ACC}」扣款後為負（{cd[ACC]:,}）→ 已歸零；請核對銀行明細後用 --undo 修正")
+        cd[ACC] = 0
 
     rc = snap.setdefault("restricted_cash", {})
     rc["金額"] = max(0, int(rc.get("金額") or 0) - sign * amount)

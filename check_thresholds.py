@@ -191,6 +191,7 @@ def main() -> int:
         "sabbatical_checklist_update.py", "debt_restructure_tracker.py", "institutional_flow.py",
         "build_retirement_plan.py", "asset_moat_monitor.py", "run_daily.py",
     ]
+    _de_ok = 0
     for _f in _DECISION_ENDPOINTS:
         _p = BASE / _f
         if not _p.exists():
@@ -200,8 +201,10 @@ def main() -> int:
             errs.append(f"{_f} 決策/評分端未經 sot_targets 取得現金口徑（禁裸用 cash_total）")
         elif "cash_total" in _src and "restricted_cash" not in _src and "available_cash" not in _src:
             errs.append(f"{_f} 仍裸用 cash_total 且未扣指定用途款")
-    else:
-        print(f"✅ 決策端現金口徑檢查完成（{len(_DECISION_ENDPOINTS)} 支）")
+        else:
+            _de_ok += 1
+    # 2026-09-29 CIO minor：原用 for/else，✅ 訊息恆印（有 err 也印）→ 改計數，且未達全數列出
+    print(f"✅ 決策端現金口徑檢查完成（{_de_ok}/{len(_DECISION_ENDPOINTS)} 支）")
 
     # ② 消費端有引用 SoT
     for f in CONSUMERS:

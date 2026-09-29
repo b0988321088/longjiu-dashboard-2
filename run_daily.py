@@ -1236,9 +1236,11 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _dbs_cash = float(tv.get("cash_total") or _dbs_snap.get("cash_total") or 0)
     _dbs_rst = _rst_fn(tv if "restricted_cash" in tv else _dbs_snap)
     _dbs_avail = max(0.0, _dbs_cash - _dbs_rst)
+    # 2026-09-29 CIO minor：判定門檻＝現金底線（SoT），不再寫死 30,000
+    _dbs_floor = float(((tv.get("thresholds_2026_0915") or {}).get("現金_twd") or {}).get("合計底線") or 700000)
     _dbs_str = (f"可動用流動資金 {_dbs_avail:,.0f} TWD（Moneybook 真值 {_dbs_cash:,.0f}"
                 + (f" − 指定清償款 {_dbs_rst:,.0f}" if _dbs_rst else "")
-                + f"），{'餘裕充足 ✅' if _dbs_avail > 30000 else '⚠️ 需補資金'}")
+                + f"），{'餘裕充足 ✅' if _dbs_avail >= _dbs_floor else f'🔴 已低於底線 {_dbs_floor:,.0f}'}")
     html = html.replace("{_dbs_note}", _dbs_str)
 
     # 機構流向雷達（2026-08-22：讀 radar_state.json，盤後更新、隔日報生效）
@@ -1821,7 +1823,8 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                             return _k2
                     return k.split("-")[0][:6]
                 _pool_txt = "＋".join(f"{_short(k)}{v/10000:.0f}萬"
-                                      for k, v in _pool.items() if k != "合計") or "池"
+                                      for k, v in _pool.items()
+                                      if k != "合計" and isinstance(v, (int, float))) or "池"
                 _pledge_card = (
                     f"<div class='callout callout-info' style='margin-top:12px'>"
                     f"<h3>🏦 質押口徑卡（動態｜來源 snapshot.cathay_pledge_0911 + DB liabilities {_loans.get('_date','')}）</h3>"
@@ -1905,10 +1908,12 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 try:
                     from market_indicator_panel import build_panel
                     html += build_panel()
-                except Exception:
-                    pass
-            except Exception:
-                pass
+                except Exception as _e_panel:
+                    print(f"⚠️ [render] 市場指標面板失敗：{type(_e_panel).__name__}: {_e_panel}")
+            except Exception as _e_lv:
+                # 2026-09-29 CIO major：原為 except Exception: pass → 9/29 起 TypeError 被吞，
+                # 哲學檢核／槓桿風控卡整段消失（日報 0 次）而全站無人察覺。改為顯式告警。
+                print(f"⚠️ [render] 槓桿／哲學檢核區塊失敗（不靜默）：{type(_e_lv).__name__}: {_e_lv}")
     except Exception:
         pass
 
