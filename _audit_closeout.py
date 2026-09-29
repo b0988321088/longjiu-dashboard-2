@@ -160,6 +160,7 @@ checks = [
     ("負債拆解可完全解釋", sum([_bup["房貸_含國泰"],
                               _bup["保單借貸"],
                               _bup["券商質押"],
+                              _bup.get("基金質押", 0),
                               _bup["信用卡_當期未繳_全額扣繳"]]) == s["total_liabilities"]),
 ]
 for name, res in checks:

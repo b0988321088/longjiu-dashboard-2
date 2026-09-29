@@ -36,9 +36,7 @@ CASES: list[tuple[str, bool, str]] = [
     # ── 引擎偏移 vs 現況缺口的口徑分流（2026-09-25 B 批）──
     ("偏移後債券 +5pp", True, "引擎偏移口徑（偏移後＝+5）"),
     ("偏移後債券 -5pp", False, "負向：引擎是加碼 +5，寫成減碼 → 擋"),
-    ("超標：美股 +9.5pp", True, "現況缺口口徑（超標＝+9.5）"),
-    ("超標：美股 -9.5pp", False, "負向：超標必為正缺口，寫成負 → 擋"),
-    ("美股超標 9.5pp、債券 +5pp", True, "切段：鄰句『超標』不得污染債券的引擎值"),
+    # 2026-09-29：原寫死 9.5pp（9 月舊缺口）→ 改由 _pen_cases() 動態生成，避免真值日案例落後。
     # ── 獨立複審抓到的兩條迴歸（2026-09-25，固定下來不再退化）──
     ("美股超標 9pp 但債券 +5pp", True, "回歸 V-A2：無標點的整數 pp 鄰句不得污染口徑"),
     ("偏移後科技 5pp", False, "回歸 V-B：口徑為引擎偏移但該標籤 off 為空 → 退回聯集擋下，不得靜默跳過"),
@@ -57,10 +55,9 @@ CASES: list[tuple[str, bool, str]] = [
     ("金融 1,234,567", True, "known limitation：金融 無 twd 集合 → 金額不掃"),
     ("現金 5pp", True, "known limitation：現金 gap/off 皆空 → pp 不掃"),
     # ── 穿透真值（既有）──
-    ("債券 +3.7pp", True, "現況缺口（佔總資產分母）"),
-    ("債券 +4.7pp", True, "現況缺口（佔投資部位分母）"),
-    ("科技 15.3%", True, "穿透真值"),
-    ("防守型配息 17.3%", True, "穿透真值"),
+    # 2026-09-29：原寫死 9 月舊穿透值（債券 +3.7pp／+4.7pp、科技 15.3%、防守 17.3%）
+    #   → 真值日後案例落後、自測假失敗（與 2026-09-26 現金案例同一個坑）。
+    #   改由下方 _pen_cases() 動態讀 snapshot.penetration 生成，守門強度不變。
     ("科技 17.5%", False, "負向：INC-245 原始案例（模型自行推算）"),
     # ── 現金派生口徑（INC-244）──
     # 2026-09-26：原寫死 861,818/161,818（9 月舊現金）→ 現金一更新就讓自測假失敗
@@ -96,6 +93,41 @@ def _cash_cases() -> list[tuple[str, bool, str]]:
 
 
 CASES += _cash_cases()
+
+
+def _pen_cases() -> list[tuple[str, bool, str]]:
+    """2026-09-29：動態生成「穿透真值／現況缺口」案例（讀 snapshot.penetration）。
+
+    原本寫死 9 月值（美股 +9.5pp、債券 +3.7/+4.7pp、科技 15.3%、防守 17.3%）
+    → 真值日更新穿透後，案例落後使自測假失敗（看起來像守門壞掉）。
+    動態生成維持同樣守門強度：值仍須落在守門算出的合法集合內才算放行。
+    """
+    import json
+    try:
+        _s = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    _pct = ((_s.get("penetration") or {}).get("actual_pct") or {})
+    _out: list[tuple[str, bool, str]] = []
+    _us = _pct.get("美股市值型成長")
+    if isinstance(_us, (int, float)) and _us > 30:
+        _gap = round(_us - 30, 1)
+        _out.append((f"超標：美股 +{_gap}pp", True, "現況缺口口徑（動態）"))
+        _out.append((f"超標：美股 -{_gap}pp", False, "負向：超標必為正缺口，寫成負 → 擋"))
+        _out.append((f"美股超標 {_gap}pp、債券 +5pp", True, "切段：鄰句『超標』不得污染債券的引擎值"))
+    _bd = _pct.get("債券")
+    if isinstance(_bd, (int, float)):
+        _out.append((f"債券 {_bd - 25:+.1f}pp", True, "現況缺口（佔總資產分母，動態）"))
+    _tech = _pct.get("美股市值型成長_科技")
+    if isinstance(_tech, (int, float)):
+        _out.append((f"科技 {_tech}%", True, "穿透真值（動態）"))
+    _defe = _pct.get("防守型配息")
+    if isinstance(_defe, (int, float)):
+        _out.append((f"防守型配息 {_defe}%", True, "穿透真值（動態）"))
+    return _out
+
+
+CASES += _pen_cases()
 
 # ── 警示自測（2026-09-25 補）：引擎檔異狀必須出聲、正常檔不得有雜訊 ──
 # 這層是「引擎口徑悄悄消失」的唯一可見點（症狀會顯示成內文數字對不上、指不到根因），
