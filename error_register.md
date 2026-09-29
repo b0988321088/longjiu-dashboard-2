@@ -1139,3 +1139,11 @@
 - 判定: 本顆 **APPROVE**（15/15 變異案例、62/62 守門、55 PASS/0 FAIL；N5 離開碼無呼叫端副作用；N7 分母 62→58 成因＝基準觀察卡巢狀段塌縮，仍有無條件 FAIL 故 fail-closed）
 - 殘留（N11–N14，**使用者 2026-09-28 裁定「只登記不實作」→ 刻意不動程式**）: ①N11 parser 先剝字串常量與 `/* */`（或改真 tokenizer／node 實跑取值）並要求期望鍵唯一且為頂層未加引號鍵 ②N12 `_vblock` 錨點缺失改具名 FAIL ③N13 深度計數納入 `[]` `{}` ④N14 檢查名稱與 work_log 補註剝除範圍。**若日後真要根治，方向是 runtime 驗證（node 實跑 index.html 的 JS 直接對 snapshot 值），不是繼續補 regex** —— 補 regex 只會再生 N 系列
 - 教訓: ①自測守門的攻擊面要**刻意停止加碼**：連續多輪「每審都有新發現」是方法性質，不是收斂中；判斷該停的訊號＝新發現已進到「需要刻意構造才會發生」的層級且不影響真值正確性 ②要斷言的若是「執行結果」，就用執行程式去驗（runtime），文字比對留給「這個字串在嗎」這種真文字斷言 ③檢查名稱說得比實力大（「V 物件外的誘餌不算」＋work_log 寫「誘餌防禦」）會被下一輪讀成已完全防禦 → 名稱要標明剝除範圍
+
+## INCIDENT cron_script_not_deployed (process)
+- 首次發生: 2026-09-29 08:30（cron 81663978c283「生活帳戶水位提醒 08:30」首班）
+- 現象: 到點執行失敗 →「Script not found: C:/Users/bot/AppData/Local/hermes/scripts/life_account_alert.py」；真身當時只存在 repo 根目錄，hermes/scripts 沒有對應檔。
+- 根因: cron 的 script 欄位是相對 HERMES_HOME/scripts 解析；新腳本要上 cron 必須在 repo/wrappers/ 放同名轉發器（post-commit 會部署）。本案只 commit 真身、沒放轉發器 → 首班必失敗。舊第 5 類鏡像檢查是固定 5 檔清單（asset_sync／buffett_cto_analyzer／closing_log／update_data／budget_daily_check），對「全新腳本未部署」結構上抓不到。
+- 修法: ①新增 wrappers/life_account_alert.py 薄轉發器（cwd=REPO；真身用 Path(__file__).parent 找 snapshot.json，直接鏡像到 hermes/scripts 會讀不到）②_audit_closeout.py 新增第 14 類不變式：每個 no_agent job 的 script 必須存在於 hermes/scripts；repo/wrappers/*.py 必須全部已部署且逐位元一致（fail-closed，缺檔即 ❌）
+- 驗證: 正向＝40 個 no_agent job 的腳本全在、14 支 wrapper 逐位元一致；負向＝暫時移走鏡像檔 → 正確報「cron 指向不存在的腳本 81663978c283」＋「wrapper 未部署」，還原後回綠；cron 端以 hermes/scripts 路徑實跑 → 印出玉山 15,044 < 安全線 40,000、rc=0
+- 教訓: ①新增 no_agent cron 的固定順序＝真身 → repo/wrappers/ 同名轉發器 → commit（hook 部署）→ 用 hermes/scripts 路徑實跑一次；沒有在 cron 端實跑過的「完成」不算完成 ②「固定清單式」的守門擋不住新成員 —— 不變式要從資料來源反推（掃 jobs.json 的 script 欄位回頭驗檔案存在），不是維護清單
