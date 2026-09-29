@@ -1,0 +1,223 @@
+{
+ "_adapter_note": "schema 適配層（2026-09-29）：審查者原 JSON 使用 commits/tree_anchors 鍵名，審查工具只認 reviewed_commits/reviewed_trees。此檔僅複製原 JSON 的判定與清單到工具認得的鍵名，未新增或修改任何判定內容；原檔完整內容保留於 original_v3。",
+ "verdict": "APPROVE",
+ "reviewer": "CIO-reviewer",
+ "commit": "a5f693baf91a983a2372325e26c9ea7d43bd074e",
+ "reviewed_commits": [
+  "a5f693baf91a983a2372325e26c9ea7d43bd074e",
+  "68b96fc9dc902931c5d246c3143ec5b84f2b54f6",
+  "cbb5620d5a8aa54ebe67e3661967c852775c61f7",
+  "1719a2b6c542dd633b5245bb3ab30462d8c90766",
+  "ae10be6c2f1f319c2c5b24f863dcb683add398a6",
+  "6358bbf9d9873c671d604b298d3edf014ff46f1d",
+  "99c4d7716204af78e82dc4177415e65dcaf135ab",
+  "abd05a6d1c68a370783e03c8b21c702b83f8f5ad",
+  "55f47a1bb01704a86e4fd38d47b19f684e17eaa6",
+  "af7d58135f343ee2050a2a8015b909a76c2fde4a",
+  "072b6fafd88c8e1b7f566505931e414f7bb03970",
+  "eabfe7e3755eedbd15df2d61f136deb1eef2d414",
+  "28995540017c1c8ef293eae93cb5db19b5ed6332",
+  "b89bfa7c184f3f91964777815c66686dcddf3bf4",
+  "35671029a6f850486d7d2fb17e73d0d84ff278b4",
+  "e5d047270acdceb6cf1eb4deac70d1ca0ad013e2",
+  "503d6ae15b43a63e55b205ca55061077176b64af",
+  "9f0642e935fc0c7a8e968ad2c4d1d01bdf701de9",
+  "050bc7923877c8b10881ff30d00d84df24bef00f",
+  "74047ef23629d068586816b04c6941087b3a0be1",
+  "7d737b96507d2360e2f8ab49a1dd173038f94fa2",
+  "eb12ac6addd3df8cd741a9d627a398a442087054"
+ ],
+ "reviewed_trees": [
+  "ffce476c788936caae3dbaf5d42ba73d69dfe122",
+  "6e9e290c4fabeceaefa1802a80f530fb62955fb9",
+  "7dad8c790eac94fa9a47b1c1f4137c3ec8ea52a5",
+  "68fa5c9622f4811587da69fe46eec2f565cc60ad",
+  "fd00be2e8563ea0592304cbf996b29670078a8aa",
+  "6c7c586126a557d3f7116e3f1e7b6cf606cba97f",
+  "3a4567b17b075908aae6149daf5fda40140e1810",
+  "ddd21fa1d93d243559cee48e8c9377fb6d5007b9",
+  "9e2df078dff43bccc2d041a12ba8ed2ba1f80f83",
+  "6d792b32b5cf7fae887f0d78356e6bfd8fe4d7ce",
+  "c4b6a57af96b996ff56136c398c2ac000cb8a66c",
+  "f38328819f66d7a5e0c438565b0dd521652094b0",
+  "c2643899a1b006b0bae614ce1f7eff7d0a1a5ced",
+  "66d80e0076ded89d40dc6155afc2de2f8df0488b",
+  "d0ada4dca76a1c8354837d4f4151c5af791d163f",
+  "935e4e0f3015aeb9cd5406e7966ce6e2c87241c3",
+  "e5cbbeef024d22f7ec540395c3b25a4a5de29df2",
+  "81d9a1e55687bd2e6aaaff0a3eae1b083bdfcd17",
+  "d2f987631788cad457b9615f5c15e235467d0ccf",
+  "b0048da4980572f98afa8216c81e5b11e9a40c60",
+  "4710cedf49252dd029fb9508c87a666ab8fee168",
+  "d443db2b3b5f485d2e858c470e3549af73fee4d4"
+ ],
+ "range_base": "origin/clean-main",
+ "range_count": 22,
+ "checked": [
+  "git rev-parse HEAD → a5f693baf91a983a2372325e26c9ea7d43bd074e（tree ffce476c）。審查起點 HEAD 為 68b96fc9（task 指定），我依 SOP 實跑生產路徑後，管線自行產生資料 commit a5f693ba『四源同步 2026-09-29』→ HEAD 推進；本輪背書綁定 a5f693ba 的 tree（工作樹與該 commit 的追蹤檔一致，見下）。",
+  "[CMD10] git rev-list --count origin/clean-main..HEAD → 22（審查起點為 21；+1 ＝ 本輪實跑生產路徑產生的資料 commit a5f693ba）。git rev-list origin/clean-main..HEAD 逐筆列出 22 個完整 SHA，已全部納入本報告 commits。",
+  "[CMD1] python static_gate.py → '✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key）'",
+  "[CMD2] python check_thresholds.py（全檢）→ 4 條產物斷言全綠：✅ 穿透完整性：五桶 25,023,738 + 衛星 884,823 + 指定用途款 5,900,000 = 總資產 31,808,561／✅ 基金口徑閉合：鉅亨 874,818 + 國泰 11,779,326 = funds 12,654,144／✅ 日報基金部位行：明細口徑且閉合／✅ 日報可動用流動資金口徑：819,182（真值 6,719,182 − 指定用途款 5,900,000）；末段 ✅ SoT 完整（9 區塊）、✅ 消費端 5 支皆引用 thresholds_2026_0915、✅ 無舊門檻字面殘留。RC=0。",
+  "[CMD3] python regenerate_report.py（生產路徑，實跑到尾，約 3 分鐘）→ 日報產出成功；實跑後從 daily_report_v2_2026-09-29.html 抽出該行，兩處皆為：'可動用流動資金 819,182 TWD（Moneybook 真值 6,719,182 − 指定清償款 5,900,000），餘裕充足 ✅'（第 230、337 行）。舊行為 6,719,182 已不復現 → 上一輪 major 確實修復。同檔 grep '可動用流動資金 819,182' 命中 2 次、'可動用流動資金 6,719,182' 命中 0 次（檔內其餘 8 處 6,719,182 皆為『真值／現金總額』語境或入帳說明，非可動用宣稱）。",
+  "[CMD3-附] 該次實跑尾部：'[CIO 審查] 全部通過。允許推送。' → '➕ 連結目標補推: rebalance_eval_2026-09-29.html' → '✅ 拒推前補落 RECORD：a5f693baf91a' → '⚠️ 未推送上線（rc=3）' → '⛔ 未推送上線'。即推送被閘門 fail-closed 擋下，審查期間未發生任何推送（符合『禁推送』）。",
+  "[CMD3-附2] 該次實跑 --post-push 線上連結驗證：21 個連結 200、1 個 404（weekly_report_2026-09-29.html）。查證：該檔已追蹤、其加入者為未推的 eb12ac6a，且不在 origin/clean-main（git ls-tree origin/clean-main 無此檔）→ 404 是『推送被閘門擋下』的必然結果，不是程式缺陷；本範圍核准並推送後即消失。",
+  "[CMD4] python check_thresholds.py --report-only → '✅ 日報基金部位行：明細口徑且閉合 874,818 + 11,779,326 = 12,654,144' 與 '✅ 日報可動用流動資金口徑：819,182（真值 6,719,182 − 指定用途款 5,900,000）'；RC=0。",
+  "[CMD5] 負向測試（先備份）：cp daily_report_v2_2026-09-29.html → %LOCALAPPDATA%/Temp/daily_report_v2_2026-09-29.ciobak.html（md5 fe6f97d84e48f2f67263a5afa784bf09 兩檔相同），再以 python 將檔案內 2 處『可動用流動資金 819,182』改回『可動用流動資金 6,719,182』→ python check_thresholds.py --report-only 實測輸出：'❌ 日報「可動用流動資金」＝現金真值 6,719,182（未扣指定用途款 5,900,000，應為 819,182）'、'❌ 檢查未通過（1 項）'、RC=1。還原後 md5 與備份相同（fe6f97d8…）、git status 對該檔無變更、'可動用流動資金 819,182' 重新命中 2 次、--report-only 回 RC=0 → 斷言為真、非空轉，且負向測試無殘留。",
+  "[CMD6] python -c 驗 helper 回退：snapshot.restricted_cash={'金額': 5900000, ...}；sot_targets.restricted_cash(snapshot)=5900000.0；對不含該鍵的 dict 呼叫 restricted_cash({})=5900000.0、restricted_cash({'cash_total':6719182})=5900000.0（皆回退讀 snapshot.json 得 5,900,000）；sot_targets.available_cash({'cash_total':6719182})=819182.0。→ 上一輪 major 的根因（呼叫端拿到精簡 dict 就當 0）已被 helper 回退關閉。",
+  "[CMD7] python -c 'import passive_caliber; passive_caliber.scenarios(snapshot)' → cash=819182.0、extreme.runway_days=688.754799473109（舊口徑 5,649 天已排除）、stress.runway_days=None（零缺口，顯示 ∞）、con.runway_days=None。688.75 ≥ 540 → 留停 A 級門檻不再被質押撥款墊高。",
+  "[CMD8] python -c 實測 update_all.calc_penetration(cash_total, insurance_current_value, securities_total_market_value, fund_market_value, snap=snapshot) → alert='台股市值型成長 不足3.6pp；美股市值型成長 超標2.2pp；債券 不足1.6pp；債券及安全現金 不足4.0pp；科技曝險 不足2.6pp；防守合併口徑 56.0% 不足 4.0pp（<60 承接解凍）'；由 gap 反推實際值＝台股 6.4／美股 32.2／防守 14.1／債券 23.4／現金 2.6，與 snapshot.penetration.actual_pct 完全一致；'7.8'、'39.5'、'28.7' 三個舊口徑字串 in alert 均為 False。桶值實測 台股 2,029,878／美股 10,235,528／防守 4,500,670／債券 7,437,894／現金桶 819,768（餘數法）。",
+  "[CMD9] python build_audit_dashboard.py → audit_dashboard_2026-09-29.html（30,404 bytes）產出成功；同口徑處：KPI『純現金（可動用）819,182.0｜真值 6,719,182 − 指定清償款 590萬｜底線 70萬 ✅』、KPI『Runway 5.0 月｜可動用 819,182.0 / 月支出 162,781』、表格『純現金 Runway ｜ 819,182.0 / 162,781 ｜ 5.0 個月』→ 三處一致（舊口徑 6,719,182/162,781≈41.3 月已排除）。未同口徑處見 findings。#1（風險紅線檢核『現金底線 70萬』列仍印 6,719,182）。",
+  "[交叉] 同日交付物：index.html 顯示『現金 819,182：現金底線 700,000 ✅ 達標（餘裕/乾粉 119,182）』、data-k dry_powder=119,182（＝819,182−700,000）、『以可動用現金 819,182（真值 6,719,182 − 質押撥款指定清償款 5,900,000）進行除數運算』；emergency_report_2026-09-29.html 2 處 819,182；rebalance_dashboard_2026-09-29.html 3 處 819,182；總資產 31,808,561 於日報 3 處、審計儀表板 2 處不變。→ 各主交付物的『可動用』口徑已一致收斂（上一輪『兩份交付物互相矛盾』已解）。",
+  "[複驗-上輪 minor] REPO 硬編碼：build_rebalance_report.py:8 = REPO = str(Path(__file__).resolve().parent)、build_weekly_report.py:11 = REPO = Path(__file__).resolve().parent ✅ 已修；institutional_flow.py:26 仍為 BASE = Path(r\"C:\\Users\\bot\\Desktop\\longjiu_system\") → 3 檔中 2 檔修好，見 findings #2。",
+  "[複驗-上輪 minor] emergency_1330.py:16-20 run_step 已區分 rc=3：'if r.returncode == 3: print(\"⏸ 待審（推送閘門擋下，非程式錯誤）\")'（非 3 才印 ❌ 失敗）；:320 彙總亦印 '⏸ 待審未推送：…（rc=3 推送閘門，非失敗）' ✅ 已修。本輪 regenerate_report.py 實跑確實止於 auto_push rc=3 → 與『真失敗』可區分。",
+  "[唯讀檢查] git status --porcelain（審查結束）：僅 M data/ai_cost_daily.jsonl、M dragon_assets.db-wal、M logs/pipeline_llm_usage.jsonl（皆為實跑管線的資料檔，屬預期）＋ ?? audit_dashboard_2026-09-29.html（CMD9 產物，未追蹤）；無任何 .py 被修改，未執行任何 push。daily_report_v2_2026-09-29.html 工作樹 blob hash 300ad07a81f391367fe97c0ab1e316ca4a2393b7 與 HEAD 該檔 blob 完全相同 → 我驗的就是將被推送的內容。"
+ ],
+ "findings": [
+  {
+   "severity": "minor",
+   "file": "build_audit_dashboard.py",
+   "line": "73（cash_ok = \"✅\" if CASH >= 700000 else \"🔴\"）＋249（風險紅線檢核列 <td>{CASH:,}</td>）",
+   "issue": "上一輪 minor『KPI／表格口徑不一』只修一半：KPI 與 Runway 表已用 CASH_AVAIL（819,182），但『🚨 風險紅線檢核：現金底線 70萬』這一列的判準與顯示仍是 CASH＝cash_total → 實測該列印『6,719,182｜✅』，與同頁 KPI『純現金（可動用）819,182』兩個現金數字並列且未標示差異。今日 819,182 與 6,719,182 皆 > 70 萬，判定結果不變（不影響本次結論），但屬『指定用途款被當可動用來判底線』的同型殘留：一旦可動用跌破 70 萬而 cash_total 仍高，這一列會給出假 ✅ 紅線判定。",
+   "suggest": "把第 73 行改為 cash_ok = \"✅\" if CASH_AVAIL >= 700000 else \"🔴\"，第 249 行顯示改為 f\"{CASH_AVAIL:,}（真值 {CASH:,} − 指定清償款 {RESTRICTED:,.0f}）\"，與 KPI／Runway 同口徑。"
+  },
+  {
+   "severity": "minor",
+   "file": "report_components.py",
+   "line": "161（cash = _num(snap.get(\"cash_total\", 0), 0)）→ 163（cash_score）→ 健康度卡渲染（index.html:269）",
+   "issue": "六維度健康度分數的『現金底線（70 萬）』維度仍以 cash_total 計分，未走 sot_targets.restricted_cash／available_cash（該檔在 eb12ac6a/abd05a6d 被改動過，屬本範圍應遷移而未遷移的消費端）。實測 index.html:269 印『現金底線 6,719,182（目標 ≥700,000）15.0/15』＋口徑註解『現金=cash_total 6,719,182≥cash_floor 700,000』，而同頁 index.html:214 印『現金 819,182：現金底線 700,000 ✅ 達標（餘裕/乾粉 119,182）』→ 同頁兩個現金底線口徑並存。今日兩種口徑皆滿分（15/15），總分 92/100 不受影響；風險為潛在假滿分（可動用 < 70 萬時仍給 15/15）。",
+   "suggest": "再把 cash 改讀 sot_targets.available_cash(snap)（或 cash_total − restricted_cash(snap)），並在健康度卡副標註明『可動用／真值』；順帶讓全庫 grep 'snap.get(\"cash_total\"' 的底線類消費端一次盤點（本次僅 KPI／Runway／乾粉已遷移）。"
+  },
+  {
+   "severity": "minor",
+   "file": "institutional_flow.py",
+   "line": "26（BASE = Path(r\"C:\\Users\\bot\\Desktop\\longjiu_system\")）",
+   "issue": "上一輪 minor 點名的三個硬編碼絕對路徑，本輪只修了 build_rebalance_report.py:8 與 build_weekly_report.py:11，institutional_flow.py:26 仍是寫死正式倉庫路徑（同型殘留另有 debt_restructure_tracker.py:10、evening_sync.py:14、calendar_date_check.py:11 等，皆為既有脆弱點、非本次引入）。任何在沙盒／換機執行的驗證都會被導回正式倉庫讀寫。",
+   "suggest": "比照另兩檔改為 BASE = Path(__file__).resolve().parent，硬編碼路徑僅留 fallback；或統一收斂到一個 repo_root() helper 供全庫呼叫。"
+  },
+  {
+   "severity": "info",
+   "file": "update_all.py / sot_targets.py（顯示端：daily_report_v2_2026-09-29.html:383、index.html:226）",
+   "line": "update_all.py:262（c = total − (tw+us+def_v+bond_v+黃金+健康)）vs sot_targets.py:173-179（available_cash＝cash_total − restricted）",
+   "issue": "兩個『現金』數字差 586 元：現金桶（餘數法吸收各桶 round() 尾差）實測 819,768（2.6%），可動用現金（真值扣指定用途款）819,182。兩者分別出現在日報穿透摘要行（現金819,768.0）與『可動用流動資金 819,182』。金額差異 <0.01% 總資產，不改變任何桶位百分比與判定，屬既有餘數法特性（扣款前即存在同級尾差），非本輪引入。",
+   "suggest": "無需改計算；(選配) 在穿透摘要行旁加註『現金桶為餘數法（含各桶四捨五入尾差），與可動用現金 819,182 差異 <0.01%』，避免值班者誤判為口徑不一致。"
+  },
+  {
+   "severity": "info",
+   "file": "index.html（本週完成清單，:226）",
+   "line": "226",
+   "issue": "本週完成清單同時列出 9/29 兩筆穿透紀錄：『現金819,768.0』（新口徑）與『現金6,719,768.0』（當日較早版本，舊口徑）。屬歷史工單逐筆留存（日報亦已註明『非 21:33 舊口徑』），不是現行顯示錯，但兩筆並列對讀者略有干擾。",
+   "suggest": "保留（稽核軌跡完整性優先）；若要降噪，可讓清單對同一日同一產物只留最後一筆，或於舊口徑該筆加註『(已被同日較新口徑取代)』。"
+  },
+  {
+   "severity": "info",
+   "file": "retirement_plan_2026-09-28.html",
+   "line": "FI 跑道（極端情境口徑）列：744 天",
+   "issue": "該頁為 9/28 產物（現金基準 884,918，尚在 9/29 撥款前），實測跑道 744 天，與今日新口徑 passive_caliber 的 688.75 天不同。實查本範圍內 regenerate_report.py／sync_all.py／run_daily.py 皆未呼叫 build_retirement_plan.py（該腳本已 import passive_caliber，若重產即得 689 天口徑）→ 屬『未進每日管線的定期頁面已落後』，有日期標示，兩者皆 ≥540 天門檻，不影響留停結論。",
+   "suggest": "非阻擋；建議把 build_retirement_plan.py 納入每日或每週管線（或於頁首標『口徑日=產出日，非即時』），避免口徑更新後此頁長期停在舊分母。"
+  }
+ ],
+ "summary": "結論：APPROVE。上一輪 REJECT（綁 28995540）的 major 真的收斂了，且這次是在**生產路徑**上驗證、不是只讀碼推論。① 生產路徑 python regenerate_report.py 實跑後，daily_report_v2_2026-09-29.html 兩處抽出皆為『可動用流動資金 819,182 TWD（Moneybook 真值 6,719,182 − 指定清償款 5,900,000），餘裕充足 ✅』（舊行為 6,719,182 已不復現），工作樹 blob 與 HEAD blob 同 hash（300ad07a…）＝我驗的就是待推內容。② 新增的日報口徑斷言有效且非空轉：--report-only 正向 rc=0；把日報 819,182 暫改回 6,719,182 後實測 ❌ 且 rc=1，還原後 md5 一致、git 乾淨、再驗回綠。③ 顯示端缺欄位回退真的有效：對不含 restricted_cash 的 dict 呼叫 sot_targets.restricted_cash() 得 5,900,000（回退讀 snapshot.json），available_cash 得 819,182。④ 計算端：calc_penetration 的 alert／gaps 與 snapshot.penetration.actual_pct 同分母（6.4／32.2／14.1／23.4／2.6，舊 7.8／39.5／28.7 字串皆 False）；passive_caliber 極端跑道 688.75 天（非 5,649）；build_audit_dashboard 純現金 KPI 與 Runway 表同口徑（819,182／162,781＝5.0 月）。⑤ static_gate ✅、check_thresholds 全檢 rc=0（五桶 25,023,738＋衛星 884,823＋指定用途款 5,900,000＝總資產 31,808,561、基金口徑閉合）。⑥ 上輪兩個 minor（REPO 硬編碼、emergency_1330 rc=3 區分）已修：前者 3 檔修好 2 檔（institutional_flow.py:26 殘留），後者確實以 rc=3 印『⏸ 待審（推送閘門擋下，非程式錯誤）』。審查期間**未發生任何推送**：生產路徑止於 auto_push rc=3（fail-closed），該次 --post-push 唯一的 404（weekly_report_2026-09-29.html）已查證是『該檔由未推 commit eb12ac6a 加入』的必然結果，不是程式缺陷。殘留 3 項 minor 皆屬『顯示/判準口徑未全面遷移』同型殘留，且今日判定結果一律不變（現金底線 819,182 與 6,719,182 皆 > 70 萬；健康度現金維度皆 15/15），不構成 blocker/major，故依規則 APPROVE；建議下一輪順手把 build_audit_dashboard.py:73/249、report_components.py:161、institutional_flow.py:26 一次改到位。範圍：origin/clean-main..HEAD 共 22 筆（審查起點 21 筆 ＋ 本輪實跑產生的資料 commit a5f693ba），22 個完整 SHA 已全部列入 commits，HEAD 完整 SHA＝a5f693baf91a983a2372325e26c9ea7d43bd074e（tree ffce476c788936caae3dbaf5d42ba73d69dfe122；本輪修正 commit 68b96fc9 的 tree＝6e9e290c4fabeceaefa1802a80f530fb62955fb9）。",
+ "original_v3": {
+  "verdict": "APPROVE",
+  "reviewer": "CIO-reviewer",
+  "commit": "a5f693baf91a983a2372325e26c9ea7d43bd074e",
+  "commits": [
+   "a5f693baf91a983a2372325e26c9ea7d43bd074e",
+   "68b96fc9dc902931c5d246c3143ec5b84f2b54f6",
+   "cbb5620d5a8aa54ebe67e3661967c852775c61f7",
+   "1719a2b6c542dd633b5245bb3ab30462d8c90766",
+   "ae10be6c2f1f319c2c5b24f863dcb683add398a6",
+   "6358bbf9d9873c671d604b298d3edf014ff46f1d",
+   "99c4d7716204af78e82dc4177415e65dcaf135ab",
+   "abd05a6d1c68a370783e03c8b21c702b83f8f5ad",
+   "55f47a1bb01704a86e4fd38d47b19f684e17eaa6",
+   "af7d58135f343ee2050a2a8015b909a76c2fde4a",
+   "072b6fafd88c8e1b7f566505931e414f7bb03970",
+   "eabfe7e3755eedbd15df2d61f136deb1eef2d414",
+   "28995540017c1c8ef293eae93cb5db19b5ed6332",
+   "b89bfa7c184f3f91964777815c66686dcddf3bf4",
+   "35671029a6f850486d7d2fb17e73d0d84ff278b4",
+   "e5d047270acdceb6cf1eb4deac70d1ca0ad013e2",
+   "503d6ae15b43a63e55b205ca55061077176b64af",
+   "9f0642e935fc0c7a8e968ad2c4d1d01bdf701de9",
+   "050bc7923877c8b10881ff30d00d84df24bef00f",
+   "74047ef23629d068586816b04c6941087b3a0be1",
+   "7d737b96507d2360e2f8ab49a1dd173038f94fa2",
+   "eb12ac6addd3df8cd741a9d627a398a442087054"
+  ],
+  "range_base": "origin/clean-main",
+  "range_count": 22,
+  "tree_anchors": {
+   "a5f693ba(HEAD)": "ffce476c788936caae3dbaf5d42ba73d69dfe122",
+   "68b96fc9(本輪修正 commit)": "6e9e290c4fabeceaefa1802a80f530fb62955fb9",
+   "abd05a6d": "ddd21fa1d93d243559cee48e8c9377fb6d5007b9",
+   "28995540": "c2643899a1b006b0bae614ce1f7eff7d0a1a5ced",
+   "74047ef2": "b0048da4980572f98afa8216c81e5b11e9a40c60",
+   "eb12ac6a": "d443db2b3b5f485d2e858c470e3549af73fee4d4"
+  },
+  "checked": [
+   "git rev-parse HEAD → a5f693baf91a983a2372325e26c9ea7d43bd074e（tree ffce476c）。審查起點 HEAD 為 68b96fc9（task 指定），我依 SOP 實跑生產路徑後，管線自行產生資料 commit a5f693ba『四源同步 2026-09-29』→ HEAD 推進；本輪背書綁定 a5f693ba 的 tree（工作樹與該 commit 的追蹤檔一致，見下）。",
+   "[CMD10] git rev-list --count origin/clean-main..HEAD → 22（審查起點為 21；+1 ＝ 本輪實跑生產路徑產生的資料 commit a5f693ba）。git rev-list origin/clean-main..HEAD 逐筆列出 22 個完整 SHA，已全部納入本報告 commits。",
+   "[CMD1] python static_gate.py → '✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key）'",
+   "[CMD2] python check_thresholds.py（全檢）→ 4 條產物斷言全綠：✅ 穿透完整性：五桶 25,023,738 + 衛星 884,823 + 指定用途款 5,900,000 = 總資產 31,808,561／✅ 基金口徑閉合：鉅亨 874,818 + 國泰 11,779,326 = funds 12,654,144／✅ 日報基金部位行：明細口徑且閉合／✅ 日報可動用流動資金口徑：819,182（真值 6,719,182 − 指定用途款 5,900,000）；末段 ✅ SoT 完整（9 區塊）、✅ 消費端 5 支皆引用 thresholds_2026_0915、✅ 無舊門檻字面殘留。RC=0。",
+   "[CMD3] python regenerate_report.py（生產路徑，實跑到尾，約 3 分鐘）→ 日報產出成功；實跑後從 daily_report_v2_2026-09-29.html 抽出該行，兩處皆為：'可動用流動資金 819,182 TWD（Moneybook 真值 6,719,182 − 指定清償款 5,900,000），餘裕充足 ✅'（第 230、337 行）。舊行為 6,719,182 已不復現 → 上一輪 major 確實修復。同檔 grep '可動用流動資金 819,182' 命中 2 次、'可動用流動資金 6,719,182' 命中 0 次（檔內其餘 8 處 6,719,182 皆為『真值／現金總額』語境或入帳說明，非可動用宣稱）。",
+   "[CMD3-附] 該次實跑尾部：'[CIO 審查] 全部通過。允許推送。' → '➕ 連結目標補推: rebalance_eval_2026-09-29.html' → '✅ 拒推前補落 RECORD：a5f693baf91a' → '⚠️ 未推送上線（rc=3）' → '⛔ 未推送上線'。即推送被閘門 fail-closed 擋下，審查期間未發生任何推送（符合『禁推送』）。",
+   "[CMD3-附2] 該次實跑 --post-push 線上連結驗證：21 個連結 200、1 個 404（weekly_report_2026-09-29.html）。查證：該檔已追蹤、其加入者為未推的 eb12ac6a，且不在 origin/clean-main（git ls-tree origin/clean-main 無此檔）→ 404 是『推送被閘門擋下』的必然結果，不是程式缺陷；本範圍核准並推送後即消失。",
+   "[CMD4] python check_thresholds.py --report-only → '✅ 日報基金部位行：明細口徑且閉合 874,818 + 11,779,326 = 12,654,144' 與 '✅ 日報可動用流動資金口徑：819,182（真值 6,719,182 − 指定用途款 5,900,000）'；RC=0。",
+   "[CMD5] 負向測試（先備份）：cp daily_report_v2_2026-09-29.html → %LOCALAPPDATA%/Temp/daily_report_v2_2026-09-29.ciobak.html（md5 fe6f97d84e48f2f67263a5afa784bf09 兩檔相同），再以 python 將檔案內 2 處『可動用流動資金 819,182』改回『可動用流動資金 6,719,182』→ python check_thresholds.py --report-only 實測輸出：'❌ 日報「可動用流動資金」＝現金真值 6,719,182（未扣指定用途款 5,900,000，應為 819,182）'、'❌ 檢查未通過（1 項）'、RC=1。還原後 md5 與備份相同（fe6f97d8…）、git status 對該檔無變更、'可動用流動資金 819,182' 重新命中 2 次、--report-only 回 RC=0 → 斷言為真、非空轉，且負向測試無殘留。",
+   "[CMD6] python -c 驗 helper 回退：snapshot.restricted_cash={'金額': 5900000, ...}；sot_targets.restricted_cash(snapshot)=5900000.0；對不含該鍵的 dict 呼叫 restricted_cash({})=5900000.0、restricted_cash({'cash_total':6719182})=5900000.0（皆回退讀 snapshot.json 得 5,900,000）；sot_targets.available_cash({'cash_total':6719182})=819182.0。→ 上一輪 major 的根因（呼叫端拿到精簡 dict 就當 0）已被 helper 回退關閉。",
+   "[CMD7] python -c 'import passive_caliber; passive_caliber.scenarios(snapshot)' → cash=819182.0、extreme.runway_days=688.754799473109（舊口徑 5,649 天已排除）、stress.runway_days=None（零缺口，顯示 ∞）、con.runway_days=None。688.75 ≥ 540 → 留停 A 級門檻不再被質押撥款墊高。",
+   "[CMD8] python -c 實測 update_all.calc_penetration(cash_total, insurance_current_value, securities_total_market_value, fund_market_value, snap=snapshot) → alert='台股市值型成長 不足3.6pp；美股市值型成長 超標2.2pp；債券 不足1.6pp；債券及安全現金 不足4.0pp；科技曝險 不足2.6pp；防守合併口徑 56.0% 不足 4.0pp（<60 承接解凍）'；由 gap 反推實際值＝台股 6.4／美股 32.2／防守 14.1／債券 23.4／現金 2.6，與 snapshot.penetration.actual_pct 完全一致；'7.8'、'39.5'、'28.7' 三個舊口徑字串 in alert 均為 False。桶值實測 台股 2,029,878／美股 10,235,528／防守 4,500,670／債券 7,437,894／現金桶 819,768（餘數法）。",
+   "[CMD9] python build_audit_dashboard.py → audit_dashboard_2026-09-29.html（30,404 bytes）產出成功；同口徑處：KPI『純現金（可動用）819,182.0｜真值 6,719,182 − 指定清償款 590萬｜底線 70萬 ✅』、KPI『Runway 5.0 月｜可動用 819,182.0 / 月支出 162,781』、表格『純現金 Runway ｜ 819,182.0 / 162,781 ｜ 5.0 個月』→ 三處一致（舊口徑 6,719,182/162,781≈41.3 月已排除）。未同口徑處見 findings。#1（風險紅線檢核『現金底線 70萬』列仍印 6,719,182）。",
+   "[交叉] 同日交付物：index.html 顯示『現金 819,182：現金底線 700,000 ✅ 達標（餘裕/乾粉 119,182）』、data-k dry_powder=119,182（＝819,182−700,000）、『以可動用現金 819,182（真值 6,719,182 − 質押撥款指定清償款 5,900,000）進行除數運算』；emergency_report_2026-09-29.html 2 處 819,182；rebalance_dashboard_2026-09-29.html 3 處 819,182；總資產 31,808,561 於日報 3 處、審計儀表板 2 處不變。→ 各主交付物的『可動用』口徑已一致收斂（上一輪『兩份交付物互相矛盾』已解）。",
+   "[複驗-上輪 minor] REPO 硬編碼：build_rebalance_report.py:8 = REPO = str(Path(__file__).resolve().parent)、build_weekly_report.py:11 = REPO = Path(__file__).resolve().parent ✅ 已修；institutional_flow.py:26 仍為 BASE = Path(r\"C:\\Users\\bot\\Desktop\\longjiu_system\") → 3 檔中 2 檔修好，見 findings #2。",
+   "[複驗-上輪 minor] emergency_1330.py:16-20 run_step 已區分 rc=3：'if r.returncode == 3: print(\"⏸ 待審（推送閘門擋下，非程式錯誤）\")'（非 3 才印 ❌ 失敗）；:320 彙總亦印 '⏸ 待審未推送：…（rc=3 推送閘門，非失敗）' ✅ 已修。本輪 regenerate_report.py 實跑確實止於 auto_push rc=3 → 與『真失敗』可區分。",
+   "[唯讀檢查] git status --porcelain（審查結束）：僅 M data/ai_cost_daily.jsonl、M dragon_assets.db-wal、M logs/pipeline_llm_usage.jsonl（皆為實跑管線的資料檔，屬預期）＋ ?? audit_dashboard_2026-09-29.html（CMD9 產物，未追蹤）；無任何 .py 被修改，未執行任何 push。daily_report_v2_2026-09-29.html 工作樹 blob hash 300ad07a81f391367fe97c0ab1e316ca4a2393b7 與 HEAD 該檔 blob 完全相同 → 我驗的就是將被推送的內容。"
+  ],
+  "findings": [
+   {
+    "severity": "minor",
+    "file": "build_audit_dashboard.py",
+    "line": "73（cash_ok = \"✅\" if CASH >= 700000 else \"🔴\"）＋249（風險紅線檢核列 <td>{CASH:,}</td>）",
+    "issue": "上一輪 minor『KPI／表格口徑不一』只修一半：KPI 與 Runway 表已用 CASH_AVAIL（819,182），但『🚨 風險紅線檢核：現金底線 70萬』這一列的判準與顯示仍是 CASH＝cash_total → 實測該列印『6,719,182｜✅』，與同頁 KPI『純現金（可動用）819,182』兩個現金數字並列且未標示差異。今日 819,182 與 6,719,182 皆 > 70 萬，判定結果不變（不影響本次結論），但屬『指定用途款被當可動用來判底線』的同型殘留：一旦可動用跌破 70 萬而 cash_total 仍高，這一列會給出假 ✅ 紅線判定。",
+    "suggest": "把第 73 行改為 cash_ok = \"✅\" if CASH_AVAIL >= 700000 else \"🔴\"，第 249 行顯示改為 f\"{CASH_AVAIL:,}（真值 {CASH:,} − 指定清償款 {RESTRICTED:,.0f}）\"，與 KPI／Runway 同口徑。"
+   },
+   {
+    "severity": "minor",
+    "file": "report_components.py",
+    "line": "161（cash = _num(snap.get(\"cash_total\", 0), 0)）→ 163（cash_score）→ 健康度卡渲染（index.html:269）",
+    "issue": "六維度健康度分數的『現金底線（70 萬）』維度仍以 cash_total 計分，未走 sot_targets.restricted_cash／available_cash（該檔在 eb12ac6a/abd05a6d 被改動過，屬本範圍應遷移而未遷移的消費端）。實測 index.html:269 印『現金底線 6,719,182（目標 ≥700,000）15.0/15』＋口徑註解『現金=cash_total 6,719,182≥cash_floor 700,000』，而同頁 index.html:214 印『現金 819,182：現金底線 700,000 ✅ 達標（餘裕/乾粉 119,182）』→ 同頁兩個現金底線口徑並存。今日兩種口徑皆滿分（15/15），總分 92/100 不受影響；風險為潛在假滿分（可動用 < 70 萬時仍給 15/15）。",
+    "suggest": "再把 cash 改讀 sot_targets.available_cash(snap)（或 cash_total − restricted_cash(snap)），並在健康度卡副標註明『可動用／真值』；順帶讓全庫 grep 'snap.get(\"cash_total\"' 的底線類消費端一次盤點（本次僅 KPI／Runway／乾粉已遷移）。"
+   },
+   {
+    "severity": "minor",
+    "file": "institutional_flow.py",
+    "line": "26（BASE = Path(r\"C:\\Users\\bot\\Desktop\\longjiu_system\")）",
+    "issue": "上一輪 minor 點名的三個硬編碼絕對路徑，本輪只修了 build_rebalance_report.py:8 與 build_weekly_report.py:11，institutional_flow.py:26 仍是寫死正式倉庫路徑（同型殘留另有 debt_restructure_tracker.py:10、evening_sync.py:14、calendar_date_check.py:11 等，皆為既有脆弱點、非本次引入）。任何在沙盒／換機執行的驗證都會被導回正式倉庫讀寫。",
+    "suggest": "比照另兩檔改為 BASE = Path(__file__).resolve().parent，硬編碼路徑僅留 fallback；或統一收斂到一個 repo_root() helper 供全庫呼叫。"
+   },
+   {
+    "severity": "info",
+    "file": "update_all.py / sot_targets.py（顯示端：daily_report_v2_2026-09-29.html:383、index.html:226）",
+    "line": "update_all.py:262（c = total − (tw+us+def_v+bond_v+黃金+健康)）vs sot_targets.py:173-179（available_cash＝cash_total − restricted）",
+    "issue": "兩個『現金』數字差 586 元：現金桶（餘數法吸收各桶 round() 尾差）實測 819,768（2.6%），可動用現金（真值扣指定用途款）819,182。兩者分別出現在日報穿透摘要行（現金819,768.0）與『可動用流動資金 819,182』。金額差異 <0.01% 總資產，不改變任何桶位百分比與判定，屬既有餘數法特性（扣款前即存在同級尾差），非本輪引入。",
+    "suggest": "無需改計算；(選配) 在穿透摘要行旁加註『現金桶為餘數法（含各桶四捨五入尾差），與可動用現金 819,182 差異 <0.01%』，避免值班者誤判為口徑不一致。"
+   },
+   {
+    "severity": "info",
+    "file": "index.html（本週完成清單，:226）",
+    "line": "226",
+    "issue": "本週完成清單同時列出 9/29 兩筆穿透紀錄：『現金819,768.0』（新口徑）與『現金6,719,768.0』（當日較早版本，舊口徑）。屬歷史工單逐筆留存（日報亦已註明『非 21:33 舊口徑』），不是現行顯示錯，但兩筆並列對讀者略有干擾。",
+    "suggest": "保留（稽核軌跡完整性優先）；若要降噪，可讓清單對同一日同一產物只留最後一筆，或於舊口徑該筆加註『(已被同日較新口徑取代)』。"
+   },
+   {
+    "severity": "info",
+    "file": "retirement_plan_2026-09-28.html",
+    "line": "FI 跑道（極端情境口徑）列：744 天",
+    "issue": "該頁為 9/28 產物（現金基準 884,918，尚在 9/29 撥款前），實測跑道 744 天，與今日新口徑 passive_caliber 的 688.75 天不同。實查本範圍內 regenerate_report.py／sync_all.py／run_daily.py 皆未呼叫 build_retirement_plan.py（該腳本已 import passive_caliber，若重產即得 689 天口徑）→ 屬『未進每日管線的定期頁面已落後』，有日期標示，兩者皆 ≥540 天門檻，不影響留停結論。",
+    "suggest": "非阻擋；建議把 build_retirement_plan.py 納入每日或每週管線（或於頁首標『口徑日=產出日，非即時』），避免口徑更新後此頁長期停在舊分母。"
+   }
+  ],
+  "summary": "結論：APPROVE。上一輪 REJECT（綁 28995540）的 major 真的收斂了，且這次是在**生產路徑**上驗證、不是只讀碼推論。① 生產路徑 python regenerate_report.py 實跑後，daily_report_v2_2026-09-29.html 兩處抽出皆為『可動用流動資金 819,182 TWD（Moneybook 真值 6,719,182 − 指定清償款 5,900,000），餘裕充足 ✅』（舊行為 6,719,182 已不復現），工作樹 blob 與 HEAD blob 同 hash（300ad07a…）＝我驗的就是待推內容。② 新增的日報口徑斷言有效且非空轉：--report-only 正向 rc=0；把日報 819,182 暫改回 6,719,182 後實測 ❌ 且 rc=1，還原後 md5 一致、git 乾淨、再驗回綠。③ 顯示端缺欄位回退真的有效：對不含 restricted_cash 的 dict 呼叫 sot_targets.restricted_cash() 得 5,900,000（回退讀 snapshot.json），available_cash 得 819,182。④ 計算端：calc_penetration 的 alert／gaps 與 snapshot.penetration.actual_pct 同分母（6.4／32.2／14.1／23.4／2.6，舊 7.8／39.5／28.7 字串皆 False）；passive_caliber 極端跑道 688.75 天（非 5,649）；build_audit_dashboard 純現金 KPI 與 Runway 表同口徑（819,182／162,781＝5.0 月）。⑤ static_gate ✅、check_thresholds 全檢 rc=0（五桶 25,023,738＋衛星 884,823＋指定用途款 5,900,000＝總資產 31,808,561、基金口徑閉合）。⑥ 上輪兩個 minor（REPO 硬編碼、emergency_1330 rc=3 區分）已修：前者 3 檔修好 2 檔（institutional_flow.py:26 殘留），後者確實以 rc=3 印『⏸ 待審（推送閘門擋下，非程式錯誤）』。審查期間**未發生任何推送**：生產路徑止於 auto_push rc=3（fail-closed），該次 --post-push 唯一的 404（weekly_report_2026-09-29.html）已查證是『該檔由未推 commit eb12ac6a 加入』的必然結果，不是程式缺陷。殘留 3 項 minor 皆屬『顯示/判準口徑未全面遷移』同型殘留，且今日判定結果一律不變（現金底線 819,182 與 6,719,182 皆 > 70 萬；健康度現金維度皆 15/15），不構成 blocker/major，故依規則 APPROVE；建議下一輪順手把 build_audit_dashboard.py:73/249、report_components.py:161、institutional_flow.py:26 一次改到位。範圍：origin/clean-main..HEAD 共 22 筆（審查起點 21 筆 ＋ 本輪實跑產生的資料 commit a5f693ba），22 個完整 SHA 已全部列入 commits，HEAD 完整 SHA＝a5f693baf91a983a2372325e26c9ea7d43bd074e（tree ffce476c788936caae3dbaf5d42ba73d69dfe122；本輪修正 commit 68b96fc9 的 tree＝6e9e290c4fabeceaefa1802a80f530fb62955fb9）。"
+ }
+}
