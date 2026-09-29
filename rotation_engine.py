@@ -238,13 +238,24 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
     _dcm = snap.get("defensive_combined_metric", {}) or {}
     _dcm_note = (f"防守合併 {_dcm.get('佔比', 0):.1f}%（{_dcm.get('裁示', '')}）"
                  if _dcm else "現金底線制")
-    plan.append({
-        "產業": "現金保留",
-        "標的": "台幣活存/MMF",
-        "金額": max(int((dry - used) / 1000) * 1000, 0),
-        "節奏": f"守住現金底線 {snap.get('cash_floor', 700000):,}；{_dcm_note}",
-        "理由": "乾粉餘額緩衝（底線制，不借錢囤現金）",
-    })
+    # 2026-09-29 CIO info：可動用 ≤ 底線（乾粉 0）時不得輸出「守住底線」的進場計畫
+    _keep = max(int((dry - used) / 1000) * 1000, 0)
+    if dry > 0:
+        plan.append({
+            "產業": "現金保留",
+            "標的": "台幣活存/MMF",
+            "金額": _keep,
+            "節奏": f"守住現金底線 {snap.get('cash_floor', 700000):,}；{_dcm_note}",
+            "理由": "乾粉餘額緩衝（底線制，不借錢囤現金）",
+        })
+    else:
+        plan.append({
+            "產業": "現金保留",
+            "標的": "不進場（乾粉 0）",
+            "金額": 0,
+            "節奏": f"可動用現金 ≤ 底線 {snap.get('cash_floor', 700000):,} → 停止新增買入、優先補足現金",
+            "理由": "底線制：乾粉為 0 時不配置新倉（指定用途款不得當乾粉）",
+        })
     return plan
 
 

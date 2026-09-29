@@ -189,7 +189,7 @@ def main() -> int:
     _DECISION_ENDPOINTS = [
         "rotation_engine.py", "coast_fi_engine.py", "macro_regime.py", "report_components.py",
         "sabbatical_checklist_update.py", "debt_restructure_tracker.py", "institutional_flow.py",
-        "build_retirement_plan.py", "asset_moat_monitor.py",
+        "build_retirement_plan.py", "asset_moat_monitor.py", "run_daily.py",
     ]
     for _f in _DECISION_ENDPOINTS:
         _p = BASE / _f

@@ -642,7 +642,11 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                 if _hs.get("石油現況") is not None:
                     _hed["石油"] = _refresh_num(_hed.get("石油", ""), _hs.get("石油現況", 0))
                 if _snap_now.get("cash_total"):
-                    _hed["現金（帳戶層真值）"] = _refresh_num(_hed.get("現金", ""), _snap_now.get("cash_total", 0))
+                    # 2026-09-29：舊鍵「現金」（8/21 靜態 800,272）一律覆寫並標口徑，不再並存兩個現金值
+                    from sot_targets import available_cash as _ac_fn2
+                    _hed.pop("現金", None)
+                    _hed["現金"] = (f"可動用 {_ac_fn2(_snap_now):,.0f}"
+                                    f"（帳戶層真值 {_snap_now.get('cash_total', 0):,.0f}）守底線 70萬")
             except Exception:
                 pass
             _hed_txt = "｜".join(f"{k}：{v}" for k, v in _hed.items())
@@ -1012,7 +1016,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
           <tr><td style="padding-left:20px;color:#94a3b8;font-size:12px">└ 非科技</td><td class="num">__DR_US_NT_V__ TWD</td><td class="num">__DR_US_NT_PCT__</td><td></td><td></td></tr>
           <tr><td>🛡️ 防守型配息</td><td class="num">__DR_DEF_V__ TWD</td><td class="num">__DR_DEF_PCT__</td><td class="num">__DR_DEF_TGT__</td><td>__DR_DEF_GAP__</td></tr>
           <tr><td>💵 債券</td><td class="num">__DR_BOND_V__ TWD</td><td class="num">__DR_BOND_PCT__</td><td class="num">__DR_BOND_TGT__</td><td>__DR_BOND_GAP__</td></tr>
-          <tr><td>💵 安全現金</td><td class="num">__DR_CASH_V__ TWD</td><td class="num">__DR_CASH_PCT__</td><td class="num">__DR_CASH_TGT__</td><td>__DR_CASH_GAP__</td></tr>
+          <tr><td>💵 安全現金<span style="font-size:11px;color:#6e6e73">（桶位＝餘數法）</span></td><td class="num">__DR_CASH_V__ TWD</td><td class="num">__DR_CASH_PCT__</td><td class="num">__DR_CASH_TGT__</td><td>__DR_CASH_GAP__</td></tr>
         </tbody>
       </table>
     </div>
@@ -1873,8 +1877,13 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _philosophy_items.append(
                     f"美元曝險 {_usd_ex:.1f}%（≤{_usd_cap:.0f}% "
                     f"{'✅' if _usd_ex <= _usd_cap else '🟡' if _usd_ex <= _usd_cap + 5 else '🔴'}）")
-                _cash_now = tv.get("cash_total") or 0
-                _philosophy_items.append(f"現金底線 {_cash_now:,.0f}（≥700,000 {'✅' if _cash_now >= 700000 else '🔴'}）")
+                # 2026-09-29 CIO major：投資哲學檢核的現金底線必須看可動用（原 cash_total → fail-open）
+                from sot_targets import available_cash as _ac_fn
+                _cash_all = float(_snap_now.get("cash_total") or 0)
+                _cash_now = _ac_fn(_snap_now)
+                _philosophy_items.append(
+                    f"現金底線 可動用 {_cash_now:,.0f}（真值 {_cash_all:,.0f}；≥700,000 "
+                    f"{'✅' if _cash_now >= 700000 else '🔴'}）")
                 _philosophy_items.append("利差 2.6%→4.8-6% ✅" if (_us30y_now or 0) < 5.50 else "利差 ⚠️")
                 _philosophy_html = "｜".join(_philosophy_items)
                 _lv_html = (

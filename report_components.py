@@ -188,6 +188,10 @@ def render_health_score(snap: dict) -> dict:
 
     score = round(min(cov / 150 * 100, 100) * 0.30 + def_score * 0.25 + usd_score * 0.20 + cash_score * 0.15 + ltv_score * 0.10)
     light = "🟢" if score >= 80 else ("🟡" if score >= 60 else "🔴")
+    # 2026-09-29 CIO minor：現金跌破底線屬紅線（不可只 −15 分仍顯示 77 🟡）→ 強制 🔴 且總分上限 55
+    if cash_score == 0:
+        score = min(score, 55)
+        light = "🔴"
     # 標準分 = 各維度 0-100 制原始得分；權重分 = 標準分 × 權重（加總 = 總分）
     _cov_std = round(min(cov / 150 * 100, 100))
     detail = {
@@ -224,6 +228,8 @@ def render_health_card(snap: dict) -> str:
         for n, v, t, p, w in rows
     )
     _weak = []
+    if d["現金標準"] == 0:
+        _weak.append("現金跌破底線")
     if d["曝險分"] < 15:
         _weak.append("美元曝險")
     if d.get("LTV分", 10) < 10:

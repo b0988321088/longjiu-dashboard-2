@@ -23,7 +23,7 @@ import json, re, ssl, sys, urllib.request
 from datetime import datetime, date, timedelta
 from pathlib import Path
 
-BASE = Path(r"C:\Users\bot\Desktop\longjiu_system")
+BASE = Path(__file__).resolve().parent   # 2026-09-29 CIO minor：禁硬編碼路徑（沙盒/隔離樹會被導回正式倉庫）
 SSL_CTX = ssl.create_default_context()
 try:
     SSL_CTX = ssl._create_unverified_context()  # CFTC 舊證書相容

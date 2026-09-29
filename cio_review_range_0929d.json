@@ -1,0 +1,137 @@
+{
+ "verdict": "REJECT",
+ "reviewer": "CIO（Hermes 獨立覆審，唯讀、未推送、未改任何 .py）",
+ "commit": "3cc54cdfab54f724855a43678fd2bdd0fb197ff8",
+ "reviewed_commits": [
+  "3cc54cdfab54f724855a43678fd2bdd0fb197ff8",
+  "1a030adf4f61272a77512ae07087d6fd32eb7052",
+  "e0ce59392f2767d7edf7b58efb95682a16992a52",
+  "b9a01808543e95adb3f0a06ffa730bbb707ce197",
+  "6b4aa009ece7de3f77fa5a5b9090f45550282214",
+  "bb6f6f93a033abd8705661fca92109f358aeeba5",
+  "b4a56abcefb65fb8d5cc54176d961906e9d3157d"
+ ],
+ "reviewed_trees": [
+  "d3da5b46e364d33ef4f0a52316e85854fc5a2a10",
+  "a2bf8305e857133297511a6e315dc44cb9e00ad8",
+  "5fe275466302a5c4bda61bc086ffc508806434a9",
+  "962cc3467907dd58f6a2b69eaac28d0796e45cd3",
+  "c0fcb9dd36f8cbe6bf382af37015c22d3b1fb6d0",
+  "3e77ccd917349e24aedf7ec431528f24c9b8f746",
+  "894ef4db2b9f0ba3de1f97fd5349752c786b3b26"
+ ],
+ "checked": [
+  {
+   "cmd": "git rev-list --count origin/clean-main..HEAD",
+   "result": "7",
+   "note": "origin/clean-main = 1b3676720fa5280bea4a2abe213104f99f99c58d；HEAD = 3cc54cdfab54f724855a43678fd2bdd0fb197ff8"
+  },
+  {
+   "cmd": "git log --oneline origin/clean-main..HEAD",
+   "result": "3cc54cdf fix(caliber): 乾粉/留停閘門收斂＋決策端防復發掃描（CIO 第六輪 2 major） / 1a030adf 四源同步 2026-09-29 / e0ce5939 fix(caliber): 決策/評分端全面收斂（CIO 第五輪 3 major）— 指定用途款不得當可動用 / b9a01808 四源同步 2026-09-29 / 6b4aa009 fix(caliber): 決策端閘門＋派生欄收斂（CIO 第四輪 2 major＋4 minor 全修） / bb6f6f93 四源同步 2026-09-29 / b4a56abc fix(caliber): 週報現金口徑＋雙維度派生欄校正（INC-255；線上抽查發現）",
+   "note": "與任務所述 7 筆相符"
+  },
+  {"cmd": "python static_gate.py", "result": "✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key）", "rc": 0},
+  {
+   "cmd": "python check_thresholds.py",
+   "result": "✅ 雙維度防禦維度自洽：Σ組成 = 合計 12,722,364 / ✅ 決策端現金口徑檢查完成（9 支） / ✅ 穿透完整性：五桶 25,023,738 + 衛星 884,823 + 指定用途款 5,900,000 = 總資產 31,808,561 / ✅ 基金口徑閉合：鉅亨 874,818 + 國泰 11,779,326 = funds 12,654,144 / ✅ 日報基金部位行：明細口徑且閉合 / ✅ 日報可動用流動資金口徑：819,182（真值 6,719,182 − 指定用途款 5,900,000） / ✅ SoT 完整（9 區塊） / ✅ 消費端 5 支皆引用 thresholds_2026_0915 / ✅ 無舊門檻字面殘留",
+   "rc": 0
+  },
+  {
+   "cmd": "實跑 rotation_engine.build_trade_plan（傳入 live snapshot；唯讀不寫檔）",
+   "result": "cash_total=6,719,182；restricted=5,900,000；可動用=819,182；cash_floor=700,000；surplus=65,970；乾粉(理論)=152,167。逐筆：① 債務優化 5,000,000（清償保單/券商高息負債）② 現金保留 152,000（台幣活存/MMF）。逐筆加總 = 5,152,000。是否出現 11,052,000 → NO。",
+   "note": "第六輪 major①（乾粉含指定用途款）已修復並實測通過"
+  },
+  {
+   "cmd": "python sabbatical_checklist_update.py + 讀 snapshot",
+   "result": "現金 819,182.0 對底線 700,000.0｜跑道 689 天（688.75）｜現金撐 23.0 個月｜驗收等級 B級 🟡 三條門檻已達 → 待 3 個月趨勢驗證（現有 1/3 個月記錄）。snapshot.sabbatical_checklist.驗收標準_2027_02.距門檻缺口.現金水位 = {現況 819182, 底線 700000, 餘裕 119182}；startup_plan_three_track_0901...距門檻缺口.現金水位 = {現況 819182, 餘裕 119182}。執行前後 md5 相同（43a643437af58471cdc8bc7e8c2285ac，冪等）。",
+   "note": "第六輪 major②（留停閘門用真值）已修復；未因 590 萬朗報 A 級（A 級另需 3 個月趨勢，本輪為 B 級）"
+  },
+  {
+   "cmd": "負向測試（shutil 備份 → 改 snapshot → 實跑 → 還原 → 驗 md5）",
+   "result": "A（cash_total=719,182、restricted 5,900,000、可動用=0）：rotation 乾粉(canonical)=0、交易計畫現金保留 32,000；sabbatical 現金水位 0／餘裕 -700,000／跑道 0 天 → 🟡 可留但先補水庫（未達：跑道 0 天 <540 天、現金 0 <底線）；coast_fi 🔴 紅燈 cash_below_floor=True；macro_regime『現金底線 70 萬』通過=False；report_components 現金標準 0／現金分 0。B（cash_total=719,182＋restricted 590,000、可動用=129,182）：同上，sabbatical 現金水位 129,182／餘裕 -570,818／跑道 109 天；檔案層實跑 sabbatical_checklist_update.py → 記錄.2026-09 現金水位 129,182、紅綠燈 🟡 可留但先補水庫、驗收等級 B級、距門檻缺口.現金水位 餘裕 -570,818。",
+   "restore": "md5(before)=md5(after)=43a643437af58471cdc8bc7e8c2285ac；還原一致 ✅；還原後 python check_thresholds.py RC=0；備份留存於 C:/Users/bot/AppData/Local/Temp/cio_0929d_snapshot_backup.json"
+  },
+  {
+   "cmd": "全庫掃 cash_total 消費端（51 處 / 29 檔）",
+   "result": "決策端 9 支皆已改走 sot_targets.restricted_cash（rotation_engine:198、coast_fi_engine:209、macro_regime:402、report_components:163、sabbatical:117、debt_restructure_tracker:274、institutional_flow:533、build_retirement_plan:34、asset_moat_monitor:19）；真值用途（合法）：sot_targets.py、db_loader.py、asset_diff_monitor、pre_push_audit、four_source_sync、build_*_dashboard 真值卡、passive_caliber:51、build_penetration_report:13（傳 snap 由 calc_penetration 內部扣）、emergency_1330:185（同上）、build_ceo_dashboard CASH（僅純現金 KPI/DB 對比）。殘留：run_daily.py:1876（現金底線判定）、run_daily.py:625/645（舊鍵未覆寫 → 800,272）、delegate_context.py:30、index.html 週完成清單、notion_shared_context.md。"
+  },
+  {
+   "cmd": "報表抽查（daily / index / audit / weekly / penetration / rebalance_dashboard+rebalance_report / retirement）",
+   "result": "七份皆已見「可動用 819,182（真值 6,719,182 − 指定清償款 5,900,000）」標註（audit:251、weekly:114/252、rebalance_dashboard:507、retirement、penetration、日報流動資金卡）。未通過項：① 日報同頁並存 800,272（舊、未標）／819,768（桶位）／6,719,182（真值）／819,182（可動用）四值；② index.html 週完成清單並存 819,768 與 6,719,768 兩筆未標口徑；③ 日報穿透行把 819,768（餘數法）標成「真值 6,719,182 − 指定清償款 5,900,000」。"
+  }
+ ],
+ "findings": [
+  {
+   "severity": "major",
+   "file": "run_daily.py",
+   "line": "1876-1877",
+   "issue": "日報「投資哲學檢核」的現金底線閘門用 raw cash_total 判定：_cash_now = tv.get(\"cash_total\") → f\"現金底線 {_cash_now:,.0f}（≥700,000 {'✅' if _cash_now >= 700000 else '🔴'}）\"。此為 fail-open：可動用現金跌破 700,000 底線時仍輸出 ✅（實測對照：cash_total=719,182 → 719,182 ≥ 700,000 → ✅，但同時可動用 = 719,182 − 5,900,000 = 129,182 應為 🔴）。與 CIO 第四輪判為 major 的 macro_regime.hard_check 屬同一病型。此路徑非死碼：2026-09-26/27/28 日報皆實際渲染本區塊並輸出「現金底線 884,918（≥700,000 ✅）」；9/29 日報因 tv['professional_investor'] 為空而未渲染（grep 計數 0），條件成立即復現。run_daily.py 不在 check_thresholds.py ②a 的 9 支 _DECISION_ENDPOINTS 名單內 → 本輪新增的防復發掃描對此檔無感。",
+   "suggest": "改用 sot_targets.available_cash(tv/tv_snap) 作為判定與顯示值（顯示格式建議「現金底線 700,000；可動用 819,182（真值 6,719,182 − 指定用途款 5,900,000）→ ✅」）；並把 run_daily.py 併入 check_thresholds._DECISION_ENDPOINTS 以免再漏。"
+  },
+  {
+   "severity": "minor",
+   "file": "run_daily.py",
+   "line": "625-645（＋snapshot.json:2819 usd_hike_evaluation.避險現況.現金）",
+   "issue": "第六輪 0929b minor 只修一半：新增 _hed[\"現金（帳戶層真值）\"] 但未覆寫/移除原本的 _hed[\"現金\"]，故 9/29 日報「避險現況」同時輸出「現金：800,272 守底線 70萬」（snapshot 內 8/21 靜態舊值）與「現金（帳戶層真值）：6,719,182 守底線 70萬」——同段落並存兩個現金值，其中 800,272 既非真值亦非可動用且未標口徑。",
+   "suggest": "run_daily.py 新增真值鍵後 _hed.pop(\"現金\", None)（或直接覆寫同一鍵），並清掉 snapshot.usd_hike_evaluation.避險現況.現金 此一 8/21 殘值。"
+  },
+  {
+   "severity": "minor",
+   "file": "notion_shared_context.md",
+   "line": "40, 53, 89, 122, 309",
+   "issue": "跨代理共享記憶檔未隨 9/29 校正重算（檔案時間 09-29 06:30，早於 10:57 撥款與 restricted 隔離）：Cash / Cash Total / Real Liquid Assets / Bank Assets Moneybook 皆 884,918；Sabbatical Checklist 現金水位 884,918、FI 跑道天數 744.02、距門檻缺口 現金水位 現況 884,918 餘裕 184,918、現況判定「🟢 已達留停門檻…跑道 744 天 ≥540 天、現金 884,918 ≥底線」。真值已為 819,182／689 天／餘裕 119,182。本輪修了 snapshot 派生欄卻未重跑此產物（產出端 notion_context_loader.py），其他代理讀到的仍是舊口徑。",
+   "suggest": "重跑 notion_context_loader.py 重生此檔；並考慮把此步併入 update_all/sync_all 四源同步，避免每次校正後共享記憶落版。"
+  },
+  {
+   "severity": "minor",
+   "file": "daily_report_v2_2026-09-29.html / emergency_report_2026-09-29.html",
+   "line": "穿透摘要行",
+   "issue": "穿透『現金/安全網』桶 819,768（update_all.calc_penetration 餘數法 c = total − Σ桶，吸收各桶 round() 尾差）與可動用 819,182 差 586 元，但日報該行標成「口徑：restricted 隔離後（真值 6,719,182 − 指定清償款 5,900,000）」＝宣稱 819,768 = 819,182，屬口徑標示錯誤；任務第 8 項要求真有差異須標「真值／可動用／餘數法」。",
+   "suggest": "該行改標「現金桶 819,768（餘數法）／可動用 819,182（真值 − 指定用途款）」或兩者並列，勿以等式呈現。"
+  },
+  {
+   "severity": "minor",
+   "file": "index.html",
+   "line": "226（本週完成清單）",
+   "issue": "同頁並存兩筆 9/29 穿透紀錄：「現金819,768.0」（新口徑）與「現金6,719,768.0」（當日較早版本、舊口徑，來源 dashboard_decisions.json / work_log.json），皆未標口徑，違反任務第 8 項『同頁不得並存兩個未標口徑的現金值』。（附註：前次審查 cio_review_restricted_0929_v3 判為 info『歷史工單逐筆留存』，本輪依本次驗收標準列 minor。）",
+   "suggest": "舊筆加註「（舊口徑）」或於產出時刪除／摺疊舊口徑紀錄。"
+  },
+  {
+   "severity": "minor",
+   "file": "report_components.py",
+   "line": "184-187（現金維度）",
+   "issue": "現金維度已正確改看可動用，但權重僅 15% 且為二值（≥底線 100 分／否則 0 分）：負向測試 B 實測現金標準 0、現金分 0，總分仍 77 → 🟡；正向為 92 🟢。現金跌破 700,000 底線（本案最重的風控條款）只造成 15 分落差、不強制降燈，燈號無法反映。",
+   "suggest": "現金 < 底線時對總分設上限（如 cap 59 → 🔴）或於明細加註強制警示，使跌破底線必定反映在燈號。"
+  },
+  {
+   "severity": "minor",
+   "file": "delegate_context.py",
+   "line": "30",
+   "issue": "派工 context 印「現金 {cash_total}」＝6,719,182，未標『含指定用途款 5,900,000／可動用 819,182』。此檔是餵給其他代理（CIO/Pro）的上下文，代理可能把 671 萬當可動用。",
+   "suggest": "改印可動用並標註真值：現金 819,182（可動用；真值 6,719,182 − 指定用途款 5,900,000）。"
+  },
+  {
+   "severity": "minor",
+   "file": "institutional_flow.py",
+   "line": "26",
+   "issue": "仍硬編碼絕對路徑 BASE = Path(r\"C:\\Users\\bot\\Desktop\\longjiu_system\")（前次 cio_review_restricted_0929_v3 minor 未修；同型已修 build_rebalance_report.py:8、build_weekly_report.py:11）。非正式路徑執行（沙盒／換機／平行驗證）會讀錯資料。",
+   "suggest": "改為 Path(__file__).resolve().parent。"
+  },
+  {
+   "severity": "info",
+   "file": "rotation_engine.py",
+   "line": "200, 241-247",
+   "issue": "可動用 < 底線時（負向測試 A/B），canonical 乾粉已正確為 0，但交易計畫仍輸出「現金保留 32,000」（＝月盈餘 65,970×0.5，設計如此：不借錢囤現金、新增月盈餘半數部署），且該列節奏文字仍寫「守住現金底線 700,000」，與當下實況（可動用 0／129,182）矛盾。",
+   "suggest": "乾粉為 0 時，該列節奏文字改為「乾粉已用盡（可動用 X < 底線 700,000）」，避免文字與數字不一致。"
+  },
+  {
+   "severity": "info",
+   "file": "daily_report_v2_2026-09-29.html",
+   "line": "執行清單敘述",
+   "issue": "決策敘述內引述歷史值「（2026-09-27 裁示：…；現金 884,918 已達標，無缺口待籌措）」，屬歷史引述非現行顯示，但仍在同一頁與 819,182 並列。",
+   "suggest": "歷史引述建議加註「（撥款前口徑）」以杜絕誤讀。"
+  }
+ ],
+ "summary": "推送範圍確認為 7 筆（origin/clean-main 1b367672 → HEAD 3cc54cdf），已逐筆登錄 40 字元 SHA 與 tree SHA。第六輪兩項 major 均經獨立實跑驗證修復：① rotation_engine.build_trade_plan 逐筆加總 = 5,152,000（5,000,000 債務優化 ＋ 152,000 現金保留），未再出現 11,052,000，乾粉 152,167；② sabbatical_checklist_update 現金水位 = 819,182、餘裕 119,182、跑道 689 天，驗收等級 B級（未因 590 萬朗報 A 級），snapshot 兩處派生欄同步且冪等（md5 前後一致）。static_gate.py 與 check_thresholds.py 皆 RC=0，九支決策端現金口徑守門通過。負向測試（cash_total=719,182；並加測 restricted=590,000 使可動用=129,182）五個消費端（rotation 乾粉=0、sabbatical 現金<底線且餘裕負、coast_fi 🔴、macro_regime 現金底線 通過=False、report_components 現金維度 0 分）全數亮紅，測後 shutil 完整還原並驗證 md5 一致、check_thresholds 仍 RC=0。全庫 51 處 cash_total 消費點逐項判定後，仍有一項 major 殘留：run_daily.py:1876-1877 日報「投資哲學檢核」的現金底線判定仍用 raw cash_total（fail-open；9/26–9/28 日報實際輸出「現金底線 884,918（≥700,000 ✅）」，9/29 因資料條件未渲染），且 run_daily.py 不在本輪新增的防復發守門名單內；另有 7 項 minor（日報 800,272 舊鍵未清、共享記憶 notion_shared_context.md 未重算、819,768 餘數法口徑標示錯誤、index.html 兩筆未標口徑並存、健康度現金維度不強制降燈、delegate_context 未標可動用、institutional_flow 絕對路徑殘留）與 2 項 info。因存在 1 項 major，verdict = REJECT：修掉 run_daily.py:1876-1877（建議一併把 run_daily.py 納入 _DECISION_ENDPOINTS 並清 snapshot.usd_hike_evaluation.避險現況.現金 舊鍵）後可再送審。"
+}

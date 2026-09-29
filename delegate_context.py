@@ -27,7 +27,9 @@ def build_context(task: str = ""):
     if SNAPSHOT.exists():
         try:
             s = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
-            parts.append(f"📊 最新資產：總資產 {s.get('total_assets',0):,} / 淨值 {s.get('net_worth',0):,} / 現金 {s.get('cash_total',0):,}")
+            from sot_targets import available_cash as _ac_dc
+            parts.append(f"📊 最新資產：總資產 {s.get('total_assets',0):,} / 淨值 {s.get('net_worth',0):,} / "
+                         f"可動用現金 {_ac_dc(s):,}（帳戶層真值 {s.get('cash_total',0):,}）")
             rb = s.get("rent_breakdown", {})
             if rb:
                 parts.append(f"🏠 房租：{' + '.join(f'{v:,}' for v in rb.values())} = {sum(rb.values()):,}")
