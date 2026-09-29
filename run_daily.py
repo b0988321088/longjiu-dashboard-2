@@ -284,6 +284,8 @@ def calibrate_sources() -> dict:
         "policy_loan": snap.get("policy_loan", 0),
         "pledge_loan": snap.get("pledge_loan", 0),
         "fund_pledge_loan": snap.get("fund_pledge_loan", 0),
+        "fund_pledge_rate": snap.get("fund_pledge_rate", 0),
+        "fund_pledge_pool": (((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("合計") or 0),
         "cc_liability": snap.get("cc_liability", 0),
     }
 
@@ -378,8 +380,13 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     if tv['pledge_loan'] > 0:
         loans_rows_html += f"""          <tr><td>—</td><td>證券質押</td><td>—</td><td class="num">{tv['pledge_loan']:,}</td><td>—</td></tr>\n"""
     if tv.get('fund_pledge_loan', 0) > 0:
-        # 2026-09-29：國泰質押撥款 590萬@2.77%（9/29 10:57 入帳）→ 負債表需列示，否則總負債對不上
-        loans_rows_html += f"""          <tr><td>國泰世華</td><td>基金質押（質押基金池 1,178.6 萬）</td><td class="num">2.65%</td><td class="num">{tv['fund_pledge_loan']:,}</td><td>9/29 撥款入帳</td></tr>\n"""
+        # 2026-09-29：國泰質押撥款 590萬@2.65%（9/29 10:57 入帳）→ 負債表需列示，否則總負債對不上。
+        # CIO 審查 af7af243 必修3：利率與基金池市值一律讀真值，禁硬編碼（利率 tv.fund_pledge_rate／
+        # 池市值讀 snapshot.cathay_pledge_0911.擔保池.合計）。
+        _fpr = float(tv.get('fund_pledge_rate') or 0.0265) * 100
+        _fpool = float(tv.get('fund_pledge_pool') or 0)
+        _fpool_txt = f"（質押基金池 {_fpool/10000:,.1f} 萬）" if _fpool else ""
+        loans_rows_html += f"""          <tr><td>國泰世華</td><td>基金質押{_fpool_txt}</td><td class="num">{_fpr:.2f}%</td><td class="num">{tv['fund_pledge_loan']:,}</td><td>9/29 撥款入帳</td></tr>\n"""
 
     # 每月固定支出明細（2026-08-21：房貸校正 永豐65,735+國泰26,000=91,735）
     try:
@@ -1763,7 +1770,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _pool_principal = float(_cp.get("額度_本金") or 12000000)
                 _pledge_pct = _pct_from(_cp.get("成數"), 45.0)
                 _pledge_loan = float(_cp.get("可貸金額") or round(_pool_principal * _pledge_pct))
-                _pledge_rate = _pct_from(_cp.get("利率"), 2.77)
+                _pledge_rate = _pct_from(_cp.get("利率"), float(snap.get("fund_pledge_rate") or 0.0265) * 100)
                 _pledge_cost_y = _pledge_loan * _pledge_rate
                 _pledge_cost_m = _pledge_cost_y / 12
                 # 既有質押借款（保單質押/券商質押）— 讀 DB liabilities 最新一列

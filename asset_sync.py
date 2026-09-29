@@ -320,7 +320,7 @@ def rebuild_liabilities(snap: dict) -> dict:
     mort = snap.get("mortgage_balance") or snap.get("mortgage") or 0
     pol = snap.get("policy_loan") or 0
     ple = snap.get("pledge_loan") or 0
-    # 2026-09-29：國泰基金質押借款（590萬@2.77%，9/29 10:57 入帳）。獨立欄位 —
+    # 2026-09-29：國泰基金質押借款（590萬@2.65%，9/29 10:57 入帳）。獨立欄位 —
     # 勿併入 pledge_loan（券商 100萬@3.92%），否則利率/月息會被混算成單一利率。
     fpl = snap.get("fund_pledge_loan") or 0
     _per_detail = {}
@@ -354,7 +354,7 @@ def rebuild_liabilities(snap: dict) -> dict:
         "total": total,
         "note": ("2026-09-13 建立：負債改由明細推導（原為手寫值，曾出現 78,099 不明殘差）；"
                  "借給女友的錢＝應收款（見 snapshot.receivables），不計入負債；"
-                 "2026-09-29 起「基金質押」（fund_pledge_loan，國泰 590萬@2.77%）與「券商質押」"
+                 "2026-09-29 起「基金質押」（fund_pledge_loan，國泰 590萬@2.65%）與「券商質押」"
                  "分列不同利率欄，勿合併計算月息"),
     }
     snap["net_worth"] = int(snap.get("total_assets") or 0) - total

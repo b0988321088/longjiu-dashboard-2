@@ -81,7 +81,7 @@ def pledge_facts(snap: dict | None = None) -> dict:
         "保單利率": r_policy,
         "券商質押": lb.get("券商質押") or 0,
         "券商利率": r_broker,
-        # 2026-09-29：國泰基金質押 590萬@2.77%（撥款入帳）→ 現況質押總額須含此筆
+        # 2026-09-29：國泰基金質押 590萬@2.65%（撥款入帳）→ 現況質押總額須含此筆
         "基金質押": s.get("fund_pledge_loan") or 0,
         "基金質押利率": lb.get("基金質押利率") or s.get("fund_pledge_rate") or 0.0265,
         "現況質押總額": target + (s.get("fund_pledge_loan") or 0),

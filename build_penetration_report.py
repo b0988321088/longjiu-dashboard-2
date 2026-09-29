@@ -185,7 +185,7 @@ if _pl_b > 0:
                  f"<td class='num'>{('%.2f' % (_pl_b_r*100)) + '%' if _pl_b_r else '⚠️ 待確認'}</td>"
                  f"<td class='num'>{(_pl_b/_sec_col*100 if _sec_col else 0):.1f}%</td>"
                  f"<td>⚠️ {_pl_b_n}</td></tr>")
-# 2026-09-29：國泰基金質押 590萬@2.6%（9/29 10:57 撥款入帳；表定 540 萬，實撥 590 萬）
+# 2026-09-29：國泰基金質押 590萬@2.65%（9/29 10:57 撥款入帳；表定 540 萬，實撥 590 萬）
 _pl_c = float(snap.get("fund_pledge_loan") or 0)
 _pl_c_r = float(snap.get("fund_pledge_rate") or 0.0265)
 _fund_pool = float((((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("合計")) or 0)
