@@ -1,0 +1,81 @@
+{
+  "verdict": "REJECT",
+  "reviewer": "CIO-reviewer（獨立唯讀抽查｜weekly/0929 尾差修正）",
+  "commit": "b4a56abcefb65fb8d5cc54176d961906e9d3157d",
+  "reviewed_commits": ["b4a56abcefb65fb8d5cc54176d961906e9d3157d"],
+  "reviewed_trees": ["894ef4db2b9f0ba3de1f97fd5349752c786b3b26"],
+  "range_base": "origin/clean-main",
+  "range_count": 1,
+  "checked": [
+    "[CMD1] git log --oneline -1 → 'b4a56abc fix(caliber): 週報現金口徑＋雙維度派生欄校正（INC-255；線上抽查發現）'；git rev-parse HEAD → b4a56abcefb65fb8d5cc54176d961906e9d3157d（tree 894ef4db2b9f0ba3de1f97fd5349752c786b3b26）。git rev-list --count origin/clean-main..HEAD = 1（origin/main 落後 119 筆，非比較基準；本 commit 確為單一未推 commit）。",
+    "[CMD2] git show --stat HEAD → 6 檔：build_weekly_report.py(+12/-4，唯一程式碼檔)、snapshot.json(9 行)、error_register.md(+19，INC-255)、audit_dashboard_2026-09-29.html、penetration_report_2026-09-29.html、weekly_report_2026-09-29.html（後 3 者為重產產物）。無未預期的程式檔異動。",
+    "[CMD3] python static_gate.py → '✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key）'，rc=0。",
+    "[CMD4] python build_weekly_report.py → '✅ weekly_report_2026-09-29.html（11,121 bytes）'，rc=0；實跑前後 md5 皆 c641426ea95e6adc96fa8ed65a2dae83（冪等）、git status 乾淨；產物 blob 與 HEAD blob 同 hash 9a008c41b30262d91d98ff3f1d1564ec0ad2e14b（＝我驗的就是待推內容）。",
+    "[CMD5] 週報抽『現金』相關行 → KPI：'<div class=\"k\">現金（可動用）</div><div class=\"v green\">819,182.0</div>…真值 6,719,182｜含指定清償款 5,900,000'；檢查列：'現金 ≥ 700,000（生活底線）｜✅｜可動用 819,182.0（真值 6,719,182 − 指定清償款 5,900,000；底線 700,000）'；資產實相比較表：'現金（帳戶層真值）866,818 → 6,719,182（+5,852,364）'。全頁統計：6,719,182×3（皆已標註：KPI 真值／檢查列真值／比較表『帳戶層真值』標籤）、819,182×2、5,900,000×2、885,890×0、49.3×0。無未標註的『現金 6,719,182』KPI。",
+    "[CMD6] 現金底線判定（可動用口徑）→ python -c：restricted_cash(snapshot)=5900000.0、可動用=819182.0、底線 700000 → True；週報實跑輸出 '✅'。原始碼檢核 build_weekly_report.py:106-109（_avail = cash − restricted_cash；cash_ok = _avail >= _cf）＝判定確實不用 6,719,182。",
+    "[CMD7] python -c 讀 snapshot.dual_dimension_metric.防禦維度 → 合計 12,789,072｜佔比 49.1｜組成：債券 6,136,220／現金/貨幣停泊 819,182／低波 1,089,462／配息型基金權益 3,367,500／避險衛星(目標) 1,310,000。自算：Σ組成 = 12,722,364，分母 = 總資產 31,808,561 − 指定用途款 5,900,000 = 25,908,561 → 12,722,364 ÷ 25,908,561 = 49.1049% → 49.1% ✅ 與所載佔比相符（現金成分占 3.162%）。但 stored 合計 12,789,072 ÷ 同分母 = 49.3623%（≈49.4%）≠ 49.1%，且 12,789,072 − 12,722,364 = 66,708 = 885,890 − 819,182 → 合計為改動前舊組成和（見 finding 1）。",
+    "[CMD8] python build_penetration_report.py → rc=0、'✅ penetration_report_2026-09-29.html (21,680 bytes)'（md5 83c93e95… 前後一致，冪等）。抽『防禦維度』行：'🛡️ 防禦維度 49.1%（…）＝ 債券 6,136,220 + 現金 819,182 + 低波 1,089,462 + 配息型基金權益 3,367,500 + 避險衛星 1,310,000（目標）'，與 snapshot 完全一致；全頁 49.3 殘留 = 0。惟同一 callout 的備註仍印『現金/貨幣停泊=台幣活存 885,890（9/14 MB 真值）』（885,890×1，見 finding 6）。",
+    "[CMD9] python check_thresholds.py（全檢）→ rc=0：'✅ 穿透完整性：五桶 25,023,738 + 衛星 884,823 + 指定用途款 5,900,000 = 總資產 31,808,561'／'✅ 基金口徑閉合：鉅亨 874,818 + 國泰 11,779,326 = funds 12,654,144'／'✅ 日報基金部位行：明細口徑且閉合'／'✅ 日報可動用流動資金口徑：819,182（真值 6,719,182 − 指定用途款 5,900,000）'／'✅ SoT 完整（9 區塊）'／'✅ 消費端 5 支皆引用 thresholds_2026_0915'／'✅ 無舊門檻字面殘留'。",
+    "[CMD10] 負向思考（真值是否被抹掉）→ 未被抹掉：snapshot.cash_total 仍為 6,719,182（HEAD~1 與 HEAD 同值）、restricted_cash={金額 5,900,000, 用途 清償 500 萬高息負債, 隔離日 2026-09-29} 完整保留供對帳；週報 3 處皆保留 6,719,182 並標註（真值／帳戶層真值）；check_thresholds 斷言明文列『真值 6,719,182 − 指定用途款 5,900,000』。結論：真值鏈路完整，只是不得當可動用 —— 判定正確。",
+    "[CMD11] 唯讀紀律 → 全程未推送（git rev-list --count 仍 = 1）、未修改任何 .py；實跑 build_penetration_report.py 造成的 snapshot.json generated_at 變更已 git checkout -- 還原，結束時 git status --porcelain 為空。"
+  ],
+  "findings": [
+    {
+      "severity": "major",
+      "file": "snapshot.json",
+      "line": "2839（\"合計\": 12789072；同節點 2840 佔比 49.1、2844 現金/貨幣停泊 819182）",
+      "issue": "防禦維度 合計 未同步，節點自相矛盾：本次把組成.現金/貨幣停泊由 885,890 改 819,182、佔比 49.3→49.1，卻沒改 sibling 欄位 合計。實算 Σ組成 = 12,722,364，而 合計 = 12,789,072，差 66,708（正好 = 885,890 − 819,182）；HEAD~1 時 合計 == Σ組成 成立，亦即此不一致是本 commit 新引入。以 合計 ÷ 分母(31,808,561 − 5,900,000) = 49.3623% ≠ 全系統所印 49.1%，任何讀 合計（或拿 合計 反推分母/防禦金額）的消費者與人都會得到錯的防禦維度金額。這正是本 commit 自己在 error_register INC-255 寫下的病徵：『派生欄位沒有寫入者＝定時炸彈；基準一動就靜默過時』——本輪修了現金成分與佔比，漏了同一節點的 合計。",
+      "suggest": "把 合計 改為 12,722,364；更佳：移除人工 合計 改為管線派生，並在 static_gate.py 或 check 腳本加一條不變量斷言『Σ組成 == 合計（防禦維度）』，讓同型殘留下次自動落紅。"
+    },
+    {
+      "severity": "major",
+      "file": "debt_restructure_tracker.py",
+      "line": "271（cash = snap.get(\"cash_total\", 0)）＋295（if cash < _cash_life → \"🔴 HALT_ALL_BUY\"）",
+      "issue": "真正的 HALT_ALL_BUY 熔斷閘門仍以帳戶層真值判定：cash = cash_total = 6,719,182（含指定清償款 5,900,000），_cash_life = 700,000 → 可動用即使歸零也不會觸發 🔴 HALT_ALL_BUY（fail-open）。本檔不在 restricted_cash 消費端清單（check_thresholds.py:31 CONSUMERS 明列它為 thresholds 消費端），即本次口徑隔離落地未收斂到此決策端。註：非本 commit 引入（既有殘留，v3 亦未點名），但它決定『停買』這個真動作，風險等級高於顯示型殘留；若本輪不修，等同第 22 個 commit 標榜的『計算端全面收斂至可動用口徑』仍未完成。",
+      "suggest": "比照 build_weekly_report.py:106-109：from sot_targets import restricted_cash → _avail = max(0, cash_total − restricted_cash(snap))，第 295/297 行判準與顯示全改 _avail，並在該列標註『可動用 X（真值 Y − 指定用途款 Z）』。"
+    },
+    {
+      "severity": "minor",
+      "file": "build_weekly_report.py",
+      "line": "169（<td>HALT_ALL_BUY</td><td>現金 &lt; 70萬</td><td>{'🔴 觸發' if cash < 850000 else '🟢'}</td>）",
+      "issue": "同一支程式、同一段風險紅線區塊：第 106 行新立的註解不變量是『現金一律「可動用」口徑』，但 63 行後的這列仍用 raw cash（6,719,182）判定，且門檻寫死 850,000 與標籤『現金 < 70萬』不符（應讀 thresholds SoT 的 _cf/生活底線，同函式 _cf 已可取）。負向演示：可動用 100,000 或 0 時，本列仍印 🟢（用真值 6,719,182 ≥ 850,000），正確應為 🔴。今日判定不變（可動用 819,182 ≥ 70 萬 → 🟢），故不改變本次結論。",
+      "suggest": "改為 {'🔴 觸發' if _avail < _cf else '🟢'}，第三欄同時顯示『可動用 {_avail:,}（真值 {cash:,}）』。"
+    },
+    {
+      "severity": "minor",
+      "file": "build_audit_dashboard.py",
+      "line": "60（_def_break = … round(v/TA*100,1)）→ 產物 audit_dashboard_2026-09-29.html:226-227",
+      "issue": "同頁『防禦維度』出現兩個數字：標題用 snapshot 佔比 49.1%（分母已扣指定用途款），明細副標用 TA=總資產 31,808,561 當分母 → 實測『債券類 19.3% + 現金/貨幣停泊 2.6% + 低波 3.4% + 配息型基金權益 10.6% + 避險衛星 4.1%』合計 40.0% ≠ 49.1%。本次修動了這一行輸出（2.8%→2.6%）卻未發現分子已改可動用、分母仍含指定用途款＝混合口徑。不影響任何門檻判定（防禦 49.1 < 50 ❌ 不變）。",
+      "suggest": "明細百分比改用同一分母（TA − restricted_cash（sot_targets）），或於副標註『各項以總資產為分母』；順手加自檢：Σ明細 ≈ 標題佔比（±0.2pp）否則落紅。"
+    },
+    {
+      "severity": "minor",
+      "file": "build_audit_dashboard.py",
+      "line": "73（cash_ok = \"✅\" if CASH >= 700000 else \"🔴\"）＋249（紅線檢核列 <td>{CASH:,}</td>）",
+      "issue": "v3（張綁 a5f693ba）已列 minor、本 commit 重產審計頁仍未修：實測 audit_dashboard_2026-09-29.html 該列為『現金底線 70萬｜6,719,182｜✅』，與同頁 KPI『純現金（可動用）819,182』並存且未標示差異（同一頁兩個現金數字）。今日兩者皆 > 70 萬、判定不變，屬『指定用途款被當可動用來判底線』的同型殘留。",
+      "suggest": "改 CASH_AVAIL 判定與顯示（真值另標），與 build_weekly_report 本輪改法對齊。"
+    },
+    {
+      "severity": "minor",
+      "file": "snapshot.json",
+      "line": "2849（防禦維度.備註）＋2992（乾粉執行_0926.戰術乾粉總額.說明）",
+      "issue": "本次以新增『更新』欄補述（2850），未改 備註 內的舊值 885,890，而 備註 會被渲染到線上報表：build_penetration_report.py:155 與 run_daily.py:670 皆輸出 {_df.get('備註')} → 實測 penetration_report_2026-09-29.html 同一 callout 內同時出現『現金 819,182』與『現金/貨幣停泊=台幣活存 885,890（9/14 MB 真值）』＝同頁兩義（本 commit 的目標正是消滅同頁兩義）。2992 另有『乾粉 = 台幣現金 885,890 − 70萬 = 18.6萬』與現行 119,182（＝819,182−700,000，index.html data-k dry_powder 實測）不符，且其指令『讀取端一律現算 cash_total − cash_floor』在新口徑下語意已錯（應為可動用 − cash_floor）。",
+      "suggest": "直接把兩處敘述改為現行口徑（或移除數字只留公式名），並把『現算 cash_total − cash_floor』改為『現算 sot_targets.available_cash(snap) − cash_floor』，避免下一個讀者照舊敘述算出 6,019,182 的乾粉。"
+    },
+    {
+      "severity": "minor",
+      "file": "daily_report_v2_2026-09-29.html / index.html",
+      "line": "daily:473、477；index.html:269（口徑註解）",
+      "issue": "派生欄改 49.1 後，當日已落版的低頻產物未重產：日報仍印『防禦維度 49.3%』與『現況對照 防禦 49.3% ⚠️ 未達』（49.3×2），index.html 口徑註解仍印『防禦=dual_dimension_metric.防禦維度.佔比（49.3%）』（49.3×1）。線上因此同時存在 49.1/49.3 兩個防禦維度值（INC-255 的教訓正是『要線上逐份報表抽同一名義欄位』，本次只抽到週報/穿透/審計頁）。結論不變（49.1 與 49.3 皆 <50% ❌）。",
+      "suggest": "下次管線或手動重產日報與 index.html 後複查 49.3 歸零；並把『49.3/885,890』納入 preflight 殘留掃描樣式。"
+    },
+    {
+      "severity": "info",
+      "file": "build_penetration_report.py（實跑副作用）→ snapshot.json",
+      "line": "generated_at（HEAD:55.568354 → 實跑後 55.393310）",
+      "issue": "單跑 build_penetration_report.py 就會把 snapshot.json 重寫回（輸出：'穿透數據已自動校正並寫入 snapshot.json'），實測唯一差異是 generated_at（＋時間戳），內容同值 → 每次產報表都造成 SOT git dirty，模糊了『snapshot 由誰寫』的邊界（本次已 git checkout -- 還原）。若某次校正邏輯有偏差，這個『暗中寫回 SOT』的路徑會讓報表生成變成資料變更，不易在 diff 中被察覺。",
+      "suggest": "僅在穿透校正值實際變動時才寫回 snapshot.json（比較後 no-op 就跳過），或改寫入獨立 sidecar 檔，讓 SOT 寫入者維持唯一。"
+    }
+  ],
+  "summary": "結論：REJECT（1 必修＝2 個 major，其餘 6 項 minor／1 項 info）。本 commit 的核心口徑修正**驗證為真且有效**：程式碼層 build_weekly_report.py:106-109 走 sot_targets.restricted_cash 扣指定清償款；實跑週報 KPI『現金（可動用）819,182.0／真值 6,719,182｜含指定清償款 5,900,000』、檢查列『✅ 可動用 819,182.0（真值 6,719,182 − 指定清償款 5,900,000）』、比較表標籤改『現金（帳戶層真值）』，全頁 6,719,182 三處全部有標註、885,890 歸零、49.3 歸零；穿透報告『防禦維度 49.1%／現金 819,182』與 snapshot 完全一致且無 49.3 殘留；static_gate rc=0、check_thresholds 全檢 rc=0（穿透完整性、基金口徑閉合、日報可動用口徑 819,182 全綠）；兩支 build 腳本冪等、產物與 HEAD blob 同 hash、結束時工作樹乾淨、全程未推送未改 .py。負向思考（真值是否被抹掉）：**未被抹掉**，cash_total 6,719,182 與 restricted_cash 5,900,000 完整保留供對帳，週報三處保留真值並標註，check_thresholds 明文斷言真值＝6,719,182 − 指定用途款 —— 只擋『當可動用』，判定正確。不能 APPROVE 的原因有兩個：①【major】snapshot 防禦維度 合計 12,789,072 未隨組成同步（Σ組成 12,722,364，差 66,708 = 885,890 − 819,182，HEAD~1 時兩者相等）→ 以 合計 反推得 49.36% ≠ 全系統 49.1%，是本 commit 新引入的 SOT 自相矛盾，正是它在 INC-255 自己寫下的『派生欄位無刷新者＝定時炸彈』。②【major】真閘門 debt_restructure_tracker.py:271/295 仍以 cash_total 判 HALT_ALL_BUY，可動用跌破 70 萬時 fail-open（既有殘留、非本 commit 引入，但同一口徑目標未收斂到決策端）。兩者修法皆為 1-2 行（合計→12,722,364；tracker 加 restricted_cash 扣減），修完可快速複審轉 APPROVE。"
+}

@@ -41,6 +41,7 @@ def main():
     _cov_act = _pcs["act"]["coverage"]
     _cw = ((snap.get("thresholds_2026_0915") or {}).get("現金_twd") or {})
     _cf = float(_cw.get("合計底線") or _cw.get("生活底線") or 700000)   # 現金底線（9/27 單一口徑）
+    _us_cap = float(((snap.get("thresholds_2026_0915") or {}).get("單桶硬上限_pct") or {}).get("美股市值型", 40))
     us30y = st.get("last_rate")
     mode = "防禦（A）" if st.get("mode") == "A" else "布局（B）" if st.get("mode") == "B" else "未知"
     us30y_txt = f"{us30y:.2f}%" if us30y else "—"
@@ -166,8 +167,8 @@ def main():
 
     # ===== 十二、引擎熔斷 =====
     eng = f"""<table><thead><tr><th>閘門</th><th>條件</th><th>目前</th></tr></thead><tbody>
-    <tr><td>HALT_ALL_BUY</td><td>現金 &lt; 70萬</td><td>{'🔴 觸發' if cash < 850000 else '🟢'}</td></tr>
-    <tr><td>FREEZE_US_BUY</td><td>美股 &gt; 33%</td><td>{'🟡 觸發' if apct.get('美股市值型成長',0) > 33 else '🟢'}</td></tr>
+    <tr><td>HALT_ALL_BUY</td><td>可動用現金 &lt; {_cf:,.0f}</td><td>{'🔴 觸發' if _avail < _cf else '🟢'}（可動用 {_avail:,.0f}）</td></tr>
+    <tr><td>FREEZE_US_BUY</td><td>美股 &gt; {_us_cap:.0f}%（SoT 單桶硬上限）</td><td>{'🟡 觸發' if apct.get('美股市值型成長',0) > _us_cap else '🟢'}</td></tr>
     <tr><td>US30Y 警戒</td><td>≥5.20%</td><td>{'🟡 觸發' if (us30y or 0) >= 5.20 else '🟢'}</td></tr>
     <tr><td>LTV 熔斷</td><td>&gt;38%</td><td>🟢 0%</td></tr>
     <tr><td>淨利差</td><td>&lt;0 虧損</td><td>🟢 正利差</td></tr>

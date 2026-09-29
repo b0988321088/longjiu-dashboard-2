@@ -268,7 +268,10 @@ def main():
     # -------- 7. 熔斷閘門檢查（Safety Breaker）-------
     print("\n【7.熔斷閘門檢查（Safety Breaker）】")
     breakers = rules.get("risk_breakers", [])
-    cash = snap.get("cash_total", 0)
+    # 2026-09-29 CIO major：熔斷閘門（HALT_ALL_BUY）必須用「可動用現金」（扣質押撥款指定清償款），
+    # 否則指定用途款會把 HALT 閘門墊高 → 可動用跌破底線時 fail-open（不會擋）。
+    from sot_targets import restricted_cash as _rst_fn
+    cash = max(0.0, float(snap.get("cash_total", 0) or 0) - _rst_fn(snap))
     checks = []
     # 2026-09-15 INC-187：門檻收斂 → 一律讀 snapshot.thresholds_2026_0915。
     # 原本的 33%（美股）／35%、38%（LTV）／70萬（現金）是 7-8 月舊口徑，

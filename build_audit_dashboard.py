@@ -56,7 +56,9 @@ _def_ok = isinstance(_def_pct, (int, float)) and _def_pct >= _sc.get("防禦最�
 _inc_ok = isinstance(_inc_pct, (int, float)) and _inc_pct >= _sc.get("收入最低", 0)
 _ltv_ok = isinstance(_ltv_v, (int, float)) and _ltv_v <= _sc.get("LTV上限", 100)
 _all_ok = _def_ok and _inc_ok and _ltv_ok
-_def_break = " + ".join(f"{k.replace('(目標)','')} {round(v/TA*100,1)}%" for k, v in dd_c.items())
+# 2026-09-29：雙維度分母＝總資產 − 指定用途款（與 snapshot 派生口徑一致，原用 TA 會得 40% ≠ 標題 49.1%）
+_dd_den = TA - RESTRICTED
+_def_break = " + ".join(f"{k.replace('(目標)','')} {round(v/(_dd_den or TA)*100,1)}%" for k, v in dd_c.items())
 MORT_MONTHLY = s.get("mortgage_cathay_monthly", 26000) + s.get("mortgage_sinopac_monthly", 65735)
 
 debt_ratio = TL / (TA + RE) * 100
@@ -70,7 +72,7 @@ rent_cov_mort = RENT / MORT * 100
 us_light = "🔴" if us30y and us30y >= 5.30 else ("🟡" if us30y and us30y >= 4.8 else "🟢")
 tech = pen.get("美股市值型成長_科技", 0)
 tech_ok = "✅ 紅線下" if tech <= 15 else "⚠️ 超標"
-cash_ok = "✅" if CASH >= 700000 else "🔴"
+cash_ok = "✅" if CASH_AVAIL >= 700000 else "🔴"
 # INC-215（2026-09-18 週五審計抓到）：美元曝險原寫死 64.1（8/22 舊值 + 舊 50% 紅線），
 # 與 snapshot.usd_exposure_monitor（9/14 定案 engine 口徑 59.0%、門檻已放寬 60%）脫節 →
 # 一律讀 snapshot，門檻/緩衝/判定全部現算。
@@ -246,7 +248,7 @@ rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W
 <tr>{H('紅線')}{H('現況')}{H('判定')}</tr>
 <tr><td {W(0)}>US30Y 5.30% 債券凍結</td><td {W(0)}>{us30y}%（警戒區 5.20-5.30）</td><td {W(0)}>{us_light} 距紅線 {max(0, round(5.30-us30y,2)) if us30y else "—"}pp</td></tr>
 <tr><td {W(0)}>40,500 停碼</td><td {W(0)}>未觸發</td><td {W(0)}>✅</td></tr>
-<tr><td {W(0)}>現金底線 70萬</td><td {W(0)}>{CASH:,}</td><td {W(0)}>{cash_ok}</td></tr>
+<tr><td {W(0)}>現金底線 70萬</td><td {W(0)}>可動用 {CASH_AVAIL:,}（真值 {CASH:,}）</td><td {W(0)}>{cash_ok}</td></tr>
 <tr><td {W(0)}>單次加碼 ≤20萬（核貸期 5萬）</td><td {W(0)}>紀律維持（累積型原則生效）</td><td {W(0)}>✅</td></tr>
 <tr><td {W(0)}>美元曝險 ≤{usd_thr:.0f}%</td><td {W(0)}>{usd_exp:.1f}%</td><td {W(0)}>{usd_verdict}</td></tr>
 </table></div>

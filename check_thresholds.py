@@ -170,6 +170,20 @@ def main() -> int:
         if _k in _bt and _pk in _tg and float(_bt[_k]) != float(_tg[_pk]):
             errs.append(f"桶目標不一致：SoT {_k}={_bt[_k]} vs penetration.targets.{_pk}={_tg[_pk]}")
 
+    # ②b 雙維度派生欄自洽（2026-09-29 INC-255：組成改了、合計沒同步 → 反推 % 與全系統不一致）
+    try:
+        _dd = (snap.get("dual_dimension_metric") or {}).get("防禦維度") or {}
+        _comp = _dd.get("組成") or {}
+        if _comp:
+            _s = sum(float(v) for v in _comp.values())
+            _t = float(_dd.get("合計") or 0)
+            if abs(_s - _t) > 1:
+                errs.append(f"雙維度防禦維度：Σ組成 {_s:,.0f} ≠ 合計 {_t:,.0f}（派生欄未同步）")
+            else:
+                print(f"✅ 雙維度防禦維度自洽：Σ組成 = 合計 {_s:,.0f}")
+    except (TypeError, ValueError) as e:
+        errs.append(f"雙維度防禦維度欄位無法解析：{e}")
+
     # ② 消費端有引用 SoT
     for f in CONSUMERS:
         p = BASE / f
