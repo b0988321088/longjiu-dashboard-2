@@ -411,10 +411,13 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _mort_net = _mort - _rent
     _cash_out = _sn2.get("monthly_expense_cash", _life + _med + _mort) or 0
     _accrual = _sn2.get("monthly_expense_accrual", _li["合計"]) or _li["合計"]
+    # 2026-09-30 CIO minor：過渡期口徑標註（利息動態化後；保單清完自動消失）
+    _trans_txt = ('<br/><span style="color:#b45309;font-size:12px">⏳ 過渡期口徑：含待清償保單息 '
+                  + f'{_int:,}（保單 400 萬清完後月支出自動 → {_fixed_total - _int:,}）</span>') if _int else ''
     _fixed_expense_html = f"""    <div class="callout" style="margin-top:10px;border-left:3px solid #3b82f6">
       <strong>📌 每月固定支出：{_fixed_total:,}</strong>（現金扣帳 {_cash_out:,} ＋ 帳上計息 {_accrual:,}）<br>
       生活 {_life:,} ｜ 醫療 {_med:,} ｜ 房貸 {_mort:,}（永豐 {_sin:,} + 國泰 {_cat:,}）｜ 保單借貸利息 {_int:,}{f" ｜ 券商質押利息 {_yua:,}" if _yua else ""}{f" ｜ 基金質押利息 {_fund_int:,}" if _fund_int else ""}
-      <br/><span style="color:#64748b;font-size:12px">與銀行實際扣款比對請用「現金扣帳」口徑（帳上計息＝保單＋券商＋基金質押三項利息之和（動態），不從帳戶扣）｜房租收入 {_rent:,} 覆蓋房貸 {_mort_net:+,} 缺口（{_mort/_rent*100:.0f}% 覆蓋）｜女友還款 6,000 為收入（至12/5）</span>
+      {_trans_txt}<br/><span style="color:#64748b;font-size:12px">與銀行實際扣款比對請用「現金扣帳」口徑（帳上計息＝保單＋券商＋基金質押三項利息之和（動態），不從帳戶扣）｜房租收入 {_rent:,} 覆蓋房貸 {_mort_net:+,} 缺口（{_mort/_rent*100:.0f}% 覆蓋）｜女友還款 6,000 為收入（至12/5）</span>
     </div>
 """
 

@@ -235,8 +235,22 @@ def render_health_card(snap: dict) -> str:
     if d.get("LTV分", 10) < 10:
         _weak.append("質押LTV")
     _weak_txt = ("唯一弱項：" + "、".join(_weak)) if _weak else "六維度全數達標"
+    # 2026-09-30 CIO minor：月支出補「現金扣帳／帳上計息」拆解與過渡期口徑標註（利息動態化後）
+    _li_txt = ""
+    try:
+        from sot_targets import liability_interest as _li_fn2
+        _li2 = _li_fn2(snap)
+        _cashout = float(snap.get("monthly_expense_cash") or 0)
+        _accr = float(snap.get("monthly_expense_accrual") or 0)
+        _li_txt = (f'（現金扣帳 {_cashout:,.0f} ＋ 帳上計息 {_accr:,.0f}＝保單 {_li2["保單借貸利息"]:,}'
+                   f'＋券商 {_li2["券商質押利息"]:,}＋基金質押 {_li2["基金質押利息"]:,}）')
+        if float(_li2["保單借貸利息"]) > 0:
+            _li_txt += (f'｜過渡期口徑：含待清償保單息 {_li2["保單借貸利息"]:,}，清完後月支出 '
+                        f'{float(d["支出"]) - float(_li2["保單借貸利息"]):,.0f}')
+    except (TypeError, ValueError, ImportError):
+        _li_txt = ""
     _note = (f'<div style="font-size:9.5px;color:#14532d;margin-top:2px;line-height:1.6">'
-             f'口徑：覆蓋=保守常態（配息100,000+房租80,100=180,100）÷月支出 {d["支出"]:,.0f}（snapshot.dividend_month_expected+rent_monthly_total÷monthly_expense，8月實收基準134%見日報）｜'
+             f'口徑：覆蓋=保守常態（配息100,000+房租80,100=180,100）÷月支出 {d["支出"]:,.0f}{_li_txt}（snapshot.dividend_month_expected+rent_monthly_total÷monthly_expense，8月實收基準134%見日報）｜'
              f'防禦=dual_dimension_metric.防禦維度.佔比（{d["防禦"]:.1f}%）｜曝險=usd_exposure_monitor.current.合計（{d["曝險"]:.1f}%）｜'
              f"現金=可動用（cash_total−指定用途款）{d['現金']:,.0f}≥cash_floor 700,000｜LTV=(policy_pledge_loan+pledge_loan+fund_pledge_loan)÷(insurance_current_value+securities+質押基金池)（{d['LTV']:.1f}%；目標≤50；銀行監看50起/55黃/60紅/70追繳）｜銀行口徑 LTV＝國泰質押借款÷質押基金池＝{d.get('銀行LTV', 0):.1f}%｜總質押率 {d['總質押率']:.1f}%（借款÷總資產，≤35%制）</div>")
     return (
