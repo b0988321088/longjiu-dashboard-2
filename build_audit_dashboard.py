@@ -17,7 +17,8 @@ INS = s["insurance_current_value"]; SEC = s["securities_total_market_value"]; FU
 CASH = s["cash_total"]; RENT = s.get("rent_monthly_total", 80100)
 # 2026-09-29 CIO 審查必修3：Runway 一律用可動用現金（扣質押撥款指定清償款），
 # 並保留真值 CASH 供「純現金」KPI 與資產結構顯示（標籤需註明含指定清償款）。
-RESTRICTED = float((s.get("restricted_cash") or {}).get("金額") or 0)
+from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
+RESTRICTED = _rst_fn(s)
 CASH_AVAIL = max(0.0, CASH - RESTRICTED)
 DIV = s.get("monthly_dividend_total", 153389); DIV_ACT = s.get("dividend_month_actual", 97233)
 EXP = s.get("monthly_expense", 162781); FIXED = s.get("monthly_fixed_expense", {}).get("合計", 162781)

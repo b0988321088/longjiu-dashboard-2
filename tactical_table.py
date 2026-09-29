@@ -84,10 +84,8 @@ def _dynamic_amount(snap: dict, asset: str, ladder: dict, dev: float, total: flo
     if asset == "現金/安全網":
         _floor = snap.get("cash_floor_rule", {}).get("floor", 700000) if isinstance(snap.get("cash_floor_rule"), dict) else 700000
         # 2026-09-29 使用者核准：超額＝可動用現金（扣指定清償款）− 底線；不得把還債款當可部署資金
-        try:
-            _rst = float((snap.get("restricted_cash") or {}).get("金額") or 0)
-        except (TypeError, ValueError):
-            _rst = 0.0
+        from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
+        _rst = _rst_fn(snap)
         _cash_excess = max(0, (snap.get("cash_total", 0) or 0) - _rst - _floor)
         return {"金額": _cash_excess,
                 "說明": f"底線制：超額 {_cash_excess:,} 待部署（MMF 停泊）"

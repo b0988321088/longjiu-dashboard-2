@@ -488,10 +488,8 @@ def _restricted_cash_of(snap: dict) -> float:
     總資產口徑仍包含它（真值），但桶位／乾粉／Runway 口徑已於 update_all.calc_penetration 扣除；
     報表凡以「總資產」為分母陳述現金占比時，必須標明含此金額，避免同檔出現兩個「現金 %」。
     """
-    try:
-        return float((((snap or {}).get("restricted_cash") or {}) or {}).get("金額") or 0)
-    except (TypeError, ValueError, AttributeError):
-        return 0.0
+    from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
+    return _rst_fn(snap)
 
 
 def build_trend_charts(history: dict, current: dict | None = None, restricted: float = 0.0) -> str:
@@ -835,7 +833,8 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     alert_header = f"單日資產下跌 ≥ {ALERT_DROP_TWD:,.0f} / {ALERT_DROP_PCT:.1f}%；證券下跌 ≥ {ALERT_SEC_DROP_TWD:,.0f} / ±{WATCH_SEC_PCT:.1f}%"
 
     buffett_md = buffett_advice(history, snap)
-    charts_html = build_trend_charts(history, ex, restricted=float((snap.get("restricted_cash") or {}).get("金額") or 0))
+    from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
+    charts_html = build_trend_charts(history, ex, restricted=_rst_fn(snap))
 
     # Fund detail card from screenshot
     # 最終防護：跳過任何非數值（dict/list）項目，避免 TypeError

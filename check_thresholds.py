@@ -179,7 +179,8 @@ def main() -> int:
         _sat = float(_pv.get("黃金", 0)) + float(_pv.get("健康", 0))
         # 2026-09-29 使用者核准（restricted 隔離）：指定用途現金（質押撥款待清償）已從現金桶
         # 扣除，但它仍是總資產的一部分 → 不變量必須加回，否則會誤判「穿透不完整」。
-        _rst = float((snap.get("restricted_cash") or {}).get("金額") or 0)
+        from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
+        _rst = _rst_fn(snap)
         _tot = float(snap.get("total_assets", 0))
         _diff = _five + _sat + _rst - _tot
         if abs(_diff) > 1:

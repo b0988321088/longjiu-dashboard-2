@@ -156,11 +156,14 @@ def restricted_cash(snap: dict) -> float:
             return 0.0
     try:
         return float(_rc or 0)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, AttributeError):
         return 0.0
 
 
 def available_cash(snap: dict) -> float:
     """可動用現金 ＝ cash_total − restricted_cash（下限 0）。"""
-    _cash = float((snap or {}).get("cash_total") or (snap or {}).get("cash") or 0)
+    try:
+        _cash = float((snap or {}).get("cash_total") or (snap or {}).get("cash") or 0)
+    except (TypeError, ValueError, AttributeError):
+        _cash = 0.0
     return max(0.0, _cash - restricted_cash(snap))

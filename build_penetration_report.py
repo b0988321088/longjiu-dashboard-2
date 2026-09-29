@@ -24,7 +24,8 @@ total = tw_v + us_v + def_v + bond_v + cash_pv + sat_gold_v + sat_health_v
 # 2026-09-29 使用者核准（restricted 隔離）：現金桶已扣掉「指定用途款」（質押撥款待清償），
 # 但分母維持「總資產」口徑 → 必須把指定用途款加回分母，否則全桶 % 被灌高
 # （台股 6.4→7.8、美股 32.2→39.5），會直接改變再平衡判定。指定用途款本身不列為配置桶位。
-_restricted_cash = float((snap.get("restricted_cash") or {}).get("金額") or 0)
+from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
+_restricted_cash = _rst_fn(snap)
 total = total + _restricted_cash
 
 # 自動校正 snapshot 穿透數據（供日報第2章使用）

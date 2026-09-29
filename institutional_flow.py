@@ -528,10 +528,8 @@ def main():
         _floor_dry = _snap.get("cash_floor", 700000)
         # 2026-09-29：乾粉改「可動用現金 − 底線」＝ (現金 − 指定用途款) − 底線。
         # 指定用途款（質押撥款待清償 590 萬）不可當乾粉（原式會顯示 602 萬）。
-        try:
-            _rst_dry = float((_snap.get("restricted_cash") or {}).get("金額") or 0)
-        except (TypeError, ValueError):
-            _rst_dry = 0.0
+        from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
+        _rst_dry = _rst_fn(_snap)
         _dry = max(0, (_snap.get("cash_total") or _snap.get("cash") or 0) - _rst_dry - _floor_dry)
         if not _dry:
             _dry = _snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)

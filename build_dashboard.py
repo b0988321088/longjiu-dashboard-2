@@ -40,10 +40,8 @@ def cash_caliber(snap):
     cash_all = float(snap.get("cash_total") or snap.get("cash") or 0)
     # 2026-09-29 使用者核准（restricted 隔離）：指定用途款（質押撥款待清償）不可當乾粉/生活緩衝
     # → 本口徑的 cash ＝ 可動用現金；真實現金另以 cash_all 回傳（現金合計卡仍顯示真值）。
-    try:
-        restricted = float((snap.get("restricted_cash") or {}).get("金額") or 0)
-    except (TypeError, ValueError):
-        restricted = 0.0
+    from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
+    restricted = _rst_fn(snap)
     cash = max(0.0, cash_all - restricted)
     total = float(cw.get("合計底線") or (life + buf))
     return {

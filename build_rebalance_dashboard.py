@@ -96,10 +96,8 @@ def cash_caliber(s):
     buf = float(cw.get("追繳緩衝") or 0)
     cash_all = float(s.get("cash_total") or s.get("cash") or 0)
     # 2026-09-29 使用者核准：指定用途款（質押撥款待清償）不可當乾粉 → cash ＝ 可動用現金
-    try:
-        restricted = float((s.get("restricted_cash") or {}).get("金額") or 0)
-    except (TypeError, ValueError):
-        restricted = 0.0
+    from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
+    restricted = _rst_fn(s)
     cash = max(0.0, cash_all - restricted)
     total = float(cw.get("合計底線") or (life + buf))
     return {

@@ -235,12 +235,8 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     # 2026-09-29 使用者核准（restricted 隔離）：指定用途現金（質押撥款待清償 590 萬）
     # 不屬配置資產 → 從「現金桶（餘數法）」與分母同步扣除，避免桶位假超標觸發自動減碼。
     # 真值來源＝snapshot.restricted_cash（禁寫死）；清償入帳後歸零即自動解除。
-    _rst = 0.0
-    if snap:
-        try:
-            _rst = float((snap.get("restricted_cash") or {}).get("金額") or 0)
-        except (TypeError, ValueError):
-            _rst = 0.0
+    from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
+    _rst = _rst_fn(snap)
     total = cash + ins + sec + funds - _rst
     # 2026-09-29 CIO 審查必修1：百分比／缺口／alert 一律用「總資產」口徑（含指定用途款）為分母，
     # 與 build_penetration_report 同分母；只有現金桶本身扣掉指定用途款 → 僅現金 % 變動（2.6%），

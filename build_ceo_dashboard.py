@@ -249,10 +249,8 @@ _life = float(_cw.get("生活底線") or s.get("cash_floor") or 0)
 _buf = float(_cw.get("追繳緩衝") or 0)
 _tot = float(_cw.get("合計底線") or (_life + _buf))
 # 2026-09-29 使用者核准：乾粉改「可動用現金（扣指定清償款）− 底線」；現金 KPI 仍顯示真值 CASH。
-try:
-    _rst_c = float((s.get("restricted_cash") or {}).get("金額") or 0)
-except (TypeError, ValueError):
-    _rst_c = 0.0
+from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
+_rst_c = _rst_fn(s)
 _cav = CASH - _rst_c
 # 2026-09-27 使用者裁示：現金底線＝單一口徑生活底線 700,000（取消追繳緩衝 50 萬）→ 單口徑顯示。
 # （2026-09-25 的雙口徑並列需求隨裁示消滅，故 kpi5 不再顯示合計底線。）

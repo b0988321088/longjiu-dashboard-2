@@ -18,7 +18,8 @@ def main():
     total = snap.get("total_assets", 0)
     cash = snap.get("cash_total", 0)
     # 2026-09-29 CIO 審查：現金紅線／卡片一律看「可動用」（扣質押撥款指定清償款），真值另標註。
-    _rst_cash = float((snap.get("restricted_cash") or {}).get("金額") or 0)
+    from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
+    _rst_cash = _rst_fn(snap)
     cash_avail = max(0.0, float(cash or 0) - _rst_cash)
 
     try:

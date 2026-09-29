@@ -1225,10 +1225,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     # 動態 DBS note（2026-08-06：去硬編碼 8/1/17,000，改讀校準後現金真值）
     # 2026-09-29 CIO 審查必修2：原寫「可動用流動資金 = cash_total」→ 把質押撥款指定清償款當可動用。
     _dbs_cash = float(tv.get("cash_total", 0) or 0)
-    try:
-        _dbs_rst = float((tv.get("restricted_cash") or {}).get("金額") or 0)
-    except (TypeError, ValueError):
-        _dbs_rst = 0.0
+    from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
+    _dbs_rst = _rst_fn(tv)
     _dbs_avail = max(0.0, _dbs_cash - _dbs_rst)
     _dbs_str = (f"可動用流動資金 {_dbs_avail:,.0f} TWD（Moneybook 真值 {_dbs_cash:,.0f}"
                 + (f" − 指定清償款 {_dbs_rst:,.0f}" if _dbs_rst else "")
@@ -1344,10 +1342,8 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
     _bond_v = _cat2("bond")
     _cash_v = tv.get('cash', tv.get('cash_total', 4_483_408))
     # 2026-09-29 使用者核准：指定用途現金（質押撥款待清償）不列入配置口徑（桶位/建議部位）
-    try:
-        _cash_v = max(0.0, float(_cash_v) - float((tv.get("restricted_cash") or {}).get("金額") or 0))
-    except (TypeError, ValueError):
-        pass
+    from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
+    _cash_v = max(0.0, float(_cash_v) - _rst_fn(tv))
 
     _sot_bt = (tv.get("thresholds_2026_0915") or {}).get("桶目標_pct") or {}
     _tgt_tw = _sot_bt.get("台股市值型", 20.0)
