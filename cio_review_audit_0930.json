@@ -1,0 +1,115 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO（獨立審查，Hermes subagent；唯讀審查，未推送、未改 repo 檔）",
+  "commit": "814dbd53",
+  "reviewed_commits": [
+    "814dbd531314b50017ea83a2a496933d94975be3",
+    "c1796c3bb9eb1457f5f45182f35743c68fbdd168"
+  ],
+  "reviewed_trees": [
+    "C:/Users/bot/Desktop/longjiu_system @ 814dbd53（審查結束後工作樹相對 HEAD 為空：git diff --name-only = ''；dragon_assets.db sha256=58ec80498e52cef2ae46fa0fd212924684bba5d0edaf119fccd53cfa0f75fe8b 前後一致）"
+  ],
+  "checked": [
+    {
+      "id": "1a",
+      "item": "commit 範圍",
+      "cmd": "git show --stat HEAD",
+      "result": "2 files changed, 9 insertions(+), 3 deletions(-)：.gitignore | 4 ++--、_audit_closeout.py | 8 +++++++-。範圍與宣告一致（僅修前一輪 2 個 minor）。",
+      "status": "PASS"
+    },
+    {
+      "id": "1b",
+      "item": "minor-1：.gitignore 逐檔硬列 → 通用樣式",
+      "cmd": "git show HEAD -- .gitignore",
+      "result": "diff 僅兩行：'-dragon_assets.db-wal / -dragon_assets.db-shm' → '+*.db-wal / +*.db-shm'。",
+      "status": "PASS"
+    },
+    {
+      "id": "1c",
+      "item": "兩個側車檔既有 ignored 狀態未被破壞",
+      "cmd": "git check-ignore -v dragon_assets.db-wal dragon_assets.db-shm ; git ls-files | grep -E 'db-(wal|shm)'",
+      "result": "'.gitignore:76:*.db-wal\\tdragon_assets.db-wal'、'.gitignore:77:*.db-shm\\tdragon_assets.db-shm'，rc=0（仍被忽略）。git ls-files 無 db-wal/db-shm（未追蹤）。",
+      "status": "PASS"
+    },
+    {
+      "id": "2",
+      "item": "minor-2：只動 BENIGN_DIRTY、未動其他邏輯；語法 OK",
+      "cmd": "git show HEAD -- _audit_closeout.py ; python -c \"import ast; ast.parse(open('_audit_closeout.py',encoding='utf-8').read())\"",
+      "result": "單一 hunk：BENIGN_DIRTY 由 {\"data/.cache_audit_state.json\"} 擴為 {\"data/.cache_audit_state.json\", \"dragon_assets.db\"}（含 3 行註解）；其餘邏輯零變動。AST OK。",
+      "status": "PASS"
+    },
+    {
+      "id": "3a",
+      "item": "有效性負向測試 A（側車檔存在且未提交 → 不得列入 fail）",
+      "cmd": "開 sqlite 連線保持開啟（select count(*) from assets）→ dragon_assets.db-wal/db-shm 出現 → python _audit_closeout.py",
+      "result": "側車檔實體=['dragon_assets.db-shm','dragon_assets.db-wal']；section 4 輸出『## main...origin/main [ahead 133]』『✅ 已追蹤檔案無未提交變更（0 筆）』『未追蹤（備份/暫存，預期）：[cio_review_gitignore_0930.json, cio_review_range_0929f.json]』；側車檔完全未出現於任何一行；結果『閉環稽核結果：全部通過 ✅』。",
+      "status": "PASS"
+    },
+    {
+      "id": "3b",
+      "item": "有效性負向測試 A2（dragon_assets.db 弄 dirty → 列入 benign 顯示行、不得列入 fail）",
+      "cmd": "sqlite 建表+insert 並 commit、關閉連線（checkpoint 後主檔變動）→ git diff --name-only 顯示 dragon_assets.db → python _audit_closeout.py",
+      "result": "git diff --name-only='dragon_assets.db'；section 4 輸出『✅ 已追蹤檔案無未提交變更（0 筆）』『ℹ️ 由排程每日更新、當下尚未提交的狀態檔（不列 fail）：['dragon_assets.db']』；結果『閉環稽核結果：全部通過 ✅』。DB 未進入 fail。",
+      "status": "PASS"
+    },
+    {
+      "id": "4",
+      "item": "不得誤放行真問題（非 benign 的真 dirty 追蹤檔仍須 fail）",
+      "cmd": "對既有追蹤檔 static_gate.py 追加一行註解（git diff --name-only='static_gate.py'）→ python _audit_closeout.py",
+      "result": "section 4 輸出『❌ 已追蹤檔案無未提交變更（1 筆）』，結果『閉環稽核結果：❌ 有問題：[\"未提交: ['static_gate.py']\"]』。證明 BENIGN_DIRTY 未把整條檢查廢掉。",
+      "status": "PASS"
+    },
+    {
+      "id": "5",
+      "item": "git add -A 後 staged 不得含側車檔",
+      "cmd": "（連線保持開啟、側車檔存在時）git add -A ; git diff --cached --name-only",
+      "result": "staged=['cio_review_gitignore_0930.json','cio_review_range_0929f.json']，不含 db-wal/db-shm；git status --short 亦完全不顯示側車檔。check-ignore -v 於側車檔存在時同樣命中 .gitignore:76/77。測試後 git reset，工作樹還原。",
+      "status": "PASS"
+    },
+    {
+      "id": "6",
+      "item": "static_gate.py 與 check_thresholds.py RC=0",
+      "cmd": "python static_gate.py ; python check_thresholds.py",
+      "result": "static_gate RC=0『✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key）』。check_thresholds RC=0，含『✅ 決策端現金口徑檢查完成（10/10 支）』『✅ 雙維度防禦維度自洽：Σ組成 = 合計 12,722,364』『✅ 穿透完整性：五桶 25,023,738 + 衛星 884,823 + 指定用途款 5,900,000 = 總資產 31,808,561』『✅ 基金口徑閉合：鉅亨 874,818 + 國泰 11,779,326 = funds 12,654,144』。",
+      "status": "PASS"
+    },
+    {
+      "id": "6b",
+      "item": "真值核對（snapshot.json）",
+      "cmd": "python -c 讀 snapshot.json",
+      "result": "cash_total=6719182、restricted_cash['金額']=5900000、total_assets=31808561 → 全部與真值期望吻合。",
+      "status": "PASS"
+    },
+    {
+      "id": "7",
+      "item": "還原驗證",
+      "cmd": "還原後 sha256sum dragon_assets.db ; git diff --name-only ; ls dragon_assets.db-*",
+      "result": "DB sha 與測試前一致（58ec80…fe8b）；git diff --name-only 空；側車檔已清除；git status 僅剩兩個未追蹤的 CIO 審查 JSON 與本檔。",
+      "status": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "file": "_audit_closeout.py",
+      "line": 25,
+      "issue": "把 dragon_assets.db 列入 BENIGN_DIRTY 後，『DB 已追蹤但未提交』不再 fail。若管線某天寫庫後未 commit（或有人手動改 DB 未提交），第 4 區 git 檢查會靜默放行，遮蔽資料通道未落版/未推送的真問題。",
+      "suggest": "加一道『有界遮蔽』守門：(1) 交叉快照——snapshot.json 仍是 canary（未列 benign，dirty 仍 fail），可再加一條『dragon_assets.db dirty 且 snapshot.json 乾淨』的 ⚠️ 提示（代表 DB 被改但資料源未同步，非夜間賽跑的常態）;(2) 加上時效上限——DB 連續髒超過 N 天（建議 2 天）即升回 fail，把遮蔽窗口封頂。兩者皆為顯示/告警層，不影響本 commit 立意。"
+    },
+    {
+      "severity": "info",
+      "file": ".gitignore",
+      "line": 76,
+      "issue": "通用樣式僅涵蓋 *.db-wal / *.db-shm，未涵蓋 SQLite rollback 模式會產生的 *.db-journal。現行 dragon_assets.db journal_mode=wal（已實測確認），故目前無影響；若日後有工具以 delete/rollback 模式開啟該庫，將產生未被忽略的 db-journal → 未來可能誤報。",
+      "suggest": "順手加上 '*.db-journal'（可選，非阻擋）。"
+    },
+    {
+      "severity": "info",
+      "file": ".gitignore",
+      "line": 76,
+      "issue": "以 wildcard 取代逐檔硬列屬正確方向（覆蓋範圍由 2 檔擴及未來所有同類側車檔）；副作用是任何名為 *.db-wal/*.db-shm 的檔案都會被忽略（含未來若真有需入版控者）。目前 repo 無此類檔，風險可忽略。",
+      "suggest": "維持現狀即可；若未來需入版控特定側車檔，用 '!path' 例外規則覆蓋。"
+    }
+  ],
+  "summary": "commit 814dbd53 精準修掉 c1796c3b 的兩個 minor：.gitignore 由逐檔硬列改為通用 '*.db-wal'/'*.db-shm'（側車檔既有 ignored 狀態經 check-ignore 驗證未被破壞，git ls-files 亦確認未追蹤），_audit_closeout.py 僅將 dragon_assets.db 併入 BENIGN_DIRTY、其餘邏輯零變動且 AST OK。有效性負向測試全綠：側車檔『存在且未提交』時不再列入 fail（實測 0 筆、側車檔完全未出現），DB 弄 dirty 時正確落入 benign 顯示行（ℹ️ 仍會顯示）而非 fail；同時非 benign 的真 dirty 追蹤檔（static_gate.py）仍使稽核 fail，證明檢查未被癱瘓。git add -A 後 staged 不含側車檔；static_gate.py 與 check_thresholds.py 皆 RC=0（含決策端 10/10、雙維度自洽、穿透完整性 = 總資產 31,808,561）；真值 cash_total 6,719,182 / restricted 5,900,000 / 總資產 31,808,561 全數吻合。全部測試後已完整還原（DB sha 前後一致、工作樹相對 HEAD 為空）。無 blocker/major，僅 1 minor（DB 列 benign 的遮蔽窗口）與 2 info（*.db-journal 未涵蓋、wildcard 廣度），皆為建議性、非阻擋 → APPROVE。"
+}

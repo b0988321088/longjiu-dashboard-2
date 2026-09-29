@@ -1,0 +1,87 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO (independent review subagent, deepseek-v4-flash) — 唯讀審查，未推送、未修改任何 repo 檔",
+  "commit": "c1796c3bb9eb1457f5f45182f35743c68fbdd168",
+  "reviewed_commits": [
+    "c1796c3bb9eb1457f5f45182f35743c68fbdd168"
+  ],
+  "reviewed_trees": [
+    "9f9a1982a6d83ff7425abe204b2ea0e773229ad1"
+  ],
+  "checked": [
+    {
+      "item": "1. commit 範圍（只動 .gitignore + 移除兩個側車檔索引項，不得動 .py）",
+      "cmd": "git log --oneline -1 ; git show --stat HEAD ; git rev-parse HEAD HEAD^{tree}",
+      "result": "c1796c3b chore(git): SQLite 側車檔 db-wal/db-shm 移出版控並加入 .gitignore（閉環稽核每晚誤報未提交）；stat = .gitignore +4 / dragon_assets.db-shm Bin 32768 -> 0 bytes / dragon_assets.db-wal Bin 877592 -> 0 bytes / 3 files changed, 4 insertions(+)；HEAD=c1796c3bb9eb1457f5f45182f35743c68fbdd168 tree=9f9a1982a6d83ff7425abe204b2ea0e773229ad1；未觸及任何 .py",
+      "pass": true
+    },
+    {
+      "item": "2. 側車檔是否仍在硬碟（審查當下）",
+      "cmd": "ls -la dragon_assets.db dragon_assets.db-wal dragon_assets.db-shm",
+      "result": "dragon_assets.db 172032 bytes（09-30 00:08）；db-wal / db-shm = No such file or directory（RC=2）。經實測成因：SQLite 最後一條連線關閉時會 checkpoint 並刪除 WAL 側車檔，屬執行期常態，非本 commit 造成。以 python 開連線寫入後 wal/shm 立即出現（wal exists=True shm exists=True），關閉後再度消失 → 移除 --cached 不會刪工作區檔案的結論成立（git rm --cached 為純索引操作，diff 為 'deleted file mode 100644'）",
+      "pass": true,
+      "note": "驗收單上『側車檔應仍在硬碟』的前提在審查時點不成立（檔案被 SQLite 正常回收），但已用可重現實驗證明其消失與本 commit 無因果關係"
+    },
+    {
+      "item": "3. DB 完整可讀（9 表 + asset_class 可讀）",
+      "cmd": "python -c \"sqlite3.connect('dragon_assets.db') ... select name from sqlite_master; pragma journal_mode; select * from asset_class limit 3\"",
+      "result": "table_count=9；['asset_class','assets','expense_breakdown','holdings','income','liabilities','market_intel','schedule','sqlite_sequence']；journal_mode=('wal',)；asset_class: ('bonds_penetration','bond','bond',1.0) ('cash','cash','cash',1.0) ('0050','tw_equity','securities',1.0)",
+      "pass": true
+    },
+    {
+      "item": "4. .gitignore 命中 + 負向驗證（git add -A 不得重新加入側車檔）",
+      "cmd": "git check-ignore -v dragon_assets.db-wal dragon_assets.db-shm ; (連線保持開啟) git add -A ; git status --porcelain ; git diff --cached --name-only",
+      "result": "check-ignore RC=0 且 .gitignore:76:dragon_assets.db-wal / .gitignore:77:dragon_assets.db-shm 皆命中。負向驗證：在 sqlite 連線開啟（wal/shm 存在於磁碟）時執行 git add -A，git status --porcelain 僅出現 'A  cio_review_range_0929f.json' 與 'M  dragon_assets.db'，git diff --cached --name-only 不含任何側車檔 → sidecars_staged=False。修法有效。審查後已 git reset + git checkout -- dragon_assets.db 還原索引與工作區",
+      "pass": true
+    },
+    {
+      "item": "5. 靜態閘門與門檻檢查",
+      "cmd": "python static_gate.py ; python check_thresholds.py",
+      "result": "static_gate: ✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key）RC=0。check_thresholds: ✅ 雙維度防禦維度自洽：Σ組成 = 合計 12,722,364 / ✅ 決策端現金口徑檢查完成（10/10 支）/ ✅ 穿透完整性：五桶 25,023,738 + 衛星 884,823 + 指定用途款 5,900,000 = 總資產 31,808,561 / ✅ 基金口徑閉合：鉅亨 874,818 + 國泰 11,779,326 = funds 12,654,144 / ✅ SoT 完整（9 區塊）/ ✅ 消費端 5 支皆引用 thresholds_2026_0915 / ✅ 無舊門檻字面殘留；RC=0",
+      "pass": true
+    },
+    {
+      "item": "6. snapshot 真值核對",
+      "cmd": "python -c \"json.load(open('snapshot.json'))\" 遞迴掃描 6719182/5900000/31808561/36003720",
+      "result": "cash_total=6719182 ✅ / total_assets=31808561 ✅ / total_liabilities=36003720 ✅ / restricted 5,900,000 出現於 penetration.restricted_cash=5900000、restricted_cash.金額=5900000、fund_pledge_loan=5900000、liabilities_build_up.基金質押=5900000、cathay_pledge_0911.可貸/實際撥款=5900000 ✅（無頂層 restricted 鍵，口徑以 penetration.restricted_cash 為準）",
+      "pass": true
+    },
+    {
+      "item": "7. 負向思考：移出版控的副作用蒐證",
+      "cmd": "grep -rn 'db-wal|db-shm|journal_mode' --include=*.py/sh/bat/yml ; git show HEAD:dragon_assets.db vs HEAD^ .db/.db-wal 隔離重放 ; git diff --name-only 殘餘噪音測試",
+      "result": "(a) 全 repo 無任何腳本引用 db-wal/db-shm 路徑 → 沒有消費者期待它們在版控。(b) 克隆完整性：把 HEAD 的 .db 單獨打開 = tables 9 / assets 29 / max_date 2026-09-29 / asset_class 41；用 HEAD^ 的 .db 單獨打開、以及 HEAD^ .db+被移除的 877,592 bytes WAL 一起打開，三者數字完全相同 → 被移出版控的 WAL 未挾帶任何未 checkpoint 的交易，clone 不會缺料（.db 本身仍受版控，首次開啟自動重建側車檔）。(c) 殘餘噪音：dragon_assets.db 仍受版控，實測對它寫入後 git diff --name-only 會列出 dragon_assets.db，而 _audit_closeout.py 的 BENIGN_DIRTY 僅含 data/.cache_audit_state.json → 若夜間最後一次寫庫發生在最後一次 commit 之後、22:40 稽核之前，仍可能出現 ❌（此為既有條件，非本 commit 引進）",
+      "pass": true
+    }
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "file": ".gitignore",
+      "line": "76-77",
+      "issue": "新規則逐檔硬列 dragon_assets.db-wal / dragon_assets.db-shm；目前 repo 僅此一顆受版控 SQLite DB 故足夠，但日後新增其他 .db 時需再補規則，屬容易漏的口徑。",
+      "suggest": "改為通用樣式 `*.db-wal` / `*.db-shm`（可保留現行兩行並加註說明），一次覆蓋所有 SQLite 資料庫側車檔。"
+    },
+    {
+      "severity": "minor",
+      "file": "_audit_closeout.py",
+      "line": "20, 215-227",
+      "issue": "殘餘噪音未完全根除：dragon_assets.db 仍受版控且每次寫入即變動，實測寫庫後 git diff --name-only 會列出 dragon_assets.db；BENIGN_DIRTY 僅含 data/.cache_audit_state.json，故夜間寫庫若晚於最後一次 commit，22:40 閉環稽核仍會報「已追蹤檔案有未提交變更」。此為既有條件，不是本 commit 造成的回歸。",
+      "suggest": "本 commit 先核准；另開一張小卡決定口徑：二選一 —— (A) 將 dragon_assets.db 加入 BENIGN_DIRTY（視為排程每日更新狀態檔，不列 fail）；(B) 排程在寫庫後立即 commit 該檔，維持嚴格版控。建議 (B) 較符合單一真值來源原則，但需確認 nightly 寫庫確實在稽核前完成 commit。"
+    },
+    {
+      "severity": "info",
+      "file": ".gitignore",
+      "line": "75-77",
+      "issue": "行尾混用：全檔 69 行 CRLF、6 行 LF（含本次新增的 3 行與 09-27 的 3 行）。.gitattributes 僅鎖 .githooks/* 與 cio_approve.py，未涵蓋 .gitignore。",
+      "suggest": "美觀層級，不影響 git 解析；若要收斂，可在 .gitattributes 加 `.gitignore text eol=crlf` 或一次性統一為 LF。"
+    },
+    {
+      "severity": "info",
+      "file": "n/a",
+      "line": "-",
+      "issue": "本次驗收單第 2 項「側車檔應仍在硬碟」的檢查方式本身有誤：SQLite 在最後連線關閉時就會刪除 WAL/SHM，因此檔案存在與否與 git rm --cached 無關，任何時點檢查都可能誤判。",
+      "suggest": "未來同型 commit 的驗收改為：(1) 確認 diff 為 'deleted file mode 100644'（索引刪除語意）＋(2) 開連線製造側車檔後執行 git add -A，確認 git diff --cached --name-only 不含側車檔。已在本次審查以此法完成驗證。"
+    }
+  ],
+  "summary": "獨立審查 c1796c3b（單一未推 commit，只動 .gitignore 與兩個 SQLite 側車檔索引項，未觸及任何 .py）。根因判定正確：側車檔原受版控，而 SQLite 於最後連線關閉時刪除 WAL/SHM、每次寫入又改內容，使 _audit_closeout.py 的 `git diff --name-only` 每晚必列為未提交 → 常態 ❌；evening_sync 的 `git add -A` 也會把它們重新入索引。實測負向驗證：在連線開啟（側車檔存在）下執行 `git add -A`，側車檔不再被加入索引，且 `git check-ignore -v` 命中 .gitignore:76/77，修法有效。DB 完整可讀（9 表、asset_class 可讀、journal_mode=wal，與 snapshot 真值 cash_total 6,719,182／restricted 5,900,000／total_assets 31,808,561／total_liabilities 36,003,720 全部相符），static_gate.py 與 check_thresholds.py 皆 RC=0（含『決策端 10/10』『雙維度自洽』『穿透完整性』）。副作用蒐證：全 repo 無腳本引用側車檔路徑；以 HEAD 的 .db 單獨開啟、與 HEAD^ 的 .db 單獨開啟／加上被移除的 877,592 bytes WAL 一起開啟，三者資料完全相同 → clone 不會因少了 WAL 而缺料。另有兩項 minor（.gitignore 未用通用 *.db-wal/*.db-shm 樣式；dragon_assets.db 仍受版控且未列 BENIGN_DIRTY，夜間寫庫晚於 commit 時仍可能觸發 ❌，屬既有條件非本 commit 回歸）與兩項 info，均無 blocker/major → APPROVE。審查全程唯讀，測試後已 git reset 並以 git checkout 還原 dragon_assets.db，工作區狀態與審查前一致（僅原有的未追蹤檔 cio_review_range_0929f.json）。"
+}

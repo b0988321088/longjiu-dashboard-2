@@ -179,5 +179,14 @@
     "status": "⏳ 執行中｜檢視日 2026-10-05（本週末對帳）",
     "tags": "還債,質押,清償,現金流",
     "detail": "使用者 9/29 指示：本週把所有高息保單質押覆蓋掉；初步預約 9/30 200 萬＋10/1 100 萬（餘 100 萬本週內）。資金＝9/29 質押撥款 590 萬之指定用途款，可動用 819,182 不受影響。效果：月息 29,629 → 19,629（首批 300 萬，省 10,000/月）→ 16,296（保單清完，省 13,333）→ 13,029（含券商，省 16,600）；指定用途款 590 萬 → 290 萬 → 190 萬 → 90 萬；淨值不變（資產與負債同減，非費用）。入帳器 apply_policy_repay.py（冪等、支援 --undo）。待確認：①券商 100 萬@3.92% 是否納入「所有高利」②實際入帳日與金額（以銀行通知為準）"
+  },
+  {
+    "id": "PEND-20260930-01",
+    "date": "2026-09-30",
+    "title": "閉環稽核 BENIGN_DIRTY 遮蔽窗口（CIO 審查 minor，有界）",
+    "desc": "dragon_assets.db 列入 _audit_closeout.py BENIGN_DIRTY 後，「已追蹤未提交」不再因 DB 變髒而 fail；若寫庫後漏 commit 會靜默放行。有界風險：snapshot.json 未列 benign，仍具 canary 作用。建議實作：DB dirty 且 snapshot.json 乾淨 → ⚠️ 提示；DB 連續髒 > 2 天升回 fail。",
+    "priority": "P2",
+    "status": "pending",
+    "source": "cio_review_audit_0930.json minor-1"
   }
 ]

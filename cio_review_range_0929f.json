@@ -1,0 +1,125 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO (independent review subagent, model=deepseek-v4-flash)",
+  "commit": "ba8f28f62206059dc837062ec208c6a272470619",
+  "reviewed_commits": [
+    "b4a56abcefb65fb8d5cc54176d961906e9d3157d",
+    "bb6f6f93a033abd8705661fca92109f358aeeba5",
+    "6b4aa009ece7de3f77fa5a5b9090f45550282214",
+    "b9a01808543e95adb3f0a06ffa730bbb707ce197",
+    "e0ce59392f2767d7edf7b58efb95682a16992a52",
+    "1a030adf4f61272a77512ae07087d6fd32eb7052",
+    "3cc54cdfab54f724855a43678fd2bdd0fb197ff8",
+    "3e4a018090d50cff450e2e5fb321d6a32026424c",
+    "ca361051ba5a3d2911f86bde2c6cf4a8cdc3c28e",
+    "dd9d7ce71e7d8368b356ea492744993c0ad17e50",
+    "649d34de5e514eeed757e53317a8f190a579a614",
+    "ba8f28f62206059dc837062ec208c6a272470619"
+  ],
+  "reviewed_trees": [
+    "894ef4db2b9f0ba3de1f97fd5349752c786b3b26",
+    "3e77ccd917349e24aedf7ec431528f24c9b8f746",
+    "c0fcb9dd36f8cbe6bf382af37015c22d3b1fb6d0",
+    "962cc3467907dd58f6a2b69eaac28d0796e45cd3",
+    "5fe275466302a5c4bda61bc086ffc508806434a9",
+    "a2bf8305e857133297511a6e315dc44cb9e00ad8",
+    "d3da5b46e364d33ef4f0a52316e85854fc5a2a10",
+    "43ce942a3821ef5d67f3310bea4d437b09cdc7ea",
+    "ca98f821887504909acbe22bb2115f2d768cf94f",
+    "56cde8c9cd38c33569c190dba91fc0e4ffdf43cd",
+    "3681bf7f7555a1eb7c76c4726839fc0e2a4c68aa",
+    "7175a70417a4d839d3e1befa6e3dd31025ab3090"
+  ],
+  "checked": [
+    {
+      "id": 1,
+      "cmd": "git rev-list --count origin/clean-main..HEAD ; git rev-parse HEAD",
+      "result": "count=12 ; HEAD=ba8f28f62206059dc837062ec208c6a272470619 ; working tree clean (git status --short empty)",
+      "status": "PASS"
+    },
+    {
+      "id": 2,
+      "cmd": "python static_gate.py",
+      "result": "✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key） ; RC=0",
+      "status": "PASS"
+    },
+    {
+      "id": 3,
+      "cmd": "python check_thresholds.py",
+      "result": "含『✅ 決策端現金口徑檢查完成（10/10 支）』『✅ 雙維度防禦維度自洽：Σ組成 = 合計 12,722,364』『✅ 穿透完整性：五桶 25,023,738 + 衛星 884,823 + 指定用途款 5,900,000 = 總資產 31,808,561』；RC=0",
+      "status": "PASS"
+    },
+    {
+      "id": 4,
+      "cmd": "HTML 死碼修復驗證：count 投資哲學檢核 / 槓桿風控輸出 + 現金底線行 + run_daily.py 對應段",
+      "result": "daily_report_v2_2026-09-29.html:『投資哲學檢核』x1、『槓桿風控輸出』x1（各≥1）。L530 含『現金底線 可動用 819,182（真值 6,719,182；≥700,000 ✅）』→ 由 run_daily.py:1884-1889 available_cash 分支產出（非死碼）。run_daily.py:1886 用 sot_targets.available_cash；:1888 字串鍵『可動用{_cash_now}/真值{_cash_all}』；:1826-1827 isinstance(v,(int,float)) 已過濾字串鍵；:1913-1916 except 改為 print 告警（不再靜默）",
+      "status": "PASS"
+    },
+    {
+      "id": 5,
+      "cmd": "負向測試（snapshot 備份→cash_total=719182→python -c 直呼→shutil 還原→md5 比對→check_thresholds RC=0）",
+      "result": "available_cash=0.0（clamp；restricted=5,900,000）、health 現金=0.0/現金標準=0/🔴/score=55、trade_plan=不進場（乾粉 0）、run_daily 字串=『現金底線 可動用 0（真值 719,182；≥700,000 🔴）』→ 全數 fail-closed（低於底線 700,000）。還原後 md5 identical=True（f6c834522f3c41d589b311f850aac755）；check_thresholds RC=0",
+      "status": "PASS (見 finding F4：實際 0 而非題目所述 129,182)"
+    },
+    {
+      "id": 6,
+      "cmd": "apply_policy_repay.py 冪等/undo（in-memory，未寫 snapshot）",
+      "result": "①同鍵第二次→跳過、state 不變 True；②undo 反向沖回且淨值不變 True（net_worth 全程 -4,195,159 不變）；③連續兩次 undo 不重複加回 True；④undo 後原鍵可重入 True。測試前後 snapshot.json 與 dragon_assets.db md5 完全不變",
+      "status": "PASS"
+    },
+    {
+      "id": 7,
+      "cmd": "殘值掃描（daily/index/audit/weekly/penetration/rebalance 六份）",
+      "result": "6,719,182 多數帶『真值』；少數裸值見 F3。819,768 多數帶『餘數法』；少數裸值見 F3。同頁 819,182（可動用）與 819,768（桶位餘數）以不同名義並列，未見同名義兩值",
+      "status": "PASS (含 F3 標註 minor)"
+    },
+    {
+      "id": 8,
+      "cmd": "負向思考：掃 `except Exception` 接 `pass`（渲染段盤點）",
+      "result": "共 15 處 pass（run_daily 13、regenerate_report 5、rotation_engine 2、asset_diff_monitor 3、build_rebalance_report 1、build_weekly_report 1 中渲染相關者見 F1/F2）",
+      "status": "PASS (含 F1/F2 minor)"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "minor",
+      "file": "run_daily.py:1917-1918",
+      "title": "外層 except Exception: pass 仍靜默（覆蓋專業投資人卡 1738-1763）",
+      "detail": "內層 try(1764)-except(1913) 已改為顯式告警，投資哲學檢核／槓桿風控／質押口徑卡確實在關鍵路徑內且已不靜默 → 第八輪 major 已封閉。但外層 try(1738)-except(1917):pass 仍吞掉『專業投資人風控卡』段落（1738-1763）的任何例外且無告警，屬同一 fail-mode 類別之殘留。建議：改為 print 告警（保留卡片不中斷）。"
+    },
+    {
+      "id": "F2",
+      "severity": "minor",
+      "file": "run_daily.py:1612 / 1983 / 2086 ; regenerate_report.py:408",
+      "title": "渲染路徑存在靜默 except pass",
+      "detail": "run_daily.py:1612（對策表 rebuild 失敗→靜默，可能導致口徑回退舊值）、:1983（rhythm08 卡外層）、:2086 build_cc_rows（信用卡表整表靜默變空）、regenerate_report.py:408（index.html 回寫 roll 靜默）。這些非本次案件核心，但皆為『整段卡無聲消失』的潛在來源。"
+    },
+    {
+      "id": "F3",
+      "severity": "minor",
+      "file": "daily/index/audit/weekly/penetration/rebalance_report",
+      "title": "殘值標註缺漏（非數值錯誤）",
+      "detail": "6,719,182 未帶『真值』：daily L420（『帳上現金因此為 6,719,182』）、index L526（data-k=cash_total 顯示 6,719,182）。819,768 未帶『餘數法』：daily L427、audit L68、weekly L46、penetration L35/L141、rebalance_report L86。數值本身正確，僅標籤可讀性/口徑辨識問題。"
+    },
+    {
+      "id": "F4",
+      "severity": "info",
+      "title": "負向測試規格算術：實際 0，非 129,182",
+      "detail": "cash_total=719,182 且 restricted_cash.金額=5,900,000 → available_cash=max(0, 719182-5900000)=0（clamp）。題目所述 129,182 = 719,182-590,000（誤將 590 萬當 59 萬）。行為仍正確 fail-closed（🔴、乾粉 0、<底線 700,000），不構成程式缺陷。"
+    },
+    {
+      "id": "F5",
+      "severity": "info",
+      "title": "check_thresholds 渲染行檢查本輪被略過",
+      "detail": "check_thresholds.py:76 讀 daily_report_v2_<today>.html；系統日=2026-09-30 但日報檔名為 2026-09-29 →『⏭️ 日報檔不存在 → 未驗渲染行』（INC-238 設計）。本輪已由人工直接檢查 HTML 覆蓋（見 checked #4）。"
+    },
+    {
+      "id": "F6",
+      "severity": "info",
+      "title": "淨值一致性佐證",
+      "detail": "net_worth = 31,808,561 - 36,003,720 = -4,195,159，與真值一致；apply_policy_repay 清償+undo 全程淨值不變（記帳正確）。"
+    }
+  ],
+  "summary": "推範圍 12 筆（b4a56ab..ba8f28f）獨立覆審。第 2/3 項閘門 RC=0 且含全部指定字串；第八輪 major（哲學檢核卡在死碼路徑）已確認修復：日報實際含『投資哲學檢核』x1、『槓桿風控輸出』x1，現金底線行『可動用 819,182（真值 6,719,182；≥700,000 ✅）』由 available_cash 分支產出，run_daily.py:1913-1916 except 已改顯式告警，isinstance 過濾字串鍵已就位。負向測試（cash_total=719,182）全鏈 fail-closed；apply_policy_repay 冪等/undo（含雙 undo 不重複加回、undo 後可重入）4/4 通過且未寫檔（snapshot/DB md5 不變、已還原）。殘值掃描標註完整度見 F3。無 blocker／major，僅 3 minor＋3 info，故 verdict=APPROVE。"
+}
