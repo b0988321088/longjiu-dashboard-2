@@ -8,7 +8,7 @@ import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
 import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
 from pathlib import Path
 
-REPO = Path(r"C:\Users\bot\Desktop\longjiu_system")
+REPO = Path(__file__).resolve().parent  # 2026-09-29 CIO minor：去硬編碼路徑
 today = datetime.date.today().isoformat()
 week_ago = (datetime.date.today() - datetime.timedelta(days=7)).isoformat()
 

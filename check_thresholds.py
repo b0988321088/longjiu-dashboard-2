@@ -93,6 +93,23 @@ def check_daily_report_row(snap: dict, errs: list[str]) -> str:
     for _tok in ("MMF", "貨幣基金"):
         if _tok in _seg and not any(_tok in str(k) for k in _fb.get("國泰直購", {})):
             errs.append(f"日報基金部位行仍描述「{_tok}」停泊，但 snapshot 國泰直購已無該標的（字樣需同步）")
+
+    # 2026-09-29 CIO major：日報「可動用流動資金」不得等於現金真值（指定用途款不得當可動用）。
+    # 這條斷言抓的是「顯示端拿不到 restricted_cash 就當 0」的靜默失敗（regenerate_report.py 路徑曾中招）。
+    try:
+        from sot_targets import restricted_cash as _rst_fn
+        _rst = _rst_fn(snap)
+    except Exception:
+        _rst = float(((snap.get("restricted_cash") or {}) or {}).get("金額") or 0)
+    if _rst > 0:
+        _cash_all = float(snap.get("cash_total") or 0)
+        _avail = max(0.0, _cash_all - _rst)
+        if f"可動用流動資金 {_cash_all:,.0f}" in _h:
+            errs.append(f"日報「可動用流動資金」＝現金真值 {_cash_all:,.0f}（未扣指定用途款 {_rst:,.0f}，應為 {_avail:,.0f}）")
+        elif f"可動用流動資金 {_avail:,.0f}" not in _h:
+            errs.append(f"日報缺「可動用流動資金 {_avail:,.0f}」字樣（口徑缺漏或格式已變）")
+        else:
+            print(f"✅ 日報可動用流動資金口徑：{_avail:,.0f}（真值 {_cash_all:,.0f} − 指定用途款 {_rst:,.0f}）")
     return "ok"
 
 

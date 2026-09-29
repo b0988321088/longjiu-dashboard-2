@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """build_rebalance_report.py — 再平衡評估網頁（動態讀 snapshot，2026-08-14 建立）"""
 import json, datetime, os
+from pathlib import Path
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
 
-REPO = r"C:\Users\bot\Desktop\longjiu_system"
+# 2026-09-29 CIO minor：勿硬編碼路徑（隔離樹／沙盒執行會被導回正式倉庫）
+REPO = str(Path(__file__).resolve().parent)
 today = datetime.date.today().strftime("%Y-%m-%d")
 
 def load():

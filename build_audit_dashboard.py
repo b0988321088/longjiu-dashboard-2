@@ -141,7 +141,7 @@ rows = f"""
 {kpi("總資產", f"{TA:,}", "不含不動產", "#1d1d1f")}
 {kpi("淨值", f"{net_worth:,}", "資產+不動產−負債", "#3b82f6")}
 {kpi("負債比", f"{debt_ratio:.1f}%", f"負債 {TL:,}", "#d97706")}
-{kpi("純現金", f"{CASH:,}", f"底線 70萬 {cash_ok}" + (f"｜含指定清償款 {RESTRICTED/10000:.0f}萬" if RESTRICTED else ""), "#22c55e" if CASH_AVAIL>=700000 else "#ef4444")}
+{kpi("純現金（可動用）", f"{CASH_AVAIL:,}", f"真值 {CASH:,}" + (f" − 指定清償款 {RESTRICTED/10000:.0f}萬" if RESTRICTED else "") + f"｜底線 70萬 {cash_ok}", "#22c55e" if CASH_AVAIL>=700000 else "#ef4444")}
 {kpi("Runway", f"{runway:.1f} 月", f"可動用 {CASH_AVAIL:,} / 月支出 {EXP:,}")}
 {kpi("被動覆蓋", f"{cov:.0f}%", f"配息 {DIV:,} + 房租 {RENT:,}", "#22c55e")}
 </div>

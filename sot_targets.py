@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import datetime as dt
+from pathlib import Path  # 2026-09-29：restricted_cash 缺 key 時回退讀 snapshot.json 用
 
 SOT_KEY = "thresholds_2026_0915"
 
@@ -148,15 +149,24 @@ def restricted_cash(snap: dict) -> float:
     真值來源＝snapshot.restricted_cash.金額（禁寫死）；清償入帳後由該欄歸零即自動解除。
     2026-09-29 使用者核准：避免「指定還債款」被當超額現金 → 桶位假超標觸發自動減碼。
     """
-    _rc = (snap or {}).get("restricted_cash") or {}
-    if isinstance(_rc, dict):
+    def _parse(_v) -> float:
+        if isinstance(_v, dict):
+            _v = _v.get("金額")
         try:
-            return float(_rc.get("金額") or 0)
-        except (TypeError, ValueError):
+            return float(_v or 0)
+        except (TypeError, ValueError, AttributeError):
             return 0.0
+
+    if isinstance(snap, dict) and "restricted_cash" in snap:
+        return _parse(snap.get("restricted_cash"))
+    # 2026-09-29 CIO major：呼叫端拿到的可能是不含該欄的精簡 dict（例：run_daily.calibrate_sources()
+    # 的回傳值，regenerate_report.py 走的就是這條生產路徑）→ 缺 key 一律回退讀 snapshot.json，
+    # 否則顯示端會把質押撥款 590 萬當可動用現金。
     try:
-        return float(_rc or 0)
-    except (TypeError, ValueError, AttributeError):
+        import json as _json
+        _p = Path(__file__).resolve().parent / "snapshot.json"
+        return _parse((_json.loads(_p.read_text(encoding="utf-8")) or {}).get("restricted_cash"))
+    except Exception:
         return 0.0
 
 

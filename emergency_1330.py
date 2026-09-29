@@ -13,14 +13,19 @@ def run_step(label, cmd, timeout=120):
     try:
         r = subprocess.run(cmd, cwd=str(LJ), capture_output=True, text=True, timeout=timeout)
         if r.returncode != 0:
-            print(f"❌ 失敗\\n{r.stderr[:200]}")
-            return False
+            # 2026-09-29 CIO minor：rc=3 ＝ 推送閘門（未經審查/未落紀錄）刻意擋下，不是程式錯誤；
+            # 原訊息一律印「失敗」→ 無法區分，還被當成管線壞掉。
+            if r.returncode == 3:
+                print("⏸ 待審（推送閘門擋下，非程式錯誤）")
+            else:
+                print(f"❌ 失敗\n{r.stderr[:200]}")
+            return r.returncode
         out = r.stdout.strip()
         if out:
             for l in out.split("\\n")[-3:]:
                 print(f"  {l}")
         print("✅")
-        return True
+        return 0
     except subprocess.TimeoutExpired:
         print("❌ 超時")
         return False
@@ -308,9 +313,15 @@ _ok_report = run_step("日報+儀表板", [sys.executable, str(LJ / "regenerate_
 _ok_diff = run_step("差異分析", [sys.executable, str(LJ / "asset_diff_monitor.py")], 60)
 _ok_push = run_step("推送", [sys.executable, str(LJ / "daily_deploy.py")], 600)
 
-_failed = [n for n, k in (("日報+儀表板", _ok_report), ("差異分析", _ok_diff), ("推送", _ok_push)) if not k]
+_rcs = {"日報+儀表板": _ok_report, "差異分析": _ok_diff, "推送": _ok_push}
+_failed = [n for n, rc in _rcs.items() if rc not in (0, 3)]
+_blocked = [n for n, rc in _rcs.items() if rc == 3]
+if _blocked:
+    print(f"\n⏸ [{datetime.now().strftime('%H%M')}] 待審未推送：{'、'.join(_blocked)}（rc=3 推送閘門，非失敗）")
 if _failed:
     print(f"\n❌ [{datetime.now().strftime('%H%M')}] 緊急應變未完成（失敗步驟：{'、'.join(_failed)}）")
     sys.exit(1)
+if _blocked:
+    sys.exit(3)
 
 print(f"\n✅ [{datetime.now().strftime('%H%M')}] 緊急應變完成")

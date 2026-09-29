@@ -1,0 +1,58 @@
+{
+  "verdict": "REJECT",
+  "reviewer": "CIO-reviewer",
+  "commit": "28995540",
+  "checked": [
+    "git rev-parse/status：審查起始 HEAD=28995540017c1c8ef293eae93cb5db19b5ed6332（tree c2643899a1b0）；審查期間作者仍持續改檔並提交，HEAD 依序推進 eabfe7e3 → 99c4d771 → ae10be6c（共 18 筆未推）。為避免測到未提交的半成品，另以 `git archive 28995540 | tar -x` 匯出該 commit 的乾淨樹到 %LOCALAPPDATA%/Temp/longjiu_rev_28995540，以下 [S] 標記者=在該乾淨樹實跑、[L] 標記者=在正式倉庫實跑。",
+    "[S] python static_gate.py → '✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key）' RC=0（未引入 F821/F823/F811/F601 類新問題）。",
+    "[L] python static_gate.py → 同上 ✅ RC=0（現行工作樹亦通過）。",
+    "[S] 必修1：python -c 'import update_all,json; p=update_all.calc_penetration(snap 真值帶 snap=snapshot)' → alert='台股市值型成長 不足3.6pp；美股市值型成長 超標2.2pp；債券 不足1.6pp；債券及安全現金 不足4.0pp；科技曝險 不足2.6pp；防守合併口徑 56.0% 不足 4.0pp'；由 gap 反推實際值＝台股 6.4／美股 32.2／防守 14.1／債券 23.4／現金 2.6，與 snapshot.penetration.actual_pct 完全一致；同一支函式若改用「已扣款分母」會得 7.8／39.5／17.4／28.7／3.2（已排除）。",
+    "[S] 必修1（報告端）：python build_penetration_report.py → 產出 penetration_report_2026-09-29.html（21,680 bytes），實測表格『台股市值型 2,029,878 ｜ 6.4% ｜ 10% ｜ -3.6pp』、『美股 32.2%（含科技 12.4%／非科技 19.7%）』＝與 alert 同分母；重跑後比對 snapshot.penetration 的 actual_pct/gaps/alert/targets/restricted_cash 五欄皆 IDENTICAL（冪等）。",
+    "[S] 必修3：python -c 'import passive_caliber; passive_caliber.scenarios(snapshot)' → cash=819,182（6,719,182−5,900,000）、extreme.runway_days=688.7548；同一支函式若用 cash_total 會得 5,649.3781 天（已用同一公式實算對照，即原 REJECT 所述 5,649 天）。688.75 ≥ 540 → 留停 A 級門檻不再被質押撥款墊高。",
+    "[S] 必修3（審計儀表板）：python build_audit_dashboard.py → audit_dashboard_2026-09-29.html 實測『純現金 Runway ｜ 819,182.0 / 162,781 ｜ 5.0 個月』（舊口徑為 6,719,182/162,781≈41.3 個月）。",
+    "[L] 必修2：python sync_all.py（我實跑，RC=1，7/20 步）→ 第 1～6 步全綠：靜態閘門✅／門檻SoT檢查✅（9 區塊、5 消費端）／同義欄位驗證✅／日報✅／日報口徑閘門✅／穿透報告✅，止於第 7 步『台股緊急應變』。",
+    "[L] python regenerate_report.py（實跑，止於 rc=3『⚠️ 未推送上線』後整體 RC=1）→ 失敗點確認為 CIO 推送閘門（auto_push rc=3：推送範圍含未審 commit 28995540／abd05a6d），非程式錯誤；CIO 審查 12 項自檢（含『巴菲特分析完整』『日報口徑閘門』）全部 ✅ 但仍未攔到本報告的 major。",
+    "[L] 同日交付物交叉比對：daily_report_v2_2026-09-29.html 實測『可動用流動資金 6,719,182』，index.html 實測『可動用現金 819,182（Moneybook 真值 6,719,182 － 質押撥款指定清償款 5,900,000）』→ 兩份同日交付物對『可動用』互相矛盾。",
+    "[L] minor4 複驗：fresh 日報實測『美股市值型成長 32.2%（10,235,528｜目標 30｜超標 2.2pp）→ 其中科技 12.4%…』＝已改讀 penetration.actual_pct，不再混 DB 啟發式口徑 ✅。",
+    "[L/S] minor 複驗：build_rebalance_report.py（沙盒內將硬編碼 REPO 指到沙盒後實跑）→ 實測『現金 ≥ 70 萬（可動用口徑）✅｜可動用 819,182（真值 6,719,182 − 指定清償款 5,900,000…）』，卡片列亦為 819,182 ✅。",
+    "[L] python cio_approve.py --status → HEAD（ae10be6c）已審、但 28995540 與 abd05a6d 仍 ❌ 未審；18 筆未推。"
+  ],
+  "findings": [
+    {
+      "severity": "major",
+      "file": "regenerate_report.py / run_daily.py",
+      "line": "regenerate_report.py:102（tv = calibrate_sources()）＋ regenerate_report.py:253（render_daily_report(tv, ...)）／run_daily.py:1230-1236（_dbs_rst = float((tv.get(\"restricted_cash\") or {}).get(\"金額\") or 0)）",
+      "issue": "必修2 只在 run_daily.main() 路徑修好；regenerate_report.py 這條產報路徑（＝sync_all 第 7 步／緊急應變／cron 產日報的主路徑）直接 tv = calibrate_sources()，而 calibrate_sources() 實測不回傳 restricted_cash（tv.restricted_cash = None），該檔在 28995540 內 grep restricted_cash 命中 0 次 → render_daily_report 內的扣款取得 0，日報仍把質押撥款當可動用。實跑 python regenerate_report.py 產出的 daily_report_v2_2026-09-29.html 實測出現兩次『可動用流動資金 6,719,182 TWD（Moneybook 真值 6,719,182），餘裕充足 ✅』（未扣 5,900,000、無任何警語），且 12 項 CIO 自檢全綠未攔截 → 靜默把還債款當可動用，正是本輪 REJECT 要防的那個錯。同日 index.html 顯示 819,182，兩份交付物互相矛盾。",
+      "suggest": "顯示端不要依賴「上游有沒有塞 key」：(1) render_daily_report 內直接讀 snapshot.json 的 restricted_cash（單一真值），或讓 sot_targets.restricted_cash() 在 snap 缺 key 時 fallback 讀 snapshot；讀不到時在報告內印⚠️警語而非靜默回退；(2) regenerate_report.py 比照 run_daily.main() 補 tv['restricted_cash']；(3) 加一條日報產物斷言（日報內『可動用流動資金』必須等於 snapshot.available_cash）納入日報口徑閘門。"
+    },
+    {
+      "severity": "minor",
+      "file": "build_audit_dashboard.py",
+      "line": "18-21（CASH_AVAIL 定義）／144（kpi(\"Runway\", ...)）／KPI『純現金』卡",
+      "issue": "同頁兩個『純現金』口徑不一致：KPI 卡實測顯示『純現金 6,719,182（綠字）｜底線 70萬 ✅｜含指定清償款 590萬』——數值是真值、燈號卻用可動用 819,182 判定；而同頁表格列『純現金 Runway』顯示 819,182.0/162,781＝5.0 個月。今日兩者皆過 70 萬故無假燈，但一旦可動用 < 70 萬就會出現『純現金 6,719,182 標 ❌』的視覺矛盾。",
+      "suggest": "KPI 標籤正名（『現金（真值，含指定用途款）』），把燈號判定的口徑寫在副標；或該卡數值直接改用 CASH_AVAIL，真值另列。"
+    },
+    {
+      "severity": "minor",
+      "file": "build_rebalance_report.py",
+      "line": "6（REPO = r\"C:\\Users\\bot\\Desktop\\longjiu_system\"）",
+      "issue": "產報腳本硬編碼正式倉庫絕對路徑（institutional_flow.py:26、build_weekly_report.py:11 同型），而非由 __file__ 推導。任何非正式路徑執行（沙盒/換機/平行驗證）都會被導回正式倉庫讀寫——本次審查就必須先改此行才能在隔離目錄實跑，否則會污染正式倉庫。本次 commit 未引入此寫法，屬既存脆弱點。",
+      "suggest": "改成 REPO = Path(__file__).resolve().parent，硬編碼路徑僅留作 fallback。"
+    },
+    {
+      "severity": "minor",
+      "file": "sync_all.py / emergency_1330.py",
+      "line": "emergency_1330.py:309-314（run_step 三段的失敗彙總）",
+      "issue": "第 7 步失敗訊息只印『❌ [2238] 緊急應變未完成（失敗步驟：日報+儀表板）』，看不出是『推送被 CIO 閘門擋下（rc=3，屬設計行為）』還是『產報/檢查真的失敗』；我必須另外單跑 regenerate_report.py（實測 rc=3 → 整體 RC=1）才能判定。審查者/值班者容易誤判為程式壞掉。",
+      "suggest": "run_step 失敗時把子流程 rc 與最後一行 stderr 併入訊息（例如『日報+儀表板 rc=1（推送被閘門擋：auto_push rc=3）』），並在閘門被擋時以固定字樣區分。"
+    },
+    {
+      "severity": "info",
+      "file": "（流程）repo HEAD",
+      "line": "28995540 vs HEAD ae10be6c",
+      "issue": "審查期間 HEAD 連推三次（eabfe7e3 四源同步 → abd05a6d refactor 單一實作 sot_targets.restricted_cash() → 99c4d771/ae10be6c 四源同步），且 28995540、abd05a6d 目前 cio_approve --status 皆 ❌。本輪 verdict 綁定 28995540 的 tree（c2643899a1b0）；我已驗證 abd05a6d 的重構只是把同一段邏輯換成呼叫 sot_targets.restricted_cash()（回傳值語意相同，且 snap 缺 key 時同樣回 0.0 → 上述 major 在 HEAD 依然存在，實跑 HEAD 亦重現）。",
+      "suggest": "核准請綁定最終 HEAD 的 tree hash 一次審；推送範圍內仍有未審 commit 時，核准單一 commit 推不上去。"
+    }
+  ],
+  "summary": "上一輪 REJECT 的三個 major 在 28995540 的計算端都真的修好了：實跑 calc_penetration 得 6.4／32.2／14.1／23.4／2.6 且 alert/gaps 與 build_penetration_report 同分母（舊 7.8／39.5／28.7 已排除）、passive_caliber.scenarios 極端跑道 688.75 天（舊口徑 5,649 天，A 級門檻 540 天不再被墊高）、build_audit_dashboard 純現金 Runway 5.0 個月，static_gate 兩樹皆通過，sync_all 前 6 步全綠。但必修2 只修到 run_daily.main() 那條路：生產路徑 regenerate_report.py 不帶 restricted_cash（該檔 grep 命中 0 次），我實跑它產出的日報仍印『可動用流動資金 6,719,182（Moneybook 真值 6,719,182），餘裕充足 ✅』，且 12 項 CIO 自檢全綠未攔截——同日 index.html 卻顯示 819,182，兩份交付物互相矛盾，靜默程度與原缺陷相同。此屬 major（未修完＋無閘門），依規則不得 APPROVE，故 verdict=REJECT；另有 3 項 minor（審計儀表板同頁『純現金』口徑不一致、產報腳本硬編碼絕對路徑、第 7 步失敗訊息無法區分閘門與真錯）建議一併處理。另提醒：sync_all 第 7 步與 regenerate_report.py 的失敗確為 CIO 推送閘門（auto_push rc=3，範圍含未審 commit），屬設計行為非程式錯誤；且審查期間 HEAD 已推進至 ae10be6c、28995540 至今未審，核准請改綁最終 tree。"
+}

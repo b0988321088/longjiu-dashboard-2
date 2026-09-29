@@ -1224,9 +1224,13 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 
     # 動態 DBS note（2026-08-06：去硬編碼 8/1/17,000，改讀校準後現金真值）
     # 2026-09-29 CIO 審查必修2：原寫「可動用流動資金 = cash_total」→ 把質押撥款指定清償款當可動用。
-    _dbs_cash = float(tv.get("cash_total", 0) or 0)
+    try:
+        _dbs_snap = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
+    except Exception:
+        _dbs_snap = {}
     from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
-    _dbs_rst = _rst_fn(tv)
+    _dbs_cash = float(tv.get("cash_total") or _dbs_snap.get("cash_total") or 0)
+    _dbs_rst = _rst_fn(tv if "restricted_cash" in tv else _dbs_snap)
     _dbs_avail = max(0.0, _dbs_cash - _dbs_rst)
     _dbs_str = (f"可動用流動資金 {_dbs_avail:,.0f} TWD（Moneybook 真值 {_dbs_cash:,.0f}"
                 + (f" − 指定清償款 {_dbs_rst:,.0f}" if _dbs_rst else "")
