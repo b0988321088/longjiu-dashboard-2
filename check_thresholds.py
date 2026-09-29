@@ -184,6 +184,30 @@ def main() -> int:
     except (TypeError, ValueError) as e:
         errs.append(f"雙維度防禦維度欄位無法解析：{e}")
 
+    # ②c 負債月息口徑自洽（2026-09-30 使用者核准動態化：利息項禁寫死，三項相加必等動態值與合計）
+    try:
+        from sot_targets import liability_interest as _li_fn   # noqa: E402
+        _li = _li_fn(snap)
+        _mfe = snap.get("monthly_fixed_expense") or {}
+        _lk = ("保單借貸利息", "券商質押利息", "基金質押利息")
+        _mfe_int = sum(float(_mfe.get(k) or 0) for k in _lk)
+        if abs(_mfe_int - float(_li["合計"])) > 1:
+            errs.append(f"月支出利息口徑不一致：monthly_fixed_expense 三項 {_mfe_int:,.0f} ≠ sot_targets 動態值 {_li['合計']:,.0f}")
+        else:
+            print(f"✅ 負債月息自洽：保單 {_li['保單借貸利息']:,} + 券商 {_li['券商質押利息']:,} + 基金質押 {_li['基金質押利息']:,} = {_li['合計']:,}")
+        _lines = sum(float(_mfe.get(k) or 0) for k in ("生活支出", "醫療_常態回診", "房貸_永豐", "房貸_國泰", *_lk))
+        if abs(_lines - float(_mfe.get("合計") or 0)) > 1:
+            errs.append(f"monthly_fixed_expense 分項相加 {_lines:,.0f} ≠ 合計 {_mfe.get('合計')}")
+        if abs(float(snap.get("monthly_expense") or 0) - float(_mfe.get("合計") or 0)) > 1:
+            errs.append(f"monthly_expense {snap.get('monthly_expense')} ≠ monthly_fixed_expense.合計 {_mfe.get('合計')}")
+        _sc = (snap.get("sabbatical_checklist") or {}).get("記錄") or {}
+        _last = _sc.get(sorted(_sc.keys())[-1]) if _sc else None
+        if isinstance(_last, dict) and _last.get("每月負債成本") is not None:
+            if abs(float(_last["每月負債成本"]) - float(_li["合計"])) > 1:
+                errs.append(f"留停記錄.每月負債成本 {_last['每月負債成本']} ≠ 動態值 {_li['合計']}（請重跑 sabbatical_checklist_update.py）")
+    except (TypeError, ValueError) as e:
+        errs.append(f"負債月息口徑檢查失敗：{e}")
+
     # ②a 決策/評分/跑道端不得裸用 cash_total（2026-09-29 INC-254~256：同一病在 9 支腳本輪流復發）
     #     這些檔案的現金一律須經 sot_targets（available_cash／restricted_cash）才可進入判斷。
     _DECISION_ENDPOINTS = [

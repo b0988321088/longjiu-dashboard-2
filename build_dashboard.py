@@ -225,7 +225,10 @@ def main():
             rep["__RISK_NODE__"] = ("凍結紅線：US30Y ≥5.30% 全面凍結債券配置、提高現金水位。"
                                     f"關鍵節點：{_nodes}")
             _chain = [x for x in [_row_of("保單轉換").get("內容", ""), _row_of("質押").get("內容", "")] if x]
-            rep["__RISK_CHAIN__"] = "📌 資金鏈現況：" + ("；".join(_chain) if _chain else "待雷達更新")
+            from sot_targets import restricted_breakdown as _rbk_d
+            _rbk_txt = _rbk_d(snap)
+            rep["__RISK_CHAIN__"] = ("📌 資金鏈現況：" + ("；".join(_chain) if _chain else "待雷達更新")
+                                     + (f"｜{_rbk_txt}" if _rbk_txt else ""))
             rep["__RADAR_SIGNALS__"] = _signals_txt
             rep["__RADAR_PLAN__"] = "｜".join(_plan)
             rep["__RADAR_POLICY__"] = _policy_txt

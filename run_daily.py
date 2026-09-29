@@ -399,17 +399,22 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _sin = _mfe.get("房貸_永豐", 65_735) or 0
     _cat = _mfe.get("房貸_國泰", 26_000) or 0
     _mort = _sin + _cat
-    _int = _mfe.get("保單借貸利息", 13_333)
-    _yua = _mfe.get("元大證金利息", 3_267)
-    _fixed_total = _mfe.get("合計", _life + _med + _mort + _int + _yua)
+    # 2026-09-30 使用者核准：利息項改由 sot_targets 單一來源動態計算（禁寫死 fallback；
+    # 券商清償後 3,267 歸零、新基金質押 590 萬@2.65% 月息 13,029 自動計入）。
+    from sot_targets import liability_interest as _li_fn
+    _li = _li_fn(_sn2)
+    _int = _li["保單借貸利息"]
+    _yua = _li["券商質押利息"]
+    _fund_int = _li["基金質押利息"]
+    _fixed_total = _mfe.get("合計", _life + _med + _mort + _li["合計"])
     _rent = _sn2.get("rent_monthly_total", 80_100) or 0
     _mort_net = _mort - _rent
     _cash_out = _sn2.get("monthly_expense_cash", _life + _med + _mort) or 0
-    _accrual = _sn2.get("monthly_expense_accrual", _int + _yua) or 0
+    _accrual = _sn2.get("monthly_expense_accrual", _li["合計"]) or _li["合計"]
     _fixed_expense_html = f"""    <div class="callout" style="margin-top:10px;border-left:3px solid #3b82f6">
       <strong>📌 每月固定支出：{_fixed_total:,}</strong>（現金扣帳 {_cash_out:,} ＋ 帳上計息 {_accrual:,}）<br>
-      生活 {_life:,} ｜ 醫療 {_med:,} ｜ 房貸 {_mort:,}（永豐 {_sin:,} + 國泰 {_cat:,}）｜ 保單借貸利息 {_int:,} ｜ 元大證金 {_yua:,}
-      <br/><span style="color:#64748b;font-size:12px">與銀行實際扣款比對請用「現金扣帳」口徑（帳上計息＝保單息＋元大息，不從帳戶扣）｜房租收入 {_rent:,} 覆蓋房貸 {_mort_net:+,} 缺口（{_mort/_rent*100:.0f}% 覆蓋）｜女友還款 6,000 為收入（至12/5）</span>
+      生活 {_life:,} ｜ 醫療 {_med:,} ｜ 房貸 {_mort:,}（永豐 {_sin:,} + 國泰 {_cat:,}）｜ 保單借貸利息 {_int:,}{f" ｜ 券商質押利息 {_yua:,}" if _yua else ""}{f" ｜ 基金質押利息 {_fund_int:,}" if _fund_int else ""}
+      <br/><span style="color:#64748b;font-size:12px">與銀行實際扣款比對請用「現金扣帳」口徑（帳上計息＝保單＋券商＋基金質押三項利息之和（動態），不從帳戶扣）｜房租收入 {_rent:,} 覆蓋房貸 {_mort_net:+,} 缺口（{_mort/_rent*100:.0f}% 覆蓋）｜女友還款 6,000 為收入（至12/5）</span>
     </div>
 """
 
@@ -1238,9 +1243,12 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _dbs_avail = max(0.0, _dbs_cash - _dbs_rst)
     # 2026-09-29 CIO minor：判定門檻＝現金底線（SoT），不再寫死 30,000
     _dbs_floor = float(((tv.get("thresholds_2026_0915") or {}).get("現金_twd") or {}).get("合計底線") or 700000)
+    from sot_targets import restricted_breakdown as _rbk_fn   # 單一來源（2026-09-30）
+    _dbs_bk = _rbk_fn(tv if "restricted_cash" in tv else _dbs_snap)
     _dbs_str = (f"可動用流動資金 {_dbs_avail:,.0f} TWD（Moneybook 真值 {_dbs_cash:,.0f}"
                 + (f" − 指定清償款 {_dbs_rst:,.0f}" if _dbs_rst else "")
-                + f"），{'餘裕充足 ✅' if _dbs_avail >= _dbs_floor else f'🔴 已低於底線 {_dbs_floor:,.0f}'}")
+                + f"），{'餘裕充足 ✅' if _dbs_avail >= _dbs_floor else f'🔴 已低於底線 {_dbs_floor:,.0f}'}"
+                + (f"<br/><span style='color:#64748b;font-size:12px'>{_dbs_bk}（轉帳中者待 MB／截圖確認才入帳）</span>" if _dbs_bk else ""))
     html = html.replace("{_dbs_note}", _dbs_str)
 
     # 機構流向雷達（2026-08-22：讀 radar_state.json，盤後更新、隔日報生效）

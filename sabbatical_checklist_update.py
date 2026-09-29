@@ -121,7 +121,10 @@ def compute_kpis(snap):
     # 單一間房的貸款。故房租淨現金流 ＝ 常態房租收入本身（房租無直接成本項）。
     # （同日先前「只扣大義街」與「扣兩筆合計」兩版皆作廢。）
     rent_net = rent
-    liab_cost = 16600                 # 保單借貸 13,333 + 元大證金 3,267（利息）
+    # 2026-09-30 使用者核准：改由 sot_targets 單一來源動態計算（原寫死 16,600＝保單 13,333＋元大 3,267，
+    # 券商清償後不會降、新基金質押月息 13,029 也不會被計入）。
+    from sot_targets import liability_interest as _li_fn
+    liab_cost = int(_li_fn(snap)["合計"])
     coverage = round(_pcs["con"]["coverage"], 1)
     stress = round(_pcs["stress"]["coverage"], 1)
     # 2026-09-28：極端情境改讀 passive_caliber（原本此處自算 div_c×0.7＋空置，

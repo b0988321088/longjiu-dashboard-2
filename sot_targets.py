@@ -177,3 +177,42 @@ def available_cash(snap: dict) -> float:
     except (TypeError, ValueError, AttributeError):
         _cash = 0.0
     return max(0.0, _cash - restricted_cash(snap))
+
+def liability_interest(snap: dict) -> dict:
+    """負債月息明細（單一來源｜2026-09-30 使用者核准動態化）。
+
+    各項＝餘額 × 利率 / 12；餘額/利率一律讀 snapshot.liabilities_build_up（禁寫死）。
+    房貸不列入（房貸月付已以「房貸」項計入月支出，再算利息＝重複）。
+    用途：sabbatical_checklist_update 的「每月負債成本」、run_daily 的月支出口徑、check_thresholds 不變式。
+    """
+    lb = snap.get("liabilities_build_up") or {}
+    _map = [
+        ("保單借貸利息", "保單借貸", "保單借貸利率", 0.04),
+        ("券商質押利息", "券商質押", "券商質押利率", 0.0392),
+        ("基金質押利息", "基金質押", "基金質押利率", 0.0265),
+    ]
+    out: dict = {}
+    for name, bal_key, rate_key, dflt_rate in _map:
+        bal = float(lb.get(bal_key) or 0)
+        rate = float(lb.get(rate_key) or dflt_rate or 0)
+        out[name] = round(bal * rate / 12)
+    out["合計"] = sum(v for k, v in out.items() if k != "合計")
+    out["_note"] = "保單借貸＋券商質押＋基金質押之月息；房貸不計（已於月支出以房貸項計入）｜來源 snapshot.liabilities_build_up"
+    return out
+
+def restricted_breakdown(snap: dict) -> str:
+    """指定用途款明細（先註記、後入帳）— 報告用單行文字（單一來源）。
+
+    使用者 2026-09-30 指示：指定用途款要「註記原始撥款 590 萬＋各筆狀態」，
+    已入帳（截圖確認）才寫入；轉帳中（未確認）只標「執行中」，不動帳。
+    """
+    rc = snap.get("restricted_cash") or {}
+    rows = rc.get("明細") or []
+    if not rows:
+        return ""
+    _icon = lambda st: ("✅" if "已清償" in st or "已入帳" in st else ("🔄" if "執行中" in st else "⏳"))
+    parts = [f"{_icon(str(x.get('狀態','')))} {x.get('簡稱') or str(x.get('項目',''))[:10]} {float(x.get('金額') or 0)/10000:.0f}萬"
+             for x in rows]
+    _orig = float(rc.get("原始撥款") or 0)
+    _head = f"指定用途款 {_orig/10000:.0f}萬" if _orig else "指定用途款"
+    return _head + "＝" + "＋".join(parts)
