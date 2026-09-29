@@ -51,7 +51,7 @@ def main():
     if days:
         f, l = hist[days[0]], hist[days[-1]]
         pairs = [("總資產", "total_assets"), ("總負債", "total_liabilities"), ("證券市值", "securities_market"),
-                 ("保單現值", "insurance_current"), ("基金市值", "fund_market"), ("現金", "cash")]
+                 ("保單現值", "insurance_current"), ("基金市值", "fund_market"), ("現金（帳戶層真值）", "cash")]
         for label, k in pairs:
             a, b = f.get(k, 0), l.get(k, 0)
             diff = b - a
@@ -102,11 +102,15 @@ def main():
 
     # ===== 五、風險紅線 =====
     us_ok = apct.get("美股市值型成長", 0) <= 33
-    cash_ok = cash >= _cf
+    # 2026-09-29：現金一律「可動用」口徑（扣質押撥款指定清償款），真值另標註（CIO 審查同類殘留）
+    from sot_targets import restricted_cash as _rst_fn
+    _rst = _rst_fn(snap)
+    _avail = max(0.0, float(cash or 0) - _rst)
+    cash_ok = _avail >= _cf
     us30y_ok = us30y is None or us30y < 5.30
     _act_ok = _div_act >= _pcs["div_con"] * _pcal.STRESS_DIV_RATIO
     rows5 = f"""<tr><td>US30Y &lt; 5.30%（債券凍結線）</td><td>{'✅' if us30y_ok else '❌'}</td><td>{us30y_txt}（{mode}）</td></tr>
-    <tr><td>現金 ≥ {_cf:,.0f}（生活底線）</td><td>{'✅' if cash_ok else '❌'}</td><td>{cash:,}（底線 {_cf:,.0f}）</td></tr>
+    <tr><td>現金 ≥ {_cf:,.0f}（生活底線）</td><td>{'✅' if cash_ok else '❌'}</td><td>可動用 {_avail:,}（真值 {cash:,} − 指定清償款 {_rst:,.0f}；底線 {_cf:,.0f}）</td></tr>
     <tr><td>美股 ≤ 33%</td><td>{'✅' if us_ok else '❌'}</td><td>{apct.get('美股市值型成長',0):.1f}%</td></tr>
     <tr><td>LTV ≤ 40%</td><td>✅</td><td>未質押</td></tr>
     <tr><td>台股單筆 ≤ 5 萬</td><td>✅</td><td>管制中</td></tr>
@@ -244,7 +248,7 @@ li{{margin-bottom:5px;font-size:12.5px;line-height:1.5}}
 <div class="kpis">
   <div class="kpi"><div class="k">總資產</div><div class="v">{total:,}</div></div>
   <div class="kpi"><div class="k">總負債</div><div class="v red">{snap.get('total_liabilities',0):,}</div></div>
-  <div class="kpi"><div class="k">現金</div><div class="v {'green' if cash_ok else 'red'}">{cash:,}</div></div>
+  <div class="kpi"><div class="k">現金（可動用）</div><div class="v {'green' if cash_ok else 'red'}">{_avail:,}</div><div class="k" style="font-weight:400;font-size:11px">真值 {cash:,}｜含指定清償款 {_rst:,.0f}</div></div>
   <div class="kpi"><div class="k">被動月收</div><div class="v green">{_passive:,}</div></div>
   <div class="kpi"><div class="k">美股佔比</div><div class="v {'green' if us_ok else 'red'}">{apct.get('美股市值型成長',0):.1f}%</div></div>
 </div>
