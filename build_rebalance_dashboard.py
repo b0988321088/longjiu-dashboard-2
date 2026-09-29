@@ -273,7 +273,9 @@ def main():
     pen = s.get("penetration", {})
     apct, atwd, tgt = pen.get("actual_pct", {}), pen.get("actual_twd", {}), pen.get("targets", {})
     total = s.get("total_assets", 0)
-    cash = s.get("cash_total", 0)
+    # 2026-09-29：頁面 KPI 現金一律可動用口徑（扣質押撥款指定清償款）
+    from sot_targets import restricted_cash as _rst_fn
+    cash = max(0.0, float(s.get("cash_total") or 0) - _rst_fn(s))
     monthly_inc = s.get("monthly_income", 228751)
     monthly_exp = s.get("monthly_expense", 162781)
     surplus = monthly_inc - monthly_exp
@@ -711,7 +713,7 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
 
 <div class="kpis">
   <div class="kpi"><div class="k">總資產（流動）</div><div class="v">{total:,}</div></div>
-  <div class="kpi"><div class="k">現金</div><div class="v">{cash:,}</div></div>
+  <div class="kpi"><div class="k">現金（可動用）</div><div class="v">{cash:,}</div></div>
   <div class="kpi"><div class="k">月盈餘</div><div class="v green">+{surplus:,}</div></div>
   <div class="kpi"><div class="k">收入/支出</div><div class="v">{monthly_inc:,} <small style="font-size:11px">/ {monthly_exp:,}</small></div></div>
   <div class="kpi"><div class="k">美元曝險</div><div class="v red">{usd_pct:.0f}%</div></div>

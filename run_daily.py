@@ -642,7 +642,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                 if _hs.get("石油現況") is not None:
                     _hed["石油"] = _refresh_num(_hed.get("石油", ""), _hs.get("石油現況", 0))
                 if _snap_now.get("cash_total"):
-                    _hed["現金"] = _refresh_num(_hed.get("現金", ""), _snap_now.get("cash_total", 0))
+                    _hed["現金（帳戶層真值）"] = _refresh_num(_hed.get("現金", ""), _snap_now.get("cash_total", 0))
             except Exception:
                 pass
             _hed_txt = "｜".join(f"{k}：{v}" for k, v in _hed.items())

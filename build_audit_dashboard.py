@@ -58,7 +58,7 @@ _ltv_ok = isinstance(_ltv_v, (int, float)) and _ltv_v <= _sc.get("LTV上限", 10
 _all_ok = _def_ok and _inc_ok and _ltv_ok
 # 2026-09-29：雙維度分母＝總資產 − 指定用途款（與 snapshot 派生口徑一致，原用 TA 會得 40% ≠ 標題 49.1%）
 _dd_den = TA - RESTRICTED
-_def_break = " + ".join(f"{k.replace('(目標)','')} {round(v/(_dd_den or TA)*100,1)}%" for k, v in dd_c.items())
+_def_break = " + ".join(f"{k.replace('(目標)','')} {round(v/(_dd_den or TA)*100,2)}%" for k, v in dd_c.items())
 MORT_MONTHLY = s.get("mortgage_cathay_monthly", 26000) + s.get("mortgage_sinopac_monthly", 65735)
 
 debt_ratio = TL / (TA + RE) * 100

@@ -29,7 +29,9 @@ manifesto_title = snap.get("lifestyle_manifesto", {}).get("title", "理想生活
 # 留停壓力測試/驗收表用別名（2026-09-02）
 expense = fire_cost
 div_c = div_conservative
-cash = snap.get("cash_total") or 0
+# 2026-09-29：退休/留停跑道一律用可動用現金（扣質押撥款指定清償款）
+from sot_targets import restricted_cash as _rst_fn
+cash = max(0.0, float(snap.get("cash_total") or 0) - _rst_fn(snap))
 liab_cost = 16600  # 保單借貸 13,333 ＋ 元大證金 3,267（利息口徑）
 # 2026-09-28 使用者裁示：房貸月付已計入月支出（monthly_fixed_expense 的房貸項），
 # 在房租端再扣一次＝重複計算（週報/月支出同口徑），且常態房租 80,100 是兩間房的

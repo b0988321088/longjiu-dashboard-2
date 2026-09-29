@@ -1,0 +1,149 @@
+{
+ "verdict": "REJECT",
+ "reviewer": "CIO (independent, read-only; Hermes subagent, 2026-09-29)",
+ "repo": "C:/Users/bot/Desktop/longjiu_system",
+ "commit": "6b4aa009ece7de3f77fa5a5b9090f45550282214",
+ "base": "origin/clean-main = 1b3676720fa5280bea4a2abe213104f99f99c58d",
+ "reviewed_commits": [
+  "6b4aa009ece7de3f77fa5a5b9090f45550282214",
+  "bb6f6f93a033abd8705661fca92109f358aeeba5",
+  "b4a56abcefb65fb8d5cc54176d961906e9d3157d"
+ ],
+ "reviewed_trees": [
+  "c0fcb9dd36f8cbe6bf382af37015c22d3b1fb6d0",
+  "3e77ccd917349e24aedf7ec431528f24c9b8f746",
+  "894ef4db2b9f0ba3de1f97fd5349752c786b3b26"
+ ],
+ "range_count": 3,
+ "checked": [
+  {
+   "id": 1,
+   "cmd": "git rev-list --count origin/clean-main..HEAD && git log --oneline origin/clean-main..HEAD",
+   "rc": 0,
+   "result": "3 筆，涵蓋整個範圍：6b4aa009 fix(caliber): 決策端閘門＋派生欄收斂（CIO 第四輪 2 major＋4 minor 全修）／bb6f6f93 四源同步 2026-09-29／b4a56abc fix(caliber): 週報現金口徑＋雙維度派生欄校正（INC-255；線上抽查發現）",
+   "pass": true
+  },
+  {
+   "id": 2,
+   "cmd": "python static_gate.py",
+   "rc": 0,
+   "result": "✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key）",
+   "pass": true
+  },
+  {
+   "id": 3,
+   "cmd": "python check_thresholds.py",
+   "rc": 0,
+   "result": "✅ 雙維度防禦維度自洽：Σ組成 = 合計 12,722,364；✅ 穿透完整性：五桶 25,023,738 + 衛星 884,823 + 指定用途款 5,900,000 = 總資產 31,808,561；✅ 基金口徑閉合；✅ 日報可動用流動資金口徑 819,182（真值 6,719,182 − 指定用途款 5,900,000）；SoT 檢查全綠",
+   "pass": true
+  },
+  {
+   "id": 4,
+   "cmd": "shutil 備份 snapshot.json → 防禦維度.合計 12,722,364→12,732,364 → python check_thresholds.py → 還原",
+   "rc": 1,
+   "result": "變異後：❌ 雙維度防禦維度：Σ組成 12,722,364 ≠ 合計 12,732,364（派生欄未同步）／❌ 檢查未通過（1 項）／RC=1。還原後 sha256 與原檔相同、git status 乾淨、check_thresholds RC=0 → 不變量真實有效",
+   "pass": true
+  },
+  {
+   "id": 5,
+   "cmd": "python -c 驗證 合計==Σ組成==12,722,364 與 49.1%",
+   "rc": 0,
+   "result": "防禦維度.合計 = 12,722,364；Σ組成 = 12,722,364；分母 = 31,808,561 − 5,900,000 = 25,908,561；合計/分母*100 = 49.104865 → 49.1%，與 snapshot 佔比 49.1 一致",
+   "pass": true
+  },
+  {
+   "id": 6,
+   "cmd": "python debt_restructure_tracker.py（真跑）＋ 攔截 snapshot 載入模擬極端值",
+   "rc": 0,
+   "result": "真值：現金判定＝cash_total 6,719,182 − restricted 5,900,000 = 819,182（第 273-274 行），819,182 ≥ 底線 700,000 → 無熔斷列。CASE A 可動用 600,000 → 「🔴 HALT_ALL_BUY｜現金: 600,000 < 生活底線 700,000」；CASE B 699,999 → 同上 HALT；CASE C 700,000（邊界）→ 不熔斷；CASE D 不改金額只把生活底線提到 900,000 → 「🔴 HALT_ALL_BUY｜現金: 819,182 < 生活底線 900,000」＝直接證明程式用的是 819,182 而非 6,719,182",
+   "pass": true
+  },
+  {
+   "id": 7,
+   "cmd": "python regenerate_report.py --no-push ＋ build_weekly_report.py ＋ build_audit_dashboard.py 後掃 daily/index/audit/weekly/penetration",
+   "rc": 0,
+   "result": "五份報表 49.3% 命中 = 0、885,890 命中 = 0。6,719,182：daily 337/428/443/480 皆帶真值或「可動用…（真值…）」；audit 26/45/113 皆帶真值（45 為「Moneybook 銀行帳戶真值」）；weekly 28/34/53 皆帶真值；index 269/526 與 daily 353/418/470 未帶真值（見 findings）；penetration 標題 L26 於同日報表內同時給 49.1% 與可動用 819,182（真值字樣在同行後段）。防禦維度行：daily L488=49.1%／index L269=49%／audit L89=49.1%／penetration L26=49.1%，皆無 49.3% 殘留",
+   "pass": false
+  },
+  {
+   "id": 8,
+   "cmd": "python build_weekly_report.py",
+   "rc": 0,
+   "result": "✅ weekly_report_2026-09-29.html（11,152 bytes）；重產後 sha256 與版本庫逐位元相同（ff6e34f1…，不需再入版控）。L110「HALT_ALL_BUY｜可動用現金 < 700,000｜🟢（可動用 819,182）」、L53「現金 ≥ 700,000（生活底線）✅ 可動用 819,182.0（真值 6,719,182 − 指定清償款 5,900,000）」、L28 KPI「現金（可動用）819,182.0／真值 6,719,182」；全檔 grep 850,000/850_000 與 33% 硬寫 = 0",
+   "pass": true
+  },
+  {
+   "id": 9,
+   "cmd": "grep -rn \"cash_total\" --include=*.py . （排除 .archive/.bak）＋ 逐項實跑",
+   "rc": 0,
+   "result": "決策/評分端仍在用 cash_total 當可投入資金者：①coast_fi_engine.py:207（留停跑道閘門，實跑輸出 5,649 天）②macro_regime.py:400（DAA 硬性約束，實跑輸出 通過=true 現況 671.9萬）③report_components.py:216/233（健康度現金底線 15/15，index.html:269）— 以上 3 處判為 major；④run_daily.py:644（避險現況敘述，daily:470）判為 minor。已收斂（正確扣 restricted）者：build_dashboard.cash_caliber、build_rebalance_report、institutional_flow:533、build_penetration_report:28、build_audit_dashboard、build_ceo_dashboard:254、passive_caliber.scenarios、debt_restructure_tracker:274、update_all.calc_penetration:240",
+   "pass": false
+  }
+ ],
+ "findings": [
+  {
+   "severity": "major",
+   "file": "coast_fi_engine.py",
+   "line": 207,
+   "issue": "第 207 行 cash_full = snapshot.cash_total、第 208 行 cash = cash_full（cash_caliber=net_of_reserve，但 reserve=0）→ 第 209 行 runway_days = cash/gap*30 以 6,719,182 計算。實跑輸出：「現金可用 6,719,182（net_of_reserve：6,719,182） → 5649 天」。此 5,649 天正是 error_register INC-254 第 3 項宣告已修復的症狀（5,649 天 vs 689 天），且第 265 行留停 A 級門檻 runway 判定（runway_days >= 540）與第 276 行擋下原因都吃這個值 → 與已被判 major 的 debt_restructure_tracker 熔斷閘門同型 fail-open（可動用跌破 700,000 仍 ✅）。passive_caliber.scenarios 與 build_audit_dashboard 已修，本檔（留停門檻引擎本身）漏修。",
+   "suggest": "第 207-208 行改用 sot_targets.available_cash(snap)（或 passive_caliber 的可動用口徑）；cash_full 僅保留作顯示真值並標「真值」；修後跑 python coast_fi_engine.py 應印出 689 天（819,182/35,681*30），並確認 --write 後 snapshot.coast_fi_engine.runway.runway_days 同步。"
+  },
+  {
+   "severity": "major",
+   "file": "macro_regime.py",
+   "line": 400,
+   "issue": "hard_check 第 400 行 cash_now = snap.get(\"cash_total\") → 第 408-409 行「現金底線 70 萬」以 6,719,182 判定。實跑 macro_regime.py 產出的 macro_regime_2026-09-29.json：硬性約束[4] = {\"項目\": \"現金底線 70 萬\", \"通過\": true, \"說明\": \"現況 671.9萬\"}（版本庫內 HEAD 版本同值，非本次實跑造成）。DAA 硬性約束端 fail-open：指定用途款在帳期間，可動用即使跌破 700,000 仍顯示通過。",
+   "suggest": "cash_now 改讀可動用（cash_total − sot_targets.restricted_cash(snap)），說明字串改為「可動用 81.9萬（真值 671.9萬）」；重跑 python macro_regime.py 確認硬性約束[4] 說明同步。"
+  },
+  {
+   "severity": "major",
+   "file": "report_components.py",
+   "line": 216,
+   "issue": "健康度卡「現金底線」列（第 216 行 d['現金']）與口徑註記（第 233 行「現金=cash_total {d['現金']}≥cash_floor 700,000」）用 cash_total → index.html:269 顯示「現金底線 6,719,182（目標 ≥700,000）15.0/15」。指定用途款存在期間該維度恆為滿分，是可動用跌破底線仍照樣「達標」的評分端 fail-open（儀表板與日報共用此卡，屬 INC-254 第 2 項同型：把還債款當可動用）。",
+   "suggest": "render_health_score 的現金維度改用 available_cash（sot_targets），顯示列改為「819,182（真值 6,719,182）」並同步改口徑註記文字；改後重產 index.html 確認 15/15 仍成立但數值改為可動用。"
+  },
+  {
+   "severity": "minor",
+   "file": "run_daily.py",
+   "line": 644,
+   "issue": "第 644-645 行避險現況「現金」以 snapshot.cash_total 刷新且未標真值 → daily_report_v2_2026-09-29.html:470 產出「…｜現金：6,719,182 守底線 70萬」，與同頁其他「可動用 819,182（真值 6,719,182）」同義不同值，且緊接「守底線 70萬」讀起來像可動用。",
+   "suggest": "改 _refresh_num(_hed.get(\"現金\", \"\"), available_cash) 並在值後補「（真值 6,719,182）」。"
+  },
+  {
+   "severity": "minor",
+   "file": "snapshot.json",
+   "line": 621,
+   "issue": "penetration.actual_twd.現金/安全網 = 819,768（update_all.calc_penetration 餘數法 c = total − Σ桶），與防禦維度／日報所用的可動用 819,182 差 586 元；index.html:226 據此印「現金819,768」與「現金6,719,768」（後者為舊 cash_total），使同一頁出現三個不同「現金」值。",
+   "suggest": "現金桶改由 available_cash 直接注入（餘數差額另立欄位），或於產出加註殘差說明；重產 penetration/儀表板後對「現金」名義欄位做同名義同值檢查。"
+  },
+  {
+   "severity": "minor",
+   "file": "index.html",
+   "line": 269,
+   "issue": "同頁並存「資產穿透 現金/安全網 819,768（2.6%）」與「現金底線 6,719,182 15.0/15」，讀者無法分辨何者為可動用；違反 INC-254 自檢鐵則「同一份報表內不得出現兩個數值不同但同名義的欄位」。",
+   "suggest": "統一為「可動用 819,182（真值 6,719,182）」，並把穿透殘差桶更名（如「現金（殘差）」。"
+  },
+  {
+   "severity": "minor",
+   "file": "audit_dashboard_2026-09-29.html",
+   "line": 89,
+   "issue": "雙維度明細四捨五入後相加 23.7+3.2+4.2+13.0+5.1 = 49.2 ≠ 標題 49.1。分母（25,908,561）與各項分子（6,136,220／819,182／1,089,462／3,367,500／1,310,000）皆正確，純為四捨五入誤差，但屬同名義不同值的噪音來源。",
+   "suggest": "明細佔比用 largest-remainder 分配使和等於標題值，或加註「合計以未捨入值計」。"
+  },
+  {
+   "severity": "info",
+   "file": "snapshot.json",
+   "line": 625,
+   "issue": "restricted_cash 同時存在於 penetration.restricted_cash = 5,900,000（純數值）與頂層 restricted_cash（dict，含金額/用途/規則）；目前消費者皆讀頂層且值一致，但雙處維護有分岔風險。",
+   "suggest": "收斂為單一頂層欄位，penetration 內欄位移除或改為指向頂層的註記。"
+  },
+  {
+   "severity": "info",
+   "file": "(commit message 6b4aa009)",
+   "line": 0,
+   "issue": "commit 訊息宣稱「重產 日報/儀表板/穿透/審計/週報」，但該 commit 僅含 .py／.jsonl／db-wal，未含任何報表 HTML；本次獨立重產：weekly／audit／penetration 與版本庫逐位元相同（口徑已落地），index.html 亦相同，daily_report_v2 因 LLM 觀點文字而變動（3 行，內容為 CIO 觀點）。紀錄與實際產出不符，稽核時無法從 commit 證明報表已重產。",
+   "suggest": "口徑類 commit 把重產檔一併入版控，或於訊息註明「產出逐位元不變，未入版控」。"
+  }
+ ],
+ "summary": "推送範圍 3 筆確認（6b4aa009／bb6f6f93／b4a56abc），第四輪 6 項修正逐項以實跑驗證全部有效：static_gate ✅、check_thresholds 全綠 RC=0（含「✅ 雙維度防禦維度自洽：Σ組成 = 合計 12,722,364」）、不變量負向測試真實擋下（合計 +10,000 → ❌ rc=1，還原後 rc=0 且檔案雜湊與 git status 皆還原）、合計==Σ組成==12,722,364、49.1% = 12,722,364/(31,808,561−5,900,000) 精確、熔斷閘門確認用可動用 819,182（模擬 600,000/699,999 觸發 🔴 HALT_ALL_BUY，邊界 700,000 不觸發，提高底線測試直接印出 819,182）、五份報表 49.3% 與 885,890 殘留 0、週報 HALT_ALL_BUY 用可動用＋底線 700,000（無 850,000/33% 硬寫）並重產後逐位元相同。惟第 9 項負向追查發現 3 處仍把 cash_total 當可投入資金的決策／評分端漏改，與本輪已判 major 的熔斷閘門屬同一 fail-open 型態（且 coast_fi_engine 印出的 5,649 天正是 error_register INC-254 宣告修復的症狀，該檔未被修到）→ 依「無 major 才可 APPROVE」規則判 REJECT。3 處修正皆為 1-5 行改動（改 import sot_targets.available_cash），建議與本批 commit 一起補完後重送審；本批已驗證正確的修正不需回退。審查期間未推送、未改 .py；重產所寫入的報表／snapshot 已還原至 HEAD。"
+}

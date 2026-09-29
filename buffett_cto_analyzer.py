@@ -65,9 +65,12 @@ def cash_caliber_note(snapshot: dict) -> str:
     國泰 MMF 500萬 已於 2026-09-09 贖回、2026-09-11 轉申購貝萊德B11（計入基金/質押擔保池），
     不可再算成現金，也不可建議減現金（底線制 70萬）。"""
     _s = snapshot or {}
-    _cash = float((_s.get("cash") or _s.get("cash_total") or 0) or 0)
+    from sot_targets import restricted_cash as _rst_fn
+    _raw = float((_s.get("cash") or _s.get("cash_total") or 0) or 0)
+    _rst = _rst_fn(_s)
+    _cash = max(0.0, _raw - _rst)
     _pct = float(((_s.get("penetration") or {}).get("actual_pct") or {}).get("現金/安全網", 0) or 0)
-    return (f"現金口徑＝台幣活存 {_cash:,.0f}（{_pct:.1f}%，不含 MMF/外幣）；"
+    return (f"現金口徑＝可動用台幣活存 {_cash:,.0f}（真值 {_raw:,.0f} − 指定清償款 {_rst:,.0f}；{_pct:.1f}%，不含 MMF/外幣）；"
             f"MMF 500萬已於 2026-09-11 轉申購貝萊德B11（計入基金／質押擔保池，不再計現金），不可建議減現金")
 
 

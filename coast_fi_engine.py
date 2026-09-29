@@ -204,7 +204,9 @@ def runway_metric(snap, c):
     cw = thr.get("現金_twd") or {}
     reserve = float(cw.get("追繳緩衝") or 0)
     floor = float(cw.get("合計底線") or 0) or (float(cw.get("生活底線") or 0) + reserve)
-    cash_full = float(snap.get("cash_total") or 0)
+    # 2026-09-29 CIO major：指定用途款（質押撥款待清償）不得當可動用 → 先扣再算跑道
+    from sot_targets import restricted_cash as _rst_fn
+    cash_full = max(0.0, float(snap.get("cash_total") or 0) - _rst_fn(snap))
     cash = cash_full - reserve if c["cash_caliber"] == "net_of_reserve" else cash_full
     days = round(cash / gap * 30) if gap > 0 else 999
     return {"income_stress": income_stress, "gap_stress": gap_stress,

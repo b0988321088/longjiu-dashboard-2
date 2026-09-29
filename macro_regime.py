@@ -397,7 +397,9 @@ def hard_check(snap: dict, out: dict) -> list[dict]:
     apct = snap.get("penetration", {}).get("actual_pct", {})
     usd = (snap.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {}
     usd_pct = usd.get("合計", 0)
-    cash_now = snap.get("cash_total", 0)
+    # 2026-09-29 CIO major：硬性約束「現金底線」必須看可動用（原 cash_total → 可動用跌破仍 ✅ fail-open）
+    from sot_targets import restricted_cash as _rst_fn
+    cash_now = max(0.0, float(snap.get("cash_total", 0) or 0) - _rst_fn(snap))
     checks = [
         ("台股 ≤15% 硬性上限", apct.get("台股市值型成長", 0) <= HARD["台股上限"],
          f"現況 {apct.get('台股市值型成長', 0):.1f}%"),

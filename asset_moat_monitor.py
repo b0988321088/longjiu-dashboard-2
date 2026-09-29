@@ -21,6 +21,9 @@ class AssetMoatMonitor:
         )
         if isinstance(liquid_assets, dict):
             liquid_assets = float(liquid_assets.get("total", 0) or liquid_assets.get("value", 0) or 0)
+        # 2026-09-29：液動資產（護城河／跑道）不得含指定用途款（質押撥款待清償）
+        from sot_targets import restricted_cash as _rst_fn
+        liquid_assets = max(0.0, float(liquid_assets or 0) - _rst_fn(snapshot))
         raw_passive = snapshot.get("passive_income")
         if isinstance(raw_passive, dict):
             # 2026-09-23 INC-248：保守配息只認 fund_dividend_conservative。

@@ -97,7 +97,7 @@ cats_data = [
     ("us", "美股市值型", us_v, targets_map["美股市值型"], "#06b6d4","00646/009823/009824"),
     ("def","防守型配息", def_v, targets_map["配息型"], "#22c55e","00878/00713/00919等"),
     ("bond","債券", bond_v, targets_map["債券型"], "#f59e0b","00983D"),
-    ("cash","安全現金", cash_pv, targets_map["現金"], "#a855f7","銀行活存"),
+    ("cash","安全現金", cash_pv, targets_map["現金"], "#a855f7","銀行活存（餘數法；與可動用口徑差額＝各桶進位尾差）"),
 ]
 
 lines = []
