@@ -1,0 +1,88 @@
+{
+ "verdict": "APPROVE",
+ "reviewer": "Hermes CIO（獨立審查｜subagent）",
+ "commit": "0e1c82a9",
+ "reviewed_commits": [
+  "e473fb4e345b66542ab7b3e2ce2415ca230bb836",
+  "0e1c82a96f90b018bc5e104ce3c9204581f1eed9"
+ ],
+ "reviewed_trees": [
+  "4c02be28072d3ce40c1f153052124d0ce6f8c609",
+  "01559c354cee788a1257b7dbe4103f2e94f7d08a"
+ ],
+ "checked": [
+  {
+   "id": "1",
+   "name": "commit 範圍 + py_compile",
+   "cmd": "git show --stat e473fb4e ; python -m py_compile report_components.py run_daily.py",
+   "result": "e473fb4e 只含 report_components.py(+16/-1)、run_daily.py(+5/-1) 兩檔（2 files changed, 19 insertions, 2 deletions）；py_compile RC=0",
+   "pass": true
+  },
+  {
+   "id": "2",
+   "name": "渲染正確（HTML 標籤容錯正則）",
+   "cmd": "strip_tags + re.search on daily_report_v2_2026-09-30.html & index.html",
+   "result": "daily_report: 每月固定支出：172543 OK / 現金扣帳146181＋帳上計息26362 OK / 過渡期口徑：含待清償保單息13333 OK / 159210 OK / 指定用途款590萬＝✅元大券商質押100萬＋🔄安聯保單質押300萬＋⏳未動用190萬 OK（全 5/5）。index.html: 現金扣帳146181＋帳上計息26362 OK / 過渡期口徑 OK / 159210 OK / 指定用途款590萬＝…190萬 OK（4/5）；『每月固定支出：172,543』字樣 MISS，但以健康度卡口徑行『÷月支出 172,543』呈現（見 finding F2）",
+   "pass": true
+  },
+  {
+   "id": "3",
+   "name": "負向測試：過渡期標注隨保單清償消失（最重要）",
+   "cmd": "temp copy snapshot.json → 設 liabilities_build_up.保單借貸=0、policy_pledge_loan=0 → render_health_card",
+   "result": "BASE: 保單息=13333, 過渡期口徑=True, 月支出172543, 含159210=True。Variant A（僅清零餘額）: 保單息=0, 過渡期口徑=**False**（動態消失✓）, 月支出172543（monthly_expense 為 stored 值未同步）。Variant B（完整清償：餘額+monthly_fixed_expense.保單借貸利息+合計+monthly_expense 同步）: 過渡期口徑=**False**, 月支出=**159,210**, 含159210=True。→ 標注確實由「動態保單息>0」驅動，清償後自動消失；159,210 為 d[支出]−動態保單息，動態算出。真值 snapshot.json 未被修改，git status 乾淨（0 行）",
+   "pass": true
+  },
+  {
+   "id": "4",
+   "name": "不得自作主張改數字（只加揭露）",
+   "cmd": "git show e473fb4e 逐行檢 ; git show 0ae569e7 -- snapshot.json（語義）",
+   "result": "e473fb4e 兩檔新增內容皆為 f-string 揭露文字（_li_txt/_trans_txt）與 if 條件；未改任何計算式（expense/income/cov/score/LTV/利息公式皆原樣）。restricted_cash.語義 為純新增欄位（0ae569e7 中為 + 行），金額/明細欄位逐行未動。語義內容算術自洽：5,900,000−1,000,000=4,900,000=金額；明細 100+300+190=590萬；5,719,182−4,900,000=819,182",
+   "pass": true
+  },
+  {
+   "id": "5",
+   "name": "閘門",
+   "cmd": "python static_gate.py ; python check_thresholds.py",
+   "result": "static_gate RC=0（✅ 靜態閘門通過）。check_thresholds RC=0：✅負債月息自洽 保單13,333+券商0+基金質押13,029=26,362｜✅決策端現金口徑 10/10 支｜✅雙維度防禦維度自洽 Σ=合計 12,722,364｜✅穿透完整性 五桶25,023,738+衛星884,823+指定用途款4,900,000=總資產30,808,561｜✅日報可動用流動資金 819,182（5,719,182−4,900,000）",
+   "pass": true
+  },
+  {
+   "id": "6",
+   "name": "負向思考：13,333 / 159,210 是否硬寫",
+   "cmd": "grep -n '13,333|13333|159,210|159210|400 萬' report_components.py run_daily.py",
+   "result": "13,333 與 159,210 皆非硬寫：report_components 中 13,333=_li2['保單借貸利息']（sot_targets.liability_interest(snap) 動態）、159,210=d['支出']−_li2['保單借貸利息']；run_daily 中 _int=_li['保單借貸利息']、→ 值=_fixed_total−_int。唯一硬字串為 run_daily.py:416 描述文字『保單 400 萬』（僅標籤，無數字真值）。判定：數值無硬寫殘留風險；標籤文字有極低殘留風險（見 F3）",
+   "pass": true
+  }
+ ],
+ "findings": [
+  {
+   "severity": "minor",
+   "file": "run_daily.py",
+   "line": 416,
+   "issue": "描述文字『保單 400 萬』為硬字串標籤（非計算值）。若保單借貸餘額日後變動（部分還款/加借），此標籤會與實際餘額不一致；因 13,333 與 → 值皆動態，僅標籤失真，不影響任何數字。",
+   "suggest": "改為 f'保單 {float(snap.liabilities_build_up.保單借貸)/10000:.0f} 萬' 動態組字，或直接寫『保單借貸清完後』避免綁定金額。"
+  },
+  {
+   "severity": "minor",
+   "file": "0e1c82a9(commit) / snapshot.json",
+   "line": 3352,
+   "issue": "commit 訊息與內容不符：0e1c82a9 訊息載明『指定用途款語義說明』，但其 snapshot.json diff 僅動『資料來源』兩時戳與 LLM 重寫的 sector_deep_dive 四段；restricted_cash.語義 實際是在前一個 commit 0ae569e7 新增。純歸屬/訊息瑕疵，欄位本身存在且為純新增（未改 金額/明細）。",
+   "suggest": "無需回退；下次避免把生成式文字重生與語義欄位混在同一 commit 訊息描述，或調整訊息為『重生報告＋雷達時戳』。"
+  },
+  {
+   "severity": "minor",
+   "file": "index.html",
+   "line": 268,
+   "issue": "index.html 健康度卡未含字面『📌 每月固定支出：172,543』，僅在口徑行呈現『÷月支出 172,543（現金扣帳 146,181 ＋ 帳上計息 26,362＝…）』。數字 172,543 與拆解皆在，措辭因渲染器不同（儀表板健康度卡 vs 日報 callout）而異，非本次回歸。",
+   "suggest": "若要求兩處標籤一致，於 report_components 口徑行前置『每月固定支出』字樣；否則於驗收清單註明儀表板以『月支出』表述。"
+  },
+  {
+   "severity": "minor",
+   "file": "run_daily.py/report_components.py（設計耦合）",
+   "line": 409,
+   "issue": "_fixed_total 與 monthly_expense/monthly_fixed_expense.合計 為 snapshot 的 stored 值（非由負債餘額推導）。負向測試 Variant A 顯示：單清負債餘額而未同步 stored 利息/合計時，月支出仍顯示 172,543（過渡期標注已正確消失）。亦即『→ 159,210』的前半（172,543）依賴人工/流程同步，非自動。",
+   "suggest": "此耦合已由 check_thresholds ②c 守住（monthly_fixed_expense 三項利息 ≠ 動態值即 FAIL）。維持現狀即可；可選：於清償腳本自動重算 monthly_fixed_expense.合計 與 monthly_expense，徹底去人工。"
+  }
+ ],
+ "summary": "獨立 CIO 審查通過（APPROVE）。三項 minor 修正皆實質到位：(1) 健康度卡口徑行補『現金扣帳146,181＋帳上計息26,362＝保單13,333＋券商0＋基金質押13,029』(2) 日報/儀表板月支出加『⏳過渡期口徑：含待清償保單息13,333…→159,210』(3) restricted_cash.語義純新增欄位。commit e473fb4e 僅觸 report_components.py、run_daily.py 兩檔且僅新增 f-string 揭露文字，未改任何計算；語義欄位未動 金額/明細。渲染 5/5 命中（index.html 4/5，缺的是措辭而非數字，已列 F2）。負向測試關鍵結論：過渡期標注由動態保單息>0 驅動，清零餘額後自動消失（Variant A ✓）；完整清償模擬下月支出正確變 159,210（Variant B ✓）；真值 snapshot 未動、git status 乾淨。static_gate RC=0、check_thresholds RC=0（負債月息自洽 26,362／決策端 10/10／雙維度自洽／穿透完整性 4,900,000=30,808,561／日報可動用 819,182 皆命中）。13,333 與 159,210 皆動態計算、無硬寫。僅 4 項 minor（1 處硬編標籤、1 處 commit 訊息歸屬、1 處儀表板措辭、1 處 stored 合計耦合），無 blocker/major。"
+}
