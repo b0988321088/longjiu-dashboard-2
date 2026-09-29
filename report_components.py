@@ -250,7 +250,7 @@ def render_health_card(snap: dict) -> str:
     except (TypeError, ValueError, ImportError):
         _li_txt = ""
     _note = (f'<div style="font-size:9.5px;color:#14532d;margin-top:2px;line-height:1.6">'
-             f'口徑：覆蓋=保守常態（配息100,000+房租80,100=180,100）÷月支出 {d["支出"]:,.0f}{_li_txt}（snapshot.dividend_month_expected+rent_monthly_total÷monthly_expense，8月實收基準134%見日報）｜'
+             f'口徑：覆蓋=保守常態（配息100,000+房租80,100=180,100）÷每月固定支出 {d["支出"]:,.0f}{_li_txt}（snapshot.dividend_month_expected+rent_monthly_total÷monthly_expense，8月實收基準134%見日報）｜'
              f'防禦=dual_dimension_metric.防禦維度.佔比（{d["防禦"]:.1f}%）｜曝險=usd_exposure_monitor.current.合計（{d["曝險"]:.1f}%）｜'
              f"現金=可動用（cash_total−指定用途款）{d['現金']:,.0f}≥cash_floor 700,000｜LTV=(policy_pledge_loan+pledge_loan+fund_pledge_loan)÷(insurance_current_value+securities+質押基金池)（{d['LTV']:.1f}%；目標≤50；銀行監看50起/55黃/60紅/70追繳）｜銀行口徑 LTV＝國泰質押借款÷質押基金池＝{d.get('銀行LTV', 0):.1f}%｜總質押率 {d['總質押率']:.1f}%（借款÷總資產，≤35%制）</div>")
     return (
