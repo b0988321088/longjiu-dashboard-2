@@ -17,7 +17,13 @@ H = Path(os.environ["LOCALAPPDATA"]) / "hermes"
 ok = lambda b: "✅" if b else "❌"
 fail = []
 # 預期由其他排程每日更新的狀態檔（髒了不算 fail）：21:40 收工登錄會改 .cache_audit_state.json
-BENIGN_DIRTY = {"data/.cache_audit_state.json"}
+BENIGN_DIRTY = {
+    "data/.cache_audit_state.json",
+    # 2026-09-30 CIO 審查 minor-2：dragon_assets.db 由管線每日寫入（資料通道），
+    # 夜間寫庫晚於當晚 commit 時仍會判定「已追蹤未提交」→ 每晚誤報紅燈。
+    # 列為 benign：仍會顯示，但不列入 fail（DB 為資料本體，非程式碼）。
+    "dragon_assets.db",
+}
 
 
 def resolve_T(db):

@@ -73,5 +73,5 @@ data/*.json.*
 *.pre_*
 
 # SQLite 執行期側車檔（每次寫入都變動，不入版控；2026-09-30 閉環稽核）
-dragon_assets.db-wal
-dragon_assets.db-shm
+*.db-wal
+*.db-shm
