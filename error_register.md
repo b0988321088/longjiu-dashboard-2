@@ -1270,3 +1270,16 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 1. 渲染區塊禁止裸 `except Exception: pass`；至少 `print(f"⚠️ [render] …{type(e).__name__}: {e}")` 讓失敗可見。
 2. 遍歷 snapshot 字典做數值運算前先過濾 `isinstance(v, (int, float))`（資料日／備註等字串鍵是常態）。
 3. 改任何顯示邏輯後，要在產出檔 grep 該區塊關鍵字確認真的渲染（0 次＝死碼，不是「今天沒觸發」）。
+
+## INC-257 ｜ 2026-09-30 ｜ Smart App Control 擋掉 Hermes 桌面版（Hermes.exe）
+
+**現象**：使用者 PC 跳出「智慧型應用程式控制已封鎖可能不安全的應用程式」。
+
+**查證**（CodeIntegrity 事件，非猜測）：`Microsoft-Windows-CodeIntegrity/Operational` 00:05:34、00:08:08 連續三事件 Id=3077／3033／3118 — `explorer.exe` 嘗試載入
+`...\hermes\hermes-agent\apps\desktop\release\win-unpacked\Hermes.exe`，因不符簽章要求被擋；`VerifiedAndReputablePolicyState=1`（SAC 強制模式）。
+
+**判定**：未簽章的 Electron 未打包（win-unpacked）建置被 SAC 擋下。**與財務管線、資料、中毒無關**。
+- 實測行程：跑的是 `uv\python\...python.exe` 與 `hermes-agent\venv\Scripts\python.exe`（cron／agent），**沒有 Hermes.exe** → 管線與 Telegram 代理不依賴桌面 App，日報／cron／推送照常。
+- 同源案例：`uv run --with ruff` → `os error 4551 應用程式控制原則已封鎖此檔案`（static_gate.py 已建降級鏈）。
+
+**處置**：不關 SAC（關閉為單向不可逆，需重設/重裝 Windows 才能回復），維持用 Telegram；若日後需要桌面 UI，改等簽章版安裝檔。
