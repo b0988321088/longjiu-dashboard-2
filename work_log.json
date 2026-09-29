@@ -1575,5 +1575,17 @@
   "category": "完成",
   "item": "資產穿透2026-09-29（台股2,029,878.0 美股10,235,528.0 防守4,500,670.0 債券7,437,894.0 現金819,768.0＝桶位餘數法（可動用 819,182；差 586＝總資產進位尾差））",
   "detail": "資產穿透2026-09-29（台股2,029,878.0 美股10,235,528.0 防守4,500,670.0 債券7,437,894.0 現金819,768.0（餘數法；可動用 819,182））｜口徑：restricted 隔離後（真值 6,719,182 − 指定清償款 5,900,000；非 21:33 舊口徑）"
+ },
+ {
+  "time": "2026-09-30 00:16",
+  "task": "閉環（收工）",
+  "items": [
+   "closeout_check 14 類全綠：閉環稽核 全部通過 ✅（00:16）",
+   "稽核噪音治本：dragon_assets.db-wal/db-shm 移出版控＋.gitignore 改通用 *.db-wal/*.db-shm（c1796c3b、814dbd53，兩輪 CIO 獨立審查 APPROVE）",
+   "_audit_closeout.py BENIGN_DIRTY 納入 dragon_assets.db（仍顯示、不列 fail）→ 22:40 每日稽核不再誤報紅燈",
+   "審查紀錄留存＋PEND-20260930-01（BENIGN_DIRTY 有界遮蔽窗口，CIO minor）→ e262a5a0",
+   "INC-257：Smart App Control 擋未簽章 Hermes.exe 桌面版（管線走 python 不受影響；桌面啟動項待使用者決定是否停用）",
+   "遠端同步：main == origin/clean-main（e262a5a0），rev-list 未推 0"
+  ]
  }
 ]
