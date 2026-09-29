@@ -1,0 +1,77 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO-independent (Hermes subagent, deepseek-v4-flash)",
+  "commit": "39b7489597a0615739abf1d8ea180a916fec3737",
+  "reviewed_commits": [
+    "39b7489597a0615739abf1d8ea180a916fec3737",
+    "d28f16105b09da2a4b3d7c3516662cd808d84ccd"
+  ],
+  "reviewed_trees": [
+    "5d0ce340238f1d0cd2fc741f00aadd92463f3f3a",
+    "f450ab33c6d43eee5148ecf217e8dbf3c62bf59f"
+  ],
+  "checked": [
+    "git show --stat 39b74895 → 只含 asset_diff_monitor.py(+32/-)/buffett_cto_analyzer.py(+12)/run_daily.py(+13)/weekly_ops_dynamic.py(新增 102)；4 files changed, 150 insertions(+), 9 deletions(-) —— 無夾帶其他檔案",
+    "git log --oneline -1 → d28f1610 data(2026-09-30): 質押替換入帳（券商質押 100 萬清償@3.92%）＋指定用途款 590→490 萬＋四源同步＋INC-258/259；工作樹 git status --porcelain 乾淨",
+    "asset_diff_history.json 口徑源頭：2026-09-29 restricted_cash=5,900,000；2026-09-30 restricted_cash=4,900,000（9/28=0）；9/30 total_assets=30,808,561 / cash=5,719,182 / liabilities=35,003,720 / net_worth=-4,195,159",
+    "LJ_NO_TELEGRAM=1 python asset_diff_monitor.py → RC=0，0.246s，產出 asset_diff_2026-09-30.html（27,674 bytes），略過 Telegram/Notion；重跑後 git status 乾淨（輸出與 HEAD 已提交版本 byte 一致）",
+    "解析 asset_diff_2026-09-30.html 表列：2026-09-30 總資產增減 = +0（+0.00%）、現金增減 = +0（原 −1,000,000 誤報已消除）；2026-09-29 增減 = -272,036（-1.04%）、現金 -65,736；2026-09-28 = +0",
+    "9/29 校驗：adj 資產 31,808,561−5,900,000=25,908,561 vs 前一交易日 26,180,597 → -272,036 = 現金淨支出 -65,736 + 投資部位 -206,300（保單 -90,110／基金 -90,710／證券 -25,480），數字互相對得上",
+    "表頭/說明：HTML 內含「增減¹」（2 處：總資產、現金）與「%¹」、以及『¹ 增減已排除「指定用途款（質押撥款待清償）」：撥款與清償同時增減現金與負債（負債替換），淨值不變，故不列為資產增減、亦不觸發單日下跌警示。』",
+    "監控警示卡：『單日資產下跌 ≥ 100,000 / 2.0%；證券下跌 ≥ 50,000 / ±3.0%（總資產增減已排除指定用途款之負債替換流動）』＋『✅ 今日無異常』（無任何 🚨 條目）",
+    "負向測試（不得遮蔽真下跌）：複製 history 後把 9/30 cash 與 total_assets 各 −300,000、restricted_cash 不變 → import 模組重跑 compute_changes → d_total_assets=-300,000（-1.1579%）、d_cash=-300,000；以該 history 重跑 build_html → 監控警示出現「總資產：-300,000（-1.16%）」，不再顯示『今日無異常』 → 排除只扣指定用途款，不是關掉檢查",
+    "負向測試還原：git checkout -- asset_diff_history.json → 與測試前備份 byte 相同（identical_after_restore=True），git status 乾淨",
+    "python weekly_ops_dynamic.py → 期間『2026-09-23 ~ 2026-09-30』；執行清單含『🏦 券商質押清償 100 萬@3.92%（元大證金）』（✅ 已完成）與『質押撥款 590 萬入帳複查』；待追蹤含『🏦 保單質押清償 200 萬（預約入帳）（2026-09-30）』；不含『9/16 保單轉換 T+4』、不含『質押撥款 540萬（估10/5）』",
+    "grep daily_report_v2_2026-09-30.html：『2026-09-08 ~ 09-13』=0、『09-08 ~ 09-13』=0、『9/16 保單轉換』=0、『保單轉換 T+4』=0、『質押撥款 540』=0、『540萬』=0；新字串『2026-09-23 ~ 2026-09-30』=1、『券商質押清償 100 萬』=2、『保單質押清償 200 萬』=2（唯一 2 筆『540 萬』為敘述句「表定 540 萬 vs 實撥 590 萬」，非舊閉環字串）",
+    "退路測試：weekly_ops_dynamic.fallback() → 回傳 weekly_ops_closure 0913 內容（期間 2026-09-08 ~ 09-13（9月第2週後段）、執行清單 4 項），未拋錯；再以 temp 目錄（僅複製 snapshot.json、無 schedule_events.json）呼叫 build_or_fallback(base=tmp) → build()={} 後自動退回 fallback，期間/待追蹤仍為 0913 版 → 退路有效且 graceful",
+    "python static_gate.py → RC=0『✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key）』",
+    "python check_thresholds.py → RC=0，含『✅ 雙維度防禦維度自洽：Σ組成 = 合計 12,722,364』『✅ 決策端現金口徑檢查完成（10/10 支）』『✅ 穿透完整性：五桶 25,023,738 + 衛星 884,823 + 指定用途款 4,900,000 = 總資產 30,808,561』『✅ 日報可動用流動資金口徑：819,182（真值 5,719,182 − 指定用途款 4,900,000）』",
+    "run_daily.py / buffett_cto_analyzer.py diff 檢視：兩者皆先呼叫 weekly_ops_dynamic.build()，取不到（或無執行清單）才回退 weekly_ops_closure_*；run_daily 失敗時印顯式 warning，buffett 以 try/except 包住，無靜默沿用舊字串路徑",
+    "負向思考蒐證（是否遮蔽真提領/消費）：apply_policy_repay.py 是唯一會改 restricted_cash 的寫入端，且同一交易同時做 現金−、對應負債−、指定款−，並在淨值變動時印『⚠️ 淨值變動＝記帳錯誤』；一般消費/提領不經此路徑 → rc 不變 → 全額反映在 adj 增減（負向測試已實證）。殘餘風險＝人工誤改 rc（把消費標成「用掉指定用途款」但負債未同步下降）會被淨空遮蔽；grep _audit_closeout.py 對 restricted 為 0 命中，目前無自動不變式把 Δrc 綁到 Δ負債"
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "file": "asset_diff_monitor.py",
+      "line": "483-496",
+      "issue": "增減排除以 (total−rc) 逐日重算，邏輯正確且有負向測試佐證；但沒有任何自動不變式把 Δrestricted_cash 綁到對應負債變動（grep _audit_closeout.py 對 restricted 為 0 命中，check_thresholds.py 只驗日報『可動用流動資金』字樣）。目前安全性完全依賴 apply_policy_repay.py 的人工入帳紀律。",
+      "suggest": "在收工稽核（_audit_closeout.py）加一條：對每組相鄰歷史日，若 Δrestricted_cash ≠ 0，則必須同時存在 |Δ(policy_pledge_loan+pledge_loan)| 的對應下降（容差內），否則報 ❌；rc 歸零當日必須驗證兩筆高息負債確實各歸零。這條能把『rc 被人工誤動 → 真實下跌被淨空』變成可攔截事故。"
+    },
+    {
+      "severity": "minor",
+      "file": "daily_report_v2_2026-09-30.html",
+      "line": "『📈 操作績效追蹤（基準 2026-08-31）』區塊（run_daily.py:1687 渲染）",
+      "issue": "同類舊字串在另一區塊殘留：該卡仍印『⏳ 追蹤點：2026-08-30 保單轉換 80萬 T+4…｜2026-09-03 質押撥款（估 10/5）→ 清償 500萬高息負債』，而 snapshot.operation_performance.追蹤點 現為 9/29、9/30×2、10/1、10/5 共 5 項。39b74895 與 HEAD 兩版日報此段完全相同，且該區塊讀 snapshot.json 即時渲染 → 顯示 d28f1610 的日報更新並未重跑渲染（39b74895 00:51:20 → d28f1610 00:51:26，6 秒＝修補式改檔），屬報告內容與資料源不同步。使用者抱怨的『質押撥款 估10/5』語意仍可見（只是不同卡片、且不含 540萬，故指定 grep 為 0 命中）。",
+      "suggest": "①每次 snapshot 資料寫入後，必重生 daily_report_v2（或把 perf 追蹤點也改由 schedule_events 推導，與 weekly_ops_dynamic 同源）；②check_thresholds.py 加斷言：日報 perf 追蹤點最早日期不得早於本月 1 日、且不得出現『估』字樣的過去日期項目。"
+    },
+    {
+      "severity": "info",
+      "file": "asset_diff_monitor.py",
+      "line": "809-820",
+      "issue": "變化表只列總資產/保單/基金/證券/現金，未列負債與淨值。排除指定用途款後，9/29→9/30 總資產顯示 +0，讀者看不到「負債同時 −100 萬、淨值不變」這件關鍵事實（9/30 d_liab=-1,000,000、d_net_worth=0 已可由 history 佐證）。",
+      "suggest": "加『負債』與『淨值』兩欄（或一行註記：本日負債 −1,000,000、淨值 ±0），讓『負債替換』在報表上可見，避免使用者以為數字沒動是系統壞了。"
+    },
+    {
+      "severity": "info",
+      "file": "asset_diff_monitor.py",
+      "line": "844-853",
+      "issue": "警示只評估 rows[-1]（最新一日）。9/29 的 -272,036（-1.04%）為真實市場變動、已過金額門檻（100,000），但因為它不是最新列，永遠不會出現在警示卡；歷史上任何非末日異動都會被跳過。",
+      "suggest": "警示迴圈改掃近 7 日窗口（或至少同時檢查 rows[-2]），並標示該筆日期。"
+    },
+    {
+      "severity": "info",
+      "file": "snapshot.json",
+      "line": "asset_diff_history.json 2026-09-28→09-29",
+      "issue": "Δrestricted_cash=+5,900,000 但 Δ總負債=+5,874,182，差 25,818（其他負債變動）。本次口徑仍正確（adj -272,036 與現金淨支出 -65,736 + 投資部位 -206,300 完全對帳得上，淨值變動 -246,218 = -272,036 + 25,818），只是提醒 rc 與負債變動不必逐日相等。",
+      "suggest": "若依 info 第 1 條加斷言，比值需用容差或改為『rc 減少必須有對應負債減少（≥）』，勿要求嚴格相等，否則日後誤擋正常帳目。"
+    },
+    {
+      "severity": "info",
+      "file": "repo hygiene",
+      "line": "-",
+      "issue": "版控內含 asset_diff_monitor.py.bak、run_daily.py.bak/.bak2/.bak3/.bak4 等備份檔（見 39b74895 tree），會讓每次審查的檔案盤點產生噪音、也讓推送閘門逐 tree hash 時多出誤判空間。",
+      "suggest": "備份檔移出 repo（或加 .gitignore），日後審查檔案清單才不會混淆。"
+    }
+  ],
+  "summary": "獨立 CIO 審查 commit 39b74895（閉環追蹤改由 schedule_events 動態推導 + 資產變化表增減排除指定用途款）：APPROVE，無 blocker/major。逐項實證結論：①變更範圍乾淨（僅 asset_diff_monitor.py / run_daily.py / buffett_cto_analyzer.py / weekly_ops_dynamic.py，150+/9−），工作樹乾淨。②口徑正確：history 內 9/29 restricted_cash=5,900,000、9/30=4,900,000；重跑 monitor 後 9/30 總資產增減為 +0（原本 -1,000,000 的誤報已消除），9/29 = -272,036（-1.04%，等於現金淨支出 -65,736 + 投資部位 -206,300，且金額門檻 100,000 可合法告警），表頭含「增減¹」「%¹」與說明列，警示卡顯示「✅ 今日無異常」；重跑輸出與已提交 HTML byte 一致。③負向測試通過：把 9/30 cash/total 各減 300,000、rc 不變 → 增減 -300,000（-1.16%）且警示確實觸發，證明排除只扣指定用途款、非關閉檢查；測試後 git checkout 還原並驗證 byte 相同。④閉環追蹤有效：weekly_ops_dynamic 期間 2026-09-23~09-30、含「券商質押清償 100 萬」、待追蹤含「保單質押清償 200 萬（2026-09-30）」，舊字串（9/16 保單轉換 T+4、質押撥款 540萬（估10/5））在 weekly 輸出與 daily_report_v2 皆 0 命中。⑤退路有效：fallback() 與「schedule_events.json 缺失」模擬皆回傳 weekly_ops_closure 0913 內容、不拋錯。⑥static_gate RC=0；check_thresholds RC=0 且含「決策端 10/10」「雙維度自洽」「穿透完整性 五桶 25,023,738 + 衛星 884,823 + 指定用途款 4,900,000 = 總資產 30,808,561」「可動用流動資金 819,182」。⑦負向思考：正常提領/消費不會被遮蔽（消費不經 apply_policy_repay → rc 不變 → 全額反映於增減並可告警，已由負向測試證實）；唯一殘餘風險是 rc 被人工誤改（真實支出被標成「已用於清償」而負債未同步下降）時會被淨空，目前無自動不變式攔截（_audit_closeout.py 無 restricted_cash 斷言），建議補 Δrc ≡ −Δ(保單質押+券商質押) 的收工斷言。另發現 2 項非阻擋問題：日報「操作績效追蹤」卡仍為舊追蹤點（與 snapshot.operation_performance 不同步，屬 d28f1610 未重生報告）、變化表未列負債/淨值欄使負債替換不可見。全程序式碼唯讀，未推送。"
+}
