@@ -343,9 +343,14 @@ def main():
         # 2026-09-13 INC-159 P2：liabilities 表同步（原為手寫值 71,799，與 snapshot 不一致）
         try:
             _lc = _db.execute("SELECT COUNT(*) FROM liabilities WHERE date=?", (_today,)).fetchone()[0]
+            # 2026-09-29（CIO 審查 af7af243 必修1）：DB liabilities.pledge_loan 欄＝質押「總額」
+            # ＝券商質押 pledge_loan＋基金質押 fund_pledge_loan。asset_diff_monitor 以欄位加總求
+            # total_liab，若只寫券商那筆會少算 590 萬（此處與 asset_sync --rebuild-liabilities 同口徑）。
+            _pledge_agg = (int(snap.get("pledge_loan", 0) or 0)
+                           + int(snap.get("fund_pledge_loan", 0) or 0))
             _lrow = (snap.get("mortgage_yy", 0), snap.get("mortgage_yydu", 0),
                      snap.get("mortgage_xz", 0), snap.get("policy_loan", 0),
-                     snap.get("pledge_loan", 0), snap.get("cc_liability", 0),
+                     _pledge_agg, snap.get("cc_liability", 0),
                      snap.get("total_liabilities", 0), snap.get("mortgage_cathay", 0))
             if _lc:
                 _db.execute("""UPDATE liabilities SET mortgage_yy=?, mortgage_yydu=?, mortgage_xz=?,
