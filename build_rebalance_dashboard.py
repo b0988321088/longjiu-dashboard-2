@@ -443,7 +443,9 @@ def main():
 
     # ── 質押 ──
     pledge = s.get("質押計畫", {})
-    ltv_txt = f"未質押（{_pf.pledge_status_line(style='card')}）"
+    # 2026-09-29 修：撥款入帳後仍顯示「未質押」＝標籤與狀態脫鉤（使用者抓包）
+    _pfx = "已質押" if _pf.pledge_facts(s)["已撥款"] else "未質押"
+    ltv_txt = f"{_pfx}（{_pf.pledge_status_line(style='card')}）"
 
     # ── 本週乾粉輪動建議（Phase 3：讀 snapshot.rotation_recommendation + 交易計畫）──
     rot_html = ""

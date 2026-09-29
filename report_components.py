@@ -163,10 +163,10 @@ def render_health_score(snap: dict) -> dict:
     cash_score = 100 if cash >= floor else 0
 
     # LTV（2026-09-05 定版口徑1：質押借款/擔保品現值 — 讀 snapshot 真值，移除寫死 20.4）
-    # 2026-09-29 擴充：加入國泰基金質押 fund_pledge_loan（590萬@2.77%，9/29 10:57 撥款）。
+    # 2026-09-29 擴充：加入國泰基金質押 fund_pledge_loan（590萬@2.65%，9/29 10:57 撥款）。
     # 借分子與擔保品分母（質押基金池市值）必須同時計入，否則整體槓桿會被低估。
     # 質押借款 = 保單質押 policy_pledge_loan(400萬@4%) + 券商質押 pledge_loan(100萬@3.92%)
-    #            + 國泰基金質押 fund_pledge_loan(590萬@2.77%)
+    #            + 國泰基金質押 fund_pledge_loan(590萬@2.65%)
     # 擔保品現值 = 保單現值 insurance_current_value + 證券市值 securities.total_market_value
     #              + 質押基金池市值（cathay_pledge_0911.擔保池.合計）
     _fund_pledge = float(snap.get("fund_pledge_loan") or 0)

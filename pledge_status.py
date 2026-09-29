@@ -8,7 +8,7 @@
 不得再自行寫死文字或金額。資料源（皆為 snapshot 真值）：
   - cathay_pledge_0911   擔保池／額度／成數／利率／撥款狀態／撥款預估日
   - policy_pledge_loan + liabilities_build_up.券商質押  清償目標與其利率
-  - ruling_20260912      用途裁示（540萬全數優先清償高息負債）
+  - ruling_20260912      用途裁示（優先清償高息負債；2026-09-29 實撥 590萬@2.65% 入帳）
 """
 from __future__ import annotations
 
