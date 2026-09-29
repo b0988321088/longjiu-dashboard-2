@@ -163,12 +163,22 @@ def render_health_score(snap: dict) -> dict:
     cash_score = 100 if cash >= floor else 0
 
     # LTV（2026-09-05 定版口徑1：質押借款/擔保品現值 — 讀 snapshot 真值，移除寫死 20.4）
-    # 質押借款 = 保單質押 policy_pledge_loan(400萬@4%) + 券商質押 pledge_loan(~100萬)
+    # 2026-09-29 擴充：加入國泰基金質押 fund_pledge_loan（590萬@2.77%，9/29 10:57 撥款）。
+    # 借分子與擔保品分母（質押基金池市值）必須同時計入，否則整體槓桿會被低估。
+    # 質押借款 = 保單質押 policy_pledge_loan(400萬@4%) + 券商質押 pledge_loan(100萬@3.92%)
+    #            + 國泰基金質押 fund_pledge_loan(590萬@2.77%)
     # 擔保品現值 = 保單現值 insurance_current_value + 證券市值 securities.total_market_value
-    _pl_loan = float(snap.get("policy_pledge_loan") or 0) + float(snap.get("pledge_loan") or 0)
+    #              + 質押基金池市值（cathay_pledge_0911.擔保池.合計）
+    _fund_pledge = float(snap.get("fund_pledge_loan") or 0)
+    _fund_pool = float((((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("合計")) or 0)
+    _pl_loan = (float(snap.get("policy_pledge_loan") or 0) + float(snap.get("pledge_loan") or 0)
+                + _fund_pledge)
     _pl_col = (float(snap.get("insurance_current_value") or 0)
-               + float((snap.get("securities") or {}).get("total_market_value") or 0))
+               + float((snap.get("securities") or {}).get("total_market_value") or 0)
+               + (_fund_pool if _fund_pledge else 0))
     ltv = (_pl_loan / _pl_col * 100) if _pl_col > 0 else 0.0
+    # 銀行口徑（國泰監看這條）：基金質押借款 ÷ 質押基金池市值
+    _bank_ltv = (_fund_pledge / _fund_pool * 100) if (_fund_pledge and _fund_pool) else 0.0
     _pl_total_asset = float(snap.get("total_assets") or 0)
     _pl_ratio_total = (_pl_loan / _pl_total_asset * 100) if _pl_total_asset > 0 else 0.0
     # 健康線 ≤50（2026-09-05 修正：35% 屬「總質押率(借款÷總資產)」制，勿誤貼到擔保品 LTV；LTV 目標依銀行鏈 50起/55黃/60紅/70追繳 與穿透情境 ≤52 一致）
@@ -186,6 +196,7 @@ def render_health_score(snap: dict) -> dict:
         "現金": cash, "現金標準": cash_score, "現金分": cash_score * 0.15,
         "支出": expense, "收入": income,
         "LTV": ltv, "LTV標準": ltv_score, "LTV分": ltv_score * 0.10,
+        "銀行LTV": _bank_ltv,
         "總質押率": _pl_ratio_total,
     }
     return detail
@@ -203,7 +214,7 @@ def render_health_card(snap: dict) -> str:
         ("防禦維度", _def_txt, "≥50%", d["防禦分"], 25),
         ("美元曝險", f"{d['曝險']:.1f}%", f"≤{_usd_cap:.0f}%（美金）", d["曝險分"], 20),
         ("現金底線", f"{d['現金']:,.0f}", "≥700,000", d["現金分"], 15),
-        ("LTV", f"{d['LTV']:.1f}%", "≤50%（質押/擔保品）", d["LTV分"], 10),
+        ("LTV", f"{d['LTV']:.1f}%／銀行 {d.get('銀行LTV', 0):.1f}%", "≤50%（質押/擔保品）", d["LTV分"], 10),
     ]
     bar = "".join(
         f'<div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0">'
@@ -219,7 +230,7 @@ def render_health_card(snap: dict) -> str:
     _note = (f'<div style="font-size:9.5px;color:#14532d;margin-top:2px;line-height:1.6">'
              f'口徑：覆蓋=保守常態（配息100,000+房租80,100=180,100）÷月支出 {d["支出"]:,.0f}（snapshot.dividend_month_expected+rent_monthly_total÷monthly_expense，8月實收基準134%見日報）｜'
              f'防禦=dual_dimension_metric.防禦維度.佔比（{d["防禦"]:.1f}%）｜曝險=usd_exposure_monitor.current.合計（{d["曝險"]:.1f}%）｜'
-             f'現金=cash_total {d["現金"]:,.0f}≥cash_floor 700,000｜LTV=(policy_pledge_loan+pledge_loan)÷(insurance_current_value+securities)（{d["LTV"]:.1f}%，目標≤50；銀行監看50起/55黃/60紅/70追繳）｜總質押率 {d["總質押率"]:.1f}%（借款÷總資產，≤35%制）</div>')
+             f"現金=cash_total {d['現金']:,.0f}≥cash_floor 700,000｜LTV=(policy_pledge_loan+pledge_loan+fund_pledge_loan)÷(insurance_current_value+securities+質押基金池)（{d['LTV']:.1f}%；目標≤50；銀行監看50起/55黃/60紅/70追繳）｜銀行口徑 LTV＝國泰質押借款÷質押基金池＝{d.get('銀行LTV', 0):.1f}%｜總質押率 {d['總質押率']:.1f}%（借款÷總資產，≤35%制）</div>")
     return (
         f'<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;margin:8px 0">'
         f'<div style="font-weight:800;color:#14532d;margin-bottom:4px">🩺 龍九健康度：<span style="font-size:16px">{d["分數"]}/100</span> {d["燈號"]}</div>'

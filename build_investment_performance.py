@@ -61,6 +61,8 @@ DEFAULT_LOANS = [
     {"name": "國泰轉貸（大義街 2.6%）", "balance_keys": ["mortgage_cathay"], "rate": 0.026},
     {"name": "保單借貸（4%）", "balance_keys": ["policy_pledge_loan"], "rate": 0.040},
     {"name": "元大質押（3.92%）", "balance_keys": ["pledge_loan"], "rate": 0.0392},
+    # 2026-09-29：國泰基金質押撥款 590萬@2.77%（質押基金池 1,178.6 萬×約5成）
+    {"name": "國泰基金質押（2.65%）", "balance_keys": ["fund_pledge_loan"], "rate": 0.0265},
 ]
 
 

@@ -320,6 +320,9 @@ def rebuild_liabilities(snap: dict) -> dict:
     mort = snap.get("mortgage_balance") or snap.get("mortgage") or 0
     pol = snap.get("policy_loan") or 0
     ple = snap.get("pledge_loan") or 0
+    # 2026-09-29：國泰基金質押借款（590萬@2.77%，9/29 10:57 入帳）。獨立欄位 —
+    # 勿併入 pledge_loan（券商 100萬@3.92%），否則利率/月息會被混算成單一利率。
+    fpl = snap.get("fund_pledge_loan") or 0
     _per_detail = {}
     if INCLUDE_PERSONAL_LOANS:
         pl = snap.get("personal_loans") or {}
@@ -331,7 +334,7 @@ def rebuild_liabilities(snap: dict) -> dict:
                         _per_detail[_k] = int(_r)
     per = sum(_per_detail.values())
 
-    total = int(mort) + int(pol) + int(ple) + unpaid + int(per)
+    total = int(mort) + int(pol) + int(ple) + int(fpl) + unpaid + int(per)
     snap["total_liabilities"] = total
     # 2026-09-13 INC-167：利率鍵曾在重建時遺失 → pledge_status 讀到 0% → 質押「月省息」被算成 868（應 4,135）；
     # 這裡一律保留舊值／回填預設（保單 4%、券商 3.92%），禁止讓利率隨重建消失。
@@ -344,11 +347,15 @@ def rebuild_liabilities(snap: dict) -> dict:
         "保單借貸利率": _r_policy,
         "券商質押": int(ple),
         "券商質押利率": _r_broker,
+        "基金質押": int(fpl),
+        "基金質押利率": float(snap.get("fund_pledge_rate") or 0.0265),
         "信用卡_當期未繳_全額扣繳": unpaid,
         "個人借款_借出款_列應收款非負債": _per_detail,
         "total": total,
         "note": ("2026-09-13 建立：負債改由明細推導（原為手寫值，曾出現 78,099 不明殘差）；"
-                 "借給女友的錢＝應收款（見 snapshot.receivables），不計入負債"),
+                 "借給女友的錢＝應收款（見 snapshot.receivables），不計入負債；"
+                 "2026-09-29 起「基金質押」（fund_pledge_loan，國泰 590萬@2.77%）與「券商質押」"
+                 "分列不同利率欄，勿合併計算月息"),
     }
     snap["net_worth"] = int(snap.get("total_assets") or 0) - total
     # 負債率雙軌（2026-08-10 使用者裁示格式）：含不動產主顯示 / 不含不動產流動監控
@@ -374,9 +381,12 @@ if __name__ == "__main__":
             _t = __import__("datetime").date.today().isoformat()   # DB 以「執行日」為列（與 update_data 一致）
             _db.execute("UPDATE assets SET total_liabilities=?, total_assets=? WHERE date=?",
                         (snap["total_liabilities"], snap.get("total_assets"), _t))
+            # DB liabilities.pledge_loan ＝質押「總額」（券商＋基金）：asset_diff_monitor 以欄位加總
+            # 求 total_liab，若只寫券商那筆會少 590 萬 → 2026-09-29 起寫入加總值。
+            _pledge_agg = int(snap.get("pledge_loan", 0) or 0) + int(snap.get("fund_pledge_loan", 0) or 0)
             _lrow = (snap.get("mortgage_yy", 0), snap.get("mortgage_yydu", 0),
                      snap.get("mortgage_xz", 0), snap.get("policy_loan", 0),
-                     snap.get("pledge_loan", 0), snap.get("cc_liability", 0),
+                     _pledge_agg, snap.get("cc_liability", 0),
                      snap.get("total_liabilities", 0), snap.get("mortgage_cathay", 0))
             if _db.execute("SELECT COUNT(*) FROM liabilities WHERE date=?", (_t,)).fetchone()[0]:
                 _db.execute("""UPDATE liabilities SET mortgage_yy=?, mortgage_yydu=?, mortgage_xz=?,
@@ -392,7 +402,8 @@ if __name__ == "__main__":
             print(f"⚠️ DB 同步失敗：{_e}")
         bu = snap["liabilities_build_up"]
         print(f"✅ 負債重建：房貸 {bu['房貸_含國泰']:,} + 保單 {bu['保單借貸']:,}"
-              f" + 質押 {bu['券商質押']:,} + 信用卡 {bu['信用卡_當期未繳_全額扣繳']:,}"
+              f" + 券商質押 {bu['券商質押']:,} + 基金質押 {bu.get('基金質押', 0):,}"
+              f" + 信用卡 {bu['信用卡_當期未繳_全額扣繳']:,}"
               f" = {snap['total_liabilities']:,}")
         if snap.get("receivables_total"):
             print(f"ℹ️ 應收款（借出款，非負債）：{snap['receivables']}"

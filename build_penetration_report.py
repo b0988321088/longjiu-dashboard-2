@@ -185,6 +185,15 @@ if _pl_b > 0:
                  f"<td class='num'>{('%.2f' % (_pl_b_r*100)) + '%' if _pl_b_r else '⚠️ 待確認'}</td>"
                  f"<td class='num'>{(_pl_b/_sec_col*100 if _sec_col else 0):.1f}%</td>"
                  f"<td>⚠️ {_pl_b_n}</td></tr>")
+# 2026-09-29：國泰基金質押 590萬@2.6%（9/29 10:57 撥款入帳；表定 540 萬，實撥 590 萬）
+_pl_c = float(snap.get("fund_pledge_loan") or 0)
+_pl_c_r = float(snap.get("fund_pledge_rate") or 0.0265)
+_fund_pool = float((((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("合計")) or 0)
+if _pl_c > 0:
+    _rows_pl += (f"<tr><td>國泰基金質押（擔保池：富達＋聯博＋貝萊德B11）</td>"
+                 f"<td class='num'>{_pl_c:,.0f}</td><td class='num'>{_pl_c_r*100:.2f}%</td>"
+                 f"<td class='num'>{(_pl_c/_fund_pool*100 if _fund_pool else 0):.1f}%</td>"
+                 f"<td>✅ 2026-09-29 撥款入帳（表定 540 萬；實撥 590 萬＝池市值×約 5 成）</td></tr>")
 if _rows_pl:
     w(f"<div class='callout' style='border-left:3px solid #ef4444'>🔒 <b>現況質押借款（2026-09-05 透明化 — 既有質押非 0，情境表 LTV 為規則上限非現況）</b>"
       f"<table style='width:100%;font-size:12px;margin-top:6px;border-collapse:collapse'><tr style='color:#64748b'><th style='text-align:left;padding:3px 6px'>項目</th><th class='num'>借款</th><th class='num'>利率</th><th class='num'>LTV(佔擔保)</th><th>狀態</th></tr>{_rows_pl}</table>"

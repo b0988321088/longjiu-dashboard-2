@@ -283,6 +283,7 @@ def calibrate_sources() -> dict:
         "financial_mortgage": snap.get("financial_mortgage", 0),
         "policy_loan": snap.get("policy_loan", 0),
         "pledge_loan": snap.get("pledge_loan", 0),
+        "fund_pledge_loan": snap.get("fund_pledge_loan", 0),
         "cc_liability": snap.get("cc_liability", 0),
     }
 
@@ -376,6 +377,9 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         loans_rows_html += f"""          <tr><td>—</td><td>保單借貸</td><td>—</td><td class="num">{tv['policy_loan']:,}</td><td>—</td></tr>\n"""
     if tv['pledge_loan'] > 0:
         loans_rows_html += f"""          <tr><td>—</td><td>證券質押</td><td>—</td><td class="num">{tv['pledge_loan']:,}</td><td>—</td></tr>\n"""
+    if tv.get('fund_pledge_loan', 0) > 0:
+        # 2026-09-29：國泰質押撥款 590萬@2.77%（9/29 10:57 入帳）→ 負債表需列示，否則總負債對不上
+        loans_rows_html += f"""          <tr><td>國泰世華</td><td>基金質押（質押基金池 1,178.6 萬）</td><td class="num">2.65%</td><td class="num">{tv['fund_pledge_loan']:,}</td><td>9/29 撥款入帳</td></tr>\n"""
 
     # 每月固定支出明細（2026-08-21：房貸校正 永豐65,735+國泰26,000=91,735）
     try:

@@ -1147,3 +1147,8 @@
 - 修法: ①新增 wrappers/life_account_alert.py 薄轉發器（cwd=REPO；真身用 Path(__file__).parent 找 snapshot.json，直接鏡像到 hermes/scripts 會讀不到）②_audit_closeout.py 新增第 14 類不變式：每個 no_agent job 的 script 必須存在於 hermes/scripts；repo/wrappers/*.py 必須全部已部署且逐位元一致（fail-closed，缺檔即 ❌）
 - 驗證: 正向＝40 個 no_agent job 的腳本全在、14 支 wrapper 逐位元一致；負向＝暫時移走鏡像檔 → 正確報「cron 指向不存在的腳本 81663978c283」＋「wrapper 未部署」，還原後回綠；cron 端以 hermes/scripts 路徑實跑 → 印出玉山 15,044 < 安全線 40,000、rc=0
 - 教訓: ①新增 no_agent cron 的固定順序＝真身 → repo/wrappers/ 同名轉發器 → commit（hook 部署）→ 用 hermes/scripts 路徑實跑一次；沒有在 cron 端實跑過的「完成」不算完成 ②「固定清單式」的守門擋不住新成員 —— 不變式要從資料來源反推（掃 jobs.json 的 script 欄位回頭驗檔案存在），不是維護清單
+
+## INCIDENT e77dda79 (four_source_sync)
+- 首次發生: 2026-09-29 11:00:28
+- 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)
