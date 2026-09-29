@@ -1,0 +1,173 @@
+{
+ "verdict": "APPROVE",
+ "reviewer": "CIO-獨立審查（Hermes subagent｜deepseek-v4-flash）",
+ "commit": "4fa144f5（程式）＋28c0b72d（資料）",
+ "reviewed_commits": [
+  "4fa144f57a07a3b3b50e0c312b90a3fe9d52848c",
+  "28c0b72d5db946595d36a6a5f4c428d6f13bd1cc"
+ ],
+ "reviewed_trees": [
+  "3dd26a6324a0164b0be2bc6bc3452a5477b0d0c7",
+  "d6236988d8a7bdd90e268e05007794f23847a436"
+ ],
+ "checked": [
+  {
+   "id": 1,
+   "name": "commit 檔案範圍",
+   "cmd": "git show --stat 4fa144f5",
+   "expected": "只含 sot_targets.py / run_daily.py / build_dashboard.py / sabbatical_checklist_update.py / check_thresholds.py",
+   "result": "PASS",
+   "raw": "build_dashboard.py | 5 ++++- ; check_thresholds.py | 24 ++++ ; run_daily.py | 22 ++ ; sabbatical_checklist_update.py | 5 ++ ; sot_targets.py | 39 +++ | 5 files changed, 86 insertions(+), 9 deletions(-)"
+  },
+  {
+   "id": "2a",
+   "name": "口徑正確性：liability_interest 動態值",
+   "cmd": "python -c \"...sot_targets.liability_interest(snapshot)\"",
+   "expected": "保單 13333／券商 0／基金質押 13029／合計 26362",
+   "result": "PASS",
+   "raw": "{\"保單借貸利息\": 13333, \"券商質押利息\": 0, \"基金質押利息\": 13029, \"合計\": 26362}"
+  },
+  {
+   "id": "2b",
+   "name": "monthly_fixed_expense 分項相加＝合計；monthly_expense＝合計",
+   "cmd": "python -c \"...sum(生活支出,醫療_常態回診,房貸_永豐,房貸_國泰,保單借貸利息,券商質押利息,基金質押利息)\"",
+   "expected": "172543 一致",
+   "result": "PASS",
+   "raw": "分項相加= 172543.0  合計= 172543  match= True ; monthly_expense= 172543 == mfe合計: True"
+  },
+  {
+   "id": "2c",
+   "name": "負向測試：liability_interest 隨負債改動（基金質押→2950000 應約 6515）",
+   "cmd": "python -c \"...s2['liabilities_build_up']['基金質押']=2950000; liability_interest(s2)\"",
+   "expected": "基金質押利息 ≈ 6515（動態，非寫死）",
+   "result": "PASS",
+   "raw": "改 基金質押=2950000 -> {\"保單借貸利息\": 13333, \"券商質押利息\": 0, \"基金質押利息\": 6515, \"合計\": 19848} ; 期望 2950000*0.0265/12 = 6515"
+  },
+  {
+   "id": "2d",
+   "name": "負向測試後還原",
+   "cmd": "python -c \"...re-read snapshot.json\"",
+   "expected": "基金質押回 5900000，動態值回 13029/26362",
+   "result": "PASS",
+   "raw": "檔案內 基金質押= 5900000 ; 原始檔 liability_interest= {\"保單借貸利息\":13333,\"券商質押利息\":0,\"基金質押利息\":13029,\"合計\":26362}；git status --porcelain 為空（工作區乾淨）"
+  },
+  {
+   "id": "3a",
+   "name": "指定用途款明細三筆相加＝原始撥款 5900000",
+   "cmd": "python -c \"...sum(restricted_cash.明細[].金額)\"",
+   "expected": "1000000+3000000+1900000 = 5900000 = 原始撥款",
+   "result": "PASS",
+   "raw": "明細三筆= [1000000.0, 3000000.0, 1900000.0] 相加= 5900000.0 原始撥款= 5900000 一致= True"
+  },
+  {
+   "id": "3b",
+   "name": "restricted_cash.金額 仍為 4900000；可動用＝819182",
+   "cmd": "python -c \"...restricted_cash.金額 / sot_targets.available_cash\"",
+   "expected": "金額 4900000；cash − restricted = 819182",
+   "result": "PASS",
+   "raw": "金額= 4900000 ; available_cash= 819182.0 ; cash_total=5719182 − 4900000 = 819182"
+  },
+  {
+   "id": "3c",
+   "name": "restricted_breakdown 用簡稱、不含完整長項目名",
+   "cmd": "python -c \"...sot_targets.restricted_breakdown(snapshot)\"",
+   "expected": "輸出「指定用途款 590萬＝✅ 元大券商質押 100萬＋🔄 安聯保單質押 300萬＋⏳ 未動用 190萬」",
+   "result": "PASS",
+   "raw": "指定用途款 590萬＝✅ 元大券商質押 100萬＋🔄 安聯保單質押 300萬＋⏳ 未動用 190萬 ; 不含「元大證金」「@4.0%」= True ; 與期望字串完全相等 = True"
+  },
+  {
+   "id": 4,
+   "name": "負向測試：先註記後入帳不得被誤當已知扣",
+   "cmd": "python -c \"...restricted_cash.金額 / snapshot.policy_repay_log\"",
+   "expected": "490 萬不變；policy_repay_log 僅 1 筆 100 萬",
+   "result": "PASS",
+   "raw": "restricted 金額= 4900000（明細含「🔄執行中 300萬」未造成扣減）；policy_repay_log 筆數= 1，內容 [{\"日期\":\"2026-09-30\",\"金額\":1000000,\"對象\":\"securities\",\"動作\":\"repay\"}]，有效合計 1000000"
+  },
+  {
+   "id": "5a",
+   "name": "日報含指定用途款明細",
+   "cmd": "python -c \"re.findall(r'指定用途款 590萬[^<]*', daily_report_v2_2026-09-30.html)\"",
+   "expected": "含「指定用途款 590萬＝✅ 元大券商質押 100萬＋🔄 安聯保單質押 300萬＋⏳ 未動用 190萬」",
+   "result": "PASS",
+   "raw": "『指定用途款 590萬＝✅ 元大券商質押 100萬＋🔄 安聯保單質押 300萬＋⏳ 未動用 190萬（轉帳中者待 MB／截圖確認才入帳）』（出現 2 次；另 1 次在可動用資金行下方）"
+  },
+  {
+   "id": "5b",
+   "name": "日報月支出行顯示 172,543（現金扣帳 146,181 ＋ 帳上計息 26,362）",
+   "cmd": "python -c \"...find('每月固定支出')\"",
+   "expected": "顯示上述字樣",
+   "result": "PASS(渲染正確；逐字 grep 因 </strong> 標籤中斷而 miss)",
+   "raw": "<strong>📌 每月固定支出：172,543</strong>（現金扣帳 146,181 ＋ 帳上計息 26,362）"
+  },
+  {
+   "id": "5c",
+   "name": "無「元大息」舊字；元大證金殘留僅為行事曆事件名",
+   "cmd": "python -c \"count('元大息') / finditer('元大證金')\"",
+   "expected": "日報與 index 皆 0 筆「元大息」",
+   "result": "PASS",
+   "raw": "daily_report: 元大息=0；index.html: 元大息=0。元大證金各 3 次皆為行事曆/決策事件名（如「券商質押清償 100 萬@3.92%（元大證金）」），非月息舊字"
+  },
+  {
+   "id": "6a",
+   "name": "static_gate.py",
+   "cmd": "python static_gate.py; echo RC=$?",
+   "expected": "RC=0",
+   "result": "PASS",
+   "raw": "✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key） RC=0"
+  },
+  {
+   "id": "6b",
+   "name": "check_thresholds.py 含 ②c 不變式與既有檢查",
+   "cmd": "python check_thresholds.py; echo RC=$?",
+   "expected": "RC=0；含負債月息自洽 13,333+0+13,029=26,362、決策端 10/10、雙維度自洽、穿透完整性…4,900,000=總資產 30,808,561",
+   "result": "PASS",
+   "raw": "✅ 雙維度防禦維度自洽：Σ組成 = 合計 12,722,364 | ✅ 負債月息自洽：保單 13,333 + 券商 0 + 基金質押 13,029 = 26,362 | ✅ 決策端現金口徑檢查完成（10/10 支） | ✅ 穿透完整性：五桶 25,023,738 + 衛星 884,823 + 指定用途款 4,900,000 = 總資產 30,808,561 | ✅ 基金口徑閉合 | ✅ 日報可動用流動資金口徑 819,182 | ✅ SoT 完整（9 區塊） | ✅ 消費端 5 支皆引用 thresholds_2026_0915 | ✅ 無舊門檻字面殘留 | RC=0"
+  },
+  {
+   "id": 7,
+   "name": "負向思考：過渡期口徑是否讓覆蓋率偏保守",
+   "cmd": "分析",
+   "expected": "明確判定＋是否標註『過渡期口徑』",
+   "result": "判定：保守（不影響正確性）",
+   "raw": "現況月支出 172,543 內含帳上計息 26,362，其中保單息 13,333 是『即將清償但尚未入帳』（9/30 轉帳 200 萬＋10/1 預約 100 萬，執行中）。保單 400 萬全清後保單息→0，月支出降至 159,210（較原 162,781 淨省 3,571/月）。因此過渡期的覆蓋率（留停壓力情境 95.9%＜100%＝B級）確實被『高估支出、低估覆蓋』，方向是保守（低估而非美化風險），對決策安全邊際有利，非 blocker。使用者已選擇接受過渡期 B 級、保單清完自動回 A。"
+  }
+ ],
+ "findings": [
+  {
+   "severity": "info",
+   "file": "daily_report_v2_2026-09-30.html",
+   "line": null,
+   "issue": "月支出行的括號說明落在 </strong> 標籤之外：`<strong>📌 每月固定支出：172,543</strong>（現金扣帳 146,181 ＋ 帳上計息 26,362）`。瀏覽器渲染為正確連貫字串，但任何逐字（contiguous）grep／快照比對（如本次檢查指令）會 miss 而誤判為缺漏。",
+   "suggest": "若要讓『每月固定支出：172,543（現金扣帳 … ＋ 帳上計息 …）』可被逐字檢索，把括號說明一併放入 <strong> 內，或於 check_thresholds 增加對日報月支出行的正則檢查（允許標籤中斷）。"
+  },
+  {
+   "severity": "minor",
+   "file": "index.html",
+   "line": null,
+   "issue": "儀表板未呈現利息拆解：index.html 中『每月固定支出』字樣 0 次、『146,181』0 次、『26,362』0 次（僅數字 172,543 出現 5 次）。日報有『現金扣帳 vs 帳上計息』拆解，儀表板沒有，兩者口徑揭露不一致。",
+   "suggest": "在 build_dashboard.py 以 sot_targets.liability_interest(snap) 於月支出卡片補『現金扣帳／帳上計息』兩欄，維持日報與儀表板同口徑。"
+  },
+  {
+   "severity": "minor",
+   "file": "snapshot.json@d6236988（restricted_cash）",
+   "line": null,
+   "issue": "restricted_cash.明細 三筆相加＝5,900,000（＝原始撥款），而同層的 金額＝4,900,000（已扣已入帳清償 100 萬）。兩個數字語義不同卻並列，外部讀者容易把明細總額誤當『指定用途款餘額』，進而算出可動用 = 5,719,182 − 5,900,000 的錯誤結果。",
+   "suggest": "在 restricted_breakdown 或明細區塊加一句『明細總額＝原始撥款 590 萬；指定用途款餘額 490 萬＝原始撥款 − 已入帳清償』，讓『先註記後入帳』的雙口徑自解釋。"
+  },
+  {
+   "severity": "minor",
+   "file": "daily_report_v2_2026-09-30.html / index.html",
+   "line": null,
+   "issue": "『過渡期口徑』字樣在日報與儀表板皆為 0 次。目前讀者只看到 172,543 與留停 B 級（95.9%），無從得知這是保單清償前的暫時高估支出、清完會自動降為 159,210 並回 A。",
+   "suggest": "建議在月支出 callout 或留停驗收區塊標註一行：『過渡期口徑：含待入帳保單息 13,333；保單 400 萬清償後月支出 159,210、驗收自動回 A』。此為揭露性建議，非阻擋項。"
+  },
+  {
+   "severity": "info",
+   "file": "sot_targets.py",
+   "line": null,
+   "issue": "liability_interest 的利率取用 `float(lb.get(rate_key) or dflt_rate or 0)`：若 snapshot 明確把某利率填 0（真 0% 借款），會被 `or` 改採預設率（0.04/0.0392/0.0265），產生非預期利息；利率鍵整體缺失時亦靜默套預設。餘額為 0 項無害。",
+   "suggest": "維持現行（snapshot 目前三鍵齊備、負向測試已證明隨餘額變動），但可考慮把缺失利率改為顯式警告（print/errs），避免未來『利率 0%』被誤判。"
+  }
+ ],
+ "summary": "兩 commit 獨立審查：程式範圍僅限核准之 5 檔（sot_targets/run_daily/build_dashboard/sabbatical_checklist_update/check_thresholds）。口徑正確性全數通過——liability_interest 動態回傳 保單 13,333／券商 0／基金質押 13,029／合計 26,362，且負向測試（基金質押→2,950,000 → 6,515）證明確實隨負債餘額變動、測後已還原且工作區乾淨；monthly_fixed_expense 分項相加＝合計＝monthly_expense＝172,543。指定用途款（最重要）三筆明細相加＝原始撥款 5,900,000、金額仍為 4,900,000、restricted_breakdown 以簡稱輸出且與期望字串完全一致、可動用 819,182 不變；『先註記後入帳』負向測試通過：明細中『🔄執行中 300 萬』未造成任何扣減，policy_repay_log 仍僅 1 筆 100 萬（securities）。日報與 index.html 皆含指定用途款明細、日報月支出行顯示 172,543（現金扣帳 146,181 ＋ 帳上計息 26,362）、無『元大息』舊字。static_gate.py RC=0；check_thresholds.py RC=0 並含 負債月息自洽／決策端 10/10／雙維度自洽／穿透完整性 4,900,000＝總資產 30,808,561。過渡期口徑判定為『保守（低估覆蓋、非美化風險）』，使用者已接受，建議於報表補一行『過渡期口徑』揭露。無 blocker／major，5 項發現皆 info/minor。verdict＝APPROVE。"
+}
