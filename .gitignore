@@ -71,3 +71,7 @@ data/*.json.*
 # 2026-09-27：手動備份命名（*.bak-/舊規則漏掉底線版本）
 *.bak_*
 *.pre_*
+
+# SQLite 執行期側車檔（每次寫入都變動，不入版控；2026-09-30 閉環稽核）
+dragon_assets.db-wal
+dragon_assets.db-shm
