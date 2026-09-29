@@ -1,0 +1,79 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO-independent (Hermes subagent, deepseek-v4-flash)",
+  "commit": "f8d8093f8bdd0391f8c21959db7478e9179cf552",
+  "reviewed_commits": [
+    "f8d8093f8bdd0391f8c21959db7478e9179cf552",
+    "490adf4980e2640fa39a5e91c4b6a6b9d0e8ce71"
+  ],
+  "reviewed_trees": [
+    "10ad5f69e8ab487633ca0e7316a1f40d1aa5ca34",
+    "70f54bdfa824e05f6a6ab630db6c4fda6530466a",
+    "a0065bff88bc794bd94413605fd6bb95f9b73f0f"
+  ],
+  "scope_note": "f8d8093f 為程式 commit（run_daily.py / report_components.py）；490adf49 為其後產出物 commit（HEAD，日報/儀表板渲染），現況渲染驗證以其輸出為準。全程序式碼唯讀、未推送。",
+  "checked": [
+    {
+      "id": "C1-diff-audit",
+      "cmd": "git show f8d8093f",
+      "result": "PASS：僅 2 檔 4+/2-。run_daily.py 新增 _pol_bal 變數（415-416 行）＋ _trans_txt 標籤字串改為 f'{_pol_bal:,.0f}'；report_components.py 253 行僅 '÷月支出'→'÷每月固定支出' 字面。逐行檢確認：無任何算式／係數／運算子變動，_fixed_total/_int/_cash_out/_accrual 全部未動。"
+    },
+    {
+      "id": "C2-dynamic-negative-test",
+      "cmd": "cp snapshot.json → temp，policy_pledge_loan=1,000,000 且 liabilities_build_up.保單借貸=1,000,000 → exec 真實原始碼 run_daily.py 392-424 行逐字（非重打）渲染標籤",
+      "result": "PASS（最重要項）。PATCHED -> (1000000.0, 3333, '⏳ 過渡期口徑：含待清償保單息 3,333（保單借貸餘額 1,000,000 清完後月支出自動 → 169,210）')；REAL -> (4000000.0, 13333, '...保單借貸餘額 4,000,000 清完後月支出自動 → 159,210')。利息 1,000,000×4%/12=3,333 自動同步，F1 動態性成立。另 sot_targets.liability_interest(patched)={'保單借貸利息':3333,'基金質押利息':13029}。"
+    },
+    {
+      "id": "C2b-restore",
+      "cmd": "git status --short ; git diff --exit-code -- snapshot.json ; git rev-parse",
+      "result": "PASS：全程複製到 temp 作業，真實 snapshot.json 未被寫入；git status 乾淨、snapshot.json diff 為空（CLEAN），tree 10ad5f69 不變。temp 檔已刪除。"
+    },
+    {
+      "id": "C3-current-render",
+      "cmd": "grep -n 保單借貸餘額/過渡期口徑 daily_report_v2_2026-09-30.html ; grep index.html 每月固定支出 172,543 ; 現金扣帳 146,181 ＋ 帳上計息 26,362",
+      "result": "PASS 全數命中。日報 line 323：'⏳ 過渡期口徑：含待清償保單息 13,333（保單借貸餘額 4,000,000 清完後月支出自動 → 159,210）'；index.html：'每月固定支出 172,543'×1、'現金扣帳 146,181 ＋ 帳上計息 26,362'×1（F2 字樣修正後儀表板已可直接 grep 到）。"
+    },
+    {
+      "id": "C3b-F2-healthcard",
+      "cmd": "python -c \"report_components.render_health_card(snapshot)\"",
+      "result": "PASS：'口徑：覆蓋=保守常態（配息100,000+房租80,100=180,100）÷每月固定支出 172,543（現金扣帳 146,181 ＋ 帳上計息 26,362＝保單 13,333＋券商 0＋基金質押 13,029）'。純措辭變動，覆蓋率分母值 172,543 與拆解均為動態注入值。"
+    },
+    {
+      "id": "C4-static-gate",
+      "cmd": "python static_gate.py",
+      "result": "PASS RC=0：'✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key）'"
+    },
+    {
+      "id": "C5-thresholds",
+      "cmd": "python check_thresholds.py",
+      "result": "PASS RC=0：'✅ 負債月息自洽：保單 13,333 + 券商 0 + 基金質押 13,029 = 26,362'；'✅ 決策端現金口徑檢查完成（10/10 支）'；'✅ 雙維度防禦維度自洽：Σ組成 = 合計 12,722,364'；'✅ 穿透完整性：五桶 25,023,738 + 衛星 884,823 + 指定用途款 4,900,000 = 總資產 30,808,561'；'✅ 日報可動用流動資金口徑：819,182'；另 '✅ SoT 完整（9 區塊）'、'✅ 消費端 5 支皆引用 thresholds_2026_0915'、'✅ 無舊門檻字面殘留'。全數命中。"
+    },
+    {
+      "id": "C6-silent-zero-stress",
+      "cmd": "5 組鍵缺失/0 值/漂移情境注入 temp snapshot 後 exec 真實標籤區塊",
+      "result": "PASS（無靜默變 0 風險）。A 兩鍵皆刪→_pol_bal=0 且 _int=0→標籤整段隱藏（不會出現「餘額 0」）；B top=0/lb=400萬→or 視 0 為 falsy 落至 lb→顯示 4,000,000；C top 缺失→fallback 生效 4,000,000；E 清償完成（兩者 0）→標籤自動消失，符合設計意圖。關鍵論證：利息 _int 由 sot_targets.liability_interest 只讀 liabilities_build_up.保單借貸，故『_int≠0 但 _pol_bal=0』在結構上不可能。"
+    },
+    {
+      "id": "C7-consumer-regression",
+      "cmd": "grep -rn '÷月支出|保單 400 萬' --include=*.py .",
+      "result": "PASS：生產 .py 已無舊字樣殘留（僅 .bak / cio_review_*.json / dashboard_decisions.json 等歷史紀錄檔命中，非消費端）。無其他程式斷言依賴舊措辭。"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "file": "run_daily.py",
+      "line": "415-416",
+      "issue": "_pol_bal 取值優先序為『頂層 snapshot.policy_pledge_loan 優先，liabilities_build_up.保單借貸 為 fallback』，但同頁利息 _int 的單一來源 sot_targets.liability_interest 僅讀 liabilities_build_up.保單借貸。兩欄若漂移（實測情境 D：top=999,000 / lb=4,000,000），標籤會顯示『保單借貸餘額 999,000』卻同時顯示利息 13,333（以 400 萬計）＝同句內兩個數字自相矛盾。現況兩欄一致（皆 4,000,000），故不影響本次交付；純顯示欄，不影響任何計算。",
+      "suggest": "將 _pol_bal 改為與利息同源優先讀 liabilities_build_up.保單借貸（即 _sn2.get('liabilities_build_up',{}).get('保單借貸') or _sn2.get('policy_pledge_loan') or 0），或在取值時加一行一致性斷言（兩欄不一致則印 WARN／改讀 lb），使標籤與利息基準永遠同源。可併入下次輕量續修，非本次阻擋項。"
+    },
+    {
+      "severity": "info",
+      "file": "run_daily.py",
+      "line": "415-418",
+      "issue": "負向思考（任務第 5 點）：_pol_bal 是否因鍵缺失而靜默變 0 導致『標籤顯示餘額 0 卻仍有保單息』？判定：不會發生。① _int 與 _pol_bal 的 fallback 同源（皆 liabilities_build_up.保單借貸），_int≠0 必然該鍵≠0；② 頂層值為 0 時因 `or` 為 falsy 會繼續 fall through，不會鎖定 0；③ 兩鍵全缺時 _int=0，標籤整段被 `if _int` 抑制，不會渲染『餘額 0』。已以 A/B/C/E 四情境實證。",
+      "suggest": "無需修復。惟若要更抗未來改動，可把 `if _int` 的抑制條件補成 `if _int and _pol_bal`，使任何「有利息、無餘額」的不一致狀態改為不顯示而非顯示 0（防禦性冗餘，非必要）。"
+    }
+  ],
+  "summary": "獨立 CIO 審查 commit f8d8093f：逐行確認僅兩處字串修改（report_components.py:253『÷月支出』→『÷每月固定支出』；run_daily.py:417-418 標籤改動態）＋新增純顯示變數 _pol_bal，未觸碰任何計算式、係數或運算子。最重要之動態性負向測試通過：將保單借貸餘額（頂層＋liabilities_build_up 兩欄）改為 1,000,000 後，以真實原始碼逐字重新渲染，標籤正確顯示『保單借貸餘額 1,000,000』且利息自動變為 3,333（≈3,333.3），月支出並自動調整為 169,210，證明 F1 標籤已脫離硬字串、部分清償後不失真；測試於 temp 副本進行，snapshot.json 全程未被寫入，git status 乾淨。現況渲染：日報含『保單借貸餘額 4,000,000…→ 159,210』與『過渡期口徑』，index.html 含『每月固定支出 172,543』與『現金扣帳 146,181 ＋ 帳上計息 26,362』，F2 字樣修正達成 grep 可比對目標。static_gate.py 與 check_thresholds.py 均 RC=0，負債月息自洽／決策端 10/10／雙維度自洽／穿透完整性 4,900,000=30,808,561／日報可動用 819,182 全數命中。負向思考『_pol_bal 靜默變 0』經 A/B/C/E 四情境實證判定不會發生（利息與 fallback 同源、0 為 falsy 會 fall through、雙缺時標籤整段抑制）。唯一 finding 為 minor：_pol_bal 優先讀頂層 policy_pledge_loan 而利息只讀 liabilities_build_up.保單借貸，若兩欄漂移會同一句顯示兩個不一致餘額／利息基準；現況一致故不影響交付，建議下次改為同源優先讀 lb。無 blocker、無 major → APPROVE。"
+}
