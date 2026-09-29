@@ -1218,3 +1218,25 @@ refinance_plan_2026.大義街（8/20 撥款入帳）、blackrock_b11_0911、week
 - 同一份報告若同時存在「總資產口徑」與「可配置口徑」兩種現金 %，標籤必須明寫（例：「現金（含指定清償款 590萬）」）。
 - `sync_all` 步驟順序原則：**單一來源的產生器必須排在所有消費端之前**（雷達週計畫 → 再平衡／儀表板）。
 - 清償入帳後解除條件寫入 `dashboard_decisions.pending_decisions`，避免「永久 restricted」變成新的靜默錯誤。
+
+## INC-254 ｜ 2026-09-29 ｜ CIO 審查 REJECT：口徑改了「顯示端」，漏改「計算端」
+
+**現象**：restricted 隔離第一版（commit eb12ac6a）CIO 審查判定 REJECT，3 個 major 全部同一型態：
+「桶位/乾粉/Runway 已扣指定款，但**同一批數字由其他函式各算一份**，沒有一併改口徑」。
+1. `update_all.calc_penetration`：分母被誤扣 → 回傳 alert 文字印舊口徑（台股 7.8／美股 39.5／債券 28.7）
+2. `run_daily._inject_market_intel`：「可動用流動資金」＝cash_total（把還債款當可動用）
+3. `passive_caliber.scenarios`＋`build_audit_dashboard`：FI 跑道／純現金 Runway 用 cash_total
+   → 極端跑道 5,649 天 vs 689 天（此值正是留停 A 級門檻「跑道 ≥540 天」的判準）
+4. minor：`build_rebalance_report` 現金紅線／卡片、run_daily 建議部位混口徑（DB 啟發式＋已扣款現金）
+
+**根因**：口徑屬於「橫切關注點」，改一處不夠；本系統同一數字有 9 處各自實作（cash_caliber×2、
+passive_caliber、build_audit_dashboard、tactical_table、asset_diff_monitor、institutional_flow、
+run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端。
+
+**流程修正**
+- 改任何「口徑」前，先 grep 該數字的**所有**讀取點（含 runway／年數／天數等換算），一次全改。
+- 新增口徑必須落地為**單一函式**（`sot_targets.restricted_cash/available_cash`），消費端一律 import，
+  禁止就地再寫一份 inline 實作（本案仍有多處 inline，已排程收斂）。
+- 送審前自檢：同一份報表內是否出現兩個數值不同但同名義的欄位（例：穿透表 2.6% vs 紅線卡 6,719,182）。
+- 不變量檢查不能只信同一個欄位（restricted 被歸零時，原「五桶＋衛星＋指定款＝總資產」抓不到）→
+  需以 DB 負債側（liabilities.pledge_loan／policy_loan）做交叉驗證（排程）。

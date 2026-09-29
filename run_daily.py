@@ -1223,8 +1223,16 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 </html>"""
 
     # 動態 DBS note（2026-08-06：去硬編碼 8/1/17,000，改讀校準後現金真值）
-    _dbs_cash = tv.get("cash_total", 0)
-    _dbs_str = f"可動用流動資金 {_dbs_cash:,} TWD（Moneybook 校準），{'餘裕充足 ✅' if _dbs_cash > 30000 else '⚠️ 需補資金'}"
+    # 2026-09-29 CIO 審查必修2：原寫「可動用流動資金 = cash_total」→ 把質押撥款指定清償款當可動用。
+    _dbs_cash = float(tv.get("cash_total", 0) or 0)
+    try:
+        _dbs_rst = float((tv.get("restricted_cash") or {}).get("金額") or 0)
+    except (TypeError, ValueError):
+        _dbs_rst = 0.0
+    _dbs_avail = max(0.0, _dbs_cash - _dbs_rst)
+    _dbs_str = (f"可動用流動資金 {_dbs_avail:,.0f} TWD（Moneybook 真值 {_dbs_cash:,.0f}"
+                + (f" − 指定清償款 {_dbs_rst:,.0f}" if _dbs_rst else "")
+                + f"），{'餘裕充足 ✅' if _dbs_avail > 30000 else '⚠️ 需補資金'}")
     html = html.replace("{_dbs_note}", _dbs_str)
 
     # 機構流向雷達（2026-08-22：讀 radar_state.json，盤後更新、隔日報生效）
@@ -1485,21 +1493,29 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
 
             buf_content_lines.append('<p><strong>🤝 Buffett 派操作建議</strong></p>')
             buf_content_lines.append(f'<span style="display:block">• 淨資產：{_format_line_with_numbers(f"{net_worth:,.0f} TWD")}</span>')
-            _us_pct = _us_v / _tot * 100
-            _tw_pct = _tw_v / _tot * 100
-            _def_pct = _def_v / _tot * 100
-            _bond_pct = _bond_v / _tot * 100
-            _cash_pct = _cash_v / _tot * 100
+            # 2026-09-29 CIO 審查 minor4：本區塊原用 DB asset_class 啟發式（與穿透表口徑不同，且現金已改
+            # 「真值−指定款」→ 混口徑）→ 台股 47%/美股 24% 與同日穿透表 6.4/32.2 自相矛盾。改讀穿透真值。
+            _pp_pct = (tv.get("penetration") or {}).get("actual_pct") or {}
+            def _pp(k, default):
+                try:
+                    return float(_pp_pct.get(k, default))
+                except (TypeError, ValueError):
+                    return float(default)
+            _us_pct = _pp("美股市值型成長", _us_v / _tot * 100)
+            _tw_pct = _pp("台股市值型成長", _tw_v / _tot * 100)
+            _def_pct = _pp("防守型配息", _def_v / _tot * 100)
+            _bond_pct = _pp("債券", _bond_v / _tot * 100)
+            _cash_pct = _pp("現金/安全網", _cash_v / _tot * 100)
             buf_content_lines.append(f'<span style="display:block">• 建議部位：美股 {_format_line_with_numbers(f"{_us_pct:.0f}%")}（目標 {_format_line_with_numbers(f"{_tgt_us:.0f}%")}）、台股 {_format_line_with_numbers(f"{_tw_pct:.0f}%")}（目標 {_format_line_with_numbers(f"{_tgt_tw:.0f}%")}）、防守 {_format_line_with_numbers(f"{_def_pct:.0f}%")}（目標 {_format_line_with_numbers(f"{_tgt_def:.0f}%")}）、債券 {_format_line_with_numbers(f"{_bond_pct:.0f}%")}（目標 {_format_line_with_numbers(f"{_tgt_bond:.0f}%")}）、現金 {_format_line_with_numbers(f"{_cash_pct:.0f}%")}（目標 {_format_line_with_numbers(f"{_tgt_cash:.0f}%")}）</span>')
 
             today_action = []
-            if (_tw_v / _tot * 100 - _tgt_tw) < -5:
+            if (_tw_pct - _tgt_tw) < -5:
                 today_action.append("台股偏低，逢低補碼")
-            if (_us_v / _tot * 100 - _tgt_us) > 5:
+            if (_us_pct - _tgt_us) > 5:
                 today_action.append("美股超標，優先減碼")
-            if (_def_v / _tot * 100 - _tgt_def) < -5:
+            if (_def_pct - _tgt_def) < -5:
                 today_action.append("防守不足，補 00878/00713")
-            if (_cash_v / _tot * 100 - _tgt_cash) > 5:
+            if (_cash_pct - _tgt_cash) > 5:
                 today_action.append("現金過多，可轉投入")
             if not today_action:
                 today_action.append("持股觀望，等待機會")

@@ -44,7 +44,10 @@ def scenarios(snap: dict) -> dict:
     snap = snap or {}
     pi = snap.get("passive_income") or {}
     exp = _f(snap.get("monthly_expense") or pi.get("monthly_expense"), _FALLBACK_EXPENSE)
-    cash = _f(snap.get("cash_total"))
+    # 2026-09-29 CIO 審查必修3：FI 跑道（＝留停 A 級門檻「跑道 ≥540 天」判準）不得把
+    # 質押撥款指定清償款當可用現金 → cash 一律取「可動用」口徑。
+    _restricted = _f(((snap.get("restricted_cash") or {}) or {}).get("金額"))
+    cash = max(0.0, _f(snap.get("cash_total")) - _restricted)
     div_con = _f(pi.get("fund_dividend_conservative"))
     div_norm = _f(snap.get("monthly_dividend_total") or pi.get("fund_dividend_monthly"))
     div_act = _f(snap.get("dividend_month_actual") or snap.get("monthly_dividend_total")

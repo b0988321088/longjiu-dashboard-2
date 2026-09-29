@@ -242,6 +242,10 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         except (TypeError, ValueError):
             _rst = 0.0
     total = cash + ins + sec + funds - _rst
+    # 2026-09-29 CIO 審查必修1：百分比／缺口／alert 一律用「總資產」口徑（含指定用途款）為分母，
+    # 與 build_penetration_report 同分母；只有現金桶本身扣掉指定用途款 → 僅現金 % 變動（2.6%），
+    # 其餘四桶 6.4/32.2/14.1/23.4 不變。原寫法誤用扣款後分母 → alert 印出 7.8/39.5/28.7 的舊口徑。
+    _total_pct = cash + ins + sec + funds
     def_v = sec_def + _fund_def
     bond_v = sec_bond + ins_bonds + _fund_bonds
     _fund_sum = _fund_tw + _fund_us + _fund_def + _fund_cash + _fund_bonds
@@ -272,13 +276,13 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         "科技曝險目標": _sot_bt.get("科技", 20),
     }
     _actual_pct = {
-        "台股市值型成長": round(tw / total * 100, 1),
-        "美股市值型成長": round(us / total * 100, 1),
-        "防守型配息": round(def_v / total * 100, 1),
-        "債券": round(bond_v / total * 100, 1),
-        "現金/安全網": round(c / total * 100, 1),
-        "美股市值型成長_科技": round(us_tech / total * 100, 1),
-        "美股市值型成長_非科技": round(us_non_tech / total * 100, 1),
+        "台股市值型成長": round(tw / _total_pct * 100, 1),
+        "美股市值型成長": round(us / _total_pct * 100, 1),
+        "防守型配息": round(def_v / _total_pct * 100, 1),
+        "債券": round(bond_v / _total_pct * 100, 1),
+        "現金/安全網": round(c / _total_pct * 100, 1),
+        "美股市值型成長_科技": round(us_tech / _total_pct * 100, 1),
+        "美股市值型成長_非科技": round(us_non_tech / _total_pct * 100, 1),
     }
     _gaps = {
         "台股市值型成長": round(_actual_pct["台股市值型成長"] - _targets["台股市值型"], 1),

@@ -17,6 +17,9 @@ def main():
     targets = snap.get("penetration", {}).get("targets", {})
     total = snap.get("total_assets", 0)
     cash = snap.get("cash_total", 0)
+    # 2026-09-29 CIO 審查：現金紅線／卡片一律看「可動用」（扣質押撥款指定清償款），真值另標註。
+    _rst_cash = float((snap.get("restricted_cash") or {}).get("金額") or 0)
+    cash_avail = max(0.0, float(cash or 0) - _rst_cash)
 
     try:
         st = json.load(open(f"{REPO}\\us30y_state.json", encoding="utf-8"))
@@ -65,7 +68,8 @@ def main():
     def red(k, ok, txt):
         redlines.append(f"<tr><td>{k}</td><td class='{'ok' if ok else 'bad'}'>{'✅' if ok else '❌'}</td><td>{txt}</td></tr>")
     red("US30Y < 5.30%（債券凍結線）", us30y is None or us30y < 5.30, f"目前 {us30y_txt}（模式A防禦）")
-    red("現金 ≥ 70 萬（6個月開支）", cash >= 700000, f"目前 {cash:,}（需求 851,748）")
+    red("現金 ≥ 70 萬（可動用口徑）", cash_avail >= 700000,
+        f"可動用 {cash_avail:,.0f}（真值 {cash:,} − 指定清償款 {_rst_cash:,.0f}；需求 851,748＝6個月開支）")
     red("美股 ≤ 33%（熔斷閾值）", apct.get("美股市值型成長", 0) <= 33, f"目前 {apct.get('美股市值型成長',0):.1f}%")
     red("LTV ≤ 40%（未質押）", True, "目前未質押 ✅")
     red("單筆交易 ≤ 5 萬（台股）", True, "管制中")
@@ -207,7 +211,7 @@ def main():
 
   <div class="cards">
     <div class="card"><div class="k">總資產</div><div class="v">{total:,}</div></div>
-    <div class="card"><div class="k">現金</div><div class="v {'green' if cash>=700000 else 'red'}">{cash:,}</div></div>
+    <div class="card"><div class="k">現金（可動用）</div><div class="v {'green' if cash_avail>=700000 else 'red'}">{cash_avail:,.0f}</div></div>
     <div class="card"><div class="k">美股超標</div><div class="v {'green' if apct.get('美股市值型成長',0)<=33 else 'red'}">{apct.get('美股市值型成長',0):.1f}%</div></div>
     <div class="card"><div class="k">US30Y</div><div class="v {'amber' if (us30y or 0)>=5.2 else 'green'}">{us30y_txt}</div></div>
     <div class="card"><div class="k">五桶合計</div><div class="v">{sum_pct:.1f}%</div></div>

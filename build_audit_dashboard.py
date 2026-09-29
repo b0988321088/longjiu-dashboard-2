@@ -15,6 +15,10 @@ d = json.load(open(os.path.join(REPO, "dashboard_decisions.json"), encoding="utf
 TA = s["total_assets"]; TL = s["total_liabilities"]; RE = s.get("real_estate_value", 34017063)
 INS = s["insurance_current_value"]; SEC = s["securities_total_market_value"]; FUND = s["fund_market_value"]
 CASH = s["cash_total"]; RENT = s.get("rent_monthly_total", 80100)
+# 2026-09-29 CIO 審查必修3：Runway 一律用可動用現金（扣質押撥款指定清償款），
+# 並保留真值 CASH 供「純現金」KPI 與資產結構顯示（標籤需註明含指定清償款）。
+RESTRICTED = float((s.get("restricted_cash") or {}).get("金額") or 0)
+CASH_AVAIL = max(0.0, CASH - RESTRICTED)
 DIV = s.get("monthly_dividend_total", 153389); DIV_ACT = s.get("dividend_month_actual", 97233)
 EXP = s.get("monthly_expense", 162781); FIXED = s.get("monthly_fixed_expense", {}).get("合計", 162781)
 MORT = 91735; POL_INT = 13333; GF = 6000
@@ -56,7 +60,7 @@ MORT_MONTHLY = s.get("mortgage_cathay_monthly", 26000) + s.get("mortgage_sinopac
 
 debt_ratio = TL / (TA + RE) * 100
 net_worth = TA + RE - TL
-runway = CASH / EXP if EXP else 0
+runway = CASH_AVAIL / EXP if EXP else 0
 cov = (DIV + RENT) / EXP * 100
 cov_act = (DIV_ACT + RENT) / EXP * 100
 cov_fixed = (DIV + RENT) / FIXED * 100
@@ -136,8 +140,8 @@ rows = f"""
 {kpi("總資產", f"{TA:,}", "不含不動產", "#1d1d1f")}
 {kpi("淨值", f"{net_worth:,}", "資產+不動產−負債", "#3b82f6")}
 {kpi("負債比", f"{debt_ratio:.1f}%", f"負債 {TL:,}", "#d97706")}
-{kpi("純現金", f"{CASH:,}", f"底線 70萬 {cash_ok}", "#22c55e" if CASH>=700000 else "#ef4444")}
-{kpi("Runway", f"{runway:.1f} 月", f"現金 / 月支出 {EXP:,}")}
+{kpi("純現金", f"{CASH:,}", f"底線 70萬 {cash_ok}" + (f"｜含指定清償款 {RESTRICTED/10000:.0f}萬" if RESTRICTED else ""), "#22c55e" if CASH_AVAIL>=700000 else "#ef4444")}
+{kpi("Runway", f"{runway:.1f} 月", f"可動用 {CASH_AVAIL:,} / 月支出 {EXP:,}")}
 {kpi("被動覆蓋", f"{cov:.0f}%", f"配息 {DIV:,} + 房租 {RENT:,}", "#22c55e")}
 </div>
 
@@ -158,7 +162,7 @@ rows = f"""
 <h3 style="font-size:14px;font-weight:800;margin:0 0 8px">二、Runway 與被動覆蓋（三種口徑）</h3>
 <table style="width:100%;font-size:13px;border-collapse:collapse">
 <tr>{H('口徑')}{H('月收')}{H('覆蓋率')}</tr>
-<tr><td {W(0)}>純現金 Runway</td><td {W(0)} style="text-align:right">{CASH:,} / {EXP:,}</td><td {W(0)} style="text-align:right;font-weight:700">{runway:.1f} 個月</td></tr>
+<tr><td {W(0)}>純現金 Runway</td><td {W(0)} style="text-align:right">{CASH_AVAIL:,} / {EXP:,}</td><td {W(0)} style="text-align:right;font-weight:700">{runway:.1f} 個月</td></tr>
 <tr><td {W(0)}>被動覆蓋（常態配息）</td><td {W(0)} style="text-align:right">{DIV+RENT:,}</td><td {W(0)} style="text-align:right;font-weight:700;color:#22c55e">{cov:.0f}%</td></tr>
 <tr><td {W(0)}>被動覆蓋（當月實收）</td><td {W(0)} style="text-align:right">{DIV_ACT+RENT:,}</td><td {W(0)} style="text-align:right;font-weight:700">{cov_act:.0f}%</td></tr>
 <tr><td {W(0)}>全口徑（含房貸/保單息/女友）</td><td {W(0)} style="text-align:right">{DIV+RENT:,} / {FIXED:,}</td><td {W(0)} style="text-align:right;font-weight:700;color:{'#22c55e' if cov_fixed>=100 else '#d97706'}">{cov_fixed:.0f}%</td></tr>
