@@ -104,9 +104,13 @@ def main() -> None:
              else "🧪 DRY RUN（未實際執行管線）"]
     for icon, name, url in have:
         lines.append(f"{icon} {name}：{url}")
-    extra = [f"{links[i][0]}：{links[i][1]}" for i in ("🔄", "📊", "🚨") if i in links]
-    if extra:
-        lines.append("　" + "｜".join(extra))
+    # 2026-09-29（使用者回報）：原本把 🔄／📊／🚨 三個連結用「｜」串成同一行，
+    # Telegram 上一條長行裡兩個網址看起來黏在一起（再平衡儀表板｜穿透分析｜緊急應變），
+    # 手指也容易點錯。改為一行一個連結（訊息多 2~3 行，換取可辨識與可點擊）。
+    for _icon in ("🔄", "📊", "🚨"):
+        if _icon in links:
+            _label, _url = links[_icon]
+            lines.append(f"{_icon} {_label}：{_url}")
     # 2026-09-23（INC-240）：原本只挑含 ❌ 的行 → 詳情行（"  - …"）被丟掉，訊息只剩光禿禿
     # 一句「❌ 儀表板同步檢查失敗:」看不出原因（真因藏在下一行）。改為 ❌ 行＋緊接的詳情行一起收。
     bad, _collect = [], False
