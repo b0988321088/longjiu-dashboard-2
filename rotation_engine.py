@@ -193,7 +193,9 @@ def build_recommendation(industry_pen: dict, sector_flow: dict) -> dict:
 def build_trade_plan(rec: dict, snap: dict) -> list:
     """明確交易計畫（2026-08-22：使用者要求「講清楚買什麼」）
     乾粉 = 現金 − 70萬底線 + 月盈餘（保守取一半）；依建議優先序分配金額 + 分批節奏"""
-    cash = snap.get("cash_total", 0)
+    # 2026-09-29 CIO major：乾粉（交易計畫金額來源）不得含指定用途款（質押撥款待清償）
+    from sot_targets import restricted_cash as _rst_fn
+    cash = max(0.0, float(snap.get("cash_total") or 0) - _rst_fn(snap))
     surplus = snap.get("monthly_income", 228751) - snap.get("monthly_expense", 162781)
     dry = max(cash - snap.get("cash_floor", 700000), 0) + surplus * 0.5  # 保守可動用（底線讀 snapshot）
     plan = []

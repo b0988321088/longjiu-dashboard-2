@@ -112,7 +112,9 @@ def compute_kpis(snap):
     passive = _pcs["con"]["income"]
     rent = _pcs["rent_norm"]
     div_c = _pcs["div_con"]
-    cash = snap.get("cash_total", 0) or 0
+    # 2026-09-29 CIO major：留停 A/B/C 級驗收的現金水位必須是可動用（扣指定用途款），否則 fail-open
+    from sot_targets import restricted_cash as _rst_fn
+    cash = max(0.0, float(snap.get("cash_total", 0) or 0) - _rst_fn(snap))
     cash_floor = _cash_floor(snap)
     # 2026-09-28 使用者裁示：房貸月付已計入月支出（monthly_fixed_expense 的房貸項），
     # 在房租端再扣一次＝重複計算；且常態房租 80,100 是兩間房的合計，不應拿去減

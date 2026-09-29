@@ -1,0 +1,123 @@
+{
+  "verdict": "REJECT",
+  "reviewer": "CIO（獨立審查 / hermes subagent，唯讀）",
+  "commit": "e0ce59392f2767d7edf7b58efb95682a16992a52",
+  "reviewed_commits": [
+    "e0ce59392f2767d7edf7b58efb95682a16992a52",
+    "b9a01808543e95adb3f0a06ffa730bbb707ce197",
+    "6b4aa009ece7de3f77fa5a5b9090f45550282214",
+    "bb6f6f93a033abd8705661fca92109f358aeeba5",
+    "b4a56abcefb65fb8d5cc54176d961906e9d3157d"
+  ],
+  "reviewed_trees": [
+    "5fe275466302a5c4bda61bc086ffc508806434a9",
+    "962cc3467907dd58f6a2b69eaac28d0796e45cd3",
+    "c0fcb9dd36f8cbe6bf382af37015c22d3b1fb6d0",
+    "3e77ccd917349e24aedf7ec431528f24c9b8f746",
+    "894ef4db2b9f0ba3de1f97fd5349752c786b3b26"
+  ],
+  "checked": [
+    {
+      "id": 1,
+      "check": "推送範圍筆數與清單",
+      "cmd": "git rev-list --count origin/clean-main..HEAD ; git log --oneline origin/clean-main..HEAD",
+      "result": "count=5；e0ce5939 fix(caliber): 決策/評分端全面收斂（CIO 第五輪 3 major）｜b9a01808 四源同步 2026-09-29｜6b4aa009 fix(caliber): 決策端閘門＋派生欄收斂（第四輪 2 major＋4 minor）｜bb6f6f93 四源同步 2026-09-29｜b4a56abc fix(caliber): 週報現金口徑＋雙維度派生欄校正（INC-255）",
+      "pass": true
+    },
+    {
+      "id": 2,
+      "check": "靜態閘門",
+      "cmd": "python static_gate.py",
+      "result": "✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key）RC=0",
+      "pass": true
+    },
+    {
+      "id": 3,
+      "check": "coast_fi_engine 跑道／現金水位",
+      "cmd": "python coast_fi_engine.py",
+      "result": "無薪安全跑道：689 天 🟢；現金水位：819,182／底線 700,000 🟢（無 5,649 殘留；RC=0，dry-run 未寫檔）",
+      "pass": true
+    },
+    {
+      "id": 4,
+      "check": "macro_regime 硬性約束『現金底線 70 萬』文案",
+      "cmd": "python macro_regime.py ; 讀 macro_regime_2026-09-29.json 硬性約束[4]",
+      "result": "{\"項目\":\"現金底線 70 萬\",\"通過\":true,\"說明\":\"現況 81.9萬\"}（非 671.9萬）",
+      "pass": true
+    },
+    {
+      "id": 5,
+      "check": "build_retirement_plan 跑道／現金水位",
+      "cmd": "python build_retirement_plan.py",
+      "result": "產出 retirement_plan_2026-09-29.html：跑道 689 天；現金水位 819,182（line289/callout）✓。惟驗收表列另印 884,918（見 finding M2/m1）",
+      "pass": true
+    },
+    {
+      "id": 6,
+      "check": "報表抽查 6,719,182 是否標『真值』",
+      "cmd": "grep + 上下文檢視 index/audit_dashboard/penetration_report/rebalance_dashboard/weekly_report",
+      "result": "index.html 健康度『現金底線 819,182（目標≥700,000）15.0/15』✓；audit/penetration/rebalance/weekly 之 6,719,182 全部標『真值/帳戶層真值』✓",
+      "pass": true
+    },
+    {
+      "id": 7,
+      "check": "門檻全檢（含雙維度自洽）",
+      "cmd": "python check_thresholds.py",
+      "result": "✅ 雙維度防禦維度自洽（Σ組成=合計 12,722,364）｜穿透 25,023,738+884,823+5,900,000=31,808,561｜基金閉合｜日報可動用 819,182（真值 6,719,182−5,900,000）。RC=0",
+      "pass": true
+    },
+    {
+      "id": 8,
+      "check": "負向測試（cash_total 暫設 719,182 → 可動用 129,182 < 700,000）",
+      "cmd": "備份→改 snapshot.cash_total=719182→跑 coast_fi_engine/macro_regime/report_components→還原",
+      "result": "coast_fi：跑道 0 天 🔴、現金水位 0／底線 700,000 🔴 已低於底線、擋下原因含『無薪跑道 0 天<540』；macro_regime：現金底線 70 萬 通過=false；report_components：現金標準=0、現金分=0.0。已完整還原，snapshot.json md5=b44321408dd24cddadecb12d8b022914 與測前一致",
+      "pass": true
+    },
+    {
+      "id": 9,
+      "check": "全庫 cash_total 消費端分類",
+      "cmd": "grep -rn cash_total --include=*.py（非 archive）",
+      "result": "50 檔；決策/評分/跑道端殘留 2 處（rotation_engine.py:196、sabbatical_checklist_update.py:115）→ findings。其餘屬合法真值用途（對帳/資產總額/資料匯入/穿透）",
+      "pass": false
+    }
+  ],
+  "findings": [
+    {
+      "severity": "major",
+      "file": "rotation_engine.py",
+      "line": 196,
+      "issue": "build_trade_plan 以 raw cash_total 計乾粉：dry = max(cash_total − cash_floor, 0) + surplus/2。實跑呼叫（傳入 snapshot.json）得 dry=6,052,167，正確應為 152,167；並據此產出交易計畫金額（本次合計 11,052,000）。等同把指定清償款 590 萬當可投入資金 → 與第五輪 3 個 major（coast_fi_engine/macro_regime/report_components）同一 fail-open 類別。呼叫端確為線上：buffett_cto_analyzer.py:571、institutional_flow.py:476、build_rebalance_dashboard.py:261 皆傳入未扣 restricted 的 snapshot。",
+      "suggest": "改為 cash = max(0, cash_total − sot_targets.restricted_cash(snap))，或直接呼叫 sot_targets.available_cash(snap) 單一實作；修正後重跑確認 dry=152,167。"
+    },
+    {
+      "severity": "major",
+      "file": "sabbatical_checklist_update.py",
+      "line": 115,
+      "issue": "compute_kpis 現金水位 = snap.get('cash_total', 0) 未扣 restricted_cash。此值（a）流入 acceptance_level 的 cash_ok = cash >= cash_floor（留停 A/B/C 級＝核心決策），可動用跌破底線時仍會 cash_ok=True（fail-open）；（b）以『餘裕＝乾粉』語意寫回 snapshot.sabbatical_checklist.記錄/驗收標準（現金水位＋餘裕）。現存 snapshot 為質押撥款前舊值 884,918，下次真值日重跑將記成 6,719,182（餘裕 6,019,182 而非 119,182）。違反 restricted_cash 『不計入可動用乾粉』之既定規則。",
+      "suggest": "比照 report_components.py:163 收斂：cash = max(0, cash_total − restricted_cash)；並重跑同步 snapshot 驗收區塊舊值。"
+    },
+    {
+      "severity": "minor",
+      "file": "build_retirement_plan.py",
+      "line": 144,
+      "issue": "同一頁出現兩個『現金水位』：line 289/callout 正確 819,182，但驗收標準表列 _cash_row 讀 snapshot 舊值 884,918（質押撥款前 cash_total），一頁兩數字易誤讀。根因即 sabbatical 殘留（finding major#2）尚未重算。",
+      "suggest": "修正 sabbatical_checklist_update 後重跑真值以刷新 snapshot 驗收區塊；或本頁統一由 cash 變數（可動用）派生。"
+    },
+    {
+      "severity": "minor",
+      "file": "snapshot.json",
+      "line": null,
+      "issue": "派生欄未隨 9/29 校正重算：sabbatical_checklist.記錄.2026-09.現金水位=884,918、驗收標準_2027_02.距門檻缺口.現金水位.現況=884,918（皆為質押撥款前 cash_total）。",
+      "suggest": "10/1 真值日前先修 sabbatical_checklist_update，否則會寫入 6,719,182。"
+    },
+    {
+      "severity": "info",
+      "file": "build_penetration_report.py",
+      "line": null,
+      "issue": "穿透『現金/安全網』桶 819,768（penetration.actual_twd）與全站『可動用現金 819,182』差 586 元，未標註口徑差異。",
+      "suggest": "桶位派生差額加註口徑或對齊，避免讀者誤判。"
+    }
+  ],
+  "summary": "第五輪 3 major（coast_fi_engine 跑道、macro_regime 現金底線硬約束、report_components 健康度現金維度）之修正均經實跑驗證通過：跑道 689 天、現金水位 819,182、macro『現況 81.9萬』、健康度現金維度扣 restricted、check_thresholds 全檢 RC=0 且雙維度自洽、負向測試三支皆正確 fail（跑道 0／通過=false／現金分 0）並完整還原。報表 6,719,182 一律標『真值』。惟全庫消費端審查（item 9）發現 2 個同類 major 殘留：rotation_engine.py:196（乾粉/交易計畫用 raw cash_total，實測 6,052,167 應為 152,167）與 sabbatical_checklist_update.py:115（留停驗收 cash_ok 閘門與現金水位/乾粉用 raw cash_total，且將寫壞 snapshot）。兩者皆把指定清償款 590 萬當可投入資金，屬 fail-open 決策/評分/跑道端，故 verdict=REJECT；另 2 個 minor（退休頁雙現金水位／snapshot 派生舊值）與 1 info。修復上述 2 major 後需重跑 build_retirement_plan 及 snapshot 驗收區塊再送審。",
+  "scope_note": "本次為唯讀審查：未執行 git push、未修改任何 .py；負向測試之 snapshot.json 與 macro_regime_2026-09-29.json 已完整還原（snapshot md5 與測前一致）。"
+}

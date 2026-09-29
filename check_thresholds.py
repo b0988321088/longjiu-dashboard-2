@@ -184,6 +184,25 @@ def main() -> int:
     except (TypeError, ValueError) as e:
         errs.append(f"雙維度防禦維度欄位無法解析：{e}")
 
+    # ②a 決策/評分/跑道端不得裸用 cash_total（2026-09-29 INC-254~256：同一病在 9 支腳本輪流復發）
+    #     這些檔案的現金一律須經 sot_targets（available_cash／restricted_cash）才可進入判斷。
+    _DECISION_ENDPOINTS = [
+        "rotation_engine.py", "coast_fi_engine.py", "macro_regime.py", "report_components.py",
+        "sabbatical_checklist_update.py", "debt_restructure_tracker.py", "institutional_flow.py",
+        "build_retirement_plan.py", "asset_moat_monitor.py",
+    ]
+    for _f in _DECISION_ENDPOINTS:
+        _p = BASE / _f
+        if not _p.exists():
+            continue
+        _src = _p.read_text(encoding="utf-8", errors="replace")
+        if "sot_targets" not in _src:
+            errs.append(f"{_f} 決策/評分端未經 sot_targets 取得現金口徑（禁裸用 cash_total）")
+        elif "cash_total" in _src and "restricted_cash" not in _src and "available_cash" not in _src:
+            errs.append(f"{_f} 仍裸用 cash_total 且未扣指定用途款")
+    else:
+        print(f"✅ 決策端現金口徑檢查完成（{len(_DECISION_ENDPOINTS)} 支）")
+
     # ② 消費端有引用 SoT
     for f in CONSUMERS:
         p = BASE / f
