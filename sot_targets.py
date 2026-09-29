@@ -140,3 +140,27 @@ def defensive_caliber(snap: dict) -> dict:
         "stored_佔比": dcm.get("佔比"),
         "stored_合計": dcm.get("配息資產合計"),
     }
+
+
+def restricted_cash(snap: dict) -> float:
+    """指定用途現金（質押撥款待清償等）— 不計入桶位／乾粉／Runway。
+
+    真值來源＝snapshot.restricted_cash.金額（禁寫死）；清償入帳後由該欄歸零即自動解除。
+    2026-09-29 使用者核准：避免「指定還債款」被當超額現金 → 桶位假超標觸發自動減碼。
+    """
+    _rc = (snap or {}).get("restricted_cash") or {}
+    if isinstance(_rc, dict):
+        try:
+            return float(_rc.get("金額") or 0)
+        except (TypeError, ValueError):
+            return 0.0
+    try:
+        return float(_rc or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def available_cash(snap: dict) -> float:
+    """可動用現金 ＝ cash_total − restricted_cash（下限 0）。"""
+    _cash = float((snap or {}).get("cash_total") or (snap or {}).get("cash") or 0)
+    return max(0.0, _cash - restricted_cash(snap))

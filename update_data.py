@@ -237,6 +237,8 @@ def main():
         "actual_twd": {k: pen[k] for k in _PEN_KEYS if k in pen},
         "actual_pct": {k: round(pen[k] / total * 100, 1) for k in _PEN_KEYS if k in pen},
         "targets": bucket_targets(snap) or _old_pen.get("targets", {}),
+        # 2026-09-29 使用者核准：指定用途款（質押撥款待清償）不列入桶位，僅記錄金額
+        "restricted_cash": pen.get("restricted_cash", 0),
     }
     # 其餘既有延伸 key（黃金／健康／防禦維度…）：現算有就用現值，沒有才保留舊值（不靜默丟棄）
     for _k, _v in (_old_pen.get("actual_twd") or {}).items():

@@ -248,11 +248,17 @@ _cw = ((s.get("thresholds_2026_0915") or {}).get("現金_twd") or {})
 _life = float(_cw.get("生活底線") or s.get("cash_floor") or 0)
 _buf = float(_cw.get("追繳緩衝") or 0)
 _tot = float(_cw.get("合計底線") or (_life + _buf))
+# 2026-09-29 使用者核准：乾粉改「可動用現金（扣指定清償款）− 底線」；現金 KPI 仍顯示真值 CASH。
+try:
+    _rst_c = float((s.get("restricted_cash") or {}).get("金額") or 0)
+except (TypeError, ValueError):
+    _rst_c = 0.0
+_cav = CASH - _rst_c
 # 2026-09-27 使用者裁示：現金底線＝單一口徑生活底線 700,000（取消追繳緩衝 50 萬）→ 單口徑顯示。
 # （2026-09-25 的雙口徑並列需求隨裁示消滅，故 kpi5 不再顯示合計底線。）
-_life_txt = (f"現金底線 {_life/10000:.0f}萬 " + ("✅ 達標" if CASH >= _life else "🔴 未達標")
-             + (f"（餘裕/乾粉 {(CASH - _life)/10000:.1f}萬）" if CASH >= _life
-                else f"（缺 {(_life - CASH)/10000:.1f}萬）"))
+_life_txt = (f"現金底線 {_life/10000:.0f}萬 " + ("✅ 達標" if _cav >= _life else "🔴 未達標")
+             + (f"（餘裕/乾粉 {(_cav - _life)/10000:.1f}萬）" if _cav >= _life
+                else f"（缺 {(_life - _cav)/10000:.1f}萬）"))
 kpi5 = kpi("現金", f"{CASH:,}", _life_txt, "#22c55e")
 
 # 2026-09-25 修正（本週週五審查發現）：原標題寫死「目標 台10/美40/防20/債25/現5」，

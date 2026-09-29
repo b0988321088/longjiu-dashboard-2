@@ -232,7 +232,16 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     _satellite = round(_fund_gold) + round(_fund_health)
     tw = sec_tw + _fund_tw
     us = sec_us + ins_eq + _fund_us - _satellite
-    total = cash + ins + sec + funds
+    # 2026-09-29 使用者核准（restricted 隔離）：指定用途現金（質押撥款待清償 590 萬）
+    # 不屬配置資產 → 從「現金桶（餘數法）」與分母同步扣除，避免桶位假超標觸發自動減碼。
+    # 真值來源＝snapshot.restricted_cash（禁寫死）；清償入帳後歸零即自動解除。
+    _rst = 0.0
+    if snap:
+        try:
+            _rst = float((snap.get("restricted_cash") or {}).get("金額") or 0)
+        except (TypeError, ValueError):
+            _rst = 0.0
+    total = cash + ins + sec + funds - _rst
     def_v = sec_def + _fund_def
     bond_v = sec_bond + ins_bonds + _fund_bonds
     _fund_sum = _fund_tw + _fund_us + _fund_def + _fund_cash + _fund_bonds
@@ -296,6 +305,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
          if abs(_v) >= 1.5 and _k != "防守型配息"] + [_def_txt]) or "各桶均在容忍範圍"
 
     return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": def_v, "債券": bond_v, "現金/安全網": c,
+            "指定用途款": round(_rst), "restricted_cash": round(_rst),
             "黃金": round(_fund_gold), "健康": round(_fund_health),
             "美股市值型成長_科技": round(us_tech), "美股市值型成長_非科技": round(us_non_tech),
             "alert": _alert,

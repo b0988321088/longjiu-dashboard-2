@@ -29,18 +29,33 @@ EXCLUDE = "node_modules,__pycache__,archive,.git,.venv,venv"
 
 def _find_runner() -> list[str] | None:
     """依序找可用的 ruff 執行方式（cron/agent 環境路徑各異，故多重 fallback）。"""
-    local = os.environ.get("LOCALAPPDATA", "")
-    candidates = []
-    if local:
-        candidates.append([os.path.join(local, "hermes", "bin", "uv"), "run", "--no-project", "--with", "ruff", "ruff", "check"])
-    candidates.append(["uv", "run", "--no-project", "--with", "ruff", "ruff", "check"])
-    if local:
-        candidates.append([os.path.join(local, "hermes", "bin", "uvx"), "ruff", "check"])
-    candidates.append(["uvx", "ruff", "check"])
-    for cmd in candidates:
+    cands = _runner_candidates()
+    for cmd in cands:
         if shutil.which(cmd[0]) or os.path.exists(cmd[0]):
             return cmd
     return None
+
+
+def _runner_candidates() -> list[list[str]]:
+    """全部候選（含「最新版 spawn 失敗 → 退回已快取可執行版本」的降級鏈）。
+
+    2026-09-29 INC（env）：`uv run --with ruff` 解析出的最新版 ruff 在 Windows 被
+    AppLocker 擋下（`Failed to spawn: ruff` / os error 4551 應用程式控制原則已封鎖此檔案），
+    但快取中既有的 0.16.7 可正常執行 → 保留未指定版本的候選在前，另補釘版本候選在後，
+    由 main() 依序試到「真的能 spawn」為止（閘門本身失效會讓整個 sync_all 卡在第 1 步）。
+    """
+    local = os.environ.get("LOCALAPPDATA", "")
+    cands: list[list[str]] = []
+    if local:
+        cands.append([os.path.join(local, "hermes", "bin", "uv"), "run", "--no-project", "--with", "ruff", "ruff", "check"])
+    cands.append(["uv", "run", "--no-project", "--with", "ruff", "ruff", "check"])
+    if local:
+        cands.append([os.path.join(local, "hermes", "bin", "uvx"), "ruff", "check"])
+    cands.append(["uvx", "ruff", "check"])
+    if local:
+        cands.append([os.path.join(local, "hermes", "bin", "uv"), "run", "--no-project", "--with", "ruff==0.16.7", "ruff", "check"])
+    cands.append(["uv", "run", "--no-project", "--with", "ruff==0.16.7", "ruff", "check"])
+    return cands
 
 
 def main() -> int:
@@ -53,16 +68,26 @@ def main() -> int:
         print(f"⚠️ 靜態閘門：找不到 {root}，跳過")
         return 0
 
-    runner = _find_runner()
-    if runner is None:
+    cands = [c for c in _runner_candidates() if shutil.which(c[0]) or os.path.exists(c[0])]
+    if not cands:
         print("⚠️ 靜態閘門：找不到 ruff（uv/uvx 皆不可用），本次跳過 — 請人工確認")
         return 0
 
-    cmd = runner + [root, "--select", RULES, "--exclude", EXCLUDE, "--output-format", "concise", "--quiet"]
-    try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
-    except Exception as e:  # 工具本身壞掉不應該擋住產報
-        print(f"⚠️ 靜態閘門：ruff 執行失敗（{e}），跳過")
+    r = None
+    for runner in cands:
+        cmd = runner + [root, "--select", RULES, "--exclude", EXCLUDE, "--output-format", "concise", "--quiet"]
+        try:
+            _r = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+        except Exception as e:  # 工具本身壞掉不應該擋住產報
+            print(f"⚠️ 靜態閘門：ruff 執行失敗（{e}），跳過")
+            return 0
+        _txt = (_r.stdout or "") + (_r.stderr or "")
+        if "Failed to spawn" in _txt:
+            continue        # 該版本二進位被環境封鎖（AppLocker）→ 換下一個候選
+        r = _r
+        break
+    if r is None:
+        print("⚠️ 靜態閘門：所有 ruff 候選皆無法 spawn，本次跳過 — 請人工確認")
         return 0
 
     out = (r.stdout or "") + (r.stderr or "")

@@ -482,7 +482,19 @@ def compute_changes(history: dict) -> list[dict]:
 
 
 # ---------- charts ----------
-def build_trend_charts(history: dict, current: dict | None = None) -> str:
+def _restricted_cash_of(snap: dict) -> float:
+    """指定用途現金（質押撥款待清償）— 2026-09-29 使用者核准隔離。
+
+    總資產口徑仍包含它（真值），但桶位／乾粉／Runway 口徑已於 update_all.calc_penetration 扣除；
+    報表凡以「總資產」為分母陳述現金占比時，必須標明含此金額，避免同檔出現兩個「現金 %」。
+    """
+    try:
+        return float((((snap or {}).get("restricted_cash") or {}) or {}).get("金額") or 0)
+    except (TypeError, ValueError, AttributeError):
+        return 0.0
+
+
+def build_trend_charts(history: dict, current: dict | None = None, restricted: float = 0.0) -> str:
     dates = sorted(history.keys())
     rows = [history[d] for d in dates[-14:]]
     if not rows:
@@ -551,11 +563,16 @@ def build_trend_charts(history: dict, current: dict | None = None) -> str:
         ("現金", last.get("cash", 0), "#f59e0b"),
     ]
     bars = []
+    # 2026-09-29 使用者核准：現金的資產結構占比是「總資產口徑」（含指定清償款），
+    # 與桶位口徑（penetration 已扣除）不同 → 標籤必須講清楚，否則同一份報告出現兩個「現金 %」。
+    _rst_bar = float(restricted or 0)
     for label, v, c in pie_items:
         v = max(0, float(v or 0))
         pct = v / total * 100
         if pct < 0.5:
             continue
+        if label == "現金" and _rst_bar:
+            label = f"現金（含指定清償款 {_rst_bar/10000:.0f}萬）"
         bars.append(
             f'<div style="display:flex;align-items:center;margin:6px 0;">'
             f'<span style="width:12px;height:12px;background:{c};border-radius:3px;margin-right:8px;display:inline-block"></span>'
@@ -627,11 +644,13 @@ def buffett_advice(history: dict, snap: dict) -> str:
     passive_coverage_actual = passive_actual / monthly_exp * 100 if monthly_exp else 0
 
     alloc_den = max(1, ta)
+    _rst_alloc = _restricted_cash_of(snap)
     alloc = (
         f"證券 {ex['securities_market']/alloc_den*100:.1f}% / "
         f"保單 {ex['insurance_current']/alloc_den*100:.1f}% / "
         f"基金 {ex['fund_market']/alloc_den*100:.1f}% / "
         f"現金 {ex['cash']/alloc_den*100:.1f}%"
+        + (f"（含指定清償款 {_rst_alloc/10000:.0f}萬）" if _rst_alloc else "")
     )
     real_estate_line = ""
     # 動態租金明細（從 snapshot rent_breakdown 自動產生）
@@ -816,7 +835,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     alert_header = f"單日資產下跌 ≥ {ALERT_DROP_TWD:,.0f} / {ALERT_DROP_PCT:.1f}%；證券下跌 ≥ {ALERT_SEC_DROP_TWD:,.0f} / ±{WATCH_SEC_PCT:.1f}%"
 
     buffett_md = buffett_advice(history, snap)
-    charts_html = build_trend_charts(history, ex)
+    charts_html = build_trend_charts(history, ex, restricted=float((snap.get("restricted_cash") or {}).get("金額") or 0))
 
     # Fund detail card from screenshot
     # 最終防護：跳過任何非數值（dict/list）項目，避免 TypeError
@@ -971,11 +990,12 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     # Asset allocation card with all components incl real estate
     # Allocation: exclude real estate so other components sum to ~100%
     alloc_den = max(1, ex['total_assets'] - ex.get('real_estate', 0))
+    _rst_ai = _restricted_cash_of(snap)
     alloc_items = [
         ('證券市值', ex['securities_market'], '#3b82f6'),
         ('保單現値', ex['insurance_current'], '#10b981'),
         ('基金市值', ex['fund_market'], '#f59e0b'),
-        ('現金部位', ex['cash'], '#8b5cf6'),
+        ('現金部位' + (f"（含指定清償款 {_rst_ai/10000:.0f}萬）" if _rst_ai else ""), ex['cash'], '#8b5cf6'),
     ]
     alloc_bars = "".join(
         f"<div style='margin:6px 0'><div style='display:flex;justify-content:space-between;font-size:14px'>"
@@ -1142,6 +1162,7 @@ def build_telegram_text(rows: list[dict], snap: dict) -> str:
         f"保單 {_pct(ex['insurance_current'], total_no_re)} / "
         f"基金 {_pct(ex['fund_market'], total_no_re)} / "
         f"現金 {_pct(ex['cash'], total_no_re)}"
+        + (f"（含指定清償款 {_restricted_cash_of(snap)/10000:.0f}萬）" if _restricted_cash_of(snap) else "")
     )
 
     return (

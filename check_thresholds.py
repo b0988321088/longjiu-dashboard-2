@@ -177,12 +177,18 @@ def main() -> int:
                                     snap.get("securities_total_market_value"),
                                     snap.get("fund_market_value"), snap=snap)
         _sat = float(_pv.get("黃金", 0)) + float(_pv.get("健康", 0))
+        # 2026-09-29 使用者核准（restricted 隔離）：指定用途現金（質押撥款待清償）已從現金桶
+        # 扣除，但它仍是總資產的一部分 → 不變量必須加回，否則會誤判「穿透不完整」。
+        _rst = float((snap.get("restricted_cash") or {}).get("金額") or 0)
         _tot = float(snap.get("total_assets", 0))
-        _diff = _five + _sat - _tot
+        _diff = _five + _sat + _rst - _tot
         if abs(_diff) > 1:
-            errs.append(f"穿透完整性失敗：五桶 {_five:,.0f} + 衛星 {_sat:,.0f} = {_five+_sat:,.0f} ≠ 總資產 {_tot:,.0f}（差 {_diff:,.0f}）")
+            _hint = ""
+            if abs(_five + _sat - _tot) <= 1 and _rst:
+                _hint = "｜診斷：快取 penetration 尚未重算（舊口徑仍含指定用途款）→ 先跑 build_penetration_report.py 再同步"
+            errs.append(f"穿透完整性失敗：五桶 {_five:,.0f} + 衛星 {_sat:,.0f} + 指定用途款 {_rst:,.0f} = {_five+_sat+_rst:,.0f} ≠ 總資產 {_tot:,.0f}（差 {_diff:,.0f}）{_hint}")
         else:
-            print(f"✅ 穿透完整性：五桶 {_five:,.0f} + 衛星 {_sat:,.0f} = 總資產 {_tot:,.0f}")
+            print(f"✅ 穿透完整性：五桶 {_five:,.0f} + 衛星 {_sat:,.0f} + 指定用途款 {_rst:,.0f} = 總資產 {_tot:,.0f}")
     except Exception as _e:
         errs.append(f"穿透完整性檢查執行失敗：{_e}")
 

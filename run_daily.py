@@ -1335,6 +1335,11 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
     _def_v = _cat2("defensive")
     _bond_v = _cat2("bond")
     _cash_v = tv.get('cash', tv.get('cash_total', 4_483_408))
+    # 2026-09-29 使用者核准：指定用途現金（質押撥款待清償）不列入配置口徑（桶位/建議部位）
+    try:
+        _cash_v = max(0.0, float(_cash_v) - float((tv.get("restricted_cash") or {}).get("金額") or 0))
+    except (TypeError, ValueError):
+        pass
 
     _sot_bt = (tv.get("thresholds_2026_0915") or {}).get("桶目標_pct") or {}
     _tgt_tw = _sot_bt.get("台股市值型", 20.0)
@@ -1770,7 +1775,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _pool_principal = float(_cp.get("額度_本金") or 12000000)
                 _pledge_pct = _pct_from(_cp.get("成數"), 45.0)
                 _pledge_loan = float(_cp.get("可貸金額") or round(_pool_principal * _pledge_pct))
-                _pledge_rate = _pct_from(_cp.get("利率"), float(snap.get("fund_pledge_rate") or 0.0265) * 100)
+                _pledge_rate = _pct_from(_cp.get("利率"), float(_snap_p.get("fund_pledge_rate") or 0.0265) * 100)
                 _pledge_cost_y = _pledge_loan * _pledge_rate
                 _pledge_cost_m = _pledge_cost_y / 12
                 # 既有質押借款（保單質押/券商質押）— 讀 DB liabilities 最新一列

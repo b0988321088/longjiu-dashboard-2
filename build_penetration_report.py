@@ -21,6 +21,11 @@ sat_gold_v, sat_health_v = p.get("黃金", 0), p.get("健康", 0)
 # 2026-09-03 修正：衛星（黃金/健康）已從美股主桶移出獨立回報（calc_penetration）→
 # 分母須含衛星。舊寫法只加五桶 → 分母短少 908,606 → 全 pct 灌高（美股 42.8 誤顯 44.4）
 total = tw_v + us_v + def_v + bond_v + cash_pv + sat_gold_v + sat_health_v
+# 2026-09-29 使用者核准（restricted 隔離）：現金桶已扣掉「指定用途款」（質押撥款待清償），
+# 但分母維持「總資產」口徑 → 必須把指定用途款加回分母，否則全桶 % 被灌高
+# （台股 6.4→7.8、美股 32.2→39.5），會直接改變再平衡判定。指定用途款本身不列為配置桶位。
+_restricted_cash = float((snap.get("restricted_cash") or {}).get("金額") or 0)
+total = total + _restricted_cash
 
 # 自動校正 snapshot 穿透數據（供日報第2章使用）
 # targets 以 snapshot 現有值為準（單一真值，禁止硬編碼覆寫）；缺 key 時 fallback 2026-08-02 定案值
@@ -64,6 +69,7 @@ snap["penetration"] = {
     "actual_pct": actual_pct,
     "gaps": gaps,
     "actual_twd": actual_map,
+    "restricted_cash": round(_restricted_cash),
     "alert": p["alert"],
 }
 # 每次管線執行滾動頂層日期（儀表板系統時間/記憶同步統一真值）

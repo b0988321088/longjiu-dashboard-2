@@ -37,10 +37,18 @@ def cash_caliber(snap):
     cw = ((snap.get("thresholds_2026_0915") or {}).get("現金_twd") or {})
     life = float(cw.get("生活底線") or snap.get("cash_floor") or 0)
     buf = float(cw.get("追繳緩衝") or 0)
-    cash = float(snap.get("cash_total") or snap.get("cash") or 0)
+    cash_all = float(snap.get("cash_total") or snap.get("cash") or 0)
+    # 2026-09-29 使用者核准（restricted 隔離）：指定用途款（質押撥款待清償）不可當乾粉/生活緩衝
+    # → 本口徑的 cash ＝ 可動用現金；真實現金另以 cash_all 回傳（現金合計卡仍顯示真值）。
+    try:
+        restricted = float((snap.get("restricted_cash") or {}).get("金額") or 0)
+    except (TypeError, ValueError):
+        restricted = 0.0
+    cash = max(0.0, cash_all - restricted)
     total = float(cw.get("合計底線") or (life + buf))
     return {
-        "cash": cash, "life": life, "buffer": buf, "total": total,
+        "cash": cash, "cash_all": cash_all, "restricted": restricted,
+        "life": life, "buffer": buf, "total": total,
         "dry": max(0.0, cash - life),
         "life_ok": cash >= life,
         "gap": max(0.0, total - cash),
@@ -313,6 +321,14 @@ def main():
     _cw_t = cash_caliber(snap)
     # 2026-09-27：單一口徑（追繳緩衝取消）→ 不再輸出「合計含追繳緩衝」
     rep["__CASH_FLOOR_LINE__"] = f"現金 ≥{_cw_t['life']:,.0f}（單一口徑現金底線）"
+    # 2026-09-29 使用者核准：Runway 卡改「可動用現金」口徑（扣指定清償款），並動態算 Runway
+    # （原模板寫死「Runway 5 / 覆蓋倍數 5.0x」且把質押撥款 590 萬算成可動用現金）。
+    _exp_m = float(snap.get("monthly_expense") or 0) or 1.0
+    _rw_m = _cw_t["cash"] / _exp_m
+    rep["__AVAILABLE_CASH_LINE__"] = (
+        f'以可動用現金 {_cw_t["cash"]:,.0f}（Moneybook 真值 {_cw_t["cash_all"]:,.0f}'
+        + (f' － 質押撥款指定清償款 {_cw_t["restricted"]:,.0f}' if _cw_t["restricted"] else '')
+        + f'）進行除數運算。Runway {_rw_m:.1f} 個月 / 覆蓋倍數 {_rw_m:.1f}x（月支出 {_exp_m:,.0f}）。')
     # 保單A 現值（8/29 補：舊 5,103,722 → 5,083,230）
 
     hits = 0
@@ -329,7 +345,7 @@ def main():
             hits += 1
     # 2026-09-21 INC-233：佔位符沒被取代＝模板與鍵名不一致，過去是「靜默留舊值」→ 改為當場大聲失敗。
     # 新增 rep 佔位符時，務必同步登錄這份清單（清單＝強制必須被消耗的佔位符）。
-    _MUST_CONSUME = ("__SAFE_LINE_RAW__", "__SAFE_LINE_CATHAY_RAW__", "__SAFE_LINE_SINOPAC_RAW__", "__CASH_FLOOR_LINE__")
+    _MUST_CONSUME = ("__SAFE_LINE_RAW__", "__SAFE_LINE_CATHAY_RAW__", "__SAFE_LINE_SINOPAC_RAW__", "__CASH_FLOOR_LINE__", "__AVAILABLE_CASH_LINE__")
     _leftover = [p for p in _MUST_CONSUME if p in tpl]
     if _leftover:
         raise RuntimeError(f"build_dashboard：佔位符未被取代 {_leftover}（注入失效，拒絕產出舊值儀表板）")

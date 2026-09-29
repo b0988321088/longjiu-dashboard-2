@@ -114,12 +114,12 @@ def main():
         ("四源同步", "python four_source_sync.py"),
         ("同義欄位複驗", "python asset_sync.py"),
         ("一致性檢查", f"python check_penetration_consistency.py {today}"),
-        ("再平衡報告", "python build_rebalance_report.py"),
-        # 2026-08-29：再平衡儀表板（雷達+政策面+本週投資計劃）— 之前 sync_all 漏跑，導致雷達更新後儀表板舊
-        ("再平衡儀表板", "python build_rebalance_dashboard.py"),
         # 2026-09-06：雷達週計畫重產 — institutional_flow.py 更新 radar_state.weekly_plan
         #     （行動儀表板 JS 即時讀取）。血淚：rotation_engine 修正後沒人重跑 → weekly_plan 殘留舊建議
         #     （「乾粉優先醫療」），使用者抓包；加此步驟確保 sync_all 後行動儀表板與引擎同步
+        # 2026-09-29 INC-252：本步原排在「再平衡報告／再平衡儀表板」之後 → 這兩張表永遠吃到
+        #     前一天的 weekly_plan（實測 22:06 產出的再平衡儀表板仍寫「現金 3.4%／乾粉 18.5萬」，
+        #     而 22:07 產出的 index 已是 2.6%／119,182）→ 前移到所有消費端之前（單一來源、無時序競態）。
         ("雷達週計畫重產", "python institutional_flow.py"),
         # 2026-09-21 治本（INC-234）：雷達資金流更新後必須重算產業輪動建議，並以守衛驗證
         #     ① 建議依據的雷達時間 == 現行 radar_state.sector_flow.generated_at（不得落後）
@@ -127,6 +127,9 @@ def main():
         #     血淚：9/21 金融資金分數停在 9/20 的 -3，被誤列「避開」；日報/儀表板/LLM 全複述。
         #     （institutional_flow.py 內部已在算完 sector_flow 後就地重算，此步純守衛）
         ("產業輪動一致性", "python check_rotation_freshness.py"),
+        ("再平衡報告", "python build_rebalance_report.py"),
+        # 2026-08-29：再平衡儀表板（雷達+政策面+本週投資計劃）— 之前 sync_all 漏跑，導致雷達更新後儀表板舊
+        ("再平衡儀表板", "python build_rebalance_dashboard.py"),
         ("儀表板注入", "python build_dashboard.py"),
         # 2026-08-29 v4：雷達資料同步驗證（radar_state.json 存在 + 政策面非空 + 三處產出含雷達結論）
         #     血淚：institutional_flow.py 讀 policy_notes 用 .get("內容") 但結構是新聞dict → 政策面空白沒人發現
