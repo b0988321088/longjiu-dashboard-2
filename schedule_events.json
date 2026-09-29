@@ -362,16 +362,16 @@
     "date": "2026-09-30",
     "item": "🏦 保單質押清償 200 萬（預約入帳）",
     "amount": "2000000",
-    "status": "⏳ 待入帳",
-    "note": "使用者 9/29 指示：本週清償所有高息保單質押。資金＝質押撥款指定用途款（不影響可動用 819,182）。入帳後跑 apply_policy_repay.py --date 2026-09-30 --amount 2000000 --target policy ＋四源同步",
+    "status": "⏳ 已轉帳待入帳（App 明細未顯示）",
+    "note": "使用者 2026-09-30 表示已轉帳完成，但保單 App 明細尚未顯示 → 不先入帳，待使用者提供截圖確認後以截圖值為準入帳（apply_policy_repay.py --target policy）。口徑鐵則：截圖為 authoritative 真值，轉帳當下不入帳。",
     "importance": "high"
   },
   {
     "date": "2026-10-01",
     "item": "🏦 保單質押清償 100 萬（預約入帳）",
     "amount": "1000000",
-    "status": "⏳ 待入帳",
-    "note": "同上；剩餘保單質押 100 萬本週內清完（清完 → 指定用途款餘 190 萬）",
+    "status": "⏳ 已轉帳待入帳（App 明細未顯示）",
+    "note": "使用者 2026-09-30 表示已轉帳完成，但保單 App 明細尚未顯示 → 不先入帳，待使用者提供截圖確認後以截圖值為準入帳（apply_policy_repay.py --target policy）。口徑鐵則：截圖為 authoritative 真值，轉帳當下不入帳。",
     "importance": "high"
   },
   {
