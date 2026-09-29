@@ -1152,3 +1152,30 @@
 - 首次發生: 2026-09-29 11:00:28
 - 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
 - 狀態: ⏳ 待處理 (總計 1 次)
+
+## INC-251 ｜ 2026-09-29 ｜ 「資料本體更新」≠「敘述層閉環」— 撥款 590 萬數字全對、文字全過期
+
+**現象**：使用者抓包「本週的交易計劃撥款 5,900,000 是不是沒有閉環」。帳務層（snapshot／DB／四源）全對，
+但敘述層整條鏈沒跟上：
+
+1. `radar_state.weekly_plan.rows`（質押列）→ 餵再平衡儀表板「本週投資計劃」＋index＋再平衡評估 → 仍寫「540 萬@2.77%；❌ 尚未撥款」
+2. `build_rebalance_dashboard.py` 質押卡標籤寫死判斷 → 已撥款仍顯示「未質押」
+3. `schedule_events` 里程碑仍是「⏳ 表定（以銀行通知為準）」，未改「✅ 已入帳」
+4. `snapshot` 12 處「現行＝整池質押 540 萬@2.77%（…撥款估 10/5）」＋3 處里程碑狀態（「❌ 尚未對保」）
+5. `build_final.py`／`debt_restructure_tracker.py`／`run_daily.py` 程式內舊字樣
+6. 差異分析「🕒 資料新鮮度」：資料本體更新了，但 as-of 機器欄位沒寫（securities.price_date 缺、
+   firstjin.last_update 停 9/21、fund_nav_dates 停 9/22、source_import_dates 停 9/23）→ 卡片顯示 7–8 天前
+
+**根因**：更新流程只寫「數字欄位」，把「敘述／狀態／日期欄位」當附帶品 → 每次真值日都製造一批
+「數字對、文字錯」的報表，比數字錯更難抓（內容看起來正常，還帶 ✅ 標記）。
+
+**流程修正（真值日／撥款日必做）**
+- 更新本體後，同批 grep 全 repo（.py／.json／.html）舊數字與舊狀態字樣（例：540 萬@2.77%／尚未撥款／未質押／表定），
+  逐條判定「歷史留痕」或「現行敘述」；現行者一律改。
+- 更新「日期類」資料時，五個 as-of 欄位一起寫：cash_source.date／securities.price_date／firstjin_detail.last_update／
+  fund_nav_dates[各源]／source_import_dates[各源]。
+- 質押類標籤一律用 `pledge_status.pledge_facts()['已撥款']` 決定，不得用字串比對推斷（撥款欄文字一改就誤判）。
+
+**本次踩到的坑（誤改 5 處、已逐筆還原）**：用「狀態欄含關鍵字就整批換」掃 snapshot 里程碑，把
+refinance_plan_2026.大義街（8/20 撥款入帳）、blackrock_b11_0911、weekly_ops_closure_0908/0912 的歷史狀態一起覆蓋。
+修法：改前先 `cp snapshot.json` 備份，改後用備份逐筆 diff 複核，只保留該改的（本次 3 改、5 還原）。
