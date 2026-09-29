@@ -405,6 +405,8 @@ def load_history(snap=None) -> dict:
                 "monthly_expense": 162781.0,
                 "rent_monthly": 80_100.0,
                 "cathay_refinance": 0.0,
+                # 2026-09-30：指定用途款（質押撥款待清償）逐日記錄 — 供增減口徑排除負債替換流動
+                "restricted_cash": float(_json_hist.get(d, {}).get("restricted_cash") or 0),
             }
             nw = history[d]["total_assets"] - history[d].get("total_liabilities", 0)
             history[d]["net_worth"] = float(nw)
@@ -440,6 +442,7 @@ def append_today(snap: dict) -> dict:
         "monthly_expense": ex["monthly_expense"],
         "rent_monthly": ex["rent_monthly"],
         "cathay_refinance": ex["cathay_refinance"],
+        "restricted_cash": _restricted_cash_of(snap),
     }
     save_json(HISTORY_FILE, history)
     return history
@@ -470,12 +473,27 @@ def compute_changes(history: dict) -> list[dict]:
             "monthly_income",
             "monthly_expense",
             "rent_monthly",
+            "restricted_cash",
         ]:
             pv = prev.get(key, 0) or 0
             cv = cur.get(key, 0) or 0
             row[key] = cv
             row[f"d_{key}"] = cv - pv
             row[f"d_{key}_pct"] = ((cv - pv) / pv * 100) if pv else 0.0
+        # 2026-09-30 使用者裁示：總資產／現金的「增減」必須排除指定用途款（質押撥款待清償）。
+        # 撥款（現金＋、負債＋）與清償（現金−、負債−）都是負債替換、淨值不變，
+        # 不得當成資產增減、也不得觸發單日下跌警示（原 9/30 清償 100 萬誤報 -3.14% 🚨）。
+        _rc_pv = float(prev.get("restricted_cash", 0) or 0)
+        _rc_cv = float(cur.get("restricted_cash", 0) or 0)
+        _adj_pv = (prev.get("total_assets", 0) or 0) - _rc_pv
+        _adj_cv = (cur.get("total_assets", 0) or 0) - _rc_cv
+        row["adj_total_assets"] = _adj_cv
+        row["d_total_assets"] = _adj_cv - _adj_pv
+        row["d_total_assets_pct"] = ((_adj_cv - _adj_pv) / _adj_pv * 100) if _adj_pv else 0.0
+        _cash_pv = (prev.get("cash", 0) or 0) - _rc_pv
+        _cash_cv = (cur.get("cash", 0) or 0) - _rc_cv
+        row["d_cash"] = _cash_cv - _cash_pv
+        row["d_cash_pct"] = ((_cash_cv - _cash_pv) / _cash_pv * 100) if _cash_pv else 0.0
         prev = cur
         rows.append(row)
     return rows
@@ -791,12 +809,15 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     table_header = (
         "<tr>"
         "<th>日期</th>"
-        "<th class='num'>總資產</th><th class='num'>增減</th><th class='num'>%</th>"
+        "<th class='num'>總資產</th><th class='num'>增減¹</th><th class='num'>%¹</th>"
         "<th class='num'>保單現値</th><th class='num'>增減</th>"
         "<th class='num'>基金市值</th><th class='num'>增減</th>"
         "<th class='num'>證券市值</th><th class='num'>增減</th>"
-        "<th class='num'>現金</th><th class='num'>增減</th>"
+        "<th class='num'>現金</th><th class='num'>增減¹</th>"
         "</tr>"
+        "<tr><td colspan='11' style=\"font-size:11px;color:#64748b;text-align:left;padding:5px 8px;line-height:1.6\">"
+        "¹ 增減已排除「指定用途款（質押撥款待清償）」：撥款與清償同時增減現金與負債（負債替換），"
+        "淨值不變，故不列為資產增減、亦不觸發單日下跌警示。</td></tr>"
     )
 
     # insurance detail block
@@ -830,7 +851,8 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         if d_sec < -ALERT_SEC_DROP_TWD or abs(r.get("d_securities_market_pct", 0)) >= WATCH_SEC_PCT:
             alerts.append(f"<b>證券市值</b>：{d_sec:+,.0f}（{r.get('d_securities_market_pct',0):+.2f}%）")
     alerts_html = "".join(f"<li style='font-size:15px;line-height:1.8;'>{a}</li>" for a in alerts) if alerts else '<li style="font-size:15px;line-height:1.8;">✅ 今日無異常</li>'
-    alert_header = f"單日資產下跌 ≥ {ALERT_DROP_TWD:,.0f} / {ALERT_DROP_PCT:.1f}%；證券下跌 ≥ {ALERT_SEC_DROP_TWD:,.0f} / ±{WATCH_SEC_PCT:.1f}%"
+    alert_header = (f"單日資產下跌 ≥ {ALERT_DROP_TWD:,.0f} / {ALERT_DROP_PCT:.1f}%；證券下跌 ≥ {ALERT_SEC_DROP_TWD:,.0f} / ±{WATCH_SEC_PCT:.1f}%"
+                    "（總資產增減已排除指定用途款之負債替換流動）")
 
     buffett_md = buffett_advice(history, snap)
     from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
@@ -1170,7 +1192,9 @@ def build_telegram_text(rows: list[dict], snap: dict) -> str:
         f"證券市值：{_fmt(last['securities_market'])}（{d_sec:+,.0f} / {d_sec_pct:+.2f}%）\n"
         f"保單現値：{_fmt(last['insurance_current'])}（{last.get('d_insurance_current',0):+,.0f}）\n"
         f"基金市值：{_fmt(last['fund_market'])}（{last.get('d_fund_market',0):+,.0f}）\n"
-        f"現金：{_fmt(last['cash'])}（{last.get('d_cash',0):+,.0f}）\n"
+        f"現金：{_fmt(last['cash'])}（{last.get('d_cash',0):+,.0f}）"
+        + (f"｜指定用途款 {_restricted_cash_of(snap):,.0f}（質押撥款待清償，已自增減排除）" if _restricted_cash_of(snap) else "")
+        + "\n"
         f"{alloc}\n"
         f"負債比率：{ex['total_liabilities']/total_with_re*100:.1f}%\n"
         f"{flag}"

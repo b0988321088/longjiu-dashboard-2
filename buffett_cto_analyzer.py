@@ -577,9 +577,15 @@ def main(**kwargs):
         # 本週操作執行紀錄（動態讀取最新 weekly_ops_closure_*）
         try:
             import json as _json
-            _snap_data = _json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
-            _ops_keys = sorted([k for k in _snap_data.keys() if k.startswith("weekly_ops_closure_")])
-            _ops = _snap_data.get(_ops_keys[-1], {}) if _ops_keys else {}
+            try:
+                import weekly_ops_dynamic as _wod
+                _ops = _wod.build()
+            except Exception:
+                _ops = {}
+            if not (_ops and _ops.get("執行清單")):
+                _snap_data = _json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+                _ops_keys = sorted([k for k in _snap_data.keys() if k.startswith("weekly_ops_closure_")])
+                _ops = _snap_data.get(_ops_keys[-1], {}) if _ops_keys else {}
             if _ops and _ops.get("執行清單"):
                 msg += f"\n\n📋 本週操作執行紀錄（{_ops.get('期間','')}）："
                 for x in _ops.get("執行清單", []):

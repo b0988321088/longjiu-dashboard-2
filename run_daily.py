@@ -1647,9 +1647,18 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
 
     # 2026-09-13：本週操作執行紀錄改回動態（讀 snapshot.weekly_ops_closure_* 最新版）
     try:
+        # 2026-09-30：改由 schedule_events 動態推導（weekly_ops_closure_* 停更於 9/13，
+        # 造成日報長期顯示 9/8~9/13 舊紀錄與已完成的閉環待追蹤）；取不到才退回舊版。
+        try:
+            import weekly_ops_dynamic as _wod
+            _ops = _wod.build()
+        except Exception as _wode:
+            print(f"⚠️ weekly_ops_dynamic 失敗，改用 weekly_ops_closure 退路：{type(_wode).__name__}: {_wode}")
+            _ops = {}
         _snap_ops = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
-        _ops_keys = sorted([k for k in _snap_ops.keys() if k.startswith("weekly_ops_closure_")])
-        _ops = _snap_ops.get(_ops_keys[-1], {}) if _ops_keys else {}
+        if not (_ops and _ops.get("執行清單")):
+            _ops_keys = sorted([k for k in _snap_ops.keys() if k.startswith("weekly_ops_closure_")])
+            _ops = _snap_ops.get(_ops_keys[-1], {}) if _ops_keys else {}
         if _ops and _ops.get("執行清單"):
             _ops_html = "".join(
                 f"<div style='padding:5px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;margin:3px 0'>"
