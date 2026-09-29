@@ -191,6 +191,11 @@ def main() -> int:
         _mfe = snap.get("monthly_fixed_expense") or {}
         _lk = ("保單借貸利息", "券商質押利息", "基金質押利息")
         _mfe_int = sum(float(_mfe.get(k) or 0) for k in _lk)
+        # 同源斷言（2026-09-30 CIO minor）：保單借貸餘額兩欄不得漂移（報表標籤與利息各讀一處）
+        _lb_pol = float((snap.get("liabilities_build_up") or {}).get("保單借貸") or 0)
+        _top_pol = float(snap.get("policy_pledge_loan") or 0)
+        if abs(_lb_pol - _top_pol) > 1:
+            errs.append(f"保單借貸餘額不同源：liabilities_build_up.保單借貸 {_lb_pol:,.0f} ≠ policy_pledge_loan {_top_pol:,.0f}")
         if abs(_mfe_int - float(_li["合計"])) > 1:
             errs.append(f"月支出利息口徑不一致：monthly_fixed_expense 三項 {_mfe_int:,.0f} ≠ sot_targets 動態值 {_li['合計']:,.0f}")
         else:
