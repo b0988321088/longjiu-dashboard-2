@@ -754,31 +754,35 @@ def buffett_advice(history: dict, snap: dict) -> str:
                          if "券商質押" in str(_r.get("項目", "")) or "券商" in str(_r.get("簡稱", ""))),
                         None)
         _sec_row_amt = float((_sec_row or {}).get("金額") or 0)
-        # 2026-09-30：狀態必須兩來源一致才敢背書 —— 明細標「已清償」且實錄還款 ≥ 明細金額
-        # 才是「已清償」；任一不足即「清償中」；兩者皆無則留白（不對外宣稱）。
-        if (_sec_row and "已清償" in str(_sec_row.get("狀態") or "")
+        _sec_owed = float(_lb.get("券商質押") or 0)   # 負債欄餘額（真值）
+        # 顯示金額＝債務額優先（明細金額 → 負債欄 → 實錄還款額），不用實錄額假裝債務額
+        _sec_amt = _sec_row_amt or _sec_owed or _sec_paid
+        # 2026-09-30：宣稱「已清償」需三方一致 —— ①負債欄已歸零 ②明細標已清償
+        # ③實錄還款 ≥ 明細金額。任一不足即「清償中」；三者皆無則整項不列（不對外宣稱）。
+        if _sec_amt <= 0:
+            _sec_status = ""
+        elif (_sec_owed <= 0 and _sec_row and "已清償" in str(_sec_row.get("狀態") or "")
                 and _sec_row_amt and _sec_paid >= _sec_row_amt):
             _sec_status = "已清償"
-        elif _sec_row or _sec_paid:
-            _sec_status = "清償中"
         else:
-            _sec_status = ""
+            _sec_status = "清償中"
         _rc_block = snap.get("restricted_cash") or {}
         _debt_left = float(_rc_block.get("剩餘未清償") or 0)
         _seg = [f"房貸 {_fmt(_mtg)}（占負債 {_mtg_share:.0f}%）"] if _mtg else []
         if _pledge:
             _old = []
-            if _ploan:
+            if _ploan > 0:
                 # 2026-09-30：餘額仍在帳上就不得宣稱「已清償」—— 原本狀態由剩餘未清償派生，
                 # 在「撥款已執行、保單端尚未截圖沖銷」的窗口會渲染出「保單質押 4,000,000
                 # @4.00% 已清償」這種餘額與狀態並存的矛盾敘述。改為：只要還在負債欄就是清償中。
+                # 另：負數（輸入異常）不列，不讓壞值偽裝成餘額。
                 _old.append((f"保單質押 {_fmt(_ploan)}{_rate_txt('保單借貸利率')}"
                              f" 清償中").strip())
-            if _sec_paid:
+            if _sec_amt > 0:
                 # 2026-09-30：原本是 `_sec_status or '已清償'` —— 寫死退路會在只有部分還款時
                 # 把「已還金額」標成「全額清償」（獨立審查實測：只還 500,000 仍印「已清償」）。
-                # 改為無真值時留白，不對外宣稱清償狀態。
-                _old.append((f"券商質押 {_fmt(_sec_paid)}{_rate_txt('券商質押利率')}"
+                # 改為無真值時留白，不對外宣稱清償狀態。金額顯示債務額（非實錄還款額）。
+                _old.append((f"券商質押 {_fmt(_sec_amt)}{_rate_txt('券商質押利率')}"
                              f" {_sec_status}").strip())
             _seg.append(
                 f"基金質押 {_fmt(_pledge)}{_rate_txt('基金質押利率')}"
@@ -786,9 +790,9 @@ def buffett_advice(history: dict, snap: dict) -> str:
             )
         if _card:
             _seg.append(f"信用卡 {_fmt(_card)}")
-        # 推估值只在「清償確實進行中」（剩餘未清償 > 0）才印 —— 無真值時不預測
+        # 推估值只在「保單質押仍在帳上且清償確實進行中」才印 —— 無真值時不預測
         _after = ((ex["total_liabilities"] - _ploan) / _denom_re * 100
-                  if (_ploan and _debt_left and _denom_re) else None)
+                  if (_ploan > 0 and _debt_left and _denom_re) else None)
         warnings.append(
             f"負債比率 {debt_ratio:.1f}%（含不動產）偏高｜結構：" + "＋".join(_seg)
             + (f"｜保單質押清償完成後 → {_after:.1f}%" if _after is not None else "")
