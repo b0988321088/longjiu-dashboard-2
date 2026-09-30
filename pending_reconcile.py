@@ -148,7 +148,7 @@ def main() -> int:
             return None
         parts = []
         if ev["券商質押已清"]:
-            parts.append("券商質押 100 萬 ✅ 已清償")
+            parts.append("券商質押 100 萬 已清償入帳")
         if ev["保單質押未入帳"]:
             parts.append("保單質押仍『執行中』（未入帳，帳務不動）")
         parts.append(f"已清償累計 {ev['已清償累計']:,.0f}／剩餘未清償 {ev['剩餘未清償']:,.0f}")

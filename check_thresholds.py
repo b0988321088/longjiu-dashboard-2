@@ -338,6 +338,47 @@ def main() -> int:
     if hits:
         errs.append(f"殘留舊門檻 {len(hits)} 處：\n" + "\n".join(sorted(set(hits))[:15]))
 
+    # ── 真值層四塊（2026-09-30 Q4 核心原則，使用者裁示）：存在性／同源／算術／狀態字樣 ──
+    try:
+        for _k in ("cash_layers", "metrics_registry", "us30y_gate", "redline_policy"):
+            if not snap.get(_k):
+                errs.append(f"真值層缺 {_k}（須由 update_data 的單一 writer 派生寫回）")
+        _cl = snap.get("cash_layers") or {}
+        if _cl:
+            _tot = float(_cl.get("cash_total") or 0)
+            _res = float((_cl.get("restricted_cash") or {}).get("total") or 0)
+            _unr = float(_cl.get("unrestricted_cash") or 0)
+            if abs(_tot - _res - _unr) > 1:
+                errs.append(f"現金分層不閉合：cash_total {_tot:,.0f} − restricted {_res:,.0f} ≠ unrestricted {_unr:,.0f}")
+            _emg = float((_cl.get("emergency_cash") or {}).get("金額") or 0)
+            _dry = float(_cl.get("dry_powder") or 0)
+            if abs(_emg + _dry - _unr) > 1:
+                errs.append(f"現金分層不閉合：底線 {_emg:,.0f} + 乾粉 {_dry:,.0f} ≠ 可動用 {_unr:,.0f}")
+        _ug = snap.get("us30y_gate") or {}
+        try:
+            _st = json.loads((BASE / "us30y_state.json").read_text(encoding="utf-8"))
+        except Exception:
+            _st = {}
+        if _ug and _st:
+            if _ug.get("as_of") != _st.get("last_date"):
+                errs.append(f"us30y_gate.as_of {_ug.get('as_of')} ≠ us30y_state.last_date {_st.get('last_date')}（未同源 → 解凍判定會踩舊讀值）")
+            if _ug.get("value") != _st.get("last_rate"):
+                errs.append(f"us30y_gate.value {_ug.get('value')} ≠ us30y_state.last_rate {_st.get('last_rate')}")
+        if _ug and _ug.get("status") != "OK" and _ug.get("unfreeze_allowed"):
+            errs.append(f"US30Y 閘門 {_ug.get('status')} 卻許可解凍（應為 False）")
+        if _ug and _ug.get("below_red_line") is False and _ug.get("unfreeze_allowed"):
+            errs.append("US30Y 未脫離紅線卻許可解凍")
+        # 未閉環 pending 卡狀態不得含「已結案」字樣（build_dashboard 以子字串過濾 → 整卡會靜默消失）
+        _closed_kw = ("✅", "☑", "已完成", "已結案", "已定案", "閉環", "已送出", "已核定")
+        for _it in json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8")):
+            _s = str(_it.get("status") or "")
+            for _t in _closed_kw:
+                if _t in _s:
+                    errs.append(f"pending 未閉環卡狀態含「{_t}」→ build_dashboard 會誤判已結案、整卡隱藏：{str(_it.get('title',''))[:34]}")
+                    break
+    except Exception as _e:
+        errs.append(f"真值層檢查失敗：{_e}")
+
     return _summarize(_mode, errs, _rep_status)
 
 

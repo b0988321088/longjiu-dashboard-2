@@ -1,0 +1,84 @@
+{
+  "verdict": "REJECT",
+  "reviewer": "Hermes Subagent (independent read-only review)",
+  "commit": "b78a3603d331b836d4ec30eb55126c2f3816e2f0",
+  "reviewed_commits": [
+    "b78a3603d331b836d4ec30eb55126c2f3816e2f0"
+  ],
+  "reviewed_trees": [
+    "1e1dbb4c908152bd94a587f7454d55ac4501312e"
+  ],
+  "checked": [
+    {
+      "id": 1,
+      "item": "commit 改動檔案清單與宣告一致；記錄 sha/tree",
+      "result": "PASS",
+      "evidence": "git rev-parse HEAD=b78a3603d331b836d4ec30eb55126c2f3816e2f0；HEAD^{tree}=1e1dbb4c908152bd94a587f7454d55ac4501312e。git show --stat b78a3603：15 files changed, 1168 insertions(+), 108 deletions(-)，含宣告的 sot_targets.py/update_data.py/action_loop.py/truth_spotcheck.py(新)/pending_reconcile.py(新)/build_dashboard.py/check_cross_report_consistency.py ＋資料產物(pending_decisions*.json/snapshot.json/rebalance_snapshot.json/index.html/dashboard_decisions.json/hunter_cache/notion_bridge)。與 commit message ①-⑧ 所述範圍一致。baseline git status --porcelain 乾淨。"
+    },
+    {
+      "id": 2,
+      "item": "真值層四塊可執行＋算術一致性（cash_total−restricted=unrestricted；emergency+dry_powder=unrestricted）",
+      "result": "PASS",
+      "evidence": "python -c 'import json,sot_targets as t;...' 實跑：cash_total=5,719,182；restricted_cash.total=4,900,000（debt_repayment_reserve=4,900,000、other_restricted=0）；unrestricted_cash=819,182。驗算 5,719,182−4,900,000=819,182 ✅；emergency_cash.金額=700,000（floor=700,000）、dry_powder=119,182；700,000+119,182=819,182 ✅。us30y_gate(snapshot) OK/5.594/2026-09-29；redline_policy(23)→stage 1『0–30 天／維持現有配置，不交易』；metrics_registry.metric_version=2.0.0。credit_line_available=None（符規格：無真值來源不推估）。"
+    },
+    {
+      "id": 3,
+      "item": "us30y_gate 負向測試（UNKNOWN/STALE/OK 三態）",
+      "result": "PASS",
+      "evidence": "實跑 t.us30y_gate(s, state=...)： (a) 缺 last_date→status=UNKNOWN、unfreeze_allowed=False（reason『缺 us30y_as_of…不得判定解凍』）； (b) last_date=2026-09-20（落後真值日 10 天）→status=STALE、unfreeze_allowed=False、lag_days=10； (c) last_date=2026-09-30、last_rate=5.0(<紅線5.3)→status=OK、unfreeze_allowed=True。邊界：lag=3→OK/True；lag=4→STALE/False；OK 但 rate 高於紅線(values=9.9)→OK/False。三態與容忍值邊界全數符合。"
+    },
+    {
+      "id": 4,
+      "item": "redline_policy 邊界（0/29/30/44/45/59/60/90）",
+      "result": "PASS",
+      "evidence": "實跑：0,29→stage 1『0–30 天／維持現有配置，不交易』；30,44→stage 2『30–45／每週重新檢查資產配置與現金流』；45,59→stage 3『45–60／啟動替代配置評估(A/B/C)』；60,90→stage 4『60–∞／CIO 必須重新審查原本解凍邏輯是否仍適用』。None→stage 1（不拋錯）；1,000,000→stage 4（不拋錯）。無任何階段回 None（stage 恆為 1-4）、無例外。"
+    },
+    {
+      "id": 5,
+      "item": "無寫死真值檢查（新增行內具體金額）",
+      "result": "PASS",
+      "evidence": "grep -nE '^\\+.*[0-9]{1,3},[0-9]{3}' 於指定 .py diff：僅 1 命中＝truth_spotcheck.py:111 的『對點方式：與玉山／富邦 App 餘額截圖核對（安全線各 40,000）』→ 屬『對點說明』敘述，非被計算使用的真值。該 40,000 為生活帳戶安全線，已於既有 life_account_alert.py 以 SAFE_LINE=40_000 定義（明載『刻意常數』），pending_reconcile.py:29 SAFE_LINE=40_000 與之一致 → 政策門檻常數，非資產真值。全 commit 另見 index.html 之 5,719,182/819,182/4,900,000 等，係 build_dashboard 由 snapshot.cash_layers 動態渲染（模板變數），非寫死。無『會被當真值使用的寫死值』。"
+    },
+    {
+      "id": 6,
+      "item": "檔案格式不漂移（indent／CRLF）",
+      "result": "PASS",
+      "evidence": "位元組檢查：pending_decisions.json CRLF=276、LF_only=0、bareCR=0、首縮排=2（indent=2 ✅）；pending_decisions_archive.json CRLF=173、LF_only=0、首縮排=1（indent=1 ✅）。snapshot.json：git show b78a3603:snapshot.json 首三行為 indent=1（' \"generated_at\"…'），現行工作檔同為 indent=1（首縮排 1）；工作檔 CRLF=5623/LF_only=0（blob 為 LF 係 core.autocrlf=true 正規化所致，非漂移）。"
+    },
+    {
+      "id": 7,
+      "item": "冪等性：build_dashboard 連跑兩次後 git status 乾淨；static_gate rc=0『通過』",
+      "result": "FAIL",
+      "evidence": "build_dashboard 本身具決定性：連跑 3 次輸出 sha256 完全相同（9ce4253d…）。但 baseline 乾淨下跑第一次即出現 ` M index.html`（第二次後仍為 ` M index.html`）→ 工作樹不乾淨、committed index.html 無法由本 commit 重現。static_gate.py rc=0、輸出『✅ 靜態閘門通過（無未定義名稱／重複定義／重複 dict key）』（此子項 PASS）。"
+    },
+    {
+      "id": 8,
+      "item": "pending_reconcile.py 安全性（dry-run 無寫入＋--apply 有備份/守恆/CRLF/規則不誤傷）",
+      "result": "PASS",
+      "evidence": "baseline 記 git status（乾淨）→ 跑 `python pending_reconcile.py`（dry-run）→ RC=0、輸出『Pending 31 筆｜規則命中 0 筆（無差異）』→ git status 不變（仍乾淨）。程式碼審查：--apply 路徑先 shutil.copy 備份 PEND 與 ARCH（.bak_reconcile_<stamp>）；寫入後 assert len(pend_new)+len(arch_new)==原筆數（筆數守恆）；assert (raw.count(b'\\n')-raw.count(b'\\r\\n'))==0（全 CRLF）；save() 用 replace('\\n','\\r\\n')+newline='' 且 pending indent=2／archive indent=1。規則分流：r_water_life 僅命中含『水位』且不含『永豐』者；r_water_sinopac 僅命中含『永豐』者（二者互斥不誤傷）；r_us30y 排除『閘門/政策/判定條件/預案』字樣與 status 含『已實作』者 → 不動設定/已實作卡。規則例外被 try/except 吞掉且回 None，不影響整卡。"
+    },
+    {
+      "id": 9,
+      "item": "update_data.py 自癒路徑：四塊相同時不再寫檔＋indent=1；實跑",
+      "result": "PASS",
+      "evidence": "_sync_truth_blocks 只在 `changed` 非空才 write_text，且用 json.dumps(..., indent=1)（與 snapshot 原檔一致）。實跑 `python update_data.py`（check 模式）輸出『✅ 所有同義欄位一致 / 總資產: 30,808,561』RC=0，未印『🔁 真值層自癒寫回』；跑後 git status 僅見先前 build 造成的 ` M index.html`，snapshot.json 未被改動（git diff --stat HEAD -- snapshot.json 無輸出）→ 四塊已一致時確實不寫檔。"
+    },
+    {
+      "id": 10,
+      "item": "跨報告閘門 PASS 且 rc=0；warn 為合法敘述提及",
+      "result": "PASS",
+      "evidence": "`python check_cross_report_consistency.py; echo RC=$?`→ RC=0、『✅ PASS：同一 as-of 下，各報告欄位一致、無失效舊值』。真值列：總資產 30,808,561／總負債 35,003,720／現金 5,719,182／可動用 819,182／防禦 49.1%。5 筆 warn 全為『[敘述提及，非阻擋] index.html：防禦舊值 53.8』，上下文均落在 P0-1 變更說明（『stored 防禦 53.8% 停用改只留派生 49.1%』『防禦 stored 53.8% 移除』等更新日誌文字），經 is_narrative(NARRATIVE_HINTS 含 stored/移除/停用) 判定 → 屬合法敘述追溯，非當期數據區殘留。"
+    },
+    {
+      "id": 11,
+      "item": "消費端相容：新增 us30y_as_of 不破壞舊讀者",
+      "result": "PASS",
+      "evidence": "grep 全 repo（排除 .archive/.bak）：rebalance_snapshot.json 的唯一程式產生者為 action_loop.py（save_snapshot 同時寫 us30y、us30y_as_of 與相容別名 us30y_date，另加 us30y_gate_status/unfreeze_allowed/unfreeze_block_reason）。無任何 .py/.js 以 json.load 讀取該檔的 us30y_date/us30y_as_of（debt_restructure_tracker.py 的 us30y_date 係 fetch_fred 區域變數，與本檔無關）；index.html/dashboard_decisions.json/cio_review.json 僅對其作敘述性引用。新增鍵為 additive + 保留舊別名 → 未破壞舊讀者。"
+    }
+  ],
+  "blocking": [
+    "檢查項 7 FAIL：baseline 乾淨下執行 `python build_dashboard.py` 即產生 ` M index.html`，工作樹不乾淨、committed index.html 無法由本 commit 重現。實證：committed index.html 的決策追蹤顯示 500 萬卡『🔄 執行中（parent）｜已清償累計 1,000,000／剩餘未清償 4,000,000…』（舊狀態文字），但同 commit 的 pending_decisions.json 該卡狀態為『🔄 執行中（2026-09-30 真值重算）｜券商質押 100 萬 ✅ 已清償…』→ index.html 係以舊 pending 產生後未隨 pending 最終編輯重產，屬 commit 內產物不一致（stale）。",
+    "功能性回歸（同源於檢查項 7）：重新 build 後，live P0 卡『500 萬高息負債清償（parent：debt_repayment_5m）』整張從儀表板消失。根因＝本 commit 寫入的 pending 狀態含子項『券商質押 100 萬 ✅ 已清償』，而 build_dashboard.py 的決策追蹤以 _closed_kw=('✅','☑','已完成','已結案','已定案','閉環','已送出','已核定') 過濾 → 整卡被判為已結案而剔除。實證：BUILT index.html 中『500 萬高息負債清償』與『parent）』字串皆 MISSING，committed 版則存在。此為 pending_reconcile 新狀態文字與 build_dashboard 過濾器的跨模組衝突，部署重產儀表板將靜默隱藏該 P0 項，應修正（例如過濾僅看 status 開頭或加 parent 例外）後再上線。"
+  ],
+  "notes": "1) 真值層本體（項 2-6、8-11）全部通過：四塊派生可執行、算術自洽、us30y_gate 三態與容忍值邊界正確、redline_policy 四階無 None/例外、pending_reconcile dry-run 零寫入且 --apply 有備份/筆數守恆/CRLF 三重防護、update_data 冪等不亂寫、跨報告閘門 PASS、消費端相容。2) 觀察（非阻擋）：committed rebalance_snapshot.json 缺新 action_loop 才會寫的 us30y_as_of/us30y_gate_status/unfreeze_allowed/unfreeze_block_reason 四鍵（僅有 us30y_date），顯示該產物未被新程式碼重新產生（可能為人工編輯或舊路徑）；建議下次跑 action_loop 落地。3) 觀察：cash_layers/metrics_registry/redline_policy 內含 derived_at=當日；跨日首跑 update_data 會因 derived_at 變動而寫 snapshot.json（同日冪等、跨日非冪等），屬設計預期但需 cron 端接受每日 diff。4) 觀察：pending_reconcile r_repay 產出的 status 寫死『檢視日 2026-10-05』與文字『券商質押 100 萬』；係敘述非真值，惟寫死日期建議改讀規則來源。5) 本次審查已先 cp 備份 snapshot.json/pending_decisions(.archive)/rebalance_snapshot.json/index.html 至暫存；測後以備份還原 index.html，最終 git status --porcelain 乾淨、snapshot/pending/rebalance 均與 HEAD 一致，除本 JSON 外未留任何檔案變更。"
+}

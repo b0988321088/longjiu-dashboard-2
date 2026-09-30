@@ -415,30 +415,10 @@ def main():
         print(f"🔁 情境現況驗證自癒：防禦 {_sv_old.get('防禦')}% → {_sv_new.get('防禦')}%（單一寫入者）")
 
     # 2026-09-30 使用者裁示（Q4 核心原則）：真值層分層化 — 現金分層／口徑版本／US30Y 閘門／紅線長期化政策。
-    # 全部派生後寫回 snapshot，其餘報表只讀（禁止在報表內重算）。
-    snap["cash_layers"] = cash_layers(snap)
-    _cl = snap.get("cash_layers") or {}
-    if _cl:
-        print(f"   現金分層：總 {_cl.get('cash_total', 0):,}｜可動用 {_cl.get('unrestricted_cash', 0):,}｜"
-              f"指定還債 {(_cl.get('restricted_cash') or {}).get('debt_repayment_reserve', 0):,}｜"
-              f"底線 {( _cl.get('emergency_cash') or {}).get('金額', 0):,}｜乾粉 {_cl.get('dry_powder', 0):,}")
-    else:
-        print("   ⚠️ 現金分層派生失敗（cash_layers 回空）→ 下游不得用單一總額做壓力測試")
-    snap["metrics_registry"] = metrics_registry(snap)
-    _mr = snap.get("metrics_registry") or {}
-    if _mr:
-        print(f"   口徑版本 {_mr.get('metric_version')}（{_mr.get('classification')}）"
-              f"｜壓力情境 {((_mr.get('影響') or {}).get('壓力情境覆蓋率') or {}).get('現行值')}%")
-    snap["us30y_gate"] = us30y_gate(snap)
-    _ug = snap.get("us30y_gate") or {}
-    if _ug:
-        print(f"   US30Y 閘門 {_ug.get('status')}：{_ug.get('value')}% @{_ug.get('as_of')}"
-              f"（解凍{'許可' if _ug.get('unfreeze_allowed') else '不許可'}）")
-    snap["redline_policy"] = redline_policy(_ug.get("streak_days"))
-    _rp = snap.get("redline_policy") or {}
-    if _rp:
-        print(f"   紅線長期化：連續 {_rp.get('streak_days')} 天 → 階段 {_rp.get('stage')}"
-              f"（{_rp.get('階段區間')}）｜{_rp.get('應做事項')}")
+    # 單一 writer：與 check 模式自癒共用同一支 _sync_truth_blocks（不在此另寫一份邏輯），
+    # 寫檔仍由下方唯一的 SNAP.write_text 負責。
+    _sync_truth_blocks(snap, write=False)
+    _print_truth_blocks(snap)
 
     SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
 

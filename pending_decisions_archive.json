@@ -170,5 +170,56 @@
   "tags": "水位監控,信用卡,玉山,提醒",
   "detail": "9/28 裁示：門檻不改（維持 4 萬常數），列入每日提醒直到補足；玉山為信用卡自動扣繳帳戶，扣款失敗會影響信用",
   "cleanup_reason": "已完成：玉山 臺幣綜存 40,044／台北富邦 數位活儲 44,116，均 ≥ 安全線 40,000 → 狀態回收"
+ },
+ {
+  "date": "2026-09-30",
+  "title": "US30Y 紅線長期化預案（若 10/31 仍 ≥5.30）",
+  "status": "✅ 政策已實作（2026-09-30）：REDLINE_LONG_DURATION_POLICY 上線（sot_targets.redline_policy → snapshot.redline_policy）",
+  "tags": "US30Y,紅線,預案,凍結",
+  "detail": "階梯（使用者 2026-09-30 定案）：<30 日→維持現有配置不交易；30–45 日→每週重檢資產配置與現金流；45–60 日→啟動替代配置評估；>60 日→CIO 必須重審「原本解凍邏輯是否仍適用」。目的不是逼投資，而是避免『暫停』最後變成『沒有人再處理』；政策只決定檢查頻率與評估啟動，不授權任何買賣。替代路線 A/B/C 內容仍待核准。",
+  "source": "CIO 9/30 建議（待使用者核准）",
+  "policy_stage": {
+   "streak_days": 23,
+   "stage": 1,
+   "階段區間": "0–30 天",
+   "應做事項": "維持現有配置，不交易",
+   "下一階段": "30 天：每週重新檢查資產配置與現金流"
+  },
+  "cleanup_reason": "2026-09-30 核准落地後閉環歸檔（pending 只留進行中；✅ 完成 → archive）"
+ },
+ {
+  "date": "2026-09-30",
+  "title": "真值回歸抽點（閘門外的第二層：抽 2 欄位對點截圖/對帳單）",
+  "status": "✅ 已實作（2026-09-30）：truth_spotcheck.py 上線（固定 4 項＋輪替 2 項／日）",
+  "tags": "真值,回歸,抽點,閘門",
+  "detail": "truth_spotcheck.py：每日固定抽 Cash／Debt／US30Y／Restricted Cash（判準原料），再依日期輪替抽 2 項（水位／保單／證券／基金／信用卡／總資產）；輸出值＋as_of＋來源鏈＋對點方式，as_of 落後 >3 天自動標 ⚠️『該欄不得用於判定』。用法：python truth_spotcheck.py｜--fixed｜--all｜--pick N M。定位＝互證（cross-check），不符才登錄 error_register。",
+  "cleanup_reason": "2026-09-30 核准落地後閉環歸檔（pending 只留進行中；✅ 完成 → archive）"
+ },
+ {
+  "date": "2026-09-30",
+  "title": "P0-1 度量修正標註（避免月報誤讀成財務惡化）",
+  "status": "✅ 已實作（2026-09-30）：metrics_registry（metric_version 2.0.0／changed_at／change_reason）寫入 snapshot",
+  "tags": "P0-1,度量修正,月報,口徑",
+  "detail": "snapshot.metrics_registry：metric_version 2.0.0、changed_at 2026-09-30、change_reason（P0-1 派生口徑）、影響表（壓力情境覆蓋率 101.7→95.9、防禦維度 53.8→49.1，性質＝度量修正）、標註規則＝凡顯示未達標處附「（度量修正 v2.0.0，非資產變動）」。月報（10/1）需獨立一行「口徑變更影響」——待月報產出時落地。",
+  "source": "CIO 9/30 建議（待使用者核准）",
+  "cleanup_reason": "2026-09-30 核准落地後閉環歸檔（pending 只留進行中；✅ 完成 → archive）"
+ },
+ {
+  "date": "2026-09-30",
+  "title": "現金分層（cash_layers）：現金不得只看單一總額",
+  "status": "✅ 已實作（2026-09-30）：snapshot.cash_layers 上線",
+  "tags": "真值,現金,分層,壓力測試",
+  "detail": "結構：cash_total → unrestricted_cash／restricted_cash{debt_repayment_reserve, other_restricted}／emergency_cash（底線內不動用）＋dry_powder（超額乾粉）。壓力測試『能不能撐住』一律用 unrestricted_cash；credit_line_available 目前無真值來源（回 None，不得推估）。來源：sot_targets.cash_layers，由 update_data 每日寫回。",
+  "source": "user 2026-09-30 規格",
+  "cleanup_reason": "2026-09-30 核准落地後閉環歸檔（pending 只留進行中；✅ 完成 → archive）"
+ },
+ {
+  "date": "2026-09-30",
+  "title": "US30Y 解凍判定閘門（as_of 落後 → 禁止解凍）",
+  "status": "✅ 已實作（2026-09-30）：sot_targets.us30y_gate ＋ rebalance_snapshot 強制 us30y_as_of",
+  "tags": "US30Y,閘門,解凍,真值日期",
+  "detail": "規則：解凍須同時具備 value＋as_of＋連續天數；as_of 缺漏或落後真值日 >3 天 → status=UNKNOWN/STALE、unfreeze_allowed=False。rebalance_snapshot.json 新增 us30y_as_of／us30y_gate_status／unfreeze_allowed／unfreeze_block_reason（us30y_date 保留為相容別名）。現況：US30Y 5.594 @2026-09-29、streak 23、閘門 OK、解凍不許可。",
+  "source": "user 2026-09-30 規格（P0）",
+  "cleanup_reason": "2026-09-30 核准落地後閉環歸檔（pending 只留進行中；✅ 完成 → archive）"
  }
 ]
