@@ -1661,5 +1661,11 @@
   "category": "完成",
   "item": "Pending 自動回收接每日 cron（pending_reconcile --apply，22:00 晚報，建 dashboard 前落地）",
   "detail": "使用者 2026-09-30 核准；同批修復 INC-263（寫入前快照在規則迴圈前取得、落地後驗證改警告不 raise）"
+ },
+ {
+  "date": "2026-09-30",
+  "category": "完成",
+  "item": "全庫校正估算值 100 萬 → 96 萬／960,000（券商質押實際金額；含審查 3 輪、7 顆 commit）",
+  "detail": "成因：真值 9/30 由估算 1,000,000 校正為實際 960,000，但以「100 萬」標示的舊字樣仍散在數字承載體（模板 index_template、日誌 work_log、審查紀錄 cio_review*、行事曆 schedule_events、decisions）→ 同一頁面並存兩個金額。修法：全庫掃描校正 79 處＋補校正註記（snapshot 裁示欄）＋INC-267 登記。"
  }
 ]
