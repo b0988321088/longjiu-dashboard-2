@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import re
 from pathlib import Path  # 2026-09-29：restricted_cash 缺 key 時回退讀 snapshot.json 用
 
 SOT_KEY = "thresholds_2026_0915"
@@ -123,6 +124,110 @@ def build_defensive_metric(snap: dict, today: str | None = None) -> dict:
         dcm["組成說明"] += f"；⚠️ 鉅亨月配口徑未定，暫留原值 {int(comp.get('鉅亨月配') or 0):,}"
     dcm.setdefault("裁示", "防守承接凍結（2026-08-21 使用者：基金也有配息應合併計算）")
     return dcm
+
+
+def sync_scenario_verification(snap: dict, today: str | None = None) -> dict:
+    """market_scenario_standards.現況驗證 ← dual_dimension_metric 單向派生同步。
+
+    2026-09-30 P0-1（使用者核准）：原 stored「防禦 53.8%」無程式寫入者（疑舊人工值），
+    與派生公式 49.1% 並存 → 同一份報告同時出現「53.8% 合格」與「49.1% 不合格」雙答案。
+    改為一律由 dual_dimension_metric.佔比 產生，門檻判定同源。
+    LTV 現況＝基金質押借款 ÷ 國泰擔保池（真值鍵，禁寫死）。
+    """
+    ms = dict(snap.get("market_scenario_standards") or {})
+    if not ms:
+        return ms
+    ddm = snap.get("dual_dimension_metric") or {}
+    _def = (ddm.get("防禦維度") or {}).get("佔比")
+    _inc = (ddm.get("收入維度") or {}).get("佔比")
+    _scenes = ms.get("情境") or {}
+    _cur = next((k for k, v in _scenes.items() if (v or {}).get("當前")), "區間震盪")
+    _sc = _scenes.get(_cur) or {}
+
+    def _num(v):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
+    # LTV 現況：基金質押借款 ÷ 擔保池市值
+    _loan = _num(snap.get("fund_pledge_loan")) or 0.0
+    _pool = _num(((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("合計")) or 0.0
+    _ltv = round(_loan / _pool * 100, 1) if _pool else None
+
+    _dmin, _imin, _lmax = _sc.get("防禦最低"), _sc.get("收入最低"), _sc.get("LTV上限")
+    _d_ok = (_def is not None and _dmin is not None and _def >= _dmin)
+    _i_ok = (_inc is not None and _imin is not None and _inc >= _imin)
+    _l_ok = (_ltv is not None and _lmax is not None and _ltv <= _lmax)
+    _all_ok = _d_ok and _i_ok and _l_ok
+    ms["現況驗證"] = {
+        "防禦": _def, "防禦門檻": _dmin, "防禦合格": _d_ok,
+        "收入": _inc, "收入門檻": _imin, "收入合格": _i_ok,
+        "LTV": _ltv, "LTV上限": _lmax, "LTV合格": _l_ok,
+        "結論": (f"完全符合「{_cur}」標準" if _all_ok
+                 else f"未完全符合「{_cur}」標準（防禦 {_def}% vs ≥{_dmin}%、收入 {_inc}% vs ≥{_imin}%、LTV {_ltv}% vs ≤{_lmax}%）"),
+        "source": "sot_targets.sync_scenario_verification（派生自 dual_dimension_metric；2026-09-30 P0-1 建立單一寫入者）",
+        "derived_at": today or dt.date.today().isoformat(),
+    }
+    return ms
+
+
+def build_dual_dimension_metric(snap: dict, today: str | None = None) -> dict:
+    """雙維度資產定位：防禦維度佔比由「組成加總 ÷ 配置分母」派生（不再手寫）。
+
+    配置分母＝total_assets − restricted_cash（指定用途款隔離後不屬配置資金；
+    2026-09-29 裁示口徑）。收入維度含不動產租金，其組成非全金額鍵 → 只重算防禦維度。
+    """
+    ddm = dict(snap.get("dual_dimension_metric") or {})
+    if not ddm:
+        return ddm
+    _total_cfg = (snap.get("total_assets") or 0) - restricted_cash(snap)
+    _def = dict(ddm.get("防禦維度") or {})
+    _comp = _def.get("組成") or {}
+    if _comp and _total_cfg > 0:
+        _amt = sum(v for v in _comp.values() if isinstance(v, (int, float)))
+        _def["合計"] = _amt
+        _def["佔比"] = round(_amt / _total_cfg * 100, 1)
+        _def["分母"] = _total_cfg
+        _def["derived_at"] = today or dt.date.today().isoformat()
+        ddm["防禦維度"] = _def
+    return ddm
+
+
+def refresh_stale_amounts(text: str, snap: dict) -> str:
+    """把歷史內文（前一日的 LLM 分析）中的清償前舊金額，替換為當日 snapshot 真值。
+
+    2026-09-30 P0-1：9/29 的緊急應變內文含「現金 6,719,182／總資產 31,808,561／
+    總負債 36,003,720」等清償前數字，注入 9/30 日報後讀者無從分辨 → 直接以真值覆蓋。
+    只替換「唯一指向舊值」的金額；`5,900,000` 同時是現行基金質押借款餘額，
+    故僅在「指定用途款／指定清償款」語境下替換。
+    """
+    if not text:
+        return text
+    _cash = float(snap.get("cash_total") or 0)
+    _rc = restricted_cash(snap)
+    _ta = snap.get("total_assets")
+    _tl = snap.get("total_liabilities")
+    _exp = snap.get("monthly_expense")
+    _pi = snap.get("passive_income") or {}
+    _cons = _pi.get("total_conservative")
+
+    # 先處理「指定用途款 5,900,000」這種組合語境（避免誤改質押借款餘額）
+    if _rc and _rc != 5900000:
+        text = re.sub(r"(指定(?:用途|清償)款\s*)5,900,000", rf"\g<1>{_rc:,.0f}", text)
+        text = re.sub(r"(指定用途款\s*)5,900,000", rf"\g<1>{_rc:,.0f}", text)
+
+    repl = {
+        "6,719,182": f"{_cash:,.0f}" if _cash else None,
+        "31,808,561": f"{_ta:,}" if _ta else None,
+        "36,003,720": f"{_tl:,}" if _tl else None,
+        "162,781": f"{_exp:,}" if _exp else None,
+        "96,798": f"{_cons:,.0f}" if _cons else None,
+    }
+    for old, new in repl.items():
+        if new and old != new:
+            text = text.replace(old, new)
+    return text
 
 
 def defensive_caliber(snap: dict) -> dict:

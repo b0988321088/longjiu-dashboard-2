@@ -152,6 +152,13 @@ _ej = BASE / "data" / "emergency_llm_analysis.json"
 if _ej.exists():
     _d = json.loads(_ej.read_text(encoding="utf-8"))
     _r = _d.get("full_report", _d.get("analysis", ""))
+    # P0-1（2026-09-30）：歷史內文中的清償前舊金額（現金／總資產／總負債／月支出…）
+    # 一律以當日 snapshot 真值覆蓋，不讓 9/29 數字偽裝成 9/30 現況。
+    try:
+        from sot_targets import refresh_stale_amounts as _refresh
+        _r = _refresh(_r, json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")))
+    except Exception as _e_r:
+        print(f"[WARN] P0-1 緊急應變內文舊值覆蓋失敗：{_e_r}")
     _gen = _d.get("generated_at", "") or ""
     _hour = int(_gen[11:13]) if len(_gen) >= 13 and _gen[11:13].isdigit() else 0
     _src = str(_d.get("source", "") or "")
@@ -163,7 +170,16 @@ if _ej.exists():
     _next = ("次一交易日 21:30 固定更新" if _is_us
              else "未觸發門檻則沿用此份；美股時段 21:30 每交易日固定更新")
     _note = f'<p style="font-size:12px;color:#6e6e73;margin-bottom:6px">📅 緊急應變資料：{_gen[:16]}（{_slot}；{_next}）</p>' if _gen else ""
-    _emergency_html = f'<div class="callout callout-warn">{_note}{_r.replace(chr(10), "<br>" + chr(10))}</div>'
+    # P0-1（2026-09-30 使用者核准）：緊急應變內文若為前一日產出，其中的資產／負債／覆蓋率
+    # 屬當時快照，不得偽裝成當日現況 → 強制標示 as_of。舊分析保留作歷史紀錄。
+    _dt_src = str(_d.get("date") or "")[:10]
+    _is_stale = bool(_dt_src) and _dt_src != str(TODAY)
+    _stale_badge = (f'<p style="font-size:12.5px;color:#b45309;font-weight:700;margin-bottom:6px;'
+                    f'background:#fffbeb;border-left:3px solid #f59e0b;padding:6px 8px">'
+                    f'⚠️ 歷史內文（as_of={_dt_src}）：以下為 {_dt_src} 的緊急應變分析，其中資產、負債、'
+                    f'覆蓋率等數字為<b>當時快照，非 {TODAY} 現況</b>；{TODAY} 真值請以日報第 1 章「財富生命線」為準。</p>'
+                    ) if _is_stale else ""
+    _emergency_html = f'<div class="callout callout-warn">{_stale_badge}{_note}{_r.replace(chr(10), "<br>" + chr(10))}</div>'
     # 加入緊急應變連結（自動找最新可用檔案）
     _emergency_files = sorted(BASE.glob("emergency_report_2*.html"), reverse=True)
     _taiex_files = sorted(BASE.glob("emergency_taiex_report_2*.html"), reverse=True)
@@ -181,16 +197,21 @@ _decision_rows = ""
 _dp = BASE / "pending_decisions.json"
 if _dp.exists():
     try:
+        from sot_targets import refresh_stale_amounts as _refresh_dec
+        _snap_dec = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
         _dd = json.loads(_dp.read_text(encoding="utf-8"))
         for _d in _dd:
             # 2026-09-12：pending 條目可帶 "card"（決策卡檔名）→ 第4欄出連結（目標 _blank）
             _card = str(_d.get("card", "") or "").strip()
             _card_td = (f'<td><a href="{_card}" target="_blank" style="color:#2563eb;text-decoration:underline">📑 決策卡</a></td>'
                         if _card else '<td>—</td>')
-            _decision_rows += (f'<tr><td>{_d.get("date","")}</td><td>{_d.get("title","")}</td>'
-                               f'<td>{_d.get("status","")}</td>{_card_td}</tr>')
-    except:
-        pass
+            # P0-1（2026-09-30）：決策追蹤文字中的清償前舊金額以當日真值覆蓋
+            _title_ok = _refresh_dec(str(_d.get("title", "") or ""), _snap_dec)
+            _status_ok = _refresh_dec(str(_d.get("status", "") or ""), _snap_dec)
+            _decision_rows += (f'<tr><td>{_d.get("date","")}</td><td>{_title_ok}</td>'
+                               f'<td>{_status_ok}</td>{_card_td}</tr>')
+    except Exception as _e_dec:
+        print(f"[WARN] P0-1 決策追蹤舊值覆蓋失敗：{_e_dec}")
 
 # 4. 從 schedule_events.json 統一讀取排程
 _events = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
@@ -297,6 +318,14 @@ except Exception:
     pass
 
 # 9. 寫入（INC-199：附加區塊原本落在 </body></html> 之後 → 寫檔前收斂回 </body> 之前）
+# P0-1（2026-09-30）：日報是「現況報告」→ 寫檔前最終覆蓋清償前舊金額。
+# 名單只含唯一指向舊值的金額（質押借款 5,900,000 不在其中，不會誤傷），
+# 涵蓋 emergency 內文／決策追蹤／工作日誌等所有注入路徑。
+try:
+    from sot_targets import refresh_stale_amounts as _refresh_out
+    html = _refresh_out(html, json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")))
+except Exception as _e_out:
+    print(f"[WARN] P0-1 日報最終舊值覆蓋失敗：{_e_out}")
 OUT.write_text(close_html_tail(html), encoding="utf-8")
 
 # 9a. 淨資產拆解自動更新（2026-09-03：儀表板 net_worth_weekly_breakdown 從 DB 真值算，

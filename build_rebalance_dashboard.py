@@ -179,6 +179,18 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     try:
         _em = load("data/emergency_llm_analysis.json", {})
         _fr = _em.get("full_report", "")
+        # P0-1（2026-09-30）：緊急應變內文若為前一日產出 → 其中資產／負債／覆蓋率屬當時快照，
+        # 不得偽裝成今日現況（原清償前舊值會經此路徑流進日報）。
+        _em_d = str(_em.get("date") or "")[:10]
+        # P0-1（2026-09-30）：以當日真值覆蓋歷史內文中的清償前舊金額
+        try:
+            from sot_targets import refresh_stale_amounts as _refresh
+            _fr = _refresh(_fr, s)
+        except Exception:
+            pass
+        if _em_d and _em_d != TODAY:
+            lines.append(f"> ⚠️ **歷史內文（as_of={_em_d}）**：下列資產／負債／覆蓋率為當時快照，"
+                         f"**非 {TODAY} 現況**；當日真值見日報第 1 章。")
         _i = _fr.find("六、風控檢查")
         if _i > -1:
             lines.append(_fr[_i:_i+700])
@@ -584,6 +596,19 @@ def main():
     try:
         _em = load("data/emergency_llm_analysis.json", {})
         _fr = _em.get("full_report", "")
+        # P0-1（2026-09-30）：歷史內文舊金額以當日真值覆蓋 + 標示 as_of（與日報同口徑）
+        _em_d = str(_em.get("date") or "")[:10]
+        try:
+            from sot_targets import refresh_stale_amounts as _refresh
+            _fr = _refresh(_fr, s)
+        except Exception:
+            pass
+        _asof_html = ""
+        if _em_d and _em_d != TODAY:
+            _asof_html = ("<div style='color:#fbbf24;font-weight:700;margin-bottom:6px;"
+                          "background:#78350f33;border-left:3px solid #f59e0b;padding:6px 8px'>"
+                          f"⚠️ 歷史內文（as_of={_em_d}）：下列內容為當時分析，非 {TODAY} 現況；"
+                          "其中金額已以當日真值覆蓋。</div>")
         _i = _fr.find("六、風控檢查")
         _seg = _fr[_i:_i+900] if _i > -1 else ""
         if not _seg:
@@ -595,6 +620,7 @@ def main():
         emg_html = f"""
   <div class="card" style="margin-top:14px;border-left:4px solid #f59e0b">
     <h2>🚨 緊急應變併入再平衡（{_em.get('generated_at','')[:16]}）</h2>
+    {_asof_html}
     <div style="font-size:12px;color:#cbd5e1;line-height:1.7">{_seg}</div>
     <div style="margin-top:8px;font-size:12px"><a href="https://b0988321088.github.io/longjiu-dashboard-2/{_er_name}" style="color:#f59e0b">📄 查看完整緊急應變報告 →</a></div>
   </div>"""

@@ -80,6 +80,17 @@ snap["penetration"] = {
 # 語意與 sync_all.py v3（sp["date"] = today）一致。
 snap["date"] = date.today().isoformat()
 snap["generated_at"] = datetime.now().isoformat()
+# P0-1（2026-09-30）：穿透報告是每日必跑路徑（regenerate_report 會呼叫）→ 在此同步
+# 雙維度佔比與情境現況驗證。防禦維度分母＝總資產−指定用途款，總資產每天隨市值變動
+# → 必須每日重算，否則佔比會漂、又回到「stored 值與派生值不一致」的老問題。
+try:
+    from sot_targets import build_dual_dimension_metric as _bdd, sync_scenario_verification as _ssv
+    snap["dual_dimension_metric"] = _bdd(snap)
+    snap["market_scenario_standards"] = _ssv(snap)
+    _ddf = (snap.get("dual_dimension_metric") or {}).get("防禦維度") or {}
+    print(f"  雙維度防禦 {_ddf.get('佔比')}%（每日重算；分母 {_ddf.get('分母', 0):,.0f}）")
+except Exception as _e_sd:
+    print(f"  ⚠️ P0-1 雙維度同步失敗：{_e_sd}")
 (BASE / "snapshot.json").write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")  # INC-184：snapshot canonical=1（原 indent=2 造成全檔假 diff）
 print("  穿透數據已自動校正並寫入 snapshot.json")
 holdings = snap.get("securities", {}).get("holdings", [])
@@ -148,10 +159,20 @@ _ddm = snap.get("dual_dimension_metric", {})
 if _ddm:
     _def = _ddm.get("防禦維度", {}); _inc = _ddm.get("收入維度", {})
     _dc2 = _def.get("組成", {})
+    # P0-1（2026-09-30）：文字說明一律由 snapshot 數字欄位動態生成，禁止手寫金額
+    # （原手寫「＝帳戶層真值 6,719,182 − 指定用途款 5,900,000」清償後即失真）
+    _rent_m_dyn = float((snap.get("passive_income") or {}).get("rent_monthly") or 0)
+    _cash_tot_dyn = float(snap.get("cash_total") or 0)
+    _rc_dyn = float(_restricted_cash or 0)
+    _avail_dyn = _cash_tot_dyn - _rc_dyn
+    _cash_bucket_dyn = float(_dc2.get("現金/貨幣停泊", 0) or 0)
+    if abs(_cash_bucket_dyn - _avail_dyn) > 1:
+        print(f"  ⚠️ P0-1：dual_dimension 現金桶 {_cash_bucket_dyn:,.0f} ≠ 動態可動用 {_avail_dyn:,.0f}"
+              f"（真值 {_cash_tot_dyn:,.0f} − 指定用途款 {_rc_dyn:,.0f}）→ 請重跑 update_data.py 同步")
     w(f"<div class='callout' style='border-left:3px solid #8b5cf6'>🧭 <b>雙維度資產定位（{_ddm.get('定稿','')}）：</b>"
-      f"<br/>🛡️ <b>防禦維度 {_def.get('佔比',0)}%</b>（{_def.get('公式','')}｜抗跌/LTV保護）＝ 債券 {_dc2.get('債券類',0):,} + 現金 {_dc2.get('現金/貨幣停泊',0):,} + 低波 {_dc2.get('低波高股息防禦',0):,} + 配息型基金權益 {_dc2.get('配息型基金權益',0):,} + 避險衛星 {_dc2.get('避險衛星(目標)',0):,}（目標）"
-      f"<br/>💵 <b>收入引擎 {_inc.get('佔比',0)}%</b>（{_inc.get('公式','')}｜現金流覆蓋）＝ 全配息資產 + 房租 80,100/月"
-      f"<br/><span style='color:#64748b;font-size:12px'>核心：配息≠防守，兩維度分離計算、獨立風控；{_def.get('備註','')}</span></div>")
+      f"<br/>🛡️ <b>防禦維度 {_def.get('佔比',0)}%</b>（{_def.get('公式','')}｜抗跌/LTV保護）＝ 債券 {_dc2.get('債券類',0):,} + 現金 {_cash_bucket_dyn:,} + 低波 {_dc2.get('低波高股息防禦',0):,} + 配息型基金權益 {_dc2.get('配息型基金權益',0):,} + 避險衛星 {_dc2.get('避險衛星(目標)',0):,}（目標）"
+      f"<br/>💵 <b>收入引擎 {_inc.get('佔比',0)}%</b>（{_inc.get('公式','')}｜現金流覆蓋）＝ 全配息資產 + 房租 {_rent_m_dyn:,.0f}/月"
+      f"<br/><span style='color:#64748b;font-size:12px'>核心：配息≠防守，兩維度分離計算、獨立風控；現金/貨幣停泊＝可動用台幣活存 <b>{_avail_dyn:,.0f}</b>（＝帳戶層真值 {_cash_tot_dyn:,.0f} − 指定用途款 {_rc_dyn:,.0f}，由數字欄位動態生成）；{_def.get('備註','')}</span></div>")
 
 # 四大市場情境門檻對照（2026-08-21 定稿）— 當前情境自動套用
 _ms = snap.get("market_scenario_standards", {})
@@ -159,18 +180,24 @@ if _ms:
     _cur = next((k for k, v in _ms.get("情境", {}).items() if v.get("當前")), "區間震盪")
     _sc = _ms.get("情境", {}).get(_cur, {})
     _v = _ms.get("現況驗證", {})
-    # INC-201：情境驗證的 stored 值（防禦 53.8%）無程式寫入者、與定稿公式不符 → 並列派生值
+    # P0-1（2026-09-30 使用者核准）：門檻判定一律用 dual_dimension 派生值，不再引用 stored 值。
+    # 原本 stored「防禦 53.8%」無程式寫入者（疑舊人工值）→ 與派生 49.1% 形成雙答案、結論相反。
     _dd2 = (snap.get("dual_dimension_metric", {}) or {})
     _def_f = (_dd2.get("防禦維度", {}) or {}).get("佔比")
     _inc_f = (_dd2.get("收入維度", {}) or {}).get("佔比")
+    _ltv_v = _v.get("LTV")
     _def_f_ok = isinstance(_def_f, (int, float)) and _def_f >= _sc.get("防禦最低", 0)
     _inc_f_ok = isinstance(_inc_f, (int, float)) and _inc_f >= _sc.get("收入最低", 0)
+    _ltv_f_ok = isinstance(_ltv_v, (int, float)) and _ltv_v <= _sc.get("LTV上限", 0)
+    _all_ok = _def_f_ok and _inc_f_ok and _ltv_f_ok
     _rows4 = "".join(
         f"<tr><td>{k}</td><td class='num'>防禦≥{v.get('防禦最低',0)}%</td><td class='num'>收入≥{v.get('收入最低',0)}%</td><td class='num'>LTV≤{v.get('LTV上限',0)}%</td><td style='font-size:11px'>{v.get('策略','')[:22]}</td></tr>"
         for k, v in _ms.get("情境", {}).items())
-    w(f"<div class='callout' style='border-left:3px solid #0ea5e9'>🎯 <b>四大市場情境門檻（{_ms.get('定稿','')}）— 當前：{_cur} {('✅ 現況全合格' if _v.get('防禦合格') and _v.get('收入合格') and _v.get('LTV合格') else '⚠️ 需調整')}</b>"
+    w(f"<div class='callout' style='border-left:3px solid #0ea5e9'>🎯 <b>四大市場情境門檻（{_ms.get('定稿','')}）— 當前：{_cur} {('✅ 現況全合格' if _all_ok else '⚠️ 需調整')}</b>"
       f"<table style='width:100%;font-size:12px;margin-top:6px;border-collapse:collapse'><tr style='color:#64748b'><th style='text-align:left;padding:3px 6px'>情境</th><th class='num'>防禦最低</th><th class='num'>收入最低</th><th class='num'>LTV上限</th><th style='text-align:left;padding:3px 6px'>策略</th></tr>{_rows4}</table>"
-      f"<span style='color:#64748b;font-size:12px'>現況驗證：防禦 {_v.get('防禦',0)}%（≥{_v.get('防禦門檻',0)}% {'✅' if _v.get('防禦合格') else '❌'}）｜收入 {_v.get('收入',0)}%（≥{_v.get('收入門檻',0)}% {'✅' if _v.get('收入合格') else '❌'}）｜LTV {_v.get('LTV',0)}%（≤{_v.get('LTV上限',0)}% {'✅' if _v.get('LTV合格') else '❌'}）→ {_v.get('結論','')}<br/>⚠️ <b>派生核對（INC-201）</b>：防禦＝dual_dimension 定稿公式 {_def_f}%（≥{_sc.get('防禦最低',0)}% {'✅' if _def_f_ok else '❌'}）｜收入＝{_inc_f}%（≥{_sc.get('收入最低',0)}% {'✅' if _inc_f_ok else '❌'}）；上面 stored 的防禦 {_v.get('防禦',0)}% 無程式寫入者（疑舊人工值）→ 以派生值為準。避險衛星以「目標值 131 萬」計入防禦維度（實況：黃金 32 萬尚未建倉）</span></div>")
+      f"<span style='color:#64748b;font-size:12px'>現況驗證（{_cur}標準）：防禦 <b>{_def_f}%</b>（≥{_sc.get('防禦最低',0)}% {'✅' if _def_f_ok else '❌'}）｜收入 <b>{_inc_f}%</b>（≥{_sc.get('收入最低',0)}% {'✅' if _inc_f_ok else '❌'}）｜LTV <b>{_ltv_v}%</b>（≤{_sc.get('LTV上限',0)}% {'✅' if _ltv_f_ok else '❌'}）"
+      f"＝ dual_dimension_metric 定稿公式派生（<b>單一來源</b>；2026-09-30 P0-1 起門檻判定單一化，"
+      f"原 stored 舊值已停用）。避險衛星以「目標值 131 萬」計入防禦維度（實況：黃金 32 萬尚未建倉）</span></div>")
 
 # 現況質押借款快照（2026-09-05 加：LTV 現況透明化 — 勿誤讀情境表為「無質押」）
 _pl_a = float(snap.get("policy_pledge_loan") or 0)

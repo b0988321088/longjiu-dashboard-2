@@ -401,9 +401,12 @@ def load_history(snap=None) -> dict:
                 # 歷史日期保留 JSON 存檔的 insurance_detail，避免被今日 snapshot 覆寫
                 "insurance_detail": _json_hist.get(d, {}).get("insurance_detail") or {"【安聯保單A】現值": _truth(snap, "allianz_policy_a_value", "allianz_a_current_value"), **{"  A-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_a_funds",{}).items()}, "【安聯保單B】現值": _truth(snap, "allianz_policy_b_value", "allianz_b_current_value"), **{"  B-"+k: (v["value"] if isinstance(v, dict) else v) for k, v in snap.get("insurance_breakdown",{}).get("policy_b_funds",{}).items()}, "安聯A+B合計": _truth(snap, "allianz_ab_current_value", "allianz_ab"), f"━第一金{snap.get('firstjin_short_label', 'FA81聯博')}現値": _truth(snap, "firstjin_current_value", "firstjin"), "━保單總現値": _truth(snap, "insurance_current_value")},
                 "fund_dividend_monthly": float(snap.get("dividend_month_actual", 0) or 0),
-                "monthly_income": 228_751.0,
-                "monthly_expense": 162781.0,
-                "rent_monthly": 80_100.0,
+                # P0-1（2026-09-30）：一律讀 snapshot 真值，禁寫死。
+                # 原手寫 228_751／162781／80_100 — 其中 monthly_expense 已過期，
+                # 導致同一系統同時出現 162,781 與 172,543 兩個「月支出」。
+                "monthly_income": float(snap.get("monthly_income") or 0),
+                "monthly_expense": float(snap.get("monthly_expense") or 0),
+                "rent_monthly": float((snap.get("passive_income") or {}).get("rent_monthly") or 0),
                 "cathay_refinance": 0.0,
                 # 2026-09-30：指定用途款（質押撥款待清償）逐日記錄 — 供增減口徑排除負債替換流動
                 "restricted_cash": float(_json_hist.get(d, {}).get("restricted_cash") or 0),
@@ -801,7 +804,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
             f"<td class='num' style='color:{_color(d_fund)}'>{d_fund:+,.0f}</td>"
             f"<td class='num'>{_fmt(r['securities_market'])}</td>"
             f"<td class='num' style='color:{_color(d_sec)}'>{d_sec:+,.0f}</td>"
-            f"<td class='num'>{_fmt(r['cash'])}</td>"
+            f"<td class='num'>{_fmt(max(0, r['cash'] - (r.get('restricted_cash') or 0)))}</td>"
             f"<td class='num' style='color:{_color(d_cash)}'>{d_cash:+,.0f}</td>"
             f"</tr>{badge}"
         )
@@ -813,11 +816,13 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         "<th class='num'>保單現値</th><th class='num'>增減</th>"
         "<th class='num'>基金市值</th><th class='num'>增減</th>"
         "<th class='num'>證券市值</th><th class='num'>增減</th>"
-        "<th class='num'>現金</th><th class='num'>增減¹</th>"
+        "<th class='num'>現金²</th><th class='num'>增減¹</th>"
         "</tr>"
         "<tr><td colspan='11' style=\"font-size:11px;color:#64748b;text-align:left;padding:5px 8px;line-height:1.6\">"
         "¹ 增減已排除「指定用途款（質押撥款待清償）」：撥款與清償同時增減現金與負債（負債替換），"
-        "淨值不變，故不列為資產增減、亦不觸發單日下跌警示。</td></tr>"
+        "淨值不變，故不列為資產增減、亦不觸發單日下跌警示。<br>"
+        "² <b>現金＝可動用</b>（帳戶層餘額 − 指定用途款），全表統一此口徑。"
+        "2026-09-30 P0-1 前為「總資產口徑（含指定用途款）」→ <b>口徑已標示變更</b>，歷史列一併以可動用口徑呈現（同一公式，無斷點）。</td></tr>"
     )
 
     # insurance detail block

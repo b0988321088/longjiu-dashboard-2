@@ -16,7 +16,8 @@
 import json, sys, shutil, datetime
 from pathlib import Path
 try:
-    from sot_targets import bucket_targets, defensive_caliber, build_defensive_metric  # INC-201／INC-242b v3：桶目標／防守合併口徑單一入口
+    from sot_targets import (bucket_targets, defensive_caliber, build_defensive_metric,
+                             build_dual_dimension_metric, sync_scenario_verification)  # INC-201／INC-242b v3／P0-1：桶目標／防守合併口徑／雙維度＋情境驗證單一入口
 except Exception:  # 極端情況下（模組缺失）不得讓管線崩潰
     def bucket_targets(_snap):
         return {}
@@ -25,6 +26,12 @@ except Exception:  # 極端情況下（模組缺失）不得讓管線崩潰
         return {}
 
     def build_defensive_metric(_snap, _today=None):
+        return {}
+
+    def build_dual_dimension_metric(_snap, _today=None):
+        return {}
+
+    def sync_scenario_verification(_snap, _today=None):
         return {}
 
 BASE = Path(__file__).resolve().parent
@@ -319,6 +326,23 @@ def main():
                 print(f"   {_k}: {_o:,} → {_n:,}" if isinstance(_o, (int, float)) else f"   {_k}: {_o} → {_n:,}")
     if _dcm_new:
         print(f"   防守合併口徑 {_dcm_new.get('佔比')}%（{_dcm_new.get('配息資產合計', 0):,}）")
+
+    # P0-1（2026-09-30 使用者核准）：雙維度佔比與市場情境「現況驗證」一律派生 → 建立單一寫入者。
+    # 原本 market_scenario_standards.現況驗證 的防禦 53.8% 為手寫、無程式寫入者，
+    # 與 dual_dimension 派生 49.1% 並存 → 同一份報告同時出現「合格」與「不合格」雙答案。
+    _ddm_old = (snap.get("dual_dimension_metric") or {}).get("防禦維度") or {}
+    snap["dual_dimension_metric"] = build_dual_dimension_metric(snap)
+    _ddm_new = (snap.get("dual_dimension_metric") or {}).get("防禦維度") or {}
+    if _ddm_new:
+        if _ddm_old.get("佔比") is not None and _ddm_old.get("佔比") != _ddm_new.get("佔比"):
+            print(f"🔁 雙維度防禦自癒：{_ddm_old.get('佔比')}% → {_ddm_new.get('佔比')}%"
+                  f"（分母 {_ddm_new.get('分母', 0):,.0f}）")
+        print(f"   雙維度防禦 {_ddm_new.get('佔比')}%（合計 {_ddm_new.get('合計', 0):,.0f}）")
+    _sv_old = (snap.get("market_scenario_standards") or {}).get("現況驗證") or {}
+    snap["market_scenario_standards"] = sync_scenario_verification(snap)
+    _sv_new = (snap.get("market_scenario_standards") or {}).get("現況驗證") or {}
+    if _sv_old.get("防禦") != _sv_new.get("防禦"):
+        print(f"🔁 情境現況驗證自癒：防禦 {_sv_old.get('防禦')}% → {_sv_new.get('防禦')}%（單一寫入者）")
     SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
 
     # 2026-08-26 檢討修正：同步 DB assets 當日列（4 源比對根因：snapshot 更新但 DB 舊 → sync_all 失敗還原）
