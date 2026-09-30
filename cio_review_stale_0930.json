@@ -1,0 +1,103 @@
+{
+ "verdict": "APPROVE",
+ "reviewer": "Hermes Subagent (independent read-only re-review)",
+ "commit": "8eb707e5ee52042283ee2e5b862d8fae389cc6ee",
+ "primary_reviewed_commit": "8eb707e5ee52042283ee2e5b862d8fae389cc6ee",
+ "reviewed_commits": [
+  "8eb707e5ee52042283ee2e5b862d8fae389cc6ee",
+  "f8145881d6023325012ba9fdec892b48c191d545",
+  "9b5a889e577b1bf0b8824d124f127ebd2c0f78a9",
+  "d60d5c3d3b8215f5c46314fa0cb5e6b3dc94cf7e"
+ ],
+ "reviewed_trees": [
+  "3533953223b7c37b19bbc37f7e49fdb8fbac8508",
+  "24846759b35044f3c08c763a3eb43cb8d6b3e01c",
+  "efc00ba60934cbed4f909f3b72e6b2d932901f58",
+  "3528f5da40f132630a7a1d2d5e0dbc399b5d5681"
+ ],
+ "range_base": "origin/clean-main",
+ "range_count": 4,
+ "checked": [
+  {
+   "id": 1,
+   "item": "範圍與身分（rev-list / HEAD / tree）",
+   "result": "PASS",
+   "evidence": "審查起始 origin/clean-main..HEAD 僅 1 筆 8eb707e5（＝任務指定唯一未推 commit），HEAD tree=3533953223b7c37b19bbc37f7e49fdb8fbac8508，git status --porcelain 為空。審查途中並行自動化管線於 21:15–21:16 追加 3 筆資料 commit（f8145881『四源同步』/ 9b5a889e『auto: daily_report_v2』/ d60d5c3d『auto: index.html』），範圍增至 4 筆，本審查已一併涵蓋其資料面（見 id 12）。8eb707e5 仍為現役 HEAD 之祖先（git merge-base --is-ancestor 8eb707e5 HEAD → YES），未被改寫。現 HEAD=d60d5c3d3b8215f5c46314fa0cb5e6b3dc94cf7e。"
+  },
+  {
+   "id": 2,
+   "item": "check_dashboard_stale.py 逐行：是否『只放寬誤判』而未放寬守門",
+   "result": "PASS",
+   "evidence": "git show 8eb707e5 -- check_dashboard_stale.py 逐行比對：掃描主體 scan() 仍對每個 active 字面以 re.finditer 在 scannable()（原文扣除 HTML 註解 <!-- -->、JS 註解 /* */、<details class=\"cio-old\"> 歸檔區）全文比對；唯一差別是命中時依『該字面是否 ∈ truth_tokens()』分流：obsolete→不 FAIL、real→fail-closed。real 分支的訊息與 return 1 原樣保留（『❌ 儀表板殘留舊值 …若此值確實是活的顯示值，修法是讓它讀 snapshot，不是加豁免』）。JS 內硬編碼仍照掃（未放寬）。"
+  },
+  {
+   "id": 3,
+   "item": "truth_tokens() 是否真由 snapshot／passive_caliber 派生（不得硬編碼真值）",
+   "result": "PASS",
+   "evidence": "truth_tokens() 讀 snapshot.json 之 insurance_total/securities_total_market_value/cash_total/total_assets/total_liabilities/monthly_dividend_total/dividend_month_actual/securities_unrealized_pnl/rent_monthly_total/rent_monthly_actual，加 restricted_cash.金額、cash_layers.unrestricted_cash、passive_income.monthly_expense；再 import passive_caliber.scenarios(snap) 取 coverage/runway_days 與顯示層組合 (div_con|div_norm|div_act + rent_norm|rent_act)/expense*100，經 _opts() 展成常見顯示寫法。函式體內無任何百分比字面。實測 truth_tokens() 產生 100 個 token，其中 '144%' ∈ truth（屬派生結果）。原始碼中唯一 '144%' 字面位於 DEFAULT_ACTIVE（保底『舊值黑名單』，語意正確，非把真值寫死）。"
+  },
+  {
+   "id": 4,
+   "item": "資料檔 active/retired 軌跡；active 有無被無聲刪除字面",
+   "result": "PASS",
+   "evidence": "以 git show 8eb707e5^:check_dashboard_stale.py 取出舊 STALE（去註解）＝36 項，對比 data/dashboard_stale_tokens.json active＝35 項：差集恰為 ['144%']，無新增項；'144%' 出現於 retired（retired_at=2026-09-30、reason=命中現行真值）。retired 另保有 78,000(2026-09-28)/102,469(2026-09-26) 之歷史軌跡（此二項原本即為註解狀態、從未列入 active）。故無任何 active 字面被無聲刪除。"
+  },
+  {
+   "id": 5,
+   "item": "JSON 缺失／壞檔之安全網（DEFAULT_ACTIVE、fail-safe）",
+   "result": "PASS",
+   "evidence": "將 check_dashboard_stale.py 複製到空目錄（無 data/dashboard_stale_tokens.json、無 snapshot.json）執行：含 772,607/35,583 之 html → RC=1（走 DEFAULT_ACTIVE 嚴格模式）；含 144% 之 html → RC=1（snapshot 缺失→truth_tokens() 回空集合＝回到原嚴格行為，fail-safe，未因缺檔而變鬆）。再將非法 JSON 寫入 data/dashboard_stale_tokens.json：程式印『⚠️ 讀取 dashboard_stale_tokens.json 失敗（改用內建清單）：Expecting property name enclosed in double quotes…』後仍 RC=1。"
+  },
+  {
+   "id": 6,
+   "item": "負向測試：真實殘留仍須 RC=1",
+   "result": "PASS",
+   "evidence": "自造 <html><body>772,607 / 35,583</body></html> → python check_dashboard_stale.py <f> 輸出『❌ 儀表板殘留舊值 2 處（neg1.html）：- 35,583 @ …- 772,607 @ …』RC=1。混合頁（144% 與 772,607 同頁）→ RC=1（真殘留未被退休字面掩蓋）。另 143.9%（未退休、且非現行真值）→ RC=1；HTML 註解內之 772,607 → RC=0（排除註解行為不變）。"
+  },
+  {
+   "id": 7,
+   "item": "正向測試：現行真值（144%）不再誤擋",
+   "result": "PASS",
+   "evidence": "自造 <html><body>實收覆蓋率 144%</body></html> → RC=0（144% 為現行真值，判為『清單過時』而非殘留）。純 retired 字面頁（78,000 102,469）→ RC=0（retired 不再納入比對）。真值 index.html → RC=0（掃描 119,036 字元，字面清單 35 項）。"
+  },
+  {
+   "id": 8,
+   "item": "--retire-obsolete idempotent（無新增不得改檔）",
+   "result": "PASS",
+   "evidence": "python check_dashboard_stale.py → RC=0（『✅ 儀表板無真殘留舊值（index.html…字面清單 35 項…）』）。python check_dashboard_stale.py --retire-obsolete → RC=0；執行前後 data/dashboard_stale_tokens.json md5 皆 1fa792fc29f55cf5685416390416a47a（未改檔），git diff --stat 空、git status --short 空。因 active∩truth=∅，無可退休項（retire() 在 toks 空時即 return 0、不落檔）。"
+  },
+  {
+   "id": 9,
+   "item": "端到端 sync_all 20/20",
+   "result": "PASS",
+   "evidence": "為遵守『不得修改任何檔案』，改將受審 HEAD 複製為臨時 clone（clone HEAD=8eb707e5ee52042283ee2e5b862d8fae389cc6ee＝源 HEAD，確認同一內容）後在其內執行 python sync_all.py 2026-09-30：SYNC_RC=0、結尾『✅ 全部完成（20/20 步驟）』；其中『儀表板產出驗證』步輸出『✅ 儀表板無真殘留舊值（index.html｜掃描 119,050 字元，字面清單 35 項｜排除註解與 cio-old 歸檔區）』。"
+  },
+  {
+   "id": 10,
+   "item": "check_thresholds.py RC=0",
+   "result": "PASS",
+   "evidence": "clone 內 python check_thresholds.py → RC=0。輸出含『穿透完整性：五桶 25,000,368 + 衛星 884,823 + 指定用途款 2,940,000 = 總資產 28,825,191』『SoT 完整（9 區塊）』『無舊門檻字面殘留』『日報基金部位行：明細口徑且閉合』。"
+  },
+  {
+   "id": 11,
+   "item": "check_cross_report_consistency.py RC=0",
+   "result": "PASS",
+   "evidence": "clone 內 python check_cross_report_consistency.py → RC=0，結尾『✅ PASS：同一 as-of 下，各報告欄位一致、無失效舊值』。僅 6 項『[敘述提及，非阻擋]』警告（daily_report_v2 內 6,719,182 之舊帳戶層敘述；index.html 內『防禦 stored 53.8% 移除』等敘述文字），皆為敘述/決策文字，非現行值欄位。"
+  },
+  {
+   "id": 12,
+   "item": "並行資料 commit（8eb707e5..HEAD）內容驗證",
+   "result": "PASS",
+   "evidence": "git diff --name-only 8eb707e5..HEAD = cost.html、cost_data.json、daily_report_v2_2026-09-30.html、dashboard_decisions.json、dragon_assets.db、index.html、mtd_data.json、mtd_performance.html、rebalance_eval_2026-09-30.html、rebalance_summary_2026-09-30.md、snapshot.json；grep -iE 'zip|csv|moneybook|\\.py$' → NONE（無程式檔、無個資檔）；diff 內未見身分證樣式字串。皆為管線自動產出之資料/報表，屬既有自動 commit 通道。"
+  }
+ ],
+ "blocking": [],
+ "risks": [
+  "MINOR｜retired 為單向門：字面一旦因『曾為現行真值』被退休，日後真值漂移、該字面再次成為殘留時，不會被自動重新納入比對（retired 僅留 token/日期/理由供人工稽核）。緩解：真值變動（月結/月初校正）時人工複核 retired 清單；此風險需『未來真值再變且舊字面復辟』之特定情境才會觸發。",
+  "MINOR｜_opts() 對所有數值一律生成『%』變體（例如把美元金額也產生 167675% 之類），真值集合有過度生成之嫌；目前 active∩truth=∅、且 143.9% 未入 truth（實測 RC=1），未造成誤放，惟語意上略寬。",
+  "MINOR（設計固有，非本次新增）｜位置盲：檢查只問『字面是否出現在可掃描區』，不看所在卡片。若某舊值恰等於現行真值、或現行真值出現在錯誤位置，均不會被抓。此為原黑名單設計既有特性（本就無位置概念）——本次僅在『字面等於現行真值』時移除黑名單，而該情形下原攔阻本就為誤判，故不構成新的守門缺口。",
+  "MINOR｜真值來源受 snapshot.json 正確性牽動：若 snapshot 某值錯誤，白名單會跟著錯而放行該錯值；惟 snapshot 為既定單一真值來源，屬另一層問題（由 check_thresholds / 四源同步把關）。",
+  "技術債（非 blocker）｜sync_all.py:62 仍保留一份程式內硬編 index_template.html 舊字面清單（含 143.9%、144%），該檢查僅印 ⚠️、不影響 exit code（warn-only），與新資料檔機制並存。建議後續一併資料化或移除，避免雙軌清單漂移。"
+ ],
+ "notes": "獨立唯讀複審 commit 8eb707e5ee52042283ee2e5b862d8fae389cc6ee（『fix(stale-check): 舊值字面清單改資料驅動＋真值派生白名單＋--retire-obsolete』，tree 3533953223b7c37b19bbc37f7e49fdb8fbac8508）。改動核心：把 check_dashboard_stale.py 內硬編舊值清單搬到 data/dashboard_stale_tokens.json（active/retired），並新增『命中現行真值（由 snapshot + passive_caliber 派生）即判清單過時、不 FAIL』與 --retire-obsolete。逐行確認：守門未放寬——掃描主體、排除規則（HTML/JS 註解＋cio-old 歸檔區）、JS 硬編碼照掃、真殘留 return 1 全部不變，放寬僅限『字面字串等於現行真值』此一原本就屬誤判之情形。真值派生確由 snapshot＋passive_caliber 計算（無百分比字面硬編碼），且 snapshot 缺檔時回空集合＝回到原嚴格行為（fail-safe）。active 相對舊清單僅少 '144%' 且其入 retired（含日期/理由），無無聲刪除。安全網齊備：JSON 缺失／壞檔皆印警告並回退 DEFAULT_ACTIVE 嚴格模式。負向/正向實測：含 772,607/35,583 → RC=1、含 144% → RC=0、143.9% → RC=1、註解內舊值 → RC=0、retired-only → RC=0、混合頁 → RC=1（見 checks 6/7）。--retire-obsolete idempotent（md5 未變、git diff 空）。端到端（於 HEAD 之臨時 clone，以不更動受審工作樹）：sync_all.py 2026-09-30 → 20/20 RC=0；check_thresholds.py → RC=0；check_cross_report_consistency.py → RC=0。風險評估（見 risks）：白名單為『位置盲』且 retired 為單向門，理論上存在『某舊值恰等於現行真值／曾退休之字面日後復辟』之誤放面，惟 ① 此類情形原本的攔阻本即誤判（值確為現行真值）；② 現行 active∩truth=∅ 且實測未誤放；③ 軌跡保留可供人工稽核 → 均判為 MINOR，不列 blocker。審查期間發生並行情境：起始範圍僅 8eb707e5 一筆，審查途中自動化管線於 21:15–21:16 追加 f8145881/9b5a889e/d60d5c3d 三筆（純資料/報表，無 .py、無 zip/csv/moneybook、diff 無個資字串），範圍增至 4 筆，已一併驗證並列於 reviewed_commits/trees（range_count=4），以使 cio_approve.py --range-base origin/clean-main 可涵蓋現行推送範圍。本審查全程唯讀：未修改任何受控檔案（data/dashboard_stale_tokens.json md5=1fa792fc29f55cf5685416390416a47a 前後一致；sync_all 於臨時 clone 執行）、未 commit/push，僅新增本審查 JSON 一檔。註：受審 repo 為活躍工作樹，審查當時工作樹有並行管線寫入之 8 個未提交檔（buffett_cto_report/daily_analysis/daily_intel_report/dashboard_decisions/data/ai_cost_daily.jsonl/dragon_assets.db/logs/pipeline_llm_usage.jsonl/notion_bridge…），非本審查所致。"
+}
