@@ -150,7 +150,9 @@ def main() -> int:
     pi["rent_monthly_actual_note"] = (
         f"{dt.date.today().isoformat()} 月初校正：真值＝rent_received_records 當月加總"
         f"＝{values['rent_monthly_actual']:,.0f}；常態應收仍為 rent_monthly={pi.get('rent_monthly')}{_extra}")
-    SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=2), encoding="utf-8")
+    # snapshot.json canonical indent = 1（INC-184／_audit_closeout.py 第 10 條）；
+    # 用錯 indent 會把整檔重排成上千行假 diff（2026-10-01 INC-268 實際踩到過）
+    SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
     print("✅ 已寫入 snapshot.json")
     print("→ 下一步：four_source_sync.py（四源同步）→ LJ_PREPUSH=1 check_dashboard_sync.py（閘門）→ auto_push")
     return 0

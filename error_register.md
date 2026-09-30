@@ -1363,3 +1363,12 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 規則入庫：①**真值被校正時，要掃「所有承載該數字的載體」**（模板／行事曆／日誌／審查紀錄／decisions／HTML），不是只改顯示端；②**修顯示矛盾要用「全檔 grep 判準」驗收**，不能只驗自己改的那一行（原判準只掃 `券商質押 100 萬` 一種字樣 → 漏掉 `券商清償 100 萬`、`券商 ~100萬` 等變體）；③**歷史紀錄以「加註校正」處理，不回溯竄改**（備份檔尤其不可動）。
 
 
+
+
+## INC-268 ｜ 2026-10-01 ｜ P1｜fixed ｜ 真值層 JSON 用錯 indent → snapshot.json 整檔重排，5,627 行假 diff 淹沒真改動
+- 症狀：新增 `monthly_rollover.py` 寫 `snapshot.json` 用 `json.dump(..., indent=2)`（canonical=1），同日 ad-hoc 手改亦用 indent=2 → commit 89236f7d 對 snapshot.json 產生 **5,627 insertions / 5,620 deletions**（整檔重排），當日真改動（房租口徑/實收歸零）被埋在裡面；`_audit_closeout.py` 第 10 條同時報 ❌。
+- 影響：真值層的歷史 diff 失真（審查者無法看出實際改了什麼），違反 INC-184 既有規則。
+- 根因：新增寫入者與 ad-hoc 手改前，都沒有先確認該檔的 canonical indent（表在 `_audit_closeout.py` 第 10 條）。
+- 修法：①`monthly_rollover.py` 改 `indent=1` 並加註原因②`snapshot.json` 以 canonical indent=1 回寫（先以 JSON 等值比對確認語意不變）③淨差異回到 21 ins／14 del（僅真改動）。
+- 驗證：`json.loads(舊)==json.loads(新)` True；與重排前 commit（29d3045f）比對差異只剩房租/配息口徑數行；`_audit_closeout` 第 10 條 ✅、`monthly_rollover.py --dry-run` 值不變。
+- 規則入庫：**動真值層 JSON 前先查 canonical indent 表**（snapshot／work_log／radar_state＝1；schedule_events／pending_decisions／dashboard_decisions＝2）；ad-hoc 手改一律用 canonical，改完跑 `_audit_closeout.py` 確認沒有整檔重排。
