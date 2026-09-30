@@ -1,0 +1,79 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "Hermes Subagent (independent read-only re-review)",
+  "commit": "24b57e5e9ceb56433747dfb43aa07f0674f2412f",
+  "reviewed_commits": [
+    "b78a3603d331b836d4ec30eb55126c2f3816e2f0",
+    "24b57e5e9ceb56433747dfb43aa07f0674f2412f"
+  ],
+  "reviewed_trees": [
+    "1e1dbb4c908152bd94a587f7454d55ac4501312e",
+    "26d65e6ea11d775ef844765e743a802875ef0c4d"
+  ],
+  "range_base": "origin/clean-main",
+  "range_count": 2,
+  "checked": [
+    {
+      "id": 1,
+      "item": "範圍與身分（rev-list/log/HEAD/tree）",
+      "result": "PASS",
+      "evidence": "git rev-list --count origin/clean-main..HEAD=2；log oneline 恰 2 筆（24b57e5e、b78a3603）；HEAD=24b57e5e9ceb56433747dfb43aa07f0674f2412f tree=26d65e6ea11d775ef844765e743a802875ef0c4d；b78a3603=b78a3603d331b836d4ec30eb55126c2f3816e2f0 tree=1e1dbb4c908152bd94a587f7454d55ac4501312e。起始 git status --porcelain 為空（review JSON 已入版控）。"
+    },
+    {
+      "id": 2,
+      "item": "【阻擋①複驗】build_dashboard 後 index.html 無變化＋兩次 md5 一致",
+      "result": "PASS",
+      "evidence": "乾淨樹 pre md5(index.html)=7d2001da6ef8a54e61b1827b24203a2a。跑 python build_dashboard.py 第1次→git status --porcelain 無 ' M index.html'、md5 同值；第2次→rc=0、md5 仍 7d2001da6ef8a54e61b1827b24203a2a，git diff --stat index.html 無輸出。committed index.html 可由本 commit 位元重現，阻擋①已修。"
+    },
+    {
+      "id": 3,
+      "item": "【阻擋②複驗】P0 卡存在＋掃描 closed_kw 誤判＋券商質押卡不帶 ✅",
+      "result": "PASS",
+      "evidence": "重建後 index.html count('500 萬高息負債清償')=1、count('debt_repayment_5m')=1（P0 卡在儀表板上）。build_dashboard.py:749 _closed_kw=('✅','☑','已完成','已結案','已定案','閉環','已送出','已核定')，:750-751 對 pending_decisions.json 每卡 r['status'] 子字串過濾。以 python 逐卡掃描 26 卡 status → 命中 0。pending_decisions.json 內 2 個 ✅ 皆在巢狀欄位（line180 '狀態' 子項「✅ 已清償入帳」、line220 'detail' 敘述），非卡片 status。卡21（title『500 萬高息負債清償（parent：debt_repayment_5m）』）status 為『🔄 執行中（2026-09-30 真值重算）｜券商質押 100 萬 已清償入帳…』，不含 ✅；『已清償』不在 closed_kw。阻擋②已修。"
+    },
+    {
+      "id": 4,
+      "item": "真值層回歸：四塊存在／算術閉合／閘門同源／紅線期不得解凍／三態負向測試",
+      "result": "PASS",
+      "evidence": "四塊皆存在。cash_total 5,719,182 − restricted 4,900,000 = unrestricted 819,182 ✅；底線 700,000 + 乾粉 119,182 = 819,182 ✅。us30y_gate.as_of '2026-09-29' == us30y_state.json last_date '2026-09-29'；value 5.594 == last_rate 5.594。紅線期 unfreeze_allowed=False（5.594 ≥ 紅線 5.3、below_red_line=False）。三態實跑 sot_targets.us30y_gate：A 缺 last_date→status=UNKNOWN/unfreeze=False；B last_date 2026-09-20（落後10天，>max_lag=3）→STALE/unfreeze=False；C last_date 2026-09-29、rate 5.0<紅線→OK/unfreeze_allowed=True。三態全符。"
+    },
+    {
+      "id": 5,
+      "item": "單一 writer：真值層四塊僅 _sync_truth_blocks 一份實作、唯一寫入者、update_data 兩跑冪等",
+      "result": "PASS",
+      "evidence": "update_data.py:56-81 僅一份 _derive_truth_blocks/_sync_truth_blocks；check 模式(:116 write=True) 與更新路徑(:420 write=False、由唯一 SNAP.write_text :423 落檔) 共用。grep 全 repo .py 對四 key 的賦值僅 update_data.py:59-61（redline_policy 於 :63），其餘檔（action_loop/build_dashboard/check_thresholds/pending_reconcile/truth_spotcheck）皆只讀。實跑 python update_data.py 兩次：皆 rc=0『✅ 所有同義欄位一致 / 總資產: 30,808,561』、無『🔁 真值層自癒寫回』訊息、snapshot.json md5 兩次同為 9f6d77a7f9d9a3939f6109c9eb2c5a55、git status 對 snapshot.json 無變化（無自癒殘留 diff）。"
+    },
+    {
+      "id": 6,
+      "item": "新門檻閘門負向可證偽（現金分層／us30y as_of 未同源）",
+      "result": "PASS",
+      "evidence": "① cp 備份後把 cash_layers.unrestricted_cash 改 999999 → python check_thresholds.py RC=1，輸出『❌ 現金分層不閉合：cash_total 5,719,182 − restricted 4,900,000 ≠ unrestricted 999,999』＋『❌ 現金分層不閉合：底線 700,000 + 乾粉 119,182 ≠ 可動用 999,999』；還原後 rc=0。② 把 us30y_gate.as_of 改 2026-09-01 → RC=1，輸出『❌ us30y_gate.as_of 2026-09-01 ≠ us30y_state.last_date 2026-09-29（未同源 → 解凍判定會踩舊讀值）』；還原後 md5 回復 9f6d77a7…。兩個負向皆可證偽。"
+    },
+    {
+      "id": 7,
+      "item": "格式不漂移（indent/CRLF 位元組比對）",
+      "result": "PASS",
+      "evidence": "json.dumps(obj, ensure_ascii=False, indent=N).replace('\n','\r\n') == 檔位元組：pending_decisions.json indent=2 round-trip_match=True/全 CRLF=True；pending_decisions_archive.json indent=1/True/True；snapshot.json indent=1/True/True。cio_review_q4_0930.json 以 UTF-8 解析成功（keys: verdict/reviewer/commit/reviewed_commits/reviewed_trees/checked/blocking/notes）。"
+    },
+    {
+      "id": 8,
+      "item": "全閘門（static_gate／check_thresholds／cross_report／pending_reconcile dry-run）",
+      "result": "PASS",
+      "evidence": "python static_gate.py rc=0（無未定義名稱／重複定義／重複 dict key）；python check_thresholds.py rc=0；python check_cross_report_consistency.py RC=0（『✅ PASS：同一 as-of 下，各報告欄位一致』，5 筆皆 [敘述提及，非阻擋]）；python pending_reconcile.py dry-run rc=0『Pending 26 筆｜規則命中 0 筆｜無差異』，跑後 git status 僅剩我自己的暫存備份（已刪）→ 無新增變動。"
+    },
+    {
+      "id": 9,
+      "item": "無寫死真值（對 24b57e5e 新增行 grep 具體金額）",
+      "result": "PASS",
+      "evidence": "git show 24b57e5e -- '*.py' 新增行的 [0-9]{1,3},[0-9]{3} 命中 NONE。全 commit 新增行的金額命中僅落在 cio_review_q4_0930.json（前審 evidence 文字）、index.html（build_dashboard 由 snapshot.cash_layers 動態渲染，非真值源）、pending_decisions.json（卡片狀態敘述）。check_thresholds.py 新增段唯一數字為容差 `> 1`；update_data.py 的 _print_truth_blocks 全為 snapshot 動態取值 f-string（:, 格式），無寫死真值。"
+    },
+    {
+      "id": 10,
+      "item": "歸檔正確性（5 張新卡皆 ✅ 已實作、pending 無重複登錄）",
+      "result": "PASS",
+      "evidence": "24b57e5e 對 pending_decisions_archive.json 新增恰 5 張卡，status 全為『✅ 政策已實作／✅ 已實作（2026-09-30）』（US30Y 紅線長期化預案、真值回歸抽點、P0-1 度量修正標註、現金分層 cash_layers、US30Y 解凍判定閘門）；同 5 標題自 pending_decisions.json 移除（diff 對稱）。python 比對歸檔 title 與現行 pending title → 重複 0 筆。"
+    }
+  ],
+  "blocking": [],
+  "notes": "獨立唯讀複審：先驗前審 REJECT 兩項阻擋是否真修，皆以實跑（非 commit message）確認已修。① 乾淨樹跑 build_dashboard.py 兩次，index.html 與 committed 位元一致（md5 7d2001da…），不再產生 ' M index.html'；② 重建後 index.html 含 P0 卡『500 萬高息負債清償（parent：debt_repayment_5m）』，且現行 pending_decisions.json 26 卡 status 逐卡掃描對 _closed_kw 命中 0，『券商質押 100 萬 已清償入帳』卡 status 不含 ✅。真值層四塊存在、算術閉合、us30y_gate 與 us30y_state.json 同源、三態負向測試（UNKNOWN/STALE/OK）全數可證偽；新門檻斷言對現金分層與 as_of 未同源兩負向皆 FAIL(RC=1) 且訊息正確、還原後 PASS。無寫死真值。殘餘風險：本 commit 對 snapshot.json 四塊已收斂為單一 writer（grep 僅 update_data.py 賦值），但 sync_all.py／asset_sync.py／build_penetration_report.py／industry_penetration.py／rotation_engine.py／complete_operation.py 仍會整檔寫回 snapshot.json（pass-through 未重算四塊）；正常情況保留既有值，惟若其中之一以非當前 snapshot 為基底寫回，四塊可被舊值蓋而無閘門察覺。另：repo 目前無任何閘門斷言『committed index.html == build_dashboard.py 產物』，阻擋①的修復屬程序性（手動重產），下次改 pending_decisions.json 未重跑 build_dashboard.py 時同類 stale 仍可能靜默復發。"
+}
