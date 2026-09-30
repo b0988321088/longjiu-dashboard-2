@@ -220,5 +220,11 @@
     "tags": "Pending,自動閉環,真值,架構",
     "detail": "pending_reconcile.py：由 snapshot 真值（cash_detail／restricted_cash 明細／policy_repay_log／us30y_state）重算 Pending 狀態，條件成立自動閉環歸檔（規則：生活帳戶水位、永豐水位、質押撥款入帳、高息清償、解凍條件）。預設 dry-run，--apply 才寫入（含備份＋筆數守恆＋CRLF 驗證）。第二階段『Pending 自動產生（Decision Engine → Pending）』尚未實作，不得宣稱完成。",
     "source": "user 2026-09-30 規格"
+  },
+  {
+    "title": "📝 日誌／記憶條目停止嵌入浮動金額（結構性）",
+    "status": "📌 待辦（2026-09-30 登錄）：寫入者為 run_daily.py:2376 add_memory ＋ pipeline 產生 dashboard_decisions 的『日報{date}（證券…）』列；改為不含金額或由 snapshot 現讀，避免當日數字被修正後成為舊值（今晚同型兩次）",
+    "created_at": "2026-09-30",
+    "note": "驗收：連續兩天改完真值後，check_dashboard_stale 與跨報告閘門不得因日誌行而告警"
   }
 ]
