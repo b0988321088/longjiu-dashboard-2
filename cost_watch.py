@@ -5,7 +5,7 @@
   wallet  餘額＋門檻警示＋儲值連結（09:00）
   digest  日/週流量＋CER 風控＋異常（13:30/18:30）
   guard   備援花費熔斷（21:10）
-  close   日結成本帳＋寫帳本（22:30）"""
+  close   日結成本帳＋寫帳本（22:30；先收帳本再印日結，兩者同口徑）"""
 import argparse
 import os
 import subprocess
@@ -27,7 +27,7 @@ def _resolve(target):
     return None, False
 
 
-def run(target, extra=(), shell_script=False, timeout=900):
+def run(target, extra=(), shell_script=False, timeout=900, quiet=False):
     """執行既有腳本，保留其原始邏輯（不重寫）。單項失敗不中斷同批次其他項目。
 
     審查修正（2026-09-22 第二輪）：
@@ -58,7 +58,7 @@ def run(target, extra=(), shell_script=False, timeout=900):
         return 1
     out = (out or '').strip()
     err = (err or '').strip()
-    if out:
+    if out and not (quiet and proc.returncode == 0):
         print(out)
     if err:
         tag = 'stderr' if proc.returncode == 0 else f'失敗 rc={proc.returncode}'
@@ -66,7 +66,10 @@ def run(target, extra=(), shell_script=False, timeout=900):
     return proc.returncode
 
 DEFAULT_MODE = 'digest'
-MODES = {'wallet': [('wallet_status.py', (), False), ('ds_balance_alert.py', (), False), ('gemini_balance_reminder.py', (), False)], 'digest': [('ai_cost_watch.py', (), False), ('build_cost_report.py', ('--quiet',), False)], 'guard': [('fallback_cost_guard.py', (), False)], 'close': [('daily_token_account.py', (), False)]}
+# 每項＝(檔名, 額外參數, 是否 shell, 成功時是否靜默)；第 4 項讓「只為副作用而跑」的步驟不洗版
+# close 內含 ai_cost_watch（帳本 upsert；--json 只為副作用、--no-probe 免一次探測）
+# —— 2026-10-01 核准：22:30 日結同時收帳本，23:55 再由 cost_watch_eod.py 收尾（18:30 後的花費當天入帳）
+MODES = {'wallet': [('wallet_status.py', (), False, False), ('ds_balance_alert.py', (), False, False), ('gemini_balance_reminder.py', (), False, False)], 'digest': [('ai_cost_watch.py', (), False, False), ('build_cost_report.py', ('--quiet',), False, False)], 'guard': [('fallback_cost_guard.py', (), False, False)], 'close': [('ai_cost_watch.py', ('--json', '--no-probe'), False, True), ('daily_token_account.py', (), False, False)]}
 
 
 def main():
@@ -77,13 +80,13 @@ def main():
     a = ap.parse_args()
     if a.list:
         for k, steps in MODES.items():
-            print(f"  {k:12s} → " + ', '.join(t for t, _e, _s in steps))
+            print(f"  {k:12s} → " + ', '.join(t for t, _e, _s, _q in steps))
         return 0
     steps = MODES.get(a.mode)
     if steps is None:
         print(f"❌ 未知模式 {a.mode!r}（可用：{', '.join(MODES)}）")
         return 2
-    failed = [t for t, extra, sh in steps if run(t, extra, sh) != 0]
+    failed = [t for t, extra, sh, quiet in steps if run(t, extra, sh, quiet=quiet) != 0]
     if failed:
         print(f"⚠️ 批次內失敗 {len(failed)}/{len(steps)} 項：{', '.join(failed)}")
         return 1
