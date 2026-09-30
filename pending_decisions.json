@@ -236,5 +236,23 @@
     "priority": "medium",
     "tags": "房租,月初校正,儀表板,口徑",
     "note": "洲際W 10月：33,000 租金 − 房客購床 5,000 折讓＝實收 28,000（比照 9 月維修費 3,000 折讓入 rent_receivable_by_month）；待收追蹤日 10/15。"
+  },
+  {
+    "title": "⏰ 月初校正自動化（每月 1 號 06:45，no_agent）",
+    "status": "✅ 已執行（2026-10-01 核准）｜新增 monthly_rollover.py＋wrappers 薄轉發器＋cron 590aa758b612（45 6 1 * *，排在 07:00 晨間產線前）｜CIO APPROVE 7/7｜commit 985e7913",
+    "created_at": "2026-10-01",
+    "date": "2026-10-01",
+    "priority": "medium",
+    "tags": "cron,月初校正,房租,配息,口徑",
+    "note": "驗收：11/1 06:45 首次自動月（10/1 06:45 也會跑一次，冪等）；確認 07:00 產線不再被閘門擋。一次性折讓/空置仍需人工覆寫，腳本會列印提示。"
+  },
+  {
+    "title": "📐 壓力情境「常態月配」基準待裁示（口徑明確化後 101.7% → 105.0%）",
+    "status": "⏳ 待裁示｜檢視日 2026-10-12（月真值複核）｜現行值：pi.fund_dividend_monthly＝167,675（9 月實收，含一次性保單撥回 71,869）→ 壓力情境 181,240／105.0%；9/28 裁示當時基準為 147,975／101.7%",
+    "created_at": "2026-10-01",
+    "date": "2026-10-01",
+    "priority": "medium",
+    "tags": "判準,壓力情境,常態月配,口徑",
+    "note": "原因：passive_caliber 修好 0 值後，div_norm 改讀 pi.fund_dividend_monthly（最後一個完整月實收）。若認為常態應排除一次性項目（保單撥回），請給定值 → 我加 snapshot.monthly_dividend_normal 並改讀它。"
   }
 ]

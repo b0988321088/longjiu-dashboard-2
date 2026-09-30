@@ -15,7 +15,7 @@
   "moneybook_total": 3614169,
   "high_yield_savings_total": 2200410,
   "cathay_refinance_amount": null,
-  "rent_monthly_actual": 24000,
+  "rent_monthly_actual": 24000.0,
   "cc_monthly_avg_4cards": 38000,
   "page1": {
     "actual_cash_flow": {
@@ -179,9 +179,9 @@
     "coverage_pct": 104.4,
     "note": "2026-09-18 依 9/5 定版校正：保守配息 100,000（原誤值 130,930＝安聯+第一金常態總額，非保守基本值）＋租金 80,100 = 180,100；覆蓋 104.4%（÷月支出 172,543）。當月實收配息 147,975（9/23 真值，與頂層 dividend_month_actual／monthly_dividend_total 同口徑；本鍵與 dividend_actual_sum 於 2026-09-23 由 9/18 舊值同步）。 2026-09-23 使用者指示：以 2026-09 完整估計為被動收入基準月，觀察 3 個月（~2026-11），2026-12 初檢視後再修正保守底線；期間判準層不動。｜9/30 更新：安聯保單撥回依保單 App 截圖 9 筆 71,869（前 52,169）→ 9月配息實收 167,675。",
     "girlfriend_repayment": 6000,
-    "dividend_actual_sum": 0,
-    "rent_monthly_actual": 24000,
-    "rent_monthly_actual_note": "2026-10-01 月初校正：真值＝rent_received_records 當月加總＝24,000（10/1 大義街店面 24,000 入帳）；常態應收仍為 rent_monthly=80,100。10月應收口徑見 rent_receivable_by_month['2026-10']＝75,100（洲際W 33,000 − 房客購床 5,000 折讓 ＝28,000）、待收 rent_monthly_gap＝51,100",
+    "dividend_actual_sum": 0.0,
+    "rent_monthly_actual": 24000.0,
+    "rent_monthly_actual_note": "2026-10-01 月初校正：真值＝rent_received_records 當月加總＝24,000；常態應收仍為 rent_monthly=80100；本月應收含一次性調整（逐項見 rent_receivable_by_month['2026-10']：{\"洲際W\": 28000}）",
     "dividend_actual_note": "2026-10-01 月初校正：當月實收配息＝10月 dividend_records 加總＝0（月初尚未收到）；9月值 147,975 已隨月份結算。⚠️ 設計陷阱：passive_caliber 的 div_act 用 `or` 串接，本月為 0 時會退回舊欄位 → 已手動歸零，結構性修法待核准。"
   },
   "allianz_policy_a_value": 4912418,
@@ -717,7 +717,7 @@
   "policy_pledge_loan": 4000000,
   "policy_pledge_loan_note": "含安聯A 2M＋安聯B 1M＋第一金 1M；利率 4%（2026-08-05 使用者確認）；用途：原為達國泰 VIP AUM 門檻借款，使命完成；2026-09-29 質押撥款 590 萬（10:57 入帳@2.65%）用於清償，第一批 200 萬已提出還款申請（待入帳）（2026-08-23／09-29 使用者確認）",
   "rent_monthly_target": 80100,
-  "rent_monthly_gap": 51100,
+  "rent_monthly_gap": 51100.0,
   "rent_monthly_gap_note": "2026-09：當月應收 77,100（含洲際W 維修費折讓 3,000）－ 實收 77,100（9/25 二三樓 21,000＋管理費 2,100 到帳後全數入帳）＝ 0 未到帳 ✅（2026-09-28 更新：原註記停在 9/20 前的部分入帳狀態）",
   "passive_income_coverage": 0.5947,
   "passive_income_total": 96798,

@@ -1,0 +1,43 @@
+{
+  "verdict": "APPROVE",
+  "blocking": [],
+  "minor": [],
+  "checks": [
+    {
+      "item": "a",
+      "pass": true,
+      "note": "所有使用 `or` 的地方已改為 `_present`，0 會被視為有效值，沒有漏掉其他同型陷阱。"
+    },
+    {
+      "item": "b",
+      "pass": true,
+      "note": "`div_norm` 取自 `pi.fund_dividend_monthly` 或 `dividend_month_expected`，符合 2026‑09‑28 的壓力情境定義，且不會混入當月實收。"
+    },
+    {
+      "item": "c",
+      "pass": true,
+      "note": "`rent_monthly_gap` 的計算式與 `build_dashboard` 的逐項待收公式一致。"
+    },
+    {
+      "item": "d",
+      "pass": true,
+      "note": "`monthly_rollover` 只在 `--apply` 時寫檔，且只補缺的本月口徑，既有月份永不覆寫。"
+    },
+    {
+      "item": "e",
+      "pass": true,
+      "note": "先執行 `dividend_tracker` 以同步配息欄位，再重新讀取 snapshot，寫入順序不會互相覆蓋。"
+    },
+    {
+      "item": "f",
+      "pass": true,
+      "note": "程式已在 `notes` 中列出溢收、缺列戶別等情況，使用者可手動確認。"
+    },
+    {
+      "item": "g",
+      "pass": true,
+      "note": "`passive_caliber` 的改動僅影響 0 的處理，其他六支腳本行為保持不變。"
+    }
+  ],
+  "summary": "所有審查項目均符合要求，改動安全可接受。"
+}
