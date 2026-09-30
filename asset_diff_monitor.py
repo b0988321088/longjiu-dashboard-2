@@ -662,15 +662,19 @@ def buffett_advice(history: dict, snap: dict) -> str:
     passive_coverage = passive_conservative / monthly_exp * 100 if monthly_exp else 0        # 判準＝保守底線
     passive_coverage_actual = passive_actual / monthly_exp * 100 if monthly_exp else 0
 
-    alloc_den = max(1, ta)
     _rst_alloc = _restricted_cash_of(snap)
-    alloc = (
-        f"證券 {ex['securities_market']/alloc_den*100:.1f}% / "
-        f"保單 {ex['insurance_current']/alloc_den*100:.1f}% / "
-        f"基金 {ex['fund_market']/alloc_den*100:.1f}% / "
-        f"現金 {ex['cash']/alloc_den*100:.1f}%"
-        + (f"（含指定清償款 {_rst_alloc/10000:.0f}萬）" if _rst_alloc else "")
-    )
+    if ta:
+        alloc = (
+            f"證券 {ex['securities_market']/ta*100:.1f}% / "
+            f"保單 {ex['insurance_current']/ta*100:.1f}% / "
+            f"基金 {ex['fund_market']/ta*100:.1f}% / "
+            f"現金 {ex['cash']/ta*100:.1f}%"
+            + (f"（含指定清償款 {_rst_alloc/10000:.0f}萬）" if _rst_alloc else "")
+        )
+    else:
+        # 2026-09-30：原以 max(1, ta) 當分母，ta==0 時會渲染出 299,363,000.0% 這種
+        # 天文數字百分比（獨立審查實測命中）→ 改為明示無法計算。
+        alloc = "（總資產為 0，占比無法計算）"
     real_estate_line = ""
     # 動態租金明細（從 snapshot rent_breakdown 自動產生）
     _rb = snap.get("rent_breakdown", {})
@@ -719,19 +723,67 @@ def buffett_advice(history: dict, snap: dict) -> str:
         ]
 
     warnings = []
-    if ex["securities_market"] / ta * 100 > 50:
+    # 2026-09-30：原 `ex["securities_market"] / ta * 100 > 50` 未防 ta==0
+    #（total_assets 為 0 時 ZeroDivisionError，由獨立審查在退化輸入下實測命中；程式碼源自 7 月）
+    if ta and ex["securities_market"] / ta * 100 > 50:
         warnings.append("證券部位佔比偏高，注意集中度")
     if debt_ratio > 55:
-        # 2026-09-30：原字串寫死「8/2 轉貸完成後將下降」—— 該日期早已過期，且該案（大義街轉貸）
-        # 實際 8/20 才撥款入帳，入帳當下負債是「增加」而非下降（舊貸清償與新貸入帳有時間差）。
-        # 改為由真值派生的結構說明（口徑／占比／償付方式），不寫死日期與因果推論。
+        # 2026-09-30（使用者指正）：原稿改寫後把「保單借貸」與「基金質押」並列成兩筆獨立負債 ——
+        # 但 590 萬基金質押的指定用途就是清償 500 萬高息舊債（保單 400 萬@4%＋券商 100 萬@3.92%），
+        # 屬「以新債換舊債」（2.65% 換 4%／3.92%），不是疊加槓桿；4,000,000 保單質押也在清償路徑上。
+        # 故改為逐筆標明利率與狀態（金額／利率皆由 snapshot 派生），並移除未經證實的償付方式推論。
+        _lb = snap.get("liabilities_build_up") or {}
         _mtg = float(snap.get("mortgage_balance") or 0)
+        _pledge = float(snap.get("fund_pledge_loan") or 0)
+        _ploan = float(snap.get("policy_pledge_loan") or 0)
+        _card = float(_lb.get("信用卡_當期未繳_全額扣繳") or 0)
         _mtg_share = _mtg / ex["total_liabilities"] * 100 if ex["total_liabilities"] else 0
+        _denom_re = ex["total_assets"] + _re_val
+
+        def _rate_txt(key):
+            """利率文字：缺值時整段省略（不印 @0.00%，避免看起來像真值）。"""
+            _r = float(_lb.get(key) or 0)
+            return f"@{_r * 100:.2f}%" if _r else ""
+
+        _rc_rows = (snap.get("restricted_cash") or {}).get("明細") or []
+        _sec_status = ""
+        for _r in _rc_rows:
+            if "券商質押" in str(_r.get("項目", "")) or "券商" in str(_r.get("簡稱", "")):
+                _sec_status = "已清償" if "已清償" in str(_r.get("狀態") or "") else "清償中"
+                break
+        _rc_block = snap.get("restricted_cash") or {}
+        _debt_left = float(_rc_block.get("剩餘未清償") or 0)
+        # 狀態只在有真值可依時才寫：無 restricted_cash 資料 → 留白（不宣稱已清償）
+        _ploan_status = "清償中" if _debt_left else ("已清償" if "剩餘未清償" in _rc_block else "")
+        # 券商質押已清償額：policy_repay_log 實錄（僅計 repay 動作，非估算）
+        _sec_paid = sum(float(x.get("金額") or 0) for x in (snap.get("policy_repay_log") or [])
+                        if str(x.get("對象")) in ("securities", "券商質押")
+                        and str(x.get("動作") or "repay") == "repay")
+        _seg = [f"房貸 {_fmt(_mtg)}（占負債 {_mtg_share:.0f}%）"] if _mtg else []
+        if _pledge:
+            _old = []
+            if _ploan:
+                _old.append((f"保單質押 {_fmt(_ploan)}{_rate_txt('保單借貸利率')}"
+                             f" {_ploan_status}").strip())
+            if _sec_paid:
+                # 2026-09-30：原本是 `_sec_status or '已清償'` —— 寫死退路會在只有部分還款時
+                # 把「已還金額」標成「全額清償」（獨立審查實測：只還 500,000 仍印「已清償」）。
+                # 改為無真值時留白，不對外宣稱清償狀態。
+                _old.append((f"券商質押 {_fmt(_sec_paid)}{_rate_txt('券商質押利率')}"
+                             f" {_sec_status}").strip())
+            _seg.append(
+                f"基金質押 {_fmt(_pledge)}{_rate_txt('基金質押利率')}"
+                + ("（撥款即為置換舊債：" + "；".join(_old) + "）" if _old else "")
+            )
+        if _card:
+            _seg.append(f"信用卡 {_fmt(_card)}")
+        # 推估值只在「清償確實進行中」（剩餘未清償 > 0）才印 —— 無真值時不預測
+        _after = ((ex["total_liabilities"] - _ploan) / _denom_re * 100
+                  if (_ploan and _debt_left and _denom_re) else None)
         warnings.append(
-            f"負債比率 {debt_ratio:.1f}%（含不動產）偏高｜結構：房貸 {_fmt(_mtg)}"
-            f"（占負債 {_mtg_share:.0f}%）＋保單借貸／質押 → 以現金流月繳償付"
-            f"（房貸月繳 {_fmt(float(snap.get('mortgage_monthly_total') or 0))}），非到期一次清償；"
-            f"流動負債率（不含不動產）{debt_ratio_flow:.1f}% 為監控口徑"
+            f"負債比率 {debt_ratio:.1f}%（含不動產）偏高｜結構：" + "＋".join(_seg)
+            + (f"｜保單質押清償完成後 → {_after:.1f}%" if _after is not None else "")
+            + f"｜監控口徑＝流動負債率 {debt_ratio_flow:.1f}%"
         )
     if ex["cathay_refinance"] > 0:
         warnings.append(f"國泰轉貸 {ex['cathay_refinance']/10000:.0f} 萬執行中")
