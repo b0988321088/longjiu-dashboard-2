@@ -8680,10 +8680,64 @@
       "user": "Laing",
       "idem_key": "hermes-pending-reconcile-cron-20260930",
       "summary": "使用者 2026-09-30 核准。落地：evening_sync.py（22:00 龍九晚報）於 update_all → asset_diff_monitor 之後、build_dashboard 之前執行 pending_reconcile.py --apply；INC-263 一併修復（檔案已寫入時驗證失敗只警告、不 raise）。pending 卡已歸檔。"
+    },
+    {
+      "id": "mem-20261001004946-918",
+      "timestamp": "2026-10-01T00:49:46.611125",
+      "agent": "Hermes",
+      "task": "日報2026-09-30",
+      "summary": "證券2,993,630 保單9,424,456 配息0",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261001004946-919",
+      "timestamp": "2026-10-01T00:49:46.682389",
+      "agent": "Hermes",
+      "task": "資產穿透2026-09-30",
+      "summary": "台股2,037,758.0 美股10,207,509.0 防守4,503,860.0 債券7,437,694.0 現金813,547.0",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261001005104-920",
+      "timestamp": "2026-10-01T00:51:04.097411",
+      "agent": "Hermes",
+      "task": "日報2026-09-30",
+      "summary": "證券2,993,630 保單9,424,456 配息0",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261001005104-921",
+      "timestamp": "2026-10-01T00:51:04.130967",
+      "agent": "Hermes",
+      "task": "資產穿透2026-09-30",
+      "summary": "台股2,037,758.0 美股10,207,509.0 防守4,503,860.0 債券7,437,694.0 現金813,547.0",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261001005212-922",
+      "timestamp": "2026-10-01T00:52:12.096373",
+      "agent": "Hermes",
+      "task": "日報2026-09-30",
+      "summary": "證券2,993,630 保單9,424,456 配息0",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261001005212-923",
+      "timestamp": "2026-10-01T00:52:12.134364",
+      "agent": "Hermes",
+      "task": "資產穿透2026-09-30",
+      "summary": "台股2,037,758.0 美股10,207,509.0 防守4,503,860.0 債券7,437,694.0 現金813,547.0",
+      "status": "completed",
+      "source": "auto"
     }
   ],
   "meta": {
-    "updated_at": "2026-09-30T21:33:15.991738"
+    "updated_at": "2026-10-01T00:52:12.134364"
   },
   "last_updated": "2026-09-30T21:50:18+08:00",
   "2026-09-29": [

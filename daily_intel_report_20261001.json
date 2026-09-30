@@ -1,0 +1,62 @@
+{
+  "date": "20261001",
+  "generated_at": "2026-10-01T00:51:59.447040",
+  "market": {
+    "twii": "47,631.96 (-0.82%)",
+    "tsm": "2,475.00 (+0.00%)",
+    "sox": "12,597.40 (-0.25%)",
+    "us": "道瓊 51,294.32 (-0.11%) / 納指 27,052.41 (+0.95%) / S&P 7,708.98 (+0.50%)",
+    "cpi": "美國 7 月 CPI YoY 3.5% (FRED 8/13)；Core 2.8% (FRED 8/13)"
+  },
+  "briefing": "【台股/大盤】\n加權指數：47,631.96 (-0.82%)\n台積電：2,475.00 (+0.00%)\n\n【美股/外資】\n美股：道瓊 51,294.32 (-0.11%) / 納指 27,052.41 (+0.95%) / S&P 7,708.98 (+0.50%)\n費半：12,597.40 (-0.25%)\n\n【CPI/利率】\n美國CPI：美國 7 月 CPI YoY 3.5% (FRED 8/13)；Core 2.8% (FRED 8/13)\n\n【賣出訊號】\n無\n\n【買進訊號】\n無\n\n【最新市場消息】\n• 《強勢美股特報》DOCS,GME,BROS,OKTA等9檔 (來源：tw.stock.yahoo.com)\n• 《強勢美股特報》HPE,SNPS,GOOGL,NVDA等6檔 (來源：tw.stock.yahoo.com)\n• 美8月PCE優於預期！美股開盤主要指數齊漲 (來源：tw.news.yahoo.com)\n\n【持倉關聯分析】\n目前持倉與市場連動正常，無特殊事件。\n\n【情報重點（含持倉關聯）】\n✅ 台股加權 今日 47,631.96 (-0.82%)，市場情緒持平。（影響: ）\n✅ 台積電 今日 2,475.00 (+0.00%)，市場情緒持平。（影響: 0050）\n✅ 費半 今日 12,600.06 (-0.23%)，市場情緒持平。（影響: ）",
+  "signals": {
+    "sell_signals": [],
+    "buy_signals": []
+  },
+  "buffett": {
+    "bull": "無買進訊號",
+    "bear": "無賣出訊號",
+    "actions": [
+      "維持現有配置",
+      "保留高利活存"
+    ],
+    "scenario_summary": "市場震盪，維持防禦"
+  },
+  "cto": {
+    "tech_stack": "市場震盪",
+    "risk": "無賣出訊號",
+    "action": "觀望為主"
+  },
+  "news": [
+    {
+      "title": "《強勢美股特報》DOCS,GME,BROS,OKTA等9檔",
+      "url": "https://tw.stock.yahoo.com/news/%E5%BC%B7%E5%8B%A2%E7%BE%8E%E8%82%A1%E7%89%B9%E5%A0%B1-docs-gme-bros-okta%E7%AD%899%E6%AA%94-151200083.html",
+      "snippet": "MoneyDJ新聞 2026-09-30 23:12:18 數位內容中心 發佈Doximity（DOCS.US）：成交價27.78美元，上漲4.73%，開盤26.71美元，盤中高點27.92美元，盤中"
+    },
+    {
+      "title": "《強勢美股特報》HPE,SNPS,GOOGL,NVDA等6檔",
+      "url": "https://tw.stock.yahoo.com/news/%E5%BC%B7%E5%8B%A2%E7%BE%8E%E8%82%A1%E7%89%B9%E5%A0%B1-hpe-snps-googl-nvda%E7%AD%896%E6%AA%94-141400313.html",
+      "snippet": "MoneyDJ新聞 2026-09-30 22:14:03 數位內容中心 發佈HP Enterprise（HPE.US）：成交價63.91美元，上漲3.94%，開盤65.76美元，盤中高點67.1美元"
+    },
+    {
+      "title": "美8月PCE優於預期！美股開盤主要指數齊漲",
+      "url": "https://tw.news.yahoo.com/%E7%BE%8E8%E6%9C%88pce%E5%84%AA%E6%96%BC%E9%A0%90%E6%9C%9F-%E7%BE%8E%E8%82%A1%E9%96%8B%E7%9B%A4%E4%B8%BB%E8%A6%81%E6%8C%87%E6%95%B8%E9%BD%8A%E6%BC%B2-135554448.html",
+      "snippet": "[NOWNEWS今日新聞]美股週三（30日）開盤後主要指數齊漲，但幅度不大，美國最新公布8月個人消費支出（PCE）物價指數，月增0.3％、年增3.4％，剔除食物與能源的8月核心PCE指數，則是月增0."
+    },
+    {
+      "title": "《強勢美股特報》DOCS,GME,BROS,OKTA等9檔",
+      "url": "https://tw.stock.yahoo.com/news/%E5%BC%B7%E5%8B%A2%E7%BE%8E%E8%82%A1%E7%89%B9%E5%A0%B1-docs-gme-bros-okta%E7%AD%899%E6%AA%94-151200083.html",
+      "snippet": "MoneyDJ新聞 2026-09-30 23:12:18 數位內容中心 發佈Doximity（DOCS.US）：成交價27.78美元，上漲4.73%，開盤26.71美元，盤中高點27.92美元，盤中"
+    },
+    {
+      "title": "《強勢美股特報》HPE,SNPS,GOOGL,NVDA等6檔",
+      "url": "https://tw.stock.yahoo.com/news/%E5%BC%B7%E5%8B%A2%E7%BE%8E%E8%82%A1%E7%89%B9%E5%A0%B1-hpe-snps-googl-nvda%E7%AD%896%E6%AA%94-141400313.html",
+      "snippet": "MoneyDJ新聞 2026-09-30 22:14:03 數位內容中心 發佈HP Enterprise（HPE.US）：成交價63.91美元，上漲3.94%，開盤65.76美元，盤中高點67.1美元"
+    },
+    {
+      "title": "美8月PCE優於預期！美股開盤主要指數齊漲",
+      "url": "https://tw.news.yahoo.com/%E7%BE%8E8%E6%9C%88pce%E5%84%AA%E6%96%BC%E9%A0%90%E6%9C%9F-%E7%BE%8E%E8%82%A1%E9%96%8B%E7%9B%A4%E4%B8%BB%E8%A6%81%E6%8C%87%E6%95%B8%E9%BD%8A%E6%BC%B2-135554448.html",
+      "snippet": "[NOWNEWS今日新聞]美股週三（30日）開盤後主要指數齊漲，但幅度不大，美國最新公布8月個人消費支出（PCE）物價指數，月增0.3％、年增3.4％，剔除食物與能源的8月核心PCE指數，則是月增0."
+    }
+  ]
+}
