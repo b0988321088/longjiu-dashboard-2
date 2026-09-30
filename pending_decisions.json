@@ -218,5 +218,14 @@
     "status": "📌 待辦（2026-09-30 登錄）：寫入者為 run_daily.py:2376 add_memory ＋ pipeline 產生 dashboard_decisions 的『日報{date}（證券…）』列；改為不含金額或由 snapshot 現讀，避免當日數字被修正後成為舊值（今晚同型兩次）",
     "created_at": "2026-09-30",
     "note": "驗收：連續兩天改完真值後，check_dashboard_stale 與跨報告閘門不得因日誌行而告警"
+  },
+  {
+    "title": "⏰ 費用帳／費用頁收日班（終結「頁面 generated_at 前進、數字停在 18:30」）",
+    "status": "✅ 已執行（2026-10-01 使用者核准）｜22:30 close 併收帳本（ai_cost_watch 靜默副作用）＋新增 23:55 cron cost_watch_eod.py（帳本 upsert→費用頁重產→stage 自家三檔→auto_push，成功靜默）｜CIO APPROVE 7/7 PASS｜commit f984d50f",
+    "created_at": "2026-10-01",
+    "date": "2026-10-01",
+    "priority": "medium",
+    "tags": "成本帳,費用頁,cron,收日班",
+    "note": "驗收：10/2 檢查 10/1 帳本是否已含 18:30 後花費、線上費用頁與帳本同口徑；首跑 10/1 23:55（job 8581b34a2f6b）"
   }
 ]

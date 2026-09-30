@@ -414,5 +414,12 @@
     "status": "🔒 保留中（不得動用）",
     "note": "使用者 9/30 指示：明年度續簽前提",
     "importance": "high"
+  },
+  {
+    "date": "2026-10-02",
+    "item": "🔍 驗證 23:55 費用收日班首跑（10/1 帳本是否已含 18:30 後花費；頁面 generated_at 不再領先數字）",
+    "status": "⏳ 待驗證",
+    "importance": "medium",
+    "note": "2026-10-01 核准：22:30 close 併收帳本＋新增 23:55 cost_watch_eod.py（job 8581b34a2f6b）"
   }
 ]
