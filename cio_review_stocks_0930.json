@@ -1,0 +1,97 @@
+{
+ "verdict": "APPROVE",
+ "reviewer": "Hermes Subagent (independent read-only re-review)",
+ "commit": "6e6f5e6fdfb82c249759da01ed6f780d5b837b21",
+ "reviewed_commits": [
+  "6e6f5e6fdfb82c249759da01ed6f780d5b837b21",
+  "408f4be421bf8e8599abe38dee9a5ace00d34140",
+  "23f6527512f617b4758871850b97eb758d1bf682",
+  "ad72946e7cbbc59b9c9e25e9326332b39dfc264c",
+  "0d16f6512eb9d87461826b921a4f7ca11c178d97"
+ ],
+ "reviewed_trees": [
+  "3d313169e6c9a14915913a704b2cfe9a6172aa79",
+  "64757674638103186cee810be2e88365185f963e",
+  "f00cd223c2dbfc1ba5d2f407a0943a1aa5af578f",
+  "50e3ebcdec8b404e09fede3b5b4dbd82dbaf4251",
+  "174b9db67339fc22daf3feabcc659357ae7d6673"
+ ],
+ "range_base": "origin/clean-main",
+ "range_count": 5,
+ "checked": [
+  {
+   "id": 1,
+   "item": "範圍與身分（rev-list/log/HEAD/tree）",
+   "result": "PASS",
+   "evidence": "審查起始 origin/clean-main..HEAD 為 4 筆（0d16f651, ad72946e, 23f65275, 408f4be4）；審查途中一支並行『四源同步』管線於 20:04:23 追加 commit 6e6f5e6f，範圍增至 5 筆，本審查已一併涵蓋（reviewed_commits 5 筆 / reviewed_trees 5 筆）。現 HEAD=6e6f5e6fdfb82c249759da01ed6f780d5b837b21 tree=3d313169e6c9a14915913a704b2cfe9a6172aa79。審查起始 git status --porcelain 為空。"
+  },
+  {
+   "id": 2,
+   "item": "推送範圍內容盤點：不該進範圍的東西（個資/zip/csv/暫存/moneybook 目錄）",
+   "result": "PASS",
+   "evidence": "git diff --name-only origin/clean-main..HEAD 之檔案清單全為產出物（html/json/db/png/md）＋唯一程式檔 apply_tw_stocks_20260930.py。| grep -iE 'zip|csv|moneybook' → NONE（含新增的第 5 顆 6e6f5e6f 亦無）。ls moneybook → 'No such file or directory'（RC=2，個資目錄已清理）。第 5 顆 6e6f5e6f 為純資料同步（cost.html/cost_data.json/daily_report_v2/dashboard_decisions/dragon_assets.db/mtd_*/rebalance_*/snapshot.json），無 .py、無個資檔。"
+  },
+  {
+   "id": 3,
+   "item": "程式檔逐行審查：斷言是否真的驗證 App 截圖值（總市值 2,993,630、當日 +12,220）",
+   "result": "PASS",
+   "evidence": "獨立重算 15 檔（不信任 script 內常數）：逐檔市值合計 TOTAL=2,993,630 == APP_TOTAL(2,993,630) True；TOTAL-PREV(2,981,410)=12,220 == APP_DAY(12,220) True；未實現 UNREAL=481,930 vs APP_UNREAL 482,080 差 150 ≤ 容差 200 True。故 assert TOTAL==APP_TOTAL、assert TOTAL-PREV==APP_DAY、assert abs(UNREAL-APP_UNREAL)<=200 三條皆為對外部截圖真值的真實比對（非自我循環），前兩條為精確等值。"
+  },
+  {
+   "id": 4,
+   "item": "程式檔寫檔格式是否 canonical（snapshot.json 需 indent=1 + CRLF）",
+   "result": "PASS",
+   "evidence": "script 以 json.dumps(snap, ensure_ascii=False, indent=1).replace('\\n','\\r\\n') + open(newline='') 落檔。實測現行 snapshot.json：CRLF 行數 5634、bare LF 0；json.dumps(obj,ensure_ascii=False,indent=1).replace('\\n','\\r\\n') == 檔位元組 → round-trip match True。格式相符，無漂移。"
+  },
+  {
+   "id": 5,
+   "item": "程式檔是否會誤改其他欄位",
+   "result": "PASS",
+   "evidence": "diff 逐行：僅賦值 securities_total_market_value/securities_total/securities_market/securities_current_value/securities_market_value/total_stock_value/securities_unrealized_pnl/securities_realized_pnl(_pct)/securities/holdings/securities_breakdown/securities_note_20260930（同一真值之同義欄位）＋派生 total_assets。其餘僅呼叫既有共用函式 asset_sync.sync_snapshot_keys / rebuild_liabilities。cash_total/insurance_total/fund_market_value 唯讀取用，未就地覆寫。total_assets 以 (insurance+securities+fund+cash) 重算：9,424,456+2,993,630+12,654,144+3,752,961=28,825,191，與真值一致。"
+  },
+  {
+   "id": 6,
+   "item": "程式檔是否硬編碼真值而無註記",
+   "result": "PASS",
+   "evidence": "H 15 檔清單為硬編碼，但屬 by-design 的『截圖＝authoritative 真值』匯入腳本：檔頭 docstring 註明「持股 App 截圖 15 檔、19:48 收盤」、H 上方有欄位註解、寫入 securities.note 與 securities_note_20260930 皆留來源與日期、並以三條 assert 對外部 App 值護欄。非無註記裸值。"
+  },
+  {
+   "id": 7,
+   "item": "真值閘門 check_thresholds.py",
+   "result": "PASS",
+   "evidence": "python check_thresholds.py → RC=0。輸出含『穿透完整性：五桶 25,000,368 + 衛星 884,823 + 指定用途款 2,940,000 = 總資產 28,825,191』、『日報可動用流動資金口徑：812,961（真值 3,752,961 − 指定用途款 2,940,000）』、『SoT 完整（9 區塊）』、『無舊門檻字面殘留』。"
+  },
+  {
+   "id": 8,
+   "item": "跨報告一致性 check_cross_report_consistency.py（RC 判定）",
+   "result": "PASS (MINOR)",
+   "evidence": "審查時（對已提交 408f4be4 之日報）python check_cross_report_consistency.py → RC=1，7 項 FAIL 全落在 daily_report_v2_2026-09-30.html：6,719,182×3、96,798、162,781、31,808,561、36,003,720，皆位於 embedded『緊急應變分析』區塊內（以字元位移量測：block 起 26029，命中 32298/33577/33806/33821/33921/33934/36315）。該區塊由 run_daily.py:1174/1176 注入 {llm_emergency_analysis}（來源 data/emergency_llm_analysis.json，mtime 9/29 22:14，內含『2026-09-29 21:34』），自標『次一交易日 21:30 固定更新』，cron『美股緊急應變 21:30』（30 21 * * 1-5）會換新。審查途中並行管線於 20:03 重生日報並 commit（6e6f5e6f），重測 RC=0（PASS），重生日報內 6,719,182/31,808,561/36,003,720/96,798/162,781 皆 0 次、2,993,630=1、812,961=5。判定為已知時序 MINOR，非 blocker：①RC=1 於同一晚下一輪管線即自癒為 RC=0，證實為時序假影；②真值層全程自洽（check_thresholds RC=0、snapshot/DB 六真值全對）；③被標舊值於 dragon_assets.db 屬合法 9/29 歷史列；④區塊外之同值命中（位移 24272）因含『舊口徑』已降為 warn。"
+  },
+  {
+   "id": 9,
+   "item": "snapshot.json 六項真值獨立比對",
+   "result": "PASS",
+   "evidence": "python 讀 snapshot.json：total_assets=28,825,191（期望 28,825,191, OK）、cash_total=3,752,961（OK）、securities_total_market_value=2,993,630（OK；五個同義欄位 sec_total/sec_market/sec_current/sec_mv/total_stock 皆=2,993,630，holdings 15 筆合計 2,993,630）、insurance_total=9,424,456（OK）、restricted_cash.金額=2,940,000（OK）、policy_repay_log 券商 金額=960000（OK）。"
+  },
+  {
+   "id": 10,
+   "item": "DB（dragon_assets.db）四源一致",
+   "result": "PASS",
+   "evidence": "assets 表最新列 date=2026-09-30：cash_total 3,752,961、securities 2,993,630、insurance 9,424,456、funds 12,654,144、total_assets 28,825,191、total_liabilities 34,979,613 — 全與 snapshot 真值一致。前一日 2026-09-29 列 cash 6,719,182／securities 2,981,410／total_assets 31,808,561／total_liabilities 36,003,720 為合法歷史列。全表掃描無 6,719,182/2,981,410/138,075 作為現行值。"
+  },
+  {
+   "id": 11,
+   "item": "殘留作廢舊值掃描（6,719,182 / 2,981,410 / 138,075 / 1,000,000 券商清償）",
+   "result": "PASS",
+   "evidence": "snapshot.json：'6,719,182' 0 次、'138,075' 0 次；'2,981,410' 僅 1 次且落在 securities_note_20260929（明示 2026-09-29 之歷史註記）→ 降為 warn；'1,000,000' 4 次皆為敘述（原始撥款 100 萬標的、『先前 1,000,000 為估算值作廢』、『安聯尚餘 1,000,000 待執行』），非現行券商清償值（現行 960,000）→ 無誤。含舊值的其他資料檔僅 cio_review_*.json（歷次審查原文）與 .bak-* 備份（皆敘述/歸檔）→ warn。"
+  },
+  {
+   "id": 12,
+   "item": "個資目錄與工作樹清潔",
+   "result": "PASS",
+   "evidence": "ls moneybook → No such file or directory（RC=2）。本次審查全程唯讀（未執行 apply_tw_stocks_20260930.py 以免改寫 snapshot.json，改以獨立重算驗證斷言）；本審查僅新增本 JSON 一檔，未 git commit/push。註：審查期間工作樹出現 4 個非本審查所改的暫存（daily_analysis.json/daily_intel_report_20260930.json/data/ai_cost_daily.jsonl/logs/pipeline_llm_usage.jsonl），係並行『四源同步』管線（20:03-20:04 仍運行）所寫，非本審查動作。"
+  }
+ ],
+ "blocking": [],
+ "notes": "獨立唯讀複審現行推送範圍 origin/clean-main..HEAD（唯一程式檔 apply_tw_stocks_20260930.py，新增於 0d16f651）。逐行審查：斷言真實比對外部截圖真值（精確 2,993,630 與 +12,220 皆過、未實現差 150 ≤ 容差 200），寫檔格式 canonical（indent=1＋CRLF，round-trip 相符），未誤改其他欄位（僅同義 securities_* ＋派生 total_assets，透過既有 asset_sync 函式），硬編碼真值屬 by-design 匯入且有 docstring/note/assert 註記與護欄。真值層自洽：check_thresholds RC=0；snapshot 六真值（28,825,191／3,752,961／2,993,630／9,424,456／restricted 2,940,000／券商清償 960,000）全對；DB 9/30 列四源一致。跨報告一致性：審查時對已提交日報 RC=1（7 項 FAIL 全在 embedded 9/29 21:34 緊急應變區塊，來源 data/emergency_llm_analysis.json）；並行『美股緊急應變 21:30』(30 21 * * 1-5) 相關管線於 20:03 重生日報後 RC=0 —— 同一晚即自癒，且被標舊值於 DB 屬合法 9/29 歷史列、日報當期區仍含正確真值 812,961，故判為已知時序 MINOR，非 blocker。無真 blocker；未修改任何檔案（僅新增本審查 JSON）、未 commit/push。審查期間 HEAD 由 408f4be4 前移至 6e6f5e6f（並行『四源同步』管線），本審查已涵蓋該第 5 顆資料 commit（無 .py、無個資檔），reviewed_commits/trees 共 5 筆。殘餘觀察（非本範圍 blocker）：repo 歷史中仍追蹤數個 Moneybook 個資 CSV/ZIP（Moneybook_*.csv、mb2.zip、mb_input.zip、moneybook_20260714.csv、tmp_mb/*），非本次任一 commit 新增，屬既存衛生議題，建議另案清理。"
+}
