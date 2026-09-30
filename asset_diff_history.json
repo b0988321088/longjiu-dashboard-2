@@ -1112,15 +1112,15 @@
   },
   "2026-09-30": {
     "date": "2026-09-30",
-    "total_assets": 30808561.0,
-    "total_liabilities": 35003720.0,
-    "net_worth": -4195159.0,
-    "securities_market": 2981410.0,
+    "total_assets": 28854560.0,
+    "total_liabilities": 34979613.0,
+    "net_worth": -6125053.0,
+    "securities_market": 2993630.0,
     "insurance_current": 9453825.0,
     "insurance_total": 9453825.0,
     "fund_market": 12654144.0,
     "real_estate": 0.0,
-    "cash": 5719182.0,
+    "cash": 3752961.0,
     "other": 0.0,
     "insurance_detail": {
       "【安聯保單A】現值": 4934409.0,
@@ -1145,6 +1145,6 @@
     "monthly_expense": 172543.0,
     "rent_monthly": 77100.0,
     "cathay_refinance": 0.0,
-    "restricted_cash": 4900000.0
+    "restricted_cash": 2940000.0
   }
 }
