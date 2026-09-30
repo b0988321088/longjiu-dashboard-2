@@ -1587,5 +1587,12 @@
    "INC-257：Smart App Control 擋未簽章 Hermes.exe 桌面版（管線走 python 不受影響；桌面啟動項待使用者決定是否停用）",
    "遠端同步：main == origin/clean-main（e262a5a0），rev-list 未推 0"
   ]
+ },
+ {
+  "date": "2026-09-30",
+  "time": "14:11",
+  "category": "修正",
+  "item": "P0-1 真值層單一寫入者：雙維度/情境驗證改派生、stored 防禦 53.8% 移除、跨報告一致性閘門",
+  "detail": "使用者裁示 P0-1 真值層（優先於資金鏈閉環）。① 防禦維度與市場情境「現況驗證」原皆為手寫 stored 值、無程式寫入者 → 同一份穿透報告同時出現「53.8% 合格」與「派生 49.1% 不合格」雙答案。改由 sot_targets.build_dual_dimension_metric / sync_scenario_verification 派生（分母＝總資產−指定用途款），接進 update_data 與每日必跑的透通路徑。② 緊急應變 LLM 內文（前一日產出）含清償前舊金額，經三條路徑流入日報 → 新增 refresh_stale_amounts 以當日真值覆蓋，並加 as_of 歷史標示（覆蓋＋標示雙軌）。③ 新增 check_cross_report_consistency.py：8 欄位跨報告閘門，同一 as-of 只能一個真值，FAIL 回傳 exit 1。首跑 14 項 FAIL → 修復後 0 項。④ 順帶修掉發現的寫死當期數字：run_daily 口徑速記（162,781/180,100/80,100）、asset_diff_monitor 月收支（228,751/162,781/80,100）、snapshot 巢狀鍵 passive_income.monthly_expense 停舊值（不受 SYNONYM_GROUPS 保護）。⑤ asset_diff 現金欄改可動用口徑並標示口徑變更。CIO-DeepSeek-Flash 審查 APPROVE（tree 9351a1135a3c）、唯讀驗證器 30 PASS / 0 FAIL。注意：穿透與再平衡頁「區間震盪 現況驗證」結論由「✅ 完全符合」翻為「⚠️ 未完全符合（防禦 49.1% < 50%）」——為顯露既有事實，非新增問題。"
  }
 ]
