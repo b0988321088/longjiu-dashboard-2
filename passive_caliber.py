@@ -12,7 +12,8 @@ run_daily 生效，儀表板與退休規劃頁仍用常態 80,100）。這裡集
 1. 保守底線（判準層）＝ passive_income.fund_dividend_conservative；
    缺值時以 0 計，不得用當月實收冒充（沿用 INC-248 對策）。
 2. 當月實收＝ dividend_month_actual（配息實收）＋ passive_income.rent_monthly_actual
-   （房租實收，真值＝當月入帳加總）。
+   （房租實收，真值＝當月入帳加總）。**兩者皆以 0 為有效值**（本月尚未收到就是 0），
+   不得用 `or` 退回上月欄位（2026-10-01 修：月初曾把 9 月 147,975 顯示成本月實收）。
 3. 壓力情境（正式判準）＝ 常態月配 × STRESS_DIV_RATIO ＋ 房租常態 − 洲際W 空置額
    （空置額讀 snapshot.rent_breakdown.洲際W，不寫死）。
    2026-09-28 使用者裁示：原本用「保守配息再砍 20%」是雙重打折（100,000 本身已是
@@ -50,11 +51,29 @@ def scenarios(snap: dict) -> dict:
     _restricted = _rst_fn(snap)
     cash = max(0.0, _f(snap.get("cash_total")) - _restricted)
     div_con = _f(pi.get("fund_dividend_conservative"))
-    div_norm = _f(snap.get("monthly_dividend_total") or pi.get("fund_dividend_monthly"))
-    div_act = _f(snap.get("dividend_month_actual") or snap.get("monthly_dividend_total")
-                 or pi.get("dividend_actual_sum"))
+
+    def _present(*vals):
+        """回傳第一個「存在」的值（0 視為有效值）；全缺才回 None。
+
+        2026-10-01（使用者核准）：原寫法 `a or b or c` 在本月真值為 0 時會一路
+        退回上個月的欄位（實例：10/1 當月配息 0 → 儀表板把 9 月實收 147,975
+        顯示成「當月實收」）。0 是有效值，不得當成缺值。
+        """
+        for v in vals:
+            if v is not None:
+                return _f(v)
+        return None
+
+    # 當月實收配息（本月尚未收到就是 0，不得退回上月）
+    div_act = _present(snap.get("dividend_month_actual"), pi.get("dividend_actual_sum"))
+    div_act = 0.0 if div_act is None else div_act
+    # 常態月配（壓力情境基準）：刻意不吃當月實收（月初 0 → 判準會塌），
+    # 也刻意不吃 monthly_dividend_total（那是 dividend_tracker 每天寫的「當月」值）
+    div_norm = _present(pi.get("fund_dividend_monthly"), snap.get("dividend_month_expected"))
+    div_norm = 0.0 if div_norm is None else div_norm
     rent_norm = _f(pi.get("rent_monthly"))
-    rent_act = _f(pi.get("rent_monthly_actual") or rent_norm)
+    rent_act = _present(pi.get("rent_monthly_actual"))
+    rent_act = rent_norm if rent_act is None else rent_act
     rb = snap.get("rent_breakdown") or {}
     vacancy = _f(rb.get("洲際W"), _FALLBACK_VACANCY) or _FALLBACK_VACANCY
 
