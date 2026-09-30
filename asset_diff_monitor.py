@@ -720,7 +720,17 @@ def buffett_advice(history: dict, snap: dict) -> str:
     if ex["securities_market"] / ta * 100 > 50:
         warnings.append("證券部位佔比偏高，注意集中度")
     if debt_ratio > 55:
-        warnings.append(f"負債比率 {debt_ratio:.1f}% 偏高，8/2 轉貸完成後將下降")
+        # 2026-09-30：原字串寫死「8/2 轉貸完成後將下降」—— 該日期早已過期，且該案（大義街轉貸）
+        # 實際 8/20 才撥款入帳，入帳當下負債是「增加」而非下降（舊貸清償與新貸入帳有時間差）。
+        # 改為由真值派生的結構說明（口徑／占比／償付方式），不寫死日期與因果推論。
+        _mtg = float(snap.get("mortgage_balance") or 0)
+        _mtg_share = _mtg / ex["total_liabilities"] * 100 if ex["total_liabilities"] else 0
+        warnings.append(
+            f"負債比率 {debt_ratio:.1f}%（含不動產）偏高｜結構：房貸 {_fmt(_mtg)}"
+            f"（占負債 {_mtg_share:.0f}%）＋保單借貸／質押 → 以現金流月繳償付"
+            f"（房貸月繳 {_fmt(float(snap.get('mortgage_monthly_total') or 0))}），非到期一次清償；"
+            f"流動負債率（不含不動產）{debt_ratio_flow:.1f}% 為監控口徑"
+        )
     if ex["cathay_refinance"] > 0:
         warnings.append(f"國泰轉貸 {ex['cathay_refinance']/10000:.0f} 萬執行中")
     if ex.get("allianz_ab_current_value") and ex.get("allianz_policy_a_value"):
@@ -738,7 +748,7 @@ def buffett_advice(history: dict, snap: dict) -> str:
 
     suggestions = []
     if ex["cathay_refinance"] > 0:
-        suggestions.append("等待 8/2 國泰轉貸完成，減少利息支出")
+        suggestions.append(f"國泰轉貸 {ex['cathay_refinance']/10000:.0f} 萬執行中 → 完成後減少利息支出")
     suggestions.append("0050 權重集中台積電 ~57%，可考慮補碼分散")
     suggestions.append("保單 A+B 管理費 1.5% 偏高，定期複檢配息收益率")
     if passive_coverage < 100:
