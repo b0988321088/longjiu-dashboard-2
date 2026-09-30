@@ -1,0 +1,46 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "Hermes Subagent (lightweight independent review)",
+  "commit": "a391e49a",
+  "reviewed_commits": ["a391e49a"],
+  "reviewed_trees": ["b1674462a0308a37bbe25c2010881c407896e5a8", "490adf49de9ef1b25d1572c406de15ae1fa40573 (parent)"],
+  "checked": [
+    {
+      "id": 1,
+      "item": "git show a391e49a — 僅動兩處",
+      "result": "PASS",
+      "evidence": "diff 僅 run_daily.py 的 _pol_bal 取值順序（改為先讀 liabilities_build_up.保單借貸、再 fallback policy_pledge_loan）與 check_thresholds.py 新增 ②c 同源斷言（abs(_lb_pol-_top_pol)>1 → errs.append）。檔案清單 = check_thresholds.py, run_daily.py，無其他邏輯變動。"
+    },
+    {
+      "id": 2,
+      "item": "兩欄當前同值",
+      "result": "PASS",
+      "evidence": "liabilities_build_up.保單借貸 = 4000000 ; policy_pledge_loan = 4000000 ; same = True"
+    },
+    {
+      "id": 3,
+      "item": "斷言有效性（負向測試）",
+      "result": "PASS",
+      "evidence": "備份後把 snapshot.json 的 policy_pledge_loan 改為 3,000,000，跑 check_thresholds.py → 輸出『❌ 保單借貸餘額不同源：liabilities_build_up.保單借貸 4,000,000 ≠ policy_pledge_loan 3,000,000』且 RC=1。測試後 git checkout -- snapshot.json，git status --porcelain 乾淨，兩欄皆回 4000000，check_thresholds RC=0。"
+    },
+    {
+      "id": 4,
+      "item": "門檻/靜態閘門正規執行",
+      "result": "PASS",
+      "evidence": "static_gate.py：『✅ 靜態閘門通過』RC=0。check_thresholds.py RC=0，含『✅ 負債月息自洽：保單 13,333 + 券商 0 + 基金質押 13,029 = 26,362』『✅ 決策端現金口徑檢查完成（10/10 支）』『✅ 日報可動用流動資金口徑：819,182』。"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "nit",
+      "item": "run_daily.py _pol_bal 與 check_thresholds.py 斷言皆採同名 fallback（先 liabilities_build_up.保單借貸，再頂層 policy_pledge_loan），來源一致，無漂移風險。",
+      "action": "無需處理"
+    },
+    {
+      "severity": "info",
+      "item": "②c 斷言閾值 >1 與相鄰月息斷言口徑一致（同用 >1 容忍浮點/四捨五入），風格統一。",
+      "action": "無需處理"
+    }
+  ],
+  "summary": "3 行修正正確且無副作用：run_daily.py 過渡期標籤的餘額已與利息同源，check_thresholds.py 新增的保單借貸兩欄同源斷言經負向測試確認有效（tamper 後必 FAIL 且 RC≠0）。static_gate RC=0、check_thresholds RC=0，全部真值（保單借貸 4,000,000、負債月息 26,362、可動用 819,182）吻合。無 blocker/major，verdict = APPROVE。"
+}
