@@ -1323,11 +1323,13 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 規則入庫：`check_thresholds.py` 新增斷言——未閉環卡 status 掃已結案關鍵詞，命中即 FAIL（卡片靜默消失是最貴的一種 bug：沒有訊息、只有內容不見）。通則：**凡「用子字串判斷狀態」的顯示層，狀態字樣就是契約**；改狀態產生器時必須回頭檢查消費端。
 
 
-## INC-263 ｜ 2026-09-30 ｜ P2｜open ｜ pending_reconcile --apply 誤報「筆數不守恆」
-- 現象：\`--apply\` 落地正確（pending 26→25、archive 28→29、合計 54 守恆），但結尾 assert 仍拋 AssertionError 並中止腳本（exit 非 0），讓人誤判寫入失敗。
+## INC-263 ｜ 2026-09-30 ｜ P2｜fixed ｜ pending_reconcile --apply 誤報「筆數不守恆」
+- 現象：`--apply` 落地正確（pending 26→25、archive 28→29、合計 54 守恆），但結尾 assert 仍拋 AssertionError 並中止腳本（exit 非 0），讓人誤判寫入失敗。
 - 影響：真值已寫入卻回報失敗 → 操作者可能重跑造成二次搬移；CIO 稽核看到非 0 會誤判。
-- 修法：assert 改為「寫入前快照 vs 寫入後重讀」同一來源計數，並把失敗改為警告（檔案已寫入時不得 raise）。
-- 規則入庫：\*\*落地與驗證必須分離**——先寫、後驗、驗證失敗只警告不 raise；斷言若會中止已完成的寫入，即為假警報來源。
+- 根因：`assert len(_p)+len(_a) == len(pend)+len(arch)` 的右邊其實已是寫入後的值 —— `arch` 在規則迴圈被 append（每自動閉環一張 +1），故只要有任一閉環，斷言必然失敗；且 assert 置於 `save()` 之後，會中止「已完成的寫入」。
+- 修法：寫入前快照 `n_total0` 改在規則迴圈「之前」取得；落地後驗證（筆數守恆／CRLF／可解析）以 try/except 包住，失敗只印 ⚠️ 警告、仍 `return 0`。commit 0aaa98b5。
+- 驗證（獨立審查 10/10 APPROVE）：沙箱 fixture 舊版 → `AssertionError: 筆數不守恆` RC=1 但檔案已正確落地（假警報實證）；新版 → RC=0、1→0／0→1 合計 1→1 守恆、零 ⚠️。變異測試（破壞守恆）→ 印警告且 RC 仍 0。
+- 規則入庫：**落地與驗證必須分離**——先寫、後驗、驗證失敗只警告不 raise；斷言若會中止已完成的寫入，即為假警報來源。計數類斷言一律對「寫入前快照」比，勿對會被就地改動的容器比（已寫入 skill `pipeline-sync-patterns`）。
 
 
 ## INC-264 ｜ 2026-09-30 ｜ P1｜fixed ｜ 儀表板舊值檢查：人工字面黑名單被真值追上 → fail-closed 誤擋整條管線
