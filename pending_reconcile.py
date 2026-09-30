@@ -88,6 +88,8 @@ def evaluate(snap: dict, st: dict, us: dict) -> dict:
         "剩餘未清償": _f(rc.get("剩餘未清償")) if isinstance(rc, dict) else 0.0,
         "已清償累計": debt_done,
         "券商質押已清": ("已清償" in _row_state("券商")[0]),
+        # 2026-09-30：卡片敘述原本寫死「券商質押 100 萬」（估算值，實際 960,000）→ 改讀真值
+        "券商質押已清額": _row_state("券商")[1],
         "保單質押狀態": _row_state("保單")[0],
         "保單質押未入帳": ("執行中" in _row_state("保單")[0]),
         "質押撥款餘額": _f(snap.get("fund_pledge_loan")),
@@ -152,7 +154,9 @@ def main() -> int:
             return None
         parts = []
         if ev["券商質押已清"]:
-            parts.append("券商質押 100 萬 已清償入帳")
+            _sec_amt = _f(ev.get("券商質押已清額"))
+            parts.append(f"券商質押 {_sec_amt:,.0f} 已清償入帳" if _sec_amt
+                         else "券商質押 已清償入帳（金額待補）")
         if ev["保單質押未入帳"]:
             parts.append("保單質押仍『執行中』（未入帳，帳務不動）")
         parts.append(f"已清償累計 {ev['已清償累計']:,.0f}／剩餘未清償 {ev['剩餘未清償']:,.0f}")
