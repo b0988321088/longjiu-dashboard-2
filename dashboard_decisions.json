@@ -7756,8 +7756,7 @@
       "summary": "台股2,029,878.0 美股10,235,528.0 防守4,500,670.0 債券7,437,894.0 現金819,768.0",
       "status": "completed",
       "source": "auto"
-    }
-  ,
+    },
     {
       "timestamp": "2026-09-30T14:19:06",
       "action": "核准",
@@ -7769,7 +7768,7 @@
       "idem_key": "hermes-p0-1-truthtier-20260930",
       "summary": "防禦 stored 53.8% 停用改只留派生 49.1%、現金備註動態生成、緊急應變以當日真值覆蓋並保留 as_of、資產差異統一 Cash=不含指定用途款；新增跨報告一致性閘門（8 欄位 FAIL exit 1）與單一寫入者 sync_dual_dimension.py，雙維度每日重算。commit 3e11156e，CIO 審查 APPROVE，Pages 已驗證。"
     }
-],
+  ],
   "meta": {
     "updated_at": "2026-09-30T13:51:16.436138"
   },

@@ -250,7 +250,6 @@ def defensive_caliber(snap: dict) -> dict:
 
 def restricted_cash(snap: dict) -> float:
     """指定用途現金（質押撥款待清償等）— 不計入桶位／乾粉／Runway。
-
     真值來源＝snapshot.restricted_cash.金額（禁寫死）；清償入帳後由該欄歸零即自動解除。
     2026-09-29 使用者核准：避免「指定還債款」被當超額現金 → 桶位假超標觸發自動減碼。
     """
@@ -321,3 +320,211 @@ def restricted_breakdown(snap: dict) -> str:
     _orig = float(rc.get("原始撥款") or 0)
     _head = f"指定用途款 {_orig/10000:.0f}萬" if _orig else "指定用途款"
     return _head + "＝" + "＋".join(parts)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 2026-09-30 Q4 核心原則：先修真值，再修狀態；先修狀態，再談配置。
+# 以下四塊全部「派生、可重算、單一寫入者」——呼叫端（update_data）寫回 snapshot，
+# 其餘報表只讀；禁止在報表內重算或手寫。
+# ═══════════════════════════════════════════════════════════════════════
+
+def cash_layers(snap: dict, today: str | None = None) -> dict:
+    """現金分層（使用者 2026-09-30 規格）：現金不得只看單一總額。
+
+        cash_total
+        ├── unrestricted_cash          真正可動用
+        ├── restricted_cash
+        │   ├── debt_repayment_reserve 指定還債款（本輪質押撥款）
+        │   └── other_restricted       其他指定用途
+        └── emergency_cash             底線內不動用（cash_floor）
+
+    壓力測試「能不能撐住」一律用 unrestricted_cash（＋真正可動用的信用額度，
+    目前無真值來源 → credit_line_available 回 None，不得推估）。
+    """
+    total = float(snap.get("cash_total") or snap.get("cash") or 0)
+    rc = snap.get("restricted_cash")
+    debt_res = other_res = 0.0
+    rows: list = []
+    if isinstance(rc, dict):
+        amt = float(rc.get("金額") or 0)
+        rows = list(rc.get("明細") or [])
+        use = str(rc.get("用途") or "")
+        # 明細裡的每一筆都是同一用途（指定還債）；用途不含「清償／還」者歸 other_restricted
+        if "清償" in use or "還" in use or not use:
+            debt_res = amt
+        else:
+            other_res = amt
+    else:
+        debt_res = float(rc or 0)
+    restricted = debt_res + other_res
+    unrestricted = max(0.0, total - restricted)
+    floor = float(snap.get("cash_floor") or 0)
+    emergency = min(unrestricted, floor) if floor else 0.0
+    return {
+        "cash_total": round(total),
+        "unrestricted_cash": round(unrestricted),
+        "restricted_cash": {
+            "total": round(restricted),
+            "debt_repayment_reserve": round(debt_res),
+            "other_restricted": round(other_res),
+            "明細": rows,
+            "狀態": (rc or {}).get("狀態") if isinstance(rc, dict) else None,
+        },
+        "emergency_cash": {
+            "金額": round(emergency),
+            "定義": "現金底線內、不得動用的部分（cash_floor）",
+            "floor": round(floor),
+        },
+        "dry_powder": round(max(0.0, unrestricted - emergency)),
+        "credit_line_available": None,
+        "credit_line_note": "⚠️ 無真值來源：可動用信用額度（未動用質押額度／保單借款空間）尚未建檔 → 壓力測試不得推估",
+        "語義": (f"現金 {total:,.0f} 中 {restricted:,.0f} 係指定還債款（同時撐『清償承諾』與『追繳緩衝』，"
+                 f"清償卡住則兩邊同時破）；可動用僅 unrestricted_cash {unrestricted:,.0f}；"
+                 "撐不撐得住一律看 unrestricted_cash，不得把指定還債款當普通現金。"),
+        "source": "sot_targets.cash_layers（派生：cash_total／restricted_cash／cash_floor）",
+        "derived_at": today or dt.date.today().isoformat(),
+    }
+
+
+METRIC_VERSION = "2.0.0"          # 2026-09-30 P0-1：口徑版本化起點
+METRIC_CHANGED_AT = "2026-09-30"
+METRIC_CHANGE_REASON = ("P0-1 真值層單一寫入者：防禦維度／市場情境現況驗證改為派生，"
+                        "配置分母排除指定用途款；緊急應變舊金額以當日真值覆蓋")
+
+
+def metrics_registry(snap: dict, today: str | None = None) -> dict:
+    """口徑版本註冊表：度量修正必須可追溯，不得與財務惡化混為一談。
+
+    背景（CIO 2026-09-30）：P0-1 上線後壓力情境由 101.7%→95.9%、留停驗收掉到 B 級，
+    屬「度量修正」而非資產變動 → 報表／月報必須標註，否則月報會把系統改版誤讀成財務惡化。
+    """
+    try:
+        import passive_caliber as _pcal
+        _sc = _pcal.scenarios(snap)
+        _stress = round(_sc["stress"]["coverage"], 1)
+        _con = round(_sc["con"]["coverage"], 1)
+    except Exception:
+        _stress = _con = None
+    _ddm = ((snap.get("dual_dimension_metric") or {}).get("防禦維度") or {})
+    return {
+        "metric_version": METRIC_VERSION,
+        "changed_at": METRIC_CHANGED_AT,
+        "change_reason": METRIC_CHANGE_REASON,
+        "classification": "度量修正（口徑變嚴格，非資產變動）",
+        "影響": {
+            "壓力情境覆蓋率": {
+                "歷史值": 101.7,
+                "現行值": _stress,
+                "性質": "度量修正",
+                "說明": ("P0-1 前為 101.7%（口徑較鬆）；P0-1 後以常態配息×0.8＋常態租金−洲際W空置÷"
+                         "當期固定支出重算 → 低於 100% 屬度量口徑揭露，不表示現金流惡化"),
+            },
+            "防禦維度": {
+                "歷史值": 53.8,
+                "現行值": _ddm.get("佔比"),
+                "性質": "度量修正",
+                "說明": "舊 stored 53.8% 無程式寫入者（疑人工值）→ 停用，改派生（分母排除指定用途款）",
+            },
+            "保守被動覆蓋率": {"現行值": _con, "性質": "未變更"},
+        },
+        "標註規則": "凡顯示未達標（B 級／<100%）處，一律附「（度量修正 v2.0.0，非資產變動）」；月報需獨立一行「口徑變更影響」",
+        "source": "sot_targets.metrics_registry",
+        "derived_at": today or dt.date.today().isoformat(),
+    }
+
+
+def _us30y_state_file() -> dict:
+    try:
+        import json as _json
+        _p = Path(__file__).resolve().parent / "us30y_state.json"
+        return _json.loads(_p.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def us30y_gate(snap: dict | None = None, state: dict | None = None,
+               max_lag_days: int = 3) -> dict:
+    """US30Y 讀值有效性閘門（CIO 2026-09-30 P0）：as_of 落後真值日 → UNKNOWN，禁止解凍判定。
+
+    「舊資料觸發投資決策」是本閘門要擋的唯一風險：
+    解凍／凍結判定必須同時具備 value + as_of + 連續天數；as_of 缺漏或落後真值日
+    超過 max_lag_days（假日容忍）→ status=UNKNOWN、unfreeze_allowed=False。
+    """
+    snap = snap or {}
+    st = state if state is not None else _us30y_state_file()
+    try:
+        import us30y_monitor as _mon
+        _red = float(getattr(_mon, "RED_LINE", 0) or 0) or None
+    except Exception:
+        _red = None
+    if _red is None:
+        _red = ((snap.get("thresholds_2026_0915") or {}).get("US30Y紅線")) or None
+    ref = str(snap.get("date") or dt.date.today().isoformat())
+    as_of = st.get("last_date")
+    value = st.get("last_rate")
+    lag = None
+    try:
+        lag = (dt.date.fromisoformat(ref[:10]) - dt.date.fromisoformat(str(as_of)[:10])).days
+    except Exception:
+        lag = None
+    if as_of in (None, "") or lag is None:
+        status, reason = "UNKNOWN", "缺 us30y_as_of（讀值日期）→ 不得判定解凍／凍結"
+    elif lag > max_lag_days:
+        status, reason = "STALE", f"讀值日 {as_of} 落後真值日 {ref} 達 {lag} 天（> {max_lag_days}）→ 不得判定解凍"
+    else:
+        status, reason = "OK", f"讀值日 {as_of}（落後 {lag} 天，在容忍值 {max_lag_days} 天內）"
+    below = (value is not None and _red is not None and float(value) < float(_red))
+    return {
+        "status": status,
+        "value": value,
+        "as_of": as_of,
+        "ref_date": ref,
+        "lag_days": lag,
+        "max_lag_days": max_lag_days,
+        "red_line": _red,
+        "streak_days": st.get("streak"),
+        "below_red_line": below,
+        "unfreeze_allowed": bool(status == "OK" and below),
+        "reason": reason,
+        "source": "sot_targets.us30y_gate（us30y_state.json + us30y_monitor.RED_LINE）",
+    }
+
+
+# 紅線長期化階梯（使用者 2026-09-30 定案）：目的不是逼投資，
+# 而是避免「暫停」最後變成「沒有人再處理」。
+REDLINE_LADDER = (
+    (0, 30, "維持現有配置，不交易"),
+    (30, 45, "每週重新檢查資產配置與現金流"),
+    (45, 60, "啟動替代配置評估（替代路線 A/B/C）"),
+    (60, 10 ** 9, "CIO 必須重新審查「原本解凍邏輯是否仍適用」"),
+)
+
+
+def redline_policy(streak_days, today: str | None = None) -> dict:
+    """US30Y 紅線長期化政策（REDLINE_LONG_DURATION_POLICY）。
+
+    依「連續 ≥紅線天數」給出階段與應做事項；>45 天啟動替代配置評估，
+    但實際買賣仍需另案核准（本政策不授權交易）。
+    """
+    try:
+        d = int(streak_days or 0)
+    except (TypeError, ValueError):
+        d = 0
+    stage = next((i + 1 for i, (lo, hi, _) in enumerate(REDLINE_LADDER) if lo <= d < hi), None)
+    _lo, _hi, _action = next(((lo, hi, a) for lo, hi, a in REDLINE_LADDER if lo <= d < hi),
+                             (0, 0, "無對應階段"))
+    _nxt = next((f"{lo} 天：{a}" for lo, hi, a in REDLINE_LADDER if lo > d), None)
+    return {
+        "policy": "REDLINE_LONG_DURATION_POLICY",
+        "streak_days": d,
+        "stage": stage,
+        "階段區間": f"{_lo}–{_hi if _hi < 10**9 else '∞'} 天",
+        "應做事項": _action,
+        "下一階段": _nxt,
+        "授權邊界": "本政策只決定『檢查頻率與評估啟動』，不授權任何買賣；交易一律另案核准",
+        "目的": "避免『暫停』變成『沒有人再處理』",
+        "ladder": [{"下限天數": lo, "上限天數": (hi if hi < 10 ** 9 else None), "應做事項": a}
+                   for lo, hi, a in REDLINE_LADDER],
+        "source": "sot_targets.redline_policy（使用者 2026-09-30 定案）",
+        "derived_at": today or dt.date.today().isoformat(),
+    }

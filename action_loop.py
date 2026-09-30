@@ -15,8 +15,21 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parent
 SNAPSHOT_FILE = BASE / "rebalance_snapshot.json"
 
+def _us30y_state() -> dict:
+    """US30Y 單一真值來源＝us30y_state.json（2026-09-30 CIO 審計③）。"""
+    try:
+        return json.loads((BASE / "us30y_state.json").read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
 def save_snapshot(table: dict, snap: dict):
-    """儲存本期待執行建議快照"""
+    """儲存本期待執行建議快照
+
+    2026-09-30（CIO 18:30 審計③）：寫入時一併綁定「讀值日期」us30y_date。
+    原本只存 us30y → 下游把「跑批日」當「收盤日」（9/21 已提過，未補），
+    凍結／解凍判定會踩在舊讀值上。rate 與 date 一律同源 us30y_state.json。
+    """
     records = []
     for r in table["rows"]:
         if r["是否交易"] or r["建議動作"] in ("增持", "減碼"):
@@ -28,15 +41,35 @@ def save_snapshot(table: dict, snap: dict):
                 "階梯等級": r["階梯等級"],
                 "現況占比": r["現況占比"],
             })
+    st = _us30y_state()
+    us30y = table.get("us30y")
+    if us30y is None:
+        us30y = st.get("last_rate")
+    # 2026-09-30（使用者 P0 規格）：強制帶 us30y_as_of；as_of 缺漏或落後真值日 → 禁解凍判定。
+    try:
+        from sot_targets import us30y_gate as _gate
+        _g = _gate(snap, st)
+    except Exception:
+        _g = {}
     snapshot = {
         "date": date.today().isoformat(),
-        "us30y": table.get("us30y"),
+        "us30y": us30y,
+        "us30y_as_of": st.get("last_date"),
+        "us30y_date": st.get("last_date"),          # 相容別名（舊消費端）
+        "us30y_gate_status": _g.get("status"),
+        "unfreeze_allowed": _g.get("unfreeze_allowed"),
+        "unfreeze_block_reason": None if _g.get("unfreeze_allowed") else _g.get("reason"),
         "frozen": table.get("frozen"),
         "total_assets": snap.get("total_assets", 0),
         "recommendations": records,
     }
     SNAPSHOT_FILE.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"✅ 建議快照已儲存（{len(records)} 筆建議）→ rebalance_snapshot.json")
+    if not snapshot["us30y_as_of"]:
+        print("⚠️ 建議快照缺 us30y_as_of（us30y_state.json 無 last_date）→ 下游不得把跑批日當收盤日、禁止解凍判定")
+    elif not snapshot["unfreeze_allowed"]:
+        print(f"⛔ 解凍不許可：{snapshot['unfreeze_block_reason']}")
+    print(f"✅ 建議快照已儲存（{len(records)} 筆建議；US30Y {us30y} @{snapshot['us30y_as_of']}"
+          f"｜閘門 {snapshot['us30y_gate_status']}）→ rebalance_snapshot.json")
 
 def compare(table: dict, snap: dict) -> dict:
     """比對上一期快照 vs 本期實際 → 執行狀態追蹤"""

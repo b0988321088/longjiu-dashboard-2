@@ -17,7 +17,8 @@ import json, sys, shutil, datetime
 from pathlib import Path
 try:
     from sot_targets import (bucket_targets, defensive_caliber, build_defensive_metric,
-                             build_dual_dimension_metric, sync_scenario_verification)  # INC-201／INC-242b v3／P0-1：桶目標／防守合併口徑／雙維度＋情境驗證單一入口
+                             build_dual_dimension_metric, sync_scenario_verification,
+                             cash_layers, metrics_registry, us30y_gate, redline_policy)  # INC-201／INC-242b v3／P0-1／2026-09-30 真值分層
 except Exception:  # 極端情況下（模組缺失）不得讓管線崩潰
     def bucket_targets(_snap):
         return {}
@@ -34,8 +35,73 @@ except Exception:  # 極端情況下（模組缺失）不得讓管線崩潰
     def sync_scenario_verification(_snap, _today=None):
         return {}
 
+    def cash_layers(_snap, _today=None):
+        return {}
+
+    def metrics_registry(_snap, _today=None):
+        return {}
+
+    def us30y_gate(_snap=None, _state=None, max_lag_days=3):
+        return {}
+
+    def redline_policy(_streak=None, _today=None):
+        return {}
+
 BASE = Path(__file__).resolve().parent
 SNAP = BASE / "snapshot.json"
+
+TRUTH_BLOCK_KEYS = ("cash_layers", "metrics_registry", "us30y_gate", "redline_policy")
+
+
+def _derive_truth_blocks(snap: dict) -> dict:
+    """真值層四塊派生（2026-09-30 Q4：現金分層／口徑版本／US30Y 閘門／紅線長期化政策）。"""
+    out = {
+        "cash_layers": cash_layers(snap),
+        "metrics_registry": metrics_registry(snap),
+        "us30y_gate": us30y_gate(snap),
+    }
+    out["redline_policy"] = redline_policy((out["us30y_gate"] or {}).get("streak_days"))
+    return out
+
+
+def _sync_truth_blocks(snap: dict, write: bool = True) -> dict:
+    """把四塊真值派生寫回 snapshot（自癒：check 模式也會補）。
+
+    2026-09-30 實踩：原版只在「帶 key=value 參數」的更新路徑寫入，而每日呼叫
+    `python update_data.py`（無參數）走 check 模式早早 return 0 → 四塊永遠不落地。
+    回傳 {key: (舊值, 新值)}（僅變更者）。
+    """
+    before = {k: snap.get(k) for k in TRUTH_BLOCK_KEYS}
+    blocks = _derive_truth_blocks(snap)
+    changed = {k: (before.get(k), v) for k, v in blocks.items() if before.get(k) != v}
+    for k, v in blocks.items():
+        snap[k] = v
+    if write and changed:
+        SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
+    return changed
+
+
+def _print_truth_blocks(snap: dict) -> None:
+    _cl = snap.get("cash_layers") or {}
+    if _cl:
+        print(f"   現金分層：總 {_cl.get('cash_total', 0):,}｜可動用 {_cl.get('unrestricted_cash', 0):,}｜"
+              f"指定還債 {(_cl.get('restricted_cash') or {}).get('debt_repayment_reserve', 0):,}｜"
+              f"底線 {(_cl.get('emergency_cash') or {}).get('金額', 0):,}｜乾粉 {_cl.get('dry_powder', 0):,}")
+    else:
+        print("   ⚠️ 現金分層派生失敗（cash_layers 回空）→ 下游不得用單一總額做壓力測試")
+    _mr = snap.get("metrics_registry") or {}
+    if _mr:
+        print(f"   口徑版本 {_mr.get('metric_version')}（{_mr.get('classification')}）"
+              f"｜壓力情境 {((_mr.get('影響') or {}).get('壓力情境覆蓋率') or {}).get('現行值')}%")
+    _ug = snap.get("us30y_gate") or {}
+    if _ug:
+        print(f"   US30Y 閘門 {_ug.get('status')}：{_ug.get('value')}%@{_ug.get('as_of')}"
+              f"（解凍{'許可' if _ug.get('unfreeze_allowed') else '不許可'}）｜{_ug.get('reason')}")
+    _rp = snap.get("redline_policy") or {}
+    if _rp:
+        print(f"   紅線長期化：連續 {_rp.get('streak_days')} 天 → 階段 {_rp.get('stage')}"
+              f"（{_rp.get('階段區間')}）｜{_rp.get('應做事項')}")
+
 
 def main():
     args = {}
@@ -44,9 +110,13 @@ def main():
             k, v = a.split("=", 1)
             args[k.strip("-")] = v
     if "--check" in sys.argv or not args:
-        # 檢查模式
+        # 檢查模式 ＋ 真值層自癒（四塊派生一律重算後寫回）
         from asset_sync import verify_synonyms
         snap = json.loads(SNAP.read_text(encoding="utf-8"))
+        _chg = _sync_truth_blocks(snap, write=True)
+        if _chg:
+            print("🔁 真值層自癒寫回：" + "、".join(_chg.keys()))
+            _print_truth_blocks(snap)
         issues = verify_synonyms(snap)
         if issues:
             print("❌ 同義欄位不一致：")
@@ -343,6 +413,33 @@ def main():
     _sv_new = (snap.get("market_scenario_standards") or {}).get("現況驗證") or {}
     if _sv_old.get("防禦") != _sv_new.get("防禦"):
         print(f"🔁 情境現況驗證自癒：防禦 {_sv_old.get('防禦')}% → {_sv_new.get('防禦')}%（單一寫入者）")
+
+    # 2026-09-30 使用者裁示（Q4 核心原則）：真值層分層化 — 現金分層／口徑版本／US30Y 閘門／紅線長期化政策。
+    # 全部派生後寫回 snapshot，其餘報表只讀（禁止在報表內重算）。
+    snap["cash_layers"] = cash_layers(snap)
+    _cl = snap.get("cash_layers") or {}
+    if _cl:
+        print(f"   現金分層：總 {_cl.get('cash_total', 0):,}｜可動用 {_cl.get('unrestricted_cash', 0):,}｜"
+              f"指定還債 {(_cl.get('restricted_cash') or {}).get('debt_repayment_reserve', 0):,}｜"
+              f"底線 {( _cl.get('emergency_cash') or {}).get('金額', 0):,}｜乾粉 {_cl.get('dry_powder', 0):,}")
+    else:
+        print("   ⚠️ 現金分層派生失敗（cash_layers 回空）→ 下游不得用單一總額做壓力測試")
+    snap["metrics_registry"] = metrics_registry(snap)
+    _mr = snap.get("metrics_registry") or {}
+    if _mr:
+        print(f"   口徑版本 {_mr.get('metric_version')}（{_mr.get('classification')}）"
+              f"｜壓力情境 {((_mr.get('影響') or {}).get('壓力情境覆蓋率') or {}).get('現行值')}%")
+    snap["us30y_gate"] = us30y_gate(snap)
+    _ug = snap.get("us30y_gate") or {}
+    if _ug:
+        print(f"   US30Y 閘門 {_ug.get('status')}：{_ug.get('value')}% @{_ug.get('as_of')}"
+              f"（解凍{'許可' if _ug.get('unfreeze_allowed') else '不許可'}）")
+    snap["redline_policy"] = redline_policy(_ug.get("streak_days"))
+    _rp = snap.get("redline_policy") or {}
+    if _rp:
+        print(f"   紅線長期化：連續 {_rp.get('streak_days')} 天 → 階段 {_rp.get('stage')}"
+              f"（{_rp.get('階段區間')}）｜{_rp.get('應做事項')}")
+
     SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
 
     # 2026-08-26 檢討修正：同步 DB assets 當日列（4 源比對根因：snapshot 更新但 DB 舊 → sync_all 失敗還原）

@@ -65,6 +65,14 @@ REQUIRED_IN = {
 # 防禦比例口徑雙答案偵測（stored 舊值 vs 派生值）
 DEFENSE_STALE = "53.8"
 
+# 敘述性上下文（更新日誌／沿革／修復說明）允許「提及」舊值以求可追溯，
+# 但不得出現在任何當期數據區 → 降為 warn 不阻擋。
+NARRATIVE_HINTS = ("移除", "舊值", "舊口徑", "stored", "歷史", "修復", "更正", "改派生")
+
+
+def is_narrative(ctx: str) -> bool:
+    return any(h in ctx for h in NARRATIVE_HINTS)
+
 
 def load_truth(snap: dict) -> dict:
     rc = float((snap.get("restricted_cash") or {}).get("金額") or 0)
@@ -130,6 +138,9 @@ def main() -> int:
         for stale, why in STALE.items():
             for m in re.finditer(re.escape(stale), body):
                 ctx = body[max(0, m.start() - 45):m.end() + 45].replace("\n", " ")
+                if is_narrative(ctx):
+                    warns.append(f"[敘述提及，非阻擋] {fn}：{stale}（{why}）… {ctx.strip()[:80]}")
+                    continue
                 fails.append(f"[失效舊值] {fn}：{stale}（{why}）… {ctx.strip()[:80]}")
 
     # ── B2. 失效舊值（總資產／總負債，僅允許歷史列所在報告） ──
@@ -141,13 +152,23 @@ def main() -> int:
             body = body_of(fn, f.read_text(encoding="utf-8", errors="ignore"))
             for m in re.finditer(re.escape(stale), body):
                 ctx = body[max(0, m.start() - 45):m.end() + 45].replace("\n", " ")
+                if is_narrative(ctx):
+                    warns.append(f"[敘述提及，非阻擋] {fn}：{stale}（{why}）… {ctx.strip()[:80]}")
+                    continue
                 fails.append(f"[失效舊值] {fn}：{stale}（{why}；僅歷史列允許）… {ctx.strip()[:80]}")
 
-    # ── C. 口徑雙答案 ──
+    # ── C. 口徑雙答案（僅當期數據區才算 FAIL；更新日誌的敘述提及降為 warn） ──
     for fn, f in files.items():
         body = body_of(fn, f.read_text(encoding="utf-8", errors="ignore"))
-        if DEFENSE_STALE in body and str(TRUTH.get("defensive_ratio")) in body:
-            fails.append(f"[口徑雙答案] {fn}：同時出現防禦 {DEFENSE_STALE} 與 {TRUTH.get('defensive_ratio')}")
+        true_v = str(TRUTH.get("defensive_ratio"))
+        for m in re.finditer(re.escape(DEFENSE_STALE), body):
+            ctx = body[max(0, m.start() - 45):m.end() + 45].replace("\n", " ")
+            if is_narrative(ctx):
+                warns.append(f"[敘述提及，非阻擋] {fn}：防禦舊值 {DEFENSE_STALE} … {ctx.strip()[:80]}")
+                continue
+            if true_v in body:
+                fails.append(f"[口徑雙答案] {fn}：同時出現防禦 {DEFENSE_STALE} 與 {true_v}")
+                break
 
     out = {
         "as_of": d,

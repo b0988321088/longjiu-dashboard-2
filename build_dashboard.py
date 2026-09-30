@@ -933,6 +933,22 @@ def main():
         # 儀表板仍顯示常態值，形成兩份數字。
         _sc = _pcal.scenarios(snap)
         _cov_act = _sc["act"]["coverage"]   # 當月實收覆蓋（配息實收＋房租實收）
+        _mr = snap.get("metrics_registry") or {}
+        _mv = _mr.get("metric_version")
+        _metric_note = ""
+        if _mv:
+            _stress_hist = ((_mr.get("影響") or {}).get("壓力情境覆蓋率") or {}).get("歷史值")
+            _metric_note = (f'<span class="text-slate-400">｜口徑 v{_mv}「度量修正」'
+                            f'（壓力情境 {_stress_hist}%→{_sc["stress"]["coverage"]:.1f}%，非資產變動）</span>')
+        _cl = snap.get("cash_layers") or {}
+        _cash_note = ""
+        if _cl:
+            _cash_note = (f'<span class="text-slate-400">｜現金分層：總 {_cl.get("cash_total", 0):,.0f}'
+                          f'／可動用 {_cl.get("unrestricted_cash", 0):,.0f}'
+                          f'（底線 {( _cl.get("emergency_cash") or {}).get("金額", 0):,.0f}'
+                          f'＋乾粉 {_cl.get("dry_powder", 0):,.0f}）'
+                          f'／指定還債 {( _cl.get("restricted_cash") or {}).get("debt_repayment_reserve", 0):,.0f}'
+                          f'（不得當普通現金）</span>')
         _legend = (f'<div class="flex gap-3 text-[10px] text-slate-400 mt-1">'
                    f'<span class="text-yellow-400">▮ 薪水 {_pc(_sal):.0f}%</span>'
                    f'<span class="text-blue-400">▮ 配息 {_pc(_div):.0f}%</span>'
@@ -946,7 +962,9 @@ def main():
                    f'<span class="text-amber-400">🏁 FI 跑道（極端情境口徑）：{_pcal.runway_text(_sc["extreme"]["runway_days"])}'
                    f'、實收情境 {_pcal.runway_text(_sc["act"]["runway_days"])}</span>'
                    f'<span class="text-amber-300">｜壓力情境覆蓋 {_sc["stress"]["coverage"]:.1f}%'
-                   f'（留停判準 ≥100%）</span></div>')
+                   f'（留停判準 ≥100%）</span>'
+                   f'{_metric_note}'
+                   f'{_cash_note}</div>')
         tpl = tpl.replace("__INC_BAR__", _bar)
         tpl = tpl.replace("__INC_LEGEND__", _legend)
         tpl = tpl.replace("__INC_COV__", f"{_cov:.1f}% 覆蓋（保守底線）｜實收 {_cov_act:.1f}%")
