@@ -29,7 +29,7 @@
       "id": 3,
       "item": "【阻擋②複驗】P0 卡存在＋掃描 closed_kw 誤判＋券商質押卡不帶 ✅",
       "result": "PASS",
-      "evidence": "重建後 index.html count('500 萬高息負債清償')=1、count('debt_repayment_5m')=1（P0 卡在儀表板上）。build_dashboard.py:749 _closed_kw=('✅','☑','已完成','已結案','已定案','閉環','已送出','已核定')，:750-751 對 pending_decisions.json 每卡 r['status'] 子字串過濾。以 python 逐卡掃描 26 卡 status → 命中 0。pending_decisions.json 內 2 個 ✅ 皆在巢狀欄位（line180 '狀態' 子項「✅ 已清償入帳」、line220 'detail' 敘述），非卡片 status。卡21（title『500 萬高息負債清償（parent：debt_repayment_5m）』）status 為『🔄 執行中（2026-09-30 真值重算）｜券商質押 100 萬 已清償入帳…』，不含 ✅；『已清償』不在 closed_kw。阻擋②已修。"
+      "evidence": "重建後 index.html count('500 萬高息負債清償')=1、count('debt_repayment_5m')=1（P0 卡在儀表板上）。build_dashboard.py:749 _closed_kw=('✅','☑','已完成','已結案','已定案','閉環','已送出','已核定')，:750-751 對 pending_decisions.json 每卡 r['status'] 子字串過濾。以 python 逐卡掃描 26 卡 status → 命中 0。pending_decisions.json 內 2 個 ✅ 皆在巢狀欄位（line180 '狀態' 子項「✅ 已清償入帳」、line220 'detail' 敘述），非卡片 status。卡21（title『500 萬高息負債清償（parent：debt_repayment_5m）』）status 為『🔄 執行中（2026-09-30 真值重算）｜券商質押 96 萬 已清償入帳…』，不含 ✅；『已清償』不在 closed_kw。阻擋②已修。"
     },
     {
       "id": 4,
@@ -75,5 +75,5 @@
     }
   ],
   "blocking": [],
-  "notes": "獨立唯讀複審：先驗前審 REJECT 兩項阻擋是否真修，皆以實跑（非 commit message）確認已修。① 乾淨樹跑 build_dashboard.py 兩次，index.html 與 committed 位元一致（md5 7d2001da…），不再產生 ' M index.html'；② 重建後 index.html 含 P0 卡『500 萬高息負債清償（parent：debt_repayment_5m）』，且現行 pending_decisions.json 26 卡 status 逐卡掃描對 _closed_kw 命中 0，『券商質押 100 萬 已清償入帳』卡 status 不含 ✅。真值層四塊存在、算術閉合、us30y_gate 與 us30y_state.json 同源、三態負向測試（UNKNOWN/STALE/OK）全數可證偽；新門檻斷言對現金分層與 as_of 未同源兩負向皆 FAIL(RC=1) 且訊息正確、還原後 PASS。無寫死真值。殘餘風險：本 commit 對 snapshot.json 四塊已收斂為單一 writer（grep 僅 update_data.py 賦值），但 sync_all.py／asset_sync.py／build_penetration_report.py／industry_penetration.py／rotation_engine.py／complete_operation.py 仍會整檔寫回 snapshot.json（pass-through 未重算四塊）；正常情況保留既有值，惟若其中之一以非當前 snapshot 為基底寫回，四塊可被舊值蓋而無閘門察覺。另：repo 目前無任何閘門斷言『committed index.html == build_dashboard.py 產物』，阻擋①的修復屬程序性（手動重產），下次改 pending_decisions.json 未重跑 build_dashboard.py 時同類 stale 仍可能靜默復發。"
+  "notes": "獨立唯讀複審：先驗前審 REJECT 兩項阻擋是否真修，皆以實跑（非 commit message）確認已修。① 乾淨樹跑 build_dashboard.py 兩次，index.html 與 committed 位元一致（md5 7d2001da…），不再產生 ' M index.html'；② 重建後 index.html 含 P0 卡『500 萬高息負債清償（parent：debt_repayment_5m）』，且現行 pending_decisions.json 26 卡 status 逐卡掃描對 _closed_kw 命中 0，『券商質押 96 萬 已清償入帳』卡 status 不含 ✅。真值層四塊存在、算術閉合、us30y_gate 與 us30y_state.json 同源、三態負向測試（UNKNOWN/STALE/OK）全數可證偽；新門檻斷言對現金分層與 as_of 未同源兩負向皆 FAIL(RC=1) 且訊息正確、還原後 PASS。無寫死真值。殘餘風險：本 commit 對 snapshot.json 四塊已收斂為單一 writer（grep 僅 update_data.py 賦值），但 sync_all.py／asset_sync.py／build_penetration_report.py／industry_penetration.py／rotation_engine.py／complete_operation.py 仍會整檔寫回 snapshot.json（pass-through 未重算四塊）；正常情況保留既有值，惟若其中之一以非當前 snapshot 為基底寫回，四塊可被舊值蓋而無閘門察覺。另：repo 目前無任何閘門斷言『committed index.html == build_dashboard.py 產物』，阻擋①的修復屬程序性（手動重產），下次改 pending_decisions.json 未重跑 build_dashboard.py 時同類 stale 仍可能靜默復發。"
 }
