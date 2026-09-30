@@ -7767,12 +7767,36 @@
       "user": "Laing",
       "idem_key": "hermes-p0-1-truthtier-20260930",
       "summary": "防禦 stored 53.8% 停用改只留派生 49.1%、現金備註動態生成、緊急應變以當日真值覆蓋並保留 as_of、資產差異統一 Cash=不含指定用途款；新增跨報告一致性閘門（8 欄位 FAIL exit 1）與單一寫入者 sync_dual_dimension.py，雙維度每日重算。commit 3e11156e，CIO 審查 APPROVE，Pages 已驗證。"
+    },
+    {
+      "timestamp": "2026-09-30T19:26:03",
+      "action": "核准",
+      "name": "Q4 真值層修復（P0 真值分層＋P0.5 單一 writer／閘門）",
+      "source": "user",
+      "status": "已執行",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-q4-truth-repair-20260930",
+      "summary": "核准『先修真值，再修狀態；先修狀態，再談配置』。P0：修 update_data.py 無參數 check 模式早退（派生四塊永不落地）→ check 模式自癒寫回，四塊＝cash_layers（可動用 819,182／指定還債 4,900,000／底線 700,000／乾粉 119,182）、metrics_registry v2.0.0（度量修正）、us30y_gate（5.594@2026-09-29、解凍不許可）、redline_policy（連續 23 日→階段 1）。P0.5：四塊收斂為單一 writer；check_thresholds 新增真值層斷言（存在／算術閉合／as_of 同源／紅線期不得解凍／未閉環卡狀態不得含已結案字樣）。commit b78a3603＋24b57e5e（獨立審查兩輪：REJECT→修復→APPROVE 10/10）。",
+      "detail": "審查第一輪抓兩項阻擋：①乾淨樹跑 build_dashboard 會 dirty（committed index.html stale）②pending 新狀態含『✅ 已清償』撞 build_dashboard 已結案過濾 → P0 卡整張消失。修法：reconcile 未閉環狀態去 ✅、今日已實作 5 張卡歸檔（pending 31→26）、儀表板冪等重產（md5 9d134317e985）。紅線階梯：0–30 維持配置不交易／30–45 每週重檢／45–60 啟動替代配置評估／>60 CIO 重審解凍邏輯本身。未動：00921、台股、避險衛星、美債 ladder。"
+    },
+    {
+      "timestamp": "2026-09-30T19:26:03",
+      "action": "核准",
+      "name": "10/1 三重截止日判準／永豐水位補足 138,075／DeepSeek 儲值 10/1",
+      "source": "user",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-approve-3items-20260930",
+      "summary": "①10/1 真值日 KPI＝真值→as_of→閘門→解凍狀態四者一致；不因閘門全 PASS 自動解凍（驗收三點：四塊存在／as_of 與真值日一致／解凍條件未達成前 unfreeze_allowed=False）。②永豐水位缺口 138,075（安全線 197,205＝房貸月繳 65,735×3）房貸扣款前補足；禁動國泰指定還債款 4,900,000；玉山 40,044／富邦 44,116 已達標不額外調度。③DeepSeek 錢包儲值執行日 2026-10-01。",
+      "detail": "commit 644dd287（data-only，AUTO-checker:decision_approve）。pending 26 筆；status 已結案字樣掃描 0 命中。永豐可用來源：敦南Richart 子帳戶 310,722＋一般 94,966、台新超安全線 49,016。"
     }
   ],
   "meta": {
     "updated_at": "2026-09-30T13:51:16.436138"
   },
-  "last_updated": "2026-09-30T18:00:00+08:00",
+  "last_updated": "2026-09-30T19:26:03",
   "2026-09-29": [
     "9/29 質押撥款入帳 NT$5,900,000（10:57，國泰世華通知；實撥 590 萬@2.65%，原表定 540 萬@2.77%）→ 真值日全資產同步：現金 6,719,182／保單 9,453,825／基金 12,654,144／台股 2,981,410／總資產 31,808,561、負債 36,003,720（含基金質押 590 萬）、淨值 -4,195,159；銀行口徑 LTV 50.1%。待執行：清償 500 萬高息（券商 100 萬@3.92% 先、保單 400 萬@4% 後）",
     "9/29 裁示：質押撥款 590 萬先轉 200 萬還保單借貸（4% → 月省 6,667；保單借貸 400 萬 → 200 萬）；撥款剩餘 3,900,000。順序調整：保單（4%）優先於券商（3.92%）。待入帳確認後四源同步。",

@@ -1303,3 +1303,21 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 根因：`update_data.py` 的 liabilities 同步段（第 ~371 行）**只存在於「更新模式」**，而該模式需要參數才會進入；無參數時走「檢查模式」直接 return。因此當 snapshot 由其他路徑（如 `asset_sync.py`／穿透報告寫回點）變更時，`assets` 表會由重新整理路徑補上當日列，`liabilities` 表卻沒有人補 → 兩個表日期不同步。`assets` 表 9/30 列其實是對的（total_liabilities 35,003,720），只有拆解表落後一天，所以單看 assets 不會發現。
 - 修法：`asset_sync.py --rebuild-liabilities`（既有的單一寫入者，註解已標明與 update_data 同口徑）→ 重建負債拆解並同步 DB（`assets.total_liabilities` ＋ `liabilities` 表補 9/30 列）。重建結果：房貸 25,044,429＋保單 4,000,000＋券商質押 0＋基金質押 5,900,000＋信用卡 59,291 = 35,003,720。重跑閉環稽核 → 全部通過。
 - 規則入庫：**「四源一致」不能只驗彙總欄位。** `assets.total_liabilities` 正確不代表 `liabilities` 拆解表是最新的；拆解表缺列會讓「負債結構／利息」類分析用到舊的一天（且當天有質押清償這種會改變結構的事件時，落後一天就是錯的結構）。凡有「彙總表＋拆解表」的地方，兩者都要驗當日列存在性，不能只比數字。
+
+
+## INC-261 ｜ 2026-09-30 ｜ P0｜fixed ｜ 真值層四塊永不落地：無參數＝check 模式早退（同 INC-260 同一類：程式只在「帶參數的更新模式」執行）
+
+- 症狀：`sot_targets.cash_layers／metrics_registry／us30y_gate／redline_policy` 四支單獨呼叫全部正確，但每日跑完 `update_data.py`，`snapshot.json` 這四塊永遠 MISSING（rc=0、無錯誤訊息）。
+- 根因：`update_data.py` 的 `if "--check" in sys.argv or not args:` 區塊在驗完同義欄位後 `return 0`；而每日管線正是**無參數**呼叫 → 後面的派生／寫回段整段沒跑。**與 INC-260（liabilities 同步段只在更新模式）是同一個病灶**：新功能寫進「只在帶參數時才會走到」的區段。
+- 修法：派生收斂成單一實作 `_sync_truth_blocks(snap, write=...)`，check 模式與更新路徑**共用**（單一 writer），只在值有變時寫檔（冪等、不留無意義 diff）；寫入仍由唯一的 `SNAP.write_text` 負責。
+- 規則入庫（自動攔截，非只靠記性）：
+  1. `check_thresholds.py` 新增真值層斷言——四塊必須存在／現金分層算術閉合（`cash_total − restricted = unrestricted`、`底線＋乾粉 = 可動用`）／`us30y_gate.as_of` 必須等於 `us30y_state.last_date`（未同源即 FAIL）／紅線期 `unfreeze_allowed` 必須為 False。負向已驗：故意改壞數值 → RC=1。
+  2. **驗收不只看 rc=0**：要驗「欄位真的存在 + as_of 正確」（程式成功 ≠ 真值成功）。
+  3. 新增派生區塊時，先確認它落在**每日必經**路徑上；凡「只在更新模式執行」的段落一律視為未實作。
+
+## INC-262 ｜ 2026-09-30 ｜ P0｜fixed ｜ Pending 狀態字樣撞儀表板「已結案」過濾 → P0 卡靜默消失（並連帶產物 stale 被審查擋下）
+
+- 症狀：`pending_decisions.json` 的 parents 卡狀態被 `pending_reconcile.py` 重算成含「券商質押 100 萬 ✅ 已清償」後，重建 `index.html` 時「500 萬高息負債清償（parent：debt_repayment_5m）」**整張卡從儀表板執行中清單消失**（無錯誤、無 warning）；同時該卡在 committed 版還在 → 獨立審查以「乾淨樹跑 build_dashboard 會產生 ` M index.html`」判定「產物無法由 commit 重現」而 REJECT。
+- 根因：①`build_dashboard.py` 以**子字串**比對已結案關鍵詞（`✅`／`已完成`／`已結案`…）決定卡片是否顯示；②`pending_reconcile.py` 產生的「未閉環」狀態文字裡帶了 `✅`（來自子項真值）→ 卡片被誤判已結案。③產物與資料源未同批重產（先建 HTML 才跑 reconcile）。
+- 修法：①reconcile 未閉環狀態不再帶結案字樣（子項欄位可帶 ✅，卡片 status 不行）②今日已實作 5 張卡依規範歸檔（pending 31→26；真做完的卡不留 pending）③資料源改動後**同批**重產 index.html，並以「連跑兩次 build 的 md5 相同」驗冪等。
+- 規則入庫：`check_thresholds.py` 新增斷言——未閉環卡 status 掃已結案關鍵詞，命中即 FAIL（卡片靜默消失是最貴的一種 bug：沒有訊息、只有內容不見）。通則：**凡「用子字串判斷狀態」的顯示層，狀態字樣就是契約**；改狀態產生器時必須回頭檢查消費端。
