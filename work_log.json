@@ -1594,5 +1594,18 @@
   "category": "修正",
   "item": "P0-1 真值層單一寫入者：雙維度/情境驗證改派生、stored 防禦 53.8% 移除、跨報告一致性閘門",
   "detail": "使用者裁示 P0-1 真值層（優先於資金鏈閉環）。① 防禦維度與市場情境「現況驗證」原皆為手寫 stored 值、無程式寫入者 → 同一份穿透報告同時出現「53.8% 合格」與「派生 49.1% 不合格」雙答案。改由 sot_targets.build_dual_dimension_metric / sync_scenario_verification 派生（分母＝總資產−指定用途款），接進 update_data 與每日必跑的透通路徑。② 緊急應變 LLM 內文（前一日產出）含清償前舊金額，經三條路徑流入日報 → 新增 refresh_stale_amounts 以當日真值覆蓋，並加 as_of 歷史標示（覆蓋＋標示雙軌）。③ 新增 check_cross_report_consistency.py：8 欄位跨報告閘門，同一 as-of 只能一個真值，FAIL 回傳 exit 1。首跑 14 項 FAIL → 修復後 0 項。④ 順帶修掉發現的寫死當期數字：run_daily 口徑速記（162,781/180,100/80,100）、asset_diff_monitor 月收支（228,751/162,781/80,100）、snapshot 巢狀鍵 passive_income.monthly_expense 停舊值（不受 SYNONYM_GROUPS 保護）。⑤ asset_diff 現金欄改可動用口徑並標示口徑變更。CIO-DeepSeek-Flash 審查 APPROVE（tree 9351a1135a3c）、唯讀驗證器 30 PASS / 0 FAIL。注意：穿透與再平衡頁「區間震盪 現況驗證」結論由「✅ 完全符合」翻為「⚠️ 未完全符合（防禦 49.1% < 50%）」——為顯露既有事實，非新增問題。"
+ },
+ {
+  "time": "2026-09-30 14:16",
+  "task": "閉環（收工）",
+  "items": [
+   "closeout_check 全部通過 ✅（14:15）",
+   "四源一致修復：DB liabilities 表缺 9/30 列（停在 9/29）→ 走 asset_sync.py --rebuild-liabilities 補齊",
+   "負債重建：房貸 25,044,429 + 保單 4,000,000 + 券商質押 0 + 基金質押 5,900,000 + 信用卡 59,291 = 35,003,720",
+   "券商質押 100 萬清償後，DB pledge_loan 欄（＝券商＋基金質押總額）6,900,000 → 5,900,000（僅剩基金質押）",
+   "P0-1 真值層修正已推送並通過 CIO 審查（3e11156e，tree 9351a1135a3c）",
+   "線上複驗：日報／穿透／儀表板／資產差異皆無舊值殘留；資產差異唯一命中為 9/29 歷史逐日列（合法）",
+   "遠端同步：main == origin/clean-main，rev-list 未推 0，工作區乾淨"
+  ]
  }
 ]
