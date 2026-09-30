@@ -162,7 +162,7 @@
   {
     "date": "2026-09-29",
     "title": "500 萬高息負債清償（parent：debt_repayment_5m）",
-    "status": "🔄 執行中（2026-09-30 真值重算）｜已清償累計 960,000／剩餘未清償 4,000,000｜檢視日 2026-10-05",
+    "status": "🔄 執行中（2026-09-30 真值重算）｜券商質押 100 萬 已清償入帳；已清償累計 960,000／剩餘未清償 4,000,000｜檢視日 2026-10-05",
     "tags": "還債,質押,清償,現金流",
     "detail": "原 500 萬＝保單質押 400 萬@4% ＋ 券商質押 100 萬@3.92%。9/29 質押撥款 590 萬入帳（指定用途款隔離）；9/30 先清券商 100 萬（policy_repay_log 已登錄）；保單端 9/29 已提出還款申請、先轉 200 萬 → 截圖確認前只標『執行中』、帳務不動。風險（CIO 9/30）：這筆指定款同時撐「清償承諾」與「追繳緩衝」，清償卡住則兩邊同時破 → 10/05 若仍未入帳需回報並啟動 B 計畫（改由其他現金分批）。狀態由 pending_reconcile.py 每日以真值重算，人工不得手改。",
     "task_id": "debt_repayment_5m",
@@ -212,14 +212,6 @@
     "tags": "判定條件,10月,轉貸,CoastFI,月檢視",
     "detail": "2026-09-30 使用者核准判準（原核心原則：程式成功 ≠ 真值成功）。10/1 真值日 KPI＝真值 → as_of → 閘門 → 解凍狀態四者一致，不因所有閘門 PASS 就自動解凍。驗收三點：①cash_layers／metrics_registry／us30y_gate／redline_policy 四塊皆存在 ②us30y_gate.as_of 與實際真值日（us30y_state.last_date）一致 ③解凍條件（US30Y 連 2 日 <5.30＋500 萬清償完成）未達成前 unfreeze_allowed 必須為 False。①洲際W＝HOLD／NO ACTION（僅四條件成立才重開）②Coast FI 真值日須成功產生完整 snapshot（留檔供日後比較修正前後）③10 月月檢視（避險衛星／第一金／00921）維持暫停，雙閘門成立才解凍。",
     "source": "CIO 9/30 建議（待使用者核准）"
-  },
-  {
-    "date": "2026-09-30",
-    "title": "Pending 自動回收（pending_reconcile.py）：真值→狀態，執行後自動 CLOSED",
-    "status": "🔄 已實作（dry-run 預設）｜待核准接每日 cron 帶 --apply",
-    "tags": "Pending,自動閉環,真值,架構",
-    "detail": "pending_reconcile.py：由 snapshot 真值（cash_detail／restricted_cash 明細／policy_repay_log／us30y_state）重算 Pending 狀態，條件成立自動閉環歸檔（規則：生活帳戶水位、永豐水位、質押撥款入帳、高息清償、解凍條件）。預設 dry-run，--apply 才寫入（含備份＋筆數守恆＋CRLF 驗證）。第二階段『Pending 自動產生（Decision Engine → Pending）』尚未實作，不得宣稱完成。",
-    "source": "user 2026-09-30 規格"
   },
   {
     "title": "📝 日誌／記憶條目停止嵌入浮動金額（結構性）",

@@ -108,6 +108,10 @@ def main() -> int:
         st = {}
     pend = _load(PEND)
     arch = _load(ARCH)
+    # INC-263：寫入前快照必須在規則迴圈之前取 —— arch 會在迴圈內被 append，
+    # 事後再算 len(arch) 已經是新值，會讓「守恆」斷言必然失敗（假警報）。
+    n_pend0, n_arch0 = len(pend), len(arch)
+    n_total0 = n_pend0 + n_arch0
     ev = evaluate(snap, st, {})
     today = ev["today"]
     actions: list[dict] = []
@@ -212,12 +216,27 @@ def main() -> int:
     shutil.copy(ARCH, ARCH.with_suffix(ARCH.suffix + f".bak_reconcile_{stamp}"))
     save(PEND, keep, 2)
     save(ARCH, arch, 1)
-    # 驗證：可解析＋筆數守恆＋全 CRLF
-    _p = _load(PEND); _a = _load(ARCH)
-    assert len(_p) + len(_a) == len(pend) + len(arch), "筆數不守恆"
-    raw = PEND.read_bytes()
-    assert (raw.count(b"\n") - raw.count(b"\r\n")) == 0, "CRLF 損毀"
-    print(f"\n✅ 已寫入：pending {len(pend)} → {len(_p)}｜archive {len(arch)} → {len(_a)}")
+    # 落地後驗證（INC-263：先寫、後驗；驗證失敗一律只警告不 raise）
+    # 理由：檔案已寫入，raise 會讓 cron/操作者誤判「寫入失敗」→ 重跑造成二次搬移。
+    warns: list[str] = []
+    n_pend1 = n_arch1 = None
+    try:
+        n_pend1, n_arch1 = len(_load(PEND)), len(_load(ARCH))
+        if n_pend1 + n_arch1 != n_total0:
+            warns.append(f"筆數不守恆（寫入前 {n_total0} → 寫入後 {n_pend1 + n_arch1}）")
+        for path, label in ((PEND, "pending_decisions.json"), (ARCH, "pending_decisions_archive.json")):
+            raw = path.read_bytes()
+            if (raw.count(b"\n") - raw.count(b"\r\n")) != 0:
+                warns.append(f"{label} CRLF 損毀")
+    except Exception as e:      # 重讀/解析失敗也算警告，不得吃掉已完成的寫入
+        warns.append(f"落地後重讀驗證失敗：{type(e).__name__}: {e}")
+    if n_pend1 is None or n_arch1 is None:
+        print(f"\n✅ 已寫入：pending {n_pend0} → {len(keep)}｜archive {n_arch0} → {len(arch)}（筆數重讀失敗）")
+    else:
+        print(f"\n✅ 已寫入：pending {n_pend0} → {n_pend1}｜archive {n_arch0} → {n_arch1}"
+              f"（合計 {n_total0} → {n_pend1 + n_arch1}）")
+    for w in warns:
+        print(f"⚠️ 落地後驗證警告（檔案已寫入，請勿重跑）：{w}")
     return 0
 
 

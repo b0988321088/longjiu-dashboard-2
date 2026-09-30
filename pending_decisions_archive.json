@@ -229,5 +229,14 @@
   "tags": "水位監控,永豐,房貸,質押",
   "detail": "2026-09-30 使用者核准：只處理永豐缺口，玉山 40,044／富邦 44,116 已達標 → 不為了「三個帳戶都漂亮」額外調度。⚠️ 資金來源禁區：國泰世華活儲 4,992,935 內含指定還債款 4,900,000（restricted，不計入可動用）→ 不得動用該筆補水位。可用來源：敦南Richart 子帳戶 310,722＋一般帳戶 94,966（未指定，合計 405,688）；台新超安全線部分 49,016（566,645 − 517,629）。本項屬房貸扣款水位管理，非投資決策。",
   "cleanup_reason": "pending_reconcile 自動閉環：永豐 221,700 ≥ 安全線 197,205（房貸月繳×3）"
+ },
+ {
+  "date": "2026-09-30",
+  "title": "Pending 自動回收（pending_reconcile.py）：真值→狀態，執行後自動 CLOSED",
+  "status": "✅ 已完成（2026-09-30 使用者核准）：已接每日 cron（22:00 龍九晚報 evening_sync.py）以 --apply 執行；pending_reconcile 同時修復 INC-263 假警報（落地後驗證只警告不 raise）",
+  "tags": "Pending,自動閉環,真值,架構",
+  "detail": "pending_reconcile.py：由 snapshot 真值（cash_detail／restricted_cash 明細／policy_repay_log／us30y_state）重算 Pending 狀態，條件成立自動閉環歸檔（規則：生活帳戶水位、永豐水位、質押撥款入帳、高息清償、解凍條件）。預設 dry-run，--apply 才寫入（含備份＋筆數守恆＋CRLF 驗證）。第二階段『Pending 自動產生（Decision Engine → Pending）』尚未實作，不得宣稱完成。",
+  "source": "user 2026-09-30 規格",
+  "cleanup_reason": "pending_reconcile 自動回收機制上線：真值→狀態自動重算／執行後自動 CLOSED，每日 22:00 於 build_dashboard 之前落地（同一批產物）"
  }
 ]
