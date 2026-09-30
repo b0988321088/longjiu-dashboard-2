@@ -746,25 +746,34 @@ def buffett_advice(history: dict, snap: dict) -> str:
             return f"@{_r * 100:.2f}%" if _r else ""
 
         _rc_rows = (snap.get("restricted_cash") or {}).get("明細") or []
-        _sec_status = ""
-        for _r in _rc_rows:
-            if "券商質押" in str(_r.get("項目", "")) or "券商" in str(_r.get("簡稱", "")):
-                _sec_status = "已清償" if "已清償" in str(_r.get("狀態") or "") else "清償中"
-                break
-        _rc_block = snap.get("restricted_cash") or {}
-        _debt_left = float(_rc_block.get("剩餘未清償") or 0)
-        # 狀態只在有真值可依時才寫：無 restricted_cash 資料 → 留白（不宣稱已清償）
-        _ploan_status = "清償中" if _debt_left else ("已清償" if "剩餘未清償" in _rc_block else "")
         # 券商質押已清償額：policy_repay_log 實錄（僅計 repay 動作，非估算）
         _sec_paid = sum(float(x.get("金額") or 0) for x in (snap.get("policy_repay_log") or [])
                         if str(x.get("對象")) in ("securities", "券商質押")
                         and str(x.get("動作") or "repay") == "repay")
+        _sec_row = next((_r for _r in _rc_rows
+                         if "券商質押" in str(_r.get("項目", "")) or "券商" in str(_r.get("簡稱", ""))),
+                        None)
+        _sec_row_amt = float((_sec_row or {}).get("金額") or 0)
+        # 2026-09-30：狀態必須兩來源一致才敢背書 —— 明細標「已清償」且實錄還款 ≥ 明細金額
+        # 才是「已清償」；任一不足即「清償中」；兩者皆無則留白（不對外宣稱）。
+        if (_sec_row and "已清償" in str(_sec_row.get("狀態") or "")
+                and _sec_row_amt and _sec_paid >= _sec_row_amt):
+            _sec_status = "已清償"
+        elif _sec_row or _sec_paid:
+            _sec_status = "清償中"
+        else:
+            _sec_status = ""
+        _rc_block = snap.get("restricted_cash") or {}
+        _debt_left = float(_rc_block.get("剩餘未清償") or 0)
         _seg = [f"房貸 {_fmt(_mtg)}（占負債 {_mtg_share:.0f}%）"] if _mtg else []
         if _pledge:
             _old = []
             if _ploan:
+                # 2026-09-30：餘額仍在帳上就不得宣稱「已清償」—— 原本狀態由剩餘未清償派生，
+                # 在「撥款已執行、保單端尚未截圖沖銷」的窗口會渲染出「保單質押 4,000,000
+                # @4.00% 已清償」這種餘額與狀態並存的矛盾敘述。改為：只要還在負債欄就是清償中。
                 _old.append((f"保單質押 {_fmt(_ploan)}{_rate_txt('保單借貸利率')}"
-                             f" {_ploan_status}").strip())
+                             f" 清償中").strip())
             if _sec_paid:
                 # 2026-09-30：原本是 `_sec_status or '已清償'` —— 寫死退路會在只有部分還款時
                 # 把「已還金額」標成「全額清償」（獨立審查實測：只還 500,000 仍印「已清償」）。
