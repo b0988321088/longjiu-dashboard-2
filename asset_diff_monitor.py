@@ -681,7 +681,9 @@ def buffett_advice(history: dict, snap: dict) -> str:
             _parts.append(f"{label}{_v:,}")
         _detail = "+".join(_parts)
     else:
-        _detail = "大義街1樓24,000+洲際W33,000+大義街23樓21,000+管理費2,100"
+        # 2026-09-30：原為寫死明細（大義街1樓24,000+…）；退路寫死舊值＝靜默給錯數字，
+        # 改為明確標示缺資料（fail-visible），不假裝有明細。
+        _detail = "（snapshot 缺 rent_breakdown，明細待補）"
     _rrm = (ex.get("rent_receivable_by_month") or {}).get(_m) or snap.get("rent_breakdown", {}) or {}
     _unpaid = "、".join(f"{_k}{int(_v - _rent_recv_month.get(_k, 0)):,}"
                         for _k, _v in _rrm.items() if (_v - _rent_recv_month.get(_k, 0)) > 0)
@@ -1271,6 +1273,16 @@ def push_to_notion(snap: dict) -> None:
         print("[notion] token missing, skip")
         return
     ex = extract_snapshot(snap)
+    # 2026-09-30：兩處修正 —— ①原字串尾部寫死「8/10 現金100萬先還星展理財型房貸（餘額2,006,447）」，
+    # 該筆已於 2026-08-11 全數清償，卻每天寫進 Notion（寫死日期＋金額，與真值脫節）。
+    # ②原「負債比率」用 ex['total_assets'] 當分母＝流動負債率口徑，卻標成「負債比率」
+    #（8/10 裁示為雙軌：主顯示含不動產、流動負債率另列監控）→ 改為兩者都標明口徑。
+    _re_n = float(snap.get("real_estate", snap.get("real_estate_value", 0)) or 0)
+    _denom_n = ex["total_assets"] + _re_n
+    _dr_n = ex["total_liabilities"] / _denom_n * 100 if _denom_n else 0
+    _drf_n = ex["total_liabilities"] / ex["total_assets"] * 100 if ex["total_assets"] else 0
+    _mtg_n = float(snap.get("mortgage_balance") or 0)
+    _mtgm_n = float(snap.get("mortgage_monthly_total") or 0)
     note = (
         f"總資產 {ex['total_assets']:,.0f}（{ex['total_assets']/10000:.0f}萬）"
         f"｜淨資產 {ex['net_worth']:,.0f}"
@@ -1280,8 +1292,8 @@ def push_to_notion(snap: dict) -> None:
         f"｜現金 {ex['cash']:,.0f}"
         f"｜負債 {ex['total_liabilities']:,.0f}"
         f"｜配息/月 {ex['fund_dividend_monthly']:,.0f}"
-        f"｜負債比率 {ex['total_liabilities']/ex['total_assets']*100:.1f}%"
-        f"｜8/10 現金100萬先還星展理財型房貸（餘額2,006,447）"
+        f"｜負債比率 {_dr_n:.1f}%（含不動產）｜流動負債率 {_drf_n:.1f}%"
+        f"｜房貸 {_mtg_n:,.0f}（月繳 {_mtgm_n:,.0f}）"
     )
     payload = {
         "parent": {"database_id": MASTER_DB},
