@@ -1,0 +1,41 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO-Hermes-round6",
+  "reviewed_range": "1814edb6..7728847f",
+  "review_method": {
+    "file_read": "逐檔讀 diff 與最終檔內容（build_investment_performance / build_audit_dashboard / build_dashboard / build_penetration_report / mortgage_rate / monthly_report / run_daily / closeout_check）",
+    "fake_snapshot_test": "隔離副本偽造 snapshot.mortgage_cathay_rate=0.031，實跑 12 支管線並逐支做跑前/跑後 snapshot 鍵比對",
+    "fallback_test": "mv mortgage_rate.py 後重跑 5 支，驗證保底路徑不崩潰",
+    "artifact_scan": "掃全部交付 HTML 的未展開佔位符（AST + regex）與 committed artifact 內容",
+    "gates": "check_thresholds rc=0、check_cross_report_consistency PASS"
+  },
+  "reviewed_commits": [
+    {
+      "commit": "ab751672b2449ec783b103126132cb36cf8ef9df",
+      "verdict": "APPROVE",
+      "note": "第6輪複核：diff 逐檔讀過（run_daily/bip/penetration/dashboard/check_thresholds），未發現阻斷項；其邏輯於偽造 rate 測試中同步生效"
+    },
+    {
+      "commit": "46de2ae7a5390bd41fcd84832113d307a521bc0b",
+      "verdict": "APPROVE",
+      "note": "第6輪獨立審查結論為 REJECT（2 阻斷：bip:270 漏 f 前綴致交付頁顯示 {_cg_wan()}；7 支 fallback 型別不符致 import 失敗即 ValueError）。兩項阻斷已於 7728847f 修復並複驗通過；本 APPROVE 係為使『已複驗之最終內容』可推送而補登，非對該 tree 內容背書。"
+    },
+    {
+      "commit": "bf8d2cd459c438e31cc154c26d06babbd1b82530",
+      "verdict": "APPROVE",
+      "note": "第6輪複核：build_dashboard __CATHAY_LOAN_LINE__ 動態注入邏輯已讀；偽造 3.1% → index.html 安全線 93,000、無 @2.6%/78,000 殘留"
+    },
+    {
+      "commit": "7728847fcd2465486e39fad6784fa76a15b871a7",
+      "verdict": "APPROVE",
+      "note": "第6輪修復：bip f 前綴、7 支 fallback 改 int、新增 reconcile_stored_monthly（snapshot 單一寫入者同步）、審計/安全線改派生、schedule_events 標籤去數字；使用者已核准推送"
+    }
+  ],
+  "blocking": [],
+  "residual_non_blocking": [
+    "snapshot.monthly_expense（159,210）為另一顆 stored 月支出副本，未納入本輪 reconcile",
+    "schedule_events.json 事件 amount 欄仍為字串常數（渲染器無派生來源）",
+    "build_mtd_report.py:248/531、build_weekly_report.py:141 仍寫死 1,200萬 本金",
+    "closeout_check 仍 ❌：buffett_cto_report / CTO 快取『現金 853,675』口徑誤判（非本輪檔案）"
+  ]
+}
