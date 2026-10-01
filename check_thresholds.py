@@ -376,6 +376,19 @@ def main() -> int:
                 if _t in _s:
                     errs.append(f"pending 未閉環卡狀態含「{_t}」→ build_dashboard 會誤判已結案、整卡隱藏：{str(_it.get('title',''))[:34]}")
                     break
+        # ── 國泰房貸利率一致性（2026-10-01）：權威鍵 vs 實繳月付 vs 舊副本 ──
+        _mcr = float(snap.get("mortgage_cathay_rate") or 0)
+        _mcp = float(snap.get("mortgage_cathay") or 0)
+        if _mcr and _mcp:
+            _exp_pay = _mcp * _mcr / 12
+            _act_pay = float((snap.get("monthly_fixed_expense") or {}).get("房貸_國泰") or 0)
+            if _act_pay and abs(_act_pay - _exp_pay) > 1:
+                errs.append(f"國泰房貸月付與 利率×本金/12 不一致：實繳 {_act_pay:,.0f} vs 派生 {_exp_pay:,.0f}"
+                            f"（rate={_mcr:.4f}、本金 {_mcp:,.0f}）→ 寬限期付息下兩者應相等；若已進入本利攤還請更新 mortgage_cathay_rate")
+            _cd = snap.get("cathay_disbursement")
+            _old_r = float((_cd or {}).get("rate") or 0) if isinstance(_cd, dict) else 0
+            if _old_r and abs(_old_r - _mcr) > 1e-9:
+                errs.append(f"國泰利率副本不一致：cathay_disbursement.rate {_old_r} ≠ mortgage_cathay_rate {_mcr}（應收斂為單一權威鍵）")
     except Exception as _e:
         errs.append(f"真值層檢查失敗：{_e}")
 

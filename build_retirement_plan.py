@@ -42,6 +42,9 @@ _rent_net_note = "房貸月付已計入月支出（不重複扣）"
 # 現金底線單一來源（9/27 裁示＝70 萬）：走 sabbatical_checklist_update._cash_floor，
 # 不在此處本地重算、也不留字面值退路（2026-09-28 翻新：寫死掃描必須為空）
 import sabbatical_checklist_update as _sab
+
+# 2026-10-01：具名化（僅 snapshot 缺值時作為最後防線；正常由真值派生）
+_FUDA_MDIV_FALLBACK = 45000
 _floor_s = float(_sab._cash_floor(snap) or 0)
 
 # ── 2026-09-23：本檔過去有多處以字面值寫死「當期」數字（覆蓋率／缺口／驗收等級／
@@ -175,7 +178,10 @@ _ext_txt = (f"🔴 缺口 {_ext_gap:,.0f}/月 → 現金水庫撐 {_ext_months} 
             if _ext_gap > 0 else "🟢 無缺口（水庫不受壓）")
 
 # 2029 情境（snapshot/記憶既有定案）
-fuda_2029 = 45000          # 富達 600萬 後收B 2029/8 解約免罰，領滿 ~45K/月
+_ctg2 = (snap.get('funds_breakdown', {}) or {}).get('國泰直購', {}) or {}
+fuda_2029 = round(next((_v for _k, _v in _ctg2.items()
+                        if '富達' in str(_k) and isinstance(_v, (int, float))), 0) * 0.0075) or _FUDA_MDIV_FALLBACK   # 2029 情境：以當前真值為基底
+# 富達 600萬 後收B 2029/8 解約免罰，領滿 ~44K/月（由 snapshot 真值派生，非寫死）
 stack_arb = "借 2.5-3% 買債 4.8-5%（前提：CPI<3% + 殖利率見頂 + 美元信用未爆）"
 after_2029 = fire_income + fuda_2029  # 2029 後月被動（未含疊卷套利）
 
@@ -248,7 +254,7 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <p class="meta">保守底線＝配息基本值 {div_conservative:,}（9/5 定版）＋房租 {rent:,}；當月實收＝{sc_month or '當月'}配息實收 {div_actual:,.0f}＋房租實收 {rent_actual:,.0f}。判準一律走保守底線。</p></div>
 
 <div class="card"><h2>📈 2029 升級情境（富達解約 + 疊卷套利）</h2>
-<p>富達 600 萬（後收 B 股，CDSC 3 年綁）2029/8 解約免罰 → 領滿約 +45,000/月 → 月被動上看 <b style="color:#22c55e">{after_2029:,}</b>。</p>
+<p>富達 600 萬（後收 B 股，CDSC 3 年綁）2029/8 解約免罰 → 領滿約 +{fuda_2029:,}/月 → 月被動上看 <b style="color:#22c55e">{after_2029:,}</b>。</p>
 <p>2029 後債券疊卷質押套利：{stack_arb}</p>
 <p class="callout">前提紅線：CPI &lt; 3% ＋ 殖利率見頂 ＋ 美元信用未爆；不滿足則只領不槓。</p></div>
 
@@ -257,7 +263,7 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><th>步驟</th><th>期間</th><th>財務關卡（通過才算數）</th></tr>
 <tr><td>① 債務優化（高息清零）</td><td>現在 ~ 2027/2</td><td>{_pf.pledge_status_line()}；洲際W轉貸 ≤2.5%；築巢 2.185% 生效 → 負債成本逐階下探</td></tr>
 <tr><td>② 留職停薪測試</td><td>2027/2 ~ 2027/8</td><td>薪資 {sal:,} 暫停後，月現金流 = 被動 {fire_income:,}（保守底線）／{fire_income_actual:,.0f}（當月實收） − 支出 {fire_cost:,} = <b style="color:#22c55e">+{fire_income - fire_cost:,}</b>（保守）／<b style="color:#38bdf8">+{fire_income_actual - fire_cost:,.0f}</b>（實收）（不含標案收入）；標案收入為增量；目標盈餘 9萬/月還債 70%</td></tr>
-<tr><td>③ 扣除房產淨資產 ≥ 0</td><td>2029-30</td><td>富達解約免罰 +45,000/月 + 債券疊卷套利；高息清零 + 還債進度 → 被動 &gt; 支出、淨資產轉正（現況 {net_worth:,}）</td></tr>
+<tr><td>③ 扣除房產淨資產 ≥ 0</td><td>2029-30</td><td>富達解約免罰 +{fuda_2029:,}/月 + 債券疊卷套利；高息清零 + 還債進度 → 被動 &gt; 支出、淨資產轉正（現況 {net_worth:,}）</td></tr>
 </table>
 <p class="callout">關鍵：決策 A（轉型）/ B（延長）/ C（回台電）<b>不影響退休基本盤</b> — 被動收入已覆蓋支出（保守底線 {fire_cov:.1f}%／當月實收 {fire_cov_actual:.1f}%），三步驟的財務關卡是「職業轉換的安全網」，退休規劃獨立運作（財務三桶分離）。</p></div>
 

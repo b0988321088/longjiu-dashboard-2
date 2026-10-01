@@ -229,9 +229,18 @@ if _pl_c > 0:
                  f"<td class='num'>{(_pl_c/_fund_pool*100 if _fund_pool else 0):.1f}%</td>"
                  f"<td>✅ 2026-09-29 撥款入帳（表定 540 萬；實撥 590 萬＝池市值×約 5 成）</td></tr>")
 if _rows_pl:
+    # 2026-10-01：房貸利率/金額改讀 snapshot 真值（原寫死「國泰 1,200萬@2.6%」、「永豐 1,312萬@2.5%」）
+    try:
+        _sn_pr = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+    except Exception:
+        _sn_pr = {}
+    _mc_p = float(_sn_pr.get("mortgage_cathay") or 0) / 10000
+    _mc_r = float(_sn_pr.get("mortgage_cathay_rate") or 0) * 100
+    _yy_p = sum(float(_sn_pr.get(k) or 0) for k in ("mortgage_yy", "mortgage_yydu", "mortgage_xz")) / 10000
+    _yy_r = float(_sn_pr.get("mortgage_yy_rate") or 0.025) * 100
     w(f"<div class='callout' style='border-left:3px solid #ef4444'>🔒 <b>現況質押借款（2026-09-05 透明化 — 既有質押非 0，情境表 LTV 為規則上限非現況）</b>"
       f"<table style='width:100%;font-size:12px;margin-top:6px;border-collapse:collapse'><tr style='color:#64748b'><th style='text-align:left;padding:3px 6px'>項目</th><th class='num'>借款</th><th class='num'>利率</th><th class='num'>LTV(佔擔保)</th><th>狀態</th></tr>{_rows_pl}</table>"
-      f"<span style='color:#64748b;font-size:12px'>{_pf.pledge_status_line()}；情境表 LTV 上限：當前『區間震盪』≤52%。房貸（大義街國泰 1,200萬@2.6%、洲際W 永豐 1,312萬@2.5%）屬不動產貸款，不計入質押。</span></div>")
+      f"<span style='color:#64748b;font-size:12px'>{_pf.pledge_status_line()}；情境表 LTV 上限：當前『區間震盪』≤52%。房貸（大義街國泰 {_mc_p:.0f}萬@{_mc_r:.1f}%、洲際W 永豐 {_yy_p:.0f}萬@{_yy_r:.1f}%）屬不動產貸款，不計入質押。</span></div>")
 
 # 1. Overview table
 w("<div class='card'><h2>🎯 配置總覽</h2>")

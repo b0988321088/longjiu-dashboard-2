@@ -58,12 +58,23 @@ DEFAULT_LOANS = [
     # balance_keys: 多 key = 加總（永豐 3 筆分帳號，勿用 mortgage=含國泰 25,082,544）
     # monthly_payment: 實際月付；None = 純付息（月付=利息）。永豐本利攤還 65,735（含本金）
     {"name": "永豐房貸（洲際W 本利攤還 2.5%）", "balance_keys": ["mortgage_yy", "mortgage_yydu", "mortgage_xz"], "rate": 0.025, "monthly_payment": 65735},
-    {"name": "國泰轉貸（大義街 2.6%）", "balance_keys": ["mortgage_cathay"], "rate": 0.026},
+    {"name": "國泰轉貸（大義街 2.6%）", "balance_keys": ["mortgage_cathay"], "rate": 0.026},  # 2026-10-01：rate 僅為最後防線；實際優先讀 snapshot.mortgage_cathay_rate
     {"name": "保單借貸（4%）", "balance_keys": ["policy_pledge_loan"], "rate": 0.040},
     {"name": "元大質押（3.92%）", "balance_keys": ["pledge_loan"], "rate": 0.0392},
     # 2026-09-29：國泰基金質押撥款 590萬@2.65%（質押基金池 1,178.6 萬×約5成）
     {"name": "國泰基金質押（2.65%）", "balance_keys": ["fund_pledge_loan"], "rate": 0.0265},
 ]
+
+
+def snap_mortgage_cathay_rate(snap):
+    """國泰轉貸利率真值推導（單一來源；供 bip 與 run_daily 共用口徑）：
+       snapshot.mortgage_cathay_rate（權威鍵）→ 月付×12/本金（3 年寬限純付息期有效）→ None"""
+    _r = float(snap.get("mortgage_cathay_rate") or 0)
+    if _r:
+        return _r
+    _mf = float((snap.get("monthly_fixed_expense") or {}).get("房貸_國泰") or 0)
+    _pr = float(snap.get("mortgage_cathay") or 0)
+    return (_mf * 12 / _pr) if (_mf and _pr) else None
 
 
 def load_loans(snap, adj_costs=None):
@@ -74,10 +85,21 @@ def load_loans(snap, adj_costs=None):
         bal = sum(snap.get(k, 0) or 0 for k in dl["balance_keys"])
         if bal <= 0:
             continue
-        rate = adj_costs.get(dl["name"], dl["rate"])
+        # 2026-10-01：利率優先序＝校正檔覆蓋 > snapshot 真值（僅國泰轉貸）> DEFAULT_LOANS
+        # （原僅 adj_costs/DEFAULT_LOANS 兩來源，與 run_daily 各自實作 → 跨報告口徑分裂，年差 60,000）
+        rate = adj_costs.get(dl["name"])
+        if not rate:
+            if "國泰轉貸" in dl["name"]:
+                rate = snap_mortgage_cathay_rate(snap) or dl["rate"]
+            else:
+                rate = dl["rate"]
+        rate = float(rate)
         monthly = bal * rate / 12
         pay = dl.get("monthly_payment") or monthly   # None→純付息
-        loans.append({"name": dl["name"], "balance": bal, "rate": rate,
+        _nm = dl["name"]
+        if "國泰轉貸" in _nm:
+            _nm = f"國泰轉貸（大義街 {rate*100:.1f}%）"   # 標籤動態（原寫死 2.6%）
+        loans.append({"name": _nm, "balance": bal, "rate": rate,
                       "monthly": monthly, "payment": pay})
     return loans
 
@@ -194,7 +216,7 @@ def write_dashboard_html(mk, class_rows, interest_total, grand, perf, project,
              f'<td style="padding:6px 8px;text-align:right;font-weight:700">{_fmt(sum(r["div"] for r in class_rows), True)}</td>'
              f'<td style="padding:6px 8px;text-align:right;font-weight:700;color:#dc2626">{_fmt(-sum(r["fee"] for r in class_rows), True)}</td>'
              f'<td style="padding:6px 8px;text-align:right;font-weight:900">{_fmt(grand, True)}</td></tr>')
-    L.append(f'<tr><td style="padding:6px 8px" colspan="4">投資利息（當月計入：房貸＋保單借貸；明細見月報校正檔）</td><td style="padding:6px 8px;text-align:right;color:#dc2626;font-weight:700">{_fmt(-interest_total, True)}</td></tr></table>')
+    L.append(f'<tr><td style="padding:6px 8px" colspan="4">投資利息（該月實際計入：房貸＋保單借貸；保單借貸已於 2026-10 全數清償，其後月份為 0；明細見月報校正檔）</td><td style="padding:6px 8px;text-align:right;color:#dc2626;font-weight:700">{_fmt(-interest_total, True)}</td></tr></table>')
     if project:
         L.append(f'<div style="font-size:10.5px;color:#94a3b8;margin-top:6px">📦 專案收入(非常態) {_fmt(project)}（另計不混入）</div>')
     L.append('</div>')
@@ -230,7 +252,10 @@ def write_dashboard_html(mk, class_rows, interest_total, grand, perf, project,
         pd = next((PERIOD[k] for k in PERIOD if nm.startswith(k)), "—")
         L.append(f'<tr><td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;font-weight:700">{T(nm)}</td><td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;font-size:11px;color:#6b7280">{pd}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{_fmt(cost)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6">{_fmt(cur)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;color:#dc2626">{_fmt(pl, True)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;color:#16a34a">{_fmt(cd, True)}</td><td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f3f4f6;font-weight:800;color:{col}">{_fmt(real, True)}</td></tr>')
     L.append(f'<tr style="background:#f9fafb"><td style="padding:6px 8px;font-weight:700">合計</td><td style="padding:6px 8px">—</td><td style="padding:6px 8px;text-align:right;font-weight:700">{_fmt(sum(r[1] for r in pol_rows))}</td><td style="padding:6px 8px;text-align:right;font-weight:700">{_fmt(sum(r[2] for r in pol_rows))}</td><td style="padding:6px 8px;text-align:right;font-weight:700;color:#dc2626">{_fmt(sum(r[5] for r in pol_rows), True)}</td><td style="padding:6px 8px;text-align:right;font-weight:700;color:#16a34a">{_fmt(sum(r[4] for r in pol_rows), True)}</td><td style="padding:6px 8px;text-align:right;font-weight:900;color:#16a34a">{_fmt(real_sum, True)}</td></tr></table>')
-    L.append(f'<div style="font-size:11px;color:#065f46;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;margin-top:8px">✅ <b>判定（2026-09-05 核准標準）</b>：月配息估 {_fmt(ins_div_m)} ＞ 保單借貸月息 {_fmt(pledge_m)}，且累計本金+配息 {_fmt(real_sum)} 為正 → <b>{cov}</b></div>')
+    _pre_txt = (f"月配息估 {_fmt(ins_div_m)} ＞ 保單借貸月息 {_fmt(pledge_m)}，且累計本金+配息 {_fmt(real_sum)} 為正"
+                if pledge_m > 0 else
+                f"月配息估 {_fmt(ins_div_m)}｜累計本金+配息 {_fmt(real_sum)}（保單借貸已清償，無借貸成本）")
+    L.append(f'<div style="font-size:11px;color:#065f46;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;margin-top:8px">✅ <b>判定（2026-09-05 核准標準）</b>：{_pre_txt} → <b>{cov}</b></div>')
     dr8 = (snap.get("dividend_records") or {}).get(mk, {}) or {}
     _d_allianz = sum(_v for _k, _v in dr8.items() if "安聯" in _k and isinstance(_v, (int, float)))
     _d_first = sum(_v for _k, _v in dr8.items() if "第一金" in _k and isinstance(_v, (int, float)))
@@ -245,7 +270,7 @@ def write_dashboard_html(mk, class_rows, interest_total, grand, perf, project,
     pl12 = cur12 - cost12
     L.append(f'<tr style="background:#f9fafb"><td style="padding:6px 8px;font-weight:700">合計 {_fmt(cur12)} vs 投入 12,000,000</td><td style="padding:6px 8px;text-align:right;font-weight:900;color:{"#dc2626" if pl12 < 0 else "#16a34a"}">{_fmt(pl12, True)}</td></tr></table>')
     ok12 = "✅ 配息可 cover 利息（本金+配息 > 借貸成本）" if cathay_div >= cathay_m else "⚠️ 配息不足 cover 利息"
-    L.append(f'<div style="font-size:11px;color:#065f46;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;margin-top:8px">富達月配息估 {_fmt(cathay_div)} vs 國泰月息 {_fmt(cathay_m)}（12M×2.6%）→ {ok12}</div></div>')
+    L.append(f'<div style="font-size:11px;color:#065f46;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;margin-top:8px">富達月配息估 {_fmt(cathay_div)} vs 國泰月息 {_fmt(cathay_m)}（本金讀 snapshot；利率讀 snapshot/校正檔）→ {ok12}</div></div>')
     # ── 鉅亨網基金（2026-09-05 補：基金檢核含鉅亨，非只有國泰直購）──
     _fb = snap.get("funds_breakdown", {}) or {}
     _jh_rows = []
@@ -426,7 +451,10 @@ def main():
     if _cur12:
         print(f"  {'合計現值':26s} {_cur12:>12,.0f}  vs 投入 12,000,000 → 損益 {_cur12 - _cost12:+,.0f}（snapshot 最新真值）")
     # 2026-10-01：改動態（原寫死 26000/45000）— 月息讀 load_loans 單一來源，月配估由國泰直購富達市值 × 0.75%/月
-    _cathay_m = next((_l["monthly"] for _l in load_loans(snap, rate_overrides) if "國泰轉貸" in _l["name"]), 0)
+    try:
+        _cathay_m = next((_l["monthly"] for _l in load_loans(snap, rate_overrides) if "國泰轉貸" in _l["name"]), 0)
+    except Exception:
+        _cathay_m = 0
     _cathay_div = round(next((_v for _k, _v in _ct.items()
                               if "富達" in str(_k) and isinstance(_v, (int, float))), 0) * 0.0075)
     print(f"  月配息估 {_cathay_div:,.0f}（富達） vs 國泰月息 {_cathay_m:,.0f} → "

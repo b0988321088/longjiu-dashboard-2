@@ -36,6 +36,20 @@ try:
 except Exception:
     _snap_date = date.today().isoformat()
 TODAY = _snap_date  # 2026-08-21 修正：報告日期跟 snapshot date 一致（跨日時 four_source_sync 會先刪 {today} 日報，若 run_daily 用 date.today 會失配）
+# 2026-10-01：魔術數字具名化（僅在 snapshot 缺值時作為最後防線）
+CATHAY_MORTGAGE_RATE_FALLBACK = 0.026
+try:
+    from build_investment_performance import snap_mortgage_cathay_rate as _snap_mc_rate
+except Exception:                      # 匯入失敗時退回本地推導（口徑仍同）
+    def _snap_mc_rate(snap):
+        _r = float(snap.get("mortgage_cathay_rate") or 0)
+        if _r:
+            return _r
+        _mf = float((snap.get("monthly_fixed_expense") or {}).get("房貸_國泰") or 0)
+        _pr = float(snap.get("mortgage_cathay") or 0)
+        return (_mf * 12 / _pr) if (_mf and _pr) else None
+_FUDA_MDIV_FALLBACK = 45000      # 富達月配估：僅 snapshot 缺「富達」鍵時的最後防線
+
 SNAPSHOT = BASE / "snapshot.json"
 RULES = BASE / "DAILY_REPORT_PIPELINE_RULE.md"
 LEDGER = BASE / "Company_Ledger.md"
@@ -371,7 +385,20 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     if tv['mortgage_xz'] > 0:
         loans_rows_html += f"""          <tr><td>永豐銀行</td><td>永豐房貸 (XZ)</td><td>—</td><td class="num">{tv['mortgage_xz']:,}</td><td>—</td></tr>\n"""
     if tv['mortgage_cathay'] > 0:
-        loans_rows_html += f"""          <tr><td>國泰世華</td><td>國泰房貸（大義街轉貸 2.6%）</td><td>20日</td><td class="num">{tv['mortgage_cathay']:,}</td><td>9/20起月付 26,000</td></tr>\n"""
+        # 2026-10-01：利率/月付讀完整 snapshot（tv=calibrate_sources 輸出，不含
+        # monthly_fixed_expense 與 mortgage_cathay_rate → 必須自行讀檔，否則 fallback 邏輯失效）
+        try:
+            _sn_mc = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
+        except Exception:
+            _sn_mc = {}
+        _mc_prin = float(_sn_mc.get('mortgage_cathay') or tv['mortgage_cathay'] or 0)
+        _mc_pay = float((_sn_mc.get('monthly_fixed_expense') or {}).get('房貸_國泰') or 0)
+        _mc_rate_v = _snap_mc_rate(_sn_mc) or CATHAY_MORTGAGE_RATE_FALLBACK   # 共用推導（單一來源）
+        # 2026-10-01：月付改由 利率×本金/12 派生（原讀 monthly_fixed_expense 形成第二來源，
+        # 偽造利率時會出現「3.1% 標籤配 月付 26,000」的頁內矛盾）；實際繳款值改由 check_thresholds 交叉斷言
+        _mc_pay = round(_mc_prin * _mc_rate_v / 12)
+        _mc_rate = _mc_rate_v * 100
+        loans_rows_html += f"""          <tr><td>國泰世華</td><td>國泰房貸（大義街轉貸 {_mc_rate:.1f}%）</td><td>20日</td><td class="num">{tv['mortgage_cathay']:,}</td><td>9/20起月付 {_mc_pay:,.0f}</td></tr>\n"""
     if tv['financial_mortgage'] > 0:
         # 2026-08-10 註記：8/10 現金 100 萬先還星展理財型房貸（餘額 3,006,447 → 2,006,447）
         loans_rows_html += f"""          <tr><td>星展銀行</td><td>理財型房貸</td><td>—</td><td class="num">{tv['financial_mortgage']:,}</td><td>8/10 已還 100 萬</td></tr>\n"""
@@ -1566,8 +1593,8 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
         _em = _em.replace("╔", "").replace("╗", "").replace("╚", "").replace("╝", "").replace("║", "").replace("═", "")
         _em = _em.replace("━━━", "").replace("━━", "").replace("━", "")
         _em = _em.replace("───", "").replace("──", "").replace("─", "")
-        # 分隔線改為 HTML hr
-        import re
+        # 分隔線改為 HTML hr（2026-10-01：移除此地 import re — 它會把 re 變成函式區域變數，
+        # 當 llm_emergency 為空時 _pct_from 閉包解析 re 失敗 → NameError，整張槓桿風控卡被靜默丟棄。模組層 L12 已 import re）
         _em = re.sub(r'[━═─]{5,}', '<hr style="border:0;border-top:1px dashed #475569;margin:10px 0">', _em)
         # 標題關鍵字加粗
         for kw in ["【壹】", "【貳】", "【參】", "【肆】", "【伍】", "【陸】"]:
@@ -1797,8 +1824,6 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 if not _us30y_now:
                     _us30y_now = (_r8b.get("indicators", {}) or {}).get("us30y") or 0
                 _p1_loan = _dp2.get("total", 12000000) or 12000000
-                _p1_cost_y = _p1_loan * 0.026
-                _p1_cost_m = _p1_cost_y / 12
                 # 2026-09-12：質押口徑改「全部動態」（原寫死 5,400,000 / 11,773,599 / 2.77%）
                 # 來源：snapshot.cathay_pledge_0911（擔保池/成數/可貸/利率）+ dragon_assets.db liabilities（既有借款）
                 _snap_p = {}
@@ -1806,6 +1831,11 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     _snap_p = json.loads(Path("snapshot.json").read_text(encoding="utf-8"))
                 except Exception:
                     _snap_p = {}
+                # 2026-10-01：國泰轉貸利率改讀真值（原寫死 0.026）— 與 ① 槓桿成本顯示 {_mc_r_pct} 同源，
+                # 避免「顯示 vs 計算」口徑分裂（CIO 重審 blocking：3.1% 時曾印出 ×3.1% 但年成本仍是 2.6% 的值）
+                _mc_rate_v = _snap_mc_rate(_snap_p) or CATHAY_MORTGAGE_RATE_FALLBACK   # 共用推導（單一來源）
+                _p1_cost_y = _p1_loan * _mc_rate_v
+                _p1_cost_m = _p1_cost_y / 12
                 _cp = (_snap_p.get("cathay_pledge_0911") or {})
                 def _pct_from(s, default_pct):
                     """'4.5 成（45%）'→0.45；'2.77%'→0.0277（先找 % 再找 成）"""
@@ -1872,7 +1902,11 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     f"<strong>⑥ 待確認：</strong>{'；'.join((_cp.get('待補') or [])[:3]) or '—'}"
                     f"</div></div>"
                 )
-                _fid_mdiv = 45000  # 富達月配估（0.75%/月 × 600萬）
+                # 2026-10-01：改動態（原寫死 45000）— 與 build_investment_performance 同源派生
+                _ctg = (tv.get("funds_breakdown", {}) or {}).get("國泰直購", {}) or {}
+                _fid_mdiv = round(next((_v for _k, _v in _ctg.items()
+                                        if "富達" in str(_k) and isinstance(_v, (int, float))), 0) * 0.0075) \
+                    or _FUDA_MDIV_FALLBACK
                 _rent_recv = tv.get("rent_received_records") or {}
                 _rent_got = 0
                 for _rv in (_rent_recv.values() if isinstance(_rent_recv, dict) else []):
@@ -1911,13 +1945,15 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _philosophy_items.append(
                     f"現金底線 可動用 {_cash_now:,.0f}（真值 {_cash_all:,.0f}；≥700,000 "
                     f"{'✅' if _cash_now >= 700000 else '🔴'}）")
-                _philosophy_items.append("利差 2.6%→4.8-6% ✅" if (_us30y_now or 0) < 5.50 else "利差 ⚠️")
+                # 2026-10-01：利差文字改動態（_mc_rate_v 已於槓桿成本段上方由 snapshot 推導，同源）
+                _mc_r_pct = _mc_rate_v * 100
+                _philosophy_items.append(f"利差 {_mc_r_pct:.1f}%→4.8-6% ✅" if (_us30y_now or 0) < 5.50 else "利差 ⚠️")
                 _philosophy_html = "｜".join(_philosophy_items)
                 _lv_html = (
                     f"<div class='callout callout-warning' style='margin-top:12px'>"
                     f"<h3>📊 槓桿風控輸出（9/11 定案：整池質押版）</h3>"
                     f"<div style='font-size:12.5px;line-height:1.8'>"
-                    f"<strong>① 槓桿成本：</strong>第一層（國泰轉貸 {_p1_loan/10000:.0f}萬×2.6%）≈ {_p1_cost_y/10000:.1f}萬/年（月 {_p1_cost_m:,.0f}）＋質押層（{_pool_txt} 池{_pool_principal/10000:.0f}萬×{_pledge_pct*10:.1f}成={_pledge_loan/10000:.0f}萬@{_pledge_rate*100:.2f}%）≈ {_pledge_cost_y/10000:.1f}萬/年（月 {_pledge_cost_m:,.0f}）→ 合計 ~{(_p1_cost_y+_pledge_cost_y)/10000:.1f}萬/年（月 {_p1_cost_m+_pledge_cost_m:,.0f}）<br/>"
+                    f"<strong>① 槓桿成本：</strong>第一層（國泰轉貸 {_p1_loan/10000:.0f}萬×{_mc_r_pct:.1f}%）≈ {_p1_cost_y/10000:.1f}萬/年（月 {_p1_cost_m:,.0f}）＋質押層（{_pool_txt} 池{_pool_principal/10000:.0f}萬×{_pledge_pct*10:.1f}成={_pledge_loan/10000:.0f}萬@{_pledge_rate*100:.2f}%）≈ {_pledge_cost_y/10000:.1f}萬/年（月 {_pledge_cost_m:,.0f}）→ 合計 ~{(_p1_cost_y+_pledge_cost_y)/10000:.1f}萬/年（月 {_p1_cost_m+_pledge_cost_m:,.0f}）<br/>"
                     f"<strong>② LTV：</strong>質押 {_pledge_loan:,.0f}/{_pledge_collateral:,.0f} = {_pledge_loan/_pledge_collateral*100:.1f}%（🟢 安全值≤53%）；池 -30% 情境 → LTV {_pledge_loan/(_pledge_collateral*0.7)*100:.1f}%（🟡 距追繳線 70% 尚有 {70-_pledge_loan/(_pledge_collateral*0.7)*100:.1f}pp）<br/>"
                     f"<strong>③ 月度利息流出 vs 現金流入：</strong>流出 {_p1_cost_m+_pledge_cost_m:,.0f} vs 流入（常態配息＋房租）{_income_m:,.0f}＋富達月配 ~{_fid_mdiv:,} = {_income_m+_fid_mdiv:,.0f} — {'✅ 覆蓋' if (_income_m+_fid_mdiv) >= (_p1_cost_m+_pledge_cost_m) else '⚠️ 未覆蓋'}<br/>"
                     f"<strong>④ 到期對照：</strong>負債＝國泰轉貸 1,200萬（3年寬限期）＋質押 {_pledge_loan/10000:,.0f}萬（富達600＋聯博100＋貝萊德B11 500 擔保，基金無到期日）；富達為月配現金流資產，無期限錯配 ✅<br/>"

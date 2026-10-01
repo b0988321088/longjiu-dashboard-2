@@ -194,8 +194,15 @@ def main():
                 _pl2 = _pf_d.pledge_status_line(style="short")
             except Exception:
                 _pl2 = "質押狀態未知"
+            # 2026-10-01：國泰房貸利率/金額改讀 snapshot 真值（原寫死「1,200萬@2.6%」）
+            try:
+                _sn_db = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+            except Exception:
+                _sn_db = {}
+            _mc_p_d = float(_sn_db.get("mortgage_cathay") or 0) / 10000
+            _mc_r_d = float(_sn_db.get("mortgage_cathay_rate") or 0) * 100
             rep["__RISK_FUNDS__"] = (
-                "— 美債殖利率高檔為主要風險；國泰 1,200萬@2.6% 8/20 撥款"
+                f"— 美債殖利率高檔為主要風險；國泰 {_mc_p_d:,.0f}萬@{_mc_r_d:.1f}% 8/20 撥款"
                 f"（配置：富達600＋聯博100＋貝萊德B11 500）；{_pl2}")
             _rules = [f"{_r.get('動作','')}{(_r.get('類別') or '').strip()}：{_brief2(_r.get('內容',''))}"
                       for _r in _rows2[:5]]
