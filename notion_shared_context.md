@@ -17,7 +17,7 @@
 - **Monthly Income**: 228751
 - **Monthly Expense**: 172543
 - **Working Surplus**: 75970
-- **Retirement Surplus**: 17319
+- **Retirement Surplus**: 20890
 - **Securities Total Market Value**: 2993630
 - **Fund Market Value**: 12654144
 - **Moneybook Total**: 3614169

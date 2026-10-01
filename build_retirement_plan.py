@@ -16,7 +16,7 @@ pi = snap.get("passive_income", {})
 # 2026-09-15：台電月薪（單一真值 snapshot）——原字串寫死 39,727（8 月值），9 月起常態調薪 42,560
 sal = int(snap.get("monthly_salary") or snap.get("salary") or 0)
 fire_income = pi.get("total_conservative", 0)
-fire_cost = pi.get("monthly_expense") or snap.get("monthly_expense") or 0
+fire_cost = int(float(pi.get("monthly_expense") or snap.get("monthly_expense") or 0))  # 2026-10-01：int 化（浮點尾巴 'x,xxx.0' 會上頁，gate 判 FAIL）
 fire_cov = pi.get("coverage_pct", 0)
 rent = pi.get("rent_monthly") or 0
 div_conservative = pi.get("fund_dividend_conservative", 0)
@@ -31,7 +31,7 @@ expense = fire_cost
 div_c = div_conservative
 # 2026-09-29：退休/留停跑道一律用可動用現金（扣質押撥款指定清償款）
 from sot_targets import restricted_cash as _rst_fn
-cash = max(0.0, float(snap.get("cash_total") or 0) - _rst_fn(snap))
+cash = max(0, int(round(float(snap.get("cash_total") or 0) - _rst_fn(snap))))  # 2026-10-01：int 化（避免頁面出現 853,675.0 浮點尾巴）
 liab_cost = 16600  # 保單借貸 13,333 ＋ 元大證金 3,267（利息口徑）
 # 2026-09-28 使用者裁示：房貸月付已計入月支出（monthly_fixed_expense 的房貸項），
 # 在房租端再扣一次＝重複計算（週報/月支出同口徑），且常態房租 80,100 是兩間房的

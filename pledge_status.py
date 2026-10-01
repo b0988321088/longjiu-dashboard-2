@@ -64,7 +64,7 @@ def pledge_facts(snap: dict | None = None) -> dict:
         "池本金": pool,
         "池本金萬": _wan(pool),
         "成數": p.get("成數_數值") or (amt / pool if pool else 0),
-        "成數文字": f"{(p.get('成數_數值') or (amt / pool if pool else 0)) * 10:.1f}成",
+        "成數文字": f"{(p.get('成數_數值') or (amt / pool if pool else 0)) * 10:g}成",  # 2026-10-01：:g 去尾零（原 .1f 產生「5.0成」浮點尾巴，gate 判 FAIL）
         "可貸": amt,
         "可貸萬": _wan(amt),
         "利率": rate,

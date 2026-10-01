@@ -1,0 +1,33 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO-Hermes",
+  "scope": "① 配息 A 制回溯（FA81 13,005 自 9 月移 8 月）② 月支出口徑單一化＋浮點尾巴清除（gate 4 條既有 FAIL 清空）",
+  "trigger": "使用者 2026-10-01：「核准」",
+  "date": "2026-10-01",
+  "root_cause": [
+    "① 2026-09-18 舊制「看入帳日」把第一金 FA81 聯博 13,005（基準日 8/28、入帳 9/7）記在 9 月；2026-10-01 使用者定調 A（所屬月份／基準日制）→ 依 A 應歸 8 月",
+    "② passive_income.monthly_expense 停在 172,543.0（過渡期口徑、且為 float），頂層 monthly_expense 已 159,210（保單借貸 400 萬 9/29＋10/1 清償後口徑）→ 同系統兩個月支出；退休頁因此顯示 172,543.0 並與 snapshot 派生值 20,890 不一致",
+    "③ pledge_status.pledge_facts 成數文字用 .1f → 「5.0成」浮點尾巴上頁",
+    "④ DAILY_REPORT_PIPELINE_RULE.md 與 notion_shared_context.md 的退休後盈餘停在 +17,319（162,781 口徑）"
+  ],
+  "fix": [
+    "snapshot.dividend_records：2026-09 移除 FA81 13,005、2026-08 新增同筆 → 9 月 183,591→170,586、8 月 138,627→151,632（source_note 載明依 A 制與使用者核准）",
+    "investment_performance_adjust.json：2026-08 配息.保單 102,469→115,474（校正檔與 dividend_records 機械重算一致）",
+    "sync_dual_dimension.py：passive_income.monthly_expense 172,543.0→159,210、coverage_pct 104.4→113.1（單一來源＝頂層 monthly_expense）",
+    "snapshot.retirement_surplus 17,319→20,890（＝保守被動 180,100 − 月支出 159,210，由 passive_caliber.scenarios 派生）",
+    "DAILY_REPORT_PIPELINE_RULE.md／notion_shared_context.md：退休後盈餘與月支出同步為現算值",
+    "build_retirement_plan.py：fire_cost 與 cash int 化（去除 x,xxx.0 浮點尾巴）",
+    "pledge_status.py：成數文字 .1f→:g（5.0成→5成）"
+  ],
+  "verification": {
+    "dividend": "dividend_records 8 月 151,632／9 月 170,586；investment_performance_adjust 8 月保單 115,474 與分類器重算一致（gate 校正檔檢查 PASS）",
+    "propagation": "170,586 已同步 index.html／monthly_report_2026-09／investment_performance／retirement_plan；183,591 與 121.8% 全站殘留 0；留停表 2026-10 壓力情境 183,569／115.3%",
+    "gates": "check_dividend_caliber 50/58（修正前基準，含 4 條既有 FAIL）→ 57/58；殘 1 條為未追蹤檔 gen_emergency_us_20261001.py（非本輪範圍）。check_dashboard_sync PASS、check_cross_report_consistency PASS、check_dashboard_stale PASS",
+    "artifacts": "11 支建置＋run_daily 全 rc=0；日報／月報／穿透／審計／再平衡／投資績效／MTD 全數重生"
+  },
+  "non_blocking_leftovers": [
+    "db_loader.build_truth_values 仍以 162,781 硬編碼派生 working_surplus/retirement_surplus（DB 真值路徑，未在本輪動；與 snapshot 已分歧，建議另案）",
+    "monthly_report_2026-08.html 為 20:45 舊產物（asset_diff_history 已無 8 月鍵，無法重生）",
+    "日報『盈餘 +75,970』仍用 152,781 舊口徑（run_daily 內部字串，未受 gate 檢核）"
+  ]
+}
