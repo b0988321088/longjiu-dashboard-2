@@ -1759,11 +1759,26 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             _rw_ext_txt = _pcal.runway_text(_sc["extreme"]["runway_days"])   # 跑道分母＝極端情境（2026-09-28）
             _rw_act_txt = _pcal.runway_text(_sc["act"]["runway_days"])
             _cov_stress = _sc["stress"]["coverage"]                          # 留停判準壓力情境
+            # 2026-10-02 裁示（第 1 批②）：留停 Gate（三條硬門檻）＋現金模式＋今日動作（觸發器單一入口）
+            try:
+                from sot_targets import sabbatical_gate as _sg, cash_mode as _cm, triggers as _trg
+                _g = _sg(_snap_p)
+                _c = _cm(_snap_p)
+                _t = _trg(_snap_p)
+                _gate_line = ("🧭 留停 Gate：<b>" + _g["判定"] + "</b>（"
+                              + "、".join(x["名稱"].split(" ")[0] + ("✅" if x["通過"] else "❌")
+                                          for x in _g["gate"]) + "）｜"
+                              + "現金模式：<b>" + _c["模式"] + "</b>（可動用 "
+                              + format(_c["可動用"], ",.0f") + "／底線 " + format(_c["底線"], ",.0f") + "）｜"
+                              + "今日動作：<b>" + _t["今日結論"] + "</b>")
+            except Exception as _e:
+                _gate_line = "🧭 留停 Gate：無法判定（" + str(_e) + "）"
             _cur_line = (f"<div style='font-size:12px;color:#92400e;margin-top:6px;padding-top:6px;border-top:1px dashed #fbbf24'>"
                           f"📊 即時（{_snap_p.get('date','')}）："
                           f"月配息保守 {_div_con:,.0f}／實收 {_div_cur:,.0f}｜"
                           f"總資產 {_ta:,.0f}｜淨資產 {_nw:,.0f}｜"
                           f"覆蓋 {_cov_con:.1f}%／實收 {_cov_act:.1f}%<br>"
+                          f"{_gate_line}<br>"
                           f"💰 月盈餘：保守 {_sur_con:+,.0f}／實收 {_sur_act:+,.0f}｜"
                           f"FI 跑道（極端情境口徑）：{_rw_ext_txt}、實收情境 {_rw_act_txt}｜"
                           f"壓力情境覆蓋 {_cov_stress:.1f}%"

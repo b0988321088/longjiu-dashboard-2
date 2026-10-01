@@ -92,7 +92,8 @@ def _cash_cases() -> list[tuple[str, bool, str]]:
     # 2026-10-01：可動用現金口徑（cash_layers.unrestricted_cash）——內文寫「現金 853,675
     #   守住底線 70 萬」時指的是可動用現金（指定用途款不列現金），與穿透桶『現金/安全網』不同。
     #   同樣動態讀 snapshot，避免現金一動就假失敗。
-    _liq = int(((_s.get("cash_layers") or {}).get("unrestricted_cash")) or 0)
+    _liq = int(((_s.get("cash_layers") or {}).get("available")
+                or (_s.get("cash_layers") or {}).get("unrestricted_cash")) or 0)
     if _liq:
         _out.append(("現金 %s" % format(_liq, ","), True, "可動用現金＝cash_layers.unrestricted_cash（動態）"))
         if _floor and _liq > _floor:

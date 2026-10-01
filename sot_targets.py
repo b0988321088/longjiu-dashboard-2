@@ -557,3 +557,281 @@ def redline_policy(streak_days, today: str | None = None) -> dict:
         "source": "sot_targets.redline_policy（使用者 2026-09-30 定案）",
         "derived_at": today or dt.date.today().isoformat(),
     }
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# 決策核心單一入口（使用者 2026-10-02 裁示；第 1 批：現金三層／留停 Gate／觸發器）
+# ════════════════════════════════════════════════════════════════════════════
+# 裁示重點：
+#   ① 可動用現金唯一真值＝cash_layers.unrestricted_cash（853,675）；
+#      穿透桶『現金/安全網』（854,264）列「在途／未對帳差異」，
+#      不得參與 Gate／覆蓋率／投資決策。
+#   ② 留停硬 Gate＝自由現金 ≥100 萬＋壓力現金流 ≥100%＋跑道 ≥540 天；
+#      保守覆蓋與 3 個月趨勢降為**參考指標**（不參與 GO/WAIT）；取消 B 級與健康度分數敘事。
+#   ③ 70～100 萬＝防守模式（禁新增槓桿／主動加碼，不擋既有定額）；<70 萬＝現金保全模式。
+#   ④ LTV ≥53%＝禁止新增質押（用語「新增質押上限 53%」）；≤45 正常；45~53 注意；70% 追繳層。
+
+CASH_MODE_NOTE = "可動用現金＝cash_layers.unrestricted_cash（唯一真值，2026-10-02 裁示）"
+
+
+def allowable_cash(snap: dict) -> float:
+    """可動用現金唯一真值（2026-10-02 裁示定案：cash_layers.available ＝ 853,675）。
+
+    穿透桶『現金/安全網』為在途／未對帳口徑（差額 589），不得用於 Gate／覆蓋率／投資決策。
+    """
+    cl = (snap or {}).get("cash_layers") or {}
+    for k in ("available", "unrestricted_cash"):
+        v = cl.get(k)
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            return float(v)
+    raise KeyError("snapshot.cash_layers.unrestricted_cash 缺值 → 可動用現金無真值，拒絕判斷"
+                   "（2026-10-02 裁示：不得改用穿透桶『現金/安全網』）")
+
+
+def cash_floor(snap: dict) -> float:
+    """現金硬底線（70 萬）：cash_floor_rule.cash_floor → thresholds.現金_twd.生活底線。"""
+    v = ((snap or {}).get("cash_floor_rule") or {}).get("cash_floor")
+    if not isinstance(v, (int, float)) or isinstance(v, bool):
+        v = (((snap or {}).get(SOT_KEY) or {}).get("現金_twd") or {}).get("生活底線")
+    if not isinstance(v, (int, float)) or isinstance(v, bool):
+        raise KeyError("snapshot 缺現金底線（cash_floor_rule.cash_floor／現金_twd.生活底線）→ 拒絕判斷")
+    return float(v)
+
+
+def gate_thresholds(snap: dict) -> dict:
+    """留停硬 Gate 門檻（SoT：snapshot.sabbatical_gate_twd；缺值即 raise，不猜）。"""
+    g = (snap or {}).get("sabbatical_gate_twd") or {}
+    need = ("自由現金_twd", "壓力覆蓋_pct", "跑道天數")
+    missing = [k for k in need if not isinstance(g.get(k), (int, float))]
+    if missing:
+        raise KeyError(f"snapshot.sabbatical_gate_twd 缺 {missing} → 留停 Gate 無門檻真值，拒絕判斷")
+    return g
+
+
+def cash_mode(snap: dict) -> dict:
+    """現金模式（裁示 2026-10-02 第 3 點）。
+
+    正常（≥100 萬）：無現金面限制
+    防守模式（70～100 萬）：禁新增槓桿（質押／借款／借錢投資）＋主動加碼風險資產
+                            ＋新增高額一次性投資；既有定期定額、已排定契約付款、
+                            必要資產維護**不擋**
+    現金保全模式（<70 萬）：連既有定額投入也暫停
+    """
+    avail = allowable_cash(snap)
+    floor = cash_floor(snap)
+    cap = float(gate_thresholds(snap)["自由現金_twd"])
+    if avail < floor:
+        mode, color = "現金保全模式", "red"
+        ban = ["新增質押", "新增借款", "借錢投資", "主動加碼風險資產",
+               "新增高額一次性投資", "既有定期定額投入"]
+        allow = ["必要資產維護", "已排定之保單／契約付款"]
+    elif avail < cap:
+        mode, color = "防守模式", "amber"
+        ban = ["新增質押", "新增借款", "借錢投資", "主動加碼風險資產", "新增高額一次性投資"]
+        allow = ["已承諾之定期定額", "已排定之保單／契約付款", "必要資產維護"]
+    else:
+        mode, color = "正常", "green"
+        ban, allow = [], ["（無現金面限制）"]
+    return {"模式": mode, "燈號": color, "可動用": avail, "底線": floor,
+            "自由現金門檻": cap, "餘裕": avail - floor, "距門檻": cap - avail,
+            "禁止": ban, "允許": allow,
+            "說明": "可動用＝cash_layers.unrestricted_cash（唯一真值）；"
+                    "穿透桶『現金/安全網』為在途／未對帳口徑，不參與判斷",
+            "source": "sot_targets.cash_mode（使用者 2026-10-02 裁示）"}
+
+
+def sabbatical_gate(snap: dict) -> dict:
+    """留停 Gate（裁示 2026-10-02 第 2 點）：三條硬門檻 → GO/WAIT；其餘為參考指標。"""
+    import passive_caliber as _pc          # 延遲匯入（passive_caliber 反向 import 本模組）
+    sc = _pc.scenarios(snap) or {}
+    thr = gate_thresholds(snap)
+    avail = allowable_cash(snap)
+    stress = float((sc.get("stress") or {}).get("coverage") or 0.0)
+    con_cov = float((sc.get("con") or {}).get("coverage") or 0.0)
+    act_cov = float((sc.get("act") or {}).get("coverage") or 0.0)
+    runway = float(_pc.runway_days(sc) or 0.0)
+    gates = [
+        {"名稱": "自由現金 ≥100 萬", "現值": avail, "門檻": float(thr["自由現金_twd"]),
+         "通過": avail >= float(thr["自由現金_twd"]),
+         "顯示": "{:,.0f} / {:,.0f}".format(avail, float(thr["自由現金_twd"]))},
+        {"名稱": "壓力現金流 ≥100%", "現值": stress, "門檻": float(thr["壓力覆蓋_pct"]),
+         "通過": stress >= float(thr["壓力覆蓋_pct"]), "顯示": "{:.1f}%".format(stress)},
+        {"名稱": "跑道 ≥540 天", "現值": runway, "門檻": float(thr["跑道天數"]),
+         "通過": runway >= float(thr["跑道天數"]), "顯示": "{:,.0f} 天".format(runway)},
+    ]
+    go = all(g["通過"] for g in gates)
+    return {
+        "判定": "GO" if go else "WAIT",
+        "燈號": "🟢 GO（取得留停選擇權）" if go else "🟡 WAIT（尚未取得）",
+        "gate": gates,
+        "未達": [g["名稱"] for g in gates if not g["通過"]],
+        "參考指標": {"保守覆蓋_pct": round(con_cov, 1), "當月實收覆蓋_pct": round(act_cov, 1),
+                     "3個月趨勢": "需連續 3 個月真值日資料（不參與判定）"},
+        "現金模式": cash_mode(snap)["模式"],
+        "說明": "硬 Gate 只決定 GO/WAIT；保守覆蓋與 3 個月趨勢為參考指標，不參與判定"
+                "（裁示 2026-10-02）；已取消 B 級與健康度分數敘事",
+        "source": "sot_targets.sabbatical_gate（使用者 2026-10-02 裁示）",
+    }
+
+
+def _ltv_values(snap: dict) -> dict:
+    """質押池 LTV（%）→ {池名: 值}；無真值回 {}（呼叫端顯示『無真值』，不推估）。"""
+    out: dict = {}
+    raw = (snap or {}).get("LTV") or (snap or {}).get("ltv") or {}
+    if isinstance(raw, dict):
+        for k, v in raw.items():
+            try:
+                out[str(k)] = float(str(v).replace("%", "").strip())
+            except Exception:
+                pass
+    if out:
+        return out
+    try:
+        import pledge_status as _ps
+        _f = _ps.pledge_facts(snap) or {}
+        _c = _f.get("成數")
+        if isinstance(_c, (int, float)) and _c > 0:
+            # 成數＝質押金額 ÷ 擔保池市值（即 LTV）；0.5 → 50%
+            out["國泰質押池"] = round(float(_c) * 100, 1)
+            return out
+        _txt = _ps.pledge_status_line(snap, style="full") or ""
+        for _m in re.finditer(r"([\u4e00-\u9fffA-Za-z0-9（）()_-]{2,12})\s*LTV\s*(\d+(?:\.\d+)?)\s*%", _txt):
+            out[_m.group(1)] = float(_m.group(2))
+    except Exception:
+        pass
+    return out
+
+
+def triggers(snap: dict) -> dict:
+    """今日觸發器（裁示 2026-10-02 第 1 批③）：把散落的煞車／上限／門檻收斂成單一入口。
+
+    只回報狀態，不產生買賣指令；每條標明真值來源。無真值者記「未建真值」，
+    依龍九原則「沒有可靠真值，不准判斷」。
+    """
+    t = (snap or {}).get(SOT_KEY) or {}
+    pen = (snap or {}).get("penetration") or {}
+    gaps = pen.get("gaps") or {}
+    actual = pen.get("actual_pct") or {}
+    ladder = t.get("動作階梯_pp") or {}
+    caps = t.get("單桶硬上限_pct") or {}
+    brake = t.get("風險煞車") or {}
+    out: list = []
+
+    # 1) 風險煞車：US30Y（優先於階梯）
+    g30 = (snap or {}).get("us30y_gate") or {}
+    _v, _rl = g30.get("value"), g30.get("red_line")
+    _streak, _need = g30.get("streak_days") or 0, brake.get("us30y_連續日") or 2
+    if isinstance(_v, (int, float)) and isinstance(_rl, (int, float)):
+        hot = _v >= _rl and _streak >= _need
+        out.append({"id": "us30y_煞車", "項目": "風險煞車：US30Y",
+                    "現值": "{:.3f}%（連續 {} 日，{}）".format(_v, _streak, g30.get("as_of") or "—"),
+                    "門檻": "≥{:.2f}% 連續 {} 日".format(_rl, _need), "觸發": hot,
+                    "動作": (brake.get("動作") or "只回報不動作（暫緩減碼/加碼）"),
+                    "來源": "snapshot.us30y_gate ＋ thresholds.風險煞車"})
+    else:
+        out.append({"id": "us30y_煞車", "項目": "風險煞車：US30Y", "現值": "無真值", "門檻": "—",
+                    "觸發": None, "動作": "待補真值（us30y_gate）", "來源": "—"})
+
+    # 2) 現金模式
+    cm = cash_mode(snap)
+    out.append({"id": "cash_mode", "項目": "現金模式",
+                "現值": "{:,.0f}（{}）".format(cm["可動用"], cm["模式"]),
+                "門檻": "底線 {:,.0f}／自由現金 {:,.0f}".format(cm["底線"], cm["自由現金門檻"]),
+                "觸發": cm["模式"] != "正常",
+                "動作": "；".join(cm["禁止"]) if cm["禁止"] else "無限制",
+                "來源": "sot_targets.cash_mode"})
+
+    # 3) 留停 Gate（三條）
+    try:
+        gt = sabbatical_gate(snap)
+        out.append({"id": "sabbatical_gate", "項目": "留停 Gate（三條）",
+                    "現值": "／".join("{}{}".format(g["名稱"].split(" ")[0], "✅" if g["通過"] else "❌")
+                                      for g in gt["gate"]),
+                    "門檻": "三條全達標", "觸發": gt["判定"] != "GO",
+                    "動作": ("留停＝WAIT（尚未取得選擇權）" if gt["判定"] != "GO"
+                             else "留停＝GO（取得選擇權）"),
+                    "來源": "sot_targets.sabbatical_gate"})
+    except Exception as _e:
+        out.append({"id": "sabbatical_gate", "項目": "留停 Gate（三條）", "現值": "無真值",
+                    "門檻": "三條全達標", "觸發": None,
+                    "動作": "無法判定：{}".format(_e), "來源": "sot_targets.sabbatical_gate"})
+
+    # 4) 桶位階梯＋單桶硬上限（US30Y 煞車生效時一律「暫緩」）
+    _brake_on = any(x["id"] == "us30y_煞車" and x["觸發"] is True for x in out)
+    for _n, _gv in gaps.items():
+        if not isinstance(_gv, (int, float)) or _n.endswith(("_科技", "_非科技")):
+            continue
+        _abs = abs(float(_gv))
+        if _abs >= float(ladder.get("大規模") or 10):
+            _stage = "大規模調整"
+        elif _abs >= float(ladder.get("導流") or 6):
+            _stage = "導流"
+        elif _abs >= float(ladder.get("觀察") or 3):
+            _stage = "觀察（僅記錄）"
+        else:
+            continue
+        out.append({"id": "gap_" + _n, "項目": "桶位偏離：" + _n, "現值": "{:+.1f}pp".format(_gv),
+                    "門檻": "觀察 ≥{}／導流 ≥{}／大規模 ≥{}pp".format(
+                        ladder.get("觀察"), ladder.get("導流"), ladder.get("大規模")),
+                    "觸發": True,
+                    "動作": ("⏸ 暫緩（US30Y 煞車生效，只回報不動作）" if _brake_on
+                             else _stage + "（走再平衡授權）"),
+                    "來源": "snapshot.penetration.gaps ＋ thresholds.動作階梯_pp"})
+    for _n, _cap in caps.items():
+        _cur = actual.get(_n)
+        if isinstance(_cur, (int, float)) and float(_cur) > float(_cap):
+            out.append({"id": "cap_" + _n, "項目": "單桶硬上限：" + _n, "現值": "{:.1f}%".format(_cur),
+                        "門檻": "≤{}%".format(_cap), "觸發": True,
+                        "動作": ("⏸ 暫緩（US30Y 煞車生效，只回報）" if _brake_on
+                                 else "減碼至上限（硬上限優先於階梯）"),
+                        "來源": "snapshot.penetration.actual_pct ＋ thresholds.單桶硬上限_pct"})
+
+    # 5) 美元曝險
+    usd = (snap or {}).get("usd_exposure_monitor") or {}
+    usd_now = (usd.get("current") or {}).get("合計")
+    usd_thr = t.get("美元曝險_pct") or {}
+    if isinstance(usd_now, (int, float)):
+        _y, _r = usd_thr.get("黃"), usd_thr.get("紅")
+        _lvl = ("紅" if (isinstance(_r, (int, float)) and usd_now >= _r)
+                else ("黃" if (isinstance(_y, (int, float)) and usd_now >= _y) else "正常"))
+        out.append({"id": "usd_exposure", "項目": "美元曝險", "現值": "{:.1f}%".format(usd_now),
+                    "門檻": "目標 {}／黃 {}／紅 {}".format(usd_thr.get("目標"), _y, _r),
+                    "觸發": _lvl != "正常",
+                    "動作": ("不再增加美元資產（紅線）" if _lvl == "紅"
+                             else ("留意，避免再加美元" if _lvl == "黃" else "無限制")),
+                    "來源": "snapshot.usd_exposure_monitor ＋ thresholds.美元曝險_pct"})
+    else:
+        out.append({"id": "usd_exposure", "項目": "美元曝險", "現值": "無真值", "門檻": "—", "觸發": None,
+                    "動作": "待補真值（usd_exposure_monitor.current.合計）", "來源": "—"})
+
+    # 6) LTV（新增質押上限 53%）
+    ltv_thr = t.get("ltv分級_pct") or {}
+    ltv_now = _ltv_values(snap)
+    if ltv_now:
+        _worst = max(ltv_now.values())
+        _g, _y, _call = ltv_thr.get("綠上限"), ltv_thr.get("黃上限"), ltv_thr.get("追繳")
+        if isinstance(_call, (int, float)) and _worst >= _call:
+            _st, _act = "追繳層", "契約層級重大風險：先回報（不得新增質押）"
+        elif isinstance(_y, (int, float)) and _worst >= _y:
+            _st, _act = "禁止新增質押", "已達「新增質押上限 {}%」→ 禁止新增質押".format(_y)
+        elif isinstance(_g, (int, float)) and _worst >= _g:
+            _st, _act = "提高注意", "45~53% 區間：提高注意、不主動加槓桿"
+        else:
+            _st, _act = "正常", "≤{}%：正常".format(_g)
+        out.append({"id": "ltv", "項目": "LTV（各池分別）",
+                    "現值": "／".join("{} {:.1f}%".format(k, v) for k, v in ltv_now.items()),
+                    "門檻": "正常 ≤{}%／新增質押上限 {}%／追繳 {}%".format(_g, _y, _call),
+                    "觸發": _st != "正常", "動作": _act,
+                    "來源": "質押池 LTV ＋ thresholds.ltv分級_pct"})
+    else:
+        out.append({"id": "ltv", "項目": "LTV（各池分別）", "現值": "無真值",
+                    "門檻": "新增質押上限 {}%".format(ltv_thr.get("黃上限")), "觸發": None,
+                    "動作": "待補真值來源（質押池 LTV）", "來源": "—"})
+
+    fired = [x for x in out if x["觸發"] is True]
+    unknown = [x for x in out if x["觸發"] is None]
+    return {"列表": out, "觸發數": len(fired),
+            "未建真值": [x["項目"] for x in unknown],
+            "今日結論": ("✅ 今日不需動作" if not fired else "⚠️ {} 項觸發".format(len(fired))),
+            "授權邊界": "本表只回報狀態；任何買賣／加減碼一律另案核准（US30Y 煞車優先於階梯）",
+            "source": "sot_targets.triggers（使用者 2026-10-02 裁示 第 1 批③）"}

@@ -1,0 +1,66 @@
+{
+ "verdict": "APPROVE",
+ "reviewer": "CIO-Hermes(DeepSeek-Flash)",
+ "scope": "第 1 批（現金真值＋CEO 決策核心基礎層定版）",
+ "trigger": "available = 853,675 為唯一可動用現金真值；589 列在途／未對帳不參與判斷；三條 FAIL 全修但不得改業務邏輯迎合測試；非本班 gen_emergency_us_20261001.py 不納入；全綠後才 commit/push；第 2～4 批暫停。",
+ "date": "2026-10-02",
+ "verification": {
+  "① 單一可動用真值": "allowable_cash 讀 available；854,264 僅存於穿透桶敘事（不參與 Gate／覆蓋率／投資決策）",
+  "② 853,675 全鏈路": "snapshot→sot_targets→allowable_cash→sabbatical_gate→cash_mode→triggers→CEO 決定卡→日報→退休頁 一致",
+  "③ Gate 未被保守覆蓋污染": "現金❌／壓力✅／跑道✅ → WAIT",
+  "④ 240 萬未混入本批": "本批產物 2,400,000 出現 0 次",
+  "⑤ 順序": "修正→本機測試→FAIL 全消→git status→（非本班檔不納入）→CIO 紀錄→commit→push→ls-remote"
+ },
+ "gates": {
+  "check_dividend_caliber": "65/65 PASS（另 2 條 SKIP）",
+  "check_dashboard_sync": "PASS",
+  "check_cross_report_consistency": "PASS",
+  "check_dashboard_stale": "PASS",
+  "check_narrative_numbers_selftest": "45/45 PASS",
+  "新增決策核心守門": "8 條（可動用真值／穿透桶不參與／Gate 三條／現金模式／觸發器／首頁決定卡／無健康度分數／589 在途標記）"
+ },
+ "changes": {
+  "程式": [
+   "sot_targets.py",
+   "report_components.py",
+   "build_dashboard.py",
+   "build_retirement_plan.py",
+   "run_daily.py",
+   "sabbatical_checklist_update.py",
+   "check_dashboard_sync.py",
+   "check_dividend_caliber.py",
+   "check_dashboard_stale.py",
+   "check_narrative_numbers.py",
+   "check_narrative_numbers_selftest.py",
+   "index_template.html"
+  ],
+  "資料": [
+   "snapshot.json"
+  ],
+  "產出": [
+   "index.html",
+   "daily_report_v2_2026-10-01.html",
+   "retirement_plan_2026-10-02.html",
+   "audit_dashboard_2026-10-02.html",
+   "rebalance_*, dynamic_weekly_review_*"
+  ]
+ },
+ "delivered": [
+  "sot_targets.allowable_cash()：唯一真值 cash_layers.available（853,675）",
+  "sot_targets.sabbatical_gate()：三條硬 Gate（自由現金≥100 萬／壓力≥100%／跑道≥540 天）→ WAIT；保守覆蓋與 3 個月趨勢降為參考指標",
+  "sot_targets.cash_mode()：正常／防守模式（70～100 萬，禁新增槓桿與主動加碼）／現金保全模式（<70 萬）",
+  "sot_targets.triggers()：US30Y 煞車、LTV（新增質押上限 53%）、美元曝險、桶位階梯、現金模式、留停 Gate 之單一入口＋今日結論",
+  "首頁 CEO 決定卡（GO/WAIT＋今日動作）；健康度分數（93 分）敘事退場，原始指標保留",
+  "退休頁 A/B/C 級表 → 留停 Gate 三條表；B 級與健康度分數取消"
+ ],
+ "excluded": [
+  "gen_emergency_us_20261001.py（非本班、未追蹤，不納入本 commit）"
+ ],
+ "paused": [
+  "第 2 批可接受範圍",
+  "第 3 批 Pending 期限管理",
+  "第 4 批 90 天需求（含 240 萬條件式需求）"
+ ],
+ "conclusion": "APPROVE",
+ "審查編號": "cio_review_batch1_decision_core_1002"
+}

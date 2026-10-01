@@ -68,7 +68,26 @@ cov_band = "非常安全" if fire_cov >= 150 else ("基本安全" if fire_cov >=
 cov_band_cls = "green" if fire_cov >= 150 else ("amber" if fire_cov >= 120 else "red")
 # 2026-09-27：need_to_150 已移除 — 缺口一律讀 snapshot.驗收標準_2027_02（單一來源）
 # 2026-09-28：欄位更名「距門檻缺口」（三條門檻）＋「距加碼級缺口_150」（理想值）
-sc_level = (_sch.get("驗收等級", {}) or {}).get("等級", "") or "（待真值日重算）"
+# _GATE_ROWS_GEN：留停 Gate 三條表列（單一來源 sot_targets.sabbatical_gate；2026-10-02 裁示）
+try:
+    from sot_targets import sabbatical_gate as _sg_rows
+    _GR = _sg_rows(snap)
+    _gate_rows = "".join(
+        "<tr><td>{}</td><td>{}</td><td>{}</td></tr>".format(
+            ("🟢 " if g["通過"] else "🔴 ") + g["名稱"], g["顯示"],
+            "通過" if g["通過"] else "未達") for g in _GR["gate"])
+    _gate_rows += ("<tr><td>A+級（加碼級·理想值·非門檻）</td><td>保守底線覆蓋 ≥150%（現 保守底線 {}%／當月實收 {}%）</td>"
+                   "<td>不影響留停判定</td></tr>".format(_GR["參考指標"]["保守覆蓋_pct"],
+                                                    _GR["參考指標"]["當月實收覆蓋_pct"]))
+    _gate_rows += ("<tr><td>參考指標（不參與判定）</td><td>保守底線 {}%｜當月實收 {}%｜3 個月趨勢：{}</td>"
+                   "<td>—</td></tr>".format(_GR["參考指標"]["保守覆蓋_pct"],
+                                            _GR["參考指標"]["當月實收覆蓋_pct"],
+                                            _GR["參考指標"]["3個月趨勢"]))
+except Exception as _e:
+    _gate_rows = "<tr><td colspan=3>Gate 無法判定：{}</td></tr>".format(_e)
+
+sc_level = (_sch.get("驗收等級", {}) or {}).get("等級", "")
+_gate_verdict = _GR["燈號"] + "（未達：" + "、".join(_GR["未達"]) + "）" if _GR.get("未達") else _GR["燈號"] or "（待真值日重算）"
 # 2026-09-28：新增 A+級（加碼級）標籤 → 綠燈；其餘依原規則
 sc_level_cls = ("green" if sc_level.startswith(("A級", "A+級"))
                 else ("amber" if sc_level.startswith("B級") else "red"))
@@ -287,33 +306,30 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><td>每月必要生活費</td><td>{expense:,}</td><td>{goal_expense}</td></tr>
 <tr><td>被動現金流（保守底線·判準）</td><td>{fire_income:,}（覆蓋 {fire_cov:.1f}%）</td><td>{goal_passive}</td></tr>
 <tr><td>被動現金流（當月實收）</td><td>{fire_income_actual:,.0f}（配息 {div_actual:,.0f}＋租金 {rent_actual:,.0f}，覆蓋 {fire_cov_actual:.1f}%）</td><td>觀察（勿與判準混用）</td></tr>
-<tr><td>保守覆蓋率（判準·保守底線）</td><td class="{('red' if fire_cov<100 else 'green')}">{fire_cov:.1f}%</td><td>≥100%（門檻）</td></tr>
+<tr><td>保守覆蓋率（判準·保守底線）</td><td class="{('red' if fire_cov<100 else 'green')}">{fire_cov:.1f}%<span class="muted">（當月實收 {fire_cov_actual:.1f}%）</span></td><td>≥100%（門檻）</td></tr>
 <tr><td>壓力情境覆蓋率（常態配息口徑）</td><td class="{_stress_cls}">{stress_cov:.1f}%</td><td>≥100%（門檻）</td></tr>
 <tr><td>FI 跑道（極端情境口徑）</td><td class="{('green' if (_SC['extreme']['runway_days'] or 0)>=540 else 'red')}">{_rw_ext}</td><td>≥540 天（門檻）</td></tr>
 <tr><td>房租淨現金流（常態房租收入 {rent:,}；房貸月付 {_mort_m:,.0f} 已列月支出）</td><td>{_rent_net:,.0f}</td><td>{_rent_net_note}</td></tr>
 <tr><td>投資現金流</td><td>{div_c:,}</td><td>穩定</td></tr>
 <tr><td>現金水位</td><td>{cash:,}</td><td>≥{_floor_s:,.0f}（底線）</td></tr>
-<tr><td>加碼級覆蓋率（理想值·非門檻）</td><td class="{('green' if fire_cov>=150 else 'amber')}">{fire_cov:.1f}%</td><td>≥150%</td></tr>
+<tr><td>加碼級覆蓋率（保守·理想值·非門檻）</td><td class="{('green' if fire_cov>=150 else 'amber')}">{fire_cov:.1f}%</td><td>≥150%</td></tr>
 <tr><td>每月負債成本</td><td>{liab_cost:,}</td><td>持續下降</td></tr>
 <tr><td>第二職涯收入</td><td>{career_income:,}</td><td>不設硬性門檻（負責驗證職涯＋加速還債）</td></tr>
 <tr><td>第二職涯工時</td><td>{career_hours:,}</td><td>觀察收入/工時</td></tr>
 </table>
-<p class="callout"><b>留停紅綠燈（2026-09-28 改版：三條同時達標才算）</b>：🟢 保守覆蓋 ≥100% ＋ 🟢 壓力情境 ≥100% ＋ 🟢 跑道 ≥540 天 ＋ 🟢 現金 ≥底線 ＝ 財務留停安全。<br>
-現況：保守 {fire_cov:.1f}%（判準）／{fire_cov_actual:.1f}%（當月實收） ＋ 壓力 {stress_cov:.1f}% ＋ 跑道 {_rw_ext} → <b class="{'green' if '🟢' in sc_light else ('amber' if '🟡' in sc_light else 'red')}">{sc_light}</b>（保守底線 {cov_band}；水庫防守）。<br>
+<p class="callout"><b>留停 Gate（2026-10-02 裁示：三條硬門檻）</b>：🟢 自由現金 ≥100 萬 ＋ 🟢 壓力現金流 ≥100% ＋ 🟢 跑道 ≥540 天 → 🟢 GO（取得選擇權）／🟡 WAIT（尚未取得）。<br>
+現況：<b>{_gate_verdict}</b>｜參考指標（不參與判定）：保守底線 {fire_cov:.1f}%（判準）／當月實收 {fire_cov_actual:.1f}%、壓力 {stress_cov:.1f}%、跑道 {_rw_ext}。<br>
 被動收入負責基本生活；標案/顧問只負責驗證第二職涯＋加速還債 — 兩者不綁死，才不會為了急著賺錢跑回現場監工。<br>
 每月 1 日真值日自動重算（sabbatical_checklist_update.py），留存 3 個月趨勢驗證「結構性改善」非單月巧合。</p></div>
 
-<div class="card"><h2>🎯 2027/2 財務驗收標準（A/B/C 級，判斷權重：當月 &lt; 趨勢 &lt; 壓力 &lt; 現金水位）</h2>
+<div class="card"><h2>🎯 2027/2 留停 Gate（三條硬門檻｜2026-10-02 裁示）</h2>
 <table>
 <tr><th>等級</th><th>條件</th><th>行動</th></tr>
-<tr><td>A級 🟢</td><td>保守 ≥100% ＋ 壓力 ≥100% ＋ 跑道 ≥540 天 ＋ 現金 ≥底線 ＋ 3個月趨勢無明顯惡化</td><td>可以放心留停（取得「薪水非生存必需品」選擇權）</td></tr>
-<tr><td>A+級 🟦</td><td>再加「保守覆蓋 ≥150%」＝加碼級理想值（<b>非門檻</b>；2026-09-28 由門檻降級）</td><td>緩衝更厚，可加速布局</td></tr>
-<tr><td>B級 🟡</td><td>保守 ≥100% 但壓力 &lt;100%、跑道 &lt;540 天或現金不足</td><td>可以留但先補水庫</td></tr>
-<tr><td>C級 🔴</td><td>保守 &lt;100%（現金流本身不足）</td><td>繼續留台電，先修財務結構</td></tr>
+{_gate_rows}
 </table>
 <p class="callout" style="border-left-color:#ef4444"><b>📏 距門檻缺口（基準月 {_acc_month} · 動態讀 snapshot）</b><br>
 保守覆蓋率 {('已達標 ✅' if _gcon <= 0 else '還缺 <b class="red">+' + format(_gcon, ',.0f') + '</b>／月')}、壓力情境 {_stress_gap_txt}；{_cash_line}<br>
-<b>加碼級（理想值·非門檻）</b>：覆蓋 {fire_cov:.1f}% → 150% 還差 <b>{_g150:,.0f}</b>／月 — 不影響留停判定。</p>
+<b>加碼級（A+級·理想值·非門檻）</b>：保守底線覆蓋 {fire_cov:.1f}%（當月實收 {fire_cov_actual:.1f}%） → 150% 還差 <b>{_g150:,.0f}</b>／月 — 不影響留停判定。</p>
 <table>
 <tr><th>指標</th><th>現況</th><th>門檻</th><th>缺口</th></tr>
 {_gap_rows}{_cash_row}

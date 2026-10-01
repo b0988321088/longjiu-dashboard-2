@@ -336,6 +336,44 @@ for _p in sorted(BASE.glob("*.py")):
             or re.search(r"MONTHLY_EXPENSE\s*=\s*162781", _code)):
         _bad_fb.append(_p.name)
 ck("月支出無寫死 fallback（一律 sot_monthly_expense）", not _bad_fb, str(_bad_fb))
+
+# 2026-10-02 裁示（第 1 批）：決策核心單一入口 —— 可動用現金／留停 Gate／觸發器
+try:
+    import sot_targets as _st_dc
+    import json as _json_dc
+    _s_dc = _json_dc.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+    _ac = _st_dc.allowable_cash(_s_dc)
+    _cl_av = float(((_s_dc.get("cash_layers") or {}).get("available")) or 0)
+    _cl_pen = float((((_s_dc.get("penetration") or {}).get("actual_twd") or {}).get("現金/安全網")) or 0)
+    _pen_cash = float((((_s_dc.get("penetration") or {}).get("actual_twd") or {}).get("現金/安全網")) or 0)
+    ck("可動用現金＝cash_layers.available（唯一真值）", abs(_ac - _cl_av) < 0.5, f"{_ac} vs {_cl_av}")
+    ck("穿透桶『現金/安全網』＝可動用＋在途未對帳（不得參與決策）",
+       _cl_pen > _cl_av and abs((_cl_pen - _cl_av) - 589) < 0.5,
+       f"穿透桶 {_cl_pen} − 可動用 {_cl_av} = {_cl_pen - _cl_av}（應為 589 在途／未對帳）")
+    ck("穿透桶口徑＝可動用＋589 在途／未對帳（不得參與決策）",
+       abs((_cl_pen - _cl_av) - 589) < 0.5, f"穿透桶 {_cl_pen} − 可動用 {_cl_av} = {_cl_pen - _cl_av}")
+    ck("穿透桶『現金/安全網』不得當可動用（在途／未對帳）", _pen_cash > 0 and abs(_ac - _pen_cash) > 0.5,
+       f"可動用 {_ac} vs 穿透 {_pen_cash}")
+    _g_dc = _st_dc.sabbatical_gate(_s_dc)
+    ck("留停 Gate 三條派生（GO/WAIT）", _g_dc.get("判定") in ("GO", "WAIT") and len(_g_dc.get("gate") or []) == 3,
+       str(_g_dc.get("判定")))
+    _cm_dc = _st_dc.cash_mode(_s_dc)
+    ck("現金模式派生（正常／防守／現金保全）",
+       _cm_dc.get("模式") in ("正常", "防守模式", "現金保全模式"),
+       f"{_cm_dc.get('模式')}｜可動用 {_cm_dc.get('可動用')}")
+    _tr_dc = _st_dc.triggers(_s_dc)
+    ck("觸發器單一入口可用（今日結論＋列表）",
+       bool(_tr_dc.get("今日結論")) and isinstance(_tr_dc.get("列表"), list) and len(_tr_dc["列表"]) >= 5,
+       f"{_tr_dc.get('今日結論')}｜{len(_tr_dc.get('列表') or [])} 條")
+    _html_dc = (BASE / "index.html").read_text(encoding="utf-8", errors="replace") if (BASE / "index.html").exists() else ""
+    ck("首頁含 CEO 決定卡（Gate＋今日動作）",
+       "CEO 決定卡" in _html_dc and "留停 Gate" in _html_dc and "今日動作" in _html_dc, "index.html")
+    ck("首頁無健康度分數敘事（93 分退場）",
+       "龍九健康度" not in _html_dc and "健康度：" not in _html_dc,
+       "健康度卡標題 x" + str(_html_dc.count("龍九健康度")))
+except Exception as _e_dc:
+    ck("決策核心（可動用／Gate／觸發器）可派生", False, str(_e_dc))
+
 ck("壓力/極端判定與顏色已派生（無寫死 red 判定）",
    'class="red">&lt;100%' not in src and "{_stress_cls}" in src and "{_ext_cls}" in src
    and "{_stress_note}" in src)
@@ -495,11 +533,20 @@ _raw = subprocess.run(["git", "status", "--porcelain"], cwd=str(BASE),
                       capture_output=True, text=True).stdout.splitlines()
 _dirty = [ln[3:].strip().strip('"') for ln in _raw if ln.strip()]
 _dirty = [d for d in _dirty if not d.endswith("_preview.png")]
+# 他班／未追蹤檔（非本班 scope）：只提示不阻擋（2026-10-02 使用者裁示：不納入本班 commit）
+_OTHER_AGENT = re.compile(r"^gen_emergency_us_\d{8}\.py$")
+_other_agent = [_d for _d in _dirty if _OTHER_AGENT.match(_d)]
+_dirty = [d for d in _dirty if d not in _other_agent]
 # 外部排程（cron）寫入：非本班變更，只提示不阻擋
 _EXT = re.compile(r"^(cost\.html|cost_data\.json|data/|logs/|dragon_assets\.db)")
 _ext = [d for d in _dirty if _EXT.match(d)]
 _dirty = [d for d in _dirty if d not in _ext]
 allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
+           "sot_targets.py",   # 決策核心單一入口（Gate／現金模式／觸發器；2026-10-02 第 1 批）
+           "report_components.py",   # 首頁 CEO 決定卡（健康度分數退場；2026-10-02 第 1 批）
+           "check_dashboard_sync.py",   # 首頁必備關鍵字改「CEO 決定卡」（2026-10-02 第 1 批）
+           "check_dashboard_stale.py", "check_narrative_numbers.py",
+           "check_narrative_numbers_selftest.py",   # 可動用現金口徑改讀 cash_layers.available
            "DAILY_REPORT_PIPELINE_RULE.md", "run_daily.py",
            "notion_shared_context.md", "index_template.html", "build_dashboard.py", "index.html",
            "check_caliber_mutation.py",   # 本守門的變異測試（2026-09-28 從 %TEMP% 搬進版控，置於 tools/）
@@ -534,6 +581,11 @@ def _declared(s):
 _undeclared = [d for d in _dirty if not all(_declared(s) for s in d.split("->"))]
 _hard = [d for d in _undeclared if any(_CODE.search(s.strip()) for s in d.split("->"))]
 ck("變更範圍：無未宣告的程式檔異動", not _hard, str(_hard))
+if _other_agent:
+    print(f"ℹ️  他班／未追蹤檔（非本班 scope，不納入本班 commit）：{_other_agent}")
+# 本班變更範圍（CIO 紀錄用；8 條決策核心守門屬於本班 schema 變更）
+print(f"ℹ️  本班異動（{len(_dirty)} 檔）：{_dirty}")
+print("ℹ️  DECISION_CORE_CHECKS=8")
 _other = [d for d in _undeclared if d not in _hard]
 if _other:
     print(f"ℹ️  其他產出異動（排程／報表產物，非程式檔，另列不計入）：{len(_other)} 檔 ｜ "

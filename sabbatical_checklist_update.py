@@ -70,39 +70,27 @@ def traffic_light(coverage, stress_cov, runway_days, cash, cash_floor):
         return "🟡 可留但先補水庫（未達：" + "、".join(miss) + "）"
     return "🔴 尚未達留停安全（" + "、".join(miss) + "）"
 
-# 2027/2 財務驗收等級（2026-09-28 使用者裁示改版）
-# 判斷權重：當月 < 3個月趨勢 < 壓力情境 < 現金水位
-# A級 🟢 = 保守≥100 + 壓力≥100 + 跑道≥540天 + 現金≥底線 + 3月趨勢無惡化 → 可以放心留停
-# A+級 🟦 = 再加「覆蓋≥150%」（加碼級理想值；非門檻，達標只作加分標記）
-# B級 🟡 = 保守≥100 但其餘門檻未達（延後／先補水庫）
-# C級 🔴 = 保守<100（現金流本身不足）
-def acceptance_level(coverage, stress_cov, runway_days, cash, cash_floor, months, trend):
-    cash_ok = cash >= cash_floor
+# 2027/2 留停 Gate（**2026-10-02 使用者裁示改版**）
+#   三條硬門檻：自由現金 ≥100 萬＋壓力現金流 ≥100%＋跑道 ≥540 天 → 🟢 GO／🟡 WAIT
+#   參考指標（不參與判定）：保守覆蓋、當月實收覆蓋、3 個月趨勢
+#   已取消：B 級、A+ 級、健康度分數敘事（保留原始指標供歷史查看）
+def acceptance_level(coverage, stress_cov, runway_days, cash, cash_floor, months, trend,
+                     free_cash_min=None):
+    """留停 Gate（2026-10-02 裁示）：三條硬門檻 → 🟢 GO／🟡 WAIT。
+
+    自由現金 ≥100 萬＋壓力現金流 ≥100%＋跑道 ≥540 天。保守覆蓋與 3 個月趨勢為**參考指標**，
+    不參與判定；B 級／A+ 級／健康度分數敘事已取消（原始指標保留供歷史查看）。
+    """
+    _min = float(free_cash_min or 1000000)
     runway_ok = (runway_days is None) or runway_days >= RUNWAY_GATE_DAYS
-    trend_ok = len(months) >= 3 and all(
-        trend[m]["生活費覆蓋率"] >= trend.get(months[i-1], {}).get("生活費覆蓋率", 0) - 2
-        for i, m in enumerate(months[1:], 1) if m in trend and months[i-1] in trend
-    ) if months else False
-    if coverage >= 100 and stress_cov >= 100 and runway_ok and cash_ok and trend_ok:
-        if coverage >= ACCEL_GATE_PCT:
-            return "A+級 🟦 加碼級達標（覆蓋 ≥150% 理想值已達）"
-        return "A級 🟢 可以放心留停"
-    if coverage >= 100 and stress_cov >= 100 and runway_ok and cash_ok:
-        # 三條門檻（現金流＋跑道＋現金）已達，只差 3 個月趨勢驗證 → 不可寫成「先補水庫」
-        return (f"B級 🟡 三條門檻已達 → 待 3 個月趨勢驗證"
-                f"（現有 {len(months)}/3 個月記錄）")
-    if coverage >= 100:
-        why = []
-        if stress_cov < 100:
-            why.append("壓力情境未破 100%")
-        if not runway_ok:
-            why.append(f"跑道 <{RUNWAY_GATE_DAYS} 天")
-        if not cash_ok:
-            why.append("現金水位不足")
-        if not why:
-            why.append("趨勢未滿 3 個月")
-        return f"B級 🟡 可以留但先補水庫（{'、'.join(why)}）"
-    return "C級 🔴 繼續留台電，先修財務結構"
+    gates = [("自由現金 ≥100 萬", cash >= _min),
+             ("壓力現金流 ≥100%", stress_cov >= 100),
+             ("跑道 ≥540 天", runway_ok)]
+    miss = [n for n, ok in gates if not ok]
+    if not miss:
+        return "🟢 GO 可以放心留停（Gate 三條全達標）"
+    return "🟡 WAIT 尚未取得留停選擇權（未達：" + "、".join(miss) + "）"
+
 
 def compute_kpis(snap):
     exp = sot_monthly_expense(snap)

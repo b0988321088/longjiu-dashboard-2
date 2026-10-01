@@ -208,8 +208,9 @@ def render_health_score(snap: dict) -> dict:
     }
     return detail
 
+# 2026-10-02 裁示：健康度綜合分數（0-100）不再顯示；保留供歷史查看。
 
-def render_health_card(snap: dict) -> str:
+def _render_health_card_legacy(snap: dict) -> str:
     """健康度卡（HTML 片段）— 儀表板/日報共用。"""
     d = render_health_score(snap)
     # 防禦維度：可能是金額（>100）→ 顯示「充足」避免怪數字
@@ -270,3 +271,82 @@ if __name__ == "__main__":
     print(render_coverage(snap, "full"))
     print(render_status_line(Path(__file__).resolve().parent, sep=" | "))
     print(render_health_score(snap))
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# 決策核心顯示（使用者 2026-10-02 裁示 第 1 批）
+#   目標：每天只看「GO/WAIT ＋ 今天有沒有事」；其餘數字退到第二層。
+# ════════════════════════════════════════════════════════════════════════════
+
+def render_decision_banner(snap: dict) -> str:
+    """首頁決定卡：自由現金三層 ＋ 留停 Gate 三燈 ＋ 今日動作（觸發器單一入口）。"""
+    from sot_targets import cash_mode as _cm, sabbatical_gate as _gt, triggers as _tr
+    cm, gt, tr = _cm(snap), _gt(snap), _tr(snap)
+    _mc = {"green": "text-emerald-300", "amber": "text-amber-300", "red": "text-rose-300"}[cm["燈號"]]
+    _rows = "".join(
+        '<div class="flex items-center justify-between gap-2 py-0.5">'
+        '<span class="text-slate-300">{} {}</span>'
+        '<span class="font-bold {}">{}</span></div>'.format(
+            "🟢" if g["通過"] else "🔴", g["名稱"],
+            "text-emerald-300" if g["通過"] else "text-rose-300", g["顯示"])
+        for g in gt["gate"])
+    _fired = [x for x in tr["列表"] if x["觸發"] is True]
+    if _fired:
+        _act = "".join('<div class="py-0.5">・<b>{}</b> {} → {}</div>'.format(
+            x["項目"], x["現值"], x["動作"]) for x in _fired[:5])
+    else:
+        _act = '<div class="py-0.5 text-emerald-300 font-bold">今日無需動作</div>'
+    _unknown = ("".join('<span class="text-slate-400">{}（待補真值）</span>'.format(u)
+                        for u in tr["未建真值"]) if tr["未建真值"] else "")
+    _go = gt["判定"] == "GO"
+    return (
+        '<div class="mb-4 p-4 rounded-xl bg-slate-900/80 border border-emerald-700/60">'
+        '<div class="flex items-center justify-between flex-wrap gap-2 mb-3">'
+        '<div class="text-base font-black text-white">🧭 龍九｜CEO 決定卡</div>'
+        '<div class="text-xs px-2 py-1 rounded border {}">留停 Gate：{}</div></div>'
+        '<div class="grid grid-cols-1 md:grid-cols-3 gap-3">'
+        '<div class="rounded-lg bg-slate-800/50 p-3">'
+        '<div class="text-[11px] text-slate-400 mb-1">現金三層（可動用＝唯一真值）</div>'
+        '<div class="text-xl font-black {}">{:,.0f}</div>'
+        '<div class="text-[11px] text-slate-400 leading-relaxed">底線 {:,.0f}｜餘裕 {:,.0f}<br>'
+        '模式：<b class="{}">{}</b>（距自由現金門檻 {:,.0f}）</div></div>'
+        '<div class="rounded-lg bg-slate-800/50 p-3">'
+        '<div class="text-[11px] text-slate-400 mb-1">留停 Gate（三條硬門檻）</div>'
+        '<div class="text-xs">{}</div>'
+        '<div class="text-[11px] text-slate-400 mt-1 leading-relaxed">'
+        '參考指標（不參與判定）：保守覆蓋 {}%｜3 個月趨勢：{}</div></div>'
+        '<div class="rounded-lg bg-slate-800/50 p-3">'
+        '<div class="text-[11px] text-slate-400 mb-1">今日動作（{} 項觸發）</div>'
+        '<div class="text-xs leading-relaxed">{}</div>'
+        '<div class="text-[10px] text-slate-500 mt-1">{}{}</div></div></div>'
+        '<div class="text-[10px] text-slate-500 mt-2">'
+        '可動用＝cash_layers.unrestricted_cash；穿透桶「現金/安全網」（＋589 在途／未對帳差異）'
+        '不參與 Gate／覆蓋率／投資決策。</div></div>'
+    ).format(
+        ("border-emerald-500/40 bg-emerald-500/10 text-emerald-300" if _go
+         else "border-amber-500/40 bg-amber-500/10 text-amber-300"),
+        gt["燈號"], _mc, cm["可動用"], cm["底線"], cm["餘裕"], _mc, cm["模式"], cm["距門檻"],
+        _rows, gt["參考指標"]["保守覆蓋_pct"], gt["參考指標"]["3個月趨勢"],
+        tr["觸發數"], _act, tr["授權邊界"], ("｜" + _unknown) if _unknown else "")
+
+
+def render_health_card(snap: dict) -> str:
+    """決策核心卡（取代 93 分健康度）：Gate 三條 ＋ 參考指標，不再顯示綜合分數。"""
+    from sot_targets import cash_mode as _cm, sabbatical_gate as _gt
+    gt, cm = _gt(snap), _cm(snap)
+    _rows = "".join(
+        '<tr><td>{} {}</td><td class="num">{}</td><td>{}</td></tr>'.format(
+            "🟢" if g["通過"] else "🔴", g["名稱"], g["顯示"],
+            "通過" if g["通過"] else "未達") for g in gt["gate"])
+    return (
+        '<div class="rounded-xl border border-slate-700/60 bg-slate-900/70 p-4 mb-4">'
+        '<div class="font-black text-white mb-2">🎯 留停 Gate（三條硬門檻｜{}）</div>'
+        '<table class="w-full text-xs"><tr><th>門檻</th><th>現況</th><th>判定</th></tr>{}</table>'
+        '<div class="text-[11px] text-slate-400 mt-2 leading-relaxed">'
+        '參考指標（不參與 GO/WAIT）：保守覆蓋 {}%｜當月實收覆蓋 {}%｜3 個月趨勢：{}<br>'
+        '現金模式：<b>{}</b>｜可動用 {:,.0f}（底線 {:,.0f}、餘裕 {:,.0f}）<br>'
+        '<span class="text-slate-500">2026-10-02 裁示：取消 B 級與健康度分數敘事，'
+        '保留原始指標供歷史查看。</span></div></div>'
+    ).format(gt["燈號"], _rows, gt["參考指標"]["保守覆蓋_pct"],
+             gt["參考指標"]["當月實收覆蓋_pct"], gt["參考指標"]["3個月趨勢"],
+             cm["模式"], cm["可動用"], cm["底線"], cm["餘裕"])

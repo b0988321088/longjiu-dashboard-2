@@ -118,7 +118,8 @@ def build_allowed(snap: dict) -> dict:
     # 『現金/安全網』854,264 差 589（在途／零錢）。兩者同為 snapshot 派生真值 → 一併放行，
     # 並補它的派生口徑（可動用現金 − 底線＝可動用緩衝，如 153,675）。
     # 規則不變：只放行 snapshot 現算值，非真值金額仍會被擋。
-    _liq = ((snap or {}).get("cash_layers") or {}).get("unrestricted_cash")
+    _liq = (((snap or {}).get("cash_layers") or {}).get("available")
+            or ((snap or {}).get("cash_layers") or {}).get("unrestricted_cash"))
     if isinstance(_liq, (int, float)) and "現金" in allowed:
         allowed["現金"]["twd"].add(float(_liq))
         for _k in ("生活底線", "追繳緩衝", "合計底線"):

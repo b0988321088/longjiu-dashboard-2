@@ -532,11 +532,13 @@ def main():
         tpl = tpl.replace("__TODAY_STATUS__", "🟢 今日狀態：無需人工操作")
         tpl = tpl.replace("__TODAY__", date.today().isoformat())
 
-    # ── 健康度卡（2026-08-27：共享組件 report_components.render_health_card）──
+    # ── 決定卡＋決策核心卡（2026-10-02 裁示：首頁只看 GO/WAIT ＋ 今天有沒有事）──
     try:
-        from report_components import render_health_card as _rhc
+        from report_components import render_decision_banner as _rdb, render_health_card as _rhc
+        tpl = tpl.replace("__DECISION_BANNER__", _rdb(snap))
         tpl = tpl.replace("__HEALTH_CARD__", _rhc(snap))
     except Exception:
+        tpl = tpl.replace("__DECISION_BANNER__", "")
         tpl = tpl.replace("__HEALTH_CARD__", "")
 
     # ── 戰略異常中心動態化（2026-09-01：雷達/交易計畫/政策面不再硬編碼 8/29 快照）──
@@ -999,7 +1001,7 @@ def main():
         _cash_note = ""
         if _cl:
             _cash_note = (f'<span class="text-slate-400">｜現金分層：總 {_cl.get("cash_total", 0):,.0f}'
-                          f'／可動用 {_cl.get("unrestricted_cash", 0):,.0f}'
+                          f'／可動用 {_cl.get("available", _cl.get("unrestricted_cash", 0)):,.0f}'
                           f'（底線 {( _cl.get("emergency_cash") or {}).get("金額", 0):,.0f}'
                           f'＋乾粉 {_cl.get("dry_powder", 0):,.0f}）'
                           f'／指定還債 {( _cl.get("restricted_cash") or {}).get("debt_repayment_reserve", 0):,.0f}'

@@ -80,7 +80,7 @@ def truth_tokens() -> set:
         if isinstance(v, (int, float)) and v:
             toks |= _opts(float(v))
     rc = snap.get("restricted_cash") or {}
-    for v in (rc.get("金額"), (snap.get("cash_layers") or {}).get("unrestricted_cash"),
+    for v in (rc.get("金額"), (snap.get("cash_layers") or {}).get("available"),
               (snap.get("passive_income") or {}).get("monthly_expense")):
         if isinstance(v, (int, float)) and v:
             toks |= _opts(float(v))
