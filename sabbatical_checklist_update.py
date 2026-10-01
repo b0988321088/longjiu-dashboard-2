@@ -8,6 +8,7 @@
 import json, sys, datetime
 from pathlib import Path
 import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
+from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
 
 BASE = Path(__file__).resolve().parent
 SNAP = BASE / "snapshot.json"
@@ -104,7 +105,7 @@ def acceptance_level(coverage, stress_cov, runway_days, cash, cash_floor, months
     return "C級 🔴 繼續留台電，先修財務結構"
 
 def compute_kpis(snap):
-    exp = snap.get("monthly_expense", 162781)
+    exp = sot_monthly_expense(snap)
     pi = snap.get("passive_income", {})
     # 2026-09-27：三情境改由 passive_caliber 單一來源計算（原本這裡自算一份，
     # 且寫死 33,000 空置／80,100 房租 fallback → 與其他報表各說各話）

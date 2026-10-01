@@ -9,6 +9,7 @@
 import json
 from datetime import date, datetime
 from pathlib import Path
+from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
 
 BASE = Path(__file__).parent.resolve()
 TODAY = date.today().isoformat()
@@ -196,7 +197,7 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
     # 2026-09-29 CIO major：乾粉（交易計畫金額來源）不得含指定用途款（質押撥款待清償）
     from sot_targets import restricted_cash as _rst_fn
     cash = max(0.0, float(snap.get("cash_total") or 0) - _rst_fn(snap))
-    surplus = snap.get("monthly_income", 228751) - snap.get("monthly_expense", 162781)
+    surplus = sot_monthly_income(snap) - sot_monthly_expense(snap)
     # 2026-09-29 CIO minor：可動用 < 底線時不得把月盈餘算成乾粉（否則「乾粉 0 → 不進場」分支永不觸發）
     _dry_now = max(cash - snap.get("cash_floor", 700000), 0)
     dry = _dry_now + (surplus * 0.5 if _dry_now > 0 else 0)  # 保守可動用（底線讀 snapshot）

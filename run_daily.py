@@ -31,6 +31,7 @@ except Exception:
 
 BASE = Path(__file__).parent.resolve()
 import json as _json
+from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
 try:
     _snap_date = _json.load(open(BASE / "snapshot.json", encoding="utf-8")).get("date") or date.today().isoformat()
 except Exception:
@@ -348,7 +349,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     firstjin_dividend = tv.get("firstjin_dividend", 22_949)
     # 房租覆蓋率（2026-09-23 INC-241b：原用 rent_monthly＝當月已收 → 月中覆蓋率被低估為 33%；
     # 常態口徑應為 80,100/162,781 = 49%）
-    _rent_cov = (tv.get("rent_monthly_target", 0) or 0) / (tv.get("monthly_expense", 162781) or 1) * 100
+    _rent_cov = (tv.get("rent_monthly_target", 0) or 0) / (sot_monthly_expense(tv) or 1) * 100
     # 當月實際已收房租（rent_received_records）
     _rent_recv = tv.get("rent_received_records", {}) or {}
     _rm = date.today().strftime("%Y-%m")
@@ -1743,7 +1744,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             _ta = _snap_p.get('total_assets', 0)
             _nw = _snap_p.get('net_worth', 0)
             _div_cur = _snap_p.get('monthly_dividend_total', 0)
-            _exp = _snap_p.get('monthly_expense', 162781)
+            _exp = sot_monthly_expense(_snap_p)
             _pi = _snap_p.get('passive_income', {}) or {}
             # 2026-09-27：改由 passive_caliber 單一來源計算（保守/實收/壓力 + FI 跑道）。
             # 使用者 9/27 指正：實收 225,075 已高於保守 180,100，只顯示保守會低估水位。
@@ -1935,7 +1936,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _snap_now = json.loads(Path("snapshot.json").read_text(encoding="utf-8")) if Path("snapshot.json").exists() else {}
                 # 2026-08-27：共享組件統一覆蓋率口徑（與儀表板一致）
                 _inc_m = (_snap_now.get("dividend_month_expected") or 100000) + (_snap_now.get("rent_monthly_total") or 0)
-                _exp = _snap_now.get("monthly_expense") or 162781
+                _exp = sot_monthly_expense(_snap_now)
                 _cov = _inc_m / _exp if _exp else 0
                 try:
                     from report_components import render_coverage as _rc

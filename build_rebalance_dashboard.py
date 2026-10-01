@@ -10,6 +10,7 @@ import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
 import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
 from datetime import date
 from pathlib import Path
+from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
 
 BASE = Path(__file__).parent.resolve()
 TODAY = date.today().isoformat()
@@ -289,7 +290,7 @@ def main():
     from sot_targets import restricted_cash as _rst_fn
     cash = max(0.0, float(s.get("cash_total") or 0) - _rst_fn(s))
     monthly_inc = s.get("monthly_income", 228751)
-    monthly_exp = s.get("monthly_expense", 162781)
+    monthly_exp = sot_monthly_expense(s)
     surplus = monthly_inc - monthly_exp
     coverage = monthly_inc / monthly_exp * 100 if monthly_exp else 0
     # ── 2026-09-27：被動現金流三情境 + FI 跑道（口徑單一來源 passive_caliber）──

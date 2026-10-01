@@ -16,6 +16,8 @@ from typing import Any
 import requests
 from dotenv import load_dotenv
 
+from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
+
 # ---------- env ----------
 project_env = Path(__file__).resolve().parent / ".env"
 hermes_env = Path.home() / "AppData" / "Local" / "hermes" / ".env"
@@ -277,7 +279,7 @@ def extract_snapshot(snap: dict) -> dict:
                     "monthly_income": float(
                         snap.get("monthly_income", 228_751)
                     ),
-                    "monthly_expense": float(snap.get("monthly_expense", 162781)),
+                    "monthly_expense": float(sot_monthly_expense(snap)),
                     "rent_monthly": float(snap.get("rent_monthly_actual", 80_100)),
                     # 2026-09-23 INC-241：常態應收／當月待收／當月應收明細（單一真值）
                     "rent_target": float(snap.get("rent_monthly_total") or 80_100),

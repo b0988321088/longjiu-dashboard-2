@@ -304,6 +304,35 @@ def liability_interest(snap: dict) -> dict:
     out["_note"] = "保單借貸＋券商質押＋基金質押之月息；房貸不計（已於月支出以房貸項計入）｜來源 snapshot.liabilities_build_up"
     return out
 
+def sot_monthly_expense(snap: dict) -> float:
+    """月支出單一入口（2026-10-01 INC-270）：消費端**禁**自帶 fallback 常數。
+
+    為什麼：全 repo 曾有 ~15 處在讀 monthly_expense 時自帶 162,781（8 月口徑）當 fallback，
+    之後該值被 172,543、159,210 兩次取代。fallback 平時不觸發，但 snapshot 一旦
+    缺值／壞檔，頁面會**靜默印出三代前的月支出**，覆蓋率／安全線／乾粉等派生值跟著全錯
+    且沒有任何告警（與 INC-201「消費端悄悄落回硬編碼」同病）。
+
+    來源順序：snapshot.monthly_expense → snapshot.monthly_fixed_expense.合計
+    （同檔同義，check_thresholds 每次驗兩者相等）→ 都沒有就 **raise**（大聲失敗，
+    不以舊數字頂替）。
+    """
+    v = (snap or {}).get("monthly_expense")
+    if not isinstance(v, (int, float)) or isinstance(v, bool):
+        v = ((snap or {}).get("monthly_fixed_expense") or {}).get("合計")
+    if not isinstance(v, (int, float)) or isinstance(v, bool):
+        raise KeyError("snapshot 缺 monthly_expense 與 monthly_fixed_expense.合計："
+                       "拒絕以舊口徑編造月支出（詳見 sot_monthly_expense docstring）")
+    return float(v)
+
+
+def sot_monthly_income(snap: dict) -> float:
+    """月收入單一入口（2026-10-01 INC-270）：缺值即 raise，不以 228,751 之類常數頂替。"""
+    v = (snap or {}).get("monthly_income")
+    if not isinstance(v, (int, float)) or isinstance(v, bool):
+        raise KeyError("snapshot 缺 monthly_income：拒絕以舊口徑編造月收入")
+    return float(v)
+
+
 def restricted_breakdown(snap: dict) -> str:
     """指定用途款明細（先註記、後入帳）— 報告用單行文字（單一來源）。
 

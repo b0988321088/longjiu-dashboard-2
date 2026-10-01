@@ -15,6 +15,7 @@
 import json
 from datetime import date, timedelta
 from pathlib import Path
+from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
 
 
 # ═══════════════ 穿透五桶卡 ═══════════════
@@ -52,7 +53,7 @@ def render_penetration_card(snap: dict, title: str = "📊 資產穿透") -> str
 def render_coverage(snap: dict, mode: str = "passive") -> str:
     """覆蓋率文字。mode=passive：被動保守（配息 100,000+房租）；mode=full：含薪水常態。
     2026-08-25 定案：日報主顯示用 passive（保守口徑）。"""
-    expense = snap.get("monthly_expense", 162781)
+    expense = sot_monthly_expense(snap)
     rent = snap.get("rent_monthly_total", 80100) or 0
     if mode == "full":
         income = (snap.get("monthly_income", 214685) or 0)
@@ -113,7 +114,7 @@ def _num(v, default=0):
 def render_health_score(snap: dict) -> dict:
     """健康度分數 0-100（五維度加權）→ (分數, 燈號, 明細)。
     2026-08-27 定版：覆蓋30/防禦25/曝險20/現金15/LTV10（US30Y 為市場環境，非個人健康指標 → 移除計分）"""
-    expense = snap.get("monthly_expense", 162781)
+    expense = sot_monthly_expense(snap)
     rent = snap.get("rent_monthly_total", 80100) or 0
     income = (snap.get("dividend_month_expected") or 100000) + rent
     income_act = float(snap.get("monthly_dividend_total", 0) or 0) + rent

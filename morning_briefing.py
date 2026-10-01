@@ -6,6 +6,7 @@
 import json, subprocess, re
 from datetime import date, timedelta
 from pathlib import Path
+from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
 
 BASE = Path(__file__).resolve().parent
 TODAY = date.today()
@@ -100,7 +101,7 @@ def get_fire(snap):
     except Exception:
         pass
     total = ins+etf+fund+rent
-    expense = snap.get("monthly_expense", 162781)  # 當下真實常態開銷
+    expense = sot_monthly_expense(snap)  # 當下真實常態開銷（單一入口）
     mortgage = snap.get("mortgage_monthly_total", 0) or 0
     other_expense = max(0, expense - mortgage)
     ideal_spend = 40000  # 長期理想目標月花費

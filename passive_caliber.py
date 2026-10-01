@@ -27,8 +27,11 @@ run_daily 生效，儀表板與退休規劃頁仍用常態 80,100）。這裡集
 
 from __future__ import annotations
 
+from sot_targets import sot_monthly_expense   # INC-270：月支出單一入口（禁寫死 fallback）
+
 STRESS_DIV_RATIO = 0.8          # 壓力／極端情境：配息砍 20%
-_FALLBACK_EXPENSE = 162781.0    # 僅在 snapshot 完全缺值時使用（v4 定版月支出）
+# 2026-10-01 INC-270：原 _FALLBACK_EXPENSE = 162781.0（8 月口徑）已移除——
+#   缺值時改讀同檔 stored 副本 passive_income.monthly_expense，再缺即 raise（不以舊值頂替）。
 _FALLBACK_VACANCY = 33000.0     # 僅在 rent_breakdown 缺值時使用（洲際W 月租）
 
 
@@ -44,7 +47,14 @@ def scenarios(snap: dict) -> dict:
     月被動、覆蓋率、盈餘、FI 跑道。"""
     snap = snap or {}
     pi = snap.get("passive_income") or {}
-    exp = _f(snap.get("monthly_expense") or pi.get("monthly_expense"), _FALLBACK_EXPENSE)
+    try:
+        exp = sot_monthly_expense(snap)
+    except KeyError:
+        # 2026-10-01 INC-270：頂層缺值 → 同檔 stored 副本（passive_income.monthly_expense）；
+        # 兩者都缺就讓它 raise（不以 162,781 之類舊常數頂替）。
+        exp = _f(pi.get("monthly_expense"))
+        if not exp:
+            raise
     # 2026-09-29 CIO 審查必修3：FI 跑道（＝留停 A 級門檻「跑道 ≥540 天」判準）不得把
     # 質押撥款指定清償款當可用現金 → cash 一律取「可動用」口徑。
     from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）

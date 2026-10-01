@@ -10,6 +10,7 @@ from pathlib import Path
 from scripts.components.volatility_monitor import make_volatility_report
 from dividend_caliber import bucket_of
 import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
+from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
 
 BASE = Path(__file__).resolve().parent
 
@@ -106,7 +107,9 @@ def main():
     az_div = _dr.get("安聯保單撥回", 0) or 0
     div_ins = az_div + firstjin_div
     div_total = sum(v for k, v in _dr.items() if isinstance(v, (int, float))) or 0
-    expense = snap.get("monthly_expense", 162781) or 162781
+    expense = sot_monthly_expense(snap)
+    if not expense:
+        raise ValueError("snapshot.monthly_expense <= 0：拒絕以 0 當分母（詳見 sot_monthly_expense）")
     # 薪水（當月已收，salary_records 動態）
     salary = 0
     for k, v in (snap.get("salary_records", {}) or {}).items():
@@ -971,7 +974,7 @@ def main():
         _rent = float(_pi.get("rent_monthly", 0) or 0)
         if "rent_monthly" not in _pi:
             print("[WARN] 儀表板：passive_income.rent_monthly 缺值：房租常態以 0 計（不以當月已收冒充）")
-        _exp = float(expense or 0) or 162781.0
+        _exp = float(expense or 0)
         _inc_tot = _sal + _div + _rent
         if _inc_tot <= 0:
             raise ValueError("income total <= 0")

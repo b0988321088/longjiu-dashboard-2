@@ -29,7 +29,12 @@ _CC_MAP = {"玉山銀行": "玉山", "台新銀行": "台新", "永豐銀行": "
 # Company_Ledger.md §本月支出：信用卡消費 38,000 = 四大主力卡月均（snapshot cc_low 35,000 / cc_mid 38,000 / cc_high 42,000）
 LEDGER_BUDGET = 38000
 LEDGER_BAND = (35000, 42000)
-MONTHLY_EXPENSE = 162781
+# 2026-10-01 INC-270：原月支出基線常數（8 月口徑）已移除——禁寫死退路。
+# 月支出基線一律讀 snapshot 單一入口；缺值即 raise（不以舊值頂替）。
+def _monthly_expense_baseline() -> float:
+    import json as _json
+    from sot_targets import sot_monthly_expense
+    return sot_monthly_expense(_json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")))
 SAFETY_LINE = 40000  # 玉山/富邦生活帳戶安全線
 
 
@@ -216,7 +221,7 @@ def calculate_budget_status(expenses, bill_date, cycle, acct):
         lines.append("- 其他卡（國泰 CUBE 等）當期未繳：{:,} TWD；**全部卡費合計 {:,} TWD**".format(
             other, total_cycle + other))
     lines.append("- 帳本四卡月預算：{:,} TWD（區間 {:,}–{:,}）".format(LEDGER_BUDGET, LEDGER_BAND[0], LEDGER_BAND[1]))
-    lines.append("- 月支出基線：{:,} TWD".format(MONTHLY_EXPENSE))
+    lines.append("- 月支出基線：{:,} TWD".format(int(_monthly_expense_baseline())))
     lines.append("- 相對帳本基準衝擊：{:+,} TWD".format(total_cycle - LEDGER_BUDGET))
     cash = acct.get("cash", {})
     if cash:

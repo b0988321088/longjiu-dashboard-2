@@ -6,6 +6,7 @@
 import json, sqlite3, sys
 from datetime import date, timedelta
 from pathlib import Path
+from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
 
 BASE = Path(__file__).resolve().parent
 
@@ -87,7 +88,7 @@ def main():
 
     # 階段狀態
     print(f"\n[階段] 國泰核貸: {snap.get('cathay_refinance_note', '審查中')[:60]}")
-    print(f"[現金底線] 現金 {snap.get('real_liquid_assets', 0):,} vs 6個月支出 {snap.get('monthly_expense', 162781) * 6:,.0f}")
+    print(f"[現金底線] 現金 {snap.get('real_liquid_assets', 0):,} vs 6個月支出 {sot_monthly_expense(snap) * 6:,.0f}")
 
     # P0-1 目標-對策對照表（tactical_table.py）
     try:

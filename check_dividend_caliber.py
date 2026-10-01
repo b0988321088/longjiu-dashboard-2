@@ -320,6 +320,22 @@ ck("極端情境分母已保護（無裸除法）",
    and "/(expense-(div_c*0.7+rent-33000))" not in src)
 ck("已移除未使用變數 surplus/working_surplus",
    "surplus = snap.get" not in src and "working_surplus = snap.get" not in src)
+
+# 2026-10-01 INC-270：月支出／月收入禁自帶寫死 fallback（一律走 sot_targets 單一入口）。
+# 為什麼：162,781（8 月口徑）散在 15 個生產檔當 snap.get(..., 162781) 的退路 → snapshot 缺值時
+# 靜默印出舊值。改為 accessor（缺值即 raise）後，這條守門防止下一個人再寫回退路。
+_bad_fb = []
+for _p in sorted(BASE.glob("*.py")):
+    if _p.name == Path(__file__).name or _p.name.startswith("_"):
+        continue
+    _t = _p.read_text(encoding="utf-8", errors="replace")
+    # 去註解再掃：註解（例如「原常數已移除」的說明）不會造成靜默舊值，不應誤判
+    _code = "\n".join(_ln.split("#", 1)[0] for _ln in _t.splitlines())
+    if (re.search(r'monthly_expense["\']?\s*,\s*162781', _code)
+            or re.search(r"or\s+162781(?:\.0)?", _code)
+            or re.search(r"MONTHLY_EXPENSE\s*=\s*162781", _code)):
+        _bad_fb.append(_p.name)
+ck("月支出無寫死 fallback（一律 sot_monthly_expense）", not _bad_fb, str(_bad_fb))
 ck("壓力/極端判定與顏色已派生（無寫死 red 判定）",
    'class="red">&lt;100%' not in src and "{_stress_cls}" in src and "{_ext_cls}" in src
    and "{_stress_note}" in src)

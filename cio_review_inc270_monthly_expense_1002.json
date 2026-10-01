@@ -1,0 +1,31 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO-Hermes",
+  "scope": "INC-270 月支出／月收入單一入口（移除 15 處寫死 fallback）＋保單息口徑＋A2/B1 治理文件校正",
+  "trigger": "使用者 2026-10-02「修復核准」（同意前一輪評估的 A1／A2／B1）",
+  "date": "2026-10-02",
+  "root_cause": [
+    "A1：全 repo 15 處以 snap.get(\"monthly_expense\", 162781) 讀月支出——162,781 為 8 月口徑，其後被 172,543、159,210 兩次取代。fallback 平時不觸發，但 snapshot 缺值／壞檔時會靜默印出三代前的月支出，覆蓋率／安全線／乾粉等派生值全錯且無告警（同 INC-201 病根）",
+    "A1b（執行中發現、同一根因）：build_audit_dashboard.py 保單息寫死 13,333（保單借貸 9/29＋10/1 清償後應為 0）、常態配息預設 153,389（8/30 已廢值）且 monthly_dividend_total 月初為 0 → 稽核頁被動覆蓋以 0 計",
+    "A2：pending_decisions #24 標題停在「101.7% → 105.0%」（現行 115.3%），狀態列仍夾舊月支出 172,543 口徑敘述",
+    "B1：DAILY_REPORT_PIPELINE_RULE.md 來源註解規範表為 2026-07-11 建立時範例，值全過時但無歷史標註；兩行校準錨點無「真值日必做」提示"
+  ],
+  "fix": {
+    "accessor": "新增 sot_targets.sot_monthly_expense()／sot_monthly_income()：snapshot.monthly_expense → monthly_fixed_expense.合計 → raise（不再以舊常數頂替）",
+    "migration": "15 處改走 accessor：asset_diff_monitor、build_audit_dashboard、build_dashboard(2)、build_rebalance_dashboard、dynamic_review、monthly_report、monthly_strategy_review、morning_briefing、report_components、run_daily(3)、sabbatical_checklist_update、rotation_engine；passive_caliber 移除 _FALLBACK_EXPENSE；budget_daily_check 移除 MONTHLY_EXPENSE 常數",
+    "audit_dashboard": "保單息改讀 sot_targets.liability_interest()（現為 0）、常態配息改讀 passive_income.fund_dividend_conservative",
+    "guard": "check_dividend_caliber.py 新增『月支出無寫死 fallback』（去註解後掃描；禁止 monthly_expense\", 162781／or 162781／MONTHLY_EXPENSE = 162781 再現）",
+    "A2_B1": "pending #24 標題/狀態改現行值優先＋歷史加註；metrics_registry 說明中間版本標【歷史】；RULE 檔來源表加「2026-07-11 範例」警語、校準錨點加「真值日必做（含雙 key）」提示"
+  },
+  "verification": {
+    "static": "pyflakes 15 檔：undefined name 0（僅既有 unused-local 風格項）",
+    "runtime": "實跑建置全綠：build_dashboard／build_audit_dashboard／build_rebalance_dashboard／build_retirement_plan／dynamic_review／asset_diff_monitor／monthly_report 2026-09／run_daily 皆 rc=0；run_daily 三源校準通過、真值 月收 228,751／月支 159,210／盈餘 +69,541",
+    "gates": "check_cross_report_consistency PASS、check_dashboard_stale PASS；check_dividend_caliber 58/60（餘 1 條＝他班未追蹤檔 gen_emergency_us_20261001.py、1 條 SKIP）；check_dashboard_sync 於推 10-02 產物後轉 PASS",
+    "residue": "生產碼寫死 fallback 殘留 0（守門背書）；index.html／日報 162,781 殘留 0",
+    "self_test": "內文守門自測 45/45（含前一日新增之可動用現金口徑）"
+  },
+  "non_blocking_leftovers": [
+    "check_dividend_caliber『變更範圍』仍列他班未追蹤檔 gen_emergency_us_20261001.py（非本班範圍，未納入 commit）",
+    "work_log 歷史條目（9/05、9/30）仍含舊口徑字面值 → 屬歷史紀錄，依 INC-267 規則不回溯改寫"
+  ]
+}

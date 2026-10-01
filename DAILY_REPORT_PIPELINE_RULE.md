@@ -56,6 +56,11 @@
 
 ## 保單配息顯示規則
 
+> ⚠️ **真值日必做（三源校準錨點）**：更新保單現值時，本節兩行的『現值 N』必須同步改寫
+> （`run_daily.calibrate_sources()` 以這兩行與 snapshot 對帳，**不符即 exit 2 擋掉日報**）；
+> snapshot 兩組 key 也要一起改：`allianz_ab`／`allianz_ab_current_value`、`firstjin`／`firstjin_current_value`
+> （校準讀 `_current_value` 優先，只改一個會拿到舊值）。
+
 - **安聯 A + 安聯 B = 一張合併 row**（現值 7,557,489；2026-10-01 校正，配息一律讀 snapshot dividend_records）
   - 成本／現值／累計配息／資產報酬率：一律讀 snapshot（allianz_*），不在本檔留數字
   - 本月配息：讀 snapshot.dividend_records[當月] 保單桶（2026-10-01 校正；原 55,451 為 7 月值，已移除）
@@ -112,6 +117,10 @@
 ---
 
 ## 來源註解規範
+
+> ⚠️ **本節為 2026-07-11 v2.0 建立時的範例**（下表金額＝當日值，早已過時）：
+> 現行真值一律讀 `snapshot.json`，**不得**把本表數字當現值引用；僅供「來源怎麼標註」的格式參考。
+
 
 | 數字 | 來源 |
 |------|------|

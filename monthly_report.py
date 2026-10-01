@@ -5,6 +5,7 @@
 """
 import json, sys
 from pathlib import Path
+from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
 try:
     from dividend_caliber import bucket_of as _bucket_of   # 配息分類單一來源（2026-10-01）
 except Exception:
@@ -82,7 +83,7 @@ def main():
     for _k, _v in (snap.get("girlfriend_repayment_records", {}) or {}).items():
         if str(_k).startswith(ym):
             _gf += _v.get("amount", 0) if isinstance(_v, dict) else (_v if isinstance(_v, (int, float)) else 0)
-    _expense = snap.get("monthly_expense", 162781) or 162781
+    _expense = sot_monthly_expense(snap)
     # 2026-09-23 INC-241：房租「當月應收」＝ rent_receivable_by_month[當月]（含一次性調整，2026-09 洲際W 折讓 3,000），
     # 缺本月才退回常態 rent_monthly_total；待收 = 當月應收 − 當月已收（原用常態相減 → 幽靈待收 3,000）
     _rrb_m = (snap.get("rent_receivable_by_month", {}) or {}).get(ym) or {}

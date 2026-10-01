@@ -10,6 +10,7 @@
 import json
 from datetime import date
 from pathlib import Path
+from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
 
 BASE = Path(__file__).resolve().parent
 
@@ -54,7 +55,7 @@ def build_monthly_review(snap: dict, us30y: float = None) -> dict:
     # 環境狀態
     env = {
         "核貸進度": snap.get("cathay_refinance_note", "審查中"),
-        "現金底線覆蓋": f"{snap.get('real_liquid_assets',0):,} vs 6個月 {snap.get('monthly_expense',162781)*6:,.0f}",
+        "現金底線覆蓋": f"{snap.get('real_liquid_assets',0):,} vs 6個月 {sot_monthly_expense(snap)*6:,.0f}",
         "US30Y": us30y,
         "負債比": snap.get("debt_ratio", "?"),
     }

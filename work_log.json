@@ -1696,7 +1696,7 @@
   "date": "2026-10-01",
   "category": "完成",
   "item": "db_loader 去硬編碼",
-  "detail": "working/retirement surplus 不再用 162,781 派生；allianz_ab/firstjin/房租/常態配息一律讀 snapshot。工作期盈餘 75,970→69,541"
+  "detail": "working/retirement 盈餘不再用 8 月舊口徑常數派生；allianz_ab/firstjin/房租/常態配息一律讀 snapshot。工作期盈餘校正為 69,541（＝月收 228,751−月支 159,210）"
  },
  {
   "date": "2026-10-01",
