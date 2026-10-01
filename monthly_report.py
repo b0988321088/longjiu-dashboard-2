@@ -6,6 +6,18 @@
 import json, sys
 from pathlib import Path
 try:
+    from dividend_caliber import bucket_of as _bucket_of   # 配息分類單一來源（2026-10-01）
+except Exception:
+    def _bucket_of(k):                                     # 保底：與 run_daily._div_by_type 同規則
+        s = str(k)
+        if "安聯" in s or "第一金" in s or "撥回" in s:
+            return "ins"
+        if "股息" in s or "股利" in s or "ETF" in s:
+            return "etf"
+        if "一次性" in s or "現金股息" in s:
+            return "oneoff"
+        return "fund"
+try:
     from mortgage_rate import (cathay_rate_pct as _cg_pct, cathay_wan as _cg_wan,
                                cathay_monthly as _cg_mo)
 except Exception:
@@ -46,9 +58,17 @@ def main():
         rows.append(("總負債", first["total_liabilities"], last["total_liabilities"], last["total_liabilities"] - first["total_liabilities"]))
         rows.append(("淨資產(流動-負債)", liq(first) - first["total_liabilities"], liq(last) - last["total_liabilities"], (liq(last) - last["total_liabilities"]) - (liq(first) - first["total_liabilities"])))
 
-    # 被動收入
-    mdb = snap.get("monthly_dividend_breakdown", {})
-    ins_div = mdb.get("allianz", 0) + mdb.get("firstjin", 0)
+    # 被動收入（2026-10-01 修正）：改由 dividend_records[ym] 逐筆分類彙總。
+    # 原讀 monthly_dividend_breakdown（＝「當月」欄位，月初校正即歸零）→ 產 9 月報時
+    # 保單／ETF／基金全顯示 0，與同頁「現金流審查」的配息實收自相矛盾。
+    _dr_m = (snap.get("dividend_records", {}) or {}).get(ym) or {}
+    _bk = {"ins": 0, "etf": 0, "fund": 0, "oneoff": 0}
+    for _k, _v in _dr_m.items():
+        if isinstance(_v, (int, float)):
+            _b = _bucket_of(_k)
+            _bk[_b] = _bk.get(_b, 0) + _v
+    ins_div, etf_div, fund_div = _bk["ins"], _bk["etf"], _bk["fund"]
+    _oneoff = _bk["oneoff"]
 
     # 現金流審查變數（2026-08-24 新增：實際 = snapshot 真值口徑）
     # 2026-09-15：薪資改讀 snapshot（原 fallback 寫死 39,727 為 8 月值，9 月常態調薪 42,560；
@@ -79,11 +99,14 @@ def main():
     gf_act, gf_exp, exp_total, act_total, rent_gap = _gf, _gf_exp, _exp_total, _act_total, _rent_exp - _rent_got
     rent_norm = snap.get("rent_monthly_total", 80100) or 80100  # 常態全月應收（INC-241b 註腳用）
     passive_act, coverage, expense = _passive_act, _coverage, _expense
-    div_norm = snap.get("monthly_dividend_total", 153389) or 153389  # 常態全月基準（含月底撥回）
-    etf_div = mdb.get("etf", 0)
-    fund_div = mdb.get("fund", 0)
-    rent = snap.get("rent_monthly_actual", 80100)
-    total_income = ins_div + etf_div + fund_div + rent
+    # 2026-10-01：常態全月基準改讀單一口徑（保守基本值）；原 fallback 153,389 為 8/30 已廢誤值
+    div_norm = int((snap.get("passive_income") or {}).get("fund_dividend_conservative")
+                   or snap.get("dividend_month_expected") or 0)
+    # 2026-10-01：房租改月內實收（rent_monthly_actual 月初校正即歸零；9 月報曾誤顯示 24,000）
+    rent = _rent_got
+    total_income = ins_div + etf_div + fund_div + _oneoff + rent
+    _oneoff_row = (f'<tr><td>一次性（現金股息等）</td><td class="num">{_oneoff:,}</td></tr>'
+                   if _oneoff else '')
 
     # 投資績效（2026-08-31 新增：淨資產變化 + 扣專案收入 → 常態績效）
     _net_first = (hist.get(first_d, {}).get("total_assets", 0) or 0) - (hist.get(first_d, {}).get("total_liabilities", 0) or 0)
@@ -130,10 +153,10 @@ td{{padding:8px 6px;border-top:1px solid #e5e5ea}}
 <tr><td>保單配息</td><td class="num">{ins_div:,}</td></tr>
 <tr><td>ETF配息</td><td class="num">{etf_div:,}</td></tr>
 <tr><td>基金配息</td><td class="num">{fund_div:,}</td></tr>
-<tr><td>房租收入</td><td class="num">{rent:,}</td></tr>
+{_oneoff_row}<tr><td>房租收入</td><td class="num">{rent:,}</td></tr>
 <tr style="font-weight:700;border-top:2px solid #2563eb"><td>合計</td><td class="num">{total_income:,}</td></tr>
 </tbody></table>
-<p style="font-size:12px;color:#6e6e73;margin-top:6px">口徑：本表為 <strong>當月實收</strong>（配息＝monthly_dividend_breakdown、房租＝rent_received_records）；房租當月應收 {rent_exp:,}（常態 {rent_norm:,}，差額為一次性折讓）、當月待收 {rent_gap:,}，見下方現金流審查</p></div>
+<p style="font-size:12px;color:#6e6e73;margin-top:6px">口徑：本表為 <strong>當月實收</strong>（配息＝dividend_records[{ym}] 逐筆分類彙總、房租＝rent_received_records[{ym}]）；房租當月應收 {rent_exp:,}（常態 {rent_norm:,}，差額為一次性折讓）、當月待收 {rent_gap:,}，見下方現金流審查</p></div>
 
 <div class="card"><h2>💵 現金流審查（{ym}，2026-08-24 新增）</h2>
 <table><thead><tr><th>項目</th><th class="num">預期</th><th class="num">實際</th><th class="num">差異</th></tr></thead><tbody>
@@ -181,7 +204,7 @@ td{{padding:8px 6px;border-top:1px solid #e5e5ea}}
 <li>🔁 保單組合調整：新增 PIMCO收益增長（A 1,683,485 + B 952,834），聯博美國成長出清，安聯B M&G 轉出</li>
 <li>🏦 國泰轉貸：已撥款 {_cg_pct()}%（8/20、本金 {_cg_wan()} 萬、月付 {_cg_mo():,}）；2026-09-29 質押 590 萬@2.65%，已清償保單借貸 400 萬＋券商質押 96 萬</li>
 <li>📉 Fed 7/30 維持利率 3.50-3.75%，30年公債破 5.2%，市場震盪</li>
-<li>💰 本月配息：保單 118,296 + ETF 10,740 + 基金 615 = 129,651</li>
+<li>💰 本月配息（{ym} 實收）：保單 {ins_div:,} + ETF {etf_div:,} + 基金 {fund_div:,} = {ins_div+etf_div+fund_div:,}</li>
 </ul></div>
 <p style="font-size:12px;color:#9a9aa0;text-align:center">龍七控股自動月報 · 資料來源 snapshot.json + dragon_assets.db</p>
 </body></html>"""

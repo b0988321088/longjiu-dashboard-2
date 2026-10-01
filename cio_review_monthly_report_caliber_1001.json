@@ -1,0 +1,42 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO-Hermes",
+  "scope": "月報「被動收入」卡口徑修正 + 本月配息行去硬編碼 + 常態基準改單一口徑",
+  "trigger": "使用者 2026-10-01：「修」（同意修月報兩處既有缺陷）",
+  "date": "2026-10-01",
+  "root_cause": [
+    "monthly_report.py 被動收入卡讀 snapshot.monthly_dividend_breakdown（＝『當月』欄位）＋rent_monthly_actual → 每月 1 日月初校正歸零後，產 9 月報時保單／ETF／基金全顯示 0、房租顯示當月值 24,000，與同頁『現金流審查』的配息 183,591 自相矛盾（動態月報 2026-09 已記載此缺陷）",
+    "monthly_report.py:184『本月配息：保單 118,296 + ETF 10,740 + 基金 615 = 129,651』為硬編碼常態，逐月原樣重印（違反 no-hardcode mandate）",
+    "monthly_report.py:82 div_norm fallback 153,389 為 2026-08-30 已廢誤值（monthly_dividend_total 為 0 時 falsy → 印出 153,389）"
+  ],
+  "fix": {
+    "monthly_report.py": [
+      "被動收入卡改由 dividend_records[ym] 逐筆分類彙總（import dividend_caliber.bucket_of，附與 run_daily 同規則之保底分類器）；房租改月內實收 rent_received_records[ym]（原 rent_monthly_actual）",
+      "本月重點『本月配息』行改動態：保單／ETF／基金／合計 皆現算（附 ym 標示）",
+      "配息常態（全月基準）改讀 passive_income.fund_dividend_conservative（fallback dividend_month_expected）；移除 153,389 硬編碼 fallback",
+      "一次性（現金股息等）bucket 獨立成列（僅非零時顯示），不再被靜默丟棄"
+    ]
+  },
+  "verification": {
+    "monthly_report_2026-09.html": [
+      "被動收入（2026-09 實收）：保單 110,077／ETF 16,340／基金 57,174／房租 77,100（合計 260,691）— 與現金流審查『配息實收 183,591』一致",
+      "本月配息（2026-09 實收）：保單 110,077 + ETF 16,340 + 基金 57,174 = 183,591（動態）",
+      "配息常態（全月基準）= 100,000（原印 153,389 已廢值）"
+    ],
+    "monthly_report_2026-10.html": [
+      "被動收入：保單 0／ETF 0／基金 0／房租 24,000；本月配息 = 0（符合 10 月歸零定案）"
+    ],
+    "gates": {
+      "check_dividend_caliber": "53/58 PASS（與修正前同；餘 4 條為既有月支出口徑/浮點尾巴項，另 1 條為本 commit 前之未宣告程式檔）",
+      "check_dashboard_sync": "PASS",
+      "check_cross_report_consistency": "PASS",
+      "check_dashboard_stale": "PASS（index.html 真殘留 0）"
+    },
+    "regression": "monthly_report.py 2026-08 印『❌ 2026-08 無資料』（asset_diff_history 已無 8 月鍵）→ 既有 monthly_report_2026-08.html 為 20:45 舊產物未更新，非本次改動造成"
+  },
+  "non_blocking_leftovers": [
+    "monthly_report_2026-08.html 為舊產物（history 已無 8 月資料、無法重生），內含舊硬編碼行；不影響 9/10 月報",
+    "月報『本月重點』其餘兩行（PIMCO 部位敘述、Fed 利率）仍為靜態文字，未動",
+    "check_dividend_caliber 4 條既有 FAIL（月支出 172,543 vs 159,210 口徑 → retirement_surplus 17,319 vs 20,890、頁面浮點尾巴、儀表板安全退休盈餘）仍待另案處理"
+  ]
+}
