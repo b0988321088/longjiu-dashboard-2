@@ -756,12 +756,22 @@ def triggers(snap: dict) -> dict:
                     "門檻": "三條全達標", "觸發": None,
                     "動作": "無法判定：{}".format(_e), "來源": "sot_targets.sabbatical_gate"})
 
-    # 4) 桶位階梯＋單桶硬上限（US30Y 煞車生效時一律「暫緩」）
+    # 4) 桶位：**可接受範圍制**（2026-10-02 裁示②）＋單桶硬上限（US30Y 煞車生效時一律「暫緩」）
+    #    範圍內＝完全靜默（不列、不產生任何行動文字）；範圍外只標示「範圍外」，
+    #    實際動作仍走既有 3/6/10pp 階梯＋硬上限（本批未變更階梯／煞車邏輯）。
     _brake_on = any(x["id"] == "us30y_煞車" and x["觸發"] is True for x in out)
-    for _n, _gv in gaps.items():
-        if not isinstance(_gv, (int, float)) or _n.endswith(("_科技", "_非科技")):
-            continue
-        _abs = abs(float(_gv))
+    try:
+        _bands = acceptable_band(snap)
+    except Exception as _e_band:
+        _bands = {}
+        out.append({"id": "band_nodata", "項目": "可接受範圍", "現值": "無真值", "門檻": "—",
+                    "觸發": None, "動作": "無法判定：{}".format(_e_band),
+                    "來源": "sot_targets.acceptable_band"})
+    for _n, _b in _bands.items():
+        if not _b.get("顯示行動"):
+            continue                                   # ← 範圍內完全靜默
+        _tgt = _b.get("目標")
+        _abs = abs(float(_b["現值"]) - float(_tgt)) if isinstance(_tgt, (int, float)) else 0.0
         if _abs >= float(ladder.get("大規模") or 10):
             _stage = "大規模調整"
         elif _abs >= float(ladder.get("導流") or 6):
@@ -769,14 +779,14 @@ def triggers(snap: dict) -> dict:
         elif _abs >= float(ladder.get("觀察") or 3):
             _stage = "觀察（僅記錄）"
         else:
-            continue
-        out.append({"id": "gap_" + _n, "項目": "桶位偏離：" + _n, "現值": "{:+.1f}pp".format(_gv),
-                    "門檻": "觀察 ≥{}／導流 ≥{}／大規模 ≥{}pp".format(
-                        ladder.get("觀察"), ladder.get("導流"), ladder.get("大規模")),
+            _stage = "僅標示範圍外（未達階梯門檻，不動作）"
+        out.append({"id": "band_" + _n, "項目": "範圍外：" + _n,
+                    "現值": "{:.1f}%".format(_b["現值"]),
+                    "門檻": "可接受 {}~{}%".format(_b["下限"], _b["上限"]),
                     "觸發": True,
                     "動作": ("⏸ 暫緩（US30Y 煞車生效，只回報不動作）" if _brake_on
                              else _stage + "（走再平衡授權）"),
-                    "來源": "snapshot.penetration.gaps ＋ thresholds.動作階梯_pp"})
+                    "來源": "snapshot.可接受範圍_pct ＋ penetration.actual_pct"})
     for _n, _cap in caps.items():
         _cur = actual.get(_n)
         if isinstance(_cur, (int, float)) and float(_cur) > float(_cap):
@@ -835,3 +845,78 @@ def triggers(snap: dict) -> dict:
             "今日結論": ("✅ 今日不需動作" if not fired else "⚠️ {} 項觸發".format(len(fired))),
             "授權邊界": "本表只回報狀態；任何買賣／加減碼一律另案核准（US30Y 煞車優先於階梯）",
             "source": "sot_targets.triggers（使用者 2026-10-02 裁示 第 1 批③）"}
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# 可接受範圍＋靜默原則（第 2 批｜使用者 2026-10-02 裁示 ②）
+#   台股 7–13｜美股 27–33｜債券 27–33｜防禦（防守型配息）27–33｜科技 ≤15（上限）
+#   現金：**不設百分比**（由 Gate／cash_mode 管理，不得塞進配置範圍）
+#
+#   ★ 「目標值」與「可接受範圍」分離（裁示重點）：
+#     範圍只負責顯示與判讀；**落在範圍內＝完全靜默**——不得出現
+#     「低於目標 Xpp／距離目標還差 Xpp／建議增加／需再平衡」等行動文字。
+#     超出範圍也只標示「範圍外」；真正交易判斷仍沿用既有 3/6/10pp 階梯＋US30Y 煞車。
+#     本函式不改變任何投資決策邏輯、不新增市場指標、不碰質押／借款／自動賣股。
+# ════════════════════════════════════════════════════════════════════════════
+BAND_EXCLUDED = ("現金", "現金/安全網", "cash")   # 不進 allocation 可接受範圍（裁示：現金不設百分比）
+
+
+def acceptable_band(snap: dict) -> dict:
+    """各投資桶可接受範圍（SoT：snapshot.可接受範圍_pct；缺值即 raise，不猜）。
+
+    回傳 {桶名: {...}}；`顯示行動` 為 False＝落在範圍內 → 任何行動文字都不得出現。
+    """
+    tbl = (snap or {}).get("可接受範圍_pct")
+    if not isinstance(tbl, dict) or not tbl:
+        raise KeyError("snapshot.可接受範圍_pct 缺值 → 可接受範圍無真值，拒絕判斷（2026-10-02 裁示②）")
+    actual = ((snap or {}).get("penetration") or {}).get("actual_pct") or {}
+    targets = (((snap or {}).get(SOT_KEY) or {}).get("桶目標_pct") or {})
+    hard = (((snap or {}).get(SOT_KEY) or {}).get("單桶硬上限_pct") or {})
+    out: dict = {}
+    for name, cfg in tbl.items():
+        if str(name).startswith("_") or not isinstance(cfg, dict):
+            continue                      # 略過 _規則／_來源 等說明欄
+        if any(x in str(name) for x in BAND_EXCLUDED):
+            continue
+        _cur_key = cfg.get("現值鍵") or name
+        cur = actual.get(_cur_key, actual.get(name))
+        lo, hi = cfg.get("下限"), cfg.get("上限")
+        typ = cfg.get("類型") or ("硬上限" if (lo is None and hi is not None) else "帶狀")
+        tgt = targets.get(str(name).replace("成長", "")) if cfg.get("目標") is None else cfg.get("目標")
+        state = "無現值"
+        if isinstance(cur, (int, float)):
+            if isinstance(hi, (int, float)) and cur > hi:
+                state = "超上限"
+            elif isinstance(lo, (int, float)) and cur < lo:
+                state = "低於下限"
+            elif lo is None:
+                state = "在上限內"
+            else:
+                state = "範圍內"
+        show = state in ("超上限", "低於下限")
+        out[name] = {
+            "類型": typ, "目標": tgt, "下限": lo, "上限": hi, "現值": cur,
+            "狀態": state, "顯示行動": show,
+            "硬上限_pct": hard.get(str(name).replace("成長", "")) or hard.get(name),
+            "說明": ("範圍內＝完全靜默（不產生任何行動建議）" if not show
+                     else "範圍外 → 僅標示『範圍外』；實際動作走 3/6/10pp 階梯（US30Y 煞車優先）"),
+        }
+    return out
+
+
+def band_line(snap: dict, bucket: str) -> str:
+    """單一桶顯示片段：**範圍內回空字串**（靜默）；範圍外只標示範圍外，不下指令。"""
+    try:
+        b = acceptable_band(snap).get(bucket)
+    except Exception:
+        b = None
+    if not b or not b.get("顯示行動"):
+        return ""
+    if b["狀態"] == "超上限":
+        return f"{bucket} {b['現值']:.1f}%（範圍外：高於可接受上限 {b['上限']}%）"
+    return f"{bucket} {b['現值']:.1f}%（範圍外：低於可接受下限 {b['下限']}%）"
+
+
+def band_silent_buckets(snap: dict) -> list:
+    """落在可接受範圍內（＝必須靜默）的桶名清單；稽核守門用。"""
+    return [k for k, v in acceptable_band(snap).items() if not v.get("顯示行動")]

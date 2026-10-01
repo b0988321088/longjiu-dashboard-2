@@ -350,3 +350,62 @@ def render_health_card(snap: dict) -> str:
     ).format(gt["燈號"], _rows, gt["參考指標"]["保守覆蓋_pct"],
              gt["參考指標"]["當月實收覆蓋_pct"], gt["參考指標"]["3個月趨勢"],
              cm["模式"], cm["可動用"], cm["底線"], cm["餘裕"])
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# 顯示層靜默過濾（第 2 批｜使用者 2026-10-02 裁示②）
+#   落在「可接受範圍」內的桶：不得出現「缺口 ±X.Xpp／還差／不足／低於目標／建議增加／
+#   需再平衡／距離目標」等行動文字；範圍外原樣保留。**只改顯示文字，數字與決策邏輯不動。**
+# ════════════════════════════════════════════════════════════════════════════
+import re
+
+_BAND_ALIAS = {
+    "台股市值型成長": ("台股市值型", "台股"),
+    "美股市值型成長": ("美股市值型", "美股"),
+    "防守型配息": ("防守型配息", "防守", "防禦"),
+    "債券": ("債券",),
+    "科技": ("科技", "高科技"),
+}
+_BAND_BAD = ("缺口", "還差", "不足", "低於目標", "建議增加", "需再平衡", "距離目標")
+
+
+def band_filter(text: str, snap: dict | None = None) -> str:
+    """把「範圍內」桶的缺口／行動字樣自顯示文字移除；範圍外與所有數字原樣保留。
+
+    snap 未給時自讀 snapshot.json（給呼叫端零負擔的注入方式）。
+    """
+    if snap is None:
+        try:
+            import json as _json
+
+            snap = _json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
+        except Exception:
+            return text
+    try:
+        from sot_targets import acceptable_band
+
+        bands = acceptable_band(snap)
+    except Exception:
+        return text
+    out = text
+    for name, b in bands.items():
+        if b.get("顯示行動"):
+            continue                                  # 範圍外 → 原樣保留
+        cur = b.get("現值")
+        for w in _BAND_ALIAS.get(name, (name,)):
+            _repl = (w + "（{:.1f}%，範圍內）".format(cur) if isinstance(cur, (int, float))
+                     else w + "（範圍內）")
+            pat = re.compile(re.escape(w) + r"[^（(]{0,10}[（(][^）)]{0,90}?(?:"
+                             + "|".join(_BAND_BAD) + r")[^）)]{0,70}?[）)]")
+            for _ in range(30):
+                m = pat.search(out)
+                if not m:
+                    break
+                out = out[:m.start()] + _repl + out[m.end():]
+            for _ in range(30):
+                m2 = re.search(re.escape(w) + r"((?:(?!" + re.escape(w) + r").){0,140}?)("
+                               + "|".join(_BAND_BAD) + r")\s*[+-]?[\d.]+(?:\s*)pp", out, re.S)
+                if not m2:
+                    break
+                out = out[:m2.start()] + w + m2.group(1).rstrip() + "（範圍內）" + out[m2.end():]
+    return out

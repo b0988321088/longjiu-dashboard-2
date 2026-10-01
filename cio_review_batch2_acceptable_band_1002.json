@@ -1,0 +1,28 @@
+{
+ "verdict": "APPROVE",
+ "reviewer": "CIO-Hermes",
+ "scope": "第 2 批：可接受範圍＋靜默原則（裁示② 2026-10-02）",
+ "trigger": "使用者 2026-10-02 裁示②：台股 7–13／美股 27–33／債券 27–33／防禦 27–33／科技 ≤15；現金不設；目標值與可接受範圍分離；範圍內完全靜默",
+ "date": "2026-10-02",
+ "delivered": [
+  "snapshot.可接受範圍_pct（SoT；5 桶＋現金排除；_規則 寫明靜默原則）",
+  "sot_targets.acceptable_band()／band_line()／band_silent_buckets()（缺值即 raise）",
+  "sot_targets.triggers() 桶位由『3pp 偏離』改『可接受範圍制』：範圍內不列、範圍外只標示範圍外",
+  "report_components.band_filter()：顯示層把範圍內桶的『缺口 ±X.Xpp／還差／不足／低於目標／建議增加／需再平衡／距離目標』改寫為『（現值%，範圍內）』",
+  "注入點：build_dashboard（index 操作規範）、build_rebalance_dashboard（本週投資計劃）",
+  "守門新增 2 條：範圍內桶不得殘留缺口／行動字樣；可接受範圍真值存在（5 桶、現金排除）"
+ ],
+ "verification": {
+  "範圍判定": "台股 7.6%（7~13）範圍內＝靜默｜美股 38.3% 超上限｜債券 27.6%（27~33）範圍內＝靜默｜防守 16.7% 低於下限｜科技 15.1% > 15 超上限",
+  "範圍內噪音": "index／rebalance／audit／daily 產物掃描：0 殘留（精準比對＝該桶 現值−目標 的 pp 值）",
+  "原始數字": "完整保留於 reference layer（穿透表、目標欄、現值欄皆未動）",
+  "階梯與煞車": "3/6/10pp 動作階梯與 US30Y 煞車邏輯未變（僅顯示來源改範圍制；煞車生效時動作仍為暫緩）",
+  "守門": "check_dividend_caliber 67/67（含新增 2 條）；sync／cross-report／stale／narrative 全 PASS"
+ },
+ "excluded": [
+  "第 3 批（Pending 期限管理）",
+  "第 4 批（90 天需求）",
+  "gen_emergency_us_20261001.py（非本班）"
+ ],
+ "conclusion": "APPROVE"
+}

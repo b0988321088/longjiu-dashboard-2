@@ -4,6 +4,7 @@
 解法：每次從 snapshot.json 讀真值 → replace 模板寫死值 → 產 index.html
 用法：python build_dashboard.py（sync_all 已整合為步驟）
 """
+from report_components import band_filter as _band_filter
 import json, re
 from datetime import date, timedelta
 from pathlib import Path
@@ -1096,7 +1097,7 @@ def main():
             tpl = tpl.replace(_ph, "—")
         print("  ⚠️ 被動收入基準觀察卡注入失敗:", _dbe)
 
-    (BASE / "index.html").write_text(tpl, encoding="utf-8")
+    (BASE / "index.html").write_text(_band_filter(tpl), encoding="utf-8")
     print(f"✅ 儀表板注入完成（{hits} 組值 + {_link_hits} 連結動態化）｜現金 {_fmt(cash)} / 保單 {_fmt(ins)} / 配息 {_fmt(div_total)} / 租金 {_fmt(rent_got)}")
 
 if __name__ == "__main__":

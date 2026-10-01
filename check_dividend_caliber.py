@@ -368,6 +368,41 @@ try:
     _html_dc = (BASE / "index.html").read_text(encoding="utf-8", errors="replace") if (BASE / "index.html").exists() else ""
     ck("首頁含 CEO 決定卡（Gate＋今日動作）",
        "CEO 決定卡" in _html_dc and "留停 Gate" in _html_dc and "今日動作" in _html_dc, "index.html")
+    # 第 2 批（裁示② 2026-10-02）：可接受範圍內＝完全靜默
+    try:
+        import sot_targets as _st_b
+        import re as _re_b
+        _sn_b = _json_dc.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        _bands_b = _st_b.acceptable_band(_sn_b)
+        _alias_b = {"台股市值型成長": ("台股市值型", "台股"), "美股市值型成長": ("美股市值型", "美股"),
+                    "防守型配息": ("防守型配息", "防守", "防禦"), "債券": ("債券",), "科技": ("科技", "高科技")}
+        _BAD_b = ("缺口", "還差", "不足", "低於目標", "建議增加", "需再平衡", "距離目標")
+        _noise = []
+        for _f_b in ("index.html", "rebalance_dashboard_%s.html" % __import__("datetime").date.today().isoformat(),
+                     "daily_report_v2_%s.html" % __import__("datetime").date.today().isoformat()):
+            _fp_b = BASE / _f_b
+            if not _fp_b.exists():
+                continue
+            _h_b = _fp_b.read_text(encoding="utf-8", errors="replace")
+            for _n_b, _b_b in _bands_b.items():
+                if _b_b.get("顯示行動") or not isinstance(_b_b.get("現值"), (int, float)):
+                    continue                      # 範圍外 → 允許出現
+                _tgt_b = _b_b.get("目標")
+                if not isinstance(_tgt_b, (int, float)):
+                    continue
+                _pp_b = abs(_b_b["現值"] - _tgt_b)
+                for _w_b in _alias_b.get(_n_b, (_n_b,)):
+                    for _m_b in _re_b.finditer(_re_b.escape(_w_b), _h_b):
+                        _win_b = _h_b[max(0, _m_b.start() - 110):_m_b.end() + 110]
+                        for _a_b in _BAD_b:
+                            if _re_b.search(_re_b.escape(_a_b) + r"\s*[+-]?{:.1f}\s*pp".format(_pp_b), _win_b):
+                                _noise.append((_f_b, _n_b, _a_b, _pp_b))
+        ck("可接受範圍內桶不得殘留缺口／行動字樣（範圍內＝完全靜默）", not _noise, str(_noise[:3]))
+        ck("可接受範圍已建真值（5 桶、現金排除）",
+           len(_bands_b) == 5 and all("現金" not in k for k in _bands_b), str(list(_bands_b)))
+    except Exception as _e_b2:
+        ck("可接受範圍守門可執行", False, str(_e_b2))
+
     ck("首頁無健康度分數敘事（93 分退場）",
        "龍九健康度" not in _html_dc and "健康度：" not in _html_dc,
        "健康度卡標題 x" + str(_html_dc.count("龍九健康度")))
@@ -547,6 +582,7 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "check_dashboard_sync.py",   # 首頁必備關鍵字改「CEO 決定卡」（2026-10-02 第 1 批）
            "check_dashboard_stale.py", "check_narrative_numbers.py",
            "check_narrative_numbers_selftest.py",   # 可動用現金口徑改讀 cash_layers.available
+           "build_rebalance_dashboard.py",   # 第 2 批：本週投資計劃文案過 band_filter（裁示②靜默）
            "DAILY_REPORT_PIPELINE_RULE.md", "run_daily.py",
            "notion_shared_context.md", "index_template.html", "build_dashboard.py", "index.html",
            "check_caliber_mutation.py",   # 本守門的變異測試（2026-09-28 從 %TEMP% 搬進版控，置於 tools/）

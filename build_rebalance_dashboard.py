@@ -4,6 +4,7 @@
 資料全部動態讀 snapshot.json + radar_state.json，每週六可重跑。
 輸出：rebalance_dashboard_{date}.html
 """
+from report_components import band_filter as _band_filter
 import json
 import re
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
@@ -791,7 +792,7 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
 </div></body></html>"""
 
     out = BASE / f"rebalance_dashboard_{TODAY}.html"
-    out.write_text(html, encoding="utf-8")
+    out.write_text(_band_filter(html), encoding="utf-8")
     print(f"✅ 再平衡儀表板已產出: {out}（{len(html)//1024} KB）")
 
     # 再平衡評估（文字版）— 與儀表板同源
