@@ -1,0 +1,54 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO-Hermes",
+  "scope": "配息歸屬修正：2026-10 本月配息歸零（10/1 入帳＝9 月 M&G 配息）",
+  "trigger": "使用者 2026-10-01：「本月的配息應該是歸零；10月1號進帳的是 M G 九月份的配息」＋「特別是保單的部分」",
+  "date": "2026-10-01",
+  "root_cause": {
+    "symptom": "儀表板/日報/差異分析顯示本月（2026-10）配息 35,616（保單 35,616 + ETF 0 + 基金 0）",
+    "wrong_records": "snapshot.dividend_records['2026-10'] = {安聯保單撥回: 19,700, 第一金配息: 15,916} = 35,616",
+    "evidence": [
+      "安聯保單 App 2026-10-01 12:41 截圖（snapshot.allianz_note_20261001）：「本月累積配息/撥回 0」→ 19,700 屬 9 月應收（已含於 9/30 截圖之 9 月 71,869），10 月為重複計",
+      "snapshot.firstjin_detail.note_20261001：IDXX M&G入息 9/18 基準日 765.52831 單位×0.654 USD×31.79＝15,916（10/1 入帳）→ 依 9/4 裁示之應收（基準日）制歸 9 月",
+      "安聯 9 月 = 71,869（9 筆）已於 9/30 計入 9 月；第一金 FJXX 摩根 9/8 基準日 9,287 亦已歸 9 月 → 兩者皆為同一制度之先例"
+    ]
+  },
+  "fix": {
+    "snapshot.dividend_records": [
+      "2026-10 → {}（歸零；與保單 App「本月累積 0」一致）",
+      "2026-09 += 第一金IDXX M&G入息配息 15,916 → 9 月實收 167,675 → 183,591"
+    ],
+    "derived": [
+      "dividend_tracker.py 重跑：dividend_month_actual / monthly_dividend_total / monthly_dividend / breakdown 皆 0（10 月）",
+      "passive_income.fund_dividend_monthly 167,675 → 183,591（9 月實收基準）",
+      "metrics_registry.影響.壓力情境覆蓋率 現行值 105.0 → 121.8（口徑重算；說明補記）",
+      "sabbatical_checklist 記錄 2026-10：壓力情境 月被動 181,240 → 193,973、覆蓋率 113.8 → 121.8（sabbatical_checklist_update.py）",
+      "pending_decisions 待裁示項「常態月配基準」內文現行值 167,675 → 183,591、壓力情境 181,240／105.0% → 193,973／121.8%",
+      "work_log.json 當日「日報2026-10-01（…配息35,616）」日誌行更正為 配息0 並附歸屬修正說明"
+    ],
+    "regenerated_artifacts": [
+      "index.html、daily_report_v2_2026-10-01.html、asset_diff_2026-10-01.html(+history/md)、mtd_data.json、mtd_performance.html",
+      "monthly_report_2026-09.html、investment_performance.html、retirement_plan_2026-10-01.html、rebalance_dashboard_2026-10-01.html、penetration_report_2026-10-01.html、audit_dashboard_2026-10-01.html"
+    ]
+  },
+  "verification": {
+    "display": [
+      "日報：本月領息 0 TWD（保單 0 + ETF 0 + 基金 0）；被動月收實收 24,000（配息 0 + 房租 24,000）；預期 房租 80,100 + 配息保守 100,000",
+      "差異分析：配息 保守基本值 100,000｜當月實收 0；被動收入 當月實收 24,000",
+      "mtd_data.json dividend_raw = {}",
+      "index.html / 日報：35,616 殘留 0 次（含 JS 備援）",
+      "9 月實收 183,591 已同步至 index.html／monthly_report_2026-09.html／investment_performance.html／retirement_plan"
+    ],
+    "gates": {
+      "check_dividend_caliber": "53/58 PASS（改動前基準 50/58）→ 本修正清掉 3 條：差異分析配息成對、差異分析被動收入成對、當日產物壓力情境覆蓋",
+      "check_dashboard_sync": "PASS",
+      "check_cross_report_consistency": "PASS",
+      "builders": "build_dashboard / run_daily / asset_diff_monitor / build_penetration_report / build_audit_dashboard / build_retirement_plan / build_rebalance_dashboard / build_investment_performance / build_mtd_report / monthly_report / dividend_tracker / sabbatical_checklist_update 全 rc=0"
+    }
+  },
+  "non_blocking_leftovers": [
+    "check_dividend_caliber 剩 4 條為既有（非本修正）：月支出口徑 172,543 vs 159,210 → retirement_surplus 17,319 vs 現算 20,890（×2）、頁面浮點尾巴 172,543.0、儀表板安全退休盈餘；另 1 條為並行程序未宣告檔 gen_emergency_us_20261001.py",
+    "index.html／日報的「系統工作日誌」保留 9/30 日誌行（配息167,675）＝當日實際產出之歷史記載；9 月最終值 183,591 已於月報/投資績效/留停表更新",
+    "dashboard_decisions.json 內 20:01–22:46 之舊「配息35,616」為逐筆執行歷史（非消費端），最新一筆（22:50 後）已為配息0"
+  ]
+}

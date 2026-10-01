@@ -114,11 +114,11 @@
         <tbody>
           <tr><td>總資產</td><td>26,791,534 TWD</td><td>流動資產（不記錄不動產）；負債率 50.9%（含不動產）｜流動負債率 115.6%（不含不動產）</td></tr>
           <tr><td>總負債</td><td>30,967,893 TWD</td><td>總負債合計（含房貸、保單借貸、質押）</td></tr>
-          <tr><td>本月領息</td><td>35,616 TWD</td><td>保單 35,616 + ETF 0 + 基金 0</td></tr>
-          <tr><td>被動月收</td><td>59,616 TWD</td><td>實收：配息 35,616 + 房租 24,000｜預期：房租 80,100 + 配息保守 100,000</td></tr>
+          <tr><td>本月領息</td><td>0 TWD</td><td>保單 0 + ETF 0 + 基金 0</td></tr>
+          <tr><td>被動月收</td><td>24,000 TWD</td><td>實收：配息 0 + 房租 24,000｜預期：房租 80,100 + 配息保守 100,000</td></tr>
         </tbody>
       </table>
-      <p style="font-size:11px;color:#6e6e73;margin-top:6px">📌 口徑速記：月支出 159,210（v4 定版）｜配息 35,616（實收=常態）/ 100,000（保守）｜被動保守 180,100（配息 100,000 + 房租 80,100）</p>
+      <p style="font-size:11px;color:#6e6e73;margin-top:6px">📌 口徑速記：月支出 159,210（v4 定版）｜配息 0（實收=常態）/ 100,000（保守）｜被動保守 180,100（配息 100,000 + 房租 80,100）</p>
       <p style="font-size:11px;color:#b45309;margin-top:2px">⚠️ 配息為截至今日實收，月底前依配息接力時程陸續補齊（撥回入帳後覆蓋率更高）</p>
     </div>
   </div>
@@ -187,8 +187,8 @@
 <p>加權指數：48,353.49 (+0.86%)</p>
 <p>台積電：2,510.00 (+1.21%)</p>
 <p><strong>【美股/外資】</strong></p>
-<p>美股：道瓊 50,700.31 (-0.40%) / 納指 26,839.85 (-0.08%) / S&P 7,638.81 (-0.17%)</p>
-<p>費半：12,725.90 (+0.77%)</p>
+<p>美股：道瓊 50,673.27 (-0.46%) / 納指 26,814.26 (-0.17%) / S&P 7,632.73 (-0.25%)</p>
+<p>費半：12,708.61 (+0.63%)</p>
 <p><strong>【CPI/利率】</strong></p>
 <p>美國CPI：美國 7 月 CPI YoY 3.5% (FRED 8/13)；Core 2.8% (FRED 8/13)</p>
 <p><strong>【賣出訊號】</strong></p>
@@ -213,7 +213,7 @@
     <div class="label">四大戰略重點</div>
 
     <h3>保單維運</h3>
-    <p class="text-lead">保單現值 <strong>9,418,965 TWD</strong>（安聯 A+B 7,557,489 + 第一金M&G入息A(美元避險月配)F（9/16 FJ33→M&G T+4 生效完成） 1,861,476），本月配息合計 <strong>35,616 TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
+    <p class="text-lead">保單現值 <strong>9,418,965 TWD</strong>（安聯 A+B 7,557,489 + 第一金M&G入息A(美元避險月配)F（9/16 FJ33→M&G T+4 生效完成） 1,861,476），本月配息合計 <strong>0 TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
 
     <h3>證券曝險</h3>
     <p class="text-lead">證券總市值 <strong>3,007,220 TWD</strong>（15檔）。本月已收配息：0 TWD。前三大：00878 17.4%、006208 17.2%、009816 8.8%。0056 凍結質押中，短期無法加碼。</p>
@@ -230,7 +230,7 @@
   <div class="card">
     <h2>5/9｜保單接力引擎 Insurance Relay Engine</h2>
     <div class="label">三站配息接力（月初→月中→月底）</div>
-    <p class="text-lead"><strong>本月配息合計：35,616 TWD</strong></p>
+    <p class="text-lead"><strong>本月配息合計：0 TWD</strong></p>
     <div class="table-wrap">
       <table class="mobile-bordered">
         <thead>
@@ -261,7 +261,7 @@
         </thead>
         <tbody>
           <tr><td>現值</td><td class="num">7,557,489</td><td>最新 market value</td></tr>
-          <tr><td>本月配息</td><td class="num">19,700</td><td>當月配息</td></tr>
+          <tr><td>本月配息</td><td class="num">0</td><td>當月配息</td></tr>
         </tbody>
       </table>
     </div>
@@ -274,7 +274,7 @@
         </thead>
         <tbody>
           <tr><td>現值</td><td class="num">1,861,476</td><td>配息前</td></tr>
-          <tr><td>本月配息</td><td class="num">15,916</td><td>上月底配息</td></tr>
+          <tr><td>本月配息</td><td class="num">0</td><td>上月底配息</td></tr>
         </tbody>
       </table>
     </div>
@@ -367,7 +367,7 @@
 
     <h3>🛠️ 系統工作日誌（收工登錄）</h3>
     <div class="label">work_log.json 動態讀取 — 應辦 / 完成分色（2026-09-05 起，與儀表板同源）</div>
-    <div class="callout callout-info"><div style="font-size:12px;color:#b45309;font-weight:800;margin:4px 0 0">📋 應辦（3）</div><div style="border-left:3px solid #b45309;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#b45309;font-weight:800">📋</span> <span style="color:#1d1d1f;font-weight:600">保單/負債寫死退路常數全面清除（低優先，已部分完成）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">['同義欄位＋寫死退路類已修 6 處。剩餘（依 9/18 盤點）：asset_diff_monitor.py 226/251/274/370 行、run_daily.py 240/245/300/301/1248/1249/1263 行，仍以寫死數字當退路 → 缺值時會無聲給舊值。低優先，但屬「數字可信度」類風險。', '2026-09-22：決策/工作帳本清理時保留本筆（其餘 7 筆未閉環項因過期/分類錯/重複已刪）。']</div></div><div style="border-left:3px solid #b45309;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#b45309;font-weight:800">📋</span> <span style="color:#1d1d1f;font-weight:600">紅線口徑敘述殘留清理（低優先）</span></div><div style="border-left:3px solid #b45309;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#b45309;font-weight:800">📋</span> <span style="color:#1d1d1f;font-weight:600">📝 日誌／記憶條目停止嵌入浮動金額（結構性）</span></div><div style="font-size:12px;color:#059669;font-weight:800;margin:8px 0 0">✅ 完成（近 8 筆 / 共 185）</div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">資產穿透2026-10-01（台股2,041,032.0 美股10,257,066.0 防守4,469,324.0 債券7,398,132.0 現金854,264.0）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">台股2,041,032.0 美股10,257,066.0 防守4,469,324.0 債券7,398,132.0 現金854,264.0</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">日報2026-10-01（證券3,007,220 保單9,418,965 配息35,616）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">證券3,007,220 保單9,418,965 配息35,616</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">全庫校正估算值 100 萬 → 96 萬／960,000（券商質押實際金額；含審查 3 輪、7 顆 commit）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">成因：真值 9/30 由估算 1,000,000 校正為實際 960,000，但以「100 萬」標示的舊字樣仍散在數字承載體（模板 index_template、日誌 work_log、審查紀錄 cio_review*、行事曆 schedule_events、decisions）→ 同一頁面並存兩個金額。修法：全庫掃描校正 79 處＋補校正註記（snapshot 裁示欄）＋INC-267 登記。</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">Pending 自動回收接每日 cron（pending_reconcile --apply，22:00 晚報，建 dashboard 前落地）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">使用者 2026-09-30 核准；同批修復 INC-263（寫入前快照在規則迴圈前取得、落地後驗證改警告不 raise）</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">資產穿透2026-09-30（台股2,029,878.0 美股10,235,528.0 防守4,500,670.0 債券7,437,894.0 現金819,768.0）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">台股2,029,878.0 美股10,235,528.0 防守4,500,670.0 債券7,437,894.0 現金819,768.0</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">日報2026-09-30（證券2,981,410 保單9,453,825 配息147,975）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">證券2,981,410 保單9,453,825 配息147,975</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">資產穿透2026-09-30（台股2,037,758.0 美股10,207,509.0 防守4,503,860.0 債券7,437,694.0 現金813,547.0（可動用口徑））</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">數值為 9/30 收盤校正後真值（同 snapshot.penetration.actual_twd）</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">日報2026-09-30（證券2,993,630 保單9,424,456 配息167,675）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">證券2,993,630 保單9,424,456 配息167,675（當日收盤校正後真值）</div></div></div>
+    <div class="callout callout-info"><div style="font-size:12px;color:#b45309;font-weight:800;margin:4px 0 0">📋 應辦（3）</div><div style="border-left:3px solid #b45309;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#b45309;font-weight:800">📋</span> <span style="color:#1d1d1f;font-weight:600">保單/負債寫死退路常數全面清除（低優先，已部分完成）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">['同義欄位＋寫死退路類已修 6 處。剩餘（依 9/18 盤點）：asset_diff_monitor.py 226/251/274/370 行、run_daily.py 240/245/300/301/1248/1249/1263 行，仍以寫死數字當退路 → 缺值時會無聲給舊值。低優先，但屬「數字可信度」類風險。', '2026-09-22：決策/工作帳本清理時保留本筆（其餘 7 筆未閉環項因過期/分類錯/重複已刪）。']</div></div><div style="border-left:3px solid #b45309;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#b45309;font-weight:800">📋</span> <span style="color:#1d1d1f;font-weight:600">紅線口徑敘述殘留清理（低優先）</span></div><div style="border-left:3px solid #b45309;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#b45309;font-weight:800">📋</span> <span style="color:#1d1d1f;font-weight:600">📝 日誌／記憶條目停止嵌入浮動金額（結構性）</span></div><div style="font-size:12px;color:#059669;font-weight:800;margin:8px 0 0">✅ 完成（近 8 筆 / 共 185）</div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">資產穿透2026-10-01（台股2,041,032.0 美股10,257,066.0 防守4,469,324.0 債券7,398,132.0 現金854,264.0）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">台股2,041,032.0 美股10,257,066.0 防守4,469,324.0 債券7,398,132.0 現金854,264.0</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">日報2026-10-01（證券3,007,220 保單9,418,965 配息0）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">證券3,007,220 保單9,418,965 配息0｜2026-10-01 配息歸屬修正：10/1 入帳之 IDXX M&amp;G 15,916（基準日 9/18）歸 9 月；安聯 9 月 App 71,869 已含之 19,700 不重複計 → 10 月配息實收 0</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">全庫校正估算值 100 萬 → 96 萬／960,000（券商質押實際金額；含審查 3 輪、7 顆 commit）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">成因：真值 9/30 由估算 1,000,000 校正為實際 960,000，但以「100 萬」標示的舊字樣仍散在數字承載體（模板 index_template、日誌 work_log、審查紀錄 cio_review*、行事曆 schedule_events、decisions）→ 同一頁面並存兩個金額。修法：全庫掃描校正 79 處＋補校正註記（snapshot 裁示欄）＋INC-267 登記。</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">Pending 自動回收接每日 cron（pending_reconcile --apply，22:00 晚報，建 dashboard 前落地）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">使用者 2026-09-30 核准；同批修復 INC-263（寫入前快照在規則迴圈前取得、落地後驗證改警告不 raise）</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">資產穿透2026-09-30（台股2,029,878.0 美股10,235,528.0 防守4,500,670.0 債券7,437,894.0 現金819,768.0）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">台股2,029,878.0 美股10,235,528.0 防守4,500,670.0 債券7,437,894.0 現金819,768.0</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">日報2026-09-30（證券2,981,410 保單9,453,825 配息147,975）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">證券2,981,410 保單9,453,825 配息147,975</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">資產穿透2026-09-30（台股2,037,758.0 美股10,207,509.0 防守4,503,860.0 債券7,437,694.0 現金813,547.0（可動用口徑））</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">數值為 9/30 收盤校正後真值（同 snapshot.penetration.actual_twd）</div></div><div style="border-left:3px solid #059669;padding:2px 0 2px 10px;margin:6px 0"><span style="color:#059669;font-weight:800">✅</span> <span style="color:#1d1d1f;font-weight:600">日報2026-09-30（證券2,993,630 保單9,424,456 配息167,675）</span><div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">證券2,993,630 保單9,424,456 配息167,675（當日收盤校正後真值）</div></div></div>
   </div>
 
   <!-- 投資決策框架 -->
@@ -453,23 +453,23 @@
     <!-- 巴菲特視角建議 (Fallback 或輔助) -->
     <div class="callout callout-bull">
       <h3>巴菲特視角建議</h3>
-      📊 市場：加權 48,353.49 (+0.86%) | SOX 12,725.90 (+0.77%) | Hunter 0筆 (買0/賣0)<br>⚡ 主要風險：🛡️ 防守合併口徑 66.2% 已足（單看 16.7% 僅高股息ETF）；承接凍結<br>📊 總投資部位：25,019,818 TWD<br>第一，你的能力圈在美股大型優質企業，那裡有真護城河，佔比超標不是問題，是紀律的果實，別急著削。第二，防守合併口徑已足，別被單一高股息ETF的數字嚇到加碼——那不是安全邊際，是重複下注。第三，市場恐懼時該貪婪，但你手上現金是底線制，不是彈藥，真正的乾粉在凍結的承接裡，別自欺。<br>紀律提醒：匯率與油價不在你能力圈，美元曝險貼紅線就讓它貼，別為幾個基點做無謂對沖；你該盯的是企業十年後的獲利，不是本週輪動。
+      📊 市場：加權 48,353.49 (+0.86%) | SOX 12,708.61 (+0.63%) | Hunter 0筆 (買0/賣0)<br>⚡ 主要風險：🛡️ 防守合併口徑 66.2% 已足（單看 16.7% 僅高股息ETF）；承接凍結<br>📊 總投資部位：25,019,818 TWD<br>第一，你的能力圈很清楚：真正懂的是美股大型優質企業，那就別為了「達標」去補防守與高股息。防守合併口徑已足，追大額只是買安心，不是買價值。<br>第二，美元曝險與科技都貼紅線，這不是貪婪時刻，是安全邊際被侵蝕。別人恐懼我貪婪，前提是子彈在手上、標的在圈內；現在現金是底線，不是彈藥。<br>第三，債券等 US30Y<5.30% 再談，石油禁碰、REITs 已超配。強勢科技可續抱，但逢彈減碼是紀律，不是看空。<br>紀律提醒：沒有好球就不揮棒。本週乾粉保留、零新增，等待，也是一種持倉。
     </div>
 
     <!-- CTO 技術視角 (Fallback 或輔助) -->
     <div class="callout callout-bear">
       <h3>CTO 技術視角</h3>
-      今日最大風險：美元曝險59%逼近60%紅線，且US30Y 5.64%站上凍結線，債券與美股同步承壓。<br>建議動作：美股逢彈減碼≤20萬/次，優先砍XLK超配（科技17.5%>15%紅線）；台股僅能單筆≤5萬、8-12週分批，順勢敲科技（法人+26百萬、RS最強），避開金融（-2百萬、最弱）。防守合併66.2%已足，勿追高股息（-158百萬流出）。現金853,675守住底線，不買債、不碰油。
+      今日最大風險：美元曝險59%貼60%紅線＋US30Y 5.64%站上凍結線，債券與美股同步承壓，且高股息防禦遭賣超158百萬、資金明顯撤出防禦。<br>建議動作：美股38.3%超標8.3pp，逢彈減碼≤20萬/次，優先砍科技（17.5%底層、紅線15%）。台股7.6%落後，僅用單筆≤5萬、8-12週分批承接科技（XLK動能最強、法人買超+26百萬）。債券、石油、REITs、黃金全凍結不動作。現金853,675守住底線，不減。
     </div>
 
     <!-- CIO 審查 / 觀點 -->
         <div class="callout callout-info">
           <p><strong>🧑‍💻 CIO 觀點</strong></p>
-<span style="display:block">①配置：美股38.3%＋美元曝險59.0%已近上限，不宜再加；台股7.6%偏低但法人僅科技+26百萬、其餘多為負，無吸納標的，維持不動。固收/現金29.0%為乾粉，保留。
+<span style="display:block">①配置：美股38.3%＋科技24.2%已足，不加碼；高股息防禦-158百萬、債券-26百萬續失血，防守16.7%與債券27.6%暫不動，現金3.2%留作乾粉。台股7.6%偏低但法人僅科技+26百萬，不追。
 
-②最大風險：美元曝險59.0%逼近≤60%紅線，且高股息防禦-158百萬、市值型-34百萬，資金撤出防禦型，若美元反轉將雙殺。
+②最大風險：美元曝險59.0%逼近60%上限，底層為美股桶24.5%＋美元基金19.2%＋保單美元債15.2%，美元一貶即全面受創；美債10年🔴示警。
 
-③動作：本週不追高、不新增；避開金融（-2百萬、輪動最弱）。輪動聚焦科技（XLK RS+6.5pp、法人+26百萬），小幅加碼台股科技，其餘乾粉待Fed流動性轉綠再進場。</span>
+③動作：本週不新增，避開金融（-2百萬、輪動最弱）；輪動盯科技XLK強勢但勿追高，食品+81百萬可小額觀察。優先降美元曝險至55%以下。</span>
         </div>
         <!-- END CIO -->
 
@@ -479,7 +479,7 @@
       <div class="text-sm" style="color:#6e6e73;margin-bottom:8px;">偏離階梯：≤2pp觀察 / 2-5pp戰術觀察 / 5-10pp中等再平衡 / >10pp大規模再平衡</div>
       <table style='width:100%;border-collapse:collapse;font-size:12.5px'><thead><tr><th>資產分類</th><th class='num'>現況%</th><th class='num'>目標%</th><th class='num'>偏離pp</th><th>動作</th><th class='num'>精算金額</th><th>階梯</th><th>觸發條件</th></tr></thead><tbody><tr><td>台股市值型成長</td><td class='num'>7.6%</td><td class='num'>10%</td><td class='num'>-2.4</td><td>觀察(凍結期)</td><td class='num'>0</td><td>戰術觀察</td><td style='font-size:11px'>記錄偏移，等待資金流入再處理，不主動賣出調整｜rotation 交易計畫</td></tr><tr><td>美股市值型成長</td><td class='num'>38.3%</td><td class='num'>30%</td><td class='num'>+8.3</td><td>觀察(凍結期)</td><td class='num'>0</td><td>中等再平衡</td><td style='font-size:11px'>計算調整金額，納入週報指示卡｜逢彈減碼 ≤20萬/次（8/19 核准）</td></tr><tr><td>防守型配息</td><td class='num'>16.7%</td><td class='num'>30%</td><td class='num'>-13.3</td><td>承接凍結</td><td class='num'>0</td><td>大規模再平衡</td><td style='font-size:11px'>優先等級拉高，下週必須處理｜合併 66.2% ≥60% 凍結</td></tr><tr><td>債券</td><td class='num'>27.6%</td><td class='num'>25%</td><td class='num'>+2.6</td><td>凍結</td><td class='num'>0</td><td>戰術觀察</td><td style='font-size:11px'>記錄偏移，等待資金流入再處理，不主動賣出調整｜基金經理人調整（PIMCO/M&G/00983D），不另建債梯</td></tr><tr><td>現金/安全網</td><td class='num'>3.2%</td><td class='num'>5%</td><td class='num'>-1.8</td><td>觀察(凍結期)</td><td class='num'>0</td><td>觀察</td><td style='font-size:11px'>僅寫入警示日誌，不產生交易建議｜底線制：超額 153,675.0 待部署（MMF 停泊）；另指定清償款 900,000 不列可部署</td></tr></tbody></table><div style='color:#dc2626;font-size:12px;margin-top:6px'>⛔ US30Y 5.64% &gt; 5.30% → TAA 全域凍結（只觀察）</div><div class='callout' style='margin-top:8px;border-left:3px solid #f59e0b'><strong>📡 產業/衛星動態調整（依市場狀況）</strong><table style='width:100%;border-collapse:collapse;font-size:12px;margin-top:4px'><tr><th style='text-align:left'>產業/衛星</th><th>動作</th><th>標的</th></tr><tr><td>金融</td><td>⏸ 避開（資金流出）</td><td style='font-size:11px'>0055(金融)</td></tr><tr><td>核心消費</td><td>🟡 觀察（資金中性）</td><td style='font-size:11px'>0050(含核心消費成分:統一/大成等)</td></tr><tr><td>黃金衛星</td><td>🟢 順勢（COT 淨多單週增）（COT 淨多 225,853）</td><td style='font-size:11px'>00635U（PI 後分批 40/30/20，單次≤20萬）</td></tr></table></div>
       <div style='background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin:12px 0'><div style='font-weight:800;color:#0f172a;margin-bottom:8px'>📋 本週操作執行紀錄（2026-09-24 ~ 2026-10-01）</div><div style='padding:5px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;margin:3px 0'><b style='color:#16a34a'>✅</b> 💳 DeepSeek 錢包儲值（9/27 餘額剩約 5.9 天；使用者指示延至撥款日一起處理）— 同日併辦：質押撥款 590 萬（✅ 已入帳）、… <span style='color:#64748b'>(—)</span><span style='float:right;color:#64748b'>✅ 已儲值（2026-10-01 11:03 儲值 ¥200，餘額 204.65 CNY）</span></div><div style='padding:5px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;margin:3px 0'><b style='color:#16a34a'>✅</b> 🏦 質押撥款 590 萬入帳複查（✅ 9/29 10:57 已入帳）＋ 500 萬高息清償執行（第一批 保單 200 萬已提出申請、待入帳；後續… <span style='color:#64748b'>(5900000)</span><span style='float:right;color:#64748b'>✅ 已完成（清償續行）</span></div><div style='padding:5px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;margin:3px 0'><b style='color:#16a34a'>✅</b> 📅 黃金A10 32萬 + 健康A10 48萬 轉換生效確認（24號轉換，30號進帳）→ 更新 snapshot <span style='color:#64748b'>(—)</span><span style='float:right;color:#64748b'>✅ 已完成（9/30 保單 A/B 截圖逐檔已見：黃金A10 183,989／153,055、健康A10 293,596／244,487；保單現值已更新）</span></div><div style='padding:5px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;margin:3px 0'><b style='color:#16a34a'>✅</b> 🏧 玉山生活帳戶水位補足期限（信用卡扣繳安全線 40,000） <span style='color:#64748b'>(40,000)</span><span style='float:right;color:#64748b'>✅ 已達標（玉山 40,044 ≥ 安全線 40,000，餘裕 44）</span></div><div style='padding:5px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;margin:3px 0'><b style='color:#16a34a'>✅</b> 🏦 保單質押清償 200 萬（預約入帳） <span style='color:#64748b'>(2000000)</span><span style='float:right;color:#64748b'>✅ 已清償（2026-10-01 保單 App 截圖：安聯 A/B 合計 7,557,489；本金 4,000,000 已結清）</span></div><div style='padding:5px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;margin:3px 0'><b style='color:#16a34a'>✅</b> 🏦 券商質押清償（元大證金）— 已全部結清 960,000 <span style='color:#64748b'>(960000)</span><span style='float:right;color:#64748b'>✅ 已全部結清（2026-09-30，實際 960,000；MB 明細 17 筆扣款）</span></div><div style='padding:5px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;margin:3px 0'><b style='color:#16a34a'>✅</b> 🚦 雙閘門檢視：US30Y 連 2 日 <5.30？＋ 500 萬清償完成？→ 決定第一金轉 PIMCO／00921 是否解凍（避險衛星已於 9… <span style='color:#64748b'>(—)</span><span style='float:right;color:#64748b'>📌 月檢視（清償已完成 ✅；US30Y 5.638% ≥5.30 → 續停）</span></div><div style='padding:5px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;margin:3px 0'><b style='color:#16a34a'>✅</b> 🏦 保單質押清償 100 萬（待執行，尚未執行） <span style='color:#64748b'>(1000000)</span><span style='float:right;color:#64748b'>✅ 已執行（2026-10-01 轉出 2,020,624＝餘款 1,000,000＋未動用 1,040,000）</span></div><div style='font-size:12px;color:#64748b;margin-top:6px'>📌 閉環待追蹤：⏳ 🏦 質押清償狀況全面檢視（還款完成、剩部分利息未結、等入帳）（2026-10-01）｜⏳ 🔍 驗證 23:55 費用收日班首跑（10/1 帳本是否已含 18:30 後花費；頁面 generated_at 不再領先數字）（2026-10-02）｜⏳ 🏦 保單借貸入帳確認（安聯 2,000,000 轉出後 3 個工作日）→ 以保單 App 顯示值沖銷，4,000,000→2,000,000（2026-10-03）｜⏳ 🏗️ 10月環保標案（創業預演）：財務監控/合規/對接（我）＋現場執行（建明）；合規紅線=在職只做前置｜10月財務鎖定檢核：轉貸合約/PI生效/授信AUM VIP（不看公職身分）/富達600＋聯博100＋貝萊德B11 500（擔保池 1,177.9萬×約5成＝質押撥款 590萬@2.65%，9/29 已入帳）完成（2026-10-05）｜⏳ 🤝 家慶合作洽談：書面釐清權責/出資/獲利分配/退出機制（避免口頭約定爭議）（2026-10-15）｜⏳ 🏠 10月房租待收追蹤 51,100（大義街23樓 21,000／洲際W 28,000／管理費 2,100）（2026-10-15）</div></div>
-      <div style='background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin:12px 0'><div style='font-weight:800;color:#78350f;margin-bottom:8px'>📈 操作績效追蹤（基準 2026-08-31）</div><div style='font-size:12px;color:#92400e'>月配息 138,627｜總資產 26,150,815｜淨資產 -3,987,438｜覆蓋 134%</div><div style='font-size:12px;color:#92400e;margin-top:4px'>⏳ 追蹤點：2026-09-29 質押撥款 590萬入帳（10:57）｜2026-09-30 券商質押清償 96 萬@3.92%｜2026-09-30 保單質押清償 200 萬（預約入帳）｜2026-10-01 保單質押清償 100 萬（預約入帳）｜2026-10-05 高息負債清償結案檢視</div><div style='font-size:11px;color:#b45309;margin-top:4px'>⚠️ 失敗訊號：淨資產較基準下降</div><div style='font-size:12px;color:#92400e;margin-top:6px;padding-top:6px;border-top:1px dashed #fbbf24'>📊 即時（2026-10-01）：月配息保守 100,000／實收 0｜總資產 26,791,534｜淨資產 -4,176,359｜覆蓋 113.1%／實收 15.1%<br>💰 月盈餘：保守 +20,890／實收 -135,210｜FI 跑道（極端情境口徑）：798 天、實收情境 189 天｜壓力情境覆蓋 113.8%（判準仍為保守底線 100,000）</div></div>
+      <div style='background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin:12px 0'><div style='font-weight:800;color:#78350f;margin-bottom:8px'>📈 操作績效追蹤（基準 2026-08-31）</div><div style='font-size:12px;color:#92400e'>月配息 138,627｜總資產 26,150,815｜淨資產 -3,987,438｜覆蓋 134%</div><div style='font-size:12px;color:#92400e;margin-top:4px'>⏳ 追蹤點：2026-09-29 質押撥款 590萬入帳（10:57）｜2026-09-30 券商質押清償 96 萬@3.92%｜2026-09-30 保單質押清償 200 萬（預約入帳）｜2026-10-01 保單質押清償 100 萬（預約入帳）｜2026-10-05 高息負債清償結案檢視</div><div style='font-size:11px;color:#b45309;margin-top:4px'>⚠️ 失敗訊號：淨資產較基準下降</div><div style='font-size:12px;color:#92400e;margin-top:6px;padding-top:6px;border-top:1px dashed #fbbf24'>📊 即時（2026-10-01）：月配息保守 100,000／實收 0｜總資產 26,791,534｜淨資產 -4,176,359｜覆蓋 113.1%／實收 15.1%<br>💰 月盈餘：保守 +20,890／實收 -135,210｜FI 跑道（極端情境口徑）：798 天、實收情境 189 天｜壓力情境覆蓋 121.8%（判準仍為保守底線 100,000）</div></div>
     </div>
   </div>
 
