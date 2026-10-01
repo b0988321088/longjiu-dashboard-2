@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-01 07:00",
+ "generated_at": "2026-10-01 13:30",
  "days": 14,
  "ledger_rows": 23,
  "backfilled": [],
@@ -136,17 +136,17 @@
   },
   {
    "date": "2026-10-01",
-   "ds_twd": 7,
+   "ds_twd": 12,
    "gemini_twd": 0,
    "free_twd": 0,
-   "total_twd": 7,
-   "calls": 156,
+   "total_twd": 12,
+   "calls": 229,
    "cer": 0,
    "q429": 0
   }
  ],
  "today": {
-  "total_twd": 7,
+  "total_twd": 12,
   "cer": 0,
   "q429": 0
  },
@@ -208,12 +208,12 @@
   }
  },
  "wallets": {
-  "ds_balance_cny": 4.91,
-  "ds_balance_twd": 23,
+  "ds_balance_cny": 204.18,
+  "ds_balance_twd": 966,
   "ds_source": "API",
   "ds_daily_twd": 42,
   "ds_daily_src": "餘額真值（最近 7 個日曆日，7 個樣本）",
-  "ds_days_left": 0.6,
+  "ds_days_left": 23.0,
   "gemini_balance_twd": 884,
   "gemini_daily_twd": 0,
   "gemini_days_left": null,
@@ -240,6 +240,14 @@
    "unit": "TWD",
    "twd": 1000.0,
    "evidence": "data/gemini_cost_log.json"
+  },
+  {
+   "date": "2026-10-01",
+   "wallet": "DeepSeek",
+   "amount": 186.64,
+   "unit": "CNY",
+   "twd": 883,
+   "evidence": "cost_log.csv 餘額跳升（連續日）"
   }
  ],
  "topups_unresolved": [],
@@ -330,25 +338,19 @@
   ],
   "note": "CER＝DeepSeek 內容風控擋下的呼叫數。spillover_strict_twd＝只算「CER ≥ 門檻且免費接手率 < 門檻」的日子（推定值，最接近風控逼出來的付費）。paid_backup_on_cer_days_upper_twd＝CER 當日的全部 Gemini 花費（僅為上限，含非 CER 任務，不可當成外溢成本）。streak_capped=true 表示已回溯到帳本最早一天，真實連續天數可能更長。"
  },
- "alerts": [
-  {
-   "code": "A6",
-   "level": "critical",
-   "msg": "DeepSeek 剩餘 0.6 天 < 7 天，需立即儲值"
-  }
- ],
+ "alerts": [],
  "governance": {
   "baseline_date": "2026-09-22",
   "start_date": "2026-09-23",
   "days": 9,
-  "ds_twd": 350.0,
+  "ds_twd": 355.0,
   "gem_twd": 3.0,
   "free_twd": 0.0,
   "free_calls": 528,
-  "calls": 7486,
+  "calls": 7559,
   "cer": 156,
   "pending": false,
-  "total_twd": 353.0
+  "total_twd": 358.0
  },
  "page": {
   "top_n": 3,
