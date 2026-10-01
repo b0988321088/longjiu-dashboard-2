@@ -306,8 +306,12 @@ _p2 = subprocess.run([sys.executable, "-c", "import run_daily; run_daily.calibra
                      cwd=str(BASE), capture_output=True, text=True)
 _out = _p2.stdout + _p2.stderr
 ck("run_daily.calibrate_sources 通過", _p2.returncode == 0, _out.strip()[-200:])
-ck("校準空轉 WARN 已可見（allianz/firstjin）",
-   "校準空轉" in _out and "allianz_value" in _out and "firstjin_value" in _out, _out.strip()[-160:])
+ck("校準點位全數可比（allianz/firstjin 不再空轉）",
+   _p2.returncode == 0 and "校準空轉" not in _out,
+   _out.strip()[-160:])
+# 2026-10-01：安聯A+B／第一金現值 regex 已改活（RULE 檔現值同步為真值），
+# 本檢查由「WARN 必須可見（已知缺口揭露）」升級為「不得有空轉點」——
+# 任一 regex 再失配即 FAIL，避免校準靜默空轉（原註記見 error_register 待對帳項）。
 ck("壓力列改單一派生（f-string 無重複算式）",
    "div_c*0.8 + rent - 33000:,.0f" not in src and "{_stress_income:,.0f}" in src)
 ck("極端列無缺口文案分支存在", "_ext_txt" in src and "無缺口（水庫不受壓）" in src)

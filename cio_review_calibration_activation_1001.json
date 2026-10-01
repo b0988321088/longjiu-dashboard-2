@@ -1,0 +1,29 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO-Hermes",
+  "scope": "三源校準兩點改活（安聯A+B／第一金現值）＋閘門判準升級＋RULE 檔去 7 月常數",
+  "trigger": "使用者 2026-10-01：「好」（同意把兩個空轉校準點補齊）",
+  "date": "2026-10-01",
+  "root_cause": [
+    "run_daily.calibrate_sources() 的 allianz_value／firstjin_value 兩點 regex 期望「安聯 A + 安聯 B = …現值 N」「第一金 = …現值 N」，但 RULE 檔該兩行寫成「安聯 A+B = 一張合併 row，配息 = 55,451」→ 兩個正則從未命中，每次跑都印「校準空轉」，這兩點形同沒在校準",
+    "該區塊另帶 2026-07-11 截圖時代常數（成本 8,000,000／現值 7,846,690／1,994,698／配息 55,451／13,593／合計 69,044），與現行真值分歧",
+    "原始缺口處置（error_register 既有註記）刻意不改活以免 fail-closed 擋掉日報，列為待對帳項 → 本輪收尾"
+  ],
+  "fix": [
+    "DAILY_REPORT_PIPELINE_RULE.md：兩行補上現值真值（安聯 A + 安聯 B 現值 7,557,489／第一金 現值 1,861,476，2026-10-01 校正），使兩點真比較",
+    "同區塊移除 7 月舊常數（55,451／13,593／69,044 與現值 7,846,690／1,994,698），改為「一律讀 snapshot（allianz_*／firstjin_*／dividend_records[當月]）」，來源註解規範表日期 2026-07-11→2026-10-01",
+    "check_dividend_caliber.py：判準由「校準空轉 WARN 必須可見（揭露已知缺口）」升級為「不得有空轉點、calibrate_sources rc=0」→ 任一 regex 再失配即 FAIL",
+    "error_register.md：登錄 INC-269（症狀／根因／修法／驗證／規則入庫）"
+  ],
+  "verification": {
+    "calibration": "實跑 python -c \"import run_daily; run_daily.calibrate_sources()\"：無空轉 WARN、三源校準通過，5 個點位（月收入／工作期盈餘／退休盈餘／安聯現值／第一金現值）全部真比較",
+    "regex_probe": "對 RULE 檔實測兩條正則：安聯 → ['7,557,489']、第一金 → ['1,861,476']（修正前皆為 []）",
+    "gates": "check_dividend_caliber 57/58（餘 1 條為未追蹤檔 gen_emergency_us_20261001.py，非本輪）；sync／cross／stale 全 PASS",
+    "residue": "RULE 檔 55,451／13,593／69,044 僅存於「已移除」說明文字，不再作數值使用"
+  },
+  "coupling_warning": "此後真值日更新保單現值時，必須同步更新 DAILY_REPORT_PIPELINE_RULE.md 該兩行現值，否則 run_daily fail-closed（exit 2）擋掉日報；校準刻意不自動同步，自動同步將使校準失去守門意義。",
+  "non_blocking_leftovers": [
+    "來源註解規範表其他列仍為 7 月截圖值（證券總市值 2,362,120／銀行現金 8,417,380／總負債 26,800,000 等）未納入校準，未動",
+    "monthly_report_2026-08.html 仍為舊產物（asset_diff_history 無 8 月鍵）"
+  ]
+}

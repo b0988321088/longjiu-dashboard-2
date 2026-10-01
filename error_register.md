@@ -1372,3 +1372,11 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 修法：①`monthly_rollover.py` 改 `indent=1` 並加註原因②`snapshot.json` 以 canonical indent=1 回寫（先以 JSON 等值比對確認語意不變）③淨差異回到 21 ins／14 del（僅真改動）。
 - 驗證：`json.loads(舊)==json.loads(新)` True；與重排前 commit（29d3045f）比對差異只剩房租/配息口徑數行；`_audit_closeout` 第 10 條 ✅、`monthly_rollover.py --dry-run` 值不變。
 - 規則入庫：**動真值層 JSON 前先查 canonical indent 表**（snapshot／work_log／radar_state＝1；schedule_events／pending_decisions／dashboard_decisions＝2）；ad-hoc 手改一律用 canonical，改完跑 `_audit_closeout.py` 確認沒有整檔重排。
+
+
+## INC-269 ｜ 2026-10-01 ｜ P2｜fixed ｜ 三源校準兩點長期空轉（安聯A+B／第一金現值 regex 未命中）→ 改活並升級閘門判準
+- 症狀：`run_daily.calibrate_sources()` 的 `allianz_value`／`firstjin_value` 兩點 regex 從未命中（RULE 檔寫「安聯 A+B = 一張合併 row，配息 = …」，與 snapshot 現值口徑不符），每次跑都印「[CALIBRATE] ⚠️ 校準空轉」；閘門當時以「WARN 必須可見」記錄此已知缺口。
+- 根因：RULE 檔該兩行停在 2026-07-11 截圖值（7,846,690／1,994,698）且無「現值 <數字>」字樣 → 之前刻意不改活（改活即 fail-closed 擋掉日報管線），列為待對帳項。
+- 修法：①RULE 檔兩行補上現值真值（7,557,489／1,861,476，2026-10-01 校正）②同區塊移除 7 月舊配息常數（55,451／13,593／69,044），改為「一律讀 snapshot dividend_records[當月]」③`check_dividend_caliber.py` 判準由「WARN 可見」升級為「不得有空轉點」（任一 regex 失配即 FAIL）。
+- 驗證：`python -c "import run_daily; run_daily.calibrate_sources()"` → 無空轉 WARN、三源校準通過（5/5 點真比較）；閘門 57/58（餘 1 條為未追蹤檔 gen_emergency_us_20261001.py）。
+- 規則入庫：**真值日更新保單現值時，必須同步 `DAILY_REPORT_PIPELINE_RULE.md` 的「安聯 A + 安聯 B = … 現值 N」與「第一金 = … 現值 N」兩行**，否則 `run_daily` fail-closed（exit 2）擋掉日報。校準刻意不自動同步（自動同步＝校準失去守門意義）。
