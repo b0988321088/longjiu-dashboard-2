@@ -17,7 +17,8 @@
       "build_dashboard：待收列改讀 snapshot（月還款＋還款日）；行事曆 女友借款/還款兩列改成 __GF_* 真值注入",
       "index_template：JS 端備援列改讀 snapshot.personal_loans；靜態列 token 化",
       "run_daily：日報「女友還款 6,000 為收入（至12/5）」改為 snapshot 派生",
-      "monthly_report：女友還款常態額 6,000 寫死 2 處改讀 snapshot"
+      "monthly_report：女友還款常態額 6,000 寫死 2 處改讀 snapshot",
+      "schedule_events.json：10/5 女友還款事件標記為「✅ 已入帳（10/1）」→ 儀表板狀態列不再把它列為「下一個」（原本即使在已入帳後仍顯示為待辦）"
     ]
   },
   "verification": {
@@ -27,7 +28,6 @@
     "gates": "check_dashboard_sync PASS、check_cross_report_consistency PASS、py_compile 全過、build_dashboard/run_daily/monthly_report rc=0"
   },
   "non_blocking_leftovers": [
-    "schedule_events.json 的 10/5 女友還款行事曆事件仍為排程標記（金額 6,000 常態寫死）；提早入帳不影響排程表",
     "女友借款 checkpoint（12/5）事件內文含 30 萬敘述，屬決策備忘非儀表板數值"
   ]
 }
