@@ -183,7 +183,16 @@ def build_dual_dimension_metric(snap: dict, today: str | None = None) -> dict:
         return ddm
     _total_cfg = (snap.get("total_assets") or 0) - restricted_cash(snap)
     _def = dict(ddm.get("防禦維度") or {})
-    _comp = _def.get("組成") or {}
+    _comp = dict(_def.get("組成") or {})
+    # 2026-10-02 使用者裁示：現金/貨幣停泊一律派生自可動用現金唯一真值
+    # （sot_targets.allowable_cash＝cash_layers.available／unrestricted_cash）。
+    # 目的：消滅「第二份人工輸入的現金真值」（曾出現 819,182 ≠ 853,675）。
+    # 缺真值時 allowable_cash 直接 raise（fail-closed），不沿用舊值、不編造。
+    if "現金/貨幣停泊" in _comp:
+        _cash_sot = float(allowable_cash(snap))
+        # 保持既有型別（整數元 → int），避免重產後整份 snapshot 出現 853675.0 型別漂移
+        _comp["現金/貨幣停泊"] = int(_cash_sot) if _cash_sot.is_integer() else _cash_sot
+    _def["組成"] = _comp
     if _comp and _total_cfg > 0:
         _amt = sum(v for v in _comp.values() if isinstance(v, (int, float)))
         _def["合計"] = _amt
