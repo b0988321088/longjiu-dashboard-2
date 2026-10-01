@@ -592,3 +592,6 @@
 {"ts": "2026-10-01T20:03:04", "model": "deepseek-chat", "caller": "run_daily.py", "in": 875, "cached": 128, "out": 149, "ok": true}
 {"ts": "2026-10-01T20:03:07", "model": "deepseek-chat", "caller": "run_daily.py", "in": 488, "cached": 0, "out": 171, "ok": true}
 {"ts": "2026-10-01T20:04:14", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 419, "cached": 256, "out": 388, "ok": true}
+{"ts": "2026-10-01T20:06:28", "model": "deepseek-chat", "caller": "run_daily.py", "in": 845, "cached": 128, "out": 172, "ok": true}
+{"ts": "2026-10-01T20:06:30", "model": "deepseek-chat", "caller": "run_daily.py", "in": 870, "cached": 128, "out": 125, "ok": true}
+{"ts": "2026-10-01T20:06:33", "model": "deepseek-chat", "caller": "run_daily.py", "in": 483, "cached": 0, "out": 169, "ok": true}
