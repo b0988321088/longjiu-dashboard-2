@@ -1773,12 +1773,19 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                               + "今日動作：<b>" + _t["今日結論"] + "</b>")
             except Exception as _e:
                 _gate_line = "🧭 留停 Gate：無法判定（" + str(_e) + "）"
+            # 2026-10-02 裁示④：未來 90 天現金需求（A 已確認納入覆蓋率；B 條件式不計入）
+            try:
+                from sot_targets import cash_need_90d_line as _cnl
+                _need_line = "💧 " + _cnl(_snap_p)
+            except Exception as _e2:
+                _need_line = "💧 90 天現金需求：無法判定（" + str(_e2) + "）"
             _cur_line = (f"<div style='font-size:12px;color:#92400e;margin-top:6px;padding-top:6px;border-top:1px dashed #fbbf24'>"
                           f"📊 即時（{_snap_p.get('date','')}）："
                           f"月配息保守 {_div_con:,.0f}／實收 {_div_cur:,.0f}｜"
                           f"總資產 {_ta:,.0f}｜淨資產 {_nw:,.0f}｜"
                           f"覆蓋 {_cov_con:.1f}%／實收 {_cov_act:.1f}%<br>"
                           f"{_gate_line}<br>"
+                          f"{_need_line}<br>"
                           f"💰 月盈餘：保守 {_sur_con:+,.0f}／實收 {_sur_act:+,.0f}｜"
                           f"FI 跑道（極端情境口徑）：{_rw_ext_txt}、實收情境 {_rw_act_txt}｜"
                           f"壓力情境覆蓋 {_cov_stress:.1f}%"

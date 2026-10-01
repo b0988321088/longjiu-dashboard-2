@@ -409,6 +409,36 @@ try:
 except Exception as _e_dc:
     ck("決策核心（可動用／Gate／觸發器）可派生", False, str(_e_dc))
 
+# 第 4 批（裁示④ 2026-10-02）：90 天資金需求 A/B 分區
+try:
+    import sot_targets as _st_n
+    _sn_n = _json_dc.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+    _nd_n = _st_n.cash_need_90d(_sn_n)
+    _a_n = float(_nd_n["A_已確認"]["合計"])
+    _cfg_n = _sn_n.get("cash_need_90d") or {}
+    ck("90 天需求不建立 B 區（未得標款項不得進模型）",
+       "B_條件式" not in _cfg_n and "B_條件式" not in _nd_n,
+       str([k for k in _cfg_n if "B" in str(k)]))
+    ck("A 區＝固定月支出 × 3（無其他未確認項）",
+       abs(_a_n - float(_nd_n["A_已確認"]["固定月支出_合計"])) < 1.0,
+       "A=" + format(_a_n, ",.0f"))
+    ck("90 天覆蓋率＝可動用 ÷ A 區（毛需求）",
+       abs(float(_nd_n["覆蓋率_pct"]) - (_nd_n["可動用"] / _a_n * 100.0)) < 0.05,
+       str(_nd_n["覆蓋率_pct"]) + "%")
+    import re as _re_n
+    _re_need = _re_n.compile(r"(90\s*天|Coverage|覆蓋率)[^<]{0,80}2,400,000|2,400,000[^<]{0,60}(90\s*天|需求)")
+    _pg_n = ""
+    for _f_n in ("index.html", "daily_report_v2_%s.html" % __import__("datetime").date.today().isoformat()):
+        _fp_n = BASE / _f_n
+        if _fp_n.exists():
+            _pg_n += _fp_n.read_text(encoding="utf-8", errors="replace")
+    ck("產物不得把押標金列為 90 天資金需求（不顯示、不產生缺口）",
+       not _re_need.search(_pg_n), "index/daily")
+    ck("產物含 90 天覆蓋率（毛需求口徑）",
+       "未來 90 天現金需求覆蓋率" in _pg_n or "未來 90 天現金需求" in _pg_n, "index/daily")
+except Exception as _e_n:
+    ck("90 天資金需求守門可執行", False, str(_e_n))
+
 ck("壓力/極端判定與顏色已派生（無寫死 red 判定）",
    'class="red">&lt;100%' not in src and "{_stress_cls}" in src and "{_ext_cls}" in src
    and "{_stress_note}" in src)

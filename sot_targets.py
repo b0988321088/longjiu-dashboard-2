@@ -920,3 +920,58 @@ def band_line(snap: dict, bucket: str) -> str:
 def band_silent_buckets(snap: dict) -> list:
     """落在可接受範圍內（＝必須靜默）的桶名清單；稽核守門用。"""
     return [k for k, v in acceptable_band(snap).items() if not v.get("顯示行動")]
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# 90 天資金需求（第 4 批｜使用者 2026-10-02 裁示④）
+#   A｜已確認（Confirmed）＝固定月支出 × 3 ＋ 其他已確認清單 → **納入 Coverage**
+#   B｜條件式（Conditional）＝押標金 240 萬（得標後才成立）→ **不進分母**，
+#        不得因此觸發借款／質押／賣股；真正接案後才進行資金來源比較
+#   公式：可動用現金 ÷ A 區（毛需求）。被動收入僅作參考，不得用來美化現金安全度。
+# ════════════════════════════════════════════════════════════════════════════
+def cash_need_90d(snap: dict) -> dict:
+    """90 天資金需求（A 已確認／B 條件式）與覆蓋率；缺 SoT 即 raise，不猜。"""
+    cfg = (snap or {}).get("cash_need_90d")
+    if not isinstance(cfg, dict) or not isinstance(cfg.get("A_已確認"), dict):
+        raise KeyError("snapshot.cash_need_90d 缺值 → 90 天需求無真值，拒絕判斷（2026-10-02 裁示④）")
+    a_cfg = cfg["A_已確認"]
+    months = float(a_cfg.get("固定月支出_月數") or 3)
+    fixed = float(sot_monthly_expense(snap)) * months
+    others = a_cfg.get("其他已確認") or []
+    other_sum = 0.0
+    for it in others:
+        v = it.get("金額") if isinstance(it, dict) else it
+        if isinstance(v, (int, float)):
+            other_sum += float(v)
+    total_a = fixed + other_sum
+    avail = allowable_cash(snap)
+    thr = float(cfg.get("門檻_pct") or 100)
+    cov = (avail / total_a * 100.0) if total_a > 0 else None
+    # 2026-10-02 使用者更正裁示：**不建立 B 區**。得標與否未定的款項（如押標金 240 萬）
+    # 不屬 90 天已確認需求 → 不進分母、不顯示、不觸發任何動作，僅留存於 SoT 備註（不渲染）。
+    passive = ((snap or {}).get("passive_income") or {}).get("monthly_dividend_total")
+    return {
+        "A_已確認": {"固定月支出_月額": float(sot_monthly_expense(snap)), "月數": months,
+                     "固定月支出_合計": fixed, "其他已確認": others, "其他合計": other_sum,
+                     "合計": total_a},
+        "可動用": avail,
+        "覆蓋率_pct": round(cov, 1) if isinstance(cov, (int, float)) else None,
+        "門檻_pct": thr,
+        "燈號": (None if cov is None else ("🟢 充足" if cov >= thr else "🔴 不足")),
+        "被動收入_參考（不參與）": passive,
+        "說明": "毛需求為 Gate；被動收入僅參考；未得標之條件式事件（如押標金）不屬 90 天需求，不進分母也不顯示",
+        "source": "sot_targets.cash_need_90d（使用者 2026-10-02 裁示④）",
+    }
+
+
+def cash_need_90d_line(snap: dict) -> str:
+    """決定卡／日報用單行文字（A 覆蓋率＋B 條件式標註）。"""
+    try:
+        d = cash_need_90d(snap)
+    except Exception as e:
+        return "90 天現金需求：無法判定（" + str(e) + "）"
+    a = d["A_已確認"]["合計"]
+    s = ("未來 90 天現金需求覆蓋率 <b>" + ("{:.1f}%".format(d["覆蓋率_pct"]) if d["覆蓋率_pct"] is not None else "—")
+         + "</b>（可動用 " + format(d["可動用"], ",.0f") + " ÷ 已確認 " + format(a, ",.0f") + "；門檻 "
+         + format(d["門檻_pct"], ",.0f") + "%）")
+    return s
