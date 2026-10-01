@@ -1,0 +1,27 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO-Hermes",
+  "scope": "① db_loader 去硬編碼（snapshot 單一來源）② 工作期盈餘口徑校正 75,970→69,541",
+  "trigger": "使用者 2026-10-01：「好」（同意收乾淨前輪列出的 1、2 兩項）",
+  "date": "2026-10-01",
+  "root_cause": [
+    "① db_loader.load_tv()/seed_from_snapshot() 內含多個寫死金額：working_surplus／retirement_surplus 以 162,781（舊月支出口徑）派生、allianz_ab 7,808,297、firstjin 1,979,676、monthly_dividend 69,044、real_estate 34,000,000 等；與 snapshot 真值長期分歧（本模組無 .py 呼叫點，屬未回收的舊真值路徑）",
+    "② snapshot.working_surplus 停在 75,970（＝228,751 − 152,781 舊月支出），RULE 檔同步寫死同一組數字 → 兩邊一致地錯，run_daily 三源校準因此照樣通過"
+  ],
+  "fix": [
+    "db_loader.py 重寫為 snapshot 派生：allianz_ab／firstjin／房租拆分（rent_breakdown）／常態配息（passive_income.fund_dividend_conservative、allianz_ab_monthly、firstjin_monthly）／月收入／月支出／working_surplus（＝收入−支出）／retirement_surplus（讀 snapshot 派生值）；缺鍵寫 None 並列 WARN，不再以常數頂替",
+    "snapshot.working_surplus 75,970→69,541（＝月收入 228,751 − 月支出 159,210）",
+    "DAILY_REPORT_PIPELINE_RULE.md：月支出 152,781→159,210（列出現行六項動態組成）、工作期盈餘 +75,970→+69,541"
+  ],
+  "verification": {
+    "db_loader": "實跑 python db_loader.py：allianz_ab 7,557,489／monthly_dividend 100,000／monthly_expense 159,210／monthly_income 228,751／retirement_surplus 20,890／working_surplus 69,541（全與 snapshot 一致）",
+    "run_daily": "實跑輸出 [RUN_DAILY] 真值：月收 228,751 / 月支 159,210 / 盈餘 +69,541；[CALIBRATE] 三源校準通過",
+    "gates": "check_dividend_caliber 57/58（餘 1 條＝未追蹤檔 gen_emergency_us_20261001.py，非本輪）；check_dashboard_sync PASS、check_cross_report_consistency PASS、check_dashboard_stale PASS",
+    "residue": "152,781／75,970 在 RULE 檔與 .py 生產碼殘留 0"
+  },
+  "non_blocking_leftovers": [
+    "[CALIBRATE] 安聯A+B現值／第一金現值兩個校準點 regex 未命中（WARN 非 FAIL，修正前即存在；RULE 檔來源表未載該兩列）",
+    "monthly_report_2026-08.html 仍為舊產物（asset_diff_history 無 8 月鍵）",
+    "run_daily 有 tv/三源以外的其他寫死字串（如情報段落），非本輪範圍"
+  ]
+}
