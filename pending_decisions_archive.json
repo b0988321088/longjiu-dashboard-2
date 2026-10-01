@@ -238,5 +238,38 @@
   "detail": "pending_reconcile.py：由 snapshot 真值（cash_detail／restricted_cash 明細／policy_repay_log／us30y_state）重算 Pending 狀態，條件成立自動閉環歸檔（規則：生活帳戶水位、永豐水位、質押撥款入帳、高息清償、解凍條件）。預設 dry-run，--apply 才寫入（含備份＋筆數守恆＋CRLF 驗證）。第二階段『Pending 自動產生（Decision Engine → Pending）』尚未實作，不得宣稱完成。",
   "source": "user 2026-09-30 規格",
   "cleanup_reason": "pending_reconcile 自動回收機制上線：真值→狀態自動重算／執行後自動 CLOSED，每日 22:00 於 build_dashboard 之前落地（同一批產物）"
+ },
+ {
+  "title": "⏰ 費用帳／費用頁收日班（終結「頁面 generated_at 前進、數字停在 18:30」）",
+  "status": "✅ 已執行（2026-10-01 使用者核准）｜22:30 close 併收帳本（ai_cost_watch 靜默副作用）＋新增 23:55 cron cost_watch_eod.py（帳本 upsert→費用頁重產→stage 自家三檔→auto_push，成功靜默）｜CIO APPROVE 7/7 PASS｜commit f984d50f",
+  "created_at": "2026-10-01",
+  "date": "2026-10-01",
+  "priority": "medium",
+  "tags": "成本帳,費用頁,cron,收日班",
+  "note": "驗收：10/2 檢查 10/1 帳本是否已含 18:30 後花費、線上費用頁與帳本同口徑；首跑 10/1 23:55（job 8581b34a2f6b）",
+  "archived_at": "2026-10-01 20:00",
+  "archive_reason": "真值日 2026-10-01：狀態已含完成字樣 → 移出未閉環清單（check_thresholds 硬擋）"
+ },
+ {
+  "title": "🏠 10月月初校正（房租口徑＋當月實收歸零）",
+  "status": "✅ 已執行（2026-10-01，使用者提供真值＋核准）｜應收 75,100（大義街1樓 24,000／23樓 21,000／洲際W 28,000＝33,000−5,000 房客購床折讓／管理費 2,100）；待收 51,100（一樓 24,000 已於 10/1 入帳）；當月實收房租 24,000、配息 0（月初歸零）｜四源同步 ✅＋儀表板閘門 ✅｜commit 89236f7d",
+  "created_at": "2026-10-01",
+  "date": "2026-10-01",
+  "priority": "medium",
+  "tags": "房租,月初校正,儀表板,口徑",
+  "note": "洲際W 10月：33,000 租金 − 房客購床 5,000 折讓＝實收 28,000（比照 9 月維修費 3,000 折讓入 rent_receivable_by_month）；待收追蹤日 10/15。",
+  "archived_at": "2026-10-01 20:00",
+  "archive_reason": "真值日 2026-10-01：狀態已含完成字樣 → 移出未閉環清單（check_thresholds 硬擋）"
+ },
+ {
+  "title": "⏰ 月初校正自動化（每月 1 號 06:45，no_agent）",
+  "status": "✅ 已執行（2026-10-01 核准）｜新增 monthly_rollover.py＋wrappers 薄轉發器＋cron 590aa758b612（45 6 1 * *，排在 07:00 晨間產線前）｜CIO APPROVE 7/7｜commit 985e7913",
+  "created_at": "2026-10-01",
+  "date": "2026-10-01",
+  "priority": "medium",
+  "tags": "cron,月初校正,房租,配息,口徑",
+  "note": "驗收：11/1 06:45 首次自動月（10/1 06:45 也會跑一次，冪等）；確認 07:00 產線不再被閘門擋。一次性折讓/空置仍需人工覆寫，腳本會列印提示。",
+  "archived_at": "2026-10-01 20:00",
+  "archive_reason": "真值日 2026-10-01：狀態已含完成字樣 → 移出未閉環清單（check_thresholds 硬擋）"
  }
 ]
