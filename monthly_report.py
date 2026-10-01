@@ -11,7 +11,7 @@ try:
 except Exception:
     def _cg_pct(*a, **k): return "2.6"
     def _cg_wan(*a, **k): return "1,200"
-    def _cg_mo(*a, **k): return "26,000"
+    def _cg_mo(*a, **k): return 26000
 
 BASE = Path(__file__).resolve().parent
 

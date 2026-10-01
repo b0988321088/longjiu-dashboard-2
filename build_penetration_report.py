@@ -91,6 +91,13 @@ try:
     print(f"  雙維度防禦 {_ddf.get('佔比')}%（每日重算；分母 {_ddf.get('分母', 0):,.0f}）")
 except Exception as _e_sd:
     print(f"  ⚠️ P0-1 雙維度同步失敗：{_e_sd}")
+try:
+    from mortgage_rate import reconcile_stored_monthly as _recon_mo
+    _mo_chg = _recon_mo(snap)
+    if _mo_chg:
+        print("  國泰月付鍵同步（消除第二來源漂移）：" + "、".join(f"{k} {o}→{n}" for k, o, n in _mo_chg))
+except Exception as _e_mo:
+    print(f"  ⚠️ 國泰月付鍵同步失敗：{_e_mo}")
 (BASE / "snapshot.json").write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")  # INC-184：snapshot canonical=1（原 indent=2 造成全檔假 diff）
 print("  穿透數據已自動校正並寫入 snapshot.json")
 holdings = snap.get("securities", {}).get("holdings", [])

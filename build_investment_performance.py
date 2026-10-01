@@ -267,7 +267,7 @@ def write_dashboard_html(mk, class_rows, interest_total, grand, perf, project,
     L.append(f'<div style="font-size:10.5px;color:#94a3b8;margin-top:6px">📌 <b>跨保單比較要看持有期間</b>（安聯約2年 vs FJ33 3-4個月，累計配息不可直接比）。當月檢核口徑（{mk} 配息：安聯 {_fmt(_d_allianz)} / 第一金 {_fmt(_d_first)} vs 當月淨值變化）以左欄「保單損益」為準</div></div>')
     # ── 國泰轉貸專區 ──
     L.append('<div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px">')
-    L.append('<h3 style="font-size:15px;font-weight:800;margin:0 0 2px;color:#1d1d1f">🏦 國泰轉貸 {_cg_wan()}萬 專區</h3>')
+    L.append(f'<h3 style="font-size:15px;font-weight:800;margin:0 0 2px;color:#1d1d1f">🏦 國泰轉貸 {_cg_wan()}萬 專區</h3>')
     L.append('<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">借貸資金：投入列帳面、漲跌才計績效｜snapshot 最新真值</div>')
     L.append('<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="color:#6b7280;border-bottom:2px solid #e5e7eb"><th style="text-align:left;padding:5px 8px">標的</th><th style="text-align:right;padding:5px 8px">目前市值</th></tr>')
     for k, v in ct_items:

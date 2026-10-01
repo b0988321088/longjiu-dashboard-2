@@ -288,7 +288,11 @@ def main():
     # 流動性調度 tab 銀行卡（2026-08-29 補：原 6 卡全寫死 → 動態）
     # 2026-09-28 使用者裁示：房貸扣款行安全線＝「自身房貸月繳×3」（國泰＝大義街、永豐＝洲際W）；
     #    其餘（台新薪轉帳戶）仍用月支出×3。值一律讀 snapshot，勿寫死。
-    _cat_loan = float(snap.get("mortgage_cathay_monthly") or 0)
+    try:   # 2026-10-01：國泰房貸月繳改讀派生真值（rate×本金/12），利率一動安全線跟著動
+        from mortgage_rate import cathay_monthly as _cg_mo_safe
+        _cat_loan = float(_cg_mo_safe(snap) or 0)
+    except Exception:
+        _cat_loan = float(snap.get("mortgage_cathay_monthly") or 0)
     _sin_loan = float(snap.get("mortgage_sinopac_monthly") or 0)
     for _nm, _lv in (("mortgage_cathay_monthly", _cat_loan), ("mortgage_sinopac_monthly", _sin_loan)):
         if _lv <= 0:   # 2026-09-28（CIO 審查）：缺值不得退成 0 門檻（會把 🔴 誤判成 🟢）→ 退回月支出

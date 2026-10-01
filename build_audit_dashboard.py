@@ -10,7 +10,7 @@ try:
 except Exception:      # 匯入失敗時的保底（口徑同）
     def _cg_pct(*a, **k): return "2.6"
     def _cg_wan(*a, **k): return "1,200"
-    def _cg_mo(*a, **k): return "26,000"
+    def _cg_mo(*a, **k): return 26000
     def _yf_wan(*a, **k): return "1,304"
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
 
@@ -68,7 +68,7 @@ _all_ok = _def_ok and _inc_ok and _ltv_ok
 # 2026-09-29：雙維度分母＝總資產 − 指定用途款（與 snapshot 派生口徑一致，原用 TA 會得 40% ≠ 標題 49.1%）
 _dd_den = TA - RESTRICTED
 _def_break = " + ".join(f"{k.replace('(目標)','')} {round(v/(_dd_den or TA)*100,2)}%" for k, v in dd_c.items())
-MORT_MONTHLY = s.get("mortgage_cathay_monthly", 26000) + s.get("mortgage_sinopac_monthly", 65735)
+MORT_MONTHLY = _cg_mo(s) + s.get("mortgage_sinopac_monthly", 65735)   # 2026-10-01：國泰月付改讀派生值（原讀 mortgage_cathay_monthly 第二來源，與利率真值可漂移）
 
 debt_ratio = TL / (TA + RE) * 100
 net_worth = TA + RE - TL

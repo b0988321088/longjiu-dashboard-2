@@ -374,7 +374,11 @@ def step_consistency(quiet: bool) -> list:
         else:
             # 2026-09-28 使用者裁示：房貸扣款行安全線＝自身房貸月繳×3（國泰／永豐）；台新＝月支出×3。
             #   期望值一律由 snapshot 現算（禁寫死），真值一動門檻跟著動。
-            _cat_loan = _num(snap.get("mortgage_cathay_monthly"))
+            try:   # 2026-10-01：國泰月繳改讀派生真值（rate×本金/12），與產出側同源
+                from mortgage_rate import cathay_monthly as _cg_mo_safe
+                _cat_loan = _num(_cg_mo_safe(snap))
+            except Exception:
+                _cat_loan = _num(snap.get("mortgage_cathay_monthly"))
             _sin_loan = _num(snap.get("mortgage_sinopac_monthly"))
             for _nm, _lv in (("mortgage_cathay_monthly", _cat_loan), ("mortgage_sinopac_monthly", _sin_loan)):
                 if _lv is None or _lv <= 0:
