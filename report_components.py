@@ -283,6 +283,11 @@ def render_decision_banner(snap: dict) -> str:
     from sot_targets import cash_mode as _cm, sabbatical_gate as _gt, triggers as _tr
     from sot_targets import cash_need_90d as _cn
     cm, gt, tr = _cm(snap), _gt(snap), _tr(snap)
+    from pending_engine import pending_line as _pl
+    try:
+        _pend = _pl()
+    except Exception as _pend_e:
+        _pend = "📌 Pending：無法判定（" + str(_pend_e) + "）"
     try:
         _nd = _cn(snap)
     except Exception as _nd_e:
@@ -327,7 +332,8 @@ def render_decision_banner(snap: dict) -> str:
         '<div class="rounded-lg bg-slate-800/50 p-3">'
         '<div class="text-[11px] text-slate-400 mb-1">今日動作（{} 項觸發）</div>'
         '<div class="text-xs leading-relaxed">{}</div>'
-        '<div class="text-[10px] text-slate-500 mt-1">{}{}</div></div>'
+        '<div class="text-[10px] text-slate-500 mt-1">{}{}</div>'
+        '<div class="text-[11px] text-slate-200 mt-1">{}</div></div>'
         '<div class="rounded-lg bg-slate-800/50 p-3">'
         '<div class="text-[11px] text-slate-400 mb-1">未來 90 天現金需求（A｜已確認）</div>'
         '<div class="text-xl font-black {}">{}</div>'
@@ -342,7 +348,7 @@ def render_decision_banner(snap: dict) -> str:
          else "border-amber-500/40 bg-amber-500/10 text-amber-300"),
         gt["燈號"], _mc, cm["可動用"], cm["底線"], cm["餘裕"], _mc, cm["模式"], cm["距門檻"],
         _rows, gt["參考指標"]["保守覆蓋_pct"], gt["參考指標"]["3個月趨勢"],
-        tr["觸發數"], _act, tr["授權邊界"], ("｜" + _unknown) if _unknown else "",
+        tr["觸發數"], _act, tr["授權邊界"], ("｜" + _unknown) if _unknown else "", _pend,
         _nd_color, _nd_pct, _nd["可動用"], (_nd.get("A_已確認") or {}).get("合計") or 0,
         _nd.get("門檻_pct") or 100)
 

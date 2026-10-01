@@ -1779,6 +1779,12 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _need_line = "💧 " + _cnl(_snap_p)
             except Exception as _e2:
                 _need_line = "💧 90 天現金需求：無法判定（" + str(_e2) + "）"
+            # 2026-10-02 裁示③：Pending 期限管理（只突出真正今日到期；無到期日不提醒）
+            try:
+                from pending_engine import pending_line as _pl3
+                _pend_line = _pl3()
+            except Exception as _e3:
+                _pend_line = "📌 Pending：無法判定（" + str(_e3) + "）"
             _cur_line = (f"<div style='font-size:12px;color:#92400e;margin-top:6px;padding-top:6px;border-top:1px dashed #fbbf24'>"
                           f"📊 即時（{_snap_p.get('date','')}）："
                           f"月配息保守 {_div_con:,.0f}／實收 {_div_cur:,.0f}｜"
@@ -1786,6 +1792,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                           f"覆蓋 {_cov_con:.1f}%／實收 {_cov_act:.1f}%<br>"
                           f"{_gate_line}<br>"
                           f"{_need_line}<br>"
+                          f"{_pend_line}<br>"
                           f"💰 月盈餘：保守 {_sur_con:+,.0f}／實收 {_sur_act:+,.0f}｜"
                           f"FI 跑道（極端情境口徑）：{_rw_ext_txt}、實收情境 {_rw_act_txt}｜"
                           f"壓力情境覆蓋 {_cov_stress:.1f}%"

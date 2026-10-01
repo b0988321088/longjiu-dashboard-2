@@ -439,6 +439,44 @@ try:
 except Exception as _e_n:
     ck("90 天資金需求守門可執行", False, str(_e_n))
 
+# 第 3 批（裁示③ 2026-10-02）：Pending 期限管理 schema 與狀態機
+try:
+    import datetime as _dt_p
+    import pending_engine as _pe_p
+    _items_p = _pe_p.load_items()
+    _need_fields = ("due_date", "last_confirmed", "owner", "external_owner", "status")
+    _missing_p = [(x.get("title"), k) for x in _items_p for k in _need_fields if k not in x]
+    ck("Pending schema 五欄齊備（26 筆一次遷移）",
+       not _missing_p and len(_items_p) == 26, str(_missing_p[:3]) + "｜n=" + str(len(_items_p)))
+    _bad_src = [x.get("title") for x in _items_p
+                if x.get("due_date") and not str(x.get("due_date_source") or "").startswith("既有文字")]
+    ck("due_date 一律來自既有文字（不猜、不推算）", not _bad_src, str(_bad_src[:3]))
+    _null_no_flag = [x.get("title") for x in _items_p if not x.get("due_date") and not x.get("needs_due_date")]
+    ck("無 due_date 者標記 needs_due_date", not _null_no_flag, str(_null_no_flag[:3]))
+    _enum_bad = [x.get("title") for x in _items_p if x.get("status") not in _pe_p.STATUS_ENUM]
+    ck("status 正規化為四態（原字串保留 status_raw）",
+       not _enum_bad and all("status_raw" in x for x in _items_p), str(_enum_bad[:3]))
+    _t_p = _dt_p.date(2026, 10, 2)
+    _st_p = {d: _pe_p.escalation_stage(d, _t_p)["stage"] for d in
+             ("2026-10-03", "2026-10-02", "2026-10-01", "2026-09-29", "2026-09-25")}
+    ck("升級門檻＝0／今日／+1／+3／+7",
+       _st_p["2026-10-03"] == 0 and _st_p["2026-10-02"] == 1 and _st_p["2026-10-01"] == 2
+       and _st_p["2026-09-29"] == 3 and _st_p["2026-09-25"] == 4, str(_st_p))
+    _pg_p = ""
+    for _f_p in ("index.html", "daily_report_v2_%s.html" % _dt_p.date.today().isoformat()):
+        _fp_p = BASE / _f_p
+        if _fp_p.exists():
+            _pg_p += _fp_p.read_text(encoding="utf-8", errors="replace")
+    _seg_p = [m.group(0) for m in re.finditer(r"📌 Pending：[^<]{0,200}", _pg_p)]
+    _cmd_p = [s for s in _seg_p if re.search(r"建議(買|賣)|加碼|減碼|質押|借款|賣股|應買|應賣", s)]
+    _line_p = _seg_p
+    ck("Pending 行只提醒、不含交易指令", bool(_line_p) and not _cmd_p, str(_cmd_p[:2]))
+    ck("Pending 行只突出今日到期（其餘為升級／不提醒）",
+       all(("今日到期" in l or "今日無到期" in l) for l in _line_p) if _line_p else False,
+       str(_line_p[:1]))
+except Exception as _e_p:
+    ck("Pending 期限守門可執行", False, str(_e_p))
+
 ck("壓力/極端判定與顏色已派生（無寫死 red 判定）",
    'class="red">&lt;100%' not in src and "{_stress_cls}" in src and "{_ext_cls}" in src
    and "{_stress_note}" in src)
@@ -613,6 +651,7 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "check_dashboard_stale.py", "check_narrative_numbers.py",
            "check_narrative_numbers_selftest.py",   # 可動用現金口徑改讀 cash_layers.available
            "build_rebalance_dashboard.py",   # 第 2 批：本週投資計劃文案過 band_filter（裁示②靜默）
+           "pending_engine.py", "pending_decisions.json",   # 第 3 批：Pending 期限管理（裁示③）
            "DAILY_REPORT_PIPELINE_RULE.md", "run_daily.py",
            "notion_shared_context.md", "index_template.html", "build_dashboard.py", "index.html",
            "check_caliber_mutation.py",   # 本守門的變異測試（2026-09-28 從 %TEMP% 搬進版控，置於 tools/）

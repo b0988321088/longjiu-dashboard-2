@@ -1,0 +1,25 @@
+{
+ "verdict": "APPROVE",
+ "reviewer": "CIO-Hermes",
+ "scope": "第 3 批：Pending 期限管理（schema migration）",
+ "trigger": "使用者 2026-10-02 裁示③：due_date／last_confirmed／owner=CEO／external_owner／status；狀態機 到期→+1→+3→+7 CEO 強制處理；26 筆一次遷移；不猜缺失日期；只突出今日到期",
+ "date": "2026-10-02",
+ "delivered": [
+  "pending_decisions.json 26 筆一次遷移（新增 5 欄＋due_date_source／needs_due_date／status_raw）",
+  "pending_engine.py：escalation_stage／pending_digest／pending_line（只提醒、不下交易指令）",
+  "首頁 CEO 決定卡＋日報新增 Pending 行（今日到期／升級中／未提供到期日）",
+  "守門 +8 條：schema 五欄齊備／due_date 僅來自既有文字／無 due_date 標 needs_due_date／status 四態／升級門檻 0-1-3-7／只提醒不含指令／只突出今日到期"
+ ],
+ "verification": {
+  "遷移": "26 筆；有 due_date 8 筆、未提供 18 筆（不猜、不推算）",
+  "status 分佈": "待處理 20／已確認 5／已完成 1（原字串保留 status_raw）",
+  "今日到期": "1 件（美債中短 ladder，due 2026-10-02）；升級中 2 件（最高 +3）",
+  "不提醒": "HOLD／已確認／已完成／關案 皆不進提醒（避免已定案項反覆佔用決策空間）",
+  "守門": "check_dividend_caliber 79/79（另 2 條 SKIP）"
+ },
+ "excluded": [
+  "① ② ④ 三批已 CLOSED，本輪未動",
+  "投資配置／槓桿／質押／3-6-10pp 階梯／US30Y 煞車 未動"
+ ],
+ "conclusion": "APPROVE"
+}
