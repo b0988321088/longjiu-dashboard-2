@@ -201,6 +201,9 @@ def main():
                 _sn_db = {}
             _mc_p_d = float(_sn_db.get("mortgage_cathay") or 0) / 10000
             _mc_r_d = float(_sn_db.get("mortgage_cathay_rate") or 0) * 100
+            # 2026-10-01：國泰房貸繳款列改由真值注入（原 index_template 寫死「1,200萬@2.6% 26,000」）
+            rep["__CATHAY_LOAN_LINE__"] = (
+                f"國泰房貸繳款（大義街 {_mc_p_d:,.0f}萬@{_mc_r_d:.1f}%寬限期） {round(_mc_p_d * 10000 * _mc_r_d / 100 / 12):,.0f}")
             rep["__RISK_FUNDS__"] = (
                 f"— 美債殖利率高檔為主要風險；國泰 {_mc_p_d:,.0f}萬@{_mc_r_d:.1f}% 8/20 撥款"
                 f"（配置：富達600＋聯博100＋貝萊德B11 500）；{_pl2}")

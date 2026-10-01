@@ -538,7 +538,7 @@ __WEEK_DONE__
 <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/01</span><span class="text-amber-300 font-mono flex-1">🍽️ 聚餐 回台中聚餐（沙鹿火車站集合，下午 5:30）</span></div>
 <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/01</span><span class="text-slate-300 font-mono flex-1">📋 例行 龍七動態月報自動產出（09:00）</span></div>
 <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/06</span><span class="text-slate-300 font-mono flex-1">📋 例行 動態自我檢討週報產出（19:00）</span></div>
-<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/20</span><span class="text-slate-300 font-mono flex-1">📋 每月20日 💰 國泰房貸繳款（大義街1,200萬@2.6%寬限期） 26,000</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/20</span><span class="text-slate-300 font-mono flex-1">📋 每月20日 💰 __CATHAY_LOAN_LINE__</span></div>
 <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/01</span><span class="text-emerald-400 font-mono flex-1">✅ 已入帳 大義街店面房租入帳 24,000（已收）</span></div>
 <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/05</span><span class="text-slate-300 font-mono flex-1">✅ 定期 台電薪資入帳 42,560（9/4 已入，常態調薪）</span></div>
 <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">待處理</span><span class="text-white font-bold flex-1">✅ 完成 ✅ 0050 配息確認 0.6元（7/21除息，8/10發放） —</span></div>
@@ -831,7 +831,7 @@ var gotTotal = _salaryA + divTotal + rentGot;
       var safeLine = Math.round(exp * 3);
       var taiwan = (cd['敦南Richart子帳戶']||0)+(cd['文心綜活儲存款-薪轉']||0)+(cd['敦南Richart數位一般帳戶']||0)+(cd['敦南Richart外幣']||0);
       var sinopac = (cd['營業部DAWHO活期儲蓄存款']||0)+(cd['市政分行活期儲蓄存款']||0);
-      // 2026-09-28 使用者裁示：房貸扣款行安全線＝自身房貸月繳×3（國泰 26,000／永豐 65,735）
+      // 2026-09-28 使用者裁示：房貸扣款行安全線＝自身房貸月繳×3（月繳值由 build_dashboard 動態注入）
       var _exp3 = Math.round((s.monthly_expense||exp) * 3);
       var cathaySafe = Math.round((s.mortgage_cathay_monthly||0) * 3) || _exp3;   // 缺值→退回月支出×3（與 Python 層同口徑）
       var sinopacSafe = Math.round((s.mortgage_sinopac_monthly||0) * 3) || _exp3;

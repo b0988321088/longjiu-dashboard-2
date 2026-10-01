@@ -397,7 +397,6 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         except Exception:
             _sn_mc = {}
         _mc_prin = float(_sn_mc.get('mortgage_cathay') or tv['mortgage_cathay'] or 0)
-        _mc_pay = float((_sn_mc.get('monthly_fixed_expense') or {}).get('房貸_國泰') or 0)
         _mc_rate_v = _snap_mc_rate(_sn_mc) or CATHAY_MORTGAGE_RATE_FALLBACK   # 共用推導（單一來源）
         # 2026-10-01：月付改由 利率×本金/12 派生（原讀 monthly_fixed_expense 形成第二來源，
         # 偽造利率時會出現「3.1% 標籤配 月付 26,000」的頁內矛盾）；實際繳款值改由 check_thresholds 交叉斷言
@@ -1833,7 +1832,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 # 來源：snapshot.cathay_pledge_0911（擔保池/成數/可貸/利率）+ dragon_assets.db liabilities（既有借款）
                 _snap_p = {}
                 try:
-                    _snap_p = json.loads(Path("snapshot.json").read_text(encoding="utf-8"))
+                    _snap_p = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
                 except Exception:
                     _snap_p = {}
                 # 2026-10-01：國泰轉貸利率改讀真值（原寫死 0.026）— 與 ① 槓桿成本顯示 {_mc_r_pct} 同源，
