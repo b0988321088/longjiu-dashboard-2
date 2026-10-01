@@ -1763,5 +1763,11 @@
   "category": "完成",
   "item": "第 4 批｜未來 90 天資金需求（只做 Confirmed；不建立 B 區）（使用者 2026-10-02 裁示④＋同日更正：④ 只做 Confirmed 90-day demand，不建立 B 區。A｜Confirmed＝未來 90 天已確定會發生的現金需求 → 固定月支出 × 3 ＋「其他已確認」清單（目前為空，逐項需使用者確認，不得自行推定）；Cov",
   "detail": "使用者 2026-10-02 裁示④＋同日更正：④ 只做 Confirmed 90-day demand，不建立 B 區。A｜Confirmed＝未來 90 天已確定會發生的現金需求 → 固定月支出 × 3 ＋「其他已確認」清單（目前為空，"
+ },
+ {
+  "date": "2026-10-02",
+  "category": "完成",
+  "item": "第 3 批｜Pending 期限管理（schema migration 26 筆）（使用者 2026-10-02 裁示③：Pending 五欄 schema（due_date／last_confirmed／owner=CEO／external_owner／status）＋狀態機（到期 → +1 第一次升級 → +3 第二次升級 → +7 CEO 強制處理）；",
+  "detail": "使用者 2026-10-02 裁示③：Pending 五欄 schema（due_date／last_confirmed／owner=CEO／external_owner／status）＋狀態機（到期 → +1 第一次升級 → +3 第二次"
  }
 ]
