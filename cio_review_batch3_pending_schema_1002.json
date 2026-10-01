@@ -8,7 +8,8 @@
   "pending_decisions.json 26 筆一次遷移（新增 5 欄＋due_date_source／needs_due_date／status_raw）",
   "pending_engine.py：escalation_stage／pending_digest／pending_line（只提醒、不下交易指令）",
   "首頁 CEO 決定卡＋日報新增 Pending 行（今日到期／升級中／未提供到期日）",
-  "守門 +8 條：schema 五欄齊備／due_date 僅來自既有文字／無 due_date 標 needs_due_date／status 四態／升級門檻 0-1-3-7／只提醒不含指令／只突出今日到期"
+  "守門 +8 條：schema 五欄齊備／due_date 僅來自既有文字／無 due_date 標 needs_due_date／status 四態／升級門檻 0-1-3-7／只提醒不含指令／只突出今日到期",
+  "schema 說明置於 pending_engine.py docstring（pending_decisions.json 為 list 容器，未加 _schema 鍵；原 CIO 紀錄此處已更正）"
  ],
  "verification": {
   "遷移": "26 筆；有 due_date 8 筆、未提供 18 筆（不猜、不推算）",
@@ -21,5 +22,6 @@
   "① ② ④ 三批已 CLOSED，本輪未動",
   "投資配置／槓桿／質押／3-6-10pp 階梯／US30Y 煞車 未動"
  ],
- "conclusion": "APPROVE"
+ "conclusion": "APPROVE",
+ "amendment": "status 正規化誤判修正（敘事中的「已達標」曾誤判為已完成）→ norm_status 只看開頭 40 字語境；收斂後 已確認 13／待處理 13；commit 346e1476"
 }
