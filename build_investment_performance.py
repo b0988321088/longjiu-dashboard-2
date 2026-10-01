@@ -407,8 +407,11 @@ def main():
         _pledge_m = next((_l["monthly"] for _l in _loans if "保單借貸" in _l["name"]), 0)
     except Exception:
         _pledge_m = 0
-    _cov = ("✅ 月配息可持續且累計本金+配息為正 → 保單健康（本金+配息 > 借貸成本）"
-            if (_ins_div_m >= _pledge_m and _real_sum > 0) else "⚠️ 需檢視：配息或本金覆蓋不足")
+    if _pledge_m <= 0:
+        _cov = "✅ 保單借貸已清償（無借貸成本）→ 配息全數留存"
+    else:
+        _cov = ("✅ 月配息可持續且累計本金+配息為正 → 保單健康（本金+配息 > 借貸成本）"
+                if (_ins_div_m >= _pledge_m and _real_sum > 0) else "⚠️ 需檢視：配息或本金覆蓋不足")
     print(f"  月配息估 {_ins_div_m:,.0f} vs 保單借貸月息 {_pledge_m:,.0f}｜{_cov}")
 
     # ── 國泰轉貸 1,200萬 專區（2026-09-05：成本 vs 現值，統一最新真值）──
@@ -422,8 +425,10 @@ def main():
             print(f"  {_k:26s} {_v:>12,.0f}")
     if _cur12:
         print(f"  {'合計現值':26s} {_cur12:>12,.0f}  vs 投入 12,000,000 → 損益 {_cur12 - _cost12:+,.0f}（snapshot 最新真值）")
-    _cathay_m = 26000     # 12M @2.6% → 月息 ~26,000
-    _cathay_div = 45000   # 富達月配估 0.75%/月 × 600萬（與 run_daily 同源）
+    # 2026-10-01：改動態（原寫死 26000/45000）— 月息讀 load_loans 單一來源，月配估由國泰直購富達市值 × 0.75%/月
+    _cathay_m = next((_l["monthly"] for _l in load_loans(snap, rate_overrides) if "國泰轉貸" in _l["name"]), 0)
+    _cathay_div = round(next((_v for _k, _v in _ct.items()
+                              if "富達" in str(_k) and isinstance(_v, (int, float))), 0) * 0.0075)
     print(f"  月配息估 {_cathay_div:,.0f}（富達） vs 國泰月息 {_cathay_m:,.0f} → "
           f"{'✅ 配息可 cover 利息（本金+配息 > 借貸成本）' if _cathay_div >= _cathay_m else '⚠️ 配息不足 cover 利息'}")
     print("口徑：借貸不計績效（投入列帳面、漲跌才計）；配息當月實收；市值含未實現；本金錨=原始成本")
