@@ -18,6 +18,11 @@
   python build_investment_performance.py 2026-08
 """
 import json, sys, sqlite3, datetime
+try:
+    from mortgage_rate import cathay_wan as _cg_wan
+except Exception:
+    def _cg_wan(*a, **k): return "1,200"
+
 from pathlib import Path
 from dividend_caliber import bucket_of
 
@@ -201,7 +206,7 @@ def write_dashboard_html(mk, class_rows, interest_total, grand, perf, project,
     L.append('<div style="flex:1.15;min-width:300px;background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px">')
     perf_col = "#16a34a" if perf >= 0 else "#dc2626"
     L.append(f'<div style="display:flex;justify-content:space-between;align-items:baseline"><h3 style="font-size:15px;font-weight:800;margin:0;color:#1d1d1f">📈 投資收益</h3><div style="font-size:24px;font-weight:900;color:{perf_col}">{perf/10000:+.1f} 萬</div></div>')
-    L.append(f'<div style="font-size:11px;color:#94a3b8;margin:2px 0 10px">{mk}｜市值變化+配息−利息−手續費｜轉貸 1,200 萬已剔除</div>')
+    L.append(f'<div style="font-size:11px;color:#94a3b8;margin:2px 0 10px">{mk}｜市值變化+配息−利息−手續費｜轉貸 {_cg_wan()} 萬已剔除</div>')
     L.append('<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="color:#6b7280;border-bottom:2px solid #e5e7eb"><th style="text-align:left;padding:5px 8px">類別</th><th style="text-align:right;padding:5px 8px">市值變化</th><th style="text-align:right;padding:5px 8px">配息</th><th style="text-align:right;padding:5px 8px">費用</th><th style="text-align:right;padding:5px 8px">損益</th></tr>')
     icons = {"股票": "📈", "基金": "💰", "保單": "🛡️"}
     for r in class_rows:
@@ -262,7 +267,7 @@ def write_dashboard_html(mk, class_rows, interest_total, grand, perf, project,
     L.append(f'<div style="font-size:10.5px;color:#94a3b8;margin-top:6px">📌 <b>跨保單比較要看持有期間</b>（安聯約2年 vs FJ33 3-4個月，累計配息不可直接比）。當月檢核口徑（{mk} 配息：安聯 {_fmt(_d_allianz)} / 第一金 {_fmt(_d_first)} vs 當月淨值變化）以左欄「保單損益」為準</div></div>')
     # ── 國泰轉貸專區 ──
     L.append('<div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px">')
-    L.append('<h3 style="font-size:15px;font-weight:800;margin:0 0 2px;color:#1d1d1f">🏦 國泰轉貸 1,200萬 專區</h3>')
+    L.append('<h3 style="font-size:15px;font-weight:800;margin:0 0 2px;color:#1d1d1f">🏦 國泰轉貸 {_cg_wan()}萬 專區</h3>')
     L.append('<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">借貸資金：投入列帳面、漲跌才計績效｜snapshot 最新真值</div>')
     L.append('<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="color:#6b7280;border-bottom:2px solid #e5e7eb"><th style="text-align:left;padding:5px 8px">標的</th><th style="text-align:right;padding:5px 8px">目前市值</th></tr>')
     for k, v in ct_items:
@@ -443,7 +448,7 @@ def main():
     _ct = (snap.get("funds_breakdown", {}) or {}).get("國泰直購", {}) or {}
     _cur12 = sum(_v for _k, _v in _ct.items() if _k != "note" and isinstance(_v, (int, float)))
     _cost12 = 12000000
-    print("\n🏦 國泰轉貸 1,200萬 專區（借貸資金：投入帳面、漲跌才計績效）")
+    print(f"\n🏦 國泰轉貸 {_cg_wan()}萬 專區（借貸資金：投入帳面、漲跌才計績效）")
     print("-" * 58)
     for _k, _v in sorted(_ct.items()):
         if _k != "note" and isinstance(_v, (int, float)):

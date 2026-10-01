@@ -3,6 +3,15 @@
 與文字審計報告同等內容：實相+變動歸因 / Runway 三口徑 / 巴菲特視角 / 行動 / 紅線 / 決策
 """
 import json, datetime, os
+
+try:
+    from mortgage_rate import (cathay_rate_pct as _cg_pct, cathay_wan as _cg_wan,
+                               cathay_monthly as _cg_mo, yongfeng_principal as _yf_wan)
+except Exception:      # 匯入失敗時的保底（口徑同）
+    def _cg_pct(*a, **k): return "2.6"
+    def _cg_wan(*a, **k): return "1,200"
+    def _cg_mo(*a, **k): return "26,000"
+    def _yf_wan(*a, **k): return "1,304"
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
 
 REPO = os.path.dirname(os.path.abspath(__file__))
@@ -157,8 +166,8 @@ rows = f"""
 <tr><td {W(0)}>基金</td><td {W(0)} style="text-align:right;font-weight:700">{FUND:,}</td><td {W(0)} style="text-align:right">{FUND/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">鉅亨 {FUND_JZ:,}（一般申購+自由Pay） + 國泰 {FUND_CT:,}（富達 {_wan(FD)}／聯博 {_wan(LB)}／貝萊德B11 {_wan(BL)} 月配主力）</td></tr>
 <tr><td {W(0)}>證券</td><td {W(0)} style="text-align:right;font-weight:700">{SEC:,}</td><td {W(0)} style="text-align:right">{SEC/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">{SEC_N} 檔；未實現 {SEC_PNL:,}</td></tr>
 <tr><td {W(0)}>現金</td><td {W(0)} style="text-align:right;font-weight:700">{CASH:,}</td><td {W(0)} style="text-align:right">{CASH/TA*100:.1f}%</td><td {W(0)} style="color:#6e6e73;font-size:12px">Moneybook 銀行帳戶真值（{mb_txt}）；不含 MMF/外幣定存（該部位列基金桶）</td></tr>
-<tr><td {W(0)}>總資產</td><td {W(0)} style="text-align:right;font-weight:800">{TA:,}</td><td {W(0)}></td><td {W(0)} style="color:#6e6e73;font-size:12px">8/20 撥款 1,200萬 → 部署 600萬富達 + T+2 600萬</td></tr>
-<tr><td {W(0)}>總負債</td><td {W(0)} style="text-align:right;font-weight:800;color:#ef4444">{TL:,}</td><td {W(0)}></td><td {W(0)} style="color:#6e6e73;font-size:12px">國泰新貸 1,200萬@2.6%（大義街轉貸）＋ 信用卡 {CC_PEND:,}</td></tr>
+<tr><td {W(0)}>總資產</td><td {W(0)} style="text-align:right;font-weight:800">{TA:,}</td><td {W(0)}></td><td {W(0)} style="color:#6e6e73;font-size:12px">8/20 撥款 {_cg_wan()}萬 → 部署 600萬富達 + T+2 600萬</td></tr>
+<tr><td {W(0)}>總負債</td><td {W(0)} style="text-align:right;font-weight:800;color:#ef4444">{TL:,}</td><td {W(0)}></td><td {W(0)} style="color:#6e6e73;font-size:12px">國泰新貸 {_cg_wan()}萬@{_cg_pct()}%（大義街轉貸）＋ 信用卡 {CC_PEND:,}</td></tr>
 </table></div>
 
 <div style="flex:1;min-width:340px;background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
@@ -171,7 +180,7 @@ rows = f"""
 <tr><td {W(0)}>全口徑（含房貸/保單息/女友）</td><td {W(0)} style="text-align:right">{DIV+RENT:,} / {FIXED:,}</td><td {W(0)} style="text-align:right;font-weight:700;color:{'#22c55e' if cov_fixed>=100 else '#d97706'}">{cov_fixed:.0f}%</td></tr>
 <tr><td {W(0)}>房租覆蓋房貸</td><td {W(0)} style="text-align:right">{RENT:,} / {MORT_MONTHLY:,}</td><td {W(0)} style="text-align:right;font-weight:700">{rent_cov_mort:.0f}%</td></tr>
 </table>
-<div style="font-size:12px;color:#6e6e73;margin-top:8px">月固定支出 {FIXED:,}（v4 定版）＝ 生活 {LIFE:,} + 房貸 {MORT_MONTHLY:,}（永豐 65,735+國泰 26,000）+ 保單息 {POL_INT:,} + 女友 {GF:,} + 醫療/元大證金等</div>
+<div style="font-size:12px;color:#6e6e73;margin-top:8px">月固定支出 {FIXED:,}（v4 定版）＝ 生活 {LIFE:,} + 房貸 {MORT_MONTHLY:,}（永豐 65,735+國泰 {_cg_mo():,}）+ 保單息 {POL_INT:,} + 女友 {GF:,} + 醫療/元大證金等</div>
 </div></div>
 
 <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">

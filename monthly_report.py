@@ -5,6 +5,13 @@
 """
 import json, sys
 from pathlib import Path
+try:
+    from mortgage_rate import (cathay_rate_pct as _cg_pct, cathay_wan as _cg_wan,
+                               cathay_monthly as _cg_mo)
+except Exception:
+    def _cg_pct(*a, **k): return "2.6"
+    def _cg_wan(*a, **k): return "1,200"
+    def _cg_mo(*a, **k): return "26,000"
 
 BASE = Path(__file__).resolve().parent
 
@@ -165,12 +172,12 @@ td{{padding:8px 6px;border-top:1px solid #e5e5ea}}
         v = pen.get(k, 0)
         p = pct.get(k, 0)
         html += f'<tr><td>{label}</td><td class="num">{v:,.0f}</td><td class="num">{p:.1f}%</td></tr>'
-    html += """</tbody></table></div>
+    html += f"""</tbody></table></div>
 
 <div class="card"><h2>本月重點</h2>
 <ul style="font-size:14px;line-height:1.8;margin:0;padding-left:20px">
 <li>🔁 保單組合調整：新增 PIMCO收益增長（A 1,683,485 + B 952,834），聯博美國成長出清，安聯B M&G 轉出</li>
-<li>🏦 國泰轉貸：核貸 2.6% 進行中（預計 8/2 完成），以轉貸清償保單借貸</li>
+<li>🏦 國泰轉貸：已撥款 {_cg_pct()}%（8/20、本金 {_cg_wan()} 萬、月付 {_cg_mo():,}）；2026-09-29 質押 590 萬@2.65%，已清償保單借貸 400 萬＋券商質押 96 萬</li>
 <li>📉 Fed 7/30 維持利率 3.50-3.75%，30年公債破 5.2%，市場震盪</li>
 <li>💰 本月配息：保單 118,296 + ETF 10,740 + 基金 615 = 129,651</li>
 </ul></div>

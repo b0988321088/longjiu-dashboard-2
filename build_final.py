@@ -9,6 +9,15 @@ from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 import json, os, datetime, urllib.request
 
+try:
+    from mortgage_rate import (cathay_rate_pct as _cg_pct, cathay_wan as _cg_wan,
+                               cathay_monthly as _cg_mo, yongfeng_principal as _yf_wan)
+except Exception:      # 匯入失敗時的保底（口徑同）
+    def _cg_pct(*a, **k): return "2.6"
+    def _cg_wan(*a, **k): return "1,200"
+    def _cg_mo(*a, **k): return "26,000"
+    def _yf_wan(*a, **k): return "1,304"
+
 BASE = os.path.dirname(os.path.abspath(__file__))
 SNAP = json.load(open(f'{BASE}/snapshot.json', encoding='utf-8'))
 INS = SNAP.get('allianz_combined',0) + SNAP.get('firstjin_fl65_current_value',0)
@@ -192,7 +201,7 @@ B(s, [
 # === S6: 債務分析 ===
 s = ns()
 T(s, '債務結構：低利優勢不變，質押降息進行中')
-ST(s, '市場利率 6-7% vs 您的加權 ~2.6% — 結構性優勢')
+ST(s, f'市場利率 6-7% vs 您的加權 ~{_cg_pct()}% — 結構性優勢')
 pl = SNAP.get('policy_pledge_loan',4000000)
 B(s, [
     f'🔴 保單借貸 {pl/10000:,.0f} 萬 @4%+ → 質押 590 萬@2.65% 償還（9/29 已撥款入帳）',
@@ -201,11 +210,11 @@ B(s, [
     '🟡 洲際W 1,312 萬（600+700）@2.5% 9/25 到期 → 不急，最差續約 2.5%',
     '     國泰備案主軸 ≤2.5%+3 年寬限+全額代償；築巢 2.185%（台電專屬）優先洽詢',
     '',
-    '🟡 大義街 1,200 萬 @2.6%（國泰 8/20 已撥款）→ 3 年寬限期，月付 26,000',
+    f'🟡 大義街 {_cg_wan()} 萬 @{_cg_pct()}%（國泰 8/20 已撥款）→ 3 年寬限期，月付 {_cg_mo():,}',
     '',
     '🟢 理財型房貸已全數清償（8/11）✅ ｜ 證券質押 100 萬凍結中',
     '',
-    '🏠 優勢：別人貸款 6-7%，您 2.5-2.6% → 升息環境反而擴大利差優勢',
+    f'🏠 優勢：別人貸款 6-7%，您 {_cg_pct()}% → 升息環境反而擴大利差優勢',
     '     質押上限紀律：US30Y ≥ 5.30 全域凍結新增質押（目前 5.25 未觸發）'
 ])
 
@@ -242,7 +251,7 @@ B(s, [
     '🟢 情境C：降息（若 CPI 走軟 + FOMC 轉鴿）',
     '     10 月標案結果後重評估 ladder ✅ 台股解凍分批買 ✅',
     '',
-    '🏠 三情境都安全：房貸 ~2.6% 固定低利，升息環境利差反而擴大',
+    f'🏠 三情境都安全：房貸 ~{_cg_pct()}% 固定低利，升息環境利差反而擴大',
     '     債務清洗監測啟動（DXY 月跌>3% / 10Y breakeven>3% 等觸發才動作）'
 ])
 
@@ -297,7 +306,7 @@ ST(s, '低利債務 + 現金緩衝 + 配息覆蓋 → 等訊號再出手')
 B(s, [
     f'💰 匯率 {FX:.2f}：{FX_NOTE} → 不再加碼美元曝險，等 10 月重評估',
     '',
-    '🏠 債務 ~2.6%：比市場低 4pp+，質押 590 萬@2.65% 再降成本（9/29 已撥款）',
+    f'🏠 債務 ~{_cg_pct()}%：比市場低 4pp+，質押 590 萬@2.65% 再降成本（9/29 已撥款）',
     '',
     f'📈 台股 {TAIEX:,.0f}（{ASOF} 收盤，單日 {CHG1D:+.2f}%）→ 無系統風險，不恐慌不追高',
     '',

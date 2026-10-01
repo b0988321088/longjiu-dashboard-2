@@ -4,6 +4,15 @@
 五大監測維度：市場利率(Rhythm-08) / 匯率 / PI狀態 / LTV槓桿 / 現金流與債務時程。
 """
 import json, urllib.request
+
+try:
+    from mortgage_rate import (cathay_rate as _cg_rate, cathay_rate_pct as _cg_pct,
+                               cathay_wan as _cg_wan, cathay_monthly as _cg_mo)
+except Exception:
+    def _cg_rate(*a, **k): return 0.026
+    def _cg_pct(*a, **k): return "2.6"
+    def _cg_wan(*a, **k): return "1,200"
+    def _cg_mo(*a, **k): return "26,000"
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -256,9 +265,9 @@ def main():
     print("  Net Yield = Yield×(1-Tax) - 融資 - 鎖匯 - 摩擦")
     # 三個路徑淨利差
     paths = [
-        ("① 債務重置（清償高息債）", 0.04, 0.0, 0.026, "還債=確定性收益"),
-        ("② 美元MMF/短債（BIL/00865B）", 0.04, 0.0, 0.026, "無Duration風險"),
-        ("③ 階梯投資等級短債（1-3年）", 0.0475, 0.0, 0.026, "持有至到期"),
+        ("① 債務重置（清償高息債）", 0.04, 0.0, _cg_rate(), "還債=確定性收益"),
+        ("② 美元MMF/短債（BIL/00865B）", 0.04, 0.0, _cg_rate(), "無Duration風險"),
+        ("③ 階梯投資等級短債（1-3年）", 0.0475, 0.0, _cg_rate(), "持有至到期"),
     ]
     for name, y, hedge, fund, note in paths:
         ny = calc_net_yield(y, 0.0, fund, hedge, fc.get("friction_cost", 0.0015))
@@ -356,7 +365,7 @@ def main():
         print(f"  {n}. 🎫 PI 未核准：禁 Lombard 質押；10/1 轉增貸建議延後")
         n += 1
     if today < date(2026, 8, 15):
-        print(f"  {n}. 🔵 9/29 已撥款：質押 590萬@2.65%（10:57 入帳；表定 540萬＝本金1,200萬×4.5成，實撥＝池市值1,177.9萬×約5成）→ 清償 500萬高息負債（第一批 保單借貸 200萬已提出申請、待入帳；後續 券商100萬@3.92%＋保單餘200萬@4%）；月息 16,600 → 13,029（淨省 3,571/月）；⛔ 原『買富達600+MMF600萬→MMF轉標案預備金』已作廢")
+        print(f"  {n}. 🔵 9/29 已撥款：質押 590萬@2.65%（10:57 入帳；表定 540萬＝本金{_cg_wan()}萬×4.5成，實撥＝池市值1,177.9萬×約5成）→ 清償 500萬高息負債（第一批 保單借貸 200萬已提出申請、待入帳；後續 券商100萬@3.92%＋保單餘200萬@4%）；月息 16,600 → 13,029（淨省 3,571/月）；⛔ 原『買富達600+MMF600萬→MMF轉標案預備金』已作廢")
         n += 1
     print(f"  {n}. 🛡️ 400萬停泊永遠禁止質押（防火牆）；全域凍結≠賣光舊部位")
     print("=" * 58)

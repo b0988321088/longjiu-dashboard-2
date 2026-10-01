@@ -9,6 +9,15 @@ from pptx.chart.data import CategoryChartData
 from pptx.enum.chart import XL_CHART_TYPE, XL_LEGEND_POSITION, XL_LABEL_POSITION
 import json, os
 
+try:
+    from mortgage_rate import (cathay_rate_pct as _cg_pct, cathay_wan as _cg_wan,
+                               cathay_monthly as _cg_mo, yongfeng_principal as _yf_wan)
+except Exception:      # 匯入失敗時的保底（口徑同）
+    def _cg_pct(*a, **k): return "2.6"
+    def _cg_wan(*a, **k): return "1,200"
+    def _cg_mo(*a, **k): return "26,000"
+    def _yf_wan(*a, **k): return "1,304"
+
 BASE = os.path.dirname(os.path.abspath(__file__))
 SNAP = json.load(open(f'{BASE}/snapshot.json'))
 INS = SNAP.get('allianz_combined',0) + SNAP.get('firstjin_fl65_current_value',0)
@@ -106,8 +115,8 @@ s = ns()
 txt(s, '債務結構 vs 市場利率 6-7%', 0.5, 0.3, 8, 0.6, 28, True, WHITE)
 txt(s, '您的平均 ~2.5%，比市場低 3.5pp', 0.5, 1, 8, 0.4, 14, False, GRAY)
 cd4 = CategoryChartData()
-cd4.categories = ['保單借貸\n5%','市場房貸\n~6.5%','理財型\n4.0%','質押\n3.9%','築巢\n2.185%','國泰週轉\n2.6%']
-cd4.add_series('利率(%)', (5.0, 6.5, 4.0, 3.9, 2.185, 2.6))
+cd4.categories = ['保單借貸\n5%','市場房貸\n~6.5%','理財型\n4.0%','質押\n3.9%','築巢\n2.185%',f'國泰週轉\n{_cg_pct()}%']
+cd4.add_series('利率(%)', (5.0, 6.5, 4.0, 3.9, 2.185, float(_cg_pct())))
 chart(s, cd4, 0.5, 1.5, 7, 4.5, XL_CHART_TYPE.COLUMN_CLUSTERED)
 txt(s, '🏠 您的築巢 2.185% 比市場低 4.3pp', 1, 6.2, 10, 0.3, 16, True, GREEN)
 txt(s, '🔴 4筆保單借貸@5% → 9月清償年省20萬', 1, 6.6, 10, 0.3, 16, False, RED)

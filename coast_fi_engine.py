@@ -16,6 +16,15 @@
   python coast_fi_engine.py --write    # 寫回 snapshot.coast_fi_engine（附歷史）
 """
 import json
+
+try:
+    from mortgage_rate import (cathay_rate_pct as _cg_pct, cathay_wan as _cg_wan,
+                               cathay_monthly as _cg_mo, yongfeng_principal as _yf_wan)
+except Exception:      # 匯入失敗時的保底（口徑同）
+    def _cg_pct(*a, **k): return "2.6"
+    def _cg_wan(*a, **k): return "1,200"
+    def _cg_mo(*a, **k): return "26,000"
+    def _yf_wan(*a, **k): return "1,304"
 import sys
 import datetime
 import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
@@ -246,7 +255,7 @@ def credit_locked(snap, facts):
     items = []
     ref = snap.get("refinance_plan_2026") or {}
     dy = ref.get("大義街") or {}
-    items.append({"項目": "大義街轉貸（國泰 1,200萬@2.6%）",
+    items.append({"項目": f"大義街轉貸（國泰 {_cg_wan()}萬@{_cg_pct()}%）",
                   "完成": "撥款已入帳" in str(dy.get("狀態") or "")})
     xz = ref.get("洲際W") or {}
     items.append({"項目": f"洲際W 轉貸（永豐 1,312萬，9/25 到期）",

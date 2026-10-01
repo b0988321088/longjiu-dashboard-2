@@ -6,6 +6,15 @@
 """
 
 from pptx import Presentation
+
+try:
+    from mortgage_rate import (cathay_rate_pct as _cg_pct, cathay_wan as _cg_wan,
+                               cathay_monthly as _cg_mo, yongfeng_principal as _yf_wan)
+except Exception:      # 匯入失敗時的保底（口徑同）
+    def _cg_pct(*a, **k): return "2.6"
+    def _cg_wan(*a, **k): return "1,200"
+    def _cg_mo(*a, **k): return "26,000"
+    def _yf_wan(*a, **k): return "1,304"
 from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN
 from pptx.enum.chart import XL_CHART_TYPE
@@ -321,7 +330,7 @@ if __name__ == "__main__":
     sl = d._new()
     d.page_title(sl, "築巢優利貸 2.185% 為最優解，月省 49,658", "三方案比較：現狀 vs 國泰轉貸 vs 築巢優利貸")
     d.metric_card(sl, 0.5, 1.8, 3.5, 1.8, "現狀：永豐房貸", "99,458/月", RED, "利率 ~2.5% ｜ 三筆分散")
-    d.metric_card(sl, 4.3, 1.8, 3.5, 1.8, "方案 B：國泰轉貸", "52,500/月", GOLD, "利率 2.6% ｜ 次佳選擇")
+    d.metric_card(sl, 4.3, 1.8, 3.5, 1.8, "方案 B：國泰轉貸", "52,500/月", GOLD, f"利率 {_cg_pct()}% ｜ 次佳選擇")
     d.metric_card(sl, 8.1, 1.8, 3.5, 1.8, "方案 A：築巢優利貸 ⭐", "49,800/月", GREEN, "利率 2.185% ｜ 公務員專案")
     d.card(sl, 0.5, 4, 11.5, 2.7)
     d.txt(sl, "為什麼推薦築巢優利貸？", 0.8, 4.2, 8, 0.5, 20, True, GOLD)
