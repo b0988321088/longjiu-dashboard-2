@@ -194,7 +194,7 @@ def write_dashboard_html(mk, class_rows, interest_total, grand, perf, project,
              f'<td style="padding:6px 8px;text-align:right;font-weight:700">{_fmt(sum(r["div"] for r in class_rows), True)}</td>'
              f'<td style="padding:6px 8px;text-align:right;font-weight:700;color:#dc2626">{_fmt(-sum(r["fee"] for r in class_rows), True)}</td>'
              f'<td style="padding:6px 8px;text-align:right;font-weight:900">{_fmt(grand, True)}</td></tr>')
-    L.append(f'<tr><td style="padding:6px 8px" colspan="4">投資利息（8月當月計入：永豐房貸 28,000 + 保單借貸 14,000）</td><td style="padding:6px 8px;text-align:right;color:#dc2626;font-weight:700">{_fmt(-interest_total, True)}</td></tr></table>')
+    L.append(f'<tr><td style="padding:6px 8px" colspan="4">投資利息（當月計入：房貸＋保單借貸；明細見月報校正檔）</td><td style="padding:6px 8px;text-align:right;color:#dc2626;font-weight:700">{_fmt(-interest_total, True)}</td></tr></table>')
     if project:
         L.append(f'<div style="font-size:10.5px;color:#94a3b8;margin-top:6px">📦 專案收入(非常態) {_fmt(project)}（另計不混入）</div>')
     L.append('</div>')
@@ -404,9 +404,9 @@ def main():
     _ins_div_m = (snap.get("allianz_ab_monthly", 0) or 0) + (snap.get("firstjin_monthly", 0) or 0)
     try:
         _loans = load_loans(snap, rate_overrides)
-        _pledge_m = next((_l["monthly"] for _l in _loans if "保單借貸" in _l["name"]), 14000)
+        _pledge_m = next((_l["monthly"] for _l in _loans if "保單借貸" in _l["name"]), 0)
     except Exception:
-        _pledge_m = 14000
+        _pledge_m = 0
     _cov = ("✅ 月配息可持續且累計本金+配息為正 → 保單健康（本金+配息 > 借貸成本）"
             if (_ins_div_m >= _pledge_m and _real_sum > 0) else "⚠️ 需檢視：配息或本金覆蓋不足")
     print(f"  月配息估 {_ins_div_m:,.0f} vs 保單借貸月息 {_pledge_m:,.0f}｜{_cov}")
@@ -421,7 +421,7 @@ def main():
         if _k != "note" and isinstance(_v, (int, float)):
             print(f"  {_k:26s} {_v:>12,.0f}")
     if _cur12:
-        print(f"  {'合計現值':26s} {_cur12:>12,.0f}  vs 投入 12,000,000 → 損益 {_cur12 - _cost12:+,.0f}（9/3 報價）")
+        print(f"  {'合計現值':26s} {_cur12:>12,.0f}  vs 投入 12,000,000 → 損益 {_cur12 - _cost12:+,.0f}（snapshot 最新真值）")
     _cathay_m = 26000     # 12M @2.6% → 月息 ~26,000
     _cathay_div = 45000   # 富達月配估 0.75%/月 × 600萬（與 run_daily 同源）
     print(f"  月配息估 {_cathay_div:,.0f}（富達） vs 國泰月息 {_cathay_m:,.0f} → "
