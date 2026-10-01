@@ -530,8 +530,8 @@ __WEEK_DONE__
 
             <div class="space-y-3 text-xs" id="calendar-events">
             <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">08/24</span><span class="text-white font-bold flex-1">🔴 今日執行 🔁 保單轉換 300萬（8/24 定案執行）：貝萊德科技A10 + 摩根JPM股部分 → PIMCO 120萬 + M&G 100萬 + 健康科學A2(醫療) 50萬 + 黃金A10 30萬（T+4 免現金免稅：降科技/建黃金/補醫療） 300萬</span></div>
-<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">待處理</span><span class="text-white font-bold flex-1">⚠️ 還款中 女友借款（每月還6,000，預計12/5清償） 300,000</span></div>
-<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">09/05</span><span class="text-slate-300 font-mono flex-1">🔄 還款中 女友還款（每月6,000） 6,000</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-red-500/30"><span class="text-amber-400 font-mono font-bold w-14">待處理</span><span class="text-white font-bold flex-1">__GF_LOAN_LINE__</span></div>
+<div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">__GF_NEXT_DATE__</span><span class="text-slate-300 font-mono flex-1">__GF_NEXT_LINE__</span></div>
 <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">08/25</span><span class="text-slate-300 font-mono flex-1">📋 行程 五、六段聯合夏季工安宣導及祈福會議（東海站大會議室）</span></div>
 <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">08/26</span><span class="text-slate-300 font-mono flex-1">📋 行程 每月租金總對帳</span></div>
 <div class="flex items-center gap-3 p-2 bg-slate-900/30 rounded border border-slate-800"><span class="text-slate-400 font-mono w-14">08/27</span><span class="text-slate-300 font-mono flex-1">📋 節日 中元節 —</span></div>
@@ -762,7 +762,7 @@ __WEEK_DONE__
       if(_gf>0) items.push(['女友還款', _gf]);
       var pend = [];
       if(_salary<=0) pend.push(['台電薪水', Number(snap.monthly_salary||0), snap.monthly_salary? '本月入帳' : '金額待確認']);
-      if(_gf<=0) pend.push(['女友還款', 6000, '9/5 入帳']);
+      if(_gf<=0){var _gfl=(snap.personal_loans&&snap.personal_loans['女友借款'])||{}; pend.push(['女友還款', _gfl['月還款']||6000, _gfl['還款日']||'每月5號']);}
       /* 2026-09-23 INC-241：逐項待收用「當月應收」明細，缺本月才退回常態 rent_breakdown
          （原本只用常態 → 一次性折讓會變幽靈待收） */
       var rb = (snap.rent_receivable_by_month||{})[_ym2] || snap.rent_breakdown||{};

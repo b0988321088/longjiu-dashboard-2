@@ -449,10 +449,19 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                      or _sn2.get("policy_pledge_loan") or 0)
     _trans_txt = ('<br/><span style="color:#b45309;font-size:12px">⏳ 過渡期口徑：含待清償保單息 '
                   + f'{_int:,}（保單借貸餘額 {_pol_bal:,.0f} 清完後月支出自動 → {_fixed_total - _int:,}）</span>') if _int else ''
+    # 2026-10-01：原本寫死「女友還款 6,000 為收入（至12/5）」→ 改讀 snapshot（月還款＋最後清償）
+    _gfl_rd = ((_sn2.get("personal_loans") or {}).get("女友借款") or {})
+    _gfd_rd = str(_gfl_rd.get("最後清償") or "")
+    try:
+        _gf_due = f"{int(_gfd_rd[5:7])}/{int(_gfd_rd[8:10])}"
+    except Exception:
+        _gf_due = ""
+    _gf_note = (f'女友還款 {int(float(_gfl_rd.get("月還款") or 0)):,} 為收入'
+                + (f'（至{_gf_due}）' if _gf_due else '')) if _gfl_rd.get("月還款") else '女友還款為收入'
     _fixed_expense_html = f"""    <div class="callout" style="margin-top:10px;border-left:3px solid #3b82f6">
       <strong>📌 每月固定支出：{_fixed_total:,}</strong>（現金扣帳 {_cash_out:,} ＋ 帳上計息 {_accrual:,}）<br>
       生活 {_life:,} ｜ 醫療 {_med:,} ｜ 房貸 {_mort:,}（永豐 {_sin:,} + 國泰 {_cat:,}）｜ 保單借貸利息 {_int:,}{f" ｜ 券商質押利息 {_yua:,}" if _yua else ""}{f" ｜ 基金質押利息 {_fund_int:,}" if _fund_int else ""}
-      {_trans_txt}<br/><span style="color:#64748b;font-size:12px">與銀行實際扣款比對請用「現金扣帳」口徑（帳上計息＝保單＋券商＋基金質押三項利息之和（動態），不從帳戶扣）｜房租收入 {_rent:,} 覆蓋房貸 {_mort_net:+,} 缺口（{_mort/_rent*100:.0f}% 覆蓋）｜女友還款 6,000 為收入（至12/5）</span>
+      {_trans_txt}<br/><span style="color:#64748b;font-size:12px">與銀行實際扣款比對請用「現金扣帳」口徑（帳上計息＝保單＋券商＋基金質押三項利息之和（動態），不從帳戶扣）｜房租收入 {_rent:,} 覆蓋房貸 {_mort_net:+,} 缺口（{_mort/_rent*100:.0f}% 覆蓋）｜{_gf_note}</span>
     </div>
 """
 

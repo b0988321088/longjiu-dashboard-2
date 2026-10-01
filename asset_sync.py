@@ -169,7 +169,7 @@ RECEIVABLES_IN_ASSETS = False    # 使用者 2026-09-13 裁示「不併」：應
 PERSONAL_LOAN_PAYDAY_DEFAULT = 5  # 每月 5 號還款（info 沒寫時用）
 
 
-def personal_loan_remaining(info: dict, today=None) -> float:
+def personal_loan_remaining(info: dict, today=None, records: dict | None = None) -> float:
     """女友借款「剩餘本金」=（原始金額 − 月還款 × 已過還款期數）。
 
     例：300,000（7/25 起、每月 5 號還 6,000、5% 年息）→ 9/13 已過 8/5、9/5 兩期
@@ -213,6 +213,14 @@ def personal_loan_remaining(info: dict, today=None) -> float:
         m += 1
         if m > 12:
             m, y = 1, y + 1
+    # 2026-10-01：實收紀錄優先 —— 使用者常提早於還款日入帳（8/5、9/1、10/1 實例），只按排程日
+    #   推算會出現「儀表板已收 6,000、應收餘額還沒掉」的同一事實兩套數字。
+    #   期數取 max(排程推算, 實收紀錄月份數)；未來月份不計。有實收無排程（提早入帳）也算。
+    if records:
+        _now_m = today.strftime("%Y-%m")
+        _nrec = len({str(k)[:7] for k in records
+                     if str(k)[:4].isdigit() and str(k)[:7] <= _now_m})
+        n = max(n, _nrec)
     _principal = max(0.0, amt - pay * n)
     if _principal <= 0:
         return 0.0
@@ -275,11 +283,13 @@ def rebuild_receivables(snap: dict) -> dict:
     要併入總資產時把旗標改 True 即可（屆時 net_worth 會 +應收餘額）。
     """
     pl = snap.get("personal_loans") or {}
+    _gf_rec = snap.get("girlfriend_repayment_records") or {}   # 2026-10-01：實收紀錄（提早入帳也認）
     detail = {}
     if isinstance(pl, dict):
         for _k, _v in pl.items():
             if isinstance(_v, dict):
-                _r = personal_loan_remaining(_v)
+                _rec = _gf_rec if "女友" in str(_k) else None
+                _r = personal_loan_remaining(_v, records=_rec)
                 if _r > 0:
                     detail[_k] = int(_r)
     total = sum(detail.values())
@@ -289,7 +299,8 @@ def rebuild_receivables(snap: dict) -> dict:
             if not isinstance(_v, dict):
                 continue
             if detail.get(_k):
-                _prin = int(personal_loan_remaining({**_v, "利率": "0%"}))   # 同函式、利率歸零 → 只取本金
+                _rec = _gf_rec if "女友" in str(_k) else None
+                _prin = int(personal_loan_remaining({**_v, "利率": "0%"}, records=_rec))   # 同函式、利率歸零 → 只取本金
                 _brk[_k] = {"本金": _prin, "未收利息": detail[_k] - _prin,
                             "結清日": str(_v.get("最後清償") or ""),
                             "結清金額": int(personal_loan_clearance(_v))}
@@ -329,7 +340,7 @@ def rebuild_liabilities(snap: dict) -> dict:
         if isinstance(pl, dict):
             for _k, _v in pl.items():
                 if isinstance(_v, dict):
-                    _r = personal_loan_remaining(_v)
+                    _r = personal_loan_remaining(_v, records=(snap.get("girlfriend_repayment_records") or {}) if "女友" in str(_k) else None)
                     if _r > 0:
                         _per_detail[_k] = int(_r)
     per = sum(_per_detail.values())

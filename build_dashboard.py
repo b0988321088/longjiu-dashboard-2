@@ -204,6 +204,39 @@ def main():
             # 2026-10-01：國泰房貸繳款列改由真值注入（原 index_template 寫死「1,200萬@2.6% 26,000」）
             rep["__CATHAY_LOAN_LINE__"] = (
                 f"國泰房貸繳款（大義街 {_mc_p_d:,.0f}萬@{_mc_r_d:.1f}%寬限期） {round(_mc_p_d * 10000 * _mc_r_d / 100 / 12):,.0f}")
+            # 2026-10-01：女友借款/還款列改由真值注入（原 index_template 靜態寫死「300,000」「09/05」）
+            _gfi = ((_sn_db.get("personal_loans") or {}).get("女友借款") or {})
+            _gf_bal = float(((_sn_db.get("receivables_breakdown") or {}).get("女友借款") or {}).get("本金") or 0) \
+                or float((_sn_db.get("receivables") or {}).get("女友借款") or 0)
+            _gf_m = int(float(_gfi.get("月還款") or 0))
+            _gf_due = str(_gfi.get("最後清償") or "")
+            try:
+                _gf_due_txt = f"{int(_gf_due[5:7])}/{int(_gf_due[8:10])}"
+            except Exception:
+                _gf_due_txt = _gf_due or "—"
+            rep["__GF_LOAN_LINE__"] = (
+                f"⚠️ 還款中 女友借款（每月還 {_gf_m:,}，預計 {_gf_due_txt} 清償）餘本金 {_gf_bal:,.0f}"
+                if _gf_m else "")
+            _gf_payd = int("".join(ch for ch in str(_gfi.get("還款日") or "5") if ch.isdigit()) or 5)
+            _gf_recs = _sn_db.get("girlfriend_repayment_records") or {}
+            _t2 = date.today()
+            _cand = []
+            for _mo in (0, 1, 2):
+                _y2 = _t2.year + (_t2.month - 1 + _mo) // 12
+                _m2 = (_t2.month - 1 + _mo) % 12 + 1
+                try:
+                    _d2 = date(_y2, _m2, _gf_payd)
+                except ValueError:
+                    continue
+                if f"{_y2}-{_m2:02d}" in _gf_recs or _d2 < _t2:
+                    continue
+                _cand.append(_d2)
+            if _cand and _gf_m:
+                rep["__GF_NEXT_DATE__"] = f"{_cand[0].month:02d}/{_cand[0].day:02d}"
+                rep["__GF_NEXT_LINE__"] = f"🔄 還款中 女友還款（每月 {_gf_m:,}） {_gf_m:,}"
+            else:
+                rep["__GF_NEXT_DATE__"] = ""
+                rep["__GF_NEXT_LINE__"] = ""
             rep["__RISK_FUNDS__"] = (
                 f"— 美債殖利率高檔為主要風險；國泰 {_mc_p_d:,.0f}萬@{_mc_r_d:.1f}% 8/20 撥款"
                 f"（配置：富達600＋聯博100＋貝萊德B11 500）；{_pl2}")
@@ -724,7 +757,12 @@ def main():
         _sal_lbl = "本月入帳" if _sal_pend > 0 else "金額待確認（snapshot.monthly_salary 缺失）"
         _pend2.append(("台電薪水", _sal_pend, _sal_lbl))
     if _gf_inc <= 0:
-        _pend2.append(("女友還款", 6000, "9/5 入帳"))
+        # 2026-10-01：原寫死 ("女友還款", 6000, "9/5 入帳") → 改讀 snapshot（月還款＋還款日）
+        #   否則每月都會停在同一個舊入帳日（使用者 10/1 反映「已入帳但儀表板沒更新」）
+        _gfl = ((snap.get("personal_loans") or {}).get("女友借款") or {})
+        _gfa = int(float(_gfl.get("月還款") or 0))
+        if _gfa > 0:
+            _pend2.append(("女友還款", _gfa, str(_gfl.get("還款日") or "每月5號")))
     # 當月應收明細（2026-09-23 INC-241）：逐項待收必須用「當月應收」而非常態 rent_breakdown，
     # 否則一次性折讓（2026-09 洲際W 維修費 −3,000）會變成幽靈待收（26,100 vs 真值 23,100）。
     # 真值來源：snapshot.rent_receivable_by_month[本月]；缺本月 → fallback 常態 rent_breakdown。

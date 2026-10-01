@@ -68,13 +68,15 @@ def main():
     _rrb_m = (snap.get("rent_receivable_by_month", {}) or {}).get(ym) or {}
     _rent_exp = sum(_rrb_m.values()) if _rrb_m else (snap.get("rent_monthly_total", 80100) or 80100)
     _sal_exp, _div_exp = _sal, int(snap.get("dividend_month_expected") or 0)
-    _exp_total = _sal_exp + _rent_exp + _div_exp + 6000
+    # 2026-10-01：女友還款常態額改讀 snapshot.personal_loans.女友借款.月還款（原本 6000 寫死 2 處）
+    _gf_exp = int(float(((snap.get("personal_loans") or {}).get("女友借款") or {}).get("月還款") or 0) or 6000)
+    _exp_total = _sal_exp + _rent_exp + _div_exp + _gf_exp
     _act_total = _sal + _rent_got + _div_act + _gf
     _passive_act = _div_act + _rent_got
     _coverage = _passive_act / _expense * 100 if _expense else 0
     # HTML 卡別名（對齊模板變數名）
     sal_exp, sal_act, rent_exp, rent_got, div_exp, div_act = _sal_exp, _sal, _rent_exp, _rent_got, _div_exp, _div_act
-    gf_act, exp_total, act_total, rent_gap = _gf, _exp_total, _act_total, _rent_exp - _rent_got
+    gf_act, gf_exp, exp_total, act_total, rent_gap = _gf, _gf_exp, _exp_total, _act_total, _rent_exp - _rent_got
     rent_norm = snap.get("rent_monthly_total", 80100) or 80100  # 常態全月應收（INC-241b 註腳用）
     passive_act, coverage, expense = _passive_act, _coverage, _expense
     div_norm = snap.get("monthly_dividend_total", 153389) or 153389  # 常態全月基準（含月底撥回）
@@ -139,7 +141,7 @@ td{{padding:8px 6px;border-top:1px solid #e5e5ea}}
 <tr><td>租金（已收）</td><td class="num">{rent_exp:,}</td><td class="num">{rent_got:,}</td><td class="num">{rent_got-rent_exp:+,}</td></tr>
 <tr><td>配息（實收）</td><td class="num">{div_exp:,}</td><td class="num">{div_act:,}</td><td class="num">{div_act-div_exp:+,}</td></tr>
 <tr><td style="font-size:11px;color:#6e6e73">配息常態（全月基準）</td><td class="num">—</td><td class="num">{div_norm:,}</td><td class="num">⏳ 月底補齊</td></tr>
-<tr><td>女友還款</td><td class="num">6,000</td><td class="num">{gf_act:,}</td><td class="num">{gf_act-6000:+,}</td></tr>
+<tr><td>女友還款</td><td class="num">{gf_exp:,}</td><td class="num">{gf_act:,}</td><td class="num">{gf_act-gf_exp:+,}</td></tr>
 <tr style="font-weight:700;border-top:2px solid #2563eb"><td>合計</td><td class="num">{exp_total:,}</td><td class="num">{act_total:,}</td><td class="num">{act_total-exp_total:+,}</td></tr>
 </tbody></table>
 <p style="font-size:12px;color:#6e6e73;margin-top:6px">預期 = snapshot 月收入口徑（配息保守 100,000）｜實際 = snapshot 真值（dividend_records 合計 + rent_received_records）｜待收租金 = {rent_gap:,}｜一次性收入（環保標結餘等）不計常態</p>

@@ -1,0 +1,33 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO-Hermes",
+  "scope": "女友還款 10 月已入帳 → 儀表板/日報/月報/應收 全鏈路同步",
+  "trigger": "使用者 2026-10-01 反映「本月份女友還款 6,000 已入帳、儀表板沒有更新」",
+  "findings": {
+    "root_cause": [
+      "snapshot.girlfriend_repayment_records 缺 2026-10；build_dashboard 以當月紀錄判斷已收/待收 → 10 月無紀錄 → 顯示為「待收」",
+      "待收列備援為寫死 ('女友還款', 6000, '9/5 入帳')（九月的舊入帳日）→ 使用者看到「已入帳卻仍顯示 9/5」",
+      "index_template.html JS 端同樣寫死 pend.push(['女友還款',6000,'9/5 入帳'])",
+      "index_template.html 行事曆靜態備援列寫死 300,000／09/05（原始借款額與九月日期）",
+      "receivables 期數只按排程日（每月5號）推算 → 使用者提早入帳（10/1）時應收餘額不會跟著掉"
+    ],
+    "fixed": [
+      "snapshot：新增 girlfriend_repayment_records['2026-10'] = {amount:6000, date:2026-10-01}；receivables 290,500→285,750（本金 282,000＋未收利息 3,750，結清金額 276,250 不變）",
+      "asset_sync.personal_loan_remaining(records=)：期數取 max(排程推算, 已入帳月份數) → 提早入帳也認，排程/實收不再兩套數字",
+      "build_dashboard：待收列改讀 snapshot（月還款＋還款日）；行事曆 女友借款/還款兩列改成 __GF_* 真值注入",
+      "index_template：JS 端備援列改讀 snapshot.personal_loans；靜態列 token 化",
+      "run_daily：日報「女友還款 6,000 為收入（至12/5）」改為 snapshot 派生",
+      "monthly_report：女友還款常態額 6,000 寫死 2 處改讀 snapshot"
+    ]
+  },
+  "verification": {
+    "receivables": "asset_sync --rebuild-liabilities → 應收 285,750（本金 282,000＋未收利息 3,750）",
+    "index_html": "✅已收 女友還款 6,000；待收無女友列；殘留 '9/5 入帳' = 0；'女友借款（每月還6,000' 舊字串 = 0；未展開 __GF_ token = 0；還款中列顯示「餘本金 282,000」下一期 11/05",
+    "daily_report": "女友還款 6,000 為收入（至12/5）由 snapshot 派生（值不變、來源改動）",
+    "gates": "check_dashboard_sync PASS、check_cross_report_consistency PASS、py_compile 全過、build_dashboard/run_daily/monthly_report rc=0"
+  },
+  "non_blocking_leftovers": [
+    "schedule_events.json 的 10/5 女友還款行事曆事件仍為排程標記（金額 6,000 常態寫死）；提早入帳不影響排程表",
+    "女友借款 checkpoint（12/5）事件內文含 30 萬敘述，屬決策備忘非儀表板數值"
+  ]
+}
