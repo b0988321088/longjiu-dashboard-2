@@ -15,13 +15,13 @@ td{padding:8px 6px;border-top:1px solid #e5e5ea}
 
 <div class="card"><h2>被動收入（2026-09 實收）</h2>
 <table><thead><tr><th>來源</th><th class="num">月收</th></tr></thead><tbody>
-<tr><td>保單配息</td><td class="num">94,161</td></tr>
-<tr><td>ETF配息</td><td class="num">16,340</td></tr>
-<tr><td>基金配息</td><td class="num">57,174</td></tr>
-<tr><td>房租收入</td><td class="num">77,100</td></tr>
-<tr style="font-weight:700;border-top:2px solid #2563eb"><td>合計</td><td class="num">244,775</td></tr>
+<tr><td>保單配息</td><td class="num">0</td></tr>
+<tr><td>ETF配息</td><td class="num">0</td></tr>
+<tr><td>基金配息</td><td class="num">0</td></tr>
+<tr><td>房租收入</td><td class="num">24,000.0</td></tr>
+<tr style="font-weight:700;border-top:2px solid #2563eb"><td>合計</td><td class="num">24,000.0</td></tr>
 </tbody></table>
-<p style="font-size:12px;color:#6e6e73;margin-top:6px">口徑：本表為 <strong>當月實收</strong>（配息＝dividend_records 逐月彙整：安聯 71,869＋第一金 22,292＋ETF 16,340＋基金 57,174＝167,675；房租＝rent_received_records 9 月合計）；房租當月應收 77,100（常態 80,100，差額為一次性折讓）、當月待收 0，見下方現金流審查。⚠️ monthly_report.py 產出時該卡誤讀月初已重置欄位（顯示 0），已依上述真值人工校正，原始碼待走審查通道修復</p></div>
+<p style="font-size:12px;color:#6e6e73;margin-top:6px">口徑：本表為 <strong>當月實收</strong>（配息＝monthly_dividend_breakdown、房租＝rent_received_records）；房租當月應收 77,100（常態 80,100，差額為一次性折讓）、當月待收 0，見下方現金流審查</p></div>
 
 <div class="card"><h2>💵 現金流審查（2026-09，2026-08-24 新增）</h2>
 <table><thead><tr><th>項目</th><th class="num">預期</th><th class="num">實際</th><th class="num">差異</th></tr></thead><tbody>
@@ -33,7 +33,7 @@ td{padding:8px 6px;border-top:1px solid #e5e5ea}
 <tr style="font-weight:700;border-top:2px solid #2563eb"><td>合計</td><td class="num">225,660</td><td class="num">293,335</td><td class="num">+67,675</td></tr>
 </tbody></table>
 <p style="font-size:12px;color:#6e6e73;margin-top:6px">預期 = snapshot 月收入口徑（配息保守 100,000）｜實際 = snapshot 真值（dividend_records 合計 + rent_received_records）｜待收租金 = 0｜一次性收入（環保標結餘等）不計常態</p>
-<p style="font-size:12.5px;margin-top:8px"><strong>覆蓋率：</strong>被動（配息 167,675 + 租金 77,100 = 244,775） vs 月開支 172,543 = 142% ✅</p>
+<p style="font-size:12.5px;margin-top:8px"><strong>覆蓋率：</strong>被動（配息 167,675 + 租金 77,100 = 244,775） vs 月開支 159,210 = 154% ✅</p>
 </div>
 
 <div class="card"><h2>📈 投資績效（2026-09，2026-08-31 新增）</h2>
@@ -46,18 +46,18 @@ td{padding:8px 6px;border-top:1px solid #e5e5ea}
 </div>
 
 <div class="card"><h2>保單組合（2026-09-30）</h2>
-<table><thead><tr><th>保單</th><th>基金</th><th class="num">現值</th></tr></thead><tbody><tr><td>安聯A</td><td>USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)</td><td class="num">619,256</td></tr><tr><td>安聯A</td><td>USDEQ5440 摩根投資基金 - 多重收益基金 - JPM多重收益(美元對沖) - A股(穩定月配)</td><td class="num">1,715,772</td></tr><tr><td>安聯A</td><td>USDEQ5680 貝萊德世界健康科學基金 A10美元(總報酬穩定配息)</td><td class="num">293,508</td></tr><tr><td>安聯A</td><td>USDEQ5700 M&G入息基金A(美元避險月配)F</td><td class="num">752,279</td></tr><tr><td>安聯A</td><td>USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)</td><td class="num">1,364,224</td></tr><tr><td>安聯A</td><td>USDEQ6730 貝萊德世界黃金基金 A10美元(總報酬穩定配息)</td><td class="num">189,370</td></tr><tr><td>安聯B</td><td>USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)</td><td class="num">486,704</td></tr><tr><td>安聯B</td><td>USDEQ5680 貝萊德世界健康科學基金 A10美元(總報酬穩定配息)</td><td class="num">244,414</td></tr><tr><td>安聯B</td><td>USDEQ5700 M&G入息基金A(美元避險月配)F</td><td class="num">1,548,321</td></tr><tr><td>安聯B</td><td>USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)</td><td class="num">196,962</td></tr><tr><td>安聯B</td><td>USDEQ6730 貝萊德世界黃金基金 A10美元(總報酬穩定配息)</td><td class="num">157,531</td></tr><tr style="border-top:2px solid #2563eb;font-weight:700"><td>安聯A+B</td><td></td><td class="num">7,538,972</td></tr>
-<tr><td>第一金M&G入息A(美元避險月配)F</td><td></td><td class="num">1,885,484</td></tr>
-<tr style="font-weight:700"><td>保單總值</td><td></td><td class="num">9,424,456</td></tr>
+<table><thead><tr><th>保單</th><th>基金</th><th class="num">現值</th></tr></thead><tbody><tr><td>安聯A</td><td>USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)</td><td class="num">613,114</td></tr><tr><td>安聯A</td><td>USDEQ5440 摩根投資基金 - 多重收益基金 - JPM多重收益(美元對沖) - A股(穩定月配)</td><td class="num">682,401</td></tr><tr><td>安聯A</td><td>USDEQ5680 貝萊德世界健康科學基金 A10美元(總報酬穩定配息)</td><td class="num">292,139</td></tr><tr><td>安聯A</td><td>USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)</td><td class="num">3,156,597</td></tr><tr><td>安聯A</td><td>USDEQ6730 貝萊德世界黃金基金 A10美元(總報酬穩定配息)</td><td class="num">183,585</td></tr><tr><td>安聯B</td><td>USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)</td><td class="num">488,552</td></tr><tr><td>安聯B</td><td>USDEQ5680 貝萊德世界健康科學基金 A10美元(總報酬穩定配息)</td><td class="num">243,274</td></tr><tr><td>安聯B</td><td>USDEQ5700 M&G入息基金A(美元避險月配)F</td><td class="num">1,549,046</td></tr><tr><td>安聯B</td><td>USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)</td><td class="num">196,063</td></tr><tr><td>安聯B</td><td>USDEQ6730 貝萊德世界黃金基金 A10美元(總報酬穩定配息)</td><td class="num">152,718</td></tr><tr style="border-top:2px solid #2563eb;font-weight:700"><td>安聯A+B</td><td></td><td class="num">7,557,489</td></tr>
+<tr><td>第一金M&G入息A(美元避險月配)F</td><td></td><td class="num">1,861,476</td></tr>
+<tr style="font-weight:700"><td>保單總值</td><td></td><td class="num">9,418,965</td></tr>
 </tbody></table></div>
 
 <div class="card"><h2>穿透配置（2026-09-30）</h2>
-<table><thead><tr><th>類別</th><th class="num">金額</th><th class="num">佔比</th></tr></thead><tbody><tr><td>台股</td><td class="num">2,037,758</td><td class="num">7.1%</td></tr><tr><td>美股</td><td class="num">10,207,509</td><td class="num">35.4%</td></tr><tr><td>防守</td><td class="num">4,503,860</td><td class="num">15.6%</td></tr><tr><td>債券</td><td class="num">7,437,694</td><td class="num">25.8%</td></tr><tr><td>現金</td><td class="num">813,547</td><td class="num">2.8%</td></tr></tbody></table></div>
+<table><thead><tr><th>類別</th><th class="num">金額</th><th class="num">佔比</th></tr></thead><tbody><tr><td>台股</td><td class="num">2,041,032</td><td class="num">7.6%</td></tr><tr><td>美股</td><td class="num">10,257,066</td><td class="num">38.3%</td></tr><tr><td>防守</td><td class="num">4,469,324</td><td class="num">16.7%</td></tr><tr><td>債券</td><td class="num">7,398,132</td><td class="num">27.6%</td></tr><tr><td>現金</td><td class="num">854,264</td><td class="num">3.2%</td></tr></tbody></table></div>
 
 <div class="card"><h2>本月重點</h2>
 <ul style="font-size:14px;line-height:1.8;margin:0;padding-left:20px">
 <li>🔁 保單組合調整：新增 PIMCO收益增長（A 1,683,485 + B 952,834），聯博美國成長出清，安聯B M&G 轉出</li>
-<li>🏦 國泰轉貸：核貸 2.6% 進行中（預計 8/2 完成），以轉貸清償保單借貸</li>
+<li>🏦 國泰轉貸：已撥款 2.6%（8/20、本金 1,200 萬、月付 26,000）；2026-09-29 質押 590 萬@2.65%，已清償保單借貸 400 萬＋券商質押 96 萬</li>
 <li>📉 Fed 7/30 維持利率 3.50-3.75%，30年公債破 5.2%，市場震盪</li>
 <li>💰 本月配息：保單 118,296 + ETF 10,740 + 基金 615 = 129,651</li>
 </ul></div>
