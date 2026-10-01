@@ -1,0 +1,26 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO-Hermes",
+  "scope": "月支出分層口徑校正（帳上計息 26,362→13,029）＋頁面重產",
+  "trigger": "使用者 2026-10-01：「做完工檢查跟閉環」→ closeout_check.py ⑥ 真值一致性 ❌",
+  "date": "2026-10-01",
+  "root_cause": [
+    "保單借貸 4,000,000 於 9/29＋10/1 全數清償 → snapshot.monthly_fixed_expense 內『保單借貸利息』已歸零、合計 159,210 正確，但頂層分層欄位 monthly_expense_accrual 未同步，仍為 26,362（舊＝保單息 13,333＋基金質押息 13,029）",
+    "導致 closeout ⑥『現金扣帳 146,181 + 帳上計息 26,362 ≠ 月支出 159,210』，且 index.html 同一句同時出現『帳上計息 26,362』與『保單 0＋券商 0＋基金質押 13,029』自相矛盾"
+  ],
+  "fix": [
+    "snapshot.monthly_expense_accrual 26,362 → 13,029，並新增 monthly_expense_accrual_note 記錄校正依據（清償事實＋算式）",
+    "重產 index.html、daily_report_v2_2026-10-01.html 等衍生頁面（自動化資料產出，無程式改動）",
+    "同步提交他班產出 buffett_cto_report_2026-10-01.md（收工檢查『未提交』項，屬自動化資料產出）"
+  ],
+  "verification": {
+    "consistency": "146,181（現金扣帳）+ 13,029（帳上計息）= 159,210 = 頂層 monthly_expense = monthly_fixed_expense.合計（三者一致）",
+    "residue": "index.html 26,362=0（13,029×4）、daily_report_v2_2026-10-01.html 26,362=0（13,029×3）",
+    "calibration": "run_daily 實跑：三源校準通過、[RUN_DAILY] 真值 月收 228,751 / 月支 159,210 / 盈餘 +69,541",
+    "historical_kept": "dynamic_monthly_review_2026-09.html 保留 26,362（9 月當月負債成本事實，同列已載明『清完保單後 → 13,029』），不回溯改寫歷史月報"
+  },
+  "non_blocking_leftovers": [
+    "daily_report_v2_2026-09-30.html 為歷史產物，仍載 26,362（不改歷史）",
+    "gen_emergency_us_20261001.py 為他班未追蹤檔，未納入本 commit"
+  ]
+}

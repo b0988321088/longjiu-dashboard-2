@@ -1,0 +1,23 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO-Hermes",
+  "scope": "內文守門補『可動用現金』口徑（check_narrative_numbers.py + selftest）",
+  "trigger": "使用者 2026-10-01：「做完工檢查跟閉環」→ 收工稽核第 13 類 ❌ 內文數字對不上 snapshot（2 處）",
+  "date": "2026-10-01",
+  "root_cause": [
+    "當日 CTO／巴菲特內文寫「現金 853,675 守住底線 70 萬，不動作」——此處『現金』指的是可動用現金（snapshot.cash_layers.unrestricted_cash，指定用途款不列現金）",
+    "合法值集合只收穿透桶『現金/安全網』854,264（及 cash_total、底線、乾粉派生），未收可動用現金口徑 → 正確的派生數字被誤判為對不上 snapshot（同型第 N 次：科技分母→現金派生→引擎偏移→可動用現金）"
+  ],
+  "fix": [
+    "check_narrative_numbers.py：build_allowed() 增列 cash_layers.unrestricted_cash 及其派生（可動用現金 − 底線＝可動用緩衝，如 153,675）；只放行 snapshot 現算值，非真值金額仍會被擋（不放寬其他檢查）",
+    "check_narrative_numbers_selftest.py：_cash_cases() 動態新增兩案（可動用現金、可動用緩衝），維持動態讀 snapshot 以免真值日假失敗"
+  ],
+  "verification": {
+    "selftest": "python check_narrative_numbers_selftest.py → 45/45 通過（原 43/43，新增 2 案）",
+    "audit_step13": "closeout_check.py 第 13 類 ✅ 守門自測 45/45 ＋ 內文數字全部可追溯（cto cache / buffett_cto_report 的 853,675 已可追溯）",
+    "negative_cases_kept": "現金 999,999（不存在）／現金 1,200,000（已取消底線）仍必須被擋 → 自測維持 PASS"
+  },
+  "non_blocking_leftovers": [
+    "snapshot.cash_available（772,607）尚未納入合法集合 —— 目前內文未出現此口徑，出現時再依同規則補"
+  ]
+}

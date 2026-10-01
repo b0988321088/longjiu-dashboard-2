@@ -112,6 +112,20 @@ def build_allowed(snap: dict) -> dict:
                     _extras.add(float(_cash - _f))      # 乾粉／餘裕
         allowed["現金"]["twd"] |= _extras
 
+    # ── 2026-10-01 補洞：可動用現金口徑（cash_layers.unrestricted_cash）──────────
+    # 為什麼：內文會寫「現金 853,675 守住底線 70 萬，不動作」——此處「現金」指**可動用現金**
+    # （= cash_layers.unrestricted_cash：指定用途款（還債／保留款）不列現金），與穿透桶
+    # 『現金/安全網』854,264 差 589（在途／零錢）。兩者同為 snapshot 派生真值 → 一併放行，
+    # 並補它的派生口徑（可動用現金 − 底線＝可動用緩衝，如 153,675）。
+    # 規則不變：只放行 snapshot 現算值，非真值金額仍會被擋。
+    _liq = ((snap or {}).get("cash_layers") or {}).get("unrestricted_cash")
+    if isinstance(_liq, (int, float)) and "現金" in allowed:
+        allowed["現金"]["twd"].add(float(_liq))
+        for _k in ("生活底線", "追繳緩衝", "合計底線"):
+            _f = _thr.get(_k)
+            if isinstance(_f, (int, float)) and _f > 0 and _liq - _f > 0:
+                allowed["現金"]["twd"].add(float(_liq - _f))
+
     for label, gname in LABEL_GICS.items():
         row = gics.get(gname)
         if isinstance(row, dict) and isinstance(row.get("佔比"), (int, float)):
