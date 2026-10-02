@@ -9793,68 +9793,234 @@
       "summary": "台股2,041,032.0 美股10,257,066.0 防守4,469,324.0 債券7,398,132.0 現金853,675",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "timestamp": "2026-10-02T19:07:50.406562",
+      "action": "核准",
+      "name": "統一現金口徑：穿透桶讀可動用真值 + 在途顯式化",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-1790939270",
+      "summary": "使用者 10/2 裁示『統一現金口徑』：穿透桶『現金/安全網』改讀可動用現金真值 cash_layers.available＝853,675（原餘數法 854,264 除役）；在途／未對帳 589 顯式化為 penetration.cash_in_transit；不變量更新為『五桶＋在途＋衛星＋指定款＝總資產』。commit 3f4d07e9（第三方審查 APPROVE 0 blocker、RECORD、已推 clean-main）。"
+    },
+    {
+      "timestamp": "2026-10-02T19:29:00.318065",
+      "action": "更正",
+      "name": "更正註記｜854,264『僅存穿透桶敘事』失效（原紀錄保留）",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "更正",
+      "user": "Laing",
+      "idem_key": "hermes-1790940540",
+      "summary": "使用者 10/2 ✅ 核准：統一現金口徑後穿透桶『現金/安全網』改讀真值 853,675，『854,264 除役為可動用（僅存穿透桶敘事）』之敘述已失效；差額 589 顯式化為 penetration.cash_in_transit 並納入不變量（五桶＋在途＋衛星＋指定款＝總資產 26,791,534）。原紀錄 decisions/1024 與 work_log #279 依治理慣例保留原文，以本筆更正為準。"
+    },
+    {
+      "id": "mem-20261002195408-1056",
+      "timestamp": "2026-10-02T19:54:08.467609+08:00",
+      "agent": "Hermes",
+      "task": "封存孤兒決策腳本＋Pending 完成卡移入 work_log",
+      "summary": "使用者 10/2 ✅ 核准：decision_handler.py／decision_buttons.py（期待 p[\"id\"]/p[\"text\"]、資料無此鍵、全 repo＋cron 零呼叫）以 git rename 封存至 .archive/scripts_orphans_20261002/（內容位元不變）；hermes/scripts 兩支孤兒副本 → quarantine/。decision_json.py／notion_bridge.py 註解與 no-op 說明改指現行入庫路徑。pending_decisions.json 移除 status 含 ✅ 的完成卡（check_thresholds 閘門：✅ 會讓 build_dashboard 整卡靜默隱藏）→ 完成事項改記 work_log；並新增 pending 追蹤 CIO 9/23 ②「核准即自動入庫」缺口。commit 2ebcd9d0（第三方審查 APPROVE 0 blocker）→ RECORD → 推送；7 閘門 PASS、線上 2 檔 blob 一致。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261002205306-1057",
+      "timestamp": "2026-10-02T20:53:06.428183+08:00",
+      "agent": "Hermes",
+      "task": "CIO 9/23 ② 決策入庫自動化（小型修復）",
+      "summary": "使用者 10/2 核准開立，定位為小型修復非新功能：①新增 append_dashboard_decisions.py 成 dashboard_decisions.json 唯一寫入入口（source=user 一律經此），固定產生 id/timestamp(台北+08:00)/agent/status/source，寫入用文字手術不整檔重排＋三重驗證，並留收據 data/decision_intake_receipts.jsonl；②新增 reconcile_decision_intake.py：今日收據(ID集) vs 今日入庫(source=user) 比對，一致 PASS、不一致印缺口筆數與明細（exit 1），並可 --notion 用獨立第二來源對照；③復盤前強制對帳（CIO 每日審查前置步驟＋收工稽核同一檢查）。驗收標準：Telegram ✅ 核准 → 同一流程立即在 dashboard_decisions 出現 → CIO 當日 18:30 不需人工補資料。範圍外不動：CIO 內容/架構、Pending 架構、Dashboard UI、其他資料流。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261002205742-1058",
+      "timestamp": "2026-10-02T20:57:42.528616+08:00",
+      "agent": "Hermes",
+      "task": "週五維護兩項裁示：memories/backups 低優先＋Provider Health Check 獨立變更",
+      "summary": "使用者 10/2 裁示：①memories/backups 名義 14 份、實際 60 份（約 4.1MB）列低優先 cleanup debt，不為『數字看起來不一致』增加變更面；②Provider Health Check 獨立成下一個 commit：只負責偵測與通知，不自動修改備援鏈（每天四棒各送最小 prompt：HTTP→content→finish_reason→latency→timeout；Telegram 只在異常/恢復/整條鏈失效時通知）；space-bunny-alpha 標為臨時實驗性備援。註：本筆原僅記於 Notion 與對話，未入 dashboard_decisions（CIO Part A 看不到）→ 經對帳工具抓出後由唯一入口補登。",
+      "status": "completed",
+      "source": "user"
     }
-,
-  {
-    "timestamp": "2026-10-02T19:07:50.406562",
-    "action": "核准",
-    "name": "統一現金口徑：穿透桶讀可動用真值 + 在途顯式化",
-    "source": "Hermes Telegram Gate",
-    "status": "已核准",
-    "category": "決策",
-    "user": "Laing",
-    "idem_key": "hermes-1790939270",
-    "summary": "使用者 10/2 裁示『統一現金口徑』：穿透桶『現金/安全網』改讀可動用現金真值 cash_layers.available＝853,675（原餘數法 854,264 除役）；在途／未對帳 589 顯式化為 penetration.cash_in_transit；不變量更新為『五桶＋在途＋衛星＋指定款＝總資產』。commit 3f4d07e9（第三方審查 APPROVE 0 blocker、RECORD、已推 clean-main）。"
-  },
-  {
-    "timestamp": "2026-10-02T19:29:00.318065",
-    "action": "更正",
-    "name": "更正註記｜854,264『僅存穿透桶敘事』失效（原紀錄保留）",
-    "source": "Hermes Telegram Gate",
-    "status": "已核准",
-    "category": "更正",
-    "user": "Laing",
-    "idem_key": "hermes-1790940540",
-    "summary": "使用者 10/2 ✅ 核准：統一現金口徑後穿透桶『現金/安全網』改讀真值 853,675，『854,264 除役為可動用（僅存穿透桶敘事）』之敘述已失效；差額 589 顯式化為 penetration.cash_in_transit 並納入不變量（五桶＋在途＋衛星＋指定款＝總資產 26,791,534）。原紀錄 decisions/1024 與 work_log #279 依治理慣例保留原文，以本筆更正為準。"
-  }
-,
-  {
-    "id": "mem-20261002195408-1056",
-    "timestamp": "2026-10-02T19:54:08.467609+08:00",
-    "agent": "Hermes",
-    "task": "封存孤兒決策腳本＋Pending 完成卡移入 work_log",
-    "summary": "使用者 10/2 ✅ 核准：decision_handler.py／decision_buttons.py（期待 p[\"id\"]/p[\"text\"]、資料無此鍵、全 repo＋cron 零呼叫）以 git rename 封存至 .archive/scripts_orphans_20261002/（內容位元不變）；hermes/scripts 兩支孤兒副本 → quarantine/。decision_json.py／notion_bridge.py 註解與 no-op 說明改指現行入庫路徑。pending_decisions.json 移除 status 含 ✅ 的完成卡（check_thresholds 閘門：✅ 會讓 build_dashboard 整卡靜默隱藏）→ 完成事項改記 work_log；並新增 pending 追蹤 CIO 9/23 ②「核准即自動入庫」缺口。commit 2ebcd9d0（第三方審查 APPROVE 0 blocker）→ RECORD → 推送；7 閘門 PASS、線上 2 檔 blob 一致。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261002205306-1057",
-    "timestamp": "2026-10-02T20:53:06.428183+08:00",
-    "agent": "Hermes",
-    "task": "CIO 9/23 ② 決策入庫自動化（小型修復）",
-    "summary": "使用者 10/2 核准開立，定位為小型修復非新功能：①新增 append_dashboard_decisions.py 成 dashboard_decisions.json 唯一寫入入口（source=user 一律經此），固定產生 id/timestamp(台北+08:00)/agent/status/source，寫入用文字手術不整檔重排＋三重驗證，並留收據 data/decision_intake_receipts.jsonl；②新增 reconcile_decision_intake.py：今日收據(ID集) vs 今日入庫(source=user) 比對，一致 PASS、不一致印缺口筆數與明細（exit 1），並可 --notion 用獨立第二來源對照；③復盤前強制對帳（CIO 每日審查前置步驟＋收工稽核同一檢查）。驗收標準：Telegram ✅ 核准 → 同一流程立即在 dashboard_decisions 出現 → CIO 當日 18:30 不需人工補資料。範圍外不動：CIO 內容/架構、Pending 架構、Dashboard UI、其他資料流。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261002205742-1058",
-    "timestamp": "2026-10-02T20:57:42.528616+08:00",
-    "agent": "Hermes",
-    "task": "週五維護兩項裁示：memories/backups 低優先＋Provider Health Check 獨立變更",
-    "summary": "使用者 10/2 裁示：①memories/backups 名義 14 份、實際 60 份（約 4.1MB）列低優先 cleanup debt，不為『數字看起來不一致』增加變更面；②Provider Health Check 獨立成下一個 commit：只負責偵測與通知，不自動修改備援鏈（每天四棒各送最小 prompt：HTTP→content→finish_reason→latency→timeout；Telegram 只在異常/恢復/整條鏈失效時通知）；space-bunny-alpha 標為臨時實驗性備援。註：本筆原僅記於 Notion 與對話，未入 dashboard_decisions（CIO Part A 看不到）→ 經對帳工具抓出後由唯一入口補登。",
-    "status": "completed",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-02T19:01:45.316977"
+    "updated_at": "2026-10-02T21:32:45.478383"
   },
   "last_updated": "2026-10-02T18:00:00+08:00",
   "2026-09-29": [
     "9/29 質押撥款入帳 NT$5,900,000（10:57，國泰世華通知；實撥 590 萬@2.65%，原表定 540 萬@2.77%）→ 真值日全資產同步：現金 6,719,182／保單 9,453,825／基金 12,654,144／台股 2,981,410／總資產 31,808,561、負債 36,003,720（含基金質押 590 萬）、淨值 -4,195,159；銀行口徑 LTV 50.1%。待執行：清償 500 萬高息（券商 96 萬@3.92% 先、保單 400 萬@4% 後）",
     "9/29 裁示：質押撥款 590 萬先轉 200 萬還保單借貸（4% → 月省 6,667；保單借貸 400 萬 → 200 萬）；撥款剩餘 3,900,000。順序調整：保單（4%）優先於券商（3.92%）。待入帳確認後四源同步。",
     "9/29 核准（✅ 使用者）：① 質押撥款 590 萬列為『指定用途款 restricted_cash』— 從現金桶／可動用乾粉／Runway／配置分母全部排除（現金桶 6,719,768→819,768、21.1%→2.6%；乾粉 6,019,182→119,182；『債券及安全現金』超標 +14.5pp→不足 −4.0pp），避免桶位假超標觸發 9/8 的自動減碼授權；總資產 6,719,182／負債 36,003,720 真值不變，清償入帳後將 restricted_cash 歸零即自動解除。② 校正儀表板『操作規範』舊口徑：桶位 % 一律由穿透真值派生（原由雷達計劃文字帶出 7.8/39.4/68.4/28.7/3.4 舊值），Runway 卡改動態實算並註明「真值 − 指定清償款」。附帶修復：static_gate 被 AppLocker 擋（降級鏈）、run_daily F821、funds_cathay_breakdown 殘留 9/23 舊值（11,876,124→11,779,326）、sync_all 雷達步驟時序競態（再平衡兩表吃到前一天 weekly_plan）。"
+  ],
+  "pending_decisions": [
+    {
+      "date": "2026-09-25",
+      "action": "洲際W轉貸",
+      "status": "已確認",
+      "tags": "轉貸,洲際W,房貸"
+    },
+    {
+      "date": "2026-09-06",
+      "action": "美債中短 ladder 延後至 10 月標案定案（9/6 核准）",
+      "status": "待處理",
+      "tags": "債券,美債,標案,資金框架"
+    },
+    {
+      "date": "2026-09-12",
+      "action": "保單B 轉換台股連結基金（0056:0050=75:25，分批、每站保留站長）",
+      "status": "已確認",
+      "tags": "保單轉換,台股連結基金,0056,0050,配息接力"
+    },
+    {
+      "date": "2026-09-14",
+      "action": "避險衛星加碼：保單轉換黃金A10＋健康A10（分批，單次≤20萬）",
+      "status": "已確認",
+      "tags": "避險衛星,黃金,健康,保單轉換,分批"
+    },
+    {
+      "date": "2026-09-16",
+      "action": "儀表板/稽核儀表板殘留靜態值清理（低優先）",
+      "status": "待處理",
+      "tags": "儀表板,清理,低優先"
+    },
+    {
+      "date": "2026-09-18",
+      "action": "保單/負債寫死退路常數全面清除（低優先，已部分完成）",
+      "status": "待處理",
+      "tags": "no-hardcode,稽核,低優先"
+    },
+    {
+      "date": "2026-09-20",
+      "action": "安聯累計現金給付總額對帳（差額 22,180）",
+      "status": "待處理",
+      "tags": "對帳,安聯,Moneybook"
+    },
+    {
+      "date": "2026-09-21",
+      "action": "台股解凍 → 納入 9/21 再平衡評估",
+      "status": "已確認",
+      "tags": "再平衡,台股,解凍,US30Y,006208,0051"
+    },
+    {
+      "date": "2026-09-21",
+      "action": "成本帳納入管線 LLM 用量（每次更新可歸因）",
+      "status": "已確認",
+      "tags": "成本帳,系統"
+    },
+    {
+      "date": "2026-09-22",
+      "action": "第一金保單轉換補設定（轉入 PIMCO）",
+      "status": "已確認",
+      "tags": "保單轉換,第一金,PIMCO,系統錯誤,客服"
+    },
+    {
+      "date": "2026-09-21",
+      "action": "安聯（第三站）轉換至 PIMCO 收益增長M",
+      "status": "待處理",
+      "tags": "保單轉換,安聯,PIMCO,配息接力"
+    },
+    {
+      "date": "2026-09-25",
+      "action": "📋 M&G 全轉出 T+4 生效確認（9/21 提出：M&G→PIMCO 700K + M&G→0056 300K）→ 生效後補登保單成分、同步四源/穿透、M&G 市值歸零",
+      "status": "待處理",
+      "tags": "保單轉換,M&G,PIMCO,0056,T+4"
+    },
+    {
+      "date": "2026-09-26",
+      "action": "週六再平衡 agent 首跑驗證（gate 修正＋口徑閘門）",
+      "status": "已確認",
+      "tags": "再平衡,驗證,gate,口徑"
+    },
+    {
+      "date": "2026-09-22",
+      "action": "00921 暫停投入（第1批未成交）— 待重新定案",
+      "status": "已確認",
+      "tags": "台股,00921,暫停,乾粉"
+    },
+    {
+      "date": "2026-09-23",
+      "action": "Coast FI 引擎首次真值日運行驗證（10/1）",
+      "status": "已確認",
+      "tags": "CoastFI,真值日,驗證"
+    },
+    {
+      "date": "2026-09-23",
+      "action": "覆蓋率成對顯示持續驗證（下次真值日／月報）",
+      "status": "已確認",
+      "tags": "覆蓋率,口徑,驗證"
+    },
+    {
+      "date": "2026-09-25",
+      "action": "US30Y 紅線期因應定案（不交易；先做 5 件確定性動作）",
+      "status": "已確認",
+      "tags": "US30Y,紅線,因應,現金底線,質押撥款,標案"
+    },
+    {
+      "date": "2026-09-25",
+      "action": "紅線口徑敘述殘留清理（低優先）",
+      "status": "待處理",
+      "tags": "口徑,殘留,低優先"
+    },
+    {
+      "date": "2026-09-29",
+      "action": "DeepSeek 錢包儲值（餘額剩約 5.9 天）",
+      "status": "已確認",
+      "tags": "系統,成本,儲值"
+    },
+    {
+      "date": "2026-09-28",
+      "action": "10 月標案押標金 240 萬來源定案（不得預設由 540 萬撥款支付）",
+      "status": "待處理",
+      "tags": "標案,押標金,資金框架"
+    },
+    {
+      "date": "2026-09-30",
+      "action": "閉環稽核 BENIGN_DIRTY 遮蔽窗口（CIO 審查 minor，有界）",
+      "status": "待處理",
+      "tags": ""
+    },
+    {
+      "date": "2026-09-30",
+      "action": "P0-2 資金鏈閉環（10/1 安聯 100萬入帳確認、240萬押標金來源）",
+      "status": "待處理",
+      "tags": ""
+    },
+    {
+      "date": "2026-09-30",
+      "action": "10/1 三重截止日判定條件（洲際W轉貸／Coast FI 首次真值日／10 月月檢視）",
+      "status": "已確認",
+      "tags": "判定條件,10月,轉貸,CoastFI,月檢視"
+    },
+    {
+      "date": "",
+      "action": "📝 日誌／記憶條目停止嵌入浮動金額（結構性）",
+      "status": "待處理",
+      "tags": ""
+    },
+    {
+      "date": "2026-10-01",
+      "action": "📐 壓力情境「常態月配」基準待裁示（現行 115.3%；常態基準 170,586）",
+      "status": "待處理",
+      "tags": "判準,壓力情境,常態月配,口徑"
+    },
+    {
+      "date": "2026-10-01",
+      "action": "🏠 洲際W 轉貸延至 11 月再處理",
+      "status": "待處理",
+      "tags": "轉貸,洲際W,永豐,國泰"
+    },
+    {
+      "date": "2026-10-02",
+      "action": "核准即自動入庫（CIO 2026-09-23 ② 建議）：無法自動 append dashboard_decisions",
+      "status": "⏳ 待處理",
+      "tags": "治理,決策入庫,CIO,自動化"
+    },
+    {
+      "date": "2026-10-02",
+      "action": "dashboard_decisions 條目 schema 與 source 值漂移（對帳工具查出）",
+      "status": "⏳ 待處理",
+      "tags": "治理,決策入庫,schema,債"
+    }
   ]
 }
