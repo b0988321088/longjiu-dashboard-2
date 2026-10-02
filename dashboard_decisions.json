@@ -9843,6 +9843,36 @@
       "status": "completed",
       "source": "user"
     }
+,
+  {
+    "id": "mem-20261002222716-1059",
+    "timestamp": "2026-10-02T22:27:16.383365+08:00",
+    "agent": "Hermes",
+    "task": "未閉環 3 筆修復（範圍鎖死）",
+    "summary": "使用者 2026-10-02 核准且範圍鎖死：①假未閉環（CLOSED_CAT 兩層同步加『更正』；該筆 category 更正→修正）②日誌／記憶停止嵌當日金額（run_daily.py 兩筆 add_memory 改指向 snapshot）③紅線口徑殘留（buffett_cto_analyzer 新增 cash_floor_label() 現讀，6 處寫死『70萬』改動態；debt_restructure_tracker 移除已作廢的 1,200,000 合計底線退路）＋④寫死退路盤點入庫（實測 71 處／20 檔、高風險 14 處；原清單 10 個行號已全失效）。明確不批准：71 處常數實改、既有 7 條基準 FAIL 混入本批。CIO-DeepSeek-Flash 審查 APPROVE（0 required_fixes、31/31 唯讀驗證）；commit 02442fca（程式）＋f43b9f46（資料）＋691cf79f（未閉環 3→2）已推 clean-main；線上 work_log 未閉環 4→2（②待兩日驗收、④未施工）。",
+    "status": "completed",
+    "source": "user"
+  }
+,
+  {
+    "id": "mem-20261002222716-1060",
+    "timestamp": "2026-10-02T22:27:16.519682+08:00",
+    "agent": "Hermes",
+    "task": "INC-278 立案＋fail-open 列架構級禁止",
+    "summary": "使用者 2026-10-02 裁示：7 條守門基準紅燈（可動用現金口徑／穿透桶×3／日報缺口字樣／Pending schema n=28／status 四態）另案處理、不混入本批；並要求『missing → 0 的 fail-open 應列為架構級禁止事項，不只是修幾個檔案』。落地：INC-278 立案（error_register.md，含逐字紅燈清單）＋ patch 技能 no-hardcode-mandate 新增『缺值不得靜默退 0』四條規則（canonical truth 單一 accessor／缺值 raise 或告警／禁止 or 0 偽裝真值／守門不得用 fallback 掩蓋鍵名漂移）。已查根因：snapshot 實鍵為 cash_layers.unrestricted_cash，但 10/2 裁示文字與部分端點寫 cash_layers.available → 無 fallback 者取到 0（0 值假真值）。下一案順序（使用者定）：canonical 鍵名 → sot_targets 單一 accessor → 全面掃描 → 禁止下游自行 fallback → 跑完整守門；裁示未下來前不動任何讀者端。",
+    "status": "completed",
+    "source": "user"
+  }
+,
+  {
+    "id": "mem-20261002222716-1061",
+    "timestamp": "2026-10-02T22:27:16.664423+08:00",
+    "agent": "Hermes",
+    "task": "未閉環診斷 SOP 入技能＋10/4 自動驗收",
+    "summary": "使用者 2026-10-02 核准永久化：技能 unclosed-card-diagnosis-sop（定位＝診斷／驗收 SOP，非自動修復）核心順序『證明→分類→修→驗收→立案』；五鐵則：①兩層類別語義同步（CLOSED_CAT／_CAT_ICON）②真假分離（有 closure condition 不得提前閉環）③驗收條件卡化④基準線證明（git stash 證明既有 FAIL 非本批 regression）⑤canonical truth 單一 accessor。並建立 cron job 618df86be65d（一次性 2026-10-04 10:00 +08:00，deliver origin，掛載該技能）：驗收『日誌／記憶嵌浮動金額』兩個 closure condition（閘門不得因日誌行告警／dashboard_decisions 歷史列是否仍觸發）；兩日內真值無變動時註明『空洞通過（vacuous）不得算證據』；成立才自動閉環（改 category→修正、重產、純資料 commit、推送、ls-remote 驗證），不成立則完全不碰檔案只回報原因。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-02T21:34:09.448049"

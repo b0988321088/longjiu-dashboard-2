@@ -1814,5 +1814,23 @@
   "category": "完成",
   "item": "週五維護兩項裁示：memories/backups 低優先＋Provider Health Check 獨立變更（使用者 10/2 裁示：①memories/backups 名義 14 份、實際 60 份（約 4.1MB）列低優先 cleanup debt，不為『數字看起來不一致』增加變更面；②Provider Health Check 獨立成下一個 com",
   "detail": "使用者 10/2 裁示：①memories/backups 名義 14 份、實際 60 份（約 4.1MB）列低優先 cleanup debt，不為『數字看起來不一致』增加變更面；②Provider Health Check 獨立成下一個 "
+ },
+ {
+  "date": "2026-10-02",
+  "category": "完成",
+  "item": "未閉環 3 筆修復（假未閉環分類／日誌嵌金額／紅線口徑殘留）＋寫死退路盤點入庫（範圍鎖死）",
+  "detail": "commit 02442fca（程式）＋f43b9f46（資料）＋691cf79f（未閉環 3→2）；CIO-DeepSeek-Flash APPROVE（0 required_fixes、31/31 唯讀驗證）；線上未閉環 4→2；71 處實改未動、7 條基準 FAIL 不混入"
+ },
+ {
+  "date": "2026-10-02",
+  "category": "完成",
+  "item": "INC-278 立案（7 條守門基準紅燈）＋缺值 fail-open 列架構級禁止",
+  "detail": "error_register INC-278（含逐字紅燈與 available/unrestricted_cash 漂移根因）；技能 no-hardcode-mandate 新增『缺值不得靜默退 0』四規則"
+ },
+ {
+  "date": "2026-10-02",
+  "category": "完成",
+  "item": "未閉環診斷 SOP 入技能＋10/4 10:00 自動驗收 job",
+  "detail": "技能 unclosed-card-diagnosis-sop（證明→分類→修→驗收→立案）；cron 618df86be65d（空洞通過不得算證據；成立才自動閉環，不成立不碰檔）"
  }
 ]
