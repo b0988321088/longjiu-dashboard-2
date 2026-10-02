@@ -371,6 +371,15 @@ try:
         print("  ⚠️ 本月績效頁產出失敗（不影響日報）：" + (_r9c1.stderr or "").strip()[:160])
 except Exception as _e9c1:
     print(f"  ⚠️ 本月績效頁產出異常（不影響日報）: {_e9c1}")
+# 9c2. 投資績效｜月度比較（2026-10-03 新增）：performance_monthly.html
+#      口徑＝performance_core.monthly_history()（唯一計算層），按鈕 __PERF_MONTHLY__ 指向它。
+try:
+    _r9c2 = _sp9c.run([sys.executable, str(BASE / "build_performance_monthly.py")], cwd=BASE,
+                      capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180)
+    if _r9c2.returncode != 0:
+        print("  ⚠️ 投資績效月度比較產出失敗（不影響日報）：" + (_r9c2.stderr or "").strip()[:160])
+except Exception as _e9c2:
+    print(f"  ⚠️ 投資績效月度比較產出異常（不影響日報）: {_e9c2}")
 _r9c = _sp9c.run([sys.executable, str(BASE / "build_dashboard.py")], cwd=BASE,
                  capture_output=True, text=True, timeout=120)
 if _r9c.stdout:

@@ -135,6 +135,7 @@ def monthly_performance(ym: str, *, snap: dict, adjust_all: dict, db=None,
             missing.append(f"{c}市值變化")
         rows.append({"c": c, "mkt": mkt, "invest": inv, "src": src, "upd": upd,
                      "gross": gross, "div": div, "fee": fee,
+                     "mv0": (mv0[c] if mv0 else None),
                      "pnl": mkt + div - fee, "basis": basis})
 
     if not adj_fee:
@@ -153,7 +154,149 @@ def monthly_performance(ym: str, *, snap: dict, adjust_all: dict, db=None,
         "fee": sum(r["fee"] for r in rows),
         "interest": interest,
         "interest_by": dict(adj_interest),
+        "interest_registered": bool(adj_interest),
         "net": grand - interest,
         "project": _num(a.get("專案收入", 0)),
         "missing": missing,
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 歷史視圖（2026-10-03 使用者裁示）：月份「角色／可用性」與聚合的唯一判準
+# 鐵則：7/8/9/10 月屬於哪一區（Baseline／歷史參考／資本基準月／基準後）一律由本層決定，
+#       報表端（HTML/JS）不得自行用月份字串判斷 → 防止前端人工判斷漂移。
+# 角色來源＝校正檔該月 `角色` 欄位（資料宣告、可審查）；市值不可靠則強制 legacy。
+# ─────────────────────────────────────────────────────────────────────────────
+
+ROLE_LEGACY = "legacy"                    # 市值不可靠：僅現金型 → Baseline／不可比
+ROLE_REFERENCE = "reference"              # 資本結構改變前的歷史參考月（非正式基準）
+ROLE_CAPITAL_BASELINE = "capital_baseline"  # 新資本基準月（結構性變化後的第一個完整月）
+ROLE_POST_BASELINE = "post_baseline"      # 基準月之後（含當月進行中）
+
+USE_COMPLETE = "complete"                 # 可進入累計／平均
+USE_IN_PROGRESS = "in_progress"           # 當月未結束 → 獨立顯示
+USE_NOT_COMPARABLE = "not_comparable"     # 不可比 → 只展示，不進任何聚合
+
+USABLE_LABEL = {
+    USE_COMPLETE: "完整月",
+    USE_IN_PROGRESS: "進行中",
+    USE_NOT_COMPARABLE: "不可比",
+}
+ROLE_LABEL = {
+    ROLE_LEGACY: "Baseline／不可比",
+    ROLE_REFERENCE: "歷史參考／非正式基準",
+    ROLE_CAPITAL_BASELINE: "⭐ 新資本基準月",
+    ROLE_POST_BASELINE: "基準後",
+}
+
+
+def declared_baseline_month(adjust_all: dict):
+    """校正檔中宣告為資本基準月的月份（可多筆時取最新）；無宣告 → None。"""
+    return max((ym for ym in adjust_all
+                if len(ym) == 7 and ((adjust_all.get(ym) or {}).get("角色") == ROLE_CAPITAL_BASELINE)),
+               default=None)
+
+
+def month_role(res: dict, meta: dict, *, baseline_month=None, today: dt.date | None = None) -> str:
+    """月份角色（唯一判準）：市值不可靠 → legacy；宣告基準月 → capital_baseline；
+    基準月之後（含當月）→ post_baseline；其餘 → reference。"""
+    today = today or dt.date.today()
+    declared = (meta or {}).get("角色")
+    if not res.get("reliable", True) or declared == ROLE_LEGACY:
+        return ROLE_LEGACY
+    if baseline_month and res.get("month") == baseline_month:
+        return ROLE_CAPITAL_BASELINE
+    if baseline_month and res.get("month") > baseline_month:
+        return ROLE_POST_BASELINE
+    return ROLE_REFERENCE
+
+
+def month_usability(res: dict, *, today: dt.date | None = None) -> str:
+    """可否進入累計：市值不可靠 → not_comparable；當月 → in_progress；其餘 → complete。"""
+    today = today or dt.date.today()
+    if not res.get("reliable", True):
+        return USE_NOT_COMPARABLE
+    if res.get("month") == today.strftime("%Y-%m"):
+        return USE_IN_PROGRESS
+    return USE_COMPLETE
+
+
+def estimate_interest(adjust_all: dict, exclude: str) -> tuple[float, str]:
+    """最近一個「已登錄利息」的月份 → (利息合計, 來源月份)；無則 (0.0, "")。
+
+    用途：當月利息尚未登錄時，報表可標示「同口徑暫估」——來源必須是可追溯的登錄值，
+    不得在報表端寫死數字（no-hardcode-mandate）。
+    """
+    for ym in sorted((k for k in adjust_all if len(k) == 7 and k < exclude), reverse=True):
+        interest = (adjust_all[ym] or {}).get("利息") or {}
+        if interest:
+            return sum(_num(v) for v in interest.values()), ym
+    return 0.0, ""
+
+
+def monthly_history(months, *, snap: dict, adjust_all: dict, db=None,
+                    today: dt.date | None = None) -> dict:
+    """歷史月度績效（報表與閘門共用的唯一入口）。
+
+    - `role`  報告角色（legacy／reference／capital_baseline／post_baseline）
+    - `usable` 是否可進入聚合（complete／in_progress／not_comparable）
+    - `post_accum` 基準後累計：**只計「基準月之後且已完成」的月份**
+      （基準月本身、歷史參考月、Baseline 不可比月、進行中月一律不列入）
+    """
+    today = today or dt.date.today()
+    baseline = declared_baseline_month(adjust_all)
+    out = []
+    for ym in months:
+        res = monthly_performance(ym, snap=snap, adjust_all=adjust_all, db=db)
+        meta = adjust_all.get(ym) or {}
+        role = month_role(res, meta, baseline_month=baseline, today=today)
+        usable = month_usability(res, today=today)
+        mstart, mend, _ = month_bounds(ym)
+        days = (mend - mstart).days + 1 if usable != USE_IN_PROGRESS \
+            else (min(today, mend) - mstart).days + 1
+        est, est_from = (None, "")
+        if usable == USE_IN_PROGRESS and not res["interest_registered"]:
+            est_v, est_from = estimate_interest(adjust_all, ym)
+            est = est_v if est_from else None
+        mv_total0 = sum(r["mv0"] for r in res["rows"] if r.get("mv0")) or None
+        out.append({
+            "month": ym,
+            "label": ym.replace("-", "/"),
+            "role": role,
+            "role_label": ROLE_LABEL[role],
+            "usable": usable,
+            "usable_label": USABLE_LABEL[usable],
+            "is_current": usable == USE_IN_PROGRESS,
+            "days": days,
+            "reliable": res["reliable"],
+            "rows": res["rows"],
+            "grand": res["grand"],
+            "div": res["div"],
+            "fee": res["fee"],
+            "interest": res["interest"],
+            "interest_registered": res["interest_registered"],
+            "interest_est": est,
+            "interest_est_from": est_from,
+            "net": res["net"],
+            "net_same_caliber": (res["net"] - est) if est is not None else res["net"],
+            "net_per_day": (res["net"] / days) if days else 0.0,
+            "mv_total0": mv_total0,
+            "rate": (sum(r["mkt"] for r in res["rows"]) / mv_total0) if mv_total0 else None,
+            "missing": res["missing"],
+            "project": res["project"],
+        })
+    post = [m for m in out if m["role"] == ROLE_POST_BASELINE and m["usable"] == USE_COMPLETE]
+    total = sum(m["net"] for m in post)
+    return {
+        "months": out,
+        "baseline_month": baseline,
+        "post_months": [m["month"] for m in out if m["role"] == ROLE_POST_BASELINE],
+        "post_accum": {
+            "start": post[0]["month"] if post else (baseline or None),
+            "n": len(post),
+            "sum": total,
+            "avg": (total / len(post)) if post else 0.0,
+        },
+        # 僅供「歷史參考」展示，永不進入 post_accum
+        "reference_months": [m["month"] for m in out if m["role"] in (ROLE_REFERENCE, ROLE_LEGACY)],
     }
