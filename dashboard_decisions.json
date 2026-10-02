@@ -9913,6 +9913,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261003004102-1066",
+    "timestamp": "2026-10-03T00:41:02.618289+08:00",
+    "agent": "hermes",
+    "task": "INC-282 A 案 Task 1+2 收案封版（計算引擎統一、月報口徑未變）",
+    "summary": "使用者 2026-10-03 裁示收案：Task 1（performance_core.py 唯一計算層）＋Task 2（既有輸出逐位元不變）判定完成並封版。落地：commit 2d1b9ed2（程式4檔，tree 03b8229a96e4）＋9c90dd8d（審查紀錄/work_log/計畫進度）；CIO-DeepSeek-Flash APPROVE 0 required fixes；origin/clean-main=HEAD=9c90dd8d、未推送0；既有績效結果完全不變（7月+100,649／8月+428,802／9月+6,315）、A/B regression 19/19 PASS、線上閘門 21/21 200。明確留待 Task 3 的決策點：mtd 閉月 rows 的 upd 由固定 0.0 是否改顯示真值（如9月保單 −178,547）；此為月報口徑/語意設計問題，不得在 Task 1/2 偷渡。後續：以 07:00 管線跑完本已審版本為第一個穩定週期觀測點；Task 3～6（月報口徑／常態淨資產變化／專案性資金流之定義）另案單獨審，動工前不動程式。封版基線＝『計算引擎已統一，但月報口徑尚未改變』。",
+    "status": "已結案",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-02T21:34:09.448049"
