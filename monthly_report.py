@@ -3,7 +3,7 @@
 彙整月初vs月末資產變化 + 被動收入 + 保單組合變動 + 穿透配置
 用法：python monthly_report.py 2026-07
 """
-import json, sys
+import datetime, json, sys
 from pathlib import Path
 from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
 try:
@@ -34,6 +34,15 @@ def load_json(p):
 def main():
     ym = sys.argv[1] if len(sys.argv) > 1 else "2026-07"
     year, month = ym.split("-")
+    # 2026-10-02 防護：月報＝「完整月份」彙整（月初 vs 月末），未滿月只有 1 天資料、數字全 0。
+    # 實踩：10/1 修被動收入口徑時跑 monthly_report.py 2026-10 產出空報表 → build_dashboard 的
+    # glob 取最新檔名 → 儀表板「📄 彙整月報」按鈕指向未滿月的 10 月報（使用者回報「沒有參考價值」）。
+    _today = datetime.date.today()
+    if (int(year), int(month)) >= (_today.year, _today.month) and "--force" not in sys.argv:
+        _py, _pm = (_today.year - 1, 12) if _today.month == 1 else (_today.year, _today.month - 1)
+        print(f"⛔ {ym} 尚未結束 — 月報為完整月份彙整，未滿月不產出。")
+        print(f"   請改用已結束月份：python monthly_report.py {_py}-{_pm:02d}（要強制產出請加 --force）")
+        raise SystemExit(2)
     hist = load_json(BASE / "asset_diff_history.json")
     snap = load_json(BASE / "snapshot.json")
 

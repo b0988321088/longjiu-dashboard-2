@@ -223,6 +223,22 @@ try:
 except Exception as _e15:
     fails.append(f"日報房租待收口徑檢查無法執行: {_e15}")
 
+# 16. 月報類連結不得指向「未滿月」（2026-10-02）
+#     實踩：monthly_report_2026-10.html 是 10/1 測試時產生的空報表（月報＝月初 vs 月末，1 天資料全 0），
+#     但檔名最新 → _link_map glob 取最新 → 儀表板「📄 彙整月報」按鈕指向沒有參考價值的當月檔。
+#     閘門：連結區內 monthly_report_／dynamic_monthly_review_ 的目標月份必須 < 當月。
+try:
+    _today16 = datetime.date.today()
+    _bad16 = []
+    for _m16 in re.finditer(r'href="((?:monthly_report_|dynamic_monthly_review_)(\d{4})-(\d{2})[^"]*\.html)"', html):
+        if (int(_m16.group(2)), int(_m16.group(3))) >= (_today16.year, _today16.month):
+            _bad16.append(_m16.group(1))
+    if _bad16:
+        fails.append("月報連結指向未滿月（月報＝完整月份彙整，應指向已結束月份）: "
+                     + ", ".join(sorted(set(_bad16))))
+except Exception as _e16:
+    fails.append(f"月報連結月份檢查無法執行: {_e16}")
+
 # 13. --post-push：推送後對「線上 Pages」逐連結驗 200（2026-09-23 INC-240 新增）
 #     為什麼要拆出來：第 12 條的「未進版控」只能判斷 commit 前的狀態，而 commit 前今天的檔必然
 #     還沒進版控 → 晨間班每天自我誤報。真風險（連結指向沒上線／被 push 漏掉的檔 ＝ 線上 404）
