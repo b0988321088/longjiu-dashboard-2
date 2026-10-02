@@ -1856,5 +1856,11 @@
   "category": "修正",
   "item": "INC-282 A 案 Task 1+2：投資績效統一為單一計算核心 performance_core（既有輸出逐位元不變）",
   "detail": "使用者裁示先立計算核心、不碰口徑。新增 performance_core.py（唯一計算層：Σ市值變化＋Σ配息實收−Σ投資利息−Σ手續費；排除薪資/租金/消費/借款本金流/淨資產變化；專案收入另列），build_mtd_report.py 閉月與 build_investment_performance.py 全數改讀 core（原 _MAP 分類表移入 core，原位留相容轉發）。驗收：A/B（舊版取 parent commit，%TEMP% 沙盒）mtd_performance.html/mtd_data.json 遮罩 generated_at 後逐位元相同、investment_performance.html 逐位元完全相同、兩支 console/TG 文字相同；三閉月 2026-07 +100,649／2026-08 +428,802／2026-09 +6,315 不變；check_dividend_caliber 78/85→79/85 無新增 FAIL。相容性修復（非口徑）：mtd 閉月 upd 保留 0.0（真值留待 Task 3）、_fmt 正規化負零讓 fee 顯示 +0。驗證器 tools/verify_performance_core_task12.py 19/19 PASS、違規 exit 1。CIO-DeepSeek-Flash APPROVE 0 required_fixes（tree 03b8229a96e4 逐字相符）。commit 2d1b9ed2；Task 3～6（月報改口徑/閘門/動態月報）暫停未動。"
+ },
+ {
+  "date": "2026-10-03",
+  "category": "完成",
+  "item": "投資績效｜月度比較（歷史視圖）＋資本基準月制度（9 月）",
+  "detail": "使用者 10/3 裁示：新增 performance_monthly.html（儀表板新按鈕「📈 投資績效｜月度比較」）。分區由 performance_core 判定（角色來源＝校正檔 `角色` 宣告）：7 月 Baseline／不可比、8 月歷史參考／非正式基準、9 月⭐新資本基準月、10 月基準後進行中（−34,371／同口徑暫估 −76,371）。累計只計基準月後已完成月份（目前 0 個）。核心新增 month_role／month_usability／declared_baseline_month／estimate_interest／monthly_history；報酬率無可靠期初市值一律顯示「—」不反推；HTML 零寫死數字。防回歸閘門 tools/verify_performance_monthly.py 含突變測試（角色對調後分區須跟著變）。"
  }
 ]
