@@ -9827,6 +9827,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261002205306-1057",
+    "timestamp": "2026-10-02T20:53:06.428183+08:00",
+    "agent": "Hermes",
+    "task": "CIO 9/23 ② 決策入庫自動化（小型修復）",
+    "summary": "使用者 10/2 核准開立，定位為小型修復非新功能：①新增 append_dashboard_decisions.py 成 dashboard_decisions.json 唯一寫入入口（source=user 一律經此），固定產生 id/timestamp(台北+08:00)/agent/status/source，寫入用文字手術不整檔重排＋三重驗證，並留收據 data/decision_intake_receipts.jsonl；②新增 reconcile_decision_intake.py：今日收據(ID集) vs 今日入庫(source=user) 比對，一致 PASS、不一致印缺口筆數與明細（exit 1），並可 --notion 用獨立第二來源對照；③復盤前強制對帳（CIO 每日審查前置步驟＋收工稽核同一檢查）。驗收標準：Telegram ✅ 核准 → 同一流程立即在 dashboard_decisions 出現 → CIO 當日 18:30 不需人工補資料。範圍外不動：CIO 內容/架構、Pending 架構、Dashboard UI、其他資料流。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-02T19:01:45.316977"

@@ -9,6 +9,7 @@ import os
 import re
 import sqlite3
 import subprocess
+import sys
 import urllib.request
 from pathlib import Path
 
@@ -540,6 +541,24 @@ if _wdiff:
     fail.append(f"wrappers 未部署/不一致 {len(_wdiff)} 支")
 else:
     print(f"  ✅ {len(_wrappers)} 支 wrapper 全部已部署且逐位元一致")
+
+# ── 11) 決策入庫對帳（2026-10-02 新增；CIO 2026-09-23 ② 的時序缺口）──────────
+# 「今日核准」與「今日 dashboard_decisions 入庫」做 ID 集合比對（細節見 reconcile_decision_intake.py）：
+#   收據有、檔案沒有 → 真缺口（列 fail）；檔案有、收據沒有 → 未經單一入口（列示不擋）。
+print("=== 11) 決策入庫對帳（核准 → dashboard_decisions）===")
+try:
+    _rc = subprocess.run([sys.executable, str(R / "reconcile_decision_intake.py")],
+                         capture_output=True, text=True, timeout=120)
+    _out = ((_rc.stdout or "") + (_rc.stderr or "")).strip()
+    for _ln in _out.splitlines():
+        if _ln.strip() and not _ln.startswith("==="):
+            print("  " + _ln.strip())
+    if _rc.returncode == 1:
+        fail.append("決策入庫缺口（今日核准未入庫）")
+    elif _rc.returncode not in (0, 1):
+        print(f"  ⚠️ 對帳未完成（rc={_rc.returncode}）— 不列 fail，但請確認來源")
+except Exception as _e:
+    print(f"  ⚠️ 對帳腳本執行失敗（不列 fail）：{_e}")
 
 print()
 print("=" * 46)
