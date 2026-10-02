@@ -9933,6 +9933,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261003021525-1068",
+    "timestamp": "2026-10-03T02:15:25.407965+08:00",
+    "agent": "Hermes",
+    "task": "月度比較閘門接進每日 07:00 管線（自動化防守：FAIL 阻擋推送）",
+    "summary": "使用者 2026-10-03 核准（定位＝自動化防守，不是新的績效功能）：把 tools/verify_performance_monthly.py 接進 regenerate_report.py 的 9c4 步驟（組完 _push_files 之後、git add/commit/auto_push 之前）。PASS → 才允許後續；FAIL（rc≠0 或驗證器例外）→ _gate_ok=False → 阻擋 commit/push、行程 exit 1（fail-closed，不得因驗證器故障放行）。明確不變：不修改績效計算邏輯、不修改目前頁面、不新增任何績效口徑、保留既有突變測試／負測能力。新增 tools/verify_perf_monthly_gate_wiring.py（結構檢查＋行為負測：植入 9,999,999 必須 rc≠0、還原後 sha256 位元一致、範圍檢查限本批檔案）。驗收：接線閘門 PASS 0 FAIL；月度比較閘門 PASS；Task1+2 零回歸 19/0；check_dividend_caliber 79/85（僅既有 6 條）。程式 commit e201119d（tree 07ac8e66）CIO-DeepSeek-Flash APPROVE 0 required fixes，已推 clean-main（a1d572d1）；07:00 首次實跑即為上線驗收點。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-02T21:34:09.448049"
