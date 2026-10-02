@@ -9923,6 +9923,16 @@
     "status": "已結案",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261003020815-1067",
+    "timestamp": "2026-10-03T02:08:15.744349+08:00",
+    "agent": "Hermes",
+    "task": "投資績效｜月度比較上線＋資本基準月制度（2026/09）",
+    "summary": "使用者 2026-10-03 裁示並核准施工：新增 performance_monthly.html（儀表板新按鈕「📈 投資績效｜月度比較」）。分區由 performance_core 角色判定（前端不得人工判斷）：2026/07＝Baseline／不可比（校正檔 市值可靠=false）、2026/08＝歷史參考／非正式基準（角色=reference）、2026/09＝⭐新資本基準月（角色=capital_baseline，9 月底貸款/質押資金到位、資本基數改變）、2026/10＝基準後第 1 個月／進行中（−34,371 未扣利息；同口徑暫估 −76,371，利息暫估來源 2026-09）。累計只計『基準月之後且已完成』月份（基準月本身、歷史參考、Baseline、進行中一律不列入）→ 目前 0 個完整基準後月份。歷史月報酬率顯示「—」禁止反推；10 月報酬率 −0.137%（分母＝db 2026-09-30 期初投資市值 25,072,230，已逐項查核差額 0）。施工鐵則：performance_core 唯一真值、HTML 不寫死數字、不修改 Task 1+2 計算口徑。驗收：tools/verify_performance_monthly.py PASS（含突變測試＋9,999,999 負測）、Task1+2 驗證器 PASS 19/0、check_dashboard_sync 全過（線上 21/21）。程式 commit 921e6124（CIO-DeepSeek-Flash APPROVE 0 required fixes）＋資料 18fb1e1f／5a5bfc9f 已推 clean-main、線上已驗證。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-02T21:34:09.448049"
