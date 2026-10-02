@@ -9817,6 +9817,16 @@
     "idem_key": "hermes-1790940540",
     "summary": "使用者 10/2 ✅ 核准：統一現金口徑後穿透桶『現金/安全網』改讀真值 853,675，『854,264 除役為可動用（僅存穿透桶敘事）』之敘述已失效；差額 589 顯式化為 penetration.cash_in_transit 並納入不變量（五桶＋在途＋衛星＋指定款＝總資產 26,791,534）。原紀錄 decisions/1024 與 work_log #279 依治理慣例保留原文，以本筆更正為準。"
   }
+,
+  {
+    "id": "mem-20261002195408-1056",
+    "timestamp": "2026-10-02T19:54:08.467609+08:00",
+    "agent": "Hermes",
+    "task": "封存孤兒決策腳本＋Pending 完成卡移入 work_log",
+    "summary": "使用者 10/2 ✅ 核准：decision_handler.py／decision_buttons.py（期待 p[\"id\"]/p[\"text\"]、資料無此鍵、全 repo＋cron 零呼叫）以 git rename 封存至 .archive/scripts_orphans_20261002/（內容位元不變）；hermes/scripts 兩支孤兒副本 → quarantine/。decision_json.py／notion_bridge.py 註解與 no-op 說明改指現行入庫路徑。pending_decisions.json 移除 status 含 ✅ 的完成卡（check_thresholds 閘門：✅ 會讓 build_dashboard 整卡靜默隱藏）→ 完成事項改記 work_log；並新增 pending 追蹤 CIO 9/23 ②「核准即自動入庫」缺口。commit 2ebcd9d0（第三方審查 APPROVE 0 blocker）→ RECORD → 推送；7 閘門 PASS、線上 2 檔 blob 一致。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-02T19:01:45.316977"
