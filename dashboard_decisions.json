@@ -9893,6 +9893,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261003000808-1064",
+    "timestamp": "2026-10-03T00:08:08.668694+08:00",
+    "agent": "Hermes",
+    "task": "月報發布鏈修復：未滿月不得產出月報＋儀表板「彙整月報」改指 9 月",
+    "summary": "使用者 2026-10-03 核准放行。根因：月報＝完整月份（月初vs月末）彙整，10/1 修口徑時測試跑 monthly_report.py 2026-10 產出僅 1 天、數字全 0 的空報表；而連結解析是 glob 取最新檔名 → 儀表板「📄 彙整月報」被指向它（發布鏈問題，非手動改 index）。修法：①monthly_report.py 未滿月拒產（--force 可覆寫）②check_dashboard_sync 第 16 條閘門（月報連結不得指向未滿月）③index.html 連結改指 monthly_report_2026-09.html ④10 月空報表封存 .archive/ ⑤9 月報穿透現金 854,264（已除役餘數法）→853,675 真值同步。CIO-DeepSeek-Flash 唯讀審查 APPROVE 0 必修（tree 5327fc40，驗證器 25/0）。線上驗證：彙整月報→2026-09、9 月報 853,675、10 月檔 404、post-push 21/21 條 200。另立 INC-281（auto_record 對含 git rename 的 commit 必失敗）另案處理，本批不動。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-02T21:34:09.448049"
