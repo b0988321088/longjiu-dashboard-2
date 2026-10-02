@@ -9952,7 +9952,18 @@
       "status": "completed",
       "source": "auto"
     }
-  ],
+,
+  {
+    "timestamp": "2026-10-02T19:07:50.406562",
+    "action": "核准",
+    "name": "統一現金口徑：穿透桶讀可動用真值 + 在途顯式化",
+    "source": "Hermes Telegram Gate",
+    "status": "已核准",
+    "category": "決策",
+    "user": "Laing",
+    "idem_key": "hermes-1790939270",
+    "summary": "使用者 10/2 裁示『統一現金口徑』：穿透桶『現金/安全網』改讀可動用現金真值 cash_layers.available＝853,675（原餘數法 854,264 除役）；在途／未對帳 589 顯式化為 penetration.cash_in_transit；不變量更新為『五桶＋在途＋衛星＋指定款＝總資產』。commit 3f4d07e9（第三方審查 APPROVE 0 blocker、RECORD、已推 clean-main）。"
+  }  ],
   "meta": {
     "updated_at": "2026-10-02T19:01:45.316977"
   },

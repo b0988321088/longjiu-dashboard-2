@@ -1381,7 +1381,25 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 驗證：`python -c "import run_daily; run_daily.calibrate_sources()"` → 無空轉 WARN、三源校準通過（5/5 點真比較）；閘門 57/58（餘 1 條為未追蹤檔 gen_emergency_us_20261001.py）。
 - 規則入庫：**真值日更新保單現值時，必須同步 `DAILY_REPORT_PIPELINE_RULE.md` 的「安聯 A + 安聯 B = … 現值 N」與「第一金 = … 現值 N」兩行**，否則 `run_daily` fail-closed（exit 2）擋掉日報。校準刻意不自動同步（自動同步＝校準失去守門意義）。
 
-## INCIDENT a893bf01 (four_source_sync)
+## INCIDENT a893bf01 (four_source_sync) — ✅ 已解決 2026-10-02（INC-271／272 修復）
 - 首次發生: 2026-10-02 18:54:13
 - 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
 - 狀態: ⏳ 待處理 (總計 1 次)
+
+## INC-271 ｜ 2026-10-02 ｜ P1｜fixed ｜ 改「餘數法」桶位而不同步推導式 → 穿透報告總資產少 589（假總資產）
+- 症狀：使用者裁示「統一現金口徑」把穿透桶『現金/安全網』由餘數法（總資產扣其他桶）改直讀真值 853,675 後，`penetration_report` 印 **26,790,945**（真值 26,791,534，差 589）→ `check_penetration_consistency` 擋下、`sync_all` 第 9 步中止。
+- 根因：報告的「總資產」是**反推**（五桶＋衛星＋指定用途款）而非讀 snapshot；餘數法分項**承載**恆等式的最後一塊 → 改數字等於改恆等式。
+- 修法：差額**顯式化**而非改數字 —— 新增 `penetration.cash_in_transit`（＝餘數法 − 可動用真值），推導式加回該腿，不變量改為「五桶＋在途＋衛星＋指定款＝總資產」；檢查器改讀**快取** penetration 欄位（讀現算 `_meta` 會在重算前後各假失敗一次）。
+- 驗證：報告總資產字串回 26,791,534、穿透一致性 ✅、SoT 不變量 ✅、桶位％不變。
+- 規則入庫：**改任何被報告加總的分項前，先 grep 該分項名找反推式，並跑完整 `sync_all.py`（20 步）**；只跑單支 builder 驗不出恆等式斷裂。
+
+## INC-272 ｜ 2026-10-02 ｜ P1｜fixed ｜ state 檔更新後派生真值塊沒跟上 → sync_all 第 2 步中止
+- 症狀：`sync_all` 第 2 步「門檻SoT檢查」❌ `us30y_gate.value 5.638 ≠ us30y_state.last_rate 5.603`、`as_of 2026-09-30 ≠ 2026-10-01`。報告因此引用兩組 US30Y（週五報告 5.603、rebalance_eval 5.638）。
+- 根因：監控 cron 08:45 更新了 `us30y_state.json`，但 snapshot 的**派生塊**（`us30y_gate`／`redline_policy`）是上一次管線寫的 → 不同源。
+- 修法：跑官方自癒 `python update_data.py`（無參數＝check＋真值層寫回）→ `us30y_gate` 重算為 5.603@10/01、streak 25、解凍不許可；`check_thresholds.py --sot-only` exit 0。
+- 規則入庫：**state 檔一更新，就問「誰把派生塊寫回 snapshot」**；驗證三欄位同源（value/as_of/streak_days）。
+
+## INC-273 ｜ 2026-10-02 ｜ P2｜fixed ｜ 錯題編號自動配號被「日期字串」污染（INC-2027／2028）
+- 症狀：新 INC 編號取自 `re.findall(r"INC-(\d+)")` 取最大值 → 撞到內文日期樣式 `INC-2026-…`，產出 **INC-2027／2028**（真實下一號是 271，且 270 已被 10/01 五支程式引用）。
+- 修法：配號規則改為「只掃 `^## INC-<n>` 標題 ＋ 全 repo `grep INC-<n>` 交叉檢查」，本日兩筆改為 **INC-271／272**。
+- 規則入庫：**自動配號不可只依賴單一 regex 的 max**；編號先算候選、再用全 repo 引用掃描確認未被佔用才落筆。
