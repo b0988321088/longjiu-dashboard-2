@@ -9963,7 +9963,19 @@
     "user": "Laing",
     "idem_key": "hermes-1790939270",
     "summary": "使用者 10/2 裁示『統一現金口徑』：穿透桶『現金/安全網』改讀可動用現金真值 cash_layers.available＝853,675（原餘數法 854,264 除役）；在途／未對帳 589 顯式化為 penetration.cash_in_transit；不變量更新為『五桶＋在途＋衛星＋指定款＝總資產』。commit 3f4d07e9（第三方審查 APPROVE 0 blocker、RECORD、已推 clean-main）。"
-  }  ],
+  },
+  {
+    "timestamp": "2026-10-02T19:29:00.318065",
+    "action": "更正",
+    "name": "更正註記｜854,264『僅存穿透桶敘事』失效（原紀錄保留）",
+    "source": "Hermes Telegram Gate",
+    "status": "已核准",
+    "category": "更正",
+    "user": "Laing",
+    "idem_key": "hermes-1790940540",
+    "summary": "使用者 10/2 ✅ 核准：統一現金口徑後穿透桶『現金/安全網』改讀真值 853,675，『854,264 除役為可動用（僅存穿透桶敘事）』之敘述已失效；差額 589 顯式化為 penetration.cash_in_transit 並納入不變量（五桶＋在途＋衛星＋指定款＝總資產 26,791,534）。原紀錄 decisions/1024 與 work_log #279 依治理慣例保留原文，以本筆更正為準。"
+  }
+  ],
   "meta": {
     "updated_at": "2026-10-02T19:01:45.316977"
   },
