@@ -421,7 +421,7 @@
 ⑤ 硬性上限：台股 7.6% ≤ 15% 通過；科技 15.1% 對硬上限 25% 仍遠低於；美元曝險 59% 未觸黃燈 65%。<br>
 ⑥ 質押／核貸時程（讀 pending_decisions.json 與 snapshot）：保單借貸本金 4,000,000 全數清償（9/29 轉 2,000,000＋10/1 轉 2,020,624）；元大證金券商質押 960,000 已於 9/30 清償；質押撥款用途已全數執行完畢、無未執行額度；帳上指定款剩 900,000＝洲際W 房貸預繳 200,000＋國泰保留 700,000（質押續簽必要保留）。洲際W 轉貸＝HOLD／NO ACTION（僅 4 條重開條件成立才重啟）。10 月標案押標金 240 萬＝來源未決策、檢視日 10/15，不得預設由質押撥款支付。<br>
 ⑦ 急煞車條款：單日急跌 >3% 或 US30Y ≥5.30% → 暫緩減碼與加碼，只回報不動作。US30Y 條件持續成立，故本班不出任何交易指令。<br>
-⑧ 資料來源揭露：Yahoo Finance chart API（10/2 開盤即時，5 日序列）＋us30y_state.json（讀值 10/1）＋snapshot.json（10/2）＋macro_regime_2026-10-02.json＋daily_analysis briefing／tw.stock.yahoo.com RSS／hunter_cache（本班新聞來源受限，未取用 web_search，已以快取補足）。</div><br><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_2026-10-01.html.html" target="_blank" style="display:inline-block;margin-top:10px;color:#34D399;font-weight:bold">📄 檢視完整 LLM 緊急應變報告 →</a><br><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_taiex_report_2026-10-01.html.html" target="_blank" style="font-size:13px;color:#6e6e73">📊 數據版報告（備援）</a>
+⑧ 資料來源揭露：Yahoo Finance chart API（10/2 開盤即時，5 日序列）＋us30y_state.json（讀值 10/1）＋snapshot.json（10/2）＋macro_regime_2026-10-02.json＋daily_analysis briefing／tw.stock.yahoo.com RSS／hunter_cache（本班新聞來源受限，未取用 web_search，已以快取補足）。</div><br><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_2026-10-02.html.html" target="_blank" style="display:inline-block;margin-top:10px;color:#34D399;font-weight:bold">📄 檢視完整 LLM 緊急應變報告 →</a><br><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_taiex_report_2026-10-02.html.html" target="_blank" style="font-size:13px;color:#6e6e73">📊 數據版報告（備援）</a>
 
       <!-- 機構流向雷達（2026-08-22 新增，讀 radar_state.json） -->
       <div class='callout' style='margin-top:10px;border-left:3px solid #8b5cf6'><strong>📡 機構流向雷達</strong>（更新 2026-10-02）<br><span style='display:inline-block;margin:2px 10px 2px 0'>🟢 <b>台股</b>：外資淨買超 4.1億（連2日）— 台股慢慢買順勢</span><span style='display:inline-block;margin:2px 10px 2px 0'>🟡 <b>黃金</b>：淨多單 225,853 週減 -1.9% — 觀望</span><span style='display:inline-block;margin:2px 10px 2px 0'>🟢 <b>原油</b>：淨多單 -6,548 週增 63.3% — 順勢</span><span style='display:inline-block;margin:2px 10px 2px 0'>🔴 <b>美債10年</b>：10Y殖利率月動能 +9.2%（急升，債券承壓）</span><span style='display:inline-block;margin:2px 10px 2px 0'>🟡 <b>Fed流動性</b>：資產負債表 -0.1%</span><span style='display:inline-block;margin:2px 10px 2px 0'>⚪ <b>台幣</b>：USD/TWD 31.87 週變化 +0.29%</span><br/><span style='color:#64748b;font-size:12px'>加碼前檢查：個人方向 vs 機構方向；紅燈凍結該資產調度</span></div>
@@ -474,11 +474,11 @@
     <!-- CIO 審查 / 觀點 -->
         <div class="callout callout-info">
           <p><strong>🧑‍💻 CIO 觀點</strong></p>
-<span style="display:block">①配置：股債現金不動。台股7.6%偏輕、美股38.3%已足，加碼空間有限；債券27.6%遭法人賣超-37百萬，暫不追。防守16.7%對應高股息-93百萬流出，不增。
+<span style="display:block">①配置：美股38.3%＋美元曝險59.0%已近上限，不宜再加；台股7.6%偏低但法人僅科技+29、台積電+2百萬，訊號太弱，暫不追。防守16.7%＋債券27.6%維持，債券遭賣37百萬先不攤平。
 
-②最大風險：美元曝險59.0%逼近上限，疊加美債10年🔴與Fed流動性🟡，若殖利率再揚，美股桶與美元債雙殺。
+②最大風險：美元曝險59.0%逼近60%上限，疊加Fed流動性🔴與美債10年🔴，若美元回貶將同時衝擊美股桶與美元債。
 
-③動作：本週乾粉保留，不新增。輪動僅科技(XLK)RS+7.9pp可續抱，避開金融、原物料、不動產。優先將美元計價基金19.2%部分轉台幣或非美資產，壓曝險至≤55%。</span>
+③動作：本週保留乾粉，避開金融、原物料、不動產（法人同步賣超）。輪動僅順RS最強科技(XLK)小幅加碼，其餘不動；食品+110百萬列觀察，不追高。</span>
         </div>
         <!-- END CIO -->
 
