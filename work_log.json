@@ -1838,5 +1838,11 @@
   "category": "修正",
   "item": "22:40 收工稽核連敗治本（close 班自提交帳本＋入庫入口自提交寫入集）",
   "detail": "根因二：①wrappers/cost_watch_close.py（22:30）寫帳本不提交 → 落在 22:00 晚報之後必判髒（10/1、10/2 實例）②data/decision_intake_receipts.jsonl 入庫收據漏提交。修法：close 班比照 digest 班自提交＋走 auto_push；入庫入口自提交 OWN_FILES（僅唯一待推時才推）；_audit_closeout.py 收據列 benign（canary dashboard_decisions.json／帳本仍判 ❌）。CIO-DeepSeek-Flash 唯讀審查 APPROVE 0 必修（tree ec938786）；沙箱自測 28 PASS／0 FAIL（tools/verify_closeout_dirty_fix.py）。22:40 job 不暫停，守門保留。另案：INC-279"
+ },
+ {
+  "date": "2026-10-02",
+  "category": "修正",
+  "item": "決策入庫對帳設「收據制時間邊界」（上線前歷史條目不再每晚假缺口）",
+  "detail": "根因：收據制 20:53 上線後，對帳把 19:54 進檔的 mem-20261002195408-1056 當「未經單一入口」每晚警示（新制度量歷史資料）。修法：以收據檔最早 ts 為起算點（資料現算）→ 早於起算點列 ℹ️ legacy 不警示、起算點後仍 ⚠️、空檔／缺檔／壞時戳 fail-closed；真缺口 rc=1 不變。驗證器 tools/verify_decision_intake_epoch.py 17 檢查 ALL PASS。INC-280"
  }
 ]
