@@ -472,6 +472,7 @@ try:
 except Exception as _ce:
     print(f"⚠️ CIO 審查執行失敗（不推送）: {_ce}")
 _pages_ok = True  # 2026-09-23 INC-240：推送後線上連結驗證（--post-push）結果；False → 本次不視為成功
+_gate_ok = True   # 2026-10-03：自動化防守閘門（performance_monthly 頁面數字 vs performance_core）；False → 阻擋推送
 if _NO_PUSH:
     # INC-210：核准前本機產出（交付鐵則：改完先傳本地檔案，使用者說「推」才 push）
     print("\n🧪 --no-push：本機檔案已產出，略過 commit/push（核准後再跑一次不帶此參數）")
@@ -488,7 +489,9 @@ elif ok and _cio_ok:
                         # 2026-09-22：AI 費用頁（固定檔名，按鈕 __COST_PAGE__ 指向它）
                         'cost.html', 'cost_data.json',
                         # 2026-09-22：本月績效頁（固定檔名，按鈕 __MTD_PAGE__ 指向它）
-                        'mtd_performance.html', 'mtd_data.json']
+                        'mtd_performance.html', 'mtd_data.json',
+                        # 2026-10-03：投資績效｜月度比較（固定檔名，按鈕 __PERF_MONTHLY__ 指向它）
+                        'performance_monthly.html']
     # 再平衡儀表板（2026-08-22：每日重跑，build_rebalance_dashboard.py 讀 snapshot+radar_state）
     try:
         subprocess.run([sys.executable, str(BASE / "build_rebalance_dashboard.py")], cwd=str(BASE),
@@ -536,8 +539,32 @@ elif ok and _cio_ok:
                 print(f"  ➕ 連結目標補推: {_h}")
     except Exception as _le:
         print(f"⚠️ 連結掃描略過: {_le}")
+    # 9c4. 自動化防守閘門（2026-10-03 使用者核准）：月度比較頁數字必須等於 performance_core 輸出
+    #      定位＝自動化防守，不是績效功能：不碰計算邏輯、不新增口徑、不改頁面。
+    #      PASS → 才允許後續 commit/push；FAIL → 阻擋推送（fail-closed），本次不視為成功。
+    try:
+        _vg = subprocess.run([sys.executable, str(BASE / "tools" / "verify_performance_monthly.py")],
+                             capture_output=True, text=True, encoding="utf-8", errors="replace",
+                             timeout=900, cwd=str(BASE))
+        _vg_out = (_vg.stdout or "").strip().splitlines()
+        for _l in _vg_out[-4:]:
+            print("  🔒 " + _l.strip())
+        _gate_ok = _vg.returncode == 0
+        if not _gate_ok:
+            print("  ⛔ 月度比較閘門 FAIL → 頁面數字 ≠ performance_core 輸出，阻擋推送：")
+            for _l in _vg_out:
+                if "❌" in _l:
+                    print("    " + _l.strip())
+    except Exception as _e9c4:
+        _gate_ok = False   # 閘門本身跑不起來 → 一律視為 FAIL（不得因驗證器故障而放行）
+        print(f"  ⛔ 月度比較閘門異常 → 視為 FAIL、阻擋推送：{_e9c4}")
+
     _recorded = False
-    if _push_files:
+    if not _gate_ok:
+        print("  ⛔ 已阻擋 commit/push（月度比較閘門 FAIL；修正後重跑 regenerate_report.py --deploy）")
+        if _push_files:
+            print(f"  ⛔ 有 {len(_push_files)} 個檔案待推，但閘門 FAIL → 本次不推送（fail-closed）")
+    if _push_files and _gate_ok:
         subprocess.run(['git', 'add'] + _push_files, capture_output=True, text=True, cwd=BASE)
         _staged = subprocess.run(['git', 'diff', '--cached', '--name-only'], capture_output=True, text=True, cwd=BASE).stdout.strip()
         if _staged:
@@ -557,7 +584,7 @@ elif ok and _cio_ok:
                 print("  ⛔ 未推送上線（見上方 auto_push 訊息）")
         else:
             print("⚠️ 無檔案可提交（全部已是最新，跳過 commit）")
-    else:
+    elif not _push_files:
         print("⚠️ 無任何報表檔案可推送")
     # 推送與遠端 sha 驗證已在 auto_push.py 內完成（含重試與 ls-remote 覆核）
     # 驗證上線（2026-09-23 INC-240：改呼叫 check_dashboard_sync.py --post-push ——
@@ -584,4 +611,4 @@ _emergency_link = _er_name  # v6 修正 2026-09-13：_latest_er 在 320 行已�
 print(f'🚨 緊急應變:  https://b0988321088.github.io/longjiu-dashboard-2/{_emergency_link}')
 
 import sys
-sys.exit(0 if (ok and _pages_ok) else 1)
+sys.exit(0 if (ok and _pages_ok and _gate_ok) else 1)
