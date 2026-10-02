@@ -1,0 +1,15 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO-DeepSeek-Flash",
+  "reviewed_commits": [
+    {
+      "commit": "2d1b9ed2dd62e7d1e3d84c0d9043d8ccdf06b387",
+      "tree": "03b8229a96e4933356bef83acbbfeab53076b30a"
+    }
+  ],
+  "required_fixes": [],
+  "note": "A. tree 逐字相符：git rev-parse ^{tree} 回 03b8229a96e4933356bef83acbbfeab53076b30a（實測）。git show --stat 僅 4 檔變更，+358/−71：build_investment_performance.py | build_mtd_report.py | performance_core.py | tools/verify_performance_core_task12.py；無第五檔、無歷史真值。B. performance_core.py 公式成立：rows pnl = mkt + div − fee；net = grand(=Σpnl) − interest(=Σ利息)，即「Σ市值變化＋Σ配息實收 − Σ手續費 − Σ投資利息」，與裁示一致。排除項成立：模組只消費 市值變化/新增投入/資金來源/配息/手續費/利息/估值更新/專案收入 與 dividend_records，未含薪資/租金/生活消費/借款本金流/資金過境/淨資產變化；專案收入另列 (a.get('專案收入'))，不進 net。純計算：檔內不 open/write 任何檔、不 import 任何報表模組，只 import dividend_caliber.bucket_of；db 由呼叫端注入（core 僅對傳入連線執行 SELECT，不自開檔）。缺件列 missing[]（手續費/利息/市值變化），不靜默歸零。C. 兩支報表已無自行重算、無殘留第二套：build_mtd_report.month_series 閉月改呼叫 perf_core.monthly_performance(mk, snap, adjust_all)（不傳 db）；build_investment_performance.main 改呼叫 _perf_core.monthly_performance(..., db=db, reliable=mv_reliable)，逐類取 _core_by[c] 的 invest/src/div/fee/upd/mkt/gross/pnl，原 adj_mv/adj_invest/adj_div/adj_fees/auto_div/估值更新 重算區塊全數刪除。grep 第二份分類表：bip 內 _MAP 已移除、無 bucket_of/auto_div 殘留（僅 console 與 docstring 讀 core），配息分類單一口徑 performance_core.classify_dividend→_MAP（全域唯一一份），bip.classify_dividend 僅相容轉發。mtd 的可靠旗標 parity：本地 reliable=bool(a.get('市值可靠',True)) 僅供顯示欄，core 內部獨立算同值，分支行為等價。D. 期望值全中：驗證器第3節 2026-07 net=100,649、2026-08=428,802、2026-09=6,315（實得逐字相符）。E. 驗證器唯讀且沙盒：只讀 repo、git 僅用 rev-parse/show（無寫操作）；所有實際重產在 %TEMP%\\verify_pc_task12 複本執行（複製 snapshot.json/dragon_assets.db/investment_performance_adjust.json/dividend_caliber.py/sot_targets.py 後在沙盒 build）；A/B 舊版確實取自 parent commit（git show {sha}^:{file}），非拿被審版跟自己比；失敗 sys.exit(1 if FAIL else 0) → exit 非 0；本次實跑 exit=0、PASS 19 / FAIL 0（逐項計數＝19）。唯一在 repo cwd 執行的子程序 check_dividend_caliber.py 經 grep 確認無任何 open(w)/write_text/.write./to_csv/json.dump → 亦唯讀。TS 遮罩僅正規化 'generated_at' 一款，為每次執行必然變動的時間戳，屬必要合理例外。F. 未動任何歷史真值/既有產物：stat 清單無 snapshot.json、dragon_assets.db、任何 *.html；本顆僅新增 performance_core.py 與 tools/verify_performance_core_task12.py、改 2 支 builder。相容性修復確認僅維持原輸出：mtd 閉月 rows 的 upd 固定 0.0（真值留待 Task 3）、bip._fmt 將 v==0 正規化為 0.0 使 fee 顯示 +0（僅影響零值，非口徑變更）。C/M 附註：bip 保留 db 連線至 core 呼叫後才 close，正確性由 A/B 逐位元（mtd_performance.html/mtd_data.json 遮罩 TS 後相同、investment_performance.html 逐位元完全相同、兩支 console/TG 文字相同）背書。Task 3~6 未施工與既有 6 條 check_dividend_caliber FAIL 屬預期基準線，均不列缺失。",
+  "source": "delegation deleg_0f47f05b（sa-0-b356561f，model=deepseek-v4-flash，34.59s，API calls=6）",
+  "raw_commands_output_ref": "C:/Users/bot/AppData/Local/hermes/cache/delegation/live/deleg_0f47f05b/task-0.log",
+  "note_on_source": "判讀欄位（verdict/reviewer/reviewed_commits/required_fixes/note）逐字取自委派回報之完整 JSON；命令輸出原文見 raw_commands_output_ref。"
+}

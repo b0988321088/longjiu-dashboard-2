@@ -188,3 +188,17 @@ LLM 必須**引用**（腳本印出即貼），不得現算。
 
 **V2 升級為不可省略的 regression test**：把舊配息 `167,675` 塞回 → **必須抓出 2,911**。
 理由：這不是在測「答案對不對」，是在測「系統能不能抓到『真值更新、下游沒更新』」這種**實際發生過**的事故。
+
+
+---
+
+## §9 施工進度（2026-10-03 01:00 更新）
+
+- **Task 1＋Task 2 已完成並上線**：commit `2d1b9ed2`（tree `03b8229a96e4933356bef83acbbfeab53076b30a`），
+  CIO-DeepSeek-Flash **APPROVE、0 required fixes**，審查紀錄 `cio_review_performance_core_task12_1003.json`，
+  已推 `clean-main`（remote＝HEAD、未推送 0 筆）。
+- 驗收證據：`tools/verify_performance_core_task12.py`（19/19 PASS）；A/B 逐位元不變（僅遮罩 `generated_at`）；
+  三閉月 2026-07 +100,649／2026-08 +428,802／2026-09 +6,315 不變；`check_dividend_caliber` 無新增 FAIL。
+- 使用者 2026-10-03 裁示：Task 1＋2 單獨落地，**不與 Task 3～6 綁一起**。
+- **Task 3～6 暫停、未動**：`monthly_report.py`、動態月報、一致性閘門皆未修改（`git diff ef3a1fe2..HEAD --` 為空）。
+- 已知留待 Task 3 決策點：mtd 閉月 rows 的 `upd` 是否由固定 0.0 改為顯示真值。

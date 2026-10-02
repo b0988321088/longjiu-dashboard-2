@@ -1850,5 +1850,11 @@
   "category": "修正",
   "item": "月報發布鏈修復：未滿月不得產出月報＋儀表板「彙整月報」改指 9 月",
   "detail": "使用者回報「十月份才剛開始沒有參考價值」。根因：10/1 修口徑時測試跑 monthly_report.py 2026-10，產出僅 1 天、數字全 0 的空報表，而連結解析是 glob 取最新檔名 → 儀表板「📄 彙整月報」被指向它。修法：①monthly_report.py 未滿月拒產（--force 可覆寫）②check_dashboard_sync 第 16 條（月報連結不得指向未滿月）③index.html 連結改指 monthly_report_2026-09.html ④10 月空報表封存 .archive/ ⑤9 月報穿透現金 854,264（已除役餘數法）→853,675（可動用真值）。CIO 審查 APPROVE 0 必修；另發現 auto_record 對含 git rename 的 commit 必判失敗（INC-281）"
+ },
+ {
+  "date": "2026-10-03",
+  "category": "修正",
+  "item": "INC-282 A 案 Task 1+2：投資績效統一為單一計算核心 performance_core（既有輸出逐位元不變）",
+  "detail": "使用者裁示先立計算核心、不碰口徑。新增 performance_core.py（唯一計算層：Σ市值變化＋Σ配息實收−Σ投資利息−Σ手續費；排除薪資/租金/消費/借款本金流/淨資產變化；專案收入另列），build_mtd_report.py 閉月與 build_investment_performance.py 全數改讀 core（原 _MAP 分類表移入 core，原位留相容轉發）。驗收：A/B（舊版取 parent commit，%TEMP% 沙盒）mtd_performance.html/mtd_data.json 遮罩 generated_at 後逐位元相同、investment_performance.html 逐位元完全相同、兩支 console/TG 文字相同；三閉月 2026-07 +100,649／2026-08 +428,802／2026-09 +6,315 不變；check_dividend_caliber 78/85→79/85 無新增 FAIL。相容性修復（非口徑）：mtd 閉月 upd 保留 0.0（真值留待 Task 3）、_fmt 正規化負零讓 fee 顯示 +0。驗證器 tools/verify_performance_core_task12.py 19/19 PASS、違規 exit 1。CIO-DeepSeek-Flash APPROVE 0 required_fixes（tree 03b8229a96e4 逐字相符）。commit 2d1b9ed2；Task 3～6（月報改口徑/閘門/動態月報）暫停未動。"
  }
 ]
