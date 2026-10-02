@@ -297,6 +297,10 @@ def render_decision_banner(snap: dict) -> str:
     _nd_ok = isinstance(_nd.get("覆蓋率_pct"), (int, float)) and _nd["覆蓋率_pct"] >= (_nd.get("門檻_pct") or 100)
     _nd_color = "text-emerald-300" if _nd_ok else "text-amber-300"
     _mc = {"green": "text-emerald-300", "amber": "text-amber-300", "red": "text-rose-300"}[cm["燈號"]]
+    # 現金口徑自我說明（2026-10-02 使用者「維持」裁示）：總現金含指定款，與可動用分開揭露
+    _cl = (snap or {}).get("cash_layers") or {}
+    _cash_total = float(_cl.get("cash_total") or 0)
+    _cash_restricted = float((_cl.get("restricted_cash") or {}).get("total") or 0)
     _rows = "".join(
         '<div class="flex items-center justify-between gap-2 py-0.5">'
         '<span class="text-slate-300">{} {}</span>'
@@ -323,7 +327,9 @@ def render_decision_banner(snap: dict) -> str:
         '<div class="text-[11px] text-slate-400 mb-1">現金三層（可動用＝唯一真值）</div>'
         '<div class="text-xl font-black {}">{:,.0f}</div>'
         '<div class="text-[11px] text-slate-400 leading-relaxed">底線 {:,.0f}｜餘裕 {:,.0f}<br>'
-        '模式：<b class="{}">{}</b>（距自由現金門檻 {:,.0f}）</div></div>'
+        '模式：<b class="{}">{}</b>（距自由現金門檻 {:,.0f}）<br>'
+        '<span class="text-slate-500">總現金 {:,.0f} ＝ 可動用 {:,.0f} ＋ 指定款 {:,.0f}'
+        '（國泰保留／洲際W 預繳，依 10/02 裁示不釋放）</span></div></div>'
         '<div class="rounded-lg bg-slate-800/50 p-3">'
         '<div class="text-[11px] text-slate-400 mb-1">留停 Gate（三條硬門檻）</div>'
         '<div class="text-xs">{}</div>'
@@ -347,6 +353,7 @@ def render_decision_banner(snap: dict) -> str:
         ("border-emerald-500/40 bg-emerald-500/10 text-emerald-300" if _go
          else "border-amber-500/40 bg-amber-500/10 text-amber-300"),
         gt["燈號"], _mc, cm["可動用"], cm["底線"], cm["餘裕"], _mc, cm["模式"], cm["距門檻"],
+        _cash_total, cm["可動用"], _cash_restricted,
         _rows, gt["參考指標"]["保守覆蓋_pct"], gt["參考指標"]["3個月趨勢"],
         tr["觸發數"], _act, tr["授權邊界"], ("｜" + _unknown) if _unknown else "", _pend,
         _nd_color, _nd_pct, _nd["可動用"], (_nd.get("A_已確認") or {}).get("合計") or 0,
