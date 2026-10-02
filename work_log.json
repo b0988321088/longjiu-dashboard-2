@@ -1779,5 +1779,10 @@
  "category": "完成",
  "item": "統一現金口徑（穿透桶讀可動用真值 853,675＋在途 589 顯式化）（使用者 2026-10-02 裁示）",
  "detail": "commit 3f4d07e9：穿透桶由餘數法改讀 sot_targets.allowable_cash／cash_layers.available；差額 589 改列 penetration.cash_in_transit 並納入不變量（五桶＋在途＋衛星＋指定款＝總資產 26,791,534）。第三方審查 APPROVE 0 blocker → RECORD → 推送 clean-main；sync_all 20/20、全閘門 PASS、線上 6 檔 blob 一致。桶位％與缺口不變（7.6/38.3/16.7/27.6/3.2）。沿途修 2 真 bug：us30y_gate 真值塊落後 state（INC-272）、餘數法承載不變量（INC-271）。"
+ },
+ {"date": "2026-10-02",
+ "category": "完成",
+ "item": "決策層治理收斂：Pending 單一真值＋孤兒腳本封存（使用者 2026-10-02 核准）",
+ "detail": "① commit b34d72a9：dashboard_decisions.json 的 legacy pending 鏡像退役（26 筆備份 .archive/），Pending 唯一真值 = pending_decisions.json；稽核 check#9 改以 .get() 取用並改驗真值狀態齊備（不再宣稱兩 store 一致）。② commit 2ebcd9d0：decision_handler.py／decision_buttons.py 封存至 .archive/scripts_orphans_20261002/（無呼叫者、期待 p[\"id\"]/p[\"text\"] 而資料無此鍵），hermes/scripts 兩支孤兒副本移入 quarantine/；完成卡移出 pending 改記 work_log；新增 pending 追蹤 CIO 9/23 ② 核准即自動入庫缺口。③ commit cafd536a：錯題 INC-274（完成卡進 pending）／INC-275（真值 JSON 文字手術的邊界與逗號假設）。三批皆第三方審查 APPROVE 0 blocker、RECORD、推送 clean-main，線上 blob 逐檔複驗一致。"
  }
 ]
