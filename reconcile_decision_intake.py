@@ -144,6 +144,66 @@ def match_notion(titles, intake):
     return unmatched_n, unmatched_f
 
 
+def load_all_receipts():
+    """整個收據檔（不分日）——用於判定「收據制起算時點」。"""
+    if not RECEIPT_FILE.exists():
+        return []
+    out = []
+    for ln in RECEIPT_FILE.read_text(encoding="utf-8").splitlines():
+        ln = ln.strip()
+        if not ln:
+            continue
+        try:
+            out.append(json.loads(ln))
+        except Exception:
+            continue
+    return out
+
+
+def _ts_of(obj):
+    """取 ISO 時戳（收據用 'ts'、決策用 'timestamp'）；無法解析回 None。"""
+    if not isinstance(obj, dict):
+        return None
+    try:
+        return datetime.fromisoformat(str(obj.get("ts") or obj.get("timestamp") or ""))
+    except Exception:
+        return None
+
+
+def receipt_regime_start():
+    """收據制（單一入庫入口）的起算時點＝收據檔最早一筆 ts；無有效時戳回 None。
+
+    為什麼要有時間邊界（2026-10-02 INC-280）：收據制是 10/2 20:53 才上線的制度。
+    比它更早進檔的決策**結構上不可能**有收據 → 每跑一次對帳就被當「未經單一入口」警示一次
+    （實例：mem-20261002195408-1056 每晚假缺口）。判準要有生效邊界，不是每筆都一視同仁。
+    """
+    ts = [t for t in (_ts_of(r) for r in load_all_receipts()) if t]
+    return min(ts) if ts else None
+
+
+def compare(day, rec, intake):
+    """回傳 (missing, unregistered, legacy) 三個 id 清單。
+
+    missing      = 有收據但沒進檔 → 真缺口（rc=1）
+    unregistered = 收據制上線**之後**進檔卻沒有收據 → 未經單一入口（警示）
+    legacy       = 收據制上線**之前**的歷史入庫 → 不列警示（制度當時不存在）
+    fail-closed：收據檔無有效時戳（空／不存在）時無法判定起點 → 一律歸 unregistered。
+    """
+    rec_ok = [r for r in rec if r.get("ok")]
+    rec_ids = {str(r.get("id")) for r in rec_ok if r.get("id")}
+    file_ids = {str(x.get("id")) for x in intake if x.get("id")}
+    missing = sorted(rec_ids - file_ids)
+    start = receipt_regime_start()
+    unregistered, legacy = [], []
+    for i in sorted(file_ids - rec_ids):
+        t = next((_ts_of(x) for x in intake if str(x.get("id")) == i), None)
+        if start is not None and t is not None and t < start:
+            legacy.append(i)
+        else:
+            unregistered.append(i)
+    return missing, unregistered, legacy
+
+
 def main():
     ap = argparse.ArgumentParser(description="今日核准 vs 今日入庫 對帳")
     ap.add_argument("--date")
@@ -157,10 +217,8 @@ def main():
     rec_ok = [r for r in rec if r.get("ok")]
     rec_ids = {str(r.get("id")) for r in rec_ok if r.get("id")}
     file_ids = {str(x.get("id")) for x in intake if x.get("id")}
-    noid = [x for x in intake if not x.get("id")]
 
-    missing = sorted(rec_ids - file_ids)          # 收了收據但沒進檔 → 真缺口
-    unregistered = sorted(file_ids - rec_ids)     # 進檔但沒有收據 → 未經單一入口（人工/舊路徑）
+    missing, unregistered, legacy = compare(day, rec, intake)
 
     if not a.quiet:
         print(f"=== 決策入庫對帳（{day}）===")
@@ -175,11 +233,19 @@ def main():
             t = next((r.get("task") for r in rec_ok if r.get("id") == i), "")
             print(f"     - {i}｜{str(t)[:44]}")
         rc = 1
+    start = receipt_regime_start()
+    if legacy:
+        print(f"  ℹ️ 收據制上線前（{start:%Y-%m-%d %H:%M}）的歷史入庫 {len(legacy)} 筆，不列警示：")
+        for i in legacy:
+            t = next((x.get("task") for x in intake if str(x.get("id")) == i), "")
+            print(f"     - {i}｜{str(t)[:44]}")
     if unregistered:
         print(f"  ⚠️ {len(unregistered)} 筆入庫沒有收據（未經 append_dashboard_decisions.py，可能是舊路徑或人工補）：")
         for i in unregistered:
-            t = next((x.get("task") for x in intake if x.get("id") == i), "")
+            t = next((x.get("task") for x in intake if str(x.get("id")) == i), "")
             print(f"     - {i}｜{str(t)[:44]}")
+        if start is None:
+            print("     （收據檔無有效時戳 → 無法判定收據制起點，一律列警示）")
     if not missing and not unregistered:
         print(f"  ✅ 一致（{len(file_ids)} 筆；今日無缺口）")
 
