@@ -1436,3 +1436,27 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 修法：改為明確 `matched` 旗標；恢復初始化；子程序改用 subprocess.run(capture_output=True) 並依 rc 分流（0 PASS／1 缺口／2 未查核）。
 - **規則**：改控制流或比對邏輯時，**每次 patch 後立刻跑一次實腳本（含負向案例）**，不要累積多處改動才測；子程序一律用 subprocess 並檢查 rc。
 
+## INC-278 ｜ 2026-10-02 ｜ P1｜open ｜ 7 條守門基準紅燈（10/2 現金口徑統一後未同步）— **另案，本批不動**
+- 發現：修「系統工作日誌未閉環 3 筆」（commit `02442fca` 程式／`f43b9f46` 資料，已推 clean-main）時，
+  基準 `check_dividend_caliber.py` 即為 **78/85、7 條 FAIL**。已用 `git stash` 收起本批改動重跑證實
+  「未含本批改動時同樣是這 7 條」→ **非本批 regression**。使用者 2026-10-02 核准：本批 APPROVE 落地，
+  但範圍鎖死（僅 ①假未閉環 ②日誌嵌金額 ③紅線口徑殘留＋④寫死退路盤點入庫），7 FAIL 不得混入。
+- 7 條逐字：
+  1. `可動用現金＝cash_layers.available（唯一真值） ｜853675.0 vs 0.0`
+  2. `穿透桶『現金/安全網』＝可動用＋在途未對帳（不得參與決策） ｜穿透桶 853675.0 − 可動用 0.0 = 853675.0`
+  3. `穿透桶口徑＝可動用＋589 在途／未對帳（不得參與決策） ｜同上`
+  4. `穿透桶『現金/安全網』不得當可動用（在途／未對帳） ｜可動用 853675.0 vs 穿透 853675.0`
+  5. `可接受範圍內桶不得殘留缺口／行動字樣（範圍內＝完全靜默） ｜daily_report_v2_2026-10-02.html 台股市值型成長『缺口』`
+  6. `Pending schema 五欄齊備（26 筆一次遷移） ｜[]｜n=28`
+  7. `status 正規化為四態（原字串保留 status_raw） ｜3 筆未正規化`
+- **已查根因（第 1 條；2/3/4 待查）：欄位名漂移（data contract 漂移）**
+  - snapshot 實際鍵名 = `cash_layers.unrestricted_cash`（853,675）；10/2 裁示文件與部分程式卻寫 `cash_layers.available`。
+  - 無 fallback 的端點會拿到 **0**：`check_dividend_caliber.py:346`、同檔 `:349` 標題、`check_dashboard_stale.py:83`、`sot_targets.py:587` docstring。
+  - 有 fallback 者不受影響：`check_narrative_numbers.py:121-122`（`or ...unrestricted_cash`）。
+  - **影響**：守門假紅燈（持續佔用審查注意力）＋任何只讀 `.available` 的端點會把可動用現金顯示成 0（決策數字風險）。
+- 另案待辦：①決定 canonical 鍵名並全端對齊（或由 `sot_targets` 出單一 accessor，禁讀者自行 `.get("available")`）
+  ②2/3/4 條與在途 589 口徑對齊 ③日報缺口字樣過 band_filter ④Pending 遷移計數與 status 四態收斂。
+- 附帶非阻斷觀察（本批 CIO 提出，同案處理）：
+  ① `debt_restructure_tracker.py:297-298` 現金底線缺值退 `0` → 閘門 **fail-open**（建議缺值時大聲告警，不靜默）；
+  ② `check_dividend_caliber.py:449` 失敗訊息寫死「26 筆一次遷移」，與實測 n 不符（即第 6 條）。
+
