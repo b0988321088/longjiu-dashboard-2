@@ -1770,19 +1770,52 @@
   "item": "第 3 批｜Pending 期限管理（schema migration 26 筆）（使用者 2026-10-02 裁示③：Pending 五欄 schema（due_date／last_confirmed／owner=CEO／external_owner／status）＋狀態機（到期 → +1 第一次升級 → +3 第二次升級 → +7 CEO 強制處理）；",
   "detail": "使用者 2026-10-02 裁示③：Pending 五欄 schema（due_date／last_confirmed／owner=CEO／external_owner／status）＋狀態機（到期 → +1 第一次升級 → +3 第二次"
  },
- {"date": "2026-10-02",
+ {
+  "date": "2026-10-02",
   "category": "更正",
   "item": "更正註記｜『854,264 除役為可動用（僅存穿透桶敘事）』已失效（原紀錄 #279 保留不變）（使用者 2026-10-02 ✅ 核准）",
   "detail": "使用者 10/2 核准『統一現金口徑』後：穿透桶『現金/安全網』已改讀真值 cash_layers.available＝853,675（不再用餘數法）；854,264 不再具『穿透桶敘事』角色，差額 589 已顯式化為 penetration.cash_in_transit（明帳腿）並納入不變量（五桶＋在途＋衛星＋指定款＝總資產 26,791,534）。原裁示紀錄（decisions/1024、work_log #279）依治理慣例保留原文不修改，以本筆為準。工程落地：commit 3f4d07e9（第三方審查 APPROVE 0 blocker）；沿途修 INC-271（餘數法承載不變量→報告總資產少 589）、INC-272（us30y_gate 派生塊落後 state）。"
  },
- {"date": "2026-10-02",
- "category": "完成",
- "item": "統一現金口徑（穿透桶讀可動用真值 853,675＋在途 589 顯式化）（使用者 2026-10-02 裁示）",
- "detail": "commit 3f4d07e9：穿透桶由餘數法改讀 sot_targets.allowable_cash／cash_layers.available；差額 589 改列 penetration.cash_in_transit 並納入不變量（五桶＋在途＋衛星＋指定款＝總資產 26,791,534）。第三方審查 APPROVE 0 blocker → RECORD → 推送 clean-main；sync_all 20/20、全閘門 PASS、線上 6 檔 blob 一致。桶位％與缺口不變（7.6/38.3/16.7/27.6/3.2）。沿途修 2 真 bug：us30y_gate 真值塊落後 state（INC-272）、餘數法承載不變量（INC-271）。"
+ {
+  "date": "2026-10-02",
+  "category": "完成",
+  "item": "統一現金口徑（穿透桶讀可動用真值 853,675＋在途 589 顯式化）（使用者 2026-10-02 裁示）",
+  "detail": "commit 3f4d07e9：穿透桶由餘數法改讀 sot_targets.allowable_cash／cash_layers.available；差額 589 改列 penetration.cash_in_transit 並納入不變量（五桶＋在途＋衛星＋指定款＝總資產 26,791,534）。第三方審查 APPROVE 0 blocker → RECORD → 推送 clean-main；sync_all 20/20、全閘門 PASS、線上 6 檔 blob 一致。桶位％與缺口不變（7.6/38.3/16.7/27.6/3.2）。沿途修 2 真 bug：us30y_gate 真值塊落後 state（INC-272）、餘數法承載不變量（INC-271）。"
  },
- {"date": "2026-10-02",
- "category": "完成",
- "item": "決策層治理收斂：Pending 單一真值＋孤兒腳本封存（使用者 2026-10-02 核准）",
- "detail": "① commit b34d72a9：dashboard_decisions.json 的 legacy pending 鏡像退役（26 筆備份 .archive/），Pending 唯一真值 = pending_decisions.json；稽核 check#9 改以 .get() 取用並改驗真值狀態齊備（不再宣稱兩 store 一致）。② commit 2ebcd9d0：decision_handler.py／decision_buttons.py 封存至 .archive/scripts_orphans_20261002/（無呼叫者、期待 p[\"id\"]/p[\"text\"] 而資料無此鍵），hermes/scripts 兩支孤兒副本移入 quarantine/；完成卡移出 pending 改記 work_log；新增 pending 追蹤 CIO 9/23 ② 核准即自動入庫缺口。③ commit cafd536a：錯題 INC-274（完成卡進 pending）／INC-275（真值 JSON 文字手術的邊界與逗號假設）。三批皆第三方審查 APPROVE 0 blocker、RECORD、推送 clean-main，線上 blob 逐檔複驗一致。"
+ {
+  "date": "2026-10-02",
+  "category": "完成",
+  "item": "決策層治理收斂：Pending 單一真值＋孤兒腳本封存（使用者 2026-10-02 核准）",
+  "detail": "① commit b34d72a9：dashboard_decisions.json 的 legacy pending 鏡像退役（26 筆備份 .archive/），Pending 唯一真值 = pending_decisions.json；稽核 check#9 改以 .get() 取用並改驗真值狀態齊備（不再宣稱兩 store 一致）。② commit 2ebcd9d0：decision_handler.py／decision_buttons.py 封存至 .archive/scripts_orphans_20261002/（無呼叫者、期待 p[\"id\"]/p[\"text\"] 而資料無此鍵），hermes/scripts 兩支孤兒副本移入 quarantine/；完成卡移出 pending 改記 work_log；新增 pending 追蹤 CIO 9/23 ② 核准即自動入庫缺口。③ commit cafd536a：錯題 INC-274（完成卡進 pending）／INC-275（真值 JSON 文字手術的邊界與逗號假設）。三批皆第三方審查 APPROVE 0 blocker、RECORD、推送 clean-main，線上 blob 逐檔複驗一致。"
+ },
+ {
+  "date": "2026-10-02",
+  "category": "完成",
+  "item": "日報2026-10-02（證券3,007,220 保單9,418,965 配息0）",
+  "detail": "證券3,007,220 保單9,418,965 配息0"
+ },
+ {
+  "date": "2026-10-02",
+  "category": "完成",
+  "item": "資產穿透2026-10-02（台股2,041,032.0 美股10,257,066.0 防守4,469,324.0 債券7,398,132.0 現金854,264.0）",
+  "detail": "台股2,041,032.0 美股10,257,066.0 防守4,469,324.0 債券7,398,132.0 現金854,264.0"
+ },
+ {
+  "date": "2026-10-02",
+  "category": "完成",
+  "item": "封存孤兒決策腳本＋Pending 完成卡移入 work_log（使用者 10/2 ✅ 核准：decision_handler.py／decision_buttons.py（期待 p[\"id\"]/p[\"text\"]、資料無此鍵、全 repo＋cron 零呼叫）以 git rename 封存至 .archive/scripts_orphans_20261002/",
+  "detail": "使用者 10/2 ✅ 核准：decision_handler.py／decision_buttons.py（期待 p[\"id\"]/p[\"text\"]、資料無此鍵、全 repo＋cron 零呼叫）以 git rename 封存至 .archi"
+ },
+ {
+  "date": "2026-10-02",
+  "category": "完成",
+  "item": "CIO 9/23 ② 決策入庫自動化（小型修復）（使用者 10/2 核准開立，定位為小型修復非新功能：①新增 append_dashboard_decisions.py 成 dashboard_decisions.json 唯一寫入入口（source=user 一律經此），固定產生 id/timestamp(台北+08:00)/agent/status/so",
+  "detail": "使用者 10/2 核准開立，定位為小型修復非新功能：①新增 append_dashboard_decisions.py 成 dashboard_decisions.json 唯一寫入入口（source=user 一律經此），固定產生 id/"
+ },
+ {
+  "date": "2026-10-02",
+  "category": "完成",
+  "item": "週五維護兩項裁示：memories/backups 低優先＋Provider Health Check 獨立變更（使用者 10/2 裁示：①memories/backups 名義 14 份、實際 60 份（約 4.1MB）列低優先 cleanup debt，不為『數字看起來不一致』增加變更面；②Provider Health Check 獨立成下一個 com",
+  "detail": "使用者 10/2 裁示：①memories/backups 名義 14 份、實際 60 份（約 4.1MB）列低優先 cleanup debt，不為『數字看起來不一致』增加變更面；②Provider Health Check 獨立成下一個 "
  }
 ]
