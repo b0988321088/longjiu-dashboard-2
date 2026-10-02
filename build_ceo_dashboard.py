@@ -147,12 +147,22 @@ if not chg_rows:  # 後備：DB 歷史不足 → 回退 LLM 原列
                      f"<td style='{_td_cell};font-size:11.5px;color:#6e6e73'>{c.get('歸因','')}</td></tr>")
 chg_card = card(chg_title, "📊", table(["項目", "上週", "本週", "變化", "歸因"], chg_rows, 5))
 
-# B. 資金流動：snapshot weekly_ops_closure_{date}（最新一期）執行清單，金額非空即入列
-_wk_keys = sorted([k for k in s if str(k).startswith("weekly_ops_closure_")])
+# B. 資金流動：schedule_events 動態推導（weekly_ops_dynamic，2026-09-30 定為單一來源）
+#    —— 原寫法直讀 snapshot.weekly_ops_closure_* 最新一筆，而該源自 0913 後無人再寫，
+#    導致 10/2 的儀表板仍顯示「2026-09-08 ~ 09-13」的舊操作（同 9/30 日報已修的同一個病灶）。
+#    取不到才退回 snapshot 舊筆（人工維護版退路）。
 _wk_period, _flow_src = "", []
 _infra_kw = ("日報", "同步", "修復", "整併", "清除", "上線", "缺陷", "審計", "檢查", "測試", "收斂", "登記", "建檔", "污染")
-if _wk_keys:
-    _wk = s[_wk_keys[-1]]
+try:
+    import weekly_ops_dynamic as _wod
+    _wk = _wod.build_or_fallback(today=today) or {}
+except Exception as _wode:
+    print(f"⚠️ weekly_ops_dynamic 失敗，改用 weekly_ops_closure 退路：{type(_wode).__name__}: {_wode}")
+    _wk = {}
+if not _wk:
+    _wk_keys = sorted([k for k in s if str(k).startswith("weekly_ops_closure_")])
+    _wk = s[_wk_keys[-1]] if _wk_keys else {}
+if _wk:
     _wk_period = str(_wk.get("期間", ""))
     for _it in (_wk.get("執行清單") or []):
         _amt = str(_it.get("金額", "")).strip()
