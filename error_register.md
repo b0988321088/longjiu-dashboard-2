@@ -1403,3 +1403,24 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 症狀：新 INC 編號取自 `re.findall(r"INC-(\d+)")` 取最大值 → 撞到內文日期樣式 `INC-2026-…`，產出 **INC-2027／2028**（真實下一號是 271，且 270 已被 10/01 五支程式引用）。
 - 修法：配號規則改為「只掃 `^## INC-<n>` 標題 ＋ 全 repo `grep INC-<n>` 交叉檢查」，本日兩筆改為 **INC-271／272**。
 - 規則入庫：**自動配號不可只依賴單一 regex 的 max**；編號先算候選、再用全 repo 引用掃描確認未被佔用才落筆。
+## INC-274 ｜ 2026-10-02 ｜ P2｜fixed ｜ 已完成事項被放進 pending 清單（status 含 ✅）→ 閘門擋下
+
+- 症狀：把「統一現金口徑（已完成）」寫入 `pending_decisions.json`，status 字串含「✅ 已完成（10/02）…」→
+  `check_thresholds.py` 報 ❌「pending 未閉環卡狀態含「✅」→ build_dashboard 會誤判已結案、整卡隱藏」。
+- 根因：pending 清單的語意是「未閉環卡」；`build_dashboard` 用子字串過濾結案字樣（✅／已完成／已結案／已定案／閉環／已送出／已核定），
+  命中就**整卡靜默消失**。我把「待辦追蹤」與「完成紀錄」混在同一個 store，且用了結案字樣。
+- 修法：該卡移出 pending（文字手術）→ 完成事項改記 `work_log.json`（category=完成）；pending 尾筆改為真正的未閉環項（CIO 9/23 ② 核准即自動入庫）。
+- 影響：0（閘門在交付前擋下，未流出任何錯誤卡片狀態）。
+- 規則入庫：**完成 → work_log；pending 只放未閉環卡，且 status 不得含結案字樣**（寫進技能 `longjiu-closeout-audit`）。
+
+## INC-275 ｜ 2026-10-02 ｜ P2｜fixed ｜ 共用真值 JSON 的文字手術：兩個錯誤假設（漏逗號／邊界硬找）
+
+- 症狀①：手寫元素物件時用 `"".join("\r\n  " + k:v)` 忘了逗號分隔 → `JSONDecodeError: Expecting ',' delimiter`，
+  且錯誤 char 位置落在別處（誤導排查方向）。
+- 症狀②：用單一形式 `\r\n {`（換行＋空白＋大括號）硬找元素起點 → 檔案實為 `\r\n{`（無空白）與 `\r\n {`（一空白）混排 → `ValueError: substring not found`；
+  另一種情況是「把合法的 `}  ],` 黏連當成壞排版去補逗號」→ 陣列逗號後等值 → `Expecting value`。
+- 根因：對 JSON 做「文字手術」時假設了檔案的排版樣式；歷史插入（不同工具、不同 indent）造成同檔多種樣式。
+- 修法：①元素欄位一律用 `",\r\n  ".join(f'{json.dumps(k)}: {json.dumps(v)}')`；②起點用候選清單（`\r\n{`／`\r\n {`／`\r\n  {`）取最近者，
+  終點用**字串感知的深度掃描**找配對的 `}`；③寫入前三重驗證：`json.loads` 過、目標陣列筆數 +1 且尾筆是新的、其他頂層鍵與其他陣列長度不變。
+- 影響：0（三次失敗都在寫入前 assert 中止，檔案未被改；每次動檔前已備份）。
+- 規則入庫：見技能 `pipeline-sync-patterns`（治理 JSON 文字插入法）與 `longjiu-closeout-audit`（元素邊界定位）。
