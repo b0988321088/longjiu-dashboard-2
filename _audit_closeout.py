@@ -24,6 +24,14 @@ BENIGN_DIRTY = {
     # 夜間寫庫晚於當晚 commit 時仍會判定「已追蹤未提交」→ 每晚誤報紅燈。
     # 列為 benign：仍會顯示，但不列入 fail（DB 為資料本體，非程式碼）。
     "dragon_assets.db",
+    # 2026-10-02（22:40 稽核連續誤報修復）：決策入庫收據為 append-only 執行期產物，
+    # 由唯一入口 append_dashboard_decisions.py 於『核准當下』事件觸發寫入（不是可排程的工作），
+    # 落在 22:00 晚報（git add -A）之後就會被判「已追蹤未提交」而每晚誤報
+    # （10/2 實例：22:27 入庫 3 筆，決策本體已提交、收據漏掉）。
+    # 列為 benign：仍會顯示，但不列入 fail。
+    # ⚠️ 有界遮蔽＋canary：同一輪的決策本體 dashboard_decisions.json **不在**名單內，
+    #    入庫後忘記提交決策仍會照樣亮 ❌（本檔只是收據，不是交付物）。
+    "data/decision_intake_receipts.jsonl",
 }
 
 

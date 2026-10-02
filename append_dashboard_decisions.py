@@ -22,6 +22,7 @@ import argparse
 import json
 import os
 import shutil
+import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -107,6 +108,52 @@ def write_receipt(entry, ok, msg):
         f.write(json.dumps(rec, ensure_ascii=False) + "\r\n")
 
 
+# 本次入庫的「寫入集」＝就該被提交的檔案集（單一入口自己收尾，不靠人記得）
+OWN_FILES = ("dashboard_decisions.json", "data/decision_intake_receipts.jsonl")
+
+
+def _git(*args):
+    return subprocess.run(["git", *args], cwd=str(REPO), capture_output=True,
+                          text=True, encoding="utf-8", errors="replace")
+
+
+def settle_own(entry):
+    """把本次入庫的寫入集就地提交（純資料檔），回傳一行狀態。
+
+    為什麼（2026-10-02 修復）：22:40 收工稽核連續判「已追蹤未提交」——入庫寫的兩個檔
+    落在 22:00 晚報（git add -A）之後，過去靠人記得一起提交；10/2 就是漏掉收據檔
+    （決策本體提交了、收據留在工作區）。單一入口就該在同一輪提交自己的寫入集。
+
+    界線：
+      · 只提交 OWN_FILES（不用 git add -A，不碰別條路徑）
+      · 無變更就不 commit（靜默）
+      · **只在本 commit 是唯一待推 commit 時**才順手推送；已有其他待推 commit 時不代推
+        （避免把使用者尚未核准的內容提前上線），交由既有推送路徑處理
+    """
+    add = _git("add", "--", *OWN_FILES)
+    if add.returncode != 0:
+        return f"⚠️ 入庫收尾：git add 失敗 {(add.stderr or add.stdout or '').strip()[:200]}"
+    if _git("diff", "--cached", "--quiet", "--", *OWN_FILES).returncode == 0:
+        return "ℹ️ 入庫收尾：無變更，未提交"
+    c = _git("commit", "-m", f"data(decisions): 入庫 {entry['id']}｜{entry['task'][:40]}", "--", *OWN_FILES)
+    if c.returncode != 0:
+        return f"⚠️ 入庫收尾：commit 失敗 {(c.stderr or c.stdout or '').strip()[:200]}"
+    head = (_git("rev-parse", "--short", "HEAD").stdout or "").strip()
+
+    ahead = _git("rev-list", "--count", "origin/clean-main..HEAD")
+    n = (ahead.stdout or "").strip()
+    if ahead.returncode != 0:
+        return f"✅ 入庫已提交 {head}（讀不到 origin/clean-main → 未推送，交由既有推送路徑）"
+    if n != "1":
+        return f"✅ 入庫已提交 {head}（待推 {n} 顆，含本筆 → 不代推，交由既有推送路徑）"
+    p = subprocess.run([sys.executable, "auto_push.py", "--script", "append_dashboard_decisions.py"],
+                       cwd=str(REPO), capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")
+    tail = ((p.stdout or "").strip().splitlines() or [""])[-1]
+    return (f"✅ 入庫已提交並推送 {head}" if p.returncode == 0
+            else f"⚠️ 入庫已提交 {head}，推送失敗 rc={p.returncode}：{tail[:160]}")
+
+
 def main():
     ap = argparse.ArgumentParser(description="dashboard_decisions.json 唯一寫入入口（核准/決策事件）")
     ap.add_argument("--task", required=True)
@@ -126,7 +173,6 @@ def main():
     if not ok:
         return 1
     if not a.quiet and not a.dry_run:
-        import subprocess
         r = subprocess.run([sys.executable, str(REPO / "reconcile_decision_intake.py"), "--quiet"],
                            capture_output=True, text=True)
         out = (r.stdout or "").strip()
@@ -138,6 +184,8 @@ def main():
             print(out or (r.stderr or "").strip())
         elif out:
             print(out)
+    if not a.dry_run:
+        print(settle_own(entry))
     return 0
 
 
