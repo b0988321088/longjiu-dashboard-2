@@ -324,21 +324,35 @@ except Exception as _e:
 # 觸發：CIO 抓到「DS 儲值已入帳，待辦狀態沒回收」。兩份決策檔語意不同但同一件事會同時存在，
 # 一旦只在其中一份回收狀態，日報／CIO 復盤就會用過期前提（dashboard_decisions.json 是 CIO Part A 的輸入）。
 # 判準：同標題項在 pending_decisions.json 已標結案標記，dashboard_decisions.json 的 pending 不得仍無結案標記。
-print("=== 9) 決策狀態一致（pending_decisions.json ↔ dashboard_decisions.json）===")
+print("=== 9) 決策狀態一致（Pending 真值 = pending_decisions.json；dashboard 鏡像 2026-10-02 退役）===")
 try:
     _pd_std = json.loads((R / "pending_decisions.json").read_text(encoding="utf-8"))
-    _pd_dash = json.loads((R / "dashboard_decisions.json").read_text(encoding="utf-8"))["pending_decisions"]
+    _pd_dash = json.loads((R / "dashboard_decisions.json").read_text(encoding="utf-8")).get("pending_decisions")
     _CLOSED = ("✅", "已結案", "已定案", "已閉環", "已完成")
     _std = {x.get("title"): str(x.get("status", "")) for x in _pd_std if isinstance(x, dict)}
-    _drift = []
-    for _e in _pd_dash:
-        if not isinstance(_e, dict):
-            continue
-        _new = _std.get(_e.get("action"))
-        if _new is None:
-            continue
-        if any(_m in _new for _m in _CLOSED) and not any(_m in str(_e.get("status", "")) for _m in _CLOSED):
-            _drift.append(_e.get("action"))
+    if _pd_dash is None:
+        # 2026-10-02 退役：dashboard_decisions.json 的 legacy pending 鏡像（schema {date,action,status,tags}，
+        # 無 id/text）已移除——唯一潛在讀者 decision_handler/decision_buttons 期待 p["id"]/p["text"] 且全 repo
+        # 無人呼叫（實質孤兒）。Pending 唯一真值 = pending_decisions.json，本檢查改驗真值自身狀態齊備。
+        _bad = [x.get("title") for x in _pd_std
+                if isinstance(x, dict) and not str(x.get("status", "")).strip()]
+        if _bad:
+            print(f"  ❌ pending_decisions.json {len(_bad)} 筆無 status：{_bad[:3]}")
+            fail.append(f"pending 狀態缺漏: {_bad[:3]}")
+        else:
+            print(f"  ✅ 鏡像已退役（Pending 唯一真值 = pending_decisions.json；{len(_pd_std)} 筆狀態齊備）")
+        _drift = []
+    else:
+        _std = {x.get("title"): str(x.get("status", "")) for x in _pd_std if isinstance(x, dict)}
+        _drift = []
+        for _e in _pd_dash:
+            if not isinstance(_e, dict):
+                continue
+            _new = _std.get(_e.get("action"))
+            if _new is None:
+                continue
+            if any(_m in _new for _m in _CLOSED) and not any(_m in str(_e.get("status", "")) for _m in _CLOSED):
+                _drift.append(_e.get("action"))
     if _drift:
         for _t in _drift:
             print(f"  ❌ {str(_t)[:52]}｜pending_decisions.json 已結案，dashboard_decisions.json 仍列未完成")
