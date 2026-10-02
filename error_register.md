@@ -1424,3 +1424,15 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
   終點用**字串感知的深度掃描**找配對的 `}`；③寫入前三重驗證：`json.loads` 過、目標陣列筆數 +1 且尾筆是新的、其他頂層鍵與其他陣列長度不變。
 - 影響：0（三次失敗都在寫入前 assert 中止，檔案未被改；每次動檔前已備份）。
 - 規則入庫：見技能 `pipeline-sync-patterns`（治理 JSON 文字插入法）與 `longjiu-closeout-audit`（元素邊界定位）。
+## INC-276 ｜ 2026-10-02 ｜ P2｜fixed ｜ 對帳工具 v1 判準過窄（source=='user'）→ 假陰性漏看兩筆真核准
+- 症狀：首版 reconcile_decision_intake.py 以 source=='user' 過濾入庫，實際歷史條目用過 'Hermes Telegram Gate'（同日 2 筆）→ 工具把真核准算成「不在檔案裡」，若照它輸出會誤判缺口方向。
+- 根因：把「欄位值」當成「語意」：同一個語意（人核准的決策）在歷史上有 4 種字串（user／Hermes Telegram Gate／auto／notion），只挑一種等於假設值域純淨。
+- 修法：入庫判準改為「排除 auto/notion」，並在輸出印 source 分布（值域透明）；標題取值 fallback task→name→action；Notion 比對改 difflib≥0.6＋互相包含。
+- **規則**：**放寬/收窄任何判準前，先列舉該欄位的實際值域並列印分布**（`Counter`），不要用單一字面值當語意。修完要同時跑正向與負向測試各一次。
+
+## INC-277 ｜ 2026-10-02 ｜ P2｜fixed ｜ 自製腳本兩個程式錯（for/else 誤用＋變數未初始化）
+- 症狀：改寫 match_notion() 時把 `for ... break` 的 else 語意改壞，且移除 best/best_r 初始化 → 實跑立刻 UnboundLocalError；另 append 端誤用 os.system 判斷 exit code，吞掉子腳本輸出。
+- 根因：一次 patch 同時改「控制流 + 變數初始化 + 子程序呼叫」三件事，只在腦中驗證。
+- 修法：改為明確 `matched` 旗標；恢復初始化；子程序改用 subprocess.run(capture_output=True) 並依 rc 分流（0 PASS／1 缺口／2 未查核）。
+- **規則**：改控制流或比對邏輯時，**每次 patch 後立刻跑一次實腳本（含負向案例）**，不要累積多處改動才測；子程序一律用 subprocess 並檢查 rc。
+
