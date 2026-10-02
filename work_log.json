@@ -1832,5 +1832,11 @@
   "category": "完成",
   "item": "未閉環診斷 SOP 入技能＋10/4 10:00 自動驗收 job",
   "detail": "技能 unclosed-card-diagnosis-sop（證明→分類→修→驗收→立案）；cron 618df86be65d（空洞通過不得算證據；成立才自動閉環，不成立不碰檔）"
+ },
+ {
+  "date": "2026-10-02",
+  "category": "修正",
+  "item": "22:40 收工稽核連敗治本（close 班自提交帳本＋入庫入口自提交寫入集）",
+  "detail": "根因二：①wrappers/cost_watch_close.py（22:30）寫帳本不提交 → 落在 22:00 晚報之後必判髒（10/1、10/2 實例）②data/decision_intake_receipts.jsonl 入庫收據漏提交。修法：close 班比照 digest 班自提交＋走 auto_push；入庫入口自提交 OWN_FILES（僅唯一待推時才推）；_audit_closeout.py 收據列 benign（canary dashboard_decisions.json／帳本仍判 ❌）。CIO-DeepSeek-Flash 唯讀審查 APPROVE 0 必修（tree ec938786）；沙箱自測 28 PASS／0 FAIL（tools/verify_closeout_dirty_fix.py）。22:40 job 不暫停，守門保留。另案：INC-279"
  }
 ]

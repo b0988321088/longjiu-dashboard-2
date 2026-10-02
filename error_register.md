@@ -1460,3 +1460,29 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
   ① `debt_restructure_tracker.py:297-298` 現金底線缺值退 `0` → 閘門 **fail-open**（建議缺值時大聲告警，不靜默）；
   ② `check_dividend_caliber.py:449` 失敗訊息寫死「26 筆一次遷移」，與實測 n 不符（即第 6 條）。
 
+## INC-279 ｜ 2026-10-02 ｜ P2｜fixed ｜ 22:40 收工稽核連敗：寫入端不提交（close 班帳本＋入庫收據）
+- 症狀：cron「龍九收工檢查 22:40」連續多晚 exit 1，內容 `❌ 未提交: data/ai_cost_daily.jsonl`／`data/decision_intake_receipts.jsonl`；
+  在 `內容正確` 與 `內容錯誤` 兩個 case 下都是「檔是對的、只是沒人提交」，屬假紅燈但每晚佔用注意力。
+- 根因（兩條都在 22:00 晚報 `git add -A` **之後**才寫檔，且寫入端不提交）：
+  ① `wrappers/cost_watch_close.py`（22:30 日結）upsert 帳本 `data/ai_cost_daily.jsonl` 後就結束；
+     同族的 `wrappers/cost_watch_digest.py`（13:30／18:30）本來就自提交自家費用檔 → 同源不同工。
+  ② `data/decision_intake_receipts.jsonl` 由唯一入庫入口 `append_dashboard_decisions.py` 在「核准當下」append，
+     過去靠人記得一起提交（10/2 22:27 入庫 3 筆：決策本體 `dashboard_decisions.json` 提交了、收據漏掉）。
+- 修法：**寫入端自己收尾，稽核不改判準**。
+  ① close 班比照 digest 班：只 stage 自家 `COST_FILES` → commit → `auto_push.py` 唯一出口；
+     無變更不 commit 不 push；close 本體失敗仍推帳本，但 `return push_rc or r.returncode`（故障不靜默）。
+  ② 入庫入口提交 `OWN_FILES`（`dashboard_decisions.json` + 收據），`git commit -- <paths>` 限定；
+     **只在 `git rev-list --count origin/clean-main..HEAD == 1`（本筆是唯一待推）時**才呼 auto_push，
+     否則不代推（避免把未核准內容提前上線）。
+  ③ `_audit_closeout.py` 把 append-only 收據列 `BENIGN_DIRTY`：**有界遮蔽＋canary** —— 同輪的
+     `dashboard_decisions.json` 與費用帳本仍在名單外，漏提交照樣亮 ❌（真 repo 實測已證）。
+- 落地：commit `379d20d2`（tree `ec938786`，4 檔）→ CIO-DeepSeek-Flash 唯讀審查 APPROVE 0 必修 → RECORD → 推 clean-main。
+  驗證器 `tools/verify_closeout_dirty_fix.py`（%TEMP% 沙箱，28 PASS／0 FAIL；含誘餌髒檔、無變更不推、close 失敗 rc≠0 三類負向案例）。
+- **規則**：
+  1. **「誰寫檔，誰提交」**：任何在晚間 commit 之後才寫入的資料檔，必須由寫入端自己 commit＋走 `auto_push` 唯一出口；
+     不可依賴「晚報的 `git add -A`」或「人記得一起提交」——時序一改就每晚誤報。
+  2. **稽核紅燈先問「是產物錯，還是收尾錯」**：檔內容正確卻被判未提交 → 修寫入端，**不要加豁免、不要停 job**（守門是暴露漏點的那一方）。
+  3. 加 BENIGN 名單時**必附 canary**（同輪真正該提交的交付物不得一起進名單），並在名單註解寫明遮蔽界線。
+  4. 端點自己推送前先看「是否只有我這一顆待推」（`rev-list --count origin/clean-main..HEAD`），
+     否則會替別條路徑尚未核准的內容代推。
+- 相關技能：`longjiu-closeout-audit`、`cron-git-commit-scope`。
