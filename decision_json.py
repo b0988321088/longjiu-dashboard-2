@@ -5,7 +5,9 @@
   else 分支將 pending_decisions/decisions 全數清空重寫（17:00 空寫事故，第三次）。
 - 統一由此模組讀寫，內建「空寫防護」：舊檔有 pending 而新版 pending 歸零，
   或新舊皆空但有舊內容 → 中止寫入 + 自動備份 .bak + 拋例外。
-- 所有寫方：notion_bridge / decision_handler / decision_buttons / complete_operation
+- 所有寫方：notion_bridge / complete_operation（決策按鈕流程 decision_handler / decision_buttons 已於
+  2026-10-02 封存至 .archive/scripts_orphans_20261002/ — 它們期待 p["id"]/p["text"]，與實際資料形狀不符）
+- 2026-10-02：檔內 legacy 「pending_decisions」鏡像退役，Pending 唯一真值 = pending_decisions.json。
 """
 import json
 from datetime import datetime

@@ -443,11 +443,21 @@
     "status_raw": "📋 延至 2026-11（等時機）",
     "is_informational": false
   },
-{
-  "date": "2026-10-02",
-  "title": "統一現金口徑（穿透桶讀真值 853,675＋在途顯式化）",
-  "status": "✅ 已完成（10/02）：commit 3f4d07e9 第三方審查 APPROVE 0 blocker → RECORD → 推送；sync_all 20/20、全閘門 PASS；線上 6 檔 blob 一致",
-  "tags": "口徑,現金,真值層,閉環",
-  "detail": "10/02 使用者裁示：穿透桶現金改讀真值，差額 589 改列 penetration.cash_in_transit（不再藏在桶內）；不變量改為五桶＋在途＋衛星＋指定款＝總資產。沿途修掉兩個真 bug：①us30y_gate 真值塊落後 state（5.638@9/30 vs 5.603@10/1）→ 跑 update_data 自癒②餘數法承載不變量，只改數字會讓報告總資產少 589 → 改差額顯式化。桶位％與缺口不變（7.6/38.3/16.7/27.6/3.2）。殘留：emergency_llm_analysis.json （02:51 快取）仍寫舊值，下次應變觸發時刷新。"
-}
+
+ {"date": "2026-10-02",
+ "title": "核准即自動入庫（CIO 2026-09-23 ② 建議）：無法自動 append dashboard_decisions",
+ "status": "⏳ 待處理",
+ "tags": "治理,決策入庫,CIO,自動化",
+ "detail": "CIO 9/23 ②：使用者 Telegram ✅ 真核准若靠人工補，dashboard_decisions.json（CIO Part A 輸入）永遠殘缺（當日 3 筆核准只入庫 1 筆）。現況：入庫由 notion_decision_logger.py 執行（手動／我代跑）；原設計的 decision_handler.py 從未真正運作（期待 p[\"id\"]/p[\"text\"]，實際資料無此鍵）並已於 10/02 封存（.archive/scripts_orphans_20261002/）。待辦：定義「核准回覆 → 自動 append dashboard_decisions（單一入庫口）」的實作與驗證。",
+ "reopen_conditions": "設計方案定案並落地：核准解析 → 自動寫 dashboard_decisions + Notion，且有一致性檢查",
+ "due_date": null,
+ "due_date_source": "未提供",
+ "needs_due_date": true,
+ "last_confirmed": "2026-10-02",
+ "last_confirmed_source": "使用者核准（封存孤兒腳本批次）",
+ "owner": "CEO",
+ "external_owner": null,
+ "status_raw": "⏳ 待處理（10/02 建檔）",
+ "is_informational": false
+ }
 ]

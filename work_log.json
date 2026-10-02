@@ -1774,5 +1774,10 @@
   "category": "更正",
   "item": "更正註記｜『854,264 除役為可動用（僅存穿透桶敘事）』已失效（原紀錄 #279 保留不變）（使用者 2026-10-02 ✅ 核准）",
   "detail": "使用者 10/2 核准『統一現金口徑』後：穿透桶『現金/安全網』已改讀真值 cash_layers.available＝853,675（不再用餘數法）；854,264 不再具『穿透桶敘事』角色，差額 589 已顯式化為 penetration.cash_in_transit（明帳腿）並納入不變量（五桶＋在途＋衛星＋指定款＝總資產 26,791,534）。原裁示紀錄（decisions/1024、work_log #279）依治理慣例保留原文不修改，以本筆為準。工程落地：commit 3f4d07e9（第三方審查 APPROVE 0 blocker）；沿途修 INC-271（餘數法承載不變量→報告總資產少 589）、INC-272（us30y_gate 派生塊落後 state）。"
+ },
+ {"date": "2026-10-02",
+ "category": "完成",
+ "item": "統一現金口徑（穿透桶讀可動用真值 853,675＋在途 589 顯式化）（使用者 2026-10-02 裁示）",
+ "detail": "commit 3f4d07e9：穿透桶由餘數法改讀 sot_targets.allowable_cash／cash_layers.available；差額 589 改列 penetration.cash_in_transit 並納入不變量（五桶＋在途＋衛星＋指定款＝總資產 26,791,534）。第三方審查 APPROVE 0 blocker → RECORD → 推送 clean-main；sync_all 20/20、全閘門 PASS、線上 6 檔 blob 一致。桶位％與缺口不變（7.6/38.3/16.7/27.6/3.2）。沿途修 2 真 bug：us30y_gate 真值塊落後 state（INC-272）、餘數法承載不變量（INC-271）。"
  }
 ]

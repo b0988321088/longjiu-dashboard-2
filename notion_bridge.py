@@ -173,8 +173,15 @@ def sync_notion_to_local() -> dict:
     return result
 
 def local_to_notion(decisions: list) -> dict:
-    """本地決策 → Notion Ops Logs（已有 decision_handler.py 處理）"""
-    return {"synced": False, "note": "由 decision_handler.py 接管"}
+    """本地決策 → Notion Ops Logs（本函式為 no-op 佔位）。
+
+    2026-10-02：決策按鈕流程 decision_handler.py / decision_buttons.py 已封存
+    （.archive/scripts_orphans_20261002/，資料形狀不符且無人呼叫）。
+    現行入庫路徑：核准後由 notion_decision_logger.py 寫 Notion、決策落
+    dashboard_decisions.json / pending_decisions.json（CIO Part A 輸入）。
+    「核准即自動入庫」尚未自動化（CIO 2026-09-23 ② 建議），列 pending 追蹤。
+    """
+    return {"synced": False, "note": "no-op；入庫走 notion_decision_logger + dashboard_decisions/pending_decisions"}
 
 def push_daily_snapshot(tv: dict) -> str:
     """將每日資產快照寫入 Notion database"""
