@@ -263,15 +263,20 @@ def main() -> int:
         # 扣除，但它仍是總資產的一部分 → 不變量必須加回，否則會誤判「穿透不完整」。
         from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
         _rst = _rst_fn(snap)
+        # 2026-10-02（統一現金口徑）：現金桶改讀可動用真值後，餘數法的在途／未對帳差額
+        # 已從桶內移出 → 不變量必須把它加回，否則會誤判「穿透不完整」（差 589）。
+        # 讀「快取 penetration」的欄位（不是現算 _pv）：快取桶位與在途欄位必須同源，
+        # 否則重算前後會出現「舊桶已含在途、又再加一次」的雙重計算假失敗。
+        _cit = float(((snap.get("penetration") or {}).get("cash_in_transit")) or 0)
         _tot = float(snap.get("total_assets", 0))
-        _diff = _five + _sat + _rst - _tot
+        _diff = _five + _sat + _rst + _cit - _tot
         if abs(_diff) > 1:
             _hint = ""
             if abs(_five + _sat - _tot) <= 1 and _rst:
                 _hint = "｜診斷：快取 penetration 尚未重算（舊口徑仍含指定用途款）→ 先跑 build_penetration_report.py 再同步"
-            errs.append(f"穿透完整性失敗：五桶 {_five:,.0f} + 衛星 {_sat:,.0f} + 指定用途款 {_rst:,.0f} = {_five+_sat+_rst:,.0f} ≠ 總資產 {_tot:,.0f}（差 {_diff:,.0f}）{_hint}")
+            errs.append(f"穿透完整性失敗：五桶 {_five:,.0f} + 衛星 {_sat:,.0f} + 指定用途款 {_rst:,.0f} + 在途 {_cit:,.0f} = {_five+_sat+_rst+_cit:,.0f} ≠ 總資產 {_tot:,.0f}（差 {_diff:,.0f}）{_hint}")
         else:
-            print(f"✅ 穿透完整性：五桶 {_five:,.0f} + 衛星 {_sat:,.0f} + 指定用途款 {_rst:,.0f} = 總資產 {_tot:,.0f}")
+            print(f"✅ 穿透完整性：五桶 {_five:,.0f} + 衛星 {_sat:,.0f} + 指定用途款 {_rst:,.0f} + 在途 {_cit:,.0f} = 總資產 {_tot:,.0f}")
     except Exception as _e:
         errs.append(f"穿透完整性檢查執行失敗：{_e}")
 

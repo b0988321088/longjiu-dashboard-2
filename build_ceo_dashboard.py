@@ -322,7 +322,8 @@ html = f"""<div style="background:#f5f5f7;font-family:-apple-system,'PingFang TC
 
 <div style="font-size:12px;color:#6e6e73;background:#fff;border-radius:12px;padding:12px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08)"><b>一句話總結</b>：{summary_txt}</div>
 <div style="font-size:11px;color:#94a3b8;margin-top:12px;text-align:center">龍九控股 CEO 深度分析儀表板 ｜ build_ceo_dashboard.py 動態產生 ｜ 下次：{_next_txt}</div>
-</div>"""
+</div>
+</body></html>"""
 
 out = os.path.join(REPO, f"ceo_dashboard_{today}.html")
 open(out, "w", encoding="utf-8").write(html)

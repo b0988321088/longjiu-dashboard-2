@@ -586,7 +586,9 @@ CASH_MODE_NOTE = "可動用現金＝cash_layers.unrestricted_cash（唯一真值
 def allowable_cash(snap: dict) -> float:
     """可動用現金唯一真值（2026-10-02 裁示定案：cash_layers.available ＝ 853,675）。
 
-    穿透桶『現金/安全網』為在途／未對帳口徑（差額 589），不得用於 Gate／覆蓋率／投資決策。
+    2026-10-02 二階段（使用者裁示「統一現金口徑」）：穿透桶『現金/安全網』**已改讀此真值**
+    （update_all.calc_penetration），餘數法與真值的差額（在途／未對帳，實測 589）
+    改揭露於 penetration._meta.cash_in_transit，不再併入桶位。
     """
     cl = (snap or {}).get("cash_layers") or {}
     for k in ("available", "unrestricted_cash"):

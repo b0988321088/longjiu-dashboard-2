@@ -1380,3 +1380,8 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 修法：①RULE 檔兩行補上現值真值（7,557,489／1,861,476，2026-10-01 校正）②同區塊移除 7 月舊配息常數（55,451／13,593／69,044），改為「一律讀 snapshot dividend_records[當月]」③`check_dividend_caliber.py` 判準由「WARN 可見」升級為「不得有空轉點」（任一 regex 失配即 FAIL）。
 - 驗證：`python -c "import run_daily; run_daily.calibrate_sources()"` → 無空轉 WARN、三源校準通過（5/5 點真比較）；閘門 57/58（餘 1 條為未追蹤檔 gen_emergency_us_20261001.py）。
 - 規則入庫：**真值日更新保單現值時，必須同步 `DAILY_REPORT_PIPELINE_RULE.md` 的「安聯 A + 安聯 B = … 現值 N」與「第一金 = … 現值 N」兩行**，否則 `run_daily` fail-closed（exit 2）擋掉日報。校準刻意不自動同步（自動同步＝校準失去守門意義）。
+
+## INCIDENT a893bf01 (four_source_sync)
+- 首次發生: 2026-10-02 18:54:13
+- 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)

@@ -316,6 +316,9 @@ def main():
         "targets": bucket_targets(snap) or _old_pen.get("targets", {}),
         # 2026-09-29 使用者核准：指定用途款（質押撥款待清償）不列入桶位，僅記錄金額
         "restricted_cash": pen.get("restricted_cash", 0),
+        # 2026-10-02（統一現金口徑）：在途／未對帳零錢（現金桶已改讀可動用真值）
+        # 顯式記錄，供穿透完整性不變量（五桶＋在途＋衛星＋指定用途款＝總資產）使用。
+        "cash_in_transit": int((pen.get("_meta") or {}).get("cash_in_transit") or 0),
     }
     # 其餘既有延伸 key（黃金／健康／防禦維度…）：現算有就用現值，沒有才保留舊值（不靜默丟棄）
     for _k, _v in (_old_pen.get("actual_twd") or {}).items():

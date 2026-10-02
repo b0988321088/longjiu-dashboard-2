@@ -27,6 +27,12 @@ total = tw_v + us_v + def_v + bond_v + cash_pv + sat_gold_v + sat_health_v
 from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
 _restricted_cash = _rst_fn(snap)
 total = total + _restricted_cash
+# 2026-10-02 使用者裁示（統一現金口徑）：現金桶已改讀可動用真值（sot_targets.allowable_cash
+# ＝cash_layers.available），餘數法原本藏在桶內的在途／未對帳差額（實測 589）改為顯式揭露。
+# 不變量「五桶＋在途＋衛星＋指定用途款 = 總資產」必須成立 —— 少加這一條，報表會印出
+# 26,790,945（假總資產）並被 check_penetration_consistency 擋下（實測即此症狀）。
+_cash_in_transit = int((p.get("_meta") or {}).get("cash_in_transit") or 0)
+total = total + _cash_in_transit
 
 # 自動校正 snapshot 穿透數據（供日報第2章使用）
 # targets 以 snapshot 現有值為準（單一真值，禁止硬編碼覆寫）；缺 key 時 fallback 2026-08-02 定案值
@@ -71,6 +77,9 @@ snap["penetration"] = {
     "gaps": gaps,
     "actual_twd": actual_map,
     "restricted_cash": round(_restricted_cash),
+    # 2026-10-02（統一現金口徑）：在途／未對帳零錢，從現金桶移出後顯式記錄，
+    # 供穿透完整性不變量（五桶＋在途＋衛星＋指定用途款＝總資產）使用。
+    "cash_in_transit": _cash_in_transit,
     "alert": p["alert"],
 }
 # 每次管線執行滾動頂層日期（儀表板系統時間/記憶同步統一真值）

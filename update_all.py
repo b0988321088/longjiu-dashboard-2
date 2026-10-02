@@ -260,6 +260,19 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         def_v = sec_def + _fund_def
         bond_v = sec_bond + ins_bonds + _fund_bonds
     c = total - (tw + us + def_v + bond_v + _fund_gold + _fund_health) # 從總資產中扣除
+    # 2026-10-02 使用者裁示（統一現金口徑）：穿透桶「現金/安全網」一律讀可動用現金真值
+    # （sot_targets.allowable_cash ＝ cash_layers.available／unrestricted_cash）。
+    # 為什麼：餘數法會把「在途／未對帳」零錢（實測差 589）悄悄併進桶內，導致同一份報告
+    # 同時出現 853,675（可動用）與 854,264（桶位）兩個「現金」，誰是真的看不出來。
+    # 差額另記 _meta.cash_in_transit 供追溯，不參與桶位／缺口／百分比（僅揭露，不當真值）。
+    _cash_in_transit = 0
+    try:
+        from sot_targets import allowable_cash as _allowable_cash
+        _avail_c = round(float(_allowable_cash(snap or {})))
+        _cash_in_transit = round(c - _avail_c)
+        c = _avail_c
+    except Exception as _e:  # 真值缺漏 → 保留餘數法並留痕，不得靜默
+        print(f"⚠️ 穿透桶現金真值不可得（{type(_e).__name__}: {_e}）→ 沿用餘數法 {c:,}")
     us_tech = _fund_us_tech + ins_tech + sec_us_tech - round(_sat_tech)
     us_non_tech = us - us_tech
     _sot_bt = (snap.get("thresholds_2026_0915") or {}).get("桶目標_pct") or {}
@@ -311,4 +324,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             "alert": _alert,
             "_meta": {"ins_eq": ins_eq, "fund_us": _fund_us, "fund_def": _fund_def,
                       "sec_tw": sec_tw, "sec_us": sec_us, "sec_def": sec_def, "sec_bond": sec_bond,
-                      "us_tech": round(us_tech), "us_non_tech": round(us_non_tech)}}
+                      "us_tech": round(us_tech), "us_non_tech": round(us_non_tech),
+                      # 2026-10-02：餘數法 − 可動用真值的差額（在途／未對帳零錢）。
+                      # 桶位已改讀真值，此值僅供追溯與稽核，不參與任何判斷。
+                      "cash_in_transit": _cash_in_transit}}
