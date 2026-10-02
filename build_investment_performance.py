@@ -24,23 +24,22 @@ except Exception:
     def _cg_wan(*a, **k): return "1,200"
 
 from pathlib import Path
-from dividend_caliber import bucket_of
+from performance_core import classify_dividend as _core_classify_dividend  # INC-282 A 案：唯一計算層
+import performance_core as _perf_core  # noqa: E402  ← INC-282 A 案：投資績效唯一計算層
 
 BASE = Path(__file__).resolve().parent
 ADJ_FILE = BASE / "investment_performance_adjust.json"
 
 CLASS_KEYS = ["股票", "基金", "保單"]
 
-_MAP = {"etf": "股票", "oneoff": "股票", "ins": "保單", "fund": "基金"}
-
 
 def classify_dividend(name):
-    """配息 key → 類別（委派 dividend_caliber.bucket_of，單一口徑）。
+    """配息 key → 類別（單一口徑：performance_core → dividend_caliber.bucket_of）。
 
-    顯示對照：ETF／一次性（台灣特品）→股票；保單（保單／第一金，或安聯但名稱不含「基金」）→保單；
-    其餘基金→基金。原本自帶的分類規則已移除（舊版把『安聯』一律歸保單，會讓
-    『基金配息 安聯收益AM…』誤記保單）。"""
-    return _MAP[bucket_of(name)]
+    分類規則與顯示對照表已移入 performance_core（INC-282 A 案），本檔只保留相容轉發，
+    避免出現第二份分類規則。
+    """
+    return _core_classify_dividend(name)
 
 
 def load_adjust():
@@ -169,6 +168,10 @@ def funding_cost_report(snap, adj_costs=None, rate_overrides=None):
 
 
 def _fmt(v, signed=False):
+    # INC-282 A 案 Task 2（2026-10-03）：數值改由 performance_core 提供後，fee 會是 0.0（float），
+    # -0.0 格式化為 "-0"（原 int 0 為 "+0"）→ 先正規化負零，保持輸出逐位元不變。
+    if v == 0:
+        v = 0.0
     return f"{v:+,.0f}" if signed else f"{v:,.0f}"
 
 
@@ -318,12 +321,8 @@ def main():
 
     adj = load_adjust()
     a = adj.get(mk, {}) or {}
-    adj_invest = a.get("新增投入", {}) or {}       # {類: 金額}
-    adj_src = a.get("資金來源", {}) or {}          # {類: "國泰轉貸 1,200萬"}
-    adj_mv = a.get("市值變化", {}) or {}           # {類: 真實市值變化(已剔投入)} 校正優先
-    adj_div = a.get("配息", {}) or {}              # {類: 金額} 校正優先，否則自動分類
-    adj_interest = a.get("利息", {}) or {}         # {"房貸":x,"保單借貸":y}
-    adj_fees = a.get("手續費", {}) or {}           # {類: 金額}
+    # 2026-10-03（INC-282 A 案 Task 1）：新增投入／資金來源／市值變化／配息／利息／手續費
+    # 一律由 performance_core.monthly_performance() 讀取，本檔不再自行取出（避免第二套口徑）。
     project = a.get("專案收入", 0)
     adj_costs = a  # 整個月份校正 dict：含 "資金成本"(利率覆蓋) + "配息實收" + "房租實收"
     rate_overrides = a.get("資金成本", {})
@@ -332,30 +331,22 @@ def main():
     db = sqlite3.connect(str(BASE / "dragon_assets.db"))
     end_row = db_asset_on(db, month_end.isoformat())
     start_row = db_asset_on(db, prev_end.isoformat())
-    db.close()
 
     mv_reliable = a.get("市值可靠", True)   # false=月初基準不足/投入時點未知，只列現金型報酬
 
-    # ── 各類帳面市值起訖（db 自動） ──
-    mv0 = mv1 = None
+    # ── 各類帳面市值起訖（僅供基準說明；市值變化推導已移入 performance_core） ──
     db_start_note = ""
     if end_row:
-        mv1 = {"股票": end_row[1], "基金": end_row[2], "保單": end_row[3]}
         if start_row:
-            mv0 = {"股票": start_row[1], "基金": start_row[2], "保單": start_row[3]}
             db_start_note = start_row[0]
         else:
             db_start_note = f"（db 自 {end_row[0]} 起，無月初基準）"
 
-    # ── 配息自動分類（若校正未帶） ──
-    auto_div = {"股票": 0, "基金": 0, "保單": 0}
-    dr = (snap.get("dividend_records") or {}).get(mk, {}) or {}
-    for k, v in dr.items():
-        if isinstance(v, (int, float)):
-            auto_div[classify_dividend(k)] += v
-
-    # ── 利息（校正帶入，fallback 月報慣例） ──
-    interest_total = sum(adj_interest.values()) if adj_interest else 0
+    # ── 唯一計算層（INC-282 A 案 Task 1）：配息分類／市值變化／利息一律走 performance_core ──
+    core = _perf_core.monthly_performance(mk, snap=snap, adjust_all=adj, db=db, reliable=mv_reliable)
+    _core_by = {x["c"]: x for x in core["rows"]}
+    interest_total = core["interest"]
+    db.close()
 
     print(f"\n📊 投資績效月報 {y:04d}-{m:02d}（細分版：股票/基金/保單）")
     print(f"基準：{db_start_note or '校正檔'} → {end_row[0] if end_row else '校正檔'}")
@@ -364,30 +355,14 @@ def main():
     grand = 0
     class_rows = []
     for c in CLASS_KEYS:
-        inv = adj_invest.get(c, 0)
-        src = adj_src.get(c, "")
-        div = adj_div.get(c, auto_div[c])
-        fee = adj_fees.get(c, 0)
+        x = _core_by[c]                       # 全部數值來自唯一計算層，本檔不再自行運算
+        inv, src = x["invest"], x["src"]
+        div, fee = x["div"], x["fee"]
+        upd, real_mv, gross_mv = x["upd"], x["mkt"], x["gross"]
         print(f"\n■ {c}")
         if mv_reliable:
-            # 估值更新（帳務校正）：本檔與 build_mtd_report.py 共用同一欄位（2026-09-22 加入）
-            upd = 0
-            for u in (a.get("估值更新") or []):
-                if isinstance(u, dict) and (u.get("類") or u.get("類別")) == c:
-                    try:
-                        upd += float(u.get("金額") or 0)
-                    except (TypeError, ValueError):
-                        pass
-            # 真實市值變化：校正優先，其次 帳面−投入−估值更新
-            if c in adj_mv:
-                real_mv = adj_mv[c]
-                gross_mv = real_mv + inv
-            elif mv0 and mv1:
-                gross_mv = mv1[c] - mv0[c]
-                real_mv = gross_mv - inv - upd
-            else:
+            if x["basis"] == "無月初基準，不計":
                 print("  ⚠️ 無基準 → 市值變化需校正檔，先以 0 計")
-                real_mv = 0; gross_mv = 0
             print(f"  市值：帳面 {gross_mv:+,.0f}")
             if inv:
                 print(f"     − 新增投入 {inv:,.0f}" + (f"（{src}）" if src else "（自有資金）"))
@@ -395,12 +370,11 @@ def main():
                 print(f"     − 估值更新 {upd:+,.0f}（帳務校正，見校正檔）")
             print(f"     ＝ 真實市值變化 {real_mv:+,.0f}")
         else:
-            real_mv = 0
             print("  市值：本月基準不足/投入時點未知 → 不計（見備註）")
         print(f"  ＋ 配息實收 {div:+,.0f}")
         if fee:
             print(f"  − 手續費 {-fee:,.0f}")
-        sub = real_mv + div - fee
+        sub = x["pnl"]
         grand += sub
         class_rows.append({"c": c, "real_mv": real_mv, "div": div, "fee": fee, "sub": sub})
         print(f"  ＝ {c}損益 {sub:+,.0f}" + ("（含市值）" if real_mv else "（現金型：不含市值）"))
@@ -408,7 +382,7 @@ def main():
     print("\n" + "-" * 58)
     print(f"三類損益合計        {grand:+,.0f}")
     if interest_total:
-        print(f"− 投資利息(合計)    {-interest_total:,.0f}" + (f"（{json.dumps(adj_interest, ensure_ascii=False)}）" if adj_interest else ""))
+        print(f"− 投資利息(合計)    {-interest_total:,.0f}" + (f"（{json.dumps(core['interest_by'], ensure_ascii=False)}）" if core["interest_by"] else ""))
     print("=" * 58)
     perf = grand - interest_total
     print(f"🎯 投資績效（月）= {perf:+,.0f} ＝ {(perf/10000):+.1f} 萬")

@@ -29,6 +29,7 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE))
 import build_investment_performance as bip  # noqa: E402
+import performance_core as perf_core  # noqa: E402  ← INC-282 A 案：投資績效唯一計算層
 
 CLASS_KEYS = ["股票", "基金", "保單"]
 OUT_HTML = BASE / "mtd_performance.html"
@@ -63,7 +64,7 @@ def _freshness(snap: dict, mk: str, end_date: str) -> list[dict]:
 
 
 def month_series(snap, adj_all, today, current):
-    """月份序列：閉月以校正檔（已裁示口徑）為準，當月沿用 MTD 計算結果（不重算 → 零漂移）"""
+    """月份序列：閉月以 performance_core（唯一計算層）為準，當月沿用 MTD 計算結果（不重算 → 零漂移）"""
     cur_mk = today.strftime("%Y-%m")
     out = []
     for mk in sorted(k for k in adj_all if len(k) == 7 and k[4] == "-"):
@@ -81,24 +82,13 @@ def month_series(snap, adj_all, today, current):
             interest = current["interest"]["total"]
             basis = "即時計算"
         else:
-            adj_mv = a.get("市值變化") or {}
-            adj_inv = a.get("新增投入") or {}
-            adj_div = a.get("配息") or {}
-            adj_fee = a.get("手續費") or {}
-            dr = (snap.get("dividend_records") or {}).get(mk) or {}
-            auto = {c: 0.0 for c in CLASS_KEYS}
-            for k, v in dr.items():
-                if isinstance(v, (int, float)):
-                    auto[bip.classify_dividend(k)] += float(v)
-            rows = []
-            for c in CLASS_KEYS:
-                mkt = _num(adj_mv.get(c, 0)) if reliable else 0.0
-                inv = _num(adj_inv.get(c, 0))
-                div = _num(adj_div.get(c, auto.get(c, 0)))
-                fee = _num(adj_fee.get(c, 0))
-                rows.append({"c": c, "gross": mkt + inv, "invest": inv, "upd": 0.0,
-                             "mkt": mkt, "div": div, "fee": fee, "pnl": mkt + div - fee})
-            interest = sum(_num(v) for v in (a.get("利息") or {}).values())
+            # INC-282 A 案 Task 1（2026-10-03）：閉月改讀 performance_core，禁止本檔自行重算。
+            # 註：本呼叫端沿用既有輸入（不傳 db → 不推導市值變化；與改造前逐位元相同）。
+            r = perf_core.monthly_performance(mk, snap=snap, adjust_all=adj_all)
+            # upd 固定 0.0：本序列歷來不顯示估值更新（Task 2 逐位元不變；是否改為顯示真值屬 Task 3 決策點）
+            rows = [{"c": x["c"], "gross": x["gross"], "invest": x["invest"], "upd": 0.0,
+                     "mkt": x["mkt"], "div": x["div"], "fee": x["fee"], "pnl": x["pnl"]} for x in r["rows"]]
+            interest = r["interest"]
             basis = "校正檔"
         grand = sum(r["pnl"] for r in rows)
         net = grand - interest
