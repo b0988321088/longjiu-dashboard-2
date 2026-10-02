@@ -56,17 +56,26 @@ def load_receipts(day):
 
 
 def load_intake(day):
+    """今日入庫的「人工決策」＝ source 非 auto/notion（歷史寫方用過 'user'、'Hermes Telegram Gate' 等字串，
+    語意都是人核准的決策；納入才不會漏看）。"""
     d = json.loads(DEC_FILE.read_text(encoding="utf-8"))
-    return [x for x in d.get("decisions", [])
-            if str(x.get("timestamp", "")).startswith(day) and str(x.get("source")) == "user"]
+    out, srcs = [], {}
+    for x in d.get("decisions", []):
+        if not str(x.get("timestamp", "")).startswith(day):
+            continue
+        s = str(x.get("source") or "")
+        if s in ("auto", "notion"):
+            continue
+        out.append(x)
+        srcs[s or "(空)"] = srcs.get(s or "(空)", 0) + 1
+    return out, srcs
 
 
-def notion_today_count(day):
-    """獨立第二來源：Notion 分析 DB 今日建立的頁數。回傳 (count, note)。"""
+def notion_today_titles(day):
+    """獨立第二來源：Notion 分析 DB 今日建立的頁面標題清單。回傳 (titles, note)。"""
     try:
         sys.path.insert(0, str(REPO))
         from notion_bridge import notion_post  # noqa
-        import os
         db = ""
         for p in (Path.home() / "AppData/Local/hermes/.env", REPO / ".env"):
             if p.exists():
@@ -81,9 +90,58 @@ def notion_today_count(day):
         res = r.get("results")
         if res is None:
             return None, f"Notion 回應無 results（未查核）: {str(r)[:120]}"
-        return len(res), f"Notion 今日建立 {len(res)} 頁"
+        titles = []
+        for pg in res:
+            tt = ""
+            for prop in (pg.get("properties") or {}).values():
+                if prop.get("type") == "title":
+                    tt = "".join(x.get("plain_text", "") for x in prop.get("title", []))
+            titles.append(tt.strip())
+        return [t for t in titles if t], f"Notion 今日建立 {len(titles)} 頁"
     except Exception as e:
         return None, f"Notion 查核失敗（未查核）: {e}"
+
+
+def _norm_title(s):
+    """標題正規化：只留中文與英數字（去掉空白、全形/半形標點與裝飾符號），用於寬鬆比對。"""
+    return "".join(ch for ch in str(s or "") if ch.isalnum()).lower()
+
+
+def _title_of(x):
+    """取決策項的標題：新 schema 用 task；舊 decisions 模板寫在 name/action。"""
+    for k in ("task", "name", "action", "title"):
+        v = x.get(k)
+        if v:
+            return str(v)
+    return ""
+
+
+def match_notion(titles, intake):
+    """回傳 (未匹配的 Notion 標題, 未匹配的檔案項目)。用 difflib 相似度寬鬆比對
+    （標題常有日期前綴、狀態後綴、用字微差，例如 memories/backups vs backups）。"""
+    import difflib
+    f_norm = [(_norm_title(_title_of(x)), x) for x in intake]
+    matched_f = set()
+    unmatched_n = []
+    for t in titles:
+        tn = _norm_title(t)
+        best, best_r = None, 0.0
+        matched = False
+        for i, (fn, _x) in enumerate(f_norm):
+            if not fn or not tn:
+                continue
+            if fn in tn or tn in fn:
+                best, best_r, matched = i, 1.0, True
+                break
+            r = difflib.SequenceMatcher(None, fn, tn).ratio()
+            if r > best_r:
+                best, best_r = i, r
+        if matched or (best is not None and best_r >= 0.6):
+            matched_f.add(best)
+        else:
+            unmatched_n.append(f"{t}（最相近 {best_r:.2f}）" if best is not None else t)
+    unmatched_f = [x for i, (_fn, x) in enumerate(f_norm) if i not in matched_f]
+    return unmatched_n, unmatched_f
 
 
 def main():
@@ -95,10 +153,11 @@ def main():
     day = _today(a.date)
 
     rec = load_receipts(day)
-    intake = load_intake(day)
+    intake, srcs = load_intake(day)
     rec_ok = [r for r in rec if r.get("ok")]
-    rec_ids = {r.get("id") for r in rec_ok}
-    file_ids = {x.get("id") for x in intake}
+    rec_ids = {str(r.get("id")) for r in rec_ok if r.get("id")}
+    file_ids = {str(x.get("id")) for x in intake if x.get("id")}
+    noid = [x for x in intake if not x.get("id")]
 
     missing = sorted(rec_ids - file_ids)          # 收了收據但沒進檔 → 真缺口
     unregistered = sorted(file_ids - rec_ids)     # 進檔但沒有收據 → 未經單一入口（人工/舊路徑）
@@ -106,7 +165,7 @@ def main():
     if not a.quiet:
         print(f"=== 決策入庫對帳（{day}）===")
         print(f"  收據（單一入口）：{len(rec)} 筆（成功 {len(rec_ok)}）")
-        print(f"  檔案（source=user）：{len(intake)} 筆")
+        print(f"  檔案（人工決策）：{len(intake)} 筆" + (f"｜source 分布 {srcs}" if srcs else ""))
         print(f"  收據 ∩ 檔案：{len(rec_ids & file_ids)} 筆")
 
     rc = 0
@@ -125,13 +184,24 @@ def main():
         print(f"  ✅ 一致（{len(file_ids)} 筆；今日無缺口）")
 
     if a.notion:
-        cnt, note = notion_today_count(day)
+        titles, note = notion_today_titles(day)
         print(f"  （第二來源）{note}")
-        if cnt is None:
+        if titles is None:
             rc = rc or 2
-        elif cnt != len(intake):
-            print(f"  ⚠️ Notion 今日 {cnt} 筆 ≠ 檔案今日 user {len(intake)} 筆 → 有一邊漏記，需人工確認")
-            rc = rc or 2
+        else:
+            un_n, un_f = match_notion(titles, intake)
+            if not un_n and not un_f:
+                print(f"  ✅ 第二來源一致（Notion {len(titles)} 頁 ↔ 檔案 {len(intake)} 筆，標題寬鬆比對全數對上）")
+            else:
+                if un_n:
+                    print(f"  ⚠️ Notion 有 {len(un_n)} 頁在檔案找不到對應決策（可能漏入庫）：")
+                    for t in un_n:
+                        print(f"     - {t[:52]}")
+                if un_f:
+                    print(f"  ⚠️ 檔案有 {len(un_f)} 筆在 Notion 找不到對應頁（可能漏記 Notion／或 Notion 標題不同）：")
+                    for x in un_f:
+                        print(f"     - {_title_of(x)[:52]}")
+                rc = rc or 2
     return rc
 
 

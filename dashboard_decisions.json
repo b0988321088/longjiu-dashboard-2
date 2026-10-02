@@ -9837,6 +9837,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261002205742-1058",
+    "timestamp": "2026-10-02T20:57:42.528616+08:00",
+    "agent": "Hermes",
+    "task": "週五維護兩項裁示：memories/backups 低優先＋Provider Health Check 獨立變更",
+    "summary": "使用者 10/2 裁示：①memories/backups 名義 14 份、實際 60 份（約 4.1MB）列低優先 cleanup debt，不為『數字看起來不一致』增加變更面；②Provider Health Check 獨立成下一個 commit：只負責偵測與通知，不自動修改備援鏈（每天四棒各送最小 prompt：HTTP→content→finish_reason→latency→timeout；Telegram 只在異常/恢復/整條鏈失效時通知）；space-bunny-alpha 標為臨時實驗性備援。註：本筆原僅記於 Notion 與對話，未入 dashboard_decisions（CIO Part A 看不到）→ 經對帳工具抓出後由唯一入口補登。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-02T19:01:45.316977"
