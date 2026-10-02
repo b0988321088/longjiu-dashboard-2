@@ -92,7 +92,7 @@
     "title": "保單/負債寫死退路常數全面清除（低優先，已部分完成）",
     "status": "待處理",
     "tags": "no-hardcode,稽核,低優先",
-    "detail": "2026-09-18：CIO 審查 REJECT 指出寫死退路會掩蓋 snapshot 缺值。本次已清保單/月收入相關 6 處並導入 _truth()；其餘（負債 18,197,422/22,000,000、不動產 34,000,000、債券現金 9,697,196、現金 3,614,169、保單 7,634,046/1,952,366、4,483,408、5,812,576、2,097,467 等）需逐項確認 snapshot 是否為真值來源後再改，避免一次動太多造成回歸。；INC-218 後續（CIO 非阻擋）：① memory_sync.py 核准判準註解措辭與實作不一致（註解寫「開頭」、實作為前 12 字窗）② decision_handler.py 會把 pending 形狀列 append 進 decisions（無 timestamp/source、核准落 12 字後）→ 該路徑不會被計入（目前 0 筆，屬未來風險）③ 本檔 pending 用 title、dashboard_decisions 內嵌 pending 用 action（欄位名漂移，讀取端需雙 fallback）。｜INC-219 複審新增（非阻擋）：①退路常數/註解舊字串：build_penetration_report L310-313 退路名與常數、asset_diff_monitor L162/376 預設標籤、build_dashboard L593 與 index_template L746 待收列標籤、snapshot.fund_selection_principle.執行 文字②snapshot.sector_penetration 仍為 8/22 靜態版（含舊第一金FA81聯博債55% 1,095,745），日報仍渲染其 44.6% 固收與現金 → 需另案隨 sector_penetration 重算",
+    "detail": "2026-09-18：CIO 審查 REJECT 指出寫死退路會掩蓋 snapshot 缺值。本次已清保單/月收入相關 6 處並導入 _truth()；其餘（負債 18,197,422/22,000,000、不動產 34,000,000、債券現金 9,697,196、現金 3,614,169、保單 7,634,046/1,952,366、4,483,408、5,812,576、2,097,467 等）需逐項確認 snapshot 是否為真值來源後再改，避免一次動太多造成回歸。；INC-218 後續（CIO 非阻擋）：① memory_sync.py 核准判準註解措辭與實作不一致（註解寫「開頭」、實作為前 12 字窗）② decision_handler.py 會把 pending 形狀列 append 進 decisions（無 timestamp/source、核准落 12 字後）→ 該路徑不會被計入（目前 0 筆，屬未來風險）③ 本檔 pending 用 title、dashboard_decisions 內嵌 pending 用 action（欄位名漂移，讀取端需雙 fallback）。｜INC-219 複審新增（非阻擋）：①退路常數/註解舊字串：build_penetration_report L310-313 退路名與常數、asset_diff_monitor L162/376 預設標籤、build_dashboard L593 與 index_template L746 待收列標籤、snapshot.fund_selection_principle.執行 文字②snapshot.sector_penetration 仍為 8/22 靜態版（含舊第一金FA81聯博債55% 1,095,745），日報仍渲染其 44.6% 固收與現金 → 需另案隨 sector_penetration 重算｜2026-10-02 重新盤點：原列行號（asset_diff_monitor 226/251/274/370、run_daily 240/245/300/301/1248/1249/1263）已隨改版全數失效，照單無法施工。現行實測仍有 71 處 .get(key, fallback>=1萬) 寫死退路，跨 20 檔（最大宗 run_daily.py 17 處、asset_diff_monitor.py 8、fire_progress.py 7、morning_briefing.py 7）。其中 14 處為高風險總額類：不動產 34,000,000／總負債 22,000,000／月收入 228,751（asset_diff_monitor）、現金 3,119,158／保單 9,802,872（build_penetration_report）、現金 3,614,169／4,483,408（run_daily）、月收入 214,685（report_components，已是舊值）。2026-10-02 使用者裁示：本批僅更新盤點，工程分批後續。",
     "due_date": null,
     "due_date_source": "未提供",
     "needs_due_date": true,
@@ -100,7 +100,7 @@
     "last_confirmed_source": "未提供",
     "owner": "CEO",
     "external_owner": null,
-    "status_raw": "📌 待辦：同義欄位與寫死退路類已修 6 處；asset_diff_monitor.py 餘 226/251/274/370 行、run_daily.py 餘 240/245/300/301/1248/1249/1263 行仍以寫死數字當退路，缺值時會無聲給舊值",
+    "status_raw": "📌 待辦（2026-10-02 重盤）：原列 10 個行號全數失效；實測仍有 71 處寫死退路、跨 20 檔，14 處屬高風險總額類。使用者 10/02 裁示：本批更新盤點，工程分批執行（先清高風險 14 處）。",
     "is_informational": false
   },
   {
@@ -296,7 +296,7 @@
     "title": "紅線口徑敘述殘留清理（低優先）",
     "status": "待處理",
     "tags": "口徑,殘留,低優先",
-    "detail": "2026-09-25 INC cash_floor_two_calibers_unlabeled 修法（commit 70144027）已讓 build_dashboard／build_rebalance_dashboard 雙口徑並列；殘留為 LLM 敘事與 buffett_cto_analyzer 文案層，不影響判定。清理方式：LLM prompt 要求標明口徑、buffett 敘述改讀 cash_caliber。",
+    "detail": "2026-09-25 INC cash_floor_two_calibers_unlabeled 修法（commit 70144027）已讓 build_dashboard／build_rebalance_dashboard 雙口徑並列；殘留為 LLM 敘事與 buffett_cto_analyzer 文案層，不影響判定。清理方式：LLM prompt 要求標明口徑、buffett 敘述改讀 cash_caliber。｜2026-10-02 現況複查：①緊急應變兩條 prompt（2cc25e334eae／dff67a1d02bd）與週報 prompt 已明寫「單一口徑 700,000、不得引用 1,200,000」＝已完成；②程式層殘留 3 處已於本批修除：buffett_cto_analyzer 6 行硬字面「底線制70萬」改讀 snapshot、debt_restructure_tracker:295 退路 1,200,000 改讀現行口徑。",
     "due_date": null,
     "due_date_source": "未提供",
     "needs_due_date": true,
@@ -304,7 +304,7 @@
     "last_confirmed_source": "未提供",
     "owner": "CEO",
     "external_owner": null,
-    "status_raw": "📌 待辦：①緊急應變 LLM 六、風控檢查與日報的「底線 1,200,000」未標口徑 ②buffett_cto_analyzer 敘述仍寫生活底線 ≥70萬",
+    "status_raw": "📌 待驗收（2026-10-02 收斂）：prompt 層已符合；程式層 3 處已修。驗收＝後續報告不得再出現未標口徑的 1,200,000。",
     "is_informational": false
   },
   {
@@ -404,8 +404,9 @@
     "last_confirmed_source": "未提供",
     "owner": "CEO",
     "external_owner": null,
-    "status_raw": "📌 待辦（2026-09-30 登錄）：寫入者為 run_daily.py:2376 add_memory ＋ pipeline 產生 dashboard_decisions 的『日報{date}（證券…）』列；改為不含金額或由 snapshot 現讀，避免當日數字被修正後成為舊值（今晚同型兩次）",
-    "is_informational": false
+    "status_raw": "📌 待驗收（2026-10-02 修畢）：寫入者已去金額化。驗收＝連續兩天改完真值後，check_dashboard_stale 與跨報告閘門不得因日誌行告警。",
+    "is_informational": false,
+    "detail": "｜2026-10-02 已修寫入者：run_daily.py:2455-2456 兩筆 add_memory 移除當日金額字面，改為指向 snapshot 的說明文字；dashboard_decisions 既有歷史列不回溯。"
   },
   {
     "title": "📐 壓力情境「常態月配」基準待裁示（現行 115.3%；常態基準 170,586）",
