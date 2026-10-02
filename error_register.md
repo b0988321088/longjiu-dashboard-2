@@ -1501,3 +1501,16 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
   2. 判準要有生效邊界，且邊界**由資料現算**（收據最早 ts）——寫死日期會在制度重建時失效。
   3. 放寬的同時必須留 **fail-closed 退路**：無法判定起點＝一律警示，不得靜默放行。
 - 相關：INC-276（同一工具先前的判準過窄）、INC-279（同夜收工稽核誤報治本）。
+
+## INC-281 ｜ 2026-10-03 ｜ P3｜open ｜ auto_record 對「含 git rename 的 commit」完整性檢查必失敗
+- 症狀：對任一含改名的 commit 跑 `auto_record.py`（含 `auto_push.py --record auto` 的範圍補紀錄）→
+  `❌ auto_record 檢查未通過：<舊路徑> 不存在於工作區` → 不落紀錄；`auto_push --record auto` 連帶 rc=3 拒推。
+- 根因：`auto_record.changed_files()` 用 `git diff-tree --name-status -M`，**刻意**同時回傳改名的「舊路徑＋新路徑」，
+  但完整性檢查只 `if st.startswith("D"): continue`（只跳過純刪除）→ 改名的舊路徑（工作區本來就不存在）被當缺失。
+  純刪除（D）可過、改名（R100）必擋，與「-M 連舊路徑一起看是為了防繞過」的原意互相矛盾。
+- 影響：任何「封存／搬移檔案」的資料 commit 都無法走正常 RECORD 通道。本批（月報空檔封存 `.archive/`）實踩，
+  只能改走 pre-push v4 的 TAG 通道（該 commit 僅 .html，gate 有留痕）。
+- 修法（未施工）：`changed_files()` 對 R/C 另標記，或完整性檢查改
+  `if st[:1] in ("D", "R", "C") and not fp.exists(): continue`；並補「改名 commit 可落紀錄」的負向測試。
+- 範圍：本批不動（使用者指定維持邊界，不順手處理範圍外項），另案處理。
+- 相關：`.githooks/pre-push`（v4 通道規則）、`cioreview-sop`（資料 commit 走 auto_record 的既定流程）。

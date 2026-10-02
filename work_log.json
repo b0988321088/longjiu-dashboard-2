@@ -1844,5 +1844,11 @@
   "category": "修正",
   "item": "決策入庫對帳設「收據制時間邊界」（上線前歷史條目不再每晚假缺口）",
   "detail": "根因：收據制 20:53 上線後，對帳把 19:54 進檔的 mem-20261002195408-1056 當「未經單一入口」每晚警示（新制度量歷史資料）。修法：以收據檔最早 ts 為起算點（資料現算）→ 早於起算點列 ℹ️ legacy 不警示、起算點後仍 ⚠️、空檔／缺檔／壞時戳 fail-closed；真缺口 rc=1 不變。驗證器 tools/verify_decision_intake_epoch.py 17 檢查 ALL PASS。INC-280"
+ },
+ {
+  "date": "2026-10-03",
+  "category": "修正",
+  "item": "月報發布鏈修復：未滿月不得產出月報＋儀表板「彙整月報」改指 9 月",
+  "detail": "使用者回報「十月份才剛開始沒有參考價值」。根因：10/1 修口徑時測試跑 monthly_report.py 2026-10，產出僅 1 天、數字全 0 的空報表，而連結解析是 glob 取最新檔名 → 儀表板「📄 彙整月報」被指向它。修法：①monthly_report.py 未滿月拒產（--force 可覆寫）②check_dashboard_sync 第 16 條（月報連結不得指向未滿月）③index.html 連結改指 monthly_report_2026-09.html ④10 月空報表封存 .archive/ ⑤9 月報穿透現金 854,264（已除役餘數法）→853,675（可動用真值）。CIO 審查 APPROVE 0 必修；另發現 auto_record 對含 git rename 的 commit 必判失敗（INC-281）"
  }
 ]
