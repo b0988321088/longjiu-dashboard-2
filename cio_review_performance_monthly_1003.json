@@ -1,0 +1,13 @@
+{
+  "verdict": "APPROVE",
+  "reviewer": "CIO-DeepSeek-Flash",
+  "reviewed_commits": [
+    {
+      "commit": "921e61244925ae368e5ee42957a96938fedd7cd5",
+      "tree": "ff0868ab45f020fe84f2b0341856d8d57ec46829"
+    }
+  ],
+  "required_fixes": [],
+  "note": "唯讀審查（workdir=C:\\Users\\bot\\Desktop\\longjiu_system，無任何寫/checkout/commit）。A~G 全數通過，APPROVE。A. tree 逐字 ff0868ab45f020fe84f2b0341856d8d57ec46829；--numstat 6 檔、刪除行 0：performance_core.py +143、build_performance_monthly.py +285(新)、tools/verify_performance_monthly.py +166(新)、index_template.html +1、links_config.py +1、regenerate_report.py +9。B. 口徑零變更：monthly_performance() 僅新增 keys（rows 增 mv0、result 增 interest_registered），其餘 143 行全為附加新函式（month_role/month_usability/declared_baseline_month/estimate_interest/monthly_history）；Task1+2 A/B 逐位元 PASS（mtd 26234=26234、mtd_data.json 7822=7822、investment_performance 15799 bytes 全等）。C. 角色由資料決定：declared_baseline_month 讀校正檔 角色==capital_baseline；month_role 判準＝reliable/宣告/baseline 前後；month_usability＝reliable→not_comparable、當月→in_progress、其餘 complete；estimate_interest 讀校正檔 利息。生產檔內 2026-0/2026/0/2026/1 命中 0（無寫死月份），命中僅在驗證器突變測試與日期註解。D. build_performance_monthly.py 唯一真值 pc.monthly_history()；無寫死金額（逗號大額僅命中 CSS rgba）；僅以 core rows 顯示小計。驗證器 D 段 PASS。E. 突變測試有效：monkeypatch monthly_history（8月改 capital_baseline、9月改 reference、baseline=2026-08）重繪 → 基準月區跟著改成 2026/08、9 月移到歷史參考區，證明分區跟隨 core；驗證器唯讀（僅寫 tempfile）；負測植入 9,999,999 確實被抓。F. Task1+2 驗證器 PASS 19/FAIL 0，rc=0（07=100,649、08=428,802、09=6,315）。G. index_template 增 href=__PERF_MONTHLY__、links_config PLACEHOLDER_FIXED 增固定檔名 performance_monthly.html；regenerate_report 9c2 步驟 try/except + returncode，失敗僅印不影響日報（fail-soft）；check_dashboard_sync 全過 rc=0。verify_performance_monthly 全綠 FAIL 0：07=+100,649 legacy/not_comparable、08=+428,802 reference/complete、09=+6,315 capital_baseline/complete、10=−34,371 post_baseline/in_progress、post_accum n=0、報酬率無可靠期初市值則 None→「—」。無阻斷上線問題。",
+  "note_10月報酬率分母查核": "使用者點名查核：10 月 −0.137% 的分母＝db 2026-09-30 該筆（securities 2,993,630 + funds 12,654,144 + insurance 9,424,456 = 25,072,230），與 core rows 的 mv0 合計差額 0；分子＝Σ市值變化（core 損益口徑第一項）−34,371；34,371/25,072,230 = −0.137%，與頁面顯示一致。口徑說明：分子為純市值變化（配息為 0 故今日與「(市值+配息)/期初」同值；配息入帳後兩者會分歧，屆時如需『總報酬率』須另行定義）。此查核由本審查之持有人(parent agent)獨立實測，非審查員輸出。"
+}
