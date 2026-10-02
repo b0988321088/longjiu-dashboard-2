@@ -1019,7 +1019,7 @@ var gotTotal = _salaryA + divTotal + rentGot;
     fetch('work_log.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(list){
       if(!list || !list.length) return;
       var wesc = function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
-      var CLOSED_CAT = ['完成','修正','計畫','結案','閉環'];
+      var CLOSED_CAT = ['完成','修正','計畫','結案','閉環','更正'];  /* 2026-10-02：加「更正」— 更正註記本身即完成的登錄動作（否則假未閉環） */
       var open = list.filter(function(x){ var c=String(x.category||''); return c && CLOSED_CAT.indexOf(c)<0; });
       open.reverse();  /* 同日：後登錄者較新 */
       open.sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); });

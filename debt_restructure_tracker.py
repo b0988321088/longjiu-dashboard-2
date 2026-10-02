@@ -292,8 +292,10 @@ def main():
     _caps = (_th.get("單桶硬上限_pct") or {})
     _us30_red = float(_brake.get("us30y_pct", 5.30))
     _us30_yel = float(_brake.get("us30y_警戒_pct", 5.20))
-    _cash_floor = float(_cashr.get("合計底線", 1200000))
-    _cash_life = float(_cashr.get("生活底線", 700000))
+    # 2026-10-02：退路不得寫死 1,200,000（9/27 裁示取消追繳緩衝、單一口徑＝生活底線 700,000）；
+    # 缺值時退回「生活底線」本身，而非已作廢的合計底線舊值。
+    _cash_floor = float(_cashr.get("合計底線") or _cashr.get("生活底線") or 0)
+    _cash_life = float(_cashr.get("生活底線") or _cashr.get("合計底線") or 0)
     _us_cap = float(_caps.get("美股市值型", 40))
     # US30Y（us30y 為百分比數值 5.22 → 轉 0.0522 比較）
     us30y_dec = us30y / 100.0

@@ -77,6 +77,24 @@ def cash_caliber_note(snapshot: dict) -> str:
 DCM_FREEZE_THRESHOLD = 60  # 防守承接凍結門檻（2026-09-16 使用者裁示：合併口徑 ≥60% 為判準）
 
 
+def cash_floor_label(snapshot: dict | None = None) -> str:
+    """現金底線字面（單一口徑，2026-09-27 裁示「生活底線 70 萬即為緩衝」）。
+    一律由 snapshot 現讀，禁止在敘述／prompt 寫死「70萬」（口徑一改就變舊值）。
+    缺值時回中性字樣「底線」，寧可不給數字，也不給錯的數字。"""
+    _s = snapshot
+    if _s is None:
+        try:
+            _s = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        except Exception:
+            _s = {}
+    _cr = ((_s.get("thresholds_2026_0915") or {}).get("現金_twd") or {})
+    try:
+        _v = float(_cr.get("合計底線") or _cr.get("生活底線") or 0)
+    except (TypeError, ValueError):
+        _v = 0.0
+    return f"{_v / 10000:.0f}萬" if _v else "底線"
+
+
 def defensive_combined_pct(snapshot: dict):
     """防守合併口徑真值（%）。讀 snapshot.defensive_combined_metric.佔比，讀不到回 None。"""
     _pct = ((snapshot or {}).get("defensive_combined_metric") or {}).get("佔比")
@@ -177,7 +195,7 @@ def penetration_analysis(snapshot: dict) -> dict:
                     key_action = "台股市值低配屬逐步架構預期：僅回檔小單分批低吸，不強迫貼齊"
         # 2026-08-23：現金超標 → 階段性停泊說明（8/22 裁示：底線制取代 5% 目標；不當風險警報）
         if gaps.get("cash", 0) > 5:
-            _cash_note = f"💰 現金 {actual.get('cash', 0):.1f}% 為階段性停泊（{cash_caliber_note(snapshot)}；底線制 ≥70萬 ✅）"
+            _cash_note = f"💰 現金 {actual.get('cash', 0):.1f}% 為階段性停泊（{cash_caliber_note(snapshot)}；底線制 ≥{cash_floor_label(snapshot)} ✅）"
             key_risk = (key_risk + "｜" + _cash_note) if key_risk else _cash_note
         return {
             "actual": actual, "actual_twd": actual_twd, "gaps": gaps,
@@ -228,7 +246,7 @@ def penetration_analysis(snapshot: dict) -> dict:
                 key_action = "台股市值低配屬逐步架構預期：僅回檔小單分批低吸，不強迫貼齊"
     # 2026-08-23：現金超標 → 階段性停泊說明
     if gaps.get("cash", 0) > 5:
-        _cash_note = f"💰 現金 {actual.get('cash', 0):.1f}% 為階段性停泊（{cash_caliber_note(snapshot)}；底線制 ≥70萬 ✅）"
+        _cash_note = f"💰 現金 {actual.get('cash', 0):.1f}% 為階段性停泊（{cash_caliber_note(snapshot)}；底線制 ≥{cash_floor_label(snapshot)} ✅）"
         key_risk = (key_risk + "｜" + _cash_note) if key_risk else _cash_note
 
     return {
@@ -349,7 +367,7 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
             f"結構風險：美元曝險{_usd_exp_val:.1f}%（紅線{_usd_cap_val:.0f}%）、高科技{_tech_exp_val:.1f}%（紅線{_tech_cap_val:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡\n"
             f"產業與風險因子：{_industry_context()}\n"
             f"{market_text}\n"
-            f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（{cash_caliber_note(_snap)}）；"
+            f"硬性約束（違反即無效，不可建議）：現金=底線制{cash_floor_label(_snap)}（{cash_caliber_note(_snap)}）；"
             f"台股加碼單筆≤5萬、8-12週分批；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
             f"債券等 US30Y<5.30%；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）。\n"
             f"請以巴菲特投資哲學（護城河、安全邊際、能力圈、長期持有、別人恐懼我貪婪）做 3 點具體觀察 + 1 個紀律提醒，200字內，繁體中文，不要重複數字表。"
@@ -422,7 +440,7 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
         lines.append("  ⚠️ 防守超標：維持現況，不追高")
     else:
         lines.append("  ✅ 防守合理範圍（第一優先維持）")
-    lines.append("  🔒 兩條底線：現金≥70萬；US30Y 無連3日<5.20% 不開放市值大額進場")
+    lines.append(f"  🔒 兩條底線：現金≥{cash_floor_label()}；US30Y 無連3日<5.20% 不開放市值大額進場")
     
     return lines
 
@@ -457,7 +475,7 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
             f"結構風險：美元曝險{_usd_exp_val:.1f}%（紅線{_usd_cap_val:.0f}%）、高科技{_tech_exp_val:.1f}%（紅線{_tech_cap_val:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡、{us30y_note()}\n"
             f"產業與風險因子：{_industry_context()}\n"
             f"{market_text}\n"
-            f"硬性約束（違反即無效，不可建議）：現金=底線制70萬（{cash_caliber_note(_snap)}）；"
+            f"硬性約束（違反即無效，不可建議）：現金=底線制{cash_floor_label(_snap)}（{cash_caliber_note(_snap)}）；"
             f"台股加碼單筆≤5萬、8-12週分批（不可建議單筆大額）；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
             f"債券等 US30Y<5.30%（禁建議買債）；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）。\n"
             f"請以技術面（動能、趨勢、支撐壓力、風險）+ 產業資金流向（哪個產業順勢/逆勢）給：今日最大風險 + 具體建議動作（含標的/金額節奏，須符合上述約束），150字內，繁體中文。"
@@ -493,7 +511,7 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
                 direction = "減碼" if gv > 0 else "補碼"
                 lines.append(f"  {cat}：{direction} {abs(gv):.0f}pp")
     lines.append("")
-    lines.append("再平衡：逐步架構導向，容許階段偏離；優先守現金底線70萬")
+    lines.append(f"再平衡：逐步架構導向，容許階段偏離；優先守現金底線{cash_floor_label()}")
     return lines
 
 def main(**kwargs):

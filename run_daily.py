@@ -2451,9 +2451,11 @@ def main():
     # === 寫入記憶 ===
     try:
         from memory_helper import add_memory
-        _pen = _snap.get("penetration", {}).get("actual_twd", {})
-        add_memory("Hermes", f"日報{TODAY}", f"證券{_snap.get('securities_total_market_value',0):,} 保單{_snap.get('insurance_current_value',0):,} 配息{tv.get('monthly_dividend',0):,}")
-        add_memory("Hermes", f"資產穿透{TODAY}", f"台股{_pen.get('台股市值型成長',0):,} 美股{_pen.get('美股市值型成長',0):,} 防守{_pen.get('防守型配息',0):,} 債券{_pen.get('債券',0):,} 現金{_pen.get('現金/安全網',0):,}")
+        # 2026-10-02（pending「日誌／記憶條目停止嵌入浮動金額」）：不再把當日金額寫進記憶／日誌行
+        #   —— 金額一旦入帳或校正，日誌行就成了舊值，會讓 check_dashboard_stale 與跨報告閘門誤報。
+        #   記憶只登錄「已產出」事實，數字一律現讀 snapshot（單一真值）。
+        add_memory("Hermes", f"日報{TODAY}", "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）")
+        add_memory("Hermes", f"資產穿透{TODAY}", "已產出（五桶市值見 snapshot.penetration.actual_twd）")
     except Exception as _me:
         print(f"  ⚠️ 記憶寫入失敗: {_me}")
 

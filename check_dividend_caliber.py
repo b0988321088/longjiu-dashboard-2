@@ -665,6 +665,8 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "mtd_data.json", "mtd_performance.html", "passive_caliber.py",
            "sabbatical_checklist_update.py", "work_log.json", "radar_state.json",
            "cio_approve.py",   # 治理工具（--status 比較基準修正，2026-09-28）
+           "buffett_cto_analyzer.py",   # 2026-10-02：現金底線字面改 cash_floor_label() 現讀（口徑殘留清理）
+           "debt_restructure_tracker.py",   # 2026-10-02：移除已作廢的 1,200,000 合計底線退路
            }
 # 逐日產物：命名比對，跨月不失效（舊版 allowed_prefixes 釘死 2026-09）
 _DAILY = re.compile(r"^(asset_diff|retirement_plan|daily_report_v2|rebalance_dashboard|"

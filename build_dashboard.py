@@ -933,7 +933,7 @@ def main():
         _wlog = json.loads((BASE / "work_log.json").read_text(encoding="utf-8"))
         _td = _dtm.date.today()
         _lo = _td - _dtm.timedelta(days=6)
-        _CAT_ICON = {"完成": "✅", "修正": "🔧"}
+        _CAT_ICON = {"完成": "✅", "修正": "🔧", "更正": "📝"}  # 2026-10-02：加「更正」與模板 JS CLOSED_CAT 同步（兩層語義一致）
         _done = []
         for _e in _wlog:
             _ic = _CAT_ICON.get(str(_e.get("category", "")))
