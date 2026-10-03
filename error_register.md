@@ -1541,3 +1541,26 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
   「⏳ 本月投資績效見績效頁」；**B** 僅正名＋把說明欄改成真公式（`淨資產變化 − 專案收入`），不引入新口徑。
   邊界：**不修歷史資料、不動 9 月真值、不動線上版本**（待使用者裁定後另批施工）。
 - 相關：INC-281（同日另案：auto_record 對 rename）、INC-278（cash canonical key）——三者互不混合。
+
+## INC-283 ｜ 2026-10-03 ｜ P1｜fixed（同日） ｜ 晨間產線 fail-closed 被「範圍內缺口字樣」觸發；訊息把「有 1 條新 FAIL」讀成「沒有新增 FAIL」
+- 症狀（07:00 cron 警報）：`regenerate_report.py` rc=1；失敗項列出 3 個線上 404
+  （`daily_report_v2_2026-10-03.html`／`asset_diff_2026-10-03.html`／`buffett_cto_report_2026-10-03.md`）
+  與 `🔒 ❌ Task1+2 驗證器 PASS — FAIL: 無新增 FAIL（既有 6 條白名單外為空）`。
+- **誤判風險（本卡教訓之二）**：該行 label 是「Task1+2 驗證器 PASS」，detail 取「最後一行含 FAIL」＝
+  **檢查項名稱**「無新增 FAIL（…）」，讀成「PASS — FAIL」→ 極易被讀成「沒有新增 FAIL，只是 404」。
+  實際上是「**有 1 條新 FAIL**」，且 404 是它的下游症狀，不是原因。
+- 真因鏈：`check_dividend_caliber` 檢查項「可接受範圍內桶不得殘留缺口／行動字樣（範圍內＝完全靜默）」
+  抓到日報內「台股 7.6%（…缺口 -2.4pp…）」而台股可接受範圍為 7~13% → Task1+2 驗證器 rc=1 →
+  月度比較閘門 fail-closed 阻擋 commit/push → 今日產物未上線 → 推送後驗證 404 → rc=1。
+- 文字來源：`data/emergency_llm_analysis.json`（10/2 21:36 美股班 LLM 自由內文）注入日報時
+  **未過 `report_components.band_filter`** —— index.html／rebalance_dashboard 都有過，日報是唯一漏掉的一路。
+  檢查項 10/2 00:49（3c24673d）上線、閘門 10/3 02:13（e201119d）才接進 07:00 → 故首次觸發。
+- 修法（程式 commit `3497b072`）：兩條注入路徑（`regenerate_report.py`／`run_daily.py`）注入前套
+  `band_filter`；`verify_performance_monthly` 的 Task1+2 檢查項改印「摘要行＋逐條未過檢查項」、
+  label 改「Task1+2 驗證器零回歸（rc=0）」；`verify_performance_core_task12` 檢查項更名
+  「既有閘門無新增 FAIL（白名單外為空）」並移除寫死「6 條」。Task1+2 三檔未動。
+- 未竟／觀察：`emergency_report_*.html`／`emergency_taiex_report_*.html`（同一份 JSON 渲染）仍保留原字樣；
+  該三檔不在守門掃描範圍（只掃 index／rebalance／daily）→ 是否一併納入靜默，另案。
+- 教訓：① **fail-closed 的下游症狀會蓋掉上游真因**：產線失敗要先看閘門結論，不要從 404 往回追。
+  ② **守門訊息不得把「檢查項名稱」當結論貼在判定後面**（否則一次誤讀就會回滾已封版的程式）。
+- 相關：INC-282（Task1+2 封版，本次證明非其回歸）、INC-278（cash canonical key）。
