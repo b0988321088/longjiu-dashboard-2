@@ -9842,112 +9842,112 @@
       "summary": "使用者 10/2 裁示：①memories/backups 名義 14 份、實際 60 份（約 4.1MB）列低優先 cleanup debt，不為『數字看起來不一致』增加變更面；②Provider Health Check 獨立成下一個 commit：只負責偵測與通知，不自動修改備援鏈（每天四棒各送最小 prompt：HTTP→content→finish_reason→latency→timeout；Telegram 只在異常/恢復/整條鏈失效時通知）；space-bunny-alpha 標為臨時實驗性備援。註：本筆原僅記於 Notion 與對話，未入 dashboard_decisions（CIO Part A 看不到）→ 經對帳工具抓出後由唯一入口補登。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261002222716-1059",
+      "timestamp": "2026-10-02T22:27:16.383365+08:00",
+      "agent": "Hermes",
+      "task": "未閉環 3 筆修復（範圍鎖死）",
+      "summary": "使用者 2026-10-02 核准且範圍鎖死：①假未閉環（CLOSED_CAT 兩層同步加『更正』；該筆 category 更正→修正）②日誌／記憶停止嵌當日金額（run_daily.py 兩筆 add_memory 改指向 snapshot）③紅線口徑殘留（buffett_cto_analyzer 新增 cash_floor_label() 現讀，6 處寫死『70萬』改動態；debt_restructure_tracker 移除已作廢的 1,200,000 合計底線退路）＋④寫死退路盤點入庫（實測 71 處／20 檔、高風險 14 處；原清單 10 個行號已全失效）。明確不批准：71 處常數實改、既有 7 條基準 FAIL 混入本批。CIO-DeepSeek-Flash 審查 APPROVE（0 required_fixes、31/31 唯讀驗證）；commit 02442fca（程式）＋f43b9f46（資料）＋691cf79f（未閉環 3→2）已推 clean-main；線上 work_log 未閉環 4→2（②待兩日驗收、④未施工）。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261002222716-1060",
+      "timestamp": "2026-10-02T22:27:16.519682+08:00",
+      "agent": "Hermes",
+      "task": "INC-278 立案＋fail-open 列架構級禁止",
+      "summary": "使用者 2026-10-02 裁示：7 條守門基準紅燈（可動用現金口徑／穿透桶×3／日報缺口字樣／Pending schema n=28／status 四態）另案處理、不混入本批；並要求『missing → 0 的 fail-open 應列為架構級禁止事項，不只是修幾個檔案』。落地：INC-278 立案（error_register.md，含逐字紅燈清單）＋ patch 技能 no-hardcode-mandate 新增『缺值不得靜默退 0』四條規則（canonical truth 單一 accessor／缺值 raise 或告警／禁止 or 0 偽裝真值／守門不得用 fallback 掩蓋鍵名漂移）。已查根因：snapshot 實鍵為 cash_layers.unrestricted_cash，但 10/2 裁示文字與部分端點寫 cash_layers.available → 無 fallback 者取到 0（0 值假真值）。下一案順序（使用者定）：canonical 鍵名 → sot_targets 單一 accessor → 全面掃描 → 禁止下游自行 fallback → 跑完整守門；裁示未下來前不動任何讀者端。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261002222716-1061",
+      "timestamp": "2026-10-02T22:27:16.664423+08:00",
+      "agent": "Hermes",
+      "task": "未閉環診斷 SOP 入技能＋10/4 自動驗收",
+      "summary": "使用者 2026-10-02 核准永久化：技能 unclosed-card-diagnosis-sop（定位＝診斷／驗收 SOP，非自動修復）核心順序『證明→分類→修→驗收→立案』；五鐵則：①兩層類別語義同步（CLOSED_CAT／_CAT_ICON）②真假分離（有 closure condition 不得提前閉環）③驗收條件卡化④基準線證明（git stash 證明既有 FAIL 非本批 regression）⑤canonical truth 單一 accessor。並建立 cron job 618df86be65d（一次性 2026-10-04 10:00 +08:00，deliver origin，掛載該技能）：驗收『日誌／記憶嵌浮動金額』兩個 closure condition（閘門不得因日誌行告警／dashboard_decisions 歷史列是否仍觸發）；兩日內真值無變動時註明『空洞通過（vacuous）不得算證據』；成立才自動閉環（改 category→修正、重產、純資料 commit、推送、ls-remote 驗證），不成立則完全不碰檔案只回報原因。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261002225941-1062",
+      "timestamp": "2026-10-02T22:59:41.943735+08:00",
+      "agent": "Hermes",
+      "task": "22:40 收工稽核連敗治本（close 班自提交帳本＋入庫入口自提交寫入集）",
+      "summary": "使用者 10/2 ✅ 核准：根因二（①cost_watch_close 22:30 寫帳本不提交 ②入庫收據漏提交）→ 修法：close 班比照 digest 班自提交＋auto_push 唯一出口、入庫入口自提交 OWN_FILES（僅唯一待推時才推）、_audit_closeout 收據列 benign（canary dashboard_decisions.json／帳本仍判 ❌）。commit 379d20d2（CIO-DeepSeek-Flash 唯讀審查 APPROVE 0 必修，tree ec938786）＋13ccd9bf（INC-279／work_log／審查原文）；沙箱自測 28 PASS／0 FAIL；22:40 job 不暫停。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261002231005-1063",
+      "timestamp": "2026-10-02T23:10:05.362645+08:00",
+      "agent": "Hermes",
+      "task": "現金口徑維持：Gate 基準＝可動用現金 853,675（總現金 1,753,675 扣指定款 900,000）",
+      "summary": "使用者 2026-10-02 裁示「維持」：國泰保留款 700,000（質押續簽維持率）與洲際W 房貸預繳 200,000 續列指定款、不釋放；留停 Gate 第一條（自由現金 ≥100 萬）基準維持 cash_layers.unrestricted_cash = 853,675，距門檻 146,325，維持 cash_mode 防守模式。總現金 1,753,675 為含指定款口徑，不得作為 Gate 或加碼判斷基準。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261003000808-1064",
+      "timestamp": "2026-10-03T00:08:08.668694+08:00",
+      "agent": "Hermes",
+      "task": "月報發布鏈修復：未滿月不得產出月報＋儀表板「彙整月報」改指 9 月",
+      "summary": "使用者 2026-10-03 核准放行。根因：月報＝完整月份（月初vs月末）彙整，10/1 修口徑時測試跑 monthly_report.py 2026-10 產出僅 1 天、數字全 0 的空報表；而連結解析是 glob 取最新檔名 → 儀表板「📄 彙整月報」被指向它（發布鏈問題，非手動改 index）。修法：①monthly_report.py 未滿月拒產（--force 可覆寫）②check_dashboard_sync 第 16 條閘門（月報連結不得指向未滿月）③index.html 連結改指 monthly_report_2026-09.html ④10 月空報表封存 .archive/ ⑤9 月報穿透現金 854,264（已除役餘數法）→853,675 真值同步。CIO-DeepSeek-Flash 唯讀審查 APPROVE 0 必修（tree 5327fc40，驗證器 25/0）。線上驗證：彙整月報→2026-09、9 月報 853,675、10 月檔 404、post-push 21/21 條 200。另立 INC-281（auto_record 對含 git rename 的 commit 必失敗）另案處理，本批不動。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261003002708-1065",
+      "timestamp": "2026-10-03T00:27:08.731884+08:00",
+      "agent": "Hermes",
+      "task": "INC-282 裁示：投資績效口徑統一（Q1 留／Q2 每日／Q3 硬擋；43,267 另案）",
+      "summary": "使用者 2026-10-03 對 A 案計畫（98f07662）最終裁示：①Q1 保留「常態淨資產變化（扣專案）」但與投資績效完全分欄（有管理價值，不可再冒充投資績效；分欄可避免把資產／負債增加誤讀成賺錢）②Q2 一致性閘門掛每日 regenerate_report、FAIL 就擋，且須驗「來源真值→各輸出」的鏈而非只比四個 HTML 數字 ③Q3 動態月報硬擋：抽不到 canonical performance 不准發布帶績效數字的新版，不給一週寬限 ④43,267 純投資槓桿利息口徑本案不碰（避免從消滅三套數字變成重新定義投資績效）⑤V2 負向測試（舊配息 167,675 → 必須抓出 2,911）列不可省略 regression test。邊界：不動歷史真值、不改 9 月數字、不上線。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261003004102-1066",
+      "timestamp": "2026-10-03T00:41:02.618289+08:00",
+      "agent": "hermes",
+      "task": "INC-282 A 案 Task 1+2 收案封版（計算引擎統一、月報口徑未變）",
+      "summary": "使用者 2026-10-03 裁示收案：Task 1（performance_core.py 唯一計算層）＋Task 2（既有輸出逐位元不變）判定完成並封版。落地：commit 2d1b9ed2（程式4檔，tree 03b8229a96e4）＋9c90dd8d（審查紀錄/work_log/計畫進度）；CIO-DeepSeek-Flash APPROVE 0 required fixes；origin/clean-main=HEAD=9c90dd8d、未推送0；既有績效結果完全不變（7月+100,649／8月+428,802／9月+6,315）、A/B regression 19/19 PASS、線上閘門 21/21 200。明確留待 Task 3 的決策點：mtd 閉月 rows 的 upd 由固定 0.0 是否改顯示真值（如9月保單 −178,547）；此為月報口徑/語意設計問題，不得在 Task 1/2 偷渡。後續：以 07:00 管線跑完本已審版本為第一個穩定週期觀測點；Task 3～6（月報口徑／常態淨資產變化／專案性資金流之定義）另案單獨審，動工前不動程式。封版基線＝『計算引擎已統一，但月報口徑尚未改變』。",
+      "status": "已結案",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261003020815-1067",
+      "timestamp": "2026-10-03T02:08:15.744349+08:00",
+      "agent": "Hermes",
+      "task": "投資績效｜月度比較上線＋資本基準月制度（2026/09）",
+      "summary": "使用者 2026-10-03 裁示並核准施工：新增 performance_monthly.html（儀表板新按鈕「📈 投資績效｜月度比較」）。分區由 performance_core 角色判定（前端不得人工判斷）：2026/07＝Baseline／不可比（校正檔 市值可靠=false）、2026/08＝歷史參考／非正式基準（角色=reference）、2026/09＝⭐新資本基準月（角色=capital_baseline，9 月底貸款/質押資金到位、資本基數改變）、2026/10＝基準後第 1 個月／進行中（−34,371 未扣利息；同口徑暫估 −76,371，利息暫估來源 2026-09）。累計只計『基準月之後且已完成』月份（基準月本身、歷史參考、Baseline、進行中一律不列入）→ 目前 0 個完整基準後月份。歷史月報酬率顯示「—」禁止反推；10 月報酬率 −0.137%（分母＝db 2026-09-30 期初投資市值 25,072,230，已逐項查核差額 0）。施工鐵則：performance_core 唯一真值、HTML 不寫死數字、不修改 Task 1+2 計算口徑。驗收：tools/verify_performance_monthly.py PASS（含突變測試＋9,999,999 負測）、Task1+2 驗證器 PASS 19/0、check_dashboard_sync 全過（線上 21/21）。程式 commit 921e6124（CIO-DeepSeek-Flash APPROVE 0 required fixes）＋資料 18fb1e1f／5a5bfc9f 已推 clean-main、線上已驗證。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261003021525-1068",
+      "timestamp": "2026-10-03T02:15:25.407965+08:00",
+      "agent": "Hermes",
+      "task": "月度比較閘門接進每日 07:00 管線（自動化防守：FAIL 阻擋推送）",
+      "summary": "使用者 2026-10-03 核准（定位＝自動化防守，不是新的績效功能）：把 tools/verify_performance_monthly.py 接進 regenerate_report.py 的 9c4 步驟（組完 _push_files 之後、git add/commit/auto_push 之前）。PASS → 才允許後續；FAIL（rc≠0 或驗證器例外）→ _gate_ok=False → 阻擋 commit/push、行程 exit 1（fail-closed，不得因驗證器故障放行）。明確不變：不修改績效計算邏輯、不修改目前頁面、不新增任何績效口徑、保留既有突變測試／負測能力。新增 tools/verify_perf_monthly_gate_wiring.py（結構檢查＋行為負測：植入 9,999,999 必須 rc≠0、還原後 sha256 位元一致、範圍檢查限本批檔案）。驗收：接線閘門 PASS 0 FAIL；月度比較閘門 PASS；Task1+2 零回歸 19/0；check_dividend_caliber 79/85（僅既有 6 條）。程式 commit e201119d（tree 07ac8e66）CIO-DeepSeek-Flash APPROVE 0 required fixes，已推 clean-main（a1d572d1）；07:00 首次實跑即為上線驗收點。",
+      "status": "completed",
+      "source": "user"
     }
 ,
   {
-    "id": "mem-20261002222716-1059",
-    "timestamp": "2026-10-02T22:27:16.383365+08:00",
+    "id": "mem-20261003080915-1069",
+    "timestamp": "2026-10-03T08:09:15.205031+08:00",
     "agent": "Hermes",
-    "task": "未閉環 3 筆修復（範圍鎖死）",
-    "summary": "使用者 2026-10-02 核准且範圍鎖死：①假未閉環（CLOSED_CAT 兩層同步加『更正』；該筆 category 更正→修正）②日誌／記憶停止嵌當日金額（run_daily.py 兩筆 add_memory 改指向 snapshot）③紅線口徑殘留（buffett_cto_analyzer 新增 cash_floor_label() 現讀，6 處寫死『70萬』改動態；debt_restructure_tracker 移除已作廢的 1,200,000 合計底線退路）＋④寫死退路盤點入庫（實測 71 處／20 檔、高風險 14 處；原清單 10 個行號已全失效）。明確不批准：71 處常數實改、既有 7 條基準 FAIL 混入本批。CIO-DeepSeek-Flash 審查 APPROVE（0 required_fixes、31/31 唯讀驗證）；commit 02442fca（程式）＋f43b9f46（資料）＋691cf79f（未閉環 3→2）已推 clean-main；線上 work_log 未閉環 4→2（②待兩日驗收、④未施工）。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261002222716-1060",
-    "timestamp": "2026-10-02T22:27:16.519682+08:00",
-    "agent": "Hermes",
-    "task": "INC-278 立案＋fail-open 列架構級禁止",
-    "summary": "使用者 2026-10-02 裁示：7 條守門基準紅燈（可動用現金口徑／穿透桶×3／日報缺口字樣／Pending schema n=28／status 四態）另案處理、不混入本批；並要求『missing → 0 的 fail-open 應列為架構級禁止事項，不只是修幾個檔案』。落地：INC-278 立案（error_register.md，含逐字紅燈清單）＋ patch 技能 no-hardcode-mandate 新增『缺值不得靜默退 0』四條規則（canonical truth 單一 accessor／缺值 raise 或告警／禁止 or 0 偽裝真值／守門不得用 fallback 掩蓋鍵名漂移）。已查根因：snapshot 實鍵為 cash_layers.unrestricted_cash，但 10/2 裁示文字與部分端點寫 cash_layers.available → 無 fallback 者取到 0（0 值假真值）。下一案順序（使用者定）：canonical 鍵名 → sot_targets 單一 accessor → 全面掃描 → 禁止下游自行 fallback → 跑完整守門；裁示未下來前不動任何讀者端。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261002222716-1061",
-    "timestamp": "2026-10-02T22:27:16.664423+08:00",
-    "agent": "Hermes",
-    "task": "未閉環診斷 SOP 入技能＋10/4 自動驗收",
-    "summary": "使用者 2026-10-02 核准永久化：技能 unclosed-card-diagnosis-sop（定位＝診斷／驗收 SOP，非自動修復）核心順序『證明→分類→修→驗收→立案』；五鐵則：①兩層類別語義同步（CLOSED_CAT／_CAT_ICON）②真假分離（有 closure condition 不得提前閉環）③驗收條件卡化④基準線證明（git stash 證明既有 FAIL 非本批 regression）⑤canonical truth 單一 accessor。並建立 cron job 618df86be65d（一次性 2026-10-04 10:00 +08:00，deliver origin，掛載該技能）：驗收『日誌／記憶嵌浮動金額』兩個 closure condition（閘門不得因日誌行告警／dashboard_decisions 歷史列是否仍觸發）；兩日內真值無變動時註明『空洞通過（vacuous）不得算證據』；成立才自動閉環（改 category→修正、重產、純資料 commit、推送、ls-remote 驗證），不成立則完全不碰檔案只回報原因。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261002225941-1062",
-    "timestamp": "2026-10-02T22:59:41.943735+08:00",
-    "agent": "Hermes",
-    "task": "22:40 收工稽核連敗治本（close 班自提交帳本＋入庫入口自提交寫入集）",
-    "summary": "使用者 10/2 ✅ 核准：根因二（①cost_watch_close 22:30 寫帳本不提交 ②入庫收據漏提交）→ 修法：close 班比照 digest 班自提交＋auto_push 唯一出口、入庫入口自提交 OWN_FILES（僅唯一待推時才推）、_audit_closeout 收據列 benign（canary dashboard_decisions.json／帳本仍判 ❌）。commit 379d20d2（CIO-DeepSeek-Flash 唯讀審查 APPROVE 0 必修，tree ec938786）＋13ccd9bf（INC-279／work_log／審查原文）；沙箱自測 28 PASS／0 FAIL；22:40 job 不暫停。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261002231005-1063",
-    "timestamp": "2026-10-02T23:10:05.362645+08:00",
-    "agent": "Hermes",
-    "task": "現金口徑維持：Gate 基準＝可動用現金 853,675（總現金 1,753,675 扣指定款 900,000）",
-    "summary": "使用者 2026-10-02 裁示「維持」：國泰保留款 700,000（質押續簽維持率）與洲際W 房貸預繳 200,000 續列指定款、不釋放；留停 Gate 第一條（自由現金 ≥100 萬）基準維持 cash_layers.unrestricted_cash = 853,675，距門檻 146,325，維持 cash_mode 防守模式。總現金 1,753,675 為含指定款口徑，不得作為 Gate 或加碼判斷基準。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261003000808-1064",
-    "timestamp": "2026-10-03T00:08:08.668694+08:00",
-    "agent": "Hermes",
-    "task": "月報發布鏈修復：未滿月不得產出月報＋儀表板「彙整月報」改指 9 月",
-    "summary": "使用者 2026-10-03 核准放行。根因：月報＝完整月份（月初vs月末）彙整，10/1 修口徑時測試跑 monthly_report.py 2026-10 產出僅 1 天、數字全 0 的空報表；而連結解析是 glob 取最新檔名 → 儀表板「📄 彙整月報」被指向它（發布鏈問題，非手動改 index）。修法：①monthly_report.py 未滿月拒產（--force 可覆寫）②check_dashboard_sync 第 16 條閘門（月報連結不得指向未滿月）③index.html 連結改指 monthly_report_2026-09.html ④10 月空報表封存 .archive/ ⑤9 月報穿透現金 854,264（已除役餘數法）→853,675 真值同步。CIO-DeepSeek-Flash 唯讀審查 APPROVE 0 必修（tree 5327fc40，驗證器 25/0）。線上驗證：彙整月報→2026-09、9 月報 853,675、10 月檔 404、post-push 21/21 條 200。另立 INC-281（auto_record 對含 git rename 的 commit 必失敗）另案處理，本批不動。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261003002708-1065",
-    "timestamp": "2026-10-03T00:27:08.731884+08:00",
-    "agent": "Hermes",
-    "task": "INC-282 裁示：投資績效口徑統一（Q1 留／Q2 每日／Q3 硬擋；43,267 另案）",
-    "summary": "使用者 2026-10-03 對 A 案計畫（98f07662）最終裁示：①Q1 保留「常態淨資產變化（扣專案）」但與投資績效完全分欄（有管理價值，不可再冒充投資績效；分欄可避免把資產／負債增加誤讀成賺錢）②Q2 一致性閘門掛每日 regenerate_report、FAIL 就擋，且須驗「來源真值→各輸出」的鏈而非只比四個 HTML 數字 ③Q3 動態月報硬擋：抽不到 canonical performance 不准發布帶績效數字的新版，不給一週寬限 ④43,267 純投資槓桿利息口徑本案不碰（避免從消滅三套數字變成重新定義投資績效）⑤V2 負向測試（舊配息 167,675 → 必須抓出 2,911）列不可省略 regression test。邊界：不動歷史真值、不改 9 月數字、不上線。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261003004102-1066",
-    "timestamp": "2026-10-03T00:41:02.618289+08:00",
-    "agent": "hermes",
-    "task": "INC-282 A 案 Task 1+2 收案封版（計算引擎統一、月報口徑未變）",
-    "summary": "使用者 2026-10-03 裁示收案：Task 1（performance_core.py 唯一計算層）＋Task 2（既有輸出逐位元不變）判定完成並封版。落地：commit 2d1b9ed2（程式4檔，tree 03b8229a96e4）＋9c90dd8d（審查紀錄/work_log/計畫進度）；CIO-DeepSeek-Flash APPROVE 0 required fixes；origin/clean-main=HEAD=9c90dd8d、未推送0；既有績效結果完全不變（7月+100,649／8月+428,802／9月+6,315）、A/B regression 19/19 PASS、線上閘門 21/21 200。明確留待 Task 3 的決策點：mtd 閉月 rows 的 upd 由固定 0.0 是否改顯示真值（如9月保單 −178,547）；此為月報口徑/語意設計問題，不得在 Task 1/2 偷渡。後續：以 07:00 管線跑完本已審版本為第一個穩定週期觀測點；Task 3～6（月報口徑／常態淨資產變化／專案性資金流之定義）另案單獨審，動工前不動程式。封版基線＝『計算引擎已統一，但月報口徑尚未改變』。",
-    "status": "已結案",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261003020815-1067",
-    "timestamp": "2026-10-03T02:08:15.744349+08:00",
-    "agent": "Hermes",
-    "task": "投資績效｜月度比較上線＋資本基準月制度（2026/09）",
-    "summary": "使用者 2026-10-03 裁示並核准施工：新增 performance_monthly.html（儀表板新按鈕「📈 投資績效｜月度比較」）。分區由 performance_core 角色判定（前端不得人工判斷）：2026/07＝Baseline／不可比（校正檔 市值可靠=false）、2026/08＝歷史參考／非正式基準（角色=reference）、2026/09＝⭐新資本基準月（角色=capital_baseline，9 月底貸款/質押資金到位、資本基數改變）、2026/10＝基準後第 1 個月／進行中（−34,371 未扣利息；同口徑暫估 −76,371，利息暫估來源 2026-09）。累計只計『基準月之後且已完成』月份（基準月本身、歷史參考、Baseline、進行中一律不列入）→ 目前 0 個完整基準後月份。歷史月報酬率顯示「—」禁止反推；10 月報酬率 −0.137%（分母＝db 2026-09-30 期初投資市值 25,072,230，已逐項查核差額 0）。施工鐵則：performance_core 唯一真值、HTML 不寫死數字、不修改 Task 1+2 計算口徑。驗收：tools/verify_performance_monthly.py PASS（含突變測試＋9,999,999 負測）、Task1+2 驗證器 PASS 19/0、check_dashboard_sync 全過（線上 21/21）。程式 commit 921e6124（CIO-DeepSeek-Flash APPROVE 0 required fixes）＋資料 18fb1e1f／5a5bfc9f 已推 clean-main、線上已驗證。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261003021525-1068",
-    "timestamp": "2026-10-03T02:15:25.407965+08:00",
-    "agent": "Hermes",
-    "task": "月度比較閘門接進每日 07:00 管線（自動化防守：FAIL 阻擋推送）",
-    "summary": "使用者 2026-10-03 核准（定位＝自動化防守，不是新的績效功能）：把 tools/verify_performance_monthly.py 接進 regenerate_report.py 的 9c4 步驟（組完 _push_files 之後、git add/commit/auto_push 之前）。PASS → 才允許後續；FAIL（rc≠0 或驗證器例外）→ _gate_ok=False → 阻擋 commit/push、行程 exit 1（fail-closed，不得因驗證器故障放行）。明確不變：不修改績效計算邏輯、不修改目前頁面、不新增任何績效口徑、保留既有突變測試／負測能力。新增 tools/verify_perf_monthly_gate_wiring.py（結構檢查＋行為負測：植入 9,999,999 必須 rc≠0、還原後 sha256 位元一致、範圍檢查限本批檔案）。驗收：接線閘門 PASS 0 FAIL；月度比較閘門 PASS；Task1+2 零回歸 19/0；check_dividend_caliber 79/85（僅既有 6 條）。程式 commit e201119d（tree 07ac8e66）CIO-DeepSeek-Flash APPROVE 0 required fixes，已推 clean-main（a1d572d1）；07:00 首次實跑即為上線驗收點。",
+    "task": "CIO 獨立審查｜commit 3497b072（INC-283 日報緊急應變過 band_filter）",
+    "summary": "第三方 CIO（independent, adversarial）對抗性審查 3497b072：Verdict APPROVE、Confidence high、Blocking 0、Claim checks 11/11 PASS、Task1+2 PASS 19/FAIL 0、Monthly gate rc=0、Scope creep false、Task1+2 core files 未動、KNOWN_GATE_FAILS 未擴大、唯讀驗證 PASS。非阻擋（記錄）：emergency_llm_analysis.json 與 emergency_report_2026-10-02.html 殘留屬 scope leak(low)，另開工單、不污染本 commit；check_dividend_caliber rc=1 之 6 項為既有白名單 FAIL、非本 commit 引入。狀態鎖定 APPROVE/CLOSED。",
     "status": "completed",
     "source": "user"
   }
   ],
   "meta": {
-    "updated_at": "2026-10-02T21:34:09.448049"
+    "updated_at": "2026-10-03T08:04:29.046391"
   },
-  "last_updated": "2026-10-02T18:00:00+08:00",
+  "last_updated": "2026-10-03T18:00:00+08:00",
   "2026-09-29": [
     "9/29 質押撥款入帳 NT$5,900,000（10:57，國泰世華通知；實撥 590 萬@2.65%，原表定 540 萬@2.77%）→ 真值日全資產同步：現金 6,719,182／保單 9,453,825／基金 12,654,144／台股 2,981,410／總資產 31,808,561、負債 36,003,720（含基金質押 590 萬）、淨值 -4,195,159；銀行口徑 LTV 50.1%。待執行：清償 500 萬高息（券商 96 萬@3.92% 先、保單 400 萬@4% 後）",
     "9/29 裁示：質押撥款 590 萬先轉 200 萬還保單借貸（4% → 月省 6,667；保單借貸 400 萬 → 200 萬）；撥款剩餘 3,900,000。順序調整：保單（4%）優先於券商（3.92%）。待入帳確認後四源同步。",
@@ -9999,7 +9999,7 @@
     {
       "date": "2026-09-21",
       "action": "台股解凍 → 納入 9/21 再平衡評估",
-      "status": "已確認",
+      "status": "⏸ 條件未成立（2026-10-02 真值重算）：US30Y 5.603%（as_of 2026-10-01）、連續 25 日 ≥ 紅線；閘門 OK（解凍不許可）",
       "tags": "再平衡,台股,解凍,US30Y,006208,0051"
     },
     {
