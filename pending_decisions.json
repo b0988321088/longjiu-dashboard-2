@@ -122,7 +122,7 @@
   {
     "date": "2026-09-21",
     "title": "台股解凍 → 納入 9/21 再平衡評估",
-    "status": "⏸ 條件未成立（2026-10-02 真值重算）：US30Y 5.603%（as_of 2026-10-01）、連續 25 日 ≥ 紅線；閘門 OK（解凍不許可）",
+    "status": "⏸ 條件未成立（2026-10-03 真值重算）：US30Y 5.603%（as_of 2026-10-01）、連續 25 日 ≥ 紅線；閘門 OK（解凍不許可）",
     "tags": "再平衡,台股,解凍,US30Y,006208,0051",
     "detail": "恢復條件＝連續 2 交易日 <5.30 且 as_of 在真值日 3 天內 ＋ 500 萬清償完成。閘門實作：sot_targets.us30y_gate（value＋as_of＋連續天數）；rebalance_snapshot.json 強制寫入 us30y_as_of／unfreeze_allowed／unfreeze_block_reason。10/1 月檢視併同判定。",
     "unfreeze_rule": {

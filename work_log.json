@@ -1874,5 +1874,17 @@
   "category": "完成",
   "item": "CIO 獨立審查｜commit 3497b072（INC-283 日報緊急應變過 band_filter＋閘門訊息可讀性）",
   "detail": "第三方 CIO（independent, adversarial）對抗性審查 APPROVE、0 必修（commit 3497b072／tree 2f589c41f3ea）。11/11 claim checks PASS；Task1+2 驗證器 PASS 19/FAIL 0（rc=0）；月度比較閘門 rc=0 PASS；只動 4 檔、Task1+2 三檔（performance_core/build_mtd_report/build_investment_performance）未觸；KNOWN_GATE_FAILS 白名單未擴大；唯讀驗證器確認未改工作區。三項保留判斷：①3497b072 本身核准、不需返工。②data/emergency_llm_analysis.json 與 emergency_report_2026-10-02.html 仍殘留『台股 7.6%…缺口 -2.4pp』，屬 scope leak／low severity（既有產物、gate 未掃 emergency_report_*），另開工單處理，不回頭污染本 commit。③check_dividend_caliber rc=1 的 6 項為既有白名單 FAIL，CIO 已確認非本 commit 引入，不得據此把 3497b072 判為失敗。狀態鎖定 APPROVE / CLOSED。"
+ },
+ {
+  "date": "2026-10-03",
+  "category": "完成",
+  "item": "INC-282 裁示：投資績效口徑統一（Q1 留／Q2 每日／Q3 硬擋；43,267 另案）（使用者 2026-10-03 對 A 案計畫（98f07662）最終裁示：①Q1 保留「常態淨資產變化（扣專案）」但與投資績效完全分欄（有管理價值，不可再冒充投資績效；分欄可避免把資產／負債增加誤讀成賺錢）②Q2 一致性閘門掛每日 regenerate_repor",
+  "detail": "使用者 2026-10-03 對 A 案計畫（98f07662）最終裁示：①Q1 保留「常態淨資產變化（扣專案）」但與投資績效完全分欄（有管理價值，不可再冒充投資績效；分欄可避免把資產／負債增加誤讀成賺錢）②Q2 一致性閘門掛每日 rege"
+ },
+ {
+  "date": "2026-10-03",
+  "category": "完成",
+  "item": "投資績效｜月度比較上線＋資本基準月制度（2026/09）（使用者 2026-10-03 裁示並核准施工：新增 performance_monthly.html（儀表板新按鈕「📈 投資績效｜月度比較」）。分區由 performance_core 角色判定（前端不得人工判斷）：2026/07＝Baseline／不可比（校正檔 市值可靠=false）、2026/0",
+  "detail": "使用者 2026-10-03 裁示並核准施工：新增 performance_monthly.html（儀表板新按鈕「📈 投資績效｜月度比較」）。分區由 performance_core 角色判定（前端不得人工判斷）：2026/07＝Base"
  }
 ]
