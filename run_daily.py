@@ -2364,6 +2364,15 @@ def main():
             emergency_data = json.loads(emergency_json_path.read_text(encoding='utf-8'))
             analysis_content = emergency_data.get("full_report", emergency_data.get("analysis", ""))
             _report_html = _format_content_to_html(analysis_content, content_type="emergency_analysis")
+            # 2026-10-03（INC-283）：緊急應變 LLM 內文是自由文字，可能替「可接受範圍內」的桶寫出
+            #   「缺口 ±X.Xpp」等行動字樣（10/2 21:36 美股班內文即為實例：寫「台股 7.6%…缺口 -2.4pp」
+            #   但台股可接受範圍是 7~13%）→ 與 index.html／rebalance_dashboard 同口徑，
+            #   注入日報前一律過 band_filter（裁示②：範圍內＝完全靜默）。範圍外文字原樣保留。
+            try:
+                from report_components import band_filter as _band_filter
+                _report_html = _band_filter(_report_html)
+            except Exception as _bfe:
+                print(f"[WARN] band_filter 套用失敗（緊急應變內文，範圍內靜默可能失效）：{_bfe}")
             _gen2 = emergency_data.get("generated_at", "") or ""
             # 2026-09-18 INC-214：原字串寫死「美股時段產出…今晚 21:30 自動更新」，但 13:00 那條
             # 有 emergency_gate_tw.py 守門（CALM 就不跑），且文案與實際時段無關 → 使用者抓到

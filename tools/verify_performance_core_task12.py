@@ -156,7 +156,9 @@ if not _m:
 else:
     _names = re.findall(r"'([^']+)'", _m.group(3))
     _new = [n for n in _names if n not in KNOWN_GATE_FAILS and not n.startswith("變更範圍")]
-    chk("無新增 FAIL（既有 6 條白名單外為空）", not _new, "、".join(_new) if _new else f"{_m.group(1)}/{_m.group(2)} PASS")
+    chk("既有閘門無新增 FAIL（白名單外為空）", not _new,
+        "、".join(_new) if _new else
+        f"白名單外 0 條｜{_m.group(1)}/{_m.group(2)} PASS")
 
 print(f"\n=== Task 1+2 驗收：PASS {len(PASS)} / FAIL {len(FAIL)} ===")
 for f in FAIL:

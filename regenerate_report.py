@@ -179,6 +179,15 @@ if _ej.exists():
                     f'⚠️ 歷史內文（as_of={_dt_src}）：以下為 {_dt_src} 的緊急應變分析，其中資產、負債、'
                     f'覆蓋率等數字為<b>當時快照，非 {TODAY} 現況</b>；{TODAY} 真值請以日報第 1 章「財富生命線」為準。</p>'
                     ) if _is_stale else ""
+    # 2026-10-03（INC-283）：緊急應變 LLM 內文為自由文字，可能替「可接受範圍內」的桶寫出
+    #   「缺口 ±X.Xpp」等行動字樣（10/2 21:36 美股班實例：台股寫「缺口 -2.4pp」但可接受範圍 7~13%）
+    #   → 與 index.html／rebalance_dashboard 同口徑，注入日報前一律過 band_filter
+    #   （裁示②：範圍內＝完全靜默）。範圍外文字原樣保留。
+    try:
+        from report_components import band_filter as _band_filter
+        _r = _band_filter(_r)
+    except Exception as _bfe:
+        print(f"[WARN] band_filter 套用失敗（緊急應變內文，範圍內靜默可能失效）：{_bfe}")
     _emergency_html = f'<div class="callout callout-warn">{_stale_badge}{_note}{_r.replace(chr(10), "<br>" + chr(10))}</div>'
     # 加入緊急應變連結（自動找最新可用檔案）
     _emergency_files = sorted(BASE.glob("emergency_report_2*.html"), reverse=True)

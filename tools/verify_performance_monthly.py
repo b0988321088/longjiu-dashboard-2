@@ -153,7 +153,15 @@ def main() -> int:
     r = subprocess.run([sys.executable, str(BASE / "tools" / "verify_performance_core_task12.py"),
                         "2d1b9ed2"], cwd=str(BASE), capture_output=True, text=True)
     tail = [ln for ln in (r.stdout or "").splitlines() if "驗收" in ln or "FAIL" in ln]
-    chk(r.returncode == 0, "Task1+2 驗證器 PASS", (tail[-1].strip() if tail else ""))
+    # 2026-10-03（INC-283）：原本 detail 取「最後一行含 FAIL 者」→ 會把檢查項名稱
+    #   「無新增 FAIL（既有 6 條白名單外為空）」貼在「Task1+2 驗證器 PASS」後面，
+    #   讀起來像「PASS — FAIL」，把「有 1 條新 FAIL」誤讀成「沒有新增 FAIL」。
+    #   改為：摘要行（驗收：PASS x / FAIL y）＋ 逐條列出未過的檢查項名稱。
+    _lines = (r.stdout or "").splitlines()
+    _summary = next((ln.strip().strip("=").strip() for ln in _lines if "驗收：" in ln), (tail[-1].strip() if tail else ""))
+    _failed = [ln.split("FAIL:", 1)[1].strip() for ln in _lines if ln.strip().startswith("FAIL:")]
+    chk(r.returncode == 0, "Task1+2 驗證器零回歸（rc=0）",
+        (_summary + ("｜未過檢查項：" + "、".join(_failed) if _failed else "")).strip())
 
     total = 12 + len(fresh["months"]) + 14
     print(f"\n=== 月度比較閘門：{'PASS' if not fails else 'FAIL'}（FAIL {len(fails)}）===")
