@@ -9932,20 +9932,37 @@
       "summary": "使用者 2026-10-03 核准（定位＝自動化防守，不是新的績效功能）：把 tools/verify_performance_monthly.py 接進 regenerate_report.py 的 9c4 步驟（組完 _push_files 之後、git add/commit/auto_push 之前）。PASS → 才允許後續；FAIL（rc≠0 或驗證器例外）→ _gate_ok=False → 阻擋 commit/push、行程 exit 1（fail-closed，不得因驗證器故障放行）。明確不變：不修改績效計算邏輯、不修改目前頁面、不新增任何績效口徑、保留既有突變測試／負測能力。新增 tools/verify_perf_monthly_gate_wiring.py（結構檢查＋行為負測：植入 9,999,999 必須 rc≠0、還原後 sha256 位元一致、範圍檢查限本批檔案）。驗收：接線閘門 PASS 0 FAIL；月度比較閘門 PASS；Task1+2 零回歸 19/0；check_dividend_caliber 79/85（僅既有 6 條）。程式 commit e201119d（tree 07ac8e66）CIO-DeepSeek-Flash APPROVE 0 required fixes，已推 clean-main（a1d572d1）；07:00 首次實跑即為上線驗收點。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261003080915-1069",
+      "timestamp": "2026-10-03T08:09:15.205031+08:00",
+      "agent": "Hermes",
+      "task": "CIO 獨立審查｜commit 3497b072（INC-283 日報緊急應變過 band_filter）",
+      "summary": "第三方 CIO（independent, adversarial）對抗性審查 3497b072：Verdict APPROVE、Confidence high、Blocking 0、Claim checks 11/11 PASS、Task1+2 PASS 19/FAIL 0、Monthly gate rc=0、Scope creep false、Task1+2 core files 未動、KNOWN_GATE_FAILS 未擴大、唯讀驗證 PASS。非阻擋（記錄）：emergency_llm_analysis.json 與 emergency_report_2026-10-02.html 殘留屬 scope leak(low)，另開工單、不污染本 commit；check_dividend_caliber rc=1 之 6 項為既有白名單 FAIL、非本 commit 引入。狀態鎖定 APPROVE/CLOSED。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004000646-1070",
+      "timestamp": "2026-10-04T00:06:46.136227",
+      "agent": "Hermes",
+      "task": "日報2026-10-03",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261004000646-1071",
+      "timestamp": "2026-10-04T00:06:46.170968",
+      "agent": "Hermes",
+      "task": "資產穿透2026-10-03",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
     }
-,
-  {
-    "id": "mem-20261003080915-1069",
-    "timestamp": "2026-10-03T08:09:15.205031+08:00",
-    "agent": "Hermes",
-    "task": "CIO 獨立審查｜commit 3497b072（INC-283 日報緊急應變過 band_filter）",
-    "summary": "第三方 CIO（independent, adversarial）對抗性審查 3497b072：Verdict APPROVE、Confidence high、Blocking 0、Claim checks 11/11 PASS、Task1+2 PASS 19/FAIL 0、Monthly gate rc=0、Scope creep false、Task1+2 core files 未動、KNOWN_GATE_FAILS 未擴大、唯讀驗證 PASS。非阻擋（記錄）：emergency_llm_analysis.json 與 emergency_report_2026-10-02.html 殘留屬 scope leak(low)，另開工單、不污染本 commit；check_dividend_caliber rc=1 之 6 項為既有白名單 FAIL、非本 commit 引入。狀態鎖定 APPROVE/CLOSED。",
-    "status": "completed",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-03T08:04:29.046391"
+    "updated_at": "2026-10-04T00:06:46.170968"
   },
   "last_updated": "2026-10-03T18:00:00+08:00",
   "2026-09-29": [
