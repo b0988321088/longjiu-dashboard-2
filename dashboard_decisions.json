@@ -10056,6 +10056,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261004211444-1082",
+    "timestamp": "2026-10-04T21:14:44.057720+08:00",
+    "agent": "Hermes",
+    "task": "P0 延伸 cash_floor 700,000 第一批｜施工完成，待收案（DELIVERED）",
+    "summary": "使用者 2026-10-04 GO 開工。範圍：判斷類消費端全數改接既有單一 accessor sot_targets.cash_floor()（不建第二份 accessor、不改 snapshot 政策值、不動純顯示文字／macro_regime／threshold 30M／P1/P2）。逐條（15 處／9 檔）：institutional_flow.py:528,636｜rotation_engine.py:202,251,259｜report_components.py:165｜tactical_table.py:85｜build_audit_dashboard.py:87＋159｜build_rebalance_report.py:74,217｜run_daily.py:1295,1992,2006｜sabbatical_checklist_update.py:24（原本地 _cash_floor 為第二份 accessor，已刪除，4 個呼叫端改走單一入口）｜build_weekly_report.py:43。施工中由 T1 靜態複掃新抓到 1 處原清單未列：build_audit_dashboard.py:159 KPI 卡片顏色判定 CASH_AVAIL>=700000（判斷類，非顯示）→ 一併清除。並修正實際缺陷：tactical_table.py:85 原讀 cash_floor_rule.floor（snapshot 實鍵為 cash_floor、無 floor 鍵）→ 恆落 700000 fallback，鍵名漂移被 fallback 永久掩蓋（INC-278 同型）。驗收全過：T1 靜態複掃（含 f-string 內插判定）判定類殘留 0，殘留僅顯示類字串；T2 accessor 有值 700,000、三消費端取真值；T3 硬測1 遮蔽 snapshot 底線 → 7 支腳本零洩漏，6 支 raise、institutional_flow 兩處被既有寬鬆 except Exception 攔截並印告警（未落回 700,000）；T4 硬測2 鍵名漂移 → cash_floor_rule.cash_floor 由 700,000 改 750,000，新版超額位移 50,000 而 HEAD 舊版位移 0（證明舊碼讀不到該鍵），accessor 第二來源（生活底線 720,000）亦驗證位移 20,000；T5 沙盒真跑 7 支腳本 rc=0；回歸 check_thresholds 與 HEAD 基準線同為既有 1 項 FAIL（pending 卡狀態，非本批 regression）、check_caliber_consistency 不一致 0；diff 範圍僅 9 檔 .py，snapshot.json 未變更。獨立審查 APPROVE 0 blocking；commit 4c5c68fe 已推 clean-main，遠端 sha 複驗相符。附帶觀察（未列入本批、建議另案）：institutional_flow.py 以寬鬆 except Exception 包住本週投資計劃區塊 → 底線缺值時該區塊會靜默消失（有告警但 rc=0），與「假真值」不同型但屬可觀測性缺口。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-04T11:39:48.740349"
