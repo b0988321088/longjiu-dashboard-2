@@ -266,8 +266,14 @@ def build_table(snap: dict, us30y: float = None) -> dict:
             "大規模再平衡": sum(1 for r in rows if r["階梯等級"] == "大規模再平衡"),
         },
         # 專業投資人二策略管控（snapshot professional_investor）
-        "professional_investor": snap.get("professional_investor", {}),
+        "professional_investor": _pi_payload(snap),
     }
+
+def _pi_payload(snap: dict) -> dict:
+    """PI 雙軌 payload — 委派 pi_card.pi_payload（唯一計算點；禁在此重複組公式）。"""
+    import pi_card as _pic
+    return _pic.pi_payload(snap)
+
 
 def to_markdown(table: dict) -> str:
     """輸出週報可讀的 Markdown 表格（含視覺進度條）"""
@@ -282,12 +288,20 @@ def to_markdown(table: dict) -> str:
             f"{r['偏離pp']:+.1f} | {r['建議動作']} | {r['精算金額']:,} | "
             f"{r['階梯等級']} |"
         )
-    # 專業投資人風控卡（核心-衛星策略）
-    pi = table.get("professional_investor", {}) or {}
+    # 專業投資人（PI）雙軌狀態卡｜使用者 2026-10-04 裁決：財力軌 vs 資格軌分離
+    _pi = table.get("professional_investor", {}) or {}
+    if _pi.get("error"):
+        lines.append("")
+        lines.append("**🎫 專業投資人（PI）｜雙軌狀態卡**")
+        lines.append(f"- ⛔ PI 資料缺真值（{_pi['error']}）→ 拒絕顯示任何數字（fail-closed）")
+        return "\n".join(lines)
+    pi = _pi.get("record", {}) or {}
     if pi:
         lines.append("")
-        lines.append("**🎫 專業投資人風控卡｜核心‑衛星保守成長（零槓桿預設）**")
-        lines.append(f"- 狀態：{pi.get('status', '申請中')}｜門檻：{pi.get('threshold', 30_000_000):,}｜現況：金融資產含保單 28,220,311｜缺口：{pi.get('gap', 0):,}（可併配偶）")
+        lines.append("**🎫 專業投資人（PI）｜雙軌狀態卡（零槓桿預設）**")
+        lines.append(f"- 資格軌：申請 {pi.get('application_status', '—')}｜核准 {pi.get('approval_status', '—')}｜Lombard 硬鎖 {'🔓 已解除' if _pi['approved'] else '🔒 鎖定'}")
+        lines.append(f"- 財力軌（系統內部 readiness proxy，非機構最終認定）：{_pi['proxy_twd']:,.0f} ／ 門檻 {_pi['threshold_twd']:,.0f}｜缺口 {_pi['gap_twd']:,.0f}｜{'✅ 達標' if _pi['meets_financial_threshold'] else '🔴 未達'}")
+        lines.append("- ⚠️ 財力達標 ≠ 已核准：門檻僅為送件條件之一（另涉書面申請、專業知識與交易經驗、機構合理調查）")
         _fo = pi.get("force_order", [])
         if isinstance(_fo, list) and _fo:
             lines.append(f"- 強制順序：{' > '.join(_fo[:2])}")

@@ -1061,5 +1061,89 @@ def cash_need_90d_line(snap: dict) -> str:
     a = d["A_已確認"]["合計"]
     s = ("未來 90 天現金需求覆蓋率 <b>" + ("{:.1f}%".format(d["覆蓋率_pct"]) if d["覆蓋率_pct"] is not None else "—")
          + "</b>（可動用 " + format(d["可動用"], ",.0f") + " ÷ 已確認 " + format(a, ",.0f") + "；門檻 "
-         + format(d["門檻_pct"], ",.0f") + "%）")
+         + format(d["門檻_pct"], ",.0f") + "%)")
     return s
+
+
+# ═══════════════════════════════════════════════════════════════
+# PI 專業投資人｜雙軌模型（使用者 2026-10-04 裁決，規格 PI_DATA_LIFECYCLE_SPEC.md）
+#   ① 財力軌（proxy vs 法規門檻）與 ② 資格軌（application／approval）**完全分離**。
+#      資產達標 ≠ PI 已核准；只有 approval_status == "已核准" 可解鎖 Lombard／entry hard lock。
+#   ② 門檻＝外部法規常數，唯一位置在本模組，**不進 snapshot、不 fail-closed**。
+#   ③ 財力 proxy 為「本系統內部送件 readiness proxy」，**不等同**金融機構最終資格認定；
+#      不得命名或對外宣稱為「法規認定資產」。
+#   ④ proxy／gap／meets 一律**即時計算、不得落地儲存**
+#      （避免再現 28,220,311 型 stale 假真值：落地值會隨資產變動而過期）。
+#   ⑤ 頂層 snapshot.pi_status 與舊欄名「認列」已廢除。
+# ═══════════════════════════════════════════════════════════════
+
+PI_CONTAINER_KEY = "professional_investor"
+
+# 金管會「專業投資人」自然人財力門檻（金融資產 3,000 萬元）──外部法規常數，唯一位置。
+PI_REGULATORY_THRESHOLD_TWD = 30_000_000
+
+# 兩軌狀態機（使用者 2026-10-04 裁決：六態；拒絕／失效不得塞回「未申請」）
+PI_APPLICATION_STATES = ("未申請", "已送件", "補件中", "審核中")
+PI_APPROVAL_STATES = ("未核准", "已核准", "未通過", "失效")
+PI_ALL_STATES = PI_APPLICATION_STATES + PI_APPROVAL_STATES
+
+
+def pi_regulatory_threshold() -> int:
+    """外部法規常數（專業投資人財力門檻）。不進 snapshot、不參與 fail-closed。"""
+    return PI_REGULATORY_THRESHOLD_TWD
+
+
+def pi_record(snap: dict) -> dict:
+    """PI 唯一容器（snapshot.professional_investor）。缺值／狀態非法 → raise（fail-closed）。
+
+    禁 `or {}`、禁預設「申請中」、禁由資產推導核准。
+    """
+    rec = (snap or {}).get(PI_CONTAINER_KEY)
+    if not isinstance(rec, dict) or not rec:
+        raise KeyError(
+            f"snapshot 缺 {PI_CONTAINER_KEY} → PI 無真值，拒絕以預設值頂替"
+            "（2026-10-04 PI 資料生命週期裁決；頂層 snapshot.pi_status／舊欄名「認列」已廢除）")
+    for _k in ("application_status", "approval_status"):
+        _v = rec.get(_k)
+        if not isinstance(_v, str) or not _v:
+            raise KeyError(f"{PI_CONTAINER_KEY}.{_k} 缺值 → PI 狀態無真值，拒絕判斷")
+        if _v not in PI_ALL_STATES:
+            raise KeyError(
+                f"{PI_CONTAINER_KEY}.{_k}={_v!r} 非合法狀態（合法：{'／'.join(PI_ALL_STATES)}）"
+                "→ 拒絕回退為「未申請」（禁 fail-open）")
+    return rec
+
+
+def pi_application_status(snap: dict) -> str:
+    """送件流程狀態（未申請／已送件／補件中／審核中）。"""
+    return pi_record(snap)["application_status"]
+
+
+def pi_approval_status(snap: dict) -> str:
+    """資格核准結果（未核准／已核准／未通過／失效）。"""
+    return pi_record(snap)["approval_status"]
+
+
+def pi_financial_asset_proxy(snap: dict) -> float:
+    """PI 財力檢核口徑（內部 readiness proxy）＝證券＋基金＋保單＋現金（含存款）。
+
+    口徑裁決：使用者 2026-10-04（含現金）。**即時計算、不落地**。
+    本值為系統內部 proxy，不等同金融機構最終資格認定。
+    """
+    return (securities_total(snap) + funds_total(snap)
+            + insurance_total(snap) + total_cash(snap))
+
+
+def pi_gap_twd(snap: dict) -> float:
+    """距財力門檻缺口（達標為 0）。僅為財力檢核，**不構成資格判定**。"""
+    return max(0.0, float(PI_REGULATORY_THRESHOLD_TWD) - pi_financial_asset_proxy(snap))
+
+
+def pi_meets_financial_threshold(snap: dict) -> bool:
+    """財力 proxy 是否達門檻。**不得**用來推導 PI 已核准（第五測）。"""
+    return pi_financial_asset_proxy(snap) >= float(PI_REGULATORY_THRESHOLD_TWD)
+
+
+def pi_is_approved(snap: dict) -> bool:
+    """PI hard lock 的唯一解鎖條件：approval_status == '已核准'。不得由資產推導。"""
+    return pi_approval_status(snap) == "已核准"

@@ -24,7 +24,7 @@ base_fx = 32.18          # 基準匯率
 ideal_monthly_surplus = 40000
 pessimistic_low = 0
 pessimistic_high = 10000
-PI_STATES = ["未申請", "審核中", "已正式核准"]
+# 2026-10-04 廢除本地狀態清單：唯一來源＝sot_targets.PI_ALL_STATES（禁第二份）
 
 def load_engine_rules():
     """讀取 arbitrage_engine_rules.json 規則配置"""
@@ -192,13 +192,25 @@ def main():
     except Exception:
         print("  ⚠️ 日圓匯率抓取失敗")
 
-    # -------- 3. PI 專業投資人狀態 --------
-    pi_status = pi.get("pi_status", "未申請")
-    if pi_status not in PI_STATES:
-        pi_status = "未申請"
-    can_do_lombard = (pi_status == "已正式核准")
+    # -------- 3. PI 專業投資人狀態（唯一容器 professional_investor；2026-10-04 裁決：雙軌模型）--------
+    #    ⚠️ 財力達標 ≠ 已核准 → 只有 approval_status == "已核准" 解鎖 Lombard（硬鎖）。
+    try:
+        import sot_targets as _sot_pi
+        _pi_app = _sot_pi.pi_application_status(snap)
+        _pi_apv = _sot_pi.pi_approval_status(snap)
+        can_do_lombard = _sot_pi.pi_is_approved(snap)
+        _pi_err = None
+    except Exception as _e:
+        _pi_app = _pi_apv = None
+        can_do_lombard = False      # fail-safe：缺真值一律鎖定（不得回退為「未申請」）
+        _pi_err = _e
     print("\n【3.PI專業投資人狀態】")
-    print(f"  PI_approval_status：{pi_status}")
+    if _pi_err is not None:
+        print(f"  ⛔ PI 缺真值：{_pi_err}")
+        print("  → 拒絕回退為「未申請」（禁 fail-open）；請用 sync_professional_investor.py 寫入")
+    else:
+        print(f"  申請：{_pi_app}｜核准：{_pi_apv}（唯一容器 snapshot.professional_investor）")
+    print(f"  PI_approval_status：{_pi_apv if _pi_apv is not None else '—（缺真值）'}")
     print("  ⚠️ 硬性鎖定：PI非【已正式核准】→ 禁止執行任何 Lombard 質押借出作業")
     if not can_do_lombard:
         print("  → 10/1 國泰洲際W轉增貸前置檢查：PI未核准 → 建議延後轉增貸，避免負債變動干擾PI資產核算")

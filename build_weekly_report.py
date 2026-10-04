@@ -40,7 +40,7 @@ def main():
     _rent = _pcs["rent_norm"]
     _cov_act = _pcs["act"]["coverage"]
     _cw = ((snap.get("thresholds_2026_0915") or {}).get("現金_twd") or {})
-    from sot_targets import cash_floor as _cf_fn   # 2026-10-04 P0延伸：現金底線單一入口
+    from sot_targets import cash_floor as _cf_fn, PI_REGULATORY_THRESHOLD_TWD as _PI_THR  # 2026-10-04：底線／PI 法規常數單一入口
     _cf = _cf_fn(snap)   # 現金底線（9/27 單一口徑；原 fallback 700000 已移除）
     _us_cap = float(((snap.get("thresholds_2026_0915") or {}).get("單桶硬上限_pct") or {}).get("美股市值型", 40))
     us30y = st.get("last_rate")
@@ -138,11 +138,11 @@ def main():
     </tbody></table>"""
 
     # ===== 九、債務時程 =====
-    debt_chain = """<table><thead><tr><th>時程</th><th>事件</th><th>狀態</th></tr></thead><tbody>
+    debt_chain = f"""<table><thead><tr><th>時程</th><th>事件</th><th>狀態</th></tr></thead><tbody>
     <tr><td><b>8/20</b></td><td>國泰 1,200萬 撥款入帳 → 8/20 定案（富達600萬＋台幣貨基500萬；⛔ 原記「MMF600萬」已更正）</td><td>✅ 已入帳</td></tr>
     <tr><td>2026-09-11（五）</td><td>申購貝萊德 B11 500萬（MMF 贖回款轉入，<b>未質押</b>）</td><td>✅ 申購完成</td></tr>
     <tr><td>{_pf.pledge_facts()['撥款預估日']}</td><td>{_pf.pledge_status_line(style='card')}</td><td>⏳</td></tr>
-    <tr><td>9-10月</td><td>PI 資格送件（資產 3,000萬 盤點）</td><td>⏳</td></tr>
+    <tr><td>9-10月</td><td>PI 資格送件（財力 proxy ≥ {_PI_THR/10_000:,.0f}萬 盤點）</td><td>⏳</td></tr>
     <tr><td>10/1</td><td>築巢優利貸 2.185% 轉換（舊房貸 9/25 到期）</td><td>⏳</td></tr>
     <tr><td>階段2（可選）</td><td>質押 LTV≤50%｜4 門檻全過才執行</td><td>⏸ 選擇性</td></tr>
     </tbody></table>"""
@@ -190,9 +190,9 @@ def main():
         act4 = f"""<div style="font-size:11px;color:#6e6e73;margin-bottom:6px">📋 來源：radar_state.weekly_plan（{_plan_date} 全資產面結論）</div>
 <ol style="padding-left:18px;margin:0">{act4_items}</ol>"""
     else:
-        act4 = """<ol style="padding-left:18px;margin:0">
+        act4 = f"""<ol style="padding-left:18px;margin:0">
 <li><b>質押撥款</b>：{_pf.pledge_status_line()}</li>
-<li><b>PI 送件</b>：撥款後盤點資產 3,000萬</li>
+<li><b>PI 送件</b>：撥款後盤點財力 proxy（門檻 {_PI_THR/10_000:,.0f}萬）</li>
 <li><b>美股逢彈減碼</b>（39.3%→30%，≤10萬/次）→ 資金導向防守</li>
 <li><b>現金回補</b>（≥70萬底線）</li>
 <li><b>每週六再平衡評估</b>＋保單 JPM 轉換後穿透追蹤</li>

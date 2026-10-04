@@ -4,7 +4,7 @@
 每日檢查進場條件 → 達成 → TG 通知（明確：買什麼/多少/何時）
 
 進場計畫（entry_plan.json，可調）：
-  台股慢慢買：PI 認列（snapshot.pi_status）→ 每週 0050/006208 1.5-2萬
+  台股慢慢買：PI 已核准（snapshot.professional_investor.approval_status）→ 每週 0050/006208 1.5-2萬
   美股減碼：SPY/費半 反彈 ≥2% → 00646/009823/009824 ≤20萬
   黃金衛星：00635U 回檔 -3% 或 PI 後 → 第一批 20萬
   PI 質押：額度已核定（9/11, 540萬@2.77%）→ 待對保後撥款（~9/25）→ 清償 500萬高息負債
@@ -42,15 +42,32 @@ def main():
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     alerts = []
 
-    # 1. PI 認列（9/3 前）→ 台股慢慢買 + 質押還債 + 黃金衛星啟動
-    pi = snap.get("pi_status", {}) or {}
-    pi_done = pi.get("認列") in (True, "✅", "已認列") or "認列" in str(pi.get("status", ""))
-    if pi_done:
-        alerts.append("🎯 PI 已認列 → 執行鏈啟動：\n├ 台股分批 0050/006208（單筆 ≤5萬）\n├ " + _pf.pledge_status_line(style="short") + "\n└ 黃金衛星 00635U 分批 ≤20萬")
+    # 1. PI 資格軌（唯一容器 snapshot.professional_investor；2026-10-04 裁決：雙軌模型）
+    #    ⚠️ 財力達標 ≠ 已核准 → 只有 approval_status == "已核准" 解鎖執行鏈。
+    try:
+        import sot_targets as _sot_pi
+        _pi_apv = _sot_pi.pi_approval_status(snap)
+        _pi_app = _sot_pi.pi_application_status(snap)
+        _pi_approved = _sot_pi.pi_is_approved(snap)
+        _pi_meets = _sot_pi.pi_meets_financial_threshold(snap)
+        _pi_gap = _sot_pi.pi_gap_twd(snap)
+        _pi_err = None
+    except Exception as _e:
+        _pi_apv = _pi_app = None
+        _pi_approved = False          # fail-safe：缺真值一律鎖定
+        _pi_meets = False
+        _pi_gap = 0.0
+        _pi_err = _e
+    if _pi_approved:
+        alerts.append("🎯 PI 已核准（唯一容器 professional_investor）→ 執行鏈啟動：\n├ 台股分批 0050/006208（單筆 ≤5萬）\n├ " + _pf.pledge_status_line(style="short") + "\n└ 黃金衛星 00635U 分批 ≤20萬")
+    elif _pi_err is not None:
+        # 缺真值屬資料品質事件（罕見）→ 明確告警，不靜默、不塞預設「未申請」
+        alerts.append(f"⛔ PI 狀態缺真值（{_pi_err}）→ 執行鏈鎖定（fail-closed；請用 sync_professional_investor.py 寫入）")
     else:
-        _days = (datetime.date(2026, 9, 3) - today).days
-        if 0 <= _days <= 3:
-            alerts.append(f"⏰ PI 認列剩 {_days} 天（9/3 前）→ 準備執行鏈（質押還債/慢慢買/衛星）")
+        # 未核准：僅入 stdout（不推 TG，避免每日噪音）
+        print(f"[PI] 未核准｜申請 {_pi_app}／核准 {_pi_apv}｜財力 proxy "
+              + ("達標" if _pi_meets else f"缺口 {_pi_gap:,.0f}")
+              + " → 執行鏈鎖定（財力達標不等於已核准）")
 
     # 2. 美股減碼：SPY 反彈 ≥2%（10 日內低點）
     try:
@@ -69,10 +86,10 @@ def main():
         if len(g) >= 5:
             hi = max(g[-10:])
             drawdown = (g[-1] - hi) / hi * 100
-            if drawdown <= -3 and not pi_done:
+            if drawdown <= -3 and not _pi_approved:
                 alerts.append(f"🥇 黃金回檔 {drawdown:.1f}% → 00635U 可進第一批（≤20萬，回檔紀律）")
-            elif drawdown <= -3 and pi_done:
-                alerts.append(f"🥇 黃金回檔 {drawdown:.1f}% + PI 已認列 → 00635U 第一批 20萬 可執行")
+            elif drawdown <= -3 and _pi_approved:
+                alerts.append(f"🥇 黃金回檔 {drawdown:.1f}% + PI 已核准 → 00635U 第一批 20萬 可執行")
     except Exception:
         pass
 
@@ -80,8 +97,8 @@ def main():
     if today == datetime.date(2026, 8, 25):
         alerts.append("🔴 今日執行保單轉換 300萬：PIMCO(M級月配)120 + M&G 115 + 健康科學A2 25 + 黃金A10 15")
 
-    # 5. 台股慢慢買例行（PI 後每週）
-    if pi_done and today.weekday() == 0:
+    # 5. 台股慢慢買例行（PI 已核准後每週）
+    if _pi_approved and today.weekday() == 0:
         alerts.append("TW 週一 → 台股慢慢買 0050/006208（每週 1.5-2萬）")
 
     if alerts:
