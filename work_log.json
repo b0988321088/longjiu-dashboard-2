@@ -2000,5 +2000,11 @@
   "category": "完成",
   "item": "pending 收案｜PEND-20261004-01（PI 現況真值）＋ 日誌/記憶條目浮動金額卡 移出 pending（依 2ebcd9d0 慣例）",
   "detail": "check_thresholds 不變式：未閉環 pending 卡狀態不得含「✅／☑／已完成／已結案／已定案／閉環／已送出／已核定」——build_dashboard 以子字串過濾，命中即整卡靜默隱藏。兩張完成卡狀態含「已完成」→ 自 pending_decisions.json 移除，完成事項改記 work_log（本日另有『PI 專業投資人｜正式建檔』條目）。PEND-20261004-01 之閉環內容：使用者提供銀行事實 → sync_professional_investor.py 建檔 approval_status=已核准，hard lock 依 approval_status 解除。📝 卡為既有缺陷（本批之前狀態即含「已完成」）→ 一併收案。pending 30 → 28。"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "稽核覆蓋缺口關閉｜check_thresholds 不變式納入 closeout_check（收工閘門 fail-closed）",
+  "detail": "commit 3fadde30（tree aa62b990，3 檔 +322/−0）；CIO-DeepSeek-Pro 獨立唯讀審查 APPROVE 0 required_fixes（6/6 邊界、12/12 命令）。缺口：收工稽核 15 類不含 check_thresholds 的 blocking 不變式，使「收工全綠」與「pending 卡被 build_dashboard 靜默隱藏」可同時成立（實踩數日才由另一道閘門抓到）。修法：closeout_check 新增 step_threshold_invariants()（⑦），只呼叫 check_thresholds 的 blocking contract（rc），不重寫任何斷言；採 --sot-only（日報渲染行比對屬產報時序關卡 INC-238，22:00 晚報合法移動 snapshot → 收工時必假失敗，已由 sync_all 負責）；fail-closed 四路（不存在／逾時／例外／rc≠0）且保留 stdout/stderr；強制 LJ_NO_TELEGRAM=1；subprocess 明寫 encoding=utf-8（cp950 解不到 ❌ → 每次假 FAIL）。驗證 tools/verify_closeout_threshold_gate.py 12/12：四態＋mutation（拔掉不變式→同夾具不再 FAIL）＋端到端 rc 穿透＋無遞迴／無副作用／反恆真。CIO 另自行做兩條獨立反空洞實驗（刪 8 行不變式→rc=0；拿掉 problems.extend→失去穿透力）。check_thresholds.py 零改動。收工檢查：全部通過（⑦ ✅）。"
  }
 ]

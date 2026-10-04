@@ -479,23 +479,5 @@
     "external_owner": null,
     "status_raw": "pending",
     "is_informational": false
-  },
-  {
-    "id": "PEND-20261004-03",
-    "date": "2026-10-04",
-    "title": "稽核覆蓋缺口｜check_thresholds 不變式納入 closeout_check（收工閘門 fail-closed）",
-    "desc": "使用者 2026-10-04 裁決並核准施工。缺口：closeout_check.py 的 15 類稽核不含 check_thresholds 的 blocking 不變式（含「未閉環 pending 卡狀態不得含隱藏關鍵字」）→ 實踩：完成卡狀態含「已完成」 使 build_dashboard 整卡靜默隱藏數日，收工稽核仍報「全部通過」。修法（責任分離）：新增 step_threshold_invariants()，只呼叫 check_thresholds.py 的 blocking contract（rc），不重寫任何斷言； rc≠0／逾時／無法執行／腳本不存在 → 一律 FAIL（fail-closed）。採 --sot-only：日報渲染行比對屬產報時序關卡（INC-238，22:00 晚報合法移動 snapshot → 收工時必假失敗），已由 sync_all 負責；--sot-only 仍涵蓋全部不變式。邊界（6）：①先確認真正 blocking invariant ②不整支無條件耦合、保留獨立責任 ③FAIL 必須穿透（非 0 → 非 0）且保留 stdout/stderr ④測試至少四態（正常 PASS／含隱藏關鍵字 FAIL／檢查器異常 FAIL／資訊性檢查不阻塞）⑤避免 recursion 與副作用（不觸發 closeout、不改 snapshot/pending/dashboard/Notion/Telegram，強制 LJ_NO_TELEGRAM=1）⑥CIO 完整審查、測試不得有恆真斷言、須做 mutation test。驗收樹：closeout=15類PASS＋pending visibility PASS＋threshold invariants PASS＋dependency failure FAIL-CLOSED。範圍外不動：PEND-20260930-01／PEND-20260930-02／PEND-20261004-02。",
-    "priority": "P0",
-    "status": "待處理",
-    "source": "使用者 2026-10-04 裁決",
-    "due_date": null,
-    "due_date_source": "未提供",
-    "needs_due_date": false,
-    "last_confirmed": null,
-    "last_confirmed_source": "未提供",
-    "owner": "CEO",
-    "external_owner": null,
-    "status_raw": "pending",
-    "is_informational": false
   }
 ]
