@@ -37,13 +37,15 @@ try:
 except Exception:
     _snap_date = date.today().isoformat()
 TODAY = _snap_date  # 2026-08-21 修正：報告日期跟 snapshot date 一致（跨日時 four_source_sync 會先刪 {today} 日報，若 run_daily 用 date.today 會失配）
-# 2026-10-01：魔術數字具名化（僅在 snapshot 缺值時作為最後防線）
-CATHAY_MORTGAGE_RATE_FALLBACK = 0.026
+# 2026-10-04 P0（PEND-20261004-02）：移除 `CATHAY_MORTGAGE_RATE_FALLBACK = 0.026`。
+# 原作為房貸利率缺值時的「最後防線」，兩處消費點（負債明細表／槓桿卡）皆已改 fail-closed，
+# 且全庫無人 import → 留著只會被下一個人當成合法 fallback 再撿回去用。
 
-try:
-    from mortgage_rate import cathay_wan as _cg_wan
-except Exception:
-    def _cg_wan(*a, **k): return "1,200"
+# 2026-10-04 P0（PEND-20261004-02）：移除 `mortgage_rate.cathay_wan` 的 import ＋
+# `except Exception: def _cg_wan(...): return "1,200"` 硬編碼 fallback。
+# 該函式唯一呼叫點是槓桿風控卡 ④ 行，匯入失敗時會憑空生出「國泰轉貸 1,200萬」
+# ——正是本卡要消滅的「舊數字救場」，且它直讀 BASE/snapshot.json、繞過 SoT accessor。
+# ④ 行已改與 ① 同源（mortgage_principal_cathay），該 import 與 fallback 一併移除。
 try:
     from build_investment_performance import snap_mortgage_cathay_rate as _snap_mc_rate
 except Exception:                      # 匯入失敗時退回本地推導（口徑仍同）
@@ -398,12 +400,21 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         except Exception:
             _sn_mc = {}
         _mc_prin = float(_sn_mc.get('mortgage_cathay') or tv['mortgage_cathay'] or 0)
-        _mc_rate_v = _snap_mc_rate(_sn_mc) or CATHAY_MORTGAGE_RATE_FALLBACK   # 共用推導（單一來源）
-        # 2026-10-01：月付改由 利率×本金/12 派生（原讀 monthly_fixed_expense 形成第二來源，
-        # 偽造利率時會出現「3.1% 標籤配 月付 26,000」的頁內矛盾）；實際繳款值改由 check_thresholds 交叉斷言
-        _mc_pay = round(_mc_prin * _mc_rate_v / 12)
-        _mc_rate = _mc_rate_v * 100
-        loans_rows_html += f"""          <tr><td>國泰世華</td><td>國泰房貸（大義街轉貸 {_mc_rate:.1f}%）</td><td>20日</td><td class="num">{tv['mortgage_cathay']:,}</td><td>9/20起月付 {_mc_pay:,.0f}</td></tr>\n"""
+        # 2026-10-04 P0（PEND-20261004-02）：利率改 fail-closed（原 `or CATHAY_MORTGAGE_RATE_FALLBACK`）。
+        # 缺真值時靜默套 2.6% → 再由「本金 × 假利率」派生一個假月付，而同一份日報的槓桿卡
+        # （已改）卻明示缺真值 → 同一事實兩個敘述，且假的那個看起來很正常。缺值 → 不顯示數字。
+        _mc_rate_v = _snap_mc_rate(_sn_mc)
+        if _mc_rate_v is None:
+            _mc_label = "國泰房貸（大義街轉貸 ⚠️ 利率缺真值）"
+            _mc_pay_txt = "月付：缺真值（不由假利率派生）"
+            print("⚠️ [render] 負債明細表：國泰房貸利率缺真值"
+                  "（mortgage_cathay_rate／monthly_fixed_expense.房貸_國泰）→ 不顯示利率與派生月付")
+        else:
+            # 2026-10-01：月付改由 利率×本金/12 派生（原讀 monthly_fixed_expense 形成第二來源，
+            # 偽造利率時會出現「3.1% 標籤配 月付 26,000」的頁內矛盾）；實際繳款值改由 check_thresholds 交叉斷言
+            _mc_label = f"國泰房貸（大義街轉貸 {_mc_rate_v*100:.1f}%）"
+            _mc_pay_txt = f"9/20起月付 {round(_mc_prin * _mc_rate_v / 12):,.0f}"
+        loans_rows_html += f"""          <tr><td>國泰世華</td><td>{_mc_label}</td><td>20日</td><td class="num">{tv['mortgage_cathay']:,}</td><td>{_mc_pay_txt}</td></tr>\n"""
     if tv['financial_mortgage'] > 0:
         # 2026-08-10 註記：8/10 現金 100 萬先還星展理財型房貸（餘額 3,006,447 → 2,006,447）
         loans_rows_html += f"""          <tr><td>星展銀行</td><td>理財型房貸</td><td>—</td><td class="num">{tv['financial_mortgage']:,}</td><td>8/10 已還 100 萬</td></tr>\n"""
@@ -415,10 +426,18 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         # 2026-09-29：國泰質押撥款 590萬@2.65%（9/29 10:57 入帳）→ 負債表需列示，否則總負債對不上。
         # CIO 審查 af7af243 必修3：利率與基金池市值一律讀真值，禁硬編碼（利率 tv.fund_pledge_rate／
         # 池市值讀 snapshot.cathay_pledge_0911.擔保池.合計）。
-        _fpr = float(tv.get('fund_pledge_rate') or 0.0265) * 100
-        _fpool = float(tv.get('fund_pledge_pool') or 0)
-        _fpool_txt = f"（質押基金池 {_fpool/10000:,.1f} 萬）" if _fpool else ""
-        loans_rows_html += f"""          <tr><td>國泰世華</td><td>基金質押{_fpool_txt}</td><td class="num">{_fpr:.2f}%</td><td class="num">{tv['fund_pledge_loan']:,}</td><td>9/29 撥款入帳</td></tr>\n"""
+        # 2026-10-04 P0（PEND-20261004-02）：利率／池市值改 fail-closed。
+        # 原 `tv.get('fund_pledge_rate') or 0.0265` → 缺真值靜默印 2.65%（同時槓桿卡已明示「未取得」）；
+        # `tv.get('fund_pledge_pool') or 0` → 缺真值讓池市值括號靜默消失（看起來像「本來就沒池」）。
+        # 兩者都屬同一條 pledge truth chain，故與槓桿卡一併納入本卡範圍。
+        _fpr_v = tv.get('fund_pledge_rate')
+        _fpr_txt = f"{float(_fpr_v)*100:.2f}%" if _fpr_v else "⚠️ 缺真值"
+        _fpool_v = tv.get('fund_pledge_pool')
+        _fpool_txt = (f"（質押基金池 {float(_fpool_v)/10000:,.1f} 萬）" if _fpool_v
+                      else "（⚠️ 池市值缺真值）")
+        if not _fpr_v or not _fpool_v:
+            print("⚠️ [render] 負債明細表：基金質押利率或池市值缺真值 → 不顯示估算（不以常量／0 頂替）")
+        loans_rows_html += f"""          <tr><td>國泰世華</td><td>基金質押{_fpool_txt}</td><td class="num">{_fpr_txt}</td><td class="num">{tv['fund_pledge_loan']:,}</td><td>9/29 撥款入帳</td></tr>\n"""
 
     # 每月固定支出明細（2026-08-21：房貸校正 永豐65,735+國泰26,000=91,735）
     try:
@@ -1832,7 +1851,8 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
 
     # 專業投資人風控卡（snapshot.professional_investor）
     try:
-        _pi = tv.get("professional_investor", {}) or {}
+        # 2026-10-04 P0：移除死賦值 `_pi = tv.get("professional_investor", {}) or {}`——
+        # gating 已改 _pi_ok（pi_record 判斷），留著會讓讀者誤以為它仍是判斷依據。
         # PI 專業投資人｜雙軌狀態卡（使用者 2026-10-04 裁決）：計算與渲染一律走 pi_card
         # （禁在此自行組公式、禁寫死任何金額；財力軌 vs 資格軌分離，缺真值 fail-closed）
         import pi_card as _pic
@@ -2019,6 +2039,10 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 else:
                     _philosophy_items.append(f"利差 {_mc_r_pct:.1f}%→4.8-6% ✅" if (_us30y_now or 0) < 5.50 else "利差 ⚠️")
                 _philosophy_html = "｜".join(_philosophy_items)
+                # 2026-10-04 P0：④ 行原用 `_cg_wan()`——它另有硬編碼 "1,200" fallback，且直讀
+                # BASE/snapshot.json 繞過 SoT accessor（在 SNAPSHOT 覆寫的測試情境下看不出來）。
+                # 改與 ① 同源，缺真值明示、不顯示數字。
+                _lv_cg = "⚠️ 缺真值" if _p1_loan is None else f"{_p1_loan/10000:,.0f}萬"
                 if _p1_loan is None or _mc_rate_v is None:
                     _lv_l1 = ("第一層（國泰轉貸）：⚠️ 缺真值（mortgage_cathay 或 房貸利率 不存在）"
                               "→ 不顯示估算")
@@ -2054,7 +2078,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     f"<strong>① 槓桿成本：</strong>{_lv_l1}＋{_lv_l2}→ {_lv_total}<br/>"
                     f"<strong>② LTV：</strong>{_lv_ltv}<br/>"
                     f"<strong>③ 月度利息流出 vs 現金流入：</strong>{_lv_cov}<br/>"
-                    f"<strong>④ 到期對照：</strong>負債＝國泰轉貸 {_cg_wan()}萬（3年寬限期）＋質押 {_pledge_loan/10000:,.0f}萬（擔保：{_pool_txt}；基金無到期日）；富達為月配現金流資產，無期限錯配 ✅<br/>"
+                    f"<strong>④ 到期對照：</strong>負債＝國泰轉貸 {_lv_cg}（3年寬限期）＋質押 {_pledge_loan/10000:,.0f}萬（擔保：{_pool_txt}；基金無到期日）；富達為月配現金流資產，無期限錯配 ✅<br/>"
                     f"<strong>⑤ US30Y：</strong>{_us30y_now:.2f}% — {_fz_txt}<br/>"
                     f"<strong>⑥ 底線規則（8/13 動態）：</strong>現金≥6個月開支（{_floor_now:,.0f}，月開支 {_exp:,.0f}）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/>"
                     f"<strong>⑦ 投資哲學檢核（8/19 定版）：</strong>{_philosophy_html}<br/>"
