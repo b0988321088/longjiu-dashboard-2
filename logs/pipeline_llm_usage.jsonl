@@ -772,3 +772,5 @@
 {"ts": "2026-10-04T23:36:39", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 489, "cached": 256, "out": 185, "ok": true}
 {"ts": "2026-10-04T23:41:22", "model": "deepseek-chat", "caller": "verify_pledge_fallback_removal.py", "in": 489, "cached": 256, "out": 175, "ok": true}
 {"ts": "2026-10-04T23:44:29", "model": "deepseek-chat", "caller": "verify_pledge_fallback_removal.py", "in": 489, "cached": 256, "out": 204, "ok": true}
+{"ts": "2026-10-05T00:01:45", "model": "deepseek-chat", "caller": "verify_pledge_fallback_removal.py", "in": 489, "cached": 256, "out": 203, "ok": true}
+{"ts": "2026-10-05T00:03:00", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 489, "cached": 256, "out": 177, "ok": true}
