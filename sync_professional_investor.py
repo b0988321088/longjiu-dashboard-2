@@ -74,7 +74,10 @@ def main() -> int:
     if bad:
         print(f"⚠️ 既有記錄含衍生／未知欄位，將移除：{bad}")
 
-    rec = {k: v for k, v in (old or {}).items() if k not in DERIVED_KEYS}
+    # 2026-10-04 修正：舊版只過濾 DERIVED_KEYS，卻印「將移除」——訊息與行為不符，
+    # 導致舊欄位（pi_status／applied_date／approved_date／expected_approval／deployment_plan）
+    # 留在容器裡，等於寫完後仍有第二份狀態真值。改為只保留白名單欄位。
+    rec = {k: v for k, v in (old or {}).items() if k in _known and k not in DERIVED_KEYS}
     rec["application_status"] = a.application_status
     rec["approval_status"] = a.approval_status
     if a.note:

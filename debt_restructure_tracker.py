@@ -87,7 +87,8 @@ def fetch_fx():
 def main():
     snap = load("snapshot.json")
     pi = snap.get("professional_investor", {})
-    plan = pi.get("deployment_plan", {})
+    # 2026-10-04：professional_investor.deployment_plan 隨 PI 容器收斂（只留狀態真值）廢除。
+    # 本段所有質押數字改走 sot_targets 質押 accessor（見 §4）；§5b 的 8/20 定案紀錄已於 9/11、9/12 作廢。
     pending = load("pending_decisions.json")
     events = load("schedule_events.json")
 
@@ -218,7 +219,13 @@ def main():
         print("  → 10/1 國泰洲際W轉增貸前置檢查：✅ 可執行")
 
     # -------- 4. LTV 質押槓桿監控 --------
-    ltv = plan.get("current_ltv", 0)
+    # 2026-10-04：professional_investor.deployment_plan 已廢除（PI 容器只留狀態真值）。
+    # 本段原讀 plan.get("current_ltv")＝舊值（且 9/29 實撥後已過期），移除後會退化成 0% 假綠燈；
+    # 改走 sot_targets 質押 accessor（唯一來源：fund_pledge_loan／cathay_pledge_0911）。
+    from sot_targets import (pledge_ltv as _pledge_ltv,
+                             pledge_loan_twd as _pledge_loan_twd,
+                             pledge_collateral_market_value as _pledge_mv_fn)
+    ltv = _pledge_ltv(snap)
     print("\n【4.LTV質押槓桿監控｜策略A 燈號（8/20 定版：綠≤53/黃54-58/紅≥59/追繳≥70）】")
     if ltv <= 0.53:
         light4 = "🟢 綠燈（LTV≤53%：月淨現金流≥+5萬 且穿透在目標區間 → 維持現狀每週監控）"
@@ -231,16 +238,19 @@ def main():
     print(f"  current_LTV_ratio = {ltv*100:.1f}% → {light4}" if ltv else "  current_LTV_ratio = 0%（尚未質押）→ 🟢")
     # 擔保池組成／借款金額一律從 snapshot 讀（2026-09-11：原為舊版硬編碼「股票600+平衡300~600」，
     # 會讓 9/11 新質押（池 1,177 萬 × 4.5 成 = 540 萬）在週報顯示成舊計畫）
-    _pool = plan.get("pool_market_value") or 0
-    _loan = plan.get("loan_amount") or 0
-    _rate = plan.get("rate")
+    # 擔保池組成／借款金額一律讀質押事實 accessor（2026-10-04：原讀 deployment_plan，
+    # 該鍵已廢除；若不改會落到下面的 else，印出 7 月舊版寫死的「股票600+平衡300~600」）
+    _pool = _pledge_mv_fn(snap)
+    _loan = _pledge_loan_twd(snap)
+    _rate = snap.get("fund_pledge_rate")
     if _pool and _loan:
-        print(f"  擔保池 {_pool:,}｜借款 {_loan:,}｜利率 {(_rate*100 if _rate else 0):.2f}%"
-              f"｜撥款 {plan.get('disbursement_eta', '—')}")
+        print(f"  擔保池市值 {_pool:,.0f}｜實際動用 {_loan:,.0f}｜利率 {(_rate*100 if _rate else 0):.2f}%"
+              f"｜撥款 {snap.get('pledge_disbursement_20260929', {}).get('日期', '—')}")
         print(f"  壓力情境：跌20% → LTV {_loan/(_pool*0.8)*100:.1f}%｜跌30% → LTV {_loan/(_pool*0.7)*100:.1f}%"
               f"｜追繳線70% 需再跌 {100-_loan/0.7/_pool*100:.1f}%")
     else:
-        print("  質押初始LTV≤50%；擔保池=股票600+平衡300~600（追繳臨界自 -30% 延後至 -40%）")
+        # fail-closed：不補任何「看起來合理」的舊文（原為 7 月寫死字串）
+        print("  ⛔ 質押事實缺值（fund_pledge_loan／擔保池）→ 拒絕顯示 LTV 與擔保池明細")
 
     # -------- 5. 現金流 & 債務重整時程 --------
     print("\n【5.現金流 & 債務重整時程】")
@@ -249,7 +259,7 @@ def main():
     print("  提醒：降槓桿週期非固定，環境惡化還本速度會顯著拉長")
 
     # -------- 5b. 8/20 定案（富達質押版，取代 8/12 兩層槓桿版）-------
-    dp = snap.get("professional_investor", {}).get("deployment_plan", {})
+    dp = {}   # 2026-10-04：deployment_plan 已隨 PI 容器廢除；本節保留為歷史位置，恆走 else 分支
     print("\n【5b.8/20 定案（富達質押版）】")
     if dp.get("status", "").startswith("兩層槓桿修正版") or dp.get("status", "").startswith("8/20 定案"):
         p1 = dp.get("phase1_mandatory", {})
@@ -327,8 +337,8 @@ def main():
     us_ratio = snap.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0)
     if us_ratio > _us_cap:
         checks.append(("美股占比", f"{us_ratio:.1f}% > {_us_cap:.0f}%（單桶硬上限）", "🟡 FREEZE_US_BUY + 配息導流"))
-    # LTV（未質押=0）
-    ltv_val = plan.get("current_ltv", 0)
+    # LTV（未質押=0）— 2026-10-04：改讀 §4 同一來源（質押事實 accessor）
+    ltv_val = ltv
     _ltv_red = float(_ltvb.get("黃上限", 53)) / 100.0
     _ltv_yel = float(_ltvb.get("綠上限", 45)) / 100.0
     if ltv_val >= _ltv_red:

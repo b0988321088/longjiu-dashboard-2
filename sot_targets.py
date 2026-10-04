@@ -1082,8 +1082,9 @@ PI_CONTAINER_KEY = "professional_investor"
 # 金管會「專業投資人」自然人財力門檻（金融資產 3,000 萬元）──外部法規常數，唯一位置。
 PI_REGULATORY_THRESHOLD_TWD = 30_000_000
 
-# 兩軌狀態機（使用者 2026-10-04 裁決：六態；拒絕／失效不得塞回「未申請」）
-PI_APPLICATION_STATES = ("未申請", "已送件", "補件中", "審核中")
+# 兩軌狀態機（使用者 2026-10-04 裁決；application 4 態 + 終態「已完成」、approval 4 態＝共 9 值；
+# 拒絕／失效不得塞回「未申請」）
+PI_APPLICATION_STATES = ("未申請", "已送件", "補件中", "審核中", "已完成")
 PI_APPROVAL_STATES = ("未核准", "已核准", "未通過", "失效")
 PI_ALL_STATES = PI_APPLICATION_STATES + PI_APPROVAL_STATES
 
@@ -1103,13 +1104,16 @@ def pi_record(snap: dict) -> dict:
         raise KeyError(
             f"snapshot 缺 {PI_CONTAINER_KEY} → PI 無真值，拒絕以預設值頂替"
             "（2026-10-04 PI 資料生命週期裁決；頂層 snapshot.pi_status／舊欄名「認列」已廢除）")
-    for _k in ("application_status", "approval_status"):
+    for _k, _allowed in (("application_status", PI_APPLICATION_STATES),
+                         ("approval_status", PI_APPROVAL_STATES)):
         _v = rec.get(_k)
         if not isinstance(_v, str) or not _v:
             raise KeyError(f"{PI_CONTAINER_KEY}.{_k} 缺值 → PI 狀態無真值，拒絕判斷")
-        if _v not in PI_ALL_STATES:
+        # 2026-10-04 CIO 審查：原用兩軌聯集（PI_ALL_STATES）驗證，會讓
+        # approval_status="已完成" 這種跨軌值通過讀取驗證（語意污染）。改分軌驗證。
+        if _v not in _allowed:
             raise KeyError(
-                f"{PI_CONTAINER_KEY}.{_k}={_v!r} 非合法狀態（合法：{'／'.join(PI_ALL_STATES)}）"
+                f"{PI_CONTAINER_KEY}.{_k}={_v!r} 非合法狀態（合法：{'／'.join(_allowed)}）"
                 "→ 拒絕回退為「未申請」（禁 fail-open）")
     return rec
 
@@ -1147,3 +1151,25 @@ def pi_meets_financial_threshold(snap: dict) -> bool:
 def pi_is_approved(snap: dict) -> bool:
     """PI hard lock 的唯一解鎖條件：approval_status == '已核准'。不得由資產推導。"""
     return pi_approval_status(snap) == "已核准"
+
+
+# ── 質押事實 accessor（2026-10-04：professional_investor.deployment_plan 廢除後，
+#    LTV／擔保池／借款金額的唯一來源。禁再由 PI 容器或寫死值推導）──────────────
+def pledge_loan_twd(snap: dict) -> float:
+    """實際動用額（＝snapshot.fund_pledge_loan；與 DB liabilities.pledge_loan 同源）。"""
+    return float((snap or {}).get("fund_pledge_loan") or 0)
+
+
+def pledge_collateral_market_value(snap: dict) -> float:
+    """質押品市值：優先用 擔保池.合計（該筆質押專屬），退回國泰基金總市值。"""
+    cp = (snap or {}).get("cathay_pledge_0911") or {}
+    pool = cp.get("擔保池") or {}
+    v = pool.get("合計") if isinstance(pool, dict) else None
+    return float(v or (snap or {}).get("funds_cathay_market_value") or 0)
+
+
+def pledge_ltv(snap: dict) -> float:
+    """LTV＝實際動用 ÷ 質押品市值。無質押（任一為 0）→ 0.0。"""
+    mv = pledge_collateral_market_value(snap)
+    ln = pledge_loan_twd(snap)
+    return (ln / mv) if (mv and ln) else 0.0
