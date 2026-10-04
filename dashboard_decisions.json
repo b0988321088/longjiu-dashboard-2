@@ -10076,6 +10076,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261004212051-1084",
+    "timestamp": "2026-10-04T21:20:51.086464+08:00",
+    "agent": "Hermes",
+    "task": "PI 專業投資人：裁決 (a) 保留功能、標記 DORMANT／SPEC REQUIRED，開資料生命週期規格工單（規格已交付，不施工）",
+    "summary": "使用者 2026-10-04 裁決：threshold 30M 保留、定義為「外部法規常數」；PI 風控保留但標記 DORMANT／SPEC REQUIRED；本輪不修改任何程式；下一批先開「PI 資料生命週期規格工單」而非直接清 30M。使用者明確拒絕「直接把 28,220,311 換成目前 snapshot 某欄位」的作法，理由是該金額牽涉「金融資產含保單」定義、尚未裁決，直接換會製造另一個「看似合理但未經裁決」的新真值；正確順序＝先定義 PI 資料模型→確認金融資產來源→建立唯一寫入者→再清舊路徑。已交付規格 PI_DATA_LIFECYCLE_SPEC.md（狀態 OPEN/SPEC ONLY/NO ENGINEERING，10 節）：①為何需要（無寫入者、現況不可達、兩個位置、兩種欄名、假真值）②現行消費者清冊 7 條（tactical_table:269/286-310、debt_restructure_tracker:89/196-199/240、entry_monitor:46-48、run_daily:295）③待裁示口徑 Q1-Q4 ④目標資料模型（professional_investor 唯一容器＋唯一寫入者 sync_professional_investor.py，含 updated_at/source/PII gate/dry-run）⑤threshold 具名法規常數 PI_REGULATORY_THRESHOLD_TWD＝30_000_000（不進 snapshot、不 fail-closed）＋唯一 accessor pi_regulatory_threshold() ⑥current 由 accessor pi_financial_assets(snap) 單一口徑（禁用寫死）⑦gap/status 計算與邊界（current==threshold 判達標）⑧fail-closed 規則（professional_investor 缺→印「PI 資料缺真值」不得靜默隱藏；pi_status 缺或非法→raise，取代現行回退未申請的 fail-open）⑨須消除舊路徑 7 條 ⑩驗收四測（有值／無值／跨 30M／反寫死位移測試）＋施工順序六步（①未完成不得進②-⑥）。關鍵新證據（本次實測，寫入規格）：卡片寫死 28,220,311 為 stale 且方向是「低估缺口」——真值證券 3,007,220＋基金 12,611,674＋保單 9,418,965＝25,037,859，＋現金 1,753,675＝26,791,534（＝total_assets）；寫死值多 1,428,777，導致卡片算出假缺口 1,779,689 vs 真缺口 3,208,466（含現金口徑），相差 143 萬，足以誤導送件時機。另證實全 repo 對 snapshot.professional_investor 只有讀、零寫入者（tactical_table:269、run_daily:295 皆僅轉手），故 tactical_table:286 if pi: 恆為 False、PI 卡從未渲染＝dormant。交付：commit d6d23eef（規格文件，獨立審查 APPROVE 0 blocking，已推 clean-main 並驗遠端 sha）。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-04T11:39:48.740349"
