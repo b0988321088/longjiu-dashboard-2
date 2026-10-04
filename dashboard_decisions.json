@@ -9995,210 +9995,190 @@
       "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "id": "mem-20261004114539-1076",
+      "timestamp": "2026-10-04T11:45:39.425011+08:00",
+      "agent": "Hermes",
+      "task": "2026-09-30「日誌／記憶嵌浮動金額」閉環（卡片 CLOSED）",
+      "summary": "裁決：可標記 CLOSED。寫入端已去金額化+指向真值來源；連續觀察期間三閘門（stale/cross/caliber）未因日誌行告警；pending 卡以狀態機標 已完成（保留 status_raw）；歷史 dashboard_decisions 列不清洗（具歷史語義、不被任何閘門引用）。work_log #263 已於 10/4 改『應辦→修正』。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004204637-1077",
+      "timestamp": "2026-10-04T20:46:37.045176+08:00",
+      "agent": "Hermes",
+      "task": "寫死退路常數盤點｜10/04 基準鎖定（OPEN／INVENTORY ONLY）",
+      "summary": "10/04 重掃補正 10/02 盤點基準：live .get(key, fallback≥1萬) 實測 69 處／19 檔（10/02 記錄 71 處／20 檔，差 2 處／1 檔不可回溯——原清單未保存逐條行號，兩份清單在原始輸出補齊前不硬合併成施工範圍）；.archive/ 與 .bak-* 另有 42 處，明確排除 live 債。分類：P0 總額級 14 處（不動產 34,017,063×3／34,000,000×2、總負債 22,000,000、保單 9,876,282＋9,802,872、現金 4,483,408／3,614,169／3,119,158、證券 2,597,360、基金 793,434／765,991）；P0 延伸 cash_floor 700,000×6、threshold 30,000,000、policy_pledge_loan 4,000,000；P1 收入／配息／租金／支出明細；P2 純顯示非決策級。已確認假真值案例：build_final.py:205 policy_pledge_loan=4,000,000（該債 9/29＋10/1 已全數清償，fallback 會復活不存在的負債）、report_components.py:59 monthly_income=214,685（舊口徑，現行 228,751）、rent_monthly_total 80,100 vs 實收 77,100（多處兜底口徑分裂）。施工協議（本輪未啟動）＝0 先確認單一 accessor 存在 →1 找到 →2 判源 →3 清 fallback →4 改明確缺值（禁 or 0）→5 雙向測試（有值／無值）→6 驗收，逐批施工、不一次碰 69 處。本輪無任何程式／資料／線上真值變更；掃描器已移出 repo（~/AppData/Local/hermes/scripts/hardcode_scan/）避免 22:00 晚報 git add -A 誤納；69 處 JSON 已保存作下一批工單底稿。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004205541-1078",
+      "timestamp": "2026-10-04T20:55:41.894449+08:00",
+      "agent": "Hermes",
+      "task": "P0 假真值退路清除 第一批｜施工完成（OPEN→DELIVERED）",
+      "summary": "工單：P0 假真值退路清除 第一批。A 第0步 Accessor Gate：原缺 5 個單一來源（總負債／不動產／保單／證券／基金）→ sot_targets 新增 total_cash／total_liabilities／real_estate_value／insurance_total／securities_total／funds_total／policy_pledge_loan 七個 fail-closed accessor（缺值 raise，禁 or 0）；同義鍵清單沿用 asset_sync.SYNONYM_GROUPS（新增 total_liabilities／real_estate 兩組，不複製第二份清單）。B 14 處總額級全數清除：不動產 34,017,063×3（asset_diff_monitor:1264、build_audit_dashboard:24、build_ceo_dashboard:13）＋34,000,000×2（asset_diff_monitor:271／399）；總負債 22,000,000（asset_diff_monitor:298）；保單 9,876,282（market_intel:146）＋9,802,872（build_penetration_report:14）；現金 4,483,408（run_daily:1411）／3,614,169（run_daily:285）／3,119,158（build_penetration_report:13）；證券 2,597,360（build_penetration_report:15）；基金 793,434（build_penetration_report:16）／765,991（asset_diff_monitor:975 → 改明確「缺真值」顯示＋告警）。C 兩高危案例：build_final:205 policy_pledge_loan 4,000,000 → accessor，pl==0 分支改印「保單借貸已全數清償（餘額 0）」（原 fallback 會把已清償的 400 萬負債復活）；report_components:59 monthly_income 214,685 → sot_monthly_income（現值 228,751）。驗收：T1 去註解複掃程式碼 0 殘留；T2 七個 accessor 有值／遮蔽後 raise 全過；T3 覆蓋率 full 228,751/159,210=144%；T4 真跑 build_penetration_report rc=0（含 1,753,675／9,418,965／12,611,674）、asset_diff_monitor rc=0（負債比率 50.9% 含不動產｜流動 115.6%，證實 real_estate_value 與 total_liabilities 端到端生效）、build_final rc=0；T5 沙箱遮蔽真值 → rc=1 KeyError 且零舊常數洩漏；基準線以 git archive HEAD 原版跑 check_thresholds 得同一條既有 FAIL（pending 卡狀態含「已完成」）→ 證明非本批 regression；check_caliber_consistency 不一致 0。diff 範圍僅 10 檔 .py（+131/−23），未動 snapshot 真值與施工邊界外檔案（cash_floor／threshold 30,000,000／P1／P2／.archive／.bak-* 全未碰）。獨立審查 APPROVE 0 blocking（CIO-Independent／llm_review_client）；commit 4fe504f0 已推 clean-main，遠端 sha 複驗相符。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004210150-1079",
+      "timestamp": "2026-10-04T21:01:50.550050+08:00",
+      "agent": "Hermes",
+      "task": "P0 假真值退路清除 第一批｜收案 CLOSED ＋ fetch_weekly_proxy.py 隔離裁決",
+      "summary": "【一、第一批收案】使用者裁決 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION，不再補工程。確認項目：7 個 accessor 全 fail-closed raise KeyError、無 or 0／新常數掩蓋缺值、刻意排除 stale 相容鍵（securities_market_value／securities_current）、14 處總額級 fallback 全清、policy_pledge_loan=4,000,000 已證明清償後不再復活、monthly_income 回到現行 228,751、有值/無值雙向測試皆跑、靜態複掃 0 殘留、snapshot／cash_floor／threshold／P1／P2 均未越界、CIO APPROVE 0 blocking、遠端 SHA 一致。commit 4fe504f0（程式）＋3d2a4233（決策入庫）；線上 clean-main 複驗相符。下一個正式施工批次為 cash_floor 700,000 等 P0 延伸，未經明確下令不自動開工。【二、fetch_weekly_proxy.py 裁決：QUARANTINED／NOT VERSIONED】已自 repo 移出並隔離至 ~/AppData/Local/hermes/quarantine/20261004_orphan_weekly_proxy/（含 _weekly_yf_proxy.json 19:01 快照），未進版控、未 commit。來源追查結果：①該檔從未存在於任何 branch／commit（git log --all 空）；②全 repo 與 hermes 目錄零引用（引用者只有它自己）；③寫入者已定位＝Hermes cron job 6a9babc90954「龍九動態自我檢討週報 週日19:00」（agent 型、no_agent=false），該 job 於 2026-10-04 19:00:20 起跑、19:06:42 結束，期間 19:00:56 生成 .py、19:01:07 改寫 _weekly_yf_proxy.json；④_weekly_yf_proxy.json 為已入版控檔案（8/24 743b76ca 起），但同樣零程式引用 → 屬 agent 執行期自建的中介產物。處置：來源已查明為真實產線（週報 job）而非殘留垃圾，故不刪除；是否把取價邏輯正式化（移入 scripts/ 並入版控、或改由 hermes/scripts 免落地執行、並讓週報 job 不再於 repo 根目錄寫 .py）另開工單處理，不混入本批。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004210349-1080",
+      "timestamp": "2026-10-04T21:03:49.104162+08:00",
+      "agent": "Hermes",
+      "task": "Backlog 立案（未開工）：週報 Agent 執行期產物治理",
+      "summary": "使用者 2026-10-04 裁決：P0 假真值清除全批正式結案 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION（線上 clean-main 40c429e8）；fetch_weekly_proxy.py 處置確認為 QUARANTINED／NOT VERSIONED／SOURCE IDENTIFIED（非垃圾檔，係 19:00 agent 型週報 job 6a9babc90954 執行期自建中介物，不刪為正確）。本筆為 backlog 立案、狀態📋 待開工（未施工、未動任何檔案），與 P0 假真值清除屬不同問題／不同風險／不同驗收範圍，故分開。工單名稱：週報 Agent 執行期產物治理。驗收範圍（5 條）：①取價邏輯移至正式 scripts/ 或 hermes/scripts；②禁止 job 在 repo root 生成 .py；③_weekly_yf_proxy.json 明確登錄為產物；④指定唯一 writer；⑤新增產線驗收：job 執行後 git status --short 不得出現新的 .py。優先序建議（使用者裁決）：下一批優先開 P0 延伸 cash_floor 700,000（直接牽涉閘門判斷，風險高於一般 P1/P2 顯示型 fallback）；threshold 30M、P1、P2 續排其後。目前無任何待動項目。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004210646-1081",
+      "timestamp": "2026-10-04T21:06:46.940003+08:00",
+      "agent": "Hermes",
+      "task": "P0 延伸優先序裁決 ＋ cash_floor 700,000 第 0 步盤點（📋 待核准開工，未施工）",
+      "summary": "使用者 2026-10-04 裁決下一階段優先序：①P0 延伸 cash_floor 700,000（最優先：會影響現金防守水位／閘門判斷／rotation／tactical／report_components）②P0 延伸 threshold 30,000,000（次之；須先判定「正式政策常數」或「歷史寫死舊數字」——若為政策常數應改為單一設定來源而非刪除，不得單純 search-and-replace）③P1 收入／租金／配息／支出 fallback（須先區分真值 fallback vs 政策假設值，例 rent_monthly_total 80,100 為預期租金則可能合法）④P2 顯示型 fallback（CEO/週報/月報/audit dashboard，不影響決策）。週報 Agent 產物治理為獨立 backlog，無依賴關係。裁示原則：不追求「69 處全清」，只按風險分批。本筆同時登錄 cash_floor 第 0 步唯讀盤點結果：①accessor 已存在且 fail-closed（sot_targets.cash_floor：cash_floor_rule.cash_floor → thresholds.現金_twd.生活底線 → raise），但**全 repo 零 import**（有 accessor 沒人用）。②真值來源確認：cash_floor_rule.cash_floor=700000、thresholds_2026_0915.現金_twd.生活底線=合計底線=700000（追繳緩衝=0）、top-level cash_floor=700000 → 700,000 屬「已落在 snapshot 的政策真值」，處置＝改走 accessor，不是刪數字。③live 掃到 39 處含 700000／70萬（archive 0 處）。④高價值缺陷：tactical_table.py:85 讀 cash_floor_rule.floor，但 snapshot 實鍵為 cash_floor（無 floor 鍵）→ 恆落 700000 fallback，鍵名漂移被 fallback 永久掩蓋（INC-278 同型）。⑤待施工清單（影響判斷類）：institutional_flow.py:528/636、rotation_engine.py:202/251/259、report_components.py:165、tactical_table.py:85、build_audit_dashboard.py:87、build_rebalance_report.py:74/217、run_daily.py:1295/1992/2006、sabbatical_checklist_update.py:24、build_weekly_report.py:43；另 macro_regime.py:36 為程式內政策常數定義（與 snapshot 真值重複＝雙來源），屬 threshold 批同型的「單一設定來源」問題。施工方式照 0→6。本筆未動任何程式、未改 snapshot；待使用者 ✅ 核准後才開工。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004211444-1082",
+      "timestamp": "2026-10-04T21:14:44.057720+08:00",
+      "agent": "Hermes",
+      "task": "P0 延伸 cash_floor 700,000 第一批｜施工完成，待收案（DELIVERED）",
+      "summary": "使用者 2026-10-04 GO 開工。範圍：判斷類消費端全數改接既有單一 accessor sot_targets.cash_floor()（不建第二份 accessor、不改 snapshot 政策值、不動純顯示文字／macro_regime／threshold 30M／P1/P2）。逐條（15 處／9 檔）：institutional_flow.py:528,636｜rotation_engine.py:202,251,259｜report_components.py:165｜tactical_table.py:85｜build_audit_dashboard.py:87＋159｜build_rebalance_report.py:74,217｜run_daily.py:1295,1992,2006｜sabbatical_checklist_update.py:24（原本地 _cash_floor 為第二份 accessor，已刪除，4 個呼叫端改走單一入口）｜build_weekly_report.py:43。施工中由 T1 靜態複掃新抓到 1 處原清單未列：build_audit_dashboard.py:159 KPI 卡片顏色判定 CASH_AVAIL>=700000（判斷類，非顯示）→ 一併清除。並修正實際缺陷：tactical_table.py:85 原讀 cash_floor_rule.floor（snapshot 實鍵為 cash_floor、無 floor 鍵）→ 恆落 700000 fallback，鍵名漂移被 fallback 永久掩蓋（INC-278 同型）。驗收全過：T1 靜態複掃（含 f-string 內插判定）判定類殘留 0，殘留僅顯示類字串；T2 accessor 有值 700,000、三消費端取真值；T3 硬測1 遮蔽 snapshot 底線 → 7 支腳本零洩漏，6 支 raise、institutional_flow 兩處被既有寬鬆 except Exception 攔截並印告警（未落回 700,000）；T4 硬測2 鍵名漂移 → cash_floor_rule.cash_floor 由 700,000 改 750,000，新版超額位移 50,000 而 HEAD 舊版位移 0（證明舊碼讀不到該鍵），accessor 第二來源（生活底線 720,000）亦驗證位移 20,000；T5 沙盒真跑 7 支腳本 rc=0；回歸 check_thresholds 與 HEAD 基準線同為既有 1 項 FAIL（pending 卡狀態，非本批 regression）、check_caliber_consistency 不一致 0；diff 範圍僅 9 檔 .py，snapshot.json 未變更。獨立審查 APPROVE 0 blocking；commit 4c5c68fe 已推 clean-main，遠端 sha 複驗相符。附帶觀察（未列入本批、建議另案）：institutional_flow.py 以寬鬆 except Exception 包住本週投資計劃區塊 → 底線缺值時該區塊會靜默消失（有告警但 rc=0），與「假真值」不同型但屬可觀測性缺口。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004211650-1083",
+      "timestamp": "2026-10-04T21:16:50.037228+08:00",
+      "agent": "Hermes",
+      "task": "cash_floor 第一批收案 CLOSED ＋ threshold 30M 第 0 步唯讀盤點（未施工）",
+      "summary": "【一、cash_floor 第一批收案】使用者 2026-10-04 裁決 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION（線上 clean-main 73f39965）。使用者特別指出本批最有價值處＝抓到 build_audit_dashboard.py:159 的 CASH_AVAIL>=700000（判斷邏輯非顯示文字；若漏抓，政策值一改儀表板會繼續用舊門檻）。驗收成立：15 處／9 檔全接單一 sot_targets.cash_floor()；鍵名漂移以 750,000 位移測試證明（新版位移 50,000／HEAD 位移 0）；accessor 第二來源亦位移驗證；遮蔽底線未掉回 700,000；T1 判定類殘留 0；沙盒 7 支腳本通過；snapshot 未改；邊界外未碰；regression 與 HEAD 基準一致；獨立審查 APPROVE 0 blocking；遠端 SHA 一致。審查理由簡短不退件（T1–T5 實測為主要依據）。唯一技術債（同意不塞入本批）：institutional_flow.py 的 except Exception → 缺底線時告警但 rc=0（fail-closed accessor 被上層寬鬆例外吃掉→功能區塊消失但整支程式成功；屬可觀測性／錯誤傳播問題，另案）。【二、threshold 30M 第 0 步唯讀盤點】使用者在施工前先要四問答案（本筆未動任何程式）。①snapshot 是否有正式政策真值：無。全快照 2,900–3,100 萬區間僅 total_liabilities＝30,967,893 與 liabilities_build_up.total（同值，屬負債，與門檻無關，數值巧合）。②是否已有 accessor：無（sot_targets 有 gate_thresholds／acceptable_band／bucket_targets／cash_floor，皆非此門檻）。③是否有程式內第二份來源：live 僅 3 處——tactical_table.py:290 pi.get(\"threshold\", 30_000_000)（取值 fallback，1 處）＋build_weekly_report.py:145,195 顯示文字「資產 3,000萬 盤點」（2 處）；archive/bak 0 處。④它代表什麼：台灣「專業投資人（PI）」法規門檻＝金融資產 3,000 萬元，不是資產／負債／留停 Gate 門檻，也不是歷史顯示數字。【三、盤點衍生重要發現】該站點目前**不可達**：tactical_table.py:286 `if pi:` 的 pi 來自 table[\"professional_investor\"] ← snap.get(\"professional_investor\", {})，但全 repo 只有「讀」沒有任何寫入者、snapshot 亦無此鍵（grep 全 repo 證實）→ if pi: 恆為 False，PI 風控卡從不渲染。同一 f-string 內另有寫死的「現況：金融資產含保單 28,220,311」＝真正的假真值風險（若卡開始渲染會印固定數字）。另發現 entry_monitor.py:46 讀 snapshot.pi_status 亦不存在 → PI 認列閘門同屬空讀。結論建議（待使用者裁示，本筆不施工）：因 30M 屬法規常數而非個人政策值，不宜單純換常數；可能方向為 (a) 建立 snapshot.professional_investor 單一寫入者（含 threshold／現況／gap），現況改由 snapshot 金融資產含保單推導；(b) 或將整塊列為 dormant 並登錄；兩者皆須先決定 PI 卡是否仍要存在。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004212051-1084",
+      "timestamp": "2026-10-04T21:20:51.086464+08:00",
+      "agent": "Hermes",
+      "task": "PI 專業投資人：裁決 (a) 保留功能、標記 DORMANT／SPEC REQUIRED，開資料生命週期規格工單（規格已交付，不施工）",
+      "summary": "使用者 2026-10-04 裁決：threshold 30M 保留、定義為「外部法規常數」；PI 風控保留但標記 DORMANT／SPEC REQUIRED；本輪不修改任何程式；下一批先開「PI 資料生命週期規格工單」而非直接清 30M。使用者明確拒絕「直接把 28,220,311 換成目前 snapshot 某欄位」的作法，理由是該金額牽涉「金融資產含保單」定義、尚未裁決，直接換會製造另一個「看似合理但未經裁決」的新真值；正確順序＝先定義 PI 資料模型→確認金融資產來源→建立唯一寫入者→再清舊路徑。已交付規格 PI_DATA_LIFECYCLE_SPEC.md（狀態 OPEN/SPEC ONLY/NO ENGINEERING，10 節）：①為何需要（無寫入者、現況不可達、兩個位置、兩種欄名、假真值）②現行消費者清冊 7 條（tactical_table:269/286-310、debt_restructure_tracker:89/196-199/240、entry_monitor:46-48、run_daily:295）③待裁示口徑 Q1-Q4 ④目標資料模型（professional_investor 唯一容器＋唯一寫入者 sync_professional_investor.py，含 updated_at/source/PII gate/dry-run）⑤threshold 具名法規常數 PI_REGULATORY_THRESHOLD_TWD＝30_000_000（不進 snapshot、不 fail-closed）＋唯一 accessor pi_regulatory_threshold() ⑥current 由 accessor pi_financial_assets(snap) 單一口徑（禁用寫死）⑦gap/status 計算與邊界（current==threshold 判達標）⑧fail-closed 規則（professional_investor 缺→印「PI 資料缺真值」不得靜默隱藏；pi_status 缺或非法→raise，取代現行回退未申請的 fail-open）⑨須消除舊路徑 7 條 ⑩驗收四測（有值／無值／跨 30M／反寫死位移測試）＋施工順序六步（①未完成不得進②-⑥）。關鍵新證據（本次實測，寫入規格）：卡片寫死 28,220,311 為 stale 且方向是「低估缺口」——真值證券 3,007,220＋基金 12,611,674＋保單 9,418,965＝25,037,859，＋現金 1,753,675＝26,791,534（＝total_assets）；寫死值多 1,428,777，導致卡片算出假缺口 1,779,689 vs 真缺口 3,208,466（含現金口徑），相差 143 萬，足以誤導送件時機。另證實全 repo 對 snapshot.professional_investor 只有讀、零寫入者（tactical_table:269、run_daily:295 皆僅轉手），故 tactical_table:286 if pi: 恆為 False、PI 卡從未渲染＝dormant。交付：commit d6d23eef（規格文件，獨立審查 APPROVE 0 blocking，已推 clean-main 並驗遠端 sha）。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004213302-1085",
+      "timestamp": "2026-10-04T21:33:02.802890+08:00",
+      "agent": "Hermes",
+      "task": "PI 專業投資人雙軌資料生命週期｜②-⑥ 施工完成（DELIVERED，待收案）",
+      "summary": "依使用者 2026-10-04 裁決（規格 APPROVED、①-④ 定案、②-⑥ GO）完成施工。①骨架：sot_targets 新增 PI_REGULATORY_THRESHOLD_TWD=30_000_000（唯一位置之法規常數，不進 snapshot、不 fail-closed）＋ accessor 拆分 pi_regulatory_threshold()／pi_record()／pi_application_status()／pi_approval_status()／pi_financial_asset_proxy()／pi_gap_twd()／pi_meets_financial_threshold()／pi_is_approved()；缺值一律 raise（禁 or 0、禁預設「申請中」）。②唯一寫入者 sync_professional_investor.py（拒寫衍生欄位、狀態驗證、dry-run、備份＋三重驗證：目標鍵正確／其他鍵逐鍵不變／可重解析；snapshot 先驗證 indent=1 可無損 round-trip 才允許寫入）。③唯一計算與渲染層 pi_card.py（日報 HTML 與週報 Markdown 共用同一 payload，tactical_table 與 run_daily 皆委派，不各自組公式）。④舊路徑清除：頂層 snapshot.pi_status、欄名「認列」、PI_STATES 本地清單、寫死 28,220,311、pi.get(threshold/gap/status) 預設值全部消滅；entry_monitor 黃金分支與台股慢慢買例行改判「已核准」。⑤狀態機以兩欄位實作：application_status（未申請/已送件/補件中/審核中）＋ approval_status（未核准/已核准/未通過/失效）；拒絕與失效不得塞回未申請（債務 tracker 原 fail-open 回退未申請已改 raise＋fail-safe 鎖定）。⑥財力口徑＝證券＋基金＋保單＋現金＝26,791,534（缺口 3,208,466）；欄位命名要求已遵守：對外稱「PI 財力檢核口徑／readiness proxy」，程式碼與卡片皆註記「不等同金融機構最終認定」，未宣稱為法規認定資產。⑦不併配偶（v1）。重要設計裁決（須向使用者報備，因其模型圖列 8 欄位）：proxy／gap／meets／threshold 一律即時計算、不落地儲存，snapshot 僅存 application_status／approval_status／source／updated_at；理由＝落地值會隨資產變動過期，正是本次要消滅的 28,220,311 型 stale 假真值。驗收（全過）：五測 ①有值 ②缺值 fail-closed（三消費端零金額洩漏、未回退未申請） ③29M/30M/31M 邊界（== 判達標） ④反寫死位移（來源 +500,000 → proxy 與缺口同步位移 500,000，卡片內容隨之改變） ⑤資產達標但未核准 → pi_is_approved=False、卡片同時顯示「✅達標」與「🔒鎖定」、tracker 硬鎖、entry 不觸發執行鏈（本批最重要）；⑥寫入者六項檢查。端到端：日報今日檔含新卡且無 28,220,311；缺值時日報出現 fail-closed 卡（不靜默隱藏）；週報產物含「財力 proxy ≥ 3,000萬」。靜態複掃：28,220,311／1,779,689／3,000萬 live 程式 0 殘留（僅註解與 docstring 提及歷史案例）；30,000,000 只剩 sot_targets 一處。回歸：check_thresholds 與 check_caliber_consistency 與 HEAD 基準線完全一致。diff 範圍：8 檔 .py（6 改＋2 新，+370/−54）。獨立審查 APPROVE 0 blocking；commit b486b27f 已推 clean-main 並驗遠端 sha。施工中另發現並一併修正（已於審查說明）：(a) run_daily.py 有第二張 PI 卡（原清冊漏列，同樣寫死 28,220,311）→ 改走 pi_card；(b) build_weekly_report.py 的 debt_chain 與 act4 樣板本非 f-string，既有 {_pf...} 佔位符會原樣印出（既有瑕疵），因本次插入常數佔位符而必須修正 → 改為 f-string。待辦與觀察：①PI 現行狀態（申請／核准）系統內無任何記錄，尚未 seed → 目前所有消費端呈 fail-closed（這是刻意行為，非故障）；需使用者一句話即可用唯一寫入者建檔。②run_daily 8/20 定案區塊（deployment_plan）仍在 if _pi: 之內且含 _dp2.get(total, 12000000) 等 fallback，屬同型假真值，建議另批處理（本批未動）。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004213540-1086",
+      "timestamp": "2026-10-04T21:35:40.720099+08:00",
+      "agent": "Hermes",
+      "task": "PI 雙軌資料生命週期｜收案 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION ＋ 下一張 P0 立案（deployment_plan dormant fallback）",
+      "summary": "使用者 2026-10-04 裁決：②-⑥ APPROVED／CLOSED／DEPLOYED／VERIFIED，commit b486b27f 接受，獨立審查 APPROVE 0 blocking，遠端 clean-main 一致。五項正式裁決：①最大設計偏離「只落地 4 欄位（application_status／approval_status／source／updated_at），regulatory_threshold_twd／financial_assets_proxy_twd／gap_twd／meets_financial_threshold 改 runtime derivation 不落 snapshot」→ 核准，並改為正式裁決：PI snapshot 只保存「事實／人工核准狀態」，財力與門檻全部 runtime derivation；未來若需稽核歷史，另做唯讀計算快照，不得成為判斷來源。②application／approval 雙軌核准（不採單一六態，理由：申請進度與資格核准是兩個不同事實，「已送件／未核准」與「未申請／未核准」不可混為一態）；Lombard／entry hard lock 正式鎖定於 approval_status==\"已核准\"。③兩個漏掃出的 28,220,311（tactical_table 與 run_daily 第二張卡）處理正確，本批性質為「假真值資料流清除」而非搜尋取代；28,220,311 live=0、1,779,689 live=0、30,000,000=唯一法規常數、PI proxy=唯一由真值即時計算。④build_weekly_report.py 兩處 f-string 修正裁定不算 scope creep（新常數確需插入樣板，原模板非 f-string 導致既有 placeholder 原樣輸出；屬本批必要之既有模板缺陷修復）。⑤deployment_plan：同意不在本批回頭改，因該區塊目前受 if _pi: gating 從未渲染，屬同型 dormant fake-truth fallback（_dp2.get(\"total\", 12000000) 等），現改會破壞本批已驗收之範圍邊界 → 正式立案下一張 P0：dormant fallback cleanup — deployment_plan（優先級高，與本批分卡）。未完成項（非技術問題）：PI 現況真值建檔。使用者明確指示不得由系統挑選合理預設、必須由本人提供真實狀態；確認後才可執行唯一一次建檔（sync_professional_investor.py）。系統內既有痕跡彙整（供使用者確認參考，未寫入）：snapshot 載「8/20-8/23 部署完成→PI 核定→國泰質押 540萬@2.77%」、「先送 PI（8/20-21）→8/31 贖回→PI 認列（~9/3）→再還債」、「8/21 PI 認證期停泊不動」；而質押實際已於 2026-09-29 10:57 撥款 590 萬（利率 2.65%，原記 2.77% 待銀行書面覆核）——惟 debt_restructure_tracker 之硬鎖規則為「PI 非已正式核准 → 禁止執行任何 Lombard 質押借出作業」，故「質押已撥款」與「PI 未核准」存在邏輯張力，兩者不可同時成立。目前所有 PI 消費端呈 fail-closed（刻意行為、非故障）。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004213833-1087",
+      "timestamp": "2026-10-04T21:38:33.807931+08:00",
+      "agent": "Hermes",
+      "task": "PI 現況真值｜裁決暫不建檔、維持 fail-closed；primary evidence 搜尋結果為「未尋獲」（唯讀）",
+      "summary": "使用者 2026-10-04 裁決：暫不建檔，維持 PI DORMANT／FAIL-CLOSED 與所有 hard lock（台股慢慢買、黃金衛星、Lombard 均續鎖）。理由：現有三條證據不足以把推論升格為 snapshot 真值——A（8/20-9/3 多處「PI 核定／認列」記載）屬系統內部敘述、強但非正式；B（9/29 撥款 590 萬、2.65%、LTV 50.09%）證明質押確實發生，但不能單獨證明 PI 核准狀態；C（現行 hard lock 要求「已正式核准」）不能反推歷史真值，只說明系統未留存該真值。且 9/29 該筆質押是否屬於 debt_restructure_tracker 所定義之 Lombard 尚未釐清；在用推論解鎖真實投資／借貸決策鏈之前不得寫入。明確禁止六項：不填「未申請／未核准」、不填「已核准」、不用 2.65% 推導 PI、不用 9/29 已撥款反推 PI、不用舊 snapshot「PI 核定」文字升格為正式狀態、不修改任何程式。A 之定位：待核實的高可信歷史證據（≠沒有證據）。目前最合理狀態：系統真值＝未知；歷史證據＝高度指向已核准。核准日不得猜（8/20、8/21、8/31、9/3 僅能稱事件日期／歷史敘述日期）。升格條件（primary evidence 標準）：銀行正式 PI／專業投資人核准或認定紀錄、對保／契約／申請文件中明確標示 PI 身分、銀行提供之客戶分類或核准通知、或能直接證明 9/29 590 萬質押適用 PI 資格之文件；取得後始可建檔，並於 note 留核准日與證據來源。【本次已執行之唯讀搜尋（未改任何程式）】Gmail 查詢 11 組：專業投資人／PI／對保／核准／from:cathay／from:國泰世華／質押／額度核定／金融資產／財力證明／投資屬性——全數未命中 PI 核准或認定通知；命中項均為行銷、登入通知、基金公開說明書樣板或無關郵件（國泰世華僅 CUBE App 登入通知與信用卡行銷；「額度核定」0 筆）。本機檔案：Desktop／Downloads／Documents／Pictures 與 repo 內無任何 PI 或對保佐證文件（僅圖表 PNG 與 00983D_質押套利方案.txt）。結論：primary evidence 不在任何我可存取的數位來源中，須由銀行端取得。建議取得路徑：①國泰世華 CUBE App 之投資屬性／客戶分類頁（PI 身分通常顯示於此）②9/21 對保之契約書／約定書影本（若載明 PI 身分或適用 PI 條款）③9/11 額度核定之書面通知 ④直接向理專索取「專業投資人資格」書面確認（最直接）。另需一併釐清：該筆質押之適用法規／產品別，以確認是否屬 hard lock 所指之 Lombard。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004214154-1088",
+      "timestamp": "2026-10-04T21:41:54.869952+08:00",
+      "agent": "Hermes",
+      "task": "PI 現況真值｜收案 CLOSED／WAITING FOR EXTERNAL EVIDENCE（本輪 0 程式變更）",
+      "summary": "使用者 2026-10-04 裁決收案：狀態 CLOSED／WAITING FOR EXTERNAL EVIDENCE。確認本次唯讀搜尋已證明「系統內找不到 primary evidence」→ 不再繼續挖數位來源、不為 PI 增加提醒或程式處理。鎖定狀態：PI＝DORMANT／FAIL-CLOSED；approval_status＝未知、不建檔；台股慢慢買／黃金衛星＝LOCKED；Lombard＝依現行 hard lock 維持 LOCKED；28,220,311＝已永久清除；PI lifecycle ②-⑥ 已完成驗收；本輪程式 0 變更。pending 治理：查核後確認 pending_decisions.json 原本 0 張 PI 相關卡（無重複可清），依裁決「保留一張即可、不新增重複提醒」新增 PEND-20261004-01（PI 專業投資人現況真值｜等待銀行端 primary evidence），並將使用者同日正式立案的下一張 P0 一併建卡 PEND-20261004-02（dormant fallback cleanup — deployment_plan）。兩卡皆 status=待處理、due_date=null（依 pending_engine 鐵則「無 due_date 者不提醒、不推算」→ 不進提醒迴圈，符合「不新增重複提醒」）。check_thresholds 複驗：仍為既有 1 項 FAIL（已完成狀態卡），未因本次新增卡而生新 FAIL。commit 8452032b 已推 clean-main 並驗遠端 sha。PEND-20261004-01 內載明：取得銀行端證據時一次問兩件事——①是否已正式認定為專業投資人（PI）、核准／認定日期；②2026-09-29 撥款 590 萬之質押屬 Lombard／PI 適用產品或一般金融資產質借／其他高資產客戶產品。分支：若「是 PI 且該筆即 PI/Lombard 質押」→ 可建檔 approval_status=已核准 並以銀行確認日為 note（走 sync_professional_investor.py）；若「非 PI 或該筆非 Lombard」→ 命題轉為 debt_restructure_tracker hard-lock 適用範圍檢討，非 PI 狀態問題。取得路徑：CUBE App 投資屬性／客戶分類頁、9/21 對保契約書、9/11 額度核定書面、或直接向理專索取 PI 資格書面確認。本輪附帶教訓（自我修正，已落地）：推送資料類 commit 時若傳 auto_push.py --record skip 且未先 cio_approve 落紀錄 → 閘門必擋（INC-183 同型，本次重犯一次後改走預設自動落紀錄並成功）。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004221411-1089",
+      "timestamp": "2026-10-04T22:14:11.076447+08:00",
+      "agent": "Hermes Agent",
+      "task": "PI 專業投資人｜正式建檔（已完成／已核准）＋ 質押四概念分離",
+      "summary": "使用者 2026-10-04 提供真實狀態：國泰世華 PI 資格已核准（依此取得質押額度、9/21 對保、9/29 撥款 590 萬@2.65%）。以唯一寫入者 sync_professional_investor.py 建檔：application_status=已完成／approval_status=已核准（財力 proxy 26,791,534 未達 30,000,000，與資格軌分離，不影響核准）；廢除容器內舊 schema（pi_status／applied_date／approved_date／expected_approval／deployment_plan）；寫入者修正為白名單過濾（原印『將移除』卻未移除）；pi_record 改分軌驗證。質押四概念分離：質押品市值／實際動用額／利率／撥款日為真值，銀行核定授信額度未取得文件 → null，禁由質押品價值反推（撤回 12M−5.9M=6.1M）。新增質押 accessor；修回歸：deployment_plan 廢除後 debt_restructure_tracker §4 退化成『0% 尚未質押 🟢』假綠燈並復活 7 月寫死字串 → 改讀 accessor，LTV 現算 50.1%。E2E 2×2 雙態對照＋突變自測 27/27、驗證器 42/42。三輪 CIO-DeepSeek-Pro 獨立唯讀審查 APPROVE 0 required_fixes。commit 49ccbcf3（程式）／b0d63771（資料）已推 clean-main。",
+      "status": "CLOSED/DEPLOYED/VERIFIED",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004221438-1090",
+      "timestamp": "2026-10-04T22:14:38.695338+08:00",
+      "agent": "Hermes Agent",
+      "task": "範圍控制：run_daily.py 質押口徑卡與 deployment_plan fallback 另案處理",
+      "summary": "使用者 2026-10-04 裁決：本批不得修改 run_daily.py。其 :1843  與  回退 12,000,000 屬既有 PEND-20261004-02，另立卡處理；另質押口徑卡 ①『額度計算：擔保池本金 12,000,000 × 成數 50.0% = 可貸 5,900,000』之語意（把 12M 當授信額度）與其  假真值 fallback 亦同批辦理。架構建議一併處理：（容器非空即真）應改為  存在性判斷。範圍控制理由：讓被審批次純粹，避免 sneaky scope creep。",
+      "status": "PENDING/SCOPED-OUT",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004221525-1091",
+      "timestamp": "2026-10-04T22:15:25.598639+08:00",
+      "agent": "Hermes Agent",
+      "task": "範圍控制（更正 1090 摘要）｜run_daily.py 質押口徑卡與 deployment_plan fallback 另案處理",
+      "summary": "【更正 mem-20261004221438-1090 摘要】原筆摘要中的程式片段因 shell 把反引號當命令替換而遺失（非決策變更，屬寫入殘缺），本筆補正全文：使用者 2026-10-04 裁決本批不得修改 run_daily.py。其 :1843 `_dp2 = tv.get('professional_investor', {}).get('deployment_plan', {}) or {}` 與後續 `_p1_loan` 回退 12,000,000 屬既有 PEND-20261004-02（已於 21:40 立卡），另案處理；另質押口徑卡 ①『額度計算：擔保池本金 12,000,000 × 成數 50.0% = 可貸 5,900,000』之語意（把 12M 當授信額度）與其 `_cp.get(\"可貸金額\") or round(池本金 × 成數)` 假真值 fallback，亦同批辦理。架構建議一併處理：`if _pi:`（容器非空即真，因 pi_card payload 含 error 鍵而恆真）應改為 `pi_record()` 存在性判斷。範圍控制理由：讓被審批次純粹，避免 sneaky scope creep。",
+      "status": "PENDING/SCOPED-OUT",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004223737-1092",
+      "timestamp": "2026-10-04T22:37:37.101215+08:00",
+      "agent": "Hermes",
+      "task": "稽核覆蓋缺口關閉｜check_thresholds 不變式納入 closeout_check（收工閘門 fail-closed）",
+      "summary": "使用者 2026-10-04 裁決核准施工，範圍鎖定一張獨立卡，不碰 PEND-20260930-01／-02／PEND-20261004-02。缺口：closeout_check.py 的 15 類稽核不含 check_thresholds.py 的 blocking 不變式 → 實踩：完成卡 status 含「已完成」使 build_dashboard 以子字串過濾整卡靜默隱藏數日，而收工稽核仍報全部通過。Step 0 判定：check_thresholds 的 blocking contract = main() 回傳值（errs 非空→1），errs 內每條皆 violation、無資訊性錯誤通道（資訊性走 print/rep_status，不進 errs）→ 只能呼叫該 rc 契約，不得自己重寫斷言（避免第二份真值）。選 --sot-only：日報渲染行比對屬產報時序關卡（INC-238，22:00 晚報合法移動 snapshot → 收工時設計上必假失敗），已由 sync_all 負責；--sot-only 仍涵蓋全部不變式（含 pending 隱藏關鍵字）。落地：closeout_check.py 新增 step_threshold_invariants()（⑦）＋THRESHOLD_CHECKER/ARGS/TIMEOUT；fail-closed 四路（腳本不存在／逾時／無法執行／rc≠0）皆回報；失敗保留 stdout 末40行＋stderr 末20行；強制 LJ_NO_TELEGRAM=1（不推 Telegram／Notion）；subprocess 明寫 encoding=utf-8、errors=replace（zh-TW Windows 預設 cp950 解不到 ❌ → 每次假 FAIL）；checker 參數刻意不做環境變數開關（防指向假腳本）。新增 tools/verify_closeout_threshold_gate.py 12 項：S1 正常PASS／S2 含隱藏關鍵字FAIL／S2b 保留原始輸出／S3 檢查器異常FAIL／S4 資訊性不阻塞／S5 不存在FAIL／S6 mutation（同夾具拔掉不變式→不再FAIL，證明非空洞）／S7 無遞迴／S8 無副作用／S9 反恆真／S10 wiring／S11 端到端 rc 穿透。CIO-DeepSeek-Pro 獨立唯讀審查 APPROVE 0 required_fixes（6/6 邊界、12/12 命令），並自行加做兩條獨立反空洞實驗：cmd10 刪除 8 行不變式→rc 由 1 變 0；cmd11 拿掉 problems.extend(thr_problems)→失去穿透力（rc=0）。check_thresholds.py 零改動（責任分離）。commit 3fadde30（tree aa62b990，3 檔 +322/−0）已推 clean-main；未推 0；收工檢查全部通過（⑦ ✅）。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004224837-1093",
+      "timestamp": "2026-10-04T22:48:37.344270+08:00",
+      "agent": "Hermes",
+      "task": "威剛 3260 申購抽籤｜核准扣款 290,070（分類＝申購抽籤／暫時性資金占用，非台股加碼）",
+      "summary": "使用者 2026-10-04 裁決：✅ 扣款。機制釐清（使用者自行更正）：先扣 290,070 → 參加抽籤 → 未中籤退款，僅收 30 元手續費；不是「中籤後才準備 290,070」。資金影響：10/6 可動用 853,675 − 290,070 = 563,605（暫時）；未中籤 +290,040 退款 → 853,645。★ 分類鐵則（使用者指定）：本筆不得記為「新增台股配置／加碼」，應記為「申購抽籤／暫時性資金占用」——否則儀表板未來會誤判為「台股暫緩政策被繞過」。政策關係：台股暫緩加碼（US30Y 煞車）不適用作否決理由——因該筆非主動永久配置、且未中籤即退回。★ 未閉環點：中籤＝該 290,070 轉為實質台股部位 → 須另案依台股暫緩政策檢視；未中籤＝退款確認後結案。風險檢查（本筆真正該看的）：10/6～退款期間可動用 563,605 是否足以應付同期確定支出。同期（10/6–10/31）確定：支出 國泰房貸 26,000（10/20）、胡志明市出差 10/23–28（金額未列）；收入 房租 51,100（10/15）。註：563,605 低於現金底線 700,000（短少 136,395，＝申購超出乾粉 153,675 的部分），屬暫時性、未中籤即回復。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004224906-1094",
+      "timestamp": "2026-10-04T22:49:06.273822+08:00",
+      "agent": "Hermes",
+      "task": "10 月標案押標金 240 萬｜維持條件式：現在不動用現金、不預先辦保證函",
+      "summary": "使用者 2026-10-04 裁決：⏸️ 現在不動 240 萬、不辦保證函；等「確定標案 → 確認押標金與支票要求」後再決定資金來源。理由：目前尚未決定投哪個標案 → 240 萬屬條件式資金需求，不提前占用現金。沿革更正：9/25 方向為「履約保證函/保證保險替代現金（年費約 1%）」；9/29 更新為「先鎖定標的再評估可行性」；2026-10-04 進一步收斂為「連保證函也不預先辦理」。系統處置（已存在於 snapshot.cash_need_90d._條件式事件備註）：不進 A 區、不進 Coverage、不顯示為資金需求、不產生缺口或紅燈、不觸發任何動作；得標後才啟動「現金 vs 賣股 vs 質押」資金來源比較。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261004225554-1095",
+      "timestamp": "2026-10-04T22:55:54.330379+08:00",
+      "agent": "Hermes",
+      "task": "威剛 3260 申購期間風險模型（四維度不得合併為單一綠燈）＋三項收斂裁示",
+      "summary": "使用者 2026-10-04 裁決。背景：本筆申購的正確判讀不是『563,605 還夠付房貸所以 OK』，而是『申購期間形成現金底線暫時破線』狀態。★ 明定四維度分別成立、不得混成一個綠燈：① Cash floor ❌ 暫時跌破（可動用 853,675 − 290,070 = 563,605 < 底線 700,000，短少 136,395；該 136,395 恰等於申購超出乾粉 153,675 的部分）② 確定支出覆蓋 ✅ 目前足夠（10/6–10/31 同期已確認支出僅國泰房貸 26,000 @10/20）③ 流動性事件 ⚠️ 進行中（等退款／中籤結果）④ 留停 Gate3 🟡 WAIT（不因①②③而改變）。使用者並指定此案為「A 綠 ≠ B 綠」原則的實例。三項裁示：①出差預算暫不填——維持缺資料狀態，不得為讓模型完整而自行塞估算值；不得用預估值把現金底線硬算成綠（落點：snapshot.cash_need_90d._待確認支出，載明不得視為 0）。②建立『抽籤結果』驗收節點（PEND-20261004-04）——不猜抽籤日期，觸發條件＝取得結果：未中籤→退款 290,040 入帳確認後結案；中籤→290,070 轉為實質台股部位，須另案依台股暫緩政策裁示，★不得自動視為既有核准。③PEND-20260930-02 政策同步——僅把過時的『240 萬押標金來源』改為現行條件式政策（不提前占用現金、不預先辦保證函、待標案確定後再定來源），不改 P0-2 核心技術範圍、不重新裁示押標金來源、保留 10/15 檢視節點。真值層落點：snapshot.cash_need_90d._流動性事件_20261006（含維度／分支／不得合併為單一綠燈旗標）、_暫時性占用備註；行事曆 10/6 條目補註追蹤結果。",
+      "status": "completed",
+      "source": "user"
     }
-,
-  {
-    "id": "mem-20261004114539-1076",
-    "timestamp": "2026-10-04T11:45:39.425011+08:00",
-    "agent": "Hermes",
-    "task": "2026-09-30「日誌／記憶嵌浮動金額」閉環（卡片 CLOSED）",
-    "summary": "裁決：可標記 CLOSED。寫入端已去金額化+指向真值來源；連續觀察期間三閘門（stale/cross/caliber）未因日誌行告警；pending 卡以狀態機標 已完成（保留 status_raw）；歷史 dashboard_decisions 列不清洗（具歷史語義、不被任何閘門引用）。work_log #263 已於 10/4 改『應辦→修正』。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004204637-1077",
-    "timestamp": "2026-10-04T20:46:37.045176+08:00",
-    "agent": "Hermes",
-    "task": "寫死退路常數盤點｜10/04 基準鎖定（OPEN／INVENTORY ONLY）",
-    "summary": "10/04 重掃補正 10/02 盤點基準：live .get(key, fallback≥1萬) 實測 69 處／19 檔（10/02 記錄 71 處／20 檔，差 2 處／1 檔不可回溯——原清單未保存逐條行號，兩份清單在原始輸出補齊前不硬合併成施工範圍）；.archive/ 與 .bak-* 另有 42 處，明確排除 live 債。分類：P0 總額級 14 處（不動產 34,017,063×3／34,000,000×2、總負債 22,000,000、保單 9,876,282＋9,802,872、現金 4,483,408／3,614,169／3,119,158、證券 2,597,360、基金 793,434／765,991）；P0 延伸 cash_floor 700,000×6、threshold 30,000,000、policy_pledge_loan 4,000,000；P1 收入／配息／租金／支出明細；P2 純顯示非決策級。已確認假真值案例：build_final.py:205 policy_pledge_loan=4,000,000（該債 9/29＋10/1 已全數清償，fallback 會復活不存在的負債）、report_components.py:59 monthly_income=214,685（舊口徑，現行 228,751）、rent_monthly_total 80,100 vs 實收 77,100（多處兜底口徑分裂）。施工協議（本輪未啟動）＝0 先確認單一 accessor 存在 →1 找到 →2 判源 →3 清 fallback →4 改明確缺值（禁 or 0）→5 雙向測試（有值／無值）→6 驗收，逐批施工、不一次碰 69 處。本輪無任何程式／資料／線上真值變更；掃描器已移出 repo（~/AppData/Local/hermes/scripts/hardcode_scan/）避免 22:00 晚報 git add -A 誤納；69 處 JSON 已保存作下一批工單底稿。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004205541-1078",
-    "timestamp": "2026-10-04T20:55:41.894449+08:00",
-    "agent": "Hermes",
-    "task": "P0 假真值退路清除 第一批｜施工完成（OPEN→DELIVERED）",
-    "summary": "工單：P0 假真值退路清除 第一批。A 第0步 Accessor Gate：原缺 5 個單一來源（總負債／不動產／保單／證券／基金）→ sot_targets 新增 total_cash／total_liabilities／real_estate_value／insurance_total／securities_total／funds_total／policy_pledge_loan 七個 fail-closed accessor（缺值 raise，禁 or 0）；同義鍵清單沿用 asset_sync.SYNONYM_GROUPS（新增 total_liabilities／real_estate 兩組，不複製第二份清單）。B 14 處總額級全數清除：不動產 34,017,063×3（asset_diff_monitor:1264、build_audit_dashboard:24、build_ceo_dashboard:13）＋34,000,000×2（asset_diff_monitor:271／399）；總負債 22,000,000（asset_diff_monitor:298）；保單 9,876,282（market_intel:146）＋9,802,872（build_penetration_report:14）；現金 4,483,408（run_daily:1411）／3,614,169（run_daily:285）／3,119,158（build_penetration_report:13）；證券 2,597,360（build_penetration_report:15）；基金 793,434（build_penetration_report:16）／765,991（asset_diff_monitor:975 → 改明確「缺真值」顯示＋告警）。C 兩高危案例：build_final:205 policy_pledge_loan 4,000,000 → accessor，pl==0 分支改印「保單借貸已全數清償（餘額 0）」（原 fallback 會把已清償的 400 萬負債復活）；report_components:59 monthly_income 214,685 → sot_monthly_income（現值 228,751）。驗收：T1 去註解複掃程式碼 0 殘留；T2 七個 accessor 有值／遮蔽後 raise 全過；T3 覆蓋率 full 228,751/159,210=144%；T4 真跑 build_penetration_report rc=0（含 1,753,675／9,418,965／12,611,674）、asset_diff_monitor rc=0（負債比率 50.9% 含不動產｜流動 115.6%，證實 real_estate_value 與 total_liabilities 端到端生效）、build_final rc=0；T5 沙箱遮蔽真值 → rc=1 KeyError 且零舊常數洩漏；基準線以 git archive HEAD 原版跑 check_thresholds 得同一條既有 FAIL（pending 卡狀態含「已完成」）→ 證明非本批 regression；check_caliber_consistency 不一致 0。diff 範圍僅 10 檔 .py（+131/−23），未動 snapshot 真值與施工邊界外檔案（cash_floor／threshold 30,000,000／P1／P2／.archive／.bak-* 全未碰）。獨立審查 APPROVE 0 blocking（CIO-Independent／llm_review_client）；commit 4fe504f0 已推 clean-main，遠端 sha 複驗相符。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004210150-1079",
-    "timestamp": "2026-10-04T21:01:50.550050+08:00",
-    "agent": "Hermes",
-    "task": "P0 假真值退路清除 第一批｜收案 CLOSED ＋ fetch_weekly_proxy.py 隔離裁決",
-    "summary": "【一、第一批收案】使用者裁決 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION，不再補工程。確認項目：7 個 accessor 全 fail-closed raise KeyError、無 or 0／新常數掩蓋缺值、刻意排除 stale 相容鍵（securities_market_value／securities_current）、14 處總額級 fallback 全清、policy_pledge_loan=4,000,000 已證明清償後不再復活、monthly_income 回到現行 228,751、有值/無值雙向測試皆跑、靜態複掃 0 殘留、snapshot／cash_floor／threshold／P1／P2 均未越界、CIO APPROVE 0 blocking、遠端 SHA 一致。commit 4fe504f0（程式）＋3d2a4233（決策入庫）；線上 clean-main 複驗相符。下一個正式施工批次為 cash_floor 700,000 等 P0 延伸，未經明確下令不自動開工。【二、fetch_weekly_proxy.py 裁決：QUARANTINED／NOT VERSIONED】已自 repo 移出並隔離至 ~/AppData/Local/hermes/quarantine/20261004_orphan_weekly_proxy/（含 _weekly_yf_proxy.json 19:01 快照），未進版控、未 commit。來源追查結果：①該檔從未存在於任何 branch／commit（git log --all 空）；②全 repo 與 hermes 目錄零引用（引用者只有它自己）；③寫入者已定位＝Hermes cron job 6a9babc90954「龍九動態自我檢討週報 週日19:00」（agent 型、no_agent=false），該 job 於 2026-10-04 19:00:20 起跑、19:06:42 結束，期間 19:00:56 生成 .py、19:01:07 改寫 _weekly_yf_proxy.json；④_weekly_yf_proxy.json 為已入版控檔案（8/24 743b76ca 起），但同樣零程式引用 → 屬 agent 執行期自建的中介產物。處置：來源已查明為真實產線（週報 job）而非殘留垃圾，故不刪除；是否把取價邏輯正式化（移入 scripts/ 並入版控、或改由 hermes/scripts 免落地執行、並讓週報 job 不再於 repo 根目錄寫 .py）另開工單處理，不混入本批。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004210349-1080",
-    "timestamp": "2026-10-04T21:03:49.104162+08:00",
-    "agent": "Hermes",
-    "task": "Backlog 立案（未開工）：週報 Agent 執行期產物治理",
-    "summary": "使用者 2026-10-04 裁決：P0 假真值清除全批正式結案 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION（線上 clean-main 40c429e8）；fetch_weekly_proxy.py 處置確認為 QUARANTINED／NOT VERSIONED／SOURCE IDENTIFIED（非垃圾檔，係 19:00 agent 型週報 job 6a9babc90954 執行期自建中介物，不刪為正確）。本筆為 backlog 立案、狀態📋 待開工（未施工、未動任何檔案），與 P0 假真值清除屬不同問題／不同風險／不同驗收範圍，故分開。工單名稱：週報 Agent 執行期產物治理。驗收範圍（5 條）：①取價邏輯移至正式 scripts/ 或 hermes/scripts；②禁止 job 在 repo root 生成 .py；③_weekly_yf_proxy.json 明確登錄為產物；④指定唯一 writer；⑤新增產線驗收：job 執行後 git status --short 不得出現新的 .py。優先序建議（使用者裁決）：下一批優先開 P0 延伸 cash_floor 700,000（直接牽涉閘門判斷，風險高於一般 P1/P2 顯示型 fallback）；threshold 30M、P1、P2 續排其後。目前無任何待動項目。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004210646-1081",
-    "timestamp": "2026-10-04T21:06:46.940003+08:00",
-    "agent": "Hermes",
-    "task": "P0 延伸優先序裁決 ＋ cash_floor 700,000 第 0 步盤點（📋 待核准開工，未施工）",
-    "summary": "使用者 2026-10-04 裁決下一階段優先序：①P0 延伸 cash_floor 700,000（最優先：會影響現金防守水位／閘門判斷／rotation／tactical／report_components）②P0 延伸 threshold 30,000,000（次之；須先判定「正式政策常數」或「歷史寫死舊數字」——若為政策常數應改為單一設定來源而非刪除，不得單純 search-and-replace）③P1 收入／租金／配息／支出 fallback（須先區分真值 fallback vs 政策假設值，例 rent_monthly_total 80,100 為預期租金則可能合法）④P2 顯示型 fallback（CEO/週報/月報/audit dashboard，不影響決策）。週報 Agent 產物治理為獨立 backlog，無依賴關係。裁示原則：不追求「69 處全清」，只按風險分批。本筆同時登錄 cash_floor 第 0 步唯讀盤點結果：①accessor 已存在且 fail-closed（sot_targets.cash_floor：cash_floor_rule.cash_floor → thresholds.現金_twd.生活底線 → raise），但**全 repo 零 import**（有 accessor 沒人用）。②真值來源確認：cash_floor_rule.cash_floor=700000、thresholds_2026_0915.現金_twd.生活底線=合計底線=700000（追繳緩衝=0）、top-level cash_floor=700000 → 700,000 屬「已落在 snapshot 的政策真值」，處置＝改走 accessor，不是刪數字。③live 掃到 39 處含 700000／70萬（archive 0 處）。④高價值缺陷：tactical_table.py:85 讀 cash_floor_rule.floor，但 snapshot 實鍵為 cash_floor（無 floor 鍵）→ 恆落 700000 fallback，鍵名漂移被 fallback 永久掩蓋（INC-278 同型）。⑤待施工清單（影響判斷類）：institutional_flow.py:528/636、rotation_engine.py:202/251/259、report_components.py:165、tactical_table.py:85、build_audit_dashboard.py:87、build_rebalance_report.py:74/217、run_daily.py:1295/1992/2006、sabbatical_checklist_update.py:24、build_weekly_report.py:43；另 macro_regime.py:36 為程式內政策常數定義（與 snapshot 真值重複＝雙來源），屬 threshold 批同型的「單一設定來源」問題。施工方式照 0→6。本筆未動任何程式、未改 snapshot；待使用者 ✅ 核准後才開工。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004211444-1082",
-    "timestamp": "2026-10-04T21:14:44.057720+08:00",
-    "agent": "Hermes",
-    "task": "P0 延伸 cash_floor 700,000 第一批｜施工完成，待收案（DELIVERED）",
-    "summary": "使用者 2026-10-04 GO 開工。範圍：判斷類消費端全數改接既有單一 accessor sot_targets.cash_floor()（不建第二份 accessor、不改 snapshot 政策值、不動純顯示文字／macro_regime／threshold 30M／P1/P2）。逐條（15 處／9 檔）：institutional_flow.py:528,636｜rotation_engine.py:202,251,259｜report_components.py:165｜tactical_table.py:85｜build_audit_dashboard.py:87＋159｜build_rebalance_report.py:74,217｜run_daily.py:1295,1992,2006｜sabbatical_checklist_update.py:24（原本地 _cash_floor 為第二份 accessor，已刪除，4 個呼叫端改走單一入口）｜build_weekly_report.py:43。施工中由 T1 靜態複掃新抓到 1 處原清單未列：build_audit_dashboard.py:159 KPI 卡片顏色判定 CASH_AVAIL>=700000（判斷類，非顯示）→ 一併清除。並修正實際缺陷：tactical_table.py:85 原讀 cash_floor_rule.floor（snapshot 實鍵為 cash_floor、無 floor 鍵）→ 恆落 700000 fallback，鍵名漂移被 fallback 永久掩蓋（INC-278 同型）。驗收全過：T1 靜態複掃（含 f-string 內插判定）判定類殘留 0，殘留僅顯示類字串；T2 accessor 有值 700,000、三消費端取真值；T3 硬測1 遮蔽 snapshot 底線 → 7 支腳本零洩漏，6 支 raise、institutional_flow 兩處被既有寬鬆 except Exception 攔截並印告警（未落回 700,000）；T4 硬測2 鍵名漂移 → cash_floor_rule.cash_floor 由 700,000 改 750,000，新版超額位移 50,000 而 HEAD 舊版位移 0（證明舊碼讀不到該鍵），accessor 第二來源（生活底線 720,000）亦驗證位移 20,000；T5 沙盒真跑 7 支腳本 rc=0；回歸 check_thresholds 與 HEAD 基準線同為既有 1 項 FAIL（pending 卡狀態，非本批 regression）、check_caliber_consistency 不一致 0；diff 範圍僅 9 檔 .py，snapshot.json 未變更。獨立審查 APPROVE 0 blocking；commit 4c5c68fe 已推 clean-main，遠端 sha 複驗相符。附帶觀察（未列入本批、建議另案）：institutional_flow.py 以寬鬆 except Exception 包住本週投資計劃區塊 → 底線缺值時該區塊會靜默消失（有告警但 rc=0），與「假真值」不同型但屬可觀測性缺口。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004211650-1083",
-    "timestamp": "2026-10-04T21:16:50.037228+08:00",
-    "agent": "Hermes",
-    "task": "cash_floor 第一批收案 CLOSED ＋ threshold 30M 第 0 步唯讀盤點（未施工）",
-    "summary": "【一、cash_floor 第一批收案】使用者 2026-10-04 裁決 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION（線上 clean-main 73f39965）。使用者特別指出本批最有價值處＝抓到 build_audit_dashboard.py:159 的 CASH_AVAIL>=700000（判斷邏輯非顯示文字；若漏抓，政策值一改儀表板會繼續用舊門檻）。驗收成立：15 處／9 檔全接單一 sot_targets.cash_floor()；鍵名漂移以 750,000 位移測試證明（新版位移 50,000／HEAD 位移 0）；accessor 第二來源亦位移驗證；遮蔽底線未掉回 700,000；T1 判定類殘留 0；沙盒 7 支腳本通過；snapshot 未改；邊界外未碰；regression 與 HEAD 基準一致；獨立審查 APPROVE 0 blocking；遠端 SHA 一致。審查理由簡短不退件（T1–T5 實測為主要依據）。唯一技術債（同意不塞入本批）：institutional_flow.py 的 except Exception → 缺底線時告警但 rc=0（fail-closed accessor 被上層寬鬆例外吃掉→功能區塊消失但整支程式成功；屬可觀測性／錯誤傳播問題，另案）。【二、threshold 30M 第 0 步唯讀盤點】使用者在施工前先要四問答案（本筆未動任何程式）。①snapshot 是否有正式政策真值：無。全快照 2,900–3,100 萬區間僅 total_liabilities＝30,967,893 與 liabilities_build_up.total（同值，屬負債，與門檻無關，數值巧合）。②是否已有 accessor：無（sot_targets 有 gate_thresholds／acceptable_band／bucket_targets／cash_floor，皆非此門檻）。③是否有程式內第二份來源：live 僅 3 處——tactical_table.py:290 pi.get(\"threshold\", 30_000_000)（取值 fallback，1 處）＋build_weekly_report.py:145,195 顯示文字「資產 3,000萬 盤點」（2 處）；archive/bak 0 處。④它代表什麼：台灣「專業投資人（PI）」法規門檻＝金融資產 3,000 萬元，不是資產／負債／留停 Gate 門檻，也不是歷史顯示數字。【三、盤點衍生重要發現】該站點目前**不可達**：tactical_table.py:286 `if pi:` 的 pi 來自 table[\"professional_investor\"] ← snap.get(\"professional_investor\", {})，但全 repo 只有「讀」沒有任何寫入者、snapshot 亦無此鍵（grep 全 repo 證實）→ if pi: 恆為 False，PI 風控卡從不渲染。同一 f-string 內另有寫死的「現況：金融資產含保單 28,220,311」＝真正的假真值風險（若卡開始渲染會印固定數字）。另發現 entry_monitor.py:46 讀 snapshot.pi_status 亦不存在 → PI 認列閘門同屬空讀。結論建議（待使用者裁示，本筆不施工）：因 30M 屬法規常數而非個人政策值，不宜單純換常數；可能方向為 (a) 建立 snapshot.professional_investor 單一寫入者（含 threshold／現況／gap），現況改由 snapshot 金融資產含保單推導；(b) 或將整塊列為 dormant 並登錄；兩者皆須先決定 PI 卡是否仍要存在。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004212051-1084",
-    "timestamp": "2026-10-04T21:20:51.086464+08:00",
-    "agent": "Hermes",
-    "task": "PI 專業投資人：裁決 (a) 保留功能、標記 DORMANT／SPEC REQUIRED，開資料生命週期規格工單（規格已交付，不施工）",
-    "summary": "使用者 2026-10-04 裁決：threshold 30M 保留、定義為「外部法規常數」；PI 風控保留但標記 DORMANT／SPEC REQUIRED；本輪不修改任何程式；下一批先開「PI 資料生命週期規格工單」而非直接清 30M。使用者明確拒絕「直接把 28,220,311 換成目前 snapshot 某欄位」的作法，理由是該金額牽涉「金融資產含保單」定義、尚未裁決，直接換會製造另一個「看似合理但未經裁決」的新真值；正確順序＝先定義 PI 資料模型→確認金融資產來源→建立唯一寫入者→再清舊路徑。已交付規格 PI_DATA_LIFECYCLE_SPEC.md（狀態 OPEN/SPEC ONLY/NO ENGINEERING，10 節）：①為何需要（無寫入者、現況不可達、兩個位置、兩種欄名、假真值）②現行消費者清冊 7 條（tactical_table:269/286-310、debt_restructure_tracker:89/196-199/240、entry_monitor:46-48、run_daily:295）③待裁示口徑 Q1-Q4 ④目標資料模型（professional_investor 唯一容器＋唯一寫入者 sync_professional_investor.py，含 updated_at/source/PII gate/dry-run）⑤threshold 具名法規常數 PI_REGULATORY_THRESHOLD_TWD＝30_000_000（不進 snapshot、不 fail-closed）＋唯一 accessor pi_regulatory_threshold() ⑥current 由 accessor pi_financial_assets(snap) 單一口徑（禁用寫死）⑦gap/status 計算與邊界（current==threshold 判達標）⑧fail-closed 規則（professional_investor 缺→印「PI 資料缺真值」不得靜默隱藏；pi_status 缺或非法→raise，取代現行回退未申請的 fail-open）⑨須消除舊路徑 7 條 ⑩驗收四測（有值／無值／跨 30M／反寫死位移測試）＋施工順序六步（①未完成不得進②-⑥）。關鍵新證據（本次實測，寫入規格）：卡片寫死 28,220,311 為 stale 且方向是「低估缺口」——真值證券 3,007,220＋基金 12,611,674＋保單 9,418,965＝25,037,859，＋現金 1,753,675＝26,791,534（＝total_assets）；寫死值多 1,428,777，導致卡片算出假缺口 1,779,689 vs 真缺口 3,208,466（含現金口徑），相差 143 萬，足以誤導送件時機。另證實全 repo 對 snapshot.professional_investor 只有讀、零寫入者（tactical_table:269、run_daily:295 皆僅轉手），故 tactical_table:286 if pi: 恆為 False、PI 卡從未渲染＝dormant。交付：commit d6d23eef（規格文件，獨立審查 APPROVE 0 blocking，已推 clean-main 並驗遠端 sha）。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004213302-1085",
-    "timestamp": "2026-10-04T21:33:02.802890+08:00",
-    "agent": "Hermes",
-    "task": "PI 專業投資人雙軌資料生命週期｜②-⑥ 施工完成（DELIVERED，待收案）",
-    "summary": "依使用者 2026-10-04 裁決（規格 APPROVED、①-④ 定案、②-⑥ GO）完成施工。①骨架：sot_targets 新增 PI_REGULATORY_THRESHOLD_TWD=30_000_000（唯一位置之法規常數，不進 snapshot、不 fail-closed）＋ accessor 拆分 pi_regulatory_threshold()／pi_record()／pi_application_status()／pi_approval_status()／pi_financial_asset_proxy()／pi_gap_twd()／pi_meets_financial_threshold()／pi_is_approved()；缺值一律 raise（禁 or 0、禁預設「申請中」）。②唯一寫入者 sync_professional_investor.py（拒寫衍生欄位、狀態驗證、dry-run、備份＋三重驗證：目標鍵正確／其他鍵逐鍵不變／可重解析；snapshot 先驗證 indent=1 可無損 round-trip 才允許寫入）。③唯一計算與渲染層 pi_card.py（日報 HTML 與週報 Markdown 共用同一 payload，tactical_table 與 run_daily 皆委派，不各自組公式）。④舊路徑清除：頂層 snapshot.pi_status、欄名「認列」、PI_STATES 本地清單、寫死 28,220,311、pi.get(threshold/gap/status) 預設值全部消滅；entry_monitor 黃金分支與台股慢慢買例行改判「已核准」。⑤狀態機以兩欄位實作：application_status（未申請/已送件/補件中/審核中）＋ approval_status（未核准/已核准/未通過/失效）；拒絕與失效不得塞回未申請（債務 tracker 原 fail-open 回退未申請已改 raise＋fail-safe 鎖定）。⑥財力口徑＝證券＋基金＋保單＋現金＝26,791,534（缺口 3,208,466）；欄位命名要求已遵守：對外稱「PI 財力檢核口徑／readiness proxy」，程式碼與卡片皆註記「不等同金融機構最終認定」，未宣稱為法規認定資產。⑦不併配偶（v1）。重要設計裁決（須向使用者報備，因其模型圖列 8 欄位）：proxy／gap／meets／threshold 一律即時計算、不落地儲存，snapshot 僅存 application_status／approval_status／source／updated_at；理由＝落地值會隨資產變動過期，正是本次要消滅的 28,220,311 型 stale 假真值。驗收（全過）：五測 ①有值 ②缺值 fail-closed（三消費端零金額洩漏、未回退未申請） ③29M/30M/31M 邊界（== 判達標） ④反寫死位移（來源 +500,000 → proxy 與缺口同步位移 500,000，卡片內容隨之改變） ⑤資產達標但未核准 → pi_is_approved=False、卡片同時顯示「✅達標」與「🔒鎖定」、tracker 硬鎖、entry 不觸發執行鏈（本批最重要）；⑥寫入者六項檢查。端到端：日報今日檔含新卡且無 28,220,311；缺值時日報出現 fail-closed 卡（不靜默隱藏）；週報產物含「財力 proxy ≥ 3,000萬」。靜態複掃：28,220,311／1,779,689／3,000萬 live 程式 0 殘留（僅註解與 docstring 提及歷史案例）；30,000,000 只剩 sot_targets 一處。回歸：check_thresholds 與 check_caliber_consistency 與 HEAD 基準線完全一致。diff 範圍：8 檔 .py（6 改＋2 新，+370/−54）。獨立審查 APPROVE 0 blocking；commit b486b27f 已推 clean-main 並驗遠端 sha。施工中另發現並一併修正（已於審查說明）：(a) run_daily.py 有第二張 PI 卡（原清冊漏列，同樣寫死 28,220,311）→ 改走 pi_card；(b) build_weekly_report.py 的 debt_chain 與 act4 樣板本非 f-string，既有 {_pf...} 佔位符會原樣印出（既有瑕疵），因本次插入常數佔位符而必須修正 → 改為 f-string。待辦與觀察：①PI 現行狀態（申請／核准）系統內無任何記錄，尚未 seed → 目前所有消費端呈 fail-closed（這是刻意行為，非故障）；需使用者一句話即可用唯一寫入者建檔。②run_daily 8/20 定案區塊（deployment_plan）仍在 if _pi: 之內且含 _dp2.get(total, 12000000) 等 fallback，屬同型假真值，建議另批處理（本批未動）。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004213540-1086",
-    "timestamp": "2026-10-04T21:35:40.720099+08:00",
-    "agent": "Hermes",
-    "task": "PI 雙軌資料生命週期｜收案 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION ＋ 下一張 P0 立案（deployment_plan dormant fallback）",
-    "summary": "使用者 2026-10-04 裁決：②-⑥ APPROVED／CLOSED／DEPLOYED／VERIFIED，commit b486b27f 接受，獨立審查 APPROVE 0 blocking，遠端 clean-main 一致。五項正式裁決：①最大設計偏離「只落地 4 欄位（application_status／approval_status／source／updated_at），regulatory_threshold_twd／financial_assets_proxy_twd／gap_twd／meets_financial_threshold 改 runtime derivation 不落 snapshot」→ 核准，並改為正式裁決：PI snapshot 只保存「事實／人工核准狀態」，財力與門檻全部 runtime derivation；未來若需稽核歷史，另做唯讀計算快照，不得成為判斷來源。②application／approval 雙軌核准（不採單一六態，理由：申請進度與資格核准是兩個不同事實，「已送件／未核准」與「未申請／未核准」不可混為一態）；Lombard／entry hard lock 正式鎖定於 approval_status==\"已核准\"。③兩個漏掃出的 28,220,311（tactical_table 與 run_daily 第二張卡）處理正確，本批性質為「假真值資料流清除」而非搜尋取代；28,220,311 live=0、1,779,689 live=0、30,000,000=唯一法規常數、PI proxy=唯一由真值即時計算。④build_weekly_report.py 兩處 f-string 修正裁定不算 scope creep（新常數確需插入樣板，原模板非 f-string 導致既有 placeholder 原樣輸出；屬本批必要之既有模板缺陷修復）。⑤deployment_plan：同意不在本批回頭改，因該區塊目前受 if _pi: gating 從未渲染，屬同型 dormant fake-truth fallback（_dp2.get(\"total\", 12000000) 等），現改會破壞本批已驗收之範圍邊界 → 正式立案下一張 P0：dormant fallback cleanup — deployment_plan（優先級高，與本批分卡）。未完成項（非技術問題）：PI 現況真值建檔。使用者明確指示不得由系統挑選合理預設、必須由本人提供真實狀態；確認後才可執行唯一一次建檔（sync_professional_investor.py）。系統內既有痕跡彙整（供使用者確認參考，未寫入）：snapshot 載「8/20-8/23 部署完成→PI 核定→國泰質押 540萬@2.77%」、「先送 PI（8/20-21）→8/31 贖回→PI 認列（~9/3）→再還債」、「8/21 PI 認證期停泊不動」；而質押實際已於 2026-09-29 10:57 撥款 590 萬（利率 2.65%，原記 2.77% 待銀行書面覆核）——惟 debt_restructure_tracker 之硬鎖規則為「PI 非已正式核准 → 禁止執行任何 Lombard 質押借出作業」，故「質押已撥款」與「PI 未核准」存在邏輯張力，兩者不可同時成立。目前所有 PI 消費端呈 fail-closed（刻意行為、非故障）。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004213833-1087",
-    "timestamp": "2026-10-04T21:38:33.807931+08:00",
-    "agent": "Hermes",
-    "task": "PI 現況真值｜裁決暫不建檔、維持 fail-closed；primary evidence 搜尋結果為「未尋獲」（唯讀）",
-    "summary": "使用者 2026-10-04 裁決：暫不建檔，維持 PI DORMANT／FAIL-CLOSED 與所有 hard lock（台股慢慢買、黃金衛星、Lombard 均續鎖）。理由：現有三條證據不足以把推論升格為 snapshot 真值——A（8/20-9/3 多處「PI 核定／認列」記載）屬系統內部敘述、強但非正式；B（9/29 撥款 590 萬、2.65%、LTV 50.09%）證明質押確實發生，但不能單獨證明 PI 核准狀態；C（現行 hard lock 要求「已正式核准」）不能反推歷史真值，只說明系統未留存該真值。且 9/29 該筆質押是否屬於 debt_restructure_tracker 所定義之 Lombard 尚未釐清；在用推論解鎖真實投資／借貸決策鏈之前不得寫入。明確禁止六項：不填「未申請／未核准」、不填「已核准」、不用 2.65% 推導 PI、不用 9/29 已撥款反推 PI、不用舊 snapshot「PI 核定」文字升格為正式狀態、不修改任何程式。A 之定位：待核實的高可信歷史證據（≠沒有證據）。目前最合理狀態：系統真值＝未知；歷史證據＝高度指向已核准。核准日不得猜（8/20、8/21、8/31、9/3 僅能稱事件日期／歷史敘述日期）。升格條件（primary evidence 標準）：銀行正式 PI／專業投資人核准或認定紀錄、對保／契約／申請文件中明確標示 PI 身分、銀行提供之客戶分類或核准通知、或能直接證明 9/29 590 萬質押適用 PI 資格之文件；取得後始可建檔，並於 note 留核准日與證據來源。【本次已執行之唯讀搜尋（未改任何程式）】Gmail 查詢 11 組：專業投資人／PI／對保／核准／from:cathay／from:國泰世華／質押／額度核定／金融資產／財力證明／投資屬性——全數未命中 PI 核准或認定通知；命中項均為行銷、登入通知、基金公開說明書樣板或無關郵件（國泰世華僅 CUBE App 登入通知與信用卡行銷；「額度核定」0 筆）。本機檔案：Desktop／Downloads／Documents／Pictures 與 repo 內無任何 PI 或對保佐證文件（僅圖表 PNG 與 00983D_質押套利方案.txt）。結論：primary evidence 不在任何我可存取的數位來源中，須由銀行端取得。建議取得路徑：①國泰世華 CUBE App 之投資屬性／客戶分類頁（PI 身分通常顯示於此）②9/21 對保之契約書／約定書影本（若載明 PI 身分或適用 PI 條款）③9/11 額度核定之書面通知 ④直接向理專索取「專業投資人資格」書面確認（最直接）。另需一併釐清：該筆質押之適用法規／產品別，以確認是否屬 hard lock 所指之 Lombard。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004214154-1088",
-    "timestamp": "2026-10-04T21:41:54.869952+08:00",
-    "agent": "Hermes",
-    "task": "PI 現況真值｜收案 CLOSED／WAITING FOR EXTERNAL EVIDENCE（本輪 0 程式變更）",
-    "summary": "使用者 2026-10-04 裁決收案：狀態 CLOSED／WAITING FOR EXTERNAL EVIDENCE。確認本次唯讀搜尋已證明「系統內找不到 primary evidence」→ 不再繼續挖數位來源、不為 PI 增加提醒或程式處理。鎖定狀態：PI＝DORMANT／FAIL-CLOSED；approval_status＝未知、不建檔；台股慢慢買／黃金衛星＝LOCKED；Lombard＝依現行 hard lock 維持 LOCKED；28,220,311＝已永久清除；PI lifecycle ②-⑥ 已完成驗收；本輪程式 0 變更。pending 治理：查核後確認 pending_decisions.json 原本 0 張 PI 相關卡（無重複可清），依裁決「保留一張即可、不新增重複提醒」新增 PEND-20261004-01（PI 專業投資人現況真值｜等待銀行端 primary evidence），並將使用者同日正式立案的下一張 P0 一併建卡 PEND-20261004-02（dormant fallback cleanup — deployment_plan）。兩卡皆 status=待處理、due_date=null（依 pending_engine 鐵則「無 due_date 者不提醒、不推算」→ 不進提醒迴圈，符合「不新增重複提醒」）。check_thresholds 複驗：仍為既有 1 項 FAIL（已完成狀態卡），未因本次新增卡而生新 FAIL。commit 8452032b 已推 clean-main 並驗遠端 sha。PEND-20261004-01 內載明：取得銀行端證據時一次問兩件事——①是否已正式認定為專業投資人（PI）、核准／認定日期；②2026-09-29 撥款 590 萬之質押屬 Lombard／PI 適用產品或一般金融資產質借／其他高資產客戶產品。分支：若「是 PI 且該筆即 PI/Lombard 質押」→ 可建檔 approval_status=已核准 並以銀行確認日為 note（走 sync_professional_investor.py）；若「非 PI 或該筆非 Lombard」→ 命題轉為 debt_restructure_tracker hard-lock 適用範圍檢討，非 PI 狀態問題。取得路徑：CUBE App 投資屬性／客戶分類頁、9/21 對保契約書、9/11 額度核定書面、或直接向理專索取 PI 資格書面確認。本輪附帶教訓（自我修正，已落地）：推送資料類 commit 時若傳 auto_push.py --record skip 且未先 cio_approve 落紀錄 → 閘門必擋（INC-183 同型，本次重犯一次後改走預設自動落紀錄並成功）。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004221411-1089",
-    "timestamp": "2026-10-04T22:14:11.076447+08:00",
-    "agent": "Hermes Agent",
-    "task": "PI 專業投資人｜正式建檔（已完成／已核准）＋ 質押四概念分離",
-    "summary": "使用者 2026-10-04 提供真實狀態：國泰世華 PI 資格已核准（依此取得質押額度、9/21 對保、9/29 撥款 590 萬@2.65%）。以唯一寫入者 sync_professional_investor.py 建檔：application_status=已完成／approval_status=已核准（財力 proxy 26,791,534 未達 30,000,000，與資格軌分離，不影響核准）；廢除容器內舊 schema（pi_status／applied_date／approved_date／expected_approval／deployment_plan）；寫入者修正為白名單過濾（原印『將移除』卻未移除）；pi_record 改分軌驗證。質押四概念分離：質押品市值／實際動用額／利率／撥款日為真值，銀行核定授信額度未取得文件 → null，禁由質押品價值反推（撤回 12M−5.9M=6.1M）。新增質押 accessor；修回歸：deployment_plan 廢除後 debt_restructure_tracker §4 退化成『0% 尚未質押 🟢』假綠燈並復活 7 月寫死字串 → 改讀 accessor，LTV 現算 50.1%。E2E 2×2 雙態對照＋突變自測 27/27、驗證器 42/42。三輪 CIO-DeepSeek-Pro 獨立唯讀審查 APPROVE 0 required_fixes。commit 49ccbcf3（程式）／b0d63771（資料）已推 clean-main。",
-    "status": "CLOSED/DEPLOYED/VERIFIED",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004221438-1090",
-    "timestamp": "2026-10-04T22:14:38.695338+08:00",
-    "agent": "Hermes Agent",
-    "task": "範圍控制：run_daily.py 質押口徑卡與 deployment_plan fallback 另案處理",
-    "summary": "使用者 2026-10-04 裁決：本批不得修改 run_daily.py。其 :1843  與  回退 12,000,000 屬既有 PEND-20261004-02，另立卡處理；另質押口徑卡 ①『額度計算：擔保池本金 12,000,000 × 成數 50.0% = 可貸 5,900,000』之語意（把 12M 當授信額度）與其  假真值 fallback 亦同批辦理。架構建議一併處理：（容器非空即真）應改為  存在性判斷。範圍控制理由：讓被審批次純粹，避免 sneaky scope creep。",
-    "status": "PENDING/SCOPED-OUT",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004221525-1091",
-    "timestamp": "2026-10-04T22:15:25.598639+08:00",
-    "agent": "Hermes Agent",
-    "task": "範圍控制（更正 1090 摘要）｜run_daily.py 質押口徑卡與 deployment_plan fallback 另案處理",
-    "summary": "【更正 mem-20261004221438-1090 摘要】原筆摘要中的程式片段因 shell 把反引號當命令替換而遺失（非決策變更，屬寫入殘缺），本筆補正全文：使用者 2026-10-04 裁決本批不得修改 run_daily.py。其 :1843 `_dp2 = tv.get('professional_investor', {}).get('deployment_plan', {}) or {}` 與後續 `_p1_loan` 回退 12,000,000 屬既有 PEND-20261004-02（已於 21:40 立卡），另案處理；另質押口徑卡 ①『額度計算：擔保池本金 12,000,000 × 成數 50.0% = 可貸 5,900,000』之語意（把 12M 當授信額度）與其 `_cp.get(\"可貸金額\") or round(池本金 × 成數)` 假真值 fallback，亦同批辦理。架構建議一併處理：`if _pi:`（容器非空即真，因 pi_card payload 含 error 鍵而恆真）應改為 `pi_record()` 存在性判斷。範圍控制理由：讓被審批次純粹，避免 sneaky scope creep。",
-    "status": "PENDING/SCOPED-OUT",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004223737-1092",
-    "timestamp": "2026-10-04T22:37:37.101215+08:00",
-    "agent": "Hermes",
-    "task": "稽核覆蓋缺口關閉｜check_thresholds 不變式納入 closeout_check（收工閘門 fail-closed）",
-    "summary": "使用者 2026-10-04 裁決核准施工，範圍鎖定一張獨立卡，不碰 PEND-20260930-01／-02／PEND-20261004-02。缺口：closeout_check.py 的 15 類稽核不含 check_thresholds.py 的 blocking 不變式 → 實踩：完成卡 status 含「已完成」使 build_dashboard 以子字串過濾整卡靜默隱藏數日，而收工稽核仍報全部通過。Step 0 判定：check_thresholds 的 blocking contract = main() 回傳值（errs 非空→1），errs 內每條皆 violation、無資訊性錯誤通道（資訊性走 print/rep_status，不進 errs）→ 只能呼叫該 rc 契約，不得自己重寫斷言（避免第二份真值）。選 --sot-only：日報渲染行比對屬產報時序關卡（INC-238，22:00 晚報合法移動 snapshot → 收工時設計上必假失敗），已由 sync_all 負責；--sot-only 仍涵蓋全部不變式（含 pending 隱藏關鍵字）。落地：closeout_check.py 新增 step_threshold_invariants()（⑦）＋THRESHOLD_CHECKER/ARGS/TIMEOUT；fail-closed 四路（腳本不存在／逾時／無法執行／rc≠0）皆回報；失敗保留 stdout 末40行＋stderr 末20行；強制 LJ_NO_TELEGRAM=1（不推 Telegram／Notion）；subprocess 明寫 encoding=utf-8、errors=replace（zh-TW Windows 預設 cp950 解不到 ❌ → 每次假 FAIL）；checker 參數刻意不做環境變數開關（防指向假腳本）。新增 tools/verify_closeout_threshold_gate.py 12 項：S1 正常PASS／S2 含隱藏關鍵字FAIL／S2b 保留原始輸出／S3 檢查器異常FAIL／S4 資訊性不阻塞／S5 不存在FAIL／S6 mutation（同夾具拔掉不變式→不再FAIL，證明非空洞）／S7 無遞迴／S8 無副作用／S9 反恆真／S10 wiring／S11 端到端 rc 穿透。CIO-DeepSeek-Pro 獨立唯讀審查 APPROVE 0 required_fixes（6/6 邊界、12/12 命令），並自行加做兩條獨立反空洞實驗：cmd10 刪除 8 行不變式→rc 由 1 變 0；cmd11 拿掉 problems.extend(thr_problems)→失去穿透力（rc=0）。check_thresholds.py 零改動（責任分離）。commit 3fadde30（tree aa62b990，3 檔 +322/−0）已推 clean-main；未推 0；收工檢查全部通過（⑦ ✅）。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004224837-1093",
-    "timestamp": "2026-10-04T22:48:37.344270+08:00",
-    "agent": "Hermes",
-    "task": "威剛 3260 申購抽籤｜核准扣款 290,070（分類＝申購抽籤／暫時性資金占用，非台股加碼）",
-    "summary": "使用者 2026-10-04 裁決：✅ 扣款。機制釐清（使用者自行更正）：先扣 290,070 → 參加抽籤 → 未中籤退款，僅收 30 元手續費；不是「中籤後才準備 290,070」。資金影響：10/6 可動用 853,675 − 290,070 = 563,605（暫時）；未中籤 +290,040 退款 → 853,645。★ 分類鐵則（使用者指定）：本筆不得記為「新增台股配置／加碼」，應記為「申購抽籤／暫時性資金占用」——否則儀表板未來會誤判為「台股暫緩政策被繞過」。政策關係：台股暫緩加碼（US30Y 煞車）不適用作否決理由——因該筆非主動永久配置、且未中籤即退回。★ 未閉環點：中籤＝該 290,070 轉為實質台股部位 → 須另案依台股暫緩政策檢視；未中籤＝退款確認後結案。風險檢查（本筆真正該看的）：10/6～退款期間可動用 563,605 是否足以應付同期確定支出。同期（10/6–10/31）確定：支出 國泰房貸 26,000（10/20）、胡志明市出差 10/23–28（金額未列）；收入 房租 51,100（10/15）。註：563,605 低於現金底線 700,000（短少 136,395，＝申購超出乾粉 153,675 的部分），屬暫時性、未中籤即回復。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004224906-1094",
-    "timestamp": "2026-10-04T22:49:06.273822+08:00",
-    "agent": "Hermes",
-    "task": "10 月標案押標金 240 萬｜維持條件式：現在不動用現金、不預先辦保證函",
-    "summary": "使用者 2026-10-04 裁決：⏸️ 現在不動 240 萬、不辦保證函；等「確定標案 → 確認押標金與支票要求」後再決定資金來源。理由：目前尚未決定投哪個標案 → 240 萬屬條件式資金需求，不提前占用現金。沿革更正：9/25 方向為「履約保證函/保證保險替代現金（年費約 1%）」；9/29 更新為「先鎖定標的再評估可行性」；2026-10-04 進一步收斂為「連保證函也不預先辦理」。系統處置（已存在於 snapshot.cash_need_90d._條件式事件備註）：不進 A 區、不進 Coverage、不顯示為資金需求、不產生缺口或紅燈、不觸發任何動作；得標後才啟動「現金 vs 賣股 vs 質押」資金來源比較。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261004225554-1095",
-    "timestamp": "2026-10-04T22:55:54.330379+08:00",
-    "agent": "Hermes",
-    "task": "威剛 3260 申購期間風險模型（四維度不得合併為單一綠燈）＋三項收斂裁示",
-    "summary": "使用者 2026-10-04 裁決。背景：本筆申購的正確判讀不是『563,605 還夠付房貸所以 OK』，而是『申購期間形成現金底線暫時破線』狀態。★ 明定四維度分別成立、不得混成一個綠燈：① Cash floor ❌ 暫時跌破（可動用 853,675 − 290,070 = 563,605 < 底線 700,000，短少 136,395；該 136,395 恰等於申購超出乾粉 153,675 的部分）② 確定支出覆蓋 ✅ 目前足夠（10/6–10/31 同期已確認支出僅國泰房貸 26,000 @10/20）③ 流動性事件 ⚠️ 進行中（等退款／中籤結果）④ 留停 Gate3 🟡 WAIT（不因①②③而改變）。使用者並指定此案為「A 綠 ≠ B 綠」原則的實例。三項裁示：①出差預算暫不填——維持缺資料狀態，不得為讓模型完整而自行塞估算值；不得用預估值把現金底線硬算成綠（落點：snapshot.cash_need_90d._待確認支出，載明不得視為 0）。②建立『抽籤結果』驗收節點（PEND-20261004-04）——不猜抽籤日期，觸發條件＝取得結果：未中籤→退款 290,040 入帳確認後結案；中籤→290,070 轉為實質台股部位，須另案依台股暫緩政策裁示，★不得自動視為既有核准。③PEND-20260930-02 政策同步——僅把過時的『240 萬押標金來源』改為現行條件式政策（不提前占用現金、不預先辦保證函、待標案確定後再定來源），不改 P0-2 核心技術範圍、不重新裁示押標金來源、保留 10/15 檢視節點。真值層落點：snapshot.cash_need_90d._流動性事件_20261006（含維度／分支／不得合併為單一綠燈旗標）、_暫時性占用備註；行事曆 10/6 條目補註追蹤結果。",
-    "status": "completed",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-04T11:39:48.740349"
+    "updated_at": "2026-10-04T23:42:34.049967"
   },
   "last_updated": "2026-10-04T18:00:00+08:00",
   "2026-09-29": [
@@ -10252,7 +10232,7 @@
     {
       "date": "2026-09-21",
       "action": "台股解凍 → 納入 9/21 再平衡評估",
-      "status": "⏸ 條件未成立（2026-10-03 真值重算）：US30Y 5.603%（as_of 2026-10-01）、連續 25 日 ≥ 紅線；閘門 OK（解凍不許可）",
+      "status": "⏸ 條件未成立（2026-10-04 真值重算）：US30Y 5.603%（as_of 2026-10-01）、連續 25 日 ≥ 紅線；閘門 OK（解凍不許可）",
       "tags": "再平衡,台股,解凍,US30Y,006208,0051"
     },
     {
@@ -10324,7 +10304,7 @@
     {
       "date": "2026-09-28",
       "action": "10 月標案押標金 240 萬來源定案（不得預設由 540 萬撥款支付）",
-      "status": "待處理",
+      "status": "⏳ 待處理（2026-10-04 裁決收斂）：不提前占用現金、不預先辦保證函；等確定標案與押標金/支票要求後再定來源｜檢視日 2026-10-15",
       "tags": "標案,押標金,資金框架"
     },
     {
@@ -10335,8 +10315,8 @@
     },
     {
       "date": "2026-09-30",
-      "action": "P0-2 資金鏈閉環（10/1 安聯 100萬入帳確認、240萬押標金來源）",
-      "status": "待處理",
+      "action": "P0-2 資金鏈閉環（10/1 安聯 100萬入帳確認；240萬押標金＝條件式事件，不提前占用現金）",
+      "status": "待處理（2026-10-04 政策同步：押標金已收斂為條件式；核心技術範圍與 10/15 檢視節點不變）",
       "tags": ""
     },
     {
@@ -10344,12 +10324,6 @@
       "action": "10/1 三重截止日判定條件（洲際W轉貸／Coast FI 首次真值日／10 月月檢視）",
       "status": "已確認",
       "tags": "判定條件,10月,轉貸,CoastFI,月檢視"
-    },
-    {
-      "date": "",
-      "action": "📝 日誌／記憶條目停止嵌入浮動金額（結構性）",
-      "status": "已完成",
-      "tags": ""
     },
     {
       "date": "2026-10-01",
@@ -10374,6 +10348,30 @@
       "action": "dashboard_decisions 條目 schema 與 source 值漂移（對帳工具查出）",
       "status": "⏳ 待處理",
       "tags": "治理,決策入庫,schema,債"
+    },
+    {
+      "date": "2026-10-04",
+      "action": "P0 dormant fallback cleanup — deployment_plan（run_daily 8/20 定案區塊）",
+      "status": "待處理",
+      "tags": ""
+    },
+    {
+      "date": "2026-10-04",
+      "action": "威剛 3260 申購抽籤｜結果驗收節點（未中籤＝退款入帳確認結案／中籤＝另案依台股暫緩政策裁示）",
+      "status": "待處理",
+      "tags": ""
+    },
+    {
+      "date": "2026-10-04",
+      "action": "decision_auto_close.py 名為掃描、實則改寫 pending_decisions.json（save_json 吃掉檔尾換行 → 每日假 diff）",
+      "status": "待處理",
+      "tags": ""
+    },
+    {
+      "date": "2026-10-04",
+      "action": "質押貸款 5,900,000｜每月現金流出未列入月支出（待第一期款項後更新）",
+      "status": "待處理",
+      "tags": ""
     }
   ]
 }

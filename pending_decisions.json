@@ -516,5 +516,23 @@
     "external_owner": null,
     "status_raw": "pending",
     "is_informational": false
+  },
+  {
+    "id": "PEND-20261004-06",
+    "date": "2026-10-04",
+    "title": "質押貸款 5,900,000｜每月現金流出未列入月支出（待第一期款項後更新）",
+    "desc": "使用者 2026-10-04 指示。現況：月支出 159,210 已含基金質押息 13,029，但該項歸類為「帳上計息」(monthly_expense_accrual)，而現金扣帳 146,181 不含它。因此若國泰實際每月自帳戶扣息，現金流出被低估 13,029/月；若為本息攤還，低估更多。真值層 snapshot.cathay_pledge_0911.待補 早已列「銀行側撥款通知／對帳單（月付息日、繳息方式）」為未確認。★ 不猜金額、不猜日期：等「第一期款項」實際出現（使用者提供帳單／扣款紀錄）後才更新。屆時更新範圍：① 確認繳息方式（只繳息／本息攤還）② 若屬現金扣帳 → monthly_expense_cash 併入並複核月支出口徑 ③ 槓桿風控卡③ 覆蓋判斷、被動收入覆蓋率、FI 跑道全部重算 ④ 若含還本 → 90 天現金需求與現金底線重新評估。受影響現狀：③ 顯示「流出 39,029 vs 流入 144,114 覆蓋」，尚未反映此未確認項。",
+    "priority": "P1",
+    "status": "待處理",
+    "source": "使用者 2026-10-04 指示",
+    "due_date": "2026-10-29",
+    "due_date_source": "使用者 2026-10-04 指定（撥款日 2026-09-29 ＋ 1 個月＝第一期）",
+    "needs_due_date": true,
+    "last_confirmed": null,
+    "last_confirmed_source": "未提供",
+    "owner": "CEO",
+    "external_owner": "國泰世華（對帳單／扣款通知）",
+    "status_raw": "pending",
+    "is_informational": false
   }
 ]
