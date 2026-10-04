@@ -1982,5 +1982,17 @@
   "category": "完成",
   "item": "PI 現況真值｜裁決暫不建檔、維持 fail-closed；primary evidence 搜尋結果為「未尋獲」（唯讀）（使用者 2026-10-04 裁決：暫不建檔，維持 PI DORMANT／FAIL-CLOSED 與所有 hard lock（台股慢慢買、黃金衛星、Lombard 均續鎖）。理由：現有三條證據不足以把推論升格為 snapshot 真值—",
   "detail": "使用者 2026-10-04 裁決：暫不建檔，維持 PI DORMANT／FAIL-CLOSED 與所有 hard lock（台股慢慢買、黃金衛星、Lombard 均續鎖）。理由：現有三條證據不足以把推論升格為 snapshot 真值——A"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "PI 專業投資人｜正式建檔（已完成／已核准）＋ 質押四概念分離（使用者 2026-10-04 提供銀行事實）",
+  "detail": "commit 49ccbcf3（程式 6 檔，tree a83d75df）／b0d63771（snapshot，tree b9658874）；三輪 CIO-DeepSeek-Pro 唯讀審查，第三輪 APPROVE 0 required_fixes、12/12 PASS。建檔：唯一寫入者 sync_professional_investor.py（白名單過濾修正—原印「將移除」卻未移除，會留下第二份 pi_status 真值）、pi_record 分軌驗證、PI_APPLICATION_STATES 補終態「已完成」。質押四概念分離（不得互相推導）：質押品市值 11,779,326／實際動用 5,900,000／利率 2.65%／撥款 2026-09-29；銀行核定授信額度未取得文件 → null（撤回「12M−5.9M=6.1M」）。新增 pledge_loan_twd／pledge_collateral_market_value／pledge_ltv accessor（LTV 現算不落地，避免「本金改了、LTV 還是舊值」）。修回歸（P0）：deployment_plan 廢除後 debt_restructure_tracker §4 退化成「0% 尚未質押 綠燈」假綠燈並復活 7 月寫死字串 → 改讀 accessor，現輸出 50.1%。驗證：tools/verify_pi_sot_20261004.py 42/42、tests/pi_e2e_closure_20261004.py 27/27（含 2x2 雙態對照＋突變自測）。範圍控制：run_daily.py 0 行改動（留 PEND-20261004-02）。決策入庫 mem-1089／1090／1091。"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "更正",
+  "item": "更正 work_log #318｜「PI 現況真值｜裁決暫不建檔、維持 fail-closed」已失效（原紀錄保留不變）",
+  "detail": "使用者 2026-10-04 晚間提供銀行事實後，PI 由 DORMANT／UNKNOWN 正式建檔為 已完成／已核准；commit 49ccbcf3／b0d63771（CIO APPROVE 0 必修）已落地 clean-main。原紀錄之敘述（暫不建檔、維持 PI DORMANT、所有 hard lock 續鎖）依治理慣例保留原文，以本筆為準。質押風險鏈現為 50.1% → 跌20%:62.6% → 跌30%:71.6%（追繳線 70% 需再跌 28.4%），不再報 0%。"
  }
 ]
