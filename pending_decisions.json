@@ -393,22 +393,6 @@
     "is_informational": false
   },
   {
-    "title": "📝 日誌／記憶條目停止嵌入浮動金額（結構性）",
-    "status": "已完成",
-    "created_at": "2026-09-30",
-    "note": "驗收：連續兩天改完真值後，check_dashboard_stale 與跨報告閘門不得因日誌行而告警",
-    "due_date": null,
-    "due_date_source": "未提供",
-    "needs_due_date": true,
-    "last_confirmed": null,
-    "last_confirmed_source": "未提供",
-    "owner": "CEO",
-    "external_owner": null,
-    "status_raw": "✅ 已完成（2026-10-04 CEO 裁決閉環）｜原：📌 待驗收（2026-10-02 修畢）：寫入者已去金額化。驗收＝連續兩天改完真值後，check_dashboard_stale 與跨報告閘門不得因日誌行告警。｜驗收證據（10/4 實測）：三閘門 stale／cross／caliber 均無因日誌行告警；新寫入列已無金額；歷史 dashboard_decisions 殘留具歷史語義、不被任何閘門引用，依裁決不清洗。",
-    "is_informational": false,
-    "detail": "｜2026-10-02 已修寫入者：run_daily.py:2455-2456 兩筆 add_memory 移除當日金額字面，改為指向 snapshot 的說明文字；dashboard_decisions 既有歷史列不回溯。"
-  },
-  {
     "title": "📐 壓力情境「常態月配」基準待裁示（現行 115.3%；常態基準 170,586）",
     "status": "待處理",
     "created_at": "2026-10-01",
@@ -476,24 +460,6 @@
     "owner": "CEO",
     "external_owner": null,
     "status_raw": "⏳ 待處理（10/02 建檔）",
-    "is_informational": false
-  },
-  {
-    "id": "PEND-20261004-01",
-    "date": "2026-10-04",
-    "title": "PI 專業投資人現況真值｜等待銀行端 primary evidence（系統維持 fail-closed，不猜）",
-    "desc": "系統真值＝未知；不得由資產、利率或歷史敘述推導。狀態：PI DORMANT／FAIL-CLOSED，台股慢慢買／黃金衛星／Lombard 依 hard lock 維持 LOCKED。取得銀行端證據後，一次問兩件事：①是否已正式認定為「專業投資人（PI）」、核准／認定日期為何；②2026-09-29 撥款 590 萬之質押屬 Lombard／PI 適用產品，抑或一般金融資產質借／其他高資產客戶產品。分支：若為「是 PI 且該筆即 PI/Lombard 質押」→ 可建檔 approval_status=已核准 並以銀行確認日為 note（用 sync_professional_investor.py）；若「非 PI 或該筆非 Lombard」→ 命題轉為 debt_restructure_tracker hard-lock 適用範圍檢討，非 PI 狀態問題。建議取得路徑：CUBE App 投資屬性／客戶分類頁、9/21 對保契約書、9/11 額度核定書面、或直接向理專索取 PI 資格書面確認。已驗證：Gmail 11 組查詢＋本機檔案＋repo 皆無 primary evidence（數位來源已窮盡，不必重搜）。注意：本卡 due_date=null → 不進提醒迴圈（不新增重複提醒）。",
-    "priority": "P0",
-    "status": "已完成（2026-10-04 真值建檔）：使用者提供銀行事實＝國泰世華 PI 資格已核准（8/21 申請→9/8 核定通知→9/21 對保→9/29 撥款 590 萬@2.65%），命中本卡 desc 分支①「是 PI 且該筆即 PI 質押」→ 已走 sync_professional_investor.py 建檔（application_status=已完成／approval_status=已核准）；Lombard／台股慢慢買／黃金衛星之 hard lock 依 approval_status 解除（E2E 2x2 雙態對照＋突變自測驗證）。落地 commit 49ccbcf3（程式）／b0d63771（資料），三輪 CIO-DeepSeek-Pro 審查 APPROVE 0 必修。附註：質押標的為基金（非保單）；12,000,000 為質押品價值非授信額度（銀行核定授信額度未取得文件 → null，禁反推剩餘）。財力 proxy 26,791,534 與資格軌分離，不反向決定 PI。",
-    "source": "使用者 2026-10-04 裁決",
-    "due_date": null,
-    "due_date_source": "未提供",
-    "needs_due_date": false,
-    "last_confirmed": null,
-    "last_confirmed_source": "未提供",
-    "owner": "CEO",
-    "external_owner": "國泰世華（理專／銀行端）",
-    "status_raw": "pending",
     "is_informational": false
   },
   {

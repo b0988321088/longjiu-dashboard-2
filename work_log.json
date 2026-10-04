@@ -1994,5 +1994,11 @@
   "category": "更正",
   "item": "更正 work_log #318｜「PI 現況真值｜裁決暫不建檔、維持 fail-closed」已失效（原紀錄保留不變）",
   "detail": "使用者 2026-10-04 晚間提供銀行事實後，PI 由 DORMANT／UNKNOWN 正式建檔為 已完成／已核准；commit 49ccbcf3／b0d63771（CIO APPROVE 0 必修）已落地 clean-main。原紀錄之敘述（暫不建檔、維持 PI DORMANT、所有 hard lock 續鎖）依治理慣例保留原文，以本筆為準。質押風險鏈現為 50.1% → 跌20%:62.6% → 跌30%:71.6%（追繳線 70% 需再跌 28.4%），不再報 0%。"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "pending 收案｜PEND-20261004-01（PI 現況真值）＋ 日誌/記憶條目浮動金額卡 移出 pending（依 2ebcd9d0 慣例）",
+  "detail": "check_thresholds 不變式：未閉環 pending 卡狀態不得含「✅／☑／已完成／已結案／已定案／閉環／已送出／已核定」——build_dashboard 以子字串過濾，命中即整卡靜默隱藏。兩張完成卡狀態含「已完成」→ 自 pending_decisions.json 移除，完成事項改記 work_log（本日另有『PI 專業投資人｜正式建檔』條目）。PEND-20261004-01 之閉環內容：使用者提供銀行事實 → sync_professional_investor.py 建檔 approval_status=已核准，hard lock 依 approval_status 解除。📝 卡為既有缺陷（本批之前狀態即含「已完成」）→ 一併收案。pending 30 → 28。"
  }
 ]
