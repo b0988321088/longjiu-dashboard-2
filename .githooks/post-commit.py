@@ -45,6 +45,52 @@ if HERMES is None:
     sys.exit(1)
 TARGET = HERMES / "scripts"
 
+# ── 失敗留痕（2026-10-05 INC：靜默漂移）─────────────────────────────
+# 病灶：原本只有 ③ 自我驗證會寫 MIRROR_SYNC_FAILED；⓪（轉發器部署）與 ①（硬編碼清單）
+# 在任何例外下就中止 —— 沒有 marker、沒有同步，而 git 不理 post-commit 的退出碼，
+# 於是「repo 改了、cron 端仍跑舊版」可以完全無痕（9/14 與 10/5 兩次復發同型）。
+# 修法：① 統一 _hook_fail()（marker＋append-only log＋stderr）
+#       ② sys.excepthook 兜住所有未捕捉例外（含 ① 的裸 copy2）
+MARKER = BASE / ".git" / "MIRROR_SYNC_FAILED"
+HOOK_LOG = BASE / ".git" / "hook_sync.log"
+
+
+def _env_snapshot() -> str:
+    """留痕用：HERMES 解析受這些環境變數影響，事故時要能還原當時的值。"""
+    return "HERMES_HOME=%r USERPROFILE=%r HOME=%r" % (
+        os.environ.get("HERMES_HOME"), os.environ.get("USERPROFILE"), os.environ.get("HOME"))
+
+
+def _log(line: str) -> None:
+    try:
+        with open(HOOK_LOG, "a", encoding="utf-8") as f:
+            f.write("%s\t%s\n" % (__import__("datetime").datetime.now().isoformat(timespec="seconds"), line))
+    except Exception:
+        pass
+
+
+def _hook_fail(reason: str) -> None:
+    """任何失敗路徑都要留痕（呼叫端負責 exit）——只印 stdout 等於沒人看到。"""
+    try:
+        MARKER.write_text(
+            "%s 未同步：%s\n" % (__import__("datetime").datetime.now().isoformat(timespec="seconds"), reason),
+            encoding="utf-8",
+        )
+    except Exception:
+        pass
+    _log("FAIL\t%s\t%s" % (reason, _env_snapshot()))
+    print("  ❌ post-commit 未完成：%s" % reason, file=sys.stderr)
+    print("     → 已寫入 .git/%s（cron 端可能仍是舊版邏輯）" % MARKER.name, file=sys.stderr)
+
+
+def _excepthook(et, ev, tb):
+    _hook_fail("uncaught:%s:%s" % (et.__name__, ev))
+    sys.__excepthook__(et, ev, tb)
+
+
+sys.excepthook = _excepthook
+_log("START\tHERMES=%s\t%s" % (HERMES, _env_snapshot()))
+
 SCRIPTS = [
     "update_all.py", "run_daily.py", "daily_intel.py",
     "hunter_intel.py", "asset_diff_monitor.py", "daily_deploy.py",
@@ -93,15 +139,26 @@ if WRAPPERS_SRC.is_dir():
     if w_bad:
         print(f"  ❌ 轉發器自我驗證失敗：{len(w_bad)} 支不一致 → {', '.join(w_bad[:6])}")
         print("     → hermes/scripts 的轉發器與 repo/wrappers/ 不符，cron 可能 Script not found")
+        _hook_fail("⓪ 轉發器部署失敗 %d 支：%s" % (len(w_bad), ", ".join(w_bad[:6])))
         sys.exit(1)
 
 # ① 硬編碼清單（hermes-only 或缺檔時補齊）
+#    2026-10-05：改 fail-loud。原為裸 copy2 —— 目標檔被鎖（Windows：同時間另一支 pipeline
+#    正在跑）或目標目錄不存在就丟 traceback，整個 hook 死在這裡（②③ 不執行、無 marker）。
+_bad1: list[str] = []
 for name in SCRIPTS:
     src = BASE / name
     dst = TARGET / name
-    if src.exists() and not _is_forwarder(dst):
+    if not (src.exists() and not _is_forwarder(dst)):
+        continue
+    try:
         shutil.copy2(src, dst)
         ok += 1
+    except Exception as e:
+        _bad1.append(f"{name}({e})")
+if _bad1:
+    _hook_fail("① 硬編碼清單複製失敗 %d 支：%s" % (len(_bad1), ", ".join(_bad1[:6])))
+    sys.exit(1)
 
 # ② 全量鏡像：repo 與 hermes/scripts 同名的非轉發器檔一律對齊
 #    （2026-09-11 INC：舊版只同步硬編碼 15 檔，其餘 18 檔靜默漂移，
@@ -125,7 +182,7 @@ print(f"  🔁 auto-sync: {ok} scripts -> hermes/scripts/ (+{mirrored} 全量鏡
 #    手動重跑 hook 才同步）→ 若沒人比對就會靜默漂移，cron 端跑舊版邏輯（與 9/11 同病灶）。
 #    ⚠️ 這裡 exit 1 會讓 git commit 回非零碼（commit 本身已完成）→ 呼叫端會視為失敗而不推送，
 #       這是刻意的：鏡像沒同步 = cron 會跑錯版本，寧可中斷也要讓人看到。
-_marker = BASE / ".git" / "MIRROR_SYNC_FAILED"
+_marker = MARKER  # 2026-10-05：抽到檔頭統一（所有失敗路徑共用同一個 marker 語義）
 bad: list[str] = []
 for _name in sorted({*SCRIPTS, *(p.name for p in BASE.glob("*.py"))}):
     _src = BASE / _name
@@ -138,18 +195,13 @@ for _name in sorted({*SCRIPTS, *(p.name for p in BASE.glob("*.py"))}):
     except Exception:
         bad.append(_name)
 if bad:
-    try:
-        _marker.write_text(
-            f"{__import__('datetime').datetime.now().isoformat()} 未同步（{len(bad)}）：{', '.join(bad[:10])}\n",
-            encoding="utf-8",
-        )
-    except Exception:
-        pass
+    _hook_fail("③ 自我驗證失敗 %d 支：%s" % (len(bad), ", ".join(bad[:10])))
     print(f"  ❌ 鏡像自我驗證失敗：{len(bad)} 支內容不一致 → {', '.join(bad[:6])}")
-    print(f"     → 已寫入 {_marker.name}；cron 端可能仍是舊版邏輯，請查鏡像目標與權限")
+    print("     → cron 端可能仍是舊版邏輯，請查鏡像目標與權限")
     sys.exit(1)
 if _marker.exists():
     _marker.unlink()
+_log("OK\tok=%d mirrored=%d\t%s" % (ok, mirrored, _env_snapshot()))
 print(f"  ✅ 鏡像自我驗證通過（{len(SCRIPTS)} 硬編碼清單 + 同名檔逐位元比對）")
 
 # 決策軌跡自動化（2026-09-02 CIO 風險2）：[cioreviewed] commit 同步寫入 trail

@@ -241,17 +241,32 @@ print(f"  未追蹤（備份/暫存，預期）：{untracked}")
 if tracked:
     fail.append(f"未提交: {tracked}")
 
-# ── 5) hermes/scripts 鏡像 ─────────────────────────────────
-print("=== 5) hermes/scripts 鏡像 ===")
-for f in ["asset_sync.py", "buffett_cto_analyzer.py", "closing_log.py", "update_data.py", "budget_daily_check.py"]:
-    a, b = R / f, H / "scripts" / f
-    if not b.exists():
-        print(f"  ⚠️ {f} 不在鏡像清單（不適用）")
-        continue
-    same = a.read_bytes().replace(b"\r\n", b"\n") == b.read_bytes().replace(b"\r\n", b"\n")
-    print(f"  {ok(same)} {f}")
-    if not same:
-        fail.append(f"鏡像不同步 {f}")
+# ── 5) hermes/scripts 鏡像（2026-10-05：改全量掃描；原 5 支硬編碼 → 漏掃 8 支）──
+#     背景：原清單只有 asset_sync／buffett_cto_analyzer／closing_log／update_data／budget_daily_check，
+#     實測真正漂移 10 支（另含 asset_diff_monitor、build_dashboard、build_penetration_report、
+#     build_rebalance_dashboard、fire_progress、morning_briefing、report_components、run_daily）。
+#     固定清單式守門擋不住清單外成員 → 改為全量掃描，實作單一化在 mirror_guard.py。
+print("=== 5) hermes/scripts 鏡像（全量掃描｜mirror_guard.py）===")
+try:
+    if str(R) not in sys.path:
+        sys.path.insert(0, str(R))
+    import mirror_guard  # noqa: E402
+    _mg = mirror_guard.scan(R, H / "scripts")
+    print(f"  一致 {_mg['same']} 支｜轉發器 {_mg['forwarders']}｜鏡像無此檔 {_mg['not_mirrored']}")
+    if _mg["drift"]:
+        print(f"  ❌ 漂移 {len(_mg['drift'])} 支 → {', '.join(_mg['drift'][:12])}")
+        fail.append(f"鏡像漂移 {len(_mg['drift'])} 支: {_mg['drift']}")
+    else:
+        print("  ✅ repo ∩ 鏡像（全量、排除轉發器）逐位元一致")
+    if _mg["wrapper_bad"]:
+        print(f"  ❌ wrapper 不變式不符 {len(_mg['wrapper_bad'])} 支 → {', '.join(_mg['wrapper_bad'][:6])}")
+        fail.append(f"wrapper 不符 {_mg['wrapper_bad']}")
+    else:
+        print("  ✅ wrapper 不變式逐位元一致")
+except Exception as _e:
+    # fail-closed：無法判定（解析不到目錄／讀檔失敗）視為 FAIL，不得當 PASS
+    print(f"  ❌ 鏡像全量掃描無法判定（fail-closed 視為 FAIL）：{_e}")
+    fail.append(f"鏡像全量掃描無法判定: {_e}")
 
 # ── 6) cron jobs ──────────────────────────────────────────
 print("=== 6) cron jobs ===")
