@@ -196,7 +196,11 @@ def main() -> int:
         _top_pol = float(snap.get("policy_pledge_loan") or 0)
         if abs(_lb_pol - _top_pol) > 1:
             errs.append(f"保單借貸餘額不同源：liabilities_build_up.保單借貸 {_lb_pol:,.0f} ≠ policy_pledge_loan {_top_pol:,.0f}")
-        if abs(_mfe_int - float(_li["合計"])) > 1:
+        if _li.get("合計") is None:
+            # 2026-10-04 P0（PEND-20261004-02）：缺利率 → 無法驗證，不得以預設利率算出的值混充
+            errs.append(f"負債月息無法計算：liabilities_build_up 缺利率鍵 {_li.get('_缺真值')}"
+                        "（禁以預設利率 4.0/3.92/2.65% 頂替；請補真值後重跑）")
+        elif abs(_mfe_int - float(_li["合計"])) > 1:
             errs.append(f"月支出利息口徑不一致：monthly_fixed_expense 三項 {_mfe_int:,.0f} ≠ sot_targets 動態值 {_li['合計']:,.0f}")
         else:
             print(f"✅ 負債月息自洽：保單 {_li['保單借貸利息']:,} + 券商 {_li['券商質押利息']:,} + 基金質押 {_li['基金質押利息']:,} = {_li['合計']:,}")

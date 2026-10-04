@@ -297,20 +297,40 @@ def liability_interest(snap: dict) -> dict:
     各項＝餘額 × 利率 / 12；餘額/利率一律讀 snapshot.liabilities_build_up（禁寫死）。
     房貸不列入（房貸月付已以「房貸」項計入月支出，再算利息＝重複）。
     用途：sabbatical_checklist_update 的「每月負債成本」、run_daily 的月支出口徑、check_thresholds 不變式。
+
+    2026-10-04 P0（PEND-20261004-02／CIO 三審必改3）：移除 dflt_rate 常數退路
+    （保單 4.0%／券商 3.92%／基金 2.65%）。真值缺利率時**不得**用預設利率算出一條看起來
+    正常的月息（例：基金質押 5,900,000 缺利率仍印 13,029）。改為該項回 None、`合計` 亦回 None
+    （禁部分加總偽裝完整），並以 `_缺真值` 列出缺哪個利率鍵供呼叫端明示。
+    邊界：餘額為 0 時利率不影響結果（0 是正確值）→ 不列缺真值，避免無謂的全域退化。
     """
     lb = snap.get("liabilities_build_up") or {}
     _map = [
-        ("保單借貸利息", "保單借貸", "保單借貸利率", 0.04),
-        ("券商質押利息", "券商質押", "券商質押利率", 0.0392),
-        ("基金質押利息", "基金質押", "基金質押利率", 0.0265),
+        ("保單借貸利息", "保單借貸", "保單借貸利率"),
+        ("券商質押利息", "券商質押", "券商質押利率"),
+        ("基金質押利息", "基金質押", "基金質押利率"),
     ]
     out: dict = {}
-    for name, bal_key, rate_key, dflt_rate in _map:
+    _miss: list = []
+    for name, bal_key, rate_key in _map:
         bal = float(lb.get(bal_key) or 0)
-        rate = float(lb.get(rate_key) or dflt_rate or 0)
-        out[name] = round(bal * rate / 12)
-    out["合計"] = sum(v for k, v in out.items() if k != "合計")
-    out["_note"] = "保單借貸＋券商質押＋基金質押之月息；房貸不計（已於月支出以房貸項計入）｜來源 snapshot.liabilities_build_up"
+        rate_v = lb.get(rate_key)
+        if rate_v in (None, ""):
+            out[name] = None if bal else 0
+            if bal:
+                _miss.append(rate_key)
+            continue
+        try:
+            out[name] = round(bal * float(rate_v) / 12)
+        except (TypeError, ValueError):
+            out[name] = None if bal else 0
+            if bal:
+                _miss.append(rate_key)
+    _vals = [out["保單借貸利息"], out["券商質押利息"], out["基金質押利息"]]
+    out["合計"] = None if any(v is None for v in _vals) else sum(_vals)
+    out["_缺真值"] = _miss
+    out["_note"] = ("保單借貸＋券商質押＋基金質押之月息；房貸不計（已於月支出以房貸項計入）"
+                    "｜來源 snapshot.liabilities_build_up｜缺利率 → 該項與合計皆為 None（禁以預設利率頂替）")
     return out
 
 def sot_monthly_expense(snap: dict) -> float:

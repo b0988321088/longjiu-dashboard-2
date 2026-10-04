@@ -268,7 +268,10 @@ def calibrate_sources() -> dict:
         "firstjin_label": snap.get("insurance_label_b", "第一金FA81聯博"),
         "rent_monthly": s_rent,
         # 2026-09-23 INC-241b：常態應收／當月應收明細／當月待收（單一真值，供日報與 _fmt_rent_status 用）
-        "rent_monthly_target": snap.get("rent_monthly_total") or s_rent or 0,
+        # 2026-10-04 P0（PEND-20261004-02／CIO 三審必改2）：原為 `… or s_rent or 0`——
+        # 常態房租鍵一缺，就靜默改用「當月實收」或 0（實測會把實收 24,000 當成常態目標顯示）。
+        # 缺值一律回 None，讓下游真的 fail-closed（顯示端已可處理 None）。
+        "rent_monthly_target": snap.get("rent_monthly_total"),
         "rent_receivable_by_month": snap.get("rent_receivable_by_month", {}),
         "rent_pending": snap.get("rent_monthly_gap", 0),
         "securities_total": s_securities,
@@ -295,7 +298,10 @@ def calibrate_sources() -> dict:
         "salary_records": snap.get("salary_records", {}),
         "salary": snap.get("salary", snap.get("monthly_salary", 42_560)),
         "monthly_income": snap.get("monthly_income", 228_751),
-        "dividend_month_expected": snap.get("dividend_month_expected", 100_000),
+        # 2026-10-04 P0（PEND-20261004-02／CIO 三審必改1）：原為 `snap.get(..., 100_000)`——
+        # 真值鍵一缺，tv 就被塞回 100,000（且恰好等於現行真值 → 毫無症狀），使顯示端與卡片③
+        # 永遠收不到 None、fail-closed 形同虛設。缺鍵一律回 None。
+        "dividend_month_expected": snap.get("dividend_month_expected"),
         "funds_breakdown": snap.get("funds_breakdown", {}),
         "professional_investor": snap.get("professional_investor", {}),
         "rhythm08": snap.get("rhythm08", {}),
@@ -534,7 +540,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _cov_line = (f"{_mort / _rent * 100:.0f}%" if (_mort is not None and _rent) else "⚠️ 缺真值")
     _fixed_expense_html = f"""    <div class="callout" style="margin-top:10px;border-left:3px solid #3b82f6">
       <strong>📌 每月固定支出：{_n(_fixed_total)}</strong>（現金扣帳 {_n(_cash_out)} ＋ 帳上計息 {_n(_accrual)}）<br>
-      生活 {_n(_life)} ｜ 醫療 {_n(_med)} ｜ 房貸 {_n(_mort)}（永豐 {_n(_sin)} + 國泰 {_n(_cat)}）｜ 保單借貸利息 {_int:,}{f" ｜ 券商質押利息 {_yua:,}" if _yua else ""}{f" ｜ 基金質押利息 {_fund_int:,}" if _fund_int else ""}
+      生活 {_n(_life)} ｜ 醫療 {_n(_med)} ｜ 房貸 {_n(_mort)}（永豐 {_n(_sin)} + 國泰 {_n(_cat)}）｜ 保單借貸利息 {_n(_int)}{f" ｜ 券商質押利息 {_n(_yua)}" if _yua else ""}{f" ｜ 基金質押利息 {_n(_fund_int)}" if _fund_int else ""}
       {_trans_txt}<br/><span style="color:#64748b;font-size:12px">與銀行實際扣款比對請用「現金扣帳」口徑（帳上計息＝保單＋券商＋基金質押三項利息之和（動態），不從帳戶扣）｜房租收入 {_n(_rent)} 覆蓋房貸 {_n(_mort_net, plus=True)} 缺口（{_cov_line} 覆蓋）｜{_gf_note}</span>
     </div>
 """
@@ -797,7 +803,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
             _dual_dim = f"""<div class="callout" style="border-left:3px solid #8b5cf6;margin-top:10px">
   <h3>🧭 雙維度資產定位（2026-08-21 定稿）</h3>
   <p style="margin:4px 0">🛡️ <b>防禦維度 {_df.get('佔比',0)}%</b>（{_df.get('公式','')}｜抗跌/LTV保護）＝ 債券 {_dc2.get('債券類',0):,} + 現金 {_dc2.get('現金/貨幣停泊',0):,} + 低波 {_dc2.get('低波高股息防禦',0):,} + 配息型基金權益 {_dc2.get('配息型基金權益',0):,} + 避險衛星 {_dc2.get('避險衛星(目標)',0):,}（目標）</p>
-  <p style="margin:4px 0">💵 <b>收入引擎 {_inc.get('佔比',0)}%</b>（{_inc.get('公式','')}｜現金流覆蓋）＝ 全配息資產 + 房租 80,100/月</p>
+  <p style="margin:4px 0">💵 <b>收入引擎 {_inc.get('佔比',0)}%</b>（{_inc.get('公式','')}｜現金流覆蓋）＝ 全配息資產 + 房租 {_nn(_rent_tgt)}/月</p>
   <p style="font-size:11px;color:#94a3b8;margin:4px 0">核心：配息≠防守，兩維度分離計算、獨立風控；{_df.get('備註','')}</p>
   <p style="margin:8px 0 2px 0">🎯 <b>四大市場情境（當前：區間震盪）：</b>多頭 防禦≥40/收入≥60/LTV≤55 ｜ <b>震盪 防禦≥50/收入≥65/LTV≤52</b> ｜ 股債雙殺 防禦≥55/收入≥70/LTV≤50 ｜ 熊市 防禦≥60/收入≥70/LTV≤48</p>
   <p style="font-size:12px;margin:4px 0">📐 現況對照（震盪標準 防禦≥50／收入≥65）：防禦 {_df.get('佔比',0):.1f}% {'✅' if _df.get('佔比',0)>=50 else '⚠️ 未達'} ｜ 收入 {_inc.get('佔比',0):.1f}% {'✅' if _inc.get('佔比',0)>=65 else '⚠️ 未達'}｜LTV 見第八章風險紅線（動態）</p>
@@ -1999,9 +2005,13 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _li_items = [(k, v) for k, v in _li.items()
                              if not str(k).startswith("_") and k != "合計"]
                 _li_total = _li.get("合計")
+                _li_miss = _li.get("_缺真值") or []
                 _li_txt = ("＋".join(f"{str(k)[:-2]} {v:,.0f}/月" for k, v in _li_items)
                            + f" = 合計 {_li_total:,.0f}/月") \
-                    if (_li_items and _li_total is not None) else "⚠️ 缺真值 → 不顯示（不以 0 頂替）"
+                    if (_li_items and _li_total is not None) else \
+                    (("⚠️ 缺真值（" + "、".join(_li_miss) + " 不存在）→ 不顯示"
+                      "（禁以預設利率 4.0/3.92/2.65% 或 0 頂替）")
+                     if _li_miss else "⚠️ 缺真值 → 不顯示（不以 0 頂替）")
                 def _short(k):
                     for _k2 in ("富達", "聯博", "貝萊德", "安聯", "第一金"):
                         if _k2 in k:
@@ -2061,16 +2071,20 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                         _rent_got += sum(_rv.values())
                     elif isinstance(_rv, (int, float)):
                         _rent_got += _rv
-                # 2026-10-04 P0（PEND-20261004-02）：原 `tv.get("dividend_month_expected") or 100000`
-                # ——真值一缺就拿 100,000 去算 ③ 的覆蓋判斷，可能亮出「✅ 覆蓋」的**假綠燈**。
-                # 且該常數目前恰好等於真值（100,000），故現階段毫無症狀，是最難察覺的一類。
-                # 改 fail-closed：真值缺 → 覆蓋判斷不予成立（不得以常數救場）。
+                # 2026-10-04 P0（PEND-20261004-02／CIO 三審必改5）：原讀 `tv.get("rent_monthly_total")`，
+                # 但 tv **從不具此鍵**（tv 的鍵名是 rent_monthly_target）→ 房租恆被當 0：
+                # 正式日報顯示「流入（常態配息＋房租）100,000」卻標示含房租，與資產總表
+                # 被動保守 180,100（配息100,000＋房租80,100）在同一天報內對同一事實給出兩個數字。
                 _dme = tv.get("dividend_month_expected")
-                _rmt = tv.get("rent_monthly_total")
+                _rmt = tv.get("rent_monthly_target")
                 _income_m = (float(_dme) + float(_rmt or 0)) if _dme not in (None, "") else None
                 if _income_m is None:
                     print("⚠️ [render] 槓桿風控卡③：dividend_month_expected 缺真值"
                           "→ 覆蓋判斷不予成立（禁以 100,000 救場）")
+                elif _rmt in (None, ""):
+                    _income_m = None
+                    print("⚠️ [render] 槓桿風控卡③：rent_monthly_target 缺真值"
+                          "→ 流入不得只算配息卻標示為「配息＋房租」，覆蓋判斷不予成立")
                 _freeze = _us30y_now >= 5.30
                 _fz_txt = f"🔴 觸及全域凍結線（{_us30y_now:.2f}% ≥ 5.30%）— 禁止新增債券質押" if _freeze else f"🟢 未觸及凍結線（{_us30y_now:.2f}% &lt; 5.30%）"
                 # 投資哲學檢核（2026-08-19 定版：核心三支柱 + 4 問）— 用常態被動收入（非當月實收）

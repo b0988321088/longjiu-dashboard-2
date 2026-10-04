@@ -55,12 +55,20 @@ def render_coverage(snap: dict, mode: str = "passive") -> str:
     """覆蓋率文字。mode=passive：被動保守（配息 100,000+房租）；mode=full：含薪水常態。
     2026-08-25 定案：日報主顯示用 passive（保守口徑）。"""
     expense = sot_monthly_expense(snap)
-    rent = snap.get("rent_monthly_total", 80100) or 0
+    # 2026-10-04 P0（PEND-20261004-02）：原 `rent_monthly_total, 80100` 與 `dividend_month_expected or 100000`
+    # 為同型假真值（且兩常數恰好等於現行真值 → 毫無症狀）。缺真值一律不予判斷，禁以常數救場。
+    _rent_v = snap.get("rent_monthly_total")
+    _dme_v = snap.get("dividend_month_expected")
     if mode == "full":
         income = sot_monthly_income(snap)  # 2026-10-04 P0：原 fallback 214,685 為舊口徑假真值
         label = "含薪水常態"
     else:
-        income = (snap.get("dividend_month_expected") or 100000) + rent
+        _miss = [k for k, v in (("rent_monthly_total", _rent_v),
+                                ("dividend_month_expected", _dme_v)) if v in (None, "")]
+        if _miss:
+            return (f"⚠️ 現金流覆蓋（被動保守）：缺真值（{'、'.join(_miss)}）"
+                    "→ 不予判斷（禁以 100,000／80,100 救場）")
+        income = float(_dme_v) + float(_rent_v)
         label = "被動保守"
     cov = income / expense * 100 if expense else 0
     light = "🟢" if cov >= 100 else ("🟡" if cov >= 80 else "🔴")
@@ -116,14 +124,22 @@ def render_health_score(snap: dict) -> dict:
     """健康度分數 0-100（五維度加權）→ (分數, 燈號, 明細)。
     2026-08-27 定版：覆蓋30/防禦25/曝險20/現金15/LTV10（US30Y 為市場環境，非個人健康指標 → 移除計分）"""
     expense = sot_monthly_expense(snap)
-    rent = snap.get("rent_monthly_total", 80100) or 0
-    income = (snap.get("dividend_month_expected") or 100000) + rent
-    income_act = float(snap.get("monthly_dividend_total", 0) or 0) + rent
-    cov = income / expense * 100 if expense else 0
-    cov_act = income_act / expense * 100 if expense else 0
+    # 2026-10-04 P0（PEND-20261004-02）：同 render_coverage——缺真值不得靠預設值計分。
+    _rent_h = snap.get("rent_monthly_total")
+    _dme_h = snap.get("dividend_month_expected")
+    _rent_h = float(_rent_h) if _rent_h not in (None, "") else None
+    _dme_h = float(_dme_h) if _dme_h not in (None, "") else None
+    income = (_dme_h + _rent_h) if (_dme_h is not None and _rent_h is not None) else None
+    income_act = (float(snap.get("monthly_dividend_total", 0) or 0) + _rent_h
+                  if _rent_h is not None else None)
+    cov = (income / expense * 100) if (income is not None and expense) else None
+    cov_act = (income_act / expense * 100) if (income_act is not None and expense) else None
 
     # 現金流覆蓋（2026-09-13 修正：>=100% 即為 100 分，100%~150% 為超額加分區間）
-    if cov >= 100.0:
+    # 2026-10-04 P0：缺真值 → 該維度 0 分（fail-closed：不得靠預設值拿分）
+    if cov is None:
+        _cov_std = 0
+    elif cov >= 100.0:
         _cov_std = min(100, int(90 + (cov - 100.0) / 50.0 * 10))  # 100%給90分，150%以上給100分
     else:
         _cov_std = max(0, int(cov / 100.0 * 90))
@@ -195,10 +211,13 @@ def render_health_score(snap: dict) -> dict:
         score = min(score, 55)
         light = "🔴"
     # 標準分 = 各維度 0-100 制原始得分；權重分 = 標準分 × 權重（加總 = 總分）
-    _cov_std = round(min(cov / 150 * 100, 100))
+    _cov_std = round(min(cov / 150 * 100, 100)) if cov is not None else 0
     detail = {
         "分數": score, "燈號": light,
-        "覆蓋": round(cov), "覆蓋實收": round(cov_act), "覆蓋標準": _cov_std, "覆蓋分": round(_cov_std * 0.30),
+        "覆蓋": round(cov) if cov is not None else None,
+        "覆蓋實收": round(cov_act) if cov_act is not None else None,
+        "覆蓋標準": _cov_std, "覆蓋分": round(_cov_std * 0.30),
+        "覆蓋缺真值": cov is None,
         "防禦": defense, "防禦標準": def_score, "防禦分": round(def_score * 0.25),
         "曝險": usd, "曝險標準": usd_score, "曝險分": round(usd_score * 0.20),
         "現金": cash, "現金標準": cash_score, "現金分": cash_score * 0.15,
@@ -219,7 +238,10 @@ def _render_health_card_legacy(snap: dict) -> str:
     # (名稱, 現況, 目標, 權重分/權重) — 現況 vs 目標 → 得分
     _usd_cap = float((snap.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)  # 2026-09-13：目標讀 snapshot（裁示② 50→60）
     rows = [
-        ("現金流覆蓋", f"{d['覆蓋']}%／實收 {d['覆蓋實收']}%", "≥100%", d["覆蓋分"], 30),
+        ("現金流覆蓋",
+         (f"{d['覆蓋']}%／實收 {d['覆蓋實收']}%" if d.get("覆蓋") is not None
+          else "⚠️ 缺真值（該維度不計分）"),
+         "≥100%", d["覆蓋分"], 30),
         ("防禦維度", _def_txt, "≥50%", d["防禦分"], 25),
         ("美元曝險", f"{d['曝險']:.1f}%", f"≤{_usd_cap:.0f}%（美金）", d["曝險分"], 20),
         ("現金底線", f"{d['現金']:,.0f}", "≥700,000", d["現金分"], 15),
@@ -245,15 +267,30 @@ def _render_health_card_legacy(snap: dict) -> str:
         _li2 = _li_fn2(snap)
         _cashout = float(snap.get("monthly_expense_cash") or 0)
         _accr = float(snap.get("monthly_expense_accrual") or 0)
-        _li_txt = (f'（現金扣帳 {_cashout:,.0f} ＋ 帳上計息 {_accr:,.0f}＝保單 {_li2["保單借貸利息"]:,}'
-                   f'＋券商 {_li2["券商質押利息"]:,}＋基金質押 {_li2["基金質押利息"]:,}）')
-        if float(_li2["保單借貸利息"]) > 0:
-            _li_txt += (f'｜過渡期口徑：含待清償保單息 {_li2["保單借貸利息"]:,}，清完後月支出 '
-                        f'{float(d["支出"]) - float(_li2["保單借貸利息"]):,.0f}')
+        _pol2, _sec2, _fd2 = (_li2["保單借貸利息"], _li2["券商質押利息"], _li2["基金質押利息"])
+        if None in (_pol2, _sec2, _fd2):
+            # 2026-10-04 P0（PEND-20261004-02）：缺利率 → 明示缺真值；
+            # 禁以預設利率（4.0／3.92／2.65%）算出的數字混充（原為 silent except → _li_txt=""）
+            _li_txt = (f'（現金扣帳 {_cashout:,.0f} ＋ 帳上計息 {_accr:,.0f}）'
+                       f'｜⚠️ 負債利率缺真值（{"、".join(_li2.get("_缺真值") or [])}）'
+                       f'→ 三項利息不顯示、不以預設利率頂替')
+        else:
+            _li_txt = (f'（現金扣帳 {_cashout:,.0f} ＋ 帳上計息 {_accr:,.0f}＝保單 {_pol2:,}'
+                       f'＋券商 {_sec2:,}＋基金質押 {_fd2:,}）')
+            if _pol2 > 0:
+                _li_txt += (f'｜過渡期口徑：含待清償保單息 {_pol2:,}，清完後月支出 '
+                            f'{float(d["支出"]) - float(_pol2):,.0f}')
     except (TypeError, ValueError, ImportError):
         _li_txt = ""
+    # 2026-10-04 P0：口徑說明原寫死「配息100,000+房租80,100=180,100」——同型硬編碼真值，改由 snapshot 派生
+    _n_dme = snap.get("dividend_month_expected")
+    _n_rent = snap.get("rent_monthly_total")
+    _n_dme_txt = f"{int(_n_dme):,}" if _n_dme not in (None, "") else "⚠️ 缺真值"
+    _n_rent_txt = f"{int(_n_rent):,}" if _n_rent not in (None, "") else "⚠️ 缺真值"
+    _n_inc_txt = (f"{int(_n_dme) + int(_n_rent):,}"
+                  if (_n_dme not in (None, "") and _n_rent not in (None, "")) else "⚠️ 缺真值")
     _note = (f'<div style="font-size:9.5px;color:#14532d;margin-top:2px;line-height:1.6">'
-             f'口徑：覆蓋=保守常態（配息100,000+房租80,100=180,100）÷每月固定支出 {d["支出"]:,.0f}{_li_txt}（snapshot.dividend_month_expected+rent_monthly_total÷monthly_expense，8月實收基準134%見日報）｜'
+             f'口徑：覆蓋=保守常態（配息{_n_dme_txt}+房租{_n_rent_txt}={_n_inc_txt}）÷每月固定支出 {d["支出"]:,.0f}{_li_txt}（snapshot.dividend_month_expected+rent_monthly_total÷monthly_expense，缺鍵即示缺真值不代數）｜'
              f'防禦=dual_dimension_metric.防禦維度.佔比（{d["防禦"]:.1f}%）｜曝險=usd_exposure_monitor.current.合計（{d["曝險"]:.1f}%）｜'
              f"現金=可動用（cash_total−指定用途款）{d['現金']:,.0f}≥cash_floor 700,000｜LTV=(policy_pledge_loan+pledge_loan+fund_pledge_loan)÷(insurance_current_value+securities+質押基金池)（{d['LTV']:.1f}%；目標≤50；銀行監看50起/55黃/60紅/70追繳）｜銀行口徑 LTV＝國泰質押借款÷質押基金池＝{d.get('銀行LTV', 0):.1f}%｜總質押率 {d['總質押率']:.1f}%（借款÷總資產，≤35%制）</div>")
     return (

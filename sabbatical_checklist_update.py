@@ -112,7 +112,16 @@ def compute_kpis(snap):
     # 2026-09-30 使用者核准：改由 sot_targets 單一來源動態計算（原寫死 16,600＝保單 13,333＋元大 3,267，
     # 券商清償後不會降、新基金質押月息 13,029 也不會被計入）。
     from sot_targets import liability_interest as _li_fn
-    liab_cost = int(_li_fn(snap)["合計"])
+    # 2026-10-04 P0（PEND-20261004-02／CIO 三審必改3）：liability_interest 已移除 dflt_rate 常數退路。
+    # 缺利率 → 合計為 None。留停 Gate 的「每月負債成本」是硬閘門輸入，寧可明確失敗，
+    # 也不得用預設利率（保單 4.0／券商 3.92／基金 2.65%）算出一條看起來正常的數字。
+    _li_d = _li_fn(snap)
+    if _li_d.get("合計") is None:
+        raise RuntimeError(
+            "負債月息缺真值：snapshot.liabilities_build_up 缺利率鍵 "
+            f"{_li_d.get('_缺真值')}——留停 Gate 的每月負債成本必須用真值，"
+            "禁止以預設利率頂替（PEND-20261004-02）。請補真值後重跑。")
+    liab_cost = int(_li_d["合計"])
     coverage = round(_pcs["con"]["coverage"], 1)
     stress = round(_pcs["stress"]["coverage"], 1)
     # 2026-09-28：極端情境改讀 passive_caliber（原本此處自算 div_c×0.7＋空置，

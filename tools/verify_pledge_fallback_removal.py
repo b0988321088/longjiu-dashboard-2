@@ -132,6 +132,44 @@ def _render_liab(snap_override: Path | None = None,
     return html, buf.getvalue()
 
 
+def _render_card_live(snap_override: Path | None = None) -> tuple[str, str]:
+    """槓桿風控卡（實際在 run_daily._inject_market_intel 內）——**tv 由 calibrate_sources() 產生**。
+
+    2026-10-04 CIO 三審必改6：S15/S16 原本以 raw snapshot 直接當 tv 傳入，
+    繞過 calibrate_sources 的 producer 端 default（L271／L298）→ 測不到真值缺鍵的實際行為
+    （假信心）。此 helper 一律走「snapshot 檔移除鍵 → calibrate_sources() → 渲染」的真管線。
+    """
+    import run_daily as R  # noqa
+    _bak = R.SNAPSHOT
+    if snap_override is not None:
+        R.SNAPSHOT = snap_override
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            tv = dict(R.calibrate_sources())
+            _stubs = {
+                "holdings_count": 0,
+                "holdings_top3": [("—", 0.0), ("—", 0.0), ("—", 0.0)],
+                "holdings": [],
+            }
+            for _k, _v in _stubs.items():
+                tv.setdefault(_k, _v)
+            for _try in range(80):
+                try:
+                    html = R._inject_market_intel("<div></div>", tv, {})
+                    break
+                except KeyError as _ke:
+                    _k = _ke.args[0]
+                    if _k in tv:
+                        raise
+                    tv[_k] = _stubs.get(_k, 0)
+            else:
+                raise RuntimeError("_inject_market_intel 補鍵 80 次仍未收斂（stub 不足）")
+    finally:
+        R.SNAPSHOT = _bak
+    return html, buf.getvalue()
+
+
 def _dump(obj: dict, path: Path) -> Path:
     path.write_text(json.dumps(obj, ensure_ascii=False), encoding="utf-8")
     return path
@@ -295,40 +333,166 @@ def main() -> int:
     finally:
         shutil.rmtree(tmpd3, ignore_errors=True)
 
-    # ── S15 資產總表：常態房租／保守配息 fail-closed ────────────────────────
-    h15, _ = _render_liab(mutate={"rent_monthly_target": None,
-                                  "dividend_month_expected": None})
-    i15 = h15.find("被動月收")
-    seg15 = h15[i15:i15 + 700] if i15 >= 0 else ""
-    chk("S15 E2E（缺值／資產總表）：rent_monthly_target／dividend_month_expected 缺"
-        " → 不得以 80,100／100,000 救場",
-        bool(seg15) and ("⚠️ 缺真值" in seg15)
-        and ("80,100" not in seg15) and ("100,000" not in seg15),
-        f"段={seg15[:170]!r}")
+    # ── S15 資產總表：常態房租／保守配息 fail-closed（2026-10-04 CIO 三審必改6：
+    #    改走「snapshot 檔移除鍵 → calibrate_sources()」真管線，不再用 mutate 注入 tv）──
+    tmpd5 = Path(tempfile.mkdtemp(prefix="lj_p0e_"))
+    try:
+        d15 = json.loads(json.dumps(real_snap))
+        d15.pop("rent_monthly_total", None)
+        d15.pop("dividend_month_expected", None)
+        sp15 = _dump(d15, tmpd5 / "snapshot_no_rent_dme.json")
+        h15, _ = _render_liab(snap_override=sp15)
+        i15 = h15.find("被動月收")
+        seg15 = h15[i15:i15 + 700] if i15 >= 0 else ""
+        chk("S15 E2E（缺值／資產總表）：rent_monthly_total／dividend_month_expected 缺"
+            " → 不得以 80,100／100,000 救場",
+            bool(seg15) and ("⚠️ 缺真值" in seg15)
+            and ("80,100" not in seg15) and ("100,000" not in seg15),
+            f"段={seg15[:170]!r}")
 
-    # ── S16 卡片③：常態配息缺 → 覆蓋不得亮綠燈 ─────────────────────────────
-    tv_k = {k: v for k, v in real_snap.items() if k != "dividend_month_expected"}
-    h16, _ = _render(tv_k)
-    card16 = _card(h16)
-    i16 = card16.find("③ 月度利息流出")
-    seg16 = card16[i16:i16 + 160] if i16 >= 0 else ""
-    chk("S16 E2E（缺值／卡片③）：dividend_month_expected 缺 → 覆蓋判斷不得亮綠燈",
-        bool(card16) and ("✅ 覆蓋" not in card16) and ("不予判斷" in seg16),
-        f"③={seg16!r}")
+        # ── S16 卡片③：常態配息缺 → 覆蓋不得亮綠燈（真管線）───────────────────
+        d16 = json.loads(json.dumps(real_snap))
+        d16.pop("dividend_month_expected", None)
+        sp16 = _dump(d16, tmpd5 / "snapshot_no_dme_card.json")
+        h16, _ = _render_card_live(snap_override=sp16)
+        card16 = _card(h16)
+        i16 = card16.find("③ 月度利息流出")
+        seg16 = card16[i16:i16 + 160] if i16 >= 0 else ""
+        chk("S16 E2E（缺值／卡片③／經 calibrate_sources）：dividend_month_expected 缺"
+            " → 覆蓋判斷不得亮綠燈",
+            bool(card16) and ("✅ 覆蓋" not in card16) and ("不予判斷" in seg16),
+            f"③={seg16!r}")
 
-    # ── S17 卡片③：富達月配缺 → 覆蓋不得亮綠燈 ─────────────────────────────
-    tv_f = json.loads(json.dumps(real_snap))
-    _ctg17 = (tv_f.get("funds_breakdown", {}) or {}).get("國泰直購", {}) or {}
-    tv_f["funds_breakdown"] = dict(tv_f.get("funds_breakdown") or {})
-    tv_f["funds_breakdown"]["國泰直購"] = {k: v for k, v in _ctg17.items()
-                                            if "富達" not in str(k)}
-    h17, _ = _render(tv_f)
-    card17 = _card(h17)
-    i17 = card17.find("③ 月度利息流出")
-    seg17 = card17[i17:i17 + 175] if i17 >= 0 else ""
-    chk("S17 E2E（缺值／卡片③）：富達月配缺（國泰直購 無「富達」鍵）→ 覆蓋判斷不得亮綠燈",
-        bool(card17) and ("✅ 覆蓋" not in card17) and ("不予判斷" in seg17),
-        f"③={seg17!r}")
+        # ── S17 卡片③：富達月配缺 → 覆蓋不得亮綠燈（真管線）───────────────────
+        d17 = json.loads(json.dumps(real_snap))
+        _ctg17 = (d17.get("funds_breakdown", {}) or {}).get("國泰直購", {}) or {}
+        d17["funds_breakdown"] = dict(d17.get("funds_breakdown") or {})
+        d17["funds_breakdown"]["國泰直購"] = {k: v for k, v in _ctg17.items()
+                                              if "富達" not in str(k)}
+        sp17 = _dump(d17, tmpd5 / "snapshot_no_fidelity.json")
+        h17, _ = _render_card_live(snap_override=sp17)
+        card17 = _card(h17)
+        i17 = card17.find("③ 月度利息流出")
+        seg17 = card17[i17:i17 + 175] if i17 >= 0 else ""
+        chk("S17 E2E（缺值／卡片③／經 calibrate_sources）：富達月配缺（國泰直購 無「富達」鍵）"
+            " → 覆蓋判斷不得亮綠燈",
+            bool(card17) and ("✅ 覆蓋" not in card17) and ("不予判斷" in seg17),
+            f"③={seg17!r}")
+    finally:
+        shutil.rmtree(tmpd5, ignore_errors=True)
+
+    # ══ S18–S23：CIO 三審六項必改（生產端 default／硬編碼／驗收器假信心）══════
+    # 關鍵差異：一律走「snapshot 檔移除鍵 + calibrate_sources()」的真實管線；
+    # 不用 mutate 直接注入 tv——後者正是三審指出 S15/S16「假信心」的根因。
+    import sot_targets as _sot
+    tmpd4 = Path(tempfile.mkdtemp(prefix="lj_p0d_"))
+    try:
+        import run_daily as _R4
+        _bak4 = _R4.SNAPSHOT
+
+        # ── S18 生產端：（必改1）remove dividend_month_expected → tv 必須 None ──
+        d4 = json.loads(json.dumps(real_snap))
+        d4.pop("dividend_month_expected", None)
+        sp4 = _dump(d4, tmpd4 / "snapshot_no_dme.json")
+        try:
+            _R4.SNAPSHOT = sp4
+            _tv4 = dict(_R4.calibrate_sources())
+        finally:
+            _R4.SNAPSHOT = _bak4
+        chk("S18 生產端（必改1）：snapshot 移除 dividend_month_expected → calibrate_sources() 回 None"
+            "（原 default 100_000 使顯示端與卡片③永遠收不到 None）",
+            _tv4.get("dividend_month_expected") is None,
+            f"tv={_tv4.get('dividend_month_expected')!r}")
+        h18, _ = _render_liab(snap_override=sp4)
+        _i18 = h18.find("被動月收")
+        seg18 = h18[_i18:_i18 + 700] if _i18 >= 0 else ""
+        chk("S18b E2E（經完整 calibrate_sources 管線）：資產總表不得出現配息保守 100,000",
+            bool(seg18) and ("⚠️ 缺真值" in seg18) and ("100,000" not in seg18),
+            f"段={seg18[:170]!r}")
+
+        # ── S19 生產端：（必改2）remove rent_monthly_total → 必須 None ──────────
+        d5 = json.loads(json.dumps(real_snap))
+        _srent5 = d5.get("rent_monthly")
+        d5.pop("rent_monthly_total", None)
+        sp5 = _dump(d5, tmpd4 / "snapshot_no_rent.json")
+        try:
+            _R4.SNAPSHOT = sp5
+            _tv5 = dict(_R4.calibrate_sources())
+        finally:
+            _R4.SNAPSHOT = _bak4
+        chk("S19 生產端（必改2）：snapshot 移除 rent_monthly_total → rent_monthly_target 為 None"
+            "（原 `or s_rent or 0` 會靜默退成當月實收／0）",
+            _tv5.get("rent_monthly_target") is None,
+            f"tv={_tv5.get('rent_monthly_target')!r}（當月實收={_srent5!r}）")
+        h19, _ = _render_liab(snap_override=sp5)
+        _i19 = h19.find("被動月收")
+        seg19 = h19[_i19:_i19 + 700] if _i19 >= 0 else ""
+        chk("S19b E2E（經完整管線）：資產總表不得出現常態房租 80,100",
+            bool(seg19) and ("⚠️ 缺真值" in seg19) and ("80,100" not in seg19),
+            f"段={seg19[:170]!r}")
+        # 必改4 動態驗證：雙維度資產定位 callout 原寫死「房租 80,100/月」（S21 只驗靜態）；
+        # 這裡要求缺鍵時**整份報告**都不得再冒出該數字。
+        chk("S19c E2E（必改4 動態）：rent_monthly_total 缺 → 雙維度 callout 與全份報告"
+            "皆不得再出現「房租 80,100」（證明為動態派生，非硬編碼）",
+            "房租 80,100" not in h19 and "房租 ⚠️ 缺真值" in h19,
+            f"全份殘留={'房租 80,100' in h19}｜示缺真值={'房租 ⚠️ 缺真值' in h19}")
+
+        # ── S20 生產端：（必改3）liability_interest 拔 dflt_rate ───────────────
+        d6 = json.loads(json.dumps(real_snap))
+        _lb6 = dict(d6.get("liabilities_build_up") or {})
+        _rl6 = _lb6.pop("基金質押利率", None)
+        d6["liabilities_build_up"] = _lb6
+        _li6 = _sot.liability_interest(d6)
+        chk("S20 生產端（必改3）：移除 基金質押利率 → 該項與合計皆 None"
+            "（原 dflt_rate 2.65% 會算出 13,029）",
+            _li6.get("基金質押利息") is None and _li6.get("合計") is None
+            and "基金質押利率" in (_li6.get("_缺真值") or []),
+            f"基金質押={_li6.get('基金質押利息')!r}｜合計={_li6.get('合計')!r}"
+            f"｜缺={_li6.get('_缺真值')!r}（原利率={_rl6!r}）")
+        sp6 = _dump(d6, tmpd4 / "snapshot_no_pledge_rate.json")
+        h20, _ = _render_card_live(snap_override=sp6)
+        card20 = _card(h20)
+        _i20 = card20.find("② 負債月息")
+        seg20 = card20[_i20:_i20 + 260] if _i20 >= 0 else ""
+        chk("S20b E2E：卡片② 缺質押利率 → 不得再印「基金質押 13,029/月」，須示缺真值",
+            bool(seg20) and ("13,029" not in seg20) and ("缺真值" in seg20),
+            f"②={seg20!r}")
+
+        # ── S21 靜態：（必改4）房租硬編碼 ─────────────────────────────────────
+        _hard21 = [p for p in ("房租 80,100", "80100", "80_100") if p in body]
+        chk("S21 靜態（必改4）：run_daily.py 不得硬編碼房租 80,100（雙維度資產定位 callout）",
+            not _hard21, f"命中={_hard21}")
+
+        # ── S22 必改5：卡片③ 房租鍵名（tv 從不具 rent_monthly_total → 房租恆 0）
+        _bad22 = [p for p in ('tv.get("rent_monthly_total")', "tv.get('rent_monthly_total')")
+                  if p in body]
+        chk("S22 靜態（必改5）：卡片③ 不得讀 tv 不存在的鍵 rent_monthly_total（會把房租當 0，"
+            "卻仍標示「配息＋房租」）",
+            not _bad22, f"命中={_bad22}")
+        h22, _ = _render_card_live()
+        card22 = _card(h22)
+        _i22 = card22.find("③ 月度利息流出")
+        seg22 = card22[_i22:_i22 + 320] if _i22 >= 0 else ""
+        chk("S22b E2E：卡片③ 流入＝常態配息＋房租 180,100（與資產總表同口徑，不得只算配息 100,000）",
+            ("180,100" in seg22) and ("100,000" not in seg22),
+            f"③={seg22!r}")
+
+        # ── S23 驗收器自證：（必改6）證明測的是 producer，不是 mutate 注入 ──────
+        try:
+            _R4.SNAPSHOT = _bak4
+            _tv_ok = dict(_R4.calibrate_sources())
+        finally:
+            _R4.SNAPSHOT = _bak4
+        chk("S23 驗收器自證（必改6）：同一路徑下「真值檔回真值、缺鍵檔回 None」"
+            "→ 證明驗的是 calibrate_sources 生產端（非 mutate 注入的假 None）",
+            _tv_ok.get("dividend_month_expected") == real_snap.get("dividend_month_expected")
+            and _tv_ok.get("rent_monthly_target") == real_snap.get("rent_monthly_total")
+            and _tv4.get("dividend_month_expected") is None
+            and _tv5.get("rent_monthly_target") is None,
+            f"真值檔={_tv_ok.get('dividend_month_expected')!r}/{_tv_ok.get('rent_monthly_target')!r}"
+            f"｜缺鍵檔={_tv4.get('dividend_month_expected')!r}/{_tv5.get('rent_monthly_target')!r}")
+    finally:
+        shutil.rmtree(tmpd4, ignore_errors=True)
 
     # ── S9 反恆真（測試檔掃全部樣式；生產檔只掃恆真斷言）────────────────────
     SELF_BANNED = ["or" + " True", "assert" + " True", "or" + " 1"]
