@@ -2006,5 +2006,11 @@
   "category": "完成",
   "item": "稽核覆蓋缺口關閉｜check_thresholds 不變式納入 closeout_check（收工閘門 fail-closed）",
   "detail": "commit 3fadde30（tree aa62b990，3 檔 +322/−0）；CIO-DeepSeek-Pro 獨立唯讀審查 APPROVE 0 required_fixes（6/6 邊界、12/12 命令）。缺口：收工稽核 15 類不含 check_thresholds 的 blocking 不變式，使「收工全綠」與「pending 卡被 build_dashboard 靜默隱藏」可同時成立（實踩數日才由另一道閘門抓到）。修法：closeout_check 新增 step_threshold_invariants()（⑦），只呼叫 check_thresholds 的 blocking contract（rc），不重寫任何斷言；採 --sot-only（日報渲染行比對屬產報時序關卡 INC-238，22:00 晚報合法移動 snapshot → 收工時必假失敗，已由 sync_all 負責）；fail-closed 四路（不存在／逾時／例外／rc≠0）且保留 stdout/stderr；強制 LJ_NO_TELEGRAM=1；subprocess 明寫 encoding=utf-8（cp950 解不到 ❌ → 每次假 FAIL）。驗證 tools/verify_closeout_threshold_gate.py 12/12：四態＋mutation（拔掉不變式→同夾具不再 FAIL）＋端到端 rc 穿透＋無遞迴／無副作用／反恆真。CIO 另自行做兩條獨立反空洞實驗（刪 8 行不變式→rc=0；拿掉 problems.extend→失去穿透力）。check_thresholds.py 零改動。收工檢查：全部通過（⑦ ✅）。"
+ },
+ {
+  "date": "2026-10-05",
+  "category": "完成",
+  "item": "pending 收案｜PEND-20261004-02（fail-closed 全面化：沒有真值就停）",
+  "detail": "問題：被消費的資料容器刪除／缺鍵時，下游不是安全失敗，而是靜默變成一個『看起來正常』的錯值。本卡四項列名範圍全部落地：① run_daily 8/20 dormant 區塊 `_dp2.get('total',12000000) or 12000000` 已除（deployment_plan 隨 PI 容器廢除、_dp2 恆 {}→恆回常量假真值；現改 mortgage_principal_cathay accessor，缺值→None 不估算）；② `_p1_loan` 回退 12,000,000 已除；③ `if _pi:`（payload 含 error 鍵即恆真）→ 改 bool(sot_targets.pi_record(tv)) 存在性判斷；④ 質押口徑卡①『可貸金額 or 池本金×成數』假真值 fallback 已除。另經八輪獨立唯讀審查（CIO-DeepSeek-Flash，每項要求可判別實驗）擴大清出並修復同型殘留：R1/R2（負債7鍵 producer default、現金流覆蓋維度）；M1–M7（同表/同函式對稱漏修：fund_pledge_loan 列、LTV 三鍵、穿透 2.65%、大義街 0萬@0.0%、晨報/FIRE 常態對照）；六審8項（含**真值層寫入器** asset_sync／update_data 改『缺鍵→不寫入＋大聲告警』：原本會編造 基金質押=0、利率=2.65%、total 少590萬、net_worth 由 −417.6萬翻正為 +172.4萬寫進 snapshot）；七審 BLOCK-1（`_rows_pl` NameError 迴歸，實跑 RC=1 會中止 sync_all）。鐵律：`0`＝真值為零（不列）／`None`＝缺真值（必列且示警）；禁以 `if x>0` 或 `or 0` 把缺值靜默吞掉。驗收：tools/verify_pledge_fallback_removal.py 47/47 PASS（含 S33 以 subprocess **實跑** build_penetration_report.py 斷言 rc==0——純靜態掃描抓不到執行期 NameError，為本卡最貴教訓，已寫入 unclosed-card-diagnosis-sop 鐵則六）；check_thresholds 新增 mortgage_cathay_rate 硬斷言。紅線：snapshot 金額欄位零變動（僅日期/敘述欄）、12M 未回灌真值層（S13 靜態命中=[]）、credit_limit_twd 全庫零命中（本輪最重要資料治理成果）。八審裁定 chain_closed=true、remaining_blocking=[]。commit 70adecea／0eda81ff／22d7f032／a43db01d 已推 clean-main（remote=local=a43db01d、未推送 0），線上 index／penetration／daily 三頁 200 且數值一致。收案補掃出未經審查判定的同型殘留 → 另立 PEND-20261005-01（P2）；績效引擎 bip fallback 延期於 PEND-20261004-07（P2）。"
  }
 ]
