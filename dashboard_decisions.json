@@ -10066,6 +10066,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261004211650-1083",
+    "timestamp": "2026-10-04T21:16:50.037228+08:00",
+    "agent": "Hermes",
+    "task": "cash_floor 第一批收案 CLOSED ＋ threshold 30M 第 0 步唯讀盤點（未施工）",
+    "summary": "【一、cash_floor 第一批收案】使用者 2026-10-04 裁決 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION（線上 clean-main 73f39965）。使用者特別指出本批最有價值處＝抓到 build_audit_dashboard.py:159 的 CASH_AVAIL>=700000（判斷邏輯非顯示文字；若漏抓，政策值一改儀表板會繼續用舊門檻）。驗收成立：15 處／9 檔全接單一 sot_targets.cash_floor()；鍵名漂移以 750,000 位移測試證明（新版位移 50,000／HEAD 位移 0）；accessor 第二來源亦位移驗證；遮蔽底線未掉回 700,000；T1 判定類殘留 0；沙盒 7 支腳本通過；snapshot 未改；邊界外未碰；regression 與 HEAD 基準一致；獨立審查 APPROVE 0 blocking；遠端 SHA 一致。審查理由簡短不退件（T1–T5 實測為主要依據）。唯一技術債（同意不塞入本批）：institutional_flow.py 的 except Exception → 缺底線時告警但 rc=0（fail-closed accessor 被上層寬鬆例外吃掉→功能區塊消失但整支程式成功；屬可觀測性／錯誤傳播問題，另案）。【二、threshold 30M 第 0 步唯讀盤點】使用者在施工前先要四問答案（本筆未動任何程式）。①snapshot 是否有正式政策真值：無。全快照 2,900–3,100 萬區間僅 total_liabilities＝30,967,893 與 liabilities_build_up.total（同值，屬負債，與門檻無關，數值巧合）。②是否已有 accessor：無（sot_targets 有 gate_thresholds／acceptable_band／bucket_targets／cash_floor，皆非此門檻）。③是否有程式內第二份來源：live 僅 3 處——tactical_table.py:290 pi.get(\"threshold\", 30_000_000)（取值 fallback，1 處）＋build_weekly_report.py:145,195 顯示文字「資產 3,000萬 盤點」（2 處）；archive/bak 0 處。④它代表什麼：台灣「專業投資人（PI）」法規門檻＝金融資產 3,000 萬元，不是資產／負債／留停 Gate 門檻，也不是歷史顯示數字。【三、盤點衍生重要發現】該站點目前**不可達**：tactical_table.py:286 `if pi:` 的 pi 來自 table[\"professional_investor\"] ← snap.get(\"professional_investor\", {})，但全 repo 只有「讀」沒有任何寫入者、snapshot 亦無此鍵（grep 全 repo 證實）→ if pi: 恆為 False，PI 風控卡從不渲染。同一 f-string 內另有寫死的「現況：金融資產含保單 28,220,311」＝真正的假真值風險（若卡開始渲染會印固定數字）。另發現 entry_monitor.py:46 讀 snapshot.pi_status 亦不存在 → PI 認列閘門同屬空讀。結論建議（待使用者裁示，本筆不施工）：因 30M 屬法規常數而非個人政策值，不宜單純換常數；可能方向為 (a) 建立 snapshot.professional_investor 單一寫入者（含 threshold／現況／gap），現況改由 snapshot 金融資產含保單推導；(b) 或將整塊列為 dormant 並登錄；兩者皆須先決定 PI 卡是否仍要存在。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-04T11:39:48.740349"
