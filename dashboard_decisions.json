@@ -10146,6 +10146,16 @@
     "status": "PENDING/SCOPED-OUT",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261004221525-1091",
+    "timestamp": "2026-10-04T22:15:25.598639+08:00",
+    "agent": "Hermes Agent",
+    "task": "範圍控制（更正 1090 摘要）｜run_daily.py 質押口徑卡與 deployment_plan fallback 另案處理",
+    "summary": "【更正 mem-20261004221438-1090 摘要】原筆摘要中的程式片段因 shell 把反引號當命令替換而遺失（非決策變更，屬寫入殘缺），本筆補正全文：使用者 2026-10-04 裁決本批不得修改 run_daily.py。其 :1843 `_dp2 = tv.get('professional_investor', {}).get('deployment_plan', {}) or {}` 與後續 `_p1_loan` 回退 12,000,000 屬既有 PEND-20261004-02（已於 21:40 立卡），另案處理；另質押口徑卡 ①『額度計算：擔保池本金 12,000,000 × 成數 50.0% = 可貸 5,900,000』之語意（把 12M 當授信額度）與其 `_cp.get(\"可貸金額\") or round(池本金 × 成數)` 假真值 fallback，亦同批辦理。架構建議一併處理：`if _pi:`（容器非空即真，因 pi_card payload 含 error 鍵而恆真）應改為 `pi_record()` 存在性判斷。範圍控制理由：讓被審批次純粹，避免 sneaky scope creep。",
+    "status": "PENDING/SCOPED-OUT",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-04T11:39:48.740349"
