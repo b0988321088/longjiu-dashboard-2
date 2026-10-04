@@ -1,11 +1,11 @@
 {
-  "date": "2026-10-02",
-  "us30y": 5.638,
-  "us30y_as_of": "2026-09-30",
-  "us30y_date": "2026-09-30",
+  "date": "2026-10-04",
+  "us30y": 5.603,
+  "us30y_as_of": "2026-10-01",
+  "us30y_date": "2026-10-01",
   "us30y_gate_status": "OK",
   "unfreeze_allowed": false,
-  "unfreeze_block_reason": "讀值日 2026-09-30（落後 1 天，在容忍值 3 天內）",
+  "unfreeze_block_reason": "讀值日 2026-10-01（落後 3 天，在容忍值 3 天內）",
   "frozen": true,
   "total_assets": 26791534,
   "recommendations": []
