@@ -552,5 +552,27 @@
     "external_owner": null,
     "status_raw": "pending",
     "is_informational": false
+  },
+  {
+    "id": "PEND-20261005-02",
+    "date": "2026-10-05",
+    "title": "鏡像防線殘留界線：獨立守門尚未獨立排程＋hook ② 不補新檔（設計）",
+    "desc": "PEND-20261004-02 收案時掃到、未經八輪審查判定的同型殘留——共同特徵：缺鍵時給出『看起來正常』的值。① market_indicator_panel.py:50 ltv_now=(可貸金額 or 0)/(合計 or 1) → 缺鍵時 LTV 0.0%（看起來更健康）；② 同檔:121 個人硬性約束字串 (可貸金額 or 0)/(額度_本金 or 1) → 印『質押≤0%』；③ 同檔:38 已有 `if _cp.get('可貸金額') else '—'` 守門（可留）。④ debt_restructure_tracker.py:228-236 用 pledge_ltv() 但**未以 pledge_truth_present() 守門** → 缺鍵時 LTV=0 走『🟢』綠燈（每週日 08:50 cron）；⑤ asset_diff_monitor.py:750 `policy_pledge_loan or 0`（同檔:747 已修，此處漏改；現況 debt_ratio 50.93%<55 不可達）；⑥ pledge_status.py:80-87（or 0／or 0.0265，無消費端引用該欄位）；run_daily.py:562（輸出閘關閉）。施工原則同 PEND-20261004-02：先確認 canonical accessor → 缺值一律 None → 渲染端明示缺真值或第三態（禁綠燈）→ 有值/無值雙測。驗收器須加『實跑 E2E』斷言（見 unclosed-card-diagnosis-sop 鐵則六）。來源：CIO 第八審 latent_judgments（deleg_2f112c36）＋本卡收案補掃。",
+    "priority": "P2",
+    "status": "待處理",
+    "source": "2026-10-05 P0 Mirror Guard 收案（commit 4d6fd5e2）",
+    "due_date": null,
+    "due_date_source": "未提供",
+    "needs_due_date": false,
+    "last_confirmed": null,
+    "last_confirmed_source": "未提供",
+    "owner": "CEO",
+    "external_owner": null,
+    "status_raw": "pending",
+    "is_informational": false,
+    "tags": "鏡像,post-commit,稽核,防線",
+    "created_at": "2026-10-05T02:50:00+08:00",
+    "updated_at": "2026-10-05T02:50:00+08:00",
+    "detail": "本輪已完成：post-commit 任何失敗路徑先留痕（marker＋.git/hook_sync.log＋環境快照）再 fail-loud；稽核第 5 類由 5 支硬編碼改全量掃描（mirror_guard.py 單一實作、rc 0/1/2 fail-closed）。殘留兩點非阻擋、屬設計界線：①獨立守門目前內嵌在每日 22:40 收工檢查（closeout_check.py → mirror_guard.scan），非獨立 cron job → 若 22:40 該 job 本身失敗，偵測仍可能延後一天；②hook ②（全量鏡像）只對『鏡像已存在的同名非轉發器檔』對齊，不主動補新檔 → 新增檔是否入鏡像仍由 ⓪ repo/wrappers 與 ① 硬編碼清單決定（設計、R6b 已證）。觸發處理：若再出現『repo 改了、cron 端仍跑舊版』且 log 無 FAIL 記錄 → 檢查 hook 是否根本未被 git 呼叫（core.hooksPath 解析、提交工具是否走 plumbing），並考慮把 mirror_guard 拉成獨立 cron（22:45、no_agent、rc≠0 即推播）。"
   }
 ]
