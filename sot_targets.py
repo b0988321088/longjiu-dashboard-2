@@ -1173,3 +1173,38 @@ def pledge_ltv(snap: dict) -> float:
     mv = pledge_collateral_market_value(snap)
     ln = pledge_loan_twd(snap)
     return (ln / mv) if (mv and ln) else 0.0
+
+
+def mortgage_principal_cathay(snap: dict) -> float | None:
+    """國泰（大義街）房貸本金權威鍵＝snapshot.mortgage_cathay。
+
+    2026-10-04：原槓桿風控卡以 professional_investor.deployment_plan.total 讀取房貸本金，
+    該容器隨 PI 收斂廢除後，該行退化成常量 12,000,000 fallback（假真值）。
+    改為單一 accessor。缺值 → **None**（禁回退常量、禁退 0；呼叫端須明示缺值或略過該層）。
+    語意邊界：**明確的 0 是「真的沒有房貸」**（真值存在）→ 回 0.0；只有缺鍵／空字串／
+    無法解析（None、''、'abc'）才回 None。
+    """
+    v = (snap or {}).get("mortgage_cathay")
+    if v is None or v == "":
+        return None
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def pledge_truth_present(snap: dict) -> bool:
+    """質押事實是否具備真值（鍵存在、可解析、且質押品市值 > 0）。
+
+    2026-10-04：質押 accessor（pledge_loan_twd／pledge_collateral_market_value）為
+    「無質押 → 0」語意；缺鍵時也回 0，無法與「真的沒質押」區分 → 這是 fail-open 的縫。
+    呼叫端要 fail-closed 時必須先問本函式，缺真值時顯示缺值、不得顯示 0 或估算。
+    """
+    s = snap or {}
+    if "fund_pledge_loan" not in s:
+        return False
+    try:
+        float(s.get("fund_pledge_loan"))
+    except (TypeError, ValueError):
+        return False
+    return pledge_collateral_market_value(s) > 0

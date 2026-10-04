@@ -1837,10 +1837,18 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
         # （禁在此自行組公式、禁寫死任何金額；財力軌 vs 資格軌分離，缺真值 fail-closed）
         import pi_card as _pic
         html += _pic.pi_html(_pic.pi_payload(tv))
-        if _pi:
+        # 2026-10-04 P0（PEND-20261004-02）：原為 `if _pi:`——payload 只要含任何鍵（含 error 鍵）
+        # 即為真 → gating 恆真；PI 容器缺失／狀態非法時整段照跑。改以「有效 PI record」判斷，
+        # 取不到真值就不渲染並明示原因（fail-closed；不靜默、不以預設頂替）。
+        _pi_ok = False
+        try:
+            import sot_targets as _sot_p
+            _pi_ok = bool(_sot_p.pi_record(tv))
+        except Exception as _e_pi:
+            print(f"ℹ️ [render] 槓桿風控卡略過：PI 無有效真值（{type(_e_pi).__name__}: {_e_pi}）")
+        if _pi_ok:
             # 8/20 定案槓桿風控輸出欄位（8/12 裁決強制，2026-08-20 更新為富達質押版）
             try:
-                _dp2 = tv.get("professional_investor", {}).get("deployment_plan", {}) or {}
                 _r8b = tv.get("rhythm08", {}) or {}
                 _us30y_now = 0
                 try:
@@ -1850,9 +1858,6 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     _us30y_now = 0
                 if not _us30y_now:
                     _us30y_now = (_r8b.get("indicators", {}) or {}).get("us30y") or 0
-                _p1_loan = _dp2.get("total", 12000000) or 12000000
-                # 2026-09-12：質押口徑改「全部動態」（原寫死 5,400,000 / 11,773,599 / 2.77%）
-                # 來源：snapshot.cathay_pledge_0911（擔保池/成數/可貸/利率）+ dragon_assets.db liabilities（既有借款）
                 _snap_p = {}
                 try:
                     _snap_p = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
@@ -1860,44 +1865,67 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     _snap_p = {}
                 # 2026-10-01：國泰轉貸利率改讀真值（原寫死 0.026）— 與 ① 槓桿成本顯示 {_mc_r_pct} 同源，
                 # 避免「顯示 vs 計算」口徑分裂（CIO 重審 blocking：3.1% 時曾印出 ×3.1% 但年成本仍是 2.6% 的值）
-                _mc_rate_v = _snap_mc_rate(_snap_p) or CATHAY_MORTGAGE_RATE_FALLBACK   # 共用推導（單一來源）
-                _p1_cost_y = _p1_loan * _mc_rate_v
-                _p1_cost_m = _p1_cost_y / 12
+                # 2026-10-04 P0：利率亦改 fail-closed。
+                # 原 `_snap_mc_rate(...) or CATHAY_MORTGAGE_RATE_FALLBACK`：利率真值缺漏時靜默套 0.026
+                # →「真本金 × 假利率」照樣算出一條看起來正常的年成本，且無任何跡象。缺值 → None。
+                _mc_rate_v = _snap_mc_rate(_snap_p)
+                if _mc_rate_v is None:
+                    print("⚠️ [render] 槓桿卡缺真值：國泰房貸利率"
+                          "（mortgage_cathay_rate／monthly_fixed_expense.房貸_國泰）→ 不顯示利率與成本")
+                # 2026-10-04 P0：房貸本金改讀權威鍵 accessor。
+                # 原 `_dp2.get("total", 12000000) or 12000000`：deployment_plan 隨 PI 容器廢除後
+                # `_dp2` 恆為 {} → 恆回常量 12,000,000（假真值，且無從察覺）。缺值 → None，不估算。
+                _p1_loan = _sot_p.mortgage_principal_cathay(_snap_p)
+                if _p1_loan is None or _mc_rate_v is None:
+                    _p1_cost_y = _p1_cost_m = None
+                    if _p1_loan is None:
+                        print("⚠️ [render] 槓桿卡第一層缺真值：snapshot.mortgage_cathay 不存在 → 不顯示估算")
+                else:
+                    _p1_cost_y = _p1_loan * _mc_rate_v
+                    _p1_cost_m = _p1_cost_y / 12
                 _cp = (_snap_p.get("cathay_pledge_0911") or {})
-                def _pct_from(s, default_pct):
-                    """'4.5 成（45%）'→0.45；'2.77%'→0.0277（先找 % 再找 成）"""
-                    m = re.search(r"(\d+(?:\.\d+)?)\s*%", str(s or ""))
-                    if m:
-                        return float(m.group(1)) / 100.0
-                    m = re.search(r"(\d+(?:\.\d+)?)\s*成", str(s or ""))
-                    if m:
-                        return float(m.group(1)) / 10.0
-                    return default_pct / 100.0
                 _pool = _cp.get("擔保池") or {}
-                _pledge_collateral = float(_pool.get("合計") or 11773599)
-                _pool_principal = float(_cp.get("額度_本金") or 12000000)
-                _pledge_pct = _pct_from(_cp.get("成數"), 45.0)
-                _pledge_loan = float(_cp.get("可貸金額") or round(_pool_principal * _pledge_pct))
-                _pledge_rate = _pct_from(_cp.get("利率"), float(_snap_p.get("fund_pledge_rate") or 0.0265) * 100)
-                _pledge_cost_y = _pledge_loan * _pledge_rate
-                _pledge_cost_m = _pledge_cost_y / 12
-                # 既有質押借款（保單質押/券商質押）— 讀 DB liabilities 最新一列
-                _loans = {}
+                # 2026-10-04 P0：質押口徑一律走 SoT accessor。
+                # 原 `float(_cp.get("可貸金額") or round(_pool_principal * _pledge_pct))` 會在缺值時
+                # 由「額度_本金 12,000,000 × 成數」**推導**出可貸金額 → 把質押品價值當成銀行授信額度。
+                # 已知真值只有：實際動用 5,900,000／質押品市值 11,779,326／LTV 現算；
+                # 銀行核定授信額度未取得文件 → 顯示「未取得」，不得由質押品價值反推。
+                _pledge_ok = _sot_p.pledge_truth_present(_snap_p)
+                _pledge_collateral = _sot_p.pledge_collateral_market_value(_snap_p)
+                _pledge_loan = _sot_p.pledge_loan_twd(_snap_p)
+                _pledge_ltv_v = _sot_p.pledge_ltv(_snap_p)
+                def _rate_from(s):
+                    """利率字串（'2.65%（...）'）→ 0.0265；解析不出 → None（禁退常數）"""
+                    m = re.search(r"(\d+(?:\.\d+)?)\s*%", str(s or ""))
+                    return (float(m.group(1)) / 100.0) if m else None
+                _pledge_rate = _rate_from(_cp.get("利率"))
+                if _pledge_rate is None:
+                    _fr = _snap_p.get("fund_pledge_rate")
+                    _pledge_rate = float(_fr) if _fr else None
+                if _pledge_ok and _pledge_rate is not None:
+                    _pledge_cost_y = _pledge_loan * _pledge_rate
+                    _pledge_cost_m = _pledge_cost_y / 12
+                else:
+                    _pledge_cost_y = _pledge_cost_m = None
+                    print("⚠️ [render] 槓桿卡質押層缺真值（fund_pledge_loan／擔保池／利率 不全）"
+                          "→ 不顯示利息估算、不以 0 或推導值頂替")
+                # 2026-10-04 P0：負債月息改讀 SoT 單一來源。
+                # 原讀 DB liabilities 的 policy_loan／pledge_loan 兩欄，卻把它們**標成**「保單質押借款／
+                # 券商股票質押」並套 3.92%（券商利率）→ 同一個 5,900,000 在 ① 是 2.65%、在 ② 是 3.92%，
+                # 月息從 13,029 變成 19,273（同一筆錢兩個口徑，且 ② 的標籤與事實不符）。
+                # SoT＝snapshot.liabilities_build_up（保單借貸／券商質押／基金質押 三軌分明）。
                 try:
-                    import sqlite3 as _sql3
-                    _dbl = _sql3.connect(str(BASE / "dragon_assets.db"))
-                    _lr = _dbl.execute("SELECT policy_loan, pledge_loan, date FROM liabilities ORDER BY date DESC LIMIT 1").fetchone()
-                    _dbl.close()
-                    if _lr:
-                        _loans = {"保單質押借款": float(_lr[0] or 0), "券商股票質押": float(_lr[1] or 0),
-                                  "_date": _lr[2]}
-                except Exception:
-                    _loans = {}
-                _loans_total = sum(v for k, v in _loans.items() if not k.startswith("_"))
-                _policy_rate = float(_snap_p.get("policy_pledge_rate") or 0.04)
-                _sec_rate = 0.0392  # 券商質押利率待對帳單核對（計畫書估 3.92%）
-                _save_y = (_loans.get("保單質押借款", 0) * (_policy_rate - _pledge_rate)
-                           + _loans.get("券商股票質押", 0) * (_sec_rate - _pledge_rate))
+                    _li = _sot_p.liability_interest(_snap_p)
+                except Exception as _e_li:
+                    _li = {}
+                    print(f"⚠️ [render] 負債月息缺真值（liability_interest 失敗）："
+                          f"{type(_e_li).__name__}: {_e_li} → 不顯示、不以 0 頂替")
+                _li_items = [(k, v) for k, v in _li.items()
+                             if not str(k).startswith("_") and k != "合計"]
+                _li_total = _li.get("合計")
+                _li_txt = ("＋".join(f"{str(k)[:-2]} {v:,.0f}/月" for k, v in _li_items)
+                           + f" = 合計 {_li_total:,.0f}/月") \
+                    if (_li_items and _li_total is not None) else "⚠️ 缺真值 → 不顯示（不以 0 頂替）"
                 def _short(k):
                     for _k2 in ("富達", "聯博", "貝萊德", "安聯", "第一金"):
                         if _k2 in k:
@@ -1906,26 +1934,35 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _pool_txt = "＋".join(f"{_short(k)}{v/10000:.0f}萬"
                                       for k, v in _pool.items()
                                       if k != "合計" and isinstance(v, (int, float))) or "池"
+                if not _pledge_ok:
+                    _p1_fact = ("⚠️ <strong>缺真值</strong>（fund_pledge_loan／擔保池不全）"
+                                "→ 不顯示估算數字（2026-10-04 P0：禁由質押品價值推導）")
+                else:
+                    _rt_txt = f"{_pledge_rate*100:.2f}%" if _pledge_rate is not None else "缺真值"
+                    _p1_fact = (f"質押品市值 {_pledge_collateral:,.0f}（{_pool_txt}）｜"
+                                f"實際動用 <strong>{_pledge_loan:,.0f}</strong>｜"
+                                f"利率 {_rt_txt}｜LTV {_pledge_ltv_v*100:.1f}%")
+                if _pledge_ok and _pledge_loan > 0:
+                    _ltv_txt = (f"LTV {_pledge_ltv_v*100:.1f}%（借款/質押品市值，🟢 安全值≤53%）｜"
+                                f"維持率 {_pledge_collateral/_pledge_loan*100:.0f}%｜"
+                                f"池 -30% → LTV {_pledge_loan/(_pledge_collateral*0.7)*100:.1f}%")
+                else:
+                    _ltv_txt = "⚠️ 缺真值 → 不顯示"
                 _pledge_card = (
                     f"<div class='callout callout-info' style='margin-top:12px'>"
-                    f"<h3>🏦 質押口徑卡（動態｜來源 snapshot.cathay_pledge_0911 + DB liabilities {_loans.get('_date','')}）</h3>"
+                    f"<h3>🏦 質押口徑卡（真值｜SoT accessor：cathay_pledge_0911 ＋ liabilities_build_up）</h3>"
                     f"<div style='font-size:12.5px;line-height:1.8'>"
-                    f"<strong>① 額度計算：</strong>擔保池本金 {_pool_principal:,.0f}（{_pool_txt}）"
-                    f"× 成數 {_pledge_pct*100:.1f}% = <strong>可貸 {_pledge_loan:,.0f}</strong>"
-                    f"｜池市值 {_pledge_collateral:,.0f}（×{_pledge_pct*100:.0f}% = {_pledge_collateral*_pledge_pct:,.0f}，"
-                    f"銀行取本金口徑）｜利率 {_pledge_rate*100:.2f}%<br/>"
-                    f"<strong>② 現有質押借款（{_loans.get('_date','')}）：</strong>"
-                    + "＋".join(f"{k} {v:,.0f}" for k, v in _loans.items() if not k.startswith("_"))
-                    + f" = <strong>{_loans_total:,.0f}</strong>"
-                    f"（月息約 {(_loans.get('保單質押借款',0)*_policy_rate+_loans.get('券商股票質押',0)*_sec_rate)/12:,.0f}）<br/>"
-                    f"<strong>③ LTV／維持率：</strong>LTV {_pledge_loan/_pledge_collateral*100:.1f}%"
-                    f"（借款/池市值，🟢 安全值≤53%）｜維持率 {_pledge_collateral/_pledge_loan*100:.0f}%"
-                    f"（池市值/借款）｜池 -30% → LTV {_pledge_loan/(_pledge_collateral*0.7)*100:.1f}%<br/>"
-                    f"<strong>④ 撥款後去向：</strong>可貸 {_pledge_loan:,.0f} − 現有借款 {_loans_total:,.0f} = "
-                    f"<strong>餘 {_pledge_loan-_loans_total:,.0f}</strong>"
-                    f"（9/12 裁示：先清償 500萬高息負債；押標金 9 月底再評估）<br/>"
-                    f"<strong>⑤ 省息試算：</strong>月省約 {_save_y/12:,.0f}／年省約 {_save_y:,.0f}"
-                    f"（保單 {_policy_rate*100:.1f}%〔待確認 4.0/4.2 兩版〕、券商 {_sec_rate*100:.2f}%〔待對帳單〕）<br/>"
+                    f"<strong>① 質押事實：</strong>{_p1_fact}"
+                    f"｜<strong>銀行核定授信額度：未取得</strong>"
+                    f"（無銀行核定文件；<u>不得</u>由質押品價值或「額度_本金 × 成數」反推剩餘可借）<br/>"
+                    f"<strong>② 負債月息（SoT｜snapshot.liabilities_build_up）：</strong>{_li_txt}"
+                    f"（房貸不計：已於月支出以「房貸」項計入）<br/>"
+                    f"<strong>③ LTV／維持率：</strong>{_ltv_txt}<br/>"
+                    f"<strong>④ 撥款用途：</strong>實際動用 {_pledge_loan:,.0f} 之用途見 "
+                    f"snapshot.cathay_pledge_0911.用途（<u>不</u>計算「額度−動用＝剩餘可借」："
+                    f"銀行核定授信額度未取得，該算式已於 2026-10-04 撤回）<br/>"
+                    f"<strong>⑤ 省息：</strong>已執行（歷史，非預測）——質押 2.65% 取代原保單借貸 4%／"
+                    f"券商質押 3.92%；歷史試算見 snapshot.cathay_pledge_0911.月息（不在此重新推導）<br/>"
                     f"<strong>⑥ 待確認：</strong>{'；'.join((_cp.get('待補') or [])[:3]) or '—'}"
                     f"</div></div>"
                 )
@@ -1975,17 +2012,49 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     f"現金底線 可動用 {_cash_now:,.0f}（真值 {_cash_all:,.0f}；≥700,000 "
                     f"{'✅' if _cash_now >= _floor_now else '🔴'}）")
                 # 2026-10-01：利差文字改動態（_mc_rate_v 已於槓桿成本段上方由 snapshot 推導，同源）
-                _mc_r_pct = _mc_rate_v * 100
-                _philosophy_items.append(f"利差 {_mc_r_pct:.1f}%→4.8-6% ✅" if (_us30y_now or 0) < 5.50 else "利差 ⚠️")
+                # 2026-10-04 P0：利率缺真值時不顯示（禁「先套常量、再照算」）
+                _mc_r_pct = (_mc_rate_v * 100) if _mc_rate_v is not None else None
+                if _mc_r_pct is None:
+                    _philosophy_items.append("利差 ⚠️ 缺利率真值（不顯示）")
+                else:
+                    _philosophy_items.append(f"利差 {_mc_r_pct:.1f}%→4.8-6% ✅" if (_us30y_now or 0) < 5.50 else "利差 ⚠️")
                 _philosophy_html = "｜".join(_philosophy_items)
+                if _p1_loan is None or _mc_rate_v is None:
+                    _lv_l1 = ("第一層（國泰轉貸）：⚠️ 缺真值（mortgage_cathay 或 房貸利率 不存在）"
+                              "→ 不顯示估算")
+                else:
+                    _lv_l1 = (f"第一層（國泰轉貸 {_p1_loan/10000:.0f}萬×{_mc_r_pct:.1f}%）"
+                              f"≈ {_p1_cost_y/10000:.1f}萬/年（月 {_p1_cost_m:,.0f}）")
+                if _pledge_cost_m is None:
+                    _lv_l2 = "質押層：⚠️ 缺真值 → 不顯示估算"
+                else:
+                    _lv_l2 = (f"質押層（質押品市值 {_pledge_collateral/10000:,.1f}萬 → 實際動用 "
+                              f"{_pledge_loan/10000:,.0f}萬 @{_pledge_rate*100:.2f}%）"
+                              f"≈ {_pledge_cost_y/10000:.1f}萬/年（月 {_pledge_cost_m:,.0f}）")
+                if _p1_cost_m is None or _pledge_cost_m is None:
+                    _lv_total = "合計：⚠️ 有層缺真值 → 不予合計（不以 0 頂替）"
+                    _lv_cov = "流出：⚠️ 有層缺真值 → 不予判斷（不以 0 頂替）"
+                else:
+                    _lv_total = (f"合計 ~{(_p1_cost_y+_pledge_cost_y)/10000:.1f}萬/年"
+                                 f"（月 {_p1_cost_m+_pledge_cost_m:,.0f}）")
+                    _lv_cov = (f"流出 {_p1_cost_m+_pledge_cost_m:,.0f} vs 流入（常態配息＋房租）"
+                               f"{_income_m:,.0f}＋富達月配 ~{_fid_mdiv:,} = {_income_m+_fid_mdiv:,.0f} — "
+                               f"{'✅ 覆蓋' if (_income_m+_fid_mdiv) >= (_p1_cost_m+_pledge_cost_m) else '⚠️ 未覆蓋'}")
+                if _pledge_ok and _pledge_loan > 0:
+                    _lv_ltv = (f"質押 {_pledge_loan:,.0f}/{_pledge_collateral:,.0f} = {_pledge_ltv_v*100:.1f}%"
+                               f"（🟢 安全值≤53%）；池 -30% 情境 → LTV "
+                               f"{_pledge_loan/(_pledge_collateral*0.7)*100:.1f}%"
+                               f"（🟡 距追繳線 70% 尚有 {70-_pledge_loan/(_pledge_collateral*0.7)*100:.1f}pp）")
+                else:
+                    _lv_ltv = "⚠️ 缺真值 → 不顯示"
                 _lv_html = (
                     f"<div class='callout callout-warning' style='margin-top:12px'>"
                     f"<h3>📊 槓桿風控輸出（9/11 定案：整池質押版）</h3>"
                     f"<div style='font-size:12.5px;line-height:1.8'>"
-                    f"<strong>① 槓桿成本：</strong>第一層（國泰轉貸 {_p1_loan/10000:.0f}萬×{_mc_r_pct:.1f}%）≈ {_p1_cost_y/10000:.1f}萬/年（月 {_p1_cost_m:,.0f}）＋質押層（{_pool_txt} 池{_pool_principal/10000:.0f}萬×{_pledge_pct*10:.1f}成={_pledge_loan/10000:.0f}萬@{_pledge_rate*100:.2f}%）≈ {_pledge_cost_y/10000:.1f}萬/年（月 {_pledge_cost_m:,.0f}）→ 合計 ~{(_p1_cost_y+_pledge_cost_y)/10000:.1f}萬/年（月 {_p1_cost_m+_pledge_cost_m:,.0f}）<br/>"
-                    f"<strong>② LTV：</strong>質押 {_pledge_loan:,.0f}/{_pledge_collateral:,.0f} = {_pledge_loan/_pledge_collateral*100:.1f}%（🟢 安全值≤53%）；池 -30% 情境 → LTV {_pledge_loan/(_pledge_collateral*0.7)*100:.1f}%（🟡 距追繳線 70% 尚有 {70-_pledge_loan/(_pledge_collateral*0.7)*100:.1f}pp）<br/>"
-                    f"<strong>③ 月度利息流出 vs 現金流入：</strong>流出 {_p1_cost_m+_pledge_cost_m:,.0f} vs 流入（常態配息＋房租）{_income_m:,.0f}＋富達月配 ~{_fid_mdiv:,} = {_income_m+_fid_mdiv:,.0f} — {'✅ 覆蓋' if (_income_m+_fid_mdiv) >= (_p1_cost_m+_pledge_cost_m) else '⚠️ 未覆蓋'}<br/>"
-                    f"<strong>④ 到期對照：</strong>負債＝國泰轉貸 {_cg_wan()}萬（3年寬限期）＋質押 {_pledge_loan/10000:,.0f}萬（富達600＋聯博100＋貝萊德B11 500 擔保，基金無到期日）；富達為月配現金流資產，無期限錯配 ✅<br/>"
+                    f"<strong>① 槓桿成本：</strong>{_lv_l1}＋{_lv_l2}→ {_lv_total}<br/>"
+                    f"<strong>② LTV：</strong>{_lv_ltv}<br/>"
+                    f"<strong>③ 月度利息流出 vs 現金流入：</strong>{_lv_cov}<br/>"
+                    f"<strong>④ 到期對照：</strong>負債＝國泰轉貸 {_cg_wan()}萬（3年寬限期）＋質押 {_pledge_loan/10000:,.0f}萬（擔保：{_pool_txt}；基金無到期日）；富達為月配現金流資產，無期限錯配 ✅<br/>"
                     f"<strong>⑤ US30Y：</strong>{_us30y_now:.2f}% — {_fz_txt}<br/>"
                     f"<strong>⑥ 底線規則（8/13 動態）：</strong>現金≥6個月開支（{_floor_now:,.0f}，月開支 {_exp:,.0f}）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/>"
                     f"<strong>⑦ 投資哲學檢核（8/19 定版）：</strong>{_philosophy_html}<br/>"
