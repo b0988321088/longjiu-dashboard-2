@@ -10116,6 +10116,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261004214154-1088",
+    "timestamp": "2026-10-04T21:41:54.869952+08:00",
+    "agent": "Hermes",
+    "task": "PI 現況真值｜收案 CLOSED／WAITING FOR EXTERNAL EVIDENCE（本輪 0 程式變更）",
+    "summary": "使用者 2026-10-04 裁決收案：狀態 CLOSED／WAITING FOR EXTERNAL EVIDENCE。確認本次唯讀搜尋已證明「系統內找不到 primary evidence」→ 不再繼續挖數位來源、不為 PI 增加提醒或程式處理。鎖定狀態：PI＝DORMANT／FAIL-CLOSED；approval_status＝未知、不建檔；台股慢慢買／黃金衛星＝LOCKED；Lombard＝依現行 hard lock 維持 LOCKED；28,220,311＝已永久清除；PI lifecycle ②-⑥ 已完成驗收；本輪程式 0 變更。pending 治理：查核後確認 pending_decisions.json 原本 0 張 PI 相關卡（無重複可清），依裁決「保留一張即可、不新增重複提醒」新增 PEND-20261004-01（PI 專業投資人現況真值｜等待銀行端 primary evidence），並將使用者同日正式立案的下一張 P0 一併建卡 PEND-20261004-02（dormant fallback cleanup — deployment_plan）。兩卡皆 status=待處理、due_date=null（依 pending_engine 鐵則「無 due_date 者不提醒、不推算」→ 不進提醒迴圈，符合「不新增重複提醒」）。check_thresholds 複驗：仍為既有 1 項 FAIL（已完成狀態卡），未因本次新增卡而生新 FAIL。commit 8452032b 已推 clean-main 並驗遠端 sha。PEND-20261004-01 內載明：取得銀行端證據時一次問兩件事——①是否已正式認定為專業投資人（PI）、核准／認定日期；②2026-09-29 撥款 590 萬之質押屬 Lombard／PI 適用產品或一般金融資產質借／其他高資產客戶產品。分支：若「是 PI 且該筆即 PI/Lombard 質押」→ 可建檔 approval_status=已核准 並以銀行確認日為 note（走 sync_professional_investor.py）；若「非 PI 或該筆非 Lombard」→ 命題轉為 debt_restructure_tracker hard-lock 適用範圍檢討，非 PI 狀態問題。取得路徑：CUBE App 投資屬性／客戶分類頁、9/21 對保契約書、9/11 額度核定書面、或直接向理專索取 PI 資格書面確認。本輪附帶教訓（自我修正，已落地）：推送資料類 commit 時若傳 auto_push.py --record skip 且未先 cio_approve 落紀錄 → 閘門必擋（INC-183 同型，本次重犯一次後改走預設自動落紀錄並成功）。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-04T11:39:48.740349"
