@@ -10156,6 +10156,16 @@
     "status": "PENDING/SCOPED-OUT",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261004223737-1092",
+    "timestamp": "2026-10-04T22:37:37.101215+08:00",
+    "agent": "Hermes",
+    "task": "稽核覆蓋缺口關閉｜check_thresholds 不變式納入 closeout_check（收工閘門 fail-closed）",
+    "summary": "使用者 2026-10-04 裁決核准施工，範圍鎖定一張獨立卡，不碰 PEND-20260930-01／-02／PEND-20261004-02。缺口：closeout_check.py 的 15 類稽核不含 check_thresholds.py 的 blocking 不變式 → 實踩：完成卡 status 含「已完成」使 build_dashboard 以子字串過濾整卡靜默隱藏數日，而收工稽核仍報全部通過。Step 0 判定：check_thresholds 的 blocking contract = main() 回傳值（errs 非空→1），errs 內每條皆 violation、無資訊性錯誤通道（資訊性走 print/rep_status，不進 errs）→ 只能呼叫該 rc 契約，不得自己重寫斷言（避免第二份真值）。選 --sot-only：日報渲染行比對屬產報時序關卡（INC-238，22:00 晚報合法移動 snapshot → 收工時設計上必假失敗），已由 sync_all 負責；--sot-only 仍涵蓋全部不變式（含 pending 隱藏關鍵字）。落地：closeout_check.py 新增 step_threshold_invariants()（⑦）＋THRESHOLD_CHECKER/ARGS/TIMEOUT；fail-closed 四路（腳本不存在／逾時／無法執行／rc≠0）皆回報；失敗保留 stdout 末40行＋stderr 末20行；強制 LJ_NO_TELEGRAM=1（不推 Telegram／Notion）；subprocess 明寫 encoding=utf-8、errors=replace（zh-TW Windows 預設 cp950 解不到 ❌ → 每次假 FAIL）；checker 參數刻意不做環境變數開關（防指向假腳本）。新增 tools/verify_closeout_threshold_gate.py 12 項：S1 正常PASS／S2 含隱藏關鍵字FAIL／S2b 保留原始輸出／S3 檢查器異常FAIL／S4 資訊性不阻塞／S5 不存在FAIL／S6 mutation（同夾具拔掉不變式→不再FAIL，證明非空洞）／S7 無遞迴／S8 無副作用／S9 反恆真／S10 wiring／S11 端到端 rc 穿透。CIO-DeepSeek-Pro 獨立唯讀審查 APPROVE 0 required_fixes（6/6 邊界、12/12 命令），並自行加做兩條獨立反空洞實驗：cmd10 刪除 8 行不變式→rc 由 1 變 0；cmd11 拿掉 problems.extend(thr_problems)→失去穿透力（rc=0）。check_thresholds.py 零改動（責任分離）。commit 3fadde30（tree aa62b990，3 檔 +322/−0）已推 clean-main；未推 0；收工檢查全部通過（⑦ ✅）。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-04T11:39:48.740349"
