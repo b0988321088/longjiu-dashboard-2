@@ -84,7 +84,7 @@ def get_fire(snap):
     etf = mdb.get("etf",0)
     fund = mdb.get("fund",0)
     rent = snap.get("rent_monthly_actual", 80100)
-    # 2026-08-24 修正：租金用「當月已收」（rent_received_records 加總），非應收 80,100
+    # 2026-08-24 修正：租金用「當月已收」（rent_received_records 加總），非應收常態值
     # 2026-09-01 修正：月份動態化（原寫死 2026-08 → 9 月起顯示 0）
     _tm = date.today().strftime("%Y-%m") if 'date' in dir() else __import__('datetime').date.today().strftime("%Y-%m")
     try:
@@ -115,6 +115,20 @@ def get_fire(snap):
         _cur_m = str(date.today().month)
         _m = f"（{_n}月）" if _n == _cur_m else f"（{_n}月實收）"
     cov = total / expense * 100 if expense else 0
+    # 2026-10-04 P0（CIO 五審 M7）：常態對照原用 `snap.get(dividend_month_expected, <硬編碼常數>)` /
+    # `snap.get(rent_monthly_total, <硬編碼常數>)`——硬編碼舊真值。缺鍵時仍印舊真值（配息＋房租
+    # ）＝以編造數字救場。缺鍵即明示缺真值。
+    _dme_n = snap.get("dividend_month_expected")
+    _rent_n = snap.get("rent_monthly_total")
+    _norm_miss = [k for k, v in (("dividend_month_expected", _dme_n),
+                                 ("rent_monthly_total", _rent_n)) if v in (None, "")]
+    if _norm_miss:
+        _norm_line = ("  📌常態對照：⚠️ 缺真值（" + "、".join(_norm_miss)
+                      + "）→ 不予判斷（禁以硬編碼常數救場）")
+    else:
+        _norm_sum = float(_dme_n) + float(_rent_n)
+        _norm_line = (f"  📌常態對照（配息 {float(_dme_n):,.0f} + 房租 {float(_rent_n):,.0f} 全月應收）："
+                      f"**{_norm_sum:,.0f}**/月（覆蓋 {_norm_sum / expense * 100:.1f}%）")
     lines = [
         f"  被動收入{_m}：**{total:,}**",
         f"    （保單 {ins:,} + ETF {etf:,} + 基金 {fund:,} + 房租 {rent:,}）",
@@ -122,9 +136,9 @@ def get_fire(snap):
         f"    （房貸 {mortgage:,} + 生活/信用卡 {other_expense:,}）",
         f"  {'🟢' if cov >= 100 else '🔴'}當下覆蓋率：**{cov:.1f}%** {'✅（被動收入已超過真實生活花費）' if cov >= 100 else '⚠️（不足）'}",
         # 2026-09-04：月初當月應收偏低時，附常態對照避免誤讀
-        # 2026-09-23 INC-241：常態對照的「房租全月應收」必須讀 rent_monthly_total（80,100）；
+        # 2026-09-23 INC-241：常態對照的「房租全月應收」必須讀 rent_monthly_total（常態應收）；
         # 原用 rent_monthly_actual（＝當月已收）→ 常態對照被低估
-        f"  📌常態對照（配息 {snap.get('dividend_month_expected', 100_000):,} + 房租 {snap.get('rent_monthly_total', 80_100):,} 全月應收）：**{(snap.get('dividend_month_expected', 100_000) or 0) + (snap.get('rent_monthly_total', 80_100) or 0):,}**/月（覆蓋 {((snap.get('dividend_month_expected', 100_000) or 0) + (snap.get('rent_monthly_total', 80_100) or 0)) / expense * 100:.1f}%）",
+        _norm_line,
         f"  📌長期理想目標（月花費 {ideal_spend:,}）：缺口 **{max(0, ideal_spend-total):,}**/月",
     ]
     return lines

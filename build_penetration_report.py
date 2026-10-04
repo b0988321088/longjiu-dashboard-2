@@ -239,13 +239,25 @@ if _pl_b > 0:
                  f"<td class='num'>{(_pl_b/_sec_col*100 if _sec_col else 0):.1f}%</td>"
                  f"<td>⚠️ {_pl_b_n}</td></tr>")
 # 2026-09-29：國泰基金質押 590萬@2.65%（9/29 10:57 撥款入帳；表定 540 萬，實撥 590 萬）
-_pl_c = float(snap.get("fund_pledge_loan") or 0)
-_pl_c_r = float(snap.get("fund_pledge_rate") or 0.0265)
-_fund_pool = float((((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("合計")) or 0)
-if _pl_c > 0:
+# 2026-10-04 P0（CIO 五審 M3/M4）：原 `fund_pledge_loan or 0` / `fund_pledge_rate or 0.0265` / gate `> 0`——
+# 缺真值時穿透報表會靜默印假 2.65%，或缺 loan 時整列消失（5,900,000 不見）。
+_NUM_MISS = (None, "")
+_pl_c_raw = snap.get("fund_pledge_loan")
+_pl_c_r_raw = snap.get("fund_pledge_rate")
+_fund_pool_raw = ((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("合計")
+_pl_c = float(_pl_c_raw) if _pl_c_raw not in _NUM_MISS else None
+_pl_c_r = float(_pl_c_r_raw) if _pl_c_r_raw not in _NUM_MISS else None
+_fund_pool = float(_fund_pool_raw) if _fund_pool_raw not in _NUM_MISS else None
+if _pl_c is None:
+    print("⚠️ [penetration] fund_pledge_loan 缺真值 → 基金質押列明示缺真值（不得靜默消失）")
+if _pl_c is None or _pl_c > 0:
+    _pl_c_txt = f"{_pl_c:,.0f}" if _pl_c is not None else "⚠️ 缺真值"
+    _pl_r_txt = f"{_pl_c_r*100:.2f}%" if _pl_c_r is not None else "⚠️ 缺真值"
+    _pl_ltv_txt = (f"{_pl_c/_fund_pool*100:.1f}%"
+                   if (_pl_c is not None and _fund_pool) else "⚠️ 缺真值")
     _rows_pl += (f"<tr><td>國泰基金質押（擔保池：富達＋聯博＋貝萊德B11）</td>"
-                 f"<td class='num'>{_pl_c:,.0f}</td><td class='num'>{_pl_c_r*100:.2f}%</td>"
-                 f"<td class='num'>{(_pl_c/_fund_pool*100 if _fund_pool else 0):.1f}%</td>"
+                 f"<td class='num'>{_pl_c_txt}</td><td class='num'>{_pl_r_txt}</td>"
+                 f"<td class='num'>{_pl_ltv_txt}</td>"
                  f"<td>✅ 2026-09-29 撥款入帳（表定 540 萬；實撥 590 萬＝池市值×約 5 成）</td></tr>")
 if _rows_pl:
     # 2026-10-01：房貸利率/金額改讀 snapshot 真值（原寫死「國泰 1,200萬@2.6%」、「永豐 1,312萬@2.5%」）
@@ -253,13 +265,25 @@ if _rows_pl:
         _sn_pr = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     except Exception:
         _sn_pr = {}
-    _mc_p = float(_sn_pr.get("mortgage_cathay") or 0) / 10000
-    _mc_r = float(_sn_pr.get("mortgage_cathay_rate") or 0) * 100
-    _yy_p = sum(float(_sn_pr.get(k) or 0) for k in ("mortgage_yy", "mortgage_yydu", "mortgage_xz")) / 10000
-    _yy_r = float(_sn_pr.get("mortgage_yy_rate") or 0.025) * 100
+    # 2026-10-04 P0（CIO 五審 M6）：原 mortgage_cathay / mortgage_cathay_rate `or 0` → 缺真值時靜默印「大義街國泰 0萬@0.0%」；
+    # 另 `mortgage_yy_rate or 0.025` 為硬編碼利率（該鍵不存在於真值層）→ 一併改明示缺真值，不以常數頂替。
+    _mc_p_raw2 = _sn_pr.get("mortgage_cathay")
+    _mc_r_raw2 = _sn_pr.get("mortgage_cathay_rate")
+    _mc_p = (float(_mc_p_raw2) / 10000) if _mc_p_raw2 not in (None, "") else None
+    _mc_r = (float(_mc_r_raw2) * 100) if _mc_r_raw2 not in (None, "") else None
+    _mc_txt2 = (f"大義街國泰 {_mc_p:.0f}萬@{_mc_r:.1f}%"
+                if (_mc_p is not None and _mc_r is not None) else "大義街國泰 ⚠️ 缺真值")
+    _yy_keys2 = ("mortgage_yy", "mortgage_yydu", "mortgage_xz")
+    _yy_miss2 = [k for k in _yy_keys2 if _sn_pr.get(k) in (None, "")]
+    _yy_p = (None if _yy_miss2
+             else sum(float(_sn_pr.get(k) or 0) for k in _yy_keys2) / 10000)
+    _yy_r_raw2 = _sn_pr.get("mortgage_yy_rate")
+    _yy_r = (float(_yy_r_raw2) * 100) if _yy_r_raw2 not in (None, "") else None
+    _yy_txt2 = (f"洲際W 永豐 {_yy_p:.0f}萬@{_yy_r:.1f}%"
+                if (_yy_p is not None and _yy_r is not None) else "洲際W 永豐 ⚠️ 缺真值")
     w(f"<div class='callout' style='border-left:3px solid #ef4444'>🔒 <b>現況質押借款（2026-09-05 透明化 — 既有質押非 0，情境表 LTV 為規則上限非現況）</b>"
       f"<table style='width:100%;font-size:12px;margin-top:6px;border-collapse:collapse'><tr style='color:#64748b'><th style='text-align:left;padding:3px 6px'>項目</th><th class='num'>借款</th><th class='num'>利率</th><th class='num'>LTV(佔擔保)</th><th>狀態</th></tr>{_rows_pl}</table>"
-      f"<span style='color:#64748b;font-size:12px'>{_pf.pledge_status_line()}；情境表 LTV 上限：當前『區間震盪』≤52%。房貸（大義街國泰 {_mc_p:.0f}萬@{_mc_r:.1f}%、洲際W 永豐 {_yy_p:.0f}萬@{_yy_r:.1f}%）屬不動產貸款，不計入質押。</span></div>")
+      f"<span style='color:#64748b;font-size:12px'>{_pf.pledge_status_line()}；情境表 LTV 上限：當前『區間震盪』≤52%。房貸（{_mc_txt2}、{_yy_txt2}）屬不動產貸款，不計入質押。</span></div>")
 
 # 1. Overview table
 w("<div class='card'><h2>🎯 配置總覽</h2>")

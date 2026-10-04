@@ -549,6 +549,75 @@ def main() -> int:
     finally:
         shutil.rmtree(tmpd4, ignore_errors=True)
 
+    # ══ S26–S29：CIO 五審殘留（M1 基金質押列／M2 LTV／M7 晨報硬編碼）══════════
+    tmpd6 = Path(tempfile.mkdtemp(prefix="lj_p0f_"))
+    try:
+        # S26（M1）fund_pledge_loan 缺 → 基金質押列不得靜默消失
+        d10 = json.loads(json.dumps(real_snap))
+        d10.pop("fund_pledge_loan", None)
+        sp10 = _dump(d10, tmpd6 / "snapshot_no_fund_pledge.json")
+        h26, _ = _render_liab(snap_override=sp10)
+        r26 = _row(h26, "基金質押")
+        chk("S26a E2E（M1／缺值）：fund_pledge_loan 缺 → 負債明細表仍須有『基金質押』列"
+            "且明示缺真值（原 gate `> 0` 會讓 5,900,000 整列靜默消失）",
+            bool(r26) and ("缺真值" in r26) and ("5,900,000" not in r26),
+            f"列={r26[:220]!r}")
+        h26r, _ = _render_liab()
+        r26r = _row(h26r, "基金質押")
+        chk("S26b 正向對照（真值）：基金質押列顯示 5,900,000／2.65%（S26a 非假通過）",
+            bool(r26r) and all(x in r26r for x in ("5,900,000", "2.65%")),
+            f"列={r26r[:220]!r}")
+
+        # S27（M2）render_health_score：缺質押鍵 → 不得少算分子後靜默變健康
+        import report_components as _rc27
+        _d27 = _rc27.render_health_score(json.loads(json.dumps(d10)))
+        _t27 = _rc27.render_health_score(json.loads(json.dumps(real_snap)))
+        chk("S27 E2E（M2）：缺 fund_pledge_loan → LTV 系列為 None（非 0.0）、LTV缺真值=True、"
+            "該維度 0 分；原 `or 0` 會讓 LTV 由 24.4% 靜默變 0.0%（看起來更健康）",
+            _d27.get("LTV") is None and _d27.get("LTV缺真值") is True
+            and _d27.get("LTV分") == 0 and _d27.get("分數") < _t27.get("分數")
+            and abs(_t27.get("LTV") - 24.3746) < 0.01,
+            f"缺值 LTV={_d27.get('LTV')!r}／分數={_d27.get('分數')}｜真值 LTV={_t27.get('LTV'):.2f}／"
+            f"分數={_t27.get('分數')}")
+
+        # S28（M7）晨報／FIRE 常態對照不得用硬編碼舊真值救場
+        import morning_briefing as _mb28
+        import fire_progress as _fp28
+        _s28 = json.loads(json.dumps(real_snap))
+        _s28.pop("dividend_month_expected", None)
+        _s28.pop("rent_monthly_total", None)
+        _l28 = "".join(_mb28.get_fire(_s28))
+        _l28t = "".join(_mb28.get_fire(json.loads(json.dumps(real_snap))))
+        _bad28 = [x for x in ("100,000", "80,100", "180,100", "113.1%") if x in _l28]
+        chk("S28 E2E（M7）：晨報常態對照缺真值 → 不得再印硬編碼舊真值"
+            "（100,000／80,100／180,100／113.1%），須明示缺真值",
+            (not _bad28) and ("缺真值" in _l28) and ("180,100" in _l28t),
+            f"殘留={_bad28}｜示缺真值={'缺真值' in _l28}")
+        _f28 = _fp28.calc.__module__ and "" or ""
+        _src28 = Path(_fp28.__file__).read_text(encoding="utf-8")
+        _bad28b = [p for p in ("dividend_month_expected', 100_000",
+                               "rent_monthly_total', 80_100") if p in _src28]
+        chk("S28b 靜態（M7）：fire_progress.py 常態對照不得再用硬編碼 default",
+            not _bad28b, f"命中={_bad28b}")
+
+        # S29（M3–M7）靜態：同型 `or <舊常數>` 不得復辟
+        _files29 = ("build_penetration_report.py", "build_dashboard.py",
+                    "morning_briefing.py", "fire_progress.py", "report_components.py")
+        _pats29 = ('fund_pledge_rate") or 0.0265', "fund_pledge_rate') or 0.0265",
+                   'dividend_month_expected", 100_000', "dividend_month_expected', 100_000",
+                   'rent_monthly_total", 80_100', "rent_monthly_total', 80_100",
+                   'mortgage_cathay") or 0', 'mortgage_cathay_rate") or 0')
+        _hit29 = []
+        for _fn29 in _files29:
+            _tx29 = "\n".join(l for l in (BASE / _fn29).read_text(encoding="utf-8").splitlines()
+                              if not l.lstrip().startswith("#"))
+            _hit29 += [f"{_fn29}:{p}" for p in _pats29 if p in _tx29]
+        chk("S29 靜態（M3–M7）：canonical 鍵不得再以 `or <舊常數>` 型式供假真值"
+            "（2.65%／100,000／80,100／mortgage_cathay 0）",
+            not _hit29, f"命中={_hit29}")
+    finally:
+        shutil.rmtree(tmpd6, ignore_errors=True)
+
     # ── S9 反恆真（測試檔掃全部樣式；生產檔只掃恆真斷言）────────────────────
     SELF_BANNED = ["or" + " True", "assert" + " True", "or" + " 1"]
     PROD_BANNED = ["or" + " True", "assert" + " True"]

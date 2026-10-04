@@ -189,20 +189,31 @@ def render_health_score(snap: dict) -> dict:
     #            + 國泰基金質押 fund_pledge_loan(590萬@2.65%)
     # 擔保品現值 = 保單現值 insurance_current_value + 證券市值 securities.total_market_value
     #              + 質押基金池市值（cathay_pledge_0911.擔保池.合計）
-    _fund_pledge = float(snap.get("fund_pledge_loan") or 0)
-    _fund_pool = float((((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("合計")) or 0)
-    _pl_loan = (float(snap.get("policy_pledge_loan") or 0) + float(snap.get("pledge_loan") or 0)
-                + _fund_pledge)
+    # 2026-10-04 P0（CIO 五審 M2）：質押借款三鍵原為 `or 0`——缺真值時分子少算 590 萬，
+    # LTV 由 24.4%→0.0%、銀行 LTV 由 50.1%→0.0%（**看起來更健康**），且健康度仍 93 🟢、無任何缺真值標記。
+    # 缺鍵 → 值為「未知」→ LTV 系列一律 None（不與 0 混淆），該維度 0 分。
+    def _num1(v):
+        return float(v) if v not in (None, "") else None
+    _fund_pledge = _num1(snap.get("fund_pledge_loan"))
+    _fund_pool = _num1(((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("合計"))
+    _pol_pl = _num1(snap.get("policy_pledge_loan"))
+    _sec_pl = _num1(snap.get("pledge_loan"))
+    _pl_missing = [n for n, v in (("policy_pledge_loan", _pol_pl), ("pledge_loan", _sec_pl),
+                                  ("fund_pledge_loan", _fund_pledge)) if v is None]
+    _pl_loan = sum(v for v in (_pol_pl, _sec_pl, _fund_pledge) if v is not None)
     _pl_col = (float(snap.get("insurance_current_value") or 0)
                + float((snap.get("securities") or {}).get("total_market_value") or 0)
-               + (_fund_pool if _fund_pledge else 0))
-    ltv = (_pl_loan / _pl_col * 100) if _pl_col > 0 else 0.0
+               + (_fund_pool or 0))
+    ltv = None if _pl_missing else ((_pl_loan / _pl_col * 100) if _pl_col > 0 else 0.0)
     # 銀行口徑（國泰監看這條）：基金質押借款 ÷ 質押基金池市值
-    _bank_ltv = (_fund_pledge / _fund_pool * 100) if (_fund_pledge and _fund_pool) else 0.0
+    _bank_ltv = (None if _fund_pledge is None
+                 else ((_fund_pledge / _fund_pool * 100) if _fund_pool else 0.0))
     _pl_total_asset = float(snap.get("total_assets") or 0)
-    _pl_ratio_total = (_pl_loan / _pl_total_asset * 100) if _pl_total_asset > 0 else 0.0
+    _pl_ratio_total = None if _pl_missing else (
+        (_pl_loan / _pl_total_asset * 100) if _pl_total_asset > 0 else 0.0)
     # 健康線 ≤50（2026-09-05 修正：35% 屬「總質押率(借款÷總資產)」制，勿誤貼到擔保品 LTV；LTV 目標依銀行鏈 50起/55黃/60紅/70追繳 與穿透情境 ≤52 一致）
-    ltv_score = 100 if ltv <= 50 else (50 if ltv <= 60 else 0)
+    # 2026-10-04 P0（CIO 五審 M2）：ltv 可為 None（缺真值）→ 該維度 0 分，不得靠少算的分子拿分
+    ltv_score = 0 if ltv is None else (100 if ltv <= 50 else (50 if ltv <= 60 else 0))
 
     # 2026-10-04 P0（CIO 四審 R2）：本顆已把 cov 改為可為 None（缺真值），但漏改此行 →
     # 缺鍵時 TypeError（sync_all 的組件自測會崩）。缺真值時該維度以 0 計分（fail-closed：不靠預設值拿分）。
@@ -225,6 +236,7 @@ def render_health_score(snap: dict) -> dict:
         "現金": cash, "現金標準": cash_score, "現金分": cash_score * 0.15,
         "支出": expense, "收入": income,
         "LTV": ltv, "LTV標準": ltv_score, "LTV分": ltv_score * 0.10,
+        "LTV缺真值": bool(_pl_missing),
         "銀行LTV": _bank_ltv,
         "總質押率": _pl_ratio_total,
     }
@@ -247,7 +259,10 @@ def _render_health_card_legacy(snap: dict) -> str:
         ("防禦維度", _def_txt, "≥50%", d["防禦分"], 25),
         ("美元曝險", f"{d['曝險']:.1f}%", f"≤{_usd_cap:.0f}%（美金）", d["曝險分"], 20),
         ("現金底線", f"{d['現金']:,.0f}", "≥700,000", d["現金分"], 15),
-        ("LTV", f"{d['LTV']:.1f}%／銀行 {d.get('銀行LTV', 0):.1f}%", "≤50%（質押/擔保品）", d["LTV分"], 10),
+        ("LTV",
+         (f"{d['LTV']:.1f}%／銀行 {d['銀行LTV']:.1f}%" if d.get("LTV") is not None
+          else "⚠️ 缺真值（該維度不計分）"),
+         "≤50%（質押/擔保品）", d["LTV分"], 10),
     ]
     bar = "".join(
         f'<div style="display:flex;justify-content:space-between;font-size:11px;margin:2px 0">'
@@ -291,10 +306,14 @@ def _render_health_card_legacy(snap: dict) -> str:
     _n_rent_txt = f"{int(_n_rent):,}" if _n_rent not in (None, "") else "⚠️ 缺真值"
     _n_inc_txt = (f"{int(_n_dme) + int(_n_rent):,}"
                   if (_n_dme not in (None, "") and _n_rent not in (None, "")) else "⚠️ 缺真值")
+    # 2026-10-04 P0（CIO 五審 M2）：LTV 系列可為 None（缺真值）→ 口徑說明須明示，不得印 None 或崩潰
+    _n_ltv = (f"{d['LTV']:.1f}%" if d.get("LTV") is not None else "⚠️ 缺真值")
+    _n_bltv = (f"{d['銀行LTV']:.1f}%" if d.get("銀行LTV") is not None else "⚠️ 缺真值")
+    _n_prt = (f"{d['總質押率']:.1f}%" if d.get("總質押率") is not None else "⚠️ 缺真值")
     _note = (f'<div style="font-size:9.5px;color:#14532d;margin-top:2px;line-height:1.6">'
              f'口徑：覆蓋=保守常態（配息{_n_dme_txt}+房租{_n_rent_txt}={_n_inc_txt}）÷每月固定支出 {d["支出"]:,.0f}{_li_txt}（snapshot.dividend_month_expected+rent_monthly_total÷monthly_expense，缺鍵即示缺真值不代數）｜'
              f'防禦=dual_dimension_metric.防禦維度.佔比（{d["防禦"]:.1f}%）｜曝險=usd_exposure_monitor.current.合計（{d["曝險"]:.1f}%）｜'
-             f"現金=可動用（cash_total−指定用途款）{d['現金']:,.0f}≥cash_floor 700,000｜LTV=(policy_pledge_loan+pledge_loan+fund_pledge_loan)÷(insurance_current_value+securities+質押基金池)（{d['LTV']:.1f}%；目標≤50；銀行監看50起/55黃/60紅/70追繳）｜銀行口徑 LTV＝國泰質押借款÷質押基金池＝{d.get('銀行LTV', 0):.1f}%｜總質押率 {d['總質押率']:.1f}%（借款÷總資產，≤35%制）</div>")
+             f"現金=可動用（cash_total−指定用途款）{d['現金']:,.0f}≥cash_floor 700,000｜LTV=(policy_pledge_loan+pledge_loan+fund_pledge_loan)÷(insurance_current_value+securities+質押基金池)（{_n_ltv}；目標≤50；銀行監看50起/55黃/60紅/70追繳）｜銀行口徑 LTV＝國泰質押借款÷質押基金池＝{_n_bltv}｜總質押率 {_n_prt}（借款÷總資產，≤35%制）</div>")
     return (
         f'<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;margin:8px 0">'
         f'<div style="font-weight:800;color:#14532d;margin-bottom:4px">🩺 龍九健康度：<span style="font-size:16px">{d["分數"]}/100</span> {d["燈號"]}</div>'

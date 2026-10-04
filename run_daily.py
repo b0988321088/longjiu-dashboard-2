@@ -317,7 +317,9 @@ def calibrate_sources() -> dict:
         "financial_mortgage": snap.get("financial_mortgage"),
         "policy_loan": snap.get("policy_loan"),
         "pledge_loan": snap.get("pledge_loan"),
-        "fund_pledge_loan": snap.get("fund_pledge_loan", 0),
+        # 2026-10-04 P0（CIO 五審 M1）：原 `snap.get("fund_pledge_loan", 0)` → 配合下面 gate `> 0`
+        # 使國泰基金質押 590 萬整列靜默消失。缺鍵一律回 None。
+        "fund_pledge_loan": snap.get("fund_pledge_loan"),
         "fund_pledge_rate": snap.get("fund_pledge_rate", 0),
         "fund_pledge_pool": (((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("合計") or 0),
         "cc_liability": snap.get("cc_liability", 0),
@@ -480,7 +482,13 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         elif _bv2 > 0:
             loans_rows_html += (f"""          <tr><td>{_bk2}</td><td>{_bn2}</td>"""
                                 f"""<td>—</td><td class="num">{_bv2:,}</td><td>{_bnote2}</td></tr>\n""")
-    if tv.get('fund_pledge_loan', 0) > 0:
+    # 2026-10-04 P0（CIO 五審 M1）：原 gate 為 `if tv.get('fund_pledge_loan', 0) > 0:`——與同一張表的 7 鍵同型。
+    # 缺真值→0→False→國泰基金質押 590 萬整列靜默消失；而總負債 summary（讀 snapshot）仍是全額 → 表內對不上卻無告警。
+    # 0＝真值為零（不列）／None＝缺真值（必須列且示警）。
+    if tv.get('fund_pledge_loan') is None:
+        print("⚠️ [render] 負債明細表：fund_pledge_loan 缺真值 → 基金質押列明示缺真值"
+              "（不得靜默漏列此筆負債）")
+    if tv.get('fund_pledge_loan') is None or (tv.get('fund_pledge_loan') or 0) > 0:
         # 2026-09-29：國泰質押撥款 590萬@2.65%（9/29 10:57 入帳）→ 負債表需列示，否則總負債對不上。
         # CIO 審查 af7af243 必修3：利率與基金池市值一律讀真值，禁硬編碼（利率 tv.fund_pledge_rate／
         # 池市值讀 snapshot.cathay_pledge_0911.擔保池.合計）。
@@ -495,7 +503,9 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                       else "（⚠️ 池市值缺真值）")
         if not _fpr_v or not _fpool_v:
             print("⚠️ [render] 負債明細表：基金質押利率或池市值缺真值 → 不顯示估算（不以常量／0 頂替）")
-        loans_rows_html += f"""          <tr><td>國泰世華</td><td>基金質押{_fpool_txt}</td><td class="num">{_fpr_txt}</td><td class="num">{tv['fund_pledge_loan']:,}</td><td>9/29 撥款入帳</td></tr>\n"""
+        _fpl_v = tv.get('fund_pledge_loan')
+        _fpl_txt = f"{_fpl_v:,}" if _fpl_v is not None else "⚠️ 缺真值"
+        loans_rows_html += f"""          <tr><td>國泰世華</td><td>基金質押{_fpool_txt}</td><td class="num">{_fpr_txt}</td><td class="num">{_fpl_txt}</td><td>9/29 撥款入帳</td></tr>\n"""
 
     # 每月固定支出明細（2026-08-21：房貸校正 永豐65,735+國泰26,000=91,735）
     try:

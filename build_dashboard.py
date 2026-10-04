@@ -203,11 +203,25 @@ def main():
                 _sn_db = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
             except Exception:
                 _sn_db = {}
-            _mc_p_d = float(_sn_db.get("mortgage_cathay") or 0) / 10000
-            _mc_r_d = float(_sn_db.get("mortgage_cathay_rate") or 0) * 100
-            # 2026-10-01：國泰房貸繳款列改由真值注入（原 index_template 寫死「1,200萬@2.6% 26,000」）
-            rep["__CATHAY_LOAN_LINE__"] = (
-                f"國泰房貸繳款（大義街 {_mc_p_d:,.0f}萬@{_mc_r_d:.1f}%寬限期） {round(_mc_p_d * 10000 * _mc_r_d / 100 / 12):,.0f}")
+            # 2026-10-04 P0（CIO 五審 M5）：原 `or 0` → 缺真值時儀表板靜默顯示
+            # 「國泰房貸繳款（大義街 0萬@0.0%寬限期） 0」＝ 1,200 萬房貸看起來歸零。缺鍵必須明示。
+            _mc_p_raw = _sn_db.get("mortgage_cathay")
+            _mc_r_raw = _sn_db.get("mortgage_cathay_rate")
+            if _mc_p_raw in (None, "") or _mc_r_raw in (None, ""):
+                _mc_miss = [k for k, v in (("mortgage_cathay", _mc_p_raw),
+                                           ("mortgage_cathay_rate", _mc_r_raw))
+                            if v in (None, "")]
+                rep["__CATHAY_LOAN_LINE__"] = (
+                    "國泰房貸繳款（大義街 ⚠️ 缺真值：" + "、".join(_mc_miss) + "）")
+                print(f"⚠️ [dashboard] 國泰房貸真值缺（{'、'.join(_mc_miss)}）"
+                      "→ 該列明示缺真值（不以 0萬@0.0% 頂替）")
+            else:
+                _mc_p_d = float(_mc_p_raw) / 10000
+                _mc_r_d = float(_mc_r_raw) * 100
+                # 2026-10-01：國泰房貸繳款列改由真值注入（原 index_template 寫死「1,200萬@2.6% 26,000」）
+                rep["__CATHAY_LOAN_LINE__"] = (
+                    f"國泰房貸繳款（大義街 {_mc_p_d:,.0f}萬@{_mc_r_d:.1f}%寬限期） "
+                    f"{round(float(_mc_p_raw) * float(_mc_r_raw) / 12):,.0f}")
             # 2026-10-01：女友借款/還款列改由真值注入（原 index_template 靜態寫死「300,000」「09/05」）
             _gfi = ((_sn_db.get("personal_loans") or {}).get("女友借款") or {})
             _gf_bal = float(((_sn_db.get("receivables_breakdown") or {}).get("女友借款") or {}).get("本金") or 0) \
