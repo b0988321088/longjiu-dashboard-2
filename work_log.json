@@ -1886,5 +1886,101 @@
   "category": "完成",
   "item": "投資績效｜月度比較上線＋資本基準月制度（2026/09）（使用者 2026-10-03 裁示並核准施工：新增 performance_monthly.html（儀表板新按鈕「📈 投資績效｜月度比較」）。分區由 performance_core 角色判定（前端不得人工判斷）：2026/07＝Baseline／不可比（校正檔 市值可靠=false）、2026/0",
   "detail": "使用者 2026-10-03 裁示並核准施工：新增 performance_monthly.html（儀表板新按鈕「📈 投資績效｜月度比較」）。分區由 performance_core 角色判定（前端不得人工判斷）：2026/07＝Base"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "日報2026-10-03（已產出（金額見 snapshot／當日日報檔，勿在此複寫數字））",
+  "detail": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "資產穿透2026-10-03（已產出（五桶市值見 snapshot.penetration.actual_twd））",
+  "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "日報2026-10-04（已產出（金額見 snapshot／當日日報檔，勿在此複寫數字））",
+  "detail": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "資產穿透2026-10-04（已產出（五桶市值見 snapshot.penetration.actual_twd））",
+  "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "2026-09-30「日誌／記憶嵌浮動金額」閉環（卡片 CLOSED）（裁決：可標記 CLOSED。寫入端已去金額化+指向真值來源；連續觀察期間三閘門（stale/cross/caliber）未因日誌行告警；pending 卡以狀態機標 已完成（保留 status_raw）；歷史 dashboard_decisions 列不清洗（具歷史語義、不被任何閘門引用",
+  "detail": "裁決：可標記 CLOSED。寫入端已去金額化+指向真值來源；連續觀察期間三閘門（stale/cross/caliber）未因日誌行告警；pending 卡以狀態機標 已完成（保留 status_raw）；歷史 dashboard_decis"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "寫死退路常數盤點｜10/04 基準鎖定（OPEN／INVENTORY ONLY）（10/04 重掃補正 10/02 盤點基準：live .get(key, fallback≥1萬) 實測 69 處／19 檔（10/02 記錄 71 處／20 檔，差 2 處／1 檔不可回溯——原清單未保存逐條行號，兩份清單在原始輸出補齊前不硬合併成施工範圍）；.archive",
+  "detail": "10/04 重掃補正 10/02 盤點基準：live .get(key, fallback≥1萬) 實測 69 處／19 檔（10/02 記錄 71 處／20 檔，差 2 處／1 檔不可回溯——原清單未保存逐條行號，兩份清單在原始輸出補齊前"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "P0 假真值退路清除 第一批｜施工完成（OPEN→DELIVERED）（工單：P0 假真值退路清除 第一批。A 第0步 Accessor Gate：原缺 5 個單一來源（總負債／不動產／保單／證券／基金）→ sot_targets 新增 total_cash／total_liabilities／real_estate_value／insurance_tota",
+  "detail": "工單：P0 假真值退路清除 第一批。A 第0步 Accessor Gate：原缺 5 個單一來源（總負債／不動產／保單／證券／基金）→ sot_targets 新增 total_cash／total_liabilities／real_est"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "P0 假真值退路清除 第一批｜收案 CLOSED ＋ fetch_weekly_proxy.py 隔離裁決（【一、第一批收案】使用者裁決 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION，不再補工程。確認項目：7 個 accessor 全 fail-closed raise KeyError、無 or 0／新常數掩蓋缺值、刻意排除",
+  "detail": "【一、第一批收案】使用者裁決 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION，不再補工程。確認項目：7 個 accessor 全 fail-closed raise KeyError、無 or 0／新常數掩蓋缺"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "Backlog 立案（未開工）：週報 Agent 執行期產物治理（使用者 2026-10-04 裁決：P0 假真值清除全批正式結案 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION（線上 clean-main 40c429e8）；fetch_weekly_proxy.py 處置確認為 QUARANTINED／NOT VERSION",
+  "detail": "使用者 2026-10-04 裁決：P0 假真值清除全批正式結案 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION（線上 clean-main 40c429e8）；fetch_weekly_proxy.py 處置"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "P0 延伸優先序裁決 ＋ cash_floor 700,000 第 0 步盤點（📋 待核准開工，未施工）（使用者 2026-10-04 裁決下一階段優先序：①P0 延伸 cash_floor 700,000（最優先：會影響現金防守水位／閘門判斷／rotation／tactical／report_components）②P0 延伸 threshold 30,0",
+  "detail": "使用者 2026-10-04 裁決下一階段優先序：①P0 延伸 cash_floor 700,000（最優先：會影響現金防守水位／閘門判斷／rotation／tactical／report_components）②P0 延伸 thresho"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "P0 延伸 cash_floor 700,000 第一批｜施工完成，待收案（DELIVERED）（使用者 2026-10-04 GO 開工。範圍：判斷類消費端全數改接既有單一 accessor sot_targets.cash_floor()（不建第二份 accessor、不改 snapshot 政策值、不動純顯示文字／macro_regime／thresh",
+  "detail": "使用者 2026-10-04 GO 開工。範圍：判斷類消費端全數改接既有單一 accessor sot_targets.cash_floor()（不建第二份 accessor、不改 snapshot 政策值、不動純顯示文字／macro_re"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "cash_floor 第一批收案 CLOSED ＋ threshold 30M 第 0 步唯讀盤點（未施工）（【一、cash_floor 第一批收案】使用者 2026-10-04 裁決 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION（線上 clean-main 73f39965）。使用者特別指出本批最有價值處＝抓到 build_",
+  "detail": "【一、cash_floor 第一批收案】使用者 2026-10-04 裁決 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION（線上 clean-main 73f39965）。使用者特別指出本批最有價值處＝抓到 b"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "PI 專業投資人：裁決 (a) 保留功能、標記 DORMANT／SPEC REQUIRED，開資料生命週期規格工單（規格已交付，不施工）（使用者 2026-10-04 裁決：threshold 30M 保留、定義為「外部法規常數」；PI 風控保留但標記 DORMANT／SPEC REQUIRED；本輪不修改任何程式；下一批先開「PI 資料生命週期規格工單」而",
+  "detail": "使用者 2026-10-04 裁決：threshold 30M 保留、定義為「外部法規常數」；PI 風控保留但標記 DORMANT／SPEC REQUIRED；本輪不修改任何程式；下一批先開「PI 資料生命週期規格工單」而非直接清 30M。"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "PI 專業投資人雙軌資料生命週期｜②-⑥ 施工完成（DELIVERED，待收案）（依使用者 2026-10-04 裁決（規格 APPROVED、①-④ 定案、②-⑥ GO）完成施工。①骨架：sot_targets 新增 PI_REGULATORY_THRESHOLD_TWD=30_000_000（唯一位置之法規常數，不進 snapshot、不 fail-cl",
+  "detail": "依使用者 2026-10-04 裁決（規格 APPROVED、①-④ 定案、②-⑥ GO）完成施工。①骨架：sot_targets 新增 PI_REGULATORY_THRESHOLD_TWD=30_000_000（唯一位置之法規常數，不進"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "PI 雙軌資料生命週期｜收案 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION ＋ 下一張 P0 立案（deployment_plan dormant fallback）（使用者 2026-10-04 裁決：②-⑥ APPROVED／CLOSED／DEPLOYED／VERIFIED，commit b486b27f 接受，獨立審查 ",
+  "detail": "使用者 2026-10-04 裁決：②-⑥ APPROVED／CLOSED／DEPLOYED／VERIFIED，commit b486b27f 接受，獨立審查 APPROVE 0 blocking，遠端 clean-main 一致。五項正式"
+ },
+ {
+  "date": "2026-10-04",
+  "category": "完成",
+  "item": "PI 現況真值｜裁決暫不建檔、維持 fail-closed；primary evidence 搜尋結果為「未尋獲」（唯讀）（使用者 2026-10-04 裁決：暫不建檔，維持 PI DORMANT／FAIL-CLOSED 與所有 hard lock（台股慢慢買、黃金衛星、Lombard 均續鎖）。理由：現有三條證據不足以把推論升格為 snapshot 真值—",
+  "detail": "使用者 2026-10-04 裁決：暫不建檔，維持 PI DORMANT／FAIL-CLOSED 與所有 hard lock（台股慢慢買、黃金衛星、Lombard 均續鎖）。理由：現有三條證據不足以把推論升格為 snapshot 真值——A"
  }
 ]

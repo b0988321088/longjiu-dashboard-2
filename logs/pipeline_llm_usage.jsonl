@@ -753,3 +753,15 @@
 {"ts": "2026-10-04T00:06:23", "model": "deepseek-chat", "caller": "run_daily.py", "in": 851, "cached": 256, "out": 212, "ok": true}
 {"ts": "2026-10-04T00:06:25", "model": "deepseek-chat", "caller": "run_daily.py", "in": 876, "cached": 256, "out": 172, "ok": true}
 {"ts": "2026-10-04T00:06:28", "model": "deepseek-chat", "caller": "run_daily.py", "in": 489, "cached": 0, "out": 186, "ok": true}
+{"ts": "2026-10-04T07:00:23", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 489, "cached": 256, "out": 190, "ok": true}
+{"ts": "2026-10-04T07:01:00", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 602, "cached": 384, "out": 1060, "ok": true}
+{"ts": "2026-10-04T11:26:10", "model": "deepseek-chat", "caller": "run_daily.py", "in": 851, "cached": 640, "out": 173, "ok": true}
+{"ts": "2026-10-04T11:26:12", "model": "deepseek-chat", "caller": "run_daily.py", "in": 876, "cached": 640, "out": 156, "ok": true}
+{"ts": "2026-10-04T11:26:25", "model": "deepseek-chat", "caller": "run_daily.py", "in": 489, "cached": 256, "out": 167, "ok": true}
+{"ts": "2026-10-04T11:28:06", "model": "deepseek-chat", "caller": "run_daily.py", "in": 851, "cached": 640, "out": 157, "ok": true}
+{"ts": "2026-10-04T11:28:07", "model": "deepseek-chat", "caller": "run_daily.py", "in": 876, "cached": 640, "out": 165, "ok": true}
+{"ts": "2026-10-04T11:28:10", "model": "deepseek-chat", "caller": "run_daily.py", "in": 489, "cached": 256, "out": 200, "ok": true}
+{"ts": "2026-10-04T11:33:49", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 489, "cached": 256, "out": 179, "ok": true}
+{"ts": "2026-10-04T11:34:04", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 602, "cached": 384, "out": 1056, "ok": true}
+{"ts": "2026-10-04T11:39:50", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 489, "cached": 256, "out": 151, "ok": true}
+{"ts": "2026-10-04T11:40:05", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 602, "cached": 384, "out": 936, "ok": true}
