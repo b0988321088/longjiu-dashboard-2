@@ -24,4 +24,4 @@
 {"calls": 1165, "cer": 0, "date": "2026-10-02", "ds_balance_cny": 189.32, "ds_calls": 1165, "ds_twd": 49, "free_calls": 0, "free_twd": 0, "gemini_calls": 0, "gemini_twd": 0, "last_write": "2026-10-05", "log_visible": true, "q429": 0}
 {"calls": 445, "cer": 0, "date": "2026-10-03", "ds_balance_cny": 179.48, "ds_calls": 445, "ds_twd": 20, "free_calls": 0, "free_twd": 0, "gemini_calls": 0, "gemini_twd": 0, "last_write": "2026-10-05", "log_visible": true, "q429": 0}
 {"calls": 1162, "cer": 0, "date": "2026-10-04", "ds_balance_cny": 179.24, "ds_calls": 1162, "ds_twd": 62, "free_calls": 0, "free_twd": 0, "gemini_calls": 0, "gemini_twd": 0, "last_write": "2026-10-05", "log_visible": true, "q429": 0}
-{"calls": 119, "cer": 0, "date": "2026-10-05", "ds_calls": 119, "ds_twd": 5, "free_calls": 0, "free_twd": 0, "gemini_calls": 0, "gemini_twd": 0, "last_write": "2026-10-05", "log_visible": true, "q429": 0}
+{"calls": 182, "cer": 0, "date": "2026-10-05", "ds_calls": 182, "ds_twd": 7, "free_calls": 0, "free_twd": 0, "gemini_calls": 0, "gemini_twd": 0, "last_write": "2026-10-05", "log_visible": true, "q429": 0}
