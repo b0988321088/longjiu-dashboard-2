@@ -534,5 +534,23 @@
     "external_owner": "國泰世華（對帳單／扣款通知）",
     "status_raw": "pending",
     "is_informational": false
+  },
+  {
+    "id": "PEND-20261004-07",
+    "date": "2026-10-04",
+    "title": "績效引擎內國泰房貸利率 fallback（build_investment_performance）——暫緩，待解凍後修",
+    "desc": "CIO 六審列為阻擋項之一：build_investment_performance.py:97 `rate = snap_mortgage_cathay_rate(snap) or dl[\"rate\"]`，dl[\"rate\"]=0.026 為硬編碼；缺真值時會以 2.6% 派生月息。本輪**未改**：本模組隸屬績效計算引擎，使用者已凍結 Task 3-6 口徑（動工前不動程式、Task 1+2 已封版），改動會動到已封版績效數字。處置：本輪改為大聲告警（⚠️ [bip] 國泰轉貸利率缺真值…另案處理），維持原 fallback 不動口徑。解凍後修法：DEFAULT_LOANS 國泰轉貸 rate 改 None，load_loans 遇 None 時 rate/monthly/payment 一併為 None，並由下游明示缺真值（同步檢查 funding_cost_report 的 wacc／total_m 加總需容忍 None）。※ 另：mortgage_rate.py 本輪已改 fail-closed（cathay_rate／cathay_monthly 缺真值回 None），此卡僅剩本檔的最後一道 fallback。",
+    "priority": "P2",
+    "status": "待處理",
+    "source": "CIO 六審審查結論（deleg_4b345a2b）＋使用者 2026-10-05 裁示 A 之例外（性能引擎凍結）",
+    "due_date": null,
+    "due_date_source": "未提供（待績效引擎解凍後排入）",
+    "needs_due_date": false,
+    "last_confirmed": null,
+    "last_confirmed_source": "未提供",
+    "owner": "CEO",
+    "external_owner": null,
+    "status_raw": "pending",
+    "is_informational": false
   }
 ]
