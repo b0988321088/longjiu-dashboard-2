@@ -66,6 +66,15 @@ def _row(html: str, needle: str) -> str:
     return ""
 
 
+def _block(html: str, needle: str) -> str:
+    """取出含 needle 的那一個區塊（到最近的 </div> 為止）。"""
+    i = html.find(needle)
+    if i < 0:
+        return ""
+    j = html.find("</div>", i)
+    return html[i:j if j > i else i + 800]
+
+
 def _render(tv: dict, snap_override: Path | None = None) -> tuple[str, str]:
     """回傳 (html, stdout)。snap_override：把 run_daily.SNAPSHOT 暫時指向別的檔案。"""
     import run_daily as R  # noqa
@@ -261,6 +270,65 @@ def main() -> int:
     hit13 = [p for p in pats if p in body]
     chk("S13 靜態：`tv.get('fund_pledge_rate')` 搭配常量、以及 12,000,000 常量 fallback 型式不得復辟",
         not hit13, f"命中={hit13}")
+
+    # ── S14 每月固定支出明細 fail-closed（CIO 二審必改1）──────────────────
+    tmpd3 = Path(tempfile.mkdtemp(prefix="lj_p0c_"))
+    try:
+        d3 = json.loads(json.dumps(real_snap))
+        _m = dict(d3.get("monthly_fixed_expense") or {})
+        for _k in ("生活支出", "醫療_常態回診", "房貸_永豐", "房貸_國泰", "合計"):
+            _m.pop(_k, None)
+        d3["monthly_fixed_expense"] = _m
+        sp3 = _dump(d3, tmpd3 / "snapshot_nomfe.json")
+        h14, _ = _render_liab(snap_override=sp3)
+        blk = _block(h14, "📌 每月固定支出")
+        stale = [x for x in ("28,500", "65,735", "26,000", "15,946") if x in blk]
+        chk("S14 E2E（缺值／每月固定支出明細）：不得以舊常數"
+            "（生活 28,500／永豐 65,735／國泰 26,000／醫療 15,946）救場",
+            bool(blk) and not stale and ("缺真值" in blk),
+            f"殘留舊常數={stale}｜明示={('缺真值' in blk)}")
+        h14r, _ = _render_liab()
+        blk14r = _block(h14r, "📌 每月固定支出")
+        chk("S14b 正向對照：真值存在時顯示真值（生活 38,500＋房貸 91,735＋合計 159,210）",
+            all(x in blk14r for x in ("38,500", "65,735", "26,000", "91,735", "159,210")),
+            f"區塊={blk14r[:170]!r}")
+    finally:
+        shutil.rmtree(tmpd3, ignore_errors=True)
+
+    # ── S15 資產總表：常態房租／保守配息 fail-closed ────────────────────────
+    h15, _ = _render_liab(mutate={"rent_monthly_target": None,
+                                  "dividend_month_expected": None})
+    i15 = h15.find("被動月收")
+    seg15 = h15[i15:i15 + 700] if i15 >= 0 else ""
+    chk("S15 E2E（缺值／資產總表）：rent_monthly_target／dividend_month_expected 缺"
+        " → 不得以 80,100／100,000 救場",
+        bool(seg15) and ("⚠️ 缺真值" in seg15)
+        and ("80,100" not in seg15) and ("100,000" not in seg15),
+        f"段={seg15[:170]!r}")
+
+    # ── S16 卡片③：常態配息缺 → 覆蓋不得亮綠燈 ─────────────────────────────
+    tv_k = {k: v for k, v in real_snap.items() if k != "dividend_month_expected"}
+    h16, _ = _render(tv_k)
+    card16 = _card(h16)
+    i16 = card16.find("③ 月度利息流出")
+    seg16 = card16[i16:i16 + 160] if i16 >= 0 else ""
+    chk("S16 E2E（缺值／卡片③）：dividend_month_expected 缺 → 覆蓋判斷不得亮綠燈",
+        bool(card16) and ("✅ 覆蓋" not in card16) and ("不予判斷" in seg16),
+        f"③={seg16!r}")
+
+    # ── S17 卡片③：富達月配缺 → 覆蓋不得亮綠燈 ─────────────────────────────
+    tv_f = json.loads(json.dumps(real_snap))
+    _ctg17 = (tv_f.get("funds_breakdown", {}) or {}).get("國泰直購", {}) or {}
+    tv_f["funds_breakdown"] = dict(tv_f.get("funds_breakdown") or {})
+    tv_f["funds_breakdown"]["國泰直購"] = {k: v for k, v in _ctg17.items()
+                                            if "富達" not in str(k)}
+    h17, _ = _render(tv_f)
+    card17 = _card(h17)
+    i17 = card17.find("③ 月度利息流出")
+    seg17 = card17[i17:i17 + 175] if i17 >= 0 else ""
+    chk("S17 E2E（缺值／卡片③）：富達月配缺（國泰直購 無「富達」鍵）→ 覆蓋判斷不得亮綠燈",
+        bool(card17) and ("✅ 覆蓋" not in card17) and ("不予判斷" in seg17),
+        f"③={seg17!r}")
 
     # ── S9 反恆真（測試檔掃全部樣式；生產檔只掃恆真斷言）────────────────────
     SELF_BANNED = ["or" + " True", "assert" + " True", "or" + " 1"]

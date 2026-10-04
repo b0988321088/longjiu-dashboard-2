@@ -56,7 +56,10 @@ except Exception:                      # 匯入失敗時退回本地推導（口
         _mf = float((snap.get("monthly_fixed_expense") or {}).get("房貸_國泰") or 0)
         _pr = float(snap.get("mortgage_cathay") or 0)
         return (_mf * 12 / _pr) if (_mf and _pr) else None
-_FUDA_MDIV_FALLBACK = 45000      # 富達月配估：僅 snapshot 缺「富達」鍵時的最後防線
+# 2026-10-04 P0（PEND-20261004-02）：移除 `_FUDA_MDIV_FALLBACK = 45000`。
+# 它原是槓桿風控卡 ③ 覆蓋判斷「富達月配」的最後防線，缺真值時以 45,000 頂替 →
+# 流入被高估、可能亮出「✅ 覆蓋」。該處已改 fail-closed，此常量無人使用
+# （另註：build_retirement_plan.py 有同名常量，屬 2029 情境建模，非本卡範圍）。
 
 SNAPSHOT = BASE / "snapshot.json"
 RULES = BASE / "DAILY_REPORT_PIPELINE_RULE.md"
@@ -351,12 +354,29 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     firstjin_dividend = tv.get("firstjin_dividend", 22_949)
     # 房租覆蓋率（2026-09-23 INC-241b：原用 rent_monthly＝當月已收 → 月中覆蓋率被低估為 33%；
     # 常態口徑應為 80,100/162,781 = 49%）
-    _rent_cov = (tv.get("rent_monthly_target", 0) or 0) / (sot_monthly_expense(tv) or 1) * 100
+    # 2026-10-04 P0（PEND-20261004-02）：常態房租／保守配息改 fail-closed。
+    # 原 `tv.get("rent_monthly_target", 0) or 0` 與 `tv.get("dividend_month_expected", 100_000)`：
+    # 真值一缺就分別以 0（→ 覆蓋率顯示 0%）與 100,000（恰好等於現行真值 → 毫無症狀）救場。
+    # 這兩個鍵同時是槓桿風控卡 ③ 覆蓋判斷的輸入，屬同一條 truth chain。
+    _rt_r = tv.get("rent_monthly_target")
+    _rent_tgt = float(_rt_r) if _rt_r not in (None, "") else None
+    if _rent_tgt is None:
+        print("⚠️ [render] 資產總表：rent_monthly_target 缺真值"
+              "→ 房租／覆蓋率不顯示估算（禁以 80,100／0 救場）")
+    _dme_r = tv.get("dividend_month_expected")
+    _div_expected = float(_dme_r) if _dme_r not in (None, "") else None
+    if _div_expected is None:
+        print("⚠️ [render] 資產總表：dividend_month_expected 缺真值"
+              "→ 保守配息不顯示估算（禁以 100,000 救場）")
+    def _nn(v):
+        """None → 明示缺真值（禁以 0 或舊常數頂替）。"""
+        return "⚠️ 缺真值" if v is None else f"{v:,.0f}"
+    _rent_cov = ((_rent_tgt / (sot_monthly_expense(tv) or 1) * 100)
+                 if _rent_tgt is not None else None)
     # 當月實際已收房租（rent_received_records）
     _rent_recv = tv.get("rent_received_records", {}) or {}
     _rm = date.today().strftime("%Y-%m")
     _rent_got = sum(v for d, items in _rent_recv.items() if str(d).startswith(_rm) for v in items.values())
-    _div_expected = tv.get("dividend_month_expected", 100_000)  # 保守預估
     _fund_bd = tv.get("funds_breakdown", {}) or {}
     if _fund_bd:
         # 支援兩種結構：扁平 {name: val} 或嵌套 {群組: {name: val}}
@@ -399,16 +419,22 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
             _sn_mc = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
         except Exception:
             _sn_mc = {}
-        _mc_prin = float(_sn_mc.get('mortgage_cathay') or tv['mortgage_cathay'] or 0)
-        # 2026-10-04 P0（PEND-20261004-02）：利率改 fail-closed（原 `or CATHAY_MORTGAGE_RATE_FALLBACK`）。
-        # 缺真值時靜默套 2.6% → 再由「本金 × 假利率」派生一個假月付，而同一份日報的槓桿卡
-        # （已改）卻明示缺真值 → 同一事實兩個敘述，且假的那個看起來很正常。缺值 → 不顯示數字。
+        # 2026-10-04 P0（PEND-20261004-02／CIO 二審必改2）：改走本輪新增的 SoT accessor（單一寫入者）。
+        # 原自行重造 fallback 鏈 `_sn_mc['mortgage_cathay'] → tv[...] → 0`，且 `or 0` 在「本金」語意上
+        # 會印出「0 元本金」而非明示缺真值。缺值 → None → 不派生月付。
+        import sot_targets as _sot_mc
+        _mc_prin = _sot_mc.mortgage_principal_cathay(_sn_mc)
+        # 利率：缺真值 → None（原 `or CATHAY_MORTGAGE_RATE_FALLBACK` 會靜默套 2.6%）
         _mc_rate_v = _snap_mc_rate(_sn_mc)
         if _mc_rate_v is None:
             _mc_label = "國泰房貸（大義街轉貸 ⚠️ 利率缺真值）"
             _mc_pay_txt = "月付：缺真值（不由假利率派生）"
             print("⚠️ [render] 負債明細表：國泰房貸利率缺真值"
                   "（mortgage_cathay_rate／monthly_fixed_expense.房貸_國泰）→ 不顯示利率與派生月付")
+        elif _mc_prin is None:
+            _mc_label = f"國泰房貸（大義街轉貸 {_mc_rate_v*100:.1f}%）"
+            _mc_pay_txt = "月付：⚠️ 缺真值（mortgage_cathay 不存在）"
+            print("⚠️ [render] 負債明細表：國泰房貸本金缺真值（mortgage_cathay）→ 不派生月付")
         else:
             # 2026-10-01：月付改由 利率×本金/12 派生（原讀 monthly_fixed_expense 形成第二來源，
             # 偽造利率時會出現「3.1% 標籤配 月付 26,000」的頁內矛盾）；實際繳款值改由 check_thresholds 交叉斷言
@@ -445,11 +471,29 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     except Exception:
         _sn2 = {}
     _mfe = _sn2.get("monthly_fixed_expense", {}) or {}
-    _life = _mfe.get("生活支出", 28_500)
-    _med = _mfe.get("醫療_常態回診", 15_946)
-    _sin = _mfe.get("房貸_永豐", 65_735) or 0
-    _cat = _mfe.get("房貸_國泰", 26_000) or 0
-    _mort = _sin + _cat
+    # 2026-10-04 P0（PEND-20261004-02）：本表原以「舊數字常數」救場——
+    # 生活支出 28,500／醫療 15,946／房貸_永豐 65,735／房貸_國泰 26,000／租金 80,100。
+    # 其中「生活支出 28,500」與真值 38,500 **已實際分歧**（加入差旅費 10,000 後未同步）：
+    # 真值一缺，本表就會用一個偏低 10,000 的舊數字算出月支出總額，且無任何跡象。
+    # 另註：房貸_國泰 同時是 snap_mortgage_cathay_rate 的利率推導來源
+    #（26,000×12÷12,000,000 = 2.6%），屬同一條 truth chain，故與負債明細表一併 fail-closed。
+    def _mfe_num(key, container, label):
+        """缺鍵／空／非數值 → None（並明示），禁止以舊常數或 0 救場。"""
+        v = (container or {}).get(key)
+        if v is None or v == "":
+            print(f"⚠️ [render] {label}：{key} 缺真值 → 不顯示估算（禁以舊常數／0 頂替）")
+            return None
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            print(f"⚠️ [render] {label}：{key} 非數值（{v!r}）→ 不顯示估算")
+            return None
+    _LBL = "每月固定支出明細"
+    _life = _mfe_num("生活支出", _mfe, _LBL)
+    _med = _mfe_num("醫療_常態回診", _mfe, _LBL)
+    _sin = _mfe_num("房貸_永豐", _mfe, _LBL)
+    _cat = _mfe_num("房貸_國泰", _mfe, _LBL)
+    _mort = (_sin + _cat) if (_sin is not None and _cat is not None) else None
     # 2026-09-30 使用者核准：利息項改由 sot_targets 單一來源動態計算（禁寫死 fallback；
     # 券商清償後 3,267 歸零、新基金質押 590 萬@2.65% 月息 13,029 自動計入）。
     from sot_targets import liability_interest as _li_fn
@@ -457,18 +501,27 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _int = _li["保單借貸利息"]
     _yua = _li["券商質押利息"]
     _fund_int = _li["基金質押利息"]
-    _fixed_total = _mfe.get("合計", _life + _med + _mort + _li["合計"])
-    _rent = _sn2.get("rent_monthly_total", 80_100) or 0
-    _mort_net = _mort - _rent
-    _cash_out = _sn2.get("monthly_expense_cash", _life + _med + _mort) or 0
-    _accrual = _sn2.get("monthly_expense_accrual", _li["合計"]) or _li["合計"]
+    _fixed_total = _mfe_num("合計", _mfe, _LBL)
+    _rent = _mfe_num("rent_monthly_total", _sn2, _LBL)
+    _mort_net = (_mort - _rent) if (_mort is not None and _rent is not None) else None
+    _cash_out = _mfe_num("monthly_expense_cash", _sn2, _LBL)
+    _accrual = _mfe_num("monthly_expense_accrual", _sn2, _LBL)
+    if _accrual is None:
+        _accrual = _li.get("合計")   # 與 liability_interest 同源（非舊常數）
+    def _n(v, plus=False):
+        """None → 明示缺真值（禁以 0 或常數頂替）。"""
+        if v is None:
+            return "⚠️ 缺真值"
+        return f"{v:+,.0f}" if plus else f"{v:,.0f}"
     # 2026-09-30 CIO minor：過渡期口徑標註（利息動態化後；保單清完自動消失）
     # 2026-09-30 CIO minor：與 liability_interest 同源（先讀 liabilities_build_up.保單借貸），
     # 避免頂層鍵與明細鍵漂移時，同一句話出現「餘額」與「利息」兩個來源。
     _pol_bal = float(((_sn2.get("liabilities_build_up") or {}).get("保單借貸"))
                      or _sn2.get("policy_pledge_loan") or 0)
     _trans_txt = ('<br/><span style="color:#b45309;font-size:12px">⏳ 過渡期口徑：含待清償保單息 '
-                  + f'{_int:,}（保單借貸餘額 {_pol_bal:,.0f} 清完後月支出自動 → {_fixed_total - _int:,}）</span>') if _int else ''
+                  + f'{_int:,}（保單借貸餘額 {_pol_bal:,.0f} 清完後月支出自動 → '
+                  + (_n(_fixed_total - _int) if _fixed_total is not None else "⚠️ 缺真值")
+                  + '）</span>') if _int else ''
     # 2026-10-01：原本寫死「女友還款 6,000 為收入（至12/5）」→ 改讀 snapshot（月還款＋最後清償）
     _gfl_rd = ((_sn2.get("personal_loans") or {}).get("女友借款") or {})
     _gfd_rd = str(_gfl_rd.get("最後清償") or "")
@@ -478,10 +531,11 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         _gf_due = ""
     _gf_note = (f'女友還款 {int(float(_gfl_rd.get("月還款") or 0)):,} 為收入'
                 + (f'（至{_gf_due}）' if _gf_due else '')) if _gfl_rd.get("月還款") else '女友還款為收入'
+    _cov_line = (f"{_mort / _rent * 100:.0f}%" if (_mort is not None and _rent) else "⚠️ 缺真值")
     _fixed_expense_html = f"""    <div class="callout" style="margin-top:10px;border-left:3px solid #3b82f6">
-      <strong>📌 每月固定支出：{_fixed_total:,}</strong>（現金扣帳 {_cash_out:,} ＋ 帳上計息 {_accrual:,}）<br>
-      生活 {_life:,} ｜ 醫療 {_med:,} ｜ 房貸 {_mort:,}（永豐 {_sin:,} + 國泰 {_cat:,}）｜ 保單借貸利息 {_int:,}{f" ｜ 券商質押利息 {_yua:,}" if _yua else ""}{f" ｜ 基金質押利息 {_fund_int:,}" if _fund_int else ""}
-      {_trans_txt}<br/><span style="color:#64748b;font-size:12px">與銀行實際扣款比對請用「現金扣帳」口徑（帳上計息＝保單＋券商＋基金質押三項利息之和（動態），不從帳戶扣）｜房租收入 {_rent:,} 覆蓋房貸 {_mort_net:+,} 缺口（{_mort/_rent*100:.0f}% 覆蓋）｜{_gf_note}</span>
+      <strong>📌 每月固定支出：{_n(_fixed_total)}</strong>（現金扣帳 {_n(_cash_out)} ＋ 帳上計息 {_n(_accrual)}）<br>
+      生活 {_n(_life)} ｜ 醫療 {_n(_med)} ｜ 房貸 {_n(_mort)}（永豐 {_n(_sin)} + 國泰 {_n(_cat)}）｜ 保單借貸利息 {_int:,}{f" ｜ 券商質押利息 {_yua:,}" if _yua else ""}{f" ｜ 基金質押利息 {_fund_int:,}" if _fund_int else ""}
+      {_trans_txt}<br/><span style="color:#64748b;font-size:12px">與銀行實際扣款比對請用「現金扣帳」口徑（帳上計息＝保單＋券商＋基金質押三項利息之和（動態），不從帳戶扣）｜房租收入 {_n(_rent)} 覆蓋房貸 {_n(_mort_net, plus=True)} 缺口（{_cov_line} 覆蓋）｜{_gf_note}</span>
     </div>
 """
 
@@ -1066,10 +1120,10 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
           <tr><td>總資產</td><td>{tv['total_assets']:,} TWD</td><td>流動資產（不記錄不動產）；負債率 {_liab_ratio:.1f}%（含不動產）｜流動負債率 {_liab_ratio_flow:.1f}%（不含不動產）</td></tr>
           <tr><td>總負債</td><td>{tv['total_liabilities']:,} TWD</td><td>總負債合計（含房貸、保單借貸、質押）</td></tr>
           <tr><td>本月領息</td><td>{monthly_dividend:,} TWD</td><td>保單 {tv['insurance_dividend']:,} + ETF {tv['sec_dividend_monthly']:,} + 基金 {tv['fund_dividend_monthly']:,}</td></tr>
-          <tr><td>被動月收</td><td>{monthly_dividend + _rent_got:,} TWD</td><td>實收：配息 {monthly_dividend:,} + 房租 {_rent_got:,}｜預期：房租 80,100 + 配息保守 {_div_expected:,}</td></tr>
+          <tr><td>被動月收</td><td>{monthly_dividend + _rent_got:,} TWD</td><td>實收：配息 {monthly_dividend:,} + 房租 {_rent_got:,}｜預期：房租 {_nn(_rent_tgt)} + 配息保守 {_nn(_div_expected)}</td></tr>
         </tbody>
       </table>
-      <p style="font-size:11px;color:#6e6e73;margin-top:6px">📌 口徑速記：月支出 {tv['monthly_expense']:,}（v4 定版）｜配息 {monthly_dividend:,}（實收=常態）/ {_div_expected:,}（保守）｜被動保守 {_div_expected + (tv.get('rent_monthly_target') or 80100):,.0f}（配息 {_div_expected:,} + 房租 {(tv.get('rent_monthly_target') or 80100):,.0f}）</p>
+      <p style="font-size:11px;color:#6e6e73;margin-top:6px">📌 口徑速記：月支出 {tv['monthly_expense']:,}（v4 定版）｜配息 {monthly_dividend:,}（實收=常態）/ {_nn(_div_expected)}（保守）｜被動保守 {_nn(_div_expected + _rent_tgt) if (_div_expected is not None and _rent_tgt is not None) else "⚠️ 缺真值"}（配息 {_nn(_div_expected)} + 房租 {_nn(_rent_tgt)}）</p>
       <p style="font-size:11px;color:#b45309;margin-top:2px">⚠️ 配息為截至今日實收，月底前依配息接力時程陸續補齊（撥回入帳後覆蓋率更高）</p>
     </div>
   </div>
@@ -1120,7 +1174,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     {tv['etf_div_table']}
 
     <h3>房租金流</h3>
-    <p class="text-lead">房租月收 <strong>{tv['rent_monthly_target']:,} TWD</strong>〔常態應收；當月已收 {tv['rent_monthly']:,}、待收 {tv.get('rent_pending', 0):,}〕，覆蓋月支出 {_rent_cov:.0f}%。{_fmt_rent_status(tv)}{_dbs_note_ph}</p>
+    <p class="text-lead">房租月收 <strong>{_nn(_rent_tgt)} TWD</strong>〔常態應收；當月已收 {tv['rent_monthly']:,}、待收 {tv.get('rent_pending', 0):,}〕，覆蓋月支出 {f"{_rent_cov:.0f}%" if _rent_cov is not None else "⚠️ 缺真值"}。{_fmt_rent_status(tv)}{_dbs_note_ph}</p>
 
     <h3>基金部位（鉅亨網 + 國泰基金）</h3>
     <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong> ＝ 鉅亨網 <strong>{sum(v for k,v in tv.get('funds_breakdown',{}).get('一般申購',{}).items() if k != 'note') + sum(v for k,v in tv.get('funds_breakdown',{}).get('自由Pay',{}).items() if k != 'note'):,}</strong> ＋ 國泰基金 <strong>{sum(v for k,v in tv.get('funds_breakdown',{}).get('國泰直購',{}).items() if k != 'note'):,}</strong>（富達 {tv.get('funds_breakdown',{}).get('國泰直購',{}).get('富達全球動能多元B股C月配息美元',0):,} + 聯博 {tv.get('funds_breakdown',{}).get('國泰直購',{}).get('聯博全球多元收益AD美元月配',0):,} + B11 {tv.get('funds_breakdown',{}).get('國泰直購',{}).get('貝萊德智慧數據收益成長B11-美元-強化穩定月配息',0):,}）。本月已收配息：{tv['fund_dividend_monthly']:,} TWD。{_fund_detail}</p>
@@ -1766,7 +1820,9 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             _nw = _snap_p.get('net_worth', 0)
             _div_cur = _snap_p.get('monthly_dividend_total', 0)
             _exp = sot_monthly_expense(_snap_p)
-            _pi = _snap_p.get('passive_income', {}) or {}
+            # 2026-10-04 P0（PEND-20261004-02）：移除死賦值 `_pi = _snap_p.get('passive_income', {})`。
+            # 該區塊自 2026-09-27 起改由 passive_caliber 單一來源（_pcal.scenarios）計算，此變數已無人讀取；
+            # 且與 PI 風控卡的 `_pi` 同名，會讓後續審查者誤判 gating 來源（CIO 二審 note c）。
             # 2026-09-27：改由 passive_caliber 單一來源計算（保守/實收/壓力 + FI 跑道）。
             # 使用者 9/27 指正：實收 225,075 已高於保守 180,100，只顯示保守會低估水位。
             _sc = _pcal.scenarios(_snap_p)
@@ -1987,10 +2043,17 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     f"</div></div>"
                 )
                 # 2026-10-01：改動態（原寫死 45000）— 與 build_investment_performance 同源派生
+                # 2026-10-04 P0（PEND-20261004-02）：`or _FUDA_MDIV_FALLBACK`（45,000）是同型
+                # 「舊數字救場」，且它就是 ③ 覆蓋判斷的輸入 → 缺真值改 None（覆蓋不予判斷）。
                 _ctg = (tv.get("funds_breakdown", {}) or {}).get("國泰直購", {}) or {}
-                _fid_mdiv = round(next((_v for _k, _v in _ctg.items()
-                                        if "富達" in str(_k) and isinstance(_v, (int, float))), 0) * 0.0075) \
-                    or _FUDA_MDIV_FALLBACK
+                _fuda_v = next((_v for _k, _v in _ctg.items()
+                                if "富達" in str(_k) and isinstance(_v, (int, float))), None)
+                if _fuda_v is None:
+                    _fid_mdiv = None
+                    print("⚠️ [render] 槓桿風控卡③：富達月配缺真值（funds_breakdown.國泰直購 無「富達」鍵）"
+                          "→ 覆蓋判斷不予成立（禁以 45,000 救場）")
+                else:
+                    _fid_mdiv = round(_fuda_v * 0.0075)
                 _rent_recv = tv.get("rent_received_records") or {}
                 _rent_got = 0
                 for _rv in (_rent_recv.values() if isinstance(_rent_recv, dict) else []):
@@ -1998,22 +2061,42 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                         _rent_got += sum(_rv.values())
                     elif isinstance(_rv, (int, float)):
                         _rent_got += _rv
-                _income_m = (tv.get("dividend_month_expected") or 100000) + (tv.get("rent_monthly_total") or 0)
+                # 2026-10-04 P0（PEND-20261004-02）：原 `tv.get("dividend_month_expected") or 100000`
+                # ——真值一缺就拿 100,000 去算 ③ 的覆蓋判斷，可能亮出「✅ 覆蓋」的**假綠燈**。
+                # 且該常數目前恰好等於真值（100,000），故現階段毫無症狀，是最難察覺的一類。
+                # 改 fail-closed：真值缺 → 覆蓋判斷不予成立（不得以常數救場）。
+                _dme = tv.get("dividend_month_expected")
+                _rmt = tv.get("rent_monthly_total")
+                _income_m = (float(_dme) + float(_rmt or 0)) if _dme not in (None, "") else None
+                if _income_m is None:
+                    print("⚠️ [render] 槓桿風控卡③：dividend_month_expected 缺真值"
+                          "→ 覆蓋判斷不予成立（禁以 100,000 救場）")
                 _freeze = _us30y_now >= 5.30
                 _fz_txt = f"🔴 觸及全域凍結線（{_us30y_now:.2f}% ≥ 5.30%）— 禁止新增債券質押" if _freeze else f"🟢 未觸及凍結線（{_us30y_now:.2f}% &lt; 5.30%）"
                 # 投資哲學檢核（2026-08-19 定版：核心三支柱 + 4 問）— 用常態被動收入（非當月實收）
                 _philosophy_items = []
                 _snap_now = json.loads(Path("snapshot.json").read_text(encoding="utf-8")) if Path("snapshot.json").exists() else {}
                 # 2026-08-27：共享組件統一覆蓋率口徑（與儀表板一致）
-                _inc_m = (_snap_now.get("dividend_month_expected") or 100000) + (_snap_now.get("rent_monthly_total") or 0)
+                # 2026-10-04 P0（PEND-20261004-02）：同上——`or 100000` 會在真值缺漏時
+                # 讓「現金流覆蓋（常態）」以假數字亮 ✅。缺真值 → 不予判斷。
+                _dme2 = _snap_now.get("dividend_month_expected")
+                _rmt2 = _snap_now.get("rent_monthly_total")
+                _inc_m = (float(_dme2) + float(_rmt2 or 0)) if _dme2 not in (None, "") else None
                 _exp = sot_monthly_expense(_snap_now)
-                _cov = _inc_m / _exp if _exp else 0
+                _cov = (_inc_m / _exp) if (_inc_m is not None and _exp) else None
+                if _inc_m is None:
+                    print("⚠️ [render] 投資哲學檢核：dividend_month_expected 缺真值"
+                          "→ 現金流覆蓋不予判斷（禁以 100,000 救場）")
                 try:
                     from report_components import render_coverage as _rc
-                    _cov_txt = _rc(_snap_now, "passive")
+                    _cov_txt = (_rc(_snap_now, "passive") if _inc_m is not None
+                                else "現金流覆蓋（常態）：⚠️ 缺真值 → 不予判斷（不以常數救場）")
                     _philosophy_items.append(_cov_txt)
                 except Exception:
-                    _philosophy_items.append(f"現金流覆蓋（常態）{_inc_m:,.0f}/{_exp:,.0f} = {_cov*100:.0f}% {'✅' if _cov >= 1.0 else '🔴'}")
+                    _philosophy_items.append(
+                        (f"現金流覆蓋（常態）{_inc_m:,.0f}/{_exp:,.0f} = {_cov*100:.0f}% "
+                         f"{'✅' if _cov >= 1.0 else '🔴'}") if _cov is not None else
+                        "現金流覆蓋（常態）：⚠️ 缺真值 → 不予判斷（不以常數救場）")
                 # 2026-09-13：口徑統一 = usd_exposure_monitor.current.合計（與儀表板/穿透圖同源；原用美股桶會與儀表板不一致）
                 _mon = (_snap_now.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {}
                 _usd_ex = float(_mon.get("合計") or tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0))
@@ -2057,10 +2140,17 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                               f"≈ {_pledge_cost_y/10000:.1f}萬/年（月 {_pledge_cost_m:,.0f}）")
                 if _p1_cost_m is None or _pledge_cost_m is None:
                     _lv_total = "合計：⚠️ 有層缺真值 → 不予合計（不以 0 頂替）"
-                    _lv_cov = "流出：⚠️ 有層缺真值 → 不予判斷（不以 0 頂替）"
                 else:
                     _lv_total = (f"合計 ~{(_p1_cost_y+_pledge_cost_y)/10000:.1f}萬/年"
                                  f"（月 {_p1_cost_m+_pledge_cost_m:,.0f}）")
+                # 2026-10-04 P0：③ 的流入側原為 `tv.get("dividend_month_expected") or 100000`
+                # → 真值缺漏時仍會亮「✅ 覆蓋」的假綠燈（該常數現恰好等於真值，故無症狀）。
+                # _income_m 為 None → 覆蓋不予判斷。
+                if (_p1_cost_m is None or _pledge_cost_m is None or _income_m is None
+                        or _fid_mdiv is None):
+                    _lv_cov = ("流出／流入：⚠️ 有層缺真值（利息／常態配息／富達月配）→ 覆蓋不予判斷"
+                               "（不以 0／常數頂替、不亮綠燈）")
+                else:
                     _lv_cov = (f"流出 {_p1_cost_m+_pledge_cost_m:,.0f} vs 流入（常態配息＋房租）"
                                f"{_income_m:,.0f}＋富達月配 ~{_fid_mdiv:,} = {_income_m+_fid_mdiv:,.0f} — "
                                f"{'✅ 覆蓋' if (_income_m+_fid_mdiv) >= (_p1_cost_m+_pledge_cost_m) else '⚠️ 未覆蓋'}")
