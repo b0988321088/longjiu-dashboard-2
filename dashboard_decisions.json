@@ -10086,6 +10086,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261004213302-1085",
+    "timestamp": "2026-10-04T21:33:02.802890+08:00",
+    "agent": "Hermes",
+    "task": "PI 專業投資人雙軌資料生命週期｜②-⑥ 施工完成（DELIVERED，待收案）",
+    "summary": "依使用者 2026-10-04 裁決（規格 APPROVED、①-④ 定案、②-⑥ GO）完成施工。①骨架：sot_targets 新增 PI_REGULATORY_THRESHOLD_TWD=30_000_000（唯一位置之法規常數，不進 snapshot、不 fail-closed）＋ accessor 拆分 pi_regulatory_threshold()／pi_record()／pi_application_status()／pi_approval_status()／pi_financial_asset_proxy()／pi_gap_twd()／pi_meets_financial_threshold()／pi_is_approved()；缺值一律 raise（禁 or 0、禁預設「申請中」）。②唯一寫入者 sync_professional_investor.py（拒寫衍生欄位、狀態驗證、dry-run、備份＋三重驗證：目標鍵正確／其他鍵逐鍵不變／可重解析；snapshot 先驗證 indent=1 可無損 round-trip 才允許寫入）。③唯一計算與渲染層 pi_card.py（日報 HTML 與週報 Markdown 共用同一 payload，tactical_table 與 run_daily 皆委派，不各自組公式）。④舊路徑清除：頂層 snapshot.pi_status、欄名「認列」、PI_STATES 本地清單、寫死 28,220,311、pi.get(threshold/gap/status) 預設值全部消滅；entry_monitor 黃金分支與台股慢慢買例行改判「已核准」。⑤狀態機以兩欄位實作：application_status（未申請/已送件/補件中/審核中）＋ approval_status（未核准/已核准/未通過/失效）；拒絕與失效不得塞回未申請（債務 tracker 原 fail-open 回退未申請已改 raise＋fail-safe 鎖定）。⑥財力口徑＝證券＋基金＋保單＋現金＝26,791,534（缺口 3,208,466）；欄位命名要求已遵守：對外稱「PI 財力檢核口徑／readiness proxy」，程式碼與卡片皆註記「不等同金融機構最終認定」，未宣稱為法規認定資產。⑦不併配偶（v1）。重要設計裁決（須向使用者報備，因其模型圖列 8 欄位）：proxy／gap／meets／threshold 一律即時計算、不落地儲存，snapshot 僅存 application_status／approval_status／source／updated_at；理由＝落地值會隨資產變動過期，正是本次要消滅的 28,220,311 型 stale 假真值。驗收（全過）：五測 ①有值 ②缺值 fail-closed（三消費端零金額洩漏、未回退未申請） ③29M/30M/31M 邊界（== 判達標） ④反寫死位移（來源 +500,000 → proxy 與缺口同步位移 500,000，卡片內容隨之改變） ⑤資產達標但未核准 → pi_is_approved=False、卡片同時顯示「✅達標」與「🔒鎖定」、tracker 硬鎖、entry 不觸發執行鏈（本批最重要）；⑥寫入者六項檢查。端到端：日報今日檔含新卡且無 28,220,311；缺值時日報出現 fail-closed 卡（不靜默隱藏）；週報產物含「財力 proxy ≥ 3,000萬」。靜態複掃：28,220,311／1,779,689／3,000萬 live 程式 0 殘留（僅註解與 docstring 提及歷史案例）；30,000,000 只剩 sot_targets 一處。回歸：check_thresholds 與 check_caliber_consistency 與 HEAD 基準線完全一致。diff 範圍：8 檔 .py（6 改＋2 新，+370/−54）。獨立審查 APPROVE 0 blocking；commit b486b27f 已推 clean-main 並驗遠端 sha。施工中另發現並一併修正（已於審查說明）：(a) run_daily.py 有第二張 PI 卡（原清冊漏列，同樣寫死 28,220,311）→ 改走 pi_card；(b) build_weekly_report.py 的 debt_chain 與 act4 樣板本非 f-string，既有 {_pf...} 佔位符會原樣印出（既有瑕疵），因本次插入常數佔位符而必須修正 → 改為 f-string。待辦與觀察：①PI 現行狀態（申請／核准）系統內無任何記錄，尚未 seed → 目前所有消費端呈 fail-closed（這是刻意行為，非故障）；需使用者一句話即可用唯一寫入者建檔。②run_daily 8/20 定案區塊（deployment_plan）仍在 if _pi: 之內且含 _dp2.get(total, 12000000) 等 fallback，屬同型假真值，建議另批處理（本批未動）。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-04T11:39:48.740349"
