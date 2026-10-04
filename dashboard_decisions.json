@@ -10026,6 +10026,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261004210150-1079",
+    "timestamp": "2026-10-04T21:01:50.550050+08:00",
+    "agent": "Hermes",
+    "task": "P0 假真值退路清除 第一批｜收案 CLOSED ＋ fetch_weekly_proxy.py 隔離裁決",
+    "summary": "【一、第一批收案】使用者裁決 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION，不再補工程。確認項目：7 個 accessor 全 fail-closed raise KeyError、無 or 0／新常數掩蓋缺值、刻意排除 stale 相容鍵（securities_market_value／securities_current）、14 處總額級 fallback 全清、policy_pledge_loan=4,000,000 已證明清償後不再復活、monthly_income 回到現行 228,751、有值/無值雙向測試皆跑、靜態複掃 0 殘留、snapshot／cash_floor／threshold／P1／P2 均未越界、CIO APPROVE 0 blocking、遠端 SHA 一致。commit 4fe504f0（程式）＋3d2a4233（決策入庫）；線上 clean-main 複驗相符。下一個正式施工批次為 cash_floor 700,000 等 P0 延伸，未經明確下令不自動開工。【二、fetch_weekly_proxy.py 裁決：QUARANTINED／NOT VERSIONED】已自 repo 移出並隔離至 ~/AppData/Local/hermes/quarantine/20261004_orphan_weekly_proxy/（含 _weekly_yf_proxy.json 19:01 快照），未進版控、未 commit。來源追查結果：①該檔從未存在於任何 branch／commit（git log --all 空）；②全 repo 與 hermes 目錄零引用（引用者只有它自己）；③寫入者已定位＝Hermes cron job 6a9babc90954「龍九動態自我檢討週報 週日19:00」（agent 型、no_agent=false），該 job 於 2026-10-04 19:00:20 起跑、19:06:42 結束，期間 19:00:56 生成 .py、19:01:07 改寫 _weekly_yf_proxy.json；④_weekly_yf_proxy.json 為已入版控檔案（8/24 743b76ca 起），但同樣零程式引用 → 屬 agent 執行期自建的中介產物。處置：來源已查明為真實產線（週報 job）而非殘留垃圾，故不刪除；是否把取價邏輯正式化（移入 scripts/ 並入版控、或改由 hermes/scripts 免落地執行、並讓週報 job 不再於 repo 根目錄寫 .py）另開工單處理，不混入本批。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-04T11:39:48.740349"
