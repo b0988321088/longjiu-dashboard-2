@@ -660,6 +660,29 @@ def main() -> int:
         f"缺值 rate={_mr30.cathay_rate(_s32)!r}／monthly={_mr30.cathay_monthly(_s32)!r}／"
         f"pct={_mr30.cathay_rate_pct(_s32)!r}｜真值 rate={_mr30.cathay_rate(real_snap)!r}")
 
+    # S33（七審 BLOCK-1）：**實跑** build_penetration_report.py 必須 rc==0。
+    # 教訓：S29 只做靜態字串掃描，擋不住 `_rows_pl` vs `rows_pl` 這類執行期 NameError
+    # （本卡第七審實證：改動後模組層 NameError、rc=1、sync_all 於「穿透報告」步驟 break）。
+    import os as _os33, subprocess as _sp33
+    _env33 = dict(_os33.environ); _env33["LJ_NO_TELEGRAM"] = "1"
+    _r33 = _sp33.run([sys.executable, "build_penetration_report.py"],
+                     cwd=str(BASE), capture_output=True, text=True, env=_env33, timeout=300)
+    _out33 = sorted(BASE.glob("penetration_report_*.html"))[-1].read_text(encoding="utf-8")
+    chk("S33（七審 BLOCK-1）：實跑 build_penetration_report.py 必須 rc==0 且產出含基金質押列"
+        "（靜態掃描抓不到執行期 NameError）",
+        _r33.returncode == 0 and "國泰基金質押" in _out33,
+        f"rc={_r33.returncode}｜stderr尾={(_r33.stderr or '')[-160:]!r}｜含基金質押列={'國泰基金質押' in _out33}")
+
+    # S34（七審 bip 延期條件①）：mortgage_cathay_rate 必須存在 → 使績效引擎的 0.026
+    # fallback 永遠不可達（PEND-20261004-07 凍結期保護）
+    import check_thresholds as _ct34
+    _e34 = []
+    _ct34.check_all(json.loads(json.dumps(real_snap)), _e34) if hasattr(_ct34, "check_all") else None
+    chk("S34（七審條件①）：真值 snapshot 必須存在 mortgage_cathay_rate（凍結期內使 "
+        "build_investment_performance 的 0.026 fallback 不可達）",
+        real_snap.get("mortgage_cathay_rate") not in (None, ""),
+        f"mortgage_cathay_rate={real_snap.get('mortgage_cathay_rate')!r}")
+
     # ── S9 反恆真（測試檔掃全部樣式；生產檔只掃恆真斷言）────────────────────
     SELF_BANNED = ["or" + " True", "assert" + " True", "or" + " 1"]
     PROD_BANNED = ["or" + " True", "assert" + " True"]

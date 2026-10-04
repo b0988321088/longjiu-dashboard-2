@@ -194,6 +194,12 @@ def main() -> int:
         # 同源斷言（2026-09-30 CIO minor）：保單借貸餘額兩欄不得漂移（報表標籤與利息各讀一處）
         _lb_pol = float((snap.get("liabilities_build_up") or {}).get("保單借貸") or 0)
         _top_pol = float(snap.get("policy_pledge_loan") or 0)
+        # 2026-10-04 P0（CIO 七審 bip 延期條件①）：mortgage_cathay_rate 必須存在 →
+        # 使 build_investment_performance.py `or dl["rate"]`（寫死 0.026）的 fallback 永遠不可達。
+        # 凍結期保護（PEND-20261004-07）：此鍵一缺，績效引擎就會以 0.026 編造月息且不會大聲失敗。
+        if snap.get("mortgage_cathay_rate") in (None, ""):
+            errs.append("snapshot 缺 mortgage_cathay_rate：績效引擎 build_investment_performance 的 "
+                        "0.026 fallback 將變為可達（PEND-20261004-07 凍結期保護條件，禁止缺鍵）")
         if abs(_lb_pol - _top_pol) > 1:
             errs.append(f"保單借貸餘額不同源：liabilities_build_up.保單借貸 {_lb_pol:,.0f} ≠ policy_pledge_loan {_top_pol:,.0f}")
         if _li.get("合計") is None:

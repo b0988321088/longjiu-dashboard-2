@@ -229,7 +229,7 @@ _pl_b_r = snap.get("pledge_loan_rate")
 _pl_b_n = str(snap.get("pledge_loan_rate_note") or "待核對")
 _ins_col = float(snap.get("insurance_current_value") or 0)
 _sec_col = float((snap.get("securities") or {}).get("total_market_value") or 0)
-rows_pl = ""
+_rows_pl = ""
 if _pl_a is None:
     print("⚠️ [penetration] policy_pledge_loan 缺真值 → 保單質押列明示缺真值（不得靜默消失）")
 if _pl_a is None or _pl_a > 0:
