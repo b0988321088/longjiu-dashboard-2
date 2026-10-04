@@ -10036,6 +10036,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261004210349-1080",
+    "timestamp": "2026-10-04T21:03:49.104162+08:00",
+    "agent": "Hermes",
+    "task": "Backlog 立案（未開工）：週報 Agent 執行期產物治理",
+    "summary": "使用者 2026-10-04 裁決：P0 假真值清除全批正式結案 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION（線上 clean-main 40c429e8）；fetch_weekly_proxy.py 處置確認為 QUARANTINED／NOT VERSIONED／SOURCE IDENTIFIED（非垃圾檔，係 19:00 agent 型週報 job 6a9babc90954 執行期自建中介物，不刪為正確）。本筆為 backlog 立案、狀態📋 待開工（未施工、未動任何檔案），與 P0 假真值清除屬不同問題／不同風險／不同驗收範圍，故分開。工單名稱：週報 Agent 執行期產物治理。驗收範圍（5 條）：①取價邏輯移至正式 scripts/ 或 hermes/scripts；②禁止 job 在 repo root 生成 .py；③_weekly_yf_proxy.json 明確登錄為產物；④指定唯一 writer；⑤新增產線驗收：job 執行後 git status --short 不得出現新的 .py。優先序建議（使用者裁決）：下一批優先開 P0 延伸 cash_floor 700,000（直接牽涉閘門判斷，風險高於一般 P1/P2 顯示型 fallback）；threshold 30M、P1、P2 續排其後。目前無任何待動項目。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-04T11:39:48.740349"
