@@ -10046,6 +10046,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261004210646-1081",
+    "timestamp": "2026-10-04T21:06:46.940003+08:00",
+    "agent": "Hermes",
+    "task": "P0 延伸優先序裁決 ＋ cash_floor 700,000 第 0 步盤點（📋 待核准開工，未施工）",
+    "summary": "使用者 2026-10-04 裁決下一階段優先序：①P0 延伸 cash_floor 700,000（最優先：會影響現金防守水位／閘門判斷／rotation／tactical／report_components）②P0 延伸 threshold 30,000,000（次之；須先判定「正式政策常數」或「歷史寫死舊數字」——若為政策常數應改為單一設定來源而非刪除，不得單純 search-and-replace）③P1 收入／租金／配息／支出 fallback（須先區分真值 fallback vs 政策假設值，例 rent_monthly_total 80,100 為預期租金則可能合法）④P2 顯示型 fallback（CEO/週報/月報/audit dashboard，不影響決策）。週報 Agent 產物治理為獨立 backlog，無依賴關係。裁示原則：不追求「69 處全清」，只按風險分批。本筆同時登錄 cash_floor 第 0 步唯讀盤點結果：①accessor 已存在且 fail-closed（sot_targets.cash_floor：cash_floor_rule.cash_floor → thresholds.現金_twd.生活底線 → raise），但**全 repo 零 import**（有 accessor 沒人用）。②真值來源確認：cash_floor_rule.cash_floor=700000、thresholds_2026_0915.現金_twd.生活底線=合計底線=700000（追繳緩衝=0）、top-level cash_floor=700000 → 700,000 屬「已落在 snapshot 的政策真值」，處置＝改走 accessor，不是刪數字。③live 掃到 39 處含 700000／70萬（archive 0 處）。④高價值缺陷：tactical_table.py:85 讀 cash_floor_rule.floor，但 snapshot 實鍵為 cash_floor（無 floor 鍵）→ 恆落 700000 fallback，鍵名漂移被 fallback 永久掩蓋（INC-278 同型）。⑤待施工清單（影響判斷類）：institutional_flow.py:528/636、rotation_engine.py:202/251/259、report_components.py:165、tactical_table.py:85、build_audit_dashboard.py:87、build_rebalance_report.py:74/217、run_daily.py:1295/1992/2006、sabbatical_checklist_update.py:24、build_weekly_report.py:43；另 macro_regime.py:36 為程式內政策常數定義（與 snapshot 真值重複＝雙來源），屬 threshold 批同型的「單一設定來源」問題。施工方式照 0→6。本筆未動任何程式、未改 snapshot；待使用者 ✅ 核准後才開工。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-04T11:39:48.740349"
