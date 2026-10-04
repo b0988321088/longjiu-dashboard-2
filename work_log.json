@@ -1649,9 +1649,9 @@
  },
  {
   "date": "2026-09-30",
-  "category": "應辦",
+  "category": "修正",
   "item": "📝 日誌／記憶條目停止嵌入浮動金額（結構性）",
-  "detail": "｜2026-10-02 程式已修：run_daily.py:2455-2456 兩筆 add_memory 移除當日金額字面，改指向 snapshot（commit 02442fca）。⚠️ 尚未閉環：驗收＝連續兩天改完真值後 check_dashboard_stale 與跨報告閘門不得因日誌行告警；且 dashboard_decisions 既有「日報/資產穿透」歷史列仍含當日金額（新寫入已無），需觀察是否仍觸發。"
+  "detail": "｜2026-10-02 程式已修：run_daily.py:2455-2456 兩筆 add_memory 移除當日金額字面，改指向 snapshot（commit 02442fca）。⚠️ 尚未閉環：驗收＝連續兩天改完真值後 check_dashboard_stale 與跨報告閘門不得因日誌行告警；且 dashboard_decisions 既有「日報/資產穿透」歷史列仍含當日金額（新寫入已無），需觀察是否仍觸發。 ｜2026-10-04 驗收通過（兩條件實測）：check_dashboard_stale ✅、跨報告閘門 ✅、check_dividend_caliber FAIL 集合＝基準 7 條（無新增）；dashboard_decisions 歷史列殘留 897 筆但不被任何閘門引用（新寫入已無金額）。"
  },
  {
   "date": "2026-09-30",
