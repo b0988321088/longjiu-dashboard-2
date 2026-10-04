@@ -333,6 +333,13 @@ def rebuild_liabilities(snap: dict) -> dict:
     snap["credit_card_pending"] = unpaid
     snap["cc_liability"] = unpaid
 
+    # 2026-10-04 P0（CIO 六審 8 項之一／使用者裁示 A）：真值層寫入器改「缺鍵 → 不寫入 ＋ 大聲告警」，不編造。
+    # 原以 `or 0` 補值會把 基金質押=0、基金質押利率=2.65%（編造）、total_liabilities 少 590 萬、
+    # net_worth 由 −417.6 萬翻正為 +172.4 萬寫進 snapshot（假真值入庫，且與 DB 對不上）。
+    _liab_miss = [k for k in ("policy_loan", "pledge_loan", "fund_pledge_loan")
+                  if snap.get(k) in (None, "")]
+    if snap.get("mortgage_balance") in (None, "") and snap.get("mortgage") in (None, ""):
+        _liab_miss.append("mortgage_balance/mortgage")
     mort = snap.get("mortgage_balance") or snap.get("mortgage") or 0
     pol = snap.get("policy_loan") or 0
     ple = snap.get("pledge_loan") or 0
@@ -350,21 +357,32 @@ def rebuild_liabilities(snap: dict) -> dict:
                         _per_detail[_k] = int(_r)
     per = sum(_per_detail.values())
 
-    total = int(mort) + int(pol) + int(ple) + int(fpl) + unpaid + int(per)
-    snap["total_liabilities"] = total
+    if _liab_miss:
+        # 2026-10-04 P0：缺鍵 → 保留原 total_liabilities（不覆蓋、不編造）
+        total = int(snap.get("total_liabilities") or 0)
+        print("⚠️ [asset_sync] 負債真值缺鍵（" + "、".join(_liab_miss)
+              + "）→ **不重建** total_liabilities／liabilities_build_up（保留原值、不編造）")
+        globals()["_LAST_LIAB_MISS"] = list(_liab_miss)
+    else:
+        total = int(mort) + int(pol) + int(ple) + int(fpl) + unpaid + int(per)
+        snap["total_liabilities"] = total
     # 2026-09-13 INC-167：利率鍵曾在重建時遺失 → pledge_status 讀到 0% → 質押「月省息」被算成 868（應 4,135）；
     # 這裡一律保留舊值／回填預設（保單 4%、券商 3.92%），禁止讓利率隨重建消失。
     _lb_prev = snap.get("liabilities_build_up") or {}
     _r_policy = float(_lb_prev.get("保單借貸利率") or snap.get("policy_pledge_rate") or 0.04)
     _r_broker = float(_lb_prev.get("券商質押利率") or snap.get("pledge_loan_rate") or 0.0392)
-    snap["liabilities_build_up"] = {
+    _lb_new = {
         "房貸_含國泰": int(mort),
         "保單借貸": int(pol),
         "保單借貸利率": _r_policy,
         "券商質押": int(ple),
         "券商質押利率": _r_broker,
         "基金質押": int(fpl),
-        "基金質押利率": float(snap.get("fund_pledge_rate") or 0.0265),
+        # 2026-10-04 P0：原 `or 0.0265` 會在缺鍵時**編造** 2.65% 寫進真值層
+        # → 改保留原值；兩者皆缺則為 None（明示缺真值，不再編造）
+        "基金質押利率": (float(snap["fund_pledge_rate"])
+                         if snap.get("fund_pledge_rate") not in (None, "")
+                         else _lb_prev.get("基金質押利率")),
         "信用卡_當期未繳_全額扣繳": unpaid,
         "個人借款_借出款_列應收款非負債": _per_detail,
         "total": total,
@@ -373,6 +391,9 @@ def rebuild_liabilities(snap: dict) -> dict:
                  "2026-09-29 起「基金質押」（fund_pledge_loan，國泰 590萬@2.65%）與「券商質押」"
                  "分列不同利率欄，勿合併計算月息"),
     }
+    # 2026-10-04 P0（使用者裁示 A）：缺鍵 → 不寫入（保留原值），並已在上面大聲告警
+    if not _liab_miss:
+        snap["liabilities_build_up"] = _lb_new
     snap["net_worth"] = int(snap.get("total_assets") or 0) - total
     # 負債率雙軌（2026-08-10 使用者裁示格式）：含不動產主顯示 / 不含不動產流動監控
     _ta = float(snap.get("total_assets") or 0)
@@ -389,9 +410,17 @@ if __name__ == "__main__":
         snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
         snap = rebuild_receivables(snap)
         snap = rebuild_liabilities(snap)
-        (BASE / "snapshot.json").write_text(
-            json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
+        # 2026-10-04 P0（CIO 六審／使用者裁示 A）：缺鍵 → 真值層**不寫入**（保留原檔），不編造
+        _m6 = globals().get("_LAST_LIAB_MISS") or []
+        if _m6:
+            print("⚠️ [asset_sync] 負債真值缺鍵（" + "、".join(_m6)
+                  + "）→ **不寫回** snapshot.json（保留原檔、不編造）")
+        else:
+            (BASE / "snapshot.json").write_text(
+                json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
         try:
+            if _m6:
+                raise RuntimeError("負債真值缺鍵 → 略過 DB 寫入（保留原值；見上方告警）")
             import sqlite3
             _db = sqlite3.connect(str(BASE / "dragon_assets.db"))
             _t = __import__("datetime").date.today().isoformat()   # DB 以「執行日」為列（與 update_data 一致）
@@ -416,11 +445,14 @@ if __name__ == "__main__":
             print(f"✅ DB 已同步（{_t}）：assets.total_liabilities＋liabilities 表（信用卡 {snap['cc_liability']:,}）")
         except Exception as _e:
             print(f"⚠️ DB 同步失敗：{_e}")
-        bu = snap["liabilities_build_up"]
-        print(f"✅ 負債重建：房貸 {bu['房貸_含國泰']:,} + 保單 {bu['保單借貸']:,}"
-              f" + 券商質押 {bu['券商質押']:,} + 基金質押 {bu.get('基金質押', 0):,}"
-              f" + 信用卡 {bu['信用卡_當期未繳_全額扣繳']:,}"
-              f" = {snap['total_liabilities']:,}")
+        bu = snap.get("liabilities_build_up") or {}
+        if not bu:
+            print("⚠️ [asset_sync] 無 liabilities_build_up 可印（缺真值，未重建）")
+        else:
+            print(f"✅ 負債重建：房貸 {bu['房貸_含國泰']:,} + 保單 {bu['保單借貸']:,}"
+                  f" + 券商質押 {bu['券商質押']:,} + 基金質押 {bu.get('基金質押', 0):,}"
+                  f" + 信用卡 {bu['信用卡_當期未繳_全額扣繳']:,}"
+                  f" = {snap['total_liabilities']:,}")
         if snap.get("receivables_total"):
             print(f"ℹ️ 應收款（借出款，非負債）：{snap['receivables']}"
                   f" 合計 {snap['receivables_total']:,}"

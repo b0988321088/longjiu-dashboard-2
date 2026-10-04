@@ -1,12 +1,12 @@
 """國泰房貸利率／月付 單一來源（2026-10-01）
 避免同一數字散落多支產生器各自寫死（INC-267 型靜默失效）。
-優先序：snapshot.mortgage_cathay_rate（權威鍵）→ monthly_fixed_expense['房貸_國泰']×12/本金 → 0.026
+優先序：snapshot.mortgage_cathay_rate（權威鍵）→ monthly_fixed_expense['房貸_國泰']×12/本金
+2026-10-04 P0（CIO 六審）：兩者皆缺 → 回 None（缺真值）並由呼叫端明示，**禁以 0.026／26,000 編造**
 """
 import json
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
-FALLBACK_RATE = 0.026
 
 
 def load_snapshot(snap=None):
@@ -26,12 +26,14 @@ def cathay_rate(snap=None):
         return r
     mf = float((s.get("monthly_fixed_expense") or {}).get("房貸_國泰") or 0)
     pr = float(s.get("mortgage_cathay") or 0)
-    return (mf * 12 / pr) if (mf and pr) else FALLBACK_RATE
+    # 2026-10-04 P0：原 else FALLBACK_RATE（0.026）＝缺真值時編造 2.6% → 改回 None
+    return (mf * 12 / pr) if (mf and pr) else None
 
 
 def cathay_rate_pct(snap=None, digits=1):
     """國泰轉貸年利率（百分比字串，如 '2.6'）"""
-    return f"{cathay_rate(snap) * 100:.{digits}f}"
+    _r = cathay_rate(snap)
+    return f"{_r * 100:.{digits}f}" if _r is not None else "⚠️ 缺真值"
 
 
 def cathay_principal(snap=None):
@@ -47,9 +49,12 @@ def cathay_monthly(snap=None):
     """寬限期月付＝本金×利率/12（單一來源）；本金缺值時才退回 snapshot 存放的月付鍵"""
     s = load_snapshot(snap)
     pr = cathay_principal(s)
+    _r = cathay_rate(s)
+    # 2026-10-04 P0（CIO 六審）：原 `or 26000` 為硬編碼假月付；利率缺真值亦不得派生 → 回 None
     if pr > 0:
-        return round(pr * cathay_rate(s) / 12)
-    return round(float(s.get("mortgage_cathay_monthly") or 0) or 26000)
+        return round(pr * _r / 12) if _r is not None else None
+    _mf = float(s.get("mortgage_cathay_monthly") or 0)
+    return round(_mf) if _mf else None
 
 
 def reconcile_stored_monthly(snap):
@@ -61,6 +66,9 @@ def reconcile_stored_monthly(snap):
     if not isinstance(snap, dict) or not snap:
         return []
     m = cathay_monthly(snap)
+    if m is None:
+        print("⚠️ [mortgage_rate] 國泰月付缺真值（利率／本金／月付鍵皆缺）→ **不寫入**月付鍵（不編造）")
+        return []
     mfe = snap.get("monthly_fixed_expense")
     # 合計＝下表各項加總（與 check_thresholds 同口徑；差旅費 10,000 等「註記型」項不計入，
     # 故不可用「全部數值鍵加總」，否則會對不上而每次都誤發警告）

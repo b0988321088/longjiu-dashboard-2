@@ -219,24 +219,35 @@ if _ms:
       f"原 stored 舊值已停用）。避險衛星以「目標值 131 萬」計入防禦維度（實況：黃金 32 萬尚未建倉）</span></div>")
 
 # 現況質押借款快照（2026-09-05 加：LTV 現況透明化 — 勿誤讀情境表為「無質押」）
-_pl_a = float(snap.get("policy_pledge_loan") or 0)
+# 2026-10-04 P0（CIO 六審）：原 `or 0` → 缺鍵時保單質押／券商質押整列靜默消失（與同表 fund_pledge 同型）。
+# 「0＝真值為零（不列）／None＝缺真值（須列且示警）」分離。
+_pl_a_raw, _pl_b_raw = snap.get("policy_pledge_loan"), snap.get("pledge_loan")
+_pl_a = float(_pl_a_raw) if _pl_a_raw not in (None, "") else None
+_pl_b = float(_pl_b_raw) if _pl_b_raw not in (None, "") else None
 _pl_a_r = snap.get("policy_pledge_rate") or 0
-_pl_b = float(snap.get("pledge_loan") or 0)
 _pl_b_r = snap.get("pledge_loan_rate")
 _pl_b_n = str(snap.get("pledge_loan_rate_note") or "待核對")
 _ins_col = float(snap.get("insurance_current_value") or 0)
 _sec_col = float((snap.get("securities") or {}).get("total_market_value") or 0)
-_rows_pl = ""
-if _pl_a > 0:
+rows_pl = ""
+if _pl_a is None:
+    print("⚠️ [penetration] policy_pledge_loan 缺真值 → 保單質押列明示缺真值（不得靜默消失）")
+if _pl_a is None or _pl_a > 0:
+    _pl_a_txt = f"{_pl_a:,.0f}" if _pl_a is not None else "⚠️ 缺真值"
+    _pl_a_ltv = (f"{_pl_a/_ins_col*100:.1f}%" if (_pl_a is not None and _ins_col) else "⚠️ 缺真值")
     _rows_pl += (f"<tr><td>保單質押（安聯A 200萬+安聯B 100萬+第一金 100萬）</td>"
-                 f"<td class='num'>{_pl_a:,.0f}</td><td class='num'>{_pl_a_r*100:.1f}%</td>"
-                 f"<td class='num'>{(_pl_a/_ins_col*100 if _ins_col else 0):.1f}%</td>"
+                 f"<td class='num'>{_pl_a_txt}</td><td class='num'>{_pl_a_r*100:.1f}%</td>"
+                 f"<td class='num'>{_pl_a_ltv}</td>"
                  f"<td>待 PI 質押撥款後償還 300萬</td></tr>")
-if _pl_b > 0:
+if _pl_b is None:
+    print("⚠️ [penetration] pledge_loan 缺真值 → 券商質押列明示缺真值（不得靜默消失）")
+if _pl_b is None or _pl_b > 0:
+    _pl_b_txt = f"{_pl_b:,.0f}" if _pl_b is not None else "⚠️ 缺真值"
+    _pl_b_ltv = (f"{_pl_b/_sec_col*100:.1f}%" if (_pl_b is not None and _sec_col) else "⚠️ 缺真值")
     _rows_pl += (f"<tr><td>券商質押（snapshot pledge_loan；計畫列元大 50萬 — 金額不一致待核對）</td>"
-                 f"<td class='num'>{_pl_b:,.0f}</td>"
+                 f"<td class='num'>{_pl_b_txt}</td>"
                  f"<td class='num'>{('%.2f' % (_pl_b_r*100)) + '%' if _pl_b_r else '⚠️ 待確認'}</td>"
-                 f"<td class='num'>{(_pl_b/_sec_col*100 if _sec_col else 0):.1f}%</td>"
+                 f"<td class='num'>{_pl_b_ltv}</td>"
                  f"<td>⚠️ {_pl_b_n}</td></tr>")
 # 2026-09-29：國泰基金質押 590萬@2.65%（9/29 10:57 撥款入帳；表定 540 萬，實撥 590 萬）
 # 2026-10-04 P0（CIO 五審 M3/M4）：原 `fund_pledge_loan or 0` / `fund_pledge_rate or 0.0265` / gate `> 0`——

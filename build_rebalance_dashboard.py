@@ -645,15 +645,21 @@ def main():
     try:
         _snap_rb = load("snapshot.json")
         _cp = (_snap_rb.get("cathay_pledge_0911") or {})
-        _loan_rb = float(_cp.get("可貸金額") or 0)
-        _pool_rb = float(((_cp.get("擔保池") or {}).get("合計")) or 0)
-        _plv = (_loan_rb / _pool_rb * 100) if _pool_rb else 0.0
+        # 2026-10-04 P0（CIO 六審）：原 `or 0` → 缺 擔保池.合計 時印「LTV 0.0%（借 590萬／池 0）」
+        # 且 _pl_trig=False 顯示「🟢 安全」＝與 M2 同型的「看起來更健康」。缺鍵 → None（不綠燈）。
+        _loan_rb = float(_cp["可貸金額"]) if _cp.get("可貸金額") not in (None, "") else None
+        _pool_rb = (float((_cp.get("擔保池") or {})["合計"])
+                    if ((_cp.get("擔保池") or {}).get("合計") not in (None, "")) else None)
+        _plv = (round(_loan_rb / _pool_rb * 100, 1)
+                if (_loan_rb is not None and _pool_rb) else None)
         _ltvb = ((_snap_rb.get("thresholds_2026_0915") or {}).get("ltv分級_pct") or {})
-        _pl_txt = f"{_plv:.1f}%（借 {_loan_rb:,.0f}／池 {_pool_rb:,.0f}）"
+        _pl_txt = (f"{_plv:.1f}%（借 {_loan_rb:,.0f}／池 {_pool_rb:,.0f}）" if _plv is not None
+                   else "⚠️ 缺真值（可貸金額／擔保池.合計）")
         _pl_lim = f"綠 ≤{_ltvb.get('綠上限', 45)}／黃 ≤{_ltvb.get('黃上限', 53)}／追繳 ≥{_ltvb.get('追繳', 70)}"
-        _pl_trig = _plv > float(_ltvb.get("綠上限", 45))
+        # 缺真值 → None（不得視為「安全」；渲染端第三態）
+        _pl_trig = (_plv > float(_ltvb.get("綠上限", 45))) if _plv is not None else None
     except Exception:
-        _pl_txt, _pl_lim, _pl_trig = "—", "綠 ≤45／追繳 ≥70", False
+        _pl_txt, _pl_lim, _pl_trig = "⚠️ 缺真值", "綠 ≤45／追繳 ≥70", None
 
     # ── 風險紅線 ──
     _cw2 = cash_caliber(s)
@@ -664,7 +670,8 @@ def main():
         ("美元曝險", f"{usd_pct:.0f}%", "紅線 60%", "🔴 觸發" if usd_pct > 60 else "🟢 安全"),
         ("高科技", f"{tech:.1f}%", "紅線 30%", "🔴 觸發" if tech > 30 else "🟢 安全"),
         (f"現金｜底線 {_cw2['life']:,.0f}（單一口徑）", f"{_cw2['cash']:,.0f}", f"≥{_cw2['life']:,.0f}", _lif_st2),
-        ("國泰擔保池 LTV", _pl_txt, _pl_lim, "🔴 觸發" if _pl_trig else "🟢 安全"),
+        ("國泰擔保池 LTV", _pl_txt, _pl_lim,
+         ("🔴 觸發" if _pl_trig else ("⚠️ 缺真值（不判定）" if _pl_trig is None else "🟢 安全"))),
     ]
     risk_rows = ""
     for name, val, limit, st in risks:

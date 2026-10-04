@@ -452,22 +452,33 @@ def main():
             # 2026-09-29（CIO 審查 af7af243 必修1）：DB liabilities.pledge_loan 欄＝質押「總額」
             # ＝券商質押 pledge_loan＋基金質押 fund_pledge_loan。asset_diff_monitor 以欄位加總求
             # total_liab，若只寫券商那筆會少算 590 萬（此處與 asset_sync --rebuild-liabilities 同口徑）。
-            _pledge_agg = (int(snap.get("pledge_loan", 0) or 0)
-                           + int(snap.get("fund_pledge_loan", 0) or 0))
-            _lrow = (snap.get("mortgage_yy", 0), snap.get("mortgage_yydu", 0),
-                     snap.get("mortgage_xz", 0), snap.get("policy_loan", 0),
-                     _pledge_agg, snap.get("cc_liability", 0),
-                     snap.get("total_liabilities", 0), snap.get("mortgage_cathay", 0))
-            if _lc:
-                _db.execute("""UPDATE liabilities SET mortgage_yy=?, mortgage_yydu=?, mortgage_xz=?,
-                    policy_loan=?, pledge_loan=?, credit_card=?, total_liabilities=?, mortgage_cathay=?
-                    WHERE date=?""", _lrow + (_today,))
+            # 2026-10-04 P0（CIO 六審／使用者裁示 A）：缺鍵 → DB **不寫入**（保留原值），不編造 0。
+            # 原 `snap.get("pledge_loan", 0) or 0` 會在缺鍵時把 DB liabilities.pledge_loan 寫成 0
+            #（真值 5,900,000）→ asset_diff_monitor 以欄位加總求 total_liab 就會少算。
+            _upd_miss = [k for k in ("mortgage_yy", "mortgage_yydu", "mortgage_xz", "policy_loan",
+                                     "pledge_loan", "fund_pledge_loan", "mortgage_cathay",
+                                     "cc_liability")
+                         if snap.get(k) in (None, "")]
+            if _upd_miss:
+                print("⚠️ [update_data] 負債真值缺鍵（" + "、".join(_upd_miss)
+                      + "）→ DB liabilities 表**不寫入**（保留原值、不編造 0）")
             else:
-                _db.execute("""INSERT INTO liabilities (mortgage_yy, mortgage_yydu, mortgage_xz,
-                    policy_loan, pledge_loan, credit_card, total_liabilities, mortgage_cathay, date)
-                    VALUES (?,?,?,?,?,?,?,?,?)""", _lrow + (_today,))
-            _db.commit()
-            print(f"✅ DB liabilities {_today} 已同步（信用卡 {snap.get('cc_liability',0):,}／總負債 {snap.get('total_liabilities',0):,}）")
+                _pledge_agg = (int(snap.get("pledge_loan"))
+                               + int(snap.get("fund_pledge_loan")))
+                _lrow = (snap.get("mortgage_yy"), snap.get("mortgage_yydu"),
+                         snap.get("mortgage_xz"), snap.get("policy_loan"),
+                         _pledge_agg, snap.get("cc_liability"),
+                         snap.get("total_liabilities"), snap.get("mortgage_cathay"))
+                if _lc:
+                    _db.execute("""UPDATE liabilities SET mortgage_yy=?, mortgage_yydu=?, mortgage_xz=?,
+                        policy_loan=?, pledge_loan=?, credit_card=?, total_liabilities=?, mortgage_cathay=?
+                        WHERE date=?""", _lrow + (_today,))
+                else:
+                    _db.execute("""INSERT INTO liabilities (mortgage_yy, mortgage_yydu, mortgage_xz,
+                        policy_loan, pledge_loan, credit_card, total_liabilities, mortgage_cathay, date)
+                        VALUES (?,?,?,?,?,?,?,?,?)""", _lrow + (_today,))
+                _db.commit()
+                print(f"✅ DB liabilities {_today} 已同步（信用卡 {snap.get('cc_liability',0):,}／總負債 {snap.get('total_liabilities',0):,}）")
         except Exception as _le:
             print(f"⚠️ DB liabilities 同步失敗: {_le}")
     except Exception as _e:

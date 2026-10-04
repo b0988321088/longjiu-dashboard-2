@@ -41,7 +41,10 @@ def build_panel(snap: dict | None = None) -> str:
             if _k2 in k:
                 return _k2
         return k.split("-")[0][:4]
-    collateral = (f"擔保池 {(_cp.get('額度_本金') or 0)/10000:.0f}萬"
+    # 2026-10-04 P0（CIO 六審）：原 `or 0` → 缺 額度_本金 時靜默印「擔保池 0萬」無示警
+    _eq_raw = _cp.get("額度_本金")
+    _eq_txt = (f"{float(_eq_raw)/10000:.0f}萬" if _eq_raw not in (None, "") else "⚠️ 缺真值")
+    collateral = (f"擔保池 {_eq_txt}"
                   f"（{'+'.join(_short(k) for k in _cp_pool if k != '合計')}）"
                   f"× {_cp.get('成數','—')}") if _cp else "—"
     ltv_now = round((_cp.get("可貸金額") or 0) / (_cp_pool.get("合計") or 1) * 100, 1) if _cp else 0

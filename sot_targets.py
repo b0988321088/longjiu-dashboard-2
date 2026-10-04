@@ -151,9 +151,14 @@ def sync_scenario_verification(snap: dict, today: str | None = None) -> dict:
             return None
 
     # LTV 現況：基金質押借款 ÷ 擔保池市值
-    _loan = _num(snap.get("fund_pledge_loan")) or 0.0
-    _pool = _num(((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("合計")) or 0.0
-    _ltv = round(_loan / _pool * 100, 1) if _pool else None
+    # 2026-10-04 P0（CIO 六審）：原 `or 0.0` → 缺 fund_pledge_loan 時 _loan=0、_ltv=0.0、
+    # `LTV合格=True` → 每日穿透報表情境 callout 印「LTV 0.0%（≤52% ✅）」（與同份報告該列
+    # 「⚠️ 缺真值」自相矛盾），且本函式輸出會被呼叫端寫回 snapshot.market_scenario_standards
+    # ＝假真值入庫。缺鍵一律 None；None 不得被判定為合格。
+    _loan = _num(snap.get("fund_pledge_loan"))
+    _pool = _num(((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("合計"))
+    _ltv = (round(_loan / _pool * 100, 1)
+            if (_loan is not None and _pool) else None)
 
     _dmin, _imin, _lmax = _sc.get("防禦最低"), _sc.get("收入最低"), _sc.get("LTV上限")
     _d_ok = (_def is not None and _dmin is not None and _def >= _dmin)
@@ -165,7 +170,8 @@ def sync_scenario_verification(snap: dict, today: str | None = None) -> dict:
         "收入": _inc, "收入門檻": _imin, "收入合格": _i_ok,
         "LTV": _ltv, "LTV上限": _lmax, "LTV合格": _l_ok,
         "結論": (f"完全符合「{_cur}」標準" if _all_ok
-                 else f"未完全符合「{_cur}」標準（防禦 {_def}% vs ≥{_dmin}%、收入 {_inc}% vs ≥{_imin}%、LTV {_ltv}% vs ≤{_lmax}%）"),
+                 else f"未完全符合「{_cur}」標準（防禦 {_def}% vs ≥{_dmin}%、收入 {_inc}% vs ≥{_imin}%、"
+                      f"LTV {'⚠️ 缺真值' if _ltv is None else f'{_ltv}%'} vs ≤{_lmax}%）"),
         "source": "sot_targets.sync_scenario_verification（派生自 dual_dimension_metric；2026-09-30 P0-1 建立單一寫入者）",
         "derived_at": today or dt.date.today().isoformat(),
     }

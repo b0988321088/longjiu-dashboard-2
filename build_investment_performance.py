@@ -94,7 +94,14 @@ def load_loans(snap, adj_costs=None):
         rate = adj_costs.get(dl["name"])
         if not rate:
             if "國泰轉貸" in dl["name"]:
-                rate = snap_mortgage_cathay_rate(snap) or dl["rate"]
+                rate = snap_mortgage_cathay_rate(snap)
+                if rate is None:
+                    # 2026-10-04 P0（CIO 六審）：缺真值時本不應退回寫死值，但本模組隸屬**績效計算引擎**
+                    # （使用者已凍結 Task 3-6 口徑：動工前不動程式；Task 1+2 已封版）→ 本輪**不改計算口徑**，
+                    # 改為大聲告警並登記另案卡，以免動到已封版的績效數字。
+                    print("⚠️ [bip] 國泰轉貸利率缺真值（mortgage_cathay_rate／月付×12/本金 皆缺）"
+                          "→ 暫用 DEFAULT_LOANS 值；屬績效引擎凍結範圍，另案處理（不在 PEND-20261004-02 改口徑）")
+                    rate = dl["rate"]
             else:
                 rate = dl["rate"]
         rate = float(rate)

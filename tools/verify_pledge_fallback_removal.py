@@ -577,7 +577,7 @@ def main() -> int:
             _d27.get("LTV") is None and _d27.get("LTV缺真值") is True
             and _d27.get("LTV分") == 0 and _d27.get("分數") < _t27.get("分數")
             and abs(_t27.get("LTV") - 24.3746) < 0.01,
-            f"缺值 LTV={_d27.get('LTV')!r}／分數={_d27.get('分數')}｜真值 LTV={_t27.get('LTV'):.2f}／"
+            f"缺值 LTV={_d27.get('LTV')!r}／分數={_d27.get('分數')}｜真值 LTV={_t27.get('LTV')!r}／"
             f"分數={_t27.get('分數')}")
 
         # S28（M7）晨報／FIRE 常態對照不得用硬編碼舊真值救場
@@ -617,6 +617,48 @@ def main() -> int:
             not _hit29, f"命中={_hit29}")
     finally:
         shutil.rmtree(tmpd6, ignore_errors=True)
+
+    # ══ S30–S32：CIO 六審 8 項（sot_targets LTV／真值層寫入器／mortgage_rate）══════
+    import sot_targets as _sot30
+    import asset_sync as _as30
+    import mortgage_rate as _mr30
+    _d30 = json.loads(json.dumps(real_snap))
+    _d30.pop("fund_pledge_loan", None)
+    _v30d = _sot30.sync_scenario_verification(_d30)["現況驗證"]
+    _v30t = _sot30.sync_scenario_verification(json.loads(json.dumps(real_snap)))["現況驗證"]
+    chk("S30（六審1）：sot_targets 缺 fund_pledge_loan → LTV 為 None 且 LTV合格=False"
+        "（原 `or 0.0` 會給 LTV 0.0%、合格=True＝「LTV 0.0%（≤52% ✅）」並寫回 snapshot）",
+        _v30d.get("LTV") is None and _v30d.get("LTV合格") is False
+        and "缺真值" in str(_v30d.get("結論"))
+        and abs(_v30t.get("LTV") - 50.1) < 0.5 and _v30t.get("LTV合格") is True,
+        f"缺值 LTV={_v30d.get('LTV')!r}／合格={_v30d.get('LTV合格')}｜"
+        f"真值 LTV={_v30t.get('LTV')!r}／合格={_v30t.get('LTV合格')}")
+
+    # S31 真值層寫入器：缺鍵 → 不寫入（保留原值、不編造）
+    _s31 = json.loads(json.dumps(real_snap))
+    _tl31_before = _s31.get("total_liabilities")
+    _lb31_before = json.dumps(_s31.get("liabilities_build_up"), ensure_ascii=False, sort_keys=True)
+    _s31.pop("fund_pledge_loan", None)
+    _s31 = _as30.rebuild_liabilities(_s31)
+    _lb31_after = json.dumps(_s31.get("liabilities_build_up"), ensure_ascii=False, sort_keys=True)
+    chk("S31（六審2／真值層寫入器）：缺 fund_pledge_loan → total_liabilities 與 liabilities_build_up"
+        "**保留原值**（不編造 0／不編造 2.65%），且 net_worth 不得由 −417.6 萬翻正為 +172.4 萬",
+        _s31.get("total_liabilities") == _tl31_before and _lb31_after == _lb31_before,
+        f"total {_tl31_before}→{_s31.get('total_liabilities')}｜build_up 未變={_lb31_after == _lb31_before}")
+
+    # S32 mortgage_rate：缺真值不得退回硬編碼 0.026／26,000
+    _s32 = json.loads(json.dumps(real_snap))
+    for _k32 in ("mortgage_cathay_rate", "mortgage_cathay", "mortgage_cathay_monthly"):
+        _s32.pop(_k32, None)
+    _s32["monthly_fixed_expense"] = {k: v for k, v in (_s32.get("monthly_fixed_expense") or {}).items()
+                                     if k != "房貸_國泰"}
+    chk("S32（六審4）：mortgage_rate 缺真值 → cathay_rate()／cathay_monthly() 回 None、"
+        "cathay_rate_pct() 示缺真值（原退回硬編碼 0.026／26,000）",
+        _mr30.cathay_rate(_s32) is None and _mr30.cathay_monthly(_s32) is None
+        and "缺真值" in _mr30.cathay_rate_pct(_s32)
+        and abs(_mr30.cathay_rate(json.loads(json.dumps(real_snap))) - 0.026) < 1e-9,
+        f"缺值 rate={_mr30.cathay_rate(_s32)!r}／monthly={_mr30.cathay_monthly(_s32)!r}／"
+        f"pct={_mr30.cathay_rate_pct(_s32)!r}｜真值 rate={_mr30.cathay_rate(real_snap)!r}")
 
     # ── S9 反恆真（測試檔掃全部樣式；生產檔只掃恆真斷言）────────────────────
     SELF_BANNED = ["or" + " True", "assert" + " True", "or" + " 1"]

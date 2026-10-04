@@ -283,7 +283,10 @@ def extract_snapshot(snap: dict) -> dict:
                     "monthly_expense": float(sot_monthly_expense(snap)),
                     "rent_monthly": float(snap.get("rent_monthly_actual", 80_100)),
                     # 2026-09-23 INC-241：常態應收／當月待收／當月應收明細（單一真值）
-                    "rent_target": float(snap.get("rent_monthly_total") or 80_100),
+                    # 2026-10-04 P0（CIO 六審）：原 `or 80_100` 是硬編碼舊真值，使 :661 的
+                    # 「rent_monthly_total 缺值 → WARN + 以 0 計」永不可達（永遠 truthy）。缺鍵回 None。
+                    "rent_target": (float(snap["rent_monthly_total"])
+                                    if snap.get("rent_monthly_total") not in (None, "") else None),
                     "rent_pending": float(snap.get("rent_monthly_gap") or 0),
                     "rent_receivable_by_month": snap.get("rent_receivable_by_month", {}),
                     "rent_received_records": snap.get("rent_received_records", {}),
@@ -360,7 +363,9 @@ def extract_snapshot(snap: dict) -> dict:
         "monthly_expense": _truth(snap, "monthly_expense", "monthly_expense_mb"),
         "rent_monthly": float(snap.get("rent_monthly_actual", 80100)),
         # 2026-09-23 INC-241：常態應收／當月待收／當月應收明細（單一真值）
-        "rent_target": float(snap.get("rent_monthly_total") or 80100),
+        # 2026-10-04 P0（CIO 六審）：同 :286——移除硬編碼舊真值，缺鍵回 None 讓 WARN 可達
+        "rent_target": (float(snap["rent_monthly_total"])
+                        if snap.get("rent_monthly_total") not in (None, "") else None),
         "rent_pending": float(snap.get("rent_monthly_gap") or 0),
         "rent_receivable_by_month": snap.get("rent_receivable_by_month", {}),
         "rent_received_records": snap.get("rent_received_records", {}),
@@ -739,7 +744,9 @@ def buffett_advice(history: dict, snap: dict) -> str:
         # 故改為逐筆標明利率與狀態（金額／利率皆由 snapshot 派生），並移除未經證實的償付方式推論。
         _lb = snap.get("liabilities_build_up") or {}
         _mtg = float(snap.get("mortgage_balance") or 0)
-        _pledge = float(snap.get("fund_pledge_loan") or 0)
+        # 2026-10-04 P0（CIO 六審）：原 `or 0` → 缺鍵時「基金質押 590 萬」整段敘述靜默消失
+        _plg_raw = snap.get("fund_pledge_loan")
+        _pledge = float(_plg_raw) if _plg_raw not in (None, "") else None
         _ploan = float(snap.get("policy_pledge_loan") or 0)
         _card = float(_lb.get("信用卡_當期未繳_全額扣繳") or 0)
         _mtg_share = _mtg / ex["total_liabilities"] * 100 if ex["total_liabilities"] else 0
@@ -774,7 +781,9 @@ def buffett_advice(history: dict, snap: dict) -> str:
         _rc_block = snap.get("restricted_cash") or {}
         _debt_left = float(_rc_block.get("剩餘未清償") or 0)
         _seg = [f"房貸 {_fmt(_mtg)}（占負債 {_mtg_share:.0f}%）"] if _mtg else []
-        if _pledge:
+        if _pledge is None:
+            print("⚠️ [asset_diff] fund_pledge_loan 缺真值 → 負債敘述明示缺真值（不得靜默省略此筆）")
+        if _pledge is None or _pledge > 0:
             _old = []
             if _ploan > 0:
                 # 2026-09-30：餘額仍在帳上就不得宣稱「已清償」—— 原本狀態由剩餘未清償派生，
@@ -790,7 +799,8 @@ def buffett_advice(history: dict, snap: dict) -> str:
                 _old.append((f"券商質押 {_fmt(_sec_amt)}{_rate_txt('券商質押利率')}"
                              f" {_sec_status}").strip())
             _seg.append(
-                f"基金質押 {_fmt(_pledge)}{_rate_txt('基金質押利率')}"
+                f"基金質押 {_fmt(_pledge) if _pledge is not None else '⚠️ 缺真值'}"
+                f"{_rate_txt('基金質押利率')}"
                 + ("（撥款即為置換舊債：" + "；".join(_old) + "）" if _old else "")
             )
         if _card:
