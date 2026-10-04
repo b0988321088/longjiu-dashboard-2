@@ -10016,6 +10016,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261004205541-1078",
+    "timestamp": "2026-10-04T20:55:41.894449+08:00",
+    "agent": "Hermes",
+    "task": "P0 假真值退路清除 第一批｜施工完成（OPEN→DELIVERED）",
+    "summary": "工單：P0 假真值退路清除 第一批。A 第0步 Accessor Gate：原缺 5 個單一來源（總負債／不動產／保單／證券／基金）→ sot_targets 新增 total_cash／total_liabilities／real_estate_value／insurance_total／securities_total／funds_total／policy_pledge_loan 七個 fail-closed accessor（缺值 raise，禁 or 0）；同義鍵清單沿用 asset_sync.SYNONYM_GROUPS（新增 total_liabilities／real_estate 兩組，不複製第二份清單）。B 14 處總額級全數清除：不動產 34,017,063×3（asset_diff_monitor:1264、build_audit_dashboard:24、build_ceo_dashboard:13）＋34,000,000×2（asset_diff_monitor:271／399）；總負債 22,000,000（asset_diff_monitor:298）；保單 9,876,282（market_intel:146）＋9,802,872（build_penetration_report:14）；現金 4,483,408（run_daily:1411）／3,614,169（run_daily:285）／3,119,158（build_penetration_report:13）；證券 2,597,360（build_penetration_report:15）；基金 793,434（build_penetration_report:16）／765,991（asset_diff_monitor:975 → 改明確「缺真值」顯示＋告警）。C 兩高危案例：build_final:205 policy_pledge_loan 4,000,000 → accessor，pl==0 分支改印「保單借貸已全數清償（餘額 0）」（原 fallback 會把已清償的 400 萬負債復活）；report_components:59 monthly_income 214,685 → sot_monthly_income（現值 228,751）。驗收：T1 去註解複掃程式碼 0 殘留；T2 七個 accessor 有值／遮蔽後 raise 全過；T3 覆蓋率 full 228,751/159,210=144%；T4 真跑 build_penetration_report rc=0（含 1,753,675／9,418,965／12,611,674）、asset_diff_monitor rc=0（負債比率 50.9% 含不動產｜流動 115.6%，證實 real_estate_value 與 total_liabilities 端到端生效）、build_final rc=0；T5 沙箱遮蔽真值 → rc=1 KeyError 且零舊常數洩漏；基準線以 git archive HEAD 原版跑 check_thresholds 得同一條既有 FAIL（pending 卡狀態含「已完成」）→ 證明非本批 regression；check_caliber_consistency 不一致 0。diff 範圍僅 10 檔 .py（+131/−23），未動 snapshot 真值與施工邊界外檔案（cash_floor／threshold 30,000,000／P1／P2／.archive／.bak-* 全未碰）。獨立審查 APPROVE 0 blocking（CIO-Independent／llm_review_client）；commit 4fe504f0 已推 clean-main，遠端 sha 複驗相符。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-04T11:39:48.740349"
