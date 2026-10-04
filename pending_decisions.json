@@ -394,7 +394,7 @@
   },
   {
     "title": "📝 日誌／記憶條目停止嵌入浮動金額（結構性）",
-    "status": "待處理",
+    "status": "已完成",
     "created_at": "2026-09-30",
     "note": "驗收：連續兩天改完真值後，check_dashboard_stale 與跨報告閘門不得因日誌行而告警",
     "due_date": null,
@@ -404,7 +404,7 @@
     "last_confirmed_source": "未提供",
     "owner": "CEO",
     "external_owner": null,
-    "status_raw": "📌 待驗收（2026-10-02 修畢）：寫入者已去金額化。驗收＝連續兩天改完真值後，check_dashboard_stale 與跨報告閘門不得因日誌行告警。",
+    "status_raw": "✅ 已完成（2026-10-04 CEO 裁決閉環）｜原：📌 待驗收（2026-10-02 修畢）：寫入者已去金額化。驗收＝連續兩天改完真值後，check_dashboard_stale 與跨報告閘門不得因日誌行告警。｜驗收證據（10/4 實測）：三閘門 stale／cross／caliber 均無因日誌行告警；新寫入列已無金額；歷史 dashboard_decisions 殘留具歷史語義、不被任何閘門引用，依裁決不清洗。",
     "is_informational": false,
     "detail": "｜2026-10-02 已修寫入者：run_daily.py:2455-2456 兩筆 add_memory 移除當日金額字面，改為指向 snapshot 的說明文字；dashboard_decisions 既有歷史列不回溯。"
   },
