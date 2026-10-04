@@ -39,6 +39,7 @@ import argparse
 import contextlib
 import datetime as dt
 import io
+import os
 import re
 import subprocess
 import sys
@@ -462,6 +463,64 @@ def step_consistency(quiet: bool) -> list:
     return problems
 
 
+# ── ⑦ 門檻／不變式閘門（2026-10-04 INC：收工稽核的涵蓋面缺口）────────────────
+# 缺口：本檔的 15 類稽核「不含」check_thresholds 的 blocking 不變式（含「未閉環 pending 卡狀態
+#       不得含隱藏關鍵字」）。實踩：一張完成卡狀態含「已完成」→ build_dashboard 以子字串過濾
+#       使整卡靜默隱藏數日，而收工稽核仍報「全部通過 ✅」。
+# 責任分離：check_thresholds.py 仍是唯一 threshold／invariant checker；本步**只呼叫它的
+#       blocking contract（rc）**，不在此重寫任何斷言（否則就成為第二份真值）。
+# 為何 --sot-only：日報渲染行比對（INC-238）讀磁碟上「當日」日報檔、且必須與同期 snapshot 同源；
+#       22:00 晚報校準會合法地移動 snapshot → 收工時跑它屬「設計上必然假失敗」，那是產報時序
+#       關卡（已由 sync_all 步驟 2 以 --sot-only ＋ 產報後 --report-only 負責）。
+#       --sot-only 仍涵蓋全部不變式：SoT 完整性／消費端引用／決策端現金口徑／雙維度自洽／
+#       負債月息口徑／穿透完整性／基金口徑閉合／舊門檻字面／真值層（含 pending 隱藏關鍵字）。
+# fail-closed：腳本不存在／逾時／無法執行／rc≠0 → 一律回傳問題（不得宣告收工全綠）。
+THRESHOLD_CHECKER = REPO / "check_thresholds.py"
+THRESHOLD_ARGS = ("--sot-only",)
+THRESHOLD_TIMEOUT = 180
+
+
+def step_threshold_invariants(quiet: bool, checker: Path | None = None) -> list:
+    """⑦ 呼叫 check_thresholds.py 的 blocking contract；FAIL → 回傳問題清單（fail-closed）。
+
+    checker：**僅供測試**注入沙盒副本（預設＝正式腳本）。刻意不做成環境變數開關，
+             以免有人用環境變數把閘門指到假腳本。
+    副作用：無——檢查器為純讀取，且強制 LJ_NO_TELEGRAM=1（不推 Telegram／Notion、不開瀏覽器）。
+    """
+    ck = Path(checker) if checker else THRESHOLD_CHECKER
+    if not ck.exists():
+        return [f"門檻不變式檢查器不存在：{ck}（fail-closed，不得宣告收工全綠）"]
+    env = dict(os.environ)
+    env["LJ_NO_TELEGRAM"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
+    try:
+        p = subprocess.run([sys.executable, str(ck), *THRESHOLD_ARGS],
+                           cwd=str(ck.parent), capture_output=True, text=True,
+                           encoding="utf-8", errors="replace",
+                           timeout=THRESHOLD_TIMEOUT, env=env)
+    except subprocess.TimeoutExpired:
+        return [f"門檻不變式檢查逾時（>{THRESHOLD_TIMEOUT}s）→ fail-closed"]
+    except Exception as e:
+        return [f"門檻不變式檢查無法執行：{type(e).__name__}: {e} → fail-closed"]
+
+    out = p.stdout or ""
+    err = p.stderr or ""
+    if p.returncode != 0:
+        # stdout/stderr 一律保留：不能只留下「檢查失敗」四個字
+        print("⑦ 門檻／不變式（check_thresholds.py --sot-only）：❌ FAIL")
+        for ln in out.rstrip().splitlines()[-40:]:
+            print("   " + ln)
+        if err.strip():
+            for ln in err.rstrip().splitlines()[-20:]:
+                print("   [stderr] " + ln)
+        bad = [ln.strip() for ln in out.splitlines() if ln.strip().startswith("❌")]
+        head = "；".join(bad[:5]) if bad else f"rc={p.returncode}（無 ❌ 行，詳見上方原始輸出）"
+        return [f"門檻不變式檢查 FAIL（rc={p.returncode}）：{head}"]
+    if not quiet:
+        print("⑦ 門檻／不變式（check_thresholds.py --sot-only）：✅")
+    return []
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="龍九每日收工檢查（一鍵）")
     ap.add_argument("--fix", action="store_true", help="釋放被誤認領的排程時點")
@@ -485,6 +544,7 @@ def main() -> int:
         warn_problems = step_auto_warns(args.quiet or args.silent_ok)
         sync_problems = step_remote_sync(args.quiet or args.silent_ok)
         cons_problems = step_consistency(args.quiet or args.silent_ok)
+        thr_problems = step_threshold_invariants(args.quiet or args.silent_ok)
 
         problems = []
         if left_claims:
@@ -495,6 +555,7 @@ def main() -> int:
         problems.extend(warn_problems)
         problems.extend(sync_problems)
         problems.extend(cons_problems)
+        problems.extend(thr_problems)
 
         print()
         print("=" * 52)
