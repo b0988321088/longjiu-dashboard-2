@@ -5,6 +5,7 @@
 """
 from pptx import Presentation
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
+from sot_targets import policy_pledge_loan  # 2026-10-04 P0 假真值退路清除（保單借貸餘額單一入口）
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 import json, os, datetime, urllib.request
@@ -202,10 +203,17 @@ B(s, [
 s = ns()
 T(s, '債務結構：低利優勢不變，質押降息進行中')
 ST(s, f'市場利率 6-7% vs 您的加權 ~{_cg_pct()}% — 結構性優勢')
-pl = SNAP.get('policy_pledge_loan',4000000)
+# 2026-10-04 P0 假真值退路清除：原 .get('policy_pledge_loan', 4000000) 會在 snapshot 缺鍵時
+# 把「已於 2026-09-29＋10-01 全數清償」的保單借貸 400 萬復活（負債假真值）→ 改走 accessor，缺值阻斷。
+pl = policy_pledge_loan(SNAP)
+_pl_li = (
+    [f'🔴 保單借貸 {pl/10000:,.0f} 萬 @4%+ → 質押 590 萬@2.65% 償還（9/29 已撥款入帳）',
+     '     （第一批 200 萬已提出還款申請、待入帳；餘 300 萬待執行）利息成本 4% → 2.65%']
+    if pl > 0 else
+    ['✅ 保單借貸已全數清償（2026-09-29＋10-01，餘額 0）→ 質押 590 萬完成置換，利息成本 4% → 2.65%']
+)
 B(s, [
-    f'🔴 保單借貸 {pl/10000:,.0f} 萬 @4%+ → 質押 590 萬@2.65% 償還（9/29 已撥款入帳）',
-    '     （第一批 200 萬已提出還款申請、待入帳；餘 300 萬待執行）利息成本 4% → 2.65%',
+    *_pl_li,
     '',
     '🟡 洲際W 1,312 萬（600+700）@2.5% 9/25 到期 → 不急，最差續約 2.5%',
     '     國泰備案主軸 ≤2.5%+3 年寬限+全額代償；築巢 2.185%（台電專屬）優先洽詢',

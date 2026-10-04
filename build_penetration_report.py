@@ -2,7 +2,8 @@
 """Generate detailed penetration report."""
 import json
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
-from sot_targets import bucket_targets, defensive_caliber  # INC-201：桶目標／防守合併口徑單一入口
+from sot_targets import (bucket_targets, defensive_caliber,  # INC-201：桶目標／防守合併口徑單一入口
+                         total_cash, insurance_total, securities_total, funds_total)  # 2026-10-04 P0 假真值退路清除
 from datetime import date, datetime
 from pathlib import Path
 
@@ -10,10 +11,12 @@ BASE = Path(__file__).resolve().parent
 snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
 from update_all import calc_penetration
 
-cash = snap.get("cash_total", 3119158)
-ins = snap.get("insurance_current_value", 9802872)
-sec = snap.get("securities_total_market_value", 2597360)
-funds = snap.get("fund_market_value", 793434)
+# 2026-10-04 P0 假真值退路清除：原 .get(key, 3,119,158／9,802,872／2,597,360／793,434)
+# 會在 snapshot 缺鍵時靜默印出數月前舊真值；改走 sot_targets 單一 accessor（缺值 raise）。
+cash = total_cash(snap)
+ins = insurance_total(snap)
+sec = securities_total(snap)
+funds = funds_total(snap)
 p = calc_penetration(cash, ins, sec, funds, snap=snap)
 tw_v, us_v, def_v, bond_v, cash_pv = p["台股市值型成長"], p["美股市值型成長"], p["防守型配息"], p["債券"], p["現金/安全網"]
 us_tech_v, us_nt_v = p.get("美股市值型成長_科技", 0), p.get("美股市值型成長_非科技", 0)

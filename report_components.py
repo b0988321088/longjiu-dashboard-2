@@ -56,7 +56,7 @@ def render_coverage(snap: dict, mode: str = "passive") -> str:
     expense = sot_monthly_expense(snap)
     rent = snap.get("rent_monthly_total", 80100) or 0
     if mode == "full":
-        income = (snap.get("monthly_income", 214685) or 0)
+        income = sot_monthly_income(snap)  # 2026-10-04 P0：原 fallback 214,685 為舊口徑假真值
         label = "含薪水常態"
     else:
         income = (snap.get("dividend_month_expected") or 100000) + rent

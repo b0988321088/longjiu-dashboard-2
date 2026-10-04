@@ -13,6 +13,7 @@ except Exception:      # 匯入失敗時的保底（口徑同）
     def _cg_mo(*a, **k): return 26000
     def _yf_wan(*a, **k): return "1,304"
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
+from sot_targets import real_estate_value  # 2026-10-04 P0 假真值退路清除（不動產單一入口）
 
 REPO = os.path.dirname(os.path.abspath(__file__))
 today = datetime.date.today().strftime("%Y-%m-%d")
@@ -21,7 +22,7 @@ s = json.load(open(os.path.join(REPO, "snapshot.json"), encoding="utf-8"))
 us = json.load(open(os.path.join(REPO, "us30y_state.json"), encoding="utf-8"))
 d = json.load(open(os.path.join(REPO, "dashboard_decisions.json"), encoding="utf-8"))
 
-TA = s["total_assets"]; TL = s["total_liabilities"]; RE = s.get("real_estate_value", 34017063)
+TA = s["total_assets"]; TL = s["total_liabilities"]; RE = real_estate_value(s)  # 2026-10-04 P0：原 fallback 34,017,063 為假真值
 INS = s["insurance_current_value"]; SEC = s["securities_total_market_value"]; FUND = s["fund_market_value"]
 CASH = s["cash_total"]; RENT = s.get("rent_monthly_total", 80100)
 # 2026-09-29 CIO 審查必修3：Runway 一律用可動用現金（扣質押撥款指定清償款），

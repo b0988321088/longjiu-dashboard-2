@@ -599,6 +599,83 @@ def allowable_cash(snap: dict) -> float:
                    "（2026-10-02 裁示：不得改用穿透桶『現金/安全網』）")
 
 
+# ═══════════════════════════════════════════════════════════════
+# 總額級真值 accessor（2026-10-04 P0 假真值退路清除）
+#
+# 為什麼要有這層：這 6 個總額在全 repo 有 14 處 `.get(key, <大額常數>)` 假真值退路
+# （不動產 34,017,063／34,000,000、總負債 22,000,000、保單 9,802,872／9,876,282、
+# 現金 4,483,408／3,614,169／3,119,158、證券 2,597,360、基金 793,434／765,991）。
+# fallback 平時不觸發，但 snapshot 一旦缺鍵／壞檔，報表會**靜默印出數個月前的舊真值**，
+# 且沒有任何告警（與 INC-201「消費端悄悄落回硬編碼」、INC-278「missing → 假真值」同病）。
+#
+# 規則（使用者 2026-10-04 裁示）：
+#   ① 同義鍵清單只准有一份＝asset_sync.SYNONYM_GROUPS（沿用，禁在此複製一份）。
+#   ② 缺值一律 raise（fail-closed），**禁止** or 0、get(key, 0)、新常數兜底。
+#   ③ 呼叫端不得再自行 `.get(..., 常數)`——一律走本層。
+# ═══════════════════════════════════════════════════════════════
+
+def _synonym_truth(snap: dict, group: str, label: str) -> float:
+    """同義鍵群組取真值；群組內全部無值 → raise（不以任何常數頂替）。"""
+    from asset_sync import SYNONYM_GROUPS
+    keys = SYNONYM_GROUPS[group]
+    for _k in keys:
+        _v = (snap or {}).get(_k)
+        if isinstance(_v, (int, float)) and not isinstance(_v, bool):
+            return float(_v)
+    raise KeyError(f"snapshot 缺{label}（同義鍵 {'／'.join(keys)} 皆無值）→ 拒絕以寫死常數頂替"
+                   "（2026-10-04 P0 假真值退路清除；詳見 sot_targets._synonym_truth docstring）")
+
+
+def total_cash(snap: dict) -> float:
+    """總現金真值（含指定用途款）。可動用口徑請用 allowable_cash()／available_cash()。"""
+    return _synonym_truth(snap, "cash_total", "總現金")
+
+
+def total_liabilities(snap: dict) -> float:
+    """總負債真值：liabilities_build_up.total（明細推導，canonical）→ total_liabilities（相容鍵）→ raise。"""
+    _lb = ((snap or {}).get("liabilities_build_up") or {}).get("total")
+    if isinstance(_lb, (int, float)) and not isinstance(_lb, bool):
+        return float(_lb)
+    return _synonym_truth(snap, "total_liabilities", "總負債")
+
+
+def real_estate_value(snap: dict) -> float:
+    """不動產價值真值（real_estate_value／real_estate 同義）。"""
+    return _synonym_truth(snap, "real_estate", "不動產價值")
+
+
+def insurance_total(snap: dict) -> float:
+    """保單總現值真值（insurance_total／insurance_current_value／insurance 同義）。"""
+    return _synonym_truth(snap, "insurance_total", "保單總現值")
+
+
+def securities_total(snap: dict) -> float:
+    """證券總市值真值（securities_total_market_value 為 canonical；其餘為同義鍵）。"""
+    return _synonym_truth(snap, "securities_total", "證券總市值")
+
+
+def funds_total(snap: dict) -> float:
+    """基金總市值真值（fund_market／fund_market_value／funds_total／funds 同義）。"""
+    return _synonym_truth(snap, "funds_total", "基金總市值")
+
+
+def policy_pledge_loan(snap: dict) -> float:
+    """保單借貸餘額真值：liabilities_build_up.保單借貸（明細推導）→ policy_pledge_loan（相容鍵）→ raise。
+
+    2026-10-04 P0 假真值案例：build_final.py 原 `.get('policy_pledge_loan', 4000000)`
+    會在 snapshot 缺鍵時，把「已於 2026-09-29＋10-01 全數清償」的 400 萬保單借貸復活。
+    這是負債假真值——比顯示 0 更危險，因為它讓已消滅的債務看起來還在。
+    """
+    _lb = ((snap or {}).get("liabilities_build_up") or {}).get("保單借貸")
+    if isinstance(_lb, (int, float)) and not isinstance(_lb, bool):
+        return float(_lb)
+    _v = (snap or {}).get("policy_pledge_loan")
+    if isinstance(_v, (int, float)) and not isinstance(_v, bool):
+        return float(_v)
+    raise KeyError("snapshot 缺保單借貸餘額（liabilities_build_up.保單借貸／policy_pledge_loan）→ "
+                   "拒絕以 4,000,000 舊負債頂替（2026-10-04 P0 假真值退路清除）")
+
+
 def cash_floor(snap: dict) -> float:
     """現金硬底線（70 萬）：cash_floor_rule.cash_floor → thresholds.現金_twd.生活底線。"""
     v = ((snap or {}).get("cash_floor_rule") or {}).get("cash_floor")

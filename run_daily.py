@@ -31,7 +31,7 @@ except Exception:
 
 BASE = Path(__file__).parent.resolve()
 import json as _json
-from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
+from sot_targets import sot_monthly_expense, sot_monthly_income, total_cash  # INC-270 月支出／月收入單一入口＋2026-10-04 P0 總現金
 try:
     _snap_date = _json.load(open(BASE / "snapshot.json", encoding="utf-8")).get("date") or date.today().isoformat()
 except Exception:
@@ -282,7 +282,7 @@ def calibrate_sources() -> dict:
         "insurance_current_value": s_insurance,
         "funds": snap.get("fund_market_value", snap.get("funds_total", 0)) or 0,
         "funds_cathay": snap.get("funds_cathay", 0) or 0,
-        "cash_total": snap.get("cash_total", 3_614_169),
+        "cash_total": total_cash(snap),  # 2026-10-04 P0：原 fallback 3,614,169 為假真值
         "rent_breakdown": snap.get("rent_breakdown", {}),
         "rent_received_records": snap.get("rent_received_records", {}),
         "dividend_records": _div_records,
@@ -1408,7 +1408,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
     _us_v = _cat2("us_equity")
     _def_v = _cat2("defensive")
     _bond_v = _cat2("bond")
-    _cash_v = tv.get('cash', tv.get('cash_total', 4_483_408))
+    _cash_v = total_cash(tv)  # 2026-10-04 P0：原 fallback 4,483,408 為假真值
     # 2026-09-29 使用者核准：指定用途現金（質押撥款待清償）不列入配置口徑（桶位/建議部位）
     from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
     _cash_v = max(0.0, float(_cash_v) - _rst_fn(tv))

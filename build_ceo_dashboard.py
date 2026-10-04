@@ -4,13 +4,14 @@
 若 JSON 不存在 → 從 snapshot 產生基本版（KPI+穿透），策略段落留待 cron 補
 """
 import json, datetime, os, sqlite3, re
+from sot_targets import real_estate_value  # 2026-10-04 P0 假真值退路清除（不動產單一入口）
 
 REPO = os.path.dirname(os.path.abspath(__file__))
 # 2026-09-13：支援指定日期補產（python build_ceo_dashboard.py 2026-09-11）
 import sys as _sys
 today = _sys.argv[1] if len(_sys.argv) > 1 else datetime.date.today().strftime("%Y-%m-%d")
 s = json.load(open(os.path.join(REPO, "snapshot.json"), encoding="utf-8"))
-TA = s["total_assets"]; TL = s["total_liabilities"]; RE = s.get("real_estate_value", 34017063)
+TA = s["total_assets"]; TL = s["total_liabilities"]; RE = real_estate_value(s)  # 2026-10-04 P0：原 fallback 34,017,063 為假真值
 CASH = s["cash_total"]
 pen = s["penetration"]["actual_pct"]; twd = s["penetration"]["actual_twd"]
 pen_key = {"台股市值型成長": "台股", "美股市值型成長": "美股", "防守型配息": "防守", "債券": "債券", "現金/安全網": "現金"}

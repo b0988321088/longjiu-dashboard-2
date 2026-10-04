@@ -20,6 +20,11 @@ SYNONYM_GROUPS = {
     # 基金總值（5 個 key + 國泰基金市值 8/24 新增）
     "funds_total": ["fund_market", "fund_market_value", "funds_total", "fund_total_market_value", "funds"],
     "funds_cathay": ["funds_cathay", "funds_cathay_market_value"],
+    # 總負債／不動產（2026-10-04 P0 假真值退路清除）：
+    # sot_targets 的讀取層 accessor 直接沿用本表，避免「第二份同義鍵清單」。
+    # 兩組皆為單一語意欄；不動產 34,017,063 原有多處 .get(key, 34017063) 假真值退路。
+    "total_liabilities": ["total_liabilities"],
+    "real_estate": ["real_estate_value", "real_estate"],
     # 現金總值（4 個 key）
     "cash_total": ["cash_total", "cash", "real_liquid_assets", "bank_assets_moneybook"],
     # 安聯 A+B

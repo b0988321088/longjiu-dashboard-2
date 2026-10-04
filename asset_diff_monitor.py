@@ -16,7 +16,8 @@ from typing import Any
 import requests
 from dotenv import load_dotenv
 
-from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
+from sot_targets import (sot_monthly_expense, sot_monthly_income,  # INC-270 月支出／月收入單一入口
+                         total_liabilities, real_estate_value)  # 2026-10-04 P0 假真值退路清除
 
 # ---------- env ----------
 project_env = Path(__file__).resolve().parent / ".env"
@@ -267,9 +268,9 @@ def extract_snapshot(snap: dict) -> dict:
                     # 從 snapshot.json 補基金明細
                     "_fund_breakdown": snap.get("funds_breakdown", {}),
                     "fund_breakdown_display": snap.get("funds_breakdown", {}),
-                    "real_estate": float(
-                        _ar.get("real_estate", 34_000_000)
-                    ),  # Updated default for real_estate
+                    # 2026-10-04 P0：原 fallback 34,000,000 為假真值。DB 該列缺值 → 回讀
+                    # snapshot 真值；兩者皆無 → raise（不再以 3,400 萬頂替）。
+                    "real_estate": float(_ar.get("real_estate") or real_estate_value(snap)),
                     "other": 0.0,
                     "cash": float(snap.get("cash_total", _ar.get("cash_total", 0))),
                     "bonds": float(_ar.get("bonds", 0)),
@@ -295,7 +296,7 @@ def extract_snapshot(snap: dict) -> dict:
     
     # fallback 到 snapshot.json（原有邏輯）
     total_assets = snap.get("total_assets", 0)
-    total_liab = snap.get("total_liabilities", 22_000_000)
+    total_liab = total_liabilities(snap)  # 2026-10-04 P0：原 fallback 22,000,000 為假真值
     net_worth = snap.get("net_worth", total_assets - total_liab)
 
     securities = snap.get("securities_total_market_value", snap.get("securities_total", 0))
@@ -396,7 +397,9 @@ def load_history(snap=None) -> dict:
                 "insurance_current": float(r.get("insurance", 0)),
                 "insurance_total": float(r.get("insurance", 0)),
                 "fund_market": float(r.get("funds", 0)),
-                "real_estate": float(r.get("real_estate", 34_000_000)),
+                # 2026-10-04 P0：原 fallback 34,000,000 為假真值。歷史列缺值 → JSON 存檔 → snapshot 真值。
+                "real_estate": float(r.get("real_estate") or _json_hist.get(d, {}).get("real_estate")
+                                     or real_estate_value(snap)),
                 "cash": float(r.get("cash_total", 0)),
                 "bonds": float(r.get("bonds", 0)),
                 "other": 0.0,
@@ -968,11 +971,20 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
                 f"<tr style='padding-left:18px;font-size:13px;color:#6e6e73'>"
                 f"<td>　{_k}</td><td class='num'>{_v:,.0f}</td><td>TWD</td></tr>"
             )
+    # 2026-10-04 P0 假真值退路清除：原 f-string `ex.get('fund_market', 765_991)` 會在
+    # ex 缺 fund_market 時靜默印出數月前舊真值 → 改為明確缺值顯示＋告警（不再以常數頂替）。
+    _fund_total_v = ex.get("fund_market")
+    if isinstance(_fund_total_v, (int, float)) and not isinstance(_fund_total_v, bool):
+        _fund_total_disp = f"{_fund_total_v:,.0f}"
+    else:
+        print("[WARN] 基金總值缺真值（ex.fund_market）→ 顯示「缺真值」，不以 765,991 頂替"
+              "（2026-10-04 P0 假真值退路清除）")
+        _fund_total_disp = "—（缺真值）"
     fund_card = (
         '<div class="card"><h2>📊 基金部位</h2>'
         '<div class="table-wrap"><table><thead><tr><th>基金名稱</th><th class=\'num\'>市值</th><th>幣別</th></tr></thead><tbody>'
         + fund_detail_rows
-        + f"<tr style='font-weight:600;border-top:2px solid #3b82f6'><td>基金總值（APP帳戶總覽）</td><td class='num'>{ex.get('fund_market', 765_991):,.0f}</td><td>TWD</td></tr>"
+        + f"<tr style='font-weight:600;border-top:2px solid #3b82f6'><td>基金總值（APP帳戶總覽）</td><td class='num'>{_fund_total_disp}</td><td>TWD</td></tr>"
         + "</tbody></table></div></div>"
     )
 
@@ -1261,7 +1273,7 @@ def build_telegram_text(rows: list[dict], snap: dict) -> str:
 
     ex = extract_snapshot(snap)
     total_no_re = ex['total_assets']  # 2026-08-24 修正：資產佔比用不含不動產總資產（與資產變化表/日報一致）
-    total_with_re = total_no_re + (snap.get('real_estate_value', 34_017_063) or 34_017_063)  # 負債率主顯示 = 含不動產（雙軌制）
+    total_with_re = total_no_re + real_estate_value(snap)  # 負債率主顯示 = 含不動產（雙軌制）｜2026-10-04 P0 假真值退路清除
     alloc = (
         f"資產佔比：證券 {_pct(ex['securities_market'], total_no_re)} / "
         f"保單 {_pct(ex['insurance_current'], total_no_re)} / "

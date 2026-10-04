@@ -14,6 +14,7 @@ import os
 import re
 from datetime import date
 from pathlib import Path
+from sot_targets import insurance_total  # 2026-10-04 P0 假真值退路清除（保單總現值單一入口）
 
 BASE = Path(__file__).parent.resolve()
 HUNTER_DIR = BASE / "hunter_logs"
@@ -143,7 +144,7 @@ if __name__ == "__main__":
 
 def render_buffett_analysis(tv: dict, market: dict) -> str:
     """根據最新 market 情報產生巴菲特視角建議"""
-    allianz = tv.get("insurance_total", 9_876_282)
+    allianz = insurance_total(tv)  # 2026-10-04 P0：原 fallback 9,876,282 為假真值
     monthly_dividend = 69_044
 
     buffett_md = f"""# 巴菲特視角分析（{tv.get('date', date.today().isoformat())}）
