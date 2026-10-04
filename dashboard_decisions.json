@@ -10126,6 +10126,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261004221411-1089",
+    "timestamp": "2026-10-04T22:14:11.076447+08:00",
+    "agent": "Hermes Agent",
+    "task": "PI 專業投資人｜正式建檔（已完成／已核准）＋ 質押四概念分離",
+    "summary": "使用者 2026-10-04 提供真實狀態：國泰世華 PI 資格已核准（依此取得質押額度、9/21 對保、9/29 撥款 590 萬@2.65%）。以唯一寫入者 sync_professional_investor.py 建檔：application_status=已完成／approval_status=已核准（財力 proxy 26,791,534 未達 30,000,000，與資格軌分離，不影響核准）；廢除容器內舊 schema（pi_status／applied_date／approved_date／expected_approval／deployment_plan）；寫入者修正為白名單過濾（原印『將移除』卻未移除）；pi_record 改分軌驗證。質押四概念分離：質押品市值／實際動用額／利率／撥款日為真值，銀行核定授信額度未取得文件 → null，禁由質押品價值反推（撤回 12M−5.9M=6.1M）。新增質押 accessor；修回歸：deployment_plan 廢除後 debt_restructure_tracker §4 退化成『0% 尚未質押 🟢』假綠燈並復活 7 月寫死字串 → 改讀 accessor，LTV 現算 50.1%。E2E 2×2 雙態對照＋突變自測 27/27、驗證器 42/42。三輪 CIO-DeepSeek-Pro 獨立唯讀審查 APPROVE 0 required_fixes。commit 49ccbcf3（程式）／b0d63771（資料）已推 clean-main。",
+    "status": "CLOSED/DEPLOYED/VERIFIED",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-04T11:39:48.740349"
