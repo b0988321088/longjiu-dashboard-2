@@ -1,0 +1,20 @@
+# 未被引用的 .py 清單（唯讀報告，未刪除） 產生於 2026-10-05 03:00
+# 判定來源：cron jobs.json（含 agent prompt）＋ repo 程式/文件 ＋ 技能庫 SKILL.md ＋ hermes scripts
+# 零引用 ≠ 沒用：可能是手動工具、或 agent 憑慣例呼叫的腳本。請人工複核後再刪。
+
+## 完全零引用（9 支）
+  - apply_tw_stocks_20260929.py
+  - eval_00983D.py
+  - fix_allianz_breakdown_0929.py
+  - fix_pledge_rate2_0929.py
+  - fix_pledge_rate_0929.py
+  - fix_review_af7af243.py
+  - fix_selftest_dynamic.py
+  - parse_mb_20260929.py
+  - t_us30y.py
+
+## 僅 1 次引用（4 支，疑似弱引用／只有文件提到）
+  - annotate_pledge_facts_20261004.py
+  - apply_truth_20260929.py
+  - build_adaptive.py
+  - old_weekly_clean.py
