@@ -900,6 +900,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     try:
         _wl = json.loads((Path(__file__).resolve().parent / "work_log.json").read_text(encoding="utf-8"))
         if isinstance(_wl, list) and _wl:
+            from report_components import band_filter as _wl_band   # INC-284：範圍內＝完全靜默（裁示②）
             def _wl_esc(_s: str) -> str:
                 return _s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             def _wl_row(_d: dict) -> str:
@@ -907,12 +908,13 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                 _ic = "📋" if _c == "應辦" else ("✅" if _c == "完成" else "•")
                 _cl = "#b45309" if _c == "應辦" else ("#059669" if _c == "完成" else "#64748b")
                 _dh = ""
-                _de = str(_d.get("detail", "") or "").strip()
+                _de = _wl_band(str(_d.get("detail", "") or "")).strip()
+                _it = _wl_band(str(_d.get("item", "") or ""))
                 if _de:
                     _dh = f'<div style="font-size:12px;color:#6e6e73;margin:2px 0 4px">{_wl_esc(_de)}</div>'
                 return (f'<div style="border-left:3px solid {_cl};padding:2px 0 2px 10px;margin:6px 0">'
                         f'<span style="color:{_cl};font-weight:800">{_ic}</span> '
-                        f'<span style="color:#1d1d1f;font-weight:600">{_wl_esc(str(_d.get("item", "")))}</span>{_dh}</div>')
+                        f'<span style="color:#1d1d1f;font-weight:600">{_wl_esc(_it)}</span>{_dh}</div>')
             _wl_todos = [d for d in _wl if d.get("category") == "應辦"]
             _wl_dones = [d for d in _wl if d.get("category") == "完成"]
             _wl_parts = []
