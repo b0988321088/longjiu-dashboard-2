@@ -9996,6 +9996,16 @@
       "status": "completed",
       "source": "auto"
     }
+,
+  {
+    "id": "mem-20261004114539-1076",
+    "timestamp": "2026-10-04T11:45:39.425011+08:00",
+    "agent": "Hermes",
+    "task": "2026-09-30「日誌／記憶嵌浮動金額」閉環（卡片 CLOSED）",
+    "summary": "裁決：可標記 CLOSED。寫入端已去金額化+指向真值來源；連續觀察期間三閘門（stale/cross/caliber）未因日誌行告警；pending 卡以狀態機標 已完成（保留 status_raw）；歷史 dashboard_decisions 列不清洗（具歷史語義、不被任何閘門引用）。work_log #263 已於 10/4 改『應辦→修正』。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-04T11:39:48.740349"
