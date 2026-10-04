@@ -498,5 +498,23 @@
     "external_owner": "凱基證券（抽籤結果）",
     "status_raw": "pending",
     "is_informational": false
+  },
+  {
+    "id": "PEND-20261004-05",
+    "date": "2026-10-04",
+    "title": "decision_auto_close.py 名為掃描、實則改寫 pending_decisions.json（save_json 吃掉檔尾換行 → 每日假 diff）",
+    "desc": "2026-10-04 由收工檢查抓到（第 ⑤ 遠端同步後的『未提交』項）。根因：decision_auto_close.py:18 save_json() 以 json.dumps(...) 直接寫回、未保留檔尾換行，且**無變更也照寫**——一個看起來只讀的掃描器因此每次執行都改動檔案。放大因素：morning_batch.py:65 每天 08:05 呼叫它 → 每日產生一筆 spurious diff，長期被晚報的自動 commit 順手吸收，所以從未被發現。影響：污染 git 歷史（每筆差異無語意）、讓『工作樹是否乾淨』失去訊號、並可能讓收工檢查誤報未提交。修法（未施工，待核准）：save_json 保留檔尾換行；且**內容無變更時不寫檔**（真正的 idempotent scanner）。同時檢討：本檔應否改為只讀（寫入交給單一 writer）。範圍：不含 pending 語意變更、不含 schema 變更。",
+    "priority": "P2",
+    "status": "待處理",
+    "source": "2026-10-04 收工檢查實測發現",
+    "due_date": null,
+    "due_date_source": "未提供",
+    "needs_due_date": false,
+    "last_confirmed": null,
+    "last_confirmed_source": "未提供",
+    "owner": "CEO",
+    "external_owner": null,
+    "status_raw": "pending",
+    "is_informational": false
   }
 ]
