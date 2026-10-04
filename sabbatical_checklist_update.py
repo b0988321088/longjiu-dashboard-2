@@ -8,7 +8,8 @@
 import json, sys, datetime
 from pathlib import Path
 import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
-from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
+from sot_targets import (sot_monthly_expense, sot_monthly_income,  # INC-270 月支出／月收入單一入口
+                         cash_floor as _cf_fn)  # 2026-10-04 P0延伸：現金底線單一入口
 
 BASE = Path(__file__).resolve().parent
 SNAP = BASE / "snapshot.json"
@@ -18,10 +19,8 @@ RUNWAY_GATE_DAYS = 540        # 留停門檻：無薪跑道 ≥540 天（≈18 �
 ACCEL_GATE_PCT = 150          # 加碼級（理想值·非門檻）：保守覆蓋 ≥150%
 
 
-def _cash_floor(snap):
-    """現金底線單一來源＝snapshot.thresholds_2026_0915.現金_twd.合計底線（9/27 裁示＝70 萬）。"""
-    thr = ((snap.get("thresholds_2026_0915") or {}).get("現金_twd") or {})
-    return float(thr.get("合計底線") or (float(thr.get("生活底線") or 0) + float(thr.get("追繳緩衝") or 0)) or 700000)
+# 2026-10-04 P0 延伸：原本地 _cash_floor()（＝第二份 accessor，自帶 700000 fallback）已移除，
+# 全部改走 sot_targets.cash_floor 單一入口（缺值 fail-closed）。
 
 
 def targets(exp, cash_floor):
@@ -104,7 +103,7 @@ def compute_kpis(snap):
     # 2026-09-29 CIO major：留停 A/B/C 級驗收的現金水位必須是可動用（扣指定用途款），否則 fail-open
     from sot_targets import restricted_cash as _rst_fn
     cash = max(0.0, float(snap.get("cash_total", 0) or 0) - _rst_fn(snap))
-    cash_floor = _cash_floor(snap)
+    cash_floor = _cf_fn(snap)
     # 2026-09-28 使用者裁示：房貸月付已計入月支出（monthly_fixed_expense 的房貸項），
     # 在房租端再扣一次＝重複計算；且常態房租 80,100 是兩間房的合計，不應拿去減
     # 單一間房的貸款。故房租淨現金流 ＝ 常態房租收入本身（房租無直接成本項）。
@@ -154,7 +153,7 @@ def sync_acceptance_block(snap, kpis, month):
     gap_stress = round(_sc["stress"]["gap"])
     _runway = kpis.get("FI 跑道天數")
     _runway_txt = _pcal.runway_text(_runway)
-    _floor = float(kpis.get("現金底線") or _cash_floor(snap))
+    _floor = float(kpis.get("現金底線") or _cf_fn(snap))
     _cash = float(kpis.get("現金水位") or 0)
     if "🟢" in kpis["紅綠燈"]:
         verdict = (f"🟢 已達留停門檻（保守 {con}% ≥100%、壓力 {stress}% ≥100%、"
@@ -236,7 +235,7 @@ def main():
     kpis = compute_kpis(snap)
     # 2026-09-28：目標改由 targets() 依當期支出與現金底線動態生成（不寫死金額）
     cl["目標_2027_02"] = targets(kpis["每月必要生活費"],
-                                 kpis.get("現金底線") or _cash_floor(snap))
+                                 kpis.get("現金底線") or _cf_fn(snap))
     # 保留既有 職涯收入/工時（真值日手動帶入，勿覆寫）
     prev = cl["記錄"].get(month, {})
     kpis["第二職涯收入"] = prev.get("第二職涯收入", 0)
@@ -252,7 +251,7 @@ def main():
     cl["趨勢_近3月"] = trend
     # 2027/2 財務驗收等級（權重：當月 < 趨勢 < 壓力 < 現金水位）
     lvl = acceptance_level(kpis["生活費覆蓋率"], kpis["壓力情境覆蓋率"], kpis.get("FI 跑道天數"),
-                           kpis["現金水位"], kpis.get("現金底線") or _cash_floor(snap),
+                           kpis["現金水位"], kpis.get("現金底線") or _cf_fn(snap),
                            months, trend)
     cl["驗收等級"] = {"月份": month, "等級": lvl,
                       "門檻": "保守≥100% ＋ 壓力≥100% ＋ 跑道≥540天 ＋ 現金≥底線 ＋（3月趨勢）",

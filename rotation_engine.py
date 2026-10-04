@@ -9,7 +9,8 @@
 import json
 from datetime import date, datetime
 from pathlib import Path
-from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
+from sot_targets import (sot_monthly_expense, sot_monthly_income,  # INC-270 月支出／月收入單一入口
+                         cash_floor as _cf_fn)  # 2026-10-04 P0延伸：現金底線單一入口
 
 BASE = Path(__file__).parent.resolve()
 TODAY = date.today().isoformat()
@@ -199,7 +200,8 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
     cash = max(0.0, float(snap.get("cash_total") or 0) - _rst_fn(snap))
     surplus = sot_monthly_income(snap) - sot_monthly_expense(snap)
     # 2026-09-29 CIO minor：可動用 < 底線時不得把月盈餘算成乾粉（否則「乾粉 0 → 不進場」分支永不觸發）
-    _dry_now = max(cash - snap.get("cash_floor", 700000), 0)
+    _cf_v = _cf_fn(snap)  # 2026-10-04 P0延伸：現金底線單一入口（原 .get("cash_floor", 700000)）
+    _dry_now = max(cash - _cf_v, 0)
     dry = _dry_now + (surplus * 0.5 if _dry_now > 0 else 0)  # 保守可動用（底線讀 snapshot）
     plan = []
     
@@ -248,7 +250,7 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
             "產業": "現金保留",
             "標的": "台幣活存/MMF",
             "金額": _keep,
-            "節奏": f"守住現金底線 {snap.get('cash_floor', 700000):,}；{_dcm_note}",
+            "節奏": f"守住現金底線 {_cf_v:,}；{_dcm_note}",
             "理由": "乾粉餘額緩衝（底線制，不借錢囤現金）",
         })
     else:
@@ -256,7 +258,7 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
             "產業": "現金保留",
             "標的": "不進場（乾粉 0）",
             "金額": 0,
-            "節奏": f"可動用現金 ≤ 底線 {snap.get('cash_floor', 700000):,} → 停止新增買入、優先補足現金",
+            "節奏": f"可動用現金 ≤ 底線 {_cf_v:,} → 停止新增買入、優先補足現金",
             "理由": "底線制：乾粉為 0 時不配置新倉（指定用途款不得當乾粉）",
         })
     return plan

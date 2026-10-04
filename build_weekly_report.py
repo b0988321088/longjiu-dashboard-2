@@ -40,7 +40,8 @@ def main():
     _rent = _pcs["rent_norm"]
     _cov_act = _pcs["act"]["coverage"]
     _cw = ((snap.get("thresholds_2026_0915") or {}).get("現金_twd") or {})
-    _cf = float(_cw.get("合計底線") or _cw.get("生活底線") or 700000)   # 現金底線（9/27 單一口徑）
+    from sot_targets import cash_floor as _cf_fn   # 2026-10-04 P0延伸：現金底線單一入口
+    _cf = _cf_fn(snap)   # 現金底線（9/27 單一口徑；原 fallback 700000 已移除）
     _us_cap = float(((snap.get("thresholds_2026_0915") or {}).get("單桶硬上限_pct") or {}).get("美股市值型", 40))
     us30y = st.get("last_rate")
     mode = "防禦（A）" if st.get("mode") == "A" else "布局（B）" if st.get("mode") == "B" else "未知"

@@ -82,7 +82,10 @@ def _dynamic_amount(snap: dict, asset: str, ladder: dict, dev: float, total: flo
         return {"金額": round(abs(dev) / 100 * total), "說明": "合併未足，偏離×總資產"}
     # 現金：底線制 → 超額即待部署（金額 = 超額部分）
     if asset == "現金/安全網":
-        _floor = snap.get("cash_floor_rule", {}).get("floor", 700000) if isinstance(snap.get("cash_floor_rule"), dict) else 700000
+        # 2026-10-04 P0 延伸：原讀 cash_floor_rule.floor，但 snapshot 實鍵是 cash_floor
+        # （無 floor 鍵）→ 恆落 700000 fallback，鍵名漂移被 fallback 永久掩蓋（INC-278 同型）。
+        from sot_targets import cash_floor as _cf_fn   # 現金底線單一入口
+        _floor = _cf_fn(snap)
         # 2026-09-29 使用者核准：超額＝可動用現金（扣指定清償款）− 底線；不得把還債款當可部署資金
         from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
         _rst = _rst_fn(snap)

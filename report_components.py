@@ -15,7 +15,8 @@
 import json
 from datetime import date, timedelta
 from pathlib import Path
-from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
+from sot_targets import (sot_monthly_expense, sot_monthly_income,  # INC-270 月支出／月收入單一入口
+                         cash_floor as _cf_fn)  # 2026-10-04 P0延伸：現金底線單一入口
 
 
 # ═══════════════ 穿透五桶卡 ═══════════════
@@ -162,7 +163,7 @@ def render_health_score(snap: dict) -> dict:
     # 2026-09-29 CIO major：健康度現金維度一律看可動用（扣質押撥款指定清償款），否則評分端 fail-open
     from sot_targets import restricted_cash as _rst_fn
     cash = max(0.0, _num(snap.get("cash_total", 0), 0) - _rst_fn(snap))
-    floor = _num(snap.get("cash_floor_rule", {}).get("cash_floor", 700000), 700000)
+    floor = _cf_fn(snap)  # 2026-10-04 P0延伸：現金底線單一入口（原雙重 700,000 fallback）
     cash_score = 100 if cash >= floor else 0
 
     # LTV（2026-09-05 定版口徑1：質押借款/擔保品現值 — 讀 snapshot 真值，移除寫死 20.4）

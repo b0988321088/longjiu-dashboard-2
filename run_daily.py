@@ -31,7 +31,7 @@ except Exception:
 
 BASE = Path(__file__).parent.resolve()
 import json as _json
-from sot_targets import sot_monthly_expense, sot_monthly_income, total_cash  # INC-270 月支出／月收入單一入口＋2026-10-04 P0 總現金
+from sot_targets import sot_monthly_expense, sot_monthly_income, total_cash, cash_floor as _cf_fn  # INC-270 月支出／月收入＋2026-10-04 P0 總現金／現金底線單一入口
 try:
     _snap_date = _json.load(open(BASE / "snapshot.json", encoding="utf-8")).get("date") or date.today().isoformat()
 except Exception:
@@ -1292,7 +1292,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _dbs_rst = _rst_fn(tv if "restricted_cash" in tv else _dbs_snap)
     _dbs_avail = max(0.0, _dbs_cash - _dbs_rst)
     # 2026-09-29 CIO minor：判定門檻＝現金底線（SoT），不再寫死 30,000
-    _dbs_floor = float(((tv.get("thresholds_2026_0915") or {}).get("現金_twd") or {}).get("合計底線") or 700000)
+    _dbs_floor = _cf_fn(tv if "cash_floor_rule" in tv else _dbs_snap)  # 2026-10-04 P0延伸：現金底線單一入口（原 fallback 700000）
     from sot_targets import restricted_breakdown as _rbk_fn   # 單一來源（2026-09-30）
     _dbs_bk = _rbk_fn(tv if "restricted_cash" in tv else _dbs_snap)
     _dbs_str = (f"可動用流動資金 {_dbs_avail:,.0f} TWD（Moneybook 真值 {_dbs_cash:,.0f}"
@@ -1987,9 +1987,11 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 from sot_targets import available_cash as _ac_fn
                 _cash_all = float(_snap_now.get("cash_total") or 0)
                 _cash_now = _ac_fn(_snap_now)
+                _floor_now = _cf_fn(_snap_now)   # 2026-10-04 P0延伸：現金底線單一入口
                 _philosophy_items.append(
+                    # 註：句內文字「≥700,000」為純顯示字串 → 依 2026-10-04 裁示留 P2（與動態判定並存）
                     f"現金底線 可動用 {_cash_now:,.0f}（真值 {_cash_all:,.0f}；≥700,000 "
-                    f"{'✅' if _cash_now >= 700000 else '🔴'}）")
+                    f"{'✅' if _cash_now >= _floor_now else '🔴'}）")
                 # 2026-10-01：利差文字改動態（_mc_rate_v 已於槓桿成本段上方由 snapshot 推導，同源）
                 _mc_r_pct = _mc_rate_v * 100
                 _philosophy_items.append(f"利差 {_mc_r_pct:.1f}%→4.8-6% ✅" if (_us30y_now or 0) < 5.50 else "利差 ⚠️")
@@ -2003,7 +2005,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     f"<strong>③ 月度利息流出 vs 現金流入：</strong>流出 {_p1_cost_m+_pledge_cost_m:,.0f} vs 流入（常態配息＋房租）{_income_m:,.0f}＋富達月配 ~{_fid_mdiv:,} = {_income_m+_fid_mdiv:,.0f} — {'✅ 覆蓋' if (_income_m+_fid_mdiv) >= (_p1_cost_m+_pledge_cost_m) else '⚠️ 未覆蓋'}<br/>"
                     f"<strong>④ 到期對照：</strong>負債＝國泰轉貸 {_cg_wan()}萬（3年寬限期）＋質押 {_pledge_loan/10000:,.0f}萬（富達600＋聯博100＋貝萊德B11 500 擔保，基金無到期日）；富達為月配現金流資產，無期限錯配 ✅<br/>"
                     f"<strong>⑤ US30Y：</strong>{_us30y_now:.2f}% — {_fz_txt}<br/>"
-                    f"<strong>⑥ 底線規則（8/13 動態）：</strong>現金≥6個月開支（{700000:,}，月開支 {_exp:,.0f}）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/>"
+                    f"<strong>⑥ 底線規則（8/13 動態）：</strong>現金≥6個月開支（{_floor_now:,.0f}，月開支 {_exp:,.0f}）｜被動實收連2月&lt;常態80% → 停建債｜直債僅美債＋投資級（BBB-以上）、單一發行人≤20%<br/>"
                     f"<strong>⑦ 投資哲學檢核（8/19 定版）：</strong>{_philosophy_html}<br/>"
                     f"<strong>⛔ 資金禁令：</strong>轉貸/質押資金禁止生活消費擴張"
                     f"</div></div>"

@@ -525,7 +525,8 @@ def main():
             return _pen.get(k, d)
         # 2026-09-13：乾粉改「台幣現金 − 底線」現算（原讀 乾粉執行_0926.當前=100,272 是 8/22 口徑；
         # 現金已 800,272 → 857,298、MMF 500萬已轉 B11 → 舊值會與同行現金 % 自相矛盾）
-        _floor_dry = _snap.get("cash_floor", 700000)
+        from sot_targets import cash_floor as _cf_fn   # 2026-10-04 P0延伸：現金底線單一入口（缺值 fail-closed）
+        _floor_dry = _cf_fn(_snap)                      # 原 .get("cash_floor", 700000) 假真值退路已移除
         # 2026-09-29：乾粉改「可動用現金 − 底線」＝ (現金 − 指定用途款) − 底線。
         # 指定用途款（質押撥款待清償 590 萬）不可當乾粉（原式會顯示 602 萬）。
         from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
@@ -633,7 +634,8 @@ def main():
         lines.append(f"⏸️ 債券 {_bond5:.1f}%（目標 {_bond_t}%）→ 等 US30Y 回落凍結線 {_us30_gate}% 以下才新增")
         # ⑤ 現金/乾粉
         _cash5 = _pen5.get("現金/安全網", 0)
-        _floor5 = _snap.get("cash_floor", 700000)
+        from sot_targets import cash_floor as _cf_fn5   # 2026-10-04 P0延伸：現金底線單一入口
+        _floor5 = _cf_fn5(_snap)                        # 原 .get("cash_floor", 700000) 假真值退路已移除
         if _rot5.get("產業") and not _gate:
             lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；乾粉 {_dry/10000:.1f}萬 優先「{_rot5.get('產業','—')}」（{_rot5.get('動作','')}）")
         elif _gate:

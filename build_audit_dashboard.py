@@ -13,7 +13,7 @@ except Exception:      # 匯入失敗時的保底（口徑同）
     def _cg_mo(*a, **k): return 26000
     def _yf_wan(*a, **k): return "1,304"
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
-from sot_targets import real_estate_value  # 2026-10-04 P0 假真值退路清除（不動產單一入口）
+from sot_targets import real_estate_value, cash_floor  # 2026-10-04 P0：不動產／現金底線單一入口
 
 REPO = os.path.dirname(os.path.abspath(__file__))
 today = datetime.date.today().strftime("%Y-%m-%d")
@@ -25,6 +25,7 @@ d = json.load(open(os.path.join(REPO, "dashboard_decisions.json"), encoding="utf
 TA = s["total_assets"]; TL = s["total_liabilities"]; RE = real_estate_value(s)  # 2026-10-04 P0：原 fallback 34,017,063 為假真值
 INS = s["insurance_current_value"]; SEC = s["securities_total_market_value"]; FUND = s["fund_market_value"]
 CASH = s["cash_total"]; RENT = s.get("rent_monthly_total", 80100)
+FLOOR = cash_floor(s)  # 2026-10-04 P0延伸：現金底線單一入口（原紅線判定寫死 700000）
 # 2026-09-29 CIO 審查必修3：Runway 一律用可動用現金（扣質押撥款指定清償款），
 # 並保留真值 CASH 供「純現金」KPI 與資產結構顯示（標籤需註明含指定清償款）。
 from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
@@ -84,7 +85,7 @@ rent_cov_mort = RENT / MORT * 100
 us_light = "🔴" if us30y and us30y >= 5.30 else ("🟡" if us30y and us30y >= 4.8 else "🟢")
 tech = pen.get("美股市值型成長_科技", 0)
 tech_ok = "✅ 紅線下" if tech <= 15 else "⚠️ 超標"
-cash_ok = "✅" if CASH_AVAIL >= 700000 else "🔴"
+cash_ok = "✅" if CASH_AVAIL >= FLOOR else "🔴"  # 2026-10-04 P0延伸：底線改讀單一入口
 # INC-215（2026-09-18 週五審計抓到）：美元曝險原寫死 64.1（8/22 舊值 + 舊 50% 紅線），
 # 與 snapshot.usd_exposure_monitor（9/14 定案 engine 口徑 59.0%、門檻已放寬 60%）脫節 →
 # 一律讀 snapshot，門檻/緩衝/判定全部現算。
@@ -155,7 +156,7 @@ rows = f"""
 {kpi("總資產", f"{TA:,}", "不含不動產", "#1d1d1f")}
 {kpi("淨值", f"{net_worth:,}", "資產+不動產−負債", "#3b82f6")}
 {kpi("負債比", f"{debt_ratio:.1f}%", f"負債 {TL:,}", "#d97706")}
-{kpi("純現金（可動用）", f"{CASH_AVAIL:,}", f"真值 {CASH:,}" + (f" − 指定清償款 {RESTRICTED/10000:.0f}萬" if RESTRICTED else "") + f"｜底線 70萬 {cash_ok}", "#22c55e" if CASH_AVAIL>=700000 else "#ef4444")}
+{kpi("純現金（可動用）", f"{CASH_AVAIL:,}", f"真值 {CASH:,}" + (f" − 指定清償款 {RESTRICTED/10000:.0f}萬" if RESTRICTED else "") + f"｜底線 70萬 {cash_ok}", "#22c55e" if CASH_AVAIL>=FLOOR else "#ef4444")}
 {kpi("Runway", f"{runway:.1f} 月", f"可動用 {CASH_AVAIL:,} / 月支出 {EXP:,}")}
 {kpi("被動覆蓋", f"{cov:.0f}%", f"配息 {DIV:,} + 房租 {RENT:,}", "#22c55e")}
 </div>
