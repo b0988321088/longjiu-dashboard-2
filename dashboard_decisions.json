@@ -10096,6 +10096,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261004213540-1086",
+    "timestamp": "2026-10-04T21:35:40.720099+08:00",
+    "agent": "Hermes",
+    "task": "PI 雙軌資料生命週期｜收案 CLOSED／DEPLOYED／VERIFIED／NO REGRESSION ＋ 下一張 P0 立案（deployment_plan dormant fallback）",
+    "summary": "使用者 2026-10-04 裁決：②-⑥ APPROVED／CLOSED／DEPLOYED／VERIFIED，commit b486b27f 接受，獨立審查 APPROVE 0 blocking，遠端 clean-main 一致。五項正式裁決：①最大設計偏離「只落地 4 欄位（application_status／approval_status／source／updated_at），regulatory_threshold_twd／financial_assets_proxy_twd／gap_twd／meets_financial_threshold 改 runtime derivation 不落 snapshot」→ 核准，並改為正式裁決：PI snapshot 只保存「事實／人工核准狀態」，財力與門檻全部 runtime derivation；未來若需稽核歷史，另做唯讀計算快照，不得成為判斷來源。②application／approval 雙軌核准（不採單一六態，理由：申請進度與資格核准是兩個不同事實，「已送件／未核准」與「未申請／未核准」不可混為一態）；Lombard／entry hard lock 正式鎖定於 approval_status==\"已核准\"。③兩個漏掃出的 28,220,311（tactical_table 與 run_daily 第二張卡）處理正確，本批性質為「假真值資料流清除」而非搜尋取代；28,220,311 live=0、1,779,689 live=0、30,000,000=唯一法規常數、PI proxy=唯一由真值即時計算。④build_weekly_report.py 兩處 f-string 修正裁定不算 scope creep（新常數確需插入樣板，原模板非 f-string 導致既有 placeholder 原樣輸出；屬本批必要之既有模板缺陷修復）。⑤deployment_plan：同意不在本批回頭改，因該區塊目前受 if _pi: gating 從未渲染，屬同型 dormant fake-truth fallback（_dp2.get(\"total\", 12000000) 等），現改會破壞本批已驗收之範圍邊界 → 正式立案下一張 P0：dormant fallback cleanup — deployment_plan（優先級高，與本批分卡）。未完成項（非技術問題）：PI 現況真值建檔。使用者明確指示不得由系統挑選合理預設、必須由本人提供真實狀態；確認後才可執行唯一一次建檔（sync_professional_investor.py）。系統內既有痕跡彙整（供使用者確認參考，未寫入）：snapshot 載「8/20-8/23 部署完成→PI 核定→國泰質押 540萬@2.77%」、「先送 PI（8/20-21）→8/31 贖回→PI 認列（~9/3）→再還債」、「8/21 PI 認證期停泊不動」；而質押實際已於 2026-09-29 10:57 撥款 590 萬（利率 2.65%，原記 2.77% 待銀行書面覆核）——惟 debt_restructure_tracker 之硬鎖規則為「PI 非已正式核准 → 禁止執行任何 Lombard 質押借出作業」，故「質押已撥款」與「PI 未核准」存在邏輯張力，兩者不可同時成立。目前所有 PI 消費端呈 fail-closed（刻意行為、非故障）。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-04T11:39:48.740349"
