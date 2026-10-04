@@ -491,6 +491,61 @@ def main() -> int:
             and _tv5.get("rent_monthly_target") is None,
             f"真值檔={_tv_ok.get('dividend_month_expected')!r}/{_tv_ok.get('rent_monthly_target')!r}"
             f"｜缺鍵檔={_tv4.get('dividend_month_expected')!r}/{_tv5.get('rent_monthly_target')!r}")
+        # ── S24（CIO 四審 R1）：負債明細表不得因缺真值而靜默漏列 ─────────────────
+        d7 = json.loads(json.dumps(real_snap))
+        d7.pop("mortgage_cathay", None)
+        sp7 = _dump(d7, tmpd4 / "snapshot_no_mortgage_cathay.json")
+        chk("S24a 靜態（R1）：producer 端不得再以 `snap.get(\"mortgage_cathay\", 0)` 供預設 0",
+            'snap.get("mortgage_cathay", 0)' not in body,
+            "命中" if 'snap.get("mortgage_cathay", 0)' in body else "未命中")
+        h24, _ = _render_liab(snap_override=sp7)
+        r24 = _row(h24, "國泰房貸")
+        chk("S24b E2E（R1／缺值）：mortgage_cathay 缺 → 負債明細表仍須有『國泰房貸』列"
+            "且明示缺真值（原 gate `> 0` 會讓整列靜默消失＝1,200 萬負債憑空不見）",
+            bool(r24) and ("缺真值" in r24) and ("12,000,000" not in r24),
+            f"列={r24[:230]!r}")
+        h24r, _ = _render_liab()
+        r24r = _row(h24r, "國泰房貸")
+        chk("S24c 正向對照（真值）：國泰房貸列顯示本金／利率／月付，且本金不得出現 float 尾綴"
+            "（accessor 回 float → 原 f\"{:,}\" 會印 12,000,000.0）（S24b 非假通過）",
+            bool(r24r) and all(x in r24r for x in ("12,000,000", "2.6%", "26,000"))
+            and ("12,000,000.0" not in r24r),
+            f"列={r24r[:230]!r}")
+        _LK24 = ("mortgage_yy", "mortgage_yydu", "mortgage_xz", "mortgage_cathay",
+                 "financial_mortgage", "policy_loan", "pledge_loan")
+        _hit24d = [k for k in _LK24 if ("tv['" + k + "'] > 0") in body]
+        chk("S24d 靜態（R1）：負債明細表不得再用 `if tv['<負債鍵>'] > 0:` 型式"
+            "（缺真值會被靜默吞列）",
+            not _hit24d, f"殘留={_hit24d}")
+
+        # ── S25（CIO 四審 R2）：render_health_score 缺真值不得崩 ────────────────
+        import report_components as _rc25
+        d8 = json.loads(json.dumps(real_snap))
+        d8.pop("rent_monthly_total", None)
+        _ok25 = True
+        _err25 = ""
+        try:
+            _d25 = _rc25.render_health_score(d8)
+        except Exception as _e25:      # noqa: BLE001
+            _ok25 = False
+            _err25 = f"{type(_e25).__name__}: {_e25}"
+        chk("S25 E2E（R2）：render_health_score 缺 rent_monthly_total → 不得 raise"
+            "（原 L207 直接除 cov → TypeError，sync_all 組件自測會崩）",
+            _ok25 and (_d25.get("覆蓋缺真值") is True)
+            and (_d25.get("覆蓋") is None) and (_d25.get("覆蓋標準") == 0),
+            f"例外={_err25 or '無'}｜覆蓋缺真值={(_d25.get('覆蓋缺真值') if _ok25 else 'N/A')}"
+            f"｜分數={(_d25.get('分數') if _ok25 else 'N/A')}")
+        d9 = json.loads(json.dumps(real_snap))
+        _ok25b = True
+        try:
+            _d25b = _rc25.render_health_score(d9)
+        except Exception as _e25b:     # noqa: BLE001
+            _ok25b = False
+            _err25b = f"{type(_e25b).__name__}: {_e25b}"
+        chk("S25b 正向對照（R2／真值）：真值齊全時健康度正常（覆蓋 113、分數與第三審一致）",
+            _ok25b and _d25b.get("覆蓋") is not None and _d25b.get("覆蓋") >= 100,
+            f"覆蓋={(_d25b.get('覆蓋') if _ok25b else 'N/A')}｜分數={(_d25b.get('分數') if _ok25b else 'N/A')}")
+
     finally:
         shutil.rmtree(tmpd4, ignore_errors=True)
 

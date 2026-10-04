@@ -204,7 +204,9 @@ def render_health_score(snap: dict) -> dict:
     # 健康線 ≤50（2026-09-05 修正：35% 屬「總質押率(借款÷總資產)」制，勿誤貼到擔保品 LTV；LTV 目標依銀行鏈 50起/55黃/60紅/70追繳 與穿透情境 ≤52 一致）
     ltv_score = 100 if ltv <= 50 else (50 if ltv <= 60 else 0)
 
-    score = round(min(cov / 150 * 100, 100) * 0.30 + def_score * 0.25 + usd_score * 0.20 + cash_score * 0.15 + ltv_score * 0.10)
+    # 2026-10-04 P0（CIO 四審 R2）：本顆已把 cov 改為可為 None（缺真值），但漏改此行 →
+    # 缺鍵時 TypeError（sync_all 的組件自測會崩）。缺真值時該維度以 0 計分（fail-closed：不靠預設值拿分）。
+    score = round((min(cov / 150 * 100, 100) if cov is not None else 0) * 0.30 + def_score * 0.25 + usd_score * 0.20 + cash_score * 0.15 + ltv_score * 0.10)
     light = "🟢" if score >= 80 else ("🟡" if score >= 60 else "🔴")
     # 2026-09-29 CIO minor：現金跌破底線屬紅線（不可只 −15 分仍顯示 77 🟡）→ 強制 🔴 且總分上限 55
     if cash_score == 0:

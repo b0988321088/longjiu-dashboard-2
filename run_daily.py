@@ -306,14 +306,17 @@ def calibrate_sources() -> dict:
         "professional_investor": snap.get("professional_investor", {}),
         "rhythm08": snap.get("rhythm08", {}),
         # Liabilities from snapshot.json
-        "mortgage_yy": snap.get("mortgage_yy", 0),
-        "mortgage_yydu": snap.get("mortgage_yydu", 0),
-        "mortgage_xz": snap.get("mortgage_xz", 0),
-        "mortgage_cathay": snap.get("mortgage_cathay", 0),
+        # 2026-10-04 P0（CIO 四審 R1）：以下 7 鍵原為 `snap.get(k, 0)`——與必改1(L298) 同型、同函式。
+        # 配合負債明細表的 `if tv[k] > 0:` gate，缺真值時整列被靜默跳過（負債憑空消失）。
+        # 缺鍵一律回 None（語意：未知 ≠ 0），由下游依「0＝真值為零／None＝缺真值」分流。
+        "mortgage_yy": snap.get("mortgage_yy"),
+        "mortgage_yydu": snap.get("mortgage_yydu"),
+        "mortgage_xz": snap.get("mortgage_xz"),
+        "mortgage_cathay": snap.get("mortgage_cathay"),
         "mortgage_balance": snap.get("mortgage_balance", 0),
-        "financial_mortgage": snap.get("financial_mortgage", 0),
-        "policy_loan": snap.get("policy_loan", 0),
-        "pledge_loan": snap.get("pledge_loan", 0),
+        "financial_mortgage": snap.get("financial_mortgage"),
+        "policy_loan": snap.get("policy_loan"),
+        "pledge_loan": snap.get("pledge_loan"),
         "fund_pledge_loan": snap.get("fund_pledge_loan", 0),
         "fund_pledge_rate": snap.get("fund_pledge_rate", 0),
         "fund_pledge_pool": (((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("合計") or 0),
@@ -412,13 +415,27 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _liab_ratio_flow = (_total_liab / _total_with_re * 100) if _total_with_re else 0  # 不含不動產（流動監控）
 
     loans_rows_html = ""
-    if tv['mortgage_yy'] > 0:
-        loans_rows_html += f"""          <tr><td>永豐銀行</td><td>永豐房貸 (YY)</td><td>—</td><td class="num">{tv['mortgage_yy']:,}</td><td>—</td></tr>\n"""
-    if tv['mortgage_yydu'] > 0:
-        loans_rows_html += f"""          <tr><td>永豐銀行</td><td>永豐房貸 (YYDU)</td><td>—</td><td class="num">{tv['mortgage_yydu']:,}</td><td>—</td></tr>\n"""
-    if tv['mortgage_xz'] > 0:
-        loans_rows_html += f"""          <tr><td>永豐銀行</td><td>永豐房貸 (XZ)</td><td>—</td><td class="num">{tv['mortgage_xz']:,}</td><td>—</td></tr>\n"""
-    if tv['mortgage_cathay'] > 0:
+    # 2026-10-04 P0（CIO 四審 R1）：原為 `if tv[k] > 0:`×3——配合 producer 端 `, 0` default，
+    # 缺真值時整列被**靜默跳過**（負債憑空消失，表看起來仍正常）。
+    # 「0＝真值為零（不列）」與「None＝缺真值（必須列且示警）」必須分離。
+    for _bk, _bn, _bkey in (("永豐銀行", "永豐房貸 (YY)", "mortgage_yy"),
+                            ("永豐銀行", "永豐房貸 (YYDU)", "mortgage_yydu"),
+                            ("永豐銀行", "永豐房貸 (XZ)", "mortgage_xz")):
+        _bv = tv.get(_bkey)
+        if _bv is None:
+            loans_rows_html += (f"""          <tr><td>{_bk}</td><td>{_bn} ⚠️ 缺真值</td>"""
+                                f"""<td>—</td><td class="num">⚠️ 缺真值</td><td>—</td></tr>\n""")
+            print(f"⚠️ [render] 負債明細表：{_bkey} 缺真值 → 該列明示缺真值（不得靜默消失）")
+        elif _bv > 0:
+            loans_rows_html += (f"""          <tr><td>{_bk}</td><td>{_bn}</td>"""
+                                f"""<td>—</td><td class="num">{_bv:,}</td><td>—</td></tr>\n""")
+    # 2026-10-04 P0（CIO 四審 R1）：國泰房貸為結構性負債，**列不得因缺真值而消失**。
+    # 原 gate 為 `if tv['mortgage_cathay'] > 0:` → producer default 0 時整列被吞，
+    # 連作者自寫的 `elif _mc_prin is None: 月付：⚠️ 缺真值` 分支都成不可達死碼。
+    if tv.get('mortgage_cathay') is None:
+        print("⚠️ [render] 負債明細表：mortgage_cathay 缺真值 → 國泰房貸列明示缺真值"
+              "（不得靜默漏列此筆負債）")
+    if tv.get('mortgage_cathay') is None or (tv.get('mortgage_cathay') or 0) > 0:
         # 2026-10-01：利率/月付讀完整 snapshot（tv=calibrate_sources 輸出，不含
         # monthly_fixed_expense 與 mortgage_cathay_rate → 必須自行讀檔，否則 fallback 邏輯失效）
         try:
@@ -446,14 +463,23 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
             # 偽造利率時會出現「3.1% 標籤配 月付 26,000」的頁內矛盾）；實際繳款值改由 check_thresholds 交叉斷言
             _mc_label = f"國泰房貸（大義街轉貸 {_mc_rate_v*100:.1f}%）"
             _mc_pay_txt = f"9/20起月付 {round(_mc_prin * _mc_rate_v / 12):,.0f}"
-        loans_rows_html += f"""          <tr><td>國泰世華</td><td>{_mc_label}</td><td>20日</td><td class="num">{tv['mortgage_cathay']:,}</td><td>{_mc_pay_txt}</td></tr>\n"""
-    if tv['financial_mortgage'] > 0:
-        # 2026-08-10 註記：8/10 現金 100 萬先還星展理財型房貸（餘額 3,006,447 → 2,006,447）
-        loans_rows_html += f"""          <tr><td>星展銀行</td><td>理財型房貸</td><td>—</td><td class="num">{tv['financial_mortgage']:,}</td><td>8/10 已還 100 萬</td></tr>\n"""
-    if tv['policy_loan'] > 0:
-        loans_rows_html += f"""          <tr><td>—</td><td>保單借貸</td><td>—</td><td class="num">{tv['policy_loan']:,}</td><td>—</td></tr>\n"""
-    if tv['pledge_loan'] > 0:
-        loans_rows_html += f"""          <tr><td>—</td><td>證券質押</td><td>—</td><td class="num">{tv['pledge_loan']:,}</td><td>—</td></tr>\n"""
+        # 2026-10-04 P0（CIO 四審 R1）：本金一律印 accessor 值（可由 None → 明示缺真值）；
+        # 原印 `tv['mortgage_cathay']`，缺真值時 `:,` 直接 TypeError 或（改 None 後）崩潰。
+        _mc_prin_txt = f"{round(_mc_prin):,}" if _mc_prin is not None else "⚠️ 缺真值"
+        loans_rows_html += f"""          <tr><td>國泰世華</td><td>{_mc_label}</td><td>20日</td><td class="num">{_mc_prin_txt}</td><td>{_mc_pay_txt}</td></tr>\n"""
+    # 2026-10-04 P0（CIO 四審 R1）：同型——0（真值為零，不列）與 None（缺真值，須列且示警）分離。
+    for _bk2, _bn2, _bkey2, _bnote2 in (
+            ("星展銀行", "理財型房貸", "financial_mortgage", "8/10 已還 100 萬"),
+            ("—", "保單借貸", "policy_loan", "—"),
+            ("—", "證券質押", "pledge_loan", "—")):
+        _bv2 = tv.get(_bkey2)
+        if _bv2 is None:
+            loans_rows_html += (f"""          <tr><td>{_bk2}</td><td>{_bn2} ⚠️ 缺真值</td>"""
+                                f"""<td>—</td><td class="num">⚠️ 缺真值</td><td>{_bnote2}</td></tr>\n""")
+            print(f"⚠️ [render] 負債明細表：{_bkey2} 缺真值 → 該列明示缺真值（不得靜默消失）")
+        elif _bv2 > 0:
+            loans_rows_html += (f"""          <tr><td>{_bk2}</td><td>{_bn2}</td>"""
+                                f"""<td>—</td><td class="num">{_bv2:,}</td><td>{_bnote2}</td></tr>\n""")
     if tv.get('fund_pledge_loan', 0) > 0:
         # 2026-09-29：國泰質押撥款 590萬@2.65%（9/29 10:57 入帳）→ 負債表需列示，否則總負債對不上。
         # CIO 審查 af7af243 必修3：利率與基金池市值一律讀真值，禁硬編碼（利率 tv.fund_pledge_rate／
