@@ -10185,6 +10185,16 @@
       "status": "completed",
       "source": "user"
     }
+,
+  {
+    "id": "mem-20261005084224-1097",
+    "timestamp": "2026-10-05T08:42:24.333318+08:00",
+    "agent": "Hermes",
+    "task": "PEND-20261005-04 核准施工：Pending 期限閘門白名單釋放＋動態口徑",
+    "summary": "裁示 ✅ 核准（2026-10-05）。範圍＝①『Pending schema 五欄齊備（26 筆一次遷移）』改動態口徑、移除硬編碼 len==26 ②逐張處理非 STATUS_ENUM 的 status（原字串保留 status_raw）③把這兩條自 tools/verify_performance_core_task12.py 的 KNOWN_GATE_FAILS 釋放，恢復回歸擋關能力。邊界：不動白名單中現金/穿透桶 4 條（他案）、不改 status 語意映射（一律用 pending_engine.norm_status）、normalize_cards 維持不重寫 status『值』（避免讓閘門檢查變空轉）。施工後須負向測試：注入非 ENUM status 必須仍被擋。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-05T08:34:26.896378"
