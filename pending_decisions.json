@@ -577,5 +577,24 @@
     "external_owner": "國泰世華銀行",
     "status_raw": "⏳ 資料缺口（2026-10-05 盤點）：只補資料、不動模型；銀行書面到手前不假設、不增本金支出、不改 runway。",
     "is_informational": false
+  },
+  {
+    "date": "2026-10-05",
+    "status": "待處理",
+    "category": "治理",
+    "p": 1,
+    "title": "預防性修正：緊急應變 prompt 禁止 LLM 自算「建議金額」",
+    "detail": "2026-10-05 立案（使用者裁決：定位＝預防性修正，非本輪事故修復）。事故：當日 21:32 美股緊急應變 LLM 未現讀引擎，自行以 10/2 舊總資產 26,791,534 推算建議金額，產生 2,143,323／535,831／1,339,577（三筆一律偏低 0.058%），並被嵌入當日三份已發布產物；由 closeout 第 ⑬ 步「內文數字可追溯」攔下 6 處。修復已於 commit abb3daf4 完成（當日產物同步更正、10-02～10-04 歷史檔不回溯）。責任分層定案：引擎負責計算 → LLM 負責轉述 → ⑬ 負責穿透驗證 → closeout 負責攔截。待施工對象＝兩支 job（美股緊急應變 21:30、台股緊急應變 13:00）之 prompt 硬規則：①「建議金額一律逐字複製 macro_regime_{today}.json → targetAllocation.rows[].建議金額(±)；禁止自行計算、推算、四捨五入或依其他資產總額重算。若來源不存在或無法讀取，必須標記 FAIL，不得自行填值。」②「輸出前須逐字比對來源欄位；比例、缺口等計算值亦不得取代來源中的既定建議金額。」",
+    "tags": "治理,LLM,prompt,緊急應變,驗證器",
+    "due_date": null,
+    "due_date_source": "未提供（預防性修正，待排入下一輪）",
+    "needs_due_date": true,
+    "last_confirmed": null,
+    "last_confirmed_source": "未提供",
+    "owner": "龍九",
+    "external_owner": null,
+    "status_raw": "🆕 2026-10-05 立案（使用者裁決：預防性修正，本輪不動程式與資料）",
+    "is_informational": false,
+    "reopen_conditions": []
   }
 ]
