@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import sys
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
@@ -26,6 +27,42 @@ FILE = BASE / "pending_decisions.json"
 
 STATUS_ENUM = ("待處理", "已確認", "已完成", "關案")
 ALERT_STATUSES = ("待處理",)
+
+# ── 期限 schema 自癒（2026-10-05 PEND-20261005-03）──────────────────────
+# 症狀（10/05 07:00 實例）：新增的 pending 卡漏了 needs_due_date（或整組 schema 鍵）→ 產線末端
+# check_dividend_caliber 的『無 due_date 者標記 needs_due_date』亮紅 → Task1+2 驗證器第 5 類擋關
+# → 日報產出但不推送（連 3 次失敗）。根因是「新增卡靠人手複製模板」，缺欄當下沒有任何守門。
+# 修法：提供一個**無損**正規化函式，讓唯一計算層（pending_engine）同時提供「自癒」能力；
+#       由產線在產出與閘門之前呼叫（regenerate_report 3b2），不自癒「不可無損推得」的欄位。
+SCHEMA_FIELDS = ("due_date", "last_confirmed", "owner", "external_owner", "status")
+SCHEMA_DEFAULTS = {"due_date": None, "last_confirmed": None, "owner": "CEO",
+                   "external_owner": None, "status": "待處理"}
+
+
+def normalize_cards(items: list) -> list[str]:
+    """無損自癒：只補「不猜、不推算」就能推得的欄位，回傳修正紀錄（就地修改 items）。
+
+    可自癒：
+      ① 缺 schema 鍵 → 補 honest 預設（owner 一律 "CEO"；status 預設 "待處理"＝最保守、會進提醒）
+      ② due_date 為空 → needs_due_date = True（schema 不變式：沒有日期就必須標記「待提供」）
+      ③ 有 status 但缺 status_raw → 以 status 回填（原字串不存在時唯一誠實的取值）
+    刻意**不可**自癒（留給閘門 fail-closed，不得代改、不得代刪）：
+      · due_date 有值但 due_date_source 不以「既有文字」開頭（推算／臆測出來的日期）
+    """
+    fixes: list[str] = []
+    for x in items:
+        tag = str(x.get("id") or x.get("title") or "?")[:36]
+        for k in SCHEMA_FIELDS:
+            if k not in x:
+                x[k] = SCHEMA_DEFAULTS[k]
+                fixes.append(f"{tag}: 補 schema 鍵 {k}={SCHEMA_DEFAULTS[k]!r}")
+        if not x.get("due_date") and not x.get("needs_due_date"):
+            x["needs_due_date"] = True
+            fixes.append(f"{tag}: 無 due_date → needs_due_date=True")
+        if "status_raw" not in x:
+            x["status_raw"] = x.get("status") or ""
+            fixes.append(f"{tag}: 缺 status_raw → 以 status 回填")
+    return fixes
 
 def norm_status(raw: str) -> str:
     """原字串 → 狀態機旗標（只看開頭語境，避免敘事中出現「已達標」被誤判為完成）。"""
@@ -116,6 +153,26 @@ def pending_line(today: dt.date | None = None, path: Path | None = None) -> str:
 
 
 if __name__ == "__main__":
+    import argparse as _ap
+    _p = _ap.ArgumentParser()
+    _p.add_argument("--normalize", action="store_true",
+                    help="檢查 Pending 期限 schema、列出可無損自癒項（有自癒項時 exit 1）")
+    _p.add_argument("--apply", action="store_true", help="與 --normalize 併用：把自癒結果寫回檔案")
+    _a = _p.parse_args()
+    if _a.normalize:
+        _items = load_items()
+        _fx = normalize_cards(_items)
+        if not _fx:
+            print("✅ Pending 期限 schema 合規（無可自癒項）")
+            sys.exit(0)
+        for _f in _fx:
+            print("  🔧 " + _f)
+        if _a.apply:
+            FILE.write_text(json.dumps(_items, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            print(f"✅ 已寫回 {FILE.name}（{len(_fx)} 筆自癒）")
+            sys.exit(0)
+        print("（預覽模式，未寫回；加 --apply 才寫入）")
+        sys.exit(1)
     g = pending_digest()
     print(pending_line())
     print(json.dumps({k: (len(v) if isinstance(v, list) else v) for k, v in g.items()},

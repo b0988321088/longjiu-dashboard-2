@@ -201,6 +201,26 @@ if _ej.exists():
         _github_link = "https://b0988321088.github.io/longjiu-dashboard-2/%s.html" % _latest_tr
         _emergency_html += '<br><a href="%s" target="_blank" style="font-size:13px;color:#6e6e73">📊 數據版報告（備援）</a>' % _github_link
 
+# 3b2. Pending 期限 schema 自癒（2026-10-05 PEND-20261005-03）
+# 為何在產出之前：10/05 07:00 實例是「新增卡漏 needs_due_date」→ 產線末端 check_dividend_caliber
+# 亮紅 → Task1+2 驗證器第 5 類擋關 → 日報產出但**不推送**（連 3 次失敗、且擋在花完成本之後）。
+# 這裡先用唯一計算層（pending_engine.normalize_cards）做無損自癒並大聲列出改了什麼；
+# 「不可無損推得」的（due_date 有值但來源非既有文字＝推算）刻意不自癒，仍交回閘門 fail-closed。
+# 本檔已在推送清單內（_push_candidates），自癒後的內容會隨本次四源同步一併提交。
+_dp_seed = BASE / "pending_decisions.json"
+if _dp_seed.exists():
+    try:
+        import pending_engine as _pe_seed
+        _seed_items = json.loads(_dp_seed.read_text(encoding="utf-8"))
+        _seed_fixes = _pe_seed.normalize_cards(_seed_items)
+        if _seed_fixes:
+            _dp_seed.write_text(json.dumps(_seed_items, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            print(f"  🔧 Pending 期限 schema 自癒 {len(_seed_fixes)} 筆：")
+            for _sf in _seed_fixes[:12]:
+                print("     - " + _sf)
+    except Exception as _e_seed:
+        print(f"[WARN] Pending schema 自癒未執行（不阻擋；閘門仍會擋）：{_e_seed}")
+
 # 3c. 載入執行中決策追蹤
 _decision_rows = ""
 _dp = BASE / "pending_decisions.json"
