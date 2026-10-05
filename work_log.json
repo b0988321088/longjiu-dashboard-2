@@ -1892,5 +1892,11 @@
   "category": "修正",
   "item": "07:00 晨間產線擋關修復｜Pending 期限 schema（白名單外新增 FAIL）",
   "detail": "症狀：龍九晨間自動化 07:00（morning_deploy.py／regenerate_report.py）rc=1，Task1+2 驗證器第 5 類『既有閘門無新增 FAIL』擋關、日報產出但未推送（連續 3 次失敗）。根因（與鏡像那批無關）：check_dividend_caliber 第 3 批 Pending 期限檢查兩條——①『無 due_date 者標記 needs_due_date』：10/04～10/05 新增的 5 張卡（PEND-20261004-04/05/07、20261005-01/02）needs_due_date=False 且 due_date=None；②『due_date 一律來自既有文字（不猜、不推算）』：PEND-20261004-06 質押貸款的 due_date=2026-10-29 是『撥款日 09-29＋1 個月』推算值。修法（純資料，不改驗收標準、不動白名單）：①5 張 needs_due_date→True；②該卡降級 due_date=None、needs_due_date=True，暫估值與『屬推算非既有文字』寫入 due_date_source 與 detail（不損失資訊）。驗收：check_dividend_caliber 68/74（白名單外 0 條）；verify_performance_core_task12.py PASS 19/FAIL 0；重跑 regenerate_report.py rc=0、push 71482379f2f2、線上 22/22 條 200。※ 未採用『把新 FAIL 加進 KNOWN_GATE_FAILS』的過關解。"
+ },
+ {
+  "date": "2026-10-05",
+  "category": "修正",
+  "item": "PEND-20261005-03 收案｜Pending 期限 schema 無損自癒＋產線產出前接線",
+  "detail": "根因：新增 pending 卡靠人手複製模板，缺 needs_due_date／schema 鍵時當下無守門，只在 07:00 產線末端（check_dividend_caliber → verify_performance_core_task12 第 5 類）才擋，且擋在花完成本之後。修法：pending_engine 新增無損自癒 normalize_cards()（①缺 schema 鍵補 honest 預設 ②無 due_date⇒needs_due_date=True ③缺 status_raw 以 status 回填；刻意不自癒『due_date 有值但來源非既有文字』）＋ CLI --normalize/--apply；regenerate_report 新增 3b2 區塊於產出與閘門之前呼叫自癒。驗收：本機 T1–T4（注入缺欄→自癒3筆→閘門轉綠；注入推算 provenance→自癒不碰、閘門仍紅；還原回綠）；CIO 對抗性唯讀審查（沙盒 R1–R9）APPROVE 0 required fixes，tree 1ad29820；程式 commit 35a33be1；E2E 實跑 regenerate_report rc=0、Task1+2 PASS 19/FAIL 0、月度閘門 PASS、push a0be4632、線上 22/22 條 200。"
  }
 ]

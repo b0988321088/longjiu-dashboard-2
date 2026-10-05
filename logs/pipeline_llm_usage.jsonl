@@ -785,3 +785,6 @@
 {"ts": "2026-10-05T08:12:29", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 602, "cached": 384, "out": 1082, "ok": true}
 {"ts": "2026-10-05T08:17:50", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 489, "cached": 256, "out": 198, "ok": true}
 {"ts": "2026-10-05T08:18:07", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 602, "cached": 384, "out": 872, "ok": true}
+{"ts": "2026-10-05T08:31:56", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 489, "cached": 256, "out": 171, "ok": true}
+{"ts": "2026-10-05T08:34:28", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 489, "cached": 256, "out": 195, "ok": true}
+{"ts": "2026-10-05T08:34:44", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 602, "cached": 384, "out": 896, "ok": true}

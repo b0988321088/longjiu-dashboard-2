@@ -577,13 +577,13 @@
     "detail": "本輪已完成：post-commit 任何失敗路徑先留痕（marker＋.git/hook_sync.log＋環境快照）再 fail-loud；稽核第 5 類由 5 支硬編碼改全量掃描（mirror_guard.py 單一實作、rc 0/1/2 fail-closed）。殘留兩點非阻擋、屬設計界線：①獨立守門目前內嵌在每日 22:40 收工檢查（closeout_check.py → mirror_guard.scan），非獨立 cron job → 若 22:40 該 job 本身失敗，偵測仍可能延後一天；②hook ②（全量鏡像）只對『鏡像已存在的同名非轉發器檔』對齊，不主動補新檔 → 新增檔是否入鏡像仍由 ⓪ repo/wrappers 與 ① 硬編碼清單決定（設計、R6b 已證）。觸發處理：若再出現『repo 改了、cron 端仍跑舊版』且 log 無 FAIL 記錄 → 檢查 hook 是否根本未被 git 呼叫（core.hooksPath 解析、提交工具是否走 plumbing），並考慮把 mirror_guard 拉成獨立 cron（22:45、no_agent、rc≠0 即推播）。"
   },
   {
-    "id": "PEND-20261005-03",
+    "id": "PEND-20261005-04",
     "date": "2026-10-05",
-    "title": "新增 pending 卡缺 needs_due_date 會擋 07:00 產線 → 於唯一寫入路徑加守門",
-    "desc": "10/05 07:00 產線擋關根因是『新增卡沒帶 needs_due_date』（本輪已修資料）。目前唯一寫入路徑是人工／agent 複製模板卡，缺欄時只有 check_dividend_caliber 在產線末端擋關（且擋關位置在 07:00 產出之後）→ 每次新增卡都可能再犯。建議方向（待裁示，未動程式）：在 pending 卡的唯一寫入／正規化路徑（pending_engine）對『due_date 為空 ⇒ needs_due_date=True』補預設，或於寫入前做 schema 驗證並大聲失敗；此改動屬程式檔，需送審後才動。",
+    "title": "Pending 期限閘門被白名單吸收＋硬編碼計數 26 → 該類回歸檢查失效",
+    "desc": "CIO 審查 35a33be1 的 known limits（非本 commit 引入，屬既有缺陷）：①『Pending schema 五欄齊備（26 筆一次遷移）』與『status 正規化為四態（原字串保留 status_raw）』已被釘入 tools/verify_performance_core_task12.py 的 KNOWN_GATE_FAILS → 兩條檢查永遠可由白名單吸收，『既有閘門無新增 FAIL』的守門價值對這兩條失效（真正擋關能力只剩 due_date 相關兩條）。②該檢查的 len==26 為硬編碼，現況已 34 卡 → 即使資料合規也永遠 FAIL。③現況仍有 ≥1 張卡 status 不在 STATUS_ENUM（『⏸ 條件未成立…』），被白名單吸收。建議（待裁示，未動程式）：把『五欄齊備』改成動態口徑（卡片清單自我比對，不寫死筆數）、逐張處理非 ENUM 的 status 後把這兩條自白名單釋放；屬程式檔，需送審後施工。",
     "priority": "P2",
     "status": "待處理",
-    "source": "2026-10-05 07:00 產線擋關事件",
+    "source": "CIO 審查 35a33be1 known_limits",
     "due_date": null,
     "due_date_source": "未提供",
     "needs_due_date": true,
@@ -593,7 +593,7 @@
     "external_owner": null,
     "status_raw": "pending",
     "is_informational": false,
-    "tags": "pending,schema,產線守門,治理",
+    "tags": "pending,閘門,白名單,回歸,治理",
     "created_at": "2026-10-05T02:50:00+08:00",
     "updated_at": "2026-10-05T02:50:00+08:00",
     "detail": "本輪已完成：post-commit 任何失敗路徑先留痕（marker＋.git/hook_sync.log＋環境快照）再 fail-loud；稽核第 5 類由 5 支硬編碼改全量掃描（mirror_guard.py 單一實作、rc 0/1/2 fail-closed）。殘留兩點非阻擋、屬設計界線：①獨立守門目前內嵌在每日 22:40 收工檢查（closeout_check.py → mirror_guard.scan），非獨立 cron job → 若 22:40 該 job 本身失敗，偵測仍可能延後一天；②hook ②（全量鏡像）只對『鏡像已存在的同名非轉發器檔』對齊，不主動補新檔 → 新增檔是否入鏡像仍由 ⓪ repo/wrappers 與 ① 硬編碼清單決定（設計、R6b 已證）。觸發處理：若再出現『repo 改了、cron 端仍跑舊版』且 log 無 FAIL 記錄 → 檢查 hook 是否根本未被 git 呼叫（core.hooksPath 解析、提交工具是否走 plumbing），並考慮把 mirror_guard 拉成獨立 cron（22:45、no_agent、rc≠0 即推播）。"
