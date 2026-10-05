@@ -10175,20 +10175,19 @@
       "summary": "使用者 2026-10-04 裁決。背景：本筆申購的正確判讀不是『563,605 還夠付房貸所以 OK』，而是『申購期間形成現金底線暫時破線』狀態。★ 明定四維度分別成立、不得混成一個綠燈：① Cash floor ❌ 暫時跌破（可動用 853,675 − 290,070 = 563,605 < 底線 700,000，短少 136,395；該 136,395 恰等於申購超出乾粉 153,675 的部分）② 確定支出覆蓋 ✅ 目前足夠（10/6–10/31 同期已確認支出僅國泰房貸 26,000 @10/20）③ 流動性事件 ⚠️ 進行中（等退款／中籤結果）④ 留停 Gate3 🟡 WAIT（不因①②③而改變）。使用者並指定此案為「A 綠 ≠ B 綠」原則的實例。三項裁示：①出差預算暫不填——維持缺資料狀態，不得為讓模型完整而自行塞估算值；不得用預估值把現金底線硬算成綠（落點：snapshot.cash_need_90d._待確認支出，載明不得視為 0）。②建立『抽籤結果』驗收節點（PEND-20261004-04）——不猜抽籤日期，觸發條件＝取得結果：未中籤→退款 290,040 入帳確認後結案；中籤→290,070 轉為實質台股部位，須另案依台股暫緩政策裁示，★不得自動視為既有核准。③PEND-20260930-02 政策同步——僅把過時的『240 萬押標金來源』改為現行條件式政策（不提前占用現金、不預先辦保證函、待標案確定後再定來源），不改 P0-2 核心技術範圍、不重新裁示押標金來源、保留 10/15 檢視節點。真值層落點：snapshot.cash_need_90d._流動性事件_20261006（含維度／分支／不得合併為單一綠燈旗標）、_暫時性占用備註；行事曆 10/6 條目補註追蹤結果。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261005025309-1096",
+      "timestamp": "2026-10-05T02:53:09.000970+08:00",
+      "agent": "Hermes",
+      "task": "P0 Mirror/Hook/Audit 防線 CLOSED（A/B/C/D 全通過）",
+      "summary": "裁示：CLOSED。證據鏈：A 10 支鏡像漂移→0；B 稽核第5類由5支硬編碼改全量掃描（mirror_guard.py 單一實作、rc 0/1/2 fail-closed，負向測試證明舊清單漏報 build_dashboard.py）；C hook 無聲失敗根因重現（⓪/① 在留痕前崩潰 ⇒ 無 marker、無同步，git 不理 post-commit 退出碼）並建立 failure contract：任何失敗先留痕（marker＋.git/hook_sync.log＋環境快照）再 fail-loud；D 故障注入雙向（注入→rc=1 且點名→稽核轉紅→日常守門 fail-closed；還原→sha256 逐位元一致、rc=0）。落地：程式 commit 4d6fd5e2（僅三檔明列）、RECORD/CIO-DeepSeek-Flash APPROVE 0 required fixes、tree 逐字相符；資料 commit 8877a87b。remote=local、未推送0、落後0、closeout rc=0、check_thresholds rc=0、GitHub raw 線上 work_log/pending 已落地。三點揭露不影響 CLOSED：①CIO 審查來源降級不偽造（最小 JSON＋raw log ref）②本次修的是『失敗可以無聲消失』而非只讓 hook 正常成功 ③獨立項隔離：PEND-20261005-02（P2，獨立守門未獨立排程／hook ② 不補新檔）、9/18 低優先 work_log 未閉環卡未動。",
+      "status": "completed",
+      "source": "user"
     }
-,
-  {
-    "id": "mem-20261005025309-1096",
-    "timestamp": "2026-10-05T02:53:09.000970+08:00",
-    "agent": "Hermes",
-    "task": "P0 Mirror/Hook/Audit 防線 CLOSED（A/B/C/D 全通過）",
-    "summary": "裁示：CLOSED。證據鏈：A 10 支鏡像漂移→0；B 稽核第5類由5支硬編碼改全量掃描（mirror_guard.py 單一實作、rc 0/1/2 fail-closed，負向測試證明舊清單漏報 build_dashboard.py）；C hook 無聲失敗根因重現（⓪/① 在留痕前崩潰 ⇒ 無 marker、無同步，git 不理 post-commit 退出碼）並建立 failure contract：任何失敗先留痕（marker＋.git/hook_sync.log＋環境快照）再 fail-loud；D 故障注入雙向（注入→rc=1 且點名→稽核轉紅→日常守門 fail-closed；還原→sha256 逐位元一致、rc=0）。落地：程式 commit 4d6fd5e2（僅三檔明列）、RECORD/CIO-DeepSeek-Flash APPROVE 0 required fixes、tree 逐字相符；資料 commit 8877a87b。remote=local、未推送0、落後0、closeout rc=0、check_thresholds rc=0、GitHub raw 線上 work_log/pending 已落地。三點揭露不影響 CLOSED：①CIO 審查來源降級不偽造（最小 JSON＋raw log ref）②本次修的是『失敗可以無聲消失』而非只讓 hook 正常成功 ③獨立項隔離：PEND-20261005-02（P2，獨立守門未獨立排程／hook ② 不補新檔）、9/18 低優先 work_log 未閉環卡未動。",
-    "status": "completed",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-05T00:24:24.527343"
+    "updated_at": "2026-10-05T08:12:11.914662"
   },
   "last_updated": "2026-10-05T18:00:00+08:00",
   "2026-09-29": [
@@ -10361,12 +10360,6 @@
     },
     {
       "date": "2026-10-04",
-      "action": "P0 dormant fallback cleanup — deployment_plan（run_daily 8/20 定案區塊）",
-      "status": "待處理",
-      "tags": ""
-    },
-    {
-      "date": "2026-10-04",
       "action": "威剛 3260 申購抽籤｜結果驗收節點（未中籤＝退款入帳確認結案／中籤＝另案依台股暫緩政策裁示）",
       "status": "待處理",
       "tags": ""
@@ -10388,6 +10381,18 @@
       "action": "績效引擎內國泰房貸利率 fallback（build_investment_performance）——暫緩，待解凍後修",
       "status": "待處理",
       "tags": ""
+    },
+    {
+      "date": "2026-10-05",
+      "action": "缺真值 fail-closed 殘留清理（潛伏項，非阻擋）",
+      "status": "待處理",
+      "tags": ""
+    },
+    {
+      "date": "2026-10-05",
+      "action": "鏡像防線殘留界線：獨立守門尚未獨立排程＋hook ② 不補新檔（設計）",
+      "status": "待處理",
+      "tags": "鏡像,post-commit,稽核,防線"
     }
   ]
 }
