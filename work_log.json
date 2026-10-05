@@ -1898,5 +1898,11 @@
   "category": "修正",
   "item": "PEND-20261005-03 收案｜Pending 期限 schema 無損自癒＋產線產出前接線",
   "detail": "根因：新增 pending 卡靠人手複製模板，缺 needs_due_date／schema 鍵時當下無守門，只在 07:00 產線末端（check_dividend_caliber → verify_performance_core_task12 第 5 類）才擋，且擋在花完成本之後。修法：pending_engine 新增無損自癒 normalize_cards()（①缺 schema 鍵補 honest 預設 ②無 due_date⇒needs_due_date=True ③缺 status_raw 以 status 回填；刻意不自癒『due_date 有值但來源非既有文字』）＋ CLI --normalize/--apply；regenerate_report 新增 3b2 區塊於產出與閘門之前呼叫自癒。驗收：本機 T1–T4（注入缺欄→自癒3筆→閘門轉綠；注入推算 provenance→自癒不碰、閘門仍紅；還原回綠）；CIO 對抗性唯讀審查（沙盒 R1–R9）APPROVE 0 required fixes，tree 1ad29820；程式 commit 35a33be1；E2E 實跑 regenerate_report rc=0、Task1+2 PASS 19/FAIL 0、月度閘門 PASS、push a0be4632、線上 22/22 條 200。"
+ },
+ {
+  "date": "2026-10-05",
+  "category": "修正",
+  "item": "PEND-20261005-04 收案｜Pending 期限閘門白名單釋放＋五欄齊備改動態",
+  "detail": "根因（CIO 審查 35a33be1 的 known limits，非 35a33be1 引入）：①『Pending schema 五欄齊備（26 筆一次遷移）』的 len==26 是硬編碼，卡片長到 34 張後即使資料合規也永遠 FAIL（假紅燈）；②該條與『status 正規化為四態（原字串保留 status_raw）』都被釘在 tools/verify_performance_core_task12.py 的 KNOWN_GATE_FAILS → 回歸擋關能力實際失效。修法（使用者 10/05 ✅ 核准）：①檢查改動態口徑（名稱改『Pending schema 五欄齊備（全卡動態）』，只驗每張都有五欄）②5 張非 STATUS_ENUM 的 status 以 pending_engine.norm_status() 逐張正規化、原字串（含 ⏸／⏳ 敘事與舊 raw）保留進 status_raw ③自白名單釋放該 3 筆（KNOWN_GATE_FAILS 7→4）。驗收：check_dividend_caliber 70/74（白名單外 0，僅剩現金/穿透桶 4 條他案）；負向測試——注入非 ENUM status 與拔掉 owner 鍵，兩者都讓閘門與 Task1+2 驗證器第 5 類 FAIL（不再被白名單吸收，牙齒已恢復）；還原後 PASS 19/FAIL 0。CIO 對抗性唯讀審查 APPROVE 0 required fixes（tree 97d7876f）。程式 commit bb7dcf32（RECORD）已推 clean-main。"
  }
 ]
