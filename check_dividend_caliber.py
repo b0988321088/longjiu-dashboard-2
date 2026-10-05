@@ -446,8 +446,10 @@ try:
     _items_p = _pe_p.load_items()
     _need_fields = ("due_date", "last_confirmed", "owner", "external_owner", "status")
     _missing_p = [(x.get("title"), k) for x in _items_p for k in _need_fields if k not in x]
-    ck("Pending schema 五欄齊備（26 筆一次遷移）",
-       not _missing_p and len(_items_p) == 26, str(_missing_p[:3]) + "｜n=" + str(len(_items_p)))
+    # 2026-10-05（使用者核准 PEND-20261005-04）：原 `len(_items_p) == 26` 是一次性遷移留下的硬編碼，
+    # 卡片長到 34 張後即使資料完全合規也永遠 FAIL（假紅燈）。改動態口徑：只驗「每一張都有五欄」。
+    ck("Pending schema 五欄齊備（全卡動態）",
+       not _missing_p and len(_items_p) > 0, str(_missing_p[:3]) + "｜n=" + str(len(_items_p)))
     _bad_src = [x.get("title") for x in _items_p
                 if x.get("due_date") and not str(x.get("due_date_source") or "").startswith("既有文字")]
     ck("due_date 一律來自既有文字（不猜、不推算）", not _bad_src, str(_bad_src[:3]))
