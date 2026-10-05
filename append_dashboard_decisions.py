@@ -163,9 +163,26 @@ def main():
     ap.add_argument("--agent", default="Hermes")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--allow-duplicate", action="store_true",
+                    help="明確允許同日同任務同來源再寫一筆（預設＝去重，P0-2）")
     a = ap.parse_args()
 
     entry = build_entry(a.task, a.summary, a.status, a.source, a.agent)
+
+    # ── duplicate guard（P0-2，2026-10-05 使用者核准）────────────────────────
+    # 同一決策／同一任務／同一 execution 不得產生多筆等價收據。
+    # 命中 → 不 append、**也不寫收據**（沒產生新筆就沒有收據；否則會讓
+    # reconcile_decision_intake 的「收據 ∩ 檔案」出現假缺口）。
+    # 語義＝idempotent no-op（rc 0）：重跑安全，不是失敗。
+    if not a.allow_duplicate:
+        from memory_helper import find_duplicate
+        dec = json.loads(DEC_FILE.read_text(encoding="utf-8"))
+        dup = find_duplicate(dec.get("decisions") or [], entry)
+        if dup is not None:
+            print(f"♻️ 已存在等價收據（同日同任務同來源 id={dup.get('id')}）→ 略過，未 append"
+                  f"｜{a.task[:40]}（如確需再記一次請加 --allow-duplicate）")
+            return 0
+
     ok, msg = append_entry(entry, dry_run=a.dry_run)
     if not a.dry_run:
         write_receipt(entry, ok, msg)

@@ -23,6 +23,9 @@
    推舊 commit 時範圍內沒有新 commit 所以全綠，於是「本機一路產出、遠端停在五天前」
    可以完全靜默（Pages 全站吃舊值）。「推得動」不等於「推對東西」，必須單獨量。
 7. **真值一致性**（INC-233）：月支出口徑與儀表板安全線不得漂移（詳見 `step_consistency`）。
+8. **驗證器執行心跳**（P0-1）：讀 `data/verifier_heartbeat.json` ——
+   `NOT_RUN`（沒跑）／逾期未跑／`FAIL`（跑了但斷言未過）皆列問題（fail-closed）。
+   三態不得混為一談；標準不得下調（6 條既有漂移在修好前不得當成 OK）。
 
 用法
 ----
@@ -39,6 +42,7 @@ import argparse
 import contextlib
 import datetime as dt
 import io
+import json
 import os
 import re
 import subprocess
@@ -521,6 +525,63 @@ def step_threshold_invariants(quiet: bool, checker: Path | None = None) -> list:
     return []
 
 
+# ── ⑧ 驗證器執行心跳（P0-1，2026-10-05 使用者核准）─────────────────────────────
+# 缺口：tools/verify_ficriteria.py（留停 FI 門檻回歸保護）自 2026-10-03 起
+#       AttributeError 全死、連續兩天未被偵測。根因不是它壞，而是**沒有呼叫端**
+#       —— 沒有呼叫端就沒有心跳，「沒跑」與「跑了但失敗」同一個狀態（都＝什麼都沒有）。
+# 責任分離：本步**只讀**心跳檔（data/verifier_heartbeat.json），不重跑驗證器；
+#       重跑由 tools/run_verifier_heartbeat.py 專責（cron 每日呼叫）。
+# fail-closed：檔缺／NOT_RUN／逾期未跑／FAIL → 一律回傳問題（不得宣告收工全綠）。
+# 標準不得下調：驗證器目前真實結果為 49 PASS / 6 FAIL；6 條斷言漂移屬另案修復，
+#       但在修好之前**不得**因「已知」而當成 OK（使用者明令）。
+HEARTBEAT_FILE = REPO / "data" / "verifier_heartbeat.json"
+HEARTBEAT_STALE_HOURS = 48   # 每日排程；容忍一次漏跑，超過即視為「沒跑」
+
+
+def step_verifier_heartbeat(quiet: bool) -> list:
+    """⑧ 讀驗證器執行心跳；NOT_RUN／逾期／FAIL 皆回傳問題清單（fail-closed）。"""
+    if not HEARTBEAT_FILE.exists():
+        return [f"驗證器心跳檔不存在（{HEARTBEAT_FILE.name}）→ verify_ficriteria "
+                f"從未被執行（NOT_RUN，無聲失效）"]
+    try:
+        hb = json.loads(HEARTBEAT_FILE.read_text(encoding="utf-8"))
+    except Exception as e:  # noqa: BLE001
+        return [f"驗證器心跳檔無法解析：{type(e).__name__}: {e} → 視為 NOT_RUN"]
+
+    st = str(hb.get("execution_status") or "NOT_RUN")
+    streak = hb.get("consecutive_failure_count")
+    last_run = hb.get("last_run_at")
+
+    fresh = True
+    if last_run:
+        try:
+            t = dt.datetime.fromisoformat(str(last_run))
+            if t.tzinfo is None:
+                t = t.replace(tzinfo=dt.timezone(dt.timedelta(hours=8)))
+            age_h = (dt.datetime.now(t.tzinfo) - t).total_seconds() / 3600.0
+            fresh = age_h <= HEARTBEAT_STALE_HOURS
+        except Exception:  # noqa: BLE001
+            fresh = False
+
+    if st == "PASS" and fresh:
+        if not quiet:
+            print(f"⑧ 驗證器心跳：✅ PASS（{hb.get('pass_count')} PASS / "
+                  f"{hb.get('fail_count')} FAIL）")
+        return []
+
+    if not fresh:
+        return [f"驗證器未在 {HEARTBEAT_STALE_HOURS}h 內執行（last_run_at={last_run}）"
+                f"→ NOT_RUN（無聲失效；cron 呼叫端可能沒跑）"]
+
+    if st == "FAIL":
+        return [f"驗證器 FAIL（{hb.get('pass_count')} PASS / {hb.get('fail_count')} FAIL；"
+                f"連續失敗 {streak}；rc={hb.get('exit_code')}）→ 業務斷言未過，"
+                f"修正前不得宣告收工全綠"]
+
+    return [f"驗證器執行狀態異常：execution_status={st!r}（應為 PASS／FAIL／NOT_RUN）"
+            f"→ 視為 NOT_RUN"]
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="龍九每日收工檢查（一鍵）")
     ap.add_argument("--fix", action="store_true", help="釋放被誤認領的排程時點")
@@ -545,6 +606,7 @@ def main() -> int:
         sync_problems = step_remote_sync(args.quiet or args.silent_ok)
         cons_problems = step_consistency(args.quiet or args.silent_ok)
         thr_problems = step_threshold_invariants(args.quiet or args.silent_ok)
+        hb_problems = step_verifier_heartbeat(args.quiet or args.silent_ok)
 
         problems = []
         if left_claims:
@@ -556,6 +618,7 @@ def main() -> int:
         problems.extend(sync_problems)
         problems.extend(cons_problems)
         problems.extend(thr_problems)
+        problems.extend(hb_problems)
 
         print()
         print("=" * 52)

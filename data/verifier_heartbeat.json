@@ -1,0 +1,13 @@
+{
+ "verifier": "tools/verify_ficriteria.py",
+ "last_run_at": "2026-10-05T18:47:32.888553+08:00",
+ "last_success_at": null,
+ "last_failure_at": "2026-10-05T18:47:32.888553+08:00",
+ "duration_ms": 187,
+ "exit_code": 1,
+ "pass_count": 49,
+ "fail_count": 6,
+ "execution_status": "FAIL",
+ "consecutive_failure_count": 3,
+ "tail": "  PASS  100% 門檻線位置 = 66.7%\n  PASS  index.html：FI 跑道（極端情境口徑）\n  PASS  daily_report_v2_*.html：FI 跑道（極端情境口徑）\n  PASS  rebalance_dashboard_*.html：四情境\n\n== 結果：49 PASS / 6 FAIL =="
+}
