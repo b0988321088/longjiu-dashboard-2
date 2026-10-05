@@ -464,7 +464,8 @@
     "owner": "CEO",
     "external_owner": null,
     "status_raw": "pending",
-    "is_informational": false
+    "is_informational": false,
+    "detail": "※ 2026-10-05 併入 indent／writer 證據（使用者裁決：不另開卡，併既有稽核）：同一 pending_decisions.json 今日被至少兩種格式寫過 —— 19:16 時 git 內為 indent=1、22:00 晚報跑完後變成 indent=2（pending_reconcile --apply 是其中一個實際 writer）。用錯的那一種寫會產生整檔假 diff（實測 579/563 行）；改用「先讀 HEAD 實際格式再照著寫」後，diff 回到 +19/−0。登記表載明 canonical=2，故 indent=1 那條路徑為偏離者，待定位。稽核待答三問：①canonical specification 以什麼為準（登記表／HEAD 現況／writer 實際輸出）②誰是長期 writer、共幾條路徑在寫同一檔③三者是否應統一（建議：單一 writer 或單一 formatter）。"
   },
   {
     "id": "PEND-20261004-06",
