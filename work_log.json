@@ -1886,5 +1886,11 @@
   "category": "修正",
   "item": "鏡像防線復原｜post-commit 靜默失敗留痕＋稽核第 5 類改全量掃描（實際漂移 10 支）",
   "detail": "問題鏈：hermes/scripts 有 10 支實質漂移（asset_diff_monitor/asset_sync/build_dashboard/build_penetration_report/build_rebalance_dashboard/fire_progress/morning_briefing/report_components/run_daily/update_data），而每日稽核第 5 類只比對 5 支硬編碼檔 → 結構性漏掃；且 10/05 00:03-00:36 共 6 顆 commit 未同步卻完全無痕。A 手動同步 10→0（僅恢復當下一致）。B 新增 mirror_guard.py（repo∩鏡像逐位元＋wrapper 不變式＋rc 0/1/2 fail-closed），稽核第 5 類改呼叫它；負向測試：舊清單外的 build_dashboard.py 落後可被點名。C 根因收斂為可重現 failure contract：⓪/① 在留痕前崩潰（HERMES_HOME 污染、⓪/① 裸 copy2 例外）⇒ 無 marker、無同步，而 git 不理 post-commit 退出碼 ⇒ 外觀像沒跑過；修法：統一 _hook_fail()（marker＋.git/hook_sync.log＋環境快照）、⓪/① 補守門、sys.excepthook 兜底。D 故障注入：注入 fire_progress.py → mirror_guard rc=1 且點名、稽核第 5 類同步轉紅；還原 → sha256 逐位元一致、rc=0、marker 無殘留。CIO-DeepSeek-Flash 唯讀對抗性審查 APPROVE（0 required fixes、tree 相符）→ RECORD 落地 → 推 clean-main（remote=local=4d6fd5e2）。"
+ },
+ {
+  "date": "2026-10-05",
+  "category": "修正",
+  "item": "07:00 晨間產線擋關修復｜Pending 期限 schema（白名單外新增 FAIL）",
+  "detail": "症狀：龍九晨間自動化 07:00（morning_deploy.py／regenerate_report.py）rc=1，Task1+2 驗證器第 5 類『既有閘門無新增 FAIL』擋關、日報產出但未推送（連續 3 次失敗）。根因（與鏡像那批無關）：check_dividend_caliber 第 3 批 Pending 期限檢查兩條——①『無 due_date 者標記 needs_due_date』：10/04～10/05 新增的 5 張卡（PEND-20261004-04/05/07、20261005-01/02）needs_due_date=False 且 due_date=None；②『due_date 一律來自既有文字（不猜、不推算）』：PEND-20261004-06 質押貸款的 due_date=2026-10-29 是『撥款日 09-29＋1 個月』推算值。修法（純資料，不改驗收標準、不動白名單）：①5 張 needs_due_date→True；②該卡降級 due_date=None、needs_due_date=True，暫估值與『屬推算非既有文字』寫入 due_date_source 與 detail（不損失資訊）。驗收：check_dividend_caliber 68/74（白名單外 0 條）；verify_performance_core_task12.py PASS 19/FAIL 0；重跑 regenerate_report.py rc=0、push 71482379f2f2、線上 22/22 條 200。※ 未採用『把新 FAIL 加進 KNOWN_GATE_FAILS』的過關解。"
  }
 ]
