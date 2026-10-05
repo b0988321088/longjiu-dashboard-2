@@ -60,7 +60,25 @@ def main() -> None:
     # 2026-08-24：理財型房貸已清償（financial_mortgage=0）時不再要求「理財型」，與 cio_review 8/14 放寬邏輯一致
     _fm = (snap or {}).get("financial_mortgage", 0) or 0
     _need_licai = "理財型" if _fm > 0 else ""
-    loan_ok = all(x in daily for x in ["永豐房貸 (YY)", "永豐房貸 (YYDU)", "永豐房貸 (XZ)", _need_licai, "保單借貸", "證券質押"])
+    # 2026-10-05 修正：質押列標籤於 2026-09-29 由「證券質押」改為「基金質押」
+    #   （國泰 590 萬基金質押獨立成一列、券商質押另列）→ 舊字串自此不再出現於日報，
+    #   本檢查自 2026-09-30 起恆為 False，13:00「台股緊急應變」步驟每次中止（實測 10/03-10/05 日報皆無「證券質押」）。
+    #   改為依真值存在與否要求對應標籤：有券商質押才要求「證券質押」，有基金質押才要求「基金質押」
+    #   （維持「缺真值不得靜默漏列」的守門意圖，而非放寬成不檢查）。
+    _need_pledge, _miss_pledge = [], []
+    for _k, _lab in (("pledge_loan", "證券質押"), ("fund_pledge_loan", "基金質押")):
+        _v = (snap or {}).get(_k)
+        if _v is None:
+            # 0 與 None 分流鐵則（PEND-20261004-02）：缺鍵＝缺真值 → 仍要求列示並告警；
+            # 原寫法 snap.get(k, 0) or 0 會把 None 當 0，讓守門因「鍵消失」而靜默失能（CIO 四輪 blocking）。
+            _miss_pledge.append(_k)
+            _need_pledge.append(_lab)
+        elif float(_v) > 0:
+            _need_pledge.append(_lab)
+    if _miss_pledge:
+        print(f"  ⚠️ 質押真值缺鍵 {_miss_pledge} → 仍要求對應標籤並告警（0 與 None 分流）")
+    loan_ok = all(x in daily for x in ["永豐房貸 (YY)", "永豐房貸 (YYDU)", "永豐房貸 (XZ)",
+                                       _need_licai, "保單借貸"] + _need_pledge)
     results.append(check("房貸帳戶（大義街已清償 ✅）", loan_ok))
 
     # 5. 保單現值對齊 snapshot.json

@@ -39,13 +39,16 @@ liab_cost = 16600  # 保單借貸 13,333 ＋ 元大證金 3,267（利息口徑�
 _mort_m = float(snap.get("mortgage_monthly_total") or 0)   # 僅供列標對照，不參與計算
 _rent_net = rent
 _rent_net_note = "房貸月付已計入月支出（不重複扣）"
-# 現金底線單一來源（9/27 裁示＝70 萬）：走 sabbatical_checklist_update._cash_floor，
+# 現金底線單一來源（9/27 裁示＝70 萬）：2026-10-05 修正——走 sot_targets.cash_floor，
 # 不在此處本地重算、也不留字面值退路（2026-09-28 翻新：寫死掃描必須為空）
-import sabbatical_checklist_update as _sab
+# 血淚：4c5c68fe（2026-10-04）已移除 sabbatical_checklist_update._cash_floor（收斂為單一入口），
+#      本檔漏改 → 自 10/03 起每次執行 AttributeError，退休規劃頁一路停在 10/02，
+#      連帶 check_dividend_caliber 的退休規劃頁斷言長期走 SKIP（假綠燈）。
+from sot_targets import cash_floor as _cash_floor_fn
 
 # 2026-10-01：具名化（僅 snapshot 缺值時作為最後防線；正常由真值派生）
 _FUDA_MDIV_FALLBACK = 45000
-_floor_s = float(_sab._cash_floor(snap) or 0)
+_floor_s = float(_cash_floor_fn(snap) or 0)
 
 # ── 2026-09-23：本檔過去有多處以字面值寫死「當期」數字（覆蓋率／缺口／驗收等級／
 # 基準月標籤／2027/2 目標值），改為一律由 snapshot 動態派生；否則真值校正後

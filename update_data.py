@@ -252,12 +252,21 @@ def main():
                 _dr[_ym] = _bucket
             snap["dividend_records"] = _dr
             print(f"✅ dividend_records 已補記（{sum(len(v) for v in _dv.values())} 筆）")
+            # 2026-10-05 修正（CIO 三輪 blocking 根因）：dividend_tracker 是「另一支行程、自己讀 snapshot.json」，
+            # 而原版在步驟③（SNAP.write_text，本檔最後才寫檔）之前就呼叫它 → tracker 讀到「不含本次補記」的舊檔
+            # → 走 else 分支把 dividend_month_actual / monthly_dividend_total 算成 0，與 dividend_records 的補記值分裂，
+            # 違反五欄一致鐵則（實測：dividend_records 9,446 vs dividend_month_actual 0 → 差異分析閘門翻紅）。
+            # 改：先落檔 → 再跑 tracker → 重新載入，讓後續步驟（穿透/負債/寫檔）吃到 tracker 的重算結果。
+            SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
             # 2026-08-31 核准：補記後自動重算 dividend_month_actual（不再只提示手動跑）
             try:
                 import subprocess as _sp
                 _r = _sp.run([sys.executable, str(BASE / "dividend_tracker.py")], capture_output=True, text=True, cwd=str(BASE), timeout=120)
-                _line = [l for l in (_r.stdout or "").splitlines() if "保留既有" in l or "已更新" in l]
-                print(f"  🔁 dividend_tracker: {_line[-1] if _line else '完成'}")
+                _line = [l for l in (_r.stdout or "").splitlines()
+                         if "保留既有" in l or "已追蹤" in l or "已收到配息" in l]
+                print(f"  🔁 dividend_tracker: {_line[-1].strip() if _line else '完成'}")
+                snap = json.loads(SNAP.read_text(encoding="utf-8"))
+                print(f"  🔁 已重新載入 snapshot（當月實收 {snap.get('dividend_month_actual', 0):,.0f}）")
             except Exception as _e:
                 print(f"  ⚠️ dividend_tracker 自動重算失敗（手動跑 python dividend_tracker.py）: {_e}")
         except Exception as _e:

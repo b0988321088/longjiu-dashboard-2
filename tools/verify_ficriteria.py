@@ -128,7 +128,11 @@ def main():
     # 現金底線一律走 sabbatical._cash_floor(snap) 的單一來源（snapshot.thresholds_2026_0915.現金_twd.合計底線）；
     # 僅於 snapshot 門檻缺漏時由該函式回退 → 本檔不得再出現任何當期金額字面值
     # —— 2026-09-28 CIO 指出：此處寫死會讓「現況三條達標 → 🟢」在底線裁示變動後仍以舊值判定＝假 PASS
-    gate, floor = sab.RUNWAY_GATE_DAYS, sab._cash_floor(snap)
+    # 現金底線一律走單一來源 sot_targets.cash_floor(snap)（2026-10-05 修正：
+    # sabbatical_checklist_update._cash_floor 已於 4c5c68fe（10/04）移除，本檔漏改 → 直接 AttributeError、
+    # 整支 FI 門檻回歸保護工具靜默失效（保護消失且無告警＝P0 假綠燈型缺陷）。
+    # —— 2026-09-28 CIO 指出：此處寫死會讓「現況三條達標 → 🟢」在底線裁示變動後仍以舊值判定＝假 PASS
+    gate, floor = sab.RUNWAY_GATE_DAYS, _load("sot", repo / "sot_targets.py").cash_floor(snap)
     cash = float(snap.get("cash_total") or 0)
     cov, strc = sc["con"]["coverage"], sc["stress"]["coverage"]
     rw = sc["extreme"]["runway_days"]

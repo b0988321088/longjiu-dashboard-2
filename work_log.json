@@ -1904,5 +1904,23 @@
   "category": "修正",
   "item": "PEND-20261005-04 收案｜Pending 期限閘門白名單釋放＋五欄齊備改動態",
   "detail": "根因（CIO 審查 35a33be1 的 known limits，非 35a33be1 引入）：①『Pending schema 五欄齊備（26 筆一次遷移）』的 len==26 是硬編碼，卡片長到 34 張後即使資料合規也永遠 FAIL（假紅燈）；②該條與『status 正規化為四態（原字串保留 status_raw）』都被釘在 tools/verify_performance_core_task12.py 的 KNOWN_GATE_FAILS → 回歸擋關能力實際失效。修法（使用者 10/05 ✅ 核准）：①檢查改動態口徑（名稱改『Pending schema 五欄齊備（全卡動態）』，只驗每張都有五欄）②5 張非 STATUS_ENUM 的 status 以 pending_engine.norm_status() 逐張正規化、原字串（含 ⏸／⏳ 敘事與舊 raw）保留進 status_raw ③自白名單釋放該 3 筆（KNOWN_GATE_FAILS 7→4）。驗收：check_dividend_caliber 70/74（白名單外 0，僅剩現金/穿透桶 4 條他案）；負向測試——注入非 ENUM status 與拔掉 owner 鍵，兩者都讓閘門與 Task1+2 驗證器第 5 類 FAIL（不再被白名單吸收，牙齒已恢復）；還原後 PASS 19/FAIL 0。CIO 對抗性唯讀審查 APPROVE 0 required fixes（tree 97d7876f）。程式 commit bb7dcf32（RECORD）已推 clean-main。"
+ },
+ {
+  "date": "2026-10-05",
+  "category": "完成",
+  "item": "保單B M&G 全轉出（9/21 提出）T+4 生效確認｜pending 兩卡收案",
+  "detail": "安聯 App 2026-10-05 11:44-11:45 截圖證實生效（保單B 逐檔）：M&G入息 1,549,046 → 620,358（−928,688）、PIMCO收益增長M 196,063 → 765,109（+569,046）、新增 元大台灣高股息優質龍頭基金-新台幣(B)配息 380,553；B 總值 2,629,653 → 2,645,088。9/21 提出金額 100 萬（M&G→PIMCO 700K＋M&G→0056 300K）為當時市值，實際轉出 928,688（M&G 未歸零、餘 620,358 ≈ 40%），落地比例 PIMCO 569,046：台股 380,553 ≈ 60:40（與計畫 70:30 不同，以實際生效值為準）。已同步 snapshot.insurance_breakdown.policy_b_funds（6 檔）＋fund_components_09 新增『元大台灣高股息優質龍頭』（股 100%，GICS 產業拆分待補）＋ 穿透重算四源。兩張卡同時收案理由：『安聯（第三站）轉換至 PIMCO 收益增長M』與『M&G 全轉出』同為 9/21 提出、T+4 約 9/25 生效、同一筆 PIMCO 轉入（第二站 M&G → 第三站 PIMCO），金額即本次截圖實測值。"
+ },
+ {
+  "date": "2026-10-05",
+  "category": "完成",
+  "item": "真值日同步｜安聯 A/B＋國泰基金＋鉅亨＋凱基證券＋Moneybook 現金（五源）",
+  "detail": "使用者 2026-10-05 提供 7 張截圖＋2 檔 CSV＋Moneybook ZIP，逐源比對後一次同步（四源一致、同義欄位一致）：①安聯 App：A 4,943,043（+15,207）／B 2,645,088（+15,435）→ A+B 7,588,131（+30,642）；B 逐檔含 M&G 全轉出生效（M&G 1,549,046→620,358、PIMCO 196,063→765,109、新增元大台灣高股息優質龍頭 380,553）②國泰 App 依基金查詢：11,737,941→11,657,328（−80,613；富達 5,785,524／貝萊德B11 4,909,222／聯博AD 962,582，逐檔加總＝App 總額）③鉅亨：873,733→880,943（一般申購 393,547＋自由Pay 487,396，兩來源交叉吻合）④凱基證券：3,007,220→3,057,060（15 檔股數×截圖股價逐檔驗算＝3,057,060 完全相同）⑤Moneybook：現金 1,753,675→1,762,137、信用卡待繳 23,464→35,826、房貸 3 筆不變。結果：總資產 26,791,534→26,807,075、保險 9,449,607、基金 12,538,271、負債 30,980,255、淨值 −4,173,180；現金分層 可動用 862,137／指定還款 900,000／底線 700,000／乾粉 162,137。US30Y 5.603% STALE、紅線連續 25 天（階段 1、維持不交易）。"
+ },
+ {
+  "date": "2026-10-05",
+  "category": "修正",
+  "item": "四個既有斷掉的下游：checklist 質押標籤／update_data 配息順序／退休規劃頁／FI 驗證器",
+  "detail": "①daily_checklist.py：質押列標籤 9/29 改為「基金質押」但檢查仍要求舊字串「證券質押」→ 自 9/30 起恆假、13:00 台股緊急應變每次中止。改依真值分流，並依 CIO 四輪意見落實 0／None 分流鐵則（真值 0＝不要求；缺鍵 None＝仍要求並告警）。②update_data.py --dividend：原在寫檔前呼叫 dividend_tracker（另一支行程自己讀檔）→ tracker 讀到舊檔、當月實收算 0，與 dividend_records 補記值分裂（差異分析閘門翻紅）。改「先落檔→跑 tracker→重新載入」；受控測試：歸零後補記→五欄全同步，還原後五欄皆 9,446。③build_retirement_plan.py：10/04 的 4c5c68fe 移除 sabbatical_checklist_update._cash_floor（收斂 sot_targets.cash_floor 單一入口）漏改本檔 → 自 10/03 起 AttributeError、退休規劃頁停在 10/02、check_dividend_caliber 該段斷言長期 SKIP（假綠燈）。改接單一入口後頁面重生（113.1%／21.0%）。④tools/verify_ficriteria.py：同一移除造成同款漏改（CIO 四輪抓到，我第一版只修了 ③ 未掃全庫）→ 已改 _load sot_targets.cash_floor；並以全庫掃描確認無其他殘留（模組屬性引用 0 處不存在）。"
  }
 ]

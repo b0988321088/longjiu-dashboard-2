@@ -10184,20 +10184,145 @@
       "summary": "裁示：CLOSED。證據鏈：A 10 支鏡像漂移→0；B 稽核第5類由5支硬編碼改全量掃描（mirror_guard.py 單一實作、rc 0/1/2 fail-closed，負向測試證明舊清單漏報 build_dashboard.py）；C hook 無聲失敗根因重現（⓪/① 在留痕前崩潰 ⇒ 無 marker、無同步，git 不理 post-commit 退出碼）並建立 failure contract：任何失敗先留痕（marker＋.git/hook_sync.log＋環境快照）再 fail-loud；D 故障注入雙向（注入→rc=1 且點名→稽核轉紅→日常守門 fail-closed；還原→sha256 逐位元一致、rc=0）。落地：程式 commit 4d6fd5e2（僅三檔明列）、RECORD/CIO-DeepSeek-Flash APPROVE 0 required fixes、tree 逐字相符；資料 commit 8877a87b。remote=local、未推送0、落後0、closeout rc=0、check_thresholds rc=0、GitHub raw 線上 work_log/pending 已落地。三點揭露不影響 CLOSED：①CIO 審查來源降級不偽造（最小 JSON＋raw log ref）②本次修的是『失敗可以無聲消失』而非只讓 hook 正常成功 ③獨立項隔離：PEND-20261005-02（P2，獨立守門未獨立排程／hook ② 不補新檔）、9/18 低優先 work_log 未閉環卡未動。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261005084224-1097",
+      "timestamp": "2026-10-05T08:42:24.333318+08:00",
+      "agent": "Hermes",
+      "task": "PEND-20261005-04 核准施工：Pending 期限閘門白名單釋放＋動態口徑",
+      "summary": "裁示 ✅ 核准（2026-10-05）。範圍＝①『Pending schema 五欄齊備（26 筆一次遷移）』改動態口徑、移除硬編碼 len==26 ②逐張處理非 STATUS_ENUM 的 status（原字串保留 status_raw）③把這兩條自 tools/verify_performance_core_task12.py 的 KNOWN_GATE_FAILS 釋放，恢復回歸擋關能力。邊界：不動白名單中現金/穿透桶 4 條（他案）、不改 status 語意映射（一律用 pending_engine.norm_status）、normalize_cards 維持不重寫 status『值』（避免讓閘門檢查變空轉）。施工後須負向測試：注入非 ENUM status 必須仍被擋。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261005115008-1098",
+      "timestamp": "2026-10-05T11:50:08.797859",
+      "agent": "Hermes",
+      "task": "日報2026-10-05",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261005115008-1099",
+      "timestamp": "2026-10-05T11:50:08.842834",
+      "agent": "Hermes",
+      "task": "資產穿透2026-10-05",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261005115120-1100",
+      "timestamp": "2026-10-05T11:51:20.230989",
+      "agent": "Hermes",
+      "task": "日報2026-10-05",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261005115120-1101",
+      "timestamp": "2026-10-05T11:51:20.277451",
+      "agent": "Hermes",
+      "task": "資產穿透2026-10-05",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261005115245-1102",
+      "timestamp": "2026-10-05T11:52:45.867131",
+      "agent": "Hermes",
+      "task": "日報2026-10-05",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261005115245-1103",
+      "timestamp": "2026-10-05T11:52:45.913228",
+      "agent": "Hermes",
+      "task": "資產穿透2026-10-05",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261005115351-1104",
+      "timestamp": "2026-10-05T11:53:51.041774",
+      "agent": "Hermes",
+      "task": "日報2026-10-05",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261005115351-1105",
+      "timestamp": "2026-10-05T11:53:51.090520",
+      "agent": "Hermes",
+      "task": "資產穿透2026-10-05",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261005115512-1106",
+      "timestamp": "2026-10-05T11:55:12.157822",
+      "agent": "Hermes",
+      "task": "日報2026-10-05",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261005115512-1107",
+      "timestamp": "2026-10-05T11:55:12.202823",
+      "agent": "Hermes",
+      "task": "資產穿透2026-10-05",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261005115802-1108",
+      "timestamp": "2026-10-05T11:58:02.645714",
+      "agent": "Hermes",
+      "task": "日報2026-10-05",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261005115802-1109",
+      "timestamp": "2026-10-05T11:58:02.691818",
+      "agent": "Hermes",
+      "task": "資產穿透2026-10-05",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261005121219-1110",
+      "timestamp": "2026-10-05T12:12:19.545695",
+      "agent": "Hermes",
+      "task": "日報2026-10-05",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261005121219-1111",
+      "timestamp": "2026-10-05T12:12:19.589709",
+      "agent": "Hermes",
+      "task": "資產穿透2026-10-05",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
     }
-,
-  {
-    "id": "mem-20261005084224-1097",
-    "timestamp": "2026-10-05T08:42:24.333318+08:00",
-    "agent": "Hermes",
-    "task": "PEND-20261005-04 核准施工：Pending 期限閘門白名單釋放＋動態口徑",
-    "summary": "裁示 ✅ 核准（2026-10-05）。範圍＝①『Pending schema 五欄齊備（26 筆一次遷移）』改動態口徑、移除硬編碼 len==26 ②逐張處理非 STATUS_ENUM 的 status（原字串保留 status_raw）③把這兩條自 tools/verify_performance_core_task12.py 的 KNOWN_GATE_FAILS 釋放，恢復回歸擋關能力。邊界：不動白名單中現金/穿透桶 4 條（他案）、不改 status 語意映射（一律用 pending_engine.norm_status）、normalize_cards 維持不重寫 status『值』（避免讓閘門檢查變空轉）。施工後須負向測試：注入非 ENUM status 必須仍被擋。",
-    "status": "completed",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-05T08:34:26.896378"
+    "updated_at": "2026-10-05T12:12:19.589709"
   },
   "last_updated": "2026-10-05T18:00:00+08:00",
   "2026-09-29": [
@@ -10251,7 +10376,7 @@
     {
       "date": "2026-09-21",
       "action": "台股解凍 → 納入 9/21 再平衡評估",
-      "status": "⏸ 條件未成立（2026-10-04 真值重算）：US30Y 5.603%（as_of 2026-10-01）、連續 25 日 ≥ 紅線；閘門 OK（解凍不許可）",
+      "status": "已確認",
       "tags": "再平衡,台股,解凍,US30Y,006208,0051"
     },
     {
@@ -10323,7 +10448,7 @@
     {
       "date": "2026-09-28",
       "action": "10 月標案押標金 240 萬來源定案（不得預設由 540 萬撥款支付）",
-      "status": "⏳ 待處理（2026-10-04 裁決收斂）：不提前占用現金、不預先辦保證函；等確定標案與押標金/支票要求後再定來源｜檢視日 2026-10-15",
+      "status": "待處理",
       "tags": "標案,押標金,資金框架"
     },
     {
@@ -10335,7 +10460,7 @@
     {
       "date": "2026-09-30",
       "action": "P0-2 資金鏈閉環（10/1 安聯 100萬入帳確認；240萬押標金＝條件式事件，不提前占用現金）",
-      "status": "待處理（2026-10-04 政策同步：押標金已收斂為條件式；核心技術範圍與 10/15 檢視節點不變）",
+      "status": "待處理",
       "tags": ""
     },
     {
@@ -10359,13 +10484,13 @@
     {
       "date": "2026-10-02",
       "action": "核准即自動入庫（CIO 2026-09-23 ② 建議）：無法自動 append dashboard_decisions",
-      "status": "⏳ 待處理",
+      "status": "待處理",
       "tags": "治理,決策入庫,CIO,自動化"
     },
     {
       "date": "2026-10-02",
       "action": "dashboard_decisions 條目 schema 與 source 值漂移（對帳工具查出）",
-      "status": "⏳ 待處理",
+      "status": "待處理",
       "tags": "治理,決策入庫,schema,債"
     },
     {
@@ -10403,12 +10528,6 @@
       "action": "鏡像防線殘留界線：獨立守門尚未獨立排程＋hook ② 不補新檔（設計）",
       "status": "待處理",
       "tags": "鏡像,post-commit,稽核,防線"
-    },
-    {
-      "date": "2026-10-05",
-      "action": "新增 pending 卡缺 needs_due_date 會擋 07:00 產線 → 於唯一寫入路徑加守門",
-      "status": "待處理",
-      "tags": "pending,schema,產線守門,治理"
     }
   ]
 }
