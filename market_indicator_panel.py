@@ -56,8 +56,14 @@ def build_panel(snap: dict | None = None) -> str:
     usd = (s.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {}
     usd_pct = usd.get("合計", 0)
     _usd_cap = float((s.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)
-    usd_light = "🔴" if usd_pct > _usd_cap else ("🟡" if usd_pct > _usd_cap - 5 else "🟢")
-    _usd_txt = f"{usd_pct:.1f}% {usd_light}（上限 {_usd_cap:.0f}%）"
+    # 2026-10-07 裁決：美元曝險只顯示、不觸發（advisory_only）→ 不標紅線、加政策提示
+    _usd_adv = bool((s.get("usd_exposure_monitor", {}) or {}).get("advisory_only"))
+    if _usd_adv and usd_pct > _usd_cap:
+        usd_light = "🟡"
+        _usd_txt = f"{usd_pct:.1f}% 🟡 僅顯示（門檻 {_usd_cap:.0f}%；政策門檻待 10 月戰略檢討）"
+    else:
+        usd_light = "🔴" if usd_pct > _usd_cap else ("🟡" if usd_pct > _usd_cap - 5 else "🟢")
+        _usd_txt = f"{usd_pct:.1f}% {usd_light}（上限 {_usd_cap:.0f}%）"
 
     # 科技穿透曝險（2026-09-12：目標 15%→20% 由 snapshot 讀；原寫死 → 顏色誤標）
     _tech_pct = ((s.get("penetration", {}) or {}).get("actual_pct", {}) or {}).get("美股市值型成長_科技")

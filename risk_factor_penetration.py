@@ -73,9 +73,13 @@ def build_chart():
     ax.pie([usd_pct, 100 - usd_pct], labels=["美元", "台幣"], autopct="%.0f%%",
            colors=["#ef4444", "#22c55e"], startangle=90,
            explode=(0.04, 0))
-    ax.set_title(f"幣別曝險（美元 {usd_twd/1e4:.0f}萬）｜紅線 {_usd_cap:.0f}%", fontsize=13, fontweight="bold")
+    # 2026-10-07 裁決：美元曝險只顯示、不觸發（advisory_only）→ 標題與結論文字不得再寫成紅線指令
+    _usd_adv = bool((s.get("usd_exposure_monitor", {}) or {}).get("advisory_only"))
+    _cap_word = "僅顯示 門檻" if _usd_adv else "紅線"
+    ax.set_title(f"幣別曝險（美元 {usd_twd/1e4:.0f}萬）｜{_cap_word} {_usd_cap:.0f}%", fontsize=13, fontweight="bold")
     _gap = usd_pct - _usd_cap
-    _gap_txt = (f"⚠️ 超紅線 {_gap:.1f}pp — 新增資金一律台幣" if _gap > 0
+    _gap_txt = ((f"🟡 僅顯示：超門檻 {_gap:.1f}pp，不觸發資產調整（政策門檻待 10 月戰略檢討）" if _usd_adv
+                 else f"⚠️ 超紅線 {_gap:.1f}pp — 新增資金一律台幣") if _gap > 0
                 else f"✅ 未超線（餘裕 {-_gap:.1f}pp）— 仍以台幣新生資金為主")
     ax.text(0, -1.35, _gap_txt, ha="center", fontsize=11, color=("#dc2626" if _gap > 0 else "#16a34a"))
 
@@ -105,7 +109,7 @@ def build_chart():
     _cash_b = apct.get("現金/安全網", 0)
     _inc_dim = ((s.get("dual_dimension_metric", {}) or {}).get("收入維度", {}) or {}).get("佔比", 0)
     risks = [
-        f"[{'🔴' if usd_pct > _usd_cap else '✅'}] 美元曝險 {usd_pct:.1f}%（紅線 {_usd_cap:.0f}%，台幣40/美金60）— 台幣升5%資產縮水",
+        f"[{'🟡 僅顯示' if (_usd_adv and usd_pct > _usd_cap) else ('🔴' if usd_pct > _usd_cap else '✅')}] 美元曝險 {usd_pct:.1f}%（{'門檻' if _usd_adv else '紅線'} {_usd_cap:.0f}%，台幣40/美金60）— 台幣升5%資產縮水",
         f"[{'🔴' if apct.get('美股市值型成長',0) > 60 else '🟡'}] 美股相關 {apct.get('美股市值型成長',0):.1f}% — 平衡基金底層重疊",
         f"[{'🟡' if _tech <= _tech_cap else '🔴'}] 科技 {_tech:.1f}%（目標 ≤{_tech_cap:.0f}%）",
         f"[{'🟡' if _tw < _tw_tgt else '✅'}] 台股 {_tw:.1f}%（目標 {_tw_tgt:.0f}%）— 慢慢買補缺口",
