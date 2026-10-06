@@ -10400,20 +10400,19 @@
       "summary": "build_dashboard.py 被動收入結構條 _sal 由當月實收改取常態 monthly_salary；__INC_TOTAL__ fallback 改 got_total。驗收：常態 42,560+100,000+80,100=222,660 與當月實收 39,777 同時正確；負向（移除當月紀錄）常態線仍 222,660。唯讀驗證器 20/20 PASS、CIO APPROVE 0 必修；程式 6aed7a55 + 資料 0d20f93e 已推 clean-main。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261006160126-1121",
+      "timestamp": "2026-10-06T16:01:26.610772+08:00",
+      "agent": "Hermes",
+      "task": "薪資三層定義定版（MB 事實／salary_records 實收／monthly_salary 常態假設）",
+      "summary": "使用者 2026-10-06 定版：①Moneybook 台電薪資匯款＝薪資發生多少的唯一真值 ②salary_records＝MB 真值的結構化紀錄／快取 ③monthly_salary=42,560＝常態模型假設、非薪資真值。自動來源卡方向鎖定＝MB→台電薪資交易辨識→salary_records（需去重與異常檢查，不得 LLM／人工輸入）；找不到則當月顯示 0／未入帳、常態線仍用 42,560。使用者並確認本次已 CLOSED 的常態線修正方向正確、不需回頭改。唯讀核對：全系統取值語意一致，L773-777 待收段用常態值為正確語意。",
+      "status": "completed",
+      "source": "user"
     }
-,
-  {
-    "id": "mem-20261006160126-1121",
-    "timestamp": "2026-10-06T16:01:26.610772+08:00",
-    "agent": "Hermes",
-    "task": "薪資三層定義定版（MB 事實／salary_records 實收／monthly_salary 常態假設）",
-    "summary": "使用者 2026-10-06 定版：①Moneybook 台電薪資匯款＝薪資發生多少的唯一真值 ②salary_records＝MB 真值的結構化紀錄／快取 ③monthly_salary=42,560＝常態模型假設、非薪資真值。自動來源卡方向鎖定＝MB→台電薪資交易辨識→salary_records（需去重與異常檢查，不得 LLM／人工輸入）；找不到則當月顯示 0／未入帳、常態線仍用 42,560。使用者並確認本次已 CLOSED 的常態線修正方向正確、不需回頭改。唯讀核對：全系統取值語意一致，L773-777 待收段用常態值為正確語意。",
-    "status": "completed",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-06T15:42:19.326610"
+    "updated_at": "2026-10-06T19:42:28.864234"
   },
   "last_updated": "2026-10-06T18:00:00+08:00",
   "2026-09-29": [
@@ -10631,6 +10630,12 @@
       "action": "資安 remediation：repo 五步（public→private／HEAD 淨化／filter-repo／force-with-lease／Pages 驗 404）＋第 1 步已完成",
       "status": "已確認",
       "tags": "資安,SECURITY,憑證輪替,repo rewrite,Pages"
+    },
+    {
+      "date": "2026-10-06",
+      "action": "薪資入帳無自動來源 → 月初收入視圖暫時為 0（資產真值正確、收入視圖錯誤）",
+      "status": "已確認",
+      "tags": "收入,salary_records,自動化,系統缺口,Moneybook"
     }
   ]
 }
