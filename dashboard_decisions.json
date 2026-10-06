@@ -10365,6 +10365,16 @@
       "status": "completed",
       "source": "auto"
     }
+,
+  {
+    "id": "mem-20261006151908-1117",
+    "timestamp": "2026-10-06T15:19:08.863512+08:00",
+    "agent": "Hermes",
+    "task": "資安 remediation 第 0 步 0-A CLOSED：Telegram bot token 輪替完成",
+    "summary": "裁決「現在立即輪替、不等窗口」。手動最小權限執行；9/9 Gate 全過（新 token 200／舊 token 401／sha 6d28115b→0b305f5e／gateway 恢復且進程數 1／雙向收發驗證）。未動 git 歷史、Pages、10/06 真值。殘餘風險（token 曾出現在對話通道）已揭露並經使用者選擇接受。下一步 0-B Moneybook 匯出密碼。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-06T14:06:14.681382"
