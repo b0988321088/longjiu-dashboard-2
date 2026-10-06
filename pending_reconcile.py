@@ -24,6 +24,13 @@ import sys
 from datetime import datetime
 
 BASE = pathlib.Path(__file__).resolve().parent
+sys.path.insert(0, str(BASE))
+from pending_engine import norm_status  # noqa: E402  （唯一狀態機：原字串 → 四態）
+
+
+def _raw_of(item: dict) -> str:
+    """卡片目前可讀的敘述狀態（新制在 status_raw；舊制在 status）。"""
+    return str(item.get("status_raw") or item.get("status") or "")
 PEND = BASE / "pending_decisions.json"
 ARCH = BASE / "pending_decisions_archive.json"
 SAFE_LINE = 40_000
@@ -195,10 +202,18 @@ def main() -> int:
             arch.append(item)
             actions.append({"動作": "自動閉環", "title": title, "證據": res["evidence"]})
             continue
-        if res and res["kind"] == "update" and res.get("status") != item.get("status"):
-            actions.append({"動作": "狀態重算", "title": title, "舊": item.get("status", "")[:70],
-                            "新": res["status"][:120], "證據": res.get("evidence")})
-            item["status"] = res["status"]
+        if res and res["kind"] == "update" and res.get("status") != _raw_of(item):
+            _new = res["status"]
+            _old = _raw_of(item)
+            actions.append({"動作": "狀態重算", "title": title, "舊": _old[:70],
+                            "新": _new[:120], "證據": res.get("evidence")})
+            # 2026-10-06（閘門回歸）：schema 契約＝status 只能是四態、原敘述保留在 status_raw。
+            #   舊寫法把敘述字串直接寫進 status → check_dividend_caliber「status 正規化為四態」亮紅
+            #   → Task1+2 驗證器第 5 類擋關 → 10/05、10/06 晨間產線「有產出但不推送」。
+            #   status_raw 只保留一層「舊 raw」歷史，避免每日重算無限膨脹。
+            item["status_raw"] = (_new if not _old or _old in _new
+                                  else f"{_new} ｜ 舊 raw：{_old.split(' ｜ 舊 raw：')[0]}")
+            item["status"] = norm_status(_new)
         keep.append(item)
 
     print(f"═══ Pending 真值對帳（{today}｜{'寫入' if apply else 'dry-run'}）═══")
