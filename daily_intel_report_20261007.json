@@ -1,0 +1,64 @@
+{
+  "date": "20261007",
+  "generated_at": "2026-10-07T05:39:55.621937",
+  "market": {
+    "twii": "49,712.04 (+2.55%)",
+    "tsm": "2,585.00 (+0.39%)",
+    "sox": "13,217.82 (+0.34%)",
+    "us": "道瓊 51,521.28 (+0.49%) / 納指 27,599.79 (+0.45%) / S&P 7,818.93 (+0.58%)",
+    "cpi": "美國 7 月 CPI YoY 3.5% (FRED 8/13)；Core 2.8% (FRED 8/13)"
+  },
+  "briefing": "【台股/大盤】\n加權指數：49,712.04 (+2.55%)\n台積電：2,585.00 (+0.39%)\n\n【美股/外資】\n美股：道瓊 51,521.28 (+0.49%) / 納指 27,599.79 (+0.45%) / S&P 7,818.93 (+0.58%)\n費半：13,217.82 (+0.34%)\n\n【CPI/利率】\n美國CPI：美國 7 月 CPI YoY 3.5% (FRED 8/13)；Core 2.8% (FRED 8/13)\n\n【賣出訊號】\n無\n\n【買進訊號】\n• 台股大漲 2.55%\n\n【最新市場消息】\n• 《強勢美股特報》MTSI等1檔 (來源：tw.stock.yahoo.com)\n• 《強勢美股特報》LEN,LITE等2檔 (來源：tw.stock.yahoo.com)\n• 《強勢美股特報》DY,FN,STRL,MTN等10檔 (來源：tw.stock.yahoo.com)\n\n【持倉關聯分析】\n台股持倉市值型成長 2,121,729 TWD，今日大盤上漲 2.55%，動能轉強。",
+  "signals": {
+    "sell_signals": [],
+    "buy_signals": [
+      "台股大漲 2.55%"
+    ]
+  },
+  "buffett": {
+    "bull": "台股大漲 2.55%",
+    "bear": "無賣出訊號",
+    "actions": [
+      "維持現有配置",
+      "保留高利活存"
+    ],
+    "scenario_summary": "市場震盪，維持防禦"
+  },
+  "cto": {
+    "tech_stack": "市場震盪",
+    "risk": "無賣出訊號",
+    "action": "觀望為主"
+  },
+  "news": [
+    {
+      "title": "《強勢美股特報》MTSI等1檔",
+      "url": "https://tw.stock.yahoo.com/news/%E5%BC%B7%E5%8B%A2%E7%BE%8E%E8%82%A1%E7%89%B9%E5%A0%B1-mtsi%E7%AD%891%E6%AA%94-190300581.html",
+      "snippet": "MoneyDJ新聞 2026-10-07 03:03:17 數位內容中心 發佈MACOM Technology Solutions（MTSI.US）：成交價352.33美元，上漲7.32%，開盤334"
+    },
+    {
+      "title": "《強勢美股特報》LEN,LITE等2檔",
+      "url": "https://tw.stock.yahoo.com/news/%E5%BC%B7%E5%8B%A2%E7%BE%8E%E8%82%A1%E7%89%B9%E5%A0%B1-len-lite%E7%AD%892%E6%AA%94-180400618.html",
+      "snippet": "MoneyDJ新聞 2026-10-07 02:04:03 數位內容中心 發佈Lennar - Class A（LEN.US）：成交價77.57美元，上漲4.2%，開盤74.95美元，盤中高點77.7"
+    },
+    {
+      "title": "《強勢美股特報》DY,FN,STRL,MTN等10檔",
+      "url": "https://tw.stock.yahoo.com/news/%E5%BC%B7%E5%8B%A2%E7%BE%8E%E8%82%A1%E7%89%B9%E5%A0%B1-dy-fn-strl-mtn%E7%AD%8910%E6%AA%94-150800264.html",
+      "snippet": "MoneyDJ新聞 2026-10-06 23:08:50 數位內容中心 發佈Dycom（DY.US）：成交價290.49美元，上漲5.86%，開盤276.87美元，盤中高點293.8美元，盤中低點2"
+    },
+    {
+      "title": "《強勢美股特報》MTSI等1檔",
+      "url": "https://tw.stock.yahoo.com/news/%E5%BC%B7%E5%8B%A2%E7%BE%8E%E8%82%A1%E7%89%B9%E5%A0%B1-mtsi%E7%AD%891%E6%AA%94-190300581.html",
+      "snippet": "MoneyDJ新聞 2026-10-07 03:03:17 數位內容中心 發佈MACOM Technology Solutions（MTSI.US）：成交價352.33美元，上漲7.32%，開盤334"
+    },
+    {
+      "title": "《強勢美股特報》LEN,LITE等2檔",
+      "url": "https://tw.stock.yahoo.com/news/%E5%BC%B7%E5%8B%A2%E7%BE%8E%E8%82%A1%E7%89%B9%E5%A0%B1-len-lite%E7%AD%892%E6%AA%94-180400618.html",
+      "snippet": "MoneyDJ新聞 2026-10-07 02:04:03 數位內容中心 發佈Lennar - Class A（LEN.US）：成交價77.57美元，上漲4.2%，開盤74.95美元，盤中高點77.7"
+    },
+    {
+      "title": "《強勢美股特報》DY,FN,STRL,MTN等10檔",
+      "url": "https://tw.stock.yahoo.com/news/%E5%BC%B7%E5%8B%A2%E7%BE%8E%E8%82%A1%E7%89%B9%E5%A0%B1-dy-fn-strl-mtn%E7%AD%8910%E6%AA%94-150800264.html",
+      "snippet": "MoneyDJ新聞 2026-10-06 23:08:50 數位內容中心 發佈Dycom（DY.US）：成交價290.49美元，上漲5.86%，開盤276.87美元，盤中高點293.8美元，盤中低點2"
+    }
+  ]
+}
