@@ -10364,30 +10364,28 @@
       "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "id": "mem-20261006151908-1117",
+      "timestamp": "2026-10-06T15:19:08.863512+08:00",
+      "agent": "Hermes",
+      "task": "資安 remediation 第 0 步 0-A CLOSED：Telegram bot token 輪替完成",
+      "summary": "裁決「現在立即輪替、不等窗口」。手動最小權限執行；9/9 Gate 全過（新 token 200／舊 token 401／sha 6d28115b→0b305f5e／gateway 恢復且進程數 1／雙向收發驗證）。未動 git 歷史、Pages、10/06 真值。殘餘風險（token 曾出現在對話通道）已揭露並經使用者選擇接受。下一步 0-B Moneybook 匯出密碼。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261006152606-1118",
+      "timestamp": "2026-10-06T15:26:06.351323+08:00",
+      "agent": "Hermes",
+      "task": "資安 remediation：0-B 撤銷（身分證字號不可輪替）＋第 1 步 CLOSED（mb_extract 去硬編碼）",
+      "summary": "使用者裁決：匯出密碼維持身分證字號、不更換。框架更正：識別碼非可輪替憑證 → 0-B 撤銷。改以搬家處理：mb_extract.py 去硬編碼改讀 .env（未設定 fail-closed）、值存 Hermes .env、calibration log 明文改 [REDACTED]；全庫逐位元反查 1,955 檔命中 2→0；真實 ZIP 端到端解壓成功；CIO APPROVE 0 必修。殘餘：git 歷史舊 blob 待 filter-repo；該值仍可解未來 ZIP（已揭露、使用者知情）。",
+      "status": "completed",
+      "source": "user"
     }
-,
-  {
-    "id": "mem-20261006151908-1117",
-    "timestamp": "2026-10-06T15:19:08.863512+08:00",
-    "agent": "Hermes",
-    "task": "資安 remediation 第 0 步 0-A CLOSED：Telegram bot token 輪替完成",
-    "summary": "裁決「現在立即輪替、不等窗口」。手動最小權限執行；9/9 Gate 全過（新 token 200／舊 token 401／sha 6d28115b→0b305f5e／gateway 恢復且進程數 1／雙向收發驗證）。未動 git 歷史、Pages、10/06 真值。殘餘風險（token 曾出現在對話通道）已揭露並經使用者選擇接受。下一步 0-B Moneybook 匯出密碼。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261006152606-1118",
-    "timestamp": "2026-10-06T15:26:06.351323+08:00",
-    "agent": "Hermes",
-    "task": "資安 remediation：0-B 撤銷（身分證字號不可輪替）＋第 1 步 CLOSED（mb_extract 去硬編碼）",
-    "summary": "使用者裁決：匯出密碼維持身分證字號、不更換。框架更正：識別碼非可輪替憑證 → 0-B 撤銷。改以搬家處理：mb_extract.py 去硬編碼改讀 .env（未設定 fail-closed）、值存 Hermes .env、calibration log 明文改 [REDACTED]；全庫逐位元反查 1,955 檔命中 2→0；真實 ZIP 端到端解壓成功；CIO APPROVE 0 必修。殘餘：git 歷史舊 blob 待 filter-repo；該值仍可解未來 ZIP（已揭露、使用者知情）。",
-    "status": "completed",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-06T14:06:14.681382"
+    "updated_at": "2026-10-06T15:34:37.342876"
   },
   "last_updated": "2026-10-06T18:00:00+08:00",
   "2026-09-29": [
@@ -10599,6 +10597,12 @@
       "action": "預防性修正：緊急應變 prompt 禁止 LLM 自算「建議金額」",
       "status": "待處理",
       "tags": "治理,LLM,prompt,緊急應變,驗證器"
+    },
+    {
+      "date": "2026-10-06",
+      "action": "資安 remediation：repo 五步（public→private／HEAD 淨化／filter-repo／force-with-lease／Pages 驗 404）＋第 1 步已完成",
+      "status": "已確認",
+      "tags": "資安,SECURITY,憑證輪替,repo rewrite,Pages"
     }
   ]
 }
