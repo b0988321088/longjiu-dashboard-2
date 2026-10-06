@@ -10375,6 +10375,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261006152606-1118",
+    "timestamp": "2026-10-06T15:26:06.351323+08:00",
+    "agent": "Hermes",
+    "task": "資安 remediation：0-B 撤銷（身分證字號不可輪替）＋第 1 步 CLOSED（mb_extract 去硬編碼）",
+    "summary": "使用者裁決：匯出密碼維持身分證字號、不更換。框架更正：識別碼非可輪替憑證 → 0-B 撤銷。改以搬家處理：mb_extract.py 去硬編碼改讀 .env（未設定 fail-closed）、值存 Hermes .env、calibration log 明文改 [REDACTED]；全庫逐位元反查 1,955 檔命中 2→0；真實 ZIP 端到端解壓成功；CIO APPROVE 0 必修。殘餘：git 歷史舊 blob 待 filter-repo；該值仍可解未來 ZIP（已揭露、使用者知情）。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-06T14:06:14.681382"
