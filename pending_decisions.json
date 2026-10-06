@@ -731,5 +731,41 @@
   "is_informational": false,
   "created_at": "2026-10-06T23:50:13+08:00",
   "updated_at": "2026-10-06T23:50:13+08:00"
+ },
+ {
+  "date": "2026-10-07",
+  "title": "美元曝險 advisory_only 語意滲透所有下游（含三段 LLM prompt）",
+  "status": "待處理",
+  "category": "治理/口徑",
+  "priority": "P2",
+  "tags": "美元曝險,advisory_only,下游一致性,LLM prompt",
+  "detail": "2026-10-07 使用者裁決：美元曝險 68~70% 僅為真值回歸、只顯示不觸發（advisory_only=true），門檻 60/65/70 與口徑本輪均不動。現況：sot_targets（觸發層）＋build_dashboard／build_rebalance_dashboard／run_daily／market_indicator_panel／risk_factor_penetration 已吃旗標；但三段 LLM prompt（巴菲特／CTO／CIO）仍把 70.5% 當紅線並產出「壓美元曝險／減碼」字樣（2026-10-07 實測日報）。本卡範圍＝把 advisory_only 餵進三段 prompt（或明示「政策門檻待 10 月戰略檢討，不得轉為交易指令」）。驗收：①三段 prompt 皆帶旗標或明示語 ②日報不得再出現把美元曝險寫成紅線指令的句子（字串負測）③不修改 60/65/70 門檻與口徑 ④唯讀驗證器 PASS。",
+  "due_date": null,
+  "due_date_source": "無到期日（下一輪工作）",
+  "needs_due_date": false,
+  "last_confirmed": null,
+  "last_confirmed_source": "未提供",
+  "owner": "龍九",
+  "source": "2026-10-07 元大高股息分類修正｜CIO 複審殘餘①",
+  "created_at": "2026-10-07",
+  "updated_at": "2026-10-07"
+ },
+ {
+  "date": "2026-10-07",
+  "title": "防呆：攔住繞過 advisory_only、把美元曝險轉成資產調整指令的下游",
+  "status": "待處理",
+  "category": "治理/閘門",
+  "priority": "P2",
+  "tags": "美元曝險,advisory_only,閘門,靜態檢查",
+  "detail": "承接 2026-10-07 裁決「不讓自動化把政策衝突轉成資產指令」。現況：advisory_only 只在 sot_targets（宣告／觸發層）判定；任何下游若自行讀 penetration.actual_pct.美股市值型成長 或 usd_exposure_pct 判定美元曝險觸發，即繞過旗標。作法（待審）：新增靜態檢查／閘門，掃出「未經 sot_targets 而自行判定美元曝險觸發」的路徑並告警或阻擋，並加負向測試。驗收：①負向測試（植入一條繞過路徑）必須被抓到 ②還原後位元一致 ③閘門掛進每日管線且不阻擋資料類產出 ④不修改門檻與口徑。",
+  "due_date": null,
+  "due_date_source": "無到期日（下一輪工作）",
+  "needs_due_date": false,
+  "last_confirmed": null,
+  "last_confirmed_source": "未提供",
+  "owner": "龍九",
+  "source": "2026-10-07 元大高股息分類修正｜CIO 複審殘餘②",
+  "created_at": "2026-10-07",
+  "updated_at": "2026-10-07"
  }
 ]
