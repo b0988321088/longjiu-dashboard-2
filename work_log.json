@@ -2017,5 +2017,74 @@
   "verified": {
    "scope": "唯讀核對，未改程式與 snapshot"
   }
+ },
+ {
+  "timestamp": "2026-10-06T20:05:00+08:00",
+  "date": "2026-10-06",
+  "type": "定版",
+  "title": "薪資口徑改『MB 實際入帳』（使用者 2026-10-06 裁決）",
+  "detail": "使用者裁決：薪資以 Moneybook 實際入帳為真值，不以『應發 − 6% 勞退自提』反推（不猜扣項）。snapshot 4 欄改實入口徑：monthly_salary/salary 42,560→39,777、monthly_income 228,751→225,968、working_surplus 69,541→66,758；DAILY_REPORT_PIPELINE_RULE.md 同步（run_daily 三源校準來源）。儀表板被動結構條 222,660→219,877。留停 Gate 不受影響（判準只吃配息＋房租，不含薪資），維持 WAIT。sync_all.py 20/20 PASS；commit c92c05e2（本地＝origin/clean-main）。邊界(暫不動)：second_salary 39,121、page1.actual_cash_flow.台電薪水_固定 39,727（歷史/固定基準）、moneybook_6m_analysis.py 內寫死 42,560（已不在管線，死碼清理另開卡）。另：pending 卡『常態模型誤用當月實收薪水』狀態已完成卻留在 pending，觸發 check_thresholds 閘門，已結案歸檔。另：.gitignore 新增 snapshot.backup.json（執行期備份不入版控，避免 add -A 造成非預期工作樹變化）。",
+  "commits": [
+   "c92c05e2"
+  ],
+  "artifacts": [
+   "snapshot.json",
+   "DAILY_REPORT_PIPELINE_RULE.md",
+   "pending_decisions.json",
+   "pending_decisions_archive.json",
+   ".gitignore"
+  ],
+  "verified": {
+   "scope": "sync_all 20/20 PASS；run_daily 三源校準通過（月收 225,968／盈餘 +66,758）",
+   "note": "線上 Pages 抽查仍為舊值，疑 main 分支落後／快取，未重推"
+  }
+ },
+ {
+  "date": "2026-10-06",
+  "category": "完成",
+  "item": "本輪 CLOSED 裁決：緊急應變金額漂移修復收束（預防性 prompt 修正另開卡）（本輪事故修復 CLOSED（commit abb3daf4）。裁決：①不改 prompt（預防性修正已另開卡，待下一輪）②不改既有驗證器 FAIL —— 49 PASS / 6 FAIL、streak 4 維持誠實狀態，不為全綠而修。證據：closeout 三次讀心跳未改",
+  "detail": "本輪事故修復 CLOSED（commit abb3daf4）。裁決：①不改 prompt（預防性修正已另開卡，待下一輪）②不改既有驗證器 FAIL —— 49 PASS / 6 FAIL、streak 4 維持誠實狀態，不為全綠而修。證據："
+ },
+ {
+  "date": "2026-10-06",
+  "category": "完成",
+  "item": "日報2026-10-06（已產出（金額見 snapshot／當日日報檔，勿在此複寫數字））",
+  "detail": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）"
+ },
+ {
+  "date": "2026-10-06",
+  "category": "完成",
+  "item": "資產穿透2026-10-06（已產出（五桶市值見 snapshot.penetration.actual_twd））",
+  "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-10-06",
+  "category": "完成",
+  "item": "資安 remediation 第 0 步 0-A CLOSED：Telegram bot token 輪替完成（裁決「現在立即輪替、不等窗口」。手動最小權限執行；9/9 Gate 全過（新 token 200／舊 token 401／sha 6d28115b→0b305f5e／gateway 恢復且進程數 1／雙向收發驗證）。未動 git 歷史、Pages、",
+  "detail": "裁決「現在立即輪替、不等窗口」。手動最小權限執行；9/9 Gate 全過（新 token 200／舊 token 401／sha 6d28115b→0b305f5e／gateway 恢復且進程數 1／雙向收發驗證）。未動 git 歷史、Pa"
+ },
+ {
+  "date": "2026-10-06",
+  "category": "完成",
+  "item": "資安 remediation：0-B 撤銷（身分證字號不可輪替）＋第 1 步 CLOSED（mb_extract 去硬編碼）（使用者裁決：匯出密碼維持身分證字號、不更換。框架更正：識別碼非可輪替憑證 → 0-B 撤銷。改以搬家處理：mb_extract.py 去硬編碼改讀 .env（未設定 fail-closed）、值存 Hermes .env、calibr",
+  "detail": "使用者裁決：匯出密碼維持身分證字號、不更換。框架更正：識別碼非可輪替憑證 → 0-B 撤銷。改以搬家處理：mb_extract.py 去硬編碼改讀 .env（未設定 fail-closed）、值存 Hermes .env、calibrati"
+ },
+ {
+  "date": "2026-10-06",
+  "category": "完成",
+  "item": "薪資入帳補記＋B 裁決：10 月 39,777 照實記、常態維持 42,560（單月因素不污染常態模型）（台電薪資 10/06 入帳 39,777（Moneybook 明細）。資產真值正確（cash_detail 薪轉 118,582 逐位元相符、total_assets 26,823,015 未變），但 salary_records 缺 2026-10 →",
+  "detail": "台電薪資 10/06 入帳 39,777（Moneybook 明細）。資產真值正確（cash_detail 薪轉 118,582 逐位元相符、total_assets 26,823,015 未變），但 salary_records 缺 20"
+ },
+ {
+  "date": "2026-10-06",
+  "category": "完成",
+  "item": "儀表板常態線口徑錯置修正（當月實收污染常態模型）（build_dashboard.py 被動收入結構條 _sal 由當月實收改取常態 monthly_salary；__INC_TOTAL__ fallback 改 got_total。驗收：常態 42,560+100,000+80,100=222,660 與當月實收 39,777 同時正確；負向（移除當月紀錄",
+  "detail": "build_dashboard.py 被動收入結構條 _sal 由當月實收改取常態 monthly_salary；__INC_TOTAL__ fallback 改 got_total。驗收：常態 42,560+100,000+80,100="
+ },
+ {
+  "date": "2026-10-06",
+  "category": "完成",
+  "item": "薪資三層定義定版（MB 事實／salary_records 實收／monthly_salary 常態假設）（使用者 2026-10-06 定版：①Moneybook 台電薪資匯款＝薪資發生多少的唯一真值 ②salary_records＝MB 真值的結構化紀錄／快取 ③monthly_salary=42,560＝常態模型假設、非薪資真值。自動來源卡方向鎖定＝M",
+  "detail": "使用者 2026-10-06 定版：①Moneybook 台電薪資匯款＝薪資發生多少的唯一真值 ②salary_records＝MB 真值的結構化紀錄／快取 ③monthly_salary=42,560＝常態模型假設、非薪資真值。自動來源卡"
  }
 ]
