@@ -687,5 +687,27 @@
   "is_informational": false,
   "created_at": "2026-10-06T22:34:00+08:00",
   "updated_at": "2026-10-06T22:35:22+08:00"
+ },
+ {
+  "id": "PEND-20261006-02",
+  "date": "2026-10-06",
+  "title": "負債資料時間軸缺口：DB liabilities 表在夜間產線無寫入者（四源閘門每日誤報）",
+  "desc": "夜間產線 regenerate_report.py 只補 DB assets 列、不補 liabilities 列；liabilities 僅在真值日／手動跑 update_data.py 才落列。導致該表長期停在最近一次真值日，四源閘門與信用卡一致性檢查在隔日必然各報一條 ❌。真值本身無誤（snapshot 自洽、逐卡可重建），問題在兩張表的寫入責任不對稱與時間語義未定義。",
+  "detail": "【症狀】2026-10-06 22:40 收工稽核 ② 閉環稽核 ❌ 兩條：\n① 四源: snapshot 負債 = DB assets = DB liabilities（DB 負債列 = 2026-10-05）\n② 四源: 信用卡當期未繳三源一致（36,279）\n\n【真值無誤・三源實測】\n・snapshot@10/06 total_liabilities = 30,980,708（自洽：房貸 25,044,429＋質押 5,900,000＋信用卡 36,279）\n・DB assets@10/06 = 30,980,708 ✓（created_at 2026-10-06 21:34:50）\n・DB liabilities 最新列 @2026-10-05 = 30,980,255／credit_card 35,826（created_at 2026-10-05 11:48:34）\n・liabilities 表全表僅 15 列，max(date) = 2026-10-05\n・10/05→10/06 差額 total +453 ＝ credit_card +453，完全同源、無殘差\n・36,279 可由逐卡明細完整重建：台北富邦 23,464＋台新 6,100＋國泰 6,478＋永豐 237＝36,279（玉山 Unicard +5,127 為溢繳不計）\n\n【根因・寫入路徑不對稱】\n・regenerate_report.py:75（夜間產線 _roll_day_to_today）→ INSERT OR REPLACE INTO assets（含 total_liabilities），**完全不寫 liabilities**\n・four_source_sync.py:155 → 同樣只寫 assets\n・只有 update_data.py:455 與 db_loader.py:148 會寫 liabilities；update_data 僅在真值日／手動執行時跑\n・時間戳佐證：assets 各日列皆誕生於夜間 21:34–21:37（產線）；liabilities 各列誕生於白天 11:00／11:48／14:15／19:58（真值日手動）\n・反證：以 update_data 原始 INSERT 語句對 DB 副本重跑 → 成功（schema date TEXT PRIMARY KEY、無缺欄無約束問題）→『寫入失敗』排除，是『沒人寫』\n\n【復發性】9/29→9/30 已發生同一類（work_log 記載以手動 asset_sync.py --rebuild-liabilities 補列）。本次為復發，非新問題。\n\n【信用卡註記・使用者逐字同意原文保留】\n信用卡 FAIL 為 liabilities 缺少 10/06 snapshot 的次生徵狀；snapshot 與逐卡明細均確認 36,279 正確，且使用者採自動扣繳，無獨立人工處置需求。\n升級門檻（未命中即靜默）：自動扣繳失敗／扣款日仍未清償／出現循環利息／三源在同一日期真的不一致／餘額突然異常增加。\n\n【施工決策：目前僅開卡，不選定實作方案】\n方案 A：夜間產線每日產生 liabilities snapshot（補寫入者）。\n方案 B：liabilities 本來就只代表真值日資料 → 調整四源驗證的時間語義。\n方案 C：重新定義兩張表責任邊界，讓 assets.total_liabilities 與 liabilities 不再被視為同一層級的每日 snapshot。\n目前證據只足以證明寫入責任不對稱，尚不足以證明 A 一定是正確架構。\n\n【明確不做（今晚）】不改 regenerate_report.py／four_source_sync.py／update_data.py／db_loader.py；不補 liabilities 10/06 資料；不改 validator；不為讓閘門變綠而人工重跑真值日；不順手處理 verifier_heartbeat 與 pending archive regression。",
+  "priority": "P1",
+  "status": "待處理",
+  "status_raw": "🔵 OPEN／待架構裁決（僅開卡，不選定實作方案）｜使用者 2026-10-06 Telegram 裁決",
+  "source": "使用者 2026-10-06 Telegram 裁決",
+  "tags": "負債,liabilities,四源,閘門,寫入不對稱,資料時間軸,結構性",
+  "due_date": null,
+  "due_date_source": "未提供",
+  "needs_due_date": true,
+  "last_confirmed": "2026-10-06",
+  "last_confirmed_source": "使用者裁決開卡",
+  "owner": "CEO",
+  "external_owner": null,
+  "is_informational": false,
+  "created_at": "2026-10-06T22:49:58+08:00",
+  "updated_at": "2026-10-06T22:49:58+08:00"
  }
 ]
