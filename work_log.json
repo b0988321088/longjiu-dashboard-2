@@ -1958,5 +1958,11 @@
   "category": "完成",
   "item": "P0-1 驗證器心跳 ＋ P0-2 決策入庫去重 施工批次（CIO 獨立對抗性審查 APPROVE / 0 blocking；commit 4e26f6f7（程式10檔）＋0215016f（P2資料2檔）已推 clean-main、remote=local 0/0、線上 200。修的是「驗證器沒跑也沒人知道」與「同一收據被 append 70 次」。待 22",
   "detail": "CIO 獨立對抗性審查 APPROVE / 0 blocking；commit 4e26f6f7（程式10檔）＋0215016f（P2資料2檔）已推 clean-main、remote=local 0/0、線上 200。修的是「驗證器沒跑也"
+ },
+ {
+  "date": "2026-10-06",
+  "category": "修正",
+  "item": "INC-284 收工封版（🔒 CLOSED / ALL GREEN）：pending_reconcile 狀態寫回四態（原敘述保留 status_raw），修掉連兩天擋掉晨間產線的閘門回歸",
+  "detail": "根因＝寫入層違反 schema 契約（把真值重算敘述寫進 status）→ check_dividend_caliber『status 正規化為四態』亮紅 → Task1+2 驗證器第 5 類擋關 → 月度比較閘門 fail-closed（10/05、10/06 連兩天產出不上線）。證據：唯讀 A/B 驗證器 PASS 8 / FAIL 0（舊版 2 張卡逃逸、新版 0 筆）、月度比較閘門 PASS（FAIL 0）、Task1+2 PASS 19 / FAIL 0。落地：程式 4505fbfd（CIO-DeepSeek-Flash APPROVE / required_fixes=[]、tree 逐字相符）＋ INC-284 留痕 91d1d007；remote=local、未推送 0、線上 22/22=200、pending 34 張非四態 0 筆。觀測點（非待辦、不預先修）：今晚 22:00 evening_sync、明早 07:00 晨間產線。"
  }
 ]
