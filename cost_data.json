@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-06 15:42",
+ "generated_at": "2026-10-06 18:30",
  "days": 14,
  "ledger_rows": 28,
  "backfilled": [],
@@ -136,17 +136,17 @@
   },
   {
    "date": "2026-10-06",
-   "ds_twd": 37,
+   "ds_twd": 44,
    "gemini_twd": 0,
    "free_twd": 0,
-   "total_twd": 37,
-   "calls": 411,
+   "total_twd": 44,
+   "calls": 472,
    "cer": 0,
    "q429": 0
   }
  ],
  "today": {
-  "total_twd": 37,
+  "total_twd": 44,
   "cer": 0,
   "q429": 0
  },
@@ -208,12 +208,12 @@
   }
  },
  "wallets": {
-  "ds_balance_cny": 149.93,
-  "ds_balance_twd": 709,
+  "ds_balance_cny": 148.75,
+  "ds_balance_twd": 704,
   "ds_source": "API",
   "ds_daily_twd": 51,
   "ds_daily_src": "餘額真值（最近 7 個日曆日，7 個樣本）",
-  "ds_days_left": 14.0,
+  "ds_days_left": 13.9,
   "gemini_balance_twd": 884,
   "gemini_daily_twd": 0,
   "gemini_days_left": null,
@@ -338,19 +338,25 @@
   ],
   "note": "CER＝DeepSeek 內容風控擋下的呼叫數。spillover_strict_twd＝只算「CER ≥ 門檻且免費接手率 < 門檻」的日子（推定值，最接近風控逼出來的付費）。paid_backup_on_cer_days_upper_twd＝CER 當日的全部 Gemini 花費（僅為上限，含非 CER 任務，不可當成外溢成本）。streak_capped=true 表示已回溯到帳本最早一天，真實連續天數可能更長。"
  },
- "alerts": [],
+ "alerts": [
+  {
+   "code": "A6",
+   "level": "warn",
+   "msg": "DeepSeek 剩餘 13.9 天 < 14 天"
+  }
+ ],
  "governance": {
   "baseline_date": "2026-09-22",
   "start_date": "2026-09-23",
   "days": 14,
-  "ds_twd": 616.0,
+  "ds_twd": 623.0,
   "gem_twd": 3.0,
   "free_twd": 0.0,
   "free_calls": 528,
-  "calls": 12742,
+  "calls": 12803,
   "cer": 156,
   "pending": false,
-  "total_twd": 619.0
+  "total_twd": 626.0
  },
  "page": {
   "top_n": 3,
