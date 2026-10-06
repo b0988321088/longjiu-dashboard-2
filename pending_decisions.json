@@ -665,5 +665,26 @@
   "status": "已完成",
   "created_at": "2026-10-06T20:35:00+08:00",
   "updated_at": "2026-10-06T22:05:00+08:00"
+ },
+ {
+  "id": "PEND-20261006-01",
+  "date": "2026-10-06",
+  "title": "fx_rates.usd_to_twd 長期失真 — 估值系統 P0 資料品質缺口（stale FX）",
+  "desc": "snapshot.json 的 fx_rates.usd_to_twd 固定 32.4375，逐檔比對 8 個歷史備份全數同值 → 該欄自 2026-08-14 起從未更新；實際使用值已出現 31.50（第一金，匯率日 9/07）與 31.8725（鉅亨，10/02 淨值日），與欄位脫節約 1.7%。",
+  "detail": "【定性・使用者 2026-10-06 裁決】不是基金風險事故，是估值系統 P0 資料品質缺口；本卡＝資料真值修復卡，非投資決策卡。不做：不讓 LLM 猜匯率、不回寫歷史資料。\n【影響面】台幣資產估值／美元基金損益／投資績效歸因／月報／風險分析，皆可能被同一個 stale FX 值帶偏。\n【P0 驗收】① 找出 fx_rates.usd_to_twd 的唯一真值來源。② 改由實際淨值日／交易日對應的匯率來源更新。③ 明確保存 rate date／source／timestamp。④ 舊 snapshot 不回寫、不重算歷史績效。⑤ 找不到可靠匯率時，系統須標示 FX stale／unavailable，不得沿用舊值假裝正常。⑥ 反測：故意讓 FX 過期，驗證系統會報 stale，而不是靜默採用 32.4375。\n【P1】再確認哪些報表實際讀此欄位，避免只修 snapshot、結果下游仍使用硬編碼匯率。\n【觸發證據】2026-10-06 基金下跌歸因分析：因該欄失真，匯率對本波跌幅的貢獻無法量化。",
+  "priority": "P0",
+  "status": "待處理",
+  "status_raw": "⏳ 待處理（使用者 2026-10-06 裁決開卡；定性＝資料真值修復卡，非投資決策卡）",
+  "source": "使用者 2026-10-06 Telegram 裁決",
+  "tags": "資料真值,FX,匯率,snapshot,P0,估值,stale",
+  "due_date": null,
+  "due_date_source": "未提供",
+  "needs_due_date": true,
+  "last_confirmed": "2026-10-06",
+  "last_confirmed_source": "使用者裁決開卡",
+  "owner": "CEO",
+  "external_owner": null,
+  "is_informational": false,
+  "created_at": "2026-10-06T22:34:00+08:00"
  }
 ]
