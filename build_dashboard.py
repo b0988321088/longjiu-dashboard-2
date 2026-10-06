@@ -980,7 +980,17 @@ def main():
     # ── 被動收入結構條（2026-09-14：模板寫死值移除，改由 snapshot 動態計算；INC 對策）──
     try:
         _pi = snap.get("passive_income", {}) or {}
-        _sal = float(salary or 0)
+        # 2026-10-06 使用者裁決（口徑錯置修正）：本區塊是「常態模型」——與配息保守
+        # （fund_dividend_conservative）、房租常態（rent_monthly）並列，且覆蓋率以此為底線，
+        # 因此薪資必須取常態 monthly_salary。
+        # 原 `_sal = salary`（當月實收 salary_records[當月]）有兩個病：
+        #   ①月初尚未補記 → 常態線顯示薪水 0（實例：10/01–10/05 為 180,100）
+        #   ②單月因素（連假等）波動被當成常態（實例：10/06 補記後 39,777）
+        # 當月實收的呈現不受影響：data-k="salary_got"／"got_total2" 由 _data_k_map
+        # 靜態注入（L434/L432）並於開頁由 JS 以 salary_records[當月] 覆寫。
+        _sal = float(snap.get("monthly_salary") or 0)
+        if not snap.get("monthly_salary"):
+            print("[WARN] 儀表板：snapshot.monthly_salary 缺值：常態薪資以 0 計（不以當月實收冒充）")
         # 2026-09-23 INC-248：保守口徑鍵缺值時不得靜默退到「當月實收」——
         # 原 `or div_total（當月實收）` 會讓圖例的「覆蓋 X%（保守底線）」偷偷變成實收口徑；
         # 房租同理（rent_got＝當月已收）。缺值一律 WARN 並以 0 計（寧可低估，不得偷換口徑）。
@@ -1045,7 +1055,10 @@ def main():
         tpl = tpl.replace("__INC_SALARY__", _fmt(_sal))
         tpl = tpl.replace("__INC_DIV__", _fmt(_div))
         tpl = tpl.replace("__INC_RENT__", _fmt(_rent))
-        tpl = tpl.replace("__INC_TOTAL__", _fmt(_inc_tot))
+        # 2026-10-06：此佔位符只出現在 data-k="got_total2" 的 span（當月實際已收），
+        # 靜態 fallback 必須與 JS 的 gotTotal（_salaryA + divTotal + rentGot）同口徑，
+        # 不得放常態總計（_inc_tot）。正常情況該 span 會被 L481 的 data-k 注入覆寫。
+        tpl = tpl.replace("__INC_TOTAL__", _fmt(got_total))
         print(f"  💰 被動收入結構條：薪水 {_fmt(_sal)} / 配息 {_fmt(_div)}（保守） / 房租 {_fmt(_rent)}｜覆蓋 {_cov:.1f}%（保守底線）｜當月實收 {_cov_act:.1f}%")
     except Exception as _ince:
         for _ph in ("__INC_BAR__", "__INC_LEGEND__", "__INC_COV__", "__INC_SUMMARY__",
