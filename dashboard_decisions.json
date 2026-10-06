@@ -10346,10 +10346,28 @@
       "summary": "本輪事故修復 CLOSED（commit abb3daf4）。裁決：①不改 prompt（預防性修正已另開卡，待下一輪）②不改既有驗證器 FAIL —— 49 PASS / 6 FAIL、streak 4 維持誠實狀態，不為全綠而修。證據：closeout 三次讀心跳未改變 last_run_at／streak（只讀不重跑）；⑬ 內文數字可追溯已抓到並驗證防線有效。indent writer 證據已併入既有稽核卡（PEND-26），不另開卡。程式、資料、歷史檔（10-02～10-04）皆不動。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261006140603-1115",
+      "timestamp": "2026-10-06T14:06:03.241080",
+      "agent": "Hermes",
+      "task": "日報2026-10-06",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261006140603-1116",
+      "timestamp": "2026-10-06T14:06:03.280137",
+      "agent": "Hermes",
+      "task": "資產穿透2026-10-06",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
     }
   ],
   "meta": {
-    "updated_at": "2026-10-06T12:13:16.341843"
+    "updated_at": "2026-10-06T14:06:14.681382"
   },
   "last_updated": "2026-10-06T18:00:00+08:00",
   "2026-09-29": [
