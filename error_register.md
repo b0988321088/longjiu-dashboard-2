@@ -1564,3 +1564,28 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 教訓：① **fail-closed 的下游症狀會蓋掉上游真因**：產線失敗要先看閘門結論，不要從 404 往回追。
   ② **守門訊息不得把「檢查項名稱」當結論貼在判定後面**（否則一次誤讀就會回滾已封版的程式）。
 - 相關：INC-282（Task1+2 封版，本次證明非其回歸）、INC-278（cash canonical key）。
+
+## INC-284 ｜ 2026-10-06 ｜ P1｜fixed（同日） ｜ Pending 狀態寫入逃出四態 → 閘門 fail-closed 連兩天擋掉晨間產線（產出但不推送）
+- 症狀：10/05、10/06 07:00 cron 警報 `rc=1`；失敗項 `Task1+2 驗證器零回歸`（PASS 18 / FAIL 1）＋ 當日線上檔 404
+  （`daily_report_v2_<d>.html`／`asset_diff_<d>.html`／`buffett_cto_report_<d>.md`…）。
+- 真因鏈：`pending_reconcile.py`（每晚 22:00 由 evening_sync 以 `--apply` 執行，把 pending 卡狀態由真值重算）
+  把「真值重算敘述」直接寫進 `status` 欄位 → `check_dividend_caliber` 檢查項
+  「status 正規化為四態（原字串保留 status_raw）」亮紅 → `tools/verify_performance_core_task12` 第 5 類擋關
+  → 月度比較閘門 fail-closed（不 commit／不 push）→ 當日產物未上線 → 推送後線上連結 404。
+- 為什麼連兩天：10/05 只把 5 張卡「資料」逐張正規化（commit bb7dcf32）而**沒修寫入者** → 當晚 22:00 重算
+  又把敘述寫回 status → 隔天早上同一條閘門再亮紅。＝**假修：改資料沒改產生資料的程式**。
+- 修法（程式 commit `4505fbfd`，CIO-DeepSeek-Flash APPROVE 0 required fixes）：update 分支改為
+  `status_raw = 敘述（僅保留一層『舊 raw：』歷史、不遞迴膨脹）`、`status = pending_engine.norm_status(敘述)`
+  （沿用唯一狀態機，不自帶第二份對照表）；並以 `_raw_of()` 判斷敘述真的有變才寫。
+- 證據：唯讀 A/B 驗證器（`%TEMP%/verify_pending_reconcile.py`）PASS 8 / FAIL 0 —— 同一受控輸入下
+  舊版讓 2 張卡 status 逃出四態、新版 0 筆；`check_dividend_caliber` ENUM 紅燈消失（僅餘 4 條既有白名單）；
+  `tools/verify_performance_monthly.py` 月度比較閘門 PASS（FAIL 0）、Task1+2 PASS 19 / FAIL 0。
+  上線驗證：remote=local（`4505fbfd`）、未推送 0、線上 22/22 條 200、儀表板已指 10/6 產物。
+- 教訓：①**改資料不等於修程式** —— 閘門亮紅先問「誰寫進去的」，否則隔天同樣紅（本條連兩天實證）。
+  ②schema 契約（status 只能四態、原敘述保留在 status_raw）由寫入者共同維持：一律呼叫
+  `pending_engine.norm_status`，不得自行把敘述寫進 status。
+  ③cron `rc≠0` 先看 `~/AppData/Local/hermes/cron/output/<job>/` 的 ❌ 清單（本案第一行就指名）
+  與閘門結論，不要從線上 404 往回追（那是下游症狀）。
+- 已知界線：close 分支（自動閉環歸檔卡）仍寫 `✅ 自動閉環(...)` 進 status；該批卡片不在
+  `pending_decisions.json`（閘門只驗 pending 清單），本輪刻意不動。
+- 相關：INC-283（同一閘門、不同觸發源）、PEND-20261005-04（10/05 只做了一半的那次正規化）。
