@@ -2003,5 +2003,19 @@
    "negative": "月初無紀錄 → 常態線仍 222,660、還原 sha a8313af77e3a52b7 逐位元相同",
    "boundary": "monthly_salary/salary_records/total_assets/cash_total/index_template.html 皆未動"
   }
+ },
+ {
+  "timestamp": "2026-10-06T16:20:00+08:00",
+  "date": "2026-10-06",
+  "type": "定版",
+  "title": "薪資三層定義定版（MB 事實／salary_records 實收／monthly_salary 常態）",
+  "detail": "薪資三層定義（使用者 2026-10-06 定版）：①Moneybook 台電薪資匯款＝薪資「發生多少」的唯一真值來源（例：2026/10/06｜台新銀行 文心綜活儲存款-薪轉｜39,777｜媒體轉入-薪資 台電 03795904）②salary_records＝MB 真值的結構化紀錄／快取 ③monthly_salary＝42,560＝常態模型假設、不是薪資真值。責任分離：MB 管事實／salary_records 管結構化實收／monthly_salary 管常態假設。　使用者同時確認：本次已 CLOSED 的常態線修正方向正確，不需回頭改。自動來源卡方向鎖定＝MB→交易辨識→salary_records（需去重與異常檢查，不得 LLM／人工輸入）。唯讀核對：全系統 salary_records／monthly_salary 取值語意一致；L773-777 待收段用常態值為正確。另記：run_daily.py:299 與 moneybook_6m_analysis.py:142 的 42,560 為寫死退路常數（非口徑錯用），屬既有「寫死退路常數盤點」卡範圍，不另開卡。",
+  "commits": [],
+  "artifacts": [
+   "pending_decisions.json"
+  ],
+  "verified": {
+   "scope": "唯讀核對，未改程式與 snapshot"
+  }
  }
 ]
