@@ -593,6 +593,12 @@ elif ok and _cio_ok:
         print("  ⛔ 已阻擋 commit/push（月度比較閘門 FAIL；修正後重跑 regenerate_report.py --deploy）")
         if _push_files:
             print(f"  ⛔ 有 {len(_push_files)} 個檔案待推，但閘門 FAIL → 本次不推送（fail-closed）")
+    # 2026-10-06（使用者裁決）dirty-worktree fail-closed：
+    #   宣告範圍外存在既有 dirty 檔 → 停止，不 auto-commit（不 stash／不 reset／不刪／不自行決定範圍）。
+    #   ⚠️ SystemExit(9) 刻意「不吞掉」：讓整條 commit/push path 立即中止、行程 rc=9。
+    #   dirty_gate 自身故障亦 fail-closed（內部 raise SystemExit），不得因驗證器故障而放行。
+    from dirty_gate import assert_clean_scope as _dcs
+    _dcs(_push_files, base=BASE, label=f"regenerate_report({TODAY})")
     if _push_files and _gate_ok:
         subprocess.run(['git', 'add'] + _push_files, capture_output=True, text=True, cwd=BASE)
         _staged = subprocess.run(['git', 'diff', '--cached', '--name-only'], capture_output=True, text=True, cwd=BASE).stdout.strip()

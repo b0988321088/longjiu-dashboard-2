@@ -75,3 +75,8 @@ data/*.json.*
 # SQLite 執行期側車檔（每次寫入都變動，不入版控；2026-09-30 閉環稽核）
 *.db-wal
 *.db-shm
+
+# 執行期快照備份（本機保留、不入版控）：four_source_sync 成功後會 rm 此檔。
+# 2026-10-06 裁決：備份檔可存在，但不應被 cron 當成待提交產物（.gitignore 邊界），
+# 避免 add -A 型路徑把「備份存在／被刪」變成非預期的工作樹變化。
+snapshot.backup.json
