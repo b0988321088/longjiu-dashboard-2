@@ -64,6 +64,18 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     _fund_gold = 0
     _fund_health = 0
     _sat_tech = 0
+    # ── 2026-10-07 使用者裁示（元大台灣高股息分類修正）──────────────────────
+    # 保單基金穿透原本只拆「債券比」，其餘權益部位一律灌進美股桶
+    # （us = 證券美股 + ins_eq + 基金美股 − 衛星）→ 台幣計價、成分純台股的保單基金
+    # （元大台灣高股息優質龍頭基金-新台幣(B)配息）被算成美股；且 _TECH 查不到名稱時
+    # 吃 0.15 預設 → 美股科技被虛灌（實測 380,553 進美股桶、科技 +57,083）。
+    # 官方真值（2026/08/31 MoneyDJ/投信揭露）：台灣 91.24%／國外 0.00%（北美 0）。
+    # 修法：名稱對到台股／防守籃的保單基金，權益部位改記 _ins_def_eq／_ins_tw_eq，
+    # 自 ins_eq（＝美股桶）移出，且科技貢獻 0。關鍵字表與 funds_breakdown 分支一致。
+    _INS_EQ_DEF = ("元大台灣高股息", "台中銀台灣優息", "國泰台灣高股息", "高股息ETF連結")
+    _INS_EQ_TW = ("0050連結", "統一奔騰", "路博邁台灣5G", "路博邁5G", "安聯台灣科技")
+    fv = {}        # 保單基金 {名稱: 市值}（各分支共用；供權益桶分流）
+    _br_eff = {}   # 生效的債券比對照表（同上）
 
     if bond_portion is not None:
         ins_bonds = int(bond_portion)
@@ -83,10 +95,13 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         ins_tech_calculated = 0
         
         for n in fv:
+            _br_eff = fund_ratios
             _br_ratio = fund_ratios.get(_match_fund_key(n, fund_ratios), 0)
             ins_bonds_calculated += round(fv[n] * _br_ratio)
 
-            _tech_ratio = _TECH.get(_match_fund_key(n, _TECH), 0.15)
+            # 2026-10-07：台股／防守籃保單基金（元大高股息…）不得計入美股科技
+            _tech_ratio = 0 if any(_k in n for _k in _INS_EQ_DEF + _INS_EQ_TW) \
+                else _TECH.get(_match_fund_key(n, _TECH), 0.15)
             ins_tech_calculated += round(fv[n] * _tech_ratio)
 
             if "黃金基金" in n or "黃金" in n:
@@ -119,10 +134,13 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             ins_tech_calculated = 0
 
             for n in fv:
+                _br_eff = _br
                 _br_ratio = _br.get(_match_fund_key(n, _br), 0)
                 ins_bonds_calculated += round(fv[n] * _br_ratio)
 
-                _tech_ratio = _TECH.get(_match_fund_key(n, _TECH), 0.15)
+                # 2026-10-07：台股／防守籃保單基金（元大高股息…）不得計入美股科技
+                _tech_ratio = 0 if any(_k in n for _k in _INS_EQ_DEF + _INS_EQ_TW) \
+                    else _TECH.get(_match_fund_key(n, _TECH), 0.15)
                 ins_tech_calculated += round(fv[n] * _tech_ratio)
 
                 if "黃金基金" in n or "黃金" in n:
@@ -138,6 +156,18 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             ins_bonds = round(2_780_466*0.35 + 3_136_436*0.55 + 902_679*0.50)
             ins_tech = round(2_780_466*0.16 + 3_136_436*0.07 + 902_679*0.35)
         ins_eq = int(ins) - ins_bonds - _fj
+    # ── 保單權益桶分流（2026-10-07 裁示）：台股／防守籃的保單基金權益部位自美股桶移出 ──
+    _ins_def_eq = 0
+    _ins_tw_eq = 0
+    for _n in fv:
+        _r_ins = (float(_br_eff.get(_match_fund_key(_n, _br_eff), 0) or 0) if _br_eff else 0.0)
+        _eq_ins = fv[_n] - round(fv[_n] * _r_ins)
+        if any(_k in _n for _k in _INS_EQ_DEF):
+            _ins_def_eq += _eq_ins
+        elif any(_k in _n for _k in _INS_EQ_TW):
+            _ins_tw_eq += _eq_ins
+    if _ins_def_eq or _ins_tw_eq:
+        print(f"  保單權益分流：防守 {_ins_def_eq:,}／台股 {_ins_tw_eq:,}（自美股桶移出，非美股部位）")
     # 分類基金（鉅亨基金帳戶）— 支援扁平 {name: val} 或嵌套 {群組: {name: val}}
     _fund_tw = _fund_us = _fund_def = _fund_us_tech = _fund_cash = _fund_bonds = 0
     _fb = (snap or {}).get("funds_breakdown", {})
@@ -230,8 +260,8 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     # 扣回，衛星被雙重扣除（2026-09-03 實證：908,606 蒸發 → 五桶≠總資產、
     # 美股虛胖 48.0% / 現金虛瘦 19.5%）。衛星為獨立避險桶，不屬美股。
     _satellite = round(_fund_gold) + round(_fund_health)
-    tw = sec_tw + _fund_tw
-    us = sec_us + ins_eq + _fund_us - _satellite
+    tw = sec_tw + _fund_tw + _ins_tw_eq
+    us = sec_us + (ins_eq - _ins_def_eq - _ins_tw_eq) + _fund_us - _satellite
     # 2026-09-29 使用者核准（restricted 隔離）：指定用途現金（質押撥款待清償 590 萬）
     # 不屬配置資產 → 從「現金桶（餘數法）」與分母同步扣除，避免桶位假超標觸發自動減碼。
     # 真值來源＝snapshot.restricted_cash（禁寫死）；清償入帳後歸零即自動解除。
@@ -242,7 +272,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     # 與 build_penetration_report 同分母；只有現金桶本身扣掉指定用途款 → 僅現金 % 變動（2.6%），
     # 其餘四桶 6.4/32.2/14.1/23.4 不變。原寫法誤用扣款後分母 → alert 印出 7.8/39.5/28.7 的舊口徑。
     _total_pct = cash + ins + sec + funds
-    def_v = sec_def + _fund_def
+    def_v = sec_def + _fund_def + _ins_def_eq
     bond_v = sec_bond + ins_bonds + _fund_bonds
     _fund_sum = _fund_tw + _fund_us + _fund_def + _fund_cash + _fund_bonds
     if _fund_sum > 0 and funds > 0 and abs(_fund_sum - funds) / funds > 0.001:
@@ -255,9 +285,9 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         _sat_tech = round(_sat_tech * _fk)
         _satellite = round(_fund_gold) + round(_fund_health)
 
-        tw = sec_tw + _fund_tw
-        us = sec_us + ins_eq + _fund_us - _satellite
-        def_v = sec_def + _fund_def
+        tw = sec_tw + _fund_tw + _ins_tw_eq
+        us = sec_us + (ins_eq - _ins_def_eq - _ins_tw_eq) + _fund_us - _satellite
+        def_v = sec_def + _fund_def + _ins_def_eq
         bond_v = sec_bond + ins_bonds + _fund_bonds
     c = total - (tw + us + def_v + bond_v + _fund_gold + _fund_health) # 從總資產中扣除
     # 2026-10-02 使用者裁示（統一現金口徑）：穿透桶「現金/安全網」一律讀可動用現金真值
@@ -322,7 +352,9 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             "黃金": round(_fund_gold), "健康": round(_fund_health),
             "美股市值型成長_科技": round(us_tech), "美股市值型成長_非科技": round(us_non_tech),
             "alert": _alert,
-            "_meta": {"ins_eq": ins_eq, "fund_us": _fund_us, "fund_def": _fund_def,
+            "_meta": {"ins_eq": ins_eq, "ins_bonds": ins_bonds, "ins_def_eq": _ins_def_eq,
+                      "ins_tw_eq": _ins_tw_eq,
+                      "fund_us": _fund_us, "fund_def": _fund_def,
                       "sec_tw": sec_tw, "sec_us": sec_us, "sec_def": sec_def, "sec_bond": sec_bond,
                       "us_tech": round(us_tech), "us_non_tech": round(us_non_tech),
                       # 2026-10-02：餘數法 − 可動用真值的差額（在途／未對帳零錢）。

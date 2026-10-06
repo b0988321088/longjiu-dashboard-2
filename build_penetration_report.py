@@ -110,6 +110,14 @@ try:
         print("  國泰月付鍵同步（消除第二來源漂移）：" + "、".join(f"{k} {o}→{n}" for k, o, n in _mo_chg))
 except Exception as _e_mo:
     print(f"  ⚠️ 國泰月付鍵同步失敗：{_e_mo}")
+# 2026-10-07 使用者裁決：美元曝險改由引擎自動產生（usd_exposure_sync.py）。
+# 原 usd_exposure_monitor.current 為人工維護 → 停在 2026-09-13（美股桶 24.5%），
+# 與引擎現值脫節、合計低估。此處在寫檔前重算，與 penetration 同源同步。
+try:
+    from usd_exposure_sync import sync_usd_exposure as _sync_usd
+    _sync_usd(snap, pen=p, total=total, verbose=True)
+except Exception as _e_usd:
+    print(f"  ⚠️ 美元曝險自動重算失敗（未寫入舊值即止）：{_e_usd}")
 (BASE / "snapshot.json").write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")  # INC-184：snapshot canonical=1（原 indent=2 造成全檔假 diff）
 print("  穿透數據已自動校正並寫入 snapshot.json")
 holdings = snap.get("securities", {}).get("holdings", [])
@@ -409,6 +417,12 @@ for _pol, _pfunds in [("安聯保單A", _ins_brk.get("policy_a_funds", {})), ("�
         elif "健康科學基金" in _fn_orig or "健康科學" in _fn_orig:
             _fn_display = f"健康科學投資 ({_fn_orig})"
             _cls = "健康科學 100%"
+        elif any(_k in _fn_orig for _k in ("元大台灣高股息", "台中銀台灣優息", "國泰台灣高股息", "高股息ETF連結")):
+            # 2026-10-07：台幣計價台股基金（官方揭露：台灣 91.24%／國外 0.00%）→ 防守型配息桶，
+            # 不得顯示為美股（原本落到下方 else 印「美股 100%」）
+            _cls = "台股 100%（台幣計價，無美股）→ 防守型配息桶"
+        elif any(_k in _fn_orig for _k in ("0050連結", "統一奔騰", "路博邁台灣5G", "路博邁5G", "安聯台灣科技")):
+            _cls = "台股 100% → 台股市值型桶"
         else:
             _br = _bond_ratio.get(_fn_orig, 0.5)
             _cls = f"債券 {_br*100:.0f}% / 美股 {(1-_br)*100:.0f}%"
@@ -446,7 +460,7 @@ w("• 貝萊德A10 → 100% 美股<br>")
 w(f"• 第一金{_fj_code}（{_fj_name[:24]}）→ 債券 {_fj_br*100:.0f}% / 美股 {_fj_er*100:.0f}%（依 snapshot current_fund 穿透比率／fund_components_09；9/16 FJ33→M&G 生效）<br>")
 w("• （安聯AI收益成長 50% — 2026-08-14 已轉出，保留僅供回溯；M&G入息 55% 現仍持有於安聯A/B 與第一金）<br><br>")
 w("<b>Step 3：匯總</b><br>")
-w("台股 = 證券台股（保險無台股部位）<br>")
+w("台股 = 證券台股 ＋ 保險台股部位（台幣計價台股基金，2026-10-07 起）<br>")
 w("美股 = 證券美股 + 保險美股穿透<br>")
 w("防守型 = 證券防守型（第一金已拆股債，不再整筆防守）<br>")
 w("債券 = 證券債券 + 保險債券穿透<br>")

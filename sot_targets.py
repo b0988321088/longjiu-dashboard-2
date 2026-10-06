@@ -918,12 +918,22 @@ def triggers(snap: dict) -> dict:
         _y, _r = usd_thr.get("黃"), usd_thr.get("紅")
         _lvl = ("紅" if (isinstance(_r, (int, float)) and usd_now >= _r)
                 else ("黃" if (isinstance(_y, (int, float)) and usd_now >= _y) else "正常"))
-        out.append({"id": "usd_exposure", "項目": "美元曝險", "現值": "{:.1f}%".format(usd_now),
-                    "門檻": "目標 {}／黃 {}／紅 {}".format(usd_thr.get("目標"), _y, _r),
-                    "觸發": _lvl != "正常",
-                    "動作": ("不再增加美元資產（紅線）" if _lvl == "紅"
-                             else ("留意，避免再加美元" if _lvl == "黃" else "無限制")),
-                    "來源": "snapshot.usd_exposure_monitor ＋ thresholds.美元曝險_pct"})
+        _adv = bool(usd.get("advisory_only"))
+        if _adv:
+            # 2026-10-07 使用者裁決：美元曝險自動化＝真值回歸，非重新制定政策。
+            # 60/65/70 門檻與 9/12 放寬政策衝突 → 只顯示、不得轉成資產操作（觸發=False）。
+            out.append({"id": "usd_exposure", "項目": "美元曝險", "現值": "{:.1f}%".format(usd_now),
+                        "門檻": "目標 {}／黃 {}／紅 {}（政策門檻待 10 月戰略檢討）".format(usd_thr.get("目標"), _y, _r),
+                        "觸發": False, "僅顯示": True, "等級": _lvl,
+                        "動作": "🟡 僅顯示：不觸發「不再增加美元資產」（2026-10-07 裁決；政策衝突留待 10 月戰略檢討）",
+                        "來源": "snapshot.usd_exposure_monitor（advisory_only；usd_exposure_sync.py 自動產生）"})
+        else:
+            out.append({"id": "usd_exposure", "項目": "美元曝險", "現值": "{:.1f}%".format(usd_now),
+                        "門檻": "目標 {}／黃 {}／紅 {}".format(usd_thr.get("目標"), _y, _r),
+                        "觸發": _lvl != "正常",
+                        "動作": ("不再增加美元資產（紅線）" if _lvl == "紅"
+                                 else ("留意，避免再加美元" if _lvl == "黃" else "無限制")),
+                        "來源": "snapshot.usd_exposure_monitor ＋ thresholds.美元曝險_pct"})
     else:
         out.append({"id": "usd_exposure", "項目": "美元曝險", "現值": "無真值", "門檻": "—", "觸發": None,
                     "動作": "待補真值（usd_exposure_monitor.current.合計）", "來源": "—"})

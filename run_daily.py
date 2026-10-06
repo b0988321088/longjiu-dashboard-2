@@ -714,10 +714,13 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                     _top4 = "、".join(f"{k} {v['佔比']:.1f}%" for k, v in sorted(_gics_c.items(), key=lambda x: -x[1]['金額'])[:4] if v['金額'] > 0)
                     # 2026-09-13 INC-168：風險因子原寫死「美股相關>60%、美元信用債~20%」→ 改讀 usd_exposure_monitor 真值
                     _usd_c = ((_snap_c.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {})
+                    # 2026-10-07 裁決：美元曝險只顯示不觸發 → LLM 脈絡一併標注，避免模型自行推論成減碼指令
+                    _usd_adv_c = bool((_snap_c.get("usd_exposure_monitor") or {}).get("advisory_only"))
                     _cio_ictx = (f"產業：{_top4}｜資金流向：{_sf_c.get('台股總結','—')}；{_sf_c.get('美股總結','—')}｜"
                                  f"輪動建議：{_rot_c or '—'}｜風險因子：美元曝險 {_usd_c.get('合計','—')}%"
                                  f"（美股桶 {_usd_c.get('美股桶','—')}%＋美元計價基金 {_usd_c.get('美元計價基金（非美股桶）','—')}%"
-                                 f"＋保單美元債 {_usd_c.get('保單美元債券','—')}%，目標 ≤{_snap_c.get('usd_exposure_monitor', {}).get('threshold', 60)}%）")
+                                 f"＋保單美元債 {_usd_c.get('保單美元債券','—')}%，目標 ≤{_snap_c.get('usd_exposure_monitor', {}).get('threshold', 60)}%"
+                                 + ("；🟡 僅顯示、不觸發資產調整，政策門檻待 10 月戰略檢討）" if _usd_adv_c else "）"))
                 except Exception:
                     pass
                 # 2026-09-13 INC-168：雷達燈號原寫死「台股🟢/黃金🟢/原油🔴/美債10Y🟡」→ 改讀 radar_state.signals

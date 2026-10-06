@@ -228,12 +228,17 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     _al_txt = "｜".join(f"{_n} {_a}" for _n, _a, _v in _al_rows) if _al_rows else "（snapshot 無乾粉分配表）"
     _cw = cash_caliber(s)
     lines.append(f"- 當前乾粉：{dry_cur:,}（現金 {_cw['cash']:,.0f} − 生活底線 {_cw['life']:,.0f}）｜{_al_txt}")
+    # 2026-10-07 裁決：美元曝險僅顯示、不觸發（advisory_only 由 usd_exposure_sync.py 寫入）
+    _usd_adv = bool(((s.get("usd_exposure_monitor") or {}).get("advisory_only")))
     for name, val, limit, triggered in [
         ("US30Y", f"{us30y:.2f}%" if us30y else "—", "≥5.30%", us30y and us30y >= 5.30),
-        ("美元曝險", f"{usd_pct:.0f}%", "紅線 60%", usd_pct > 60),
+        ("美元曝險", f"{usd_pct:.0f}%",
+         ("僅顯示（政策門檻待 10 月戰略檢討）" if _usd_adv else "紅線 60%"),
+         (False if _usd_adv else usd_pct > 60)),
         ("高科技", f"{tech:.1f}%", "紅線 30%", tech > 30),
     ]:
-        st = "🔴 觸發" if triggered else "🟢 安全"
+        st = ("🟡 僅顯示" if (_usd_adv and name == "美元曝險")
+              else ("🔴 觸發" if triggered else "🟢 安全"))
         lines.append(f"- {name} {val}（{limit}）：{st}")
     _lif_st = "✅ 達標" if _cw["life_ok"] else "🔴 未達標"
     # 2026-09-27：現金底線單一口徑（追繳緩衝取消）→ 只列一行，不再有「合計底線／追繳緩衝」
@@ -664,10 +669,13 @@ def main():
     # ── 風險紅線 ──
     _cw2 = cash_caliber(s)
     _lif_st2 = "🟢 安全" if _cw2["life_ok"] else "🔴 觸發"
+    _usd_adv = bool(((s.get("usd_exposure_monitor") or {}).get("advisory_only")))
     risks = [
         ("US30Y 凍結線", f"{us30y:.2f}%" if us30y else "—", "≥5.30% 🔴",
          "🔴 觸發" if (us30y and us30y >= 5.30) else "🟢 安全"),
-        ("美元曝險", f"{usd_pct:.0f}%", "紅線 60%", "🔴 觸發" if usd_pct > 60 else "🟢 安全"),
+        ("美元曝險", f"{usd_pct:.0f}%",
+         ("僅顯示（政策門檻待 10 月戰略檢討）" if _usd_adv else "紅線 60%"),
+         ("🟡 僅顯示" if _usd_adv else ("🔴 觸發" if usd_pct > 60 else "🟢 安全"))),
         ("高科技", f"{tech:.1f}%", "紅線 30%", "🔴 觸發" if tech > 30 else "🟢 安全"),
         (f"現金｜底線 {_cw2['life']:,.0f}（單一口徑）", f"{_cw2['cash']:,.0f}", f"≥{_cw2['life']:,.0f}", _lif_st2),
         ("國泰擔保池 LTV", _pl_txt, _pl_lim,

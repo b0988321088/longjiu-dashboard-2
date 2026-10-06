@@ -176,7 +176,10 @@ def main():
             _plan.append(f"📊 台股穿透 {_pen2.get('台股市值型成長', 0):.1f}%（目標 {_tg2.get('台股市值型目標', 10)}%，缺口 {_tg2.get('台股市值型目標', 10) - _pen2.get('台股市值型成長', 0):+.1f}pp）")
             _plan.append(f"💰 乾粉 {_dry2/10000:.1f}萬（現金 {_cw3['cash']:,.0f} − 現金底線 {_cw3['life']:,.0f} 守 "
                          + ("🟢 達標" if _cw3['life_ok'] else f"🔴 未達標（缺 {_cw3['life'] - _cw3['cash']:,.0f}）") + "）")
-            if _usd2 > 55:
+            if snap.get("usd_exposure_monitor", {}).get("advisory_only"):
+                # 2026-10-07 裁決：美元曝險僅顯示、不觸發資產動作（原字面「→ 美股減碼」已移除）
+                _plan.append(f"🟡 美元曝險 {_usd2}%（門檻 60）→ 僅顯示，不觸發美股減碼；政策門檻待 10 月戰略檢討")
+            elif _usd2 > 55:
                 _plan.append(f"🔴 美元曝險 {_usd2}% 超標（目標≤60%）→ 美股減碼")
             else:
                 _plan.append(f"🟡 美元曝險 {_usd2}%（目標≤60%）→ 續觀察")
