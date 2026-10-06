@@ -14,8 +14,29 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 SNAPSHOT = f'{BASE}/snapshot.json'
 
 def get_password():
-    """從 memory 讀取密碼（直接寫入，不問使用者）"""
-    return 'B121674155'
+    """從 .env 讀取 Moneybook ZIP 密碼。
+
+    憑證不得硬編碼在程式裡（2026-10-06 資安 remediation 第 1 步）。
+    來源優先序：行程環境變數 → Hermes .env（repo 外，憑證正本）→ repo .env。
+    未設定時明確報錯，不得有任何硬編碼退路。
+    """
+    v = os.environ.get('MONEYBOOK_ZIP_PASSWORD', '').strip()
+    if not v:
+        home = os.environ.get('HERMES_HOME') or os.path.join(
+            os.path.expanduser('~'), 'AppData', 'Local', 'hermes')
+        for p in (os.path.join(home, '.env'), os.path.join(BASE, '.env')):
+            if not os.path.exists(p):
+                continue
+            for line in open(p, encoding='utf-8', errors='ignore'):
+                if line.strip().startswith('MONEYBOOK_ZIP_PASSWORD='):
+                    v = line.split('=', 1)[1].strip().strip('"').strip("'")
+                    break
+            if v:
+                break
+    if not v:
+        raise SystemExit(
+            '❌ 未設定 MONEYBOOK_ZIP_PASSWORD：請寫進 Hermes .env（憑證不得硬編碼在程式裡）')
+    return v
 
 def extract(zip_path, out_dir):
     with pyzipper.AESZipFile(zip_path, 'r') as zf:
