@@ -310,5 +310,15 @@
   "tags": "質押,清償,利息,入帳",
   "note": "保單借貸 4,000,000 全數還款完成（9/29 2,000,000＋10/1 2,020,624）；券商質押 960,000 已清（9/30）。剩部分利息未結清，目前等入帳。入帳後：比對保單借款頁截圖 → 沖銷 policy_loan → 補列未結清利息。",
   "cleanup_reason": "pending_reconcile 自動閉環：剩餘未清償 0（policy_repay_log 累計已足）"
+ },
+ {
+  "title": "常態模型誤用當月實收薪水 — 被動安全月收入應改用 monthly_salary",
+  "status": "✅ 結案歸檔(2026-10-06)：原卡已完成（常態線改取 monthly_salary，程式 6aed7a55＋資料 0d20f93e 已推）｜原狀態：已完成",
+  "created_at": "2026-10-06",
+  "date": "2026-10-06",
+  "priority": "P1",
+  "tags": "儀表板,口徑,常態模型,monthly_salary,CIO審查",
+  "note": "✅ 已完成：常態線改取 monthly_salary（42,560），當月實收仍取 salary_records[當月]（39,777）。程式 6aed7a55（CIO-DeepSeek-Flash APPROVE 0 必修、tree 167adc254a5d）+ 資料 0d20f93e 已推 clean-main，線上驗收命中：常態線 42,560+100,000+80,100=222,660、data-k=\"salary_got\"=39,777。負向驗收：月初無當月紀錄時常態線仍 222,660（不再掉 0）。｜證據：L983 `_sal = float(salary or 0)`；L115-118 salary＝sum(salary_records[當月])；L1043 注入『薪水 {_sal} + 配息保守 {_div} + 房租 {_rent} = {_inc_tot}』。後兩者為常態值，故 _sal 亦應為常態 monthly_salary。實測：10/01–10/05 顯示薪水 0 → 180,100（少 42,560）；10/06 補記後顯示 39,777 → 219,877（較常態 42,560 少 2,783，正是使用者 2026-10-06 所指『單月因素不應污染常態模型』）。覆蓋率未受影響（L1002 為 (配息+房租)/月支出，不含薪水）。建議修法：新增獨立佔位符（常態線用 monthly_salary；已收明細沿用 salary_records 當月實收），屬程式改動須走 CIO 審查；口徑變更須使用者核准後施工。",
+  "cleanup_reason": "狀態含『已完成』卻留在 pending_decisions → 觸發 check_thresholds 閘門（build_dashboard 以子字串過濾會誤判已結案、整卡靜默隱藏），且造成 sync_all 第 2 步即中止。本卡結論已由使用者 2026-10-06 新裁示取代：薪水口徑改『實際入帳』（monthly_salary 42,560→39,777），故結案歸檔。"
  }
 ]
