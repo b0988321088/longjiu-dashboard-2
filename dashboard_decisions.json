@@ -10410,9 +10410,19 @@
       "status": "completed",
       "source": "user"
     }
+,
+  {
+    "id": "mem-20261006215401-1122",
+    "timestamp": "2026-10-06T21:54:01.789520+08:00",
+    "agent": "Hermes",
+    "task": "2026-10-06 dirty_gate fail-closed 治理變更閉環",
+    "summary": "production auto-commit dirty-worktree fail-closed 治理卡 CLOSED：治理 commit 41cc15da（5 檔）＋資料 commit f188f873（9 檔）皆已推 clean-main；CIO-DeepSeek-Flash APPROVE 0 阻斷；正負向驗收 ACCEPT_PASS（正向放行／負向 rc=9 且 0 commit 0 push）；out-of-scope 14→0。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
-    "updated_at": "2026-10-06T19:42:28.864234"
+    "updated_at": "2026-10-06T21:34:50.810043"
   },
   "last_updated": "2026-10-06T18:00:00+08:00",
   "2026-09-29": [
@@ -10636,6 +10646,18 @@
       "action": "薪資入帳無自動來源 → 月初收入視圖暫時為 0（資產真值正確、收入視圖錯誤）",
       "status": "已確認",
       "tags": "收入,salary_records,自動化,系統缺口,Moneybook"
+    },
+    {
+      "date": "2026-10-06",
+      "action": "Pages 生產來源分支落後：main 與 clean-main 分叉／不同步，線上版本非最新 CLOSED 真值",
+      "status": "待處理",
+      "tags": "Pages,git,分支,治理,線上真值"
+    },
+    {
+      "date": "2026-10-06",
+      "action": "production auto-commit dirty-worktree fail-closed（宣告範圍外既有 dirty 檔 → 停止）",
+      "status": "待處理",
+      "tags": "治理,auto-commit,fail-closed,git,產線,dirty-worktree"
     }
   ]
 }
