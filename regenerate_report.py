@@ -593,16 +593,23 @@ elif ok and _cio_ok:
         print("  ⛔ 已阻擋 commit/push（月度比較閘門 FAIL；修正後重跑 regenerate_report.py --deploy）")
         if _push_files:
             print(f"  ⛔ 有 {len(_push_files)} 個檔案待推，但閘門 FAIL → 本次不推送（fail-closed）")
-    # 2026-10-06（使用者裁決）dirty-worktree fail-closed：
-    #   宣告範圍外存在既有 dirty 檔 → 停止，不 auto-commit（不 stash／不 reset／不刪／不自行決定範圍）。
+    # 2026-10-06（使用者裁決，方案 2）per-commit scope isolation：
+    #   舊語義＝整個 worktree 不能髒 → 任何未納管 dirty 都會擋住所有產線。
+    #   新語義＝本輪 commit 只對本輪宣告 scope 負責：scope 內必須乾淨、必須驗證、必須受管控；
+    #            scope 外既有 dirty 不得自動納入 commit、不得阻擋本輪 commit、必須保留原狀。
     #   ⚠️ SystemExit(9) 刻意「不吞掉」：讓整條 commit/push path 立即中止、行程 rc=9。
     #   dirty_gate 自身故障亦 fail-closed（內部 raise SystemExit），不得因驗證器故障而放行。
-    from dirty_gate import assert_clean_scope as _dcs
-    _dcs(_push_files, base=BASE, label=f"regenerate_report({TODAY})")
+    from dirty_gate import (build_manifest as _bm, assert_scoped_commit as _dsc,
+                            assert_staged_in_scope as _dsi)
+    _scope = _bm(label=f"regenerate_report({TODAY})", produced=_push_files, base=BASE)
+    _dsc(_scope, base=BASE, label=f"regenerate_report({TODAY})")
     if _push_files and _gate_ok:
-        subprocess.run(['git', 'add'] + _push_files, capture_output=True, text=True, cwd=BASE)
+        # 只 stage 本輪 scope（manifest.allow）── 絕對不使用 git add -A、絕不 stage scope 外檔案
+        subprocess.run(['git', 'add', '--'] + list(_scope.get('allow') or _push_files), capture_output=True, text=True, cwd=BASE)
         _staged = subprocess.run(['git', 'diff', '--cached', '--name-only'], capture_output=True, text=True, cwd=BASE).stdout.strip()
         if _staged:
+            # stage 後、commit 前：staged 必須完全落在本輪 scope 內（絕對禁止 scope 外檔案進入 commit）
+            _dsi(_scope, base=BASE, label=f"regenerate_report({TODAY})")
             subprocess.run(['git', 'commit', '-m', _msg], capture_output=True, text=True, cwd=BASE)
             # 2026-09-14（INC-183）：此處原本寫 --record skip，但檔案內沒有任何地方替這顆 commit 落紀錄
             # （cio_review.py 只是本地規則檢查、不寫紀錄；cio_approve 從未被呼叫；原先是靠 [cioreviewed]
