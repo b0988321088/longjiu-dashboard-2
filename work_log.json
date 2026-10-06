@@ -1965,7 +1965,43 @@
   "item": "INC-284 收工封版（🔒 CLOSED / ALL GREEN）：pending_reconcile 狀態寫回四態（原敘述保留 status_raw），修掉連兩天擋掉晨間產線的閘門回歸",
   "detail": "根因＝寫入層違反 schema 契約（把真值重算敘述寫進 status）→ check_dividend_caliber『status 正規化為四態』亮紅 → Task1+2 驗證器第 5 類擋關 → 月度比較閘門 fail-closed（10/05、10/06 連兩天產出不上線）。證據：唯讀 A/B 驗證器 PASS 8 / FAIL 0（舊版 2 張卡逃逸、新版 0 筆）、月度比較閘門 PASS（FAIL 0）、Task1+2 PASS 19 / FAIL 0。落地：程式 4505fbfd（CIO-DeepSeek-Flash APPROVE / required_fixes=[]、tree 逐字相符）＋ INC-284 留痕 91d1d007；remote=local、未推送 0、線上 22/22=200、pending 34 張非四態 0 筆。觀測點（非待辦、不預先修）：今晚 22:00 evening_sync、明早 07:00 晨間產線。"
  },
- {"date": "2026-10-06", "category": "修正", "item": "0-A CLOSED：公開 repo 外洩之 Telegram bot token 輪替", "detail": "第 0-A 步＝公開 repo 外洩憑證的**唯一真止血**（git filter-repo 只能清本 repo 歷史，不能讓已外洩的活憑證失效）。新 token `getMe` HTTP 200（@benbenbentw_bot）；舊 token `getMe` HTTP **401**（撤銷確認）；`.env` token sha256 6d28115b880a8ce3 → 0b305f5eb378faf3（確實更換）；備份 `.env.bak-20261006-151557`；gateway 重啟後 log `telegram connected`／`getUpdates progressing (generation 1)`、進程數 1（無 polling 互搶）；雙向驗證：`sendMessage` HTTP 200 ＋ gateway.log 收到 inbound。九項 Gate 9/9（腳本 `gate_0A.py` 可重跑）。未動：git 歷史、repo visibility、Pages、10/06 真值（snapshot.json 與 HEAD 無 diff、last_updated=2026-10-06、total=26,823,015、未推送 0）。殘餘風險已揭露：輪替期間新 token 曾出現在對話通道，使用者知情並選擇接受現狀結案。 剩餘：0-B（Moneybook 匯出密碼，使用者端操作）＋第 1 步 mb_extract.py 去硬編碼 ＋ repo 五步（排定明早 07:00 產線前窗口）。"},
- {"date": "2026-10-06", "category": "修正", "item": "資安 remediation 第 1 步 CLOSED：mb_extract.py 去硬編碼（ZIP 密碼改讀 .env），全庫命中 2→0 檔", "detail": "起因：使用者裁決「不改密碼，就用身分證字號」→ 0-B 的「輪替」框架撤銷（識別碼不可輪替），改以「搬家」處理。mb_extract.py get_password() 改讀 .env（os.environ → Hermes .env → repo .env），未設定時 raise SystemExit fail-closed，無硬編碼退路。值寫入 Hermes .env 的 MONEYBOOK_ZIP_PASSWORD（repo 外、已 gitignore）。行為等價：新舊值逐位元相同 + 真實 ZIP 端到端解壓 3 檔成功。moneybook_calibration_log.md L214 明文改 [REDACTED]。值逐位元反查 1,955 個已版控檔：命中 2→0。獨立唯讀驗證器 22/22 PASS（commit e01fc656，只動 1 檔 +23/-2）。殘餘：git 歷史舊 blob 待第 4 步 filter-repo；該值仍可解未來 ZIP（已揭露，使用者知情）。"},
- {"date": "2026-10-06", "category": "修正", "item": "2026-10 台電薪資 39,777 入帳補記（salary_records 缺月）— 資產真值正確但收入視圖為 0", "detail": "source=Moneybook 明細 2026/10/06 台新銀行 文心綜活儲存款-薪轉『媒體轉入 - 薪資 台電』39,777。只加 salary_records['2026-10']，+5 行、其餘欄位逐一比對零變動，total_assets 26,823,015 與 cash_total 1,789,623 均不變（錢已在帳戶餘額內）。使用者裁決 B：10 月 39,777 為連假造成的單月入帳波動、非調降；2026-09 的 42,560 保留；monthly_salary 維持 42,560；常態模型（monthly_income／覆蓋率／健康度）仍以 42,560 計算；10 月實際現金收入用 39,777。實際收入 ≠ 常態月薪，兩概念分開。另開兩卡：①薪資入帳無自動來源②常態模型誤用當月實收。commit 95f2b517（10 檔、0 程式檔、顯式 pathspec）。"}
+ {
+  "date": "2026-10-06",
+  "category": "修正",
+  "item": "0-A CLOSED：公開 repo 外洩之 Telegram bot token 輪替",
+  "detail": "第 0-A 步＝公開 repo 外洩憑證的**唯一真止血**（git filter-repo 只能清本 repo 歷史，不能讓已外洩的活憑證失效）。新 token `getMe` HTTP 200（@benbenbentw_bot）；舊 token `getMe` HTTP **401**（撤銷確認）；`.env` token sha256 6d28115b880a8ce3 → 0b305f5eb378faf3（確實更換）；備份 `.env.bak-20261006-151557`；gateway 重啟後 log `telegram connected`／`getUpdates progressing (generation 1)`、進程數 1（無 polling 互搶）；雙向驗證：`sendMessage` HTTP 200 ＋ gateway.log 收到 inbound。九項 Gate 9/9（腳本 `gate_0A.py` 可重跑）。未動：git 歷史、repo visibility、Pages、10/06 真值（snapshot.json 與 HEAD 無 diff、last_updated=2026-10-06、total=26,823,015、未推送 0）。殘餘風險已揭露：輪替期間新 token 曾出現在對話通道，使用者知情並選擇接受現狀結案。 剩餘：0-B（Moneybook 匯出密碼，使用者端操作）＋第 1 步 mb_extract.py 去硬編碼 ＋ repo 五步（排定明早 07:00 產線前窗口）。"
+ },
+ {
+  "date": "2026-10-06",
+  "category": "修正",
+  "item": "資安 remediation 第 1 步 CLOSED：mb_extract.py 去硬編碼（ZIP 密碼改讀 .env），全庫命中 2→0 檔",
+  "detail": "起因：使用者裁決「不改密碼，就用身分證字號」→ 0-B 的「輪替」框架撤銷（識別碼不可輪替），改以「搬家」處理。mb_extract.py get_password() 改讀 .env（os.environ → Hermes .env → repo .env），未設定時 raise SystemExit fail-closed，無硬編碼退路。值寫入 Hermes .env 的 MONEYBOOK_ZIP_PASSWORD（repo 外、已 gitignore）。行為等價：新舊值逐位元相同 + 真實 ZIP 端到端解壓 3 檔成功。moneybook_calibration_log.md L214 明文改 [REDACTED]。值逐位元反查 1,955 個已版控檔：命中 2→0。獨立唯讀驗證器 22/22 PASS（commit e01fc656，只動 1 檔 +23/-2）。殘餘：git 歷史舊 blob 待第 4 步 filter-repo；該值仍可解未來 ZIP（已揭露，使用者知情）。"
+ },
+ {
+  "date": "2026-10-06",
+  "category": "修正",
+  "item": "2026-10 台電薪資 39,777 入帳補記（salary_records 缺月）— 資產真值正確但收入視圖為 0",
+  "detail": "source=Moneybook 明細 2026/10/06 台新銀行 文心綜活儲存款-薪轉『媒體轉入 - 薪資 台電』39,777。只加 salary_records['2026-10']，+5 行、其餘欄位逐一比對零變動，total_assets 26,823,015 與 cash_total 1,789,623 均不變（錢已在帳戶餘額內）。使用者裁決 B：10 月 39,777 為連假造成的單月入帳波動、非調降；2026-09 的 42,560 保留；monthly_salary 維持 42,560；常態模型（monthly_income／覆蓋率／健康度）仍以 42,560 計算；10 月實際現金收入用 39,777。實際收入 ≠ 常態月薪，兩概念分開。另開兩卡：①薪資入帳無自動來源②常態模型誤用當月實收。commit 95f2b517（10 檔、0 程式檔、顯式 pathspec）。"
+ },
+ {
+  "timestamp": "2026-10-06T16:05:00+08:00",
+  "date": "2026-10-06",
+  "type": "修正",
+  "title": "儀表板常態線口徑錯置修正（當月實收污染常態模型）",
+  "detail": "build_dashboard.py 被動收入結構條：_sal 由「當月實收 salary_records[當月]」改為「常態 monthly_salary」，並補缺值 WARN；__INC_TOTAL__ fallback 由 _inc_tot 改為 got_total（對齊 data-k=got_total2 與 JS gotTotal 口徑）。兩病：①月初未補記→常態線顯示薪水 0（10/01–10/05 為 180,100）②單月連假波動被當常態（39,777）。驗收：常態 42,560+100,000+80,100=222,660、當月實收 salary_got=39,777 同時正確；負向（移除當月紀錄）常態線仍 222,660。唯讀驗證器 20/20 PASS；CIO-DeepSeek-Flash APPROVE 0 必修。",
+  "commits": [
+   "6aed7a55",
+   "0d20f93e"
+  ],
+  "artifacts": [
+   "build_dashboard.py",
+   "index.html"
+  ],
+  "verified": {
+   "verify_inc_salary_fix.py": "20/20 ALL PASS (exit 0)",
+   "online": "常態線 222,660 / salary_got 39,777 / post-push 22/22 條 200",
+   "negative": "月初無紀錄 → 常態線仍 222,660、還原 sha a8313af77e3a52b7 逐位元相同",
+   "boundary": "monthly_salary/salary_records/total_assets/cash_total/index_template.html 皆未動"
+  }
+ }
 ]
