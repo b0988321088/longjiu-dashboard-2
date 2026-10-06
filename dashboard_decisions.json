@@ -10393,6 +10393,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261006155659-1120",
+    "timestamp": "2026-10-06T15:56:59.563449+08:00",
+    "agent": "Hermes",
+    "task": "儀表板常態線口徑錯置修正（當月實收污染常態模型）",
+    "summary": "build_dashboard.py 被動收入結構條 _sal 由當月實收改取常態 monthly_salary；__INC_TOTAL__ fallback 改 got_total。驗收：常態 42,560+100,000+80,100=222,660 與當月實收 39,777 同時正確；負向（移除當月紀錄）常態線仍 222,660。唯讀驗證器 20/20 PASS、CIO APPROVE 0 必修；程式 6aed7a55 + 資料 0d20f93e 已推 clean-main。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-06T15:42:19.326610"
