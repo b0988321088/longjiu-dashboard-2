@@ -630,5 +630,40 @@
   "needs_due_date": true,
   "status": "已確認",
   "updated_at": "2026-10-06T16:20:00+08:00"
+ },
+ {
+  "date": "2026-10-06",
+  "title": "Pages 生產來源分支落後：main 與 clean-main 分叉／不同步，線上版本非最新 CLOSED 真值",
+  "status_raw": "🔵 OPEN／待分析，不施工。使用者 2026-10-06 裁決：❌ 禁止把 main fast-forward 到 clean-main（即使技術上無衝突，也不得因為『看起來能修』就動它）；Pages source branch＋folder 待 API 實查，不得靠分支名推測。唯讀盤點結果見 detail。",
+  "detail": "現象：線上 Pages 抽查 index.html?v=2 仍顯示舊值（222,660／42,560），但 origin/clean-main 已是 CLOSED 真值 c92c05e2。差異盤點：clean-main 有、main 沒有 = 498 顆（含程式 124 顆）；main 有、clean-main 沒有 = 0 顆。⚠️ 反證（與『Pages 由 main 供檔』假設衝突）：INC-236 已定案 clean-main = GitHub default branch 且為 Pages source，main 是已退役的鏡像分支（auto_push.DEFAULT_REFS 僅 HEAD:clean-main）→ main 落後屬於舊機制殘留，未必是線上舊版根因；根因待定（另可能是 Pages 建置/CDN 傳播鏈）。證據鏈（規格／prompt 與機制不一致，2026-10-06 納入本卡）：INC-236 定案 auto_push 正式路徑＝HEAD:clean-main（main 已退役）；但 22:00 晚報 cron（job 71e723d8af2d）prompt 仍寫「推 clean-main 和 main 兩個分支」→ 與 origin/main 停在 9/27 高度相關。處置：只納入本卡，暫不修改 prompt；待 Pages source 實查後再決定（改為只描述 clean-main／保留歷史鏡像需求／正式移除 main push 語義）。下一步（唯讀）：① 確認 GitHub Pages 實際 source branch／folder ② 比對線上位元組與 clean-main 對應檔 ③ 再決定 fast-forward／merge／其他。禁令：不得對 main 做任何操作（含 fast-forward）。",
+  "tags": "Pages,git,分支,治理,線上真值",
+  "owner": "CEO",
+  "due_date": null,
+  "due_date_source": "待分析後排定",
+  "external_owner": null,
+  "is_informational": false,
+  "last_confirmed": "2026-10-06",
+  "last_confirmed_source": "created_at",
+  "needs_due_date": true,
+  "status": "待處理",
+  "created_at": "2026-10-06T20:20:00+08:00"
+ },
+ {
+  "date": "2026-10-06",
+  "title": "production auto-commit dirty-worktree fail-closed（宣告範圍外既有 dirty 檔 → 停止）",
+  "status_raw": "✅ 已完成（2026-10-06 閉環）｜舊 raw：🔵 OPEN／施工中（使用者 2026-10-06 授權，只限本卡範圍）。",
+  "detail": "問題：production 產線（regenerate_report.py → auto_push）會 auto-commit。2026-10-06 實例：commit c92c05e2「四源同步」把不屬於該輪的治理變更（pending_decisions.json 的卡異動、work_log.json）一起帶進 production commit。裁決範圍（極窄）：pipeline 在 commit 前發現『非本輪宣告範圍』的既有 dirty worktree → 直接停止，不 auto-commit。禁止：自動 stash／reset／刪除／commit／自行決定哪些檔案屬於本輪。只看見不乾淨 → 停止 → 人工處理。落地：新增 dirty_gate.py（assert_clean_scope(declared)）並接進 regenerate_report.py 的 commit 前；判定＝dirty_now − declared − KNOWN_RUNTIME，非空即 SystemExit(9)；本身故障亦 fail-closed。現況（未提交）：dirty_gate.py 已建立、regenerate_report.py 已接線；本輪實測會擋下（range 外有既有 dirty）。⚠️ 待使用者核可：KNOWN_RUNTIME 常態 runtime 清單（logs/*、data/ai_cost_daily.jsonl、hunter_cache/*、notion_bridge/*、cost_log.csv、*.log）目前為『顯式可稽核常數』，未核可前只影響不擋的範圍。另納入驗收：production 分支角色判斷一律以 origin/* 為準，不以 local main／clean-main 名稱判斷（不整理、不重命名 local branches）。｜⚠️ 新增架構洞（2026-10-06，使用者裁決＝另案、現在不施工）：auto_push.py --auto-stage（＝git add -A）**未接** dirty_gate，任何呼叫端可繞過「宣告範圍」原則（實例：22:00 晚報走 evening_sync.py → auto_push --auto-stage，若恢復即可能把整棵 dirty tree 一次 commit+push）。使用者偏好 B：廢掉 --auto-stage、一律要求顯式 pathspec——理由「未宣告的檔案不得進入自動 commit」應是系統不變量，而非每個 caller 自己記得接 dirty_gate（A 仍保留誤用風險）。順序：先等 07:00 真實負向驗收（rc=9／0 commit／0 push）→ 再另開卡決定 A/B → CIO 審查後才施工。禁令：不得為修 auto_push.py 而順手清理或重整目前 27 檔 dirty（兩個問題不得混在一起）。\n\n【2026-10-06 閉環紀錄】① 治理 commit 41cc15da（恰 5 檔：dirty_gate.py 新增／regenerate_report.py 接線／.gitignore 加 snapshot.backup.json／snapshot.backup.json 刪除／DAILY_REPORT_PIPELINE_RULE.md 薪資口徑），CIO-DeepSeek-Flash 唯讀審查 APPROVE、0 阻斷（tree 2b712561），已推 clean-main。② 資料 commit f188f873（恰 9 檔範圍外產物、0 程式檔，走 auto_record --own 通道），已推 clean-main。③ 驗收 ACCEPT_PASS：以 regenerate_report.py 同一個 assert_clean_scope、同一份 27 檔宣告範圍──正向放行；負向（放入 git 可見誘餌）rc=9 且 0 commit／0 push／誘餌未被 stash-reset-刪；移除誘餌後再次放行。④ out-of-scope 14→0；剩餘 dirty 全數落在 declared 或 KNOWN_RUNTIME，『dirty ≠ 一律阻擋』的新治理邏輯已落地。｜仍待下一輪（非阻斷，CIO 提出）：(a) dirty_gate.py 的 KNOWN_RUNTIME 上方註解列了 dashboard_decisions.json，但實際 tuple 未含（註解／實作不一致，方向 fail-closed，非安全洞）；(b) _dcs 未先判斷 _push_files 為空；(c) KNOWN_RUNTIME 為硬編碼 tuple；另 data/.cache_audit_state.json 屬 runtime cache，宜納入 KNOWN_RUNTIME／.gitignore。｜沿既有裁決仍待處理：auto_push.py --auto-stage（＝git add -A）未接 dirty_gate。",
+  "tags": "治理,auto-commit,fail-closed,git,產線,dirty-worktree",
+  "owner": "CEO",
+  "due_date": null,
+  "due_date_source": "施工中（2026-10-06 起）",
+  "external_owner": null,
+  "is_informational": false,
+  "last_confirmed": "2026-10-06",
+  "last_confirmed_source": "治理紀錄登錄",
+  "needs_due_date": true,
+  "status": "已完成",
+  "created_at": "2026-10-06T20:35:00+08:00",
+  "updated_at": "2026-10-06T22:05:00+08:00"
  }
 ]
