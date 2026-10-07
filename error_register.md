@@ -1622,3 +1622,15 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
   連續發生才另開「部署驗證時序」改善卡。② 本機 `main`／`clean-main` 雙 ref（可能「ref 選錯但 push 回 0」）→ 🟠 另案
   （INC-236 延伸），已於 `pending_decisions.json` 開 P1 卡、**只讀盤點、禁 merge/rebase/reset**，待裁決。
 - 相關：INC-229（程式改動需同輪送審＋落地，同型）、INC-183（推送路徑未落紀錄）、INC-236（推送範圍判讀）、INC-284（假修：改資料沒改程式）。
+
+## INC-286 ｜ 2026-10-07 ｜ P1｜fixed（同日） ｜ push gate 只驗 HEAD、不驗「被推的 source ref」→ stale 分支可被誤推而系統自認成功（INC-236 延伸 Phase A／C）
+- 風險（盤點發現，尚未成災）：`auto_push.py --branch REF` 可覆寫 refspec，而推送前的 NOT-FF 檢查比對的是「**HEAD** vs origin/<dst>」而不是被推的 source → `--branch clean-main:clean-main` 會以最新 HEAD 通過檢查、實際把 stale 本機 `clean-main`（9/25，722ebb3d）推上 Pages＝INC-236 重演。事後第 5 步會以 remote sha 不符抓到，但**推送已經發生**（Pages 已吃舊值）。現況無任何腳本使用 `--branch`，屬潛在入口。
+- 修法（Phase A：程式 commit `083d0eca`，CIO-DeepSeek-Flash APPROVE 0 required fixes）：
+  ① 新增 `parse_refspec`／`source_sha`／`validate_refspecs`：**推送前**驗「被推的 source 解析後必須 == 當前 HEAD」與「destination 必須是部署分支 clean-main」，違反即拒推（新退出碼 **rc=7**）並寫 `.git/AUTO_PUSH.log`（`REFSPEC-REJECT … SRC-STALE／DEST／UNRESOLVED`）。
+  ② NOT-FF 檢查改看「被推的 source」（原為 HEAD）；推送後驗證訊息同步改為「被推的 source」。
+  ③ 判準：**source resolve → commit == current HEAD** 才放行（使用者裁決不採「字面必須是 HEAD」的形式限制）。
+- Phase C（同 commit）：`closeout_check.py` 新增 **⑨ ref topology 觀測**（本機/遠端分支、upstream、ahead/behind、last commit、部署來源），持續寫 `.git/REF_TOPOLOGY.json`；**永不**進 problems、不改任何 ref、不影響 exit code。
+- 證據（正負向齊備）：預設／`HEAD:clean-main` → rc=0；`clean-main:clean-main`（stale）→ **rc=7**（訊息指名 `source 'clean-main' → 722ebb3daf3a ≠ 當前 HEAD`）；`HEAD:main` → rc=7；舊 sha → rc=7；不存在 ref → rc=7；`+` 前綴／`refs/heads/` 前綴／空 `--branch`／多 refspec／`:clean-main` 皆無繞過路徑（審查者獨立探測）。落地後：未推 0、遠端 clean-main == HEAD == `083d0eca`、`AUTO_PUSH.log` OK、`--post-push` 線上 22/22 條 200、`cio_approve --status` 無 ❌。
+- 教訓：**push gate 必須驗「實際被推送的 source ref」與「實際 destination ref」，不能只驗 HEAD**；否則「推錯東西卻回 0、系統自認成功」這類最危險的失敗模式會持續存在。
+- 殘留（**Phase B，另案、未施工**）：本機 stale `clean-main`、本機 `main` upstream=origin/main、`origin/main`／`origin/master`／`origin/gh-pages` 非部署來源 → 已列 P1 卡於 `pending_decisions.json`，只讀盤點、禁 merge/rebase/reset。
+- 相關：INC-236（原事故）、INC-285（未推迭代未收斂，同型治理）、INC-198（refspec 來源改推 HEAD）。
