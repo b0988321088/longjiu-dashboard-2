@@ -1634,3 +1634,14 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 教訓：**push gate 必須驗「實際被推送的 source ref」與「實際 destination ref」，不能只驗 HEAD**；否則「推錯東西卻回 0、系統自認成功」這類最危險的失敗模式會持續存在。
 - 殘留（**Phase B，另案、未施工**）：本機 stale `clean-main`、本機 `main` upstream=origin/main、`origin/main`／`origin/master`／`origin/gh-pages` 非部署來源 → 已列 P1 卡於 `pending_decisions.json`，只讀盤點、禁 merge/rebase/reset。
 - 相關：INC-236（原事故）、INC-285（未推迭代未收斂，同型治理）、INC-198（refspec 來源改推 HEAD）。
+
+## INC-287 ｜ 2026-10-07 ｜ P1｜fixed（同日） ｜ pre-push 只驗審查紀錄、不驗被推的 ref → 人工 git push 可繞過 auto_push 推錯 source／destination（INC-236 延伸 Phase B）
+- 風險：Phase A（INC-286）只保護「自動化推送」（auto_push.py 推送前驗 refspec）；人工 `git push` 走 pre-push hook，而 hook v4 只驗「推送範圍內每個 commit 的 tree 有無審查紀錄」，**不驗 source／destination** → 推 stale ref 或錯 destination 仍可通過（INC-236 實例正是強制推舊內容）。
+- 修法（Phase B-4，程式 commit `f2d86ad4`，CIO-DeepSeek-Flash **APPROVE 0 required fixes**）：pre-push **v5** 新增 `check_refspec` —— 由 stdin 取「實際被推的 local ref／local sha／remote ref」，驗 ① local sha == 當前 HEAD ② remote ref == 部署分支 clean-main ③ 刪除分支（sha 全零）一律擋；違反即擋並留痕 `PUSH_LANE.log`（`REFSPEC-BLOCKED-SRC／DEST／DELETE`、通過記 `REFSPEC-OK`）。**`--dry-run` 同樣觸發**（驗的是 push decision，非網路傳輸）。
+- 證據：9 組單元（餵 stdin、不碰任何 ref）＋整合（真實 git：`--force stale→clean-main` 擋、`:clean-main` delete 擋、`HEAD→main` 擋）全數符合；正常路徑 `HEAD:clean-main` 放行；落地後真實推送通過並留痕 `REFSPEC-OK HEAD f2d86ad4`。風險核查：22 個 auto_push 呼叫端全走 `DEFAULT_REFS`、無 `--branch`。
+- **連帶修復（同輪）**：
+  ① **4 個 cron agent prompt 仍寫 `git push origin clean-main && git push origin clean-main:main --force-with-lease`**（9/21 INC-236 後已廢除的雙分支推法）→ 在 B-2（刪本機 clean-main）與 B-4（擋 main destination）之後**必定失敗**；已全數改為 `python auto_push.py --script <name>`（唯一出口），`jobs.json` 已備份 `jobs.json.bak_inc287_*`，全檔殘留 **0**。
+  ② 遠端 ref 清理（經裁決、證據鏈完整）：`origin/main`（3e534a8a，未併入 0／behind 528）、`origin/gh-pages`（3cb25da8，未併入 0／behind 2555）已刪；刪前先 bundle 封存（`refs_archive_20261007.bundle`，SHA256 `e1039272…b08d`，5/5 preserved、0 lost、獨立 repo 還原驗證）、刪後 `prune` ＋ topology 驗證（遠端僅剩 clean-main、⑨ ⚠️ 由 5 條降為 **0 條**）。
+- 教訓：① **push gate 必須驗「實際被推的 source 與 destination」**——Phase A 驗自動路徑、Phase B 驗人工路徑，兩者互補，缺一即留繞過入口。② **廢除一條推送慣例時，必須同步掃 agent prompt 裡的字面指令**（cron prompt 不在程式碼搜尋範圍內，最易遺漏；本次即為實例）。
+- 殘留（另案）：R6–R8 本機分支（`backup-915-batch`／`backup-915-batch2`／`fix/force-kpi-fallback`／`gh-pages`）有未併入 commit，經裁決**保留**；force push／重寫 clean-main 未被區分（超出本輪 invariant 範圍）。
+- 相關：INC-236（原事故）、INC-286（Phase A／C）、INC-285（同型治理）。
