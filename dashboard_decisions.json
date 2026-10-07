@@ -10455,6 +10455,16 @@
       "status": "completed",
       "source": "auto"
     }
+,
+  {
+    "id": "mem-20261007130639-1127",
+    "timestamp": "2026-10-07T13:06:39.497266+08:00",
+    "agent": "Hermes",
+    "task": "2026-10-07 發布前 artifact integrity gate：停止發布（daily report 雙 producer 缺章 P0）",
+    "summary": "使用者裁示立即停止 push：待推 a0b92529 的 daily_report_v2_2026-10-07.html 相對線上 b6fde1da 少了「📋 執行中決策追蹤」整章（約 48 列決策卡；洲際W轉貸 2→0），且五桶偏離欄位由 -2.1pp 變 -384,704。根因＝雙 producer（regenerate_report.py 有章／run_daily.py 無章），12:30 產線走 run_daily.py；非本批 ①②③ 引入。定 P0 產出完整性（INC-289／PEND-20261007-02）；build_dashboard.py 殘留「→ 美股減碼」不可達分支另開 INC-290／PEND-20261007-03。CIO-DeepSeek-Flash APPROVE（審查範圍未含本項）不得轉為發布授權；a0b92529／873594f7 不動、不 amend、不 reset、不 bypass。",
+    "status": "已核准",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-07T12:29:10.779968"
