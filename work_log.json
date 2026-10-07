@@ -2092,5 +2092,11 @@
   "category": "完成",
   "item": "美元曝險政策一致性修正 ①②③（使用者核准）：①健康度移出美元曝險計分（20% 權重併入防禦45）②政策門檻單一來源＝thresholds_2026_0915.美元曝險_pct（usd_advisory 唯一入口；移除 monitor.threshold/target_split）③命名改 目標值60／黃色觀察65／高曝險觀察線70、>70 僅顯示。真值未動（70.5%／美股桶 37.5%／27–33%／US30Y 煞車）",
   "detail": "使用者 2026-10-07 裁決 ①②③ 全部核准施工、不做成新的美元曝險策略卡。落地：usd_advisory.py 新增 policy/cap/tier/status_text（政策門檻唯一讀取入口）、usd_exposure_sync.py 監控區塊只存觀測真值與狀態、report_components.render_health_score 曝險維度不計分、sot_targets.triggers 美元曝險觸發=False 且門檻字樣改觀測線、market_indicator_panel／risk_factor_penetration／build_audit_dashboard／institutional_flow／build_dashboard／build_rebalance_dashboard／run_daily（含三段 LLM prompt 不餵美元數字）全部改走單一入口；順帶修正再平衡儀表板原讀 top-level usd_exposure_pct（空值）→改讀 current.合計。驗證：本機重產 18/18 步 rc=0（sync_all 第4步卡既有 P1-P2 故改逐支同步順序）、static_gate PASS、check_usd_advisory PASS、日報口徑閘門 PASS、跨報告一致性 PASS（1 條既有非阻擋警告）、check_dividend_caliber 73/77（4 條為既有 cash_layers.available 白名單殘留）、check_dashboard_stale PASS、index 結構 PASS。⚠️ 本批**刻意未修改 emergency／historical frozen blocks**（日報④波動／上限＝10/06 緊急應變凍結文字『美元曝險 59.0%』、日報緊急應變 8/22 期『64.1% 超 50% 紅線』、『② PI 後 加碼壓回<60%』）——經使用者裁示不擴大本批 scope，另開 PEND-20261007-01 ＋ INC-288 獨立處理。本機 commit、未 push。"
+ },
+ {
+  "date": "2026-10-07",
+  "category": "修正",
+  "item": "發布前 artifact integrity gate：停止發布（P0 日報雙 producer 缺章）＋開 P0/P2 修復卡",
+  "detail": "使用者裁決：立即停止 push，CIO APPROVE 不得轉為發布授權。發現＝待推 a0b92529 的 daily_report_v2_2026-10-07.html 相對線上 b6fde1da 少了「📋 執行中決策追蹤」整章（約 48 列決策卡；洲際W轉貸 2→0），且五桶偏離欄位由 -2.1pp 變 -384,704。根因＝日報雙 producer：regenerate_report.py（第224行3c段＋第297-301行append）有該章；run_daily.py（_p0_html 第2558/2591行）無該章；12:30 產線走 run_daily.py。逐版 grep -c 執行中決策追蹤：d4e73cba=0, d0d787ba=0, 4ae76edd=1, 9600b8f4=1, 14a68056=1, 1d114918=1, b6fde1da=1, a0b92529=0 → 非本批① ② ③ 引入。處置：開 INC-289／PEND-20261007-02（P0 產出一致性）＋INC-290／PEND-20261007-03（build_dashboard.py 殘留「→ 美股減碼」不可達分支＋check_usd_advisory 掃描範圍未含本檔）。邊界：不改 70.5% USD policy、不碰 INC-288 三處歷史文字、不動 a0b92529／873594f7（不 amend／不 reset／不 bypass）。CIO-DeepSeek-Flash 判決 APPROVE、confidence high、blocking []、required_fixes []、reviewed_commits 873594f7/6fb7f1fd… ＋ a0b92529/35bab6b0…、scope_creep false —— 但其審查範圍未含本次缺章發現。"
  }
 ]

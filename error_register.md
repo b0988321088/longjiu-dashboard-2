@@ -1656,3 +1656,30 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 邊界（新卡，禁止事項）：不改 70.5%、不改美股桶 37.5%、不改 27–33%、不改 US30Y 煞車、不新增美元減碼規則、不改 60/65/70 數值、不改 advisory_only、不改本批已完成之三項政策邏輯。
 - 驗收：三處文字或標為歷史快照、或改讀現行真值；`check_usd_advisory` 仍 PASS；跨報告一致性仍 PASS；真值逐位元不變。
 - 相關：2026-10-07 政策一致性批次（①②③，使用者核准）、`usd_advisory.py`（政策語意唯一入口）。
+
+## INC-289 ｜ 2026-10-07 ｜ P0｜open ｜ daily report 雙 producer 產出一致性分歧（執行中決策追蹤整章遺失＋五桶偏離欄位口徑不一致）
+- 症狀（發布前 artifact integrity gate 發現；來源：使用者 2026-10-07 裁示「立即停止發布」）：
+  同一份 `daily_report_v2_2026-10-07.html`，因**生產者路徑不同**而產生內容完整性差異：
+  ① **「📋 執行中決策追蹤」整章遺失**（線上 b6fde1da 有約 48 列決策卡；待推 a0b92529 為 0 列；`洲際W轉貸` 由 2 次變 0 次）。
+  ② **五桶偏離欄位口徑不一致**：線上／10-06 版為 `-2.1pp`（百分點），待推 a0b92529 版為 `-384,704`（TWD 金額）。
+- 證據（逐版計數 `grep -c "執行中決策追蹤"`）：
+  d4e73cba=0、d0d787ba=0、4ae76edd=1、9600b8f4=1、14a68056=1、1d114918=1、b6fde1da=1、a0b92529=0 → **同日交錯出現，非本批刻意刪章**。
+- 根因（已定位到行號）：日報有兩個 producer，只有一個會加該章
+  - `regenerate_report.py`：第 224 行「3c. 載入執行中決策追蹤」＋第 297–301 行 append → **有**該章
+  - `run_daily.py`：`_p0_html` 於第 2558／2591 行組成（僅 P0 任務，無決策追蹤表）→ **不產生**該章
+  - `a0b92529` 的日報出自 `run_daily.py` 路徑（12:30 產線），故缺章；`b6fde1da`（12:29）出自 `regenerate_report.py`。
+  - 偏離欄位同樣是兩路徑各自的渲染差異（已驗證本批 `git diff a0b92529^ a0b92529 -- report_components.py run_daily.py index_template.html` **未改動**偏離欄位渲染）。
+- 定性：**非 2026-10-07 政策一致性批次（①②③）引入**，屬長期存在的雙 producer 分歧；但本批的待推產物因此相對現行線上版發生**內容減損** → 屬發布前 P0 產出完整性問題（使用者裁示：不是 INC-288 那種可另開卡的既有顯示問題）。
+- 影響：使用者賴以追蹤待決事項的日報章節會靜默消失；真值不受影響（snapshot 未動，儀表板 index.html 仍保有該章）。
+- 修法方向（新卡，待裁決）：**不是「讓今天這份 HTML 看起來一樣」**，而是決定 canonical producer，或讓兩條路徑共用同一個 render component，使同輸入必得同產出。
+- 邊界（禁止事項）：不改 70.5% USD policy；不碰 INC-288 三處歷史／凍結文字；不動 a0b92529／873594f7（不 amend／不 reset／不 bypass）；不因本卡順手修其他顯示層問題。
+- 驗收：「執行中決策追蹤」存在；約 48 列決策卡正常；`洲際W轉貸` 不由 2 次變 0 次；五桶偏離欄位口徑一致；`regenerate_report.py`／`run_daily.py` 同輸入產出一致。
+- 相關：2026-10-07 政策一致性批次（①②③）、`PEND-20261007-02`（P0 修復卡）、CIO-DeepSeek-Flash APPROVE（範圍未含本項，不可轉為發布授權）。
+
+## INC-290 ｜ 2026-10-07 ｜ P2｜open ｜ build_dashboard.py 殘留 USD 指令語意（不可達分支）＋ check_usd_advisory 掃描範圍未含本檔
+- 症狀：`build_dashboard.py` 仍留 `🔴 美元曝險 {x}% 超標（目標值 ≤{cap:.0f}%）→ 美股減碼`（`elif _usd2 > _usd_cap2` 分支）。該分支被前一行 `if snap...advisory_only:` 擋住 → advisory_only 為真時**不可達**（實測產出 `index.html` 出現「美股減碼」0 次）。
+- 定性：技術債。**「不可達」不等於「沒有風險」**——政策要求 advisory_only=true 時，不應存在 USD exposure → action 的出口。
+- 修法方向：清掉不可達分支的舊指令語意；並把 `build_dashboard.py` 納入 `check_usd_advisory.py` 掃描範圍（現行僅掃 4 檔）。
+- 邊界：**不與 INC-289 同批施工**，避免 scope 爆掉。
+- 驗收：`build_dashboard.py` 無 USD→action 出口字樣；`check_usd_advisory.py` 掃描範圍含本檔且 PASS。
+- 相關：2026-10-07 政策一致性批次裁決③（清除顯示層指令語意）、`PEND-20261007-03`。

@@ -2553,44 +2553,18 @@ def main():
 
     market_intel_text = _format_content_to_html(market_intel_text, content_type="market_intel")
 
-    # 從 schedule_events.json 統一讀取排程（P0 + 本週行程）
     _schedule_rows = ""
     _p0_html = ""
-    try:
-        _events = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
-        _today_s = date.today().isoformat()
-        # 重要度權重：🔴 重要 > ⚠️ 待確認/還款 > 📋 行程 > ✅ 定期 > 🔄 待處理 > 📋 例行
-        _prio = {'🔴': 0, '⚠️': 1, '📋 重要': 1, '🔄': 2, '📋': 3, '✅': 4}
-        def _ev_key(e):
-            st = e.get("status", "") or ""
-            p = min((v for k, v in _prio.items() if k in st), default=5)
-            d = e.get("date", "")
-            return (p, d if d != "待處理" else "9999-99-99")
-        from datetime import timedelta as _td
-        _end_s = (date.today() + _td(days=30)).isoformat()
-        _week_s = (date.today() + _td(days=7)).isoformat()
-        # 過濾：待處理 或 今天~+30天（不含過去；2026-08-06 移除寫死 8/31）
-        _upcoming = [
-            e for e in _events
-            if e.get("date", "") == "待處理" or (_today_s <= e.get("date", "") <= _end_s)
-        ]
-        _upcoming.sort(key=_ev_key)
-        # 本週行程表：只顯示今天~+7天（2026-08-06）
-        _schedule_rows = "\n".join(
-            f'<tr><td>{e.get("date","")}</td><td>{e.get("item","")}</td><td class="num">{e.get("amount","")}</td><td>{e.get("status","")}</td></tr>'
-            for e in _upcoming if e.get("date", "") == "待處理" or e.get("date", "") <= _week_s
-        )[:4000]
-        # 2026-08-06 移除硬編碼過期項（8/4申請中、8/5已收配息）；8/15 撥款已由 schedule_events.json 動態聚合
-        _p0_core = []
-        _important = ['🔴', '🔄', '⚠️', '⏸️', '📋 重要']
-        _p0_dynamic = [
-            f'<li>{e.get("date","")} — {e.get("item","")} {e.get("amount","")} {e.get("status","")}</li>'
-            for e in _upcoming
-            if any(s in (e.get("status", "") or "") for s in _important)
-        ]
-        _p0_html = "\n".join(_p0_core + _p0_dynamic)
-    except Exception as _pe:
-        print(f"[WARN] schedule_events.json: {_pe}")
+    # 從 schedule_events.json 統一讀取排程（P0 + 本週行程 + 執行中決策追蹤）
+    # INC-289：唯一實作＝daily_report_assembly（canonical 行為＝regenerate_report.py 已上線實作）。
+    #   本檔原本自帶另一份實作（優先度排序＋4000 字截斷＋不含決策追蹤章）→ 已收斂。
+    #   fail-closed：組裝失敗直接拋錯，不允許靜默產出缺章日報。
+    from daily_report_assembly import build_schedule_rows as _asm_sched, build_p0_tasks_html as _asm_p0
+    _events = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
+    _pending_dec = json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8"))
+    _snap_asm = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+    _schedule_rows = _asm_sched(_events, date.today().isoformat())
+    _p0_html = _asm_p0(_events, _pending_dec, _snap_asm, date.today().isoformat())
 
     # 日報
     # 從 daily_intel_report_{TODAY}.json 讀取市場情報
@@ -2667,29 +2641,12 @@ def main():
 
     # 注入戰略穿透值到日報
     _snap = json.loads(Path(SNAPSHOT).read_text(encoding="utf-8")) if Path(SNAPSHOT).exists() else {}
+    # INC-289：穿透 __DR_*__ 取代＝唯一實作（daily_report_assembly.substitute_dr_tokens）
+    #   canonical 口徑＝pp（與線上版一致）。本檔原本私有實作印 TWD 金額 → 已收斂；
+    #   兩條路徑不再各印一種格式。
+    from daily_report_assembly import substitute_dr_tokens as _asm_dr
     _pen = _snap.get("penetration", {})
-    _atwd = _pen.get("actual_twd", {})
-    _apct = _pen.get("actual_pct", {})
-    # 2026-09-23 INC-244：子維度金額若缺 → 表格印 0 TWD（% 卻正常），先喊出來
-    for _tk in ("美股市值型成長_科技", "美股市值型成長_非科技"):
-        if _tk in _apct and not _atwd.get(_tk):
-            print(f"  ⚠️ 穿透缺 {_tk} 金額（actual_twd）→ 日報該列會顯示 0 TWD；請先跑 update_data.py 重建穿透")
-    _tgt = _pen.get("targets", {})
-    _tw_v = _atwd.get("台股市值型成長", 0)
-    _us_v = _atwd.get("美股市值型成長", 0)
-    _def_v = _atwd.get("防守型配息", 0)
-    _bond_v = _atwd.get("債券", 0)
-    _cash_v = _atwd.get("現金/安全網", 0)
-    for k, v in [("__DR_TW_V__",f"{_tw_v:,.0f}"),("__DR_US_V__",f"{_us_v:,.0f}"),("__DR_DEF_V__",f"{_def_v:,.0f}"),("__DR_BOND_V__",f"{_bond_v:,.0f}"),("__DR_CASH_V__",f"{_cash_v:,.0f}")]: daily_html = daily_html.replace(k, v)
-    _atwd2 = _pen.get("actual_twd", {})
-    for k, v in [("__DR_TW_PCT__",f"{_apct.get('台股市值型成長',0):.1f}%"),("__DR_US_PCT__",f"{_apct.get('美股市值型成長',0):.1f}%"),("__DR_DEF_PCT__",f"{_apct.get('防守型配息',0):.1f}%"),("__DR_BOND_PCT__",f"{_apct.get('債券',0):.1f}%"),("__DR_CASH_PCT__",f"{_apct.get('現金/安全網',0):.1f}%"),
-                 ("__DR_US_TECH_V__",f"{_atwd2.get('美股市值型成長_科技',0):,}"),("__DR_US_TECH_PCT__",f"{_apct.get('美股市值型成長_科技',0):.1f}%"),
-                 ("__DR_US_NT_V__",f"{_atwd2.get('美股市值型成長_非科技',0):,}"),("__DR_US_NT_PCT__",f"{_apct.get('美股市值型成長_非科技',0):.1f}%"),
-                 ("__DR_US_TECH_TGT__",f"{_tgt.get('科技曝險目標',15):.0f}%"),("__DR_US_TECH_GAP__",f"{_apct.get('美股市值型成長_科技',0) - _tgt.get('科技曝險目標',15):+.1f}pp")]: daily_html = daily_html.replace(k, v)
-    for k, v in [("__DR_TW_TGT__",f"{_tgt.get('台股市值型目標',20):.0f}%"),("__DR_US_TGT__",f"{_tgt.get('美股市值型目標',30):.0f}%"),("__DR_DEF_TGT__",f"{_tgt.get('配息型目標',20):.0f}%"),("__DR_BOND_TGT__",f"{_tgt.get('債券型目標',15):.0f}%"),("__DR_CASH_TGT__",f"{_tgt.get('現金目標',15):.0f}%")]: daily_html = daily_html.replace(k, v)
-    _pen_total = _tw_v + _us_v + _def_v + _bond_v + _cash_v or 1
-    for k, t, g in [("__DR_TW_GAP__",_tw_v,_tgt.get('台股市值型目標',20)),("__DR_US_GAP__",_us_v,_tgt.get('美股市值型目標',30)),("__DR_DEF_GAP__",_def_v,_tgt.get('配息型目標',20)),("__DR_BOND_GAP__",_bond_v,_tgt.get('債券型目標',15)),("__DR_CASH_GAP__",_cash_v,_tgt.get('現金目標',15))]:
-        _gap = t - _pen_total * g / 100; daily_html = daily_html.replace(k, f"{'+'if _gap>0 else ''}{_gap:,.0f}")
+    daily_html = _asm_dr(daily_html, _pen)
 
     # 證券明細注入
     try:

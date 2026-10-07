@@ -221,53 +221,15 @@ if _dp_seed.exists():
     except Exception as _e_seed:
         print(f"[WARN] Pending schema 自癒未執行（不阻擋；閘門仍會擋）：{_e_seed}")
 
-# 3c. 載入執行中決策追蹤
-_decision_rows = ""
-_dp = BASE / "pending_decisions.json"
-if _dp.exists():
-    try:
-        from sot_targets import refresh_stale_amounts as _refresh_dec
-        _snap_dec = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
-        _dd = json.loads(_dp.read_text(encoding="utf-8"))
-        for _d in _dd:
-            # 2026-09-12：pending 條目可帶 "card"（決策卡檔名）→ 第4欄出連結（目標 _blank）
-            _card = str(_d.get("card", "") or "").strip()
-            _card_td = (f'<td><a href="{_card}" target="_blank" style="color:#2563eb;text-decoration:underline">📑 決策卡</a></td>'
-                        if _card else '<td>—</td>')
-            # P0-1（2026-09-30）：決策追蹤文字中的清償前舊金額以當日真值覆蓋
-            _title_ok = _refresh_dec(str(_d.get("title", "") or ""), _snap_dec)
-            _status_ok = _refresh_dec(str(_d.get("status", "") or ""), _snap_dec)
-            _decision_rows += (f'<tr><td>{_d.get("date","")}</td><td>{_title_ok}</td>'
-                               f'<td>{_status_ok}</td>{_card_td}</tr>')
-    except Exception as _e_dec:
-        print(f"[WARN] P0-1 決策追蹤舊值覆蓋失敗：{_e_dec}")
-
-# 4. 從 schedule_events.json 統一讀取排程
+# 3c-4. 本週行程表／P0 任務／「執行中決策追蹤」（INC-289：唯一實作＝daily_report_assembly）
+#   canonical 行為＝2026-10-07 前本檔的已上線實作（維持檔案順序、缺口欄 pp、含決策追蹤章）；
+#   run_daily.py main() 亦呼叫同一組函式 → 兩個 producer 不再各自實作、不再產出不同版本。
+from daily_report_assembly import build_schedule_rows as _asm_sched, build_p0_tasks_html as _asm_p0
 _events = json.loads((BASE / "schedule_events.json").read_text(encoding="utf-8"))
-
-# 排程表（本週：今日 ~ +7 天 + 待處理；不再顯示過期/遠期）2026-08-06
-from datetime import timedelta as _td
-_schedule_rows = []
-_sched_end = (dt.today() + _td(days=7)).isoformat()
-for e in _events:
-    d = e.get("date","")
-    if d == "待處理" or (TODAY <= d <= _sched_end):
-        _schedule_rows.append(f'<tr><td>{d}</td><td>{e.get("item","")}</td><td class="num">{e.get("amount","")}</td><td>{e.get("status","")}</td></tr>')
-_schedule = "\n".join(_schedule_rows[:20])
-
-# P0 任務（只顯示重要/待處理事件）— 2026-08-06 移除硬編碼過期項（7/17、7/22、7/23），全改由 schedule_events.json 動態聚合
-_p0_core = []
-# 篩選重要事件（今日 ~ +30 天 + 待處理；不再顯示已過期月份）2026-08-06
-_important = ['🔴','🔄','⚠️','⏸️','📋 重要']
-_p0_end = (dt.today() + _td(days=30)).isoformat()
-_p0_dynamic = []
-for e in _events:
-    d = e.get("date","")
-    st = e.get("status","") or ""
-    if any(s in st for s in _important):
-        if d == "待處理" or (TODAY <= d <= _p0_end):
-            _p0_dynamic.append(f'<li>{d} — {e.get("item","")} {e.get("amount","")} {st}</li>')
-_p0_html = '\n'.join(_p0_core + _p0_dynamic)
+_pending = json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8"))
+_snap_asm = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+_schedule = _asm_sched(_events, TODAY)
+_p0_html = _asm_p0(_events, _pending, _snap_asm, TODAY)
 # 同步更新 dashboard_decisions.json（供 CIO 審計用）
 # ⚠️ 2026-07-31 修復：原邏輯整檔覆寫會清空 decisions（含核准記錄，事發於 3965a8e），改為合併式更新
 try:
@@ -293,35 +255,18 @@ try:
     _dash_path.write_text(json.dumps(_existing, ensure_ascii=False, indent=2), encoding='utf-8')
 except:
     pass
-# 決策追蹤附加至 P0 區塊
-if _decision_rows:
-    _p0_html += '\n<p style="margin-top:12px;font-weight:700;color:#3b82f6">📋 執行中決策追蹤</p>'
-    _p0_html += '\n<table style="width:100%;font-size:13px;border-collapse:collapse"><thead><tr style="background:#f0f0f5"><th>日期</th><th>決策</th><th>狀態</th><th>決策卡</th></tr></thead><tbody>'
-    _p0_html += _decision_rows
-    _p0_html += '\n</tbody></table>'
 
 html = render_daily_report(tv, market_intel_text=_market_html, schedule_rows_html=_schedule, p0_tasks_html=_p0_html, llm_emergency_analysis=_emergency_html, mb_cc_rows=build_cc_rows())
 
 # 5. 注入市場情報 + 緊急應變（雙保險）
 html = _inject_market_intel(html, tv, daily_analysis, _emergency_html)
 
-# 6. 穿透 __DR_*__ 取代
+# 6. 穿透 __DR_*__ 取代（INC-289：唯一實作＝daily_report_assembly.substitute_dr_tokens）
+#   2026-10-07 前此處為本檔私有實作，與 run_daily.py main() 的另一份私有實作分歧
+#   （缺口欄 pp vs TWD 金額）→ 已收斂；canonical 口徑＝pp。
+from daily_report_assembly import substitute_dr_tokens as _asm_dr
 _snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
-_pen = _snap.get("penetration", {})
-_atwd, _apct, _tgt = _pen.get("actual_twd", {}), _pen.get("actual_pct", {}), _pen.get("targets", {})
-# 2026-09-23 INC-244：穿透子維度金額若缺 → 表格會印 0 TWD（% 卻正常），先喊出來
-for _tk in ("美股市值型成長_科技", "美股市值型成長_非科技"):
-    if _tk in _apct and not _atwd.get(_tk):
-        print(f"  ⚠️ 穿透缺 {_tk} 金額（actual_twd）→ 日報該列會顯示 0 TWD；請先跑 update_data.py 重建穿透")
-for k, v in [("__DR_TW_V__",f"{_atwd.get('台股市值型成長',0):,.0f}"),("__DR_US_V__",f"{_atwd.get('美股市值型成長',0):,.0f}"),("__DR_DEF_V__",f"{_atwd.get('防守型配息',0):,.0f}"),("__DR_BOND_V__",f"{_atwd.get('債券',0):,.0f}"),("__DR_CASH_V__",f"{_atwd.get('現金/安全網',0):,.0f}")]: html = html.replace(k, v)
-for k, v in [("__DR_TW_PCT__",f"{_apct.get('台股市值型成長',0):.1f}%"),("__DR_US_PCT__",f"{_apct.get('美股市值型成長',0):.1f}%"),("__DR_DEF_PCT__",f"{_apct.get('防守型配息',0):.1f}%"),("__DR_BOND_PCT__",f"{_apct.get('債券',0):.1f}%"),("__DR_CASH_PCT__",f"{_apct.get('現金/安全網',0):.1f}%")]: html = html.replace(k, v)
-# 美股科技/非科技子維度（8/21 補：與 run_daily.py L1535-1538 同步，曾造成 __DR_ 殘留擋推送）
-for k, v in [("__DR_US_TECH_V__",f"{_atwd.get('美股市值型成長_科技',0):,.0f}"),("__DR_US_TECH_PCT__",f"{_apct.get('美股市值型成長_科技',0):.1f}%"),
-             ("__DR_US_NT_V__",f"{_atwd.get('美股市值型成長_非科技',0):,.0f}"),("__DR_US_NT_PCT__",f"{_apct.get('美股市值型成長_非科技',0):.1f}%"),
-             ("__DR_US_TECH_TGT__",f"{_tgt.get('科技曝險目標',15):.0f}%"),("__DR_US_TECH_GAP__",f"{_apct.get('美股市值型成長_科技',0) - _tgt.get('科技曝險目標',15):+.1f}pp")]: html = html.replace(k, v)
-for k, v in [("__DR_TW_TGT__",f"{_tgt.get('台股市值型目標',20):.0f}%"),("__DR_US_TGT__",f"{_tgt.get('美股市值型目標',30):.0f}%"),("__DR_DEF_TGT__",f"{_tgt.get('配息型目標',20):.0f}%"),("__DR_BOND_TGT__",f"{_tgt.get('債券型目標',15):.0f}%"),("__DR_CASH_TGT__",f"{_tgt.get('現金目標',15):.0f}%")]: html = html.replace(k, v)
-for k, t, g in [("__DR_TW_GAP__",_apct.get('台股市值型成長',0),_tgt.get('台股市值型目標',20)),("__DR_US_GAP__",_apct.get('美股市值型成長',0),_tgt.get('美股市值型目標',30)),("__DR_DEF_GAP__",_apct.get('防守型配息',0),_tgt.get('配息型目標',20)),("__DR_BOND_GAP__",_apct.get('債券',0),_tgt.get('債券型目標',15)),("__DR_CASH_GAP__",_apct.get('現金/安全網',0),_tgt.get('現金目標',15))]:
-    html = html.replace(k, f"{t - g:+.1f}pp")
+html = _asm_dr(html, _snap.get("penetration", {}))
 
 # 8. 章節 5→6
 for i in range(1, 7):

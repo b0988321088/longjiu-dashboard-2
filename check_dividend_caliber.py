@@ -673,6 +673,9 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "usd_advisory.py", "usd_exposure_sync.py",   # 政策門檻唯一入口（policy/cap/tier）＋監控區塊只留真值
            "market_indicator_panel.py", "risk_factor_penetration.py",
            "build_audit_dashboard.py", "institutional_flow.py",
+           # 2026-10-07 INC-289 P0（日報雙 producer 產出一致性）：抽出唯一實作＋守門
+           "daily_report_assembly.py", "regenerate_report.py",
+           "verify_daily_report_single_producer.py",   # 守門置於 tools/
            }
 # 逐日產物：命名比對，跨月不失效（舊版 allowed_prefixes 釘死 2026-09）
 _DAILY = re.compile(r"^(asset_diff|retirement_plan|daily_report_v2|rebalance_dashboard|"
