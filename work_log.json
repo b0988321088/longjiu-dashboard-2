@@ -2098,5 +2098,41 @@
   "category": "修正",
   "item": "發布前 artifact integrity gate：停止發布（P0 日報雙 producer 缺章）＋開 P0/P2 修復卡",
   "detail": "使用者裁決：立即停止 push，CIO APPROVE 不得轉為發布授權。發現＝待推 a0b92529 的 daily_report_v2_2026-10-07.html 相對線上 b6fde1da 少了「📋 執行中決策追蹤」整章（約 48 列決策卡；洲際W轉貸 2→0），且五桶偏離欄位由 -2.1pp 變 -384,704。根因＝日報雙 producer：regenerate_report.py（第224行3c段＋第297-301行append）有該章；run_daily.py（_p0_html 第2558/2591行）無該章；12:30 產線走 run_daily.py。逐版 grep -c 執行中決策追蹤：d4e73cba=0, d0d787ba=0, 4ae76edd=1, 9600b8f4=1, 14a68056=1, 1d114918=1, b6fde1da=1, a0b92529=0 → 非本批① ② ③ 引入。處置：開 INC-289／PEND-20261007-02（P0 產出一致性）＋INC-290／PEND-20261007-03（build_dashboard.py 殘留「→ 美股減碼」不可達分支＋check_usd_advisory 掃描範圍未含本檔）。邊界：不改 70.5% USD policy、不碰 INC-288 三處歷史文字、不動 a0b92529／873594f7（不 amend／不 reset／不 bypass）。CIO-DeepSeek-Flash 判決 APPROVE、confidence high、blocking []、required_fixes []、reviewed_commits 873594f7/6fb7f1fd… ＋ a0b92529/35bab6b0…、scope_creep false —— 但其審查範圍未含本次缺章發現。"
+ },
+ {
+  "date": "2026-10-07",
+  "category": "完成",
+  "item": "日報2026-10-07（已產出（金額見 snapshot／當日日報檔，勿在此複寫數字））",
+  "detail": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）"
+ },
+ {
+  "date": "2026-10-07",
+  "category": "完成",
+  "item": "資產穿透2026-10-07（已產出（五桶市值見 snapshot.penetration.actual_twd））",
+  "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-10-07",
+  "category": "完成",
+  "item": "2026-10-07 核准：美元曝險政策一致性修正 ①②③（健康度中性／門檻單一來源／觀測線命名）（使用者 2026-10-07 裁決 ①②③ 全部核准施工（不做成新的美元曝險策略卡）：①健康度移出美元曝險計分，20% 權重併入防禦 45；②政策門檻單一來源＝thresholds_2026_0915.美元曝險_pct（usd_advisory 為唯一讀取入口",
+  "detail": "使用者 2026-10-07 裁決 ①②③ 全部核准施工（不做成新的美元曝險策略卡）：①健康度移出美元曝險計分，20% 權重併入防禦 45；②政策門檻單一來源＝thresholds_2026_0915.美元曝險_pct（usd_adviso"
+ },
+ {
+  "date": "2026-10-07",
+  "category": "完成",
+  "item": "2026-10-07 明文解除「停止發布」（13:06 停推 → 13:16 修復後恢復推送；事後授權補登）（使用者 2026-10-07 指示「修復」CIO 18:30 審查缺口 → 明文追認解除 13:06 停止發布。事實時序：13:06 裁示立即停止 push（已入庫 mem-20261007130639-1127）；13:16 以修復 commit ",
+  "detail": "使用者 2026-10-07 指示「修復」CIO 18:30 審查缺口 → 明文追認解除 13:06 停止發布。事實時序：13:06 裁示立即停止 push（已入庫 mem-20261007130639-1127）；13:16 以修復 co"
+ },
+ {
+  "date": "2026-10-07",
+  "category": "完成",
+  "item": "2026-10-07 事實補充：a0b92529（政策一致性修正程式碼）已隨 13:16 推送鏈上線「程式碼通道」（接續 mem-20261007184128-1129。唯讀查核（git merge-base --is-ancestor）發現：13:16 推送 3b7ac135 時，未推鏈一併上線 → b6fde1da → a0b92529 → 873594",
+  "detail": "接續 mem-20261007184128-1129。唯讀查核（git merge-base --is-ancestor）發現：13:16 推送 3b7ac135 時，未推鏈一併上線 → b6fde1da → a0b92529 → 8735"
+ },
+ {
+  "date": "2026-10-07",
+  "category": "完成",
+  "item": "2026-10-07 更正：停推解除授權「已存在」（Notion 14:29【發布】6-commit 記錄）— 真缺口＝Notion 未同步 dashboard_decisions（更正 mem-20261007184128-1129（原述『該時點無書面解除授權』）與 mem-20261007184251-1130（原述『凍結是否解除待裁示』）。唯讀查核 N",
+  "detail": "更正 mem-20261007184128-1129（原述『該時點無書面解除授權』）與 mem-20261007184251-1130（原述『凍結是否解除待裁示』）。唯讀查核 Notion 分析庫：2026-10-07 14:29（台北）已"
  }
 ]
