@@ -25,7 +25,7 @@
                                     若其中含程式檔 → 拒絕推送（程式改動必須走真 CIO 審查）
                       skip：完全不動紀錄（呼叫端已自行走 cio_approve 真審查）
   --own GLOB...       轉發給 auto_record：本 job 產出未提交 → 硬擋
-  --branch REF        預設 clean-main:main（第一支照推、第二支 --force-with-lease）
+  --branch REF        預設 HEAD:clean-main；source 必須解析到當前 HEAD（見「refspec 治理」）
   --no-verify         略過遠端 sha 驗證（不建議）
   --dry-run           只印將做什麼，不動任何東西
 
@@ -35,6 +35,7 @@
   4 = push 重試後仍失敗
   5 = push 回 0 但遠端 sha 與 HEAD 不符（線上是舊的）
   6 = 環境問題（不在 repo／remote 讀不到）
+  7 = refspec 治理拒推（source 未解析到當前 HEAD／destination 非部署分支）
 """
 from __future__ import annotations
 
@@ -47,6 +48,13 @@ import time
 from pathlib import Path
 
 DEFAULT_REFS = ["HEAD:clean-main"]
+DEPLOY_BRANCH = "clean-main"
+# 2026-10-07 INC-236 延伸（Phase A）：push source／destination 治理
+#   ① 被推送的 source **必須解析到當前 HEAD**：推本機其他分支或舊 sha（stale local clean-main、
+#      舊 local main）一律拒推 —— INC-236 的失敗模式正是「推舊內容、git push 回 0、系統自認成功」。
+#   ② NOT-FF 檢查以「實際 source → destination」為準，不再拿 HEAD 代替 source。
+#   ③ destination 只允許 DEPLOY_BRANCH（Pages 唯一部署來源），避免推錯分支卻無人察覺。
+EXIT_REFSPEC = 7
 # 2026-09-16 INC-198：原本是 ["clean-main", "clean-main:main"] —— 來源是**本機分支**，不是 HEAD。
 # HEAD detached（例如 `git checkout <sha>` 看舊版後忘了回來）時，本機分支仍停在舊 commit，
 # 於是「推上去的是舊內容、returncode 卻是 0」，只有第 5 步驗證以 rc=5 現形（看起來像網路問題）。
@@ -61,6 +69,75 @@ CODE_RE = r"\.(py|sh|bat|ps1|cmd|toml|yml|yaml|js|ts|sql)$|^\.githooks/|^\.gitat
 def dest_of(refspec: str) -> str:
     """refspec → 目標分支名（'HEAD:clean-main' → 'clean-main'；'clean-main' → 'clean-main'）。"""
     return refspec.split(":")[-1].strip()
+
+
+def parse_refspec(refspec: str) -> tuple[str, str]:
+    """refspec → (source, destination)。git push 語義：'a:b' 推 a 到 b；'b' 等於 'b:b'。
+
+    2026-10-07 INC-236 延伸 Phase A：閘門要驗的是**實際被推送的 source 與 destination**，
+    不能只看 HEAD（舊版就是拿 HEAD 代表 source，才會讓 stale ref 有機可乘）。
+    """
+    r = refspec.strip()
+    while r.startswith("+"):          # force 前綴不影響來源判定
+        r = r[1:]
+    if ":" in r:
+        src, dst = r.split(":", 1)
+    else:
+        src = dst = r
+
+    def _short(x: str) -> str:
+        x = x.strip()
+        for p in ("refs/heads/", "refs/tags/"):
+            if x.startswith(p):
+                return x[len(p):]
+        return x
+
+    return _short(src), _short(dst)
+
+
+def source_sha(base: Path, refspec: str) -> str | None:
+    """解析 refspec 的 source 成 commit sha（解析不到回 None）。"""
+    src, _ = parse_refspec(refspec)
+    if not src:
+        return None
+    p = run(["git", "rev-parse", "--verify", "--quiet", f"{src}^{{commit}}"], base)
+    s = p.stdout.strip()
+    return s if (p.returncode == 0 and s) else None
+
+
+def validate_refspecs(base: Path, refs: list, head: str, dry_run: bool, script: str) -> int | None:
+    """推送前 refspec 治理（2026-10-07 INC-236 延伸 Phase A）。
+
+    回傳 None＝可推；否則回傳中止用的 exit code。違反即**拒推**，不是先推後驗。
+      ① source 必須解析到**當前 HEAD** —— 推本機其他分支／舊 sha 一律拒
+         （INC-236：推舊內容、git push 回 0、看起來成功，Pages 卻吃舊值）。
+      ② destination 必須是 DEPLOY_BRANCH —— 避免推錯分支卻無人察覺。
+    """
+    for spec in refs:
+        src, dst = parse_refspec(spec)
+        if dst != DEPLOY_BRANCH:
+            print(f"❌ auto_push：refspec destination 不是部署分支 {DEPLOY_BRANCH}：{spec}", file=sys.stderr)
+            print(f"   destination 解析為 '{dst}'；Pages 唯一部署來源是 {DEPLOY_BRANCH}，推別的分支不會上線。",
+                  file=sys.stderr)
+            log(base, f"REFSPEC-REJECT\t{script}\tDEST\t{spec}\t{head[:12]}")
+            return EXIT_REFSPEC
+        s_sha = source_sha(base, spec)
+        if s_sha is None:
+            print(f"❌ auto_push：refspec source 無法解析：{spec}", file=sys.stderr)
+            log(base, f"REFSPEC-REJECT\t{script}\tUNRESOLVED\t{spec}\t{head[:12]}")
+            return EXIT_REFSPEC
+        if s_sha != head:
+            print("❌ auto_push：refspec source 不是當前 HEAD → 拒推（避免把舊內容當新進度推上 Pages）",
+                  file=sys.stderr)
+            print(f"   refspec    = {spec}（source '{src}' → {s_sha[:12]}）", file=sys.stderr)
+            print(f"   當前 HEAD  = {head[:12]}", file=sys.stderr)
+            print("   修法：改用預設 refspec（不帶 --branch），或 git checkout 到正確的 commit 後重跑。",
+                  file=sys.stderr)
+            log(base, f"REFSPEC-REJECT\t{script}\tSRC-STALE\t{spec}\t{s_sha[:12]}")
+            return EXIT_REFSPEC
+        if dry_run:
+            print(f"[dry-run] refspec 治理通過：{spec}（source {s_sha[:12]} == HEAD）")
+    return None
 
 
 def run(args: list[str], cwd: Path, timeout: int = 180) -> subprocess.CompletedProcess:
@@ -142,6 +219,8 @@ def main() -> int:
 
     base = base_dir()
     refs = [a.branch] if a.branch else list(DEFAULT_REFS)
+    # 2026-10-07 INC-236 延伸：refs 一律先過 validate_refspecs（source 必須解析到 HEAD、
+    # destination 必須是部署分支），推送前就擋 —— 不是先推、再看遠端 sha 是否相符。
 
     # 1) staging（add -A 型路徑）——程式檔先 unstage，避免掃進本 job 的 commit
     if a.auto_stage:
@@ -170,6 +249,12 @@ def main() -> int:
         print("❌ 讀不到 HEAD", file=sys.stderr)
         return 6
 
+    # 3-0a) refspec 治理（2026-10-07 INC-236 延伸 Phase A）：驗「實際被推送的 source ref →
+    #       destination ref」，不再用 HEAD 代表 source；違反即拒推（rc=7），不進行任何推送。
+    _rej = validate_refspecs(base, refs, head, a.dry_run, a.script)
+    if _rej is not None:
+        return _rej
+
     # 3-0) 推送前安全檢查（2026-09-16 INC-198）——舊版在這裡是啞的：HEAD detached 時照推本機分支的舊內容。
     if run(["git", "symbolic-ref", "-q", "HEAD"], base).returncode != 0:
         print("❌ auto_push：HEAD 處於 detached（不在任何分支上）→ 拒絕推送。", file=sys.stderr)
@@ -180,8 +265,10 @@ def main() -> int:
         _dst = dest_of(_ref)
         if run(["git", "rev-parse", "--verify", "--quiet", f"origin/{_dst}"], base).returncode != 0:
             continue  # 遠端尚無此分支（首次推送）
-        if run(["git", "merge-base", "--is-ancestor", f"origin/{_dst}", "HEAD"], base).returncode != 0:
-            print(f"❌ auto_push：HEAD 不是 origin/{_dst} 的後代（非 fast-forward）→ 拒絕推送，避免把遠端回捲。",
+        _src_sha = source_sha(base, _ref) or head
+        # 2026-10-07 INC-236 延伸：NOT-FF 看的是「被推的 source」而不是 HEAD
+        if run(["git", "merge-base", "--is-ancestor", f"origin/{_dst}", _src_sha], base).returncode != 0:
+            print(f"❌ auto_push：被推的 source（{_src_sha[:12]}）不是 origin/{_dst} 的後代（非 fast-forward）→ 拒絕推送，避免把遠端回捲。",
                   file=sys.stderr)
             print(f"   若確實要回捲，請人工執行：git push origin HEAD:{_dst}（本工具不代人回捲正式分支）", file=sys.stderr)
             log(base, f"NOT-FF\t{a.script}\t{_dst}\t{head[:12]}")
@@ -277,7 +364,7 @@ def main() -> int:
             if rsha is None:
                 problems.append(f"{branch}：讀不到遠端 sha")
             elif rsha != head:
-                problems.append(f"{branch}：遠端 {rsha[:12]} ≠ 本機 {head[:12]}")
+                problems.append(f"{branch}：遠端 {rsha[:12]} ≠ 被推的 source {head[:12]}")
         if problems:
             msg = "；".join(problems)
             print(f"❌ 推送後驗證不符（線上是舊的）→ {msg}", file=sys.stderr)

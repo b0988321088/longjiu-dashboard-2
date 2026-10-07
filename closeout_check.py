@@ -52,6 +52,8 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent
 LANE_LOG = REPO / ".git" / "PUSH_LANE.log"   # pre-push 閘門的逐筆通道留痕（v3 起）
 WARN_LOG = REPO / ".git" / "AUTO_WARN.log"   # auto_record 的警告留痕（INC-180 起）
+TOPOLOGY_FILE = REPO / ".git" / "REF_TOPOLOGY.json"  # ref 盤點報告（INC-236 延伸 Phase C，觀測用）
+DEPLOY_REF = "origin/clean-main"      # Pages 唯一部署來源（= GitHub default branch，2026-10-07 盤點確認）
 sys.path.insert(0, str(REPO))
 import release_claimed_occurrences as rco  # noqa: E402
 import auto_push as apush  # noqa: E402  （複核 range-missing 是否已補紀錄）
@@ -582,6 +584,74 @@ def step_verifier_heartbeat(quiet: bool) -> list:
             f"→ 視為 NOT_RUN"]
 
 
+def step_ref_topology(quiet: bool) -> None:
+    """⑨ ref topology 稽核（2026-10-07 INC-236 延伸 Phase C）：**觀測與預警，不阻擋產線**。
+
+    為什麼：INC-236 的失敗模式（ref 選錯、push 回 0、系統自認成功）不能只靠人工偶然發現。
+    Phase A 已在 auto_push 推送前擋住「source 非 HEAD／destination 非部署分支」；
+    本步把「有哪些本機/遠端 ref、誰落後、upstream 指向哪、stale 多久」持續寫成報告，
+    讓 stale local clean-main、誤導性 upstream 這類結構性風險不再無聲存在。
+
+    契約：**永不**回傳問題、不影響 exit code（它是預警，不是新的 deployment gate）。
+    唯讀（只讀 git ref 與寫 .git/REF_TOPOLOGY.json，不改任何 ref、不動工作區檔案）。
+    """
+    try:
+        fmt = ("%(refname:short)\t%(objectname:short=10)\t%(upstream:short)\t"
+               "%(upstream:track)\t%(committerdate:format:%Y-%m-%d %H:%M)")
+        def _rows(refglob: str) -> list:
+            out = []
+            for ln in _git("for-each-ref", f"--format={fmt}", refglob).splitlines():
+                parts = (ln.split("\t") + [""] * 5)[:5]
+                out.append({
+                    "name": parts[0], "sha": parts[1], "upstream": parts[2],
+                    "track": parts[3].strip("[]"), "last_commit": parts[4],
+                })
+            return out
+
+        locals_ = _rows("refs/heads")
+        # 排除 origin/HEAD（symbolic ref；short name 會顯示成 "origin"，不是真分支）
+        remotes = [r for r in _rows("refs/remotes/origin/*") if r["name"] not in ("origin", "origin/HEAD")]
+        deploy_sha = _git("rev-parse", "--short=10", DEPLOY_REF) or "?"
+
+        flags = []
+        for b in locals_:
+            if b["name"] == "clean-main" and b["sha"] != deploy_sha:
+                flags.append(f"local {b['name']} = stale（{b['sha']} ≠ {DEPLOY_REF} {deploy_sha}）"
+                             f"→ 與部署分支同名，誤當推送來源會推上舊內容")
+            if b["upstream"] and b["upstream"] != DEPLOY_REF:
+                flags.append(f"local {b['name']} 的 upstream = {b['upstream']}（非部署來源）"
+                             f"→ git status/pull 語義誤導")
+        for r in remotes:
+            if r["name"] not in ("origin", "origin/HEAD", "origin/clean-main"):
+                flags.append(f"遠端另存 {r['name']}（{r['last_commit']}）→ 非部署來源，勿當推送目標")
+
+        report = {
+            "generated_at": dt.datetime.now(dt.timezone(dt.timedelta(hours=8))).isoformat(timespec="seconds"),
+            "deployment_ref": DEPLOY_REF,
+            "deployment_sha": deploy_sha,
+            "deployment_note": "GitHub default_branch 與 Pages source 皆為 clean-main（repo public）",
+            "local_branches": locals_,
+            "remote_branches": remotes,
+            "flags": flags,
+        }
+        TOPOLOGY_FILE.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        if not quiet:
+            print(f"⑨ ref topology（觀測／不阻擋）：部署來源 {DEPLOY_REF} @ {deploy_sha}")
+            for b in locals_:
+                up = f" → {b['upstream']}({b['track']})" if b["upstream"] else "（無 upstream）"
+                print(f"     local {b['name']} @ {b['sha']}{up}　最後 {b['last_commit']}")
+            for r in remotes:
+                print(f"     remote {r['name']} @ {r['sha']}　最後 {r['last_commit']}")
+            for f in flags:
+                print(f"     ⚠️ {f}")
+            print(f"     報告：{TOPOLOGY_FILE}")
+    except Exception as e:  # noqa: BLE001
+        # 觀測步不得因畸形輸入讓整份收工檢查變成 traceback
+        if not quiet:
+            print(f"⑨ ref topology：⚪ 讀取失敗（{type(e).__name__}: {e}）→ 略過（本步為觀測，不阻擋）")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="龍九每日收工檢查（一鍵）")
     ap.add_argument("--fix", action="store_true", help="釋放被誤認領的排程時點")
@@ -607,6 +677,8 @@ def main() -> int:
         cons_problems = step_consistency(args.quiet or args.silent_ok)
         thr_problems = step_threshold_invariants(args.quiet or args.silent_ok)
         hb_problems = step_verifier_heartbeat(args.quiet or args.silent_ok)
+        # ⑨ ref topology：觀測與預警，**不**併入 problems（不阻擋產線；INC-236 延伸 Phase C）
+        step_ref_topology(args.quiet or args.silent_ok)
 
         problems = []
         if left_claims:
