@@ -684,12 +684,29 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
             # 機制對齊 buffett_cto_analyzer._data_fingerprint（同名手法，避免兩套寫法）。
             try:
                 import hashlib as _hl
-                _cio_fp = _hl.md5((BASE / "snapshot.json").read_bytes()).hexdigest()[:8]
+                # 2026-10-07 卡② v3：指紋納入「腳本本身」——否則改了 CIO prompt（＝風控規則變更）
+                # 仍會沿用舊答案（今日即發生：v3 禁談規則上線後，05:42 的舊快取被繼續沿用）。
+                # 與 buffett_cto_analyzer._llm_cached 的 _script_hash 慣例一致。
+                _cio_fp = _hl.md5((BASE / "snapshot.json").read_bytes()
+                                  + Path(__file__).read_bytes()).hexdigest()[:8]
             except Exception:
                 _cio_fp = "nofp"
             _cio_cache = BASE / "data" / f"cio_llm_{date.today().isoformat()}_{_cio_fp}.json"  # 用真實今天（run_daily TODAY=snapshot 日期 8/21，若用它 cache 永不更新）
             if _cio_cache.exists():
                 _cio_llm = json.loads(_cio_cache.read_text(encoding="utf-8")).get("text", "")
+                # 2026-10-07 卡② v3：快取自癒 —— 讀到的內容若含違規敘述（規則上線前產生），
+                # 就地中和並回寫，不必重打 API、也不會把舊文字帶進日報。
+                try:
+                    from usd_advisory import scrub as _usd_scrub0
+                    _cio_fixed, _cio_hits0 = _usd_scrub0(
+                        _cio_llm, json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")))
+                    if _cio_hits0:
+                        _cio_llm = _cio_fixed
+                        _cio_cache.write_text(json.dumps({"text": _cio_llm, "date": TODAY},
+                                                         ensure_ascii=False), encoding="utf-8")
+                        print(f"[usd-advisory] CIO 快取自癒：中和 {len(_cio_hits0)} 句", file=sys.stderr)
+                except Exception as _e_heal:
+                    print(f"[usd-advisory] CIO 快取自癒失敗：{_e_heal}", file=sys.stderr)
             else:
                 _cio_da0 = json.loads((BASE / "daily_analysis.json").read_text(encoding="utf-8"))
                 _cio_m0 = _cio_da0.get("market", {})
@@ -706,6 +723,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                 from llm_analysis import ask_llm
                 # 產業脈絡（GICS + 資金流向 + 輪動，2026-08-22 加）
                 _cio_ictx = ""
+                # 2026-10-07 卡①：美元曝險 advisory 硬性約束（由 usd_advisory 單一入口提供）
+                _cio_usd_pb = ""
                 try:
                     _snap_c = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
                     _gics_c = _snap_c.get("industry_penetration", {}).get("產業", {})
@@ -716,6 +735,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                     _usd_c = ((_snap_c.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {})
                     # 2026-10-07 裁決：美元曝險只顯示不觸發 → LLM 脈絡一併標注，避免模型自行推論成減碼指令
                     _usd_adv_c = bool((_snap_c.get("usd_exposure_monitor") or {}).get("advisory_only"))
+                    from usd_advisory import prompt_block as _usd_pb
+                    _cio_usd_pb = _usd_pb(_snap_c)
                     _cio_ictx = (f"產業：{_top4}｜資金流向：{_sf_c.get('台股總結','—')}；{_sf_c.get('美股總結','—')}｜"
                                  f"輪動建議：{_rot_c or '—'}｜風險因子：美元曝險 {_usd_c.get('合計','—')}%"
                                  f"（美股桶 {_usd_c.get('美股桶','—')}%＋美元計價基金 {_usd_c.get('美元計價基金（非美股桶）','—')}%"
@@ -733,7 +754,8 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                     f"你是龍九控股的 CIO。市場訊號：買訊{len(_cio_b0)}/賣訊{len(_cio_s1)}、加權 {_cio_m0.get('twii','—')}、"
                     f"台積電 {_cio_m0.get('tsm','—')}、配置 台股{_cio_pen_tw:.1f}%/美股{_cio_pen_us:.1f}%/防守{_cio_pen_def:.1f}%"
                     f"/債券{_cio_pen_bond:.1f}%/現金{_cio_pen_cash:.1f}%（以上為全部可用數字，禁止自行推算或引用其他比例）、"
-                    f"警訊：{_cio_warn0}。機構雷達（動態）：{_sig_txt}。{_cio_ictx}\n"
+                    f"警訊：{_cio_warn0}。機構雷達（動態）：{_sig_txt}。{_cio_ictx}"
+                    f"{_cio_usd_pb}\n"
                     f"請給 CIO 戰略觀點：①配置判斷（哪裡該動/哪裡不動，須對照產業資金流向）②最大風險（含底層風險因子）"
                     f"③下一步具體動作（含產業輪動方向），150字內，繁體中文，直接給結論。"
                 )
@@ -743,6 +765,14 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                     _cio_out = ask_llm(_cio_prompt, system="你是龍九控股 CIO。輸出繁體中文，精簡決策導向。")
                     if _cio_out:
                         break
+                # 卡② 硬性防呆：即使 prompt 未被遵守，也不得把 advisory_only 轉成資產調整指令
+                try:
+                    from usd_advisory import scrub as _usd_scrub
+                    _cio_out, _usd_hits = _usd_scrub(_cio_out, _snap_c)
+                    if _usd_hits:
+                        print(f"[usd-advisory] CIO 輸出中和 {len(_usd_hits)} 句", file=sys.stderr)
+                except Exception as _e_scrub:
+                    print(f"[usd-advisory] scrub 失敗（不阻擋產出）：{_e_scrub}", file=sys.stderr)
                 if _cio_out:
                     _cio_llm = _cio_out
                     try:

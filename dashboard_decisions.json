@@ -10409,42 +10409,57 @@
       "summary": "使用者 2026-10-06 定版：①Moneybook 台電薪資匯款＝薪資發生多少的唯一真值 ②salary_records＝MB 真值的結構化紀錄／快取 ③monthly_salary=42,560＝常態模型假設、非薪資真值。自動來源卡方向鎖定＝MB→台電薪資交易辨識→salary_records（需去重與異常檢查，不得 LLM／人工輸入）；找不到則當月顯示 0／未入帳、常態線仍用 42,560。使用者並確認本次已 CLOSED 的常態線修正方向正確、不需回頭改。唯讀核對：全系統取值語意一致，L773-777 待收段用常態值為正確語意。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261006215401-1122",
+      "timestamp": "2026-10-06T21:54:01.789520+08:00",
+      "agent": "Hermes",
+      "task": "2026-10-06 dirty_gate fail-closed 治理變更閉環",
+      "summary": "production auto-commit dirty-worktree fail-closed 治理卡 CLOSED：治理 commit 41cc15da（5 檔）＋資料 commit f188f873（9 檔）皆已推 clean-main；CIO-DeepSeek-Flash APPROVE 0 阻斷；正負向驗收 ACCEPT_PASS（正向放行／負向 rc=9 且 0 commit 0 push）；out-of-scope 14→0。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261006223412-1123",
+      "timestamp": "2026-10-06T22:34:12.879370+08:00",
+      "agent": "Hermes",
+      "task": "2026-10-06 開卡：fx_rates.usd_to_twd 長期失真（估值系統 P0 資料品質缺口）",
+      "summary": "PEND-20261006-01（P0）。fx_rates 固定 32.4375，8 個歷史備份全同值 → 自 2026-08-14 起未更新；實際使用值 31.50（第一金 9/07 匯率日）／31.8725（鉅亨 10/02 淨值日），脫節約 1.7%。定性＝估值系統資料品質缺口，非基金風險事故。P0 六項驗收＋P1 下游讀取盤點。同時裁決：index.html＋emergency_report 先不推（走 22:15 既定產線）；基金不因本波下跌交易。",
+      "status": "✅ 已開卡（PEND-20261006-01）｜P0 資料真值修復",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261006223553-1124",
+      "timestamp": "2026-10-06T22:35:53.803176+08:00",
+      "agent": "Hermes",
+      "task": "2026-10-06 更正：fx_rates stale 之定性（P0 估值系統缺口 → P2 FX 歸因資料 freshness）",
+      "summary": "使用者更正裁決：資產真值層（截圖→台幣現值→snapshot）不經 usd_to_twd 計算 → 基金現值 12,522,002 與各檔現值皆為真值、無失真；只有『美元資產變化拆成市場損益＋匯率損益』的歸因層才需要可靠 FX。因此本卡由 P0『估值系統修復』降為 P2『FX 歸因資料 freshness 修正』小卡；不升 P0、不改基金資料、不因 FX 過期調整部位。架構確認：未用 FX 反推現值＝正確。原 P0 框架列 b45109c3 依『歷史列不清洗』原則保留不動。",
+      "status": "✅ 已更正定性（P0→P2）",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261007054016-1125",
+      "timestamp": "2026-10-07T05:40:16.608307",
+      "agent": "Hermes",
+      "task": "日報2026-10-07",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261007054016-1126",
+      "timestamp": "2026-10-07T05:40:16.653314",
+      "agent": "Hermes",
+      "task": "資產穿透2026-10-07",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
     }
-,
-  {
-    "id": "mem-20261006215401-1122",
-    "timestamp": "2026-10-06T21:54:01.789520+08:00",
-    "agent": "Hermes",
-    "task": "2026-10-06 dirty_gate fail-closed 治理變更閉環",
-    "summary": "production auto-commit dirty-worktree fail-closed 治理卡 CLOSED：治理 commit 41cc15da（5 檔）＋資料 commit f188f873（9 檔）皆已推 clean-main；CIO-DeepSeek-Flash APPROVE 0 阻斷；正負向驗收 ACCEPT_PASS（正向放行／負向 rc=9 且 0 commit 0 push）；out-of-scope 14→0。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261006223412-1123",
-    "timestamp": "2026-10-06T22:34:12.879370+08:00",
-    "agent": "Hermes",
-    "task": "2026-10-06 開卡：fx_rates.usd_to_twd 長期失真（估值系統 P0 資料品質缺口）",
-    "summary": "PEND-20261006-01（P0）。fx_rates 固定 32.4375，8 個歷史備份全同值 → 自 2026-08-14 起未更新；實際使用值 31.50（第一金 9/07 匯率日）／31.8725（鉅亨 10/02 淨值日），脫節約 1.7%。定性＝估值系統資料品質缺口，非基金風險事故。P0 六項驗收＋P1 下游讀取盤點。同時裁決：index.html＋emergency_report 先不推（走 22:15 既定產線）；基金不因本波下跌交易。",
-    "status": "✅ 已開卡（PEND-20261006-01）｜P0 資料真值修復",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261006223553-1124",
-    "timestamp": "2026-10-06T22:35:53.803176+08:00",
-    "agent": "Hermes",
-    "task": "2026-10-06 更正：fx_rates stale 之定性（P0 估值系統缺口 → P2 FX 歸因資料 freshness）",
-    "summary": "使用者更正裁決：資產真值層（截圖→台幣現值→snapshot）不經 usd_to_twd 計算 → 基金現值 12,522,002 與各檔現值皆為真值、無失真；只有『美元資產變化拆成市場損益＋匯率損益』的歸因層才需要可靠 FX。因此本卡由 P0『估值系統修復』降為 P2『FX 歸因資料 freshness 修正』小卡；不升 P0、不改基金資料、不因 FX 過期調整部位。架構確認：未用 FX 反推現值＝正確。原 P0 框架列 b45109c3 依『歷史列不清洗』原則保留不動。",
-    "status": "✅ 已更正定性（P0→P2）",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-06T21:34:50.810043"
+    "updated_at": "2026-10-07T07:00:03.536458"
   },
-  "last_updated": "2026-10-06T18:00:00+08:00",
+  "last_updated": "2026-10-07T18:00:00+08:00",
   "2026-09-29": [
     "9/29 質押撥款入帳 NT$5,900,000（10:57，國泰世華通知；實撥 590 萬@2.65%，原表定 540 萬@2.77%）→ 真值日全資產同步：現金 6,719,182／保單 9,453,825／基金 12,654,144／台股 2,981,410／總資產 31,808,561、負債 36,003,720（含基金質押 590 萬）、淨值 -4,195,159；銀行口徑 LTV 50.1%。待執行：清償 500 萬高息（券商 96 萬@3.92% 先、保單 400 萬@4% 後）",
     "9/29 裁示：質押撥款 590 萬先轉 200 萬還保單借貸（4% → 月省 6,667；保單借貸 400 萬 → 200 萬）；撥款剩餘 3,900,000。順序調整：保單（4%）優先於券商（3.92%）。待入帳確認後四源同步。",
@@ -10676,8 +10691,44 @@
     {
       "date": "2026-10-06",
       "action": "production auto-commit dirty-worktree fail-closed（宣告範圍外既有 dirty 檔 → 停止）",
-      "status": "待處理",
+      "status": "已完成",
       "tags": "治理,auto-commit,fail-closed,git,產線,dirty-worktree"
+    },
+    {
+      "date": "2026-10-06",
+      "action": "FX 歸因資料 freshness 修正（fx_rates.usd_to_twd 過期）",
+      "status": "待處理",
+      "tags": "FX,匯率,歸因,freshness,snapshot,資料品質"
+    },
+    {
+      "date": "2026-10-06",
+      "action": "負債資料時間軸缺口：DB liabilities 表在夜間產線無寫入者（四源閘門每日誤報）",
+      "status": "待處理",
+      "tags": "負債,liabilities,四源,閘門,寫入不對稱,資料時間軸,結構性"
+    },
+    {
+      "date": "2026-10-06",
+      "action": "dirty_gate 升級：全域 worktree gate → per-commit scope isolation（方案 2）",
+      "status": "待處理",
+      "tags": "產線,治理,dirty_gate,scope,manifest,fail-closed,可回滾"
+    },
+    {
+      "date": "2026-10-07",
+      "action": "美元曝險 advisory_only 語意滲透所有下游（含三段 LLM prompt）",
+      "status": "待處理",
+      "tags": "美元曝險,advisory_only,下游一致性,LLM prompt"
+    },
+    {
+      "date": "2026-10-07",
+      "action": "防呆：攔住繞過 advisory_only、把美元曝險轉成資產調整指令的下游",
+      "status": "待處理",
+      "tags": "美元曝險,advisory_only,閘門,靜態檢查"
+    },
+    {
+      "date": "2026-10-07",
+      "action": "「防禦資產」完整口徑重新檢查（本質判定 vs 來源/桶位判定）",
+      "status": "待處理",
+      "tags": "防禦資產,雙維度,口徑,保單基金,試算"
     }
   ]
 }

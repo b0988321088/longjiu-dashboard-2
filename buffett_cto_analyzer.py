@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 import requests
 
 BASE = Path(__file__).parent.resolve()
+# 2026-10-07 卡①：美元曝險 advisory 唯一入口（只顯示、不觸發；LLM 不得轉成資產調整建議）
+from usd_advisory import label as _usd_label, prompt_block as _usd_prompt_block  # noqa: E402
+from usd_advisory import scrub as _usd_scrub  # noqa: E402  # 卡②：硬性防呆（中和資產調整指令）
 load_dotenv(os.path.expanduser("~/AppData/Local/hermes/.env"))
 TG_TOKEN = os.environ.get("TG_TOKEN", "")
 TG_CHAT_ID = os.environ.get("TG_CHAT_ID", "") or os.environ.get("TELEGRAM_ALLOWED_USERS", "")
@@ -333,6 +336,14 @@ def _llm_cached(name: str, prompt: str, system: str, max_tokens: int = 450) -> s
             pass
     from llm_analysis import ask_llm
     _out = ask_llm(prompt, system=system, max_tokens=max_tokens)
+    # 卡② v3（2026-10-07）：快取寫入前先中和 → 快取本身即合規素材，
+    # 任何未來讀這份快取的下游都不會拿到「美元曝險→資產調整」文字。
+    try:
+        _out, _usd_hits0 = _usd_scrub(_out, json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")))
+        if _usd_hits0:
+            print(f"  ⚠️ [usd-advisory] 快取寫入前中和 {len(_usd_hits0)} 句")
+    except Exception:
+        pass
     if _out:
         (BASE / "data").mkdir(exist_ok=True)
         _cf.write_text(json.dumps({"out": _out}, ensure_ascii=False), encoding="utf-8")
@@ -364,7 +375,8 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
             f"五桶：{_fmt}\n"
             f"主要偏離：{pen.get('key_risk','—')}｜建議：{pen.get('key_action','—')}\n"
             f"成長 {pen['growth_pct']:.1f}%（目標{pen['growth_target']}%）；防禦 {pen['defense_pct']:.1f}%；安全網 {pen['safety_pct']:.1f}%\n"
-            f"結構風險：美元曝險{_usd_exp_val:.1f}%（紅線{_usd_cap_val:.0f}%）、高科技{_tech_exp_val:.1f}%（紅線{_tech_cap_val:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡\n"
+            f"結構風險：美元曝險{_usd_exp_val:.1f}%（{_usd_label(_snap)}{_usd_cap_val:.0f}%）、高科技{_tech_exp_val:.1f}%（紅線{_tech_cap_val:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡\n"
+            f"{_usd_prompt_block(_snap)}"
             f"產業與風險因子：{_industry_context()}\n"
             f"{market_text}\n"
             f"硬性約束（違反即無效，不可建議）：現金=底線制{cash_floor_label(_snap)}（{cash_caliber_note(_snap)}）；"
@@ -373,6 +385,10 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
             f"請以巴菲特投資哲學（護城河、安全邊際、能力圈、長期持有、別人恐懼我貪婪）做 3 點具體觀察 + 1 個紀律提醒，200字內，繁體中文，不要重複數字表。"
         )
         _out = _llm_cached("buffett", _prompt, "你是巴菲特視角的投資分析師。輸出繁體中文，精簡犀利，有具體觀點。")
+        # 卡② 硬性防呆：即使 prompt 未被遵守，也不得把 advisory_only 轉成資產調整指令
+        _out, _usd_hits = _usd_scrub(_out, json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")))
+        if _usd_hits:
+            print(f"  ⚠️ [usd-advisory] 巴菲特輸出中和 {len(_usd_hits)} 句：{_usd_hits[0]['片段'][:60]}")
         if _out:
             # 2026-08-23 修復：LLM 分支必須含「主要風險/總投資部位/TWD」關鍵字，CIO 審查(cio_review.py L162-167)才不會擋
             _kr = pen.get("key_risk", "—")
@@ -472,7 +488,8 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
             f"你是龍九控股的 CTO（技術分析師）。以下為資產穿透資料（總投資 {pen['total_inv']/1e4:.0f}萬）：\n"
             f"五桶：{_fmt}\n"
             f"主要偏離：{pen.get('key_risk','—')}｜建議：{pen.get('key_action','—')}\n"
-            f"結構風險：美元曝險{_usd_exp_val:.1f}%（紅線{_usd_cap_val:.0f}%）、高科技{_tech_exp_val:.1f}%（紅線{_tech_cap_val:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡、{us30y_note()}\n"
+            f"結構風險：美元曝險{_usd_exp_val:.1f}%（{_usd_label(_snap)}{_usd_cap_val:.0f}%）、高科技{_tech_exp_val:.1f}%（紅線{_tech_cap_val:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡、{us30y_note()}\n"
+            f"{_usd_prompt_block(_snap)}"
             f"產業與風險因子：{_industry_context()}\n"
             f"{market_text}\n"
             f"硬性約束（違反即無效，不可建議）：現金=底線制{cash_floor_label(_snap)}（{cash_caliber_note(_snap)}）；"
@@ -481,6 +498,10 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
             f"請以技術面（動能、趨勢、支撐壓力、風險）+ 產業資金流向（哪個產業順勢/逆勢）給：今日最大風險 + 具體建議動作（含標的/金額節奏，須符合上述約束），150字內，繁體中文。"
         )
         _out = _llm_cached("cto", _prompt, "你是技術分析師（CTO）。輸出繁體中文，直接給結論與動作，不要客套。")
+        # 卡② 硬性防呆：同上
+        _out, _usd_hits = _usd_scrub(_out, json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")))
+        if _usd_hits:
+            print(f"  ⚠️ [usd-advisory] CTO 輸出中和 {len(_usd_hits)} 句：{_usd_hits[0]['片段'][:60]}")
         if _out:
             # 2026-08-26 修復：LLM 分支輸出可能用「最大風險/動作」標籤，CIO 審查(cio_review.py L176-179)
             # 要求「今日最大風險」+「建議動作/具體動作」才放行 → 標準化標籤（同 8/23 巴菲特分支修法）

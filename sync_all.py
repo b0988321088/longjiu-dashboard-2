@@ -114,6 +114,10 @@ def main():
         ("四源同步", "python four_source_sync.py"),
         ("同義欄位複驗", "python asset_sync.py"),
         ("一致性檢查", f"python check_penetration_consistency.py {today}"),
+        # 2026-10-07 卡②（使用者裁決）：美元曝險 advisory 硬性防呆閘門 —
+        #   即使 prompt 未被遵守、或哪個模組忘了吃 advisory_only，產出檔只要出現
+        #   「美元曝險＋資產調整指令」即 FAIL，擋住後續 commit/push。非 advisory 時自動 SKIP。
+        ("美元曝險advisory閘門", f"python check_usd_advisory.py {today}"),
         # 2026-09-06：雷達週計畫重產 — institutional_flow.py 更新 radar_state.weekly_plan
         #     （行動儀表板 JS 即時讀取）。血淚：rotation_engine 修正後沒人重跑 → weekly_plan 殘留舊建議
         #     （「乾粉優先醫療」），使用者抓包；加此步驟確保 sync_all 後行動儀表板與引擎同步

@@ -28,6 +28,9 @@ CASH = SNAP.get('real_liquid_assets',0)
 TOTAL = INS + SEC + FUND + CASH
 p = SNAP.get('penetration',{}).get('actual_pct',{})
 USD_EXP = SNAP.get('usd_exposure_pct')
+# 2026-10-07 卡② v4（CIO 第四輪 D 點）：本頁原本直接輸出「美元曝險 → 估值回吐風險／
+# 不再加碼美元曝險」等處置語意，且不經 scrub → 改為 advisory 感知（僅顯示時不產生方向）。
+USD_ADV = bool((SNAP.get('usd_exposure_monitor') or {}).get('advisory_only'))
 USD_EXP_TXT = f'{USD_EXP}%' if isinstance(USD_EXP,(int,float)) else '~64%'
 
 # ── 市場快照執行時抓取（v5：取代寫死 as-of 值；失敗 fallback + 印警告）──
@@ -87,12 +90,24 @@ def ns():
     s.background.fill.solid(); s.background.fill.fore_color.rgb = BG
     return s
 
+def _adv(t):
+    """整頁兜底（CIO 第五輪 D 建議）：簡報所有文字輸出前一律過 scrub ——
+    advisory 模式下，任何美元曝險相關的敘述都會被中和，不依賴逐處人工閘控。"""
+    try:
+        from usd_advisory import scrub as _sc
+        return _sc(t, SNAP)[0]
+    except Exception:
+        return t
+
+
 def T(s, t, top=0.3):
+    t = _adv(t)
     tb = s.shapes.add_textbox(Inches(0.8), Inches(top), Inches(11.5), Inches(0.8))
     pgh = tb.text_frame.paragraphs[0]
     pgh.text = t; pgh.font.size = Pt(32); pgh.font.bold = True; pgh.font.color.rgb = WHITE
 
 def ST(s, t, top=1.2):
+    t = _adv(t)
     tb = s.shapes.add_textbox(Inches(0.8), Inches(top), Inches(11.5), Inches(0.5))
     pgh = tb.text_frame.paragraphs[0]
     pgh.text = t; pgh.font.size = Pt(16); pgh.font.color.rgb = GRAY
@@ -102,7 +117,7 @@ def B(s, items, top=1.9):
     tf = tb.text_frame; tf.word_wrap = True
     for i, item in enumerate(items):
         pgh = tf.paragraphs[0] if i==0 else tf.add_paragraph()
-        pgh.text = item; pgh.font.size = Pt(15); pgh.font.color.rgb = WHITE
+        pgh.text = _adv(item); pgh.font.size = Pt(15); pgh.font.color.rgb = WHITE
         pgh.space_after = Pt(5)
 
 # === S1: 封面 ===
@@ -139,20 +154,25 @@ B(s, [
 
 # === S3: 匯率 ===
 s = ns()
-T(s, f'匯率 {FX:.2f} — {FX_NOTE}，美元曝險的雙面刃')
-ST(s, f'美元曝險 {USD_EXP_TXT}（>55% 監控線）→ 台幣{"升值" if FX_MOVE>0 else "貶值"} = {"估值回吐風險" if FX_MOVE>0 else "估值增益"}')
+T(s, f'匯率 {FX:.2f} — {FX_NOTE}' + ('' if USD_ADV else '，美元曝險的雙面刃'))
+ST(s, f'美元曝險 {USD_EXP_TXT}（🟡 僅顯示，門檻 60；政策門檻待 10 月戰略檢討）' if USD_ADV
+   else f'美元曝險 {USD_EXP_TXT}（>55% 監控線）→ 台幣{"升值" if FX_MOVE>0 else "貶值"} = {"估值回吐風險" if FX_MOVE>0 else "估值增益"}')
 B(s, [
-    '🔵 美股ETF + 安聯保單 + 美元基金合計曝險已超監控線',
+    ('🔵 美股ETF + 安聯保單 + 基金部位之計價結構僅供觀察（🟡 僅顯示，政策門檻待 10 月戰略檢討）'
+     if USD_ADV else '🔵 美股ETF + 安聯保單 + 美元基金合計曝險已超監控線'),
     f'     7/29 高點 32.38 → 如今 {FX:.2f}（{FX_NOTE} {FX_MOVE:+.1f}%）',
-    f'     台幣若{"續強，美元資產以台幣計價縮水" if FX_MOVE>0 else "轉弱，美元資產估值回升"}（未實現）',
+    (f'     匯率變動對資產之計價影響僅供參考（未實現）' if USD_ADV
+     else f'     台幣若{"續強，美元資產以台幣計價縮水" if FX_MOVE>0 else "轉弱，美元資產估值回升"}（未實現）'),
     '',
     '💡 框架更新（9/11／9/12 定案）：原「500 萬 MMF＝10 月標案預備金」⛔ 已作廢',
     '     MMF 已於 9/9 贖回、9/11 轉申購貝萊德 B11（質押擔保池）；10 月押標金 240 萬 來源延 9 月底評估',
     '',
     '⚠️ 美債 5 階 ladder（2027-2031）延至 10 月標案結果',
-    '     沒標到 → 重評估匯率/美元曝險/利率是否見頂，再換匯建 ladder 或還債',
+    '     沒標到 → 重評估匯率、利率是否見頂與曝險結構，再換匯建 ladder 或還債',
     '     標到 → 履約保證函優先（年費 0.5-1.5%），不新增保單借貸',
     '',
+    '📊 結論：匯率方向已逆轉；美元曝險僅顯示、不作為行動依據，等 10 月重評估'
+    if USD_ADV else
     '📊 結論：匯率方向已逆轉 → 不再加碼美元曝險，等 10 月重評估'
 ])
 
@@ -193,6 +213,8 @@ B(s, [
     '     聯博全球多元收益AD美元月配 ' + f"{gk.get('聯博全球多元收益AD美元月配',0):,.0f}".replace(',',',') + ' 元',
     '',
     '✅ 鉅亨：自由Pay（路博邁5G累積/統一奔騰/0050連結A）+ 一般申購 19 檔',
+    '     ⚠️ 美元/日圓計價部位多 → 計入外幣曝險（僅顯示，不作為行動依據）'
+    if USD_ADV else
     '     ⚠️ 美元/日圓計價部位多 → 計入外幣曝險，續抱不加碼',
     '',
     '💡 基金結構不改：月配息覆蓋生活費，其餘交市場',
