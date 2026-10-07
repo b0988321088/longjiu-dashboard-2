@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 龍九 pre-push 閘門 v3（2026-09-14）
+# 龍九 pre-push 閘門 v5（2026-10-07）
 # 修正 v2 漏洞：只驗 HEAD tree → 改成驗「本次推送範圍內每一個 commit 的 tree」。
 #
 # 放行條件（逐 commit 判定，全部通過才放行）：
@@ -13,6 +13,10 @@
 #   Lane SKIPREVIEW ：該 commit message 含 [skipreview]（緊急例外，留痕）
 #                     ★v4：若同時含程式檔 → 記為 SKIPREVIEW-CODE（仍放行但大聲留痕，每日稽核會抓）
 #   Lane DELETE     ：刪除分支（無內容上傳）
+#   Lane REFSPEC    ：★v5（2026-10-07 INC-236 延伸 Phase B-4）：驗 stdin 帶來的『實際』ref ——
+#                      local sha 必須 == 當前 HEAD；remote ref 必須是部署分支 clean-main；
+#                      刪除分支一律擋。與 auto_push 的 Phase A 同一組 invariant，
+#                      補上「人工 git push 繞過 auto_push」這條路徑（--dry-run 同樣觸發）。
 # 其餘一律擋下，並列出未通過的 commit 與 tree。
 #
 # 為何保留 TAG 通道：repo 內有 10 條自動化推送路徑（daily_push / update_and_deploy / evening_sync /
@@ -114,6 +118,44 @@ check_one() {
   return 1
 }
 
+# ── v5（2026-10-07 INC-236 延伸 Phase B-4）：push source / destination invariant ──
+# 為什麼：auto_push.py 的 refspec gate（Phase A）只保護「自動化推送」；人工 `git push`
+#   會繞過 auto_push、只經過本檔。本檔由 git 自 stdin 取得「實際被推的 local ref／local sha／
+#   remote ref」，驗的是實際被推的東西，不猜使用者打了什麼命令。
+#   invariant：① local sha 必須 == 當前 HEAD（不得推 stale ref／舊 sha）
+#              ② remote ref 必須是部署分支 clean-main
+#              ③ 刪除分支（local sha 全零）→ 擋（分支清理須人工裁決，不經自動閘門）
+#   註：--dry-run 同樣經過本閘門 —— 這裡驗的是 push decision，不是網路傳輸。
+DEPLOY_BRANCH=clean-main
+REFSPEC_BAD=""
+
+check_refspec() {
+  local lref="$1" lsha="$2" rref="$3"
+  local head_sha rshort
+  head_sha=$(git rev-parse HEAD 2>/dev/null || echo "")
+  case "$rref" in
+    refs/heads/*) rshort="${rref#refs/heads/}" ;;
+    *) rshort="$rref" ;;
+  esac
+  if [ "$lsha" = "$ZERO" ]; then
+    REFSPEC_BAD="$REFSPEC_BAD  - 分支刪除被擋（remote $rref）：清理分支須人工裁決，不經自動閘門\n"
+    log_lane "REFSPEC-BLOCKED-DELETE" "$rref" "-"
+    return 1
+  fi
+  if [ "$rshort" != "$DEPLOY_BRANCH" ]; then
+    REFSPEC_BAD="$REFSPEC_BAD  - destination 不是部署分支 $DEPLOY_BRANCH（remote $rref）\n"
+    log_lane "REFSPEC-BLOCKED-DEST" "$rref" "${lsha:0:12}"
+    return 1
+  fi
+  if [ -z "$head_sha" ] || [ "$lsha" != "$head_sha" ]; then
+    REFSPEC_BAD="$REFSPEC_BAD  - source 不是當前 HEAD（local $lref → ${lsha:0:12} ≠ HEAD ${head_sha:0:12}）\n"
+    log_lane "REFSPEC-BLOCKED-SRC" "$lref" "${lsha:0:12}"
+    return 1
+  fi
+  log_lane "REFSPEC-OK" "$lref" "${lsha:0:12}"
+  return 0
+}
+
 check_range() {
   local local_sha="$1" remote_sha="$2" commits c
   if [ "$remote_sha" = "$ZERO" ]; then
@@ -136,6 +178,8 @@ stdin_used=0
 while read -r local_ref local_sha remote_ref remote_sha; do
   [ -z "${local_ref:-}" ] && continue
   stdin_used=1
+  # v5：先驗 push source/destination（人工 push 也擋）——不合 invariant 者不進範圍檢查
+  check_refspec "$local_ref" "$local_sha" "$remote_ref" || continue
   if [ "$local_sha" = "$ZERO" ]; then
     log_lane "DELETE" "$remote_ref" "-"   # 刪除分支：無內容上傳
     continue
@@ -150,8 +194,8 @@ if [ "$stdin_used" = "0" ]; then
   if [ -n "$UP" ]; then check_range "$HEAD_SHA" "$UP"; else check_range "$HEAD_SHA" "$ZERO"; fi
 fi
 
-if [ -z "$BAD" ]; then
-  echo "✅ 推送閘門 v4：$CHECKED 個 commit 全數通過（紀錄見 $(basename "$LANE_LOG")）"
+if [ -z "$BAD" ] && [ -z "$REFSPEC_BAD" ]; then
+  echo "✅ 推送閘門 v5：$CHECKED 個 commit 全數通過（紀錄見 $(basename "$LANE_LOG")）"
   exit 0
 fi
 
@@ -160,7 +204,7 @@ cat <<EOF
 ╔══════════════════════════════════════════════╗
 ║  ❌ 推送被擋：有 commit 未通過審查           ║
 ╚══════════════════════════════════════════════╝
-$(printf "$BAD")
+$(printf "$BAD")$(printf "$REFSPEC_BAD")
   正確流程：
     1) 送 CIO 審查（delegate_task，指定檢查項目）
     2) CIO APPROVE 後落地紀錄：
@@ -169,7 +213,8 @@ $(printf "$BAD")
 
   ⚠️ 例外通道：[cioreviewed] / [skipreview]（自動化與緊急用，全部留痕於 $(basename "$LANE_LOG")）
 
-  ★ v4 規則：含程式檔的變更（.py .sh .bat .ps1 .cmd .toml .yml .yaml .js .ts .sql、
+  ★ v5 規則：push source 必須是當前 HEAD、destination 必須是 clean-main（本輪新擋）；
+     含程式檔的變更（.py .sh .bat .ps1 .cmd .toml .yml .yaml .js .ts .sql、
      .githooks/*、.gitattributes、.gitignore、index_template.html）不得走 [cioreviewed] 通道；
      自動化「資料/報表產出」不受影響。程式改動請送審後用 cio_approve.py 落地。
 EOF
