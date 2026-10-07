@@ -1595,7 +1595,7 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
   `pending_decisions.json`（閘門只驗 pending 清單），本輪刻意不動。
 - 相關：INC-283（同一閘門、不同觸發源）、PEND-20261005-04（10/05 只做了一半的那次正規化）。
 
-## INC-285 ｜ 2026-10-07 ｜ P1｜fixed（同日） ｜ 未推分支的程式迭代未收斂 → push gate fail-closed 擋整段，07:00 晨間產線「產出完成但未上線」
+## INC-285 ｜ 2026-10-07 ｜ P1｜CLOSED（同日，使用者裁決） ｜ 未推分支的程式迭代未收斂 → push gate fail-closed 擋整段，07:00 晨間產線「產出完成但未上線」
 - 症狀：07:00 cron 警報 `rc=1`；失敗項「線上 rebalance_dashboard_2026-10-07.html → 404」＋「線上連結驗證未過」；
   本地當日檔案齊全，且日報／差異分析／穿透在線上（該批為 05:55 前已推）。
 - 真因鏈（**不是產出故障，是治理閘門正常拒絕**）：`origin/clean-main` 停在 05:55，本地落後段 06:02–07:27 共 39 顆未推
@@ -1617,4 +1617,8 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 已知界線（P1 觀察，未施工）：推送成功但 `morning_deploy.py` 仍回報 `rc=1`（內建 post-push 驗證在 Pages rebuild 前檢查，
   首次上線的新檔名最常見）；約 8 秒後 `check_dashboard_sync --post-push` 全過。判讀：`AUTO_PUSH.log` 為 `OK` 且未推顆數 0
   時屬時序抖動，**不要重跑整條產線**。
+- 結案與分流（2026-10-07 使用者裁決）：**INC-285 CLOSED，不 reopening**。兩個殘留分開處理，不得混為一案：
+  ① post-push 時序假 404 → 🟡 觀察，不為讓 `rc=0` 改 production code（已有 8 秒後 22/22 人工實證）；
+  連續發生才另開「部署驗證時序」改善卡。② 本機 `main`／`clean-main` 雙 ref（可能「ref 選錯但 push 回 0」）→ 🟠 另案
+  （INC-236 延伸），已於 `pending_decisions.json` 開 P1 卡、**只讀盤點、禁 merge/rebase/reset**，待裁決。
 - 相關：INC-229（程式改動需同輪送審＋落地，同型）、INC-183（推送路徑未落紀錄）、INC-236（推送範圍判讀）、INC-284（假修：改資料沒改程式）。
