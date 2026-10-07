@@ -10457,7 +10457,7 @@
     }
   ],
   "meta": {
-    "updated_at": "2026-10-07T09:57:36.912396"
+    "updated_at": "2026-10-07T10:46:14.046597"
   },
   "last_updated": "2026-10-07T18:00:00+08:00",
   "2026-09-29": [
@@ -10729,6 +10729,12 @@
       "action": "「防禦資產」完整口徑重新檢查（本質判定 vs 來源/桶位判定）",
       "status": "待處理",
       "tags": "防禦資產,雙維度,口徑,保單基金,試算"
+    },
+    {
+      "date": "2026-10-07",
+      "action": "push 來源 / ref topology 收斂（INC-236 延伸）：本機 stale 分支可被誤當推送來源",
+      "status": "已完成",
+      "tags": "push,ref,clean-main,main,auto_push,INC-236,topology"
     }
   ]
 }
