@@ -11,7 +11,8 @@
              + 美元計價基金（非美股桶，B11 已歸防守/債券桶 → 只計一次）
              + 保單美元債券（保單 A/B 基金債券部位＋第一金債券部位 ＝ _meta.ins_bonds）
              + 美元定存 + 美元債券梯
-門檻 = usd_exposure_monitor.threshold（2026-09-12 裁示 50→60）。
+門檻 = thresholds.美元曝險_pct.目標（2026-10-07 裁決②：政策門檻唯一來源＝thresholds；
+       經 usd_advisory 單一入口讀取，監控區塊不再另存政策門檻）。
 
 寫入單一真值：
     snapshot.usd_exposure_monitor.current.{updated_at, 美股桶, 美元計價基金（非美股桶）,
@@ -63,7 +64,12 @@ def compute_usd_exposure(snap: dict, pen: dict = None, total: float = None) -> d
         total = _num(snap.get("total_assets"))
     mon = snap.get("usd_exposure_monitor") or {}
     prev = mon.get("current") or {}
-    thr = float(mon.get("threshold") or 60)
+    # 2026-10-07 裁決②：政策門檻唯一來源 = thresholds.美元曝險_pct（經 usd_advisory 單一入口）；
+    # 本監控區塊不再另存政策門檻，只存觀測真值與狀態。
+    from usd_advisory import cap as _usd_cap, status_text as _usd_status, tier as _usd_tier
+    thr = _usd_cap(snap)
+    if thr is None:
+        thr = 60.0   # 缺政策真值時僅作顯示 fallback，不寫回任何政策欄位
 
     us_bucket = float(pen.get("美股市值型成長") or 0)
     usd_funds = _usd_fund_value(snap)
@@ -86,14 +92,10 @@ def compute_usd_exposure(snap: dict, pen: dict = None, total: float = None) -> d
     out["合計"] = total_pct
     out["_twd_amounts"] = {"美股桶": us_bucket, "美元計價基金": usd_funds, "保單美元債券": ins_bonds,
                            "美元定存": usd_td, "美元債券梯": usd_ladder, "分母_總資產": total}
-    if total_pct >= thr:
-        out["狀態"] = (f"🟡 {total_pct}% ≥ 門檻 {thr:.0f}%（僅顯示：不觸發資產調整；"
-                      f"政策門檻待 10 月戰略檢討）")
-    elif total_pct >= thr - 5:
-        out["狀態"] = f"🟡 接近上限 {total_pct}% ≤ {thr:.0f}%（緩衝 {round(thr - total_pct, 1)}pp）"
-    else:
-        out["狀態"] = f"🟢 {total_pct}% < {thr:.0f}%"
-    out["門檻"] = thr
+    # 2026-10-07 裁決③：命名＝目標值／黃色觀察／高曝險觀察線；狀態字串由 usd_advisory 單一入口產生
+    out["狀態"] = _usd_status(snap, total_pct)
+    out["等級"] = _usd_tier(snap, total_pct)
+    out["目標值"] = thr
     # 2026-10-07 使用者裁決（只顯示、不觸發）：美元曝險自動化＝真值回歸，不是重新制定資產政策。
     # 68~70% 為新觀測結果，但 60/65/70 三級門檻與 2026-09-12「放寬到 60」的政策存在衝突 →
     # 不得讓程式把政策衝突直接轉成資產操作。故一律標記 advisory_only，門檻與口徑本輪均不動。
@@ -116,7 +118,8 @@ def sync_usd_exposure(snap: dict, pen: dict = None, total: float = None, verbose
         "美元定存": cur["美元定存"],
         "美元債券梯": cur["美元債券梯"],
         "合計": cur["合計"],
-        "門檻": cur["門檻"],
+        "目標值": cur["目標值"],
+        "等級": cur["等級"],
         "狀態": cur["狀態"],
         "口徑": "引擎自動產生（usd_exposure_sync.py；build_penetration_report 每日呼叫）— 2026-10-07 起廢除手動維護",
         "金額明細": cur["_twd_amounts"],
@@ -131,7 +134,7 @@ def sync_usd_exposure(snap: dict, pen: dict = None, total: float = None, verbose
     if verbose:
         print("  美元曝險 " + "＋".join(f"{k} {v}%" for k, v in new.items()
               if k in ("美股桶", "美元計價基金（非美股桶）", "保單美元債券", "美元定存", "美元債券梯"))
-              + f" = {new['合計']}%（門檻 {new['門檻']:.0f}%）")
+              + f" = {new['合計']}%（目標值 {new['目標值']:.0f}%）")
     return new
 
 

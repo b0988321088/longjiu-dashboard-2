@@ -669,6 +669,10 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "cio_approve.py",   # 治理工具（--status 比較基準修正，2026-09-28）
            "buffett_cto_analyzer.py",   # 2026-10-02：現金底線字面改 cash_floor_label() 現讀（口徑殘留清理）
            "debt_restructure_tracker.py",   # 2026-10-02：移除已作廢的 1,200,000 合計底線退路
+           # 2026-10-07 政策一致性修正 ①②③（使用者核准：健康度中性／門檻單一來源／觀測線命名）
+           "usd_advisory.py", "usd_exposure_sync.py",   # 政策門檻唯一入口（policy/cap/tier）＋監控區塊只留真值
+           "market_indicator_panel.py", "risk_factor_penetration.py",
+           "build_audit_dashboard.py", "institutional_flow.py",
            }
 # 逐日產物：命名比對，跨月不失效（舊版 allowed_prefixes 釘死 2026-09）
 _DAILY = re.compile(r"^(asset_diff|retirement_plan|daily_report_v2|rebalance_dashboard|"

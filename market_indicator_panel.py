@@ -11,6 +11,8 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 import macro_regime  # 同目錄
+from usd_advisory import cap as _usd_cap_fn, tier as _usd_tier, tier_limit_text as _usd_tier_text  # noqa: E402
+# 2026-10-07 裁決②③：政策門檻唯一來源（usd_advisory ← thresholds.美元曝險_pct）＋觀測線命名
 
 
 def _score_light(v: float | None) -> str:
@@ -55,12 +57,15 @@ def build_panel(snap: dict | None = None) -> str:
     # 美元曝險（2026-09-12：上限改讀 snapshot.usd_exposure_monitor.threshold = 60，原寫死 50/55）
     usd = (s.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {}
     usd_pct = usd.get("合計", 0)
-    _usd_cap = float((s.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)
-    # 2026-10-07 裁決：美元曝險只顯示、不觸發（advisory_only）→ 不標紅線、加政策提示
+    # 2026-10-07 裁決②：政策門檻單一來源（usd_advisory.policy ← thresholds.美元曝險_pct）
+    _usd_cap = float(_usd_cap_fn(s) or 60)
+    # 2026-10-07 裁決①③：美元曝險只顯示、不觸發（advisory_only）→ 不標紅線，改用觀測線命名
     _usd_adv = bool((s.get("usd_exposure_monitor", {}) or {}).get("advisory_only"))
-    if _usd_adv and usd_pct > _usd_cap:
-        usd_light = "🟡"
-        _usd_txt = f"{usd_pct:.1f}% 🟡 僅顯示（門檻 {_usd_cap:.0f}%；政策門檻待 10 月戰略檢討）"
+    if _usd_adv:
+        _usd_t = _usd_tier(s, usd_pct)
+        usd_light = {"高曝險觀察線": "🟡", "黃色觀察": "🟡", "目標值內": "🟢"}.get(_usd_t, "⚪")
+        _usd_txt = (f"{usd_pct:.1f}% {usd_light} {_usd_t}"
+                    f"（{_usd_tier_text(s)}；僅顯示，不觸發資產調整）")
     else:
         usd_light = "🔴" if usd_pct > _usd_cap else ("🟡" if usd_pct > _usd_cap - 5 else "🟢")
         _usd_txt = f"{usd_pct:.1f}% {usd_light}（上限 {_usd_cap:.0f}%）"

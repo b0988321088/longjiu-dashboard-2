@@ -169,6 +169,8 @@ def main():
             _dry2 = _cw3["dry"] \
                 or snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
             _usd2 = snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
+            from usd_advisory import cap as _usd_cap_fn   # 2026-10-07 裁決②：政策門檻單一來源
+            _usd_cap2 = float(_usd_cap_fn(snap) or 60)
             # 2026-09-13：本週計劃改讀 radar_state.weekly_plan.rows（單一來源＝institutional_flow 產出）
             # 原為 7 行貼死文字（含「9/11簽約」「Fed 9/11 CPI / 9/16 FOMC」等過期日期）
             _plan = [f"{r.get('動作','')} {r.get('類別','')}：{r.get('內容','')}"
@@ -177,12 +179,13 @@ def main():
             _plan.append(f"💰 乾粉 {_dry2/10000:.1f}萬（現金 {_cw3['cash']:,.0f} − 現金底線 {_cw3['life']:,.0f} 守 "
                          + ("🟢 達標" if _cw3['life_ok'] else f"🔴 未達標（缺 {_cw3['life'] - _cw3['cash']:,.0f}）") + "）")
             if snap.get("usd_exposure_monitor", {}).get("advisory_only"):
-                # 2026-10-07 裁決：美元曝險僅顯示、不觸發資產動作（原字面「→ 美股減碼」已移除）
-                _plan.append(f"🟡 美元曝險 {_usd2}%（門檻 60）→ 僅顯示，不觸發美股減碼；政策門檻待 10 月戰略檢討")
-            elif _usd2 > 55:
-                _plan.append(f"🔴 美元曝險 {_usd2}% 超標（目標≤60%）→ 美股減碼")
+                # 2026-10-07 裁決①③：美元曝險僅顯示、不觸發＋觀測線命名（門檻讀單一來源）
+                from usd_advisory import tier_limit_text as _usd_tl
+                _plan.append(f"🟡 美元曝險 {_usd2}%（{_usd_tl(snap)}）→ 僅顯示，不觸發美股減碼；政策門檻待 10 月戰略檢討")
+            elif _usd2 > _usd_cap2:
+                _plan.append(f"🔴 美元曝險 {_usd2}% 超標（目標值 ≤{_usd_cap2:.0f}%）→ 美股減碼")
             else:
-                _plan.append(f"🟡 美元曝險 {_usd2}%（目標≤60%）→ 續觀察")
+                _plan.append(f"🟡 美元曝險 {_usd2}%（目標值 ≤{_usd_cap2:.0f}%）→ 續觀察")
             if not _plan:
                 _plan = ["待雷達更新"]
             rep["__RADAR_DATE__"] = _rd.get("last_run", "2026-08-29")[:10]

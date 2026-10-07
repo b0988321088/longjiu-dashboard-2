@@ -735,13 +735,15 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                     _usd_c = ((_snap_c.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {})
                     # 2026-10-07 裁決：美元曝險只顯示不觸發 → LLM 脈絡一併標注，避免模型自行推論成減碼指令
                     _usd_adv_c = bool((_snap_c.get("usd_exposure_monitor") or {}).get("advisory_only"))
-                    from usd_advisory import prompt_block as _usd_pb
+                    from usd_advisory import prompt_block as _usd_pb, cap as _usd_cap_fn
                     _cio_usd_pb = _usd_pb(_snap_c)
-                    _cio_ictx = (f"產業：{_top4}｜資金流向：{_sf_c.get('台股總結','—')}；{_sf_c.get('美股總結','—')}｜"
-                                 f"輪動建議：{_rot_c or '—'}｜風險因子：美元曝險 {_usd_c.get('合計','—')}%"
+                    # 2026-10-07 裁決①：advisory → 連數字都不進 LLM 脈絡（與 prompt_block 一致）
+                    _usd_ictx = ("" if _usd_adv_c else
+                                 f"｜風險因子：美元曝險 {_usd_c.get('合計','—')}%"
                                  f"（美股桶 {_usd_c.get('美股桶','—')}%＋美元計價基金 {_usd_c.get('美元計價基金（非美股桶）','—')}%"
-                                 f"＋保單美元債 {_usd_c.get('保單美元債券','—')}%，目標 ≤{_snap_c.get('usd_exposure_monitor', {}).get('threshold', 60)}%"
-                                 + ("；🟡 僅顯示、不觸發資產調整，政策門檻待 10 月戰略檢討）" if _usd_adv_c else "）"))
+                                 f"＋保單美元債 {_usd_c.get('保單美元債券','—')}%，目標值 ≤{(_usd_cap_fn(_snap_c) or 60):.0f}%）")
+                    _cio_ictx = (f"產業：{_top4}｜資金流向：{_sf_c.get('台股總結','—')}；{_sf_c.get('美股總結','—')}｜"
+                                 f"輪動建議：{_rot_c or '—'}" + _usd_ictx)
                 except Exception:
                     pass
                 # 2026-09-13 INC-168：雷達燈號原寫死「台股🟢/黃金🟢/原油🔴/美債10Y🟡」→ 改讀 radar_state.signals
@@ -2183,11 +2185,16 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 # 2026-09-13：口徑統一 = usd_exposure_monitor.current.合計（與儀表板/穿透圖同源；原用美股桶會與儀表板不一致）
                 _mon = (_snap_now.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {}
                 _usd_ex = float(_mon.get("合計") or tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0))
-                # 2026-09-12：上限改讀 snapshot（裁示②：50%→60%），原寫死 50/55 會誤標紅燈
-                _usd_cap = float((_snap_now.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)
-                _philosophy_items.append(
-                    f"美元曝險 {_usd_ex:.1f}%（≤{_usd_cap:.0f}% "
-                    f"{'✅' if _usd_ex <= _usd_cap else '🟡' if _usd_ex <= _usd_cap + 5 else '🔴'}）")
+                # 2026-10-07 裁決①③：美元曝險已裁定「僅顯示、不觸發」→ 哲學檢核不得再標紅燈
+                from usd_advisory import cap as _usd_cap_fn, is_advisory as _usd_is_adv, tier as _usd_tier
+                _usd_cap = float(_usd_cap_fn(_snap_now) or 60)   # 政策門檻單一來源（thresholds.美元曝險_pct）
+                if _usd_is_adv(_snap_now):
+                    _philosophy_items.append(
+                        f"美元曝險 {_usd_ex:.1f}%（🟡 {_usd_tier(_snap_now, _usd_ex)}；僅顯示，不觸發資產調整）")
+                else:
+                    _philosophy_items.append(
+                        f"美元曝險 {_usd_ex:.1f}%（≤{_usd_cap:.0f}% "
+                        f"{'✅' if _usd_ex <= _usd_cap else '🟡' if _usd_ex <= _usd_cap + 5 else '🔴'}）")
                 # 2026-09-29 CIO major：投資哲學檢核的現金底線必須看可動用（原 cash_total → fail-open）
                 from sot_targets import available_cash as _ac_fn
                 _cash_all = float(_snap_now.get("cash_total") or 0)

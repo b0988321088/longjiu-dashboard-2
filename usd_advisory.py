@@ -34,6 +34,76 @@ def label(snap) -> str:
     return "🟡 僅顯示 門檻 " if is_advisory(snap) else "紅線"
 
 
+# ── 裁決②③（2026-10-07）：政策門檻唯一來源 ＋ 觀測線命名 ──────────────────────
+# 2026-10-07 使用者裁決②：usd_exposure_monitor 不再另存一份政策門檻（避免「兩處
+# 改一處」的漂移），唯一來源 = snapshot.thresholds.美元曝險_pct。
+# 2026-10-07 使用者裁決③：命名改為 60＝目標值、65＝黃色觀察、70＝高曝險觀察線、
+# >70 ＝ 僅顯示（70 已非 action trigger，故不再叫「紅線」）。
+# 本節是「政策門檻」的唯一讀取入口，其他模組一律呼叫這裡，不得各自讀 snapshot。
+def policy(snap) -> dict:
+    """回 {'目標','黃','紅','來源'}（％）。唯一來源＝thresholds_2026_0915.美元曝險_pct。"""
+    _all = (snap or {})
+    t = ((_all.get("thresholds_2026_0915") or _all.get("thresholds") or {})
+         .get("美元曝險_pct") or {})
+    out = {}
+    for k in ("目標", "黃", "紅"):
+        v = t.get(k)
+        out[k] = float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+    if out["目標"] is None:
+        # 回溯相容：舊 snapshot 只在 usd_exposure_monitor.threshold 存門檻（2026-10-07 已移除）
+        v = _mon(snap).get("threshold")
+        out["目標"] = float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+    out["來源"] = "snapshot.thresholds_2026_0915.美元曝險_pct"
+    return out
+
+
+def cap(snap):
+    """目標值（％）；缺真值回 None（呼叫端自行決定是否以顯示用 fallback 頂替）。"""
+    return policy(snap).get("目標")
+
+
+def tier_limit_text(snap) -> str:
+    """顯示用門檻字樣：目標值 60%／黃色觀察 65%／高曝險觀察線 70%。"""
+    p = policy(snap)
+
+    def _f(k):
+        v = p.get(k)
+        return "{:.0f}".format(v) if isinstance(v, (int, float)) else "—"
+
+    return ("目標值 {}%／黃色觀察 {}%／高曝險觀察線 {}%"
+            .format(_f("目標"), _f("黃"), _f("紅")))
+
+
+def tier(snap, val) -> str:
+    """觀測等級字樣（不含動作語意）：高曝險觀察線／黃色觀察／目標值內／無真值。"""
+    p = policy(snap)
+    if not isinstance(val, (int, float)) or isinstance(val, bool):
+        return "無真值"
+    r, y = p.get("紅"), p.get("黃")
+    if isinstance(r, (int, float)) and val >= r:
+        return "高曝險觀察線"
+    if isinstance(y, (int, float)) and val >= y:
+        return "黃色觀察"
+    return "目標值內"
+
+
+def status_text(snap, val) -> str:
+    """監控狀態字串（裁決③命名）：只描述事實，不含任何處置語意。"""
+    p = policy(snap)
+    _t = tier(snap, val)
+    _tail = "（僅顯示：不觸發資產調整；政策門檻待 10 月戰略檢討）"
+    _g, _y, _r = p.get("目標"), p.get("黃"), p.get("紅")
+    if _t == "無真值":
+        return "⚠️ 無真值" + _tail
+    if _t == "高曝險觀察線":
+        return "🟡 {}% ≥ 高曝險觀察線 {:.0f}%{}".format(val, _r, _tail)
+    if _t == "黃色觀察":
+        return "🟡 {}% 位於黃色觀察區 {:.0f}~{:.0f}%{}".format(val, _y, _r, _tail)
+    if isinstance(_g, (int, float)) and val >= _g:
+        return "🟢 {}% ≥ 目標值 {:.0f}%（未進觀察區）{}".format(val, _g, _tail)
+    return "🟢 {}% < 目標值 {}%{}".format(val, "{:.0f}".format(_g) if isinstance(_g, (int, float)) else "—", _tail)
+
+
 def prompt_block(snap) -> str:
     """LLM prompt 專用硬性約束段。非 advisory 時回空字串（不改變既有 prompt）。
 
@@ -352,10 +422,15 @@ def _canon_pct_allowed(snap) -> set:
             vals.add(round(float(v), 1))
 
     m = snap.get("usd_exposure_monitor")
+    # 2026-10-07 裁決②：政策門檻唯一來源（thresholds_2026_0915.美元曝險_pct）優先納入真值集合
+    _pt = ((snap.get("thresholds_2026_0915") or snap.get("thresholds") or {})
+           .get("美元曝險_pct") or {})
+    for k in ("目標", "黃", "紅"):
+        _add(_pt.get(k))
     if isinstance(m, dict):
         cur = m.get("current")
         if isinstance(cur, dict):
-            for k in ("合計", "門檻", "現值", "current", "threshold"):
+            for k in ("合計", "目標值", "門檻", "現值", "current", "threshold"):
                 _add(cur.get(k))
         for k in ("threshold", "current_pct", "threshold_pct", "target_pct"):
             _add(m.get(k))
@@ -381,8 +456,11 @@ def _canon_threshold(snap):
     if not isinstance(m, dict):
         return None
     cands = []
+    # 2026-10-07 裁決②：政策門檻唯一來源 = thresholds.美元曝險_pct.目標（優先）
+    cands.append(cap(snap))
     cur = m.get("current")
     if isinstance(cur, dict):
+        cands.append(cur.get("目標值"))
         cands.append(cur.get("門檻"))
     cands.append(m.get("threshold"))
     for v in cands:

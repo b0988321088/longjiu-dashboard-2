@@ -42,6 +42,8 @@ hs = s.get("hedge_satellite", {}); dcm = s.get("defensive_combined_metric", {})
 # INC-201 單一入口：防守合併口徑（金額由「組成」加總派生、門檻取自 snapshot.thresholds_2026_0915）
 # 2026-09-22 審查修正：原本門檻 60 在本檔與週報 prompt 各寫一份 → 正是要消滅的漂移模式，改讀單一來源。
 from sot_targets import defensive_caliber as _defensive_caliber
+from usd_advisory import cap as _usd_cap_fn, tier as _usd_tier, tier_limit_text as _usd_tier_text  # noqa: E402
+# 2026-10-07 裁決②③：政策門檻唯一來源（usd_advisory ← thresholds.美元曝險_pct）＋觀測線命名
 _dcx = _defensive_caliber(s)
 DC_PCT = _dcx.get("佔比", 0)
 DC_THR = _dcx.get("門檻")
@@ -90,12 +92,19 @@ cash_ok = "✅" if CASH_AVAIL >= FLOOR else "🔴"  # 2026-10-04 P0延伸：底�
 # 與 snapshot.usd_exposure_monitor（9/14 定案 engine 口徑 59.0%、門檻已放寬 60%）脫節 →
 # 一律讀 snapshot，門檻/緩衝/判定全部現算。
 _usd_m = s.get("usd_exposure_monitor", {}) or {}
-usd_thr = float(_usd_m.get("threshold") or 60)
+usd_thr = float(_usd_cap_fn(s) or 60)  # 2026-10-07 裁決②：政策門檻單一來源（usd_advisory ← thresholds）
 usd_exp = float((_usd_m.get("current") or {}).get("合計") or 0)
 usd_gap = round(usd_exp - usd_thr, 1)
-usd_col = "#22c55e" if usd_exp <= usd_thr else "#ef4444"
-usd_verdict = (f"🟢 未觸線（緩衝 {abs(usd_gap):.1f}pp）" if usd_exp <= usd_thr
-               else f"🔴 超 {usd_gap:.1f}pp（靠台幣側壓回）")
+# 2026-10-07 裁決①③：advisory（僅顯示、不觸發）→ 改用觀測線命名、不標紅、不產生處置指令
+_usd_adv = bool(_usd_m.get("advisory_only"))
+_usd_limit_txt = (f"{_usd_tier_text(s)}（僅顯示）" if _usd_adv else f"紅線 {usd_thr:.0f}%")
+_usd_action_txt = ("→ 🟡 僅顯示，不觸發台幣加碼／MMF 轉配置處置" if _usd_adv
+                   else "→ 選台幣計價避險標的不推高；MMF 轉配置優先累積型")
+usd_col = ("#6e6e73" if _usd_adv
+           else ("#22c55e" if usd_exp <= usd_thr else "#ef4444"))
+usd_verdict = (f"🟡 {_usd_tier(s, usd_exp)}（僅顯示；政策門檻待 10 月戰略檢討）" if _usd_adv
+               else (f"🟢 未觸線（緩衝 {abs(usd_gap):.1f}pp）" if usd_exp <= usd_thr
+                     else f"🔴 超 {usd_gap:.1f}pp（靠台幣側壓回）"))
 # Moneybook 真值日期（原寫死 8/21）與下次審計日（原寫死 2026-08-28）
 _mbd = str(s.get("moneybook_date") or "")[:8]
 mb_txt = (f"{int(_mbd[4:6])}/{int(_mbd[6:8])}"
@@ -252,7 +261,7 @@ rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W
 <tr style="color:#6e6e73"><th style="text-align:left;padding:5px 10px">情境</th><th style="text-align:right;padding:5px 10px">防禦最低</th><th style="text-align:right;padding:5px 10px">收入最低</th><th style="text-align:right;padding:5px 10px">LTV上限</th><th style="text-align:left;padding:5px 10px">核心策略</th></tr>
 <tr><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>多頭穩定</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥40%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥60%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤55%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>追求資本利得</td></tr><tr style="background:#eef2ff;font-weight:700"><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>區間震盪（當前）</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥50%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥65%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤52%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>穩定擔保、控風險</td></tr><tr><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>股債雙殺/升息</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥55%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥70%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤50%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>保守、增債保現金</td></tr><tr><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb'>熊市大跌</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥60%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≥70%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='text-align:right'>≤48%</td><td style='padding:5px 10px;border-bottom:1px solid #e5e7eb' style='font-size:11.5px'>全防守、降槓桿</td></tr><tr style="background:#f0f9ff"><td colspan="5" style="padding:6px 10px;font-size:12px">{"✅" if _all_ok else "⚠️"} 現況驗證（{_sc_cur}標準）：防禦 <b>{_def_pct}%</b> ≥{_sc.get("防禦最低",0)}% {"✅" if _def_ok else "❌"} ｜ 收入 <b>{_inc_pct}%</b> ≥{_sc.get("收入最低",0)}% {"✅" if _inc_ok else "❌"} ｜ LTV <b>{_ltv_v}%</b> ≤{_sc.get("LTV上限",0)}% {"✅" if _ltv_ok else "❌"} → 防禦/收入＝dual_dimension_metric 定稿公式派生（不含未建倉部位調整）</td></tr>
 </table></div>
-美元曝險 <b style="color:{usd_col}">{usd_exp:.1f}%</b>（紅線 {usd_thr:.0f}%）→ 選台幣計價避險標的不推高；MMF 轉配置優先累積型</div>
+美元曝險 <b style="color:{usd_col}">{usd_exp:.1f}%</b>（{_usd_limit_txt}）{_usd_action_txt}</div>
 </div></div>
 
 <div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:14px">
@@ -263,7 +272,7 @@ rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W
 <tr><td {W(0)}>40,500 停碼</td><td {W(0)}>未觸發</td><td {W(0)}>✅</td></tr>
 <tr><td {W(0)}>現金底線 70萬</td><td {W(0)}>可動用 {CASH_AVAIL:,}（真值 {CASH:,}）</td><td {W(0)}>{cash_ok}</td></tr>
 <tr><td {W(0)}>單次加碼 ≤20萬（核貸期 5萬）</td><td {W(0)}>紀律維持（累積型原則生效）</td><td {W(0)}>✅</td></tr>
-<tr><td {W(0)}>美元曝險 ≤{usd_thr:.0f}%</td><td {W(0)}>{usd_exp:.1f}%</td><td {W(0)}>{usd_verdict}</td></tr>
+<tr><td {W(0)}>美元曝險（{_usd_limit_txt}）</td><td {W(0)}>{usd_exp:.1f}%</td><td {W(0)}>{usd_verdict}</td></tr>
 </table></div>
 
 <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">

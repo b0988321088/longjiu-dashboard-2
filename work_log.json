@@ -2086,5 +2086,11 @@
   "category": "完成",
   "item": "薪資三層定義定版（MB 事實／salary_records 實收／monthly_salary 常態假設）（使用者 2026-10-06 定版：①Moneybook 台電薪資匯款＝薪資發生多少的唯一真值 ②salary_records＝MB 真值的結構化紀錄／快取 ③monthly_salary=42,560＝常態模型假設、非薪資真值。自動來源卡方向鎖定＝M",
   "detail": "使用者 2026-10-06 定版：①Moneybook 台電薪資匯款＝薪資發生多少的唯一真值 ②salary_records＝MB 真值的結構化紀錄／快取 ③monthly_salary=42,560＝常態模型假設、非薪資真值。自動來源卡"
+ },
+ {
+  "date": "2026-10-07",
+  "category": "完成",
+  "item": "美元曝險政策一致性修正 ①②③（使用者核准）：①健康度移出美元曝險計分（20% 權重併入防禦45）②政策門檻單一來源＝thresholds_2026_0915.美元曝險_pct（usd_advisory 唯一入口；移除 monitor.threshold/target_split）③命名改 目標值60／黃色觀察65／高曝險觀察線70、>70 僅顯示。真值未動（70.5%／美股桶 37.5%／27–33%／US30Y 煞車）",
+  "detail": "使用者 2026-10-07 裁決 ①②③ 全部核准施工、不做成新的美元曝險策略卡。落地：usd_advisory.py 新增 policy/cap/tier/status_text（政策門檻唯一讀取入口）、usd_exposure_sync.py 監控區塊只存觀測真值與狀態、report_components.render_health_score 曝險維度不計分、sot_targets.triggers 美元曝險觸發=False 且門檻字樣改觀測線、market_indicator_panel／risk_factor_penetration／build_audit_dashboard／institutional_flow／build_dashboard／build_rebalance_dashboard／run_daily（含三段 LLM prompt 不餵美元數字）全部改走單一入口；順帶修正再平衡儀表板原讀 top-level usd_exposure_pct（空值）→改讀 current.合計。驗證：本機重產 18/18 步 rc=0（sync_all 第4步卡既有 P1-P2 故改逐支同步順序）、static_gate PASS、check_usd_advisory PASS、日報口徑閘門 PASS、跨報告一致性 PASS（1 條既有非阻擋警告）、check_dividend_caliber 73/77（4 條為既有 cash_layers.available 白名單殘留）、check_dashboard_stale PASS、index 結構 PASS。⚠️ 本批**刻意未修改 emergency／historical frozen blocks**（日報④波動／上限＝10/06 緊急應變凍結文字『美元曝險 59.0%』、日報緊急應變 8/22 期『64.1% 超 50% 紅線』、『② PI 後 加碼壓回<60%』）——經使用者裁示不擴大本批 scope，另開 PEND-20261007-01 ＋ INC-288 獨立處理。本機 commit、未 push。"
  }
 ]

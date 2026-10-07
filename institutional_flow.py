@@ -24,6 +24,9 @@ from datetime import datetime, date, timedelta
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent   # 2026-09-29 CIO minor：禁硬編碼路徑（沙盒/隔離樹會被導回正式倉庫）
+from usd_advisory import is_advisory as _usd_is_advisory, cap as _usd_cap_fn  # noqa: E402
+from usd_advisory import tier as _usd_tier, tier_limit_text as _usd_tier_text  # noqa: E402
+# 2026-10-07 裁決①~③：美元曝險 advisory（只顯示、不觸發）＋政策門檻單一來源＋觀測線命名
 SSL_CTX = ssl.create_default_context()
 try:
     SSL_CTX = ssl._create_unverified_context()  # CFTC 舊證書相容
@@ -647,14 +650,16 @@ def main():
             lines.append("⏸️ 避險衛星：黃金A10 32萬 8/30 生效（保單內）；00635U ~105萬 延後（華許放鷹+金價偏高）→ 等回檔")
         else:
             lines.append(f"🟢 避險衛星：黃金現況 {_hs.get('黃金現況',0):,} → PI 後 00635U 分批 ≤20萬/次")
-        # ⑦ 美元曝險
-        _usd_cfg = _snap.get("usd_exposure_monitor", {}) or {}
-        _usd_raw = _usd_cfg.get("target") or _usd_cfg.get("threshold") or 60
-        _usd_t = _usd_raw if not isinstance(_usd_raw, dict) else _usd_raw.get("合計", 60)
-        if _usd > float(_usd_t):
-            lines.append(f"🔴 美元曝險 {_usd}% 超標（目標 ≤{_usd_t}%）→ 美股減碼/美元定存到期轉台幣")
+        # ⑦ 美元曝險（2026-10-07 裁決①~③：只顯示、不觸發；政策門檻單一來源；觀測線命名）
+        _usd_mon = _snap.get("usd_exposure_monitor", {}) or {}
+        _usd_val = (_usd_mon.get("current") or {}).get("合計")
+        if _usd_is_advisory(_snap):
+            lines.append(f"🟡 美元曝險 {_usd_val}%（{_usd_tier(_snap, _usd_val)}；{_usd_tier_text(_snap)}）"
+                         f"→ 僅顯示，不觸發換匯／減碼（政策門檻待 10 月戰略檢討）")
+        elif _usd_val is not None and float(_usd_val) > float(_usd_cap_fn(_snap) or 60):
+            lines.append(f"🔴 美元曝險 {_usd_val}% 超標（目標值 ≤{_usd_cap_fn(_snap):.0f}%）→ 美股減碼/美元定存到期轉台幣")
         else:
-            lines.append(f"🟡 美元曝險 {_usd}%（目標 ≤{_usd_t}%）→ 未達減碼閾值，續觀察")
+            lines.append(f"🟡 美元曝險 {_usd_val}%（目標值 ≤{float(_usd_cap_fn(_snap) or 60):.0f}%）→ 未達減碼閾值，續觀察")
         # ⑧ 保單轉換（9/10 安聯＋第一金同步轉入 M&G入息）
         lines.append("✅ 保單轉換 9/10 送出（安聯＋第一金同步轉入 M&G入息A美元避險月配，T+4 預期 9/16 生效）；9/1 安聯 PIMCO+50萬、貝萊德科技A10 90萬→摩根 已完成")
         # ⑨ 負債/質押

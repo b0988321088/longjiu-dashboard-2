@@ -26,6 +26,8 @@ for f in ["Microsoft YaHei", "Microsoft JhengHei", "Noto Sans CJK TC"]:
 plt.rcParams["axes.unicode_minus"] = False
 
 BASE = Path(r"C:\Users\bot\Desktop\longjiu_system")
+from usd_advisory import cap as _usd_cap_fn, tier as _usd_tier, tier_limit_text as _usd_tier_text  # noqa: E402
+# 2026-10-07 裁決②③：政策門檻唯一來源（usd_advisory ← thresholds.美元曝險_pct）＋觀測線命名
 TODAY = date.today().isoformat()
 
 def load(p):
@@ -48,7 +50,8 @@ def build_chart():
     # 美元曝險（2026-09-13：單一真值來源 = snapshot.usd_exposure_monitor.current.合計；紅線讀 threshold = 60）
     _usd_m = (s.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {}
     usd_pct = float(_usd_m.get("合計") or s.get("usd_exposure_pct", 0) or 0)
-    _usd_cap = float((s.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)
+    # 2026-10-07 裁決②：政策門檻單一來源（usd_advisory.policy ← thresholds.美元曝險_pct）
+    _usd_cap = float(_usd_cap_fn(s) or 60)
     usd_twd = total * usd_pct / 100
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 10), dpi=130)
@@ -73,15 +76,18 @@ def build_chart():
     ax.pie([usd_pct, 100 - usd_pct], labels=["美元", "台幣"], autopct="%.0f%%",
            colors=["#ef4444", "#22c55e"], startangle=90,
            explode=(0.04, 0))
-    # 2026-10-07 裁決：美元曝險只顯示、不觸發（advisory_only）→ 標題與結論文字不得再寫成紅線指令
+    # 2026-10-07 裁決①③：美元曝險只顯示、不觸發（advisory_only）→ 標題與結論文字不得再寫成紅線指令
     _usd_adv = bool((s.get("usd_exposure_monitor", {}) or {}).get("advisory_only"))
-    _cap_word = "僅顯示 門檻" if _usd_adv else "紅線"
-    ax.set_title(f"幣別曝險（美元 {usd_twd/1e4:.0f}萬）｜{_cap_word} {_usd_cap:.0f}%", fontsize=13, fontweight="bold")
+    _usd_title_limit = _usd_tier_text(s) if _usd_adv else f"紅線 {_usd_cap:.0f}%"
+    ax.set_title(f"幣別曝險（美元 {usd_twd/1e4:.0f}萬）｜{_usd_title_limit}", fontsize=13, fontweight="bold")
     _gap = usd_pct - _usd_cap
-    _gap_txt = ((f"🟡 僅顯示：超門檻 {_gap:.1f}pp，不觸發資產調整（政策門檻待 10 月戰略檢討）" if _usd_adv
-                 else f"⚠️ 超紅線 {_gap:.1f}pp — 新增資金一律台幣") if _gap > 0
-                else f"✅ 未超線（餘裕 {-_gap:.1f}pp）— 仍以台幣新生資金為主")
-    ax.text(0, -1.35, _gap_txt, ha="center", fontsize=11, color=("#dc2626" if _gap > 0 else "#16a34a"))
+    if _usd_adv:
+        _gap_txt = f"🟡 僅顯示：{_usd_tier(s, usd_pct)}（距目標值 {_gap:+.1f}pp），不觸發資產調整"
+    elif _gap > 0:
+        _gap_txt = f"⚠️ 超紅線 {_gap:.1f}pp — 新增資金一律台幣"
+    else:
+        _gap_txt = f"✅ 未超線（餘裕 {-_gap:.1f}pp）— 仍以台幣新生資金為主"
+    ax.text(0, -1.35, _gap_txt, ha="center", fontsize=11, color=("#dc2626" if (_gap > 0 and not _usd_adv) else "#16a34a"))
 
     # Panel 3: 底層因子集中度（2026-09-13：改由 snapshot 現算，不再寫死 8/22 值）
     ax = axes[1][0]
@@ -109,7 +115,7 @@ def build_chart():
     _cash_b = apct.get("現金/安全網", 0)
     _inc_dim = ((s.get("dual_dimension_metric", {}) or {}).get("收入維度", {}) or {}).get("佔比", 0)
     risks = [
-        f"[{'🟡 僅顯示' if (_usd_adv and usd_pct > _usd_cap) else ('🔴' if usd_pct > _usd_cap else '✅')}] 美元曝險 {usd_pct:.1f}%（{'門檻' if _usd_adv else '紅線'} {_usd_cap:.0f}%，台幣40/美金60）— 台幣升5%資產縮水",
+        f"[{'🟡 僅顯示' if (_usd_adv and usd_pct >= _usd_cap) else ('🔴' if usd_pct > _usd_cap else '✅')}] 美元曝險 {usd_pct:.1f}%（{(_usd_tier(s, usd_pct) + '／' + _usd_tier_text(s)) if _usd_adv else ('高曝險觀察線 ' + format(_usd_cap, '.0f') + '%')}）— 台幣升5%資產縮水",
         f"[{'🔴' if apct.get('美股市值型成長',0) > 60 else '🟡'}] 美股相關 {apct.get('美股市值型成長',0):.1f}% — 平衡基金底層重疊",
         f"[{'🟡' if _tech <= _tech_cap else '🔴'}] 科技 {_tech:.1f}%（目標 ≤{_tech_cap:.0f}%）",
         f"[{'🟡' if _tw < _tw_tgt else '✅'}] 台股 {_tw:.1f}%（目標 {_tw_tgt:.0f}%）— 慢慢買補缺口",

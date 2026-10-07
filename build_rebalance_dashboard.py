@@ -12,6 +12,8 @@ import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（�
 from datetime import date
 from pathlib import Path
 from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
+from usd_advisory import cap as _usd_cap_fn, tier as _usd_tier, tier_limit_text as _usd_tier_text  # noqa: E402
+# 2026-10-07 裁決②③：政策門檻唯一來源（usd_advisory ← thresholds.美元曝險_pct）＋觀測線命名
 
 BASE = Path(__file__).parent.resolve()
 TODAY = date.today().isoformat()
@@ -233,11 +235,11 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     for name, val, limit, triggered in [
         ("US30Y", f"{us30y:.2f}%" if us30y else "—", "≥5.30%", us30y and us30y >= 5.30),
         ("美元曝險", f"{usd_pct:.0f}%",
-         ("僅顯示（政策門檻待 10 月戰略檢討）" if _usd_adv else "紅線 60%"),
-         (False if _usd_adv else usd_pct > 60)),
+         (f"{_usd_tier_text(s)}（僅顯示）" if _usd_adv else f"紅線 {_usd_cap_fn(s):.0f}%"),
+         (False if _usd_adv else usd_pct > float(_usd_cap_fn(s) or 60))),
         ("高科技", f"{tech:.1f}%", "紅線 30%", tech > 30),
     ]:
-        st = ("🟡 僅顯示" if (_usd_adv and name == "美元曝險")
+        st = (f"🟡 {_usd_tier(s, usd_pct)}（僅顯示）" if (_usd_adv and name == "美元曝險")
               else ("🔴 觸發" if triggered else "🟢 安全"))
         lines.append(f"- {name} {val}（{limit}）：{st}")
     _lif_st = "✅ 達標" if _cw["life_ok"] else "🔴 未達標"
@@ -328,7 +330,9 @@ def main():
         '壓力情境＝常態配息 −20%＋洲際W 空置（<b>留停判準</b>）｜極端情境＝配息掉到保守值再 −20%＋空置（跑道分母）。'
         'FI 跑道＝現金 ÷ 月缺口；「月盈餘」KPI 為含薪資口徑，與本表不同。</div></div>' 
     )
-    usd_pct = s.get("usd_exposure_pct", 64.0)
+    # 2026-10-07 裁決②：口徑統一＝usd_exposure_monitor.current.合計（單一真值；原讀 top-level usd_exposure_pct）
+    usd_pct = float((((s.get("usd_exposure_monitor") or {}).get("current") or {}).get("合計")
+                     or s.get("usd_exposure_pct") or 0))
     tech = (s.get("industry_penetration", {}).get("產業", {}).get("資訊科技", {}).get("佔比")
             or s.get("sector_penetration", {}).get("高科技/半導體", {}).get("佔比_估", 17.5))  # 8/22 修正：以 GICS 21.1% 為主（與 GICS 區塊一致）
     us30y = load("us30y_state.json", {}).get("last_rate")
@@ -674,8 +678,9 @@ def main():
         ("US30Y 凍結線", f"{us30y:.2f}%" if us30y else "—", "≥5.30% 🔴",
          "🔴 觸發" if (us30y and us30y >= 5.30) else "🟢 安全"),
         ("美元曝險", f"{usd_pct:.0f}%",
-         ("僅顯示（政策門檻待 10 月戰略檢討）" if _usd_adv else "紅線 60%"),
-         ("🟡 僅顯示" if _usd_adv else ("🔴 觸發" if usd_pct > 60 else "🟢 安全"))),
+         (f"{_usd_tier_text(s)}（僅顯示）" if _usd_adv else f"紅線 {_usd_cap_fn(s):.0f}%"),
+         (f"🟡 {_usd_tier(s, usd_pct)}（僅顯示）" if _usd_adv
+          else ("🔴 觸發" if usd_pct > float(_usd_cap_fn(s) or 60) else "🟢 安全"))),
         ("高科技", f"{tech:.1f}%", "紅線 30%", "🔴 觸發" if tech > 30 else "🟢 安全"),
         (f"現金｜底線 {_cw2['life']:,.0f}（單一口徑）", f"{_cw2['cash']:,.0f}", f"≥{_cw2['life']:,.0f}", _lif_st2),
         ("國泰擔保池 LTV", _pl_txt, _pl_lim,

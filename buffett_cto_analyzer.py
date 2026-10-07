@@ -12,6 +12,7 @@ import requests
 BASE = Path(__file__).parent.resolve()
 # 2026-10-07 卡①：美元曝險 advisory 唯一入口（只顯示、不觸發；LLM 不得轉成資產調整建議）
 from usd_advisory import label as _usd_label, prompt_block as _usd_prompt_block  # noqa: E402
+from usd_advisory import cap as _usd_cap, is_advisory as _usd_is_advisory  # noqa: E402
 from usd_advisory import scrub as _usd_scrub  # noqa: E402  # 卡②：硬性防呆（中和資產調整指令）
 load_dotenv(os.path.expanduser("~/AppData/Local/hermes/.env"))
 TG_TOKEN = os.environ.get("TG_TOKEN", "")
@@ -366,16 +367,19 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
                          for c in ["tw_equity", "us_equity", "defensive", "bond", "cash"])
 
         _usd_exp_val = (_snap.get("usd_exposure_monitor", {}) or {}).get("current", {}).get("合計", 0)
-        _usd_cap_val = float((_snap.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)
+        _usd_cap_val = float(_usd_cap(_snap) or 60)   # 2026-10-07 裁決②：政策門檻單一來源
         _tech_exp_val = (_snap.get("penetration", {}) or {}).get("actual_pct", {}).get("美股市值型成長_科技", 0)
         _tech_cap_val = TARGETS["tech_exposure"]
+        # 2026-10-07 裁決①：advisory 時美元曝險整項不進 prompt（連數字都不餵，防線前移到輸入端）
+        _usd_clause = ("" if _usd_is_advisory(_snap)
+                       else f"美元曝險{_usd_exp_val:.1f}%（{_usd_label(_snap)}{_usd_cap_val:.0f}%）、")
 
         _prompt = (
             f"你是巴菲特（波克夏董事長）。以下是龍九控股資產穿透資料（總投資 {pen['total_inv']/1e4:.0f}萬台幣）：\n"
             f"五桶：{_fmt}\n"
             f"主要偏離：{pen.get('key_risk','—')}｜建議：{pen.get('key_action','—')}\n"
             f"成長 {pen['growth_pct']:.1f}%（目標{pen['growth_target']}%）；防禦 {pen['defense_pct']:.1f}%；安全網 {pen['safety_pct']:.1f}%\n"
-            f"結構風險：美元曝險{_usd_exp_val:.1f}%（{_usd_label(_snap)}{_usd_cap_val:.0f}%）、高科技{_tech_exp_val:.1f}%（紅線{_tech_cap_val:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡\n"
+            f"結構風險：{_usd_clause}高科技{_tech_exp_val:.1f}%（紅線{_tech_cap_val:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡\n"
             f"{_usd_prompt_block(_snap)}"
             f"產業與風險因子：{_industry_context()}\n"
             f"{market_text}\n"
@@ -481,14 +485,17 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
         _fmt = "、".join(f"{TARGET_LABELS[c]} {a.get(c,0):.1f}%（目標{TARGETS[c]}%，{g.get(c,0):+.1f}pp）"
                          for c in ["tw_equity", "us_equity", "defensive", "bond", "cash"])
         _usd_exp_val = (_snap.get("usd_exposure_monitor", {}) or {}).get("current", {}).get("合計", 0)
-        _usd_cap_val = float((_snap.get("usd_exposure_monitor", {}) or {}).get("threshold") or 60)
+        _usd_cap_val = float(_usd_cap(_snap) or 60)   # 2026-10-07 裁決②：政策門檻單一來源
         _tech_exp_val = (_snap.get("penetration", {}) or {}).get("actual_pct", {}).get("美股市值型成長_科技", 0)
         _tech_cap_val = TARGETS["tech_exposure"]
+        # 2026-10-07 裁決①：advisory 時美元曝險整項不進 prompt（連數字都不餵，防線前移到輸入端）
+        _usd_clause2 = ("" if _usd_is_advisory(_snap)
+                        else f"美元曝險{_usd_exp_val:.1f}%（{_usd_label(_snap)}{_usd_cap_val:.0f}%）、")
         _prompt = (
             f"你是龍九控股的 CTO（技術分析師）。以下為資產穿透資料（總投資 {pen['total_inv']/1e4:.0f}萬）：\n"
             f"五桶：{_fmt}\n"
             f"主要偏離：{pen.get('key_risk','—')}｜建議：{pen.get('key_action','—')}\n"
-            f"結構風險：美元曝險{_usd_exp_val:.1f}%（{_usd_label(_snap)}{_usd_cap_val:.0f}%）、高科技{_tech_exp_val:.1f}%（紅線{_tech_cap_val:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡、{us30y_note()}\n"
+            f"結構風險：{_usd_clause2}高科技{_tech_exp_val:.1f}%（紅線{_tech_cap_val:.0f}%）、機構雷達 台股🟢/黃金🟢/原油🔴/美債10Y🟡、{us30y_note()}\n"
             f"{_usd_prompt_block(_snap)}"
             f"產業與風險因子：{_industry_context()}\n"
             f"{market_text}\n"
