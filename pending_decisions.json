@@ -817,6 +817,7 @@
     "date": "2026-10-07",
     "title": "顯示層舊文字清理：凍結區塊殘留已廢美元曝險政策語意（不屬 10/07 政策一致性批次）",
     "status": "待處理",
+    "status_raw": "待處理",
     "category": "報表/顯示層",
     "priority": "P2",
     "tags": "usd,advisory,顯示層,歷史快照,emergency,rebalance,日報,不涉真值",
