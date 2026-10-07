@@ -1699,3 +1699,32 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 驗收：兩路徑對緊急應變區塊同輸入產出逐位元相同；as_of 標示一致；守門 S1 白名單掃描涵蓋；真值逐位元不變。
 - 相關：INC-289（本卡為其範圍邊界揭露）、`PEND-20261007-04`、CIO 對抗性審查判決 `.git/cio_reviews/20261007_inc289_single_producer.json`。
 
+
+## INC-292 ｜ 2026-10-07 ｜ P2｜open ｜ 守門自我豁免分支未套用 emit/lit 規則（INC-289 收尾新增之機制缺口）
+- 來源：2026-10-07 第二輪對抗性 CIO 審查 required_fix #1（獨立審查，攻擊項 a6）。
+- 症狀：`tools/verify_daily_report_single_producer.py` 的 `scan_producers()` 對 `_SELF_EXEMPT` 檔案在檢查 `.replace(__DR_*)` 後即 `continue`，未套用「不得 emit 決策追蹤章」「不得出現非偵測用 `__DR_*` 字面」兩條白名單規則。實測把惡意 producer 寫進掃描器自身（a6a 串接組 token、a6c 只 emit 章）→ **0 違規**。
+- 定性：**self-exemption 為 intentional 設計**（掃描器必須持有偵測用字面，並為比對用途匯入 `daily_report_assembly`）；缺口在於豁免分支的守衛條件不完整。**不屬 INC-289 blocking**：CIO 判 `blocking=[]`，且掃描器只讀 repo、僅寫 `%TEMP%`、無任何 producer/orchestrator 呼叫 → 不可能產出日報。
+- 現行 guard 條件（已實作）：①不得出現 `.replace(<__DR_ token>)` 呼叫（AST，含變數間接形式）②須帶 `ROLE: DETECTOR-ONLY` 標記 ③S1.10 驗證未被任何 producer/orchestrator 引用。
+- CIO 已證實的 bypass：a6a（`"__DR"+"_TW_GAP__"` 串接＋產出函式）、a6c（僅 emit 決策章）→ 皆 0 違規。
+- 後續修復 owner／scope：owner＝本系統管線維護；scope 限 `tools/verify_daily_report_single_producer.py` 的 self 分支（改為與一般檔同一套規則、僅豁免「偵測用字面」），**不得觸及 `daily_report_assembly.py` 產出邏輯**。與 INC-293 同批評估。
+- 驗收：在 `%TEMP%` 鏡像以 a6a／a6c 兩種寫法注入掃描器自身 → 必須 rc≠0；正本 repo 仍 42 PASS/0 FAIL。
+- 相關：INC-289、INC-293、PEND-20261007-02、`.git/cio_reviews/20261007_inc289_fixup_round2.json`。
+
+## INC-293 ｜ 2026-10-07 ｜ P2｜open ｜ 守門掃描覆蓋邊界（副檔名清單／混淆變體）— detector coverage backlog
+- 來源：2026-10-07 第二輪對抗性 CIO 審查 required_fix #2/#3（攻擊項 a5／a7／a3f）。
+- 症狀（皆實測 0 違規）：
+  ① `_SCAN_EXT` 僅 `(.py,.sh,.js)`：`.pyw`／`.pyx`／`.ps1`／`.bat`／`.cmd` 不被掃描；無副檔名的 `.githooks/pre-push` 與 `*.toml`／`*.yaml` 亦不掃描（a5／a7）。
+  ② emit 偵測為精確子字串 `📋 執行中決策追蹤</p>`：**全形空白 U+3000 變體即繞過**（a3f）。
+  ③ AST 只認字串常量：token 以串接／f-string／`"".join` 組出且不 emit 章（a3a／a3c／a3d）、`getattr(h,"replace")` 或 `h.replace(*[...])`（a4a／a4b）皆繞過——此兩類與 a2（子目錄同名檔）同屬**作者已宣告之已知侷限**。
+- 定性：detector coverage 邊界，**非 INC-289 blocking**（CIO 判 `blocking=[]`；殘餘繞道全屬「主動混淆／改名／換副檔名」層級，且作者未宣稱已封死所有繞道）。
+- 後續修復 owner／scope：owner＝本系統管線維護；scope 限 `tools/verify_daily_report_single_producer.py` 的掃描面（擴副檔名全集＋`.githooks/*`、emit 比對改寬鬆或正規化空白、必要時對 token 組裝做資料流分析）。**不得把此閘門膨脹成通用惡意程式碼偵測器**（使用者 2026-10-07 明示 scope 邊界）。
+- 驗收：a2／a3／a4／a5／a7 各情境在 `%TEMP%` 鏡像皆 rc≠0（或其殘餘明確登記為「接受之限制」）；正本 repo 仍 0 FAIL。
+- 相關：INC-289、INC-292。
+
+## INC-294 ｜ 2026-10-07 ｜ P2｜open ｜ 日報緊急應變連結出現重複副檔名 `.html.html`（既有，2 處 404）
+- 症狀：2026-10-07 發布後線上連結掃描（24 個唯一目標）發現 `daily_report_v2_2026-10-07.html` 內兩個連結指向 `emergency_report_2026-10-06.html.html` 與 `emergency_taiex_report_2026-10-06.html.html` → **HTTP 404**（其餘 22 個皆 200）。
+- 定性：**既有缺陷、非本批引入**——`origin/clean-main` 的 `daily_report_v2_2026-10-06.html` 同樣有 2 處，本批 `75a00a0e` 之 10-07 版亦 2 處。屬顯示層連結瑕疵，**真值不受影響**。
+- 根因（初步、唯讀定位）：`regenerate_report.py:425` `_er_name = _latest_er[0].name if _latest_er else f"emergency_report_{TODAY}.html"` 取到**已含 `.html` 的檔名**，連結組裝處又補一次 `.html`。
+- 邊界：不動 07:00／22:00 產線；不與 INC-289／292／293 同批；修正後須重跑連結掃描。
+- 驗收：兩處連結為單一 `.html` 且線上 200；連結掃描 24/24 全 200。
+- 相關：INC-289（同批發布後掃描發現；刻意未即時修以守住 scope）。
