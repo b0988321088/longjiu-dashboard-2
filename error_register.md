@@ -1676,6 +1676,9 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 驗收：「執行中決策追蹤」存在；約 48 列決策卡正常；`洲際W轉貸` 不由 2 次變 0 次；五桶偏離欄位口徑一致；`regenerate_report.py`／`run_daily.py` 同輸入產出一致。
 - 相關：2026-10-07 政策一致性批次（①②③）、`PEND-20261007-02`（P0 修復卡）、CIO-DeepSeek-Flash APPROVE（範圍未含本項，不可轉為發布授權）。
 
+- 【收尾揭露 2026-10-07｜對抗性 CIO 審查 required_fix】本卡宣稱的「唯一 producer」**僅涵蓋 3 項收斂**（①決策追蹤章 ②缺口欄 pp/TWD 口徑 ③行程／P0 優先度排序＋4000 字截斷）；第 4 條分歧（緊急應變 LLM 區塊）仍存在且屬既有，另立 **INC-291**，本卡不得被解讀為「產出一致性已全數關閉」。
+- 【守門加固 2026-10-07】`tools/verify_daily_report_single_producer.py` S1 由「只掃兩個已知 producer」改為**白名單式全 repo 掃描**（287 檔），新增 S1.8/S1.9/S1.10 與 S4.4/S4.5/S4.6 負向對照；實測可抓到「注入未知 producer」與「變數名繞過的私有取代」兩種繞道（原缺口由 CIO 對抗點 A／B 實證）。閘門 42 PASS / 0 FAIL / RC=0。
+
 ## INC-290 ｜ 2026-10-07 ｜ P2｜open ｜ build_dashboard.py 殘留 USD 指令語意（不可達分支）＋ check_usd_advisory 掃描範圍未含本檔
 - 症狀：`build_dashboard.py` 仍留 `🔴 美元曝險 {x}% 超標（目標值 ≤{cap:.0f}%）→ 美股減碼`（`elif _usd2 > _usd_cap2` 分支）。該分支被前一行 `if snap...advisory_only:` 擋住 → advisory_only 為真時**不可達**（實測產出 `index.html` 出現「美股減碼」0 次）。
 - 定性：技術債。**「不可達」不等於「沒有風險」**——政策要求 advisory_only=true 時，不應存在 USD exposure → action 的出口。
@@ -1683,3 +1686,16 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 邊界：**不與 INC-289 同批施工**，避免 scope 爆掉。
 - 驗收：`build_dashboard.py` 無 USD→action 出口字樣；`check_usd_advisory.py` 掃描範圍含本檔且 PASS。
 - 相關：2026-10-07 政策一致性批次裁決③（清除顯示層指令語意）、`PEND-20261007-03`。
+
+## INC-291 ｜ 2026-10-07 ｜ P1｜open ｜ INC-289 收斂範圍外的第 4 條雙 producer 分歧（緊急應變 LLM 區塊）
+- 來源：2026-10-07 INC-289 對抗性 CIO 審查 required_fix #1（**獨立審查發現，非作者自述**）。
+- 症狀：日報「緊急應變（美股）」LLM 區塊仍由兩個 producer 各自組裝：
+  ① `regenerate_report.py`：有 `refresh_stale_amounts` 舊值覆蓋 ＋ as_of `_stale_badge` ＋ `<br>` 換行 ＋ 2 條連結
+  ② `run_daily.py`：走 `_format_content_to_html`、**無舊值覆蓋、無 as_of 標示、1 條連結**
+- 定性：**既有分歧**（CIO 已驗證 `origin/clean-main` 即存在），非 INC-289 引入 → 故不列 blocking；但 INC-289 的「唯一 producer／對外可見內容零變化」宣告**只涵蓋 3 項**（①決策追蹤章 ②缺口欄 pp/TWD 口徑 ③行程／P0 任務優先度排序＋4000 字截斷），不得被理解為「產出一致性已全數關閉」——本卡即為第 4 條。
+- 影響：緊急應變區塊可能出現舊值未覆蓋／缺 as_of 標示，**取決於當日走哪條產線**（使用者看到的內容會不同）；真值不受影響。
+- 修法方向（另案、待裁決）：把緊急應變區塊組裝收斂進 `daily_report_assembly.py`（或共用 render component）。
+- 邊界（禁止事項）：不改 70.5%／USD policy；不碰 INC-288 三處歷史／凍結文字；不與 INC-290 同批施工。
+- 驗收：兩路徑對緊急應變區塊同輸入產出逐位元相同；as_of 標示一致；守門 S1 白名單掃描涵蓋；真值逐位元不變。
+- 相關：INC-289（本卡為其範圍邊界揭露）、`PEND-20261007-04`、CIO 對抗性審查判決 `.git/cio_reviews/20261007_inc289_single_producer.json`。
+

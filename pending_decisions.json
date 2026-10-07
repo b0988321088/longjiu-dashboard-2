@@ -876,5 +876,27 @@
     "created_at": "2026-10-07",
     "updated_at": "2026-10-07",
     "inc": "INC-290"
+  },
+  {
+    "id": "PEND-20261007-04",
+    "date": "2026-10-07",
+    "title": "P1 產出一致性：INC-289 收斂範圍外的第 4 條雙 producer 分歧（緊急應變 LLM 區塊）",
+    "status": "待處理",
+    "status_raw": "待處理",
+    "category": "報表/顯示層",
+    "priority": "P1",
+    "tags": "P1,產出一致性,日報,雙producer,緊急應變,emergency,as_of,stale,不涉真值",
+    "detail": "來源：2026-10-07 INC-289 對抗性 CIO 審查 required_fix #1（獨立審查發現，非作者自述）。\n【症狀】日報「緊急應變（美股）」LLM 區塊仍由兩個 producer 各自組裝：\n  ① regenerate_report.py：有 refresh_stale_amounts 舊值覆蓋 ＋ as_of _stale_badge ＋ `<br>` 換行 ＋ 2 條連結\n  ② run_daily.py：走 _format_content_to_html、無舊值覆蓋、無 as_of 標示、1 條連結\n【定性】既有分歧（CIO 已驗證 origin/clean-main 即存在），非 INC-289 引入，故未列 blocking；\n  但 INC-289 的『唯一 producer／對外可見內容零變化』宣告只涵蓋 3 項（決策追蹤章、缺口欄 pp/TWD 口徑、行程 P0 排序＋4000 字截斷），\n  不得被理解為『產出一致性已全數關閉』——本卡即為第 4 條。\n【影響】緊急應變區塊可能出現舊值未覆蓋／缺 as_of 標示（取決於當日走哪條路徑，使用者看到的內容會不同）。\n【修法方向（另案）】把緊急應變區塊組裝收斂進 daily_report_assembly.py（或共用 render component）。\n【驗收】兩路徑對緊急應變區塊同輸入逐位元相同；as_of 標示一致；守門 S1 白名單掃描涵蓋該區塊；真值逐位元不變。\n【邊界】不改 70.5%／USD policy；不碰 INC-288 三處歷史文字；不與 INC-290 同批施工。",
+    "due_date": null,
+    "due_date_source": "無到期日（等裁決後排程）",
+    "needs_due_date": true,
+    "last_confirmed": null,
+    "last_confirmed_source": "未提供",
+    "owner": "龍九",
+    "external_owner": null,
+    "source": "2026-10-07 INC-289 對抗性 CIO 審查 required_fix #1（收尾揭露）",
+    "created_at": "2026-10-07",
+    "updated_at": "2026-10-07",
+    "inc": "INC-291"
   }
 ]

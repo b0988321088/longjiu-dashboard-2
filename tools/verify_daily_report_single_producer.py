@@ -11,6 +11,8 @@
   S4 負向對照：把私有實作塞回暫存副本 → 閘門必須 FAIL（證明閘門非空洞）
 
 唯讀：只讀 repo 檔＋寫 %TEMP% 暫存副本。rc=0 全過、rc=1 有 FAIL。
+ROLE: DETECTOR-ONLY
+
 用法：python tools/verify_daily_report_single_producer.py [--report <html>]
 """
 from __future__ import annotations
@@ -20,8 +22,8 @@ import ast
 import hashlib
 import io
 import json
-import os
 import re
+import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -55,8 +57,88 @@ print("=" * 78)
 print("INC-289 閘門：日報單一 canonical producer")
 print("=" * 78)
 
-# ═══════════ S1. 唯一實作 ═══════════
-print("\n[S1] 唯一實作（兩個 producer 都必須走共用模組）")
+# ═══════════ S1. 唯一實作（白名單式全 repo 掃描）═══════════
+print("\n[S1] 唯一實作（白名單式全 repo 掃描；未知新檔不得自建組裝路徑）")
+
+# 白名單：允許合法持有 `__DR_*__` token／決策追蹤 emit 字串的檔案
+DR_WHITELIST = {"daily_report_assembly.py",   # 唯一取代實作
+                "run_daily.py"}                # 日報模板持有者（__DR_*__ 佔位符本身）
+EMIT_WHITELIST = {"daily_report_assembly.py"}  # 只有它能 emit「執行中決策追蹤」章
+# 掃描器自身（僅偵測、不產出）；豁免前提＝不得有 .replace(__DR_*) 或匯入共用組裝模組
+_SELF_EXEMPT = {"verify_daily_report_single_producer.py"}
+_SELF_MARK = "ROLE: DETECTOR-ONLY"
+_SELF_NAME = "verify_daily_report_single_producer.py"
+_SCAN_EXT = (".py", ".sh", ".js")
+_SCAN_SKIP_DIRS = {"backups", ".bak-inc-unclosed", ".archive", ".git", "cache",
+                   "logs", "__pycache__", "node_modules", ".venv", "venv"}
+_DR_TOKEN_RE = re.compile(r"^__DR_[A-Z_]+__$")
+
+
+def _imports_shared(src):
+    """是否從共用組裝模組匯入（＝具備產出日報的能力）。"""
+    return bool(re.search(r"^\s*(from|import)\s+daily_report_assembly", src, re.M))
+
+
+def _has_private_dr_replace(src):
+    """抓 `X.replace(<__DR_ token>)`，含「先把 token 存進變數再 replace」的間接形式。
+
+    （2026-10-07 CIO 對抗性審查實證：純字面比對 `\.replace\("__DR_` 可用變數名繞過。）
+    """
+    tree = ast.parse(src)
+    tok_names = set()
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Assign) and len(node.targets) == 1
+                and isinstance(node.targets[0], ast.Name)):
+            v = node.value
+            if (isinstance(v, ast.Constant) and isinstance(v.value, str)
+                    and _DR_TOKEN_RE.match(v.value)):
+                tok_names.add(node.targets[0].id)
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "replace" and node.args):
+            continue
+        a0 = node.args[0]
+        if isinstance(a0, ast.Constant) and isinstance(a0.value, str) and _DR_TOKEN_RE.match(a0.value):
+            return True
+        if isinstance(a0, ast.Name) and a0.id in tok_names:
+            return True
+    return False
+
+
+def scan_producers(root, extra_skip=()):
+    """白名單式掃描 → [(相對路徑, 違規說明), ...]；同時回傳掃描檔數。"""
+    root = Path(root)
+    viol, n = [], 0
+    for f in sorted(root.rglob("*")):
+        if not f.is_file() or f.suffix.lower() not in _SCAN_EXT:
+            continue
+        try:
+            rel = f.relative_to(root).as_posix()
+        except Exception:
+            continue
+        if any(seg in _SCAN_SKIP_DIRS for seg in Path(rel).parts) or rel in extra_skip:
+            continue
+        n += 1
+        txt = rd(f)
+        has_lit = bool(re.search(r"__DR_[A-Z_]+__", txt))
+        has_emit = _EMIT in txt
+        if f.name in _SELF_EXEMPT:
+            # 掃描器自身：可持有偵測用字面、可為「比對」而匯入共用模組，
+            # 但不得自行取代 __DR_*__，且必須自我標記 DETECTOR-ONLY（否則白名單即後門）
+            if _has_private_dr_replace(txt):
+                viol.append((rel, "掃描器自身出現 .replace(__DR_*) 產出行為"))
+            elif _SELF_MARK not in txt:
+                viol.append((rel, "自我豁免但缺 " + _SELF_MARK + " 標記"))
+            continue
+        if has_lit and f.name not in DR_WHITELIST:
+            viol.append((rel, "出現 __DR_*__ 字面但不在白名單（未知 producer 自建取代路徑）"))
+        if has_emit and f.name not in EMIT_WHITELIST:
+            viol.append((rel, "emit 決策追蹤章但不在白名單"))
+        if f.name == "run_daily.py" and _has_private_dr_replace(txt):
+            viol.append((rel, "模板持有者 run_daily.py 不得自行取代 __DR_*__"))
+    return viol, n
+
+
 ck("S1.1 daily_report_assembly.py 存在", SHARED.exists(), str(SHARED))
 src_shared = rd(SHARED) if SHARED.exists() else ""
 _shared_tree = ast.parse(src_shared) if src_shared else None
@@ -65,25 +147,32 @@ ck("S1.2 共用模組提供完整 API", all(a in _shared_defs for a in REQUIRED_
    "缺：" + str([a for a in REQUIRED_API if a not in _shared_defs]))
 
 for tag, path in (("regenerate_report.py", REGEN), ("run_daily.py", RUNDAILY)):
-    s = rd(path)
-    tree = ast.parse(s)
-    # 由共用模組匯入的名稱
+    s_ = rd(path)
+    tree = ast.parse(s_)
     imported = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom) and (node.module or "") == "daily_report_assembly":
             imported |= {a.name for a in node.names}
     ck(f"S1.3 {tag} 自共用模組匯入組裝 API",
        len(imported & set(REQUIRED_API)) >= 3, "匯入：" + str(sorted(imported)))
-    # 不得自行做 __DR_ 取代
-    n_local_dr = len(re.findall(r'\.replace\(\s*["\']__DR_', s))
-    ck(f"S1.4 {tag} 無私有 __DR_*__ 取代", n_local_dr == 0, f"命中 {n_local_dr} 處")
-    # 不得自行產生決策追蹤章
-    ck(f"S1.5 {tag} 無私有「執行中決策追蹤」實作", _EMIT_TPL not in s, f"命中 {s.count(_EMIT_TPL)} 處")
-    # 必須真的呼叫（非只有 import）
+    ck(f"S1.4 {tag} 無私有 __DR_*__ 取代（AST 判定，含變數間接形式）",
+       not _has_private_dr_replace(s_), "AST 掃描")
+    ck(f"S1.5 {tag} 無私有「執行中決策追蹤」實作", _EMIT_TPL not in s_, f"命中 {s_.count(_EMIT_TPL)} 處")
     ck(f"S1.6 {tag} 實際呼叫組裝函式",
-       ("_asm_p0(" in s and "_asm_dr(" in s) or ("build_p0_tasks_html(" in s and "substitute_dr_tokens(" in s))
-ck("S1.7 共用模組是「執行中決策追蹤」唯一出處（emit 字串僅 1 處）",
+       ("_asm_p0(" in s_ and "_asm_dr(" in s_) or ("build_p0_tasks_html(" in s_ and "substitute_dr_tokens(" in s_))
+ck("S1.7 共用模組是決策追蹤章唯一出處（emit 字串僅 1 處）",
    src_shared.count(_EMIT_TPL) == 1, f"命中 {src_shared.count(_EMIT_TPL)} 處")
+
+_repo_viol, _scanned = scan_producers(BASE)
+ck("S1.8 全 repo 白名單掃描：無未授權的組裝路徑", not _repo_viol, str(_repo_viol[:5]))
+ck("S1.9 掃描確實有掃到檔案（防空掃描假綠）", _scanned > 50, f"掃描 {_scanned} 檔")
+_PROD_REFS = []
+for _n in ("regenerate_report.py", "run_daily.py", "scripts/morning_deploy.py",
+           "sync_all.py", "daily_build.py", "four_source_sync.py"):
+    _fp = BASE / _n
+    if _fp.exists() and _SELF_NAME in rd(_fp):
+        _PROD_REFS.append(_n)
+ck("S1.10 掃描器純偵測、未被任何 producer/orchestrator 引用", not _PROD_REFS, str(_PROD_REFS))
 
 # ═══════════ S2. 呼叫契約 ─══════════
 print("\n[S2] 呼叫契約（同一函式、同一輸入來源）")
@@ -285,6 +374,28 @@ ck("S5.6 組裝完全不依賴呼叫端（無隱含全域狀態）",
 
 # ═══════════ S4. 負向對照 ═══════════
 print("\n[S4] 負向對照（把私有實作塞回去 → 閘門必須抓到）")
+# 2026-10-07 CIO 要求：S1 改白名單式後，必須證明它真的抓得到「未知新檔」與「變數名繞過」
+_negroot = Path(tempfile.gettempdir()) / "inc289_gate_neg"
+if _negroot.exists():
+    shutil.rmtree(_negroot, ignore_errors=True)
+_negroot.mkdir(parents=True, exist_ok=True)
+for _f in ("daily_report_assembly.py", "regenerate_report.py", "run_daily.py"):
+    shutil.copy(BASE / _f, _negroot / _f)
+# 注入 1：未知 producer（私有 __DR_ 取代 ＋ 私有決策追蹤章）
+io.open(_negroot / "evil_producer.py", "w", encoding="utf-8", newline="").write(
+    "def build(h, pen):\n"
+    "    h = h.replace(\"__DR_TW_GAP__\", \"-999.9pp\")\n"
+    "    h += '\\n<p>\U0001f4cb \u57f7\u884c\u4e2d\u51b3\u7b56\u8ffd\u8e2a</p>'\n"
+    "    return h\n")
+# 注入 2：模板持有者用「變數名」繞過字面比對
+_rdx = rd(_negroot / "run_daily.py")
+_rdx = _rdx.replace("    daily_html = _asm_dr(daily_html, _pen)",
+                    "    _tk = \"__DR_TW_GAP__\"\n"
+                    "    daily_html = daily_html.replace(_tk, \"-999.9pp\")\n"
+                    "    daily_html = _asm_dr(daily_html, _pen)")
+io.open(_negroot / "run_daily.py", "w", encoding="utf-8", newline="").write(_rdx)
+_neg_scan, _neg_n = scan_producers(_negroot)
+print(f"  （負向鏡像：{_negroot}｜掃描 {_neg_n} 檔｜違規 {len(_neg_scan)} 筆）")
 _tmp = Path(tempfile.gettempdir()) / "inc289_negative_control"
 _tmp.mkdir(parents=True, exist_ok=True)
 _div = rd(RUNDAILY).replace(
@@ -305,6 +416,12 @@ ck("S4.1 負向樣本被判為違規（私有 __DR_ 取代／私有決策追蹤�
    "S1.4/S1.5 這類檢查會在負向樣本上 FAIL")
 ck("S4.2 正向檔（現行 run_daily.py）未被誤判", not _static_violations(RUNDAILY))
 ck("S4.3 負向樣本與正向檔不同", _md5(_div) != _md5(rd(RUNDAILY)))
+
+ck("S4.4 白名單掃描抓到「注入的未知 producer」（CIO 對抗點 A 的缺口已補）",
+   any("evil_producer.py" in v[0] for v in _neg_scan), str(_neg_scan[:4]))
+ck("S4.5 白名單掃描抓到「變數名繞過」形式的私有取代（CIO 對抗點 B 的缺口已補）",
+   any("run_daily.py" in v[0] and "模板持有者" in v[1] for v in _neg_scan), str(_neg_scan[:4]))
+ck("S4.6 對照組：同一份掃描器對正本 repo 判 0 違規（非全盤誤報）", not _repo_viol, str(_repo_viol[:3]))
 
 # ═══════════ 結果 ═══════════
 print("\n" + "=" * 78)

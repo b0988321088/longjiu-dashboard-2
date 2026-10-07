@@ -12,14 +12,21 @@
   ② 穿透 `__DR_*_GAP__` 缺口欄：regenerate = `pp`，run_daily = TWD 金額
   ③ 本週行程／P0 任務：run_daily 另做優先度排序＋4000 字截斷，regenerate 維持檔案順序
 
-本模組＝**唯一實作**。canonical 行為刻意等於 `regenerate_report.py` 的現行已上線行為
-（使用者每天看到的就是這一份），因此收斂後**對外可見內容零變化**，只是讓另一個
-producer 不再能產出不同版本。
+本模組＝上述**這 3 項**的唯一實作。canonical 行為刻意等於 `regenerate_report.py` 的現行
+已上線行為（使用者每天看到的就是這一份），因此這 3 項收斂後**對外可見內容零變化**，
+只是讓另一個 producer 不再能產出不同版本。兩個 producer 一律呼叫本模組；任一 producer
+自行重寫這 3 項邏輯＝閘門 FAIL（`tools/verify_daily_report_single_producer.py`）。
 
-兩個 producer 一律呼叫本模組；任一 producer 自行重寫這些邏輯＝閘門 FAIL
-（`tools/verify_daily_report_single_producer.py`）。
+收斂範圍邊界（重要）
+--------------------
+「唯一 producer」的宣告**只涵蓋上面 3 項**，不等於「日報產出一致性已全數關閉」。
+已知仍有第 4 條雙 producer 分歧、且屬既有（`origin/clean-main` 即存在）：
+**「緊急應變（美股）」LLM 區塊**——`regenerate_report.py` 有 `refresh_stale_amounts`
+舊值覆蓋＋as_of `_stale_badge`＋`<br>` 換行＋2 條連結；`run_daily.py` 走
+`_format_content_to_html`、無舊值覆蓋、無 as_of 標示、1 條連結。
+該項另立 **INC-291／PEND-20261007-04**，未經裁決不得在此順手收斂。
 
-相關：error_register INC-289／PEND-20261007-02。
+相關：error_register INC-289／INC-291、PEND-20261007-02／04。
 """
 from __future__ import annotations
 
