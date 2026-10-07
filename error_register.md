@@ -1594,3 +1594,27 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 已知界線：close 分支（自動閉環歸檔卡）仍寫 `✅ 自動閉環(...)` 進 status；該批卡片不在
   `pending_decisions.json`（閘門只驗 pending 清單），本輪刻意不動。
 - 相關：INC-283（同一閘門、不同觸發源）、PEND-20261005-04（10/05 只做了一半的那次正規化）。
+
+## INC-285 ｜ 2026-10-07 ｜ P1｜fixed（同日） ｜ 未推分支的程式迭代未收斂 → push gate fail-closed 擋整段，07:00 晨間產線「產出完成但未上線」
+- 症狀：07:00 cron 警報 `rc=1`；失敗項「線上 rebalance_dashboard_2026-10-07.html → 404」＋「線上連結驗證未過」；
+  本地當日檔案齊全，且日報／差異分析／穿透在線上（該批為 05:55 前已推）。
+- 真因鏈（**不是產出故障，是治理閘門正常拒絕**）：`origin/clean-main` 停在 05:55，本地落後段 06:02–07:27 共 39 顆未推
+  commit（其中 24 顆含程式檔：卡① 1 顆、卡② 內部迭代 22 顆、卡③ 唯讀試算 1 顆），每顆 tree 皆無審查紀錄
+  → `auto_push.py` 逐 commit 驗推送範圍時判 `REFUSED`（exit 3）→ 當日產物未上線 →
+  `check_dashboard_sync --post-push` 驗到 404 → `regenerate_report.py rc=1` → cron 警報。
+  證據：`.git/AUTO_PUSH.log` `2026-10-06T23:10:43Z REFUSED regenerate_report.py <17 顆>`；`.git/AUTO_WARN.log` `range-missing 32 顆無紀錄`。
+- 修法（依使用者裁決：不放行、不補假紀錄）：把 06:02–07:27 未推迭代**收斂為單一交付單位**
+  （`TREE=$(git show -s --format=%T HEAD)` → `git commit-tree $TREE -p origin/clean-main` → `git reset --soft <new>`；
+  tree `96d6a43c` 不變、worktree 不動、原史留於 `backup-pre-squash-20261007`）→ 對最終 tree 送真 CIO
+  （CIO-DeepSeek-Flash：7 支命令輸出逐字相符、0 required fixes、審查 JSON 僅列 final tree 且無 `reviewed_range`）
+  → `cio_approve.py --commit` 落地單筆 → 推送。
+- 證據：`cio_approve.py --status`「範圍內全部已審（1 顆）」；`AUTO_PUSH.log` `2026-10-07T01:58:34Z OK regenerate_report.py … 1 顆補紀錄`；
+  遠端 `clean-main` = 本地 HEAD = `9600b8f4`、`git rev-list --count origin/clean-main..HEAD` = 0；
+  `check_dashboard_sync.py --post-push` 22/22 條 200、rc=0；三個原 404 頁面（再平衡儀表板／評估／摘要）全數 200。
+- 教訓：① 產線失敗先看**閘門結論**（`REFUSED`），404 只是下游症狀。② **一顆未審程式 commit 會連坐整段推送範圍**：
+  迭代中的程式改動不要常駐在未推分支上，交付前收斂。③ 既有 APPROVE 只覆蓋它自己那顆 tree ——
+  HEAD 有紀錄 ≠ range 已審，不可拿來填其他 commit 的缺口。④ 收斂後才送審，可省下對 22 顆淘汰版本的逐顆背書。
+- 已知界線（P1 觀察，未施工）：推送成功但 `morning_deploy.py` 仍回報 `rc=1`（內建 post-push 驗證在 Pages rebuild 前檢查，
+  首次上線的新檔名最常見）；約 8 秒後 `check_dashboard_sync --post-push` 全過。判讀：`AUTO_PUSH.log` 為 `OK` 且未推顆數 0
+  時屬時序抖動，**不要重跑整條產線**。
+- 相關：INC-229（程式改動需同輪送審＋落地，同型）、INC-183（推送路徑未落紀錄）、INC-236（推送範圍判讀）、INC-284（假修：改資料沒改程式）。
