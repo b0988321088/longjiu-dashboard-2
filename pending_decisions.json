@@ -860,5 +860,28 @@
     "created_at": "2026-10-07",
     "updated_at": "2026-10-07",
     "inc": "INC-291"
+  },
+  {
+    "id": "PEND-20261008-01",
+    "date": "2026-10-08",
+    "title": "Producer commit/push scope isolation：禁止把既有 working-tree dirty 誤認為本輪產物並自動發布",
+    "status": "待處理",
+    "status_raw": "待處理",
+    "category": "",
+    "priority": "",
+    "tags": "治理,producer,auto_push,dirty_gate,scope,publish-boundary",
+    "detail": "【事故證據 2026-10-08 19:04】regenerate_report.py 自動 commit＋auto_push 15 檔上 clean-main（CIO_APPROVED：AUTO-checker:regenerate_report.py(range)），掃入當時尚未提交的 pending_decisions.json（2 卡結案歸檔）＋work_log.json，且未帶 archive.json。根因＝regenerate_report._push_candidates 把 4 個「只讀不寫」的檔（pending_decisions.json／work_log.json／schedule_events.json／radar_state.json）宣告為本輪產物 → dirty_gate allow=produced → V8『scope 內 dirty 必須全部 stage』→ 既有編輯依設計被掃入；V7 只擋 scope『外』dirty，不擋 scope『內』既有編輯。\n【盤點（唯讀 2026-10-08）】具自行 commit＋push 能力者分三型＋一類繞道：(1) over-declare：regenerate_report；(2) git add -A 型：evening_sync（paused）／radar_weekly／investment_perf_monthly／refresh_all／update_and_deploy／complete_operation／pre-run.sh；(3) 路徑限定但該檔有既有 dirty 仍會帶：radar_push／nightly_dashboard_sync／append_dashboard_decisions／safe_update／daily_deploy／cio_review_ingest／cleanup_utils；(4) 繞過 auto_push：cron agent prompt 直接 git add && git commit && git push（月報／週六再平衡／週日週報／週五深度審查）。責任邊界：auto_push／dirty_gate／auto_record／pre-push v5。\n【核心驗收標準（治理原則）】clean gate ≠ producer isolation。必須證明「producer 在 working tree 有既有 dirty 時，仍只能發布本輪真正產生的檔案」；produced 須由 before/after 狀態差證明（produced ∈ after − before），不得由 producer 自宣告。\n【Phase A】防止『既有 dirty 被誤認本輪產物』：正向（本輪產生 report.json → PASS 可 commit）／負向（本輪未產生 work_log.json 但它原本 dirty → FAIL-CLOSED 不得 commit）；程式檔 dirty 不得混進 data commit。\n【Phase B】producer scope 收斂：git add -A 型逐步改為明確 manifest。\n【Phase C】統一發布出口：所有 cron prompt 直接 git add/commit/push 一律導向 auto_push（不得有兩套發布治理）。\n【最小止血（第一優先）】先封 regenerate：移除上述 4 檔出 produced——最乾淨、最易驗證的第一步。",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": false,
+    "last_confirmed": null,
+    "last_confirmed_source": null,
+    "owner": "龍九",
+    "external_owner": null,
+    "source": "",
+    "created_at": "",
+    "updated_at": "",
+    "inc": "",
+    "is_informational": false
   }
 ]
