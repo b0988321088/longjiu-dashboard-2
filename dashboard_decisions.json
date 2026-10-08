@@ -10536,6 +10536,16 @@
       "status": "已核准",
       "source": "user"
     }
+,
+  {
+    "id": "mem-20261008225821-1136",
+    "timestamp": "2026-10-08T22:58:21.873067+08:00",
+    "agent": "Hermes",
+    "task": "真值日→DB liabilities 落列：第一階段診斷 CLOSED｜PEND-20261006-02 沿用不開新卡｜第二階段未授權",
+    "summary": "使用者 2026-10-08 裁決：第一階段唯讀診斷 CLOSED。根因已確認＝DB liabilities 表在自動化圖上無寫入者（rebuild_liabilities() 僅改 snapshot；夜間產線只寫 assets；三個 DB 寫入口 update_data／asset_sync CLI／db_loader 皆不在夜鏈、後者無呼叫者）→ assets 每日前進、liabilities 停在最近真值日，差額＝當日信用卡增量（+643）。本次證據併入既有 PEND-20261006-02（同根因同復發，不開第二張卡）。A/B/C 未選；最小止血方向（真值日流程明示完成 DB liabilities 落列並驗四源）確認可行、未授權實作；真值日 prompt 應補明示、未授權修改；apply_truth_20261008.py 補登版控未授權。本次授權邊界＝僅『證據入庫』，零修復操作。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-08T22:45:45.470597"
