@@ -887,7 +887,7 @@
   {
     "date": "2026-10-08",
     "title": "liabilities 自然回歸失敗：真值日 runner 未帶 land_db=True（10/08 untracked）",
-    "status": "待處理",
+    "status": "關案",
     "tags": "真值日,DB,liabilities,land_db,freshness,治理,不reopen#38",
     "detail": "【缺陷證據 2026-10-08 唯讀】\n層① 表層：apply_truth_20261008.py（UNTRACKED，mtime 2026-10-08 09:23）第 257 行 `snap = rebuild_liabilities(snap)` 未帶 land_db=True；同族已版控者 apply_truth_20260929.py:110／apply_truth_20261006.py:143 皆已帶（d103d31d 只改這兩支＋asset_sync.py）。\n層② 中層：每個真值日都以一支新的、未版控的一次性腳本執行 → 正確性依賴『每次都記得帶參數』。\n層③ 深層：monthly-truth-day SOP 全文無『落 DB liabilities』步驟（grep 0 命中）→ 執行者根本不知道有這件事。\n【實測佐證】10/08 真值日 09:23 執行該 runner → DB liabilities 未落列（dragon_assets.db 於 23:11:50 才由另一條路徑寫入）；22:00 晚報回報 ✅四源同步，但 22:40 收工稽核仍 2 顆 ❌（DB 負債列＝2026-10-05）→ 證明『job 有跑 ≠ 根因修復』。\n【判定 A（使用者 2026-10-08）】apply_truth_*.py 為真值日一次性套用腳本（含當日寫死金額），性質為執行留痕、非可重用模板 → 10/08 不版控，明確標註『一次性留痕、不作模板；DB landing 一律走 CLI』。只做 A 不足以防復發，故三層並修。\n【修復設計（三層）】① SOP 層：monthly-truth-day SKILL.md 增固定步驟『真值日收尾：python asset_sync.py --rebuild-liabilities』（asset_sync.py:504 已存在之唯一落 DB 入口）② 一次性腳本層：apply_truth_*.py 統一加註不作模板 ③ 守門層：check_thresholds.py 增負債落列 freshness 斷言 —— DB liabilities 最新列日期與 snapshot 真值日期不一致／超過允許窗口 → fail-closed。\n【驗收】① 下一真值日（或乾跑）→ DB liabilities 自動落列 ② 刻意不落 → 閘門 rc≠0 ③ 四源 0 ❌。\n【邊界】不 reopen #38（PEND-20261006-02 已 CLOSED）；不處理 R-a～R-e；不改 rebuild_liabilities 之計算語意。\n【施工狀態】使用者 2026-10-08 授權，以獨立變更批次施工（不與 #12／#46／#47 混批）。\n\n【⚠️ 更正（2026-10-08 23:50，Closure Sweep 作者自更正）】原文『層③ 深層：monthly-truth-day SOP 全文無「落 DB liabilities」步驟（grep 0 命中）』**錯誤**。成因：前一輪 grep 誤指 `skills/productivity/monthly-truth-day/`，實際技能路徑為 `skills/financial/monthly-truth-day/SKILL.md`。\n【更正後事實（唯讀實證）】真值日 SOP **第 25–30 行已存在**步驟『③a 真值日必做：顯式落 DB liabilities（2026-10-08 修復 PEND-20261006-02）』，內含兩種做法（`python -c \"...land_liabilities_db(...)\"` 或套用腳本內 `rebuild_liabilities(snap, land_db=True)`）與『落完立刻驗 snapshot.total_liabilities == DB assets[今日] == DB liabilities[今日] ＋信用卡三源一致』。技能檔 mtime＝2026-10-08 23:13:17。\n【據此修正後的真根因】層③ 不成立；實際缺口縮為兩層：層① 表層＝10/08 runner（mtime 09:23，**早於 SOP 修正 23:13**）未依 SOP 帶 land_db=True；層② 中層＝一次性 runner 靠人手複製模板，無任何機制強制其遵循 SOP。\n【據此修正後的修復範圍】① SOP 層 → **已存在，不需新增**（僅需補『勿複製上一支 apply_truth_*.py 作為模板』之警語，屬選配）② 一次性腳本層 → 10/08 標註不作模板（不版控）③ 守門層 → check_thresholds.py 增負債落列 freshness 斷言（**此層為唯一真正缺失、且是唯一能防『忘記』的機制**）。\n【連帶影響】SOP 修正（23:13）從未被任何真值日實際執行過 → 『自然回歸驗證』仍是唯一證明途徑，此點不變。",
     "reopen_conditions": null,
@@ -895,10 +895,10 @@
     "due_date_source": "未提供",
     "needs_due_date": true,
     "last_confirmed": "2026-10-08",
-    "last_confirmed_source": "使用者裁決開卡",
+    "last_confirmed_source": "使用者裁決關案",
     "owner": "龍九",
     "external_owner": null,
-    "status_raw": "🔴 Active Repair（2026-10-08 使用者裁決開卡）：10/08 runner 未帶 land_db=True → 下一次真值日預期復發；不 reopen PEND-20261006-02（#38 已 CLOSED）",
+    "status_raw": "✅ 已完成・關案（2026-10-08 使用者裁決）：真值日→DB liabilities 落列斷點修復已落地 —— 程式 commit e3b69d04（publication integrity gate：值為判準、只在 DB 已定稿時觸發、fail-closed 置於 sync_all 前置步驟），CIO-Adversarial-Subagent 獨立對抗審查 APPROVE／blocking=[]／13 項實測 PASS；SOP ③a 已補「勿以 apply_truth_*.py 為模板」與守門位置；10/08 runner 依裁決 A 不版控、僅加『一次性留痕』標註。本筆為狀態層與宣告層同步（非重新施工）。待驗收殘項＝自然回歸（下一個真值日觀察），不屬本卡未完事項。",
     "is_informational": false
   },
   {
