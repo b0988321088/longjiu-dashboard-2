@@ -1700,7 +1700,7 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 相關：INC-289（本卡為其範圍邊界揭露）、`PEND-20261007-04`、CIO 對抗性審查判決 `.git/cio_reviews/20261007_inc289_single_producer.json`。
 
 
-## INC-292 ｜ 2026-10-07 ｜ P2｜open ｜ 守門自我豁免分支未套用 emit/lit 規則（INC-289 收尾新增之機制缺口）
+## INC-292 ｜ 2026-10-07 ｜ P2｜CLOSED（2026-10-09）｜ 守門自我豁免分支未套用 emit/lit 規則（INC-289 收尾新增之機制缺口）
 - 來源：2026-10-07 第二輪對抗性 CIO 審查 required_fix #1（獨立審查，攻擊項 a6）。
 - 症狀：`tools/verify_daily_report_single_producer.py` 的 `scan_producers()` 對 `_SELF_EXEMPT` 檔案在檢查 `.replace(__DR_*)` 後即 `continue`，未套用「不得 emit 決策追蹤章」「不得出現非偵測用 `__DR_*` 字面」兩條白名單規則。實測把惡意 producer 寫進掃描器自身（a6a 串接組 token、a6c 只 emit 章）→ **0 違規**。
 - 定性：**self-exemption 為 intentional 設計**（掃描器必須持有偵測用字面，並為比對用途匯入 `daily_report_assembly`）；缺口在於豁免分支的守衛條件不完整。**不屬 INC-289 blocking**：CIO 判 `blocking=[]`，且掃描器只讀 repo、僅寫 `%TEMP%`、無任何 producer/orchestrator 呼叫 → 不可能產出日報。
@@ -1709,6 +1709,18 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 後續修復 owner／scope：owner＝本系統管線維護；scope 限 `tools/verify_daily_report_single_producer.py` 的 self 分支（改為與一般檔同一套規則、僅豁免「偵測用字面」），**不得觸及 `daily_report_assembly.py` 產出邏輯**。與 INC-293 同批評估。
 - 驗收：在 `%TEMP%` 鏡像以 a6a／a6c 兩種寫法注入掃描器自身 → 必須 rc≠0；正本 repo 仍 42 PASS/0 FAIL。
 - 相關：INC-289、INC-293、PEND-20261007-02、`.git/cio_reviews/20261007_inc289_fixup_round2.json`。
+
+### ✅ CLOSED 2026-10-09 ｜ 修復 commit `42c6d754`（tree `ff737dbd`）
+
+- **第一輪驗收（2026-10-09 凌晨）＝ FAIL**：原卡驗收在 `%TEMP%` 鏡像以 a6a／a6c 注入掃描器自身 → S1.8 仍 `[]`、68 PASS / 1 FAIL，與 control 逐項相同。定罪：`has_emit`／`has_lit` 兩條規則仍在自我豁免 `continue` 之後；且 `_has_private_dr_replace()` 只認單一 `ast.Constant`（`"__DR"+"_TW_GAP__"` 是 `BinOp`，常數折疊發生在 compile 階段、`ast.parse` 不做）。另：原卡驗收條件的「rc≠0」在基線已有 S3.8 FAIL 時失去鑑別力，判別指標改為 **S1.8 違規清單**。→ 裁決 FAIL / RETURN FOR REPAIR，不得 CLOSED。
+- **唯讀前置盤點（關鍵發現）**：**天真搬移會讓閘門擋自己** —— 掃描器自身 `has_lit=True`（16 處偵測用 token 字面）、`has_emit=True`（L66 `_EMIT` 定義 ＋ S4 負向樣板），且本檔不在 `DR_WHITELIST`／`EMIT_WHITELIST`。故修復順序必須是①先處理偵測字面的持有方式 ②再調檢查順序。
+- **修正（僅 `tools/verify_daily_report_single_producer.py`，+39/−13）**：① `_EMIT` 改以 `\u` 轉義持有（值逐位元不變，同 `_EM_KEY` 手法）② S4 負向樣板改以 `_EMIT` 拼接組出（產出字串等價證明通過）③ 新增 `_fold_str()` 並讓 `_has_private_dr_replace()` 折疊 `BinOp`／`Name` → 修 **a6a** ④ `has_emit` 檢查移至自我豁免 `continue` 之前 → 修 **a6c** ⑤ S1.11 擴充為同檢 `_EMIT` 原文殘留（防回歸）。
+- **設計說明**：`has_lit` **刻意不移前** —— a6a 並非由 `has_lit` 攔（regex 對字串拼接天生無效），且掃描器合法持有 16 處偵測用 token 字面，強行移前須做 16 處字面手術（scope 爆炸）；自身檔的 `__DR_*__` **產出行為**已由既有 AST 規則涵蓋。
+- **驗收矩陣（偵測層 ＋ 真閘門層 皆通過）**：scanner 自身 **0**／control **0**／a6a **≥1**／a6c **≥1**／a7 **≥1**；正本 repo **68 PASS / 1 FAIL / 0 SKIP**（唯一 FAIL ＝ 既有 S3.8 STALE-ARTIFACT，非本輪引入）。
+- **CIO 對抗性審查（獨立 context，`deleg_0c0725f6`）**：verdict **APPROVE**／`blocking=[]`／受審 tree `ff737dbdc6ba690b4c38e9397b16223b689ddf5c`。獨立取證：自建 `GIT_INDEX_FILE` 復現同一 tree；`git diff --name-only` 證實僅一檔不同；自跑 292 檔假陽性掃描（判定翻轉 0、新判 True 0）；真閘門注入 5 變體（含 a6c 轉義對照）；**HEAD 版 vs 候選版整支 stdout diff 僅 S1.11 一行** → 無既有斷言被削弱／刪除／恆真；INC-291 V1/V2/V3 逐字未動。判決檔 `.git/cio_reviews/20261009_inc292_round2.json` ＋ 完整實驗輸出 `20261009_inc292_round2_ciogate.out`。
+- **落地與上線**：commit `42c6d754`（tree 逐字等於受審 tree；僅 1 檔；3 dirty ＋ 1 untracked 未帶走）→ 閘門 v5（1 commit 全通過）→ push `845245b2..42c6d754  HEAD -> clean-main`。上線驗證：`remote == local == 42c6d754`、未推 0、線上 raw tools 檔 sha256 與本機 blob **逐位元相同**（34,036 bytes）、Pages `/`／`index.html`／`daily_report_v2_2026-10-08.html` 皆 200、閘門重跑 68/1 且 S1.8 `[]`、acceptance fixtures 全 OK。
+- **已揭露（不影響 CLOSED）**：① 落地 JSON 為**最小 JSON**（本輪 `subagent-summary` 摘要檔未落地；判讀欄位逐字保留、`acceptance_reproduced` 標［節錄］、ref 指回 live log）② **a6c 轉義版**（emit 字面以 `\u` 持有）未被偵測 —— 經 CIO 獨立驗證主張成立：屬 `has_emit` 純文字比對的固有極限，在 `845245b2` 即已存在於所有非自身檔、非本次引入、不改變任何真值或已發布產出；依 Release boundary（`blocking=[]`）登記為 required_fixes 而非阻斷。
+- **後續卡（另案，不 reopen 本卡）**：`PEND-20261009-01`～`05` —— ① emit 偵測改 AST 折疊 ② 檔頭補列本案例 ③ 驗收樣本移入版控／S4 內建 ④ S4.6 降噪 ⑤ 自身檔禁呼叫共用 emit／組裝 API 之 AST 斷言。
 
 ## INC-293 ｜ 2026-10-07 ｜ P2｜open ｜ 守門掃描覆蓋邊界（副檔名清單／混淆變體）— detector coverage backlog
 - 來源：2026-10-07 第二輪對抗性 CIO 審查 required_fix #2/#3（攻擊項 a5／a7／a3f）。
