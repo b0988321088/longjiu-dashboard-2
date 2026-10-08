@@ -10,6 +10,18 @@
   S3 真實輸入產出：決策追蹤章存在、列數 == 卡片數、洲際W轉貸計數一致、缺口欄＝pp、無 __DR_ 殘留
   S4 負向對照：把私有實作塞回暫存副本 → 閘門必須 FAIL（證明閘門非空洞）
 
+INC-291（2026-10-09）擴充：涵蓋第 4 條雙 producer 分歧「緊急應變（美股／台股）LLM 區塊」——
+  唯一實作＝`daily_report_assembly.build_emergency_block()`。
+  偵測鍵以 \\u 轉義持有（故掃描器不會自我命中、亦無須自我豁免跳過，R2）；白名單一律以 **repo 相對
+  路徑** 判定（R1）；標記比對去 emoji（R3-V1/V2）；私有 formatter 以 **AST** 判定 content_type
+  引數（R3-V3，引號／位置引數無關）。
+  新增：S1.11、S3.17（today 值敏感）、S5.9/S5.10（today 來源不變量）、S4.7–S4.12（六種變體＋對照）。
+
+已揭露的偵測極限（分層防禦，不是單點保證）：
+  ① 若 producer 把標記 **拆成變數拼接**（`KEY="緊急應變"+"資料"`）且檔內同時不出現 `daily_report_v2`
+     字面，V2 抓不到 → 仍由 S1.7d／S2.6／S5.7 的結構檢查（兩 producer 必須呼叫同一函式）兜底。
+  ② 掃描是「文字＋AST」啟發式，不是資料流分析；要證明「無第二實作」最終仍靠 code review。
+
 唯讀：只讀 repo 檔＋寫 %TEMP% 暫存副本。rc=0 全過、rc=1 有 FAIL。
 ROLE: DETECTOR-ONLY
 
@@ -47,7 +59,8 @@ def rd(p):
 SHARED = BASE / "daily_report_assembly.py"
 REGEN = BASE / "regenerate_report.py"
 RUNDAILY = BASE / "run_daily.py"
-REQUIRED_API = ("build_schedule_rows", "build_p0_tasks_html", "substitute_dr_tokens", "build_decision_rows")
+REQUIRED_API = ("build_schedule_rows", "build_p0_tasks_html", "substitute_dr_tokens", "build_decision_rows",
+                "build_emergency_block")
 _MARKER = "執行中決策追蹤"
 # 只認「會被寫進 HTML 的那一行」，註解／docstring 提到這串字不算私有實作
 _EMIT = '📋 執行中決策追蹤</p>'
@@ -60,12 +73,22 @@ print("=" * 78)
 # ═══════════ S1. 唯一實作（白名單式全 repo 掃描）═══════════
 print("\n[S1] 唯一實作（白名單式全 repo 掃描；未知新檔不得自建組裝路徑）")
 
-# 白名單：允許合法持有 `__DR_*__` token／決策追蹤 emit 字串的檔案
+# 白名單一律以「repo 相對路徑」判定（INC-291 R1：用 basename 判 → 任意子目錄放同名檔即全豁免）
 DR_WHITELIST = {"daily_report_assembly.py",   # 唯一取代實作
                 "run_daily.py"}                # 日報模板持有者（__DR_*__ 佔位符本身）
 EMIT_WHITELIST = {"daily_report_assembly.py"}  # 只有它能 emit「執行中決策追蹤」章
+# INC-291：緊急應變區塊的私有組裝偵測（唯一出處＝共用模組）
+# 標記刻意以 \u 轉義持有（R2）：掃描器自身不得因「持有字面」被自我豁免，
+# 也不得因持有字面而在全 repo 掃描命中自己 → 本組檢查因此可置於自我豁免之前。
+_EM_KEY = "\u7dca\u6025\u61c9\u8b8a\u8cc7\u6599"   # 正規化鍵：去 emoji（R3：有無 📅 都要抓到）
+_EM_CT_KEY = ("\u0065\u006d\u0065\u0072\u0067\u0065\u006e\u0063\u0079"
+              "\u005f\u0061\u006e\u0061\u006c\u0079\u0073\u0069\u0073")  # emergency_analysis
+_DAILY_NAME = "daily_report_v2"   # 會產出／讀取日報的檔（V1：任何上下文皆不得持有該標記）
+EM_WHITELIST = {"daily_report_assembly.py"}
 # 掃描器自身（僅偵測、不產出）；豁免前提＝不得有 .replace(__DR_*) 或匯入共用組裝模組
-_SELF_EXEMPT = {"verify_daily_report_single_producer.py"}
+# ⚠️ 以 rel 判定：本檔在 tools/ 底下（R1 改 rel 後，用 basename 會漏掉自己→被自己的白名單判為違規）
+_SELF_EXEMPT = {"tools/verify_daily_report_single_producer.py"}
+_SELF_REL = "tools/verify_daily_report_single_producer.py"
 _SELF_MARK = "ROLE: DETECTOR-ONLY"
 _SELF_NAME = "verify_daily_report_single_producer.py"
 _SCAN_EXT = (".py", ".sh", ".js")
@@ -105,6 +128,41 @@ def _has_private_dr_replace(src):
     return False
 
 
+def _emit_like_em_lines(src):
+    """回傳「看起來在產出緊急應變區塊」的行（R3：不綁 emoji／引號樣式）。
+
+    判準＝同一行同時含標記與 HTML／插值語境（`<` 或 `{`）。
+    註解、純字串常數（例如 `check_usd_advisory.py` 用來跳過歷史存檔區段的行首標記）不含上述語境 → 不算。
+    """
+    return [ln for ln in src.splitlines() if _EM_KEY in ln and ("<" in ln or "{" in ln)]
+
+
+def _private_em_formatter_calls(src):
+    """AST：把 `emergency_analysis` 當內容型別傳進呼叫者（R3：引號／空白樣式無關）。
+
+    兩種形式都算：`f(x, content_type="emergency_analysis")`、`f(x, "emergency_analysis")`。
+    AST 解析失敗（非合法 Python）→ 回空清單，不讓閘門因單一壞檔崩潰。
+    """
+    import ast as _ast
+    try:
+        tree = _ast.parse(src)
+    except SyntaxError:
+        return []
+    hits = []
+    for node in _ast.walk(tree):
+        if not isinstance(node, _ast.Call):
+            continue
+        for _kw in node.keywords:
+            _v = _kw.value
+            if isinstance(_v, _ast.Constant) and _v.value == _EM_CT_KEY:
+                hits.append(f"kw:{_kw.arg}")
+        if len(node.args) >= 2:
+            _a1 = node.args[1]
+            if isinstance(_a1, _ast.Constant) and _a1.value == _EM_CT_KEY:
+                hits.append("pos2")
+    return hits
+
+
 def scan_producers(root, extra_skip=()):
     """白名單式掃描 → [(相對路徑, 違規說明), ...]；同時回傳掃描檔數。"""
     root = Path(root)
@@ -122,7 +180,17 @@ def scan_producers(root, extra_skip=()):
         txt = rd(f)
         has_lit = bool(re.search(r"__DR_[A-Z_]+__", txt))
         has_emit = _EMIT in txt
-        if f.name in _SELF_EXEMPT:
+        # ── INC-291 緊急應變檢查：置於自我豁免之前 → 任何檔名都不得跳過（R2）──
+        # V1 在任何上下文都不得持有標記（擋變數間接）；V2 擋 emit 語境的私有組裝；
+        # V3 以 AST 擋私有 formatter（引號／空白樣式無關）。
+        if rel not in EM_WHITELIST:
+            if _DAILY_NAME in txt and _EM_KEY in txt:
+                viol.append((rel, "會產出／讀取日報，且檔內出現緊急應變標記（任何上下文皆不得持有）"))
+            elif _emit_like_em_lines(txt):
+                viol.append((rel, "emit 緊急應變區塊但不在白名單（未知 producer 自建組裝路徑）"))
+            if _private_em_formatter_calls(txt):
+                viol.append((rel, "出現私有 emergency_analysis formatter 呼叫（唯一組裝＝共用模組）"))
+        if rel in _SELF_EXEMPT:
             # 掃描器自身：可持有偵測用字面、可為「比對」而匯入共用模組，
             # 但不得自行取代 __DR_*__，且必須自我標記 DETECTOR-ONLY（否則白名單即後門）
             if _has_private_dr_replace(txt):
@@ -130,11 +198,11 @@ def scan_producers(root, extra_skip=()):
             elif _SELF_MARK not in txt:
                 viol.append((rel, "自我豁免但缺 " + _SELF_MARK + " 標記"))
             continue
-        if has_lit and f.name not in DR_WHITELIST:
+        if has_lit and rel not in DR_WHITELIST:
             viol.append((rel, "出現 __DR_*__ 字面但不在白名單（未知 producer 自建取代路徑）"))
-        if has_emit and f.name not in EMIT_WHITELIST:
+        if has_emit and rel not in EMIT_WHITELIST:
             viol.append((rel, "emit 決策追蹤章但不在白名單"))
-        if f.name == "run_daily.py" and _has_private_dr_replace(txt):
+        if rel == "run_daily.py" and _has_private_dr_replace(txt):
             viol.append((rel, "模板持有者 run_daily.py 不得自行取代 __DR_*__"))
     return viol, n
 
@@ -162,12 +230,26 @@ for tag, path in (("regenerate_report.py", REGEN), ("run_daily.py", RUNDAILY)):
        ("_asm_p0(" in s_ and "_asm_dr(" in s_) or ("build_p0_tasks_html(" in s_ and "substitute_dr_tokens(" in s_))
 ck("S1.7 共用模組是決策追蹤章唯一出處（emit 字串僅 1 處）",
    src_shared.count(_EMIT_TPL) == 1, f"命中 {src_shared.count(_EMIT_TPL)} 處")
+# ---- INC-291：緊急應變區塊同樣只有一套實作 ----
+ck("S1.7b 共用模組是緊急應變區塊唯一 emit 出處（標記僅 1 處）",
+   src_shared.count(_EM_KEY) == 1, f"命中 {src_shared.count(_EM_KEY)} 處")
+ck("S1.7c 共用模組提供 build_emergency_block", "build_emergency_block" in _shared_defs)
+for tag, path in (("regenerate_report.py", REGEN), ("run_daily.py", RUNDAILY)):
+    _s = rd(path)
+    ck(f"S1.7d {tag} 無緊急應變區塊私有 emit（私有組裝已刪）", _EM_KEY not in _s,
+       f"命中 {_s.count(_EM_KEY)} 處")
+    ck(f"S1.7e {tag} 無私有 emergency_analysis formatter 呼叫（AST 判定）",
+       not _private_em_formatter_calls(_s))
+    ck(f"S1.7f {tag} 無私有 as_of 標示實作（_stale_badge 賦值）",
+       not re.search(r"^\s*_stale_badge\s*=", _s, re.M), "AST/正則：賦值才算實作，註解提及不算")
+ck("S1.11 掃描器以 \\u 轉義持有偵測鍵（不會自我命中，故無須自我豁免跳過）",
+   _EM_KEY not in rd(BASE / _SELF_REL), f"原始鍵殘留 {rd(BASE / _SELF_REL).count(_EM_KEY)} 處")
 
 _repo_viol, _scanned = scan_producers(BASE)
 ck("S1.8 全 repo 白名單掃描：無未授權的組裝路徑", not _repo_viol, str(_repo_viol[:5]))
 ck("S1.9 掃描確實有掃到檔案（防空掃描假綠）", _scanned > 50, f"掃描 {_scanned} 檔")
 _PROD_REFS = []
-for _n in ("regenerate_report.py", "run_daily.py", "scripts/morning_deploy.py",
+for _n in ("regenerate_report.py", "run_daily.py", "morning_deploy.py",
            "sync_all.py", "daily_build.py", "four_source_sync.py"):
     _fp = BASE / _n
     if _fp.exists() and _SELF_NAME in rd(_fp):
@@ -207,6 +289,9 @@ ck("S2.2 run_daily 呼叫 build_p0_tasks_html（4 位置參數）",
 ck("S2.3 兩邊缺口口徑同一函式（substitute_dr_tokens 2 參數）",
    _c_regen.get("substitute_dr_tokens") == [2] and _c_run.get("substitute_dr_tokens") == [2],
    f"regen={_c_regen.get('substitute_dr_tokens')} run={_c_run.get('substitute_dr_tokens')}")
+ck("S2.6 兩邊緊急應變同一函式（build_emergency_block 3 位置參數）",
+   _c_regen.get("build_emergency_block") == [3] and _c_run.get("build_emergency_block") == [3],
+   f"regen={_c_regen.get('build_emergency_block')} run={_c_run.get('build_emergency_block')}")
 
 import daily_report_assembly as asm
 
@@ -252,6 +337,37 @@ for _tok in ("__DR_TW_GAP__", "__DR_US_GAP__", "__DR_DEF_GAP__", "__DR_BOND_GAP_
         _gap_bad.append((_tok, _o))
 ck("S3.6 六個缺口欄逐欄皆為 pp（舊 TWD 金額格式已消滅）", not _gap_bad, str(_gap_bad))
 
+# INC-291：緊急應變區塊（唯一實作）以真實輸入實測
+_ej_p = BASE / "data" / "emergency_llm_analysis.json"
+if _ej_p.exists():
+    try:
+        _dt_em = str(json.loads(rd(_ej_p)).get("date") or "")[:10]
+    except Exception:
+        _dt_em = ""
+    _em1 = asm.build_emergency_block(BASE, _snap, _today)
+    _em2 = asm.build_emergency_block(BASE, _snap, _today)
+    ck("S3.12 緊急應變區塊決定性（同輸入兩次 md5 相同）", _md5(_em1) == _md5(_em2), _md5(_em1)[:12])
+    ck("S3.13 緊急應變區塊＝單一 callout-warn 容器（連結在其內）",
+       _em1.startswith('<div class="callout callout-warn">')
+       and _em1.count('<div class="callout callout-warn">') == 1 and _em1.count("</div>") == 1, _em1[:26])
+    ck("S3.14 as_of 標示與資料日一致（資料日 != 今天 → 必標）",
+       ("歷史內文（as_of=" in _em1) == bool(_dt_em and _dt_em != _today),
+       f"data_date={_dt_em} today={_today}")
+    ck("S3.15 連結 2 條（完整報告＋數據版備援）",
+       _em1.count("📄 檢視完整 LLM 緊急應變報告 →") == 1
+       and _em1.count("📊 數據版報告（備援）") == 1, f"links={_em1.count('<a href=')}")
+    ck("S3.16 緊急應變區塊無未替換模板佔位符", not re.search(r"__[A-Z_]+__", _em1),
+       str(re.findall(r"__[A-Z_]+__", _em1)[:3]))
+    # R4：today 是「值」敏感的（決定要不要上 as_of 標示）→ 資料日與牆鐘日兩個值都必須符合判準，
+    #     不得只驗「閘門自己取的那個值」（否則正好掩蓋兩 producer 的 today 來源差異）。
+    _wall = __import__("datetime").date.today().isoformat()
+    for _tv in sorted({_today, _wall}):
+        _b = asm.build_emergency_block(BASE, _snap, _tv)
+        ck(f"S3.17 today={_tv}（值敏感）as_of 標示符合判準",
+           ("歷史內文（as_of=" in _b) == bool(_dt_em and _dt_em != _tv), f"data_date={_dt_em}")
+else:
+    SKIP.append("S3.12-16 無 data/emergency_llm_analysis.json（略過）")
+
 # 產出檔（若已存在）
 _ap = argparse.ArgumentParser()
 _ap.add_argument("--report", default=None)
@@ -277,12 +393,6 @@ else:
 
 # ═══════════ S5. 雙 producer 同輸入等效性 ═══════════
 print("\n[S5] 雙 producer 同輸入等效性（呼叫點正規化後必須相同）")
-
-
-def _today_exprs():
-    return {"TODAY", "__import__('datetime').date.today().isoformat()",
-            "date.today().isoformat()", "dt.today().isoformat()",
-            "(datetime.date.today()).isoformat()"}
 
 
 def _sources(src):
@@ -370,6 +480,24 @@ _in_b = asm.build_p0_tasks_html(asm.load_events(BASE), asm.load_pending(BASE), _
 ck("S5.5 同輸入實測：兩次組裝 md5 相同", _md5(_in_a) == _md5(_in_b), _md5(_in_a)[:12])
 ck("S5.6 組裝完全不依賴呼叫端（無隱含全域狀態）",
    _md5(asm.build_p0_tasks_html(list(_events), list(_pending), json.loads(json.dumps(_snap)), _today)) == _md5(_in_a))
+_n_em = _normalize(RUNDAILY, "build_emergency_block")
+_r_em = _normalize(REGEN, "build_emergency_block")
+ck("S5.7 build_emergency_block 兩邊輸入正規化後相同", _n_em == _r_em,
+   f"run_daily={_n_em}  regenerate={_r_em}")
+ck("S5.8 build_emergency_block 輸入＝(BASE, snapshot.json, 今天)",
+   _r_em == ["name:BASE", "file:snapshot.json", "today"], str(_r_em))
+# R4：S5.7/S5.8 只比「來源 token」，比不出 today 的「值」。兩 producer 的 today 來源本就不同
+#   （regenerate＝牆鐘日 `TODAY = dt.today()`；run_daily＝`TODAY = _snap_date`）
+#   → 改為斷言「管線不變量存在」：regenerate 必須先滾日（_roll_day_to_today）才組裝，
+#     使 snapshot.date == TODAY；run_daily 的 TODAY 必須來自 snapshot。不變量消失即 FAIL。
+_regen_src, _run_src = rd(REGEN), rd(RUNDAILY)
+_roll_pos = _regen_src.find("_roll_day_to_today(TODAY)")
+_em_pos = _regen_src.find("build_emergency_block as _asm_em")
+ck("S5.9 regenerate 先滾日才組緊急應變（R4 不變量：snapshot.date == TODAY）",
+   0 <= _roll_pos < _em_pos, f"_roll_day_to_today@{_roll_pos} < 組裝@{_em_pos}")
+ck("S5.10 run_daily 的 TODAY 來源＝snapshot date（與滾日後同值）",
+   re.search(r"^TODAY\s*=\s*_snap_date\b", _run_src, re.M) is not None
+   and re.search(r'_snap_date\s*=\s*_json\.load\(open\(BASE / "snapshot\.json"', _run_src) is not None)
 
 
 # ═══════════ S4. 負向對照 ═══════════
@@ -387,6 +515,29 @@ io.open(_negroot / "evil_producer.py", "w", encoding="utf-8", newline="").write(
     "    h = h.replace(\"__DR_TW_GAP__\", \"-999.9pp\")\n"
     "    h += '\\n<p>\U0001f4cb \u57f7\u884c\u4e2d\u51b3\u7b56\u8ffd\u8e2a</p>'\n"
     "    return h\n")
+# 注入 1b-1d（INC-291 R2/R3）：私有緊急應變組裝的三種變體
+#   1b）含 emoji 的原樣式；1c）**去 emoji**（R3：標記不得綁 emoji）；1d）formatter 單引號／位置引數
+_EMOJI = "\U0001f4c5 "
+io.open(_negroot / "evil_emergency.py", "w", encoding="utf-8", newline="").write(
+    "def build():\n"
+    "    return '<p>" + _EMOJI + _EM_KEY + "\uff1a2026-01-01</p>'\n")
+io.open(_negroot / "evil_noemoji.py", "w", encoding="utf-8", newline="").write(
+    "def build(x):\n"
+    "    return f'<span>" + _EM_KEY + "\uff1a{x}</span>'\n")
+io.open(_negroot / "evil_fmt.py", "w", encoding="utf-8", newline="").write(
+    "def build(t):\n"
+    "    return _format_content_to_html(t, content_type='" + _EM_CT_KEY + "')\n")
+# 注入 1e（INC-291 R1）：子目錄放「同名檔」——舊設計以 basename 判白名單 → 全豁免
+_nested = _negroot / "deep" / "nested"
+_nested.mkdir(parents=True, exist_ok=True)
+io.open(_nested / "daily_report_assembly.py", "w", encoding="utf-8", newline="").write(
+    "def build(h):\n"
+    "    return h.replace('__DR_TW_GAP__', '-999.9pp')\n")
+# 注入 1f（INC-291 R2）：同名掃描器副本＋自行宣告 DETECTOR-ONLY → 不得藉自我豁免掩護私有 emit
+io.open(_negroot / "verify_daily_report_single_producer.py", "w", encoding="utf-8", newline="").write(
+    "# " + _SELF_MARK + "\n"
+    "def build(x):\n"
+    "    return f'<p>" + _EM_KEY + "\uff1a{x}</p>'\n")
 # 注入 2：模板持有者用「變數名」繞過字面比對
 _rdx = rd(_negroot / "run_daily.py")
 _rdx = _rdx.replace("    daily_html = _asm_dr(daily_html, _pen)",
@@ -422,6 +573,21 @@ ck("S4.4 白名單掃描抓到「注入的未知 producer」（CIO 對抗點 A �
 ck("S4.5 白名單掃描抓到「變數名繞過」形式的私有取代（CIO 對抗點 B 的缺口已補）",
    any("run_daily.py" in v[0] and "模板持有者" in v[1] for v in _neg_scan), str(_neg_scan[:4]))
 ck("S4.6 對照組：同一份掃描器對正本 repo 判 0 違規（非全盤誤報）", not _repo_viol, str(_repo_viol[:3]))
+ck("S4.7 白名單掃描抓到「私有緊急應變區塊組裝」（原樣式，含 emoji）",
+   any("evil_emergency.py" in v[0] for v in _neg_scan), str(_neg_scan[:5]))
+ck("S4.8 抓到「去 emoji」變體（R3：標記不綁 emoji）",
+   any("evil_noemoji.py" in v[0] for v in _neg_scan), str(_neg_scan[:5]))
+ck("S4.9 抓到「單引號／位置引數」formatter 變體（R3：AST 判定，非字面比對）",
+   any("evil_fmt.py" in v[0] for v in _neg_scan), str(_neg_scan[:5]))
+ck("S4.10 抓到「子目錄同名檔」全豁免漏洞（R1：白名單改 rel 判定）",
+   any("deep/nested/daily_report_assembly.py" in v[0] for v in _neg_scan), str(_neg_scan[:6]))
+ck("S4.11 抓到「同名掃描器自我豁免」掩護私有 emit（R2：EM 檢查在豁免之前）",
+   any("verify_daily_report_single_producer.py" in v[0] and "緊急應變" in v[1] for v in _neg_scan),
+   str(_neg_scan[:6]))
+ck("S4.12 對照組：正本 repo 緊急應變違規 0 筆、負向鏡像 ≥3 筆（非空洞亦非全盤誤報）",
+   not any("緊急應變" in v[1] for v in _repo_viol)
+   and sum(1 for v in _neg_scan if "緊急應變" in v[1]) >= 3,
+   f"repo={sum(1 for v in _repo_viol if '緊急應變' in v[1])} neg={sum(1 for v in _neg_scan if '緊急應變' in v[1])}")
 
 # ═══════════ 結果 ═══════════
 print("\n" + "=" * 78)

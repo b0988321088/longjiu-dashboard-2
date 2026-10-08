@@ -2365,21 +2365,8 @@ def _format_content_to_html(text, content_type="market_intel"):
                 _formatted_lines.append(f"<p style=\"margin-left:12px\">{_l}</p>")
             else:
                 _formatted_lines.append(f"<p>{_l}</p>")
-    elif content_type == "emergency_analysis":
-        import re as _nm # This import needs to be handled carefully if it's not global
-        for _analysis_line in text.split('\n'):
-            _trimmed_line = _analysis_line.strip()
-            if not _trimmed_line:
-                _formatted_lines.append('<p></p>')
-            elif _trimmed_line.startswith('━'):
-                _formatted_lines.append('<hr>')
-            elif _trimmed_line.startswith('•') or _trimmed_line.startswith('🔥'):
-                _formatted_lines.append(f'<span style=\"display:block\">{_trimmed_line}</span>')
-            elif _trimmed_line.startswith('【') and _trimmed_line.endswith('】'):
-                _formatted_lines.append(f'<strong>{_trimmed_line}</strong>')
-            else:
-                _b = _nm.sub(r'([0-9,]{3,}\\.?[0-9]*|[+-]?[0-9.]+%)', r'<strong style=\"color:#c2410c\">\1</strong>', _trimmed_line)
-                _formatted_lines.append(f'<span>{_b}</span>')
+    # 2026-10-09（INC-291）：原 `elif content_type == "emergency_analysis"` 私有 formatter 已刪除 ——
+    #   緊急應變區塊的唯一組裝＝daily_report_assembly.build_emergency_block()（閘門 S1 禁止復活）。
     return "\n".join(_formatted_lines)
 
 def build_cc_rows() -> str:
@@ -2589,51 +2576,12 @@ def main():
         market_intel_text = "市場情報待補齊"
         intel_signals = {}
 
-    # LLM 緊急應變分析
-    emergency_json_path = BASE / "data" / "emergency_llm_analysis.json"
-    llm_emergency_analysis_html = ""
-    if emergency_json_path.exists():
-        try:
-            emergency_data = json.loads(emergency_json_path.read_text(encoding='utf-8'))
-            analysis_content = emergency_data.get("full_report", emergency_data.get("analysis", ""))
-            _report_html = _format_content_to_html(analysis_content, content_type="emergency_analysis")
-            # 2026-10-03（INC-283）：緊急應變 LLM 內文是自由文字，可能替「可接受範圍內」的桶寫出
-            #   「缺口 ±X.Xpp」等行動字樣（10/2 21:36 美股班內文即為實例：寫「台股 7.6%…缺口 -2.4pp」
-            #   但台股可接受範圍是 7~13%）→ 與 index.html／rebalance_dashboard 同口徑，
-            #   注入日報前一律過 band_filter（裁示②：範圍內＝完全靜默）。範圍外文字原樣保留。
-            try:
-                from report_components import band_filter as _band_filter
-                _report_html = _band_filter(_report_html)
-            except Exception as _bfe:
-                print(f"[WARN] band_filter 套用失敗（緊急應變內文，範圍內靜默可能失效）：{_bfe}")
-            _gen2 = emergency_data.get("generated_at", "") or ""
-            # 2026-09-18 INC-214：原字串寫死「美股時段產出…今晚 21:30 自動更新」，但 13:00 那條
-            # 有 emergency_gate_tw.py 守門（CALM 就不跑），且文案與實際時段無關 → 使用者抓到
-            # 「緊急應變沒更新」。改為依 generated_at 時段動態、且只承諾真的會發生的排程（21:30 每交易日固定產出）。
-            _h2 = int(_gen2[11:13]) if len(_gen2) >= 13 and _gen2[11:13].isdigit() else 0
-            # 2026-09-18 INC-214b：改成「依 source 判分析標的、標題不再綁時段」，避免手動補跑被誤標
-            # （實例：13:46 手動跑的美股報告被標成「台股時段 13:00 產出」）。時段僅作 fallback。
-            _src2 = str(emergency_data.get("source", "") or "")
-            _is_us2 = ("美股" in _src2) if ("美股" in _src2 or "台股" in _src2) else (_h2 >= 15)
-            _slot2 = ("美股應變分析；最新可用，次一交易日 21:30 固定更新" if _is_us2 else
-                      "台股應變分析；未觸發門檻則沿用此份，美股時段 21:30 每交易日固定更新")
-            _note2 = f'<p style="font-size:12px;color:#6e6e73;margin-bottom:6px">📅 緊急應變資料：{_gen2[:16]}（{_slot2}）</p>' if _gen2 else ""
-            _report_html = _note2 + _report_html
-            _er_files = sorted(BASE.glob("emergency_report_2*.html"), reverse=True)
-            _er_link = ""
-            if _er_files:
-                _er_link = f"https://b0988321088.github.io/longjiu-dashboard-2/{_er_files[0].name}"
-            llm_emergency_analysis_html = f"""<div class="callout callout-warn">
-            {_report_html}"""
-            if _er_link:
-                llm_emergency_analysis_html += f"""
-            <p style="margin-top:8px;text-align:right;font-size:13px">
-              <a href="{_er_link}" target="_blank" style="color:#2563eb">📄 查看完整緊急應變報告 →</a>
-            </p>"""
-            llm_emergency_analysis_html += """
-            </div>"""
-        except Exception as _exc:
-            print(f"[WARN] load emergency_llm_analysis.json failed: {_exc}")
+    # LLM 緊急應變分析（INC-291：唯一實作＝daily_report_assembly.build_emergency_block）
+    #   原私有組裝（_format_content_to_html、無舊值覆蓋、無 as_of 標示、僅 1 條連結、包裝縮排不同）
+    #   已收斂；canonical 口徑＝regenerate_report.py 的已上線實作（同輸入逐位元相同）。
+    from daily_report_assembly import build_emergency_block as _asm_em
+    _snap_em = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+    llm_emergency_analysis_html = _asm_em(BASE, _snap_em, TODAY)
 
     daily_html = render_daily_report(tv, intel_text="", intel_signals=intel_signals, market_intel_text=market_intel_text, llm_emergency_analysis=llm_emergency_analysis_html, schedule_rows_html=_schedule_rows, p0_tasks_html=_p0_html, mb_cc_rows=build_cc_rows())  # 2026-09-16：補上信用卡明細（原本走 run_daily 路徑會是空表，四大信用卡檢查必失敗）
     # 2026-09-16（INC-209）：波動損失卡已改在 render_daily_report() 內注入（此處移除避免重複）

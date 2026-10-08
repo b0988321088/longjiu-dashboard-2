@@ -204,60 +204,13 @@ except Exception as _e:
     print(f"[WARN] condensed intel 注入失敗：{_e}")
 _market_html = f"<pre style='font-size:14px;line-height:1.6;white-space:pre-wrap'>{briefing}</pre>"
 
-# 3b. 載入緊急應變分析
-_emergency_html = ""
-_ej = BASE / "data" / "emergency_llm_analysis.json"
-if _ej.exists():
-    _d = json.loads(_ej.read_text(encoding="utf-8"))
-    _r = _d.get("full_report", _d.get("analysis", ""))
-    # P0-1（2026-09-30）：歷史內文中的清償前舊金額（現金／總資產／總負債／月支出…）
-    # 一律以當日 snapshot 真值覆蓋，不讓 9/29 數字偽裝成 9/30 現況。
-    try:
-        from sot_targets import refresh_stale_amounts as _refresh
-        _r = _refresh(_r, json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")))
-    except Exception as _e_r:
-        print(f"[WARN] P0-1 緊急應變內文舊值覆蓋失敗：{_e_r}")
-    _gen = _d.get("generated_at", "") or ""
-    _hour = int(_gen[11:13]) if len(_gen) >= 13 and _gen[11:13].isdigit() else 0
-    _src = str(_d.get("source", "") or "")
-    _is_us = (("美股" in _src) if ("美股" in _src or "台股" in _src) else (_hour >= 15))
-    _slot = "美股應變分析" if _is_us else "台股應變分析"
-    # 2026-09-18 INC-214：原為「今日 13:00 產出 → 今晚 21:30 自動更新 / 21:30 產出 → 明日 13:00 自動更新」，
-    # 但 13:00 那條受 emergency_gate_tw.py 守門（CALM 不跑）→ 承諾的更新不會發生，使用者抓到「緊急應變沒更新」。
-    # 改為只承諾真的會發生的排程：美股時段 21:30 已改為每交易日固定產出（2026-09-18 使用者核准）。
-    _next = ("次一交易日 21:30 固定更新" if _is_us
-             else "未觸發門檻則沿用此份；美股時段 21:30 每交易日固定更新")
-    _note = f'<p style="font-size:12px;color:#6e6e73;margin-bottom:6px">📅 緊急應變資料：{_gen[:16]}（{_slot}；{_next}）</p>' if _gen else ""
-    # P0-1（2026-09-30 使用者核准）：緊急應變內文若為前一日產出，其中的資產／負債／覆蓋率
-    # 屬當時快照，不得偽裝成當日現況 → 強制標示 as_of。舊分析保留作歷史紀錄。
-    _dt_src = str(_d.get("date") or "")[:10]
-    _is_stale = bool(_dt_src) and _dt_src != str(TODAY)
-    _stale_badge = (f'<p style="font-size:12.5px;color:#b45309;font-weight:700;margin-bottom:6px;'
-                    f'background:#fffbeb;border-left:3px solid #f59e0b;padding:6px 8px">'
-                    f'⚠️ 歷史內文（as_of={_dt_src}）：以下為 {_dt_src} 的緊急應變分析，其中資產、負債、'
-                    f'覆蓋率等數字為<b>當時快照，非 {TODAY} 現況</b>；{TODAY} 真值請以日報第 1 章「財富生命線」為準。</p>'
-                    ) if _is_stale else ""
-    # 2026-10-03（INC-283）：緊急應變 LLM 內文為自由文字，可能替「可接受範圍內」的桶寫出
-    #   「缺口 ±X.Xpp」等行動字樣（10/2 21:36 美股班實例：台股寫「缺口 -2.4pp」但可接受範圍 7~13%）
-    #   → 與 index.html／rebalance_dashboard 同口徑，注入日報前一律過 band_filter
-    #   （裁示②：範圍內＝完全靜默）。範圍外文字原樣保留。
-    try:
-        from report_components import band_filter as _band_filter
-        _r = _band_filter(_r)
-    except Exception as _bfe:
-        print(f"[WARN] band_filter 套用失敗（緊急應變內文，範圍內靜默可能失效）：{_bfe}")
-    _emergency_html = f'<div class="callout callout-warn">{_stale_badge}{_note}{_r.replace(chr(10), "<br>" + chr(10))}</div>'
-    # 加入緊急應變連結（自動找最新可用檔案）
-    _emergency_files = sorted(BASE.glob("emergency_report_2*.html"), reverse=True)
-    _taiex_files = sorted(BASE.glob("emergency_taiex_report_2*.html"), reverse=True)
-    _latest_er = _emergency_files[0].name if _emergency_files else None
-    _latest_tr = _taiex_files[0].name if _taiex_files else None
-    if _latest_er:
-        _railway_link = "https://b0988321088.github.io/longjiu-dashboard-2/%s.html" % _latest_er
-        _emergency_html += '<br><a href="%s" target="_blank" style="display:inline-block;margin-top:10px;color:#34D399;font-weight:bold">📄 檢視完整 LLM 緊急應變報告 →</a>' % _railway_link
-    if _latest_tr:
-        _github_link = "https://b0988321088.github.io/longjiu-dashboard-2/%s.html" % _latest_tr
-        _emergency_html += '<br><a href="%s" target="_blank" style="font-size:13px;color:#6e6e73">📊 數據版報告（備援）</a>' % _github_link
+# 3b. 緊急應變分析（INC-291：唯一實作＝daily_report_assembly.build_emergency_block）
+#   canonical 行為＝本檔 2026-10-09 前的已上線實作（refresh_stale_amounts 舊值覆蓋／as_of
+#   `_stale_badge`／`<br>` 換行／2 條連結）；run_daily.py main() 亦呼叫同一函式
+#   → 兩個 producer 不再各自組裝。已知連結 `.html.html` 缺陷刻意保留（見共用模組 docstring）。
+from daily_report_assembly import build_emergency_block as _asm_em
+_snap_em = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+_emergency_html = _asm_em(BASE, _snap_em, TODAY)
 
 # 3b2. Pending 期限 schema 自癒（2026-10-05 PEND-20261005-03）
 # 為何在產出之前：10/05 07:00 實例是「新增卡漏 needs_due_date」→ 產線末端 check_dividend_caliber
