@@ -10576,6 +10576,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261009025052-1140",
+    "timestamp": "2026-10-09T02:50:52.838505+08:00",
+    "agent": "Hermes",
+    "task": "INC-294 CLOSED（A 案：只修程式不回填歷史）｜commit 21ec3b58（tree 0185c4fd）｜資料 2603bfe1｜後續 3 卡 PEND-20261009-06～08",
+    "summary": "【INC-294 CLOSED 2026-10-09】日報緊急應變連結重複副檔名 .html.html（既有，2 處 404）— A 案修復＋CIO APPROVE＋上線驗證通過。\n\n一、根因（精確定位，取代原卡初步推定）：唯一產生點在 daily_report_assembly.py build_emergency_block() 的 L270／L274 — href 模板 \"%s.html\" % (PAGES_BASE + \"/\" + _ef[0].name)，而 _ef[0].name 取自 glob(\"emergency_report_2*.html\")，本身已含 .html，故再補一次。regenerate_report.py:425 僅是傳遞者。該共用模組同時服務 07:00（regenerate_report.py:211/213）與 22:00（run_daily.py:2582/2584）兩條產線 → 修一處即涵蓋兩線。影響 17 份日報（09-13～10-08）、34 個壞連結。\n\n二、裁決 A 案（使用者 2026-10-09）：只修 producer，不回填 17 份歷史日報。理由：①根因唯一定位 ②A 案已滿足原卡驗收（單一日報 24/24＝200、新產物不再產生 .html.html）③歷史日報是已發布的當日快照，為一個不影響數據正確性的 href 改寫 17 份歷史產物會擴大 scope 並產生額外 Pages 歷史層變動 ④本卡授權目的即修正 INC-289／291「零變化」限制期刻意保留之 defect。→ 17 份歷史日報的 .html.html 屬「刻意保留」，不是未完成；日後掃描命中舊檔不構成 defect、不得據此重開。\n\n三、修正（僅 daily_report_assembly.py，+9／−8）：①L270／L274 href 模板 \"%s.html\" → \"%s\" ②清除 docstring 兩處已過期的「已知缺陷／刻意保留、另案處理」註記並改寫為 INC-294 已修正 ③L266 行內註解同步改寫 ④docstring 相關卡清單加入 INC-294。\n\n四、驗收：①閘門 68 PASS / 1 FAIL / 0 SKIP、S1.8 []、S1.11 PASS（唯一 FAIL＝既有 S3.8）②帶真實 snapshot 直呼 build_emergency_block，三組日期（None／10-08／10-09）皆輸出單一 .html、.html.html 計數 0 ③連結目標全 200 ④%TEMP% 鏡像跑真產線 regenerate_report.py --no-push → rc=0，新產出 .html.html 計數 0 ⑤兩條產線共用模組已證實。\n\n五、CIO 對抗性審查（獨立 context，deleg_9acb57c6）：verdict APPROVE／blocking=[]／受審 tree 0185c4fd5f0272f9716f76f927bc314014270043。獨立自建 GIT_INDEX_FILE 復現同一 tree；git diff --name-only 證實僅一檔；雙版本 harness 三組日期逐位元比對（差異精確為兩條 href）；全庫掃描確認產生點唯一（build_rebalance_dashboard.py:630 不補 .html、regenerate_report.py:435 為 dead code、index.html 命中係審查內文敘述）；線上 curl .html 200／.html.html 404；鏡像產線 rc=0 且 .html.html＝0；確認候選 tree 未夾帶 3 個既有 dirty 與 1 個 untracked。判決檔 .git/cio_reviews/20261009_inc294.json。\n\n六、落地與上線：程式 commit 21ec3b58（tree 逐字等於受審 tree；僅 1 檔）→ RECORD（.git/CIO_APPROVED）→ 閘門 v5 → push fd51f676..21ec3b58。上線驗證：remote == local == 21ec3b58、未推 0、線上 raw daily_report_assembly.py sha256 與本機逐位元相同（a7a44d84…）。資料 commit 2603bfe1（error_register CLOSED ＋ PEND-20261009-06～08），TAG 車道。\n\n七、已揭露（不影響 CLOSED）：首次線上 sha256 比對不符（回傳前一版 a344f155…），經查為 Pages／CDN 重建延遲（加 cache-buster 重取即一致），非發布內容不一致。\n\n八、過程發現（另案）：在 %TEMP% 鏡像跑產線時，risk_factor_penetration.py:28 寫死正本絕對路徑，把 PNG 寫進正本 repo（sandbox 逃逸）。已刪除外洩檔並驗證正本工作區乾淨。CIO 實測證實：改指鏡像後逃逸 diff＝0；全庫 60 檔／65 處同型硬編碼。與 no-hardcode-mandate 直接衝突。\n\n九、後續卡分流（依使用者裁決，不 reopen INC-294）：PEND-20261009-06（regenerate_report.py:210 過期註解，P2）／07（daily_report_assembly.py:218 docstring 語意限定為 INC-289 驗收，P2）／08（全庫 60 檔寫死絕對路徑 sandbox 逃逸，P1 — 優先級最高）。CIO required_fixes #4（歷史不回填裁決）不另開卡，已直接寫入 INC-294 結案證據。\n\n十、產出影響時點：缺陷自下一份新產出日報（2026-10-09，07:00 產線）起消失；歷史 17 份維持原狀。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-08T22:45:45.470597"
