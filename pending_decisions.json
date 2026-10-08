@@ -213,17 +213,17 @@
   {
     "date": "2026-09-23",
     "title": "Coast FI 真值日 writer／caller 缺失（無腳本 caller／無 freshness gate）",
-    "status": "待處理",
+    "status": "關案",
     "tags": "CoastFI,真值日,驗證",
-    "detail": "9/23 上線時為手動首跑。待驗證點：①真值日步驟 4b 是否被實際執行 ②history 逐次留痕（上限 90）③燈號未變時不推播 ④config target_date 2027-02-01 屆期後門檻自動收斂\n\n【2026-10-08 唯讀診斷（升級為 Active Repair）】\n症狀：snapshot.coast_fi_engine.asof 停留 2026-09-28、history 僅 9/23、9/27、9/28 → 10/1 真值日步驟 4b 未執行。\nQ1 誰應該呼叫：設計上的唯一 caller ＝ monthly-truth-day SOP 步驟 4b（真值日 cron 8722ae6b67af 觸發的 LLM agent 於互動對話中執行）。全庫 grep coast_fi_engine 只有讀者（check_thresholds 決策端清單／tools/verify_ficriteria／tools/verify_pi_sot）；無任何 .py／.sh／cron 呼叫它；--notify 同樣僅存在於 SOP 文字。\nQ2 應在哪個 stage：SOP 4b，位置在『4 留停驗收表』之後、『5 產出真值差異報告』之前。10/01 該次 cron 只發提醒（使用者當時未提供資料）→ 未走到 4b；之後對話中提供資料時 4b 未執行。\nQ3 為何驗證器沒攔：check_thresholds.py 與 tools/verify_ficriteria.py 對 'asof' ≡ 0 命中 → 全系統無 freshness 斷言；verify_ficriteria『6) coast_fi_engine』只驗口徑（跑道分母＝極端情境、PCCR 實收同口徑），不驗是否更新 → 停擺 10 天仍可全綠。\nQ4 最小修復（順序不可顛倒）：① freshness gate（先讓停擺可見、可攔）② deterministic writer（把 4b 從『LLM 讀 SOP 自行決定』改為確定性腳本）③ cron（最後）。理由：沒有斷言，補了 caller 下次仍會被繞過。\n【定案】使用者 2026-10-08 裁決：升級 Active Repair；施工順序 ①→②→③；不得先加 cron。",
+    "detail": "9/23 上線時為手動首跑。待驗證點：①真值日步驟 4b 是否被實際執行 ②history 逐次留痕（上限 90）③燈號未變時不推播 ④config target_date 2027-02-01 屆期後門檻自動收斂\n\n【2026-10-08 唯讀診斷（升級為 Active Repair）】\n症狀：snapshot.coast_fi_engine.asof 停留 2026-09-28、history 僅 9/23、9/27、9/28 → 10/1 真值日步驟 4b 未執行。\nQ1 誰應該呼叫：設計上的唯一 caller ＝ monthly-truth-day SOP 步驟 4b（真值日 cron 8722ae6b67af 觸發的 LLM agent 於互動對話中執行）。全庫 grep coast_fi_engine 只有讀者（check_thresholds 決策端清單／tools/verify_ficriteria／tools/verify_pi_sot）；無任何 .py／.sh／cron 呼叫它；--notify 同樣僅存在於 SOP 文字。\nQ2 應在哪個 stage：SOP 4b，位置在『4 留停驗收表』之後、『5 產出真值差異報告』之前。10/01 該次 cron 只發提醒（使用者當時未提供資料）→ 未走到 4b；之後對話中提供資料時 4b 未執行。\nQ3 為何驗證器沒攔：check_thresholds.py 與 tools/verify_ficriteria.py 對 'asof' ≡ 0 命中 → 全系統無 freshness 斷言；verify_ficriteria『6) coast_fi_engine』只驗口徑（跑道分母＝極端情境、PCCR 實收同口徑），不驗是否更新 → 停擺 10 天仍可全綠。\nQ4 最小修復（順序不可顛倒）：① freshness gate（先讓停擺可見、可攔）② deterministic writer（把 4b 從『LLM 讀 SOP 自行決定』改為確定性腳本）③ cron（最後）。理由：沒有斷言，補了 caller 下次仍會被繞過。\n【定案】使用者 2026-10-08 裁決：升級 Active Repair；施工順序 ①→②→③；不得先加 cron。\n\n【2026-10-09 收斂完成（使用者裁決 A：① Freshness Gate ＋ ② Deterministic Writer ＋ ③ 用 ② 收斂）】\n① check_thresholds.py ②g「Coast FI freshness」（fail-closed；掛 sync_all 的「門檻SoT檢查」步驟）：\n   錨點＝snapshot.last_updated（真值日，只由 apply_truth_* 寫）；刻意不用 snapshot.date（＝每日管線寫的「今日」，會每日偽陽性擋關）。\n   前置＝DB assets[真值日] 已落（未定稿 → 不檢查、不誤擋）；asof < 真值日 → rc=1；缺 coast_fi_engine 鍵亦 rc=1（不 fail-open）。\n   沙箱驗收 6/6 PASS（未定稿不誤擋／正向 ==、> ／真正負向／缺鍵／未定稿缺鍵），真值前後 sha256 相同。\n② truth_day_finalize.py 新增固定入口：sabbatical_checklist_update → coast_fi_engine --write → --notify → post_update_reminder；\n   硬性步驟失敗即中止回非 0、輸出步驟失敗只警告；--dry 不寫檔。monthly-truth-day SOP 4/4b 已改指向此入口（含守門與口徑警示）。\n③ 收斂：snapshot.coast_fi_engine.asof 2026-09-28 → 2026-10-09；重跑逐位元相同（冪等）；閘門回綠 rc=0。\n④ 附帶修復（施工中揭露的既存缺陷）：coast_fi_engine.py 的 PCCR 分子原讀 snapshot.monthly_dividend_total，\n   但該鍵自 2026-10-01 起由 dividend_tracker 寫入「當月實收」（10/09＝9,446）→ PCCR 被低估為 55.1%（錯誤產出）。\n   改用既有單一口徑 passive_caliber.div_norm（常態月配 170,586）→ PCCR 136.0%；canonical_source 標籤同步更正。\n   未動：保守軌／實收軌／門檻／租金／現金數字。\n⑤ 真值刷新（照真值保留、未回滾、未美化）：留停驗收表 現金水位 853,675→606,485（< 底線 700,000）、跑道 798→567 天、\n   餘裕 +153,675→−93,515，判定 🟢 已達留停門檻 → 🟡 可留但先補水庫。\n   歸因＝真值刷新造成的判定變動（606,485 係 cash_layers.unrestricted_cash 既有真值、derived_at 2026-10-08），非本批 writer 的產出錯誤。\n⑥ 落地：程式 commit 93268e74（tree 1d5ee1359716）＋資料 commit 884c9d8e。\n⑦ 未做（未授權）：③ 新增 cron —— 第三階段，待本批線上驗收後另案評估。",
     "due_date": null,
     "due_date_source": "未提供",
     "needs_due_date": true,
-    "last_confirmed": "2026-10-08",
-    "last_confirmed_source": "使用者裁決升級為 Active Repair",
+    "last_confirmed": "2026-10-09",
+    "last_confirmed_source": "使用者裁決：#12 A 批（①＋②＋③ 收斂）完成",
     "owner": "CEO",
     "external_owner": null,
-    "status_raw": "🔴 Active Repair（2026-10-08 使用者裁決升級）：無腳本 caller —— 唯一 caller 是 monthly-truth-day SOP 步驟 4b，由 LLM 自行決定跑不跑；驗證器零 freshness 斷言；snapshot.coast_fi_engine.asof 停留 2026-09-28。修復順序：①freshness gate ②deterministic writer ③cron（最後）。",
+    "status_raw": "✅ 已完成・關案（2026-10-09 使用者裁決）：① freshness gate ② deterministic writer ③ 收斂 三項完成，並附帶修復施工中揭露的 PCCR 常態口徑缺陷 —— 程式 commit 93268e74（CIO-DeepSeek-Flash 對抗性審查 APPROVE／11 檢查點全 PASS／blocking 空／tree 1d5ee1359716）＋ 資料 commit 884c9d8e。cron 未做（第三階段，另案）。",
     "is_informational": false
   },
   {
