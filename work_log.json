@@ -2140,5 +2140,17 @@
   "category": "完成",
   "item": "2026-10-08 Pending 結案歸檔 2 張完成卡（dirty_gate fail-closed／push ref topology P1）— 解除 sync_all「門檻SoT檢查」長期阻塞",
   "detail": "①production auto-commit dirty-worktree fail-closed（2026-10-06 閉環）②push 來源/ref topology 收斂 INC-236 延伸（Phase A/C 上線 083d0eca、Phase B B-1~B-4 CLOSED，pre-push v5 invariant f2d86ad4）。兩卡 status 含『已完成』卻留在 pending_decisions.json → check_thresholds『未閉環卡狀態不得含結案字樣』FAIL → sync_all 門檻SoT檢查步中止。依治理規則結案歸檔（pending→archive），pending 49→47。後續追蹤（另案卡）：dirty_gate 升級 per-commit scope isolation（方案 2）。"
+ },
+ {
+  "date": "2026-10-08",
+  "category": "完成",
+  "item": "日報2026-10-08（已產出（金額見 snapshot／當日日報檔，勿在此複寫數字））",
+  "detail": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）"
+ },
+ {
+  "date": "2026-10-08",
+  "category": "完成",
+  "item": "資產穿透2026-10-08（已產出（五桶市值見 snapshot.penetration.actual_twd））",
+  "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
  }
 ]
