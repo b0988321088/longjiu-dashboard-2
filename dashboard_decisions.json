@@ -10518,6 +10518,16 @@
       "status": "completed",
       "source": "auto"
     }
+,
+  {
+    "id": "mem-20261008193711-1134",
+    "timestamp": "2026-10-08T19:37:11.564239+08:00",
+    "agent": "Hermes",
+    "task": "開卡 PEND-20261008-01｜Producer commit/push scope isolation（統一 governance 卡）",
+    "summary": "使用者 2026-10-08 裁決：C 開統一卡＋A 最小止血。19:04 regenerate_report 自動 commit+push 掃入未提交 working-tree（實證）。核心驗收＝clean gate ≠ producer isolation：producer 在 working tree 有既有 dirty 時仍只能發布本輪真正產生的檔案（produced ∈ after−before，不得自宣告）。三 Phase：A 防既有 dirty 被誤認／B add -A→manifest／C 統一發布出口。最小止血先封 regenerate（移除 4 只讀檔出 produced）。",
+    "status": "pending",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-08T19:04:14.031167"
