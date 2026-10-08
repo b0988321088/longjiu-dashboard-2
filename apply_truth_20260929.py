@@ -105,7 +105,9 @@ snap = __import__("asset_sync").sync_snapshot_keys(snap)
 from asset_sync import rebuild_liabilities       # noqa: E402
 snap["total_assets"] = (snap["insurance_total"] + snap["securities_total_market_value"]
                         + snap["fund_market_value"] + snap["cash_total"])
-snap = rebuild_liabilities(snap)
+# 2026-10-08（PEND-20261006-02 修復）：真值日流程必須**顯式**落 DB liabilities（land_db=True）。
+# 這裡若沿用預設（land_db=False）＝只更新 snapshot，DB liabilities 表不會前進，收工稽核隔日必兩條 ❌。
+snap = rebuild_liabilities(snap, land_db=True)
 snap["真值日_20260929"] = ("使用者 9/29 上傳：Moneybook ZIP（08/30–09/29）＋安聯保單 A/B 截圖＋"
                           "第一金保單頁＋國泰基金庫存＋鉅亨一般申購 CSV／自由PAY 截圖；"
                           "台股證券沿用 3,006,890（本批未提供）")

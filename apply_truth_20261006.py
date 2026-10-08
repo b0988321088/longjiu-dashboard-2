@@ -138,7 +138,9 @@ snap["insurance_total"] = snap["allianz_combined"] + (snap.get("firstjin_fl65_cu
 snap = sync_snapshot_keys(snap) or snap
 snap["total_assets"] = snap["insurance_total"] + snap["securities_total_market_value"] + \
     snap["fund_market_value"] + snap["cash_total"]
-snap = rebuild_liabilities(snap) or snap
+# 2026-10-08（PEND-20261006-02 修復）：真值日流程必須**顯式**落 DB liabilities（land_db=True）——
+# 這支是後續真值日腳本的複製範本；沿用預設＝只更新 snapshot，DB 不會前進（10/08 斷點的成因）。
+snap = rebuild_liabilities(snap, land_db=True) or snap
 snap["last_updated"] = "2026-10-06"
 P.write_text(json.dumps(snap, ensure_ascii=False, indent=1).replace("\n", "\r\n"),
              encoding="utf-8", newline="")

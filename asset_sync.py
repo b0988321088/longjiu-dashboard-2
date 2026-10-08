@@ -10,6 +10,15 @@ import json
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
+# DB 路徑（單一來源）：負債落地寫入器 land_liabilities_db 與 CLI 共用。測試可覆寫此常數。
+DB_PATH = BASE / "dragon_assets.db"
+# 2026-10-08（PEND-20261006-02／CIO 複審 required_fix）：落地必填真值鍵的**單一來源**。
+# 缺任一鍵一律 fail-closed 不寫（含 total_liabilities/total_assets：缺了會把 NULL 寫成「成功」）。
+_LIAB_REQUIRED_KEYS = ("mortgage_yy", "mortgage_yydu", "mortgage_xz", "policy_loan",
+                       "pledge_loan", "fund_pledge_loan", "mortgage_cathay",
+                       "cc_liability", "total_liabilities", "total_assets")
+# 最近一次落地結果（供 CLI 依實際結果輸出訊息，取代無條件「已完成」）。
+_LAST_LAND_RESULT = None
 
 # 同義欄位對照（key 群組，全部要同步）
 SYNONYM_GROUPS = {
@@ -327,8 +336,83 @@ def rebuild_receivables(snap: dict) -> dict:
     return snap
 
 
-def rebuild_liabilities(snap: dict) -> dict:
-    """由明細重建 cc_liability / total_liabilities / net_worth（冪等）。"""
+def land_liabilities_db(snap: dict, date: str | None = None, db_path=None,
+                        dry_run: bool = False) -> dict:
+    """把 snapshot 的負債真值落地到 DB：assets.total_liabilities ＋ liabilities 當日列（UPSERT）。
+
+    2026-10-08 斷點修復（PEND-20261006-02，使用者授權）：
+      真值日只更新 snapshot（rebuild_liabilities 回傳 dict），夜間產線（regenerate_report／
+      four_source_sync）只寫 assets → liabilities 表長期停在最近一次真值日，四源閘門與信用卡
+      一致性檢查隔日必然各報一條 ❌。本函式補回「真值日 → DB liabilities 落列」這最後一哩。
+
+    契約：
+      · 缺任一負債真值鍵 → fail-closed：**不寫入**、不編造 0（回傳 ok=False）。
+      · 冪等：同日可重複執行（有列 UPDATE／無列 INSERT）。
+      · 只碰 assets.total_liabilities・total_assets 與 liabilities 當日列，不動其他表。
+      · 日期語意沿用既有實作＝「執行日」（與 update_data.py／asset_sync CLI 同口徑）。
+    """
+    import datetime as _dt
+    import sqlite3
+    _t = date or _dt.date.today().isoformat()
+    # 必填鍵走模組常數（單一來源，含 total_liabilities/total_assets）→ 缺鍵 fail-closed，不用 `or 0` 編造。
+    _miss = [k for k in _LIAB_REQUIRED_KEYS if snap.get(k) in (None, "")]
+    if _miss:
+        print("⚠️ [asset_sync] 負債真值缺鍵（" + "、".join(_miss)
+              + "）→ DB liabilities **不寫入**（保留原值、不編造 0）")
+        _r = {"ok": False, "date": _t, "action": "skip",
+              "reason": "missing_keys", "missing": _miss}
+        globals()["_LAST_LAND_RESULT"] = _r
+        return _r
+    # liabilities.pledge_loan 欄＝質押「總額」（券商＋基金）：asset_diff_monitor 以欄位加總
+    # 求 total_liab，若只寫券商那筆會少 590 萬（與 update_data.py 同口徑）。
+    _pledge_agg = int(snap.get("pledge_loan", 0) or 0) + int(snap.get("fund_pledge_loan", 0) or 0)
+    _lrow = (snap.get("mortgage_yy"), snap.get("mortgage_yydu"), snap.get("mortgage_xz"),
+             snap.get("policy_loan"), _pledge_agg, snap.get("cc_liability"),
+             snap.get("total_liabilities"), snap.get("mortgage_cathay"))
+    if dry_run:
+        _r = {"ok": True, "date": _t, "action": "dry-run", "row": _lrow}
+        globals()["_LAST_LAND_RESULT"] = _r
+        return _r
+    _a_n = 0
+    _db = sqlite3.connect(str(db_path or DB_PATH))
+    try:
+        _a_n = _db.execute("UPDATE assets SET total_liabilities=?, total_assets=? WHERE date=?",
+                           (snap.get("total_liabilities"), snap.get("total_assets"), _t)).rowcount or 0
+        if _a_n == 0:
+            # 該日 assets 列尚未存在（assets 由夜間產線 INSERT；真值日 09:00 落列時常還沒有）：
+            # 不猜測其他欄位硬 INSERT（會造出殘缺列）→ 顯式告警，指明這是暫態、夜鏈會補齊。
+            print(f"⚠️ [asset_sync] DB assets 無 {_t} 列（UPDATE 0 列）→ 本次僅落 liabilities 列；"
+                  f"assets 列由夜間產線建立後三源才會一致（暫態、已顯式告警）")
+        if _db.execute("SELECT COUNT(*) FROM liabilities WHERE date=?", (_t,)).fetchone()[0]:
+            _db.execute("""UPDATE liabilities SET mortgage_yy=?, mortgage_yydu=?, mortgage_xz=?,
+                policy_loan=?, pledge_loan=?, credit_card=?, total_liabilities=?, mortgage_cathay=?
+                WHERE date=?""", _lrow + (_t,))
+            _act = "update"
+        else:
+            _db.execute("""INSERT INTO liabilities (mortgage_yy, mortgage_yydu, mortgage_xz,
+                policy_loan, pledge_loan, credit_card, total_liabilities, mortgage_cathay, date)
+                VALUES (?,?,?,?,?,?,?,?,?)""", _lrow + (_t,))
+            _act = "insert"
+        _db.commit()
+    finally:
+        _db.close()
+    print(f"✅ DB liabilities 已落地（{_t}／{_act}）：信用卡 {int(snap.get('cc_liability') or 0):,}"
+          f"／總負債 {int(snap.get('total_liabilities') or 0):,}"
+          + ("" if _a_n else "（assets 列待夜鏈建立）"))
+    _r = {"ok": True, "date": _t, "action": _act, "assets_updated": bool(_a_n)}
+    globals()["_LAST_LAND_RESULT"] = _r
+    return _r
+
+
+def rebuild_liabilities(snap: dict, land_db: bool = False) -> dict:
+    """由明細重建 cc_liability / total_liabilities / net_worth（冪等）。
+
+    2026-10-08（PEND-20261006-02 修復）：
+      · 本函式維持「計算函式」語意，**預設不碰 DB**（land_db=False）——避免任何新 caller
+        默默產生持久化副作用。
+      · 需要正式落 DB 的流程必須**顯式**傳 land_db=True（真值日／套用類腳本、CLI
+        `--rebuild-liabilities`）；缺鍵時仍由 land_liabilities_db() fail-closed 不寫。
+    """
     unpaid = cc_unpaid(snap)
     snap["credit_card_pending"] = unpaid
     snap["cc_liability"] = unpaid
@@ -400,6 +484,19 @@ def rebuild_liabilities(snap: dict) -> dict:
     _re = float(snap.get("real_estate_value") or 0)
     snap["debt_ratio"] = round(total / (_ta + _re) * 100, 1) if (_ta + _re) else 0
     snap["debt_ratio_flow"] = round(total / _ta * 100, 1) if _ta else 0
+    # 2026-10-08（PEND-20261006-02）：真值日／套用類腳本 → DB liabilities 落列（補回最後一哩）。
+    # 缺鍵時 land_liabilities_db 自身 fail-closed（不寫入、不編造）；DB 失敗不得阻斷 snapshot 重建。
+    if land_db:
+        try:
+            _lres = land_liabilities_db(snap)
+            # 2026-10-08（CIO 複審 required_fix R4）：rebuild 與 land 的必填鍵集**不同**（rebuild 管推導
+            # 所需鍵、land 管落地所需鍵）。若 rebuild 端過關但 land 端 fail-closed → snapshot 已前進而 DB
+            # 未落地，此狀態**不得視為完成**，故以 ❌ 顯式標示（不 raise，避免卡死真值日流程）。
+            if not _lres.get("ok"):
+                print("❌ [asset_sync] 真值已重建但 DB liabilities **未落地**（"
+                      + "、".join(_lres.get("missing") or []) + "）→ 不得視為完成，請補齊後重跑落地")
+        except Exception as _e:
+            print(f"❌ [asset_sync] DB liabilities 落地失敗（snapshot 已重建，不得視為完成）：{_e}")
     return snap
 
 if __name__ == "__main__":
@@ -409,7 +506,8 @@ if __name__ == "__main__":
         # 並同步 DB assets.total_liabilities + liabilities 表（避免 snapshot/DB 再度分岔）
         snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
         snap = rebuild_receivables(snap)
-        snap = rebuild_liabilities(snap)
+        # 2026-10-08：CLI 是「明確要落 DB」的流程 → 顯式 land_db=True（下方共用同一實作）。
+        snap = rebuild_liabilities(snap, land_db=True)
         # 2026-10-04 P0（CIO 六審／使用者裁示 A）：缺鍵 → 真值層**不寫入**（保留原檔），不編造
         _m6 = globals().get("_LAST_LIAB_MISS") or []
         if _m6:
@@ -418,33 +516,19 @@ if __name__ == "__main__":
         else:
             (BASE / "snapshot.json").write_text(
                 json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
+        _land_ok = True
         try:
             if _m6:
                 raise RuntimeError("負債真值缺鍵 → 略過 DB 寫入（保留原值；見上方告警）")
-            import sqlite3
-            _db = sqlite3.connect(str(BASE / "dragon_assets.db"))
-            _t = __import__("datetime").date.today().isoformat()   # DB 以「執行日」為列（與 update_data 一致）
-            _db.execute("UPDATE assets SET total_liabilities=?, total_assets=? WHERE date=?",
-                        (snap["total_liabilities"], snap.get("total_assets"), _t))
-            # DB liabilities.pledge_loan ＝質押「總額」（券商＋基金）：asset_diff_monitor 以欄位加總
-            # 求 total_liab，若只寫券商那筆會少 590 萬 → 2026-09-29 起寫入加總值。
-            _pledge_agg = int(snap.get("pledge_loan", 0) or 0) + int(snap.get("fund_pledge_loan", 0) or 0)
-            _lrow = (snap.get("mortgage_yy", 0), snap.get("mortgage_yydu", 0),
-                     snap.get("mortgage_xz", 0), snap.get("policy_loan", 0),
-                     _pledge_agg, snap.get("cc_liability", 0),
-                     snap.get("total_liabilities", 0), snap.get("mortgage_cathay", 0))
-            if _db.execute("SELECT COUNT(*) FROM liabilities WHERE date=?", (_t,)).fetchone()[0]:
-                _db.execute("""UPDATE liabilities SET mortgage_yy=?, mortgage_yydu=?, mortgage_xz=?,
-                    policy_loan=?, pledge_loan=?, credit_card=?, total_liabilities=?, mortgage_cathay=?
-                    WHERE date=?""", _lrow + (_t,))
-            else:
-                _db.execute("""INSERT INTO liabilities (mortgage_yy, mortgage_yydu, mortgage_xz,
-                    policy_loan, pledge_loan, credit_card, total_liabilities, mortgage_cathay, date)
-                    VALUES (?,?,?,?,?,?,?,?,?)""", _lrow + (_t,))
-            _db.commit()
-            print(f"✅ DB 已同步（{_t}）：assets.total_liabilities＋liabilities 表（信用卡 {snap['cc_liability']:,}）")
+            # 2026-10-08（CIO 複審 required_fix）：訊息依**實際落地結果**輸出，不再無條件宣稱完成。
+            _lr = globals().get("_LAST_LAND_RESULT")
+            if not _lr or not _lr.get("ok"):
+                raise RuntimeError(f"DB 未落地（{(_lr or {}).get('reason') or '無落地結果'}）")
+            print(f"（DB liabilities 落地：{_lr.get('action')}"
+                  + ("；assets 列待夜鏈建立" if not _lr.get("assets_updated") else "，assets 已同步") + "）")
         except Exception as _e:
-            print(f"⚠️ DB 同步失敗：{_e}")
+            _land_ok = False
+            print(f"❌ DB 同步失敗：{_e}")
         bu = snap.get("liabilities_build_up") or {}
         if not bu:
             print("⚠️ [asset_sync] 無 liabilities_build_up 可印（缺真值，未重建）")
@@ -459,6 +543,11 @@ if __name__ == "__main__":
                   f"｜{'已併入總資產' if RECEIVABLES_IN_ASSETS else '僅列備忘、未計入總資產'}")
         print(f"   淨值 {snap['net_worth']:,}｜負債率 {snap['debt_ratio']}%（含不動產）"
               f"／{snap['debt_ratio_flow']}%（流動）")
+        # 2026-10-08（CIO 複審 required_fix）：DB 未落地 → rc≠0（fail-closed），
+        # 讓真值日流程／cron／稽核能用 return code 偵測，不必靠文字比對。
+        if not _land_ok:
+            print("❌ DB liabilities 未落地 → 真值日流程不得視為完成（exit 1，fail-closed）")
+            _sys.exit(1)
         _sys.exit(0)
     # 自檢
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
