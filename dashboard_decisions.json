@@ -10520,7 +10520,7 @@
     }
   ],
   "meta": {
-    "updated_at": "2026-10-08T09:30:05.715424"
+    "updated_at": "2026-10-08T19:04:14.031167"
   },
   "last_updated": "2026-10-08T18:00:00+08:00",
   "2026-09-29": [
@@ -10753,12 +10753,6 @@
     },
     {
       "date": "2026-10-06",
-      "action": "production auto-commit dirty-worktree fail-closed（宣告範圍外既有 dirty 檔 → 停止）",
-      "status": "已完成",
-      "tags": "治理,auto-commit,fail-closed,git,產線,dirty-worktree"
-    },
-    {
-      "date": "2026-10-06",
       "action": "FX 歸因資料 freshness 修正（fx_rates.usd_to_twd 過期）",
       "status": "待處理",
       "tags": "FX,匯率,歸因,freshness,snapshot,資料品質"
@@ -10792,12 +10786,6 @@
       "action": "「防禦資產」完整口徑重新檢查（本質判定 vs 來源/桶位判定）",
       "status": "待處理",
       "tags": "防禦資產,雙維度,口徑,保單基金,試算"
-    },
-    {
-      "date": "2026-10-07",
-      "action": "push 來源 / ref topology 收斂（INC-236 延伸）：本機 stale 分支可被誤當推送來源",
-      "status": "已完成",
-      "tags": "push,ref,clean-main,main,auto_push,INC-236,topology"
     },
     {
       "date": "2026-10-07",

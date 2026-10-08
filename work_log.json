@@ -2134,5 +2134,11 @@
   "category": "完成",
   "item": "2026-10-07 更正：停推解除授權「已存在」（Notion 14:29【發布】6-commit 記錄）— 真缺口＝Notion 未同步 dashboard_decisions（更正 mem-20261007184128-1129（原述『該時點無書面解除授權』）與 mem-20261007184251-1130（原述『凍結是否解除待裁示』）。唯讀查核 N",
   "detail": "更正 mem-20261007184128-1129（原述『該時點無書面解除授權』）與 mem-20261007184251-1130（原述『凍結是否解除待裁示』）。唯讀查核 Notion 分析庫：2026-10-07 14:29（台北）已"
+ },
+ {
+  "date": "2026-10-08",
+  "category": "完成",
+  "item": "2026-10-08 Pending 結案歸檔 2 張完成卡（dirty_gate fail-closed／push ref topology P1）— 解除 sync_all「門檻SoT檢查」長期阻塞",
+  "detail": "①production auto-commit dirty-worktree fail-closed（2026-10-06 閉環）②push 來源/ref topology 收斂 INC-236 延伸（Phase A/C 上線 083d0eca、Phase B B-1~B-4 CLOSED，pre-push v5 invariant f2d86ad4）。兩卡 status 含『已完成』卻留在 pending_decisions.json → check_thresholds『未閉環卡狀態不得含結案字樣』FAIL → sync_all 門檻SoT檢查步中止。依治理規則結案歸檔（pending→archive），pending 49→47。後續追蹤（另案卡）：dirty_gate 升級 per-commit scope isolation（方案 2）。"
  }
 ]
