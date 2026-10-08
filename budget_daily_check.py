@@ -9,9 +9,7 @@
 from pathlib import Path
 from logging_config import get_logger
 logger = get_logger("budget_daily_check")
-import csv
-import os
-import re
+import mb_source  # 2026-10-08 ②-budget：MB 匯入契約（單一來源；禁自建搜尋路徑）
 
 BASE = Path(__file__).resolve().parent
 REPORT = BASE / "BUDGET_WEEKLY_REPORT.md"
@@ -38,102 +36,89 @@ def _monthly_expense_baseline() -> float:
 SAFETY_LINE = 40000  # 玉山/富邦生活帳戶安全線
 
 
-def _latest(pattern):
-    """v2（2026-09-13 INC-159）：跨目錄蒐集後取「檔名日期最大」者。
+def _load(kind):
+    """走 mb_source 匯入契約（單一來源；消費端不自建搜尋路徑）。
 
-    原版只掃 BASE 與 BASE/moneybook 且用「字典序第一個」→ repo 只放 7/27 匯出、
-    最新 9/02 匯出在 hermes cache 裡，於是永遠讀到舊檔 → 台新被誤報 P1 超支 117%
-    （實際循環 4,383、−35%）。修法：納入 cache/documents（含子目錄）並以檔名日期取最新。
+    2026-10-08 SEC-P0／②-budget：原版自掃 4 個目錄且只認 *.csv → 使用者上傳的 ZIP 看不到，
+    永遠讀到舊匯出（實測停留 9/02）。契約失敗一律回 (None, 原因)，**不得**退回舊檔。
     """
-    dirs = [BASE, BASE / "moneybook", BASE / "tmp_mb",
-            Path.home() / "AppData" / "Local" / "hermes" / "cache" / "documents"]
-    files = []
-    for d in dirs:
-        if not d.exists():
-            continue
-        files += list(d.glob(pattern))
-        files += list(d.glob("*" + os.sep + pattern))
-        files += list(d.glob("*" + os.sep + "*" + os.sep + pattern))
-    if not files:
-        return None
-
-    def _key(p):
-        m = re.search(r"(\d{4})(\d{2})(\d{2})", p.name)
-        return (m.group(1) + m.group(2) + m.group(3)) if m else "00000000"
-
-    return max(files, key=lambda p: (_key(p), p.stat().st_mtime))
+    try:
+        d = mb_source.load(kind)
+    except mb_source.MBSourceError as e:
+        return None, str(e)
+    if d is None:
+        return None, f"找不到含「{kind}」的 Moneybook 匯出（ZIP 或 CSV）"
+    return d, None
 
 
-def _date_from_name(p):
-    m = re.search(r"(\d{4})(\d{2})(\d{2})", p.name)
-    return "{}-{}-{}".format(*m.groups()) if m else p.name
+def _safe_float(v):
+    try:
+        return float(str(v).replace(",", "") or 0)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 def parse_moneybook_bill():
-    """從 MB 最新帳單 CSV 讀取各卡最新一期帳單金額。回傳 (dict, 資料日)"""
-    f = _latest("*帳單*.csv")
-    if f is None:
-        return None, None
+    """各卡最新一期帳單金額。回傳 (expenses, meta)。
+
+    meta 語義分離（②-budget C）：export_date＝檔案匯出日（新鮮度）；statement_due＝帳單期別。
+    """
+    d, err = _load("帳單")
+    if d is None:
+        print("⚠️ 帳單來源問題：{}".format(err))
+        return None, {"error": err, "export_date": None, "statement_due": None}
     expenses = {card: 0 for card in CARDS}
     latest = {}
-    try:
-        with open(f, "r", encoding="utf-8-sig") as fh:
-            for row in csv.DictReader(fh):
-                bank = row.get("金融機構", "")
-                if bank not in _CC_MAP or row.get("帳單類型", "") != "信用卡":
-                    continue
-                due = row.get("繳費截止日", "")
-                amt = float(row.get("帳單金額", 0) or 0)
-                if amt <= 0:
-                    continue
-                if bank not in latest or due > latest[bank][0]:
-                    latest[bank] = (due, amt)
-        for bank, (due, amt) in latest.items():
-            expenses[_CC_MAP[bank]] = int(amt)
-    except Exception as e:
-        print("CSV parse error: {}".format(e))
-        return None, None
-    return expenses, _date_from_name(f)
+    for row in d["rows"]:
+        bank = row.get("金融機構", "")
+        if bank not in _CC_MAP or row.get("帳單類型", "") != "信用卡":
+            continue
+        due = str(row.get("繳費截止日", "") or "")
+        amt = _safe_float(row.get("帳單金額", 0))
+        if amt <= 0:
+            continue
+        if bank not in latest or due > latest[bank][0]:
+            latest[bank] = (due, amt)
+    for bank, (due, amt) in latest.items():
+        expenses[_CC_MAP[bank]] = int(amt)
+    return expenses, {"export_date": d["export_date"], "origin": d["origin"],
+                      "container": d["container"], "member": d.get("member"),
+                      "statement_due": mb_source.latest_statement_due(d["rows"]), "error": None}
 
 
 def parse_moneybook_account():
-    """從 MB 最新帳戶 CSV 讀取信用卡未繳餘額（當期循環）與帳戶水位。"""
-    f = _latest("*帳戶*.csv")
-    if f is None:
-        return None, {}
+    """信用卡未繳餘額（當期循環）與帳戶水位。"""
+    d, err = _load("帳戶")
+    if d is None:
+        print("⚠️ 帳戶來源問題：{}".format(err))
+        return None, {"date": None, "export_date": None, "error": err}
     owed = {card: 0 for card in CARDS}
     other = 0
     cash = {}
     banks = {}
-    try:
-        with open(f, "r", encoding="utf-8-sig") as fh:
-            for row in csv.DictReader(fh):
-                if row.get("幣別", "TWD") != "TWD":
-                    continue
-                inst = row.get("機構名稱", "")
-                name = row.get("帳戶名稱", "") or ""
-                try:
-                    amt = float(row.get("帳戶金額", 0) or 0)
-                except ValueError:
-                    continue
-                if "卡" in name:
-                    card = _CC_MAP.get(inst)
-                    if amt < 0:
-                        if card:
-                            owed[card] += int(-amt)
-                        else:
-                            other += int(-amt)
-                    continue
-                if "貸款" in name or "房貸" in name:
-                    continue
-                if inst in ("玉山銀行", "台北富邦", "台新銀行", "永豐銀行") and amt > 0:
-                    cash[inst] = cash.get(inst, 0) + amt
-                if "活" in name and amt > 0:
-                    banks[inst] = banks.get(inst, 0) + amt
-    except Exception as e:
-        print("Account CSV parse error: {}".format(e))
-        return None, {}
-    return owed, {"date": _date_from_name(f), "cash": cash, "banks": banks, "other": other}
+    for row in d["rows"]:
+        if row.get("幣別", "TWD") != "TWD":
+            continue
+        inst = row.get("機構名稱", "")
+        name = row.get("帳戶名稱", "") or ""
+        amt = _safe_float(row.get("帳戶金額", 0))
+        if "卡" in name:
+            card = _CC_MAP.get(inst)
+            if amt < 0:
+                if card:
+                    owed[card] += int(-amt)
+                else:
+                    other += int(-amt)
+            continue
+        if "貸款" in name or "房貸" in name:
+            continue
+        if inst in ("玉山銀行", "台北富邦", "台新銀行", "永豐銀行") and amt > 0:
+            cash[inst] = cash.get(inst, 0) + amt
+        if "活" in name and amt > 0:
+            banks[inst] = banks.get(inst, 0) + amt
+    return owed, {"date": d["export_date"], "export_date": d["export_date"],
+                  "origin": d["origin"], "container": d["container"],
+                  "cash": cash, "banks": banks, "other": other, "error": None}
 
 
 def _pct(actual, budget):
@@ -148,7 +133,7 @@ def _level(pct):
     return "✅"
 
 
-def calculate_budget_status(expenses, bill_date, cycle, acct):
+def calculate_budget_status(expenses, bill_meta, cycle, acct):
     total_budget = sum(BUDGET.values())
     total_stmt = sum(expenses.values()) if expenses else 0
     total_cycle = sum(cycle.values()) if cycle else 0
@@ -205,9 +190,13 @@ def calculate_budget_status(expenses, bill_date, cycle, acct):
     elif tot_pct >= 10:
         alerts.append("- ⚠️ **P2** 四卡本期帳單合計 {:+,} TWD（{:+.1f}%）高於帳本基準".format(
             total_stmt - LEDGER_BUDGET, tot_pct))
-    if bill_date and _age(bill_date) > 14:
-        alerts.append("- 🚨 **P1（資料品質）** 帳單匯出資料日 {}，已 {} 天未更新；循環數據以帳戶 CSV {} 為準".format(
-            bill_date, _age(bill_date), acct.get("date", "?")))
+    if bill_meta.get("export_date") and _age(bill_meta["export_date"]) > 14:
+        alerts.append("- 🚨 **P1（資料品質）** 帳單匯出檔資料日 {}（{} 天前）逾 14 天未更新；"
+                      "請確認 Moneybook ZIP 是否已上傳（契約：ZIP 為 canonical 來源）".format(
+                          bill_meta["export_date"], _age(bill_meta["export_date"])))
+    elif not bill_meta.get("export_date"):
+        alerts.append("- 🚨 **P1（資料品質）** 帳單資料來源失效：{}".format(
+            bill_meta.get("error") or "無來源（不得靜默退回舊檔）"))
     if not alerts:
         lines.append("- ✅ 無異常，四大主力皆在預算範圍內")
     else:
@@ -239,9 +228,11 @@ def calculate_budget_status(expenses, bill_date, cycle, acct):
     lines.append("")
     lines.append("## 資料來源")
     lines.append("")
-    lines.append("- 帳單：{}".format(bill_date or "無"))
-    lines.append("- 帳戶/循環：{}".format(acct.get("date", "無")))
-    lines.append("- 執行腳本：budget_daily_check.py")
+    lines.append("- " + mb_source.describe("帳單", bill_meta))
+    lines.append("- " + mb_source.describe("帳戶", acct))
+    lines.append("- 帳單期別（最新繳費截止日）：{}".format(bill_meta.get("statement_due") or "—"))
+    lines.append("- 語義分離：**匯出日＝資料新鮮度**；**期別＝帳單事件時間**（兩者不同，不得混用）")
+    lines.append("- 執行腳本：budget_daily_check.py（來源走 MB 匯入契約 mb_source.py）")
     lines.append("")
 
     report = "\n".join(lines)
@@ -251,13 +242,13 @@ def calculate_budget_status(expenses, bill_date, cycle, acct):
 
 
 def main():
-    expenses, bill_date = parse_moneybook_bill()
+    expenses, bill_meta = parse_moneybook_bill()
     cycle, acct = parse_moneybook_account()
     if expenses is None:
         expenses = {card: 0 for card in CARDS}
     if cycle is None:
         cycle = {card: 0 for card in CARDS}
-    report = calculate_budget_status(expenses, bill_date, cycle, acct)
+    report = calculate_budget_status(expenses, bill_meta or {}, cycle, acct or {})
     print(report)
     print("Report written to {}".format(REPORT))
 

@@ -50,6 +50,20 @@ moneybook_tmp/
 # OCR 暫存（含個資文字）
 _ocr_*
 
+# 2026-10-08 SEC-P0-20261008 防再發：Moneybook 匯出／分析／加密容器（含個資或帳務資料，一律不得進版控）
+# 適用於任何目錄（含 repo 根目錄）：檔名比對，避免 add -A 型路徑把匯出檔再推上公開站
+Moneybook_*.csv
+moneybook_*.csv
+moneybook_analysis*.json
+moneybook_calibration_log*.md
+mb*.zip
+tmp_mb/
+tmp_mb_extract/
+
+# 2026-10-08 ②-budget 裁決：預算報告含帳戶水位／卡費／資金流量（財務敏感，可組合再識別）→ 不進 public Git。
+# 若 dashboard 需要，改由程式重算後只發布非敏感衍生指標（預算使用率／是否超標／安全線是否跌破／趨勢）。
+BUDGET_WEEKLY_REPORT.md
+
 # 審查落地檔（.git/CIO_APPROVED 才是正式紀錄；這裡只是落地時的暫存 JSON）
 .cio_review*.json
 

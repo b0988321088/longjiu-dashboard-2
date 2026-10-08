@@ -21,6 +21,31 @@ def _validate_date_format(date_str):
 
 BASE = Path(__file__).resolve().parent
 
+# 2026-10-08 SEC-P0-20261008：個資／帳務檔案會落入的暫存目錄 —— 單一清單（清理與測試共用同一份，
+# 避免「腳本實際解壓到 tmp_mb_extract/ 但清單只列 moneybook/」＝整條防線失效）。
+CLEANUP_DIRS = ("moneybook_tmp", "moneybook", "mb_tmp", "tmp_mb", "tmp_mb_extract")
+
+
+def cleanup_sensitive_dirs(base: Path = BASE) -> list:
+    """移除所有已知的 Moneybook 暫存目錄（含身分證欄位者曾被 commit 進 git）。
+
+    回傳實際被移除的目錄名單；由 pii_guard.py --lifecycle 以假目錄驗證同一支實作。
+    """
+    import shutil
+
+    removed = []
+    for name in CLEANUP_DIRS:
+        p = Path(base) / name
+        if p.exists():
+            try:
+                shutil.rmtree(p)
+                removed.append(name)
+                print(f"🧹 已清理個資目錄 {name}/（含個資欄位，勿 commit）")
+            except Exception as e:
+                print(f"⚠️ 清理 {name}/ 失敗: {e}")
+    return removed
+
+
 def run(label, cmd, timeout=300, stop_on_fail=True):
     print(f"\n=== {label} ===")
     try:
@@ -97,6 +122,13 @@ def main():
         #     但 run_daily.py 的 `intel_text`、`timedelta` 遮蔽、`monthly_income` 重複 key
         #     全靠人工看才發現；此步讓它們在產報前就被自動擋下。
         ("靜態閘門", "python static_gate.py"),
+        # 2026-10-08 SEC-P0-20261008：負向閘門 —— 敏感匯出檔（Moneybook CSV／加密 ZIP／分析 JSON）
+        #  或 .env 內敏感值不得出現在 Git index；命中即 FAIL（fail-closed，擋住後續推送）。
+        ("敏感檔禁入 index", "python pii_guard.py --index"),
+        # 2026-10-08 SEC-P0：防線自測（三層驗證語義／Excel 遮罩／加密 ZIP 分類／中文檔名 percent-encoding／
+        #  lifecycle）＋MB 匯入契約 5 個 case（ZIP 能讀／純 CSV 能讀／新舊並存選新／不落地／cleanup 後契約仍成立）
+        ("PII 防線自測", "python pii_guard.py --selftest"),
+        ("MB 匯入契約測試", "python mb_source_selftest.py"),
         # 2026-09-15 INC-187：門檻單一真值檢查（SoT 完整性 + 消費端引用 + 舊門檻字面殘留）
         # 2026-09-22 INC-238：此步改 --sot-only（不含日報渲染行比對）—— 渲染行比對讀的是
         #     磁碟上的日報檔，排在產報之前等於拿「上一輪日報」對「本輪 snapshot」，
@@ -167,15 +199,8 @@ def main():
     print(f"\n{'✅ 全部完成' if ok else '⚠️ 有步驟失敗（見上）'}（{_ran}/{len(steps)} 步驟）")
 
     # 2026-08-31 血淚：Moneybook 解壓目錄含身分證欄位（曾被 commit 進 git！）→ 每次同步後強制清理
-    for _d in ["moneybook_tmp", "moneybook", "mb_tmp"]:
-        _p = BASE / _d
-        if _p.exists():
-            try:
-                import shutil
-                shutil.rmtree(_p)
-                print(f"🧹 已清理個資目錄 {_d}/（含身分證欄位，勿 commit）")
-            except Exception as _e:
-                print(f"⚠️ 清理 {_d}/ 失敗: {_e}")
+    # 2026-10-08 SEC-P0-20261008：清單抽成 CLEANUP_DIRS 單一實作，並由 pii_guard.py --lifecycle 驗證
+    cleanup_sensitive_dirs()
 
     return 0 if ok else 1
 
