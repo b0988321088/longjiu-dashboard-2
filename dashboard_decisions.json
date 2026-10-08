@@ -10499,10 +10499,28 @@
       "summary": "更正 mem-20261007184128-1129（原述『該時點無書面解除授權』）與 mem-20261007184251-1130（原述『凍結是否解除待裁示』）。唯讀查核 Notion 分析庫：2026-10-07 14:29（台北）已有明文發布授權記錄——『2026-10-07【發布】日報／儀表板正式上線（6-commit 範圍，CIO 第二輪對抗性審查 APPROVE）』，載明範圍＝75a00a0e／79bb89f0／3b7ac135／7b86a2b9／873594f7／a0b92529（含 a0b92529）、推送 b6fde1da→75a00a0e（6 顆、CIO_APPROVED 6 筆）、CIO 第二輪獨立對抗性審查 APPROVE／blocking=[]／判定檔 .git/cio_reviews/20261007_inc289_fixup_round2.json、Pages 全數 200。故：①解除並非無授權，而是授權只落 Notion、未落 dashboard_decisions → CIO Part A（只讀 dashboard_decisions）天生看不到＝CIO 質疑①的真實根因（通道不一致，非紀律鬆綁）②a0b92529 屬該授權範圍內，第 1130 筆之保留敘述據此更正 ③時序上 13:16 首推（3b7ac135 鏈）早於 14:29 授權記錄，該時點是否已有口頭核准仍需使用者確認 ④殘餘真缺口：凍結觀測 job ddbf2a0a2acc（10/8 09:00）前提仍寫『origin 維持 b6fde1da／a0b92529 未授權發布』與事實不符，是否改寫或停用由使用者裁示（未動排程）。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261008093005-1132",
+      "timestamp": "2026-10-08T09:30:05.656441",
+      "agent": "Hermes",
+      "task": "日報2026-10-08",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261008093005-1133",
+      "timestamp": "2026-10-08T09:30:05.713407",
+      "agent": "Hermes",
+      "task": "資產穿透2026-10-08",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
     }
   ],
   "meta": {
-    "updated_at": "2026-10-08T08:27:11.298749"
+    "updated_at": "2026-10-08T09:30:05.715424"
   },
   "last_updated": "2026-10-08T18:00:00+08:00",
   "2026-09-29": [

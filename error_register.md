@@ -1728,3 +1728,10 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 邊界：不動 07:00／22:00 產線；不與 INC-289／292／293 同批；修正後須重跑連結掃描。
 - 驗收：兩處連結為單一 `.html` 且線上 200；連結掃描 24/24 全 200。
 - 相關：INC-289（同批發布後掃描發現；刻意未即時修以守住 scope）。
+
+## INCIDENT 282b2361 (four_source_sync)
+- 首次發生: 2026-10-08 09:29:05
+- 錯誤: 四源不一致，請檢查；日報產出失敗: [RUN_DAILY] 日期：2026-10-08
+[CALIBRATE] 三源校準失敗：{'allianz_value': False, 'firstjin_value': False}
+；穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)
