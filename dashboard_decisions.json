@@ -10517,30 +10517,28 @@
       "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "id": "mem-20261008193711-1134",
+      "timestamp": "2026-10-08T19:37:11.564239+08:00",
+      "agent": "Hermes",
+      "task": "開卡 PEND-20261008-01｜Producer commit/push scope isolation（統一 governance 卡）",
+      "summary": "使用者 2026-10-08 裁決：C 開統一卡＋A 最小止血。19:04 regenerate_report 自動 commit+push 掃入未提交 working-tree（實證）。核心驗收＝clean gate ≠ producer isolation：producer 在 working tree 有既有 dirty 時仍只能發布本輪真正產生的檔案（produced ∈ after−before，不得自宣告）。三 Phase：A 防既有 dirty 被誤認／B add -A→manifest／C 統一發布出口。最小止血先封 regenerate（移除 4 只讀檔出 produced）。",
+      "status": "pending",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261008201804-1135",
+      "timestamp": "2026-10-08T20:18:04.073419+08:00",
+      "agent": "Hermes",
+      "task": "夜間生產鏈恢復窗口：Phase A/B producer isolation CLOSED ＋ 22:00 恢復（觀測中）",
+      "summary": "Phase A regenerate_report(aa459bd1/tree57649e1f)＋Phase B evening_sync(e129732d/tree63d0a533) 皆 CIO APPROVE+blocking=[] 落地，遠端 tree 逐位元一致；22:00 job 71e723d8af2d 恢復。今晚首次 production run 只驗四項根因鏈（DB liabilities 前進／四源一致／信用卡三源一致／closeout 兩顆 ❌ 消失）。既有 dirty 不帶走、ignored 產物 scope 階段排除、禁 git add -A、staged==produced 閘門、fail-closed。HOLD：TOCTOU／staged 邊界／子目錄／deletion／cron prompt／Phase C／P0#3#4／FX／6 FAIL。",
+      "status": "已核准",
+      "source": "user"
     }
-,
-  {
-    "id": "mem-20261008193711-1134",
-    "timestamp": "2026-10-08T19:37:11.564239+08:00",
-    "agent": "Hermes",
-    "task": "開卡 PEND-20261008-01｜Producer commit/push scope isolation（統一 governance 卡）",
-    "summary": "使用者 2026-10-08 裁決：C 開統一卡＋A 最小止血。19:04 regenerate_report 自動 commit+push 掃入未提交 working-tree（實證）。核心驗收＝clean gate ≠ producer isolation：producer 在 working tree 有既有 dirty 時仍只能發布本輪真正產生的檔案（produced ∈ after−before，不得自宣告）。三 Phase：A 防既有 dirty 被誤認／B add -A→manifest／C 統一發布出口。最小止血先封 regenerate（移除 4 只讀檔出 produced）。",
-    "status": "pending",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261008201804-1135",
-    "timestamp": "2026-10-08T20:18:04.073419+08:00",
-    "agent": "Hermes",
-    "task": "夜間生產鏈恢復窗口：Phase A/B producer isolation CLOSED ＋ 22:00 恢復（觀測中）",
-    "summary": "Phase A regenerate_report(aa459bd1/tree57649e1f)＋Phase B evening_sync(e129732d/tree63d0a533) 皆 CIO APPROVE+blocking=[] 落地，遠端 tree 逐位元一致；22:00 job 71e723d8af2d 恢復。今晚首次 production run 只驗四項根因鏈（DB liabilities 前進／四源一致／信用卡三源一致／closeout 兩顆 ❌ 消失）。既有 dirty 不帶走、ignored 產物 scope 階段排除、禁 git add -A、staged==produced 閘門、fail-closed。HOLD：TOCTOU／staged 邊界／子目錄／deletion／cron prompt／Phase C／P0#3#4／FX／6 FAIL。",
-    "status": "已核准",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-08T19:04:14.031167"
+    "updated_at": "2026-10-08T21:34:39.473534"
   },
   "last_updated": "2026-10-08T18:00:00+08:00",
   "2026-09-29": [
@@ -10830,6 +10828,12 @@
       "action": "P1 產出一致性：INC-289 收斂範圍外的第 4 條雙 producer 分歧（緊急應變 LLM 區塊）",
       "status": "待處理",
       "tags": "P1,產出一致性,日報,雙producer,緊急應變,emergency,as_of,stale,不涉真值"
+    },
+    {
+      "date": "2026-10-08",
+      "action": "Producer commit/push scope isolation：禁止把既有 working-tree dirty 誤認為本輪產物並自動發布",
+      "status": "待處理",
+      "tags": "治理,producer,auto_push,dirty_gate,scope,publish-boundary"
     }
   ]
 }
