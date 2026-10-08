@@ -83,6 +83,64 @@ def _roll_day_to_today(_today: str) -> None:
         print(f"⚠️ INC-210 DB 補列失敗（不擋產線）: {_e}")
 
 
+# ============ 0-pre. producer 邊界 before-snapshot（2026-10-08 治理 PEND-20261008-01 Phase A）============
+# 規則：本輪產物（produced）必須由「執行前後狀態差」證明 —— produced = after − before。
+#   呼叫端自宣告的候選清單（_push_candidates／index.html 連結）≠ 本輪真的產生。
+#   邊界：只在本檔（regenerate）producer 邊界實作；不得改 dirty_gate.py／auto_push.py（Phase B 才抽共用）。
+# ⚠️ 已知殘留風險（CIO 對抗審查 2026-10-08，required_fixes 已收斂）：
+#   ① 讀取失敗語意已由「略過」改為 _UNREADABLE 哨兵 → 該檔一律排除（fail-closed）；不再是 fail-open。
+#   ② before/after 是「整輪多分鐘」的單一內容差窗口 → 期間任何並行寫入者（他支 cron／人工編輯）
+#      對候選檔的變更仍會被歸因為本 producer（僅印出警示，未縮窗）。
+#   ③ 不在 _SNAP_EXT 或 > _SNAP_MAX 的候選檔無法快照 → 一律排除（under-push，不洩漏）；會示警。
+import hashlib as _hl
+
+_SNAP_EXT = {'.html', '.json', '.md', '.png', '.db', '.jsonl', '.csv', '.svg', '.txt', '.xml',
+             '.webp', '.jpg', '.jpeg', '.gif', '.ico', '.pdf'}
+_SNAP_MAX = 20 * 1024 * 1024
+_UNREADABLE = "<UNREADABLE>"   # 存在但不可快照（讀取失敗／過大）→ 一律不得視為本輪產物
+
+
+def _snap_root(_base):
+    """根目錄候選檔的內容指紋；**存在卻無法快照者記為 _UNREADABLE（不是略過）**。"""
+    _d = {}
+    for _p in _base.iterdir():
+        try:
+            if not _p.is_file() or _p.suffix.lower() not in _SNAP_EXT:
+                continue
+            if _p.stat().st_size > _SNAP_MAX:
+                _d[_p.name] = _UNREADABLE          # 過大 → 標記（不可快照）
+                continue
+            _d[_p.name] = _hl.sha256(_p.read_bytes()).hexdigest()
+        except Exception:
+            try:
+                _d[_p.name] = _UNREADABLE          # 存在但讀不到 → 標記（fail-closed）
+            except Exception:
+                pass
+    return _d
+
+
+def _is_produced(_f, _before, _after):
+    """本輪是否真的產生 _f。after 必須可靠；before 不可靠（_UNREADABLE）→ False（fail-closed）。"""
+    _a = _after.get(_f)
+    if _a is None or _a == _UNREADABLE:
+        return False
+    if _f not in _before:
+        return True                                # 本輪新增
+    if _before[_f] == _UNREADABLE:
+        return False                               # before 不可信 → 不得算本輪產物
+    return _before[_f] != _a
+
+
+def _produced_only(_cands, _before, _after):
+    """只保留本輪真正產生的檔（produced = after − before）；回傳 (produced, excluded)。"""
+    _keep = [f for f in _cands if _is_produced(f, _before, _after)]
+    _drop = [f for f in _cands if f not in _keep]
+    return _keep, _drop
+
+
+_BEFORE = _snap_root(BASE)
+print(f"🧾 producer 邊界 before-snapshot：{len(_BEFORE)} 檔（本輪產物須由 before/after 差異證明）")
+
 _roll_day_to_today(TODAY)
 
 # 0. 巴菲特/CTO LLM 分析（2026-08-22：今日檔不存在才重跑，避免每次 regenerate 重複呼叫 API）
@@ -457,8 +515,15 @@ elif ok and _cio_ok:
     _push_candidates = [f'daily_report_v2_{TODAY}.html', f'asset_diff_{TODAY}.html', 'index.html', 'snapshot.json', 'dragon_assets.db',
                         # 2026-09-13：補齊儀表板會連到的今日產物（血淚：buffett_cto_report_{TODAY}.md 不在清單 → Pages 404「連結失效」）
                         f'buffett_cto_report_{TODAY}.md', f'risk_factor_penetration_{TODAY}.png', f'macro_regime_{TODAY}.json',
-                        'work_log.json', 'pending_decisions.json', 'schedule_events.json', 'radar_state.json',
-                        'cio_review.json', 'dashboard_decisions.json', 'us30y_state.json',
+                        # 2026-10-08 治理（PEND-20261008-01｜C 統一卡＋A 最小止血）：
+                        #   移除 5 個「本檔只讀不寫」的檔出本輪產物清單 —— work_log.json／pending_decisions.json／
+                        #   schedule_events.json／radar_state.json／us30y_state.json。它們過去被宣告為本輪產物 →
+                        #   dirty_gate allow=produced → V8「scope 內 dirty 必須全部 stage」→ 把當時尚未提交的
+                        #   working-tree 編輯一起 commit+push（2026-10-08 19:04 實證：掃入結案歸檔中的
+                        #   pending_decisions.json＋work_log.json）。只讀不寫者不得進 produced；其變更由各自
+                        #   producer 負責推送（us30y_state.json 之 producer＝us30y_monitor.py:109；regenerate 呼叫鏈
+                        #   僅 buffett_cto_analyzer／build_rebalance_dashboard 讀取，無任何寫入）。
+                        'cio_review.json', 'dashboard_decisions.json',
                         'grand_pivot_deck.html',
                         # 2026-09-22：AI 費用頁（固定檔名，按鈕 __COST_PAGE__ 指向它）
                         'cost.html', 'cost_data.json',
@@ -497,22 +562,42 @@ elif ok and _cio_ok:
         print(f"  ⚠️ 收尾重刷連結失敗（不影響本次產出）：{_e}")
     if _pen_file:
         _push_candidates.append(_pen_file)
-    _push_files = [f for f in _push_candidates if (BASE / f).exists()]
-    # 2026-09-13：再掃 index.html 的所有本機連結，凡「已改動/未追蹤」者一併納入（治本：新增產物忘了加清單 → Pages 404）
-    try:
-        import re as _re2
-        _idx = (BASE / "index.html").read_text(encoding="utf-8")
-        _st = subprocess.run(['git', 'status', '--porcelain', '--untracked-files=all'],
-                             capture_output=True, text=True, cwd=BASE).stdout
-        _dirty = {ln[3:].strip().strip('"') for ln in _st.splitlines() if ln.strip()}
-        for _h in sorted(set(_re2.findall(r'href="([^"]+)"', _idx))):
-            if not _h or _h.startswith(("http", "#", "mailto")) or "/" in _h:
-                continue
-            if (BASE / _h).exists() and _h in _dirty and _h not in _push_files:
-                _push_files.append(_h)
-                print(f"  ➕ 連結目標補推: {_h}")
-    except Exception as _le:
-        print(f"⚠️ 連結掃描略過: {_le}")
+    # 2026-10-08 治理（PEND-20261008-01 Phase A）：commit scope 只收「本輪真正產生」的檔。
+    #   produced = after − before（內容指紋差）。既有 dirty（使用者／他班未提交編輯）不得因
+    #   出現在候選清單、或「被 index.html 連結」而進 commit —— 一次封住 Vector 1（靜態 over-declare）
+    #   與 Vector 2（動態 dirty-link 掃入）。呼叫端宣告 ≠ 本輪產物。
+    #   註：本過濾不宣稱「絕對 fail-closed」；殘留風險（並行寫入歸因、不可快照檔 under-push）見檔頭警示。
+    _after = _snap_root(BASE)
+    _snap_ok = bool(_BEFORE) and bool(_after)
+    if not _snap_ok:
+        # fail-closed：快照不完整時無法以 before/after 差異證明「本輪產物」→ 一律不推送。
+        print("  ⛔ producer 邊界快照不完整（before/after 任一為空）→ 無法證明本輪產物，本次不推送（fail-closed）")
+        _push_files = []
+    else:
+        _cands = [f for f in _push_candidates if (BASE / f).exists()]
+        _push_files, _excluded = _produced_only(_cands, _BEFORE, _after)
+        _unsnap = [f for f in _cands if f not in _BEFORE and f not in _after]
+        if _unsnap:
+            print(f"  ⚠️ 候選檔無法快照（副檔名不在 _SNAP_EXT 或過大）→ 已排除，請確認非本輪產物: {', '.join(sorted(_unsnap))}")
+        if _excluded:
+            print(f"  🚫 非本輪產物，排除 {len(_excluded)} 檔（既有 dirty 不得進 commit）：{', '.join(sorted(_excluded))}")
+        if _push_files:
+            print(f"  ✅ 本輪產物 {len(_push_files)} 檔進 commit scope：{', '.join(sorted(_push_files))}")
+    # 2026-09-13：再掃 index.html 的所有本機連結補推（治本：新增產物忘了加清單 → Pages 404）；
+    #   2026-10-08 收緊：由「已改動/未追蹤」改為「本輪真的產生」—— 既有 dirty 的連結目標不得因被連結
+    #   而進 commit（共用 _is_produced 同一判準；before 不可讀者一律排除）。快照不完整時整段略過。
+    if _snap_ok:
+        try:
+            import re as _re2
+            _idx = (BASE / "index.html").read_text(encoding="utf-8")
+            for _h in sorted(set(_re2.findall(r'href="([^"]+)"', _idx))):
+                if not _h or _h.startswith(("http", "#", "mailto")) or "/" in _h:
+                    continue
+                if (BASE / _h).exists() and _h not in _push_files and _is_produced(_h, _BEFORE, _after):
+                    _push_files.append(_h)
+                    print(f"  ➕ 連結目標補推（本輪產物）: {_h}")
+        except Exception as _le:
+            print(f"⚠️ 連結掃描略過: {_le}")
     # 9c4. 自動化防守閘門（2026-10-03 使用者核准）：月度比較頁數字必須等於 performance_core 輸出
     #      定位＝自動化防守，不是績效功能：不碰計算邏輯、不新增口徑、不改頁面。
     #      PASS → 才允許後續 commit/push；FAIL → 阻擋推送（fail-closed），本次不視為成功。
