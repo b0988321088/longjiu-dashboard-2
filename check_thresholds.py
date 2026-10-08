@@ -391,7 +391,37 @@ def main() -> int:
                 if _t in _s:
                     errs.append(f"pending 未閉環卡狀態含「{_t}」→ build_dashboard 會誤判已結案、整卡隱藏：{str(_it.get('title',''))[:34]}")
                     break
-        # ── 國泰房貸利率一致性（2026-10-01）：權威鍵 vs 實繳月付 vs 舊副本 ──
+        # ②f 負債落列 freshness（2026-10-08 新增；#48「liabilities 自然回歸」）
+        #     症狀：真值日只更新 snapshot、未落 DB liabilities → DB 負債列停在舊真值日；
+        #           夜間產線只寫 assets（值前進）→ 隔日收工稽核必亮兩顆 ❌（負債三源＋信用卡三源）。
+        #     判準：以「值」而非「日曆天數」——assets[今日] 已等於 snapshot 真值（＝DB 已定稿），
+        #           而 liabilities 最新列的 total_liabilities 仍與 snapshot 不同 → 落列沒跟上，fail-closed。
+        #     為何不看日曆天數：liabilities 只在「負債有變動」的真值日落列，平日天數落差是正常的；
+        #           且管線中途 snapshot 可能已前進、assets 尚未寫入 → 天數/單邊比對會偽陽性擋關。
+        try:
+            import sqlite3 as _sq
+            from asset_sync import DB_PATH as _dbp      # 單一來源（測試可覆寫本常數）
+            _T = str(snap.get("last_updated") or "")[:10]
+            _snap_li = snap.get("total_liabilities")
+            _con = _sq.connect(str(_dbp))
+            try:
+                _a = _con.execute("select total_liabilities from assets where date=?",
+                                  (_T,)).fetchone()
+                _row = _con.execute("select date, total_liabilities from liabilities "
+                                    "where date<=? order by date desc limit 1", (_T,)).fetchone()
+            finally:
+                _con.close()
+            if _snap_li is not None and _a is not None and float(_a[0]) == float(_snap_li):
+                if _row is None:
+                    errs.append(f"負債落列：DB liabilities 無任何 ≤ {_T} 的列，但 DB assets[{_T}] 已落真值 "
+                                f"→ 真值日未落列（請跑 python asset_sync.py --rebuild-liabilities）")
+                elif float(_row[1]) != float(_snap_li):
+                    errs.append(f"負債落列不新鮮：DB liabilities 最新列 {_row[0]}＝{float(_row[1]):,.0f} "
+                                f"≠ snapshot 真值 {float(_snap_li):,.0f}（DB assets[{_T}] 已同真值）"
+                                f" → 真值前進但未落列（請跑 python asset_sync.py --rebuild-liabilities）")
+        except Exception as _e:
+            errs.append(f"負債落列 freshness 檢查執行失敗：{_e}")
+        # ── 國泰房貸利率一致性（2026-10-01）：權威鍵 vs 實繳月付 vs 舊副本 ────────────────
         _mcr = float(snap.get("mortgage_cathay_rate") or 0)
         _mcp = float(snap.get("mortgage_cathay") or 0)
         if _mcr and _mcp:
