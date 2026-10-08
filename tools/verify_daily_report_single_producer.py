@@ -63,7 +63,9 @@ REQUIRED_API = ("build_schedule_rows", "build_p0_tasks_html", "substitute_dr_tok
                 "build_emergency_block")
 _MARKER = "執行中決策追蹤"
 # 只認「會被寫進 HTML 的那一行」，註解／docstring 提到這串字不算私有實作
-_EMIT = '📋 執行中決策追蹤</p>'
+# INC-292：以 \u 轉義持有（同 _EM_KEY 手法）→ 掃描器自身不持有原文，
+# 故 has_emit 可與一般檔同一套規則判定，無須靠自我豁免跳過。
+_EMIT = "\U0001f4cb \u57f7\u884c\u4e2d\u6c7a\u7b56\u8ffd\u8e64</p>"
 _EMIT_TPL = '<p style="margin-top:12px;font-weight:700;color:#3b82f6">' + _EMIT
 
 print("=" * 78)
@@ -102,26 +104,45 @@ def _imports_shared(src):
     return bool(re.search(r"^\s*(from|import)\s+daily_report_assembly", src, re.M))
 
 
-def _has_private_dr_replace(src):
-    """抓 `X.replace(<__DR_ token>)`，含「先把 token 存進變數再 replace」的間接形式。
+def _fold_str(node, tbl=None):
+    """把 AST 節點盡力還原成字串常數（Constant／字串加法拼接／已知變數）。
 
-    （2026-10-07 CIO 對抗性審查實證：純字面比對 `\.replace\("__DR_` 可用變數名繞過。）
+    INC-292：常數折疊發生在 compile 階段，`ast.parse` 不做 → `"__DR"+"_TW_GAP__"`
+    在 AST 上永遠是 BinOp，只比對 ast.Constant 會漏掉，故須自行折疊。
+    """
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        _l, _r = _fold_str(node.left, tbl), _fold_str(node.right, tbl)
+        if _l is not None and _r is not None:
+            return _l + _r
+    if isinstance(node, ast.Name) and tbl and node.id in tbl:
+        return tbl[node.id]
+    return None
+
+
+def _has_private_dr_replace(src):
+    """抓 `X.replace(<__DR_ token>)`，含「先存變數再 replace」與「拼接組出 token」。
+
+    （2026-10-07 CIO 對抗性審查實證：純字面比對 `\.replace\("__DR_` 可用變數名繞過。
+     2026-10-09 INC-292：`"__DR"+"_TW_GAP__"` 為 BinOp 拼接，須折疊後比對。）
     """
     tree = ast.parse(src)
-    tok_names = set()
+    _consts = {}
     for node in ast.walk(tree):
         if (isinstance(node, ast.Assign) and len(node.targets) == 1
                 and isinstance(node.targets[0], ast.Name)):
-            v = node.value
-            if (isinstance(v, ast.Constant) and isinstance(v.value, str)
-                    and _DR_TOKEN_RE.match(v.value)):
-                tok_names.add(node.targets[0].id)
+            v = _fold_str(node.value, _consts)
+            if v is not None:
+                _consts[node.targets[0].id] = v
+    tok_names = {k for k, v in _consts.items() if _DR_TOKEN_RE.match(v)}
     for node in ast.walk(tree):
         if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
                 and node.func.attr == "replace" and node.args):
             continue
         a0 = node.args[0]
-        if isinstance(a0, ast.Constant) and isinstance(a0.value, str) and _DR_TOKEN_RE.match(a0.value):
+        v = _fold_str(a0, _consts)
+        if v is not None and _DR_TOKEN_RE.match(v):
             return True
         if isinstance(a0, ast.Name) and a0.id in tok_names:
             return True
@@ -190,6 +211,11 @@ def scan_producers(root, extra_skip=()):
                 viol.append((rel, "emit 緊急應變區塊但不在白名單（未知 producer 自建組裝路徑）"))
             if _private_em_formatter_calls(txt):
                 viol.append((rel, "出現私有 emergency_analysis formatter 呼叫（唯一組裝＝共用模組）"))
+        # INC-292：決策追蹤章的 emit 檢查與緊急應變同級 —— 置於自我豁免之前，
+        # 任何檔名（含掃描器自身）都不得跳過。掃描器已不持有 _EMIT 原文（\u 轉義），
+        # 故此檢查可對自身生效而不會自我誤判（a6c：僅 emit 決策章 → 必須被擋）。
+        if has_emit and rel not in EMIT_WHITELIST:
+            viol.append((rel, "emit 決策追蹤章但不在白名單"))
         if rel in _SELF_EXEMPT:
             # 掃描器自身：可持有偵測用字面、可為「比對」而匯入共用模組，
             # 但不得自行取代 __DR_*__，且必須自我標記 DETECTOR-ONLY（否則白名單即後門）
@@ -200,8 +226,6 @@ def scan_producers(root, extra_skip=()):
             continue
         if has_lit and rel not in DR_WHITELIST:
             viol.append((rel, "出現 __DR_*__ 字面但不在白名單（未知 producer 自建取代路徑）"))
-        if has_emit and rel not in EMIT_WHITELIST:
-            viol.append((rel, "emit 決策追蹤章但不在白名單"))
         if rel == "run_daily.py" and _has_private_dr_replace(txt):
             viol.append((rel, "模板持有者 run_daily.py 不得自行取代 __DR_*__"))
     return viol, n
@@ -242,8 +266,10 @@ for tag, path in (("regenerate_report.py", REGEN), ("run_daily.py", RUNDAILY)):
        not _private_em_formatter_calls(_s))
     ck(f"S1.7f {tag} 無私有 as_of 標示實作（_stale_badge 賦值）",
        not re.search(r"^\s*_stale_badge\s*=", _s, re.M), "AST/正則：賦值才算實作，註解提及不算")
+_selfsrc_p = BASE / _SELF_REL
 ck("S1.11 掃描器以 \\u 轉義持有偵測鍵（不會自我命中，故無須自我豁免跳過）",
-   _EM_KEY not in rd(BASE / _SELF_REL), f"原始鍵殘留 {rd(BASE / _SELF_REL).count(_EM_KEY)} 處")
+   _EM_KEY not in rd(_selfsrc_p) and _EMIT not in rd(_selfsrc_p),
+   f"緊急應變鍵殘留 {rd(_selfsrc_p).count(_EM_KEY)} 處／決策章 emit 字面殘留 {rd(_selfsrc_p).count(_EMIT)} 處")
 
 _repo_viol, _scanned = scan_producers(BASE)
 ck("S1.8 全 repo 白名單掃描：無未授權的組裝路徑", not _repo_viol, str(_repo_viol[:5]))
@@ -552,7 +578,7 @@ _tmp.mkdir(parents=True, exist_ok=True)
 _div = rd(RUNDAILY).replace(
     '    daily_html = _asm_dr(daily_html, _pen)',
     '    daily_html = daily_html.replace("__DR_TW_GAP__", f"{_pen_total:,.0f}")\n'
-    '    _p0_html += \'\\n<p>📋 執行中決策追蹤</p>\'')
+    '    _p0_html += \'\\n<p>' + _EMIT + '\'')
 
 
 def _static_violations(path):
