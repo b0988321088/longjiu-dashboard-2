@@ -10546,6 +10546,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261008232428-1137",
+    "timestamp": "2026-10-08T23:24:28.333858+08:00",
+    "agent": "Hermes",
+    "task": "真值日→DB liabilities 落列修復 CLOSED（3 輪獨立審查 APPROVE／blocking=[]）｜commit d103d31d（3 檔）｜殘留 R-a～R-f 入治理清單",
+    "summary": "PEND-20261006-02 修復窗口（使用者 2026-10-08 授權）落地：①asset_sync.py 新增 land_liabilities_db() 為唯一 DB 落地實作（UPSERT liabilities 當日列＋UPDATE assets，冪等）②rebuild_liabilities(snap, land_db=False) 預設維持純計算、顯式 land_db=True 才落 DB（使用者裁決：拒絕預設帶持久化副作用）③必填鍵含 total_liabilities/total_assets，缺鍵 fail-closed（不寫、不編造、不寫 NULL）④目標日無 assets 列→顯式告警＋assets_updated=False（不硬插殘缺列）⑤CLI 落地失敗 rc=1 fail-closed ⑥版控內真值日 runner apply_truth_20260929／20261006 顯式 land_db=True。驗證：snapshot＝DB assets＝DB liabilities＝30,980,898、信用卡 36,469 → 四源差額 643→0；負向：缺鍵 skip 不寫／刪列→四源閘門 FAIL／CLI 缺鍵 rc=1 且 DB 不變；35/35 沙盒 PASS；真 DB md5 全程未變。獨立對抗式審查 3 輪皆 APPROVE、blocking=[]、scope_creep=false；第 2 輪抓到作者『apply_truth runner 未版控』敘述有誤（實為版控內）已更正並接線；第 3 輪抓到揭露清單漏列未版控 apply_truth_20261008.py。程式 commit d103d31d（tree da7590ac，3 檔：asset_sync.py＋apply_truth_20260929.py＋apply_truth_20261006.py）。殘留治理清單（未做、待裁示）：R-a 4 支套用類 runner 未接線（同型復發向量）／R-b rebuild與land鍵集未統一（刻意不 over-tighten）／R-c 日期語意＝執行日／R-d _LAST_LAND_RESULT 模組全域／R-e runner 車道 rc 未 propagate（僅 CLI 有 rc=1）／R-f 未版控 20261008.py 仍預設呼叫＋歷史 runner 重跑會寫執行日列。",
+    "status": "completed",
+    "source": "使用者在 2026-10-08 Telegram 授權修復窗口"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-08T22:45:45.470597"
