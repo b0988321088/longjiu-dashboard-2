@@ -33,10 +33,11 @@ canonical 行為刻意等於 `regenerate_report.py` 的現行已上線行為（�
 ③ `producer 之間`尚有非本模組職責的差異（例：`_inject_market_intel` 第 3 參數 regenerate 傳
    `daily_analysis`、run_daily 傳 `intel_signals`）——未經裁決不得順手收斂。
 
-緊急應變區塊另有**已知缺陷、本卡刻意保留**（不得順手改）：連結多綴一個 `.html`
-（產出 `…2026-10-08.html.html` → 404）。修正須另立卡片經使用者裁決。
+INC-294（2026-10-09 使用者裁決 A 案）：緊急應變連結原多綴一個 `.html`
+（產出 `…2026-10-08.html.html` → 404）**已修正** —— 檔名取自 glob，本身已含副檔名，故不再補。
+**歷史已發布日報不回填**（維持當日快照，裁決理由：不影響數據正確性、避免改寫已發布產物）。
 
-相關：error_register INC-289／INC-291、PEND-20261007-02／04。
+相關：error_register INC-289／INC-291／INC-294、PEND-20261007-02／04。
 """
 from __future__ import annotations
 
@@ -216,8 +217,8 @@ def build_emergency_block(base, snapshot, today: str | None = None) -> str:
     吞掉並留空；本函式採後者（容忍 ＋ WARN）→ 對 regenerate 路徑屬**放寬**（不再因壞檔停產），
     故**並非**「與原行為完全一致」。若日後要求 fail-closed，須另立卡片（本卡驗收＝對外可見內容零變化）。
 
-    ⚠️ 已知缺陷（**刻意保留、另案處理**）：連結多綴一個 `.html` → `…2026-10-08.html.html`
-    （404）。本卡職責＝收斂雙 producer、維持對外可見內容零變化；修正須另立卡片經裁決。
+    INC-294（2026-10-09 使用者裁決 A 案）：連結原多綴一個 `.html` → `…2026-10-08.html.html`（404），
+    已修正為單一 `.html` —— 檔名取自 glob，本身已含副檔名。歷史已發布日報不回填。
     """
     _base = Path(base)
     _today = str(today or _date.today().isoformat())
@@ -263,14 +264,14 @@ def build_emergency_block(base, snapshot, today: str | None = None) -> str:
     except Exception as _bfe:
         print(f"[WARN] band_filter 套用失敗（緊急應變內文，範圍內靜默可能失效）：{_bfe}")
     _html = f'<div class="callout callout-warn">{_stale_badge}{_note}{_r.replace(chr(10), "<br>" + chr(10))}</div>'
-    # 連結（自動找最新可用檔案）；`%s.html` 為沿用的已知缺陷，見 docstring。
+    # 連結（自動找最新可用檔案）；`_ef[0].name` 已含 `.html`，故不再補副檔名（INC-294）。
     _ef = sorted(_base.glob("emergency_report_2*.html"), reverse=True)
     _tf = sorted(_base.glob("emergency_taiex_report_2*.html"), reverse=True)
     if _ef:
-        _html += ('<br><a href="%s.html" target="_blank" '
+        _html += ('<br><a href="%s" target="_blank" '
                   'style="display:inline-block;margin-top:10px;color:#34D399;font-weight:bold">'
                   '📄 檢視完整 LLM 緊急應變報告 →</a>') % (PAGES_BASE + "/" + _ef[0].name)
     if _tf:
-        _html += ('<br><a href="%s.html" target="_blank" style="font-size:13px;color:#6e6e73">'
+        _html += ('<br><a href="%s" target="_blank" style="font-size:13px;color:#6e6e73">'
                   '📊 數據版報告（備援）</a>') % (PAGES_BASE + "/" + _tf[0].name)
     return _html
