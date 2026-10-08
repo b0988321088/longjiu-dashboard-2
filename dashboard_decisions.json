@@ -10535,72 +10535,66 @@
       "summary": "Phase A regenerate_report(aa459bd1/tree57649e1f)＋Phase B evening_sync(e129732d/tree63d0a533) 皆 CIO APPROVE+blocking=[] 落地，遠端 tree 逐位元一致；22:00 job 71e723d8af2d 恢復。今晚首次 production run 只驗四項根因鏈（DB liabilities 前進／四源一致／信用卡三源一致／closeout 兩顆 ❌ 消失）。既有 dirty 不帶走、ignored 產物 scope 階段排除、禁 git add -A、staged==produced 閘門、fail-closed。HOLD：TOCTOU／staged 邊界／子目錄／deletion／cron prompt／Phase C／P0#3#4／FX／6 FAIL。",
       "status": "已核准",
       "source": "user"
+    },
+    {
+      "id": "mem-20261008225821-1136",
+      "timestamp": "2026-10-08T22:58:21.873067+08:00",
+      "agent": "Hermes",
+      "task": "真值日→DB liabilities 落列：第一階段診斷 CLOSED｜PEND-20261006-02 沿用不開新卡｜第二階段未授權",
+      "summary": "使用者 2026-10-08 裁決：第一階段唯讀診斷 CLOSED。根因已確認＝DB liabilities 表在自動化圖上無寫入者（rebuild_liabilities() 僅改 snapshot；夜間產線只寫 assets；三個 DB 寫入口 update_data／asset_sync CLI／db_loader 皆不在夜鏈、後者無呼叫者）→ assets 每日前進、liabilities 停在最近真值日，差額＝當日信用卡增量（+643）。本次證據併入既有 PEND-20261006-02（同根因同復發，不開第二張卡）。A/B/C 未選；最小止血方向（真值日流程明示完成 DB liabilities 落列並驗四源）確認可行、未授權實作；真值日 prompt 應補明示、未授權修改；apply_truth_20261008.py 補登版控未授權。本次授權邊界＝僅『證據入庫』，零修復操作。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261008232428-1137",
+      "timestamp": "2026-10-08T23:24:28.333858+08:00",
+      "agent": "Hermes",
+      "task": "真值日→DB liabilities 落列修復 CLOSED（3 輪獨立審查 APPROVE／blocking=[]）｜commit d103d31d（3 檔）｜殘留 R-a～R-f 入治理清單",
+      "summary": "PEND-20261006-02 修復窗口（使用者 2026-10-08 授權）落地：①asset_sync.py 新增 land_liabilities_db() 為唯一 DB 落地實作（UPSERT liabilities 當日列＋UPDATE assets，冪等）②rebuild_liabilities(snap, land_db=False) 預設維持純計算、顯式 land_db=True 才落 DB（使用者裁決：拒絕預設帶持久化副作用）③必填鍵含 total_liabilities/total_assets，缺鍵 fail-closed（不寫、不編造、不寫 NULL）④目標日無 assets 列→顯式告警＋assets_updated=False（不硬插殘缺列）⑤CLI 落地失敗 rc=1 fail-closed ⑥版控內真值日 runner apply_truth_20260929／20261006 顯式 land_db=True。驗證：snapshot＝DB assets＝DB liabilities＝30,980,898、信用卡 36,469 → 四源差額 643→0；負向：缺鍵 skip 不寫／刪列→四源閘門 FAIL／CLI 缺鍵 rc=1 且 DB 不變；35/35 沙盒 PASS；真 DB md5 全程未變。獨立對抗式審查 3 輪皆 APPROVE、blocking=[]、scope_creep=false；第 2 輪抓到作者『apply_truth runner 未版控』敘述有誤（實為版控內）已更正並接線；第 3 輪抓到揭露清單漏列未版控 apply_truth_20261008.py。程式 commit d103d31d（tree da7590ac，3 檔：asset_sync.py＋apply_truth_20260929.py＋apply_truth_20261006.py）。殘留治理清單（未做、待裁示）：R-a 4 支套用類 runner 未接線（同型復發向量）／R-b rebuild與land鍵集未統一（刻意不 over-tighten）／R-c 日期語意＝執行日／R-d _LAST_LAND_RESULT 模組全域／R-e runner 車道 rc 未 propagate（僅 CLI 有 rc=1）／R-f 未版控 20261008.py 仍預設呼叫＋歷史 runner 重跑會寫執行日列。",
+      "status": "completed",
+      "source": "使用者在 2026-10-08 Telegram 授權修復窗口"
+    },
+    {
+      "id": "mem-20261008232816-1138",
+      "timestamp": "2026-10-08T23:28:16.536950+08:00",
+      "agent": "Hermes",
+      "task": "PEND-20261006-02 ✅ CLOSED（使用者 2026-10-08 裁決）｜修復鏈閉環：643→0、線上=本機、CIO 3 輪 APPROVE",
+      "summary": "使用者最終裁決 CLOSED。逐項核可：根因已確認／land_liabilities_db() 正式落地／真 DB 10/08 已寫入／四源差異 643→0／信用卡 36,469 三源一致／歷史列無污染／程式審查 CIO 3 輪 APPROVE blocking=[]／程式·資料·治理三顆 commit 分離（d103d31d+b56bc188+e9e7f962）／remote unpushed=0／Pages 200 且 index blob 逐位元一致、19 個參照頁全 200／closeout 本批 2 顆紅燈→0／治理留痕 pending+dashboard_decisions。使用者肯定：①未把既有問題（runtime dirty 3 檔、既有 validator 49 PASS/6 FAIL）硬算成本輪成果（機制≠收斂）②JSON 假 diff（indent=1＋CRLF，885 行）主動揭露並以 --amend 收斂（未用 reset/stash/clean）。裁示：R-a～R-f 保留為治理 backlog，不得視為本案未結、不得順手修；本案正式收工、不再動此卡。落地：pending_decisions.json PEND-20261006-02 status→關案。",
+      "status": "completed",
+      "source": "使用者 2026-10-08 Telegram 裁決 CLOSED"
+    },
+    {
+      "id": "mem-20261009022322-1139",
+      "timestamp": "2026-10-09T02:23:22.628359+08:00",
+      "agent": "Hermes",
+      "task": "INC-292 CLOSED（Round-2 受限實作＋CIO APPROVE＋上線驗證）｜commit 42c6d754（tree ff737dbd）｜後續 5 卡 PEND-20261009-01～05",
+      "summary": "【INC-292 CLOSED 2026-10-09】守門自我豁免分支未套用 emit/lit 規則 — Round-2 受限實作＋CIO APPROVE＋上線驗證通過。\n\n一、第一輪驗收 FAIL：原卡驗收在 %TEMP% 鏡像以 a6a／a6c 注入掃描器自身 → S1.8 仍 []、68 PASS/1 FAIL，與 control 逐項相同。定罪：has_emit／has_lit 兩條規則仍在自我豁免 continue 之後；且 _has_private_dr_replace() 只認單一 ast.Constant（\"__DR\"+\"_TW_GAP__\" 是 BinOp，常數折疊在 compile 階段、ast.parse 不做）。原驗收條件「rc≠0」在基線已有 S3.8 FAIL 時失去鑑別力，判別指標改為 S1.8 違規清單。裁決 FAIL / RETURN FOR REPAIR。\n\n二、前置盤點關鍵發現（天真搬移會讓閘門擋自己）：掃描器自身 has_lit=True（16 處偵測用 token 字面）、has_emit=True（L66 _EMIT 定義＋S4 樣板），且本檔不在 DR_WHITELIST／EMIT_WHITELIST。故修復順序必須先處理偵測字面持有方式，再調順序。\n\n三、修正（僅 tools/verify_daily_report_single_producer.py，+39/−13）：①_EMIT 改以反斜線u 轉義持有（值逐位元不變，同 _EM_KEY 手法）②S4 負向樣板改以 _EMIT 拼接（產出字串等價證明通過）③新增 _fold_str() 並讓 _has_private_dr_replace() 折疊 BinOp／Name → 修 a6a ④has_emit 檢查移至自我豁免 continue 之前 → 修 a6c ⑤S1.11 擴充為同檢 _EMIT 原文殘留（防回歸）。設計說明：has_lit 刻意不移前（a6a 非由 has_lit 攔；掃描器合法持有 16 處偵測用字面，強行移前須 16 處手術＝scope 爆炸；自身檔產出行為已由既有 AST 規則涵蓋）。\n\n四、驗收矩陣（偵測層＋真閘門層皆通過）：scanner 自身 0／control 0／a6a ≥1／a6c ≥1／a7 ≥1；正本 repo 68 PASS / 1 FAIL / 0 SKIP（唯一 FAIL＝既有 S3.8 STALE-ARTIFACT，非本輪引入）。\n\n五、CIO 對抗性審查（獨立 context，deleg_0c0725f6）：verdict APPROVE／blocking=[]／受審 tree ff737dbdc6ba690b4c38e9397b16223b689ddf5c。獨立取證：自建 GIT_INDEX_FILE 復現同一 tree；git diff --name-only 證實僅一檔不同；自跑 292 檔假陽性掃描（判定翻轉 0、新判 True 0）；真閘門注入 5 變體（含 a6c 轉義對照）；HEAD 版 vs 候選版整支 stdout diff 僅 S1.11 一行 → 無既有斷言被削弱／刪除／恆真；INC-291 V1/V2/V3 逐字未動。判決檔 .git/cio_reviews/20261009_inc292_round2.json ＋完整實驗輸出 20261009_inc292_round2_ciogate.out。\n\n六、落地與上線：commit 42c6d754（tree 逐字等於受審 tree；僅 1 檔；3 dirty＋1 untracked 未帶走）→ 閘門 v5（1 commit 全通過）→ push 845245b2..42c6d754 HEAD->clean-main。上線驗證：remote==local==42c6d754、未推 0、線上 raw tools 檔 sha256 與本機 blob 逐位元相同（34,036 bytes）、Pages ／、index.html、daily_report_v2_2026-10-08.html 皆 200、閘門重跑 68/1 且 S1.8 []、acceptance fixtures 全 OK。\n\n七、已揭露（不影響 CLOSED）：①落地 JSON 為最小 JSON（本輪 subagent-summary 未落地；判讀欄位逐字保留、acceptance_reproduced 標［節錄］、ref 指回 live log）②a6c 轉義版（emit 字面以反斜線u 持有）未被偵測 — 經 CIO 獨立驗證主張成立：屬 has_emit 純文字比對固有極限、在 845245b2 即存在於所有非自身檔、非本次引入、不改變任何真值或已發布產出；依 Release boundary（blocking=[]）登記為 required_fixes 而非阻斷。\n\n八、後續卡（不 reopen 本卡）：PEND-20261009-01～05 — ①emit 偵測改 AST 折疊 ②檔頭補列本案例 ③驗收樣本移入版控／S4 內建 ④S4.6 降噪 ⑤自身檔禁呼叫共用 emit／組裝 API 之 AST 斷言。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261009025052-1140",
+      "timestamp": "2026-10-09T02:50:52.838505+08:00",
+      "agent": "Hermes",
+      "task": "INC-294 CLOSED（A 案：只修程式不回填歷史）｜commit 21ec3b58（tree 0185c4fd）｜資料 2603bfe1｜後續 3 卡 PEND-20261009-06～08",
+      "summary": "【INC-294 CLOSED 2026-10-09】日報緊急應變連結重複副檔名 .html.html（既有，2 處 404）— A 案修復＋CIO APPROVE＋上線驗證通過。\n\n一、根因（精確定位，取代原卡初步推定）：唯一產生點在 daily_report_assembly.py build_emergency_block() 的 L270／L274 — href 模板 \"%s.html\" % (PAGES_BASE + \"/\" + _ef[0].name)，而 _ef[0].name 取自 glob(\"emergency_report_2*.html\")，本身已含 .html，故再補一次。regenerate_report.py:425 僅是傳遞者。該共用模組同時服務 07:00（regenerate_report.py:211/213）與 22:00（run_daily.py:2582/2584）兩條產線 → 修一處即涵蓋兩線。影響 17 份日報（09-13～10-08）、34 個壞連結。\n\n二、裁決 A 案（使用者 2026-10-09）：只修 producer，不回填 17 份歷史日報。理由：①根因唯一定位 ②A 案已滿足原卡驗收（單一日報 24/24＝200、新產物不再產生 .html.html）③歷史日報是已發布的當日快照，為一個不影響數據正確性的 href 改寫 17 份歷史產物會擴大 scope 並產生額外 Pages 歷史層變動 ④本卡授權目的即修正 INC-289／291「零變化」限制期刻意保留之 defect。→ 17 份歷史日報的 .html.html 屬「刻意保留」，不是未完成；日後掃描命中舊檔不構成 defect、不得據此重開。\n\n三、修正（僅 daily_report_assembly.py，+9／−8）：①L270／L274 href 模板 \"%s.html\" → \"%s\" ②清除 docstring 兩處已過期的「已知缺陷／刻意保留、另案處理」註記並改寫為 INC-294 已修正 ③L266 行內註解同步改寫 ④docstring 相關卡清單加入 INC-294。\n\n四、驗收：①閘門 68 PASS / 1 FAIL / 0 SKIP、S1.8 []、S1.11 PASS（唯一 FAIL＝既有 S3.8）②帶真實 snapshot 直呼 build_emergency_block，三組日期（None／10-08／10-09）皆輸出單一 .html、.html.html 計數 0 ③連結目標全 200 ④%TEMP% 鏡像跑真產線 regenerate_report.py --no-push → rc=0，新產出 .html.html 計數 0 ⑤兩條產線共用模組已證實。\n\n五、CIO 對抗性審查（獨立 context，deleg_9acb57c6）：verdict APPROVE／blocking=[]／受審 tree 0185c4fd5f0272f9716f76f927bc314014270043。獨立自建 GIT_INDEX_FILE 復現同一 tree；git diff --name-only 證實僅一檔；雙版本 harness 三組日期逐位元比對（差異精確為兩條 href）；全庫掃描確認產生點唯一（build_rebalance_dashboard.py:630 不補 .html、regenerate_report.py:435 為 dead code、index.html 命中係審查內文敘述）；線上 curl .html 200／.html.html 404；鏡像產線 rc=0 且 .html.html＝0；確認候選 tree 未夾帶 3 個既有 dirty 與 1 個 untracked。判決檔 .git/cio_reviews/20261009_inc294.json。\n\n六、落地與上線：程式 commit 21ec3b58（tree 逐字等於受審 tree；僅 1 檔）→ RECORD（.git/CIO_APPROVED）→ 閘門 v5 → push fd51f676..21ec3b58。上線驗證：remote == local == 21ec3b58、未推 0、線上 raw daily_report_assembly.py sha256 與本機逐位元相同（a7a44d84…）。資料 commit 2603bfe1（error_register CLOSED ＋ PEND-20261009-06～08），TAG 車道。\n\n七、已揭露（不影響 CLOSED）：首次線上 sha256 比對不符（回傳前一版 a344f155…），經查為 Pages／CDN 重建延遲（加 cache-buster 重取即一致），非發布內容不一致。\n\n八、過程發現（另案）：在 %TEMP% 鏡像跑產線時，risk_factor_penetration.py:28 寫死正本絕對路徑，把 PNG 寫進正本 repo（sandbox 逃逸）。已刪除外洩檔並驗證正本工作區乾淨。CIO 實測證實：改指鏡像後逃逸 diff＝0；全庫 60 檔／65 處同型硬編碼。與 no-hardcode-mandate 直接衝突。\n\n九、後續卡分流（依使用者裁決，不 reopen INC-294）：PEND-20261009-06（regenerate_report.py:210 過期註解，P2）／07（daily_report_assembly.py:218 docstring 語意限定為 INC-289 驗收，P2）／08（全庫 60 檔寫死絕對路徑 sandbox 逃逸，P1 — 優先級最高）。CIO required_fixes #4（歷史不回填裁決）不另開卡，已直接寫入 INC-294 結案證據。\n\n十、產出影響時點：缺陷自下一份新產出日報（2026-10-09，07:00 產線）起消失；歷史 17 份維持原狀。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261009031645-1141",
+      "timestamp": "2026-10-09T03:16:45.433972+08:00",
+      "agent": "Hermes",
+      "task": "SI 第一批① CLOSED／上線：房貸扣款行安全線每日驗證｜commit f70b4c12（tree 569e18f3）｜cron 46ee9089cc83 @ 08:35｜銀行端 HOLD",
+      "summary": "【SI 第一批① CLOSED／上線 2026-10-09】房貸扣款行安全線每日驗證（監控／告警，非金流執行）\n\n一、成果：新增 2 檔並上線 —— mortgage_account_alert.py（+201，本體）與 wrappers/mortgage_account_alert.py（+25，cron 薄轉發器）。安全線＝自身房貸月繳×3（國泰取派生 mortgage_rate.cathay_monthly；永豐讀 snapshot.mortgage_sinopac_monthly），例外式（達標→空 stdout 不推播）。\n\n二、流程：CIO Round-1 對抗性審查判 REJECT（blocking＝fail-open：安全線可退化成 0 或 NaN 導致 no_agent 靜默漏報），實測出兩條靜默路徑 ①monthly_expense 亦 0 時退回值 0×3=0 → 靜默 ②NaN 穿過「not x or x<=0」防線、bal<NaN 恆 False → 靜默且無 stderr。修 8 項後本機 14/14 PASS；CIO Round-2 複審 APPROVE／blocking=[]／required_fixes=[]，並自加測 monthly=1e308 → line=inf 被防禦斷言攔下 → rc=2，證明該斷言非死碼。\n\n三、落地：commit f70b4c12（tree 569e18f3 ＝ 核准 tree 逐字相符）→ RECORD（CIO-Gemini）→ 閘門 v5 → push 645c3f02..f70b4c12。remote=local=f70b4c12、未推 0。post-commit 自動 wrapper deploy 1 支。\n\n四、最關鍵驗證（超出單元測試）：用 cron 的真實執行路徑實跑（hermes/scripts/mortgage_account_alert.py ＋ cwd=workdir），達標時空 stdout rc=0、--always 正常 —— 實際排除 2026-09-28「Script not found」那類故障，確認真實執行環境可用。\n\n五、Cron：46ee9089cc83｜35 8 * * *｜no_agent｜deliver=origin｜下次 2026-10-09 08:35。與已驗證的 08:30 生活帳戶 job 五個欄位逐項相同（no_agent／deliver／workdir／enabled／origin chat_id 8886571290）；解析路徑存在、無同型重複。定位＝觀測非轉帳。\n\n六、預期行為：正常 → 兩戶都達標、什麼都不通知；異常 → 🔴 低於安全線才通知；資料故障 → fail-closed 告警（rc=2；Hermes cron 對非零退出另發錯誤警報，兩條路都響）。\n\n七、後續節奏（使用者裁決）：不建議馬上做②生活帳戶與③質押息。目前三個更高層級未定型 —— 轉貸 → 標案備用金 → 緊急預備金 100 萬。節奏＝①先跑觀測期 → 確認 08:35 實際運作穩定 → 等轉貸條件定型 → 再決定②③的銀行端路徑。**銀行端固定轉帳一律 HOLD**，等三件事完成再一次性設定，避免「銀行設好了、貸款轉完又全部重設」的二次作業。\n\n八、狀態表：房貸安全線程式🟢上線｜CIO Round-2🟢APPROVE｜commit/tree🟢一致｜remote🟢同步｜cron 08:35🟢已建立｜真實 Hermes 路徑🟢實跑驗證｜銀行自動轉帳🔴HOLD｜生活帳戶②🟡等待設計｜質押息③🟡等待設計。\n\n九、CIO 留下的三项 non-blocking（不 reopen ①）：①扣款日 20 仍為排程常數，建議結構化進 snapshot schema ②完全降級且無告警時降級僅見於 stderr（本案 fallback 更保守，非恆過）③rate 全缺時用途文字顯示「⚠️ 缺真值%」純顯示瑕疵。\n\n十、教訓已入庫：fail-safe 必須覆蓋整條 fallback 鏈（含 fallback 本身為 0）與非有限值（NaN/Inf）；NaN 會穿過 `not x or x <= 0` 的直覺寫法，且 json.loads 預設接受 NaN；門檻算出後再加 isfinite(line) and line>0 斷言；降級時須在輸出揭露基礎已改變。寫入 finance-standing-instructions 技能。\n\n十一、如實揭露：清理 %TEMP% 時以 snap_* glob 誤刪一個既有檔案 snap_pre_truth.bak（9/16 舊備份、非本輪產生），已無法復原。",
+      "status": "completed",
+      "source": "user"
     }
-,
-  {
-    "id": "mem-20261008225821-1136",
-    "timestamp": "2026-10-08T22:58:21.873067+08:00",
-    "agent": "Hermes",
-    "task": "真值日→DB liabilities 落列：第一階段診斷 CLOSED｜PEND-20261006-02 沿用不開新卡｜第二階段未授權",
-    "summary": "使用者 2026-10-08 裁決：第一階段唯讀診斷 CLOSED。根因已確認＝DB liabilities 表在自動化圖上無寫入者（rebuild_liabilities() 僅改 snapshot；夜間產線只寫 assets；三個 DB 寫入口 update_data／asset_sync CLI／db_loader 皆不在夜鏈、後者無呼叫者）→ assets 每日前進、liabilities 停在最近真值日，差額＝當日信用卡增量（+643）。本次證據併入既有 PEND-20261006-02（同根因同復發，不開第二張卡）。A/B/C 未選；最小止血方向（真值日流程明示完成 DB liabilities 落列並驗四源）確認可行、未授權實作；真值日 prompt 應補明示、未授權修改；apply_truth_20261008.py 補登版控未授權。本次授權邊界＝僅『證據入庫』，零修復操作。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261008232428-1137",
-    "timestamp": "2026-10-08T23:24:28.333858+08:00",
-    "agent": "Hermes",
-    "task": "真值日→DB liabilities 落列修復 CLOSED（3 輪獨立審查 APPROVE／blocking=[]）｜commit d103d31d（3 檔）｜殘留 R-a～R-f 入治理清單",
-    "summary": "PEND-20261006-02 修復窗口（使用者 2026-10-08 授權）落地：①asset_sync.py 新增 land_liabilities_db() 為唯一 DB 落地實作（UPSERT liabilities 當日列＋UPDATE assets，冪等）②rebuild_liabilities(snap, land_db=False) 預設維持純計算、顯式 land_db=True 才落 DB（使用者裁決：拒絕預設帶持久化副作用）③必填鍵含 total_liabilities/total_assets，缺鍵 fail-closed（不寫、不編造、不寫 NULL）④目標日無 assets 列→顯式告警＋assets_updated=False（不硬插殘缺列）⑤CLI 落地失敗 rc=1 fail-closed ⑥版控內真值日 runner apply_truth_20260929／20261006 顯式 land_db=True。驗證：snapshot＝DB assets＝DB liabilities＝30,980,898、信用卡 36,469 → 四源差額 643→0；負向：缺鍵 skip 不寫／刪列→四源閘門 FAIL／CLI 缺鍵 rc=1 且 DB 不變；35/35 沙盒 PASS；真 DB md5 全程未變。獨立對抗式審查 3 輪皆 APPROVE、blocking=[]、scope_creep=false；第 2 輪抓到作者『apply_truth runner 未版控』敘述有誤（實為版控內）已更正並接線；第 3 輪抓到揭露清單漏列未版控 apply_truth_20261008.py。程式 commit d103d31d（tree da7590ac，3 檔：asset_sync.py＋apply_truth_20260929.py＋apply_truth_20261006.py）。殘留治理清單（未做、待裁示）：R-a 4 支套用類 runner 未接線（同型復發向量）／R-b rebuild與land鍵集未統一（刻意不 over-tighten）／R-c 日期語意＝執行日／R-d _LAST_LAND_RESULT 模組全域／R-e runner 車道 rc 未 propagate（僅 CLI 有 rc=1）／R-f 未版控 20261008.py 仍預設呼叫＋歷史 runner 重跑會寫執行日列。",
-    "status": "completed",
-    "source": "使用者在 2026-10-08 Telegram 授權修復窗口"
-  }
-,
-  {
-    "id": "mem-20261008232816-1138",
-    "timestamp": "2026-10-08T23:28:16.536950+08:00",
-    "agent": "Hermes",
-    "task": "PEND-20261006-02 ✅ CLOSED（使用者 2026-10-08 裁決）｜修復鏈閉環：643→0、線上=本機、CIO 3 輪 APPROVE",
-    "summary": "使用者最終裁決 CLOSED。逐項核可：根因已確認／land_liabilities_db() 正式落地／真 DB 10/08 已寫入／四源差異 643→0／信用卡 36,469 三源一致／歷史列無污染／程式審查 CIO 3 輪 APPROVE blocking=[]／程式·資料·治理三顆 commit 分離（d103d31d+b56bc188+e9e7f962）／remote unpushed=0／Pages 200 且 index blob 逐位元一致、19 個參照頁全 200／closeout 本批 2 顆紅燈→0／治理留痕 pending+dashboard_decisions。使用者肯定：①未把既有問題（runtime dirty 3 檔、既有 validator 49 PASS/6 FAIL）硬算成本輪成果（機制≠收斂）②JSON 假 diff（indent=1＋CRLF，885 行）主動揭露並以 --amend 收斂（未用 reset/stash/clean）。裁示：R-a～R-f 保留為治理 backlog，不得視為本案未結、不得順手修；本案正式收工、不再動此卡。落地：pending_decisions.json PEND-20261006-02 status→關案。",
-    "status": "completed",
-    "source": "使用者 2026-10-08 Telegram 裁決 CLOSED"
-  }
-,
-  {
-    "id": "mem-20261009022322-1139",
-    "timestamp": "2026-10-09T02:23:22.628359+08:00",
-    "agent": "Hermes",
-    "task": "INC-292 CLOSED（Round-2 受限實作＋CIO APPROVE＋上線驗證）｜commit 42c6d754（tree ff737dbd）｜後續 5 卡 PEND-20261009-01～05",
-    "summary": "【INC-292 CLOSED 2026-10-09】守門自我豁免分支未套用 emit/lit 規則 — Round-2 受限實作＋CIO APPROVE＋上線驗證通過。\n\n一、第一輪驗收 FAIL：原卡驗收在 %TEMP% 鏡像以 a6a／a6c 注入掃描器自身 → S1.8 仍 []、68 PASS/1 FAIL，與 control 逐項相同。定罪：has_emit／has_lit 兩條規則仍在自我豁免 continue 之後；且 _has_private_dr_replace() 只認單一 ast.Constant（\"__DR\"+\"_TW_GAP__\" 是 BinOp，常數折疊在 compile 階段、ast.parse 不做）。原驗收條件「rc≠0」在基線已有 S3.8 FAIL 時失去鑑別力，判別指標改為 S1.8 違規清單。裁決 FAIL / RETURN FOR REPAIR。\n\n二、前置盤點關鍵發現（天真搬移會讓閘門擋自己）：掃描器自身 has_lit=True（16 處偵測用 token 字面）、has_emit=True（L66 _EMIT 定義＋S4 樣板），且本檔不在 DR_WHITELIST／EMIT_WHITELIST。故修復順序必須先處理偵測字面持有方式，再調順序。\n\n三、修正（僅 tools/verify_daily_report_single_producer.py，+39/−13）：①_EMIT 改以反斜線u 轉義持有（值逐位元不變，同 _EM_KEY 手法）②S4 負向樣板改以 _EMIT 拼接（產出字串等價證明通過）③新增 _fold_str() 並讓 _has_private_dr_replace() 折疊 BinOp／Name → 修 a6a ④has_emit 檢查移至自我豁免 continue 之前 → 修 a6c ⑤S1.11 擴充為同檢 _EMIT 原文殘留（防回歸）。設計說明：has_lit 刻意不移前（a6a 非由 has_lit 攔；掃描器合法持有 16 處偵測用字面，強行移前須 16 處手術＝scope 爆炸；自身檔產出行為已由既有 AST 規則涵蓋）。\n\n四、驗收矩陣（偵測層＋真閘門層皆通過）：scanner 自身 0／control 0／a6a ≥1／a6c ≥1／a7 ≥1；正本 repo 68 PASS / 1 FAIL / 0 SKIP（唯一 FAIL＝既有 S3.8 STALE-ARTIFACT，非本輪引入）。\n\n五、CIO 對抗性審查（獨立 context，deleg_0c0725f6）：verdict APPROVE／blocking=[]／受審 tree ff737dbdc6ba690b4c38e9397b16223b689ddf5c。獨立取證：自建 GIT_INDEX_FILE 復現同一 tree；git diff --name-only 證實僅一檔不同；自跑 292 檔假陽性掃描（判定翻轉 0、新判 True 0）；真閘門注入 5 變體（含 a6c 轉義對照）；HEAD 版 vs 候選版整支 stdout diff 僅 S1.11 一行 → 無既有斷言被削弱／刪除／恆真；INC-291 V1/V2/V3 逐字未動。判決檔 .git/cio_reviews/20261009_inc292_round2.json ＋完整實驗輸出 20261009_inc292_round2_ciogate.out。\n\n六、落地與上線：commit 42c6d754（tree 逐字等於受審 tree；僅 1 檔；3 dirty＋1 untracked 未帶走）→ 閘門 v5（1 commit 全通過）→ push 845245b2..42c6d754 HEAD->clean-main。上線驗證：remote==local==42c6d754、未推 0、線上 raw tools 檔 sha256 與本機 blob 逐位元相同（34,036 bytes）、Pages ／、index.html、daily_report_v2_2026-10-08.html 皆 200、閘門重跑 68/1 且 S1.8 []、acceptance fixtures 全 OK。\n\n七、已揭露（不影響 CLOSED）：①落地 JSON 為最小 JSON（本輪 subagent-summary 未落地；判讀欄位逐字保留、acceptance_reproduced 標［節錄］、ref 指回 live log）②a6c 轉義版（emit 字面以反斜線u 持有）未被偵測 — 經 CIO 獨立驗證主張成立：屬 has_emit 純文字比對固有極限、在 845245b2 即存在於所有非自身檔、非本次引入、不改變任何真值或已發布產出；依 Release boundary（blocking=[]）登記為 required_fixes 而非阻斷。\n\n八、後續卡（不 reopen 本卡）：PEND-20261009-01～05 — ①emit 偵測改 AST 折疊 ②檔頭補列本案例 ③驗收樣本移入版控／S4 內建 ④S4.6 降噪 ⑤自身檔禁呼叫共用 emit／組裝 API 之 AST 斷言。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261009025052-1140",
-    "timestamp": "2026-10-09T02:50:52.838505+08:00",
-    "agent": "Hermes",
-    "task": "INC-294 CLOSED（A 案：只修程式不回填歷史）｜commit 21ec3b58（tree 0185c4fd）｜資料 2603bfe1｜後續 3 卡 PEND-20261009-06～08",
-    "summary": "【INC-294 CLOSED 2026-10-09】日報緊急應變連結重複副檔名 .html.html（既有，2 處 404）— A 案修復＋CIO APPROVE＋上線驗證通過。\n\n一、根因（精確定位，取代原卡初步推定）：唯一產生點在 daily_report_assembly.py build_emergency_block() 的 L270／L274 — href 模板 \"%s.html\" % (PAGES_BASE + \"/\" + _ef[0].name)，而 _ef[0].name 取自 glob(\"emergency_report_2*.html\")，本身已含 .html，故再補一次。regenerate_report.py:425 僅是傳遞者。該共用模組同時服務 07:00（regenerate_report.py:211/213）與 22:00（run_daily.py:2582/2584）兩條產線 → 修一處即涵蓋兩線。影響 17 份日報（09-13～10-08）、34 個壞連結。\n\n二、裁決 A 案（使用者 2026-10-09）：只修 producer，不回填 17 份歷史日報。理由：①根因唯一定位 ②A 案已滿足原卡驗收（單一日報 24/24＝200、新產物不再產生 .html.html）③歷史日報是已發布的當日快照，為一個不影響數據正確性的 href 改寫 17 份歷史產物會擴大 scope 並產生額外 Pages 歷史層變動 ④本卡授權目的即修正 INC-289／291「零變化」限制期刻意保留之 defect。→ 17 份歷史日報的 .html.html 屬「刻意保留」，不是未完成；日後掃描命中舊檔不構成 defect、不得據此重開。\n\n三、修正（僅 daily_report_assembly.py，+9／−8）：①L270／L274 href 模板 \"%s.html\" → \"%s\" ②清除 docstring 兩處已過期的「已知缺陷／刻意保留、另案處理」註記並改寫為 INC-294 已修正 ③L266 行內註解同步改寫 ④docstring 相關卡清單加入 INC-294。\n\n四、驗收：①閘門 68 PASS / 1 FAIL / 0 SKIP、S1.8 []、S1.11 PASS（唯一 FAIL＝既有 S3.8）②帶真實 snapshot 直呼 build_emergency_block，三組日期（None／10-08／10-09）皆輸出單一 .html、.html.html 計數 0 ③連結目標全 200 ④%TEMP% 鏡像跑真產線 regenerate_report.py --no-push → rc=0，新產出 .html.html 計數 0 ⑤兩條產線共用模組已證實。\n\n五、CIO 對抗性審查（獨立 context，deleg_9acb57c6）：verdict APPROVE／blocking=[]／受審 tree 0185c4fd5f0272f9716f76f927bc314014270043。獨立自建 GIT_INDEX_FILE 復現同一 tree；git diff --name-only 證實僅一檔；雙版本 harness 三組日期逐位元比對（差異精確為兩條 href）；全庫掃描確認產生點唯一（build_rebalance_dashboard.py:630 不補 .html、regenerate_report.py:435 為 dead code、index.html 命中係審查內文敘述）；線上 curl .html 200／.html.html 404；鏡像產線 rc=0 且 .html.html＝0；確認候選 tree 未夾帶 3 個既有 dirty 與 1 個 untracked。判決檔 .git/cio_reviews/20261009_inc294.json。\n\n六、落地與上線：程式 commit 21ec3b58（tree 逐字等於受審 tree；僅 1 檔）→ RECORD（.git/CIO_APPROVED）→ 閘門 v5 → push fd51f676..21ec3b58。上線驗證：remote == local == 21ec3b58、未推 0、線上 raw daily_report_assembly.py sha256 與本機逐位元相同（a7a44d84…）。資料 commit 2603bfe1（error_register CLOSED ＋ PEND-20261009-06～08），TAG 車道。\n\n七、已揭露（不影響 CLOSED）：首次線上 sha256 比對不符（回傳前一版 a344f155…），經查為 Pages／CDN 重建延遲（加 cache-buster 重取即一致），非發布內容不一致。\n\n八、過程發現（另案）：在 %TEMP% 鏡像跑產線時，risk_factor_penetration.py:28 寫死正本絕對路徑，把 PNG 寫進正本 repo（sandbox 逃逸）。已刪除外洩檔並驗證正本工作區乾淨。CIO 實測證實：改指鏡像後逃逸 diff＝0；全庫 60 檔／65 處同型硬編碼。與 no-hardcode-mandate 直接衝突。\n\n九、後續卡分流（依使用者裁決，不 reopen INC-294）：PEND-20261009-06（regenerate_report.py:210 過期註解，P2）／07（daily_report_assembly.py:218 docstring 語意限定為 INC-289 驗收，P2）／08（全庫 60 檔寫死絕對路徑 sandbox 逃逸，P1 — 優先級最高）。CIO required_fixes #4（歷史不回填裁決）不另開卡，已直接寫入 INC-294 結案證據。\n\n十、產出影響時點：缺陷自下一份新產出日報（2026-10-09，07:00 產線）起消失；歷史 17 份維持原狀。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261009031645-1141",
-    "timestamp": "2026-10-09T03:16:45.433972+08:00",
-    "agent": "Hermes",
-    "task": "SI 第一批① CLOSED／上線：房貸扣款行安全線每日驗證｜commit f70b4c12（tree 569e18f3）｜cron 46ee9089cc83 @ 08:35｜銀行端 HOLD",
-    "summary": "【SI 第一批① CLOSED／上線 2026-10-09】房貸扣款行安全線每日驗證（監控／告警，非金流執行）\n\n一、成果：新增 2 檔並上線 —— mortgage_account_alert.py（+201，本體）與 wrappers/mortgage_account_alert.py（+25，cron 薄轉發器）。安全線＝自身房貸月繳×3（國泰取派生 mortgage_rate.cathay_monthly；永豐讀 snapshot.mortgage_sinopac_monthly），例外式（達標→空 stdout 不推播）。\n\n二、流程：CIO Round-1 對抗性審查判 REJECT（blocking＝fail-open：安全線可退化成 0 或 NaN 導致 no_agent 靜默漏報），實測出兩條靜默路徑 ①monthly_expense 亦 0 時退回值 0×3=0 → 靜默 ②NaN 穿過「not x or x<=0」防線、bal<NaN 恆 False → 靜默且無 stderr。修 8 項後本機 14/14 PASS；CIO Round-2 複審 APPROVE／blocking=[]／required_fixes=[]，並自加測 monthly=1e308 → line=inf 被防禦斷言攔下 → rc=2，證明該斷言非死碼。\n\n三、落地：commit f70b4c12（tree 569e18f3 ＝ 核准 tree 逐字相符）→ RECORD（CIO-Gemini）→ 閘門 v5 → push 645c3f02..f70b4c12。remote=local=f70b4c12、未推 0。post-commit 自動 wrapper deploy 1 支。\n\n四、最關鍵驗證（超出單元測試）：用 cron 的真實執行路徑實跑（hermes/scripts/mortgage_account_alert.py ＋ cwd=workdir），達標時空 stdout rc=0、--always 正常 —— 實際排除 2026-09-28「Script not found」那類故障，確認真實執行環境可用。\n\n五、Cron：46ee9089cc83｜35 8 * * *｜no_agent｜deliver=origin｜下次 2026-10-09 08:35。與已驗證的 08:30 生活帳戶 job 五個欄位逐項相同（no_agent／deliver／workdir／enabled／origin chat_id 8886571290）；解析路徑存在、無同型重複。定位＝觀測非轉帳。\n\n六、預期行為：正常 → 兩戶都達標、什麼都不通知；異常 → 🔴 低於安全線才通知；資料故障 → fail-closed 告警（rc=2；Hermes cron 對非零退出另發錯誤警報，兩條路都響）。\n\n七、後續節奏（使用者裁決）：不建議馬上做②生活帳戶與③質押息。目前三個更高層級未定型 —— 轉貸 → 標案備用金 → 緊急預備金 100 萬。節奏＝①先跑觀測期 → 確認 08:35 實際運作穩定 → 等轉貸條件定型 → 再決定②③的銀行端路徑。**銀行端固定轉帳一律 HOLD**，等三件事完成再一次性設定，避免「銀行設好了、貸款轉完又全部重設」的二次作業。\n\n八、狀態表：房貸安全線程式🟢上線｜CIO Round-2🟢APPROVE｜commit/tree🟢一致｜remote🟢同步｜cron 08:35🟢已建立｜真實 Hermes 路徑🟢實跑驗證｜銀行自動轉帳🔴HOLD｜生活帳戶②🟡等待設計｜質押息③🟡等待設計。\n\n九、CIO 留下的三项 non-blocking（不 reopen ①）：①扣款日 20 仍為排程常數，建議結構化進 snapshot schema ②完全降級且無告警時降級僅見於 stderr（本案 fallback 更保守，非恆過）③rate 全缺時用途文字顯示「⚠️ 缺真值%」純顯示瑕疵。\n\n十、教訓已入庫：fail-safe 必須覆蓋整條 fallback 鏈（含 fallback 本身為 0）與非有限值（NaN/Inf）；NaN 會穿過 `not x or x <= 0` 的直覺寫法，且 json.loads 預設接受 NaN；門檻算出後再加 isfinite(line) and line>0 斷言；降級時須在輸出揭露基礎已改變。寫入 finance-standing-instructions 技能。\n\n十一、如實揭露：清理 %TEMP% 時以 snap_* glob 誤刪一個既有檔案 snap_pre_truth.bak（9/16 舊備份、非本輪產生），已無法復原。",
-    "status": "completed",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-08T22:45:45.470597"
+    "updated_at": "2026-10-09T07:00:15.043968"
   },
-  "last_updated": "2026-10-08T18:00:00+08:00",
+  "last_updated": "2026-10-09T18:00:00+08:00",
   "2026-09-29": [
     "9/29 質押撥款入帳 NT$5,900,000（10:57，國泰世華通知；實撥 590 萬@2.65%，原表定 540 萬@2.77%）→ 真值日全資產同步：現金 6,719,182／保單 9,453,825／基金 12,654,144／台股 2,981,410／總資產 31,808,561、負債 36,003,720（含基金質押 590 萬）、淨值 -4,195,159；銀行口徑 LTV 50.1%。待執行：清償 500 萬高息（券商 96 萬@3.92% 先、保單 400 萬@4% 後）",
     "9/29 裁示：質押撥款 590 萬先轉 200 萬還保單借貸（4% → 月省 6,667；保單借貸 400 萬 → 200 萬）；撥款剩餘 3,900,000。順序調整：保單（4%）優先於券商（3.92%）。待入帳確認後四源同步。",
@@ -10681,8 +10675,8 @@
     },
     {
       "date": "2026-09-23",
-      "action": "Coast FI 引擎首次真值日運行驗證（10/1）",
-      "status": "已確認",
+      "action": "Coast FI 真值日 writer／caller 缺失（無腳本 caller／無 freshness gate）",
+      "status": "關案",
       "tags": "CoastFI,真值日,驗證"
     },
     {
@@ -10814,8 +10808,8 @@
     {
       "date": "2026-10-06",
       "action": "資安 remediation：repo 五步（public→private／HEAD 淨化／filter-repo／force-with-lease／Pages 驗 404）＋第 1 步已完成",
-      "status": "已確認",
-      "tags": "資安,SECURITY,憑證輪替,repo rewrite,Pages"
+      "status": "待處理",
+      "tags": "資安,SECURITY,憑證輪替,repo rewrite,Pages,Active-Repair,HIGH,狀態失真"
     },
     {
       "date": "2026-10-06",
@@ -10838,13 +10832,13 @@
     {
       "date": "2026-10-06",
       "action": "負債資料時間軸缺口：DB liabilities 表在夜間產線無寫入者（四源閘門每日誤報）",
-      "status": "待處理",
+      "status": "關案",
       "tags": "負債,liabilities,四源,閘門,寫入不對稱,資料時間軸,結構性"
     },
     {
       "date": "2026-10-06",
       "action": "dirty_gate 升級：全域 worktree gate → per-commit scope isolation（方案 2）",
-      "status": "待處理",
+      "status": "關案",
       "tags": "產線,治理,dirty_gate,scope,manifest,fail-closed,可回滾"
     },
     {
@@ -10874,7 +10868,7 @@
     {
       "date": "2026-10-07",
       "action": "P0 產出一致性：daily report 雙 producer 分歧（執行中決策追蹤缺章＋五桶偏離欄位口徑不一致）",
-      "status": "待處理",
+      "status": "關案",
       "tags": "P0,產出一致性,日報,雙producer,regenerate_report,run_daily,缺章,artifact-integrity,不涉真值"
     },
     {
@@ -10894,6 +10888,66 @@
       "action": "Producer commit/push scope isolation：禁止把既有 working-tree dirty 誤認為本輪產物並自動發布",
       "status": "待處理",
       "tags": "治理,producer,auto_push,dirty_gate,scope,publish-boundary"
+    },
+    {
+      "date": "2026-10-08",
+      "action": "liabilities 自然回歸失敗：真值日 runner 未帶 land_db=True（10/08 untracked）",
+      "status": "關案",
+      "tags": "真值日,DB,liabilities,land_db,freshness,治理,不reopen#38"
+    },
+    {
+      "date": "2026-10-08",
+      "action": "技術債（低優先／DELIBERATE HOLD）：db_loader.py 的 assets 寫入未含 total_liabilities → 若接上 caller 將使「負債落列」閘門偽陰性",
+      "status": "已確認",
+      "tags": "tech-debt,低優先,DELIBERATE-HOLD,db_loader,assets,insert-contract,閘門偽陰性,不施工"
+    },
+    {
+      "date": "2026-10-09",
+      "action": "守門偵測根治：決策章 emit 改 AST 折疊（消除轉義／拼接／間接繞道）",
+      "status": "待處理",
+      "tags": "技術債,守門,detector,single_producer,AST,inc292-required"
+    },
+    {
+      "date": "2026-10-09",
+      "action": "檔頭『已揭露的偵測極限』補列 emit 轉義／拼接案例",
+      "status": "待處理",
+      "tags": "技術債,文件,守門,detector,inc292-required"
+    },
+    {
+      "date": "2026-10-09",
+      "action": "INC-292 驗收樣本由 %TEMP%／hermes 移入版控（建議 S4 內建三變體）",
+      "status": "待處理",
+      "tags": "技術債,驗收,回歸保護,守門,inc292-required"
+    },
+    {
+      "date": "2026-10-09",
+      "action": "S4.6 對照組改用未注入來源掃描（降低與 S1.8 的重複訊號）",
+      "status": "待處理",
+      "tags": "技術債,驗收,降噪,守門,inc292-required"
+    },
+    {
+      "date": "2026-10-09",
+      "action": "架構約束：自身檔不得呼叫共用模組的 emit／組裝 API（AST 斷言）",
+      "status": "待處理",
+      "tags": "技術債,架構,守門,AST,inc292-required"
+    },
+    {
+      "date": "2026-10-09",
+      "action": "regenerate_report.py:210 過期註解（仍稱 .html.html 缺陷刻意保留）",
+      "status": "待處理",
+      "tags": "文件一致性,註解,inc294-required"
+    },
+    {
+      "date": "2026-10-09",
+      "action": "daily_report_assembly.py:218 docstring 語意限定為 INC-289 驗收",
+      "status": "待處理",
+      "tags": "文件一致性,docstring,inc294-required"
+    },
+    {
+      "date": "2026-10-09",
+      "action": "全庫 60 檔／65 處寫死絕對路徑 → 鏡像/sandbox 跑產線寫回正本 repo（sandbox 逃逸）",
+      "status": "待處理",
+      "tags": "技術債,沙箱隔離,硬編碼,producer-isolation,no-hardcode,inc294-required"
     }
   ]
 }
