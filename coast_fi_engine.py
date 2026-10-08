@@ -146,8 +146,11 @@ def pccr_metric(snap, c):
     pi = snap.get("passive_income") or {}
     exp = float(snap.get("monthly_expense") or 0)
     div_c = float(pi.get("fund_dividend_conservative") or 0)          # 保守基本值
-    div_n = float(snap.get("monthly_dividend_total")
-                  or pi.get("fund_dividend_monthly") or 0)            # 常態月配（9月 147,975）
+    # 常態月配（2026-10-09 校正；PEND #12）：一律走 passive_caliber 單一口徑（本檔已 import 為 _pcal）。
+    # 舊寫法讀 snap["monthly_dividend_total"]，但該鍵自 2026-10-01 起由 dividend_tracker 寫入
+    # 「當月實收」（月初會塌成小額：10/09 為 9,446）→ PCCR 被嚴重低估（55.1% vs 正確 ~136%）。
+    # passive_caliber.div_norm 刻意不吃當月實收、也不吃 monthly_dividend_total。
+    div_n = float(_pcal.scenarios(snap).get("div_norm") or 0)          # 常態月配
     div_a = float(snap.get("dividend_month_actual") or div_n)          # 當月實收
     rent = float(pi.get("rent_monthly") or 0)
     # 2026-09-28：實收軌的房租用「當月入帳真值」rent_monthly_actual（77,100），
@@ -166,7 +169,7 @@ def pccr_metric(snap, c):
         "pccr_actual_pct": cov(div_a + rent_act),       # 當月實收（房租＝當月入帳真值）
         "pccr_normal_headroom": round((div_n * h + rent) / exp * 100, 1) if exp else 0,
         "nonpassive": {"girlfriend_repayment": float(pi.get("girlfriend_repayment") or 0)},
-        "canonical_source": "monthly_dividend_total（常態）／passive_income.fund_dividend_conservative（保守）",
+        "canonical_source": "passive_caliber.div_norm（常態；2026-10-09 校正）／passive_income.fund_dividend_conservative（保守）",
     }
 
 

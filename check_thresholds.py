@@ -421,6 +421,34 @@ def main() -> int:
                                 f" → 真值前進但未落列（請跑 python asset_sync.py --rebuild-liabilities）")
         except Exception as _e:
             errs.append(f"負債落列 freshness 檢查執行失敗：{_e}")
+        # ②g Coast FI freshness（2026-10-09 新增；PEND #12「Coast FI 真值日 writer／caller 缺失」）
+        #     症狀：真值日步驟 4（留停驗收表）跑了、步驟 4b（Coast FI --write）沒跑 →
+        #           snapshot.coast_fi_engine.asof 停在上一次真值日，仍照常在日報／儀表板／退休規劃顯示。
+        #     判準：以「值」而非「日曆天數」——DB assets[真值日] 已落（＝真值已定稿），
+        #           而 coast_fi_engine.asof 仍早於真值日 → 步驟 4b 未執行，fail-closed。
+        #     錨點用 snapshot.last_updated（真值日，只由 apply_truth_* 寫），
+        #           不用 snapshot.date（＝每日管線寫的「今日」，會每日偽陽性擋關）。
+        try:
+            import sqlite3 as _sq2
+            from asset_sync import DB_PATH as _dbp2     # 單一來源（測試可覆寫本常數）
+            _T2 = str(snap.get("last_updated") or "")[:10]
+            _cf = snap.get("coast_fi_engine") or {}
+            _cf_asof = str(_cf.get("asof") or "")[:10]
+            _con2 = _sq2.connect(str(_dbp2))
+            try:
+                _a2 = _con2.execute("select 1 from assets where date=?", (_T2,)).fetchone()
+            finally:
+                _con2.close()
+            if _T2 and _a2 is not None:   # assets[真值日] 不存在 → 真值尚未落 DB，不檢查（不誤擋）
+                if not _cf_asof:
+                    errs.append("Coast FI 未執行：snapshot 缺 coast_fi_engine.asof"
+                                "（真值日步驟 4b 從未執行）")
+                elif _cf_asof < _T2:
+                    errs.append(f"Coast FI 未更新：snapshot.coast_fi_engine.asof {_cf_asof} "
+                                f"早於真值日 {_T2}（DB assets[{_T2}] 已落）→ 真值日步驟 4b 未執行"
+                                f"（請跑 python truth_day_finalize.py）")
+        except Exception as _e:
+            errs.append(f"Coast FI freshness 檢查執行失敗：{_e}")
         # ── 國泰房貸利率一致性（2026-10-01）：權威鍵 vs 實繳月付 vs 舊副本 ────────────────
         _mcr = float(snap.get("mortgage_cathay_rate") or 0)
         _mcp = float(snap.get("mortgage_cathay") or 0)
