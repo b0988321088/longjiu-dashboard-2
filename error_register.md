@@ -1733,13 +1733,28 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 驗收：a2／a3／a4／a5／a7 各情境在 `%TEMP%` 鏡像皆 rc≠0（或其殘餘明確登記為「接受之限制」）；正本 repo 仍 0 FAIL。
 - 相關：INC-289、INC-292。
 
-## INC-294 ｜ 2026-10-07 ｜ P2｜open ｜ 日報緊急應變連結出現重複副檔名 `.html.html`（既有，2 處 404）
+## INC-294 ｜ 2026-10-07 ｜ P2｜CLOSED（2026-10-09）｜ 日報緊急應變連結出現重複副檔名 `.html.html`（既有，2 處 404）
 - 症狀：2026-10-07 發布後線上連結掃描（24 個唯一目標）發現 `daily_report_v2_2026-10-07.html` 內兩個連結指向 `emergency_report_2026-10-06.html.html` 與 `emergency_taiex_report_2026-10-06.html.html` → **HTTP 404**（其餘 22 個皆 200）。
 - 定性：**既有缺陷、非本批引入**——`origin/clean-main` 的 `daily_report_v2_2026-10-06.html` 同樣有 2 處，本批 `75a00a0e` 之 10-07 版亦 2 處。屬顯示層連結瑕疵，**真值不受影響**。
 - 根因（初步、唯讀定位）：`regenerate_report.py:425` `_er_name = _latest_er[0].name if _latest_er else f"emergency_report_{TODAY}.html"` 取到**已含 `.html` 的檔名**，連結組裝處又補一次 `.html`。
 - 邊界：不動 07:00／22:00 產線；不與 INC-289／292／293 同批；修正後須重跑連結掃描。
 - 驗收：兩處連結為單一 `.html` 且線上 200；連結掃描 24/24 全 200。
 - 相關：INC-289（同批發布後掃描發現；刻意未即時修以守住 scope）。
+
+### ✅ CLOSED 2026-10-09 ｜ 修復 commit `21ec3b58`（tree `0185c4fd`）
+
+- **根因（精確定位，取代上方初步推定）**：唯一產生點在 `daily_report_assembly.py` `build_emergency_block()` 的 **L270／L274** —— `'<br><a href="%s.html" …' % (PAGES_BASE + "/" + _ef[0].name)`，而 `_ef[0].name` 取自 `glob("emergency_report_2*.html")`，**本身已含 `.html`**，故再補一次 → `.html.html`。`regenerate_report.py:425` 僅是傳遞者，非產生點。該共用模組同時服務 **07:00**（`regenerate_report.py:211/213`）與 **22:00**（`run_daily.py:2582/2584`）兩條產線 → 修一處即涵蓋兩線。
+- **影響範圍**：17 份日報（09-13～10-08）、34 個壞連結；線上 10-07／10-08 兩份仍 404（`emergency_report_*.html` 本身 200）。
+- **裁決：A 案 —— 只修 producer，不回填歷史（使用者 2026-10-09 裁決）**。理由：① 根因唯一定位 ② A 案已滿足原卡驗收（單一日報 24/24＝200、新產物不再產生 `.html.html`）③ 歷史日報是**已發布的當日快照**，為一個不影響數據正確性的 href 而改寫 17 份歷史產物，會擴大 scope 並產生額外 Pages 歷史層變動 ④ 本卡授權目的即修正 INC-289／291「零變化」限制期刻意保留之 defect，不需順帶洗歷史層。
+  → **因此 17 份歷史日報的 `.html.html` 屬「刻意保留」，不是未完成**：日後任何掃描命中舊檔，應視為本裁決之預期結果，**不構成 defect、不得據此重開本卡**。
+- **修正（僅 `daily_report_assembly.py`，+9／−8）**：① L270／L274 href 模板 `"%s.html"` → `"%s"` ② 清除 docstring 兩處已過期的「已知缺陷／刻意保留、另案處理」註記並改寫為 INC-294 已修正 ③ L266 行內註解同步改寫 ④ docstring 相關卡清單加入 INC-294。
+- **驗收**：① 閘門 `68 PASS / 1 FAIL / 0 SKIP`、S1.8 `[]`、S1.11 PASS（唯一 FAIL＝既有 S3.8）② 帶真實 snapshot 直呼 `build_emergency_block`，三組日期（None／10-08／10-09）皆輸出單一 `.html`、`.html.html` 計數 **0** ③ 連結目標全 **200** ④ `%TEMP%` 鏡像跑真產線 `regenerate_report.py --no-push` → rc=0，新產出之 `.html.html` 計數 **0** ⑤ 兩條產線共用模組已證實。
+- **CIO 對抗性審查（獨立 context，`deleg_9acb57c6`）**：verdict **APPROVE**／`blocking=[]`／受審 tree `0185c4fd5f0272f9716f76f927bc314014270043`。獨立取證：自建 `GIT_INDEX_FILE` 復現同一 tree；`git diff --name-only` 證實僅一檔（+9/−8）；雙版本 harness 三組日期逐位元比對（差異精確為兩條 href）；全庫掃描確認產生點唯一（`build_rebalance_dashboard.py:630` 不補 `.html`、`regenerate_report.py:435` 為 dead code、`index.html` 命中係審查內文敘述）；線上 curl `.html` 200／`.html.html` 404；鏡像產線 rc=0 且 `.html.html`＝0；確認候選 tree 未夾帶 3 個既有 dirty 與 1 個 untracked。判決檔 `.git/cio_reviews/20261009_inc294.json`。
+- **落地與上線**：commit `21ec3b58`（tree 逐字等於受審 tree；僅 1 檔；3 dirty ＋ 1 untracked 未帶走）→ RECORD（`.git/CIO_APPROVED`）→ 閘門 v5（1 commit 全通過）→ push `fd51f676..21ec3b58  HEAD -> clean-main`。上線驗證：`remote == local == 21ec3b58`、未推 0、線上 raw `daily_report_assembly.py` sha256 與本機**逐位元相同**（`a7a44d84…`）。
+- **已揭露（不影響 CLOSED）**：首次線上 sha256 比對不符（回傳前一版 `a344f155…`），經查為 **Pages／CDN 重建延遲**（加 cache-buster 重取即一致），非發布內容不一致。
+- **產出影響時點**：缺陷自**下一份新產出日報**（2026-10-09，07:00 產線）起消失；歷史 17 份維持原狀（見上方 A 案裁決）。
+- **後續卡（另案，不 reopen 本卡）**：`PEND-20261009-06`（`regenerate_report.py:210` 過期註解）、`PEND-20261009-07`（`daily_report_assembly.py:218` docstring 語意限定為 INC-289 驗收）、`PEND-20261009-08`（**P1**：全庫 60 檔 / 65 處寫死絕對路徑 → 鏡像／sandbox 跑產線會寫回正本 repo）。
+- 相關：INC-289（同批發布後掃描發現）、INC-291（零變化限制期刻意保留）、PEND-20261009-06～08、CIO 判決 `.git/cio_reviews/20261009_inc294.json`。
 
 ## INCIDENT 282b2361 (four_source_sync)
 - 首次發生: 2026-10-08 09:29:05
