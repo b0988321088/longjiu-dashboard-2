@@ -900,5 +900,24 @@
     "external_owner": null,
     "status_raw": "🔴 Active Repair（2026-10-08 使用者裁決開卡）：10/08 runner 未帶 land_db=True → 下一次真值日預期復發；不 reopen PEND-20261006-02（#38 已 CLOSED）",
     "is_informational": false
+  },
+  {
+    "date": "2026-10-08",
+    "title": "技術債（低優先／DELIBERATE HOLD）：db_loader.py 的 assets 寫入未含 total_liabilities → 若接上 caller 將使「負債落列」閘門偽陰性",
+    "status": "已確認",
+    "tags": "tech-debt,低優先,DELIBERATE-HOLD,db_loader,assets,insert-contract,閘門偽陰性,不施工",
+    "detail": "【來源】2026-10-08「liabilities 自然回歸」（#48）施工之獨立對抗性審查（CIO-Adversarial-Subagent，verdict APPROVE／blocking 0）於 13 項檢查中揭露之 non-blocking 殘留。\n【風險】db_loader.py 對 assets 表做 INSERT OR REPLACE 時未帶 total_liabilities 欄 → 該欄落 DEFAULT（0）。目前全庫無任何 db_loader 呼叫者 → 無現行觸發路徑，不影響本次 #48 修復、不構成本次 blocking。\n【為何仍要登記】一旦未來接上 caller／實際寫入路徑，assets[當日].total_liabilities 會被寫成 0（或非 snapshot 真值）；而 2026-10-08 新增的「負債落列 freshness」閘門是以『assets[當日] 已等於 snapshot 真值』作為『上游已定稿』前置條件 —— 前置條件一旦不成立，閘門會靜默跳過（偽陰性），該類缺陷將再次無聲通過。性質屬「現在沒有火，但接上電之後可能失火」，故不留痕反而容易讓未來接手者重踩。\n【邊界（本次僅登記，未施工）】不修改 db_loader.py／不修改任何閘門／不修改 SOP／不新增測試／不跑產線／不動 DB 與 snapshot／不重開 #48。\n【施工觸發條件（重要）】出現第一個 production caller／實際寫入路徑（db_loader 的 assets insert 被任何產線或人工流程呼叫）時，重新評估 total_liabilities 是否必須納入 assets insert contract（單一寫入者原則）。\n【未來施工方向（尚未核准）】①將 total_liabilities 納入 assets insert contract；②或於閘門補上「snapshot 已前進但 assets 缺列／值不成立」的告警，消除偽陰性缺口。兩者皆須另案設計並經 CIO 審查。",
+    "reopen_conditions": [
+      "出現第一個 production caller／實際寫入路徑（db_loader 的 assets insert 被任何產線或人工流程呼叫）→ 重新評估 total_liabilities 是否納入 assets insert contract"
+    ],
+    "due_date": null,
+    "due_date_source": "無到期日（DELIBERATE HOLD：刻意等待實際 caller 出現）",
+    "needs_due_date": true,
+    "last_confirmed": "2026-10-08",
+    "last_confirmed_source": "使用者裁決登記（CIO 揭露之 non-blocking 殘留）",
+    "owner": "龍九",
+    "external_owner": null,
+    "status_raw": "🟡 DELIBERATE HOLD（2026-10-08 使用者裁決登記）：目前無 caller、無觸發路徑，刻意等待實際 caller 出現再處理。施工觸發條件＝出現第一個 production caller／實際寫入路徑時，重新評估 total_liabilities 是否必須納入 assets insert contract。本卡非 Active Repair、不進提醒。",
+    "is_informational": false
   }
 ]
