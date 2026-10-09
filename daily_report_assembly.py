@@ -215,7 +215,8 @@ def build_emergency_block(base, snapshot, today: str | None = None) -> str:
     回傳 `""` ＝ 沒有可用的緊急應變分析。**語意差異（已揭露）**：JSON「存在但格式壞」時，舊
     `regenerate_report.py` 是**直接拋 `JSONDecodeError`（整條產線中斷）**、舊 `run_daily.py` 是
     吞掉並留空；本函式採後者（容忍 ＋ WARN）→ 對 regenerate 路徑屬**放寬**（不再因壞檔停產），
-    故**並非**「與原行為完全一致」。若日後要求 fail-closed，須另立卡片（本卡驗收＝對外可見內容零變化）。
+    故**並非**「與原行為完全一致」。若日後要求 fail-closed，須另立卡片。（註：「對外可見內容
+    零變化」係 INC-289／INC-291 當時的驗收條件，**非現行驗收**；INC-294 已使對外內容變動——僅連結。）
 
     INC-294（2026-10-09 使用者裁決 A 案）：連結原多綴一個 `.html` → `…2026-10-08.html.html`（404），
     已修正為單一 `.html` —— 檔名取自 glob，本身已含副檔名。歷史已發布日報不回填。

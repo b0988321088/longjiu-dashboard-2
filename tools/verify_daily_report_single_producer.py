@@ -21,6 +21,8 @@ INC-291（2026-10-09）擴充：涵蓋第 4 條雙 producer 分歧「緊急應�
   ① 若 producer 把標記 **拆成變數拼接**（`KEY="緊急應變"+"資料"`）且檔內同時不出現 `daily_report_v2`
      字面，V2 抓不到 → 仍由 S1.7d／S2.6／S5.7 的結構檢查（兩 producer 必須呼叫同一函式）兜底。
   ② 掃描是「文字＋AST」啟發式，不是資料流分析；要證明「無第二實作」最終仍靠 code review。
+     具體已揭露繞道：emit 標記以 Unicode 轉義（`\\uXXXX`）或字串拼接持有時 has_emit 抓不到 →
+     兜底為 S1.3／S1.6（兩 producer 必須呼叫共用模組）、S2（呼叫契約、逐位元決定性）、S5 等結構檢查。
 
 唯讀：只讀 repo 檔＋寫 %TEMP% 暫存副本。rc=0 全過、rc=1 有 FAIL。
 ROLE: DETECTOR-ONLY
