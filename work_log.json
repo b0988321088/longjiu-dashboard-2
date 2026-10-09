@@ -2152,5 +2152,11 @@
   "category": "完成",
   "item": "資產穿透2026-10-08（已產出（五桶市值見 snapshot.penetration.actual_twd））",
   "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-10-09",
+  "category": "修正",
+  "item": "週報同口徑假性淨值下降修正",
+  "detail": "201萬非投資損失（跨日入帳假性下降）；同口徑 -2,012,811 → -53,548；事件鏈判定＋9 條回歸測試＋文案（事件鏈日期/資料截至時間）；commit 324c5378；CIO 兩輪 APPROVE"
  }
 ]
