@@ -261,6 +261,40 @@ def main() -> int:
     rec("T8e", "核准來源指向 repo 內檔案（偽造核准）", "FAIL-CLOSED",
         "FAIL-CLOSED" if not r["ok"] else "PASS(out)", not r["ok"], r["checks"][-1]["detail"])
 
+    # 2026-10-09（PEND-20261009-16／#65 修正）：例外路徑必須 fail-closed。
+    #   缺陷可達性：以確定性注入讓 Path.resolve() 拋例外（模擬例外類），
+    #   核准檔本身**可讀且含候選 tree 的 APPROVE** → 未修版會因此「通過發布」（＝測試非空測）。
+    _forged = TMP / "forged_ok.txt"
+    _forged.write_text("2026-10-09T00:00:00+08:00\ttreeA\tabc\tAPPROVE\tr\tn\n", encoding="utf-8")
+    from pathlib import Path as _PL
+    _orig_resolve = _PL.resolve
+
+    def _boom(self, *a, **k):
+        if "forged_ok" in str(self):
+            raise OSError("simulated resolve failure")
+        return _orig_resolve(self, *a, **k)
+
+    _PL.resolve = _boom
+    try:
+        r = pgc.f4_publish_consistency(candidate_tree="treeA", artifacts={"x.html": "abc"},
+                                       approved_artifacts={"x.html": "abc"},
+                                       pushed_manifest="treeA", approval_file=_forged)
+    finally:
+        _PL.resolve = _orig_resolve
+    rec("T8g", "例外路徑 fail-closed（可讀偽造核准檔不得被採信）", "FAIL-CLOSED",
+        "FAIL-CLOSED" if not r["ok"] else "PASS(out)", not r["ok"],
+        (r["checks"][-1]["detail"] if r["checks"] else ""))
+
+    # 格式錯誤：沙箱核准檔內容無法解析 → 不得採信（第 3 類負向測試）
+    _badfmt = TMP / "cio_approved_malformed.txt"
+    _badfmt.write_text("not-a-valid-tab-record\n", encoding="utf-8")
+    r = pgc.f4_publish_consistency(candidate_tree="treeA", artifacts={"x.html": "abc"},
+                                   approved_artifacts={"x.html": "abc"},
+                                   pushed_manifest="treeA", approval_file=_badfmt)
+    rec("T8h", "核准紀錄格式錯誤（無法解析）", "BLOCKED",
+        "BLOCKED" if not r["ok"] else "PASS(out)", not r["ok"],
+        (r["checks"][-1]["detail"] if r["checks"] else ""))
+
     # 2026-10-09（CIO 第二輪 blocking）：生產 CLI 不得暴露核准來源參數
     _cli = (REPO / "tools" / "verify_performance_monthly.py").read_text(encoding="utf-8")
     rec("T8f", "生產 CLI 未暴露 --approval-file（不得以參數取代查核）", "PASS",
@@ -281,6 +315,59 @@ def main() -> int:
         f"契約{'PASS' if ev['task_contract']['ok'] else 'FAIL'}／"
         f"環境{'PASS' if ev['environment']['ok'] else 'FAIL'}／rc={ev['rc']}", sep,
         f"F1/F2/F4={ev['task_contract']['members']}｜F3 快照外 {len(ev['f3']['new_fails'])} 條")
+
+    # ───────────── T19–T22 閘門作用域（方案 1：F2／F4 僅於發布批次）─────────────
+    # 2026-10-09（使用者裁決）：F2／F4 屬「發布批次」契約，日常產線不得被其恆擋；
+    #   但**不得**因此可用模式切換規避發布查核。以下為反繞過負向測試。
+    print("\n== T19–T22 閘門作用域與反繞過 ==")
+    _cli_src = (REPO / "tools" / "verify_performance_monthly.py").read_text(encoding="utf-8")
+    rec("T19", "閘門模式預設為 publish（未帶旗標＝嚴格路徑，fail-closed 預設）",
+        'default="publish"', 'default="publish"' in _cli_src,
+        'default="publish"' in _cli_src and 'choices=("publish", "daily")' in _cli_src)
+
+    _hits = []
+    for _p in REPO.rglob("*.py"):
+        if any(_x in _p.parts for _x in (".git", ".archive", "node_modules")) or ".bak" in _p.name:
+            continue
+        try:
+            _t = _p.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+        if ("--check-mode" in _t and _p.name != "verify_performance_monthly.py"
+                and "verify_perf_gate_tests" not in _p.name):
+            _hits.append(str(_p.relative_to(REPO)).replace("\\", "/"))
+    rec("T21", "只有白名單呼叫端帶 --check-mode daily（模式只由可信任呼叫端宣告）",
+        "['regenerate_report.py']", str(sorted(_hits)),
+        sorted(_hits) == ["regenerate_report.py"],
+        "產物（資料／報表檔）無法宣告模式" if sorted(_hits) == ["regenerate_report.py"] else str(_hits))
+
+    _decl = json.loads((REPO / "governance" / "publish_scope.json").read_text(encoding="utf-8"))
+    _base = [PY, str(REPO / "tools" / "verify_performance_monthly.py")]
+    _dargs = []
+    if _decl.get("allowed_files"):
+        _dargs += ["--allowed-files", ",".join(map(str, _decl["allowed_files"]))]
+    if _decl.get("deliverables"):
+        _dargs += ["--deliverables", ",".join(map(str, _decl["deliverables"]))]
+    if _decl.get("approval_ref"):
+        _dargs += ["--approval-ref", str(_decl["approval_ref"])]
+
+    _rp = subprocess.run(_base + _dargs, cwd=str(REPO), capture_output=True, text=True,
+                         encoding="utf-8", errors="replace", timeout=1500)
+    _op = _rp.stdout or ""
+    _fp = sorted(ln.strip()[2:4] for ln in _op.splitlines() if ln.strip().startswith("- F"))
+    rec("T22", "發布模式仍 fail-closed：範圍不符＋缺核准雜湊", "['F2','F4']", str(_fp),
+        _fp == ["F2", "F4"] and _rp.returncode == 1,
+        f"rc={_rp.returncode}｜fails={_fp}")
+
+    _rd = subprocess.run(_base + _dargs + ["--check-mode", "daily"], cwd=str(REPO),
+                         capture_output=True, text=True, encoding="utf-8",
+                         errors="replace", timeout=1500)
+    _od = _rd.stdout or ""
+    _na = ("⏭ F2" in _od) and ("⏭ F4" in _od)
+    rec("T20", "日常模式：F2／F4 標 N/A 且不計入 FAIL；F1／F3／A–E 照舊評估",
+        "rc=0 且 F2/F4=N/A", f"rc={_rd.returncode}、N/A={_na}",
+        _rd.returncode == 0 and _na and "F1 封版契約" in _od,
+        "F1／F3／A–E 仍全數評估（未被放行）")
 
     # ───────────── R1 / R2 ─────────────
     print("\n== R1/R2 回歸 ==")

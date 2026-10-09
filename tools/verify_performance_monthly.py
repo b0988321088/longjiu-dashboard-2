@@ -165,6 +165,15 @@ def main() -> int:
     _ap.add_argument("--snapshot", default="")
     _ap.add_argument("--approval-tree", default="")
     _ap.add_argument("--build-source", default="")
+    # 2026-10-09（使用者裁決，方案 1：閘門作用域修正）
+    #   F2／F4 屬「宣告發布批次」契約（範圍宣告、核准產物雜湊），日常產線並非發布批次
+    #   → 沿用即恆 FAIL。以模式區分，但**預設為 publish（嚴格、全量 F1–F4）**：
+    #   （a）未帶旗標者一律走嚴格路徑（fail-closed 預設）
+    #   （b）模式由**可信任的呼叫端**（程式檔：受 pre-push 程式檔規則＋CIO 審查）
+    #        明確決定，不得由待驗證的產物（資料／報表檔）自行宣告
+    #   （c）呼叫端無法以模式切換規避「發布查核」：發布決策仍由 auto_push／pre-push
+    #        的逐 commit 核准與範圍隔離把關，本閘門的 daily 模式不具備發布效力
+    _ap.add_argument("--check-mode", default="publish", choices=("publish", "daily"))
     _a, _ = _ap.parse_known_args()
     _split = lambda s: [x.strip() for x in re.split(r"[,\n;]", s or "") if x.strip()]
     _ev = pgc.evaluate(
@@ -177,15 +186,26 @@ def main() -> int:
         approval_tree=_a.approval_tree,
         build_source=_a.build_source,
     )
+    _MODE = (getattr(_a, "check_mode", "publish") or "publish").strip().lower()
+    print("\n  閘門模式：" + _MODE + ("（發布批次：F1–F4 全量）" if _MODE == "publish"
+          else "（日常產線：F1／F3＋A–E；F2／F4 改由發布步驟查核）"))
     for _k in ("f1", "f2", "f3", "f4"):
         _v = _ev[_k]
         _bad = [c["label"] + (f"（{c['detail']}）" if c["detail"] else "")
                 for c in _v["checks"] if not c["ok"]]
+        if _MODE == "daily" and _k in ("f2", "f4"):
+            print(f"  ⏭ {_k.upper()} {_v['name']}：N/A（非發布批次，改由發布步驟查核）→ 本次不計入 FAIL")
+            continue
         chk(_v["ok"], f"{_k.upper()} {_v['name']}",
             ("；".join(_bad) if _bad else "全部通過")[:300])
     _tc, _env = _ev["task_contract"], _ev["environment"]
-    print("\n  【任務契約｜發布必要條件】" + ("PASS" if _tc["ok"] else "FAIL") + "  "
-          + " ".join(f"{k}={'PASS' if v else 'FAIL'}" for k, v in _tc["members"].items()))
+    if _MODE == "daily":
+        print("\n  【任務契約｜發布必要條件】N/A（日常產線模式）  "
+              + f"F1={'PASS' if _tc['members']['F1'] else 'FAIL'}"
+              + "（F2／F4 僅於發布批次判定）")
+    else:
+        print("\n  【任務契約｜發布必要條件】" + ("PASS" if _tc["ok"] else "FAIL") + "  "
+              + " ".join(f"{k}={'PASS' if v else 'FAIL'}" for k, v in _tc["members"].items()))
     print("  【環境健康度｜獨立呈現】" + ("PASS" if _env["ok"] else "FAIL")
           + f"（F3；快照外紅燈 {len(_ev['f3'].get('new_fails') or [])} 條"
           + f"／範圍類 {len(_ev['f3'].get('scope_class') or [])} 條）")

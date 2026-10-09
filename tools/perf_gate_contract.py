@@ -372,8 +372,15 @@ def f4_publish_consistency(approval_tree: str = "", candidate_tree: str = "",
         _p = Path(approval_file)
         try:
             _inside = _p.resolve().is_relative_to(REPO.resolve())
-        except Exception:
-            _inside = False
+        except Exception as _rf:
+            # 2026-10-09（PEND-20261009-16／#65 修正）：原 `except Exception: _inside = False`
+            #   等同「無法判定就跳過『repo 內一律拒絕採信』的查核」＝ fail-open
+            #   （審查者可用例外觸發該路徑，使 repo 內偽造核准檔被採信）。
+            #   改為 fail-closed：無法判定來源位置 → 一律拒絕採信，與相鄰分支語義一致。
+            ck("已取得 CIO 核准 tree 綁定", False,
+               f"FAIL-CLOSED：無法判定核准來源是否位於 repo 內（{approval_file}；{type(_rf).__name__}）→ 拒絕採信")
+            out["ok"] = False
+            return out
         if _inside:
             ck("已取得 CIO 核准 tree 綁定", False,
                f"FAIL-CLOSED：核准來源不得指向 repo 內檔案（{approval_file}）→ 拒絕採信")

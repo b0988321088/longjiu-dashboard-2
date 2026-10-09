@@ -560,7 +560,13 @@ elif ok and _cio_ok:
         #   governance/publish_scope.json。呼叫端不得自行擴張範圍再用自己提供的範圍過關。
         #   缺檔／缺欄 → 不傳參數 → 閘門 F2 FAIL-CLOSED（不預設「範圍不限」）。
         _decl_path = BASE / "governance" / "publish_scope.json"
-        _vg_cmd = [sys.executable, str(BASE / "tools" / "verify_performance_monthly.py")]
+        # 2026-10-09（使用者裁決，方案 1：閘門作用域修正）：日常產線明確宣告「非發布批次」
+        #   → 閘門只驗 F1／F3＋A–E 數字一致性；F2（宣告範圍）／F4（核准產物雜湊）屬
+        #   **發布步驟**契約，日常產線沿用即恆 FAIL。模式由本程式（可信任的呼叫端，
+        #   受 pre-push 程式檔規則與 CIO 審查）決定，不由待驗證的產物宣告；
+        #   未帶此旗標者一律走嚴格路徑（預設 publish）。
+        _vg_cmd = [sys.executable, str(BASE / "tools" / "verify_performance_monthly.py"),
+                   "--check-mode", "daily"]
         if _decl_path.exists():
             try:
                 _decl = json.loads(_decl_path.read_text(encoding="utf-8"))
