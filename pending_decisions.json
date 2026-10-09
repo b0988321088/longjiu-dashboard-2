@@ -1126,5 +1126,28 @@
     "updated_at": "2026-10-09",
     "inc": null,
     "is_informational": false
+  },
+  {
+    "id": "PEND-20261009-10",
+    "date": "2026-10-09",
+    "title": "週報事件鏈判定 hardening 2 項（4 日鏈回歸測試／多子鏈顯示淨殘差）",
+    "status": "待處理",
+    "status_raw": "待處理",
+    "category": "技術債",
+    "priority": "P2",
+    "tags": "技術債,週報,event-chain,回歸測試,顯示層",
+    "detail": "來源：2026-10-09 週報同口徑事件鏈修正（commit 324c5378／tree 2e2172a4）第二輪獨立對抗性 CIO 審查 required_fixes（非阻擋）。① 回歸測試未涵蓋『3 日以上鏈合併』路徑：reverse_leg 同步修正（merged[-1]['reverse_leg']=c['reverse_leg']）僅由審查者以記憶體構造 4 日鋸齒鏈實測通過，tests/test_weekly_trend_event_chain.py 無對應自動化案例 → 建議補 1 條 4 日 merge 測試，鎖住『reverse 與 reverse_leg 同屬反轉日（非首個子鏈殘值）』。② 多子鏈合併時，顯示行『對沖比／兩腿互抵後淨差額』僅取 first 與 reverse 兩日計算，未涵蓋中間各日 → 未來若出現多子鏈合併會低估整鏈淨殘差（真實序列目前僅單一子鏈，顯示精確）。結案條件：① 新增 4 日 merge 測試並跑通（9→10 條）② 顯示層若改採『整鏈加總』須同步更新驗收基準（-53,548 不得變動）。",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": true,
+    "last_confirmed": null,
+    "last_confirmed_source": null,
+    "owner": "龍九",
+    "external_owner": null,
+    "source": "CIO 對抗性審查 deleg_40b681c4（tree 2e2172a4）",
+    "created_at": "2026-10-09",
+    "updated_at": "2026-10-09",
+    "inc": null,
+    "is_informational": false
   }
 ]
