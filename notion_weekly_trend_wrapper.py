@@ -177,14 +177,172 @@ def main():
               f"共 {len(rows)} 筆明細更新。")
     print("=" * 60)
 
+# ===== 2026-10-09 新增：事件鏈判定（同口徑口徑修正）=====
+# 背景（唯讀稽核 2026-10-09）：質押撥款、保單借貸清償等結構事件，其「資產腿」（現金轉出）
+# 與「負債腿」（借款沖銷）入帳日不同（保單公司 3 個工作日入帳），常落在相鄰兩天。
+# 兩天的單日跳變可能都未達 ≥10% 門檻 → 舊版「同口徑」只排除跳變日，漏掉中間那一天，
+# 造成 2026-09-30 單日 −1,959,263 被誤計為損失（實為假性下降，兩日合計 +18,800）。
+# 規則（三條件須同時成立，避免誤排除真實市場損失）：
+#   1) 相鄰兩日淨值方向相反、金額對沖比 ≥ 80%（且 ≤ 125%）
+#   2) 兩日「主導腿」不同：一日為資產腿主導、另一日為負債腿主導
+#      → 市場漲跌造成的反向變動兩腿皆為資產腿，不會被排除
+#   3) 兩日淨值變動絕對值皆 ≥ EVENT_CHAIN_MIN_AMOUNT（材料性門檻）
+EVENT_CHAIN_OFFSET_RATIO = 0.80
+EVENT_CHAIN_MIN_AMOUNT = 100_000.0
+EVENT_CHAIN_LEG_SHARE = 0.60   # 主導腿須佔該日淨值變動 60% 以上
+# 已知限制（2026-10-09 CIO 對抗性審查 required_fixes #3，非阻擋級）：本判定為啟發式。
+# 當「真實負債惡化」與「隔日真實市場反彈」金額恰好落在對沖比 [0.80, 1.25] 且兩日皆
+# ≥ EVENT_CHAIN_MIN_AMOUNT 時，該兩日會被整鏈排除（偽陽性）。比率趨近 1 時淨殘差近 0，
+# 且大幅變動會先被 ≥10% 基準變動日規則攔截。若日後出現此型態，改為「只排除對沖量、
+# 保留淨殘差」之實作，並補對應回歸測試。
+
+def _dominant_leg(d_nw, d_ta, d_liab):
+    """該日淨值變動主要由哪一腿驅動：'資產' / '負債' / None（無明顯主導腿）"""
+    if not d_nw:
+        return None
+    if abs(d_ta or 0) >= abs(d_liab or 0) and abs(d_ta or 0) >= EVENT_CHAIN_LEG_SHARE * abs(d_nw):
+        return "資產"
+    if abs(d_liab or 0) > abs(d_ta or 0) and abs(d_liab or 0) >= EVENT_CHAIN_LEG_SHARE * abs(d_nw):
+        return "負債"
+    return None
+
+def compute_daily_metrics(rows):
+    """逐日指標 —— 結構日／資產腿／負債腿的唯一計算法源（勿在他處重算，避免口徑分歧）。
+    負債缺資料的列＝不計淨值（沿用舊口徑），且不前進比較基準。
+    回傳 {date: {date, ta, liab, nw, cash, d_nw, d_ta, d_liab, ta_jump, liab_jump, structural, leg}}
+    """
+    metrics = {}
+    prev = None
+    for r in sorted(rows, key=lambda x: (x.get("date") or "")[:10]):   # 防呆：一律依日期遞增（呼叫端可能傳 DESC）
+        liab_raw = r.get("total_liabilities")
+        ta = float(r["total_assets"] or 0)
+        d = (r.get("date") or "")[:10]
+        base = {"date": d, "ta": ta, "liab": None, "nw": None,
+                "cash": float(r.get("cash_total") or 0),
+                "d_nw": None, "d_ta": None, "d_liab": None,
+                "ta_jump": 0.0, "liab_jump": 0.0, "structural": False, "leg": None}
+        if liab_raw in (None, "", 0):
+            metrics[d] = base
+            continue
+        liab = float(liab_raw)
+        nw = ta - liab
+        m = dict(base, liab=liab, nw=nw)
+        if prev is not None:
+            m["d_nw"] = nw - prev["nw"]
+            m["d_ta"] = ta - prev["ta"]
+            m["d_liab"] = liab - prev["liab"]
+            m["ta_jump"] = abs(m["d_ta"]) / prev["ta"] * 100 if prev["ta"] else 0.0
+            m["liab_jump"] = abs(m["d_liab"]) / prev["liab"] * 100 if prev["liab"] else 0.0
+            # 資產或負債單日跳變 ≥10% = 基準變動（借款/撥款入帳、帳務重述），非市場損益
+            m["structural"] = m["ta_jump"] >= 10 or m["liab_jump"] >= 10
+            m["leg"] = _dominant_leg(m["d_nw"], m["d_ta"], m["d_liab"])
+        metrics[d] = m
+        prev = m
+    return metrics
+
+def detect_event_chains(metrics, structural_days=None):
+    """偵測「事件鏈」：相鄰兩日反向對沖 ≥80% 且主導腿不同 → 同一結構事件分兩日入帳。
+    回傳 [{"dates": [...], "first", "reverse", "ratio", "amount", "first_leg", "reverse_leg"}]
+    並把緊鄰的基準變動日併入同一條鏈（僅供顯示與同口徑排除，判準不變）。
+    """
+    days = [m for m in metrics.values() if m["d_nw"] is not None]
+    days.sort(key=lambda m: m["date"])
+    chains = []
+    for a, b in zip(days, days[1:]):
+        d1, d2 = a["d_nw"], b["d_nw"]
+        if not d1 or not d2 or (d1 > 0) == (d2 > 0):
+            continue
+        ratio = abs(d2) / abs(d1)
+        if not (EVENT_CHAIN_OFFSET_RATIO <= ratio <= 1 / EVENT_CHAIN_OFFSET_RATIO):
+            continue
+        if abs(d1) < EVENT_CHAIN_MIN_AMOUNT or abs(d2) < EVENT_CHAIN_MIN_AMOUNT:
+            continue
+        if not a["leg"] or not b["leg"] or a["leg"] == b["leg"]:
+            continue
+        chains.append({"dates": [a["date"], b["date"]], "first": a["date"], "reverse": b["date"],
+                       "ratio": ratio, "amount": abs(d1),
+                       "first_leg": a["leg"], "reverse_leg": b["leg"]})
+    merged = []
+    for c in chains:
+        if merged and c["dates"][0] in merged[-1]["dates"]:
+            merged[-1]["dates"] = sorted(set(merged[-1]["dates"]) | set(c["dates"]))
+            merged[-1]["reverse"] = c["reverse"]
+            merged[-1]["reverse_leg"] = c["reverse_leg"]   # 同步更新，避免與 reverse 不一致
+        else:
+            merged.append(c)
+    sd = set(structural_days or [])
+    order = {m["date"]: i for i, m in enumerate(days)}
+    for c in merged:
+        dates = set(c["dates"])
+        i, j = order.get(c["dates"][0]), order.get(c["dates"][-1])
+        if i is not None and i - 1 >= 0 and days[i - 1]["date"] in sd:
+            dates.add(days[i - 1]["date"])
+        if j is not None and j + 1 < len(days) and days[j + 1]["date"] in sd:
+            dates.add(days[j + 1]["date"])
+        c["dates"] = sorted(dates)
+    return merged
+
+ASOF_KEYS = (("現金", r"^cash_source$"),
+             ("證券", r"^securities_note_(\d{8})$"),
+             ("基金", r"^(?:funds_cathay_note|heng_note|funds_note)_(\d{8})?$"),
+             ("保單", r"^(?:allianz_note|firstjin_note)_(\d{8})$"))
+
+def extract_asof(snapshot):
+    """從 snapshot 註記鍵取各類別資料截至日（含註記內第一個 HH:MM），回傳 [(類別, YYYY-MM-DD, HH:MM, key)]"""
+    import re
+    out = []
+    for label, pat in ASOF_KEYS:
+        best = None
+        for k, v in (snapshot or {}).items():
+            m = re.match(pat, k)
+            if not m:
+                continue
+            ds = m.group(1) if m.groups() else None
+            if not ds and isinstance(v, dict):
+                ds = str(v.get("date") or "").replace("-", "")
+            ds = (ds or "").strip()
+            if len(ds) == 4 and ds.isdigit():            # MMDD（如 funds_cathay_note_1008）→ 補當年
+                ds = f"{date.today().year}{ds}"
+            if not (len(ds) == 8 and ds.isdigit()):
+                ds = ""
+            txt = v if isinstance(v, str) else json.dumps(v, ensure_ascii=False)
+            if best is None or ds > best[0]:
+                best = (ds, k, txt)
+        if best and best[0]:
+            ds, k, txt = best
+            tm = re.search(r"(\d{2}:\d{2})", txt or "")
+            out.append((label, f"{ds[:4]}-{ds[4:6]}-{ds[6:8]}", tm.group(1) if tm else "", k))
+    return out
+
+def data_asof_line():
+    """📅 各類別資料截至時間（唯讀讀 snapshot.json；缺檔回空字串）"""
+    try:
+        snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+    except Exception:
+        return ""
+    parts = [f"{lb} {ymd}" + (f" {tm}" if tm else "") for lb, ymd, tm, _k in extract_asof(snap)]
+    return "｜".join(parts)
+
 def report_from_db(rows):
     """從 DB rows 產出趨勢報告（數字與日報一致）
     2026-08-23 改淨值口徑：借款入帳（如國泰 1,200萬 8/20）資產負債同步增，總資產會誤報 +81%；
     以淨值（總資產−總負債）計算變動/異常/結論。
     2026-09-06 增基準變動日處理：資產或負債單日跳變 ≥10%（借款入帳/帳務重述，如 8/20
     大義街1,200萬、8/11 負債重述）→ 該日標記 ⚠️基準變動、不列入 ±5% 異常；期間另印同口徑
-    淨值變動（剔除跳進基準變動日的單日變動）；保險/基金類別附註非純市值損益。"""
+    淨值變動（剔除跳進基準變動日的單日變動）；保險/基金類別附註非純市值損益。
+    2026-10-09 增事件鏈處理（唯讀稽核後修正）：質押撥款、保單借貸清償等結構事件的「資產腿」
+    與「負債腿」入帳日不同（保單公司 3 個工作日入帳），常落在相鄰兩日；兩日單日跳變可能都
+    未達 ≥10%，舊版同口徑會把中間那天（2026-09-30 單日 −1,959,263）誤計成損失。
+    → 改以 detect_event_chains() 偵測「相鄰反向對沖 ≥80% 且主導腿不同」的事件鏈，整鏈排除；
+      真實市場漲跌（兩日皆資產腿主導）與對沖不足者不排除。另輸出各類別資料截至時間。
+    判準常數：EVENT_CHAIN_*；回歸測試：tests/test_weekly_trend_event_chain.py。"""
     rows = sorted(rows, key=lambda r: r["date"])
+    metrics = compute_daily_metrics(rows)   # 結構日/資產腿/負債腿：唯一計算法源（2026-10-09）
+    # 基準變動日與事件鏈先算（逐日標記、異常排除、同口徑共用同一份結果，避免兩處重算）
+    structural_all = [d for d, m in sorted(metrics.items()) if m["structural"]]
+    chains = detect_event_chains(metrics, structural_all)
+    chain_days = sorted({dt for c in chains for dt in c["dates"]})
+    excluded = sorted(set(structural_all) | set(chain_days))
     print("=" * 60)
     print(f"📊 龍九控股資產趨勢（dragon_assets.db 真值，最近 {len(rows)} 天）")
     print(f"📅 查詢日: {date.today()}")
@@ -207,20 +365,16 @@ def report_from_db(rows):
         if nw is None:
             print(f"{d:<12} {t:>14,.0f} {'缺資料':>12} {'?':>12} {cash:>12,.0f} {'(負債缺)':>12}")
             continue
-        structural = False
-        if prev is not None:
-            ta_jump = abs(t - prev_ta) / prev_ta * 100 if prev_ta else 0.0
-            liab_jump = (abs(float(liab_raw) - prev_liab) / prev_liab * 100
-                         if prev_liab else 0.0)
-            # 資產或負債單日跳變 ≥10% = 基準變動（借款/撥款入帳、帳務重述），非市場損益
-            structural = ta_jump >= 10 or liab_jump >= 10
+        # 結構日／事件鏈判定一律取自 compute_daily_metrics（單一計算法源，勿在此重算）
+        structural = bool((metrics.get(d) or {}).get("structural"))
+        in_chain = d in chain_days
         if structural:
             structural_days.append(d)
         if prev is not None:
             diff = nw - prev
             pct = diff / abs(prev) * 100 if prev else 0
-            is_anom = abs(pct) >= 5 and not structural
-            flag = "🔴" if is_anom else ("⚠️基準變動" if structural else "")
+            is_anom = abs(pct) >= 5 and d not in excluded
+            flag = "🔴" if is_anom else ("⚠️基準變動" if structural else ("🔗事件鏈" if in_chain else ""))
             if is_anom:
                 anomalies.append((d, pct))
             print(f"{d:<12} {t:>14,.0f} {float(liab_raw):>12,.0f} {nw:>12,.0f} {cash:>12,.0f} {diff:>+12,.0f} {pct:>+6.1f}% {flag}")
@@ -232,17 +386,20 @@ def report_from_db(rows):
     def _nw(r): return float(r["total_assets"] or 0) - float(r.get("total_liabilities") or 0)
     net_change = _nw(latest) - _nw(earliest)
     net_pct = net_change / abs(_nw(earliest)) * 100 if _nw(earliest) else 0
-    # 同口徑：剔除「跳進基準變動日的單日變動」，避免結構入帳/帳務重述被當成績效
+    # 同口徑：剔除「基準變動日」與「事件鏈各日」的單日變動，避免結構入帳/帳務重述被當成績效
+    # （chains／chain_days／excluded 已於逐日輸出前算出，此處不重算）
     excl_change = 0.0
     for i in range(len(rows) - 1):
-        if rows[i + 1]["date"][:10] in structural_days:
+        if rows[i + 1]["date"][:10] in excluded:
             continue
         excl_change += _nw(rows[i + 1]) - _nw(rows[i])
-    has_ex = len(structural_days) > 0 and excl_change != net_change
+    has_ex = len(excluded) > 0 and excl_change != net_change
     if has_ex:
         excl_pct = excl_change / abs(_nw(earliest)) * 100 if _nw(earliest) else 0
-        print(f"\n▶ 期間淨值變動: {net_change:+,.0f}（{net_pct:+.1f}%，含 {len(structural_days)} 個基準變動日）")
-        print(f"  ↳ 同口徑（不含基準變動日）: {excl_change:+,.0f}（{excl_pct:+.1f}%）")
+        _overlap = len(set(structural_days) & set(chain_days))
+        print(f"\n▶ 期間淨值變動: {net_change:+,.0f}（{net_pct:+.1f}%，已剔除聯集 {len(excluded)} 日"
+              f"：基準變動 {len(structural_days)}／事件鏈 {len(chain_days)}／重疊 {_overlap}）")
+        print(f"  ↳ 同口徑（不含基準變動日與事件鏈）: {excl_change:+,.0f}（{excl_pct:+.1f}%）")
     else:
         print(f"\n▶ 期間淨值變動: {net_change:+,.0f}（{net_pct:+.1f}%）")
 
@@ -262,20 +419,34 @@ def report_from_db(rows):
         print("    負債增減含借款入帳與償還（基準變動日），非費用。")
 
     if anomalies:
-        print("\n🚨 異常提醒（單日淨值變動 ≥±5%，基準變動日已排除）：")
+        print("\n🚨 異常提醒（單日淨值變動 ≥±5%，基準變動日與事件鏈已排除）：")
         for d, p in anomalies:
             print(f"   {d}: {p:+.1f}%")
     else:
-        print("\n✅ 無異常（單日淨值變動皆 <±5%，基準變動日已排除）")
+        print("\n✅ 無異常（單日淨值變動皆 <±5%，基準變動日與事件鏈已排除）")
     if structural_days:
         print("  🧱 基準變動日（資產/負債結構性入帳或帳務重述，非市場損益）："
               + "、".join(structural_days))
+    if chains:
+        print("  🔗 事件鏈（相鄰日反向對沖 ≥80%、資產腿／負債腿分屬不同日 → 同一結構事件分日入帳，非損益）：")
+        for c in chains:
+            m1 = metrics.get(c["first"]) or {}
+            m2 = metrics.get(c["reverse"]) or {}
+            resid = float(m1.get("d_nw") or 0) + float(m2.get("d_nw") or 0)
+            print(f"     {c['dates'][0]} ~ {c['dates'][-1]}：首日 {c['first']}（{c['first_leg']}腿主導）"
+                  f"Δ資產 {float(m1.get('d_ta') or 0):+,.0f}／Δ負債 {float(m1.get('d_liab') or 0):+,.0f}；"
+                  f"反轉日 {c['reverse']}（{c['reverse_leg']}腿主導）"
+                  f"Δ資產 {float(m2.get('d_ta') or 0):+,.0f}／Δ負債 {float(m2.get('d_liab') or 0):+,.0f}；"
+                  f"對沖比 {c['ratio'] * 100:.0f}%（兩腿互抵後淨差額 {resid:+,.0f}）")
+        print("     ※ 事件鏈各日已整鏈排除；兩腿互抵後之淨差額亦不留在同口徑內（未對沖者才計入）。")
+    print("  📅 各類別資料截至：" + (data_asof_line() or "（snapshot 註記不可讀）"))
 
     trend = "上升" if net_change > 0 else ("下降" if net_change < 0 else "持平")
     if has_ex:
         t2 = "上升" if excl_change > 0 else ("下降" if excl_change < 0 else "持平")
         print(f"\n📌 結論：最近 {len(rows)} 天含基準變動淨值{trend} {net_change:+,.0f}（{net_pct:+.1f}%）；"
-              f"同口徑{t2} {excl_change:+,.0f}（{excl_pct:+.1f}%）— 以同口徑為準。")
+              f"同口徑{t2} {excl_change:+,.0f}（{excl_pct:+.1f}%）"
+              f"（已剔除 {len(excluded)} 日：{'、'.join(excluded)}）— 以同口徑為準。")
     else:
         print(f"\n📌 結論：最近 {len(rows)} 天淨值{trend}（{net_change:+,.0f}，{net_pct:+.1f}%）。")
     print("=" * 60)

@@ -1103,5 +1103,28 @@
     "updated_at": "",
     "inc": "INC-294",
     "is_informational": false
+  },
+  {
+    "id": "PEND-20261009-09",
+    "date": "2026-10-09",
+    "title": "台新帳號 002***75 是否為 Moneybook 納管帳戶（週報事件鏈資金路徑對帳殘項）",
+    "status": "待處理",
+    "status_raw": "待處理",
+    "category": "帳務對帳",
+    "priority": "P2",
+    "tags": "對帳,台新,納管帳戶,event-chain,週報",
+    "detail": "來源：2026-10-09 唯讀稽核（201 萬假性淨值下降）殘項，獨立於已定案根因，不阻擋週報事件鏈修正驗收。事實：9/30 國泰活期『電子轉出 (812)002***75』−2,000,000；10/1 敦南Richart『轉帳存入（轉出 002***75）』+2,000,000、同日 cd轉出 1,006,900（安聯）＋1,013,724（第一金）＝2,020,624 清償保單借貸（負債 4,000,000 於 10/1 認列）。該 200 萬 9/30 離開納管帳戶、10/1 回到納管帳戶 → 資產腿與負債腿分日入帳 → 9/30 單日淨值假性 −1,959,263。待查：002***75 末碼是否屬 cash_detail 既有納管帳戶（若屬納管，則同帳套移轉應為內部、不應反映為總資產減少；若不屬納管，則呈現正確）。結案條件：以帳號末碼比對 MB 帳戶 CSV／cash_detail 得明確歸屬，或由使用者確認帳戶身分；結論寫回本卡並關案。",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": true,
+    "last_confirmed": null,
+    "last_confirmed_source": null,
+    "owner": "龍九",
+    "external_owner": null,
+    "source": "audit_weekly_trend_event_chain_20261009.md",
+    "created_at": "2026-10-09",
+    "updated_at": "2026-10-09",
+    "inc": null,
+    "is_informational": false
   }
 ]
