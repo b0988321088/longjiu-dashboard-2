@@ -10589,20 +10589,37 @@
       "summary": "【SI 第一批① CLOSED／上線 2026-10-09】房貸扣款行安全線每日驗證（監控／告警，非金流執行）\n\n一、成果：新增 2 檔並上線 —— mortgage_account_alert.py（+201，本體）與 wrappers/mortgage_account_alert.py（+25，cron 薄轉發器）。安全線＝自身房貸月繳×3（國泰取派生 mortgage_rate.cathay_monthly；永豐讀 snapshot.mortgage_sinopac_monthly），例外式（達標→空 stdout 不推播）。\n\n二、流程：CIO Round-1 對抗性審查判 REJECT（blocking＝fail-open：安全線可退化成 0 或 NaN 導致 no_agent 靜默漏報），實測出兩條靜默路徑 ①monthly_expense 亦 0 時退回值 0×3=0 → 靜默 ②NaN 穿過「not x or x<=0」防線、bal<NaN 恆 False → 靜默且無 stderr。修 8 項後本機 14/14 PASS；CIO Round-2 複審 APPROVE／blocking=[]／required_fixes=[]，並自加測 monthly=1e308 → line=inf 被防禦斷言攔下 → rc=2，證明該斷言非死碼。\n\n三、落地：commit f70b4c12（tree 569e18f3 ＝ 核准 tree 逐字相符）→ RECORD（CIO-Gemini）→ 閘門 v5 → push 645c3f02..f70b4c12。remote=local=f70b4c12、未推 0。post-commit 自動 wrapper deploy 1 支。\n\n四、最關鍵驗證（超出單元測試）：用 cron 的真實執行路徑實跑（hermes/scripts/mortgage_account_alert.py ＋ cwd=workdir），達標時空 stdout rc=0、--always 正常 —— 實際排除 2026-09-28「Script not found」那類故障，確認真實執行環境可用。\n\n五、Cron：46ee9089cc83｜35 8 * * *｜no_agent｜deliver=origin｜下次 2026-10-09 08:35。與已驗證的 08:30 生活帳戶 job 五個欄位逐項相同（no_agent／deliver／workdir／enabled／origin chat_id 8886571290）；解析路徑存在、無同型重複。定位＝觀測非轉帳。\n\n六、預期行為：正常 → 兩戶都達標、什麼都不通知；異常 → 🔴 低於安全線才通知；資料故障 → fail-closed 告警（rc=2；Hermes cron 對非零退出另發錯誤警報，兩條路都響）。\n\n七、後續節奏（使用者裁決）：不建議馬上做②生活帳戶與③質押息。目前三個更高層級未定型 —— 轉貸 → 標案備用金 → 緊急預備金 100 萬。節奏＝①先跑觀測期 → 確認 08:35 實際運作穩定 → 等轉貸條件定型 → 再決定②③的銀行端路徑。**銀行端固定轉帳一律 HOLD**，等三件事完成再一次性設定，避免「銀行設好了、貸款轉完又全部重設」的二次作業。\n\n八、狀態表：房貸安全線程式🟢上線｜CIO Round-2🟢APPROVE｜commit/tree🟢一致｜remote🟢同步｜cron 08:35🟢已建立｜真實 Hermes 路徑🟢實跑驗證｜銀行自動轉帳🔴HOLD｜生活帳戶②🟡等待設計｜質押息③🟡等待設計。\n\n九、CIO 留下的三项 non-blocking（不 reopen ①）：①扣款日 20 仍為排程常數，建議結構化進 snapshot schema ②完全降級且無告警時降級僅見於 stderr（本案 fallback 更保守，非恆過）③rate 全缺時用途文字顯示「⚠️ 缺真值%」純顯示瑕疵。\n\n十、教訓已入庫：fail-safe 必須覆蓋整條 fallback 鏈（含 fallback 本身為 0）與非有限值（NaN/Inf）；NaN 會穿過 `not x or x <= 0` 的直覺寫法，且 json.loads 預設接受 NaN；門檻算出後再加 isfinite(line) and line>0 斷言；降級時須在輸出揭露基礎已改變。寫入 finance-standing-instructions 技能。\n\n十一、如實揭露：清理 %TEMP% 時以 snap_* glob 誤刪一個既有檔案 snap_pre_truth.bak（9/16 舊備份、非本輪產生），已無法復原。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261009092805-1142",
+      "timestamp": "2026-10-09T09:28:05.583127+08:00",
+      "agent": "Hermes",
+      "task": "沙鹿租屋 2026-10 匯款登錄＋水電頻率＋過期排程清除",
+      "summary": "使用者 2026-10-09 核准：①沙鹿租屋匯款轉出 5,548（房租 4,500＋水電 1,048）登錄 rent_expense_records；水電為浮動、約每兩個月一次，列入 debt_schedule 浮動項（金額 1,048 僅 10 月實付參考，不按月計入基線、不動 monthly_expense 159,210）。②清除 debt_schedule 兩列過期項：9/2 摩根T+4（8/21 轉換已完成）、9/3 質押 540萬@2.77%（已由 9/29 實撥 590萬@2.65% 取代）→ 排程 6 列縮為 4 列。現金不手改（真值＝Moneybook CSV 10-08 1,506,485；下次匯入對帳）。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261009093934-1143",
+      "timestamp": "2026-10-09T09:39:34.910238",
+      "agent": "Hermes",
+      "task": "日報2026-10-09",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261009093934-1144",
+      "timestamp": "2026-10-09T09:39:34.959241",
+      "agent": "Hermes",
+      "task": "資產穿透2026-10-09",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
     }
-,
-  {
-    "id": "mem-20261009092805-1142",
-    "timestamp": "2026-10-09T09:28:05.583127+08:00",
-    "agent": "Hermes",
-    "task": "沙鹿租屋 2026-10 匯款登錄＋水電頻率＋過期排程清除",
-    "summary": "使用者 2026-10-09 核准：①沙鹿租屋匯款轉出 5,548（房租 4,500＋水電 1,048）登錄 rent_expense_records；水電為浮動、約每兩個月一次，列入 debt_schedule 浮動項（金額 1,048 僅 10 月實付參考，不按月計入基線、不動 monthly_expense 159,210）。②清除 debt_schedule 兩列過期項：9/2 摩根T+4（8/21 轉換已完成）、9/3 質押 540萬@2.77%（已由 9/29 實撥 590萬@2.65% 取代）→ 排程 6 列縮為 4 列。現金不手改（真值＝Moneybook CSV 10-08 1,506,485；下次匯入對帳）。",
-    "status": "completed",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-09T07:00:15.043968"
+    "updated_at": "2026-10-09T09:40:16.060747"
   },
   "last_updated": "2026-10-09T18:00:00+08:00",
   "2026-09-29": [
