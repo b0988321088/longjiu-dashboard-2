@@ -607,7 +607,11 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     # 非「8/6 已轉出」— 移除錯誤標記，恢復顯示配息排程；M&G 8/10 摩根轉回）
     _rc_funds = ['摩根JPM', '安聯收益成長', 'M&G入息', 'PIMCO', '安聯AI收益', '聯博', '貝萊德A10']
     _rc_out = {}
-    _rc_months = ['9', '10', '11', '12']
+    # 2026-10-10：月份動態化（原寫死 9-12 月，已過月份仍列入 → 使用者抓包「還停在九月」）
+    _cur_m = date.today().month
+    _rc_all_m = sorted([m for m in _rc_data.keys() if str(m).isdigit()], key=int) if _rc_data else []
+    _rc_months = [m for m in _rc_all_m if int(m) >= _cur_m][:3] or _rc_all_m[-3:] or ['10', '11', '12']
+    _rc_thead = ''.join(f'<th>{m}月</th>' for m in _rc_months)
     # 動態生成行事曆表格
     _rc_rows = ""
     for _f in _rc_funds:
@@ -628,7 +632,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _relay_calendar_html = f"""    <h3>2026 保單基金配息接力行事曆</h3>
     <div class="table-wrap">
       <table class="mobile-bordered">
-        <thead><tr><th>基金</th><th>9月</th><th>10月</th><th>11月</th><th>12月</th></tr></thead>
+        <thead><tr><th>基金</th>{_rc_thead}</tr></thead>
         <tbody>
 {_rc_rows}
         </tbody>
@@ -657,6 +661,14 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         _est = _sd.get("預估入帳", "")
         _est_txt = f"<td>{_est}</td>" if _est else ""
         _station_rows += f"""          <tr><td>{_sn}</td><td>{_fund}</td><td>{_payout}</td><td>{_deadline}</td>{_est_txt}<td>{_icon} {_st}</td></tr>"""
+    # 2026-10-10：註腳說明動態化（原寫死 9 月三站日期）
+    _flow_bits = []
+    for _fk in ['第一站（月初）', '第二站（月中）', '第三站（月底）']:
+        _fs = _stations.get(_fk, {}) if isinstance(_stations, dict) else {}
+        _fp = _fs.get('配息時間', '') if isinstance(_fs, dict) else ''
+        _fm = re.search(r'([0-9]{1,2}/[0-9]{1,2})', str(_fp))
+        _flow_bits.append(f"{_fk.split(chr(65288))[0]}（{_fm.group(1) if _fm else '—'}）")
+    _relay_flow = ' → '.join(_flow_bits) if _flow_bits else '—'
     relay_table = f"""<div class="table-wrap">
       <table class="mobile-bordered">
         <thead>
@@ -1351,7 +1363,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
 {schedule_rows_html}
         </tbody>
       </table>
-      <p class="text-sm" style="color:#6e6e73;margin-top:6px">🔁 配息接力時間表：💰 = 配息基準日（基準日+12天左右入帳）、🔴 = T+4 轉換截止（除息前4工作日）。三站依配息時間循環領息：月初（摩根 9/8）→ 月中（安聯 9/14 / M&G 9/18）→ 月底（AI 9/24 / PIMCO 9/28 / A10+聯博 9/29）。</p>
+      <p class="text-sm" style="color:#6e6e73;margin-top:6px">🔁 配息接力時間表：💰 = 配息基準日（基準日+12天左右入帳）、🔴 = T+4 轉換截止（除息前4工作日）。三站依配息時間循環領息：{_relay_flow}。</p>
     </div>
 
     <h3>🛠️ 系統工作日誌（收工登錄）</h3>

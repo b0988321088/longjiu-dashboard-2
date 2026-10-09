@@ -55,6 +55,37 @@ def cash_caliber(snap):
         "single": buf <= 0,   # 2026-09-27：單一口徑（追繳緩衝取消）→ 顯示端省略緩衝字樣
     }
 
+def relay_schedule_html(stations) -> str:
+    """配息接力戰略時序（三站卡片）— 2026-10-10 動態化。
+
+    原寫死在 index_template.html（每月停在舊月份）；改由 snapshot.relay_stations 生成，
+    更新配息時間／T+4截止只需改 snapshot，不必動模板。配息基準日唯一來源仍為 relay_calendar.md。
+    """
+    _order = [("第一站（月初）", "emerald"), ("第二站（月中）", "blue"), ("第三站（月底）", "emerald")]
+    _cards = []
+    for _key, _color in _order:
+        _st = (stations or {}).get(_key)
+        if not isinstance(_st, dict):
+            continue
+        _fund = str(_st.get("基金", "") or "")
+        _payout = str(_st.get("配息時間", "") or "")
+        _t4 = str(_st.get("T+4截止", "") or "")
+        _desc = str(_st.get("說明") or _st.get("流向") or "")
+        _m = re.search(r"([0-9]{1,2}/[0-9]{1,2})", _payout)
+        _first = _m.group(1) if _m else ""
+        _m2 = re.match(r"([0-9/]+)", _t4)
+        _t4s = _m2.group(1) if _m2 else _t4
+        _tag = _key.split("（")[0]
+        _cards.append(f"""                <div class="relative pl-6 border-l-2 border-{_color}-500">
+                    <div class="absolute -left-1.5 top-1.5 w-3 h-3 bg-{_color}-500 rounded-full"></div>
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-xs font-bold text-{_color}-400">【{_tag} {_first}】{_fund}</h4>
+                        <span class="text-[10px] bg-{_color}-500/20 text-{_color}-300 px-2 py-0.5 rounded">基準 {_first}｜T+4截止 {_t4s}</span>
+                    </div>
+                    <p class="text-xs text-slate-300 mt-1">{_desc}</p>
+                </div>""")
+    return (chr(13) + chr(10)).join(_cards) if _cards else '                <p class="text-xs text-slate-400">接力資料待更新</p>'
+
 def main():
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     tpl = (BASE / "index_template.html").read_text(encoding="utf-8")
@@ -1129,6 +1160,13 @@ def main():
                     "__DIVBASE_BASE_M__", "__DIVBASE_N__"):
             tpl = tpl.replace(_ph, "—")
         print("  ⚠️ 被動收入基準觀察卡注入失敗:", _dbe)
+
+    # ── 配息接力戰略時序（三站卡片）動態化（2026-10-10：原寫死於模板，每月停在舊月）──
+    try:
+        tpl = tpl.replace("__RELAY_SCHEDULE__", relay_schedule_html(snap.get("relay_stations", {})))
+    except Exception as _rse:
+        tpl = tpl.replace("__RELAY_SCHEDULE__", '<p class="text-xs text-slate-400">接力資料待更新</p>')
+        print("  ⚠️ 接力時序注入失敗:", _rse)
 
     (BASE / "index.html").write_text(_band_filter(tpl), encoding="utf-8")
     print(f"✅ 儀表板注入完成（{hits} 組值 + {_link_hits} 連結動態化）｜現金 {_fmt(cash)} / 保單 {_fmt(ins)} / 配息 {_fmt(div_total)} / 租金 {_fmt(rent_got)}")
