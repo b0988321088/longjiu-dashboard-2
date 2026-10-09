@@ -10616,20 +10616,19 @@
       "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "id": "mem-20261009104231-1145",
+      "timestamp": "2026-10-09T10:42:31.416423+08:00",
+      "agent": "Hermes",
+      "task": "週報同口徑假性淨值下降裁定（201萬）＋事件鏈判定修正上線",
+      "summary": "使用者 2026-10-09 裁決：①確認 201 萬元為『跨日入帳』造成的假性淨值下降，非已確認投資損失（9/30 資產腿先動、10/1 負債腿才認列；兩日合計 +18,800 對沖）②週報『同口徑』算法確有缺陷（只看單日 ≥10% 門檻，漏掉未達門檻但隔日反向對沖的事件鏈）→ 批准修正事件鏈判定、回歸測試、週報文案；不動投資部位、不改貸款安排、不擴張其他程式 ③不因該警報執行賣出／加碼質押／提前還款。修正後：notion_weekly_trend_wrapper.py 新增 detect_event_chains()（相鄰日反向對沖 ≥80% 且主導腿不同 → 整鏈排除），驗收同口徑 -53,548（原 -2,012,811）；回歸測試 tests/test_weekly_trend_event_chain.py 9 條（含真實市場損失／市場 V 型／對沖不足不得排除）；文案新增事件鏈證據、已剔除日期、各類別資料截至時間。CIO 獨立對抗性審查兩輪 APPROVE（blocking=[]，tree 2e2172a4）。落地 commit 324c5378（程式）＋2b37b877（資料卡 PEND-20261009-10），已推 clean-main 並線上驗收（post-push 22/22 200）。稽核紀錄 audit_weekly_trend_event_chain_20261009.md；殘項卡 PEND-20261009-09（台新 002***75 是否納管帳戶，P2 獨立結案）。",
+      "status": "completed",
+      "source": "user"
     }
-,
-  {
-    "id": "mem-20261009104231-1145",
-    "timestamp": "2026-10-09T10:42:31.416423+08:00",
-    "agent": "Hermes",
-    "task": "週報同口徑假性淨值下降裁定（201萬）＋事件鏈判定修正上線",
-    "summary": "使用者 2026-10-09 裁決：①確認 201 萬元為『跨日入帳』造成的假性淨值下降，非已確認投資損失（9/30 資產腿先動、10/1 負債腿才認列；兩日合計 +18,800 對沖）②週報『同口徑』算法確有缺陷（只看單日 ≥10% 門檻，漏掉未達門檻但隔日反向對沖的事件鏈）→ 批准修正事件鏈判定、回歸測試、週報文案；不動投資部位、不改貸款安排、不擴張其他程式 ③不因該警報執行賣出／加碼質押／提前還款。修正後：notion_weekly_trend_wrapper.py 新增 detect_event_chains()（相鄰日反向對沖 ≥80% 且主導腿不同 → 整鏈排除），驗收同口徑 -53,548（原 -2,012,811）；回歸測試 tests/test_weekly_trend_event_chain.py 9 條（含真實市場損失／市場 V 型／對沖不足不得排除）；文案新增事件鏈證據、已剔除日期、各類別資料截至時間。CIO 獨立對抗性審查兩輪 APPROVE（blocking=[]，tree 2e2172a4）。落地 commit 324c5378（程式）＋2b37b877（資料卡 PEND-20261009-10），已推 clean-main 並線上驗收（post-push 22/22 200）。稽核紀錄 audit_weekly_trend_event_chain_20261009.md；殘項卡 PEND-20261009-09（台新 002***75 是否納管帳戶，P2 獨立結案）。",
-    "status": "completed",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-09T09:40:16.060747"
+    "updated_at": "2026-10-09T21:37:51.637992"
   },
   "last_updated": "2026-10-09T18:00:00+08:00",
   "2026-09-29": [
@@ -10985,6 +10984,56 @@
       "action": "全庫 60 檔／65 處寫死絕對路徑 → 鏡像/sandbox 跑產線寫回正本 repo（sandbox 逃逸）",
       "status": "待處理",
       "tags": "技術債,沙箱隔離,硬編碼,producer-isolation,no-hardcode,inc294-required"
+    },
+    {
+      "date": "2026-10-09",
+      "action": "台新帳號 002***75 是否為 Moneybook 納管帳戶（週報事件鏈資金路徑對帳殘項）",
+      "status": "待處理",
+      "tags": "對帳,台新,納管帳戶,event-chain,週報"
+    },
+    {
+      "date": "2026-10-09",
+      "action": "週報事件鏈判定 hardening 2 項（4 日鏈回歸測試／多子鏈顯示淨殘差）",
+      "status": "待處理",
+      "tags": "技術債,週報,event-chain,回歸測試,顯示層"
+    },
+    {
+      "date": "2026-10-09",
+      "action": "申購款『待確認應收』科目＋穿透不變量擴充（290,070 資產漏認列）",
+      "status": "待處理",
+      "tags": "資產口徑,應收,穿透不變量,cio-approved,待施工"
+    },
+    {
+      "date": "2026-10-09",
+      "action": "發布前真值一致性『共用閘門』＋daily_deploy 接入＋孤兒 pre-run.sh／死碼 PUSH_FORCE_OK 處置",
+      "status": "待處理",
+      "tags": "發布閘門,真值一致,blocking,pre-push,daily_deploy,cio-reject,待施工"
+    },
+    {
+      "date": "2026-10-09",
+      "action": "週報顯示層三缺陷修正（Bug A 租金月份口徑／Bug B 動態目標標題／Bug C 指定款標籤）",
+      "status": "CONDITIONAL",
+      "tags": "週報,顯示層,口徑,硬編碼,ito-approved,待施工"
+    },
+    {
+      "date": "2026-10-09",
+      "action": "🔴 P0｜週報雙 producer：legacy weekly_report.py 與 build_weekly_report.py 同輸出路徑",
+      "status": "CONDITIONAL",
+      "tags": [
+        "發布安全",
+        "雙producer",
+        "週報"
+      ]
+    },
+    {
+      "date": "2026-10-09",
+      "action": "「指定清償款」過時標籤同型殘留（8 檔 11 處）",
+      "status": "待處理",
+      "tags": [
+        "標籤語意",
+        "口徑一致",
+        "全庫掃描"
+      ]
     }
   ]
 }
