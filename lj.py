@@ -24,7 +24,7 @@ CMDS = {
     'emergency': f'echo "📡 美股緊急應變: python {BASE}/daily_intel.py + python {BASE}/emergency_1330.py"; python {BASE}/notion_backup.py snap 緊急 "緊急應變分析完成"',
     'hunter': f'echo "🔍 Hunter情報收集: 執行 daily_intel.py"; python {BASE}/notion_backup.py snap 情報 "Hunter情報收集完成"',
     'morning': f'python {BASE}/morning_briefing.py; python {BASE}/notion_backup.py snap 晨報 "晨間簡報完成"',
-    'weekly': f'python {BASE}/weekly_report.py; python {BASE}/notion_backup.py snap 週報 "週報完成"',
+    'weekly': f'python {BASE}/build_weekly_report.py; python {BASE}/notion_backup.py snap 週報 "週報完成"',
     'cashflow': f'python {BASE}/cashflow_analysis.py; python {BASE}/notion_backup.py snap 現金流 "現金流分析完成"',
     'fire': f'python {BASE}/fire_progress.py; python {BASE}/notion_backup.py snap FIRE "FIRE進度更新"',
     'backup': f'python {BASE}/notion_backup.py snap',

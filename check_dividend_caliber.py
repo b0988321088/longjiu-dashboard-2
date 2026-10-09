@@ -425,15 +425,25 @@ try:
     ck("90 天覆蓋率＝可動用 ÷ A 區（毛需求）",
        abs(float(_nd_n["覆蓋率_pct"]) - (_nd_n["可動用"] / _a_n * 100.0)) < 0.05,
        str(_nd_n["覆蓋率_pct"]) + "%")
-    import re as _re_n
-    _re_need = _re_n.compile(r"(90\s*天|Coverage|覆蓋率)[^<]{0,80}2,400,000|2,400,000[^<]{0,60}(90\s*天|需求)")
+    # 2026-10-09（使用者裁決：押標金未得標→不列入 90 天已確認需求、不預先辦理保證函）：
+    #   原散文正則「否定句附近出現 2,400,000」無法辨識否定語意，會把**明示排除**的句子
+    #   誤判為違規（實測：當日日報 ⑥ 條件式事件一句）。
+    #   改為數值判定：產物渲染的 90 天需求分母必須＝A 區計算值。
+    #   比原式強：原式僅「碰巧鄰近」才觸發且無法區分否定；本式直接比對計算結果。
+    #   實作見 tools/cash_need_90d_guard.py（附正反向測試）。
+    #   註：第一版曾加「語境」檢查（押標金附近需有排除詞），實測同樣脆弱——
+    #       產物在多處合法語境提及押標金（決策卡清單／本週計劃／條件式事件），
+    #       固定字元窗無法區分「提及」與「列為需求」→ 又製造假紅燈，故**不採用散文式判定**。
+    import sys as _sys_n
+    _sys_n.path.insert(0, str(BASE / "tools"))
+    import cash_need_90d_guard as _cg_n
     _pg_n = ""
     for _f_n in ("index.html", "daily_report_v2_%s.html" % __import__("datetime").date.today().isoformat()):
         _fp_n = BASE / _f_n
         if _fp_n.exists():
             _pg_n += _fp_n.read_text(encoding="utf-8", errors="replace")
-    ck("產物不得把押標金列為 90 天資金需求（不顯示、不產生缺口）",
-       not _re_need.search(_pg_n), "index/daily")
+    _ok_den_n, _d_den_n = _cg_n.check_rendered_denominator(_pg_n, _a_n)
+    ck("產物 90 天需求分母＝A 區計算值（押標金未併入）", _ok_den_n, _d_den_n)
     ck("產物含 90 天覆蓋率（毛需求口徑）",
        "未來 90 天現金需求覆蓋率" in _pg_n or "未來 90 天現金需求" in _pg_n, "index/daily")
 except Exception as _e_n:
@@ -642,6 +652,14 @@ _dirty = [d for d in _dirty if not d.endswith("_preview.png")]
 _OTHER_AGENT = re.compile(r"^gen_emergency_us_\d{8}\.py$")
 _other_agent = [_d for _d in _dirty if _OTHER_AGENT.match(_d)]
 _dirty = [d for d in _dirty if d not in _other_agent]
+# 他班／前批未追蹤檔（明確歸屬、非本班 scope）：只提示不阻擋，且**不得混入本班 commit**。
+#   2026-10-09 使用者裁決：「未提交的其他檔案必須維持原有歸屬，不可混入本次提交；由工程端隔離」。
+#   隔離＝明列歸屬並排除於本班範圍；不是當成本班變更（吸收），也不是靜默忽略（消失）。
+_OTHER_OWNER = {
+    "apply_truth_20261008.py": "2026-10-08 真值套用腳本（前批產物，非本班）",
+}
+_other_owner = [_d for _d in _dirty if Path(_d.strip()).name in _OTHER_OWNER]
+_dirty = [d for d in _dirty if d not in _other_owner]
 # 外部排程（cron）寫入：非本班變更，只提示不阻擋
 _EXT = re.compile(r"^(cost\.html|cost_data\.json|data/|logs/|dragon_assets\.db)")
 _ext = [d for d in _dirty if _EXT.match(d)]
@@ -679,6 +697,12 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            # 2026-10-09 使用者核准：週報同口徑事件鏈判定修正（唯讀稽核後）
            "notion_weekly_trend_wrapper.py", "test_weekly_trend_event_chain.py",
            "audit_weekly_trend_event_chain_20261009.md",
+           # 2026-10-09 本班（Phase 03 績效閘門解耦 ＋ 90 天需求守門改數值判定）
+           #   授權：PEND-20261009-13／-14／-15 ＋ 使用者 2026-10-09「一次完成所有必要修復」裁決
+           "build_weekly_report.py", "lj.py", "weekly_report.py",
+           "verify_performance_monthly.py", "verify_performance_core_task12.py",
+           "perf_gate_contract.py", "verify_perf_gate_tests.py",
+           "cash_need_90d_guard.py", "verify_cash_need_90d_guard.py",
            }
 # 逐日產物：命名比對，跨月不失效（舊版 allowed_prefixes 釘死 2026-09）
 _DAILY = re.compile(r"^(asset_diff|retirement_plan|daily_report_v2|rebalance_dashboard|"
@@ -702,6 +726,10 @@ _hard = [d for d in _undeclared if any(_CODE.search(s.strip()) for s in d.split(
 ck("變更範圍：無未宣告的程式檔異動", not _hard, str(_hard))
 if _other_agent:
     print(f"ℹ️  他班／未追蹤檔（非本班 scope，不納入本班 commit）：{_other_agent}")
+if _other_owner:
+    for _d_o in _other_owner:
+        print(f"ℹ️  非本班檔（維持原歸屬、排除於本班 commit）：{_d_o}"
+              f"｜{_OTHER_OWNER[Path(_d_o.strip()).name]}")
 # 本班變更範圍（CIO 紀錄用；8 條決策核心守門屬於本班 schema 變更）
 print(f"ℹ️  本班異動（{len(_dirty)} 檔）：{_dirty}")
 print("ℹ️  DECISION_CORE_CHECKS=8")

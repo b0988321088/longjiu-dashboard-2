@@ -207,7 +207,7 @@ _market_html = f"<pre style='font-size:14px;line-height:1.6;white-space:pre-wrap
 # 3b. 緊急應變分析（INC-291：唯一實作＝daily_report_assembly.build_emergency_block）
 #   canonical 行為＝本檔 2026-10-09 前的已上線實作（refresh_stale_amounts 舊值覆蓋／as_of
 #   `_stale_badge`／`<br>` 換行／2 條連結）；run_daily.py main() 亦呼叫同一函式
-#   → 兩個 producer 不再各自組裝。已知連結 `.html.html` 缺陷刻意保留（見共用模組 docstring）。
+#   → 兩個 producer 不再各自組裝。連結 `.html.html` 重綴缺陷已於 INC-294 修正（見共用模組 docstring）。
 from daily_report_assembly import build_emergency_block as _asm_em
 _snap_em = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
 _emergency_html = _asm_em(BASE, _snap_em, TODAY)
@@ -555,7 +555,31 @@ elif ok and _cio_ok:
     #      定位＝自動化防守，不是績效功能：不碰計算邏輯、不新增口徑、不改頁面。
     #      PASS → 才允許後續 commit/push；FAIL → 阻擋推送（fail-closed），本次不視為成功。
     try:
-        _vg = subprocess.run([sys.executable, str(BASE / "tools" / "verify_performance_monthly.py")],
+        # 2026-10-09（使用者裁決 Q1：呼叫端明示＋核准紀錄交叉比對）：
+        #   呼叫端必須**明示**本輪允許範圍、核准參照與產物清單；來源＝獨立治理宣告檔
+        #   governance/publish_scope.json。呼叫端不得自行擴張範圍再用自己提供的範圍過關。
+        #   缺檔／缺欄 → 不傳參數 → 閘門 F2 FAIL-CLOSED（不預設「範圍不限」）。
+        _decl_path = BASE / "governance" / "publish_scope.json"
+        _vg_cmd = [sys.executable, str(BASE / "tools" / "verify_performance_monthly.py")]
+        if _decl_path.exists():
+            try:
+                _decl = json.loads(_decl_path.read_text(encoding="utf-8"))
+                _af = [str(x) for x in (_decl.get("allowed_files") or [])]
+                _dl = [str(x) for x in (_decl.get("deliverables") or [])]
+                _ar = str(_decl.get("approval_ref") or "")
+                if _af:
+                    _vg_cmd += ["--allowed-files", ",".join(_af)]
+                if _dl:
+                    _vg_cmd += ["--deliverables", ",".join(_dl)]
+                if _ar:
+                    _vg_cmd += ["--approval-ref", _ar]
+                print(f"  🔒 宣告來源 governance/publish_scope.json：{len(_af)} 檔／"
+                      f"核准參照{'有' if _ar else '缺'}")
+            except Exception as _de:
+                print(f"  ⚠️ 宣告檔解析失敗（F2 將 FAIL-CLOSED）: {_de}")
+        else:
+            print("  ⚠️ 缺 governance/publish_scope.json → 閘門 F2 將 FAIL-CLOSED")
+        _vg = subprocess.run(_vg_cmd,
                              capture_output=True, text=True, encoding="utf-8", errors="replace",
                              timeout=900, cwd=str(BASE))
         _vg_out = (_vg.stdout or "").strip().splitlines()

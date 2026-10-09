@@ -75,14 +75,16 @@ def main():
         attrib = "；".join(cause) if cause else "小幅波動"
         attrib_html = f"<p style='font-size:12px;color:#6e6e73;margin:8px 0 0'>🔍 歸因：{attrib}｜總資產變化 {d_total:+,.0f}</p>"
         # 2026-08-30 修正：租金為收入非資產（原資產表「房租」列顯示 0 誤導 → 改顯示已收）
+        # 2026-10-09 PEND-20261009-13（CIO APPROVE）Bug A：原取 rent_received_records「全期累計」充當「/月」
+        #   （8/01–10/01＝181,200，與同報告被動月收口徑自相矛盾）→ 改讀常態月租單一入口 _rent
+        #   （＝passive_caliber.rent_norm，源自 passive_income.rent_monthly／rent_monthly_total＝80,100）。
         try:
-            import json as _json
-            _snap = _json.load(open(str(Path(__file__).resolve().parent / "snapshot.json"), encoding="utf-8"))
-            _rr = _snap.get("rent_received_records", {}) or {}
-            _rent_got = sum(v for d in _rr.values() for v in (d.values() if isinstance(d, dict) else [d]) if isinstance(v, (int, float)))
-            _rent_break = _snap.get("rent_breakdown", {})
+            _rent_break = snap.get("rent_breakdown", {})
             _rent_txt = " + ".join(f"{k} {v:,}" for k, v in _rent_break.items()) or "—"
-            attrib_html += f"<p style='font-size:12px;color:#2d6a4f;margin:4px 0 0'>🏠 本週租金已收：{_rent_got:,}/月（{_rent_txt}）</p>"
+            if _rent:
+                attrib_html += f"<p style='font-size:12px;color:#2d6a4f;margin:4px 0 0'>🏠 月租金（常態）：{_rent:,.0f} 元／月（{_rent_txt}）</p>"
+            else:
+                print("[WARN] 週報：rent_norm 缺值 → 不顯示租金列（不以全期累計或當月實收冒充）", file=sys.stderr)
         except Exception:
             pass
     else:
@@ -101,6 +103,8 @@ def main():
         gap = a - t
         light = "🟢" if abs(gap) <= 1.5 else ("🟡" if abs(gap) <= 3 else "🔴")
         rows3 += f"<tr><td>{label}</td><td class='num'>{v:,.0f}</td><td class='num'>{a:.1f}%</td><td class='num'>{t}%</td><td class='num'>{gap:+.1f}pp</td><td>{light}</td><td style='font-size:11px;color:#6e6e73'>{act}</td></tr>"
+    # 2026-10-09 PEND-20261009-13（CIO APPROVE）Bug B：標題目標改由 penetration.targets 動態組成（原寫死 15/30/20/30/5）
+    _tgt_txt = "/".join(f"{targets.get(_tk, 0):g}" for _, _tk, _, _ in BUCKETS)
 
     # ===== 五、風險紅線 =====
     us_ok = apct.get("美股市值型成長", 0) <= 33
@@ -108,11 +112,17 @@ def main():
     from sot_targets import restricted_cash as _rst_fn
     _rst = _rst_fn(snap)
     _avail = max(0.0, float(cash or 0) - _rst)
+    # 2026-10-09 PEND-20261009-13（CIO APPROVE）Bug C：標籤由「指定清償款」（10/01 已完成清償，語意過時）
+    #   改為「指定用途款」並列出實際保留項；明細由 snapshot.restricted_cash.明細 動態組成（禁寫死）。
+    _rst_keep = [d for d in (((snap.get("restricted_cash") or {}).get("明細")) or [])
+                 if isinstance(d, dict) and "保留" in str(d.get("狀態", ""))]
+    _rst_txt = "＋".join(f"{d.get('簡稱') or d.get('項目') or '?'} {float(d.get('金額') or 0):,.0f}"
+                         for d in _rst_keep) or "無"
     cash_ok = _avail >= _cf
     us30y_ok = us30y is None or us30y < 5.30
     _act_ok = _div_act >= _pcs["div_con"] * _pcal.STRESS_DIV_RATIO
     rows5 = f"""<tr><td>US30Y &lt; 5.30%（債券凍結線）</td><td>{'✅' if us30y_ok else '❌'}</td><td>{us30y_txt}（{mode}）</td></tr>
-    <tr><td>現金 ≥ {_cf:,.0f}（生活底線）</td><td>{'✅' if cash_ok else '❌'}</td><td>可動用 {_avail:,}（真值 {cash:,} − 指定清償款 {_rst:,.0f}；底線 {_cf:,.0f}）</td></tr>
+    <tr><td>現金 ≥ {_cf:,.0f}（生活底線）</td><td>{'✅' if cash_ok else '❌'}</td><td>可動用 {_avail:,}（真值 {cash:,} − 指定用途款 {_rst:,.0f}＝{_rst_txt}；底線 {_cf:,.0f}）</td></tr>
     <tr><td>美股 ≤ 33%</td><td>{'✅' if us_ok else '❌'}</td><td>{apct.get('美股市值型成長',0):.1f}%</td></tr>
     <tr><td>LTV ≤ 40%</td><td>✅</td><td>未質押</td></tr>
     <tr><td>台股單筆 ≤ 5 萬</td><td>✅</td><td>管制中</td></tr>
@@ -250,7 +260,7 @@ li{{margin-bottom:5px;font-size:12.5px;line-height:1.5}}
 <div class="kpis">
   <div class="kpi"><div class="k">總資產</div><div class="v">{total:,}</div></div>
   <div class="kpi"><div class="k">總負債</div><div class="v red">{snap.get('total_liabilities',0):,}</div></div>
-  <div class="kpi"><div class="k">現金（可動用）</div><div class="v {'green' if cash_ok else 'red'}">{_avail:,}</div><div class="k" style="font-weight:400;font-size:11px">真值 {cash:,}｜含指定清償款 {_rst:,.0f}</div></div>
+  <div class="kpi"><div class="k">現金（可動用）</div><div class="v {'green' if cash_ok else 'red'}">{_avail:,}</div><div class="k" style="font-weight:400;font-size:11px">真值 {cash:,}｜指定用途款 {_rst:,.0f}（{_rst_txt}）</div></div>
   <div class="kpi"><div class="k">被動月收</div><div class="v green">{_passive:,}</div></div>
   <div class="kpi"><div class="k">美股佔比</div><div class="v {'green' if us_ok else 'red'}">{apct.get('美股市值型成長',0):.1f}%</div></div>
 </div>
@@ -262,7 +272,7 @@ li{{margin-bottom:5px;font-size:12.5px;line-height:1.5}}
 <p style="font-size:13px;margin:0 0 8px">目前 US30Y <b>{us30y_txt}</b> → 模式 <b>{mode}</b></p>
 {rhythm}</div>
 
-<div class="card"><h2>📊 三、穿透對照（目標 15/30/20/30/5）</h2>
+<div class="card"><h2>📊 三、穿透對照（目標 {_tgt_txt}）</h2>
 <table><thead><tr><th>類別</th><th class="num">金額</th><th class="num">實際</th><th class="num">目標</th><th class="num">差距</th><th>燈號</th><th>建議</th></tr></thead><tbody>{rows3}</tbody></table></div>
 
 <div class="card"><h2>🎯 四、下週行動</h2>{act4}</div>

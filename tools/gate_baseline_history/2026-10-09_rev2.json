@@ -1,0 +1,26 @@
+{
+  "as_of": "2026-10-09",
+  "expires_at": "2026-11-08",
+  "created_by": "hermes-agent（PEND-20261009 Phase 03 隔離實作）",
+  "updated_by": "使用者 2026-10-09 裁決：Phase 03 授權（自既有白名單遷移、同一集合未擴張）",
+  "reason": "自 check_dividend_caliber 的 KNOWN_GATE_FAILS 白名單遷移為受治理快照：同一集合、未擴張、未新增；該 4 條為 2026-10-05 前既存並已記載為既有狀態。",
+  "approval_ref": "設計審查 v2（使用者 2026-10-09 裁決：Q1-Q4 採納＋三控制點補強）",
+  "released_20261005": [
+    "Pending schema 五欄齊備（26 筆一次遷移）",
+    "status 正規化為四態（原字串保留 status_raw）"
+  ],
+  "fail_set": [
+    "可動用現金＝cash_layers.available（唯一真值）",
+    "穿透桶『現金/安全網』＝可動用＋在途未對帳（不得參與決策）",
+    "穿透桶口徑＝可動用＋589 在途／未對帳（不得參與決策）",
+    "穿透桶『現金/安全網』不得當可動用（在途／未對帳）"
+  ],
+  "content_sha256": "fe50e7ccac99dc594b8a59ba696a67df199645af04d8279ea993cf5fab7a7403",
+  "history": [
+    {
+      "version": "2026-10-09_initial",
+      "path": "tools/gate_baseline_history/2026-10-09_initial.json"
+    }
+  ],
+  "executed_by": "hermes-agent（執行者；非產生該 FAIL 的閘門流程）"
+}

@@ -149,24 +149,59 @@ def main() -> int:
                              cwd=str(BASE), capture_output=True).returncode == 0
     chk(tracked, "performance_monthly.html 已進版控（否則 Pages 404）")
 
-    print("== F. Task 1+2 零回歸 ==")
-    r = subprocess.run([sys.executable, str(BASE / "tools" / "verify_performance_core_task12.py"),
-                        "2d1b9ed2"], cwd=str(BASE), capture_output=True, text=True)
-    tail = [ln for ln in (r.stdout or "").splitlines() if "驗收" in ln or "FAIL" in ln]
-    # 2026-10-03（INC-283）：原本 detail 取「最後一行含 FAIL 者」→ 會把檢查項名稱
-    #   「無新增 FAIL（既有 6 條白名單外為空）」貼在「Task1+2 驗證器 PASS」後面，
-    #   讀起來像「PASS — FAIL」，把「有 1 條新 FAIL」誤讀成「沒有新增 FAIL」。
-    #   改為：摘要行（驗收：PASS x / FAIL y）＋ 逐條列出未過的檢查項名稱。
-    _lines = (r.stdout or "").splitlines()
-    _summary = next((ln.strip().strip("=").strip() for ln in _lines if "驗收：" in ln), (tail[-1].strip() if tail else ""))
-    _failed = [ln.split("FAIL:", 1)[1].strip() for ln in _lines if ln.strip().startswith("FAIL:")]
-    chk(r.returncode == 0, "Task1+2 驗證器零回歸（rc=0）",
-        (_summary + ("｜未過檢查項：" + "、".join(_failed) if _failed else "")).strip())
+    print("== F. 契約與發布閘門（F1–F4 分立；不互相冒充）==")
+    # 2026-10-09（Phase 03，設計 v2 §2）：原 F 段以 1 個 chk 同時承擔
+    #   ①封版契約 ②本輪範圍 ③環境健康度 → 跨任務／跨時間耦合。
+    #   改為 4 個獨立斷言，各自判準與失敗原因；環境紅燈不再冒充 Task 1+2 回歸。
+    sys.path.insert(0, str(BASE / "tools"))
+    import argparse
+    import perf_gate_contract as pgc
+    _ap = argparse.ArgumentParser(add_help=False)
+    _ap.add_argument("--baseline-sha", default=pgc.BASELINE_SHA)
+    _ap.add_argument("--candidate", default="HEAD")
+    _ap.add_argument("--allowed-files", default="")
+    _ap.add_argument("--approval-ref", default="")
+    _ap.add_argument("--deliverables", default="")
+    _ap.add_argument("--snapshot", default="")
+    _ap.add_argument("--approval-tree", default="")
+    _ap.add_argument("--build-source", default="")
+    _a, _ = _ap.parse_known_args()
+    _split = lambda s: [x.strip() for x in re.split(r"[,\n;]", s or "") if x.strip()]
+    _ev = pgc.evaluate(
+        baseline_sha=_a.baseline_sha,
+        candidate=_a.candidate,
+        allowed_files=_split(_a.allowed_files),
+        approval_ref=_a.approval_ref,
+        deliverables=_split(_a.deliverables),
+        snapshot_path=Path(_a.snapshot) if _a.snapshot else None,
+        approval_tree=_a.approval_tree,
+        build_source=_a.build_source,
+    )
+    for _k in ("f1", "f2", "f3", "f4"):
+        _v = _ev[_k]
+        _bad = [c["label"] + (f"（{c['detail']}）" if c["detail"] else "")
+                for c in _v["checks"] if not c["ok"]]
+        chk(_v["ok"], f"{_k.upper()} {_v['name']}",
+            ("；".join(_bad) if _bad else "全部通過")[:300])
+    _tc, _env = _ev["task_contract"], _ev["environment"]
+    print("\n  【任務契約｜發布必要條件】" + ("PASS" if _tc["ok"] else "FAIL") + "  "
+          + " ".join(f"{k}={'PASS' if v else 'FAIL'}" for k, v in _tc["members"].items()))
+    print("  【環境健康度｜獨立呈現】" + ("PASS" if _env["ok"] else "FAIL")
+          + f"（F3；快照外紅燈 {len(_ev['f3'].get('new_fails') or [])} 條"
+          + f"／範圍類 {len(_ev['f3'].get('scope_class') or [])} 條）")
+    for _n in (_ev["f3"].get("new_fails") or []):
+        print("      ・F3 快照外紅燈（不計入 Task 1+2 回歸）：" + _n)
+    for _n in (_ev["f3"].get("scope_class") or []):
+        print("      ・F3 範圍類紅燈（獨立呈現，未濾除）：" + _n)
 
     total = 12 + len(fresh["months"]) + 14
     print(f"\n=== 月度比較閘門：{'PASS' if not fails else 'FAIL'}（FAIL {len(fails)}）===")
     for f in fails:
         print("  - " + f)
+    _tcf = [f for f in fails if f[:2] in ("F1", "F2", "F4")]
+    _envf = [f for f in fails if f[:2] == "F3"]
+    print(f"  分類：任務契約 {len(_tcf)} 條｜環境健康度 {len(_envf)} 條"
+          f"｜A–E {len(fails) - len(_tcf) - len(_envf)} 條")
     return 0 if not fails else 1
 
 

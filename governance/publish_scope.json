@@ -1,0 +1,40 @@
+{
+  "schema": "publish_scope/1",
+  "batch": "2026-10-09 Phase 03 績效閘門解耦 ＋ 90 天需求守門改數值判定",
+  "declared_at": "2026-10-09",
+  "owner": "龍九系統（本班）",
+  "approval_ref": "PEND-20261009-13／-14／-15；使用者 2026-10-09 裁決「一次完成所有必要修復，不必逐項請示」",
+  "note": "F2（本輪範圍契約）的唯一宣告來源。呼叫端不得自行擴張；與 CIO 核准紀錄交叉比對，缺漏一律 FAIL-CLOSED。",
+  "allowed_files": [
+    "build_weekly_report.py",
+    "lj.py",
+    "weekly_report.py",
+    "check_dividend_caliber.py",
+    "tools/perf_gate_contract.py",
+    "tools/verify_performance_monthly.py",
+    "tools/verify_performance_core_task12.py",
+    "tools/verify_perf_gate_tests.py",
+    "tools/cash_need_90d_guard.py",
+    "tools/verify_cash_need_90d_guard.py",
+    "governance/publish_scope.json",
+    "tools/gate_baseline_dividend_caliber.json",
+    "tools/gate_baseline_history/2026-10-09_initial.json",
+    "pending_decisions.json",
+    "regenerate_report.py",
+    ".hermes/plans/2026-10-09_220000-perf-gate-decoupling-design.md",
+    ".archive/weekly_report.py.retired_20261009",
+    "tools/gate_baseline_history/2026-10-09_rev2.json"
+  ],
+  "deliverables": [
+    "build_weekly_report.py",
+    "check_dividend_caliber.py",
+    "tools/perf_gate_contract.py",
+    "tools/verify_performance_monthly.py",
+    "tools/verify_performance_core_task12.py",
+    "tools/verify_perf_gate_tests.py",
+    "tools/cash_need_90d_guard.py",
+    "tools/verify_cash_need_90d_guard.py"
+  ],
+  "artifact_hashes": {},
+  "artifact_hashes_note": "由發布步驟於 CIO 核准後填入（檔名 → sha256）。未填 = 尚未核准，F4 一律 BLOCKED。"
+}

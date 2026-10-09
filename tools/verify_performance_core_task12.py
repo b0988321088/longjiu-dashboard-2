@@ -150,17 +150,30 @@ chk("逐位元完全相同：investment_performance.html", a == b, f"{len(a)} vs
 chk("console/TG 文字相同：build_mtd_report", (_r3.stdout + _r3.stderr) == (_r1.stdout + _r1.stderr))
 chk("console/TG 文字相同：build_investment_performance", (_r4.stdout + _r4.stderr) == (_r2.stdout + _r2.stderr))
 
-print("== 5. 既有閘門無新增 FAIL ==")
+print("== 5. 環境健康度（獨立呈現；不計入 Task 1+2 契約）==")
+# 2026-10-09（Phase 03，設計 v2 §2.3）：**解耦**。
+#   原設計把「現行 check_dividend_caliber 的即時紅燈」計入 Task 1+2 的 rc，
+#   造成跨任務／跨時間耦合：白名單凍結後新增的無關紅燈會被算成本契約的回歸
+#   （Phase 01 實證：月度閘門 F 項唯一 FAIL 的真因）。
+#   改為：本節只「報告」環境狀態並輸出結構化 ENV_JSON，**不寫入 FAIL**；
+#   分類與判定交由月度閘門 F3（受治理快照）獨立負責 → 單一判定來源。
 _g = run([PY, "check_dividend_caliber.py"], REPO, timeout=600)
-_m = re.search(r"(\d+)/(\d+) PASS.*?FAIL: \[(.*?)\]", _g.stdout + _g.stderr, re.S)
+_gate_out = (_g.stdout or "") + (_g.stderr or "")
+_m = re.search(r"(\d+)/(\d+) PASS.*?FAIL: \[(.*?)\]", _gate_out, re.S)
+ENV = {"gate": "check_dividend_caliber", "parseable": False,
+       "pass_count": None, "total": None, "fail_names": []}
 if not _m:
-    chk("check_dividend_caliber 可解析結果", False, "找不到 PASS/FAIL 摘要")
+    print("  ⚠️ 環境健康度：check_dividend_caliber 輸出無法解析（不計入本契約；F3 應 FAIL-CLOSED）")
 else:
-    _names = re.findall(r"'([^']+)'", _m.group(3))
-    _new = [n for n in _names if n not in KNOWN_GATE_FAILS and not n.startswith("變更範圍")]
-    chk("既有閘門無新增 FAIL（白名單外為空）", not _new,
-        "、".join(_new) if _new else
-        f"白名單外 0 條｜{_m.group(1)}/{_m.group(2)} PASS")
+    ENV["parseable"] = True
+    ENV["pass_count"], ENV["total"] = int(_m.group(1)), int(_m.group(2))
+    ENV["fail_names"] = re.findall(r"'([^']+)'", _m.group(3))
+    print(f"  ℹ️ 環境狀態：{ENV['pass_count']}/{ENV['total']} PASS｜紅燈 {len(ENV['fail_names'])} 條"
+          f"（分類與判定由月度閘門 F3 負責，本契約不計入）")
+    print("  （不計入本契約的原始清單）")
+    for _n in ENV["fail_names"]:
+        print("     ・", _n)
+print("ENV_JSON:" + json.dumps(ENV, ensure_ascii=False))
 
 print(f"\n=== Task 1+2 驗收：PASS {len(PASS)} / FAIL {len(FAIL)} ===")
 for f in FAIL:
