@@ -1762,3 +1762,16 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 [CALIBRATE] 三源校準失敗：{'allianz_value': False, 'firstjin_value': False}
 ；穿透三報表不一致（check_penetration_consistency.py 抓到）
 - 狀態: ⏳ 待處理 (總計 1 次)
+
+## INC-295 ｜ 2026-10-10 ｜ P1｜open ｜ 本機 commit 觸發 post-commit 自動鏡像 → 未授權的執行環境變更（本機層級 commit 與 deploy 無法分離）
+
+- 觸發點：commit `a367e6e7`（B 案：健康度現金計分改接 `allowable_cash()`）之 **post-commit hook**（`.githooks/post-commit` → `post-commit.py`）。
+- 影響檔案：`hermes/scripts/report_components.py`（本機執行環境）。
+- 鏡像結果：SHA-256 `78fbbd6845f871c7908e0d5e947b925ef411da93954785759ec2e7a84566f77e`，與 B 案 CIO 審查版本（`report_components.py` working tree）**逐位元一致**（LF 正規化後比對，33,668 bytes）。
+- 已知未影響項目：① 未 push（`origin/clean-main` 仍 `20a4e4c4`）② Pages 未更新 ③ A 案執行檔 `hermes/scripts/health_alert_check.py` 仍為 `28a3b769…`（未變）④ 排程未動、未修改 A 案、未擴大施工範圍。
+- 範圍確認（唯讀）：`hermes/scripts/` 其餘 18 支 mtime 皆為舊時間，本次僅 `report_components.py` 被動；hook 日誌 (`mirrored=1`) 今日僅 01:03:30（既有 commit）與 09:50:50（本次）。
+- 性質：**授權範圍外**——授權內容為「git add ＋ 本機 commit，不 deploy」，但 `report_components.py` 位於鏡像清單（`mirror_guard.py` 19 支）內，**commit 必然觸發鏡像**。
+- 根因：`post-commit` hook 跑在 commit 完成**之後**，**不受 `--no-verify` 影響**；在現行架構下無法以「不帶 hook」的方式完成 commit → **本機 commit 與執行環境變更在技術上不可分離**。
+- 處置（2026-10-10 使用者裁決，方案 3）：**保留現狀、不回滾、不 push、不再觸發部署**；本機鏡像列為「未授權的附帶變更」，**不追認為部署授權、不視為發布**。
+- 後續（需獨立工單評估，不在本卡內施工）：① hook／清單是否需提供「commit-only、不鏡像」路徑 ② 修正前，任何含鏡像清單檔案的 commit 都應先評估執行環境副作用。
+- 相關：B 案 commit `a367e6e7`（tree `88f06346`）、`reviews/B_cash_fix_cio_result.json`、事件紀錄 `~/longjiu_backups/20261010_mirror_incident/INCIDENT.md`、INC-236（push gate 架構）、INC-285（未推分支導致產線 fail-closed）。
