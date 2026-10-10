@@ -43,6 +43,32 @@ hs = s.get("hedge_satellite", {}); dcm = s.get("defensive_combined_metric", {})
 # 2026-09-22 審查修正：原本門檻 60 在本檔與週報 prompt 各寫一份 → 正是要消滅的漂移模式，改讀單一來源。
 from sot_targets import defensive_caliber as _defensive_caliber
 from usd_advisory import cap as _usd_cap_fn, tier as _usd_tier, tier_limit_text as _usd_tier_text  # noqa: E402
+
+def _weekly_plan_html():
+    """🗓️ 下週行動建議：唯一來源 radar_state.weekly_plan（與 build_weekly_report 同源）。
+    2026-10-11：改讀 radar_state.weekly_plan.rows —— 移除寫死的 8/25 歷史事件與已作廢 MMF 敘述；
+    讀取失敗或無內容時明確顯示「資料暫不可用」，不回退任何過期行動建議。質押行維持 pledge_status 來源不變。
+    """
+    try:
+        _rs = json.load(open(os.path.join(REPO, "radar_state.json"), encoding="utf-8"))
+        _wp = _rs.get("weekly_plan", {}) or {}
+        _rows = [r for r in (_wp.get("rows") or []) if r.get("內容")]
+        _d = str(_wp.get("日期") or "").split("T")[0] or "—"
+    except Exception as _e:
+        _rows, _d = [], "—"
+        print(f"[WARN] radar_state.weekly_plan 讀取失敗：{_e}")
+    if _rows:
+        _items = "".join(
+            f"<li><b>{r.get('動作','⚪')} {r.get('類別','—')}</b>：{r.get('內容','')}</li>"
+            for r in _rows if r.get("類別") != "質押")
+        _src = f"📋 來源：radar_state.weekly_plan（{_d} 全資產面結論）"
+    else:
+        _items = "<li>⚠️ 資料暫不可用（radar_state.weekly_plan 讀取失敗或無內容）— 不顯示過期行動建議</li>"
+        _src = "📋 來源：radar_state.weekly_plan（讀取失敗／無內容）"
+    return (f'<div style="font-size:11px;color:#6e6e73;margin-bottom:6px">{_src}</div>'
+            '<ol style="font-size:13px;line-height:1.95;margin:0;padding-left:20px;color:#1d1d1f">'
+            + _items + f'<li><b>質押（動態）</b>：{_pf.pledge_status_line()}</li></ol>')
+
 # 2026-10-07 裁決②③：政策門檻唯一來源（usd_advisory ← thresholds.美元曝險_pct）＋觀測線命名
 _dcx = _defensive_caliber(s)
 DC_PCT = _dcx.get("佔比", 0)
@@ -286,12 +312,7 @@ rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W
 <li>美股 {pen.get("美股市值型成長",0):.1f}% 超目標 4pp — DAA 觀察，不主動新增</li>
 </ul></div>
 <div style="flex:1;min-width:340px;background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
-<h3 style="font-size:14px;font-weight:800;margin:0 0 8px">🗓️ 下週行動建議</h3>
-<ol style="font-size:13px;line-height:1.95;margin:0;padding-left:20px;color:#1d1d1f">
-<li><b>8/25（二）T+2 入帳確認（歷史）</b>：聯博 100萬 + 台幣貨基 500萬 入帳 → 四源同步（現金 800,272 → 基金 12,801,239）｜後續：該 500 萬 9/9 贖回、9/11 轉申購貝萊德 B11（質押擔保池）</li>
-<li><b>質押（動態）</b>：{_pf.pledge_status_line()}</li>
-<li>⛔ 原「MMF 剩餘 ~369萬 轉配置」已作廢（MMF 9/9 贖回、9/11 轉申購 B11）→ 現行補充資金＝現金流滾存＋9 月底評估押標金來源</li>
-</ol></div></div>
+<h3 style="font-size:14px;font-weight:800;margin:0 0 8px">🗓️ 下週行動建議</h3>{_weekly_plan_html()}</div></div>
 
 <div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
 <h3 style="font-size:14px;font-weight:800;margin:0 0 8px">📌 近期決策（近 14 天）</h3>
