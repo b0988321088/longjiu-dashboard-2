@@ -39,6 +39,14 @@ BENIGN_DIRTY = {
     # 同型：LLM 使用量為 append-only 逐筆寫入的執行期帳本（每次呼叫即寫），
     # 其交付物是費用頁／成本報告（仍在名單外，漏提交照樣亮 ❌）。
     "logs/pipeline_llm_usage.jsonl",
+    # 2026-10-10（CIO required_fix③＋第二輪審查校正）：告警去重「狀態檔」不是「產物」。
+    # 每日寫入者經複驗＝09:10 盤前提醒（cron job 0a596eafe6fa「盤前提醒 09:10（健康度紅線）」
+    # → alerts_morning.py → alerts.py:68 MODES['morning']={'health_alert_check.py'}
+    # → 部署版 health_alert_check.py:25 state_p=REPO/"health_alert_state.json"、:49 write_text；
+    #   repo 根無此檔，alerts.py:20 _resolve 會回退到部署版）。
+    # 故比照性質同質的 data/.cache_audit_state.json 列 benign 執行期狀態（仍會顯示、不列 fail）；
+    # 不列 OWNED_PENDING（那是「產物」語意）。
+    "health_alert_state.json",
 }
 
 
@@ -67,9 +75,6 @@ OWNED_PENDING = {
     "daily_analysis.json": ("分析快取（regenerate_report 只讀，:182）",
                             "分析腳本寫入（buffett_cto_analyzer／daily_intel／cost_monitor），無推送擁有者",
                             "—"),
-    "health_alert_state.json": ("執行期狀態（告警去重）",
-                                "tools/health_alert_check.py 每日覆寫；性質同 data/.cache_audit_state.json",
-                                "不需提交"),
 }
 # 「無推送擁有者」＝既有結構缺口（非本輪造成），仍逐檔揭露、不得靜默。
 NO_PUBLISHER = {"investment_performance.html", "cost_log.csv", "daily_analysis.json"}

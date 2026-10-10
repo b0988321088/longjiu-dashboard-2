@@ -1333,5 +1333,21 @@
     "needs_due_date": true,
     "tags": "治理,發布紀律,鏡像,hook,架構",
     "detail": "背景：INC-295（2026-10-10）。B 案 commit `a367e6e7` 觸發 post-commit hook，使 `hermes/scripts/report_components.py` 被自動鏡像更新（78fbbd68…），形成「未授權的執行環境變更」——原授權僅涵蓋「本機 commit、不 deploy」。\n\n現況（唯讀查證）：`.githooks/post-commit` → `post-commit.py` 比對 `mirror_guard.py` 19 支硬編碼清單，有差異即鏡像至 `hermes/scripts/`；日誌 `.git/hook_sync.log`。\n\n問題：`post-commit` 跑在 commit 完成**之後**，**不受 `--no-verify` 影響** → 只要 commit 涉及鏡像清單內的檔案，鏡像必然發生。因此在本機層級，**「commit」與「deploy」在技術上不可分離**：任何「只授權 commit、不授權 deploy」的授權範圍都無法真正被遵守。\n\n影響：① 治理面——發布授權邊界被自動機制穿透，須事後逐案揭露 ② 實務面——受影響的每次 commit 都要先評估執行環境副作用。\n\n待決選項（不預設答案）：① 提供可辨識的 commit-only 路徑（例如環境變數 SKIP_MIRROR=1 或 hook 參數），並留痕 ② 改為在 push 階段才鏡像（語意上「部署」更接近 push）③ 僅提供 dry-run 提示（commit 前先告知將鏡像哪些檔）。\n\n邊界：不得改變現行 cron 產線的鏡像行為語意；任何 hook 改動須經獨立 CIO 審查；不得與其他批次混批。\n\n驗收條件：① 定義並實作可辨識的「不鏡像」路徑（若有該選項）② 負向測試：使用該路徑 commit 後 `hermes/scripts/` 目標檔 sha256 不變 ③ 正向測試：現行產線 commit 的鏡像行為逐位元與現狀一致 ④ 於 INC-295 結案紀錄引用本卡。"
+  },
+  {
+    "id": "PEND-20261010-02",
+    "date": "2026-10-10",
+    "status": "待處理",
+    "last_confirmed": null,
+    "owner": "龍九",
+    "external_owner": null,
+    "title": "🟠 P1｜薪資真值模型口徑一致性（常態薪資 ／ 當月實收 ／ 自提 6%）",
+    "priority": "P1",
+    "status_raw": "🆕 2026-10-10 使用者授權批次建立（來源：退休頁②留停測試薪資語意疑點）",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": true,
+    "tags": "薪資,口徑,真值,snapshot,治理",
+    "detail": "【背景】2026-10-10 本輪交付時發現退休頁②留停測試顯示薪資 39,777（讀 snapshot.monthly_salary），薪資語意未解 → 使用者裁示另開本卡：先做影響矩陣再決定是否新增欄位；本卡落地前不得改薪資真值、不得重算衍生指標、不得回溯改寫歷史 commit。\n\n【現況事實（唯讀分析）】\n- snapshot.monthly_salary=39,777、snapshot.salary=39,777、monthly_income=225,968、working_surplus=66,758。\n- 切換點唯一＝commit c92c05e2（2026-10-06 19:42「四源同步」，author=Hermes Agent）：monthly_salary/salary 42,560→39,777、monthly_income 228,751→225,968、working_surplus 69,541→66,758；is-ancestor HEAD=YES。\n- 同日較早的 B 裁決（commit 95f2b517／程式 6aed7a55）方向相反：monthly_salary 維持 42,560、常態模型用 42,560、39,777 只進 salary_records；當晚 pending_decisions_archive 把該卡結案為「已由新裁示取代」。兩份紀錄對「39,777 是單月連假波動或口徑變更」解釋互斥。\n- 全庫無任何 .py 寫入者改這兩個欄位（grep 0 命中）→ 僅快照直改（無自動來源）。\n- 「自提 6%」無欄位、無計算；且 6%×42,560=2,553.6 ≠ 差額 2,783（差 229.4）→ 該理由無法驗證。\n- 42,560 於 snapshot 內唯一以資料值（amount）殘存＝salary_records[\"2026-09\"].amount（另有三處字串欄提及：salary_records[\"2026-09\"].note、bank_assets_memo、weekly_ops_closure_0904 執行清單）（語意為 9 月實收，非「常態基準」）；另殘存於 run_daily.py:299 退路預設 42_560、build_dashboard.py:545／build_retirement_plan.py:16／calendar_sync.py:22 的註解文字、DAILY_REPORT_PIPELINE_RULE.md:112、已封存日報 HTML（daily_report_v2_2026-09-04／09-05）。\n\n【消費者 × 口徑】儀表板結構條 build_dashboard.py:1028 取 monthly_salary 當常態（實際讀到 39,777）；:813 同欄位當「本月入帳」；:545 當「現行薪資」；已收 salary_got:471 走 salary_records（39,777）；退休規劃 build_retirement_plan.py:17 取 snap.get(\"monthly_salary\") or snap.get(\"salary\")（先 monthly_salary）；行事曆 calendar_sync.py:31 取 _snap.get(\"monthly_salary\") or 0（無 salary 回退）；月報 monthly_report.py:86 取 snap.get(\"salary\") or snap.get(\"monthly_salary\")（先 salary，現值同為 39,777 → 口徑分離後此排序會改變結果）→ 無任何「排程」消費者取得到 42,560。\n\n【數值後果】常態結構條 219,877（應 222,660）／monthly_income 225,968（應 228,751）／working_surplus 66,758（應 69,541）／含薪覆蓋率 141.9%（應 143.7%），皆 −2,783。不受影響：被動覆蓋率 113.1%、健康度覆蓋維度、留停 Gate（只吃配息＋房租）。\n\n【待使用者裁決】A＝維持「分離」意圖：monthly_salary 語意拉回常態 42,560、實收只走 salary_records（不需新欄位；風險＝現被當「本月實入」的讀取點語意翻轉）。B＝維持「以實入為真值」並新增一等常態欄位（如 salary_baseline=42,560）供常態線使用，並修掉 build_dashboard.py 三處互斥註解（需核准新增欄位）。\n\n【已登錄未展開】moneybook_6m_analysis.py:142 手動腳本仍寫死 monthly_salary=42_560（未在 cron）；run_daily.py:299 以 42,560 為退路；snapshot「收入基準_0822・常態月收入」敘述仍為「薪資 39,727＋…＝225,918」（與 live monthly_income 225,968 差 50）；second_salary=39,121 口徑；monthly_income 內配息 97,233（實收）vs fund_dividend_conservative=100,000 之關係；現行驗證器不覆蓋常態薪資口徑（56 PASS/0 FAIL 對此議題無告警）。"
   }
 ]
