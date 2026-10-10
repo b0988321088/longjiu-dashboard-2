@@ -1,0 +1,47 @@
+{
+  "verdict": "PASS — B 案最小修改符合核准範圍與 6 項必查/3 條件；無 blocking。附 6 項非阻擋觀察（含 1 項揭露觸達性問題）。",
+  "blocking": [],
+  "scope_creep": false,
+  "acceptance_matrix": [
+    {"case": "必查1 正常情境：allowable_cash 回傳有效值→現金分數正確", "verified": true},
+    {"case": "必查2 缺 cash_layers.unrestricted_cash→不回退 snapshot.json、不默默給分", "verified": true},
+    {"case": "必查3 allowable_cash 拋錯→該維度 0 分、真值缺值、整體標記不完整", "verified": true},
+    {"case": "必查4 現金合法 0 元 vs 真值缺失 可區分", "verified": true},
+    {"case": "必查5 其他維度仍計算但不掩蓋現金缺值", "verified": true},
+    {"case": "必查6 回歸：cash_floor 仍走 _cf_fn(snap) 單一入口、其他維度未受影響", "verified": true},
+    {"case": "條件①不得以 0 元充現金真值（缺值保留 None）", "verified": true},
+    {"case": "條件②現金維度記 0 分並明確標記缺真值（不隱藏原因）", "verified": true},
+    {"case": "條件③整體健康度揭露不完整", "verified": true}
+  ],
+  "fixes_verified": [
+    "現金計分端已改接 sot_targets.allowable_cash()（fail-closed）；實跑回傳 639,661 = cash_layers.unrestricted_cash。",
+    "計分路徑已無 restricted_cash() 依賴：原始碼不含 '_rst_fn(snap)'；restricted_cash() 函式本體未改（git diff 僅 report_components.py）。",
+    "缺真值保留 None：cash_layers 空/缺鍵/unrestricted_cash=None/''/bool  → cash=None、現金缺真值=True、該維度 0 分；未回退 snapshot.json。",
+    "合法 0 元與缺真值可區分：0 → cash=0.0、旗標 False、套用 min(55)+🔴 紅線；缺真值 → cash=None、旗標 True、不套紅線。",
+    "其他維度未受影響：覆蓋分/防禦分/LTV分 在正常與缺值情境不變；缺真值情境 分數 78>55 證明未誤套紅線。",
+    "回歸一致：以 HEAD(committed)==backup.ORIGINAL(5075a6ab…) 獨立載入對照，正常 snapshot 之 分數=55/🔴/現金=639661 與新版完全相同。",
+    "actual git diff 之 54 個 ± 行與提供之 patch 逐行相符（無隱藏修改）。",
+    "施工者測試 python tools/test_bcase_cash_scoring.py → 26 PASS / 0 FAIL（獨立重跑複現）。",
+    "相鄰 A 案工具 python tools/test_health_alert_check.py → 21 PASS（消費端未受影響）。"
+  ],
+  "findings": [
+    "【非阻擋】揭露觸達性：所修改的 _render_health_card_legacy() 在現行樹中無任何呼叫端（僅新增測試呼叫）；儀表板實際用 render_health_card()（決策核心卡，不顯示分數），且 check_dividend_caliber 要求首頁不得出現『龍九健康度』。故條件③之『人可讀』揭露（健康度未完整）落在一個已被 2026-10-02 裁決退場的孤立函式；現行唯一活躍消費端為 A 案 tools/health_alert_check.py（僅在觸發告警時以 _fmt 顯示『缺真值』）。『機可讀』揭露（dict 之 現金缺真值=True / 現金=None）確實存在且正確。建議後續將揭露旗標接到活躍輸出（另案），但不在本輪範圍。",
+    "【非阻擋】缺真值情境總分反而較高：缺現金真值 → 分數 78 🟡；確認跌破 → 分數 min(55) 🔴；兩者皆 0 分現金維度。此為刻意設計（不把『無真值』冒充『確認跌破』），與既有 LTV 缺真值慣例一致，且以 現金缺真值 旗標揭露。惟僅讀 分數 而未檢查旗標的消費端會看到較健康數字。",
+    "【非阻擋】except Exception 過寬：ImportError 或 allowable_cash 內部真實 bug 亦被轉為『缺真值』。屬 fail-closed（安全方向），但錯誤分類/訊息被吞為同一種，屬已知限制 R5（使用者已裁決列為已知）。",
+    "【非阻擋】未加負值防護：unrestricted_cash=-1 被 allowable_cash 視為有效真值 → cash=-1.0、旗標 False、套 0 分紅線（保守，不給分）。allowable_cash 未拒絕負數，為邊界瑕疵非本輪引入。",
+    "【非阻擋】範圍輕度外擴：_missing_dims 揭露一併涵蓋 覆蓋=None、LTV=None（原僅語意於現金）。此直接服務條件③『整體健康度揭露不完整』，但仍屬超出『現金』字面；僅影響該孤立卡片，無下游破壞。",
+    "【非阻擋】工作樹另有 3 個非程式檔被改（cost_log.csv、daily_analysis.json、health_alert_state.json）— 屬執行期產物（每日 cron/健康告警輸出），非 B 案編輯，但提交時會被一併納入；『只改一檔』之宣稱就程式碼成立。"
+  ],
+  "new_defects": [],
+  "required_fixes": [],
+  "reviewed_files": [
+    "report_components.py (working-tree, sha256 78fbbd68…)",
+    "C:/Users/bot/longjiu_backups/20261010_bcase/report_components.ORIGINAL.py (sha256 5075a6ab…; == HEAD:report_components.py)",
+    "C:/Users/bot/longjiu_backups/20261010_bcase/diff.ORIGINAL_vs_NEW.patch (54 ± 行逐行相符)",
+    "tools/test_bcase_cash_scoring.py",
+    "sot_targets.py (allowable_cash/restricted_cash/available_cash/cash_floor)",
+    "snapshot.json (cash_layers.unrestricted_cash=639661; cash_floor=700000)",
+    "tools/health_alert_check.py (A案消費端，未改動)",
+    "build_dashboard.py (證 _render_health_card_legacy 無呼叫端)"
+  ]
+}
