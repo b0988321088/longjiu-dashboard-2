@@ -18,7 +18,7 @@ def calc():
     insurance_div = mdb.get("allianz", 0) + mdb.get("firstjin", 0)
     etf_div = mdb.get("etf", 0)
     fund_div = mdb.get("fund", 0)
-    rent = snap.get("rent_monthly_actual", 80100)
+    rent = snap.get("rent_monthly_actual") or 0   # 2026-10-10：移除寫死退路 80,100
     # 2026-09-04：租金用「當月已收」加總（同 morning_briefing），非應收常態值
     _tm = date.today().strftime("%Y-%m")
     _rent_got = 0

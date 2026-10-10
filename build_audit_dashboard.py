@@ -24,7 +24,7 @@ d = json.load(open(os.path.join(REPO, "dashboard_decisions.json"), encoding="utf
 
 TA = s["total_assets"]; TL = s["total_liabilities"]; RE = real_estate_value(s)  # 2026-10-04 P0：原 fallback 34,017,063 為假真值
 INS = s["insurance_current_value"]; SEC = s["securities_total_market_value"]; FUND = s["fund_market_value"]
-CASH = s["cash_total"]; RENT = s.get("rent_monthly_total", 80100)
+CASH = s["cash_total"]; RENT = s["rent_monthly_total"]   # 2026-10-10：缺值 raise，不用寫死退路 80,100
 FLOOR = cash_floor(s)  # 2026-10-04 P0延伸：現金底線單一入口（原紅線判定寫死 700000）
 # 2026-09-29 CIO 審查必修3：Runway 一律用可動用現金（扣質押撥款指定清償款），
 # 並保留真值 CASH 供「純現金」KPI 與資產結構顯示（標籤需註明含指定清償款）。

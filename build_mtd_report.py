@@ -251,7 +251,7 @@ def payload() -> dict:
               + _num(snap.get("fund_market_value") or snap.get("funds_total"))
               + _num(snap.get("insurance_total")))
     div_month_actual = sum(_num(self_div) for self_div in (adj_div.values() or [])) or None
-    div_base = div_month_actual if div_month_actual else _num(snap.get("dividend_month_expected") or 100000)
+    div_base = div_month_actual if div_month_actual else _num(snap.get("dividend_month_expected"))   # 2026-10-10：移除寫死退路 100,000
     div_yield = (div_base * 12 / inv_mv) if inv_mv else 0
     spread = div_yield - wacc
     if spread >= SPREAD_GREEN:

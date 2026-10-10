@@ -83,7 +83,7 @@ def get_fire(snap):
     ins = mdb.get("allianz",0)+mdb.get("firstjin",0)
     etf = mdb.get("etf",0)
     fund = mdb.get("fund",0)
-    rent = snap.get("rent_monthly_actual", 80100)
+    rent = snap.get("rent_monthly_actual") or 0   # 2026-10-10：移除寫死退路 80,100
     # 2026-08-24 修正：租金用「當月已收」（rent_received_records 加總），非應收常態值
     # 2026-09-01 修正：月份動態化（原寫死 2026-08 → 9 月起顯示 0）
     _tm = date.today().strftime("%Y-%m") if 'date' in dir() else __import__('datetime').date.today().strftime("%Y-%m")

@@ -32,7 +32,7 @@ def _fv(v):
 def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None, snap=None):
     _fj = int((snap or {}).get("firstjin_detail", {}).get("base_value_before_dividend")
               or (snap or {}).get("firstjin_current_value")
-              or (snap or {}).get("firstjin_fl65_current_value") or 1_958_980)
+              or (snap or {}).get("firstjin_fl65_current_value") or 0)   # 2026-10-10：移除寫死退路 1,958,980
     _fjd = (snap or {}).get("firstjin_detail", {})
     _cf_ratios = (_fjd.get("current_fund") or {}).get("穿透比率", {}) or {}
     _fj_eq_r = float(_cf_ratios.get("股票", 0.55))

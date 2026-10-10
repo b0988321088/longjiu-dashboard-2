@@ -96,7 +96,7 @@ def main():
     # 2026-09-23 INC-241：房租「當月應收」＝ rent_receivable_by_month[當月]（含一次性調整，2026-09 洲際W 折讓 3,000），
     # 缺本月才退回常態 rent_monthly_total；待收 = 當月應收 − 當月已收（原用常態相減 → 幽靈待收 3,000）
     _rrb_m = (snap.get("rent_receivable_by_month", {}) or {}).get(ym) or {}
-    _rent_exp = sum(_rrb_m.values()) if _rrb_m else (snap.get("rent_monthly_total", 80100) or 80100)
+    _rent_exp = sum(_rrb_m.values()) if _rrb_m else (snap.get("rent_monthly_total") or 0)   # 2026-10-10：移除寫死退路 80,100
     _sal_exp, _div_exp = _sal, int(snap.get("dividend_month_expected") or 0)
     # 2026-10-01：女友還款常態額改讀 snapshot.personal_loans.女友借款.月還款（原本 6000 寫死 2 處）
     _gf_exp = int(float(((snap.get("personal_loans") or {}).get("女友借款") or {}).get("月還款") or 0) or 6000)

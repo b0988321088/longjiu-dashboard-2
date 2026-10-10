@@ -297,7 +297,7 @@ def main():
     # 2026-09-29：頁面 KPI 現金一律可動用口徑（扣質押撥款指定清償款）
     from sot_targets import restricted_cash as _rst_fn
     cash = max(0.0, float(s.get("cash_total") or 0) - _rst_fn(s))
-    monthly_inc = s.get("monthly_income", 228751)
+    monthly_inc = sot_monthly_income(s)   # 2026-10-10：單一入口（原寫死退路 228,751）
     monthly_exp = sot_monthly_expense(s)
     surplus = monthly_inc - monthly_exp
     coverage = monthly_inc / monthly_exp * 100 if monthly_exp else 0

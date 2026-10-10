@@ -9,7 +9,8 @@ import json, sys, datetime
 from pathlib import Path
 import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
 from sot_targets import (sot_monthly_expense, sot_monthly_income,  # INC-270 月支出／月收入單一入口
-                         cash_floor as _cf_fn)  # 2026-10-04 P0延伸：現金底線單一入口
+                         cash_floor as _cf_fn,  # 2026-10-04 P0延伸：現金底線單一入口
+                         gate_thresholds as _gt_fn)  # 2026-10-10：留停 Gate 門檻單一來源（原寫死退路 1,000,000 已移除）
 
 BASE = Path(__file__).resolve().parent
 SNAP = BASE / "snapshot.json"
@@ -80,7 +81,9 @@ def acceptance_level(coverage, stress_cov, runway_days, cash, cash_floor, months
     自由現金 ≥100 萬＋壓力現金流 ≥100%＋跑道 ≥540 天。保守覆蓋與 3 個月趨勢為**參考指標**，
     不參與判定；B 級／A+ 級／健康度分數敘事已取消（原始指標保留供歷史查看）。
     """
-    _min = float(free_cash_min or 1000000)
+    if free_cash_min is None:
+        raise ValueError("留停 Gate 缺『自由現金門檻』真值（原寫死退路 1,000,000 已於 2026-10-10 移除，缺值不得放行）")
+    _min = float(free_cash_min)
     runway_ok = (runway_days is None) or runway_days >= RUNWAY_GATE_DAYS
     gates = [("自由現金 ≥100 萬", cash >= _min),
              ("壓力現金流 ≥100%", stress_cov >= 100),
@@ -261,7 +264,8 @@ def main():
     # 2027/2 財務驗收等級（權重：當月 < 趨勢 < 壓力 < 現金水位）
     lvl = acceptance_level(kpis["生活費覆蓋率"], kpis["壓力情境覆蓋率"], kpis.get("FI 跑道天數"),
                            kpis["現金水位"], kpis.get("現金底線") or _cf_fn(snap),
-                           months, trend)
+                           months, trend,
+                           free_cash_min=float(_gt_fn(snap)["自由現金_twd"]))  # 2026-10-10：門檻單一來源（原 acceptance_level 內寫死退路 1,000,000）
     cl["驗收等級"] = {"月份": month, "等級": lvl,
                       "門檻": "保守≥100% ＋ 壓力≥100% ＋ 跑道≥540天 ＋ 現金≥底線 ＋（3月趨勢）",
                       "加碼級": f"覆蓋≥{ACCEL_GATE_PCT}% 為理想值·非門檻",

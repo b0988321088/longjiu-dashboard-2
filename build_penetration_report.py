@@ -428,7 +428,7 @@ for _pol, _pfunds in [("安聯保單A", _ins_brk.get("policy_a_funds", {})), ("�
             _cls = f"債券 {_br*100:.0f}% / 美股 {(1-_br)*100:.0f}%"
         w(f"<tr style='padding-left:20px;font-size:12px;color:#6e6e73'><td>　{_fn_display}</td><td class='num'>{_fv:,}</td><td>{_cls}</td></tr>")
 _fj_v = (snap.get("firstjin_detail", {}).get("base_value_before_dividend")
-         or snap.get("firstjin_current_value") or 1992265)
+         or snap.get("firstjin_current_value") or 0)   # 2026-10-10：移除寫死退路 1,992,265
 _fj_name = (snap.get("firstjin_detail", {}).get("current_fund", {}).get("name")
             or snap.get("firstjin_fund_name", "FA81 聯博全球多元收益AD月配(美元)"))
 _fj_ratios = (snap.get("firstjin_detail", {}).get("current_fund", {}).get("穿透比率", {})) or {}

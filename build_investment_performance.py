@@ -400,8 +400,8 @@ def main():
 
     # ── 保單真實累計績效（2026-09-05 核准：配息 vs 本金；本金錨 = 原始成本）──
     _pols = [
-        ("安聯 A+B", snap.get("allianz_cost", 8000000), snap.get("allianz_ab_current_value", 0) or 0, snap.get("allianz_cum_dividend", 0) or 0),
-        ("第一金 FJ33", snap.get("firstjin_cost", 2000000), snap.get("firstjin_current_value", 0) or 0, snap.get("firstjin_cum_dividend", 0) or 0),
+        ("安聯 A+B", snap["allianz_cost"], snap.get("allianz_ab_current_value", 0) or 0, snap.get("allianz_cum_dividend", 0) or 0),   # 2026-10-10：移除寫死退路 8,000,000
+        ("第一金 FJXX", snap["firstjin_cost"], snap.get("firstjin_current_value", 0) or 0, snap.get("firstjin_cum_dividend", 0) or 0),   # 2026-10-10：移除寫死退路 2,000,000
     ]
     print("\n📋 保單真實累計績效（真實績效 = 累計配息 + (現值 − 原始成本)）")
     print("-" * 58)

@@ -356,13 +356,13 @@ def _diff_to_buffett_bullets(tv: dict, y: dict) -> list[str]:
 def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | None = None, market_intel_text: str = "", mb_cc_rows: str = "", llm_emergency_analysis: str = "", schedule_rows_html: str = "", p0_tasks_html: str = "", cio_content_html: str = "") -> str:
     _dbs_note_ph = "{_dbs_note}"  # placeholder for dynamic DBS note
     """產出五大章節日報 HTML。"""
-    allianz = tv["allianz_ab"] or 7_634_046
-    firstjin = tv["firstjin"] or 1_952_366
+    allianz = tv["allianz_ab"] or 0   # 2026-10-10：移除寫死退路 7,634,046
+    firstjin = tv["firstjin"] or 0   # 2026-10-10：移除寫死退路 1,952,366
     firstjin_label = tv.get("firstjin_label", "第一金FA81聯博")
     insurance_total = tv["insurance_total"] or allianz + firstjin
-    monthly_dividend = tv.get("monthly_dividend", 107_116)
-    allianz_dividend = tv.get("allianz_dividend", 73_167)
-    firstjin_dividend = tv.get("firstjin_dividend", 22_949)
+    monthly_dividend = tv.get("monthly_dividend", 0)   # 2026-10-10：移除寫死退路 107,116
+    allianz_dividend = tv.get("allianz_dividend", 0)   # 2026-10-10：移除寫死退路 73,167
+    firstjin_dividend = tv.get("firstjin_dividend", 0)   # 2026-10-10：移除寫死退路 22,949
     # 房租覆蓋率（2026-09-23 INC-241b：原用 rent_monthly＝當月已收 → 月中覆蓋率被低估為 33%；
     # 常態口徑應為 80,100/162,781 = 49%）
     # 2026-10-04 P0（PEND-20261004-02）：常態房租／保守配息改 fail-closed。
@@ -1964,7 +1964,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                           f"壓力情境覆蓋 {_cov_stress:.1f}%"
                           f"（判準仍為保守底線 {_div_con:,.0f}）</div>")
             # 動態失敗訊號（2026-09-24：從 snapshot 每月數據即時計算，不再用靜態欄位）
-            _base_div = _b.get('月配息常態估算', 138627)
+            _base_div = _b.get('月配息常態估算', 0)   # 2026-10-10：移除寫死退路 138,627
             _dr = _snap_p.get('dividend_records', {})
             _monthly_divs = []
             for _m in sorted([k for k in _dr if k.startswith('20') and len(k) == 7]):

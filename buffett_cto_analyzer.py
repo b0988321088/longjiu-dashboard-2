@@ -51,7 +51,7 @@ def _cat_value(db, category: str) -> float:
              "bond": "bonds_penetration"}
         k = m.get(src)
         if k == "bonds_cash":
-            old_cash = float(snap.get("bonds_cash", 9_697_196) or 0)
+            old_cash = float(snap.get("bonds_cash") or 0)   # 2026-10-10：移除寫死退路 9,697,196
             return max(old_cash - 5_812_576, 0) + 33_000
         if k == "bonds_penetration":
             return 2_097_467

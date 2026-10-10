@@ -127,7 +127,7 @@ def main():
     ins = snap.get("insurance_total", 0) or 0
     allianz = snap.get("allianz_combined", 0) or 0
     firstjin = snap.get("firstjin_fl65_current_value", snap.get("firstjin_current_value", 0)) or 0
-    cum_div = snap.get("firstjin_cum_dividend", 111513) or 0
+    cum_div = snap.get("firstjin_cum_dividend", 0) or 0   # 2026-10-10：移除寫死退路 111,513
     mdb = snap.get("monthly_dividend_breakdown", {}) or {}
     # 2026-08-29 修正：配息一律用 dividend_records 當月實收（mdb 是常態預估口徑，
     # 之前用 mdb 覆蓋模板實收值 → 第一金顯示 35,583 常態被標「已入帳」，實收應為 25,538）
@@ -542,7 +542,7 @@ def main():
         if _n2 != 1:
             print(f"  ⚠️ 銀行卡狀態對齊異常：{_bk} 命中 {_n2} 次（預期 1）")
     # ── 2026-09-04：純文字/手動行事曆殘留值正規化（data-k 注入只涵蓋 span；公式行與事件列金額需隨 monthly_salary 自動更新）──
-    _ms = int(snap.get("monthly_salary", 42560) or 42560)
+    _ms = int(snap["monthly_salary"])   # 2026-10-10：移除舊薪資退路 42,560（現行 39,777）；缺值 raise
     tpl = tpl.replace("39,727", f"{_ms:,}")
     _pi = snap.get("passive_income") or {}
     tpl = tpl.replace("219,827",

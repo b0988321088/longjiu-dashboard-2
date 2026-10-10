@@ -1,0 +1,32 @@
+{
+  "verdict": "APPROVE",
+  "blocking": [],
+  "scope_creep": false,
+  "acceptance_matrix": [
+    {
+      "case": "1",
+      "verified": true
+    },
+    {
+      "case": "2",
+      "verified": true
+    },
+    {
+      "case": "3",
+      "verified": true
+    },
+    {
+      "case": "4",
+      "verified": true
+    },
+    {
+      "case": "5",
+      "verified": true
+    },
+    {
+      "case": "6",
+      "verified": true
+    }
+  ],
+  "summary": "22 處寫死退路已全數移除且掃描歸零，留停 Gate 改接 gate_thresholds 且缺值 raise（fail-closed），AST 與實跑 rc=0，無 scope creep，首輪誤註解已修復。"
+}

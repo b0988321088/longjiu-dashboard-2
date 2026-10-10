@@ -244,7 +244,8 @@ def extract_snapshot(snap: dict) -> dict:
                 _ar = dict(_ar)
                 _ir = dict(_ir) if _ir else {}
                 _total_assets = sum(_ar[k] for k in ["securities","insurance","funds","bonds","cash_total"] if k in _ar)  # 不含 real_estate（2026-08-10 修正：與日報/穿透一致）
-                _total_liab = float(snap.get("total_liabilities") or 0) or 18_197_422
+                # 2026-10-10：移除寫死退路 18,197,422（缺值時會替資料背書）；缺值留 0，由下方 DB 覆蓋或下游告警
+                _total_liab = float(snap.get("total_liabilities") or 0)
                 # 從 db 拿負債（liabilities 表有當日資料才覆蓋）
                 if _lr:
                     _lr = dict(_lr)
@@ -278,10 +279,10 @@ def extract_snapshot(snap: dict) -> dict:
                     "fund_dividend_monthly": float(_div_sum_current_month),
                     "fund_dividend_conservative": _div_conservative,
                     "monthly_income": float(
-                        snap.get("monthly_income", 228_751)
+                        snap.get("monthly_income") or 0   # 2026-10-10：移除寫死退路 228,751
                     ),
                     "monthly_expense": float(sot_monthly_expense(snap)),
-                    "rent_monthly": float(snap.get("rent_monthly_actual", 80_100)),
+                    "rent_monthly": float(snap.get("rent_monthly_actual") or 0),   # 2026-10-10：移除寫死退路 80,100
                     # 2026-09-23 INC-241：常態應收／當月待收／當月應收明細（單一真值）
                     # 2026-10-04 P0（CIO 六審）：原 `or 80_100` 是硬編碼舊真值，使 :661 的
                     # 「rent_monthly_total 缺值 → WARN + 以 0 計」永不可達（永遠 truthy）。缺鍵回 None。
