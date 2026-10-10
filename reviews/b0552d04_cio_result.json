@@ -1,0 +1,29 @@
+{
+  "verdict": "APPROVE",
+  "confidence": "high",
+  "reviewed_tree": "b0552d04becdcf721484be4bb3063dee6587c36e",
+  "review_round": 3,
+  "reviewer": "CIO-DeepSeek-Flash（獨立子代理、唯讀、非產出者 context）",
+  "scope": "本批＝e1645bb6 ＋ 0c2b6c67（中間 b70769b0 為 cron 產物，非本批）",
+  "blocking": [],
+  "minor": [
+    "perf_gate_contract.py:373-376 對 repo 內判定採 except→_inside=False（fail-open），建議改 True；僅 Python 直呼接縫可及，生產不可達。",
+    "verify_performance_monthly.py 仍暴露 --snapshot／--baseline-sha 兩個 caller-supplied 路徑接縫，與已移除的 --approval-file 同類；生產路徑不傳、預設為常數，非生產可觸發。",
+    "0c2b6c67 實際為 6 檔（非 brief 所述 7 檔），敘述差異。",
+    "同意「不把代理列入 SNAPSHOT_FORBIDDEN_UPDATERS」之判斷：R-c 禁者為產生該次 FAIL 的同一流程，代理非該流程；未發現可觸發繞過。"
+  ],
+  "verified_highlights": [
+    "實跑 verify_perf_gate_tests.py → rc=0、28/28 PASS（含 T8e repo 內核准來源 FAIL-CLOSED、T8f CLI 無 --approval-file）",
+    "實跑 verify_cash_need_90d_guard.py → rc=0、5/5 PASS",
+    "生產 CLI 加 --approval-file 之輸出與不加逐字相同 → 旗標完全不生效",
+    "f4 approval_file 指向 repo 內 → ok=False FAIL-CLOSED",
+    "生產路徑 regenerate_report.py 僅傳 --allowed-files／--deliverables／--approval-ref → 呼叫端無從取代核准來源",
+    "F2 rename 洗入（未宣告 evil.py git mv 成已宣告 allowed.py）→ ok=False、out_of_scope=['evil.py']",
+    "職責分離：updated_by 或 executed_by 任一含閘門名皆被攔；本批快照 PASS",
+    "e1645bb6（16 檔）與 0c2b6c67（6 檔）皆不含 apply_truth_20261008.py 等他人檔案",
+    "無任何把 FAIL 吞成 PASS 的 except"
+  ],
+  "unverified": [
+    "未端到端實跑 regenerate_report.py 9c4 全流程（artifact_hashes 目前為空，F4 於生產恆 BLOCKED）"
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "batch": "batch-20261009-65plusgatescope",
+  "review_type": "獨立・對抗性・唯讀合一審查（項目 A：#65 F4 fail-open；項目 B：閘門作用域方案 1）",
+  "reviewed_at": "2026-10-09T15:40:00Z",
+  "reviewer": "CIO-獨立審查（唯讀、對抗性；模型 deepseek-v4-flash；本回合 inline 非 deleg）",
+  "verdict": "APPROVE",
+  "blocking": [],
+  "required_fixes": [],
+  "reviewed_commits": [
+    {
+      "commit": "8866409139642d7650f39dac4e3db213f20272cc",
+      "tree": "c933b6b0491e6d85c42bd311d54eaac2de4fc1e0"
+    }
+  ],
+  "anchor": {
+    "baseline_ref": "58f207e9",
+    "baseline_commit": "58f207e9e219dad15460be082fd5982b8819bf58",
+    "baseline_tree": "c3f55d8967cc6a9bb066d9b5c0888ec10020c1b7",
+    "anchor_ok": true
+  },
+  "candidate_files_sha256_verified": true,
+  "candidate_snapshot": "C:/Users/bot/_ab_20261009/phase03/audit_snapshots/snapshots/batch-20261009-65plusgatescope",
+  "file_sha256": {
+    "tools/perf_gate_contract.py": "6b2c9abee5e9d6fdb679fa988dce2001d82888880180c3577adc2d7d67f654e5",
+    "tools/verify_perf_gate_tests.py": "c2c08d88791ea886e6afe60eea7cfc0bc5423976959294df04a77f7d9a097315",
+    "tools/verify_performance_monthly.py": "f17b528828495a92fbeb35406ae64b5295a65d1a2f5b1a91c38570cb2170b416",
+    "regenerate_report.py": "0021be9af610a4a66c9fc195fc0f912a5ebf5fb260ea28c5f97e94584990cfe9"
+  },
+  "item_A_inc65": {
+    "verdict": "APPROVE",
+    "blocking": [],
+    "minor": ["A-M1 (T8e 暫寫 repo/governance 後 finally 清除，base 既有)", "A-M2 (load_publish_scope except→{} 靜默降級，下游 F4 仍 FAIL-CLOSED)"],
+    "reproduced_nonvacuous": true,
+    "evidence": "以 baseline blob 與現地檔載為兩個獨立 module（REPO 均指向真 repo），注入 Path.resolve→OSError：未修版 f4.ok=True（採信 repo 外可讀偽造核准檔）、候選 f4.ok=False（FAIL-CLOSED）；對照組不注入例外時兩版皆 True；repo 內既有檔（.git/CIO_APPROVED）兩版皆拒。其餘 except 逐條實測：L86→None→F3 FAIL-CLOSED；L215→(None,err)→F3 FAIL-CLOSED；L343→{}→F4『核准產物清單已提供』FAIL-CLOSED。生產 CLI 無 --approval-file（grep 0 命中）。",
+    "b1_files_changed_during_review": false,
+    "b2_unlisted_third_change": false
+  },
+  "item_B_gatescope": {
+    "verdict": "APPROVE",
+    "blocking": [],
+    "minor": ["B-M1 (T21 僅原始碼文字掃描，非安全邊界)", "B-M2 (測試檔摻雜他項變更，已隨合批消解)", "B-M3 (查無自動化以 publish 模式呼叫本閘門 — 措辭宜限定為『排程自動化』)"],
+    "bypass_possible": false,
+    "publish_mode": "rc=1 fails=['F2','F4']",
+    "daily_mode": "rc=0 F2/F4=N/A",
+    "daily_injection": "rc=1（篡改快照→F3 紅；不存在基準→F1+F3 紅；repo 複本植入 9,999,999→A–E 1 條紅）",
+    "release_layer_diff_empty": true,
+    "test_result": "34/34 PASS",
+    "evidence": "發布授權鏈（.githooks/pre-push v5 逐 commit tree RECORD＋程式檔禁 TAG 通道；auto_push.py refspec 治理）相對 baseline 零改動；daily 僅影響 F2/F4 的計分，A–E 的 chk() 呼叫無條件執行（_MODE 僅出現於 L189/190/196/202）；模式只來自 argv（無 env／config／產物驅動路徑）。"
+  },
+  "minor_consistency": {
+    "expected": 5,
+    "found": 5,
+    "notes": "五條如列、不多不少；僅 B-M3 措辭需限定（tools/verify_perf_monthly_gate_wiring.py 以無旗標＝publish 呼叫本閘門，但其為非排程人工驗證器，且該檢查自 baseline 起恆紅＝本批之外的既有問題）。"
+  },
+  "changed_during_review": [],
+  "out_of_scope_found": [
+    "tools/verify_perf_monthly_gate_wiring.py（非本批）第 4 步以不帶旗標呼叫本閘門並期望 rc=0；F1–F4 解耦（本批之前）後即恆 FAIL。非本批引入，未執行（會寫 repo 的 performance_monthly.html）。",
+    "未追蹤 apply_truth_20261008.py、reviews/*（manifest 已列 excluded_post_freeze，非本批交付）"
+  ],
+  "cannot_verify": [
+    "wiring verifier 之行為層判定（唯讀禁制下不得執行）",
+    "A–E 數字注入於 %TEMP% repo 複本執行（未動 repo 產物）"
+  ],
+  "commit_scope_check": {
+    "commit": "8866409139642d7650f39dac4e3db213f20272cc",
+    "tree": "c933b6b0491e6d85c42bd311d54eaac2de4fc1e0",
+    "files_in_commit": ["regenerate_report.py", "tools/perf_gate_contract.py", "tools/verify_perf_gate_tests.py", "tools/verify_performance_monthly.py"],
+    "files_in_commit_count": 4,
+    "numstat": "7/1 regenerate_report.py; 9/2 tools/perf_gate_contract.py; 87/0 tools/verify_perf_gate_tests.py; 22/2 tools/verify_performance_monthly.py",
+    "diff_tree_vs_baseline": "僅 4 個 M 路徑",
+    "git_add_A_used": false,
+    "eol_note": "tools/* 三檔 LF；regenerate_report.py 工作區為 CRLF，經 core.autocrlf=true 正規化為 LF 入 blob（blob 79093a0c）＝與 baseline 入庫口徑一致，內容未變（LF 正規化後與 blob 逐位元相同）。",
+    "staging_empty_before": true
+  },
+  "note": "CIO 合一審查 APPROVE、blocking=[]。技術驗收（34/34）與獨立對抗性復現均通過；發布授權仍走既有閘門（RECORD 綁 tree c933b6b0）。required_fixes=[] 為後續 hardening 建議（B-M1／B-M3 措辭、wiring verifier 另案），不改變 verdict。"
+}

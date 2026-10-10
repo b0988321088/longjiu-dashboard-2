@@ -1,0 +1,24 @@
+{
+  "review_type": "獨立・對抗性・唯讀審查",
+  "reviewer": "CIO-獨立審查（唯讀、對抗性）",
+  "verdict": "APPROVE",
+  "blocking": [],
+  "required_fixes": [],
+  "reviewed_commits": [
+    {"commit": "875c288782c90e3064f2e8966a2f34e4f174ed2e", "tree": "3e6728615c770d32ea597f217f209b40ecfaea6b"}
+  ],
+  "findings": [
+    {"level": "note", "item": "commit 檔數與 tree 皆逐字相符", "evidence": "git show --name-only -s 875c2887 = 12 檔（asset_diff_2026-10-10.html, buffett_cto_report_2026-10-10.md, build_dashboard.py, daily_report_v2_2026-10-10.html, dragon_assets.db, index.html, index_template.html, macro_regime_2026-10-10.json, penetration_report_2026-10-10.html, risk_factor_penetration_2026-10-10.png, run_daily.py, snapshot.json）；git show -s --format=%T = 3e6728615c770d32ea597f217f209b40ecfaea6b 與預期逐字相等。"},
+    {"level": "note", "item": "① snapshot.relay_stations 三站配息時間/T+4 已更新為 10 月", "evidence": "第一站『月初（10/7、11/9、12/7、1/7）』T+4『10/1（10月）』；第二站『月中（安聯 10/14、M&G 10/16）』T+4『10/8、10/12』；第三站『月底（AI 10/28、PIMCO 10/28、A10/聯博 10/29）』T+4『10/22、10/22、10/23』。"},
+    {"level": "note", "item": "② index_template.html 三站卡片已換為 __RELAY_SCHEDULE__ 佔位符；index.html 無殘留且三站卡片顯示 10 月日期", "evidence": "index_template.html 出現 __RELAY_SCHEDULE__ 1 次（原先 3 張手寫 9 月卡片已刪）；index.html grep -c __RELAY_SCHEDULE__ = 0；三卡片標題【第一站 10/7】【第二站 10/14】【第三站 10/28】，badge『基準 10/7｜T+4截止 10/1』『基準 10/14｜T+4截止 10/8』『基準 10/28｜T+4截止 10/22』。"},
+    {"level": "note", "item": "③ build_dashboard.py relay_schedule_html() 正確生成並注入；re 已 import；失敗有 fallback", "evidence": "line 8 import json, re；line 58 定義，line 1166 tpl.replace('__RELAY_SCHEDULE__', relay_schedule_html(...))，except 時替換為『接力資料待更新』。relay_calendar.md 為配息基準日唯一來源的註解保留。"},
+    {"level": "note", "item": "④ run_daily.py 行事曆表月份動態化生效，9 月欄消失", "evidence": "date.today()=2026-10-10 → _cur_m=10；relay_calendar.md 月份鍵 {9,10,11,12} → _rc_months=['10','11','12']；daily_report_v2_2026-10-10.html 表頭 <th>基金</th><th>10月</th><th>11月</th><th>12月</th>，無 9 月欄。"},
+    {"level": "note", "item": "⑤ 日報三站表與表下註腳皆為 10 月", "evidence": "三站表配息時間欄：第一站『月初（10/7、11/9、12/7、1/7）』、第二站『月中（安聯 10/14、M&G 10/16）』、第三站『月底（AI 10/28、PIMCO 10/28、A10/聯博 10/29）』；註腳『三站依配息時間循環領息：第一站（10/7） → 第二站（10/14） → 第三站（10/28）。』"},
+    {"level": "note", "item": "⑥ 作用域正確、無污染其他鏈", "evidence": "render_daily_report 函式範圍 line 356–1516；_stations 定義於 644、_relay_flow 定義於 671、使用於 1366，皆同函式內。_rc_months/_rc_thead 僅被行事曆表（line 620/635）使用，全檔無其他呼叫端依賴固定 4 個月。AST parse 兩檔通過（AST OK）。"},
+    {"level": "note", "item": "⑦ 第三站基金列名依使用者裁示維持原樣，不判缺陷", "evidence": "snapshot.relay_stations『第三站（月底）』.基金 =『安聯AI收益 + 貝萊德世界科技A10 + PIMCO收益增長』未變動，符合 10/10 使用者明確指示。"},
+    {"level": "note", "item": "⑧ index_template.html line 408/438 之 9/18 敘述屬歷史事件紀錄，保留正確", "evidence": "該二處為『第一金 FJXX → M&G入息A … 9/10 申請、9/16 生效、9/18 App 確認』之已完成轉換事實紀錄，非排程表；使用者回報的缺陷是『三站配息接力時間停在 9 月』，已由 ①②③④修正。此歷史紀錄應保留、不構成過期排程。"},
+    {"level": "note", "item": "其他鏈未見寫死 9 月三站排程殘留", "evidence": "grep build_policy_transfer_card.py / autopilot_presentation.html 無『基準 9/』『9/24-29』等硬編碼排程；index.html 亦無。line 117 提及 9/14 屬無關的殭屍按鈕既有註釋。"},
+    {"level": "note", "item": "殘餘輕微邊界（非缺陷、不阻擋）", "evidence": "_rc_months 後援 [m for m>=當月][:3] or _rc_all_m[-3:] or ['10','11','12']：若未來『當月大於行事曆所有月份』（如 1 月而 relay_calendar.md 僅有 9–12）會回退顯示行事曆末 3 月、罕見情境下可能顯示舊月。當前月份 10、行事曆含 10–12，行為正確，非本次缺陷。另 _relay_flow 僅取各站配息時間首個日期（10/7、10/14、10/28），較原文字精簡但語意正確。"}
+  ],
+  "commands_output": "1) git show --name-only --format= 875c2887 → 12 檔（與清單逐字相符）；grep -c . = 12。 2) git show -s --format=%T 875c2887 → 3e6728615c770d32ea597f217f209b40ecfaea6b（與預期逐字相等）。 3) grep -c __RELAY_SCHEDULE__ index.html → 0；index_template.html → 1；grep 三站卡片 index.html → 【第一站 10/7】…基準 10/7｜T+4截止 10/1、【第二站 10/14】、【第三站 10/28】。 4) daily_report_v2_2026-10-10.html：表頭 <th>基金</th><th>10月</th><th>11月</th><th>12月</th>（無 9月欄）；三站表配息時間 10 月；註腳『第一站（10/7） → 第二站（10/14） → 第三站（10/28）』。 5) grep -n _rc_months/_rc_thead/_relay_flow/_stations/relay_stations run_daily.py：_rc_months 僅 613/620；_rc_thead 614/635；_stations 644；_relay_flow 671→1366；render_daily_report 範圍 356–1516 → 作用域正確、無外部依賴固定 4 個月。 6) python -c ast.parse(run_daily.py, build_dashboard.py) → AST OK；date.today()=2026-10-10；模擬 _rc_data={9,10,11,12}, cur_m=10 → months=['10','11','12']。 7) python -c print(json relay_stations) → 三站皆 10 月、第三站基金列名未動。 8) grep 全 repo 硬編碼 9 月三站排程 → 僅 index_template.html:408/438 歷史 9/18 結案敘述（應保留）。"
+}

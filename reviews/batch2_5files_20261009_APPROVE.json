@@ -1,0 +1,76 @@
+{
+  "batch": "第二批（修正後完整 5 檔候選）",
+  "reviewed_at": "2026-10-09T22:43:35+08:00",
+  "reviewer": "CIO-獨立子代理（唯讀、對抗性；模型 deepseek-v4-flash；deleg_931f4826）",
+  "verdict": "APPROVE",
+  "blocking": [],
+  "minor": [
+    "PEND-20261009-20 的鍵順序與同批其他卡不同：純外觀排序，標準 JSON 解析器不受影響，不阻擋。"
+  ],
+  "batch1_minor_resolved": true,
+  "minor_fix_note": ".gitignore 註解已改為精確敘述（明言 gitignore 對已追蹤檔無效、本規則只阻止未來新增、既有 6 檔不受影響、以 PEND-20261009-20 追蹤）；規則行 `*.backup_*.json` 文字與匹配範圍（恰 6 檔；非備份正式檔命中 0）皆未變動——修正僅止於註解。minor 已妥善處理且未擴大匹配範圍。",
+  "per_file": {
+    ".gitignore": {
+      "diff_matches_claim": true,
+      "sha256_prefix_ok": true,
+      "notes": "numstat +6/-0。唯一語意變更為註解；規則行第 93 行為相對 HEAD 的全新新增，無任何刪除行涉及規則。匹配集合三重獨立驗證恰為 6 檔 .backup_*.json；27 個本輪改動已追蹤檔命中=0。"
+    },
+    "pending_decisions.json": {
+      "diff_matches_claim": true,
+      "sha256_prefix_ok": true,
+      "notes": "+80/-0（無刪除行）。行數增量 64→80 的 +16 行恰為新卡 PEND-20261009-20 所解釋；-19 追加文字以内嵌 \\n 存於 detail 單一字串故不增行 → 佐證 -16~-19 無列級增刪。-16/-17/-18/-19 status 皆仍為「待處理」；-19 含【證據缺口】段。新卡 -20 含清單/用途/保留需求/移除風險/驗收條件，明文『本卡僅記錄，不移除版控；git rm --cached 另行裁決』。全卡 status 落既有枚舉，id 無重複，JSON 可 parse。限制：-16~-18 字元級不變無法獨立 diff（無第一批快照），僅能以行數守恆佐證。"
+    },
+    "daily_report_assembly.py": {
+      "diff_matches_claim": true,
+      "sha256_prefix_ok": true,
+      "ast_identical": true,
+      "notes": "+2/-1；sha256 前綴 81f494d9＝主張值；去 docstring 後 ast.dump 與 HEAD 相同=True。"
+    },
+    "tools/verify_daily_report_single_producer.py": {
+      "diff_matches_claim": true,
+      "sha256_prefix_ok": true,
+      "ast_identical": true,
+      "notes": "+2/-0；sha256 前綴 a4b1ec2e＝主張值；去 docstring 後相同=True → 驗證器邏輯未放寬。"
+    },
+    "error_register.md": {
+      "diff_matches_claim": true,
+      "sha256_prefix_ok": true,
+      "notes": "+2/-2；sha256 前綴 a8006bd9＝主張值。事實核對：b68417b4 為 origin/clean-main 祖先＝真確；auto_record.py:72 確無 -z＝真確。"
+    }
+  },
+  "out_of_scope_found": [],
+  "trust_gap_found": [],
+  "staging_empty": true,
+  "untracked_only_excluded": true,
+  "anchor_ok": true,
+  "anchor": {
+    "head": "bfa060962fcbe728519972b1db1fac53b0f2873b",
+    "origin_clean_main": "bfa060962fcbe728519972b1db1fac53b0f2873b",
+    "ahead": 0,
+    "behind": 0,
+    "dirty_count": 32,
+    "staged_empty": true,
+    "candidate_numstat": {
+      ".gitignore": "6/0",
+      "pending_decisions.json": "80/0",
+      "daily_report_assembly.py": "2/1",
+      "tools/verify_daily_report_single_producer.py": "2/0",
+      "error_register.md": "2/2"
+    },
+    "candidate_sha256_prefix": {
+      "pending_decisions.json": "db178b18",
+      ".gitignore": "6e2fc7b1",
+      "daily_report_assembly.py": "81f494d9",
+      "tools/verify_daily_report_single_producer.py": "a4b1ec2e",
+      "error_register.md": "a8006bd9"
+    }
+  },
+  "known_limitation": "PEND-20261009-16~18 三張卡因第一批未留存快照，無法做字元級獨立 diff，僅能以行數守恆（+16 行完全由新卡 -20 解釋）佐證未被改動。",
+  "note": "APPROVE 不等於提交或推送授權。本檔不納版控（reviews/ 依裁決留本機）。",
+  "minor_resolution": {
+    "decision": "接受、不修",
+    "decided_at": "2026-10-09",
+    "detail": "使用者裁決：接受 CIO 判定（純外觀差異、不影響標準 JSON 解析）。不為此單獨修改 pending_decisions.json，避免引入不必要變更及第三輪複審。日後若同檔有其他經核准的修改，可一併整理鍵順序，但不得順帶擴大變更範圍。",
+    "status_marker": "ACCEPTED_NOT_FIXED"
+  }
+}

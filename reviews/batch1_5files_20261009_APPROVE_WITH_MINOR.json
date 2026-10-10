@@ -1,0 +1,35 @@
+{
+  "batch": "第一批（5 檔未提交候選）",
+  "reviewed_at": "2026-10-09T22:39:30+08:00",
+  "reviewer": "CIO-獨立子代理（唯讀、對抗性；模型 deepseek-v4-flash；deleg_28384051）",
+  "verdict": "APPROVE",
+  "marker": "APPROVE_WITH_MINOR",
+  "blocking": [],
+  "minor": [
+    "檔名：.gitignore — 新增規則 `*.backup_*.json` 與註解稱『使用者裁決：本機保留、不入版控』，但該規則實際匹配到 6 個『已在 HEAD 中追蹤』的備份檔（pending_decisions.backup_20260927_2207.json、snapshot.backup_20260927_2207.json、snapshot.backup_20261008.json、snapshot.backup_20261009.json、snapshot.backup_pre_dividend_20261009.json、snapshot.backup_pre_元大fix.json）。gitignore 對已追蹤檔無效，故這 6 檔仍留在版控，規則只能阻止『未來新增』的備份。註解『不入版控』的敘述對既有檔不成立，若要真正達成需另用 `git rm --cached`（本次未做）；建議修正註解或另開卡。"
+  ],
+  "per_file": {
+    "pending_decisions.json": {"diff_matches_claim": true, "ast_identical": null, "notes": "numstat +64/-0；無任何刪除行；新增恰為 PEND-20261009-16/17/18/19。全 69 張卡 status 值域為既有枚舉，新卡 status=待處理；新卡 due_date=null／needs_due_date=true／due_date_source=null，與既有同型卡一致。id 無重複，JSON 可 parse。"},
+    "daily_report_assembly.py": {"diff_matches_claim": true, "ast_identical": true, "notes": "numstat +2/-1，僅 build_emergency_block docstring 文字。去 docstring 後 ast.dump 與 HEAD 相同=True。"},
+    "tools/verify_daily_report_single_producer.py": {"diff_matches_claim": true, "ast_identical": true, "notes": "numstat +2/-0，僅模組 docstring 追加說明。去 docstring 後 ast.dump 與 HEAD 相同=True → 驗證器未放寬。"},
+    "error_register.md": {"diff_matches_claim": true, "ast_identical": null, "notes": "numstat +2/-2，僅 @@ -19,2 +19,2 @@ 兩列：INC-186『待推送』→『已修・已上線（複核 2026-10-09）』；INC-190『已解』→『🔵 HOLD（複核 2026-10-09）』。事實核對：b68417b4 經 merge-base --is-ancestor origin/clean-main = YES；auto_record.py:72 實查仍缺 -z。"},
+    ".gitignore": {"diff_matches_claim": true, "ast_identical": null, "notes": "numstat +4/-0，hunk @@ -88,0 +89,4 @@。新規則僅匹配 6 個 .backup_*.json；27 個本輪改動之已追蹤檔命中=0；非備份已追蹤檔命中=0。問題見 minor。"}
+  },
+  "out_of_scope_found": [],
+  "trust_gap_found": ["本次 5 檔範圍內無發布防線被弱化。唯一信任來源缺口：.gitignore 註解宣稱『備份不入版控』與實際（6 個備份已在 HEAD 追蹤）不符，可能使後續審查者誤信備份已排除於版控而忽略淨化。"],
+  "anchor_ok": true,
+  "anchor": {
+    "head": "bfa060962fcbe728519972b1db1fac53b0f2873b",
+    "origin_clean_main": "bfa060962fcbe728519972b1db1fac53b0f2873b",
+    "ahead": 0,
+    "dirty_count": 31,
+    "worktree_sha256_prefix": {
+      "pending_decisions.json": "ab635ea4",
+      "daily_report_assembly.py": "81f494d9",
+      "tools/verify_daily_report_single_producer.py": "a4b1ec2e",
+      "error_register.md": "a8006bd9",
+      ".gitignore": "5b312607"
+    }
+  },
+  "note": "APPROVE 不等於提交或推送授權。本批因 .gitignore 註解需修正，最終提交候選尚未重新審查，故不提交、不推送。"
+}

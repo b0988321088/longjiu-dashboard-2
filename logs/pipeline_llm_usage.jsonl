@@ -941,3 +941,15 @@
 {"ts": "2026-10-09T09:40:38", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1056, "cached": 0, "out": 137, "ok": true}
 {"ts": "2026-10-09T09:40:41", "model": "deepseek-chat", "caller": "run_daily.py", "in": 643, "cached": 509, "out": 178, "ok": true}
 {"ts": "2026-10-09T09:41:25", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 516, "cached": 0, "out": 573, "ok": true}
+{"ts": "2026-10-09T20:30:11", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1033, "cached": 256, "out": 194, "ok": true}
+{"ts": "2026-10-09T20:30:13", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1058, "cached": 256, "out": 138, "ok": true}
+{"ts": "2026-10-09T20:30:16", "model": "deepseek-chat", "caller": "run_daily.py", "in": 651, "cached": 0, "out": 145, "ok": true}
+{"ts": "2026-10-09T21:33:44", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 516, "cached": 382, "out": 596, "ok": true}
+{"ts": "2026-10-09T21:37:53", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 651, "cached": 512, "out": 158, "ok": true}
+{"ts": "2026-10-09T21:38:06", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 516, "cached": 382, "out": 673, "ok": true}
+{"ts": "2026-10-10T01:01:28", "model": "deepseek-chat", "caller": "verify", "in": 651, "cached": 512, "out": 131, "ok": true}
+{"ts": "2026-10-10T01:01:57", "model": "deepseek-chat", "caller": "buffett_cto_analyzer.py", "in": 986, "cached": 512, "out": 137, "ok": true}
+{"ts": "2026-10-10T01:01:58", "model": "deepseek-chat", "caller": "buffett_cto_analyzer.py", "in": 1011, "cached": 512, "out": 178, "ok": true}
+{"ts": "2026-10-10T01:02:02", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 651, "cached": 512, "out": 179, "ok": true}
+{"ts": "2026-10-10T07:00:30", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 651, "cached": 512, "out": 147, "ok": true}
+{"ts": "2026-10-10T07:00:47", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 516, "cached": 382, "out": 581, "ok": true}

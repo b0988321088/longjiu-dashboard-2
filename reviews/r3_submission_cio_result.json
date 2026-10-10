@@ -1,0 +1,24 @@
+{
+  "verdict": "APPROVE",
+  "confidence": "high",
+  "reviewed_tree": "c3f55d8967cc6a9bb066d9b5c0888ec10020c1b7",
+  "review_round": 3,
+  "reviewer": "CIO-獨立子代理（唯讀對抗性）：批一 APPROVE_WITH_MINOR／批二 APPROVE／批三增量 APPROVE，blocking=0",
+  "scope": "5 檔治理批次",
+  "candidate_snapshot": "batch-20261009-5files-r3",
+  "file_sha256": {
+    "pending_decisions.json": "c75f7dc4a59222abc04afd4c892d8726b9f52971e8d675e5cb4c23e2107bd83d",
+    "daily_report_assembly.py": "81f494d99dfd704d8ab76d3acae75c3848fc897fd9610fd7f6531b8ff0a3c2fb",
+    "tools/verify_daily_report_single_producer.py": "a4b1ec2efd0c41194c0a4d52fe355ac015cef7f24db16565b1be6bd4588cb623",
+    "error_register.md": "a8006bd9c2a1e05ff16f9383523b45d6b85fbeeb02f724e2c65d66a7d0cb56e2",
+    ".gitignore": "6e2fc7b119e47c67e649e61bd60f5f6a8274861242841c9ac32d38b5c3cded9d"
+  },
+  "verification": "提交 blob 與送審快照以正規化換行後比對，逐檔完全相同；raw bytes 差異僅為 CRLF↔LF（core.autocrlf=true）",
+  "excluded": [
+    "inc_events.jsonl",
+    "reviews/*",
+    "21 檔 cron／管線產物",
+    "apply_truth_20261008.py"
+  ],
+  "note": "APPROVE 及提交／推送授權由使用者 2026-10-09 明確給予。"
+}

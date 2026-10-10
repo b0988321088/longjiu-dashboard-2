@@ -1,0 +1,62 @@
+{
+  "batch": "第三批（r3 增量審查：PEND-20261009-21 導致之 pending_decisions.json 差異）",
+  "review_type": "incremental",
+  "reviewed_at": "2026-10-09T22:54:38+08:00",
+  "reviewer": "CIO-獨立子代理（唯讀、對抗性；模型 deepseek-v4-flash；deleg_74c854f7）",
+  "verdict": "APPROVE",
+  "blocking": [],
+  "minor": [
+    "PEND-20261009-21 的 due_date_source 文字內含全形括號與冒號，與既有卡片風格一致，無問題；僅記錄不作為阻擋。",
+    "既有 34 張舊式卡無 id（頂層為 list，非卡物件誤列），非本輪變動；僅記錄。"
+  ],
+  "delta_only_adds_expected_card": true,
+  "existing_cards_unchanged": true,
+  "delta_evidence": {
+    "cards_r2": 70,
+    "cards_r3": 71,
+    "added": ["PEND-20261009-21"],
+    "removed": [],
+    "changed_existing_cards": [],
+    "order_preserved": true,
+    "git_diff_u0_added_lines": 96,
+    "git_diff_u0_deleted_lines": 0,
+    "numstat": "96/0"
+  },
+  "card_21_checks": {
+    "priority": "P1",
+    "due_date": "2026-10-23",
+    "due_date_source_prefix_ok": true,
+    "needs_due_date": false,
+    "status": "待處理",
+    "status_in_enum": true,
+    "enum_observed": ["已確認", "待處理", "關案"],
+    "has_acceptance_criteria": true
+  },
+  "json_valid": true,
+  "ids_unique": true,
+  "card_count": 71,
+  "hash_5files": {
+    "pending_decisions.json": "c75f7dc4a59222abc04afd4c892d8726b9f52971e8d675e5cb4c23e2107bd83d",
+    "daily_report_assembly.py": "81f494d99dfd704d8ab76d3acae75c3848fc897fd9610fd7f6531b8ff0a3c2fb",
+    "tools/verify_daily_report_single_producer.py": "a4b1ec2efd0c41194c0a4d52fe355ac015cef7f24db16565b1be6bd4588cb623",
+    "error_register.md": "a8006bd9c2a1e05ff16f9383523b45d6b85fbeeb02f724e2c65d66a7d0cb56e2",
+    ".gitignore": "6e2fc7b119e47c67e649e61bd60f5f6a8274861242841c9ac32d38b5c3cded9d"
+  },
+  "r3_snapshot_match": true,
+  "restore_probe_ok": true,
+  "other4_still_match": true,
+  "staging_empty": true,
+  "untracked_only_excluded": true,
+  "minor_marker": "ACCEPTED_NOT_FIXED",
+  "scope_expansion_found": [],
+  "anchor_ok": true,
+  "anchor": {
+    "baseline_commit": "bfa060962fcbe728519972b1db1fac53b0f2873b",
+    "head": "bfa060962fcbe728519972b1db1fac53b0f2873b",
+    "origin_clean_main": "bfa060962fcbe728519972b1db1fac53b0f2873b",
+    "ahead": 0, "dirty_count": 33, "staged_empty": true,
+    "snapshot": "batch-20261009-5files-r3"
+  },
+  "disposition": "APPROVE／blocking=[]／五檔雜湊與 r3 一致 → 只解除本次候選之審查一致性阻擋；提交與推送仍須另行取得授權。",
+  "note": "本檔不納版控（reviews/ 依裁決留本機）。"
+}
