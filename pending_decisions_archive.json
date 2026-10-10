@@ -416,5 +416,22 @@
   "external_owner": null,
   "status_raw": "✅ 已結案（2026-10-10）：22 處寫死退路／14 檔全數移除，掃描歸零；留停 Gate 門檻接 gate_thresholds（缺值 raise）。commit 1fd8ec42，CIO APPROVE 6/6。",
   "is_informational": false
+ },
+ {
+  "date": "2026-10-06",
+  "title": "薪資入帳無自動來源 → 月初收入視圖暫時為 0（資產真值正確、收入視圖錯誤）",
+  "status_raw": "✅ 已結案（2026-10-11）：已由 commit `9cc6c47e`（CIO-Gemini APPROVE／blocking=[]）落地為唯一自動寫入者；cron 8508fc447e12 07:10 接線；詳見 detail 末段【落地】。（原裁示：方向鎖定、不施工 2026-10-06）",
+  "detail": "事故 2026-10-06：台電薪資 39,777 於 10/06 入帳（Moneybook 明細：台新銀行 文心綜活儲存款-薪轉／媒體轉入 - 薪資 台電）。資產面完全正確（cash_detail 文心綜活儲 118,582 與帳戶 CSV 逐位元相同、total_assets 26,823,015 未變），但 salary_records 缺 2026-10 → 收入視圖顯示薪水 0，被動安全月收入 180,100（少一整筆）。已於同日以文字手術補記 salary_records['2026-10']=39,777（+5 行、其餘欄位零變動、守門通過），commit 95f2b517。待辦＝設計自動帶入（例如 Moneybook 明細『媒體轉入 - 薪資 台電』樣式自動落 salary_records，或 update_data.py 增 --salary），須先計畫後施工。｜【落地（2026-10-11）】commit `9cc6c47e791f`（tree `90e52d951730`）已推 origin/clean-main 並以 git ls-remote 驗證遠端 sha 相同。新增唯一寫入者 `salary_tracker.py`（走 mb_source 單一入口、AES ZIP 記憶體解壓、fail-closed）；`mb_income_tracker.py` 為 07:10 cron 協調器（配息段輸出逐字不變、薪資段僅新寫入/WARN/失敗才輸出）；`tools/test_salary_tracker.py` 驗收 27/27 PASS（含回放 2026-09-02／2026-10-09 兩份歷史匯出＝現值 no-op；注入同月第二筆薪資 → fail-closed 0 寫入且 snapshot 位元不變；合成月份寫入不擾其他月份與模型層欄位）。辨識鎖「台電＋薪資」摘要樣式（不認 Moneybook 自訂分類——實測 2026/08/07「上境工程設計顧問有限公司 332,342」亦被歸在薪資類，只認分類會誤記）。去重／異常：同月多筆→不寫入＋WARN；既有值不符→不覆蓋＋WARN；偏離前 3 個月常態中位數 >30%→寫入＋WARN。模型層未動：monthly_salary／monthly_income／working_surplus 全程未觸碰（口徑另屬 PEND-20261010-02）。排程 `8508fc447e12` 改名「MB 入帳自動追蹤（配息＋薪資）」、script=`mb_income_tracker.py`、next run 2026-10-11 07:10；體外變更：`hermes/scripts/mb_income_tracker.py` 薄轉發器。獨立審查：CIO（deleg_15c42647）APPROVE／blocking=[]，tree 與 HEAD 逐字相符，記錄落 `.git/CIO_APPROVED`；證據檔 `reviews/salary_tracker_cio_result.json`。推送後驗證：`check_dashboard_sync --post-push` 22/22 條線上連結 200＋靜態檢查全過；`mirror_guard` 全綠。【已知界線】2026-09 薪資（9/04 42,560）不落在任何現存匯出區間 → 該月仍為手動值，模組只能帶入「匯出窗口內」的月份。",
+  "tags": "收入,salary_records,自動化,系統缺口,Moneybook",
+  "owner": "CEO",
+  "due_date": "2026-10-12",
+  "due_date_source": "既有文字（建議於月真值複核日排程）",
+  "external_owner": null,
+  "is_informational": false,
+  "last_confirmed": "2026-10-11",
+  "last_confirmed_source": "updated_at",
+  "needs_due_date": true,
+  "status": "✅ 已結案（2026-10-11）",
+  "updated_at": "2026-10-06T16:20:00+08:00"
  }
 ]
