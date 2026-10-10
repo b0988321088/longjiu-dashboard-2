@@ -32,6 +32,13 @@ BENIGN_DIRTY = {
     # ⚠️ 有界遮蔽＋canary：同一輪的決策本體 dashboard_decisions.json **不在**名單內，
     #    入庫後忘記提交決策仍會照樣亮 ❌（本檔只是收據，不是交付物）。
     "data/decision_intake_receipts.jsonl",
+    # 2026-10-10（22:40 稽核連續誤報修復）：驗證器心跳為排程自寫的執行期遙測，
+    # 由自己的 job（21:55 驗證器心跳）每日覆寫，沒有任何 job 的提交範圍含它
+    # → 結構上每晚必髒（10/05–10/10 六晚全在名單），非交付物。
+    "data/verifier_heartbeat.json",
+    # 同型：LLM 使用量為 append-only 逐筆寫入的執行期帳本（每次呼叫即寫），
+    # 其交付物是費用頁／成本報告（仍在名單外，漏提交照樣亮 ❌）。
+    "logs/pipeline_llm_usage.jsonl",
 }
 
 

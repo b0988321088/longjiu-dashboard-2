@@ -132,27 +132,55 @@ def main():
     # sabbatical_checklist_update._cash_floor 已於 4c5c68fe（10/04）移除，本檔漏改 → 直接 AttributeError、
     # 整支 FI 門檻回歸保護工具靜默失效（保護消失且無告警＝P0 假綠燈型缺陷）。
     # —— 2026-09-28 CIO 指出：此處寫死會讓「現況三條達標 → 🟢」在底線裁示變動後仍以舊值判定＝假 PASS
-    gate, floor = sab.RUNWAY_GATE_DAYS, _load("sot", repo / "sot_targets.py").cash_floor(snap)
-    cash = float(snap.get("cash_total") or 0)
+    sot = _load("sot", repo / "sot_targets.py")
+    gate, floor = sab.RUNWAY_GATE_DAYS, sot.cash_floor(snap)
+    # 2026-10-10：現金一律取「可動用」口徑（總現金 − 指定用途款，sot_targets.available_cash）。
+    # 原寫 snap.cash_total → 質押指定款 900,000 被當可動用，現金門檻判定 fail-open（假 PASS），
+    # 與 sabbatical/coast_fi 生產端口徑不一致。
+    cash = sot.available_cash(snap)
     cov, strc = sc["con"]["coverage"], sc["stress"]["coverage"]
     rw = sc["extreme"]["runway_days"]
-    ck("現況三條達標 → 🟢（保守/壓力/跑道/現金都取自 snapshot）",
-       "🟢" in sab.traffic_light(cov, strc, rw, cash, floor), f"{cov}/{strc}/{rw}/{cash}")
+    _exp_light = ("🟢" if (cov >= 100 and strc >= 100 and (rw or 0) >= gate and cash >= floor)
+                  else ("🟡" if cov >= 100 else "🔴"))
+    ck("traffic_light ＝ 四條門檻現算（保守／壓力／跑道／可動用現金）",
+       _exp_light in sab.traffic_light(cov, strc, rw, cash, floor),
+       f"期望 {_exp_light}｜現算 {cov:.1f}/{strc:.1f}/{rw if rw is None else round(rw)}/{cash:,.0f} vs 底線 {floor:,.0f}")
     ck("變異：保守 <100% → 🔴", "🔴" in sab.traffic_light(99.0, strc, rw, cash, floor))
     ck("變異：壓力 <100% → 🟡", "🟡" in sab.traffic_light(cov, 90.0, rw, cash, floor))
     ck(f"變異：跑道 <{gate} 天 → 🟡", "🟡" in sab.traffic_light(cov, strc, gate - 10, cash, floor))
-    ck("變異：現金 <底線 → 🟡", "🟡" in sab.traffic_light(cov, strc, rw, floor - 1, floor))
+    ck("變異：可動用現金 <底線 → 🟡", "🟡" in sab.traffic_light(cov, strc, rw, floor - 1, floor))
+    # 2026-10-02 使用者裁示：留停 Gate 由 A/B/C/A+ 級距改為「三條硬門檻 → 🟢 GO／🟡 WAIT」，
+    # B 級／A+ 級／健康度分數敘事取消。本節已改驗 10/02 規格（原 A 級／A+ 級／B 級／C 級
+    # 斷言自 10/02 起天天 FAIL，2026-10-10 起因 free_cash_min 改必填而整支 ValueError 中斷）。
     months = ["2026-01", "2026-02", "2026-03"]
     trend = {m: {"生活費覆蓋率": 110.0 + i} for i, m in enumerate(months)}
-    ck("三條＋趨勢齊備 → A級", sab.acceptance_level(cov, strc, rw, cash, floor, months, trend).startswith("A級"))
-    ck("覆蓋 ≥150% → A+ 加碼級（非門檻）",
-       sab.acceptance_level(152.0, strc, rw, cash, floor, months, trend).startswith("A+級"))
-    ck("三條達標但趨勢不足 → B級且文案不寫「先補水庫」",
-       (lambda s: s.startswith("B級") and "先補水庫" not in s)(
-           sab.acceptance_level(cov, strc, rw, cash, floor, ["2026-01"], trend)))
-    ck("保守 <100% → C級", sab.acceptance_level(95.0, strc, rw, cash, floor, months, trend).startswith("C級"))
-    ck("150% 未達不觸發 C級（150% 不再是門檻）",
-       not sab.acceptance_level(cov, strc, rw, cash, floor, months, trend).startswith("C級"))
+    # 門檻單一入口：自由現金門檻一律取自 sot_targets.gate_thresholds（禁寫死）
+    fc_min = float(sot.gate_thresholds(snap)["自由現金_twd"])
+
+    def _gate(*a, **k):
+        return sab.acceptance_level(*a, free_cash_min=fc_min, **k)
+
+    ck("Gate 三條全達標 → 🟢 GO",
+       _gate(cov, strc, rw, fc_min, floor, months, trend).startswith("🟢"))
+    ck("變異：自由現金 <門檻 → 🟡 WAIT",
+       _gate(cov, strc, rw, fc_min - 1, floor, months, trend).startswith("🟡"))
+    ck("變異：壓力 <100% → 🟡 WAIT",
+       _gate(cov, 90.0, rw, fc_min, floor, months, trend).startswith("🟡"))
+    ck(f"變異：跑道 <{gate} 天 → 🟡 WAIT",
+       _gate(cov, strc, gate - 10, fc_min, floor, months, trend).startswith("🟡"))
+
+    def _raises(fn):
+        try:
+            fn()
+            return False
+        except ValueError:
+            return True
+
+    ck("缺 free_cash_min → 明確失敗（不得回退寫死門檻）",
+       _raises(lambda: sab.acceptance_level(cov, strc, rw, fc_min, floor, months, trend)))
+    ck("已取消 A／A+／B／C 級敘事（不回傳舊級別字樣）",
+       not any(x in _gate(cov, strc, rw, fc_min, floor, months, trend)
+               for x in ("A級", "A+級", "B級", "C級")))
 
     print("== 5) 目標與缺口結構（動態派生） ==")
     tg = sab.targets(exp, floor)

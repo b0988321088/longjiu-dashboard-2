@@ -88,22 +88,6 @@
     "is_informational": false
   },
   {
-    "date": "2026-09-18",
-    "title": "保單/負債寫死退路常數全面清除（低優先，已部分完成）",
-    "status": "✅ 已結案（2026-10-10）",
-    "tags": "no-hardcode,稽核,低優先",
-    "detail": "2026-09-18：CIO 審查 REJECT 指出寫死退路會掩蓋 snapshot 缺值。本次已清保單/月收入相關 6 處並導入 _truth()；其餘（負債 18,197,422/22,000,000、不動產 34,000,000、債券現金 9,697,196、現金 3,614,169、保單 7,634,046/1,952,366、4,483,408、5,812,576、2,097,467 等）需逐項確認 snapshot 是否為真值來源後再改，避免一次動太多造成回歸。；INC-218 後續（CIO 非阻擋）：① memory_sync.py 核准判準註解措辭與實作不一致（註解寫「開頭」、實作為前 12 字窗）② decision_handler.py 會把 pending 形狀列 append 進 decisions（無 timestamp/source、核准落 12 字後）→ 該路徑不會被計入（目前 0 筆，屬未來風險）③ 本檔 pending 用 title、dashboard_decisions 內嵌 pending 用 action（欄位名漂移，讀取端需雙 fallback）。｜INC-219 複審新增（非阻擋）：①退路常數/註解舊字串：build_penetration_report L310-313 退路名與常數、asset_diff_monitor L162/376 預設標籤、build_dashboard L593 與 index_template L746 待收列標籤、snapshot.fund_selection_principle.執行 文字②snapshot.sector_penetration 仍為 8/22 靜態版（含舊第一金FA81聯博債55% 1,095,745），日報仍渲染其 44.6% 固收與現金 → 需另案隨 sector_penetration 重算｜2026-10-02 重新盤點：原列行號（asset_diff_monitor 226/251/274/370、run_daily 240/245/300/301/1248/1249/1263）已隨改版全數失效，照單無法施工。現行實測仍有 71 處 .get(key, fallback>=1萬) 寫死退路，跨 20 檔（最大宗 run_daily.py 17 處、asset_diff_monitor.py 8、fire_progress.py 7、morning_briefing.py 7）。其中 14 處為高風險總額類：不動產 34,000,000／總負債 22,000,000／月收入 228,751（asset_diff_monitor）、現金 3,119,158／保單 9,802,872（build_penetration_report）、現金 3,614,169／4,483,408（run_daily）、月收入 214,685（report_components，已是舊值）。2026-10-02 使用者裁示：本批僅更新盤點，工程分批後續。｜2026-10-10 完成：以 tokenize 掃描器（剔除註解/docstring/備份目錄後重盤）得 22 處寫死退路、跨 14 檔，全數移除並改讀真值或單一入口（月收入→sot_monthly_income、留停 Gate 門檻→sot_targets.gate_thresholds 缺值 raise）；改前 22 處 → 改後掃描 0 處；14 檔 AST 通過、9 支腳本實跑 rc=0。commit 1fd8ec42（CIO 獨立審查 APPROVE 6/6、無 scope creep）。",
-    "due_date": null,
-    "due_date_source": "未提供",
-    "needs_due_date": true,
-    "last_confirmed": null,
-    "last_confirmed_source": "未提供",
-    "owner": "CEO",
-    "external_owner": null,
-    "status_raw": "✅ 已結案（2026-10-10）：22 處寫死退路／14 檔全數移除，掃描歸零；留停 Gate 門檻接 gate_thresholds（缺值 raise）。commit 1fd8ec42，CIO APPROVE 6/6。",
-    "is_informational": false
-  },
-  {
     "date": "2026-09-20",
     "title": "安聯累計現金給付總額對帳（差額 22,180）",
     "status": "待處理",
