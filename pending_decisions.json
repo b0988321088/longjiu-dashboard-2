@@ -1349,5 +1349,86 @@
     "needs_due_date": true,
     "tags": "薪資,口徑,真值,snapshot,治理",
     "detail": "【背景】2026-10-10 本輪交付時發現退休頁②留停測試顯示薪資 39,777（讀 snapshot.monthly_salary），薪資語意未解 → 使用者裁示另開本卡：先做影響矩陣再決定是否新增欄位；本卡落地前不得改薪資真值、不得重算衍生指標、不得回溯改寫歷史 commit。\n\n【現況事實（唯讀分析）】\n- snapshot.monthly_salary=39,777、snapshot.salary=39,777、monthly_income=225,968、working_surplus=66,758。\n- 切換點唯一＝commit c92c05e2（2026-10-06 19:42「四源同步」，author=Hermes Agent）：monthly_salary/salary 42,560→39,777、monthly_income 228,751→225,968、working_surplus 69,541→66,758；is-ancestor HEAD=YES。\n- 同日較早的 B 裁決（commit 95f2b517／程式 6aed7a55）方向相反：monthly_salary 維持 42,560、常態模型用 42,560、39,777 只進 salary_records；當晚 pending_decisions_archive 把該卡結案為「已由新裁示取代」。兩份紀錄對「39,777 是單月連假波動或口徑變更」解釋互斥。\n- 全庫無任何 .py 寫入者改這兩個欄位（grep 0 命中）→ 僅快照直改（無自動來源）。\n- 「自提 6%」無欄位、無計算；且 6%×42,560=2,553.6 ≠ 差額 2,783（差 229.4）→ 該理由無法驗證。\n- 42,560 於 snapshot 內唯一以資料值（amount）殘存＝salary_records[\"2026-09\"].amount（另有三處字串欄提及：salary_records[\"2026-09\"].note、bank_assets_memo、weekly_ops_closure_0904 執行清單）（語意為 9 月實收，非「常態基準」）；另殘存於 run_daily.py:299 退路預設 42_560、build_dashboard.py:545／build_retirement_plan.py:16／calendar_sync.py:22 的註解文字、DAILY_REPORT_PIPELINE_RULE.md:112、已封存日報 HTML（daily_report_v2_2026-09-04／09-05）。\n\n【消費者 × 口徑】儀表板結構條 build_dashboard.py:1028 取 monthly_salary 當常態（實際讀到 39,777）；:813 同欄位當「本月入帳」；:545 當「現行薪資」；已收 salary_got:471 走 salary_records（39,777）；退休規劃 build_retirement_plan.py:17 取 snap.get(\"monthly_salary\") or snap.get(\"salary\")（先 monthly_salary）；行事曆 calendar_sync.py:31 取 _snap.get(\"monthly_salary\") or 0（無 salary 回退）；月報 monthly_report.py:86 取 snap.get(\"salary\") or snap.get(\"monthly_salary\")（先 salary，現值同為 39,777 → 口徑分離後此排序會改變結果）→ 無任何「排程」消費者取得到 42,560。\n\n【數值後果】常態結構條 219,877（應 222,660）／monthly_income 225,968（應 228,751）／working_surplus 66,758（應 69,541）／含薪覆蓋率 141.9%（應 143.7%），皆 −2,783。不受影響：被動覆蓋率 113.1%、健康度覆蓋維度、留停 Gate（只吃配息＋房租）。\n\n【待使用者裁決】A＝維持「分離」意圖：monthly_salary 語意拉回常態 42,560、實收只走 salary_records（不需新欄位；風險＝現被當「本月實入」的讀取點語意翻轉）。B＝維持「以實入為真值」並新增一等常態欄位（如 salary_baseline=42,560）供常態線使用，並修掉 build_dashboard.py 三處互斥註解（需核准新增欄位）。\n\n【已登錄未展開】moneybook_6m_analysis.py:142 手動腳本仍寫死 monthly_salary=42_560（未在 cron）；run_daily.py:299 以 42,560 為退路；snapshot「收入基準_0822・常態月收入」敘述仍為「薪資 39,727＋…＝225,918」（與 live monthly_income 225,968 差 50）；second_salary=39,121 口徑；monthly_income 內配息 97,233（實收）vs fund_dividend_conservative=100,000 之關係；現行驗證器不覆蓋常態薪資口徑（56 PASS/0 FAIL 對此議題無告警）。"
+  },
+  {
+    "id": "PEND-20261011-01",
+    "date": "2026-10-11",
+    "status": "待處理",
+    "last_confirmed": null,
+    "owner": "龍九",
+    "external_owner": null,
+    "title": "index.html 靜態 fallback：fetch 失敗時顯示過期交易計畫（:275-277）",
+    "priority": "P2",
+    "status_raw": "🟡 待處理（唯讀盤點完成；尚未授權施工，需獨立審查＋tree 綁定）",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": false,
+    "tags": [
+      "儀表板",
+      "靜態殘留",
+      "fallback"
+    ],
+    "detail": "● 位置：index.html 第 275-277 行靜態區塊（:275 標題「📡 機構流向雷達 ＆ 🎯 本週交易計畫（動態）」、:276 雷達摘要、:277 本週交易計畫）。\n● 覆寫鏈：同一 id=\"trade-plan\" 由兩支 renderer 覆寫 —— (a) index.html:981 fetch radar_state.json（失敗 catch→{}、:987 `if(!wp||!wp.rows||!wp.rows.length) return;` 早退）；(b) index.html:674-970 另一支以 snapshot.json `rotation_recommendation.交易計畫` 覆寫（:969）。任一來源都拿不到 → 靜態 :277 原樣留存。\n● 現況：:277 為寫死文字「🎯 本週交易計畫（動態）：已確認 洲際W轉貸｜待處理 美債中短 ladder 延後至 10 月標案定案…｜✅ 已結案（2026-10-10）」；正常由 JS 抓 radar_state.json 覆寫該區塊。\n● 觸發條件：radar_state.json fetch 失敗／被阻擋／JS 錯誤 → 使用者直接看到這份寫死的舊計畫，且無任何「資料過期」提示。\n● 風險：顯示過期交易計畫（含已結案事項），使用者可能誤認為現行計畫；與稽核頁同一類「靜態 fallback 冒充動態內容」。\n● 建議（未施工）：fallback 改為「⚠️ 資料暫不可用（radar_state.json 讀取失敗）」＋最後成功時間；或改用帶日期標記的快取，不得沿用無法確認新鮮度的舊文字。\n● 邊界：本卡僅登記；修法另需授權＋獨立審查＋tree 綁定。"
+  },
+  {
+    "id": "PEND-20261011-02",
+    "date": "2026-10-11",
+    "status": "待處理",
+    "last_confirmed": null,
+    "owner": "龍九",
+    "external_owner": null,
+    "title": "build_weekly_report.py 四、下週行動 else 分支寫死 fallback（:203-205）",
+    "priority": "P2",
+    "status_raw": "🟡 待處理（唯讀盤點完成；尚未授權施工，需獨立審查＋tree 綁定）",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": false,
+    "tags": [
+      "週報",
+      "靜態殘留",
+      "fallback"
+    ],
+    "detail": "● 位置：build_weekly_report.py:203-205（act4 的 else 分支）。\n● 現況：weekly_plan 讀不到時，輸出寫死兩條「<b>質押撥款</b>：{_pf.pledge_status_line()}」與「<b>PI 送件</b>：撥款後盤點財力 proxy（門檻 {_PI_THR}萬）」（門檻動態、項目文字固定）。\n● 觸發條件：radar_state.json 缺 weekly_plan、或 rows 為空。\n● 風險：與 2026-10-11 使用者對稽核頁定下的驗收第 4 條（不得回退過期固定行動建議）同類；週報可能印出已不適用的行動。\n● 建議（未施工）：比照稽核頁 A 方案改為明確「資料暫不可用」，不得回退固定建議。\n● 邊界：本卡僅登記。"
+  },
+  {
+    "id": "PEND-20261011-03",
+    "date": "2026-10-11",
+    "status": "待處理",
+    "last_confirmed": null,
+    "owner": "龍九",
+    "external_owner": null,
+    "title": "institutional_flow.py 寫死的 weekly_plan 行模板（:650／:664）＝上游根因",
+    "priority": "P2",
+    "status_raw": "🟡 待處理（唯讀盤點完成；尚未授權施工，需獨立審查＋tree 綁定）",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": false,
+    "tags": [
+      "雷達",
+      "weekly_plan",
+      "上游",
+      "靜態殘留"
+    ],
+    "detail": "● 位置：institutional_flow.py:650（`⏸️ 避險衛星：黃金A10 32萬 8/30 生效（保單內）；00635U ~105萬 延後（華許放鷹+金價偏高）→ 等回檔`）與 :664（`✅ 保單轉換 9/10 送出（安聯＋第一金同步轉入 M&G入息A美元避險月配，T+4 預期 9/16 生效）；9/1 安聯 PIMCO+50萬、貝萊德科技A10 90萬→摩根 已完成`）；:695 `_rows.append(...)`、:697 寫入 `weekly_plan`（日期=today）。\n● 現況：此兩列為寫死的固定敘述字串（:650 受 `if _hs.get(\"黃金延後_0829\"):` 條件保護；:664 為無條件 append），會被寫進 radar_state.weekly_plan.rows，再被週報／主儀表板／稽核頁動態渲染。\n● 影響：2026-10-10 A 方案只解決稽核頁「來源」問題（改讀 weekly_plan），**未解決內容本身過期**；下游修好仍會顯示這兩列固定敘述。\n● 觸發條件：每次 institutional_flow 執行（雷達產線，每日排程）。\n● 風險：行動清單長期夾帶已完成／失效敘述，且因『看起來有動態來源』而更難察覺。\n● 建議（未施工）：改由真值推導（黃金部位讀 snapshot、保單轉換讀轉換狀態）或加入有效期判定。\n● 邊界：本卡僅登記。"
+  },
+  {
+    "id": "PEND-20261011-04",
+    "date": "2026-10-11",
+    "status": "待處理",
+    "last_confirmed": null,
+    "owner": "龍九",
+    "external_owner": null,
+    "title": "稽核頁其餘寫死：衛星金額／壓力測試／8-31 違約金截止（build_audit_dashboard.py :267/:269/:309/:311）",
+    "priority": "P3",
+    "status_raw": "🟡 待處理（唯讀盤點完成；尚未授權施工，需獨立審查＋tree 綁定）",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": false,
+    "tags": [
+      "稽核頁",
+      "靜態殘留",
+      "C項"
+    ],
+    "detail": "● 位置：build_audit_dashboard.py:267「黃金（00635U）4.0%（105萬）」、:269「合計 ≤7% 5.0%（131萬）」、:309「壓力測試：富達 -30%（180萬）+ 聯博 -20%（39萬）≈ 219萬 → 標案池/現金墊 300萬 覆蓋 ✅」、:311「8/31 安聯B 贖回 3% 違約金截止」（截止日已過）。\n● 現況：2026-10-11 A 方案只處理「🗓️ 下週行動建議」段；依使用者裁決 C 項不併本輪，這 4 處寫死未動。\n● 觸發條件：每次稽核頁產生（週五 18:30 job／手動重建）都會輸出這些固定金額與過期截止日。\n● 風險：稽核頁顯示與真值脫節的固定數字／已過截止日。\n● 建議（未施工）：改讀 snapshot／sot_targets 或加日期標記與有效期。\n● 邊界：本卡僅登記。"
   }
 ]
