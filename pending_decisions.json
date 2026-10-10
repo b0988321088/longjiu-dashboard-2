@@ -1352,5 +1352,21 @@
     "needs_due_date": false,
     "tags": "治理,稽核備份,限期改善",
     "detail": "現況（2026-10-09 實測；位置 A = C:\\Users\\bot\\longjiu_audit\\snapshots）：\n通過——目錄權限（ACL 僅 SYSTEM／Administrators／benbenben\\bot，未列其他使用者）｜磁碟空間（可用 369 GB，現有快照 569 KB）｜寫入讀回與雜湊｜實際還原探針（快照內 pending_decisions.json db178b18ad622812 複製後雜湊一致）。\n未通過——**獨立備份**：①A 與 repo 同為 C: 磁碟區 → 單一磁碟故障可能同時損失兩者 ②A 不在 OneDrive 同步範圍③Windows 檔案歷程記錄未設定 ④未見第二磁碟區可作異地目標。故『可以還原』≠『有另一份可在原始磁碟故障時使用的副本』。\n\n處置要求：①補足方式優先採具**獨立故障風險**的備份目標；單純同步到同一磁碟的另一個目錄**不算**獨立備份 ②須驗證副本雜湊與**實際還原能力** ③在獨立副本驗證通過前，**不得宣稱備份能力已建立** ④殘餘風險已寫入《變更審查與稽核證據保存規則》v0.2（第八章、第十一章）⑤本項改善**不阻止**在現位置進行非破壞性快照驗證；但搬移既有快照前，應先確保原始快照仍完整保留。\n\n驗收條件：①獨立備份目標已選定並通過寫入、讀回、SHA-256 比對及還原測試 ②副本可於原始磁碟不可用時獨立還原 ③驗證紀錄留存（目標、時間、雜湊、還原測試結果）。"
+  },
+  {
+    "id": "PEND-20261010-01",
+    "date": "2026-10-10",
+    "status": "待處理",
+    "last_confirmed": null,
+    "owner": "龍九",
+    "external_owner": null,
+    "title": "🟡 P2｜post-commit 自動鏡像使「本機 commit」必然改動執行環境（無 commit-only 路徑）",
+    "priority": "P2",
+    "status_raw": "🆕 2026-10-10 使用者同意建立後續工單（來源：INC-295）",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": true,
+    "tags": "治理,發布紀律,鏡像,hook,架構",
+    "detail": "背景：INC-295（2026-10-10）。B 案 commit `a367e6e7` 觸發 post-commit hook，使 `hermes/scripts/report_components.py` 被自動鏡像更新（78fbbd68…），形成「未授權的執行環境變更」——原授權僅涵蓋「本機 commit、不 deploy」。\n\n現況（唯讀查證）：`.githooks/post-commit` → `post-commit.py` 比對 `mirror_guard.py` 19 支硬編碼清單，有差異即鏡像至 `hermes/scripts/`；日誌 `.git/hook_sync.log`。\n\n問題：`post-commit` 跑在 commit 完成**之後**，**不受 `--no-verify` 影響** → 只要 commit 涉及鏡像清單內的檔案，鏡像必然發生。因此在本機層級，**「commit」與「deploy」在技術上不可分離**：任何「只授權 commit、不授權 deploy」的授權範圍都無法真正被遵守。\n\n影響：① 治理面——發布授權邊界被自動機制穿透，須事後逐案揭露 ② 實務面——受影響的每次 commit 都要先評估執行環境副作用。\n\n待決選項（不預設答案）：① 提供可辨識的 commit-only 路徑（例如環境變數 SKIP_MIRROR=1 或 hook 參數），並留痕 ② 改為在 push 階段才鏡像（語意上「部署」更接近 push）③ 僅提供 dry-run 提示（commit 前先告知將鏡像哪些檔）。\n\n邊界：不得改變現行 cron 產線的鏡像行為語意；任何 hook 改動須經獨立 CIO 審查；不得與其他批次混批。\n\n驗收條件：① 定義並實作可辨識的「不鏡像」路徑（若有該選項）② 負向測試：使用該路徑 commit 後 `hermes/scripts/` 目標檔 sha256 不變 ③ 正向測試：現行產線 commit 的鏡像行為逐位元與現狀一致 ④ 於 INC-295 結案紀錄引用本卡。"
   }
 ]
