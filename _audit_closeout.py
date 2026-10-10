@@ -42,6 +42,39 @@ BENIGN_DIRTY = {
 }
 
 
+# ── 有歸屬的未提交產物（2026-10-10 使用者授權修復批次）──────────────────────
+# 使用者原則（原話）：「六個檔案如果經確認是明確排除的工作區變更，就應該由稽核系統
+# 記錄其歸屬，而不是為了讓 closeout 全綠而強行提交」＋「不得未經分析就批次提交、
+# 刪除或一律白名單」。故每一筆都必須附歸屬依據（性質／owner／提交時點），且只登錄
+# 已逐檔分析過的項目。canary 不變：交付物（snapshot.json／index.html／
+# dashboard_decisions.json 等）不在名單內，漏提交照樣亮 ❌。
+# 格式：路徑 → (分類, 歸屬依據, 提交時點)
+OWNED_PENDING = {
+    # regenerate_report.py 07:00 產物集明列這兩檔（_push_candidates:468-486）
+    "mtd_performance.html": ("產線輸出（發布頁，index 連結）",
+                             "regenerate_report.py 07:00 產物集（_push_candidates:484）",
+                             "每日 07:00"),
+    "mtd_data.json": ("產線輸出（發布頁資料）",
+                      "regenerate_report.py 07:00 產物集（_push_candidates:484）",
+                      "每日 07:00"),
+    # 產線寫入，但「不在任何 job 的推送集」→ 既有結構缺口，另以 NO_PUBLISHER 揭露
+    "investment_performance.html": ("產線輸出（發布頁，未被 index 連結）",
+                                    "07:00 產線產生（regenerate 呼叫 build_investment_performance），但不在 _push_candidates",
+                                    "—"),
+    "cost_log.csv": ("資料帳本（append-only；dirty_gate／pii_guard／ai_cost_watch／daily_token_account 讀取）",
+                     "成本產線寫入（09:00–23:55），無任何 job 的推送集涵蓋",
+                     "—"),
+    "daily_analysis.json": ("分析快取（regenerate_report 只讀，:182）",
+                            "分析腳本寫入（buffett_cto_analyzer／daily_intel／cost_monitor），無推送擁有者",
+                            "—"),
+    "health_alert_state.json": ("執行期狀態（告警去重）",
+                                "tools/health_alert_check.py 每日覆寫；性質同 data/.cache_audit_state.json",
+                                "不需提交"),
+}
+# 「無推送擁有者」＝既有結構缺口（非本輪造成），仍逐檔揭露、不得靜默。
+NO_PUBLISHER = {"investment_performance.html", "cost_log.csv", "daily_analysis.json"}
+
+
 def resolve_T(db):
     """回傳 (基準日, 是否為 fallback)。今天資料尚未落庫時退回最新已落庫日。"""
     want = os.environ.get("LJ_AUDIT_DATE") or _dtime.date.today().isoformat()
@@ -241,9 +274,23 @@ _dirty = (
 benign = [p for p in _dirty if p.replace("\\", "/") in BENIGN_DIRTY]
 tracked = [p for p in _dirty if p.replace("\\", "/") not in BENIGN_DIRTY]
 untracked = [x.split(" ", 1)[1] for x in st if x.startswith("??")]
+_bs = chr(92)
+_owned_names = {k.replace(_bs, "/") for k in OWNED_PENDING}
+owned = [p for p in tracked if p.replace(_bs, "/") in _owned_names]
+tracked = [p for p in tracked if p.replace(_bs, "/") not in _owned_names]
 print(f"  {ok(not tracked)} 已追蹤檔案無未提交變更（{len(tracked)} 筆）")
 if benign:
     print(f"  ℹ️ 由排程每日更新、當下尚未提交的狀態檔（不列 fail）：{benign}")
+if owned:
+    print("  ℹ️ 已歸屬的未提交產物（非本輪阻擋；逐檔附歸屬依據）：")
+    for _p in sorted(owned):
+        _cat, _ev, _eta = OWNED_PENDING[_p.replace(_bs, "/")]
+        _tag = "⚠️ 無推送擁有者" if _p.replace(_bs, "/") in NO_PUBLISHER else "▪"
+        print(f"      {_tag} {_p}｜{_cat}｜{_ev}｜提交：{_eta}")
+    _np = sorted(p for p in owned if p.replace(_bs, "/") in NO_PUBLISHER)
+    if _np:
+        print(f"  ⚠️ 其中 {len(_np)} 檔無任何 job 的推送集涵蓋（既有結構缺口，非本輪造成）：{_np}")
+    print("      （canary 不變：交付物不在本名單內，漏提交照樣亮 ❌）")
 print(f"  未追蹤（備份/暫存，預期）：{untracked}")
 if tracked:
     fail.append(f"未提交: {tracked}")
