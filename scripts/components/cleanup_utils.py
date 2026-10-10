@@ -10,7 +10,7 @@
 5. 刪除淘汰的產線腳本與一次性 ad-hoc 腳本。
 6. 智能清理 .archive 目錄中過期的歸檔檔案。
 7. 識別未被引用的 .py 檔案（唯讀：只產清單＋報告，**不自動刪**）。
-8. 清理其他臨時/快取檔案（待實作）。
+8. 清理其他臨時/快取檔案（__pycache__／根目錄 .log／.cio_review_*.json／data 舊快取；2026-10-10 實作）。
 """
 import collections
 import json
@@ -244,24 +244,73 @@ def _cleanup_html_banners(apply_changes: bool, current_date_iso: str):
             updated_count += 1
     return updated_count
 
-def _cleanup_old_backups(apply_changes: bool):
-    logger.info("執行 D. 清理舊備份檔 (保留最新 2 個)...")
-    pats = ['snapshot.json.bak-*', 'snapshot*.bak', '*.bak-*', '*.pre_*']
-    cleaned_count = 0
+def _tracked_relpaths():
+    """回傳 git 追蹤檔的相對路徑集合（forward-slash 正規化）；取不到回 None。
 
-    for pat in pats:
-        # 針對每個模式，根據檔案名詞幹 (stem) 分組
-        stems = {re.sub(r'\d.*$', '', f.name) for f in ROOT.glob(pat)}
-        for stem in stems:
-            # 篩選出屬於當前詞幹的檔案，並按修改時間倒序排列
-            fs = sorted([f for f in ROOT.glob(pat) if f.name.startswith(stem)], key=lambda x: x.stat().st_mtime, reverse=True)
-            old = fs[2:] # 保留最新兩個
-            if old:
-                logger.info(f'D. {pat} (stem={stem}): 保留最新 {min(2, len(fs))}，刪除 {len(old)} 個。刪除範例：' + ', '.join(x.name for x in old[:6]) + (' …' if len(old) > 6 else ''))
-                if apply_changes:
-                    for x in old:
-                        x.unlink()   # 不歸檔：備份檔本身即 snapshot/work_log 的副本，git 歷史已有
-                        cleaned_count += 1
+    ⚠️ 呼叫端必須用『相對路徑』比對（`fp.relative_to(ROOT).as_posix()`），
+    不可只比 `fp.name`：`git ls-files` 回的是相對路徑，只比 basename 會讓
+    子目錄下的 tracked 檔全部躲過保護。2026-10-10 實踩：清理腳本寫
+    `if f.name in tracked` 而誤刪 10 個 `data/` 下的 tracked 檔；根目錄檔的
+    basename 恰等於路徑，讓檢查「看起來有在擋」，掩蓋了子目錄的漏洞。
+    回 None = 取不到清單 → 呼叫端須 fail-closed（本次不做任何刪除）。
+    """
+    try:
+        out = subprocess.run(["git", "ls-files"], cwd=str(ROOT),
+                             capture_output=True, text=True, timeout=120)
+        if out.returncode != 0:
+            logger.warning(f"git ls-files rc={out.returncode} → 停用刪除（fail-closed）")
+            return None
+        return {ln.strip().replace("\\", "/") for ln in out.stdout.splitlines() if ln.strip()}
+    except Exception as exc:
+        logger.warning(f"git ls-files 失敗（{exc}）→ 停用刪除（fail-closed）")
+        return None
+
+
+def _is_tracked(fp: pathlib.Path, tracked) -> bool:
+    """受版控檔判定：一律以相對路徑比對（理由見 _tracked_relpaths）。"""
+    if not tracked:
+        return False
+    try:
+        return fp.relative_to(ROOT).as_posix() in tracked
+    except ValueError:
+        return False
+
+
+def _cleanup_old_backups(apply_changes: bool, keep: int = 2):
+    logger.info(f"執行 D. 清理舊備份檔（每類保留最新 {keep} 個）...")
+    tracked = _tracked_relpaths()
+    if tracked is None:
+        logger.warning("D. 無法取得 tracked 清單 → 跳過備份清理（fail-closed，不動任何檔）。")
+        return 0
+
+    # 2026-10-10：改掃「根目錄所有 *.bak*」，按『第一個 .bak 之前的前綴』分組。
+    # 舊 pattern 清單只涵蓋 `*.bak-*`（連字號），漏掉 `.bak_reconcile_`／`.bak_firstjin_`／
+    # `.bak_`（底線）與 `pending_decisions*.bak_*` → 那幾類從未被清，才是堆積主因
+    # （實測：233 個 .bak 檔／31M，舊規則只會刪到其中 34 個）。
+    groups = {}
+    for f in ROOT.glob('*.bak*'):
+        if not f.is_file():
+            continue
+        m = re.match(r'^(.*?)\.bak', f.name)
+        groups.setdefault(m.group(1) if m else f.name, []).append(f)
+
+    cleaned_count = 0
+    skipped_tracked = 0
+    for prefix, fs in groups.items():
+        fs.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+        safe_old, blocked = [], []
+        for x in fs[keep:]:
+            (blocked if _is_tracked(x, tracked) else safe_old).append(x)
+        skipped_tracked += len(blocked)
+        if not safe_old:
+            continue
+        logger.info(f"D. {prefix}: 保留最新 {min(keep, len(fs))}，刪除 {len(safe_old)} 個。刪除範例：" + ', '.join(x.name for x in safe_old[:4]) + (' …' if len(safe_old) > 4 else ''))
+        if apply_changes:
+            for x in safe_old:
+                x.unlink()   # 不歸檔：備份檔本身即 snapshot/work_log 的副本，git 歷史已有
+                cleaned_count += 1
+    if skipped_tracked:
+        logger.info(f"D. 跳過 {skipped_tracked} 個受版控的備份檔（不刪 tracked 檔）。")
     return cleaned_count
 
 def _cleanup_stale_docs(apply_changes: bool):
@@ -543,25 +592,70 @@ def _cleanup_unreferenced_py_scripts(apply_changes: bool):
     # 回傳 0：本函式不刪任何檔案，維持「cleaned」語意誠實
     return 0
 
-def _cleanup_temp_and_cache_files(apply_changes: bool):
-    logger.info("執行清理臨時/快取檔案 (待實作)...")
-    # 掃描常見的臨時檔後綴或快取目錄 (e.g., *.tmp, *.log, __pycache__)
+def _cleanup_temp_and_cache_files(apply_changes: bool, keep_review: int = 3, cache_days: int = 14):
+    """H. 臨時/快取清理（2026-10-10 實作；原本是「待實作」的空殼）。
+
+    涵蓋：__pycache__／根目錄臨時 .log／.cio_review_*.json／data 下舊 json 快取。
+    安全規則（缺一不可）：
+      · 受版控檔一律不刪 —— _is_tracked 以『相對路徑』比對（見 _tracked_relpaths 的警告）
+      · 同日 LLM 快取禁刪（檔名含今日就跳過；刪了同日重跑會重新付費）
+      · 取不到 tracked 清單 → fail-closed，本次不做任何刪除
+    """
+    logger.info(f"執行 H. 清理臨時/快取檔案（__pycache__／.cio_review_* 留最新 {keep_review}／data 快取 >{cache_days} 天）...")
+    tracked = _tracked_relpaths()
+    if tracked is None:
+        logger.warning("H. 無法取得 tracked 清單 → 跳過快取清理（fail-closed，不動任何檔）。")
+        return 0
     cleaned_count = 0
-    # 範例：清理 __pycache__ 目錄
+
+    # H1. __pycache__（不受版控）
     for pycache_dir in ROOT.glob('**/__pycache__'):
         if pycache_dir.is_dir():
-            logger.info(f"刪除 __pycache__ 目錄: {pycache_dir}")
+            logger.info(f"H1. 刪除 __pycache__: {pycache_dir.relative_to(ROOT)}")
             if apply_changes:
-                shutil.rmtree(pycache_dir)
+                shutil.rmtree(pycache_dir, ignore_errors=True)
                 cleaned_count += 1
-    # 範例：清理專案根目錄下的 .log 檔案 (非標準日誌)
+
+    # H2. 根目錄臨時 .log（排除 Hermes 主 log）
     for log_file in ROOT.glob('*.log'):
-        if log_file.is_file() and log_file.name != 'hermes_agent.log': # 排除Hermes自己的主要log
-            logger.info(f"刪除臨時 .log 檔案: {log_file.name}")
+        if log_file.is_file() and log_file.name != 'hermes_agent.log' and not _is_tracked(log_file, tracked):
+            logger.info(f"H2. 刪除臨時 .log: {log_file.name}")
             if apply_changes:
                 log_file.unlink()
                 cleaned_count += 1
-    # 更多臨時文件類型可以添加...
+
+    # H3. 根目錄 .cio_review_*.json（ignored 審查暫存，保留最新 keep_review 個）
+    cio = sorted([f for f in ROOT.glob('.cio_review_*.json') if f.is_file()],
+                 key=lambda x: x.stat().st_mtime, reverse=True)
+    old_cio = [f for f in cio[keep_review:] if not _is_tracked(f, tracked)]
+    if old_cio:
+        logger.info(f"H3. .cio_review_*.json 共 {len(cio)} 個 → 保留最新 {keep_review}，刪除 {len(old_cio)} 個。")
+        if apply_changes:
+            for f in old_cio:
+                f.unlink()
+                cleaned_count += 1
+
+    # H4. data/ 下舊 json 快取（>cache_days 且非當日；受版控檔不動）
+    today = date.today().isoformat()
+    cutoff = datetime.now() - timedelta(days=cache_days)
+    old_cache = []
+    for f in ROOT.glob('data/**/*.json*'):
+        if not f.is_file() or today in f.name:
+            continue   # 同日快取禁刪（LLM 快取重跑會重新付費）
+        if _is_tracked(f, tracked):
+            continue
+        try:
+            if datetime.fromtimestamp(f.stat().st_mtime) < cutoff:
+                old_cache.append(f)
+        except OSError:
+            continue
+    if old_cache:
+        logger.info(f"H4. data/ 快取 >{cache_days} 天且非當日：刪除 {len(old_cache)} 個。刪除範例：" + ', '.join(f.name for f in old_cache[:4]) + (' …' if len(old_cache) > 4 else ''))
+        if apply_changes:
+            for f in old_cache:
+                f.unlink()
+                cleaned_count += 1
+
     return cleaned_count
 
 def weekly_calendar_main(dry_run: bool | None = None) -> None:
