@@ -1435,5 +1435,29 @@
       "測試"
     ],
     "detail": "● 出處：CIO 2026-10-11 判決（deleg_15c42647，commit 9cc6c47e／tree 90e52d951730，verdict=APPROVE、blocking=[]）之 required_fixes 5 條；證據檔 `reviews/salary_tracker_cio_result.json`。性質＝hardening ＋ 已知界線，**不影響已發布版本正確性**（CIO 明載不改變判決）。\n● 立卡原因：這些是下一次同檔施工時必須一起帶上的修正；不立卡會在下輪『改同一支程式』時被當新缺陷重查一次，白耗一輪審查成本。\n● 待修項目（5 條，逐條保留 CIO 原意）：\n　① `mb_income_tracker.py` 模組頂層 `import salary_tracker`（連帶 mb_source／pyzipper）——此鏈任一匯入失敗會讓整個 07:10 job（含既有配息段）一起起不來；應把薪資段的 import／執行包進 try/except，確保既有配息段不被牽連。\n　② `snap.setdefault(\"salary_records_source\", {})[\"mb_auto_last_run\"]`——若該鍵存在但值為 `null`，setdefault 會回 None 並 TypeError；雖在 dumps 之前就拋出（snapshot 安全且 exit 1 揭露），仍應改為 None-safe。\n　③ 測試 F3 只比對 monthly_salary／monthly_income／working_surplus 三鍵，未涵蓋其他頂層鍵；應改為斷言「頂層 key 差集 = {salary_records 變動, salary_records_source 新增}」。\n　④ D 回放僅斷言 `len(det)>=1` 且全 no-op，斷言偏弱；且 2026-09（42,560）不落在任何現存匯出區間，測試無法覆蓋該月（＝檔頭已載明的界線，不是待修 defect）。\n　⑤ `tools/test_salary_tracker.py` fixture 逐字帶入真實台電統編字串（0379****，公開統編、非個資）；repo 外推 Pages 屬輕度識別資訊，建議打碼（上境帳號已用非真實值，處理正確）。\n　註：D 回放若仍要覆蓋到 42,560，須先凍結一份涵蓋 9/04 的歷史匯出當 fixture（現存匯出分別為 9/02 與 10/09，皆不含該日）。\n● 施工界線：只在下一輪同檔變更時合併處理，需獨立審查＋tree 綁定；不得為了「消化本卡」單獨重推一棵新 tree。\n● 驗收：① 每條有對應的負向測試（①：模擬 salary_tracker 匯入失敗，配息段仍須產出；②：寫入 null 後重跑不得 TypeError；③：注入非預期頂層鍵變更 → 必須 FAIL）② 現有 27 項不得退化 ③ 模型層欄位仍零變動。"
+  },
+  {
+    "id": "PEND-20261011-06",
+    "date": "2026-10-11",
+    "status": "待處理",
+    "last_confirmed": "2026-10-11T03:10:00+08:00",
+    "owner": "龍九",
+    "external_owner": null,
+    "title": "🟡 P2｜驗證器心跳時點早於夜鏈 → 22:40 收工檢查每晚結構性 ❌（主因已修，殘留待清）",
+    "priority": "P2",
+    "status_raw": "🟡 主因已修（2026-10-11 心跳 21:55→22:35；實跑 56 PASS / 0 FAIL、streak 0；22:40 收工檢查轉「全部通過」）。殘留三項待清，未授權施工前不動。",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": false,
+    "tags": [
+      "驗證器",
+      "cron",
+      "時點",
+      "收工檢查",
+      "誤報",
+      "治理"
+    ],
+    "is_informational": false,
+    "detail": "【症狀】2026-10-11 03:00 收工檢查唯一 ❌＝「驗證器 FAIL（48 PASS / 7 FAIL；連續失敗 9；rc=1）」。該數字來自心跳檔 data/verifier_heartbeat.json 的快照（最後執行 2026-10-10 21:55），非 live 執行。\n【根因：時點排序】驗證器心跳排在 21:55，早於當晚夜鏈（22:00 evening_sync 輕量校準 → 22:15 行動儀表板每晚同步 → 22:20 重產 index.html → 22:57 刷新當期真值）。驗證器比對的是「報告產物 × snapshot」的一致性，21:55 當下產物還是白天版本 → 固定不過；22:40 收工檢查再讀這份陳舊 FAIL → 每晚誤報。連 9 晚同型（10/05 起 6 FAIL、10/09 起 7 FAIL）＝結構性，不是當晚壞掉。\n【證據】① live 重跑同支驗證器（現行程式＋現行產物）：56 PASS / 0 FAIL / rc=0，連兩次一致 → 無 live 缺陷。② git worktree 檢出 fb5a9425（夜鏈前最後一顆 commit）跑同一支驗證器：48 PASS / 7 FAIL，與 21:55 心跳逐數相同 → 重現該時點狀態。③ 在 worktree 逐步換入現行 index.html／日報／snapshot／全部 *.html ＋ data/*.json ＋ DB：FAIL 僅由 7 降到 5 → 未收斂。原因是 worktree 同時帶舊版 .py（驗證器 import repo 模組現算期望值），故此實驗無法完成歸因（見殘留③）。\n【修法（已落地）】cron aaf5dbf89335「驗證器心跳」時點 55 21 * * * → 35 22 * * *（名稱為『驗證器心跳 22:35』）。選 22:35 的理由：夜鏈（22:00／22:15／22:20）之後、22:40 收工檢查之前，維持原設計『先心跳後檢查』的順序；不選 22:45 是避免心跳跑在收工檢查之後、使 22:40 讀到前一日心跳而反轉設計語意。驗收：以 cron 端路徑實跑 hermes/scripts/run_verifier_heartbeat.py → PASS 56 / FAIL 0 / streak 0（2026-10-11T03:07）；隨後 closeout_check.py → ⑧ 驗證器心跳 ✅ PASS、收工檢查『全部通過』（03:07）。next_run_at=2026-10-11T22:35。\n【殘留（未做，非 blocking）】① closeout_check.py:537 註解仍寫「驗證器目前真實結果為 49 PASS / 6 FAIL；6 條斷言漂移屬另案修復」＝數字已過期（現為 56/0），屬程式註解變更需獨立審查＋tree 綁定。② 6 FAIL → 7 FAIL 的增量來源未逐條定位（是否與時點無關的既有斷言漂移，需在夜鏈後固定時點連續取樣才能分離）。③ 未逐條判定『哪一個產物在夜鏈後翻轉哪一條斷言』：需在『現行 .py × 舊產物』的組合下重做實驗（本次 worktree 實驗因程式碼版本混淆而不可用）。\n【界線】本卡不得作為下調驗證器標準、放寬斷言或豁免 FAIL 的理由；心跳錯的是『時點』，不是斷言。來源：2026-10-11 使用者核准（兩項：移動心跳時點＋登錄本卡）。"
   }
 ]
