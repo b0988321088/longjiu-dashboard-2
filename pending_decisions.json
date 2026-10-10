@@ -142,7 +142,7 @@
     "last_confirmed_source": "未提供",
     "owner": "CEO",
     "external_owner": null,
-    "status_raw": "⏸ 條件未成立（2026-10-09 真值重算）：US30Y 5.606%（as_of 2026-10-08）、連續 29 日 ≥ 紅線；閘門 OK（解凍不許可） ｜ 舊 raw：⏸ 條件未成立（2026-10-08 真值重算）：US30Y 5.661%（as_of 2026-10-07）、連續 28 日 ≥ 紅線；閘門 OK（解凍不許可）",
+    "status_raw": "⏸ 條件未成立（2026-10-10 真值重算）：US30Y 5.606%（as_of 2026-10-08）、連續 29 日 ≥ 紅線；閘門 OK（解凍不許可） ｜ 舊 raw：⏸ 條件未成立（2026-10-09 真值重算）：US30Y 5.606%（as_of 2026-10-08）、連續 29 日 ≥ 紅線；閘門 OK（解凍不許可）",
     "is_informational": false
   },
   {
@@ -501,7 +501,7 @@
     "last_confirmed_source": "未提供",
     "owner": "CEO",
     "external_owner": null,
-    "status_raw": "⏸ 條件未成立（2026-10-09 真值重算）：US30Y 5.606%（as_of 2026-10-08）、連續 29 日 ≥ 紅線；閘門 OK（解凍不許可） ｜ 舊 raw：⏸ 條件未成立（2026-10-08 真值重算）：US30Y 5.661%（as_of 2026-10-07）、連續 28 日 ≥ 紅線；閘門 OK（解凍不許可）",
+    "status_raw": "⏸ 條件未成立（2026-10-10 真值重算）：US30Y 5.606%（as_of 2026-10-08）、連續 29 日 ≥ 紅線；閘門 OK（解凍不許可） ｜ 舊 raw：⏸ 條件未成立（2026-10-09 真值重算）：US30Y 5.606%（as_of 2026-10-08）、連續 29 日 ≥ 紅線；閘門 OK（解凍不許可）",
     "is_informational": false
   },
   {
@@ -1232,25 +1232,6 @@
       "週報"
     ],
     "detail": "【問題】兩個 producer 寫入同一路徑 weekly_report_{date}.html：build_weekly_report.py:310（12 章節版，live：sync_all.py:188「週報」步驟）與 weekly_report.py:82（legacy，2026-09-12，4KB，docstring 自稱每週日 19:00 產出）。【啟用中的排程】cron「龍九動態自我檢討週報 週日19:00」（expr 0 19 * * 0，enabled=True）指令為「先跑 python weekly_report.py + python dynamic_review.py weekly」→ 週日實際執行的是 legacy。【實測證據（hash 對照，已還原）】修正後 e639cf3e…／17,506 bytes／12 章節／修正字串=1 → 跑 legacy → 84657f1c…／2,515 bytes／4 章節／修正字串=0（覆蓋）→ 重跑 build_weekly_report.py → 回復 e639cf3e…。【影響】PEND-20261009-13 的修正不具持久性，週日 19:00 會被還原；正式產物內容取決於誰最後跑。【首選方案】統一為單一 producer。先確認所有呼叫者（lj.py:27 週報指令、cron 週日 job）、相依功能與排程，再決定「將 job 指向 build_weekly_report.py」或「淘汰 legacy 腳本」；不得未查相依就直接刪除。【驗收條件（可重現實測）】①排程實際入口已改為單一 producer；②輸出路徑唯一（全庫僅一處寫 weekly_report_{date}.html）；③修正字串（月租金（常態）80,100／目標動態／指定用途款）在排程跑完後仍持續存在；④重跑 legacy 路徑不再覆蓋正式產物（或 legacy 已不存在）。【關聯】PEND-20261009-13（CONDITIONAL 之持久性阻斷）。同類前例：INC-289 日報雙 producer。【施工紀錄 2026-10-09（使用者授權；未 commit／未 push）】決策＝統一單一 producer：①淘汰 legacy（git mv weekly_report.py → .archive/weekly_report.py.retired_20261009，可回復）②lj.py:27 weekly 指令改指向 build_weekly_report.py ③Hermes cron job 6a9babc90954 prompt 內 python weekly_report.py → python build_weekly_report.py。盤點證據：legacy 呼叫者僅 lj.py 與該 job；dynamic_review.py 對 legacy 引用數 0；links_config.py 的 weekly_report_ 連結 glob 由 build 產物滿足；實際受害證據＝weekly_report_2026-10-04.html 僅 2,505 bytes（週日 19:00 被 legacy 覆蓋），其餘日皆 17,0xx。四項驗收實測：①排程入口已改、legacy 呼叫數 0 ②全庫僅 build_weekly_report.py:310 寫該路徑 ③修正字串持續存在 ④重跑 legacy 回 No such file（不再覆蓋）。cron 工具覆核後 jobs.json 仍保有變更、job enabled、schedule 0 19 * * 0 未變。【CIO 複審（Gemini 2.5 Flash，與產出者 DeepSeek 非同家）】scope tree hash＝5cf579ee471e754945589f8c3477e59e9bbefa58（5 檔，範圍乾淨）。第一輪 REJECT／1 blocking（主張 HTML 產物不應入版控）；經補充客觀事實（本 repo 產物 HTML 依設計入版控並由 GitHub Pages 發布，實測受版控產物 HTML 檔數＝證據；為 diff hunk 外之定義補充）後第二輪 APPROVE／0 blocking／0 minor。未改動任何程式即以事實澄清，未為過關而修改正確程式。【殘餘風險（未處理，待裁示）】週日排程會執行 working tree 中尚未 commit 的程式碼，並將其產物 commit＋push → 「未審查程式碼經排程間接發布」。複審 APPROVE 尚未經 cio_approve.py 落地（該工具綁定 HEAD tree，須先 commit），故不構成發布授權。",
-    "due_date": null,
-    "last_confirmed": null,
-    "owner": "CEO",
-    "external_owner": null,
-    "needs_due_date": true
-  },
-  {
-    "id": "PEND-20261009-15",
-    "date": "2026-10-09",
-    "title": "「指定清償款」過時標籤同型殘留（8 檔 11 處）",
-    "priority": "P1",
-    "status": "待處理",
-    "status_raw": "🟡 待施工　使用者 2026-10-09 裁決開卡｜禁批次取代，須逐處判定",
-    "tags": [
-      "標籤語意",
-      "口徑一致",
-      "全庫掃描"
-    ],
-    "detail": "【背景】Bug C 於週報已修（改「指定用途款」），同源掃描發現同型舊標籤仍在 8 檔、11 處產出字串（非註解）：asset_diff_monitor.py:604,682,1125,1292；buffett_cto_analyzer.py:77；build_audit_dashboard.py:168；build_dashboard.py:402；build_rebalance_report.py:77；run_daily.py:1449；sot_targets.py:220；tactical_table.py:95。（另有 13 處註解提及，及歷史產出 HTML／.bak 目錄，屬歷史紀錄。）【問題】清償已於 2026-10-01 完成，該語意過時；現行指定用途款＝國泰保留 700,000＋W 房貸預繳 200,000。【驗收條件】①逐一判定每處屬「使用者可見標籤／歷史紀錄／內部語意」，逐處決定修或不修（禁全庫批次取代）；②修正處一律使用同一真值來源與一致的指定用途款口徑（snapshot.restricted_cash，禁寫死）；③全庫重掃證明應修位置已清零，且歷史資料（歷史 HTML／.bak／error_register 紀錄）未被誤改。【明確排除】「常態月租硬編碼退路散在 11 檔」為另一類警示，不併入本卡；須先盤點哪些是顯示 fallback、哪些是正式真值來源，另行裁定的獨立案。",
     "due_date": null,
     "last_confirmed": null,
     "owner": "CEO",

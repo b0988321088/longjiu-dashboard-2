@@ -380,5 +380,25 @@
   "external_owner": null,
   "needs_due_date": true,
   "cleanup_reason": "pending_reconcile 自動閉環：剩餘未清償 0（policy_repay_log 累計已足）"
+ },
+ {
+  "id": "PEND-20261009-15",
+  "date": "2026-10-09",
+  "title": "「指定清償款」過時標籤同型殘留（8 檔 11 處）",
+  "priority": "P1",
+  "status": "✅ 自動閉環(2026-10-10)：剩餘未清償 0（policy_repay_log 累計已足）｜原狀態：待處理",
+  "status_raw": "🟡 待施工　使用者 2026-10-09 裁決開卡｜禁批次取代，須逐處判定",
+  "tags": [
+   "標籤語意",
+   "口徑一致",
+   "全庫掃描"
+  ],
+  "detail": "【背景】Bug C 於週報已修（改「指定用途款」），同源掃描發現同型舊標籤仍在 8 檔、11 處產出字串（非註解）：asset_diff_monitor.py:604,682,1125,1292；buffett_cto_analyzer.py:77；build_audit_dashboard.py:168；build_dashboard.py:402；build_rebalance_report.py:77；run_daily.py:1449；sot_targets.py:220；tactical_table.py:95。（另有 13 處註解提及，及歷史產出 HTML／.bak 目錄，屬歷史紀錄。）【問題】清償已於 2026-10-01 完成，該語意過時；現行指定用途款＝國泰保留 700,000＋W 房貸預繳 200,000。【驗收條件】①逐一判定每處屬「使用者可見標籤／歷史紀錄／內部語意」，逐處決定修或不修（禁全庫批次取代）；②修正處一律使用同一真值來源與一致的指定用途款口徑（snapshot.restricted_cash，禁寫死）；③全庫重掃證明應修位置已清零，且歷史資料（歷史 HTML／.bak／error_register 紀錄）未被誤改。【明確排除】「常態月租硬編碼退路散在 11 檔」為另一類警示，不併入本卡；須先盤點哪些是顯示 fallback、哪些是正式真值來源，另行裁定的獨立案。",
+  "due_date": null,
+  "last_confirmed": null,
+  "owner": "CEO",
+  "external_owner": null,
+  "needs_due_date": true,
+  "cleanup_reason": "pending_reconcile 自動閉環：剩餘未清償 0（policy_repay_log 累計已足）"
  }
 ]
