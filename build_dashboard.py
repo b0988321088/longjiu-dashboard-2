@@ -685,7 +685,11 @@ def main():
     try:
         _pd = json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8"))
         _plan_items = []
-        for _d in (_pd if isinstance(_pd, list) else [])[:6]:
+        # 2026-10-11：原取前 6 筆（檔案順序）→ 改取「未結案」子集（四態），排序新→舊。
+        _pl = [x for x in (_pd if isinstance(_pd, list) else [])
+               if isinstance(x, dict) and str(x.get("status", "")) in ("待處理", "已確認")]
+        _pl.sort(key=lambda x: str(x.get("date", "")), reverse=True)
+        for _d in _pl[:6]:
             _st = str(_d.get("status", "") or "").replace("：", ":")[:26]
             _tt = str(_d.get("title", "") or "")[:26]
             _plan_items.append(f"{_st} {_tt}")
@@ -702,7 +706,13 @@ def main():
         _pd2 = json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8"))
         _lst = _pd2 if isinstance(_pd2, list) else []
         if _lst:
-            _p0 = _lst[0]
+            # 2026-10-11：本段（P0 卡／戰術計畫／交易計畫）原直接吃檔案順序（_lst[0]、
+            #   _lst[:6]）—— 狀態四態化與清單分流後，檔案第一筆即失去「P0」語意。
+            #   統一改吃「未結案」子集（四態：待處理／已確認），P0 卡優先挑有 P0 標記者。
+            _act = [x for x in _lst if str(x.get("status", "")) in ("待處理", "已確認")] or _lst
+            _p0_c = [x for x in _act if "P0" in str(x.get("title", ""))]
+            _p0 = (sorted(_p0_c, key=lambda x: str(x.get("date", "")))[0] if _p0_c
+                   else sorted(_act, key=lambda x: str(x.get("date", "")))[0])
             _p0_st = str(_p0.get("status", "") or "")[:90]
             _p0_tt = str(_p0.get("title", "") or "")[:90]
             _p0_dt = str(_p0.get("detail", "") or "")[:150]
@@ -710,15 +720,15 @@ def main():
                 '<div class="luxury-card p-6 border-l-4 border-red-500 space-y-4">'
                 '<div class="flex justify-between items-start">'
                 '<div><span class="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded font-mono font-bold">P0 戰略任務</span>'
-                f'<h3 class="text-md font-bold text-white mt-1">✅ {_p0_st}｜{_p0_tt}</h3></div>'
+                f'<h3 class="text-md font-bold text-white mt-1">{"🔄" if _p0_st.startswith("待處理") else "✅"} {_p0_st}｜{_p0_tt}</h3></div>'
                 f'<span class="text-xs text-slate-400 font-mono">{str(_p0.get("date", ""))[:10]}</span></div>'
                 '<div class="bg-slate-900/60 p-4 rounded-xl space-y-2 border border-slate-800 text-xs">'
-                f'<p class="font-bold text-yellow-500">✅ 執行狀態：{_p0_st[:60]}</p>'
+                f'<p class="font-bold text-yellow-500">執行狀態：{_p0_st[:60]}</p>'
                 f'<p class="text-slate-300 leading-relaxed font-mono">{_p0_dt}</p></div></div>'
             )
             tpl = tpl.replace("__P0_TASK__", _p0_html)
             _tact_rows = []
-            for _d in _lst[:6]:
+            for _d in _act[:6]:
                 _st = str(_d.get("status", "") or "").replace("：", ":")[:34]
                 _tt = str(_d.get("title", "") or "")[:26]
                 _tact_rows.append(
@@ -865,9 +875,19 @@ def main():
         # 2026-09-12：原取「清單前 6 筆」（=最舊 6 筆）→ 新裁決永遠看不到儀表板。
         # 改為：剔除已結案 → 依日期新→舊 → 取最新 8 筆（日報第5章仍列全部）。
         # 2026-09-13：閉環判定與前端 JS 對齊（單一口徑），否則靜態層與即時層顯示不同筆數。
-        _closed_kw = ("✅", "☑", "已完成", "已結案", "已定案", "閉環", "已送出", "已核定")
+        # 2026-10-11：狀態單一口徑＝pending_engine 四態（待處理／已確認／已完成／關案）。
+        # 原白名單在 2026-10-06 狀態正規化後失效 → 「關案」被靜態層當成執行中（與前端 JS 不一致）。
+        _open_status = ("待處理", "已確認")
+        _closed_kw = ("✅", "☑", "已完成", "已結案", "已定案", "閉環", "已送出", "已核定", "關案")
+        def _is_active_r(_r):
+            _s = str(_r.get("status", ""))
+            if _s in _open_status:
+                return True
+            if _s in ("已完成", "關案"):
+                return False
+            return not any(_kw in _s for _kw in _closed_kw)
         _pd3_rows = [r for r in (_pd3 if isinstance(_pd3, list) else [])
-                     if isinstance(r, dict) and not any(_kw in str(r.get("status", "")) for _kw in _closed_kw)]
+                     if isinstance(r, dict) and _is_active_r(r)]
         _pd3_rows.sort(key=lambda r: str(r.get("date", "")), reverse=True)
         for _d in _pd3_rows[:8]:
             _d_date = str(_d.get("date", ""))[5:].replace("-", "/")

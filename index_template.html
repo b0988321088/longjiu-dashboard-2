@@ -971,9 +971,15 @@ var gotTotal = _salaryA + divTotal + rentGot;
     fetch('pending_decisions.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(list){
       if(!list || !list.length) return;
       var esc = function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+      /* 2026-10-11：狀態單一口徑＝pending_engine 四態（待處理／已確認／已完成／關案）。
+         2026-10-06 狀態正規化後，舊白名單（✅/已結案…）比對失效 → 連「關案」也被當執行中
+         計入（實測 87 筆全數入列）。現以四態為準；非四態的舊資料才回退白名單。 */
+      var CLOSED_KW = ['✅','☑','已完成','已結案','已定案','閉環','已送出','已核定','關案'];
       var active = list.filter(function(x){
         var s = String(x.status||'');
-        return ['✅','☑','已完成','已結案','已定案','閉環','已送出','已核定'].every(function(k){ return s.indexOf(k)<0; });
+        if(s === '待處理' || s === '已確認') return true;
+        if(s === '已完成' || s === '關案') return false;
+        return CLOSED_KW.every(function(k){ return s.indexOf(k)<0; });
       });
       active.sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); });
       var h = '<div style="font-size:11px;color:#64748b;margin-bottom:4px">執行中 '+active.length+' 筆（即時 · 已閉環不顯示）</div>';
@@ -1016,6 +1022,28 @@ var gotTotal = _salaryA + divTotal + rentGot;
       }
       h += '<div class="text-[11px] text-slate-500 mt-1">已閉環事項不列此卡 → 見頁首「✅ 本週完成清單」；完整歷史見日報「系統工作日誌」段</div>';
       wl.innerHTML = h;
+      /* 2026-10-11：技術債獨立呈現 —— 工程/技術債類（守門／閘門／驗收器／寫死／治理缺陷）
+         原被登錄進 pending_decisions.json，導致「執行中決策追蹤」膨脹（10/09 +22、10/11 +16）。
+         現已分流至 tech_debt.json：決策歸決策、工程債歸工程債。 */
+      fetch('tech_debt.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(td){
+        if(!td || !td.length) return;
+        var op = td.filter(function(x){ var s=String(x.status||''); return s.indexOf('開放')>=0 || s.indexOf('暫緩')>=0; });
+        if(!op.length) return;
+        var sev = {};
+        op.forEach(function(x){ var k=String(x.severity||'NA'); sev[k]=(sev[k]||0)+1; });
+        op.sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); });
+        var ph = '<div class="mt-4 pt-3 border-t border-slate-700">'
+          + '<div class="text-white font-bold text-xs">🔧 技術債（工程／治理 · 獨立追蹤 '+op.length+' 筆）</div>'
+          + '<div class="text-[11px] text-slate-400 mt-1">P0 '+(sev.P0||0)+' ｜ P1 '+(sev.P1||0)+' ｜ P2 '+(sev.P2||0)+' ｜ 未分級 '+(sev.NA||0)+'</div>'
+          + '<div class="space-y-1 mt-2">';
+        op.slice(0,5).forEach(function(x){
+          ph += '<div class="flex items-start gap-2 p-2 bg-slate-900/30 rounded border border-slate-800">'
+              + '<span class="text-slate-500 font-mono w-14 shrink-0">'+wesc((x.date||'').slice(5))+'</span>'
+              + '<span class="text-slate-300 flex-1">'+wesc(x.title||'')+'</span></div>';
+        });
+        ph += '</div><div class="text-[11px] text-slate-500 mt-1">完整清單見 tech_debt.json（不再佔用「執行中決策追蹤」）</div></div>';
+        wl.insertAdjacentHTML('beforeend', ph);
+      }).catch(function(){});
     }).catch(function(){});
   }
   var wd = document.getElementById('week-done-list');

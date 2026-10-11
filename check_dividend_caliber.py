@@ -702,7 +702,11 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "build_weekly_report.py", "lj.py", "weekly_report.py",
            "verify_performance_monthly.py", "verify_performance_core_task12.py",
            "perf_gate_contract.py", "verify_perf_gate_tests.py",
-           "cash_need_90d_guard.py", "verify_cash_need_90d_guard.py",
+           # 2026-10-11 本班：pending 治理修復（1/3 只增不減根治）
+           #   授權：使用者 2026-10-11 Telegram 核准「A+B+D 一次做完（修引擎＋修前端計數＋清理）」
+           "decision_auto_close.py",   # 逾時歸檔改四態判定＋閉環改歸檔（不再直接覆寫正本）
+           "tech_debt.py",   # 技術債登錄工具（工程/治理類分流去處；新增）
+           "tech_debt.json",   # 技術債資料檔（新增；非程式檔但一併宣告）
            }
 # 逐日產物：命名比對，跨月不失效（舊版 allowed_prefixes 釘死 2026-09）
 _DAILY = re.compile(r"^(asset_diff|retirement_plan|daily_report_v2|rebalance_dashboard|"

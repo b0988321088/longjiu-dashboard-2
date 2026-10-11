@@ -2212,5 +2212,11 @@
   "category": "完成",
   "item": "2026-10-11 一次性根因修復（A乾粉/D債券/C防守口徑/B資產分解/E調度欄位）統一發布（核准＝使用者 2026-10-11 Telegram 一次整合授權（A+D+C+B+E+共用閘門、一次驗收、一次發布）。發布：程式 commit 48f78549（tree 7ee0f766，A+D）＋66c6d46c（tree 75d403b1，C+B+E＋",
   "detail": "核准＝使用者 2026-10-11 Telegram 一次整合授權（A+D+C+B+E+共用閘門、一次驗收、一次發布）。發布：程式 commit 48f78549（tree 7ee0f766，A+D）＋66c6d46c（tree 75d40"
+ },
+ {
+  "date": "2026-10-11",
+  "category": "修正",
+  "item": "執行中決策追蹤「只增不減」根治：立卡分流（tech_debt.json）＋自動歸檔/逾期警報四態修復＋前端計數口徑對齊",
+  "detail": "觸發：使用者 2026-10-11 詢問「執行中的決策追蹤怎麼越來越多」。診斷（三層根因）：①立卡口徑膨脹——10/09 +22、10/11 +16 筆，87 筆中約 76% 為工程/治理類（守門、閘門、驗證器、寫死、文件一致性），非資產決策；②歸檔引擎實質失效——decision_auto_close.py 逾時條件寫 '\"待執行\" in status'，但 10/06 狀態已正規化為四態（待處理／已確認／已完成／關案），該字串全庫 0 筆 → 逾時歸檔與逾期警報兩條路徑同時靜默失效（實測 87 筆會閉環 0 筆）；③顯示層多算——前端 JS 與 build_dashboard 靜態層仍用舊白名單（✅/已結案…），四態後的「關案」不含白名單關鍵字 → 5 筆已關案被計入執行中（顯示 87、實際 82）。處理（使用者核准 A+B+D 一次做完）：A 引擎——逾時歸檔改四態＋due_date 優先，且只自動歸檔「工程/治理類」逾期卡，資產類（債券/保單/質押/標案/轉貸…）即使逾期只列警報交 CEO 裁示；閉環改為先寫 pending_decisions_archive.json（含 cleanup_reason）再從正本移除；逾期警報改以 due_date 判定。B 顯示——index_template.html 前端 JS 與 build_dashboard.py 靜態層改以四態為單一口徑（非四態舊資料才回退白名單）；順修 P0 卡吃檔案順序（_lst[0]）與「✅ 待處理」矛盾顯示。D 清理——87 → 21 筆：60 筆工程/治理類移入新建 tech_debt.json（新工具 tech_debt.py：add/list/close）、5 筆關案＋1 筆被 10/01 新定案取代者歸檔（archive 42 → 108 筆，含 cleanup_reason）。C 分流——技術債於儀表板「系統工作日誌」卡下獨立呈現（P0/P1/P2 統計），不再佔用決策追蹤。驗收：decision_auto_close 實跑 21 筆/0 誤歸檔且逾期警報復活（5 筆）；check_dividend_caliber 69/74（未變差，本班兩檔已加入 allowed 宣告）；verify_daily_report_single_producer 68 PASS/0 FAIL（重產日報後 S3.8 一致）；build_dashboard rc=0，決策卡 8 筆、P0 卡改挑 P0 標記者。未發布（--no-push）：依發布紀律待使用者授權。"
  }
 ]
