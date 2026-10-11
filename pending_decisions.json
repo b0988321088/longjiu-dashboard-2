@@ -1646,5 +1646,73 @@
     ],
     "is_informational": false,
     "detail": "【症狀】`.git/CIO_APPROVED` 為六欄格式（時間／tree／commit／verdict／reviewer／note）；CIO 型紀錄的 note 欄位多為空 → 無法回答「這筆 RECORD 的審查證據來自哪個檔案」。\n【影響】事後稽核僅能證明「有審查」，不能證明「審查了什麼、依據哪份 JSON」。tree 綁定仍有效（內容不可替換），缺的是**證據來源**的追溯。\n【建議】`cio_approve.py` 在 note 欄位寫入 `--result` 的相對路徑與其 sha256；不改 tree 綁定語意、不改格式欄數。\n【來源】PG-20261011 v2 使用者裁決第 5 點。"
+  },
+  {
+    "id": "PEND-20261011-15",
+    "date": "2026-10-11",
+    "status": "待處理",
+    "last_confirmed": "2026-10-11T22:59:12+08:00",
+    "owner": "龍九",
+    "external_owner": null,
+    "title": "🟡 P2｜10/11 週報產物殘留舊措辭「合併口徑 66.6% 已足」（產生器已修、產物未重產）",
+    "priority": "P2",
+    "status_raw": "🟡 已知殘留（2026-10-11 使用者裁決：採不重產方案，明確記錄）",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": false,
+    "tags": [
+      "週報",
+      "措辭",
+      "產物",
+      "CBE",
+      "待確認"
+    ],
+    "is_informational": false,
+    "detail": "【現況】產生器 `institutional_flow.py:645-657` 已改為揭露分母口徑（配息資產合計 17,820,490 ÷ 總資產 26,751,051 = 66.6% vs 門檻 60% → 已足），驗證器 C-8「舊樣式（無定義的『合併口徑 X% 已足』）已不存在」通過＝**程式層級已修**。但 2026-10-11 週報 HTML（`dynamic_weekly_review_2026-10-11.html`，commit 21461bc9）的 00878 理由欄仍含舊措辭字面「合併口徑 66.6% 已足」。\n【性質】該處為 LLM 產出片段（非模板），屬歷史產物；下週重產即消失。\n【使用者裁決 2026-10-11】採不重產方案 — 源頭已修、重產增成本並擴大修復範圍。**但明確界線：下週重新產生不代表這份 10/11 HTML 已經修正**；若該報告仍被用於決策，須另行評估是否需要更正，不得當成已修復的現行產物。\n【下一步】確認 10/11 週報是否仍為決策依據。\n【來源】CBE 工單 required_fixes[3]（verdict=APPROVE、blocking=[]）。CBE 修復工單已 CLOSED（commit f815da69）。"
+  },
+  {
+    "id": "PEND-20261011-16",
+    "date": "2026-10-11",
+    "status": "待處理",
+    "last_confirmed": "2026-10-11T22:59:12+08:00",
+    "owner": "龍九",
+    "external_owner": null,
+    "title": "🟠 P1｜check_dividend_caliber.py 六條既有 FAIL（4 條現金口徑／1 條 due_date／1 條變更範圍）",
+    "priority": "P1",
+    "status_raw": "🔴 未施工（2026-10-11 CBE 驗收對照證實為既有問題，另案處理）",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": false,
+    "tags": [
+      "驗證器",
+      "現金口徑",
+      "既存FAIL",
+      "基準證據",
+      "CBE"
+    ],
+    "is_informational": false,
+    "detail": "【現況】`check_dividend_caliber.py` 68/74 PASS、6 FAIL：\n① 可動用現金＝cash_layers.available（唯一真值）\n② 穿透桶『現金/安全網』＝可動用＋在途未對帳（不得參與決策）\n③ 穿透桶口徑＝可動用＋589 在途／未對帳（不得參與決策）\n④ 穿透桶『現金/安全網』不得當可動用（在途／未對帳）\n⑤ 無 due_date 者標記 needs_due_date（列 3 卡：`index.html:275-277` 靜態 fallback／`build_weekly_report.py:203-205` else 分支 fallback／`institutional_flow.py:650,664` 寫死 weekly_plan 行模板＝上游根因）\n⑥ 變更範圍：無未宣告的程式檔異動（工作區 5 個未提交程式檔：`tools/verify_cbe_20261011.py`＋`_archive_closed_card_20261010.py`＋`tools/health_alert_check.py`＋`tools/it_health_alert_check.py`＋`tools/test_health_alert_check.py`）\n【歸類依據（基準版本證據）】2026-10-11 以 `git stash push -- tools/verify_cbe_20261011.py` 移除本輪 CBE 修改後重跑，**HEAD 版同樣 FAIL** → 證實為既有問題，非 CBE 修復造成。失敗項目與該對照已記錄於本卡。\n【使用者裁決 2026-10-11】不混入 CBE 工單、**不為求本次驗收全綠而順手修改這 6 項**；保留失敗項目與基準版本證據，另案決定是否開修復工單。"
+  },
+  {
+    "id": "PEND-20261011-17",
+    "date": "2026-10-11",
+    "status": "待處理",
+    "last_confirmed": "2026-10-11T22:59:12+08:00",
+    "owner": "龍九",
+    "external_owner": null,
+    "title": "🟡 P2｜回歸測試污染工作區：dragon_assets.db 成為 dirty（測試隔離待檢討）",
+    "priority": "P2",
+    "status_raw": "🟡 待確認（2026-10-11 使用者裁決：暫時保留、不清理、不還原）",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": false,
+    "tags": [
+      "測試隔離",
+      "dirty",
+      "dragon_assets.db",
+      "回歸測試"
+    ],
+    "is_informational": false,
+    "detail": "【現象】2026-10-11 執行 CBE 回歸測試（`check_caliber_consistency`／`check_cross_report_consistency`／`check_penetration_consistency`／`check_dividend_caliber`）後，工作區 dirty 由 23 → 24，新增 `dragon_assets.db`（狀態 M）。\n【性質】閉環稽核認可該檔屬可接受類別（`閉環稽核結果：全部通過 ✅`），但它是**測試副作用**，非產線產物。\n【使用者裁決 2026-10-11】暫時保留、不清理、不還原；**不得因稽核允許就永久忽略**。\n【待確認】①資料庫是否有預期的測試資料變更 ②是否應改用隔離測試資料庫 ③未來回歸測試能否避免污染工作區。\n【來源】2026-10-11 CBE 修復發布驗收（commit f815da69）。"
   }
 ]
