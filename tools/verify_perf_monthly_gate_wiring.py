@@ -69,12 +69,17 @@ print("== 4. 行為負測（閘門指令真的會擋）==")
 orig_bytes = PAGE.read_bytes()
 orig_sha = hashlib.sha256(orig_bytes).hexdigest()
 neg_rc = pos_rc = None
+# 2026-10-11（晨間產線事件修復）：閘門自 2026-10-09 Phase 03 起「未帶旗標者一律走嚴格 publish」，
+#   而日常產線由 regenerate_report.py 明確傳 `--check-mode daily`。本驗證器原本以「裸呼叫」代表
+#   日常路徑 → 模式變更後恆 rc=1（harness 自己長期假紅、連帶失去『閘門真的會擋』的驗證能力）。
+#   改為與產線同一條呼叫方式（daily），負測仍必須 rc≠0。
+_GATE_CMD = [sys.executable, str(GATE), "--check-mode", "daily"]
 try:
-    r0 = run([sys.executable, str(GATE)])
+    r0 = run(_GATE_CMD)
     pos_rc = r0.returncode
     chk(pos_rc == 0, "還原狀態下閘門 PASS（rc=0）", f"rc={pos_rc}")
     PAGE.write_bytes(orig_bytes.replace("◆ 資本基準月".encode(), "◆ 資本基準月 <span>9,999,999</span>".encode(), 1))
-    r1 = run([sys.executable, str(GATE)])
+    r1 = run(_GATE_CMD)
     neg_rc = r1.returncode
     chk(neg_rc != 0, "植入硬編數字後閘門 FAIL（rc≠0 → 管線會擋推）", f"rc={neg_rc}")
 finally:

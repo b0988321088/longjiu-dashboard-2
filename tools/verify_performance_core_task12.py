@@ -88,6 +88,8 @@ for f in CODEFILES:
 
 print("== 3. 唯一計算層重現三個閉月 ==")
 sys.path.insert(0, str(REPO))
+sys.path.insert(0, str(REPO / "tools"))   # 2026-10-11：受限標籤遮罩正規化（tools/label_mask.py）
+import label_mask as _label_mask  # noqa: E402
 import performance_core as pc  # noqa: E402
 _snap = json.loads((REPO / "snapshot.json").read_text(encoding="utf-8"))
 _adj = json.loads((REPO / "investment_performance_adjust.json").read_text(encoding="utf-8"))
@@ -144,11 +146,29 @@ for f in ("mtd_performance.html", "mtd_data.json"):
     a = _norm_ts((SB / f).read_text(encoding="utf-8", errors="replace"))
     b = _norm_ts((SB / "_old" / f).read_text(encoding="utf-8", errors="replace"))
     chk(f"逐位元相同（僅遮罩 generated_at）：{f}", a == b, f"{len(a)} vs {len(b)} chars")
-a = (SB / "investment_performance.html").read_bytes()
-b = (SB / "_old" / "investment_performance.html").read_bytes()
-chk("逐位元完全相同：investment_performance.html", a == b, f"{len(a)} vs {len(b)} bytes")
-chk("console/TG 文字相同：build_mtd_report", (_r3.stdout + _r3.stderr) == (_r1.stdout + _r1.stderr))
-chk("console/TG 文字相同：build_investment_performance", (_r4.stdout + _r4.stderr) == (_r2.stdout + _r2.stderr))
+a = (SB / "investment_performance.html").read_bytes() if (SB / "investment_performance.html").exists() else None
+b = (SB / "_old" / "investment_performance.html").read_bytes() if (SB / "_old" / "investment_performance.html").exists() else None
+# 2026-10-11（使用者裁決「受限契約正規化」）：本項改為「正規化後完全相同」。
+#   唯一被正規化的欄位＝保單標籤代號（第一金 FJ<2> / vs FJ<2>，數值型或遮罩型一律視為等價）；
+#   任何非標籤差異仍會 FAIL（tools/label_mask.py 的 same_after_mask ＋ test_label_mask.py T3–T5）。
+if a is None or b is None:
+    chk("逐位元完全相同（標籤遮罩正規化後）：investment_performance.html", False,
+        "A/B 產物缺失 → fail-closed（不完整產物不得冒充通過）")
+else:
+    chk("逐位元完全相同（標籤遮罩正規化後）：investment_performance.html",
+        _label_mask.same_after_mask(a, b), f"{len(a)} vs {len(b)} bytes")
+_o1, _o2 = _r3.stdout + _r3.stderr, _r1.stdout + _r1.stderr
+_o3, _o4 = _r4.stdout + _r4.stderr, _r2.stdout + _r2.stderr
+if not _o1.strip() or not _o2.strip():
+    chk("console/TG 文字相同：build_mtd_report", False, "console 輸出為空 → fail-closed")
+else:
+    chk("console/TG 文字相同：build_mtd_report", _label_mask.same_after_mask(_o1, _o2))
+if not _o3.strip() or not _o4.strip():
+    chk("console/TG 文字相同（標籤遮罩正規化後）：build_investment_performance", False,
+        "console 輸出為空 → fail-closed")
+else:
+    chk("console/TG 文字相同（標籤遮罩正規化後）：build_investment_performance",
+        _label_mask.same_after_mask(_o3, _o4))
 
 print("== 5. 環境健康度（獨立呈現；不計入 Task 1+2 契約）==")
 # 2026-10-09（Phase 03，設計 v2 §2.3）：**解耦**。
