@@ -209,6 +209,20 @@ def s_edge() -> None:
           pg.special_reason("data/ai_cost_daily.jsonl") is None)
     check("E5 .bak 被擋", pg.special_reason("x.json.bak") is not None)
     check("E6 reviews/ 被擋", pg.special_reason("reviews/a.json") is not None)
+    # 本輪 CIO 指摘的修正驗證
+    check("E7 大小寫變體被擋（Windows 大小寫不敏感）",
+          pg.special_reason("Reviews/x.json") is not None
+          and pg.special_reason("PENDING_DECISIONS.JSON") is not None)
+    check("E8 憑證／設定檔被擋（.env/.ini/.conf/.xml）",
+          all(pg.special_reason(x) is not None for x in ("cfg.env", "app.ini", "s.conf", "d.xml")))
+    check("E9 二進位／執行檔被擋（.exe/.dll/.jar/.so）",
+          all(pg.special_reason(x) is not None for x in ("a.exe", "b.dll", "c.jar", "d.so")))
+    # 空 allow 檢查（既有實作，供 review 追溯）
+    repo4, head4, base4 = make_repo({"cost.html": "a"},
+                                    allowlist={"version": 1, "entries": [{"label": "x", "allow": []}]})
+    r4 = pg.decide(repo4, base4, None, allowlist_ref=base4)
+    check("E10 條目 allow 為空字串→拒（既有檢查）",
+          not r4["ok"] and any(b["id"] == "ALLOWLIST_UNAVAILABLE" for b in r4["blockings"]))
 
 
 def main() -> int:

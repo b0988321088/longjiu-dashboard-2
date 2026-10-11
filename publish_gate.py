@@ -54,9 +54,10 @@ NEVER_AUTO_PREFIX = (
     "logs/",
     "data/decision_intake",
 )
-NEVER_AUTO_SUFFIX = (".bak", ".backup", ".old", ".orig", ".tmp")
+NEVER_AUTO_SUFFIX = (".bak", ".backup", ".old", ".orig", ".tmp", ".env", ".envrc")
 CODE_SUFFIX = (".py", ".sh", ".bat", ".ps1", ".cmd", ".toml", ".yml", ".yaml",
-               ".js", ".ts", ".sql", ".json5")
+               ".js", ".ts", ".sql", ".json5", ".ini", ".conf", ".cfg", ".xml",
+               ".properties", ".exe", ".bin", ".jar", ".so", ".dll", ".dylib", ".msi")
 
 
 def _git(base: Path, args: list[str], timeout: int = 180) -> subprocess.CompletedProcess:
@@ -91,19 +92,33 @@ def changes(base: Path, range_base: str) -> tuple[dict[str, str] | None, str]:
     return out, "ok"
 
 
-def special_reason(path: str) -> str | None:
+def special_reason(path: str, base: Path | None = None) -> str | None:
+    """特殊類別 → 強制真 CIO 審查。回傳原因或 None。
+
+    比對一律**不分大小寫**（本系統在 Windows 上執行，大小寫不敏感的檔案系統
+    可能讓 'Reviews/x.json' 繞過 'reviews/' 前綴比對）。
+    """
     p = _norm(path)
-    if p in NEVER_AUTO_EXACT:
+    lp = p.lower()
+    if lp in {x.lower() for x in NEVER_AUTO_EXACT}:
         return f"列於強制 CIO 清單：{p}"
     for pre in NEVER_AUTO_PREFIX:
-        if p.startswith(pre):
+        if lp.startswith(pre.lower()):
             return f"屬強制 CIO 前綴（{pre}）：{p}"
     for suf in NEVER_AUTO_SUFFIX:
-        if p.endswith(suf):
-            return f"備份／暫存檔不得自動發布：{p}"
+        if lp.endswith(suf.lower()):
+            return f"備份／暫存／憑證檔不得自動發布：{p}"
     for suf in CODE_SUFFIX:
-        if p.endswith(suf):
-            return f"程式檔改動必須走真 CIO 審查：{p}"
+        if lp.endswith(suf.lower()):
+            return f"程式／設定檔改動必須走真 CIO 審查：{p}"
+    # 符號連結：目標可能指向未授權路徑 → 一律不得自動發布
+    if base is not None:
+        try:
+            fp = base / p
+            if fp.is_symlink():
+                return f"符號連結不得自動發布（目標未受白名單管轄）：{p}"
+        except Exception:
+            return f"無法安全判定檔案型態（保守拒絕）：{p}"
     return None
 
 
@@ -192,7 +207,7 @@ def decide(base: Path, range_base: str, producer_own: list[str] | None = None,
     changed = set(ch.keys())
 
     # 關卡二：特殊類別（一律執行，不因前面失敗而跳過）
-    specials = {p: special_reason(p) for p in sorted(changed)}
+    specials = {p: special_reason(p, base) for p in sorted(changed)}
     specials = {p: r for p, r in specials.items() if r}
     checks["special"] = {"ok": not specials, "hits": specials}
 
