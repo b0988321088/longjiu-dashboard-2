@@ -99,8 +99,8 @@ _us = _sf["美股市值型成長"]
 _need = ("戰略偏差_pp", "戰術偏差_pp", "理論調整金額_twd", "風控後可執行金額_twd", "阻擋規則名稱")
 rec("E-1", "五個結構化欄位齊備", all(k in _us for k in _need), str([k for k in _need if k not in _us]))
 rec("E-2", "美股：戰略偏差 +8.1pp、理論調整 2,166,835（含公式與分母）",
-    _us["戰略偏差_pp"] == 8.1 and abs(_us["理論調整金額_twd"] - 2166835) <= 2
-    and "分母" in _us["公式"] or True,
+    (_us["戰略偏差_pp"] == 8.1 and abs(_us["理論調整金額_twd"] - 2166835) <= 2
+     and "分母" in _us["公式"]),
     f"{_us['戰略偏差_pp']:+.1f}pp／{_us['理論調整金額_twd']:,}")
 rec("E-3", "理論金額＝|偏差pp|÷100×分母（獨立複算）",
     abs(_us["理論調整金額_twd"] - round(abs(_us["戰略偏差_pp"]) / 100 * _tot)) <= 1)
