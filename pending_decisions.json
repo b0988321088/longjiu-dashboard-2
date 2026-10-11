@@ -1554,5 +1554,51 @@
   ],
   "is_informational": false,
   "detail": "【症狀】build_refinance_html.py 的 publish_deck() 在「簡報檔無變更」分支，若同時偵測到遠端未同步（本機有未推 commit／ls-remote 失敗／遠端 sha≠HEAD），會回 rc=1 並印 ❌；該檢查發生在 --dry-run 預覽之前，故 --dry-run 使用者期待「只預覽將執行的步驟」時，會拿到 rc=1 且看不到步驟清單。\n【影響面】僅 --dry-run（手動測試用）語意不精確。正式 cron 路徑（週日 17:00 job，不帶旗標）不受影響：該 rc=1 正是想要的 fail-loud（遠端未同步不得給綠燈）。非「失敗卻綠燈」，第三輪 CIO 明列非阻擋。\n【建議修法】讓 --dry-run 一律只預覽：在 no-change 分支的同步檢查之前早退（rc=0），並在輸出明示「預覽模式：本次未驗證遠端同步」；或改為印出「將執行的同步確認步驟（rev-list 未推數／ls-remote sha 比對）」後才回 1。\n【界線】不得為了讓 --dry-run 變綠而放寬 no-change 分支的 fail-loud 條件（那會重開「延遲型靜默成功」）。\n【來源】reviews/deck_autopub_cio_result_round3.json required_fixes[0]（verdict=APPROVE、blocking=[]）。"
- }
+ },
+  {
+    "id": "PEND-20261011-11",
+    "date": "2026-10-11",
+    "status": "待處理",
+    "last_confirmed": "2026-10-11T18:37:33+08:00",
+    "owner": "龍九",
+    "external_owner": null,
+    "title": "🟡 P2｜regenerate_report 收尾守門：「無檔案可提交」被歸為推送失敗 → 冪等重跑噴假 FAIL",
+    "priority": "P2",
+    "status_raw": "🟡 未施工（2026-10-11 CIO 差異覆蓋審查列為非阻擋 hardening RF1）",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": true,
+    "tags": [
+      "發布",
+      "regenerate_report",
+      "post-push",
+      "假警報",
+      "CIO-hardening"
+    ],
+    "is_informational": false,
+    "detail": "【症狀】10/11 上線的收尾守門以 `_push_pending = bool(_push_files) and _gate_ok` 判定「本次應推送成功」；但當 `_gate_ok=True`、`_push_files` 非空、而 `git diff --cached` 為空時（該段印「⚠️ 無檔案可提交（全部已是最新，跳過 commit）」、根本沒呼叫 auto_push，`_recorded` 停在 False），會落入 elif 分支 → `_pages_ok=False` → 行程 rc 由 0 翻成 1，且訊息宣稱「推送未成功（見上方 auto_push 訊息）」卻沒有任何 auto_push 訊息。\n【影響面】同日冪等重跑（例如依失敗訊息指示「修正後重跑 regenerate_report.py --deploy」而產物位元未變）會對健康站台噴假 FAIL。方向仍是 fail-loud（不會掩蓋真錯），故 2026-10-11 CIO 列為 hardening、非阻擋。\n【建議修法】把「無檔案可提交」獨立成旗標（如 `_nothing_to_commit`），使其落入「驗線上」分支，與舊碼在該子情境的行為一致；或至少在該分支訊息區分「無待推變更」與「推送失敗」。\n【界線】不得為了消滅這個假 FAIL 而放寬任何略過分支的 fail-loud（所有略過分支 rc 必須維持 1）。\n【來源】reviews/postpush_guard_cio_result.json required_fixes[0]（verdict=APPROVE、blocking=[]）。"
+  },
+  {
+    "id": "PEND-20261011-12",
+    "date": "2026-10-11",
+    "status": "待處理",
+    "last_confirmed": "2026-10-11T18:37:33+08:00",
+    "owner": "龍九",
+    "external_owner": null,
+    "title": "🟡 P2｜閘門 FAIL 時略過線上連結驗證 → 既有線上 404 的診斷訊號縮減（rc 仍為 1）",
+    "priority": "P2",
+    "status_raw": "🟡 未施工（2026-10-11 CIO 差異覆蓋審查列為非阻擋 hardening RF2）",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": true,
+    "tags": [
+      "發布",
+      "regenerate_report",
+      "post-push",
+      "診斷訊號",
+      "CIO-hardening"
+    ],
+    "is_informational": false,
+    "detail": "【症狀】閘門 FAIL 的本輪不再執行 `check_dashboard_sync.py --post-push`，因此「與本輪無關的既有線上 404」在 gate-FAIL 執行中不再被列出（rc 仍為 1，訊息只剩「⏭ 本次未推送 → 略過線上連結驗證」）。舊碼在該情境會列出 404 清單。\n【影響面】診斷訊號縮減，非放寬 fail-loud（CIO 以 16 組真值表證明所有略過分支 rc=1，且「rc=0 ⇒ 一定真的驗過線上且通過」）。\n【建議修法】略過時補一行明示「本輪未驗線上連結（線上狀態未由本輪變更）」，避免日後把「未列 404」誤讀成「線上一定乾淨」。\n【來源】reviews/postpush_guard_cio_result.json required_fixes[1]（verdict=APPROVE、blocking=[]）。"
+  }
 ]
