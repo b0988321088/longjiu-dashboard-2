@@ -39,6 +39,62 @@ TRACK_MARK = ("🔴", "⏸️", "⏳", "🟡", "📌", "pipeline", "📋 重要"
 
 STATE_CALENDAR_OVERDUE = ROOT / "data" / "calendar_overdue_state.json"
 
+# ── 每週深度清理：產物邊界與落版紀律（2026-10-12）─────────────────────────────────
+# 本 job 只會動這些位置（自身產物）。落版／推送一律以此為界，**禁止 git add -A**：
+#   2026-10-12 03:00 實踩 —— `auto_push --auto-stage`（＝git add -A）把整個工作區掃進本 job 的
+#   commit，含閘門「強制真 CIO」類檔（dashboard_decisions.json／work_log.json／snapshot.json／
+#   reviews/／logs/…，外加別條路徑的 _bak_* 備份目錄）→ publish_gate 判 mode=CIO，而本 job 只能
+#   蓋 AUTO 章 → rc=3 fail-closed；那顆 commit 留在 main 上又讓 origin/clean-main..HEAD 整段範圍
+#   對所有 producer 變 CIO 模式（07:00 晨報部署、當晚夜鏈一起被擋）。
+CLEANUP_OWN_PRODUCTS = (
+    ".archive/",                          # 歸檔、備份輪替、報告（含 deprecated_scripts/ 內的程式檔）
+    "data/.cache_audit_state.json",
+    "data/calendar_overdue_state.json",
+    "work_log.json",                      # 歸檔後改寫（治理檔）
+    "error_register.md",                  # 歸檔後改寫（治理檔）
+    "pending_decisions.json",             # B 段 pending 清理（治理檔）
+    "dashboard_decisions.json",           # B 段內嵌 pending 清理（治理檔）
+)
+
+
+def _cleanup_product_scan():
+    """→ (可落版產物, 需真 CIO 審查產物)：工作區實況 ∩ CLEANUP_OWN_PRODUCTS。
+
+    「需真 CIO」用 `auto_record.force_cio_paths`（＝publish_gate.special_reason ∪ 程式副檔名）判定，
+    即落版側的排除集合 ⊇ 閘門側 —— 只有可落版者才准進 commit，才不會製造「commit 得進去、
+    永遠推不出去」的產物。
+    """
+    p = subprocess.run(["git", "status", "--porcelain", "-z", "--untracked-files=all"],
+                       cwd=str(ROOT), capture_output=True, text=True, timeout=120)
+    if p.returncode != 0:
+        raise RuntimeError(f"git status 失敗：{(p.stderr or '').strip()[:120]}")
+    entries = [e for e in p.stdout.split("\0") if e]
+    paths, i = [], 0
+    while i < len(entries):
+        e = entries[i]
+        st, rel = e[:2], e[3:]
+        if st[:1] in ("R", "C"):          # porcelain -z：rename/copy 後緊接舊路徑那一筆
+            i += 1
+            if i < len(entries):
+                rel = entries[i][3:]
+        i += 1
+        rel = rel.replace("\\", "/").strip('"')
+        if not rel:
+            continue
+        if rel in CLEANUP_OWN_PRODUCTS or any(
+                rel.startswith(x) for x in CLEANUP_OWN_PRODUCTS if x.endswith("/")):
+            paths.append(rel)
+    try:
+        if str(ROOT) not in sys.path:
+            sys.path.insert(0, str(ROOT))
+        from auto_record import force_cio_paths  # 單一真值：落版側 ⊇ 閘門側
+        forced = set(force_cio_paths(sorted(set(paths)), ROOT))
+    except Exception as e:  # noqa: BLE001 — 載不到（含 publish_gate 不可用）→ fail-closed：全部視為需真 CIO
+        logger.warning(f"產物掃描：無法載入 force_cio_paths（{str(e)[:60]}）→ 全部視為需真 CIO（fail-closed）")
+        return [], sorted(set(paths))
+    return sorted(set(paths) - forced), sorted(forced)
+
+
 def _load_calendar_overdue_state():
     if STATE_CALENDAR_OVERDUE.exists():
         try:
@@ -793,35 +849,33 @@ def run_full_cleanup(apply_changes: bool = False):
 
     logger.info("=== 龍九系統深度清理完成 ===")
 
-    # ── 收尾：真的動過檔就自動落版＋推送（2026-09-16 使用者核准）──
-    # 走 repo 既有的「add -A 型」通路（auto_push --auto-stage：先 git add -A + auto_record --clean-stage，
-    # 再 commit、補紀錄、重試推送、驗遠端 sha）。刻意用 add -A：深度清理的產出散在資料檔、
-    # 備份輪替、文件與 .archive 搬移，逐一列路徑會漏。
-    # ⚠️ 安全閥：若本次清理把程式檔的改動/刪除帶進推送範圍，閘門會 fail-closed 拒絕推送（exit 3）
-    #    並回非零碼 → cron 會出聲要人工 CIO 審查，不會默默把未審程式碼推上線。
+    # ── 收尾：盤點本輪產物並交棒（2026-10-12 修：不再自行落版／推送）───────────────
+    # 舊版走 auto_push --auto-stage（＝git add -A）自行落版＋推送。2026-10-12 03:00 實踩三件事：
+    #   ① add -A 把整個工作區掃進本 job 的 commit（含閘門強制真 CIO 類檔與別條路徑的 _bak_* 備份）
+    #   ② publish_gate 判 mode=CIO，而本 job 只能蓋 AUTO 章 → rc=3 fail-closed（閘門判得對）
+    #   ③ 那顆 commit 留在 main 上時，origin/clean-main..HEAD 整段範圍對**所有** producer 都變
+    #      CIO 模式 → 07:00 晨報部署與當晚夜鏈一起被擋（TD-20261012-01 的線上對齊驗收連帶卡住）
+    # 修法：本 job 不再自行落版／推送（PG-20261011 v2：未經真 CIO 審查的批次不得發布，而 robust 的
+    #      做法不是自己蓋章）。產物留在工作區 —— dirty 不阻擋任何 producer（dirty_gate v2 以 commit
+    #      scope 為核心），只把清單交棒給真 CIO 審查批次，避免製造推不出去又毒化推送範圍的 commit。
     if apply_changes:
         try:
-            _st = subprocess.run(["git", "status", "--porcelain"], cwd=str(ROOT),
-                                 capture_output=True, text=True, timeout=60)
-            if _st.stdout.strip():
-                logger.info("深度清理：工作區有變更 → 走 auto_push（落版＋推送）。")
-                _ap = subprocess.run([sys.executable, str(ROOT / "auto_push.py"),
-                                      "--script", "weekly_system_cleanup.py",
-                                      "--auto-stage",
-                                      "--commit", "[cron] 每週系統深度清理（歸檔／備份輪替／淘汰腳本／快取）"],
-                                     cwd=str(ROOT), capture_output=True, text=True, timeout=900)
-                _tail = ((_ap.stdout or "") + (_ap.stderr or "")).strip().splitlines()[-3:]
-                if _ap.returncode == 0:
-                    print("🧹 每週深度清理完成並已推送：" + " / ".join(_tail))
-                else:
-                    print(f"⚠️ 每週深度清理完成但未推送（rc={_ap.returncode}）：" + " / ".join(_tail))
-                    if _ap.returncode == 3:
-                        print("   → 推送範圍含未經 CIO 審查的程式檔改動（例如 ad-hoc 腳本搬進 .archive），"
-                              "依閘門設計停在本地，請人工審查後再推。")
+            _can_land, _need_cio = _cleanup_product_scan()
+            if _can_land or _need_cio:
+                print(f"🧹 每週深度清理完成；本輪產物 {len(_can_land)} 檔待落版、"
+                      f"{len(_need_cio)} 檔需真 CIO 審查（本 job 不自行落版／推送）。")
+                for _p in _can_land[:6]:
+                    print(f"   · 待落版：{_p}")
+                for _p in _need_cio[:6]:
+                    print(f"   · 需真 CIO：{_p}")
+                _extra = len(_can_land) + len(_need_cio) - 12
+                if _extra > 0:
+                    print(f"   · …另有 {_extra} 檔（完整清單：git status --porcelain）")
+                print("   → 交棒給「真 CIO 審查 → cio_approve → auto_push --record skip」批次落版。")
             else:
-                logger.info("深度清理：工作區無變更，無需落版。")
-        except Exception as _e_push:
-            print(f"⚠️ 每週深度清理落版失敗：{_e_push}")
+                logger.info("深度清理：本輪無產物變更，無需落版。")
+        except Exception as _e_product:
+            print(f"⚠️ 每週深度清理產物盤點失敗：{_e_product}")
 
     return results
 

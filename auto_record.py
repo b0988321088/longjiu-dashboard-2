@@ -55,6 +55,36 @@ CODE_RE = re.compile(
 )
 
 
+class GateUnavailable(RuntimeError):
+    """`publish_gate` 不可用（載不到／匯入失敗）→ 落版與落紀錄一律 fail-closed。
+
+    `publish_gate` 是所有推送路徑的授權核心；它不可用時，落版側就失去「閘門側是什麼」的真值，
+    此時**不得**退回較寬鬆的規則 —— 那會變成一條繞道（讓 import 失敗即可放行治理檔）。
+    一律拒絕落版／落紀錄，讓問題以明確訊息浮出來（2026-10-12 CIO 審查 major 項）。
+    """
+
+
+def force_cio_paths(paths: list[str], base: Path) -> list[str]:
+    """回傳「閘門會強制真 CIO 審查」的路徑（落版側的排除集合）。
+
+    **不變量（2026-10-12 週清實踩）**：落版側的排除集合必須 ⊇ 閘門側（`publish_gate.special_reason`）。
+    舊版只排除程式副檔名，閘門側還排除治理紀錄（`dashboard_decisions.json`／`work_log.json`／
+    `snapshot.json`…）、`reviews/`、`logs/`、備份與憑證副檔名 → 落版側放行、閘門必擋的 commit
+    會不斷被製造出來；而且那顆 commit 只要留在 branch 上，`origin/<branch>..HEAD` 整段範圍
+    會對**所有** producer 都變成 CIO 模式（2026-10-12 03:00 週清：07:00 晨報與當晚夜鏈一併被擋）。
+
+    載不到 `publish_gate` → 丟 `GateUnavailable`（fail-closed，不退回較寬鬆的規則）。
+    """
+    hits = {p for p in paths if CODE_RE.search(p)}
+    try:
+        if str(base) not in sys.path:
+            sys.path.insert(0, str(base))
+        from publish_gate import special_reason  # noqa: E402
+    except Exception as e:  # noqa: BLE001
+        raise GateUnavailable(f"載不到 publish_gate：{e}") from e
+    return sorted(hits | {p for p in paths if special_reason(p, base)})
+
+
 def run(args: list[str], cwd: Path, timeout: int = 120) -> subprocess.CompletedProcess:
     return subprocess.run(args, cwd=cwd, capture_output=True, text=True, timeout=timeout)
 
@@ -85,22 +115,32 @@ def changed_files(base: Path, commit: str) -> list[tuple[str, str]]:
 
 
 def clean_stage(base: Path) -> int:
-    """staging 去程式檔（給 `git add -A` 型路徑在 commit 前呼叫）。
+    """staging 去「閘門會強制真 CIO 審查」的檔（給 `git add -A` 型路徑在 commit 前呼叫）。
 
     理由（2026-09-14）：`git add -A` 會把工作區「所有」變更掃進本 job 的 commit（包含
     別人留下的未提交程式改動）→ auto_record 判定「含程式檔」→ 不落紀錄 → 該班次斷推
     （22:00 晚報是第一線受害者）。這裡只排除程式檔、保留資料/報表，並把排除清單印出來。
+
+    2026-10-12 擴大（週清實踩）：排除集合由「程式副檔名」擴為**閘門側一律強制真 CIO 的類別**
+    （見 `force_cio_paths`）——治理紀錄、`reviews/`、`logs/`、備份／憑證副檔名也算。只排程式檔
+    會讓 `dashboard_decisions.json`／`work_log.json`／`reviews/*.json` 這種「commit 得進去、
+    永遠推不出去（閘門判 CIO 而本通道只蓋 AUTO 章）」的 commit 被生產出來，還會毒化整段推送範圍。
     """
     raw = run(["git", "diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"], base).stdout
     staged = [x for x in raw.split("\0") if x.strip()]
-    code = [f for f in staged if CODE_RE.search(f)]
+    try:
+        code = force_cio_paths(staged, base)
+    except GateUnavailable as e:
+        print(f"❌ clean-stage fail-closed：{e}｜閘門不可用時不得改用較寬鬆的規則放行 "
+              f"→ 不進行任何 commit（請先修好 publish_gate）", file=sys.stderr)
+        return 4
     if not code:
         return 0
     p = run(["git", "restore", "--staged", "--"] + code, base)
     if p.returncode != 0:
-        print(f"❌ clean-stage 失敗（無法 unstage 程式檔）：{p.stderr.strip()[:160]}", file=sys.stderr)
+        print(f"❌ clean-stage 失敗（無法 unstage 閘門強制真 CIO 類檔）：{p.stderr.strip()[:160]}", file=sys.stderr)
         return 4
-    print(f"⚠️ clean-stage：已排除 {len(code)} 個程式檔（不進本 job 的 commit）→ {', '.join(code[:6])}")
+    print(f"⚠️ clean-stage：已排除 {len(code)} 個閘門強制真 CIO 類檔（不進本 job 的 commit）→ {', '.join(code[:6])}")
     return 0
 
 
@@ -147,7 +187,7 @@ def main() -> int:
                     help="本 job 的產出檔（glob，可多個）：這些檔若未提交 → 硬擋（防產出沒進 commit 卻落了紀錄）")
     ap.add_argument("--dry-run", action="store_true", help="只印出將寫入的內容，不動任何檔")
     ap.add_argument("--clean-stage", action="store_true",
-                    help="只做 staging 去程式檔（git add -A 型路徑在 commit 前呼叫），不落紀錄")
+                    help="只做 staging 去「閘門會強制真 CIO」的檔（git add -A 型路徑在 commit 前呼叫），不落紀錄")
     a = ap.parse_args()
 
     base = base_dir()
@@ -163,10 +203,16 @@ def main() -> int:
     files = changed_files(base, commit)
     problems: list[str] = []
 
-    # ① 不得含程式檔
-    code = sorted({p for _st, p in files if CODE_RE.search(p)})
+    # ① 不得含「閘門強制真 CIO」類檔（程式檔 ∪ 治理紀錄／reviews／logs／備份類）——
+    #    本通道只蓋 AUTO 章，命中者在 publish_gate 必被擋（CIO_REQUIRED）；落 AUTO 章不但救不了它，
+    #    還會在那顆 commit 留在 branch 上時，讓整段 origin/<branch>..HEAD 對所有 producer 變 CIO 模式。
+    try:
+        code = force_cio_paths(sorted({p for _st, p in files}), base)
+    except GateUnavailable as e:
+        code, _gate_err = [], str(e)
+        problems.append(f"{_gate_err} → 無法判定是否含強制 CIO 類檔（fail-closed，不落紀錄）")
     if code:
-        problems.append(f"含程式檔（程式改動必須走真 CIO 審查）：{', '.join(code[:5])}")
+        problems.append(f"含閘門強制真 CIO 類檔（AUTO 章無效，須走真審查）：{', '.join(code[:5])}")
     if not files:
         problems.append("變更清單為空（沒有東西要落紀錄）")
 
