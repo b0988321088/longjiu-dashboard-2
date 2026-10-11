@@ -642,15 +642,28 @@ elif ok and _cio_ok:
     elif not _push_files:
         print("⚠️ 無任何報表檔案可推送")
     # 推送與遠端 sha 驗證已在 auto_push.py 內完成（含重試與 ls-remote 覆核）
-    # 驗證上線（2026-09-23 INC-240：改呼叫 check_dashboard_sync.py --post-push ——
+    # 驗證上線（2026-09-23 INC-240：呼叫 check_dashboard_sync.py --post-push ——
     # index.html 全部本機連結逐條驗線上 200，取代原本只驗 4 個檔；有 404 即 rc≠0 → 不假裝成功）
-    _post = subprocess.run([sys.executable, str(BASE / "check_dashboard_sync.py"), "--post-push"],
-                           capture_output=True, text=True, encoding="utf-8", errors="replace",
-                           timeout=900, cwd=str(BASE))
-    print((_post.stdout or "").strip())
-    if _post.returncode != 0:
+    # 2026-10-11（使用者裁決）：只在「本次真的推成功」或「本輪無待推產物（線上狀態未被本次改動）」時才驗線上。
+    #   閘門 FAIL／推送失敗時，本輪新檔必然還沒上線 → 逐條驗必然 404，只會蓋掉真因
+    #   （實踩 10/11 07:00：F1 封版契約 FAIL 擋推，卻噴 3 檔線上 404，讓「閘門 FAIL」被誤讀成「部署壞了」）。
+    #   fail-loud 不放寬：有產物＋閘門 PASS 卻沒推成 → 明確標記失敗，不靠 404 巧合。
+    _push_pending = bool(_push_files) and _gate_ok   # 本次「應」推送成功
+    if _recorded or (_gate_ok and not _push_files):
+        _post = subprocess.run([sys.executable, str(BASE / "check_dashboard_sync.py"), "--post-push"],
+                               capture_output=True, text=True, encoding="utf-8", errors="replace",
+                               timeout=900, cwd=str(BASE))
+        print((_post.stdout or "").strip())
+        if _post.returncode != 0:
+            _pages_ok = False
+            print("  ⛔ 線上連結驗證未過（見上方 ❌）→ 本次不視為成功（cron 會發警報）")
+    elif _push_pending:
         _pages_ok = False
-        print("  ⛔ 線上連結驗證未過（見上方 ❌）→ 本次不視為成功（cron 會發警報）")
+        print("  ⛔ 有本輪產物且閘門 PASS，但推送未成功（見上方 auto_push 訊息）→ 略過線上連結驗證"
+              "（未推送的新檔必然 404），本次不視為成功（cron 會發警報）")
+    else:
+        print("  ⏭ 本次未推送（閘門 FAIL 或無本輪產物）→ 略過線上連結驗證"
+              "（未推送的新檔必然 404 屬假警報；真因見上方 ⛔，本次仍不視為成功）")
 else:
     print(f"\n⛔ 產出檢查={'✅' if ok else '❌'} / CIO 審查={'✅' if _cio_ok else '❌'} → 未推送（修正後重跑 regenerate_report.py --deploy）")
 # 12. 產出連結清單（不論是否推播都顯示）

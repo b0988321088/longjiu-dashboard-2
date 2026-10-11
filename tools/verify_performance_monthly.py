@@ -191,7 +191,10 @@ def main() -> int:
           else "（日常產線：F1／F3＋A–E；F2／F4 改由發布步驟查核）"))
     for _k in ("f1", "f2", "f3", "f4"):
         _v = _ev[_k]
-        _bad = [c["label"] + (f"（{c['detail']}）" if c["detail"] else "")
+        # 2026-10-11（使用者裁決）：未過項原本只印「檢查標籤（證據）」，而標籤是**正面要求**
+        #   （例：'封版契約檢查器 rc=0'）→ 讀起來像「它自己說 rc=0，卻被判 ❌」的自我矛盾
+        #   （10/11 07:00 實踩：使用者據此判為閘門誤報，實際那 2 條檢查真的 FAIL）。加「未過」前綴消歧義。
+        _bad = ["未過「" + c["label"] + "」" + (f"：{c['detail']}" if c["detail"] else "")
                 for c in _v["checks"] if not c["ok"]]
         if _MODE == "daily" and _k in ("f2", "f4"):
             print(f"  ⏭ {_k.upper()} {_v['name']}：N/A（非發布批次，改由發布步驟查核）→ 本次不計入 FAIL")
