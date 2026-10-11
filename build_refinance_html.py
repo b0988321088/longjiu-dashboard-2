@@ -160,26 +160,34 @@ def publish_deck(dry_run=False, no_push=False):
         print(f'❌ 發布前檢查失敗（git status rc={st.returncode}）：{(st.stderr or "").strip()[:160]}')
         return 1
     if not st.stdout.strip():
-        # 無變更也要確認「遠端已同步」（CIO required_fix #1）：
-        #   若上一輪 commit 成功但 push 失敗，本輪會印綠燈卻讓線上停舊版 → 延遲型靜默成功。
-        #   先做本地未推數檢查（不依賴網路）；remote 查得到時再比對 sha（查不到僅警告，不製造假紅）。
-        _n = subprocess.run(['git', 'rev-list', '--count', 'origin/clean-main..HEAD'], cwd=BASE,
-                            capture_output=True, text=True, encoding='utf-8', errors='replace').stdout.strip()
-        if _n and _n != '0':
+        # 無變更也要確認「遠端已同步」（CIO RF#1＋第二輪 A/B/C）：任何無法取得正向確認的情況一律 fail-loud，
+        #   不再有「查不到就當沒問題」的 ⚠️ 分支（那正是延遲型靜默成功的入口）。
+        #   ① 本機未推數（不依賴網路）② remote ref 存在 ③ remote sha == HEAD。
+        _r = subprocess.run(['git', 'rev-list', '--count', 'origin/clean-main..HEAD'], cwd=BASE,
+                            capture_output=True, text=True, encoding='utf-8', errors='replace')
+        _n = (_r.stdout or '').strip()
+        if _r.returncode != 0 or not _n.isdigit():
+            print(f'❌ 無法確認本機未推狀態（rev-list rc={_r.returncode}，輸出={_n[:40]!r}）→ 不以綠燈放行')
+            return 1
+        if _n != '0':
             print(f'❌ 簡報無變更，但本機有 {_n} 顆未推 commit → 線上可能仍是舊版，需處理後再放行')
             return 1
         _head = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=BASE, capture_output=True, text=True,
                                encoding='utf-8', errors='replace').stdout.strip()
         _ls = subprocess.run(['git', 'ls-remote', 'origin', 'refs/heads/clean-main'], cwd=BASE,
                              capture_output=True, text=True, encoding='utf-8', errors='replace')
-        if _ls.returncode == 0 and _ls.stdout.strip():
-            _remote = _ls.stdout.split()[0]
-            if _remote != _head:
-                print(f'❌ 簡報無變更，但遠端 sha {_remote[:12]} ≠ HEAD {_head[:12]} → 未同步，不放行')
-                return 1
-            print(f'⏭ 簡報無變更，略過發布（遠端已同步 {_remote[:12]}）')
-        else:
-            print(f'⚠️ 簡報無變更，略過發布（遠端 sha 查詢失敗，本地未推=0 → 僅警告）')
+        if _ls.returncode != 0:
+            print(f'❌ 無變更但無法向遠端確認同步狀態（ls-remote rc={_ls.returncode}）→ 不以綠燈放行')
+            return 1
+        _lines = [ln for ln in (_ls.stdout or '').splitlines() if ln.strip()]
+        if not _lines:
+            print('❌ 遠端 clean-main 不存在（ls-remote 回空）→ 部署分支異常，不以綠燈放行')
+            return 1
+        _remote = _lines[0].split()[0]
+        if _remote != _head:
+            print(f'❌ 簡報無變更，但遠端 sha {_remote[:12]} ≠ HEAD {_head[:12]} → 未同步，不放行')
+            return 1
+        print(f'⏭ 簡報無變更，略過發布（遠端已同步 {_remote[:12]}）')
         return 0
     steps = [
         ['git', 'add', '--', *PUB_FILES],
