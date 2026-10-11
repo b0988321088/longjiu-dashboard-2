@@ -10626,6 +10626,16 @@
       "status": "completed",
       "source": "user"
     }
+,
+  {
+    "id": "mem-20261011180117-1146",
+    "timestamp": "2026-10-11T18:01:17.556243+08:00",
+    "agent": "Hermes",
+    "task": "大轉向簡報自動發布 週日17:00 主鏈 CLOSED",
+    "summary": "使用者裁決(10/11)：發布閉環完成＝產出→commit→RECORD→push→驗remote sha 端到端 exit 0；失敗語意改 fail-loud(未推 commit→rc=1、遠端同步→rc=0)；週日17:00 job d809f2b117c0 未改(no_agent、script=build_final.py)，下次 2026-10-18 17:00 為首跑觀測點。殘留 PEND-20261011-10(P2 --dry-run 預覽語意)獨立追蹤、不放寬 fail-loud。本輪不再改程式/不加排程。",
+    "status": "已核准",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-11T10:46:04.096425"
