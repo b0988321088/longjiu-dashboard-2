@@ -2,6 +2,7 @@
 """build_refinance_html.py — 從 grand_pivot_deck.pptx 抽 11 頁內容 → 深色手機友善 HTML。
 用法：python build_refinance_html.py（需先跑 build_final.py 產出 pptx）"""
 import os
+import sys
 from pptx import Presentation
 from pptx.util import Emu
 
@@ -133,3 +134,59 @@ html = f'''<!DOCTYPE html>
 with open(OUT, 'w', encoding='utf-8') as f:
     f.write(html)
 print(f'✅ 已產出 {OUT}（{len(slides_html)} 頁）')
+
+# === 產出後自動發布（2026-10-11 使用者核准）===================================
+# 症狀：build_final.py（pptx）與本檔（html）都只產出、不推送 → 週日 17:00 的簡報長期停在
+#       「已產出但沒上線」，儀表板「📕 大轉向簡報」按鈕指向前一週版本
+#       （10-04 實例：靠當晚晚報的資料 commit 順帶帶上去，不是簡報自己的發布路徑）。
+# 修法：最後一棒（本檔）產完後走既有資料通道自發布 —— 只碰本對檔（html ＋ pptx），
+#       commit → auto_record（RECORD 通道）→ auto_push（內含 ls-remote 遠端 sha 驗證）。
+# 界線：不含任何程式檔；無變更 → 不產生空 commit；發布失敗 → 印 ❌ 且 sys.exit(1)（cron 必須看到紅）。
+# 旗標：--no-push 略過發布（本機測試）；--dry-run 只印將執行的動作，不動 git。
+# ============================================================================
+PUB_FILES = ['grand_pivot_deck.html', 'grand_pivot_deck.pptx']
+_PUB_CMD = os.path.join(BASE, 'auto_push.py')
+
+
+def publish_deck(dry_run=False, no_push=False):
+    import subprocess
+    import sys as _sys
+    if no_push:
+        print('🧪 --no-push：已略過發布（本機測試用）')
+        return 0
+    st = subprocess.run(['git', 'status', '--porcelain', '--', *PUB_FILES], cwd=BASE,
+                        capture_output=True, text=True, encoding='utf-8', errors='replace')
+    if st.returncode != 0:
+        print(f'❌ 發布前檢查失敗（git status rc={st.returncode}）：{(st.stderr or "").strip()[:160]}')
+        return 1
+    if not st.stdout.strip():
+        print('⏭ 簡報無變更，略過發布')
+        return 0
+    steps = [
+        ['git', 'add', '--', *PUB_FILES],
+        ['git', 'commit', '-q', '-m', 'publish(deck): 大轉向簡報自動發布（週日 17:00）'],
+        [_sys.executable, os.path.join(BASE, 'auto_record.py'), '--script', 'build_final.py',
+         '--own', *PUB_FILES, '--note', '週日17:00 簡報自動發布（build_refinance_html 收尾）'],
+        [_sys.executable, _PUB_CMD, '--script', 'build_final.py'],
+    ]
+    if dry_run:
+        print('🔍 --dry-run 將執行：')
+        for s in steps:
+            print('   ' + ' '.join(str(x) for x in s))
+        return 0
+    for s in steps:
+        r = subprocess.run(s, cwd=BASE, capture_output=True, text=True, encoding='utf-8', errors='replace')
+        if r.returncode != 0:
+            print(f'❌ 簡報發布失敗（step={" ".join(str(x) for x in s[:2])} rc={r.returncode}）')
+            tail = ((r.stdout or '') + (r.stderr or '')).strip().splitlines()[-3:]
+            for ln in tail:
+                print('   ' + ln[:200])
+            return 1
+        for ln in (r.stdout or '').strip().splitlines():
+            if any(k in ln for k in ('✅', '⏭', '⚠️', '❌', 'RECORD')):
+                print('   ' + ln.strip()[:200])
+    print('✅ 簡報已發布並驗證遠端 sha（誤差 0）')
+    return 0
+
+
+sys.exit(publish_deck(dry_run='--dry-run' in sys.argv, no_push='--no-push' in sys.argv))
