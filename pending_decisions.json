@@ -1531,5 +1531,28 @@
   ],
   "is_informational": false,
   "detail": "【症狀】2026-10-11 晨間產線因封版契約 FAIL 被擋，當日批次未發布。修復後補發布時，regenerate_report.py 首輪只推了 14 檔；同批次的 asset_diff／penetration_report／industry_penetration.png／macro_regime.json／buffett_cto_report.md 被列為「非本輪產物，排除」，即使它們確實是當日批次且 index 有連結 → 上線後仍 404。\n【根因】producer isolation（2026-10-08 PEND-20261008-01 Phase A）以 before/after 內容指紋差異判定「本輪產物」：同一日第二次（或補跑）執行時，產出物內容與第一次完全相同 → `_is_produced()` 回 False → 不進 commit scope。正常每天首跑沒問題（before 不存在＝視為新增），但「補發布／重跑」場景必然踩到。\n【本次繞道（未改程式）】把檔案移開後重跑，使其在 before-snapshot 中缺席 → 視為新增 → 進 scope；共 3 輪重跑完成補發布（a1c3e915／c4b98577／afb71bb1）。\n【建議選項（需獨立審查）】(a) regenerate_report 增 --republish：候選清單中「已存在但屬本批次」者仍視為欲發布（不得放寬 produced 判準本身）；(b) 或在補發布時由呼叫端提供 batches_manifest（明示本批次檔名）→ 仍受 dirty_gate scope 管控；(c) 或維持現狀但把「補發布 SOP」寫進技能（移開→重跑→驗證）。\n【界線】不得為此放寬 produced 判準或回到 git add -A／掃 dirty 的老路（10/08 事故）。\n【未完成】尚未決定選項；決策前補發布一律走人工繞道。"
+ },
+ {
+  "id": "PEND-20261011-10",
+  "date": "2026-10-11",
+  "status": "待處理",
+  "last_confirmed": "2026-10-11T17:26:00+08:00",
+  "owner": "龍九",
+  "external_owner": null,
+  "title": "🟡 P2｜deck 自動發布：--dry-run 在「無變更＋未同步」時回 rc=1（預覽語意不精確）",
+  "priority": "P2",
+  "status_raw": "🟡 未施工（2026-10-11 第三輪 CIO 審查列為非阻擋 polish）",
+  "due_date": null,
+  "due_date_source": null,
+  "needs_due_date": true,
+  "tags": [
+   "簡報",
+   "發布",
+   "build_refinance_html",
+   "dry-run",
+   "CIO-polish"
+  ],
+  "is_informational": false,
+  "detail": "【症狀】build_refinance_html.py 的 publish_deck() 在「簡報檔無變更」分支，若同時偵測到遠端未同步（本機有未推 commit／ls-remote 失敗／遠端 sha≠HEAD），會回 rc=1 並印 ❌；該檢查發生在 --dry-run 預覽之前，故 --dry-run 使用者期待「只預覽將執行的步驟」時，會拿到 rc=1 且看不到步驟清單。\n【影響面】僅 --dry-run（手動測試用）語意不精確。正式 cron 路徑（週日 17:00 job，不帶旗標）不受影響：該 rc=1 正是想要的 fail-loud（遠端未同步不得給綠燈）。非「失敗卻綠燈」，第三輪 CIO 明列非阻擋。\n【建議修法】讓 --dry-run 一律只預覽：在 no-change 分支的同步檢查之前早退（rc=0），並在輸出明示「預覽模式：本次未驗證遠端同步」；或改為印出「將執行的同步確認步驟（rev-list 未推數／ls-remote sha 比對）」後才回 1。\n【界線】不得為了讓 --dry-run 變綠而放寬 no-change 分支的 fail-loud 條件（那會重開「延遲型靜默成功」）。\n【來源】reviews/deck_autopub_cio_result_round3.json required_fixes[0]（verdict=APPROVE、blocking=[]）。"
  }
 ]
