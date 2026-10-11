@@ -323,6 +323,28 @@ def main() -> int:
                 return 3
             print(f"✅ 補落 RECORD：{c[:12]}")
 
+    # 3c) 發布授權閘門（PG-20261011 v2）—— 白名單 ＋ 本次實際變更集合
+    #     必要性：3b 的 --own 由呼叫端自備（G1），無法證明「變更本身」有權發布；
+    #     且舊守門只在 not pending 時生效。此閘門以「變更檔案集合」判定 AUTO/CIO，
+    #     **不看 --script** → 呼叫端無法以自稱取得授權（R7 結構性消除）。
+    #     放置於 dry-run 之前，使 --dry-run 亦能驗證閘門結果而不推送。
+    try:
+        sys.path.insert(0, str(base))
+        from publish_gate import decide as _pg_decide  # noqa: E402
+        _pg = _pg_decide(base, f"origin/{primary}", a.own, allowlist_ref="HEAD")
+    except Exception as _e:  # noqa: BLE001
+        print(f"❌ 發布授權閘門載入失敗 → 不推送：{_e}", file=sys.stderr)
+        log(base, f"GATE-ERROR\t{a.script}\t{str(_e)[:160]}")
+        return 3
+    if not _pg["ok"]:
+        print(f"❌ 發布授權閘門拒絕（模式={_pg['mode']}，blocking {_pg['blocking_count']}）"
+              f"→ 不推送", file=sys.stderr)
+        for _b in _pg["blockings"]:
+            print(f"   - [{_b['id']}] {_b['text']}", file=sys.stderr)
+        log(base, f"GATE-REJECT\t{a.script}\t{_pg['mode']}\t"
+                  f"{','.join(b['id'] for b in _pg['blockings'])}")
+        return 3
+
     if a.dry_run:
         print(f"[dry-run] 將推送 {refs}（HEAD {head[:12]}）")
         return 0

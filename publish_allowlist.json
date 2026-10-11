@@ -1,0 +1,26 @@
+{
+ "version": 1,
+ "note": "AUTO 發布白名單：以『變更檔案集合』為鍵，不以腳本名稱為鍵 —— 呼叫端無法自稱取得授權。任何未命中此表者一律走真 CIO 審查。特殊類別（reviews/、治理紀錄、備份檔、程式檔、logs/）永遠不得自動發布。",
+ "entries": [
+  {
+   "label": "AI 成本帳（digest / close）",
+   "allow": [
+    "cost.html",
+    "cost_data.json",
+    "data/ai_cost_daily.jsonl"
+   ],
+   "evidence": "cost_watch_digest.py 9 顆 + cost_watch_close.py 3 顆 AUTO 紀錄，產物固定為此 3 檔",
+   "risk": "low",
+   "note": "純費用統計頁與其資料檔，無治理語意、無資產真值影響"
+  },
+  {
+   "label": "AI 成本帳資料檔（單獨）",
+   "allow": [
+    "data/ai_cost_daily.jsonl"
+   ],
+   "evidence": "近 3 日出現 2 次單獨變更（成本帳 append 路徑）",
+   "risk": "low",
+   "note": "僅追加式成本紀錄檔，無對外呈現"
+  }
+ ]
+}
