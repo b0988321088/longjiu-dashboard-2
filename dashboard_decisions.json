@@ -10625,54 +10625,45 @@
       "summary": "使用者 2026-10-09 裁決：①確認 201 萬元為『跨日入帳』造成的假性淨值下降，非已確認投資損失（9/30 資產腿先動、10/1 負債腿才認列；兩日合計 +18,800 對沖）②週報『同口徑』算法確有缺陷（只看單日 ≥10% 門檻，漏掉未達門檻但隔日反向對沖的事件鏈）→ 批准修正事件鏈判定、回歸測試、週報文案；不動投資部位、不改貸款安排、不擴張其他程式 ③不因該警報執行賣出／加碼質押／提前還款。修正後：notion_weekly_trend_wrapper.py 新增 detect_event_chains()（相鄰日反向對沖 ≥80% 且主導腿不同 → 整鏈排除），驗收同口徑 -53,548（原 -2,012,811）；回歸測試 tests/test_weekly_trend_event_chain.py 9 條（含真實市場損失／市場 V 型／對沖不足不得排除）；文案新增事件鏈證據、已剔除日期、各類別資料截至時間。CIO 獨立對抗性審查兩輪 APPROVE（blocking=[]，tree 2e2172a4）。落地 commit 324c5378（程式）＋2b37b877（資料卡 PEND-20261009-10），已推 clean-main 並線上驗收（post-push 22/22 200）。稽核紀錄 audit_weekly_trend_event_chain_20261009.md；殘項卡 PEND-20261009-09（台新 002***75 是否納管帳戶，P2 獨立結案）。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261011180117-1146",
+      "timestamp": "2026-10-11T18:01:17.556243+08:00",
+      "agent": "Hermes",
+      "task": "大轉向簡報自動發布 週日17:00 主鏈 CLOSED",
+      "summary": "使用者裁決(10/11)：發布閉環完成＝產出→commit→RECORD→push→驗remote sha 端到端 exit 0；失敗語意改 fail-loud(未推 commit→rc=1、遠端同步→rc=0)；週日17:00 job d809f2b117c0 未改(no_agent、script=build_final.py)，下次 2026-10-18 17:00 為首跑觀測點。殘留 PEND-20261011-10(P2 --dry-run 預覽語意)獨立追蹤、不放寬 fail-loud。本輪不再改程式/不加排程。",
+      "status": "已核准",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261011183759-1147",
+      "timestamp": "2026-10-11T18:37:59.364526+08:00",
+      "agent": "Hermes",
+      "task": "晨間產線假404修復上線（推送後線上驗證守門）",
+      "summary": "使用者裁決(10/11)：以一次走到修復完成/推送/線上驗收/結案為目標。根因＝regenerate_report 收尾的 check_dashboard_sync --post-push 無條件執行，閘門FAIL擋推時本輪新檔必然未上線→必然404並蓋掉真因(10/11 07:00 F1 FAIL 卻噴3檔線上404)。修法(3檔)=只在本輪真的推成功或(閘門PASS且無待推產物)時驗線上；有產物+閘門PASS卻沒推成→明確標失敗；閘門FAIL→略過並印明原因；exit表達式未動(所有略過分支rc=1)，fail-loud不放寬。另修正：F1原始事故為真FAIL(已由同日 perf-gate 修復，現況 PASS 19/FAIL 0)，本次僅將未過項渲染改為「未過「標籤」：證據」以消滅自述通過卻判❌的誤讀。新增 tools/verify_postpush_guard.py（由真碼抽出守門區塊以stub執行E1~E5＋pre-fix缺陷重現）。CIO獨立對抗審查兩輪皆 APPROVE/blocking=[]（tree e02cb165隨機真值表16組＋4組變異測試；tree 77ed3470 差異覆蓋證明僅他班已推cost三檔）。上線：a9284412（程式，tree 77ed3470，RECORD通道）＋1796a523（卡片）。驗收：remote=local、未推0/落後0；F1 PASS 19/FAIL 0；guard回歸 PASS(FAIL 0)；線上22/22條200、事故3檔(asset_diff/buffett_cto/daily_report_v2_2026-10-11)皆200；鏡像hermes/scripts逐位元相同。殘留：PEND-20261011-11(RF1 無檔案可提交子情境假FAIL)、-12(RF2 gate-FAIL診斷訊號縮減)，皆hardening非阻擋。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261011212201-1148",
+      "timestamp": "2026-10-11T21:22:01.763243+08:00",
+      "agent": "Hermes/L1+CIO(獨立對抗式)",
+      "task": "2026-10-11 一次性根因修復（A乾粉/D債券/C防守口徑/B資產分解/E調度欄位）統一發布",
+      "summary": "核准＝使用者 2026-10-11 Telegram 一次整合授權（A+D+C+B+E+共用閘門、一次驗收、一次發布）。發布：程式 commit 48f78549（tree 7ee0f766，A+D）＋66c6d46c（tree 75d403b1，C+B+E＋閘門抽取式同步）已推 clean-main；CIO 對抗式審查兩輪皆 APPROVE／blocking=[]（deleg_d8a46f8a、deleg_6f5bf4b4）；remote=local、未推0/落後0、線上22/22條200、6檔raw與發布tree逐位元一致。發布後唯讀驗證第一輪 PASS（30/31，唯一FAIL為斷言瑕疵已查證為本輪前既有未追蹤.py，實質31/31）；零副作用已證（5檔資料雜湊前後一致、已納版控py無M）。第二輪唯讀 job acc83f9becb3 排定 22:45。財務口徑未定案3項（債券25% vs 27-33%、單筆上限200,000 vs thresholds 500,000、桶戰術目標_pct 無SoT）→ 未裁決前不宣告財務面CLOSED。殘項：tools/verify_cbe E-2 恆真斷言需附審查之小commit修正（不直接改已發布程式）；dynamic_weekly_review HTML 仍含舊措辭待下次週日產線改版；5檔資料待22:00夜鏈producer邊界處理。",
+      "status": "✅ 已發布｜程式與發布 CLOSED（財務口徑待裁決）",
+      "source": "使用者 2026-10-11 Telegram 裁決/核准"
     }
-,
-  {
-    "id": "mem-20261011180117-1146",
-    "timestamp": "2026-10-11T18:01:17.556243+08:00",
-    "agent": "Hermes",
-    "task": "大轉向簡報自動發布 週日17:00 主鏈 CLOSED",
-    "summary": "使用者裁決(10/11)：發布閉環完成＝產出→commit→RECORD→push→驗remote sha 端到端 exit 0；失敗語意改 fail-loud(未推 commit→rc=1、遠端同步→rc=0)；週日17:00 job d809f2b117c0 未改(no_agent、script=build_final.py)，下次 2026-10-18 17:00 為首跑觀測點。殘留 PEND-20261011-10(P2 --dry-run 預覽語意)獨立追蹤、不放寬 fail-loud。本輪不再改程式/不加排程。",
-    "status": "已核准",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261011183759-1147",
-    "timestamp": "2026-10-11T18:37:59.364526+08:00",
-    "agent": "Hermes",
-    "task": "晨間產線假404修復上線（推送後線上驗證守門）",
-    "summary": "使用者裁決(10/11)：以一次走到修復完成/推送/線上驗收/結案為目標。根因＝regenerate_report 收尾的 check_dashboard_sync --post-push 無條件執行，閘門FAIL擋推時本輪新檔必然未上線→必然404並蓋掉真因(10/11 07:00 F1 FAIL 卻噴3檔線上404)。修法(3檔)=只在本輪真的推成功或(閘門PASS且無待推產物)時驗線上；有產物+閘門PASS卻沒推成→明確標失敗；閘門FAIL→略過並印明原因；exit表達式未動(所有略過分支rc=1)，fail-loud不放寬。另修正：F1原始事故為真FAIL(已由同日 perf-gate 修復，現況 PASS 19/FAIL 0)，本次僅將未過項渲染改為「未過「標籤」：證據」以消滅自述通過卻判❌的誤讀。新增 tools/verify_postpush_guard.py（由真碼抽出守門區塊以stub執行E1~E5＋pre-fix缺陷重現）。CIO獨立對抗審查兩輪皆 APPROVE/blocking=[]（tree e02cb165隨機真值表16組＋4組變異測試；tree 77ed3470 差異覆蓋證明僅他班已推cost三檔）。上線：a9284412（程式，tree 77ed3470，RECORD通道）＋1796a523（卡片）。驗收：remote=local、未推0/落後0；F1 PASS 19/FAIL 0；guard回歸 PASS(FAIL 0)；線上22/22條200、事故3檔(asset_diff/buffett_cto/daily_report_v2_2026-10-11)皆200；鏡像hermes/scripts逐位元相同。殘留：PEND-20261011-11(RF1 無檔案可提交子情境假FAIL)、-12(RF2 gate-FAIL診斷訊號縮減)，皆hardening非阻擋。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261011212201-1148",
-    "timestamp": "2026-10-11T21:22:01.763243+08:00",
-    "agent": "Hermes/L1+CIO(獨立對抗式)",
-    "task": "2026-10-11 一次性根因修復（A乾粉/D債券/C防守口徑/B資產分解/E調度欄位）統一發布",
-    "summary": "核准＝使用者 2026-10-11 Telegram 一次整合授權（A+D+C+B+E+共用閘門、一次驗收、一次發布）。發布：程式 commit 48f78549（tree 7ee0f766，A+D）＋66c6d46c（tree 75d403b1，C+B+E＋閘門抽取式同步）已推 clean-main；CIO 對抗式審查兩輪皆 APPROVE／blocking=[]（deleg_d8a46f8a、deleg_6f5bf4b4）；remote=local、未推0/落後0、線上22/22條200、6檔raw與發布tree逐位元一致。發布後唯讀驗證第一輪 PASS（30/31，唯一FAIL為斷言瑕疵已查證為本輪前既有未追蹤.py，實質31/31）；零副作用已證（5檔資料雜湊前後一致、已納版控py無M）。第二輪唯讀 job acc83f9becb3 排定 22:45。財務口徑未定案3項（債券25% vs 27-33%、單筆上限200,000 vs thresholds 500,000、桶戰術目標_pct 無SoT）→ 未裁決前不宣告財務面CLOSED。殘項：tools/verify_cbe E-2 恆真斷言需附審查之小commit修正（不直接改已發布程式）；dynamic_weekly_review HTML 仍含舊措辭待下次週日產線改版；5檔資料待22:00夜鏈producer邊界處理。",
-    "status": "✅ 已發布｜程式與發布 CLOSED（財務口徑待裁決）",
-    "source": "使用者 2026-10-11 Telegram 裁決/核准"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-11T10:46:04.096425"
+    "updated_at": "2026-10-12T07:00:26.404929"
   },
-  "last_updated": "2026-10-11T18:00:00+08:00",
+  "last_updated": "2026-10-12T18:00:00+08:00",
   "2026-09-29": [
     "9/29 質押撥款入帳 NT$5,900,000（10:57，國泰世華通知；實撥 590 萬@2.65%，原表定 540 萬@2.77%）→ 真值日全資產同步：現金 6,719,182／保單 9,453,825／基金 12,654,144／台股 2,981,410／總資產 31,808,561、負債 36,003,720（含基金質押 590 萬）、淨值 -4,195,159；銀行口徑 LTV 50.1%。待執行：清償 500 萬高息（券商 96 萬@3.92% 先、保單 400 萬@4% 後）",
     "9/29 裁示：質押撥款 590 萬先轉 200 萬還保單借貸（4% → 月省 6,667；保單借貸 400 萬 → 200 萬）；撥款剩餘 3,900,000。順序調整：保單（4%）優先於券商（3.92%）。待入帳確認後四源同步。",
     "9/29 核准（✅ 使用者）：① 質押撥款 590 萬列為『指定用途款 restricted_cash』— 從現金桶／可動用乾粉／Runway／配置分母全部排除（現金桶 6,719,768→819,768、21.1%→2.6%；乾粉 6,019,182→119,182；『債券及安全現金』超標 +14.5pp→不足 −4.0pp），避免桶位假超標觸發 9/8 的自動減碼授權；總資產 6,719,182／負債 36,003,720 真值不變，清償入帳後將 restricted_cash 歸零即自動解除。② 校正儀表板『操作規範』舊口徑：桶位 % 一律由穿透真值派生（原由雷達計劃文字帶出 7.8/39.4/68.4/28.7/3.4 舊值），Runway 卡改動態實算並註明「真值 − 指定清償款」。附帶修復：static_gate 被 AppLocker 擋（降級鏈）、run_daily F821、funds_cathay_breakdown 殘留 9/23 舊值（11,876,124→11,779,326）、sync_all 雷達步驟時序競態（再平衡兩表吃到前一天 weekly_plan）。"
   ],
   "pending_decisions": [
-    {
-      "date": "2026-09-25",
-      "action": "洲際W轉貸",
-      "status": "已確認",
-      "tags": "轉貸,洲際W,房貸"
-    },
     {
       "date": "2026-09-06",
       "action": "美債中短 ladder 延後至 10 月標案定案（9/6 核准）",
@@ -10692,12 +10683,6 @@
       "tags": "避險衛星,黃金,健康,保單轉換,分批"
     },
     {
-      "date": "2026-09-16",
-      "action": "儀表板/稽核儀表板殘留靜態值清理（低優先）",
-      "status": "待處理",
-      "tags": "儀表板,清理,低優先"
-    },
-    {
       "date": "2026-09-20",
       "action": "安聯累計現金給付總額對帳（差額 22,180）",
       "status": "待處理",
@@ -10710,22 +10695,10 @@
       "tags": "再平衡,台股,解凍,US30Y,006208,0051"
     },
     {
-      "date": "2026-09-21",
-      "action": "成本帳納入管線 LLM 用量（每次更新可歸因）",
-      "status": "已確認",
-      "tags": "成本帳,系統"
-    },
-    {
       "date": "2026-09-22",
       "action": "第一金保單轉換補設定（轉入 PIMCO）",
       "status": "已確認",
       "tags": "保單轉換,第一金,PIMCO,系統錯誤,客服"
-    },
-    {
-      "date": "2026-09-26",
-      "action": "週六再平衡 agent 首跑驗證（gate 修正＋口徑閘門）",
-      "status": "已確認",
-      "tags": "再平衡,驗證,gate,口徑"
     },
     {
       "date": "2026-09-22",
@@ -10734,46 +10707,16 @@
       "tags": "台股,00921,暫停,乾粉"
     },
     {
-      "date": "2026-09-23",
-      "action": "Coast FI 真值日 writer／caller 缺失（無腳本 caller／無 freshness gate）",
-      "status": "關案",
-      "tags": "CoastFI,真值日,驗證"
-    },
-    {
-      "date": "2026-09-23",
-      "action": "覆蓋率成對顯示持續驗證（下次真值日／月報）",
-      "status": "已確認",
-      "tags": "覆蓋率,口徑,驗證"
-    },
-    {
       "date": "2026-09-25",
       "action": "US30Y 紅線期因應定案（不交易；先做 5 件確定性動作）",
       "status": "已確認",
       "tags": "US30Y,紅線,因應,現金底線,質押撥款,標案"
     },
     {
-      "date": "2026-09-25",
-      "action": "紅線口徑敘述殘留清理（低優先）",
-      "status": "待處理",
-      "tags": "口徑,殘留,低優先"
-    },
-    {
-      "date": "2026-09-29",
-      "action": "DeepSeek 錢包儲值（餘額剩約 5.9 天）",
-      "status": "已確認",
-      "tags": "系統,成本,儲值"
-    },
-    {
       "date": "2026-09-28",
       "action": "10 月標案押標金 240 萬來源定案（不得預設由 540 萬撥款支付）",
       "status": "待處理",
       "tags": "標案,押標金,資金框架"
-    },
-    {
-      "date": "2026-09-30",
-      "action": "閉環稽核 BENIGN_DIRTY 遮蔽窗口（CIO 審查 minor，有界）",
-      "status": "待處理",
-      "tags": ""
     },
     {
       "date": "2026-09-30",
@@ -10800,26 +10743,8 @@
       "tags": "轉貸,洲際W,永豐,國泰"
     },
     {
-      "date": "2026-10-02",
-      "action": "核准即自動入庫（CIO 2026-09-23 ② 建議）：無法自動 append dashboard_decisions",
-      "status": "待處理",
-      "tags": "治理,決策入庫,CIO,自動化"
-    },
-    {
-      "date": "2026-10-02",
-      "action": "dashboard_decisions 條目 schema 與 source 值漂移（對帳工具查出）",
-      "status": "待處理",
-      "tags": "治理,決策入庫,schema,債"
-    },
-    {
       "date": "2026-10-04",
       "action": "威剛 3260 申購抽籤｜結果驗收節點（未中籤＝退款入帳確認結案／中籤＝另案依台股暫緩政策裁示）",
-      "status": "待處理",
-      "tags": ""
-    },
-    {
-      "date": "2026-10-04",
-      "action": "decision_auto_close.py 名為掃描、實則改寫 pending_decisions.json（save_json 吃掉檔尾換行 → 每日假 diff）",
       "status": "待處理",
       "tags": ""
     },
@@ -10830,40 +10755,10 @@
       "tags": ""
     },
     {
-      "date": "2026-10-04",
-      "action": "績效引擎內國泰房貸利率 fallback（build_investment_performance）——暫緩，待解凍後修",
-      "status": "已確認",
-      "tags": ""
-    },
-    {
-      "date": "2026-10-05",
-      "action": "缺真值 fail-closed 殘留清理（潛伏項，非阻擋）",
-      "status": "待處理",
-      "tags": ""
-    },
-    {
-      "date": "2026-10-05",
-      "action": "鏡像防線殘留界線：獨立守門尚未獨立排程＋hook ② 不補新檔（設計）",
-      "status": "待處理",
-      "tags": "鏡像,post-commit,稽核,防線"
-    },
-    {
-      "date": "2026-10-05",
-      "action": "verify_ficriteria 修復後 6 條斷言漂移（工具自 10/03 起 AttributeError 全死）",
-      "status": "待處理",
-      "tags": "工具,CIO,驗證器"
-    },
-    {
       "date": "2026-10-05",
       "action": "質押貸款 5,900,000 還本條件未知（資料缺口，不得自行假設）",
       "status": "待處理",
       "tags": "質押,貸款,現金流,資料缺口,runway"
-    },
-    {
-      "date": "2026-10-05",
-      "action": "預防性修正：緊急應變 prompt 禁止 LLM 自算「建議金額」",
-      "status": "待處理",
-      "tags": "治理,LLM,prompt,緊急應變,驗證器"
     },
     {
       "date": "2026-10-06",
@@ -10872,136 +10767,10 @@
       "tags": "資安,SECURITY,憑證輪替,repo rewrite,Pages,Active-Repair,HIGH,狀態失真"
     },
     {
-      "date": "2026-10-06",
-      "action": "Pages 生產來源分支落後：main 與 clean-main 分叉／不同步，線上版本非最新 CLOSED 真值",
-      "status": "待處理",
-      "tags": "Pages,git,分支,治理,線上真值"
-    },
-    {
-      "date": "2026-10-06",
-      "action": "FX 歸因資料 freshness 修正（fx_rates.usd_to_twd 過期）",
-      "status": "待處理",
-      "tags": "FX,匯率,歸因,freshness,snapshot,資料品質"
-    },
-    {
-      "date": "2026-10-06",
-      "action": "負債資料時間軸缺口：DB liabilities 表在夜間產線無寫入者（四源閘門每日誤報）",
-      "status": "關案",
-      "tags": "負債,liabilities,四源,閘門,寫入不對稱,資料時間軸,結構性"
-    },
-    {
-      "date": "2026-10-06",
-      "action": "dirty_gate 升級：全域 worktree gate → per-commit scope isolation（方案 2）",
-      "status": "關案",
-      "tags": "產線,治理,dirty_gate,scope,manifest,fail-closed,可回滾"
-    },
-    {
-      "date": "2026-10-07",
-      "action": "美元曝險 advisory_only 語意滲透所有下游（含三段 LLM prompt）",
-      "status": "待處理",
-      "tags": "美元曝險,advisory_only,下游一致性,LLM prompt"
-    },
-    {
-      "date": "2026-10-07",
-      "action": "防呆：攔住繞過 advisory_only、把美元曝險轉成資產調整指令的下游",
-      "status": "待處理",
-      "tags": "美元曝險,advisory_only,閘門,靜態檢查"
-    },
-    {
       "date": "2026-10-07",
       "action": "「防禦資產」完整口徑重新檢查（本質判定 vs 來源/桶位判定）",
       "status": "待處理",
       "tags": "防禦資產,雙維度,口徑,保單基金,試算"
-    },
-    {
-      "date": "2026-10-07",
-      "action": "顯示層舊文字清理：凍結區塊殘留已廢美元曝險政策語意（不屬 10/07 政策一致性批次）",
-      "status": "待處理",
-      "tags": "usd,advisory,顯示層,歷史快照,emergency,rebalance,日報,不涉真值"
-    },
-    {
-      "date": "2026-10-07",
-      "action": "P0 產出一致性：daily report 雙 producer 分歧（執行中決策追蹤缺章＋五桶偏離欄位口徑不一致）",
-      "status": "關案",
-      "tags": "P0,產出一致性,日報,雙producer,regenerate_report,run_daily,缺章,artifact-integrity,不涉真值"
-    },
-    {
-      "date": "2026-10-07",
-      "action": "P2 技術債：build_dashboard.py 殘留 USD 指令語意（不可達分支）＋ check_usd_advisory 掃描範圍未含本檔",
-      "status": "待處理",
-      "tags": "P2,技術債,advisory,usd,掃描範圍,build_dashboard,不涉真值"
-    },
-    {
-      "date": "2026-10-07",
-      "action": "P1 產出一致性：INC-289 收斂範圍外的第 4 條雙 producer 分歧（緊急應變 LLM 區塊）",
-      "status": "待處理",
-      "tags": "P1,產出一致性,日報,雙producer,緊急應變,emergency,as_of,stale,不涉真值"
-    },
-    {
-      "date": "2026-10-08",
-      "action": "Producer commit/push scope isolation：禁止把既有 working-tree dirty 誤認為本輪產物並自動發布",
-      "status": "待處理",
-      "tags": "治理,producer,auto_push,dirty_gate,scope,publish-boundary,governance,producer-isolation,負向測試,發布授權"
-    },
-    {
-      "date": "2026-10-08",
-      "action": "liabilities 自然回歸失敗：真值日 runner 未帶 land_db=True（10/08 untracked）",
-      "status": "關案",
-      "tags": "真值日,DB,liabilities,land_db,freshness,治理,不reopen#38"
-    },
-    {
-      "date": "2026-10-08",
-      "action": "技術債（低優先／DELIBERATE HOLD）：db_loader.py 的 assets 寫入未含 total_liabilities → 若接上 caller 將使「負債落列」閘門偽陰性",
-      "status": "已確認",
-      "tags": "tech-debt,低優先,DELIBERATE-HOLD,db_loader,assets,insert-contract,閘門偽陰性,不施工"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "守門偵測根治：決策章 emit 改 AST 折疊（消除轉義／拼接／間接繞道）",
-      "status": "待處理",
-      "tags": "技術債,守門,detector,single_producer,AST,inc292-required"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "檔頭『已揭露的偵測極限』補列 emit 轉義／拼接案例",
-      "status": "待處理",
-      "tags": "技術債,文件,守門,detector,inc292-required"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "INC-292 驗收樣本由 %TEMP%／hermes 移入版控（建議 S4 內建三變體）",
-      "status": "待處理",
-      "tags": "技術債,驗收,回歸保護,守門,inc292-required"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "S4.6 對照組改用未注入來源掃描（降低與 S1.8 的重複訊號）",
-      "status": "待處理",
-      "tags": "技術債,驗收,降噪,守門,inc292-required"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "架構約束：自身檔不得呼叫共用模組的 emit／組裝 API（AST 斷言）",
-      "status": "待處理",
-      "tags": "技術債,架構,守門,AST,inc292-required"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "regenerate_report.py:210 過期註解（仍稱 .html.html 缺陷刻意保留）",
-      "status": "待處理",
-      "tags": "文件一致性,註解,inc294-required"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "daily_report_assembly.py:218 docstring 語意限定為 INC-289 驗收",
-      "status": "待處理",
-      "tags": "文件一致性,docstring,inc294-required"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "全庫 60 檔／65 處寫死絕對路徑 → 鏡像/sandbox 跑產線寫回正本 repo（sandbox 逃逸）",
-      "status": "待處理",
-      "tags": "技術債,沙箱隔離,硬編碼,producer-isolation,no-hardcode,inc294-required"
     },
     {
       "date": "2026-10-09",
@@ -11011,190 +10780,15 @@
     },
     {
       "date": "2026-10-09",
-      "action": "週報事件鏈判定 hardening 2 項（4 日鏈回歸測試／多子鏈顯示淨殘差）",
-      "status": "待處理",
-      "tags": "技術債,週報,event-chain,回歸測試,顯示層"
-    },
-    {
-      "date": "2026-10-09",
       "action": "申購款『待確認應收』科目＋穿透不變量擴充（290,070 資產漏認列）",
       "status": "待處理",
       "tags": "資產口徑,應收,穿透不變量,cio-approved,待施工"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "發布前真值一致性『共用閘門』＋daily_deploy 接入＋孤兒 pre-run.sh／死碼 PUSH_FORCE_OK 處置",
-      "status": "待處理",
-      "tags": "發布閘門,真值一致,blocking,pre-push,daily_deploy,cio-reject,待施工"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "週報顯示層三缺陷修正（Bug A 租金月份口徑／Bug B 動態目標標題／Bug C 指定款標籤）",
-      "status": "待處理",
-      "tags": "週報,顯示層,口徑,硬編碼,ito-approved,待施工"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "🔴 P0｜週報雙 producer：legacy weekly_report.py 與 build_weekly_report.py 同輸出路徑",
-      "status": "待處理",
-      "tags": [
-        "發布安全",
-        "雙producer",
-        "週報"
-      ]
-    },
-    {
-      "date": "2026-10-09",
-      "action": "🔴 P0｜F4 核准查核例外 fail-open：查核拋例外時可能錯誤放行",
-      "status": "待處理",
-      "tags": "CIO複審,閘門,治理"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "🟡 P1｜正式 CLI 仍暴露 --snapshot／--baseline-sha 基準覆寫接縫",
-      "status": "待處理",
-      "tags": "CIO複審,閘門,治理"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "🟡 P1｜F2 approval_ref 未與正式核准紀錄交叉比對",
-      "status": "待處理",
-      "tags": "CIO複審,閘門,治理"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "🔴 P0 事故｜22:00 晚報 job 非原子重寫 pending_decisions.json，併發新增的決策卡遭覆蓋遺失",
-      "status": "待處理",
-      "tags": "P0,事故,資料遺失,併發"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "🟡 P1｜6 個備份檔仍在版控：用途與保留需求未審，移除前須先建立可驗證外部副本",
-      "status": "待處理",
-      "tags": "治理,版控,備份,CIO複審"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "🟡 P1｜稽核快照獨立備份與還原驗證（A 位置與 repo 同磁區、尚無獨立副本）",
-      "status": "待處理",
-      "tags": "治理,稽核備份,限期改善"
-    },
-    {
-      "date": "2026-10-10",
-      "action": "🟡 P2｜post-commit 自動鏡像使「本機 commit」必然改動執行環境（無 commit-only 路徑）",
-      "status": "待處理",
-      "tags": "治理,發布紀律,鏡像,hook,架構"
     },
     {
       "date": "2026-10-10",
       "action": "🟠 P1｜薪資真值模型口徑一致性（常態薪資 ／ 當月實收 ／ 自提 6%）",
       "status": "待處理",
       "tags": "薪資,口徑,真值,snapshot,治理"
-    },
-    {
-      "date": "2026-10-11",
-      "action": "index.html 靜態 fallback：fetch 失敗時顯示過期交易計畫（:275-277）",
-      "status": "待處理",
-      "tags": [
-        "儀表板",
-        "靜態殘留",
-        "fallback"
-      ]
-    },
-    {
-      "date": "2026-10-11",
-      "action": "build_weekly_report.py 四、下週行動 else 分支寫死 fallback（:203-205）",
-      "status": "待處理",
-      "tags": [
-        "週報",
-        "靜態殘留",
-        "fallback"
-      ]
-    },
-    {
-      "date": "2026-10-11",
-      "action": "institutional_flow.py 寫死的 weekly_plan 行模板（:650／:664）＝上游根因",
-      "status": "待處理",
-      "tags": [
-        "雷達",
-        "weekly_plan",
-        "上游",
-        "靜態殘留"
-      ]
-    },
-    {
-      "date": "2026-10-11",
-      "action": "稽核頁其餘寫死：衛星金額／壓力測試／8-31 違約金截止（build_audit_dashboard.py :267/:269/:309/:311）",
-      "status": "待處理",
-      "tags": [
-        "稽核頁",
-        "靜態殘留",
-        "C項"
-      ]
-    },
-    {
-      "date": "2026-10-11",
-      "action": "🟡 P2｜薪資自動來源 hardening：CIO required_fixes 5 條（import 鏈／None-safe／測試強度／界線揭露）",
-      "status": "待處理",
-      "tags": [
-        "薪資",
-        "自動來源",
-        "hardening",
-        "cron",
-        "測試"
-      ]
-    },
-    {
-      "date": "2026-10-11",
-      "action": "🟡 P2｜驗證器心跳時點早於夜鏈 → 22:40 收工檢查每晚結構性 ❌（主因已修，殘留待清）",
-      "status": "待處理",
-      "tags": [
-        "驗證器",
-        "cron",
-        "時點",
-        "收工檢查",
-        "誤報",
-        "治理"
-      ]
-    },
-    {
-      "date": "2026-10-11",
-      "action": "🟠 P1｜公開頁保單代號未遮罩（mtd 頁硬編）＋遮罩政策面清查與產物落差閉合",
-      "status": "待處理",
-      "tags": [
-        "保單",
-        "標籤遮罩",
-        "個資",
-        "公開頁",
-        "閘門",
-        "治理",
-        "既有狀態"
-      ]
-    },
-    {
-      "date": "2026-10-11",
-      "action": "🟡 P2｜閘門硬化：test_label_mask 未接進任何管線、docstring 引用誤植、KNOWN_GATE_FAILS 死碼",
-      "status": "待處理",
-      "tags": [
-        "閘門",
-        "驗證器",
-        "測試",
-        "死碼",
-        "硬化",
-        "治理"
-      ]
-    },
-    {
-      "date": "2026-10-11",
-      "action": "🟡 P2｜補發布時 producer isolation 會漏掉「內容與前次相同」的產物",
-      "status": "待處理",
-      "tags": [
-        "發布",
-        "產線",
-        "producer-isolation",
-        "gate",
-        "治理"
-      ]
     }
   ]
 }
