@@ -10636,6 +10636,16 @@
     "status": "已核准",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261011183759-1147",
+    "timestamp": "2026-10-11T18:37:59.364526+08:00",
+    "agent": "Hermes",
+    "task": "晨間產線假404修復上線（推送後線上驗證守門）",
+    "summary": "使用者裁決(10/11)：以一次走到修復完成/推送/線上驗收/結案為目標。根因＝regenerate_report 收尾的 check_dashboard_sync --post-push 無條件執行，閘門FAIL擋推時本輪新檔必然未上線→必然404並蓋掉真因(10/11 07:00 F1 FAIL 卻噴3檔線上404)。修法(3檔)=只在本輪真的推成功或(閘門PASS且無待推產物)時驗線上；有產物+閘門PASS卻沒推成→明確標失敗；閘門FAIL→略過並印明原因；exit表達式未動(所有略過分支rc=1)，fail-loud不放寬。另修正：F1原始事故為真FAIL(已由同日 perf-gate 修復，現況 PASS 19/FAIL 0)，本次僅將未過項渲染改為「未過「標籤」：證據」以消滅自述通過卻判❌的誤讀。新增 tools/verify_postpush_guard.py（由真碼抽出守門區塊以stub執行E1~E5＋pre-fix缺陷重現）。CIO獨立對抗審查兩輪皆 APPROVE/blocking=[]（tree e02cb165隨機真值表16組＋4組變異測試；tree 77ed3470 差異覆蓋證明僅他班已推cost三檔）。上線：a9284412（程式，tree 77ed3470，RECORD通道）＋1796a523（卡片）。驗收：remote=local、未推0/落後0；F1 PASS 19/FAIL 0；guard回歸 PASS(FAIL 0)；線上22/22條200、事故3檔(asset_diff/buffett_cto/daily_report_v2_2026-10-11)皆200；鏡像hermes/scripts逐位元相同。殘留：PEND-20261011-11(RF1 無檔案可提交子情境假FAIL)、-12(RF2 gate-FAIL診斷訊號縮減)，皆hardening非阻擋。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-11T10:46:04.096425"
