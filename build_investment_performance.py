@@ -274,7 +274,7 @@ def write_dashboard_html(mk, class_rows, interest_total, grand, perf, project,
     dr8 = (snap.get("dividend_records") or {}).get(mk, {}) or {}
     _d_allianz = sum(_v for _k, _v in dr8.items() if "安聯" in _k and isinstance(_v, (int, float)))
     _d_first = sum(_v for _k, _v in dr8.items() if "第一金" in _k and isinstance(_v, (int, float)))
-    L.append(f'<div style="font-size:10.5px;color:#94a3b8;margin-top:6px">📌 <b>跨保單比較要看持有期間</b>（安聯約2年 vs FJ33 3-4個月，累計配息不可直接比）。當月檢核口徑（{mk} 配息：安聯 {_fmt(_d_allianz)} / 第一金 {_fmt(_d_first)} vs 當月淨值變化）以左欄「保單損益」為準</div></div>')
+    L.append(f'<div style="font-size:10.5px;color:#94a3b8;margin-top:6px">📌 <b>跨保單比較要看持有期間</b>（安聯約2年 vs FJXX 3-4個月，累計配息不可直接比）。當月檢核口徑（{mk} 配息：安聯 {_fmt(_d_allianz)} / 第一金 {_fmt(_d_first)} vs 當月淨值變化）以左欄「保單損益」為準</div></div>')
     # ── 國泰轉貸專區 ──
     L.append('<div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px">')
     L.append(f'<h3 style="font-size:15px;font-weight:800;margin:0 0 2px;color:#1d1d1f">🏦 國泰轉貸 {_cg_wan()}萬 專區</h3>')

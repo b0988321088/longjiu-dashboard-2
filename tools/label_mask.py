@@ -11,8 +11,10 @@
 設計原則（使用者 2026-10-11 裁決「受限契約正規化」）：
     ① 只正規化**明確核准的標籤欄位**：政策標籤「第一金 FJ<2 碼>」與行內註記「vs FJ<2 碼>」。
        其餘任何字元、任何行、任何頁面差異一律不得被忽略。
-    ② 只接受**兩種合法型態**：數值型 `FJ` + 兩位數字，或已遮罩 `FJXX`；兩者一律視為等價（遮罩政策
-       要求公開輸出不得出現代號）。其他形態（如 `FJAB`）**不**正規化 → 仍會被判為差異。
+    ② 只接受**兩種合法型態**：數值型 `FJ` + 兩位數字，或已遮罩 `FJXX`；兩者一律視為等價。
+       政策方向＝標籤遮罩（公開輸出不宜出現代號），但**本模組不主張全站已遮罩**：現況仍有
+       未遮罩字面存在於其他產物（見 has_unmasked_label 與 PEND 卡），本模組只負責「比對層
+       把兩種型態視為等價」。其他形態（如 `FJAB`）**不**正規化 → 仍會被判為差異。
     ③ 純函式、不改寫任何檔案；正規化只發生在比對層（A/B 比較的兩側同時套用，語意對稱）。
     ④ 不得用於放寬其他斷言：本模組沒有任何「略過檔案／略過整段」的能力。
 
@@ -41,6 +43,22 @@ def normalize_bytes(data: bytes) -> bytes:
         return normalize(data.decode("utf-8")).encode("utf-8")
     except UnicodeDecodeError:
         return data
+
+
+# 反向斷言用：偵測「未遮罩」的核准標籤（＝遮罩回歸）
+UNMASKED_LABEL_RE = re.compile(r"(第一金 FJ|vs FJ)[0-9]{2}")
+
+
+def has_unmasked_label(text: str) -> bool:
+    """正向遮罩斷言：True 表示文字中仍有『未遮罩』的核准標籤代號。
+
+    為什麼需要（2026-10-11 獨立 CIO 審查 required_fix #1）：
+        A/B 改為「正規化後相同」等於放棄比對這兩個欄位；若程式哪天又輸出未遮罩代號（re-leak），
+        光靠 A/B 再也偵測不到。本函式把那個缺口用**另一條獨立斷言**補回來：
+        出貨頁面必須是遮罩型（第一金 FJXX／vs FJXX），出現數值型即視為遮罩回歸。
+        （兩側皆為數值型時 A/B 相同、但本斷言仍會 FAIL → 補回真錯攔截能力。）
+    """
+    return bool(text) and UNMASKED_LABEL_RE.search(text) is not None
 
 
 def same_after_mask(a: bytes | str, b: bytes | str) -> bool:

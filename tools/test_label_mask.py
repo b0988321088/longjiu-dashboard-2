@@ -66,6 +66,13 @@ _lm_src = (TOOLS / "label_mask.py").read_text(encoding="utf-8")
 chk("T11 純函式：無寫檔 API（不得成為洩漏向量）",
     not re.search(r"\.write_text\(|\.write_bytes\(|open\([^)]*['\"][wa]", _lm_src))
 
+print("== C2. 正向遮罩斷言（補回 A/B 放寬掉的偵測面；CIO required_fix #1）==")
+chk("T17a 未遮罩數值型 → 抓到（re-leak 可攔）", lm.has_unmasked_label(f"<td>第一金 {NUM}</td>"))
+chk("T17b 行內註記未遮罩 → 抓到", lm.has_unmasked_label(f"（vs {NUM} 3-4個月）"))
+chk("T17c 已遮罩 → 不誤報", not lm.has_unmasked_label(f"<td>第一金 {MSK}</td>"))
+chk("T17d 無標籤／空字串 → 不誤報（不得把正常頁面判紅）",
+    not lm.has_unmasked_label("<td>無標籤</td>") and not lm.has_unmasked_label(""))
+
 print("== D. 真實 A/B（沙盒；若無則略過）==")
 import tempfile  # noqa: E402
 SB = Path(tempfile.gettempdir()) / "verify_pc_task12"
@@ -90,6 +97,12 @@ if (SB / "_new_bip.log").exists() and (_old / "bip.log").exists():
     chk("T14 真實 console（舊 vs 新）正規化後相同", lm.same_after_mask(na, ob))
     chk("T14b console 注入非標籤差異 → 判不同",
         not lm.same_after_mask(na.replace("配息", "收益", 1), ob))
+    did += 1
+if (SB / "_new_mtd.log").exists() and (_old / "mtd.log").exists():
+    nm_ = (SB / "_new_mtd.log").read_text(encoding="utf-8", errors="replace")
+    om_ = (_old / "mtd.log").read_text(encoding="utf-8", errors="replace")
+    # CIO required_fix #2：mtd console 舊/新逐位元相同 → 不得放寬，維持原始位元相等
+    chk("T16 mtd console 維持逐位元相同（無須放寬）", nm_ == om_)
     did += 1
 
 print("== E. 未經正規化的原始態（事故重現）==")

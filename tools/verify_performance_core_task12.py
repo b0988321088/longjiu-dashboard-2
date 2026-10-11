@@ -136,6 +136,10 @@ for f in CODEFILES:
 _r3 = run([PY, "build_mtd_report.py"], SB)
 _r4 = run([PY, "build_investment_performance.py"], SB)
 chk("A/B 新版可執行", _r3.returncode == 0 and _r4.returncode == 0, f"rc={_r3.returncode}/{_r4.returncode}")
+# 2026-10-11：把「新版」console 落地到沙盒，供 tools/test_label_mask.py 做真實 A/B
+#   （原本測試找不到新版 log → T14/T14b 長期靜默略過；獨立 CIO 審查 required_fix #4）
+for _n, _r in (("_new_mtd.log", _r3), ("_new_bip.log", _r4)):
+    (SB / _n).write_text(_r.stdout + _r.stderr, encoding="utf-8")
 
 
 def _norm_ts(t: str) -> str:
@@ -157,12 +161,19 @@ if a is None or b is None:
 else:
     chk("逐位元完全相同（標籤遮罩正規化後）：investment_performance.html",
         _label_mask.same_after_mask(a, b), f"{len(a)} vs {len(b)} bytes")
+    # 2026-10-11（獨立 CIO 審查 required_fix #1）：A/B 不再比對標籤代號，缺口用「正向遮罩斷言」補回。
+    #   出貨頁面必須是遮罩型；若哪天又輸出未遮罩數值代號（re-leak），本條轉紅。
+    _pg = a.decode("utf-8", "replace")
+    chk("標籤遮罩未回歸：investment_performance.html 無未遮罩代號",
+        not _label_mask.has_unmasked_label(_pg), "出現 第一金 FJ<數字>／vs FJ<數字> 即視為遮罩回歸")
 _o1, _o2 = _r3.stdout + _r3.stderr, _r1.stdout + _r1.stderr
 _o3, _o4 = _r4.stdout + _r4.stderr, _r2.stdout + _r2.stderr
 if not _o1.strip() or not _o2.strip():
     chk("console/TG 文字相同：build_mtd_report", False, "console 輸出為空 → fail-closed")
 else:
-    chk("console/TG 文字相同：build_mtd_report", _label_mask.same_after_mask(_o1, _o2))
+    # 2026-10-11（獨立 CIO 審查 required_fix #2）：獨立重現證明 mtd console 舊/新逐位元相同，
+    #   本項無須放寬 → 維持原始位元相等（唯一放寬面只留真的非放寬不可的 bip console）。
+    chk("console/TG 文字相同：build_mtd_report", _o1 == _o2)
 if not _o3.strip() or not _o4.strip():
     chk("console/TG 文字相同（標籤遮罩正規化後）：build_investment_performance", False,
         "console 輸出為空 → fail-closed")
