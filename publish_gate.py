@@ -54,7 +54,10 @@ NEVER_AUTO_PREFIX = (
     "logs/",
     "data/decision_intake",
 )
-NEVER_AUTO_SUFFIX = (".bak", ".backup", ".old", ".orig", ".tmp", ".env", ".envrc")
+NEVER_AUTO_SUFFIX = (".bak", ".backup", ".old", ".orig", ".tmp",
+                     # 憑證／金鑰／機密材料：一律不得自動發布
+                     ".env", ".envrc", ".pem", ".key", ".crt", ".cer", ".p12", ".pfx",
+                     ".jks", ".keystore", ".asc", ".gpg", ".kdbx", ".ppk", ".der")
 CODE_SUFFIX = (".py", ".sh", ".bat", ".ps1", ".cmd", ".toml", ".yml", ".yaml",
                ".js", ".ts", ".sql", ".json5", ".ini", ".conf", ".cfg", ".xml",
                ".properties", ".exe", ".bin", ".jar", ".so", ".dll", ".dylib", ".msi")
