@@ -12,7 +12,7 @@
   ③ 歸檔而非刪除：閉環一律先寫入 pending_decisions_archive.json（含 cleanup_reason）
      才從正本移除，維持可追溯性。
 """
-import json, sys
+import json, re, sys
 from datetime import date, datetime
 from pathlib import Path
 
@@ -36,7 +36,14 @@ ENG_MARK = ("技術債", "守門", "閘門", "發布", "驗證器", "治理", "�
             "事件鏈", "審計", "顯示層", "CLI", "schema", "鏡像", "追溯",
             "dirty", "cron", "遮罩", "fallback", "重產")
 # 2026-10-11（CIO RF8）：資安／高優先卡不得靜默自動歸檔 → 一律走警報，交 CEO
-PROTECT_KW = ("資安", "安全", "SECURITY", "P0", "P1")
+# 2026-10-12（CIO 二輪 RF-4）：P0/P1 改**詞邊界**比對。舊版純子字串會誤保護
+#   『P10 驗證器』『MP0 測試』『P1X 回歸』（任何含 P1 字樣者永不清帳）。
+PROTECT_TEXT = ("資安", "安全", "SECURITY")
+_PROTECT_RE = re.compile(r"(?<![0-9A-Za-z])P[01](?![0-9A-Za-z])")
+
+
+def _is_protected(body: str) -> bool:
+    return any(k in body for k in PROTECT_TEXT) or bool(_PROTECT_RE.search(body))
 # 2026-10-11（CIO RF6）：無 due_date 的卡過去既不歸檔也不提醒 → 永遠不老化
 NO_DUE_ALERT_DAYS = 45
 
@@ -46,15 +53,45 @@ def load_json(p):
     except:
         return []
 
+
+def load_json_strict(p: Path, what: str):
+    """2026-10-12（CIO 第二輪 blocking）：存在但不可解析 → raise（fail-closed）。
+
+    原 load_json() 對不可解析輸入一律回 []，使 archive 的讀-改-寫在檔案損壞
+    （部分寫入／尾端殘字）時被當成「空清單」，接著以「只剩本次新卡」覆寫整檔
+    → 實測 108 筆 → 1 筆、靜默遺失 107 筆且無例外。凡本檔寫入路徑皆改用本函式。
+    缺檔仍視為空清單（合法的首次建立情境）。
+    """
+    if not p.exists():
+        return []
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except Exception as e:
+        raise RuntimeError(
+            f"{what} 存在但無法解析（疑似部分寫入／損壞）→ fail-closed，不覆寫任何檔案：{e}") from e
+    if not isinstance(data, list):
+        raise RuntimeError(f"{what} 型別非清單（{type(data).__name__}）→ fail-closed，不覆寫任何檔案")
+    return data
+
 def _atomic_write(p: Path, text: str) -> None:
     """原子寫入（tmp → JSON 驗證 → os.replace）。2026-10-11（CIO RF1/RF3）：
     正本 pending_decisions.json 原以 write_text 直接覆寫，中斷即永久遺失（21 筆保留卡
     僅存在此檔）。凡本檔寫入一律走此路徑。"""
     import os as _os
     _tmp = p.with_name(p.name + ".tmp")
-    _tmp.write_text(text, encoding="utf-8")
-    json.loads(_tmp.read_text(encoding="utf-8"))      # 讀回驗證（不合法即 raise，不動正本）
-    _os.replace(str(_tmp), str(p))
+    try:
+        _tmp.write_text(text, encoding="utf-8")
+        json.loads(_tmp.read_text(encoding="utf-8"))  # 讀回驗證（不合法即 raise，不動正本）
+        _os.replace(str(_tmp), str(p))
+    except Exception:
+        # 2026-10-12（CIO 二輪 RF-2）：失敗時清掉暫存檔，否則 .tmp 殘檔會污染
+        #   repo 根目錄與發布閘門（正本仍逐位元不變）。
+        try:
+            if _tmp.exists():
+                _tmp.unlink()
+        except Exception:
+            pass
+        raise
 
 
 def save_json(p, data):
@@ -120,8 +157,8 @@ def check_conditions(d, _all_decisions=()):
     body = str(title) + " " + str(d.get("tags", "") or "")
     if any(k in body for k in ASSET_KW):
         return False, ""                       # 資產保護（負面清單）
-    if any(k in body for k in PROTECT_KW):
-        return False, ""                       # 資安／P0／P1 保護（CIO RF8）
+    if _is_protected(body):
+        return False, ""                       # 資安／P0／P1 保護（CIO RF8／詞邊界 RF-4）
     is_asset = False
     is_eng = any(k in body for k in ENG_MARK)  # 必須正向命中工程標記
     try:
@@ -131,7 +168,12 @@ def check_conditions(d, _all_decisions=()):
     if status not in STATUS_OPEN:
         return False, ""
     due = str(d.get("due_date") or "")
-    if due and due >= today.isoformat():
+    if not due:
+        # 2026-10-12（CIO 二輪 RF-3）：無 due_date 者一律 advisory-only（由 auto_close 的
+        #   老化警報處理），**不進入自動歸檔分支**。舊版會被 OVERDUE_LIMIT 搶先歸檔，
+        #   使「逾 45 天只警報」對任何工程卡皆不可達 → 需求與行為不一致。
+        return False, ""
+    if due >= today.isoformat():
         return False, ""                       # 檢視日未到 → 不判逾期、不歸檔
     days = (today - dt).days
     if status == "待處理" and days > OVERDUE_LIMIT["待處理"]:
@@ -146,7 +188,7 @@ def check_conditions(d, _all_decisions=()):
     return False, ""
 
 def auto_close():
-    decisions = load_json(DECISIONS)
+    decisions = load_json_strict(DECISIONS, "pending_decisions.json")
     updated, archived_items = [], []
     closed = 0
     alerts = []
@@ -207,9 +249,7 @@ def auto_close():
     # 2026-10-11 硬化：fail-closed。任一步失敗（暫存寫入／JSON 不合法／筆數不符／置換後複核
     # 失敗）一律 raise，且**不執行** save_json(DECISIONS) → 正本維持原樣，絕不資料遺失。
     if archived_items:
-        _arc = load_json(ARCHIVE)
-        if not isinstance(_arc, list):
-            _arc = []
+        _arc = load_json_strict(ARCHIVE, "pending_decisions_archive.json")
         # 2026-10-11（CIO RF3）：冪等 —— 若 save_json 曾中斷，同一張卡會同時存在於
         # pending 與 archive；再跑一次不得二次歸檔造成 archive 同 title 重複。
         _seen = {str(x.get("title", "")) for x in _arc if isinstance(x, dict)}
@@ -221,8 +261,8 @@ def auto_close():
             _want = _before + len(_new_items)
             _arc.extend(_new_items)
             _atomic_write(ARCHIVE, json.dumps(_arc, ensure_ascii=False, indent=1))
-            _after = load_json(ARCHIVE)
-            if not isinstance(_after, list) or len(_after) != _want:
+            _after = load_json_strict(ARCHIVE, "pending_decisions_archive.json")
+            if len(_after) != _want:
                 raise RuntimeError("archive 置換後複核失敗｜正本未動")
 
     save_json(DECISIONS, updated)

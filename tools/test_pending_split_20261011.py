@@ -28,12 +28,15 @@ d30 = (today - timedelta(days=30)).isoformat(); d31 = (today - timedelta(days=31
 d89 = (today - timedelta(days=89)).isoformat(); d91 = (today - timedelta(days=91)).isoformat()
 fut = (today + timedelta(days=5)).isoformat()
 ck("待處理 30 天（邊界）不歸檔", m.check_conditions(card(date=d30, title="閘門技術債", tags="技術債"))[0] is False)
-ck("待處理 31 天工程類→歸檔", m.check_conditions(card(date=d31, title="守門技術債", tags="技術債"))[0] is True)
+ck("待處理 31 天工程類＋逾期 due_date→歸檔",
+   m.check_conditions(card(date=d31, title="守門技術債", tags="技術債", due_date=d31))[0] is True)
 ck("待處理 31 天資產類→不歸檔", m.check_conditions(card(date=d31, title="美債 ladder 延後", tags="債券,美債"))[0] is False)
 ck("待處理 31 天無法歸類→不歸檔", m.check_conditions(card(date=d31, title="無分類項目", tags=""))[0] is False)
 ck("有未來 due_date→不歸檔", m.check_conditions(card(date=d31, title="閘門技術債", tags="技術債", due_date=fut))[0] is False)
-ck("已確認 89 天工程類→不歸檔", m.check_conditions(card(date=d89, title="驗證器技術債", status="已確認", tags="驗證器"))[0] is False)
-ck("已確認 91 天工程類→歸檔", m.check_conditions(card(date=d91, title="驗證器技術債", status="已確認", tags="驗證器"))[0] is True)
+ck("已確認 89 天工程類＋逾期 due_date→不歸檔",
+   m.check_conditions(card(date=d89, title="驗證器技術債", status="已確認", tags="驗證器", due_date=d89))[0] is False)
+ck("已確認 91 天工程類＋逾期 due_date→歸檔",
+   m.check_conditions(card(date=d91, title="驗證器技術債", status="已確認", tags="驗證器", due_date=d91))[0] is True)
 ck("舊敘述狀態（非四態）→不歸檔", m.check_conditions(card(date=d31, title="閘門技術債", status="🔄 執行中", tags="技術債"))[0] is False)
 ck("工程類但含資產關鍵字→不歸檔", m.check_conditions(card(date=d31, title="保單 fallback 寫死", tags="技術債,保單"))[0] is False)
 ck("STATUS_OPEN 契約＝(待處理,已確認)", tuple(m.STATUS_OPEN) == ("待處理", "已確認"))
@@ -43,7 +46,7 @@ ck("00983D 分支不拋例外", isinstance(m.check_conditions(card(title="00983D
 print("[2] archive 先寫入驗證、再移出正本")
 p, a = tmp / "p.json", tmp / "a.json"
 keep = card(date="2026-10-01", title="保留卡", tags="質押")
-gone = card(date="2026-08-01", title="閘門技術債卡", tags="技術債,閘門,驗證器")
+gone = card(date="2026-08-01", title="閘門技術債卡", tags="技術債,閘門,驗證器", due_date="2026-08-01")
 p.write_text(json.dumps([keep, gone], ensure_ascii=False, indent=2), encoding="utf-8")
 a.write_text(json.dumps([{"date": "2026-01-01", "title": "舊歸檔"}], ensure_ascii=False, indent=1), encoding="utf-8")
 m.DECISIONS, m.ARCHIVE = p, a
@@ -74,8 +77,11 @@ ck("重複執行冪等（正本無可歸檔項時 archive／正本皆逐位元�
 
 print("[3] 真實檔案資料契約")
 import subprocess as _sp
-_p_std = _sp.run(["git","show","HEAD~1:pending_decisions_archive.json"], cwd=str(BASE), capture_output=True, text=True, encoding="utf-8").stdout
-_ARCH_BASE = len(json.loads(_p_std)) + 66 if _p_std.strip() else len(json.loads(ARCH.read_text(encoding="utf-8")))
+def _git_show(spec):
+    r = _sp.run(["git", "show", spec], cwd=str(BASE), capture_output=True, text=True, encoding="utf-8")
+    return json.loads(r.stdout) if r.stdout.strip() else None
+_BASE_PEND = _git_show("9196b047:pending_decisions.json") or []
+_BASE_ARCH = _git_show("9196b047:pending_decisions_archive.json") or []
 pend = json.loads(PEND.read_text(encoding="utf-8")); arch = json.loads(ARCH.read_text(encoding="utf-8"))
 td = json.loads((BASE / "tech_debt.json").read_text(encoding="utf-8"))
 ENUM = ("待處理", "已確認", "已完成", "關案")
@@ -83,7 +89,22 @@ bad = [(str(i.get("title", ""))[:26], i.get("status")) for i in pend if i.get("s
 ck("正本 status 全落四態", not bad, bad[:3])
 ck("正本＝21 筆", len(pend) == 21, len(pend))
 ck("正本 title 無重複", len({i.get("title") for i in pend}) == len(pend))
-ck("archive 筆數 = HEAD 基準＋本次歸檔數", len(arch) == _ARCH_BASE, f"{len(arch)} vs {_ARCH_BASE}")
+# 2026-10-12（CIO 二輪 RF-1）：改「批次守恆」相對斷言 —— 不再硬編碼本輪增量（原 +66
+# 會與 HEAD 位置耦合，在本 commit 上永久 FAIL）。改為：本批移出的每一張卡都必須
+# 出現在 archive 且帶本批 cleanup_reason。
+_BATCH_OUT = [str(x.get("title", "")) for x in _BASE_PEND
+              if str(x.get("title", "")) not in {str(y.get("title", "")) for y in pend}
+              and str(x.get("title", "")) not in {str(y.get("title", "")) for y in
+                                                   json.loads((BASE / "tech_debt.json").read_text(encoding="utf-8"))}]
+_arch_by_title = {}
+for _x in arch:
+    if isinstance(_x, dict):
+        _arch_by_title.setdefault(str(_x.get("title", "")), []).append(_x)
+_missing = [_t for _t in _BATCH_OUT
+            if not any(str(_y.get("cleanup_reason", "") or "").strip()
+                       for _y in _arch_by_title.get(_t, []))]
+ck(f"本批移出 {len(_BATCH_OUT)} 張皆在 archive 且帶本批 cleanup_reason", not _missing, _missing[:2])
+ck("archive 未縮減（≥ 基線 42）", len(arch) >= len(_BASE_ARCH), f"{len(arch)} vs {len(_BASE_ARCH)}")
 _new = arch[-66:]
 ck("本次歸檔 66 筆皆含 cleanup_reason", all(x.get("cleanup_reason") for x in _new),
    [x.get("title", "")[:20] for x in _new if not x.get("cleanup_reason")][:3])
@@ -149,7 +170,8 @@ _cl, _al = m.auto_close()
 ck("無 due_date 逾期卡 → 產出老化警報（RF6）", any("無檢視日" in a for a in _al), _al[:1])
 ck("無 due_date 逾期卡 → 不歸檔（advisory）", len(_json.loads(_a3.read_text(encoding="utf-8"))) == 0)
 _t4 = Path(_tf.mkdtemp(prefix="dac_idem_")); _p4 = _t4 / "p.json"; _a4 = _t4 / "a.json"
-_g = card(date=(today - timedelta(days=80)).isoformat(), title="閘門技術債重複測試", tags="技術債,閘門")
+_d80 = (today - timedelta(days=80)).isoformat()
+_g = card(date=_d80, title="閘門技術債重複測試", tags="技術債,閘門", due_date=_d80)
 _p4.write_text(_json.dumps([_g], ensure_ascii=False), encoding="utf-8")
 _a4.write_text(_json.dumps([dict(_g)], ensure_ascii=False), encoding="utf-8")
 m.DECISIONS, m.ARCHIVE = _p4, _a4
@@ -158,6 +180,59 @@ ck("archive 已存在同 title → 不重複歸檔（RF3 冪等）",
    len(_json.loads(_a4.read_text(encoding="utf-8"))) == 1
    and len(_json.loads(_p4.read_text(encoding="utf-8"))) == 0)
 ck("check_conditions 單參呼叫不拋例外（RF10）", isinstance(m.check_conditions(card(title="信貸套利 x")), tuple))
+
+
+print("[7] 第三輪修正回歸（CIO 二輪 blocking／required_fixes）")
+import tempfile as _tf2, json as _j3
+# blocking：archive 損壞 → fail-closed、兩檔皆逐位元不變
+_t5 = Path(_tf2.mkdtemp(prefix="dac_corrupt_")); _p5 = _t5 / "p.json"; _a5 = _t5 / "a.json"
+_d80b = (today - timedelta(days=80)).isoformat()
+_p5.write_text(_j3.dumps([card(date=_d80b, title="閘門技術債損壞測試", tags="技術債,閘門", due_date=_d80b)], ensure_ascii=False), encoding="utf-8")
+_a5.write_text(_j3.dumps([{"date": "2026-01-01", "title": f"舊{_i}"} for _i in range(5)], ensure_ascii=False) + "GARBAGE", encoding="utf-8")
+_pb5, _ab5 = _p5.read_bytes(), _a5.read_bytes(); _raised5 = ""
+try:
+    m.DECISIONS, m.ARCHIVE = _p5, _a5; m.auto_close()
+except Exception as _e:
+    _raised5 = str(_e)
+ck("archive 損壞（尾端殘字）→ fail-closed 拋例外", "fail-closed" in _raised5, _raised5[:70])
+ck("archive 損壞 → 正本逐位元不變", _p5.read_bytes() == _pb5)
+ck("archive 損壞 → archive 逐位元不變（零遺失）", _a5.read_bytes() == _ab5)
+# RF-2：.tmp 不殘留
+_t6 = Path(_tf2.mkdtemp(prefix="dac_tmp_")); _p6 = _t6 / "p.json"
+_p6.write_text("ORIGINAL", encoding="utf-8")
+try:
+    m._atomic_write(_p6, "{ broken")
+except Exception:
+    pass
+ck("_atomic_write 失敗不殘留 .tmp 且正本不變",
+   not list(_t6.glob("*.tmp")) and _p6.read_text(encoding="utf-8") == "ORIGINAL")
+# RF-3：無 due_date 工程卡 advisory-only
+_t7 = Path(_tf2.mkdtemp(prefix="dac_adv_")); _p7 = _t7 / "p.json"; _a7 = _t7 / "a.json"
+_p7.write_text(_j3.dumps([card(date=(today - timedelta(days=80)).isoformat(), title="無檢視日工程卡", tags="技術債,閘門")], ensure_ascii=False), encoding="utf-8")
+_a7.write_text("[]", encoding="utf-8")
+m.DECISIONS, m.ARCHIVE = _p7, _a7
+_cl7, _al7 = m.auto_close()
+ck("無 due_date 之工程卡 → 不歸檔（RF6 優先序）", len(_j3.loads(_a7.read_text(encoding="utf-8"))) == 0)
+ck("無 due_date 之工程卡 → 產 advisory 警報", any("無檢視日" in a for a in _al7), _al7[:1])
+# 讀側 fail-closed：pending 截斷
+_p8 = _t7 / "p8.json"; _p8.write_text('{"date":"x"', encoding="utf-8"); _pb8 = _p8.read_bytes()
+_r8 = ""
+try:
+    m.DECISIONS, m.ARCHIVE = _p8, _a7; m.auto_close()
+except Exception as _e:
+    _r8 = str(_e)
+ck("pending 截斷 → fail-closed 且不覆寫", "fail-closed" in _r8 and _p8.read_bytes() == _pb8, _r8[:60])
+# RF-4：PROTECT 詞邊界
+_d100 = (today - timedelta(days=100)).isoformat()
+ck("P1X 回歸（偽 P1）不誤保護 → 逾期工程卡仍歸檔",
+   m.check_conditions(card(date=_d100, title="P1X 回歸技術債", tags="技術債,回歸", due_date=_d100))[0] is True)
+ck("P10 驗證器（偽 P1）不誤保護",
+   m.check_conditions(card(date=_d100, title="P10 驗證器技術債", tags="技術債,驗證器", due_date=_d100))[0] is True)
+ck("真 P0（tag）仍受保護",
+   m.check_conditions(card(date=_d100, title="技術債修復", tags="技術債,P0", due_date=_d100))[0] is False)
+_d200 = (today - timedelta(days=200)).isoformat()
+ck("『資安』仍受保護",
+   m.check_conditions(card(date=_d200, title="資安補強技術債", tags="技術債,資安", due_date=_d200))[0] is False)
 
 print()
 ok = sum(1 for _, c in R if c); print(f"== {ok}/{len(R)} PASS ==")
