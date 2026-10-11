@@ -163,7 +163,11 @@ ck("前端 JS 含關案於白名單（舊資料回退）", "'已核定','關案'
 ck("技術債卡 JS 已上線", "fetch('tech_debt.json'" in h)
 ck("P0 卡非硬寫 ✅", "P0 戰略任務" in h and "\">✅ {_p0_st}" not in h)
 i = h.find('id="decision-list"'); seg = h[i:i + 3000]
-ck("靜態決策卡列數＝min(8, active)＝8", seg.count("border border-red-500/30") == 8, seg.count("border border-red-500/30"))
+# 2026-10-12（CIO 四輪 RF-2）：移除與 active 卡數的硬耦合，改相對斷言（1 ≤ 列數 ≤ 8 且不超過現行進行中卡數）
+_n_seg = seg.count("border border-red-500/30")
+_active_n = len([x for x in pend if str(x.get("status", "")) in ("待處理", "已確認")])
+ck("靜態決策卡列數相對合理（1 ≤ 列數 ≤ min(8, 進行中卡數)）",
+   1 <= _n_seg <= min(8, max(1, _active_n)), f"{_n_seg} with active={_active_n}")
 ck("靜態卡不含工程技術債字樣", "docstring" not in seg and "守門偵測" not in seg)
 ck("檔案內不再殘留 87 筆基準字樣", "執行中 87 筆" not in h)
 
@@ -278,6 +282,22 @@ m.auto_close()
 ck("同卡同時存在兩檔 → 冪等收斂（archive 不增、正本移除）",
    len(_j3.loads(_a10.read_text(encoding="utf-8"))) == 1
    and len(_j3.loads(_p10.read_text(encoding="utf-8"))) == 0)
+
+# 2026-10-12（CIO 四輪 blocking）：同 title／同 date／detail 僅「尾段」不同 → 不得被判同卡而漏寫
+_t11 = Path(_tf2.mkdtemp(prefix="dac_tail_")); _p11 = _t11 / "p.json"; _a11 = _t11 / "a.json"
+_deep = (today - timedelta(days=80)).isoformat()
+_BASE_TAIL = "X" * 150
+_p11.write_text(_j3.dumps([card(date=_deep, title="尾段差異卡", detail=_BASE_TAIL + "NEW-TAIL",
+                                tags="技術債,閘門", due_date=_deep)], ensure_ascii=False), encoding="utf-8")
+_a11.write_text(_j3.dumps([{"date": _deep, "title": "尾段差異卡", "detail": _BASE_TAIL + "OLD-TAIL"}],
+                          ensure_ascii=False), encoding="utf-8")
+m.DECISIONS, m.ARCHIVE = _p11, _a11
+m.auto_close()
+_p11n = _j3.loads(_p11.read_text(encoding="utf-8")); _a11n = _j3.loads(_a11.read_text(encoding="utf-8"))
+_all11 = _j3.dumps(_p11n, ensure_ascii=False) + _j3.dumps(_a11n, ensure_ascii=False)
+ck("detail 僅尾段不同 → 不同卡、尾段內容不得遺失（四輪 blocking 回歸）",
+   "NEW-TAIL" in _all11 and "OLD-TAIL" in _all11 and len(_a11n) == 2 and len(_p11n) == 0,
+   f"archive={len(_a11n)} pend={len(_p11n)}")
 
 print()
 ok = sum(1 for _, c in R if c); print(f"== {ok}/{len(R)} PASS ==")

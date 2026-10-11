@@ -12,7 +12,7 @@
   ③ 歸檔而非刪除：閉環一律先寫入 pending_decisions_archive.json（含 cleanup_reason）
      才從正本移除，維持可追溯性。
 """
-import json, re, sys
+import hashlib, json, re, sys
 from datetime import date, datetime
 from pathlib import Path
 
@@ -254,9 +254,18 @@ def auto_close():
         #   舊版以 **title 單欄** 去重 → 若「不同卡剛好同名」，會被誤判成「已歸檔」
         #   而只自正本移除 → 該卡兩檔皆無、靜默遺失（實測 detail 永久消失）。
         #   現改以 (title, date, detail[:120]) 判定同一張卡：只有**確定同卡**才跳過寫入。
+        # 2026-10-12（CIO 四輪 blocking / 三輪 RF）：卡別身分改為**全卡 sha256**（排除
+        #   歸檔時會被改寫的三個欄位 status/cleanup_reason/updated_at）。
+        #   先前用 title → 誤判「不同卡同名」為同卡；改用 detail[:120] → 仍會漏掉尾段差異。
+        #   現為全欄位正規化比對：任何欄位差異即視為不同卡 → 一律寫入 archive。
+        #   失效方向因此改為**可復原的重複**（寧可重複、不可漏寫）；真正同一張卡
+        #   （含寫入中斷造成的兩檔並存）仍可冪等收斂。
+        _VOLATILE = ("status", "cleanup_reason", "updated_at")
+
         def _card_key(x):
-            return (str(x.get("title", "")), str(x.get("date", "")),
-                    str(x.get("detail", "") or "")[:120])
+            _payload = {k: v for k, v in x.items() if k not in _VOLATILE}
+            return hashlib.sha256(
+                json.dumps(_payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
 
         _seen = {_card_key(x) for x in _arc if isinstance(x, dict)}
         _new_items = [x for x in archived_items if _card_key(x) not in _seen]
