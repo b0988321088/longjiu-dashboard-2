@@ -160,11 +160,31 @@ def publish_deck(dry_run=False, no_push=False):
         print(f'❌ 發布前檢查失敗（git status rc={st.returncode}）：{(st.stderr or "").strip()[:160]}')
         return 1
     if not st.stdout.strip():
-        print('⏭ 簡報無變更，略過發布')
+        # 無變更也要確認「遠端已同步」（CIO required_fix #1）：
+        #   若上一輪 commit 成功但 push 失敗，本輪會印綠燈卻讓線上停舊版 → 延遲型靜默成功。
+        #   先做本地未推數檢查（不依賴網路）；remote 查得到時再比對 sha（查不到僅警告，不製造假紅）。
+        _n = subprocess.run(['git', 'rev-list', '--count', 'origin/clean-main..HEAD'], cwd=BASE,
+                            capture_output=True, text=True, encoding='utf-8', errors='replace').stdout.strip()
+        if _n and _n != '0':
+            print(f'❌ 簡報無變更，但本機有 {_n} 顆未推 commit → 線上可能仍是舊版，需處理後再放行')
+            return 1
+        _head = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=BASE, capture_output=True, text=True,
+                               encoding='utf-8', errors='replace').stdout.strip()
+        _ls = subprocess.run(['git', 'ls-remote', 'origin', 'refs/heads/clean-main'], cwd=BASE,
+                             capture_output=True, text=True, encoding='utf-8', errors='replace')
+        if _ls.returncode == 0 and _ls.stdout.strip():
+            _remote = _ls.stdout.split()[0]
+            if _remote != _head:
+                print(f'❌ 簡報無變更，但遠端 sha {_remote[:12]} ≠ HEAD {_head[:12]} → 未同步，不放行')
+                return 1
+            print(f'⏭ 簡報無變更，略過發布（遠端已同步 {_remote[:12]}）')
+        else:
+            print(f'⚠️ 簡報無變更，略過發布（遠端 sha 查詢失敗，本地未推=0 → 僅警告）')
         return 0
     steps = [
         ['git', 'add', '--', *PUB_FILES],
-        ['git', 'commit', '-q', '-m', 'publish(deck): 大轉向簡報自動發布（週日 17:00）'],
+        # pathspec 式 commit（CIO required_fix #2）：只提交這 2 檔，index 若夾帶他班 staged 檔也不會被一起推上去
+        ['git', 'commit', '-q', '-m', 'publish(deck): 大轉向簡報自動發布（週日 17:00）', '--', *PUB_FILES],
         [_sys.executable, os.path.join(BASE, 'auto_record.py'), '--script', 'build_final.py',
          '--own', *PUB_FILES, '--note', '週日17:00 簡報自動發布（build_refinance_html 收尾）'],
         [_sys.executable, _PUB_CMD, '--script', 'build_final.py'],
