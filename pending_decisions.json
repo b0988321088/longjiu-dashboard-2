@@ -1459,5 +1459,30 @@
     ],
     "is_informational": false,
     "detail": "【症狀】2026-10-11 03:00 收工檢查唯一 ❌＝「驗證器 FAIL（48 PASS / 7 FAIL；連續失敗 9；rc=1）」。該數字來自心跳檔 data/verifier_heartbeat.json 的快照（最後執行 2026-10-10 21:55），非 live 執行。\n【根因：時點排序】驗證器心跳排在 21:55，早於當晚夜鏈（22:00 evening_sync 輕量校準 → 22:15 行動儀表板每晚同步 → 22:20 重產 index.html → 22:57 刷新當期真值）。驗證器比對的是「報告產物 × snapshot」的一致性，21:55 當下產物還是白天版本 → 固定不過；22:40 收工檢查再讀這份陳舊 FAIL → 每晚誤報。連 9 晚同型（10/05 起 6 FAIL、10/09 起 7 FAIL）＝結構性，不是當晚壞掉。\n【證據】① live 重跑同支驗證器（現行程式＋現行產物）：56 PASS / 0 FAIL / rc=0，連兩次一致 → 無 live 缺陷。② git worktree 檢出 fb5a9425（夜鏈前最後一顆 commit）跑同一支驗證器：48 PASS / 7 FAIL，與 21:55 心跳逐數相同 → 重現該時點狀態。③ 在 worktree 逐步換入現行 index.html／日報／snapshot／全部 *.html ＋ data/*.json ＋ DB：FAIL 僅由 7 降到 5 → 未收斂。原因是 worktree 同時帶舊版 .py（驗證器 import repo 模組現算期望值），故此實驗無法完成歸因（見殘留③）。\n【修法（已落地）】cron aaf5dbf89335「驗證器心跳」時點 55 21 * * * → 35 22 * * *（名稱為『驗證器心跳 22:35』）。選 22:35 的理由：夜鏈（22:00／22:15／22:20）之後、22:40 收工檢查之前，維持原設計『先心跳後檢查』的順序；不選 22:45 是避免心跳跑在收工檢查之後、使 22:40 讀到前一日心跳而反轉設計語意。驗收：以 cron 端路徑實跑 hermes/scripts/run_verifier_heartbeat.py → PASS 56 / FAIL 0 / streak 0（2026-10-11T03:07）；隨後 closeout_check.py → ⑧ 驗證器心跳 ✅ PASS、收工檢查『全部通過』（03:07）。next_run_at=2026-10-11T22:35。\n【殘留（未做，非 blocking）】① closeout_check.py:537 註解仍寫「驗證器目前真實結果為 49 PASS / 6 FAIL；6 條斷言漂移屬另案修復」＝數字已過期（現為 56/0），屬程式註解變更需獨立審查＋tree 綁定。② 6 FAIL → 7 FAIL 的增量來源未逐條定位（是否與時點無關的既有斷言漂移，需在夜鏈後固定時點連續取樣才能分離）。③ 未逐條判定『哪一個產物在夜鏈後翻轉哪一條斷言』：需在『現行 .py × 舊產物』的組合下重做實驗（本次 worktree 實驗因程式碼版本混淆而不可用）。\n【界線】本卡不得作為下調驗證器標準、放寬斷言或豁免 FAIL 的理由；心跳錯的是『時點』，不是斷言。來源：2026-10-11 使用者核准（兩項：移動心跳時點＋登錄本卡）。"
-  }
+  },
+ {
+  "id": "PEND-20261011-07",
+  "date": "2026-10-11",
+  "status": "待處理",
+  "last_confirmed": "2026-10-11T09:20:00+08:00",
+  "owner": "龍九",
+  "external_owner": null,
+  "title": "🟠 P1｜公開頁保單代號未遮罩（mtd 頁硬編）＋遮罩政策面清查與產物落差閉合",
+  "priority": "P1",
+  "status_raw": "🔴 未施工｜本卡由 2026-10-11 晨間產線事件修復期間之獨立 CIO 審查（兩輪 APPROVE／blocking=[]）要求補立；未經獨立核准不動工。",
+  "due_date": null,
+  "due_date_source": null,
+  "needs_due_date": true,
+  "tags": [
+   "保單",
+   "標籤遮罩",
+   "個資",
+   "公開頁",
+   "閘門",
+   "治理",
+   "既有狀態"
+  ],
+  "is_informational": false,
+  "detail": "【來源】2026-10-11 晨間產線事件（封版契約 A/B 因標籤遮罩變更而 fail-closed）之修復過程，經兩輪獨立 CIO 對抗式審查揭露。\n\n【現況（既有狀態，非本次修復引入）】\n① mtd_performance.html（已進版控、會上 Pages）內含未遮罩保單代號「第一金 FJ<數值>」，來源＝build_mtd_report.py 內硬編字面（實測該檔 1 處、該頁 1 處）。\n② 已提交（尚未重產）的 investment_performance.html 仍含 2 處未遮罩（政策標籤列＋行內 vs FJ<數值> 註記）；來源 build_investment_performance.py 已於 2026-10-11 修好（遮罩補完），產物須待下一次 07:00 產線重產並提交才會閉合。\n③ 歷史／其他產物亦有多處同型字面（grep 全 repo 產物曾見 800+ 筆，橫跨 9 月多份報告、audit_dashboard、ceo_dashboard 等），且該代號早已存在於公開 git 歷史。\n\n【與現行防線的關係】\n- 封版契約 Task 1+2 因採「受限標籤遮罩正規化」（tools/label_mask.py），該欄位不再納入逐位元比對；缺口已由正向斷言 has_unmasked_label() 補回，但目前只覆蓋 investment_performance.html（bip 頁）。\n- mtd 頁目前僅靠「逐位元 A/B（僅遮罩 generated_at）」保護內容變更，無正向遮罩斷言（已在 tools/verify_performance_core_task12.py 以註解明文記錄此界線）。\n\n【待決事項（需使用者裁決）】\n- 保單代號是否允許出現在公開頁面？此為 2026-10-11 懸而未決的政策題（先前提出方案 A 重新封版／B 還原標籤／C 契約正規化；本次只採 C 於閘門層）。\n- 若政策為「公開輸出不得出現代號」：需 (a) 清除 build_mtd_report.py 硬編字面並重產 mtd_performance.html、(b) 把 has_unmasked_label 正向斷言擴及 mtd 頁、(c) 評估是否回溯清理既有公開歷史產物（涉及 git 歷史，需另立 PII 清理程序）。\n\n【界線】使用者於本次修復明白下過「不擴大至其他頁面」，故本卡不於該票內施工；須另案核准後執行。"
+ }
 ]
