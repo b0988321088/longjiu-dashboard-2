@@ -87,7 +87,8 @@ td = json.loads((BASE / "tech_debt.json").read_text(encoding="utf-8"))
 ENUM = ("待處理", "已確認", "已完成", "關案")
 bad = [(str(i.get("title", ""))[:26], i.get("status")) for i in pend if i.get("status") not in ENUM]
 ck("正本 status 全落四態", not bad, bad[:3])
-ck("正本＝21 筆", len(pend) == 21, len(pend))
+ck("正本量級：>0 且 < 基線（分流後必然縮減）", 0 < len(pend) < len(_BASE_PEND),
+   f"{len(pend)}/{len(_BASE_PEND)}")
 ck("正本 title 無重複", len({i.get("title") for i in pend}) == len(pend))
 # 2026-10-12（CIO 二輪 RF-1）：改「批次守恆」相對斷言 —— 不再硬編碼本輪增量（原 +66
 # 會與 HEAD 位置耦合，在本 commit 上永久 FAIL）。改為：本批移出的每一張卡都必須
@@ -105,16 +106,33 @@ _missing = [_t for _t in _BATCH_OUT
                        for _y in _arch_by_title.get(_t, []))]
 ck(f"本批移出 {len(_BATCH_OUT)} 張皆在 archive 且帶本批 cleanup_reason", not _missing, _missing[:2])
 ck("archive 未縮減（≥ 基線 42）", len(arch) >= len(_BASE_ARCH), f"{len(arch)} vs {len(_BASE_ARCH)}")
-_new = arch[-66:]
-ck("本次歸檔 66 筆皆含 cleanup_reason", all(x.get("cleanup_reason") for x in _new),
-   [x.get("title", "")[:20] for x in _new if not x.get("cleanup_reason")][:3])
-ck("本次歸檔 66 筆皆含 🗑 前綴", all(str(x.get("status", "")).startswith("🗑") for x in _new))
-ck("tech_debt＝60 筆", len(td) == 60, len(td))
+# 2026-10-12（CIO 三輪 RF-1）：移除殘餘硬編碼（原 _new=arch[-66:]、len(td)==60、len==21、
+# 守恆算術 87）→ 全部改為「溯源／守恆」相對斷言，資料演進不再 false-red。
+# 溯源鍵＝標題＋日期（容忍合法內容增補，例：CIO RF5 為取代卡補回 detail/reopen_conditions）
+def _key(x):
+    return (str(x.get("title", "")), str(x.get("date", "")))
+
+
+_pend_t = {str(i.get("title", "")) for i in pend}
+_td_t = {str(x.get("title", "")) for x in td}
+_base_keys = {_key(x) for x in _BASE_PEND}
+_live_keys = ({_key(x) for x in pend} | {_key(x) for x in td}
+              | {_key(x) for x in arch if isinstance(x, dict)})
+_unarchived = [k[0] for k in _base_keys if k not in _live_keys]
+ck("溯源：基線每一張卡仍可在 正本∪tech_debt∪archive 找到", not _unarchived, _unarchived[:3])
+# 只檢查「本批」歸檔項（archive 另有 pending_reconcile 的 ✅ 自動閉環項，非本批）
+_BATCH_REASON = ("分流", "關案歸檔", "被 2026-10-01")
+ck("本批歸檔項皆為 🗑 前綴（未覆蓋原文）",
+   all(str(x.get("status", "")).startswith("🗑")
+       for x in arch if str(x.get("cleanup_reason", "") or "").startswith(_BATCH_REASON)))
 ck("tech_debt 欄位齊備", all(x.get("id") and x.get("title") and x.get("severity") and x.get("status") for x in td))
 ck("tech_debt id 唯一", len({x.get("id") for x in td}) == len(td))
 ck("pending ∩ tech_debt title ＝ 空", not ({i.get("title") for i in pend} & {x.get("title") for x in td}))
-ck("守恆 21＋60＋(5 關案＋1 取代)＝87",
-   len(pend) + len(td) + len([x for x in _new if str(x.get("cleanup_reason", "")).startswith("關案") or "取代" in str(x.get("cleanup_reason", ""))]) == 87)
+_bo_t = set(_BATCH_OUT)
+ck("守恆：基線全部卡＝正本 ∪ tech_debt ∪ 本批歸檔（且三兩互斥）",
+   (_pend_t | _td_t | _bo_t) == {str(x.get("title", "")) for x in _BASE_PEND}
+   and not (_pend_t & _td_t) and not (_bo_t & _pend_t) and not (_bo_t & _td_t),
+   f"pend={len(_pend_t)} td={len(_td_t)} out={len(_bo_t)} base={len(_BASE_PEND)}")
 ck("tech_debt severity 分布 P0/P1/P2", {"P0", "P1", "P2"} <= {x.get("severity") for x in td})
 
 print("[4] tech_debt.py CRUD（複本隔離）")
@@ -233,6 +251,33 @@ ck("真 P0（tag）仍受保護",
 _d200 = (today - timedelta(days=200)).isoformat()
 ck("『資安』仍受保護",
    m.check_conditions(card(date=_d200, title="資安補強技術債", tags="技術債,資安", due_date=_d200))[0] is False)
+
+# 2026-10-12（CIO 三輪 blocking）：不同卡同 title 不得被誤判「已歸檔」而兩檔皆無。
+_t9 = Path(_tf2.mkdtemp(prefix="dac_coll_")); _p9 = _t9 / "p.json"; _a9 = _t9 / "a.json"
+_dued = (today - timedelta(days=80)).isoformat()
+_p9.write_text(_j3.dumps([card(date=_dued, title="例行複核", detail="NEW-CARD-UNIQUE-DETAIL",
+                               tags="技術債,閘門", due_date=_dued)], ensure_ascii=False), encoding="utf-8")
+_a9.write_text(_j3.dumps([{"date": "2020-01-01", "title": "例行複核", "detail": "OLD-ARCHIVED-CARD"}],
+                         ensure_ascii=False), encoding="utf-8")
+m.DECISIONS, m.ARCHIVE = _p9, _a9
+m.auto_close()
+_p9n = _j3.loads(_p9.read_text(encoding="utf-8")); _a9n = _j3.loads(_a9.read_text(encoding="utf-8"))
+_all9 = _j3.dumps(_p9n, ensure_ascii=False) + _j3.dumps(_a9n, ensure_ascii=False)
+ck("同 title 不同卡 → 內容不得遺失（三輪 blocking 回歸）",
+   "NEW-CARD-UNIQUE-DETAIL" in _all9 and len(_a9n) == 2 and len(_p9n) == 0,
+   f"archive={len(_a9n)} pend={len(_p9n)} kept={'NEW-CARD-UNIQUE-DETAIL' in _all9}")
+# 寫入順序視窗：同一張卡同時存在兩檔 → 收斂時只自正本移除、archive 不重複
+_t10 = Path(_tf2.mkdtemp(prefix="dac_win_")); _p10 = _t10 / "p.json"; _a10 = _t10 / "a.json"
+_same = card(date=_dued, title="閘門技術債視窗測試", detail="SAME-CARD", tags="技術債,閘門", due_date=_dued)
+_arch_same = dict(_same)
+_arch_same["status"] = "🗑 自動歸檔：測試｜原狀態：待處理"; _arch_same["cleanup_reason"] = "decision_auto_close：測試"
+_p10.write_text(_j3.dumps([_same], ensure_ascii=False), encoding="utf-8")
+_a10.write_text(_j3.dumps([_arch_same], ensure_ascii=False), encoding="utf-8")
+m.DECISIONS, m.ARCHIVE = _p10, _a10
+m.auto_close()
+ck("同卡同時存在兩檔 → 冪等收斂（archive 不增、正本移除）",
+   len(_j3.loads(_a10.read_text(encoding="utf-8"))) == 1
+   and len(_j3.loads(_p10.read_text(encoding="utf-8"))) == 0)
 
 print()
 ok = sum(1 for _, c in R if c); print(f"== {ok}/{len(R)} PASS ==")

@@ -250,20 +250,33 @@ def auto_close():
     # 失敗）一律 raise，且**不執行** save_json(DECISIONS) → 正本維持原樣，絕不資料遺失。
     if archived_items:
         _arc = load_json_strict(ARCHIVE, "pending_decisions_archive.json")
-        # 2026-10-11（CIO RF3）：冪等 —— 若 save_json 曾中斷，同一張卡會同時存在於
-        # pending 與 archive；再跑一次不得二次歸檔造成 archive 同 title 重複。
-        _seen = {str(x.get("title", "")) for x in _arc if isinstance(x, dict)}
-        _new_items = [x for x in archived_items if str(x.get("title", "")) not in _seen]
+        # 冪等去重（2026-10-11 RF3）＋ 內容身分（2026-10-12 CIO 三輪 blocking）：
+        #   舊版以 **title 單欄** 去重 → 若「不同卡剛好同名」，會被誤判成「已歸檔」
+        #   而只自正本移除 → 該卡兩檔皆無、靜默遺失（實測 detail 永久消失）。
+        #   現改以 (title, date, detail[:120]) 判定同一張卡：只有**確定同卡**才跳過寫入。
+        def _card_key(x):
+            return (str(x.get("title", "")), str(x.get("date", "")),
+                    str(x.get("detail", "") or "")[:120])
+
+        _seen = {_card_key(x) for x in _arc if isinstance(x, dict)}
+        _new_items = [x for x in archived_items if _card_key(x) not in _seen]
+        _before = len(_arc)
+        _want = _before + len(_new_items)
         if not _new_items:
-            print("  ℹ️ 歸檔項已存在於 archive → 僅自正本移除（冪等，不重複歸檔）")
+            print("  ℹ️ 歸檔項內容已存在於 archive（同一張卡）→ 僅自正本移除（冪等，不重複歸檔）")
         else:
-            _before = len(_arc)
-            _want = _before + len(_new_items)
             _arc.extend(_new_items)
             _atomic_write(ARCHIVE, json.dumps(_arc, ensure_ascii=False, indent=1))
-            _after = load_json_strict(ARCHIVE, "pending_decisions_archive.json")
-            if len(_after) != _want:
-                raise RuntimeError("archive 置換後複核失敗｜正本未動")
+        _after = load_json_strict(ARCHIVE, "pending_decisions_archive.json")
+        if len(_after) != _want:
+            raise RuntimeError("archive 置換後複核失敗｜正本未動")
+        # 成對不變量（CIO 三輪 RF-3）：「加入 archive」與「自 pending 移除」必須是同一單位。
+        #   機器可驗證：每個被自正本移除的卡，其內容必須確實存在於 archive；否則 raise。
+        _after_keys = {_card_key(x) for x in _after if isinstance(x, dict)}
+        _lost = [str(x.get("title", "")) for x in archived_items if _card_key(x) not in _after_keys]
+        if _lost:
+            raise RuntimeError(
+                f"歸檔成對性驗證失敗：{_lost[:2]} 未落 archive → 正本未動（fail-closed）")
 
     save_json(DECISIONS, updated)
 
@@ -276,4 +289,11 @@ def auto_close():
 
 if __name__ == "__main__":
     print(f"🔍 決策自動閉環掃描 — {date.today()}")
-    auto_close()
+    try:
+        auto_close()
+    except Exception as _e:
+        # 2026-10-12（CIO 三輪 RF-4）：fail-closed 改動後，本檔由 morning_batch.py（08:05）呼叫。
+        #   損壞時必須是「大聲告警」而非靜默：先輸出一行可讀告警，再以非零碼結束（不吞例外）。
+        print(f"❌ 決策自動閉環掃描失敗（fail-closed：未寫入任何檔案，正本與 archive 皆未變更）：{_e}",
+              file=sys.stderr)
+        raise SystemExit(2)
