@@ -18,8 +18,11 @@
     ③ 純函式、不改寫任何檔案；正規化只發生在比對層（A/B 比較的兩側同時套用，語意對稱）。
     ④ 不得用於放寬其他斷言：本模組沒有任何「略過檔案／略過整段」的能力。
 
-邊界（刻意可接受）：標籤代號本身不納入逐位元比對 —— 因為公開輸出一律遮罩，代號不應成為
-    契約的比對對象。此界線由 tools/test_label_mask.py 的 T7 明文釘住，避免日後被當成漏洞利用。
+邊界（刻意可接受）：標籤代號本身不納入逐位元比對 —— 政策方向是公開輸出不宜出現代號，代號不應成為
+    契約的比對對象。**但這不等於「全站已遮罩」**：現況 mtd_performance.html（來源 build_mtd_report.py）
+    與已提交（尚未重產）的 investment_performance.html 仍含未遮罩字面，見 PEND-20261011-07；因此本模組
+    的正規化缺口另由 tools/label_mask.has_unmasked_label() 的**正向斷言**補回（bip 頁），而非靠「已遮罩」
+    這個假設。此界線由 tools/test_label_mask.py 的 T7/T17 明文釘住，避免日後被當成漏洞利用。
 """
 from __future__ import annotations
 

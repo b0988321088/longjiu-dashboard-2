@@ -163,6 +163,10 @@ else:
         _label_mask.same_after_mask(a, b), f"{len(a)} vs {len(b)} bytes")
     # 2026-10-11（獨立 CIO 審查 required_fix #1）：A/B 不再比對標籤代號，缺口用「正向遮罩斷言」補回。
     #   出貨頁面必須是遮罩型；若哪天又輸出未遮罩數值代號（re-leak），本條轉紅。
+    #   覆蓋範圍界線（CIO 第二輪 RF#1 之二選一，採「明文記錄」）：本斷言只套 bip 頁。
+    #   mtd_performance.html 仍含未遮罩代號（來源 build_mtd_report.py 硬編，屬既有狀態），硬套會誤傷，
+    #   且使用者本票界線明定「不擴大至其他頁面」→ mtd 頁目前僅靠「逐位元 A/B（僅遮罩 generated_at）」
+    #   保護內容變更；待 PEND-20261011-07 完成遮罩清理後，再把本斷言擴及 mtd 頁。
     _pg = a.decode("utf-8", "replace")
     chk("標籤遮罩未回歸：investment_performance.html 無未遮罩代號",
         not _label_mask.has_unmasked_label(_pg), "出現 第一金 FJ<數字>／vs FJ<數字> 即視為遮罩回歸")

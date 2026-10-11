@@ -114,6 +114,11 @@ if (SB / "investment_performance.html").exists() and (_old / "investment_perform
 else:
     print("  ⏭ 無沙盒可用（先跑 tools/verify_performance_core_task12.py 產生）")
 
+# 2026-10-11（CIO 第二輪 required_fix）：沙盒相依的 T12–T16 不得「靜默略過」而仍回報全綠。
+#   沙盒由 tools/verify_performance_core_task12.py 產生；缺沙盒＝這批 A/B 根本沒被驗到。
+chk("沙盒齊備：T12–T16 實際執行（不得空跑冒充通過）", did >= 3,
+    f"實際執行 {did}/3 組（缺沙盒請先跑 tools/verify_performance_core_task12.py）")
+
 print(f"\n{len(PASS)}/{len(PASS) + len(FAIL)} PASS")
 if FAIL:
     print("FAIL:"); [print("  -", f) for f in FAIL]
