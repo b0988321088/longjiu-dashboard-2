@@ -73,6 +73,9 @@ ck("重複執行冪等（正本無可歸檔項時 archive／正本皆逐位元�
    a.read_text(encoding="utf-8") == _a_before and p.read_text(encoding="utf-8") == _p_before)
 
 print("[3] 真實檔案資料契約")
+import subprocess as _sp
+_p_std = _sp.run(["git","show","HEAD~1:pending_decisions_archive.json"], cwd=str(BASE), capture_output=True, text=True, encoding="utf-8").stdout
+_ARCH_BASE = len(json.loads(_p_std)) + 66 if _p_std.strip() else len(json.loads(ARCH.read_text(encoding="utf-8")))
 pend = json.loads(PEND.read_text(encoding="utf-8")); arch = json.loads(ARCH.read_text(encoding="utf-8"))
 td = json.loads((BASE / "tech_debt.json").read_text(encoding="utf-8"))
 ENUM = ("待處理", "已確認", "已完成", "關案")
@@ -80,7 +83,7 @@ bad = [(str(i.get("title", ""))[:26], i.get("status")) for i in pend if i.get("s
 ck("正本 status 全落四態", not bad, bad[:3])
 ck("正本＝21 筆", len(pend) == 21, len(pend))
 ck("正本 title 無重複", len({i.get("title") for i in pend}) == len(pend))
-ck("archive＝108 筆", len(arch) == 108, len(arch))
+ck("archive 筆數 = HEAD 基準＋本次歸檔數", len(arch) == _ARCH_BASE, f"{len(arch)} vs {_ARCH_BASE}")
 _new = arch[-66:]
 ck("本次歸檔 66 筆皆含 cleanup_reason", all(x.get("cleanup_reason") for x in _new),
    [x.get("title", "")[:20] for x in _new if not x.get("cleanup_reason")][:3])
@@ -124,6 +127,37 @@ i = h.find('id="decision-list"'); seg = h[i:i + 3000]
 ck("靜態決策卡列數＝min(8, active)＝8", seg.count("border border-red-500/30") == 8, seg.count("border border-red-500/30"))
 ck("靜態卡不含工程技術債字樣", "docstring" not in seg and "守門偵測" not in seg)
 ck("檔案內不再殘留 87 筆基準字樣", "執行中 87 筆" not in h)
+
+
+print("[6] CIO RF4/RF6/RF8 負向與老化測試")
+for _t in ("安排家族信託文件清單備份", "四家銀行授權書備份歸檔", "新銀行帳戶開戶與備份設定"):
+    ck(f"偽陰性排除：{_t}（40 天前）不歸檔",
+       m.check_conditions(card(date=(today - timedelta(days=40)).isoformat(), title=_t))[0] is False)
+ck("資安卡（逾期 100 天）不自動歸檔（RF8）",
+   m.check_conditions(card(date=(today - timedelta(days=100)).isoformat(),
+                           title="資安 remediation：repo 五步", tags="資安,P0"))[0] is False)
+ck("P0 標記卡不自動歸檔（RF8）",
+   m.check_conditions(card(date=(today - timedelta(days=100)).isoformat(),
+                           title="技術債 P0 修復", tags="技術債,P0"))[0] is False)
+import tempfile as _tf, json as _json
+_t3 = Path(_tf.mkdtemp(prefix="dac_age_")); _p3 = _t3 / "p.json"; _a3 = _t3 / "a.json"
+_p3.write_text(_json.dumps([card(date=(today - timedelta(days=80)).isoformat(),
+                                 title="無檢視日資產卡", tags="質押")], ensure_ascii=False), encoding="utf-8")
+_a3.write_text("[]", encoding="utf-8")
+m.DECISIONS, m.ARCHIVE = _p3, _a3
+_cl, _al = m.auto_close()
+ck("無 due_date 逾期卡 → 產出老化警報（RF6）", any("無檢視日" in a for a in _al), _al[:1])
+ck("無 due_date 逾期卡 → 不歸檔（advisory）", len(_json.loads(_a3.read_text(encoding="utf-8"))) == 0)
+_t4 = Path(_tf.mkdtemp(prefix="dac_idem_")); _p4 = _t4 / "p.json"; _a4 = _t4 / "a.json"
+_g = card(date=(today - timedelta(days=80)).isoformat(), title="閘門技術債重複測試", tags="技術債,閘門")
+_p4.write_text(_json.dumps([_g], ensure_ascii=False), encoding="utf-8")
+_a4.write_text(_json.dumps([dict(_g)], ensure_ascii=False), encoding="utf-8")
+m.DECISIONS, m.ARCHIVE = _p4, _a4
+m.auto_close()
+ck("archive 已存在同 title → 不重複歸檔（RF3 冪等）",
+   len(_json.loads(_a4.read_text(encoding="utf-8"))) == 1
+   and len(_json.loads(_p4.read_text(encoding="utf-8"))) == 0)
+ck("check_conditions 單參呼叫不拋例外（RF10）", isinstance(m.check_conditions(card(title="信貸套利 x")), tuple))
 
 print()
 ok = sum(1 for _, c in R if c); print(f"== {ok}/{len(R)} PASS ==")

@@ -81,6 +81,22 @@ def build_schedule_rows(events, today: str | None = None, days: int = 7) -> str:
 
 
 # ---------------------------------------------------------------- P0 / 決策追蹤
+ACTIVE_STATUS = ("待處理", "已確認")
+
+
+def _is_active_card(d) -> bool:
+    """2026-10-11（CIO RF2）：四態單一口徑 —— 只有 pending_engine.STATUS_ENUM 的
+    「待處理／已確認」算執行中；「已完成／關案」不得計入。原實作逐卡全列，
+    只要 pending 內存在關案卡就會被日報算成執行中。"""
+    s = str(d.get("status", ""))
+    if s in ACTIVE_STATUS:
+        return True
+    if s in ("已完成", "關案"):
+        return False
+    _closed = ("✅", "☑", "已完成", "已結案", "已定案", "閉環", "已送出", "已核定", "關案", "🗑")
+    return not any(k in s for k in _closed)
+
+
 def build_decision_rows(pending, snapshot) -> str:
     """「執行中決策追蹤」逐卡一列（含決策卡連結）。
 
@@ -89,6 +105,7 @@ def build_decision_rows(pending, snapshot) -> str:
     **fail-closed**：pending 非空卻產出 0 列＝直接拋錯，不允許靜默減章。
     """
     rows = ""
+    pending = [x for x in (pending or []) if isinstance(x, dict) and _is_active_card(x)]
     for _d in pending:
         _card = str(_d.get("card", "") or "").strip()
         _card_td = (f'<td><a href="{_card}" target="_blank" '
@@ -133,7 +150,45 @@ def build_p0_tasks_html(events, pending, snapshot, today: str | None = None, day
                 '<th>狀態</th><th>決策卡</th></tr></thead><tbody>')
         out += _rows
         out += "\n</tbody></table>"
+    out += build_tech_debt_line()
     return out
+
+
+def build_tech_debt_line(base=None) -> str:
+    """技術債回顧錨點（2026-10-11，CIO RF7）：工程/治理類自 pending 分流至
+    tech_debt.json 後，若無日報消費端即成「無界清單」。此處每日輸出一行摘要
+    （總數／分級／最舊卡齡／逾 45 天未結數），作為回顧閘門。缺檔即靜默略過。"""
+    try:
+        _b = Path(base) if base else Path(__file__).resolve().parent
+        _td = json.loads((_b / "tech_debt.json").read_text(encoding="utf-8"))
+    except Exception:
+        return ""
+    if not isinstance(_td, list) or not _td:
+        return ""
+    _open = [x for x in _td if isinstance(x, dict)
+             and str(x.get("status", "")) in ("開放", "暫緩")]
+    if not _open:
+        return ""
+    _sev = {}
+    for x in _open:
+        _k = str(x.get("severity", "NA") or "NA")
+        _sev[_k] = _sev.get(_k, 0) + 1
+    _dates = [str(x.get("date", ""))[:10] for x in _open if x.get("date")]
+    _oldest, _age_txt, _stale = "", "", 0
+    if _dates:
+        _oldest = min(_dates)
+        try:
+            _age_txt = f"｜最舊 {_oldest}（{(_date.today() - _date.fromisoformat(_oldest)).days} 天）"
+            _stale = sum(1 for x in _open
+                         if x.get("date") and
+                         (_date.today() - _date.fromisoformat(str(x["date"])[:10])).days > 45)
+        except Exception:
+            _age_txt = f"｜最舊 {_oldest}"
+    return (f'<p style="margin-top:10px;font-size:12.5px;color:#6b7280">'
+            f'🔧 技術債（工程／治理類 · 另冊 tech_debt.json）{len(_open)} 筆｜'
+            f'P0 {_sev.get("P0", 0)}／P1 {_sev.get("P1", 0)}／P2 {_sev.get("P2", 0)}／'
+            f'未分級 {_sev.get("NA", 0)}{_age_txt}'
+            + (f'｜⚠️ 逾 45 天未結 {_stale} 筆' if _stale else '') + '</p>')
 
 
 # ---------------------------------------------------------------- 穿透 __DR_*
