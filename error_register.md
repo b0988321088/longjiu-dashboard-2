@@ -1775,3 +1775,13 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 處置（2026-10-10 使用者裁決，方案 3）：**保留現狀、不回滾、不 push、不再觸發部署**；本機鏡像列為「未授權的附帶變更」，**不追認為部署授權、不視為發布**。
 - 後續（需獨立工單評估，不在本卡內施工）：① hook／清單是否需提供「commit-only、不鏡像」路徑 ② 修正前，任何含鏡像清單檔案的 commit 都應先評估執行環境副作用。
 - 相關：B 案 commit `a367e6e7`（tree `88f06346`）、`reviews/B_cash_fix_cio_result.json`、事件紀錄 `~/longjiu_backups/20261010_mirror_incident/INCIDENT.md`、INC-236（push gate 架構）、INC-285（未推分支導致產線 fail-closed）。
+## INC-296 ｜ 2026-10-11 ｜ P1｜closed ｜ 22:40 收工檢查連續 7 晚誤報（BENIGN_DIRTY 漏列 memory_archive_today.json）
+
+- 觸發點：`closeout_check.py` ② 閉環稽核 → `_audit_closeout.py`；2026-10-05～10-11 連續七晚 `rc=1`。
+- 症狀：`❌ 未提交: [...]`，且**每晚清單不同**（10/11 一檔／10/10 九檔／10/09 二十五檔）→ 非單一檔案問題，而是「執行期狀態檔漏列」的同型誤報。
+- 根因：`memory_archive_today.json`（記憶歸檔當日摘要，`memory_archiver.py:10`，由 06:50 `memory_ops_backup` job `3aa6e83c3122` 每日覆寫）未列入 `BENIGN_DIRTY`；它無專職提交者，僅靠當日其他 commit 順帶帶到 → 在沒有覆蓋它的 commit 的日子結構上必髒（10/11 為週日，正是此情境）。
+- 修法：`BENIGN_DIRTY` 新增該條目，比照既有慣例附歸屬依據（性質／寫入者行號／cron job id／無專職提交者）＋ canary 宣告（交付物不在名單內）。
+- 驗證：①正向 `閉環稽核結果：全部通過 ✅`（原 ❌）②負向 canary：`index.html`／`snapshot.json`／`dashboard_decisions.json`／`work_log.json`／`pending_decisions.json`／`daily_analysis.json` 全數不在集合內 ③修完當下唯一亮 ❌ 者為 `_audit_closeout.py` 本身（canary 有效）④22:45 重跑收工檢查 `rc=0`、全部通過、驗證器 56 PASS / 0 FAIL。
+- 落地：commit `21367686`（CIO-Gemini APPROVE、`artifact_sha256 11012f5f0d6993b8`、tree 綁定 RECORD）。**該次推送為 publish_gate 閘門首次實戰通過**（`.py` → 強制真 CIO → 有真 CIO 蓋章 → 放行）。本機 ≡ 遠端。
+- 性質：**既有稽核機制的漏列**，非產線故障；遮蔽有界（canary 已在名單註解宣告）。
+- 相關：技能 `longjiu-closeout-audit/references/benign-dirty-criteria.md`；PEND-20261011-13／-14（同批 PG-20261011 v2 衍生）。

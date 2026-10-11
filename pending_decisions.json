@@ -1600,5 +1600,51 @@
     ],
     "is_informational": false,
     "detail": "【症狀】閘門 FAIL 的本輪不再執行 `check_dashboard_sync.py --post-push`，因此「與本輪無關的既有線上 404」在 gate-FAIL 執行中不再被列出（rc 仍為 1，訊息只剩「⏭ 本次未推送 → 略過線上連結驗證」）。舊碼在該情境會列出 404 清單。\n【影響面】診斷訊號縮減，非放寬 fail-loud（CIO 以 16 組真值表證明所有略過分支 rc=1，且「rc=0 ⇒ 一定真的驗過線上且通過」）。\n【建議修法】略過時補一行明示「本輪未驗線上連結（線上狀態未由本輪變更）」，避免日後把「未列 404」誤讀成「線上一定乾淨」。\n【來源】reviews/postpush_guard_cio_result.json required_fixes[1]（verdict=APPROVE、blocking=[]）。"
+  },
+  {
+    "id": "PEND-20261011-13",
+    "date": "2026-10-11",
+    "status": "待處理",
+    "last_confirmed": "2026-10-11T22:47:05+08:00",
+    "owner": "龍九",
+    "external_owner": null,
+    "title": "🟠 P1｜reviews/ 發布秩序：審查產出檔與被審物同批、經 AUTO 通道發布",
+    "priority": "P1",
+    "status_raw": "🔴 未施工（2026-10-11 PG-20261011 v2 唯讀盤點發現，使用者裁定獨立處理）",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": false,
+    "tags": [
+      "發布",
+      "治理",
+      "reviews",
+      "CIO",
+      "PG-20261011"
+    ],
+    "is_informational": false,
+    "detail": "【唯讀盤點】reviews/ 19 個追蹤檔，來源三類：①AUTO-checker:radar_weekly.py(range) 引入 9 檔（commit 20a4e4c43dfe，10-10 08:30「auto: 週六雷達儀表板同步」）②AUTO-checker:sync_all.py 引入 6 檔（commit 8288d29e348d，09-22「data: Moneybook 9/22 匯入」）③真 CIO 引入 4 檔（CIO-獨立審查（唯讀、對抗性）／CIO-LLM）。\n【關鍵判定】`.git/CIO_APPROVED` 中出現 `reviews/` 的筆數 = 0 → **無自我證明循環**（未有「以 producer 自產審查結果落 RECORD」之情形）。抽樣三個檔案內容確認為真審查產出（含 reviewer／reviewed_commits／tree／verdict／blocking），故問題在**秩序**而非偽造：審查產出物與被審物混於同一發布批次、且由 AUTO 通道發布。\n【風險】審查證據檔的發布者與被審者同一批次 → 可追溯性與公信力受影響。\n【建議】①釐清 reviews/ 應由誰產生與發布（是否應獨立於一般發布鏈）②評估是否納入 publish_gate 特殊類別明示（現行 NEVER_AUTO_PREFIX 未含 reviews/，但白名單亦不含 → 實務上仍走真 CIO，屬間接保護而非明示）。\n【來源】PG-20261011 v2 使用者裁決第 5 點（獨立處理、不擴大清理範圍）。**未批次刪除或覆寫任何 reviews/ 檔。**"
+  },
+  {
+    "id": "PEND-20261011-14",
+    "date": "2026-10-11",
+    "status": "待處理",
+    "last_confirmed": "2026-10-11T22:47:05+08:00",
+    "owner": "龍九",
+    "external_owner": null,
+    "title": "🟡 P2｜CIO RECORD 未留 --result 來源 → 審查證據不可追溯",
+    "priority": "P2",
+    "status_raw": "🟡 未施工（2026-10-11 PG-20261011 v2 使用者裁決第 5 點）",
+    "due_date": null,
+    "due_date_source": null,
+    "needs_due_date": false,
+    "tags": [
+      "治理",
+      "CIO",
+      "稽核",
+      "可追溯性",
+      "PG-20261011"
+    ],
+    "is_informational": false,
+    "detail": "【症狀】`.git/CIO_APPROVED` 為六欄格式（時間／tree／commit／verdict／reviewer／note）；CIO 型紀錄的 note 欄位多為空 → 無法回答「這筆 RECORD 的審查證據來自哪個檔案」。\n【影響】事後稽核僅能證明「有審查」，不能證明「審查了什麼、依據哪份 JSON」。tree 綁定仍有效（內容不可替換），缺的是**證據來源**的追溯。\n【建議】`cio_approve.py` 在 note 欄位寫入 `--result` 的相對路徑與其 sha256；不改 tree 綁定語意、不改格式欄數。\n【來源】PG-20261011 v2 使用者裁決第 5 點。"
   }
 ]
