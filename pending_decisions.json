@@ -1484,5 +1484,29 @@
   ],
   "is_informational": false,
   "detail": "【來源】2026-10-11 晨間產線事件（封版契約 A/B 因標籤遮罩變更而 fail-closed）之修復過程，經兩輪獨立 CIO 對抗式審查揭露。\n\n【現況（既有狀態，非本次修復引入）】\n① mtd_performance.html（已進版控、會上 Pages）內含未遮罩保單代號「第一金 FJ<數值>」，來源＝build_mtd_report.py 內硬編字面（實測該檔 1 處、該頁 1 處）。\n② 已提交（尚未重產）的 investment_performance.html 仍含 2 處未遮罩（政策標籤列＋行內 vs FJ<數值> 註記）；來源 build_investment_performance.py 已於 2026-10-11 修好（遮罩補完），產物須待下一次 07:00 產線重產並提交才會閉合。\n③ 歷史／其他產物亦有多處同型字面（grep 全 repo 產物曾見 800+ 筆，橫跨 9 月多份報告、audit_dashboard、ceo_dashboard 等），且該代號早已存在於公開 git 歷史。\n\n【與現行防線的關係】\n- 封版契約 Task 1+2 因採「受限標籤遮罩正規化」（tools/label_mask.py），該欄位不再納入逐位元比對；缺口已由正向斷言 has_unmasked_label() 補回，但目前只覆蓋 investment_performance.html（bip 頁）。\n- mtd 頁目前僅靠「逐位元 A/B（僅遮罩 generated_at）」保護內容變更，無正向遮罩斷言（已在 tools/verify_performance_core_task12.py 以註解明文記錄此界線）。\n\n【待決事項（需使用者裁決）】\n- 保單代號是否允許出現在公開頁面？此為 2026-10-11 懸而未決的政策題（先前提出方案 A 重新封版／B 還原標籤／C 契約正規化；本次只採 C 於閘門層）。\n- 若政策為「公開輸出不得出現代號」：需 (a) 清除 build_mtd_report.py 硬編字面並重產 mtd_performance.html、(b) 把 has_unmasked_label 正向斷言擴及 mtd 頁、(c) 評估是否回溯清理既有公開歷史產物（涉及 git 歷史，需另立 PII 清理程序）。\n\n【界線】使用者於本次修復明白下過「不擴大至其他頁面」，故本卡不於該票內施工；須另案核准後執行。"
+ },
+ {
+  "id": "PEND-20261011-08",
+  "date": "2026-10-11",
+  "status": "待處理",
+  "last_confirmed": "2026-10-11T09:30:00+08:00",
+  "owner": "龍九",
+  "external_owner": null,
+  "title": "🟡 P2｜閘門硬化：test_label_mask 未接進任何管線、docstring 引用誤植、KNOWN_GATE_FAILS 死碼",
+  "priority": "P2",
+  "status_raw": "🔴 未施工｜由 2026-10-11 修復案第三輪獨立 CIO 審查之 required_fixes 轉卡（非阻擋項）。",
+  "due_date": null,
+  "due_date_source": null,
+  "needs_due_date": true,
+  "tags": [
+   "閘門",
+   "驗證器",
+   "測試",
+   "死碼",
+   "硬化",
+   "治理"
+  ],
+  "is_informational": false,
+  "detail": "【來源】2026-10-11 晨間產線事件修復案（commit 0438ed73／44e54c55／9476608a）之第三輪獨立 CIO 對抗式審查 required_fixes，屬非阻擋項。\n\n【待辦三項】\n① tools/test_label_mask.py 未被任何管線／閘門呼叫（全 repo grep 僅見註解與自我引用，無 caller）→ 本輪新增的『沙盒齊備：T12–T16 實際執行（不得空跑冒充通過）』斷言，只在有人手動跑該測試時生效。建議接進 tools/verify_performance_core_task12.py 收尾或月度閘門 F1，否則同型『空跑冒充全綠』風險仍靠人工自律。\n② tools/label_mask.py:71 docstring 引用誤植：把『任何非標籤欄位的差異都會讓 same_after_mask 回 False』歸給測試 T3/T4/T5，但 T3 是 normalize 正向測試（兩種錨點），並非負例。應改引 T4/T5（或補一條 T3b）。純文字準確性，不影響行為。\n③ tools/verify_performance_core_task12.py:60 KNOWN_GATE_FAILS 為死碼（全檔僅定義、無引用）。可清理，但**不得於後續任何一輪被當成白名單使用**（不得用來吸收 FAIL）。\n\n【驗收建議】①以管線實跑證明測試被呼叫且缺沙盒時會擋、②docstring 引用與實際測試編號逐條相符、③移除或保留 KNOWN_GATE_FAILS 需明示決定（保留要加註『未使用』）。"
  }
 ]
