@@ -79,6 +79,12 @@ snap["penetration"] = {
     "actual_pct": actual_pct,
     "gaps": gaps,
     "actual_twd": actual_map,
+    # 2026-10-11 工單B：衛星明細獨立記錄。calc_penetration 已把黃金/健康自美股主桶移出獨立回報，
+    #   但舊寫法沒 persist → 消費端加總 actual_twd 只得 93.44%，其餘 853,894
+    #   （＝黃金 328,153＋健康 525,741）無從交代（10/11 週報症狀）。
+    #   刻意**不改** actual_twd／actual_pct 形狀（避免既有消費端加總語意位移）；
+    #   指定用途款亦不寫入此處（已在 restricted_cash 鍵），避免雙重計算。
+    "satellite_twd": {"黃金": float(sat_gold_v), "健康": float(sat_health_v)},
     "restricted_cash": round(_restricted_cash),
     # 2026-10-02（統一現金口徑）：在途／未對帳零錢，從現金桶移出後顯式記錄，
     # 供穿透完整性不變量（五桶＋在途＋衛星＋指定用途款＝總資產）使用。

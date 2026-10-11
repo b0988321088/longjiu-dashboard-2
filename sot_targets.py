@@ -1059,6 +1059,203 @@ def triggers(snap: dict) -> dict:
 BAND_EXCLUDED = ("現金", "現金/安全網", "cash")   # 不進 allocation 可接受範圍（裁示：現金不設百分比）
 
 
+# ════════════════════════════════════════════════════════════════════════════
+# 資產分解（2026-10-11 工單B｜使用者裁決）
+#   不變量：五桶 ＋ 衛星 ＋ 在途 ＋ 指定用途款 = 總資產
+#   為什麼：只印五桶會出現「合計 93.44%」而無從得知其餘 6.56% 是什麼（10/11 週報症狀）。
+#   規則：不閉合 → closed=False，呼叫端必須**阻擋精確調度建議**（fail-closed），
+#        不得自行補平、不得為湊 100% 正規化、不得把未歸類項塞進任一桶。
+# ════════════════════════════════════════════════════════════════════════════
+MAIN_BUCKETS = ("台股市值型成長", "美股市值型成長", "防守型配息", "債券", "現金/安全網")
+_SUBKEY_SUFFIX = ("_科技", "_非科技")      # 美股子集，非獨立桶（重複計算陷阱）
+SAT_KEYWORDS = ("黃金", "健康")            # 衛星（2026-09-03 已從美股主桶移出獨立回報）
+
+
+def asset_decomposition(snap: dict) -> dict:
+    """資產分解唯一入口（五桶／衛星／在途／指定款／未歸類，含分母與閉合判定）。
+
+    回傳：
+      總資產、五桶(dict)、五桶合計、衛星(dict)、衛星合計、在途、指定款、
+      已歸類合計、未歸類、未歸類明細(dict)、缺口、closed(bool)、分母、說明
+    缺 `total_assets` 或 `penetration.actual_twd` → raise（不以 0 冒充，fail-closed）。
+    """
+    if not isinstance(snap, dict):
+        raise ValueError("asset_decomposition 需要 snapshot dict")
+    _tot = snap.get("total_assets")
+    if not isinstance(_tot, (int, float)) or _tot <= 0:
+        raise ValueError("資產分解缺真值：total_assets（拒絕計算）")
+    _atwd = (snap.get("penetration") or {}).get("actual_twd")
+    if not isinstance(_atwd, dict) or not _atwd:
+        raise ValueError("資產分解缺真值：penetration.actual_twd（拒絕計算）")
+
+    _five = {k: float(_atwd.get(k) or 0) for k in MAIN_BUCKETS}
+    _five_sum = sum(_five.values())
+    # 衛星：優先讀 penetration.satellite_twd（工單B 新增的獨立鍵）；缺則由 actual_twd 名稱掃描。
+    # 其餘鍵：子集鍵（_科技/_非科技）不計；含「指定/在途/restricted」者不計（各自另有來源，
+    # 避免雙重計算）；其餘列為未歸類明細。
+    _sat, _unclassified = {}, {}
+    _sat_src = (snap.get("penetration") or {}).get("satellite_twd")
+    if isinstance(_sat_src, dict) and _sat_src:
+        _sat = {k: float(v or 0) for k, v in _sat_src.items()}
+    for k, v in _atwd.items():
+        if k in MAIN_BUCKETS or any(k.endswith(s) for s in _SUBKEY_SUFFIX):
+            continue
+        if k in _sat:
+            continue
+        if any(w in k for w in ("指定", "在途", "restricted", "transit")):
+            continue
+        if any(w in k for w in SAT_KEYWORDS):
+            _sat[k] = float(v or 0)
+        else:
+            _unclassified[k] = float(v or 0)
+
+    _transit = float((snap.get("penetration") or {}).get("cash_in_transit") or 0)
+    _restricted = float(restricted_cash(snap) or 0)      # 指定用途款（不在桶位內）
+    _sat_sum = sum(_sat.values())
+    _classified = _five_sum + _sat_sum + _transit + _restricted
+    _other = _tot - _classified
+    _closed = abs(_other) <= 1.0                          # 允許 1 元四捨五入
+    return {
+        "總資產": float(_tot),
+        "五桶": _five, "五桶合計": _five_sum,
+        "衛星": _sat, "衛星合計": _sat_sum,
+        "在途": _transit,
+        "指定款": _restricted,
+        "已歸類合計": _classified,
+        "未歸類": _other,
+        "未歸類明細": _unclassified,
+        "closed": _closed,
+        "分母": "snapshot.total_assets",
+        "說明": ("五桶＋衛星＋在途＋指定用途款＝總資產（不變量）；未歸類 >1 元＝closed=False → "
+                 "呼叫端必須阻擋精確調度建議，不得補平或正規化"),
+    }
+
+
+def asset_decomposition_line(snap: dict) -> str:
+    """單行揭露字串（週報／eval 共用）——五桶只佔 93.4% 時必須交代其餘部分。"""
+    d = asset_decomposition(snap)
+    _tot = d["總資產"] or 1
+    _parts = [f"五桶 {d['五桶合計']:,.0f}（{d['五桶合計'] / _tot * 100:.2f}%）"]
+    if d["衛星合計"]:
+        _parts.append(f"衛星 {d['衛星合計']:,.0f}（{d['衛星合計'] / _tot * 100:.2f}%）")
+    if d["在途"]:
+        _parts.append(f"在途 {d['在途']:,.0f}")
+    if d["指定款"]:
+        _parts.append(f"指定用途款 {d['指定款']:,.0f}（不列桶位）")
+    if d["未歸類明細"]:
+        _parts.append("＋".join(f"未歸類:{k} {v:,.0f}" for k, v in d["未歸類明細"].items()))
+    elif abs(d["未歸類"]) > 1:
+        _parts.append(f"未歸類 {d['未歸類']:,.0f}")
+    _tail = (f"＝ 總資產 {d['總資產']:,.0f}（{d['分母']}）✅ 不變量閉合"
+             if d["closed"] else
+             f"≠ 總資產 {d['總資產']:,.0f}（差 {d['未歸類']:,.0f}）⚠️ 不變量未閉合 → 阻擋精確調度建議")
+    return "｜".join(_parts) + " " + _tail
+
+
+def scheduling_fields(snap: dict, us30y: float | None = None, sellable_twd: dict | None = None) -> dict:
+    """調度欄位（結構化）＝程式產生，報告只引用（2026-10-11 工單E）。
+
+    使用者裁決：每個調度建議都必須有程式計算依據；理論金額**不得**冒充可執行金額；
+    逢反彈紀律（單次≤200,000、4–6 週）必須保留**政策來源**，不得只把文字變成常數。
+    缺必要資料或煞車／凍結生效 → 如實輸出阻擋狀態（fail-closed）。
+
+    回傳 {桶: {...}}，每桶欄位：現況_pct／戰略目標_pct／戰略偏差_pp／戰術目標_pct／戰術偏差_pp／
+    分母_twd／理論調整金額_twd／公式／單筆上限_twd／風控後可執行金額_twd／阻擋規則名稱／
+    可執行(bool)／來源(dict)。
+    """
+    _tot = snap.get("total_assets")
+    if not isinstance(_tot, (int, float)) or _tot <= 0:
+        raise ValueError("調度欄位缺真值：total_assets（拒絕計算）")
+    _thr = snap.get("thresholds_2026_0915") or {}
+    _tgt = _thr.get("桶目標_pct") or {}
+    _tac = _thr.get("桶戰術目標_pct") or {}          # SoT 未定義時為空 → 戰術偏差標「不計算」
+    _lad = _thr.get("動作階梯_pp") or {}
+    _hard = _thr.get("單桶硬上限_pct") or {}
+    _exe = _thr.get("減碼可執行性") or {}
+    _brake = _thr.get("風險煞車") or {}
+    _apct = (snap.get("penetration") or {}).get("actual_pct") or {}
+
+    # 逢反彈紀律：政策來源必須跟著常數走（使用者 2026-08-22 裁示）
+    _single_cap = {
+        "金額": 200000,
+        "週數": "4-6",
+        "來源": "使用者 2026-08-22 裁示（美股逢反彈分批減碼，單次≤20萬／4-6 週完成）",
+        "衝突": (f"thresholds.動作階梯_pp.單筆上限_twd={_lad.get('單筆上限_twd')}"
+                 if _lad.get("單筆上限_twd") and _lad.get("單筆上限_twd") != 200000 else None),
+    }
+    _brake_on = bool(us30y is not None and isinstance(_brake.get("us30y_pct"), (int, float))
+                     and us30y >= _brake["us30y_pct"])
+    _brake_name = (f"US30Y 煞車（{_brake.get('us30y_pct')}%，連 {_brake.get('us30y_連續日')} 日；"
+                   f"優先於動作階梯與單桶硬上限）") if _brake_on else ""
+    _exe_name = (f"可減部位限制（{_exe.get('可減部位', '非後收/非保單內/無CDSC')}）"
+                 f"→ 不可減部位處理：{_exe.get('不可減部位處理', '停新增＋配息導流')}")
+
+    _mapping = {"台股市值型成長": "台股市值型", "美股市值型成長": "美股市值型",
+                "防守型配息": "防守型配息", "債券": "債券", "現金/安全網": "現金"}
+    out = {}
+    for _pen_name, _sot_name in _mapping.items():
+        _cur = _apct.get(_pen_name)
+        _st = _tgt.get(_sot_name)
+        if not isinstance(_cur, (int, float)) or not isinstance(_st, (int, float)):
+            out[_pen_name] = {"現況_pct": _cur, "戰略目標_pct": _st, "戰略偏差_pp": None,
+                              "戰術目標_pct": None, "戰術偏差_pp": None,
+                              "理論調整金額_twd": None, "風控後可執行金額_twd": None,
+                              "可執行": False, "阻擋規則名稱": ["缺真值（現況或戰略目標）→ 不計算"],
+                              "來源": {"現況": "penetration.actual_pct", "戰略目標": "thresholds.桶目標_pct"}}
+            continue
+        _dev = round(_cur - _st, 1)
+        _theo = int(round(abs(_dev) / 100 * float(_tot)))          # 理論調整金額（雙向）
+        _tac_t = _tac.get(_sot_name)
+        _blocks = []
+        if _brake_name:
+            _blocks.append(_brake_name)
+        _cap = _single_cap["金額"]
+        _sell = (sellable_twd or {}).get(_pen_name)
+        _exec_amt = _theo
+        if _dev <= 0:
+            _exec_amt = 0
+            _blocks.append("方向為加碼 → 受現金底線/凍結規則約束（非減碼路徑）")
+        if _brake_on:
+            _exec_amt = 0
+        if _theo > _cap:
+            _exec_amt = min(_exec_amt, _cap)
+            _blocks.append(f"單筆上限（{_cap:,}）封頂：理論 {_theo:,} > 上限")
+        if isinstance(_sell, (int, float)):
+            if _exec_amt > _sell:
+                _exec_amt = int(_sell)
+                _blocks.append(f"可動部位（{_sell:,.0f}）封頂")
+            if _sell <= 0:
+                _exec_amt = 0
+        else:
+            _blocks.append("可減部位未提供 → 不計算可執行金額（fail-closed）")
+            _exec_amt = 0
+        if _hard.get(_sot_name) is not None and _cur > _hard[_sot_name]:
+            _blocks.append(f"已破單桶硬上限 {_hard[_sot_name]}%")
+        out[_pen_name] = {
+            "現況_pct": _cur,
+            "戰略目標_pct": _st,
+            "戰略偏差_pp": _dev,
+            "戰術目標_pct": _tac_t,
+            "戰術偏差_pp": (round(_cur - _tac_t, 1) if isinstance(_tac_t, (int, float)) else None),
+            "戰術來源": ("thresholds.桶戰術目標_pct" if isinstance(_tac_t, (int, float))
+                         else "無 SoT（週報曾引用『戰術 27%』但 thresholds 無此鍵）→ 不計算"),
+            "分母_twd": float(_tot), "分母來源": "snapshot.total_assets",
+            "理論調整金額_twd": _theo,
+            "公式": "|戰略偏差_pp| ÷ 100 × 分母_twd",
+            "單筆上限_twd": _cap, "單筆上限來源": _single_cap,
+            "可動部位_twd": _sell,
+            "風控後可執行金額_twd": int(_exec_amt),
+            "阻擋規則名稱": _blocks,
+            "可執行": bool(_exec_amt > 0 and not _brake_on),
+            "來源": {"現況": "penetration.actual_pct", "戰略目標": "thresholds_2026_0915.桶目標_pct",
+                     "階梯": "thresholds_2026_0915.動作階梯_pp",
+                     "硬上限": "thresholds_2026_0915.單桶硬上限_pct",
+                     "執行性": "thresholds_2026_0915.減碼可執行性",
+                     "煞車": "thresholds_2026_0915.風險煞車"},
+        }
+    return out
+
+
 def band_conflicts(snap: dict) -> list:
     """「目標值落在自身可接受範圍之外」的桶（2026-10-11 一次性工單 D）。
 

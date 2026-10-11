@@ -135,6 +135,49 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
         gap = act - t
         lines.append(f"| {name} | {act:.1f}% | {t}% | {gap:+.1f}pp | {action_map.get(name, '—')} |")
 
+    # 2026-10-11 工單B：資產分解（SoT 唯一入口）——五桶只佔 93.44% 時必須交代其餘部分與分母。
+    #   不變量不閉合（未歸類 >1 元）→ 明確標示並**阻擋精確調度建議**（fail-closed），
+    #   不得自行補平、不得為湊 100% 正規化。
+    try:
+        from sot_targets import asset_decomposition as _ad_fn, asset_decomposition_line as _adl_fn
+        _ad = _ad_fn(s)
+        lines += ["", "### 資產分解（不變量：五桶＋衛星＋在途＋指定用途款＝總資產）", "",
+                  f"- {_adl_fn(s)}"]
+        if not _ad["closed"]:
+            lines.append(f"- ⛔ **不變量未閉合**（未歸類 {_ad['未歸類']:,.0f}）→ 本週不對任何桶給出精確調度金額，"
+                         "待資料補齊後重算（不得以補平或正規化方式使合計為 100%）。")
+    except Exception as _e_ad:
+        lines += ["", "### 資產分解（不變量：五桶＋衛星＋在途＋指定款＝總資產）", "",
+                  f"- ⛔ 無法取得真值（{_e_ad}）→ 阻擋精確調度建議（fail-closed）"]
+
+    # 2026-10-11 工單E：調度欄位（結構化）——程式產生，報告只引用；理論與可執行必須分欄，
+    #   煞車／缺可減部位 → 如實輸出阻擋狀態（不得把理論金額冒充可執行金額）。
+    try:
+        from sot_targets import scheduling_fields as _sf_fn
+        _sf_all = _sf_fn(s, us30y=us30y)
+        lines += ["", "### 調度欄位（結構化｜程式產生）", "",
+                  "| 桶 | 現況 | 戰略目標 | 戰略偏差 | 戰術偏差 | 理論調整 | 風控後可執行 | 阻擋規則 |",
+                  "|---|---|---|---|---|---|---|---|"]
+        _nm = {"台股市值型成長": "台股", "美股市值型成長": "美股", "防守型配息": "防守",
+               "債券": "債券", "現金/安全網": "現金"}
+        for _b, _d in _sf_all.items():
+            _sb = ("—" if _d.get("戰略偏差_pp") is None else f"{_d['戰略偏差_pp']:+.1f}pp")
+            _tb = ("—" if _d.get("戰術偏差_pp") is None else f"{_d['戰術偏差_pp']:+.1f}pp")
+            _th = ("—" if _d.get("理論調整金額_twd") is None else f"{_d['理論調整金額_twd']:,}")
+            _ex = ("—" if _d.get("風控後可執行金額_twd") is None else f"{_d['風控後可執行金額_twd']:,}")
+            lines.append(
+                f"| {_nm.get(_b, _b)} | {_d.get('現況_pct')}% | {_d.get('戰略目標_pct')}% | "
+                f"{_sb} | {_tb} | {_th} | {_ex} | "
+                f"{('；'.join(_d.get('阻擋規則名稱') or []) or '—')} |")
+        lines.append("")
+        lines.append("- 分母＝snapshot.total_assets；理論調整＝|戰略偏差pp|÷100×分母；"
+                     "風控後可執行＝理論經單筆上限／可減部位／煞車封頂後金額（不得以理論充當可執行）。")
+        lines.append("- 逢反彈紀律：單次 ≤200,000、4–6 週完成（來源：使用者 2026-08-22 裁示）。"
+                     "⚠️ thresholds.動作階梯_pp.單筆上限_twd＝500,000 與之不一致 → 待裁決（本表取嚴者）。")
+    except Exception as _e_sf:
+        lines += ["", "### 調度欄位（結構化｜程式產生）", "",
+                  f"- ⛔ 無法取得真值（{_e_sf}）→ 阻擋調度金額（fail-closed）"]
+
     lines += ["", "## 二、機構流向雷達", ""]
     for k in ["台股", "黃金", "原油", "美債10年", "台幣"]:
         v = radar.get("signals", {}).get(k, {})

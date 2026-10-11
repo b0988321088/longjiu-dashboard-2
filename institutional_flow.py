@@ -550,14 +550,8 @@ def main():
         lines = []
         _pen5 = _snap.get("penetration", {}).get("actual_pct", {}) or {}
         _tw5 = _pen5.get("台股市值型成長", 7.5); _us5 = _pen5.get("美股市值型成長", 43.4)
-        # 2026-09-23 INC-242b v3：防守合併口徑一律走真值派生（原本讀 stored 佔比 → 組成
-        # 分量過期時，這裡會把舊值寫進 radar_state.weekly_plan 再被儀表板注入，
-        # 且 check_dashboard_sync 的舊值檢查會擋推送）。
-        try:
-            from sot_targets import defensive_caliber as _dc5_fn
-            _def5 = _dc5_fn(_snap).get("佔比") or _snap.get("defensive_combined_metric", {}).get("佔比", 69.2)
-        except Exception:
-            _def5 = _snap.get("defensive_combined_metric", {}).get("佔比", 69.2)
+        # 2026-10-11 工單C：改由 ③ 防守 行直接呼叫 defensive_caliber() 揭露「金額÷分母」與
+        #   待確認試算；此處原先的 _def5（含寫死 fallback 69.2）已無使用 → 移除，避免假真值殘留。
         _rot5 = ((_snap.get("rotation_recommendation", {}) or {}).get("建議") or [{}])[0]
         # ① 台股（2026-09-05：觀望 gate — PI質押款到位 + Fed 數據/重大事件前不投入）
         try:
@@ -630,11 +624,48 @@ def main():
             lines.append(f"⏸️ 美股（{_us5:.1f}% vs 目標{_us_t}%，超配 {_over_pp:+.1f}pp ≈ {_over_twd:,.0f}）> 可動部位 {_sellable:,.0f} → 停新增＋配息導流（不賣後收/保單內）")
         else:
             lines.append(f"🔴 美股（{_us5:.1f}% vs 目標{_us_t}%，超配 {_over_pp:+.1f}pp）→ 逢彈減碼 ≤20萬/次（可動 {_sellable:,.0f}）")
-        # ③ 防守
-        lines.append(f"⏸️ 防守（合併口徑 {_def5:.1f}% 已足）→ 凍結不追（00878/00713 不加碼）")
+        # 工單E（2026-10-11）：調度欄位一律由程式產生（sot_targets.scheduling_fields），報告只引用
+        #   —— 防止「理論調整金額」被當成「風控後可執行金額」。缺可減部位／煞車生效 → 如實輸出阻擋。
+        from sot_targets import scheduling_fields as _sf_fn
+        _sf = (_sf_fn(_snap, us30y=_us30_v, sellable_twd={"美股市值型成長": _sellable}) or {}).get("美股市值型成長") or {}
+        if _sf:
+            _cap_src = _sf.get("單筆上限來源") or {}
+            lines.append(
+                f"　↳ 調度欄位：戰略目標 {_sf.get('戰略目標_pct')}%／戰略偏差 {_sf.get('戰略偏差_pp'):+.1f}pp／"
+                f"理論調整 {_sf.get('理論調整金額_twd'):,}（{_sf.get('公式')}；分母 {_sf.get('分母_twd'):,.0f}）／"
+                f"風控後可執行 {_sf.get('風控後可執行金額_twd'):,}"
+                + (f"（單筆上限 {_cap_src.get('金額'):,}／{_cap_src.get('週數')} 週；來源：{_cap_src.get('來源')}）"
+                   if _cap_src.get("金額") else "")
+                + f"／阻擋規則：{('；'.join(_sf.get('阻擋規則名稱') or []) or '無')}"
+                + f"｜戰術偏差：{_sf.get('戰術來源')}")
+            if _cap_src.get("衝突"):
+                lines.append(f"　↳ ⚠️ 單筆上限設定衝突：{_cap_src['衝突']}（取嚴者 200,000；待裁決）")
+        # ③ 防守（工單C 2026-10-11：揭露口徑定義＋分母＋待確認項目；**值不動**）
+        #   使用者裁決：配息資產合計 ÷ 總資產，≠防守桶＋債券；鉅亨月配列「分類待確認」，
+        #   並揭露「排除待確認項目的試算」。原句只寫「合併口徑 66.6% 已足」→ 無法回溯口徑。
+        from sot_targets import defensive_caliber as _dc_fn     # INC-201 單一入口
+        _dc5 = _dc_fn(_snap)
+        _dc_amt, _dc_pct = _dc5["金額"], _dc5["佔比"]
+        _dc_thr = _dc5["門檻"]
+        _dc_tot = float(_snap.get("total_assets") or 0)
+        _dc_pen = float(_dc5["組成"].get("鉅亨月配") or 0)       # 分類待確認項
+        _dc_excl = _dc_amt - _dc_pen
+        _dc_excl_pct = round(_dc_excl / _dc_tot * 100, 2) if _dc_tot else 0.0
+        lines.append(
+            f"⏸️ 防守（配息資產合計 {_dc_amt:,.0f} ÷ 總資產 {_dc_tot:,.0f} = {_dc_pct:.1f}%"
+            + (f" vs 門檻 {_dc_thr:g}%" if isinstance(_dc_thr, (int, float)) else "")
+            + f" → {'已足' if _dc5['已足'] else '未達門檻（回報）'}）→ 凍結不追（00878/00713 不加碼）"
+              "｜口徑＝保單月配基金＋國泰月配＋防守ETF＋鉅亨月配＋第一金ID01（**≠防守桶＋債券**）"
+              f"｜含鉅亨月配 {_dc_pen:,.0f}（分類待確認）；排除待確認項目試算 {_dc_excl:,.0f}＝{_dc_excl_pct:.2f}%（僅試算）")
         # ④ 債券（比例與目標讀 snapshot，原寫死 23.1%/25%）
         _bond5 = _pen5.get("債券", 0); _bond_t = _tgt5.get("債券型目標", 25)
-        lines.append(f"⏸️ 債券 {_bond5:.1f}%（目標 {_bond_t}%）→ 等 US30Y 回落凍結線 {_us30_gate}% 以下才新增")
+        # 工單D（2026-10-11）：目標 25% 與自身可接受範圍 27–33% 的設定衝突必須在此揭露
+        #   （不自行改值、不稱 25% 為上限）；裁決前本桶不自動交易（fail-closed）。
+        from sot_targets import band_conflicts as _bc_fn5
+        _bc5 = {_c["桶"]: _c for _c in _bc_fn5(_snap)}.get("債券")
+        lines.append(f"⏸️ 債券 {_bond5:.1f}%（目標 {_bond_t}%）→ 等 US30Y 回落凍結線 {_us30_gate}% 以下才新增"
+                     + (f"｜⚠️ 設定衝突：{_bc5['衝突']}（{_bc5['來源']}）→ 待裁決；"
+                        "裁決前本桶不自動交易（fail-closed）" if _bc5 else ""))
         # ⑤ 現金/乾粉
         _cash5 = _pen5.get("現金/安全網", 0)
         from sot_targets import cash_floor as _cf_fn5   # 2026-10-04 P0延伸：現金底線單一入口
