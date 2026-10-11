@@ -11,7 +11,7 @@ from pathlib import Path
 from scripts.components.volatility_monitor import make_volatility_report
 from dividend_caliber import bucket_of
 import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
-from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
+from sot_targets import sot_monthly_expense, sot_monthly_income, dry_display  # INC-270 月支出／月收入單一入口；2026-10-11 工單A 乾粉顯示單一實作
 
 BASE = Path(__file__).resolve().parent
 
@@ -49,7 +49,12 @@ def cash_caliber(snap):
     return {
         "cash": cash, "cash_all": cash_all, "restricted": restricted,
         "life": life, "buffer": buf, "total": total,
+        # 2026-10-11 工單A：`dry` 維持「餘裕」（≥0）語意；新增 dry_signed（有正負號）與
+        #   shortfall（短少）。消費端**禁止**再寫 `dry or 舊值`——乾粉不足時 dry=0 會讓
+        #   falsy 判斷回退到 snapshot.乾粉執行_0926 的 9/29 值（119,182），把短少洗成餘裕。
         "dry": max(0.0, cash - life),
+        "dry_signed": int(round(cash - life)),
+        "shortfall": int(round(max(0.0, life - cash))),
         "life_ok": cash >= life,
         "gap": max(0.0, total - cash),
         "single": buf <= 0,   # 2026-09-27：單一口徑（追繳緩衝取消）→ 顯示端省略緩衝字樣
@@ -197,8 +202,10 @@ def main():
             # 2026-09-13：乾粉 = 台幣現金 − 生活底線（現算；原讀 乾粉執行_0926 的 8/22 舊值會與現金 % 矛盾）
             # 2026-09-25 INC cash_floor_two_calibers_unlabeled：現金口徑一律由 cash_caliber 派生
             _cw3 = cash_caliber(snap)
-            _dry2 = _cw3["dry"] \
-                or snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
+            # 2026-10-11 工單A：乾粉＝可動用現金 − 現金底線（有正負號）。移除「0 就回退
+            #   snapshot.乾粉執行_0926 舊值（119,182）」的路徑——負值被 max(0,·) 夾成 0 後，
+            #   falsy 判斷會把過期正值寫進下游報告（10/11 週報/eval 即此症狀）。
+            _dry2 = _cw3["dry_signed"]
             _usd2 = snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
             from usd_advisory import cap as _usd_cap_fn   # 2026-10-07 裁決②：政策門檻單一來源
             _usd_cap2 = float(_usd_cap_fn(snap) or 60)
@@ -207,7 +214,7 @@ def main():
             _plan = [f"{r.get('動作','')} {r.get('類別','')}：{r.get('內容','')}"
                      for r in ((_rd.get("weekly_plan", {}) or {}).get("rows") or []) if r.get("內容")]
             _plan.append(f"📊 台股穿透 {_pen2.get('台股市值型成長', 0):.1f}%（目標 {_tg2.get('台股市值型目標', 10)}%，缺口 {_tg2.get('台股市值型目標', 10) - _pen2.get('台股市值型成長', 0):+.1f}pp）")
-            _plan.append(f"💰 乾粉 {_dry2/10000:.1f}萬（現金 {_cw3['cash']:,.0f} − 現金底線 {_cw3['life']:,.0f} 守 "
+            _plan.append(f"💰 {dry_display(_cw3, 'wan')}（現金 {_cw3['cash']:,.0f} − 現金底線 {_cw3['life']:,.0f} 守 "
                          + ("🟢 達標" if _cw3['life_ok'] else f"🔴 未達標（缺 {_cw3['life'] - _cw3['cash']:,.0f}）") + "）")
             if snap.get("usd_exposure_monitor", {}).get("advisory_only"):
                 # 2026-10-07 裁決①③：美元曝險僅顯示、不觸發＋觀測線命名（門檻讀單一來源）
@@ -486,6 +493,9 @@ def main():
         "card_sum": _card_sum,
         "other_sum": _other_sum,
         "dry_powder": _dry,
+        # 2026-10-11 工單A：分層註記需要的短少值（乾粉不足時 dry_powder=0，但短少＝60,339）
+        "dry_powder_signed": _cw_t["dry_signed"],
+        "cash_shortfall": _cw_t["shortfall"],
         "safe_line_cathay": int(_cat_loan) * 3,      # 2026-09-28：房貸扣款行各自口徑
         "safe_line_sinopac": int(_sin_loan) * 3,
         "cathay_loan": int(_cat_loan),
@@ -1062,10 +1072,15 @@ def main():
         _cl = snap.get("cash_layers") or {}
         _cash_note = ""
         if _cl:
+            # 2026-10-11 工單A：原本乾粉直接讀 snapshot.cash_layers.dry_powder（不足時被夾成 0
+            #   → 顯示「＋乾粉 0」，與報告的「短少 60,339」矛盾）。改走 SoT 現算並保留正負號。
+            from sot_targets import dry_powder as _dp_fn
+            _dpx = _dp_fn(snap)
+            _dry_txt = dry_display(_dpx)
             _cash_note = (f'<span class="text-slate-400">｜現金分層：總 {_cl.get("cash_total", 0):,.0f}'
                           f'／可動用 {_cl.get("available", _cl.get("unrestricted_cash", 0)):,.0f}'
                           f'（底線 {( _cl.get("emergency_cash") or {}).get("金額", 0):,.0f}'
-                          f'＋乾粉 {_cl.get("dry_powder", 0):,.0f}）'
+                          f'＋{_dry_txt}）'
                           f'／指定還債 {( _cl.get("restricted_cash") or {}).get("debt_repayment_reserve", 0):,.0f}'
                           f'（不得當普通現金）</span>')
         _legend = (f'<div class="flex gap-3 text-[10px] text-slate-400 mt-1">'

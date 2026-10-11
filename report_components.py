@@ -511,6 +511,23 @@ def band_filter(text: str, snap: dict | None = None) -> str:
     except Exception:
         return text
     out = text
+    # 2026-10-11 工單D：設定衝突（目標值 ∉ 自身可接受範圍）→ **只揭露、不改值**，並在該桶字樣後
+    #   補標示。使用者裁決：不得自行改目標或改範圍；不得把目標值敘述為「上限」；衝突期間該桶不交易。
+    try:
+        from sot_targets import band_conflicts as _bc_fn
+        for _c in _bc_fn(snap):
+            _flag = (f"⚠️ 設定衝突（{_c['衝突']}）→ 待裁決；裁決前本桶不自動交易（fail-closed）；"
+                     f"目標為中樞值、非上限")
+            if _flag in out:
+                continue
+            for w in _BAND_ALIAS.get(_c["桶"], (_c["桶"],)):
+                # 別名後允許少量字元（如「債券 26.9%（…）」）再接第一個括號
+                _m = re.search(re.escape(w) + r"[^（(]{0,14}[（(][^）)]{0,60}）", out)
+                if _m:
+                    out = out[:_m.end()] + " " + _flag + out[_m.end():]
+                    break
+    except Exception:                                        # noqa: BLE001
+        pass
     for name, b in bands.items():
         if b.get("顯示行動"):
             continue                                  # 範圍外 → 原樣保留

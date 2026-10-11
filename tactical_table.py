@@ -125,7 +125,17 @@ def build_table(snap: dict, us30y: float = None) -> dict:
     targets = pen.get("targets", {})
     total = snap.get("total_assets", 0)
 
-    # 目標區間：目標 ±5pp（可調整）
+    # 2026-10-11 工單D：可接受範圍一律讀 SoT（snapshot.可接受範圍_pct），**禁止**自行 ±5pp；
+    #   並偵測「目標 ∉ 自身範圍」的設定衝突 → 該桶 fail-closed（動作降為待裁示、金額 0）。
+    #   使用者裁決：不得自行改目標或改範圍；不得把目標值敘述為「上限」。
+    try:
+        from sot_targets import acceptable_band as _ab_fn, band_conflicts as _bc_fn
+        _bands = _ab_fn(snap)
+        _conf = {c["桶"]: c for c in _bc_fn(snap)}
+    except Exception as _e:                                    # noqa: BLE001
+        _bands, _conf = {}, {}
+        print(f"[WARN] 可接受範圍 SoT 不可得（{_e}）→ 目標區間留空，不自行推導")
+
     target_map = {
         "台股市值型成長": ("台股市值型", "台股市值型成長"),
         "美股市值型成長": ("美股市值型", "美股市值型成長"),
@@ -173,18 +183,43 @@ def build_table(snap: dict, us30y: float = None) -> dict:
             amount = adj_amount
             note = strat.get("note", "")
 
+        # 工單D：設定衝突（目標 ∉ 自身可接受範圍）→ fail-closed（不自動交易、金額 0、動作待裁示）
+        _cfl = _conf.get(asset)
+        if _cfl:
+            action, trade, amount = "⛔ 設定衝突・待裁示", False, 0
+            note = (_cfl["衝突"] + "｜來源：" + _cfl["來源"]
+                    + "｜裁決前本桶自動交易 fail-closed（金額 0）")
+        # 可接受範圍（SoT）：帶狀→「27~33%」；只有上限→「≤15%（硬上限）」；無真值→不推導
+        _band = _bands.get(asset) or {}
+        _lo, _hi = _band.get("下限"), _band.get("上限")
+        if asset in ("現金/安全網", "現金", "cash"):
+            # 裁示②（2026-10-02）：現金不設百分比範圍 → 不推導、不顯示帶狀（原本 ±5pp 假範圍）
+            _band_txt = "—（現金不設百分比；裁示② 2026-10-02）"
+        elif isinstance(_lo, (int, float)) and isinstance(_hi, (int, float)):
+            _band_txt = f"{_lo:g}~{_hi:g}%"
+        elif isinstance(_hi, (int, float)):
+            _band_txt = f"≤{_hi:g}%（硬上限）"
+        else:
+            _band_txt = "無真值（不推導）"
+
         rows.append({
             "資產分類": asset,
             "現況占比": round(cur, 1),
             "目標": tgt,
-            "目標區間": f"{tgt-5}~{tgt+5}%",
+            "目標區間": _band_txt,
+            "可接受範圍": _band_txt,
+            "設定衝突": (_cfl["衝突"] if _cfl else ""),
+            "目標註記": (f"⚠️ 設定衝突：{_cfl['衝突']}（{_cfl['來源']}）→ 待裁決；"
+                         f"目標為中樞值，非上限" if _cfl else ""),
             "偏離pp": round(dev, 1),
             "階梯等級": ladder["level"],
             "優先級": ladder["priority"],
             "建議動作": action,
             "精算金額": amount,
             "觸發條件": (ladder["desc"] + "｜" + _dyn_note) if _dyn_note else ladder["desc"],
-            "停止條件": strat.get("stop", ""),
+            # 工單D：衝突處置寫進「停止條件」（報告引用此欄）→ 下游看得見 fail-closed 原因
+            "停止條件": ((strat.get("stop", "") + ("｜" if strat.get("stop") else "") + note)
+                        if _cfl else strat.get("stop", "")),
             "是否交易": trade,
         })
 
@@ -277,17 +312,21 @@ def _pi_payload(snap: dict) -> dict:
 
 def to_markdown(table: dict) -> str:
     """輸出週報可讀的 Markdown 表格（含視覺進度條）"""
-    lines = ["| 資產分類 | 進度視覺 | 現況% | 目標 | 偏離pp | 動作 | 精算金額 | 階梯 |",
-             "|---|---|---|---|---|---|---|---|"]
+    lines = ["| 資產分類 | 進度視覺 | 現況% | 目標 | 可接受範圍 | 偏離pp | 動作 | 精算金額 | 階梯 |",
+             "|---|---|---|---|---|---|---|---|---|"]
     for r in table["rows"]:
         # 視覺進度條：現況/目標比例（滿 20 格）
         _bar_len = max(1, min(20, int(abs(r["現況占比"]) / max(r["目標"], 1) * 20)))
         _bar = "█" * _bar_len + "░" * (20 - _bar_len)
         lines.append(
             f"| {r['資產分類']} | `{_bar}` | {r['現況占比']}% | {r['目標']}% | "
+            f"{r.get('可接受範圍', '—')} | "
             f"{r['偏離pp']:+.1f} | {r['建議動作']} | {r['精算金額']:,} | "
             f"{r['階梯等級']} |"
         )
+        # 2026-10-11 工單D：設定衝突（目標 ∉ 自身範圍）必須逐列揭露——不得只標一張卡
+        if r.get("目標註記"):
+            lines.append(f"| ⚠️ |  |  |  |  |  | {r['目標註記']} |  |  |")
     # 專業投資人（PI）雙軌狀態卡｜使用者 2026-10-04 裁決：財力軌 vs 資格軌分離
     _pi = table.get("professional_investor", {}) or {}
     if _pi.get("error"):

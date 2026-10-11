@@ -526,17 +526,17 @@ def main():
         _pen = _snap.get("penetration", {}).get("actual_pct", {})
         def _ap(k, d=0):
             return _pen.get(k, d)
-        # 2026-09-13：乾粉改「台幣現金 − 底線」現算（原讀 乾粉執行_0926.當前=100,272 是 8/22 口徑；
-        # 現金已 800,272 → 857,298、MMF 500萬已轉 B11 → 舊值會與同行現金 % 自相矛盾）
+        # 2026-10-11 工單A（根因）：原式 `max(0, 現金 − 指定款 − 底線)` 把負值夾成 0，接著
+        #   `if not _dry:` 又回退到 snapshot.乾粉執行_0926 的 9/29 舊值（119,182）
+        #   → weekly_plan 寫出「乾粉 11.9萬」，與 eval 同頁的「短少 60,339」互相矛盾，
+        #   且過期乾粉流入下游報告。改走單一入口 sot_targets.dry_powder()：保留正負號、
+        #   不再回退任何舊值（缺真值 fail-closed）。
+        from sot_targets import dry_powder as _dp_fn, dry_display as _dry_txt_fn
         from sot_targets import cash_floor as _cf_fn   # 2026-10-04 P0延伸：現金底線單一入口（缺值 fail-closed）
         _floor_dry = _cf_fn(_snap)                      # 原 .get("cash_floor", 700000) 假真值退路已移除
-        # 2026-09-29：乾粉改「可動用現金 − 底線」＝ (現金 − 指定用途款) − 底線。
-        # 指定用途款（質押撥款待清償 590 萬）不可當乾粉（原式會顯示 602 萬）。
-        from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
-        _rst_dry = _rst_fn(_snap)
-        _dry = max(0, (_snap.get("cash_total") or _snap.get("cash") or 0) - _rst_dry - _floor_dry)
-        if not _dry:
-            _dry = _snap.get("乾粉執行_0926", {}).get("戰術乾粉總額", {}).get("當前", 0)
+        _dp = _dp_fn(_snap)
+        _dry = _dp["dry"]                               # 有正負號（<0＝短少）
+        _dry_wan = _dry_txt_fn(_dp, "wan")              # 「乾粉 11.9萬」／「短少 6.0萬」
         _usd = _snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
         _hs = _snap.get("hedge_satellite", {})
         _conv = _snap.get("insurance_conversion_0826b", {})
@@ -639,12 +639,17 @@ def main():
         _cash5 = _pen5.get("現金/安全網", 0)
         from sot_targets import cash_floor as _cf_fn5   # 2026-10-04 P0延伸：現金底線單一入口
         _floor5 = _cf_fn5(_snap)                        # 原 .get("cash_floor", 700000) 假真值退路已移除
-        if _rot5.get("產業") and not _gate:
-            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；乾粉 {_dry/10000:.1f}萬 優先「{_rot5.get('產業','—')}」（{_rot5.get('動作','')}）")
+        if _dry <= 0:
+            # 2026-10-11 工單A：乾粉為負＝短少 → 不得再寫「優先吸納」（沒有可部署金額，
+            #   否則同一份報告會出現「短少 6.0萬」＋「✅ 乾粉優先吸納」自相矛盾）。
+            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；{_dry_wan} → 先補現金底線、"
+                         f"本週不做新增部署（指定款不得視為可動用）")
+        elif _rot5.get("產業") and not _gate:
+            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；{_dry_wan} 優先「{_rot5.get('產業','—')}」（{_rot5.get('動作','')}）")
         elif _gate:
-            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；乾粉 {_dry/10000:.1f}萬 保留（觀望 gate 未解除前零新增）")
+            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；{_dry_wan} 保留（觀望 gate 未解除前零新增）")
         else:
-            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；乾粉 {_dry/10000:.1f}萬 保留（本週無「低配＋資金流入」標的，等訊號）")
+            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；{_dry_wan} 保留（本週無「低配＋資金流入」標的，等訊號）")
         # ⑥ 避險衛星
         if _hs.get("黃金延後_0829"):
             lines.append("⏸️ 避險衛星：黃金A10 32萬 8/30 生效（保單內）；00635U ~105萬 延後（華許放鷹+金價偏高）→ 等回檔")

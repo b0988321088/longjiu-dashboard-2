@@ -11,7 +11,7 @@ import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
 import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
 from datetime import date
 from pathlib import Path
-from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
+from sot_targets import sot_monthly_expense, sot_monthly_income, dry_display  # INC-270 月支出／月收入單一入口；2026-10-11 工單A 乾粉顯示單一實作
 from usd_advisory import cap as _usd_cap_fn, tier as _usd_tier, tier_limit_text as _usd_tier_text  # noqa: E402
 # 2026-10-07 裁決②③：政策門檻唯一來源（usd_advisory ← thresholds.美元曝險_pct）＋觀測線命名
 
@@ -107,7 +107,11 @@ def cash_caliber(s):
     return {
         "cash": cash, "cash_all": cash_all, "restricted": restricted,
         "life": life, "buffer": buf, "total": total,
+        # 2026-10-11 工單A：同 build_dashboard——`dry` 維持 ≥0；新增 dry_signed／shortfall，
+        #   並移除消費端的 `dry or 舊值` 回退（見 build_summary_md 與 792 行）。
         "dry": max(0.0, cash - life),
+        "dry_signed": int(round(cash - life)),
+        "shortfall": int(round(max(0.0, life - cash))),
         "life_ok": cash >= life,
         "gap": max(0.0, total - cash),
         "single": buf <= 0,   # 2026-09-27：單一口徑（追繳緩衝取消）
@@ -229,7 +233,7 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     _al_rows = dry_alloc()
     _al_txt = "｜".join(f"{_n} {_a}" for _n, _a, _v in _al_rows) if _al_rows else "（snapshot 無乾粉分配表）"
     _cw = cash_caliber(s)
-    lines.append(f"- 當前乾粉：{dry_cur:,}（現金 {_cw['cash']:,.0f} − 生活底線 {_cw['life']:,.0f}）｜{_al_txt}")
+    lines.append(f"- {dry_display(_cw)}（現金 {_cw['cash']:,.0f} − 生活底線 {_cw['life']:,.0f}）｜{_al_txt}")
     # 2026-10-07 裁決：美元曝險僅顯示、不觸發（advisory_only 由 usd_exposure_sync.py 寫入）
     _usd_adv = bool(((s.get("usd_exposure_monitor") or {}).get("advisory_only")))
     for name, val, limit, triggered in [
@@ -244,7 +248,7 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
         lines.append(f"- {name} {val}（{limit}）：{st}")
     _lif_st = "✅ 達標" if _cw["life_ok"] else "🔴 未達標"
     # 2026-09-27：現金底線單一口徑（追繳緩衝取消）→ 只列一行，不再有「合計底線／追繳緩衝」
-    lines.append(f"- 現金｜現金底線 {_cw['life']:,.0f}（單一口徑；現 {_cw['cash']:,.0f}）：{_lif_st} → 餘裕/乾粉 {_cw['dry']:,.0f}")
+    lines.append(f"- 現金｜現金底線 {_cw['life']:,.0f}（單一口徑；現 {_cw['cash']:,.0f}）：{_lif_st} → {dry_display(_cw)}")
 
     lines += ["", "## 七、里程碑時程", ""]
     _ms_rows = milestones_next(6)
@@ -466,10 +470,10 @@ def main():
         sec_rows += f"<tr><td>{k}</td><td class='num'>{amt:,}</td><td class='num'>{pct}</td><td>{st}</td></tr>"
 
     # ── 乾粉 ──
-    dry = s.get("乾粉執行_0926", {}).get("戰術乾粉總額", {})
-    # 2026-09-13：乾粉 = 台幣現金 − 底線（現算；舊值 10.0萬 為 8/22 口徑，現金已 857,298）
+    # 2026-10-11 工單A：移除 snapshot.乾粉執行_0926（9/29 舊值 119,182）的回退來源。
+    #   乾粉＝可動用現金 − 現金底線，可為負（短少）；顯示一律走 sot_targets.dry_display。
     _cw0 = cash_caliber(s)
-    dry_cur = _cw0["dry"] or dry.get("當前", 0)
+    dry_cur = _cw0["dry_signed"]
 
     # ── 質押 ──
     pledge = s.get("質押計畫", {})
@@ -789,7 +793,7 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
     <div class="drybar">
 {_drybar_html}    </div>
     <div style="font-size:12px;color:#cbd5e1;line-height:1.7">
-      當前乾粉 <b>{dry_cur:,}</b>（現金 {_cw2['cash']:,.0f} − 現金底線 {_cw2['life']:,.0f}，單一口徑）｜分配表＝snapshot.乾粉執行_0926（單一真值）<br>
+      當前 {dry_display(_cw2)}（現金 {_cw2['cash']:,.0f} − 現金底線 {_cw2['life']:,.0f}，單一口徑）｜分配表＝snapshot.乾粉執行_0926（僅供分配表；乾粉金額一律現算）<br>
 {_al_note_html}    </div>
   </div>
   <div class="card"><h2>🛡️ 質押 / 風險紅線</h2>

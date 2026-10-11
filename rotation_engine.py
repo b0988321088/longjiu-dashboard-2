@@ -156,7 +156,19 @@ def build_recommendation(industry_pen: dict, sector_flow: dict) -> dict:
     avoid = [r for r in rows if r["動作"].startswith("🔴") or r["動作"].startswith("⏸")]
 
     summary = "本週乾粉："
-    if top:
+    # 2026-10-11 工單A：乾粉為負（短少）時不得輸出「本週乾粉：優先 X」——該句會被日報／週報引用，
+    #   與同頁「短少 60,339」互相矛盾。讀 SoT 現算；查不到真值時保留原敘述（不誤導新數字）。
+    _shortfall = 0
+    try:
+        import json as _json
+        from sot_targets import dry_powder as _dp_fn
+        _snap_disk = _json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        _shortfall = int(_dp_fn(_snap_disk)["shortfall"])
+    except Exception:
+        _shortfall = 0
+    if _shortfall:
+        summary = f"本週現金短少 {_shortfall:,} → 先守底線、不做新增部署"
+    elif top:
         summary += "優先 " + "、".join(r["產業"] for r in top[:3])
     else:
         # 2026-09-06：無吸納標的（觀望 Gate / 已由保單涵蓋）→ 輸出「保留」語意，

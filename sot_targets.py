@@ -299,6 +299,69 @@ def available_cash(snap: dict) -> float:
         _cash = 0.0
     return max(0.0, _cash - restricted_cash(snap))
 
+
+LONG_TERM_CASH_GOAL = 1000000   # 長期目標（僅標示用；不取代硬底線 700,000，2026-10-11 工單A）
+
+
+def dry_powder(snap: dict) -> dict:
+    """乾粉／現金缺口＝可動用現金 − 現金底線，**保留正負號**（2026-10-11 一次性工單 A 單一入口）。
+
+    為什麼要有這支（根因）：乾粉可以為負（不足＝短少）。舊寫法在三個消費端各自
+    `max(0, cash − life)` 把負值夾成 0，再用 `dry or 舊值` 回退到
+    `snapshot.乾粉執行_0926.戰術乾粉總額.當前`（2026-09-29 的 119,182）→ 負值被換成
+    過期正值，於是 10/11 週報／eval 同時出現「乾粉 119,182（現金 639,661 − 生活底線
+    700,000）」與「短少 60,339」，且過期乾粉流入下游報告。
+
+    回傳：available／floor／dry（有正負號）／shortfall／status／long_term_goal。
+    讀取端一律呼叫本函式，**不得**再自行 max(0,…) 或回退 snapshot.乾粉執行_0926。
+    缺真值 fail-closed：現金或底線無法解析即 raise，不以 0 冒充（0 是合法乾粉值，
+    會與「缺值」混淆）。
+    """
+    _raw_cash = (snap or {}).get("cash_total", (snap or {}).get("cash"))
+    if not isinstance(_raw_cash, (int, float)) or isinstance(_raw_cash, bool):
+        # 缺現金鍵 → 不得以 0 冒充（會變成「短少 700,000」這種假警報），fail-closed。
+        raise ValueError("乾粉口徑缺真值（snapshot 無 cash_total／cash）→ 拒絕計算")
+    floor = cash_floor(snap)              # 既有單一入口（缺值即 raise）
+    avail = available_cash(snap)
+    if floor is None or avail is None:
+        raise ValueError("乾粉口徑缺真值（available_cash／cash_floor）→ 拒絕計算")
+    dry = int(round(float(avail) - float(floor)))
+    # 跨源一致性（工單A 要求）：cash_total−restricted（本函式口徑）與 snapshot.cash_layers.unrestricted_cash
+    #   若不一致 > 1 元 → 標記，交共用閘門 fail-closed（不得靜默選一個）。缺 cash_layers 時不誤報。
+    _cl = (snap or {}).get("cash_layers") or {}
+    _cl_avail = _cl.get("unrestricted_cash")
+    _xgap = None
+    if isinstance(_cl_avail, (int, float)) and not isinstance(_cl_avail, bool):
+        if abs(float(_cl_avail) - float(avail)) > 1:
+            _xgap = int(round(float(avail) - float(_cl_avail)))
+    return {
+        "available": float(avail),
+        "floor": float(floor),
+        "dry": dry,                                   # 有正負號：<0 代表短少
+        "shortfall": int(max(0, -dry)),
+        "status": "餘裕" if dry >= 0 else "短少",
+        "long_term_goal": LONG_TERM_CASH_GOAL,        # 僅標示；10/14 結轉未入帳前不得宣告已補足
+        "cross_source_gap": _xgap,                    # None＝一致；非 None＝跨源不一致（差額）
+        "cross_source_ok": _xgap is None,
+        "note": ("乾粉＝可動用現金 − 現金底線（可為負）；長期目標 1,000,000 僅標示，"
+                 "不取代硬底線 700,000；來源 sot_targets.dry_powder"),
+    }
+
+
+def dry_display(dp: dict, unit: str = "twd") -> str:
+    """乾粉顯示字串（單一實作）：正→「乾粉 119,182」／負→「短少 60,339」。
+
+    unit="wan" 時改印「乾粉 11.9萬／短少 6.0萬」（供既有「萬」格式的內文沿用）。
+    """
+    d = dp or {}
+    # 兼容兩種來源：sot_targets.dry_powder()（dry＝有正負號）與 cash_caliber()（dry_signed）
+    dry = int(d["dry_signed"]) if "dry_signed" in d else int(d.get("dry") or 0)
+    if dry >= 0:
+        return f"乾粉 {dry/10000:.1f}萬" if unit == "wan" else f"乾粉 {dry:,}"
+    sf = -dry
+    return f"短少 {sf/10000:.1f}萬" if unit == "wan" else f"短少 {sf:,}"
+
+
 def liability_interest(snap: dict) -> dict:
     """負債月息明細（單一來源｜2026-09-30 使用者核准動態化）。
 
@@ -441,7 +504,13 @@ def cash_layers(snap: dict, today: str | None = None) -> dict:
             "定義": "現金底線內、不得動用的部分（cash_floor）",
             "floor": round(floor),
         },
+        # 2026-10-11 工單A：dry_powder 維持「可動用超出底線的部分」（≥0）——與 check_thresholds
+        #   的閉合不變式（底線＋乾粉＝可動用）相容：不足時底線＝全部可動用、乾粉＝0。
+        #   另外獨立輸出「短少」與「有正負號的乾粉」，供報告層如實顯示「短少 60,339」，
+        #   不再讓負值被夾成 0 後被消費端回退成 snapshot.乾粉執行_0926 的過期正值。
         "dry_powder": round(max(0.0, unrestricted - emergency)),
+        "dry_powder_signed": round(unrestricted - floor),
+        "cash_shortfall": round(max(0.0, floor - unrestricted)),
         "credit_line_available": None,
         "credit_line_note": "⚠️ 無真值來源：可動用信用額度（未動用質押額度／保單借款空間）尚未建檔 → 壓力測試不得推估",
         "語義": (f"現金 {total:,.0f} 中 {restricted:,.0f} 係指定還債款（同時撐『清償承諾』與『追繳緩衝』，"
@@ -988,6 +1057,39 @@ def triggers(snap: dict) -> dict:
 #     本函式不改變任何投資決策邏輯、不新增市場指標、不碰質押／借款／自動賣股。
 # ════════════════════════════════════════════════════════════════════════════
 BAND_EXCLUDED = ("現金", "現金/安全網", "cash")   # 不進 allocation 可接受範圍（裁示：現金不設百分比）
+
+
+def band_conflicts(snap: dict) -> list:
+    """「目標值落在自身可接受範圍之外」的桶（2026-10-11 一次性工單 D）。
+
+    使用者裁決（2026-10-11）：**不自選值修訂**。25%（`thresholds_2026_0915.桶目標_pct.債券`）
+    與 27–33%（2026-10-02 裁示② `snapshot.可接受範圍_pct`）都是可追溯的正式設定，衝突屬
+    「策略裁決層」→ 本函式只**偵測並揭露**，不改任何值；偵測到即 fail-closed：
+    該桶不得自動交易（呼叫端須據此把動作降為「待裁示」且金額 0），且報告不得把目標寫成上限。
+    """
+    out: list = []
+    try:
+        bands = acceptable_band(snap)
+    except Exception:
+        return out
+    for name, cfg in (bands or {}).items():
+        tgt, lo, hi = cfg.get("目標"), cfg.get("下限"), cfg.get("上限")
+        if not isinstance(tgt, (int, float)):
+            continue
+        _c = ""
+        if isinstance(lo, (int, float)) and tgt < lo:
+            _c = f"目標 {tgt:g}% < 下限 {lo:g}%"
+        elif isinstance(hi, (int, float)) and tgt > hi:
+            _c = f"目標 {tgt:g}% > 上限 {hi:g}%"
+        if _c:
+            out.append({
+                "桶": name, "目標": tgt, "下限": lo, "上限": hi, "衝突": _c,
+                "來源": ("snapshot.可接受範圍_pct（2026-10-02 使用者裁示②）"
+                         f" vs thresholds_2026_0915.桶目標_pct（{tgt:g}%）"),
+                "處置": "待使用者裁決；裁決前本桶自動交易 fail-closed（動作降為待裁示、金額 0）",
+                "禁止": "不得自行改目標或改範圍以求一致；不得把目標值敘述為『上限』",
+            })
+    return out
 
 
 def acceptable_band(snap: dict) -> dict:

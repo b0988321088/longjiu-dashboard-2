@@ -124,8 +124,13 @@ def build_allowed(snap: dict) -> dict:
         allowed["現金"]["twd"].add(float(_liq))
         for _k in ("生活底線", "追繳緩衝", "合計底線"):
             _f = _thr.get(_k)
-            if isinstance(_f, (int, float)) and _f > 0 and _liq - _f > 0:
-                allowed["現金"]["twd"].add(float(_liq - _f))
+            if isinstance(_f, (int, float)) and _f > 0:
+                # 2026-10-11 工單A：可動用 < 底線時，內文寫的是「短少 60,339」＝底線 − 可動用（正值量值）。
+                #   原集合只在淨額 > 0 時放行 → 正確的「短少」金額會被誤判「對不上 snapshot」。補放行短少量值。
+                if _liq - _f > 0:
+                    allowed["現金"]["twd"].add(float(_liq - _f))
+                else:
+                    allowed["現金"]["twd"].add(float(_f - _liq))
 
     for label, gname in LABEL_GICS.items():
         row = gics.get(gname)
