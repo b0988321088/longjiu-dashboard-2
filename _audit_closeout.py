@@ -47,6 +47,14 @@ BENIGN_DIRTY = {
     # 故比照性質同質的 data/.cache_audit_state.json 列 benign 執行期狀態（仍會顯示、不列 fail）；
     # 不列 OWNED_PENDING（那是「產物」語意）。
     "health_alert_state.json",
+    # 2026-10-11（22:40 稽核連續誤報修復）：記憶歸檔的「當日摘要」為每日覆寫的執行期
+    # 狀態檔，由 06:50 memory_ops_backup（job 3aa6e83c3122）→ memory_archiver.py:10 寫入；
+    # 本身無專職提交者，僅靠當日其他 commit（如 22:00 晚報）順帶帶到 → 在沒有覆蓋它的
+    # commit 的日子（如 10/11 週日）結構上必髒（10/05–10/11 七晚中命中即整晚紅燈）。
+    # 列為 benign：仍會顯示，但不列入 fail。
+    # ⚠️ canary：記憶本體（歸檔 .md、技能檔）與 work_log.json 等交付物**不在**名單內，
+    #    漏提交照樣亮 ❌（本檔只是當日摘要，不是交付物）。
+    "memory_archive_today.json",
 }
 
 
