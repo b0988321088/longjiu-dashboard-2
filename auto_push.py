@@ -174,13 +174,29 @@ def tree_approved(base: Path, commit: str) -> bool:
 
 
 def commit_has_code(base: Path, commit: str) -> list[str]:
+    """該 commit 內「publish_gate 會強制真 CIO 審查」的檔（函式名沿用歷史，語義已擴大）。
+
+    2026-10-12（週清實踩）：單一真值改為 `auto_record.force_cio_paths`（＝閘門 `special_reason`
+    ∪ 程式副檔名）。舊版只認程式副檔名，於是含 `dashboard_decisions.json`／`work_log.json`／
+    `reviews/`／`logs/` 的 commit 被當成「純資料 commit」而補落 AUTO 章 —— 閘門照樣必擋
+    （CIO_REQUIRED），且那顆 commit 留在範圍內會讓所有 producer 一起被擋。
+    """
     p = run(["git", "diff-tree", "--no-commit-id", "--name-status", "-M", "-r", commit], base)
-    hits = []
-    for line in p.stdout.splitlines():
-        for f in line.split("\t")[1:]:
-            if f and re.search(CODE_RE, f, re.I):
-                hits.append(f)
-    return hits
+    paths = [f for line in p.stdout.splitlines() for f in line.split("\t")[1:] if f]
+    try:
+        if str(base) not in sys.path:
+            sys.path.insert(0, str(base))
+        from auto_record import force_cio_paths  # noqa: E402 — 落版側 ⊇ 閘門側，單一真值
+    except Exception:  # noqa: BLE001
+        print("⚠️ 載不到 auto_record.force_cio_paths → 保守處理：本 commit 視為含強制 CIO 類檔（fail-closed）",
+              file=sys.stderr)
+        return paths or ["<force_cio_paths unavailable>"]
+    try:
+        return force_cio_paths(paths, base)
+    except Exception as e:  # noqa: BLE001 — publish_gate 不可用 → fail-closed（視為含強制 CIO 類檔）
+        print(f"⚠️ publish_gate 不可用（{str(e)[:80]}）→ 本 commit 視為含強制 CIO 類檔（fail-closed）",
+              file=sys.stderr)
+        return paths or ["<publish_gate unavailable>"]
 
 
 def log(base: Path, line: str) -> None:
@@ -222,7 +238,7 @@ def main() -> int:
     # 2026-10-07 INC-236 延伸：refs 一律先過 validate_refspecs（source 必須解析到 HEAD、
     # destination 必須是部署分支），推送前就擋 —— 不是先推、再看遠端 sha 是否相符。
 
-    # 1) staging（add -A 型路徑）——程式檔先 unstage，避免掃進本 job 的 commit
+    # 1) staging（add -A 型路徑）——閘門強制真 CIO 類檔先 unstage，避免掃進本 job 的 commit
     if a.auto_stage:
         if a.dry_run:
             print("[dry-run] 將 git add -A ＋ auto_record --clean-stage")
@@ -231,6 +247,15 @@ def main() -> int:
             cs = run([sys.executable, str(base / "auto_record.py"), "--clean-stage"], base, timeout=180)
             if (cs.stdout or "").strip():
                 print(cs.stdout.strip())
+            if cs.returncode != 0:
+                # 2026-10-12：clean-stage 失敗（含 publish_gate 不可用的 fail-closed）→ 不得繼續
+                # commit／push，否則等於用「沒清過的 staging」把閘門強制類檔一起送上線。
+                print(f"❌ auto-stage：clean-stage 失敗（rc={cs.returncode}）→ 不 commit、不推送",
+                      file=sys.stderr)
+                if (cs.stderr or "").strip():
+                    print("   " + cs.stderr.strip().splitlines()[-1][:200], file=sys.stderr)
+                log(base, f"CLEAN-STAGE-FAIL\t{a.script}\trc={cs.returncode}")
+                return 3
 
     # 2) commit（有 staged 變更才做；委外 commit 的路徑用 --record skip 或自行 commit）
     if a.commit:
