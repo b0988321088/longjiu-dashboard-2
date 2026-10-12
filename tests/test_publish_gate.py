@@ -433,6 +433,12 @@ def _rec_line(i: int, ok: bool = True) -> str:
                       ensure_ascii=False)
 
 
+def _dec_text2(entries: list[dict], meta: dict, last_updated: str = "2026-10-01") -> str:
+    """可自訂 meta／last_updated 的版本（測合法 meta 更新 vs 篡改）。"""
+    return json.dumps({"decisions": entries, "meta": meta, "last_updated": last_updated},
+                      ensure_ascii=False, indent=1)
+
+
 def make_ao_repo(dec_before: str, rec_before: str, dec_after: str | None, rec_after: str | None,
                  allowlist: dict | None = ALLOW_AO, extra_after: dict | None = None,
                  reviewer: str = "AUTO-checker:append_dashboard_decisions.py",
@@ -518,14 +524,47 @@ def s_append_only_lane() -> None:
     check("AO-P2 僅失敗收據（ok=false、決策未動）→ 仍可發布 AUTO",
           r["ok"] and r["mode"] == "AUTO", str(r.get("blockings"))[:220])
 
+    # ── 正向：合法 meta 更新（2026-10-12 TD-20261012-17：修正「合法 meta 更新被誤判為篡改」）
+    repo, head, base = make_ao_repo(dec0, rec0, _dec_text([e1, e2, e3], meta_note="m-NEW"),
+                                    rec0 + _rec_line(3) + "\r\n")
+    r = pg.decide(repo, base, None, allowlist_ref=base)
+    check("AO-P3 合法 meta 時間戳更新（updated_at m0 → m-NEW）＋合法追加 → AUTO",
+          r["ok"] and r["mode"] == "AUTO", str(r.get("blockings"))[:220])
+    v = pg.classify_paths(repo, [_DEC, _REC], ref="HEAD")
+    check("AO-P3b 落版側同結論（不再一側 AUTO／一側 CIO）",
+          v["mode"] == "AUTO" and v.get("append_only", {}).get("ok") is True, str(v)[:220])
+
+    repo, head, base = make_ao_repo(dec0, rec0,
+                                    _dec_text2([e1, e2, e3], {"updated_at": "m0"}, "2026-10-12"),
+                                    rec0 + _rec_line(3) + "\r\n")
+    r = pg.decide(repo, base, None, allowlist_ref=base)
+    check("AO-P4 頂層 last_updated 時間戳更新 → AUTO",
+          r["ok"] and r["mode"] == "AUTO", str(r.get("blockings"))[:220])
+
+    # 真實案例回歸（commit 12dc9ea6 的形狀）：唯一差異＝meta.updated_at，前綴逐筆相等
+    repo, head, base = make_ao_repo(_dec_text([e1, e2], meta_note="2026-10-12T13:26:49.115075"),
+                                    rec0,
+                                    _dec_text([e1, e2, e3], meta_note="2026-10-12T19:05:51.787629"),
+                                    rec0 + _rec_line(3) + "\r\n")
+    r = pg.decide(repo, base, None, allowlist_ref=base)
+    check("AO-P5 真實案例形狀（純追加＋meta 時間戳更新）→ AUTO（原被降級真 CIO）",
+          r["ok"] and r["mode"] == "AUTO" and r["checks"]["append_only"].get("ok") is True,
+          str(r.get("blockings"))[:220])
+
     # ── 負向：既有紀錄被動到
     cases = [
         ("AO-N1 修改既有決策內容",
          _dec_text([dict(e1, summary="竄改"), e2]), rec0),
         ("AO-N2 刪除既有決策",
          _dec_text([e1]), rec0),
-        ("AO-N3 改動 meta（頂層鍵）",
-         _dec_text([e1, e2], meta_note="CHANGED"), rec0),
+        ("AO-N3 meta 內非時間戳欄位變動（schema_version 1 → 2）",
+         _dec_text2([e1, e2], {"updated_at": "m0", "schema_version": 2}), rec0),
+        ("AO-N3b meta 時間戳欄位被刪除（updated_at 消失）",
+         _dec_text2([e1, e2], {}), rec0),
+        ("AO-N3c 既有決策順序重排（非純追加）",
+         _dec_text([e2, e1]), rec0),
+        ("AO-N3d 頂層 last_updated 由時間戳變成其他語意內容（非字串）",
+         _dec_text2([e1, e2], {"updated_at": "m0"}, None), rec0),
         ("AO-N4 決策有新增但收據未同步",
          _dec_text([e1, e2, e3]), rec0),
         ("AO-N5 決策檔被刪除", None, rec0),

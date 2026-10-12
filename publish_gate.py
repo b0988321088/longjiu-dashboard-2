@@ -389,6 +389,31 @@ def is_append_only_entry(entry: dict | None) -> bool:
     return bool(entry) and entry.get("append_only") is True
 
 
+# ── 2026-10-12 TD-20261012-17：合法 meta 更新 vs 歷史篡改 ─────────────────────
+# 舊版對「任何頂層鍵變動」一律判「既有頂層鍵被改動」→ producer 每次入庫更新
+# meta.updated_at 即判不變量失敗、降級真 CIO，受限車道形同虛設。
+# 實證（commit 12dc9ea6）：唯一差異就是 meta.updated_at 13:26:49 → 19:05:51，
+# 前綴逐筆相等、0 刪除、0 改寫，卻仍被降級。
+# 修法＝語意判定：時間戳語意欄位（白名單）之「字串更新」放行；其餘欄位、meta 內其他子欄位、
+# 既有 decisions 內容仍須零變動。**格式可驗真≠內容為真**（殘餘風險見輸出 note）。
+META_TIMESTAMP_KEYS = ("updated_at", "last_updated")
+
+
+def _meta_change_reasons(key: str, old_v, new_v) -> list[str]:
+    """合法 meta 更新回傳空 list（放行）；疑似篡改回傳具名理由。"""
+    if key in META_TIMESTAMP_KEYS:
+        if isinstance(old_v, str) and isinstance(new_v, str) and new_v.strip():
+            return []          # 時間戳更新＝producer 每跑必做，非歷史變更
+        return [f"時間戳欄位 {key} 型別或內容不合法（{type(old_v).__name__} → {type(new_v).__name__}）"]
+    if isinstance(old_v, dict) and isinstance(new_v, dict):
+        bad = [kk for kk in sorted(set(old_v) | set(new_v))
+               if kk not in META_TIMESTAMP_KEYS and old_v.get(kk) != new_v.get(kk)]
+        if not bad:
+            return []          # 只有時間戳子欄位變動
+        return [f"既有頂層鍵 {key} 內含非時間戳欄位變動：{bad[:3]}"]
+    return [f"既有頂層鍵被改動（{key}）——只允許時間戳 meta 更新與 decisions 追加"]
+
+
 def _check_decisions(old_b: bytes | None, new_b: bytes | None) -> tuple[list[str], set[str], set[str]]:
     """決策檔不變量：只追加、既有內容零變動。回 (reasons, 新增 id, 新檔全部 id)。"""
     if old_b is None:
@@ -405,8 +430,14 @@ def _check_decisions(old_b: bytes | None, new_b: bytes | None) -> tuple[list[str
     for k in old:
         if k == "decisions":
             continue
-        if k not in new or new[k] != old[k]:
-            rs.append(f"既有頂層鍵被改動（{k}）——只允許追加 decisions")
+        if k not in new:
+            rs.append(f"既有頂層鍵被刪除（{k}）")
+            continue
+        if new[k] == old[k]:
+            continue
+        # 2026-10-12 TD-17：不再「任何變動即篡改」；改由 _meta_change_reasons 分離
+        # 合法時間戳更新與真實歷史變更（既有 decisions 內容仍逐筆零變動，見下）。
+        rs += _meta_change_reasons(k, old[k], new[k])
     od, nd = old.get("decisions"), new.get("decisions")
     if not isinstance(od, list) or not isinstance(nd, list):
         return rs + ["decisions 非陣列"], set(), set()
