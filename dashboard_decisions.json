@@ -10724,20 +10724,19 @@
       "summary": "使用者 2026-10-12 裁決：240 萬押標金取消。落地：①snapshot.標案押標金_1010 新增 狀態＝❌ 已取消（2026-10-12 使用者裁決）＋裁示_20261012；既有鍵（金額/用途/來源/時序/性質/資金成本/裁示_0912）全數保留不刪，歷史不動。②snapshot.cash_need_90d._條件式事件備註 改為已取消＋沿革（9/25 保證函方向→9/29 先鎖標的→10/4 條件式、不預先辦理→10/12 取消）。③schedule_events.json：該列移除押標金金額與語意，僅保留美債 ladder 待辦（未刪該列、未動 2026-09-29 歷史事件）；全庫僅 check_dividend_caliber 讀該檔作字串比對，無數值依賴。④pledge_status.py：質押句原寫死『10月標案押標金不預留，9月底評估』→ 改由 snapshot 狀態欄組出（新增 _bid_clause；狀態缺漏時明確示警）。驗證：tools/verify_cash_need_90d_guard.py 5/5 PASS（若押標金被併入 90 天需求→立即 FAIL）；pledge_status 三樣式實跑顯示『10 月標案押標金：❌ 已取消（2026-10-12 使用者裁決）』；獨立審查兩輪（CIO-Pollinations，非 DS 非 Google）：首輪 REJECT（排程列殘留押標金語意/status）→ 修後次輪 APPROVE blocking=[]。commit 6554c90f（tree f061b4ab），已推 clean-main、待推 0。90 天需求／覆蓋率／缺口／燈號：無任何變動（押標金本就不在 A 區分母）。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261012190952-1157",
+      "timestamp": "2026-10-12T19:09:52.589483+08:00",
+      "agent": "Hermes",
+      "task": "押標金取消連帶：pending 三卡收斂（歸檔／前置解除／P0-2 轉已完成）",
+      "summary": "因 2026-10-12「240 萬押標金取消」，pending_decisions.json（日報第 5 章來源）三處連帶收斂：①2026-09-06 美債 ladder 卡保留（ladder 本身仍待辦、非押標金），但『延至 10 月標案結果』前置已消滅 → status_raw 記明、due_date 10/31→null＋needs_due_date=true 須重定；②2026-09-28「押標金 240 萬來源定案」標的整體失效 → 移入 pending_decisions_archive.json（🗑 已清理(2026-10-12)＋cleanup_reason＋cleanup_at），正本移除（先歸檔不刪）；③PEND-20260930-02「P0-2 資金鏈閉環」高息負債 9/30–10/1 已全數清償 4,980,624，唯一殘餘掛載＝押標金條件式事件（已取消）→ 四態轉『已完成』。驗證：check_dividend_caliber ✅四態／✅schema 五欄；pending_engine.STATUS_ENUM 自查 0 筆不合規；未動其他 17 卡。獨立審查 APPROVE/0.92/blocking=[]。commit a4e5801a（tree 152e91e8）。",
+      "status": "completed",
+      "source": "user"
     }
-,
-  {
-    "id": "mem-20261012190952-1157",
-    "timestamp": "2026-10-12T19:09:52.589483+08:00",
-    "agent": "Hermes",
-    "task": "押標金取消連帶：pending 三卡收斂（歸檔／前置解除／P0-2 轉已完成）",
-    "summary": "因 2026-10-12「240 萬押標金取消」，pending_decisions.json（日報第 5 章來源）三處連帶收斂：①2026-09-06 美債 ladder 卡保留（ladder 本身仍待辦、非押標金），但『延至 10 月標案結果』前置已消滅 → status_raw 記明、due_date 10/31→null＋needs_due_date=true 須重定；②2026-09-28「押標金 240 萬來源定案」標的整體失效 → 移入 pending_decisions_archive.json（🗑 已清理(2026-10-12)＋cleanup_reason＋cleanup_at），正本移除（先歸檔不刪）；③PEND-20260930-02「P0-2 資金鏈閉環」高息負債 9/30–10/1 已全數清償 4,980,624，唯一殘餘掛載＝押標金條件式事件（已取消）→ 四態轉『已完成』。驗證：check_dividend_caliber ✅四態／✅schema 五欄；pending_engine.STATUS_ENUM 自查 0 筆不合規；未動其他 17 卡。獨立審查 APPROVE/0.92/blocking=[]。commit a4e5801a（tree 152e91e8）。",
-    "status": "completed",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-12T19:05:51.787629"
+    "updated_at": "2026-10-12T19:21:41.922112"
   },
   "last_updated": "2026-10-12T18:00:00+08:00",
   "2026-09-29": [
@@ -10789,15 +10788,9 @@
       "tags": "US30Y,紅線,因應,現金底線,質押撥款,標案"
     },
     {
-      "date": "2026-09-28",
-      "action": "10 月標案押標金 240 萬來源定案（不得預設由 540 萬撥款支付）",
-      "status": "待處理",
-      "tags": "標案,押標金,資金框架"
-    },
-    {
       "date": "2026-09-30",
       "action": "P0-2 資金鏈閉環（10/1 安聯 100萬入帳確認；240萬押標金＝條件式事件，不提前占用現金）",
-      "status": "待處理",
+      "status": "已完成",
       "tags": ""
     },
     {
