@@ -1425,5 +1425,37 @@
     "moved_from": "",
     "moved_at": "2026-10-12",
     "cleanup_reason": ""
+  },
+  {
+    "id": "TD-20261012-23",
+    "date": "2026-10-12",
+    "title": "純資料/報表 commit 兩側通道結論不一致（v5 標籤可推 vs auto_push 落版側 rc=3）",
+    "severity": "P2",
+    "source": "2026-10-12 工單 P1-P3 結案殘留",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "實測兩次：f506a72f（人工補連結目標入庫）與隔離沙盒 Run B（gate PASS、commit 成立）→ auto_push 以『推送範圍內有未落紀錄且含程式檔』rc=3 拒推；同一顆 commit 的 v5 pre-push 閘門卻允許走 [cioreviewed] 資料通道。兩側 classify 對同一變更集合給出不同結論，結果是純報表 commit 只能直推 clean-main、不能走 auto_push（與『auto_push 為唯一推送出口』的治理目標衝突）。建議：把標籤通道與落版側白名單對齊成單一真值，或明文登記哪些產線允許直推。",
+    "tags": "publish-gate,auto_push,governance",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-12",
+    "cleanup_reason": ""
+  },
+  {
+    "id": "TD-20261012-24",
+    "date": "2026-10-12",
+    "title": "發布前連結閘門擋下時只還原本輪 scope 的 stage（既有 pre-staged 會殘留）",
+    "severity": "P3",
+    "source": "2026-10-12 工單 P1-P3 結案殘留",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "隔離沙盒 Run A 實測：閘門擋下並取消 stage 後，index 仍留 pending_decisions.json（非本輪產物、進場前已 staged）。後續 producer 的 git commit 會一次提交整個 index，殘留項可能被順手帶走。建議：記錄進場時的 index 快照，擋下時還原到進場狀態（而非只還原本輪 scope）。",
+    "tags": "link-gate,publish,stage-hygiene",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-12",
+    "cleanup_reason": ""
   }
 ]
