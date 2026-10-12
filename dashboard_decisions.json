@@ -10680,6 +10680,16 @@
       "status": "completed",
       "source": "auto"
     }
+,
+  {
+    "id": "mem-20261012141008-1152",
+    "timestamp": "2026-10-12T14:10:08.605662+08:00",
+    "agent": "Hermes",
+    "task": "現金累積優先於核心消費部署（目標可動用現金 1,000,000）",
+    "summary": "2026-10-12 裁決：達標前停用乾粉全數部署；依實際入帳盈餘逐步補足 72,637（月盈餘 66,758 ≈1.1 個月），不預先計入未入帳盈餘；達標後再評估恢復部分部署；指定用途款 200,000＋700,000 不得挪用。落地 rotation_engine 現金累積閘門＋snapshot.cash_accumulation_policy（單一來源）；commit 9d4e37e8/tree 1ed69e91b426，CIO APPROVE 0.92 blocking=[]，已推 clean-main，線上已驗（raw＋Pages）",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-12T13:26:49.115075"
