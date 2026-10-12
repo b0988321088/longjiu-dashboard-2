@@ -10742,60 +10742,55 @@
       "summary": "總工單一次閉環（A 修 4 條 FAIL／B TD-17／C 重產發布）。共同根因：①真值修正（安聯保單撥回 9,446→15,221，截圖＋使用者確認）未同步正典五欄 → 分桶器實跑≠正典、差異分析成對、儀表板三桶 4 條 FAIL；②dividend_tracker.main() 兩分支口徑不一致：有掃到新配息時把當月實收寫成「本次新增額」，僅無掃描分支才寫當月全部合計（並補非數值防護，避免 TypeError 讓 07:00 產線整班失敗）；③TD-17：_check_decisions 對任何頂層鍵變動一律判篡改 → 每次入庫（meta.updated_at）即降級真 CIO，受限車道形同虛設；④衍生產物殘留押標金舊敘述：來源為 data/emergency_llm_analysis.json（2026-10-09 美股班內文）被日報與再平衡報表無視日期嵌入。修正：正典寫入者重算（insurance 15,221／total 64,611，diff 僅 6 行）＋口徑單一化＋期限管理僅對進行中卡（結案態不假紅燈）＋append-only 車道區分合法 meta 更新與歷史篡改＋共用刷新層以 snapshot 狀態驅動失效敘述覆蓋（v2 硬化：語境錨定 regex／日期驗證／fail-loud 示警）。測試：test_publish_gate 136/136、test_dividend_tracker_total 9/9、test_pending_active_due 16/16、test_sot_stale_ruling 12/12；verify_ficriteria 56/0；月度閘門 PASS（FAIL 0）。產出：程式／資料 6 顆（30089c10/f49fffe2/ec1799d4/6612c333/cb2d8c09/e0c13360）＋重產與副產品 5 顆（a1916902/80637ab8/889337cc/0b97dde1/0f4a1a57/8e3ac14d），每顆獨立審查 APPROVE（blocking=0；Pollinations 402 時走備援鏈並揭露）。線上：遠端=e0c13360、待推 0；snapshot/index/日報/dashboard_decisions/rebalance_summary 逐位元一致；配息 64,611、押標金狀態『❌ 已取消』、決策 1158 筆零刪改；日報押標金舊敘述 4 處 → 1 處（且為已取消正確敘述）；線上年輕穿透 −23,161（FX 重算）有審查紀錄（a1916902 APPROVE/0.92）。殘餘（未動、已揭露）：基金口徑差額 2,524（既有另案）＋4 條治理白名單（as_of 2026-10-09，未擴張未放寬）；TD-17 關閉並留殘餘風險（格式可驗真≠內容為真）。",
       "status": "completed",
       "source": "Telegram 裁決 2026-10-12（全案一次閉環）"
+    },
+    {
+      "id": "mem-20261012203221-1159",
+      "timestamp": "2026-10-12T20:32:21.966855+08:00",
+      "agent": "Hermes",
+      "task": "總工單 C 收尾：radar_state 舊敘述修正＋補裁示日欄＋重產（355c3a2b）",
+      "summary": "延續 1158 同一總工單：rebalance_summary 仍殘留 2 處押標金舊敘述，逐處追溯來源＝radar_state.json（雷達班產物）內『（押標金 240萬 來源 9 月底評估）』與『10月標案押標金不預留，9月底評估』→ 以精準字串替換更新為『已於 2026-10-12 經使用者裁決取消』；另補 snapshot.標案押標金_1010.裁示日_取消＝2026-10-12（缺欄使覆蓋文字退化為『本輪』）。重產後：日報押標金 1 處（正確敘述）、rebalance_summary 3 處全為已取消敘述、無『9 月底評估／不預留』殘留；月度閘門 PASS、覆蓋規則不再示警。commit 355c3a2b（tree 200b7d04），獨立審查 APPROVE/0.95（備援鏈；Pollinations 402），已推 clean-main、待推 0；線上 snapshot／日報／rebalance_summary／radar_state 逐位元一致。殘餘：基金口徑 2,524（既有另案）、4 條治理白名單（未擴張）。",
+      "status": "completed",
+      "source": "Telegram 裁決 2026-10-12（全案一次閉環）"
+    },
+    {
+      "id": "mem-20261012203622-1160",
+      "timestamp": "2026-10-12T20:36:22.389278+08:00",
+      "agent": "Hermes",
+      "task": "總工單最終裁決＋獨立補審完成（Gemini 不同家族重審 APPROVE）",
+      "summary": "使用者 2026-10-12 最終裁決：本案＝工程修復完成、線上驗收通過、獨立審查尚待補強，不宣告六項完成標準全部滿足。① 4 條 FAIL 修復完成（真因：正典五欄未隨真值＋dividend_tracker 兩分支口徑不一致）、原始閘門 PASS（FAIL 0）② TD-17 結案有證據（ec1799d4；真實案例重驗、正反例 136/136；產線實證＝入庫 1158 走 append-only 車道自動推送成功未降級）③ 押標金舊敘述來源層修復（sot_targets 共用刷新層狀態驅動覆蓋 v2＋radar_state 精準替換），殘留符合預期（日報 1 處正確敘述）④ 測試與閘門全數通過 ⑤ 遠端與線上逐位元一致（HEAD e8725c2a 起）⑥ 獨立審查：**補審已完成並通過**——Pollinations（GPT-OSS）402 額度用盡後由 DeepSeek 備援完成之首輪審查，已由使用者裁決列為待重審；本次以**不同模型家族**（Gemini 2.5 Flash）針對備援鏈審查之 6 顆實際遠端 commit（e0c13360／889337cc／0b97dde1／0f4a1a57／8e3ac14d／355c3a2b，tree 逐一綁定）重新執行獨立審查，未沿用先前 APPROVE → 結果 APPROVE／confidence 0.95／blocking=0，並列 2 項殘餘風險（WARN 依賴 stdout 監控、regex 需隨敘述變化維護）。補審紀錄存 .git/cio_reviews/reaudit_gemini_20261012.json 並已寫入 CIO_APPROVED。⑦ 三項揭露獨立掛帳（不混入補審）：基金口徑 2,524（P1）、歷史檔刷新時序（P2）、legacy 副本差異（P2）。未擴白名單、未降閘門、未刪 FAIL、未重做已驗收修復。",
+      "status": "completed",
+      "source": "Telegram 裁決 2026-10-12（補審後關閉最後一項驗收缺口）"
+    },
+    {
+      "id": "mem-20261012205935-1161",
+      "timestamp": "2026-10-12T20:59:35.833590+08:00",
+      "agent": "Hermes",
+      "task": "P0 三條全閉環（③②①）＋獨立審查",
+      "summary": "P0 三條全閉環（③②①）：TD-20261009-16 決策卡靜默遺失／TD-20261009-13 F4 fail-open／TD-20261009-12 週報雙 producer。③ 新增 pending_store.py 唯一寫入通道（跨程序互斥鎖＋fsync 原子替換＋崩潰殘檔回收），pending_reconcile/decision_auto_close 全數插鎖；tests/test_pending_lock.py 24 PASS；真實產線沙盒演練：無鎖時真產線覆蓋併發新卡（重現事故原型、重跑再現）、有鎖時新卡存活、外部持鎖時兩支真程式皆被擋住且 0 卡遺失。② F4 讀取失敗改明確阻擋（ApprovalUnreadable／strict），tests/test_perf_gate_f4.py 18 PASS（三類負向＋repo 內偽造核准檔含 4 種非常規路徑一律拒絕）。① 週報單一 producer 查核＋沙盒實跑（14 章節／13,111 bytes／含月租金）＋守門 tests/test_weekly_single_producer.py 9 PASS。後端審查皆為不同模型家族（Gemini）獨立審查 APPROVE／blocking=[]（設計審查＋差異審查）。commits：636098dc（③）、93b3aa29（②）、deb83a53（①）；遠端 clean-main 逐筆驗證、待推 0。5 筆 inc_events 結案事件逐筆查明：1 有證據／1 間接矛盾／3 無證據→列未解事項（TD-20261012-22），原始紀錄保留不補造。未併入本批結論者：基金口徑差額 2,524（TD-16）、既有治理白名單 4 條、TD-20261012-21(P0 資安 key 未輪替)、TD-20261012-12/11-07（公開面遮罩）。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261012212210-1162",
+      "timestamp": "2026-10-12T21:22:10.734768+08:00",
+      "agent": "Hermes",
+      "task": "資安處置：保留憑證＋公開資料清理＋唯讀盤點",
+      "summary": "資安處置（使用者裁決 2026-10-12）：保留憑證、不撤銷；優先清理公開資料。①公開面清理完成並線上驗證：新增 public_mask.py 唯一遮蔽實作（帳號→•••／安全線門檻→不公開／行庫鍵→●●●），產生端（build_dashboard／run_daily／regenerate_report）寫檔前 scrub、institutional_flow 不再落地 Fed 總資產；Pages＋raw 實測 index.html／radar_state.json／日報之帳號與門檻值全數清除、radar fed 僅存日期；守門測試 test_public_mask 16 PASS、test_public_exposure 20 PASS；commit 56342f17（已推 clean-main）。②唯讀盤點：AIza 命中僅 1 組且為 base64 區塊巧合（Google API 探測 400）、ghp_ 命中為 safe_read.py 假樣本、目前樹 2,122 檔無 .env 機密值命中 → 先前『仍有效 key』警報查無證據支持；身分證字號／ZIP 密碼仍在公開歷史＝依 10/06 裁決之明確風險接受，未撤銷未輪替。③未宣告資安結案；TD-20261012-21 改為風險接受追蹤，TD-20261012-12 已結案（附線上驗收）。殘留：repo 仍為 public，儀表板仍公開資產組合總額；是否改私有待裁決。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261012212813-1163",
+      "timestamp": "2026-10-12T21:28:13.052533+08:00",
+      "agent": "Hermes",
+      "task": "收工閉環：稽核假紅修正＋心跳刷新＋殘留盤點",
+      "summary": "收工閉環（2026-10-12）：closeout_check 假紅 17→0（遮蔽政策與稽核對齊：稽核改讀 snapshot 真值，非讀畫面哨兵；commit afcc85ab 已推）。驗證器心跳刷新 → 56 PASS / 0 FAIL（原先 53/3 為 19:24 陳舊心跳）。殘留 ❌ 兩類（非本輪、不隱藏）：①基金口徑差額 2,524（TD-20261016 既有另案／check_thresholds 1 項）②18 檔他班未提交資料（asset_diff_history、work_log、error_register、inc_events、us30y_state、notion_* 等）→ 由 22:00 evening_sync 夜鏈收斂，非本輪範圍。遠端 clean-main＝afcc85ab、待推 0；本輪全部 commit 皆有獨立審查紀錄。",
+      "status": "completed",
+      "source": "user"
     }
-,
-  {
-    "id": "mem-20261012203221-1159",
-    "timestamp": "2026-10-12T20:32:21.966855+08:00",
-    "agent": "Hermes",
-    "task": "總工單 C 收尾：radar_state 舊敘述修正＋補裁示日欄＋重產（355c3a2b）",
-    "summary": "延續 1158 同一總工單：rebalance_summary 仍殘留 2 處押標金舊敘述，逐處追溯來源＝radar_state.json（雷達班產物）內『（押標金 240萬 來源 9 月底評估）』與『10月標案押標金不預留，9月底評估』→ 以精準字串替換更新為『已於 2026-10-12 經使用者裁決取消』；另補 snapshot.標案押標金_1010.裁示日_取消＝2026-10-12（缺欄使覆蓋文字退化為『本輪』）。重產後：日報押標金 1 處（正確敘述）、rebalance_summary 3 處全為已取消敘述、無『9 月底評估／不預留』殘留；月度閘門 PASS、覆蓋規則不再示警。commit 355c3a2b（tree 200b7d04），獨立審查 APPROVE/0.95（備援鏈；Pollinations 402），已推 clean-main、待推 0；線上 snapshot／日報／rebalance_summary／radar_state 逐位元一致。殘餘：基金口徑 2,524（既有另案）、4 條治理白名單（未擴張）。",
-    "status": "completed",
-    "source": "Telegram 裁決 2026-10-12（全案一次閉環）"
-  }
-,
-  {
-    "id": "mem-20261012203622-1160",
-    "timestamp": "2026-10-12T20:36:22.389278+08:00",
-    "agent": "Hermes",
-    "task": "總工單最終裁決＋獨立補審完成（Gemini 不同家族重審 APPROVE）",
-    "summary": "使用者 2026-10-12 最終裁決：本案＝工程修復完成、線上驗收通過、獨立審查尚待補強，不宣告六項完成標準全部滿足。① 4 條 FAIL 修復完成（真因：正典五欄未隨真值＋dividend_tracker 兩分支口徑不一致）、原始閘門 PASS（FAIL 0）② TD-17 結案有證據（ec1799d4；真實案例重驗、正反例 136/136；產線實證＝入庫 1158 走 append-only 車道自動推送成功未降級）③ 押標金舊敘述來源層修復（sot_targets 共用刷新層狀態驅動覆蓋 v2＋radar_state 精準替換），殘留符合預期（日報 1 處正確敘述）④ 測試與閘門全數通過 ⑤ 遠端與線上逐位元一致（HEAD e8725c2a 起）⑥ 獨立審查：**補審已完成並通過**——Pollinations（GPT-OSS）402 額度用盡後由 DeepSeek 備援完成之首輪審查，已由使用者裁決列為待重審；本次以**不同模型家族**（Gemini 2.5 Flash）針對備援鏈審查之 6 顆實際遠端 commit（e0c13360／889337cc／0b97dde1／0f4a1a57／8e3ac14d／355c3a2b，tree 逐一綁定）重新執行獨立審查，未沿用先前 APPROVE → 結果 APPROVE／confidence 0.95／blocking=0，並列 2 項殘餘風險（WARN 依賴 stdout 監控、regex 需隨敘述變化維護）。補審紀錄存 .git/cio_reviews/reaudit_gemini_20261012.json 並已寫入 CIO_APPROVED。⑦ 三項揭露獨立掛帳（不混入補審）：基金口徑 2,524（P1）、歷史檔刷新時序（P2）、legacy 副本差異（P2）。未擴白名單、未降閘門、未刪 FAIL、未重做已驗收修復。",
-    "status": "completed",
-    "source": "Telegram 裁決 2026-10-12（補審後關閉最後一項驗收缺口）"
-  }
-,
-  {
-    "id": "mem-20261012205935-1161",
-    "timestamp": "2026-10-12T20:59:35.833590+08:00",
-    "agent": "Hermes",
-    "task": "P0 三條全閉環（③②①）＋獨立審查",
-    "summary": "P0 三條全閉環（③②①）：TD-20261009-16 決策卡靜默遺失／TD-20261009-13 F4 fail-open／TD-20261009-12 週報雙 producer。③ 新增 pending_store.py 唯一寫入通道（跨程序互斥鎖＋fsync 原子替換＋崩潰殘檔回收），pending_reconcile/decision_auto_close 全數插鎖；tests/test_pending_lock.py 24 PASS；真實產線沙盒演練：無鎖時真產線覆蓋併發新卡（重現事故原型、重跑再現）、有鎖時新卡存活、外部持鎖時兩支真程式皆被擋住且 0 卡遺失。② F4 讀取失敗改明確阻擋（ApprovalUnreadable／strict），tests/test_perf_gate_f4.py 18 PASS（三類負向＋repo 內偽造核准檔含 4 種非常規路徑一律拒絕）。① 週報單一 producer 查核＋沙盒實跑（14 章節／13,111 bytes／含月租金）＋守門 tests/test_weekly_single_producer.py 9 PASS。後端審查皆為不同模型家族（Gemini）獨立審查 APPROVE／blocking=[]（設計審查＋差異審查）。commits：636098dc（③）、93b3aa29（②）、deb83a53（①）；遠端 clean-main 逐筆驗證、待推 0。5 筆 inc_events 結案事件逐筆查明：1 有證據／1 間接矛盾／3 無證據→列未解事項（TD-20261012-22），原始紀錄保留不補造。未併入本批結論者：基金口徑差額 2,524（TD-16）、既有治理白名單 4 條、TD-20261012-21(P0 資安 key 未輪替)、TD-20261012-12/11-07（公開面遮罩）。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261012212210-1162",
-    "timestamp": "2026-10-12T21:22:10.734768+08:00",
-    "agent": "Hermes",
-    "task": "資安處置：保留憑證＋公開資料清理＋唯讀盤點",
-    "summary": "資安處置（使用者裁決 2026-10-12）：保留憑證、不撤銷；優先清理公開資料。①公開面清理完成並線上驗證：新增 public_mask.py 唯一遮蔽實作（帳號→•••／安全線門檻→不公開／行庫鍵→●●●），產生端（build_dashboard／run_daily／regenerate_report）寫檔前 scrub、institutional_flow 不再落地 Fed 總資產；Pages＋raw 實測 index.html／radar_state.json／日報之帳號與門檻值全數清除、radar fed 僅存日期；守門測試 test_public_mask 16 PASS、test_public_exposure 20 PASS；commit 56342f17（已推 clean-main）。②唯讀盤點：AIza 命中僅 1 組且為 base64 區塊巧合（Google API 探測 400）、ghp_ 命中為 safe_read.py 假樣本、目前樹 2,122 檔無 .env 機密值命中 → 先前『仍有效 key』警報查無證據支持；身分證字號／ZIP 密碼仍在公開歷史＝依 10/06 裁決之明確風險接受，未撤銷未輪替。③未宣告資安結案；TD-20261012-21 改為風險接受追蹤，TD-20261012-12 已結案（附線上驗收）。殘留：repo 仍為 public，儀表板仍公開資產組合總額；是否改私有待裁決。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261012212813-1163",
-    "timestamp": "2026-10-12T21:28:13.052533+08:00",
-    "agent": "Hermes",
-    "task": "收工閉環：稽核假紅修正＋心跳刷新＋殘留盤點",
-    "summary": "收工閉環（2026-10-12）：closeout_check 假紅 17→0（遮蔽政策與稽核對齊：稽核改讀 snapshot 真值，非讀畫面哨兵；commit afcc85ab 已推）。驗證器心跳刷新 → 56 PASS / 0 FAIL（原先 53/3 為 19:24 陳舊心跳）。殘留 ❌ 兩類（非本輪、不隱藏）：①基金口徑差額 2,524（TD-20261016 既有另案／check_thresholds 1 項）②18 檔他班未提交資料（asset_diff_history、work_log、error_register、inc_events、us30y_state、notion_* 等）→ 由 22:00 evening_sync 夜鏈收斂，非本輪範圍。遠端 clean-main＝afcc85ab、待推 0；本輪全部 commit 皆有獨立審查紀錄。",
-    "status": "completed",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-12T20:30:36.970525"
+    "updated_at": "2026-10-12T21:32:49.498872"
   },
   "last_updated": "2026-10-12T18:00:00+08:00",
   "2026-09-29": [
