@@ -10853,6 +10853,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261012233420-1171",
+    "timestamp": "2026-10-12T23:34:20.211275+08:00",
+    "agent": "Hermes",
+    "task": "TD-20261012-25：producer 產物歸屬規則修復（M3）已落地並發布",
+    "summary": "使用者 2026-10-12 裁決核准施工。修法＝regenerate_report.py producer 邊界新增「既有 dirty 檔定點認領」：候選檔在進場前已 dirty 且本輪窗口內被寫出位元相同內容時（before==after 的定點），舊判準永久不認領 → 一經漏出即永久殘留。新判準三條件同時成立才認領：①相對 HEAD 確實 dirty（內容≠HEAD blob）②mtime 不早於本輪起跑時刻 ③after 指紋可靠（非 _UNREADABLE）；另加允許範圍防線（存在／副檔名∈_SNAP_EXT／大小≤_SNAP_MAX）且只對單檔作答，不得連帶其他 dirty 檔。其餘判準不變，未改 dirty_gate.py／auto_push.py、未用 TAG。測試：tools/test_produced_claim.py 20/20（AST 抽取、真實暫存 git repo 無 mock；含 RED→GREEN、窗口外／非候選／與 HEAD 相同不認領、_UNREADABLE fail-closed、原有行為不變、認領路徑不改 staging/HEAD 且區塊內無 push/commit/add）；隔離沙盒 e2e（真 producer＋真 auto_push、remote=本地 bare）注入壞連結 → 閘門 rc=1，HEAD／staging／commit 數／remote 保持進場狀態 5/5；回歸 publish_gate 136/136、link gate 22/22。發布：commit 437b1ca2（tree c0002da7f797；修正訊息之 amend 發生在推送前、尚無 RECORD、未觸及已發布歷史），真 CIO APPROVE blocking=0、RECORD 已落、auto_push 推送、本機＝遠端、待推 0、線上 200。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-12T23:20:03.140759"
