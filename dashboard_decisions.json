@@ -10719,6 +10719,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261012190542-1156",
+    "timestamp": "2026-10-12T19:05:42.814280+08:00",
+    "agent": "Hermes",
+    "task": "240 萬押標金取消（真值＋排程＋質押句去寫死；兩輪獨立審查 APPROVE）",
+    "summary": "使用者 2026-10-12 裁決：240 萬押標金取消。落地：①snapshot.標案押標金_1010 新增 狀態＝❌ 已取消（2026-10-12 使用者裁決）＋裁示_20261012；既有鍵（金額/用途/來源/時序/性質/資金成本/裁示_0912）全數保留不刪，歷史不動。②snapshot.cash_need_90d._條件式事件備註 改為已取消＋沿革（9/25 保證函方向→9/29 先鎖標的→10/4 條件式、不預先辦理→10/12 取消）。③schedule_events.json：該列移除押標金金額與語意，僅保留美債 ladder 待辦（未刪該列、未動 2026-09-29 歷史事件）；全庫僅 check_dividend_caliber 讀該檔作字串比對，無數值依賴。④pledge_status.py：質押句原寫死『10月標案押標金不預留，9月底評估』→ 改由 snapshot 狀態欄組出（新增 _bid_clause；狀態缺漏時明確示警）。驗證：tools/verify_cash_need_90d_guard.py 5/5 PASS（若押標金被併入 90 天需求→立即 FAIL）；pledge_status 三樣式實跑顯示『10 月標案押標金：❌ 已取消（2026-10-12 使用者裁決）』；獨立審查兩輪（CIO-Pollinations，非 DS 非 Google）：首輪 REJECT（排程列殘留押標金語意/status）→ 修後次輪 APPROVE blocking=[]。commit 6554c90f（tree f061b4ab），已推 clean-main、待推 0。90 天需求／覆蓋率／缺口／燈號：無任何變動（押標金本就不在 A 區分母）。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-12T13:26:49.115075"
