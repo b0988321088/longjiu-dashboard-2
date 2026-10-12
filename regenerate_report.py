@@ -366,6 +366,23 @@ try:
         print("  ⚠️ 投資績效月度比較產出失敗（不影響日報）：" + (_r9c2.stderr or "").strip()[:160])
 except Exception as _e9c2:
     print(f"  ⚠️ 投資績效月度比較產出異常（不影響日報）: {_e9c2}")
+# 9c-1. 退休規劃報告（P2／2026-10-12 工單，使用者裁決：既有流程歸屬＝本產線 9c 段）
+#   根因：build_retirement_plan.py 全庫零呼叫者（run_daily／sync_all／morning_batch／four_source_sync 皆查無），
+#   產出檔只有 update_dashboard_links.py 的 glob 會吃進按鈕 → 沒有任何流程負責入庫。
+#   2026-10-12 實踩：線上「退休規劃」按鈕指向 retirement_plan_2026-10-12.html（未追蹤）→ Pages 404 一整天。
+#   放在 build_dashboard 之前：先產檔、後刷連結，按鈕才不會指到不存在的檔案；產物與 index.html 同一輪、
+#   同一個 commit scope（「發布責任明確」＝本輪 commit，不再靠人工補）。
+#   失敗不阻擋本輪（僅告警）——與同段其他非日報產物一致；真 404 由下游發布前連結閘門擋。
+try:
+    _r_ret = subprocess.run([sys.executable, str(BASE / "build_retirement_plan.py")], cwd=str(BASE),
+                            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
+    _ret_lines = (_r_ret.stdout or "").strip().splitlines()
+    print("  " + (_ret_lines[-1] if _ret_lines else "✅ retirement_plan"))
+    if _r_ret.returncode != 0:
+        print(f"  ⚠️ 退休規劃產出異常（不影響日報）: rc={_r_ret.returncode} "
+              f"{(_r_ret.stderr or '').strip()[:160]}")
+except Exception as _e9cr:
+    print(f"  ⚠️ 退休規劃產出異常（不影響日報）: {_e9cr}")
 _r9c = _sp9c.run([sys.executable, str(BASE / "build_dashboard.py")], cwd=BASE,
                  capture_output=True, text=True, timeout=120)
 if _r9c.stdout:
@@ -484,7 +501,10 @@ elif ok and _cio_ok:
                         # 2026-09-22：本月績效頁（固定檔名，按鈕 __MTD_PAGE__ 指向它）
                         'mtd_performance.html', 'mtd_data.json',
                         # 2026-10-03：投資績效｜月度比較（固定檔名，按鈕 __PERF_MONTHLY__ 指向它）
-                        'performance_monthly.html']
+                        'performance_monthly.html',
+                        # 2026-10-12（工單 P2）：退休規劃報告 —— 9c-1 段產出，發布責任歸屬本輪 commit
+                        #   （原本零呼叫者、零發布責任 → 2026-10-12 線上按鈕 404）
+                        f'retirement_plan_{TODAY}.html']
     # 再平衡儀表板（2026-08-22：每日重跑，build_rebalance_dashboard.py 讀 snapshot+radar_state）
     try:
         subprocess.run([sys.executable, str(BASE / "build_rebalance_dashboard.py")], cwd=str(BASE),
@@ -603,6 +623,7 @@ elif ok and _cio_ok:
         print(f"  ⛔ 月度比較閘門異常 → 視為 FAIL、阻擋推送：{_e9c4}")
 
     _recorded = False
+    _links_ok = True   # P1（2026-10-12 工單）：發布前連結閘門結果；False → 本輪不 commit、不推送
     if not _gate_ok:
         print("  ⛔ 已阻擋 commit/push（月度比較閘門 FAIL；修正後重跑 regenerate_report.py --deploy）")
         if _push_files:
@@ -621,7 +642,43 @@ elif ok and _cio_ok:
         # 只 stage 本輪 scope（manifest.allow）── 絕對不使用 git add -A、絕不 stage scope 外檔案
         subprocess.run(['git', 'add', '--'] + list(_scope.get('allow') or _push_files), capture_output=True, text=True, cwd=BASE)
         _staged = subprocess.run(['git', 'diff', '--cached', '--name-only'], capture_output=True, text=True, cwd=BASE).stdout.strip()
+        # P1（2026-10-12 工單，使用者核准）：發布前連結閘門 —— 第 12 項（連結目標未進版控）只在
+        #   「已 stage、未 commit」這個時點判得準：`git ls-files` 讀的是 index，本輪已 stage 的檔
+        #   已算 tracked；沒進 index 的連結目標＝本次不會上線＝線上必 404。
+        #   為什麼要補這道：產線兩處呼叫（9c2／收尾）都帶 LJ_PREPUSH=1 → 第 12 項永遠只印 ℹ️，
+        #   push 前沒有任何一道會真的擋。2026-10-12 實踩：index.html「退休規劃」按鈕指向未入庫檔
+        #   （retirement_plan_2026-10-12.html）→ 線上 404 一整天，直到人工補版控才修好。
+        #   刻意「不」帶 LJ_PREPUSH，且放在 commit 之前 → 擋下時不會留下「已 commit 卻推不動」的
+        #   毒化 commit（那顆會讓 origin/clean-main..HEAD 整段對所有 producer 變 CIO 模式）。
+        _links_ok, _links_lines = True, []
         if _staged:
+            try:
+                _lk_gate = subprocess.run([sys.executable, str(BASE / "check_dashboard_sync.py")],
+                                          capture_output=True, text=True, encoding="utf-8",
+                                          errors="replace", timeout=120, cwd=str(BASE))
+                _links_ok = _lk_gate.returncode == 0
+                if not _links_ok:
+                    _links_lines = [l.strip() for l in (_lk_gate.stdout or "").splitlines()
+                                    if "❌" in l or "未進版控" in l or "不存在" in l]
+            except Exception as _e_lk:
+                # fail-closed：驗證器跑不起來 → 視為 FAIL（不得因驗證器故障而放行）
+                _links_ok = False
+                _links_lines = [f"發布前連結閘門無法執行: {_e_lk}"]
+            if not _links_ok:
+                print("  ⛔ 發布前連結閘門 FAIL（index.html 有連結目標不會上線 → 線上必 404）"
+                      "→ 本次不 commit、不推送：")
+                for _l in (_links_lines or ["（無細節輸出）"]):
+                    print("    " + _l)
+                print("  ⛔ 兩種既有解法（不繞過閘門、不手動 git add）：")
+                print("     (a) 該檔的 producer 先自行入庫（例如 21:30 美股緊急應變 job）→ 重跑本產線")
+                print("     (b) 該檔確屬本輪產物 → 加進 _push_candidates 後重跑（一次到位）")
+                _unstage = subprocess.run(['git', 'restore', '--staged', '--']
+                                          + list(_scope.get('allow') or _push_files),
+                                          capture_output=True, text=True, cwd=BASE)
+                print("  ↩️ 已取消 stage（不留 staged 殘留，避免混入下一班 commit）"
+                      if _unstage.returncode == 0
+                      else f"  ⚠️ 取消 stage 失敗：{(_unstage.stderr or '').strip()[:120]}")
+        if _staged and _links_ok:
             # stage 後、commit 前：staged 必須完全落在本輪 scope 內（絕對禁止 scope 外檔案進入 commit）
             _dsi(_scope, base=BASE, label=f"regenerate_report({TODAY})")
             subprocess.run(['git', 'commit', '-m', _msg], capture_output=True, text=True, cwd=BASE)
@@ -638,6 +695,8 @@ elif ok and _cio_ok:
             _recorded = _ar.returncode == 0
             if not _recorded:
                 print("  ⛔ 未推送上線（見上方 auto_push 訊息）")
+        elif not _links_ok:
+            print("⚠️ 已跳過 commit（發布前連結閘門 FAIL，見上方 ⛔；本輪產物留在工作區、未提交）")
         else:
             print("⚠️ 無檔案可提交（全部已是最新，跳過 commit）")
     elif not _push_files:
@@ -658,6 +717,10 @@ elif ok and _cio_ok:
         if _post.returncode != 0:
             _pages_ok = False
             print("  ⛔ 線上連結驗證未過（見上方 ❌）→ 本次不視為成功（cron 會發警報）")
+    elif _push_pending and not _links_ok:
+        _pages_ok = False
+        print("  ⛔ 發布前連結閘門 FAIL → 本輪未 commit、未推送（見上方 ⛔ 與兩種既有解法）；"
+              "本次不視為成功（cron 會發警報）")
     elif _push_pending:
         _pages_ok = False
         print("  ⛔ 有本輪產物且閘門 PASS，但推送未成功（見上方 auto_push 訊息）→ 略過線上連結驗證"
