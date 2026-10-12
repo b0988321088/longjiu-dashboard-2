@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -68,7 +69,102 @@ def _git(base: Path, args: list[str], timeout: int = 180) -> subprocess.Complete
 
 
 def _norm(p: str) -> str:
-    return str(p).replace("\\", "/").lstrip("./")
+    """正規化路徑。
+
+    只剝**成對的開頭 `./`**，不可用 `lstrip("./")`——那會把開頭多個 `.` 一併剝掉，
+    使 `.env` 變 `env`、`.githooks/pre-push` 變 `githooks/pre-push`，
+    讓 NEVER_AUTO_SUFFIX 的 `.env` 與 NEVER_AUTO_PREFIX 的 `.githooks/`、`.hermes/`
+    永遠比不中（＝這兩個保護形同不存在）。2026-10-12 CIO 審查 F1 指出，舊碼即有此盲點。
+    """
+    s = str(p).replace("\\", "/")
+    while s.startswith("./"):
+        s = s[2:]
+    return s
+
+
+# ------------------------------------------------- 純資料批次授權（PG-20261011 v3）
+
+def glob_match(pattern: str, path: str) -> bool:
+    """單層 glob：'*' 只匹配同一路徑段落內的字元（不跨 '/'）。"""
+    rx = "^" + re.escape(_norm(pattern)).replace(r"\*", "[^/]*") + "$"
+    return re.match(rx, _norm(path)) is not None
+
+
+def spec_items(entry: dict) -> list[str]:
+    """條目的規格元素（allow 為字面路徑；patterns 為單層 glob）。"""
+    out: list[str] = []
+    for key in ("allow", "patterns"):
+        v = entry.get(key)
+        if isinstance(v, list):
+            out.extend(str(x) for x in v)
+    return out
+
+
+def spec_unsafe_reason(item: str) -> str | None:
+    """白名單條目規格安全檢查（fail-closed）。
+
+    條目是「明確授權」，但不得因寫得太寬而實質變成通用放行
+    （＝使用者裁決「不得把未知檔案一律視為可自動核准」的程式化防線）。
+    規則：① 不得以 '*' 開頭 ② '*' 前的字面前綴需 ≥3 字元
+         ③ 副檔名位置不得含 '*' ④ 副檔名不得落於備份／憑證／程式類
+         ⑤ 不得落於強制 CIO 前綴 ⑥ 不得恰為強制 CIO 檔名
+    """
+    raw = str(item).strip()
+    if not raw:
+        return "空字串"
+    p = _norm(raw)
+    lp = p.lower()
+    if "*" not in p:
+        if lp in {x.lower() for x in NEVER_AUTO_EXACT}:
+            return f"不得授權強制 CIO 檔：{raw}"
+        for pre in NEVER_AUTO_PREFIX:
+            if lp.startswith(pre.lower()):
+                return f"不得授權強制 CIO 前綴（{pre}）：{raw}"
+        for suf in tuple(NEVER_AUTO_SUFFIX) + tuple(CODE_SUFFIX):
+            if lp.endswith(str(suf).lower()):
+                return f"不得授權禁止副檔名（{suf}）：{raw}"
+        return None
+    if p.startswith("*"):
+        return f"樣式不得以 '*' 開頭（無路徑約束＝實質通用放行）：{raw}"
+    head, _, tail = p.partition("*")
+    if len(head) < 3:
+        return f"'*' 前的字面前綴過短（<3 字元）：{raw}"
+    if "." in tail and "*" in tail.split(".", 1)[1]:
+        return f"副檔名位置不得含 '*'：{raw}"
+    if "." not in tail:
+        return f"樣式必須明示副檔名（不得寫可吸收任意副檔名的樣式）：{raw}"
+    if "." in tail:
+        ext = "." + tail.rsplit(".", 1)[1]
+        for suf in tuple(NEVER_AUTO_SUFFIX) + tuple(CODE_SUFFIX):
+            if ext.lower() == str(suf).lower():
+                return f"樣式副檔名落於禁止類（{suf}）：{raw}"
+    for pre in NEVER_AUTO_PREFIX:
+        if head.lower().startswith(pre.lower()):
+            return f"樣式前綴落於強制 CIO 前綴（{pre}）：{raw}"
+    return None
+
+
+def spec_matches(items: list[str], path: str) -> bool:
+    """path 是否落在條目規格內（字面相等或 glob 命中）。"""
+    p = _norm(path)
+    for it in items:
+        s = _norm(it)
+        if "*" in s:
+            if glob_match(s, p):
+                return True
+        elif s == p:
+            return True
+    return False
+
+
+def spec_specificity(items: list[str]) -> tuple[int, int]:
+    """規格嚴謹度排序鍵（供 reverse=True 排序）：字面比樣式嚴謹（字面前綴給大值）；
+    同樣含樣式時，前綴越長越嚴謹；元素越少越嚴謹（以負數表達）。
+    """
+    lits = [len(_norm(i).partition("*")[0]) for i in items if "*" in _norm(i)]
+    lit = min(lits) if lits else 10 ** 6
+    return (lit, -len(items))
+
 
 
 def git_dir(base: Path) -> Path:
@@ -128,7 +224,13 @@ def special_reason(path: str, base: Path | None = None) -> str | None:
 # ---------------------------------------------------------------- 關卡二
 
 def load_allowlist(base: Path, ref: str = "HEAD") -> tuple[dict | None, str]:
-    """讀**已提交版本**的產物白名單（工作區改寫無效）。"""
+    """讀**已提交版本**的產物白名單（工作區改寫無效）。
+
+    v3：條目可用 `allow`（字面路徑）或 `patterns`（單層 glob）。
+    載入時做規格安全檢查（fail-closed）——任一條目寫得過寬
+    （以 '*' 開頭、副檔名含 '*'、指向程式／治理／備份類）
+    即整份白名單視為不可用，不靜默忽略該條目。
+    """
     r = _git(base, ["show", f"{ref}:{ALLOWLIST_PATH}"])
     if r.returncode != 0:
         return None, f"白名單不存在（{ref}:{ALLOWLIST_PATH}）"
@@ -139,24 +241,43 @@ def load_allowlist(base: Path, ref: str = "HEAD") -> tuple[dict | None, str]:
     if not isinstance(m, dict) or not isinstance(m.get("entries"), list) or not m["entries"]:
         return None, "白名單格式錯誤（需 entries 非空陣列）"
     for e in m["entries"]:
-        if not isinstance(e, dict) or not isinstance(e.get("allow"), list) or not e["allow"]:
+        if not isinstance(e, dict):
             return None, f"白名單條目格式錯誤：{e!r}"
-        if any(str(x).strip() == "" for x in e["allow"]):
+        items = spec_items(e)
+        if not items:
+            return None, f"白名單條目格式錯誤（allow／patterns 皆空）：{e!r}"
+        if any(not str(x).strip() for x in items):
             return None, "白名單條目含空字串"
+        for it in (e.get("allow") or []):
+            if "*" in str(it):
+                return None, f"allow 為字面路徑、不得含 '*'（需要樣式請改用 patterns）：{it}"
+        if not str(e.get("producer") or "").strip() and "patterns" in e:
+            return None, f"含 patterns 的條目必須標明 producer（產物歸屬）：{e.get('label')}"
+        for it in items:
+            why = spec_unsafe_reason(it)
+            if why:
+                return None, f"白名單條目規格過寬／越界（{e.get('label')}）：{why}"
     return m, "ok"
 
 
 def match_entry(changed: set[str], allowlist: dict) -> tuple[dict | None, str]:
-    """找出「本次變更全部落在其 allow 內」的白名單條目；無則回 None。"""
+    """找出「本次變更全部落在其規格內」的白名單條目；無則回 None。
+
+    命中條件：changed 的**每一個**檔案都落在該條目的 allow／patterns 內。
+    變更集合為空時不得命中任何條目（避免空集合被任何條目吸收）。
+    """
+    if not changed:
+        return None, "本次變更為空"
     hits = []
     for e in allowlist["entries"]:
-        allowed = {_norm(x) for x in e["allow"]}
-        if changed <= allowed:
+        items = spec_items(e)
+        if items and all(spec_matches(items, p) for p in changed):
             hits.append(e)
     if not hits:
         return None, "本次變更不在任何已核准的低風險白名單內"
-    # 取最貼合者（allow 最小）作為判定依據，避免寬鬆條目意外吸收
-    best = sorted(hits, key=lambda e: len(e["allow"]))[0]
+    # 取最嚴謹者（字面比樣式嚴謹；前綴越長、元素越少越嚴謹）作為判定依據，
+    # 避免寬鬆條目意外吸收本次變更。
+    best = sorted(hits, key=lambda e: spec_specificity(spec_items(e)), reverse=True)[0]
     return best, "ok"
 
 
@@ -189,6 +310,39 @@ def is_auto(rec: dict) -> bool:
 
 
 # ---------------------------------------------------------------- 統一裁決
+
+def classify(changed: set[str], entry: dict | None,
+             specials: dict | None = None) -> tuple[str, bool, str]:
+    """單一真值：一個檔案集合在發布授權上屬 AUTO 或 CIO。
+
+    **落版側（auto_record）與閘門側（decide）必須共用此函式。**
+    2026-10-12 死鎖根因即兩側各有一套判定：落版側只認「特殊類別 ∪ 程式副檔名」，
+    閘門側另有「未命中白名單」→ 純資料 commit 被落 AUTO 章、卻被閘門以 CIO 模式拒絕。
+    """
+    sp = specials or {}
+    if sp:
+        return "CIO", True, "特殊類別命中"
+    if entry is None:
+        return "CIO", True, "未命中白名單"
+    return "AUTO", False, "命中低風險白名單"
+
+
+def classify_paths(base: Path, paths, ref: str = "HEAD") -> dict:
+    """給定檔案清單 → 發布授權判定（落版側查詢用；與 decide 共用 classify）。"""
+    changed = {_norm(p) for p in paths if str(p).strip()}
+    specials = {p: special_reason(p, base) for p in sorted(changed)}
+    specials = {p: r for p, r in specials.items() if r}
+    al, why_al = load_allowlist(base, ref=ref)
+    if al is None:
+        return {"mode": "CIO", "must_cio": True, "entry": None,
+                "reason": f"白名單不可用（{why_al}）", "specials": specials,
+                "files": sorted(changed)}
+    entry, _why = match_entry(changed, al)
+    mode, must_cio, why_mode = classify(changed, entry, specials)
+    return {"mode": mode, "must_cio": must_cio,
+            "entry": (entry or {}).get("label"), "reason": why_mode,
+            "specials": specials, "files": sorted(changed)}
+
 
 def decide(base: Path, range_base: str, producer_own: list[str] | None = None,
            allowlist_ref: str = "HEAD") -> dict:
@@ -226,11 +380,8 @@ def decide(base: Path, range_base: str, producer_own: list[str] | None = None,
                               "matched": (entry or {}).get("label"), "reason": why_e}
 
     # 模式判定：特殊類別命中 或 不在白名單 → 必須走真 CIO 審查
-    must_cio = bool(specials) or entry is None
-    mode = "CIO" if must_cio else "AUTO"
-    checks["mode"] = {"mode": mode, "must_cio": must_cio,
-                      "reason": ("特殊類別命中" if specials else
-                                 ("未命中白名單" if entry is None else "命中低風險白名單"))}
+    mode, must_cio, why_mode = classify(changed, entry, specials)
+    checks["mode"] = {"mode": mode, "must_cio": must_cio, "reason": why_mode}
 
     # 關卡三：核准紀錄與 tree 綁定（逐 commit，全部檢查）
     cs = commits_in_range(base, range_base)

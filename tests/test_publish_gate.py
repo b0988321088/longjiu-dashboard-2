@@ -225,6 +225,183 @@ def s_edge() -> None:
           not r4["ok"] and any(b["id"] == "ALLOWLIST_UNAVAILABLE" for b in r4["blockings"]))
 
 
+# ------------------------------------------------ 純資料批次授權路徑（v3）
+
+ALLOW_RADAR = {"version": 3, "entries": [
+    {"label": "雷達發布產物", "producer": "radar_push.py",
+     "patterns": ["radar_state.json", "radar_report_*.html"],
+     "evidence": "radar_weekly.py 產生、build_dashboard.py 重繪；檔名含日期", "risk": "low"}]}
+
+
+def s_data_batch_lane() -> None:
+    """正向：已登記的純資料批次走 AUTO；負向：未登記／混合一律不走 AUTO。"""
+    print("\n【純資料批次授權路徑】")
+    repo, head, base = make_repo({"radar_state.json": "{}",
+                                  "radar_report_2026-10-12.html": "<html>"},
+                                 allowlist=ALLOW_RADAR)
+    r = pg.decide(repo, base, None, allowlist_ref=base)
+    check("D1 已登記純資料批次（含日期樣式）→ 可發布 AUTO",
+          r["ok"] and r["mode"] == "AUTO", str(r.get("blockings"))[:200])
+    check("D1b 命中正確條目", r["allow_entry"] == "雷達發布產物", str(r["allow_entry"]))
+    # 只有 state（子集）也命中同一條目
+    repo2, head2, base2 = make_repo({"radar_state.json": "{}"}, allowlist=ALLOW_RADAR)
+    r2 = pg.decide(repo2, base2, None, allowlist_ref=base2)
+    check("D2 子集（僅 state）→ 可發布 AUTO", r2["ok"] and r2["mode"] == "AUTO",
+          str(r2.get("blockings"))[:200])
+    # 負向：未登記檔
+    repo3, head3, base3 = make_repo({"radar_state.json": "{}", "unknown_thing.json": "{}"},
+                                    allowlist=ALLOW_RADAR)
+    r3 = pg.decide(repo3, base3, None, allowlist_ref=base3)
+    check("D3 未登記檔（純資料）→ 拒（不得因未知而自動核准）", not r3["ok"])
+    check("D3b blocking=CIO_REQUIRED", any(b["id"] == "CIO_REQUIRED" for b in r3["blockings"]),
+          str([b["id"] for b in r3["blockings"]]))
+    # 負向：混合範圍（登記資料 + 程式檔）
+    repo4, head4, base4 = make_repo({"radar_state.json": "{}", "helper.py": "x"},
+                                    allowlist=ALLOW_RADAR)
+    r4 = pg.decide(repo4, base4, None, allowlist_ref=base4)
+    check("D4 混合範圍（資料＋程式）→ 拒", not r4["ok"])
+    check("D4b 特殊類別仍被記錄", r4["checks"]["special"]["ok"] is False)
+    # 負向：混合範圍（登記資料 + 治理紀錄）
+    repo5, head5, base5 = make_repo({"radar_state.json": "{}", "work_log.json": "{}"},
+                                    allowlist=ALLOW_RADAR)
+    r5 = pg.decide(repo5, base5, None, allowlist_ref=base5)
+    check("D5 混合範圍（資料＋治理紀錄）→ 拒", not r5["ok"])
+    # 負向：登記資料 + 未登記檔（樣式不得吸收）
+    repo6, head6, base6 = make_repo({"radar_report_2026-10-12.html": "<html>",
+                                     "radar_report_evil.json": "{}"},
+                                    allowlist=ALLOW_RADAR)
+    r6 = pg.decide(repo6, base6, None, allowlist_ref=base6)
+    check("D6 樣式不得跨副檔名吸收（*.json 未登記）→ 拒", not r6["ok"],
+          str([b["id"] for b in r6["blockings"]]))
+
+
+def s_pattern_safety() -> None:
+    """負向：條目規格過寬 → 整份白名單不可用（fail-closed，不得靜默忽略）。"""
+    print("\n【白名單規格安全（fail-closed）】")
+    bad = {
+        "以 * 開頭": ["*_report.html"],
+        "通用 json": ["*.json"],
+        "副檔名含 *": ["radar_*.h*ml"],
+        "前綴過短": ["a*.html"],
+        "程式副檔名": ["radar_report_*.py"],
+        "備份副檔名": ["radar_*.bak"],
+        "治理檔字面": ["work_log.json"],
+        "reviews 前綴": ["reviews/radar_*.json"],
+        "空字串": [""],
+    }
+    for label, pats in bad.items():
+        al = {"version": 3, "entries": [{"label": "壞條目", "producer": "x.py",
+                                         "patterns": pats}]}
+        repo, head, base = make_repo({"radar_state.json": "{}"}, allowlist=al)
+        r = pg.decide(repo, base, None, allowlist_ref=base)
+        ok = (not r["ok"]) and any(b["id"] == "ALLOWLIST_UNAVAILABLE" for b in r["blockings"])
+        check(f"S-{label}（{pats}）→ 白名單不可用、拒", ok,
+              str([b["id"] for b in r["blockings"]]))
+    # patterns 未標 producer → 拒
+    al2 = {"version": 3, "entries": [{"label": "無歸屬", "patterns": ["radar_state.json"]}]}
+    repo2, head2, base2 = make_repo({"radar_state.json": "{}"}, allowlist=al2)
+    r2 = pg.decide(repo2, base2, None, allowlist_ref=base2)
+    check("S-無 producer 的 patterns 條目→拒",
+          not r2["ok"] and any(b["id"] == "ALLOWLIST_UNAVAILABLE" for b in r2["blockings"]))
+    # 合法樣式仍可用（避免防線過度）
+    repo3, head3, base3 = make_repo({"radar_report_2026-10-12.html": "<html>"},
+                                    allowlist=ALLOW_RADAR)
+    r3 = pg.decide(repo3, base3, None, allowlist_ref=base3)
+    check("S-合法樣式 radar_report_*.html→仍可用", r3["ok"] and r3["mode"] == "AUTO",
+          str(r3.get("blockings"))[:160])
+
+
+def s_forgery() -> None:
+    """負向：偽造標記／偽造授權。"""
+    print("\n【偽造】")
+    # 1) 工作區改寫白名單（憑空長出授權）→ 讀 HEAD 版本，無效
+    repo, head, base = make_repo({"unknown_thing.json": "{}"}, allowlist=ALLOW_RADAR)
+    r1a = pg.decide(repo, base, None, allowlist_ref=base)
+    forged = {"version": 3, "entries": [{"label": "偽造", "producer": "x.py",
+                                         "patterns": ["unknown_thing.json"]}]}
+    (repo / "publish_allowlist.json").write_text(json.dumps(forged, ensure_ascii=False),
+                                                 encoding="utf-8")
+    r1b = pg.decide(repo, base, None, allowlist_ref=base)
+    check("X1 工作區改寫白名單偽造授權→無效", (not r1a["ok"]) and (not r1b["ok"]),
+          f"a={r1a['ok']} b={r1b['ok']}")
+    # 2) 自稱他人 producer 名 → 判定不看身分，仍拒
+    repo2, head2, base2 = make_repo({"unknown_thing.json": "{}"},
+                                    reviewer="AUTO-checker:radar_push.py")
+    r2 = pg.decide(repo2, base2, None, allowlist_ref=base2)
+    check("X2 自稱已登記 producer 名→仍拒（授權來自檔案集合）", not r2["ok"],
+          str([b["id"] for b in r2["blockings"]]))
+    # 3) 偽造 tree 綁定
+    repo3, head3, base3 = make_repo({"radar_state.json": "{}"}, allowlist=ALLOW_RADAR,
+                                    tree_override="f" * 40)
+    r3 = pg.decide(repo3, base3, None, allowlist_ref=base3)
+    check("X3 偽造／過期 tree 的核准紀錄→拒", not r3["ok"])
+    # 4) 未命中條目但自落 AUTO 章
+    repo4, head4, base4 = make_repo({"dashboard_decisions.json": "{}"},
+                                    reviewer="AUTO-checker:x.py")
+    r4 = pg.decide(repo4, base4, None, allowlist_ref=base4)
+    check("X4 未登記治理檔 + AUTO 章→拒", not r4["ok"] and r4["mode"] == "CIO")
+
+
+def s_classify_single_truth() -> None:
+    """classify 為兩側共用真值：classify_paths 與 decide 對同一集合給出相同 mode。"""
+    print("\n【單一真值（落版側／閘門側一致）】")
+    cases = [
+        ({"cost.html": "a"}, ALLOW_COST, "AUTO"),
+        ({"radar_state.json": "{}", "radar_report_2026-10-12.html": "<html>"}, ALLOW_RADAR, "AUTO"),
+        ({"unknown_thing.json": "{}"}, ALLOW_RADAR, "CIO"),
+        ({"radar_state.json": "{}", "helper.py": "x"}, ALLOW_RADAR, "CIO"),
+        ({"work_log.json": "{}"}, ALLOW_RADAR, "CIO"),
+    ]
+    for files, al, want in cases:
+        repo, head, base = make_repo(files, allowlist=al)
+        rd = pg.decide(repo, base, None, allowlist_ref=base)["mode"]
+        rc = pg.classify_paths(repo, sorted(files), ref=base)["mode"]
+        check(f"T 兩側一致 {sorted(files)} → {want}", rd == want and rc == want,
+              f"decide={rd} classify_paths={rc}")
+
+
+def s_hardening_f1_f2_f3() -> None:
+    """CIO 審查 required_fixes F1／F2／F3 的加固驗證。"""
+    print("\n【加固：F1 前導點盲點／F2 allow 樣式／F3 無副檔名樣式】")
+    # F1：_norm 不得把開頭多個 '.' 剝掉
+    check("F1a _norm 保留前導點（.env）", pg._norm(".env") == ".env", pg._norm(".env"))
+    check("F1b _norm 仍剝成對的 './'", pg._norm("./x/y.json") == "x/y.json", pg._norm("./x/y.json"))
+    check("F1c _norm 保留 .githooks/", pg._norm("./.githooks/pre-push") == ".githooks/pre-push",
+          pg._norm("./.githooks/pre-push"))
+    check("F1d special_reason('.env') 必須命中", pg.special_reason(".env") is not None)
+    check("F1e special_reason('.githooks/pre-push') 必須命中",
+          pg.special_reason(".githooks/pre-push") is not None)
+    check("F1f special_reason('.hermes/x.json') 必須命中",
+          pg.special_reason(".hermes/x.json") is not None)
+    # F1 端到端：把 .githooks/* 註冊進 patterns 也不得放行
+    for pats in (["\.githooks/*"], [".githooks/pre-push"]):
+        al = {"version": 3, "entries": [{"label": "壞", "producer": "x.py", "patterns": pats}]}
+        repo, head, base = make_repo({"x.json": "{}"}, allowlist=al)
+        r = pg.decide(repo, base, None, allowlist_ref=base)
+        check(f"F1g patterns={pats} → 白名單不可用、拒", not r["ok"],
+              str([b["id"] for b in r["blockings"]]))
+    # F2：allow 內含 '*' → fail-closed（allow 語意為字面路徑）
+    al2 = {"version": 1, "entries": [{"label": "字面混樣式", "allow": ["radar_*.html"]}]}
+    repo2, head2, base2 = make_repo({"radar_report_9.html": "<html>"}, allowlist=al2)
+    r2 = pg.decide(repo2, base2, None, allowlist_ref=base2)
+    check("F2 allow 含 '*' → 白名單不可用、拒（不得靜默當 glob）",
+          not r2["ok"] and any(b["id"] == "ALLOWLIST_UNAVAILABLE" for b in r2["blockings"]),
+          str([b["id"] for b in r2["blockings"]]))
+    # F3：樣式必須明示副檔名
+    for pats in (["data/*"], ["radar_*"], ["dir/sub*"]):
+        al3 = {"version": 3, "entries": [{"label": "無副檔名", "producer": "x.py", "patterns": pats}]}
+        repo3, head3, base3 = make_repo({"x.json": "{}"}, allowlist=al3)
+        r3 = pg.decide(repo3, base3, None, allowlist_ref=base3)
+        check(f"F3 patterns={pats} → 白名單不可用、拒", not r3["ok"],
+              str([b["id"] for b in r3["blockings"]]))
+    # 回歸：合法樣式仍可用
+    repo4, head4, base4 = make_repo({"radar_report_2026-10-12.html": "<html>"},
+                                    allowlist=ALLOW_RADAR)
+    r4 = pg.decide(repo4, base4, None, allowlist_ref=base4)
+    check("F3 回歸 合法樣式 radar_report_*.html 仍可用",
+          r4["ok"] and r4["mode"] == "AUTO", str(r4.get("blockings"))[:160])
+
+
 def main() -> int:
     print("=" * 70)
     print("publish_gate 隔離測試（白名單 + 實際變更集合）")
@@ -237,6 +414,11 @@ def main() -> int:
     s_r7_impersonation()
     s_multi_error()
     s_edge()
+    s_data_batch_lane()
+    s_pattern_safety()
+    s_forgery()
+    s_classify_single_truth()
+    s_hardening_f1_f2_f3()
     print("\n" + "=" * 70)
     print(f"通過 {len(PASS)} 項｜失敗 {len(FAIL)} 項")
     for f in FAIL:

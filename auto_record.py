@@ -65,23 +65,37 @@ class GateUnavailable(RuntimeError):
 
 
 def force_cio_paths(paths: list[str], base: Path) -> list[str]:
-    """回傳「閘門會強制真 CIO 審查」的路徑（落版側的排除集合）。
+    """回傳「閘門不會給 AUTO 授權」的路徑（落版側的排除集合）。
 
-    **不變量（2026-10-12 週清實踩）**：落版側的排除集合必須 ⊇ 閘門側（`publish_gate.special_reason`）。
+    **不變量（2026-10-12 週清實踩）**：落版側的排除集合必須 ⊇ 閘門側。
     舊版只排除程式副檔名，閘門側還排除治理紀錄（`dashboard_decisions.json`／`work_log.json`／
     `snapshot.json`…）、`reviews/`、`logs/`、備份與憑證副檔名 → 落版側放行、閘門必擋的 commit
     會不斷被製造出來；而且那顆 commit 只要留在 branch 上，`origin/<branch>..HEAD` 整段範圍
     會對**所有** producer 都變成 CIO 模式（2026-10-12 03:00 週清：07:00 晨報與當晚夜鏈一併被擋）。
 
+    **2026-10-12 死鎖修復（PG-20261011 v3）**：排除集合再擴到「閘門會判 CIO 的整個檔案集合」。
+    根因是兩側各有一套真值 —— 落版側只認「特殊類別 ∪ 程式副檔名」，閘門側另有「未命中白名單」。
+    純資料 commit（如 radar 三檔）因而被落 AUTO 章、卻被閘門以 CIO 模式拒絕，且無路可走。
+    現在改為呼叫 `publish_gate.classify_paths`（**與閘門共用 `classify` 單一真值**）：
+    整批拿不到 AUTO 授權時，回傳全部路徑 → 落版側不落 AUTO 章，問題以明確訊息浮出
+    （「需真 CIO 審查」），而不是「先落章再被拒」。
+
     載不到 `publish_gate` → 丟 `GateUnavailable`（fail-closed，不退回較寬鬆的規則）。
     """
+    paths = [p for p in paths if str(p).strip()]
     hits = {p for p in paths if CODE_RE.search(p)}
     try:
         if str(base) not in sys.path:
             sys.path.insert(0, str(base))
-        from publish_gate import special_reason  # noqa: E402
+        from publish_gate import special_reason, classify_paths  # noqa: E402
     except Exception as e:  # noqa: BLE001
         raise GateUnavailable(f"載不到 publish_gate：{e}") from e
+    try:
+        v = classify_paths(base, paths, ref="HEAD")
+    except Exception as e:  # noqa: BLE001
+        raise GateUnavailable(f"publish_gate.classify_paths 失敗：{e}") from e
+    if v.get("mode") != "AUTO":
+        return sorted(set(paths))
     return sorted(hits | {p for p in paths if special_reason(p, base)})
 
 
