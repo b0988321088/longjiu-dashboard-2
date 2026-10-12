@@ -10783,6 +10783,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261012212813-1163",
+    "timestamp": "2026-10-12T21:28:13.052533+08:00",
+    "agent": "Hermes",
+    "task": "收工閉環：稽核假紅修正＋心跳刷新＋殘留盤點",
+    "summary": "收工閉環（2026-10-12）：closeout_check 假紅 17→0（遮蔽政策與稽核對齊：稽核改讀 snapshot 真值，非讀畫面哨兵；commit afcc85ab 已推）。驗證器心跳刷新 → 56 PASS / 0 FAIL（原先 53/3 為 19:24 陳舊心跳）。殘留 ❌ 兩類（非本輪、不隱藏）：①基金口徑差額 2,524（TD-20261016 既有另案／check_thresholds 1 項）②18 檔他班未提交資料（asset_diff_history、work_log、error_register、inc_events、us30y_state、notion_* 等）→ 由 22:00 evening_sync 夜鏈收斂，非本輪範圍。遠端 clean-main＝afcc85ab、待推 0；本輪全部 commit 皆有獨立審查紀錄。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-12T20:30:36.970525"
