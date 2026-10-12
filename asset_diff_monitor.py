@@ -1082,7 +1082,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
     # Securities detail card
     try:
         _db_sec = sqlite3.connect(str(REPO_BASE / "dragon_assets.db"))
-        _holdings = _db_sec.execute("SELECT ticker, shares, source FROM holdings ORDER BY ticker").fetchall()
+        _holdings = _db_sec.execute("SELECT ticker, shares, source FROM holdings WHERE shares > 0 ORDER BY ticker").fetchall()
         _db_sec.close()
     except:
         _holdings = []

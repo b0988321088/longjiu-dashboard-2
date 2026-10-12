@@ -1203,7 +1203,7 @@ def main():
         tpl = tpl.replace("__RELAY_SCHEDULE__", '<p class="text-xs text-slate-400">接力資料待更新</p>')
         print("  ⚠️ 接力時序注入失敗:", _rse)
 
-    (BASE / "index.html").write_text(_band_filter(tpl), encoding="utf-8")
+    (BASE / "index.html").write_text(_band_filter(tpl), encoding="utf-8", newline="\n")  # 2026-10-12：鎖 LF，避免每次重建產生整檔 CRLF 假 diff
     print(f"✅ 儀表板注入完成（{hits} 組值 + {_link_hits} 連結動態化）｜現金 {_fmt(cash)} / 保單 {_fmt(ins)} / 配息 {_fmt(div_total)} / 租金 {_fmt(rent_got)}")
 
 if __name__ == "__main__":
