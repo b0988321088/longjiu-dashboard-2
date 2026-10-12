@@ -748,7 +748,13 @@ __RELAY_SCHEDULE__
       var rb = (snap.rent_receivable_by_month||{})[_ym2] || snap.rent_breakdown||{};
       for(var k4 in rb){ var g4 = _rrecv[k4]||0; if(g4 < rb[k4]) pend.push([k4+'房租', rb[k4]-g4, '']); }
       var fjExp = (snap.firstjin_dividend_expected||{})[_ym2]||{};
-      if(fjExp.amount>0 && !pend.some(function(p){return p[0].indexOf('第一金')>=0;})) pend.push(['第一金 FA81 配息', fjExp.amount, (fjExp.note||'').slice(0,40)]);
+      if(fjExp.amount>0 && !pend.some(function(p){return p[0].indexOf('第一金')>=0;})) pend.push(['第一金 FAXX 配息', fjExp.amount, (fjExp.note||'').slice(0,40)]);
+      /* 2026-10-12：ETF 已除息待發放（發放日未到，不計入實收；來源 snapshot.etf_dividend_receivable_202610） */
+      var _etfr = snap.etf_dividend_receivable_202610 || null;
+      if(_etfr && Number(_etfr.合計) > 0){
+        var _etfl = (_etfr.明細||[]).map(function(x){ return x.代號 + ' ' + x.發放日; }).join('／');
+        pend.push(['ETF 配息（已除息待發放）', Number(_etfr.合計), _etfl]);
+      }
       var ih = '';
       if(items.length===0){ ih = '<div class="text-slate-400">本月尚無入帳</div>'; }
       else {
