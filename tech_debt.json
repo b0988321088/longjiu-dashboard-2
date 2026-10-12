@@ -1457,5 +1457,37 @@
     "moved_from": "",
     "moved_at": "2026-10-12",
     "cleanup_reason": ""
+  },
+  {
+    "id": "TD-20261012-25",
+    "date": "2026-10-12",
+    "title": "產線既有產物 16 檔未提交（另案盤點）",
+    "severity": "P2",
+    "source": "closeout_check.py 2026-10-12",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "asset_diff_history.json／buffett_cto_report_*.md／penetration_report_*.html／industry_penetration_*.png／error_register.md／data/ai_cost_daily.jsonl 等 16 檔屬產線既有產物，未被本輪 commit scope 涵蓋；保留原狀不清理、不納入 B 案結案範圍。",
+    "tags": "publish-scope,residual",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-12",
+    "cleanup_reason": ""
+  },
+  {
+    "id": "TD-20261012-26",
+    "date": "2026-10-12",
+    "title": "基金口徑差額 NT$2,524（另案核對）",
+    "severity": "P2",
+    "source": "closeout_check.py 門檻不變式 2026-10-12",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "鉅亨 898,743＋國泰 11,780,925＝12,679,668 ≠ funds 12,677,144，差 2,524。保留 FAIL 證據，不修改既有真值，另案核對。",
+    "tags": "caliber,residual",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-12",
+    "cleanup_reason": ""
   }
 ]
