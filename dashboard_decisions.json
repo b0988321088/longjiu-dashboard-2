@@ -10796,50 +10796,56 @@
       "summary": "修復儀表板按鈕 404 根因：第12項在產線兩處呼叫都帶 LJ_PREPUSH=1 → 永不攔截；改為 stage 後、commit 前以非 PREPUSH 模式真擋（擋下不 commit、取消 stage）；退休規劃改由 regenerate_report 9c 段產出並納入本輪 commit scope。commit af01101f tree 0de1c099、CIO-Pollinations APPROVE blocking=0；四情境沙盒測試 22/22。結案驗收：Pages build success、線上 blob 逐位元相同。",
       "status": "施工完成-待結案驗收",
       "source": "使用者 2026-10-12 工單裁決"
+    },
+    {
+      "id": "mem-20261012230155-1165",
+      "timestamp": "2026-10-12T23:01:55.570418+08:00",
+      "agent": "Hermes",
+      "task": "TD-20261012-23 發布通道一致性（B 案）",
+      "summary": "限定範圍驗收通過／CLOSED。修法：regenerate_report.py 於 auto_push 前自取真 CIO 審查＋RECORD（範圍契約：待推範圍每顆須有 RECORD、僅本輪 HEAD 可補審；治理檔純追加不變量只放行 updated_at；異質審查須 APPROVE＋commit/tree 綁定）。隔離沙盒五情境全符合（S1 審查→RECORD→推送；S2 舊 commit 阻塞／S3 meta 不一致／S4 審查拒絕／S5 未追蹤連結，後四者 fail-closed 且 stage 還原）。實跑無人介入閉環 bfb23caedd8d：本機＝origin/clean-main、待推 0、審查 tree 1d4de6b2e7a3＝被推 commit tree、線上 post-push 22/22 200、index.html 逐位元相同、未使用 cioreviewed 標籤。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261012230203-1166",
+      "timestamp": "2026-10-12T23:02:03.322222+08:00",
+      "agent": "Hermes",
+      "task": "原工單（發布鏈修復）維持未結案",
+      "summary": "裁定：原工單 OPEN。兩項既有殘留分開立案、保留失敗證據、不清除、不納入本案：①16 檔未提交（產線既有產物）②基金口徑差額 NT$2,524（鉅亨 898,743＋國泰 11,780,925＝12,679,668 ≠ funds 12,677,144）。closeout_check.py 其餘通過（驗證器心跳 56 PASS／0 FAIL、ref topology origin/clean-main＝local main @ bfb23cae）。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261012230916-1167",
+      "timestamp": "2026-10-12T23:09:16.202487+08:00",
+      "agent": "Hermes",
+      "task": "每日 AI 成本帳 22:30（close）補跑 CLOSED",
+      "summary": "補跑 PASS·rc=0；commit b2ff1a33d3d7，真 CIO RECORD 已落地並推送 clean-main；cost_log.csv 已寫入 2026-10-12 日結列、cost_data.json 已提交、工作區乾淨、待推 0、線上 raw 200；同一支腳本自行完成、未人工補標籤。原失敗原因＝推送死結（exit 3），非腳本本身。營運留意：DS 餘額約 2.5 天（不影響本次判定）。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261012230923-1168",
+      "timestamp": "2026-10-12T23:09:23.962849+08:00",
+      "agent": "Hermes",
+      "task": "龍九收工檢查 22:40 維持 FAIL；既有殘留白名單政策未授權",
+      "summary": "收工檢查補跑 rc=1，阻塞項＝16 檔未提交（TD-20261012-25 P2/OPEN）與基金口徑差額（TD-20261012-26 P2/OPEN）；兩項保留原狀、不放寬檢查、不清除證據。政策裁決：目前不授權白名單、不要求現在處理；未來若採用已知殘留白名單，必須①僅涵蓋已立案的 TD-20261012-25／TD-20261012-26 ②其他新未提交檔案或新基金差異仍須 FAIL ③報告須區分「原始稽核 FAIL」與「排除已核准例外後的結果」，不得把例外包裝成原始檢查通過。",
+      "status": "completed",
+      "source": "user"
     }
 ,
   {
-    "id": "mem-20261012230155-1165",
-    "timestamp": "2026-10-12T23:01:55.570418+08:00",
+    "id": "mem-20261012232338-1169",
+    "timestamp": "2026-10-12T23:23:38.534503+08:00",
     "agent": "Hermes",
-    "task": "TD-20261012-23 發布通道一致性（B 案）",
-    "summary": "限定範圍驗收通過／CLOSED。修法：regenerate_report.py 於 auto_push 前自取真 CIO 審查＋RECORD（範圍契約：待推範圍每顆須有 RECORD、僅本輪 HEAD 可補審；治理檔純追加不變量只放行 updated_at；異質審查須 APPROVE＋commit/tree 綁定）。隔離沙盒五情境全符合（S1 審查→RECORD→推送；S2 舊 commit 阻塞／S3 meta 不一致／S4 審查拒絕／S5 未追蹤連結，後四者 fail-closed 且 stage 還原）。實跑無人介入閉環 bfb23caedd8d：本機＝origin/clean-main、待推 0、審查 tree 1d4de6b2e7a3＝被推 commit tree、線上 post-push 22/22 200、index.html 逐位元相同、未使用 cioreviewed 標籤。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261012230203-1166",
-    "timestamp": "2026-10-12T23:02:03.322222+08:00",
-    "agent": "Hermes",
-    "task": "原工單（發布鏈修復）維持未結案",
-    "summary": "裁定：原工單 OPEN。兩項既有殘留分開立案、保留失敗證據、不清除、不納入本案：①16 檔未提交（產線既有產物）②基金口徑差額 NT$2,524（鉅亨 898,743＋國泰 11,780,925＝12,679,668 ≠ funds 12,677,144）。closeout_check.py 其餘通過（驗證器心跳 56 PASS／0 FAIL、ref topology origin/clean-main＝local main @ bfb23cae）。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261012230916-1167",
-    "timestamp": "2026-10-12T23:09:16.202487+08:00",
-    "agent": "Hermes",
-    "task": "每日 AI 成本帳 22:30（close）補跑 CLOSED",
-    "summary": "補跑 PASS·rc=0；commit b2ff1a33d3d7，真 CIO RECORD 已落地並推送 clean-main；cost_log.csv 已寫入 2026-10-12 日結列、cost_data.json 已提交、工作區乾淨、待推 0、線上 raw 200；同一支腳本自行完成、未人工補標籤。原失敗原因＝推送死結（exit 3），非腳本本身。營運留意：DS 餘額約 2.5 天（不影響本次判定）。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261012230923-1168",
-    "timestamp": "2026-10-12T23:09:23.962849+08:00",
-    "agent": "Hermes",
-    "task": "龍九收工檢查 22:40 維持 FAIL；既有殘留白名單政策未授權",
-    "summary": "收工檢查補跑 rc=1，阻塞項＝16 檔未提交（TD-20261012-25 P2/OPEN）與基金口徑差額（TD-20261012-26 P2/OPEN）；兩項保留原狀、不放寬檢查、不清除證據。政策裁決：目前不授權白名單、不要求現在處理；未來若採用已知殘留白名單，必須①僅涵蓋已立案的 TD-20261012-25／TD-20261012-26 ②其他新未提交檔案或新基金差異仍須 FAIL ③報告須區分「原始稽核 FAIL」與「排除已核准例外後的結果」，不得把例外包裝成原始檢查通過。",
+    "task": "龍九全系統總收尾（一次盤點／修復／驗收）結果",
+    "summary": "四項範圍：①16 檔未提交→實際 52 項，已逐檔分類（23 已追蹤被改／29 未追蹤：18 reviews 審查產物、_bak 備份、_pages_fetched 暫存、apply_truth 真值日腳本、3 支未被實碼 import 的工具）並逐檔給出處置依據；結構根因＝produced-set（after−before）會把「已 dirty」的檔永久排除在 producer commit scope 外。②基金口徑差額→根因＝三處消費者加總停更逐檔字典（自由Pay 10/08 497,695）而非平台總覽 896,219；修法＝fund_caliber.py 單一口徑（差異必須點名、無 funds_stale_notice 即 fail-closed）；日報行 12,677,144＝896,219＋11,780,925 閉合、check_thresholds 全檢 PASS、負向測試通過；TD-20261012-26 結案。③Pages 線上＝raw＝commit 逐位元相同（實測 md5 6d4b09cf…），非建置落後。④全量工單：86 卡／78 OPEN（P0 1、P1 11、P2 29、NA 36、P3 1）已盤出；本輪直接相關 5 張已逐一處置。發布：99a8eb14（程式3檔＋日報，tree cb13a6fada58）、5793a5f8（tech_debt）皆真 CIO APPROVE、RECORD、auto_push、待推 0、線上已驗。",
     "status": "completed",
     "source": "user"
   }
   ],
   "meta": {
-    "updated_at": "2026-10-12T22:54:20.221436"
+    "updated_at": "2026-10-12T23:20:03.140759"
   },
   "last_updated": "2026-10-12T18:00:00+08:00",
   "2026-09-29": [
