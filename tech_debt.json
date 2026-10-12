@@ -1252,15 +1252,16 @@
     "title": "P1｜公開 Pages 洩漏：index.html 含遮罩帳號＋銀行餘額；radar_state.json 含總資產分母",
     "severity": "P1",
     "source": "CIO-Gemini radar 批次審查（commit e27122e4，tree 7fc4158e）",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-12)：公開面三類敏感項清除並線上驗證。①新增 public_mask.py 唯一遮蔽實作（帳號→•••／安全線門檻→內部門檻不公開／行庫 data-k→●●●）；②產生端寫檔前套用 scrub：build_dashboard、run_daily、regenerate_report；institutional_flow 不再落地 Fed 總資產；③公開產物重產後 Pages＋raw 實測：index.html／radar_state.json／日報之帳號、安全線門檻、玉山 40,044、永豐 197,205 全數已清除；radar fed 僅存 date；④守門測試 test_public_mask 16 PASS、test_public_exposure 20 PASS。殘留（另案、非本卡範圍）：儀表板仍公開資產組合總額（總資產 26.8M 級）等部位資訊 → 是否改為私有 repo／加存取控制屬另一決策（另立卡）。",
     "detail": "index.html（公開首頁）內含『台新帳號 002***75』與銀行餘額（玉山 40,044／台北富邦 44,116）；radar_state.json 公開提供 weekly_plan（含總資產 26,822,005）。兩者 HEAD 即存在、非本批引入，封鎖本批無法下線。需另案治理（遮蔽或移出公開 repo）。與既有資安 P0（GEMINI_API_KEY 歷史）同屬公開面治理範疇。",
     "tags": "資安,公開面,PII,Pages",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-12",
-    "cleanup_reason": ""
+    "cleanup_reason": "公開面三類敏感項（帳號／銀行餘額／資產分母）已清除且線上驗證；commit 56342f17。",
+    "updated_at": "2026-10-12"
   },
   {
     "id": "TD-20261012-13",
@@ -1398,15 +1399,16 @@
     "title": "🔴 P0｜資安：曾入公開 git 歷史的 API key 未撤銷／輪替（GEMINI_API_KEY）",
     "severity": "P0",
     "source": "獨立資安追蹤（使用者 2026-10-12 指示）",
-    "status": "開放",
-    "status_raw": "",
+    "status": "開放（風險接受 · 未撤銷）",
+    "status_raw": "🟠 保留憑證、不撤銷（使用者 2026-10-12 裁決）＋唯讀盤點完成、明確風險接受。盤點（僅輸出雜湊／計數）：①全歷史 12 顆命中 AIza 特徵者**僅 1 組字串、且落在嵌入 base64 區塊內（前後皆 base64 字元）**，對 Google models.list 探測回 HTTP 400 → 判定為 base64 巧合、非有效憑證；②`ghp_` 命中 1 筆為 safe_read.py 自我測試用的**假樣本**（與 AIzaSy...pqrs、user@example.com 同列）；③`.env` 機密值在目前樹 2,122 個已版控檔中命中 0；④先前警報所指『仍有效的 API key』查無證據支持。**仍存在且未解除**：真實身分證字號／Moneybook ZIP 密碼曾入公開歷史 → 依 2026-10-06 裁決屬識別碼、不輪替＝**明確風險接受**（非已修復）。本次**未**撤銷、未輪替、未改權限；掃描範圍＝HEAD 全樹＋2026-08-01 後全歷史 patch（更早歷史未逐位元掃）。選項（待裁決）：公開 repo 的整類風險可用『改私有』一次性移除（含歷史），或維持公開並接受殘餘風險。",
     "detail": "曾暴露於公開程式庫歷史且仍有效未輪替。**獨立資安應變計畫（本卡唯一關閉條件）**：①確認實際暴露範圍與可公開性（2026-10-12 完成初查：repo 可見性、歷史命中 commit 數、公開首頁與 radar_state.json 揭露情形）②撤銷並輪替為新值（存放 repo 外 .env）③失效驗證（舊值必須失效、新值可用）④公開面清除與線上複驗（快取、逐位元確認）。限制：裁決停施工、不得標 CLOSED、不新增機制；不得在報告／測試／提交中再次輸出密鑰。獨立性：不得由任何其他卡的結案掩蓋，須以自身應變證據關閉。",
     "tags": "security,credential",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-12",
-    "cleanup_reason": ""
+    "cleanup_reason": "使用者裁決：保留憑證不撤銷；本卡改為風險追蹤＋風險接受記錄，不標已修復。",
+    "updated_at": "2026-10-12"
   },
   {
     "id": "TD-20261012-22",
