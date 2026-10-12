@@ -67,41 +67,53 @@ def scan_month_dividends(target_month: str):
     return dict(records)
 
 
+def month_total(records: dict, month: str) -> float:
+    """當月配息實收合計（單一口徑）。
+
+    2026-10-12（A1 真因）：舊版兩個分支對同一欄位用了兩套口徑——「本次有掃到新配息」
+    的分支把 total 寫成**本次新增額**，只有「無掃描」分支才寫**當月全部紀錄合計**。
+    於是只要當天掃到新配息，dividend_month_actual／monthly_dividend／mdb.total 就被
+    覆蓋成單次增量（保守底線、覆蓋率、差異分析、FIRE 進度全部連動失真）。
+    掃描的職責只有「把新紀錄併入 dividend_records」；總額一律由此函式重算。
+    """
+    tot = 0.0
+    for _d, _items in (records or {}).items():
+        if str(_d).startswith(month):
+            tot += sum(v for v in _items.values() if isinstance(v, (int, float)))
+    return tot
+
+
 def main():
     today = date.today()
     month = today.strftime("%Y-%m")
     snap = json.load(open(SNAP_PATH, encoding="utf-8"))
+    dr = snap.get("dividend_records", {}) or {}
     records = scan_month_dividends(month)
 
     if records:
         # 合併進 dividend_records（保留既有）
-        dr = snap.get("dividend_records", {}) or {}
         for d, items in records.items():
             merged = dict(dr.get(d, {}))
             for k, v in items.items():
                 merged[k] = merged.get(k, 0) + v
             dr[d] = merged
         snap["dividend_records"] = dr
-        total = sum(v for items in records.values() for v in items.values())
-        snap["dividend_month_actual"] = total
-        # 同步 monthly_dividend（其他腳本如 rebalance/morning_briefing 讀此欄位）
-        snap["monthly_dividend"] = total
-        print(f"✅ 本月({month})已追蹤配息: {total:,.0f} TWD")
+        scanned = sum(v for items in records.values() for v in items.values())
+        print(f"✅ 本月({month})本次掃到配息（已併入紀錄）: {scanned:,.0f} TWD")
         for d in sorted(records):
             print(f"  {d}: " + ", ".join(f"{k} {v:,.0f}" for k, v in records[d].items()))
+
+    # 2026-10-12 A1：五欄一律由當月全部紀錄重算（不因有無新掃描而換口徑）
+    total = month_total(dr, month)
+    snap["dividend_month_actual"] = total
+    # 同步 monthly_dividend（其他腳本如 rebalance/morning_briefing 讀此欄位）
+    snap["monthly_dividend"] = total
+    if records:
+        print(f"ℹ️ 本月({month})當月實收合計（含既有紀錄）: {total:,.0f} TWD")
+    elif total > 0:
+        print(f"ℹ️ 本月({month})無新掃描，保留既有紀錄: {total:,.0f} TWD")
     else:
-        # 當月無新掃描 → 保留既有 dividend_records（不覆蓋手動/既有紀錄），僅重算
-        dr = snap.get("dividend_records", {}) or {}
-        total = 0
-        for _d, _items in dr.items():
-            if str(_d).startswith(month):
-                total += sum(_items.values())
-        snap["dividend_month_actual"] = total
-        snap["monthly_dividend"] = total
-        if total > 0:
-            print(f"ℹ️ 本月({month})無新掃描，保留既有紀錄: {total:,.0f} TWD")
-        else:
-            print(f"ℹ️ 本月({month})尚未收到配息，顯示 0")
+        print(f"ℹ️ 本月({month})尚未收到配息，顯示 0")
 
     # 2026-09-04 防復發（35,583/130,930 誤值三犯）：五欄一致鐵則自動校準。
     # monthly_dividend_total / monthly_dividend_breakdown 一律由當月 dividend_records
@@ -114,6 +126,12 @@ def main():
             if not str(_d2).startswith(month):
                 continue
             for _k2, _v2 in _items2.items():
+                # 2026-10-12：與 month_total 用同一過濾規則（非數值一律不計）。
+                # 舊版直接相加 → dividend_records 只要混入一個字串（備註/空值）就
+                # TypeError 讓每日 07:00 產線整班失敗；且 total 與分桶若採不同規則
+                # 還會出現「三桶加總 ≠ total」的第二種口徑不一致。
+                if not isinstance(_v2, (int, float)):
+                    continue
                 _b2 = bucket_of(_k2)
                 if _b2 == "ins":
                     if "安聯" in _k2:
