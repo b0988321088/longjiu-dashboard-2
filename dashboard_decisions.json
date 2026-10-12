@@ -10773,6 +10773,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261012212210-1162",
+    "timestamp": "2026-10-12T21:22:10.734768+08:00",
+    "agent": "Hermes",
+    "task": "資安處置：保留憑證＋公開資料清理＋唯讀盤點",
+    "summary": "資安處置（使用者裁決 2026-10-12）：保留憑證、不撤銷；優先清理公開資料。①公開面清理完成並線上驗證：新增 public_mask.py 唯一遮蔽實作（帳號→•••／安全線門檻→不公開／行庫鍵→●●●），產生端（build_dashboard／run_daily／regenerate_report）寫檔前 scrub、institutional_flow 不再落地 Fed 總資產；Pages＋raw 實測 index.html／radar_state.json／日報之帳號與門檻值全數清除、radar fed 僅存日期；守門測試 test_public_mask 16 PASS、test_public_exposure 20 PASS；commit 56342f17（已推 clean-main）。②唯讀盤點：AIza 命中僅 1 組且為 base64 區塊巧合（Google API 探測 400）、ghp_ 命中為 safe_read.py 假樣本、目前樹 2,122 檔無 .env 機密值命中 → 先前『仍有效 key』警報查無證據支持；身分證字號／ZIP 密碼仍在公開歷史＝依 10/06 裁決之明確風險接受，未撤銷未輪替。③未宣告資安結案；TD-20261012-21 改為風險接受追蹤，TD-20261012-12 已結案（附線上驗收）。殘留：repo 仍為 public，儀表板仍公開資產組合總額；是否改私有待裁決。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-12T20:30:36.970525"
