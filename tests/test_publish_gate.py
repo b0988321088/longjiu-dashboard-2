@@ -436,12 +436,20 @@ def _rec_line(i: int, ok: bool = True) -> str:
 def make_ao_repo(dec_before: str, rec_before: str, dec_after: str | None, rec_after: str | None,
                  allowlist: dict | None = ALLOW_AO, extra_after: dict | None = None,
                  reviewer: str = "AUTO-checker:append_dashboard_decisions.py",
-                 approvals: bool = True, msg: str = "produce") -> tuple[Path, str, str]:
-    """base commit 已含兩檔；第二顆 commit 依參數追加（dec_after=None ＝ 刪除該檔）。"""
+                 approvals: bool = True, msg: str = "produce",
+                 include_gate: bool = False) -> tuple[Path, str, str]:
+    """base commit 已含兩檔；第二顆 commit 依參數追加（dec_after=None ＝ 刪除該檔）。
+
+    include_gate=True 時把受測的 publish_gate.py 放進 base commit（供 auto_record.force_cio_paths
+    在同一個 base 內 import 用）。
+    """
     repo = Path(tempfile.mkdtemp(prefix="pgtest_ao_"))
     for a in (["init", "-q"], ["config", "user.email", "t@example.com"],
               ["config", "user.name", "tester"], ["config", "core.autocrlf", "false"]):
         _git(repo, *a)
+    if include_gate:
+        (repo / "publish_gate.py").write_text((REPO / "publish_gate.py").read_text(encoding="utf-8"),
+                                              encoding="utf-8")
     if allowlist is not None:
         (repo / "publish_allowlist.json").write_text(
             json.dumps(allowlist, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -472,6 +480,17 @@ def make_ao_repo(dec_before: str, rec_before: str, dec_after: str | None, rec_af
         (repo / ".git" / "CIO_APPROVED").write_text(
             f"2026-10-12T00:00:00Z\t{tree}\t{head}\tAPPROVE\t{reviewer}\tnote\n", encoding="utf-8")
     return repo, head, base
+
+
+def _ao_blocked(r) -> bool:
+    """不變量未通過的正確行為：不得給 AUTO（mode=CIO）＋ 必須留下具名 advisory 可稽核。
+
+    不硬擋的理由：一顆內容不符的 commit 若經真 CIO 明確核准（tree 綁定）仍應可發布；
+    硬擋會製造「合法修正無路可走」的新型死鎖。偽造 AUTO 章則由 CIO_REQUIRED 擋下。
+    """
+    return (not r["ok"]) and r["mode"] == "CIO" \
+        and r["checks"]["append_only"].get("ok") is False \
+        and any(a["id"] == "APPEND_ONLY_NOT_VERIFIED" for a in r.get("advisories", []))
 
 
 def s_append_only_lane() -> None:
@@ -514,7 +533,7 @@ def s_append_only_lane() -> None:
     for name, dec_after, rec_after in cases:
         repo, head, base = make_ao_repo(dec0, rec0, dec_after, rec_after)
         r = pg.decide(repo, base, None, allowlist_ref=base)
-        check(f"{name} → 拒", not r["ok"] and any(b["id"] == "APPEND_ONLY_VIOLATION" for b in r["blockings"]),
+        check(f"{name} → 拒", _ao_blocked(r),
               str([b["id"] for b in r["blockings"]]))
         check(f"{name}b 回 CIO 模式（不得自動發布）", r["mode"] == "CIO")
 
@@ -523,20 +542,20 @@ def s_append_only_lane() -> None:
                                     rec0.replace('"note": "n"', '"note": "X"', 1) + _rec_line(3) + "\r\n")
     r = pg.decide(repo, base, None, allowlist_ref=base)
     check("AO-N6 修改既有收據行 → 拒",
-          not r["ok"] and any(b["id"] == "APPEND_ONLY_VIOLATION" for b in r["blockings"]),
+          _ao_blocked(r),
           str([b["id"] for b in r["blockings"]]))
 
     repo, head, base = make_ao_repo(dec0, rec0, dec0, rec0 + _rec_line(7) + "\r\n")
     r = pg.decide(repo, base, None, allowlist_ref=base)
     check("AO-N7 憑空 ok=true 收據（決策檔無此 id）→ 拒",
-          not r["ok"] and any(b["id"] == "APPEND_ONLY_VIOLATION" for b in r["blockings"]),
+          _ao_blocked(r),
           str([b["id"] for b in r["blockings"]]))
 
     repo, head, base = make_ao_repo(dec0, rec0, _dec_text([e1, e2, e3]),
                                     rec0 + _rec_line(3) + "\r\n" + _rec_line(8) + "\r\n")
     r = pg.decide(repo, base, None, allowlist_ref=base)
     check("AO-N8 決策 1 筆／成功收據 2 筆（筆數不一致）→ 拒",
-          not r["ok"] and any(b["id"] == "APPEND_ONLY_VIOLATION" for b in r["blockings"]),
+          _ao_blocked(r),
           str([b["id"] for b in r["blockings"]]))
 
     repo, head, base = make_ao_repo(dec0, rec0, _dec_text([e1, e2, e3]), rec0 + _rec_line(3) + "\r\n",
@@ -555,7 +574,7 @@ def s_append_only_lane() -> None:
                                     allowlist=fake, msg="data(decisions): 入庫 append_dashboard_decisions.py")
     r = pg.decide(repo, base, None, allowlist_ref=base)
     check("AO-N10 自稱 append_dashboard_decisions.py 但內容非追加 → 仍拒（不靠自稱）",
-          not r["ok"] and any(b["id"] == "APPEND_ONLY_VIOLATION" for b in r["blockings"]),
+          _ao_blocked(r),
           str([b["id"] for b in r["blockings"]]))
 
     # ── 負向：條目本身不合法 → 整份白名單不可用（fail-closed，非靜默忽略）
@@ -573,6 +592,46 @@ def s_append_only_lane() -> None:
         check(f"{name} → 白名單不可用、拒",
               not r["ok"] and any(b["id"] == "ALLOWLIST_UNAVAILABLE" for b in r["blockings"]),
               str([b["id"] for b in r["blockings"]]))
+
+    # ── 落版側與閘門側同結論（本輪修掉的第二處 divergence：auto_record.force_cio_paths 二次推翻）
+    if str(REPO) not in sys.path:
+        sys.path.insert(0, str(REPO))
+    import auto_record as _ar
+    repo, head, base = make_ao_repo(dec0, rec0, _dec_text([e1, e2, e3]), rec0 + _rec_line(3) + "\r\n",
+                                    include_gate=True)
+    got = _ar.force_cio_paths([_DEC, _REC], repo)
+    check("AO-P3 落版側 force_cio_paths：合法追加 → 不再列為強制 CIO（否則又死鎖）",
+          got == [], str(got))
+    repo, head, base = make_ao_repo(dec0, rec0, _dec_text([dict(e1, summary="竄改"), e2]), rec0,
+                                    include_gate=True)
+    got2 = _ar.force_cio_paths([_DEC, _REC], repo)
+    check("AO-N15 落版側 force_cio_paths：非追加內容 → 仍列為強制 CIO",
+          sorted(got2) == sorted([_DEC, _REC]), str(got2))
+
+    # ── 防禦性收斂（獨立審查 Finding 3）：車道只收斂受限兩檔本身的特殊類別
+    check("AO-N17 classify：車道通過但 specials 含範圍外高風險路徑 → 仍回 CIO",
+          pg.classify({_DEC, _REC}, {"append_only": True},
+                      {"work_log.json": "治理紀錄"}, append_only_ok=True)[0] == "CIO")
+    check("AO-P5 classify：車道通過且 specials 僅含受限兩檔 → AUTO（收斂成立、非全面豁免）",
+          pg.classify({_DEC, _REC}, {"append_only": True},
+                      {_DEC: "列於強制 CIO 清單"}, append_only_ok=True)[0] == "AUTO")
+
+    # ── 新語意：不變量未通過＝不給 AUTO，但真 CIO 明確核准仍可發布（合法修正有出路）
+    repo, head, base = make_ao_repo(dec0, rec0, _dec_text([dict(e1, summary="CIO 核准的修正"), e2]), rec0,
+                                    reviewer="CIO-Gemini")
+    r = pg.decide(repo, base, None, allowlist_ref=base)
+    check("AO-P4 不變量未通過＋真 CIO 核准（tree 綁定）→ 可發布（不是死鎖）", r["ok"],
+          str(r.get("blockings"))[:200])
+    check("AO-P4b 仍不給 AUTO（mode=CIO、advisory 保留可稽核）",
+          r["mode"] == "CIO" and any(a["id"] == "APPEND_ONLY_NOT_VERIFIED" for a in r["advisories"]),
+          str(r.get("advisories"))[:160])
+
+    repo, head, base = make_ao_repo(dec0, rec0, _dec_text([dict(e1, summary="竄改"), e2]), rec0,
+                                    reviewer="AUTO-checker:append_dashboard_decisions.py")
+    r = pg.decide(repo, base, None, allowlist_ref=base)
+    check("AO-N16 不變量未通過＋偽造 AUTO 章 → 拒（CIO_REQUIRED）",
+          not r["ok"] and any(b["id"] == "CIO_REQUIRED" for b in r["blockings"]),
+          str([b["id"] for b in r["blockings"]]))
 
     # ── 回歸：新增條目不得影響既有成本帳條目
     repo, head, base = make_repo({"cost.html": "a", "cost_data.json": "{}"}, allowlist=ALLOW_AO_COST)

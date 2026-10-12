@@ -584,7 +584,10 @@ def classify(changed: set[str], entry: dict | None,
     """
     sp = specials or {}
     ao = bool(append_only_ok and is_append_only_entry(entry))
-    if sp and not ao:
+    # 受限車道只收斂「受限兩檔本身」的特殊類別；若 specials 含任何其他路徑（呼叫端傳入的集合
+    # 比條目更寬時的理論情境），一律回 CIO —— 不得因車道通過而連帶放行不相干的高風險路徑。
+    # （2026-10-12 獨立審查 Finding 3 指出；正式路徑下 entry 命中已保證 changed ⊆ 兩檔，此為防禦性收斂。）
+    if sp and not (ao and set(sp) <= set(APPEND_ONLY_PATHS)):
         return "CIO", True, "特殊類別命中"
     if entry is None:
         return "CIO", True, "未命中白名單"
@@ -658,15 +661,18 @@ def decide(base: Path, range_base: str, producer_own: list[str] | None = None,
                               "entries": len(al["entries"]),
                               "matched": (entry or {}).get("label"), "reason": why_e}
 
-    # append-only 受限車道（PG-20261012 v4）：命中受限條目且變更集合 ⊆ 兩檔時，
-    # 逐 commit 重算內容不變量。**不通過即拒**（fail-closed）——不得靜默降級為 CIO 放行，
-    # 否則「驗證失敗」與「未命中白名單」在行為上無法區分。
+    # append-only 受限車道（PG-20261012 v4）：命中受限條目且變更集合 ⊆ 兩檔時，逐 commit 重算內容不變量。
+    # 不通過 → **降級為 CIO**（不給 AUTO）＋ 留 advisory 說明原因；不得靜默當成「未命中白名單」。
+    # 為何不硬擋（PG-20261012 實作後修正）：硬擋會產生「合法修正無路可走」的新型死鎖 ——
+    #   一顆內容不符的 commit 若經真 CIO 明確核准（含 tree 綁定），仍應可發布；硬擋會讓它永遠卡在分支上。
+    #   防線不變：mode 降為 CIO ⇒ 偽造 AUTO 章一律被 CIO_REQUIRED 擋下（見關卡三）。
+    advisories: list[dict] = []
     ao_ok, ao_det = False, {"applied": False}
     if is_append_only_entry(entry) and changed and changed <= set(APPEND_ONLY_PATHS):
         try:
             ao_ok, ao_det = verify_append_only_range(base, range_base)
             ao_det["applied"] = True
-        except Exception as e:  # noqa: BLE001 — 驗證器不可用一律視為未通過
+        except Exception as e:  # noqa: BLE001 — 驗證器不可用一律視為未通過（fail-closed）
             ao_ok, ao_det = False, {"applied": True, "mode": "range",
                                     "reasons": [f"驗證器執行失敗：{str(e)[:160]}"]}
         if not ao_ok:
@@ -674,9 +680,9 @@ def decide(base: Path, range_base: str, producer_own: list[str] | None = None,
             for c in ao_det.get("commits") or []:
                 if not c.get("ok"):
                     why_bad += [f"{c.get('commit')}：{r}" for r in (c.get("reasons") or [])]
-            blockings.append({"id": "APPEND_ONLY_VIOLATION", "severity": "high",
-                              "text": "決策入庫 append-only 不變量未通過 → 拒（不得自動發布）："
-                                      + "；".join(why_bad[:4])})
+            advisories.append({"id": "APPEND_ONLY_NOT_VERIFIED", "severity": "high",
+                               "text": "決策入庫 append-only 不變量未通過 → 不給 AUTO，須真 CIO 審查："
+                                       + "；".join(why_bad[:4])})
     checks["append_only"] = {"ok": ao_ok, **ao_det}
 
     # 模式判定：特殊類別命中 或 不在白名單 → 必須走真 CIO 審查
@@ -747,6 +753,7 @@ def decide(base: Path, range_base: str, producer_own: list[str] | None = None,
     return {"ok": ok, "rc": EXIT_OK if ok else EXIT_REJECT,
             "mode": mode, "range": f"{range_base}..HEAD",
             "blocking_count": len(blockings), "blockings": blockings,
+            "advisories": advisories,
             "checks": checks, "changes": {k: ch[k] for k in sorted(ch)},
             "allow_entry": (entry or {}).get("label"),
             "per_commit": per_commit}
@@ -780,6 +787,8 @@ def main() -> int:
             print(f"  append-only 受限車道：{'✅ 不變量通過' if _ao.get('ok') else '⛔ 不變量未通過'}"
                   f"（查核模式={_ao.get('mode')}）")
         print(f"  特殊類別：{'無' if ch['special']['ok'] else ch['special']['hits']}")
+        for ad in res.get("advisories") or []:
+            print(f"  ⚠️ [{ad['id']}] {ad['text'][:200]}")
         print(f"  核准紀錄：{ch['records']['commits']} 顆｜失敗 {len(ch['records']['failed'])}")
         for b in res["blockings"]:
             print(f"   ⛔ [{b['id']}] {b['text']}")
