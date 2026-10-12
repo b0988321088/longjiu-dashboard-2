@@ -26,6 +26,7 @@ from datetime import datetime
 BASE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE))
 from pending_engine import norm_status  # noqa: E402  （唯一狀態機：原字串 → 四態）
+import pending_store  # noqa: E402  （唯一寫入通道：跨程序互斥鎖 ＋ 原子替換）
 
 
 def _raw_of(item: dict) -> str:
@@ -41,8 +42,13 @@ def _load(p):
 
 
 def save(p, data, indent):
-    txt = json.dumps(data, ensure_ascii=False, indent=indent).replace("\n", "\r\n")
-    p.write_text(txt, encoding="utf-8", newline="")
+    """2026-10-12（TD-20261009-16）：改走唯一寫入通道（原子替換 ＋ 呼叫端已持鎖）。
+
+    原實作為 `p.write_text(...)` 裸寫：僅在 22:00 job 與其他生產者併發時造成
+    讀-改-寫競態（last-writer-wins），實證吃掉併發新增的 PEND-20261009-15。
+    格式（CRLF／indent）不變，避免整檔假 diff。
+    """
+    pending_store.atomic_write_json(p, data, indent=indent, newline="crlf")
 
 
 def _f(v, d=0.0):
@@ -108,7 +114,7 @@ def evaluate(snap: dict, st: dict, us: dict) -> dict:
     }
 
 
-def main() -> int:
+def _main_impl() -> int:
     apply = "--apply" in sys.argv
     snap = _load(BASE / "snapshot.json")
     try:
@@ -257,6 +263,19 @@ def main() -> int:
     for w in warns:
         print(f"⚠️ 落地後驗證警告（檔案已寫入，請勿重跑）：{w}")
     return 0
+
+
+def main() -> int:
+    """2026-10-12（TD-20261009-16）：整個「讀→判定→備份→寫→落地後驗證」在
+    pending 系列唯一跨程序鎖內執行（讀取也在鎖內，否則鎖擋不住競態）。
+    取鎖逾時＝fail-closed（LockTimeout），不得改走無鎖寫入。
+    """
+    try:
+        with pending_store.locked():
+            return _main_impl()
+    except pending_store.LockTimeout as e:
+        print(f"❌ 取鎖逾時，未寫入任何檔案（fail-closed）：{e}", file=sys.stderr)
+        return 3
 
 
 if __name__ == "__main__":

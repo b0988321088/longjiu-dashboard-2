@@ -74,24 +74,16 @@ def load_json_strict(p: Path, what: str):
     return data
 
 def _atomic_write(p: Path, text: str) -> None:
-    """原子寫入（tmp → JSON 驗證 → os.replace）。2026-10-11（CIO RF1/RF3）：
-    正本 pending_decisions.json 原以 write_text 直接覆寫，中斷即永久遺失（21 筆保留卡
-    僅存在此檔）。凡本檔寫入一律走此路徑。"""
-    import os as _os
-    _tmp = p.with_name(p.name + ".tmp")
-    try:
-        _tmp.write_text(text, encoding="utf-8")
-        json.loads(_tmp.read_text(encoding="utf-8"))  # 讀回驗證（不合法即 raise，不動正本）
-        _os.replace(str(_tmp), str(p))
-    except Exception:
-        # 2026-10-12（CIO 二輪 RF-2）：失敗時清掉暫存檔，否則 .tmp 殘檔會污染
-        #   repo 根目錄與發布閘門（正本仍逐位元不變）。
-        try:
-            if _tmp.exists():
-                _tmp.unlink()
-        except Exception:
-            pass
-        raise
+    """原子寫入：**收斂至 pending_store 的單一實作**（2026-10-12，TD-20261009-16）。
+
+    2026-10-11（CIO RF1/RF3）：正本 pending_decisions.json 原以 write_text 直接覆寫，
+    中斷即永久遺失（21 筆保留卡僅存在此檔）。
+    2026-10-12：原自帶一份 tmp→驗證→replace 實作，與 pending_store 重複；
+    兩份實作漂移會讓「原子性」在其中一支悄悄失效 → 一律委派單一實作。
+    呼叫端必須已持有 pending 系列鎖（見 __main__ 的 pending_store.locked()）。
+    """
+    import pending_store
+    pending_store.atomic_write_text(p, text)
 
 
 def save_json(p, data):
@@ -299,7 +291,10 @@ def auto_close():
 if __name__ == "__main__":
     print(f"🔍 決策自動閉環掃描 — {date.today()}")
     try:
-        auto_close()
+        # 2026-10-12（TD-20261009-16）：讀-改-寫全程在同一把鎖內；逾時 fail-closed。
+        import pending_store
+        with pending_store.locked():
+            auto_close()
     except Exception as _e:
         # 2026-10-12（CIO 三輪 RF-4）：fail-closed 改動後，本檔由 morning_batch.py（08:05）呼叫。
         #   損壞時必須是「大聲告警」而非靜默：先輸出一行可讀告警，再以非零碼結束（不吞例外）。

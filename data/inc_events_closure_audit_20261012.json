@@ -1,0 +1,70 @@
+{
+ "audit": "inc_events 結案事件逐筆稽核（TD-20261009-16 驗收條件⑤）",
+ "date": "2026-10-12",
+ "source_file": "inc_events.jsonl",
+ "closure_actor": "lj_inc.py close <id>（手動 CLI；唯一能把 status 設 closed 的程式）",
+ "closure_batch": "2026-10-09T05:26:56–57Z（台北 13:26）5 筆於 1 秒內連續結案，無理由欄位、無卡片關聯欄位",
+ "method": "以 error_register.md 逐筆比對結案理由；不以推測補造關聯",
+ "events": [
+  {
+   "id": "10020915",
+   "first_seen": "2026-09-14 20:19",
+   "error": "穿透三報表不一致",
+   "count": 3,
+   "register_entry": "error_register.md INCIDENT 10020915",
+   "register_status": "✅ 已結案（2026-09-14 23:00）",
+   "evidence": "有：結案理由載明觸發源為當晚 B11 現值入帳後的重生成空窗；重生成後三報表一致、當晚兩次閉環稽核通過；判為產出時序而非系統缺陷",
+   "verdict": "已證實（有結案理由；JSONL 的 closed_at=10/09 屬事後回填，與 09-14 的即時結案一致）"
+  },
+  {
+   "id": "319fe1e2",
+   "first_seen": "2026-09-16 14:35",
+   "error": "穿透三報表不一致",
+   "count": 1,
+   "register_entry": "error_register.md INCIDENT 319fe1e2",
+   "register_status": "⏳ 待處理（總計 1 次）",
+   "evidence": "無結案理由；error_register 仍標待處理",
+   "verdict": "UNRESOLVED（無客觀結案證據，保留原始紀錄，不補造關聯）"
+  },
+  {
+   "id": "418c0820",
+   "first_seen": "2026-09-23 18:25",
+   "error": "穿透三報表不一致",
+   "count": 2,
+   "register_entry": "error_register.md INCIDENT 418c0820",
+   "register_status": "⏳ 待處理（總計 1 次）",
+   "evidence": "無結案理由",
+   "verdict": "UNRESOLVED"
+  },
+  {
+   "id": "e77dda79",
+   "first_seen": "2026-09-29 11:00",
+   "error": "穿透三報表不一致",
+   "count": 1,
+   "register_entry": "error_register.md INCIDENT e77dda79",
+   "register_status": "⏳ 待處理（總計 1 次）",
+   "evidence": "無結案理由",
+   "verdict": "UNRESOLVED"
+  },
+  {
+   "id": "a893bf01",
+   "first_seen": "2026-10-02 18:54",
+   "error": "穿透三報表不一致",
+   "count": 2,
+   "register_entry": "error_register.md INCIDENT a893bf01 — 標題加註「✅ 已解決 2026-10-02（INC-271／272 修復）」",
+   "register_status": "條目內狀態行仍為「⏳ 待處理（總計 1 次）」→ 與標題自相矛盾",
+   "evidence": "間接：指向 INC-271／272 修復紀錄；條目狀態欄未同步",
+   "verdict": "PARTIAL（有間接證據，條目自相矛盾，需人工定案）"
+  }
+ ],
+ "current_condition": "check_penetration_consistency.py 今日 rc=0（三報表一致）",
+ "handling": "原始紀錄保留、狀態不擅自回改；3 筆無證據者列為未解事項單獨掛帳",
+ "no_fabrication": true,
+ "version_control_finding": {
+  "fact": "5 筆的 status=closed 與 closed_at **已確實存在於 HEAD（已進版控）**；HEAD 版與工作樹皆為 closed。",
+  "verified_by": "git show HEAD:inc_events.jsonl 逐筆比對 id 與 status 欄位",
+  "worktree_note": "inc_events.jsonl 工作樹另有 9 行未提交變更，內容為**其他事件**（含 2026-10-08 與 2026-10-12 新事件），非本批次範圍，本批次不動。",
+  "earlier_draft_correction": "初稿曾誤述『結案狀態未進版控』→ 已以 HEAD 內容查核更正（保留此欄以維持可追溯）",
+  "handling": "結案的可追溯性缺口在於『無結案理由欄位』與『無卡片關聯欄位』，非版控缺失。"
+ }
+}
