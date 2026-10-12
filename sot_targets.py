@@ -244,6 +244,41 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
     for old, new in repl.items():
         if new and old != new:
             text = text.replace(old, new)
+
+    # ── 2026-10-12（總工單 A2/A3 收尾）：**失效敘述覆蓋**，與金額覆蓋同一層、同一入口 ──
+    # 症狀：日報與再平衡報表會嵌入先前班次的「緊急應變 LLM 內文」
+    #       （data/emergency_llm_analysis.json）。該內文可能仍寫「押標金 240 萬＝條件式事件、
+    #       檢視日 10/15」，甚至列在『要做的事』清單裡 —— 即使真值已裁決取消。
+    # 為何在此修、不直接改產物文字：這兩份產物共用本函式；在此以 snapshot **狀態**驅動覆蓋，
+    #       單一入口、兩處同步生效；若日後裁決改變（狀態不再含「取消」）即不再覆蓋，不寫死。
+    # 2026-10-12 獨立審查（首版被 REJECT）後的硬化：
+    #   ① 全部改為**語境錨定 regex**（不再用裸子字串 replace）——避免誤傷同金額的其他語境
+    #   ② 日期只接受 YYYY-MM-DD，否則退回具名預設並具名示警（不自帶未驗證字串進產物）
+    #   ③ 若內文仍含失效片語但 snapshot 狀態欄缺失/未取消 → **fail-loud 示警**（不靜默放行）
+    _bid = snap.get("標案押標金_1010")
+    _bid_st = str((_bid or {}).get("狀態") or "")
+    _STALE_PATS = (r"、\s*10/15 標案押標金(?:來源)?的資訊蒐集",
+                   r"條件式事件：10 月標案押標金 2,400,000 元[^。]*。",
+                   r"10 月標案押標金 240 萬來源定案",
+                   r"10\s*月標案押標金不預留[，,]\s*9\s*月底評估")
+    if "取消" in _bid_st:
+        _bd_raw = str((_bid or {}).get("裁示日_取消") or "").strip()
+        _bd = _bd_raw if re.fullmatch(r"\d{4}-\d{2}-\d{2}", _bd_raw) else ""
+        if not _bd:
+            print(f"[WARN] 標案押標金取消裁示日非 YYYY-MM-DD（{_bd_raw!r}）→ 敘述覆蓋以『已取消』呈現、不帶日期")
+        _suffix = f"（{_bd}）" if _bd else ""
+        _mid = f" {_bd} " if _bd else "本輪"
+        text = re.sub(_STALE_PATS[0], "", text)
+        text = re.sub(_STALE_PATS[1],
+                      f"條件式事件：10 月標案押標金 2,400,000 元已於{_mid}經使用者裁決取消"
+                      f"（不再評估、不辦理保證函、不列任何需求與排程）。", text)
+        text = re.sub(_STALE_PATS[2], f"10 月標案押標金 240 萬（已取消{'：' + _bd if _bd else ''}）", text)
+        text = re.sub(_STALE_PATS[3], f"10 月標案押標金已取消{_suffix}", text)
+    else:
+        _hit = [p for p in _STALE_PATS if re.search(p, text)]
+        if _hit:
+            print(f"[WARN] 內文仍含失效之押標金敘述 {len(_hit)} 種，但 snapshot.標案押標金_1010.狀態"
+                  f"未載明『取消』（現值 {_bid_st[:24]!r}）→ 未覆蓋；請確認裁決與真值是否同步")
     return text
 
 
