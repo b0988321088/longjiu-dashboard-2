@@ -10753,6 +10753,16 @@
     "status": "completed",
     "source": "Telegram 裁決 2026-10-12（全案一次閉環）"
   }
+,
+  {
+    "id": "mem-20261012203622-1160",
+    "timestamp": "2026-10-12T20:36:22.389278+08:00",
+    "agent": "Hermes",
+    "task": "總工單最終裁決＋獨立補審完成（Gemini 不同家族重審 APPROVE）",
+    "summary": "使用者 2026-10-12 最終裁決：本案＝工程修復完成、線上驗收通過、獨立審查尚待補強，不宣告六項完成標準全部滿足。① 4 條 FAIL 修復完成（真因：正典五欄未隨真值＋dividend_tracker 兩分支口徑不一致）、原始閘門 PASS（FAIL 0）② TD-17 結案有證據（ec1799d4；真實案例重驗、正反例 136/136；產線實證＝入庫 1158 走 append-only 車道自動推送成功未降級）③ 押標金舊敘述來源層修復（sot_targets 共用刷新層狀態驅動覆蓋 v2＋radar_state 精準替換），殘留符合預期（日報 1 處正確敘述）④ 測試與閘門全數通過 ⑤ 遠端與線上逐位元一致（HEAD e8725c2a 起）⑥ 獨立審查：**補審已完成並通過**——Pollinations（GPT-OSS）402 額度用盡後由 DeepSeek 備援完成之首輪審查，已由使用者裁決列為待重審；本次以**不同模型家族**（Gemini 2.5 Flash）針對備援鏈審查之 6 顆實際遠端 commit（e0c13360／889337cc／0b97dde1／0f4a1a57／8e3ac14d／355c3a2b，tree 逐一綁定）重新執行獨立審查，未沿用先前 APPROVE → 結果 APPROVE／confidence 0.95／blocking=0，並列 2 項殘餘風險（WARN 依賴 stdout 監控、regex 需隨敘述變化維護）。補審紀錄存 .git/cio_reviews/reaudit_gemini_20261012.json 並已寫入 CIO_APPROVED。⑦ 三項揭露獨立掛帳（不混入補審）：基金口徑 2,524（P1）、歷史檔刷新時序（P2）、legacy 副本差異（P2）。未擴白名單、未降閘門、未刪 FAIL、未重做已驗收修復。",
+    "status": "completed",
+    "source": "Telegram 裁決 2026-10-12（補審後關閉最後一項驗收缺口）"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-12T20:30:36.970525"
