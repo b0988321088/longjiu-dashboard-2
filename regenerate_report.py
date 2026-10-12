@@ -99,6 +99,45 @@ _SNAP_EXT = {'.html', '.json', '.md', '.png', '.db', '.jsonl', '.csv', '.svg', '
              '.webp', '.jpg', '.jpeg', '.gif', '.ico', '.pdf'}
 _SNAP_MAX = 20 * 1024 * 1024
 _UNREADABLE = "<UNREADABLE>"   # 存在但不可快照（讀取失敗／過大）→ 一律不得視為本輪產物
+import time as _time
+_RUN_T0 = _time.time()          # 本輪起跑時刻（producer 邊界窗口下端；定點認領用）
+
+
+def _head_sha(_f):
+    """HEAD:<檔> 的內容指紋；HEAD 無此檔（未追蹤）或讀取失敗 → None。"""
+    try:
+        _r = subprocess.run(["git", "show", f"HEAD:{_f}"], capture_output=True, cwd=str(BASE))
+        if _r.returncode != 0 or not _r.stdout:
+            return None
+        return _hl.sha256(_r.stdout).hexdigest()
+    except Exception:
+        return None
+
+
+def _claim_dirty_fixed_point(_f, _a):
+    """既有 dirty 檔的「定點認領」（2026-10-12 TD-20261012-25；使用者裁決之三條件＋允許範圍防線）。
+
+    背景：produced = after − before。若某候選檔在**進場前就已 dirty**，而本輪又重寫出位元相同的
+    內容（before == after 的定點），舊判準永遠不認領它 → 一經漏出即永久殘留（今天清、明天又漏）。
+    三條件同時成立才認領，任一不成立即維持原判準（不認領）：
+      ① 相對 HEAD 確實 dirty（內容 ≠ HEAD blob；HEAD 無此檔者走「本輪新增」分支，不經此處）
+      ② 本輪執行窗口內確實被寫入（mtime 不早於本輪起跑時刻 _RUN_T0）
+      ③ after 指紋可靠（呼叫端已驗，非 _UNREADABLE）
+    允許範圍防線：認領仍須符合原候選範圍（檔案存在、副檔名 ∈ _SNAP_EXT、大小 ≤ _SNAP_MAX）；
+    本函式只對「這一個檔案」作答 —— 認領成功不得連帶把其他 dirty 檔納入提交候選。
+    """
+    _h = _head_sha(_f)
+    if _h is None or _h == _a:
+        return False                               # 未追蹤，或內容與 HEAD 相同 → 不認領
+    try:
+        _st = (BASE / _f).stat()
+    except Exception:
+        return False
+    if _st.st_mtime < _RUN_T0:
+        return False                               # 窗口外（本輪未寫它）→ 不認領
+    if (BASE / _f).suffix.lower() not in _SNAP_EXT or _st.st_size > _SNAP_MAX:
+        return False                               # 超出原允許範圍 → 不認領
+    return True
 
 
 def _snap_root(_base):
@@ -129,7 +168,10 @@ def _is_produced(_f, _before, _after):
         return True                                # 本輪新增
     if _before[_f] == _UNREADABLE:
         return False                               # before 不可信 → 不得算本輪產物
-    return _before[_f] != _a
+    if _before[_f] != _a:
+        return True                                # 內容確實變了 → 本輪產物
+    # 定點：進場前已 dirty ＋ 本輪窗口內被寫出位元相同內容 → 認領（2026-10-12 TD-20261012-25）
+    return _claim_dirty_fixed_point(_f, _a)
 
 
 def _produced_only(_cands, _before, _after):

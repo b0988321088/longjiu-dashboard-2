@@ -100,3 +100,13 @@ data/*.json.*
 # 2026-10-06 裁決：備份檔可存在，但不應被 cron 當成待提交產物（.gitignore 邊界），
 # 避免 add -A 型路徑把「備份存在／被刪」變成非預期的工作樹變化。
 snapshot.backup.json
+
+# 2026-10-12 TD-20261012-25（使用者有條件核准：僅限這兩個明確路徑，不得涵蓋整類目錄或廣泛檔名）。
+# 前提已逐一核實：
+#   ① /_pages_fetched.html — Pages 抓頁傾印；全 repo 僅決策紀錄文字提及，無任何流程讀它當輸入或證據，
+#      可隨時重新抓取（耐久證據是抓取當下記入決策紀錄的雜湊，不是這個檔案本身）。
+#   ② /pending_decisions.lock — pending_store.py:40 的跨程序互斥鎖；內容僅 {"pid","ts","argv"}，
+#      不承載決策資料（決策真值在版控的 pending_decisions.json），忽略它不會遮蔽應受版控的真值。
+# 兩者皆為執行期產物；gitignore 對「已追蹤」檔無效，故此規則只阻止未來新增進入版控。
+/_pages_fetched.html
+/pending_decisions.lock
