@@ -310,11 +310,18 @@ def head_tree(root=None) -> str:
     return (r.stdout or "").strip()
 
 
-def load_cio_approved(root=None, path=None) -> dict:
+class ApprovalUnreadable(RuntimeError):
+    """CIO 核准紀錄存在但無法讀取（權限／存取異常）→ fail-closed，不得視為「無紀錄」帶過。"""
+
+
+def load_cio_approved(root=None, path=None, strict: bool = False) -> dict:
     """讀 CIO 核准紀錄（tab 分隔、append-only）→ {tree: [verdict, ...]}。
 
     2026-10-09 使用者裁決：F4 的正式核准來源＝cio_approve.py 的核准紀錄（唯一入口）。
     path 僅為**測試接縫**（指向沙箱檔），不改變「必須有 APPROVE 才放行」的語意。
+    2026-10-12（TD-20261009-13）：讀取失敗原會直接拋出例外穿透 F4（呼叫端只檢查
+    out["ok"] 時語意不明）；strict=True 時改拋 ApprovalUnreadable，由 F4 轉成
+    「明確阻擋（ok=False ＋ FAIL-CLOSED 訊息）」。strict 預設 False → 其他呼叫端語意不變。
     """
     if path is not None:
         f = Path(path)
@@ -324,7 +331,13 @@ def load_cio_approved(root=None, path=None) -> dict:
     out: dict = {}
     if not f or not f.exists():
         return out
-    for line in f.read_text(encoding="utf-8", errors="replace").splitlines():
+    try:
+        _raw = f.read_text(encoding="utf-8", errors="replace")
+    except Exception as e:
+        if strict:
+            raise ApprovalUnreadable(f"{type(e).__name__}: {e}") from e
+        return out
+    for line in _raw.splitlines():
         if not line.strip():
             continue
         r = line.split("\t")
@@ -387,7 +400,14 @@ def f4_publish_consistency(approval_tree: str = "", candidate_tree: str = "",
             out["ok"] = False
             return out
         _apf = _p
-    _appr = load_cio_approved(path=_apf)
+    _appr = None
+    try:
+        _appr = load_cio_approved(path=_apf, strict=True)
+    except ApprovalUnreadable as _ue:
+        ck("已取得 CIO 核准 tree 綁定", False,
+           f"FAIL-CLOSED：無法讀取 CIO 核准紀錄（{approval_file or '預設 .git/CIO_APPROVED'}）→ 拒絕採信：{_ue}")
+        out["ok"] = False
+        return out
     if not _appr:
         ck("已取得 CIO 核准 tree 綁定", False,
            f"BLOCKED：無 CIO 核准紀錄（{approval_file or '預設 .git/CIO_APPROVED'}）→ 不得發布")
