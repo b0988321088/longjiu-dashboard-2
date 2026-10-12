@@ -26,6 +26,23 @@ BASE = Path(__file__).resolve().parent
 FILE = BASE / "pending_decisions.json"
 
 STATUS_ENUM = ("待處理", "已確認", "已完成", "關案")
+
+# 2026-10-12：結案態（已完成／關案）不再屬於「待辦」——不得要求它們帶期限。
+# 用途：check_dividend_caliber 的「無 due_date 者標記 needs_due_date」等期限類檢查
+# 只對進行中的卡生效；否則第一張結案卡就會製造假紅燈（與 2026-10-05 修掉
+# 「卡片長到 34 張後永遠 FAIL」同一類：檢查口徑沒跟上狀態機）。
+ACTIVE_STATUS = ("待處理", "已確認")
+
+
+def is_active(item: dict | None) -> bool:
+    """進行中（待處理／已確認）＝唯一需要期限管理的狀態；結案態回 False。"""
+    return str((item or {}).get("status") or "") in ACTIVE_STATUS
+
+
+def active_items(items) -> list:
+    return [x for x in (items or []) if is_active(x)]
+
+
 ALERT_STATUSES = ("待處理",)
 
 # ── 期限 schema 自癒（2026-10-05 PEND-20261005-03）──────────────────────
