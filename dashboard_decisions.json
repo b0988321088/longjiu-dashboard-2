@@ -10709,6 +10709,16 @@
     "status": "completed",
     "source": "Telegram 裁決 2026-10-12"
   }
+,
+  {
+    "id": "mem-20261012185846-1155",
+    "timestamp": "2026-10-12T18:58:46.057782+08:00",
+    "agent": "Hermes",
+    "task": "PG-20261012 v4 決策入庫 append-only 受限車道（有條件核准 → 實作／測試／獨立審查／發布完成）",
+    "summary": "使用者 2026-10-12 有條件核准設計後落地：①publish_gate 新增 append-only 受限車道——逐字限 dashboard_decisions.json＋data/decision_intake_receipts.jsonl、僅 A/M、決策檔只追加且既有頂點（含 meta）逐位元不變、收據檔為舊內容逐位元前綴延伸、新增決策與 ok=true 收據一對一互綁；超範圍／驗證失敗／混程式碼一律回真 CIO。②授權不靠 producer 自稱，靠與身分無關的內容不變量（自稱同名但內容非追加→仍拒）。③不變量未通過＝降級真 CIO＋具名 advisory（不硬擋，避免「合法修正無路」的新死鎖）。④修掉實跑才發現的第二處 divergence：auto_record.force_cio_paths 不得以路徑名二次推翻閘門結論。證據：單元測試 126/126（新增 34 項正反例）；沙盒全鏈路實跑（真 producer＋真 auto_push、remote 換本地空 repo）合法追加→補落 RECORD→閘門放行→推送→ls-remote 一致，篡改既有決策→不變量未通過並指名『既有決策紀錄被修改」→拒且 remote 未污染；獨立審查兩輪（Pollinations，非 DS 非 Google）：首輪 REJECT 3 條 → 修 F3（classify 收斂範圍過寬，加 AO-N17／AO-P5）→ 次輪 APPROVE blocking=[]。commit ca3cd2f1／cb0f96cd／3526ecba（同範圍另含一顆並行產線資料 commit 0e600fc0，一併送審以免再留推不動的 commit），已推 clean-main（遠端 3526ecba、待推 0）。⏳ 待使用者確認：殘餘風險＝本車道對這兩檔能驗『格式是純追加』、不能驗『內容為真』（偽造一筆不存在的裁決仍可過格式檢查）——即授權門檻由『真 CIO 審查內容』降為『格式不變量審查』，已於兩份審查紀錄與本裁決明文揭露。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-12T13:26:49.115075"
