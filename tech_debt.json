@@ -1062,5 +1062,22 @@
     "moved_from": "pending_decisions.json",
     "moved_at": "2026-10-11",
     "note": "2026-10-11 分流：工程／技術債類卡自 pending 移出（原 status=待處理），不再佔用『執行中決策追蹤』。"
+  },
+  {
+    "id": "TD-20261012-01",
+    "date": "2026-10-12",
+    "title": "🟠 P1｜線上 dashboard_decisions.json 內嵌 pending 區塊 79 筆 ≠ pending_decisions.json 21 筆（本機已對齊、待次夜鏈推送後驗收）",
+    "severity": "P1",
+    "source": "使用者 2026-10-12 Telegram 裁決（收工前驗收條件）",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "【現象】公開讀取面不一致：線上（Pages／origin clean-main）dashboard_decisions.json 的內嵌 pending_decisions 區塊仍為 79 筆；獨立的 pending_decisions.json 已是 21 筆（已提交）。兩者為同一份資料的兩個讀取面，不可因其他稽核類別全綠就宣稱線上全部一致。\n【已查證事實 2026-10-12 00:55】\n① 線上檔案（Pages URL dashboard_decisions.json）內嵌 pending_decisions = 79 筆、last_updated 2026-10-11T18:00。\n② 本機工作區 dashboard_decisions.json 內嵌 = 21 筆，且與 pending_decisions.json 的投影（date／action／status／tags 四欄）逐筆同序完全一致（21/21）。\n③ 本機 HEAD（＝origin clean-main）內嵌 = 79 筆，為本機 21 筆的超集（多 58 筆舊項）。\n④ 差異未提交：本機工作區對 HEAD 的 diff 為 462 行（單一檔），尚未提交、未推送。\n【寫入者與對齊機制】內嵌區塊由 regenerate_report.py（同步 pending → dashboard_decisions，只寫 date／action／status／tags 四欄投影）產生；本機已產出 21 筆的對齊版本，僅缺一次由既有排程（nightly_dashboard_sync，其提交清單含 dashboard_decisions.json）帶上的推送。故「會自然對齊」目前仍是預期，非已驗證結果。\n【下次驗收條件（夜鏈執行後必做）】\n1. 取線上檔並計數：curl -sL https://b0988321088.github.io/longjiu-dashboard-2/dashboard_decisions.json 後以 Python 讀 pending_decisions 長度，必須等於 20（2026-10-12 使用者裁決歸檔「第一金保單轉換補設定」卡 → 正本與內嵌同步 21→20；原門檻 21 作廢）。\n2. 內容一致：把線上內嵌區塊與 pending_decisions.json 的四欄投影（date／action／status／tags，逐筆同序）比對，必須完全相同；僅筆數相同而內容不符＝未通過。\n3. 兩項皆通過才可把本卡結案；只通過第 1 項不得結案。\n【更新 2026-10-12 11:02】使用者裁決（Telegram ✅）「刪除過期決策」＝歸檔 1 張真正過期的卡：第一金保單轉換補設定（9/24 已裁示暫停、內容被取代）→ 依 decision_auto_close 的成對性規則寫入 pending_decisions_archive.json（含 cleanup_reason），正本與 dashboard 內嵌同步 21→20；另 3 張僅檢視日過期（美債 ladder／保單B 轉換／00921）屬『等條件成立』的 live 卡，順延檢視日至 2026-10-31、不歸檔；資安 remediation 屬 P0 保護、不動。兩讀取面四欄投影逐筆同序一致（20/20）已複驗。\n【界線】①凍結期不為此差異補推送、不新增發布批次（使用者 2026-10-12 裁決）。②在完成對齊前的夜鏈，CIO 及任何自動化流程不得依賴舊內嵌區塊做新決策（舊區塊為汙染讀取面）。③本卡為工程／治理項，只登錄本檔，不佔用執行中決策追蹤。\n【相關】2026-10-11 夜 pending 分流（pending 21 筆為正確值）、tech_debt TD-20261011-06／-14、closeout_check 15 類稽核。",
+    "tags": "讀取面不一致,dashboard_decisions,夜鏈驗收,凍結期",
+    "due_date": "2026-10-12",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-12",
+    "cleanup_reason": "",
+    "updated_at": "2026-10-12"
   }
 ]
