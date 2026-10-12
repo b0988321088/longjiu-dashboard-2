@@ -87,7 +87,8 @@ def force_cio_paths(paths: list[str], base: Path) -> list[str]:
     try:
         if str(base) not in sys.path:
             sys.path.insert(0, str(base))
-        from publish_gate import special_reason, classify_paths  # noqa: E402
+        import publish_gate as _pg  # noqa: E402
+        special_reason, classify_paths = _pg.special_reason, _pg.classify_paths
     except Exception as e:  # noqa: BLE001
         raise GateUnavailable(f"載不到 publish_gate：{e}") from e
     try:
@@ -96,7 +97,14 @@ def force_cio_paths(paths: list[str], base: Path) -> list[str]:
         raise GateUnavailable(f"publish_gate.classify_paths 失敗：{e}") from e
     if v.get("mode") != "AUTO":
         return sorted(set(paths))
-    return sorted(hits | {p for p in paths if special_reason(p, base)})
+    extra = {p for p in paths if special_reason(p, base)}
+    # PG-20261012 v4：append-only 受限車道已由閘門逐條件重算內容不變量（比路徑式規則更強），
+    # 此時不得再用「路徑本身命中 special_reason」二次推翻 —— 那兩檔本來就在 NEVER_AUTO 內，
+    # 二次推翻就會回到「落版側拒 AUTO 章／閘門側已放行」的同型死鎖。授權來自內容不變量，不是路徑名。
+    _ao = v.get("append_only") or {}
+    if _ao.get("applied") and _ao.get("ok") is True:
+        extra -= set(getattr(_pg, "APPEND_ONLY_PATHS", ()) or ())
+    return sorted(hits | extra)
 
 
 def run(args: list[str], cwd: Path, timeout: int = 120) -> subprocess.CompletedProcess:
