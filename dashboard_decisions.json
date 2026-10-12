@@ -10733,20 +10733,19 @@
       "summary": "因 2026-10-12「240 萬押標金取消」，pending_decisions.json（日報第 5 章來源）三處連帶收斂：①2026-09-06 美債 ladder 卡保留（ladder 本身仍待辦、非押標金），但『延至 10 月標案結果』前置已消滅 → status_raw 記明、due_date 10/31→null＋needs_due_date=true 須重定；②2026-09-28「押標金 240 萬來源定案」標的整體失效 → 移入 pending_decisions_archive.json（🗑 已清理(2026-10-12)＋cleanup_reason＋cleanup_at），正本移除（先歸檔不刪）；③PEND-20260930-02「P0-2 資金鏈閉環」高息負債 9/30–10/1 已全數清償 4,980,624，唯一殘餘掛載＝押標金條件式事件（已取消）→ 四態轉『已完成』。驗證：check_dividend_caliber ✅四態／✅schema 五欄；pending_engine.STATUS_ENUM 自查 0 筆不合規；未動其他 17 卡。獨立審查 APPROVE/0.92/blocking=[]。commit a4e5801a（tree 152e91e8）。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261012202934-1158",
+      "timestamp": "2026-10-12T20:29:34.842636+08:00",
+      "agent": "Hermes",
+      "task": "總工單 A/B/C 一次閉環：4 條 FAIL＋TD-17＋失效敘述＋重產發布",
+      "summary": "總工單一次閉環（A 修 4 條 FAIL／B TD-17／C 重產發布）。共同根因：①真值修正（安聯保單撥回 9,446→15,221，截圖＋使用者確認）未同步正典五欄 → 分桶器實跑≠正典、差異分析成對、儀表板三桶 4 條 FAIL；②dividend_tracker.main() 兩分支口徑不一致：有掃到新配息時把當月實收寫成「本次新增額」，僅無掃描分支才寫當月全部合計（並補非數值防護，避免 TypeError 讓 07:00 產線整班失敗）；③TD-17：_check_decisions 對任何頂層鍵變動一律判篡改 → 每次入庫（meta.updated_at）即降級真 CIO，受限車道形同虛設；④衍生產物殘留押標金舊敘述：來源為 data/emergency_llm_analysis.json（2026-10-09 美股班內文）被日報與再平衡報表無視日期嵌入。修正：正典寫入者重算（insurance 15,221／total 64,611，diff 僅 6 行）＋口徑單一化＋期限管理僅對進行中卡（結案態不假紅燈）＋append-only 車道區分合法 meta 更新與歷史篡改＋共用刷新層以 snapshot 狀態驅動失效敘述覆蓋（v2 硬化：語境錨定 regex／日期驗證／fail-loud 示警）。測試：test_publish_gate 136/136、test_dividend_tracker_total 9/9、test_pending_active_due 16/16、test_sot_stale_ruling 12/12；verify_ficriteria 56/0；月度閘門 PASS（FAIL 0）。產出：程式／資料 6 顆（30089c10/f49fffe2/ec1799d4/6612c333/cb2d8c09/e0c13360）＋重產與副產品 5 顆（a1916902/80637ab8/889337cc/0b97dde1/0f4a1a57/8e3ac14d），每顆獨立審查 APPROVE（blocking=0；Pollinations 402 時走備援鏈並揭露）。線上：遠端=e0c13360、待推 0；snapshot/index/日報/dashboard_decisions/rebalance_summary 逐位元一致；配息 64,611、押標金狀態『❌ 已取消』、決策 1158 筆零刪改；日報押標金舊敘述 4 處 → 1 處（且為已取消正確敘述）；線上年輕穿透 −23,161（FX 重算）有審查紀錄（a1916902 APPROVE/0.92）。殘餘（未動、已揭露）：基金口徑差額 2,524（既有另案）＋4 條治理白名單（as_of 2026-10-09，未擴張未放寬）；TD-17 關閉並留殘餘風險（格式可驗真≠內容為真）。",
+      "status": "completed",
+      "source": "Telegram 裁決 2026-10-12（全案一次閉環）"
     }
-,
-  {
-    "id": "mem-20261012202934-1158",
-    "timestamp": "2026-10-12T20:29:34.842636+08:00",
-    "agent": "Hermes",
-    "task": "總工單 A/B/C 一次閉環：4 條 FAIL＋TD-17＋失效敘述＋重產發布",
-    "summary": "總工單一次閉環（A 修 4 條 FAIL／B TD-17／C 重產發布）。共同根因：①真值修正（安聯保單撥回 9,446→15,221，截圖＋使用者確認）未同步正典五欄 → 分桶器實跑≠正典、差異分析成對、儀表板三桶 4 條 FAIL；②dividend_tracker.main() 兩分支口徑不一致：有掃到新配息時把當月實收寫成「本次新增額」，僅無掃描分支才寫當月全部合計（並補非數值防護，避免 TypeError 讓 07:00 產線整班失敗）；③TD-17：_check_decisions 對任何頂層鍵變動一律判篡改 → 每次入庫（meta.updated_at）即降級真 CIO，受限車道形同虛設；④衍生產物殘留押標金舊敘述：來源為 data/emergency_llm_analysis.json（2026-10-09 美股班內文）被日報與再平衡報表無視日期嵌入。修正：正典寫入者重算（insurance 15,221／total 64,611，diff 僅 6 行）＋口徑單一化＋期限管理僅對進行中卡（結案態不假紅燈）＋append-only 車道區分合法 meta 更新與歷史篡改＋共用刷新層以 snapshot 狀態驅動失效敘述覆蓋（v2 硬化：語境錨定 regex／日期驗證／fail-loud 示警）。測試：test_publish_gate 136/136、test_dividend_tracker_total 9/9、test_pending_active_due 16/16、test_sot_stale_ruling 12/12；verify_ficriteria 56/0；月度閘門 PASS（FAIL 0）。產出：程式／資料 6 顆（30089c10/f49fffe2/ec1799d4/6612c333/cb2d8c09/e0c13360）＋重產與副產品 5 顆（a1916902/80637ab8/889337cc/0b97dde1/0f4a1a57/8e3ac14d），每顆獨立審查 APPROVE（blocking=0；Pollinations 402 時走備援鏈並揭露）。線上：遠端=e0c13360、待推 0；snapshot/index/日報/dashboard_decisions/rebalance_summary 逐位元一致；配息 64,611、押標金狀態『❌ 已取消』、決策 1158 筆零刪改；日報押標金舊敘述 4 處 → 1 處（且為已取消正確敘述）；線上年輕穿透 −23,161（FX 重算）有審查紀錄（a1916902 APPROVE/0.92）。殘餘（未動、已揭露）：基金口徑差額 2,524（既有另案）＋4 條治理白名單（as_of 2026-10-09，未擴張未放寬）；TD-17 關閉並留殘餘風險（格式可驗真≠內容為真）。",
-    "status": "completed",
-    "source": "Telegram 裁決 2026-10-12（全案一次閉環）"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-12T20:23:50.319874"
+    "updated_at": "2026-10-12T20:30:36.970525"
   },
   "last_updated": "2026-10-12T18:00:00+08:00",
   "2026-09-29": [
