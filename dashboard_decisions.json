@@ -10863,6 +10863,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261013004606-1172",
+    "timestamp": "2026-10-13T00:46:06.187611+08:00",
+    "agent": "Hermes",
+    "task": "TD-20261012-25 延伸：自身產出就地提交機制（self_publish）＋受控擴充白名單＋event owner",
+    "summary": "使用者 2026-10-13 裁決：①白名單採受控擴充（只加必要的精確路徑 notion_shared_context.md，禁通配）②缺陷修正併入第二顆 commit ③db653777 不得繞過 CIO 也不得未核對就重設 ④lj_inc.py 為事件殘留唯一 owner ⑤既有 B1 紅燈維持隔離。落地與驗收：self_publish.py（共用自身產出就地提交：逐字 allowlist、只認本輪寫出、staged 超出即 fail-closed、推送唯一出口 auto_push）＋三個 producer 接上（maintenance_deep／notion_context_loader／intel_sync_wrapper）＋修 evening_sync scope 誤擋（原 sorted(staged)==sorted(produced) 在 git 正規化無差異時整批 fail-closed，實證當晚『多出 []』卻不推 → 晚報連續不上線）。上線 da101e85（tree 9efeaaca）＋db653777（tree e6c3a024）皆真 CIO 審查 APPROVE／blocking=[]（CIO-Pollinations(openai)）後推送；未推 0／落後 0、remote=da101e855375；線上驗 raw 綁 sha 三檔位元一致、Pages 200、hermes/scripts 鏡像逐位元一致。測試：self_publish 22 斷言（含 H 起跑時刻契約）、evening scope 10 斷言（含舊判定誤擋回歸）、publish_gate 140/0（NE1 登記後 AUTO／NE2 未登記路徑不得 AUTO／NE3 治理紀錄登記仍 ALLOWLIST_UNAVAILABLE）。殘留與歸期：收工檢查未提交 15→14；07:00 主產線 7 檔（定點認領）、06:00 notion_bridge 手稿、22:00 asset_diff_history、下週一 03:00 週深清 3 檔；error_register.md／inc_events.jsonl 無自動歸期（NEVER_AUTO_EXACT 安全線，需另次裁決）。揭露：error_register.md 單一寫入者尚未完全收斂（four_source_sync／cleanup_utils 仍直接改寫）；工作區另有未提交程式檔 daily_report_assembly.py（非本輪）；tools/verify_closeout_dirty_fix.py B1 為既有紅燈、非本次回歸。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-12T23:20:03.140759"
