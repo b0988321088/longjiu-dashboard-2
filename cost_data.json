@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-12 18:30",
+ "generated_at": "2026-10-12 18:34",
  "days": 14,
  "ledger_rows": 34,
  "backfilled": [],
@@ -136,17 +136,17 @@
   },
   {
    "date": "2026-10-12",
-   "ds_twd": 82,
+   "ds_twd": 83,
    "gemini_twd": 0,
    "free_twd": 0,
-   "total_twd": 82,
-   "calls": 993,
+   "total_twd": 83,
+   "calls": 1036,
    "cer": 0,
    "q429": 0
   }
  ],
  "today": {
-  "total_twd": 82,
+  "total_twd": 83,
   "cer": 0,
   "q429": 0
  },
@@ -208,7 +208,7 @@
   }
  },
  "wallets": {
-  "ds_balance_cny": 44.92,
+  "ds_balance_cny": 44.83,
   "ds_balance_twd": 212,
   "ds_source": "API",
   "ds_daily_twd": 70,
@@ -349,14 +349,14 @@
   "baseline_date": "2026-09-22",
   "start_date": "2026-09-23",
   "days": 20,
-  "ds_twd": 1106.0,
+  "ds_twd": 1107.0,
   "gem_twd": 3.0,
   "free_twd": 0.0,
   "free_calls": 528,
-  "calls": 20539,
+  "calls": 20582,
   "cer": 159,
   "pending": false,
-  "total_twd": 1109.0
+  "total_twd": 1110.0
  },
  "page": {
   "top_n": 3,
