@@ -9,6 +9,7 @@
   - cathay_pledge_0911   擔保池／額度／成數／利率／撥款狀態／撥款預估日
   - policy_pledge_loan + liabilities_build_up.券商質押  清償目標與其利率
   - ruling_20260912      用途裁示（優先清償高息負債；2026-09-29 實撥 590萬@2.65% 入帳）
+  - 標案押標金_1010      押標金狀態（2026-10-12 取消；原寫死句已移除）
 """
 from __future__ import annotations
 
@@ -36,6 +37,16 @@ def _wan(v: float) -> str:
     if v is None:
         return "—"
     return f"{v / 10000:,.0f}萬"
+
+
+def _bid_clause(s: dict) -> str:
+    """押標金狀態句（單一真值：snapshot.標案押標金_1010）。
+
+    2026-10-12：240 萬押標金經使用者裁決取消。原句「10月標案押標金不預留，9月底評估」是寫死在本檔的，
+    取消後不會跟著動（違反本檔鐵則）→ 改由 snapshot 狀態欄組出；狀態欄缺漏時明確示警，不假裝正常。
+    """
+    st = str((s.get("標案押標金_1010") or {}).get("狀態") or "").strip()
+    return f"10 月標案押標金：{st}" if st else "10 月標案押標金狀態未設定（snapshot 缺 標案押標金_1010.狀態）"
 
 
 def pledge_facts(snap: dict | None = None) -> dict:
@@ -90,6 +101,9 @@ def pledge_facts(snap: dict | None = None) -> dict:
         "月省息": net_save_month,
         "LTV": p.get("LTV") or "",
         "裁示日": "2026-09-12",
+        # 2026-10-12：押標金狀態改由 snapshot 驅動（原為寫死的「10月標案押標金不預留，9月底評估」，
+        # 該句在 10/12 取消後已成過期敘述；本檔自述「質押文字唯一來源、不得寫死會過期的描述」）。
+        "押標金": _bid_clause(s),
     }
 
 
@@ -116,7 +130,7 @@ def pledge_status_line(snap: dict | None = None, style: str = "full") -> str:
     use = (f"用途：優先清償 {f['清償目標萬']}高息負債（保單質押 {_wan(f['保單借貸'])}"
            f"@{f['保單利率'] * 100:.1f}% ＋ 券商質押 {_wan(f['券商質押'])}"
            f"@{f['券商利率'] * 100:.2f}%）— 月息 {f['月息_舊']:,.0f} → {f['月息_新']:,.0f}"
-           f"，月省約 {f['月省息']:,.0f}（{f['裁示日']} 裁示；10月標案押標金不預留，9月底評估）")
+           f"，月省約 {f['月省息']:,.0f}（{f['裁示日']} 裁示；{f['押標金']}）")
 
     if style == "short":
         return f"質押 {f['可貸萬']}@{f['利率文字']}（{pay_status}）"
