@@ -10763,6 +10763,16 @@
     "status": "completed",
     "source": "Telegram 裁決 2026-10-12（補審後關閉最後一項驗收缺口）"
   }
+,
+  {
+    "id": "mem-20261012205935-1161",
+    "timestamp": "2026-10-12T20:59:35.833590+08:00",
+    "agent": "Hermes",
+    "task": "P0 三條全閉環（③②①）＋獨立審查",
+    "summary": "P0 三條全閉環（③②①）：TD-20261009-16 決策卡靜默遺失／TD-20261009-13 F4 fail-open／TD-20261009-12 週報雙 producer。③ 新增 pending_store.py 唯一寫入通道（跨程序互斥鎖＋fsync 原子替換＋崩潰殘檔回收），pending_reconcile/decision_auto_close 全數插鎖；tests/test_pending_lock.py 24 PASS；真實產線沙盒演練：無鎖時真產線覆蓋併發新卡（重現事故原型、重跑再現）、有鎖時新卡存活、外部持鎖時兩支真程式皆被擋住且 0 卡遺失。② F4 讀取失敗改明確阻擋（ApprovalUnreadable／strict），tests/test_perf_gate_f4.py 18 PASS（三類負向＋repo 內偽造核准檔含 4 種非常規路徑一律拒絕）。① 週報單一 producer 查核＋沙盒實跑（14 章節／13,111 bytes／含月租金）＋守門 tests/test_weekly_single_producer.py 9 PASS。後端審查皆為不同模型家族（Gemini）獨立審查 APPROVE／blocking=[]（設計審查＋差異審查）。commits：636098dc（③）、93b3aa29（②）、deb83a53（①）；遠端 clean-main 逐筆驗證、待推 0。5 筆 inc_events 結案事件逐筆查明：1 有證據／1 間接矛盾／3 無證據→列未解事項（TD-20261012-22），原始紀錄保留不補造。未併入本批結論者：基金口徑差額 2,524（TD-16）、既有治理白名單 4 條、TD-20261012-21(P0 資安 key 未輪替)、TD-20261012-12/11-07（公開面遮罩）。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-12T20:30:36.970525"
