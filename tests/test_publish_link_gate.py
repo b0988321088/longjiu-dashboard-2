@@ -256,7 +256,9 @@ def scenario_wiring() -> None:
     for node in ast.walk(tree):
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
             seg = _call_seg(node)
-            if "'commit'" in seg or '"commit"' in seg:
+            # 精確定位「真的 git commit 呼叫」——不可用 'commit' 字樣，因為 helper 內也有
+            # cio_approve 的 "--commit" 與 f-string {commit}，會把行號帶偏（2026-10-12 實踩）。
+            if "'git', 'commit', '-m'" in seg:
                 commit_lines.append(node.lineno)
             if "check_dashboard_sync.py" in seg:
                 gate_lines.append(node.lineno)
