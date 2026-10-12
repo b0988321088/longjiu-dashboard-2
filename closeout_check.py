@@ -250,6 +250,15 @@ def step_auto_warns(quiet: bool) -> list:
 SNAP_FILE = REPO / "snapshot.json"
 INDEX_FILE = REPO / "index.html"
 LIFE_ACCOUNT_MIN = "40000"   # 玉山／富邦生活帳戶安全線（4 萬，刻意常數；非 3 個月支出）
+MASKED_TOKENS = {"●●●", "•••"}   # public_mask 的遮蔽哨兵（公開面政策；語意＝已遮蔽但需與真值一致）
+# 行庫卡 key → snapshot.cash_detail 帳戶名（口徑與 build_dashboard 的 _bank_state 相同）
+_BANK_KEY2SNAP = {
+    "cathay":  ("活期儲蓄存款", "數位存款帳戶２類"),
+    "taiwan":  ("敦南Richart子帳戶", "文心綜活儲存款-薪轉", "敦南Richart數位一般帳戶"),
+    "sinopac": ("營業部DAWHO活期儲蓄存款", "市政分行活期儲蓄存款"),
+    "yushan":  ("臺幣綜存",),
+    "fubon":   ("數位活儲",),
+}
 EXPECT_SAFE_ANCHORS = 1      # 「月支出×3」安全線錨點數（2026-09-28 起只剩台新；國泰／永豐改自身房貸口徑）
 EXPECT_LOAN_SAFE_ANCHORS = 2 # 「房貸月繳×3」安全線錨點數（國泰 safe_line_cathay／永豐 safe_line_sinopac）
 EXPECT_BANK_MIN = 3          # 銀行卡門檻數（國泰／台新／永豐；將來銀行 2026-09-28 移除）
@@ -400,8 +409,11 @@ def step_consistency(quiet: bool) -> list:
                 html = INDEX_FILE.read_text(encoding="utf-8", errors="replace")
                 def _anchors(key: str) -> list:
                     return re.findall('data-k="%s">([^<]*)<' % re.escape(key), html)
+                # 2026-10-12 資安處置：公開頁行庫餘額／安全線已由 public_mask 遮蔽為哨兵值。
+                #   本檢查的意圖（頁面必須與真值一致）不變：值＝真值 **或** 哨兵皆算一致，
+                #   其餘（舊值／寫死值）一律仍判 ❌，不放寬。
                 anchors = _anchors("safe_line")           # 月支出×3（台新）
-                bad = sorted({v for v in anchors if v != want})
+                bad = sorted({v for v in anchors if v != want and v not in MASKED_TOKENS})
                 if bad:
                     problems.append(f"index.html 安全線錨點為 {bad}（應為 {want}＝月支出 {expense:,}×3）")
                 if len(anchors) != EXPECT_SAFE_ANCHORS:
@@ -412,7 +424,7 @@ def step_consistency(quiet: bool) -> list:
                     if _w is None:
                         problems.append(f"index.html {_k} 無法驗證：snapshot 缺房貸月繳值（mortgage_*_monthly）")
                         continue
-                    _bad2 = sorted({v for v in _a if v != _w})
+                    _bad2 = sorted({v for v in _a if v != _w and v not in MASKED_TOKENS})
                     if _bad2:
                         problems.append(f"index.html {_k} 錨點為 {_bad2}（應為 {_w}＝{_lbl}）")
                     if len(_a) != 1:
@@ -434,6 +446,9 @@ def step_consistency(quiet: bool) -> list:
                     problems.append(f"index.html 生活帳戶門檻數量 {len(life)} ≠ {EXPECT_LIFE_MIN}")
                 # 2026-09-28（CIO 審查）：卡片靜態配色／狀態字樣必須與門檻一致
                 #   （防 build_dashboard 的對齊 regex 靜默失配 → 藍框紅字或假充裕）
+                _cd_snap = snap.get("cash_detail", {}) or {}
+                def _bank_truth(key: str):
+                    return sum((_num(_cd_snap.get(_k)) or 0) for _k in _BANK_KEY2SNAP.get(key, ()))
                 _cpat = re.compile(
                     r'<div class="border-(red|blue)-500/20 bg-\1-500/10 p-4 rounded-xl space-y-1">'
                     r'<div class="flex justify-between text-xs font-bold text-(red-400|blue-300)">'
@@ -443,7 +458,11 @@ def step_consistency(quiet: bool) -> list:
                 for _m in _cpat.finditer(html):
                     _col, _tcol, _name, _key, _minv, _stext, _val = _m.groups()
                     _n_cards += 1
-                    _v = _num(_val) or 0
+                    # 2026-10-12 資安處置：顯示值可能為哨兵（●●●）→ 此時以 snapshot 真值判定，
+                    #   否則本檢查會把正確的遮蔽誤判成「餘 0 vs 門檻」而全排假紅。
+                    _v = None if _val.strip() in MASKED_TOKENS else _num(_val)
+                    if _v is None:
+                        _v = _bank_truth(_key)
                     _mn = _num(_minv) or 0
                     _want_ok = _v >= _mn
                     if _want_ok != (_col == "blue"):
