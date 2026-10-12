@@ -98,7 +98,7 @@ def f1_baseline_contract(baseline_sha: str = BASELINE_SHA) -> dict:
         out["checks"].append({"label": label, "ok": bool(cond), "detail": str(detail)[:200]})
 
     r = subprocess.run(
-        [PY, str(REPO / "tools" / "verify_performance_core_task12.py"), baseline_sha],
+        [PY, str(REPO / "tools" / "verify_performance_core_task12.py"), baseline_sha, "--contract-only"],
         cwd=str(REPO), capture_output=True, text=True, encoding="utf-8", errors="replace")
     stdout = r.stdout or ""
     out["env_json"] = _parse_env_json(stdout)

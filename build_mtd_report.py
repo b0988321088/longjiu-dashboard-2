@@ -30,12 +30,53 @@ BASE = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE))
 import build_investment_performance as bip  # noqa: E402
 import performance_core as perf_core  # noqa: E402  ← INC-282 A 案：投資績效唯一計算層
+import notion_weekly_trend_wrapper as nwtw  # noqa: E402  ← 事件鏈判準唯一來源（不在此重算）
 
 CLASS_KEYS = ["股票", "基金", "保單"]
 OUT_HTML = BASE / "mtd_performance.html"
 OUT_JSON = BASE / "mtd_data.json"
 # 資金成本燈號門檻（與 build_investment_performance.funding_cost_report 同值；改一處要同步）
 SPREAD_GREEN = 0.012
+
+
+def align_baseline_nw(metrics: dict, chains: list, base_day: str, nw_end=None):
+    """基準日落在「結構事件鏈」中途時，回傳事件對齊後的淨值比較基準（2026-10-12 工單 §三）。
+
+    背景：質押撥款／保單借貸清償的「資產腿」與「負債腿」入帳日不同（保單公司 3 個工作日），
+    月初基準日若正好夾在兩腿之間，該日淨值即被單邊低估 → 期初期末相減不是本期淨值變化。
+
+    口徑：判準一律委派 `notion_weekly_trend_wrapper`（compute_daily_metrics／detect_event_chains），
+    本檔不重算、不寫死金額；**不改原始交易日期或歷史真值**，只調整報表比較基準。
+
+    回傳 dict（皆為可重現的計算結果）：
+      applied           基準日是否落在事件鏈內
+      baseline_raw      月報原用基準日（＝上月末最後一筆）
+      baseline_aligned  對齊後基準日（事件鏈起始日之前最後一個有效淨值日）
+      net_worth_chg     對齊後淨值變化
+      nw_raw            原基準日淨值
+      nw_aligned        對齊後基準日淨值
+      chain             觸發對齊的事件鏈（dates/first/reverse/ratio/amount/兩腿）
+    """
+    out = {"applied": False, "baseline_raw": base_day, "baseline_aligned": None,
+           "net_worth_chg": None, "nw_raw": None, "nw_aligned": None, "chain": None}
+    m0 = metrics.get(base_day)
+    if not m0 or m0.get("nw") is None:
+        return out
+    out["nw_raw"] = m0["nw"]
+    hit = next((c for c in chains if base_day in (c.get("dates") or [])), None)
+    if not hit:
+        return out
+    chain_days = sorted(hit.get("dates") or [])
+    priors = [d for d, m in metrics.items()
+              if m.get("nw") is not None and d < chain_days[0]]
+    if not priors:
+        return out
+    prev_day = max(priors)
+    out.update({"applied": True, "baseline_aligned": prev_day,
+                "nw_aligned": metrics[prev_day]["nw"], "chain": hit})
+    if nw_end is not None:
+        out["net_worth_chg"] = nw_end - out["nw_aligned"]
+    return out
 
 
 def _num(v):
@@ -163,6 +204,28 @@ def payload() -> dict:
         return (_num(r[1]), r[0]) if r else (None, None)
     total_end, total_end_date = _db_total(today.isoformat())
     total_start, total_start_date = _db_total(prev_end.isoformat())
+
+    def _db_liab(d):
+        """同期總負債（與 total_assets 同一列口徑）— 供「還債 ≠ 虧損」註記推算。"""
+        r = db.execute("SELECT total_liabilities FROM assets WHERE date <= ? "
+                       "ORDER BY date DESC LIMIT 1", (d,)).fetchone()
+        return _num(r[0]) if r and r[0] is not None else None
+
+    liab_end = _db_liab(today.isoformat())
+    liab_start = _db_liab(prev_end.isoformat())
+
+    # ── 基準日事件對齊（2026-10-12 工單 §三：修正比較口徑，不覆寫來源）──
+    # 判準一律委派 notion_weekly_trend_wrapper（單一口徑）；視窗取基準日前 14 天以確保鏈起點可見。
+    _win = db.execute(
+        "SELECT date, total_assets, total_liabilities, cash_total FROM assets "
+        "WHERE date >= ? AND date <= ? ORDER BY date",
+        ((prev_end - dt.timedelta(days=14)).isoformat(), today.isoformat())).fetchall()
+    _metrics = nwtw.compute_daily_metrics(
+        [{"date": r[0], "total_assets": r[1], "total_liabilities": r[2], "cash_total": r[3]}
+         for r in _win])
+    _structural = [d for d, m in sorted(_metrics.items()) if m["structural"]]
+    _chains = nwtw.detect_event_chains(_metrics, _structural)
+
     _weeks = week_buckets(db, today)
     _daily = daily_series(db, month_start, today)
     db.close()
@@ -270,6 +333,14 @@ def payload() -> dict:
         policies.append({"name": nm, "cost": cost, "current": cur, "principal": cur - cost,
                          "cum_div": cd, "real": cd + cur - cost})
 
+    # ── 總資產變化的口徑註記（2026-10-12 使用者核准：避免「還債」被誤讀為虧損）──
+    _liab_chg = (liab_end - liab_start) if (liab_start is not None and liab_end is not None) else None
+    _nw_start = (total_start - liab_start) if (total_start is not None and liab_start is not None) else None
+    _nw_end = (total_end - liab_end) if (total_end is not None and liab_end is not None) else None
+    _nw_chg = (_nw_end - _nw_start) if (_nw_start is not None and _nw_end is not None) else None
+    # 基準日事件對齊（同一口徑來源；端點一律用同一組期末值）
+    _align = align_baseline_nw(_metrics, _chains, prev_end.isoformat(), _nw_end)
+
     return {
         "generated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M"),
         "month": mk,
@@ -278,6 +349,10 @@ def payload() -> dict:
                    "start_ref": total_start_date or (start_row[0] if start_row else "")},
         "total_assets": {"start": total_start, "end": total_end,
                          "chg": (total_end - total_start) if (total_start is not None and total_end is not None) else None},
+        # 同期負債／淨值（全部由 db 推導，不寫死）：總資產變化含現金流，非投資績效
+        "equity": {"liab_start": liab_start, "liab_end": liab_end, "liab_chg": _liab_chg,
+                   "net_worth_start": _nw_start, "net_worth_end": _nw_end, "net_worth_chg": _nw_chg,
+                   "alignment": _align},
         "mv_reliable": bool(mv_reliable),
         # 保單專屬：配息 vs 借貸月息覆蓋（本月頁該看的指標，不是累計本金）
         "policy_int": policy_int,
@@ -320,7 +395,14 @@ def static_fallback(p: dict) -> str:
 
     rows = [
         (f'{p["month"]} 本月投資損益', nt(p["perf"]["net"]) + "（未扣利息）" if not p["interest"]["total"] else nt(p["perf"]["net"])),
-        ("　帳面市值變化", nt(p["total_assets"].get("chg")) + "（總資產）"),
+        ("　總資產變化（帳面）", nt(p["total_assets"].get("chg"))),
+        ("　同期總負債變化", nt((p.get("equity") or {}).get("liab_chg"))),
+        ("　同期淨值變化", nt((p.get("equity") or {}).get("net_worth_chg"))),
+        ("　事件對齊淨值變化", (nt((p.get("equity") or {}).get("alignment", {}).get("net_worth_chg"))
+                            + "（比較視窗 " + str((p.get("equity") or {}).get("alignment", {}).get("baseline_aligned"))
+                            + " → " + str((p.get("period") or {}).get("end")) + "，含九月）")
+                           if (p.get("equity") or {}).get("alignment", {}).get("applied") else "—（基準日未落於事件鏈）"),
+        ("　※口徑註記", "總資產變化含現金流（還債／撥款／投入），≠ 投資績效；資產與負債同時減少＝拿現金還債"),
         ("　配息實收", nt(p["grand"]["div"])),
         ("　本月報酬率", "｜".join(f'{x["c"]} {x["rate"]*100:+.2f}%（佔 {(x["share"] or 0)*100:.1f}%）'
                                   for x in p["classes"] if x.get("rate") is not None)),
@@ -457,13 +539,36 @@ function render(d){
   var sub = (d.interest && d.interest.total) ? '已扣投資利息 '+money(d.interest.total) : '未扣利息（見資金成本卡）';
   h.push('<section class="grid k4">');
   h.push(kpi('本月投資損益', '<span class="'+cls(d.perf.net)+'">'+sgn(d.perf.net)+'</span>', esc(sub)));
-  h.push(kpi('總資產變化', '<span class="'+cls(t.chg)+'">'+sgn(t.chg)+'</span>', '帳面（含未實現、含配息）'));
+  h.push(kpi('總資產變化', '<span class="'+cls(t.chg)+'">'+sgn(t.chg)+'</span>', '帳面（含未實現、含配息）｜⚠️ 含現金流，非投資績效'));
   h.push(kpi('配息實收（三類）', '<span class="up">'+sgn(g.div)+'</span>', '股票＋基金＋保單'));
   h.push(kpi('本月報酬率', '<span class="'+(d.rate==null?'':(d.rate>=0?'up':'down'))+'">'+(d.rate==null?'—':pct(d.rate))+'</span>',
              '以月初市值 '+money(d.total_mv0)+' 計（年化＝單月推估 '+(d.rate_ann==null?'—':pct(d.rate_ann))+'）'));
   h.push(kpi('淨利差（配息−資金成本）', '<span class="'+(f.light==='ok'?'up':(f.light==='bad'?'down':''))+'">'+(f.spread*100).toFixed(2)+'pp</span>',
              '加權資金成本 '+(f.wacc*100).toFixed(2)+'%'));
   h.push('</section>');
+
+  // 總資產變化口徑註記（2026-10-12 使用者核准：避免「還債」被誤讀為虧損；數字全部由 db 推導）
+  var eq = d.equity||{};
+  if(t.chg!=null){
+    h.push('<section class="card"><h2>◆ 總資產變化說明<em>'+esc(p.start_db||p.prev_end)+' → '+esc(p.end)+'｜帳面 ≠ 投資績效</em></h2>');
+    h.push('<div class="tscroll"><table class="t"><thead><tr><th>項目</th><th>變化</th></tr></thead><tbody>');
+    h.push('<tr><td>帳面總資產<br><span class="muted" style="font-size:10.5px">'+money(t.start)+' → '+money(t.end)+'</span></td><td class="'+cls(t.chg)+'"><b>'+sgn(t.chg)+'</b></td></tr>');
+    if(eq.liab_start!=null){ h.push('<tr><td>同期總負債<br><span class="muted" style="font-size:10.5px">'+money(eq.liab_start)+' → '+money(eq.liab_end)+'</span></td><td class="'+cls(eq.liab_chg)+'">'+sgn(eq.liab_chg)+'</td></tr>'); }
+    if(eq.net_worth_start!=null){ h.push('<tr><td>同期淨值<br><span class="muted" style="font-size:10.5px">'+money(eq.net_worth_start)+' → '+money(eq.net_worth_end)+'</span></td><td class="'+cls(eq.net_worth_chg)+'"><b>'+sgn(eq.net_worth_chg)+'</b></td></tr>'); }
+    h.push('</tbody></table></div>');
+    var al = eq.alignment||{};
+    if(al.applied){
+      h.push('<div class="tscroll" style="margin-top:8px"><table class="t"><thead><tr><th>事件對齊後</th><th>變化</th></tr></thead><tbody>');
+      h.push('<tr><td>基準回退至 '+esc(al.baseline_aligned)+'<br><span class="muted" style="font-size:10.5px">比較視窗 '+esc(al.baseline_aligned)+' → '+esc(p.end)+'（含九月）｜事件鏈 '+esc((al.chain&&al.chain.dates||[]).join('、'))+'：資產腿／負債腿分日入帳</span></td><td class="'+cls(al.net_worth_chg)+'"><b>'+sgn(al.net_worth_chg)+'</b></td></tr>');
+      h.push('</tbody></table></div>');
+    }
+    h.push('<div class="note">⚠️ <b>帳面總資產變化含現金流</b>（清償負債／質押撥款／新增投入／資金過境），<b>不等於投資績效</b>；'+
+           '投資成果只看「本月投資損益 '+sgn(d.perf.net)+'」。總資產與負債<b>同時減少</b>＝「拿現金還債」（負債清償，非虧損），實質變化要看<b>淨值</b>。'+
+           (al.applied
+             ? '期初 '+esc(al.baseline_raw)+' 適逢保單借貸沖銷入帳時差（保單公司 3 個工作日：現金已轉出、負債未沖銷），該日淨值被單邊低估 → 上列帳面淨值變化不可比；已另列「事件對齊後」（基準回退至 '+esc(al.baseline_aligned)+'）。原始交易日期與歷史真值均未更動。'
+             : '期初日若適逢保單借貸沖銷入帳時差（保單公司 3 個工作日：現金已轉出、負債未沖銷），該日淨值會偏低而放大淨值變化，需另行校正。')+'</div>');
+    h.push('</section>');
+  }
 
   h.push('<section class="card"><h2>◆ 四段式拆解<em>帳面 → 投入/校正 → 市場 → 配息（每類同一套）</em></h2>');
   (d.classes||[]).forEach(function(c){ h.push(wfRow(c)); });
