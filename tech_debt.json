@@ -1490,5 +1490,53 @@
     "moved_at": "2026-10-12",
     "cleanup_reason": "tech_debt close：根因＝三處消費者（run_daily 日報行、check_thresholds ④閉合與日報行比對）加總停更的逐檔字典（自由Pay 10/08 497,695）而非平台總覽權威值。修法＝新增 fund_caliber.py 單一口徑（權威值 funds_heng_total_<yyyymmdd>），差異必須點名且無 funds_stale_notice 即 fail-closed。驗收：日報行 12,677,144＝鉅亨 896,219＋國泰 11,780,925（閉合）；check_thresholds 全檢 PASS；負向測試（移除 stale notice → fail-closed）通過；commit 99a8eb14／tree cb13a6fada58，真 CIO APPROVE、RECORD、已推 clean-main、線上 raw 已驗。",
     "updated_at": "2026-10-12"
+  },
+  {
+    "id": "TD-20261013-01",
+    "date": "2026-10-13",
+    "title": "事件殘留無自動歸期：inc_events.jsonl／error_register.md 在 NEVER_AUTO_EXACT",
+    "severity": "P2",
+    "source": "2026-10-13 self_publish 交付揭露",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "owner 指定為 lj_inc.py（登記與寫入範圍），但兩檔在 publish_gate.NEVER_AUTO_EXACT → 自身產出就地提交必得 rc=3、永遠拿不到 AUTO 章。要自動收斂必須另一次裁決動該安全線；在此之前每晚誠實 FAIL。附帶：error_register.md 單一寫入者尚未完全收斂（four_source_sync.py 登記新 INC、scripts/components/cleanup_utils.py 週深清歸檔仍直接改寫）。",
+    "tags": "publish,residual,gate",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-13",
+    "cleanup_reason": ""
+  },
+  {
+    "id": "TD-20261013-02",
+    "date": "2026-10-13",
+    "title": "未提交程式檔 daily_report_assembly.py 待處置",
+    "severity": "P2",
+    "source": "2026-10-13 收工檢查殘留盤點",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "非本輪產生、已追蹤未提交之程式檔（auto_record 標記為 code-dirty）。程式檔必須走真 CIO 審查車道，不得與資料混 commit；需另案決定納入哪個審查批次。",
+    "tags": "residual,code,review",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-13",
+    "cleanup_reason": ""
+  },
+  {
+    "id": "TD-20261013-03",
+    "date": "2026-10-13",
+    "title": "驗證器 tools/verify_closeout_dirty_fix.py 案例 B1 既有紅燈",
+    "severity": "P2",
+    "source": "2026-10-13 self_publish 交付披露",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "B1 產出的 commit 含 append_dashboard_decisions.py／auto_push.py（測試期望只含自身兩檔），非本輪改動造成（本輪未觸碰該路徑）。依 2026-10-13 裁決維持隔離：不為讓驗收全綠而修改該案例或相關程式。",
+    "tags": "verifier,known-red",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-13",
+    "cleanup_reason": ""
   }
 ]
