@@ -234,6 +234,34 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
                      f"{pf['月息_新']:,.0f}，月省 {pf['月省息']:,.0f}（{pf['裁示日']} 裁示）"),
         })
 
+    # ★ 2026-10-12 使用者裁決：現金累積優先於核心消費部署（達標前停用「乾粉全數部署」）
+    #   目標口徑＝可動用現金（sot_targets.allowable_cash，已扣指定用途款）；缺口動態計算、不寫死。
+    from sot_targets import allowable_cash as _avail_fn
+    _ca = snap.get("cash_accumulation_policy") or {}
+    _ca_target = int(_ca.get("目標") or 0)
+    _avail_now = round(float(_avail_fn(snap)))
+    if _ca_target > 0 and _avail_now < _ca_target:
+        _gap = _ca_target - _avail_now
+        _months = (_gap / surplus) if surplus > 0 else None
+        plan.append({
+            "產業": "現金累積",
+            "標的": "台幣活存／MMF（可動用現金）",
+            "金額": _gap,
+            "節奏": (f"依實際入帳盈餘逐步補足（月盈餘 {surplus:,.0f}，"
+                     + (f"預估約 {_months:.1f} 個月" if _months else "盈餘為 0，待現金流改善") + "）"),
+            "理由": (f"可動用現金 {_avail_now:,} ＜ 目標 {_ca_target:,}（差 {_gap:,}）；"
+                     f"2026-10-12 裁決：累積優先、達標前停用「乾粉全數部署」；"
+                     f"指定用途款（洲際W預繳 200,000＋國泰保留 700,000）不得挪用"),
+        })
+        plan.append({
+            "產業": "核心消費",
+            "標的": "暫停（現金未達標）",
+            "金額": 0,
+            "節奏": f"可動用現金達 {_ca_target:,} 後，再依當時現金流／指定用途款／風險評估是否恢復部分部署",
+            "理由": "現金累積優先：不預先把尚未入帳的盈餘當成可部署現金",
+        })
+        return plan
+
     # ② 產業吸納：資金輪動引擎「建議」中動作 ✅ 者；金額由乾粉平均分配（單筆 ≤5 萬節奏）
     buys = [r for r in rec.get("建議", []) if str(r.get("動作", "")).startswith("✅")]
     used = 0
