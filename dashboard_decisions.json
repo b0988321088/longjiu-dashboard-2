@@ -10679,16 +10679,25 @@
       "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "id": "mem-20261012141008-1152",
+      "timestamp": "2026-10-12T14:10:08.605662+08:00",
+      "agent": "Hermes",
+      "task": "現金累積優先於核心消費部署（目標可動用現金 1,000,000）",
+      "summary": "2026-10-12 裁決：達標前停用乾粉全數部署；依實際入帳盈餘逐步補足 72,637（月盈餘 66,758 ≈1.1 個月），不預先計入未入帳盈餘；達標後再評估恢復部分部署；指定用途款 200,000＋700,000 不得挪用。落地 rotation_engine 現金累積閘門＋snapshot.cash_accumulation_policy（單一來源）；commit 9d4e37e8/tree 1ed69e91b426，CIO APPROVE 0.92 blocking=[]，已推 clean-main，線上已驗（raw＋Pages）",
+      "status": "completed",
+      "source": "user"
     }
 ,
   {
-    "id": "mem-20261012141008-1152",
-    "timestamp": "2026-10-12T14:10:08.605662+08:00",
-    "agent": "Hermes",
-    "task": "現金累積優先於核心消費部署（目標可動用現金 1,000,000）",
-    "summary": "2026-10-12 裁決：達標前停用乾粉全數部署；依實際入帳盈餘逐步補足 72,637（月盈餘 66,758 ≈1.1 個月），不預先計入未入帳盈餘；達標後再評估恢復部分部署；指定用途款 200,000＋700,000 不得挪用。落地 rotation_engine 現金累積閘門＋snapshot.cash_accumulation_policy（單一來源）；commit 9d4e37e8/tree 1ed69e91b426，CIO APPROVE 0.92 blocking=[]，已推 clean-main，線上已驗（raw＋Pages）",
+    "id": "mem-20261012170627-1153",
+    "timestamp": "2026-10-12T17:06:27.430846+08:00",
+    "agent": "龍九",
+    "task": "PG-20261011 v3 閘門修復＋radar 落版（純資料批次授權政策）",
+    "summary": "裁決 A（保守）：不動 publish_allowlist.json，radar 產物不登記為可自動發布；公開首頁 index.html 維持必經真 CIO 審查。radar 排程（週一/三 16:15）每次執行需一次人工 CIO 審查，未審時閘門以 rc=3 明確拒絕（不再有落 AUTO 章卻無路可走的死鎖）。已上線：36ca3cc1（publish_gate v3 兩側單一真值＋patterns/producer 機制＋fail-closed 規格檢查，CIO APPROVE blocking=0，tree 8112efa4）；e27122e4（radar 三檔真 CIO 審查落版，tree 7fc4158e）。線上 5/5 逐位元相同、本機=遠端、未推 0。殘留：技術債卡 12 張待下一批送審（含 TD-20261012-12 P1 公開面遮罩帳號/餘額）。",
     "status": "completed",
-    "source": "user"
+    "source": "Telegram 裁決 2026-10-12"
   }
   ],
   "meta": {
