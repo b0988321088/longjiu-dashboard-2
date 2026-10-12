@@ -10743,6 +10743,16 @@
       "status": "completed",
       "source": "Telegram 裁決 2026-10-12（全案一次閉環）"
     }
+,
+  {
+    "id": "mem-20261012203221-1159",
+    "timestamp": "2026-10-12T20:32:21.966855+08:00",
+    "agent": "Hermes",
+    "task": "總工單 C 收尾：radar_state 舊敘述修正＋補裁示日欄＋重產（355c3a2b）",
+    "summary": "延續 1158 同一總工單：rebalance_summary 仍殘留 2 處押標金舊敘述，逐處追溯來源＝radar_state.json（雷達班產物）內『（押標金 240萬 來源 9 月底評估）』與『10月標案押標金不預留，9月底評估』→ 以精準字串替換更新為『已於 2026-10-12 經使用者裁決取消』；另補 snapshot.標案押標金_1010.裁示日_取消＝2026-10-12（缺欄使覆蓋文字退化為『本輪』）。重產後：日報押標金 1 處（正確敘述）、rebalance_summary 3 處全為已取消敘述、無『9 月底評估／不預留』殘留；月度閘門 PASS、覆蓋規則不再示警。commit 355c3a2b（tree 200b7d04），獨立審查 APPROVE/0.95（備援鏈；Pollinations 402），已推 clean-main、待推 0；線上 snapshot／日報／rebalance_summary／radar_state 逐位元一致。殘餘：基金口徑 2,524（既有另案）、4 條治理白名單（未擴張）。",
+    "status": "completed",
+    "source": "Telegram 裁決 2026-10-12（全案一次閉環）"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-12T20:30:36.970525"
