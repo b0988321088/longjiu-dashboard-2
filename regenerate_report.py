@@ -22,6 +22,7 @@
 import json, sqlite3, re, sys, os
 from pathlib import Path
 from datetime import date as dt
+import public_mask  # 2026-10-12 資安處置：公開面遮蔽（唯一實作）
 
 BASE = Path(__file__).resolve().parent
 TODAY = dt.today().isoformat()
@@ -311,7 +312,7 @@ try:
     html = _refresh_out(html, json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")))
 except Exception as _e_out:
     print(f"[WARN] P0-1 日報最終舊值覆蓋失敗：{_e_out}")
-OUT.write_text(close_html_tail(html), encoding="utf-8")
+OUT.write_text(public_mask.scrub(close_html_tail(html)), encoding="utf-8")  # 2026-10-12 資安處置：公開面遮蔽
 
 # 9a. 淨資產拆解自動更新（2026-09-03：儀表板 net_worth_weekly_breakdown 從 DB 真值算，
 #     冪等 — 已是最新窗口即略過；週五深度審查 LLM 覆核可再細分成本）
@@ -427,7 +428,7 @@ except Exception as _e:
 if _pen_file:
     try:
         _idx_html = (BASE / "index.html").read_text(encoding="utf-8").replace("__PEN_REPORT__", _pen_file)
-        (BASE / "index.html").write_text(_idx_html, encoding="utf-8")
+        (BASE / "index.html").write_text(public_mask.scrub(_idx_html), encoding="utf-8")
     except Exception:
         pass
 # 緊急應變連結（2026-08-22 修正：週末/例假日不產出 → 一律 glob 最新，避免 __TODAY__ 404）
@@ -435,7 +436,7 @@ try:
     _latest_er = sorted(BASE.glob("emergency_report_2*.html"), key=lambda p: p.stat().st_mtime, reverse=True)
     _er_name = _latest_er[0].name if _latest_er else f"emergency_report_{TODAY}.html"
     _idx_html2 = (BASE / "index.html").read_text(encoding="utf-8").replace("__EMERGENCY_REPORT__", _er_name)
-    (BASE / "index.html").write_text(_idx_html2, encoding="utf-8")
+    (BASE / "index.html").write_text(public_mask.scrub(_idx_html2), encoding="utf-8")
 except Exception:
     pass
 

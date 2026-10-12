@@ -6,6 +6,7 @@
 """
 from report_components import band_filter as _band_filter
 import json, re
+import public_mask  # 2026-10-12 資安處置：公開面遮蔽（唯一實作）
 from datetime import date, timedelta
 from pathlib import Path
 from scripts.components.volatility_monitor import make_volatility_report
@@ -526,7 +527,12 @@ def main():
     }
     for _dk, _dv in _data_k_map.items():
         _pat = _re.compile(r'(<span data-k="%s">)[^<]*(</span>)' % _dk)
-        tpl, _n = _pat.subn(lambda m: m.group(1) + _fmt(_dv) + m.group(2), tpl)
+        # 2026-10-12 資安處置（使用者裁決：保留憑證、優先清理公開資料）：
+        #   行庫餘額／安全線／房貸月繳屬 4 類敏感項（帳號、餘額、資產分母）→ 公開頁只顯示 ●●●，
+        #   狀態色與門檻比較仍用真值計算（功能不失、金額不公開）。真值層與內部報告不受影響。
+        _show = public_mask.display_value(_dk, _dv)
+        tpl, _n = _pat.subn(
+            lambda m: m.group(1) + (_show if _show is not None else _fmt(_dv)) + m.group(2), tpl)
         if _n:
             hits += _n
     # ── 銀行水位卡片「靜態狀態」對齊門檻（2026-09-28：卡片顏色/🟢🔴字樣原本手寫，與實際門檻不一致）──
@@ -1202,6 +1208,10 @@ def main():
     except Exception as _rse:
         tpl = tpl.replace("__RELAY_SCHEDULE__", '<p class="text-xs text-slate-400">接力資料待更新</p>')
         print("  ⚠️ 接力時序注入失敗:", _rse)
+
+    # 2026-10-12 資安處置：輸出前最後一道——遮罩帳號識別碼與安全線門檻（唯一實作在 public_mask）
+
+    tpl = public_mask.scrub(tpl)
 
     (BASE / "index.html").write_text(_band_filter(tpl), encoding="utf-8", newline="\n")  # 2026-10-12：鎖 LF，避免每次重建產生整檔 CRLF 假 diff
     print(f"✅ 儀表板注入完成（{hits} 組值 + {_link_hits} 連結動態化）｜現金 {_fmt(cash)} / 保單 {_fmt(ins)} / 配息 {_fmt(div_total)} / 租金 {_fmt(rent_got)}")

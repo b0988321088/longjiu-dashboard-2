@@ -7,6 +7,7 @@
   3. changelog_{date}.md（差異說明）
 """
 from __future__ import annotations
+import public_mask  # 2026-10-12 資安處置：公開面遮蔽（唯一實作）
 
 import json
 import re
@@ -2622,7 +2623,7 @@ def main():
         daily_html = daily_html.replace("__SEC_TOP3__", "---")
 
     daily_html = close_html_tail(daily_html)  # INC-199：附加區塊一律收回 </body> 之前
-    OUT_DAILY.write_text(daily_html, encoding="utf-8")
+    OUT_DAILY.write_text(public_mask.scrub(daily_html), encoding="utf-8")  # 2026-10-12 資安處置：公開面遮蔽
     print(f"[RUN_DAILY] 日報產出：{OUT_DAILY}")
     # 靜態儀表板：統一由 build_dashboard.py 產出（2026-08-27 根治：run_daily 舊邏輯只取代數值、漏連結佔位符 → 儀表板連結失效）
     try:

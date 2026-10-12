@@ -409,8 +409,10 @@ def compute_signals(tw, cot, fed, twd, tnx, cfg, state):
                 sig["Fed流動性"] = {"color": "🟡", "note": f"資產負債表 {chg*100:+.1f}%"}
         else:
             # 單位＝百萬美元，除以 1e3 得十億美元（B）；2026-09-20 修：原換算倍率錯，6,797B 會印成 0B
-            sig["Fed流動性"] = {"color": "⚪", "note": f"總資產 {fed['total_assets']/1e3:,.0f}B（基準建立中）"}
-        state["fed"] = {"total_assets": fed["total_assets"], "date": fed["date"]}
+            sig["Fed流動性"] = {"color": "⚪", "note": "基準建立中"}
+        # 2026-10-12 資安處置（公開面）：radar_state.json 為公開檔 → **不得落地 Fed 總資產**（資產分母）。
+    #   只保留日期與變化率（變化率足以驅動燈號，分母本身無需公開）；內部需要絕對值時改讀 fetch 當次結果。
+    state["fed"] = {"date": fed["date"]}
 
     # 台幣強升 → 綠燈升級
     if twd.get("週變化") is not None:
