@@ -688,6 +688,49 @@ def s_append_only_lane() -> None:
           str([b["id"] for b in r["blockings"]]))
 
 
+# ------------------------------ 2026-10-13 受控擴充白名單（notion_shared_context.md）
+ALLOW_NOTION = {"version": 1, "entries": [
+    {"label": "Notion 共享上下文（單檔，純資料）",
+     "allow": ["notion_shared_context.md"],
+     "producer": "notion_context_loader.py"}]}
+
+
+def s_allowlist_expansion_20261013() -> None:
+    """使用者 2026-10-13 裁決：白名單受控擴充（只加必要的精確路徑）。
+
+    必須同時證明兩件事：①登記後該路徑可走 AUTO ②未登記路徑／安全線檔仍被拒。
+    """
+    print("\n【2026-10-13 受控擴充白名單：Notion 共享上下文】")
+    repo, head, base = make_repo({"notion_shared_context.md": "new\n"},
+                                 allowlist=ALLOW_NOTION,
+                                 reviewer="AUTO-checker:notion_context_loader.py")
+    r = pg.decide(repo, base, None, allowlist_ref=base)
+    check("NE1 登記後的單一精確路徑 → AUTO 可發布",
+          r["ok"] and r["mode"] == "AUTO", str(r.get("blockings"))[:200])
+    check("NE1b 命中條目正確",
+          r["allow_entry"] == "Notion 共享上下文（單檔，純資料）", str(r.get("allow_entry")))
+
+    # 負向一：同一張白名單下，未登記路徑（同目錄、同副檔名誘餌）仍必須走真 CIO
+    repo2, head2, base2 = make_repo({"notion_bridge/2026-10-13_strategy_handbook.md": "x\n"},
+                                    allowlist=ALLOW_NOTION,
+                                    reviewer="AUTO-checker:notion_context_loader.py")
+    r2 = pg.decide(repo2, base2, None, allowlist_ref=base2)
+    check("NE2 未登記路徑（同目錄同副檔名誘餌）→ 不得 AUTO",
+          (not r2["ok"]) and r2["mode"] != "AUTO",
+          f"mode={r2['mode']} blockings={[b['id'] for b in r2.get('blockings', [])]}")
+
+    # 負向二：把 NEVER_AUTO_EXACT 檔登記進白名單 → 白名單本身不可用（安全線不得被登記繞過）
+    repo3, head3, base3 = make_repo(
+        {"error_register.md": "x\n"},
+        allowlist={"version": 1, "entries": [
+            {"label": "不當登記", "allow": ["error_register.md"]}]},
+        reviewer="AUTO-checker:evil.py")
+    r3 = pg.decide(repo3, base3, None, allowlist_ref=base3)
+    check("NE3 治理紀錄不得被白名單放行（安全線優先）",
+          (not r3["ok"]) and any(b["id"] == "ALLOWLIST_UNAVAILABLE" for b in r3["blockings"]),
+          str([b["id"] for b in r3["blockings"]]))
+
+
 def main() -> int:
     print("=" * 70)
     print("publish_gate 隔離測試（白名單 + 實際變更集合）")
@@ -706,6 +749,7 @@ def main() -> int:
     s_classify_single_truth()
     s_hardening_f1_f2_f3()
     s_append_only_lane()
+    s_allowlist_expansion_20261013()
     print("\n" + "=" * 70)
     print(f"通過 {len(PASS)} 項｜失敗 {len(FAIL)} 項")
     for f in FAIL:

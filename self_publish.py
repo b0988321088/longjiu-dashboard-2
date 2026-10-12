@@ -17,11 +17,18 @@
     ④ 無變更 → 不 commit、不 push（不製造空 commit）
     ⑤ 推送唯一出口＝auto_push.py；其 rc 原樣回報（0＝已上線並驗 remote sha）
 
-邊界（fail-closed）：
-    · allowlist 條目不得為絕對路徑、不得含 `..`、不得指向 .git/、不得以 `*` 開頭、
-      `*` 前的字面前綴 ≥3 字元、不得含程式副檔名（.py 等）—— 違反即整批拒絕。
-    · 目錄掃描只用 allowlist 內的樣式，不用「整個目錄」。
-    · untracked 檔不在本模組範圍（屬另一類，不因本模組被帶進 commit）。
+    邊界（fail-closed）：
+        · allowlist 條目不得為絕對路徑、不得含 `..`、不得指向 .git/、不得以 `*` 開頭、
+          `*` 前的字面前綴 ≥3 字元、不得含程式副檔名（.py 等）—— 違反即整批拒絕。
+        · 目錄掃描只用 allowlist 內的樣式，不用「整個目錄」。
+        · untracked 檔不在本模組範圍（屬另一類，不因本模組被帶進 commit）。
+
+    ⚠️ 呼叫端契約（2026-10-13 實跑踩到）：
+        「本輪起跑時刻」預設＝**本模組被 import 的時刻** → 呼叫端必須在「開始做事之前」import；
+        若在本輪工作**之後**才 import（例：先寫完產物、結尾才 import 綁定），T0 會晚於產物 mtime
+        → 一律不認領（實例：notion_context_loader 首版把 import 放在 load_context() 之後 →
+        明明剛寫完檔卻回報「本輪未寫它」）。要自帶起跑時刻時用 `since=` 明確傳入。
+        設計取捨：寧可漏認領（下次執行再收），不可誤認領（把上一輪的檔當本輪帶走）。
 """
 from __future__ import annotations
 
@@ -99,8 +106,9 @@ def _dirty_vs_head(rel: str) -> bool:
     return r.returncode == 0 and bool(r.stdout.strip())
 
 
-def claim_files(allow: list[str]) -> tuple[list[str], list[str]]:
-    """回傳（可認領, 略過並附原因）。"""
+def claim_files(allow: list[str], since: float | None = None) -> tuple[list[str], list[str]]:
+    """回傳（可認領, 略過並附原因）。since＝本輪起跑時刻（預設＝本模組 import 時刻）。"""
+    t0 = _T0 if since is None else since
     keep, drop = [], []
     for entry in allow:
         _check_entry(entry)
@@ -110,7 +118,7 @@ def claim_files(allow: list[str]) -> tuple[list[str], list[str]]:
         except OSError:
             drop.append(f"{rel}（讀不到）")
             continue
-        if mtime < _T0:
+        if mtime < t0:
             drop.append(f"{rel}（本輪未寫它）")
             continue
         if not _dirty_vs_head(rel):
@@ -121,7 +129,7 @@ def claim_files(allow: list[str]) -> tuple[list[str], list[str]]:
 
 
 def commit_own(script: str, allow: list[str], *, dry_run: bool = False,
-               producer_rc: int = 0) -> int:
+               producer_rc: int = 0, since: float | None = None) -> int:
     """把「本輪自己寫出的產物」就地提交並推送（唯一出口 auto_push.py）。
 
     參數：
@@ -129,13 +137,14 @@ def commit_own(script: str, allow: list[str], *, dry_run: bool = False,
         allow        逐字宣告的產物清單／樣式（必填，空清單＝拒絕）
         dry_run      只列印不落地
         producer_rc  producer 本體 rc；推送成功時回傳它，讓本體故障不被靜默
+        since        本輪起跑時刻（預設＝本模組 import 時刻；見上方呼叫端契約）
     回傳：推送結果（0＝已上線並驗 remote sha；非 0＝失敗，cron 端要看得到）
     """
     if not allow:
         sys.stderr.write("⛔ self_publish 拒絕：allowlist 為空（不得用空清單放行整棵樹）\n")
         return 2
 
-    keep, drop = claim_files(allow)
+    keep, drop = claim_files(allow, since)
     if drop:
         print("🚫 不認領：" + "；".join(drop[:8]) + ("…" if len(drop) > 8 else ""))
     if not keep:

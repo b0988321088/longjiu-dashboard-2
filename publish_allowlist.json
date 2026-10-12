@@ -33,6 +33,16 @@
    "evidence": "近 3 日出現 2 次單獨變更（成本帳 append 路徑）",
    "risk": "low",
    "note": "僅追加式成本紀錄檔，無對外呈現"
+  },
+  {
+   "label": "Notion 共享上下文（單檔，純資料）",
+   "allow": [
+    "notion_shared_context.md"
+   ],
+   "producer": "notion_context_loader.py",
+   "evidence": "2026-10-13 使用者裁決（受控擴充白名單）：該檔每日由 notion_context_loader.py 重產，內容僅為既有真值（snapshot.json／schedule_events.json／notion_bridge/<日期>_strategy_handbook.md）的彙整，無新數字、無治理語意、無對外呈現頁面。",
+   "risk": "low",
+   "note": "逐條登記單一精確路徑（無通配符、無目錄）；未登記路徑一律真 CIO 審查不變。"
   }
  ]
 }

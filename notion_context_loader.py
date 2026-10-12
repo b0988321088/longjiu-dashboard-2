@@ -2,6 +2,8 @@
 import datetime
 import json
 import os
+import sys          # 2026-10-13：self_publish 的呼叫端需要（實跑才發現原檔未 import → NameError）
+from self_publish import commit_own   # 必須在「開始做事之前」import：T0 才等於本輪起跑（模組契約）
 
 def load_context():
     today = datetime.date.today()
@@ -59,5 +61,4 @@ if __name__ == "__main__":
     load_context()
     # 2026-10-12 TD-20261012-25 延伸：本支產物過去只留工作區（notion_shared_context.md 每晚
     # 被判「已追蹤未提交」）→ 跑完就地提交自家產物（純資料），推送走 auto_push 唯一出口。
-    from self_publish import commit_own       # noqa: E402
     sys.exit(commit_own("notion_context_loader.py", ["notion_shared_context.md"]))

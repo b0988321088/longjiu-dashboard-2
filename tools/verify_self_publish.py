@@ -202,9 +202,23 @@ def case_g():
     check("G2 其他目錄同名樣式不受影響", dirty(d, "other/2026-10-12_thing.md"))
 
 
+# ---- H：起跑時刻契約（since= 覆寫）----------------------------------------
+def case_h():
+    d = new_sandbox("H")
+    baseline(d, {"cost_data.json": "old"})
+    f = d / "cost_data.json"
+    f.write_text("本輪寫的", encoding="utf-8", newline="\n")      # 先寫檔（mtime=now）
+    mod = load(d, "H")                                          # 之後才載入 → T0 晚於 mtime
+    h0 = head(d)
+    rc = mod.commit_own("probe_h.py", ["cost_data.json"])
+    check("H1 模組晚於產物載入 → 不認領（契約）", head(d) == h0 and push_calls(d) == [], f"rc={rc}")
+    rc = mod.commit_own("probe_h.py", ["cost_data.json"], since=f.stat().st_mtime - 1)
+    check("H2 明確傳入 since= → 可認領", changed_in_head(d) == ["cost_data.json"], f"rc={rc}")
+
+
 if __name__ == "__main__":
     print(f"self_publish 沙箱自測（{ROOT}）")
-    for fn in (case_a, case_b, case_c, case_d, case_e, case_f, case_g):
+    for fn in (case_a, case_b, case_c, case_d, case_e, case_f, case_g, case_h):
         fn()
     print(f"\n結果：{'✅ 全部通過' if not FAILS else '❌ 失敗 ' + str(FAILS)}")
     sys.exit(1 if FAILS else 0)

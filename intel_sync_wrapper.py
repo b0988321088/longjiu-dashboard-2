@@ -2,6 +2,7 @@
 """intel_sync_wrapper.py — 合併 Hunter情報 + Notion戰略手稿同步"""
 import subprocess, sys, time
 from pathlib import Path
+from self_publish import commit_own   # 必須在「開始做事之前」import：T0 才等於本輪起跑（模組契約）
 from logging_config import get_logger
 logger = get_logger("intel_sync_wrapper")
 
@@ -29,5 +30,4 @@ logger.info("✅ 情報同步完成")
 
 # 2026-10-12 TD-20261012-25 延伸：notion_bridge 的戰術手稿（notion_bridge/<日期>_strategy_handbook.md）
 # 過去只留工作區 → 每晚被判「已追蹤未提交」。跑完就地提交自家產物（純資料），走 auto_push 唯一出口。
-from self_publish import commit_own       # noqa: E402
 sys.exit(commit_own("intel_sync_wrapper.py", ["notion_bridge/*.md"]))

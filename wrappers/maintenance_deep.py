@@ -7,6 +7,9 @@
 被插入更正聲明的舊日期報告頁），22:40 收工稽核每晚判「已追蹤未提交」。
 改為跑完就地提交自家產物（純資料，逐字宣告清單；判斷與 cost_watch_close 同一套：
 只 stage 自家檔案、無變更不 commit、推送走 auto_push.py 唯一出口）。
+
+2026-10-13 修正（實跑踩到）：self_publish 的「本輪起跑時刻」＝該模組被 import 的時刻，
+必須**在執行 deep 之前** import（首版放在 deep 之後 → T0 晚於產物 mtime → 一律不認領）。
 """
 import os
 import subprocess
@@ -27,13 +30,13 @@ if not os.path.exists(TARGET):
     sys.exit(1)
 
 sys.path.insert(0, REPO)
-r = subprocess.run([sys.executable, TARGET, "deep"], cwd=REPO)
-
 try:
-    from self_publish import commit_own
+    from self_publish import commit_own      # 必須在 deep 之前 import（見模組呼叫端契約）
 except Exception as e:                                     # import 失敗＝自身產出漏出風險
     sys.stderr.write(f"⛔ 無法載入 self_publish（{e}）→ 產物未提交，需人工處理\n")
-    sys.exit(1 if r.returncode == 0 else r.returncode)
+    sys.exit(1)
+
+r = subprocess.run([sys.executable, TARGET, "deep"], cwd=REPO)
 
 # 推送失敗要讓 cron 看得到（rc 原樣帶回），deep 本體失敗也不得被靜默
 sys.exit(commit_own("maintenance_deep.py", OWN, producer_rc=r.returncode))

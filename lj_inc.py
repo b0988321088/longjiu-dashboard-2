@@ -1,7 +1,17 @@
-import json
-import os
-import sys
-import datetime
+"""lj_inc.py — 事件殘留的**唯一 owner**（2026-10-13 使用者裁決）。
+
+責任邊界（單一寫入者）：
+  · 本檔負責 `inc_events.jsonl` 的登記與寫入範圍；其他產線「只負責產生事件」，
+    不得另建競爭的認領機制（shared 機制＝回報事件、由本檔落地）。
+  · `error_register.md` 目前仍由 four_source_sync.py（登記新 INC）與
+    scripts/components/cleanup_utils.py（週深清歸檔）直接改寫 → owner 尚未收斂到本檔，
+    列為已揭露的未完成項，不在同一輪擴大改動範圍（見 2026-10-13 驗收報告）。
+
+⚠️ 發布邊界（不得繞過）：`inc_events.jsonl` 與 `error_register.md` 都在
+publish_gate.py 的 NEVER_AUTO_EXACT —— 「一律強制真 CIO 審查，不得由 AUTO 通道發布」。
+因此這兩個檔**不可能**靠自身產出就地提交自動上線（會拿到 rc=3），這條安全線不動；
+要讓它們自動收斂需另一次裁決，不在本輪範圍。
+"""
 
 INC_EVENTS_FILE = 'inc_events.jsonl'
 
