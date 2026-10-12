@@ -21,6 +21,8 @@ import re
 import sys
 from pathlib import Path
 
+import fund_caliber as _fcal  # 2026-10-12 基金市值口徑單一來源（鉅亨權威值）；別名避開本檔既有區域變數 _fc
+
 BASE = Path(__file__).resolve().parent
 SOT_KEY = "thresholds_2026_0915"
 
@@ -71,7 +73,10 @@ def check_daily_report_row(snap: dict, errs: list[str]) -> str:
     def _grp(_name):
         return sum(float(v) for k, v in (_fb.get(_name) or {}).items() if k != "note")
 
-    _ju, _ca = _grp("一般申購") + _grp("自由Pay"), _grp("國泰直購")
+    # 2026-10-12 總收尾（TD-20261012-26 根因）：鉅亨值改取「平台帳戶總覽」權威（見 fund_caliber.py）。
+    # 舊寫法直接加總逐檔字典 —— 自由Pay 逐檔在明細未提供時會停更（10/08 497,695 vs 10/12 495,171
+    # 差 2,524），拿舊值當真值會讓日報行與門檻檢查每晚假 FAIL。
+    _ju, _ca = _fcal.heng_total(snap), _grp("國泰直購")
     import datetime as _dt
     _rep = BASE / f"daily_report_v2_{_dt.date.today().isoformat()}.html"
     if not _rep.exists():
@@ -299,7 +304,19 @@ def main() -> int:
         _fb = snap.get("funds_breakdown") or {}
         def _grp(name):
             return sum(float(v) for k, v in (_fb.get(name) or {}).items() if k != "note")
-        _ju, _ca = _grp("一般申購") + _grp("自由Pay"), _grp("國泰直購")
+        # 2026-10-12 總收尾（TD-20261012-26 根因）：鉅亨值＝平台帳戶總覽權威（見 fund_caliber.py）。
+        # 差異不得用容差吃掉：逐檔字典與權威值不一致時必須被點名，且僅在 snapshot 有
+        # funds_stale_notice 記載時才視為已解釋，否則視為未記載的靜默漂移（fail-closed）。
+        _ju, _ca = _fcal.heng_total(snap), _grp("國泰直購")
+        _ju_dict = _fcal.heng_dict_sum(snap)
+        if abs(_ju_dict - _ju) > 1:
+            if _fcal.heng_explained(snap):
+                print(f"ℹ️ 基金口徑：自由Pay 逐檔字典 {_ju_dict:,.0f} vs 平台總覽 {_ju:,.0f}"
+                      f"（差 {_ju_dict - _ju:,.0f}）— 已於 snapshot.funds_stale_notice 記載；"
+                      f"權威值＝{_fcal.heng_source(snap)}")
+            else:
+                errs.append(f"基金口徑：自由Pay 逐檔字典 {_ju_dict:,.0f} ≠ 平台總覽 {_ju:,.0f}"
+                            f"（差 {_ju_dict - _ju:,.0f}）且 snapshot 無 funds_stale_notice 記載 → 不得靜默")
         _fc = snap.get("funds_cathay")
         _fcm = snap.get("funds_cathay_market_value")
         _fcb = sum(float(v) for v in (snap.get("funds_cathay_breakdown") or {}).values())

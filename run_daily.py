@@ -19,6 +19,7 @@ from logging_config import get_logger
 logger = get_logger("run_daily")
 import daily_intel as mi_mod
 import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
+import fund_caliber as _fcal  # 2026-10-12 基金市值口徑單一來源（鉅亨＝平台總覽權威，見模組說明）
 from daily_intel import load_daily_analysis
 from scripts.components.report_utils import _fmt_rent_status, _generate_schedule_html
 from scripts.components.volatility_monitor import make_volatility_report
@@ -304,6 +305,10 @@ def calibrate_sources() -> dict:
         # 永遠收不到 None、fail-closed 形同虛設。缺鍵一律回 None。
         "dividend_month_expected": snap.get("dividend_month_expected"),
         "funds_breakdown": snap.get("funds_breakdown", {}),
+        # 2026-10-12 總收尾（TD-20261012-26）：鉅亨權威值（平台帳戶總覽）隨 tv 傳遞。
+        # 渲染端不得自行加總逐檔字典（自由Pay 逐檔可能停更 → 印出與 funds 總值不閉合的數字）。
+        "funds_heng_authoritative": int(round(_fcal.heng_total(snap))),
+        "funds_heng_source": _fcal.heng_source(snap),
         "professional_investor": snap.get("professional_investor", {}),
         "rhythm08": snap.get("rhythm08", {}),
         # Liabilities from snapshot.json
@@ -1267,7 +1272,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-lead">房租月收 <strong>{_nn(_rent_tgt)} TWD</strong>〔常態應收；當月已收 {tv['rent_monthly']:,}、待收 {tv.get('rent_pending', 0):,}〕，覆蓋月支出 {f"{_rent_cov:.0f}%" if _rent_cov is not None else "⚠️ 缺真值"}。{_fmt_rent_status(tv)}{_dbs_note_ph}</p>
 
     <h3>基金部位（鉅亨網 + 國泰基金）</h3>
-    <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong> ＝ 鉅亨網 <strong>{sum(v for k,v in tv.get('funds_breakdown',{}).get('一般申購',{}).items() if k != 'note') + sum(v for k,v in tv.get('funds_breakdown',{}).get('自由Pay',{}).items() if k != 'note'):,}</strong> ＋ 國泰基金 <strong>{sum(v for k,v in tv.get('funds_breakdown',{}).get('國泰直購',{}).items() if k != 'note'):,}</strong>（富達 {tv.get('funds_breakdown',{}).get('國泰直購',{}).get('富達全球動能多元B股C月配息美元',0):,} + 聯博 {tv.get('funds_breakdown',{}).get('國泰直購',{}).get('聯博全球多元收益AD美元月配',0):,} + B11 {tv.get('funds_breakdown',{}).get('國泰直購',{}).get('貝萊德智慧數據收益成長B11-美元-強化穩定月配息',0):,}）。本月已收配息：{tv['fund_dividend_monthly']:,} TWD。{_fund_detail}</p>
+    <p class="text-lead">基金總市值 <strong>{tv.get('funds',0):,} TWD</strong> ＝ 鉅亨網 <strong>{tv.get('funds_heng_authoritative', 0):,}</strong> ＋ 國泰基金 <strong>{sum(v for k,v in tv.get('funds_breakdown',{}).get('國泰直購',{}).items() if k != 'note'):,}</strong>（富達 {tv.get('funds_breakdown',{}).get('國泰直購',{}).get('富達全球動能多元B股C月配息美元',0):,} + 聯博 {tv.get('funds_breakdown',{}).get('國泰直購',{}).get('聯博全球多元收益AD美元月配',0):,} + B11 {tv.get('funds_breakdown',{}).get('國泰直購',{}).get('貝萊德智慧數據收益成長B11-美元-強化穩定月配息',0):,}）。本月已收配息：{tv['fund_dividend_monthly']:,} TWD。{_fund_detail}</p>
   </div>
 
   <!-- 3/5 保單接力引擎 -->
