@@ -10843,6 +10843,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261012232347-1170",
+    "timestamp": "2026-10-12T23:23:47.009903+08:00",
+    "agent": "Hermes",
+    "task": "總收尾後維持 OPEN／BLOCKED 項目（有證據）",
+    "summary": "①TD-20261012-25（P2/OPEN，範圍縮小）：工作區殘留以「不需本輪提交」為處置者＝23 已追蹤被改（各 producer 擁有，含 1 檔 BENIGN_DIRTY 白名單）、18 reviews/ 審查產物（政策：NEVER_AUTO_PREFIX）、_bak 備份目錄、_pages_fetched.html 與 pending_decisions.lock（runtime/暫存）。要把這些變乾淨需政策授權：把 runtime/暫存類納入 .gitignore、或執行一次「基線復位」把當日產物入庫——兩者都會改變稽核所見，依 2026-10-12 裁決（不授權白名單、不得為全綠改標準）不自行執行。②3 支 tools/health_alert_check*.py 未入庫但已驗未被實碼 import（非生產依賴），維持不動。③P1 11 張與其餘 OPEN 卡需另批授權逐張裁決。④資安 P0 維持獨立安全軌，未混入本輪、未標 CLOSED。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-12T23:20:03.140759"
