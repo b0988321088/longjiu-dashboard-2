@@ -10688,50 +10688,56 @@
       "summary": "2026-10-12 裁決：達標前停用乾粉全數部署；依實際入帳盈餘逐步補足 72,637（月盈餘 66,758 ≈1.1 個月），不預先計入未入帳盈餘；達標後再評估恢復部分部署；指定用途款 200,000＋700,000 不得挪用。落地 rotation_engine 現金累積閘門＋snapshot.cash_accumulation_policy（單一來源）；commit 9d4e37e8/tree 1ed69e91b426，CIO APPROVE 0.92 blocking=[]，已推 clean-main，線上已驗（raw＋Pages）",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261012170627-1153",
+      "timestamp": "2026-10-12T17:06:27.430846+08:00",
+      "agent": "龍九",
+      "task": "PG-20261011 v3 閘門修復＋radar 落版（純資料批次授權政策）",
+      "summary": "裁決 A（保守）：不動 publish_allowlist.json，radar 產物不登記為可自動發布；公開首頁 index.html 維持必經真 CIO 審查。radar 排程（週一/三 16:15）每次執行需一次人工 CIO 審查，未審時閘門以 rc=3 明確拒絕（不再有落 AUTO 章卻無路可走的死鎖）。已上線：36ca3cc1（publish_gate v3 兩側單一真值＋patterns/producer 機制＋fail-closed 規格檢查，CIO APPROVE blocking=0，tree 8112efa4）；e27122e4（radar 三檔真 CIO 審查落版，tree 7fc4158e）。線上 5/5 逐位元相同、本機=遠端、未推 0。殘留：技術債卡 12 張待下一批送審（含 TD-20261012-12 P1 公開面遮罩帳號/餘額）。",
+      "status": "completed",
+      "source": "Telegram 裁決 2026-10-12"
+    },
+    {
+      "id": "mem-20261012171635-1154",
+      "timestamp": "2026-10-12T17:16:35.326539+08:00",
+      "agent": "龍九",
+      "task": "本輪交付 CLOSED（PG-20261011 v3 閘門＋radar 落版＋裁決入庫）",
+      "summary": "使用者裁決 2026-10-12：本輪交付 CLOSED，兩項既有殘留另案追蹤、不阻擋結案。已驗收：三顆 commit 36ca3cc1（publish_gate v3）→ e27122e4（radar 三檔）→ c6eb649e（決策入庫），CIO 審查全 APPROVE、blocking=0；決策紀錄 1154 筆、最新紀錄已在線上驗證；未推 0／落後 0／待推送範圍 0。殘留處置：①15 檔未提交變更另案盤點（禁止擅自覆寫或混入本輪）②基金口徑差額 2,524 元另案查核（不修改既有真值）③13 張技術債卡保留至下一批送審；TD-20261012-02、TD-20261012-14 及公開面遮罩問題（TD-20261012-12 P1）依 P1 追蹤。三項 CIO 透明揭露保留原始審查與決策紀錄、不為文字修飾重做已核准 tree。後續原則：不重做已通過的閘門／radar／決策入庫；不因既有殘留阻擋已驗收交付；下一批優先處理 P1 技術債（尤其公開面帳號/餘額遮罩）；新批次仍須範圍隔離、獨立 CIO 審查、發布後驗證。CLOSED 僅代表本輪交付完成，不代表 repo 所有殘留事項清零。",
+      "status": "completed",
+      "source": "Telegram 裁決 2026-10-12"
+    },
+    {
+      "id": "mem-20261012185846-1155",
+      "timestamp": "2026-10-12T18:58:46.057782+08:00",
+      "agent": "Hermes",
+      "task": "PG-20261012 v4 決策入庫 append-only 受限車道（有條件核准 → 實作／測試／獨立審查／發布完成）",
+      "summary": "使用者 2026-10-12 有條件核准設計後落地：①publish_gate 新增 append-only 受限車道——逐字限 dashboard_decisions.json＋data/decision_intake_receipts.jsonl、僅 A/M、決策檔只追加且既有頂點（含 meta）逐位元不變、收據檔為舊內容逐位元前綴延伸、新增決策與 ok=true 收據一對一互綁；超範圍／驗證失敗／混程式碼一律回真 CIO。②授權不靠 producer 自稱，靠與身分無關的內容不變量（自稱同名但內容非追加→仍拒）。③不變量未通過＝降級真 CIO＋具名 advisory（不硬擋，避免「合法修正無路」的新死鎖）。④修掉實跑才發現的第二處 divergence：auto_record.force_cio_paths 不得以路徑名二次推翻閘門結論。證據：單元測試 126/126（新增 34 項正反例）；沙盒全鏈路實跑（真 producer＋真 auto_push、remote 換本地空 repo）合法追加→補落 RECORD→閘門放行→推送→ls-remote 一致，篡改既有決策→不變量未通過並指名『既有決策紀錄被修改」→拒且 remote 未污染；獨立審查兩輪（Pollinations，非 DS 非 Google）：首輪 REJECT 3 條 → 修 F3（classify 收斂範圍過寬，加 AO-N17／AO-P5）→ 次輪 APPROVE blocking=[]。commit ca3cd2f1／cb0f96cd／3526ecba（同範圍另含一顆並行產線資料 commit 0e600fc0，一併送審以免再留推不動的 commit），已推 clean-main（遠端 3526ecba、待推 0）。⏳ 待使用者確認：殘餘風險＝本車道對這兩檔能驗『格式是純追加』、不能驗『內容為真』（偽造一筆不存在的裁決仍可過格式檢查）——即授權門檻由『真 CIO 審查內容』降為『格式不變量審查』，已於兩份審查紀錄與本裁決明文揭露。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261012190542-1156",
+      "timestamp": "2026-10-12T19:05:42.814280+08:00",
+      "agent": "Hermes",
+      "task": "240 萬押標金取消（真值＋排程＋質押句去寫死；兩輪獨立審查 APPROVE）",
+      "summary": "使用者 2026-10-12 裁決：240 萬押標金取消。落地：①snapshot.標案押標金_1010 新增 狀態＝❌ 已取消（2026-10-12 使用者裁決）＋裁示_20261012；既有鍵（金額/用途/來源/時序/性質/資金成本/裁示_0912）全數保留不刪，歷史不動。②snapshot.cash_need_90d._條件式事件備註 改為已取消＋沿革（9/25 保證函方向→9/29 先鎖標的→10/4 條件式、不預先辦理→10/12 取消）。③schedule_events.json：該列移除押標金金額與語意，僅保留美債 ladder 待辦（未刪該列、未動 2026-09-29 歷史事件）；全庫僅 check_dividend_caliber 讀該檔作字串比對，無數值依賴。④pledge_status.py：質押句原寫死『10月標案押標金不預留，9月底評估』→ 改由 snapshot 狀態欄組出（新增 _bid_clause；狀態缺漏時明確示警）。驗證：tools/verify_cash_need_90d_guard.py 5/5 PASS（若押標金被併入 90 天需求→立即 FAIL）；pledge_status 三樣式實跑顯示『10 月標案押標金：❌ 已取消（2026-10-12 使用者裁決）』；獨立審查兩輪（CIO-Pollinations，非 DS 非 Google）：首輪 REJECT（排程列殘留押標金語意/status）→ 修後次輪 APPROVE blocking=[]。commit 6554c90f（tree f061b4ab），已推 clean-main、待推 0。90 天需求／覆蓋率／缺口／燈號：無任何變動（押標金本就不在 A 區分母）。",
+      "status": "completed",
+      "source": "user"
     }
 ,
   {
-    "id": "mem-20261012170627-1153",
-    "timestamp": "2026-10-12T17:06:27.430846+08:00",
-    "agent": "龍九",
-    "task": "PG-20261011 v3 閘門修復＋radar 落版（純資料批次授權政策）",
-    "summary": "裁決 A（保守）：不動 publish_allowlist.json，radar 產物不登記為可自動發布；公開首頁 index.html 維持必經真 CIO 審查。radar 排程（週一/三 16:15）每次執行需一次人工 CIO 審查，未審時閘門以 rc=3 明確拒絕（不再有落 AUTO 章卻無路可走的死鎖）。已上線：36ca3cc1（publish_gate v3 兩側單一真值＋patterns/producer 機制＋fail-closed 規格檢查，CIO APPROVE blocking=0，tree 8112efa4）；e27122e4（radar 三檔真 CIO 審查落版，tree 7fc4158e）。線上 5/5 逐位元相同、本機=遠端、未推 0。殘留：技術債卡 12 張待下一批送審（含 TD-20261012-12 P1 公開面遮罩帳號/餘額）。",
-    "status": "completed",
-    "source": "Telegram 裁決 2026-10-12"
-  }
-,
-  {
-    "id": "mem-20261012171635-1154",
-    "timestamp": "2026-10-12T17:16:35.326539+08:00",
-    "agent": "龍九",
-    "task": "本輪交付 CLOSED（PG-20261011 v3 閘門＋radar 落版＋裁決入庫）",
-    "summary": "使用者裁決 2026-10-12：本輪交付 CLOSED，兩項既有殘留另案追蹤、不阻擋結案。已驗收：三顆 commit 36ca3cc1（publish_gate v3）→ e27122e4（radar 三檔）→ c6eb649e（決策入庫），CIO 審查全 APPROVE、blocking=0；決策紀錄 1154 筆、最新紀錄已在線上驗證；未推 0／落後 0／待推送範圍 0。殘留處置：①15 檔未提交變更另案盤點（禁止擅自覆寫或混入本輪）②基金口徑差額 2,524 元另案查核（不修改既有真值）③13 張技術債卡保留至下一批送審；TD-20261012-02、TD-20261012-14 及公開面遮罩問題（TD-20261012-12 P1）依 P1 追蹤。三項 CIO 透明揭露保留原始審查與決策紀錄、不為文字修飾重做已核准 tree。後續原則：不重做已通過的閘門／radar／決策入庫；不因既有殘留阻擋已驗收交付；下一批優先處理 P1 技術債（尤其公開面帳號/餘額遮罩）；新批次仍須範圍隔離、獨立 CIO 審查、發布後驗證。CLOSED 僅代表本輪交付完成，不代表 repo 所有殘留事項清零。",
-    "status": "completed",
-    "source": "Telegram 裁決 2026-10-12"
-  }
-,
-  {
-    "id": "mem-20261012185846-1155",
-    "timestamp": "2026-10-12T18:58:46.057782+08:00",
+    "id": "mem-20261012190952-1157",
+    "timestamp": "2026-10-12T19:09:52.589483+08:00",
     "agent": "Hermes",
-    "task": "PG-20261012 v4 決策入庫 append-only 受限車道（有條件核准 → 實作／測試／獨立審查／發布完成）",
-    "summary": "使用者 2026-10-12 有條件核准設計後落地：①publish_gate 新增 append-only 受限車道——逐字限 dashboard_decisions.json＋data/decision_intake_receipts.jsonl、僅 A/M、決策檔只追加且既有頂點（含 meta）逐位元不變、收據檔為舊內容逐位元前綴延伸、新增決策與 ok=true 收據一對一互綁；超範圍／驗證失敗／混程式碼一律回真 CIO。②授權不靠 producer 自稱，靠與身分無關的內容不變量（自稱同名但內容非追加→仍拒）。③不變量未通過＝降級真 CIO＋具名 advisory（不硬擋，避免「合法修正無路」的新死鎖）。④修掉實跑才發現的第二處 divergence：auto_record.force_cio_paths 不得以路徑名二次推翻閘門結論。證據：單元測試 126/126（新增 34 項正反例）；沙盒全鏈路實跑（真 producer＋真 auto_push、remote 換本地空 repo）合法追加→補落 RECORD→閘門放行→推送→ls-remote 一致，篡改既有決策→不變量未通過並指名『既有決策紀錄被修改」→拒且 remote 未污染；獨立審查兩輪（Pollinations，非 DS 非 Google）：首輪 REJECT 3 條 → 修 F3（classify 收斂範圍過寬，加 AO-N17／AO-P5）→ 次輪 APPROVE blocking=[]。commit ca3cd2f1／cb0f96cd／3526ecba（同範圍另含一顆並行產線資料 commit 0e600fc0，一併送審以免再留推不動的 commit），已推 clean-main（遠端 3526ecba、待推 0）。⏳ 待使用者確認：殘餘風險＝本車道對這兩檔能驗『格式是純追加』、不能驗『內容為真』（偽造一筆不存在的裁決仍可過格式檢查）——即授權門檻由『真 CIO 審查內容』降為『格式不變量審查』，已於兩份審查紀錄與本裁決明文揭露。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261012190542-1156",
-    "timestamp": "2026-10-12T19:05:42.814280+08:00",
-    "agent": "Hermes",
-    "task": "240 萬押標金取消（真值＋排程＋質押句去寫死；兩輪獨立審查 APPROVE）",
-    "summary": "使用者 2026-10-12 裁決：240 萬押標金取消。落地：①snapshot.標案押標金_1010 新增 狀態＝❌ 已取消（2026-10-12 使用者裁決）＋裁示_20261012；既有鍵（金額/用途/來源/時序/性質/資金成本/裁示_0912）全數保留不刪，歷史不動。②snapshot.cash_need_90d._條件式事件備註 改為已取消＋沿革（9/25 保證函方向→9/29 先鎖標的→10/4 條件式、不預先辦理→10/12 取消）。③schedule_events.json：該列移除押標金金額與語意，僅保留美債 ladder 待辦（未刪該列、未動 2026-09-29 歷史事件）；全庫僅 check_dividend_caliber 讀該檔作字串比對，無數值依賴。④pledge_status.py：質押句原寫死『10月標案押標金不預留，9月底評估』→ 改由 snapshot 狀態欄組出（新增 _bid_clause；狀態缺漏時明確示警）。驗證：tools/verify_cash_need_90d_guard.py 5/5 PASS（若押標金被併入 90 天需求→立即 FAIL）；pledge_status 三樣式實跑顯示『10 月標案押標金：❌ 已取消（2026-10-12 使用者裁決）』；獨立審查兩輪（CIO-Pollinations，非 DS 非 Google）：首輪 REJECT（排程列殘留押標金語意/status）→ 修後次輪 APPROVE blocking=[]。commit 6554c90f（tree f061b4ab），已推 clean-main、待推 0。90 天需求／覆蓋率／缺口／燈號：無任何變動（押標金本就不在 A 區分母）。",
+    "task": "押標金取消連帶：pending 三卡收斂（歸檔／前置解除／P0-2 轉已完成）",
+    "summary": "因 2026-10-12「240 萬押標金取消」，pending_decisions.json（日報第 5 章來源）三處連帶收斂：①2026-09-06 美債 ladder 卡保留（ladder 本身仍待辦、非押標金），但『延至 10 月標案結果』前置已消滅 → status_raw 記明、due_date 10/31→null＋needs_due_date=true 須重定；②2026-09-28「押標金 240 萬來源定案」標的整體失效 → 移入 pending_decisions_archive.json（🗑 已清理(2026-10-12)＋cleanup_reason＋cleanup_at），正本移除（先歸檔不刪）；③PEND-20260930-02「P0-2 資金鏈閉環」高息負債 9/30–10/1 已全數清償 4,980,624，唯一殘餘掛載＝押標金條件式事件（已取消）→ 四態轉『已完成』。驗證：check_dividend_caliber ✅四態／✅schema 五欄；pending_engine.STATUS_ENUM 自查 0 筆不合規；未動其他 17 卡。獨立審查 APPROVE/0.92/blocking=[]。commit a4e5801a（tree 152e91e8）。",
     "status": "completed",
     "source": "user"
   }
   ],
   "meta": {
-    "updated_at": "2026-10-12T13:26:49.115075"
+    "updated_at": "2026-10-12T19:05:51.787629"
   },
   "last_updated": "2026-10-12T18:00:00+08:00",
   "2026-09-29": [
