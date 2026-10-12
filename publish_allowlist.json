@@ -3,6 +3,18 @@
  "note": "AUTO 發布白名單：以『變更檔案集合』為鍵，不以腳本名稱為鍵 —— 呼叫端無法自稱取得授權。任何未命中此表者一律走真 CIO 審查。特殊類別（reviews/、治理紀錄、備份檔、程式檔、logs/）永遠不得自動發布。",
  "entries": [
   {
+   "label": "決策入庫（append-only 受限，僅此兩檔）",
+   "allow": [
+    "dashboard_decisions.json",
+    "data/decision_intake_receipts.jsonl"
+   ],
+   "append_only": true,
+   "producer": "append_dashboard_decisions.py",
+   "evidence": "2026-10-12 實證：入庫 commit 39c59086 為純追加（decisions +1、收據 +1 行、meta 逐位元不變），卻因兩檔在 NEVER_AUTO_EXACT／NEVER_AUTO_PREFIX 內而永久無章 → 卡住整段推送範圍。使用者 2026-10-12 有條件核准設計。",
+   "risk": "medium",
+   "note": "放行條件不靠 producer 自稱，而由 publish_gate 逐 commit 重算不變量：變更集合逐字限於這兩檔、僅允許 A/M、決策檔只追加且既有頂點（含 meta）逐位元不變、收據檔為舊內容逐位元前綴延伸、新增決策與 ok=true 收據一對一互綁、ok=false 收據不得對應已存在的 id。任一不符 → APPEND_ONLY_VIOLATION 直接拒。"
+  },
+  {
    "label": "AI 成本帳（digest / close）",
    "allow": [
     "cost.html",

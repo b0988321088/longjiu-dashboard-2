@@ -63,6 +63,23 @@ CODE_SUFFIX = (".py", ".sh", ".bat", ".ps1", ".cmd", ".toml", ".yml", ".yaml",
                ".js", ".ts", ".sql", ".json5", ".ini", ".conf", ".cfg", ".xml",
                ".properties", ".exe", ".bin", ".jar", ".so", ".dll", ".dylib", ".msi")
 
+# ---------------------------------------------- append-only 受限車道（PG-20261012 v4）
+# 使用者 2026-10-12 裁決（有條件核准設計）：
+#   dashboard_decisions.json 與 data/decision_intake_receipts.jsonl 是決策權威紀錄，
+#   屬 NEVER_AUTO_EXACT／NEVER_AUTO_PREFIX（永不得自動發布）；但 append_dashboard_decisions.py
+#   每筆入庫都會產生一顆「純資料追加」commit，該 commit 永遠拿不到真 CIO 章 →
+#   留在 origin/<branch>..HEAD 上會讓整段範圍對所有 producer 變 CIO（推不動的 commit＝產線死鎖）。
+#
+#   裁決：不放寬整個決策資料目錄、不取消 CIO 審查，只開一條「受限自動車道」——
+#     ① 逐字限定這兩條路徑（不得含樣式、不得夾帶其他路徑）
+#     ② 條目必須標明 producer
+#     ③ 放行前由閘門逐 commit 重算內容不變量（不靠呼叫端自稱的名字）
+#     ④ 任一不變量不符 → 直接拒絕（fail-closed），不靜默降級為 CIO 放行
+APPEND_ONLY_PATHS = ("dashboard_decisions.json", "data/decision_intake_receipts.jsonl")
+DECISIONS_PATH, RECEIPTS_PATH = APPEND_ONLY_PATHS
+APPEND_ONLY_DECISION_KEYS = ("id", "timestamp", "agent", "task", "summary", "status", "source")
+INDEX_REV = ":0"  # git 索引（staged）內容的 revision spec
+
 
 def _git(base: Path, args: list[str], timeout: int = 180) -> subprocess.CompletedProcess:
     return subprocess.run(["git", *args], cwd=str(base), capture_output=True, text=True, timeout=timeout)
@@ -251,6 +268,16 @@ def load_allowlist(base: Path, ref: str = "HEAD") -> tuple[dict | None, str]:
         for it in (e.get("allow") or []):
             if "*" in str(it):
                 return None, f"allow 為字面路徑、不得含 '*'（需要樣式請改用 patterns）：{it}"
+        # append_only 受限車道（PG-20261012 v4）：唯一能逐字列出受限兩檔的條目型態。
+        # 條件缺一即整份白名單不可用（fail-closed），不做「忽略該條目」的靜默降級。
+        if e.get("append_only") is True:
+            if not str(e.get("producer") or "").strip():
+                return None, f"append_only 條目必須標明 producer（產物歸屬）：{e.get('label')}"
+            for it in items:
+                if "*" in str(it) or _norm(it) not in APPEND_ONLY_PATHS:
+                    return None, (f"append_only 條目只能逐字列出受限兩檔、"
+                                  f"不得含樣式或夾帶其他路徑（{e.get('label')}）：{it}")
+            continue  # 兩檔本在 NEVER_AUTO 內；僅此受限車道下放行，其餘檢查不適用
         if not str(e.get("producer") or "").strip() and "patterns" in e:
             return None, f"含 patterns 的條目必須標明 producer（產物歸屬）：{e.get('label')}"
         for it in items:
@@ -309,26 +336,270 @@ def is_auto(rec: dict) -> bool:
     return str(rec.get("reviewer") or "").startswith(AUTO_PREFIX)
 
 
+# ------------------------------------------------- append-only 不變量驗證器
+# 只驗「內容事實」，不驗「誰說的」：呼叫端自稱 producer／--script 名稱一律不採信。
+
+def _git_bytes(base: Path, args: list[str], timeout: int = 180) -> subprocess.CompletedProcess:
+    """取 blob 專用：**不可**用 text=True（換行轉換會讓逐位元比對失真）。"""
+    return subprocess.run(["git", *args], cwd=str(base), capture_output=True, timeout=timeout)
+
+
+def _blob(base: Path, rev: str, path: str) -> bytes | None:
+    """rev 內容的 path 原始位元組；不存在／讀不到回 None。rev=INDEX_REV 讀索引。"""
+    spec = f"{INDEX_REV}:{path}" if rev == INDEX_REV else f"{rev}:{path}"
+    r = _git_bytes(base, ["show", spec])
+    return r.stdout if r.returncode == 0 else None
+
+
+def _commit_changed(base: Path, rev: str) -> tuple[dict[str, str] | None, str]:
+    r = _git(base, ["diff-tree", "--no-commit-id", "--name-status", "-M", "-r", rev])
+    if r.returncode != 0:
+        return None, f"讀 {rev[:12]} 變更清單失敗：{(r.stderr or '').strip()[:80]}"
+    out: dict[str, str] = {}
+    for line in r.stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+        st = parts[0][:1]
+        path = parts[2] if (st == "R" and len(parts) >= 3) else parts[1]
+        out[_norm(path)] = st
+    return out, "ok"
+
+
+def _staged_changed(base: Path) -> tuple[dict[str, str] | None, str]:
+    r = _git(base, ["diff", "--cached", "--name-status", "-M", "HEAD"])
+    if r.returncode != 0:
+        return None, f"讀 staged 變更清單失敗：{(r.stderr or '').strip()[:80]}"
+    out: dict[str, str] = {}
+    for line in r.stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+        st = parts[0][:1]
+        path = parts[2] if (st == "R" and len(parts) >= 3) else parts[1]
+        out[_norm(path)] = st
+    return out, "ok"
+
+
+def _decision_ids(doc: dict) -> set[str]:
+    return {str(d.get("id")) for d in (doc.get("decisions") or []) if isinstance(d, dict)}
+
+
+def is_append_only_entry(entry: dict | None) -> bool:
+    return bool(entry) and entry.get("append_only") is True
+
+
+def _check_decisions(old_b: bytes | None, new_b: bytes | None) -> tuple[list[str], set[str], set[str]]:
+    """決策檔不變量：只追加、既有內容零變動。回 (reasons, 新增 id, 新檔全部 id)。"""
+    if old_b is None:
+        return ["決策檔在變更前不存在（本車道只允許既有檔追加，不允許新建）"], set(), set()
+    if new_b is None:
+        return ["決策檔被刪除"], set(), set()
+    try:
+        old, new = json.loads(old_b.decode("utf-8")), json.loads(new_b.decode("utf-8"))
+    except Exception as e:  # noqa: BLE001
+        return [f"決策檔非合法 UTF-8 JSON：{str(e)[:80]}"], set(), set()
+    if not isinstance(old, dict) or not isinstance(new, dict):
+        return ["決策檔頂層非物件"], set(), set()
+    rs: list[str] = []
+    for k in old:
+        if k == "decisions":
+            continue
+        if k not in new or new[k] != old[k]:
+            rs.append(f"既有頂層鍵被改動（{k}）——只允許追加 decisions")
+    od, nd = old.get("decisions"), new.get("decisions")
+    if not isinstance(od, list) or not isinstance(nd, list):
+        return rs + ["decisions 非陣列"], set(), set()
+    if len(nd) < len(od):
+        return rs + [f"decisions 筆數減少（{len(od)} → {len(nd)}）"], set(), _decision_ids(new)
+    if nd[:len(od)] != od:
+        rs.append("既有決策紀錄被修改（前綴逐筆不完全相等）")
+    old_ids = {str(d.get("id")) for d in od if isinstance(d, dict)}
+    added_ids: set[str] = set()
+    for d in nd[len(od):]:
+        if not isinstance(d, dict):
+            rs.append("新增決策非物件")
+            continue
+        miss = [k for k in APPEND_ONLY_DECISION_KEYS if not str(d.get(k) or "").strip()]
+        if miss:
+            rs.append(f"新增決策缺必要欄位：{miss}")
+        did = str(d.get("id") or "").strip()
+        if not did:
+            continue
+        if did in added_ids:
+            rs.append(f"新增決策 id 重複：{did}")
+        if did in old_ids:
+            rs.append(f"新增決策 id 與既有紀錄衝突：{did}")
+        added_ids.add(did)
+    if not added_ids and not rs and len(nd) == len(od):
+        rs.append("decisions 無新增（本車道只允許純追加）")
+    return rs, added_ids, _decision_ids(new)
+
+
+def _check_receipts(old_b: bytes | None, new_b: bytes | None, added_ids: set[str],
+                    all_new_ids: set[str], decisions_changed: bool) -> list[str]:
+    """收據檔不變量：既有行零變動（逐位元前綴延伸）＋與決策新增互綁。"""
+    if old_b is None:
+        return ["收據檔在變更前不存在（本車道只允許既有檔追加）"]
+    if new_b is None:
+        return ["收據檔被刪除"]
+    if not new_b.startswith(old_b):
+        return ["既有收據行被修改或刪除（新內容不是舊內容的逐位元前綴延伸）"]
+    tail = new_b[len(old_b):]
+    if not tail.strip():
+        return ["收據檔無新增行"]
+    if not tail.endswith(b"\n"):
+        return ["收據檔新增段未以換行結尾（疑似截斷）"]
+    try:
+        tail_s = tail.decode("utf-8")
+    except Exception as e:  # noqa: BLE001
+        return [f"收據新增段非 UTF-8：{e}"]
+    rs: list[str] = []
+    ok_true: set[str] = set()
+    n_true = 0
+    for ln in tail_s.splitlines():
+        if not ln.strip():
+            continue
+        try:
+            r = json.loads(ln)
+        except Exception as e:  # noqa: BLE001
+            rs.append(f"新增收據行非合法 JSON：{str(e)[:60]}")
+            continue
+        if not isinstance(r, dict):
+            rs.append("新增收據行非物件")
+            continue
+        if not isinstance(r.get("ok"), bool):
+            rs.append("新增收據缺布林 ok 欄位")
+            continue
+        rid = str(r.get("id") or "").strip()
+        if not rid:
+            rs.append("新增收據缺 id")
+            continue
+        if r["ok"]:
+            n_true += 1
+            ok_true.add(rid)
+            if rid not in all_new_ids:
+                rs.append(f"收據 ok=true 但決策檔查無此 id：{rid}")
+        elif rid in all_new_ids:
+            rs.append(f"收據 ok=false 但該 id 存在於決策檔（語意矛盾）：{rid}")
+    if decisions_changed:
+        if ok_true != added_ids:
+            rs.append(f"收據與決策不一致：新增決策 {len(added_ids)} 筆／ok=true 收據 {len(ok_true)} 筆"
+                      f"（決策未落收據 {sorted(added_ids - ok_true)[:3]}、"
+                      f"收據無對應決策 {sorted(ok_true - added_ids)[:3]}）")
+        elif n_true != len(added_ids):
+            rs.append(f"新增決策筆數（{len(added_ids)}）≠ 成功收據行數（{n_true}）")
+    elif ok_true:
+        rs.append(f"僅收據變更卻出現 ok=true（決策檔未同步）：{sorted(ok_true)[:3]}")
+    return rs
+
+
+def _verify_pair(base: Path, old_rev: str, new_rev: str,
+                 changed: dict[str, str]) -> tuple[bool, dict]:
+    """兩檔在 (old_rev → new_rev) 之間的不變量；changed 為該次變更集合。"""
+    d_changed = DECISIONS_PATH in changed
+    r_changed = RECEIPTS_PATH in changed
+    reasons: list[str] = []
+    added_ids: set[str] = set()
+    all_new_ids: set[str] = set()
+    if d_changed:
+        rs, added_ids, all_new_ids = _check_decisions(
+            _blob(base, old_rev, DECISIONS_PATH), _blob(base, new_rev, DECISIONS_PATH))
+        reasons += [f"{DECISIONS_PATH}：{x}" for x in rs]
+    else:
+        nb = _blob(base, new_rev, DECISIONS_PATH)
+        if nb:
+            try:
+                all_new_ids = _decision_ids(json.loads(nb.decode("utf-8")))
+            except Exception:  # noqa: BLE001
+                all_new_ids = set()
+    if r_changed:
+        reasons += [f"{RECEIPTS_PATH}：{x}" for x in _check_receipts(
+            _blob(base, old_rev, RECEIPTS_PATH), _blob(base, new_rev, RECEIPTS_PATH),
+            added_ids, all_new_ids, d_changed)]
+    if d_changed and not r_changed:
+        reasons.append("決策有新增但收據檔未同步變更（每筆入庫必須同輪留收據）")
+    return (not reasons), {"reasons": reasons, "decisions_changed": d_changed,
+                           "receipts_changed": r_changed, "added_decisions": len(added_ids)}
+
+
+def verify_append_only_range(base: Path, range_base: str) -> tuple[bool, dict]:
+    """閘門側：逐 commit 驗整個推送範圍（要發布什麼，就驗什麼）。"""
+    cs = commits_in_range(base, range_base)
+    if not cs:
+        return False, {"mode": "range", "reasons": ["推送範圍為空（無事可做）"], "commits": []}
+    ok_all = True
+    out: list[dict] = []
+    for c in cs:
+        changed, why = _commit_changed(base, c)
+        if changed is None:
+            ok_all = False
+            out.append({"commit": c[:12], "ok": False, "reasons": [why]})
+            continue
+        outside = [p for p in changed if p not in APPEND_ONLY_PATHS]
+        bad_st = [f"{changed[p]}:{p}" for p in changed if changed[p] not in ("A", "M")]
+        if outside or bad_st or not changed:
+            ok_all = False
+            out.append({"commit": c[:12], "ok": False,
+                        "reasons": [f"超出受限兩檔範圍：{outside[:3]}（或空 commit）",
+                                    f"非追加狀態（僅允許 A/M）：{bad_st[:3]}"]})
+            continue
+        ok, det = _verify_pair(base, f"{c}^", c, changed)
+        ok_all = ok_all and ok
+        out.append({"commit": c[:12], "ok": ok, **det})
+    return ok_all, {"mode": "range", "range": f"{range_base}..HEAD", "commits": out}
+
+
+def verify_append_only_auto(base: Path, ref: str = "HEAD") -> tuple[bool, dict]:
+    """落版側查詢（classify_paths 用）：先驗 ref^..ref；該 commit 不含這兩檔時改驗 staged。"""
+    changed, _why = _commit_changed(base, ref)
+    if changed and set(changed) <= set(APPEND_ONLY_PATHS) and all(v in ("A", "M") for v in changed.values()):
+        ok, det = _verify_pair(base, f"{ref}^", ref, changed)
+        return ok, {"mode": "commit", "ref": ref, **det}
+    staged, why = _staged_changed(base)
+    if staged is None:
+        return False, {"mode": "staged", "reasons": [why]}
+    if not staged or not set(staged) <= set(APPEND_ONLY_PATHS) or any(v not in ("A", "M") for v in staged.values()):
+        return False, {"mode": "staged", "reasons": ["staged 變更集合不在受限兩檔範圍內"],
+                       "files": staged}
+    ok, det = _verify_pair(base, "HEAD", INDEX_REV, staged)
+    return ok, {"mode": "staged", **det}
+
+
 # ---------------------------------------------------------------- 統一裁決
 
 def classify(changed: set[str], entry: dict | None,
-             specials: dict | None = None) -> tuple[str, bool, str]:
+             specials: dict | None = None,
+             append_only_ok: bool = False) -> tuple[str, bool, str]:
     """單一真值：一個檔案集合在發布授權上屬 AUTO 或 CIO。
 
     **落版側（auto_record）與閘門側（decide）必須共用此函式。**
     2026-10-12 死鎖根因即兩側各有一套判定：落版側只認「特殊類別 ∪ 程式副檔名」，
     閘門側另有「未命中白名單」→ 純資料 commit 被落 AUTO 章、卻被閘門以 CIO 模式拒絕。
+
+    `append_only_ok`（PG-20261012 v4）：決策入庫兩檔的受限車道。**只有**在
+    ①命中 append_only 條目 ②變更集合 ⊆ 受限兩檔 ③不變量驗證通過 時才為 True；
+    此時「特殊類別命中」不再強制 CIO（那兩條路徑本來就在 NEVER_AUTO 內）。
+    驗證未通過時呼叫端必須先落 APPEND_ONLY_VIOLATION 阻擋，不得只靠這裡降級。
     """
     sp = specials or {}
-    if sp:
+    ao = bool(append_only_ok and is_append_only_entry(entry))
+    if sp and not ao:
         return "CIO", True, "特殊類別命中"
     if entry is None:
         return "CIO", True, "未命中白名單"
+    if ao:
+        return "AUTO", False, "append-only 受限車道（不變量驗證通過）"
     return "AUTO", False, "命中低風險白名單"
 
 
 def classify_paths(base: Path, paths, ref: str = "HEAD") -> dict:
-    """給定檔案清單 → 發布授權判定（落版側查詢用；與 decide 共用 classify）。"""
+    """給定檔案清單 → 發布授權判定（落版側查詢用；與 decide 共用 classify）。
+
+    PG-20261012 v4：命中 append_only 條目且變更集合 ⊆ 受限兩檔時，**另外**跑內容不變量
+    驗證（落版側與閘門側必須同結論，否則又會出現「一側 AUTO、一側 CIO」的死鎖）。
+    驗證未通過 → 這裡回 CIO（落版側便不會蓋 AUTO 章），閘門側另會落 APPEND_ONLY_VIOLATION。
+    """
     changed = {_norm(p) for p in paths if str(p).strip()}
     specials = {p: special_reason(p, base) for p in sorted(changed)}
     specials = {p: r for p, r in specials.items() if r}
@@ -338,10 +609,18 @@ def classify_paths(base: Path, paths, ref: str = "HEAD") -> dict:
                 "reason": f"白名單不可用（{why_al}）", "specials": specials,
                 "files": sorted(changed)}
     entry, _why = match_entry(changed, al)
-    mode, must_cio, why_mode = classify(changed, entry, specials)
+    ao_ok, ao_det = False, {"applied": False}
+    if is_append_only_entry(entry) and changed and changed <= set(APPEND_ONLY_PATHS):
+        try:
+            ao_ok, ao_det = verify_append_only_auto(base, ref=ref)
+            ao_det["applied"] = True
+        except Exception as e:  # noqa: BLE001 — 驗證器失敗一律視為未通過（fail-closed）
+            ao_ok, ao_det = False, {"applied": True, "mode": "error", "reasons": [str(e)[:160]]}
+        ao_det["ok"] = ao_ok
+    mode, must_cio, why_mode = classify(changed, entry, specials, append_only_ok=ao_ok)
     return {"mode": mode, "must_cio": must_cio,
             "entry": (entry or {}).get("label"), "reason": why_mode,
-            "specials": specials, "files": sorted(changed)}
+            "specials": specials, "files": sorted(changed), "append_only": ao_det}
 
 
 def decide(base: Path, range_base: str, producer_own: list[str] | None = None,
@@ -379,8 +658,29 @@ def decide(base: Path, range_base: str, producer_own: list[str] | None = None,
                               "entries": len(al["entries"]),
                               "matched": (entry or {}).get("label"), "reason": why_e}
 
+    # append-only 受限車道（PG-20261012 v4）：命中受限條目且變更集合 ⊆ 兩檔時，
+    # 逐 commit 重算內容不變量。**不通過即拒**（fail-closed）——不得靜默降級為 CIO 放行，
+    # 否則「驗證失敗」與「未命中白名單」在行為上無法區分。
+    ao_ok, ao_det = False, {"applied": False}
+    if is_append_only_entry(entry) and changed and changed <= set(APPEND_ONLY_PATHS):
+        try:
+            ao_ok, ao_det = verify_append_only_range(base, range_base)
+            ao_det["applied"] = True
+        except Exception as e:  # noqa: BLE001 — 驗證器不可用一律視為未通過
+            ao_ok, ao_det = False, {"applied": True, "mode": "range",
+                                    "reasons": [f"驗證器執行失敗：{str(e)[:160]}"]}
+        if not ao_ok:
+            why_bad = list(ao_det.get("reasons") or [])
+            for c in ao_det.get("commits") or []:
+                if not c.get("ok"):
+                    why_bad += [f"{c.get('commit')}：{r}" for r in (c.get("reasons") or [])]
+            blockings.append({"id": "APPEND_ONLY_VIOLATION", "severity": "high",
+                              "text": "決策入庫 append-only 不變量未通過 → 拒（不得自動發布）："
+                                      + "；".join(why_bad[:4])})
+    checks["append_only"] = {"ok": ao_ok, **ao_det}
+
     # 模式判定：特殊類別命中 或 不在白名單 → 必須走真 CIO 審查
-    mode, must_cio, why_mode = classify(changed, entry, specials)
+    mode, must_cio, why_mode = classify(changed, entry, specials, append_only_ok=ao_ok)
     checks["mode"] = {"mode": mode, "must_cio": must_cio, "reason": why_mode}
 
     # 關卡三：核准紀錄與 tree 綁定（逐 commit，全部檢查）
@@ -475,6 +775,10 @@ def main() -> int:
               + ("…" if len(res["changes"]) > 6 else ""))
         al = ch["allowlist"]
         print(f"  白名單：{'命中 '+str(al.get('matched')) if al.get('ok') else '未命中｜'+str(al.get('reason'))}")
+        _ao = ch.get("append_only") or {}
+        if _ao.get("applied"):
+            print(f"  append-only 受限車道：{'✅ 不變量通過' if _ao.get('ok') else '⛔ 不變量未通過'}"
+                  f"（查核模式={_ao.get('mode')}）")
         print(f"  特殊類別：{'無' if ch['special']['ok'] else ch['special']['hits']}")
         print(f"  核准紀錄：{ch['records']['commits']} 顆｜失敗 {len(ch['records']['failed'])}")
         for b in res["blockings"]:
