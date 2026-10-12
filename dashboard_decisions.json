@@ -10807,6 +10807,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261012230203-1166",
+    "timestamp": "2026-10-12T23:02:03.322222+08:00",
+    "agent": "Hermes",
+    "task": "原工單（發布鏈修復）維持未結案",
+    "summary": "裁定：原工單 OPEN。兩項既有殘留分開立案、保留失敗證據、不清除、不納入本案：①16 檔未提交（產線既有產物）②基金口徑差額 NT$2,524（鉅亨 898,743＋國泰 11,780,925＝12,679,668 ≠ funds 12,677,144）。closeout_check.py 其餘通過（驗證器心跳 56 PASS／0 FAIL、ref topology origin/clean-main＝local main @ bfb23cae）。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-12T22:54:20.221436"
