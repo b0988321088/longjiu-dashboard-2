@@ -1480,14 +1480,15 @@
     "title": "基金口徑差額 NT$2,524（另案核對）",
     "severity": "P2",
     "source": "closeout_check.py 門檻不變式 2026-10-12",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-12)：根因＝三處消費者（run_daily 日報行、check_thresholds ④閉合與日報行比對）加總停更的逐檔字典（自由Pay 10/08 497,695）而非平台總覽權威值。修法＝新增 fund_caliber.py 單一口徑（權威值 funds_heng_total_<yyyymmdd>），差異必須點名且無 funds_stale_notice 即 fail-closed。驗收：日報行 12,677,144＝鉅亨 896,219＋國泰 11,780,925（閉合）；check_thresholds 全檢 PASS；負向測試（移除 stale notice → fail-closed）通過；commit 99a8eb14／tree cb13a6fada58，真 CIO APPROVE、RECORD、已推 clean-main、線上 raw 已驗。",
     "detail": "鉅亨 898,743＋國泰 11,780,925＝12,679,668 ≠ funds 12,677,144，差 2,524。保留 FAIL 證據，不修改既有真值，另案核對。",
     "tags": "caliber,residual",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-12",
-    "cleanup_reason": ""
+    "cleanup_reason": "tech_debt close：根因＝三處消費者（run_daily 日報行、check_thresholds ④閉合與日報行比對）加總停更的逐檔字典（自由Pay 10/08 497,695）而非平台總覽權威值。修法＝新增 fund_caliber.py 單一口徑（權威值 funds_heng_total_<yyyymmdd>），差異必須點名且無 funds_stale_notice 即 fail-closed。驗收：日報行 12,677,144＝鉅亨 896,219＋國泰 11,780,925（閉合）；check_thresholds 全檢 PASS；負向測試（移除 stale notice → fail-closed）通過；commit 99a8eb14／tree cb13a6fada58，真 CIO APPROVE、RECORD、已推 clean-main、線上 raw 已驗。",
+    "updated_at": "2026-10-12"
   }
 ]
