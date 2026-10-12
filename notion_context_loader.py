@@ -57,3 +57,7 @@ def load_context():
 
 if __name__ == "__main__":
     load_context()
+    # 2026-10-12 TD-20261012-25 延伸：本支產物過去只留工作區（notion_shared_context.md 每晚
+    # 被判「已追蹤未提交」）→ 跑完就地提交自家產物（純資料），推送走 auto_push 唯一出口。
+    from self_publish import commit_own       # noqa: E402
+    sys.exit(commit_own("notion_context_loader.py", ["notion_shared_context.md"]))

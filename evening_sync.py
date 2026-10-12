@@ -35,6 +35,22 @@ _SNAP_MAX = 20 * 1024 * 1024
 _UNREADABLE = "<UNREADABLE>"
 
 
+def _scope_verdict(staged, keep):
+    """commit 前驗證「staged 集合 vs 本輪產物」。
+
+    不變式（安全性質只有一個方向）：**staged ⊄ produced → 整批不推**（不得把他班／他輪的檔帶走）。
+    反向（produced 有、staged 沒有）**不是**違規：內容經 git 正規化（autocrlf／clean filter）後與
+    HEAD 相同時，`git add` 不會產生 staged 變更。
+    2026-10-12 實踩：原判定式 `sorted(_st) == sorted(_keep)`（要求完全相等）遇到這種情形整批
+    fail-closed —— 當晚訊息是「多出 []」（沒有任何多餘檔卻判定不符）→ 晚報 22:00 連續不上線，
+    且當輪產物整批留在工作區（收工稽核每晚判「已追蹤未提交」）。
+    回傳 (verdict, extra, missing)；verdict ∈ {"ok", "extra_blocked"}。
+    """
+    st, kp = set(staged or []), set(keep or [])
+    extra, missing = sorted(st - kp), sorted(kp - st)
+    return ("extra_blocked" if extra else "ok"), extra, missing
+
+
 def _snap_root(base: Path) -> dict:
     """根目錄候選檔的內容指紋；存在卻無法快照者記 _UNREADABLE（不是略過）。"""
     d = {}
@@ -183,9 +199,14 @@ def main():
                                   capture_output=True, text=True, timeout=300)
             _st = [p for p in subprocess.run(["git", "diff", "--cached", "--name-only", "-z"], cwd=BASE,
                                              capture_output=True, text=True, timeout=120).stdout.split("\0") if p]
-            if _add.returncode == 0 and sorted(_st) == sorted(_keep):
+            _verdict, _extra, _missing = _scope_verdict(_st, _keep)
+            if _add.returncode == 0 and _verdict == "ok":
                 lines.append(f"📦 本輪產物 {len(_keep)} 檔入 commit scope：{', '.join(_keep[:8])}"
                              + ("…" if len(_keep) > 8 else ""))
+                if _missing:
+                    lines.append(f"ℹ️ {len(_missing)} 檔 staged 無差異（git 正規化後與 HEAD 相同，"
+                                 f"不影響本次發布）：{', '.join(_missing[:8])}"
+                                 + ("…" if len(_missing) > 8 else ""))
                 ap = subprocess.run([sys.executable, str(BASE / "auto_push.py"), "--script", "evening_sync.py",
                                      "--commit", f"auto: 晚報校準 {TODAY}"],
                                     cwd=BASE, capture_output=True, text=True, timeout=900)
