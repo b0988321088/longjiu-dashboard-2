@@ -10788,6 +10788,16 @@
       "status": "completed",
       "source": "user"
     }
+,
+  {
+    "id": "mem-20261012220942-1164",
+    "timestamp": "2026-10-12T22:09:42.074289+08:00",
+    "agent": "Hermes",
+    "task": "發布前連結閘門＋退休規劃歸屬（工單 P1-P3）",
+    "summary": "修復儀表板按鈕 404 根因：第12項在產線兩處呼叫都帶 LJ_PREPUSH=1 → 永不攔截；改為 stage 後、commit 前以非 PREPUSH 模式真擋（擋下不 commit、取消 stage）；退休規劃改由 regenerate_report 9c 段產出並納入本輪 commit scope。commit af01101f tree 0de1c099、CIO-Pollinations APPROVE blocking=0；四情境沙盒測試 22/22。結案驗收：Pages build success、線上 blob 逐位元相同。",
+    "status": "施工完成-待結案驗收",
+    "source": "使用者 2026-10-12 工單裁決"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-12T21:32:49.498872"
