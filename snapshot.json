@@ -934,7 +934,7 @@
    "基金配息 AI收益成長B月配": 1
   }
  },
- "monthly_dividend": 58836,
+ "monthly_dividend": 64611.0,
  "actual_fj33_dividend": 9356,
  "policy_a_total": 4936257,
  "policy_b_total": 2630180,
@@ -959,12 +959,12 @@
  "cash_total": 1827363,
  "bonds_cash": 10262984,
  "monthly_dividend_breakdown": {
-  "allianz": 9446,
+  "allianz": 15221,
   "firstjin": 0,
-  "insurance": 9446,
+  "insurance": 15221,
   "etf": 0,
   "fund": 49390,
-  "total": 58836,
+  "total": 64611.0,
   "note": "2026-10：安聯保單撥回 9,446（10/05 入帳 8,254＋1,192）＋基金實收 49,390（國泰直購：貝萊德智慧數據B11 41,699（10/08 首筆）、聯博全球多元收益AD 6,765（10/06）；鉅亨小額 926 = 路博邁5G 733＋聯博美國成長 34＋聯博AD小額 20＋富達C 25＋健康A10 27＋科技A10 31＋能源A10 29＋黃金A10 21＋A6 5＋AI收益B 1）；ETF 0、第一金 0＝本月尚未入帳",
   "oneoff": 0
  },
@@ -1248,7 +1248,7 @@
   "USDEQ6730 貝萊德世界黃金基金 A10美元(總報酬穩定配息)": 147908
  },
  "allianz_b_current_value": 2630180,
- "monthly_dividend_total": 58836,
+ "monthly_dividend_total": 64611.0,
  "relay_stations": {
   "第一站（月初）": {
    "流向": "摩根多重收益 配息（月初）→ 資金流向第二站",
@@ -1709,7 +1709,7 @@
  "debt_ratio_note": "雙軌（8/10 裁示）：主顯示含不動產 50.1%（分母 60,222,746）；流動負債率 115.2%（不含不動產，監控用）。8/20 國泰 1,200萬撥款入帳 → 負債 +1,200萬",
  "dividend_month_expected": 100000,
  "dividend_month_expected_note": "8月起依當月dividend_records動態累積，月初顯示保守預估10萬",
- "dividend_month_actual": 58836,
+ "dividend_month_actual": 64611.0,
  "rent_received_records": {
   "2026-08-01": {
    "大義街店面": 24000
