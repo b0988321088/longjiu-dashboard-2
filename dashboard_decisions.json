@@ -10797,6 +10797,16 @@
       "status": "施工完成-待結案驗收",
       "source": "使用者 2026-10-12 工單裁決"
     }
+,
+  {
+    "id": "mem-20261012230155-1165",
+    "timestamp": "2026-10-12T23:01:55.570418+08:00",
+    "agent": "Hermes",
+    "task": "TD-20261012-23 發布通道一致性（B 案）",
+    "summary": "限定範圍驗收通過／CLOSED。修法：regenerate_report.py 於 auto_push 前自取真 CIO 審查＋RECORD（範圍契約：待推範圍每顆須有 RECORD、僅本輪 HEAD 可補審；治理檔純追加不變量只放行 updated_at；異質審查須 APPROVE＋commit/tree 綁定）。隔離沙盒五情境全符合（S1 審查→RECORD→推送；S2 舊 commit 阻塞／S3 meta 不一致／S4 審查拒絕／S5 未追蹤連結，後四者 fail-closed 且 stage 還原）。實跑無人介入閉環 bfb23caedd8d：本機＝origin/clean-main、待推 0、審查 tree 1d4de6b2e7a3＝被推 commit tree、線上 post-push 22/22 200、index.html 逐位元相同、未使用 cioreviewed 標籤。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-12T22:54:20.221436"
