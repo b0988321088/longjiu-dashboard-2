@@ -10913,20 +10913,29 @@
       "summary": "使用者指示閉環。修復內容＝真 CIO 發布車道（cio_lane.py）＋daily_deploy／nightly_dashboard_sync 改走車道並在審查未過時撤回 commit＋fail-loud rc＋cwd 契約修正；補審 4 顆既有 commit 後正式發布。已驗收：remote=local=45ba5275、未推 0／落後 0、cio_approve --status 0 筆未審未推、線上 6 頁 200 且逐位元一致、新測試 12/0＋閘門測試 140/0。殘留（另案追蹤，不阻擋結案）：TD-20261013-04/05/06；21:30 美股緊急應變 agent 流程未納管。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261013185301-1178",
+      "timestamp": "2026-10-13T18:53:01.714192+08:00",
+      "agent": "Hermes",
+      "task": "TD 三卡處置：保單代號政策（不遮罩）＋驗證器現金口徑對齊（TD-20261011-16）＋入庫卡死車道結案（TD-20261012-14）",
+      "summary": "2026-10-13 使用者於 Telegram 一次裁決並要求「一次修正到發佈」。① TD-20261011-07：政策決定「公開頁不遮罩保單代號」（不視為敏感）→ 維持現狀結案，未動 build_mtd_report.py 與產物。② TD-20261011-16：查明 4 條 FAIL 為驗證器停在 2026-10-02 舊口徑（讀 cash_layers.available 舊鍵、硬編 589 在途），與 2026-10-12 現行裁示互斥 → 斷言改讀現行口徑（allowable_cash／unrestricted_cash／penetration.cash_in_transit），未放寬判準；第 5 條環境殘留以 _OTHER_OWNER 明列 5 檔隔離。驗收 84/84 PASS、0 FAIL。③ TD-20261012-14：實測已由 append-only 受限車道解決 → 結案。commit ec27dad1。",
+      "status": "completed",
+      "source": "user"
     }
 ,
   {
-    "id": "mem-20261013185301-1178",
-    "timestamp": "2026-10-13T18:53:01.714192+08:00",
+    "id": "mem-20261013215604-1179",
+    "timestamp": "2026-10-13T21:56:04.578864+08:00",
     "agent": "Hermes",
-    "task": "TD 三卡處置：保單代號政策（不遮罩）＋驗證器現金口徑對齊（TD-20261011-16）＋入庫卡死車道結案（TD-20261012-14）",
-    "summary": "2026-10-13 使用者於 Telegram 一次裁決並要求「一次修正到發佈」。① TD-20261011-07：政策決定「公開頁不遮罩保單代號」（不視為敏感）→ 維持現狀結案，未動 build_mtd_report.py 與產物。② TD-20261011-16：查明 4 條 FAIL 為驗證器停在 2026-10-02 舊口徑（讀 cash_layers.available 舊鍵、硬編 589 在途），與 2026-10-12 現行裁示互斥 → 斷言改讀現行口徑（allowable_cash／unrestricted_cash／penetration.cash_in_transit），未放寬判準；第 5 條環境殘留以 _OTHER_OWNER 明列 5 檔隔離。驗收 84/84 PASS、0 FAIL。③ TD-20261012-14：實測已由 append-only 受限車道解決 → 結案。commit ec27dad1。",
+    "task": "2026-10-13 審查鏈根因修復＋產線倒退偵測：閉環",
+    "summary": "本輪交付 CLOSED。①TD-20261013-05（P1）根因＝審查能力被設計成單一供應商依賴：402 非單日故障（.git/cio_reviews 10-12 已有 Pollinations402→DeepSeek 備援紀錄），三處入口行為不一致，其中 llm_review_client.generate() 的『備援』是 DeepSeek＝產出者自審（假異質）＝未經有效異質審查卻能發布的縫。②修復 commit 8f298749：新增 review_chain.py 單一實作（Pollinations → nous longcat-2.5-preview:free → nous laguna-s-2.1:free，全鏈不含 DeepSeek／Google；reviewer 標籤動態；agent_key refresh-aware），cio_lane／regenerate_report／generate() 全部收斂並移除 DeepSeek 層；fail-closed 語意不變（全鏈失敗即停、不因 REJECT 改試別層求 APPROVE）。③驗收：新測試 27/0（正常/402/逾時/無效回應/空輸出/全鏈失敗/拒審不換層/憑證排除/失敗不留 RECORD）；未破壞既有 test_publish_gate 140/0、test_cio_lane_rollback 12/0；獨立異質驗收 2/2 APPROVE 0 blocking（雙路徑、不經 review_chain、patch 全文、commit/tree 12 碼綁定核對）；真鏈端到端實跑 APPROVE。④併同結案 TD-20261013-06（審查車道重複實作收斂）與 TD-20261013-08（lj_inc.py 全面核對：list/close/usage 三路徑實測，真檔 md5 前後一致）。⑤work_log 補今日缺口 7 筆（含更正先前誤判）。⑥意外事件：驗 cron import 契約時誤觸產線（regenerate_report 無 __main__ 保護），其 auto commit 4d7e7784 被產線自身真 CIO 審查 REJECT（3 項 required_fixes）→ fail-closed 未推；逐項核對後確認 rebalance_eval 22,718→17,765 bytes（全源整合 3→1 次）、rebalance_summary 零、全源整合對照整節被刪＝真倒退，已撤銷並還原授權版 → 立案 TD-20261013-13（P1）。⑦最終狀態：HEAD=remote=線上=a8e9c09f、待推 0／落後 0、線上 6 頁 200 且 rebalance_eval 未倒退；今日 3 顆 commit（8f298749／af2835a5／a8e9c09f）皆附獨立雙路徑 RECORD。殘留另案追蹤：TD-20261013-13（P1）、TD-20261013-04/09/10/11、dirty 70 筆（既有/產線產物）。",
     "status": "completed",
     "source": "user"
   }
   ],
   "meta": {
-    "updated_at": "2026-10-13T16:27:03.987787"
+    "updated_at": "2026-10-13T21:49:46.331166"
   },
   "last_updated": "2026-10-13T18:00:00+08:00",
   "2026-09-29": [
