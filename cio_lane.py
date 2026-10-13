@@ -27,7 +27,9 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 DIFF_CAP = 12000                      # 送審內文上限（避免把整份 HTML 塞進 prompt）
-REVIEWER = "CIO-Pollinations(openai)"  # 異質審查者（非 DeepSeek、非 Google）
+# 2026-10-13（TD-20261013-05）：審查者標籤改為**動態**（由 review_chain 回報實際使用者）。
+# 本常數僅保留為「鏈全數失敗時」的敘述基準，不再寫進 RECORD。
+REVIEWER_FALLBACK_NOTE = "CIO-review-chain（異質：Pollinations／nous-longcat／nous-laguna）"
 
 
 def _git(*args: str, timeout: int = 60) -> subprocess.CompletedProcess:
@@ -87,7 +89,7 @@ def _review_and_record_repo_cwd(tag: str = "cio_lane") -> tuple[bool, str]:
     前置：cwd 必須在 repo 內（由 review_and_record() 保證）。
     """
     import cio_approve as _ca          # 既有工具：紀錄格式單一真值（不自行解析 tab 格式）
-    import llm_review_client as _lrc
+    import review_chain as _rc         # 審查鏈單一實作（2026-10-13 TD-20261013-05／06）
 
     rng = _git("rev-list", "origin/clean-main..HEAD")
     if rng.returncode != 0:
@@ -132,10 +134,9 @@ def _review_and_record_repo_cwd(tag: str = "cio_lane") -> tuple[bool, str]:
         '"blocking":[],"required_fixes":[],"note":"理由（160 字內）"}'
     )
     try:
-        txt = _lrc._call(_lrc.POLLI_URL, {"Content-Type": "application/json", "User-Agent": _lrc.UA},
-                         _lrc.POLLI_MODEL, prompt, 8192, 300, extra={"reasoning_effort": "low"})
+        txt, _reviewer = _rc.review(prompt, max_tokens=8192, timeout=300)
     except Exception as e:  # noqa: BLE001
-        return False, f"審查工具不可用（{type(e).__name__}: {str(e)[:80]}）→ fail-closed（不降級）"
+        return False, f"審查鏈全數不可用（{type(e).__name__}: {str(e)[:120]}）→ fail-closed（不降級）"
     m = re.search(r"\{.*\}", txt, re.S)
     if not m:
         return False, "審查輸出無法解析出 JSON → fail-closed"
@@ -167,13 +168,13 @@ def _review_and_record_repo_cwd(tag: str = "cio_lane") -> tuple[bool, str]:
     except Exception as e:  # noqa: BLE001
         return False, f"審查紀錄寫入失敗（{str(e)[:60]}）→ fail-closed"
     ap_ = subprocess.run([sys.executable, str(BASE / "cio_approve.py"), "--result", str(rj),
-                          "--reviewer", REVIEWER, "--commit", commit],
+                          "--reviewer", _reviewer, "--commit", commit],
                          capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=str(BASE))
     if ap_.returncode != 0:
         return False, f"cio_approve 落紀錄失敗（rc={ap_.returncode}）→ fail-closed"
     if not _ca.is_approved(tree):
         return False, "落紀錄後複驗失敗（tree 仍無 APPROVE）→ fail-closed"
-    return True, f"真 CIO RECORD 已落地（{REVIEWER}｜tree {tree[:12]}）"
+    return True, f"真 CIO RECORD 已落地（{_reviewer}｜tree {tree[:12]}）"
 
 
 def rollback_head_soft() -> tuple[bool, str]:

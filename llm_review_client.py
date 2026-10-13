@@ -89,35 +89,18 @@ def _call(url: str, headers: dict, model: str, prompt: str, max_tokens: int,
 
 def generate(prompt: str, *, max_tokens: int = 8192, timeout: float = 180,
              session_id: str = "cioreview", json_mode: bool = False) -> str:
-    """回傳模型輸出的文字。免費層失敗才動用 DeepSeek；兩層都失敗則丟例外。"""
-    errors: list[str] = []
+    """回傳模型輸出的文字。走 review_chain 的異質備援鏈；全鏈失敗則丟例外。
 
-    try:
-        return _call(
-            POLLI_URL,
-            {
-                "HTTP-Referer": "https://hermes-agent.nousresearch.com",
-                "X-Title": "Hermes Agent",
-                "User-Agent": UA,
-            },
-            POLLI_MODEL, prompt, max_tokens, timeout,
-            extra={"reasoning_effort": "low"},
-        )
-    except Exception as exc:  # noqa: BLE001
-        errors.append(f"pollinations/{POLLI_MODEL}: {exc}")
+    2026-10-13（TD-20261013-05／06）：原本這裡自帶「Pollinations → DeepSeek」兩層，
+    而 DeepSeek 就是產出者本人 —— 那條「備援」等於沒有閘門（假異質），且與 cio_lane.py／
+    regenerate_report.py 各自實作、行為不一致。現統一委派 review_chain.review()：
+    同一條鏈、同一份判定，且**不含 DeepSeek／Google**。
+    """
+    import review_chain as _rc
 
-    key = _env("DEEPSEEK_API_KEY")
-    if key:
-        try:
-            return _call(DEEPSEEK_URL, {"Authorization": f"Bearer {key}"},
-                         DEEPSEEK_MODEL, prompt, max_tokens, timeout, json_mode,
-                         extra={"thinking": {"type": "disabled"}})
-        except Exception as exc:  # noqa: BLE001
-            errors.append(f"deepseek/{DEEPSEEK_MODEL}: {exc}")
-    else:
-        errors.append("deepseek: DEEPSEEK_API_KEY 未設定")
-
-    raise RuntimeError("；".join(errors))
+    text, _reviewer = _rc.review(prompt, max_tokens=max_tokens, timeout=timeout,
+                                 json_mode=json_mode)
+    return text
 
 
 if __name__ == "__main__":

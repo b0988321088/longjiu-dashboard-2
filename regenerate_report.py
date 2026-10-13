@@ -527,7 +527,9 @@ _gate_ok = True   # 2026-10-03：自動化防守閘門（performance_monthly 頁
 #   （實測 62f09db6 與 f506a72f 以同一理由被拒）→ auto_push 恆 rc=3，產線等於無法自我部署。
 #   白名單救不了：index.html 依裁決必須經真 CIO 審查。故改為讓產線自己取得那份審查紀錄。
 _CIO_DIFF_CAP = 12000   # 送審內文上限（避免把整份 HTML 塞進 prompt）
-_CIO_REVIEWER = "CIO-Pollinations(openai)"   # 異質審查者（非 DeepSeek、非 Google）
+# 2026-10-13（TD-20261013-05／06）：審查者標籤改為**動態**（由 review_chain 回報實際使用者）。
+# 原本寫死 "CIO-Pollinations(openai)" 且送審直接打 Pollinations 單點 —— 402 即全停。
+_CIO_REVIEWER_FALLBACK_NOTE = "CIO-review-chain（異質：Pollinations／nous-longcat／nous-laguna）"
 
 
 def _cio_governance_invariant(commit: str) -> str:
@@ -571,7 +573,7 @@ def _cio_review_and_record() -> tuple[bool, str]:
     有 blocking／回傳的 commit 或 tree 與實際不符／紀錄寫入失敗／寫入後複驗失敗。
     """
     import cio_approve as _ca          # 既有工具：紀錄格式單一真值（不自行解析 tab 格式）
-    import llm_review_client as _lrc
+    import review_chain as _rc         # 審查鏈單一實作（2026-10-13 TD-20261013-05／06）
 
     def _git(*args: str):
         return subprocess.run(["git", *args], capture_output=True, text=True,
@@ -620,10 +622,9 @@ def _cio_review_and_record() -> tuple[bool, str]:
         '"blocking":[],"required_fixes":[],"note":"理由（160 字內）"}'
     )
     try:
-        txt = _lrc._call(_lrc.POLLI_URL, {"Content-Type": "application/json", "User-Agent": _lrc.UA},
-                         _lrc.POLLI_MODEL, prompt, 8192, 300, extra={"reasoning_effort": "low"})
+        txt, _reviewer = _rc.review(prompt, max_tokens=8192, timeout=300)
     except Exception as e:  # noqa: BLE001
-        return False, f"審查工具不可用（{type(e).__name__}: {str(e)[:80]}）→ fail-closed（不降級 TAG）"
+        return False, f"審查鏈全數不可用（{type(e).__name__}: {str(e)[:120]}）→ fail-closed（不降級 TAG）"
     import re as _re_cio
     m = _re_cio.search(r"\{.*\}", txt, _re_cio.S)
     if not m:
@@ -650,13 +651,13 @@ def _cio_review_and_record() -> tuple[bool, str]:
     except Exception as e:  # noqa: BLE001
         return False, f"審查紀錄寫入失敗（{str(e)[:60]}）→ fail-closed"
     ap_ = subprocess.run([sys.executable, str(BASE / "cio_approve.py"), "--result", str(rj),
-                          "--reviewer", _CIO_REVIEWER, "--commit", commit],
+                          "--reviewer", _reviewer, "--commit", commit],
                          capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=str(BASE))
     if ap_.returncode != 0:
         return False, f"cio_approve 落紀錄失敗（rc={ap_.returncode}）→ fail-closed"
     if not _ca.is_approved(tree):
         return False, "落紀錄後複驗失敗（tree 仍無 APPROVE）→ fail-closed"
-    return True, f"真 CIO RECORD 已落地（{_CIO_REVIEWER}｜tree {tree[:12]}）"
+    return True, f"真 CIO RECORD 已落地（{_reviewer}｜tree {tree[:12]}）"
 
 
 if _NO_PUSH:
