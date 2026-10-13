@@ -182,3 +182,25 @@ def rollback_head_soft() -> tuple[bool, str]:
     if r.returncode != 0:
         return False, f"git reset --soft HEAD~1 失敗（{r.stderr.strip()[:80]}）→ 請人工處理"
     return True, "已撤回本步驟 commit（內容留在工作區，下一輪可重試）"
+
+
+def _cli() -> int:
+    """CLI 入口：供 cron / shell 用單一指令呼叫（語義與 auto_record.py 對稱：exit 0=OK、非 0=不要 push）。
+
+    2026-10-13 增設：原本只有函式入口，shell 端只能用 `python -c "import cio_lane; ..."`，
+    cron prompt 裡嵌引號容易出錯。補對稱的 CLI，讓產線用一行、與 auto_record.py 同形狀的指令落版。
+    """
+    import argparse
+    ap = argparse.ArgumentParser(
+        prog="cio_lane.py",
+        description="真 CIO 審查＋落 RECORD（對「待推範圍」）",
+    )
+    ap.add_argument("--tag", default="cio_lane", help="審查紀錄檔名標籤（預設 cio_lane）")
+    a = ap.parse_args()
+    ok, msg = review_and_record(a.tag)
+    print(("✅ OK | " if ok else "❌ FAIL | ") + msg)
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(_cli())
