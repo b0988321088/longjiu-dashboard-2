@@ -59,8 +59,14 @@ except Exception as _e:  # noqa: BLE001
 _rec = "auto"
 if _cio:
     print(f"🔐 閘門判定必須真 CIO（本次變更 {len(_changed)} 檔）→ 走真審查車道")
-    import cio_lane as _lane
-    _ok, _mmsg = _lane.review_and_record(tag="nightly_dashboard_sync")
+    try:
+        import cio_lane as _lane
+        _ok, _mmsg = _lane.review_and_record(tag="nightly_dashboard_sync")
+    except (Exception, SystemExit) as _e:  # noqa: BLE001
+        # 2026-10-13：車道本身例外（例：cwd 不在 repo → cio_approve import 期 sys.exit(2)）
+        # 也必須走同一條「撤回 commit、保留阻塞」路徑，否則會留下毒藥 commit。
+        # 註：SystemExit 不是 Exception 子類，必須明列，否則攔不到 sys.exit(2)。
+        _ok, _mmsg = False, f"真審查車道例外（{type(_e).__name__}: {str(_e)[:120]}）→ fail-closed"
     print(f"真 CIO 審查：{_mmsg}")
     if not _ok:
         _rb = git("reset", "--soft", "HEAD~1")

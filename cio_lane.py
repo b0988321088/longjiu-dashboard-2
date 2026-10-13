@@ -64,9 +64,27 @@ def governance_invariant(commit: str) -> str:
 
 
 def review_and_record(tag: str = "cio_lane") -> tuple[bool, str]:
+    """外部入口：先切到 repo 根目錄再執行。
+
+    為什麼要 chdir：`cio_approve.py` 在 import 期與內部一律用「相對於 cwd」的 git 呼叫
+    （`git rev-parse --git-dir` 失敗即 sys.exit(2)）。cron 從 hermes/scripts 啟動本車道時
+    cwd 不在 repo 內 → 整個流程會被 sys.exit(2) 殺掉，呼叫端已 commit 的那顆就變成
+    「未落紀錄又推不出去」的毒藥 commit（2026-10-13 22:15 實跑踩到）。故在此統一切換 cwd。
+    """
+    import os
+    prev = os.getcwd()
+    try:
+        os.chdir(BASE)
+        return _review_and_record_repo_cwd(tag)
+    finally:
+        os.chdir(prev)
+
+
+def _review_and_record_repo_cwd(tag: str = "cio_lane") -> tuple[bool, str]:
     """對「待推範圍」取得真 CIO APPROVE 並落 RECORD。回傳 (可否繼續推送, 說明)。
 
     已有 APPROVE 的 tree → 直接回 True（不重複審查、不重複落紀錄）。
+    前置：cwd 必須在 repo 內（由 review_and_record() 保證）。
     """
     import cio_approve as _ca          # 既有工具：紀錄格式單一真值（不自行解析 tab 格式）
     import llm_review_client as _lrc

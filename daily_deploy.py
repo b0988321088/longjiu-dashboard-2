@@ -156,7 +156,12 @@ def github_push(filepath: str) -> bool:
                                  capture_output=True, text=True, timeout=60)
             print(f"  ↩ {_rb.stdout.strip() or _rb.stderr.strip()}")
             return False
-        _ok_r, _msg_r = _lane.review_and_record(tag="daily_deploy")
+        _ok_r, _msg_r = False, ""
+        try:
+            _ok_r, _msg_r = _lane.review_and_record(tag="daily_deploy")
+        except (Exception, SystemExit) as _e:  # noqa: BLE001
+            # SystemExit 不是 Exception 子類（cio_approve 於 cwd 不在 repo 時會 sys.exit(2)）→ 明列攔截
+            _msg_r = f"真審查車道例外（{type(_e).__name__}: {str(_e)[:120]}）→ fail-closed"
         print(f"  真 CIO 審查：{_msg_r}")
         if not _ok_r:
             _rb = subprocess.run(["git", "reset", "--soft", "HEAD~1"], cwd=BASE,
