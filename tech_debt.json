@@ -849,8 +849,8 @@
     "title": "🟠 P1｜公開頁保單代號未遮罩（mtd 頁硬編）＋遮罩政策面清查與產物落差閉合",
     "severity": "P1",
     "source": "發布/閘門硬化",
-    "status": "開放",
-    "status_raw": "🔴 未施工｜本卡由 2026-10-11 晨間產線事件修復期間之獨立 CIO 審查（兩輪 APPROVE／blocking=[]）要求補立；未經獨立核准不動工。",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-13)：2026-10-13 使用者裁決（Telegram）：保單代號不視為敏感資訊，公開頁不遮罩 → 維持現狀結案。build_mtd_report.py:329 硬編字面與 mtd_performance.html 產物不動；先前「須另案核准後執行」之待決事項已由本次政策決定結清（決定內容為「不遮罩」）。",
     "detail": "【來源】2026-10-11 晨間產線事件（封版契約 A/B 因標籤遮罩變更而 fail-closed）之修復過程，經兩輪獨立 CIO 對抗式審查揭露。\n\n【現況（既有狀態，非本次修復引入）】\n① mtd_performance.html（已進版控、會上 Pages）內含未遮罩保單代號「第一金 FJ<數值>」，來源＝build_mtd_report.py 內硬編字面（實測該檔 1 處、該頁 1 處）。\n② 已提交（尚未重產）的 investment_performance.html 仍含 2 處未遮罩（政策標籤列＋行內 vs FJ<數值> 註記）；來源 build_investment_performance.py 已於 2026-10-11 修好（遮罩補完），產物須待下一次 07:00 產線重產並提交才會閉合。\n③ 歷史／其他產物亦有多處同型字面（grep 全 repo 產物曾見 800+ 筆，橫跨 9 月多份報告、audit_dashboard、ceo_dashboard 等），且該代號早已存在於公開 git 歷史。\n\n【與現行防線的關係】\n- 封版契約 Task 1+2 因採「受限標籤遮罩正規化」（tools/label_mask.py），該欄位不再納入逐位元比對；缺口已由正向斷言 has_unmasked_label() 補回，但目前只覆蓋 investment_performance.html（bip 頁）。\n- mtd 頁目前僅靠「逐位元 A/B（僅遮罩 generated_at）」保護內容變更，無正向遮罩斷言（已在 tools/verify_performance_core_task12.py 以註解明文記錄此界線）。\n\n【待決事項（需使用者裁決）】\n- 保單代號是否允許出現在公開頁面？此為 2026-10-11 懸而未決的政策題（先前提出方案 A 重新封版／B 還原標籤／C 契約正規化；本次只採 C 於閘門層）。\n- 若政策為「公開輸出不得出現代號」：需 (a) 清除 build_mtd_report.py 硬編字面並重產 mtd_performance.html、(b) 把 has_unmasked_label 正向斷言擴及 mtd 頁、(c) 評估是否回溯清理既有公開歷史產物（涉及 git 歷史，需另立 PII 清理程序）。\n\n【界線】使用者於本次修復明白下過「不擴大至其他頁面」，故本卡不於該票內施工；須另案核准後執行。",
     "tags": [
       "保單",
@@ -865,7 +865,9 @@
     "owner": "龍九",
     "moved_from": "pending_decisions.json",
     "moved_at": "2026-10-11",
-    "note": "2026-10-11 分流：工程／技術債類卡自 pending 移出（原 status=待處理），不再佔用『執行中決策追蹤』。"
+    "note": "2026-10-11 分流：工程／技術債類卡自 pending 移出（原 status=待處理），不再佔用『執行中決策追蹤』。",
+    "cleanup_reason": "tech_debt close：2026-10-13 使用者裁決（Telegram）：保單代號不視為敏感資訊，公開頁不遮罩 → 維持現狀結案。build_mtd_report.py:329 硬編字面與 mtd_performance.html 產物不動；先前「須另案核准後執行」之待決事項已由本次政策決定結清（決定內容為「不遮罩」）。",
+    "updated_at": "2026-10-13"
   },
   {
     "id": "TD-20261011-08",
@@ -1050,8 +1052,8 @@
     "title": "🟠 P1｜check_dividend_caliber.py 六條既有 FAIL（4 條現金口徑／1 條 due_date／1 條變更範圍）",
     "severity": "P1",
     "source": "施工自我發現",
-    "status": "開放",
-    "status_raw": "🔴 未施工（2026-10-11 CBE 驗收對照證實為既有問題，另案處理）",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-13)：本 commit 修復：check_dividend_caliber.py 四條現金口徑斷言對齊現行裁示（舊鍵 cash_layers.available → 真值鍵 unrestricted_cash；硬編 589 在途 → penetration.cash_in_transit 顯式揭露），同一根因合併為 3 條（桶＝可動用真值、在途不併入桶位）；第 5 條環境殘留以 _OTHER_OWNER 明列 5 檔隔離（維持原歸屬、排除本班 commit）。驗收：python check_dividend_caliber.py = 84/84 PASS、0 FAIL。根因證據：snapshot.cash_layers 無 available 鍵；sot_targets.allowable_cash() 自身已支援新鍵；penetration.cash_in_transit=0 且 2026-10-12 裁示穿透桶已改讀可動用真值。",
     "detail": "【現況】`check_dividend_caliber.py` 68/74 PASS、6 FAIL：\n① 可動用現金＝cash_layers.available（唯一真值）\n② 穿透桶『現金/安全網』＝可動用＋在途未對帳（不得參與決策）\n③ 穿透桶口徑＝可動用＋589 在途／未對帳（不得參與決策）\n④ 穿透桶『現金/安全網』不得當可動用（在途／未對帳）\n⑤ 無 due_date 者標記 needs_due_date（列 3 卡：`index.html:275-277` 靜態 fallback／`build_weekly_report.py:203-205` else 分支 fallback／`institutional_flow.py:650,664` 寫死 weekly_plan 行模板＝上游根因）\n⑥ 變更範圍：無未宣告的程式檔異動（工作區 5 個未提交程式檔：`tools/verify_cbe_20261011.py`＋`_archive_closed_card_20261010.py`＋`tools/health_alert_check.py`＋`tools/it_health_alert_check.py`＋`tools/test_health_alert_check.py`）\n【歸類依據（基準版本證據）】2026-10-11 以 `git stash push -- tools/verify_cbe_20261011.py` 移除本輪 CBE 修改後重跑，**HEAD 版同樣 FAIL** → 證實為既有問題，非 CBE 修復造成。失敗項目與該對照已記錄於本卡。\n【使用者裁決 2026-10-11】不混入 CBE 工單、**不為求本次驗收全綠而順手修改這 6 項**；保留失敗項目與基準版本證據，另案決定是否開修復工單。",
     "tags": [
       "驗證器",
@@ -1064,7 +1066,9 @@
     "owner": "龍九",
     "moved_from": "pending_decisions.json",
     "moved_at": "2026-10-11",
-    "note": "2026-10-11 分流：工程／技術債類卡自 pending 移出（原 status=待處理），不再佔用『執行中決策追蹤』。"
+    "note": "2026-10-11 分流：工程／技術債類卡自 pending 移出（原 status=待處理），不再佔用『執行中決策追蹤』。",
+    "cleanup_reason": "tech_debt close：本 commit 修復：check_dividend_caliber.py 四條現金口徑斷言對齊現行裁示（舊鍵 cash_layers.available → 真值鍵 unrestricted_cash；硬編 589 在途 → penetration.cash_in_transit 顯式揭露），同一根因合併為 3 條（桶＝可動用真值、在途不併入桶位）；第 5 條環境殘留以 _OTHER_OWNER 明列 5 檔隔離（維持原歸屬、排除本班 commit）。驗收：python check_dividend_caliber.py = 84/84 PASS、0 FAIL。根因證據：snapshot.cash_layers 無 available 鍵；sot_targets.allowable_cash() 自身已支援新鍵；penetration.cash_in_transit=0 且 2026-10-12 裁示穿透桶已改讀可動用真值。",
+    "updated_at": "2026-10-13"
   },
   {
     "id": "TD-20261011-17",
@@ -1303,15 +1307,16 @@
     "title": "P1｜append_dashboard_decisions.py 自動 commit 強制 CIO 類檔（dashboard_decisions.json）→ 必推不動且留下卡死 commit",
     "severity": "P1",
     "source": "2026-10-12 實證（append_dashboard_decisions.py 入庫裁決時）",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-13)：2026-10-13 實測已解：append-only 受限車道（PG-20261012 v4）上線後，本日 00:39／05:21／05:26 三次決策入庫於 AUTO_PUSH.log 全為 OK（1 顆補紀錄）；現行 append_dashboard_decisions.py 只提交 OWN_FILES（dashboard_decisions.json＋data/decision_intake_receipts.jsonl）、且僅在「唯一待推」時才代推；cio_approve.py --status 顯示未推送 commit 0 筆、閘門無事可擋。",
     "detail": "實證：2026-10-12 17:06 入庫 Telegram 裁決（id mem-20261012170627-1153）後，工具自動 commit c6eb649e 並嘗試推送 → 閘門 rc=3 拒（該檔屬 NEVER_AUTO_EXACT → 未命中白名單 → CIO 模式 → AUTO 章被拒）。危害不在單次失敗，而在那顆 commit 留在 origin/clean-main..HEAD 範圍內時，會讓**所有** producer 的推送一併被判 CIO 模式（本日稍早已有同型事故）。修法：入庫工具比照週清（0a7d36d9）不再自行落版／推送，或先查 publish_gate.classify_paths 再決定是否 commit。已回寫技能 longjiu-pipeline-governance。",
     "tags": "發布,治理,PG-20261011,卡死commit",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-12",
-    "cleanup_reason": ""
+    "cleanup_reason": "tech_debt close：2026-10-13 實測已解：append-only 受限車道（PG-20261012 v4）上線後，本日 00:39／05:21／05:26 三次決策入庫於 AUTO_PUSH.log 全為 OK（1 顆補紀錄）；現行 append_dashboard_decisions.py 只提交 OWN_FILES（dashboard_decisions.json＋data/decision_intake_receipts.jsonl）、且僅在「唯一待推」時才代推；cio_approve.py --status 顯示未推送 commit 0 筆、閘門無事可擋。",
+    "updated_at": "2026-10-13"
   },
   {
     "id": "TD-20261012-15",

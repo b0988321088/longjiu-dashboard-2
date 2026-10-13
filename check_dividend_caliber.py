@@ -343,17 +343,21 @@ try:
     import json as _json_dc
     _s_dc = _json_dc.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     _ac = _st_dc.allowable_cash(_s_dc)
-    _cl_av = float(((_s_dc.get("cash_layers") or {}).get("available")) or 0)
-    _cl_pen = float((((_s_dc.get("penetration") or {}).get("actual_twd") or {}).get("現金/安全網")) or 0)
-    _pen_cash = float((((_s_dc.get("penetration") or {}).get("actual_twd") or {}).get("現金/安全網")) or 0)
-    ck("可動用現金＝cash_layers.available（唯一真值）", abs(_ac - _cl_av) < 0.5, f"{_ac} vs {_cl_av}")
-    ck("穿透桶『現金/安全網』＝可動用＋在途未對帳（不得參與決策）",
-       _cl_pen > _cl_av and abs((_cl_pen - _cl_av) - 589) < 0.5,
-       f"穿透桶 {_cl_pen} − 可動用 {_cl_av} = {_cl_pen - _cl_av}（應為 589 在途／未對帳）")
-    ck("穿透桶口徑＝可動用＋589 在途／未對帳（不得參與決策）",
-       abs((_cl_pen - _cl_av) - 589) < 0.5, f"穿透桶 {_cl_pen} − 可動用 {_cl_av} = {_cl_pen - _cl_av}")
-    ck("穿透桶『現金/安全網』不得當可動用（在途／未對帳）", _pen_cash > 0 and abs(_ac - _pen_cash) > 0.5,
-       f"可動用 {_ac} vs 穿透 {_pen_cash}")
+    # 2026-10-13 TD-20261011-16 口徑對齊：可動用真值鍵＝unrestricted_cash（available 為舊鍵）；
+    # 穿透桶『現金/安全網』自 2026-10-12 起已改讀可動用真值（不含在途），在途改顯式揭露。
+    _cl_uc = float(((_s_dc.get("cash_layers") or {}).get("unrestricted_cash")) or 0)
+    _pen_dc = _s_dc.get("penetration") or {}
+    _cl_pen = float(((_pen_dc.get("actual_twd") or {}).get("現金/安全網")) or 0)
+    _in_transit = _pen_dc.get("cash_in_transit")
+    ck("可動用現金＝cash_layers.unrestricted_cash（唯一真值）", abs(_ac - _cl_uc) < 0.5, f"{_ac} vs {_cl_uc}")
+    ck("穿透桶『現金/安全網』＝可動用真值（不含在途／未對帳）",
+       _cl_pen > 0 and abs(_cl_pen - _ac) < 0.5,
+       f"穿透桶 {_cl_pen} vs 可動用 {_ac}（差 {_cl_pen - _ac}，須為 0）")
+    ck("在途／未對帳顯式揭露且不併入桶位（penetration.cash_in_transit）",
+       ("cash_in_transit" in _pen_dc) and isinstance(_in_transit, (int, float))
+       and not isinstance(_in_transit, bool) and abs(_cl_pen - _ac) < 0.5,
+       f"cash_in_transit={'缺鍵' if 'cash_in_transit' not in _pen_dc else _in_transit}"
+       f"｜穿透桶 {_cl_pen} − 可動用 {_ac} = {_cl_pen - _ac}（桶位不得併入在途）")
     _g_dc = _st_dc.sabbatical_gate(_s_dc)
     ck("留停 Gate 三條派生（GO/WAIT）", _g_dc.get("判定") in ("GO", "WAIT") and len(_g_dc.get("gate") or []) == 3,
        str(_g_dc.get("判定")))
@@ -662,6 +666,13 @@ _dirty = [d for d in _dirty if d not in _other_agent]
 #   隔離＝明列歸屬並排除於本班範圍；不是當成本班變更（吸收），也不是靜默忽略（消失）。
 _OTHER_OWNER = {
     "apply_truth_20261008.py": "2026-10-08 真值套用腳本（前批產物，非本班）",
+    # 2026-10-13 TD-20261011-16：以下 5 檔為既存「非本班」檔，維持原歸屬、排除於本班 commit。
+    #   未明列時，本守門每晚以「未宣告的程式檔異動」把本班驗收一起誤擋（假紅燈）。
+    "apply_truth_20261012.py": "2026-10-12 真值套用腳本（前批產物，非本班）",
+    "_archive_closed_card_20261010.py": "2026-10-10 一次性歸檔腳本（已執行完成，置於 .archive/deprecated_scripts/）",
+    "health_alert_check.py": "2026-10-10 健康度 A 案修改版（裁決：限施工與驗收，不含提交／推送／發布；待另行發布）",
+    "it_health_alert_check.py": "2026-10-10 健康度 A 案整合測試（同上裁決，待另行發布）",
+    "test_health_alert_check.py": "2026-10-10 健康度 A 案單元測試（同上裁決，待另行發布）",
 }
 _other_owner = [_d for _d in _dirty if Path(_d.strip()).name in _OTHER_OWNER]
 _dirty = [d for d in _dirty if d not in _other_owner]

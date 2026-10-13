@@ -10914,6 +10914,16 @@
       "status": "completed",
       "source": "user"
     }
+,
+  {
+    "id": "mem-20261013185301-1178",
+    "timestamp": "2026-10-13T18:53:01.714192+08:00",
+    "agent": "Hermes",
+    "task": "TD 三卡處置：保單代號政策（不遮罩）＋驗證器現金口徑對齊（TD-20261011-16）＋入庫卡死車道結案（TD-20261012-14）",
+    "summary": "2026-10-13 使用者於 Telegram 一次裁決並要求「一次修正到發佈」。① TD-20261011-07：政策決定「公開頁不遮罩保單代號」（不視為敏感）→ 維持現狀結案，未動 build_mtd_report.py 與產物。② TD-20261011-16：查明 4 條 FAIL 為驗證器停在 2026-10-02 舊口徑（讀 cash_layers.available 舊鍵、硬編 589 在途），與 2026-10-12 現行裁示互斥 → 斷言改讀現行口徑（allowable_cash／unrestricted_cash／penetration.cash_in_transit），未放寬判準；第 5 條環境殘留以 _OTHER_OWNER 明列 5 檔隔離。驗收 84/84 PASS、0 FAIL。③ TD-20261012-14：實測已由 append-only 受限車道解決 → 結案。commit ec27dad1。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-13T16:27:03.987787"
