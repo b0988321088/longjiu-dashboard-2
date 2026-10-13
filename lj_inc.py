@@ -12,6 +12,10 @@ publish_gate.py 的 NEVER_AUTO_EXACT —— 「一律強制真 CIO 審查，不�
 因此這兩個檔**不可能**靠自身產出就地提交自動上線（會拿到 rc=3），這條安全線不動；
 要讓它們自動收斂需另一次裁決，不在本輪範圍。
 """
+import datetime
+import json
+import os
+import sys
 
 INC_EVENTS_FILE = 'inc_events.jsonl'
 
