@@ -76,14 +76,15 @@
     "severity": "NA",
     "source": "施工自我發現",
     "status": "開放",
-    "status_raw": "🔄 執行中：待 9/26 16:00 確認 agent 真的醒來並推播",
-    "detail": "待 9/26 16:00 確認 agent 確實醒來並推播；同日驗證 gate 修正與口徑閘門是否生效。",
+    "status_raw": "🔄 根因已查明並修復（2026-10-13）：gate 以「空輸出」表示喚醒，與 Hermes prerun 契約相反 —— script 成功但 stdout 為空＝視為 nothing to report，直接跳過 AI 呼叫 → agent 自 2026-09-22 判準修正起**從未被喚醒**（9/26、10/03、10/10 cron 輸出皆 0 bytes）。已改為顯式輸出 {\"wakeAgent\": true}（commit 60c8a811、tree a3d2e070、CIO APPROVE）。待 2026-10-17（週六）16:00 首跑觀測「agent 醒來並推播」。",
+    "detail": "待 9/26 16:00 確認 agent 確實醒來並推播；同日驗證 gate 修正與口徑閘門是否生效。\n\n【2026-10-13 根因與修復（使用者授權後調查）】\n· 三方證據：① log agent.log.1:19020「Job '龍九每週六再平衡評估 16:00': script produced no output, skipping AI call.」② Hermes 原始碼 cron/scheduler_prompt.py::_build_job_prompt `if success and not script_output: return None` ③ 9/26、10/03、10/10 cron 輸出檔皆 0 bytes （09/12、09/19 的 174 bytes 是 2026-09-22 修正前舊判準留下）。\n· 判讀：`_parse_wake_gate` docstring 寫「gate absent → wake」，但 stdout 為空時根本走不到該函式（更早的 `_build_job_prompt` 已 return None）→ 兩層語意不一致是本次誤解的來源。09/05 20:58 的 100KB 輸出為手動執行，不經此 gate。\n· 修法：gate 要喚醒時顯式輸出 {\"wakeAgent\": true}（不再以空輸出表示喚醒）。\n· 驗收：實跑薄轉發器（cron 實際執行路徑）→ {\"wakeAgent\": true}；模擬今天已有非 silent 輸出 → {\"wakeAgent\": false}；只有 gate-skip 輸出 → {\"wakeAgent\": true}；以真 Hermes 模組 cron.scheduler_prompt._parse_wake_gate 驗證兩種值判定正確。\n· 首跑觀測點：2026-10-17（週六）16:00。",
     "tags": "再平衡,驗證,gate,口徑",
     "due_date": null,
     "owner": "CEO",
     "moved_from": "pending_decisions.json",
     "moved_at": "2026-10-11",
-    "note": "2026-10-11 分流：工程／技術債類卡自 pending 移出（原 status=已確認），不再佔用『執行中決策追蹤』。"
+    "note": "2026-10-11 分流：工程／技術債類卡自 pending 移出（原 status=已確認），不再佔用『執行中決策追蹤』。",
+    "updated_at": "2026-10-13"
   },
   {
     "id": "TD-20260929-01",
