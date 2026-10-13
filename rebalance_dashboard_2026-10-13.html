@@ -258,11 +258,16 @@ td { padding:7px 8px; border-bottom:1px solid #263449; }
 
 
   <div class="card" style="margin-top:14px;border-left:4px solid #f59e0b">
-    <h2>🚨 緊急應變併入再平衡（2026-10-12 21:35）</h2>
-    <div style='color:#fbbf24;font-weight:700;margin-bottom:6px;background:#78350f33;border-left:3px solid #f59e0b;padding:6px 8px'>⚠️ 歷史內文（as_of=2026-10-12）：下列內容為當時分析，非 2026-10-13 現況；其中金額已以當日真值覆蓋。</div>
+    <h2>🚨 緊急應變併入再平衡（2026-10-13 13:03）</h2>
+    
     <div style="font-size:12px;color:#cbd5e1;line-height:1.7">六、風控檢查】</b>
-· US30Y：5.60%（us30y_gate status OK、as_of 2026-10-09、ref_date 2026-10-12、落後 3 天在容忍值 3 天內）；紅線 5.30%／警戒 5.20%；連續 30 個讀值日站上紅線（自 2026-09-23）；unfreeze_allowed=false → 債券新增永久凍結。10/12 哥倫布日美債休市，無新讀值。· 現金底線：單一口徑 700,000；現金 927,363；餘裕（乾粉）227,363。不再引用舊口徑（1,200,000 與追繳緩衝 50 萬皆已作廢）。· 質押：國泰世華基金質押撥款 590 萬（2026-09-29 10:57 入帳）@2.65%；擔保池富達＋聯博＋貝萊德B11，池市值 11,779,326，LTV 50.09%。分級：綠 ≤45%／黃 ≤53%／追繳 70%／單池上限 50% → 目前處黃燈區、已貼近單池上限。還本條件未知（PEND-20261004-06 系列：不得自行假設還本方式），且每月現金流出尚未列入月支出（待第一期款項後更新）。· 房貸與轉貸：洲際W 轉貸延至 11 月再處理（使用者 2026-10-01 裁示）；國泰房貸月付 26,000、扣款戶水位安全線 78,000。· 美元曝險：snapshot.usd_exposure_pct 顯示偏高（引擎檔另列其一），門檻為目標 60／黃 65／觀察線 70 → 已在觀察線之上；依 2026-10-07 裁示為 advisory_only，僅顯示不觸發動作。· 煞車檢查：費半 -2.11% 未達單日急跌 3%；US30Y 未回落 → 減碼／加碼維持暫緩。· 觀察（OBSERVE-BACKLOG，非 P0）：macro_regime 硬性約束列寫「現金底線 70 萬 通過=false」，說明欄的口徑明顯低於 snapshot 可動用現金 927,363，疑為引擎現金來源與 snapshot 不同源；本報告不以此改動任何配置，僅列待釐清。</div>
-    <div style="margin-top:8px;font-size:12px"><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_2026-10-12.html" style="color:#f59e0b">📄 查看完整緊急應變報告 →</a></div>
+· US30Y：5.598%（us30y_state.json，讀值日 2026-10-12、checked_at 2026-10-13、mode A 防禦、紅線自 2026-09-23 起）；snapshot.us30y_gate：值 5.6、as_of 2026-10-09、連續 30 個讀值日、unfreeze_allowed=false → 債券新增永久凍結。警戒 5.20%／紅線 5.30%。
+· 現金底線：單一口徑 700,000；現金 1,827,363；指定款 900,000 不列可動用；可動用 927,363；餘裕（乾粉）227,363。不再引用舊口徑（1,200,000 與追繳緩衝 50 萬皆已作廢）。
+· 質押：國泰世華基金質押 5,900,000@2.65%（2026-09-29 10:57 入帳，負債非收入）；擔保池富達＋聯博＋貝萊德 B11，池市值 11,779,326，LTV 50.09%；分級綠 ≤45%／黃 ≤53%／追繳 70%／單池上限 50% → 處黃燈區且已貼近單池上限。還本條件未知（pending_decisions：質押貸款 5,900,000 還本條件未知，不得自行假設），且每月現金流出尚未列入月支出（PEND-20261004-06，待第一期款項後更新）——此為本組合目前最大的口徑缺口，今日不因盤中波動改變處理時程。
+· 房貸與轉貸：洲際W 轉貸延至 11 月再處理（2026-10-01 裁示）；國泰大義街房貸月付 26,000、扣款戶水位安全線 78,000；永豐洲際W 月付 65,735、安全線 197,205。台新＝月支出×3。扣款日：每月 20 國泰、每月 27 永豐。
+· 配息與扣繳：10/13–10/15 待發 ETF 配息合計 17,110，未入帳前不當現金；信用卡全自動扣繳，提醒只查餘額不足、不報到期。
+· 三階段對照：phase3「扣除房地產後淨資產 ≥ 0」現為淨值 -4,160,645（需淨改善約 398 萬），路徑不因今日盤中波動改變；留停 Gate 維持 WAIT，不因單日下跌調</div>
+    <div style="margin-top:8px;font-size:12px"><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_2026-10-13.html" style="color:#f59e0b">📄 查看完整緊急應變報告 →</a></div>
   </div>
 
 <div class="card" style="margin-top:14px"><h2>🗓 里程碑時程</h2><div class='ms ms-high'><span class='ms-date'>10/15（四）</span><span class='ms-txt'>🏠 10月房租待收追蹤 51,100（大義街23樓 21,000／洲際W 28,000／管理費 2,100）</span></div><div class='ms ms-mid'><span class='ms-date'>10/18（日）</span><span class='ms-txt'>🤝 家慶合作洽談：書面釐清權責/出資/獲利分配/退出機制（避免口頭約定爭議）；並詢問開營造廠若需資金可以怎麼處理</span></div><div class='ms ms-high'><span class='ms-date'>10/20（二）</span><span class='ms-txt'>💰 國泰房貸繳款（大義街轉貸寬限期，金額見月固定支出）</span></div><div class='ms ms-mid'><span class='ms-date'>10/23（五）</span><span class='ms-txt'>Flight to 胡志明市 (JX 713)</span></div><div class='ms ms-mid'><span class='ms-date'>10/28（三）</span><span class='ms-txt'>Flight to 臺北市 (JX 712)</span></div><div class='ms ms-high'><span class='ms-date'>10/29（四）</span><span class='ms-txt'>🏦 質押貸款 590 萬第一期繳款檢核（撥款 9/29 滿月）：確認繳息方式（只繳息／本息攤還）與是否自帳戶扣款；並評估是否需要變更繳款方式</span></div><div class='ms ms-high'><span class='ms-date'>質押</span><span class='ms-txt'>整池質押 質押 590萬@2.65%（2026-09-29 使用者確認；原記 2.77%，待銀行書面覆核）（已撥款）</span></div></div>
