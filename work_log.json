@@ -2140,5 +2140,12 @@
   "category": "修正",
   "item": "審查鏈修復後意外觸發產線：偵測 rebalance「全源整合版」被重跑覆蓋，已撤銷並立案 TD-20261013-13",
   "detail": "事件（誠實揭露操作失誤）：驗證 cron 場景時執行 `python -c \"import ... regenerate_report\"`，該檔在 import 階段即執行整條產線主流程（無 __main__ 保護）→ 意外重跑產線並產生 auto commit 4d7e7784（四源同步，16 檔）。①產線自身的真 CIO 審查對該 commit 回 REJECT（required_fixes 3 項，note『多處刪減與重寫，存在資料不一致風險』）→ fail-closed 未推送，線上未受影響。②依 required_fixes 逐項核對：(a) mtd_data.json ↔ mtd_performance.html 抽樣 25 個數值 25/25 一致 ✅ (b) cost_data.json 僅 generated_at 時間戳與用量計數更新（36→55 TWD／calls 462→926），成本模型未變 ✅ (c) rebalance_eval_2026-10-13.html ❌ 真缺陷 —— blob 22,718→17,765 bytes、『全源整合』3→1 次；rebalance_summary_2026-10-13.md 18,168→14,016 bytes、『零、全源整合對照（防偏頗）』整節被刪。即 e832f6a4（19:17 經審查的『全源整合版』）被通用重跑洗成舊模板。③處置：git reset --soft 撤銷 4d7e7784；兩檔還原為 af2835a5 授權版；其餘產線產物保留為 dirty 不推。驗證：remote=local=af2835a5、待推 0／落後 0、線上 rebalance_eval 仍含全源整合對照（未倒退）。④立案 TD-20261013-13（P1）追蹤根因，本輪不自行施工。"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "修正",
+  "commit": "6ad3cc29",
+  "item": "TD-20261013-13 根因修復：正典不再被通用重跑覆蓋（全源整合區塊外置＋正典保護）",
+  "detail": "根因（已取證）：rebalance_summary 由 build_rebalance_dashboard.py:build_summary_md() 每日重跑產出，模板落後已授權正典（e832f6a4 19:17 全源整合版）——重跑會把「零、📊 全源整合對照（防偏頗）」整節、「一、」節的可接受範圍/判定欄與多處判斷性文字（裁定/靜默）一併洗掉，造成已核准正典倒退；真 CIO 審查隨後 REJECT、產線 fail-closed 不推（2026-10-13 22:00 前實測重現，線上未污染）。修法兩層：①全源整合區塊外置為受控單一真值 data/rebalance_integration.md（產生器只讀取並原樣插入，不重算、不硬編任何數字；來源檔變更＝實質內容變更必經真 CIO 審查；HTML 說明註解於插入前剝除）②依裁決備案縮小重跑 scope：正典（特徵＝含『全源整合對照』節）不被覆蓋——summary 自動版旁路至 rebalance_summary_{date}.auto.md（已入 .gitignore）、eval 不重渲染；理由＝正典含判斷性文字與結構改版，產生器無法安全機械重現（硬編即假造，違反 no-hardcode）。驗收（實測非推論）：連續三回合重跑 build_rebalance_dashboard.py，正典 summary/eval 的 md5 前後完全不變，且與已上線正典（af2835a5）忽略行尾後逐位元一致；節標題 diff 為空；發布範圍 2 顆（2132b41d 晚報 pending 狀態＋6ad3cc29 本輪），雙異質獨立審查（longcat/laguna/Pollinations）APPROVE 0 blocking；local=remote=ls-remote=6ad3cc29、待推 0、線上 4 頁 200 且 eval 全源整合 3 次（未倒退）。"
  }
 ]
