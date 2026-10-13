@@ -1785,3 +1785,10 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 落地：commit `21367686`（CIO-Gemini APPROVE、`artifact_sha256 11012f5f0d6993b8`、tree 綁定 RECORD）。**該次推送為 publish_gate 閘門首次實戰通過**（`.py` → 強制真 CIO → 有真 CIO 蓋章 → 放行）。本機 ≡ 遠端。
 - 性質：**既有稽核機制的漏列**，非產線故障；遮蔽有界（canary 已在名單註解宣告）。
 - 相關：技能 `longjiu-closeout-audit/references/benign-dirty-criteria.md`；PEND-20261011-13／-14（同批 PG-20261011 v2 衍生）。
+
+## INCIDENT 5e65261e (four_source_sync)
+- 首次發生: 2026-10-12 13:52:34
+- 錯誤: 日報產出失敗: [RUN_DAILY] 日期：2026-10-12
+[CALIBRATE] 三源校準失敗：{'allianz_value': False}
+；穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)
