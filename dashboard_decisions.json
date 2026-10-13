@@ -10963,6 +10963,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261013234124-1183",
+    "timestamp": "2026-10-13T23:41:24.242598+08:00",
+    "agent": "Hermes",
+    "task": "P1 審查閘門收緊＋兩車道審查契約統一",
+    "summary": "cio_approve 放行邊界改為 verdict==APPROVE 且 blocking 為空（原只看 verdict，APPROVE＋blocking 非空仍會落紀錄＝可繞過漏洞，突變驗證已證實原版 rc=0 實際寫入）；required_fixes／required_changes 不改變 verdict；缺欄位或格式錯 fail-closed。兩車道 prompt 收斂至 review_chain.build_review_prompt 單一真值、綁定一律 12 碼、契約五條寫入 prompt。commit 97c57662／tree 9b089206516a，真 CIO APPROVE blocking=[]，5 條核心回歸＋既有呼叫端回歸。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-13T21:49:46.331166"
