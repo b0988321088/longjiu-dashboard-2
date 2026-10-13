@@ -102,7 +102,35 @@ def gemini_review_failed() -> tuple[bool, dict]:
     return False, data
 
 
+def _gate_requires_cio(paths: list[str]) -> bool:
+    """閘門單一真值（publish_gate.classify_paths）：這批檔是否能走 AUTO 通道？
+
+    True＝必須真 CIO 審查（未命中白名單／特殊類別命中）→ 本步驟不得自行 commit＋落 AUTO 章。
+    判定失敗一律回 True（fail-closed）。
+    """
+    try:
+        import publish_gate as _pg
+        r = _pg.classify_paths(BASE, paths, ref="HEAD")
+        return bool(r.get("must_cio")) or str(r.get("mode")) != "AUTO"
+    except Exception as e:  # noqa: BLE001
+        print(f"  ⚠️ gate 判定不可用（{type(e).__name__}: {str(e)[:80]}）→ 保守視為必須真 CIO")
+        return True
+
+
 def github_push(filepath: str) -> bool:
+    # 2026-10-13 修復（台股緊急應變發布故障根因，使用者鎖定範圍）：
+    #   舊行為：不論檔類別一律 `git add`＋commit → 對「閘門強制真 CIO」的檔（實測 index.html、
+    #   daily_report_v2_*.html 未命中白名單；snapshot.json／dashboard_decisions.json 特殊類別）
+    #   auto_record 依規拒絕落 AUTO 章 → 這顆 commit 永遠推不出去，卻已進本機歷史，
+    #   把整條推送範圍（含後續所有 producer 的新 commit）一起卡死：13:01 產生的兩顆
+    #   commit 即因此讓 13:06 的緊急應變資料與四源同步全部上不了線（線上緊急應變 HTML 404）。
+    #   新行為（2026-10-13）：先問閘門。必須真 CIO 的檔 → commit 後**立刻取得真 CIO APPROVE 並落 RECORD**
+    #   （走 cio_lane.py，與 regenerate_report.py 同源的審查車道）；審查未過 → 撤回本步驟 commit
+    #   （git reset --soft HEAD~1，內容留在工作區）→ 保留阻塞，絕不留下一顆「推不出去又卡住整條範圍」的 commit。
+    _cio = _gate_requires_cio([filepath])
+    if _cio:
+        print(f"  🔐 {filepath}：閘門判定必須真 CIO 審查（未命中白名單／特殊類別）→ 取真 CIO APPROVE 後才推")
+
     result = subprocess.run(
         ["git", "add", filepath],
         cwd=BASE,
@@ -117,16 +145,37 @@ def github_push(filepath: str) -> bool:
     )
     if result.returncode != 0:
         print(f"  git commit: {result.stderr[:200]}")
-    # P2（2026-09-14）：改走 RECORD 通道 —— 先由 auto_record 落 tree 紀錄再 push；
-    # 未過 → 直接不推（閘門也會擋），避免自打 [cioreviewed] 標籤。
-    _ar = subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--script", "daily_deploy.py"],
-                         cwd=BASE, capture_output=True, text=True, timeout=300)
-    if _ar.returncode != 0:
-        print(f"  ⛔ 落紀錄未通過 → 不推送：{((_ar.stdout or '') + (_ar.stderr or ''))[-200:]}")
-        return False
+    _rec_mode = "auto"
+    if _cio:
+        # 2026-10-13：強制真 CIO 類檔 → 對「待推範圍」取真 CIO APPROVE 並落 RECORD（單一實作：cio_lane.py）
+        try:
+            import cio_lane as _lane
+        except Exception as e:  # noqa: BLE001
+            print(f"  ⛔ 無法載入真審查車道（{type(e).__name__}: {str(e)[:80]}）→ 撤回本步驟 commit、保留阻塞")
+            _rb = subprocess.run(["git", "reset", "--soft", "HEAD~1"], cwd=BASE,
+                                 capture_output=True, text=True, timeout=60)
+            print(f"  ↩ {_rb.stdout.strip() or _rb.stderr.strip()}")
+            return False
+        _ok_r, _msg_r = _lane.review_and_record(tag="daily_deploy")
+        print(f"  真 CIO 審查：{_msg_r}")
+        if not _ok_r:
+            _rb = subprocess.run(["git", "reset", "--soft", "HEAD~1"], cwd=BASE,
+                                 capture_output=True, text=True, timeout=60)
+            print(f"  ↩ 已撤回本步驟 commit（內容留在工作區，下一輪可重試）："
+                  f"{(_rb.stdout or _rb.stderr or '').strip()[:120]}")
+            return False
+        _rec_mode = "skip"   # RECORD 已由真審查車道落地
+    else:
+        # P2（2026-09-14）：純資料路徑 —— 先由 auto_record 落 tree 紀錄再 push；
+        # 未過 → 直接不推（閘門也會擋），避免自打 [cioreviewed] 標籤。
+        _ar = subprocess.run([sys.executable, str(BASE / "auto_record.py"), "--script", "daily_deploy.py"],
+                             cwd=BASE, capture_output=True, text=True, timeout=300)
+        if _ar.returncode != 0:
+            print(f"  ⛔ 落紀錄未通過 → 不推送：{((_ar.stdout or '') + (_ar.stderr or ''))[-200:]}")
+            return False
     # 2026-09-14：推送統一走 auto_push.py（範圍紀錄覆蓋／重試 3 次／遠端 sha 驗證）。
-    # 本檔每次只 commit 單一資料檔（純資料路徑）→ --record auto 會自動補落 RECORD。
-    ap = subprocess.run([sys.executable, str(BASE / "auto_push.py"), "--script", "daily_deploy.py"],
+    ap = subprocess.run([sys.executable, str(BASE / "auto_push.py"), "--script", "daily_deploy.py",
+                         "--record", _rec_mode],
                         cwd=BASE, capture_output=True, text=True, timeout=600)
     ok = ap.returncode == 0
     print(f"  push {filepath} via auto_push: {'ok' if ok else 'FAIL（rc=%d）' % ap.returncode}")
@@ -353,7 +402,7 @@ def main() -> None:
 
     if not (ok1 and ok2):
         print("[FAIL] GitHub 推送失敗")
-        return
+        return 1   # 2026-10-13：fail-loud（舊版裸 return → rc=0，cron 端看起來成功）
 
     # 4. Telegram
     daily_url = f"https://b0988321088.github.io/{REPO.split('/')[1]}/{daily_name}?v={TODAY.replace('-','')}"
@@ -368,4 +417,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())   # 2026-10-13：rc 必須反映推送結果（fail-loud；emergency_1330 依 rc 判定）
