@@ -206,18 +206,34 @@ def main():
     ck("config 指定 runway_ref_scenario=extreme",
        ((snap.get("coast_fi_config") or {}).get("runway_ref_scenario")) == "extreme")
     cf = snap.get("coast_fi_engine") or {}
+    # 本區塊是 snapshot 的**衍生區塊**（coast_fi_engine.py --write 寫入，真值日流程步驟 4b）。
+    # 它的輸入是當期真值（dividend_month_actual／cash_total／restricted_cash）；
+    # 若日報／儀表板已用新真值重產、而本區塊沒重跑 → 本節會 FAIL。
+    # 因此 FAIL 訊息一律帶 asof ＋「入庫值 vs 現算值」，讓斷言自己說出「要找哪支生產者重跑」，
+    # 不必再人工追（2026-10-13 補；當期踩到的就是這條）。
+    _asof = cf.get("asof")
     cur = cf.get("current") or {}
     pccr, rwm = (cur.get("pccr") or {}), (cur.get("runway") or {})
     if pccr:
         exp_act = sc["div_act"] + sc["rent_act"]
+        _pccr_now = exp_act / exp * 100
         ck("PCCR 當月實收 = 配息實收＋房租實收（與儀表板同口徑）",
-           abs(float(pccr.get("pccr_actual_pct") or 0) - exp_act / exp * 100) < 0.06,
-           f"{pccr.get('pccr_actual_pct')} vs {exp_act / exp * 100:.1f}")
+           abs(float(pccr.get("pccr_actual_pct") or 0) - _pccr_now) < 0.06,
+           f"snapshot={pccr.get('pccr_actual_pct')} vs 現算={_pccr_now:.1f}"
+           f"（asof={_asof}；入庫 pccr.dividend_actual={pccr.get('dividend_actual')}"
+           f" vs 現算 div_act={sc['div_act']:,.0f}；房租實收={sc['rent_act']:,.0f}）"
+           f" → 衍生區塊疑未重跑：python coast_fi_engine.py --write")
     if rwm:
+        _gap = sc["extreme"]["gap"]
+        # 分母 0 時 coast_fi_engine 一律寫 999；本處同口徑，且避免 ZeroDivisionError
+        _runway_now = (cash / _gap * 30) if _gap > 0 else 999
         ck("跑道天數 = 現金 ÷ 極端缺口 × 30",
-           (sc["extreme"]["gap"] <= 0 and rwm.get("runway_days") == 999)
-           or abs(float(rwm.get("runway_days") or 0) - cash / sc["extreme"]["gap"] * 30) < 1.5,
-           str(rwm.get("runway_days")))
+           (_gap <= 0 and rwm.get("runway_days") == 999)
+           or abs(float(rwm.get("runway_days") or 0) - _runway_now) < 1.5,
+           f"snapshot={rwm.get('runway_days')} vs 現算={_runway_now:.0f}"
+           f"（asof={_asof}；入庫 cash_full={rwm.get('cash_full')}"
+           f" vs 現算 available_cash={cash:,.0f}；極端缺口={_gap:,.0f}）"
+           f" → 衍生區塊疑未重跑：python coast_fi_engine.py --write")
         ck("跑道參考情境標記為 extreme", rwm.get("scenario") == "extreme")
 
     print("== 7) 逐日產物：新門檻在、舊門檻不在（相對式比對現算值） ==")
@@ -237,12 +253,27 @@ def main():
         ck("級距文字標明「經驗級距·非門檻」", "經驗級距" in t)
         import re
         _w = re.findall(r'<div class="bar"><div style="width:([\d.]+)%', t)
-        # 期望值必須走與頁面同一條四捨五入鏈：頁面先用 round(cov,1) 再換算尺標
-        # （2026-09-28 驗證器初版漏這步 → 未四捨五入的覆蓋率換算後與頁面差 0.1pp，假 FAIL）
-        _exp_w = [f"{min(round(c, 1) / sab.ACCEL_GATE_PCT * 100, 100):.1f}"
+        # 期望值必須走與頁面**完全相同**的換算鏈——唯一真值＝build_retirement_plan.py:111-114
+        #   _BAR_SCALE = 150.0；_bar_w(v) = max(0.0, min(v / _BAR_SCALE * 100.0, 100.0))
+        # 頁面把「原始覆蓋率」直接餵進 _bar_w（第 257／259 行：_bar_w(fire_cov)／_bar_w(fire_cov_actual)），
+        # 只負責顯示文字才會 round（{fire_cov:.1f}%）。本驗證器**不得**先 round 再換算。
+        # 2026-09-28 版註解假設頁面先 round(cov,1) → 2026-10-13 實測踩到邊界：
+        #   覆蓋率 89.7613 → 頁面 89.7613/150*100=59.8409 → "59.8"（HTML 實際值）
+        #                   驗證器 round(89.7613,1)=89.8 → 89.8/150*100=59.8667 → "59.9" → 差 0.1
+        #   ＝**驗證器自身比較方式錯（假 FAIL）**，非產物漂移。（113.1210 兩鏈同為 75.4，故只有第二條露餡）
+        _exp_w = [f"{max(0.0, min(c / sab.ACCEL_GATE_PCT * 100, 100)):.1f}"
                   for c in (cov, sc["act"]["coverage"])]
         ck("條圖尺標 0–150%：兩條寬度＝現算（且互不相同）",
            _w[:2] == _exp_w and _w[0] != _w[1], f"{_w[:2]} vs {_exp_w}")
+        # 比較模型自我校驗：上式的「150% 滿格」假設必須與頁面 _BAR_SCALE 同步，
+        # 否則頁面改尺標時本驗證器會用自己的舊模型比對 → 假紅/假綠（2026-10-13 補）。
+        _bp_path = repo / "build_retirement_plan.py"
+        _bp_src = _bp_path.read_text(encoding="utf-8") if _bp_path.exists() else ""
+        _m_scale = re.search(r"^_BAR_SCALE\s*=\s*([\d.]+)", _bp_src, re.M)
+        ck("頁面尺標 _BAR_SCALE ＝ 驗證器採用的加碼級門檻（150）",
+           bool(_m_scale) and float(_m_scale.group(1)) == sab.ACCEL_GATE_PCT,
+           f"build_retirement_plan.py _BAR_SCALE={_m_scale.group(1) if _m_scale else '未找到'} vs "
+           f"sab.ACCEL_GATE_PCT={sab.ACCEL_GATE_PCT}")
         ck("條圖無 min(,100%) 截斷殘留", "width:min(" not in t)
         ck(f"100% 門檻線位置 = {100 / sab.ACCEL_GATE_PCT * 100:.1f}%",
            f'<i style="left:{100 / sab.ACCEL_GATE_PCT * 100:.1f}%">' in t)
@@ -263,4 +294,11 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    _rc = main()
+    # 行程邊界不變式（防「驗證器說謊」）：只要有 FAIL，exit code 必須非零。
+    # 為什麼要在最後再判一次：rc 由 main() 的 return 決定，任何後續重構／早退都可能讓
+    # _fail>0 卻回 0 → 22:40 closeout 讀到假綠燈。這裡是最後一道閘，不依賴 main() 的回傳值。
+    if _fail and not _rc:
+        print(f"\n❌ 驗證器自我矛盾：{_fail} 條 FAIL 但 main() 回 0 → 強制 rc=1（fail-loud）")
+        _rc = 1
+    sys.exit(_rc)
