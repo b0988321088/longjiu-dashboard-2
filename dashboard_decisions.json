@@ -10933,6 +10933,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261013221207-1180",
+    "timestamp": "2026-10-13T22:12:07.204067+08:00",
+    "agent": "Hermes",
+    "task": "2026-10-13 TD-20261013-13 根因修復：正典不再被通用重跑覆蓋",
+    "summary": "使用者裁決立即處理、採最小範圍修復、今晚完成審查與驗收（授權範圍：TD-13；資安 remediation 維持既有 HOLD、不綁修、不標 CLOSED；明示公開 Git 歷史含有效 API key 屬憑證外洩風險，不因 repo 現況乾淨而消失，須獨立輪替）。根因（已取證）：rebalance_summary 由 build_rebalance_dashboard.py:build_summary_md() 每日重跑產出，模板落後已授權正典（e832f6a4 全源整合版）→ 重跑洗掉「零、全源整合對照」整節、「一、」節可接受範圍/判定欄與判斷性文字（已核准內容倒退）→ 真 CIO REJECT、發布 fail-closed（22:00 前實測重現，線上未污染）。修法兩層：①全源整合區塊外置為受控單一真值 data/rebalance_integration.md（產生器只讀取原樣插入、不重算不硬編；註解不外洩）②依裁決備案縮小重跑 scope：正典（含全源整合對照節）不被覆蓋，自動版旁路 .auto.md（已 gitignore）、eval 不重渲染。驗收（實測）：三回合重跑正典 summary/eval md5 不變且與已上線版逐位元一致、節標題 diff 空；發布範圍 2 顆（2132b41d 晚報＋6ad3cc29）→ 結案資料 0bf0cb28；雙異質獨立審查（longcat/laguna/Pollinations）APPROVE 0 blocking；local=remote=ls-remote=0bf0cb28、待推 0、線上 4 頁 200、eval 全源整合 3 次未倒退。殘留：資安 remediation（憑證輪替／歷史暴露）獨立追蹤。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-13T21:49:46.331166"
