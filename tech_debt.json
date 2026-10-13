@@ -1613,14 +1613,15 @@
     "title": "wrappers/run_verifier_heartbeat.py（cron 入口）永遠 rc=0；closeout 不檢查心跳跑的是哪一版真值",
     "severity": "P2",
     "source": "2026-10-13 驗證器說謊修復之未解項",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-13)：2026-10-13 依使用者裁決完成三項：①closeout 第⑧步新增 _hb_version_problems()：比對心跳 snapshot_mtime/verifier_mtime 與當前檔案 mtime（同 run_verifier_heartbeat._mtime_iso 口徑、台北時區），不一致或缺指紋→回報問題且不得沿用舊 PASS（訊息要求重跑 run_verifier_heartbeat）②輸出明確區分『cron wrapper rc 恆 0＝排程程序執行成功』與『驗證器結論』，PASS／NOT_RUN／FAIL 三態訊息皆載明③退休規劃頁確認屬每日發布集（regenerate_report.py 產出並列入 _push_files）→ 已受控重產 retirement_plan_2026-10-13.html（17:12，晚於 snapshot 17:02；頁面數字 986 天/89.8%/1,055,740 與真值一致）。驗收：tests/test_closeout_heartbeat_version_20261013.py 8 PASS/0 FAIL（含 T2 真值改寫後不得沿用舊 PASS、T4 缺指紋不得假綠、T7 真實心跳檔逐位元未變）；驗證器 57 PASS/0 FAIL。",
     "detail": "①wrapper 設計上恆 rc=0（2026-10-05 使用者核准，避免 cron 重複警報）→ 轉發器層仍有 FAIL 卻 rc=0 的表面，真訊號只落在心跳檔＋closeout 第⑧步；要讓 cron 也非零須改 wrapper（本次未動）。②closeout_check.py 只讀心跳狀態、不看心跳是對哪一版真值跑的 →『資料已更新、心跳仍停舊版』目前只能靠稽核發現；已於心跳檔加輸入指紋（snapshot_mtime/verifier_mtime/inputs_changed_since_prev_run），待 closeout 接入。③新增 _BAR_SCALE 斷言以正則讀 build_retirement_plan.py，該檔若改寫法會假紅（fail-closed 方向，可接受）。",
     "tags": "驗證器,心跳,closeout,閘門",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-13",
-    "cleanup_reason": ""
+    "cleanup_reason": "tech_debt close：2026-10-13 依使用者裁決完成三項：①closeout 第⑧步新增 _hb_version_problems()：比對心跳 snapshot_mtime/verifier_mtime 與當前檔案 mtime（同 run_verifier_heartbeat._mtime_iso 口徑、台北時區），不一致或缺指紋→回報問題且不得沿用舊 PASS（訊息要求重跑 run_verifier_heartbeat）②輸出明確區分『cron wrapper rc 恆 0＝排程程序執行成功』與『驗證器結論』，PASS／NOT_RUN／FAIL 三態訊息皆載明③退休規劃頁確認屬每日發布集（regenerate_report.py 產出並列入 _push_files）→ 已受控重產 retirement_plan_2026-10-13.html（17:12，晚於 snapshot 17:02；頁面數字 986 天/89.8%/1,055,740 與真值一致）。驗收：tests/test_closeout_heartbeat_version_20261013.py 8 PASS/0 FAIL（含 T2 真值改寫後不得沿用舊 PASS、T4 缺指紋不得假綠、T7 真實心跳檔逐位元未變）；驗證器 57 PASS/0 FAIL。",
+    "updated_at": "2026-10-13"
   }
 ]

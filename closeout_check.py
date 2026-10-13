@@ -553,10 +553,46 @@ def step_threshold_invariants(quiet: bool, checker: Path | None = None) -> list:
 # 責任分離：本步**只讀**心跳檔（data/verifier_heartbeat.json），不重跑驗證器；
 #       重跑由 tools/run_verifier_heartbeat.py 專責（cron 每日呼叫）。
 # fail-closed：檔缺／NOT_RUN／逾期未跑／FAIL → 一律回傳問題（不得宣告收工全綠）。
-# 標準不得下調：驗證器目前真實結果為 49 PASS / 6 FAIL；6 條斷言漂移屬另案修復，
-#       但在修好之前**不得**因「已知」而當成 OK（使用者明令）。
+# 標準不得下調：驗證器在修好前即使「已知」也不得當成 OK；2026-10-13 修復後真實結果為
+#       57 PASS / 0 FAIL（rc=0），本步仍只認「心跳檔本身」與其版本指紋，不因已知而放行。
+# TD-20261013-07（使用者 2026-10-13 裁決，三項範圍之一）：心跳必須能證明其 PASS 對應
+#       **當前**真值與**當前**驗證器版本；真值或驗證器在心跳之後被改寫 → 該 PASS 不得沿用。
+#       同時：cron wrapper（wrappers/run_verifier_heartbeat.py）設計上恆回 rc=0，
+#       「排程程序執行成功」≠「驗證器通過」；本步輸出必須把兩者分開講清楚。
 HEARTBEAT_FILE = REPO / "data" / "verifier_heartbeat.json"
 HEARTBEAT_STALE_HOURS = 48   # 每日排程；容忍一次漏跑，超過即視為「沒跑」
+SNAPSHOT_FILE = REPO / "snapshot.json"
+VERIFIER_FILE = REPO / "tools" / "verify_ficriteria.py"
+
+
+def _file_mtime_iso(p: Path):
+    """檔案 mtime → 台北時區 ISO 字串（與 tools/run_verifier_heartbeat.py:_mtime_iso 同口徑）。"""
+    try:
+        tpe = dt.timezone(dt.timedelta(hours=8))
+        return dt.datetime.fromtimestamp(p.stat().st_mtime, tpe).isoformat()
+    except OSError:
+        return None
+
+
+def _hb_version_problems(hb: dict) -> list:
+    """心跳版本指紋 vs 當前檔案版本（TD-20261013-07 項一）。
+
+    心跳的 PASS 只證明「跑的那一刻」；真值（snapshot.json）或驗證器
+    （tools/verify_ficriteria.py）在心跳之後被改寫時，該 PASS 不能沿用到當前版本，
+    否則真值更新後仍可能亮綠燈。缺指紋＝無法證明 → 同樣回報（fail-closed）。
+    """
+    out: list = []
+    for label, key, path in (("真值 snapshot.json", "snapshot_mtime", SNAPSHOT_FILE),
+                             ("驗證器 verify_ficriteria.py", "verifier_mtime", VERIFIER_FILE)):
+        hb_v = hb.get(key)
+        cur = _file_mtime_iso(path)
+        if hb_v is None or cur is None:
+            out.append(f"心跳缺 {key} 指紋（心跳檔={hb_v!r}／現值={cur!r}）"
+                       f"→ 無法證明該 PASS 對應當前{label}")
+        elif str(hb_v) != str(cur):
+            out.append(f"心跳版本落後：心跳驗的是 {label}={hb_v}，現值={cur}"
+                       f"→ 該 PASS 不適用於當前版本（請重跑 tools/run_verifier_heartbeat.py）")
+    return out
 
 
 def step_verifier_heartbeat(quiet: bool) -> list:
@@ -584,15 +620,25 @@ def step_verifier_heartbeat(quiet: bool) -> list:
         except Exception:  # noqa: BLE001
             fresh = False
 
-    if st == "PASS" and fresh:
+    ver_problems = _hb_version_problems(hb)
+
+    if st == "PASS" and fresh and not ver_problems:
         if not quiet:
             print(f"⑧ 驗證器心跳：✅ PASS（{hb.get('pass_count')} PASS / "
-                  f"{hb.get('fail_count')} FAIL）")
+                  f"{hb.get('fail_count')} FAIL；指紋對得上當前真值與驗證器版本）"
+                  f"｜註：cron wrapper（排程程序執行成功）rc 恆 0，不具驗證語意，"
+                  f"本步只認驗證器結論（TD-20261013-07）")
         return []
 
     if not fresh:
         return [f"驗證器未在 {HEARTBEAT_STALE_HOURS}h 內執行（last_run_at={last_run}）"
-                f"→ NOT_RUN（無聲失效；cron 呼叫端可能沒跑）"]
+                f"→ NOT_RUN（無聲失效；cron 呼叫端可能沒跑）。註：cron wrapper rc=0 只代表"
+                f"排程程序執行成功，不代表驗證器通過"]
+
+    if ver_problems:
+        # 狀態本身可能是舊的 PASS —— 一律以「版本不一致」回報，不得沿用舊 PASS
+        return [f"驗證器心跳與當前版本不一致（狀態={st}）：" + "；".join(ver_problems)
+                + "→ 修正前不得宣告收工全綠"]
 
     if st == "FAIL":
         return [f"驗證器 FAIL（{hb.get('pass_count')} PASS / {hb.get('fail_count')} FAIL；"
