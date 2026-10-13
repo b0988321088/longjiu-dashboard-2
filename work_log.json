@@ -2056,5 +2056,83 @@
   "category": "完成",
   "item": "收工閉環：稽核假紅修正＋心跳刷新＋殘留盤點（收工閉環（2026-10-12）：closeout_check 假紅 17→0（遮蔽政策與稽核對齊：稽核改讀 snapshot 真值，非讀畫面哨兵；commit afcc85ab 已推）。驗證器心跳刷新 → 56 PASS / 0 FAIL（原先 53/3 為 19:24 陳舊心跳）。殘留 ❌ 兩類（非本輪、不隱藏",
   "detail": "收工閉環（2026-10-12）：closeout_check 假紅 17→0（遮蔽政策與稽核對齊：稽核改讀 snapshot 真值，非讀畫面哨兵；commit afcc85ab 已推）。驗證器心跳刷新 → 56 PASS / 0 FAIL"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "完成",
+  "item": "TD-20261012-25 延伸：自身產出就地提交機制（self_publish）＋受控擴充白名單＋event owner（使用者 2026-10-13 裁決：①白名單採受控擴充（只加必要的精確路徑 notion_shared_context.md，禁通配）②缺陷修正併入第二顆 commit ③db653777 不得繞過 CIO 也不得未核對就重設 ④lj",
+  "detail": "使用者 2026-10-13 裁決：①白名單採受控擴充（只加必要的精確路徑 notion_shared_context.md，禁通配）②缺陷修正併入第二顆 commit ③db653777 不得繞過 CIO 也不得未核對就重設 ④lj_in"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "完成",
+  "item": "使用者受理 CLOSED：TD-20261012-25 延伸（self_publish＋受控擴充白名單＋event owner）（使用者 2026-10-13 ✅ 核准受理本輪交付。驗收依據（全部真結果）：①第二顆 commit da101e85 與 db653777 皆真 CIO 審查 APPROVE／blocking=[]（CIO-Pollination",
+  "detail": "使用者 2026-10-13 ✅ 核准受理本輪交付。驗收依據（全部真結果）：①第二顆 commit da101e85 與 db653777 皆真 CIO 審查 APPROVE／blocking=[]（CIO-Pollinations(ope"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "完成",
+  "item": "日報2026-10-13（已產出（金額見 snapshot／當日日報檔，勿在此複寫數字））",
+  "detail": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "完成",
+  "item": "資產穿透2026-10-13（已產出（五桶市值見 snapshot.penetration.actual_twd））",
+  "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "完成",
+  "item": "2026-10-13 台股緊急應變發布故障：根因修復與補審（根因＝producer commit 閘門「強制真 CIO」類檔卻只走 auto_record → 留下未落紀錄又推不出的 commit，把整條推送範圍（含後續產線）一起卡死。處置：補審 4 顆（remote 40a02d42）、新增 cio_lane.py 真審查車道、daily_deploy＋n",
+  "detail": "根因＝producer commit 閘門「強制真 CIO」類檔卻只走 auto_record → 留下未落紀錄又推不出的 commit，把整條推送範圍（含後續產線）一起卡死。處置：補審 4 顆（remote 40a02d42）、新增 ci"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "完成",
+  "item": "2026-10-13 台股緊急應變發布故障：閉環（使用者指示閉環。修復內容＝真 CIO 發布車道（cio_lane.py）＋daily_deploy／nightly_dashboard_sync 改走車道並在審查未過時撤回 commit＋fail-loud rc＋cwd 契約修正；補審 4 顆既有 commit 後正式發布。已驗收：remote=local=",
+  "detail": "使用者指示閉環。修復內容＝真 CIO 發布車道（cio_lane.py）＋daily_deploy／nightly_dashboard_sync 改走車道並在審查未過時撤回 commit＋fail-loud rc＋cwd 契約修正；補審 4"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "完成",
+  "item": "TD 三卡處置：保單代號政策（不遮罩）＋驗證器現金口徑對齊（TD-20261011-16）＋入庫卡死車道結案（TD-20261012-14）（2026-10-13 使用者於 Telegram 一次裁決並要求「一次修正到發佈」。① TD-20261011-07：政策決定「公開頁不遮罩保單代號」（不視為敏感）→ 維持現狀結案，未動 build_mtd_repor",
+  "detail": "2026-10-13 使用者於 Telegram 一次裁決並要求「一次修正到發佈」。① TD-20261011-07：政策決定「公開頁不遮罩保單代號」（不視為敏感）→ 維持現狀結案，未動 build_mtd_report.py 與產物。② "
+ },
+ {
+  "date": "2026-10-13",
+  "category": "完成",
+  "item": "週六再平衡 gate 喚醒契約修復＋三卡結案",
+  "detail": "2026-10-13 使用者授權「一次修正到發佈」後續批次。根因＝週六再平衡 gate 的喚醒契約錯誤，agent 自 2026-09-22 起從未被喚醒（沉默三週；非跑錯，是根本沒跑）。修復與證據：①60c8a811（19:09）修 gate 喚醒契約 ②32882b02（19:05）重跑評估並更新產物（對齊現行真值 26,970,031）③5194b99e（19:11）TD-20260926-01 補根因與修復證據 ④348b4b6a（19:21）TD-20260926-01 結案（首跑實地驗收通過）、同時立案 TD-20261013-12 ⑤9153bd02（19:34）cio_lane 補 CLI --tag 入口，供 cron 以單一指令走真 CIO 車道 ⑥2c0b08c5（19:58）／d2aedca8（19:59）TD-20261013-12 結案（發布車道遷移 auto_record→cio_lane，範圍 1→3）。殘留：2026-10-17 首跑觀測（另案，不阻擋結案）。"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "完成",
+  "item": "驗證器誠實化＋closeout 納入心跳版本一致性",
+  "detail": "①c3b3a143（17:03）驗證器不再說謊 —— FAIL 必 rc≠0、心跳記真實計數、coast_fi 衍生區塊重算 ②96820f2a（17:12）收工檢查納入心跳版本一致性；退休規劃頁受控重產（TD-20261013-07 結案）③ed76caae（17:08）cio_lane 審查綁定改用 12 碼前綴＋prompt 只給 12 碼，消除抄寫誤擋。"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "完成",
+  "item": "lj_inc.py 工具復原＋TD-20260923-01 結案",
+  "detail": "69bc1f22（18:59）補 lj_inc.py 缺漏 import（os／sys／json／datetime）。該檔是事件殘留的唯一 owner，缺 import 期間完全無法執行（TD-20261013-08 所載）。復原後實跑 `python lj_inc.py list` 正常回應（2 筆 open 事件，經核皆為歷史噪音）。同一 commit 另立案 4 筆並結案 TD-20260923-01。"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "完成",
+  "item": "技術債批次結案（唯讀盤點取證）",
+  "detail": "09c041a5（16:44）一次結案 10 筆技術債，取證方式為唯讀盤點（非重跑產線）。全日累計結案 17 筆、新立案 12 筆（淨 -5）；結案清單：TD-20260921-01、20260923-01、20260925-01、20260926-01、20260929-01、20261005-03、20261007-05、20261009-02／04／06／07、20261011-07、20261011-16、20261012-14／16／19、20261013-07／12。"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "完成",
+  "item": "資料入帳與同步（薪資／六批／四源）",
+  "detail": "①52a10de8（16:41）台電 10 月薪給單入帳（基本薪給 43,511／應發 44,961／扣 5,184／實發 39,777）②b39bbae9（16:29）六批資料一次同步（台股／安聯／國泰基金／鉅亨／Moneybook）③四源同步：63d76d85（07:00）、868d46ee（13:00）、40a02d42（13:06）④費用頁 digest ×2：22e19c49（13:30）、43a491b7（18:30）。今日真值：總資產 26,970,031。"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "修正",
+  "item": "TD-20261013-05／06 根因修復：審查鏈單一實作＋異質備援",
+  "detail": "commit 8f298749（2026-10-13）。根因（以證據判定，非推測）＝審查能力被設計成單一供應商依賴：①402 非單日故障 —— .git/cio_reviews 於 2026-10-12 已留有「備援鏈(Pollinations402→DeepSeek)」紀錄，今日 13:2x／14:2x 再度發生 ②三處入口行為不一致：cio_lane.py 與 regenerate_report.py 直接 _call(POLLI_URL) 單點（402 即全停），llm_review_client.generate() 的「備援」是 DeepSeek＝產出者自審（假異質）＝即「未經有效異質審查卻能發布」的縫。修復：新增 review_chain.py 單一實作（鏈＝Pollinations(openai) → nous meituan/longcat-2.5-preview:free → nous poolside/laguna-s-2.1:free；全鏈不含 DeepSeek／Google；reviewer 標籤動態回報；nous agent_key refresh-aware，過期即排除該層），兩處入口改走鏈、generate() 委派鏈（移除 DeepSeek 層），fail-closed 語意不變（全失敗即停、不因 REJECT 改試別層求 APPROVE）。驗收：新測試 tests/test_review_chain_20261013.py 27 通過／0 失敗（正常／402／逾時／無效回應／空輸出／全鏈失敗／拒審不換層／憑證排除／失敗不留 RECORD）；未破壞既有 test_publish_gate 140/0、test_cio_lane_rollback 12/0；獨立異質驗收 2/2（meituan longcat-2.5-preview:free＋poolside laguna-s-2.1:free 雙路徑、不經 review_chain、patch 全文送審、commit/tree 12 碼綁定核對一致、0 blocking）；真鏈端到端實跑 APPROVE 0 blocking；發布閉環：RECORD 已落（reviewer=CIO-獨立雙路徑）、remote=local=ls-remote=8f298749、待推 0／落後 0、線上 index.html 與 daily_report_v2 皆 HTTP 200。"
  }
 ]

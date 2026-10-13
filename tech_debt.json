@@ -1590,15 +1590,16 @@
     "title": "真審查工具（Pollinations 免費層）402 即使產線全停｜無次級異質審查者",
     "severity": "P1",
     "source": "2026-10-13",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-13)：根因＝審查能力單一供應商依賴（402 非單日故障：.git/cio_reviews 10-12 已有 Pollinations402→DeepSeek 備援紀錄）。修復 commit 8f298749：新增 review_chain.py 單一實作異質鏈（Pollinations → nous longcat-2.5-preview:free → nous laguna-s-2.1:free，全鏈不含 DS／Google，reviewer 動態，agent_key refresh-aware），cio_lane.py／regenerate_report.py／llm_review_client.generate() 全部收斂至該鏈並移除 DeepSeek 假異質層；fail-closed 不變。驗收：新測試 27/0、既有 test_publish_gate 140/0、test_cio_lane_rollback 12/0、獨立異質雙路徑驗收 2/2 APPROVE 0 blocking（不經 review_chain）、真鏈端到端實跑 APPROVE、RECORD 已落、remote=local=8f298749、待推0落後0、線上 200。",
     "detail": "13:2x 與 14:2x 兩度 HTTP 402 Payment Required → fail-closed 不降級 → 程式修復一度無法發布（重試後成功）。需評估次級異質審查來源（非 DeepSeek／非 Google）",
     "tags": "",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-13",
-    "cleanup_reason": ""
+    "cleanup_reason": "tech_debt close：根因＝審查能力單一供應商依賴（402 非單日故障：.git/cio_reviews 10-12 已有 Pollinations402→DeepSeek 備援紀錄）。修復 commit 8f298749：新增 review_chain.py 單一實作異質鏈（Pollinations → nous longcat-2.5-preview:free → nous laguna-s-2.1:free，全鏈不含 DS／Google，reviewer 動態，agent_key refresh-aware），cio_lane.py／regenerate_report.py／llm_review_client.generate() 全部收斂至該鏈並移除 DeepSeek 假異質層；fail-closed 不變。驗收：新測試 27/0、既有 test_publish_gate 140/0、test_cio_lane_rollback 12/0、獨立異質雙路徑驗收 2/2 APPROVE 0 blocking（不經 review_chain）、真鏈端到端實跑 APPROVE、RECORD 已落、remote=local=8f298749、待推0落後0、線上 200。",
+    "updated_at": "2026-10-13"
   },
   {
     "id": "TD-20261013-06",
@@ -1606,15 +1607,16 @@
     "title": "審查車道重複實作｜regenerate_report 內建 vs cio_lane.py",
     "severity": "P2",
     "source": "2026-10-13",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-13)：同一 commit 8f298749 一併收斂：審查鏈改為單一實作 review_chain.py，cio_lane.py 與 regenerate_report.py 不再各自直接 _call(POLLI_URL)，llm_review_client.generate() 亦委派同一條鏈。原『同源抽出但仍保留原實作』的雙份實作已消除，判定與 reviewer 標籤全系統一致。",
     "detail": "為避免動 07:00 主產線，cio_lane.py 為同源抽出但仍保留原實作；建議後續收斂成單一實作",
     "tags": "",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-13",
-    "cleanup_reason": ""
+    "cleanup_reason": "tech_debt close：同一 commit 8f298749 一併收斂：審查鏈改為單一實作 review_chain.py，cio_lane.py 與 regenerate_report.py 不再各自直接 _call(POLLI_URL)，llm_review_client.generate() 亦委派同一條鏈。原『同源抽出但仍保留原實作』的雙份實作已消除，判定與 reviewer 標籤全系統一致。",
+    "updated_at": "2026-10-13"
   },
   {
     "id": "TD-20261013-07",
@@ -1639,15 +1641,16 @@
     "title": "🔴 P1｜lj_inc.py 缺 import（os／sys／json／datetime）→ 事件殘留唯一 owner 完全無法執行",
     "severity": "P1",
     "source": "2026-10-13 唯讀驗證（實跑 NameError）",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-13)：原始缺陷（缺 os／sys／json／datetime import → 完全無法執行）已由 commit 69bc1f22 修復；本輪補做全面核對（非只憑單一子命令）：import 四項就位、py_compile OK、list 實跑正確（僅列 open）、close 寫入路徑於沙盒實測成功（status→closed＋closed_at，其他筆不動）、usage 錯誤路徑 rc=1 正確；真檔 inc_events.jsonl md5 前後一致（b5acd86a…）證明核對零副作用。",
     "detail": "實跑 python lj_inc.py list → NameError: name sys is not defined（L71）；os（L20 os.path.exists）與 json（L24）亦未 import。本檔為 2026-10-13 使用者裁決指定之「inc_events.jsonl 唯一 owner（單一寫入者）」，目前全檔 0 個 import 敘述 → list／close 子命令全部不可用。修法：補齊 import（最小改動，不動邏輯）。",
     "tags": "inc_events,工具,程式缺陷",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-13",
-    "cleanup_reason": ""
+    "cleanup_reason": "tech_debt close：原始缺陷（缺 os／sys／json／datetime import → 完全無法執行）已由 commit 69bc1f22 修復；本輪補做全面核對（非只憑單一子命令）：import 四項就位、py_compile OK、list 實跑正確（僅列 open）、close 寫入路徑於沙盒實測成功（status→closed＋closed_at，其他筆不動）、usage 錯誤路徑 rc=1 正確；真檔 inc_events.jsonl md5 前後一致（b5acd86a…）證明核對零副作用。",
+    "updated_at": "2026-10-13"
   },
   {
     "id": "TD-20261013-09",
