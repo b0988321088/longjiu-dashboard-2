@@ -3,7 +3,12 @@
 作為 cron prerun script（wake-gate）：今天若已有「真的跑過 agent」的輸出
 → 末行輸出 {"wakeAgent": false} → agent 完全跳過（零 LLM 零推播），
 防止同日重複執行（9/5 曾 16:03 + 20:58 雙跑 = 重複燒 ~1.8 CNY）。
-今天還沒真的跑過 → 空輸出 → 正常喚醒。
+今天還沒真的跑過 → **必須顯式輸出 {"wakeAgent": true}** → 才會喚醒 agent。
+⚠️ 2026-10-13 修正（實測事故）：不可用「空輸出」表示喚醒 —— Hermes 的契約是
+   「prerun script 成功但 stdout 為空 → 視為 nothing to report，直接跳過 AI 呼叫」
+   （cron/scheduler_prompt.py::_build_job_prompt：`if success and not script_output: return None`）。
+   舊敘述「空輸出 → 正常喚醒」與契約相反，導致 9/26、10/03、10/10 三次週六排程
+   agent 皆未執行（cron 輸出 0 bytes；log: "script produced no output, skipping AI call"）。
 
 ## 2026-09-22 判準修正（實測事故）
 舊判準 = 「rebalance_summary_{today}.md 是否存在」。但該檔自 2026-09 起**每天 07:00 由管線產出**
@@ -70,10 +75,16 @@ def already_ran_today(today: str, out_dir: Path) -> bool:
 
 
 def gate(today: str, out_dir: Path | None = None) -> str:
-    """回傳 gate 輸出：今天真的跑過 → wakeAgent false；否則空字串。純函數供測試。"""
+    """回傳 gate 輸出：今天真的跑過 → wakeAgent false；否則 wakeAgent true。純函數供測試。
+
+    2026-10-13：喚醒必須**顯式輸出**。Hermes 的 prerun 契約是「成功但 stdout 為空 → 跳過 AI 呼叫」
+    （cron/scheduler_prompt.py::_build_job_prompt），原 `return ""` 表達「喚醒」與契約相反 →
+    agent 自 2026-09-22 判準修正起從未被喚醒。顯式回 {"wakeAgent": true} 才會真的執行；
+    agent 若無事可報，依 cron 契約自行回 [SILENT] 抑制推播（不是靠 gate 靜音）。
+    """
     if already_ran_today(today, out_dir or default_output_dir()):
         return '{"wakeAgent": false}'
-    return ""
+    return '{"wakeAgent": true}'
 
 
 def main() -> None:
