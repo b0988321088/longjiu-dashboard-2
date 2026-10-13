@@ -10943,6 +10943,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261013225232-1181",
+    "timestamp": "2026-10-13T22:52:32.852383+08:00",
+    "agent": "Hermes",
+    "task": "2026-10-14 內文數字守門時序修復（TD-20261013-09）＋ work_log 格式污染修復",
+    "summary": "使用者核准一次跑完整條流程至可發布（區分「修復測試審查可完成」與「條件通過才發布」）。①TD-20261013-10 實查結案（rebalance 當月實收 142,909／89.8% 與 index 一致、舊值 88,611 零殘留、四產生器皆走 passive_caliber）。②TD-20261013-09 根因＝時序誤報（13:03 內文對照當時 snapshot 正確、真值 16:29 才前進）→ 修 check_narrative_numbers.py 以文件產出時點為上界併入該日 snapshot 歷史變體，僅放行真實出現過的值。③work_log.json 格式污染（indent=2 vs remote indent=1＋鍵名誤用 content/evidence）已修：改以 remote 為基底重建、鍵名回到 item/detail，相對 remote 僅 12 行、前 340 筆逐筆相同。④驗收全過：時序回歸 8/8、自測 45/45、跨報告一致 PASS、內文守門 PASS、publish_gate fail-closed 正確。⑤獨立審查 2/4 有效異質 APPROVE（longcat／laguna，commit/tree 綁定一致）；solar REJECT 2 條逐條判定不成立（誤解 asof 實作；測試依賴 repo 為回歸本質），stepfun 服務回空。⑥發布驗收：local=remote=ls-remote=b83561cd、待推 0／落後 0、線上 7 頁 200。揭露：verify_commit.py 曾用 git show HEAD 致送審內容與標示 commit 錯配（已修）；費用帳本三檔不一致另立案 TD-20261013-14。",
+    "status": "✅ 已核准",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-13T21:49:46.331166"
