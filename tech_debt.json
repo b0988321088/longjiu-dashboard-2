@@ -1658,15 +1658,16 @@
     "title": "🟠 P2｜緊急應變 LLM 內文數字落後當期真值（閉環稽核第 13 類 15 處 ❌）",
     "severity": "P2",
     "source": "2026-10-13 閉環稽核",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-13)：根因實證（非產出缺陷、是稽核基準錯）：13:03 產出的內文寫台股 8.0／美股 37.1／非科技 22.5，對照 13:00-13:06 的 snapshot 歷史版本（commit 868d46ee/40a02d42／63d76d85）完全正確；真值於 16:29 六批同步後前進為 9.2／36.4／21.9（b39bbae9），稽核卻以『當前 snapshot』比對『13:00 產出』→ 必然 15 處 ❌。修法（最小、不下調標準）：check_narrative_numbers.py 新增 _historical_allowed()，只在『該日』範圍取 snapshot 歷史變體併入合法值集合，且僅放行 T 日真的出現過的值。驗證：①重現對照組（只用當前 snapshot）對 13:00 舊版命中 38 處；②實驗組（併 6 版當日歷史）命中 0 處；③負向測試 6/6 符合預期（憑空數字台股 99.9%／美股 1.2%／金額 12,345,678 仍被擋，該日真值 8.0%／22.5% 放行）；④既有回歸 check_narrative_numbers_selftest.py 45/45 通過；⑤現行產出仍 PASS。無 git 環境時函式回空集合＝退回嚴格行為，不靜默放寬。",
     "detail": "13:00 產出的 emergency_llm_analysis.json 內文（台股 8.0%、美股 +7.1pp、非科技 22.5%）與 13:00 之後更新的 snapshot 穿透（台股 9.2／美股 36.4／非科技 21.9）不一致 → 稽核第 13 類固定 15 處 ❌。根因疑為「LLM 分析產出後真值又前進」；待決定修法（產出後重驗／標註 as_of／加閘門）。",
     "tags": "緊急應變,snapshot,稽核紅燈",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-13",
-    "cleanup_reason": ""
+    "cleanup_reason": "tech_debt close：根因實證（非產出缺陷、是稽核基準錯）：13:03 產出的內文寫台股 8.0／美股 37.1／非科技 22.5，對照 13:00-13:06 的 snapshot 歷史版本（commit 868d46ee/40a02d42／63d76d85）完全正確；真值於 16:29 六批同步後前進為 9.2／36.4／21.9（b39bbae9），稽核卻以『當前 snapshot』比對『13:00 產出』→ 必然 15 處 ❌。修法（最小、不下調標準）：check_narrative_numbers.py 新增 _historical_allowed()，只在『該日』範圍取 snapshot 歷史變體併入合法值集合，且僅放行 T 日真的出現過的值。驗證：①重現對照組（只用當前 snapshot）對 13:00 舊版命中 38 處；②實驗組（併 6 版當日歷史）命中 0 處；③負向測試 6/6 符合預期（憑空數字台股 99.9%／美股 1.2%／金額 12,345,678 仍被擋，該日真值 8.0%／22.5% 放行）；④既有回歸 check_narrative_numbers_selftest.py 45/45 通過；⑤現行產出仍 PASS。無 git 環境時函式回空集合＝退回嚴格行為，不靜默放寬。",
+    "updated_at": "2026-10-13"
   },
   {
     "id": "TD-20261013-10",
@@ -1674,15 +1675,16 @@
     "title": "🟠 P1｜跨頁「當月實收覆蓋」數字不一致（index 89.8% vs rebalance 55.7%）",
     "severity": "P1",
     "source": "2026-10-13 TD-20260923-01 驗收過程發現",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-13)：實查證明已消解：①rebalance_dashboard_2026-10-13.html 現值＝當月實收 142,909／89.8%（＝配息 118,909＋房租 24,000），與 index.html 89.8% 一致；②舊值 88,611 全產物 0 殘留（grep 確認）；③根因＝該頁未走統一來源，現 build_dashboard／build_rebalance_dashboard／build_retirement_plan／build_weekly_report 四者皆 import passive_caliber.scenarios()（各 1 次），asset_diff_monitor.py:655-664 另有『不以當月實收冒充保守底線』防護；④check_cross_report_consistency.py 實跑 rc=0 PASS（真值列含覆蓋 113.1%）；⑤rebalance 的 50.8% 經查為『含不動產負債率』，與覆蓋率非同一概念（非同義欄位誤配）。判準層與現況層並列顯示符合 2026-09-23 成對顯示鐵則。",
     "detail": "index.html：當月實收覆蓋 89.8%（＝142,909／159,210）；rebalance_dashboard_2026-10-13.html：當月實收 88,611 → 55.7%。兩頁同名指標不同值；daily_report_v2 另載「配息 118,909（實收=常態）／100,000（保守）」與「被動月收 142,909」。待查：是否同一口徑、rebalance 產物是否未隨真值更新、或兩者分母／分子定義不同。",
     "tags": "口徑不一致,跨報告,rebalance",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-13",
-    "cleanup_reason": ""
+    "cleanup_reason": "tech_debt close：實查證明已消解：①rebalance_dashboard_2026-10-13.html 現值＝當月實收 142,909／89.8%（＝配息 118,909＋房租 24,000），與 index.html 89.8% 一致；②舊值 88,611 全產物 0 殘留（grep 確認）；③根因＝該頁未走統一來源，現 build_dashboard／build_rebalance_dashboard／build_retirement_plan／build_weekly_report 四者皆 import passive_caliber.scenarios()（各 1 次），asset_diff_monitor.py:655-664 另有『不以當月實收冒充保守底線』防護；④check_cross_report_consistency.py 實跑 rc=0 PASS（真值列含覆蓋 113.1%）；⑤rebalance 的 50.8% 經查為『含不動產負債率』，與覆蓋率非同一概念（非同義欄位誤配）。判準層與現況層並列顯示符合 2026-09-23 成對顯示鐵則。",
+    "updated_at": "2026-10-13"
   },
   {
     "id": "TD-20261013-11",
@@ -1733,5 +1735,21 @@
     "moved_at": "2026-10-13",
     "cleanup_reason": "tech_debt close：根因：rebalance_summary 由 build_rebalance_dashboard.py:build_summary_md() 每日重跑產出，模板落後已授權正典（e832f6a4 全源整合版）→ 重跑洗掉「零、全源整合對照」節、「一、」節可接受範圍/判定欄與判斷性文字（已核准內容倒退）→ 真 CIO REJECT、發布 fail-closed（22:00 前實測重現，線上未污染）。修法兩層：①全源整合區塊外置為受控單一真值 data/rebalance_integration.md（產生器只讀取插入、不重算不硬編；插入前剝除 HTML 註解）②依裁決備案縮小重跑 scope：正典（含全源整合對照節）不被覆蓋，自動版旁路至 .auto.md、eval 不重渲染（理由：正典含判斷性文字與結構改版，無法安全機械重現）。驗收：連續三回合重跑，正典 summary/eval md5 前後不變且與已上線版逐位元一致（忽略行尾）；節標題 diff 為空；發布 commit 6ad3cc29（merged range 2132b41d→6ad3cc29），雙異質獨立審查 APPROVE 0 blocking，local=remote=ls-remote=6ad3cc29，待推 0，線上 4 頁 200 且 eval 全源整合 3 次（未倒退）。",
     "updated_at": "2026-10-13"
+  },
+  {
+    "id": "TD-20261013-14",
+    "date": "2026-10-13",
+    "title": "費用帳本三檔不一致（cost.html／cost_data.json／data/ai_cost_daily.jsonl）",
+    "severity": "P2",
+    "source": "2026-10-14 獨立審查（solar-mini4 對費用帳本 commit）實查提出",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "獨立審查實查：①同日 calls 不一致（cost_data.json 926 vs ai_cost_daily.jsonl 1064）；②ds_twd 不一致（55 vs 62）；③cost.html／cost_data.json 的 generated_at 21:50，但 cron commit 訊息宣稱日結 22:30，時間戳與數值未統一。三檔由不同步驟寫入卻無交叉驗證 → 讀者無法判斷何者為真。待查產線寫入順序與單一真值來源。審查意見已使該 commit 退出待推（未發布）。",
+    "tags": "資料一致性,費用帳本,cron",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-13",
+    "cleanup_reason": ""
   }
 ]

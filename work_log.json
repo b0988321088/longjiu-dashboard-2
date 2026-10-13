@@ -2147,5 +2147,17 @@
   "commit": "6ad3cc29",
   "item": "TD-20261013-13 根因修復：正典不再被通用重跑覆蓋（全源整合區塊外置＋正典保護）",
   "detail": "根因（已取證）：rebalance_summary 由 build_rebalance_dashboard.py:build_summary_md() 每日重跑產出，模板落後已授權正典（e832f6a4 19:17 全源整合版）——重跑會把「零、📊 全源整合對照（防偏頗）」整節、「一、」節的可接受範圍/判定欄與多處判斷性文字（裁定/靜默）一併洗掉，造成已核准正典倒退；真 CIO 審查隨後 REJECT、產線 fail-closed 不推（2026-10-13 22:00 前實測重現，線上未污染）。修法兩層：①全源整合區塊外置為受控單一真值 data/rebalance_integration.md（產生器只讀取並原樣插入，不重算、不硬編任何數字；來源檔變更＝實質內容變更必經真 CIO 審查；HTML 說明註解於插入前剝除）②依裁決備案縮小重跑 scope：正典（特徵＝含『全源整合對照』節）不被覆蓋——summary 自動版旁路至 rebalance_summary_{date}.auto.md（已入 .gitignore）、eval 不重渲染；理由＝正典含判斷性文字與結構改版，產生器無法安全機械重現（硬編即假造，違反 no-hardcode）。驗收（實測非推論）：連續三回合重跑 build_rebalance_dashboard.py，正典 summary/eval 的 md5 前後完全不變，且與已上線正典（af2835a5）忽略行尾後逐位元一致；節標題 diff 為空；發布範圍 2 顆（2132b41d 晚報 pending 狀態＋6ad3cc29 本輪），雙異質獨立審查（longcat/laguna/Pollinations）APPROVE 0 blocking；local=remote=ls-remote=6ad3cc29、待推 0、線上 4 頁 200 且 eval 全源整合 3 次（未倒退）。"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "修正",
+  "item": "TD-20261013-10 結案（實查證明已消解）：rebalance_dashboard 當月實收現值 142,909／89.8% 與 index 一致；舊值 88,611 全產物 0 殘留；根因為該頁未走統一來源，現四個產生器皆 im",
+  "detail": "TD-20261013-10 結案（實查證明已消解）：rebalance_dashboard 當月實收現值 142,909／89.8% 與 index 一致；舊值 88,611 全產物 0 殘留；根因為該頁未走統一來源，現四個產生器皆 import passive_caliber.scenarios()；check_cross_report_consistency.py 實跑 rc=0 PASS。｜證據：git: rebalance_dashboard_2026-10-13.html／index.html grep；grep -c passive_caliber 四檔各 1 次；python check_cross_report_consistency.py rc=0"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "修正",
+  "item": "TD-20261013-09 根因修復：緊急應變內文數字落後當期真值（閉環稽核第 13 類 15 處 ❌）→ 實證為時序誤報（13:03 內文對照當時 snapshot 完全正確，真值 16:29 才前進）。修 check_narrativ",
+  "detail": "TD-20261013-09 根因修復：緊急應變內文數字落後當期真值（閉環稽核第 13 類 15 處 ❌）→ 實證為時序誤報（13:03 內文對照當時 snapshot 完全正確，真值 16:29 才前進）。修 check_narrative_numbers.py：新增 _historical_allowed() 併入『該日』snapshot 歷史變體，僅放行真的出現過的值。｜證據：對照組 38 處 → 實驗組 0 處；負向測試 6/6；check_narrative_numbers_selftest.py 45/45；現行產出 PASS。備份 %LOCALAPPDATA%/Temp/lj_bak_td1309/"
  }
 ]

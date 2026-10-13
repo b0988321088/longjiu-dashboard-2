@@ -386,6 +386,21 @@ def _doc_date(p: Path) -> str | None:
     return None
 
 
+def _doc_ts(p: Path) -> str | None:
+    """內文的產出時點（generated_at；md 檔退回檔案 mtime）——時序基準用。"""
+    d = _load(p)
+    if isinstance(d, dict):
+        for k in ("generated_at", "updated_at", "時間"):
+            v = d.get(k)
+            if isinstance(v, str) and len(v) >= 16:
+                return v
+    try:
+        import datetime as _d
+        return _d.datetime.fromtimestamp(p.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        return None
+
+
 def narrative_sources(T: str, base: Path = BASE) -> list[Path]:
     """當日「現行」LLM 內文來源。
 
@@ -424,14 +439,68 @@ def _text_of(p: Path) -> str:
     return ""
 
 
+def _historical_allowed(T: str, base: Path = BASE, asof: str | None = None) -> list[dict]:
+    """該日 snapshot 的歷史變體（時序落差的合法來源）。
+
+    為什麼（2026-10-13 TD-20261013-09 根因）：緊急應變內文在 T 日某時點產出後，
+    真值仍可能前進（使用者白天補資料、16:29 六批同步、21:30 美股班）。此時內文數字
+    在「產出時點」完全正確，卻在「稽核時點」對不上當前 snapshot → 必然的假陽性
+    （實例：13:03 內文台股 8.0／美股 37.1 正確；16:29 真值前進為 9.2／36.4 → 15 處 ❌）。
+
+    紀律不變：只放行「T 日真的出現過的 snapshot 值」；模型自行推算／憑空的數字
+    仍會被擋。取不到 git（無版控環境）時回空集合＝退回現行嚴格行為，不靜默放寬。
+    """
+    out: list[dict] = []
+    try:
+        import subprocess
+        _g = lambda *a: subprocess.run(["git", "-C", str(base)] + list(a),
+                                       capture_output=True, text=True, timeout=25)
+        # solar b2（2026-10-14）：以內文產出時點為上界，避免把「產出之後才出現的真值」
+        # 併入放行範圍（那會掩蓋『內文寫了未來值』這類真錯誤）。
+        _ub = asof if asof else f"{T} 23:59"
+        r = _g("log", "--format=%H", f"--since={T} 00:00", f"--until={_ub}", "--", "snapshot.json")
+        for sha in (r.stdout or "").split()[:6]:
+            b = _g("show", f"{sha}:snapshot.json")
+            if b.returncode == 0 and (b.stdout or "").strip():
+                try:
+                    out.append(json.loads(b.stdout))
+                except Exception:
+                    pass
+    except Exception as _e:
+        # solar REJECT b3（2026-10-13 重審修正）：退回嚴格行為時必須出聲，不得靜默
+        # —— 靜默會讓「時序假陽性」與「守門真的失效」在輸出上無法區分。
+        print(f"  ⚠️ 內文數字守門：無法取得 {T} 的 snapshot 歷史變體（{type(_e).__name__}: {_e}）"
+              f"→ 以當前 snapshot 嚴格比對（若內文產出後真值曾前進，會出現時序假陽性）")
+        return []
+    if not out:
+        print(f"  ⚠️ 內文數字守門：{T} 查無 snapshot 歷史變體（該日無版控紀錄）"
+              f"→ 以當前 snapshot 嚴格比對（同上）")
+    return out
+
+
 def scan(T: str, base: Path = BASE) -> list[str]:
     snap = _load(base / "snapshot.json") or {}
-    allowed = build_allowed(snap)
     hits: list[str] = []
     for p in narrative_sources(T, base):
         txt = _text_of(p)
-        if txt:
-            hits += scan_text(txt, allowed, p.name)
+        if not txt:
+            continue
+        # 每個來源用自己的產出時點建基準（solar b2）
+        _asof = _doc_ts(p)
+        allowed = build_allowed(snap)
+        _hist_n = 0
+        for _h in _historical_allowed(T, base, _asof):
+            _ha = build_allowed(_h)
+            for _lab, _spec in _ha.items():
+                if _lab in allowed:
+                    for _k in ("pct", "twd", "gap", "off"):
+                        allowed[_lab][_k] |= _spec[_k]
+                else:
+                    allowed[_lab] = _spec
+            _hist_n += 1
+        if _hist_n:
+            print(f"  ℹ️ 內文數字守門：{p.name}（產出時點 {_asof}）併入當日 {_hist_n} 版 snapshot 歷史值")
+        hits += scan_text(txt, allowed, p.name)
     return hits
 
 
