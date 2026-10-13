@@ -10869,6 +10869,16 @@
       "status": "completed",
       "source": "user"
     }
+,
+  {
+    "id": "mem-20261013083937-1173",
+    "timestamp": "2026-10-13T08:39:37.015200+08:00",
+    "agent": "Hermes",
+    "task": "使用者受理 CLOSED：TD-20261012-25 延伸（self_publish＋受控擴充白名單＋event owner）",
+    "summary": "使用者 2026-10-13 ✅ 核准受理本輪交付。驗收依據（全部真結果）：①第二顆 commit da101e85 與 db653777 皆真 CIO 審查 APPROVE／blocking=[]（CIO-Pollinations(openai)）②受控擴充白名單僅新增精確單檔 notion_shared_context.md，負向測試 NE2（未登記路徑）不得 AUTO、NE3（治理紀錄登記）→ ALLOWLIST_UNAVAILABLE ③self_publish 起跑時刻契約（H1 模組晚於產物載入→不認領／H2 since= 可認領）通過 ④db653777 未 reset、未繞閘門，以真審查納入序列，遠端本機一致（未推 0／落後 0，remote=local=652571c3）⑤發布後線上驗證：raw 綁 sha 位元一致（self_publish／notion_shared_context／publish_allowlist／dashboard_decisions／tech_debt）＋ Pages 200 ⑥殘留明確記錄：14 筆全附歸期（07:00 主產線 7、06:00 notion_bridge 1、22:00 asset_diff_history 1、下週一 03:00 週深清 3、event 2 檔無自動歸期已立 TD-20261013-01）。未動 NEVER_AUTO_EXACT 安全線；未動 append_dashboard_decisions.py／auto_push.py；B1 既有紅燈維持隔離（TD-20261013-03）。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-13T07:00:18.395268"
