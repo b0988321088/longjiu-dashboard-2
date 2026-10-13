@@ -122,17 +122,9 @@ def _review_and_record_repo_cwd(tag: str = "cio_lane") -> tuple[bool, str]:
     files = _git("show", "--name-only", "--format=", commit).stdout.strip()
     subj = _git("log", "-1", "--format=%s", commit).stdout.strip()
     diff = _git("show", "--stat", "--format=", commit).stdout.strip()
-    _c12, _t12 = commit[:12], tree[:12]
-    prompt = (
-        "你是龍九控股的獨立 CIO 審查者（異質審查，不得預設放行）。只回傳 JSON，不要任何其他文字。\n"
-        f"待推送 commit：{_c12}\n待推送 tree：{_t12}\n主旨：{subj}\n\n"
-        f"變更檔案清單：\n{files[:DIFF_CAP]}\n\n變更統計：\n{diff[:DIFF_CAP]}\n\n"
-        "審查重點：①是否含程式／治理紀錄／憑證類變更而走資料通道 ②資料是否自相矛盾或截斷 "
-        "③是否與使用者既定裁決衝突（例如公開首頁必經真 CIO、不可放寬審查）④是否有 blocking 級缺陷。\n"
-        "輸出格式（原樣抄寫下方 12 碼 commit 與 12 碼 tree，用於綁定；**不得自行補齊或改寫字元**）：\n"
-        '{"verdict":"APPROVE 或 REJECT","reviewed_commits":[{"commit":"' + _c12 + '","tree":"' + _t12 + '"}],'
-        '"blocking":[],"required_fixes":[],"note":"理由（160 字內）"}'
-    )
+    # 2026-10-13 P1：prompt 收斂到 review_chain.build_review_prompt（單一真值）。
+    # 本檔原內嵌複本已刪除，避免兩條車道各自漂移（regenerate_report 原本還停在 40 碼綁定）。
+    prompt = _rc.build_review_prompt(commit, tree, subj, files, diff, DIFF_CAP)
     try:
         txt, _reviewer = _rc.review(prompt, max_tokens=8192, timeout=300)
     except Exception as e:  # noqa: BLE001

@@ -611,16 +611,9 @@ def _cio_review_and_record() -> tuple[bool, str]:
     files = _git("show", "--name-only", "--format=", commit).stdout.strip()
     subj = _git("log", "-1", "--format=%s", commit).stdout.strip()
     diff = _git("show", "--stat", "--format=", commit).stdout.strip()
-    prompt = (
-        "你是龍九控股的獨立 CIO 審查者（異質審查，不得預設放行）。只回傳 JSON，不要任何其他文字。\n"
-        f"待推送 commit：{commit}\n待推送 tree：{tree}\n主旨：{subj}\n\n"
-        f"變更檔案清單：\n{files[:_CIO_DIFF_CAP]}\n\n變更統計：\n{diff[:_CIO_DIFF_CAP]}\n\n"
-        "審查重點：①是否含程式／治理紀錄／憑證類變更而走資料通道 ②資料是否自相矛盾或截斷 "
-        "③是否與使用者既定裁決衝突（例如公開首頁必經真 CIO、不可放寬審查）④是否有 blocking 級缺陷。\n"
-        "輸出格式（務必逐字包含 commit 與 tree，用於綁定）：\n"
-        '{"verdict":"APPROVE 或 REJECT","reviewed_commits":[{"commit":"' + commit + '","tree":"' + tree + '"}],'
-        '"blocking":[],"required_fixes":[],"note":"理由（160 字內）"}'
-    )
+    # 2026-10-13 P1：prompt 收斂到 review_chain.build_review_prompt（單一真值）；
+    # 綁定一律 12 碼（原內嵌複本用完整 40 碼，會踩免費層抄寫掉字元的坑）。
+    prompt = _rc.build_review_prompt(commit, tree, subj, files, diff, _CIO_DIFF_CAP)
     try:
         txt, _reviewer = _rc.review(prompt, max_tokens=8192, timeout=300)
     except Exception as e:  # noqa: BLE001
@@ -635,13 +628,14 @@ def _cio_review_and_record() -> tuple[bool, str]:
         return False, f"審查 JSON 解析失敗（{str(e)[:60]}）→ fail-closed"
     verdict = str(rev.get("verdict", "")).strip().upper()
     blocking = rev.get("blocking") or []
-    ok_pairs = {(str(x.get("commit", ""))[:12], str(x.get("tree", ""))) for x in (rev.get("reviewed_commits") or [])
-                if isinstance(x, dict)}
+    # 2026-10-13 P1：綁定比對一律 12 碼前綴（與 build_review_prompt 的 12 碼慣例對齊）
+    ok_pairs = {(str(x.get("commit", ""))[:12], str(x.get("tree", ""))[:12])
+                for x in (rev.get("reviewed_commits") or []) if isinstance(x, dict)}
     if verdict != "APPROVE":
         return False, f"審查未通過（verdict={verdict or '空'}）→ fail-closed"
     if blocking:
         return False, f"審查有 blocking {len(blocking)} 項 → fail-closed"
-    if (commit[:12], tree) not in ok_pairs:
+    if (commit[:12], tree[:12]) not in ok_pairs:
         return False, ("審查回傳的 commit／tree 與實際待推內容不符（範圍無法對應）→ fail-closed")
     rdir = BASE / ".git" / "cio_reviews"
     try:

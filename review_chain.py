@@ -148,6 +148,45 @@ def chain_labels() -> list[str]:
     return [label for label, _ in _layers()]
 
 
+# ── 送審 prompt 的單一真值（2026-10-13 P1）────────────────────────────────────
+# 兩個真 CIO 送審入口（cio_lane.py／regenerate_report.py）原本各有一份內嵌 prompt
+# 複本，實測已漂移：cio_lane 走 12 碼 tree 綁定，regenerate_report 仍走 40 碼
+# （會踩「免費層抄寫長字串掉字元」的坑），且兩份都缺 canonical 契約。
+# 統一收斂到本模組；兩入口只負責取資料，不再自建 prompt。
+REVIEW_CONTRACT = (
+    "輸出契約（必遵守；違反者判決無效）：\n"
+    "1. `blocking` 只能列**具體、可指名**的阻塞缺陷（檔案＋問題）。沒有這類缺陷時一律 `[]`。\n"
+    "2. **`blocking=[]` ⇒ verdict 必須是 `APPROVE`**（release boundary）。不得以「範圍大」"
+    "「無法完整驗證」「缺乏進一步說明」等非指名理由，在 blocking 為空時給 `REJECT`。\n"
+    "3. 只有在你能指名 blocking 級缺陷時才可 `REJECT`，且該缺陷必須逐條出現在 `blocking` 陣列。\n"
+    "4. `required_fixes`／`required_changes` 屬後續 hardening，可非空，但**不得改變 verdict**。\n"
+    "5. `reviewed_commits` 原樣抄寫下方的 12 碼 commit 與 12 碼 tree，"
+    "不得自行補齊、截短或改寫任何字元。\n"
+)
+
+
+def build_review_prompt(commit: str, tree: str, subject: str, files: str, stat: str,
+                        diff_cap: int = 12000) -> str:
+    """組出真 CIO 送審 prompt（兩個入口共用的單一真值）。
+
+    綁定一律採 **12 碼前綴**：2026-10-13 實測免費層模型抄寫 40 碼 sha 會掉字元
+    （c3b3a143 那輪 tree 40 碼被抄成 39 碼，造成產線連續 6 次 fail-closed 誤擋）。
+    commit 本來就取 12 碼，tree 拉齊為同一慣例，比對端同樣只比 12 碼前綴。
+    """
+    c12, t12 = commit[:12], tree[:12]
+    return (
+        "你是龍九控股的獨立 CIO 審查者（異質審查，不得預設放行）。只回傳 JSON，不要任何其他文字。\n"
+        f"待推送 commit：{c12}\n待推送 tree：{t12}\n主旨：{subject}\n\n"
+        f"變更檔案清單：\n{files[:diff_cap]}\n\n變更統計：\n{stat[:diff_cap]}\n\n"
+        "審查重點：①是否含程式／治理紀錄／憑證類變更而走資料通道 ②資料是否自相矛盾或截斷 "
+        "③是否與使用者既定裁決衝突（例如公開首頁必經真 CIO、不可放寬審查）④是否有 blocking 級缺陷。\n\n"
+        + REVIEW_CONTRACT
+        + "\n輸出格式（原樣抄寫下方 12 碼 commit 與 12 碼 tree，不得自行補齊或改寫字元）：\n"
+        '{"verdict":"APPROVE 或 REJECT","reviewed_commits":[{"commit":"' + c12 + '","tree":"' + t12 + '"}],'
+        '"blocking":[],"required_fixes":[],"note":"理由（160 字內）"}'
+    )
+
+
 def review(prompt: str, *, max_tokens: int = 8192, timeout: float = 300,
            json_mode: bool = False) -> tuple[str, str]:
     """依序嘗試異質鏈，回傳 (模型輸出文字, 實際使用的審查者標籤)。

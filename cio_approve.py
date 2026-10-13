@@ -17,6 +17,16 @@
       從 CIO 審查回傳的 JSON 讀 verdict（支援 {"verdict": ...} /
       {"results": [{"verdict": ...}]} / {"structured_output": {...}}），
       只有讀到 APPROVE 才會寫入；REJECT 會 exit 1 並印出 blocking 項目。
+
+放行邊界（2026-10-13 P1，依既有正式契約收緊）：
+  release boundary ＝ **verdict == APPROVE 且 blocking == []**，三者分開判定：
+    · APPROVE 且 blocking=[]                → 允許落紀錄
+    · APPROVE 但 blocking 非空              → 拒絕落紀錄（exit 1）
+    · required_fixes／required_changes 非空 → 不得單獨改變 APPROVE 判定
+    · verdict != APPROVE                    → 拒絕落紀錄（exit 1）
+    · 審查 JSON 缺 blocking 欄位／格式錯誤  → fail-closed 拒絕
+  （無 --result 的自宣告與 AUTO-checker deterministic 通道沒有 blocking 概念，
+    維持既有行為，另由 SELF-DECLARED 標記與閘門限制把關。）
 """
 from __future__ import annotations
 
@@ -92,28 +102,44 @@ def push_base() -> tuple[str, str]:
     return "", ""
 
 
-def extract_verdict(obj) -> tuple[str | None, list[str]]:
-    """從各種 CIO 回傳 JSON 形狀中挖出 verdict 與 blocking 項目。"""
-    blocks: list[str] = []
+def extract_review(obj) -> tuple[str | None, list[str] | None, list[str]]:
+    """從各種 CIO 回傳 JSON 形狀中挖出 (verdict, blocking, 非阻塞項)。
+
+    2026-10-13（P1，使用者裁決）：release boundary ＝ **blocking=[]**（既有正式契約，
+    見 .git/cio_reviews/20261007_inc289_fixup_round2／20261008_phaseA_producer_isolation／
+    20261009_inc294 三份佐證）。故本函式把三類欄位**分開**回傳，不再混成一包：
+
+      - ``blocking``          → 發布阻塞項，**唯一**參與放行判定。
+      - ``required_fixes``    → 後續 hardening，依契約**不得**單獨改變 APPROVE 結果。
+      - ``required_changes``  → 依既有契約語義併入「非阻塞項」，
+                                **不得**與 blocking 混成同一個放行判斷。
+
+    ``blocking`` 回 **None ＝ 無法確認**（審查 JSON 缺 blocking 欄位）→ 呼叫端必須
+    fail-closed，不得逕自當成空清單放行。
+    """
+    blocking: list[str] | None = None
+    fixes: list[str] = []
     if isinstance(obj, dict):
         if isinstance(obj.get("verdict"), str):
             v = obj["verdict"]
-            for k in ("required_fixes", "blocking", "required_changes"):
+            if isinstance(obj.get("blocking"), list):
+                blocking = [str(x) for x in obj["blocking"]]
+            for k in ("required_fixes", "required_changes"):
                 if isinstance(obj.get(k), list):
-                    blocks += [str(x) for x in obj[k]]
-            return v.upper(), blocks
+                    fixes += [str(x) for x in obj[k]]
+            return v.upper(), blocking, fixes
         for key in ("structured_output", "result", "results", "output"):
             if key in obj:
-                v, b = extract_verdict(obj[key])
+                v, b, f = extract_review(obj[key])
                 if v:
-                    return v, b + blocks
-        return None, blocks
+                    return v, b, f + fixes
+        return None, blocking, fixes
     if isinstance(obj, list):
         for item in obj:
-            v, b = extract_verdict(item)
+            v, b, f = extract_review(item)
             if v:
-                return v, b + blocks
-    return None, blocks
+                return v, b, f + fixes
+    return None, blocking, fixes
 
 
 def extract_scope(obj) -> tuple[set[str], set[str], bool]:
@@ -218,13 +244,19 @@ def main() -> int:
         return 0 if is_approved(tree) else 1
 
     verdict = (a.verdict or "").upper() or None
-    blocks: list[str] = []
+    blocking: list[str] | None = None     # None ＝ 無法確認 → fail-closed
+    fixes: list[str] = []
     scope: set[str] = set()
     scope_trees: set[str] = set()
     scope_whole = False
     if a.result:
-        data = json.loads(Path(a.result).read_text(encoding="utf-8"))
-        v, blocks = extract_verdict(data)
+        try:
+            data = json.loads(Path(a.result).read_text(encoding="utf-8"))
+        except Exception as e:  # noqa: BLE001
+            print(f"❌ result 檔無法解析（{type(e).__name__}: {str(e)[:60]}）→ fail-closed",
+                  file=sys.stderr)
+            return 2
+        v, blocking, fixes = extract_review(data)
         scope, scope_trees, scope_whole = extract_scope(data)
         if not v:
             print("❌ 無法從 result 檔讀到 verdict，拒寫紀錄", file=sys.stderr)
@@ -239,9 +271,31 @@ def main() -> int:
         return 2
     if verdict != "APPROVE" and not a.force:
         print(f"⛔ 審查結論為 {verdict or '未提供'} → 不寫入通過紀錄。", file=sys.stderr)
-        for b in blocks:
-            print(f"   必修：{b}", file=sys.stderr)
+        for b in (blocking or []):
+            print(f"   發布阻塞：{b}", file=sys.stderr)
         return 1
+    # ── 2026-10-13 P1：release boundary ＝ blocking=[]（既有正式契約）──────────────
+    # 有審查 JSON 時，放行必須同時滿足「blocking 欄位存在且為空」；required_fixes／
+    # required_changes 屬後續 hardening，不得單獨改變 APPROVE 判定。缺少 blocking 欄位
+    # ＝ 無法確認 → fail-closed。
+    # 無審查 JSON（--verdict 自宣告、auto_record 的 AUTO-checker deterministic 通道）
+    # 沒有 blocking 概念 → 維持既有行為（已由 SELF-DECLARED 標記與閘門限制把關）。
+    if a.result and not a.force:
+        if blocking is None:
+            print("❌ 審查 JSON 缺 blocking 欄位 → 無法確認是否為空，fail-closed 拒寫",
+                  file=sys.stderr)
+            return 1
+        if blocking:
+            print(f"⛔ 審查含 {len(blocking)} 項 blocking（release boundary ＝ blocking=[]）"
+                  "→ 不寫入通過紀錄。", file=sys.stderr)
+            for b in blocking:
+                print(f"   發布阻塞：{b}", file=sys.stderr)
+            return 1
+        if fixes:
+            print(f"ℹ️ required_fixes/required_changes 共 {len(fixes)} 項屬後續 hardening，"
+                  "依契約不改變 APPROVE 判定：", file=sys.stderr)
+            for x in fixes:
+                print(f"   後續：{x}", file=sys.stderr)
 
     ts = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     reviewer = clean(a.reviewer) or "UNKNOWN"
