@@ -120,14 +120,15 @@ def _review_and_record_repo_cwd(tag: str = "cio_lane") -> tuple[bool, str]:
     files = _git("show", "--name-only", "--format=", commit).stdout.strip()
     subj = _git("log", "-1", "--format=%s", commit).stdout.strip()
     diff = _git("show", "--stat", "--format=", commit).stdout.strip()
+    _c12, _t12 = commit[:12], tree[:12]
     prompt = (
         "你是龍九控股的獨立 CIO 審查者（異質審查，不得預設放行）。只回傳 JSON，不要任何其他文字。\n"
-        f"待推送 commit：{commit}\n待推送 tree：{tree}\n主旨：{subj}\n\n"
+        f"待推送 commit：{_c12}\n待推送 tree：{_t12}\n主旨：{subj}\n\n"
         f"變更檔案清單：\n{files[:DIFF_CAP]}\n\n變更統計：\n{diff[:DIFF_CAP]}\n\n"
         "審查重點：①是否含程式／治理紀錄／憑證類變更而走資料通道 ②資料是否自相矛盾或截斷 "
         "③是否與使用者既定裁決衝突（例如公開首頁必經真 CIO、不可放寬審查）④是否有 blocking 級缺陷。\n"
-        "輸出格式（務必逐字包含 commit 與 tree，用於綁定）：\n"
-        '{"verdict":"APPROVE 或 REJECT","reviewed_commits":[{"commit":"' + commit + '","tree":"' + tree + '"}],'
+        "輸出格式（原樣抄寫下方 12 碼 commit 與 12 碼 tree，用於綁定；**不得自行補齊或改寫字元**）：\n"
+        '{"verdict":"APPROVE 或 REJECT","reviewed_commits":[{"commit":"' + _c12 + '","tree":"' + _t12 + '"}],'
         '"blocking":[],"required_fixes":[],"note":"理由（160 字內）"}'
     )
     try:
@@ -144,13 +145,19 @@ def _review_and_record_repo_cwd(tag: str = "cio_lane") -> tuple[bool, str]:
         return False, f"審查 JSON 解析失敗（{str(e)[:60]}）→ fail-closed"
     verdict = str(rev.get("verdict", "")).strip().upper()
     blocking = rev.get("blocking") or []
-    ok_pairs = {(str(x.get("commit", ""))[:12], str(x.get("tree", ""))) for x in (rev.get("reviewed_commits") or [])
+    ok_pairs = {(str(x.get("commit", ""))[:12], str(x.get("tree", ""))[:12]) for x in (rev.get("reviewed_commits") or [])
                 if isinstance(x, dict)}
+    # 2026-10-13：綁定不變（審查者必須逐字指名副審的 commit 與 tree），但允許同一綁定以頂層欄位表達，
+    # 且比對採 12 碼前綴（commit 本來就取 12 碼；tree 拉齊為同一慣例）——免費層模型抄寫 40 碼時
+    # 實測會掉字元（c3b3a143 該輪 tree 40 碼被抄成 39 碼），造成產線連續 6 次 fail-closed 誤擋。
+    # 仍不得省略 commit 或 tree，也不得只回一個。
+    if rev.get("commit") and rev.get("tree"):
+        ok_pairs.add((str(rev["commit"])[:12], str(rev["tree"])[:12]))
     if verdict != "APPROVE":
         return False, f"審查未通過（verdict={verdict or '空'}）→ fail-closed"
     if blocking:
         return False, f"審查有 blocking {len(blocking)} 項 → fail-closed"
-    if (commit[:12], tree) not in ok_pairs:
+    if (commit[:12], tree[:12]) not in ok_pairs:
         return False, "審查回傳的 commit／tree 與實際待推內容不符（範圍無法對應）→ fail-closed"
     rdir = BASE / ".git" / "cio_reviews"
     try:
