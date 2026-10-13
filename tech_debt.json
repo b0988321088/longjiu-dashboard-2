@@ -1716,5 +1716,21 @@
     "moved_at": "2026-10-13",
     "cleanup_reason": "",
     "closed_at": "2026-10-13"
+  },
+  {
+    "id": "TD-20261013-13",
+    "date": "2026-10-13",
+    "title": "regenerate_report 重跑會覆蓋 rebalance 系列「全源整合版」（已核准產出被靜默洗掉）",
+    "severity": "P1",
+    "source": "2026-10-13 審查鏈修復後意外觸發產線所揭露",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "證據（2026-10-13）：regenerate_report.py 重跑後產生的 4d7e7784（四源同步）對比已推送 af2835a5：①rebalance_eval_2026-10-13.html blob 22,718→17,765 bytes，『全源整合』出現次數 3→1（e832f6a4『全源整合版』=22,718／3 次；倒退後 ≈ 32882b02 的 17,718／1 次）②rebalance_summary_2026-10-13.md 18,168→14,016 bytes，『## 零、📊 全源整合對照（防偏頗）』整節（含來源清單、口徑宣告、觸發時點、衝突裁定表）被整段刪除。③regenerate_report 內建的 _cio_governance_invariant 未攔到（該檢查只看治理不變量，不看產物是否倒退）。風險：已由真 CIO 審查通過的產出會被單純重跑洗成舊模板；本次線上未倒退純屬僥倖 —— 產線自己的真 CIO 審查對該 commit 回 REJECT（required_fixes 3 項、note『多處刪減與重寫，存在資料不一致風險』）並 fail-closed 未推送，才擋住。④處置：已 git reset --soft 撤銷 4d7e7784、並將兩檔還原為 af2835a5 授權版；線上與遠端均未污染（remote=local=af2835a5、待推0落後0）。建議方向：rebalance 系列改為『不可由通用重跑覆蓋』（模板納入全源整合區塊，或該檔排除於四源同步 scope 外），並在收工稽核加入『已審核產出不得因重跑而縮減』的偵測。本卡不自行施工。",
+    "tags": "rebalance,regenerate_report,contract",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-13",
+    "cleanup_reason": ""
   }
 ]

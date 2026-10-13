@@ -2134,5 +2134,11 @@
   "category": "修正",
   "item": "TD-20261013-05／06 根因修復：審查鏈單一實作＋異質備援",
   "detail": "commit 8f298749（2026-10-13）。根因（以證據判定，非推測）＝審查能力被設計成單一供應商依賴：①402 非單日故障 —— .git/cio_reviews 於 2026-10-12 已留有「備援鏈(Pollinations402→DeepSeek)」紀錄，今日 13:2x／14:2x 再度發生 ②三處入口行為不一致：cio_lane.py 與 regenerate_report.py 直接 _call(POLLI_URL) 單點（402 即全停），llm_review_client.generate() 的「備援」是 DeepSeek＝產出者自審（假異質）＝即「未經有效異質審查卻能發布」的縫。修復：新增 review_chain.py 單一實作（鏈＝Pollinations(openai) → nous meituan/longcat-2.5-preview:free → nous poolside/laguna-s-2.1:free；全鏈不含 DeepSeek／Google；reviewer 標籤動態回報；nous agent_key refresh-aware，過期即排除該層），兩處入口改走鏈、generate() 委派鏈（移除 DeepSeek 層），fail-closed 語意不變（全失敗即停、不因 REJECT 改試別層求 APPROVE）。驗收：新測試 tests/test_review_chain_20261013.py 27 通過／0 失敗（正常／402／逾時／無效回應／空輸出／全鏈失敗／拒審不換層／憑證排除／失敗不留 RECORD）；未破壞既有 test_publish_gate 140/0、test_cio_lane_rollback 12/0；獨立異質驗收 2/2（meituan longcat-2.5-preview:free＋poolside laguna-s-2.1:free 雙路徑、不經 review_chain、patch 全文送審、commit/tree 12 碼綁定核對一致、0 blocking）；真鏈端到端實跑 APPROVE 0 blocking；發布閉環：RECORD 已落（reviewer=CIO-獨立雙路徑）、remote=local=ls-remote=8f298749、待推 0／落後 0、線上 index.html 與 daily_report_v2 皆 HTTP 200。"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "修正",
+  "item": "審查鏈修復後意外觸發產線：偵測 rebalance「全源整合版」被重跑覆蓋，已撤銷並立案 TD-20261013-13",
+  "detail": "事件（誠實揭露操作失誤）：驗證 cron 場景時執行 `python -c \"import ... regenerate_report\"`，該檔在 import 階段即執行整條產線主流程（無 __main__ 保護）→ 意外重跑產線並產生 auto commit 4d7e7784（四源同步，16 檔）。①產線自身的真 CIO 審查對該 commit 回 REJECT（required_fixes 3 項，note『多處刪減與重寫，存在資料不一致風險』）→ fail-closed 未推送，線上未受影響。②依 required_fixes 逐項核對：(a) mtd_data.json ↔ mtd_performance.html 抽樣 25 個數值 25/25 一致 ✅ (b) cost_data.json 僅 generated_at 時間戳與用量計數更新（36→55 TWD／calls 462→926），成本模型未變 ✅ (c) rebalance_eval_2026-10-13.html ❌ 真缺陷 —— blob 22,718→17,765 bytes、『全源整合』3→1 次；rebalance_summary_2026-10-13.md 18,168→14,016 bytes、『零、全源整合對照（防偏頗）』整節被刪。即 e832f6a4（19:17 經審查的『全源整合版』）被通用重跑洗成舊模板。③處置：git reset --soft 撤銷 4d7e7784；兩檔還原為 af2835a5 授權版；其餘產線產物保留為 dirty 不推。驗證：remote=local=af2835a5、待推 0／落後 0、線上 rebalance_eval 仍含全源整合對照（未倒退）。④立案 TD-20261013-13（P1）追蹤根因，本輪不自行施工。"
  }
 ]
