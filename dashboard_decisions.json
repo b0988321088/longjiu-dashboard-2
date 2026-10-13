@@ -10922,72 +10922,66 @@
       "summary": "2026-10-13 使用者於 Telegram 一次裁決並要求「一次修正到發佈」。① TD-20261011-07：政策決定「公開頁不遮罩保單代號」（不視為敏感）→ 維持現狀結案，未動 build_mtd_report.py 與產物。② TD-20261011-16：查明 4 條 FAIL 為驗證器停在 2026-10-02 舊口徑（讀 cash_layers.available 舊鍵、硬編 589 在途），與 2026-10-12 現行裁示互斥 → 斷言改讀現行口徑（allowable_cash／unrestricted_cash／penetration.cash_in_transit），未放寬判準；第 5 條環境殘留以 _OTHER_OWNER 明列 5 檔隔離。驗收 84/84 PASS、0 FAIL。③ TD-20261012-14：實測已由 append-only 受限車道解決 → 結案。commit ec27dad1。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261013215604-1179",
+      "timestamp": "2026-10-13T21:56:04.578864+08:00",
+      "agent": "Hermes",
+      "task": "2026-10-13 審查鏈根因修復＋產線倒退偵測：閉環",
+      "summary": "本輪交付 CLOSED。①TD-20261013-05（P1）根因＝審查能力被設計成單一供應商依賴：402 非單日故障（.git/cio_reviews 10-12 已有 Pollinations402→DeepSeek 備援紀錄），三處入口行為不一致，其中 llm_review_client.generate() 的『備援』是 DeepSeek＝產出者自審（假異質）＝未經有效異質審查卻能發布的縫。②修復 commit 8f298749：新增 review_chain.py 單一實作（Pollinations → nous longcat-2.5-preview:free → nous laguna-s-2.1:free，全鏈不含 DeepSeek／Google；reviewer 標籤動態；agent_key refresh-aware），cio_lane／regenerate_report／generate() 全部收斂並移除 DeepSeek 層；fail-closed 語意不變（全鏈失敗即停、不因 REJECT 改試別層求 APPROVE）。③驗收：新測試 27/0（正常/402/逾時/無效回應/空輸出/全鏈失敗/拒審不換層/憑證排除/失敗不留 RECORD）；未破壞既有 test_publish_gate 140/0、test_cio_lane_rollback 12/0；獨立異質驗收 2/2 APPROVE 0 blocking（雙路徑、不經 review_chain、patch 全文、commit/tree 12 碼綁定核對）；真鏈端到端實跑 APPROVE。④併同結案 TD-20261013-06（審查車道重複實作收斂）與 TD-20261013-08（lj_inc.py 全面核對：list/close/usage 三路徑實測，真檔 md5 前後一致）。⑤work_log 補今日缺口 7 筆（含更正先前誤判）。⑥意外事件：驗 cron import 契約時誤觸產線（regenerate_report 無 __main__ 保護），其 auto commit 4d7e7784 被產線自身真 CIO 審查 REJECT（3 項 required_fixes）→ fail-closed 未推；逐項核對後確認 rebalance_eval 22,718→17,765 bytes（全源整合 3→1 次）、rebalance_summary 零、全源整合對照整節被刪＝真倒退，已撤銷並還原授權版 → 立案 TD-20261013-13（P1）。⑦最終狀態：HEAD=remote=線上=a8e9c09f、待推 0／落後 0、線上 6 頁 200 且 rebalance_eval 未倒退；今日 3 顆 commit（8f298749／af2835a5／a8e9c09f）皆附獨立雙路徑 RECORD。殘留另案追蹤：TD-20261013-13（P1）、TD-20261013-04/09/10/11、dirty 70 筆（既有/產線產物）。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261013221207-1180",
+      "timestamp": "2026-10-13T22:12:07.204067+08:00",
+      "agent": "Hermes",
+      "task": "2026-10-13 TD-20261013-13 根因修復：正典不再被通用重跑覆蓋",
+      "summary": "使用者裁決立即處理、採最小範圍修復、今晚完成審查與驗收（授權範圍：TD-13；資安 remediation 維持既有 HOLD、不綁修、不標 CLOSED；明示公開 Git 歷史含有效 API key 屬憑證外洩風險，不因 repo 現況乾淨而消失，須獨立輪替）。根因（已取證）：rebalance_summary 由 build_rebalance_dashboard.py:build_summary_md() 每日重跑產出，模板落後已授權正典（e832f6a4 全源整合版）→ 重跑洗掉「零、全源整合對照」整節、「一、」節可接受範圍/判定欄與判斷性文字（已核准內容倒退）→ 真 CIO REJECT、發布 fail-closed（22:00 前實測重現，線上未污染）。修法兩層：①全源整合區塊外置為受控單一真值 data/rebalance_integration.md（產生器只讀取原樣插入、不重算不硬編；註解不外洩）②依裁決備案縮小重跑 scope：正典（含全源整合對照節）不被覆蓋，自動版旁路 .auto.md（已 gitignore）、eval 不重渲染。驗收（實測）：三回合重跑正典 summary/eval md5 不變且與已上線版逐位元一致、節標題 diff 空；發布範圍 2 顆（2132b41d 晚報＋6ad3cc29）→ 結案資料 0bf0cb28；雙異質獨立審查（longcat/laguna/Pollinations）APPROVE 0 blocking；local=remote=ls-remote=0bf0cb28、待推 0、線上 4 頁 200、eval 全源整合 3 次未倒退。殘留：資安 remediation（憑證輪替／歷史暴露）獨立追蹤。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261013225232-1181",
+      "timestamp": "2026-10-13T22:52:32.852383+08:00",
+      "agent": "Hermes",
+      "task": "2026-10-14 內文數字守門時序修復（TD-20261013-09）＋ work_log 格式污染修復",
+      "summary": "使用者核准一次跑完整條流程至可發布（區分「修復測試審查可完成」與「條件通過才發布」）。①TD-20261013-10 實查結案（rebalance 當月實收 142,909／89.8% 與 index 一致、舊值 88,611 零殘留、四產生器皆走 passive_caliber）。②TD-20261013-09 根因＝時序誤報（13:03 內文對照當時 snapshot 正確、真值 16:29 才前進）→ 修 check_narrative_numbers.py 以文件產出時點為上界併入該日 snapshot 歷史變體，僅放行真實出現過的值。③work_log.json 格式污染（indent=2 vs remote indent=1＋鍵名誤用 content/evidence）已修：改以 remote 為基底重建、鍵名回到 item/detail，相對 remote 僅 12 行、前 340 筆逐筆相同。④驗收全過：時序回歸 8/8、自測 45/45、跨報告一致 PASS、內文守門 PASS、publish_gate fail-closed 正確。⑤獨立審查 2/4 有效異質 APPROVE（longcat／laguna，commit/tree 綁定一致）；solar REJECT 2 條逐條判定不成立（誤解 asof 實作；測試依賴 repo 為回歸本質），stepfun 服務回空。⑥發布驗收：local=remote=ls-remote=b83561cd、待推 0／落後 0、線上 7 頁 200。揭露：verify_commit.py 曾用 git show HEAD 致送審內容與標示 commit 錯配（已修）；費用帳本三檔不一致另立案 TD-20261013-14。",
+      "status": "✅ 已核准",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261013234115-1182",
+      "timestamp": "2026-10-13T23:41:15.708469+08:00",
+      "agent": "Hermes",
+      "task": "A 案健康度修復發布（2026-10-10 原裁決之另行發布）",
+      "summary": "tools/health_alert_check*.py 收斂：執行檔落 repo 根目錄並同步 hermes/scripts（原審查內容零漂移 e27792b1）；整合測試去硬編碼改為動態推導＋情境注入（9/12→23/23）；cron 09:10 實際入口實跑驗收（舊版誤報 🔴 美元曝險 69.5% → 新版 🟡 黃色觀察區）。commit 3089735c／tree f42641e8452f，真 CIO APPROVE blocking=[]。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261013234124-1183",
+      "timestamp": "2026-10-13T23:41:24.242598+08:00",
+      "agent": "Hermes",
+      "task": "P1 審查閘門收緊＋兩車道審查契約統一",
+      "summary": "cio_approve 放行邊界改為 verdict==APPROVE 且 blocking 為空（原只看 verdict，APPROVE＋blocking 非空仍會落紀錄＝可繞過漏洞，突變驗證已證實原版 rc=0 實際寫入）；required_fixes／required_changes 不改變 verdict；缺欄位或格式錯 fail-closed。兩車道 prompt 收斂至 review_chain.build_review_prompt 單一真值、綁定一律 12 碼、契約五條寫入 prompt。commit 97c57662／tree 9b089206516a，真 CIO APPROVE blocking=[]，5 條核心回歸＋既有呼叫端回歸。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261013234132-1184",
+      "timestamp": "2026-10-13T23:41:32.280456+08:00",
+      "agent": "Hermes",
+      "task": "管理原則：少管理、少變更、重結果",
+      "summary": "先判斷實質風險→值得修才修→一次完成修正與驗收→結案回歸正常運作。非緊急問題先記錄、不打断產線；不為形式一致改程式；不為讓工單看起來完整而增加治理負擔。適用於後續所有系統改善的判斷基準（2026-10-13 定案）。",
+      "status": "completed",
+      "source": "user"
     }
-,
-  {
-    "id": "mem-20261013215604-1179",
-    "timestamp": "2026-10-13T21:56:04.578864+08:00",
-    "agent": "Hermes",
-    "task": "2026-10-13 審查鏈根因修復＋產線倒退偵測：閉環",
-    "summary": "本輪交付 CLOSED。①TD-20261013-05（P1）根因＝審查能力被設計成單一供應商依賴：402 非單日故障（.git/cio_reviews 10-12 已有 Pollinations402→DeepSeek 備援紀錄），三處入口行為不一致，其中 llm_review_client.generate() 的『備援』是 DeepSeek＝產出者自審（假異質）＝未經有效異質審查卻能發布的縫。②修復 commit 8f298749：新增 review_chain.py 單一實作（Pollinations → nous longcat-2.5-preview:free → nous laguna-s-2.1:free，全鏈不含 DeepSeek／Google；reviewer 標籤動態；agent_key refresh-aware），cio_lane／regenerate_report／generate() 全部收斂並移除 DeepSeek 層；fail-closed 語意不變（全鏈失敗即停、不因 REJECT 改試別層求 APPROVE）。③驗收：新測試 27/0（正常/402/逾時/無效回應/空輸出/全鏈失敗/拒審不換層/憑證排除/失敗不留 RECORD）；未破壞既有 test_publish_gate 140/0、test_cio_lane_rollback 12/0；獨立異質驗收 2/2 APPROVE 0 blocking（雙路徑、不經 review_chain、patch 全文、commit/tree 12 碼綁定核對）；真鏈端到端實跑 APPROVE。④併同結案 TD-20261013-06（審查車道重複實作收斂）與 TD-20261013-08（lj_inc.py 全面核對：list/close/usage 三路徑實測，真檔 md5 前後一致）。⑤work_log 補今日缺口 7 筆（含更正先前誤判）。⑥意外事件：驗 cron import 契約時誤觸產線（regenerate_report 無 __main__ 保護），其 auto commit 4d7e7784 被產線自身真 CIO 審查 REJECT（3 項 required_fixes）→ fail-closed 未推；逐項核對後確認 rebalance_eval 22,718→17,765 bytes（全源整合 3→1 次）、rebalance_summary 零、全源整合對照整節被刪＝真倒退，已撤銷並還原授權版 → 立案 TD-20261013-13（P1）。⑦最終狀態：HEAD=remote=線上=a8e9c09f、待推 0／落後 0、線上 6 頁 200 且 rebalance_eval 未倒退；今日 3 顆 commit（8f298749／af2835a5／a8e9c09f）皆附獨立雙路徑 RECORD。殘留另案追蹤：TD-20261013-13（P1）、TD-20261013-04/09/10/11、dirty 70 筆（既有/產線產物）。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261013221207-1180",
-    "timestamp": "2026-10-13T22:12:07.204067+08:00",
-    "agent": "Hermes",
-    "task": "2026-10-13 TD-20261013-13 根因修復：正典不再被通用重跑覆蓋",
-    "summary": "使用者裁決立即處理、採最小範圍修復、今晚完成審查與驗收（授權範圍：TD-13；資安 remediation 維持既有 HOLD、不綁修、不標 CLOSED；明示公開 Git 歷史含有效 API key 屬憑證外洩風險，不因 repo 現況乾淨而消失，須獨立輪替）。根因（已取證）：rebalance_summary 由 build_rebalance_dashboard.py:build_summary_md() 每日重跑產出，模板落後已授權正典（e832f6a4 全源整合版）→ 重跑洗掉「零、全源整合對照」整節、「一、」節可接受範圍/判定欄與判斷性文字（已核准內容倒退）→ 真 CIO REJECT、發布 fail-closed（22:00 前實測重現，線上未污染）。修法兩層：①全源整合區塊外置為受控單一真值 data/rebalance_integration.md（產生器只讀取原樣插入、不重算不硬編；註解不外洩）②依裁決備案縮小重跑 scope：正典（含全源整合對照節）不被覆蓋，自動版旁路 .auto.md（已 gitignore）、eval 不重渲染。驗收（實測）：三回合重跑正典 summary/eval md5 不變且與已上線版逐位元一致、節標題 diff 空；發布範圍 2 顆（2132b41d 晚報＋6ad3cc29）→ 結案資料 0bf0cb28；雙異質獨立審查（longcat/laguna/Pollinations）APPROVE 0 blocking；local=remote=ls-remote=0bf0cb28、待推 0、線上 4 頁 200、eval 全源整合 3 次未倒退。殘留：資安 remediation（憑證輪替／歷史暴露）獨立追蹤。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261013225232-1181",
-    "timestamp": "2026-10-13T22:52:32.852383+08:00",
-    "agent": "Hermes",
-    "task": "2026-10-14 內文數字守門時序修復（TD-20261013-09）＋ work_log 格式污染修復",
-    "summary": "使用者核准一次跑完整條流程至可發布（區分「修復測試審查可完成」與「條件通過才發布」）。①TD-20261013-10 實查結案（rebalance 當月實收 142,909／89.8% 與 index 一致、舊值 88,611 零殘留、四產生器皆走 passive_caliber）。②TD-20261013-09 根因＝時序誤報（13:03 內文對照當時 snapshot 正確、真值 16:29 才前進）→ 修 check_narrative_numbers.py 以文件產出時點為上界併入該日 snapshot 歷史變體，僅放行真實出現過的值。③work_log.json 格式污染（indent=2 vs remote indent=1＋鍵名誤用 content/evidence）已修：改以 remote 為基底重建、鍵名回到 item/detail，相對 remote 僅 12 行、前 340 筆逐筆相同。④驗收全過：時序回歸 8/8、自測 45/45、跨報告一致 PASS、內文守門 PASS、publish_gate fail-closed 正確。⑤獨立審查 2/4 有效異質 APPROVE（longcat／laguna，commit/tree 綁定一致）；solar REJECT 2 條逐條判定不成立（誤解 asof 實作；測試依賴 repo 為回歸本質），stepfun 服務回空。⑥發布驗收：local=remote=ls-remote=b83561cd、待推 0／落後 0、線上 7 頁 200。揭露：verify_commit.py 曾用 git show HEAD 致送審內容與標示 commit 錯配（已修）；費用帳本三檔不一致另立案 TD-20261013-14。",
-    "status": "✅ 已核准",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261013234115-1182",
-    "timestamp": "2026-10-13T23:41:15.708469+08:00",
-    "agent": "Hermes",
-    "task": "A 案健康度修復發布（2026-10-10 原裁決之另行發布）",
-    "summary": "tools/health_alert_check*.py 收斂：執行檔落 repo 根目錄並同步 hermes/scripts（原審查內容零漂移 e27792b1）；整合測試去硬編碼改為動態推導＋情境注入（9/12→23/23）；cron 09:10 實際入口實跑驗收（舊版誤報 🔴 美元曝險 69.5% → 新版 🟡 黃色觀察區）。commit 3089735c／tree f42641e8452f，真 CIO APPROVE blocking=[]。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261013234124-1183",
-    "timestamp": "2026-10-13T23:41:24.242598+08:00",
-    "agent": "Hermes",
-    "task": "P1 審查閘門收緊＋兩車道審查契約統一",
-    "summary": "cio_approve 放行邊界改為 verdict==APPROVE 且 blocking 為空（原只看 verdict，APPROVE＋blocking 非空仍會落紀錄＝可繞過漏洞，突變驗證已證實原版 rc=0 實際寫入）；required_fixes／required_changes 不改變 verdict；缺欄位或格式錯 fail-closed。兩車道 prompt 收斂至 review_chain.build_review_prompt 單一真值、綁定一律 12 碼、契約五條寫入 prompt。commit 97c57662／tree 9b089206516a，真 CIO APPROVE blocking=[]，5 條核心回歸＋既有呼叫端回歸。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261013234132-1184",
-    "timestamp": "2026-10-13T23:41:32.280456+08:00",
-    "agent": "Hermes",
-    "task": "管理原則：少管理、少變更、重結果",
-    "summary": "先判斷實質風險→值得修才修→一次完成修正與驗收→結案回歸正常運作。非緊急問題先記錄、不打断產線；不為形式一致改程式；不為讓工單看起來完整而增加治理負擔。適用於後續所有系統改善的判斷基準（2026-10-13 定案）。",
-    "status": "completed",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-13T21:49:46.331166"
+    "updated_at": "2026-10-14T07:00:08.278438"
   },
-  "last_updated": "2026-10-13T18:00:00+08:00",
+  "last_updated": "2026-10-14T18:00:00+08:00",
   "2026-09-29": [
     "9/29 質押撥款入帳 NT$5,900,000（10:57，國泰世華通知；實撥 590 萬@2.65%，原表定 540 萬@2.77%）→ 真值日全資產同步：現金 6,719,182／保單 9,453,825／基金 12,654,144／台股 2,981,410／總資產 31,808,561、負債 36,003,720（含基金質押 590 萬）、淨值 -4,195,159；銀行口徑 LTV 50.1%。待執行：清償 500 萬高息（券商 96 萬@3.92% 先、保單 400 萬@4% 後）",
     "9/29 裁示：質押撥款 590 萬先轉 200 萬還保單借貸（4% → 月省 6,667；保單借貸 400 萬 → 200 萬）；撥款剩餘 3,900,000。順序調整：保單（4%）優先於券商（3.92%）。待入帳確認後四源同步。",
