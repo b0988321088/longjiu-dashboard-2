@@ -830,8 +830,8 @@
     "title": "🟡 P2｜驗證器心跳時點早於夜鏈 → 22:40 收工檢查每晚結構性 ❌（主因已修，殘留待清）",
     "severity": "P2",
     "source": "施工自我發現",
-    "status": "開放",
-    "status_raw": "🟡 主因已修（2026-10-11 心跳 21:55→22:35；實跑 56 PASS / 0 FAIL、streak 0；22:40 收工檢查轉「全部通過」）。殘留三項待清，未授權施工前不動。",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-13)：心跳時點已於 2026-10-11 移至 22:35（夜鏈後、收工檢查前）；2026-10-13 實測 data/verifier_heartbeat.json：last_run_at=22:35:38、57 PASS／0 FAIL／exit_code=0／consecutive_failure_count=0。當晚 22:40 收工檢查之 ❌ 屬另一原因（當日產線產物 30 檔未提交），已於 23:10 commit fc30d605 收斂 45 檔（22:40 清單中 28 檔直接涵蓋；index.html 與 tech_debt.json 由 22:58 後 commit 收掉），複核 tracked 變更=0，23:41 重跑收工檢查『全部通過』。殘留三項（closeout_check.py:537 註解數字過期、6→7 FAIL 增量未逐條定位、未逐條歸因產物）維持記錄、不阻擋結案、不擴大施工。自然回歸驗證點：次一交易日 22:40 稽核（另立觀測，不 reopen 本卡）。",
     "detail": "【症狀】2026-10-11 03:00 收工檢查唯一 ❌＝「驗證器 FAIL（48 PASS / 7 FAIL；連續失敗 9；rc=1）」。該數字來自心跳檔 data/verifier_heartbeat.json 的快照（最後執行 2026-10-10 21:55），非 live 執行。\n【根因：時點排序】驗證器心跳排在 21:55，早於當晚夜鏈（22:00 evening_sync 輕量校準 → 22:15 行動儀表板每晚同步 → 22:20 重產 index.html → 22:57 刷新當期真值）。驗證器比對的是「報告產物 × snapshot」的一致性，21:55 當下產物還是白天版本 → 固定不過；22:40 收工檢查再讀這份陳舊 FAIL → 每晚誤報。連 9 晚同型（10/05 起 6 FAIL、10/09 起 7 FAIL）＝結構性，不是當晚壞掉。\n【證據】① live 重跑同支驗證器（現行程式＋現行產物）：56 PASS / 0 FAIL / rc=0，連兩次一致 → 無 live 缺陷。② git worktree 檢出 fb5a9425（夜鏈前最後一顆 commit）跑同一支驗證器：48 PASS / 7 FAIL，與 21:55 心跳逐數相同 → 重現該時點狀態。③ 在 worktree 逐步換入現行 index.html／日報／snapshot／全部 *.html ＋ data/*.json ＋ DB：FAIL 僅由 7 降到 5 → 未收斂。原因是 worktree 同時帶舊版 .py（驗證器 import repo 模組現算期望值），故此實驗無法完成歸因（見殘留③）。\n【修法（已落地）】cron aaf5dbf89335「驗證器心跳」時點 55 21 * * * → 35 22 * * *（名稱為『驗證器心跳 22:35』）。選 22:35 的理由：夜鏈（22:00／22:15／22:20）之後、22:40 收工檢查之前，維持原設計『先心跳後檢查』的順序；不選 22:45 是避免心跳跑在收工檢查之後、使 22:40 讀到前一日心跳而反轉設計語意。驗收：以 cron 端路徑實跑 hermes/scripts/run_verifier_heartbeat.py → PASS 56 / FAIL 0 / streak 0（2026-10-11T03:07）；隨後 closeout_check.py → ⑧ 驗證器心跳 ✅ PASS、收工檢查『全部通過』（03:07）。next_run_at=2026-10-11T22:35。\n【殘留（未做，非 blocking）】① closeout_check.py:537 註解仍寫「驗證器目前真實結果為 49 PASS / 6 FAIL；6 條斷言漂移屬另案修復」＝數字已過期（現為 56/0），屬程式註解變更需獨立審查＋tree 綁定。② 6 FAIL → 7 FAIL 的增量來源未逐條定位（是否與時點無關的既有斷言漂移，需在夜鏈後固定時點連續取樣才能分離）。③ 未逐條判定『哪一個產物在夜鏈後翻轉哪一條斷言』：需在『現行 .py × 舊產物』的組合下重做實驗（本次 worktree 實驗因程式碼版本混淆而不可用）。\n【界線】本卡不得作為下調驗證器標準、放寬斷言或豁免 FAIL 的理由；心跳錯的是『時點』，不是斷言。來源：2026-10-11 使用者核准（兩項：移動心跳時點＋登錄本卡）。",
     "tags": [
       "驗證器",
@@ -845,7 +845,9 @@
     "owner": "龍九",
     "moved_from": "pending_decisions.json",
     "moved_at": "2026-10-11",
-    "note": "2026-10-11 分流：工程／技術債類卡自 pending 移出（原 status=待處理），不再佔用『執行中決策追蹤』。"
+    "note": "2026-10-11 分流：工程／技術債類卡自 pending 移出（原 status=待處理），不再佔用『執行中決策追蹤』。",
+    "cleanup_reason": "tech_debt close：心跳時點已於 2026-10-11 移至 22:35（夜鏈後、收工檢查前）；2026-10-13 實測 data/verifier_heartbeat.json：last_run_at=22:35:38、57 PASS／0 FAIL／exit_code=0／consecutive_failure_count=0。當晚 22:40 收工檢查之 ❌ 屬另一原因（當日產線產物 30 檔未提交），已於 23:10 commit fc30d605 收斂 45 檔（22:40 清單中 28 檔直接涵蓋；index.html 與 tech_debt.json 由 22:58 後 commit 收掉），複核 tracked 變更=0，23:41 重跑收工檢查『全部通過』。殘留三項（closeout_check.py:537 註解數字過期、6→7 FAIL 增量未逐條定位、未逐條歸因產物）維持記錄、不阻擋結案、不擴大施工。自然回歸驗證點：次一交易日 22:40 稽核（另立觀測，不 reopen 本卡）。",
+    "updated_at": "2026-10-13"
   },
   {
     "id": "TD-20261011-07",
@@ -1328,15 +1330,16 @@
     "title": "P2｜既有殘留：15 檔未提交變更盤點（他支流程 dirty）",
     "severity": "P2",
     "source": "使用者裁決 2026-10-12（本輪 CLOSED，另案追蹤）",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-13)：重複卡整併（2026-10-13 唯讀盤點）：本卡與 TD-20261012-25「產線既有產物 16 檔未提交（另案盤點）」為同一主題（未提交產物盤點，清單高度重疊：error_register.md、asset_diff_history.json、每日報告 HTML 等）。以 TD-20261012-25 為主紀錄續追，本卡標為重複、保留原始紀錄不刪除。非因清單歸零而結案。",
     "detail": "closeout_check.py 未提交清單：.archive/deleted_py_list.txt、asset_diff_history.json、daily_condensed_intel_2026-10-12.json、daily_intel_report_20261012.json、daily_report_v2_2026-09-13.html、dashboard_decisions.json、dynamic_weekly_review_2026-09-13.html、error_register.md、inc_events.jsonl、notion_bridge/2026-10-12_strategy_handbook.md、notion_shared_context.md、risk_factor_penetration_2026-10-12.png、snapshot.json、tech_debt.json、us30y_state.json、work_log.json。使用者裁決：另案盤點，**禁止擅自覆寫或混入本輪**。注意其中含 NEVER_AUTO 治理檔（dashboard_decisions.json／snapshot.json／work_log.json／error_register.md／inc_events.jsonl）→ 任何落版皆須真 CIO 審查。",
     "tags": "既有殘留,closeout,另案",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-12",
-    "cleanup_reason": ""
+    "cleanup_reason": "tech_debt close：重複卡整併（2026-10-13 唯讀盤點）：本卡與 TD-20261012-25「產線既有產物 16 檔未提交（另案盤點）」為同一主題（未提交產物盤點，清單高度重疊：error_register.md、asset_diff_history.json、每日報告 HTML 等）。以 TD-20261012-25 為主紀錄續追，本卡標為重複、保留原始紀錄不刪除。非因清單歸零而結案。",
+    "updated_at": "2026-10-13"
   },
   {
     "id": "TD-20261012-16",

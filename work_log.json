@@ -2159,5 +2159,26 @@
   "category": "修正",
   "item": "TD-20261013-09 根因修復：緊急應變內文數字落後當期真值（閉環稽核第 13 類 15 處 ❌）→ 實證為時序誤報（13:03 內文對照當時 snapshot 完全正確，真值 16:29 才前進）。修 check_narrativ",
   "detail": "TD-20261013-09 根因修復：緊急應變內文數字落後當期真值（閉環稽核第 13 類 15 處 ❌）→ 實證為時序誤報（13:03 內文對照當時 snapshot 完全正確，真值 16:29 才前進）。修 check_narrative_numbers.py：新增 _historical_allowed() 併入『該日』snapshot 歷史變體，僅放行真的出現過的值。｜證據：對照組 38 處 → 實驗組 0 處；負向測試 6/6；check_narrative_numbers_selftest.py 45/45；現行產出 PASS。備份 %LOCALAPPDATA%/Temp/lj_bak_td1309/"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "完成",
+  "commit": "",
+  "item": "TD-20261011-06 結案：22:40 收工檢查結構性 ❌ 已解（心跳時點 22:35 實測 57 PASS／0 FAIL／streak 0）",
+  "detail": "當晚 22:40 收工檢查之 ❌ 屬另一原因（當日產線產物 30 檔未提交）：逐檔核對後 28 檔由 commit fc30d605(23:10) 收斂、index.html 與 tech_debt.json 由 22:58 後 commit 收掉，複核 tracked 變更=0、23:41 重跑收工檢查『全部通過』。殘留三項（closeout_check.py:537 註解數字過期、6→7 FAIL 增量未逐條定位、未逐條歸因）維持記錄、不阻擋結案、不擴大施工。自然回歸驗證點＝次一交易日 22:40 稽核（另立觀測，不 reopen 原卡）。"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "完成",
+  "commit": "",
+  "item": "今日已修復 TD 批次驗收：8 筆（05／06／07／08／09／10／12／13）全部通過，維持結案",
+  "detail": "逐筆以實際測試／實跑核對，不重新施工：05＋06＝tests/test_review_chain_20261013.py 27/0（含 T9 審查全失敗 fail-closed）；07＝tests/test_closeout_heartbeat_version_20261013.py 0 FAIL；08＝lj_inc.py list 實跑 rc=0（僅列 open）；09＝check_narrative_numbers.py 同日真值歷史變體守門在 HEAD；10＝check_cross_report_consistency.py PASS（5 份報告同一 as-of 一致）；12＝tests/test_publish_gate.py 140/0＋tests/test_cio_lane_rollback_20261013.py 12/0；13＝rebalance_summary 全源整合對照節仍在（正典未被洗掉）。發現並修正一項測試打樁落差：P1 統一 builder 後 cio_lane 改呼 review_chain.build_review_prompt，T9 打樁未一併提供導致 AttributeError（非功能缺陷），補打樁後 27/0，斷言強度不變。"
+ },
+ {
+  "date": "2026-10-13",
+  "category": "完成",
+  "commit": "",
+  "item": "整併重複技術債＋歷史事件核實註記（不刪紀錄、不強制歸零）",
+  "detail": "①TD-20261012-15 併入 TD-20261012-25（同一『未提交產物盤點』主題），標為重複並連回主紀錄，原始紀錄保留。②inc_events 2 筆 open（282b2361 於 10-08、5e65261e 於 10-12，皆 four_source_sync／穿透三報表不一致）經唯讀核實：check_penetration_consistency.py rc=0（三報表穿透一致）、對應日報產物均已產出（10-08／10-12／10-13）→ 實質問題已解。惟 schema 無結案理由欄位（TD-20261012-22 即此問題），故維持 open、不以現行 lj_inc.py close 製造無證據結案，改以本筆註記為已核實。③TD-20261013-01 主題（NEVER_AUTO_EXACT 安全線）與盤點類不同，不標重複。"
  }
 ]

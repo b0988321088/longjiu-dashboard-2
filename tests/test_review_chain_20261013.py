@@ -179,6 +179,9 @@ def main() -> int:
             raise RuntimeError("CIO-Pollinations(openai): HTTP Error 402；nous: 空輸出")
 
         fake.review = _boom
+        # 2026-10-13 P1：cio_lane 改為呼叫 review_chain.build_review_prompt 組送審 prompt
+        # （兩車道單一真值），打樁須一併提供否則會以 AttributeError 中止，測不到 T9 原意。
+        fake.build_review_prompt = lambda *a, **k: "STUB-PROMPT"
         sys.modules["review_chain"] = fake
         try:
             ok, msg = lane.review_and_record("t9")
