@@ -118,14 +118,41 @@ def cash_caliber(s):
     }
 
 
+def _rebalance_integration_block(s) -> str:
+    """全源整合區塊（單一真值＝data/rebalance_integration.md）— 2026-10-13 TD-20261013-13 根因修復。
+
+    原缺陷：build_summary_md 每次重跑只寫出 basic 資料宣告 → 把上一次已審查的
+    「零、📊 全源整合對照（防偏頗）」整節洗掉（已核准正典倒退 → 真 CIO REJECT、發布 fail-closed）。
+    修法：本區塊改由來源檔提供並原樣插入。本函式**不重算、不硬編任何數字**；
+    來源檔變更＝實質內容變更 → 須經真 CIO 審查。缺漏／讀取失敗 → 明示從缺（不假裝已整合）。
+    """
+    _fallback = (f"> 資料：snapshot.json（資料日期 {s.get('date','—')}）+ radar_state.json "
+                 "+ data/emergency_llm_analysis.json")
+    try:
+        _p = BASE / "data" / "rebalance_integration.md"
+        if not _p.exists():
+            return (_fallback + "\n\n> ⛔ 全源整合區塊來源檔（data/rebalance_integration.md）不存在 "
+                    "→ 本節從缺，**不得視為已整合**。")
+        _t = _p.read_text(encoding="utf-8")
+        _t = re.sub(r"<!--.*?-->", "", _t, flags=re.S).strip()   # 來源檔的說明註解不得外洩到產出
+        _m = re.search(r"資料日\s*(\d{4}-\d{2}-\d{2})", _t)
+        _asof = _m.group(1) if _m else None
+        if _asof and _asof != TODAY:
+            _t += (f"\n\n> ⚠️ 本節為 {_asof} 版（尚未更新至 {TODAY}）→ 僅供參考，"
+                   "**不得視為當日裁定**。")
+        return _t
+    except Exception as _e:  # noqa: BLE001
+        return (f"> ⛔ 全源整合區塊讀取失敗（{_e}）→ 本節從缺，**不得視為已整合**。")
+
+
 def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, sec_rows, dry_cur, risk_rows, ms_html, emg_html, total, cash, monthly_inc, monthly_exp, surplus, usd_pct, tech, us30y, plan_rows=None):
     """再平衡評估（文字版 md）— 與儀表板同源，每日自動更新（2026-08-22）"""
     lines = [
         f"# 🔄 龍九再平衡評估（{TODAY}）",
         "",
-        f"> 資料：snapshot.json（資料日期 {s.get('date','—')}）+ radar_state.json + data/emergency_llm_analysis.json",
+        _rebalance_integration_block(s),
         "",
-        "## 一、五桶偏離 vs 目標（修正後口徑）",
+        "## 一、五桶偏離 vs 目標",
         "",
         "| 桶 | 現況 | 目標 | 偏離 | 動作 |",
         "|---|---|---|---|---|",
@@ -249,11 +276,11 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     except Exception:
         lines.append("無緊急應變資料")
 
-    lines += ["", "## 四、動作建議（執行紀律）", ""]
+    lines += ["", "## 四、本週動作清單（承接零區裁定）", ""]
     for name, light, desc, tag in actions:
         lines.append(f"- **{name}**（{tag}）：{desc}")
 
-    lines += ["", "## 五、🎯 本週交易計畫（明確買什麼）", ""]
+    lines += ["", "## 五、🎯 本週交易計畫（引擎原案｜⏸️ 暫緩執行）", ""]
     try:
         _rot = s.get("rotation_recommendation", {})
         for p in _rot.get("交易計畫", []):
@@ -272,7 +299,7 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     except Exception:
         pass
 
-    lines += ["", "## 六、乾粉與風險紅線", ""]
+    lines += ["", "## 六、乾粉與風險紅線檢查", ""]
     _al_rows = dry_alloc()
     _al_txt = "｜".join(f"{_n} {_a}" for _n, _a, _v in _al_rows) if _al_rows else "（snapshot 無乾粉分配表）"
     _cw = cash_caliber(s)
@@ -306,13 +333,32 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     lines += ["", "## 八、結論", f"**本週動作：主動項 = {_concat}；其餘按兵不動。**",
               f"最大等待：整池質押 {_pf.pledge_status_line(style='short')} → 撥款到位即清償高息負債。", ""]
     out = BASE / f"rebalance_summary_{TODAY}.md"
+    # 2026-10-13（TD-20261013-13）備案｜縮小重跑 scope：
+    #   正典（已審查版，特徵＝含「全源整合對照」節）**不得被自動重跑覆蓋**。
+    #   理由（已取證）：正典不只多了「零、」節，還改了「一、」節表格結構（可接受範圍／判定欄）
+    #   與多處判斷性文字（裁定／靜默等）—— 產生器無法安全機械重現，硬編即為假造（違反 no-hardcode）。
+    #   故自動重跑改寫 .auto.md 供比對；正典更新一律走受控流程（檔案變更必經真 CIO 審查）。
+    _protected = False
+    try:
+        if out.exists() and "全源整合對照" in out.read_text(encoding="utf-8"):
+            _protected = True
+    except Exception:
+        _protected = False
+    if _protected:
+        out = BASE / f"rebalance_summary_{TODAY}.auto.md"
     out.write_text("\n".join(lines), encoding="utf-8")
+    if _protected:
+        print(f"🛡️ 正典受保護：自動版寫入 {out.name}（未覆蓋 rebalance_summary_{TODAY}.md）")
     print(f"✅ 再平衡評估已產出: {out}")
     # 2026-09-14：同步產出手機可讀 HTML（主儀表板「📌 再平衡評估」按鈕 glob rebalance_eval_*.html
     # 原本無產生器 → 永遠停在 9/5）。md 仍是唯一真值，HTML 由它重生成。
     try:
-        import build_rebalance_eval_html as _beh
-        _beh.build(TODAY)
+        _ev = BASE / f"rebalance_eval_{TODAY}.html"
+        if _ev.exists() and "全源整合對照" in _ev.read_text(encoding="utf-8", errors="ignore"):
+            print(f"🛡️ 正典受保護：{_ev.name} 已存在且含全源整合節 → 不重渲染")
+        else:
+            import build_rebalance_eval_html as _beh
+            _beh.build(TODAY)
     except Exception as _e:
         print(f"⚠️ 再平衡評估 HTML 產生失敗（md 已產出，不影響管線）: {_e}")
     return out

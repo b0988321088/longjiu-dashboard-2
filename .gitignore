@@ -110,3 +110,6 @@ snapshot.backup.json
 # 兩者皆為執行期產物；gitignore 對「已追蹤」檔無效，故此規則只阻止未來新增進入版控。
 /_pages_fetched.html
 /pending_decisions.lock
+
+# 2026-10-13（TD-20261013-13）：再平衡自動版草稿（正典受保護時的旁路產物，不入版控）
+rebalance_summary_*.auto.md
