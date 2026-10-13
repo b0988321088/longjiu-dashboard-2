@@ -1703,14 +1703,15 @@
     "title": "🟠 P2｜週六再平衡 cron prompt 第 5 步仍用 auto_record（已 rc=3）——閘門 10/13 起改強制真 CIO",
     "severity": "P2",
     "source": "2026-10-13 實跑 agent 自行回報",
-    "status": "開放",
-    "status_raw": "",
-    "detail": "實跑證據（2026-10-13 19:19 實地觸發）：agent 於發布步驟執行原 prompt 第 5 步 `auto_record --script cron_rebalance_weekly` 得 rc=3 —— 閘門自 2026-10-13 起把 index.html／rebalance_*.html／rebalance_*.md 列為強制真 CIO（白名單未登記）。agent 臨場改走當日新增的 cio_lane.py 真 CIO 車道取得 RECORD 後推送成功，並在回應末尾自我註記「cron prompt 第 5 步待更新」。風險：每次執行都依賴 agent 臨場繞道，屬不可靠路徑（換模型或 prompt 縮短後可能直接卡住）。修法：把 cron prompt 第 5 步改為 cio_lane 車道（或其他已登記的發布路徑），並於修改後以 hermes cron run 實跑驗收。",
+    "status": "closed",
+    "status_raw": "✅ 已修復（2026-10-13）：掃出同根因共 **3 個** cron job（原卡只列 1 個）——f5e412363a17 週六再平衡、6a9babc90954 週日週報、0697548d3103 月報。以 publish_gate.classify_paths 實測三組檔案集合皆 mode=CIO／未命中白名單（對照組純資料檔仍 AUTO）。修法：① cio_lane.py 補 CLI 入口（--tag，exit 0=可推／非 0=fail-closed，與 auto_record.py 同形狀）② 三個 prompt 的發布步驟 auto_record.py → cio_lane.py。驗收：實跑 hermes cron run 後 agent 輸出檔內含新指令原字（prompt 已送達 ✅）、口徑閘門 PASS、產物與 HEAD 逐位元相同故未產 commit；cio_lane CLI 已獨立實測 exit 0，且 19:19 那次 agent 已臨場以同一指令推送成功（commit e832f6a4 已在線上）。程式已發布 9153bd02。",
+    "detail": "實跑證據（2026-10-13 19:19 實地觸發）：agent 於發布步驟執行原 prompt 第 5 步 `auto_record --script cron_rebalance_weekly` 得 rc=3 —— 閘門自 2026-10-13 起把 index.html／rebalance_*.html／rebalance_*.md 列為強制真 CIO（白名單未登記）。agent 臨場改走當日新增的 cio_lane.py 真 CIO 車道取得 RECORD 後推送成功，並在回應末尾自我註記「cron prompt 第 5 步待更新」。風險：每次執行都依賴 agent 臨場繞道，屬不可靠路徑（換模型或 prompt 縮短後可能直接卡住）。修法：把 cron prompt 第 5 步改為 cio_lane 車道（或其他已登記的發布路徑），並於修改後以 hermes cron run 實跑驗收。\n\n【2026-10-13 修復：範圍由 1 擴至 3（同根因掃描）】\n· 量測（非推論）：publish_gate.classify_paths(base, paths) 對三組集合分別回 mode=CIO / must_cio=True / reason=未命中白名單；對照組（cost.html+cost_data.json+data/ai_cost_daily.jsonl）回 mode=AUTO → 證明測試有效、非全部誤判。\n· 三 job 的產物集合：週六再平衡＝rebalance_summary_*.md + rebalance_eval_*.html + index.html；週日週報＝dynamic_weekly_review_*.html + weekly_report_*.html + index.html + rebalance_snapshot.json；月報＝dynamic_monthly_review_*.html + monthly_report_*.html。\n· 為何週報/月報尚未爆：上次執行分別為 10/11、10/01，皆早於閘門 10/13 的規則變更；下一個執行點（10/18、11/01）就會斷推。週報 10/11 的 AUTO_PUSH.log 為 OK、commit 21461bc9 已在線上。\n· 修法：① cio_lane.py 新增 _cli() + __main__（原僅函式入口，shell 端只能 python -c 嵌引號，cron prompt 易出錯）；語義與 auto_record.py 對稱，呼叫端敘述不必改寫。② 三個 cron prompt 的發布步驟 `python auto_record.py --script <tag>` → `python cio_lane.py --tag <tag>`，並同步更新敘述中的 auto_record 字樣與 prompt_updated_at。\n· 驗收範圍（誠實邊界）：prompt 送達與 CLI 可用皆已實證；但「agent 在有實際變更時走 cio_lane 並推送成功」這一步本次未走到 —— 因為重跑時產物與 HEAD 逐位元相同，agent 正確地未製造空 commit。等效證據：19:19 那次（舊 prompt、auto_record 已 rc=3）agent 臨場改走 cio_lane 並推送成功（e832f6a4）。\n· cron prompt 存於 HERMES_HOME/cron/jobs.json（LF-only、ensure_ascii=False、indent=2）：修改前備份、寫回後以『舊=備份 vs 新=現檔』逐 job 比對，確認僅 3 個 job 的 prompt 與 prompt_updated_at 變動、無新增或移除 job。\n· 實跑副作用（已修復）：hermes cron run 以當時的 next_run_at 作為 occurrence 身份寫入 executions （scheduled_instant=2026-10-17T08:00Z），跑完落 status='completed' → completed_occurrence() 為 True → 10/17 正式排程會被跳過。已兩度把該列改為 'unknown' 並附原因（保留審計軌跡），最終 confirmed_occurrence=False。此機制與正確姿勢已寫入技能 cron-script-validation。",
     "tags": "cron,prompt,閘門,發布",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-13",
-    "cleanup_reason": ""
+    "cleanup_reason": "",
+    "closed_at": "2026-10-13"
   }
 ]
