@@ -1538,5 +1538,53 @@
     "moved_from": "",
     "moved_at": "2026-10-13",
     "cleanup_reason": ""
+  },
+  {
+    "id": "TD-20261013-04",
+    "date": "2026-10-13",
+    "title": "審查送審內容僅檔名＋變更統計（未含 patch 全文）｜真 CIO 對純程式 commit 的實質審查力有限",
+    "severity": "P2",
+    "source": "2026-10-13 台股緊急應變發布故障修復",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "cio_lane.py／regenerate_report.py 送審 prompt 只帶 git show --name-only 與 --stat；程式類 commit 建議附 patch 全文（上限截斷）",
+    "tags": "",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-13",
+    "cleanup_reason": ""
+  },
+  {
+    "id": "TD-20261013-05",
+    "date": "2026-10-13",
+    "title": "真審查工具（Pollinations 免費層）402 即使產線全停｜無次級異質審查者",
+    "severity": "P1",
+    "source": "2026-10-13",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "13:2x 與 14:2x 兩度 HTTP 402 Payment Required → fail-closed 不降級 → 程式修復一度無法發布（重試後成功）。需評估次級異質審查來源（非 DeepSeek／非 Google）",
+    "tags": "",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-13",
+    "cleanup_reason": ""
+  },
+  {
+    "id": "TD-20261013-06",
+    "date": "2026-10-13",
+    "title": "審查車道重複實作｜regenerate_report 內建 vs cio_lane.py",
+    "severity": "P2",
+    "source": "2026-10-13",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "為避免動 07:00 主產線，cio_lane.py 為同源抽出但仍保留原實作；建議後續收斂成單一實作",
+    "tags": "",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-13",
+    "cleanup_reason": ""
   }
 ]
