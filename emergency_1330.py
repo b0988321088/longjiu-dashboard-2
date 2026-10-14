@@ -313,7 +313,49 @@ _ok_report = run_step("日報+儀表板", [sys.executable, str(LJ / "regenerate_
 _ok_diff = run_step("差異分析", [sys.executable, str(LJ / "asset_diff_monitor.py")], 60)
 _ok_push = run_step("推送", [sys.executable, str(LJ / "daily_deploy.py")], 600)
 
-_rcs = {"日報+儀表板": _ok_report, "差異分析": _ok_diff, "推送": _ok_push}
+# 2026-10-14 根因修復（TD-20261014-02）：
+#   本路徑順序＝regenerate（有提交出口）→ asset_diff_monitor（步驟2，產物無出口）
+#   → daily_deploy（步驟2.8 再跑 buffett_cto_analyzer 重寫報告，但只推日報/index）
+#   ⇒ asset_diff_history.json 與 buffett_cto_report_{today}.md 的寫入落在最後一次提交之後：
+#      22:40 收工稽核判「已追蹤未提交」，22:00 晚報又因「執行前已 dirty」把它們排除 → 每晚結構性殘留。
+#   修法：收尾就地提交自家兩檔（白名單 stage／無變更不 commit），推送走 auto_push.py 唯一出口。
+#   模板同 wrappers/cost_watch_close.py（22:30 費用帳本日結）。
+_OWN_FILES = ("asset_diff_history.json", f"buffett_cto_report_{today}.md")
+
+
+def _commit_own() -> int:
+    """收尾補提交：只碰自家兩檔；無變更即靜默略過。"""
+    _files = [f for f in _OWN_FILES if (LJ / f).exists()]
+    if not _files:
+        print("自家產物不存在，略過提交")
+        return 0
+
+    def g(*a):
+        return subprocess.run(["git", *a], cwd=str(LJ), text=True, capture_output=True)
+
+    if g("add", "--", *_files).returncode != 0:
+        print("⚠️ git add 自家產物失敗 → 不提交（fail-closed）")
+        return 1
+    _foreign = sorted(set(x for x in g("diff", "--cached", "--name-only").stdout.split() if x) - set(_files))
+    if _foreign:
+        # 只用 pathspec commit → 不會帶走他班已 stage 的檔；此處僅揭露、不 abort（避免因此製造殘留）
+        print(f"ℹ️ index 另有他班已 stage 檔（不隨本次提交）：{_foreign}")
+    c = g("commit", "-m", f"data: 13:00 應變產物 {today}（資產差異歷史＋巴菲特CTO報告）", "--", *_files)
+    out = ((c.stdout or "") + (c.stderr or "")).strip()
+    if c.returncode != 0:
+        if "nothing to commit" in out or "no changes added" in out:
+            print("自家產物無變更，略過提交")
+            return 0
+        print(out)
+        return 1
+    print(out.splitlines()[0] if out else "已提交自家產物")
+    return subprocess.run([sys.executable, str(LJ / "auto_push.py"),
+                           "--script", "emergency_1330.py"], cwd=str(LJ)).returncode
+
+
+_ok_own = _commit_own()
+
+_rcs = {"日報+儀表板": _ok_report, "差異分析": _ok_diff, "推送": _ok_push, "產物補提交": _ok_own}
 _failed = [n for n, rc in _rcs.items() if rc not in (0, 3)]
 _blocked = [n for n, rc in _rcs.items() if rc == 3]
 if _blocked:
