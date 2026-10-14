@@ -2180,5 +2180,23 @@
   "commit": "",
   "item": "整併重複技術債＋歷史事件核實註記（不刪紀錄、不強制歸零）",
   "detail": "①TD-20261012-15 併入 TD-20261012-25（同一『未提交產物盤點』主題），標為重複並連回主紀錄，原始紀錄保留。②inc_events 2 筆 open（282b2361 於 10-08、5e65261e 於 10-12，皆 four_source_sync／穿透三報表不一致）經唯讀核實：check_penetration_consistency.py rc=0（三報表穿透一致）、對應日報產物均已產出（10-08／10-12／10-13）→ 實質問題已解。惟 schema 無結案理由欄位（TD-20261012-22 即此問題），故維持 open、不以現行 lj_inc.py close 製造無證據結案，改以本筆註記為已核實。③TD-20261013-01 主題（NEVER_AUTO_EXACT 安全線）與盤點類不同，不標重複。"
+ },
+ {
+  "date": "2026-10-14",
+  "category": "完成",
+  "item": "日報2026-10-14（已產出（金額見 snapshot／當日日報檔，勿在此複寫數字））",
+  "detail": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）"
+ },
+ {
+  "date": "2026-10-14",
+  "category": "完成",
+  "item": "資產穿透2026-10-14（已產出（五桶市值見 snapshot.penetration.actual_twd））",
+  "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-10-14",
+  "category": "完成",
+  "item": "CIO 裁決｜2026-10-14 戰略審查後續處置（7 項，使用者 Telegram 裁決）（一、資安：維持 P0 OPEN／BLOCKED。優先獨立輪替 Gemini 金鑰→新金鑰生效後依核准程序清理公開 Git 歷史→驗證遠端歷史與 Pages 暴露；預設關閉不視為風險解除，清除歷史不取代輪替，未驗收不得 CLOSED。二、質押貸款 5,900,000",
+  "detail": "一、資安：維持 P0 OPEN／BLOCKED。優先獨立輪替 Gemini 金鑰→新金鑰生效後依核准程序清理公開 Git 歷史→驗證遠端歷史與 Pages 暴露；預設關閉不視為風險解除，清除歷史不取代輪替，未驗收不得 CLOSED。二、質押"
  }
 ]
