@@ -58,6 +58,54 @@ DEFAULT_CONFIG = {
 }
 
 
+def render_policy_live(sig: dict, data: dict) -> list:
+    """政策面的「當日市場對照」— 市場數值一律由當日真值注入（TD-20261014-01）。
+
+    2026-10-14 審查揭露：政策文字曾寫死市場數值（10Y 月動能 +6.2%、USD/TWD 31.76、
+    COT 淨多單），與當日 signals 矛盾且過期。本函式改為每次執行時讀當日真值；
+    取不到真值時明確標示「真值暫缺」，**不得退回任何靜態舊值**。
+    """
+    _NA = "（真值暫缺）"
+    out = []
+    _sig = sig or {}
+    _data = data or {}
+
+    # ① 燈號（已由 compute_signals 依當日真值產生）
+    for _key in ("美債10年", "台幣", "黃金", "原油", "台股", "Fed流動性"):
+        _v = _sig.get(_key)
+        if isinstance(_v, dict) and _v.get("note"):
+            out.append(f"{_key}：{_v['note']}")
+        else:
+            out.append(f"{_key}：{_NA}")
+
+    # ② 原始真值（可直接核對，不經燈號文字改寫）
+    _tnx = _data.get("tnx") or {}
+    if _tnx.get("last") is not None:
+        _mom = _tnx.get("momentum")
+        _m = f"，月動能 {_mom:+.1f}%" if isinstance(_mom, (int, float)) else ""
+        out.append(f"美債10年殖利率 {_tnx['last']:.2f}%{_m}（{_tnx.get('date') or '日期未載'}）")
+    else:
+        out.append(f"美債10年殖利率：{_NA}")
+
+    _twd = _data.get("twd") or {}
+    if _twd.get("last") is not None:
+        _wk = _twd.get("週變化")
+        _w = f"，週變化 {_wk*100:+.2f}%" if isinstance(_wk, (int, float)) else ""
+        out.append(f"美元／台幣 {_twd['last']:.2f}{_w}（{_twd.get('date') or '日期未載'}）")
+    else:
+        out.append(f"美元／台幣：{_NA}")
+
+    _cot = (_data.get("cot") or {}).get("contracts") or {}
+    for _name, _label in (("黃金", "黃金 COT"), ("原油", "原油 COT")):
+        _cc = _cot.get(_name)
+        if isinstance(_cc, dict) and _cc.get("net") is not None:
+            out.append(f"{_label} 淨多單 {_cc['net']:,}（{_cc.get('date') or '日期未載'}）")
+        else:
+            out.append(f"{_label}：{_NA}")
+
+    return out
+
+
 def load_json(p, default=None):
     if Path(p).exists():
         try:
@@ -480,6 +528,13 @@ def main():
     state["data"] = {"twse": _tw_slim, "cot": cot, "fed": fed, "twd": twd, "tnx": tnx, "us_sector": us_sec}
     state["signals"] = sig
     state["sector_flow"] = sector_flow
+    # TD-20261014-01：政策面「當日市場對照」必須在存檔前生成，否則不會落地到 radar_state.json。
+    try:
+        state["policy_live"] = {"generated": state["last_run"],
+                                "lines": render_policy_live(sig, state["data"])}
+    except Exception as _e:  # pragma: no cover - 防禦性
+        state["policy_live"] = {"generated": state["last_run"],
+                                "lines": [f"（當日市場對照生成失敗：{_e.__class__.__name__}）"]}
     save_json(BASE / "radar_state.json", state)
 
     # ── 2026-09-21 治本（INC-234）：sector_flow 一更新，就地重算產業輪動建議 ──
@@ -514,6 +569,14 @@ def main():
             # → 輸出時明確標示事件日期，並宣告市場數值一律以當日燈號為準。
             print(f"\n🏛️ 政策面標註（政策事件：{_pn.get('記錄時間') or '未標'}）:")
             print("  ⓘ 以下為政策事件與解讀紀錄；市場數值一律以當日燈號為準")
+            # TD-20261014-01：當日市場對照（已於存檔前生成，此處僅輸出）
+            _live = (state.get("policy_live") or {}).get("lines") or []
+            if _live:
+                print("\n  📊 當日市場對照（程式注入當日真值）:")
+                for _line in _live:
+                    print(f"     {_line}")
+            else:
+                print("\n  📊 當日市場對照：未生成（真值暫缺）")
             for _k, _v in _pn.items():
                 if isinstance(_v, dict):
                     _c = _v.get("內容", "")

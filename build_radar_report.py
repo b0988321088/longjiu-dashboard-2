@@ -123,6 +123,21 @@ def main():
     for k2 in ["原油綜合判斷", "債券升息敏感度"]:
         if pn.get(k2):
             pol_items += f"<p style='margin:5px 0;font-size:12px;color:#374151'>📌 <b>{k2}：</b>{pn[k2]}</p>"
+    # TD-20261014-01：當日市場對照（由 institutional_flow.render_policy_live 當日注入；
+    # 政策文字內不得再寫死市場數值，HTML 一律呈現此區塊的當日真值）
+    _pl = rs.get("policy_live") or {}
+    _pl_lines = _pl.get("lines") or []
+    if _pl_lines:
+        _pl_rows = "".join(
+            f"<div style='font-size:11.5px;color:#374151;margin:2px 0'>• {ln}</div>" for ln in _pl_lines
+        )
+        pol_items += (
+            "<div style='border:1px dashed #93c5fd;background:#f0f9ff;border-radius:8px;padding:8px 10px;margin:8px 0'>"
+            "<div style='font-size:11.5px;font-weight:700;color:#1e40af;margin-bottom:4px'>"
+            "📊 當日市場對照（程式注入當日真值；政策文字內之市場數字一律以此為準）</div>"
+            f"{_pl_rows}"
+            f"<div style='font-size:10.5px;color:#6b7280;margin-top:4px'>生成時間：{_pl.get('generated','')}</div></div>"
+        )
     pol_html = (f"<div style='background:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:12px'>"
                 f"<h3 style='font-size:13px;font-weight:800;margin:0 0 6px;color:#1d1d1f'>🏛️ 政策面標註{f'（{src}）' if src else ''}</h3>{pol_items or '<p style=font-size:12px;color:#6b7280>無重大政策事件</p>'}</div>")
 
