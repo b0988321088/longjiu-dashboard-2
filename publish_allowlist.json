@@ -43,6 +43,16 @@
    "evidence": "2026-10-13 使用者裁決（受控擴充白名單）：該檔每日由 notion_context_loader.py 重產，內容僅為既有真值（snapshot.json／schedule_events.json／notion_bridge/<日期>_strategy_handbook.md）的彙整，無新數字、無治理語意、無對外呈現頁面。",
    "risk": "low",
    "note": "逐條登記單一精確路徑（無通配符、無目錄）；未登記路徑一律真 CIO 審查不變。"
+  },
+  {
+   "label": "CIO 審查收錄（儀表板分頁資料，單檔純資料）",
+   "allow": [
+    "cio_review.json"
+   ],
+   "producer": "cio_review_ingest.py",
+   "evidence": "2026-10-14 使用者核定（受控擴充白名單）：該檔由 cio_review_ingest.py 每週一/三 18:45 從 CIO 戰略審查 cron 輸出（fb014d759ac5/*.md）機械式擷取，內容為既有審查報告正文的逐字彙整，無新數字、無資產真值影響。未登記前每輪必撞閘門（10/12、10/14 連續兩輪 rc=3，並讓整段推送範圍對所有 producer 變 CIO）。",
+   "risk": "low",
+   "note": "逐條登記單一精確路徑（無通配符、無目錄）。該檔為呈現層資料（reviews 陣列，新到舊排序、保留歷史），每輪只新增當日一筆。未登記路徑一律真 CIO 審查不變。"
   }
  ]
 }
