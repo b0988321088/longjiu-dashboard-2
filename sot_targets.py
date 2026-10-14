@@ -637,13 +637,27 @@ def us30y_gate(snap: dict | None = None, state: dict | None = None,
         lag = (dt.date.fromisoformat(ref[:10]) - dt.date.fromisoformat(str(as_of)[:10])).days
     except Exception:
         lag = None
+    # 2026-10-14 W2/RF-2（使用者裁決）：缺值／不可解析／非有限（含 NaN）一律不得回 OK。
+    # 原版只靠 unfreeze_allowed=False 擋住解凍，但 status="OK" 會被下游讀成「資料有效」的
+    # 綠燈（語意不符、且 value 非數值時 646 行的 float() 會直接拋錯）。此處同時收斂。
+    def _num(x):
+        try:
+            _f = float(x)
+        except (TypeError, ValueError):
+            return None
+        return _f if (_f == _f and _f not in (float("inf"), float("-inf"))) else None
+
+    _vnum = _num(value)
     if as_of in (None, "") or lag is None:
         status, reason = "UNKNOWN", "缺 us30y_as_of（讀值日期）→ 不得判定解凍／凍結"
+    elif _vnum is None:
+        status, reason = "UNKNOWN", ("缺 us30y 讀值（last_rate 缺漏／不可解析／非有限）"
+                                     "→ 不得判定解凍／凍結")
     elif lag > max_lag_days:
         status, reason = "STALE", f"讀值日 {as_of} 落後真值日 {ref} 達 {lag} 天（> {max_lag_days}）→ 不得判定解凍"
     else:
         status, reason = "OK", f"讀值日 {as_of}（落後 {lag} 天，在容忍值 {max_lag_days} 天內）"
-    below = (value is not None and _red is not None and float(value) < float(_red))
+    below = (_vnum is not None and _red is not None and _vnum < float(_red))
     return {
         "status": status,
         "value": value,

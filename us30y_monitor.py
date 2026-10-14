@@ -163,13 +163,46 @@ def main():
     yahoo = fetch_us30y_yahoo()
     rows = merge_rows(fred, yahoo)  # Yahoo 覆蓋同日（較即時）
     if not rows:
-        print("⚠️ US30Y 無資料（FRED / Yahoo 皆失敗），略過本日檢查")
+        # 2026-10-14 W2/RF-1（使用者裁決）：記錄全來源抓取失敗的**連續次數**並分級告警。
+        # 原版只印一行「略過本日檢查」就 return，不寫 state、不計次、無落後告警；
+        # 而 gate 在 lag ≤3 天仍判 OK → 1～3 天落後完全沒有升級告警（缺口本體）。
+        # 只 FRED 失敗但 Yahoo 成功 → rows 非空，不走本分支（不算全失敗）。
+        _st = load_state()
+        _n = int(_st.get("fetch_fail_streak") or 0) + 1
+        _st["fetch_fail_streak"] = _n
+        _st.setdefault("fetch_fail_since", date.today().isoformat())
+        save_state(_st)
+        _last = _st.get("last_date") or "（無）"
+        try:
+            _lag = (date.today() - date.fromisoformat(str(_last)[:10])).days
+        except Exception:
+            _lag = "?"
+        if _n >= 3:
+            print(f"🔴 US30Y 連續 {_n} 次抓取失敗（FRED／Yahoo 皆無資料）"
+                  f"—— 讀值停留在 {_last}（落後 {_lag} 日）；"
+                  "投資決策不得依賴現有 US30Y 讀值，請檢查資料源")
+        elif _n == 2:
+            print(f"⚠️⚠️ US30Y 連續 2 次抓取失敗 —— 讀值停留在 {_last}（落後 {_lag} 日），"
+                  "解凍／凍結判定已不可靠")
+        else:
+            print(f"⚠️ US30Y 無資料（FRED／Yahoo 皆失敗）—— 第 1 次失敗，"
+                  f"讀值停留在 {_last}；略過本日檢查")
         return
 
     last2 = rows[:CONSECUTIVE_DAYS]
     latest_date, latest_rate = rows[0]
     state = load_state()
     today = date.today().isoformat()
+
+    # 2026-10-14 W2/RF-1：抓取成功即歸零連續失敗計數，且必須落在**任何 early return 之前**
+    # （下方有「初次執行且未觸發 → 靜默不寫 state」的分支；若在那之後才歸零，
+    #   streak 會殘留，下次失敗會被誤計為連續）。
+    _pf = int(state.get("fetch_fail_streak") or 0)
+    if _pf:
+        state.pop("fetch_fail_streak", None)
+        state.pop("fetch_fail_since", None)
+        save_state(state)
+        print(f"✅ US30Y 抓取已恢復（先前連續失敗 {_pf} 次）")
 
     if all_above(last2, A_THRESHOLD):
         new_mode = "A"

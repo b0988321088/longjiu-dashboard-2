@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
@@ -166,25 +167,61 @@ REVIEW_CONTRACT = (
 
 
 def build_review_prompt(commit: str, tree: str, subject: str, files: str, stat: str,
-                        diff_cap: int = 12000) -> str:
+                        diff_cap: int = 12000, patch: str | None = None,
+                        segment: tuple[int, int] | None = None) -> str:
     """組出真 CIO 送審 prompt（兩個入口共用的單一真值）。
 
     綁定一律採 **12 碼前綴**：2026-10-13 實測免費層模型抄寫 40 碼 sha 會掉字元
     （c3b3a143 那輪 tree 40 碼被抄成 39 碼，造成產線連續 6 次 fail-closed 誤擋）。
     commit 本來就取 12 碼，tree 拉齊為同一慣例，比對端同樣只比 12 碼前綴。
+
+    2026-10-14 W1（使用者核准 A+C）：新增 `patch`／`segment`。
+    原版只送 `--name-only` 檔名＋`--stat` 統計（實測 662 字元），**完全不含程式碼**，
+    使 APPROVE 的效力僅及於「通道類型判斷」而不及內容。呼叫端現須傳入實際 patch；
+    `segment=(i, n)` 用於超量分段時標示段落。兩者皆為可選 → 既有呼叫端不受影響。
     """
     c12, t12 = commit[:12], tree[:12]
+    _seg_txt = ""
+    if segment and segment[1] > 1:
+        _seg_txt = f"（第 {segment[0]}/{segment[1]} 段；本段需獨立判定，全部段落皆 APPROVE 才算通過）"
+    _content_txt = ""
+    if patch is not None:
+        _content_txt = (f"\n變更內容（實際 patch{_seg_txt}）：\n"
+                        f"```diff\n{patch[:diff_cap]}\n```\n")
     return (
         "你是龍九控股的獨立 CIO 審查者（異質審查，不得預設放行）。只回傳 JSON，不要任何其他文字。\n"
         f"待推送 commit：{c12}\n待推送 tree：{t12}\n主旨：{subject}\n\n"
-        f"變更檔案清單：\n{files[:diff_cap]}\n\n變更統計：\n{stat[:diff_cap]}\n\n"
-        "審查重點：①是否含程式／治理紀錄／憑證類變更而走資料通道 ②資料是否自相矛盾或截斷 "
-        "③是否與使用者既定裁決衝突（例如公開首頁必經真 CIO、不可放寬審查）④是否有 blocking 級缺陷。\n\n"
+        f"變更檔案清單：\n{files[:diff_cap]}\n\n變更統計：\n{stat[:diff_cap]}\n"
+        + _content_txt +
+        "\n審查重點：①是否含程式／治理紀錄／憑證類變更而走資料通道 ②資料是否自相矛盾或截斷 "
+        "③是否與使用者既定裁決衝突（例如公開首頁必經真 CIO、不可放寬審查）④是否有 blocking 級缺陷 "
+        "⑤**變更內容本身是否有具體缺陷**（邏輯錯誤、fail-open／靜默失敗、資料誤用、未處理缺失值）"
+        "—— 有則必須**指名檔案與問題**列入 blocking；無具體缺陷時不得以泛泛理由填入。\n\n"
         + REVIEW_CONTRACT
         + "\n輸出格式（原樣抄寫下方 12 碼 commit 與 12 碼 tree，不得自行補齊或改寫字元）：\n"
         '{"verdict":"APPROVE 或 REJECT","reviewed_commits":[{"commit":"' + c12 + '","tree":"' + t12 + '"}],'
         '"blocking":[],"required_fixes":[],"note":"理由（160 字內）"}'
     )
+
+
+def _valid_review(text: str) -> bool:
+    """回覆是否含**可判定**的 verdict（APPROVE／REJECT）。
+
+    2026-10-14：`_MIN_CONTENT = 2` 使得 `{}`（長度 2）恰被視為「有內容」→ 鏈直接採用
+    → verdict 空 → 車道 fail-closed。實測第一層 Pollinations 會**間歇**回 `{}`，
+    造成 3 段送審常態性卡住（與大小、內容無關）。
+
+    語意邊界：**REJECT 是有效判定、原樣採用**（「拒審不換層」契約不變）；
+    只有「無可判定 verdict」才視為該層失敗、續下一層（與逾時／空輸出同類）。
+    """
+    m = re.search(r"\{.*\}", text, re.S)
+    if not m:
+        return False
+    try:
+        obj = json.loads(m.group(0))
+    except Exception:  # noqa: BLE001
+        return False
+    return str((obj or {}).get("verdict") or "").strip().upper() in ("APPROVE", "REJECT")
 
 
 def review(prompt: str, *, max_tokens: int = 8192, timeout: float = 300,
@@ -204,7 +241,10 @@ def review(prompt: str, *, max_tokens: int = 8192, timeout: float = 300,
             errors.append(f"{label}: {type(exc).__name__}: {str(exc)[:120]}")
             continue
         if len(text.strip()) >= _MIN_CONTENT:
-            return text, label
+            if _valid_review(text):
+                return text, label
+            errors.append(f"{label}: 回覆無可判定 verdict（{text.strip()[:60]}）")
+            continue
         errors.append(f"{label}: 空輸出")
     raise RuntimeError("；".join(errors) if errors else "審查鏈全數失敗 → fail-closed")
 

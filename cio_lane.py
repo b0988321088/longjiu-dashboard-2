@@ -121,37 +121,84 @@ def _review_and_record_repo_cwd(tag: str = "cio_lane") -> tuple[bool, str]:
 
     files = _git("show", "--name-only", "--format=", commit).stdout.strip()
     subj = _git("log", "-1", "--format=%s", commit).stdout.strip()
-    diff = _git("show", "--stat", "--format=", commit).stdout.strip()
-    # 2026-10-13 P1：prompt 收斂到 review_chain.build_review_prompt（單一真值）。
-    # 本檔原內嵌複本已刪除，避免兩條車道各自漂移（regenerate_report 原本還停在 40 碼綁定）。
-    prompt = _rc.build_review_prompt(commit, tree, subj, files, diff, DIFF_CAP)
-    try:
-        txt, _reviewer = _rc.review(prompt, max_tokens=8192, timeout=300)
-    except Exception as e:  # noqa: BLE001
-        return False, f"審查鏈全數不可用（{type(e).__name__}: {str(e)[:120]}）→ fail-closed（不降級）"
-    m = re.search(r"\{.*\}", txt, re.S)
-    if not m:
-        return False, "審查輸出無法解析出 JSON → fail-closed"
-    try:
-        rev = json.loads(m.group(0))
-    except Exception as e:  # noqa: BLE001
-        return False, f"審查 JSON 解析失敗（{str(e)[:60]}）→ fail-closed"
-    verdict = str(rev.get("verdict", "")).strip().upper()
-    blocking = rev.get("blocking") or []
-    ok_pairs = {(str(x.get("commit", ""))[:12], str(x.get("tree", ""))[:12]) for x in (rev.get("reviewed_commits") or [])
-                if isinstance(x, dict)}
-    # 2026-10-13：綁定不變（審查者必須逐字指名副審的 commit 與 tree），但允許同一綁定以頂層欄位表達，
-    # 且比對採 12 碼前綴（commit 本來就取 12 碼；tree 拉齊為同一慣例）——免費層模型抄寫 40 碼時
-    # 實測會掉字元（c3b3a143 該輪 tree 40 碼被抄成 39 碼），造成產線連續 6 次 fail-closed 誤擋。
-    # 仍不得省略 commit 或 tree，也不得只回一個。
-    if rev.get("commit") and rev.get("tree"):
-        ok_pairs.add((str(rev["commit"])[:12], str(rev["tree"])[:12]))
-    if verdict != "APPROVE":
-        return False, f"審查未通過（verdict={verdict or '空'}）→ fail-closed"
-    if blocking:
-        return False, f"審查有 blocking {len(blocking)} 項 → fail-closed"
-    if (commit[:12], tree[:12]) not in ok_pairs:
-        return False, "審查回傳的 commit／tree 與實際待推內容不符（範圍無法對應）→ fail-closed"
+    stat = _git("show", "--stat", "--format=", commit).stdout.strip()
+    # 2026-10-14 W1（使用者核准 A+C）：送**完整 patch**，不再以 --stat 統計代替程式碼。
+    # 原版送 --name-only 158 字元＋--stat 504 字元＝662 字元，審查者看不到任何一行程式碼
+    # → APPROVE 只證明通過「通道類型判斷」，不及內容正確性。
+    patch = _git("show", "--format=", commit).stdout or ""
+    segs = [patch[i:i + DIFF_CAP] for i in range(0, len(patch), DIFF_CAP)] or [""]
+    if "".join(segs) != patch:      # 切片自我檢查：無遺漏、無重複
+        return False, "分段覆蓋不完整（切片自我檢查失敗）→ fail-closed"
+
+    rev = None
+    reviewers, seg_notes = [], []
+    _off = 0
+    for _idx, _seg in enumerate(segs, 1):
+        # 分段時補「本段所屬檔案」脈絡：段首常落在檔案中段（該段沒有 diff --git 行），
+        # 審查者會看不出在看哪個檔（2026-10-14 首次實戰踩到）。
+        _head = patch[:_off]
+        _di = _head.rfind("diff --git ")
+        _seg_file = (_head[_di:].splitlines()[0].split(" b/")[-1]
+                     if _di >= 0 else "（本段為 commit 開頭）")
+        # prompt 仍走 review_chain 單一真值（不在此另寫一份）
+        prompt = _rc.build_review_prompt(commit, tree, subj, files, stat, DIFF_CAP,
+                                         patch=f"# ⓘ 本段所屬檔案：{_seg_file}\n{_seg}",
+                                         segment=(_idx, len(segs)))
+        _off += len(_seg)
+        try:
+            txt, _rvw = _rc.review(prompt, max_tokens=8192, timeout=300)
+        except Exception as e:  # noqa: BLE001
+            return False, (f"第 {_idx}/{len(segs)} 段審查鏈不可用"
+                           f"（{type(e).__name__}: {str(e)[:120]}）→ fail-closed（不降級、不落 RECORD）")
+        reviewers.append(_rvw)
+        m = re.search(r"\{.*\}", txt, re.S)
+        if not m:
+            return False, f"第 {_idx}/{len(segs)} 段審查輸出無法解析出 JSON → fail-closed"
+        try:
+            _rv = json.loads(m.group(0))
+        except Exception as e:  # noqa: BLE001
+            return False, f"第 {_idx}/{len(segs)} 段審查 JSON 解析失敗（{str(e)[:60]}）→ fail-closed"
+        _v = str(_rv.get("verdict", "")).strip().upper()
+        _blk = _rv.get("blocking") or []
+        _pairs = {(str(x.get("commit", ""))[:12], str(x.get("tree", ""))[:12])
+                  for x in (_rv.get("reviewed_commits") or []) if isinstance(x, dict)}
+        if _rv.get("commit") and _rv.get("tree"):
+            _pairs.add((str(_rv["commit"])[:12], str(_rv["tree"])[:12]))
+        if _v != "APPROVE":
+            _nt = str(_rv.get("note") or "")[:200]
+            _bl = json.dumps(_blk[:2], ensure_ascii=False)[:300]
+            return False, (f"第 {_idx}/{len(segs)} 段審查未通過（verdict={_v or '空'}）→ fail-closed"
+                           f"｜note：{_nt}｜blocking：{_bl}")
+        if _blk:
+            _bl = json.dumps(_blk[:2], ensure_ascii=False)[:300]
+            return False, (f"第 {_idx}/{len(segs)} 段審查有 blocking {len(_blk)} 項 → fail-closed"
+                           f"｜{_bl}")
+        if (commit[:12], tree[:12]) not in _pairs:
+            return False, (f"第 {_idx}/{len(segs)} 段回傳的 commit／tree 與實際待推內容不符"
+                           "（範圍無法對應）→ fail-closed")
+        seg_notes.append(f"seg{_idx}:{_v}/blocking={len(_blk)}/{_rvw}")
+        if _idx == 1:
+            rev = _rv
+    # 完整性記錄（使用者契約 2026-10-14：總字元數／送審字元數／是否含 patch／各段覆蓋）
+    _sent = sum(len(s) for s in segs)
+    rev["_lane_meta"] = {
+        "patch_total_chars": len(patch),
+        "patch_sent_chars": _sent,
+        "has_patch": bool(patch),
+        "segments": len(segs),
+        "coverage_pct": round(_sent / len(patch) * 100, 2) if patch else 100.0,
+        "segment_verdicts": seg_notes,
+        "reviewers": reviewers,
+    }
+    # 2026-10-14 W1：per-段 verdict／blocking／commit-tree 綁定已在上方迴圈**逐段**驗證完畢
+    # （原單段檢查已移除，避免與分段邏輯各判一次而漂移）。綁定仍採 12 碼前綴——
+    # 免費層模型抄寫 40 碼 sha 會掉字元（c3b3a143 該輪 tree 40 碼被抄成 39 碼，曾造成連續誤擋）。
+    if rev is None or not rev.get("_lane_meta"):
+        return False, "分段審查未產生完整性紀錄（內部不變量）→ fail-closed"
+    # 2026-10-14 W1：分段審查後 reviewer 由單一值改為清單；此處合成標籤（去重保序），
+    # 供 cio_approve 落紀錄與回傳訊息使用。原單段版殘留的 `_reviewer` 變數已由迴圈取代
+    # （測試 test_01 在改名時抓到 NameError，修復於此）。
+    _reviewer = " + ".join(dict.fromkeys(reviewers)) if reviewers else "unknown"
     rdir = BASE / ".git" / "cio_reviews"
     try:
         rdir.mkdir(parents=True, exist_ok=True)
