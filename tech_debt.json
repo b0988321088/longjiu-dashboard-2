@@ -1793,15 +1793,16 @@
     "title": "未提交資料檔生命週期追查（asset_diff_history.json／buffett_cto_report_*.md／data/ai_cost_daily.jsonl）",
     "severity": "P2",
     "source": "2026-10-14 使用者裁決：列下一輪獨立修復工單（今晚不修、不清檔、不放寬驗證器）",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-14)：根因修復並上線（commit 26a35e77 程式／d92432a4 資料；已推 clean-main）。①data/ai_cost_daily.jsonl＝既有出口 wrappers/cost_watch_close.py（22:30 close 班）今日 22:30 實證已提交並推送（b5fe65f5）→ 非缺口。②asset_diff_history.json＋buffett_cto_report_{DATE}.md＝13:00 台股緊急應變路徑（emergency_1330.py）順序為 regenerate（有出口）→ asset_diff_monitor（產物無出口）→ daily_deploy（步驟2.8 重寫報告卻只推 daily/index）→ 兩檔寫入落在最後一次提交之後，22:40 稽核每晚判未提交、且 22:00 晚報以「執行前已 dirty」排除。修法：emergency_1330.py 收尾加 _commit_own()（白名單 stage、無變更不 commit、pathspec commit 不帶走他班檔、推送走 auto_push.py 唯一出口），模板同 cost_watch_close.py。驗收：沙箱 9/9 PASS（A1-A4 提交/推送/乾淨、B1-B3 無變更靜默、C1-C3 他班 staged 不被帶走）＋語法檢查 OK；現行兩檔已提交上線；closeout_check 由 FAIL（3 檔未提交）轉為『全部通過 ✅』（22:38），未修改任何檢查規則、未擴白名單、未刪檔。衍生另案：TD-20261014-03（bonds 缺鍵，P3）。",
     "detail": "closeout_check.py（22:40 收工檢查）常駐 ❌ 的最後一項＝三個他班未提交資料檔。唯讀初步線索：①asset_diff_history.json（65,267B，10-14 22:00）主要寫入者 asset_diff_monitor.py；②buffett_cto_report_2026-10-14.md（1,408B，13:02）寫入者 buffett_cto_analyzer.py；③data/ai_cost_daily.jsonl（8,515B，21:42）寫入者 ai_cost_watch.py。待查三問：誰產生、何時產生？為什麼產生後沒有完成提交？應由產生者自動提交、由專屬流程管理，還是刻意保留在工作區？約束：不得直接清除檔案、不得放寬／跳過／偽造驗證器 PASS、不得為全綠而改檢查；本輪政策定版（台股分批 v1.1）與部署成果不重做、不回退。修復方式：下一輪先唯讀追蹤來源與提交出口（self_publish／auto_record 車道歸屬），再一次性修正生命週期並驗收。",
     "tags": "未提交檔,closeout,生命週期,資料衛生",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-14",
-    "cleanup_reason": ""
+    "cleanup_reason": "tech_debt close：根因修復並上線（commit 26a35e77 程式／d92432a4 資料；已推 clean-main）。①data/ai_cost_daily.jsonl＝既有出口 wrappers/cost_watch_close.py（22:30 close 班）今日 22:30 實證已提交並推送（b5fe65f5）→ 非缺口。②asset_diff_history.json＋buffett_cto_report_{DATE}.md＝13:00 台股緊急應變路徑（emergency_1330.py）順序為 regenerate（有出口）→ asset_diff_monitor（產物無出口）→ daily_deploy（步驟2.8 重寫報告卻只推 daily/index）→ 兩檔寫入落在最後一次提交之後，22:40 稽核每晚判未提交、且 22:00 晚報以「執行前已 dirty」排除。修法：emergency_1330.py 收尾加 _commit_own()（白名單 stage、無變更不 commit、pathspec commit 不帶走他班檔、推送走 auto_push.py 唯一出口），模板同 cost_watch_close.py。驗收：沙箱 9/9 PASS（A1-A4 提交/推送/乾淨、B1-B3 無變更靜默、C1-C3 他班 staged 不被帶走）＋語法檢查 OK；現行兩檔已提交上線；closeout_check 由 FAIL（3 檔未提交）轉為『全部通過 ✅』（22:38），未修改任何檢查規則、未擴白名單、未刪檔。衍生另案：TD-20261014-03（bonds 缺鍵，P3）。",
+    "updated_at": "2026-10-14"
   },
   {
     "id": "TD-20261014-03",
