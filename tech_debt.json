@@ -1761,8 +1761,30 @@
     "title": "Gemini 受控接入 review_chain 審查架構（介面盤點／接入設計／契約與防線測試／審查紀錄／獨立驗收）",
     "severity": "P1",
     "source": "2026-10-14 使用者裁決（同意納入正式候選層；受控接入、先驗證再啟用；暫不核准改預設層級）",
+    "status": "已結案",
+    "status_raw": "CLOSED",
+    "detail": "背景：2026-10-14 W1 首度實戰暴露 review_chain 對「有效 JSON 但缺 verdict」（第一層回 {}）不降層 → 車道常態 fail-closed；已修（_valid_review，commit 9621d31b）。使用者指定以 CIO 的模型 gemini-2.5-flash 送審（3 段 APPROVE／blocking=[]），確認其能完成有效 CIO 審查。裁決：核准納入正式審查架構評估，暫不核准改動預設層級；採用「受控接入、先驗證再啟用」，不回頭修改已發布的 W1/W2。\n\n【範圍1｜介面盤點】三層對照：Pollinations（OpenAI 相容、keyless、choices[0].message.content、json_mode→response_format）；nous（OpenAI 相容、Bearer agent_key 且有 TTL 120s 檢查、同輸出格式）；Gemini（原生 generateContent、query-param key、candidates[0].content.parts[].text、responseMimeType=application/json）。須補齊確認：無 candidates／空 parts／安全阻擋／finishReason!=STOP／HTTP 非 200 的處理是否與前兩層一致。\n\n【範圍2｜接入設計】定義 Gemini 層級位置（第一層或備援層）、啟用條件（憑證可用且未過期）、失敗行為（視為該層失敗→續層，不得記為通過）、審查身分標籤（CIO-Gemini(gemini-2.5-flash)）。鐵則：模型呼叫成功 ≠ 審查通過。\n\n【範圍3｜契約測試】至少涵蓋：有效 APPROVE、有效 REJECT、空輸出、{}、缺少 verdict、逾時、格式錯誤、全層失敗。\n\n【範圍4｜防線測試】REJECT 不得被降層覆蓋；無效回覆不得被記成 APPROVE；所有必要審查未完成時一律 fail-closed。\n\n【範圍5｜審查紀錄】每次送審可追溯：模型與版本、審查內容（送審字元數／是否含 patch）、各段 verdict、blocking、最終決定。\n\n【範圍6｜獨立驗收】以完整 patch 送交真正的 CIO 審查（非本工單作者自審），通過測試與既有發布閘門後，才另行裁決是否啟用。\n\n邊界：不回頭修改已發布的 W1/W2；不擴大已結案範圍；資安凍結維持（本工單不得作為解除資安阻塞的理由）。\n\n【結案紀錄 2026-10-14】全程閉環完成：①工單登記 commit 62f6509b（tree 461d1756，RECORD CIO-Pollinations｜blocking=[]）；②Gemini 備援層實作 commit 539d6880（tree 438bd636，RECORD CIO-Gemini(gemini-2.5-flash)｜blocking=[]｜2 段｜coverage 100%）。實作：LONGJIU_REVIEW_GEMINI 控制（未設／0＝關閉，既有鏈行為不變；1＝末位備援層；only＝獨佔）；統一錯誤處理（HTTP／非 JSON／無候選／SAFETY·RECITATION·BLOCKLIST·PROHIBITED_CONTENT／空 parts → 該層失敗）；finishReason=MAX_TOKENS 視為失敗並放大上限重試；憑證讀 Hermes .env（repo 外，不外洩）；所有回覆經 _valid_review()；有效 REJECT 不降層；全層失敗 fail-closed。驗收：新增 23/23、既有回歸全過、四閘門 rc=0、三情境實測（關閉 3 層／=1 四層／only 單層）、Gemini only 端到端 APPROVE、線上 index 200；遠端＝本機＝539d6880。殘留：tools/w1_defect_probe.py 維持 untracked（依裁決）；獨立 Gemini 送審腳本已移除（功能重疊不留兩套）。",
+    "tags": "審查鏈,Gemini,治理,已結案",
+    "owner": "龍九",
+    "due_date": "",
+    "moved_from": "",
+    "moved_at": "",
+    "cleanup_reason": ""
+  },
+  {
+    "id": "TD-20261014-01",
+    "date": "2026-10-14",
+    "title": "policy_notes 動態化：政策面市場數值改由程式注入當日真值（結構化欄位）",
+    "severity": "P2",
+    "source": "2026-10-14 CIO 車道審查 REJECT 實查揭露（雷達修復工單）",
     "status": "開放",
     "status_raw": "",
-    "detail": "背景：2026-10-14 W1 首度實戰暴露 review_chain 對「有效 JSON 但缺 verdict」（第一層回 {}）不降層 → 車道常態 fail-closed；已修（_valid_review，commit 9621d31b）。使用者指定以 CIO 的模型 gemini-2.5-flash 送審（3 段 APPROVE／blocking=[]），確認其能完成有效 CIO 審查。裁決：核准納入正式審查架構評估，暫不核准改動預設層級；採用「受控接入、先驗證再啟用」，不回頭修改已發布的 W1/W2。\n\n【範圍1｜介面盤點】三層對照：Pollinations（OpenAI 相容、keyless、choices[0].message.content、json_mode→response_format）；nous（OpenAI 相容、Bearer agent_key 且有 TTL 120s 檢查、同輸出格式）；Gemini（原生 generateContent、query-param key、candidates[0].content.parts[].text、responseMimeType=application/json）。須補齊確認：無 candidates／空 parts／安全阻擋／finishReason!=STOP／HTTP 非 200 的處理是否與前兩層一致。\n\n【範圍2｜接入設計】定義 Gemini 層級位置（第一層或備援層）、啟用條件（憑證可用且未過期）、失敗行為（視為該層失敗→續層，不得記為通過）、審查身分標籤（CIO-Gemini(gemini-2.5-flash)）。鐵則：模型呼叫成功 ≠ 審查通過。\n\n【範圍3｜契約測試】至少涵蓋：有效 APPROVE、有效 REJECT、空輸出、{}、缺少 verdict、逾時、格式錯誤、全層失敗。\n\n【範圍4｜防線測試】REJECT 不得被降層覆蓋；無效回覆不得被記成 APPROVE；所有必要審查未完成時一律 fail-closed。\n\n【範圍5｜審查紀錄】每次送審可追溯：模型與版本、審查內容（送審字元數／是否含 patch）、各段 verdict、blocking、最終決定。\n\n【範圍6｜獨立驗收】以完整 patch 送交真正的 CIO 審查（非本工單作者自審），通過測試與既有發布閘門後，才另行裁決是否啟用。\n\n邊界：不回頭修改已發布的 W1/W2；不擴大已結案範圍；資安凍結維持（本工單不得作為解除資安阻塞的理由）。"
+    "detail": "背景：radar_state.json 的 policy_notes 為人工維護的靜態文字（記錄時間 2026-09-20）。2026-10-14 車道審查 REJECT 指名：其內市場數值（10Y 月動能 +6.2%、USD/TWD 31.76、黃金／原油 COT）與當日 signals 矛盾且已過期 24 天，會誤導投資判斷（審查者判斷正確）。\n\n【已止血】2026-10-14 commit 6c49098d：移除政策文字內的具體市場數值（一律以當日燈號為準），並於輸出加註「政策事件日期」與「市場數值一律以當日燈號為準」。此舉僅去除矛盾，未解決根本（仍為人工文字）。\n\n【待施工】結構化改造：①policy_notes 僅保留政策事件與解讀（文字、事件日期）；②所有市場數值（10Y 動能、USD/TWD 週變化、黃金／原油 COT 淨多單、Fed 流動性）改為讀取當日 data/signals 動態注入，不得寫死；③建立檢查：政策文字若含具體數值即告警（避免回歸）；④輸出模板統一，確保 HTML／state／Telegram 三處一致。\n\n風險：不處理則每逢數據更新即產生新矛盾，且每次都會被發布閘門擋下（如 2026-10-14）。",
+    "tags": "雷達,政策面,動態化,資料一致性",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "",
+    "cleanup_reason": ""
   }
 ]
