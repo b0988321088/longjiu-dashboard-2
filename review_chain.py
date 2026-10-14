@@ -51,6 +51,15 @@ NOUS_MODELS = (
 _NOUS_MIN_TTL = 120             # 秒：agent_key 剩餘壽命低於此 → 不使用該層
 _MIN_CONTENT = 2                # 少於 2 字元的 content 視為空輸出（推理模型燒 token 的症狀）
 
+# ── Gemini 候選層（RC-GEMINI-01，2026-10-14 使用者核准「受控接入、先驗證再啟用」）──
+# 預設**關閉**：未設／設 0 時，既有審查鏈行為完全不變。
+#   LONGJIU_REVIEW_GEMINI=1    → 追加為最後的備援層
+#   LONGJIU_REVIEW_GEMINI=only → 只走此層（用於「必須由 CIO 的模型審查」的場合）
+# 憑證讀 Hermes .env（repo 外）；**永不寫入 repo、測試輸出或審查紀錄**。
+GEMINI_ENV = "LONGJIU_REVIEW_GEMINI"
+GEMINI_MODEL = "gemini-2.5-flash"
+_HERMES_ENV_PATH = Path.home() / "AppData" / "Local" / "hermes" / ".env"
+
 
 def _nous_credentials() -> tuple[str, str] | None:
     """回傳 (inference_base_url, agent_key)；憑證缺失／已過期／即將過期 → None。"""
@@ -115,6 +124,97 @@ def _call(url: str, headers: dict, model: str, prompt: str, max_tokens: int,
     raise RuntimeError(f"空輸出（finish_reason={last_finish or '?'}，cap={max_tokens}）")
 
 
+def _read_hermes_env(name: str) -> str:
+    """讀 Hermes .env 的單一變數（repo 外的憑證來源）。
+
+    刻意不做快取：憑證可被外部輪替，每次取用即時讀。任何例外一律回空字串
+    （憑證不可讀＝該層不可用，不得讓它炸掉整條鏈），且**永不輸出值**。
+    """
+    try:
+        for line in _HERMES_ENV_PATH.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            if k.strip() == name:
+                return v.strip().strip('"').strip("'")
+    except Exception:  # noqa: BLE001
+        return ""
+    return ""
+
+
+def _gemini_credentials() -> tuple[str, str] | None:
+    """回傳 (base_url, api_key)；任一缺失 → None（該層不可用）。"""
+    base = _read_hermes_env("GEMINI_BASE_URL").rstrip("/")
+    key = _read_hermes_env("GEMINI_API_KEY")
+    if not base or not key:
+        return None
+    return base, key
+
+
+class _LayerBlocked(RuntimeError):
+    """該層回覆被結構／安全因素擋下（無候選、空內容、SAFETY…）→ 視為**該層失敗**，續下一層。
+
+    注意：這不是「拒審」——拒審（REJECT）是有效判定，必須原樣採用、不得降層。
+    """
+
+
+def _gemini_once(base: str, key: str, model: str, prompt: str, cap: int,
+                 timeout: float, json_mode: bool) -> tuple[str, str]:
+    """單次呼叫，回傳 (text, finishReason)。結構／安全異常一律 raise（見 `_LayerBlocked`）。"""
+    gcfg: dict = {"temperature": 0.1, "maxOutputTokens": cap}
+    if json_mode:
+        gcfg["responseMimeType"] = "application/json"
+    body = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": gcfg}
+    req = urllib.request.Request(
+        f"{base}/models/{model}:generateContent?key={key}",
+        data=json.dumps(body).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    if not isinstance(data, dict):
+        raise RuntimeError("Gemini 回應非 JSON 物件")
+    cands = data.get("candidates") or []
+    if not cands:
+        _fb = (data.get("promptFeedback") or {}).get("blockReason")
+        raise _LayerBlocked(f"無候選（blockReason={_fb or '?'}）")
+    c0 = cands[0] or {}
+    fr = str(c0.get("finishReason") or "").upper()
+    if fr in ("SAFETY", "RECITATION", "BLOCKLIST", "PROHIBITED_CONTENT"):
+        raise _LayerBlocked(f"finishReason={fr}")
+    parts = (c0.get("content") or {}).get("parts") or []
+    text = "".join(str(p.get("text") or "") for p in parts)
+    return text, fr
+
+
+def _call_gemini(base: str, key: str, model: str, prompt: str, max_tokens: int,
+                 timeout: float, json_mode: bool = False) -> str:
+    """Gemini 原生 generateContent（錯誤語意與 OpenAI 相容層 `_call` 對齊）。
+
+    - 空輸出 → 放大上限重試一次（推理型模型把 token 燒在 reasoning 的症狀）。
+    - **finishReason=MAX_TOKENS（截斷）一律視為失敗**：不完整的 JSON 不得進入審查，
+      放大上限重試後仍截斷 → raise → 由 `review()` 續下一層或 fail-closed。
+    - HTTP 層錯誤由 `urlopen` 拋出；無候選／安全阻擋／空 parts → `_LayerBlocked`。
+    三者皆由 `review()` 統一視為「該層失敗」。URL 帶 key 屬 Gemini 原生設計；
+    本函式不回傳、不記錄任何憑證。
+    """
+    last_finish = ""
+    for cap in (max_tokens, max(max_tokens, 8192) * 2):
+        text, last_finish = _gemini_once(base, key, model, prompt, cap, timeout, json_mode)
+        if last_finish == "MAX_TOKENS":
+            continue                      # 截斷 → 放大上限重試
+        if len(text.strip()) >= _MIN_CONTENT:
+            return text
+    raise RuntimeError(f"空輸出或截斷（finishReason={last_finish or '?'}，cap={max_tokens}）")
+
+
+def _mk_gemini(base: str, key: str):
+    def _fn(prompt: str, max_tokens: int, timeout: float, json_mode: bool) -> str:
+        return _call_gemini(base, key, GEMINI_MODEL, prompt, max_tokens, timeout, json_mode)
+    return _fn
+
+
 def _layers():
     """回傳可用層清單 [(label, callable)]；順序即優先序。憑證不可用者直接不列入。"""
     out = []
@@ -141,6 +241,16 @@ def _layers():
                                  extra={"reasoning_effort": "low"})
                 return _nous
             out.append((f"CIO-nous({model})", _mk(model)))
+
+    # Gemini 候選層（預設關閉；語意見檔頭 GEMINI_ENV）。憑證不可用 → 不列入（only 模式則空鏈）。
+    _mode = (_read_hermes_env(GEMINI_ENV) or os.environ.get(GEMINI_ENV) or "").strip().lower()
+    if _mode in ("1", "true", "yes", "on", "only"):
+        _gc = _gemini_credentials()
+        _label = f"CIO-Gemini({GEMINI_MODEL})"
+        if _mode == "only":
+            return [(_label, _mk_gemini(*_gc))] if _gc else []
+        if _gc:
+            out.append((_label, _mk_gemini(*_gc)))
     return out
 
 
