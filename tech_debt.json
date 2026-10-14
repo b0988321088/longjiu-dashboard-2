@@ -1754,5 +1754,15 @@
     "moved_from": "",
     "moved_at": "2026-10-13",
     "cleanup_reason": ""
+  },
+  {
+    "id": "RC-GEMINI-01",
+    "date": "2026-10-14",
+    "title": "Gemini 受控接入 review_chain 審查架構（介面盤點／接入設計／契約與防線測試／審查紀錄／獨立驗收）",
+    "severity": "P1",
+    "source": "2026-10-14 使用者裁決（同意納入正式候選層；受控接入、先驗證再啟用；暫不核准改預設層級）",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "背景：2026-10-14 W1 首度實戰暴露 review_chain 對「有效 JSON 但缺 verdict」（第一層回 {}）不降層 → 車道常態 fail-closed；已修（_valid_review，commit 9621d31b）。使用者指定以 CIO 的模型 gemini-2.5-flash 送審（3 段 APPROVE／blocking=[]），確認其能完成有效 CIO 審查。裁決：核准納入正式審查架構評估，暫不核准改動預設層級；採用「受控接入、先驗證再啟用」，不回頭修改已發布的 W1/W2。\n\n【範圍1｜介面盤點】三層對照：Pollinations（OpenAI 相容、keyless、choices[0].message.content、json_mode→response_format）；nous（OpenAI 相容、Bearer agent_key 且有 TTL 120s 檢查、同輸出格式）；Gemini（原生 generateContent、query-param key、candidates[0].content.parts[].text、responseMimeType=application/json）。須補齊確認：無 candidates／空 parts／安全阻擋／finishReason!=STOP／HTTP 非 200 的處理是否與前兩層一致。\n\n【範圍2｜接入設計】定義 Gemini 層級位置（第一層或備援層）、啟用條件（憑證可用且未過期）、失敗行為（視為該層失敗→續層，不得記為通過）、審查身分標籤（CIO-Gemini(gemini-2.5-flash)）。鐵則：模型呼叫成功 ≠ 審查通過。\n\n【範圍3｜契約測試】至少涵蓋：有效 APPROVE、有效 REJECT、空輸出、{}、缺少 verdict、逾時、格式錯誤、全層失敗。\n\n【範圍4｜防線測試】REJECT 不得被降層覆蓋；無效回覆不得被記成 APPROVE；所有必要審查未完成時一律 fail-closed。\n\n【範圍5｜審查紀錄】每次送審可追溯：模型與版本、審查內容（送審字元數／是否含 patch）、各段 verdict、blocking、最終決定。\n\n【範圍6｜獨立驗收】以完整 patch 送交真正的 CIO 審查（非本工單作者自審），通過測試與既有發布閘門後，才另行裁決是否啟用。\n\n邊界：不回頭修改已發布的 W1/W2；不擴大已結案範圍；資安凍結維持（本工單不得作為解除資安阻塞的理由）。"
   }
 ]
