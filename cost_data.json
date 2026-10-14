@@ -1,10 +1,8 @@
 {
- "generated_at": "2026-10-14 07:00",
+ "generated_at": "2026-10-14 13:01",
  "days": 14,
  "ledger_rows": 36,
- "backfilled": [
-  "2026-10-14"
- ],
+ "backfilled": [],
  "series": [
   {
    "date": "2026-10-01",
@@ -210,12 +208,12 @@
   }
  },
  "wallets": {
-  "ds_balance_cny": 218.1,
+  "ds_balance_cny": 218.09,
   "ds_balance_twd": 1032,
   "ds_source": "API",
   "ds_daily_twd": 73,
-  "ds_daily_src": "餘額真值（最近 7 個日曆日，6 個樣本）",
-  "ds_days_left": 14.1,
+  "ds_daily_src": "餘額真值（最近 7 個日曆日，7 個樣本）",
+  "ds_days_left": 14.2,
   "gemini_balance_twd": 999,
   "gemini_daily_twd": 0,
   "gemini_days_left": null,
@@ -249,6 +247,14 @@
    "amount": 186.64,
    "unit": "CNY",
    "twd": 883,
+   "evidence": "cost_log.csv 餘額跳升（連續日）"
+  },
+  {
+   "date": "2026-10-14",
+   "wallet": "DeepSeek",
+   "amount": 184.01,
+   "unit": "CNY",
+   "twd": 870,
    "evidence": "cost_log.csv 餘額跳升（連續日）"
   }
  ],
