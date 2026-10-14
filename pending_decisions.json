@@ -5,15 +5,15 @@
     "status": "待處理",
     "tags": "債券,美債,標案,資金框架",
     "detail": "9/6 核准（取代 9/5 美元債條件單之資金來源與時點）：①（⛔9/15 作廢：500萬 MMF 已於 9/9 贖回、9/11 轉申購貝萊德B11；押標金來源延 9 月底評估） ②美債 5 階 ladder(2027/2028/2029/2030/2031, 殖利率 4.2-4.6%)延至 10 月標案結果後 ③國泰基金質押 600萬擔保×50%=300萬@2.77%固定 還 4%+ 保單借貸（既定 9/10 PI 流程續行）④標案保證金用銀行履約保證函/保證保險(~年費1%)替代現金，保單借貸 4.2% 僅短期周轉 ⑤美元曝險 64%>55% 減碼線→不新換匯 ⑥升息確定→500萬作還債安全墊",
-    "updated_at": "2026-10-12T19:25:00",
-    "due_date": null,
-    "due_date_source": "2026-10-12 押標金取消 → 原期限（10/31）失效，需重定",
-    "needs_due_date": true,
+    "updated_at": "2026-10-14T19:02:50+08:00",
+    "due_date": "2026-10-20",
+    "due_date_source": "既有文字（檢視日 2026-10-20：2026-10-14 使用者裁決③）",
+    "needs_due_date": false,
     "last_confirmed": "2026-09-29",
     "last_confirmed_source": "updated_at",
     "owner": "CEO",
     "external_owner": null,
-    "status_raw": "⏳ 2026-10-12 使用者裁決：240 萬押標金取消 → 本卡「延至 10 月標案結果」之前置已消滅；美債 ladder 本身仍待定（時點／金額另候裁決），不再與標案綁定｜舊 raw：⏳ 撥款已入帳（9/29 590 萬）→ 檢視日 2026-10-02（撥款後 3 日內）：美債 ladder 與 10 月標案押標金 240 萬來源同步定案",
+    "status_raw": "📅 檢視日 2026-10-20（僅代表重新評估，不構成交易授權）｜⏳ 2026-10-12 使用者裁決：240 萬押標金取消 → 本卡「延至 10 月標案結果」之前置已消滅；美債 ladder 本身仍待定（時點／金額另候裁決），不再與標案綁定｜舊 raw：⏳ 撥款已入帳（9/29 590 萬）→ 檢視日 2026-10-02（撥款後 3 日內）：美債 ladder 與 10 月標案押標金 240 萬來源同步定案",
     "is_informational": false
   },
   {
@@ -89,8 +89,9 @@
     "last_confirmed_source": "未提供",
     "owner": "CEO",
     "external_owner": null,
-    "status_raw": "⏸ 條件未成立（2026-10-13 真值重算）：US30Y 5.598%（as_of 2026-10-12）、連續 31 日 ≥ 紅線；閘門 OK（解凍不許可） ｜ 舊 raw：⏸ 條件未成立（2026-10-12 真值重算）：US30Y 5.6%（as_of 2026-10-09）、連續 30 日 ≥ 紅線；閘門 OK（解凍不許可）",
-    "is_informational": false
+    "status_raw": "2026-10-14 裁決⑤：先定版解凍後分批規則（見 2026-10-14 新卡），US30Y 凍結未解除前不投入、不因低配一次補足｜⏸ 條件未成立（2026-10-13 真值重算）：US30Y 5.598%（as_of 2026-10-12）、連續 31 日 ≥ 紅線；閘門 OK（解凍不許可） ｜ 舊 raw：⏸ 條件未成立（2026-10-12 真值重算）：US30Y 5.6%（as_of 2026-10-09）、連續 30 日 ≥ 紅線；閘門 OK（解凍不許可）",
+    "is_informational": false,
+    "updated_at": "2026-10-14T19:02:50+08:00"
   },
   {
     "date": "2026-09-22",
@@ -168,14 +169,14 @@
     "priority": "medium",
     "tags": "轉貸,洲際W,永豐,國泰",
     "note": "使用者 2026-10-01 裁示：最近才剛辦完大義街轉貸（8/20 撥款），目前不適合再貸款 → 延長至 11 月再處理。",
-    "due_date": null,
-    "due_date_source": "未提供",
-    "needs_due_date": true,
+    "due_date": "2026-11-03",
+    "due_date_source": "既有文字（檢視日 2026-11-03：2026-10-14 使用者裁決③）",
+    "needs_due_date": false,
     "last_confirmed": null,
     "last_confirmed_source": "未提供",
     "owner": "CEO",
     "external_owner": null,
-    "status_raw": "📋 延至 2026-11（等時機）",
+    "status_raw": "📅 檢視日 2026-11-03（檢視≠轉貸授權；條件不成熟就繼續暫緩，但保留明確的下次檢視日）｜📋 延至 2026-11（等時機）",
     "is_informational": false,
     "reopen_conditions": [
       "新貸款利率明顯低於現行成本（築巢優利貸 2.185% 可及，或永豐現行利率 +0.5pp 以上差距）",
@@ -188,7 +189,8 @@
       "title": "洲際W轉貸",
       "date": "2026-09-25",
       "note": "2026-10-11 依 CIO RF5 補回被取代卡之 reopen_conditions/detail"
-    }
+    },
+    "updated_at": "2026-10-14T19:02:50+08:00"
   },
   {
     "id": "PEND-20261004-06",
@@ -205,16 +207,17 @@
     "last_confirmed_source": "未提供",
     "owner": "CEO",
     "external_owner": "國泰世華（對帳單／扣款通知）",
-    "status_raw": "pending",
+    "status_raw": "🔴 待核實資料（2026-10-14 裁決④）：月付／扣款日／還本方式未確認前，不得以現行月盈餘 66,758 與既有 runway 作為新增部署依據。核實項：①實際月付 ②扣款日與扣款帳戶 ③還本方式（只繳息／本息攤還／到期還本）④到期條件。現行模型僅含帳面計息 13,029（＝5,900,000×2.65%÷12），現金扣帳未確認 → 可能低估 13,029/月或更多。",
     "is_informational": false,
-    "detail": "\n※ 期限狀態（2026-10-05 修）：原 due_date 2026-10-29 為『撥款日＋1 個月』推算，非既有文字 → 依期限規則降級為 needs_due_date=True，暫估值保留於本欄，實際到期日以對帳單為準。"
+    "detail": "\n※ 期限狀態（2026-10-05 修）：原 due_date 2026-10-29 為『撥款日＋1 個月』推算，非既有文字 → 依期限規則降級為 needs_due_date=True，暫估值保留於本欄，實際到期日以對帳單為準。｜2026-10-14 使用者裁決④：取得銀行書面（撥款通知書／對帳單）後統一更新現金流、月支出與壓力情境；重算完成前停止任何新增投資部署。證據現況：現有 Moneybook 匯出僅涵蓋至 9/2，無法由帳戶明細反證扣息方式 → 唯一來源為銀行文件。",
+    "updated_at": "2026-10-14T19:02:50+08:00"
   },
   {
     "date": "2026-10-05",
     "title": "質押貸款 5,900,000 還本條件未知（資料缺口，不得自行假設）",
     "status": "待處理",
     "tags": "質押,貸款,現金流,資料缺口,runway",
-    "detail": "5,900,000 已於 2026-09-29 入帳（國泰世華）。利息 13,029/月**已**納入月支出 159,210（=38,500+15,946+65,735+26,000+13,029），runway／壓力情境／leave-test 已連動 →「590 萬利息未列月支出」之描述於 2026-10-05 由使用者撤銷，非本卡範圍。本卡只登錄資料缺口（貸款本金 ≠ 每月還款／利息現金流，兩者不得混為一談）：①借款期間 ②到期日 ③還本方式 ④付息頻率 ⑤實際扣款規則 ⑥146,181 實際現金扣帳與 13,029 帳上計息之關係。取得銀行書面資料前：不得自行假設到期日、不得自行增加本金支出、不得自行修改 runway／月支出。",
+    "detail": "5,900,000 已於 2026-09-29 入帳（國泰世華）。利息 13,029/月**已**納入月支出 159,210（=38,500+15,946+65,735+26,000+13,029），runway／壓力情境／leave-test 已連動 →「590 萬利息未列月支出」之描述於 2026-10-05 由使用者撤銷，非本卡範圍。本卡只登錄資料缺口（貸款本金 ≠ 每月還款／利息現金流，兩者不得混為一談）：①借款期間 ②到期日 ③還本方式 ④付息頻率 ⑤實際扣款規則 ⑥146,181 實際現金扣帳與 13,029 帳上計息之關係。取得銀行書面資料前：不得自行假設到期日、不得自行增加本金支出、不得自行修改 runway／月支出。｜2026-10-14 裁決④：本卡為「恢復部署」的前置條件之一（與 10/04 月現金流出卡同一組真值缺口）。核實後才重算月盈餘／現金跑道／壓力情境。",
     "due_date": "",
     "due_date_source": "待銀行書面資料（未提供）",
     "needs_due_date": true,
@@ -222,16 +225,17 @@
     "last_confirmed_source": "未提供",
     "owner": "CEO",
     "external_owner": "國泰世華銀行",
-    "status_raw": "⏳ 資料缺口（2026-10-05 盤點）：只補資料、不動模型；銀行書面到手前不假設、不增本金支出、不改 runway。",
-    "is_informational": false
+    "status_raw": "2026-10-14 裁決④：列為第 2 優先；銀行文件到手前不假設、不動模型｜⏳ 資料缺口（2026-10-05 盤點）：只補資料、不動模型；銀行書面到手前不假設、不增本金支出、不改 runway。",
+    "is_informational": false,
+    "updated_at": "2026-10-14T19:02:50+08:00"
   },
   {
     "date": "2026-10-06",
     "title": "資安 remediation：repo 五步（public→private／HEAD 淨化／filter-repo／force-with-lease／Pages 驗 404）＋第 1 步已完成",
     "status": "待處理",
-    "status_raw": "🔴 Active Repair／HIGH（HIGH remediation，狀態失真已更正 2026-10-08）：機器層原為『已確認／不提醒』係錯，實質未完成 —— repo 仍 public（GitHub API private=false／visibility=public／has_pages=true）；mb_extract.py、DEPLOYMENT_PROCESS_2026-07-17.md、safe_read.py、moneybook_calibration_extractor.py 皆 HTTP 200 公開可下載；舊 sha raw blob（17b35dbf）仍 HTTP 200 ＝ 歷史舊 blob 未清（filter-repo 未施工）；五步第 2～6 步全未施工；due 2026-10-07 已逾期；原裁決窗口（10/07 07:00 產線前）已過；dashboard_decisions 內無任何 HOLD 裁決紀錄＝不構成 Deliberate HOLD。唯一已完成者＝moneybook_calibration_log.md（404，止血 commit 0b974c5a）＋第 1 步去硬編碼（e01fc656）；0-B（Moneybook 匯出密碼）已撤銷＝非本卡事項。原 remediation 內容（public→private／HEAD 淨化／filter-repo／force-with-lease／Pages 驗 404）維持不變，本筆僅狀態修正：不重新設計、不提前施工、不執行任何 remediation 步驟。",
+    "status_raw": "🔴 OPEN／BLOCKED（2026-10-14 裁決②最高優先）：順序＝①獨立輪替 Gemini 金鑰 → ②新金鑰生效後，依核准程序清理 Git 公開歷史 → ③驗證遠端歷史與 Pages 暴露狀態。預設關閉（restrict key）不視為風險解除；清除 Git 歷史不能取代金鑰輪替（舊金鑰若仍有效＝已曝光憑證）。全部驗收前不得標 CLOSED。｜舊 raw（沿用不刪）：🔴 Active Repair／HIGH（狀態失真已更正 2026-10-08）：機器層原為『已確認／不提醒』係錯，實質未完成 —— repo 仍 public（GitHub API private=false／visibility=public／has_pages=true）；mb_extract.py、DEPLOYMENT_PROCESS_2026-07-17.md、safe_read.py、moneybook_calibration_extractor.py 皆 HTTP 200 公開可下載；舊 sha raw blob（17b35dbf）仍 HTTP 200＝歷史舊 blob 未清（filter-repo 未施工）；五步第 2～6 步全未施工；due 2026-10-07 已逾期；dashboard_decisions 內無 HOLD 裁決紀錄。",
     "tags": "資安,SECURITY,憑證輪替,repo rewrite,Pages,Active-Repair,HIGH,狀態失真",
-    "detail": "0-A（Telegram bot token）已於 2026-10-06 15:18 完成並 CLOSED（9/9 Gate）。**0-B 已撤銷**：使用者裁決維持以身分證字號作匯出密碼 —— 識別碼不可輪替，原『更換密碼』框架不成立；改以『搬家』處理，**第 1 步已完成**（commit e01fc656：`mb_extract.py` 去硬編碼改讀 `.env`、未設定 fail-closed；值存 Hermes `.env` 的 `MONEYBOOK_ZIP_PASSWORD`；`moneybook_calibration_log.md` 明文改 [REDACTED]；全庫逐位元反查命中 2→0 檔；真實 ZIP 端到端解壓 3 檔；驗證器 22/22 PASS）。**剩餘範圍＝repo 五步**：public→private（需使用者在 GitHub 網頁操作，本機無 admin）、HEAD 移除受影響檔案、`git filter-repo` 清歷史 blob、`git push --force-with-lease`、Pages/CDN 清理 → 逐 URL 驗 404。窗口＝明早 07:00 產線前（已裁決；須預留完整驗收時間，不足則延期不半途施工）。施工前 fail-closed Gate：工作區 clean→無產線在跑→HEAD/remote SHA 記錄→受影響清單固定→備份點確認。施工後驗收：origin=ls-remote／git status clean／舊敏感 blob 搜不到／受影響 Pages URL 全 404／9 檔儀表板仍正常／last_updated 與真值 snapshot 不得被改動／重跑 closeout 與 remote SHA 稽核／07:00 產線從新基線正常開始。**不得為讓 closeout 綠燈而回填舊 SHA**。已知界線：該值仍可解密未來 Moneybook ZIP（已揭露、使用者知情）。",
+    "detail": "0-A（Telegram bot token）已於 2026-10-06 15:18 完成並 CLOSED（9/9 Gate）。**0-B 已撤銷**：使用者裁決維持以身分證字號作匯出密碼 —— 識別碼不可輪替，原『更換密碼』框架不成立；改以『搬家』處理，**第 1 步已完成**（commit e01fc656：`mb_extract.py` 去硬編碼改讀 `.env`、未設定 fail-closed；值存 Hermes `.env` 的 `MONEYBOOK_ZIP_PASSWORD`；`moneybook_calibration_log.md` 明文改 [REDACTED]；全庫逐位元反查命中 2→0 檔；真實 ZIP 端到端解壓 3 檔；驗證器 22/22 PASS）。**剩餘範圍＝repo 五步**：public→private（需使用者在 GitHub 網頁操作，本機無 admin）、HEAD 移除受影響檔案、`git filter-repo` 清歷史 blob、`git push --force-with-lease`、Pages/CDN 清理 → 逐 URL 驗 404。窗口＝明早 07:00 產線前（已裁決；須預留完整驗收時間，不足則延期不半途施工）。施工前 fail-closed Gate：工作區 clean→無產線在跑→HEAD/remote SHA 記錄→受影響清單固定→備份點確認。施工後驗收：origin=ls-remote／git status clean／舊敏感 blob 搜不到／受影響 Pages URL 全 404／9 檔儀表板仍正常／last_updated 與真值 snapshot 不得被改動／重跑 closeout 與 remote SHA 稽核／07:00 產線從新基線正常開始。**不得為讓 closeout 綠燈而回填舊 SHA**。已知界線：該值仍可解密未來 Moneybook ZIP（已揭露、使用者知情）。｜2026-10-14 裁決②：維持 P0 OPEN／BLOCKED；本裁決不授權金鑰清理或遠端發布，各步驟須依原有權限與驗收程序執行。",
     "due_date": "2026-10-07",
     "due_date_source": "既有文字（裁決窗口＝明早 07:00 產線前）",
     "external_owner": "使用者（Moneybook 端換密碼／GitHub 網頁改 visibility）",
@@ -239,7 +243,8 @@
     "last_confirmed": "2026-10-08",
     "last_confirmed_source": "使用者裁決：狀態失真更正為 Active Repair",
     "needs_due_date": true,
-    "owner": "CEO"
+    "owner": "CEO",
+    "updated_at": "2026-10-14T19:02:50+08:00"
   },
   {
     "date": "2026-10-07",
@@ -322,5 +327,39 @@
     "needs_due_date": true,
     "tags": "薪資,口徑,真值,snapshot,治理",
     "detail": "【背景】2026-10-10 本輪交付時發現退休頁②留停測試顯示薪資 39,777（讀 snapshot.monthly_salary），薪資語意未解 → 使用者裁示另開本卡：先做影響矩陣再決定是否新增欄位；本卡落地前不得改薪資真值、不得重算衍生指標、不得回溯改寫歷史 commit。\n\n【現況事實（唯讀分析）】\n- snapshot.monthly_salary=39,777、snapshot.salary=39,777、monthly_income=225,968、working_surplus=66,758。\n- 切換點唯一＝commit c92c05e2（2026-10-06 19:42「四源同步」，author=Hermes Agent）：monthly_salary/salary 42,560→39,777、monthly_income 228,751→225,968、working_surplus 69,541→66,758；is-ancestor HEAD=YES。\n- 同日較早的 B 裁決（commit 95f2b517／程式 6aed7a55）方向相反：monthly_salary 維持 42,560、常態模型用 42,560、39,777 只進 salary_records；當晚 pending_decisions_archive 把該卡結案為「已由新裁示取代」。兩份紀錄對「39,777 是單月連假波動或口徑變更」解釋互斥。\n- 全庫無任何 .py 寫入者改這兩個欄位（grep 0 命中）→ 僅快照直改（無自動來源）。\n- 「自提 6%」無欄位、無計算；且 6%×42,560=2,553.6 ≠ 差額 2,783（差 229.4）→ 該理由無法驗證。\n- 42,560 於 snapshot 內唯一以資料值（amount）殘存＝salary_records[\"2026-09\"].amount（另有三處字串欄提及：salary_records[\"2026-09\"].note、bank_assets_memo、weekly_ops_closure_0904 執行清單）（語意為 9 月實收，非「常態基準」）；另殘存於 run_daily.py:299 退路預設 42_560、build_dashboard.py:545／build_retirement_plan.py:16／calendar_sync.py:22 的註解文字、DAILY_REPORT_PIPELINE_RULE.md:112、已封存日報 HTML（daily_report_v2_2026-09-04／09-05）。\n\n【消費者 × 口徑】儀表板結構條 build_dashboard.py:1028 取 monthly_salary 當常態（實際讀到 39,777）；:813 同欄位當「本月入帳」；:545 當「現行薪資」；已收 salary_got:471 走 salary_records（39,777）；退休規劃 build_retirement_plan.py:17 取 snap.get(\"monthly_salary\") or snap.get(\"salary\")（先 monthly_salary）；行事曆 calendar_sync.py:31 取 _snap.get(\"monthly_salary\") or 0（無 salary 回退）；月報 monthly_report.py:86 取 snap.get(\"salary\") or snap.get(\"monthly_salary\")（先 salary，現值同為 39,777 → 口徑分離後此排序會改變結果）→ 無任何「排程」消費者取得到 42,560。\n\n【數值後果】常態結構條 219,877（應 222,660）／monthly_income 225,968（應 228,751）／working_surplus 66,758（應 69,541）／含薪覆蓋率 141.9%（應 143.7%），皆 −2,783。不受影響：被動覆蓋率 113.1%、健康度覆蓋維度、留停 Gate（只吃配息＋房租）。\n\n【待使用者裁決】A＝維持「分離」意圖：monthly_salary 語意拉回常態 42,560、實收只走 salary_records（不需新欄位；風險＝現被當「本月實入」的讀取點語意翻轉）。B＝維持「以實入為真值」並新增一等常態欄位（如 salary_baseline=42,560）供常態線使用，並修掉 build_dashboard.py 三處互斥註解（需核准新增欄位）。\n\n【已登錄未展開】moneybook_6m_analysis.py:142 手動腳本仍寫死 monthly_salary=42_560（未在 cron）；run_daily.py:299 以 42,560 為退路；snapshot「收入基準_0822・常態月收入」敘述仍為「薪資 39,727＋…＝225,918」（與 live monthly_income 225,968 差 50）；second_salary=39,121 口徑；monthly_income 內配息 97,233（實收）vs fund_dividend_conservative=100,000 之關係；現行驗證器不覆蓋常態薪資口徑（56 PASS/0 FAIL 對此議題無告警）。"
+  },
+  {
+    "date": "2026-10-14",
+    "title": "台股解凍後分批規則定版（節奏／單次上限／停止條件）",
+    "status": "待處理",
+    "status_raw": "📝 待定版（2026-10-14 裁決⑤）：解凍後的批次節奏／單次上限／停止條件先制定，不提前買進；凍結未解除前不投入、不因低配一次補足。",
+    "tags": "台股,解凍,分批規則,US30Y,停止條件",
+    "detail": "需定版內容：①分批節奏（單週／單月最多幾批）②單次投入上限（金額或佔低配缺口％）③停止條件（US30Y 回升、單日跌幅、缺口收斂目標）④不得因低配自動補足、不得因現金達標自動解凍⑤與 US30Y 凍結規則的優先序。定版前不執行任何台股買進（含 0050／006208）。",
+    "due_date": null,
+    "due_date_source": "未提供",
+    "needs_due_date": true,
+    "owner": "CEO",
+    "external_owner": null,
+    "is_informational": false,
+    "last_confirmed": "2026-10-14",
+    "last_confirmed_source": "2026-10-14 使用者裁決⑤",
+    "updated_at": "2026-10-14T19:02:50+08:00"
+  },
+  {
+    "date": "2026-10-14",
+    "title": "恢復部署條件（可動用現金達標≠投資授權）",
+    "status": "待處理",
+    "status_raw": "⏸️ 乾粉維持、不新增部署（2026-10-14 裁決⑥）：現金門檻達標僅代表門檻成立，不代表資金已扣除尚未建模的貸款義務。",
+    "tags": "部署,乾粉,現金,質押,資安,條件",
+    "detail": "恢復部署需同時滿足：①質押貸款月付與還本條件已核實並納入模型 ②更新後現金跑道與壓力覆蓋率仍符合離職及資產安全門檻 ③US30Y 凍結規則仍有效、未收到正式解凍許可 ④不動用指定保留 900,000 ⑤恢復部署的金額、標的與分批規則已有明確核准。全數通過後才評估小額分批恢復，不必一次補齊低配。",
+    "due_date": null,
+    "due_date_source": "未提供",
+    "needs_due_date": true,
+    "owner": "CEO",
+    "external_owner": null,
+    "is_informational": false,
+    "last_confirmed": "2026-10-14",
+    "last_confirmed_source": "2026-10-14 使用者裁決⑥",
+    "updated_at": "2026-10-14T19:02:50+08:00"
   }
 ]
