@@ -2198,5 +2198,11 @@
   "category": "完成",
   "item": "CIO 裁決｜2026-10-14 戰略審查後續處置（7 項，使用者 Telegram 裁決）（一、資安：維持 P0 OPEN／BLOCKED。優先獨立輪替 Gemini 金鑰→新金鑰生效後依核准程序清理公開 Git 歷史→驗證遠端歷史與 Pages 暴露；預設關閉不視為風險解除，清除歷史不取代輪替，未驗收不得 CLOSED。二、質押貸款 5,900,000",
   "detail": "一、資安：維持 P0 OPEN／BLOCKED。優先獨立輪替 Gemini 金鑰→新金鑰生效後依核准程序清理公開 Git 歷史→驗證遠端歷史與 Pages 暴露；預設關閉不視為風險解除，清除歷史不取代輪替，未驗收不得 CLOSED。二、質押"
+ },
+ {
+  "date": "2026-10-14",
+  "category": "完成",
+  "item": "2026-10-14 台股分批規則 v1.1 定版＋發布車道閉環（裁決入庫／卡片校準／未審查 commit 撤回）",
+  "detail": "使用者裁決 v1.1（有條件核准、交易未解凍）：單筆上限 50,000、每週最多 2 筆合計 ≤100,000，達標即停不追買；沿用 thresholds 動作階梯與美股 20 萬裁示為參考、台股取更嚴上限，衝突時適用最嚴者；0051 條件式納入（0050/006208 為主、0051 回檔 ≥5% 且累計 ≤台股桶 20%、排除 00919 與純科技）；解凍閘門須同時滿足 5 條（US30Y 連 2 交易日 <5.30%；質押本金／月付／還本納入現金流模型且核實；跑道與壓力覆蓋率達標；可動用現金 ≥700,000 且 900,000 指定款排除；無更高優先級煞車生效）；10% 為補足目標、13% 預警、15% 硬上限。落地：決策入庫 mem-20261014220040-1188（dashboard_decisions 1188→1189；純追加、meta 除 updated_at 不變）＋ Notion 治理紀錄；pending 卡「台股解凍後分批規則定版」detail／status_raw 更新為 v1.1 條款，status 維持四態「已確認」。過程教訓：①CIO 對晚報校準 commit 抓到該卡 status/detail 矛盾（真缺陷）；②改以自創狀態「已定版・待解凍」被本機驗證器擋下（非四態 → build_dashboard 未結案子集、daily_report_assembly、decision_auto_close 精確比對會無聲漏卡），已改回四態、定版語意改放 status_raw；③另兩檔未宣告程式檔觸發硬擋：_send_cio_review_tmp.py 刪除（一次性、產物已存）、tools/w1_defect_probe.py 撤回並刪除（審查 REJECT 且屬刻意含缺陷樣本，不納版控）；未取 RECORD 的 commit f140e92c 已撤回、確認未誤推。驗收：check_dividend_caliber 84/84 PASS（0 FAIL）、遠端 clean-main＝本地 HEAD＝ls-remote＝94a693b5、線上 index.html 三處逐位元一致、待推 0。"
  }
 ]
