@@ -11084,6 +11084,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261014235504-1196",
+    "timestamp": "2026-10-14T23:55:04.691743+08:00",
+    "agent": "Hermes",
+    "task": "TD-20261015-02 v1.2 發布完成：方案 2 範圍審查逐顆補落 RECORD＋推送（2026-10-14 裁決）",
+    "summary": "使用者 2026-10-14 裁決：先走方案 2（保留 commit 歷史、只補齊真實審查與紀錄鏈），不直接放行推送。執行結果：①未落地項目查明＝us30y_monitor.py 同一檔僅落地 3/4 處（RED_LINE 常數註解與區段註解留有舊措辭，verifier 以舊字串仍在判定未落地）→ 最小修正 3 行，commit a79670ba。②review_chain 支援逐顆審查、cio_approve.py --range-base 可逐顆落 RECORD → 方案 2 可行，未動用方案 1。4 顆 commit 逐顆送審＝APPROVE、blocking=[]（CIO-Pollinations＋CIO-nous），tree 47e353029a9f／892e5951be67／26fe04e3881a／54c26f057501 全數寫入 .git/CIO_APPROVED；審查紀錄 .git/cio_reviews/2026-10-14_cio_lane_range_794e1d1edbef.json；未 amend／reset／rebase。③修正後重測：單元測試 22/22、check_thresholds rc=0、dashboard_sync rc=0、dividend_caliber 84/84、驗證器心跳 57/0、closeout_check 全部通過 ✅。④發布 SHA 794e1d1edbef，HEAD==remote、未推 0；Pages 與本機逐位元相同（4 次取樣 diff=0），v1.2 生效（US30Y＝宏觀風險警示、不否決台股分批；LTV 內部政策停止線 53%；還本安全閥），v1.1 交易參數保留。⑤未解除風險：U1–U5 待證、還本安全閥維持暫停、交易未解凍、銀行追繳線 70% 暫定、program 發布≠交易解凍。⑥一次性 runner 置於 repo 外未入版控；若多顆未審 commit 情境再現，建議另開票將 --range 內建 cio_lane。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-14T21:41:23.781303"
