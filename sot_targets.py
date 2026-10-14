@@ -658,7 +658,15 @@ def us30y_gate(snap: dict | None = None, state: dict | None = None,
     else:
         status, reason = "OK", f"讀值日 {as_of}（落後 {lag} 天，在容忍值 {max_lag_days} 天內）"
     below = (_vnum is not None and _red is not None and _vnum < float(_red))
-    return {
+    # ── v1.2（2026-10-14 使用者裁決 TD-20261015-02）───────────────────────
+    # US30Y 由「台股分批 hard veto」改為「宏觀風險警示」：長天期債券新增買單
+    # 凍結規則獨立保留（us30y_monitor.RED_LINE），但殖利率不再單獨否決台股。
+    # 台股分批的實體條件改由 unfreeze_conditions()（現金／質押 LTV／還本安全閥）
+    # 決定。單一切換點＝thresholds.US30Y閘門模式；切回 hard_veto 即回復 v1.1。
+    _mode = gate_mode(snap)
+    risk_warning = bool(status == "OK" and _vnum is not None
+                        and _red is not None and _vnum >= float(_red))
+    _base = {
         "status": status,
         "value": value,
         "as_of": as_of,
@@ -667,10 +675,248 @@ def us30y_gate(snap: dict | None = None, state: dict | None = None,
         "max_lag_days": max_lag_days,
         "red_line": _red,
         "streak_days": st.get("streak"),
+        "mode_a_streak_days": st.get("mode_a_streak", st.get("streak")),
+        "red_line_streak_days": st.get("red_line_streak"),
         "below_red_line": below,
-        "unfreeze_allowed": bool(status == "OK" and below),
-        "reason": reason,
-        "source": "sot_targets.us30y_gate（us30y_state.json + us30y_monitor.RED_LINE）",
+        "risk_warning": risk_warning,
+        "mode": _mode,
+    }
+    if _mode == GATE_MODE_HARD_VETO:
+        # 回復路徑（v1.1 原語意）：資料有效且低於紅線才許可解凍。
+        return {**_base,
+                "unfreeze_allowed": bool(status == "OK" and below),
+                "unfreeze_conditions": None,
+                "reason": reason,
+                "source": ("sot_targets.us30y_gate（hard_veto 回復模式；"
+                           "us30y_state.json + us30y_monitor.RED_LINE）")}
+    try:
+        _cond = unfreeze_conditions(snap, st)
+    except Exception as _e:                      # 缺真值 → fail-closed，不得回可解凍
+        _cond = {"conditions": [], "all_passed": False, "未達": [f"條件無法計算（{type(_e).__name__}）"],
+                 "source": "sot_targets.unfreeze_conditions"}
+    _allowed = bool(status == "OK" and _cond.get("all_passed"))
+    _why = ("資料無效（%s）" % status) if status != "OK" else (
+        "條件全數成立" if _cond.get("all_passed") else "未達：" + "、".join(_cond.get("未達") or []))
+    return {**_base,
+            "unfreeze_allowed": _allowed,
+            "unfreeze_conditions": _cond,
+            "reason": (f"{reason}｜US30Y 為宏觀風險警示（"
+                       f"{'已觸發，長債新增凍結生效' if risk_warning else '未觸發'}），"
+                       f"不單獨否決台股分批；解凍判定＝{_why}"),
+            "source": ("sot_targets.us30y_gate（advisory 模式 v1.2：US30Y 警示＋"
+                       "unfreeze_conditions 複合條件；thresholds.US30Y閘門模式 可切回 hard_veto）")}
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# v1.2（2026-10-14 使用者裁決 TD-20261015-02；限程式修訂）
+# US30Y 由台股分批 hard veto → 宏觀風險警示；台股分批改由三條實體條件決定：
+#   ①現金（可動用 ≥ 自由現金門檻；指定用途款永久排除；只認列已實際入帳盈餘）
+#   ②質押 LTV（同契約未償本金 ÷ 同契約擔保品最新淨值；≤ 政策停止線 53%）
+#   ③還本安全閥（還本方式未證實 → 保留風險標示；R1／R2 情境月盈餘轉負 → 暫停新增分批）
+# 全部動態讀真值、無寫死常數；缺真值一律 fail-closed（不得回可解凍）。
+# ═══════════════════════════════════════════════════════════════════════
+GATE_MODE_KEY = "US30Y閘門模式"
+GATE_MODE_ADVISORY = "advisory"
+GATE_MODE_HARD_VETO = "hard_veto"
+
+
+def gate_mode(snap: dict | None = None) -> str:
+    """US30Y 閘門模式（單一切換點；預設 v1.2 advisory）。
+
+    thresholds_2026_0915.US30Y閘門模式 = "advisory"（v1.2，US30Y 僅警示）
+                                        = "hard_veto"（回復 v1.1 原行為，零殘留）
+    未設定／值異常 → 一律 advisory（本裁決已核准 v1.2 為現行規則）。
+    """
+    m = str(((snap or {}).get(SOT_KEY) or {}).get(GATE_MODE_KEY) or "").strip()
+    return GATE_MODE_HARD_VETO if m == GATE_MODE_HARD_VETO else GATE_MODE_ADVISORY
+
+
+def pledge_ltv_detail(snap: dict) -> dict:
+    """質押 LTV（市值口徑，明細版）— v1.2 條文第 2 條。
+
+    分子＝**同一質押契約未償本金**（snapshot.fund_pledge_loan，動態真值）
+    分母＝**同一契約擔保品最新淨值合計**（snapshot.fund_breakdown_cathay 逐檔加總，動態真值）
+    ── 不得用「核定本金口徑」或申購成本；不得寫死任何金額。
+    判定單位＝單池（thresholds.ltv分級_pct：各池分別判定，不加總平均）
+    限值＝thresholds.ltv分級_pct.黃上限（現 53）＝**本系統內部投資停止線**，
+          **不得對外稱銀行追繳線**；銀行追繳線另以 ltv分級_pct.追繳（現 70）為暫定壓力參考（待書面）。
+    """
+    loan = (snap or {}).get("fund_pledge_loan")
+    rows = (snap or {}).get("fund_breakdown_cathay")
+    if not isinstance(loan, (int, float)) or isinstance(loan, bool):
+        raise KeyError("snapshot 缺 fund_pledge_loan（質押未償本金）→ 拒絕計算 LTV")
+    if not isinstance(rows, dict) or not rows:
+        raise KeyError("snapshot 缺 fund_breakdown_cathay（同契約擔保品淨值）→ 拒絕計算 LTV")
+    pool = 0.0
+    for _v in rows.values():
+        if isinstance(_v, (int, float)) and not isinstance(_v, bool):
+            pool += float(_v)
+    if pool <= 0:
+        raise KeyError("擔保品淨值合計 ≤ 0 → 拒絕計算 LTV")
+    grades = ((snap or {}).get(SOT_KEY) or {}).get("ltv分級_pct") or {}
+    line = grades.get("黃上限")
+    chase = grades.get("追繳")
+    if not isinstance(line, (int, float)) or isinstance(line, bool):
+        raise KeyError("snapshot 缺 thresholds.ltv分級_pct.黃上限（政策停止線）→ 拒絕判斷")
+    ltv = float(loan) / pool * 100.0
+    return {
+        "借款": float(loan),
+        "擔保品市值": pool,
+        "LTV_pct": round(ltv, 2),
+        "政策停止線_pct": float(line),
+        "追繳參考_pct": float(chase) if isinstance(chase, (int, float)) and not isinstance(chase, bool) else None,
+        "距停止線_pct": round(float(line) - ltv, 2),
+        # 池值還可跌多少才會觸線（%）；正數＝還有空間
+        "池值可跌_pct": round((float(loan) / (float(line) / 100.0) / pool - 1) * 100.0, 2),
+        "通過": bool(ltv <= float(line)),
+        "觸追繳": bool(isinstance(chase, (int, float)) and ltv >= float(chase)),
+        "語意": ("內部投資停止線（= thresholds.ltv分級_pct.黃上限），"
+                 "**非銀行追繳線**；銀行追繳線以追繳參考值暫作壓力測試（待銀行書面）"),
+        "source": ("sot_targets.pledge_ltv（fund_pledge_loan ÷ fund_breakdown_cathay；"
+                   "thresholds.ltv分級_pct；v1.2 TD-20261015-02）"),
+    }
+
+
+def _pledge_terms_verified(snap: dict) -> bool:
+    """U1（質押月付／扣款日／還本方式）是否已有真值；預設 False＝未證實。
+
+    只有 snapshot.cathay_pledge_0911 明確載入「還本方式」或數字型「月付」才視為已證實；
+    未載入 → 未證實（保留風險標示，不得宣告貸款安全）。
+    """
+    p = ((snap or {}).get("cathay_pledge_0911") or {})
+    for k in ("還本方式", "月付", "月付金額", "契約條款_已核實"):
+        v = p.get(k)
+        if isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0:
+            return True
+        if isinstance(v, str) and v.strip() and not any(
+                _t in v for _t in ("未知", "待", "未核實", "未取得")):
+            return True
+    return False
+
+
+def repayment_valve(snap: dict) -> dict:
+    """還本安全閥（v1.2 條文第 4 條；2026-10-14 裁決硬性要求）。
+
+    規則：還本方式未取得書面證實前，**必須保留「還本方式未知」風險標示**；
+         若既有 R1／R2 壓力情境出現月盈餘轉負，即**暫停新增分批**；
+         不得因暫定「只繳息」情境通過而宣告貸款安全。
+    情境（全為暫定假設，待 U1 書面替換）：
+         R1 到期一次還本 bullet（12／24／36 個月）→ 月提存＝借款÷期數（能否累積出本金）
+         R2 本金分期攤還（5／10／20／30 年）      → 月付＝本金攤還＋當期利息
+         R3 到期續約（暫定基準）                  → 月付＝利息
+    月盈餘＝sot_monthly_income − sot_monthly_expense（單一入口，缺值即 raise）。
+    """
+    loan = (snap or {}).get("fund_pledge_loan")
+    rate = (snap or {}).get("fund_pledge_rate")
+    if not isinstance(loan, (int, float)) or isinstance(loan, bool):
+        raise KeyError("snapshot 缺 fund_pledge_loan → 拒絕計算還本情境")
+    if not isinstance(rate, (int, float)) or isinstance(rate, bool):
+        raise KeyError("snapshot 缺 fund_pledge_rate → 拒絕計算還本情境")
+    loan, rate = float(loan), float(rate)
+    surplus = sot_monthly_income(snap) - sot_monthly_expense(snap)
+    interest = loan * rate / 12.0
+    scenarios = []
+    for _m in (12, 24, 36):
+        _pay = loan / _m
+        scenarios.append({"代號": f"R1 bullet {_m} 個月", "月付": round(_pay),
+                          "月盈餘": round(surplus - _pay), "轉負": (surplus - _pay) < 0,
+                          "類型": "到期一次還本（月提存）"})
+    for _y in (5, 10, 20, 30):
+        _pay = loan / (_y * 12) + interest
+        scenarios.append({"代號": f"R2 攤還 {_y} 年", "月付": round(_pay),
+                          "月盈餘": round(surplus - _pay), "轉負": (surplus - _pay) < 0,
+                          "類型": "本金分期攤還"})
+    scenarios.append({"代號": "R3 到期續約（暫定基準）", "月付": round(interest),
+                      "月盈餘": round(surplus - interest), "轉負": False, "類型": "只繳息"})
+    verified = _pledge_terms_verified(snap)
+    # 判定用情境：未證實＝保守（任一 R1／R2 情境轉負即暫停）；已證實＝只認實際條款
+    applied, applied_note = None, ""
+    if verified:
+        _p = (snap or {}).get("cathay_pledge_0911") or {}
+        _mp = _p.get("月付") or _p.get("月付金額")
+        _tp = str(_p.get("還本方式") or "")
+        if isinstance(_mp, (int, float)) and not isinstance(_mp, bool) and _mp > 0:
+            applied = {"代號": "U1 實際條款（月付）", "月付": round(float(_mp)),
+                       "月盈餘": round(surplus - float(_mp)),
+                       "轉負": (surplus - float(_mp)) < 0, "類型": _tp or "依銀行書面"}
+        elif ("只繳息" in _tp or "繳息" in _tp or "利息" in _tp or "循環" in _tp or "續約" in _tp):
+            applied = {"代號": "U1 實際條款（只繳息／續約）", "月付": round(interest),
+                       "月盈餘": round(surplus - interest),
+                       "轉負": (surplus - interest) < 0, "類型": _tp}
+        else:
+            _m = re.search(r"(\d+)\s*年", _tp)
+            if _m:
+                _y = int(_m.group(1))
+                _pay = loan / (_y * 12) + interest
+                applied = {"代號": f"U1 實際條款（攤還 {_y} 年）", "月付": round(_pay),
+                           "月盈餘": round(surplus - _pay), "轉負": (surplus - _pay) < 0,
+                           "類型": _tp}
+        if applied is None:
+            applied_note = "已載入 U1 欄位但無法解析還本方式 → 保守處置（比照未證實）"
+        else:
+            scenarios.append({**applied, "類型": applied["類型"]})
+    if verified and applied is not None:
+        negative = [applied["代號"]] if applied["轉負"] else []
+    else:
+        negative = [s["代號"] for s in scenarios if s["轉負"]]
+    return {
+        "已證實": verified,
+        "月盈餘": round(surplus),
+        "月息": round(interest),
+        "情境": scenarios,
+        "轉負情境": negative,
+        "暫停新增分批": bool(negative),
+        "判定用情境": (applied or {"代號": "（未證實）R1／R2 全情境保守判定"}),
+        "風險標示": ("" if (verified and applied is not None) else
+                     (applied_note + "；" if applied_note else "") +
+                     "還本方式未證實（U1 待銀行書面）：R1/R2 情境顯示月盈餘轉負 → 暫停新增分批；"
+                     "不得以暫定『只繳息』情境宣告貸款安全"),
+        "資金來源限制": "分批資金只認列**已實際入帳**的新增盈餘；預估盈餘不得當成現金",
+        "source": ("sot_targets.repayment_valve（fund_pledge_loan／fund_pledge_rate／"
+                   "sot_monthly_income／sot_monthly_expense；v1.2 TD-20261015-02 暫定假設）"),
+    }
+
+
+def unfreeze_conditions(snap: dict, state: dict | None = None) -> dict:
+    """v1.2 台股分批解凍條件（複合；US30Y 不列入否決）。
+
+    v1.1 的解凍閘門第 1 條原為「US30Y 連續 2 交易日 <5.30%」＝單一絕對殖利率否決；
+    v1.2 依 2026-10-14 裁決改為風險警示，改由下列實體條件共同決定：
+        ①現金：可動用 ≥ sabbatical_gate_twd.自由現金_twd（1,000,000）；指定用途款恆排除
+        ②質押 LTV ≤ 政策停止線（ltv分級_pct.黃上限 53%）且未觸追繳
+        ③還本安全閥：無「月盈餘轉負」情境（暫停新增分批＝False）
+    其餘 v1.1 交易參數（標的／單筆 50,000／每週 ≤2 筆 ≤100,000／單日 −3% 暫停／
+    13%／15%）**不在本函式內變更**，維持原樣。
+    """
+    cash = allowable_cash(snap)
+    cash_line = float(gate_thresholds(snap)["自由現金_twd"])
+    ltv = pledge_ltv_detail(snap)
+    valve = repayment_valve(snap)
+    conds = [
+        {"名稱": "現金 ≥ 自由現金門檻", "通過": bool(cash >= cash_line),
+         "現值": round(cash), "門檻": cash_line,
+         "註記": "可動用＝cash_layers.unrestricted_cash；指定用途款 900,000 永久排除；"
+                 "分批資金只認列已實際入帳盈餘",
+         "來源": "sot_targets.allowable_cash ＋ sabbatical_gate_twd.自由現金_twd"},
+        {"名稱": f"質押 LTV ≤ {ltv['政策停止線_pct']:.0f}%（內部政策停止線）",
+         "通過": bool(ltv["通過"] and not ltv["觸追繳"]),
+         "現值": ltv["LTV_pct"], "門檻": ltv["政策停止線_pct"],
+         "註記": ltv["語意"], "來源": ltv["source"]},
+        {"名稱": "還本安全閥（無月盈餘轉負情境）", "通過": (not valve["暫停新增分批"]),
+         "現值": ("；".join(valve["轉負情境"]) if valve["轉負情境"] else "無"),
+         "門檻": "0 個轉負情境",
+         "註記": (valve["風險標示"] or "還本方式已證實且無轉負情境") + "｜" + valve["資金來源限制"],
+         "來源": valve["source"]},
+    ]
+    unmet = [c["名稱"] for c in conds if not c["通過"]]
+    return {
+        "conditions": conds,
+        "all_passed": not unmet,
+        "未達": unmet,
+        "US30Y角色": "宏觀風險警示（不否決台股分批）",
+        "pledge_ltv": ltv,
+        "repayment_valve": valve,
+        "source": "sot_targets.unfreeze_conditions（v1.2 TD-20261015-02；2026-10-14 裁決）",
     }
 
 
@@ -956,20 +1202,58 @@ def triggers(snap: dict) -> dict:
     brake = t.get("風險煞車") or {}
     out: list = []
 
-    # 1) 風險煞車：US30Y（優先於階梯）
+    # 1) 宏觀風險警示：US30Y（v1.2：不再否決台股分批；長債新增凍結獨立保留）
     g30 = (snap or {}).get("us30y_gate") or {}
     _v, _rl = g30.get("value"), g30.get("red_line")
-    _streak, _need = g30.get("streak_days") or 0, brake.get("us30y_連續日") or 2
+    _streak = g30.get("mode_a_streak_days") or g30.get("streak_days") or 0
+    _rl_streak = g30.get("red_line_streak_days")
+    _need = brake.get("us30y_連續日") or 2
     if isinstance(_v, (int, float)) and isinstance(_rl, (int, float)):
-        hot = _v >= _rl and _streak >= _need
-        out.append({"id": "us30y_煞車", "項目": "風險煞車：US30Y",
-                    "現值": "{:.3f}%（連續 {} 日，{}）".format(_v, _streak, g30.get("as_of") or "—"),
-                    "門檻": "≥{:.2f}% 連續 {} 日".format(_rl, _need), "觸發": hot,
-                    "動作": (brake.get("動作") or "只回報不動作（暫緩減碼/加碼）"),
-                    "來源": "snapshot.us30y_gate ＋ thresholds.風險煞車"})
+        hot = _v >= _rl and (float(_rl_streak or 0) >= _need or _streak >= _need)
+        _streak_txt = "模式A警戒連續 {} 日".format(_streak)
+        if _rl_streak is not None:
+            _streak_txt += "／紅線連續 {} 日".format(_rl_streak)
+        out.append({"id": "us30y_警示", "項目": "宏觀風險警示：US30Y",
+                    "現值": "{:.3f}%（{}，{}）".format(_v, _streak_txt, g30.get("as_of") or "—"),
+                    "門檻": "≥{:.2f}% 連續 {} 日（警示）".format(_rl, _need), "觸發": hot,
+                    "動作": ("警示中：長天期債券新增買單維持凍結、科技部位上限維持或收緊；"
+                             "**不單獨否決台股分批**（v1.2）"),
+                    "來源": "snapshot.us30y_gate ＋ thresholds.風險煞車（v1.2 TD-20261015-02）"})
     else:
-        out.append({"id": "us30y_煞車", "項目": "風險煞車：US30Y", "現值": "無真值", "門檻": "—",
+        out.append({"id": "us30y_警示", "項目": "宏觀風險警示：US30Y", "現值": "無真值", "門檻": "—",
                     "觸發": None, "動作": "待補真值（us30y_gate）", "來源": "—"})
+
+    # 1b) 質押 LTV（v1.2：內部政策停止線，非銀行追繳線）
+    try:
+        _ltv = pledge_ltv_detail(snap)
+        out.append({"id": "pledge_ltv", "項目": "質押 LTV（市值口徑）",
+                    "現值": "{:.2f}%（擔保品 {:,.0f}）".format(_ltv["LTV_pct"], _ltv["擔保品市值"]),
+                    "門檻": "≤{:.0f}%（內部政策停止線；非銀行追繳線）".format(_ltv["政策停止線_pct"]),
+                    "觸發": bool(not _ltv["通過"] or _ltv["觸追繳"]),
+                    "動作": ("未達停止線：暫緩新增台股分批並檢視擔保品"
+                             if (not _ltv["通過"] or _ltv["觸追繳"]) else
+                             "未觸線（池值尚可跌 {:.1f}% 才觸線）".format(_ltv["池值可跌_pct"])),
+                    "來源": _ltv["source"]})
+    except Exception as _e:
+        out.append({"id": "pledge_ltv", "項目": "質押 LTV（市值口徑）", "現值": "無真值",
+                    "門檻": "—", "觸發": None,
+                    "動作": "無法判定：{}".format(type(_e).__name__), "來源": "sot_targets.pledge_ltv"})
+
+    # 1c) 還本安全閥（v1.2 第 4 條）
+    try:
+        _vlv = repayment_valve(snap)
+        out.append({"id": "repayment_valve", "項目": "還本安全閥",
+                    "現值": ("轉負情境 {} 個（{}）".format(len(_vlv["轉負情境"]),
+                                                       "、".join(_vlv["轉負情境"])[:60])
+                             if _vlv["轉負情境"] else "無轉負情境"),
+                    "門檻": "0 個轉負情境", "觸發": bool(_vlv["暫停新增分批"]),
+                    "動作": ("暫停新增分批：{}".format(_vlv["風險標示"] or "還本情境轉負")
+                             if _vlv["暫停新增分批"] else "可續評估"),
+                    "來源": _vlv["source"]})
+    except Exception as _e:
+        out.append({"id": "repayment_valve", "項目": "還本安全閥", "現值": "無真值", "門檻": "—",
+                    "觸發": None, "動作": "無法判定：{}".format(type(_e).__name__),
+                    "來源": "sot_targets.repayment_valve"})
 
     # 2) 現金模式
     cm = cash_mode(snap)

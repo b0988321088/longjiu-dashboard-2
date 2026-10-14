@@ -4,8 +4,10 @@
   "last_rate": 5.563,
   "last_date": "2026-10-13",
   "checked_at": "2026-10-14",
-  "mode_label": "模式A｜防禦（警戒區 5.20-5.30）｜⛔ 風控紅線 ≥5.3% 已觸發（債券新增永久凍結）",
+  "mode_label": "模式A｜防禦（警戒區 5.20-5.30）｜⚠️ 宏觀風險警示 ≥5.3%（連續 16 交易日；長天期債券新增買單凍結，不否決台股分批 v1.2）",
   "red_line": true,
   "data_source": "FRED+Yahoo",
-  "red_line_since": "2026-09-23"
+  "red_line_since": "2026-09-23",
+  "mode_a_streak": 32,
+  "red_line_streak": 16
 }

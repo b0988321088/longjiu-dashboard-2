@@ -108,6 +108,10 @@ def evaluate(snap: dict, st: dict, us: dict) -> dict:
         "質押撥款餘額": _f(snap.get("fund_pledge_loan")),
         "us30y": st.get("last_rate"), "us30y_as_of": st.get("last_date"),
         "us30y_streak": st.get("streak"), "gate_status": gate.get("status"),
+        # v1.2（2026-10-14 TD-20261015-02）：US30Y 改宏觀風險警示；解凍＝複合條件
+        "gate_mode": gate.get("mode"), "us30y_risk_warning": gate.get("risk_warning"),
+        "red_line_streak": st.get("red_line_streak"),
+        "unfreeze_conditions": gate.get("unfreeze_conditions") or {},
         "unfreeze_allowed": gate.get("unfreeze_allowed"),
         "gate_reason": gate.get("reason"),
         "檢視日": {},
@@ -185,9 +189,15 @@ def _main_impl() -> int:
             return None
         if "已實作" in str(item.get("status", "")):
             return None
-        status = (f"⏸ 條件未成立（{today} 真值重算）：US30Y {ev['us30y']}%（as_of {ev['us30y_as_of']}）"
-                  f"、連續 {ev['us30y_streak']} 日 ≥ 紅線；閘門 {ev['gate_status']}"
-                  f"（解凍{'許可' if ev['unfreeze_allowed'] else '不許可'}）")
+        # v1.2（2026-10-14 TD-20261015-02）：US30Y 為宏觀風險警示、不否決台股分批；
+        # 解凍判定改列實體未達條件（現金／質押 LTV／還本安全閥）。
+        _conds = ev.get("unfreeze_conditions") or {}
+        _unmet = _conds.get("未達") or ["條件無法計算"]
+        status = (f"⏸ 條件未成立（{today} 真值重算）：US30Y {ev['us30y']}%（as_of {ev['us30y_as_of']}，"
+                  f"紅線連續 {ev.get('red_line_streak')} 日）＝宏觀風險警示"
+                  f"（{'觸發' if ev.get('us30y_risk_warning') else '未觸發'}），不否決台股分批；"
+                  f"未達＝{'、'.join(_unmet)}"
+                  f"（解凍{'許可' if ev['unfreeze_allowed'] else '不許可'}｜閘門模式 {ev.get('gate_mode')}）")
         return {"kind": "update", "status": status, "evidence": ev["gate_reason"]}
 
     rules = [r_water_life, r_water_sinopac, r_pledge, r_repay, r_us30y]

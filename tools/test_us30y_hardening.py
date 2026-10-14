@@ -2,6 +2,7 @@
 
 F1–F5：us30y_monitor 全來源抓取失敗的連續計數與分級告警（RF-1）
 G1–G5：sot_targets.us30y_gate 的 status 語意（RF-2）
+M1–M8：v1.2（TD-20261015-02）US30Y 改宏觀風險警示＋複合解凍條件（現金／質押 LTV／還本安全閥）
 
 全部隔離：不連網、不寫真值（STATE 指向 tmp、sync_snapshot_gate 以 no-op 取代）。
 """
@@ -151,10 +152,127 @@ class TestRF2GateStatus(unittest.TestCase):
         self.assertEqual(g["status"], "OK")
         self.assertFalse(g["unfreeze_allowed"])
 
-    def test_G6_低於紅線且新鮮_允許解凍判定(self):
+    def test_G6_低於紅線且新鮮_但無複合條件真值_仍不得解凍(self):
+        """v1.2：advisory 模式下解凍改由 unfreeze_conditions 決定；
+        本測試 snap 無現金／LTV／還本真值 → fail-closed，不得回可解凍。"""
         g = self._g(5.10)                     # 5.10 < 5.30 且新鮮
         self.assertEqual(g["status"], "OK")
+        self.assertTrue(g["below_red_line"])
+        self.assertFalse(g["risk_warning"])
+        self.assertFalse(g["unfreeze_allowed"])
+
+
+class TestV12Unfreeze(unittest.TestCase):
+    """M1–M8：v1.2 解凍條件（現金／質押 LTV／還本安全閥）與 hard_veto 回復路徑。"""
+
+    POOL = 11_798_203.0            # 測試用合成池值（非真值）
+    LOAN = 5_900_000.0
+    RATE = 0.0265
+
+    def _snap(self, avail=1_055_740.0, pool=None, loan=None, rate=None,
+              income=225_968.0, expense=159_210.0, mode=None, pool_scale=1.0,
+              terms=None, ltv_line=53.0):
+        pool = (pool if pool is not None else self.POOL) * pool_scale
+        snap = {
+            "date": date.today().isoformat(),
+            "thresholds_2026_0915": {
+                "US30Y紅線": 5.30,
+                "ltv分級_pct": {"綠上限": 45, "黃上限": ltv_line, "追繳": 70, "單池上限": 50,
+                                "判定單位": "各池分別判定"},
+            },
+            "sabbatical_gate_twd": {"自由現金_twd": 1_000_000.0, "壓力覆蓋_pct": 100.0,
+                                    "跑道天數": 540.0},
+            "cash_layers": {"restricted_cash": {"total": 900_000.0},
+                            "unrestricted_cash": avail, "cash_total": avail + 900_000.0},
+            "fund_pledge_loan": (loan if loan is not None else self.LOAN),
+            "fund_pledge_rate": (rate if rate is not None else self.RATE),
+            "fund_breakdown_cathay": {"A": pool * 0.50, "B": pool * 0.42, "C": pool * 0.08},
+            "monthly_income": income,
+            "monthly_expense": expense,
+        }
+        if mode:
+            snap["thresholds_2026_0915"]["US30Y閘門模式"] = mode
+        if terms:
+            snap["cathay_pledge_0911"] = terms
+        return snap
+
+    def _gate(self, snap, last_rate=5.60, lag_days=0):
+        ref = date.today()
+        state = {"last_date": (ref - timedelta(days=lag_days)).isoformat(), "last_rate": last_rate}
+        return sot.us30y_gate(snap=snap, state=state, max_lag_days=3)
+
+    # ── M1：US30Y 高於紅線 → 警示、不再單獨否決；未達原因必須是實體條件 ──
+    def test_M1_US30Y高於紅線僅警示_不得作為單一否決來源(self):
+        g = self._gate(self._snap())
+        self.assertEqual(g["mode"], "advisory")
+        self.assertTrue(g["risk_warning"])
+        self.assertFalse(g["unfreeze_allowed"])
+        self.assertIn("不單獨否決台股分批", g["reason"])
+        unmet = g["unfreeze_conditions"]["未達"]
+        self.assertTrue(any("還本安全閥" in u for u in unmet), unmet)
+        self.assertFalse(any("US30Y" in u for u in unmet), unmet)
+
+    # ── M2：核心行為 — US30Y 5.60 但 U1 已證實為只繳息 → 條件全過，許可解凍判定 ──
+    def test_M2_US30Y高於紅線_但U1證實只繳息_條件全過可解凍(self):
+        snap = self._snap(terms={"還本方式": "按月繳息，到期續約（只繳息）", "月付": 13_029})
+        g = self._gate(snap)
+        self.assertTrue(g["risk_warning"])
+        self.assertTrue(g["unfreeze_conditions"]["all_passed"], g["unfreeze_conditions"]["未達"])
         self.assertTrue(g["unfreeze_allowed"])
+
+    # ── M3：LTV 市值口徑負向測試（擔保品 −20%／−30%）──
+    def test_M3_LTV市值口徑_跌20與30(self):
+        g0 = self._gate(self._snap())
+        l0 = g0["unfreeze_conditions"]["pledge_ltv"]
+        self.assertAlmostEqual(l0["LTV_pct"], 50.01, delta=0.05)
+        l20 = self._gate(self._snap(pool_scale=0.8))["unfreeze_conditions"]["pledge_ltv"]
+        self.assertAlmostEqual(l20["LTV_pct"], 62.51, delta=0.05)
+        self.assertFalse(l20["通過"])
+        l30 = self._gate(self._snap(pool_scale=0.7))["unfreeze_conditions"]["pledge_ltv"]
+        self.assertAlmostEqual(l30["LTV_pct"], 71.44, delta=0.05)
+        self.assertTrue(l30["觸追繳"])
+
+    # ── M4：hard_veto 回復路徑（零殘留）──
+    def test_M4_hard_veto回復_行為與v1_1相同(self):
+        lo = self._gate(self._snap(mode="hard_veto"), last_rate=5.10)
+        self.assertEqual(lo["mode"], "hard_veto")
+        self.assertTrue(lo["unfreeze_allowed"])       # 低於紅線 → 許可（v1.1 語意）
+        self.assertIsNone(lo["unfreeze_conditions"])
+        hi = self._gate(self._snap(mode="hard_veto"), last_rate=5.60)
+        self.assertFalse(hi["unfreeze_allowed"])      # 高於紅線 → 不許可（v1.1 語意）
+
+    # ── M5：現金低於門檻 → 未達條件必含現金 ──
+    def test_M5_現金低於門檻_不得解凍(self):
+        snap = self._snap(avail=900_000.0, terms={"還本方式": "按月繳息，到期續約"})
+        g = self._gate(snap)
+        self.assertFalse(g["unfreeze_allowed"])
+        self.assertTrue(any("現金" in u for u in g["unfreeze_conditions"]["未達"]))
+
+    # ── M6：還本安全閥 — U1 證實為 5 年攤還 → 月盈餘轉負 → 暫停新增分批 ──
+    def test_M6_U1證實五年攤還_月盈餘轉負_暫停新增分批(self):
+        snap = self._snap(terms={"還本方式": "本金平均攤還 5 年"})
+        g = self._gate(snap)
+        v = g["unfreeze_conditions"]["repayment_valve"]
+        self.assertTrue(v["暫停新增分批"])
+        self.assertFalse(g["unfreeze_allowed"])
+
+    # ── M7：缺真值 fail-closed（不得因缺資料而放行）──
+    def test_M7_缺質押真值_不得解凍(self):
+        for key in ("fund_pledge_loan", "fund_breakdown_cathay"):
+            with self.subTest(key=key):
+                snap = self._snap(terms={"還本方式": "按月繳息"})
+                snap.pop(key)
+                g = self._gate(snap)
+                self.assertFalse(g["unfreeze_allowed"])
+                self.assertFalse(g["unfreeze_conditions"]["all_passed"])
+
+    # ── M8：指定用途款不得計入可動用；只認 cash_layers.unrestricted_cash ──
+    def test_M8_指定用途款不得計入可動用(self):
+        snap = self._snap(avail=1_055_740.0)
+        snap["cash_layers"]["restricted_cash"]["total"] = 5_000_000.0   # 指定款膨脹
+        c = [x for x in self._gate(snap)["unfreeze_conditions"]["conditions"] if "現金" in x["名稱"]][0]
+        self.assertEqual(float(c["現值"]), 1_055_740.0)
+        self.assertIn("指定用途款", c["註記"])
 
 
 if __name__ == "__main__":

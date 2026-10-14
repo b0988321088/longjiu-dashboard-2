@@ -5283,6 +5283,8 @@
    "單池上限": 50,
    "判定單位": "各池分別判定（不加總平均；追繳看單池）"
   },
+  "US30Y閘門模式": "advisory",
+  "US30Y閘門模式_說明": "v1.2（2026-10-14 使用者裁決 TD-20261015-02）：US30Y ≥5.30% 為宏觀風險警示（長天期債券新增買單凍結、科技部位上限維持或收緊），不單獨否決台股分批；台股分批解凍改由 sot_targets.unfreeze_conditions（現金 ≥ 自由現金門檻／質押 LTV 市值口徑 ≤ 政策停止線 53%／還本安全閥）共同判定。單一切換點：本鍵改為 hard_veto 即回復 v1.1 原行為（回復路徑零殘留）。",
   "美元曝險_pct": {
    "目標": 60,
    "黃": 65,
@@ -5838,10 +5840,137 @@
   "max_lag_days": 3,
   "red_line": 5.3,
   "streak_days": 32,
+  "mode_a_streak_days": 32,
+  "red_line_streak_days": 16,
   "below_red_line": false,
+  "risk_warning": true,
+  "mode": "advisory",
   "unfreeze_allowed": false,
-  "reason": "讀值日 2026-10-13（落後 1 天，在容忍值 3 天內）",
-  "source": "sot_targets.us30y_gate（us30y_state.json + us30y_monitor.RED_LINE）"
+  "unfreeze_conditions": {
+   "conditions": [
+    {
+     "名稱": "現金 ≥ 自由現金門檻",
+     "通過": true,
+     "現值": 1055740,
+     "門檻": 1000000.0,
+     "註記": "可動用＝cash_layers.unrestricted_cash；指定用途款 900,000 永久排除；分批資金只認列已實際入帳盈餘",
+     "來源": "sot_targets.allowable_cash ＋ sabbatical_gate_twd.自由現金_twd"
+    },
+    {
+     "名稱": "質押 LTV ≤ 53%（內部政策停止線）",
+     "通過": true,
+     "現值": 50.01,
+     "門檻": 53.0,
+     "註記": "內部投資停止線（= thresholds.ltv分級_pct.黃上限），**非銀行追繳線**；銀行追繳線以追繳參考值暫作壓力測試（待銀行書面）",
+     "來源": "sot_targets.pledge_ltv（fund_pledge_loan ÷ fund_breakdown_cathay；thresholds.ltv分級_pct；v1.2 TD-20261015-02）"
+    },
+    {
+     "名稱": "還本安全閥（無月盈餘轉負情境）",
+     "通過": false,
+     "現值": "R1 bullet 12 個月；R1 bullet 24 個月；R1 bullet 36 個月；R2 攤還 5 年",
+     "門檻": "0 個轉負情境",
+     "註記": "還本方式未證實（U1 待銀行書面）：R1/R2 情境顯示月盈餘轉負 → 暫停新增分批；不得以暫定『只繳息』情境宣告貸款安全｜分批資金只認列**已實際入帳**的新增盈餘；預估盈餘不得當成現金",
+     "來源": "sot_targets.repayment_valve（fund_pledge_loan／fund_pledge_rate／sot_monthly_income／sot_monthly_expense；v1.2 TD-20261015-02 暫定假設）"
+    }
+   ],
+   "all_passed": false,
+   "未達": [
+    "還本安全閥（無月盈餘轉負情境）"
+   ],
+   "US30Y角色": "宏觀風險警示（不否決台股分批）",
+   "pledge_ltv": {
+    "借款": 5900000.0,
+    "擔保品市值": 11798203.0,
+    "LTV_pct": 50.01,
+    "政策停止線_pct": 53.0,
+    "追繳參考_pct": 70.0,
+    "距停止線_pct": 2.99,
+    "池值可跌_pct": -5.65,
+    "通過": true,
+    "觸追繳": false,
+    "語意": "內部投資停止線（= thresholds.ltv分級_pct.黃上限），**非銀行追繳線**；銀行追繳線以追繳參考值暫作壓力測試（待銀行書面）",
+    "source": "sot_targets.pledge_ltv（fund_pledge_loan ÷ fund_breakdown_cathay；thresholds.ltv分級_pct；v1.2 TD-20261015-02）"
+   },
+   "repayment_valve": {
+    "已證實": false,
+    "月盈餘": 66758,
+    "月息": 13029,
+    "情境": [
+     {
+      "代號": "R1 bullet 12 個月",
+      "月付": 491667,
+      "月盈餘": -424909,
+      "轉負": true,
+      "類型": "到期一次還本（月提存）"
+     },
+     {
+      "代號": "R1 bullet 24 個月",
+      "月付": 245833,
+      "月盈餘": -179075,
+      "轉負": true,
+      "類型": "到期一次還本（月提存）"
+     },
+     {
+      "代號": "R1 bullet 36 個月",
+      "月付": 163889,
+      "月盈餘": -97131,
+      "轉負": true,
+      "類型": "到期一次還本（月提存）"
+     },
+     {
+      "代號": "R2 攤還 5 年",
+      "月付": 111362,
+      "月盈餘": -44604,
+      "轉負": true,
+      "類型": "本金分期攤還"
+     },
+     {
+      "代號": "R2 攤還 10 年",
+      "月付": 62196,
+      "月盈餘": 4562,
+      "轉負": false,
+      "類型": "本金分期攤還"
+     },
+     {
+      "代號": "R2 攤還 20 年",
+      "月付": 37612,
+      "月盈餘": 29146,
+      "轉負": false,
+      "類型": "本金分期攤還"
+     },
+     {
+      "代號": "R2 攤還 30 年",
+      "月付": 29418,
+      "月盈餘": 37340,
+      "轉負": false,
+      "類型": "本金分期攤還"
+     },
+     {
+      "代號": "R3 到期續約（暫定基準）",
+      "月付": 13029,
+      "月盈餘": 53729,
+      "轉負": false,
+      "類型": "只繳息"
+     }
+    ],
+    "轉負情境": [
+     "R1 bullet 12 個月",
+     "R1 bullet 24 個月",
+     "R1 bullet 36 個月",
+     "R2 攤還 5 年"
+    ],
+    "暫停新增分批": true,
+    "判定用情境": {
+     "代號": "（未證實）R1／R2 全情境保守判定"
+    },
+    "風險標示": "還本方式未證實（U1 待銀行書面）：R1/R2 情境顯示月盈餘轉負 → 暫停新增分批；不得以暫定『只繳息』情境宣告貸款安全",
+    "資金來源限制": "分批資金只認列**已實際入帳**的新增盈餘；預估盈餘不得當成現金",
+    "source": "sot_targets.repayment_valve（fund_pledge_loan／fund_pledge_rate／sot_monthly_income／sot_monthly_expense；v1.2 TD-20261015-02 暫定假設）"
+   },
+   "source": "sot_targets.unfreeze_conditions（v1.2 TD-20261015-02；2026-10-14 裁決）"
+  },
+  "reason": "讀值日 2026-10-13（落後 1 天，在容忍值 3 天內）｜US30Y 為宏觀風險警示（已觸發，長債新增凍結生效），不單獨否決台股分批；解凍判定＝未達：還本安全閥（無月盈餘轉負情境）",
+  "source": "sot_targets.us30y_gate（advisory 模式 v1.2：US30Y 警示＋unfreeze_conditions 複合條件；thresholds.US30Y閘門模式 可切回 hard_veto）"
  },
  "redline_policy": {
   "policy": "REDLINE_LONG_DURATION_POLICY",

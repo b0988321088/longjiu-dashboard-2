@@ -723,6 +723,16 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "decision_auto_close.py",   # 逾時歸檔改四態判定＋閉環改歸檔（不再直接覆寫正本）
            "tech_debt.py",   # 技術債登錄工具（工程/治理類分流去處；新增）
            "tech_debt.json",   # 技術債資料檔（新增；非程式檔但一併宣告）
+           # 2026-10-14 本班（v1.2 US30Y 閘門；TD-20261015-02）：
+           #   授權＝使用者 2026-10-14 Telegram 裁決「核准開工施工 v1.2，限程式修訂、測試、
+           #   獨立驗收及真 CIO 審查」；範圍＝sot_targets.py（已宣告）／us30y_monitor.py／
+           #   action_loop.py／pending_reconcile.py／check_thresholds.py／index_template.html
+           #   （已宣告）＋ build_dashboard.py（已宣告；P3 紅線連續日數標示）＋測試。
+           "us30y_monitor.py",   # US30Y 監控：紅線連續天數真值＋警示語意（原「永久凍結」）
+           "action_loop.py",     # 建議快照帶出 gate_mode／risk_warning／unfreeze_conditions
+           "pending_reconcile.py",   # 解凍卡敘述改列實體未達條件（不再以 US30Y 為單一理由）
+           "check_thresholds.py",   # 閘門斷言：hard_veto 沿用 v1.1／advisory 重算複合條件
+           "test_us30y_hardening.py",   # 測試：M1–M8 v1.2 正向／負向／回復案例
            }
 # 逐日產物：命名比對，跨月不失效（舊版 allowed_prefixes 釘死 2026-09）
 _DAILY = re.compile(r"^(asset_diff|retirement_plan|daily_report_v2|rebalance_dashboard|"

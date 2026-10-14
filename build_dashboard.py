@@ -114,18 +114,35 @@ def main():
     tpl = tpl.replace("__PENDING_REDEMPTION__", _pending_note)
 
     # 2026-09-11 修：US30Y 曾寫死「5.22%（8/28 收盤）」→ 改動態讀 us30y_state.json
+    # 2026-10-14 v1.2（TD-20261015-02）P3 修正：紅線門檻與兩種連續天數皆改讀真值，
+    #   不再寫死 5.30，也不再拿模式A 的 streak 冒充「紅線連續 N 日」。
     try:
         _st30 = json.loads((BASE / "us30y_state.json").read_text(encoding="utf-8"))
         _r30 = float(_st30["last_rate"])
         _d30 = _st30.get("last_date", "")
     except Exception:
-        _r30, _d30 = None, ""
-    if _r30 is None:
-        _us30y_line = "US30Y 資料無法取得（us30y_state.json 缺漏）"
-    elif _r30 >= 5.30:
-        _us30y_line = f"US30Y {_r30:.2f}%（{_d30} 收盤，已站上 5.30% 債券凍結紅線 {_r30 - 5.30:.2f}pp）"
+        _st30, _r30, _d30 = {}, None, ""
+    try:
+        import us30y_monitor as _mon30
+        _rl30 = float(_mon30.RED_LINE)
+    except Exception:
+        _rl30 = None
+    _ma30 = _st30.get("mode_a_streak")
+    _rlst30 = _st30.get("red_line_streak")
+    _role = _st30.get("gate_role") or "宏觀風險警示（不否決台股分批；長債新增凍結）"
+    if _r30 is None or _rl30 is None:
+        _us30y_line = "US30Y 資料無法取得（us30y_state.json／門檻缺漏）"
     else:
-        _us30y_line = f"US30Y {_r30:.2f}%（{_d30} 收盤，距 5.30% 債券凍結紅線 {5.30 - _r30:.2f}pp）"
+        _streaks = []
+        if isinstance(_ma30, (int, float)):
+            _streaks.append(f"模式A警戒連續 {int(_ma30)} 日")
+        if isinstance(_rlst30, (int, float)):
+            _streaks.append(f"紅線 ≥{_rl30:.2f}% 連續 {int(_rlst30)} 日")
+        _s_txt = ("；".join(_streaks) + "；") if _streaks else ""
+        _gap = _r30 - _rl30
+        _rel = f"已站上紅線 {_gap:.2f}pp" if _gap >= 0 else f"距紅線 {abs(_gap):.2f}pp"
+        _us30y_line = (f"US30Y {_r30:.2f}%（{_d30} 收盤；{_s_txt}{_rel}）"
+                       f"＝{_role}（v1.2）")
     tpl = tpl.replace("__US30Y_LINE__", _us30y_line)
 
     # ── 從 snapshot 計算真值 ──

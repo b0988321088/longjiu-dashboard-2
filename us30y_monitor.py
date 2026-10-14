@@ -4,7 +4,10 @@
 規則：
 - 模式A 防禦：連續2交易日 US30Y ≥ 5.20%
 - 模式B 布局：連續2交易日 US30Y ≤ 4.90%
-- 風控紅線：連續2交易日 US30Y ≥ 5.30% → 長期債券相關新增買單永久凍結
+- 宏觀風險警示（v1.2，2026-10-14 使用者裁決 TD-20261015-02）：連續2交易日 US30Y ≥ 5.30%
+  → 長期債券相關新增買單凍結（本規則獨立保留；原為「永久凍結」）＋科技部位上限維持或收緊；
+  **不再單獨否決台股分批**（台股分批改由現金／質押 LTV／還本安全閥共同判定，見 sot_targets.unfreeze_conditions）。
+  單一切換點＝thresholds_2026_0915.US30Y閘門模式（advisory｜hard_veto＝回復 v1.1）。
 - 檢視頻率：每日（由 cron 觸發）；狀態有變化才輸出，無變化靜默
 
 資料源（2026-09-11 修）：
@@ -150,6 +153,18 @@ def red_line_hit(rows) -> bool:
     return len(last2) >= CONSECUTIVE_DAYS and all(v >= RED_LINE for _, v in last2)
 
 
+def red_line_streak(rows) -> int:
+    """紅線連續天數（2026-10-14 v1.2：原本只有模式A streak，紅線天數無真值
+    → 儀表板把模式A 的 32 日誤標成紅線連續 32 日，P3 標示失真）。"""
+    n = 0
+    for _d, _v in rows:
+        if isinstance(_v, (int, float)) and _v >= RED_LINE:
+            n += 1
+        else:
+            break
+    return n
+
+
 def all_above(vals, thr) -> bool:
     return len(vals) >= CONSECUTIVE_DAYS and all(v >= thr for _, v in vals)
 
@@ -248,23 +263,29 @@ def main():
     rl_now = red_line_hit(rows)
     rl_prev = bool(state.get("red_line", False))
     if rl_now and not rl_prev:
-        msgs.append(f"🚫 風控紅線觸發：US30Y 連續{CONSECUTIVE_DAYS}日 ≥{RED_LINE}%"
+        msgs.append(f"⚠️ 宏觀風險警示：US30Y 連續{CONSECUTIVE_DAYS}日 ≥{RED_LINE}%"
                     f"（{last2[1][0]} {last2[1][1]}% / {last2[0][0]} {last2[0][1]}%）"
-                    f" — 長期債券相關新增買單【永久凍結】（不受階段影響）")
-        msgs.append("⛔ 同步生效：禁新增質押／擴倉；僅配息被動再平衡 + 還債")
+                    f" — 長期債券相關新增買單【凍結】（不受階段影響）")
+        msgs.append("⛔ 同步生效：禁新增質押／擴倉；僅配息被動再平衡 + 還債"
+                    "｜v1.2（2026-10-14 使用者裁決）：本警示**不單獨否決台股分批**，"
+                    "台股分批改由現金／質押 LTV／還本安全閥共同判定")
     elif (not rl_now) and rl_prev:
-        msgs.append(f"✅ 風控紅線解除：US30Y 已脫離 ≥{RED_LINE}%"
+        msgs.append(f"✅ 宏觀風險警示解除：US30Y 已脫離 ≥{RED_LINE}%"
                     f"（最新 {latest_date} {latest_rate}%），債券新增買單可重新評估")
 
     # ── 寫 state ──
     fred_dates = {d for d, _ in fred}
     src = "FRED" if all(d in fred_dates for d, _ in last2) else "FRED+Yahoo"
+    rl_streak = red_line_streak(rows)
     label = MODE_LABELS.get(new_mode, "—")
     if rl_now:
-        label += f"｜⛔ 風控紅線 ≥{RED_LINE}% 已觸發（債券新增永久凍結）"
+        label += (f"｜⚠️ 宏觀風險警示 ≥{RED_LINE}%（連續 {rl_streak} 交易日；"
+                  f"長天期債券新增買單凍結，不否決台股分批 v1.2）")
     state.update({
         "mode": new_mode,
         "streak": streak,
+        "mode_a_streak": streak,          # 模式A（≥5.20）連續天數
+        "red_line_streak": rl_streak,     # 紅線（≥5.30）連續天數（v1.2 P3 修正）
         "last_rate": latest_rate,
         "last_date": latest_date,
         "checked_at": today,

@@ -57,6 +57,10 @@ def save_snapshot(table: dict, snap: dict):
         "us30y_as_of": st.get("last_date"),
         "us30y_date": st.get("last_date"),          # 相容別名（舊消費端）
         "us30y_gate_status": _g.get("status"),
+        # v1.2（2026-10-14 TD-20261015-02）：US30Y 改宏觀風險警示；解凍判定＝複合條件
+        "us30y_gate_mode": _g.get("mode"),
+        "us30y_risk_warning": _g.get("risk_warning"),
+        "unfreeze_conditions": _g.get("unfreeze_conditions"),
         "unfreeze_allowed": _g.get("unfreeze_allowed"),
         "unfreeze_block_reason": None if _g.get("unfreeze_allowed") else _g.get("reason"),
         "frozen": table.get("frozen"),

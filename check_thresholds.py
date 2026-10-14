@@ -398,8 +398,43 @@ def main() -> int:
                 errs.append(f"us30y_gate.value {_ug.get('value')} ≠ us30y_state.last_rate {_st.get('last_rate')}")
         if _ug and _ug.get("status") != "OK" and _ug.get("unfreeze_allowed"):
             errs.append(f"US30Y 閘門 {_ug.get('status')} 卻許可解凍（應為 False）")
-        if _ug and _ug.get("below_red_line") is False and _ug.get("unfreeze_allowed"):
-            errs.append("US30Y 未脫離紅線卻許可解凍")
+        # ── v1.2（2026-10-14 TD-20261015-02）：US30Y 由台股 hard veto 改宏觀風險警示 ──
+        #   hard_veto 模式＝沿用 v1.1 斷言（未脫離紅線不得解凍）；
+        #   advisory 模式＝解凍一律由 unfreeze_conditions（現金／質押 LTV／還本安全閥）決定，
+        #   逐一重算比對，缺資料或寫死值一律 fail-closed。
+        _gm = _ug.get("mode") or "advisory"
+        if _ug and _gm == "hard_veto" and _ug.get("below_red_line") is False and _ug.get("unfreeze_allowed"):
+            errs.append("US30Y 未脫離紅線卻許可解凍（hard_veto 模式）")
+        if _ug and _gm == "advisory":
+            _uc = _ug.get("unfreeze_conditions") or {}
+            _ucs = _uc.get("conditions") or []
+            if not _ucs:
+                if _ug.get("unfreeze_allowed"):
+                    errs.append("v1.2 advisory：無 unfreeze_conditions 卻許可解凍（應為 False）")
+            else:
+                _allok = all(bool(x.get("通過")) for x in _ucs)
+                if bool(_uc.get("all_passed")) != _allok:
+                    errs.append("v1.2 unfreeze_conditions.all_passed 與逐條結果不一致")
+                if bool(_ug.get("unfreeze_allowed")) and not _allok:
+                    errs.append("v1.2 advisory：條件未全數成立卻許可解凍（應為 False）")
+                if bool(_ug.get("unfreeze_allowed")) and _ug.get("risk_warning") and not _ucs:
+                    errs.append("v1.2 advisory：US30Y 僅警示，不得作為單一否決來源")
+                try:
+                    from sot_targets import pledge_ltv_detail as _pltv, repayment_valve as _rvv
+                    _l = _pltv(snap)
+                    _l_stored = (_uc.get("pledge_ltv") or {}).get("LTV_pct")
+                    if _l_stored is None or abs(float(_l["LTV_pct"]) - float(_l_stored)) > 0.05:
+                        errs.append("v1.2 質押 LTV 與 unfreeze_conditions 內值不一致（非動態真值）")
+                    if not (40.0 <= float(_l["政策停止線_pct"]) <= 60.0):
+                        errs.append(f"v1.2 質押政策停止線異常：{_l['政策停止線_pct']}（應為 ltv分級_pct.黃上限）")
+                    _vv = _rvv(snap)
+                    if bool(_vv["轉負情境"]) != bool(_vv["暫停新增分批"]):
+                        errs.append("v1.2 還本安全閥：暫停新增分批 與 轉負情境 不一致")
+                    _cv = [x for x in _ucs if "還本安全閥" in str(x.get("名稱"))]
+                    if _cv and bool(_cv[0].get("通過")) == bool(_vv["暫停新增分批"]):
+                        errs.append("v1.2 還本安全閥條件與真值不一致")
+                except Exception as _e:
+                    errs.append(f"v1.2 質押／還本條件無法重算：{type(_e).__name__}")
         # 未閉環 pending 卡狀態不得含「已結案」字樣（build_dashboard 以子字串過濾 → 整卡會靜默消失）
         _closed_kw = ("✅", "☑", "已完成", "已結案", "已定案", "閉環", "已送出", "已核定")
         for _it in json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8")):
