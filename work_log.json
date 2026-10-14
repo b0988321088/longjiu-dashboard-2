@@ -2204,5 +2204,11 @@
   "category": "完成",
   "item": "2026-10-14 台股分批規則 v1.1 定版＋發布車道閉環（裁決入庫／卡片校準／未審查 commit 撤回）",
   "detail": "使用者裁決 v1.1（有條件核准、交易未解凍）：單筆上限 50,000、每週最多 2 筆合計 ≤100,000，達標即停不追買；沿用 thresholds 動作階梯與美股 20 萬裁示為參考、台股取更嚴上限，衝突時適用最嚴者；0051 條件式納入（0050/006208 為主、0051 回檔 ≥5% 且累計 ≤台股桶 20%、排除 00919 與純科技）；解凍閘門須同時滿足 5 條（US30Y 連 2 交易日 <5.30%；質押本金／月付／還本納入現金流模型且核實；跑道與壓力覆蓋率達標；可動用現金 ≥700,000 且 900,000 指定款排除；無更高優先級煞車生效）；10% 為補足目標、13% 預警、15% 硬上限。落地：決策入庫 mem-20261014220040-1188（dashboard_decisions 1188→1189；純追加、meta 除 updated_at 不變）＋ Notion 治理紀錄；pending 卡「台股解凍後分批規則定版」detail／status_raw 更新為 v1.1 條款，status 維持四態「已確認」。過程教訓：①CIO 對晚報校準 commit 抓到該卡 status/detail 矛盾（真缺陷）；②改以自創狀態「已定版・待解凍」被本機驗證器擋下（非四態 → build_dashboard 未結案子集、daily_report_assembly、decision_auto_close 精確比對會無聲漏卡），已改回四態、定版語意改放 status_raw；③另兩檔未宣告程式檔觸發硬擋：_send_cio_review_tmp.py 刪除（一次性、產物已存）、tools/w1_defect_probe.py 撤回並刪除（審查 REJECT 且屬刻意含缺陷樣本，不納版控）；未取 RECORD 的 commit f140e92c 已撤回、確認未誤推。驗收：check_dividend_caliber 84/84 PASS（0 FAIL）、遠端 clean-main＝本地 HEAD＝ls-remote＝94a693b5、線上 index.html 三處逐位元一致、待推 0。"
+ },
+ {
+  "date": "2026-10-14",
+  "category": "完成",
+  "item": "2026-10-14 TD-20261014-02 結案：未提交資料檔生命週期追查（asset_diff_history.json／buffett_cto_report_*.md／data/ai_cost_daily.jsonl）",
+  "detail": "使用者裁決：先查根因、一次修復、完整驗收；不刪檔、不擴白名單、不改檢查規則。逐檔裁定：①data/ai_cost_daily.jsonl＝既有出口 wrappers/cost_watch_close.py（22:30 日結班），今日 22:30 實證已提交並推送（b5fe65f5）→ 非缺口（22:2x 手動稽核跑在出口前，屬時序假陽性）。②asset_diff_history.json＋buffett_cto_report_{DATE}.md＝真缺口：13:00 台股緊急應變路徑（emergency_1330.py）順序為 regenerate（有提交出口）→ asset_diff_monitor（步驟2 產物無出口）→ daily_deploy（步驟2.8 再跑 analyzer 重寫報告，卻只推日報/index）⇒ 兩檔寫入落在最後一次提交之後，22:40 收工稽核每晚判「已追蹤未提交」，22:00 晚報又以「執行前已 dirty」把它們排除 → 結構性殘留。修法：emergency_1330.py 收尾增 _commit_own()（白名單 stage／無變更不 commit／pathspec commit 不帶走他班已 stage 檔／推送走 auto_push.py 唯一出口），模板同 wrappers/cost_watch_close.py。驗收：沙箱 9/9 PASS（A1-A4／B1-B3／C1-C3）＋語法檢查 OK；兩檔已提交上線；check_dividend_caliber 84/84 PASS；closeout_check 由 FAIL（3 檔未提交）轉「全部通過 ✅」（22:38）。CIO：程式 26a35e77／資料 d92432a4（附證據重審 APPROVE）／TD 結案 55f1fb0d，皆已推 clean-main。衍生另案：TD-20261014-03（當日 asset_diff 缺 bonds 鍵，上游 snapshot.bonds 由 0.0 變 None；讀取端 r.get(\"bonds\",0) 等價 0.0，無計算影響，P3 低風險）。"
  }
 ]
