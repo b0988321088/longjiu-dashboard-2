@@ -733,6 +733,12 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "pending_reconcile.py",   # 解凍卡敘述改列實體未達條件（不再以 US30Y 為單一理由）
            "check_thresholds.py",   # 閘門斷言：hard_veto 沿用 v1.1／advisory 重算複合條件
            "test_us30y_hardening.py",   # 測試：M1–M8 v1.2 正向／負向／回復案例
+           # 2026-10-15 本班（⑨ Pages 部署稽核；使用者同日 Telegram 核准）：
+           #   授權＝使用者 2026-10-15 「✅ 核准」將 Pages 部署結論納入收工檢查；
+           #   觸發：10/14 23:59 本機＝遠端＝HEAD、收工全綠，但 Pages deploy 逾時失敗，
+           #   費用頁落後一版卻只能靠人工看到 GitHub 失敗通知（④ 的 Pages 檢查只看檔案存在）。
+           "closeout_check.py",   # 新增 ⑨ 步驟：讀 Pages workflow 最新一版結論（公開 API，無 token）
+           "test_pages_deploy_check.py",   # 上項之單元測試（4 狀態＋真實整合，11 條）
            }
 # 逐日產物：命名比對，跨月不失效（舊版 allowed_prefixes 釘死 2026-09）
 _DAILY = re.compile(r"^(asset_diff|retirement_plan|daily_report_v2|rebalance_dashboard|"

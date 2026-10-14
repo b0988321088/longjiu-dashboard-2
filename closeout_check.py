@@ -26,6 +26,10 @@
 8. **驗證器執行心跳**（P0-1）：讀 `data/verifier_heartbeat.json` ——
    `NOT_RUN`（沒跑）／逾期未跑／`FAIL`（跑了但斷言未過）皆列問題（fail-closed）。
    三態不得混為一談；標準不得下調（6 條既有漂移在修好前不得當成 OK）。
+9. **GitHub Pages 部署稽核**（2026-10-15 使用者核准）：push 出去 ≠ 部署成功。
+   用 GitHub 公開 API 讀「頁面建置與部署」workflow 最新一版的結論：已完成且失敗 → ❌；
+   仍在執行／剛 push 未建 run → ⏳（非問題）；查不到 → ⚠️ 明示未驗證（不偽裝通過）。
+   為什麼：本機與遠端都同步、④ 的 Pages 檢查也過，線上仍可能停在舊版（deploy 逾時）。
 
 用法
 ----
@@ -47,6 +51,8 @@ import os
 import re
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent
@@ -649,8 +655,120 @@ def step_verifier_heartbeat(quiet: bool) -> list:
             f"→ 視為 NOT_RUN"]
 
 
+# ── ⑨ GitHub Pages 部署稽核（2026-10-15 使用者核准）─────────────────────────────
+PAGES_WORKFLOW = "pages build and deployment"
+PAGES_GRACE_MIN = 30          # push 後 GitHub 建立 run 的寬限（分鐘）
+
+
+def _repo_slug() -> str | None:
+    """從 origin remote 取 owner/repo（支援 git@github.com-alias:owner/repo.git 與 https 形式）。"""
+    try:
+        url = _git("remote", "get-url", "origin").strip()
+    except Exception:  # noqa: BLE001
+        return None
+    m = re.search(r"[:/]([^/:]+)/([^/]+?)(?:\.git)?$", url)
+    return f"{m.group(1)}/{m.group(2)}" if m else None
+
+
+def _pages_runs(slug: str, timeout: int = 15):
+    """讀 Pages workflow 最近數筆 run（公開 API，無需 token；失敗回 None ＝未驗證）。"""
+    # 註：Pages 的 legacy build 其 event 為 dynamic／workflow_dispatch，不是 push；
+    #     因此**不可**加 event 篩選（加了會查不到任何 run → 誤判「未觸發」）。
+    url = f"https://api.github.com/repos/{slug}/actions/runs?per_page=30"
+    req = urllib.request.Request(url, headers={
+        "Accept": "application/vnd.github+json", "User-Agent": "longjiu-closeout-check"})
+    for attempt in (1, 2):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.loads(r.read().decode("utf-8") or "{}").get("workflow_runs") or []
+        except urllib.error.HTTPError as e:
+            if e.code in (403, 429) or attempt == 2:      # 限流不重試
+                return None
+        except Exception:  # noqa: BLE001
+            if attempt == 2:
+                return None
+    return None
+
+
+def step_pages_deploy(quiet: bool) -> list:
+    """⑨ GitHub Pages 部署稽核：**推得動、遠端有，都不等於線上跑的是這一版**。
+
+    2026-10-14 23:59 的實際失敗模式：本機＝遠端＝HEAD、④ 的 Pages 檢查全過、收工檢查全綠，
+    但 Pages 的 deploy job 逾時（deploy 步驟固定 10 分鐘上限）失敗 → 線上停在「上一次成功的
+    版本」，費用頁整整落後一版，只靠人工看到 GitHub 失敗通知才發現。故單獨量部署結論。
+
+    三態不得混為一談（fail-closed，但不把網路問題當成部署失敗）：
+      · 最新一版（= 部署來源 sha）已部署成功 → ✅
+      · run 仍在佇列／執行中，或剛 push 未建 run（< 寬限）→ ⏳（非問題）
+      · 已完成的 run 結論為失敗（failure／timed_out／startup_failure／action_required）→ ❌
+      · 查不到（無網路／API 限流／無 remote）→ ⚠️ 明示「未驗證」，不偽裝成通過、不阻擋產線
+    """
+    slug = _repo_slug()
+    if not slug:
+        if not quiet:
+            print("⑨ Pages 部署：⚠️ 讀不到 origin remote → 本步未驗證（不阻擋）")
+        return []
+    try:
+        deploy_sha = _git("rev-parse", DEPLOY_REF).strip() or _git("rev-parse", "HEAD").strip()
+    except Exception:  # noqa: BLE001
+        deploy_sha = ""
+    if not deploy_sha:
+        return ["Pages 部署稽核：讀不到部署來源 sha（HEAD／origin）→ 無法確認線上版本"]
+
+    runs = _pages_runs(slug)
+    if runs is None:
+        if not quiet:
+            print("⑨ Pages 部署：⚠️ 查不到 GitHub API（網路／限流）→ 本步未驗證（不阻擋產線）")
+        return []
+
+    mine = [r for r in runs
+            if r.get("name") == PAGES_WORKFLOW and (r.get("head_sha") or "").startswith(deploy_sha[:40])]
+    if not mine:
+        try:
+            ts = _git("show", "-s", "--format=%cI", deploy_sha).strip()
+            age_min = (dt.datetime.now(dt.timezone.utc)
+                       - dt.datetime.fromisoformat(ts.replace("Z", "+00:00"))).total_seconds() / 60.0
+        except Exception:  # noqa: BLE001
+            age_min = 999.0
+        if age_min <= PAGES_GRACE_MIN:
+            if not quiet:
+                print(f"⑨ Pages 部署：⏳ 剛推送（{age_min:.0f} 分前）尚未建立 run → 待 GitHub 觸發")
+            return []
+        print(f"⑨ Pages 部署：❌ 未觸發（已推送 {age_min:.0f} 分鐘仍無對應 run）｜"
+              f"{deploy_sha[:8]}｜Pages 來源設定被改？")
+        return [f"Pages 未觸發部署：{DEPLOY_REF} @ {deploy_sha[:8]} 已推送 {age_min:.0f} 分鐘"
+                f"仍無對應 workflow run（Pages 來源設定被改？）→ 線上不會更新"]
+
+    run = mine[0]
+    rid = run.get("id")
+    url = run.get("html_url") or f"https://github.com/{slug}/actions/runs/{rid}"
+    status = str(run.get("status") or "")
+    concl = str(run.get("conclusion") or "")
+
+    if status != "completed":
+        if not quiet:
+            print(f"⑨ Pages 部署：⏳ 進行中（{status}）｜{deploy_sha[:8]}｜{url}")
+        return []
+
+    if concl == "success":
+        if not quiet:
+            print(f"⑨ Pages 部署：✅ 最新一版已上線（{concl}）｜{deploy_sha[:8]}｜"
+                  f"run #{rid}")
+        return []
+
+    if concl == "cancelled":
+        if not quiet:
+            print(f"⑨ Pages 部署：⚠️ 本版 run 被取消（多半被後續 push 取代）｜{deploy_sha[:8]}｜{url}")
+        return []
+
+    msg = (f"Pages 部署失敗：run #{rid}（{concl}）｜{deploy_sha[:8]} → 線上仍是上一次成功的版本，"
+           f"最新產出未上線（本機與遠端同步不代表線上已更新）：{url}")
+    print(f"⑨ Pages 部署：❌ {concl}｜run #{rid}｜{deploy_sha[:8]}｜{url}")
+    return [msg]
+
+
 def step_ref_topology(quiet: bool) -> None:
-    """⑨ ref topology 稽核（2026-10-07 INC-236 延伸 Phase C）：**觀測與預警，不阻擋產線**。
+    """⑩ ref topology 稽核（2026-10-07 INC-236 延伸 Phase C）：**觀測與預警，不阻擋產線**。
 
     為什麼：INC-236 的失敗模式（ref 選錯、push 回 0、系統自認成功）不能只靠人工偶然發現。
     Phase A 已在 auto_push 推送前擋住「source 非 HEAD／destination 非部署分支」；
@@ -702,7 +820,7 @@ def step_ref_topology(quiet: bool) -> None:
         TOPOLOGY_FILE.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
 
         if not quiet:
-            print(f"⑨ ref topology（觀測／不阻擋）：部署來源 {DEPLOY_REF} @ {deploy_sha}")
+            print(f"⑩ ref topology（觀測／不阻擋）：部署來源 {DEPLOY_REF} @ {deploy_sha}")
             for b in locals_:
                 up = f" → {b['upstream']}({b['track']})" if b["upstream"] else "（無 upstream）"
                 print(f"     local {b['name']} @ {b['sha']}{up}　最後 {b['last_commit']}")
@@ -714,7 +832,7 @@ def step_ref_topology(quiet: bool) -> None:
     except Exception as e:  # noqa: BLE001
         # 觀測步不得因畸形輸入讓整份收工檢查變成 traceback
         if not quiet:
-            print(f"⑨ ref topology：⚪ 讀取失敗（{type(e).__name__}: {e}）→ 略過（本步為觀測，不阻擋）")
+            print(f"⑩ ref topology：⚪ 讀取失敗（{type(e).__name__}: {e}）→ 略過（本步為觀測，不阻擋）")
 
 
 def main() -> int:
@@ -742,7 +860,8 @@ def main() -> int:
         cons_problems = step_consistency(args.quiet or args.silent_ok)
         thr_problems = step_threshold_invariants(args.quiet or args.silent_ok)
         hb_problems = step_verifier_heartbeat(args.quiet or args.silent_ok)
-        # ⑨ ref topology：觀測與預警，**不**併入 problems（不阻擋產線；INC-236 延伸 Phase C）
+        pages_problems = step_pages_deploy(args.quiet or args.silent_ok)
+        # ⑩ ref topology：觀測與預警，**不**併入 problems（不阻擋產線；INC-236 延伸 Phase C）
         step_ref_topology(args.quiet or args.silent_ok)
 
         problems = []
@@ -756,6 +875,8 @@ def main() -> int:
         problems.extend(cons_problems)
         problems.extend(thr_problems)
         problems.extend(hb_problems)
+
+        problems.extend(pages_problems)
 
         print()
         print("=" * 52)
