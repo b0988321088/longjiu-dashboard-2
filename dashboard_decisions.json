@@ -11094,6 +11094,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261015005845-1197",
+    "timestamp": "2026-10-15T00:58:45.489267+08:00",
+    "agent": "Hermes",
+    "task": "⑨ Pages 部署稽核落地：push 出去 ≠ 部署成功（2026-10-15 使用者核准）",
+    "summary": "使用者 2026-10-15 Telegram「✅ 核准」：把 Pages 部署結論納入收工檢查。觸發事件＝10/14 23:59 本機＝遠端＝HEAD、收工檢查全綠，但 Pages deploy 逾時失敗（固定 10 分鐘上限）→ 線上停在上一版、費用頁落後一版，只能靠人工看到 GitHub 通知。作法＝step_pages_deploy() 讀公開 API 對照部署來源 sha；success→✅／進行中或寬限內→⏳／failure,timed_out,startup_failure→❌ 指名 run／查不到→⚠️ 未驗證（不偽裝通過）。實證：修好前真實整合抓到 ❌ run #38594138755（＝截圖那顆）；推送 197ca89e 後新 run #38602864415 success，線上 index.html／cost.html／cost_data.json 與本機 diff=0，收工檢查全部通過。測試 11/11、dividend_caliber 84/84、心跳 57/0。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-14T21:41:23.781303"
