@@ -721,6 +721,11 @@ def allowable_cash(snap: dict) -> float:
     2026-10-02 二階段（使用者裁示「統一現金口徑」）：穿透桶『現金/安全網』**已改讀此真值**
     （update_all.calc_penetration），餘數法與真值的差額（在途／未對帳，實測 589）
     改揭露於 penetration._meta.cash_in_transit，不再併入桶位。
+
+    2026-10-14 第 0 批 R2（使用者裁決）：`snapshot.cash_available`（772,607，2026-10-08 殘值）
+    經全庫盤點確認為**零消費端的過期欄位**（*.py／*.html／*.js 及 repo 外皆 0 引用；
+    僅存在於備份檔與 2026-10-01 的 CIO 口徑審查紀錄）。權威口徑＝本函式，
+    原始值依裁決「原始資料的移除須另有證據」**保留不刪**，禁再被消費。
     """
     cl = (snap or {}).get("cash_layers") or {}
     for k in ("available", "unrestricted_cash"):
@@ -1583,3 +1588,127 @@ def pledge_truth_present(snap: dict) -> bool:
     except (TypeError, ValueError):
         return False
     return pledge_collateral_market_value(s) > 0
+
+
+# ── 質押池逐池 LTV（2026-10-14 第 0 批 R1；使用者裁決 §0-R1）───────────────
+# 裁決：①不可只新增欄位——須證明每個質押池 LTV **獨立判定**（各池分別判定，不加總平均）
+#       ②門檻一律讀 thresholds_2026_0915.ltv分級_pct（禁硬編碼）
+#       ③缺門檻或缺資料時 **不得默認綠燈**（fail-closed）
+LTV_GRADE_KEYS = ("綠上限", "黃上限", "單池上限", "追繳")
+
+
+def _finite(v):
+    """有限數才回傳；其餘（None／''／'abc'／NaN／±Inf）回 None。"""
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    if f != f or f in (float("inf"), float("-inf")):
+        return None
+    return f
+
+
+def ltv_grades(snap: dict) -> dict:
+    """LTV 分級門檻（單一來源＝thresholds_2026_0915.ltv分級_pct）。
+
+    任一鍵缺失／非數值／順序無效（需 0 < 綠上限 ≤ 單池上限 ≤ 黃上限 ≤ 追繳 ≤ 100）
+    → 回 {}。呼叫端**必須**報「門檻不可得」，不得套用預設值、不得默認綠燈。
+    """
+    g = ((snap or {}).get(SOT_KEY) or {}).get("ltv分級_pct")
+    if not isinstance(g, dict):
+        return {}
+    out = {}
+    for k in LTV_GRADE_KEYS:
+        v = _finite(g.get(k))
+        if v is None:
+            return {}
+        out[k] = v
+    if not (0 < out["綠上限"] <= out["單池上限"] <= out["黃上限"] <= out["追繳"] <= 100):
+        return {}
+    out["判定單位"] = str(g.get("判定單位")
+                          or "各池分別判定（不加總平均；追繳看單池）")
+    return out
+
+
+def ltv_grade_of(ltv, grades: dict) -> str:
+    """單池 LTV → 分級字串。門檻或 LTV 不可得 → 'unverified'（不得回綠燈）。
+
+    ≥追繳 → 追繳｜≥黃上限 → 禁新增質押｜>單池上限 → 超限｜≤綠上限 → 正常｜
+    其餘（綠上限, 單池上限] → 未定義區間（門檻未定義動作，只顯示不升級）
+    """
+    if ltv is None or not grades:
+        return "unverified"
+    if ltv >= grades["追繳"]:
+        return "追繳"
+    if ltv >= grades["黃上限"]:
+        return "禁新增質押"
+    if ltv > grades["單池上限"]:
+        return "超限"
+    if ltv <= grades["綠上限"]:
+        return "正常"
+    return "未定義區間"
+
+
+# (池名, 借款真值來源, 擔保品真值來源)
+PLEDGE_POOLS = (
+    ("國泰基金質押池", "fund_pledge_loan",
+     "cathay_pledge_0911.擔保池.合計／funds_cathay_market_value"),
+    ("券商質押池", "liabilities_build_up.券商質押", "（未建池別真值）"),
+    ("保單借貸池", "policy_pledge_loan", "（未建池別真值）"),
+)
+
+
+def pledge_pools(snap: dict) -> list:
+    """質押池逐池 LTV：每池獨立一列，**不得**以加總平均或取最大值代替逐池判定。
+
+    回傳 list[dict]：{池名, 借款_twd, 擔保品市值_twd, ltv_pct, 分級, 真值, 說明,
+                     借款來源, 擔保品來源}
+    fail-closed：
+      - 借款 > 0 但擔保品市值不可得／≤ 0 → 分級 'unverified'、真值 False
+      - LTV 門檻不可得（ltv分級_pct 無效）→ 有借款的池一律 'unverified'
+      - 借款不可得或 ≤ 0 → 分級 '無借款'、真值 True（該池確實無借款，非判定失敗）
+    """
+    s = snap or {}
+    grades = ltv_grades(s)
+    lb = s.get("liabilities_build_up") or {}
+    rows = []
+    for name, borrow_src, coll_src in PLEDGE_POOLS:
+        if name.startswith("國泰"):
+            borrow = _finite(s.get("fund_pledge_loan"))
+            coll = _finite(pledge_collateral_market_value(s))
+        elif name.startswith("券商"):
+            borrow = _finite(lb.get("券商質押"))
+            coll = None
+        else:
+            borrow = _finite(s.get("policy_pledge_loan"))
+            coll = None
+
+        row = {"池名": name, "借款_twd": borrow, "擔保品市值_twd": coll,
+               "ltv_pct": None, "分級": "unverified", "真值": False, "說明": "",
+               "借款來源": borrow_src, "擔保品來源": coll_src}
+
+        if borrow is None or borrow <= 0:
+            row["分級"], row["真值"] = "無借款", True
+            row["說明"] = "無借款（不判定）"
+            rows.append(row)
+            continue
+
+        if coll is None or coll <= 0:
+            row["說明"] = ("借款 > 0 但擔保品市值不可得 → 無法判定"
+                           "（fail-closed：不得默認綠燈、不得估算）")
+            rows.append(row)
+            continue
+
+        row["ltv_pct"] = round(borrow / coll * 100, 2)
+        row["真值"] = True
+        if not grades:
+            row["真值"] = False
+            row["說明"] = ("LTV 門檻不可得（thresholds_2026_0915.ltv分級_pct）"
+                           "→ 無法分級（不得默認綠燈）")
+        else:
+            row["分級"] = ltv_grade_of(row["ltv_pct"], grades)
+            if row["分級"] == "未定義區間":
+                row["說明"] = ("介於綠上限與單池上限之間；門檻未定義動作"
+                               "（只顯示，不升級）")
+        rows.append(row)
+    return rows

@@ -5787,7 +5787,7 @@
   "credit_line_note": "⚠️ 無真值來源：可動用信用額度（未動用質押額度／保單借款空間）尚未建檔 → 壓力測試不得推估",
   "語義": "現金 1,955,740 中 900,000 係指定還債款（同時撐『清償承諾』與『追繳緩衝』，清償卡住則兩邊同時破）；可動用僅 unrestricted_cash 1,055,740；撐不撐得住一律看 unrestricted_cash，不得把指定還債款當普通現金。",
   "source": "sot_targets.cash_layers（派生：cash_total／restricted_cash／cash_floor）",
-  "derived_at": "2026-10-13"
+  "derived_at": "2026-10-14"
  },
  "metrics_registry": {
   "metric_version": "2.0.0",
@@ -5814,25 +5814,25 @@
   },
   "標註規則": "凡顯示未達標（B 級／<100%）處，一律附「（度量修正 v2.0.0，非資產變動）」；月報需獨立一行「口徑變更影響」",
   "source": "sot_targets.metrics_registry",
-  "derived_at": "2026-10-13"
+  "derived_at": "2026-10-14"
  },
  "us30y_gate": {
   "status": "OK",
-  "value": 5.598,
-  "as_of": "2026-10-12",
-  "ref_date": "2026-10-13",
+  "value": 5.563,
+  "as_of": "2026-10-13",
+  "ref_date": "2026-10-14",
   "lag_days": 1,
   "max_lag_days": 3,
   "red_line": 5.3,
-  "streak_days": 31,
+  "streak_days": 32,
   "below_red_line": false,
   "unfreeze_allowed": false,
-  "reason": "讀值日 2026-10-12（落後 1 天，在容忍值 3 天內）",
+  "reason": "讀值日 2026-10-13（落後 1 天，在容忍值 3 天內）",
   "source": "sot_targets.us30y_gate（us30y_state.json + us30y_monitor.RED_LINE）"
  },
  "redline_policy": {
   "policy": "REDLINE_LONG_DURATION_POLICY",
-  "streak_days": 31,
+  "streak_days": 32,
   "stage": 2,
   "階段區間": "30–45 天",
   "應做事項": "每週重新檢查資產配置與現金流",
@@ -5862,7 +5862,7 @@
    }
   ],
   "source": "sot_targets.redline_policy（使用者 2026-09-30 定案）",
-  "derived_at": "2026-10-13"
+  "derived_at": "2026-10-14"
  },
  "rent_note_20260930": "大義街 1 樓店面 10 月租金 24,000 於 2026-09-30 提前入帳 → 歸 2026-10-01（9 月租金實收維持 77,100）；現金 3,752,961 已含此筆。",
  "last_updated": "2026-10-08",

@@ -27,8 +27,11 @@ sys.path.insert(0, str(_HERE.parent))
 import health_alert_check as H  # noqa: E402
 
 # 乾淨基底：所有維度都在安全區，只有 usd 依情境變動（避免紅線干擾判讀）
+# 2026-10-14 第 0 批 R1：classify 新增 pools／ltv_grades 兩個關鍵字參數，
+#   LTV 紅線門檻改讀 SoT（不再硬編碼 50）→ 基底須帶入門檻，否則視為「門檻不可得」。
+LTV_G = {"綠上限": 45.0, "黃上限": 53.0, "單池上限": 50.0, "追繳": 70.0}
 SAFE = dict(ltv=24.3, cash=900000, floor=700000, cov=113.0, defense=48.5, usd=59.9,
-            th=(60.0, 65.0, 70.0))
+            th=(60.0, 65.0, 70.0), pools=None, ltv_grades=LTV_G)
 
 
 def run(**over):
@@ -185,6 +188,135 @@ class TestRedLinesUnchanged(unittest.TestCase):
         self.assertEqual(len(obs), 1)
         self.assertIn("高曝險觀察線", obs[0])
         self.assertEqual(err, [])
+
+
+class TestPledgePoolLTV(unittest.TestCase):
+    """2026-10-14 第 0 批 R1：質押池逐池判定（門檻讀 SoT、fail-closed、不用加總平均）。"""
+
+    def _pool(self, ltv, grade, borrow=5900000, note=""):
+        return [{"池名": "國泰基金質押池", "借款_twd": borrow, "ltv_pct": ltv,
+                 "分級": grade, "真值": True, "說明": note}]
+
+    def test_below_green_silent(self):
+        red, obs, err = run(pools=self._pool(40.0, "正常"), ltv=None)
+        self.assertEqual(red, [])
+        self.assertEqual(obs, [])
+        self.assertEqual(err, [])
+
+    def test_undefined_band_observe_only(self):
+        """綠上限與單池上限之間：門檻未定義動作 → 只觀察，不得升級為紅線。"""
+        red, obs, err = run(pools=self._pool(47.5, "未定義區間"), ltv=None)
+        self.assertEqual(red, [], "不得把門檻未定義區間逕判紅線")
+        self.assertEqual(len(obs), 1)
+        self.assertIn("介於綠上限與單池上限之間", obs[0])
+
+    def test_over_pool_cap_is_red(self):
+        red, _obs, _err = run(pools=self._pool(50.09, "超限"), ltv=None)
+        self.assertTrue(any("單池上限" in x for x in red))
+
+    def test_ban_zone_is_red(self):
+        red, _obs, _err = run(pools=self._pool(53.2, "禁新增質押"), ltv=None)
+        self.assertTrue(any("禁止新增質押" in x for x in red))
+
+    def test_call_zone_is_red(self):
+        red, _obs, _err = run(pools=self._pool(71.0, "追繳"), ltv=None)
+        self.assertTrue(any("追繳" in x for x in red))
+
+    def test_unverified_with_borrow_reports_data_error(self):
+        """借款 > 0 卻無法判定 → 必須報資料異常，不得默認綠燈。"""
+        red, _obs, err = run(pools=self._pool(None, "unverified", note="擔保品市值不可得"),
+                             ltv=None)
+        self.assertEqual(red, [])
+        self.assertTrue(any("無法判定 LTV" in x for x in err))
+
+    def test_no_borrow_pool_is_silent(self):
+        p = [{"池名": "券商質押池", "借款_twd": 0.0, "ltv_pct": None,
+              "分級": "無借款", "真值": True, "說明": "無借款（不判定）"}]
+        red, obs, err = run(pools=p, ltv=None)
+        self.assertEqual((red, obs, err), ([], [], []))
+
+    def test_ltv_threshold_missing_is_data_error_not_green(self):
+        """門檻不可得 → 報資料異常且不判（既不逕判紅線，也不默認綠燈）。"""
+        red, _obs, err = run(ltv=50.1, ltv_grades={})
+        self.assertEqual(red, [])
+        self.assertTrue(any("LTV 門檻來源缺失" in x for x in err))
+
+    def test_pool_ladder_monotonic(self):
+        """門檻單一來源下的分級階梯：40 → 47.5 → 50.09 → 53.2 → 71 逐級升高。"""
+        import sot_targets as S
+        g = S.ltv_grades({"thresholds_2026_0915":
+                          {"ltv分級_pct": {"綠上限": 45, "黃上限": 53,
+                                           "單池上限": 50, "追繳": 70}}})
+        seq = [(40, "正常"), (47.5, "未定義區間"), (50.09, "超限"),
+               (53.2, "禁新增質押"), (71, "追繳")]
+        self.assertEqual([S.ltv_grade_of(v, g) for v, _ in seq], [x for _, x in seq])
+
+
+class TestPledgePoolsSoT(unittest.TestCase):
+    """對真實 snapshot 驗證 sot_targets.pledge_pools：逐池、讀 SoT、fail-closed。"""
+
+    @staticmethod
+    def _snap():
+        return json.loads((_HERE.parent / "snapshot.json").read_text(encoding="utf-8"))
+
+    def test_thresholds_read_from_sot(self):
+        import sot_targets as S
+        g = S.ltv_grades(self._snap())
+        self.assertEqual((g.get("綠上限"), g.get("單池上限"), g.get("黃上限"), g.get("追繳")),
+                         (45.0, 50.0, 53.0, 70.0))
+
+    def test_each_pool_independent_rows(self):
+        """每個質押池獨立一列（不得以加總平均／取最大值代替逐池）。"""
+        import sot_targets as S
+        rows = S.pledge_pools(self._snap())
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(len({r["池名"] for r in rows}), 3)
+
+    def test_live_pool_over_cap_triggers_red(self):
+        """現況驗收：國泰池 LTV 已超單池上限 50% → 必須進紅線（過去不會觸發）。"""
+        import sot_targets as S
+        rows = S.pledge_pools(self._snap())
+        c = [r for r in rows if r["池名"].startswith("國泰")][0]
+        self.assertTrue(c["真值"], "現況應有真值")
+        self.assertGreater(c["ltv_pct"], 50.0)
+        self.assertEqual(c["分級"], "超限")
+        red, _obs, _err = run(ltv=c["ltv_pct"], pools=rows)
+        self.assertTrue(any("單池上限" in x for x in red))
+
+    def test_market_drop_scenarios(self):
+        """單池市值下跌情境（使用者指定驗收）：-6% 起進入禁新增質押層。"""
+        import copy
+        import sot_targets as S
+        s = self._snap()
+        for drop, expect in ((0, "超限"), (6, "禁新增質押"), (15, "禁新增質押")):
+            t = copy.deepcopy(s)
+            pd = t["cathay_pledge_0911"]["擔保池"]
+            pd["合計"] = pd["合計"] * (1 - drop / 100)
+            row = [r for r in S.pledge_pools(t) if r["池名"].startswith("國泰")][0]
+            self.assertEqual(row["分級"], expect, f"市值 -{drop}% 應為 {expect}")
+
+    def test_missing_collateral_fails_closed(self):
+        """擔保品市值缺 → unverified、真值 False（不得默認綠燈、不得估算）。"""
+        import copy
+        import sot_targets as S
+        t = copy.deepcopy(self._snap())
+        t["cathay_pledge_0911"] = {}
+        t.pop("funds_cathay_market_value", None)
+        row = [r for r in S.pledge_pools(t) if r["池名"].startswith("國泰")][0]
+        self.assertEqual(row["分級"], "unverified")
+        self.assertFalse(row["真值"])
+        _red, _obs, err = run(ltv=None, pools=[row])
+        self.assertTrue(any("無法判定 LTV" in x for x in err))
+
+    def test_missing_thresholds_fails_closed(self):
+        """門檻段缺 → 有借款的池一律 unverified（不得默認綠燈）。"""
+        import copy
+        import sot_targets as S
+        t = copy.deepcopy(self._snap())
+        t["thresholds_2026_0915"].pop("ltv分級_pct", None)
+        row = [r for r in S.pledge_pools(t) if r["池名"].startswith("國泰")][0]
+        self.assertEqual(row["分級"], "unverified")
+        self.assertFalse(row["真值"])
 
 
 if __name__ == "__main__":

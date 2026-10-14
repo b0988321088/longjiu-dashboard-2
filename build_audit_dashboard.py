@@ -132,9 +132,13 @@ usd_verdict = (f"🟡 {_usd_tier(s, usd_exp)}（僅顯示；政策門檻待 10 �
                else (f"🟢 未觸線（緩衝 {abs(usd_gap):.1f}pp）" if usd_exp <= usd_thr
                      else f"🔴 超 {usd_gap:.1f}pp（靠台幣側壓回）"))
 # Moneybook 真值日期（原寫死 8/21）與下次審計日（原寫死 2026-08-28）
-_mbd = str(s.get("moneybook_date") or "")[:8]
+# 2026-10-14 第 0 批 R3（使用者裁決：仍被使用的欄位須先改為明確派生值，不可直接刪除）：
+#   moneybook_date（'20260820_1'）為**無寫入者**的過期欄位，本處是它唯一的消費端 →
+#   真值來源改讀 cash_source.date（Moneybook 帳戶 CSV 匯入日），僅在其缺值時退回舊鍵。
+_mb_src = (s.get("cash_source") or {}).get("date") or s.get("moneybook_date") or ""
+_mbd = "".join(ch for ch in str(_mb_src)[:10] if ch.isdigit())[:8]
 mb_txt = (f"{int(_mbd[4:6])}/{int(_mbd[6:8])}"
-          if len(_mbd) == 8 and _mbd.isdigit() else "—")
+          if len(_mbd) == 8 else "—")
 _next_audit = (datetime.date.fromisoformat(today) + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
 LIFE = (s.get("monthly_fixed_expense", {}) or {}).get("生活支出", EXP)
 # INC-215b：實相表分項改讀 snapshot 真值（原為寫死金額與舊檔數字：安聯/第一金/鉅亨/信用卡待繳/證券檔數）

@@ -81,6 +81,19 @@ def _sync_truth_blocks(snap: dict, write: bool = True) -> dict:
     return changed
 
 
+def sync_truth_blocks(snap: dict, write: bool = True) -> dict:
+    """公開入口（2026-10-14 US30Y 同源工單／使用者裁決）。
+
+    供 **state 的寫入者**（us30y_monitor.py）在同一行程內觸發真值層同步，
+    補上原本缺失的因果鏈：monitor 08:45 寫完 us30y_state.json 後，若當日沒有
+    其他腳本順帶執行 update_data，snapshot.us30y_gate 會停留在前一日讀值，
+    造成 check_thresholds「as_of 同源」斷言 FAIL（實測 gate 5.598@10-12 對 state 5.563@10-13）。
+
+    本函式只是一層薄包裝 —— 寫入邏輯仍唯一為 _sync_truth_blocks（不另寫一份派生規則）。
+    """
+    return _sync_truth_blocks(snap, write=write)
+
+
 def _print_truth_blocks(snap: dict) -> None:
     _cl = snap.get("cash_layers") or {}
     if _cl:

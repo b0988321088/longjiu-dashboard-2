@@ -64,17 +64,52 @@ def usd_thresholds(snap):
     return g, y, r
 
 
-def classify(ltv, cash, floor, cov, defense, usd, th):
-    """純函式：五維度 + 曝險門檻 → (red, observe, data_err) 三個 list[str]。
+def classify(ltv, cash, floor, cov, defense, usd, th, pools=None, ltv_grades=None):
+    """純函式：五維度 + 曝險門檻 + 質押池 LTV → (red, observe, data_err) 三個 list[str]。
 
     抽出來是為了讓 A 案的驗收情境可被單元測試窮盡（不依賴 snapshot 現值）。
     任一維度缺真值（None）時該維度不判——原版以 `.get(k, 0)` 把缺值當 0，
     會讓「LTV 缺真值」靜默變成「不告警」，此處改為缺值即不判（fail-safe 顯示）。
+
+    2026-10-14 第 0 批 R1（使用者裁決）：
+      - **LTV 紅線門檻改讀 ltv_grades**（thresholds_2026_0915.ltv分級_pct.單池上限），
+        禁硬編碼 50；門檻不可得 → 報資料異常且不判（**不得默認綠燈**）。
+      - `ltv` 參數語意＝**單池最差 LTV**（由 sot_targets.pledge_pools 逐池取得），
+        不再傳稀釋後的全體質押率（原口徑把分母含保單＋證券 → 銀行監看線永遠不觸發）。
+      - `pools`＝sot_targets.pledge_pools() 結果：**各池分別判定**，不得以加總平均取代。
     """
     red, observe, data_err = [], [], []
 
-    if ltv is not None and ltv > 50:
-        red.append(f"LTV {ltv:.1f}% > 50（銀行監看線）")
+    _cap = None
+    if isinstance(ltv_grades, dict):
+        _cap = ltv_grades.get("單池上限")
+        if not isinstance(_cap, (int, float)):
+            _cap = None
+    if ltv is not None:
+        if _cap is None:
+            data_err.append(
+                "LTV 門檻來源缺失或無效（thresholds_2026_0915.ltv分級_pct.單池上限）"
+                "→ 本次不判 LTV（不得默認綠燈）"
+            )
+        elif ltv > _cap:
+            red.append(f"LTV {ltv:.1f}% > 單池上限 {_cap:g}%（銀行監看線）")
+
+    # 質押池逐池判定（各池分別判定；不得以加總平均或取平均取代）
+    for _p in (pools or []):
+        _nm = _p.get("池名") or "質押池"
+        _g, _v = _p.get("分級"), _p.get("ltv_pct")
+        if _g == "追繳":
+            red.append(f"{_nm} LTV {_v}% ≥ 追繳線（契約層級重大風險）")
+        elif _g == "禁新增質押":
+            red.append(f"{_nm} LTV {_v}% ≥ 黃上限（禁止新增質押）")
+        elif _g == "超限":
+            red.append(f"{_nm} LTV {_v}% > 單池上限（已超核定成數）")
+        elif _g == "未定義區間":
+            observe.append(f"{_nm} LTV {_v}% 介於綠上限與單池上限之間"
+                           "（門檻未定義動作，僅顯示）")
+        elif _g == "unverified" and (_p.get("借款_twd") or 0) > 0:
+            data_err.append(f"{_nm} 無法判定 LTV（{_p.get('說明') or '真值不足'}）")
+
     if cash is not None and floor is not None and cash < floor:
         red.append(f"現金 {cash:,.0f} < 底線 {floor:,.0f}")
     if cov is not None and cov < 100:
@@ -116,17 +151,32 @@ def main():
         last = {}
     now = datetime.date.today().isoformat()
 
-    ltv = d.get("LTV")
+    ltv = d.get("LTV")          # 稀釋後全體質押率：僅供顯示，不參與紅線判定
     usd = d.get("曝險")
     cash = d.get("現金")
     cov = d.get("覆蓋")
     defense = d.get("防禦")
     score = d.get("分數")
 
+    # 質押池逐池 LTV（2026-10-14 第 0 批 R1）：門檻讀 SoT、各池分別判定、fail-closed
+    try:
+        import sot_targets as _st
+        pools = _st.pledge_pools(snap)
+        ltv_grades_d = _st.ltv_grades(snap)
+    except Exception as e:      # 取不到 → 不得默認綠燈；交由 classify 報資料異常
+        pools, ltv_grades_d = [], {}
+        print(f"⚠️ 質押池 LTV 計算失敗（{type(e).__name__}: {e}）→ 本次不判 LTV",
+              file=sys.stderr)
+    _judged = [p["ltv_pct"] for p in pools
+               if p.get("ltv_pct") is not None and p.get("分級") != "無借款"]
+    ltv_single = max(_judged) if _judged else None
+
     red, observe, data_err = classify(
-        ltv=ltv, cash=cash, floor=FLOOR_FALLBACK, cov=cov, defense=defense,
-        usd=usd, th=usd_thresholds(snap),
+        ltv=None, cash=cash, floor=FLOOR_FALLBACK, cov=cov, defense=defense,
+        usd=usd, th=usd_thresholds(snap), pools=pools, ltv_grades=ltv_grades_d,
     )
+    # ltv 參數傳 None＝判定唯一來源改為 pools（逐池）；若仍傳單池概值，
+    # 同一池會被概值與逐池各報一次（重複推播）。ltv 參數保留供無 pools 明細時使用。
 
     worsen = []
     ls = last.get("score")
@@ -141,8 +191,10 @@ def main():
         return round(v, nd) if isinstance(v, (int, float)) else None
     state_p.write_text(json.dumps({
         "date": now, "score": score, "light": d.get("燈號"),
-        "LTV": _r(ltv), "曝險": _r(usd), "現金": _r(cash, 0),
-        "覆蓋": _r(cov, 0), "防禦": _r(defense),
+        "LTV": _r(ltv), "LTV單池最差": _r(ltv_single, 2), "曝險": _r(usd),
+        "現金": _r(cash, 0), "覆蓋": _r(cov, 0), "防禦": _r(defense),
+        "質押池": [{"池名": p.get("池名"), "LTV": p.get("ltv_pct"),
+                    "分級": p.get("分級"), "真值": p.get("真值")} for p in pools],
     }, ensure_ascii=False, indent=1), encoding="utf-8")
 
     if red or observe or worsen or data_err:

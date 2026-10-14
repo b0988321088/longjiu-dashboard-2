@@ -14,7 +14,7 @@
   5.28 → 靜默漏報。兩個原因：① 只讀 FRED（落後）② 紅線檢查寫在模式切換分支，
   模式維持時直接 return，永遠不會觸發。
 """
-import json, subprocess
+import json, subprocess, sys
 from datetime import date, datetime, timezone, timedelta
 from pathlib import Path
 
@@ -107,6 +107,41 @@ def load_state() -> dict:
 
 def save_state(state: dict) -> None:
     STATE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def sync_snapshot_gate() -> None:
+    """state 落地後，同一行程內立即同步 snapshot 真值層（US30Y 閘門／紅線政策）。
+
+    2026-10-14 US30Y 同源工單（使用者裁決）— 問題與修法：
+      本行程式是 us30y_state.json 的唯一寫入者，但 snapshot.us30y_gate 只在
+      update_data.py 被其他腳本順帶呼叫時才派生 → 若當日無 update_data 執行，
+      snapshot 會停在**前一日**讀值。實測（10-14）：gate 5.598@2026-10-12
+      對 state 5.563@2026-10-13 → check_thresholds.py 的「as_of 同源」斷言 FAIL。
+
+      修法＝建立唯一因果鏈：state 寫入者（本行程式）在寫入後立刻觸發真值層重算。
+      ① 不新增 cron；② 不改讀值來源（FRED DGS30 ＋ Yahoo ^TYX）；③ **不得手改
+      日期或利率** —— 閘門一律由 state 派生（sot_targets.us30y_gate）；④ 呼叫
+      update_data 的既有自癒入口，寫入邏輯仍唯一（不在此複製派生規則）。
+
+    fail-closed：同步失敗**不得**讓 monitor 失敗（state 已落地；閘門本身對缺漏／
+    落後會回 STALE／UNKNOWN 且 unfreeze_allowed=False），僅印警告供追蹤。
+    """
+    try:
+        sys.path.insert(0, str(BASE))
+        import update_data as _ud
+        snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        changed = _ud.sync_truth_blocks(snap, write=True)
+        if changed:
+            print("🔁 snapshot 真值層同步：" + "、".join(changed.keys()))
+        _g = snap.get("us30y_gate") or {}
+        if _g.get("status") != "OK" or not _g.get("unfreeze_allowed"):
+            print(f"⚠️ US30Y 閘門：status={_g.get('status')}｜value={_g.get('value')}%"
+                  f"@{_g.get('as_of')}｜解凍{'許可' if _g.get('unfreeze_allowed') else '不許可'}"
+                  f"（{_g.get('reason')}）")
+    except Exception as e:
+        print(f"⚠️ snapshot 真值層同步失敗（{type(e).__name__}: {e}）→ "
+              "snapshot.us30y_gate 可能落後 state；下次 update_data 執行時自癒",
+              file=sys.stderr)
 
 
 def red_line_hit(rows) -> bool:
@@ -210,6 +245,7 @@ def main():
     else:
         state.pop("red_line_since", None)
     save_state(state)
+    sync_snapshot_gate()   # 2026-10-14：state 落地後立即同步 snapshot（唯一因果鏈）
 
     if msgs:
         print("\n".join(msgs))
