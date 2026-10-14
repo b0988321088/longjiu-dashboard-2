@@ -350,12 +350,25 @@ def compute_signals(tw, cot, fed, twd, tnx, cfg, state):
         if state.get("twse", {}).get("外資連日_日期") == _tw_date and prev_days:
             prev_days = prev_days[:-1]
         streak = (prev_days + [fnet])[-3:] if fnet else prev_days
-        buy_days = sum(1 for v in streak[-3:] if v > 0)
+        # 2026-10-14 修：原本 `sum(1 for v in streak if v > 0)` 數的是「近 3 日買超**天數**」，
+        # 不是「**連續**買超天數」→ 陣列 [+2.2億, -6.1億, +7.0億] 會誤報「連2日」
+        # （前一日實為淨賣超）。改為由最新往回數、遇反向即停。
+        buy_days, sell_days = 0, 0
+        for _v in reversed(streak[-3:]):
+            if _v > 0:
+                buy_days += 1
+            else:
+                break
+        for _v in reversed(streak[-3:]):
+            if _v < 0:
+                sell_days += 1
+            else:
+                break
         if fnet < c["twse"]["外資單日賣超_紅"]:
             tw_sig, tw_note = "🔴", f"外資單日賣超 {fnet/1e8:.1f}億 大撤離 — 凍結台股加碼"
         elif buy_days >= c["twse"]["外資連續買超_綠"]:
             tw_sig, tw_note = "🟢", f"外資淨買超 {fnet/1e8:.1f}億（連{buy_days}日）— 台股慢慢買順勢"
-        elif sum(1 for v in streak[-3:] if v < 0) >= c["twse"]["外資連續賣超_黃"]:
+        elif sell_days >= c["twse"]["外資連續賣超_黃"]:
             tw_sig, tw_note = "🟡", "外資連賣 — 台股加碼暫緩，等方向"
         else:
             tw_sig, tw_note = "⚪", f"外資淨買超 {fnet/1e8:.1f}億 — 中性"
@@ -496,7 +509,11 @@ def main():
     try:
         _pn = (state.get("policy_notes") or {})
         if _pn:
-            print("\n🏛️ 政策面標註:")
+            # 2026-10-14 修：政策文字是「事件紀錄」（可能已數週前），其中的市場數值會與當日
+            # signals 矛盾（實測：政策文字寫 10Y 動能 +6.2%、USD/TWD 31.76，當日為 +5.2%／32.15）
+            # → 輸出時明確標示事件日期，並宣告市場數值一律以當日燈號為準。
+            print(f"\n🏛️ 政策面標註（政策事件：{_pn.get('記錄時間') or '未標'}）:")
+            print("  ⓘ 以下為政策事件與解讀紀錄；市場數值一律以當日燈號為準")
             for _k, _v in _pn.items():
                 if isinstance(_v, dict):
                     _c = _v.get("內容", "")
