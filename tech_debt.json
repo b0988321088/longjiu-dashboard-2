@@ -1802,5 +1802,21 @@
     "moved_from": "",
     "moved_at": "2026-10-14",
     "cleanup_reason": ""
+  },
+  {
+    "id": "TD-20261014-03",
+    "date": "2026-10-14",
+    "title": "asset_diff_history.json 當日缺 bonds 鍵（上游 snapshot.bonds 由 0.0 變 None）",
+    "severity": "P3",
+    "source": "2026-10-14 TD-20261014-02 修復衍生（CIO 審查 REJECT 指出）",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "snapshot.bonds 於 2026-10-14 由 0.0 變 None → asset_diff_monitor 產出的當日紀錄省略 bonds 鍵（10-11/12/13 皆 0.0）。讀取端一律 r.get('bonds',0) → 缺鍵等價 0.0，無計算影響（低風險）。待查：snapshot.bonds 何時/為何變 None（update_all 或資料源）。附註：審查者另指控缺 restricted_cash/fund_dividend_monthly/monthly_income/monthly_expense/rent_monthly/cathay_refinance 六欄位，經查歷史 32 筆全無該等欄位 → 屬誤判。",
+    "tags": "asset_diff,bonds,schema,資料完整性",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-14",
+    "cleanup_reason": ""
   }
 ]
