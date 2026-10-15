@@ -11130,6 +11130,16 @@
       "status": "completed",
       "source": "user"
     }
+,
+  {
+    "id": "mem-20261015231040-1202",
+    "timestamp": "2026-10-15T23:10:40.444688+08:00",
+    "agent": "Hermes",
+    "task": "2026-10-15 路線1：修復審查基建並完成發布收尾",
+    "summary": "核准修復 cio_lane 送審路徑（消除二次截斷、改走 review_chain 單一真值 build_review_prompts/review_segmented、覆蓋率 100%、守門不放寬）；對 0da98b37 重跑真審查（12 段/135,117 字元/APPROVE/blocking=[]）→ 落 RECORD → 推送；工具修復另成 60c6a299 真審查 APPROVE。最終 remote=local=1276a5f2、未推 0、線上 5 頁 200。新增『送審 SHA 契約』（禁自行補齊 40 碼；patch 空即中止）。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-15T22:24:46.019503"
