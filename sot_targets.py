@@ -526,6 +526,31 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
 
             text = re.sub(r"(台股市值型成長|美股市值型成長|防守型配息|債券|現金)\s*"
                           r"\d+(?:\.\d+)?%（([\d,]+)", _sub_bucket, text)
+            # 2026-10-15（TD-20261015-06 之一）：同一語境的第二種寫法 ——「桶名 <金額>（<佔比>%）」
+            #（金額在前）。緊急應變內文的『穿透口徑對照』句用的就是這個格式：
+            #   「台股市值型成長 2,468,426（9.1%）、美股市值型成長 9,808,190（36.2%）…」
+            # 原覆蓋只認「<佔比>%（<金額>」，故整句漏掉 → 同一報告並存兩套桶值（真 CIO blocking）。
+            _map = dict(_bucket_alias)
+            _map["現金/安全網"] = "現金/安全網"
+
+            def _sub_bucket_amt_first(m):
+                nonlocal _n_hit
+                _key = _map.get(m.group(1))
+                _new_amt, _new_pct = _pw.get(_key), _pp.get(_key)
+                if _new_amt is None or _new_pct is None:
+                    return m.group(0)
+                _n_hit += 1
+                return f"{m.group(1)} {float(_new_amt):,.0f}（{float(_new_pct):.1f}%"
+
+            text = re.sub(r"(台股市值型成長|美股市值型成長|防守型配息|債券|現金/安全網)\s*"
+                          r"[\d,]{5,}\s*（\d+(?:\.\d+)?%", _sub_bucket_amt_first, text)
+            # 美股子項（科技／非科技）同格式（金額在前）→ 金額與佔比都改 live
+            for _sub_disp, _sub_key in (("科技", "美股市值型成長_科技"),
+                                        ("非科技", "美股市值型成長_非科技")):
+                _amt_s, _p_s = _pw.get(_sub_key), _pp.get(_sub_key)
+                if _amt_s is not None and _p_s is not None:
+                    text = re.sub(rf"({_sub_disp}\s*)[\d,]{{5,}}\s*（\d+(?:\.\d+)?%",
+                                  rf"\g<1>{float(_amt_s):,.0f}（{float(_p_s):.1f}%", text)
             # 美股子項（科技／非科技）佔比同步重算（金額不動，沿用 live actual_twd）
             for _sub_disp, _sub_key in (("科技", "美股市值型成長_科技"), ("非科技", "美股市值型成長_非科技")):
                 _p = _pp.get(_sub_key)
@@ -560,6 +585,38 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
                           _stamp, text)
             # 不變量核對句的總資產（容忍半形 = 與全形 ＝）
             text = re.sub(r"([=＝]\s*總資產\s*)[\d,]{7,}", rf"\g<1>{_ta:,}", text)
+            # 2026-10-15（TD-20261015-06 之一續）：資產配置透視段落的括號註
+            #   「（全部現讀 snapshot.json：…總資產 27,085,225。）」——無 =／＝ 前綴，原規則漏掉。
+            text = re.sub(r"(總資產\s*)[\d,]{7,}", rf"\g<1>{_ta:,}", text)
+            # 子項金額（原規則刻意「金額不動」→ 修正為一併改 live；例「科技 14.8%（3,907,015；硬上限 15%）」）
+            for _sub_disp, _sub_key in (("科技", "美股市值型成長_科技"),
+                                        ("非科技", "美股市值型成長_非科技")):
+                _amt_s, _p_s = _pw.get(_sub_key), _pp.get(_sub_key)
+                if _amt_s is None or _p_s is None:
+                    continue
+                text = re.sub(rf"({_sub_disp}\s*)\d+(?:\.\d+)?%（[\d,]+",
+                              rf"\g<1>{float(_p_s):.1f}%（{float(_amt_s):,.0f}", text)
+                # 「含科技 3,907,015」這種接在動詞後的子項金額
+                text = re.sub(rf"(含\s*{_sub_disp}\s*)[\d,]{{5,}}",
+                              rf"\g<1>{float(_amt_s):,.0f}", text)
+            # 「可接受範圍」句的『現況』佔比（簡稱桶名；原規則只認全名，故漏掉）
+            _live_pct = {"台股市值型": _pp.get("台股市值型成長"),
+                         "美股市值型": _pp.get("美股市值型成長"),
+                         "債券": _pp.get("債券"),
+                         "防守型配息": _pp.get("防守型配息"),
+                         "科技": _pp.get("美股市值型成長_科技")}
+
+            def _sub_now_pct(m):
+                nonlocal _n_hit
+                _v = _live_pct.get(m.group(1))
+                if _v is None:
+                    return m.group(0)
+                _n_hit += 1
+                return f"{m.group(1)}{m.group(2)}{float(_v):.1f}%"
+
+            text = re.sub(r"(台股市值型|美股市值型|防守型配息|債券|科技)"
+                          r"(\s*(?:硬上限\s*)?[\d.]+(?:[–\-][\d.]+)?%（現況\s*)\d+(?:\.\d+)?%",
+                          _sub_now_pct, text)
             # 可動用現金／餘裕（乾粉）金額（例：「可動用 1,055,740…餘裕（乾粉）355,740」）
             try:
                 _allow = int(round(allowable_cash(snap)))
@@ -574,6 +631,31 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
             if _n_hit == 0 and not _coverable_before:
                 print("[WARN] 內文含穿透語境但未匹配任何可覆蓋樣式 → 未覆蓋；"
                       "請確認緊急應變內文格式是否已改變（不得靜默放行舊值）")
+
+    # ── 2026-10-15（TD-20261015-06 之二）：⑧「us30y_gate 現值欄 vs 可動用現金」一致性待查句 ──
+    #   該句來自前一產出日的緊急應變內文，前提＝兩值真的不同。
+    #   前提消失（真值層已自癒同步）→ 改為「本報告產出時已同步」；前提仍成立 → 原句原樣保留。
+    #   原則：不為綠燈消警示 —— 只有真值層真的已一致時才改寫，且保留可追溯字樣。
+    try:
+        _conds = (((snap.get("us30y_gate") or {}).get("unfreeze_conditions") or {})
+                  .get("conditions") or [])
+        _gate_cash = None
+        for _c in _conds:
+            if isinstance(_c, dict) and "現金" in str(_c.get("名稱") or ""):
+                _gate_cash = _c.get("現值")
+                break
+        _allow_now = int(round(allowable_cash(snap)))
+        _pat8 = (r"⑧\s*一致性待查（[^）]*）：\s*snapshot\.us30y_gate\.unfreeze_conditions"
+                 r"[^。]*。[^。]*。")
+        if _gate_cash is not None and int(round(float(_gate_cash))) == _allow_now:
+            if re.search(r"⑧\s*一致性待查", text):
+                text = re.sub(_pat8, "⑧ 一致性待查：本報告產出時已同步（us30y_gate 解凍條件之"
+                                     f"現值欄＝可動用現金 {_allow_now:,}，兩者一致）。", text)
+        elif re.search(r"⑧\s*一致性待查", text):
+            print(f"[WARN] 內文含 ⑧ 一致性待查，但 us30y_gate 現值（{_gate_cash}）"
+                  f"≠ 可動用現金（{_allow_now:,}）→ 原句保留（不消警示）")
+    except Exception as _e_g8:  # noqa: BLE001 — fail-visible，不靜默
+        print(f"[WARN] ⑧ 一致性待查覆蓋失敗（{type(_e_g8).__name__}: {_e_g8}）→ 原句保留")
     return text
 
 
