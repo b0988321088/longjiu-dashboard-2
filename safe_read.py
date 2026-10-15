@@ -130,9 +130,9 @@ def _selftest() -> int:
         ("F298765432", False),
         ("0412345678901234", False),    # 16 位帳號
         ("5194-1234-5678-9012", False),  # 卡號
-        ("sk-abcdefghijklmnop1234", False),
-        ("AIzaSyA1234567890abcdefghijklmnopqrs", False),
-        ("ghp_abcdefghijklmnopqrstuvwxyz0123456789", False),
+        ("sk-FAKEFAKEFAKEFAKEFAKEFAKE", False),   # 憑證樣式（2026-10-15 P0：改為明顯假資料，原樣本已移出）
+        ("AIzaFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKE", False),   # 憑證樣式（2026-10-15 P0：改為明顯假資料，原樣本已移出）
+        ("ghp_FAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKE", False),   # 憑證樣式（2026-10-15 P0：改為明顯假資料，原樣本已移出）
         ("user@example.com", False),
         ("0912-345-678", False),
         # 這些必須原封不動
