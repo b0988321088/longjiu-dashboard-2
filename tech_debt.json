@@ -1907,15 +1907,15 @@
     "title": "日報「五桶佔比」段落未納入舊值覆蓋（TD-20261013-09 殘留缺口）",
     "severity": "P1",
     "source": "真 CIO 完整審查 2026-10-15（blocking）",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-15)：修法依原工單『於 sot_targets.refresh_stale_amounts 新增即時推導覆蓋（不硬編）』落地。程式 commit 7f7a57fb（tree 136d8d8107b9）＋產物 1345664c（tree 2aa7d2d38720）；CIO-Gemini 真審查 1/1 段＋30/30 段 APPROVE、0 blocking，各自有效 RECORD，已推 origin/clean-main（未推送 0）。驗收逐項：①tools/test_daily_report_penetration_live.py 9 PASS／0 FAIL（含負向自測 C1／C2）②日報舊值歸零（1,055,740／26,970,031／355,740／26.4%／36.4%／3.9%／2,468,426／9,808,190／3,907,015／5,901,175／4,782,077／7,114,069／27,085,225 皆 0；線上與本機 md5 一致）③心跳 tools/verify_ficriteria.py 57 PASS／0 FAIL ④口徑 check_dividend_caliber.py 90/91 — 唯一 FAIL『變更範圍：無未宣告的程式檔異動』點名 site_sync.py＋tools/test_site_isolation.py，屬原 P0 公開面隔離工作班未提交項目（dangling 98c553cd），已獨立列管 TD-20261015-09，非本項造成、不阻塞結案。覆蓋規則：金額在前的桶值句式／子項（科技・非科技）金額與佔比／總資產括號註／可接受範圍『現況』佔比／⑧ 一致性待查前提驅動（真值一致→標示已同步；不一致→原句保留、不消警示）。",
     "detail": "緊急應變內文嵌入日報時，五桶佔比句＋不變量句（現金 1,055,740／總資產 26,970,031／債券 26.4%／美股 36.4%）未經 sot_targets.refresh_stale_amounts 覆蓋 → 同一報告兩套真值。修法：於該函式新增五桶佔比／簡稱佔比／不變量總資產／可動用／乾粉之即時推導覆蓋（不硬編）。驗收：tools/test_daily_report_penetration_live.py 9/0（含負向自測）、日報舊值歸零、心跳 57/0、口徑 91/91。",
     "tags": "日報,穿透摘要,待發布",
     "due_date": "2026-10-15",
     "owner": "工程端",
     "moved_from": "",
     "moved_at": "2026-10-15",
-    "cleanup_reason": ""
+    "cleanup_reason": "✅ 已結案(2026-10-15)：修法依原工單『於 sot_targets.refresh_stale_amounts 新增即時推導覆蓋（不硬編）』落地。程式 commit 7f7a57fb（tree 136d8d8107b9）＋產物 1345664c（tree 2aa7d2d38720）；CIO-Gemini 真審查 1/1 段＋30/30 段 APPROVE、0 blocking，各自有效 RECORD，已推 origin/clean-main（未推送 0）。驗收逐項：①tools/test_daily_report_penetration_live.py 9 PASS／0 FAIL（含負向自測 C1／C2）②日報舊值歸零（1,055,740／26,970,031／355,740／26.4%／36.4%／3.9%／2,468,426／9,808,190／3,907,015／5,901,175／4,782,077／7,114,069／27,085,225 皆 0；線上與本機 md5 一致）③心跳 tools/verify_ficriteria.py 57 PASS／0 FAIL ④口徑 check_dividend_caliber.py 90/91 — 唯一 FAIL『變更範圍：無未宣告的程式檔異動』點名 site_sync.py＋tools/test_site_isolation.py，屬原 P0 公開面隔離工作班未提交項目（dangling 98c553cd），已獨立列管 TD-20261015-09，非本項造成、不阻塞結案。覆蓋規則：金額在前的桶值句式／子項（科技・非科技）金額與佔比／總資產括號註／可接受範圍『現況』佔比／⑧ 一致性待查前提驅動（真值一致→標示已同步；不一致→原句保留、不消警示）。"
   },
   {
     "id": "TD-20261015-07",
@@ -1945,6 +1945,22 @@
     "tags": "weekly_report,US30Y,燈號口徑,CIO-REJECT",
     "due_date": "2026-10-19",
     "owner": "工程端",
+    "moved_from": "",
+    "moved_at": "2026-10-15",
+    "cleanup_reason": ""
+  },
+  {
+    "id": "TD-20261015-09",
+    "date": "2026-10-15",
+    "title": "P0 公開面隔離（site/ 白名單）工作班產出未提交：dangling commit 98c553cd 歸屬與可達性待查",
+    "severity": "P0",
+    "source": "2026-10-15 日報即時口徑修復結案時的範圍驗證 90/91（唯一 FAIL 點名之兩檔）",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "site_sync.py（11,689 bytes）與 tools/test_site_isolation.py（5,129 bytes）為 2026-10-15 16:06 另一工作班『P0 公開面隔離 — site/ 白名單發布面、site_sync 產線接線、隔離測試（21 項）』之產出（對應 commit 98c553cd）。兩檔目前為工作區未追蹤檔，而 98c553cd 已為 dangling（不在任何分支、不在 origin/clean-main）。待處理：①確認該 commit 歸屬與作者 ②確認分支可達性（是否重建分支／自 reflog 取回）③確認是否已有既有 CIO 審查紀錄（.git/cio_reviews/ 對應檔）④決定由該班自行提交或作廢重做。本卡獨立列管，不阻塞 TD-20261015-06 結案；亦不加入 check_dividend_caliber 的 _OTHER_OWNER（不以歸屬宣告消除 FAIL）。",
+    "tags": "公開面隔離,P0,待發布,跨班",
+    "due_date": "2026-10-16",
+    "owner": "原 P0 公開面隔離工作班",
     "moved_from": "",
     "moved_at": "2026-10-15",
     "cleanup_reason": ""
