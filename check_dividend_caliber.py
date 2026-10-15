@@ -769,6 +769,29 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "emergency_1330.py",   # §4：_commit_own() 預設不提交（LJ_EMERGENCY_COMMIT 閘門）
            "test_emergency_no_commit.py",   # §4：預設零 git 寫入＋產出/告警不受影響（35 條；含 E11/E12 真 git 沙盒）
            "test_html_publish_consistency.py",   # §5：producer ↔ 白名單 ↔ 輸出路徑一致性（19 條）
+           # 2026-10-15 21:5x 本輪（使用者裁決「緊急應變產線採 B 修正版：產出與驗收可以完成，
+           #   發布權限仍受獨立閘門控制；不得 commit／push／發布，也不得間接繞過」）：
+           #   ① gen_emergency_taiex_auto.py（本次宣告）：標題／副標改依 JSON `source` 判「分析標的」
+           #      （INC-214b）—— 21:30 美股班不再被渲染成「台股緊急應變報告」；兩報告家族同批重產。
+           #   ② regenerate_report.py（已宣告）：新增 LJ_EMERGENCY_LANE「只收緊」車道
+           #      （13:00／21:30 班即使 prompt 漂移也不會 commit/push）＋ emergency_taiex_report_*
+           #      納入 stage 候選；發布閘門（publish_gate／publish_plan／LJ_EMERGENCY_COMMIT）不動。
+           #   ③ run_daily.py（已宣告）：檔頭標明四階段口徑（本檔天然只產出＋驗收）。
+           #   ④ publish_allowlist.json（已宣告）：白名單條目追加 emergency_taiex_report_*.html。
+           #   ⑤ tools/test_html_publish_consistency.py（已宣告）：覆蓋擴及兩家族＋修正 P5b 過期斷言。
+           "gen_emergency_taiex_auto.py",
+           # 2026-10-15 21:5x 本輪續（同裁決，一次收尾）：③ check_dashboard_sync.py 第 1 條
+           #   排除 `window.` 之後的樣式（build_dashboard 合法注入的 JS 變數
+           #   `window.__LJ_LIVE_ROWS__` 被誤判為殘留 → 本檔恆紅）；④ tools/
+           #   test_dashboard_sync_placeholder.py（新增，鑑別力：位置型佔位符仍必須被抓到）。
+           #   註：同批未宣告的 site_sync.py／tools/test_site_isolation.py 非本輪產物
+           #   （10/15 16:24 公開面隔離工作班殘留，另列管 TD-20261015-09），本輪不納入、不代宣告。
+           "test_dashboard_sync_placeholder.py",
+           # 2026-10-15 22:2x 本輪續（使用者裁決「路線 A：先處理 13bd9b28 真缺陷，再與 A＋B
+           #   合併成單一可完整審查的 commit」）：① pending_reconcile.py（已宣告）修時間戳同步
+           #   （狀態重算時維護 updated_at ＋ 既有落後項自我修復）與紅線／模式A streak 語意標示；
+           #   ② tools/test_pending_reconcile_stamp.py（新增；T0–T5 共 8 條，含負向與守恆）。
+           "test_pending_reconcile_stamp.py",
            # 2026-10-15 同批延伸（使用者裁決「修 calc_penetration 的餘數法」）：
            #   update_all.py 桶位先取整、餘數與在途差額改整數相減 → 不變量整數層精確成立
            "update_all.py",

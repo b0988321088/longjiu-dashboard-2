@@ -58,12 +58,13 @@
    "label": "首頁重要連結報告頁（緊急應變／週報，純呈現 HTML）",
    "patterns": [
     "emergency_report_*.html",
+    "emergency_taiex_report_*.html",
     "weekly_report_*.html"
    ],
-   "producer": "emergency_1330.py（寫入）／build_weekly_report.py（寫入）｜regenerate_report.py（stage 白名單認領）",
-   "evidence": "2026-10-15 使用者裁決（B1｜HTML 方案 A：納入版控＋白名單）。事故根因：兩檔由首頁「重要連結」指向（links_config 前綴 glob），但兩個 producer 都不是每日 commit 的產物來源 → 檔案從未進版控 → 線上 404（check_dashboard_sync 第 12 項 FAIL，2026-10-15 實測）。同日 producer stage 白名單已同步納入 regenerate_report.py 候選清單。",
+   "producer": "emergency_1330.py（寫入）／gen_emergency_taiex_auto.py（兩報告家族重產，13:00 台股班／21:30 美股班）／build_weekly_report.py（寫入）｜regenerate_report.py（stage 白名單認領）",
+   "evidence": "2026-10-15 使用者裁決（B1｜HTML 方案 A：納入版控＋白名單）。事故根因：兩檔由首頁「重要連結」指向（links_config 前綴 glob），但兩個 producer 都不是每日 commit 的產物來源 → 檔案從未進版控 → 線上 404（check_dashboard_sync 第 12 項 FAIL，2026-10-15 實測）。同日 producer stage 白名單已同步納入 regenerate_report.py 候選清單。 2026-10-15 21:5x 使用者裁決（緊急應變產線 B 修正版）：emergency_taiex_report_*.html 長期未納入版控（首頁連結若指向它必 404）→ 一併納入同一套受控產物規則；限制＝只允許明確指定的報告 HTML，不得使用整個目錄的廣泛 stage。",
    "risk": "low",
-   "note": "單層樣式（'*' 不跨 '/'）且明示 .html 副檔名；僅涵蓋這兩個家族位於 repo 根目錄的當日報告頁，不含 index.html／日報／差異頁（仍在強制真 CIO 範圍）。放行僅及於「變更集合限於本條目涵蓋檔案」的 commit；夾帶任何其他路徑即未命中本條目。"
+   "note": "單層樣式（'*' 不跨 '/'）且明示 .html 副檔名；僅涵蓋這兩個家族位於 repo 根目錄的當日報告頁，不含 index.html／日報／差異頁（仍在強制真 CIO 範圍）。放行僅及於「變更集合限於本條目涵蓋檔案」的 commit；夾帶任何其他路徑即未命中本條目。 2026-10-15 追加：emergency_taiex_report_*.html 同為單層樣式且明示 .html 副檔名，producer 與 emergency_report_* 同批（gen_emergency_taiex_auto.py）；未登記路徑仍一律真 CIO 審查。"
   }
  ]
 }

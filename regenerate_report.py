@@ -28,7 +28,15 @@ BASE = Path(__file__).resolve().parent
 TODAY = dt.today().isoformat()
 OUT = BASE / f"daily_report_v2_{TODAY}.html"
 CNY_TWD = 4.73  # 2026-09-14 使用者確認（200 CNY≈944 TWD）；Yahoo CNYTWD 4.734
-_NO_PUSH = "--no-push" in sys.argv  # 2026-09-17 INC-210：核准前本機產出用（不 commit/push）
+_EMERGENCY_LANE = os.environ.get("LJ_EMERGENCY_LANE") == "1"
+_NO_PUSH = ("--no-push" in sys.argv) or _EMERGENCY_LANE
+# 2026-09-17 INC-210：核准前本機產出用（不 commit/push）。
+# 2026-10-15 使用者裁決（緊急應變產線 B 修正版）：「產出與驗收可以完成，發布權限仍受
+#   獨立閘門控制」。四階段口徑就此分離 —— ①產物生成＋②驗收＝本檔一律執行；
+#   ③提交＋④發布＝預設關閉，只能走經授權的發布路徑（07:00 主產線 morning_deploy.py）。
+#   LJ_EMERGENCY_LANE=1 為「只收緊」的車道標記（13:00 台股／21:30 美股緊急應變 cron 設定）：
+#   即使 prompt 漂移成不帶 --no-push，本車道呼叫也不會 commit/push。不新增授權途徑、
+#   不繞過發布閘門（publish_gate／publish_plan／LJ_EMERGENCY_COMMIT 全部不動）。
 
 # ============ 0a. 日期滾動（INC-210，2026-09-17） ============
 # 症狀：09-17 07:00 晨間產線產出的日報/差異分析標成 09-16（daily_report_v2_2026-09-17.html
@@ -662,7 +670,9 @@ def _cio_review_and_record() -> tuple[bool, str]:
 
 if _NO_PUSH:
     # INC-210：核准前本機產出（交付鐵則：改完先傳本地檔案，使用者說「推」才 push）
-    print("\n🧪 --no-push：本機檔案已產出，略過 commit/push（核准後再跑一次不帶此參數）")
+    # 2026-10-15：緊急應變車道固定只做產物生成＋驗收，提交／發布不在本班職權內。
+    _why_np = "LJ_EMERGENCY_LANE=1（緊急應變車道）" if _EMERGENCY_LANE else "--no-push"
+    print(f"\n🧪 {_why_np}：產物生成＋驗收完成；略過 commit/push（發布須另行授權）")
 elif ok and _cio_ok:
     # stage + commit 所有報表檔案
     # ⚠️ 8/21 實踩：git add 清單含不存在的檔 → 整批 add 失敗 → 空 commit → Pages 404
@@ -706,6 +716,11 @@ elif ok and _cio_ok:
     #   本輪起改由本清單明確認領；仍須通過 dirty_gate 的「本輪產物／dirty 定點認領」判準
     #   （既有他班 dirty 不會被夾帶進 commit），發布面由 publish_allowlist.json 對應條目放行。
     _push_candidates.append(f'emergency_report_{TODAY}.html')
+    # 2026-10-15 21:5x 使用者裁決（緊急應變產線 B 修正版）：emergency_taiex_report_*.html
+    #   與 emergency_report_*.html 同一批產出（gen_emergency_taiex_auto.py 同時寫兩檔），
+    #   長期未納入版控 → 首頁連結若指向它必 404。兩家族同一套受控產物規則（逐字檔名
+    #   認領，不做目錄級 stage）；白名單對應條目＝publish_allowlist.json「首頁重要連結報告頁」。
+    _push_candidates.append(f'emergency_taiex_report_{TODAY}.html')
     _push_candidates.append(f'weekly_report_{TODAY}.html')
     # 9c3. 收尾重刷連結（2026-09-22 根因修正）
     #      根因：步驟 9c 的 update_dashboard_links.py 跑在 #11（穿透報告）與上面

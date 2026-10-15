@@ -42,7 +42,21 @@ body{background:var(--bg);color:var(--txt);font-family:"Segoe UI","PingFang TC",
 def load_report():
     d = json.loads((BASE / "data" / "emergency_llm_analysis.json").read_text(encoding="utf-8"))
     gen = d.get("generated_at") or NOW
-    return gen, d.get("full_report", ""), d.get("market_snapshot", {})
+    return gen, d.get("full_report", ""), d.get("market_snapshot", {}), str(d.get("source", ""))
+
+
+def label_from_source(source: str):
+    """INC-214b：標題／副標依「分析標的」（JSON source 欄位）決定，不依產出時段。
+
+    13:00 gate 與 21:30 固定班共用同一支渲染器；手動補跑／延遲／跨時段執行時，
+    用小時分白會把美股分析標成台股（2026-09-18 實踩）。回傳 (標的, 副標)。
+    """
+    s = source or ""
+    if "美股" in s:
+        return "美股", "分析標的：美股開盤"
+    if "台股" in s:
+        return "台股", "分析標的：台股盤中"
+    return "", "分析標的：未標示（source 缺漏）"
 
 
 def split_sections(text):
@@ -125,14 +139,18 @@ def render(kpis_html, sec_html, pen_html, title, sub):
 
 def build():
     global TODAY, NOW
-    gen, report, snap = load_report()
+    gen, report, snap, source = load_report()
     if gen and len(gen) >= 10:
         TODAY = gen[:10]
         NOW = gen
     secs = split_sections(report)
     n = len(report)
     print(f"[JSON] full_report len = {n} chars (generated_at={gen})")
+    print(f"[標的] source={source!r} → {label_from_source(source)[0] or '(未標示)'}")
     assert n > 1500, f"full_report too short: {n}"
+    _label, _sub_label = label_from_source(source)
+    _title = f"{_label}緊急應變報告 {TODAY}｜龍九控股" if _label else f"緊急應變報告 {TODAY}｜龍九控股"
+    _sub = f"資料時間 {NOW} 台北｜{_sub_label}｜完整分析（六大章節）"
 
     kpis_html = kpis_from_snapshot(snap)
     sec_html = "".join(
@@ -141,10 +159,8 @@ def build():
     pen_html = pen_card()
     rail = BASE / f"emergency_report_{TODAY}.html"
     gh = BASE / f"emergency_taiex_report_{TODAY}.html"
-    rail.write_text(render(kpis_html, sec_html, pen_html, f"台股緊急應變報告 {TODAY}｜龍九控股",
-                           f"資料時間 {NOW} 台北｜完整分析（六大章節）"), encoding="utf-8")
-    gh.write_text(render(kpis_html, sec_html, pen_html, f"台股緊急應變報告 {TODAY}｜龍九控股",
-                         f"資料時間 {NOW} 台北｜完整分析（六大章節）"), encoding="utf-8")
+    rail.write_text(render(kpis_html, sec_html, pen_html, _title, _sub), encoding="utf-8")
+    gh.write_text(render(kpis_html, sec_html, pen_html, _title, _sub), encoding="utf-8")
     print(f"[HTML] {rail.name} ({rail.stat().st_size:,} bytes)")
     print(f"[HTML] {gh.name} ({gh.stat().st_size:,} bytes)")
     print("[DONE]", NOW)

@@ -46,6 +46,14 @@ for m in re.finditer(_PH, html):
         continue
     if _adjacent_cjk(html, m.start(), m.end()):
         continue
+    # 2026-10-15（合法 JS 變數誤判，本檔恆紅）：build_dashboard 會把即時列資料寫成
+    #   `window.__LJ_LIVE_ROWS__ = [...]`，並由同檔 JS 讀回（`window.__LJ_LIVE_ROWS__ && ...`）
+    #   —— 那是**已注入的 JS 變數**，不是未注入的版型佔位符，卻被本規則當成殘留 → 每天假 FAIL。
+    # 判準：緊接在 `window.` 之後者＝JS 命名空間存取；版型佔位符（__DR_*__／__RISK_*__ …）
+    #   永遠不會以 `window.` 形式出現 → 排除，其餘位置照擋（負向自測見
+    #   tools/test_dashboard_sync_placeholder.py：位置型佔位符注入仍必須被抓到）。
+    if html[max(0, m.start() - 7):m.start()] == "window.":
+        continue
     _bad.append(m.group(0))
 phs = sorted(set(_bad))
 if phs:

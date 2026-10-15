@@ -5,6 +5,12 @@
   1. daily_report_v2_{date}.html
   2. index.html（靜態儀表板，懶更新）
   3. changelog_{date}.md（差異說明）
+
+發布口徑（2026-10-15 使用者裁決｜緊急應變產線 B 修正版）：
+  本檔＝①產物生成＋②驗收，**不做③提交、不做④發布**（全檔零 git 寫入、零 auto_push）。
+  緊急應變 cron 的路徑一律「產出＋驗收」；提交／發布只走經授權的發布路徑
+  （07:00 主產線 morning_deploy.py → regenerate_report.py，經 CIO 審查與推送閘門）。
+  與 regenerate_report.py 的 `LJ_EMERGENCY_LANE` 收緊口徑一致：本檔無需旗標即天然不發布。
 """
 from __future__ import annotations
 import public_mask  # 2026-10-12 資安處置：公開面遮蔽（唯一實作）

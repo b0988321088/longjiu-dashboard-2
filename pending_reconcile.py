@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import shutil
 import sys
 from datetime import datetime
@@ -32,6 +33,31 @@ import pending_store  # noqa: E402  （唯一寫入通道：跨程序互斥鎖 �
 def _raw_of(item: dict) -> str:
     """卡片目前可讀的敘述狀態（新制在 status_raw；舊制在 status）。"""
     return str(item.get("status_raw") or item.get("status") or "")
+
+
+# ── 時間戳同步（2026-10-15 真 CIO 審查 finding 修復） ────────────────────────
+# 症狀：pending_reconcile 只寫 status_raw／status，未維護 updated_at →
+#   「敘述已重算到 10-15、updated_at 仍停在 10-14」的資料一致性缺陷
+#   （審查 blocking：「status_raw 已更新至 2026-10-15 真值重算，但 updated_at 仍為 10-14」）。
+# 修法：①正常的狀態重算 → 同步 updated_at；②既有落後項（本檔改版前寫入的）由
+#   _stamp_lagging() 自我修復，不需手改資料檔（資料檔一律由本檔產出）。
+_RECALC_STAMP = re.compile(r"（(\d{4}-\d{2}-\d{2}) 真值重算）")
+
+
+def _stamp_iso() -> str:
+    """本次重算時間戳（與本檔既有 updated_at 格式一致：帶時區位移、秒級）。"""
+    return datetime.now().astimezone().isoformat(timespec="seconds")
+
+
+def _stamp_lagging(item: dict) -> bool:
+    """status_raw 內含的『真值重算』日期 > updated_at 日期 → 時間戳落後 → 需補正。"""
+    m = _RECALC_STAMP.search(_raw_of(item))
+    if not m:
+        return False
+    _ua = str(item.get("updated_at") or "")[:10]
+    return (not _ua) or (m.group(1) > _ua)
+
+
 PEND = BASE / "pending_decisions.json"
 ARCH = BASE / "pending_decisions_archive.json"
 SAFE_LINE = 40_000
@@ -193,9 +219,14 @@ def _main_impl() -> int:
         # 解凍判定改列實體未達條件（現金／質押 LTV／還本安全閥）。
         _conds = ev.get("unfreeze_conditions") or {}
         _unmet = _conds.get("未達") or ["條件無法計算"]
-        status = (f"⏸ 條件未成立（{today} 真值重算）：US30Y {ev['us30y']}%（as_of {ev['us30y_as_of']}，"
-                  f"紅線連續 {ev.get('red_line_streak')} 日）＝宏觀風險警示"
-                  f"（{'觸發' if ev.get('us30y_risk_warning') else '未觸發'}），不否決台股分批；"
+        # 2026-10-15（審查 finding：語意混用）：舊文字只寫「紅線連續 N 日」而未標門檻，
+        #   與「模式A（≥5.20%）連續日數」在閱讀上混為一談 → 審查者拿模式A 的 32／33 質疑
+        #   紅線的 17。兩個數字都保留、門檻寫明；紅線值一律讀真值源 red_line_streak
+        #   （us30y_state.json，由 us30y_monitor.red_line_streak() 計算），不為迎合審查改數值。
+        status = (f"⏸ 條件未成立（{today} 真值重算）：US30Y {ev['us30y']}%（as_of {ev['us30y_as_of']}）"
+                  f"＝宏觀風險警示（{'觸發' if ev.get('us30y_risk_warning') else '未觸發'}），不否決台股分批；"
+                  f"紅線（≥5.30%）連續 {ev.get('red_line_streak')} 交易日"
+                  f"（模式A警戒（≥5.20%）連續 {ev.get('us30y_streak')} 日，兩者不同口徑）；"
                   f"未達＝{'、'.join(_unmet)}"
                   f"（解凍{'許可' if ev['unfreeze_allowed'] else '不許可'}｜閘門模式 {ev.get('gate_mode')}）")
         return {"kind": "update", "status": status, "evidence": ev["gate_reason"]}
@@ -218,18 +249,29 @@ def _main_impl() -> int:
             arch.append(item)
             actions.append({"動作": "自動閉環", "title": title, "證據": res["evidence"]})
             continue
-        if res and res["kind"] == "update" and res.get("status") != _raw_of(item):
+        if res and res["kind"] == "update":
             _new = res["status"]
             _old = _raw_of(item)
-            actions.append({"動作": "狀態重算", "title": title, "舊": _old[:70],
-                            "新": _new[:120], "證據": res.get("evidence")})
-            # 2026-10-06（閘門回歸）：schema 契約＝status 只能是四態、原敘述保留在 status_raw。
-            #   舊寫法把敘述字串直接寫進 status → check_dividend_caliber「status 正規化為四態」亮紅
-            #   → Task1+2 驗證器第 5 類擋關 → 10/05、10/06 晨間產線「有產出但不推送」。
-            #   status_raw 只保留一層「舊 raw」歷史，避免每日重算無限膨脹。
-            item["status_raw"] = (_new if not _old or _old in _new
-                                  else f"{_new} ｜ 舊 raw：{_old.split(' ｜ 舊 raw：')[0]}")
-            item["status"] = norm_status(_new)
+            if _new != _old:
+                actions.append({"動作": "狀態重算", "title": title, "舊": _old[:70],
+                                "新": _new[:120], "證據": res.get("evidence")})
+                # 2026-10-06（閘門回歸）：schema 契約＝status 只能是四態、原敘述保留在 status_raw。
+                #   舊寫法把敘述字串直接寫進 status → check_dividend_caliber「status 正規化為四態」亮紅
+                #   → Task1+2 驗證器第 5 類擋關 → 10/05、10/06 晨間產線「有產出但不推送」。
+                #   status_raw 只保留一層「舊 raw」歷史，避免每日重算無限膨脹。
+                item["status_raw"] = (_new if not _old or _old in _new
+                                      else f"{_new} ｜ 舊 raw：{_old.split(' ｜ 舊 raw：')[0]}")
+                item["status"] = norm_status(_new)
+                # 2026-10-15：敘述重算 → updated_at 同步（審查 finding：時間戳必須跟內容走）
+                item["updated_at"] = _stamp_iso()
+            elif _stamp_lagging(item):
+                # 既有落後項自我修復：內容（真值重算）已寫入但時間戳未同步 → 只補時間戳、不動敘述
+                _ts = _stamp_iso()
+                actions.append({"動作": "時間戳同步", "title": title,
+                                "舊": f"updated_at {str(item.get('updated_at'))[:19]}",
+                                "新": f"updated_at {_ts}",
+                                "證據": "status_raw 的重算日期晚於 updated_at（2026-10-15 審查 finding 修復）"})
+                item["updated_at"] = _ts
         keep.append(item)
 
     print(f"═══ Pending 真值對帳（{today}｜{'寫入' if apply else 'dry-run'}）═══")
