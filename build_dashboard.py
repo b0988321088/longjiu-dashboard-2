@@ -1132,10 +1132,15 @@ def main():
                    f'<span class="text-teal-400">▮ 房租 {_pc(_rent):.0f}%</span>'
                    f'<span class="text-slate-500">▮ 覆蓋 {_cov:.1f}%（保守底線）</span>'
                    f'<span class="text-slate-300">｜當月實收 {_cov_act:.1f}%'
-                   f'（配息 {_sc["div_act"]:,.0f} ＋ 房租 {_sc["rent_act"]:,.0f}）</span></div>'
+                   f'（配息 {_sc["div_act"]:,.0f} ＋ 房租 {_sc["rent_act"]:,.0f}）</span>'
+                   # 2026-10-15 使用者裁決：新增常態層並列（基金常態 80,000＋保單常態 97,072；
+                   # 保單值為暫定規劃值）。與實收／保守互不覆寫。
+                   f'<span class="text-amber-300">｜常態 {_sc["norm"]["coverage"]:.1f}%'
+                   f'（配息 {_sc["div_norm"]:,.0f} ＋ 房租 {_sc["rent_norm"]:,.0f}）</span></div>'
                    f'<div class="flex flex-wrap gap-3 text-[10px] mt-1">'
                    f'<span class="text-emerald-400">💰 月盈餘：保守 {_pcal.surplus_text(_sc["con"]["surplus"])}'
-                   f'／實收 {_pcal.surplus_text(_sc["act"]["surplus"])}</span>'
+                   f'／實收 {_pcal.surplus_text(_sc["act"]["surplus"])}'
+                   f'／常態 {_pcal.surplus_text(_sc["norm"]["surplus"])}</span>'
                    f'<span class="text-amber-400">🏁 FI 跑道（極端情境口徑）：{_pcal.runway_text(_sc["extreme"]["runway_days"])}'
                    f'、實收情境 {_pcal.runway_text(_sc["act"]["runway_days"])}</span>'
                    f'<span class="text-amber-300">｜壓力情境覆蓋 {_sc["stress"]["coverage"]:.1f}%'
@@ -1144,7 +1149,8 @@ def main():
                    f'{_cash_note}</div>')
         tpl = tpl.replace("__INC_BAR__", _bar)
         tpl = tpl.replace("__INC_LEGEND__", _legend)
-        tpl = tpl.replace("__INC_COV__", f"{_cov:.1f}% 覆蓋（保守底線）｜實收 {_cov_act:.1f}%")
+        tpl = tpl.replace("__INC_COV__", f"{_cov:.1f}% 覆蓋（保守底線）｜實收 {_cov_act:.1f}%"
+                                       f"｜常態 {_sc['norm']['coverage']:.1f}%")
         tpl = tpl.replace("__INC_SUMMARY__", f"薪水 {_fmt(_sal)} + 配息保守 {_fmt(_div)} + 房租 {_fmt(_rent)} = {_fmt(_inc_tot)} TWD")
         tpl = tpl.replace("__INC_EXPENSE__", _fmt(_exp))
         tpl = tpl.replace("__INC_SALARY__", _fmt(_sal))
@@ -1154,7 +1160,7 @@ def main():
         # 靜態 fallback 必須與 JS 的 gotTotal（_salaryA + divTotal + rentGot）同口徑，
         # 不得放常態總計（_inc_tot）。正常情況該 span 會被 L481 的 data-k 注入覆寫。
         tpl = tpl.replace("__INC_TOTAL__", _fmt(got_total))
-        print(f"  💰 被動收入結構條：薪水 {_fmt(_sal)} / 配息 {_fmt(_div)}（保守） / 房租 {_fmt(_rent)}｜覆蓋 {_cov:.1f}%（保守底線）｜當月實收 {_cov_act:.1f}%")
+        print(f"  💰 被動收入結構條：薪水 {_fmt(_sal)} / 配息 {_fmt(_div)}（保守） / 房租 {_fmt(_rent)}｜覆蓋 {_cov:.1f}%（保守底線）｜當月實收 {_cov_act:.1f}%｜常態 {_sc['norm']['coverage']:.1f}%（配息 {_sc['div_norm']:,.0f}）")
     except Exception as _ince:
         for _ph in ("__INC_BAR__", "__INC_LEGEND__", "__INC_COV__", "__INC_SUMMARY__",
                     "__INC_EXPENSE__", "__INC_SALARY__", "__INC_DIV__", "__INC_RENT__", "__INC_TOTAL__"):

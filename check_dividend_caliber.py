@@ -739,6 +739,11 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            #   費用頁落後一版卻只能靠人工看到 GitHub 失敗通知（④ 的 Pages 檢查只看檔案存在）。
            "closeout_check.py",   # 新增 ⑨ 步驟：讀 Pages workflow 最新一版結論（公開 API，無 token）
            "test_pages_deploy_check.py",   # 上項之單元測試（4 狀態＋真實整合，11 條）
+           # 2026-10-15 本班（常態配息層；同批核准）：
+           #   授權＝使用者 2026-10-15 Telegram「✅ 核准」常態層最小變更集（基金常態＋保單常態＝配息常態；
+           #   保單值標示為「暫定規劃值」；保守配息不動；三層實收／保守／常態並列且互不覆寫）。
+           "passive_caliber.py",   # div_norm 改讀 monthly_dividend_normal＋新增 norm 情境
+           "test_normal_dividend_layer.py",   # 上項之單元測試（正向／負向回退／回歸隔離，11 條）
            }
 # 逐日產物：命名比對，跨月不失效（舊版 allowed_prefixes 釘死 2026-09）
 _DAILY = re.compile(r"^(asset_diff|retirement_plan|daily_report_v2|rebalance_dashboard|"
@@ -773,6 +778,51 @@ _other = [d for d in _undeclared if d not in _hard]
 if _other:
     print(f"ℹ️  其他產出異動（排程／報表產物，非程式檔，另列不計入）：{len(_other)} 檔 ｜ "
           + "、".join(_other[:10]) + ("…" if len(_other) > 10 else ""))
+
+# ── 10.5) 常態配息層（2026-10-15 使用者裁決新增）──────────────────────────────
+#   三層口徑（實收／保守／常態）各自獨立、互不覆寫。常態層只改壓力情境的配息來源；
+#   保守層與極端情境（含跑道）必須逐位元不變。保單常態＝最近完整月實收（暫定規劃值）。
+#   本節刻意「零當期真值字面值」——一律以關係式比對（值改了就對不上，而不是靠改字面值）。
+_pi = snap.get("passive_income") or {}
+_nf = _pi.get("fund_dividend_normal_fund")
+_np = _pi.get("fund_dividend_normal_policy")
+_nd = _pi.get("fund_dividend_normal")
+_rt_n = _pi.get("rent_monthly_normal")
+ck("常態層拆解等式：基金常態 ＋ 保單常態 ＝ 配息常態（三鍵皆須存在且為正）",
+   all(isinstance(x, (int, float)) and x > 0 for x in (_nf, _np, _nd, _rt_n))
+   and _nd == (_nf or 0) + (_np or 0)
+   and snap.get("monthly_dividend_normal") == _nd,
+   f"基金 {_nf}／保單 {_np}／配息常態 {_nd}／monthly_dividend_normal={snap.get('monthly_dividend_normal')}")
+ck("常態被動 ＝ 配息常態 ＋ 租金常態（且與租金常態口徑同源）",
+   _pi.get("total_normal") == (_nd or 0) + (_rt_n or 0) and _rt_n == _pi.get("rent_monthly"),
+   f"total_normal={_pi.get('total_normal')}／rent_monthly_normal={_rt_n}／rent_monthly={_pi.get('rent_monthly')}")
+_scn = PC.scenarios(snap)
+_exp_m = float(snap.get("monthly_expense") or 0) or 1.0
+ck("常態層覆蓋率＝常態被動 ÷ 月支出（與宣告值及實算一致）",
+   abs(_scn["norm"]["coverage"] - float(_pi.get("coverage_pct_normal") or 0)) < 0.05
+   and abs(_scn["norm"]["coverage"] - float(_pi.get("total_normal") or 0) / _exp_m * 100) < 0.05,
+   f"實算 {_scn['norm']['coverage']:.1f}% vs 宣告 {_pi.get('coverage_pct_normal')}%")
+ck("常態層來源＝monthly_dividend_normal（不得退回最後一個完整月實收鍵）",
+   _scn["div_norm"] == snap.get("monthly_dividend_normal")
+   and _scn["div_norm"] != _pi.get("fund_dividend_monthly"),
+   f"div_norm={_scn['div_norm']}／fund_dividend_monthly={_pi.get('fund_dividend_monthly')}")
+ck("三層互不覆寫：保守配息＝宣告鍵且 ≠ 常態配息 ≠ 實收配息",
+   _scn["div_con"] == _pi.get("fund_dividend_conservative")
+   and _scn["div_con"] != _scn["div_norm"] and _scn["div_act"] != _scn["div_norm"]
+   and _scn["act"]["coverage"] < _scn["norm"]["coverage"],
+   f"保守 {_scn['div_con']}／常態 {_scn['div_norm']}／實收 {_scn['div_act']}")
+ck("壓力情境＝常態配息×STRESS_DIV_RATIO ＋ 租金常態 − 洲際W 空置（實算一致）",
+   abs(_scn["stress"]["income"]
+       - (_scn["div_norm"] * PC.STRESS_DIV_RATIO + _scn["rent_norm"] - _scn["vacancy"])) < 0.5
+   and abs(_scn["stress"]["coverage"]
+           - _scn["stress"]["income"] / _exp_m * 100) < 0.05,
+   f"stress income={_scn['stress']['income']:,.0f}／{_scn['stress']['coverage']:.1f}%")
+ck("極端情境／跑道 仍讀保守配息（不受常態層影響）",
+   abs(_scn["extreme"]["income"] - (_scn["div_con"] * PC.STRESS_DIV_RATIO
+                                    + _scn["rent_norm"] - _scn["vacancy"])) < 0.5
+   and _scn["extreme"]["coverage"] < _scn["con"]["coverage"]
+   and _scn["stress"]["coverage"] > _scn["con"]["coverage"],
+   f"extreme income={_scn['extreme']['income']:,.0f}／跑道 {_scn['extreme']['runway_days']}")
 
 fail = [c for c in checks if not c[1]]
 for name, ok, detail in checks:

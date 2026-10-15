@@ -14,7 +14,12 @@ run_daily 生效，儀表板與退休規劃頁仍用常態 80,100）。這裡集
 2. 當月實收＝ dividend_month_actual（配息實收）＋ passive_income.rent_monthly_actual
    （房租實收，真值＝當月入帳加總）。**兩者皆以 0 為有效值**（本月尚未收到就是 0），
    不得用 `or` 退回上月欄位（2026-10-01 修：月初曾把 9 月 147,975 顯示成本月實收）。
-3. 壓力情境（正式判準）＝ 常態月配 × STRESS_DIV_RATIO ＋ 房租常態 − 洲際W 空置額
+3. 常態月配（場3基準）＝ snapshot.monthly_dividend_normal（2026-10-15 使用者裁決新增層：
+   基金常態 80,000＋保單常態 97,072＝177,072；保單值為「暫定規劃值」，非已驗證穩定配息）。
+   回退順序：monthly_dividend_normal → pi.fund_dividend_normal → pi.fund_dividend_monthly →
+   dividend_month_expected（保留舊行為，0 是有效值不算缺值）。三層（實收／保守／常態）各自獨立、
+   互不覆寫；保守 100,000 與極端情境／跑道一律不受常態層影響。
+3b. 壓力情境（正式判準）＝ 常態月配 × STRESS_DIV_RATIO ＋ 房租常態 − 洲際W 空置額
    （空置額讀 snapshot.rent_breakdown.洲際W，不寫死）。
    2026-09-28 使用者裁示：原本用「保守配息再砍 20%」是雙重打折（100,000 本身已是
    下緣），等於把下限再打一次 → 判準虛高。改以常態月配（monthly_dividend_total，
@@ -78,8 +83,11 @@ def scenarios(snap: dict) -> dict:
     div_act = _present(snap.get("dividend_month_actual"), pi.get("dividend_actual_sum"))
     div_act = 0.0 if div_act is None else div_act
     # 常態月配（壓力情境基準）：刻意不吃當月實收（月初 0 → 判準會塌），
-    # 也刻意不吃 monthly_dividend_total（那是 dividend_tracker 每天寫的「當月」值）
-    div_norm = _present(pi.get("fund_dividend_monthly"), snap.get("dividend_month_expected"))
+    # 也刻意不吃 monthly_dividend_total（那是 dividend_tracker 每天寫的「當月」值）。
+    # 2026-10-15 使用者裁決：改讀 monthly_dividend_normal（常態層，177,072）；
+    # 缺值才依序回退舊鍵（舊行為保留，避免既有產物在缺欄位時塌成 0）。
+    div_norm = _present(snap.get("monthly_dividend_normal"), pi.get("fund_dividend_normal"),
+                        pi.get("fund_dividend_monthly"), snap.get("dividend_month_expected"))
     div_norm = 0.0 if div_norm is None else div_norm
     rent_norm = _f(pi.get("rent_monthly"))
     rent_act = _present(pi.get("rent_monthly_actual"))
@@ -103,6 +111,8 @@ def scenarios(snap: dict) -> dict:
         "div_con": div_con, "div_norm": div_norm, "div_act": div_act,
         "rent_norm": rent_norm, "rent_act": rent_act, "vacancy": vacancy,
         "con": _one(div_con + rent_norm),
+        # 常態層（2026-10-15 新增）：未打折的常態被動＝常態配息＋租金常態，' + nl +
+         "norm": _one(div_norm + rent_norm),
         "act": _one(div_act + rent_act),
         "stress": _one(div_norm * STRESS_DIV_RATIO + rent_norm - vacancy),
         "extreme": _one(div_con * STRESS_DIV_RATIO + rent_norm - vacancy),
