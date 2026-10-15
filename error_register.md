@@ -1792,3 +1792,22 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 [CALIBRATE] 三源校準失敗：{'allianz_value': False}
 ；穿透三報表不一致（check_penetration_consistency.py 抓到）
 - 狀態: ⏳ 待處理 (總計 1 次)
+
+## INCIDENT 3df7484c (four_source_sync)
+- 首次發生: 2026-10-15 14:21:53
+- 錯誤: 同義欄位不一致（asset_sync.py 抓到）；四源不一致，請檢查；日報產出失敗: [RUN_DAILY] 日期：2026-10-15
+[CALIBRATE] 三源校準失敗：{'firstjin_value': False}
+
+- 狀態: ⏳ 待處理 (總計 1 次)
+
+## INCIDENT 2b7298e4 (four_source_sync)
+- 首次發生: 2026-10-15 14:22:18
+- 錯誤: 日報產出失敗: [RUN_DAILY] 日期：2026-10-15
+[CALIBRATE] 三源校準失敗：{'allianz_value': False, 'firstjin_value': False}
+；穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)
+
+## INCIDENT 17d1bd43 (four_source_sync)
+- 首次發生: 2026-10-15 14:23:46
+- 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)
