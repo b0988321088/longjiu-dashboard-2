@@ -1,9 +1,10 @@
-"""W1 驗收測試（CIO 審查完整性）— 2026-10-14 使用者核准 A+C 方案。
+"""W1 驗收測試（CIO 審查完整性）— 2026-10-14 使用者核准 A+C 方案；
+2026-10-15 使用者裁決「修復審查基建、不採例外放行」後，對齊新車道介面（review_segmented）。
 
 驗證：
 1. 送審內文**含實際 patch**（不再以 --stat 統計代替程式碼）。
-2. 超量自動分段，各段獨立送審。
-3. 任何一段 REJECT／blocking／綁定不符／鏈失敗／逾時 → 整體 fail-closed，不落 RECORD。
+2. 超量自動分段，各段獨立送審，且**不得二次截斷**（2026-10-15 修復項）。
+3. 任何一段 REJECT／blocking／綁定不符／鏈失敗／逾時／涵蓋率不足 → 整體 fail-closed，不落 RECORD。
 4. RECORD 具完整性記錄（總字元數／送審字元數／has_patch／coverage／各段結果）。
 5. 既有 prompt 契約相容（不傳 patch 時不含「變更內容」段落）。
 
@@ -11,7 +12,6 @@
 """
 import json
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
@@ -101,7 +101,8 @@ class TestW1(unittest.TestCase):
 
     # ── 工具 ──
     def _stub(self, responder):
-        def _rev(prompt, max_tokens=8192, timeout=300):
+        """stub review_chain.review（review_segmented 的底層呼叫；需接受 json_mode）。"""
+        def _rev(prompt, max_tokens=8192, timeout=300, json_mode=False):
             self.sent.append(prompt)
             return responder(len(self.sent))
         rc.review = _rev
@@ -135,6 +136,20 @@ class TestW1(unittest.TestCase):
         for i, p in enumerate(self.sent, 1):
             self.assertIn(f"第 {i}/{want} 段", p)
 
+    def test_02b_分段不得二次截斷且涵蓋率100(self):
+        """2026-10-15 修復項：每段 diff 完整落在 prompt 內（無「diff 未完整」警告）。
+
+        舊版把「本段所屬檔案」脈絡串進 patch → 段長 = DIFF_CAP + 脈絡 → 二次截斷 →
+        涵蓋率 99.6% → 當日 B1／R1 守門必然 REJECT（0da98b37 實測）。
+        """
+        body = "".join("D" * 999 + "\n" for _ in range(40))       # > DIFF_CAP
+        self._stub(lambda n: (_approve_json(), "stub"))
+        ok, msg = self._run(body)
+        self.assertTrue(ok, msg)
+        for p in self.sent:
+            self.assertNotIn("diff 未完整", p)
+            self.assertNotIn("涵蓋率", p)
+
     def test_03_RECORD含完整性記錄(self):
         body = "x" * (lane.DIFF_CAP + 50)
         self._stub(lambda n: (_approve_json(), "stub"))
@@ -152,12 +167,13 @@ class TestW1(unittest.TestCase):
     # ── 2. fail-closed 各情境 ──
     def test_04_某段REJECT_fail_closed(self):
         body = "y" * (lane.DIFF_CAP * 2 + 10)
-        self._stub(lambda n: (json.dumps({"verdict": "REJECT", "blocking": [],
+        self._stub(lambda n: (json.dumps({"verdict": "REJECT",
+                                          "blocking": ["sot_targets.py: 口徑錯誤"],
                                           "reviewed_commits": [{"commit": C12, "tree": T12}],
                                           "note": "no"}), "stub") if n == 2 else (_approve_json(), "stub"))
         ok, msg = self._run(body)
         self.assertFalse(ok)
-        self.assertIn("第 2/3 段", msg)
+        self.assertIn("blocking", msg)
         self.assertEqual(self._records(), [])          # 不落 RECORD
 
     def test_05_某段blocking_fail_closed(self):
@@ -168,18 +184,19 @@ class TestW1(unittest.TestCase):
                                           "note": "blk"}), "stub") if n == 2 else (_approve_json(), "stub"))
         ok, msg = self._run(body)
         self.assertFalse(ok)
-        self.assertIn("blocking 1 項", msg)
+        self.assertIn("blocking", msg)
+        self.assertIn("us30y_monitor.py", msg)
         self.assertEqual(self._records(), [])
 
     def test_06_綁定不符_fail_closed(self):
         self._stub(lambda n: (_approve_json(c12="deadbeef0000"), "stub"))
         ok, msg = self._run("small")
         self.assertFalse(ok)
-        self.assertIn("不符", msg)
+        self.assertIn("綁定", msg)
         self.assertEqual(self._records(), [])
 
     def test_07_鏈失敗不降級且不落RECORD(self):
-        def _boom(prompt, max_tokens=8192, timeout=300):
+        def _boom(prompt, max_tokens=8192, timeout=300, json_mode=False):
             self.sent.append(prompt)
             raise RuntimeError("三層皆掛")
         rc.review = _boom
@@ -191,11 +208,38 @@ class TestW1(unittest.TestCase):
         self.assertIn("變更內容", self.sent[0])
         self.assertEqual(self._records(), [])
 
-    def test_08_解析失敗_fail_closed(self):
+    def test_08_非JSON回覆不得核准(self):
+        """模型回非 JSON → 無法回報綁定 → 整體 REJECT（fail-closed，不得核准）。"""
         self._stub(lambda n: ("完全不是 JSON", "stub"))
         ok, msg = self._run("v" * 100)
         self.assertFalse(ok)
-        self.assertIn("無法解析", msg)
+        self.assertIn("fail-closed", msg)
+        self.assertEqual(self._records(), [])
+
+    def test_09_涵蓋率不足_fail_closed(self):
+        """車道自檢：build_review_prompts 回報涵蓋率 <100% → 不得送審、不得落 RECORD。"""
+        _orig = rc.build_review_prompts
+        try:
+            rc.build_review_prompts = lambda *a, **k: (
+                ["P"], {"total_chars": 12043, "provided_chars": 12000, "pct": 99.6, "segments": 1})
+            self._stub(lambda n: (_approve_json(), "stub"))
+            ok, msg = self._run("u" * 100)
+            self.assertFalse(ok)
+            self.assertIn("涵蓋率", msg)
+            self.assertEqual(self.sent, [])            # 未送審
+            self.assertEqual(self._records(), [])
+        finally:
+            rc.build_review_prompts = _orig
+
+    def test_10_某段REJECT無blocking_視為無效審查_fail_closed(self):
+        """B1／R1 契約：REJECT ⇔ blocking 非空。回 REJECT 但未指名缺陷＝無效審查，不得當核准。"""
+        body = "y" * (lane.DIFF_CAP + 10)
+        self._stub(lambda n: (json.dumps({"verdict": "REJECT", "blocking": [],
+                                          "reviewed_commits": [{"commit": C12, "tree": T12}],
+                                          "note": "no"}), "stub") if n == 2 else (_approve_json(), "stub"))
+        ok, msg = self._run(body)
+        self.assertFalse(ok)
+        self.assertIn("無效審查", msg)
         self.assertEqual(self._records(), [])
 
 

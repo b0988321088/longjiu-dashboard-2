@@ -792,6 +792,22 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            #   （狀態重算時維護 updated_at ＋ 既有落後項自我修復）與紅線／模式A streak 語意標示；
            #   ② tools/test_pending_reconcile_stamp.py（新增；T0–T5 共 8 條，含負向與守恆）。
            "test_pending_reconcile_stamp.py",
+           # 2026-10-15 22:3x 本輪續（使用者裁決「路線 1：修復審查基建，不採例外放行」）：
+           #   ① cio_lane.py（本次宣告）：送審改走 review_chain 單一真值（build_review_prompts／
+           #      review_segmented），消除「脈絡串進 patch → 二次截斷 → 涵蓋率 99.6% → 必然
+           #      REJECT」的假截斷；並補車道自檢（涵蓋率 <100% 不得送審）與跨段 REJECT 無 blocking
+           #      的無效審查判定。審查判準不放寬。
+           #   ② tools/test_cio_lane_coverage.py（新）：U0–U6 共 14 條（分段覆蓋、無二次截斷、
+           #      負向截斷警告、涵蓋率守門、真實 0da98b37 覆蓋 100%、單段邊界）。
+           #   ③ tools/test_cio_lane_fullpatch.py（本次宣告）：W1 套件對齊新介面（stub 改
+           #      review_segmented 底層 review），原保證不變，新增 02b（不得二次截斷、涵蓋率 100%）、
+           #      09（涵蓋率不足不得送審）、10（REJECT 無 blocking＝無效審查不得核准）。
+           #   ④ tools/review_commit_and_record.py（新）：對「範圍內舊 commit」跑真審查＋落 RECORD 的
+           #      腳本化實作（auto_push 官方指示的人工路徑，2026-10-15 因 22:30 lane 疊 commit 而需要）。
+           "cio_lane.py",
+           "test_cio_lane_coverage.py",
+           "test_cio_lane_fullpatch.py",
+           "review_commit_and_record.py",
            # 2026-10-15 同批延伸（使用者裁決「修 calc_penetration 的餘數法」）：
            #   update_all.py 桶位先取整、餘數與在途差額改整數相減 → 不變量整數層精確成立
            "update_all.py",

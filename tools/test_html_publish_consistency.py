@@ -225,15 +225,16 @@ def main() -> int:
     _head_has = "emergency_report_" in _head_al
     check("P5b HEAD 版本白名單已含本條目（2026-10-15 B1 正式 commit 後生效）",
           _head_al != "" and _head_has, f"head_has_entry={_head_has}")
-    # P5c：本輪新增的 taiex 家族規則必須經 commit 才生效 —— 工作區有、HEAD 尚無＝揭露中。
-    #   鑑別力：把 taiex 樣式塞進 HEAD 版本模擬「已 commit」→ 斷言必須翻面。
+    # P5c：taiex 家族規則須「工作區＋版控」一致才算生效（2026-10-15 21:xx 已由 B1 正式
+    #   commit 納入 → 工作區與 HEAD 都應為真）。此條為真相檢查，不是期待值檢查。
+    #   鑑別力：把 HEAD 版本中的 taiex 樣式移除（模擬「未 commit」）→ 條件必須翻紅。
     _head_has_tx = "emergency_taiex_report_*.html" in _head_al
     _work_has_tx = "emergency_taiex_report_*.html" in (ROOT / "publish_allowlist.json").read_text(encoding="utf-8")
-    check("P5c 揭露：taiex 家族規則「工作區已納入／HEAD 未生效」須如實區分",
-          _work_has_tx and not _head_has_tx, f"work={_work_has_tx} head={_head_has_tx}")
-    check("P5d 負向自測：模擬已 commit（HEAD 字串注入）後 P5c 必須變紅",
-          "emergency_taiex_report_*.html" in (_head_al.replace("emergency_report_*.html",
-                                                               "emergency_report_*.html,emergency_taiex_report_*.html")))
+    check("P5c 工作區與版控一致：taiex 家族規則已在 HEAD 生效（work=True head=True）",
+          _work_has_tx and _head_has_tx, f"work={_work_has_tx} head={_head_has_tx}")
+    _pre_has_tx = "emergency_taiex_report_*.html" in _head_al.replace("emergency_taiex_report_*.html", "")
+    check("P5d 負向自測：模擬未 commit（HEAD 移除 taiex 樣式）後 P5c 條件必須翻紅",
+          _work_has_tx and not _pre_has_tx)
 
     # ── P6 三處一致（生成器 ↔ stage 候選 ↔ 白名單）2026-10-15 裁決「確認三者一致」──
     print("=== P6 三處一致（生成器 ↔ stage 候選 ↔ 白名單） ===")
