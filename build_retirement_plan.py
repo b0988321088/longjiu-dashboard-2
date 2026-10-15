@@ -159,18 +159,20 @@ _gap_rows = "".join([
     _runway_gap_row("FI 跑道（極端情境口徑）", _acc_gaps.get("FI 跑道")),
 ])
 _cash_g = _acc_gaps.get("現金水位") or {}
-# 單一來源：餘裕/底線都讀 snapshot（本頁不再自算 cash − 底線，避免頁內第二份實作）
-_cash_margin = _cash_g.get("餘裕") or 0
-_gfloor = _cash_g.get("底線") or 0
+# 2026-10-15 使用者裁決（限縮修復）：本列「現況」改以 live 可動用現金（L34 cash，讀 snapshot）推導。
+#   原讀 sabbatical_checklist.驗收標準_2027_02 之 cached 快照（停留 2026-10-09 的 639,661），
+#   與同頁其他地方（現金水位 ≥底線、自由現金 Gate）已用 live 值互相矛盾 → 統一為 live。
+#   底線維持政策值（讀同頁 _floor_s＝sot_targets.cash_floor，不另設第二套）。
+_cash_now = float(cash)
+_gfloor = int(round(float(_floor_s)))
+_cash_margin = int(round(_cash_now - _gfloor))
 _cash_status = (f'<b class="green">餘裕 {_cash_margin:,}</b>' if _cash_margin >= 0
                 else f'<b class="red">不足 {abs(_cash_margin):,}</b>')
-_cash_line = (f'現金 {_cash_g.get("現況", 0):,} 對底線 {_gfloor:,} → {_cash_status}'
-              if _cash_g else '現金水位（待真值日重算）')
-_cash_row = (f'<tr><td>現金水位</td><td>{_cash_g.get("現況", 0):,}</td>'
-             f'<td>≥{_cash_g.get("底線", 0):,}</td>'
-             f'<td class="{"green" if (_cash_g.get("餘裕") or 0) >= 0 else "red"}">'
-             f'{"餘裕" if (_cash_g.get("餘裕") or 0) >= 0 else "不足"} '
-             f'{abs(_cash_g.get("餘裕", 0)):,}</td></tr>') if _cash_g else ""
+_cash_line = f'現金 {_cash_now:,.0f} 對底線 {_gfloor:,} → {_cash_status}'
+_cash_row = (f'<tr><td>現金水位</td><td>{_cash_now:,.0f}</td>'
+             f'<td>≥{_gfloor:,}</td>'
+             f'<td class="{"green" if _cash_margin >= 0 else "red"}">'
+             f'{"餘裕" if _cash_margin >= 0 else "不足"} {abs(_cash_margin):,}</td></tr>')
 _acc_todo_html = "<br>".join(_acc_todo) if _acc_todo else "（待真值日重算）"
 _g150 = _acc_accel.get("月缺口") or 0          # 距加碼級（150%）缺口：理想值·非門檻
 _gstress = (_acc_gaps.get("壓力情境覆蓋率") or {}).get("月缺口") or 0

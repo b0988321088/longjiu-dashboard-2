@@ -611,11 +611,17 @@ def _cio_review_and_record() -> tuple[bool, str]:
     files = _git("show", "--name-only", "--format=", commit).stdout.strip()
     subj = _git("log", "-1", "--format=%s", commit).stdout.strip()
     diff = _git("show", "--stat", "--format=", commit).stdout.strip()
-    # 2026-10-13 P1：prompt 收斂到 review_chain.build_review_prompt（單一真值）；
-    # 綁定一律 12 碼（原內嵌複本用完整 40 碼，會踩免費層抄寫掉字元的坑）。
-    prompt = _rc.build_review_prompt(commit, tree, subj, files, diff, _CIO_DIFF_CAP)
+    # 2026-10-13 P1：prompt 收斂到 review_chain（單一真值）；綁定一律 12 碼
+    #   （原內嵌複本用完整 40 碼，會踩免費層抄寫掉字元的坑）。
+    # 2026-10-15 B1（R1）：原版**只送 --stat、完全不送內容**（審查者看不到一行程式碼），
+    #   且超量時不得靜默截斷 → 改為送完整 patch，超量由 review_chain 完整分段，
+    #   涵蓋率 <100% 或分段未回報 commit/tree 綁定 → 直接拒絕核准（fail-closed）。
+    patch = _git("show", "--format=", commit).stdout or ""
+    prompts, cov = _rc.build_review_prompts(commit, tree, subj, files, diff,
+                                            _CIO_DIFF_CAP, patch=patch)
     try:
-        txt, _reviewer = _rc.review(prompt, max_tokens=8192, timeout=300)
+        txt, _reviewer, _meta = _rc.review_segmented(prompts, cov,
+                                                     expect_pair=(commit[:12], tree[:12]))
     except Exception as e:  # noqa: BLE001
         return False, f"審查鏈全數不可用（{type(e).__name__}: {str(e)[:120]}）→ fail-closed（不降級 TAG）"
     import re as _re_cio
@@ -692,6 +698,15 @@ elif ok and _cio_ok:
         _push_candidates.append(f'industry_penetration_{TODAY}.png')
     except Exception:
         pass
+    # 2026-10-15 B1（§5 HTML 方案 A）：首頁「重要連結」的兩份報告頁納入 producer stage 白名單。
+    #   背景（2026-10-15 實測、check_dashboard_sync 第 12 項 FAIL）：index.html 以 links_config
+    #   前綴 glob 指向最新檔（emergency_report_*／weekly_report_*），但這兩份的 producer
+    #   （emergency_1330.py／build_weekly_report.py）都不是本輪 commit 的產物來源
+    #   → 檔案被首頁連結卻從未進版控 → 線上 404。
+    #   本輪起改由本清單明確認領；仍須通過 dirty_gate 的「本輪產物／dirty 定點認領」判準
+    #   （既有他班 dirty 不會被夾帶進 commit），發布面由 publish_allowlist.json 對應條目放行。
+    _push_candidates.append(f'emergency_report_{TODAY}.html')
+    _push_candidates.append(f'weekly_report_{TODAY}.html')
     # 9c3. 收尾重刷連結（2026-09-22 根因修正）
     #      根因：步驟 9c 的 update_dashboard_links.py 跑在 #11（穿透報告）與上面
     #      build_rebalance_dashboard（再平衡儀表板／產業穿透 PNG）**之前** →

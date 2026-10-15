@@ -211,6 +211,215 @@ def build_dual_dimension_metric(snap: dict, today: str | None = None) -> dict:
     return ddm
 
 
+def refresh_rebalance_live_numbers(text: str, snap: dict) -> str:
+    """再平衡評估（rebalance_summary*.md → rebalance_eval_*.html）之「snapshot 真值欄位」即時覆蓋。
+
+    2026-10-15 使用者裁決（限縮修復）：只改**標示為 snapshot 真值／不變量／調度欄位／分母／
+    可動用現金**的欄位，使其跟隨最新 snapshot；**不動**政策值（桶目標、門檻、底線、單筆上限）、
+    也不動帶明確 as-of 標記的歷史段落（例：『本節為 2026-10-13 版』）。
+
+    覆蓋項目（全部由 snapshot 推導，無硬編字面值）：
+      1) markdown 桶列（台股／美股／防守／債券／現金）：現況％ → actual_pct；±pp → actual_pct − target；
+         調度欄位列另重算「理論調整」＝|偏差pp|÷100×total_assets（列內引用同值一併更新）
+      2) 「五桶 N（X%）」→ live 五桶加總與佔比
+      3) 「＝ 總資產 N」→ live total_assets
+      4) 「snapshot.cash_total N／乾粉 N」→ live cash_total／live 乾粉
+      5) 「配息資產合計 N ÷ 總資產 M = X%」→ live 分子／live 分母／live 佔比
+      6) 「防守合併 X%」→ live 佔比
+      7) 「可動用 N」→ allowable_cash；「餘裕／乾粉 N」→ dry_powder
+    回傳覆蓋後文字；若偵測到桶列卻無任何命中 → 印 WARN（不靜默放行）。
+    """
+    _pen = (snap.get("penetration") or {})
+    _pct = _pen.get("actual_pct") or {}
+    _twd = _pen.get("actual_twd") or {}
+    _tgt = _pen.get("targets") or {}
+    _ta = float(snap.get("total_assets") or 0)
+    if not (_pct and _ta):
+        return text
+
+    _map = {"台股": "台股市值型成長", "美股": "美股市值型成長", "防守": "防守型配息",
+            "防守型配息": "防守型配息", "債券": "債券", "現金": "現金/安全網"}
+    _hits = 0
+    _bucket_rows = 0
+
+    _tkey = {"台股市值型成長": ("台股市值型", "台股市值型目標", "台股"),
+             "美股市值型成長": ("美股市值型", "美股市值型目標", "美股"),
+             "防守型配息": ("防守型配息", "配息型目標", "防守"),
+             "債券": ("債券", "債券型目標"),
+             "現金/安全網": ("現金", "現金目標")}
+
+    def _live(short):
+        k = _map[short]
+        p = _pct.get(k)
+        t = None
+        for _tk in _tkey.get(k, ()):
+            if _tk in _tgt:
+                t = _tgt[_tk]
+                break
+        if p is None:
+            return None, None
+        g = None if t is None else round(p - float(t), 1)
+        return float(p), g
+
+    # ── A) markdown 桶列（第一格為桶名）：現況％／±pp／理論調整（同列引用一併更新）──
+    _out_lines = []
+    for line in text.splitlines():
+        m = re.match(r"^\|\s*(台股|美股|防守|債券|現金)\s*\|", line)
+        if not m:
+            _out_lines.append(line)
+            continue
+        _bucket_rows += 1
+        pct, gap = _live(m.group(1))
+        cells = line.split("|")
+        _pct_done = _pp_done = _th_done = False
+        for idx in range(2, len(cells) - 1):
+            c = cells[idx].strip()
+            if re.fullmatch(r"\d+(?:\.\d+)?%", c) and pct is not None and not _pct_done:
+                cells[idx] = f" {pct:.1f}% "     # 第一個％＝現況；第二個％＝戰略目標（政策值，保留）
+                _pct_done = True
+                _hits += 1
+            elif re.fullmatch(r"[+-]\d+(?:\.\d+)?pp", c) and gap is not None and not _pp_done:
+                cells[idx] = f" {gap:+.1f}pp "
+                _pp_done = True
+                _hits += 1
+            elif re.fullmatch(r"\d{1,3}(?:,\d{3})+", c) and gap is not None and not _th_done \
+                    and int(c.replace(",", "")) >= 10000:
+                _old = c
+                _new = f"{int(round(abs(gap) / 100 * _ta)):,}"   # 理論調整＝|偏差pp|÷100×分母
+                cells[idx] = f" {_new} "
+                for j in range(2, len(cells) - 1):
+                    if j != idx and _old in cells[j]:
+                        cells[j] = cells[j].replace(_old, _new)
+                _th_done = True
+                _hits += 1
+        _out_lines.append("|".join(cells))
+    text = "\n".join(_out_lines)
+
+    # ── B) 行文中的簡稱佔比／偏差pp（跳過政策語境：目標／門檻／上限／下限／紅線）──
+    _POLICY = ("目標", "門檻", "上限", "下限", "紅線", "政策", "底線")
+
+    def _sub_pct(m):
+        nonlocal _hits
+        sep = m.group(2) or ""
+        if any(w in sep for w in _POLICY):
+            return m.group(0)
+        p, _ = _live(m.group(1))
+        if p is None:
+            return m.group(0)
+        _hits += 1
+        return f"{m.group(1)}{sep}{p:.1f}%"
+
+    text = re.sub(r"(台股|美股|防守型配息|防守|債券|現金)([^0-9%｜|]{0,8})(\d+(?:\.\d+)?)%",
+                  lambda m: _sub_pct(m), text)
+
+    def _sub_pp(m):
+        nonlocal _hits
+        sep = m.group(2) or ""
+        if any(w in sep for w in _POLICY):
+            return m.group(0)
+        _, g = _live(m.group(1))
+        if g is None:
+            return m.group(0)
+        _hits += 1
+        return f"{m.group(1)}{sep}{g:+.1f}pp"
+
+    text = re.sub(r"(台股|美股|防守型配息|防守|債券|現金)([^0-9%｜|]{0,10})([+-]\d+(?:\.\d+)?)pp",
+                  lambda m: _sub_pp(m), text)
+
+    # ── B2) 行內單桶推導：該行只出現一個桶名時，該行的「現況%／±pp／X%（目標」一律採該桶 live 值 ──
+    _SHORTS = ("台股", "美股", "防守型配息", "防守", "債券", "現金")
+
+    def _line_scope(m):
+        nonlocal _hits
+        line = m.group(0)
+        names = [s for s in _SHORTS if s in line]
+        uniq = [s for s in names if not any((o != s and o in s) for o in names)] or names
+        if len(uniq) != 1:
+            return line
+        p, g = _live(uniq[0])
+        if p is None:
+            return line
+        _n0 = _hits
+        if g is not None:
+            line, n1 = re.subn(r"[+-]\d+(?:\.\d+)?pp", f"{g:+.1f}pp", line)
+            _hits += n1
+        line, n2 = re.subn(r"\d+(?:\.\d+)?%（\s*目標", f"{p:.1f}%（目標", line)
+        _hits += n2
+        line, n3 = re.subn(r"（\d+(?:\.\d+)?%\s+vs\s+目標", f"（{p:.1f}% vs 目標", line)
+        _hits += n3
+        if _hits == _n0:
+            return m.group(0)
+        return line
+
+    text = re.sub(r"(?m)^.*(?:台股|美股|防守型配息|防守|債券|現金).*$", _line_scope, text)
+
+    # ── C) 理論調整（行文中引用同一桶者）／分母 ──
+    def _sub_theory(m):
+        nonlocal _hits
+        line_start = text.rfind("\n", 0, m.start()) + 1
+        line = text[line_start: text.find("\n", m.start()) if text.find("\n", m.start()) > 0 else len(text)]
+        for short in ("台股", "美股", "防守", "債券", "現金"):
+            if short in line:
+                _, g = _live(short)
+                if g is not None:
+                    _hits += 1
+                    return f"{m.group(1)}{int(round(abs(g) / 100 * _ta)):,}"
+        return m.group(0)
+
+    text = re.sub(r"(理論(?:調整)?\s*)[\d,]{5,}", _sub_theory, text)
+    text, n = re.subn(r"(分母\s*)[\d,]{7,}", rf"\g<1>{_ta:,.0f}", text)
+    _hits += n
+
+    # ── D) 五桶加總／不變量總資產 ──
+    _five = sum(float(_twd.get(k) or 0) for k in
+                ("台股市值型成長", "美股市值型成長", "防守型配息", "債券", "現金/安全網"))
+    if _five > 0:
+        text, n = re.subn(r"五桶\s*[\d,]{6,}（\d+(?:\.\d+)?%）",
+                          f"五桶 {_five:,.0f}（{_five / _ta * 100:.2f}%）", text)
+        _hits += n
+    text, n = re.subn(r"([=＝]\s*總資產\s*)[\d,]{7,}", rf"\g<1>{_ta:,.0f}", text)
+    _hits += n
+    text, n = re.subn(r"(snapshot\.total_assets\s*)[\d,]{7,}", rf"\g<1>{_ta:,.0f}", text)
+    _hits += n
+
+    # ── E) 現金欄位：可動用／餘裕／乾粉／snapshot.cash_total（含「現 N」單一口徑寫法）──
+    try:
+        _ct = int(round(total_cash(snap)))
+        _dry = int(dry_powder(snap).get("dry") or 0)
+        _allow = int(round(allowable_cash(snap)))
+        for pat, val in ((r"(snapshot\.cash_total\s*)", _ct), (r"(乾粉\s*)", _dry),
+                         (r"(餘裕\s*)", _dry), (r"(可動用\s*)", _allow),
+                         (r"(現金底線\s*[\d,]{6,}[^0-9]{0,12}現\s*)", _allow),
+                         (r"(（現金\s*)", _allow),          # 例：乾粉 470,934（現金 X − 生活底線 700,000）
+                         (r"(單一口徑；現\s*)", _allow)):
+            text, n = re.subn(pat + r"[\d,]{6,}", rf"\g<1>{val:,}", text)
+            _hits += n
+    except Exception as _e_cash:
+        # 2026-10-15 CIO blocking 修正：原為 `pass`（靜默吞例外）→ 現金欄位（cash_total／乾粉／
+        # 餘裕／可動用）留舊值而桶列已更新，會產生內部不一致報告；改為 fail-visible（不得靜默放行）。
+        print(f"[WARN] refresh_rebalance_live_numbers：現金欄位即時覆蓋失敗"
+              f"（{type(_e_cash).__name__}: {_e_cash}）→ cash_total／乾粉／餘裕／可動用 可能仍為舊值，"
+              "與桶列口徑不一致（fail-visible，不靜默）")
+
+    # ── F) 防守合併：配息資產合計 ÷ 總資產 ──
+    _dc = (snap.get("defensive_combined_metric") or {})
+    _inc_assets = _dc.get("配息資產合計") or _dc.get("分子_twd")
+    if _inc_assets:
+        _p = float(_inc_assets) / _ta * 100
+        text, n = re.subn(r"(配息資產合計\s*)[\d,]{6,}", rf"\g<1>{float(_inc_assets):,.0f}", text)
+        _hits += n
+        # 「配息資產合計 N ÷ 總資產 M ＝/＝ X%」→ live 分母與佔比（容忍 ÷／=／＝ 與空白）
+        text, n = re.subn(r"(總資產\s*)[\d,]{7,}(\s*[=＝]\s*)\d+(?:\.\d+)?%",
+                          rf"\g<1>{_ta:,.0f}\g<2>{_p:.1f}%", text)
+        _hits += n
+        text, n = re.subn(r"(防守合併\s*)\d+(?:\.\d+)?%", rf"\g<1>{_p:.1f}%", text)
+        _hits += n
+    if _bucket_rows and _hits == 0:
+        print("[WARN] refresh_rebalance_live_numbers：偵測到桶列但無任何覆蓋 → 格式可能已變，"
+              "不得靜默放行舊值")
+    return text
+
+
 def refresh_stale_amounts(text: str, snap: dict) -> str:
     """把歷史內文（前一日的 LLM 分析）中的清償前舊金額，替換為當日 snapshot 真值。
 
@@ -279,6 +488,92 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
         if _hit:
             print(f"[WARN] 內文仍含失效之押標金敘述 {len(_hit)} 種，但 snapshot.標案押標金_1010.狀態"
                   f"未載明『取消』（現值 {_bid_st[:24]!r}）→ 未覆蓋；請確認裁決與真值是否同步")
+
+    # ── 2026-10-15 本班（真 CIO 重審 blocking）──
+    #   症狀：日報嵌入的緊急應變內文（data/emergency_llm_analysis.json，前一產出日）
+    #         其【四、資產配置透視】仍寫前一日的五桶金額與佔比（例：現金 3.9%／1,055,740、
+    #         總資產 26,970,031、債券 26.4%），與同一份報告的即時區塊（27,085,225）互相矛盾。
+    #   修法（上游單一入口、非改產物 HTML）：以 snapshot.penetration 即時推導覆蓋 ——
+    #         佔比一律重算（＝actual_twd ÷ total_assets，不硬編 26.4% 之類字面值）、
+    #         金額改以 live actual_twd、不變量核對句的總資產同步更新。
+    #   只在「五桶／資產配置透視」語境生效（需出現 ≥2 個桶名）；找不到可覆蓋樣式時 fail-loud 示警。
+    _pen = (snap.get("penetration") or {})
+    _pw = _pen.get("actual_twd") or {}
+    _pp = _pen.get("actual_pct") or {}
+    _bucket_alias = [("台股市值型成長", "台股市值型成長"),
+                     ("美股市值型成長", "美股市值型成長"),
+                     ("防守型配息", "防守型配息"),
+                     ("債券", "債券"),
+                     ("現金", "現金/安全網")]
+    if _pw and _ta and _pp:
+        _names_present = sum(1 for _disp, _key in _bucket_alias if _disp in text)
+        if _names_present >= 2 or "五桶" in text or "資產配置透視" in text:
+            _n_hit = 0
+            _coverable_before = bool(re.search(
+                r"(台股|美股|防守型配息|債券|現金)\s*\d+(?:\.\d+)?%|[\d,]{6,}%\(|"
+                r"桶名", text))
+
+            def _sub_bucket(m):
+                nonlocal _n_hit
+                _disp, _amt = m.group(1), m.group(2)
+                _key = dict(_bucket_alias).get(_disp)
+                _new_amt = _pw.get(_key)
+                _new_pct = _pp.get(_key)
+                if _new_amt is None or _new_pct is None:
+                    return m.group(0)
+                _n_hit += 1
+                return f"{_disp} {float(_new_pct):.1f}%（{float(_new_amt):,.0f}"
+
+            text = re.sub(r"(台股市值型成長|美股市值型成長|防守型配息|債券|現金)\s*"
+                          r"\d+(?:\.\d+)?%（([\d,]+)", _sub_bucket, text)
+            # 美股子項（科技／非科技）佔比同步重算（金額不動，沿用 live actual_twd）
+            for _sub_disp, _sub_key in (("科技", "美股市值型成長_科技"), ("非科技", "美股市值型成長_非科技")):
+                _p = _pp.get(_sub_key)
+                if _p is not None:
+                    text = re.sub(rf"({_sub_disp}\s*)\d+(?:\.\d+)?%", rf"\g<1>{float(_p):.1f}%", text)
+            # 桶名後「不帶金額」的佔比（例：「美股 36.4% 超出 27–33%」）→ 一律改 live 佔比
+            text = re.sub(r"(台股市值型成長|美股市值型成長|防守型配息|債券|現金)\s*\d+(?:\.\d+)?%",
+                          lambda m: f"{m.group(1)} {float(_pp.get(dict(_bucket_alias).get(m.group(1)) or '', 0)):.1f}%"
+                          if _pp.get(dict(_bucket_alias).get(m.group(1))) is not None else m.group(0), text)
+            # 「範圍外/範圍內」評估句中的簡稱佔比（例：「美股 36.4% 超出 27–33%」「台股 9.2% 落在 7–13%」）
+            # 只在含判定詞的句子內改寫，避免誤傷「美股 30%（目標）」之類政策字面值
+            _alias = {"台股": "台股市值型成長", "美股": "美股市值型成長",
+                      "防守型配息": "防守型配息", "債券": "債券", "現金": "現金/安全網"}
+            _sents = re.split(r"(?<=。)", text)
+            for _si, _sent in enumerate(_sents):
+                if not any(_w in _sent for _w in ("超出", "低於", "高於", "落在", "未破")):
+                    continue
+                if not any(_a in _sent for _a in _alias):
+                    continue
+
+                def _sub_alias(m, _s=_sent):
+                    _p = _pp.get(_alias.get(m.group(1)))
+                    return f"{m.group(1)} {float(_p):.1f}%" if _p is not None else m.group(0)
+
+                _sents[_si] = re.sub(r"(台股|美股|防守型配息|債券|現金)\s*\d+(?:\.\d+)?%", _sub_alias, _sent)
+            text = "".join(_sents)
+            # 口徑標記：原分析日仍保留（provenance），但明示數字已於本報告產出時重算
+            def _stamp(m):
+                return (f"（口徑：本報告產出時以 snapshot 現值重算；原分析產出 "
+                        f"{m.group(1)}）")
+            text = re.sub(r"（現讀\s*snapshot\.json\s*penetration[，,]\s*(\d{4}-\d{2}-\d{2}[^）]*)）",
+                          _stamp, text)
+            # 不變量核對句的總資產（容忍半形 = 與全形 ＝）
+            text = re.sub(r"([=＝]\s*總資產\s*)[\d,]{7,}", rf"\g<1>{_ta:,}", text)
+            # 可動用現金／餘裕（乾粉）金額（例：「可動用 1,055,740…餘裕（乾粉）355,740」）
+            try:
+                _allow = int(round(allowable_cash(snap)))
+                _dry = int(dry_powder(snap).get("dry") or 0)
+                text = re.sub(r"(可動用\s*)[\d,]{6,}", rf"\g<1>{_allow:,}", text)
+                text = re.sub(r"((?:餘裕|乾粉)(?:（乾粉）|（餘裕）)?\s*)[\d,]{6,}", rf"\g<1>{_dry:,}", text)
+            except Exception as _e_dry:
+                # 2026-10-15 CIO blocking 修正：原為 `pass`（靜默吞例外）→ 可動用／餘裕留舊值；
+                # 改為 fail-visible（與同函式「不得靜默放行舊值」一致）。
+                print(f"[WARN] refresh_stale_amounts：可動用／餘裕（乾粉）即時覆蓋失敗"
+                      f"（{type(_e_dry).__name__}: {_e_dry}）→ 金額可能仍為舊值（fail-visible，不靜默）")
+            if _n_hit == 0 and not _coverable_before:
+                print("[WARN] 內文含穿透語境但未匹配任何可覆蓋樣式 → 未覆蓋；"
+                      "請確認緊急應變內文格式是否已改變（不得靜默放行舊值）")
     return text
 
 

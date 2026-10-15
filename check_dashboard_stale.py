@@ -9,7 +9,12 @@
      判定為「清單過時」→ 印 ⚠️ 並提示 `--retire-obsolete` 可自動退休。
      實踩：實收覆蓋率升到 144% 撞到舊字面「144%」→ sync_all 最後一步中止
      （值本身是活的顯示值，卻被當成殘留）。
-  ③ `--retire-obsolete`：把「清單過時」的字面從 active 移到 retired（含日期/理由），
+  ③ 2026-10-15 追加同義規則：**衍生差值**（穿透卡「實際 X% / 目標 Y% (±Zpp)」的 pp 值）亦由
+     今日 snapshot 派生 → 同列「清單過時」，不得判真殘留。實踩：token「-0.7pp」與現金
+     4.3% vs 目標 5% 的活差值同形 → 誤紅（現金列被誤報為陳舊資料）。
+     同時：過寬的單值 token（純 pp／單一百分比碎片）應改用**完整舊句**為條件，
+     保留「真正過時字面仍能觸發」的偵測力（見 retired 的替換紀錄）。
+  ④ `--retire-obsolete`：把「清單過時」的字面從 active 移到 retired（含日期/理由），
      寫回 JSON，idempotent。
 
 判準（只排除「不渲染 / 已歸檔」的區塊，不放寬真正的顯示值與 JS 硬編碼）：
@@ -71,7 +76,10 @@ def truth_tokens() -> set:
     toks = set()
     try:
         snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
-    except Exception:
+    except Exception as _e_snap:
+        # 2026-10-15 CIO 複審：真值字面取不到＝檢查能力失效（會把活值誤判為殘留）→ 必須可見。
+        print(f"⚠️ truth_tokens：讀不到 snapshot（{type(_e_snap).__name__}: {_e_snap}）"
+              " → 真值字面集為空、殘留判定可能誤報（fail-visible）")
         return toks
     for k in ("insurance_total", "securities_total_market_value", "cash_total", "total_assets",
               "total_liabilities", "monthly_dividend_total", "dividend_month_actual",
@@ -100,6 +108,21 @@ def truth_tokens() -> set:
                 for r in (sc.get("rent_norm"), sc.get("rent_act")):
                     if isinstance(d, (int, float)) and isinstance(r, (int, float)):
                         toks |= _opts((float(d) + float(r)) / exp * 100.0)
+    except Exception:
+        pass
+    # ② 衍生差值（穿透卡即時列「實際 X% / 目標 Y% (±Zpp)」）也是活的顯示值。
+    #    2026-10-15 實踩：token「-0.7pp」與「現金 4.3% vs 目標 5%」的活差值同形 → 被誤判成舊值殘留（誤紅）。
+    #    判準與既有「命中現行真值 → 清單過時（⚠️，不 FAIL）」一致：值由今日 snapshot 派生者不得判為真殘留。
+    #    桶位鍵對與 build_dashboard.py 穿透卡同一組（單一口徑，不另立第二套）。
+    try:
+        pen = snap.get("penetration") or {}
+        act, tgt = pen.get("actual_pct") or {}, pen.get("targets") or {}
+        for k, tk in (("台股市值型成長", "台股市值型目標"), ("美股市值型成長", "美股市值型目標"),
+                      ("防守型配息", "配息型目標"), ("債券", "債券型目標"),
+                      ("現金/安全網", "現金目標")):
+            if k in act and tk in tgt:
+                d = float(act[k]) - float(tgt[tk])
+                toks |= {f"{d:+.1f}pp", f"{d:.1f}pp"}
     except Exception:
         pass
     return toks

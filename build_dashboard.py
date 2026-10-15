@@ -12,7 +12,8 @@ from pathlib import Path
 from scripts.components.volatility_monitor import make_volatility_report
 from dividend_caliber import bucket_of
 import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
-from sot_targets import sot_monthly_expense, sot_monthly_income, dry_display  # INC-270 月支出／月收入單一入口；2026-10-11 工單A 乾粉顯示單一實作
+from sot_targets import (sot_monthly_expense, sot_monthly_income, dry_display,  # INC-270 月支出／月收入單一入口；2026-10-11 工單A 乾粉顯示單一實作
+                         defensive_caliber)  # 2026-10-15 P1-1：防守（配息資產合計）真值單一來源
 
 BASE = Path(__file__).resolve().parent
 
@@ -255,6 +256,106 @@ def main():
                         return _r
                 return {}
             _brief2 = lambda _t: ((_t or "").split("→")[0].strip())
+
+            # ── 2026-10-15 TD-20261015-05（真 CIO 工作區審查 blocking②）──
+            # 雷達週計畫（institutional_flow 週一/三產出）內寫死的桶位數字，在真值更新後會與同頁
+            # CEO 卡（讀 snapshot.penetration 即時值）不一致 → 同頁兩個官方美股比例（36.4% vs 36.2%）。
+            # 修法：顯示層把「桶位%／目標／偏差pp／分母／理論調整／以總資產為分母之比率／乾粉」
+            # 一律改寫為 snapshot 即時推導值（單一來源）；政策文字與動作階梯完全不動。
+            _lp = (snap.get("penetration", {}) or {}).get("actual_pct", {}) or {}
+            _lt = (snap.get("penetration", {}) or {}).get("targets", {}) or {}
+            _lta = float(snap.get("total_assets") or 0)
+            _pk = {"台股": ("台股市值型成長", "台股市值型目標"),
+                   "美股": ("美股市值型成長", "美股市值型目標"),
+                   "防守": ("防守型配息", "配息型目標"),
+                   "債券": ("債券", "債券型目標"),
+                   "現金": ("現金/安全網", "現金目標")}
+
+            def _live_row(_r):
+                _cat = (_r.get("類別") or "").strip()
+                _t = _r.get("內容") or ""
+                _keys = _pk.get(_cat)
+                if not (_keys and _lta > 0):
+                    return _r
+                _a = _lp.get(_keys[0])
+                _g = _lt.get(_keys[1])
+                if _a is None or _g is None:
+                    return _r
+                _a = float(_a)
+                _g = float(_g)
+                _d = _a - _g
+                # ①（X.X% vs 目標Y%，超配/缺口 ±Z.Zpp）
+                _t = re.sub(r"（\d+(?:\.\d+)?%\s*vs\s*目標\s*\d+(?:\.\d+)?%\s*，\s*(?:超配|缺口)\s*[+\-]\d+(?:\.\d+)?pp）",
+                            f"（{_a:.1f}% vs 目標{_g:.0f}%，{'超配' if _d >= 0 else '缺口'} {_d:+.1f}pp）", _t)
+                # ②X.X%（目標 Y%）
+                _t = re.sub(r"(?<![\d.])-?\d+(?:\.\d+)?%（目標\s*\d+(?:\.\d+)?%）",
+                            f"{_a:.1f}%（目標 {_g:.0f}%）", _t)
+                # ③行首裸桶位百分比（如現金列「3.9% → 底線…」）
+                _t = re.sub(r"^\s*-?\d+(?:\.\d+)?%", f"{_a:.1f}%", _t)
+                # ④戰略偏差 ±Z.Zpp
+                _t = re.sub(r"(戰略偏差\s*)[+\-]\d+(?:\.\d+)?pp",
+                            lambda m: f"{m.group(1)}{_d:+.1f}pp", _t)
+                # ⑤分母／理論調整（＝|偏差|÷100 × 分母）
+                _t = re.sub(r"分母\s*[\d,]+", f"分母 {_lta:,.0f}", _t)
+                if "理論調整" in _t:
+                    _t = re.sub(r"理論調整\s*[\d,]+", f"理論調整 {abs(_d) / 100 * _lta:,.0f}", _t)
+                    _t = re.sub(r"理論\s*[\d,]{7,}", f"理論 {abs(_d) / 100 * _lta:,.0f}", _t)
+                # ⑥「配息資產合計 A ÷ 總資產 B = C%」：分子／分母／比率同一口徑、同一 as-of
+                #    （2026-10-15 P1-1 修復）原版只換分母、保留 radar 舊分子 → 印出
+                #    「配息資產合計 17,802,228 ÷ 總資產 26,992,475 = 66.0%」，與 CEO 卡
+                #    「防守合併 65.9%（真值 17,774,779）」同頁互斥。修法：分子改讀
+                #    sot_targets.defensive_caliber（配息資產合計真值，單一來源），比率由
+                #    分子÷分母現算 → 三者自洽可核對；真值不可得則保留原文並留痕（fail-visible）。
+                _dv = 0.0
+                if "配息資產合計" in _t:
+                    try:
+                        _dv = float((defensive_caliber(snap) or {}).get("金額") or 0)
+                    except Exception as _e:  # noqa: BLE001
+                        print(f"⚠️ 配息資產合計真值不可得（{type(_e).__name__}: {_e}）→ 保留原文不重算（fail-visible）")
+                    if _dv > 0 and _lta > 0:
+                        _t = re.sub(
+                            r"配息資產合計\s*[\d,]+\s*÷\s*總資產\s*[\d,]+\s*=\s*\d+(?:\.\d+)?%",
+                            f"配息資產合計 {_dv:,.0f} ÷ 總資產 {_lta:,.0f} = {_dv / _lta * 100:.1f}%", _t)
+                # 其餘「A ÷ 總資產 B = C%」若無可稽核的分子真值 → 一律不動並印出
+                #    （禁印出「舊分子 ÷ live 分母」的跨 as-of 混合算式）
+                _canon_num = f"{_dv:,.0f}" if _dv > 0 else None
+                _unfixed = [m for m in re.findall(
+                    r"[\d,]{7,}\s*÷\s*總資產\s*[\d,]{7,}\s*=\s*\d+(?:\.\d+)?%", _t)
+                    if not (_canon_num and m.startswith(_canon_num))]
+                if _unfixed:
+                    print(f"⚠️ 未改寫的比例算式（無分子真值 → 保留原文，不與 live 分母混用）：{_unfixed}")
+                # ⑦乾粉（＝可動用現金 − 生活底線）
+                if "乾粉" in _t:
+                    try:
+                        _dr = cash_caliber(snap)["dry"]
+                        _t = re.sub(r"乾粉\s*[\d.]+萬", f"乾粉 {_dr / 10000:.1f}萬", _t)
+                    except Exception as _e_dr:
+                        # 2026-10-15 CIO 複審：不得靜默放行舊值（行動列乾粉改寫失敗須可見）
+                        print(f"⚠️ 行動列乾粉即時值不可得（{type(_e_dr).__name__}: {_e_dr}）→ 保留原文（fail-visible）")
+                _n = dict(_r)
+                _n["內容"] = _t
+                return _n
+
+            _rows2 = [_live_row(_r) for _r in _rows2]
+            # 2026-10-15 P1-1（同頁一致性）：行動儀表板 JS 載入時會用 radar_state.json 重繪
+            #   同一批 rows；餵原始內容 → 頁面載入後又冒出舊桶位（台股/美股/防守 皆會）。
+            #   注入「已套用 live 規則」的同一份內容（規則仍只在本檔＝單一來源）；
+            #   JS 端逐列以 類別+動作 嚴格比對後才採用，不符即回退原值（不錯位、不猜）。
+            def _band_row(_cat: str, _c: str, _s: dict) -> str:
+                """逐列套用與整頁同一道 band_filter（2026-10-15 P1-1）。
+
+                band_filter 以「桶別別名」為錨點，單獨餵內容會完全 no-op（實測），
+                故先補上類別前綴再套用、最後去錨 → 注入內容與伺服器端渲染逐字一致。
+                """
+                if not _cat:
+                    return _c
+                _out = _band_filter(_cat + _c, _s)
+                return _out[len(_cat):] if _out.startswith(_cat) else _out
+
+            tpl = tpl.replace("__LIVE_ROWS_JS__", json.dumps(
+                [{"類別": r.get("類別") or "", "動作": r.get("動作") or "",
+                  "內容": _band_row(r.get("類別") or "", r.get("內容") or "", snap)}
+                 for r in _rows2], ensure_ascii=False))
             try:
                 import pledge_status as _pf_d
                 _pl2 = _pf_d.pledge_status_line(style="short")
@@ -798,8 +899,12 @@ def main():
             f'<div class="text-[10px] text-slate-500 mt-0.5">市值：{_twd / 1e4:.0f} 萬 TWD</div></div>'
         )
     if _ppct_p.get("美股市值型成長_科技") is not None:
+        # 2026-10-15 P1-1 附帶：科技目標紅線改讀 snapshot 真值
+        #   （原寫死 ≤20%，與 SoT 科技曝險目標 15% 衝突 → 同頁兩個科技門檻）
+        _tgt_p = snap.get("penetration", {}).get("targets", {}) or {}
+        _tech_tgt_p = float(_tgt_p.get("科技曝險目標") or _tgt_p.get("科技") or 15)
         _pen_parts.append(
-            f'<div class="text-[11px] text-slate-400 pt-2 border-t border-slate-700/50">🔬 美股科技 {_ppct_p.get("美股市值型成長_科技", 0):.1f}%（{(_ptwd_p.get("美股市值型成長_科技", 0) or 0) / 1e4:.0f}萬）｜非科技 {_ppct_p.get("美股市值型成長_非科技", 0):.1f}%（{(_ptwd_p.get("美股市值型成長_非科技", 0) or 0) / 1e4:.0f}萬）｜科技目標 ≤20%</div>'
+            f'<div class="text-[11px] text-slate-400 pt-2 border-t border-slate-700/50">🔬 美股科技 {_ppct_p.get("美股市值型成長_科技", 0):.1f}%（{(_ptwd_p.get("美股市值型成長_科技", 0) or 0) / 1e4:.0f}萬）｜非科技 {_ppct_p.get("美股市值型成長_非科技", 0):.1f}%（{(_ptwd_p.get("美股市值型成長_非科技", 0) or 0) / 1e4:.0f}萬）｜科技目標 ≤{_tech_tgt_p:.0f}%</div>'
         )
     _pen_parts.append("</div>")
     tpl = tpl.replace("__PEN_CARD__", "".join(_pen_parts))
@@ -1236,6 +1341,9 @@ def main():
 
     tpl = public_mask.scrub(tpl)
 
+    # 2026-10-15 P1-1：__LIVE_ROWS_JS__ 若因雷達週計畫缺失而未注入 → 以空清單收尾
+    #   （JS 端逐列比對不符即回退原值），絕不留裸佔位符進 index.html（否則整段 JS 語法錯誤）。
+    tpl = tpl.replace("__LIVE_ROWS_JS__", "[]")
     (BASE / "index.html").write_text(_band_filter(tpl), encoding="utf-8", newline="\n")  # 2026-10-12：鎖 LF，避免每次重建產生整檔 CRLF 假 diff
     print(f"✅ 儀表板注入完成（{hits} 組值 + {_link_hits} 連結動態化）｜現金 {_fmt(cash)} / 保單 {_fmt(ins)} / 配息 {_fmt(div_total)} / 租金 {_fmt(rent_got)}")
 

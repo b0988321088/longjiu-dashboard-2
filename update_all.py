@@ -289,7 +289,16 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
         us = sec_us + (ins_eq - _ins_def_eq - _ins_tw_eq) + _fund_us - _satellite
         def_v = sec_def + _fund_def + _ins_def_eq
         bond_v = sec_bond + ins_bonds + _fund_bonds
-    c = total - (tw + us + def_v + bond_v + _fund_gold + _fund_health) # 從總資產中扣除
+    # 2026-10-15（使用者裁決「修 calc_penetration 的餘數法」）：
+    #   原版在「未取整的浮點桶值」上相減求餘數，再各自 round 成現金桶與在途差額 →
+    #   兩次獨立四捨五入可差 ±1；下游 build_penetration_report 以「已存的桶值」重算分母時
+    #   實測得 27,047,284，與 snapshot 總資產 27,047,285 差 1 元 →
+    #   check_penetration_consistency 判「穿透報告 缺少：總資產」並阻擋推送（本批實踩）。
+    #   修法：參與不變量的桶位**先取整**（與儲存／回報口徑一致），再以整數相減求餘數與在途差額
+    #   →「五桶＋在途＋衛星＋指定用途款 = 總資產」在整數層精確成立，且百分比變動 <0.05pp。
+    tw, us, def_v, bond_v = round(tw), round(us), round(def_v), round(bond_v)
+    _fund_gold_r, _fund_health_r = round(_fund_gold), round(_fund_health)
+    c = round(total) - (tw + us + def_v + bond_v + _fund_gold_r + _fund_health_r)  # 餘數法（整數）
     # 2026-10-02 使用者裁示（統一現金口徑）：穿透桶「現金/安全網」一律讀可動用現金真值
     # （sot_targets.allowable_cash ＝ cash_layers.available／unrestricted_cash）。
     # 為什麼：餘數法會把「在途／未對帳」零錢（實測差 589）悄悄併進桶內，導致同一份報告
@@ -299,12 +308,12 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     try:
         from sot_targets import allowable_cash as _allowable_cash
         _avail_c = round(float(_allowable_cash(snap or {})))
-        _cash_in_transit = round(c - _avail_c)
+        _cash_in_transit = c - _avail_c          # 整數相減（2026-10-15：原為 round(c-_avail_c)，會再引入 ±1）
         c = _avail_c
     except Exception as _e:  # 真值缺漏 → 保留餘數法並留痕，不得靜默
         print(f"⚠️ 穿透桶現金真值不可得（{type(_e).__name__}: {_e}）→ 沿用餘數法 {c:,}")
-    us_tech = _fund_us_tech + ins_tech + sec_us_tech - round(_sat_tech)
-    us_non_tech = us - us_tech
+    us_tech = round(_fund_us_tech + ins_tech + sec_us_tech - round(_sat_tech))
+    us_non_tech = us - us_tech          # us 已取整（2026-10-15）→ 兩者相加回到 us，桶和精確
     _sot_bt = (snap.get("thresholds_2026_0915") or {}).get("桶目標_pct") or {}
     _targets = {
         "台股市值型": _sot_bt.get("台股市值型", 10),
@@ -349,7 +358,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
 
     return {"台股市值型成長": tw, "美股市值型成長": us, "防守型配息": def_v, "債券": bond_v, "現金/安全網": c,
             "指定用途款": round(_rst), "restricted_cash": round(_rst),
-            "黃金": round(_fund_gold), "健康": round(_fund_health),
+            "黃金": _fund_gold_r, "健康": _fund_health_r,
             "美股市值型成長_科技": round(us_tech), "美股市值型成長_非科技": round(us_non_tech),
             "alert": _alert,
             "_meta": {"ins_eq": ins_eq, "ins_bonds": ins_bonds, "ins_def_eq": _ins_def_eq,

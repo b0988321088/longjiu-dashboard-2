@@ -217,12 +217,28 @@ def main():
                 _extra = sorted(set(_st) - set(_keep))
                 lines.append(f"⛔ staged 與本輪產物不符（git add rc={_add.returncode}｜多出 {_extra}）"
                              "→ 不 commit／不 push（fail-closed）")
+    # 5) 資料產物收尾提交（2026-10-15 P1-2 修復；責任邊界＝此步驟，唯一且明確）
+    #    背景：asset_diff_history.json 原本靠 emergency_1330._commit_own() 提交；該出口依 §4
+    #    裁決預設停用後，此檔永久停在 dirty（本檔 producer 規則「執行前已 dirty 者不帶走」永遠排除它）。
+    #    修法：改由 artifact_commit.py 認領 —— 只提交 artifact_commit.DECLARED 宣告清單（顯式
+    #    pathspec、commit 前驗證 staged ⊆ 宣告清單、禁 add -A）→ 不擴大提交範圍、不暗中夾帶他班
+    #    dirty；失敗一律非零 rc 且在晚報逐字揭露（失敗可見），無變更則明說「無變更」。
+    #    ★ 2026-10-15 使用者裁決（方案 b）：提交與發布分離 —— 本步驟**只提交、不推送**
+    #      （不帶 --push；artifact_commit 亦不得呼叫 auto_push）。推送交由獨立審查車道
+    #      （真 CIO 審查 → RECORD → auto_push），故晚報必須分開講「提交完成、推送待審」，
+    #      不得把兩件事合併報告成「已發布」。
+    _ok_art, _art_msg = run_capture("artifact_commit.py", 300)
+    lines.append(("📦 資料產物收尾提交（只提交、不推送）：" + ("✅ " if _ok_art else "❌ "))
+                 + (_art_msg.splitlines()[0] if _art_msg else "（無輸出）")
+                 + ("｜推送待獨立審查" if _ok_art else ""))
     _dropped = sorted(set(_drop) - set(_keep))
     if _d2_ok and _dropped:
         lines.append(f"🚫 排除 {len(_dropped)} 檔（非本輪產物／執行前已 dirty）：{', '.join(_dropped[:8])}"
                      + ("…" if len(_dropped) > 8 else ""))
+    # ★ 2026-10-15 裁決 b：收尾提交（步 5）**不算推送**——只有步 4 真的推成功才宣稱已上線，
+    #   否則一律明示「未推送上線」（殘留本機 commit 由獨立審查車道處理）。
     lines.append("✅ 已推送並驗證（clean-main）" if _pushed
-                 else "⚠️ 未推送上線 — 線上可能仍是舊版，詳見上方訊息")
+                 else "⚠️ 未推送上線 — 線上可能仍是舊版，詳見上方訊息（收尾提交僅完成本機 commit）")
     lines.append("")
     lines.append(f"📰 日報：https://b0988321088.github.io/longjiu-dashboard-2/daily_report_v2_{TODAY}.html")
     lines.append(f"📊 差異：https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html")

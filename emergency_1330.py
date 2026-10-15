@@ -1,4 +1,5 @@
 """龍九台股緊急應變 13:00 — 刷新情報 + 彙整 + 三份產出"""
+import os
 import subprocess, sys, json, re
 from pathlib import Path
 from datetime import datetime, date
@@ -309,9 +310,78 @@ if _write:
 #     300s 會在 Pages 建置較慢時把驗證砍掉，變成「推了但沒驗」。
 #   ②原本完全不理 run_step 的回傳值 → 逾時（TimeoutExpired 會印 ❌ 超時）之後腳本照樣印
 #     「✅ 緊急應變完成」＝假成功。改為收集三個步驟結果，任一失敗就以非 0 結束。
-_ok_report = run_step("日報+儀表板", [sys.executable, str(LJ / "regenerate_report.py")], 600)
-_ok_diff = run_step("差異分析", [sys.executable, str(LJ / "asset_diff_monitor.py")], 60)
-_ok_push = run_step("推送", [sys.executable, str(LJ / "daily_deploy.py")], 600)
+# ── 2026-10-15 P0-3（使用者裁決）──────────────────────────────────────────────
+#   裁決要旨：「未明確授權時，緊急流程只能產生報告及列出待處理清單；不得提交或推送。」
+#   修法：發布相關步驟由**單一函式 publish_plan()** 決定，未授權時計畫內不得含任何
+#   commit／push／發布步驟；執行前後再以 _plan_violations() 做 fail-closed 自檢，
+#   並明確印出「已略過推送」的語意（略過 ≠ 失敗，rc 記 0）。
+#   另：審查只掃本檔字面會漏掉子程序（daily_deploy.py 內部才會 commit／push），
+#   故此處改為「計畫層」可驗證 —— 見 tools/test_emergency_no_commit.py E8/E9。
+_COMMIT_ENABLED = os.environ.get("LJ_EMERGENCY_COMMIT", "0") == "1"
+
+# 具發布副作用（commit／push／Telegram）的腳本清單；本清單＝守門依據，新增者必須登記。
+_PUBLISH_CAPABLE = ("daily_deploy.py", "auto_push.py", "evening_sync.py", "artifact_commit.py",
+                    "safe_update.py", "four_source_sync.py", "regenerate_report.py")
+# 例外：支援 --no-push 降級為「只產出、不提交」的腳本（INC-210）
+_NO_PUSH_CAPABLE = {"regenerate_report.py": "--no-push"}
+
+
+def publish_plan(commit_enabled: bool, root: Path, python_exe: str) -> list[tuple[str, list[str], int]]:
+    """緊急應變執行計畫（2026-10-15 P0-3 單一決定點；純函式，供測試直接驗證）。
+
+    未授權（commit_enabled=False）→ 計畫內**不得含**任何 commit／push／發布步驟：
+      ‧ regenerate_report.py 一律帶 --no-push（產生檔案、不 commit、不 push）
+      ‧ daily_deploy.py（日報／index 的 commit＋push＋Telegram）整步不列入
+    授權（True）→ 恢復舊行為（推送步驟納入；推送仍受 auto_push.py 閘門管轄）。
+    """
+    _report_cmd = [python_exe, str(root / "regenerate_report.py")]
+    if not commit_enabled:
+        _report_cmd.append("--no-push")
+    _plan: list[tuple[str, list[str], int]] = [
+        ("日報+儀表板", _report_cmd, 600),
+        ("差異分析", [python_exe, str(root / "asset_diff_monitor.py")], 60),
+    ]
+    if commit_enabled:
+        _plan.append(("推送", [python_exe, str(root / "daily_deploy.py")], 600))
+    return _plan
+
+
+def _plan_violations(plan: list[tuple[str, list[str], int]], commit_enabled: bool = False) -> list[str]:
+    """回傳計畫中「未降級卻具發布副作用」的步驟（fail-closed 自檢）。
+
+    commit_enabled=False（未授權）：計畫內**不得**含任何未降級的發布步驟 → 一律違規。
+    commit_enabled=True（已授權）：允許 `_AUTHORIZED_WHEN_ENABLED` 內的發布步驟（授權即為
+      明示允許）；其餘未降級者仍視為違規 —— 授權不得成為塞入未預期發布腳本的通道。
+      （2026-10-15 CIO blocking：原版不分授權模式一律判違規，導致 LJ_EMERGENCY_COMMIT=1
+        的授權路徑被自檢必擋、永遠無法執行。）
+    """
+    _AUTHORIZED_WHEN_ENABLED = {"daily_deploy.py", "regenerate_report.py"}
+    _bad: list[str] = []
+    for _label, _cmd, _to in plan:
+        for _arg in _cmd:
+            _base = Path(str(_arg)).name
+            if _base not in _PUBLISH_CAPABLE:
+                continue
+            if _NO_PUSH_CAPABLE.get(_base) and _NO_PUSH_CAPABLE[_base] in _cmd:
+                continue
+            if commit_enabled and _base in _AUTHORIZED_WHEN_ENABLED:
+                continue
+            _bad.append(f"{_label}:{_base}")
+    return _bad
+
+
+_plan = publish_plan(_COMMIT_ENABLED, LJ, sys.executable)
+_viol = _plan_violations(_plan, _COMMIT_ENABLED)
+if _viol:
+    print(f"❌ 發布計畫含未授權的發布步驟（{_viol}）→ 中止（fail-closed，未執行任何步驟）")
+    sys.exit(1)
+_rcs: dict = {}
+for _label, _cmd, _timeout in _plan:
+    _rcs[_label] = run_step(_label, _cmd, _timeout)
+if not _COMMIT_ENABLED:
+    # 明確語意：推送步驟「未列入」而非失敗（略過 ≠ 失敗）；產物與待處理清單仍照常輸出。
+    print("⏸ 推送步驟已略過（未授權：LJ_EMERGENCY_COMMIT 未開啟）→ 本次只產出報告與待處理清單")
+    _rcs["推送"] = 0
 
 # 2026-10-14 根因修復（TD-20261014-02）：
 #   本路徑順序＝regenerate（有提交出口）→ asset_diff_monitor（步驟2，產物無出口）
@@ -322,12 +392,28 @@ _ok_push = run_step("推送", [sys.executable, str(LJ / "daily_deploy.py")], 600
 #   模板同 wrappers/cost_watch_close.py（22:30 費用帳本日結）。
 _OWN_FILES = ("asset_diff_history.json", f"buffett_cto_report_{today}.md")
 
+# ── 2026-10-15 B1（§4）使用者裁決：緊急應變路徑**預設不提交** ──────────────────
+#   裁決原文要旨：「緊急應變只產出、不提交、不推送、不發布；驗證排程產出報告時不會自行提交」。
+#   故本檔最後的收尾提交改為 **預設關閉**：未在環境變數明示 LJ_EMERGENCY_COMMIT=1 時，
+#   _commit_own() 只列出待提交清單、不執行任何 git 寫入（add／commit／push 皆不呼叫）。
+#   ⚠️ 開啟旗標＝恢復舊行為，**不代表取得發布授權**（推送仍受 auto_push.py 閘門管轄）。
+#   （2026-10-15 P0-3：旗標另由 publish_plan() 決定發布步驟；此處不再重複定義 `_COMMIT_ENABLED`
+#     —— 單一定義點在檔案上方，避免兩處定義漂移。）
+
 
 def _commit_own() -> int:
-    """收尾補提交：只碰自家兩檔；無變更即靜默略過。"""
+    """收尾補提交（**2026-10-15 B1／§4 起預設停用**）：只碰自家兩檔；無變更即靜默略過。
+
+    未設 LJ_EMERGENCY_COMMIT=1 → 只列印待提交清單並回 0（不呼叫任何 git 寫入）。
+    回傳值語意不變（0＝無事／完成，1＝失敗），故呼叫端的 rc 彙總邏輯不受影響。
+    """
     _files = [f for f in _OWN_FILES if (LJ / f).exists()]
     if not _files:
         print("自家產物不存在，略過提交")
+        return 0
+    if not _COMMIT_ENABLED:
+        print("⏸ 自家產物待提交（本路徑預設只產出、不提交；LJ_EMERGENCY_COMMIT 未開啟）："
+              + "、".join(_files))
         return 0
 
     def g(*a):
@@ -355,7 +441,7 @@ def _commit_own() -> int:
 
 _ok_own = _commit_own()
 
-_rcs = {"日報+儀表板": _ok_report, "差異分析": _ok_diff, "推送": _ok_push, "產物補提交": _ok_own}
+_rcs["產物補提交"] = _ok_own
 _failed = [n for n, rc in _rcs.items() if rc not in (0, 3)]
 _blocked = [n for n, rc in _rcs.items() if rc == 3]
 if _blocked:

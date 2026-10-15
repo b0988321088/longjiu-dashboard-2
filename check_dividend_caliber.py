@@ -691,6 +691,10 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "DAILY_REPORT_PIPELINE_RULE.md", "run_daily.py",
            "notion_shared_context.md", "index_template.html", "build_dashboard.py", "index.html",
            "check_caliber_mutation.py",   # 本守門的變異測試（2026-09-28 從 %TEMP% 搬進版控，置於 tools/）
+           "test_daily_report_penetration_live.py",   # 日報「五桶佔比」段落＝當日真值之回歸（2026-10-15 本班）
+           "test_retirement_rebalance_live.py",   # 退休規劃／再平衡評估 live 欄位回歸（2026-10-15 本班）
+           "build_rebalance_eval_html.py",   # 再平衡評估頁渲染：snapshot 真值欄位即時覆蓋（本班）
+           "build_retirement_plan.py",   # 留停缺口表「現金水位」改讀 live 可動用（本班）
            "verify_ciostatus_pushbase.py",   # cio_approve --status 基準修正的唯讀驗證器（tools/）
            "schedule_events.json", "error_register.md",
            "dashboard_decisions.json",   # 決策登記（decision-governance 主檔，逐筆新增屬預期）
@@ -744,6 +748,54 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            #   保單值標示為「暫定規劃值」；保守配息不動；三層實收／保守／常態並列且互不覆寫）。
            "passive_caliber.py",   # div_norm 改讀 monthly_dividend_normal＋新增 norm 情境
            "test_normal_dividend_layer.py",   # 上項之單元測試（正向／負向回退／回歸隔離，11 條）
+           # 2026-10-15 本班（真 CIO 工作區審查 3 blocking 修復 ＋ 緊急應變分離；TD-20261015-05）：
+           #   授權＝使用者同日 Telegram 裁決「授權修復 3 個 blocking、授權補記第③筆決策；
+           #   緊急應變採 B 方案從 sync_all 主流程分離；三項均不含 commit／push／發布」。
+           #   ① asset_diff 同頁矛盾：新增「指定用途款³」欄使 分項＋指定款＝總資產 逐列自洽。
+           #   ② index 美股口徑：顯示層以 snapshot.penetration 即時值改寫雷達週計畫數字。
+           #   ③ apply_truth 未定義變數：覆核為誤判（P／_FUNDS 皆有定義、可編譯）→ 補靜態守門測試。
+           "sync_all.py",   # 緊急應變步驟移出主流程（B 方案）＋根因註解；不調整任何 timeout
+           "test_page_truth_consistency.py",   # asset_diff 逐列加總＋index 桶位/live 一致性（含負向自測）
+           "test_apply_truth_scoping.py",   # apply_truth_*.py 名稱解析靜態守門（含負向案例）
+           # 2026-10-15 本班 B1（單一施工批次；R1 審查鏈／R2 bonds／R3 CTO 報告／緊急應變只產出／HTML 方案 A）：
+           #   授權＝使用者 2026-10-15 13:29 Telegram 裁決「授權執行 B1 單一施工批次，HTML 採 A
+           #   （納入版控＋白名單）」；同批邊界＝只授權修改、測試與留存證據，不含 commit／push／發布。
+           #   （regenerate_report.py／asset_diff_monitor.py／buffett_cto_analyzer.py 已於前批宣告）
+           "review_chain.py",   # R1：契約驗證＋分段完整涵蓋＋一致性（temperature 不再當確定性保證）
+           "test_review_chain_20261013.py",   # R1：契約／涵蓋率純函式測試（T10–T14）
+           "test_review_chain_stability.py",   # R1：離線穩定性整合測試（打樁 _layers，25 條）
+           "test_history_schema_completeness.py",   # R2：bonds fallback／缺值拒絕／鍵集完整性（11 條）
+           "test_cto_report_rules.py",   # R3：凍結禁令／紅線數字／ETF 標籤守門（16 條）
+           "emergency_1330.py",   # §4：_commit_own() 預設不提交（LJ_EMERGENCY_COMMIT 閘門）
+           "test_emergency_no_commit.py",   # §4：預設零 git 寫入＋產出/告警不受影響（35 條；含 E11/E12 真 git 沙盒）
+           "test_html_publish_consistency.py",   # §5：producer ↔ 白名單 ↔ 輸出路徑一致性（19 條）
+           # 2026-10-15 同批延伸（使用者裁決「修 calc_penetration 的餘數法」）：
+           #   update_all.py 桶位先取整、餘數與在途差額改整數相減 → 不變量整數層精確成立
+           "update_all.py",
+           # 2026-10-15 本輪（P1-1／P0-3／P1-2 三項 blocking 之修復收攏；使用者同日裁決
+           #   「繼續施工、維持 HOLD」——範圍＝補完測試／登錄宣告／全套回歸／第二輪複審／
+           #   發布前核對，不含 commit／push／發布）：
+           #   ① P1-1 Dashboard 比例口徑：build_dashboard.py 已於本輪改讀
+           #      sot_targets.defensive_caliber()（配息資產合計真值）單一來源＋即時卡資料注入
+           #      （build_dashboard.py 第 307–312 行；index.html／index_template.html 已宣告）。
+           #   ② P0-3 緊急流程禁止未授權發布：emergency_1330.py（已宣告）計畫層 publish_plan()
+           #      ／_plan_violations()；測試併入 test_emergency_no_commit.py E8–E12（已宣告）。
+           #   ③ P1-2 提交責任鏈：新增 artifact_commit.py 並接入 evening_sync.py。
+           "artifact_commit.py",   # P1-2＋裁決 b：受控資料產物提交（宣告清單＋顯式 pathspec；commit 前驗證 staged ⊆ 宣告清單）；**不推送**
+           "evening_sync.py",   # P1-2：晚報步 5 收尾提交（唯一責任邊界；失敗在晚報逐字揭露）
+           "test_artifact_commit_responsibility.py",   # P1-2：責任鏈真 git 沙盒驗收 R1–R13（42 條）
+           "publish_allowlist.json",   # B1｜HTML 方案 A：首頁重要連結報告頁白名單（非程式檔但一併宣告）
+           # 2026-10-15 第二輪（使用者裁決「三項逐一修到根因、完整複審一次，再決定發布」：
+           #   ① 基金口徑 12,503 差額 → 追查真值來源並補可追溯說明（不放寬檢查器）
+           #   ② Dashboard stale token → 逐項證明後退休＋改用更精確比對條件
+           #   ③ auto_push --dry-run 誤判純資料 commit → 修正分類依據（不繞過發布閘門）
+           #   範圍＝修正、測試、證據留存；不含 commit／push／發布）
+           "publish_gate.py",   # 新增 force_cio_reasons()／force_cio_summary()：按真實類別揭露拒因
+           "auto_push.py",      # 拒推訊息改按類別揭露（rc／攔截能力不變）；退出碼語意補述
+           "check_dashboard_stale.py",   # 衍生差值（穿透卡 ±Zpp）視為活顯示值 → 列「清單過時」不誤判
+           "test_dashboard_stale_tokens.py",   # 上項正／負向驗收（12 條：真舊句仍抓、活值不誤紅）
+           "test_push_commit_classification.py",   # 上項正／負向驗收（16 條：純資料辨識、程式／混合仍攔）
+           "dashboard_stale_tokens.json",   # 資料檔：四個過寬 token 逐項退休＋新增完整舊句條件
            }
 # 逐日產物：命名比對，跨月不失效（舊版 allowed_prefixes 釘死 2026-09）
 _DAILY = re.compile(r"^(asset_diff|retirement_plan|daily_report_v2|rebalance_dashboard|"

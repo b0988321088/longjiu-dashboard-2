@@ -112,7 +112,9 @@ def _call(url: str, headers: dict, model: str, prompt: str, max_tokens: int,
             "model": model,
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": cap,
-            "temperature": 0.1,
+            # 2026-10-15 B1（R1）：0.1 → 0。降低取樣隨機性；**不代表結果保證一致**
+            # （同一輸入仍可能因上游實作變動給出不同判定 → 由 stability_check 標記 UNSTABLE）。
+            "temperature": 0,
         }
         if extra:
             body.update(extra)
@@ -162,7 +164,7 @@ class _LayerBlocked(RuntimeError):
 def _gemini_once(base: str, key: str, model: str, prompt: str, cap: int,
                  timeout: float, json_mode: bool) -> tuple[str, str]:
     """單次呼叫，回傳 (text, finishReason)。結構／安全異常一律 raise（見 `_LayerBlocked`）。"""
-    gcfg: dict = {"temperature": 0.1, "maxOutputTokens": cap}
+    gcfg: dict = {"temperature": 0, "maxOutputTokens": cap}   # 2026-10-15 B1（R1）：0.1 → 0
     if json_mode:
         gcfg["responseMimeType"] = "application/json"
     body = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": gcfg}
@@ -276,6 +278,18 @@ REVIEW_CONTRACT = (
 )
 
 
+def _coverage_note(total: int, shown: int) -> str:
+    """diff 覆蓋率提示（2026-10-15 B1／R1）：不得靜默截斷。
+
+    完整提供（shown >= total）→ 空字串；否則明示涵蓋率並禁止 APPROVE。
+    """
+    if total <= 0 or shown >= total:
+        return ""
+    pct = shown * 100.0 / total
+    return (f"\n⚠️ diff 未完整：本次僅提供 {shown}/{total} 字元（涵蓋率 {pct:.1f}%）。"
+            f"涵蓋率不足 100% 時**不得給 APPROVE**，只能 REJECT 並指名截斷事實。\n")
+
+
 def build_review_prompt(commit: str, tree: str, subject: str, files: str, stat: str,
                         diff_cap: int = 12000, patch: str | None = None,
                         segment: tuple[int, int] | None = None) -> str:
@@ -297,7 +311,8 @@ def build_review_prompt(commit: str, tree: str, subject: str, files: str, stat: 
     _content_txt = ""
     if patch is not None:
         _content_txt = (f"\n變更內容（實際 patch{_seg_txt}）：\n"
-                        f"```diff\n{patch[:diff_cap]}\n```\n")
+                        f"```diff\n{patch[:diff_cap]}\n```\n"
+                        f"{_coverage_note(len(patch), min(len(patch), diff_cap))}")
     return (
         "你是龍九控股的獨立 CIO 審查者（異質審查，不得預設放行）。只回傳 JSON，不要任何其他文字。\n"
         f"待推送 commit：{c12}\n待推送 tree：{t12}\n主旨：{subject}\n\n"
@@ -312,6 +327,153 @@ def build_review_prompt(commit: str, tree: str, subject: str, files: str, stat: 
         '{"verdict":"APPROVE 或 REJECT","reviewed_commits":[{"commit":"' + c12 + '","tree":"' + t12 + '"}],'
         '"blocking":[],"required_fixes":[],"note":"理由（160 字內）"}'
     )
+
+
+def parse_review(text: str) -> dict | None:
+    """從模型輸出取出審查 JSON 物件（容忍前後雜訊）；取不到回 None。"""
+    if not text:
+        return None
+    try:
+        j = json.loads(text)
+        if isinstance(j, dict):
+            return j
+    except Exception:  # noqa: BLE001
+        pass
+    m = re.search(r"\{.*\}", text, re.DOTALL)
+    if not m:
+        return None
+    try:
+        j = json.loads(m.group(0))
+        return j if isinstance(j, dict) else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+# 可定位依據：檔名（含副檔名）／行號（`行`、`L123`、`line 12`）
+_LOCATABLE_RE = re.compile(
+    r"[A-Za-z0-9_\-./]+\.(?:py|json|md|html|db|csv|txt|yml|yaml|sh|js|toml)"
+    r"|行|L\d{1,5}|line\s*\d+")
+
+
+def contract_violation(j: dict | None, *, require_evidence: bool = True) -> str | None:
+    """審查契約違規偵測 → 回傳原因（None＝合規）。
+
+    使用者 2026-10-15 B1／R1 裁決：
+      - `blocking` 非空 ⇔ `REJECT`；`blocking` 空 ⇔ `APPROVE`。不一致者判**無效審查**，不得核准。
+      - 每個 blocking 必須含可定位依據（檔名／行號）；否則同樣無效。
+    """
+    if not isinstance(j, dict):
+        return "回覆非 JSON 物件"
+    v = str(j.get("verdict") or "").strip().upper()
+    if v not in ("APPROVE", "REJECT"):
+        return f"verdict 不可判定（{v or '空'}）"
+    bl = j.get("blocking")
+    if bl is None:
+        bl = []
+    if not isinstance(bl, list):
+        return "blocking 非陣列"
+    named = [b for b in bl
+             if (b if isinstance(b, str) else json.dumps(b, ensure_ascii=False)).strip()]
+    if v == "APPROVE" and named:
+        return f"契約違規：verdict=APPROVE 但 blocking 非空（{len(named)} 條）"
+    if v == "REJECT" and not named:
+        return "契約違規：verdict=REJECT 但 blocking 為空（未指名缺陷）"
+    if v == "REJECT" and require_evidence:
+        bad = [b for b in named
+               if not _LOCATABLE_RE.search(b if isinstance(b, str) else json.dumps(b, ensure_ascii=False))]
+        if bad:
+            return f"契約違規：blocking 缺可定位依據（檔名／行號）（{len(bad)} 條）"
+    return None
+
+
+def build_review_prompts(commit: str, tree: str, subject: str, files: str, stat: str,
+                         diff_cap: int = 12000, patch: str | None = None) -> tuple[list[str], dict]:
+    """組送審 prompt（超量 diff 改為**完整分段**，不再靜默截斷）→ (prompts, coverage)。
+
+    coverage：`total_chars`／`provided_chars`／`pct`／`segments`。
+    分段時所有字元都被涵蓋（pct=100），每段獨立判定；未完整涵蓋時不得 APPROVE。
+    """
+    total = len(patch or "")
+    if patch is None or total <= diff_cap:
+        prompts = [build_review_prompt(commit, tree, subject, files, stat, diff_cap, patch)]
+        return prompts, {"total_chars": total, "provided_chars": total, "pct": 100.0, "segments": 1}
+    segs = [patch[i:i + diff_cap] for i in range(0, total, diff_cap)]
+    prompts = [build_review_prompt(commit, tree, subject, files, stat, diff_cap, s,
+                                   segment=(k + 1, len(segs)))
+               for k, s in enumerate(segs)]
+    return prompts, {"total_chars": total, "provided_chars": total, "pct": 100.0, "segments": len(segs)}
+
+
+def review_segmented(prompts: list[str], coverage: dict, *, max_tokens: int = 8192,
+                     timeout: float = 300, json_mode: bool = True,
+                     expect_pair: tuple[str, str] | None = None) -> tuple[str, str, dict]:
+    """逐段審查＋彙總（涵蓋率 <100% 直接拒絕核准，不呼叫模型）。
+
+    回傳 (JSON 文字, 審查者標籤, meta)。任一段有 blocking → 整體 REJECT（blocking 取聯集）。
+    `expect_pair=(commit12, tree12)` 時，每段都必須原樣回報該綁定；任一
+    段綁定不符 → 整體 REJECT（不得以未綁定的審查放行）。
+    """
+    pct = float(coverage.get("pct", 0.0) or 0.0)
+    if pct < 100.0:
+        _block = [f"diff 涵蓋率 {pct:.1f}% < 100%，未完成分段審查 → 不得核准（review_chain coverage guard）"]
+        out = {"verdict": "REJECT", "blocking": _block, "note": "coverage guard",
+               "required_fixes": [], "coverage": coverage}
+        return (json.dumps(out, ensure_ascii=False), "coverage-guard",
+                {"verdict": "REJECT", "coverage": coverage, "labels": [], "segments": 0})
+    labels: list[str] = []
+    blockers: list = []
+    notes: list[str] = []
+    pairs: set[tuple[str, str]] = set()
+    binding_bad: list[str] = []
+    for k, p in enumerate(prompts, 1):
+        text, label = review(p, max_tokens=max_tokens, timeout=timeout, json_mode=json_mode)
+        labels.append(label)
+        j = parse_review(text) or {}
+        blockers += [b for b in (j.get("blocking") or []) if str(b).strip()]
+        notes.append(f"seg{k}:{j.get('verdict')}@{label}")
+        _seg_pairs = {(str(x.get("commit", ""))[:12], str(x.get("tree", ""))[:12])
+                      for x in (j.get("reviewed_commits") or []) if isinstance(x, dict)}
+        pairs |= _seg_pairs
+        if expect_pair and tuple(expect_pair) not in _seg_pairs:
+            binding_bad.append(f"第 {k}/{len(prompts)} 段未回報綁定 {expect_pair[0]}/{expect_pair[1]}")
+    if binding_bad:
+        blockers += binding_bad
+    verdict = "REJECT" if blockers else "APPROVE"
+    out = {"verdict": verdict, "blocking": blockers, "required_fixes": [],
+           "reviewed_commits": [{"commit": c, "tree": t} for c, t in sorted(pairs)],
+           "note": ("；".join(notes))[:300], "coverage": coverage}
+    return (json.dumps(out, ensure_ascii=False), ",".join(sorted(set(labels))),
+            {"verdict": verdict, "coverage": coverage, "labels": labels,
+             "segments": len(prompts), "binding_bad": binding_bad})
+
+
+def stability_check(verdicts: list[str]) -> dict:
+    """同一輸入重複送審的一致性判定（純函式，可離線測試）。
+
+    結論不一致 → `status="UNSTABLE"`：**不得作為核准依據**（維持 HOLD）。
+    """
+    vs = [str(v).strip().upper() for v in verdicts if str(v).strip()]
+    stable = len(vs) >= 2 and len(set(vs)) == 1
+    return {"stable": bool(stable), "verdicts": vs,
+            "status": "STABLE" if stable else "UNSTABLE",
+            "note": "" if stable else "同一輸入重複送審結論不一致 → UNSTABLE，不得作為核准依據"}
+
+
+def review_stable(prompt: str, *, n: int = 3, max_tokens: int = 8192, timeout: float = 300,
+                  json_mode: bool = True) -> tuple[dict, str]:
+    """重複送審同一輸入並做一致性判定（生產／診斷用）。
+
+    注意：此函式會實際呼叫模型 n 次（成本）。單元測試請改用 `stability_check`。
+    """
+    samples: list[str] = []
+    labels: list[str] = []
+    for _ in range(max(2, int(n))):
+        text, label = review(prompt, max_tokens=max_tokens, timeout=timeout, json_mode=json_mode)
+        labels.append(label)
+        samples.append(str((parse_review(text) or {}).get("verdict") or "UNKNOWN"))
+    st = stability_check(samples)
+    st["labels"] = labels
+    return st, ",".join(sorted(set(labels)))
 
 
 def _valid_review(text: str) -> bool:
@@ -352,7 +514,13 @@ def review(prompt: str, *, max_tokens: int = 8192, timeout: float = 300,
             continue
         if len(text.strip()) >= _MIN_CONTENT:
             if _valid_review(text):
-                return text, label
+                # 2026-10-15 B1（R1）：契約違規（verdict 與 blocking 不一致／缺可定位依據）
+                # → 該層判**無效審查**，續試下一層；全層無效 → fail-closed 中止。
+                _cv = contract_violation(parse_review(text))
+                if _cv is None:
+                    return text, label
+                errors.append(f"{label}: {_cv}")
+                continue
             errors.append(f"{label}: 回覆無可判定 verdict（{text.strip()[:60]}）")
             continue
         errors.append(f"{label}: 空輸出")

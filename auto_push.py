@@ -31,7 +31,8 @@
 
 退出碼（cron 依此判斷有沒有送上去）：
   0 = 已推且遠端 sha 已驗證（或本來就無事可做）
-  3 = 範圍內有含程式檔的未落紀錄 commit → 拒絕推送
+  3 = 範圍內有未落紀錄的強制真 CIO commit（程式／設定檔、治理或特殊類別、或未命中白名單的
+      純資料）→ 拒絕推送；訊息按實際類別揭露，不得把純資料講成程式改動（2026-10-15 修正）
   4 = push 重試後仍失敗
   5 = push 回 0 但遠端 sha 與 HEAD 不符（線上是舊的）
   6 = 環境問題（不在 repo／remote 讀不到）
@@ -327,9 +328,27 @@ def main() -> int:
                 _tail = ((_ar.stdout or "") + (_ar.stderr or "")).strip().splitlines()
                 print(f"✅ 拒推前補落 RECORD：{_c[:12]}" if _ar.returncode == 0
                       else f"⚠️ 拒推前補落紀錄失敗：{_c[:12]}（仍拒推，下次仍會擋）｜{_tail[-1][:140] if _tail else ''}")
-            print("❌ 推送範圍內有未落紀錄且含程式檔的 commit → 不推送（程式改動必須走真 CIO 審查）", file=sys.stderr)
+            try:
+                from publish_gate import force_cio_reasons as _fcr, force_cio_summary as _fcs  # noqa: E402
+            except Exception as _e:  # noqa: BLE001 — 分類器不可用不得改變判定（仍拒推），只降級為列檔名
+                _fcr = _fcs = None
+                print(f"⚠️ 載不到 publish_gate 分類器（{str(_e)[:80]}）→ 僅列檔名（拒推判定不變）",
+                      file=sys.stderr)
+            # 2026-10-15（P0-3 複審／使用者裁決「修正分類依據，不繞過發布閘門」）：
+            #   舊訊息把「閘門不給 AUTO 授權的整個集合」一律講成「含程式檔」→ 純資料 commit
+            #   （如 asset_diff_history.json／buffett_cto_report_*.md）被誤報為程式改動。
+            #   本處改按實際類別揭露（程式／設定檔、治理或特殊類別、未命中白名單的純資料），
+            #   rc 與攔截能力完全不變（仍是 fail-closed，仍需真 CIO 落紀錄）。
+            print("❌ 推送範圍內有未落紀錄的強制真 CIO commit → 不推送（每顆都需真 CIO 審查）",
+                  file=sys.stderr)
             for c, f in blockers:
-                print(f"   - {c[:12]}：{', '.join(f[:4])}", file=sys.stderr)
+                if _fcr and _fcs:
+                    _sum, _det = _fcs(_fcr(f, base))
+                    print(f"   - {c[:12]}：{_sum}", file=sys.stderr)
+                    for _d in _det[:6]:
+                        print(f"       · {_d}", file=sys.stderr)
+                else:
+                    print(f"   - {c[:12]}：{', '.join(f[:4])}", file=sys.stderr)
             print("   怎麼修：對該 commit 跑真審查後 `python cio_approve.py --result <審查JSON> --reviewer CIO-Gemini --commit <sha>`", file=sys.stderr)
             print("   注意：clone／全新環境不會帶 .git/CIO_APPROVED（它不在版控裡）→ 在該環境看到「整段範圍都未落紀錄」屬正常；", file=sys.stderr)
             print("        落紀錄請用 cio_approve.py／auto_record.py，不要手改檔案（TAB 分隔格式手改易錯，會被判為無紀錄）。", file=sys.stderr)

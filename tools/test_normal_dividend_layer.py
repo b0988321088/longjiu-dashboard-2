@@ -81,9 +81,19 @@ def main() -> int:
     ck("R1 保守層不變：180,100／113.1%／盈餘 +20,890",
        near(sc["con"]["income"], 180100) and near(sc["con"]["coverage"], 113.1)
        and near(sc["con"]["surplus"], 20890), f"{sc['con']}")
-    ck("R2 極端情境與跑道不變：127,100／79.8%／986 天",
-       near(sc["extreme"]["income"], 127100) and near(sc["extreme"]["coverage"], 79.8)
-       and near(sc["extreme"]["runway_days"] or 0, 986, 1.0), f"{sc['extreme']}")
+    # R2（2026-10-15 校正）：極端情境的「口徑」不變，但跑道天數＝可動用現金 ÷（月缺口÷30）
+    #   → 會隨現金真值移動（10/15 現金真值 1,055,740 → 1,170,934，使跑道 986 → 1,094 天）。
+    #   故此處鎖口徑（所得／覆蓋／缺口）並改為「由當日可動用現金推導」驗證，不再凍結 986 這個數字
+    #   （凍結會把真值更新誤判成回歸）。
+    _ex = sc["extreme"]
+    _cash_avail = float(snap.get("cash_total") or 0) - float((snap.get("restricted_cash") or {}).get("金額") or 0)
+    _gap_per_day = abs(_ex["surplus"]) / 30 if _ex["surplus"] else 0
+    _runway_expect = _cash_avail / _gap_per_day if _gap_per_day else 0
+    ck("R2 極端情境口徑不變（127,100／79.8%／−32,110）＋跑道＝可動用現金÷每日缺口",
+       near(_ex["income"], 127100) and near(_ex["coverage"], 79.8)
+       and near(_ex["surplus"], -32110)
+       and near(_ex["runway_days"] or 0, _runway_expect, 3.0),
+       f"{_ex}｜推導跑道 {_runway_expect:.1f} 天（可動用 {_cash_avail:,.0f} ÷ 每日缺口 {_gap_per_day:,.1f}）")
     ck("R3 實收層不變：142,909／89.8%／−16,301",
        near(sc["act"]["income"], 142909) and near(sc["act"]["coverage"], 89.8)
        and near(sc["act"]["surplus"], -16301), f"{sc['act']}")

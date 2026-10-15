@@ -53,6 +53,17 @@
    "evidence": "2026-10-14 使用者核定（受控擴充白名單）：該檔由 cio_review_ingest.py 每週一/三 18:45 從 CIO 戰略審查 cron 輸出（fb014d759ac5/*.md）機械式擷取，內容為既有審查報告正文的逐字彙整，無新數字、無資產真值影響。未登記前每輪必撞閘門（10/12、10/14 連續兩輪 rc=3，並讓整段推送範圍對所有 producer 變 CIO）。",
    "risk": "low",
    "note": "逐條登記單一精確路徑（無通配符、無目錄）。該檔為呈現層資料（reviews 陣列，新到舊排序、保留歷史），每輪只新增當日一筆。未登記路徑一律真 CIO 審查不變。"
+  },
+  {
+   "label": "首頁重要連結報告頁（緊急應變／週報，純呈現 HTML）",
+   "patterns": [
+    "emergency_report_*.html",
+    "weekly_report_*.html"
+   ],
+   "producer": "emergency_1330.py（寫入）／build_weekly_report.py（寫入）｜regenerate_report.py（stage 白名單認領）",
+   "evidence": "2026-10-15 使用者裁決（B1｜HTML 方案 A：納入版控＋白名單）。事故根因：兩檔由首頁「重要連結」指向（links_config 前綴 glob），但兩個 producer 都不是每日 commit 的產物來源 → 檔案從未進版控 → 線上 404（check_dashboard_sync 第 12 項 FAIL，2026-10-15 實測）。同日 producer stage 白名單已同步納入 regenerate_report.py 候選清單。",
+   "risk": "low",
+   "note": "單層樣式（'*' 不跨 '/'）且明示 .html 副檔名；僅涵蓋這兩個家族位於 repo 根目錄的當日報告頁，不含 index.html／日報／差異頁（仍在強制真 CIO 範圍）。放行僅及於「變更集合限於本條目涵蓋檔案」的 commit；夾帶任何其他路徑即未命中本條目。"
   }
  ]
 }

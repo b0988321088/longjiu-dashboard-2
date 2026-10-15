@@ -81,7 +81,17 @@ def main() -> int:
                 if act == "empty":
                     raise RuntimeError("空輸出（finish_reason=length）")
                 if act == "reject":
+                    # 2026-10-15 B1（R1）：合法 REJECT 必須指名**可定位依據**（檔名／行號）
+                    return ('{"verdict":"REJECT","reviewed_commits":[],'
+                            '"blocking":["asset_diff_history.json：2026-10-15 缺 bonds（append_today 行 441-460）"],'
+                            '"note":"n"}')
+                if act == "reject_vague":
                     return '{"verdict":"REJECT","reviewed_commits":[],"blocking":["x"],"note":"n"}'
+                if act == "reject_empty":
+                    return '{"verdict":"REJECT","reviewed_commits":[],"blocking":[],"note":"n"}'
+                if act == "approve_with_blocking":
+                    return ('{"verdict":"APPROVE","reviewed_commits":[],'
+                            '"blocking":["daily_report_v2_2026-10-15.html：不符"],"note":"n"}')
                 return '{"verdict":"APPROVE","reviewed_commits":[],"blocking":[],"note":"ok"}'
             return fn
 
@@ -101,6 +111,14 @@ def main() -> int:
              {"A": "nochoice", "B": "ok", "C": "ok"}, 2, 0),
             ("T5 空輸出 → 下一層（不得當成功）",
              {"A": "empty", "B": "ok", "C": "ok"}, 2, 0),
+            # 2026-10-15 B1（R1）：契約違規（verdict 與 blocking 不一致／缺可定位依據）
+            # → 該層判**無效審查**，續試下一層（不得把違規回覆當成有效判定）
+            ("T10 契約違規：REJECT 但 blocking 空 → 無效，續下一層",
+             {"A": "reject_empty", "B": "ok", "C": "ok"}, 2, 0),
+            ("T11 契約違規：REJECT 的 blocking 無可定位依據 → 無效，續下一層",
+             {"A": "reject_vague", "B": "ok", "C": "ok"}, 2, 0),
+            ("T12 契約違規：APPROVE 但 blocking 非空 → 無效，續下一層",
+             {"A": "approve_with_blocking", "B": "ok", "C": "ok"}, 2, 0),
         ]
         for title, script, want_calls, _ in cases:
             print(title)
@@ -138,6 +156,32 @@ def main() -> int:
             check("label 為第一層", label == "A", label)
         finally:
             rc._layers = real_layers
+
+        print("T13 全層契約違規 → fail-closed 丟例外（不得拿違規回覆放行）")
+        layers, seen = stub_layers({"A": "reject_empty", "B": "reject_vague",
+                                    "C": "approve_with_blocking"})
+        rc._layers = lambda: layers
+        try:
+            rc.review("p", max_tokens=32, timeout=5)
+            check("應丟例外", False, "未丟例外（契約違規回覆被當成有效審查）")
+        except Exception as exc:  # noqa: BLE001
+            check("三層都試過", len(seen) == 3, str(seen))
+            check("錯誤訊息含契約違規", "契約違規" in str(exc), str(exc)[:200])
+        finally:
+            rc._layers = real_layers
+
+        print("T14 契約驗證純函式（contract_violation）正負向")
+        _ok_rej = {"verdict": "REJECT", "blocking": ["asset_diff_history.json：缺 bonds（行 441）"]}
+        check("合法 REJECT → 合規", rc.contract_violation(_ok_rej) is None,
+              str(rc.contract_violation(_ok_rej)))
+        check("REJECT 空 blocking → 違規",
+              (rc.contract_violation({"verdict": "REJECT", "blocking": []}) or "").startswith("契約違規"))
+        check("APPROVE 非空 blocking → 違規",
+              (rc.contract_violation({"verdict": "APPROVE", "blocking": ["x"]}) or "").startswith("契約違規"))
+        check("blocking 缺可定位依據 → 違規",
+              (rc.contract_violation({"verdict": "REJECT", "blocking": ["x"]}) or "").startswith("契約違規"))
+        check("APPROVE 空 blocking → 合規",
+              rc.contract_violation({"verdict": "APPROVE", "blocking": []}) is None)
     finally:
         rc._layers = real_layers
 

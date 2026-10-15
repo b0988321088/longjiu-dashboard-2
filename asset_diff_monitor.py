@@ -431,6 +431,41 @@ def load_history(snap=None) -> dict:
     return history
 
 
+def _bonds_of(snap: dict) -> float:
+    """今日 `bonds` 真值（2026-10-15 B1／R2）。
+
+    明確 fallback 規則（不得以 0 掩蓋缺失）：
+      1. DB `dragon_assets.db` 的 `assets` 表：同日列 → 無則取最新一列（與 extract_snapshot 同慣例）
+      2. snapshot 若確實有 `bonds` 鍵 → 採該值
+      3. 兩者皆無有效值 → raise（fail-loud；不靜默以 0 補值）
+    """
+    _db_path = REPO_BASE / "dragon_assets.db"
+    if _db_path.exists():
+        _db = None
+        try:
+            _db = sqlite3.connect(str(_db_path))
+            _db.row_factory = sqlite3.Row
+            row = _db.execute("SELECT bonds FROM assets WHERE date = ?",
+                              (date.today().isoformat(),)).fetchone()
+            if row is None:
+                row = _db.execute("SELECT bonds FROM assets ORDER BY date DESC LIMIT 1").fetchone()
+            if row is not None and row["bonds"] is not None:
+                return float(row["bonds"])
+        except Exception as e:  # noqa: BLE001
+            print(f"[WARN] bonds 讀 DB 失敗（{e}）→ 改試 snapshot")
+        finally:
+            try:
+                if _db is not None:
+                    _db.close()
+            except Exception:  # noqa: BLE001
+                pass
+    if "bonds" in snap and snap.get("bonds") is not None:
+        return float(snap["bonds"])
+    raise ValueError(
+        "bonds 無有效來源（DB 無同日／最新列，且 snapshot 無 bonds 鍵）→ 不以 0 掩蓋資料缺失"
+        "（2026-10-15 B1／R2）")
+
+
 def append_today(snap: dict) -> dict:
     """寫入今日資料到 JSON（僅為備份用途）"""
     history = load_history(snap)
@@ -457,7 +492,19 @@ def append_today(snap: dict) -> dict:
         "rent_monthly": ex["rent_monthly"],
         "cathay_refinance": ex["cathay_refinance"],
         "restricted_cash": _restricted_cash_of(snap),
+        # 2026-10-15 B1／R2：原版缺此鍵 → 當日條目只有 18 鍵（前一日 19 鍵），
+        # 下游以 .get("bonds", 0) 讀會靜默歸零；隔日才由 DB 路徑補上。
+        "bonds": _bonds_of(snap),
     }
+    # schema 完整性（2026-10-15 B1／R2）：今日鍵集必須涵蓋前一日鍵集，缺鍵不得靜默。
+    _prev_days = sorted(d for d in history if d < today)
+    if _prev_days:
+        _missing = sorted(set(history[_prev_days[-1]].keys()) - set(history[today].keys()))
+        if _missing:
+            print(f"[WARN] asset_diff_history schema 缺鍵（{today} vs {_prev_days[-1]}）：{_missing}")
+        _extra = sorted(set(history[today].keys()) - set(history[_prev_days[-1]].keys()))
+        if _extra:
+            print(f"[INFO] asset_diff_history 新增鍵（{today} vs {_prev_days[-1]}）：{_extra}")
     save_json(HISTORY_FILE, history)
     return history
 
@@ -899,6 +946,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
             f"<td class='num' style='color:{_color(d_sec)}'>{d_sec:+,.0f}</td>"
             f"<td class='num'>{_fmt(max(0, r['cash'] - (r.get('restricted_cash') or 0)))}</td>"
             f"<td class='num' style='color:{_color(d_cash)}'>{d_cash:+,.0f}</td>"
+            f"<td class='num'>{_fmt(r.get('restricted_cash') or 0)}</td>"
             f"</tr>{badge}"
         )
 
@@ -909,13 +957,16 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         "<th class='num'>保單現値</th><th class='num'>增減</th>"
         "<th class='num'>基金市值</th><th class='num'>增減</th>"
         "<th class='num'>證券市值</th><th class='num'>增減</th>"
-        "<th class='num'>現金²</th><th class='num'>增減¹</th>"
+        f"<th class='num'>現金²</th><th class='num'>增減¹</th><th class='num'>指定用途款³</th>"
         "</tr>"
-        "<tr><td colspan='11' style=\"font-size:11px;color:#64748b;text-align:left;padding:5px 8px;line-height:1.6\">"
+        "<tr><td colspan='13' style=\"font-size:11px;color:#64748b;text-align:left;padding:5px 8px;line-height:1.6\">"
         "¹ 增減已排除「指定用途款（質押撥款待清償）」：撥款與清償同時增減現金與負債（負債替換），"
         "淨值不變，故不列為資產增減、亦不觸發單日下跌警示。<br>"
-        "² <b>現金＝可動用</b>（帳戶層餘額 − 指定用途款），全表統一此口徑。"
-        "2026-09-30 P0-1 前為「總資產口徑（含指定用途款）」→ <b>口徑已標示變更</b>，歷史列一併以可動用口徑呈現（同一公式，無斷點）。</td></tr>"
+        "² <b>現金欄＝可動用</b>（帳戶層餘額 − 該日指定用途款）。<br>"
+        "³ <b>指定用途款</b>（質押撥款待清償，隔離不挪用）為獨立欄位揭露："
+        "<b>保單＋基金＋證券＋現金²＋指定用途款³ ＝ 總資產</b>（總資產＝snapshot.total_assets，含指定用途款，"
+        "與全系統同一口徑）→ 各欄可逐列相加核對，無隱含差額。"
+        "2026-09-30 P0-1 前之歷史列亦以同一公式回溯呈現（無斷點）。</td></tr>"
     )
 
     # insurance detail block

@@ -198,7 +198,7 @@ __DECISION_BANNER__
         + '<div class="text-[10px] text-slate-500 mt-0.5">市值：'+(twd/1e4).toFixed(0)+' 萬 TWD</div></div>';
     });
     if (ap['美股市值型成長_科技']!=null) {
-      html += '<div class="text-[11px] text-slate-400 pt-2 border-t border-slate-700/50">🔬 美股科技 '+ap['美股市值型成長_科技'].toFixed(1)+'%（'+(at['美股市值型成長_科技']/1e4).toFixed(0)+'萬）｜非科技 '+ap['美股市值型成長_非科技'].toFixed(1)+'%（'+(at['美股市值型成長_非科技']/1e4).toFixed(0)+'萬）｜科技目標 ≤20%</div>';
+      html += '<div class="text-[11px] text-slate-400 pt-2 border-t border-slate-700/50">🔬 美股科技 '+ap['美股市值型成長_科技'].toFixed(1)+'%（'+(at['美股市值型成長_科技']/1e4).toFixed(0)+'萬）｜非科技 '+ap['美股市值型成長_非科技'].toFixed(1)+'%（'+(at['美股市值型成長_非科技']/1e4).toFixed(0)+'萬）｜科技目標 ≤'+(tg['科技曝險目標']||15)+'%</div>';
     }
     html += '</div>';
     pc.innerHTML = html;
@@ -911,6 +911,8 @@ var gotTotal = _salaryA + divTotal + rentGot;
     }).catch(function(){});
   }
   var wpa = document.getElementById('trade-plan');
+  /* 2026-10-15 P1-1：build_dashboard 注入的 live 內容（同一批 radar rows 的真值覆蓋結果） */
+  window.__LJ_LIVE_ROWS__ = __LIVE_ROWS_JS__;
   /* 2026-09-05 v2：行動儀表板 — 本週該做(過濾動作) + 今天行事曆 + 未來3天行程（全動態） */
   if(wpa){
     var _t0 = new Date();
@@ -927,7 +929,12 @@ var gotTotal = _salaryA + divTotal + rentGot;
       var evs = (Array.isArray(cal) ? cal : (cal.events || []));
       if(!wp || !wp.rows || !wp.rows.length) return;
       var h = '<div style="font-size:12.5px;color:#92400e;font-weight:800;margin-bottom:4px">📋 行動儀表板（'+_today.slice(5)+' 週'+_dow+'｜即時）</div>';
-      var rows = wp.rows;
+      var rows = (wp.rows || []).map(function(x,i){
+        // 2026-10-15 P1-1：優先採用 build_dashboard 注入的「已套用 live 真值規則」內容
+        //   （規則單一來源在 build_dashboard.py）；以 類別+動作 嚴格比對，不符即回退原值。
+        var c = (window.__LJ_LIVE_ROWS__ && window.__LJ_LIVE_ROWS__[i]) || null;
+        return (c && c.類別===x.類別 && c.動作===x.動作 && c.內容) ? Object.assign({}, x, {內容:c.內容}) : x;
+      });
       var doRows = rows.filter(function(x){ var a=x.動作||''; return a.indexOf('⏸️')!==0 && a.indexOf('🟡')!==0; });
       var hold = rows.filter(function(x){ var a=x.動作||''; return a.indexOf('⏸️')===0 || a.indexOf('🟡')===0; });
       var todayEv = evs.filter(function(e){ return e.date===_today && (e.status||'').indexOf('✅')!==0; });

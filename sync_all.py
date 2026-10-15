@@ -138,11 +138,16 @@ def main():
         ("日報", "python run_daily.py"),
         # INC-238：日報渲染行比對搬到產報之後（此時檔案才是本輪輸出）
         ("日報口徑閘門", "python check_thresholds.py --report-only"),
-        # 2026-09-02 血淚：緊急應變必須在穿透報告「之後」執行 — emergency_1330.py 讀的是
-        # snapshot.penetration.actual_pct 快取，穿透報告才寫入；順序反了會用到上一輪舊值
-        # → check_penetration_consistency 擋推送（上午實踩 3 次）
+        # 2026-09-02 血淚：緊急應變曾必須在穿透報告「之後」執行 — emergency_1330.py 讀的是
+        # snapshot.penetration.actual_pct 快取，穿透報告才寫入；順序反了會用到上一輪舊值。
+        # ── 2026-10-15 使用者裁決 B（TD-20261015-05）──
+        #   緊急應變自 sync_all 主流程「分離」，不再列為本清單步驟。原因：emergency_1330.py 內部
+        #   三步（regenerate_report 600s ＋ asset_diff_monitor 60s ＋ daily_deploy 600s）最壞合計
+        #   ~1,260s，遠超本清單外層 timeout=300s → 每次 sync_all 必在該步逾時中止，讓後續四源
+        #   同步／一致性／再平衡／週報全部沒跑（2026-10-15 實踩）。
+        #   獨立觸發（保留應變能力）：`python emergency_1330.py`（原 cron 排程 13:00 台股／21:00 美股）。
+        #   ⚠️ 獨立執行前仍須先跑 `python build_penetration_report.py`，否則會讀到上一輪穿透快取。
         ("穿透報告", "python build_penetration_report.py"),
-        ("台股緊急應變", "python emergency_1330.py"),
         ("四源同步", "python four_source_sync.py"),
         ("同義欄位複驗", "python asset_sync.py"),
         ("一致性檢查", f"python check_penetration_consistency.py {today}"),

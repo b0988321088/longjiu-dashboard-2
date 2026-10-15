@@ -100,6 +100,21 @@ def build(day: str | None = None) -> Path | None:
         print(f"⚠️ 找不到 {src.name} → 不產出（按鈕 fallback 由 build_dashboard 處理）")
         return None
     md_text = src.read_text(encoding="utf-8")
+    # ── 2026-10-15 使用者裁決（限縮修復）：標示為 snapshot 真值／不變量／調度欄位／分母／
+    #    可動用現金的欄位，於渲染時以最新 snapshot 即時覆蓋；政策值（目標／門檻／底線／
+    #    單筆上限）與帶明確 as-of 標記的歷史段落不動（規則集中於 sot_targets 單一實作）。
+    _stamped = False
+    try:
+        import json as _json
+        import sot_targets as _st
+        _snap = _json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        _before = md_text
+        md_text = _st.refresh_rebalance_live_numbers(_st.refresh_stale_amounts(md_text, _snap), _snap)
+        _stamped = md_text != _before
+        print(f"♻️ snapshot 真值欄位即時覆蓋：{'已套用' if _stamped else '無需變更'}"
+              f"（來源 snapshot.json；政策值與 as-of 段落未動）")
+    except Exception as _e:
+        print(f"⚠️ 真值覆蓋未套用（{type(_e).__name__}: {_e}）→ 以原 md 渲染（fail-visible）")
     body = md_to_html(md_text)
     body = re.sub(r"<table>", '<div class="tw"><table>', body)
     body = re.sub(r"</table>", "</table></div>", body)

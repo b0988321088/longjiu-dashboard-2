@@ -627,6 +627,91 @@ def classify(changed: set[str], entry: dict | None,
     return "AUTO", False, "命中低風險白名單"
 
 
+def commit_changed_paths(base: Path, commit: str) -> list[str]:
+    """單顆 commit 的變更路徑（含改名兩側；唯讀）。"""
+    r = _git(base, ["diff-tree", "--no-commit-id", "--name-status", "-M", "-r", commit])
+    if r.returncode != 0:
+        return []
+    return [f for line in (r.stdout or "").splitlines() for f in line.split("\t")[1:] if f]
+
+
+# 強制真 CIO 的類別標籤（診斷用；不得把「未命中白名單的純資料」講成「程式檔」）
+FORCE_CLASS_LABEL = {
+    "code": "程式／設定檔",
+    "special": "治理或特殊類別檔",
+    "unlisted_data": "未命中白名單的純資料檔",
+    "auto_alone": "單獨變更時可 AUTO、本顆受他檔連帶的資料檔",
+}
+
+
+def force_cio_reasons(paths, base: Path, ref: str = "HEAD") -> dict[str, dict]:
+    """一批（＝同一顆 commit）路徑 → {'class', 'reason'}；整批本來就拿得到 AUTO 授權時回 {}。
+
+    2026-10-15（P0-3 複審；使用者裁決「修正分類依據，不繞過發布閘門」）：
+      根因＝`auto_push.commit_has_code()` 的排除集合語義早已擴大為「閘門不會給 AUTO 授權的
+      整個檔案集合」（含**未命中白名單的純資料**），但拒推訊息把三者一律講成「含程式檔」，
+      於是純資料 commit（asset_diff_history.json／buffett_cto_report_*.md）被誤報成程式改動。
+      修法＝分類依據與訊息都按真實類別拆開（判定與 rc 完全不變，仍 fail-closed）：
+        · code          ：程式／設定檔（含 index_template.html）→ 真 CIO 必須
+        · special       ：治理紀錄、reviews/、logs/、備份憑證… → 真 CIO 必須
+        · unlisted_data ：純資料但未命中白名單 → 真 CIO 必須，但**不得**被描述為程式檔
+        · auto_alone    ：單獨變更時命中白名單（可 AUTO），只因同顆 commit 內其他檔案被連帶
+                          → 一併列出以免「只點名程式檔、看不到實際內容全貌」
+      ★ 批級判定與閘門一致：整批可 AUTO（含 append-only 受限車道通過）→ 回 {}（無強制 CIO 路徑）。
+      白名單不可用時 fail-closed：全部歸 special 並註明白名單不可用。
+    """
+    changed = [p for p in (_norm(x) for x in paths) if p]
+    if not changed:
+        return {}
+    al, why_al = load_allowlist(base, ref=ref)
+    if al is not None:
+        try:
+            if classify_paths(base, changed, ref=ref).get("mode") == "AUTO":
+                return {}
+        except Exception:  # noqa: BLE001 — 判定不可得 → 不得放行（下面逐檔 fail-closed）
+            al = None
+            why_al = "classify_paths 失敗"
+    out: dict[str, dict] = {}
+    for p in changed:
+        sr = special_reason(p, base)
+        if sr:
+            lp = p.lower()
+            is_code = lp.endswith(CODE_SUFFIX) or lp == "index_template.html"
+            out[p] = {"class": "code" if is_code else "special", "reason": sr}
+            continue
+        if al is None:
+            out[p] = {"class": "special",
+                      "reason": f"白名單不可用（{why_al}）→ 保守視為強制真 CIO"}
+            continue
+        entry, _why = match_entry({p}, al)
+        if entry is None:
+            out[p] = {"class": "unlisted_data",
+                      "reason": "未命中發布白名單（純資料，需真 CIO 審查；非程式改動）"}
+        else:
+            out[p] = {"class": "auto_alone",
+                      "reason": f"單獨變更時命中白名單『{entry.get('label')}』，本顆因其他檔案整批需真 CIO"}
+    return out
+
+
+def force_cio_summary(reasons: dict[str, dict]) -> tuple[str, list[str]]:
+    """把 force_cio_reasons() 的結果轉成（摘要行, 逐條明細）——單一措辭來源。
+
+    摘要行必須同時說出「各類各有幾檔」，使讀者不會把純資料 commit 誤讀成程式改動；
+    真正的程式改動仍以「程式／設定檔」點名（攔截能力不變）。
+    """
+    if not reasons:
+        return "（無：本批可自動落 RECORD）", []
+    by: dict[str, list[str]] = {}
+    for p, d in reasons.items():
+        by.setdefault(d["class"], []).append(p)
+    parts = [f"{FORCE_CLASS_LABEL[c]} {len(by[c])} 檔"
+             for c in ("code", "special", "unlisted_data", "auto_alone") if by.get(c)]
+    summary = "、".join(parts) + "，皆需真 CIO 審查（未落紀錄 → 不推送）"
+    detail = [f"{p}｜{FORCE_CLASS_LABEL[reasons[p]['class']]}｜{reasons[p]['reason']}"
+              for p in sorted(reasons)]
+    return summary, detail
+
+
 def classify_paths(base: Path, paths, ref: str = "HEAD") -> dict:
     """給定檔案清單 → 發布授權判定（落版側查詢用；與 decide 共用 classify）。
 

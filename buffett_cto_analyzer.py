@@ -2,7 +2,7 @@
 """Buffett/CTO 穿透分析器（v4 — 動態目標）"""
 from __future__ import annotations
 
-import json, os, sqlite3, sys
+import json, os, re, sqlite3, sys
 from datetime import date
 from pathlib import Path
 
@@ -36,7 +36,109 @@ TARGETS = {
     "tech_exposure": _tech_cap_snap,
 }
 TARGET_LABELS = {"tw_equity":"台股","us_equity":"美股","defensive":"防守","bond":"債券","cash":"現金", "tech_exposure":"科技"}
-TARGET_EMOJI = {"tw_equity":"TW","us_equity":"🇺🇸","defensive":"🛡️","bond":"💵","cash":"💰", "tech_exposure":"💻"}
+TARGET_EMOJI = {"tw_equity":"TW","us_equity":"US","defensive":"🛡️","bond":"💵","cash":"💰", "tech_exposure":"💻"}
+
+# ── 2026-10-15 B1（R3）：報告輸出規則守門 ─────────────────────────────────────
+# 背景（當日實證）：CTO 報告文字由 LLM 自由生成，出現三類缺陷——
+#   ① 「科技桶 24.5% 逼近紅線 15%」主語混淆（程式餵的是「高科技 14.4%（紅線 15%）」）
+#   ② 前一版「凍結的承接額度未解前，任何加碼都是違規」在重生成後消失（fail-open）
+#   ③ 「核心消費（XLV …）」ETF 標籤錯（系統定義 XLV=醫療、XLP=核心消費）
+# 決策：禁制語意與標籤映射**一律由程式強制**，不依賴 LLM 自由文字。
+SECTOR_LABELS = {"XLK": "科技", "XLF": "金融", "XLV": "醫療", "XLE": "能源", "XLY": "非核心消費",
+                 "XLP": "核心消費", "XLI": "工業", "XLU": "公用", "XLRE": "不動產", "XLB": "原物料"}
+# 註：本表鏡射 institutional_flow.py 的 SECTOR_ETFS（該表在函式內，無法直接 import）；
+#     兩者一致性由 tools/test_cto_report_rules.py 以 AST 讀取後斷言，禁止只靠人工同步。
+FREEZE_BAN_SENTENCE = "紀律提醒：現金是底線不是彈藥；承接額度凍結未解前，不得加碼、不得新增部位。"
+_BAN_MARKERS = ("不得加碼", "不得新增部位", "承接額度凍結", "任何加碼都是違規")
+
+
+def _fix_redline_numbers(text: str, tech_exp: float, tech_cap: float) -> tuple[str, list[str]]:
+    """紅線數字以程式真值為準，並把主語混淆改回程式配對（R3-①）。"""
+    fixes: list[str] = []
+    _canon = f"高科技 {tech_exp:.1f}%（紅線 {tech_cap:.0f}%）"
+
+    def _sub_mixed(m: "re.Match[str]") -> str:
+        fixes.append(f"主語混淆改寫：{m.group(0)[:40]} → {_canon}")
+        return _canon
+
+    text = re.sub(r"(?:科技桶|科技)\s*\d+(?:\.\d+)?\s*%[^。\n]{0,12}?逼近紅線\s*\d+(?:\.\d+)?\s*%",
+                  _sub_mixed, text)
+    # 消除改寫後緊鄰的重複括號（例：高科技 14.4%（紅線 15%）（高科技14.4%））
+    text = re.sub(r"(高科技\s*[\d.]+%[（(]紅線\s*[\d.]+%[)）])\s*[（(]高科技\s*[\d.]+%[)）]",
+                  r"\1", text)
+
+    def _cap(m: "re.Match[str]") -> str:
+        try:
+            v = float(m.group(1))
+        except ValueError:
+            return m.group(0)
+        if abs(v - tech_cap) > 1e-9:
+            fixes.append(f"紅線數字 {v:g}% → {tech_cap:g}%")
+            return f"紅線 {tech_cap:.0f}%"
+        return m.group(0)
+
+    text = re.sub(r"紅線\s*(\d+(?:\.\d+)?)\s*%", _cap, text)
+    return text, fixes
+
+
+def _fix_etf_labels(text: str) -> tuple[str, list[str]]:
+    """ETF 代號旁的中文標籤必須等於 SECTOR_LABELS 真值（R3-③）。
+
+    只在「緊鄰（±8 字元）出現別家 ETF 的標籤、且本代號自身標籤缺位」時改寫，
+    避免誤動正常敘述（例如同時提到醫療與金融時）。
+    """
+    fixes: list[str] = []
+    _labels = set(SECTOR_LABELS.values())
+    for _ in range(10):                     # 有界迴圈（每次修一處後重掃）
+        changed = False
+        for m in re.finditer("|".join(map(re.escape, SECTOR_LABELS)), text):
+            code = m.group(0)
+            canon = SECTOR_LABELS[code]
+            s, e = m.start(), m.end()
+            win = text[max(0, s - 8): e + 8]
+            if canon in win:
+                continue
+            wrong = [lb for lb in _labels if lb != canon and lb in win]
+            if not wrong:
+                continue
+            # 取最靠近代號者（實際缺陷樣式為「標籤（CODE」→ 標籤緊鄰在左）
+            wrong.sort(key=lambda lb: min(abs(text.rfind(lb, max(0, s - 8), e + 8) - s),
+                                          abs(text.find(lb, max(0, s - 8), e + 8) - s)))
+            lb = wrong[0]
+            i = text.rfind(lb, max(0, s - 8), e + 8)
+            if i < 0:
+                i = text.find(lb, max(0, s - 8), e + 8)
+            if i < 0:
+                continue
+            text = text[:i] + canon + text[i + len(lb):]
+            fixes.append(f"{code} 標籤「{lb}」→「{canon}」")
+            changed = True
+            break
+        if not changed:
+            break
+    return text, fixes
+
+
+def _enforce_report_rules(text: str, *, tech_exp: float | None = None,
+                          tech_cap: float | None = None) -> tuple[str, list[str]]:
+    """報告輸出規則守門（2026-10-15 B1／R3）→ (修正後文字, 修正清單)。
+
+    ① 凍結禁令必須存在（缺 → 由程式補回固定句）
+    ② 紅線數字／主語配對必須等於程式真值
+    ③ ETF 標籤必須等於 SECTOR_LABELS 真值
+    """
+    if not text:
+        return text, []
+    fixes: list[str] = []
+    _cap = float(tech_cap if tech_cap is not None else TARGETS.get("tech_exposure", 15))
+    _exp = float(tech_exp if tech_exp is not None else 0.0)
+    text, _f1 = _fix_redline_numbers(text, _exp, _cap)
+    text, _f2 = _fix_etf_labels(text)
+    fixes += _f1 + _f2
+    if not any(mk in text for mk in _BAN_MARKERS):
+        text = text.rstrip() + "\n" + FREEZE_BAN_SENTENCE
+        fixes.append("補回凍結禁令（原文字缺）")
+    return text, fixes
 
 def _cat_value(db, category: str) -> float:
     """從 asset_class 表計算某分類的穿透市值 (同 _cat2 in run_daily.py)"""
@@ -385,7 +487,8 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
             f"{market_text}\n"
             f"硬性約束（違反即無效，不可建議）：現金=底線制{cash_floor_label(_snap)}（{cash_caliber_note(_snap)}）；"
             f"台股加碼單筆≤5萬、8-12週分批；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
-            f"債券等 US30Y<5.30%；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）。\n"
+            f"債券等 US30Y<5.30%；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）；"
+            f"承接額度凍結未解前**不得加碼、不得新增部位**（凍結禁令必須出現在紀律提醒，不可省略）。\n"
             f"請以巴菲特投資哲學（護城河、安全邊際、能力圈、長期持有、別人恐懼我貪婪）做 3 點具體觀察 + 1 個紀律提醒，200字內，繁體中文，不要重複數字表。"
         )
         _out = _llm_cached("buffett", _prompt, "你是巴菲特視角的投資分析師。輸出繁體中文，精簡犀利，有具體觀點。")
@@ -393,6 +496,10 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
         _out, _usd_hits = _usd_scrub(_out, json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")))
         if _usd_hits:
             print(f"  ⚠️ [usd-advisory] 巴菲特輸出中和 {len(_usd_hits)} 句：{_usd_hits[0]['片段'][:60]}")
+        # 2026-10-15 B1（R3）：禁制語意／紅線配對／ETF 標籤一律由程式強制
+        _out, _rule_fixes = _enforce_report_rules(_out, tech_exp=_tech_exp_val, tech_cap=_tech_cap_val)
+        if _rule_fixes:
+            print(f"  ⚠️ [R3] 巴菲特輸出規則修正 {len(_rule_fixes)} 項：{_rule_fixes[0][:70]}")
         if _out:
             # 2026-08-23 修復：LLM 分支必須含「主要風險/總投資部位/TWD」關鍵字，CIO 審查(cio_review.py L162-167)才不會擋
             _kr = pen.get("key_risk", "—")
@@ -501,7 +608,8 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
             f"{market_text}\n"
             f"硬性約束（違反即無效，不可建議）：現金=底線制{cash_floor_label(_snap)}（{cash_caliber_note(_snap)}）；"
             f"台股加碼單筆≤5萬、8-12週分批（不可建議單筆大額）；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
-            f"債券等 US30Y<5.30%（禁建議買債）；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）。\n"
+            f"債券等 US30Y<5.30%（禁建議買債）；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）；"
+            f"承接額度凍結未解前**不得加碼、不得新增部位**（凍結禁令必須出現，不可省略）。\n"
             f"請以技術面（動能、趨勢、支撐壓力、風險）+ 產業資金流向（哪個產業順勢/逆勢）給：今日最大風險 + 具體建議動作（含標的/金額節奏，須符合上述約束），150字內，繁體中文。"
         )
         _out = _llm_cached("cto", _prompt, "你是技術分析師（CTO）。輸出繁體中文，直接給結論與動作，不要客套。")
@@ -509,6 +617,10 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
         _out, _usd_hits = _usd_scrub(_out, json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")))
         if _usd_hits:
             print(f"  ⚠️ [usd-advisory] CTO 輸出中和 {len(_usd_hits)} 句：{_usd_hits[0]['片段'][:60]}")
+        # 2026-10-15 B1（R3）：同巴菲特分支，禁制語意／紅線配對／ETF 標籤由程式強制
+        _out, _rule_fixes = _enforce_report_rules(_out, tech_exp=_tech_exp_val, tech_cap=_tech_cap_val)
+        if _rule_fixes:
+            print(f"  ⚠️ [R3] CTO 輸出規則修正 {len(_rule_fixes)} 項：{_rule_fixes[0][:70]}")
         if _out:
             # 2026-08-26 修復：LLM 分支輸出可能用「最大風險/動作」標籤，CIO 審查(cio_review.py L176-179)
             # 要求「今日最大風險」+「建議動作/具體動作」才放行 → 標準化標籤（同 8/23 巴菲特分支修法）
