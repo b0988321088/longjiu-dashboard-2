@@ -11150,6 +11150,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261015231102-1204",
+    "timestamp": "2026-10-15T23:11:02.249745+08:00",
+    "agent": "Hermes",
+    "task": "2026-10-15 收尾：TD-20261015-10 維持 OPEN＋5 個故障 job 補跑結果",
+    "summary": "保單不變式 TD-20261015-10（子基金加總≠保單現值 A+4,194／B+15,680）維持 OPEN，等保單真值更新路徑，不為全綠而動真值或降判準；5 個故障 job 依序補跑（發布優先）：費用監控 digest／行動儀表板同步／成本帳 close／CIO 儀表板收錄 4 個 status=ok，#4 收工檢查僅剩既有 TD；被吃掉的 4 個排程時點已用 closeout_check --fix 釋放。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-15T22:24:46.019503"
