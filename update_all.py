@@ -73,7 +73,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
     # 修法：名稱對到台股／防守籃的保單基金，權益部位改記 _ins_def_eq／_ins_tw_eq，
     # 自 ins_eq（＝美股桶）移出，且科技貢獻 0。關鍵字表與 funds_breakdown 分支一致。
     _INS_EQ_DEF = ("元大台灣高股息", "台中銀台灣優息", "國泰台灣高股息", "高股息ETF連結")
-    _INS_EQ_TW = ("0050連結", "統一奔騰", "路博邁台灣5G", "路博邁5G", "安聯台灣科技")
+    _INS_EQ_TW = ("0050連結", "統一奔騰", "路博邁台灣5G", "路博邁5G", "安聯台灣科技", "元大台灣卓越50")
     fv = {}        # 保單基金 {名稱: 市值}（各分支共用；供權益桶分流）
     _br_eff = {}   # 生效的債券比對照表（同上）
 

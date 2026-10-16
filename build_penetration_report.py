@@ -398,7 +398,7 @@ if _fb:
             _cat = "🛡️ 防守型"; _fund_def += _fv2 # 這裡的 _fund_def += _fv2 僅用於最下面的合計行，不影響實際五桶比例
         if "台新美日台" in _fn or "貝萊德" in _fn or "安聯AI" in _fn or "聯博" in _fn or "摩根" in _fn or "M&G" in _fn or "安聯收益成長" in _fn or "富達" in _fn:
             _cat = "🌎 美股"; _fund_us += _fv2
-        elif "0050連結" in _fn or "統一奔騰" in _fn or "路博邁" in _fn or "安聯台灣科技" in _fn:
+        elif "0050連結" in _fn or "統一奔騰" in _fn or "路博邁" in _fn or "安聯台灣科技" in _fn or "元大台灣卓越50" in _fn:
             # 2026-08-13 修正：路博邁台灣5G/安聯台灣科技是台股基金
             _cat = "TW 台股"; _fund_tw += _fv2
         elif any(_k in _fn for _k in ["台中銀台灣優息", "國泰台灣高股息", "元大台灣高股息", "高股息ETF連結"]):
@@ -435,7 +435,7 @@ for _pol, _pfunds in [("安聯保單A", _ins_brk.get("policy_a_funds", {})), ("�
             # 2026-10-07：台幣計價台股基金（官方揭露：台灣 91.24%／國外 0.00%）→ 防守型配息桶，
             # 不得顯示為美股（原本落到下方 else 印「美股 100%」）
             _cls = "台股 100%（台幣計價，無美股）→ 防守型配息桶"
-        elif any(_k in _fn_orig for _k in ("0050連結", "統一奔騰", "路博邁台灣5G", "路博邁5G", "安聯台灣科技")):
+        elif any(_k in _fn_orig for _k in ("0050連結", "統一奔騰", "路博邁台灣5G", "路博邁5G", "安聯台灣科技", "元大台灣卓越50")):
             _cls = "台股 100% → 台股市值型桶"
         else:
             _br = _bond_ratio.get(_fn_orig, 0.5)
