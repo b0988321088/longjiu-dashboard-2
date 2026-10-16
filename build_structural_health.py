@@ -34,7 +34,7 @@ def fmt(v):
 def wan(v, d=1):
     if v is None:
         return "—"
-    return f"{float(v) / 10000:,.{d}f}"
+    return f"{float(v) / 10000:,.{d}f}萬"
 
 
 def pctf(v, d=1):
