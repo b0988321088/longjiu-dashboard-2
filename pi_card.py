@@ -12,6 +12,26 @@ from __future__ import annotations
 import html as _html
 
 
+def _pending_receivables_of(snap: dict) -> float:
+    """穩健取「待確認應收」（2026-10-16 INC-292）。
+
+    呼叫端可能傳來扁平模板值字典 `tv`（run_daily 的 PI 卡路徑），它不含新科目
+    → 揭露值會靜默變 0（實測即此症狀）。因此：呼叫端 dict 取不到時，回真值檔
+    snapshot.json 取同一個 accessor（仍是單一來源，不新增真值、不寫死）。
+    """
+    try:
+        import sot_targets as _sot
+        v = float(_sot.pending_receivables(snap))
+        if v:
+            return v
+        import json as _json
+        from pathlib import Path as _Path
+        _s = _json.loads((_Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
+        return float(_sot.pending_receivables(_s))
+    except Exception:
+        return 0.0
+
+
 def pi_payload(snap: dict) -> dict:
     """PI 雙軌 payload（唯一計算點）。缺真值 → {"error": ...}（不 raise、由渲染端顯示）。"""
     try:
@@ -23,7 +43,7 @@ def pi_payload(snap: dict) -> dict:
             "record": rec,
             "threshold_twd": thr,
             "proxy_twd": proxy,
-            "pending_receivables_twd": float(_sot.pending_receivables(snap)),  # 2026-10-16 INC-292：供財力軌揭露（不計入 proxy 口徑）
+            "pending_receivables_twd": _pending_receivables_of(snap),  # 2026-10-16 INC-292：供財力軌揭露（不計入 proxy 口徑）
             "gap_twd": max(0.0, thr - proxy),
             "meets_financial_threshold": proxy >= thr,
             "approved": _sot.pi_is_approved(snap),

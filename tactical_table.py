@@ -339,7 +339,9 @@ def to_markdown(table: dict) -> str:
         lines.append("")
         lines.append("**🎫 專業投資人（PI）｜雙軌狀態卡（零槓桿預設）**")
         lines.append(f"- 資格軌：申請 {pi.get('application_status', '—')}｜核准 {pi.get('approval_status', '—')}｜Lombard 硬鎖 {'🔓 已解除' if _pi['approved'] else '🔒 鎖定'}")
-        lines.append(f"- 財力軌（系統內部 readiness proxy，非機構最終認定）：{_pi['proxy_twd']:,.0f} ／ 門檻 {_pi['threshold_twd']:,.0f}｜缺口 {_pi['gap_twd']:,.0f}｜{'✅ 達標' if _pi['meets_financial_threshold'] else '🔴 未達'}")
+        _prd = float(_pi.get("pending_receivables_twd") or 0)
+        _prd_txt = f"（口徑＝證券＋基金＋保單＋現金；不含待確認應收 {_prd:,.0f}，該筆尚未回到任何科目）" if _prd else ""
+        lines.append(f"- 財力軌（系統內部 readiness proxy，非機構最終認定）：{_pi['proxy_twd']:,.0f} ／ 門檻 {_pi['threshold_twd']:,.0f}{_prd_txt}｜缺口 {_pi['gap_twd']:,.0f}｜{'✅ 達標' if _pi['meets_financial_threshold'] else '🔴 未達'}")
         lines.append("- ⚠️ 財力達標 ≠ 已核准：門檻僅為送件條件之一（另涉書面申請、專業知識與交易經驗、機構合理調查）")
         _fo = pi.get("force_order", [])
         if isinstance(_fo, list) and _fo:
