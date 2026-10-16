@@ -113,3 +113,4 @@ snapshot.backup.json
 
 # 2026-10-13（TD-20261013-13）：再平衡自動版草稿（正典受保護時的旁路產物，不入版控）
 rebalance_summary_*.auto.md
+data/notion_page_ids.json

@@ -26,6 +26,11 @@ HEADERS = {
 REPO = Path(__file__).resolve().parents[0]
 DB_MAP = json.loads((REPO / "notion_db_ids.json").read_text(encoding="utf-8"))
 TODAY = datetime.now().strftime("%Y-%m-%d")
+# 2026-10-16：Notion upsert 的 page_id 快取。
+#   根因：原 upsert 只靠「查詢 title 比對」，而 Notion 寫入後查詢有 eventual consistency
+#   → 同一 title 在連續兩次執行各被建立一頁（實測 master_ledger「配息收入（保守估）」
+#     created 20:40／20:41 兩頁）。改為建立後立刻記住 page_id，下次直接 PATCH。
+PAGE_CACHE = REPO / "data" / "notion_page_ids.json"
 
 
 def ns_get(path: str) -> dict:
@@ -96,6 +101,21 @@ class NotionIngester:
         payload = {"properties": props}
         return ns_post(f"/pages/{page_id}", payload, method="PATCH")
 
+    def _load_page_cache(self) -> dict:
+        try:
+            return json.loads(PAGE_CACHE.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+
+    def _save_page_cache(self, cache: dict) -> None:
+        if self.dry:
+            return
+        try:
+            PAGE_CACHE.parent.mkdir(parents=True, exist_ok=True)
+            PAGE_CACHE.write_text(json.dumps(cache, ensure_ascii=False, indent=1), encoding="utf-8")
+        except Exception:
+            pass
+
     def _create_or_update(self, db_id: str, props: dict, markdown: str = "", date_prop: str = "", date_value: str = TODAY):
         title_map = ["資產名稱", "項目", "Name", "事件名稱", "基金名稱", "保單名稱"]
         title_prop = next((k for k in title_map if k in props), "")
@@ -105,13 +125,30 @@ class NotionIngester:
                 title_value = props[title_prop]["title"][0]["text"]["content"]
             except Exception:
                 pass
+        # ① 快取命中 → 直接 PATCH（避開 Notion 查詢的 eventual consistency）
+        _ck = f"{db_id}|{title_prop}|{title_value}"
+        _cache = self._load_page_cache()
+        _pid = _cache.get(_ck)
+        if _pid and not self.dry:
+            try:
+                return self._update(_pid, props)
+            except Exception:
+                _cache.pop(_ck, None)   # 頁面已刪／失效 → 走下方查詢重建
+        # ② 查詢既有頁
         existing = self._find_existing_page(db_id, title_prop, title_value, date_value)
         if existing:
+            _cache[_ck] = existing["id"]
+            self._save_page_cache(_cache)
             return self._update(existing["id"], props)
+        # ③ 建立，並立刻記住 page_id（下次執行即走 ①）
         payload = {"parent": {"database_id": db_id}, "properties": props}
         if markdown:
             payload["markdown"] = markdown
-        return ns_post("/pages", payload)
+        res = ns_post("/pages", payload)
+        if isinstance(res, dict) and res.get("id"):
+            _cache[_ck] = res["id"]
+            self._save_page_cache(_cache)
+        return res
 
     def ingest_master_ledger(self, snapshot: dict):
         db_id = DB_MAP["master_ledger"]
