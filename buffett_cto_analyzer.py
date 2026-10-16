@@ -380,8 +380,20 @@ def _industry_context() -> str:
         rot = snap.get("rotation_recommendation", {}).get("總結", "")
         sf = json.loads((BASE / "radar_state.json").read_text(encoding="utf-8")).get("sector_flow", {})
         top4 = "、".join(f"{k} {v['佔比']:.1f}%" for k, v in sorted(gics.items(), key=lambda x: -x[1]['金額'])[:4] if v['金額'] > 0)
+        # 2026-10-16（INC-245 再犯）：原寫死「現金(台幣)~12.8%、科技 17.5%」（皆為 8/22 舊值）
+        # → 模型照抄進 CTO 內文 → 內文數字守門判「科技 17.5% ∉ 合法值」。
+        # 改讀 snapshot 真值；缺值即省略（不保留舊數字、不猜）。
+        _ap = (snap.get("penetration") or {}).get("actual_pct") or {}
+        _tech_live = _ap.get("美股市值型成長_科技")
+        _cash_live = _ap.get("現金/安全網")
+        _risk_extra = "、".join(
+            x for x in (
+                f"現金(台幣) {float(_cash_live):.1f}%" if isinstance(_cash_live, (int, float)) else None,
+                f"科技 {float(_tech_live):.1f}%" if isinstance(_tech_live, (int, float)) else None,
+            ) if x)
         ctx = (f"GICS產業：{top4}｜資金流向：{sf.get('台股總結','—')}；{sf.get('美股總結','—')}｜"
-               f"輪動建議：{rot or '—'}｜底層風險因子：美股相關>60%、美元信用債~20%、現金(台幣)~12.8%、科技 17.5%")
+               f"輪動建議：{rot or '—'}｜底層風險因子：美股相關>60%、美元信用債~20%"
+               + (f"、{_risk_extra}" if _risk_extra else ""))
     except Exception:
         ctx = ""
     return ctx

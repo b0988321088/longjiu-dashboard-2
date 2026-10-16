@@ -293,8 +293,8 @@
     "id": "PEND-20261009-11",
     "date": "2026-10-09",
     "title": "申購款『待確認應收』科目＋穿透不變量擴充（290,070 資產漏認列）",
-    "status": "待處理",
-    "status_raw": "⏳ 待施工（CIO 2026-10-09 唯讀審查案①：APPROVE／1 major／非 blocking）｜來源：10 月 MB 逐筆對帳＋CIO 三案審查｜施工須另取授權",
+    "status": "待施工",
+    "status_raw": "⏳ 待施工（CIO 2026-10-09 唯讀審查案①：APPROVE／1 major／非阻擋）",
     "category": "",
     "priority": "P1",
     "tags": "資產口徑,應收,穿透不變量,cio-approved,待施工",
@@ -365,10 +365,15 @@
   {
     "date": "2026-10-16",
     "title": "內文數字守門：buffett_cto_report『科技 17.5%』∉ 合法值（INC-245 家族）",
-    "status": "待處理",
-    "status_raw": "⏳ 待處理（P2｜另案，不施工）",
+    "status": "已完成",
+    "status_raw": "✅ 已修（2026-10-16）：源頭寫死「科技 17.5%／現金~12.8%」（8/22 舊值）已改讀 snapshot 真值（科技 14.8%）；build_rebalance_dashboard 的 17.5 fallback 一併移除；md 於 12:42 重產；check_narrative_numbers.py ✅ 0 處（守門集合未放寬、內文未改）",
     "tags": "內文數字,守門,INC-245,科技口徑,TD-20261016-01",
-    "detail": "證據：2026-10-16 `check_narrative_numbers.py` ❌ `buffett_cto_report_2026-10-16.md`：科技 17.5% ∉ 合法值 [14.8, 15.5, 24.3]（片段「科技17.5%貼紅線」）；10-15 同位置為 14.8% 合規。初判為模型自行重算／混用分母（INC-245 家族），非本批程式造成。修法（未施工）：①若屬合法派生口徑 → 至 build_allowed／ENGINE_ROWS 補來源，並在 `check_narrative_numbers_selftest.py` 加正／負向案例；②否則修 `buffett_cto_analyzer.penetration_analysis` 使其只讀 `snapshot.penetration.actual_pct`。一律修集合或修 analyzer，不放寬比對、不改內文。"
+    "detail": "證據：2026-10-16 `check_narrative_numbers.py` ❌ `buffett_cto_report_2026-10-16.md`：科技 17.5% ∉ 合法值 [14.8, 15.5, 24.3]（片段「科技17.5%貼紅線」）；10-15 同位置為 14.8% 合規。初判為模型自行重算／混用分母（INC-245 家族），非本批程式造成。修法（未施工）：①若屬合法派生口徑 → 至 build_allowed／ENGINE_ROWS 補來源，並在 `check_narrative_numbers_selftest.py` 加正／負向案例；②否則修 `buffett_cto_analyzer.penetration_analysis` 使其只讀 `snapshot.penetration.actual_pct`。一律修集合或修 analyzer，不放寬比對、不改內文。",
+    "due_date": null,
+    "last_confirmed": null,
+    "owner": "CEO",
+    "external_owner": null,
+    "needs_due_date": true
   },
   {
     "date": "2026-10-16",
@@ -376,7 +381,12 @@
     "status": "待處理",
     "status_raw": "⏳ 待處理（P2｜需真值核對）",
     "tags": "保單,不變式,安聯,TD-20261016-02",
-    "detail": "證據：2026-10-16 `_audit_closeout.py` 第 11 段 ❌ 子基金加總 = 保單A（4,959,228 vs 4,955,034，差 +4,194）、保單B（2,645,481 vs 2,629,801，差 +15,680）。同型曾於 2026-09-18 修過一次 → 本次疑為 breakdown 與保單合計的 as-of／配息或轉換未同步。處置（未施工）：比對 allianz_a/b_breakdown 各檔 NAV 基準日與保單合計來源，確認哪一側落後後，以用戶端截圖真值校正；**不得自行改真值**。"
+    "detail": "證據：2026-10-16 `_audit_closeout.py` 第 11 段 ❌ 子基金加總 = 保單A（4,959,228 vs 4,955,034，差 +4,194）、保單B（2,645,481 vs 2,629,801，差 +15,680）。同型曾於 2026-09-18 修過一次 → 本次疑為 breakdown 與保單合計的 as-of／配息或轉換未同步。處置（未施工）：比對 allianz_a/b_breakdown 各檔 NAV 基準日與保單合計來源，確認哪一側落後後，以用戶端截圖真值校正；**不得自行改真值**。",
+    "due_date": null,
+    "last_confirmed": null,
+    "owner": "CEO",
+    "external_owner": null,
+    "needs_due_date": true
   },
   {
     "date": "2026-10-16",
@@ -384,6 +394,11 @@
     "status": "待處理",
     "status_raw": "⚠️ P1｜輪替已做、清除未做",
     "tags": "資安,P0,金鑰輪替,歷史清除,Pages,TD-20261016-03",
-    "detail": "證據：`git grep HEAD` 命中 `AIza[0-9A-Za-z_-]{30,}` → `daily_report_v2_2026-08-29.html`、`daily_report_v2_2026-09-03.html`（同一支 52 字元，sha256 前 8＝52d7545d）、`safe_read.py`（44 字元，sha256 前 8＝336d33ae）。現行 `~/.hermes/.env` 的 GEMINI_API_KEY（sha256 前 8＝f2692593）與兩者皆不同 → **輪替已完成、殘留清除未完成**。處置（未施工）：①確認殘留那兩支金鑰已停用 ②清 git 歷史（filter-repo／BFG）③驗遠端與 Pages 三層皆無殘留 ④加 pre-commit 金鑰樣式掃描防再犯。注意：歷史清除需改寫已推送歷史，屬使用者授權範圍。"
+    "detail": "證據：`git grep HEAD` 命中 `AIza[0-9A-Za-z_-]{30,}` → `daily_report_v2_2026-08-29.html`、`daily_report_v2_2026-09-03.html`（同一支 52 字元，sha256 前 8＝52d7545d）、`safe_read.py`（44 字元，sha256 前 8＝336d33ae）。現行 `~/.hermes/.env` 的 GEMINI_API_KEY（sha256 前 8＝f2692593）與兩者皆不同 → **輪替已完成、殘留清除未完成**。處置（未施工）：①確認殘留那兩支金鑰已停用 ②清 git 歷史（filter-repo／BFG）③驗遠端與 Pages 三層皆無殘留 ④加 pre-commit 金鑰樣式掃描防再犯。注意：歷史清除需改寫已推送歷史，屬使用者授權範圍。",
+    "due_date": null,
+    "last_confirmed": null,
+    "owner": "CEO",
+    "external_owner": null,
+    "needs_due_date": true
   }
 ]

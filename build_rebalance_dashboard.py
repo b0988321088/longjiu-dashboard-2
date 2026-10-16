@@ -442,8 +442,11 @@ def main():
     # 2026-10-07 裁決②：口徑統一＝usd_exposure_monitor.current.合計（單一真值；原讀 top-level usd_exposure_pct）
     usd_pct = float((((s.get("usd_exposure_monitor") or {}).get("current") or {}).get("合計")
                      or s.get("usd_exposure_pct") or 0))
+    # 2026-10-16：原第三段 fallback 寫死 8/22 舊值 17.5（缺鍵時印出舊數字＝假真值）。
+    # 改以 snapshot 穿透真值為最後一道，不再退舊常數（缺值即 None → 交由渲染端判定）。
     tech = (s.get("industry_penetration", {}).get("產業", {}).get("資訊科技", {}).get("佔比")
-            or s.get("sector_penetration", {}).get("高科技/半導體", {}).get("佔比_估", 17.5))  # 8/22 修正：以 GICS 21.1% 為主（與 GICS 區塊一致）
+            or s.get("sector_penetration", {}).get("高科技/半導體", {}).get("佔比_估")
+            or s.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長_科技"))
     us30y = load("us30y_state.json", {}).get("last_rate")
 
     # ── 五桶 ──

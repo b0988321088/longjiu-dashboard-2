@@ -11156,20 +11156,19 @@
       "summary": "保單不變式 TD-20261015-10（子基金加總≠保單現值 A+4,194／B+15,680）維持 OPEN，等保單真值更新路徑，不為全綠而動真值或降判準；5 個故障 job 依序補跑（發布優先）：費用監控 digest／行動儀表板同步／成本帳 close／CIO 儀表板收錄 4 個 status=ok，#4 收工檢查僅剩既有 TD；被吃掉的 4 個排程時點已用 closeout_check --fix 釋放。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261016123046-1205",
+      "timestamp": "2026-10-16T12:30:46.430209+08:00",
+      "agent": "CIO-Gemini",
+      "task": "2026-10-16 07:00 產線阻塞修復與發布（閉環）",
+      "summary": "①根因：審查切片以字元切穿檔案（cost.html seed JSON 被切半）→ 模型判假截斷 → REJECT → 07:00 產線全停。修法：分段改以檔案邊界為界、單段上限 12,000→32,000、僅技術性失敗重試≤2（有效 REJECT 不重試）。②日報兩缺陷：對策表以 snapshot 補齊 canonical 鍵（原每日在公開頁印『對策表產生失敗』）；US30Y 正規化收斂成唯一實作 daily_report_assembly.unify_us30y_live（歷史 as-of 引用只加註不改數字、現值型錨定 US30Y、缺值原樣返回、冪等）。③再平衡儀表板 LTV 改照 SoT 三級渲染（黃區 50.1% 不再誤標『🔴 觸發』）。④舊真值來源：weekly_plan 資料日閘門、科技 GICS 口徑 (?<!高)。⑤Gemini 審查層：關閉思考（實測開思考 cap=8192→MAX_TOKENS/44.6s、cap=32768→成功 138.6s；關閉後 1.6–1.9s 合法 JSON）。驗收：四輪真 CIO REJECT 指名的缺陷全修完；最終 Gemini CIO 30 段 58.3 秒 APPROVE、RECORD 綁 tree a381b610、publish_gate 0 blocking、推送 57b95e20、Pages 四頁 200 且關鍵值逐項複驗（對策表存在、5.53% 歸零、LTV 🟡 黃區、總資產 26,992,475 三處一致）。殘留（未修、待立案）：buffett_cto_report 內文『科技 17.5%』∉ 合法值（INC-245 家族）、保單子基金加總 vs 保單A/B 差 +4,194／+15,680、3 檔執行期未提交（asset_diff_history/ai_cost_daily/us30y_state）、資安 P0 殘留金鑰樣式字串未清（2 舊日報 + safe_read.py）。",
+      "status": "已閉環",
+      "source": "user"
     }
-,
-  {
-    "id": "mem-20261016123046-1205",
-    "timestamp": "2026-10-16T12:30:46.430209+08:00",
-    "agent": "CIO-Gemini",
-    "task": "2026-10-16 07:00 產線阻塞修復與發布（閉環）",
-    "summary": "①根因：審查切片以字元切穿檔案（cost.html seed JSON 被切半）→ 模型判假截斷 → REJECT → 07:00 產線全停。修法：分段改以檔案邊界為界、單段上限 12,000→32,000、僅技術性失敗重試≤2（有效 REJECT 不重試）。②日報兩缺陷：對策表以 snapshot 補齊 canonical 鍵（原每日在公開頁印『對策表產生失敗』）；US30Y 正規化收斂成唯一實作 daily_report_assembly.unify_us30y_live（歷史 as-of 引用只加註不改數字、現值型錨定 US30Y、缺值原樣返回、冪等）。③再平衡儀表板 LTV 改照 SoT 三級渲染（黃區 50.1% 不再誤標『🔴 觸發』）。④舊真值來源：weekly_plan 資料日閘門、科技 GICS 口徑 (?<!高)。⑤Gemini 審查層：關閉思考（實測開思考 cap=8192→MAX_TOKENS/44.6s、cap=32768→成功 138.6s；關閉後 1.6–1.9s 合法 JSON）。驗收：四輪真 CIO REJECT 指名的缺陷全修完；最終 Gemini CIO 30 段 58.3 秒 APPROVE、RECORD 綁 tree a381b610、publish_gate 0 blocking、推送 57b95e20、Pages 四頁 200 且關鍵值逐項複驗（對策表存在、5.53% 歸零、LTV 🟡 黃區、總資產 26,992,475 三處一致）。殘留（未修、待立案）：buffett_cto_report 內文『科技 17.5%』∉ 合法值（INC-245 家族）、保單子基金加總 vs 保單A/B 差 +4,194／+15,680、3 檔執行期未提交（asset_diff_history/ai_cost_daily/us30y_state）、資安 P0 殘留金鑰樣式字串未清（2 舊日報 + safe_read.py）。",
-    "status": "已閉環",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-16T11:57:09.236236"
+    "updated_at": "2026-10-16T12:42:55.367928"
   },
   "last_updated": "2026-10-16T18:00:00+08:00",
   "2026-09-29": [
@@ -11291,6 +11290,24 @@
       "action": "恢復部署評估：規則方向已核准・交易未解凍（待質押證據）",
       "status": "已確認",
       "tags": "部署,乾粉,方案A,US30Y,質押LTV,TD-20261015-02,解凍"
+    },
+    {
+      "date": "2026-10-16",
+      "action": "內文數字守門：buffett_cto_report『科技 17.5%』∉ 合法值（INC-245 家族）",
+      "status": "待處理",
+      "tags": "內文數字,守門,INC-245,科技口徑,TD-20261016-01"
+    },
+    {
+      "date": "2026-10-16",
+      "action": "保單不變式：子基金加總 ≠ 保單A/B（+4,194／+15,680）",
+      "status": "待處理",
+      "tags": "保單,不變式,安聯,TD-20261016-02"
+    },
+    {
+      "date": "2026-10-16",
+      "action": "資安：HEAD 仍殘留金鑰樣式字串（2 份舊日報＋safe_read.py）",
+      "status": "待處理",
+      "tags": "資安,P0,金鑰輪替,歷史清除,Pages,TD-20261016-03"
     }
   ]
 }
