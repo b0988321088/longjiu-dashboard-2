@@ -338,30 +338,34 @@ def load_snapshot():
 
 
 def load_moneybook_accounts():
-    account_paths = [
-        REPO / "Moneybook" / "account.csv",  # fallback legacy
-    ]
-    # auto-discover latest Moneybook_帳戶_*.csv in Moneybook folder
-    mb_dir = REPO / "Moneybook"
-    found = sorted(mb_dir.glob("Moneybook_帳戶_*.csv"))
-    if found:
-        account_paths = [found[-1]] + account_paths
-    for p in account_paths:
-        if p.exists():
-            break
-    else:
+    """銀行資產真值＝snapshot.cash_detail（單一真值）。
+
+    2026-10-16 修正（同 load_moneybook_details 的根因）：
+      原讀 repo 內 Moneybook/ 帳戶 CSV，但該目錄已不存在（外部加密 ZIP 為 canonical）
+      → 回 (None, "")，呼叫端 fallback 到 snapshot.moneybook_total（停用舊值 3,614,169）
+      → Notion 銀行資產欄被寫成舊數字（真值 2,070,934）。
+    改讀 cash_detail；排除規則與 update_data.py --cash_detail 同源（外幣／信用卡／貸款／質押）。
+    """
+    try:
+        snap = json.loads((REPO / "snapshot.json").read_text(encoding="utf-8"))
+    except Exception:
         return None, ""
+    cd = snap.get("cash_detail") or {}
+    if not cd:
+        return None, ""
+    exclude = ["外幣", "信用卡", "房貸", "卡", "房屋貸款", "貸款", "透支", "質押"]
     bank_assets = 0.0
     details = []
-    with open(p, encoding="utf-8") as f:
-        r = csv.DictReader(f)
-        for row in r:
-            currency = row.get("幣別", "").strip()
-            amt = float(row.get("帳戶金額", "0") or "0")
-            account_name = row.get("帳戶名稱", "")
-            if currency == "TWD" and amt > 0 and "信用卡" not in account_name:
-                bank_assets += amt
-                details.append((row.get("機構名稱"), account_name, amt))
+    for _name, _amt in cd.items():
+        if any(x in str(_name) for x in exclude):
+            continue
+        try:
+            _v = float(_amt or 0)
+        except Exception:
+            continue
+        if _v > 0:
+            bank_assets += _v
+            details.append(("", str(_name), _v))
     return bank_assets, details
 
 
@@ -581,7 +585,11 @@ def main():
     # Compute Moneybook true values
     bank_assets, account_details = load_moneybook_accounts()
     if bank_assets is None:
-        bank_assets = snapshot.get("moneybook_total", 0)
+        # 2026-10-16 CIO 審查 blocking：fallback 本身也可能是 None/缺值 →
+        # 加 or 0 保證下游 formatted print（f"{bank_assets:,.0f}"）不會 TypeError。
+        bank_assets = snapshot.get("moneybook_total", 0) or 0
+    else:
+        bank_assets = float(bank_assets)
 
     policy_div, etf_div = load_moneybook_details()
 
@@ -607,7 +615,8 @@ def main():
     }
 
     print(f"真值：銀行資產(正數TWD)={bank_assets:,.0f}")
-    print(f"真值：保單配息(7月)={policy_div:,.0f}，ETF/基金配息(7月)={etf_div:,.0f}")
+    _ym_label = f"{datetime.now().month}月"
+    print(f"真值：保單配息({_ym_label})={policy_div:,.0f}，ETF/基金配息({_ym_label})={etf_div:,.0f}")
     print(f"真值：配息收入(採用)={snapshot['dividend_income']:,.0f}")
     print(f"真值：房租收入={snapshot.get('rent_income',0):,.0f}")
     print(f"真值：利息收入={snapshot.get('interest_income',0):,.0f}")
