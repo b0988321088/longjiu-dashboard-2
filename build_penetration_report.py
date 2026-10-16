@@ -36,6 +36,11 @@ total = total + _restricted_cash
 # 26,790,945（假總資產）並被 check_penetration_consistency 擋下（實測即此症狀）。
 _cash_in_transit = int((p.get("_meta") or {}).get("cash_in_transit") or 0)
 total = total + _cash_in_transit
+# 2026-10-16 INC-292（卡 #15）：待確認應收（暫時性占用）同屬總資產 → 分母必須加回。
+# 少這一條＝分母短少 290,070、全桶 % 被灌高（與指定用途款／在途兩次同型症狀）。
+from sot_targets import pending_receivables as _pr_fn
+_pending_recv = _pr_fn(snap)
+total = total + _pending_recv
 
 # 自動校正 snapshot 穿透數據（供日報第2章使用）
 # targets 以 snapshot 現有值為準（單一真值，禁止硬編碼覆寫）；缺 key 時 fallback 2026-08-02 定案值
@@ -87,8 +92,11 @@ snap["penetration"] = {
     "satellite_twd": {"黃金": float(sat_gold_v), "健康": float(sat_health_v)},
     "restricted_cash": round(_restricted_cash),
     # 2026-10-02（統一現金口徑）：在途／未對帳零錢，從現金桶移出後顯式記錄，
-    # 供穿透完整性不變量（五桶＋在途＋衛星＋指定用途款＝總資產）使用。
+    # 供穿透完整性不變量（五桶＋在途＋衛星＋指定用途款＋待確認應收＝總資產）使用。
     "cash_in_transit": _cash_in_transit,
+    # 2026-10-16 INC-292（卡 #15）：待確認應收（暫時性占用；款項已離開現金帳戶、尚未回到
+    # 任何科目）亦為分母組成 → 顯式揭露，供逐項對帳（不與 cash_in_transit 混用）。
+    "pending_receivables": round(_pending_recv),
     "alert": p["alert"],
 }
 # 每次管線執行滾動頂層日期（儀表板系統時間/記憶同步統一真值）

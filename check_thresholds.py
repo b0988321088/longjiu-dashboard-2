@@ -282,16 +282,17 @@ def main() -> int:
         # 已從桶內移出 → 不變量必須把它加回，否則會誤判「穿透不完整」（差 589）。
         # 讀「快取 penetration」的欄位（不是現算 _pv）：快取桶位與在途欄位必須同源，
         # 否則重算前後會出現「舊桶已含在途、又再加一次」的雙重計算假失敗。
+        # 2026-10-16 INC-292：不變量加「待確認應收」（暫時性占用）。單一實作在 sot_targets；
+        # 負向測試見 tools/test_pending_receivables_gate_20261016.py（「現金已含卻同時列應收」必須轉紅）。
+        from sot_targets import penetration_invariant_error as _inv_err, pending_receivables as _pr_fn
+        _pr = _pr_fn(snap)
         _cit = float(((snap.get("penetration") or {}).get("cash_in_transit")) or 0)
         _tot = float(snap.get("total_assets", 0))
-        _diff = _five + _sat + _rst + _cit - _tot
-        if abs(_diff) > 1:
-            _hint = ""
-            if abs(_five + _sat - _tot) <= 1 and _rst:
-                _hint = "｜診斷：快取 penetration 尚未重算（舊口徑仍含指定用途款）→ 先跑 build_penetration_report.py 再同步"
-            errs.append(f"穿透完整性失敗：五桶 {_five:,.0f} + 衛星 {_sat:,.0f} + 指定用途款 {_rst:,.0f} + 在途 {_cit:,.0f} = {_five+_sat+_rst+_cit:,.0f} ≠ 總資產 {_tot:,.0f}（差 {_diff:,.0f}）{_hint}")
+        _err = _inv_err(snap, _sat)
+        if _err:
+            errs.append(_err)
         else:
-            print(f"✅ 穿透完整性：五桶 {_five:,.0f} + 衛星 {_sat:,.0f} + 指定用途款 {_rst:,.0f} + 在途 {_cit:,.0f} = 總資產 {_tot:,.0f}")
+            print(f"✅ 穿透完整性：五桶 {_five:,.0f} + 衛星 {_sat:,.0f} + 指定用途款 {_rst:,.0f} + 在途 {_cit:,.0f} + 待確認應收 {_pr:,.0f} = 總資產 {_tot:,.0f}")
     except Exception as _e:
         errs.append(f"穿透完整性檢查執行失敗：{_e}")
 

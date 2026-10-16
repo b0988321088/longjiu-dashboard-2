@@ -681,6 +681,57 @@ def defensive_caliber(snap: dict) -> dict:
     }
 
 
+def pending_receivables(snap: dict) -> float:
+    """暫時性占用／待確認應收合計（2026-10-16 INC-292）。
+
+    真值來源＝snapshot.pending_receivables（優先讀「合計」，否則加總 items[].金額；缺鍵 → 0）。
+    語意：款項**已離開現金帳戶、尚未回到任何資產科目**（例：申購預扣未退款／未轉證券）。
+    **不得與 penetration.cash_in_transit 混用**（後者＝現金餘數法未對帳差額）。
+    不變量：五桶＋衛星＋指定用途款＋在途＋待確認應收＝總資產。
+    """
+    _pr = (snap or {}).get("pending_receivables")
+    if isinstance(_pr, dict):
+        _v = _pr.get("合計")
+        if isinstance(_v, (int, float)) and not isinstance(_v, bool):
+            return float(_v)
+        _its = _pr.get("items")
+        if isinstance(_its, list):
+            _s = 0.0
+            for _i in _its:
+                if isinstance(_i, dict):
+                    try:
+                        _s += float(_i.get("金額") or 0)
+                    except (TypeError, ValueError):
+                        pass
+            return _s
+    return 0.0
+
+
+def penetration_invariant_error(snap: dict, sat_twd: float) -> str | None:
+    """穿透完整性不變量（唯一實作）：五桶＋衛星＋指定用途款＋在途＋待確認應收＝總資產。
+
+    通過 → None；失敗 → 錯誤訊息（含雙重計算／未重算診斷）。**只讀，不寫任何檔。**
+    """
+    _a = ((snap or {}).get("penetration") or {}).get("actual_twd") or {}
+    _five = sum(float(v) for k, v in _a.items() if not str(k).startswith("美股市值型成長_"))
+    _sat = float(sat_twd or 0)
+    _rst = restricted_cash(snap)
+    _cit = float((((snap or {}).get("penetration") or {}).get("cash_in_transit")) or 0)
+    _pr = pending_receivables(snap)
+    _tot = float((snap or {}).get("total_assets", 0))
+    _sm = _five + _sat + _rst + _cit + _pr
+    if abs(_sm - _tot) <= 1:
+        return None
+    _hint = ""
+    if _pr and abs((_sm - _pr) - _tot) <= 1:
+        _hint = "｜診斷：疑似重複計（現金桶已含該筆）→ 加回應收時，現金側必須已排除"
+    elif abs(_five + _sat - _tot) <= 1 and _rst:
+        _hint = "｜診斷：快取 penetration 尚未重算（舊口徑仍含指定用途款）→ 先跑 build_penetration_report.py 再同步"
+    return (f"穿透完整性失敗：五桶 {_five:,.0f} + 衛星 {_sat:,.0f} + 指定用途款 {_rst:,.0f} "
+            f"+ 在途 {_cit:,.0f} + 待確認應收 {_pr:,.0f} = {_sm:,.0f} ≠ 總資產 {_tot:,.0f}"
+            f"（差 {_sm - _tot:,.0f}）{_hint}")
+
+
 def restricted_cash(snap: dict) -> float:
     """指定用途現金（質押撥款待清償等）— 不計入桶位／乾粉／Runway。
     真值來源＝snapshot.restricted_cash.金額（禁寫死）；清償入帳後由該欄歸零即自動解除。

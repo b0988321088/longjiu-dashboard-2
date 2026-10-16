@@ -23,6 +23,7 @@ def pi_payload(snap: dict) -> dict:
             "record": rec,
             "threshold_twd": thr,
             "proxy_twd": proxy,
+            "pending_receivables_twd": float(_sot.pending_receivables(snap)),  # 2026-10-16 INC-292：供財力軌揭露（不計入 proxy 口徑）
             "gap_twd": max(0.0, thr - proxy),
             "meets_financial_threshold": proxy >= thr,
             "approved": _sot.pi_is_approved(snap),
@@ -69,6 +70,7 @@ def pi_html(payload: dict) -> str:
     _mt = rec.get("macro_triggers", {}) or {}
     _fb = rec.get("forbidden", [])
     _fb_txt = "；".join(_fb[:2]) if isinstance(_fb, list) and _fb else ""
+    _pr = float(payload.get("pending_receivables_twd") or 0)  # INC-292：財力軌揭露用（不計入 proxy 口徑）
     return (
         f"<div class='callout {_cls}' style='margin-top:12px'>"
         "<h3>🎫 專業投資人（PI）｜雙軌狀態卡（零槓桿預設）</h3>"
@@ -78,7 +80,8 @@ def pi_html(payload: dict) -> str:
         f"｜<strong>Lombard 硬鎖：</strong>{_lock}<br/>"
         f"<strong>財力軌（系統內部 readiness proxy，非機構最終認定）：</strong>"
         f"{payload['proxy_twd']:,.0f} ／ 門檻 {payload['threshold_twd']:,.0f}"
-        f"｜<strong>缺口：{payload['gap_twd']:,.0f}</strong>｜{_meet}<br/>"
+        + ("（口徑＝證券＋基金＋保單＋現金；不含待確認應收 %s，該筆尚未回到任何科目）" % f"{_pr:,.0f}" if _pr else "")
+        + f"｜<strong>缺口：{payload['gap_twd']:,.0f}</strong>｜{_meet}<br/>"
         "<strong>⚠️ 財力達標 ≠ 已核准：</strong>門檻僅為送件條件之一（另涉書面申請、專業知識與交易經驗、機構合理調查）<br/>"
         f"{'<strong>強制順序：</strong>' + _fo_txt + '<br/>' if _fo_txt else ''}"
         f"<strong>🔴 宏觀紅線：</strong>30Y美債 &gt;5.20% → {_mt.get('警戒線_5.20', '停止新增長債/平衡基金')}<br/>"

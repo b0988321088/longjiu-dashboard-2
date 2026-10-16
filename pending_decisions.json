@@ -364,19 +364,6 @@
   },
   {
     "date": "2026-10-16",
-    "title": "內文數字守門：buffett_cto_report『科技 17.5%』∉ 合法值（INC-245 家族）",
-    "status": "已完成",
-    "status_raw": "✅ 已修（2026-10-16）：源頭寫死「科技 17.5%／現金~12.8%」（8/22 舊值）已改讀 snapshot 真值（科技 14.8%）；build_rebalance_dashboard 的 17.5 fallback 一併移除；md 於 12:42 重產；check_narrative_numbers.py ✅ 0 處（守門集合未放寬、內文未改）",
-    "tags": "內文數字,守門,INC-245,科技口徑,TD-20261016-01",
-    "detail": "證據：2026-10-16 `check_narrative_numbers.py` ❌ `buffett_cto_report_2026-10-16.md`：科技 17.5% ∉ 合法值 [14.8, 15.5, 24.3]（片段「科技17.5%貼紅線」）；10-15 同位置為 14.8% 合規。初判為模型自行重算／混用分母（INC-245 家族），非本批程式造成。修法（未施工）：①若屬合法派生口徑 → 至 build_allowed／ENGINE_ROWS 補來源，並在 `check_narrative_numbers_selftest.py` 加正／負向案例；②否則修 `buffett_cto_analyzer.penetration_analysis` 使其只讀 `snapshot.penetration.actual_pct`。一律修集合或修 analyzer，不放寬比對、不改內文。",
-    "due_date": null,
-    "last_confirmed": null,
-    "owner": "CEO",
-    "external_owner": null,
-    "needs_due_date": true
-  },
-  {
-    "date": "2026-10-16",
     "title": "保單不變式：子基金加總 ≠ 保單A/B（+4,194／+15,680）",
     "status": "待處理",
     "status_raw": "⏳ 待處理（P2｜需真值核對）",

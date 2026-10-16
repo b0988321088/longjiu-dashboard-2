@@ -244,6 +244,13 @@ def extract_snapshot(snap: dict) -> dict:
                 _ar = dict(_ar)
                 _ir = dict(_ir) if _ir else {}
                 _total_assets = sum(_ar[k] for k in ["securities","insurance","funds","bonds","cash_total"] if k in _ar)  # 不含 real_estate（2026-08-10 修正：與日報/穿透一致）
+                # 2026-10-16 INC-292：待確認應收（暫時性占用）是獨立科目、不在上述 parts 內
+                # → 不加回會讓本表今日總資產短少（與穿透分母/日報不一致）。
+                try:
+                    from sot_targets import pending_receivables as _pr_fn2
+                    _total_assets += _pr_fn2(snap)
+                except Exception:
+                    pass
                 # 2026-10-10：移除寫死退路 18,197,422（缺值時會替資料背書）；缺值留 0，由下方 DB 覆蓋或下游告警
                 _total_liab = float(snap.get("total_liabilities") or 0)
                 # 從 db 拿負債（liabilities 表有當日資料才覆蓋）
