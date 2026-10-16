@@ -365,51 +365,51 @@ def load_moneybook_accounts():
     return bank_assets, details
 
 
-def load_moneybook_details():
-    detail_paths = [
-        REPO / "Moneybook" / "detail.csv",  # fallback legacy
-    ]
-    # auto-discover latest Moneybook_明細_*.csv in Moneybook folder
-    mb_dir = REPO / "Moneybook"
-    found = sorted(mb_dir.glob("Moneybook_明細_*.csv"))
-    if found:
-        detail_paths = [found[-1]] + detail_paths
-    for p in detail_paths:
-        if p.exists():
-            break
-    else:
+def _dividend_from_snapshot():
+    """配息真值＝snapshot.dividend_records[當月]（單一真值）。
+
+    2026-10-16 修正（兩層根因）：
+      ①原讀 repo 內 Moneybook/ 的 CSV，但該目錄已不存在（外部加密 ZIP 為 canonical）
+        → 早期 return 0,0，配息永遠 0
+      ②月份硬編 "2026/07" → 非 7 月一律跳過
+      結果：Notion 五表配息欄全被寫成 0（週五深度審查 OBSERVE 項）。
+    分類委派 dividend_caliber.bucket_of（單一口徑），與日報配息表同源；
+    保單桶＝ins，其餘（ETF／基金／一次性）歸 ETF／基金桶。
+    """
+    try:
+        snap = json.loads((REPO / "snapshot.json").read_text(encoding="utf-8"))
+    except Exception:
         return 0, 0
-    fund_keywords = ['基金', 'ETF', '00981', '00919', '00918', '00713', '摩根', '貝萊德', '聯博', '施羅德', '路博邁']
-    policy_keywords = ['安聯', '第一金人壽']
+    ym = datetime.now().strftime("%Y-%m")
+    dr = (snap.get("dividend_records") or {}).get(ym) or {}
+    if not dr:
+        return 0, 0
+    try:
+        from dividend_caliber import bucket_of as _bucket
+    except Exception:  # 模組缺失時不中斷，全歸基金桶（不假設保單）
+        _bucket = lambda _n: "fund"  # noqa: E731
     policy_div = 0.0
     etf_div = 0.0
-    seen = set()
-    with open(p, encoding="utf-8") as f:
-        r = csv.DictReader(f)
-        for row in r:
-            post_date = row.get("入帳日", "")
-            if not post_date.startswith("2026/07"):
-                continue
-            desc = row.get("明細描述", "")
-            cat = row.get("分類", "")
-            currency = row.get("幣別", "").strip()
-            amt = float(row.get("金額", "0") or "0")
-            if currency != "TWD" or amt <= 0:
-                continue
-            # exclude redemptions / fund sales which are not dividends
-            if "贖回" in desc or "賣出基金" in cat or "賣出" in desc:
-                continue
-            is_fund = any(k in desc for k in fund_keywords) or "媒體轉入 - 基金配息" in desc
-            is_policy = any(k in desc for k in policy_keywords) or "保單配息" in cat
-            key = (desc, amt)
-            if key in seen:
-                continue
-            seen.add(key)
-            if is_fund:
-                etf_div += amt
-            if is_policy and not is_fund and ("轉帳存入" in desc or "保單配息" in cat):
-                policy_div += amt
+    for _k, _v in dr.items():
+        try:
+            _amt = float(_v or 0)
+        except Exception:
+            continue
+        if _amt <= 0:
+            continue
+        if _bucket(_k) == "ins":
+            policy_div += _amt
+        else:
+            etf_div += _amt
     return policy_div, etf_div
+
+
+def load_moneybook_details():
+    """配息拆解（對外介面不變：回傳 (保單配息, ETF／基金配息)）。
+
+    2026-10-16：改讀 snapshot 單一真值（原 Moneybook/ CSV 路徑已失效且月份硬編）。
+    """
+    return _dividend_from_snapshot()
 
 
 def parse_ledger_loans():

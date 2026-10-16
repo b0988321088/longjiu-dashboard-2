@@ -81,6 +81,38 @@ def _sync_truth_blocks(snap: dict, write: bool = True) -> dict:
     return changed
 
 
+def _derive_insurance_breakdown(snap: dict) -> dict:
+    """insurance_breakdown 派生（2026-10-16，TD-20261016-02 根因修復）。
+
+    根因：保單現值有真值鍵（allianz_policy_a_value／b_value／firstjin_current_value），
+    但 insurance_breakdown 不在任何同義群組 → 真值日只更新真值鍵時它會停在舊值，
+    下游（build_penetration_report.py:444、asset_diff_monitor.py、build_mtd_report.py）
+    於是顯示舊的保單現值（實例：穿透報告 A 4,955,034 vs 真值 4,914,580、
+    第一金 1,867,416 vs 1,878,664）。
+    逐檔（policy_a_funds／policy_b_funds）是真值輸入（App 截圖），不在此重算。
+    """
+    a = int(snap.get("allianz_policy_a_value") or 0)
+    b = int(snap.get("allianz_policy_b_value") or 0)
+    fj = int(snap.get("firstjin_current_value") or 0)
+    ib = dict(snap.get("insurance_breakdown") or {})
+    ib["policy_a_total"] = a
+    ib["policy_b_total"] = b
+    ib["allianz_ab_total"] = a + b
+    ib["firstjin_total"] = fj
+    return ib
+
+
+def _sync_insurance_breakdown(snap: dict, write: bool = True) -> dict:
+    """把 insurance_breakdown 加總欄位對齊真值鍵（自癒；與四真值塊同層）。"""
+    before = dict(snap.get("insurance_breakdown") or {})
+    after = _derive_insurance_breakdown(snap)
+    changed = {k: (before.get(k), v) for k, v in after.items() if before.get(k) != v}
+    snap["insurance_breakdown"] = after
+    if write and changed:
+        SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
+    return changed
+
+
 def sync_truth_blocks(snap: dict, write: bool = True) -> dict:
     """公開入口（2026-10-14 US30Y 同源工單／使用者裁決）。
 
@@ -127,6 +159,9 @@ def main():
         from asset_sync import verify_synonyms
         snap = json.loads(SNAP.read_text(encoding="utf-8"))
         _chg = _sync_truth_blocks(snap, write=True)
+        _ib_chg = _sync_insurance_breakdown(snap, write=True)
+        if _ib_chg:
+            print("🔁 insurance_breakdown 自癒寫回：" + "、".join(f"{k} {v[0]}→{v[1]}" for k, v in _ib_chg.items()))
         if _chg:
             print("🔁 真值層自癒寫回：" + "、".join(_chg.keys()))
             _print_truth_blocks(snap)
@@ -443,6 +478,9 @@ def main():
     # 單一 writer：與 check 模式自癒共用同一支 _sync_truth_blocks（不在此另寫一份邏輯），
     # 寫檔仍由下方唯一的 SNAP.write_text 負責。
     _sync_truth_blocks(snap, write=False)
+    _ib_chg = _sync_insurance_breakdown(snap, write=False)
+    if _ib_chg:
+        print("🔁 insurance_breakdown 對齊真值鍵：" + "、".join(f"{k} {v[0]}→{v[1]}" for k, v in _ib_chg.items()))
     _print_truth_blocks(snap)
 
     SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
