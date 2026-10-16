@@ -439,6 +439,19 @@ try:
               f"{(_r_ret.stderr or '').strip()[:160]}")
 except Exception as _e9cr:
     print(f"  ⚠️ 退休規劃產出異常（不影響日報）: {_e9cr}")
+# 9c-1b. 財務結構健檢報告（2026-10-17 新增；使用者需求：可定期檢核的結構變化報告）
+#   同退休規劃模式：先產檔、後刷連結（按鈕 __STRUCT_HEALTH__ 才不會指到不存在的檔案）；
+#   產物與 index.html 同一輪、同一 commit scope（發布責任明確＝本輪）。失敗不阻擋本輪。
+try:
+    _r_sh = subprocess.run([sys.executable, str(BASE / "build_structural_health.py")], cwd=str(BASE),
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=90)
+    _sh_lines = (_r_sh.stdout or "").strip().splitlines()
+    print("  " + (_sh_lines[0] if _sh_lines else "✅ structural_health"))
+    if _r_sh.returncode != 0:
+        print(f"  ⚠️ 結構健檢產出異常（不影響日報）: rc={_r_sh.returncode} "
+              f"{(_r_sh.stderr or '').strip()[:160]}")
+except Exception as _e9csh:
+    print(f"  ⚠️ 結構健檢產出異常（不影響日報）: {_e9csh}")
 _r9c = _sp9c.run([sys.executable, str(BASE / "build_dashboard.py")], cwd=BASE,
                  capture_output=True, text=True, timeout=120)
 if _r9c.stdout:
