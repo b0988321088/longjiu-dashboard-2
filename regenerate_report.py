@@ -362,6 +362,12 @@ try:
     html = _refresh_out(html, json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")))
 except Exception as _e_out:
     print(f"[WARN] P0-1 日報最終舊值覆蓋失敗：{_e_out}")
+# 2026-10-16 P0（US30Y 單一來源）：輸出前呼叫唯一實作（daily_report_assembly.unify_us30y_live）
+try:
+    from daily_report_assembly import unify_us30y_live as _u30
+    html = _u30(html, BASE)
+except Exception:
+    pass
 OUT.write_text(public_mask.scrub(close_html_tail(html)), encoding="utf-8")  # 2026-10-12 資安處置：公開面遮蔽
 
 # 9a. 淨資產拆解自動更新（2026-09-03：儀表板 net_worth_weekly_breakdown 從 DB 真值算，
@@ -534,7 +540,7 @@ _gate_ok = True   # 2026-10-03：自動化防守閘門（performance_monthly 頁
 #   而日常產出必然碰 index.html／snapshot.json／dashboard_decisions.json → auto_record 一律拒落
 #   （實測 62f09db6 與 f506a72f 以同一理由被拒）→ auto_push 恆 rc=3，產線等於無法自我部署。
 #   白名單救不了：index.html 依裁決必須經真 CIO 審查。故改為讓產線自己取得那份審查紀錄。
-_CIO_DIFF_CAP = 12000   # 送審內文上限（避免把整份 HTML 塞進 prompt）
+_CIO_DIFF_CAP = 32000   # 送審內文上限（與 review_chain.DEFAULT_DIFF_CAP 同值；2026-10-16 裁決 12,000 → 32,000）
 # 2026-10-13（TD-20261013-05／06）：審查者標籤改為**動態**（由 review_chain 回報實際使用者）。
 # 原本寫死 "CIO-Pollinations(openai)" 且送審直接打 Pollinations 單點 —— 402 即全停。
 _CIO_REVIEWER_FALLBACK_NOTE = "CIO-review-chain（異質：Pollinations／nous-longcat／nous-laguna）"

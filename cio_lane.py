@@ -26,7 +26,7 @@ from datetime import date
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
-DIFF_CAP = 12000                      # 送審內文上限（避免把整份 HTML 塞進 prompt）
+DIFF_CAP = 32000                      # 送審內文上限（與 review_chain.DEFAULT_DIFF_CAP 同值；2026-10-16 裁決 12,000 → 32,000，段數↓但涵蓋率仍 100%）
 # 2026-10-13（TD-20261013-05）：審查者標籤改為**動態**（由 review_chain 回報實際使用者）。
 # 本常數僅保留為「鏈全數失敗時」的敘述基準，不再寫進 RECORD。
 REVIEWER_FALLBACK_NOTE = "CIO-review-chain（異質：Pollinations／nous-longcat／nous-laguna）"
@@ -99,16 +99,21 @@ def build_segments(commit: str, tree: str, subj: str, files: str, stat: str, pat
     """
     total = len(patch or "")
     import review_chain as _rc          # 模組層未 import（本檔原有呼叫端在函式內延遲載入），此處沿用同風格
-    segs = [patch[i:i + diff_cap] for i in range(0, total, diff_cap)] or [""]
+    # 2026-10-16（使用者裁決「修掉切片造成的假拒絕」）：分段改走 review_chain.split_patch
+    #   單一真值 —— 以**檔案邊界**優先、單檔超限才續切；本檔不再自行做字元切片
+    #   （自有切片會切穿檔案與超長行，實測 cost.html 的 seed JSON 被切半 → 假 REJECT）。
+    segs = [d["text"] for d in _rc.split_patch(patch, diff_cap)] or [""]
     if "".join(segs) != patch:          # 切片自我檢查：無遺漏、無重複
         raise ValueError("分段覆蓋不完整（切片自我檢查失敗）")
     prompts, cov = _rc.build_review_prompts(commit, tree, subj, files, stat, diff_cap, patch)
-    if len(prompts) != len(segs):
+    if len(prompts) != len(segs) or int(cov.get("segments", -1)) != len(segs):
         raise ValueError("prompt 段數與切片段數不一致（內部不變量）")
     _off = 0
     for k, seg in enumerate(segs):
         # 段首常落在檔案中段（該段沒有 diff --git 行）→ 補「本段所屬檔案」脈絡；
         # 加在 prompt 開頭，不進 diff → 不會吃掉 diff 預算（本次修復的關鍵）。
+        # 2026-10-16：分段以檔案邊界為優先後，此脈絡對「超限單檔續切段」仍有作用，
+        #   且與 review_chain 的分段脈絡（第 j/m 段）互補、不衝突。
         _head = patch[:_off]
         _di = _head.rfind("diff --git ")
         _seg_file = (_head[_di:].splitlines()[0].split(" b/")[-1]

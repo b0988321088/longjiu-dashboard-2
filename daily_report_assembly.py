@@ -256,6 +256,49 @@ EM_EMIT = "📅 緊急應變資料："
 PAGES_BASE = "https://b0988321088.github.io/longjiu-dashboard-2"
 
 
+def unify_us30y_live(html: str, base=None) -> str:
+    """報告輸出前 US30Y「單一來源」正規化（唯一實作）。
+
+    邊界（與程式宣告逐字一致）：
+      • 只處理未標註來源的**現值型** US30Y 讀值：
+        `US30Y (最新)讀值 N%`（後方未接「（」）與「同一句內含 US30Y 的 `現 N%`」。
+      • 明確標示「（讀值日 YYYY-MM-DD…）」的**歷史引用不改數字**，僅在後方補
+        「；本頁即時讀值 …」，維持可追溯且不誤用資料。
+      • 其他百分比（凍結線 5.30%、10Y 殖利率 5.045% 等）一律不動。
+      • `us30y_state.json` 缺值／不可解析 → 原樣返回（不猜、不偽造）。
+    """
+    import json
+    import re
+
+    if not html:
+        return html
+    try:
+        _b = Path(base) if base else Path(__file__).resolve().parent
+        _st = json.loads((_b / "us30y_state.json").read_text(encoding="utf-8"))
+        _live = float(_st.get("last_rate"))
+    except Exception:
+        return html
+    _d = _st.get("read_date") or _st.get("last_date") or ""
+    _tag = f"（即時讀值｜讀值日 {_d}）" if _d else "（即時讀值）"
+    _note = f"；本頁即時讀值 {_live:.2f}%{'（讀值日 %s）' % _d if _d else ''}"
+    _lv = f"{_live:.2f}"
+
+    # ① 明確標示 as-of 的歷史引用：數字不動，補上本頁即時讀值（冪等）
+    html = re.sub(
+        r"(US30Y\s*(?:最新)?讀值\s*5\.\d+%（(?:讀值日|as-of)[^）]*）)(?!；本頁即時讀值)",
+        lambda m: m.group(1) + _note, html)
+    # ② 未標註來源的 US30Y 讀值（後方接「（讀值日…）」者已由 ① 處理）
+    html = re.sub(r"(US30Y\s*(?:最新)?讀值\s*)5\.\d+%(?!（)",
+                  lambda m: f"{m.group(1)}{_lv}%{_tag}", html)
+    # ②b 無「讀值」字樣但以 US30Y 開頭的現值型宣稱（例：「US30Y 5.53% 站上5.30%凍結線」）
+    html = re.sub(r"(US30Y\s*)5\.\d+%(?!（)",
+                  lambda m: f"{m.group(1)}{_lv}%{_tag}", html)
+    # ③ 同一句內含 US30Y 的「現 N%」現值型宣稱（錨定 US30Y，不碰其他數字）
+    html = re.sub(r"(US30Y[^<。；]{0,60}?現\s*)5\.\d+%(?!（)",
+                  lambda m: f"{m.group(1)}{_lv}%{_tag}", html)
+    return html
+
+
 def build_emergency_block(base, snapshot, today: str | None = None) -> str:
     """「緊急應變（美股／台股）」LLM 區塊的唯一實作（INC-291／PEND-20261007-04）。
 

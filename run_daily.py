@@ -1813,7 +1813,51 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
     except Exception:
         _radar_html = ""
 
-    html = html.replace("{llm_emergency_analysis}", llm_emergency)
+    # 2026-10-16 P0（US30Y 單一來源）：注入段落內「現值型」US30Y 讀值一律以
+    # us30y_state.json last_rate 覆寫並標註讀值日，避免同一份日報出現多個同日 US30Y 值。
+    # （明確標示 as-of 的歷史引用不動；缺值即不動作，不猜。）
+    def _us30y_unify(_text):
+        if not _text:
+            return _text
+        try:
+            _r = float((_st_u or {}).get("last_rate"))
+        except Exception:
+            return _text
+        _d = ((_st_u or {}).get("read_date") or (_st_u or {}).get("last_date")
+              or (_st_u or {}).get("date") or "")
+        _tag = f"（即時讀值｜讀值日 {_d}）" if _d else "（即時讀值）"
+        _live = f"{_r:.2f}"
+        try:
+            from daily_report_assembly import unify_us30y_live as _u30i
+            return _u30i(_text, Path(__file__).resolve().parent)
+        except Exception:
+            return _text
+
+    try:
+        _st_u = json.loads((Path(__file__).resolve().parent / "us30y_state.json").read_text(encoding="utf-8"))
+    except Exception:
+        _st_u = {}
+    llm_emergency = _us30y_unify(llm_emergency)
+    # 2026-10-16 P0：緊急應變原文 as-of 非當日時，於區塊最前加一行揭露
+    #（本文讀值 vs 本頁即時讀值），避免同一頁出現未加說明的高利讀值並列。不改原文數字。
+    try:
+        _emj = json.loads((Path(__file__).resolve().parent / "data" /
+                           "emergency_llm_analysis.json").read_text(encoding="utf-8"))
+        _emd = str(_emj.get("date") or "")
+        if _emd and _emd != TODAY:
+            _lrs = (_st_u or {}).get("last_rate")
+            _ld = ((_st_u or {}).get("read_date") or (_st_u or {}).get("last_date") or "")
+            if _lrs is not None:
+                llm_emergency = (
+                    "<div style='font-size:12px;color:#6b7280;margin-bottom:6px'>"
+                    f"⏱ 本區塊＝{_emd} 緊急應變分析原文（as-of {_emd}）" 
+                    f"｜本頁即時讀值：US30Y {float(_lrs):.2f}%（讀值日 {_ld}）"
+                    "</div>") + llm_emergency
+    except Exception:
+        pass
+    cto_content = _us30y_unify(cto_content)
+    buf_content = _us30y_unify(buf_content)
+
     html = html.replace("{_radar_html}", _radar_html)
     html = html.replace("__BUFFETT_CONTENT__", buf_content)
     html = html.replace("__CTO_TECH__", cto_content)
@@ -1826,6 +1870,17 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             import json as _json
             _st = _json.loads((Path(__file__).resolve().parent / "us30y_state.json").read_text(encoding="utf-8"))
             _us30y = _st.get("last_rate")
+        except Exception:
+            pass
+        # 2026-10-16 P0：tv 是「模板值字典」，缺 snapshot canonical 鍵 →
+        # sot_targets.cash_floor(tv) 直接 raise（日報每日印出「對策表產生失敗」）。
+        # 以單一真值 snapshot.json 補齊必要鍵（僅補缺、不覆蓋既有值、不改任何數值）。
+        try:
+            _snap_z = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
+            for _k in ("cash_floor_rule", "現金_twd", "cash_layers",
+                       "sabbatical_gate_twd", "thresholds_2026_0915"):
+                if not tv.get(_k) and _snap_z.get(_k):
+                    tv[_k] = _snap_z[_k]
         except Exception:
             pass
         _tbl = build_table(tv, _us30y)
@@ -2606,6 +2661,28 @@ def main():
     from daily_report_assembly import build_emergency_block as _asm_em
     _snap_em = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     llm_emergency_analysis_html = _asm_em(BASE, _snap_em, TODAY)
+    # 2026-10-16 P0（US30Y 單一來源）：緊急應變原文 as-of 可能非當日 →
+    # 現值型讀值一律以 us30y_state.json 單一來源覆寫並標註讀值日；
+    # 非當日者於區塊最前加一行 as-of 揭露（本頁即時讀值）。明確標示讀值日的歷史引用不改數字。
+    try:
+        _stq = json.loads((Path(__file__).resolve().parent / "us30y_state.json").read_text(encoding="utf-8"))
+        _lr = float(_stq.get("last_rate"))
+        _ld2 = _stq.get("read_date") or _stq.get("last_date") or ""
+        _tag2 = f"（即時讀值｜讀值日 {_ld2}）" if _ld2 else "（即時讀值）"
+        _h = llm_emergency_analysis_html or ""
+        _h = re.sub(r"現\s*5\.\d+%", f"現 {_lr:.2f}%{_tag2}", _h)
+        _h = re.sub(r"(US30Y\s*(?:最新)?讀值\s*)5\.\d+%(?!（讀值日)",
+                    lambda _m: f"{_m.group(1)}{_lr:.2f}%{_tag2}", _h)
+        _emj2 = json.loads((Path(__file__).resolve().parent / "data" /
+                            "emergency_llm_analysis.json").read_text(encoding="utf-8"))
+        _emd2 = str(_emj2.get("date") or "")
+        if _emd2 and _emd2 != str(TODAY):
+            _h = (f"<div style='font-size:12px;color:#6b7280;margin-bottom:6px'>"
+                  f"⏱ 本區塊＝{_emd2} 緊急應變分析原文（as-of {_emd2}）｜本頁即時讀值："
+                  f"US30Y {_lr:.2f}%（讀值日 {_ld2}）</div>") + _h
+        llm_emergency_analysis_html = _h
+    except Exception:
+        pass
 
     daily_html = render_daily_report(tv, intel_text="", intel_signals=intel_signals, market_intel_text=market_intel_text, llm_emergency_analysis=llm_emergency_analysis_html, schedule_rows_html=_schedule_rows, p0_tasks_html=_p0_html, mb_cc_rows=build_cc_rows())  # 2026-09-16：補上信用卡明細（原本走 run_daily 路徑會是空表，四大信用卡檢查必失敗）
     # 2026-09-16（INC-209）：波動損失卡已改在 render_daily_report() 內注入（此處移除避免重複）
@@ -2634,6 +2711,12 @@ def main():
         daily_html = daily_html.replace("__SEC_TOP3__", "---")
 
     daily_html = close_html_tail(daily_html)  # INC-199：附加區塊一律收回 </body> 之前
+    # 2026-10-16 P0（US30Y 單一來源）：輸出前呼叫唯一實作（daily_report_assembly.unify_us30y_live）
+    try:
+        from daily_report_assembly import unify_us30y_live as _u30
+        daily_html = _u30(daily_html, BASE)
+    except Exception:
+        pass
     OUT_DAILY.write_text(public_mask.scrub(daily_html), encoding="utf-8")  # 2026-10-12 資安處置：公開面遮蔽
     print(f"[RUN_DAILY] 日報產出：{OUT_DAILY}")
     # 靜態儀表板：統一由 build_dashboard.py 產出（2026-08-27 根治：run_daily 舊邏輯只取代數值、漏連結佔位符 → 儀表板連結失效）

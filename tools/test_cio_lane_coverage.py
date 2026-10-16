@@ -80,13 +80,14 @@ def main() -> int:
     check("U2d 脈絡加在 prompt 開頭（diff fence 之外）",
           all(p.startswith("# ⓘ 本段所屬檔案：") for p in prompts), prompts[0][:40])
 
-    # U3 負向：重現舊行為（脈絡串進 patch）→ 截斷警告必須仍出現
-    _seg = segs[0]
+    # U3 負向：重現舊行為（脈絡串進 patch，且總長超過 cap）→ 截斷警告必須仍出現。
+    #   2026-10-16（cap 12,000 → 32,000）：舊寫法用 segs[0]（≤cap）已不再觸發截斷，
+    #   故此處以「刻意超長」的內容重建同一情境 —— 判準本身不放寬（仍必須出現警告）。
     _old = _rc.build_review_prompt("a" * 40, "b" * 40, "s", "f.py", "stat", cap,
-                                  patch=f"# ⓘ 本段所屬檔案：file_0.py\n{_seg}",
-                                  segment=(1, len(segs)))
-    check("U3 負向：把脈絡串進 patch（舊版行為）→ 截斷警告仍必須出現（守門未削弱）",
-          _WARN in _old and "涵蓋率 99" in _old.replace("99.6", "99"),
+                                  patch="# ⓘ 本段所屬檔案：file_0.py\n" + "z" * (cap + 43),
+                                  segment=(1, 2))
+    check("U3 負向：脈絡串進 patch 且超長（舊版行為）→ 截斷警告仍必須出現（守門未削弱）",
+          _WARN in _old and "涵蓋率 99" in _old,
           _old[-160:])
 
     # U4 負向：涵蓋率 <100% 直接 REJECT（coverage guard，不呼叫模型 → 離線可跑）

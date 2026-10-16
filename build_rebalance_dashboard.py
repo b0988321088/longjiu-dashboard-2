@@ -145,6 +145,22 @@ def _rebalance_integration_block(s) -> str:
         return (f"> ⛔ 全源整合區塊讀取失敗（{_e}）→ 本節從缺，**不得視為已整合**。")
 
 
+def weekly_plan_rows(radar_state: dict, today: str) -> tuple[list, str]:
+    """回傳 (可用列, 說明)。**資料日閘門**：非當日一律不引用（2026-10-16）。
+
+    weekly_plan 由 institutional_flow.py 產出（雷達排程＝週一／三 16:15），其餘日子天然落後
+    1~3 天；其文字內含當時的佔比／總資產，直接引用會讓同一份報告同時出現「台股 8.9%
+    （snapshot 現況欄）vs 9.1%（plan 建議欄）」等自相矛盾的舊真值（2026-10-16 實例：
+    真 CIO 以 blocking 攔下 → 07:00 產線全停）。閘門放在**取用端**，呼叫端不得自行讀 rows。
+    """
+    wp = (radar_state or {}).get("weekly_plan", {}) or {}
+    rows = [r for r in (wp.get("rows") or []) if r.get("內容")]
+    wp_date = str(wp.get("日期") or "")[:10]
+    if rows and wp_date != today:
+        return [], f"radar_state.weekly_plan 資料日 {wp_date or '未知'} ≠ {today} → 不引用其數值"
+    return rows, ""
+
+
 def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, sec_rows, dry_cur, risk_rows, ms_html, emg_html, total, cash, monthly_inc, monthly_exp, surplus, usd_pct, tech, us30y, plan_rows=None):
     """再平衡評估（文字版 md）— 與儀表板同源，每日自動更新（2026-08-22）"""
     lines = [
@@ -502,13 +518,20 @@ def main():
     try:
         _rs = json.loads((Path(__file__).resolve().parent / "radar_state.json").read_text(encoding="utf-8"))
         _wp = _rs.get("weekly_plan", {}) or {}
-        _plan_rows = [r for r in (_wp.get("rows") or []) if r.get("內容")]
+        _plan_rows, _wp_stale_msg = weekly_plan_rows(_rs, TODAY)
+        _wp_date = str(_wp.get("日期") or "")[:10]
+        _wp_stale = bool(_wp_stale_msg)
+        if _wp_stale:
+            print(f"⚠️ {_wp_stale_msg}（避免舊真值混入報告；要更新請跑 institutional_flow.py）")
         _date_lbl = str(_wp.get("日期") or TODAY).split("T")[0]
         try:
             _y, _m, _d = _date_lbl.split("-")
             _plan_title_date = f"{int(_m)}/{int(_d)}"
         except Exception:
             _plan_title_date = _date_lbl
+        if _wp_stale:
+            raise ValueError(f"radar_state.weekly_plan 資料日 {_wp_date} ≠ {TODAY} → 不引用其數值"
+                             f"（避免舊真值混入；要更新請跑 institutional_flow.py）")
         if not _plan_rows:
             raise ValueError("radar_state.weekly_plan.rows 為空（請先跑 institutional_flow.py）")
         _plan_html = "".join(
@@ -758,8 +781,23 @@ def main():
         _pl_txt = (f"{_plv:.1f}%（借 {_loan_rb:,.0f}／池 {_pool_rb:,.0f}）" if _plv is not None
                    else "⚠️ 缺真值（可貸金額／擔保池.合計）")
         _pl_lim = f"綠 ≤{_ltvb.get('綠上限', 45)}／黃 ≤{_ltvb.get('黃上限', 53)}／追繳 ≥{_ltvb.get('追繳', 70)}"
-        # 缺真值 → None（不得視為「安全」；渲染端第三態）
-        _pl_trig = (_plv > float(_ltvb.get("綠上限", 45))) if _plv is not None else None
+        # 2026-10-16 P0（CIO 四審）：原 `_pl_trig = _plv > 綠上限` 為**二級**邏輯，但同列
+        # 已宣告三級門檻（綠 ≤45／黃 ≤53／追繳 ≥70）→ 黃區值（如 50.1%）被標成「🔴 觸發」，
+        # 與自身宣告矛盾。改為照 SoT 分級渲染：False=綠、True=追繳、"Y"=黃區、"A"=逾黃區未達追繳。
+        # 僅用 thresholds SoT 既有鍵，不新增門檻、不動真值。
+        _lv_g = float(_ltvb.get("綠上限", 45))
+        _lv_y = float(_ltvb.get("黃上限", 53))
+        _lv_c = float(_ltvb.get("追繳", 70))
+        if _plv is None:
+            _pl_trig = None
+        elif _plv <= _lv_g:
+            _pl_trig = False
+        elif _plv <= _lv_y:
+            _pl_trig = "Y"
+        elif _plv < _lv_c:
+            _pl_trig = "A"
+        else:
+            _pl_trig = True
     except Exception:
         _pl_txt, _pl_lim, _pl_trig = "⚠️ 缺真值", "綠 ≤45／追繳 ≥70", None
 
@@ -777,7 +815,10 @@ def main():
         ("高科技", f"{tech:.1f}%", "紅線 30%", "🔴 觸發" if tech > 30 else "🟢 安全"),
         (f"現金｜底線 {_cw2['life']:,.0f}（單一口徑）", f"{_cw2['cash']:,.0f}", f"≥{_cw2['life']:,.0f}", _lif_st2),
         ("國泰擔保池 LTV", _pl_txt, _pl_lim,
-         ("🔴 觸發" if _pl_trig else ("⚠️ 缺真值（不判定）" if _pl_trig is None else "🟢 安全"))),
+         ("⚠️ 缺真值（不判定）" if _pl_trig is None else
+          "🔴 追繳" if _pl_trig is True else
+          "🟠 逾黃區（未達追繳）" if _pl_trig == "A" else
+          "🟡 黃區" if _pl_trig == "Y" else "🟢 安全")),
     ]
     risk_rows = ""
     for name, val, limit, st in risks:

@@ -808,6 +808,15 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "test_cio_lane_coverage.py",
            "test_cio_lane_fullpatch.py",
            "review_commit_and_record.py",
+           # 2026-10-16（使用者裁決「修掉切片造成的假拒絕」）：本輪範圍＝送審包裝層
+           #   ① review_chain.py（已宣告）：分段改以**檔案邊界**優先（split_patch）、單段上限
+           #      12,000 → 32,000、僅技術性失敗每段最多重試 2 次、段級無效結果列入 blocking。
+           #   ② cio_lane.py／regenerate_report.py（已宣告）：改走 split_patch 單一真值；
+           #      上限常數同步 32,000。審查對象、異質審查者、判準與 100% 覆蓋率均不變。
+           #   ③ tools/test_review_chain_packaging_20261016.py（新增）：P1–P6 共 33 條
+           #      （跨檔案不切穿／大型單檔／JSON 完整性／覆蓋率守門／重試行為／真實 d28b889d 回歸）。
+           "test_review_chain_packaging_20261016.py",
+           "test_stale_source_guard_20261016.py",   # 2026-10-16（本輪②）：舊快照混入防線（weekly_plan 資料日閘門／科技口徑／真實產物一致）
            # 2026-10-15 同批延伸（使用者裁決「修 calc_penetration 的餘數法」）：
            #   update_all.py 桶位先取整、餘數與在途差額改整數相減 → 不變量整數層精確成立
            "update_all.py",

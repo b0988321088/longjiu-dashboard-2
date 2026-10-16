@@ -225,7 +225,16 @@ def main() -> int:
         fake.review = _boom
         # 2026-10-13 P1：cio_lane 改為呼叫 review_chain.build_review_prompt 組送審 prompt
         # （兩車道單一真值），打樁須一併提供否則會以 AttributeError 中止，測不到 T9 原意。
+        # 2026-10-16：送審分段改走 split_patch／build_review_prompts（檔案邊界分段），
+        # 打樁同步補齊 —— 否則會以 AttributeError 中止，同樣測不到 T9 原意。
         fake.build_review_prompt = lambda *a, **k: "STUB-PROMPT"
+        fake.split_patch = lambda p, c=32000, **k: [{"text": p, "files": [], "split": {}}]
+        fake.build_review_prompts = lambda *a, **k: (
+            ["STUB-PROMPT"], {"total_chars": 0, "provided_chars": 0, "pct": 100.0, "segments": 1})
+
+        def _seg_boom(*a, **k):
+            raise RuntimeError("三層皆掛（stub）")
+        fake.review_segmented = _seg_boom
         sys.modules["review_chain"] = fake
         try:
             ok, msg = lane.review_and_record("t9")

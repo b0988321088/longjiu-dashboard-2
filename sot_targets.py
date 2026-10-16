@@ -549,13 +549,17 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
                                         ("非科技", "美股市值型成長_非科技")):
                 _amt_s, _p_s = _pw.get(_sub_key), _pp.get(_sub_key)
                 if _amt_s is not None and _p_s is not None:
-                    text = re.sub(rf"({_sub_disp}\s*)[\d,]{{5,}}\s*（\d+(?:\.\d+)?%",
+                    text = re.sub(rf"(?<!高)({_sub_disp}\s*)[\d,]{{5,}}\s*（\d+(?:\.\d+)?%",
                                   rf"\g<1>{float(_amt_s):,.0f}（{float(_p_s):.1f}%", text)
             # 美股子項（科技／非科技）佔比同步重算（金額不動，沿用 live actual_twd）
             for _sub_disp, _sub_key in (("科技", "美股市值型成長_科技"), ("非科技", "美股市值型成長_非科技")):
                 _p = _pp.get(_sub_key)
                 if _p is not None:
-                    text = re.sub(rf"({_sub_disp}\s*)\d+(?:\.\d+)?%", rf"\g<1>{float(_p):.1f}%", text)
+                    # 2026-10-16：加 (?<!高) —— 「高科技 X%（紅線 30%）」是 GICS 全資產口徑的
+                    #   風險行（真值＝snapshot.industry_penetration.產業.資訊科技.佔比），
+                    #   不是美股子項；舊規則把它一起改寫成子項口徑 → 同一數字在 md（GICS 24.3%）
+                    #   與 eval HTML（子項 14.8%）不一致（真 CIO blocking 實例）。
+                    text = re.sub(rf"(?<!高)({_sub_disp}\s*)\d+(?:\.\d+)?%", rf"\g<1>{float(_p):.1f}%", text)
             # 桶名後「不帶金額」的佔比（例：「美股 36.4% 超出 27–33%」）→ 一律改 live 佔比
             text = re.sub(r"(台股市值型成長|美股市值型成長|防守型配息|債券|現金)\s*\d+(?:\.\d+)?%",
                           lambda m: f"{m.group(1)} {float(_pp.get(dict(_bucket_alias).get(m.group(1)) or '', 0)):.1f}%"
@@ -594,7 +598,7 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
                 _amt_s, _p_s = _pw.get(_sub_key), _pp.get(_sub_key)
                 if _amt_s is None or _p_s is None:
                     continue
-                text = re.sub(rf"({_sub_disp}\s*)\d+(?:\.\d+)?%（[\d,]+",
+                text = re.sub(rf"(?<!高)({_sub_disp}\s*)\d+(?:\.\d+)?%（[\d,]+",
                               rf"\g<1>{float(_p_s):.1f}%（{float(_amt_s):,.0f}", text)
                 # 「含科技 3,907,015」這種接在動詞後的子項金額
                 text = re.sub(rf"(含\s*{_sub_disp}\s*)[\d,]{{5,}}",
