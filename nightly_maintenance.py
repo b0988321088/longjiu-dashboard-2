@@ -193,25 +193,40 @@ def tomorrow_priorities():
     # 2026-08-24 使用者確認：Notion 訂閱已取消（不再提醒）；信用卡全部自動扣繳（不再提醒截止日，改由 reminder_agent 餘額警示）
     
     # 2026-08-30 修正：動態讀 rent_received_records（硬編碼 21,000/2,100 過時 → 只提醒未收）
+    # 2026-10-16 修正（跨月累計 bug）：原 _got 把 rent_received_records「所有月份」加總，
+    #   卻與「單月」應收（rent_breakdown 常態 80,100）比 → 累計永遠 >= 月應收 →
+    #   永遠印「✅ 租金已全收」。實測 2026-10 實收僅 24,000（10/01 大義街店面）仍照印。
+    #   修法：①當月應收讀 rent_receivable_by_month[當月]（缺 → fallback rent_breakdown）
+    #         ②當月實收只算「日期落在當月」的項目
+    #         ③與 snapshot.rent_monthly_gap（單一真值）交叉驗證，不一致就顯性告警
     try:
         import json as _json
         from pathlib import Path as _Path
         _snap = _json.load(open(str(_Path(__file__).resolve().parent / "snapshot.json"), encoding="utf-8"))
+        _ym = date.today().strftime("%Y-%m")
         _rr = _snap.get("rent_received_records", {}) or {}
-        _rb = _snap.get("rent_breakdown", {}) or {}
+        _rbm = (_snap.get("rent_receivable_by_month") or {}).get(_ym)
+        _rb = _rbm or (_snap.get("rent_breakdown", {}) or {})
         _got = {}
         for _d, _items in _rr.items():
+            if not str(_d).startswith(_ym):      # ← 關鍵：只算當月
+                continue
             if _items and isinstance(_items, dict):
                 for _k, _v in _items.items():
                     _got[_k] = _got.get(_k, 0) + _v
             elif isinstance(_items, (int, float)):
                 _got["其他"] = _got.get("其他", 0) + _items
+        _due, _recv = sum(_rb.values()), sum(_got.values())
         _missing = {k: v for k, v in _rb.items() if _got.get(k, 0) < v}
+        _gap = float(_snap.get("rent_monthly_gap") or 0)
         if _missing:
             _mtxt = " + ".join(f"{k} {v:,}" for k, v in _missing.items())
-            priorities.append(f"🟡 租金待收：{_mtxt}")
+            priorities.append(f"🟡 租金待收：{_mtxt}（本月應收 {_due:,}／已收 {_recv:,}）")
+            if abs(sum(_missing.values()) - _gap) > 1:
+                priorities.append(
+                    f"⚠️ 租金待收合計 {sum(_missing.values()):,} 與 snapshot.rent_monthly_gap {_gap:,.0f} 不一致（待查）")
         else:
-            priorities.append("✅ 租金已全收（80,100/月）")
+            priorities.append(f"✅ 租金已全收（本月應收 {_due:,}／已收 {_recv:,}）")
     except Exception:
         pass
     

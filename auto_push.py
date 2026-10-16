@@ -375,12 +375,32 @@ def main() -> int:
     try:
         sys.path.insert(0, str(base))
         from publish_gate import decide as _pg_decide  # noqa: E402
-        _pg = _pg_decide(base, f"origin/{primary}", a.own, allowlist_ref="HEAD")
+        _pg = _pg_decide(base, f"origin/{primary}", a.own, allowlist_ref="HEAD", head_ref=head)
     except Exception as _e:  # noqa: BLE001
         print(f"❌ 發布授權閘門載入失敗 → 不推送：{_e}", file=sys.stderr)
         log(base, f"GATE-ERROR\t{a.script}\t{str(_e)[:160]}")
         return 3
     if not _pg["ok"]:
+        # 2026-10-16（TOCTOU 假失敗修正）：冪等成功路徑 ——
+        #   本輪起始 HEAD 之外沒有其他未推內容（_n_self<=1）、且遠端在本輪期間已前進（_n_behind>0）
+        #   → 表示本輪產出已被其他流程涵蓋上線（本腳本為「重產型」：隔日再跑即用最新狀態重算），
+        #     此時再推必為 non-fast-forward。原行為直接回 rc=3 → cron 假報 failed
+        #     （實例：nightly_dashboard_sync 22:15 commit，真 CIO 審查耗時約 40 分鐘，
+        #      期間另一流程完成 commit+push 並把本輪產出一起帶上線）。
+        _ids = [b["id"] for b in _pg["blockings"]]
+        if _ids == ["RANGE_EMPTY"]:
+            _self = run(["git", "rev-list", "--count", f"origin/{primary}..{head}"], base)
+            _behind = run(["git", "rev-list", "--count", f"{head}..origin/{primary}"], base)
+            try:
+                _n_self = int((_self.stdout or "0").strip() or 0)
+                _n_behind = int((_behind.stdout or "0").strip() or 0)
+            except ValueError:
+                _n_self, _n_behind = 1, 0
+            if _n_behind > 0 and _n_self <= 1:
+                print(f"ℹ️ 本輪期間遠端已前進 {_n_behind} 顆（其他流程已推送）→ "
+                      f"本輪產出已被涵蓋、無事可推（重產型腳本，隔日再跑即重算）→ 判定冪等成功")
+                log(base, f"IDEMPOTENT-BEHIND\t{a.script}\t{head[:12]}\tbehind={_n_behind}")
+                return 0
         print(f"❌ 發布授權閘門拒絕（模式={_pg['mode']}，blocking {_pg['blocking_count']}）"
               f"→ 不推送", file=sys.stderr)
         for _b in _pg["blockings"]:

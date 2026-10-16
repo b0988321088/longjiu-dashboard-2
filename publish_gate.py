@@ -192,9 +192,16 @@ def git_dir(base: Path) -> Path:
 
 # ---------------------------------------------------------------- 關卡一
 
-def changes(base: Path, range_base: str) -> tuple[dict[str, str] | None, str]:
-    """本次實際變更 → {path: status}，status ∈ A/M/D/R/T…（R 取新路徑）。"""
-    r = _git(base, ["diff", "--name-status", "-M", f"{range_base}..HEAD"])
+def changes(base: Path, range_base: str, head_ref: str = "HEAD") -> tuple[dict[str, str] | None, str]:
+    """本次實際變更 → {path: status}，status ∈ A/M/D/R/T…（R 取新路徑）。
+
+    2026-10-16（TOCTOU 修正）：新增 head_ref。原式硬用 'HEAD' → 呼叫端在 commit 後若期間
+    有其他流程改動 HEAD（實例：nightly_dashboard_sync 22:15 commit、真 CIO 審查耗時約 40 分鐘，
+    期間另一流程完成 commit+push 並把本輪產出一起帶上線）→ 此處算出的變更集變空 →
+    發布閘門誤判 RANGE_EMPTY 拒推 + 非零退出 → cron 假失敗。
+    改由呼叫端傳入「本輪起始 HEAD」，讓變更集反映「本輪真正產出」而非「當下世界狀態」。
+    """
+    r = _git(base, ["diff", "--name-status", "-M", f"{range_base}..{head_ref}"])
     if r.returncode != 0:
         return None, f"無法取得變更清單（{range_base}..HEAD）：{(r.stderr or '').strip()[:120]}"
     out: dict[str, str] = {}
@@ -743,12 +750,12 @@ def classify_paths(base: Path, paths, ref: str = "HEAD") -> dict:
 
 
 def decide(base: Path, range_base: str, producer_own: list[str] | None = None,
-           allowlist_ref: str = "HEAD") -> dict:
+           allowlist_ref: str = "HEAD", head_ref: str = "HEAD") -> dict:
     checks: dict = {}
     blockings: list[dict] = []
 
     # 關卡一
-    ch, why = changes(base, range_base)
+    ch, why = changes(base, range_base, head_ref)
     if ch is None:
         checks["changes"] = {"ok": False, "reason": why}
         blockings.append({"id": "CHANGES_UNAVAILABLE", "severity": "high", "text": why})
