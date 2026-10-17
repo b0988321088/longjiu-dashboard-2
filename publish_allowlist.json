@@ -65,6 +65,17 @@
    "evidence": "2026-10-15 使用者裁決（B1｜HTML 方案 A：納入版控＋白名單）。事故根因：兩檔由首頁「重要連結」指向（links_config 前綴 glob），但兩個 producer 都不是每日 commit 的產物來源 → 檔案從未進版控 → 線上 404（check_dashboard_sync 第 12 項 FAIL，2026-10-15 實測）。同日 producer stage 白名單已同步納入 regenerate_report.py 候選清單。 2026-10-15 21:5x 使用者裁決（緊急應變產線 B 修正版）：emergency_taiex_report_*.html 長期未納入版控（首頁連結若指向它必 404）→ 一併納入同一套受控產物規則；限制＝只允許明確指定的報告 HTML，不得使用整個目錄的廣泛 stage。",
    "risk": "low",
    "note": "單層樣式（'*' 不跨 '/'）且明示 .html 副檔名；僅涵蓋這兩個家族位於 repo 根目錄的當日報告頁，不含 index.html／日報／差異頁（仍在強制真 CIO 範圍）。放行僅及於「變更集合限於本條目涵蓋檔案」的 commit；夾帶任何其他路徑即未命中本條目。 2026-10-15 追加：emergency_taiex_report_*.html 同為單層樣式且明示 .html 副檔名，producer 與 emergency_report_* 同批（gen_emergency_taiex_auto.py）；未登記路徑仍一律真 CIO 審查。"
+  },
+  {
+   "label": "機構流向雷達（報告頁＋狀態資料，純呈現／純資料）",
+   "patterns": [
+    "radar_report_*.html",
+    "radar_state.json"
+   ],
+   "producer": "radar_weekly.py（週六 08:30 cron 192f1784d305）｜institutional_flow.py（寫入 state）／build_radar_report.py（寫入報告頁）",
+   "evidence": "2026-10-17 使用者指示修復（事故：每週六 rc=3 假失敗）。根因：radar_weekly 以 auto_push --auto-stage 產出，但 radar_report_*.html／radar_state.json 從未登記 → clean-stage 判為「閘門強制真 CIO」而整批 unstage → 無 commit → RANGE_EMPTY 拒推。實際後果不只是 rc=3：這兩檔**從未進版控**（git log 僅 2026-10-12 手動 commit 一次），首頁「📡 機構流向雷達」按鈕指向 radar_report_YYYY-MM-DD.html 長期線上 404（2026-10-17 實測 10-16／10-17 皆 404）。與 2026-10-15 emergency_report_* 同型（受控產物未登記）。",
+   "risk": "low",
+   "note": "單層樣式且明示 .html／.json 副檔名；僅涵蓋 repo 根目錄當日雷達報告與雷達狀態資料（純呈現＋純資料，無資產真值）。不含 index.html（radar_weekly 亦會重建首頁，但該檔仍在強制真 CIO 範圍 → 由 07:00 主產線帶上線）。放行僅及於「變更集合限於本條目涵蓋檔案」的 commit；夾帶任何其他路徑即未命中。未登記路徑仍一律真 CIO 審查。"
   }
  ]
 }
