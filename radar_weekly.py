@@ -34,10 +34,19 @@ def main():
     if d.returncode != 0:
         print(f"⚠️ 儀表板雷達同步失敗：{(d.stderr or '')[-200:]}")
 
-    # 2026-09-14：commit／紀錄／推送統一走 auto_push.py（add -A → clean-stage → commit →
+    # 2026-09-14：commit／紀錄／推送統一走 auto_push.py（clean-stage → commit →
     # 範圍紀錄覆蓋 → 重試推送 → 遠端 sha 驗證）
+    # 2026-10-17 修復（每週六 rc=3 假失敗）：不再用 --auto-stage（= git add -A）。
+    #   工作區長期常駐其他 producer 的雜檔（.archive／_bak_*／未提交程式／治理紀錄），
+    #   add -A 會把它們一起 stage → publish_gate 對「整批變更集合」判定必非 AUTO →
+    #   force_cio_paths 整批 unstage（含雷達自家兩檔）→ 無 commit → RANGE_EMPTY 拒推。
+    #   改為**只 stage 自家產物**（當日報告頁＋狀態資料），讓變更集合乾淨命中白名單條目。
+    _own = [f"radar_report_{TODAY}.html", "radar_state.json"]
+    _exist = [p for p in _own if os.path.exists(os.path.join(BASE, p))]
+    if _exist:
+        run(["git", "add", "--"] + _exist, timeout=60)
     ap = run([sys.executable, os.path.join(BASE, "auto_push.py"), "--script", "radar_weekly.py",
-              "--auto-stage", "--commit", f"auto: 週六雷達儀表板同步 {TODAY}"], timeout=900)
+              "--commit", f"auto: 週六雷達儀表板同步 {TODAY}"], timeout=900)
     ap_out = ((ap.stdout or "") + (ap.stderr or "")).strip()
     if ap_out:
         print(ap_out[-400:])
