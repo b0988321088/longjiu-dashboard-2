@@ -851,6 +851,25 @@ elif ok and _cio_ok:
 
     _recorded = False
     _links_ok = True   # P1（2026-10-12 工單）：發布前連結閘門結果；False → 本輪不 commit、不推送
+    # 2026-10-17（使用者裁決「授權 1+2」）：發布放行條件 ③⑥
+    #   ③ 範圍類 ∩ produced：未宣告的 .py 真的進入本輪發布集合才擋（不誤擋、不隱藏 FAIL）
+    #   ⑥ 新鮮度：snapshot.date 非當日且無有效 T-1 例外標記 → 擋（不補日期、不偽裝）
+    #   任何異常一律 fail-closed；本閘門只「阻擋」，不新增任何放行途徑。
+    if _gate_ok and _push_files:
+        try:
+            from tools.publish_gate import check_publish_gate as _pg_check
+            _snap_d = str((json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")) or {}).get("date") or "")
+            _pg = _pg_check(_push_files, _snap_d, TODAY, BASE)
+            for _n in _pg["notes"]:
+                print("  🔓 " + _n)
+            if not _pg["ok"]:
+                _gate_ok = False
+                print("  ⛔ 發布放行條件未通過（fail-closed）：")
+                for _b in _pg["blocking"]:
+                    print("    " + _b)
+        except Exception as _pge:
+            _gate_ok = False
+            print(f"  ⛔ 發布放行閘門異常 → 視為 FAIL、阻擋推送：{_pge}")
     if not _gate_ok:
         print("  ⛔ 已阻擋 commit/push（月度比較閘門 FAIL；修正後重跑 regenerate_report.py --deploy）")
         if _push_files:

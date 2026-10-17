@@ -1,0 +1,13 @@
+{
+  "_說明": "新鮮度例外標記「範例」——本檔不生效。要啟用請複製為 governance/freshness_exception.json 並填妥四欄；四欄任一缺失、日期不符或已過期，發布一律 fail-closed 阻擋。",
+  "_規則": [
+    "allow_snapshot_date 必須等於 snapshot.json 的 date（只允許 T-1，不得回填更舊日期）",
+    "approved_by 必須是可追溯的授權來源（人＋日期＋管道），空白視為無效",
+    "reason 必須說明為何當日無法完成真值更新",
+    "expires_at 為台北時間 ISO 8601；到期後自動失效，需重新取得授權"
+  ],
+  "allow_snapshot_date": "2026-10-16",
+  "reason": "範例：10/16 真值日順延至 10/18，本日以 T-1 快照發布",
+  "approved_by": "範例：使用者 2026-10-17 Telegram 裁決",
+  "expires_at": "2026-10-18T23:59:59+08:00"
+}

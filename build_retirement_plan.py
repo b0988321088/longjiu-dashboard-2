@@ -3,14 +3,49 @@
 全部數字動態讀 snapshot.json，禁止硬編碼。產出 retirement_plan_{today}.html。
 用法：python build_retirement_plan.py
 """
-import json, datetime
+import json, datetime, math, os, sys
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
 import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 TODAY = datetime.date.today().isoformat()
-snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+# 測試鉤子（2026-10-17 A1）：預設行為完全不變；僅在環境變數存在時改讀複本／寫到暫存目錄，
+# 讓「資料缺漏／Gate 例外」可在不動正式 snapshot 與正式頁面的前提下被驗證。
+_SNAP_PATH = Path(os.environ.get("LONGJIU_SNAPSHOT") or (BASE / "snapshot.json"))
+_OUT_DIR = Path(os.environ.get("LONGJIU_OUT_DIR") or BASE)
+snap = json.loads(_SNAP_PATH.read_text(encoding="utf-8"))
+
+# ── A1（2026-10-17 使用者裁決）：必要資料 fail-loud ─────────────────────────
+# 規則：先驗證、後寫檔。必要輸入不可用 → 明確 stderr（含 snapshot.date）＋ rc=2，
+#      且不覆寫既有退休頁（避免產出「看起來正常、數字其實缺漏」的頁面）。
+# 業務邊界：coverage = income ÷ expense × 100；expense 為分母必須 > 0；
+#          income = 0 → coverage = 0 屬合法真值，不得視為資料錯誤。
+def _fail_gate(msg: str) -> None:
+    _snap_p = _SNAP_PATH
+    _mt = datetime.datetime.fromtimestamp(_snap_p.stat().st_mtime).isoformat(timespec="seconds")
+    print(f"[retirement_plan] ❌ 資料未就緒：{msg}", file=sys.stderr)
+    print(f"[retirement_plan]    snapshot.date={snap.get('date')!r} | snapshot.mtime={_mt} | today={TODAY}",
+          file=sys.stderr)
+    print("[retirement_plan]    本次不產出頁面（既有 retirement_plan_*.html 保留不動）", file=sys.stderr)
+    sys.exit(2)
+
+
+def _require_scenarios(sc: dict) -> None:
+    """驗證分母與四情境 coverage 皆可用；缺一即 fail-loud（不猜、不補 0）。
+
+    passive_caliber.scenarios() 的結構：expense 為**頂層**（四情境共用分母），
+    各情境僅有 income／coverage／gap／runway_days（con/stress 的 runway_days 可為 None，不驗）。
+    """
+    _exp = (sc or {}).get("expense")
+    if (not isinstance(_exp, (int, float)) or isinstance(_exp, bool)
+            or not math.isfinite(float(_exp)) or float(_exp) <= 0):
+        _fail_gate(f"月支出（coverage 分母）不可用（{_exp!r}）")
+    for _k, _lb in (("con", "保守"), ("act", "當月實收"), ("stress", "壓力"), ("extreme", "極端")):
+        _cov = ((sc or {}).get(_k) or {}).get("coverage")
+        if (not isinstance(_cov, (int, float)) or isinstance(_cov, bool)
+                or not math.isfinite(float(_cov))):
+            _fail_gate(f"{_lb}情境 coverage 不可用（{_cov!r}）")
 
 pi = snap.get("passive_income", {})
 # 2026-09-15：台電月薪（單一真值 snapshot）——原字串寫死 39,727（8 月值），9 月起常態調薪 42,560
@@ -59,7 +94,13 @@ _sc_t = _sch.get("目標_2027_02", {}) or {}
 # 口徑校正要改兩處）。壓力＝常態配息×0.8＋常態租金−空置（正式判準）；極端＝保守配息再打折。
 # 使用者 2026-09-28 裁示：A 級門檻由「正常 ≥150%」改為三條（保守100%＋壓力100%＋跑道540天
 # ＋現金底線），150% 降為加碼級理想值 → 本頁所有門檻文字同步改版。
-_SC = _pcal.scenarios(snap)
+try:
+    _SC = _pcal.scenarios(snap)
+except SystemExit:
+    raise
+except Exception as _e:
+    _fail_gate(f"passive_caliber.scenarios() 失敗：{type(_e).__name__}: {_e}")
+_require_scenarios(_SC)
 _stress_income = _SC["stress"]["income"]
 stress_cov = _SC["stress"]["coverage"]
 _stress_cls = "red" if stress_cov < 100 else "green"
@@ -71,7 +112,9 @@ cov_band = "非常安全" if fire_cov >= 150 else ("基本安全" if fire_cov >=
 cov_band_cls = "green" if fire_cov >= 150 else ("amber" if fire_cov >= 120 else "red")
 # 2026-09-27：need_to_150 已移除 — 缺口一律讀 snapshot.驗收標準_2027_02（單一來源）
 # 2026-09-28：欄位更名「距門檻缺口」（三條門檻）＋「距加碼級缺口_150」（理想值）
-# _GATE_ROWS_GEN：留停 Gate 三條表列（單一來源 sot_targets.sabbatical_gate；2026-10-02 裁示）
+# _GATE_ROWS_GEN：留停 Gate 三條表列（單一來源 sot_targets.sabbatical_gate；2026-10-02 裁決）
+# A1（2026-10-17）：Gate 計算失敗不得吞掉 → 明確 stderr + rc=2，且不寫檔（先驗證後寫檔）。
+_GR = {}
 try:
     from sot_targets import sabbatical_gate as _sg_rows
     _GR = _sg_rows(snap)
@@ -86,8 +129,10 @@ try:
                    "<td>—</td></tr>".format(_GR["參考指標"]["保守覆蓋_pct"],
                                             _GR["參考指標"]["當月實收覆蓋_pct"],
                                             _GR["參考指標"]["3個月趨勢"]))
+except SystemExit:
+    raise
 except Exception as _e:
-    _gate_rows = "<tr><td colspan=3>Gate 無法判定：{}</td></tr>".format(_e)
+    _fail_gate(f"sabbatical_gate() 失敗：{type(_e).__name__}: {_e}")
 
 sc_level = (_sch.get("驗收等級", {}) or {}).get("等級", "")
 _gate_verdict = _GR["燈號"] + "（未達：" + "、".join(_GR["未達"]) + "）" if _GR.get("未達") else _GR["燈號"] or "（待真值日重算）"
@@ -223,6 +268,8 @@ budget_cov = fire_income / FIRE_IDEAL * 100 if FIRE_IDEAL else 0
 html = f"""<!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="snapshot-date" content="{snap.get('date','')}">
+<meta name="coverage-con-act" content="{_GR['參考指標']['保守覆蓋_pct']}/{_GR['參考指標']['當月實收覆蓋_pct']}">
 <title>龍九退休規劃 {TODAY}</title>
 <style>
 body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC",sans-serif;background:#0f172a;color:#f1f5f9;max-width:860px;margin:0 auto;padding:16px;font-size:15px;line-height:1.7}}
@@ -366,6 +413,6 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <p class="meta" style="text-align:center">龍九資產管理系統｜退休規劃報告（動態產出）</p>
 </body></html>"""
 
-out = BASE / f"retirement_plan_{TODAY}.html"
+out = _OUT_DIR / f"retirement_plan_{TODAY}.html"
 out.write_text(html, encoding="utf-8")
 print(f"✅ {out.name} 已產出（{len(html):,} bytes）")

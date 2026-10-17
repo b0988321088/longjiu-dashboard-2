@@ -170,7 +170,16 @@ ck("RULE 檔無退役字樣（舊值不得殘留）", not [s for s in RETIRED if
 # ── 4) 當日退休規劃頁（最新一份，不釘死檔名）────────────────────────────────
 _con_pct = f"{SC['con']['coverage']:.1f}"
 _act_pct = f"{SC['act']['coverage']:.1f}"
-_pg, _ = daily_page("retirement_plan_*.html", "退休規劃頁")
+# A1-b（2026-10-17 使用者裁決 B1）：退休頁缺失／不新鮮 → 明確 FAIL，不得以 SKIP 排除在分母外。
+# 其他頁面維持原 SKIP 行為（daily_page）不動。
+_pg_path = latest("retirement_plan_*.html")
+_pg_fresh = bool(_pg_path) and fresh(_pg_path)
+ck("退休規劃頁存在（缺失即 FAIL）", bool(_pg_path),
+   _pg_path.name if _pg_path else "無 retirement_plan_*.html")
+ck("退休規劃頁新鮮度（早於 snapshot 即 FAIL）", _pg_fresh,
+   (_pg_path.name if _pg_fresh
+    else (f"{_pg_path.name} 比 {SNAP.name} 舊 → 待重產" if _pg_path else "無檔案")))
+_pg = text_of(_pg_path.read_text(encoding="utf-8")) if _pg_fresh else None
 if _pg:
     ck("頁面『保守底線』與『當月實收』標籤成對（數量相等且 >0）",
        _pg.count("保守底線") == _pg.count("當月實收") > 0,
