@@ -5453,39 +5453,39 @@
   }
  },
  "coast_fi_engine": {
-  "asof": "2026-10-15",
+  "asof": "2026-10-17",
   "current": {
    "growth_assets": {
-    "tw_growth": 2468426.0,
-    "us_growth": 9808190.0,
+    "tw_growth": 3375905.0,
+    "us_growth": 9881940.0,
     "re_value": 34017063.0,
     "mortgage": 25044429.0,
     "re_net": 8972634.0,
     "fin_debt": 0.0,
-    "total": 21249250.0,
-    "net_after_fin_debt": 21249250.0
+    "total": 22230479.0,
+    "net_after_fin_debt": 22230479.0
    },
    "coast": {
     "fi_target_swr": 47763000.0,
     "fi_target_yield": 38210400.0,
-    "years_to_target": 0.3,
+    "years_to_target": 0.29,
     "target_date": "2027-02-01",
     "real_return_pct": 5.0,
-    "fin_only_capital": 12276616.0,
-    "coast_threshold_swr": 47068982.19371111,
-    "coast_fi_ratio_swr_pct": 45.1,
-    "coast_fi_ratio_fin_only_swr_pct": 26.1,
-    "coast_gap_fin_only_swr": 34792366.19371111,
-    "fv_no_contrib_swr": 21562563.719204545,
-    "gap_fv_swr": 26200436.280795455,
-    "monthly_needed_swr": 6509312.738961088,
-    "coast_threshold_yield": 37655185.75496889,
-    "coast_fi_ratio_yield_pct": 56.4,
-    "coast_fi_ratio_fin_only_yield_pct": 32.6,
-    "coast_gap_fin_only_yield": 25378569.75496889,
-    "fv_no_contrib_yield": 21562563.719204545,
-    "gap_fv_yield": 16647836.280795455,
-    "monthly_needed_yield": 4136036.958214743
+    "fin_only_capital": 13257845.0,
+    "coast_threshold_swr": 47091952.830646366,
+    "coast_fi_ratio_swr_pct": 47.2,
+    "coast_fi_ratio_fin_only_swr_pct": 28.2,
+    "coast_gap_fin_only_swr": 33834107.830646366,
+    "fv_no_contrib_swr": 22547257.114086136,
+    "gap_fv_swr": 25215742.885913864,
+    "monthly_needed_swr": 8370322.844086019,
+    "coast_threshold_yield": 37673562.26451709,
+    "coast_fi_ratio_yield_pct": 59.0,
+    "coast_fi_ratio_fin_only_yield_pct": 35.2,
+    "coast_gap_fin_only_yield": 24415717.26451709,
+    "fv_no_contrib_yield": 22547257.114086136,
+    "gap_fv_yield": 15663142.885913864,
+    "monthly_needed_yield": 5199353.566592204
    },
    "light_work": {
     "rows": [
@@ -5493,25 +5493,25 @@
       "月收": 0.0,
       "所需年現金流": 1910520,
       "所需本金": 38210400,
-      "缺口": 25933784,
-      "達成_pct": 32.1
+      "缺口": 24952555,
+      "達成_pct": 34.7
      },
      {
       "月收": 20000.0,
       "所需年現金流": 1670520,
       "所需本金": 33410400,
-      "缺口": 21133784,
-      "達成_pct": 36.7
+      "缺口": 20152555,
+      "達成_pct": 39.7
      },
      {
       "月收": 30000.0,
       "所需年現金流": 1550520,
       "所需本金": 31010400,
-      "缺口": 18733784,
-      "達成_pct": 39.6
+      "缺口": 17752555,
+      "達成_pct": 42.8
      }
     ],
-    "fin_capital": 12276616.0,
+    "fin_capital": 13257845.0,
     "yield_pct": 5.0,
     "expense": 159210.0
    },
@@ -5520,10 +5520,10 @@
     "rent": 80100.0,
     "dividend_conservative": 100000.0,
     "dividend_normal": 177072.0,
-    "dividend_actual": 118909.0,
+    "dividend_actual": 128449.0,
     "pccr_pct": 139.3,
     "pccr_conservative_pct": 113.1,
-    "pccr_actual_pct": 89.8,
+    "pccr_actual_pct": 95.8,
     "pccr_normal_headroom": 139.3,
     "nonpassive": {
      "girlfriend_repayment": 6000.0
@@ -5589,7 +5589,7 @@
    },
    "light": "🔴 紅燈",
    "blockers": [
-    "Coast FI 本金滑行（純金融）26.1% < 100%（含房產 45.1%）",
+    "Coast FI 本金滑行（純金融）28.2% < 100%（含房產 47.2%）",
     "跌30% 維持率 139.8% < 180%",
     "授信未鎖定（洲際W 轉貸（永豐 1,312萬，9/25 到期））"
    ]
@@ -5674,6 +5674,16 @@
     "maintenance_pct": 139.8,
     "credit_locked": false,
     "light_work_cap_2w": 21133784
+   },
+   "2026-10-17": {
+    "light": "🔴 紅燈",
+    "coast_fin_only_pct": 28.2,
+    "coast_with_re_pct": 47.2,
+    "pccr_pct": 139.3,
+    "runway_days": 1094,
+    "maintenance_pct": 139.8,
+    "credit_locked": false,
+    "light_work_cap_2w": 20152555
    }
   }
  },
