@@ -396,6 +396,17 @@ def main() -> int:
                 _n_behind = int((_behind.stdout or "0").strip() or 0)
             except ValueError:
                 _n_self, _n_behind = 1, 0
+            # 2026-10-17（PEND-20261011-11 RF1）：本輪**根本沒產生 commit** ——
+            #   無 staged 變更 → --auto-stage 沒東西可 stage → origin..HEAD 為空。
+            #   這是 no-op，不是失敗：重產型腳本（radar_weekly／nightly／evening_sync…）
+            #   在「輸入未變、產出逐位元相同」時必然走到這裡。原本一律 rc=3 →
+            #   cron 假報 failed（2026-10-17 週六雷達即此：資料未更新、產出一致）。
+            #   仍**明確印出**無變更（不靜默）：腳本若壞掉導致「本來該有變更卻沒有」，
+            #   使用者會在訊息裡看到這行，不會被當成正常綠燈。
+            if _n_self == 0:
+                print("ℹ️ 本輪無新 commit（產出與遠端一致）→ 無事可推，判定 no-op 成功")
+                log(base, f"NOOP-EMPTY\t{a.script}\t{head[:12]}\tbehind={_n_behind}")
+                return 0
             if _n_behind > 0 and _n_self <= 1:
                 print(f"ℹ️ 本輪期間遠端已前進 {_n_behind} 顆（其他流程已推送）→ "
                       f"本輪產出已被涵蓋、無事可推（重產型腳本，隔日再跑即重算）→ 判定冪等成功")
