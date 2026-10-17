@@ -139,7 +139,9 @@ today = date.today().isoformat()  # 2026-08-22 修正：統一用今天（與日
 
 # Classify holdings
 def cat_ticker(t):
-    if t in ("0050","006208","009816","00981A","00984A"): return "tw"
+    # 2026-10-17：補 00927（群益半導體收益）— 原不在對照表 → 落 other → 報表無 other 桶 → 靜默消失。
+    # 歸「台股」桶（半導體主題、台股掛牌）；不歸防守型配息，因其成分為純科技、波動屬性不符防守。
+    if t in ("0050","006208","009816","00981A","00984A","00927","00401A","00921"): return "tw"
     if t in ("00646","009823","009824","00924"): return "us"
     if t in ("00713","00878","0056","00919","00918","00888"): return "def"
     if t in ("00983D",): return "bond"
@@ -180,6 +182,15 @@ w("</style></head><body>")
 
 w("<h1>📊 龍九控股 穿透分析報告（詳細版）</h1>")
 w(f"<p class='meta'>{today} ｜ 穿透分母 = {total:,} TWD</p>")
+# 2026-10-17：未分類持股不得靜默消失（00927 事件根因）。有 other → 明確列在報表頂端。
+_other_h = [h for h in holdings if cat_ticker(h.get("ticker", "")) == "other"]
+if _other_h:
+    _ol = "、".join(f"{h.get('ticker','')} {h.get('name','')} {h.get('value',0):,.0f}" for h in _other_h)
+    _ov = sum(h.get("value", 0) for h in _other_h)
+    w(f"<div class='callout' style='border-left:3px solid #ef4444'>⚠️ <b>未分類持股（未計入任何桶）</b>："
+      f"{_ol}｜合計 {_ov:,.0f}（{_ov/max(total,1)*100:.2f}%）"
+      f"<br><span style='color:#94a3b8;font-size:12px'>修法：在 build_penetration_report.py 的 "
+      f"cat_ticker() 補分類；未補前這些部位不計入桶佔比（穿透分母仍含）</span></div>")
 w(f"<div class='callout'>🔬 <b>美股科技拆解（美股科技紅線口徑）：</b>科技股 {us_tech_v:,}（{round(us_tech_v/total*100,1)}%，目標 ≤{tech_target}%，缺口 {round(us_tech_v/total*100 - tech_target,1):+.1f}pp）｜非科技 {us_nt_v:,}（{round(us_nt_v/total*100,1)}%）｜合計 {us_v:,}（{round(us_v/total*100,1)}%）<br><span style='color:#94a3b8;font-size:12px'>⚠️ 此為「美股桶科技紅線」口徑；另有「產業穿透」口徑（GICS 全資產科技產業佔比，見日報產業區塊），兩者不同勿混淆。科技比估計：貝萊德科技100% / 009824 100% / 半導體90% / 富達35% / 安聯AI 35% / 聯博美國成長40% / 安聯收益16% / 00646·009823 32% / 摩根·PIMCO 10% / M&G 7% / 聯博全球多元收益 2.5%</span></div>")
 
 # 配息資產合併口徑（2026-08-21 使用者裁示：基金也有配息，防守應合併計算 → 承接凍結）
