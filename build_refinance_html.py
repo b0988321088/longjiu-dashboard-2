@@ -143,6 +143,10 @@ print(f'✅ 已產出 {OUT}（{len(slides_html)} 頁）')
 #       commit → auto_record（RECORD 通道）→ auto_push（內含 ls-remote 遠端 sha 驗證）。
 # 界線：不含任何程式檔；無變更 → 不產生空 commit；發布失敗 → 印 ❌ 且 sys.exit(1)（cron 必須看到紅）。
 # 旗標：--no-push 略過發布（本機測試）；--dry-run 只印將執行的動作，不動 git。
+# 2026-10-18（實際踩到）：auto_record 對這 2 檔回 rc=3「含閘門強制真 CIO 類檔」→ 週日 17:00
+#   產出完成卻發布失敗、commit 卡在本機未推。修法＝auto_record rc=3 時改走真審查車道
+#   （tools/review_commit_and_record.py → cio_approve 落 RECORD），取得紀錄後才 auto_push；
+#   仍不降級、不跳過閘門（AUTO 章對這兩檔本來就無效）。
 # ============================================================================
 PUB_FILES = ['grand_pivot_deck.html', 'grand_pivot_deck.pptx']
 _PUB_CMD = os.path.join(BASE, 'auto_push.py')
@@ -204,6 +208,14 @@ def publish_deck(dry_run=False, no_push=False):
         return 0
     for s in steps:
         r = subprocess.run(s, cwd=BASE, capture_output=True, text=True, encoding='utf-8', errors='replace')
+        if r.returncode == 3 and any('auto_record.py' in str(x) for x in s):
+            # 閘門把這 2 檔列為「強制真 CIO 類」→ AUTO 章無效（rc=3）。改走真審查車道，
+            # 取得 RECORD 後才繼續推送；審查未過 → 一律 fail-loud，不降級、不繞過。
+            print('   ℹ️ auto_record rc=3（強制真 CIO 類檔）→ 改走真審查車道')
+            _rv = [ _sys.executable, os.path.join(BASE, 'tools', 'review_commit_and_record.py'),
+                    'HEAD', 'deck_publish_weekly' ]
+            r = subprocess.run(_rv, cwd=BASE, capture_output=True, text=True,
+                               encoding='utf-8', errors='replace', timeout=3600)
         if r.returncode != 0:
             print(f'❌ 簡報發布失敗（step={" ".join(str(x) for x in s[:2])} rc={r.returncode}）')
             tail = ((r.stdout or '') + (r.stderr or '')).strip().splitlines()[-3:]
