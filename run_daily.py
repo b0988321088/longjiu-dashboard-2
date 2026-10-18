@@ -930,6 +930,11 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         _sec = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8")).get("sector_penetration", {})
         if _sec:
             _rows = ""
+            # 2026-10-18（真 CIO 審查 blocking 修正）：紅線註記原本寫死「當前 18.1%」，
+            #   與同段表格的 GICS 佔比（動態 18.5%）自相矛盾 → 一律由同一份
+            #   sector_penetration 取「高科技/半導體.佔比_估」動態產生，禁止手寫現況值。
+            _tech_pct_dyn = ((_sec.get("高科技/半導體") or {}).get("佔比_估") or "")
+            _tech_now = f"{_tech_pct_dyn}%" if str(_tech_pct_dyn).strip() not in ("", "None") else "—"
             for _k in ["高科技/半導體", "金融/電信", "醫療/公用事業/不動產", "固收與現金", "實物避險-黃金", "實物避險-石油"]:
                 _v = _sec.get(_k, {})
                 if not _v:
@@ -942,7 +947,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                 "<div class='callout' style='margin-top:10px;border-left:3px solid #f59e0b'>"
                 "<strong>🏭 產業別穿透（Micro 底層｜疊加於五桶，非取代）</strong>"
                 f"<table style='width:100%;font-size:12px;margin-top:6px'><tr><th>產業</th><th>金額</th><th>佔比</th><th>狀態</th></tr>{_rows}</table>"
-                "<span style='color:#64748b;font-size:12px'>紅線：高科技/半導體 ≤30%（當前 18.1%，敏感性 28.5% 若富達全數計科技）｜輪動閥門：科技>30% 或雷達科技轉弱 → 乾粉轉金融/電信/醫療防禦</span></div>"
+                f"<span style='color:#64748b;font-size:12px'>紅線：高科技/半導體 ≤30%（當前 {_tech_now}，敏感性 28.5% 若富達全數計科技）｜輪動閥門：科技>30% 或雷達科技轉弱 → 乾粉轉金融/電信/醫療防禦</span></div>"
             )
     except Exception:
         _sector_html = ""

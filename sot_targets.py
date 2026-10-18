@@ -200,6 +200,16 @@ def build_dual_dimension_metric(snap: dict, today: str | None = None) -> dict:
         _cash_sot = float(allowable_cash(snap))
         # 保持既有型別（整數元 → int），避免重產後整份 snapshot 出現 853675.0 型別漂移
         _comp["現金/貨幣停泊"] = int(_cash_sot) if _cash_sot.is_integer() else _cash_sot
+    # 2026-10-18（真 CIO 審查 blocking 修正）：債券類原本是 snapshot 內的靜態值，
+    #   與五桶穿透 actual_twd["債券"] 漂移（6,136,220 vs 6,714,577，差 578,357），
+    #   同一份穿透報告「配置總覽」與「雙維度防禦維度」因此出現兩個債券金額。
+    #   改為派生自穿透唯一真值（與 2026-10-02 現金同一個做法：消滅第二份人工輸入）。
+    #   缺真值時不沿用舊值、不改動（由上層顯示警告），但絕不寫入靜態猜測。
+    if "債券類" in _comp:
+        _bond_sot = ((snap.get("penetration") or {}).get("actual_twd") or {}).get("債券")
+        if _bond_sot is not None:
+            _bond_sot = float(_bond_sot)
+            _comp["債券類"] = int(_bond_sot) if _bond_sot.is_integer() else _bond_sot
     _def["組成"] = _comp
     if _comp and _total_cfg > 0:
         _amt = sum(v for v in _comp.values() if isinstance(v, (int, float)))

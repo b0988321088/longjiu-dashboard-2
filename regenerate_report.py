@@ -174,6 +174,15 @@ def _is_produced(_f, _before, _after):
         return False
     if _f not in _before:
         return True                                # 本輪新增
+    # 2026-10-18（實證死鎖）：前一輪失敗殘留的「未進版控今日產物」，在下一輪會被判成既有 dirty
+    #   （內容位元相同、又不在 before 差異內），而 _claim_dirty_fixed_point 的條件①
+    #   「相對 HEAD 確實 dirty」對未追蹤檔永遠不成立（HEAD 無此檔）→ 兩條路都不認領
+    #   → 連結閘門「連結目標未進版控」永久 FAIL，該日產物永遠上不了線
+    #   （當日 8 檔：asset_diff／penetration／rebalance_dashboard／rebalance_eval／
+    #     retirement_plan／structural_health／industry_penetration／buffett_cto_report）。
+    #   未追蹤＝沒有既有版本會被覆蓋；檔名逐字列在 _push_candidates（本輪宣告）→ 可安全認領。
+    if _head_sha(_f) is None:
+        return True
     if _before[_f] == _UNREADABLE:
         return False                               # before 不可信 → 不得算本輪產物
     if _before[_f] != _a:
@@ -723,6 +732,7 @@ elif ok and _cio_ok:
         subprocess.run([sys.executable, str(BASE / "build_rebalance_dashboard.py")], cwd=str(BASE),
                        capture_output=True, timeout=120)
         _push_candidates.append(f'rebalance_dashboard_{TODAY}.html')
+        _push_candidates.append(f'rebalance_eval_{TODAY}.html')
         _push_candidates.append(f'rebalance_summary_{TODAY}.md')
         _push_candidates.append(f'industry_penetration_{TODAY}.png')
     except Exception:
@@ -735,6 +745,9 @@ elif ok and _cio_ok:
     #   本輪起改由本清單明確認領；仍須通過 dirty_gate 的「本輪產物／dirty 定點認領」判準
     #   （既有他班 dirty 不會被夾帶進 commit），發布面由 publish_allowlist.json 對應條目放行。
     _push_candidates.append(f'emergency_report_{TODAY}.html')
+    # 2026-10-18：結構健檢報告（build_structural_health.py 產出，檔名為 structural_health_YYYYMMDD.html，
+    #   由 index.html 連結）長期未納入本輪認領 → 連結閘門「連結目標未進版控」擋住整批發布。
+    _push_candidates.append(f'structural_health_{TODAY.replace("-", "")}.html')
     # 2026-10-15 21:5x 使用者裁決（緊急應變產線 B 修正版）：emergency_taiex_report_*.html
     #   與 emergency_report_*.html 同一批產出（gen_emergency_taiex_auto.py 同時寫兩檔），
     #   長期未納入版控 → 首頁連結若指向它必 404。兩家族同一套受控產物規則（逐字檔名
