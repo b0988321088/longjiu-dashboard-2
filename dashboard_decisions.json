@@ -11202,6 +11202,16 @@
       "status": "decided",
       "source": "user"
     }
+,
+  {
+    "id": "mem-20261018223810-1210",
+    "timestamp": "2026-10-18T22:38:10.856944+08:00",
+    "agent": "Hermes",
+    "task": "審查主力改為 Google（Gemini）",
+    "summary": "2026-10-18 使用者裁決：真 CIO 審查主力層改為 CIO-Gemini(gemini-2.5-flash)，Pollinations／nous 降為備援。落地：review_chain._layers 新增 primary 模式、hermes .env LONGJIU_REVIEW_GEMINI=primary；fail-closed 語意不變（有效 REJECT 不換層、不重抽求 APPROVE）。動機：大型 commit 走原主力需 25-30 分鐘且 REJECT 不印原因；Gemini 單段約 1-2 秒。驗證：commit 33bd00b9（21 段）首輪 20/21 段 APPROVE、seg18 未回報 commit 綁定被判契約違規 → 重審 APPROVE blocking=0，已推 clean-main 並驗線上。",
+    "status": "已生效",
+    "source": "user_decision"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-18T22:31:50.867073"
