@@ -128,6 +128,42 @@ def claim_files(allow: list[str], since: float | None = None) -> tuple[list[str]
     return keep, drop
 
 
+def _classify_auto(rel: str) -> tuple[bool, str]:
+    """回傳（可否走 AUTO 車道, 原因）。
+
+    2026-10-19 事故根治：先前只擋「程式副檔名」，未問 publish_gate「這檔能不能 AUTO」，
+    於是 maintenance_deep 把「未命中白名單」的舊報告更正橫幅 commit 進歷史 → auto_push 被
+    閘門判需真 CIO（rc=3）→ 留下一顆推不動的 commit，把 origin/clean-main..HEAD 整段範圍
+    變成 CIO 模式，隔天 07:00 晨間產線連四天 rc=1。
+    契約：AUTO 車道只落「閘門側真的會給 AUTO」的檔；其餘一律不 commit（留工作區、寫警告）。
+    載不到 publish_gate → fail-closed（不落版），不退回較寬鬆的規則。
+    """
+    try:
+        if str(REPO) not in sys.path:
+            sys.path.insert(0, str(REPO))
+        import publish_gate as _pg  # noqa: PLC0415
+        v = _pg.classify_paths(REPO, [rel], ref="HEAD") or {}
+    except Exception as e:  # noqa: BLE001
+        return False, f"publish_gate 不可用（{e}）→ fail-closed"
+    if v.get("mode") == "AUTO":
+        return True, ""
+    return False, str(v.get("reason") or "非 AUTO 車道")
+
+
+def _warn_blocked(script: str, blocked: list[str]) -> None:
+    """把「需真 CIO 但本車道不落版」的檔寫進 <git-dir>/AUTO_WARN.log（收工稽核會讀）。"""
+    try:
+        gd = _g("rev-parse", "--git-dir").stdout.strip() or ".git"
+        p = Path(gd)
+        if not p.is_absolute():
+            p = REPO / p
+        with (p / "AUTO_WARN.log").open("a", encoding="utf-8") as f:
+            f.write(f"{time.strftime('%Y-%m-%dT%H:%M:%S')}\tCIO-REQUIRED\t{script}\t"
+                    + "; ".join(blocked) + "\n")
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def commit_own(script: str, allow: list[str], *, dry_run: bool = False,
                producer_rc: int = 0, since: float | None = None) -> int:
     """把「本輪自己寫出的產物」就地提交並推送（唯一出口 auto_push.py）。
@@ -147,6 +183,22 @@ def commit_own(script: str, allow: list[str], *, dry_run: bool = False,
     keep, drop = claim_files(allow, since)
     if drop:
         print("🚫 不認領：" + "；".join(drop[:8]) + ("…" if len(drop) > 8 else ""))
+
+    # 只落「閘門側真的會給 AUTO」的產物；需真 CIO 者不 commit（避免製造推不動的 commit）
+    if keep:
+        _ok, _blocked = [], []
+        for _rel in keep:
+            _allowed, _why = _classify_auto(_rel)
+            if _allowed:
+                _ok.append(_rel)
+            else:
+                _blocked.append(f"{_rel}（{_why}）")
+        if _blocked:
+            sys.stderr.write("⛔ 需真 CIO 審查 → 本車道不落版（留工作區）："
+                             + "；".join(_blocked[:8]) + ("…" if len(_blocked) > 8 else "") + "\n")
+            _warn_blocked(script, _blocked)
+        keep = _ok
+
     if not keep:
         print(f"⏭️ {script}：本輪無可提交產物（不 commit／不 push）")
         return producer_rc
