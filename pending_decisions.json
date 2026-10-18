@@ -393,16 +393,17 @@
   {
     "date": "2026-10-18",
     "title": "審查主層是否改為 Gemini（真 CIO 審查延遲 25-30 分鐘）",
-    "status": "待裁決",
-    "status_raw": "⏳ 待使用者裁決｜P2｜換審查者屬政策變更",
+    "status": "已裁決",
+    "status_raw": "✅ 2026-10-18 使用者裁決「先不用」→ 維持現狀：審查鏈主層不變（Pollinations→nous），Gemini 僅維持既有備援層（LONGJIU_REVIEW_GEMINI 預設關閉）。代價已知：大型 commit（20+ 段）真審查仍需 25-30 分鐘，且 REJECT 時不印原因，需另跑逐段診斷。若日後要換，重開卡即可。",
     "tags": "治理,CIO審查,閘門,Gemini,延遲,TD-20261018-01",
     "detail": "背景：07:00 產線與 cio_lane 對大型 commit（21-27 段、70 萬字元 patch）走 Pollinations/nous 真審查需 25-30 分鐘，且 10-18 兩次皆回 REJECT 且不印原因 → 每修一輪白等半小時。實測（同一顆 commit、同樣 27 段、涵蓋率 100%）：CIO-Pollinations 25-30 分／REJECT；CIO-Gemini(gemini-2.5-flash) 單段 1.8 秒、整份約 1 分鐘／APPROVE blocking=0。Gemini 本已是 review_chain 的核准層（LONGJIU_REVIEW_GEMINI 控制，預設關閉、排序最後）。選項：A 把 Gemini 拉為審查鏈主層（Pollinations/nous 降備援）＝每顆 1-2 分鐘；B 維持現狀（大 commit 每顆 25-30 分鐘）；C 僅對超過 N 段的 commit 改用 Gemini（局部）。風險：換審查者會改變把關強度（同日同一顆 commit 兩個審查者結論不同），決定前應以確定性檢查器（跨報告一致性／配息口徑／零值／儀表板同步）為第二道防線。未裁決前維持現狀，不改 review_chain。",
     "due_date": null,
-    "last_confirmed": null,
+    "last_confirmed": "2026-10-18",
     "owner": "CEO",
     "external_owner": null,
     "needs_due_date": false,
     "is_informational": false,
-    "updated_at": "2026-10-18T16:23:17+08:00"
+    "updated_at": "2026-10-18T18:03:12",
+    "last_confirmed_source": "使用者 Telegram 回覆「先不用」"
   }
 ]
