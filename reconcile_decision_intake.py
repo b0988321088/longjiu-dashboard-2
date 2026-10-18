@@ -161,13 +161,23 @@ def load_all_receipts():
 
 
 def _ts_of(obj):
-    """取 ISO 時戳（收據用 'ts'、決策用 'timestamp'）；無法解析回 None。"""
+    """取 ISO 時戳（收據用 'ts'、決策用 'timestamp'）；無法解析回 None。
+
+    2026-10-18（實際踩到 TypeError）：收據寫入時帶時區（`+08:00`，tz-aware），
+    dashboard_decisions 的 timestamp 是 naive → `t < start` 直接比較會拋
+    「can't compare offset-naive and offset-aware datetimes」，整支對帳掛掉，
+    收工檢查就變「決策入庫缺口」的假紅。
+    修法：一律換算成本地 naive（同一時區語意）再比較，不改任何既有判定邏輯。
+    """
     if not isinstance(obj, dict):
         return None
     try:
-        return datetime.fromisoformat(str(obj.get("ts") or obj.get("timestamp") or ""))
+        dt = datetime.fromisoformat(str(obj.get("ts") or obj.get("timestamp") or ""))
     except Exception:
         return None
+    if dt.tzinfo is not None:
+        dt = dt.astimezone().replace(tzinfo=None)
+    return dt
 
 
 def receipt_regime_start():
