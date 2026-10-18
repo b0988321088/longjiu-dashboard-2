@@ -11198,13 +11198,13 @@
       "timestamp": "2026-10-18T18:03:12.762643",
       "agent": "Hermes",
       "task": "審查主層是否改為 Gemini（TD-20261018-01）",
-      "summary": "使用者裁決「先不用」→ 維持現狀：review_chain 主層不動（Pollinations→nous），Gemini 僅為既有備援層（預設關閉）。已知代價：大型 commit 真審查 25-30 分鐘、REJECT 不印原因。不施工、不改設定。",
+      "summary": "使用者裁決「先不用」→ 維持現狀：review_chain 主層不動（Pollinations→nous），Gemini 僅為既有備援層（預設關閉）。已知代價：大型 commit 真審查 25–30 min、REJECT 不印原因。不施工、不改設定。",
       "status": "decided",
       "source": "user"
     }
   ],
   "meta": {
-    "updated_at": "2026-10-18T18:03:12.762643"
+    "updated_at": "2026-10-18T22:31:50.867073"
   },
   "last_updated": "2026-10-18T18:00:00+08:00",
   "2026-09-29": [
@@ -11341,8 +11341,8 @@
     },
     {
       "date": "2026-10-18",
-      "action": "審查主層是否改為 Gemini（真 CIO 審查延遲 25-30 分鐘）",
-      "status": "已裁決",
+      "action": "審查主層是否改為 Gemini（真 CIO 審查延遲 25–30 min）",
+      "status": "關案",
       "tags": "治理,CIO審查,閘門,Gemini,延遲,TD-20261018-01"
     }
   ]
