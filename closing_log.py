@@ -33,10 +33,20 @@ DEDUP_CHARS = 25
 # ── 快取增刪稽核（2026-09-13 INC-159 2b）────────────────────────
 # 背景：一天內有 582 檔 data/ 快取被刪（含 2 檔當日），來源無法定位（已排除所有既有腳本）。
 # 不做常駐 watch，改為每天 21:40 記錄一次「檔案清單」，隔天一比就能知道哪天被刪、刪了什麼。
+# 2026-10-19 使用者裁決：狀態檔移出 repo（不進版控、不佔 dirty），位置由 state_store 單一決定；
+# legacy 路徑只作為一次性遷移來源，讀取失敗時**不得默認空**（改為跳過本輪並告警）。
 DATA_DIR = BASE / "data"
-CACHE_AUDIT_STATE = DATA_DIR / ".cache_audit_state.json"
+CACHE_AUDIT_STATE_LEGACY = DATA_DIR / ".cache_audit_state.json"   # 遷移來源（勿再寫入）
+CACHE_AUDIT_STATE_NAME = "cache_audit_state.json"
 CACHE_AUDIT_LOG = DATA_DIR / ".cache_audit.log"
 CACHE_NAME_RE = re.compile(r"_(\d{4}-\d{2}-\d{2})_")
+
+sys.path.insert(0, str(BASE))
+try:
+    import state_store as _ss      # 執行期狀態單一位置（repo 外）
+except Exception as _e_ss:         # 載不到 → 快取稽核停用（不猜位置、不寫錯地方）
+    _ss = None
+    print(f"⚠️ 快取稽核停用：無法載入 state_store（{_e_ss}）")
 
 
 def _cache_list() -> list[str]:
@@ -47,15 +57,24 @@ def _cache_list() -> list[str]:
 
 
 def cache_audit() -> None:
-    """記錄今日快取清單 + 與上次比對（刪除即告警）。"""
+    """記錄今日快取清單 + 與上次比對（刪除即告警）。
+
+    2026-10-19：狀態移到 repo 外（state_store）。讀取失敗時**不默認空**——直接跳過本輪、
+    不覆寫既有基準，避免把「讀不到」誤當「上次是 0 檔」而誤報 800 檔全被刪。
+    """
     cur = _cache_list()
     prev: list[str] = []
-    if CACHE_AUDIT_STATE.exists():
+    if _ss is not None:
         try:
-            prev = json.loads(CACHE_AUDIT_STATE.read_text(encoding="utf-8")).get("files", []) or []
-        except Exception:
-            prev = []
-    today = dt.date.today().isoformat()
+            data, _src = _ss.read_json(CACHE_AUDIT_STATE_NAME, legacy=CACHE_AUDIT_STATE_LEGACY, default=None)
+        except Exception as e:  # noqa: BLE001 — StateUnreadable：狀態不可知
+            print(f"⚠️ [快取稽核] 狀態不可讀（{e}）→ 本輪跳過比對、不覆寫基準；請人工檢查")
+            return
+        if data is not None:
+            prev = list((data or {}).get("files", []) or [])
+        today = dt.date.today().isoformat()
+    else:
+        today = dt.date.today().isoformat()
     removed = sorted(set(prev) - set(cur))
     added = sorted(set(cur) - set(prev))
     n_today = sum(1 for f in cur if f"_{today}_" in f)
@@ -65,9 +84,9 @@ def cache_audit() -> None:
                      f"removed={len(removed)} added={len(added)}\n")
             for r in removed:
                 fh.write(f"    - {r}\n")
-        CACHE_AUDIT_STATE.write_text(
-            json.dumps({"ts": dt.datetime.now().isoformat(timespec="seconds"),
-                        "files": cur}, ensure_ascii=False), encoding="utf-8")
+        if _ss is not None:
+            _ss.write_json(CACHE_AUDIT_STATE_NAME,
+                           {"ts": dt.datetime.now().isoformat(timespec="seconds"), "files": cur})
     except Exception as e:
         print(f"⚠️ 快取稽核寫入失敗：{e}")
         return

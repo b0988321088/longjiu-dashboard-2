@@ -19,11 +19,10 @@ REPO = r"C:/Users/bot/Desktop/longjiu_system"
 TARGET = os.path.join(REPO, "maintenance.py")
 
 # 逐字宣告的自家產物（本輪確實寫出者才會被認領；mtime 早於本輪起跑者一律不帶走）
-OWN = [
-    ".archive/deleted_py_list.txt",
-    "daily_report_v2_*.html",
-    "dynamic_weekly_review_*.html",
-]
+# 2026-10-19 使用者裁決：週清不再改寫歷史報告（daily_report_v2_*.html／dynamic_weekly_review_*.html
+# 已從本清單移除）；歸檔與報告改寫到 repo 外（state_store.ARCHIVE_DIR），不進版控，
+# 因此本 job 正常執行時不再產生任何需要落版的檔案。
+OWN = []   # 全部產物已移出 repo（state_store）；本 job 不再 commit／push 任何檔案
 
 if not os.path.exists(TARGET):
     sys.stderr.write(f"ERROR: 找不到真身 {TARGET}\n")

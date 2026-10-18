@@ -29,7 +29,17 @@ from logging_config import get_logger
 logger = get_logger("cleanup_utils")
 
 ROOT = pathlib.Path(__file__).parent.parent.parent.resolve() # 假設 scripts/components 在龍九系統根目錄下
-ARCHIVE_DIR = ROOT / '.archive'
+sys.path.insert(0, str(ROOT))
+try:
+    import state_store as _ss        # 執行期狀態／歸檔的單一位置（repo 外）
+except Exception as _e_ss:           # 載不到 → 不猜位置、不退回 repo 內寫入（fail-closed）
+    _ss = None
+    logger = get_logger("cleanup_utils")
+    logger.warning(f"無法載入 state_store（{_e_ss}）→ 狀態／歸檔寫入停用")
+
+# 2026-10-19 使用者裁決：歸檔與狀態快取移出 repo，不再為它們取得 CIO 授權才能落版。
+# repo 內 .archive/ 既有 68 個 tracked 歷史歸檔保持原樣（唯讀），新產物一律寫 repo 外。
+ARCHIVE_DIR = (_ss.ARCHIVE_DIR if _ss is not None else ROOT / ".archive")
 
 # --- schedule_events_weekly_clean.py 常數與輔助函數 ---
 DONE_MARK = ("✅", "已入帳", "已完成", "已核准", "核准完成", "已進帳", "已送出", "已收")
@@ -37,19 +47,19 @@ PURE_PREFIX = ("📋 行程", "📋 節日", "📋 例行", "📅 ", "❌ 取消
 PURE_EXACT = ("📋 行程", "📋 節日", "📋 例行")
 TRACK_MARK = ("🔴", "⏸️", "⏳", "🟡", "📌", "pipeline", "📋 重要")
 
-STATE_CALENDAR_OVERDUE = ROOT / "data" / "calendar_overdue_state.json"
+STATE_CALENDAR_OVERDUE_LEGACY = ROOT / "data" / "calendar_overdue_state.json"   # 遷移來源（勿再寫入）
+STATE_CALENDAR_OVERDUE_NAME = "calendar_overdue_state.json"
 
-# ── 每週深度清理：產物邊界與落版紀律（2026-10-12）─────────────────────────────────
+# ── 每週深度清理：產物邊界與落版紀律（2026-10-12；2026-10-19 收斂）──────────────
 # 本 job 只會動這些位置（自身產物）。落版／推送一律以此為界，**禁止 git add -A**：
 #   2026-10-12 03:00 實踩 —— `auto_push --auto-stage`（＝git add -A）把整個工作區掃進本 job 的
 #   commit，含閘門「強制真 CIO」類檔（dashboard_decisions.json／work_log.json／snapshot.json／
 #   reviews/／logs/…，外加別條路徑的 _bak_* 備份目錄）→ publish_gate 判 mode=CIO，而本 job 只能
 #   蓋 AUTO 章 → rc=3 fail-closed；那顆 commit 留在 main 上又讓 origin/clean-main..HEAD 整段範圍
 #   對所有 producer 變 CIO 模式（07:00 晨報部署、當晚夜鏈一起被擋）。
+#   2026-10-19：.archive 與 data 狀態快取已移出 repo（state_store）→ 從本清單移除；
+#   週清的正常產物因此不再落在 git 追蹤範圍內（不再製造 dirty／需 CIO 的 commit）。
 CLEANUP_OWN_PRODUCTS = (
-    ".archive/",                          # 歸檔、備份輪替、報告（含 deprecated_scripts/ 內的程式檔）
-    "data/.cache_audit_state.json",
-    "data/calendar_overdue_state.json",
     "work_log.json",                      # 歸檔後改寫（治理檔）
     "error_register.md",                  # 歸檔後改寫（治理檔）
     "pending_decisions.json",             # B 段 pending 清理（治理檔）
@@ -96,17 +106,27 @@ def _cleanup_product_scan():
 
 
 def _load_calendar_overdue_state():
-    if STATE_CALENDAR_OVERDUE.exists():
-        try:
-            return json.load(open(STATE_CALENDAR_OVERDUE, encoding="utf-8"))
-        except Exception:
-            return []
-    return []
+    """回傳已處理的過期事件鍵集合；**回 None 代表「不可知」**（不得當成空集合）。
+
+    2026-10-19：狀態移到 repo 外，讀取失敗不再默認空——空集合會讓已處理的事件重新被
+    當成「新增提醒」而重複推播，也會覆寫掉仍有效的基準。呼叫端看到 None 必須跳過本輪。
+    """
+    if _ss is None:
+        return None
+    try:
+        data, _src = _ss.read_json(STATE_CALENDAR_OVERDUE_NAME,
+                                   legacy=STATE_CALENDAR_OVERDUE_LEGACY, default=[])
+    except Exception as e:  # noqa: BLE001 — StateUnreadable
+        logger.warning(f"過期事件狀態不可讀（{e}）→ 本輪跳過（不覆寫、不重複提醒）")
+        return None
+    if not isinstance(data, list):
+        return None
+    return data
 
 def _save_calendar_overdue_state(keys):
-    STATE_CALENDAR_OVERDUE.parent.mkdir(exist_ok=True)
-    json.dump(sorted(keys), open(STATE_CALENDAR_OVERDUE, "w", encoding="utf-8"),
-              ensure_ascii=False, indent=1)
+    if _ss is None:
+        raise RuntimeError("state_store 不可用 → 不得寫回 repo 內的狀態檔")
+    _ss.write_json(STATE_CALENDAR_OVERDUE_NAME, sorted(keys))
 
 def _key_of_event(e):
     return f"{e.get('date','')}|{e.get('item','')}"
@@ -191,9 +211,15 @@ def _cleanup_schedule_events(apply_changes: bool, current_date: datetime.date):
 
     auto_del, review = _classify_events(evs, current_date)
 
-    prev_keys = set(_load_calendar_overdue_state())
+    _prev = _load_calendar_overdue_state()
+    _state_known = _prev is not None
+    prev_keys = set(_prev or [])
     cur_review_keys = {_key_of_event(e) for e in review}
     new_review = [e for e in review if _key_of_event(e) not in prev_keys]
+    if not _state_known:
+        # 狀態不可知 → 不重複推播、不覆寫基準（等人工處理後再回復正常）
+        logger.warning("A. 過期事件狀態不可知 → 本輪不產生新提醒、不覆寫狀態檔")
+        new_review = []
 
     cleaned_count = 0
     retained_count = len(evs)
@@ -205,7 +231,7 @@ def _cleanup_schedule_events(apply_changes: bool, current_date: datetime.date):
         cleaned_count = len(auto_del)
         retained_count = len(evs)
 
-    if apply_changes:
+    if apply_changes and _state_known:
         _save_calendar_overdue_state(cur_review_keys)
 
     reminders = []
@@ -731,9 +757,14 @@ def weekly_calendar_main(dry_run: bool | None = None) -> None:
         logger.info("weekly_calendar: schedule_events.json 為空或無法讀取，靜默結束。")
         return
     auto_del, review = _classify_events(evs, today)
-    prev_keys = set(_load_calendar_overdue_state())
+    _prev = _load_calendar_overdue_state()
+    _state_known = _prev is not None
+    prev_keys = set(_prev or [])
     cur_review_keys = {_key_of_event(e) for e in review}
     new_review = [e for e in review if _key_of_event(e) not in prev_keys]
+    if not _state_known:
+        logger.warning("weekly_calendar: 過期事件狀態不可知 → 本輪不產生新提醒、不覆寫狀態檔")
+        new_review = []
 
     if dry_run:
         print(f"📋 [dry-run] 過期 {len(auto_del) + len(review)} 筆 | "
@@ -753,7 +784,8 @@ def weekly_calendar_main(dry_run: bool | None = None) -> None:
     push_note = ""
     # 落版條件看「檔案真的有沒有髒」，不看 cleaned 筆數：state 檔在 apply 時一律會被寫
     # （新增/消失的待裁決事件都會改 key 集合），只看 cleaned 會漏掉 state 變更 → 永遠 dirty。
-    _tracked_candidates = ["schedule_events.json", "data/calendar_overdue_state.json"]
+    # 2026-10-19 使用者裁決：狀態檔已移出 repo → 只 commit schedule_events.json 本體。
+    _tracked_candidates = ["schedule_events.json"]
     _dirty = False
     try:
         _st = subprocess.run(["git", "status", "--porcelain", "--", *_tracked_candidates],
@@ -818,8 +850,12 @@ def run_full_cleanup(apply_changes: bool = False):
     gone_pd, keep_pd = _cleanup_pending_decisions(apply_changes, current_date.isoformat())
     results['pending_decisions'] = {'cleaned': gone_pd, 'retained': keep_pd}
 
-    updated_banners = _cleanup_html_banners(apply_changes, current_date.isoformat())
-    results['html_banners'] = {'updated': updated_banners}
+    # 2026-10-19 使用者裁決（P1）：停止改寫歷史報告。
+    # 舊行為每週對 daily_report_v2_2026-09-13 / dynamic_weekly_review_2026-09-13 插入
+    # 「<當日日期> 更正」橫幅（內容為 9/11 對保錯誤），不但改動歷史頁、製造需真 CIO 的
+    # commit，還會出現「10/19 更正」講 9 月事件的日期錯配。更正事實已留存於 work_log／
+    # error_register，歷史報告保持出刊當下原樣。_cleanup_html_banners() 保留但不再呼叫。
+    results['html_banners'] = {'updated': 0}
 
     cleaned_backups = _cleanup_old_backups(apply_changes)
     results['old_backups'] = {'cleaned': cleaned_backups}

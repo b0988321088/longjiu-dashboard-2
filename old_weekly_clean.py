@@ -23,7 +23,15 @@ from pathlib import Path
 
 BASE = Path("C:/Users/bot/Desktop/longjiu_system")
 EVENTS = BASE / "schedule_events.json"
-STATE = BASE / "data" / "calendar_overdue_state.json"
+# 2026-10-19：狀態移出 repo（state_store 單一位置）；本檔為 legacy 入口，僅保留相容。
+STATE_LEGACY = BASE / "data" / "calendar_overdue_state.json"
+STATE_NAME = "calendar_overdue_state.json"
+sys.path.insert(0, str(BASE))
+try:
+    import state_store as _ss
+except Exception as _e_ss:  # noqa: BLE001
+    _ss = None
+    print(f"⚠️ 無法載入 state_store（{_e_ss}）→ 狀態讀寫停用")
 TODAY = datetime.date.today()
 
 # 完成語意（date<today 即刪）
@@ -69,12 +77,15 @@ def classify(evs):
 
 
 def load_state():
-    if STATE.exists():
-        try:
-            return json.load(open(STATE, encoding="utf-8"))
-        except Exception:
-            return []
-    return []
+    """回傳已處理鍵集合；None = 不可知（呼叫端不得當成空集合）。"""
+    if _ss is None:
+        return None
+    try:
+        data, _src = _ss.read_json(STATE_NAME, legacy=STATE_LEGACY, default=[])
+    except Exception as e:  # noqa: BLE001
+        print(f"⚠️ 狀態不可讀（{e}）→ 本輪跳過、不覆寫")
+        return None
+    return data if isinstance(data, list) else None
 
 
 def key_of(e):
@@ -82,9 +93,9 @@ def key_of(e):
 
 
 def save_state(keys):
-    STATE.parent.mkdir(exist_ok=True)
-    json.dump(sorted(keys), open(STATE, "w", encoding="utf-8"),
-              ensure_ascii=False, indent=1)
+    if _ss is None:
+        raise RuntimeError("state_store 不可用 → 不得寫回 repo")
+    _ss.write_json(STATE_NAME, sorted(keys))
 
 
 def git(op, *args):
@@ -96,9 +107,11 @@ def main():
     dry = "--dry-run" in sys.argv
     evs = load_events()
     auto_del, review = classify(evs)
-    prev_keys = set(load_state())
+    _prev = load_state()
+    _state_known = _prev is not None
+    prev_keys = set(_prev or [])
     cur_review_keys = {key_of(e) for e in review}
-    new_review = [e for e in review if key_of(e) not in prev_keys]
+    new_review = [e for e in review if key_of(e) not in prev_keys] if _state_known else []
 
     if dry:
         print(f"📋 [dry-run] 過期 {len(auto_del) + len(review)} 筆 | "
@@ -121,7 +134,8 @@ def main():
                   ensure_ascii=False, indent=2)  # INC-184：schedule_events.json canonical=2，用 1 會整檔重排
         changed = True
 
-    save_state(cur_review_keys)  # 更新 state = 本次保留全集（含已解決的自動消失）
+    if _state_known:
+        save_state(cur_review_keys)  # 更新 state = 本次保留全集（含已解決的自動消失）
 
     # commit + push（僅有變更時）
     if changed:
