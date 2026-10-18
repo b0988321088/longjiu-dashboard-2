@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>龍九控股 動態自我檢討週報（戰術版）2026-10-18</title>
+<style>
+:root{--bg:#0f1216;--card:#171c22;--card2:#1e242c;--line:#2b333d;--txt:#e8edf3;--dim:#96a2b0;
+--ok:#2ecc71;--warn:#f1c40f;--bad:#e74c3c;--info:#3498db;--gold:#d4a017}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.65;font-size:15px}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 18px 60px}
+header.top{border-bottom:2px solid var(--line);padding-bottom:16px;margin-bottom:22px}
+h1{font-size:24px;margin:0 0 6px}
+h2{font-size:19px;margin:34px 0 12px;padding-left:10px;border-left:5px solid var(--info)}
+h3{font-size:16px;margin:22px 0 8px;color:#cfe3f5}
+.meta{color:var(--dim);font-size:13px;margin:2px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+.callout{border-radius:9px;padding:12px 15px;margin:12px 0;border-left:5px solid}
+.info{background:rgba(52,152,219,.10);border-color:var(--info)}
+.ok{background:rgba(46,204,113,.10);border-color:var(--ok)}
+.warn{background:rgba(241,196,15,.12);border-color:var(--warn)}
+.bad{background:rgba(231,76,60,.12);border-color:var(--bad)}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px;background:var(--card)}
+th,td{border:1px solid var(--line);padding:8px 10px;vertical-align:top}
+th{background:var(--card2);color:#cfe3f5;font-weight:600;text-align:left}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:nth-child(even) td{background:rgba(255,255,255,.015)}
+.tag{display:inline-block;padding:1px 8px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap}
+.t-ok{background:rgba(46,204,113,.18);color:#7ee2a8;border:1px solid rgba(46,204,113,.5)}
+.t-warn{background:rgba(241,196,15,.18);color:#ffdf6b;border:1px solid rgba(241,196,15,.5)}
+.t-bad{background:rgba(231,76,60,.20);color:#ff9b8f;border:1px solid rgba(231,76,60,.55)}
+.t-info{background:rgba(52,152,219,.18);color:#8ecbf5;border:1px solid rgba(52,152,219,.5)}
+ul,ol{margin:8px 0 8px 20px;padding:0}
+li{margin:5px 0}
+.src{font-size:12.5px;color:var(--dim)}
+.small{font-size:12.5px;color:var(--dim)}
+hr{border:0;border-top:1px solid var(--line);margin:26px 0}
+.big{font-size:17px;font-weight:700}
+.pill{font-size:12px;color:var(--dim)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.kpi{background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:11px 13px}
+.kpi .k{font-size:12px;color:var(--dim)}
+.kpi .v{font-size:17px;font-weight:700;text-align:right}
+footer{margin-top:40px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:12.5px}
+</style></head><body><div class="wrap">
+<header class="top">
+<h1>🐉 龍九控股｜動態自我檢討週報（戰術版＋AI 獲利輔助）</h1>
+<div class="meta">產出：2026-10-18（日）19:00（台北）｜資料基準：snapshot.json 2026-10-18 15:26｜us30y_state.json 讀值日 2026-10-15（落差 3 天，在容忍值內）｜台股本週交易日 10/12–10/16（5 日）</div>
+<div class="callout info" style="margin-top:12px">
+<b>🔒 口徑來源：rebalance_eval_2026-10-18（07:00 管線）</b><br>
+<span class="small">本報桶權重與防守口徑逐字沿用該檔，未自行重算、未四捨五入改寫。判準：是否足夠看合併口徑 ≥60%，單桶 30% 僅結構參考（2026-09-16 定案）。</span><br>
+<span class="big">台股 12.5%｜美股 36.6%｜防守 17.8%｜債券 24.9%｜現金 4.3%｜防守合併 65.7%（門檻 60，已足）</span>
+</div>
+</header>
+
+<h2>0. 🎯 資產架構調整指示卡（全報第一眼）</h2>
+<div class="callout warn">
+<b>一句話：</b>防守合併 65.7% 已足、現金底線達標，但 US30Y 5.429% 紅線未解 → <b>本週調度 0 元</b>；唯一要做的事是「不動、等解凍」。
+</div>
+<table>
+<thead><tr><th style="width:9%">類別</th><th class="num" style="width:7%">現在佔比</th><th style="width:13%">戰略目標區間</th>
+<th style="width:14%">戰術目標區間</th><th style="width:10%">動作</th><th style="width:22%">執行細節</th><th style="width:25%">💡完整分層原因</th></tr></thead>
+<tbody><tr><td><b>台股市值型成長</b><br><span class="small">3,375,905</span></td><td class="num"><b>12.5%</b></td><td>10%（可接受範圍 7~13%；歷史硬鎖 28%，市場再熱不上調）</td><td>10% <span class="tag t-ok">🟢 觀察訊號</span> 與戰略完全一致（不上浮、不下修）</td><td><span class="tag t-warn">⏸ 0 筆（解凍未成立）</span></td><td class="small">本週 0 筆。超配 +2.5pp 處於 7~13% 可接受範圍內 → 依裁示②靜默；解凍需「US30Y 連 2 日 &lt;5.30%＋質押月付入模型＋跑道達標＋現金 ≥70 萬」四項同時成立，現僅現金達標。解凍後僅回檔小額分批、單筆 ≤5 萬、每週 ≤2 筆。</td><td class="small"><b>1️⃣ 配置偏差數據：</b>12.5% 相較戰略中樞 10% 超配 +2.5pp，位在 7~13% 可接受範圍內，屬「範圍內偏多」而非失控；距硬上限 28% 尚有 15.5pp。<br><b>2️⃣ 板塊資金輪動訊號：</b>本週 0050 −5.05%、006208 −4.86%、2330 −4.72%，但 00713 +3.46%、00919 +1.58%、2891 +5.44% → 台股內部由市值型／科技流向高息與金融；科技法人 −352.0M、市值型 −102.4M 流出，與價格方向一致（非單日雜訊）。<br><b>3️⃣ 核貸／利率階段約束：</b>大義街 1,200 萬已於 8/20 撥款入帳，階段管制已由「撥款前」轉為「撥款後單筆上限」；US30Y 5.429% 紅線未解 → 加碼路徑一律 fail-closed。</td></tr><tr><td><b>美股市值型成長</b><br><span class="small">9,881,940</span></td><td class="num"><b>36.6%</b></td><td>30%（可接受範圍 27~33%；內含科技 ≤15%、單桶硬上限 40%）</td><td>27% <span class="tag t-warn">🟡 中度輪動</span> 相較戰略區間中樞下浮 3pp，🟡 中度輪動標準調幅</td><td><span class="tag t-bad">⏸ 逢反彈減（僅回報）</span></td><td class="small">本週 0 筆、累積 5 週未執行。理論調整 1,780,736 但風控後可執行 0（US30Y 煞車優先於動作階梯；單筆上限 200,000／4~6 週；可減部位未提供 → fail-closed）。觸發：S&amp;P 反彈 ≥1.5% 且 US30Y 回落 &lt;5.30%；減碼次序＝非後收、非保單內部位優先，保單與後收基金不動。<br>科技 14.2%（3,837,311）／非科技 22.4%（6,044,629）。</td><td class="small"><b>1️⃣ 配置偏差數據：</b>36.6% 為五桶最大超配（+6.6pp 相較戰略中樞 30%），距單桶硬上限 40% 僅 3.4pp → 結構性風險源，且是全帳淨值波動的主要放大器。<br><b>2️⃣ 板塊資金輪動訊號：</b>XLK 動能 −2.4%、RS −2.5（outflow），XLV +4.7%、XLP +4.9%、XLE +5.8% 同步流入 → 美股內部由科技轉向防禦（可信度 9 分，見模組 3），資金面支持「減碼而非加碼」。<br><b>3️⃣ 核貸／利率階段約束：</b>撥款完成不等於可加碼；US30Y 5.429%（連 18 交易日 ≥5.30%）＋費半五個交易日 −7.14% → 減碼不急、加碼更不急，順序是先回報再動作。</td></tr><tr><td><b>防守型配息</b><br><span class="small">4,796,395</span></td><td class="num"><b>17.8%</b></td><td>30%（合併口徑含保單配息資產 ≥60%）</td><td>30% <span class="tag t-ok">🟢 觀察訊號</span> 與戰略一致（合併口徑已足）</td><td><span class="tag t-warn">🧊 承接凍結</span></td><td class="small">不加碼配息 ETF（00878／0056／00713／00919）。合併口徑 65.7%（≥60 ✅）→ 單桶低於範圍亦不執行加碼。除息行事曆：本週 10/19 00984A（0.473，持有 10,000 股）、10/22 0056（1.72，預估）→ 除息前不追高、除息後回檔承接。</td><td class="small"><b>1️⃣ 配置偏差數據：</b>單桶 17.8% 相較戰略中樞低配 12.2pp，但合併口徑 65.7% ≥60 → 判準以合併為準（2026-09-16 定案），單桶 30% 僅結構參考，故不加碼、不追。<br><b>2️⃣ 板塊資金輪動訊號：</b>高息為連續第 2 週避風港（00713 +3.46%、00878 +0.82%、0056 +0.26% 全數收紅），但高股息防禦類股法人仍小幅流出 −1.4M → 價格抗跌、資金未回補，屬「防守有效、追價無據」。<br><b>3️⃣ 核貸／利率階段約束：</b>承接凍結自 8/21 生效（保單配息已計入合併口徑），本週無解除條件成立；除息週僅能做「除息後回檔承接」的觀察，不得提前卡位。</td></tr><tr><td><b>債券</b><br><span class="small">6,714,577</span></td><td class="num"><b>24.9%</b></td><td>25%（設定衝突：桶目標 25% ＜ 可接受下限 27%，待裁決）</td><td>25% <span class="tag t-warn">⛔ 凍結</span> 相較戰略中樞低配 0.1pp（不動）</td><td><span class="tag t-bad">⛔ 永久凍結（US30Y ≥5.30%）</span></td><td class="small">本週 0 筆；00983D 與所有長天期債券新增買單凍結。SoT 內部不一致（桶目標 25% ＜ 可接受下限 27%）→ 本週不自動交易（fail-closed），待裁決後才恢復計算。舊模板「相較戰略上限 14% 超配 3.1pp」已失效（目標已調為 25%），本報依 rebalance_eval_2026-10-18 口徑。</td><td class="small"><b>1️⃣ 配置偏差數據：</b>24.9% 相較戰略中樞 25% 低配 0.1pp，表面上「剛好到位」；但因下限設定高於目標本身，任何自動加碼都會立刻撞牆 → 先解決設定衝突，不先動部位。<br><b>2️⃣ 板塊資金輪動訊號：</b>台股債券類股法人 +13.4M 為全場唯一明顯流入，但 10Y 殖利率 5.098%、月動能 +1.84% 上行 → 價格面仍逆風，資金流入屬防禦性配置而非殖利率見頂訊號。<br><b>3️⃣ 核貸／利率階段約束：</b>US30Y 5.429% ≥5.30% 觸發長天期凍結（自 9/23 起），與宏觀引擎「加固定收益」建議直接衝突 → 裁示鏈：紅線 ＞ 引擎，引擎建議僅列觀察、不執行。</td></tr><tr><td><b>現金／安全網</b><br><span class="small">1,170,934</span></td><td class="num"><b>4.3%</b></td><td>5%（現金不設百分比硬範圍；底線制）</td><td>5% <span class="tag t-ok">🟢 觀察訊號</span> 底線制不動</td><td><span class="tag t-ok">✅ 達標・不動</span></td><td class="small">現金桶 1,170,934 vs 現金底線 700,000 → 乾粉（餘裕）470,934。另有指定用途款 900,000（永久排除於可動用），全帳現金合計 2,070,934。本週不因配置缺口動用乾粉。</td><td class="small"><b>1️⃣ 配置偏差數據：</b>4.3% 相較戰略中樞 5% 低配 0.7pp，但現金採底線制不採百分比 → 1,170,934 ≥ 700,000，缺口為 0，乾粉 470,934。<br><b>2️⃣ 板塊資金輪動訊號：</b>無（現金不對應板塊）；本週現金增加 531,273 來自 009823／009824 出清款 214,381 與威剛退款 290,050 入帳，屬已實現項目，非策略性提高現金。<br><b>3️⃣ 核貸／利率階段約束：</b>質押 590 萬 @2.65%、LTV 50.01%（≤53% 政策停止線），擔保池 92% 後收 → 追繳時不可賣擔保品，緩衝只能靠現金，故底線 700,000 不動。</td></tr></tbody></table>
+
+<div class="callout bad"><b>🚨 擁擠風險短句：</b>人多的地方有危險，熱門 ETF 有擁擠交易風險，資金集中湧入一旦情緒反轉容易放大回檔；熱門標的禁止大筆追漲，僅限回檔小額分批承接，並檢視底層持股重疊，避免表面分散、實質集中。</div>
+<div class="card"><b>監控 4 指標（任一標的出現 → 收斂新增）：</b>①規模暴增 ②持續明顯溢價（&gt;IOPV）③交易同質化 ④市場敘述單一。</div>
+
+<h3>📐 戰術目標浮動雙重約束檢核</h3>
+<table><thead><tr><th>類別</th><th>戰術目標</th><th>戰術 vs 戰略中樞</th><th>訊號等級／標準調幅</th><th>紅線檢核</th></tr></thead><tbody>
+<tr><td>台股</td><td class="num">10%</td><td class="num">0pp</td><td>🟢 觀察訊號（與戰略完全一致）</td><td>✅ 未破歷史硬鎖 28%</td></tr>
+<tr><td>美股</td><td class="num">27%</td><td class="num">−3pp</td><td>🟡 中度輪動（±3pp，相較戰略區間中樞下浮 3pp，🟡 中度輪動標準調幅）</td><td>✅ 總偏離 3pp ≤ ±4pp 容忍；未低於最低安全配置 27%</td></tr>
+<tr><td>防守</td><td class="num">30%</td><td class="num">0pp</td><td>🟢 觀察訊號</td><td>✅ 合併口徑 65.7% ≥60</td></tr>
+<tr><td>債券</td><td class="num">25%</td><td class="num">0pp</td><td>⛔ 凍結（不套用浮動規則）</td><td>⚠️ SoT 設定衝突待裁決</td></tr>
+<tr><td>現金</td><td class="num">5%</td><td class="num">0pp</td><td>🟢 底線制不動</td><td>✅ 1,170,934 ≥ 700,000</td></tr>
+</tbody></table>
+<div class="callout info"><b>可信度對應操作保守度：</b>本週輪動可信度 9 / 10（明細見模組 3-2）→ 依規則對應「完整執行戰術目標調倉」；<b>但操作授權仍為 0</b>，因優先級為「核貸授信管制 ＞ 5.30% 債券凍結紅線 ＞ 戰術浮動邊界 ＞ AI 順勢建議」，紅線未解前任何 AI 建議皆不落地。</div>
+
+<div class="card"><b>本週調度資金總額預估：<span class="tag t-bad">0 元</span></b>
+<div class="small">理論調整（｜戰略偏差pp｜÷100×分母 26,980,846）：台股 674,521／美股 1,780,736／防守 3,291,663／債券 26,981／現金 188,866；
+<b>風控後可執行全為 0</b>：US30Y 煞車（5.429%，優先於動作階梯與單桶硬上限）＋可減部位未提供 → fail-closed。不得以理論值充當可執行金額。</div></div>
+
+<div class="callout ok"><b>本週精簡版：</b>利率環境偏緊（US30Y 5.429%、10Y 5.098%），暫不適合大額布局市值型標的；美股持續等待逢反彈減碼收斂超配部位；台股市值僅解凍後回檔小額分批承接；資金優先鞏固現金與防守部位。<br>
+<b>依核貸授信階段管制：</b>大義街 1,200 萬已撥款入帳 → 進入「單筆上限管制」階段（台股 5 萬／美股 20 萬）；債券新增仍永久凍結（詳細約束見模組 3-4）。</div>
+
+<hr>
+<h2>1. 📊 數據動態回顧（被動波動 vs 主動調度）</h2>
+<div class="callout info"><b>本週總資產 ＋229,795（＋0.86%）→ 26,980,846；淨值 −4,229,907 → −4,003,322（改善 226,585）。</b>
+<br><span class="small">改善主要來自現金入帳（已實現），不是投資績效。</span></div>
+<table><thead><tr><th style="width:20%">科目</th><th class="num">10/11</th><th class="num">10/18</th><th class="num">變化</th>
+<th class="num">變化%</th><th style="width:14%">歸因</th><th style="width:28%">說明</th></tr></thead>
+<tbody><tr><td>證券市值（台/美股 ETF 現貨）</td><td class="num">3,045,250</td><td class="num">2,815,430</td><td class="num"><b>−229,820</b></td><td class="num">−7.55%</td><td>被動（不可控）</td><td class="small">台股 0050 −5.05%、2330 −4.72% 主導；美股 ETF 同期亦隨費半走弱</td></tr><tr><td>保單現值（安聯 A+B＋第一金）</td><td class="num">9,473,034</td><td class="num">9,384,046</td><td class="num"><b>−89,056</b></td><td class="num">−0.94%</td><td>被動（不可控）</td><td class="small">配息入帳與淨值評價互抵後的小幅回落；10/16 截圖確認餘額，非人為調度</td></tr><tr><td>基金市值（鉅亨／國泰月配）</td><td class="num">12,693,106</td><td class="num">12,710,436</td><td class="num"><b>＋17,330</b></td><td class="num">＋0.14%</td><td>被動（不可控）</td><td class="small">月配基金淨值波動；10/08 第一金 M&amp;G 轉換已生效，本週無新申贖</td></tr><tr><td>現金（含指定用途款）</td><td class="num">1,539,661</td><td class="num">2,070,934</td><td class="num"><b>＋531,273</b></td><td class="num">＋34.50%</td><td>主動（人為可控／已實現）</td><td class="small">009823／009824 出清款 214,381（10/13 入帳）＋威剛退款 290,050（10/12 入帳）＋配息結轉 ≈26,842</td></tr><tr><td>總資產</td><td class="num">26,751,051</td><td class="num">26,980,846</td><td class="num"><b>＋229,795</b></td><td class="num">＋0.86%</td><td>混合</td><td class="small">現金入帳為正貢獻，證券與保單評價為負貢獻</td></tr></tbody></table>
+
+<div class="callout warn"><b>① 被動／不可控波動：</b>證券市值 −229,820（台股 0050 −5.05%、2330 −4.72% 為主因）、保單現值 −89,056（評價與配息互抵）、基金 ＋17,330 → 合計拖累約 −301,546。這部分屬市場價格與匯率，<b>不列為操作檢討</b>。</div>
+<div class="callout ok"><b>② 主動／人為可控：</b>本週買賣 <b>0 筆</b>。現金 ＋531,273 全部來自既定事項入帳（009823／009824 出清款 214,381、威剛 3260 未中籤退款 290,050、配息結轉），不是新決策，也不構成加碼能力。</div>
+<div class="callout bad"><b>③ 口徑異常（須標記、不當成績效）：</b>台股桶佔比 7.8% → 12.5%（市值 2,095,714 → 3,375,905，＋1,280,191），<b>與同期證券市值 −229,820 方向相反</b>，且總資產僅 ＋229,795。→ 判定為「穿透／桶位歸類口徑變動」而非本週買進，列 OBSERVE 待核；本報配置數字仍以 rebalance_eval_2026-10-18 為唯一口徑，不受此項影響。</div>
+
+<hr>
+<h2>2. 🔍 策略自我檢討</h2>
+<h3>✅ 做對的（4 項）</h3>
+<ul>
+<li><b>紅線期間真正做到 0 筆交易：</b>US30Y 5.2–5.4% 高檔盤旋的兩週內完全沒有「小額試單」的衝動，避開了 10/15 台股 −3.41% 的當日風險。<span class="small">（人為紀律，非市場運氣）</span></li>
+<li><b>沒有在 10/15 急跌時接刀：</b>當日觸發單日 −3.41% 煞車，處置為「只回報不動作」，事後 10/16 雖有反彈但 0050 週線仍 −5.05%，證明未接刀是對的。</li>
+<li><b>押標金 240 萬取消後未鬆動現金紀律：</b>沒有把釋出的備援額度轉成購買力，乾粉維持 470,934 不動。<span class="small">（10/12 裁決執行的直接效果）</span></li>
+<li><b>防守配置的壓艙石效果被驗證：</b>台股市值型週線 −5%，但 00713 +3.46%、00919 +1.58%、00878 +0.82%，合併口徑 65.7% 讓淨值只回落 0.86%。</li>
+</ul>
+<h3>❌ 待優化的（4 項）</h3>
+<ul>
+<li><b>台股桶佔比單週跳動 4.7pp 未被即時發現：</b>這是<b>系統／口徑問題，不是市場波動</b>。改善：penetration 任一桶單日變動 &gt;1pp 應自動告警，避免「歸類漂移」被誤讀成操作成果。</li>
+<li><b>美股減碼連續 5 週為 0 筆：</b>歸因是<b>紅線所致（機制正確）、非人為失誤</b>；但「機制正確」也意味著紅線解除那天會一次面對 6.6pp 的收斂壓力。改善：解凍後立即啟動 4~6 週分批，不等待更好價格。</li>
+<li><b>質押月付／還本方式仍未取得銀行書面：</b>這是人為可控卻延宕的項目（PEND-20261005），直接導致「還本安全閥」不通過、台股分批維持凍結。改善：10/29 第一期繳款檢核時一併索取書面試算。</li>
+<li><b>債券的 SoT 設定衝突已存在但未裁決：</b>目標 25% ＜ 可接受下限 27%，使債券桶每週都被迫 fail-closed。改善：把它當成一次性設定工單處理，而不是每週重複標註。</li>
+</ul>
+<div class="callout info"><b>歸因總結：</b>本週虧損 100% 來自市場（被動）；失誤 100% 來自「口徑與文件」而非「交易決策」——這是紅線期間應有的樣子。</div>
+
+<hr>
+<h2>3. 🌍 全域環境變化判斷</h2>
+<h3>子模組 1｜宏觀利率</h3>
+<div class="callout info">🔒 口徑來源：rebalance_eval_2026-10-18（07:00 管線）｜讀值日 2026-10-15，落後 3 天（容忍上限 3 天）</div>
+<table><thead><tr><th style="width:14%">項目</th><th class="num" style="width:20%">數值</th><th style="width:33%">狀態</th><th>處置</th></tr></thead><tbody><tr><td><b>US30Y</b></td><td class="num">5.429%</td><td class="small">🔴 ≥5.30% 紅線（自 9/23，連 18 交易日；模式 A 防禦連 34 日）</td><td class="small">長天期債券／00983D 新增凍結；加減碼暫緩、只回報不動作</td></tr><tr><td><b>4.90%</b></td><td class="num">解鎖線</td><td class="small">未達（差距 0.529pp）</td><td class="small">達成才進入「布局模式」，放寬成長權值戰術區間</td></tr><tr><td><b>5.20%</b></td><td class="num">防禦線</td><td class="small">已穿越（5.429% &gt; 5.20%）</td><td class="small">放緩美股布局、提升高息防禦優先級</td></tr><tr><td><b>5.30%</b></td><td class="num">債券凍結線</td><td class="small">已觸發（連 18 交易日）</td><td class="small">固定收益新增永久凍結；解凍需「連 2 日 &lt;5.30%」</td></tr><tr><td><b>10Y</b></td><td class="num">5.098%（radar 10-17）</td><td class="small">🟡 月動能 +1.84% 上行</td><td class="small">債券淨值面承壓，短線不搶反彈</td></tr></tbody></table>
+<div class="callout warn"><b>判定：</b>模式 A（防禦）已連續 34 個交易日、紅線自 9/23 起連 18 日 → 距「連 2 日 &lt;5.30%」解凍線沒有任何接近跡象（30Y 5.429%、10Y 5.098% 同期均高）。<b>本週維持防禦模式，非布局模式。</b></div>
+
+<h3>子模組 2｜市場流動性 &amp; 板塊資金輪動</h3>
+<div class="callout info"><b>噪音四分類處理：</b>①單日消息脈衝行情 → 權重 −50%（備註：單一日行情不構成持續趨勢，需連續 3 日法人數據驗證）②月底／季底窗飾 → −30%（10 月中，不適用）③全市場普漲普跌 → 降參考（SPY 動能僅 +0.1%，不適用）④個股題材假性上漲 → 僅觀察。</div>
+<h3>板塊代理標的本週表現（Yahoo Finance，10/12–10/16 收盤）</h3>
+<table><thead><tr><th>標的</th><th class="num">收盤</th><th class="num">週漲跌</th><th class="num">週內區間</th><th>板塊</th><th>觀察</th></tr></thead><tbody><tr><td><b>0050</b></td><td class="num">109.00</td><td class="num"><span class="tag t-bad">−5.05%</span></td><td class="num">109.00 / 114.80</td><td>市值型（科技權重）</td><td class="small">跌破週內區間下緣，收最低附近</td></tr><tr><td><b>006208</b></td><td class="num">250.35</td><td class="num"><span class="tag t-bad">−4.86%</span></td><td class="num">—</td><td>市值型（科技權重）</td><td class="small">與 0050 同步，無相對強弱</td></tr><tr><td><b>2330</b></td><td class="num">2,420</td><td class="num"><span class="tag t-bad">−4.72%</span></td><td class="num">2,420 / 2,540</td><td>台積電</td><td class="small">10/15 法說前後波動放大</td></tr><tr><td><b>2317</b></td><td class="num">244.00</td><td class="num"><span class="tag t-bad">−0.20%</span></td><td class="num">239.50 / 244.50</td><td>電子權值</td><td class="small">相對抗跌</td></tr><tr><td><b>2891</b></td><td class="num">73.60</td><td class="num"><span class="tag t-ok">＋5.44%</span></td><td class="num">69.80 / 73.60</td><td>金融</td><td class="small">收週內最高，資金明顯轉入</td></tr><tr><td><b>2881</b></td><td class="num">161.50</td><td class="num"><span class="tag t-ok">＋1.89%</span></td><td class="num">158.50 / 161.50</td><td>金融</td><td class="small">金融股同步走強</td></tr><tr><td><b>00713</b></td><td class="num">65.80</td><td class="num"><span class="tag t-ok">＋3.46%</span></td><td class="num">63.60 / 65.80</td><td>高息低波</td><td class="small">連 2 週走強，避風港首選</td></tr><tr><td><b>00919</b></td><td class="num">32.74</td><td class="num"><span class="tag t-ok">＋1.58%</span></td><td class="num">32.23 / 32.74</td><td>高息</td><td class="small">收週內最高</td></tr><tr><td><b>00878</b></td><td class="num">35.53</td><td class="num"><span class="tag t-ok">＋0.82%</span></td><td class="num">35.09 / 35.53</td><td>高息</td><td class="small">抗跌但漲幅落後 00713</td></tr><tr><td><b>0056</b></td><td class="num">58.75</td><td class="num"><span class="tag t-ok">＋0.26%</span></td><td class="num">58.25 / 59.60</td><td>高息</td><td class="small">10/22 除息前觀望</td></tr></tbody></table>
+<div class="small">資料來源：query1.finance.yahoo.com（v8 chart, range=5d）；資料日 2026-10-16。10Y（^TNX）5.098%、週 −2.71%。</div>
+<table><thead><tr><th style="width:13%">訊號等級</th><th style="width:17%">流入板塊</th><th style="width:17%">流出板塊</th><th style="width:11%">輪動類型</th><th style="width:21%">佐證數據</th><th>噪音過濾說明</th></tr></thead><tbody><tr><td><b>🟡 中度輪動（台股內部）</b></td><td>高息／金融（00713、00878、0056、2891、2881）</td><td>市值型／科技（0050、006208、2330）</td><td>防禦輪動（非全面風險趨避）</td><td class="small">00713 +3.46%、00919 +1.58%、2891 +5.44% vs 0050 −5.05%、2330 −4.72%；法人：科技 −352.0M、市值型 −102.4M、高股息防禦 −1.4M、金融 −0.5M</td><td class="small">台股 10/15 單日 −3.41% 為事件型脈衝（權重已降 50%）；高息類股法人仍小幅流出 → 價格輪動有、資金輪動未成立</td></tr><tr><td><b>🟡 中度輪動（美股）</b></td><td>醫療 XLV +4.7、核心消費 XLP +4.9、能源 XLE +5.8</td><td>科技 XLK −2.4、金融 XLF −0.6</td><td>防禦輪動</td><td class="small">RS_vs_SPY：XLP +4.9、XLE +5.7、XLV +4.6 vs XLK −2.5；SPY 動能 +0.1%（大盤幾乎不動＝類股間移轉）</td><td class="small">SPY 動能僅 +0.1% → 非全市場普漲普跌，屬類股移轉，不扣「全市場」分</td></tr><tr><td><b>⚪ 未成立</b></td><td>台股債券類股 +13.4M、能源 +1.7M、原物料避險 +1.6M、生技 +1.4M</td><td>航運 −27.8M、食品 −22.0M、其他 −1,054.8M</td><td>防禦性零散流入</td><td class="small">單日法人快照（2026-10-17 產出，資料日 10/16）；外資現貨淨買超 5.3 億但僅連 1 日</td><td class="small">無連續 3 日同向驗證 → 不列為有效順勢訊號，僅觀察</td></tr></tbody></table>
+<div class="callout ok"><b>本週輪動可信度：9 / 10。</b>扣分規則：單日消息脈衝(-2)、全市場普漲普跌(-2)、無連續 3 日法人數據驗證(-1)；基礎滿分 10 分。<br>
+<span class="small">明細：10 − 2（10/15 台股單日 −3.41% 屬事件型脈衝，僅 1 日）− 1（外資僅連 1 日買超、板塊法人僅單日快照，無連續 3 日同向）＝ 7；連 2 週同向（高息／金融相對強勢，上週 0056／00713 亦收紅）+2 ＝ 9。全市場普漲普跌不成立（SPY +0.1%），不扣分。</span></div>
+
+<h3>子模組 3｜題材與總體訊號</h3>
+<div class="card"><ul>
+<li><b>台股結構分化（可驗證）：</b>市值型／科技下跌、高息／金融上漲，且法人方向一致（科技 −352.0M）。→ <b>配置啟示：</b>台股超配部位不必急著處置，但也不加碼市值型。<b>反向風險：</b>若高息僅是除息前卡位，除息後（10/22 後）將面臨回吐。</li>
+<li><b>美股防禦輪動（可驗證）：</b>XLP／XLV／XLE 同步流入、XLK 流出，SPY 幾乎不動。→ <b>配置啟示：</b>支持「減碼科技、不急著加碼美股」的順序。<b>反向風險：</b>防禦類股（XLE +5.8%）已漲多，追高同樣危險。</li>
+<li><b>費半五個交易日 −7.14%（累積型修正，非單日崩跌）：</b>→ 未觸發單日 &gt;3% 門檻，但足以說明<b>減碼不急、加碼更不急</b>；不構成延遲減碼的理由。</li>
+<li><b>宏觀引擎（macro_regime 10-13）：</b>🔴 紅燈，美元信用壓力 52.8 為最高情境（地緣風險 0.0）。引擎建議「加固定收益」與 US30Y 凍結紅線直接衝突 → <b>裁示鏈：紅線 ＞ 引擎，引擎僅列觀察、不執行</b>。</li>
+<li><b>本週無新增可驗證題材：</b>新聞源未接入，本報不生成未經證實的題材或數字（避免模板式罐頭分析）。</li>
+</ul></div>
+
+<h3>子模組 4｜個人里程碑（階段約束權威來源）</h3>
+<table><thead><tr><th style="width:22%">里程碑</th><th style="width:20%">狀態</th><th>對配置的階段約束</th></tr></thead><tbody>
+<tr><td>大義街轉貸 1,200 萬 @2.6%</td><td><span class="tag t-ok">✅ 8/20 撥款已入帳</span></td><td>解除「撥款前不得買進」；改受單筆上限管制（台股 ≤5 萬、美股 ≤20 萬）</td></tr>
+<tr><td>整池質押 590 萬 @2.65%</td><td><span class="tag t-warn">⏳ 9/29 撥款；月付未經書面證實</span></td><td>還本安全閥未通過 → 台股分批維持凍結；月盈餘 66,758 不得作部署依據</td></tr>
+<tr><td>10/20 國泰房貸繳款</td><td><span class="tag t-info">📅 下週二</span></td><td>現金流事件，不動用乾粉</td></tr>
+<tr><td>10/29 質押第一期繳款檢核</td><td><span class="tag t-info">📅 下週四</span></td><td>確認繳息方式與是否自帳戶扣款；一併索取書面試算</td></tr>
+<tr><td>洲際 W 轉貸檢視日</td><td><span class="tag t-info">📅 11/03（檢視≠轉貸授權）</span></td><td>檢視日不動用資金、不預先承諾</td></tr>
+<tr><td>債券新增</td><td><span class="tag t-bad">⛔ 永久凍結</span></td><td>US30Y ≥5.30%＋設定衝突未裁決，雙重阻擋</td></tr>
+</tbody></table>
+
+<hr>
+<h2>4. 🎯 下週策略動態修正（10/19 → 10/25）</h2>
+<table><thead><tr><th style="width:15%">標的</th><th style="width:10%">上週操作</th><th style="width:19%">下週調整動作</th>
+<th style="width:18%">觸發執行條件</th><th style="width:17%">暫停操作門檻</th><th>背後邏輯</th></tr></thead>
+<tbody><tr><td>0050／006208／0051<br><span class="small">台股市值型</span></td><td class="small">0 筆（靜默）</td><td class="small">維持 0 筆；解凍後僅回檔小額分批，單筆 ≤5 萬、每週 ≤2 筆</td><td class="small">US30Y 連 2 日 &lt;5.30% ＋ 質押月付入模型 ＋ 跑道達標 ＋ 現金 ≥70 萬（四項同時成立）＋ 外資連 2 日買超</td><td class="small">單日漲跌 &gt;3% → 當週停買；10/15 已觸發 −3.41% 煞車（只回報不動作）</td><td class="small">12.5% 在 7~13% 範圍內（靜默）；市值型週線 −5.05% 且科技資金流出 → 不接刀、不追反彈</td></tr><tr><td>00878（國泰永續高股息）</td><td class="small">0 筆（承接凍結）</td><td class="small">不加碼；除息後回檔才承接（11 月梯次）</td><td class="small">回檔 ≥3% 且合併口徑跌破 60%</td><td class="small">單日 &gt;3% → 當週停買；除息前不追高</td><td class="small">+0.82% 抗跌但法人未回補；合併口徑 65.7% 已足 → 加碼無正當性</td></tr><tr><td>0056／00713／00919<br><span class="small">高息梯次</span></td><td class="small">0 筆</td><td class="small">10/22 0056 除息（1.72，預估）前不追高；除息後回檔承接；00713、00919 維持不動</td><td class="small">除息後回檔 ≥3% 且 US30Y &lt;5.30%</td><td class="small">單日 &gt;3% → 當週停買；除息週不卡位</td><td class="small">00713 +3.46% 已連 2 週走強 → 追價風險升高；除息前買進等於替息收付價差</td></tr><tr><td>00984A（安聯台灣高息成長）<br><span class="small">持有 10,000 股</span></td><td class="small">0 筆</td><td class="small">10/19 除息（0.473）→ 只記錄入帳，不做任何買賣</td><td class="small">—（無加碼計畫）</td><td class="small">除息前後 2 日內不下單</td><td class="small">主動式 ETF 除息屬既定事件，與配置決策無關；避免為息收改變部位</td></tr><tr><td>00983D／長天期債券</td><td class="small">0 筆</td><td class="small">⛔ 永久凍結，本週無任何新增買單</td><td class="small">解除需 US30Y 連 2 日 &lt;5.30% 且桶目標設定衝突完成裁決</td><td class="small">凍結中（無門檻可觸發）</td><td class="small">US30Y 5.429%、10Y 5.098% 月動能 +1.84% 上行 → 進場即承擔存續期間風險</td></tr><tr><td>美股科技（00646 類）／已出清 009823、009824</td><td class="small">0 筆（累積 5 週）</td><td class="small">逢反彈分批減碼，收斂至戰術 27%；單次 ≤20 萬、4~6 週完成</td><td class="small">S&amp;P 反彈 ≥1.5% 且 US30Y 回落 &lt;5.30%</td><td class="small">US30Y 急升或二次探底 → 暫停；單日 &gt;3% → 當週不動作</td><td class="small">36.6% 超配 +6.6pp 為最大結構風險；Truist 5–8% 下行警示 → 壓低減碼速度、不延遲減碼</td></tr><tr><td>現金／安全網</td><td class="small">淨增 531,273（入帳）</td><td class="small">不動；乾粉 470,934 保留</td><td class="small">解凍後才可動用（優先防守／配息標的）</td><td class="small">現金 &lt;700,000 → 立即停止一切買進</td><td class="small">質押 LTV 50.01%、擔保池 92% 後收 → 緩衝只能靠現金</td></tr></tbody></table>
+<div class="callout warn"><b>除息週備註：</b>10/19 00984A（0.473）、10/22 0056（1.72，預估）→ <b>除息前不追高、除息後回檔承接</b>；預估金額來源為上次查核版行事曆（2026-10-05），實際以公告為準。</div>
+<div class="callout bad"><b>🔗 斷鏈檢核：</b>資金輪動訊號（台股：市值型／科技流出、高息／金融流入；美股：科技流出、防禦流入，可信度 9/10）→ 戰術目標調整（台股維持 10%、美股維持 27% 下浮 3pp、防守 30%、債券凍結）→ 標的操作（全部 0 筆，唯一「動作」是除息事件記錄與解凍條件監控）。<b>三段完整串聯、無斷點</b>：本週之所以「訊號明確卻不行動」，是因為 US30Y 紅線位階高於 AI 順勢建議，而非邏輯中斷。</div>
+
+<hr>
+<h2>5. 🚦 風險紅線逐條檢核</h2>
+<table><thead><tr><th style="width:20%">項目</th><th style="width:32%">現況</th><th style="width:18%">判定</th><th>說明</th></tr></thead><tbody><tr><td>現金底線 700,000（單一口徑）</td><td class="small">現金桶 1,170,934 ≥ 700,000；乾粉 470,934</td><td><span class="tag t-ok">✅ 安全</span></td><td class="small">硬底線為 700,000，指定用途款 900,000 不列入可動用</td></tr><tr><td>債券凍結 US30Y ≥5.30%</td><td class="small">5.429%（讀值日 2026-10-15，落後 3 天在容忍內）</td><td><span class="tag t-ok">✅ 安全（已依規則凍結）</span></td><td class="small">凍結本身即為正確處置；風險在「解凍前偷跑」</td></tr><tr><td>階段管制（核貸／單筆上限）</td><td class="small">大義街 1,200 萬 8/20 撥款已入帳；單筆上限台股 5 萬／美股 20 萬</td><td><span class="tag t-ok">✅ 安全</span></td><td class="small">撥款後階段轉為單筆上限管制；債券仍凍結</td></tr><tr><td>美股超配 +6.6pp（36.6%）</td><td class="small">距單桶硬上限 40% 尚 3.4pp；累積 5 週未減碼</td><td><span class="tag t-warn">⚠️ 待處理（受紅線凍結，非人為延宕）</span></td><td class="small">US30Y 紅線優先於減碼動作；解凍後須優先收斂</td></tr><tr><td>戰術目標偏離 ≥3pp</td><td class="small">美股戰術 27% vs 戰略中樞 30% = −3pp（未超過 ±4pp 容忍）</td><td><span class="tag t-warn">⚠️ 黃色觀察</span></td><td class="small">偏離等於 3pp 門檻，未跨越 → 不升級為紅線</td></tr><tr><td>可信度 &lt;7 分且偏移 ≥3pp</td><td class="small">本週可信度 9 分 → 條件不成立</td><td><span class="tag t-ok">✅ 安全</span></td><td class="small">若下週可信度回落 ≤6 分且美股偏移仍 ≥3pp，須降單筆金額</td></tr><tr><td>與上週戰術目標變動 &gt;2pp</td><td class="small">台股 10%、美股 27%、防守 30%、債券 25%、現金 5% 全數維持，變動 0pp</td><td><span class="tag t-ok">✅ 安全（無變動）</span></td><td class="small">連續性良好，無追漲殺跌式的戰術漂移</td></tr><tr><td>美元曝險 68%</td><td class="small">門檻 60／黃色觀察 65／高曝險顯示 70 → 🟡 黃色觀察（advisory_only）</td><td><span class="tag t-warn">⚠️ 待處理（僅顯示，不觸發資產調整）</span></td><td class="small">advisory_only 語意：不得轉成減碼指令</td></tr><tr><td>高科技曝險 23.2%</td><td class="small">紅線 30% → 未觸發</td><td><span class="tag t-ok">✅ 安全</span></td><td class="small">含保單內科技基金；距紅線 6.8pp</td></tr><tr><td>質押 LTV 50.01%</td><td class="small">政策停止線 53%（非銀行追繳線）；擔保池 92% 後收</td><td><span class="tag t-ok">✅ 安全（距線 2.99pp）</span></td><td class="small">追繳時不可賣擔保品 → 緩衝只能靠現金</td></tr><tr><td>還本安全閥</td><td class="small">質押月付／扣款日／還本方式未經銀行書面證實（PEND-20261005）</td><td><span class="tag t-bad">⚠️ 未通過 → 台股分批維持凍結</span></td><td class="small">月盈餘 66,758 不得當成部署依據，也不得宣告貸款安全</td></tr></tbody></table>
+<div class="callout ok"><b>✅ 安全：</b>現金底線 700,000（桶內 1,170,934、乾粉 470,934）、債券凍結已依規則執行、階段管制生效、戰術偏離 3pp 未超容忍、可信度 9 分、上週戰術目標無變動、高科技 23.2% 未觸 30% 紅線、質押 LTV 50.01% 距線 2.99pp。</div>
+<div class="callout warn"><b>⚠️ 待處理：</b>①美股超配 +6.6pp（受紅線凍結，解凍後須優先收斂）②美元曝險 68% 黃色觀察（advisory_only，不轉為減碼指令）③還本安全閥未通過 → 台股分批維持凍結 ④債券桶目標／下限設定衝突待裁決。<b>現金餘裕 470,934 不是待處理項目</b>（現金 ≥70 萬即達標）。</div>
+
+<hr>
+<h2>🧠 AI 獲利輔助判斷（本週輸出）</h2>
+<div class="grid">
+<div class="kpi"><div class="k">真假輪動過濾</div><div class="v">9 / 10</div><div class="small">真資金遷移未達「連續 3 日」門檻 → 僅承認方向、不承認強度</div></div>
+<div class="kpi"><div class="k">動態戰術權重</div><div class="v">0 元</div><div class="small">台股 ≤5 萬／美股 ≤20 萬，惟紅線凍結 → 可執行 0</div></div>
+<div class="kpi"><div class="k">板塊 ETF 精選</div><div class="v">不啟動</div><div class="small">無 🟡／🔴 有效流入板塊（高息法人仍流出）→ 不啟動承接順序</div></div>
+<div class="kpi"><div class="k">拐點前置預警</div><div class="v">🔴 台股市值型</div><div class="small">RS 走弱＋科技法人連流出＋費半累積 −7.14%</div></div>
+</div>
+<div class="callout bad"><b>④ 拐點前置風險預警（紅色）：</b>0050 週線 −5.05%、2330 −4.72%、收在週內低點附近；科技法人 −352.0M、市值型 −102.4M；費半五個交易日 −7.14% → <b>提前 1–2 週警示</b>：解凍後<b>不得</b>以「跌深」為由承接市值型，須等外資連 2 日買超且 US30Y &lt;5.30%；美股科技減碼則不受此警示延遲（警示只影響加碼節奏，不影響減碼方向）。</div>
+<div class="callout info"><b>輸出規範：</b>所有建議已綁定輪動可信度（9 分 → 完整執行，惟紅線位階更高）；優先級＝國泰核貸授信管制 ＞ 5.30% 債券凍結紅線 ＞ 戰術浮動邊界 ＞ AI 順勢建議。本頁僅為分析，不含任何自動下單或全權代操指令。</div>
+
+<footer>
+口徑來源：rebalance_eval_2026-10-18（07:00 管線）｜五桶真值：snapshot.json（2026-10-18 15:26）｜利率：us30y_state.json（讀值日 2026-10-15）、radar_state.json（10-17）｜板塊代理：Yahoo Finance 10 檔（10/12–10/16 收盤）｜除息：ETF 除息行事曆（2026-10-05 查核版）＋dividend_events.json｜里程碑：cathay_refinance_note
+<br>龍九控股 動態自我檢討週報（戰術版）｜2026-10-18 19:00 台北｜本頁為分析與建議，所有操作需人工確認後執行。
+</footer>
+</div></body></html>
