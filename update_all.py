@@ -179,6 +179,14 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
                     continue
                 _fb_flat[_sn] = _sv
         elif isinstance(_fval, (int, float)):
+            # 2026-10-18（使用者核准施工；台股桶對帳工單）：頂層「通路小計」列
+            #   （例：一般申購_平台小計 389,525）是平台畫面的彙總，不是持股；舊寫法只跳過
+            #   鍵名恰為「小計」者 → 小計被當成一檔基金走 else 分支進台股桶，同時其成分
+            #   明細也在 → 基金分類合計超出 fund_market_value 388,937（>0.1%）→ 觸發
+            #   全基金等比縮放 ×0.9703，五桶一起被扭曲（台股被虛增 360,330）。
+            #   修法：鍵名含「小計」一律視為彙總列，不進展平表（不改任何真值欄位）。
+            if "小計" in str(_fn):
+                continue
             _fb_flat[_fn] = _fval
     for _fn, _fval in _fb_flat.items():
         # 2026-08-21 成分穿透：富達（股80.75/債14.03/現5.21，月報 2026/6/30）與
@@ -363,7 +371,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             "alert": _alert,
             "_meta": {"ins_eq": ins_eq, "ins_bonds": ins_bonds, "ins_def_eq": _ins_def_eq,
                       "ins_tw_eq": _ins_tw_eq,
-                      "fund_us": _fund_us, "fund_def": _fund_def,
+                      "fund_us": _fund_us, "fund_def": _fund_def, "fund_tw": round(_fund_tw),
                       "sec_tw": sec_tw, "sec_us": sec_us, "sec_def": sec_def, "sec_bond": sec_bond,
                       "us_tech": round(us_tech), "us_non_tech": round(us_non_tech),
                       # 2026-10-02：餘數法 − 可動用真值的差額（在途／未對帳零錢）。

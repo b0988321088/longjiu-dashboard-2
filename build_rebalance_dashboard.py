@@ -704,8 +704,9 @@ def main():
             _gics_png = BASE / f"industry_penetration_{TODAY}.png"
             _gics_img = ""
             if _gics_png.exists():
-                import base64
-                _gics_img = (f"<img src='data:image/png;base64,{base64.b64encode(_gics_png.read_bytes()).decode('ascii')}' "
+                # 2026-10-18：改外連同名 PNG（不再 base64 內嵌）→ 報表 96KB→24KB，
+                #   真 CIO 審查不再把 base64 判為 corrupted binary（同 run_daily 兩處）。
+                _gics_img = (f"<img src='{_gics_png.name}' alt='GICS 產業穿透圖' "
                              f"style='width:100%;border-radius:8px;margin-top:8px'/>")
             gics_html = f"""
   <div class="card" style="margin-top:14px;border-left:4px solid #3b82f6">

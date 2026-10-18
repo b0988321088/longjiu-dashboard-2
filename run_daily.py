@@ -969,7 +969,11 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
             _g_img = ""
             _g_png = Path(__file__).resolve().parent / f"industry_penetration_{date.today().isoformat()}.png"  # 用真實今天（TODAY=snapshot 日期 8/21 會找不到 8/22 圖）
             if _g_png.exists():
-                _g_img = (f"<img src='data:image/png;base64,{base64.b64encode(_g_png.read_bytes()).decode('ascii')}' "
+                # 2026-10-18（使用者核准施工後續）：改外連同名 PNG，不再 base64 內嵌。
+                #   理由：內嵌使日報 442KB（其中 base64 365KB），真 CIO 審查把 base64 判為
+                #   「corrupted binary data」→ 整顆 commit 被 REJECT 而無法發布；且頁面載入變慢。
+                #   PNG 本身已在版控與 Pages 內（同目錄），外連不減損任何內容。
+                _g_img = (f"<img src='{_g_png.name}' alt='GICS 產業穿透圖' "
                           f"style='width:100%;border-radius:8px;margin-top:6px'/>")
             _re_x = _gics_x.get("實體不動產_另計", {})
             _re_txt = (f"🏠 實體不動產另計：{_re_x.get('金額',0):,}（佔含不動產總資產 {_re_x.get('佔比_含不動產',0):.0f}%）"
@@ -1062,11 +1066,12 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     try:
         import risk_factor_penetration as _rfp
         _png = _rfp.build_chart()
-        _b64 = base64.b64encode(_png.read_bytes()).decode("ascii")
+        # 2026-10-18（使用者核准施工後續）：同 GICS 圖，改外連同名 PNG（不再 base64 內嵌）
+        #   → 日報縮到約 77KB，真 CIO 審查不再把 base64 判為 corrupted binary。
         _chart_html = (
             "<div class='callout' style='margin-top:10px;border-left:3px solid #22c55e'>"
             f"<strong>🖼 底層風險因子穿透對照圖（{TODAY}，每日更新）</strong><br>"
-            f"<img src='data:image/png;base64,{_b64}' style='width:100%;border-radius:8px'/>"
+            f"<img src='{_png.name}' alt='風險因子穿透對照圖' style='width:100%;border-radius:8px'/>"
             f"<br/><a href='https://b0988321088.github.io/longjiu-dashboard-2/rebalance_dashboard_{TODAY}.html' "
             f"style='color:#22c55e;font-size:12px'>🔄 開啟每日再平衡儀表板 →</a>"
             "</div>"

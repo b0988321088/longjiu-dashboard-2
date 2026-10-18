@@ -42,6 +42,7 @@ INC-294（2026-10-09 使用者裁決 A 案）：緊急應變連結原多綴一�
 from __future__ import annotations
 
 import json
+import re as _re_mod
 from datetime import date as _date, timedelta as _td
 from pathlib import Path
 
@@ -337,6 +338,38 @@ def build_emergency_block(base, snapshot, today: str | None = None) -> str:
         _r = _refresh(_r, snapshot or {})
     except Exception as _e_r:
         print(f"[WARN] P0-1 緊急應變內文舊值覆蓋失敗：{_e_r}")
+    # 2026-10-18（真 CIO 審查 blocking）：內文的「五桶現況／現況缺口」是生成當時的凍結讀值
+    #   （例：10-16 原文寫台股 8.8%、美股超標 8.1pp／現況 38.1%），卻緊接在今日桶位表下方
+    #   → 同一頁兩個數字互相矛盾。改為以 snapshot.penetration 現值就地改寫這兩句
+    #   （其餘段落一字不動），並標明為今日重算值。refresh_stale_amounts 只覆蓋金額、不含比例。
+    try:
+        _pen = (snapshot or {}).get("penetration") or {}
+        _actp, _gapp = _pen.get("actual_pct") or {}, _pen.get("gaps") or {}
+        _amtp = _pen.get("actual_twd") or {}
+        if _actp and "五桶現況" in _r:
+            _a = {k: float(v) for k, v in _actp.items()}
+            _g = {k: float(v) for k, v in _gapp.items()}
+            _am = {k: int(v) for k, v in _amtp.items() if isinstance(v, (int, float))}
+            _tot_live = int((snapshot or {}).get("total_assets") or 0)
+            _date_live = (snapshot or {}).get("date")
+            _live = (
+                f"五桶現況（總資產 {_tot_live:,}，現讀 snapshot.penetration，{_date_live}）："
+                f"台股市值型成長 {_a.get('台股市值型成長', 0):.1f}%（{_am.get('台股市值型成長', 0):,}）、"
+                f"美股市值型成長 {_a.get('美股市值型成長', 0):.1f}%（{_am.get('美股市值型成長', 0):,}）、"
+                f"防守型配息 {_a.get('防守型配息', 0):.1f}%（{_am.get('防守型配息', 0):,}）、"
+                f"債券 {_a.get('債券', 0):.1f}%（{_am.get('債券', 0):,}）、"
+                f"現金／安全網 {_a.get('現金/安全網', 0):.1f}%（{_am.get('現金/安全網', 0):,}）。<br>\n"
+                f"現況缺口（snapshot.penetration.gaps，今日重算）："
+                f"台股 {_g.get('台股市值型成長', 0):+.1f}pp、美股 {_g.get('美股市值型成長', 0):+.1f}pp、"
+                f"防守型配息 {_g.get('防守型配息', 0):+.1f}pp、債券 {_g.get('債券', 0):+.1f}pp"
+                f"（正值＝超標、負值＝不足；與上方表格同源、同一次計算）。<br>\n"
+                "引擎口徑"
+            )
+            _r2 = _re_mod.sub(r"五桶現況.*?引擎口徑", _live, _r, count=1, flags=_re_mod.S)
+            if _r2 != _r:
+                _r = _r2
+    except Exception as _e_s4:
+        print(f"[WARN] 緊急應變第四章桶位改寫失敗（保留原文）：{_e_s4}")
     _gen = _d.get("generated_at", "") or ""
     _hour = int(_gen[11:13]) if len(_gen) >= 13 and _gen[11:13].isdigit() else 0
     _src = str(_d.get("source", "") or "")

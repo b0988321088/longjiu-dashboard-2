@@ -263,15 +263,23 @@ def _layers():
                 return _nous
             out.append((f"CIO-nous({model})", _mk(model)))
 
-    # Gemini 候選層（預設關閉；語意見檔頭 GEMINI_ENV）。憑證不可用 → 不列入（only 模式則空鏈）。
+    # Gemini 候選層（語意見檔頭 GEMINI_ENV）。
+    #   2026-10-18 使用者裁決：審查主力改為 Google（Gemini）→ 新增 primary 模式＝排在最前，
+    #   Pollinations／nous 降為備援（仍 fail-closed：REJECT 不換層、不重抽求 APPROVE）。
+    #   LONGJIU_REVIEW_GEMINI=1      → 追加為最後的備援層（原行為）
+    #   LONGJIU_REVIEW_GEMINI=only   → 只走此層
+    #   LONGJIU_REVIEW_GEMINI=primary→ 排最前（主力），其餘層保留為備援
     _mode = (_read_hermes_env(GEMINI_ENV) or os.environ.get(GEMINI_ENV) or "").strip().lower()
-    if _mode in ("1", "true", "yes", "on", "only"):
+    if _mode in ("1", "true", "yes", "on", "only", "primary", "main"):
         _gc = _gemini_credentials()
         _label = f"CIO-Gemini({GEMINI_MODEL})"
         if _mode == "only":
             return [(_label, _mk_gemini(*_gc))] if _gc else []
         if _gc:
-            out.append((_label, _mk_gemini(*_gc)))
+            if _mode in ("primary", "main"):
+                out.insert(0, (_label, _mk_gemini(*_gc)))
+            else:
+                out.append((_label, _mk_gemini(*_gc)))
     return out
 
 

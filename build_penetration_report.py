@@ -97,6 +97,16 @@ snap["penetration"] = {
     # 2026-10-16 INC-292（卡 #15）：待確認應收（暫時性占用；款項已離開現金帳戶、尚未回到
     # 任何科目）亦為分母組成 → 顯式揭露，供逐項對帳（不與 cash_in_transit 混用）。
     "pending_receivables": round(_pending_recv),
+    # 2026-10-18（使用者核准施工）：桶位「組成拆解」持久化 —— 供 tools/check_bucket_attribution.py
+    #   做逐日歸因（單桶大額異動時，必須能說出是證券／平台基金／保單哪一塊動的）。
+    #   只新增鍵、不改 actual_twd／actual_pct 形狀，舊消費端不受影響。
+    "components_twd": {
+        "台股市值型成長": {
+            "證券": round(float((p.get("_meta") or {}).get("sec_tw") or 0)),
+            "平台基金": round(float((p.get("_meta") or {}).get("fund_tw") or 0)),
+            "保單穿透": round(float((p.get("_meta") or {}).get("ins_tw_eq") or 0)),
+        },
+    },
     "alert": p["alert"],
 }
 # 每次管線執行滾動頂層日期（儀表板系統時間/記憶同步統一真值）
@@ -192,6 +202,25 @@ if _other_h:
       f"<br><span style='color:#94a3b8;font-size:12px'>修法：在 build_penetration_report.py 的 "
       f"cat_ticker() 補分類；未補前這些部位不計入桶佔比（穿透分母仍含）</span></div>")
 w(f"<div class='callout'>🔬 <b>美股科技拆解（美股科技紅線口徑）：</b>科技股 {us_tech_v:,}（{round(us_tech_v/total*100,1)}%，目標 ≤{tech_target}%，缺口 {round(us_tech_v/total*100 - tech_target,1):+.1f}pp）｜非科技 {us_nt_v:,}（{round(us_nt_v/total*100,1)}%）｜合計 {us_v:,}（{round(us_v/total*100,1)}%）<br><span style='color:#94a3b8;font-size:12px'>⚠️ 此為「美股桶科技紅線」口徑；另有「產業穿透」口徑（GICS 全資產科技產業佔比，見日報產業區塊），兩者不同勿混淆。科技比估計：貝萊德科技100% / 009824 100% / 半導體90% / 富達35% / 安聯AI 35% / 聯博美國成長40% / 安聯收益16% / 00646·009823 32% / 摩根·PIMCO 10% / M&G 7% / 聯博全球多元收益 2.5%</span></div>")
+
+# 2026-10-18（使用者核准施工）：台股桶「組成拆解」。
+#   為什麼要有：桶值＝證券＋平台基金＋保單穿透，但本報表原本只列證券明細 → 2026-10-16
+#   保單新增「元大台灣卓越50」1,009,467 時，讀者只看到台股桶跳升 +966,757、無從對帳，
+#   週報因此把它判成「與證券市值方向相反」的資料異常。
+#   本區塊逐項列出三成分，並明列與桶值的差額（正常應為 0～數十元的進位差）。
+#   資料來源：calc_penetration 回傳的 _meta（sec_tw／fund_tw／ins_tw_eq），非另行估算。
+_tw_m = (p.get("_meta") or {})
+_comp_sec = round(float(_tw_m.get("sec_tw") or 0))
+_comp_fund = round(float(_tw_m.get("fund_tw") or 0))
+_comp_ins = round(float(_tw_m.get("ins_tw_eq") or 0))
+_comp_sum = _comp_sec + _comp_fund + _comp_ins
+_comp_diff = int(tw_v) - _comp_sum
+w(f"<div class='callout' style='border-left:3px solid #3b82f6'>🧩 <b>台股桶組成拆解（可逐項對帳）：</b>"
+  f"證券 {_comp_sec:,} ＋ 平台基金 {_comp_fund:,} ＋ 保單穿透 {_comp_ins:,} ＝ {_comp_sum:,}"
+  f"｜桶值 {int(tw_v):,}（差額 {_comp_diff:+,}，進位差）"
+  f"<br><span style='color:#94a3b8;font-size:12px'>口徑：平台基金＝鉅亨／自由Pay／國泰直購中歸台股者（"
+  f"通路「小計」彙總列不計入，避免與明細重複）；保單穿透＝保單內台股基金之權益部位（依官方成分拆解）。"
+  f"三者來源不同，買賣證券不會等幅改變桶值。</span></div>")
 
 # 配息資產合併口徑（2026-08-21 使用者裁示：基金也有配息，防守應合併計算 → 承接凍結）
 # INC-201：金額改由 sot_targets.defensive_caliber() 從「組成」加總派生（stored 合計會過期）
