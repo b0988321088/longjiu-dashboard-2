@@ -17,9 +17,10 @@ R = Path.home() / "Desktop" / "longjiu_system"
 H = Path(os.environ["LOCALAPPDATA"]) / "hermes"
 ok = lambda b: "✅" if b else "❌"
 fail = []
-# 預期由其他排程每日更新的狀態檔（髒了不算 fail）：21:40 收工登錄會改 .cache_audit_state.json
+# 預期由其他排程每日更新的狀態檔（髒了不算 fail）
+# 2026-10-19（使用者裁決 P2）：data/.cache_audit_state.json 已移出 repo（state_store 單一位置）
+# → 結構上不會再出現在 dirty 清單；原本的 benign 條目一併移除，不留無效遮蔽（本輪未新增任何遮蔽）。
 BENIGN_DIRTY = {
-    "data/.cache_audit_state.json",
     # 2026-09-30 CIO 審查 minor-2：dragon_assets.db 由管線每日寫入（資料通道），
     # 夜間寫庫晚於當晚 commit 時仍會判定「已追蹤未提交」→ 每晚誤報紅燈。
     # 列為 benign：仍會顯示，但不列入 fail（DB 為資料本體，非程式碼）。
@@ -44,7 +45,8 @@ BENIGN_DIRTY = {
     # → alerts_morning.py → alerts.py:68 MODES['morning']={'health_alert_check.py'}
     # → 部署版 health_alert_check.py:25 state_p=REPO/"health_alert_state.json"、:49 write_text；
     #   repo 根無此檔，alerts.py:20 _resolve 會回退到部署版）。
-    # 故比照性質同質的 data/.cache_audit_state.json 列 benign 執行期狀態（仍會顯示、不列 fail）；
+    # 故比照同質的執行期狀態列 benign（仍會顯示、不列 fail）；
+    # 註：同類的 data/.cache_audit_state.json 已於 2026-10-19 移出 repo，不再需要此條目。
     # 不列 OWNED_PENDING（那是「產物」語意）。
     "health_alert_state.json",
     # 2026-10-11（22:40 稽核連續誤報修復）：記憶歸檔的「當日摘要」為每日覆寫的執行期
@@ -379,7 +381,12 @@ for j in jobs:
 
 # ── 7) 快取稽核 / watchdog 檔案 ────────────────────────────
 print("=== 7) 監控與稽核檔 ===")
-for p in [R / "data" / ".cache_audit.log", R / "data" / ".cache_audit_state.json",
+try:
+    import state_store as _ss
+    _state_audit = _ss.STATE_DIR / "cache_audit_state.json"
+except Exception:  # noqa: BLE001
+    _state_audit = R / "data" / ".cache_audit_state.json"   # 舊位置（僅顯示用）
+for p in [R / "data" / ".cache_audit.log", _state_audit,
           H / "scripts" / "session_bloat_watch.py"]:
     print(f"  {ok(p.exists())} {p.name}")
 print(f"  .cache_audit.log 末行: {(R/'data'/'.cache_audit.log').read_text(encoding='utf-8').strip().splitlines()[-1] if (R/'data'/'.cache_audit.log').exists() else '-'}")
