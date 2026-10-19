@@ -3,8 +3,8 @@
  "version": "v5.0.10-true-value-correction",
  "date": "2026-10-19",
  "total_assets": 27047078,
- "total_liabilities": 30984168,
- "net_worth": -3937090,
+ "total_liabilities": 30987736,
+ "net_worth": -3940658,
  "debt_ratio": 50.7,
  "monthly_income": 225968,
  "monthly_expense": 159210,
@@ -110,7 +110,7 @@
  "bank_assets_memo": "Moneybook 9/8 匯出（8/9-9/8）；國泰 20,776 誤列排除（9/2 判定一致）；9/4 薪資 42,560、9/8 第一金配息 13,005 入帳",
  "monthly_expense_mb": 199186,
  "monthly_expense_mb_note": "MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償",
- "credit_card_pending": 39739,
+ "credit_card_pending": 43307,
  "mb_source": "Moneybook_明細_20260718.zip",
  "monthly_expense_snapshot_original": 141958,
  "securities_total": 2782720,
@@ -1104,11 +1104,11 @@
   "note_20261016": "保單帳戶價值 1,878,664（10/16 App 我的帳戶表現頁）；本欄為 penetration 報告顯示用（build_penetration_report.py:444 優先讀此鍵）"
  },
  "credit_card": {
-  "玉山Unicard": 7593,
-  "台北富邦": -24425,
+  "玉山Unicard": 6914,
+  "台北富邦": -24468,
   "永豐": -237,
-  "台新Richart": -7536,
-  "國泰CUBE": -7541
+  "台新Richart": -8859,
+  "國泰CUBE": -9743
  },
  "mortgage_balance": 25044429,
  "updated_by": "moneybook_20260723",
@@ -1129,7 +1129,7 @@
  "financial_mortgage_paid": 3796447,
  "policy_loan": 0,
  "pledge_loan": 0,
- "cc_liability": 39739,
+ "cc_liability": 43307,
  "sinopac_savings": 10919,
  "sinopac_dawho": 235809,
  "etf_dividend_schedule": {
@@ -4266,7 +4266,7 @@
  },
  "cash_source": {
   "date": "2026-10-19",
-  "note": "Moneybook 帳戶 CSV 匯入（cash_detail）；2026-10-19 匯出：台幣現金與前次一致（國泰活期重複列 20,776 依既定規則排除、Unicard 溢繳 6,914 不計入現金）；信用卡當期餘額待下一次四源同步入帳"
+  "note": "Moneybook 帳戶 CSV 匯入（cash_detail）；2026-10-19 匯出（國泰活期重複列 20,776 依既定規則排除，Unicard 溢繳 6,914 不計入現金）"
  },
  "fed_hike_monitor_0901": {
   "決策": "✅ 9/1 使用者確認 + 新聞證據：Fed 升息預期升溫 → 納入部署評估（Warsh 鷹派主席、9月 FOMC live）",
@@ -5155,9 +5155,9 @@
   "券商質押利率": 0.0392,
   "基金質押": 5900000,
   "基金質押利率": 0.0265,
-  "信用卡_當期未繳_全額扣繳": 39739,
+  "信用卡_當期未繳_全額扣繳": 43307,
   "個人借款_借出款_列應收款非負債": {},
-  "total": 30984168,
+  "total": 30987736,
   "note": "2026-09-13 建立：負債改由明細推導（原為手寫值，曾出現 78,099 不明殘差）；借給女友的錢＝應收款（見 snapshot.receivables），不計入負債；2026-09-29 起「基金質押」（fund_pledge_loan，國泰 590萬@2.65%）與「券商質押」分列不同利率欄，勿合併計算月息"
  },
  "receivables": {
