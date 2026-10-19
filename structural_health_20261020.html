@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>財務結構健檢 · 2026-10-20</title>
+<style>
+
+:root{--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--good:#059669;--warn:#d97706;--bad:#dc2626;--blue:#2563eb}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#eef2f7;color:var(--ink);font-size:16px;line-height:1.6;
+ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;
+ -webkit-text-size-adjust:100%}
+.wrap{max-width:920px;margin:0 auto;padding:16px 14px 56px}
+.hero{background:linear-gradient(140deg,#0f172a 0%,#1e293b 48%,#0f766e 135%);color:#fff;
+ border-radius:20px;padding:22px 20px;box-shadow:0 14px 34px -18px rgba(15,23,42,.65)}
+.hero-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.hero h1{font-size:21px;font-weight:900;letter-spacing:.4px}
+.badge{font-size:11px;font-weight:800;background:rgba(45,212,191,.16);color:#5eead4;
+ border:1px solid rgba(45,212,191,.35);border-radius:999px;padding:3px 10px;white-space:nowrap}
+.hero .sub{font-size:11.5px;color:#94a3b8;margin-top:8px;line-height:1.6}
+.verdict{margin-top:14px;background:rgba(255,255,255,.07);border-left:3px solid #2dd4bf;
+ border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.85;color:#e2e8f0}
+.verdict b{color:#fff}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-top:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 14px;
+ box-shadow:0 3px 10px -8px rgba(15,23,42,.4)}
+.kpi .lbl{font-size:11.5px;font-weight:800;color:var(--muted)}
+.kpi .val{font-size:22px;font-weight:900;letter-spacing:-.6px;margin-top:3px;font-variant-numeric:tabular-nums}
+.kpi .val.good{color:var(--good)}.kpi .val.warn{color:var(--warn)}.kpi .val.bad{color:var(--bad)}
+.kpi .note{font-size:10.5px;color:#94a3b8;margin-top:2px}
+section{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 15px;
+ margin-top:13px;box-shadow:0 3px 12px -10px rgba(15,23,42,.5)}
+h2{font-size:16px;font-weight:900;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+h2 .hint{font-size:10.5px;font-weight:700;color:#94a3b8}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+th{font-size:11px;font-weight:800;color:var(--muted);text-align:right;padding:7px 5px;
+ border-bottom:2px solid var(--line);white-space:nowrap}
+th:first-child{text-align:left}
+td{padding:9px 5px;border-bottom:1px solid #f1f5f9;text-align:right;
+ font-variant-numeric:tabular-nums;vertical-align:top}
+td:first-child{text-align:left}
+tr:last-child td{border-bottom:none}
+tr.grp td{background:#f8fafc;font-size:11px;font-weight:900;color:#475569;
+ letter-spacing:.6px;padding:5px 5px;border-bottom:1px solid var(--line)}
+td.nm{font-weight:800;line-height:1.45}
+td.nm .nt{display:block;font-size:10.5px;font-weight:600;color:#94a3b8;margin-top:1px}
+td.nm .lite{display:block;font-size:10.5px;font-weight:600;color:#94a3b8;margin-top:1px}
+td.old{color:#94a3b8}
+td.cur{font-weight:900;color:var(--ink);white-space:nowrap}
+td.cur .was{display:block;font-size:10.5px;font-weight:700;color:#9aa8bb;margin-top:1px;white-space:nowrap}
+td.dc{white-space:nowrap;width:1%}
+.d{font-weight:900;font-size:12.5px;white-space:nowrap}
+.d.good{color:var(--good)}.d.bad{color:var(--bad)}.d.flat{color:#64748b}.d.na{color:#cbd5e1;font-weight:700;font-size:11.5px}
+td.st{white-space:nowrap;font-weight:800;font-size:12px}
+.fbs{display:grid;gap:9px;margin-top:10px}
+.fb{border:1px solid var(--line);border-left-width:4px;border-radius:12px;padding:11px 13px;background:#f8fafc}
+.fb.r{border-left-color:var(--bad);background:#fef2f2}
+.fb.y{border-left-color:var(--warn);background:#fffbeb}
+.fb.g{border-left-color:var(--good);background:#f0fdf4}
+.fb-t{font-size:13.5px;font-weight:900}
+.fb-d{font-size:11.5px;color:#475569;line-height:1.7;margin-top:3px}
+.foot-note{font-size:11.5px;color:var(--muted);line-height:1.75;margin-top:10px;
+ border-top:1px dashed #e2e8f0;padding-top:8px}
+.foot-note b{color:var(--ink)}
+.bars{margin-top:10px}
+.bl{margin-bottom:13px}
+.bl-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px;flex-wrap:wrap}
+.bl-n{font-weight:800}
+.bl-v{font-variant-numeric:tabular-nums;color:#475569;font-size:12px}
+.bl-v em{color:#94a3b8;font-style:normal;font-size:11px}
+.bl-v b{font-weight:900;margin-left:2px}
+.bl-v b.good{color:var(--good)}.bl-v b.warn{color:var(--warn)}.bl-v b.bad{color:var(--bad)}
+.bar{position:relative;height:9px;background:#f1f5f9;border-radius:999px;margin-top:6px;overflow:hidden}
+.bar .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#3b82f6,#2563eb)}
+.bar .fill.over{background:linear-gradient(90deg,#f59e0b,#d97706)}
+.bar .mk{position:absolute;top:-3px;width:2px;height:15px;background:#0f172a;border-radius:2px;opacity:.55}
+.alarms{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px}
+.alarm{border-radius:13px;padding:12px 13px;border:1px solid var(--line);background:#f8fafc;
+ border-left-width:4px}
+.alarm.ok{border-left-color:var(--good);background:#f0fdf4}
+.alarm.warn{border-left-color:var(--warn);background:#fffbeb}
+.alarm.bad{border-left-color:var(--bad);background:#fef2f2}
+.a-t{font-size:11px;font-weight:900;color:var(--muted);letter-spacing:.3px}
+.a-v{font-size:20px;font-weight:900;letter-spacing:-.5px;margin-top:2px;font-variant-numeric:tabular-nums}
+.alarm.ok .a-v{color:var(--good)}.alarm.warn .a-v{color:var(--warn)}.alarm.bad .a-v{color:var(--bad)}
+.a-d{font-size:10.5px;color:#64748b;line-height:1.6;margin-top:4px}
+footer{margin-top:16px;padding:14px 15px;background:#0f172a;color:#cbd5e1;border-radius:14px;
+ font-size:11.5px;line-height:1.85}
+footer b{color:#fff}
+@media (max-width:640px){
+ body{font-size:15px}
+ .hero h1{font-size:19px}
+ table{font-size:12.5px}
+ td{padding:8px 4px}th{padding:6px 4px;font-size:10.5px}
+ .kpi .val{font-size:20px}
+ .a-v{font-size:18px}
+}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="hero-top">
+      <h1>🏥 財務結構健檢</h1>
+      <span class="badge">資料快照 2026-10-20</span>
+    </div>
+    <p class="sub">對照基準：2026-07-20（調整前）→ 今日 · 建議檢核頻率：每週六（再平衡評估同日）或每月真值日</p>
+    <div class="verdict"><b>結構改善 7 項、惡化 1 項（共 11 項，其餘持平或無同期基準）。</b><br>三個月的主軸是「可控的事做好」—— 把 4.0%／3.92% 的高息負債清零，換成加權 2.57% 的低息結構，資產配置同時向目標收斂；代價是流動性變薄（可動用現金 388.5萬 → 117.1萬）與新槓桿的還本不確定性。<br>唯一惡化項：<b>可動用現金</b>。<br><b>結論：結構比三個月前穩定，但穩定 ≠ 安全</b> —— 目前最該處理的是「質押還本方式取得銀行書面」與「美元曝險 69.1% 的導流」。</div>
+  </div>
+
+  <div class="kpis"><div class="kpi"><div class="lbl">加權負債成本</div><div class="val good">2.57%</div><div class="note">7/20：2.91%</div></div><div class="kpi"><div class="lbl">高息負債</div><div class="val good">0</div><div class="note">保單 4.0%＋券商 3.92%（已清償 500萬）</div></div><div class="kpi"><div class="lbl">被動收入覆蓋</div><div class="val good">113.1%</div><div class="note">常態 161.5%（月支出 159,210）</div></div><div class="kpi"><div class="lbl">可動用現金</div><div class="val warn">117.1萬</div><div class="note">乾粉 47.1萬（底線 70.0萬）</div></div></div>
+
+  <section>
+    <h2>① 結構指標對照<span class="hint">7/20 → 今日 · 方向以「越好越好」判定</span></h2>
+    <table>
+      <thead><tr><th>指標</th><th>今日 ／ 對照</th><th>變化</th></tr></thead>
+      <tbody><tr class="grp"><td colspan="3">成本</td></tr>
+<tr><td class="nm">加權負債成本<span class="nt">7/20 為 2.91%（含保單 4.0%、券商 3.92%）</span></td><td class="cur">2.6%<span class="was">2026-07-20 2.9%</span></td><td class="dc"><span class="d good">▼ -0.3pp</span></td></tr>
+<tr><td class="nm">高息負債（≥3.9%）<span class="nt">保單借貸＋券商質押；現已全數清償</span></td><td class="cur">0<span class="was">2026-07-20 5,000,000</span></td><td class="dc"><span class="d good">▼ -5,000,000</span></td></tr>
+<tr><td class="nm">月利息支出<span class="nt">保單息＋券商息＋基金質押息（房貸另計於月支出）</span></td><td class="cur">13,029<span class="was">2026-07-20 16,600</span></td><td class="dc"><span class="d good">▼ -3,571</span></td></tr>
+<tr><td class="nm">房貸月付<span class="nt">現值含國泰大義街 3 年寬限期（只繳息＝本金延後，非全為降息效果）</span></td><td class="cur">91,735<span class="was">2026-07-20 99,458</span></td><td class="dc"><span class="d good">▼ -7,723</span></td></tr>
+<tr class="grp"><td colspan="3">配置</td></tr>
+<tr><td class="nm">美股桶<span class="nt">目標 30%（7 月口徑目標 40%）</span></td><td class="cur">37.2%<span class="was">2026-07-20 46.1%</span></td><td class="dc"><span class="d good">▼ -8.9pp</span></td></tr>
+<tr><td class="nm">台股桶<span class="nt">目標 10%（7 月口徑目標 40%）</span></td><td class="cur">11.1%<span class="was">2026-07-20 7.2%</span></td><td class="dc"><span class="d good">▲ +3.9pp</span></td></tr>
+<tr><td class="nm">科技曝險<span class="nt">單桶硬上限 25%、目標 ≤15%</span></td><td class="cur">14.2%<span class="was">2026-07-20 —</span></td><td class="dc"><span class="d na">無同期基準</span></td></tr>
+<tr class="grp"><td colspan="3">現金流</td></tr>
+<tr><td class="nm">被動收入覆蓋（保守）<span class="nt">保守配息 180,100＋房租 80,100 ÷ 月支出 159,210</span></td><td class="cur">113.1%<span class="was">2026-07-20 107.7%</span></td><td class="dc"><span class="d good">▲ +5.4pp</span></td></tr>
+<tr class="grp"><td colspan="3">緩衝</td></tr>
+<tr><td class="nm">可動用現金<span class="nt">總現金 2,071,260＝可動用 1,171,260＋指定款 900,000</span></td><td class="cur">1,171,260<span class="was">2026-07-20 3,884,620</span></td><td class="dc"><span class="d bad">▼ -2,713,360</span></td></tr>
+<tr class="grp"><td colspan="3">風險</td></tr>
+<tr><td class="nm">美元曝險<span class="nt">門檻 目標 60／黃 65／紅 70</span></td><td class="cur">69.1%<span class="was">2026-07-20 —</span></td><td class="dc"><span class="d na">無同期基準</span></td></tr>
+<tr><td class="nm">質押 LTV<span class="nt">政策停止線 53.0%、追繳 70.0%（內部判定，非銀行追繳線）</span></td><td class="cur">49.5%<span class="was">2026-07-20 —</span></td><td class="dc"><span class="d na">無同期基準</span></td></tr></tbody>
+    </table>
+    <p class="foot-note">※ 7/20 基準有多處口徑尚未建檔（國泰直購基金、大義街轉貸、美元曝險、質押），標「—」者代表無同期可比基準，不代表示當時為零；負值變化代表下降。</p>
+  </section>
+
+  <section>
+    <h2>② 負債結構明細<span class="hint">總負債 30,987,736</span></h2>
+    <table>
+      <thead><tr><th>項目</th><th>餘額</th><th>利率</th><th>月付／月息</th></tr></thead>
+      <tbody><tr><td class="nm">永豐房貸（洲際W，3 筆）<span class=lite>每月 27 扣款</span></td><td class="cur">13,044,429</td><td>2.50%</td><td>65,735</td></tr>
+<tr><td class="nm">國泰房貸（大義街）<span class=lite>3 年寬限期・只繳息</span></td><td class="cur">12,000,000</td><td>2.60%</td><td>26,000</td></tr>
+<tr><td class="nm">國泰基金質押<span class=lite>擔保池＝國泰直購基金</span></td><td class="cur">5,900,000</td><td>2.65%</td><td>13,029</td></tr>
+<tr><td class="nm">信用卡（當期未繳・全額扣繳）</td><td class="cur">43,307</td><td>—</td><td>—</td></tr></tbody>
+    </table>
+    <p class="foot-note">加權平均負債成本 <b>2.57%</b>（房貸＋質押）。房貸月付合計 91,735，其中國泰大義街為 3 年寬限期只繳息。</p>
+  </section>
+
+  <section>
+    <h2>③ 資產配置 vs 目標<span class="hint">偏離 ≤3pp 綠／≤8pp 黃／&gt;8pp 紅</span></h2>
+    <div class="bars"><div class="bl"><div class="bl-top"><span class="bl-n">台股市值型</span><span class="bl-v">11.1% <em>／ 目標 10%</em> <b class="good">+1.1pp</b></span></div><div class="bar"><div class="fill over" style="width:87.0%"></div><span class="mk" style="left:78.3%"></span></div></div><div class="bl"><div class="bl-top"><span class="bl-n">美股市值型</span><span class="bl-v">37.2% <em>／ 目標 30%</em> <b class="warn">+7.2pp</b></span></div><div class="bar"><div class="fill over" style="width:87.0%"></div><span class="mk" style="left:70.1%"></span></div></div><div class="bl"><div class="bl-top"><span class="bl-n">科技曝險</span><span class="bl-v">14.2% <em>／ 目標 15%</em> <b class="good">-0.8pp</b></span></div><div class="bar"><div class="fill" style="width:82.3%"></div><span class="mk" style="left:87.0%"></span></div></div><div class="bl"><div class="bl-top"><span class="bl-n">債券</span><span class="bl-v">25.3% <em>／ 目標 25%</em> <b class="good">+0.3pp</b></span></div><div class="bar"><div class="fill over" style="width:87.0%"></div><span class="mk" style="left:85.9%"></span></div></div><div class="bl"><div class="bl-top"><span class="bl-n">現金／安全網</span><span class="bl-v">4.3% <em>／ 目標 5%</em> <b class="good">-0.7pp</b></span></div><div class="bar"><div class="fill" style="width:74.8%"></div><span class="mk" style="left:87.0%"></span></div></div></div>
+    <p class="foot-note">單桶硬上限：美股 40%／科技 25%／台股 15%；防守合併口徑 65.7%（門檻 60%）。</p>
+  </section>
+
+  <section>
+    <h2>④ 風險哨兵<span class="hint">四條紅線即時狀態</span></h2>
+    <div class="alarms"><div class="alarm warn"><div class="a-t">美元曝險</div><div class="a-v">69.1%</div><div class="a-d">黃色觀察區 65~70%（僅顯示，不觸發調整）</div></div><div class="alarm ok"><div class="a-t">質押 LTV</div><div class="a-v">49.5%</div><div class="a-d">政策停止線 53.0%；池值可跌 -6.6% 觸停止線</div></div><div class="alarm bad"><div class="a-t">還本安全閥</div><div class="a-v">未證實</div><div class="a-d">月盈餘 66,758；轉負情境 4 個（R1 bullet 12 個月、R1 bullet 24 個月…）｜待銀行書面確認還本方式</div></div><div class="alarm ok"><div class="a-t">US30Y 長端利率</div><div class="a-v">5.436%</div><div class="a-d">警戒線 5.3%；連續 35 日在上方（模式 advisory）</div></div></div>
+  </section>
+
+  <section>
+    <h2>⑤ 三階段目標進度</h2>
+    <table>
+      <thead><tr><th>階段</th><th>現況</th><th>狀態</th></tr></thead>
+      <tbody><tr><td class="nm">第一階段<span class="nt">債務優化｜2026–2027</span></td><td class="cur">✅ 高息債清零</td><td class="st">完成</td></tr>
+<tr><td class="nm">第二階段<span class="nt">留職停薪測試｜2027/02</span></td><td class="cur">Gate 未通過（2/3 條件成立）</td><td class="st">待執行</td></tr>
+<tr><td class="nm">第三階段<span class="nt">扣房產後淨資產 ≥ 0｜2029–2030</span></td><td class="cur">金融淨值 -3,940,658（需改善 394.1萬）</td><td class="st">待執行</td></tr></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>⑥ 本次檢核重點<span class="hint">依當前數據動態產生，未卡住則自動消失</span></h2>
+    <div class="fbs"><div class="fb r"><div class="fb-t">還本安全閥未證實</div><div class="fb-d">質押 5,900,000 的還本方式待銀行書面；轉負情境 4 個（R1 bullet 12 個月、R1 bullet 24 個月…）→ 這是留停 Gate 唯一卡點</div></div><div class="fb y"><div class="fb-t">美元曝險導流</div><div class="fb-d">現 69.1%（黃區 65~70%）→ 新增資金往台幣資產；不追高、不賣後收級別（避免摩擦成本）</div></div><div class="fb y"><div class="fb-t">乾粉回補</div><div class="fb-d">現 47.1萬（底線 70.0萬 之上）→ 長期目標 100.0萬；以配息導流回補，不賣資產</div></div><div class="fb y"><div class="fb-t">美股桶收斂</div><div class="fb-d">現 37.2% → 目標 30%；擔保池 92% 後收（CDSC 至 2029）→ 只能停新增＋配息導流</div></div></div>
+  </section>
+
+  <footer>
+    <p>金融資產 27,047,078（證券 2,782,720・基金 12,744,048・保單 9,449,050・現金 2,071,260）</p>
+    <p>金融淨值 <b>-3,940,658</b>（金融資產 − 負債）｜含不動產淨值 <b>30,076,405</b>（不動產 34,017,063）</p>
+    <p>資料源：snapshot.json（現值）＋ structural_health_baseline.json（2026-07-20 定錨）｜產生時間 2026-10-20｜唯一寫入者 build_structural_health.py</p>
+  </footer>
+
+</div>
+</body>
+</html>
