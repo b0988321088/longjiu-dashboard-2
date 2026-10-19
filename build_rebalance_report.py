@@ -6,6 +6,8 @@ import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
 
 # 2026-09-29 CIO minor：勿硬編碼路徑（隔離樹／沙盒執行會被導回正式倉庫）
 REPO = str(Path(__file__).resolve().parent)
+# 2026-10-19：目標配置單一來源（五桶）；DAA 只呈現相對偏移，不另立絕對目標
+from sot_targets import daa_offset_text as _daa_offset_text, bucket_target_text as _bucket_target_text
 today = datetime.date.today().strftime("%Y-%m-%d")
 
 def load():
@@ -118,9 +120,7 @@ def main():
             f"<td class='light'>{'🔴' if v['score'] >= 70 else '🟡' if v['score'] >= 50 else '🟢'}</td></tr>"
             for k, v in reg.items()
         )
-        alloc_txt = " ｜ ".join(
-            f"{r['資產']} {r['燈號偏移後'] if r['燈號偏移後'] is not None else r['建議金額(±)']}" for r in alloc
-        )
+        alloc_txt = _daa_offset_text(alloc, snap)
         tilt_txt = "；".join(f"{t['方向']} {t['偏移']}（{t['金額']:,}元）" for t in tilt)
         em = mr.get("緊急應變")
         em_txt = ""
@@ -130,15 +130,16 @@ def main():
         mr_html = f"""
   <h2>🧭 DAA v3 宏觀情境（{mr.get('燈號','—')}）</h2>
   <table><thead><tr><th>情境</th><th class="num">分數</th><th>燈</th></tr></thead><tbody>{reg_rows}</tbody></table>
-  <div class="note">🎯 <b>targetAllocation：</b>{alloc_txt}<br/>🔄 <b>板塊輪動：</b>{tilt_txt}{em_txt}</div>"""
+  <div class="note">🎯 <b>配置目標（唯一來源＝snapshot.penetration.targets）：</b>{_bucket_target_text(snap)}<br/>
+  🧭 <b>DAA 戰術偏移（相對五桶目標，非另一套目標值）：</b>{alloc_txt}<br/>🔄 <b>板塊輪動：</b>{tilt_txt}{em_txt}</div>"""
         # 避險衛星（黃金+石油，2026-08-21 裁示）現況 vs 目標
         _sn = load()
         _hs = _sn.get("hedge_satellite", {})
         _gold_row = next((r for r in alloc if "黃金" in r.get("資產", "")), None)
         _oil_row = next((r for r in alloc if "石油" in r.get("資產", "")), None)
         if _gold_row and _oil_row:
-            mr_html += (f"<div class='note' style='border-left:3px solid #d97706'>🛡️ <b>避險衛星（黃金+石油，合計 ≤7%）：</b>"
-                        f"黃金目標 {_gold_row['燈號偏移後']}%（現況 {_hs.get('黃金現況',0):,}）＋ 石油目標 {_oil_row['燈號偏移後']}%（現況 {_hs.get('石油現況',0):,}）"
+            mr_html += (f"<div class='note' style='border-left:3px solid #d97706'>🛡️ <b>避險衛星（黃金+石油，合計上限 ≤7%；不計入五桶）：</b>"
+                        f"黃金上限 {_gold_row['燈號偏移後']}%（現況 {_hs.get('黃金現況',0):,}）＋ 石油上限 {_oil_row['燈號偏移後']}%（現況 {_hs.get('石油現況',0):,}）"
                         f"<br/><span style='color:#cbd5e1;font-size:12px'>{_hs.get('note','')}</span></div>")
     except Exception:
         pass
@@ -222,7 +223,7 @@ def main():
     <div class="card"><div class="k">五桶合計</div><div class="v">{sum_pct:.1f}%</div></div>
   </div>
 
-  <h2>📐 五桶偏離評估（目標：{targets.get('台股市值型目標','10')} / {targets.get('美股市值型目標','40')} / {targets.get('配息型目標','20')} / {targets.get('債券型目標','25')} / {targets.get('現金目標','5')}，動態讀 snapshot）</h2>
+  <h2>📐 五桶偏離評估（目標：{_bucket_target_text(snap, ' / ')}｜單一目標來源，動態讀 snapshot）</h2>
   <table><thead><tr><th>類別</th><th class="num">金額</th><th class="num">實際</th><th class="num">目標</th><th class="num">差距</th><th>燈號</th><th>建議動作</th></tr></thead>
   <tbody>{rows_html}</tbody></table>
 

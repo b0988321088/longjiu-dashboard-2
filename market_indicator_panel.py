@@ -3,7 +3,7 @@
 資料來自 macro_regime.py（load_latest：讀今日 JSON 或即時執行）：
 主觸發：US30Y(即時) / 巴菲特 / VIX / CPI（後三者無源不觸發）
 情境評分：科技重新定價 / 確定收益輪動 / 美元信用壓力 / 地緣風險
-輸出：targetAllocation 數字 + 板塊輪動 + 質押比例 + 執行紀律
+輸出：五桶目標（單一來源）＋ DAA 戰術偏移 + 板塊輪動 + 質押比例 + 執行紀律
 """
 import json
 import re
@@ -77,12 +77,10 @@ def build_panel(snap: dict | None = None) -> str:
                  f"（目標 ≤{_tech_cap:.0f}%）") if _tech_pct is not None else "—"
     _pt_tw = ((s.get("penetration", {}) or {}).get("targets", {}) or {}).get("台股市值型目標", 10)
 
-    # targetAllocation 壓縮顯示
+    # targetAllocation → 只呈現「相對五桶目標的戰術偏移」（2026-10-19 單一目標原則）
     alloc = r.get("targetAllocation", {}).get("rows", [])
-    alloc_txt = " ｜ ".join(
-        f"{row['資產']} {row['燈號偏移後'] if row['燈號偏移後'] is not None else row['建議金額(±)']}"
-        for row in alloc
-    )
+    from sot_targets import daa_offset_text as _daa_offset_text
+    alloc_txt = _daa_offset_text(alloc, s)
     tilt = r.get("板塊輪動", [])
     tilt_txt = "；".join(f"{t['方向']} {t['偏移']}（{t['金額']:,}元）" for t in tilt)
     em = r.get("緊急應變")
@@ -119,7 +117,7 @@ def build_panel(snap: dict | None = None) -> str:
         f"科技穿透 {_tech_txt} ｜ 美元曝險 {_usd_txt}<br/>"
     )
     rows.append(
-        f"<strong>④ targetAllocation：</strong>{alloc_txt}<br/>"
+        f"<strong>④ DAA 戰術偏移（相對五桶目標，非另一套目標值）：</strong>{alloc_txt}<br/>"
     )
     rows.append(f"<strong>⑤ 板塊輪動：</strong>{tilt_txt}<br/>")
     rows.append(f"{em_txt}<br/>")

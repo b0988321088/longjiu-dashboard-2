@@ -51,6 +51,67 @@ def bucket_targets(snap: dict) -> dict:
     return out
 
 
+# ─────────────────────────────────────────────────────────────
+# DAA targetAllocation → 戰術偏移（相對五桶目標）｜2026-10-19 統一
+# 為什麼：macro_regime 的 targetAllocation 是「SAA + 燈號偏移」的絕對權重，四桶合計
+# 不必等於 100（實例 10/19：台10/美22/防32/債30＝94，再加避險衛星 7）。它與報表上方
+# 「五桶目標（snapshot.penetration.targets＝台10/美30/防30/債25/現5）」並列時，
+# 讀者會看到兩套目標，且不知道哪一套才算數。
+# 規則（單一目標原則）：配置目標只有一套＝五桶目標；DAA 只輸出「相對五桶目標的偏移pp」，
+# 不印絕對權重。要改目標一律改 SoT，不改這裡、不改引擎輸出。
+# ─────────────────────────────────────────────────────────────
+DAA_ROW_TO_TARGET_KEY = {
+    "台股市值型成長": "台股市值型目標",
+    "美股市值型成長": "美股市值型目標",
+    "防守型配息": "配息型目標",
+    "債券": "債券型目標",
+}
+DAA_ROW_SHORT = {
+    "台股市值型成長": "台股",
+    "美股市值型成長": "美股",
+    "防守型配息": "防守",
+    "債券": "債券",
+}
+
+
+def daa_offset_parts(alloc_rows, snap: dict) -> list[str]:
+    """把 targetAllocation.rows 轉成「相對五桶目標的戰術偏移」片段（不含絕對目標值）。
+
+    衛星列（黃金／石油）與現金列不在此輸出：衛星不屬五桶、現金是底線制，
+    由呼叫端各自呈現，避免被誤讀成五桶目標的一部分。
+    """
+    tgt = ((snap.get("penetration") or {}).get("targets")) or {}
+    if not tgt:
+        tgt = bucket_targets(snap)
+    out: list[str] = []
+    for r in alloc_rows or []:
+        name = str(r.get("資產", "")).strip()
+        key = DAA_ROW_TO_TARGET_KEY.get(name)
+        if not key:
+            continue
+        off = r.get("燈號偏移後")
+        base = tgt.get(key)
+        if isinstance(off, (int, float)) and isinstance(base, (int, float)):
+            out.append(f"{DAA_ROW_SHORT[name]} {off - base:+.0f}pp")
+    return out
+
+
+def daa_offset_text(alloc_rows, snap: dict, sep: str = " ｜ ") -> str:
+    """戰術偏移一行文字（偏離計算皆為派生值，不寫死任何數字）。"""
+    parts = daa_offset_parts(alloc_rows, snap)
+    return sep.join(parts) if parts else "—"
+
+
+def bucket_target_text(snap: dict, sep: str = " ｜ ") -> str:
+    """五桶目標一行文字（唯一目標來源；缺 SoT 時明確示警，不塞預設值）。"""
+    tgt = ((snap.get("penetration") or {}).get("targets")) or {}
+    order = [("台股市值型目標", "台股"), ("美股市值型目標", "美股"),
+             ("配息型目標", "防守"), ("債券型目標", "債券"), ("現金目標", "現金")]
+    parts = [f"{lab} {tgt[k] if k in tgt else '⚠️缺'}"
+             f"{'%' if isinstance(tgt.get(k), (int, float)) else ''}" for k, lab in order]
+    return sep.join(parts)
+
+
 # 防守（配息資產）合併口徑＝2026-08-21 使用者裁示：基金也有配息，防守應合併計算 →
 # ≥ 凍結承接門檻（SoT `防守合併口徑_pct.凍結承接`，現 60%）即「防守已足、承接凍結」。
 # 2026-09-16 INC-201：金額改為「組成加總」派生（stored 的 `配息資產合計` 曾是人工寫入、
