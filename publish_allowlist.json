@@ -1,81 +1,92 @@
 {
- "version": 1,
- "note": "AUTO 發布白名單：以『變更檔案集合』為鍵，不以腳本名稱為鍵 —— 呼叫端無法自稱取得授權。任何未命中此表者一律走真 CIO 審查。特殊類別（reviews/、治理紀錄、備份檔、程式檔、logs/）永遠不得自動發布。",
- "entries": [
-  {
-   "label": "決策入庫（append-only 受限，僅此兩檔）",
-   "allow": [
-    "dashboard_decisions.json",
-    "data/decision_intake_receipts.jsonl"
-   ],
-   "append_only": true,
-   "producer": "append_dashboard_decisions.py",
-   "evidence": "2026-10-12 實證：入庫 commit 39c59086 為純追加（decisions +1、收據 +1 行、meta 逐位元不變），卻因兩檔在 NEVER_AUTO_EXACT／NEVER_AUTO_PREFIX 內而永久無章 → 卡住整段推送範圍。使用者 2026-10-12 有條件核准設計。",
-   "risk": "medium",
-   "note": "放行條件不靠 producer 自稱，而由 publish_gate 逐 commit 重算不變量：變更集合逐字限於這兩檔、僅允許 A/M、決策檔只追加且既有頂點（含 meta）逐位元不變、收據檔為舊內容逐位元前綴延伸、新增決策與 ok=true 收據一對一互綁、ok=false 收據不得對應已存在的 id。任一不符 → APPEND_ONLY_VIOLATION 直接拒。"
-  },
-  {
-   "label": "AI 成本帳（digest / close）",
-   "allow": [
-    "cost.html",
-    "cost_data.json",
-    "data/ai_cost_daily.jsonl"
-   ],
-   "evidence": "cost_watch_digest.py 9 顆 + cost_watch_close.py 3 顆 AUTO 紀錄，產物固定為此 3 檔",
-   "risk": "low",
-   "note": "純費用統計頁與其資料檔，無治理語意、無資產真值影響"
-  },
-  {
-   "label": "AI 成本帳資料檔（單獨）",
-   "allow": [
-    "data/ai_cost_daily.jsonl"
-   ],
-   "evidence": "近 3 日出現 2 次單獨變更（成本帳 append 路徑）",
-   "risk": "low",
-   "note": "僅追加式成本紀錄檔，無對外呈現"
-  },
-  {
-   "label": "Notion 共享上下文（單檔，純資料）",
-   "allow": [
-    "notion_shared_context.md"
-   ],
-   "producer": "notion_context_loader.py",
-   "evidence": "2026-10-13 使用者裁決（受控擴充白名單）：該檔每日由 notion_context_loader.py 重產，內容僅為既有真值（snapshot.json／schedule_events.json／notion_bridge/<日期>_strategy_handbook.md）的彙整，無新數字、無治理語意、無對外呈現頁面。",
-   "risk": "low",
-   "note": "逐條登記單一精確路徑（無通配符、無目錄）；未登記路徑一律真 CIO 審查不變。"
-  },
-  {
-   "label": "CIO 審查收錄（儀表板分頁資料，單檔純資料）",
-   "allow": [
-    "cio_review.json"
-   ],
-   "producer": "cio_review_ingest.py",
-   "evidence": "2026-10-14 使用者核定（受控擴充白名單）：該檔由 cio_review_ingest.py 每週一/三 18:45 從 CIO 戰略審查 cron 輸出（fb014d759ac5/*.md）機械式擷取，內容為既有審查報告正文的逐字彙整，無新數字、無資產真值影響。未登記前每輪必撞閘門（10/12、10/14 連續兩輪 rc=3，並讓整段推送範圍對所有 producer 變 CIO）。",
-   "risk": "low",
-   "note": "逐條登記單一精確路徑（無通配符、無目錄）。該檔為呈現層資料（reviews 陣列，新到舊排序、保留歷史），每輪只新增當日一筆。未登記路徑一律真 CIO 審查不變。"
-  },
-  {
-   "label": "首頁重要連結報告頁（緊急應變／週報，純呈現 HTML）",
-   "patterns": [
-    "emergency_report_*.html",
-    "emergency_taiex_report_*.html",
-    "weekly_report_*.html"
-   ],
-   "producer": "emergency_1330.py（寫入）／gen_emergency_taiex_auto.py（兩報告家族重產，13:00 台股班／21:30 美股班）／build_weekly_report.py（寫入）｜regenerate_report.py（stage 白名單認領）",
-   "evidence": "2026-10-15 使用者裁決（B1｜HTML 方案 A：納入版控＋白名單）。事故根因：兩檔由首頁「重要連結」指向（links_config 前綴 glob），但兩個 producer 都不是每日 commit 的產物來源 → 檔案從未進版控 → 線上 404（check_dashboard_sync 第 12 項 FAIL，2026-10-15 實測）。同日 producer stage 白名單已同步納入 regenerate_report.py 候選清單。 2026-10-15 21:5x 使用者裁決（緊急應變產線 B 修正版）：emergency_taiex_report_*.html 長期未納入版控（首頁連結若指向它必 404）→ 一併納入同一套受控產物規則；限制＝只允許明確指定的報告 HTML，不得使用整個目錄的廣泛 stage。",
-   "risk": "low",
-   "note": "單層樣式（'*' 不跨 '/'）且明示 .html 副檔名；僅涵蓋這兩個家族位於 repo 根目錄的當日報告頁，不含 index.html／日報／差異頁（仍在強制真 CIO 範圍）。放行僅及於「變更集合限於本條目涵蓋檔案」的 commit；夾帶任何其他路徑即未命中本條目。 2026-10-15 追加：emergency_taiex_report_*.html 同為單層樣式且明示 .html 副檔名，producer 與 emergency_report_* 同批（gen_emergency_taiex_auto.py）；未登記路徑仍一律真 CIO 審查。"
-  },
-  {
-   "label": "機構流向雷達（報告頁＋狀態資料，純呈現／純資料）",
-   "patterns": [
-    "radar_report_*.html",
-    "radar_state.json"
-   ],
-   "producer": "radar_weekly.py（週六 08:30 cron 192f1784d305）｜institutional_flow.py（寫入 state）／build_radar_report.py（寫入報告頁）",
-   "evidence": "2026-10-17 使用者指示修復（事故：每週六 rc=3 假失敗）。根因：radar_weekly 以 auto_push --auto-stage 產出，但 radar_report_*.html／radar_state.json 從未登記 → clean-stage 判為「閘門強制真 CIO」而整批 unstage → 無 commit → RANGE_EMPTY 拒推。實際後果不只是 rc=3：這兩檔**從未進版控**（git log 僅 2026-10-12 手動 commit 一次），首頁「📡 機構流向雷達」按鈕指向 radar_report_YYYY-MM-DD.html 長期線上 404（2026-10-17 實測 10-16／10-17 皆 404）。與 2026-10-15 emergency_report_* 同型（受控產物未登記）。",
-   "risk": "low",
-   "note": "單層樣式且明示 .html／.json 副檔名；僅涵蓋 repo 根目錄當日雷達報告與雷達狀態資料（純呈現＋純資料，無資產真值）。不含 index.html（radar_weekly 亦會重建首頁，但該檔仍在強制真 CIO 範圍 → 由 07:00 主產線帶上線）。放行僅及於「變更集合限於本條目涵蓋檔案」的 commit；夾帶任何其他路徑即未命中。未登記路徑仍一律真 CIO 審查。"
-  }
- ]
+  "version": 1,
+  "note": "AUTO 發布白名單：以『變更檔案集合』為鍵，不以腳本名稱為鍵 —— 呼叫端無法自稱取得授權。任何未命中此表者一律走真 CIO 審查。特殊類別（reviews/、治理紀錄、備份檔、程式檔、logs/）永遠不得自動發布。",
+  "entries": [
+    {
+      "label": "決策入庫（append-only 受限，僅此兩檔）",
+      "allow": [
+        "dashboard_decisions.json",
+        "data/decision_intake_receipts.jsonl"
+      ],
+      "append_only": true,
+      "producer": "append_dashboard_decisions.py",
+      "evidence": "2026-10-12 實證：入庫 commit 39c59086 為純追加（decisions +1、收據 +1 行、meta 逐位元不變），卻因兩檔在 NEVER_AUTO_EXACT／NEVER_AUTO_PREFIX 內而永久無章 → 卡住整段推送範圍。使用者 2026-10-12 有條件核准設計。",
+      "risk": "medium",
+      "note": "放行條件不靠 producer 自稱，而由 publish_gate 逐 commit 重算不變量：變更集合逐字限於這兩檔、僅允許 A/M、決策檔只追加且既有頂點（含 meta）逐位元不變、收據檔為舊內容逐位元前綴延伸、新增決策與 ok=true 收據一對一互綁、ok=false 收據不得對應已存在的 id。任一不符 → APPEND_ONLY_VIOLATION 直接拒。"
+    },
+    {
+      "label": "AI 成本帳（digest / close）",
+      "allow": [
+        "cost.html",
+        "cost_data.json",
+        "data/ai_cost_daily.jsonl"
+      ],
+      "evidence": "cost_watch_digest.py 9 顆 + cost_watch_close.py 3 顆 AUTO 紀錄，產物固定為此 3 檔",
+      "risk": "low",
+      "note": "純費用統計頁與其資料檔，無治理語意、無資產真值影響"
+    },
+    {
+      "label": "AI 成本帳資料檔（單獨）",
+      "allow": [
+        "data/ai_cost_daily.jsonl"
+      ],
+      "evidence": "近 3 日出現 2 次單獨變更（成本帳 append 路徑）",
+      "risk": "low",
+      "note": "僅追加式成本紀錄檔，無對外呈現"
+    },
+    {
+      "label": "Notion 共享上下文（單檔，純資料）",
+      "allow": [
+        "notion_shared_context.md"
+      ],
+      "producer": "notion_context_loader.py",
+      "evidence": "2026-10-13 使用者裁決（受控擴充白名單）：該檔每日由 notion_context_loader.py 重產，內容僅為既有真值（snapshot.json／schedule_events.json／notion_bridge/<日期>_strategy_handbook.md）的彙整，無新數字、無治理語意、無對外呈現頁面。",
+      "risk": "low",
+      "note": "逐條登記單一精確路徑（無通配符、無目錄）；未登記路徑一律真 CIO 審查不變。"
+    },
+    {
+      "label": "CIO 審查收錄（儀表板分頁資料，單檔純資料）",
+      "allow": [
+        "cio_review.json"
+      ],
+      "producer": "cio_review_ingest.py",
+      "evidence": "2026-10-14 使用者核定（受控擴充白名單）：該檔由 cio_review_ingest.py 每週一/三 18:45 從 CIO 戰略審查 cron 輸出（fb014d759ac5/*.md）機械式擷取，內容為既有審查報告正文的逐字彙整，無新數字、無資產真值影響。未登記前每輪必撞閘門（10/12、10/14 連續兩輪 rc=3，並讓整段推送範圍對所有 producer 變 CIO）。",
+      "risk": "low",
+      "note": "逐條登記單一精確路徑（無通配符、無目錄）。該檔為呈現層資料（reviews 陣列，新到舊排序、保留歷史），每輪只新增當日一筆。未登記路徑一律真 CIO 審查不變。"
+    },
+    {
+      "label": "首頁重要連結報告頁（緊急應變／週報，純呈現 HTML）",
+      "patterns": [
+        "emergency_report_*.html",
+        "emergency_taiex_report_*.html",
+        "weekly_report_*.html"
+      ],
+      "producer": "emergency_1330.py（寫入）／gen_emergency_taiex_auto.py（兩報告家族重產，13:00 台股班／21:30 美股班）／build_weekly_report.py（寫入）｜regenerate_report.py（stage 白名單認領）",
+      "evidence": "2026-10-15 使用者裁決（B1｜HTML 方案 A：納入版控＋白名單）。事故根因：兩檔由首頁「重要連結」指向（links_config 前綴 glob），但兩個 producer 都不是每日 commit 的產物來源 → 檔案從未進版控 → 線上 404（check_dashboard_sync 第 12 項 FAIL，2026-10-15 實測）。同日 producer stage 白名單已同步納入 regenerate_report.py 候選清單。 2026-10-15 21:5x 使用者裁決（緊急應變產線 B 修正版）：emergency_taiex_report_*.html 長期未納入版控（首頁連結若指向它必 404）→ 一併納入同一套受控產物規則；限制＝只允許明確指定的報告 HTML，不得使用整個目錄的廣泛 stage。",
+      "risk": "low",
+      "note": "單層樣式（'*' 不跨 '/'）且明示 .html 副檔名；僅涵蓋這兩個家族位於 repo 根目錄的當日報告頁，不含 index.html／日報／差異頁（仍在強制真 CIO 範圍）。放行僅及於「變更集合限於本條目涵蓋檔案」的 commit；夾帶任何其他路徑即未命中本條目。 2026-10-15 追加：emergency_taiex_report_*.html 同為單層樣式且明示 .html 副檔名，producer 與 emergency_report_* 同批（gen_emergency_taiex_auto.py）；未登記路徑仍一律真 CIO 審查。"
+    },
+    {
+      "label": "機構流向雷達（報告頁＋狀態資料，純呈現／純資料）",
+      "patterns": [
+        "radar_report_*.html",
+        "radar_state.json"
+      ],
+      "producer": "radar_weekly.py（週六 08:30 cron 192f1784d305）｜institutional_flow.py（寫入 state）／build_radar_report.py（寫入報告頁）",
+      "evidence": "2026-10-17 使用者指示修復（事故：每週六 rc=3 假失敗）。根因：radar_weekly 以 auto_push --auto-stage 產出，但 radar_report_*.html／radar_state.json 從未登記 → clean-stage 判為「閘門強制真 CIO」而整批 unstage → 無 commit → RANGE_EMPTY 拒推。實際後果不只是 rc=3：這兩檔**從未進版控**（git log 僅 2026-10-12 手動 commit 一次），首頁「📡 機構流向雷達」按鈕指向 radar_report_YYYY-MM-DD.html 長期線上 404（2026-10-17 實測 10-16／10-17 皆 404）。與 2026-10-15 emergency_report_* 同型（受控產物未登記）。",
+      "risk": "low",
+      "note": "單層樣式且明示 .html／.json 副檔名；僅涵蓋 repo 根目錄當日雷達報告與雷達狀態資料（純呈現＋純資料，無資產真值）。不含 index.html（radar_weekly 亦會重建首頁，但該檔仍在強制真 CIO 範圍 → 由 07:00 主產線帶上線）。放行僅及於「變更集合限於本條目涵蓋檔案」的 commit；夾帶任何其他路徑即未命中。未登記路徑仍一律真 CIO 審查。"
+    },
+    {
+      "label": "成本帳本（append-only 帳本｜DeepSeek 餘額逐日）",
+      "allow": [
+        "cost_log.csv"
+      ],
+      "append_only_ledger": true,
+      "producer": "cost_monitor.py",
+      "evidence": "2026-10-19 使用者核准：closeout 長期標示「無推送擁有者」，每日 09:00 append 一列後永久 dirty。語意為純追加帳本（date,balance_cny,daily_cost_cny,note）。",
+      "risk": "low",
+      "note": "放行條件不靠 producer 自稱：publish_gate 逐 commit 重算「舊 blob 必須是新 blob 的逐位元前綴」，改舊行／刪行／重排／清空一律 APPEND_ONLY_LEDGER_NOT_VERIFIED → 降為真 CIO。變更集合只允許此檔且僅 A/M。"
+    }
+  ]
 }

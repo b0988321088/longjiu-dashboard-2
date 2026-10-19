@@ -77,6 +77,9 @@ CODE_SUFFIX = (".py", ".sh", ".bat", ".ps1", ".cmd", ".toml", ".yml", ".yaml",
 #     ④ 任一不變量不符 → 直接拒絕（fail-closed），不靜默降級為 CIO 放行
 APPEND_ONLY_PATHS = ("dashboard_decisions.json", "data/decision_intake_receipts.jsonl")
 DECISIONS_PATH, RECEIPTS_PATH = APPEND_ONLY_PATHS
+# append-only 帳本車道（PG-20261019 v5）：與決策入庫車道分開，只驗「舊內容為新內容的逐位元前綴」。
+# 決策車道另有決策結構不變量（id/時間/收據一對一），不可套用到一般帳本。
+APPEND_ONLY_LEDGER_PATHS = ("cost_log.csv",)
 APPEND_ONLY_DECISION_KEYS = ("id", "timestamp", "agent", "task", "summary", "status", "source")
 INDEX_REV = ":0"  # git 索引（staged）內容的 revision spec
 
@@ -277,6 +280,14 @@ def load_allowlist(base: Path, ref: str = "HEAD") -> tuple[dict | None, str]:
                 return None, f"allow 為字面路徑、不得含 '*'（需要樣式請改用 patterns）：{it}"
         # append_only 受限車道（PG-20261012 v4）：唯一能逐字列出受限兩檔的條目型態。
         # 條件缺一即整份白名單不可用（fail-closed），不做「忽略該條目」的靜默降級。
+        if e.get("append_only_ledger") is True:
+            if not str(e.get("producer") or "").strip():
+                return None, f"append_only_ledger 條目必須標明 producer（產物歸屬）：{e.get('label')}"
+            for it in items:
+                if "*" in str(it) or _norm(it) not in APPEND_ONLY_LEDGER_PATHS:
+                    return None, (f"append_only_ledger 條目只能逐字列出帳本路徑、"
+                                  f"不得含樣式或夾帶其他路徑（{e.get('label')}）：{it}")
+            continue
         if e.get("append_only") is True:
             if not str(e.get("producer") or "").strip():
                 return None, f"append_only 條目必須標明 producer（產物歸屬）：{e.get('label')}"
@@ -394,6 +405,10 @@ def _decision_ids(doc: dict) -> set[str]:
 
 def is_append_only_entry(entry: dict | None) -> bool:
     return bool(entry) and entry.get("append_only") is True
+
+
+def is_append_only_ledger_entry(entry: dict | None) -> bool:
+    return bool(entry) and entry.get("append_only_ledger") is True
 
 
 # ── 2026-10-12 TD-20261012-17：合法 meta 更新 vs 歷史篡改 ─────────────────────
@@ -604,11 +619,81 @@ def verify_append_only_auto(base: Path, ref: str = "HEAD") -> tuple[bool, dict]:
     return ok, {"mode": "staged", **det}
 
 
+# ------------------------------------------- append-only 帳本車道（PG-20261019 v5）
+# 語意：帳本只能「往後追加」。舊內容必須是新內容的逐位元前綴 —— 改舊行、刪行、重排、
+# 換行符正規化造成的既有內容變動，一律判為違規。不比對決策結構（那不是帳本語意）。
+
+def _verify_ledger_pair(base: Path, old_rev: str, new_rev: str,
+                        changed: dict[str, str]) -> tuple[bool, dict]:
+    reasons: list[str] = []
+    for p in sorted(changed):
+        old = _blob(base, old_rev, p)
+        new = _blob(base, new_rev, p)
+        if new is None:
+            reasons.append(f"{p}：新版內容不存在")
+            continue
+        if len(new) == 0:
+            reasons.append(f"{p}：新版為空檔（帳本不得清空）")
+            continue
+        if old is None or len(old) == 0:
+            continue                      # A：首次納入版控／原本空檔 → 無前綴可比對
+        if len(new) <= len(old):
+            reasons.append(f"{p}：內容未增加（{len(old)}→{len(new)} bytes）→ 非追加")
+            continue
+        if not new.startswith(old):
+            reasons.append(f"{p}：非逐位元前綴延伸（既有 {len(old)} bytes 被改寫或重排）")
+    return (not reasons), {"reasons": reasons, "files": sorted(changed)}
+
+
+def verify_append_only_ledger_range(base: Path, range_base: str) -> tuple[bool, dict]:
+    """閘門側：逐 commit 驗整個推送範圍（要發布什麼，就驗什麼）。"""
+    cs = commits_in_range(base, range_base)
+    if not cs:
+        return False, {"mode": "range", "reasons": ["推送範圍為空（無事可做）"], "commits": []}
+    ok_all = True
+    out: list[dict] = []
+    for c in cs:
+        changed, why = _commit_changed(base, c)
+        if changed is None:
+            ok_all = False
+            out.append({"commit": c[:12], "ok": False, "reasons": [why]})
+            continue
+        outside = [p for p in changed if p not in APPEND_ONLY_LEDGER_PATHS]
+        bad_st = [f"{changed[p]}:{p}" for p in changed if changed[p] not in ("A", "M")]
+        if outside or bad_st or not changed:
+            ok_all = False
+            out.append({"commit": c[:12], "ok": False,
+                        "reasons": [f"超出帳本範圍：{outside[:3]}（或空 commit）",
+                                    f"非追加狀態（僅允許 A/M）：{bad_st[:3]}"]})
+            continue
+        ok, det = _verify_ledger_pair(base, f"{c}^", c, changed)
+        ok_all = ok_all and ok
+        out.append({"commit": c[:12], "ok": ok, **det})
+    return ok_all, {"mode": "range", "range": f"{range_base}..HEAD", "commits": out}
+
+
+def verify_append_only_ledger_auto(base: Path, ref: str = "HEAD") -> tuple[bool, dict]:
+    """落版側查詢（classify_paths 用）：先驗 ref^..ref；該 commit 不含帳本檔時改驗 staged。"""
+    changed, _why = _commit_changed(base, ref)
+    if changed and set(changed) <= set(APPEND_ONLY_LEDGER_PATHS) and all(v in ("A", "M") for v in changed.values()):
+        ok, det = _verify_ledger_pair(base, f"{ref}^", ref, changed)
+        return ok, {"mode": "commit", "ref": ref, **det}
+    staged, why = _staged_changed(base)
+    if staged is None:
+        return False, {"mode": "staged", "reasons": [why]}
+    if not staged or not set(staged) <= set(APPEND_ONLY_LEDGER_PATHS) or any(v not in ("A", "M") for v in staged.values()):
+        return False, {"mode": "staged", "reasons": ["staged 變更集合不在帳本範圍內"],
+                       "files": staged}
+    ok, det = _verify_ledger_pair(base, "HEAD", INDEX_REV, staged)
+    return ok, {"mode": "staged", **det}
+
+
 # ---------------------------------------------------------------- 統一裁決
 
 def classify(changed: set[str], entry: dict | None,
              specials: dict | None = None,
-             append_only_ok: bool = False) -> tuple[str, bool, str]:
+             append_only_ok: bool = False,
+             append_only_ledger_ok: bool = False) -> tuple[str, bool, str]:
     """單一真值：一個檔案集合在發布授權上屬 AUTO 或 CIO。
 
     **落版側（auto_record）與閘門側（decide）必須共用此函式。**
@@ -622,15 +707,25 @@ def classify(changed: set[str], entry: dict | None,
     """
     sp = specials or {}
     ao = bool(append_only_ok and is_append_only_entry(entry))
-    # 受限車道只收斂「受限兩檔本身」的特殊類別；若 specials 含任何其他路徑（呼叫端傳入的集合
+    al = bool(append_only_ledger_ok and is_append_only_ledger_entry(entry))
+    # 受限車道只收斂「受限檔案本身」的特殊類別；若 specials 含任何其他路徑（呼叫端傳入的集合
     # 比條目更寬時的理論情境），一律回 CIO —— 不得因車道通過而連帶放行不相干的高風險路徑。
     # （2026-10-12 獨立審查 Finding 3 指出；正式路徑下 entry 命中已保證 changed ⊆ 兩檔，此為防禦性收斂。）
-    if sp and not (ao and set(sp) <= set(APPEND_ONLY_PATHS)):
+    if sp and not ((ao and set(sp) <= set(APPEND_ONLY_PATHS))
+                   or (al and set(sp) <= set(APPEND_ONLY_LEDGER_PATHS))):
         return "CIO", True, "特殊類別命中"
     if entry is None:
         return "CIO", True, "未命中白名單"
+    # 受限車道命中的是「受限檔案」，但內容不變量未通過時**不得**落到下方的「命中低風險白名單」。
+    # （PG-20261019 v5 驗收抓到的漏洞：違規的帳本 commit 會被當成普通白名單條目而取得 AUTO。）
+    if is_append_only_entry(entry) and not ao:
+        return "CIO", True, "append-only 決策車道不變量未通過"
+    if is_append_only_ledger_entry(entry) and not al:
+        return "CIO", True, "append-only 帳本車道不變量未通過（非逐位元前綴延伸）"
     if ao:
         return "AUTO", False, "append-only 受限車道（不變量驗證通過）"
+    if al:
+        return "AUTO", False, "append-only 帳本車道（逐位元前綴延伸驗證通過）"
     return "AUTO", False, "命中低風險白名單"
 
 
@@ -743,10 +838,20 @@ def classify_paths(base: Path, paths, ref: str = "HEAD") -> dict:
         except Exception as e:  # noqa: BLE001 — 驗證器失敗一律視為未通過（fail-closed）
             ao_ok, ao_det = False, {"applied": True, "mode": "error", "reasons": [str(e)[:160]]}
         ao_det["ok"] = ao_ok
-    mode, must_cio, why_mode = classify(changed, entry, specials, append_only_ok=ao_ok)
+    al_ok, al_det = False, {"applied": False}
+    if is_append_only_ledger_entry(entry) and changed and changed <= set(APPEND_ONLY_LEDGER_PATHS):
+        try:
+            al_ok, al_det = verify_append_only_ledger_auto(base, ref=ref)
+            al_det["applied"] = True
+        except Exception as e:  # noqa: BLE001 — 驗證器失敗一律視為未通過（fail-closed）
+            al_ok, al_det = False, {"applied": True, "mode": "error", "reasons": [str(e)[:160]]}
+        al_det["ok"] = al_ok
+    mode, must_cio, why_mode = classify(changed, entry, specials,
+                                        append_only_ok=ao_ok, append_only_ledger_ok=al_ok)
     return {"mode": mode, "must_cio": must_cio,
             "entry": (entry or {}).get("label"), "reason": why_mode,
-            "specials": specials, "files": sorted(changed), "append_only": ao_det}
+            "specials": specials, "files": sorted(changed),
+            "append_only": ao_det, "append_only_ledger": al_det}
 
 
 def decide(base: Path, range_base: str, producer_own: list[str] | None = None,
@@ -808,8 +913,28 @@ def decide(base: Path, range_base: str, producer_own: list[str] | None = None,
                                        + "；".join(why_bad[:4])})
     checks["append_only"] = {"ok": ao_ok, **ao_det}
 
+    # append-only 帳本車道（PG-20261019 v5）：語意與決策車道分開（只驗前綴延伸）。
+    al_ok, al_det = False, {"applied": False}
+    if is_append_only_ledger_entry(entry) and changed and changed <= set(APPEND_ONLY_LEDGER_PATHS):
+        try:
+            al_ok, al_det = verify_append_only_ledger_range(base, range_base)
+            al_det["applied"] = True
+        except Exception as e:  # noqa: BLE001 — 驗證器不可用一律視為未通過（fail-closed）
+            al_ok, al_det = False, {"applied": True, "mode": "range",
+                                    "reasons": [f"驗證器執行失敗：{str(e)[:160]}"]}
+        if not al_ok:
+            why_bad = list(al_det.get("reasons") or [])
+            for c in al_det.get("commits") or []:
+                if not c.get("ok"):
+                    why_bad += [f"{c.get('commit')}：{r}" for r in (c.get("reasons") or [])]
+            advisories.append({"id": "APPEND_ONLY_LEDGER_NOT_VERIFIED", "severity": "high",
+                               "text": "帳本 append-only 不變量未通過 → 不給 AUTO，須真 CIO 審查："
+                                       + "；".join(why_bad[:4])})
+    checks["append_only_ledger"] = {"ok": al_ok, **al_det}
+
     # 模式判定：特殊類別命中 或 不在白名單 → 必須走真 CIO 審查
-    mode, must_cio, why_mode = classify(changed, entry, specials, append_only_ok=ao_ok)
+    mode, must_cio, why_mode = classify(changed, entry, specials,
+                                        append_only_ok=ao_ok, append_only_ledger_ok=al_ok)
     checks["mode"] = {"mode": mode, "must_cio": must_cio, "reason": why_mode}
 
     # 關卡三：核准紀錄與 tree 綁定（逐 commit，全部檢查）

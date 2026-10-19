@@ -5,6 +5,15 @@ from pathlib import Path
 from logging_config import get_logger
 logger = get_logger("cost_monitor")
 
+# 自身產出就地提交（2026-10-19 PG-20261019 v5）：cost_log.csv 為 append-only 帳本，
+# 過去無任何 job 的推送集涵蓋 → closeout 長期列「無推送擁有者」。
+# import 必須在模組層（self_publish 以 import 時刻為「本輪起跑時刻」，寫入後才 import 會認領不到）。
+try:
+    import self_publish as _self_publish
+except Exception as _e:  # noqa: BLE001 — 提交車道不可用不得影響記帳本體
+    _self_publish = None
+    logger.warning("self_publish 不可用（cost_log 不會自動提交）：%s", _e)
+
 ENV = Path(os.path.expanduser("~/AppData/Local/hermes/.env"))
 LJ = Path(os.path.expanduser("~/Desktop/longjiu_system"))
 LOG = LJ / "cost_log.csv"
@@ -62,7 +71,8 @@ def load_history() -> list:
             return list(csv.DictReader(f))
     return []
 
-def save_entry(balance: float, daily_cost: float):
+def save_entry(balance: float, daily_cost: float) -> bool:
+    """寫入一列；回傳是否真的寫了（供呼叫端決定是否走自動提交車道）。"""
     history = load_history()
     today_rows = [r for r in history if r.get("date") == TODAY]
     if today_rows:
@@ -75,17 +85,18 @@ def save_entry(balance: float, daily_cost: float):
         except (TypeError, ValueError):
             last_bal = 0.0
         if balance <= last_bal:
-            return
+            return False
         with open(LOG, "a", encoding="utf-8", newline="") as f:
             w = csv.writer(f)
             w.writerow([TODAY, f"{balance:.2f}", "0.00", f"儲值（{last_bal:.2f}→{balance:.2f}）"])
-        return
+        return True
 
     with open(LOG, "a", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
         if not LOG.exists() or os.path.getsize(LOG) == 0:
             w.writerow(["date", "balance_cny", "daily_cost_cny", "note"])
         w.writerow([TODAY, f"{balance:.2f}", f"{daily_cost:.2f}", ""])
+    return True
 
 def estimate_days(balance: float, history: list) -> int:
     """根據近7天平均日耗估算剩餘天數"""
@@ -112,7 +123,13 @@ daily_cost = max(prev_balance - balance, 0) if history else 0
 # 讓 09:00 ds_balance_alert 獨佔記錄時點（避免記錄時點漂移導致日耗歸因失準）
 NO_LOG = "--no-log" in sys.argv
 if not NO_LOG:
-    save_entry(balance, daily_cost)
+    if save_entry(balance, daily_cost):
+        # 只有真的追加了一列才走車道（同日重複查詢不會製造空 commit）
+        if _self_publish is not None:
+            try:
+                _self_publish.commit_own("cost_monitor.py", ["cost_log.csv"])
+            except Exception as _e:  # noqa: BLE001 — 提交失敗不得讓記帳本體失敗
+                logger.warning("cost_log 自動提交失敗（本體不受影響）：%s", _e)
 
 # 輸出報告
 report = f"📊 **AI費用日報 {TODAY}**\n\n"
