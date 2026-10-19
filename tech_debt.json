@@ -1859,15 +1859,16 @@
     "title": "rebalance_report 兩套配置目標並存（五桶表 10/30/30/25/5 vs targetAllocation 台10/美22/防32/債30/黃金5/石油2）",
     "severity": "P2",
     "source": "真 CIO 完整審查 2026-10-15（rebalance_report_2026-10-15.html）",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-19)：rebalance_report 與日報共用面板的雙目標並存已消除：目標口徑單一化為五桶台10/美30/防30/債25/現5（snapshot.penetration.targets），DAA targetAllocation 改只輸出相對偏移pp（台+0/美-8/防+2/債+5），避險衛星改標上限且不計入五桶。實測 rebalance_report_2026-10-19.html 全文已無 22/32/30 那組；commit 1f5998f6（CIO-Gemini APPROVE，tree 087e0437，覆蓋100%）。同批同步 market_indicator_panel.py（日報/週報共用），避免日報再現第二套目標。",
     "detail": "同一報告內兩套目標並存且未標何者現行。需確認現行政策唯一來源，並把另一套明確標為歷史／情境／失效值。裁決：另開批次，不混入現金真值批次。",
     "tags": "rebalance,目標口徑,CIO-REJECT",
     "due_date": "2026-10-18",
     "owner": "工程端",
     "moved_from": "",
     "moved_at": "2026-10-15",
-    "cleanup_reason": ""
+    "cleanup_reason": "tech_debt close：rebalance_report 與日報共用面板的雙目標並存已消除：目標口徑單一化為五桶台10/美30/防30/債25/現5（snapshot.penetration.targets），DAA targetAllocation 改只輸出相對偏移pp（台+0/美-8/防+2/債+5），避險衛星改標上限且不計入五桶。實測 rebalance_report_2026-10-19.html 全文已無 22/32/30 那組；commit 1f5998f6（CIO-Gemini APPROVE，tree 087e0437，覆蓋100%）。同批同步 market_indicator_panel.py（日報/週報共用），避免日報再現第二套目標。",
+    "updated_at": "2026-10-19"
   },
   {
     "id": "TD-20261015-04",
