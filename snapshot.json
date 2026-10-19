@@ -4265,8 +4265,8 @@
   }
  },
  "cash_source": {
-  "date": "2026-10-15",
-  "note": "Moneybook 帳戶 CSV 匯入（cash_detail）"
+  "date": "2026-10-19",
+  "note": "Moneybook 帳戶 CSV 匯入（cash_detail）；2026-10-19 匯出：台幣現金與前次一致（國泰活期重複列 20,776 依既定規則排除、Unicard 溢繳 6,914 不計入現金）；信用卡當期餘額待下一次四源同步入帳"
  },
  "fed_hike_monitor_0901": {
   "決策": "✅ 9/1 使用者確認 + 新聞證據：Fed 升息預期升溫 → 納入部署評估（Warsh 鷹派主席、9月 FOMC live）",
