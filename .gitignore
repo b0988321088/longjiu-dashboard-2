@@ -114,3 +114,13 @@ snapshot.backup.json
 # 2026-10-13（TD-20261013-13）：再平衡自動版草稿（正典受保護時的旁路產物，不入版控）
 rebalance_summary_*.auto.md
 data/notion_page_ids.json
+
+# 2026-10-19（使用者核准）：分析快取不入版控
+# 前提已逐一核實：
+#   ① /daily_analysis.json — cost_monitor.py 每輪重算的快取（市場字串／cto_signal／成本摘要），
+#      讀者只有 cio_review.py 的本機驗證與 buffett_cto_analyzer 的退路取值，皆讀工作區檔案，不讀 git 版本。
+#   ② 無任何 job 的推送集涵蓋它（closeout 長期標示「無推送擁有者」），每日被覆寫 → 永久 dirty 噪音。
+#   ③ 不是真值：真值在 snapshot.json；本檔遺失時 cost_monitor 會重建，日報不會因此缺資料。
+# 因此忽略它不會遮蔽應受版控的資料，只阻止未審查的快取內容被順手帶上線。
+# gitignore 對「已追蹤」檔無效，故另以 git rm --cached 移出索引。
+/daily_analysis.json
