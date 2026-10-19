@@ -21,12 +21,55 @@ import os
 import re
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 BASE = Path.home() / "Desktop" / "longjiu_system"
 REPORT = BASE / "daily_report_v2_{d}.html"
 PAGES = "https://b0988321088.github.io/longjiu-dashboard-2"
 LINK_RE = re.compile(r"(📰|📈|🏠|🔄|📊|🚨)\s*([^:：]+)[:：]\s*(https?://\S+)")
+LOG_DIR = BASE / "logs"
+# 2026-10-20（使用者核准）：失敗摘要優先結構化擷取。matplotlib 字型警告會把尾段淹掉，
+# 過去 10/16–10/19 三次失敗因此只回報「rc=1」而看不到真因（⛔ 行不在 ❌ 掃描範圍）。
+NOISE = ("UserWarning", "missing from font", "Glyph ", "plt.tight_layout",
+         "fig.savefig", "warnings.warn", "tight_layout(")
+ERROR_KEYS = ("❌", "⛔", "Traceback", "Exception", "未推送上線", "已跳過 commit",
+              "fail-closed", "REJECT")
+
+
+def write_full_log(text: str) -> Path | None:
+    """完整 stdout+stderr 落地；失敗時訊息只需指路，不必再塞尾段。"""
+    try:
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
+        p = LOG_DIR / f"morning_{datetime.now():%Y%m%d}.log"
+        p.write_text(text or "", encoding="utf-8")
+        return p
+    except Exception:
+        return None
+
+
+def diagnose(text: str, limit: int = 12) -> tuple[list[str], list[str]]:
+    """擷取錯誤行（含緊接的 '  - ' 詳情）與 gate 段；雜訊行先濾除。"""
+    keep: list[str] = []
+    collecting = False
+    for ln in (text or "").splitlines():
+        if any(n in ln for n in NOISE):
+            continue
+        s = ln.strip()
+        if any(k in ln for k in ERROR_KEYS):
+            if len(keep) < limit:
+                keep.append(s)
+            collecting = True
+        elif collecting and s.startswith("- "):
+            if len(keep) < limit:
+                keep[-1] = keep[-1] + " " + s
+        else:
+            collecting = False
+    gate = [ln.strip() for ln in (text or "").splitlines()
+            if any(k in ln for k in ("閘門模式", "F1 ", "F2 ", "F3 ", "F4 ", "FAIL ", "分類："))
+            and not any(k in ln for k in ("❌", "⛔"))][:8]
+    return keep[:limit], gate
+
 
 
 def read_stdout() -> tuple[str, int]:
@@ -92,12 +135,20 @@ def main() -> None:
     if rc != 0 or not have:
         print("⚠️ 晨間產線失敗 — 需人工處理")
         print(f"regenerate_report.py rc={rc}；抓到連結 {len(links)} 個")
-        bad = [ln.strip() for ln in text.splitlines() if "❌" in ln][:10]
-        if bad:
-            print("失敗項：\n" + "\n".join(bad))
-        tail = text.strip()[-1000:]
-        if tail:
-            print("--- 輸出尾段 ---\n" + tail)
+        _bad, _gate = diagnose(text)
+        _log = write_full_log(text)
+        if _bad:
+            print("失敗項：\n" + "\n".join(_bad))
+        else:
+            print("失敗項：（未擷取到錯誤行，完整輸出見下方日誌路徑）")
+        if _gate:
+            print("閘門段：\n" + "\n".join("  " + g for g in _gate))
+        print(f"📄 完整日誌：{_log}" if _log else "📄 完整日誌：寫入失敗（logs/ 不可寫）")
+        if not _bad:
+            # fallback：只有在完全擷取不到錯誤行時才回到舊行為
+            tail = text.strip()[-1000:]
+            if tail:
+                print("--- 輸出尾段（fallback） ---\n" + tail)
         sys.exit(rc if rc != 0 else 1)
 
     lines = ["✅ 晨間日報已產出並上線" if not os.environ.get("LJ_MORNING_DRY")
