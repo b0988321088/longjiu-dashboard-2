@@ -368,7 +368,12 @@ for key, name, val, target, color, desc in cats_data:
     elif gap < -5: st = "<span class='tag under'>🔴 不足</span>"
     else: st = "<span class='tag good'>✅ 正常</span>"
     gc = "down" if gap < 0 else "up"
-    w(f"<tr><td>{name}</td><td class='num'>{val:,}</td><td class='num'>{pct:.1f}%</td><td class='num'>{target}%</td><td class='num {gc}'>{gap:+.1f}pp</td><td>{st}</td></tr>")
+    # 2026-10-19 使用者裁決（最小修正）：台股桶是「跨平台穿透值」，不是證券帳戶市值。
+    # 舊版只寫「台股市值型」，曾被讀成證券總市值（3,015,575 vs 券商 2,815,430）→ 加註口徑。
+    _note = ("<br><span style='font-size:10px;color:#94a3b8;font-weight:400'>"
+             "含證券、平台基金與保單穿透部位，非證券帳戶市值；不同資產類別可能涉及穿透歸類"
+             "</span>") if key == "tw" else ""
+    w(f"<tr><td>{name}{_note}</td><td class='num'>{val:,}</td><td class='num'>{pct:.1f}%</td><td class='num'>{target}%</td><td class='num {gc}'>{gap:+.1f}pp</td><td>{st}</td></tr>")
 w("</tbody></table></div>")
 
 # 2. Bar chart
