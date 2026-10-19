@@ -13,7 +13,9 @@
 
 用法：
   python auto_push.py --script evening_sync.py --auto-stage --commit "auto: 晚報校準 2026-09-14"
-  python auto_push.py --script radar_push.py --own radar_state.json "radar_report_*.html"   # 已自行 commit，只補紀錄＋推
+  python auto_push.py --script radar_push.py --own radar_state.json radar_report_2026-10-19.html   # 已自行 commit，只補紀錄＋推
+        注意：--own 只做「字面路徑」比對（publish_gate 不展開 glob）→ 一律傳實際檔名，
+              傳 glob（如 radar_report_*.html）會被判 OWN_OUTSIDE 越權而擋下。
   python auto_push.py --script regenerate_report.py                    # 日報/儀表板路徑：純資料/報表，走 auto_record 落 RECORD（INC-183）
 
 參數：
@@ -42,6 +44,8 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import fnmatch
+import os
 import re
 import subprocess
 import sys
@@ -426,13 +430,29 @@ def main() -> int:
 
     # 3b) --own 守門：即使沒有待補紀錄的 commit，也要確認「本 job 產出」已進 commit
     #     （否則會出現「紀錄說推了、內容其實是舊的」靜默落後）
+    # 2026-10-19（INC）：原本把 --own 轉呼叫 `auto_record.py --dry-run`，但該支的健檢會要求
+    #   「本 commit 只能走 AUTO 章」→ 只要本 job 產物含 index.html 等強制真 CIO 檔（雷達即如此），
+    #   即使產出已全部進 commit、也已取得真 CIO RECORD，仍回非 0 → 永遠推不出去（10-19 實證：
+    #   「本 job 產出未提交」但 git status 根本沒有 radar 檔）。改為本地比對工作區 dirty 清單，
+    #   語義同 auto_record ④-1：fnmatch 全路徑或 basename。
     if a.own and not pending:
-        chk = run([sys.executable, str(base / "auto_record.py"), "--script", f"{a.script}(own)",
-                   "--dry-run", "--own", *a.own], base, timeout=300)
-        if chk.returncode != 0:
-            print(f"❌ 本 job 產出未提交 → 不推送\n   {((chk.stdout or '') + (chk.stderr or '')).strip()[-200:]}",
-                  file=sys.stderr)
-            log(base, f"OWN-DIRTY\t{a.script}\t{a.own}")
+        st = run(["git", "status", "--porcelain"], base)
+        dirty_paths: list[str] = []
+        for _line in (st.stdout or "").splitlines():
+            _p = _line[3:].strip()
+            if " -> " in _p:                     # rename／copy：取新路徑
+                _p = _p.split(" -> ", 1)[1]
+            _p = _p.strip().strip('"')
+            if _p:
+                dirty_paths.append(_p)
+        own_dirty = sorted({
+            _p for _p in dirty_paths
+            if any(fnmatch.fnmatch(_p, _pat) or fnmatch.fnmatch(os.path.basename(_p), _pat)
+                   for _pat in a.own)
+        })
+        if own_dirty:
+            print(f"❌ 本 job 產出未提交 → 不推送\n   {', '.join(own_dirty[:5])}", file=sys.stderr)
+            log(base, f"OWN-DIRTY\t{a.script}\t{','.join(own_dirty[:5])}")
             return 3
 
     # 4) 推送（每支最多 3 次，2/5/10 秒退避）

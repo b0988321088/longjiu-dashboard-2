@@ -50,8 +50,11 @@ def main():
     # 2026-09-14：紀錄＋推送統一走 auto_push.py（範圍紀錄覆蓋／重試／遠端 sha 驗證）。
     # --own：本 job 產出（radar_state/雷達報告/儀表板）若沒進 commit → 直接擋下，
     # 不再出現「推成功但線上其實是舊的」。
+    # 2026-10-19（INC）：--own 原本傳 glob「radar_report_*.html」，而 publish_gate 的 producer_own
+    # 只做字面比對（不展開 glob）→ 一律判 OWN_OUTSIDE 越權（10-12、10-19 兩次因此推不出去）。
+    # 改傳 own_files（已濾掉不存在的檔）＝逐字檔名，與 commit 變更集合一致。
     ap = run([sys.executable, os.path.join(BASE, "auto_push.py"), "--script", "radar_push.py",
-              "--own", "radar_state.json", "radar_report_*.html", "index.html"], timeout=600)
+              "--own"] + own_files, timeout=600)
     ap_out = ((ap.stdout or "") + (ap.stderr or "")).strip()
     if ap.returncode != 0:
         print(f"⚠️ 未推送上線（rc={ap.returncode}）：{ap_out[-300:]}")
