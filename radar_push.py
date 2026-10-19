@@ -26,6 +26,15 @@ from pathlib import Path
 BASE = r"C:\Users\bot\Desktop\longjiu_system"
 TODAY = date.today().isoformat()
 
+
+# 2026-10-19（排程阻斷修復）：cron 從 ~/AppData/Local/hermes/scripts 啟動本腳本，sys.path[0]
+# 只有該目錄；閘門／審查車道的模組（publish_gate／cio_lane／review_chain／cio_approve）
+# 只存在 repo → 直接 import 會 ModuleNotFoundError（實測 review_lane 回「審查車道例外」→ rc=8，
+# 排程每次必敗）。因此把 repo 根目錄加進 sys.path；以 publish_gate.py 存在為「BASE 真的是
+# 正式 repo」的標記，避免把錯誤目錄插進搜尋路徑。
+if BASE not in sys.path and (Path(BASE) / "publish_gate.py").exists():
+    sys.path.insert(0, BASE)
+
 EXIT_OK = 0
 EXIT_PROD_FAIL = 1
 EXIT_REVIEW_REFUSED = 3
@@ -164,14 +173,16 @@ def main():
             ok_r, msg_r = review_lane()
             print(f"🔐 真 CIO 審查：{msg_r}")
             if not ok_r:
+                _code = (EXIT_REVIEW_ERROR if msg_r.startswith("審查車道例外")
+                         else EXIT_REVIEW_REFUSED)
                 ok_b, msg_b = rollback_created_commit()
                 # reset --soft 會把本輪產物留在 index（staged）；這裡只還原 staged 狀態，
                 # 不動工作區內容（產物保留、下一輪可重試，且不干擾別班的 stage）。
                 if ok_b:
                     run(["git", "restore", "--staged", "--"] + own_files, timeout=60)
-                print(f"⚠️ 未推送上線（審查未通過，rc={EXIT_REVIEW_REFUSED}）：{msg_r}")
+                print(f"⚠️ 未推送上線（審查未通過，rc={_code}）：{msg_r}")
                 print(f"   撤回本輪 commit：{msg_b}")
-                return EXIT_REVIEW_ERROR if msg_r.startswith("審查車道例外") else EXIT_REVIEW_REFUSED
+                return _code
 
     # 6) 推送（唯一出口）
     # --own 只做字面路徑比對（publish_gate 不展開 glob）→ 一律傳實際檔名。
