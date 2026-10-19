@@ -5462,17 +5462,17 @@
   }
  },
  "coast_fi_engine": {
-  "asof": "2026-10-17",
+  "asof": "2026-10-19",
   "current": {
    "growth_assets": {
-    "tw_growth": 3375905.0,
-    "us_growth": 9881940.0,
+    "tw_growth": 2997974.0,
+    "us_growth": 10052913.0,
     "re_value": 34017063.0,
     "mortgage": 25044429.0,
     "re_net": 8972634.0,
     "fin_debt": 0.0,
-    "total": 22230479.0,
-    "net_after_fin_debt": 22230479.0
+    "total": 22023521.0,
+    "net_after_fin_debt": 22023521.0
    },
    "coast": {
     "fi_target_swr": 47763000.0,
@@ -5480,21 +5480,21 @@
     "years_to_target": 0.29,
     "target_date": "2027-02-01",
     "real_return_pct": 5.0,
-    "fin_only_capital": 13257845.0,
+    "fin_only_capital": 13050887.0,
     "coast_threshold_swr": 47091952.830646366,
-    "coast_fi_ratio_swr_pct": 47.2,
-    "coast_fi_ratio_fin_only_swr_pct": 28.2,
-    "coast_gap_fin_only_swr": 33834107.830646366,
-    "fv_no_contrib_swr": 22547257.114086136,
-    "gap_fv_swr": 25215742.885913864,
-    "monthly_needed_swr": 8370322.844086019,
+    "coast_fi_ratio_swr_pct": 46.8,
+    "coast_fi_ratio_fin_only_swr_pct": 27.7,
+    "coast_gap_fin_only_swr": 34041065.830646366,
+    "fv_no_contrib_swr": 22337350.02041456,
+    "gap_fv_swr": 25425649.97958544,
+    "monthly_needed_swr": 8440001.145821733,
     "coast_threshold_yield": 37673562.26451709,
-    "coast_fi_ratio_yield_pct": 59.0,
-    "coast_fi_ratio_fin_only_yield_pct": 35.2,
-    "coast_gap_fin_only_yield": 24415717.26451709,
-    "fv_no_contrib_yield": 22547257.114086136,
-    "gap_fv_yield": 15663142.885913864,
-    "monthly_needed_yield": 5199353.566592204
+    "coast_fi_ratio_yield_pct": 58.5,
+    "coast_fi_ratio_fin_only_yield_pct": 34.6,
+    "coast_gap_fin_only_yield": 24622675.26451709,
+    "fv_no_contrib_yield": 22337350.02041456,
+    "gap_fv_yield": 15873049.979585439,
+    "monthly_needed_yield": 5269031.8683279175
    },
    "light_work": {
     "rows": [
@@ -5502,25 +5502,25 @@
       "月收": 0.0,
       "所需年現金流": 1910520,
       "所需本金": 38210400,
-      "缺口": 24952555,
-      "達成_pct": 34.7
+      "缺口": 25159513,
+      "達成_pct": 34.2
      },
      {
       "月收": 20000.0,
       "所需年現金流": 1670520,
       "所需本金": 33410400,
-      "缺口": 20152555,
-      "達成_pct": 39.7
+      "缺口": 20359513,
+      "達成_pct": 39.1
      },
      {
       "月收": 30000.0,
       "所需年現金流": 1550520,
       "所需本金": 31010400,
-      "缺口": 17752555,
-      "達成_pct": 42.8
+      "缺口": 17959513,
+      "達成_pct": 42.1
      }
     ],
-    "fin_capital": 13257845.0,
+    "fin_capital": 13050887.0,
     "yield_pct": 5.0,
     "expense": 159210.0
    },
@@ -5529,10 +5529,10 @@
     "rent": 80100.0,
     "dividend_conservative": 100000.0,
     "dividend_normal": 177072.0,
-    "dividend_actual": 128449.0,
+    "dividend_actual": 128779.0,
     "pccr_pct": 139.3,
     "pccr_conservative_pct": 113.1,
-    "pccr_actual_pct": 95.8,
+    "pccr_actual_pct": 96.0,
     "pccr_normal_headroom": 139.3,
     "nonpassive": {
      "girlfriend_repayment": 6000.0
@@ -5546,10 +5546,10 @@
     "gap": 32110.0,
     "vacancy": 33000.0,
     "scenario": "extreme",
-    "cash_full": 1170934.0,
+    "cash_full": 1171260.0,
     "reserve": 0.0,
     "floor": 700000.0,
-    "cash_used": 1170934.0,
+    "cash_used": 1171260.0,
     "cash_below_floor": false,
     "runway_days": 1094,
     "cash_caliber": "net_of_reserve",
@@ -5598,7 +5598,7 @@
    },
    "light": "🔴 紅燈",
    "blockers": [
-    "Coast FI 本金滑行（純金融）28.2% < 100%（含房產 47.2%）",
+    "Coast FI 本金滑行（純金融）27.7% < 100%（含房產 46.8%）",
     "跌30% 維持率 139.8% < 180%",
     "授信未鎖定（洲際W 轉貸（永豐 1,312萬，9/25 到期））"
    ]
@@ -5693,6 +5693,16 @@
     "maintenance_pct": 139.8,
     "credit_locked": false,
     "light_work_cap_2w": 20152555
+   },
+   "2026-10-19": {
+    "light": "🔴 紅燈",
+    "coast_fin_only_pct": 27.7,
+    "coast_with_re_pct": 46.8,
+    "pccr_pct": 139.3,
+    "runway_days": 1094,
+    "maintenance_pct": 139.8,
+    "credit_locked": false,
+    "light_work_cap_2w": 20359513
    }
   }
  },
@@ -5932,16 +5942,16 @@
    "US30Y角色": "宏觀風險警示（不否決台股分批）",
    "pledge_ltv": {
     "借款": 5900000.0,
-    "擔保品市值": 11798203.0,
-    "LTV_pct": 50.01,
+    "擔保品市值": 11915339.0,
+    "LTV_pct": 49.52,
     "政策停止線_pct": 53.0,
     "追繳參考_pct": 70.0,
-    "距停止線_pct": 2.99,
-    "池值可跌_pct": -5.65,
+    "距停止線_pct": 3.48,
+    "池值可跌_pct": -6.57,
     "通過": true,
     "觸追繳": false,
     "語意": "內部投資停止線（= thresholds.ltv分級_pct.黃上限），**非銀行追繳線**；銀行追繳線以追繳參考值暫作壓力測試（待銀行書面）",
-    "source": "sot_targets.pledge_ltv（fund_pledge_loan ÷ fund_breakdown_cathay；thresholds.ltv分級_pct；v1.2 TD-20261015-02）"
+    "source": "sot_targets.pledge_ltv_detail（2026-10-19 重算：擔保品市值改動態真值）"
    },
    "repayment_valve": {
     "已證實": false,
