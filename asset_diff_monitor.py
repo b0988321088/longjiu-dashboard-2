@@ -1212,8 +1212,12 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         #   基金與安聯＝snapshot.source_import_dates[標籤]（匯入流程負責寫），缺值顯示「—」。
         _sids = snap.get("source_import_dates", {}) or {}
 
+        # 2026-10-20 修正：列標籤與 source_import_dates 的鍵不同名（「保單 第一金 FLXX（App）」
+        #   vs「保單 第一金」）→ 舊版查不到就退回 as-of，讓「最近匯入」比實際舊 15 天。
+        _SID_ALIAS = {"保單 第一金 FLXX（App）": "保單 第一金"}
+
         def _imported_on(_label, _asof):
-            _v = _sids.get(_label)
+            _v = _sids.get(_SID_ALIAS.get(_label, _label)) or _sids.get(_label)
             if _v:
                 return str(_v)[:10]
             if _label.startswith(("現金", "證券")):
@@ -1230,6 +1234,11 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
             ("基金 國泰直購（富達/聯博/B11）", _fnd.get("國泰直購（富達/聯博/B11）")),
             ("基金 鉅亨（一般申購＋自由Pay）", _fnd.get("鉅亨（一般申購＋自由Pay）")),
         ]
+        # 2026-10-20：標註「無自動寫入者」的源。fund_nav_dates／firstjin_detail.last_update 全庫
+        #   只有 apply_truth_*.py（真值日一次性腳本）會寫，沒有每日寫入者 → 不標註時 🔴 會被
+        #   誤讀成程式異常（使用者：「新鮮度一直有更新，內容卻一直是舊的」）。
+        _no_auto = {"保單 第一金 FLXX（App）", "保單 安聯 A/B（App）",
+                    "基金 國泰直購（富達/聯博/B11）", "基金 鉅亨（一般申購＋自由Pay）"}
         # 人工補充來源：data_freshness 內非保留鍵者仍照舊呈現（已不再承載上述六列的日期）
         _legacy = {k: v for k, v in (snap.get("data_freshness", {}) or {}).items()
                    if k not in ("note", "updated_at", "deprecated", "機制")}
@@ -1238,6 +1247,8 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         _frows, _ages, _imp_ages = [], [], []
         _today_iso = date.today().isoformat()
         for _src, _d in _src_rows:
+            _src_cell = (_src + "<span style='color:#94a3b8;font-size:11px'>（無自動來源）</span>"
+                         if _src in _no_auto else _src)
             _imp = _imported_on(_src, _d)
             _imp_cell = "—"
             if _imp:
@@ -1248,7 +1259,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
                 _imp_ages.append(_imp)
                 _imp_cell = f"{_imp}（{'今天' if _ia == 0 else str(_ia) + ' 天前'}）" if _ia is not None else _imp
             if not _d:
-                _frows.append(f"<tr><td>{_src}</td><td class='num'>待補</td>"
+                _frows.append(f"<tr><td>{_src_cell}</td><td class='num'>待補</td>"
                               f"<td>⚪ 缺機器欄位（不回退舊值）</td><td class='num'>{_imp_cell}</td></tr>")
                 continue
             _iso = str(_d)[:10]
@@ -1262,7 +1273,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
                    ("🟡" if (_age is not None and _age <= 3) else
                     ("🔴" if _age is not None else "⚪")))
             _frows.append(
-                f"<tr><td>{_src}</td><td class='num'>{_iso}</td>"
+                f"<tr><td>{_src_cell}</td><td class='num'>{_iso}</td>"
                 f"<td>{_lk} {str(_age) + ' 天前' if _age is not None else '—'}</td>"
                 f"<td class='num'>{_imp_cell}</td></tr>")
         # 卡片自證：最新 as-of 與產出時間（任何「卡住」一眼可辨）
@@ -1270,6 +1281,7 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         _latest_imp = max(_imp_ages) if _imp_ages else "—"
         _ft_note = ("每列由 snapshot 機器欄位推導（現金=cash_source.date／證券=securities.price_date／"
                     "保單 firstjin=firstjin_detail.last_update／基金與安聯=fund_nav_dates）；"
+                    "「（無自動來源）」＝該源沒有每日寫入者，as-of 只在你提供截圖／匯出並入庫時前進；"
                     "「資料日期」＝該源 as-of（基金淨值 T+1 公布，今天匯入的資料 as-of 多為昨日），"
                     "「最近匯入」＝我方收到並寫入的日期（基金＝source_import_dates）。"
                     "缺值＝待補／—，不回退舊值。某列 🟡🔴 代表該上游還沒給新資料 —— 差異分析的"
