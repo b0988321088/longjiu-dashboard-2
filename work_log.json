@@ -1602,5 +1602,29 @@
   "category": "完成",
   "item": "資產穿透2026-10-16（已產出（五桶市值見 snapshot.penetration.actual_twd））",
   "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-10-19",
+  "category": "完成",
+  "item": "日報2026-10-19（已產出（金額見 snapshot／當日日報檔，勿在此複寫數字））",
+  "detail": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）"
+ },
+ {
+  "date": "2026-10-19",
+  "category": "完成",
+  "item": "資產穿透2026-10-19（已產出（五桶市值見 snapshot.penetration.actual_twd））",
+  "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-10-19",
+  "category": "完成",
+  "item": "PEND-20261009-11 結案：申購款『待確認應收』科目與穿透不變量",
+  "detail": "科目與穿透不變量已於 2026-10-16 落地，應收由退款紀錄結清（金額見 snapshot.pending_receivables，勿在此複寫數字）。卡片自 pending 移除並歸檔；收工稽核 ⑦ 第 8 類閘門（pending 狀態含已完成）修復。"
+ },
+ {
+  "date": "2026-10-19",
+  "category": "完成",
+  "item": "壓力情境『常態月配』基準結案：口徑固定當月實際收款",
+  "detail": "壓力測試採當月實際收款口徑，常態月配僅作補充標記情境（使用者 2026-10-19 核准）。卡片自 pending 移除並歸檔；收工稽核 ⑦ 第 8 類閘門（pending 狀態含已完成）修復。"
  }
 ]
