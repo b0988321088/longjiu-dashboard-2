@@ -19,6 +19,18 @@ FILES = [
     "dashboard_decisions.json",  # 決策追蹤/審計
     "us30y_state.json",       # US30Y 模式燈號
 ]
+# 2026-10-21（TD-20261013-01／使用者裁決）：事件帳本補上明確提交出口。
+#   這兩檔由 four_source_sync.py（22:00 晚報，新 INC append）與 lj_inc.py（list／close 改寫）
+#   以及週一 03:00 深清（cleanup_utils）寫入，但兩檔在 publish_gate.NEVER_AUTO_EXACT →
+#   任何 AUTO 車道都拿不到章、自身也不 commit → 每晚必髒、22:40 收工檢查反覆紅。
+#   修法：納入本任務提交集（22:15 在 22:00 之後、22:40 之前），沿用既有「強制真 CIO →
+#   cio_lane 真審查 → auto_push」車道與「審查失敗撤回 commit、內容留工作區」語意。
+#   只 stage 有實際變更的檔（git add 無變更即無 staged）→ 不產生空 commit、不擴大提交集。
+LEDGERS = [
+    "error_register.md",      # 事件登記（four_source_sync append／週深清歸檔改寫）
+    "inc_events.jsonl",       # 事件殘留帳本（lj_inc／four_source_sync 改寫）
+]
+FILES += LEDGERS
 
 def git(*args):
     return subprocess.run(["git", "-C", REPO, *args], capture_output=True, text=True, encoding="utf-8")
