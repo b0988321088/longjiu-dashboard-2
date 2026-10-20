@@ -59,9 +59,16 @@ def main() -> int:
         months.append(today.strftime("%Y-%m"))
     db = sqlite3.connect(bpm.DB)
     try:
-        fresh = pc.monthly_history(months, snap=snap, adjust_all=adjust, db=db, today=today)
+        # 2026-10-20：builder 改用「最新有效資料日 + 已登錄資金流」；重算必須同參數，
+        # 否則 A 段會因「頁面多了 flow/asof 欄位」而誤判不一致。
+        asof = pc.latest_asof(snap, db).get("asof") or today.isoformat()
+        eff_today = dt.date.fromisoformat(asof)
+        fresh = pc.monthly_history(months, snap=snap, adjust_all=adjust, db=db,
+                                   today=eff_today, asof=asof)
     finally:
         db.close()
+    fresh["balance"] = {k: snap.get(k) for k in
+                        ("total_assets", "total_liabilities", "net_worth", "cash")}
     emb = payload_of(html)
     chk(json.dumps(emb, sort_keys=True) == json.dumps(fresh, sort_keys=True),
         "頁面內嵌資料 == core 重算（逐欄位）",
@@ -90,8 +97,9 @@ def main() -> int:
         pc.monthly_history = orig
     if not keep and tmp.exists():
         tmp.unlink()
-    base_card = mut_html.split("◆ 資本基準月")[1].split("◆ 基準後累計")[0]
-    ref_block = mut_html.split("◆ 歷史參考區（不列入累計）")[1].split("◆ 損益來源")[0]
+    # 2026-10-20：頁面改為判讀式分區，改用 data-zone 定位（不再依賴標題文字順序）
+    base_card = mut_html.split('data-zone="baseline"')[1].split('data-zone="ref"')[0]
+    ref_block = mut_html.split('data-zone="ref"')[1].split("</section>")[0]
     chk("2026/08" in base_card, "突變：基準月區跟著 core 改成 2026/08")
     chk("2026/09" in ref_block, "突變：9 月被移到歷史參考區（非寫死）")
 
