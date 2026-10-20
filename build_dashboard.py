@@ -1125,7 +1125,17 @@ def main():
     _link_hits = 0
     for _ph, _pat in _link_map.items():
         if _ph in tpl:
-            _fs = sorted(_glob.glob(str(BASE / _pat)))
+            # 2026-10-20：改以「檔名中的日期」挑最新（原 sorted() 取字母序最後一個，
+            # 導致 *_card_*.html 這種檔名不固定的圖樣永遠指向字母序較大的舊卡，
+            # 例：investment_structure_plan_card_2026-10-20 輸給 policyB_conversion_card_2026-09-12）。
+            # 無日期者維持字母序，行為不變。
+            def _fdate_key(_p):
+                # 年月日可缺日（如 dynamic_monthly_review_2026-09.html）：缺日視為該月 31 日，
+                # 否則「2026-09」會因抓不到三段日期而排到「2026-08-31」之前（倒退選舊檔）。
+                _m = re.search(r"(20\d{2})[-_]?(\d{2})(?:[-_]?(\d{2}))?",
+                               str(_p).replace("\\", "/").split("/")[-1])
+                return (_m.group(1) + _m.group(2) + (_m.group(3) or "31")) if _m else "00000000"
+            _fs = sorted(_glob.glob(str(BASE / _pat)), key=lambda _x: (_fdate_key(_x), str(_x)))
             if _fs:
                 _new = str(_fs[-1]).replace("\\", "/").split("/")[-1]  # Windows glob 回傳 str
                 tpl = tpl.replace(_ph, _new)
