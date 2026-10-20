@@ -180,6 +180,35 @@ def sweep_tmp(path) -> list[str]:
     return gone
 
 
+def _validate_pending_semantics(p: Path, data) -> None:
+    """寫入前語意驗證（2026-10-20 使用者核准；只檢查、不改值）。
+
+    契約：due_date 有值 → due_date_source 必須是「既有文字…」開頭的字串。
+    不猜、不推算、不代改；違反即 WriteRejected，正本不動。
+    範圍只限 pending_decisions.json；archive 與其他 JSON 路徑不受影響。
+    """
+    if p.name != "pending_decisions.json":
+        return
+    if isinstance(data, dict):
+        if "pending_decisions" not in data:
+            raise WriteRejected("拒絕寫入（缺少 pending_decisions 鍵）")
+        items = data["pending_decisions"]
+    else:
+        items = data
+    if not isinstance(items, list):
+        raise WriteRejected(f"拒絕寫入（pending_decisions 必須是物件或陣列，實得 {type(items).__name__}）")
+    for i, it in enumerate(items):
+        if not isinstance(it, dict):
+            raise WriteRejected(f"拒絕寫入（pending_decisions[{i}] 不是物件：{type(it).__name__}）")
+        if not it.get("due_date"):
+            continue
+        src = it.get("due_date_source")
+        if not isinstance(src, str) or not src.startswith("既有文字"):
+            raise WriteRejected(
+                "拒絕寫入（due_date 有值但 due_date_source 未以「既有文字」開頭："
+                + str(it.get("id") or it.get("title") or f"index {i}") + "）")
+
+
 def atomic_write_text(path, text: str, *, fsync: bool = True, verify_json: bool = True) -> str:
     """tmp → flush+fsync → 驗證 → os.replace。失敗清 tmp 且正本不動。回傳實際寫入內容。
 
@@ -190,9 +219,10 @@ def atomic_write_text(path, text: str, *, fsync: bool = True, verify_json: bool 
     tmp = p.with_name(f"{p.name}.tmp-{os.getpid()}")
     if verify_json:
         try:
-            json.loads(text)
+            _data = json.loads(text)
         except Exception as e:
             raise WriteRejected(f"拒絕寫入（內容非合法 JSON）：{type(e).__name__}: {e}")
+        _validate_pending_semantics(p, _data)
     try:
         with open(tmp, "w", encoding="utf-8", newline="") as f:
             f.write(text)
