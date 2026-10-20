@@ -175,6 +175,21 @@ def phase2_notion() -> None:
         raise RuntimeError("Notion 往返 md5 不符")
     log(f"OK  NOTION MEMORY.md -> page {NOTION_PAGE_ID} ({len(back)} bytes, md5 相符)")
 
+    # 2026-10-21 使用者裁決（A＋C）C 案：每次成功寫入後同步更新「日期」屬性。
+    # 事故背景：notion_cleanup 規則 2＝「備份類且日期逾 N 天 → 可封存」，而本頁的
+    # 日期屬性停在首次建立日 2026-08-04，於是 2026-10-16 06:53 被自動清理封存，
+    # 導致 06:50 連續 5 天失敗。只改判定條件會掩蓋真正過期的備份，故改為讓
+    # 「有效備份」自己維持新鮮日期——規則 2 不必調整，命中條件自然不再成立。
+    # 註：內容已同步成功但日期戳記失敗時 → 仍視為失敗（fail-closed），
+    #     否則防誤封存會靜默失效，下次清理照樣命中。
+    _today = date.today().isoformat()
+    try:
+        notion("PATCH", f"pages/{NOTION_PAGE_ID}",
+               {"properties": {"日期": {"date": {"start": _today}}}})
+    except Exception as _de:
+        raise RuntimeError(f"內容已同步但「日期」屬性更新失敗（防誤封存失效）：{_de}")
+    log(f"OK  NOTION 日期屬性 -> {_today}（cleanup 規則 2 以最新備份日判斷）")
+
 
 # ---------- main ----------
 
