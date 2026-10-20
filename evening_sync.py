@@ -145,6 +145,59 @@ def run_capture(name: str, timeout: int = 600, args: list | None = None) -> tupl
     return r.returncode == 0, ((r.stdout or "") + (r.stderr or "")).strip()
 
 
+def _git_head() -> str:
+    r = subprocess.run(["git", "rev-parse", "HEAD"], cwd=BASE, capture_output=True, text=True)
+    return (r.stdout or "").strip()
+
+
+def _publish(message, lines, own_commit=True, runner=None, lane=None):
+    """commit（可選）→ 必要時走真 CIO 車道 → 推送。回傳是否真的推上線。
+
+    2026-10-20 A 案：21:xx 產線常產生「強制真 CIO 類」commit（pending_decisions.json 等），
+    auto_push 會以 rc=3 拒絕 → 舊版只印「未推送上線」但整體 rc=0，留下毒藥 commit，
+    22:15 nightly 因此 fail-closed。現改為：rc=3 時呼叫 cio_lane.review_and_record 取 APPROVE
+    並落 RECORD，再以 --record skip 推送；車道失敗則撤回本步驟 commit（內容留工作區）並回 False。
+    """
+    runner = runner or (lambda args, **kw: subprocess.run(args, cwd=BASE, **kw))
+    head0 = _git_head()
+    cmd = [sys.executable, str(BASE / "auto_push.py"), "--script", "evening_sync.py", "--record", "auto"]
+    if message:
+        cmd += ["--commit", message]
+    ap = runner(cmd, capture_output=True, text=True, timeout=900)
+    out = ((ap.stdout or "") + (ap.stderr or "")).strip()
+    for _l in out.splitlines()[-4:]:
+        lines.append("  " + _l)
+    if ap.returncode == 3:
+        lines.append("🔐 閘門判定必須真 CIO → 走真審查車道（cio_lane）")
+        if lane is None:
+            try:
+                import cio_lane as _lane
+                ok, msg = _lane.review_and_record(tag="evening_sync")
+            except (Exception, SystemExit) as _e:  # noqa: BLE001
+                ok, msg = False, f"車道例外（{type(_e).__name__}: {str(_e)[:120]}）→ fail-closed"
+        else:
+            ok, msg = lane()
+        lines.append(f"真 CIO 審查：{msg}")
+        if not ok:
+            if own_commit and _git_head() != head0:
+                rb = runner(["git", "reset", "--soft", "HEAD~1"], capture_output=True, text=True)
+                lines.append("↩ 已撤回本步驟 commit（內容留在工作區，下一輪可重試）："
+                             + (rb.stdout or rb.stderr).strip()[:100])
+            return False
+        ap2 = runner([sys.executable, str(BASE / "auto_push.py"), "--script", "evening_sync.py",
+                      "--record", "skip"], capture_output=True, text=True, timeout=900)
+        for _l in (((ap2.stdout or "") + (ap2.stderr or "")).strip()).splitlines()[-3:]:
+            lines.append("  " + _l)
+        if ap2.returncode != 0:
+            lines.append(f"⚠️ 審查通過但推送失敗（rc={ap2.returncode}）")
+            return False
+        return True
+    if ap.returncode != 0:
+        lines.append(f"⚠️ 推送失敗（rc={ap.returncode}）")
+        return False
+    return True
+
+
 def main():
     lines = ["📊 **龍九晚報（自動校準版 22:00）**"]
     # producer 邊界：跑子生產者「之前」先取內容指紋＋既有 dirty 集合（本輪產物＝after−before）
@@ -184,9 +237,12 @@ def main():
     _ig, _ig_ok = _ignored(BASE, _keep)
     _keep = [f for f in _keep if f not in _ig]
     _pushed = False
+    _fail = False
     if not (_before and _after and _d1_ok and _d2_ok):
+        _fail = True
         lines.append("⛔ producer 邊界快照不完整 → 本次不 commit／不 push（fail-closed）")
     elif not _ig_ok:
+        _fail = True
         lines.append("⛔ 無法判定 ignored 產物（git check-ignore 失敗）→ 不 commit／不 push（fail-closed）")
     else:
         if _ig:
@@ -207,14 +263,12 @@ def main():
                     lines.append(f"ℹ️ {len(_missing)} 檔 staged 無差異（git 正規化後與 HEAD 相同，"
                                  f"不影響本次發布）：{', '.join(_missing[:8])}"
                                  + ("…" if len(_missing) > 8 else ""))
-                ap = subprocess.run([sys.executable, str(BASE / "auto_push.py"), "--script", "evening_sync.py",
-                                     "--commit", f"auto: 晚報校準 {TODAY}"],
-                                    cwd=BASE, capture_output=True, text=True, timeout=900)
-                _pushed = ap.returncode == 0
-                for _l in (((ap.stdout or "") + (ap.stderr or "")).strip()).splitlines()[-4:]:
-                    lines.append("  " + _l)
+                _pushed = _publish(f"auto: 晚報校準 {TODAY}", lines)
+                if not _pushed:
+                    _fail = True
             else:
                 _extra = sorted(set(_st) - set(_keep))
+                _fail = True
                 lines.append(f"⛔ staged 與本輪產物不符（git add rc={_add.returncode}｜多出 {_extra}）"
                              "→ 不 commit／不 push（fail-closed）")
     # 5) 資料產物收尾提交（2026-10-15 P1-2 修復；責任邊界＝此步驟，唯一且明確）
@@ -227,7 +281,16 @@ def main():
     #      （不帶 --push；artifact_commit 亦不得呼叫 auto_push）。推送交由獨立審查車道
     #      （真 CIO 審查 → RECORD → auto_push），故晚報必須分開講「提交完成、推送待審」，
     #      不得把兩件事合併報告成「已發布」。
+    _head_art0 = _git_head()
     _ok_art, _art_msg = run_capture("artifact_commit.py", 300)
+    if _ok_art and _git_head() != _head_art0:
+        # 2026-10-20 A 案：收尾提交（只提交不推送，依 2026-10-15 裁決 b 不改其職責）
+        # 會留下一顆未審 commit → 在本檔內接續送真 CIO 車道並推送，否則 22:15 必被擋。
+        _p_art = _publish(None, lines, own_commit=False)
+        _pushed = _pushed or _p_art
+        if not _p_art:
+            _fail = True
+            lines.append("⚠️ 收尾提交未能完成審查／推送 → 已保留待審（不偽造成功）")
     lines.append(("📦 資料產物收尾提交（只提交、不推送）：" + ("✅ " if _ok_art else "❌ "))
                  + (_art_msg.splitlines()[0] if _art_msg else "（無輸出）")
                  + ("｜推送待獨立審查" if _ok_art else ""))
