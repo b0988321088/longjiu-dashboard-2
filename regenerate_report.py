@@ -1042,9 +1042,14 @@ elif ok and _cio_ok:
     #   fail-loud 不放寬：有產物＋閘門 PASS 卻沒推成 → 明確標記失敗，不靠 404 巧合。
     _push_pending = bool(_push_files) and _gate_ok   # 本次「應」推送成功
     if _recorded or (_gate_ok and not _push_files):
-        _post = subprocess.run([sys.executable, str(BASE / "check_dashboard_sync.py"), "--post-push"],
+        # 2026-10-21（實踩 07:00 rc=1）：推送後 Pages 建置需時間，立即驗新檔必 404。
+        #   先等 45s 再驗，並給非 200 的連結獨立重試預算（總預算拉長到 420s；本段子程序 timeout=900）。
+        #   fail-closed 不變：重試後仍非 200／ERR／未驗 → rc≠0。
+        _post_env = dict(os.environ, LJ_POSTPUSH_BUDGET="420", LJ_POSTPUSH_RETRY_CAP="240")
+        _post = subprocess.run([sys.executable, str(BASE / "check_dashboard_sync.py"), "--post-push",
+                                "--wait-pages", "45"],
                                capture_output=True, text=True, encoding="utf-8", errors="replace",
-                               timeout=900, cwd=str(BASE))
+                               timeout=900, cwd=str(BASE), env=_post_env)
         print((_post.stdout or "").strip())
         if _post.returncode != 0:
             _pages_ok = False

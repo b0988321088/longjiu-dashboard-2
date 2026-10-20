@@ -262,31 +262,65 @@ import urllib.error as _ue13
 import urllib.request as _ur13
 
 _POSTPUSH_BUDGET = int(os.environ.get("LJ_POSTPUSH_BUDGET", "240"))  # 秒；測試可用環境變數縮短
+# 2026-10-21（使用者授權「針對根因處理」，實踩 07:00 rc=1）：
+#   舊寫法把「逐條重試」與「總預算」綁在一起 → 一條落後（Pages 建置中）就吃掉其他人的探測機會，
+#   於是同時出現「3 條 404」與「17 條未驗」，但檔案在建置完成後（同一批 push）其實全部 200。
+#   新語意①首輪每條各探一次，任何人都不會被別人的重試餓死（未驗＝0）
+#          ②非 200 者再進獨立的重試段（_RETRY_CAP，預設 0＝沿用舊行為）
+#          ③仍 fail-closed：重試後非 200／ERR 一律進 fails，rc≠0。
+_RETRY_CAP = int(os.environ.get("LJ_POSTPUSH_RETRY_CAP", "0"))
+_WAIT_PAGES = int(os.environ.get("LJ_POSTPUSH_WAIT", "0"))
+if "--wait-pages" in sys.argv:
+    try:
+        _WAIT_PAGES = int(sys.argv[sys.argv.index("--wait-pages") + 1])
+    except (IndexError, ValueError):
+        _WAIT_PAGES = 0
 if POST_PUSH:
     _t0 = _t13.time()
+    if _WAIT_PAGES > 0:
+        print(f"  ⏳ 推送後先等 Pages 建置 {_WAIT_PAGES}s 再驗（立即驗新檔必假 404）")
+        _t13.sleep(_WAIT_PAGES)
     _BASE_URL = "https://b0988321088.github.io/longjiu-dashboard-2"
     _links = sorted({u for u in re.findall(r'href="([^"]+)"', html)
                      if not u.startswith(("http", "#", "mailto")) and "/" not in u})
-    _deadline = _t0 + _POSTPUSH_BUDGET
-    _bad_codes, _unknown, _skipped = [], [], []
-    _n200 = 0
+    _deadline = _t0 + _WAIT_PAGES + _POSTPUSH_BUDGET
+
+    def _probe(_u: str) -> str:
+        try:
+            _rq = _ur13.Request(f"{_BASE_URL}/{_u}", headers={"User-Agent": "longjiu-postpush"})
+            with _ur13.urlopen(_rq, timeout=10) as _rs:
+                return str(_rs.status)
+        except _ue13.HTTPError as _he:
+            return str(_he.code)
+        except Exception:
+            return "ERR"
+
+    _code_by: dict[str, str] = {}
+    _skipped: list[str] = []
+    # ① 首輪：每條各探一次（不吃重試預算）
     for _u in _links:
         if _t13.time() > _deadline:
             _skipped.append(_u)  # 硬停：逾時後不再嘗試（未驗證 ≠ 通過）
             continue
-        _code = "ERR"
-        for _try in range(4):
-            try:
-                _rq = _ur13.Request(f"{_BASE_URL}/{_u}", headers={"User-Agent": "longjiu-postpush"})
-                with _ur13.urlopen(_rq, timeout=10) as _rs:
-                    _code = str(_rs.status)
-            except _ue13.HTTPError as _he:
-                _code = str(_he.code)
-            except Exception:
-                _code = "ERR"
-            if _code == "200" or _t13.time() > _deadline:
-                break
+        _code_by[_u] = _probe(_u)
+    # ② 重試段：只針對非 200（Pages 建置落後用獨立預算等它）
+    if _RETRY_CAP > 0:
+        _rdeadline = _t13.time() + _RETRY_CAP
+        _pending = [u for u in _links if _code_by.get(u) not in (None, "200")]
+        while _pending and _t13.time() < _rdeadline:
             _t13.sleep(20)
+            for _u in list(_pending):
+                _code_by[_u] = _probe(_u)
+                if _code_by[_u] == "200":
+                    _pending.remove(_u)
+    _bad_codes, _unknown = [], []
+    _n200 = 0
+    for _u in _links:
+        if _u in _skipped:
+            _mark = "⚠️"
+            print(f"  {_mark} 線上 {_u} → 未驗（總預算用盡）")
+            continue
+        _code = _code_by.get(_u, "ERR")
         _mark = "✅" if _code == "200" else ("⚠️" if _code == "ERR" else "❌")
         print(f"  {_mark} 線上 {_u} → {_code}")
         if _code == "200":
