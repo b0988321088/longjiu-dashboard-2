@@ -203,4 +203,21 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    # 2026-10-21（使用者核准）：手動代跑時把五章摘要推回 Telegram。
+    #   cron 不帶 --notify → 行為完全不變（避免與 cron 既有通知重複）。
+    #   rc 12／13／1 也照樣推（失敗訊息比只看到 RC=1 有用），推送失敗不改變退出碼。
+    _notify = "--notify" in sys.argv[1:]
+    _rc = 0
+    try:
+        main()
+    except SystemExit as _e:
+        _rc = 0 if _e.code is None else int(_e.code)
+    if _notify:
+        try:
+            import pipeline_summary
+            print("📨 五章摘要" + ("已推送 Telegram" if pipeline_summary.send_summary(rc=_rc)
+                                   else "推送失敗（token／chat_id 或網路，見上）"))
+        except Exception as _ne:
+            print(f"⚠️ 摘要推送失敗：{type(_ne).__name__}: {_ne}")
+    if _rc:
+        raise SystemExit(_rc)
