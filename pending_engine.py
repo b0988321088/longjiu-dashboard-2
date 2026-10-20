@@ -90,10 +90,40 @@ def norm_status(raw: str) -> str:
     if any(k in head for k in ("關案", "作廢")):
         return "關案"
     if any(k in head for k in ("HOLD", "NO ACTION", "暫停", "條件未成立", "凍結", "不動作",
-                               "不追問", "執行中", "核准", "已定案")):
+                               "不追問", "執行中", "進行中", "核准", "已定案")):
         return "已確認"
     return "待處理"
           # 只有「待處理」會進提醒；其餘為已定案或資訊性
+
+
+# ── 閘門謂詞（單一來源；check_dividend_caliber 與回歸測試共用，禁止各留副本）──
+def status_violations(items: list) -> list[tuple]:
+    """status 不在四態，或整張卡缺 status_raw → [(title, 實值)]。
+
+    2026-10-21：卡片直接寫自由文字（例「進行中」）時，status 不在 STATUS_ENUM，
+    norm_status 也不會被套用 → 閘門 FAIL。此處只「辨識」，不代改 status 值
+    （代改會讓閘門變空轉，寫入端必須自己正規化並保留 status_raw）。
+    """
+    bad: list[tuple] = []
+    for x in items:
+        st = x.get("status")
+        if st not in STATUS_ENUM:
+            bad.append((x.get("title"), st))
+        elif "status_raw" not in x:
+            bad.append((x.get("title"), f"缺 status_raw（status={st}）"))
+    return bad
+
+
+def due_date_source_violations(items: list) -> list:
+    """due_date 有值但來源不是既有文字（＝推算／臆測）→ [title]。"""
+    return [x.get("title") for x in items
+            if x.get("due_date") and not str(x.get("due_date_source") or "").startswith("既有文字")]
+
+
+def missing_due_date_flag(items: list) -> list:
+    """進行中卡（待處理／已確認）沒有 due_date 又沒標 needs_due_date → [title]。"""
+    return [x.get("title") for x in items
+            if is_active(x) and not x.get("due_date") and not x.get("needs_due_date")]
 _ESC = ((0, "今日到期"), (1, "第一次升級（+1）"), (3, "第二次升級（+3）"), (7, "CEO 強制處理（+7）"))
 
 

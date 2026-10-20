@@ -473,19 +473,18 @@ try:
     # 卡片長到 34 張後即使資料完全合規也永遠 FAIL（假紅燈）。改動態口徑：只驗「每一張都有五欄」。
     ck("Pending schema 五欄齊備（全卡動態）",
        not _missing_p and len(_items_p) > 0, str(_missing_p[:3]) + "｜n=" + str(len(_items_p)))
-    _bad_src = [x.get("title") for x in _items_p
-                if x.get("due_date") and not str(x.get("due_date_source") or "").startswith("既有文字")]
+    # 2026-10-21：兩個謂詞移入 pending_engine（單一來源），閘門與回歸測試共用同一份實作。
+    _bad_src = _pe_p.due_date_source_violations(_items_p)
     ck("due_date 一律來自既有文字（不猜、不推算）", not _bad_src, str(_bad_src[:3]))
     # 2026-10-12：期限管理只對「進行中」（待處理／已確認）生效。結案態（已完成／關案）
     # 不該再被要求帶期限或補 needs_due_date——否則第一張結案卡即假紅燈（紅燈必須陳述真問題）。
     # 狀態判定一律委派 pending_engine（單一來源），此處不自帶副本。
-    _active_p = [x for x in _items_p if _pe_p.is_active(x)]
-    _null_no_flag = [x.get("title") for x in _active_p if not x.get("due_date") and not x.get("needs_due_date")]
+    _null_no_flag = _pe_p.missing_due_date_flag(_items_p)
     ck("無 due_date 者標記 needs_due_date（僅進行中卡；結案態不受期限管理）",
        not _null_no_flag, str(_null_no_flag[:3]))
-    _enum_bad = [x.get("title") for x in _items_p if x.get("status") not in _pe_p.STATUS_ENUM]
+    _enum_bad = [t for t, _v in _pe_p.status_violations(_items_p)]
     ck("status 正規化為四態（原字串保留 status_raw）",
-       not _enum_bad and all("status_raw" in x for x in _items_p), str(_enum_bad[:3]))
+       not _enum_bad, str(_enum_bad[:3]))
     _t_p = _dt_p.date(2026, 10, 2)
     _st_p = {d: _pe_p.escalation_stage(d, _t_p)["stage"] for d in
              ("2026-10-03", "2026-10-02", "2026-10-01", "2026-09-29", "2026-09-25")}
