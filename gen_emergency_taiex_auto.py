@@ -11,6 +11,8 @@ import json, re, datetime
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
+DEFAULT_IN_JSON = BASE / "data" / "emergency_llm_analysis.json"
+DEFAULT_OUT_DIR = BASE
 TODAY = datetime.date.today().isoformat()
 NOW = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
@@ -39,8 +41,11 @@ body{background:var(--bg);color:var(--txt);font-family:"Segoe UI","PingFang TC",
 """
 
 
-def load_report():
-    d = json.loads((BASE / "data" / "emergency_llm_analysis.json").read_text(encoding="utf-8"))
+def load_report(path=None):
+    p = Path(path) if path else DEFAULT_IN_JSON
+    if not p.is_file():
+        raise SystemExit(f"[FAIL] 找不到分析 JSON：{p}")
+    d = json.loads(p.read_text(encoding="utf-8"))
     gen = d.get("generated_at") or NOW
     return gen, d.get("full_report", ""), d.get("market_snapshot", {}), str(d.get("source", ""))
 
@@ -137,9 +142,9 @@ def render(kpis_html, sec_html, pen_html, title, sub):
 </div></body></html>"""
 
 
-def build():
+def build(in_json=None, out_dir=None):
     global TODAY, NOW
-    gen, report, snap, source = load_report()
+    gen, report, snap, source = load_report(in_json)
     if gen and len(gen) >= 10:
         TODAY = gen[:10]
         NOW = gen
@@ -157,14 +162,37 @@ def build():
         f'<div class="sec"><h2>{title}</h2>' + "".join(f"<p>{p}</p>" for p in paras if p) + "</div>"
         for title, paras in secs)
     pen_html = pen_card()
-    rail = BASE / f"emergency_report_{TODAY}.html"
-    gh = BASE / f"emergency_taiex_report_{TODAY}.html"
+    # 輸出位置：預設＝repo 根（與舊版逐位元相同）；--out-dir 時改寫到指定目錄（F1 第二階段）
+    if out_dir:
+        _od = Path(out_dir)
+        _od.mkdir(parents=True, exist_ok=True)
+    else:
+        _od = None
+    if _od is not None:
+        rail = _od / f"emergency_report_{TODAY}.html"
+        gh = _od / f"emergency_taiex_report_{TODAY}.html"
+    else:
+        rail = BASE / f"emergency_report_{TODAY}.html"
+        gh = BASE / f"emergency_taiex_report_{TODAY}.html"
     rail.write_text(render(kpis_html, sec_html, pen_html, _title, _sub), encoding="utf-8")
     gh.write_text(render(kpis_html, sec_html, pen_html, _title, _sub), encoding="utf-8")
+    print(f"[IN ] {Path(in_json) if in_json else DEFAULT_IN_JSON}")
+    print(f"[OUT] {rail.parent}")
     print(f"[HTML] {rail.name} ({rail.stat().st_size:,} bytes)")
     print(f"[HTML] {gh.name} ({gh.stat().st_size:,} bytes)")
     print("[DONE]", NOW)
 
 
+def main(argv=None):
+    import argparse
+    ap = argparse.ArgumentParser(
+        description="緊急應變報告渲染（無參數時行為與舊版相同：讀 data/emergency_llm_analysis.json、寫 repo 根）")
+    ap.add_argument("--in-json", default=None, help="分析 JSON 路徑（預設 data/emergency_llm_analysis.json）")
+    ap.add_argument("--out-dir", default=None, help="輸出目錄（預設 repo 根；F1 交接請指向 staging）")
+    a = ap.parse_args(argv)
+    build(in_json=a.in_json, out_dir=a.out_dir)
+    return 0
+
+
 if __name__ == "__main__":
-    build()
+    raise SystemExit(main())
