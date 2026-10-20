@@ -132,6 +132,26 @@ def main() -> None:
     want = [("📰", "日報"), ("📈", "差異分析"), ("🏠", "儀表板")]
     have = [(icon, name, links[icon][1]) for icon, name in want if icon in links]
 
+    if rc in (12, 13):
+        # F1 第三階段（2026-10-21 使用者裁決）：rc 12/13 只在「日報已產出並上線、僅應變段需人工」
+        # 時出現，不得報成「產線失敗」（會掩蓋已上線事實、誘使重跑）。退出碼保留，cron 仍會告警；
+        # 但 12/13 不列入自動重試（Hermes cron 本就不重試，僅記 error＋發一次警報）。
+        _label = ("應變段驗證失敗，未注入（H12）" if rc == 12
+                  else "應變功能關閉卻有當日資料，未注入（H13）")
+        print(f"⚠️ 晨間日報已上線 — {_label}；rc={rc}，需人工處理")
+        for _icon, _name, _url in have:
+            print(f"{_icon} {_name}：{_url}")
+        _bad, _gate = diagnose(text)
+        _log = write_full_log(text)
+        if _bad:
+            print("應變段：\n" + "\n".join(_bad))
+        else:
+            print("應變段：（未擷取到錯誤行，完整輸出見日誌）")
+        if _gate:
+            print("閘門段：\n" + "\n".join("  " + g for g in _gate))
+        print(f"📄 完整日誌：{_log}" if _log else "📄 完整日誌：寫入失敗（logs/ 不可寫）")
+        sys.exit(rc)
+
     if rc != 0 or not have:
         print("⚠️ 晨間產線失敗 — 需人工處理")
         print(f"regenerate_report.py rc={rc}；抓到連結 {len(links)} 個")

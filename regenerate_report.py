@@ -264,13 +264,59 @@ except Exception as _e:
     print(f"[WARN] condensed intel 注入失敗：{_e}")
 _market_html = f"<pre style='font-size:14px;line-height:1.6;white-space:pre-wrap'>{briefing}</pre>"
 
+# 3b-0. 緊急應變隔夜交接閘門（F1 第三階段，2026-10-21 使用者授權）
+#   21:30 只寫 repo 外 staging；本檔是本批唯一發布出口。
+#   旗標 LJ_EMERGENCY_HANDOFF 未設／off 且當日無交接資料 → mode=legacy，
+#   行為與舊版**完全相同**（回滾語意＝把旗標設回 off）。
+#   呼叫端只看 gate().mode／rc，不以 rc=0 推論「驗證通過」（dry-run 亦為 rc=0）。
+_hgate = None
+try:
+    import staging_handoff as _sh_h
+    _hgate = _sh_h.gate(TODAY)
+    print(f"🗂 緊急應變交接：mode={_hgate.mode} state={_hgate.state} rc={_hgate.rc}"
+          + (f"｜{_hgate.public}" if _hgate.public else ""))
+except Exception as _e_h:
+    print(f"[WARN] 交接驗證未執行（沿用舊行為）：{_e_h}")
+_em_mode = _hgate.mode if _hgate is not None else "legacy"
+
 # 3b. 緊急應變分析（INC-291：唯一實作＝daily_report_assembly.build_emergency_block）
 #   canonical 行為＝本檔 2026-10-09 前的已上線實作（refresh_stale_amounts 舊值覆蓋／as_of
 #   `_stale_badge`／`<br>` 換行／2 條連結）；run_daily.py main() 亦呼叫同一函式
 #   → 兩個 producer 不再各自組裝。連結 `.html.html` 重綴缺陷已於 INC-294 修正（見共用模組 docstring）。
 from daily_report_assembly import build_emergency_block as _asm_em
 _snap_em = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
-_emergency_html = _asm_em(BASE, _snap_em, TODAY)
+if _em_mode == "inject":
+    # 只有「通過交接驗證的當日分析」才可進 repo：先寫暫存檔再原子替換，
+    # 不讓半寫入的 JSON 落成當日正式檔（21:30 不得直接寫入此路徑）。
+    _em_src = _hgate.result.path / "analysis.json"
+    _em_dst = BASE / "data" / "emergency_llm_analysis.json"
+    _em_tmp = None
+    try:
+        _em_raw = _em_src.read_bytes()
+        _em_tmp = _em_dst.with_suffix(".json.tmp")
+        _em_tmp.write_bytes(_em_raw)
+        _em_tmp.replace(_em_dst)
+        print(f"🗂 應變分析已由交接複製入 repo（{len(_em_raw):,} bytes，經 SHA-256 驗證）")
+    except Exception as _e_cp:
+        print(f"⛔ 複製應變分析失敗（不注入）: {_e_cp}")
+        # 失敗不得留下半成品暫存檔（否則工作區多出未追蹤檔、也可能被誤認本輪產物）
+        try:
+            if _em_tmp is not None and _em_tmp.exists():
+                _em_tmp.unlink()
+                print("🧹 已清除暫存檔（複製失敗殘留）")
+        except Exception as _e_rm:
+            print(f"[WARN] 暫存檔清除失敗（需人工確認）: {_e_rm}")
+        _em_mode = "block"
+if _em_mode in ("legacy", "inject"):
+    _emergency_html = _asm_em(BASE, _snap_em, TODAY)
+elif _em_mode == "block":
+    _em_txt = _hgate.public if (_hgate is not None and _hgate.public) else "應變資料驗證失敗（未分類）（H99）"
+    _emergency_html = (f'<div class="callout callout-warn"><p style="font-size:13px;color:#b45309;'
+                       f'font-weight:700">⚠️ 緊急應變交接驗證失敗，未注入：{_em_txt}</p></div>')
+else:  # blank：無資料／dry-run／功能關閉但有資料 → 第八章留空，不拿舊檔冒充當日
+    _em_txt = f"｜{_hgate.public}" if (_hgate is not None and _hgate.public) else ""
+    _emergency_html = (f'<div class="callout callout-warn"><p style="font-size:13px;color:#6e6e73">'
+                       f'ℹ️ 今日無可用的緊急應變交接資料（未注入）{_em_txt}</p></div>')
 
 # 3b2. Pending 期限 schema 自癒（2026-10-05 PEND-20261005-03）
 # 為何在產出之前：10/05 07:00 實例是「新增卡漏 needs_due_date」→ 產線末端 check_dividend_caliber
@@ -788,6 +834,17 @@ elif ok and _cio_ok:
         print("  ⛔ producer 邊界快照不完整（before/after 任一為空）→ 無法證明本輪產物，本次不推送（fail-closed）")
         _push_files = []
     else:
+        # F1 第三階段：非 inject 時，應變三件（兩份報告頁＋分析 JSON）一律不進本輪發布；
+        # inject 時才明確認領分析 JSON（該檔由上面的驗證複製步驟寫入）。
+        _em_artifacts = {f'emergency_report_{TODAY}.html', f'emergency_taiex_report_{TODAY}.html'}
+        if _em_mode == "inject":
+            _push_candidates.append('data/emergency_llm_analysis.json')
+        else:
+            _before_n = len(_push_candidates)
+            _push_candidates = [c for c in _push_candidates if c not in _em_artifacts]
+            if len(_push_candidates) != _before_n:
+                print(f"  ⏭ 應變報告頁不納入本輪發布（mode={_em_mode}，排除 "
+                      f"{_before_n - len(_push_candidates)} 檔）")
         _cands = [f for f in _push_candidates if (BASE / f).exists()]
         _push_files, _excluded = _produced_only(_cands, _BEFORE, _after)
         _unsnap = [f for f in _cands if f not in _BEFORE and f not in _after]
@@ -960,6 +1017,13 @@ elif ok and _cio_ok:
                 _recorded = _ar.returncode == 0
                 if not _recorded:
                     print("  ⛔ 未推送上線（見上方 auto_push 訊息）")
+                elif _em_mode == "inject" and _hgate is not None:
+                    # 發布成功才落 published（供日後 archive／H09 批次衝突判定）
+                    try:
+                        _sh_h.mark_published(TODAY)
+                        print("  🗂 交接 published 紀錄已寫入")
+                    except Exception as _e_mp:
+                        print(f"[WARN] 交接 published 紀錄未寫入（不影響本次發布）：{_e_mp}")
             else:
                 _recorded = False
                 print("  ⛔ 未推送（fail-closed：真 CIO RECORD 未取得，不做 TAG 降級）")
@@ -1011,4 +1075,14 @@ _emergency_link = _er_name  # v6 修正 2026-09-13：_latest_er 在 320 行已�
 print(f'🚨 緊急應變:  https://b0988321088.github.io/longjiu-dashboard-2/{_emergency_link}')
 
 import sys
-sys.exit(0 if (ok and _pages_ok and _gate_ok) else 1)
+# F1 第三階段退出碼語意（2026-10-21 授權）：
+#   既有成敗（產出／線上驗證／閘門）失敗 → 1（維持不變）
+#   既有全綠但交接狀態需人工處理 → 12（已發布但應變段無效）／13（功能關閉卻有當日資料）
+#   兩者皆不得自動重試；rc=12 已發布，不可誤報為未推送殘留。
+_rc_final = 0
+if not (ok and _pages_ok and _gate_ok):
+    _rc_final = 1
+elif _hgate is not None and _hgate.rc:
+    _rc_final = _hgate.rc
+    print(f"⚠️ 應變交接需人工處理：mode={_em_mode} rc={_rc_final}（不列入自動重試）")
+sys.exit(_rc_final)
