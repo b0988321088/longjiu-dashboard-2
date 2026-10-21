@@ -178,6 +178,13 @@ if _wk:
             continue
         _flow_src.append((_nm, _amt, str(_it.get("狀態", ""))))
 _flow_ov = {str(c.get("項目", "")).strip(): str(c.get("去向", "")) for c in (A.get("資金流動") or [])}
+# 2026-10-21：分析 JSON 若自帶「資金流動期間」＋「資金流動」清單 → 以它為準（本週真值），
+#   否則才用 weekly_ops_dynamic（該源在 10/12 後停更，會讓 CEO 頁顯示兩週前的資金流）。
+_flow_rows_src = A.get("資金流動") or []
+if _flow_rows_src and A.get("資金流動期間"):
+    _wk_period = str(A.get("資金流動期間"))
+    _flow_src = [(str(c.get("項目", ""))[:60], str(c.get("金額", "")), str(c.get("去向", "")))
+                 for c in _flow_rows_src]
 flow_rows = ""
 for _p, _a, _g in _flow_src:
     flow_rows += (f"<tr><td style='{_td_cell}'>{_p[:46]}</td>"
