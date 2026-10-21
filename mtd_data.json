@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-21 13:51",
+ "generated_at": "2026-10-21 14:10",
  "month": "2026-10",
  "period": {
   "start": "2026-10-01",
@@ -10,21 +10,21 @@
  },
  "total_assets": {
   "start": 28825191.0,
-  "end": 27149049.0,
-  "chg": -1676142.0
+  "end": 27117008.0,
+  "chg": -1708183.0
  },
  "equity": {
   "liab_start": 34979613.0,
-  "liab_end": 30987736.0,
-  "liab_chg": -3991877.0,
+  "liab_end": 30982116.0,
+  "liab_chg": -3997497.0,
   "net_worth_start": -6154422.0,
-  "net_worth_end": -3838687.0,
-  "net_worth_chg": 2315735.0,
+  "net_worth_end": -3865108.0,
+  "net_worth_chg": 2289314.0,
   "alignment": {
    "applied": true,
    "baseline_raw": "2026-09-30",
    "baseline_aligned": "2026-09-28",
-   "net_worth_chg": 110254.0,
+   "net_worth_chg": 83833.0,
    "nw_raw": -6154422.0,
    "nw_aligned": -3948941.0,
    "chain": {
