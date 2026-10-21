@@ -18,7 +18,7 @@ CIO 2026-09-23 ② 的缺口本質是「時序不可靠」：核准有留下、�
 
 用法：
   python reconcile_decision_intake.py [--date 2026-10-02] [--notion] [--quiet]
-退出碼：0 = PASS；1 = 有缺口（fail-loud，供閘門/復盤前置使用）；2 = 有來源未查核
+退出碼：0 = PASS；1 = 有缺口（fail-loud，供閘門/復盤前置使用）；2 = 有來源未查核／無資料（完整性未驗證）
 """
 import argparse
 import json
@@ -257,7 +257,16 @@ def main():
         if start is None:
             print("     （收據檔無有效時戳 → 無法判定收據制起點，一律列警示）")
     if not missing and not unregistered:
-        print(f"  ✅ 一致（{len(file_ids)} 筆；今日無缺口）")
+        if not rec and not intake:
+            # 2026-10-21（使用者核准，範圍限本檔）：空集合不得算「一致性 PASS」。
+            #   收據 0／檔案 0 只證明「今天沒有可比對的資料」，無法證明今日裁定都已入庫
+            #   （實證：10/21 有兩項裁定、兩邊皆 0 筆，舊版仍印「✅ 一致」rc=0）。
+            #   語意改為「未驗證」，rc=2 沿用既有契約（CIO 18:30 job 已把 rc=2 視為
+            #   「對帳未完成」而不得當成通過），不動 rc=0 的既有成功語意。
+            print("  ⚠️ 無資料，完整性未驗證（收據 0／檔案 0）→ 不得視為通過")
+            rc = max(rc, 2)
+        else:
+            print(f"  ✅ 一致（{len(file_ids)} 筆；今日無缺口）")
 
     if a.notion:
         titles, note = notion_today_titles(day)
