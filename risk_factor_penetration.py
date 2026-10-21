@@ -7,6 +7,7 @@
 輸出：risk_factor_penetration_YYYY-MM-DD.png
 """
 import json
+import os
 from datetime import date
 from pathlib import Path
 
@@ -25,7 +26,10 @@ for f in ["Microsoft YaHei", "Microsoft JhengHei", "Noto Sans CJK TC"]:
         continue
 plt.rcParams["axes.unicode_minus"] = False
 
-BASE = Path(r"C:\Users\bot\Desktop\longjiu_system")
+# 2026-10-21（使用者裁決）：資料根目錄可用 LONGJIU_BASE 覆寫，預設＝正式路徑（行為不變）。
+# 目的：讓 07:00 鏈路能在沙盒驗證時完全隔離，避免本檔讀正式 snapshot.json、把 PNG 寫回正式目錄
+# （2026-10-21 沙盒測試實際發生過）。不改變任何計算邏輯；正式執行不設此變數即與原本一致。
+BASE = Path(os.environ.get("LONGJIU_BASE") or r"C:\Users\bot\Desktop\longjiu_system")
 from usd_advisory import cap as _usd_cap_fn, tier as _usd_tier, tier_limit_text as _usd_tier_text  # noqa: E402
 # 2026-10-07 裁決②③：政策門檻唯一來源（usd_advisory ← thresholds.美元曝險_pct）＋觀測線命名
 TODAY = date.today().isoformat()
