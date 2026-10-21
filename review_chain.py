@@ -540,6 +540,38 @@ def build_review_prompts(commit: str, tree: str, subject: str, files: str, stat:
                      "segments": n, "file_aligned": True, "split_files": split_map}
 
 
+_BINDING_REPAIR_PROMPT = (
+    "只回一個 JSON 物件，不要任何說明或 markdown 圍籬。\n"
+    "把下列 12 碼 commit 與 12 碼 tree **原樣逐字抄寫**進 reviewed_commits（不得改寫、不得補零）：\n"
+    "commit={c12}\ntree={t12}\n"
+    '輸出格式：{{"reviewed_commits":[{{"commit":"{c12}","tree":"{t12}"}}]}}'
+)
+
+
+def _repair_binding(expect_pair: tuple[str, str], max_tokens: int, timeout: float,
+                    json_mode: bool) -> tuple[str, str] | None:
+    """只補抄綁定（不重新裁決）→ 成功回 (commit12, tree12)，失敗回 None。
+
+    2026-10-21：綁定漏抄是**格式性缺漏**（實測大段 diff 的 14 段審查裡 9 段漏寫
+    reviewed_commits，且四輪重抽皆然），非實質異議。修復性重問只索取綁定回聲，
+    verdict／blocking 一律沿用第一次審查結果 → 不可能因此產生核准。
+    """
+    try:
+        txt, _label = review(_BINDING_REPAIR_PROMPT.format(c12=expect_pair[0], t12=expect_pair[1]),
+                             max_tokens=min(int(max_tokens), 512),
+                             timeout=min(float(timeout), 120), json_mode=json_mode)
+    except Exception:  # noqa: BLE001  取不到就維持 fail-closed
+        return None
+    j = parse_review(txt) or {}
+    for x in (j.get("reviewed_commits") or []):
+        if not isinstance(x, dict):
+            continue
+        p = (str(x.get("commit", ""))[:12], str(x.get("tree", ""))[:12])
+        if p == tuple(expect_pair):
+            return p
+    return None
+
+
 def review_segmented(prompts: list[str], coverage: dict, *, max_tokens: int = 8192,
                      timeout: float = 300, json_mode: bool = True,
                      expect_pair: tuple[str, str] | None = None,
@@ -616,7 +648,15 @@ def review_segmented(prompts: list[str], coverage: dict, *, max_tokens: int = 81
                       for x in (j.get("reviewed_commits") or []) if isinstance(x, dict)}
         pairs |= _seg_pairs
         if expect_pair and tuple(expect_pair) not in _seg_pairs:
-            binding_bad.append(f"第 {k}/{len(prompts)} 段未回報綁定 {expect_pair[0]}/{expect_pair[1]}")
+            # 2026-10-21：綁定漏抄＝格式性缺漏（不是實質異議）→ 只補抄綁定，不重抽 verdict。
+            #   修復失敗才計入 blocking（fail-closed 語意不變：沒有正確綁定一律不放行）。
+            _fixed = _repair_binding(expect_pair, max_tokens, timeout, json_mode)
+            if _fixed:
+                pairs.add(_fixed)
+                retried.append(f"seg{k}:binding-repair")
+                notes.append(f"seg{k}:binding-repaired")
+            else:
+                binding_bad.append(f"第 {k}/{len(prompts)} 段未回報綁定 {expect_pair[0]}/{expect_pair[1]}")
     if binding_bad:
         blockers += binding_bad
     if invalid_segs:
