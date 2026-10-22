@@ -82,7 +82,7 @@ def read_stdout() -> tuple[str, int]:
             return "", 0
         return fx.read_text(encoding="utf-8", errors="replace"), 0
     try:
-        r = subprocess.run([sys.executable, str(BASE / "regenerate_report.py")],
+        r = subprocess.run([sys.executable, str(BASE / "regenerate_report.py"), "--no-push"],
                            cwd=str(BASE), capture_output=True, text=True, timeout=1800)
     except Exception as e:
         print(f"⚠️ 晨間產線執行失敗（無法啟動 regenerate_report.py）：{e}")

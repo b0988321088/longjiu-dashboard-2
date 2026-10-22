@@ -7,7 +7,7 @@ JSON 變更需 commit+push 到 GitHub 才會上線。此腳本把當天變更收
 - 有變更 → commit → 落 RECORD（auto_record，P2 起） → push clean-main + main
 設計：從 hermes/scripts 執行（cron 慣例），用 git -C 指向 repo，不依賴 cwd。
 """
-import subprocess, sys, datetime
+import subprocess, sys, datetime, os
 
 REPO = r"C:/Users/bot/Desktop/longjiu_system"
 FILES = [
@@ -18,6 +18,10 @@ FILES = [
     "pending_decisions.json", # 決策待辦
     "dashboard_decisions.json",  # 決策追蹤/審計
     "us30y_state.json",       # US30Y 模式燈號
+    # 2026-10-22：asset_diff_history.json 原由 22:00 artifact_commit 認領；22:00 若跳過
+    #   commit，07:00 與本檔都不認領 → 永久孤兒。納入本任務（22:00 之後、22:40 之前），
+    #   沿用真 CIO 車道；無變更時上方 status 為空即 sys.exit(0)，不產生空 commit。
+    "asset_diff_history.json",
 ]
 # 2026-10-21（TD-20261013-01／使用者裁決）：事件帳本補上明確提交出口。
 #   這兩檔由 four_source_sync.py（22:00 晚報，新 INC append）與 lj_inc.py（list／close 改寫）
@@ -36,6 +40,10 @@ def git(*args):
     return subprocess.run(["git", "-C", REPO, *args], capture_output=True, text=True, encoding="utf-8")
 
 today = datetime.date.today().isoformat()
+# 2026-10-22 P1：提交暫停旗標（本任務不生成資料，跳過即無事可做）
+if os.path.exists(os.path.join(REPO, ".git", "PUSH_HOLD")):
+    print("⏸️ PUSH_HOLD 生效：跳過 nightly commit/push；發布待另行授權")
+    sys.exit(0)
 git("add", "--", *FILES)
 st = git("status", "--porcelain", "--", *FILES)
 if not st.stdout.strip():
@@ -72,8 +80,23 @@ _rec = "auto"
 if _cio:
     print(f"🔐 閘門判定必須真 CIO（本次變更 {len(_changed)} 檔）→ 走真審查車道")
     try:
-        import cio_lane as _lane
-        _ok, _mmsg = _lane.review_and_record(tag="nightly_dashboard_sync")
+        # 2026-10-21 A 案（擴大）：cron 從 hermes/scripts 啟動本檔時 sys.path 只有該目錄，
+        # in-process `import cio_lane` 會在 cio_lane 的延遲 import review_chain 時 ModuleNotFoundError
+        # （2026-10-21 22:00 晚報實踩同型）。改走 cio_lane 既有 CLI：腳本路徑在 REPO →
+        # sys.path[0]=REPO，repo 根目錄的 review_chain 可見（與 92 行 auto_push 同模式）。
+        # 契約：exit 0＝OK、非 0＝不要 push；stdout 末行 `✅ OK | …` / `❌ FAIL | …`。
+        _r2 = subprocess.run([sys.executable, "cio_lane.py", "--tag", "nightly_dashboard_sync"],
+                             cwd=REPO, capture_output=True, text=True, encoding="utf-8", timeout=1800)
+        _out2 = ((_r2.stdout or "") + (_r2.stderr or "")).strip()
+        _last2 = _out2.splitlines()[-1].strip() if _out2 else ""
+        if _r2.returncode == 0 and _last2.startswith("✅ OK | "):
+            _ok, _mmsg = True, _last2[len("✅ OK | "):].strip()
+        elif _last2.startswith("❌ FAIL | "):
+            _ok, _mmsg = False, _last2[len("❌ FAIL | "):].strip()
+        else:
+            _ok = False
+            _mmsg = (f"真審查車道 rc={_r2.returncode} 無可解析輸出 → fail-closed"
+                     + (f"｜{_last2[:120]}" if _last2 else ""))
     except (Exception, SystemExit) as _e:  # noqa: BLE001
         # 2026-10-13：車道本身例外（例：cwd 不在 repo → cio_approve import 期 sys.exit(2)）
         # 也必須走同一條「撤回 commit、保留阻塞」路徑，否則會留下毒藥 commit。

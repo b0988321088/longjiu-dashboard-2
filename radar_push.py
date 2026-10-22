@@ -135,6 +135,10 @@ def main():
     #  「雷達儀表板同步」）→ 改白名單，只提交本 job 自身產物。
     own_files = ["radar_state.json", f"radar_report_{TODAY}.html", "index.html"]
     own_files = [f for f in own_files if os.path.exists(os.path.join(BASE, f))]
+    # 2026-10-22 P1：提交暫停旗標（只擋 commit/push，不擋產出）
+    if os.path.exists(os.path.join(BASE, ".git", "PUSH_HOLD")):
+        print("⏸️ PUSH_HOLD 生效：雷達已更新，跳過 commit/push；發布待另行授權")
+        return 0
     g = run(["git", "add", "--"] + own_files, timeout=60)
     if g.returncode != 0:
         print(f"⚠️ git add 失敗（{own_files}）：{_tail(g.stderr, 200)}")

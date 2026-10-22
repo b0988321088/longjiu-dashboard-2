@@ -170,9 +170,24 @@ def _publish(message, lines, own_commit=True, runner=None, lane=None):
     if ap.returncode == 3:
         lines.append("🔐 閘門判定必須真 CIO → 走真審查車道（cio_lane）")
         if lane is None:
+            # 2026-10-21 A 案修復：cron 從 hermes/scripts 啟動本檔時 sys.path 只有該目錄，
+            # in-process `import cio_lane` 會因 review_chain 無鏡像而 ModuleNotFoundError
+            # （實踩 22:00 晚報：commit 成立、無 RECORD、不推送）。改走 cio_lane 既有 CLI，
+            # 與 run()/run_capture() 同一模式（腳本路徑在 BASE → sys.path[0]=BASE，模組可見）。
+            # 契約：exit 0＝OK、非 0＝不要 push；stdout 末行 `✅ OK | …` / `❌ FAIL | …`。
             try:
-                import cio_lane as _lane
-                ok, msg = _lane.review_and_record(tag="evening_sync")
+                _r = runner([sys.executable, str(BASE / "cio_lane.py"), "--tag", "evening_sync"],
+                            capture_output=True, text=True, timeout=1800)
+                _o = ((_r.stdout or "") + (_r.stderr or "")).strip()
+                _last = _o.splitlines()[-1].strip() if _o else ""
+                if _r.returncode == 0 and _last.startswith("✅ OK | "):
+                    ok, msg = True, _last[len("✅ OK | "):].strip()
+                elif _last.startswith("❌ FAIL | "):
+                    ok, msg = False, _last[len("❌ FAIL | "):].strip()
+                else:
+                    ok = False
+                    msg = (f"車道 rc={_r.returncode} 無可解析輸出 → fail-closed"
+                           + (f"｜{_last[:120]}" if _last else ""))
             except (Exception, SystemExit) as _e:  # noqa: BLE001
                 ok, msg = False, f"車道例外（{type(_e).__name__}: {str(_e)[:120]}）→ fail-closed"
         else:
@@ -238,7 +253,11 @@ def main():
     _keep = [f for f in _keep if f not in _ig]
     _pushed = False
     _fail = False
-    if not (_before and _after and _d1_ok and _d2_ok):
+    # 2026-10-22 P1：提交暫停旗標（只擋 commit/push，不擋資料更新）
+    _hold = (Path(BASE) / ".git" / "PUSH_HOLD").exists()
+    if _hold:
+        lines.append("⏸️ PUSH_HOLD 生效：資料已更新，跳過 commit/push 與收尾提交；發布待另行授權")
+    elif not (_before and _after and _d1_ok and _d2_ok):
         _fail = True
         lines.append("⛔ producer 邊界快照不完整 → 本次不 commit／不 push（fail-closed）")
     elif not _ig_ok:
@@ -281,19 +300,22 @@ def main():
     #      （不帶 --push；artifact_commit 亦不得呼叫 auto_push）。推送交由獨立審查車道
     #      （真 CIO 審查 → RECORD → auto_push），故晚報必須分開講「提交完成、推送待審」，
     #      不得把兩件事合併報告成「已發布」。
-    _head_art0 = _git_head()
-    _ok_art, _art_msg = run_capture("artifact_commit.py", 300)
-    if _ok_art and _git_head() != _head_art0:
-        # 2026-10-20 A 案：收尾提交（只提交不推送，依 2026-10-15 裁決 b 不改其職責）
-        # 會留下一顆未審 commit → 在本檔內接續送真 CIO 車道並推送，否則 22:15 必被擋。
-        _p_art = _publish(None, lines, own_commit=False)
-        _pushed = _pushed or _p_art
-        if not _p_art:
-            _fail = True
-            lines.append("⚠️ 收尾提交未能完成審查／推送 → 已保留待審（不偽造成功）")
-    lines.append(("📦 資料產物收尾提交（只提交、不推送）：" + ("✅ " if _ok_art else "❌ "))
-                 + (_art_msg.splitlines()[0] if _art_msg else "（無輸出）")
-                 + ("｜推送待獨立審查" if _ok_art else ""))
+    if _hold:
+        lines.append("📦 資料產物收尾提交：⏸️ PUSH_HOLD 生效，已略過（發布待另行授權）")
+    else:
+        _head_art0 = _git_head()
+        _ok_art, _art_msg = run_capture("artifact_commit.py", 300)
+        if _ok_art and _git_head() != _head_art0:
+            # 2026-10-20 A 案：收尾提交（只提交不推送，依 2026-10-15 裁決 b 不改其職責）
+            # 會留下一顆未審 commit → 在本檔內接續送真 CIO 車道並推送，否則 22:15 必被擋。
+            _p_art = _publish(None, lines, own_commit=False)
+            _pushed = _pushed or _p_art
+            if not _p_art:
+                _fail = True
+                lines.append("⚠️ 收尾提交未能完成審查／推送 → 已保留待審（不偽造成功）")
+        lines.append(("📦 資料產物收尾提交（只提交、不推送）：" + ("✅ " if _ok_art else "❌ "))
+                     + (_art_msg.splitlines()[0] if _art_msg else "（無輸出）")
+                     + ("｜推送待獨立審查" if _ok_art else ""))
     _dropped = sorted(set(_drop) - set(_keep))
     if _d2_ok and _dropped:
         lines.append(f"🚫 排除 {len(_dropped)} 檔（非本輪產物／執行前已 dirty）：{', '.join(_dropped[:8])}"
@@ -309,7 +331,9 @@ def main():
     lines.append("")
     lines.append("（晚報已改輕量校準模式：零 LLM 成本；完整 LLM 分析在晨間 07:00）")
     print("\n".join(lines))
+    # 2026-10-22：內部失敗必須反映到 cron 退出碼（原本 _fail 累積但永遠 exit 0）
+    return 1 if _fail else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

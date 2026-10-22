@@ -43,6 +43,10 @@ def main():
     #   改為**只 stage 自家產物**（當日報告頁＋狀態資料），讓變更集合乾淨命中白名單條目。
     _own = [f"radar_report_{TODAY}.html", "radar_state.json"]
     _exist = [p for p in _own if os.path.exists(os.path.join(BASE, p))]
+    # 2026-10-22 P1：提交暫停旗標（只擋 commit/push，不擋產出）
+    if os.path.exists(os.path.join(BASE, ".git", "PUSH_HOLD")):
+        print("⏸️ PUSH_HOLD 生效：週六雷達已更新，跳過 commit/push；發布待另行授權")
+        return 0
     if _exist:
         run(["git", "add", "--"] + _exist, timeout=60)
     ap = run([sys.executable, os.path.join(BASE, "auto_push.py"), "--script", "radar_weekly.py",
@@ -52,10 +56,15 @@ def main():
         print(ap_out[-400:])
     if ap.returncode != 0:
         print(f"⚠️ 未推送上線（rc={ap.returncode}）")
+        _push_rc = ap.returncode
+    else:
+        _push_rc = 0
 
     # 4) 完整摘要交付 TG
     print(f"📋 週六再平衡 — 機構流向雷達\n{out}")
+    # 2026-10-22：推送失敗必須反映到 cron 退出碼（原本只 print，永遠 exit 0）
+    return _push_rc
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)
