@@ -11292,6 +11292,16 @@
       "status": "completed",
       "source": "auto"
     }
+,
+  {
+    "id": "mem-20261022231701-1220",
+    "timestamp": "2026-10-22T23:17:01.817373+08:00",
+    "agent": "Hermes",
+    "task": "22:38 收尾自動提交機制上線（data_closeout_commit）",
+    "summary": "新增 cron 8960236bbae6 每日 22:38：把當日未入庫的資料/報表提交並推送 clean-main；只收資料/報表、程式檔跳過、優先補首頁連結未入庫報表、別班未推 commit 則中止。",
+    "status": "核准",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-22T21:33:37.529909"
