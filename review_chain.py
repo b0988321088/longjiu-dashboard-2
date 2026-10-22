@@ -549,27 +549,45 @@ _BINDING_REPAIR_PROMPT = (
 
 
 def _repair_binding(expect_pair: tuple[str, str], max_tokens: int, timeout: float,
-                    json_mode: bool) -> tuple[str, str] | None:
-    """只補抄綁定（不重新裁決）→ 成功回 (commit12, tree12)，失敗回 None。
+                    json_mode: bool,
+                    retry_technical: int = _RETRY_TECHNICAL) -> tuple[tuple[str, str] | None, int, str]:
+    """只補抄綁定（不重新裁決）→ 回 (pair|None, 嘗試次數, 最後錯誤)。
 
-    2026-10-21：綁定漏抄是**格式性缺漏**（實測大段 diff 的 14 段審查裡 9 段漏寫
+    2026-10-21 初版：綁定漏抄是**格式性缺漏**（實測大段 diff 的 14 段審查裡 9 段漏寫
     reviewed_commits，且四輪重抽皆然），非實質異議。修復性重問只索取綁定回聲，
     verdict／blocking 一律沿用第一次審查結果 → 不可能因此產生核准。
+
+    2026-10-23 R2（使用者核准）：初版走 `review()`，而 `review()` 要求可判定 verdict，
+    純綁定回聲必被逐層判無效 → 修復恆失敗（死碼）。改走 `review_text()`（不套審查契約），
+    並比照段級 `retry_technical` 重試＋`_RETRY_BACKOFF` 退避；重試用盡仍失敗 → None（fail-closed）。
+
+    硬條件（不得放寬）：
+      · 修復只提供綁定，不是重新審查：不重抽 verdict、不換層求通過。
+      · 綁定必須**逐字**等於預期 12 碼 commit/tree（40 碼僅允許截前 12 碼的既有慣例）；
+        任何模糊、缺字、改寫一律視為失敗，不得推定成功。
     """
-    try:
-        txt, _label = review(_BINDING_REPAIR_PROMPT.format(c12=expect_pair[0], t12=expect_pair[1]),
-                             max_tokens=min(int(max_tokens), 512),
-                             timeout=min(float(timeout), 120), json_mode=json_mode)
-    except Exception:  # noqa: BLE001  取不到就維持 fail-closed
-        return None
-    j = parse_review(txt) or {}
-    for x in (j.get("reviewed_commits") or []):
-        if not isinstance(x, dict):
+    _err = ""
+    _tries = max(0, int(retry_technical)) + 1
+    for attempt in range(1, _tries + 1):
+        if attempt > 1:
+            time.sleep(_RETRY_BACKOFF * (attempt - 1))
+        try:
+            txt, _label = review_text(_BINDING_REPAIR_PROMPT.format(c12=expect_pair[0],
+                                                                     t12=expect_pair[1]),
+                                      max_tokens=min(int(max_tokens), 512),
+                                      timeout=min(float(timeout), 120), json_mode=json_mode)
+        except Exception as exc:  # noqa: BLE001  取不到就重試，用盡維持 fail-closed
+            _err = f"{type(exc).__name__}: {str(exc)[:160]}"
             continue
-        p = (str(x.get("commit", ""))[:12], str(x.get("tree", ""))[:12])
-        if p == tuple(expect_pair):
-            return p
-    return None
+        j = parse_review(txt) or {}
+        for x in (j.get("reviewed_commits") or []):
+            if not isinstance(x, dict):
+                continue
+            p = (str(x.get("commit", ""))[:12], str(x.get("tree", ""))[:12])
+            if p == tuple(expect_pair):
+                return p, attempt, ""
+        _err = f"回覆未含正確綁定（{txt.strip()[:100]}）"
+    return None, _tries, _err
 
 
 def review_segmented(prompts: list[str], coverage: dict, *, max_tokens: int = 8192,
@@ -607,6 +625,7 @@ def review_segmented(prompts: list[str], coverage: dict, *, max_tokens: int = 81
     notes: list[str] = []
     pairs: set[tuple[str, str]] = set()
     binding_bad: list[str] = []
+    binding_repaired: list[str] = []
     retried: list[str] = []
     invalid_segs: list[str] = []
     for k, p in enumerate(prompts, 1):
@@ -650,13 +669,18 @@ def review_segmented(prompts: list[str], coverage: dict, *, max_tokens: int = 81
         if expect_pair and tuple(expect_pair) not in _seg_pairs:
             # 2026-10-21：綁定漏抄＝格式性缺漏（不是實質異議）→ 只補抄綁定，不重抽 verdict。
             #   修復失敗才計入 blocking（fail-closed 語意不變：沒有正確綁定一律不放行）。
-            _fixed = _repair_binding(expect_pair, max_tokens, timeout, json_mode)
+            # 2026-10-23 R2：修復改走 review_text() 並重試（原走 review()＝恆失敗）；
+            #   只處理本段、不重跑其他段、不改變本段已取得的 verdict。
+            _fixed, _att, _err = _repair_binding(expect_pair, max_tokens, timeout, json_mode)
             if _fixed:
                 pairs.add(_fixed)
-                retried.append(f"seg{k}:binding-repair")
+                retried.append(f"seg{k}:binding-repair" + (f"x{_att}" if _att > 1 else ""))
+                binding_repaired.append(f"seg{k}:{_att}")
                 notes.append(f"seg{k}:binding-repaired")
             else:
-                binding_bad.append(f"第 {k}/{len(prompts)} 段未回報綁定 {expect_pair[0]}/{expect_pair[1]}")
+                binding_bad.append(
+                    f"第 {k}/{len(prompts)} 段未回報綁定 {expect_pair[0]}/{expect_pair[1]}"
+                    + (f"（綁定修復 {_att} 次未取得綁定：{_err[:120]}）" if _err else f"（綁定修復 {_att} 次未取得）"))
     if binding_bad:
         blockers += binding_bad
     if invalid_segs:
@@ -668,6 +692,7 @@ def review_segmented(prompts: list[str], coverage: dict, *, max_tokens: int = 81
     return (json.dumps(out, ensure_ascii=False), ",".join(sorted(set(labels))),
             {"verdict": verdict, "coverage": coverage, "labels": labels,
              "segments": len(prompts), "binding_bad": binding_bad,
+             "binding_repaired": binding_repaired,
              "invalid_segments": invalid_segs, "retried": retried})
 
 
@@ -747,6 +772,37 @@ def review(prompt: str, *, max_tokens: int = 8192, timeout: float = 300,
                 continue
             errors.append(f"{label}: 回覆無可判定 verdict（{text.strip()[:60]}）")
             continue
+        errors.append(f"{label}: 空輸出")
+    raise RuntimeError("；".join(errors) if errors else "審查鏈全數失敗 → fail-closed")
+
+
+def review_text(prompt: str, *, max_tokens: int = 512, timeout: float = 120,
+                json_mode: bool = False) -> tuple[str, str]:
+    """只取審查鏈的文字回應，**不套用審查契約**。用途受限（2026-10-23 R1）。
+
+    存在理由：`_repair_binding()` 索取的是「12 碼 commit/tree 綁定回聲」，
+    它本質上不是一次審查（不含 verdict）。若走 `review()`，會被
+    `_valid_review()`（要求可判定 verdict）與 `contract_violation()`（verdict 不可判定）
+    逐層判為無效 → 全層 RuntimeError → 修復恆失敗（10-22 22:24、10-23 07:32 兩次
+    「內容全 APPROVE、僅卡綁定契約」REJECT 的成因）。
+
+    契約邊界（使用者 2026-10-23 硬條件）：
+      ① 回傳文字不得當作審查結論；呼叫端只能從中取綁定欄位。
+      ② verdict／blocking 一律沿用首審，本函式不得產生、改寫或暗示判決。
+      ③ 鏈序與 `review()` 完全一致（不換層求通過）；全層無輸出 → RuntimeError（fail-closed）。
+    """
+    errors: list[str] = []
+    layers = _layers()
+    if not layers:
+        raise RuntimeError("審查鏈無任何可用層（憑證缺失）→ fail-closed")
+    for label, fn in layers:
+        try:
+            text = fn(prompt, max_tokens, timeout, json_mode)
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{label}: {type(exc).__name__}: {str(exc)[:120]}")
+            continue
+        if text and len(text.strip()) >= _MIN_CONTENT:
+            return text, label
         errors.append(f"{label}: 空輸出")
     raise RuntimeError("；".join(errors) if errors else "審查鏈全數失敗 → fail-closed")
 
