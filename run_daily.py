@@ -1953,16 +1953,17 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
             print(f"⚠️ weekly_ops_dynamic 失敗，改用 weekly_ops_closure 退路：{type(_wode).__name__}: {_wode}")
             _ops = {}
         _snap_ops = json.loads((Path(__file__).resolve().parent / "snapshot.json").read_text(encoding="utf-8"))
-        if not (_ops and _ops.get("執行清單")):
+        if not (_ops and _ops.get("期間")):
             _ops_keys = sorted([k for k in _snap_ops.keys() if k.startswith("weekly_ops_closure_")])
             _ops = _snap_ops.get(_ops_keys[-1], {}) if _ops_keys else {}
-        if _ops and _ops.get("執行清單"):
+        if _ops and _ops.get("期間"):
+            _ops_list = _ops.get("執行清單") or []
             _ops_html = "".join(
                 f"<div style='padding:5px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;margin:3px 0'>"
                 f"<b style='color:#16a34a'>✅</b> {x.get('項目','')} <span style='color:#64748b'>({x.get('金額','')})</span>"
                 f"<span style='float:right;color:#64748b'>{x.get('狀態','')}</span></div>"
-                for x in _ops.get("執行清單", [])
-            )
+                for x in _ops_list
+            ) or "<div style='font-size:12px;color:#64748b'>（本週尚無已完成項目）</div>"
             _ops_close = "｜".join(_ops.get("閉環", {}).get("待追蹤", []))
             html = html.replace("__WEEKLY_OPS__",
                 f"<div style='background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin:12px 0'>"

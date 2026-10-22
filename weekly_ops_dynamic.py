@@ -95,7 +95,9 @@ def fallback(base: Path | None = None) -> dict:
 
 def build_or_fallback(base: Path | None = None, today: str | None = None) -> dict:
     d = build(base, today)
-    return d if (d and d.get("執行清單")) else fallback(base)
+    # 2026-10-22：只要動態推導得到「期間」就採用，不再因本週剛好沒有已完成項目
+    # 而退回 snapshot.weekly_ops_closure_*（那會顯示數週前的舊期間，如 10/05~10/12）。
+    return d if (d and d.get("期間")) else fallback(base)
 
 
 if __name__ == "__main__":

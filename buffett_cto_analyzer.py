@@ -752,14 +752,17 @@ def main(**kwargs):
                 _ops = _wod.build()
             except Exception:
                 _ops = {}
-            if not (_ops and _ops.get("執行清單")):
+            if not (_ops and _ops.get("期間")):
                 _snap_data = _json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
                 _ops_keys = sorted([k for k in _snap_data.keys() if k.startswith("weekly_ops_closure_")])
                 _ops = _snap_data.get(_ops_keys[-1], {}) if _ops_keys else {}
-            if _ops and _ops.get("執行清單"):
+            if _ops and _ops.get("期間"):
                 msg += f"\n\n📋 本週操作執行紀錄（{_ops.get('期間','')}）："
-                for x in _ops.get("執行清單", []):
-                    msg += f"\n  ✅ {x.get('項目','')}（{x.get('金額','')}）"
+                if _ops.get("執行清單"):
+                    for x in _ops.get("執行清單", []):
+                        msg += f"\n  ✅ {x.get('項目','')}（{x.get('金額','')}）"
+                else:
+                    msg += "\n  （本週尚無已完成項目）"
                 _close = _ops.get("閉環", {}).get("待追蹤", [])
                 if _close:
                     msg += "\n📌 閉環待追蹤：" + "｜".join(_close)
