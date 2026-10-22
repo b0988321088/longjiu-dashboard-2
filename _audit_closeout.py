@@ -90,6 +90,66 @@ OWNED_PENDING = {
 NO_PUBLISHER = {"investment_performance.html", "cost_log.csv", "daily_analysis.json"}
 
 
+def classify_linked_artifacts(linked_targets, tracked_files, untracked_files, base):
+    """未追蹤項分類：被首頁連結的正式交付物 vs 其餘暫存/備份（2026-10-22 治本）。
+
+    背景：10/12、10/16、10/21 三次 21:30 美股緊急應變報告「已產出、已被 index.html 連結、
+    卻沒進 git」→ Pages 按鈕 404。舊版把**所有**未追蹤檔一律印成「備份/暫存，預期」，
+    正式報表因此被歸類成正常暫存 → 沒人補、也沒人擋（21:30 job 只產檔不 commit 是刻意設計，
+    入庫依賴後續流程；後續流程的閘門對這類檔無感就是缺口）。
+
+    判準＝index.html 是「使用者看得到的清單」：它連到的相對路徑就是正式交付物，
+    「本機存在但不在版控」就是漏登。判定用 tracked 全集而非只比 untracked 清單——
+    .gitignore 忽略的檔同樣 push 不上去、線上同樣 404，卻不會出現在未追蹤清單裡。
+    未連結者（_bak_*／site/／hunter_cache/／log…）維持既有「只產檔」流程，不阻擋。
+
+    回傳 (reports_unpublished, temp_untracked, missing_targets)：
+      reports_unpublished  被連結、本機存在、但不在版控 → 呼叫端必須列 fail
+      temp_untracked       未連結的未追蹤檔（備份/暫存/快取）→ 只印 ℹ️
+      missing_targets      被連結但本機不存在（產檔失敗／連結指向未來檔）→ 呼叫端必須列 fail
+
+    連結正規化（2026-10-22 審查意見納入）：`./x.html` 去前綴、`x.html?t=1#a` 去 query/hash、
+    結尾 `/` 或目錄一律不算交付物 → 避免把「同一檔的不同寫法」誤判成漏登或漏產。
+    """
+    def _norm(u):
+        u = str(u).split("#")[0].split("?")[0].strip()
+        while u.startswith("./"):
+            u = u[2:]
+        return u
+
+    linked = {_norm(u) for u in linked_targets
+              if u and not str(u).startswith(("http", "mailto"))}
+    linked = {u for u in linked if u and not u.endswith("/")}
+    base_p = Path(base)
+    published = {str(p).rstrip("/") for p in tracked_files}
+    names = {str(p).rstrip("/") for p in untracked_files}
+    reports = sorted(u for u in linked
+                     if (base_p / u).is_file() and u not in published)
+    missing = sorted(u for u in linked if not (base_p / u).is_file())
+    temp = sorted(names - linked)
+    return reports, temp, missing
+
+
+def collect_link_issues(linked_targets, tracked_files, untracked_files, base):
+    """把 classify 結果轉成 (fail 條目, 列印訊息)——closeout 只負責 append／print。
+
+    2026-10-22：抽出來是為了讓「會不會擋」變成可被測試直接呼叫的行為，
+    而不是靠測試去 grep 原始碼片段（字串守門擋不住 `fail.append` 被換成 `pass` 這種退化）。
+    """
+    rep, temp, miss = classify_linked_artifacts(linked_targets, tracked_files, untracked_files, base)
+    issues, lines = [], []
+    if rep:
+        lines.append(f"  ❌ 被 index.html 連結卻未入庫（push 不會帶上去 → 線上 404）: {rep}")
+        issues.append(f"正式報表未入庫: {rep}")
+    else:
+        lines.append("  ✅ 所有 index.html 連結的正式報表均已入庫")
+    if miss:
+        lines.append(f"  ❌ index.html 連結目標本機不存在（產檔失敗／連結指到未來檔）: {miss}")
+        issues.append(f"連結目標不存在: {miss}")
+    lines.append(f"  ℹ️ 未追蹤暫存/備份（未連結首頁，預期、不阻擋）共 {len(temp)} 檔")
+    return issues, lines
+
+
 def resolve_T(db):
     """回傳 (基準日, 是否為 fallback)。今天資料尚未落庫時退回最新已落庫日。"""
     want = os.environ.get("LJ_AUDIT_DATE") or _dtime.date.today().isoformat()
@@ -288,7 +348,10 @@ _dirty = (
 )
 benign = [p for p in _dirty if p.replace("\\", "/") in BENIGN_DIRTY]
 tracked = [p for p in _dirty if p.replace("\\", "/") not in BENIGN_DIRTY]
-untracked = [x.split(" ", 1)[1] for x in st if x.startswith("??")]
+# 未追蹤檔改用「逐檔」清單（git status 會把未追蹤目錄摺疊成 site/，無法逐檔比對正式報表）
+untracked = subprocess.run(["git", "ls-files", "--others", "--exclude-standard"],
+                           cwd=R, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace").stdout.splitlines()
 _bs = chr(92)
 _owned_names = {k.replace(_bs, "/") for k in OWNED_PENDING}
 owned = [p for p in tracked if p.replace(_bs, "/") in _owned_names]
@@ -306,7 +369,24 @@ if owned:
     if _np:
         print(f"  ⚠️ 其中 {len(_np)} 檔無任何 job 的推送集涵蓋（既有結構缺口，非本輪造成）：{_np}")
     print("      （canary 不變：交付物不在本名單內，漏提交照樣亮 ❌）")
-print(f"  未追蹤（備份/暫存，預期）：{untracked}")
+# ── 正式報表未入庫（2026-10-22 治本）─────────────────────────────
+# 10/12、10/16、10/21 三次 21:30 美股緊急應變報告：產出成功、被 index.html 連結、卻沒進 git
+# → Pages 按鈕 404。根因是本區把**所有**未追蹤檔一律當「備份/暫存，預期」，正式報表因此
+# 被歸類成正常暫存。判準改為「index.html 連到的相對路徑＝正式交付物，未入版控即 fail」；
+# 未連結者（_bak_*／site/／hunter_cache/／log…）維持既有「只產檔不 commit」流程，只印 ℹ️。
+try:
+    _linked_targets = set(re.findall(r'href="([^"]+)"',
+                                     (R / "index.html").read_text(encoding="utf-8")))
+    _tracked_all = set(subprocess.run(["git", "ls-files"], cwd=R, capture_output=True, text=True,
+                                      encoding="utf-8", errors="replace").stdout.splitlines())
+    _link_issues, _link_lines = collect_link_issues(
+        _linked_targets, _tracked_all, untracked, R)
+    for _ln in _link_lines:
+        print(_ln)
+    fail.extend(_link_issues)
+except Exception as _e_link:
+    print(f"  ❌ 正式報表入庫檢查無法執行: {_e_link}")
+    fail.append(f"正式報表入庫檢查無法執行: {_e_link}")
 if tracked:
     fail.append(f"未提交: {tracked}")
 

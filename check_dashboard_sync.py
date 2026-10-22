@@ -22,6 +22,19 @@ PREPUSH = os.environ.get("LJ_PREPUSH") == "1"
 html = (BASE / "index.html").read_text(encoding="utf-8")
 fails = []
 
+
+def _is_pending_this_commit(path, today):
+    """PREPUSH 豁免判準（2026-10-22 治本）：只有「今天產生」的檔才算待本次 commit。
+
+    INC-240 的豁免原意是「commit 前，今天的檔必然還沒入版控」；但舊寫法把所有未入版控的
+    連結檔一律降成 ℹ️，跨日漏登（10/12、10/16、10/21 三次 21:30 美股應變報告）因此天天
+    被放行 → 線上按鈕 404。現在：mtime 不是今天的舊檔不給豁免，一律 FAIL。
+    """
+    try:
+        return datetime.date.fromtimestamp(path.stat().st_mtime) == today
+    except OSError:
+        return False
+
 # 1. 佔位符殘留（build_dashboard 未注入）
 # 2026-09-16 INC-166 補修：純子字串比對會把「檢討紀錄散文裡提到的佔位符」當成殘留
 # （例：工作日誌寫「四個段落全改動態注入（__RISK_FUNDS__/__RISK_RULES__/…）」）→ 每天假警報。
@@ -184,8 +197,11 @@ try:
             fails.append(f"連結目標本機不存在: {_u}")
         elif _u not in _tracked and not PREPUSH:
             fails.append(f"連結目標未進版控（Pages 會 404）: {_u}")
-        elif _u not in _tracked:
+        elif _u not in _tracked and _is_pending_this_commit(BASE / _u, datetime.date.today()):
             _pending_untracked.append(_u)
+        elif _u not in _tracked:
+            # 跨日仍未入版控＝漏登（2026-10-22 治本；豁免只給今天產出的檔）
+            fails.append(f"連結目標跨日仍未進版控（Pages 會 404）: {_u}")
     if _pending_untracked:
         print(f"  ℹ️ 待本次 commit 進版控 {len(_pending_untracked)} 檔（commit 前必然狀態，非故障；"
               f"上線後由 --post-push 驗線上 200）")
