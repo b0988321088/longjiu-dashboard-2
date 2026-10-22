@@ -1674,5 +1674,11 @@
   "category": "完成",
   "item": "資產穿透2026-10-22（已產出（五桶市值見 snapshot.penetration.actual_twd））",
   "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-10-22",
+  "category": "完成",
+  "item": "22:38 收尾自動提交機制（data_closeout_commit）上線",
+  "detail": "cron 8960236bbae6 每日 22:38；只收資料/報表、程式檔跳過、優先補首頁連結未入庫報表、別班未推 commit 則中止；CIO-Gemini APPROVE＋RECORD；三情境 dry-run 驗證；closeout 全綠、線上三檔 200"
  }
 ]
