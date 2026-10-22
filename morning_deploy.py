@@ -82,7 +82,13 @@ def read_stdout() -> tuple[str, int]:
             return "", 0
         return fx.read_text(encoding="utf-8", errors="replace"), 0
     try:
-        r = subprocess.run([sys.executable, str(BASE / "regenerate_report.py"), "--no-push"],
+        # 2026-10-23 修復（使用者回報 07:00 連結多為 404）：
+        #   10-22 14:35 的「PUSH_HOLD 守門」收工把這裡加上 --no-push，等於 07:00 主產線
+        #   不再 commit/push —— 但本腳本仍照舊印「✅ 已上線」＋Pages 連結，
+        #   於是每日 07:00 的日報/差異/再平衡/穿透全部 404，直到晚上收尾提交才補上。
+        #   regenerate_report.py 的註解已明定「發布只能走經授權的發布路徑（07:00 主產線）」，
+        #   故此處不得帶 --no-push；若需暫停發布，走 .git/PUSH_HOLD 或人工裁決，不是改這行。
+        r = subprocess.run([sys.executable, str(BASE / "regenerate_report.py")],
                            cwd=str(BASE), capture_output=True, text=True, timeout=1800)
     except Exception as e:
         print(f"⚠️ 晨間產線執行失敗（無法啟動 regenerate_report.py）：{e}")
@@ -124,6 +130,23 @@ def snapshot_head() -> str:
         return f"📌 snapshot 資料日 {d}" + ("（" + "／".join(bits) + "）" if bits else "")
     except Exception:
         return ""
+
+
+def url_alive(url: str, timeout: float = 8.0) -> bool | None:
+    """Pages 上線驗證：True=HTTP 200、False=非 200（含 404）、None=無法判定。
+
+    2026-10-23：使用者回報 07:00 訊息「很多連結 404」。根因是產線沒 push 卻仍宣稱已上線，
+    訊息本身沒有任何事實核對。此後標題只依實測結果給；抓不到（None）不當失敗、也不當通過。
+    """
+    if os.environ.get("LJ_MORNING_DRY"):
+        return None
+    try:
+        import urllib.request
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (longjiu-morning)"})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.status == 200
+    except Exception as e:  # noqa: BLE001
+        return False if getattr(e, "code", None) is not None else None
 
 
 def main() -> None:
@@ -171,8 +194,26 @@ def main() -> None:
                 print("--- 輸出尾段（fallback） ---\n" + tail)
         sys.exit(rc if rc != 0 else 1)
 
-    lines = ["✅ 晨間日報已產出並上線" if not os.environ.get("LJ_MORNING_DRY")
-             else "🧪 DRY RUN（未實際執行管線）"]
+    _ordered = [(i, n, u) for i, n, u in have]
+    for _icon in ("🔄", "📊", "🚨"):
+        if _icon in links:
+            _label, _url = links[_icon]
+            _ordered.append((_icon, _label, _url))
+    # 2026-10-23：標題不再無條件宣稱「已上線」。實測 Pages 狀態後才給 ✅；
+    #   有任一連結非 200 → 標題改 ⚠️ 並在尾端列出未上線項目（含 HTTP 狀態），
+    #   讓「產線成功但沒發布」與「真的上線」在訊息上就分得開。
+    _dead = []
+    for _icon, _name, _url in _ordered:
+        _st = url_alive(_url)
+        if _st is False:
+            _dead.append((_icon, _name))
+    if os.environ.get("LJ_MORNING_DRY"):
+        _headline = "🧪 DRY RUN（未實際執行管線）"
+    elif _dead:
+        _headline = f"⚠️ 晨間日報已產出，但有 {len(_dead)} 個連結未上線（Pages 404）"
+    else:
+        _headline = "✅ 晨間日報已產出並上線"
+    lines = [_headline]
     for icon, name, url in have:
         lines.append(f"{icon} {name}：{url}")
     # 2026-09-29（使用者回報）：原本把 🔄／📊／🚨 三個連結用「｜」串成同一行，
@@ -182,6 +223,9 @@ def main() -> None:
         if _icon in links:
             _label, _url = links[_icon]
             lines.append(f"{_icon} {_label}：{_url}")
+    if _dead:
+        lines.append("❌ 未上線：%s（產物已生成但未發布，需人工處理）"
+                     % "、".join(f"{n}" for _i, n in _dead))
     # 2026-09-23（INC-240）：原本只挑含 ❌ 的行 → 詳情行（"  - …"）被丟掉，訊息只剩光禿禿
     # 一句「❌ 儀表板同步檢查失敗:」看不出原因（真因藏在下一行）。改為 ❌ 行＋緊接的詳情行一起收。
     bad, _collect = [], False
