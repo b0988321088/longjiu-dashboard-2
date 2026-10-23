@@ -25,25 +25,14 @@ import check_narrative_numbers as C  # noqa: E402
 
 # (內文片段, 應放行?, 說明)
 CASES: list[tuple[str, bool, str]] = [
-    # ── 引擎口徑（2026-09-25 新增補洞）──
-    ("債券 +5pp", True, "引擎戰術偏移（燈號偏移後 − 目標）"),
-    ("美股 -8pp", True, "引擎戰術偏移（負向）"),
-    ("美股 8pp", True, "引擎戰術偏移（內文寫成減碼幅度）"),
-    ("債券 30%", True, "引擎偏移後目標值"),
-    ("美股 22%", True, "引擎偏移後目標值"),
-    ("債券 +9pp", False, "負向：不存在的偏移"),
-    ("美股 12%", False, "負向：不存在的目標值"),
-    # ── 引擎偏移 vs 現況缺口的口徑分流（2026-09-25 B 批）──
-    ("偏移後債券 +5pp", True, "引擎偏移口徑（偏移後＝+5）"),
-    ("偏移後債券 -5pp", False, "負向：引擎是加碼 +5，寫成減碼 → 擋"),
-    # 2026-09-29：原寫死 9.5pp（9 月舊缺口）→ 改由 _pen_cases() 動態生成，避免真值日案例落後。
-    # ── 獨立複審抓到的兩條迴歸（2026-09-25，固定下來不再退化）──
-    ("美股超標 9pp 但債券 +5pp", True, "回歸 V-A2：無標點的整數 pp 鄰句不得污染口徑"),
-    ("偏移後科技 5pp", False, "回歸 V-B：口徑為引擎偏移但該標籤 off 為空 → 退回聯集擋下，不得靜默跳過"),
+    # ── 引擎口徑（2026-09-25 補洞；2026-10-23 改為動態生成）──
+    # 原本寫死 9/25 當天的引擎值（債券 +5pp／美股 -8pp／債券 30%／美股 22%／衛星 7%），
+    # 引擎戰術偏移一歸零（2026-10-23 全列 0pp＝紅線解除後不加不減）就讓自測假失敗，
+    # 收工稽核顯示成「內文守門自測失敗（守門本身有問題）」——但守門是好的，壞的是案例。
+    # 這與 9/26 現金、9/29 穿透同一個坑，故改由下方 _engine_cases() 現讀最新
+    # macro_regime_*.json 生成，正向與負向案例都跟著引擎走。
     # ── 避險衛星覆蓋（2026-09-25 B 批；修前這些標籤根本不存在＝從未被掃）──
-    ("衛星 7%", True, "避險衛星合計偏移後目標"),
-    ("避險衛星 7%", True, "同上（長標籤寫法）"),
-    ("衛星 5%", False, "負向：非衛星列任何口徑的值"),
+    # 衛星／避險衛星的正負向案例同樣改由 _engine_cases() 動態生成（見下方）。
     ("黃金 5%", True, "刻意未註冊黃金標籤（會與金價 2,400 碰撞）→ 不掃"),
     ("衛星 +183.1萬", True, "萬為單位無千分位 → 金額型態不成立，不掃"),
     # ── known limitation：空集合＝該口徑不掃（既有設計，非本批引入）──
@@ -104,6 +93,92 @@ def _cash_cases() -> list[tuple[str, bool, str]]:
 CASES += _cash_cases()
 
 
+def _live_engine() -> dict:
+    """2026-10-23：讀最新 macro_regime_YYYY-MM-DD.json，回傳 {標籤: {'pct':set,'off':set}}。
+
+    選檔規則刻意與 check_narrative_numbers._engine_calibers 一致（只認日期命名、取最新
+    日期、日期不合法跳過），否則自測驗的口徑會與守門實際採用的那一套不同 → 自測通過
+    但實掃誤報（或反之），比沒有自測更危險。
+    """
+    import datetime
+    import json
+    import re as _re
+    _files: list[tuple[str, Path]] = []
+    for _p in BASE.glob("macro_regime_*.json"):
+        _m = _re.fullmatch(r"macro_regime_(\d{4}-\d{2}-\d{2})\.json", _p.name)
+        if not _m:
+            continue
+        try:
+            datetime.date.fromisoformat(_m.group(1))
+        except ValueError:
+            continue
+        _files.append((_m.group(1), _p))
+    if not _files:
+        return {}
+    _files.sort()
+    try:
+        _data = json.loads(_files[-1][1].read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    _out: dict[str, dict[str, set]] = {}
+    for _row in ((_data.get("targetAllocation") or {}).get("rows") or []):
+        _name = str(_row.get("資產", "")).strip()
+        if _name not in C.ENGINE_ROWS:
+            continue
+        _t, _off = _row.get("target"), _row.get("燈號偏移後")
+        for _lab in C.ENGINE_ROWS[_name]:
+            _spec = _out.setdefault(_lab, {"pct": set(), "off": set()})
+            if isinstance(_t, (int, float)) and isinstance(_off, (int, float)):
+                _spec["off"].add(round(float(_off) - float(_t), 1))
+                _spec["pct"].add(round(float(_off), 1))
+            if isinstance(_t, (int, float)):
+                _spec["pct"].add(round(float(_t), 1))
+    return _out
+
+
+def _pp(v: float) -> str:
+    """有號 pp 字串（守門解析用）：4 → '+4.0'、0 → '+0.0'、-8 → '-8.0'。"""
+    return f"{float(v):+.1f}"
+
+
+def _num(v: float) -> str:
+    """百分比數字：25.0 → '25'、36.3 → '36.3'。"""
+    return f"{round(float(v), 1):g}"
+
+
+def _engine_cases() -> list[tuple[str, bool, str]]:
+    """2026-10-23：動態生成「引擎口徑」案例（讀最新引擎檔，不寫死任何數字）。
+
+    覆蓋三種合法派生口徑：①戰術偏移（含『偏移後』前綴寫法、含無號寫法）
+    ②偏移後目標值 ③負向對照組（集合外的值必須擋下）。
+    引擎偏移全為 0 的日子（紅線解除後不加不減）仍會生成 "+0.0pp" 案例 —— 0 必須
+    被視為合法，否則守門會在「引擎不動」的日子誤檔正常內文。
+    """
+    _cal = _live_engine()
+    if not _cal:
+        return []
+    _out: list[tuple[str, bool, str]] = []
+    for _lab in ("台股", "美股", "防守型配息", "債券", "避險衛星", "衛星"):
+        _spec = _cal.get(_lab)
+        if not _spec:
+            continue
+        _pcts = sorted(_spec["pct"])
+        _offs = sorted(_spec["off"], key=abs)
+        if _pcts and max(_pcts) > 0:
+            _v = max(_pcts)
+            _out.append((f"{_lab} {_num(_v)}%", True, f"引擎偏移後目標值（動態 {_num(_v)}%）"))
+            _out.append((f"{_lab} {_num(_v + 11.3)}%", False, "負向：不存在的目標值"))
+        if _offs:
+            _o = max(_offs, key=abs)
+            _out.append((f"{_lab} {_pp(_o)}pp", True, "引擎戰術偏移（動態）"))
+            _out.append((f"{_lab} {_num(abs(_o))}pp", True, "引擎戰術偏移（內文寫成無號幅度）"))
+            _out.append((f"偏移後{_lab} {_pp(_o)}pp", True, "引擎偏移口徑（偏移後＝動態值）"))
+            if _o:
+                _out.append((f"偏移後{_lab} {_pp(-_o)}pp", False, "負向：方向相反 → 擋"))
+            _out.append((f"{_lab} {_pp(abs(_o) + 11.3)}pp", False, "負向：不存在的偏移"))
+    return _out
+
+
 def _pen_cases() -> list[tuple[str, bool, str]]:
     """2026-09-29：動態生成「穿透真值／現況缺口」案例（讀 snapshot.penetration）。
 
@@ -118,25 +193,37 @@ def _pen_cases() -> list[tuple[str, bool, str]]:
         return []
     _pct = ((_s.get("penetration") or {}).get("actual_pct") or {})
     _out: list[tuple[str, bool, str]] = []
+    _tg = ((_s.get("penetration") or {}).get("targets") or {})
     _us = _pct.get("美股市值型成長")
-    if isinstance(_us, (int, float)) and _us > 30:
-        _gap = round(_us - 30, 1)
+    _tg_us = _tg.get("美股市值型", 30)
+    if isinstance(_us, (int, float)):
+        _gap = round(_us - float(_tg_us), 1)
         _out.append((f"超標：美股 +{_gap}pp", True, "現況缺口口徑（動態）"))
         _out.append((f"超標：美股 -{_gap}pp", False, "負向：超標必為正缺口，寫成負 → 擋"))
-        _out.append((f"美股超標 {_gap}pp、債券 +5pp", True, "切段：鄰句『超標』不得污染債券的引擎值"))
+        # 2026-10-23：鄰句回歸案例原本寫死「債券 +5pp」（9/25 引擎值）→ 引擎歸零即假失敗。
+        # 改讀引擎當日偏移，切段邏輯仍被鎖住。
+        _bd_off_set = ((_live_engine().get("債券") or {}).get("off")) or {0.0}
+        _bd_off = sorted(_bd_off_set, key=abs)[-1]
+        _out.append((f"美股超標 {_gap}pp、債券 {_pp(_bd_off)}pp", True,
+                     "切段：鄰句『超標』不得污染債券的引擎值"))
     _bd = _pct.get("債券")
+    _tg_bd = _tg.get("債券", 25)
     if isinstance(_bd, (int, float)):
-        _out.append((f"債券 {_bd - 25:+.1f}pp", True, "現況缺口（佔總資產分母，動態）"))
+        _out.append((f"債券 {_bd - float(_tg_bd):+.1f}pp", True, "現況缺口（佔總資產分母，動態）"))
     _tech = _pct.get("美股市值型成長_科技")
     if isinstance(_tech, (int, float)):
         _out.append((f"科技 {_tech}%", True, "穿透真值（動態）"))
     _defe = _pct.get("防守型配息")
     if isinstance(_defe, (int, float)):
         _out.append((f"防守型配息 {_defe}%", True, "穿透真值（動態）"))
+    # 回歸 V-B（2026-09-25）：口徑為引擎偏移、但該標籤 off 為空（科技不在 ENGINE_ROWS）
+    # → 退回聯集比對、不得靜默跳過。原寫死 5pp（會隨穿透真值漂移），改取遠離任何集合的值。
+    _out.append(("偏移後科技 +99.9pp", False, "回歸 V-B：該標籤 off 為空 → 退回聯集擋下"))
     return _out
 
 
 CASES += _pen_cases()
+CASES += _engine_cases()
 
 # ── 警示自測（2026-09-25 補）：引擎檔異狀必須出聲、正常檔不得有雜訊 ──
 # 這層是「引擎口徑悄悄消失」的唯一可見點（症狀會顯示成內文數字對不上、指不到根因），
