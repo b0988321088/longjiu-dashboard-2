@@ -11319,6 +11319,16 @@
       "status": "completed",
       "source": "user"
     }
+,
+  {
+    "id": "mem-20261023224813-1223",
+    "timestamp": "2026-10-23T22:48:13.014580+08:00",
+    "agent": "Hermes",
+    "task": "10/23 內文守門自測修復＋三道防護落地（收工檢查恢復全綠）",
+    "summary": "收工稽核②連續多日FAIL『內文守門自測失敗』真因＝自測案例寫死9/25引擎值（債券+5pp/美股-8pp/衛星7%），10/23引擎偏移全列歸零→10條正向案例假失敗；守門本體正常（當日實掃✅全部可追溯）。修法：_live_engine()選檔規則對齊_engine_calibers、_engine_cases()動態生成38條引擎案例（含+0.0pp視為合法、無號寫法、偏移後前綴、方向相反必擋、集合外必擋）、_pen_cases改讀引擎與penetration.targets；案例45→59。三道防再壞：①覆蓋率下限（總≥45/引擎≥30，防引擎檔讀不到時59→21仍全綠的假綠）②口徑漂移檢查（自測集合須為守門allowed子集）③每次跑自測做變異測試M1/M2/M3（實測轉紅19/15/17條）。落地commit b7881354（CIO tree c06ae1ac）＋ed99c781（CIO tree f9eaa373），閘門v5通過、local=remote=ed99c781、未推0、Pages success。驗證：自測73/73 rc=0、模擬引擎消失rc=1、closeout_check全綠22:47。另22:38收尾自動提交首跑實證成功（22:38:24→22:38:35，commit 703acc11收11檔含emergency_report_2026-10-23.html，線上22:39:56轉200、與本機diff=0、未推0）。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-23T21:35:38.150660"
