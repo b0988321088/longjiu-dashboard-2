@@ -225,6 +225,12 @@ def _pen_cases() -> list[tuple[str, bool, str]]:
 CASES += _pen_cases()
 CASES += _engine_cases()
 
+# 案例數下限（2026-10-23）：_engine_cases() 讀不到引擎檔時會回空 → 引擎案例 38 條整批
+# 消失（總數 59→21）卻仍「全綠」，這是最危險的假綠。故設兩道下限：總數與引擎案例數。
+# 調整案例時同步維護，且只能上調不能下調（下調等於放寬守門）。
+MIN_CASES = 45
+MIN_ENGINE_CASES = 30
+
 # ── 警示自測（2026-09-25 補）：引擎檔異狀必須出聲、正常檔不得有雜訊 ──
 # 這層是「引擎口徑悄悄消失」的唯一可見點（症狀會顯示成內文數字對不上、指不到根因），
 # 所以把它鎖進自測，而不是只靠人記得看 stderr。
@@ -339,17 +345,61 @@ def _warn_check(files) -> tuple[bool, str, dict]:
     return bool(_msg), _msg, _allowed
 
 
-def main() -> int:
-    snap = C._load(BASE / "snapshot.json") or {}
-    allowed = C.build_allowed(snap)
-    fails = 0
+def _eval_cases(allowed: dict, scan=None, verbose: bool = True) -> tuple[int, int]:
+    """跑正向／負向案例，回傳 (fail 數, 案例數)。scan 可注入（變異測試用）。"""
+    _scan = scan or C.scan_text
+    fails = total = 0
     for text, expect_pass, note in CASES:
-        hits = C.scan_text(text, allowed, "SELFTEST")
+        total += 1
+        hits = _scan(text, allowed, "SELFTEST")
         ok = (not hits) == expect_pass
         if not ok:
             fails += 1
-        print(f"{'PASS' if ok else 'FAIL'} | {'應放行' if expect_pass else '應擋下'} | {text} | {note}"
-              + ("" if ok else f" | hits={hits}"))
+        if verbose:
+            print(f"{'PASS' if ok else 'FAIL'} | {'應放行' if expect_pass else '應擋下'} | {text} | {note}"
+                  + ("" if ok else f" | hits={hits}"))
+    return fails, total
+
+
+def _mutation_checks(allowed: dict) -> list[tuple[str, bool, str]]:
+    """2026-10-23：變異測試 —— 故意把守門弄壞，自測必須轉紅。
+
+    為什麼必要：案例與實作若「同源」就會一起錯（自測全綠但守門已失效＝假綠）。
+    唯一能證明自測有偵測力的方法是把受測邏輯逐一拿掉，看它會不會叫。
+    全部在記憶體內完成，不寫檔、不改真值。
+    """
+    _out: list[tuple[str, bool, str]] = []
+    _f1, _ = _eval_cases(allowed, scan=lambda *a, **k: [], verbose=False)
+    _out.append(("M1 比對函式永遠放行（scan 回空）", _f1 > 0, f"轉紅 {_f1} 條"))
+    _a2 = {k: v for k, v in allowed.items() if k not in _live_engine()}
+    _f2, _ = _eval_cases(_a2, verbose=False)
+    _out.append(("M2 引擎口徑整批未補入", _f2 > 0, f"轉紅 {_f2} 條"))
+    _a3 = {k: {**v, "off": set()} for k, v in allowed.items()}
+    _f3, _ = _eval_cases(_a3, verbose=False)
+    _out.append(("M3 有號偏移 off 集合被清空", _f3 > 0, f"轉紅 {_f3} 條"))
+    return _out
+
+
+def _drift_check(allowed: dict) -> list[str]:
+    """自測現算的引擎集合必須是守門 allowed 的子集。
+
+    兩邊各有一套選檔／解析邏輯（自測不 import 生產路徑的私有函式以免耦合），
+    一旦漂移，自測會放行守門其實會擋的值 → 只有這裡能提早看到。
+    """
+    _bad: list[str] = []
+    for _lab, _spec in _live_engine().items():
+        _a = allowed.get(_lab) or {}
+        for _k in ("pct", "off"):
+            _miss = [v for v in _spec.get(_k, set()) if round(float(v), 1) not in (_a.get(_k) or set())]
+            if _miss:
+                _bad.append(f"{_lab}.{_k} 缺 {sorted(_miss)}")
+    return _bad
+
+
+def main() -> int:
+    snap = C._load(BASE / "snapshot.json") or {}
+    allowed = C.build_allowed(snap)
+    fails, _n = _eval_cases(allowed)
     # ── 警示自測：合成引擎檔 → 確認「整列缺列／部分欄位改名」會出聲、正常檔不出聲 ──
     for note, files, expect_warn, absent, present in WARN_CASES:
         got, msg, al = _warn_check(files)
@@ -363,15 +413,44 @@ def main() -> int:
         print(f"{'PASS' if ok else 'FAIL'} | {'應出聲' if expect_warn else '不應出聲'} | 警示 | {note}"
               + (f" | {msg.splitlines()[0][:70]}" if msg else "") + _why)
 
+    # ── 覆蓋率下限（2026-10-23）：案例因「讀不到引擎檔」整批消失時，自測會變少但全綠
+    #    （＝假綠）。下限讓「覆蓋率下降」本身變紅燈，而不是等哪天真的誤擋才發現。
+    _struct = 0
+    _n_total = len(CASES)
+    _n_engine = len(_engine_cases())
+    if _n_total < MIN_CASES:
+        _struct += 1
+        print(f"FAIL | 覆蓋率下限 | 案例數 {_n_total} < 下限 {MIN_CASES}"
+              f"（引擎檔讀不到？_engine_cases 回空？）")
+    if _n_engine < MIN_ENGINE_CASES:
+        _struct += 1
+        print(f"FAIL | 引擎覆蓋下限 | 引擎案例 {_n_engine} 條 < 下限 {MIN_ENGINE_CASES}"
+              f"（引擎口徑整批消失＝守門失去覆蓋但看起來全綠）")
+
+    # ── 漂移檢查：自測現算的引擎集合必須都在守門 allowed 內 ──
+    _drift = _drift_check(allowed)
+    if _drift:
+        _struct += 1
+        print(f"FAIL | 口徑漂移 | 自測與守門不同步：{'；'.join(_drift[:4])}")
+
+    # ── 變異測試：把守門弄壞，自測必須轉紅（證明有偵測力）──
+    _mut = _mutation_checks(allowed)
+    for _mnote, _mok, _mwhy in _mut:
+        if not _mok:
+            fails += 1
+        print(f"{'PASS' if _mok else 'FAIL'} | 變異測試 | {_mnote} | {_mwhy}")
+
     # 印 gap（現況缺口）／off（引擎偏移）／pct 三集合：口徑拆分後 gap 不再含引擎值，
     # 只看 gap 會誤以為引擎口徑消失了（收工稽核第 13 類讀的就是這一行）。
-    _total = len(CASES) + len(WARN_CASES)
+    _total = len(CASES) + len(WARN_CASES) + len(_mut)
     print(f"--- 內文守門自測：{_total - fails}/{_total} 通過"
           f"｜債券 gap={sorted(allowed['債券']['gap'])} off={sorted(allowed['債券']['off'])}"
           f" pct={sorted(allowed['債券']['pct'])}")
-    if fails:
-        print("❌ 自測未過 → 守門本身有問題，先修守門再談內文")
-    return 1 if fails else 0
+    if fails or _struct:
+        print(f"❌ 自測未過 → 守門本身有問題，先修守門再談內文"
+              f"（案例失敗 {fails}｜結構檢查失敗 {_struct}）")
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
