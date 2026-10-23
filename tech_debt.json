@@ -1981,5 +1981,37 @@
     "moved_from": "",
     "moved_at": "2026-10-15",
     "cleanup_reason": ""
+  },
+  {
+    "id": "TD-20261023-01",
+    "date": "2026-10-23",
+    "title": "emergency_taiex_report_*.html 自 10/16 起未入庫（線上 404）",
+    "severity": "P2",
+    "source": "10/23 閉環盤點",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "10/16、10/20、10/21、10/22、10/23 全為未追蹤（??）；已入庫的 10/19 版線上仍 200。該鏡像不在 index.html 連結清單內 → 22:38 data_closeout 不會自動收（規則只收被首頁連結但未入庫者）。使用者 10/23 指示維持現狀不動，待真值日或發布窗口裁示：補入庫 or 正式退役並移除產出。",
+    "tags": "報表,入庫,404",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-23",
+    "cleanup_reason": ""
+  },
+  {
+    "id": "TD-20261023-02",
+    "date": "2026-10-23",
+    "title": "儀表板殘留三處舊 US30Y 文字（與頭部 5.29% 矛盾）",
+    "severity": "P2",
+    "source": "10/23 閉環盤點",
+    "status": "開放",
+    "status_raw": "",
+    "detail": "①CTO 技術視角段寫死 5.44%『站上凍結線』（來源 9/13 LLM 分析快取，語氣卻像當日）②CIO 審查段 5.441%（基準 10/20，紅線 streak 21 日）③行動儀表板台股/美股列 5.439%（radar_state 停在 10/22，週五無 16:15 雷達排程）。頭部 __US30Y_LINE__ 已正確顯示 5.29%、紅線連續 0 日。屬文字層過時，不影響 Gate 判定（Gate 讀 snapshot）。修法涉及 build_dashboard/cio_review 注入與 radar 重產，凍結期未動。",
+    "tags": "儀表板,寫死,US30Y",
+    "due_date": "",
+    "owner": "龍九",
+    "moved_from": "",
+    "moved_at": "2026-10-23",
+    "cleanup_reason": ""
   }
 ]
