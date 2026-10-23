@@ -605,58 +605,7 @@ __RELAY_SCHEDULE__
 <!-- SPA 切換邏輯與極簡動態控制 -->
 <!-- 原有 SPA 切換邏輯與極簡動態控制已移除，改為垂直顯示 -->
 
-<script>
-/* C 方案階段3（2026-08-23）：交易計畫 + 決策追蹤 JS 即時渲染，失敗保留快照版 */
-(function(){
-  var tp = document.getElementById('trade-plan');
-  if(tp){
-    fetch('snapshot.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(s){
-      var rot = s.rotation_recommendation||{};
-      var plan = rot.交易計畫||[];
-      if(!plan.length) return;
-      var h = '<div style="font-size:12px;color:#92400e;font-weight:800;margin-bottom:6px">🎯 本週交易計畫（'+rot.日期+'｜即時）</div>';
-      h += '<div style="font-size:11.5px;color:#b45309;margin-bottom:6px">'+(rot.總結||'')+'</div>';
-      // 2026-08-27：產業優先序（動作 ✅ 的建議 + 具體標的/產業明細）
-      var inds = (rot.建議||[]).filter(function(x){ return (x.動作||'').indexOf('✅') === 0; });
-      if(inds.length){
-        h += '<div style="font-size:11px;color:#92400e;font-weight:700;margin:6px 0 3px">🥇 產業優先序（依資金輪動）：</div>';
-        inds.forEach(function(x){
-          h += '<div style="font-size:11px;color:#1f2937;line-height:1.6">✅ <b>'+x.產業+'</b>（'+(x.現況||0)+'%→目標'+(x.目標||0)+'%）｜買：'+(x.標的||[]).join('、')+'</div>';
-          h += '<div style="font-size:10px;color:#92400e;margin:0 0 4px 14px">'+(x.理由||'')+'</div>';
-        });
-      }
-      h += '<table style="width:100%;border-collapse:collapse;font-size:11.5px"><tr style="color:#92400e"><th style="text-align:left">產業</th><th>買什麼</th><th style="text-align:right">金額</th><th>節奏</th></tr>';
-      plan.forEach(function(p){
-        h += '<tr><td style="color:#1f2937">'+p.產業+'</td><td style="color:#1f2937">'+(p.標的||'')+'</td><td style="text-align:right;color:#1f2937"><b>'+(p.金額>0?p.金額.toLocaleString('zh-TW'):'—')+'</b></td><td style="font-size:10.5px;color:#1f2937">'+(p.節奏||'')+'</td></tr>';
-      });
-      h += '</table>';
-      tp.innerHTML = h;
-    }).catch(function(){});
-  }
-  var wn = document.getElementById('weekly-nw');
-  if(wn){
-    fetch('snapshot.json?v='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(s){
-      var bd = s.net_worth_weekly_breakdown;
-      if(bd && bd.net_worth_change !== undefined){
-        var fmt = function(v){var s2=v>=0?'+':'';return s2+Math.round(v).toLocaleString('zh-TW');};
-        var col = bd.net_worth_change>=0 ? '#16a34a' : '#dc2626';
-        var h = '<div style="font-size:12px;color:#5b21b6;font-weight:800;margin-bottom:6px">📡 本週淨資產變動拆解（'+bd.period+'｜即時）</div>';
-        h += '<div style="font-size:12.5px;color:#1f2937">淨資產變動：<b style="color:'+col+'">'+fmt(bd.net_worth_change)+'</b></div>';
-        h += '<div style="font-size:11.5px;color:#6b7280;margin-left:8px">├─ 市場性：'+fmt(bd.market)+' 🟡（市場波動）</div>';
-        if(bd.transaction !== undefined) h += '<div style="font-size:11.5px;color:#6b7280;margin-left:8px">├─ 帳務/交易性：'+fmt(bd.transaction)+'</div>';
-        h += '<div style="font-size:11.5px;color:#2563eb;margin-left:8px">└─ 資金成本：'+fmt(bd.cost_of_capital)+' 🔵（固定）</div>';
-        h += '<div style="font-size:11.5px;margin-top:6px;padding:6px 8px;background:#eef2ff;border-radius:6px;color:#1f2937">判斷：<b>'+(bd.judgment||'')+'</b></div>';
-        h += '<div style="font-size:10.5px;color:#6b7280;margin-top:4px">→ 週看「變動來源」；月/季才看資金效率（資產增長 vs 資金成本）</div>';
-        wn.innerHTML = h;
-      } else {
-        wn.innerHTML = '<div style="font-size:12px;color:#dc2626;font-weight:700">⚠️ 資料未就緒（snapshot 缺 net_worth_weekly_breakdown）</div>';
-      }
-    }).catch(function(e){
-      wn.innerHTML = '<div style="font-size:12px;color:#dc2626;font-weight:700">⚠️ 讀取失敗：'+(e.message||'網路錯誤')+'</div>';
-    });
-  }
-})();
-</script>
+<!-- 2026-10-23 修復：舊 snapshot.rotation_recommendation 交易計畫 renderer 已移除（與 #trade-plan 行動儀表板競態、會用 2 條產業覆寫 10+ 條全資產結論；單一寫入者＝頁尾行動儀表板 JS） -->
 <script>
 // 2026-08-26：行事曆 JS 動態化（讀 schedule_events.json，與日報同源；失敗保留快照版）
 (function(){
@@ -936,7 +885,9 @@ var gotTotal = _salaryA + divTotal + rentGot;
         var c = (window.__LJ_LIVE_ROWS__ && window.__LJ_LIVE_ROWS__[i]) || null;
         return (c && c.類別===x.類別 && c.動作===x.動作 && c.內容) ? Object.assign({}, x, {內容:c.內容}) : x;
       });
-      var doRows = rows.filter(function(x){ var a=x.動作||''; return a.indexOf('⏸️')!==0 && a.indexOf('🟡')!==0; });
+      var ACT = ['🔴','🟢','💰','✅','📊','🔍'];
+      /* 2026-10-23 修復：↳ 為調度附註、⚠️ 為設定衝突待裁決，皆非本週動作 → 不列「本週該做」 */
+      var doRows = rows.filter(function(x){ var a=x.動作||''; for(var i=0;i<ACT.length;i++){ if(a.indexOf(ACT[i])===0) return true; } return false; });
       var hold = rows.filter(function(x){ var a=x.動作||''; return a.indexOf('⏸️')===0 || a.indexOf('🟡')===0; });
       var todayEv = evs.filter(function(e){ return e.date===_today && (e.status||'').indexOf('✅')!==0; });
       var soon = [];

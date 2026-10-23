@@ -805,22 +805,24 @@ def main():
     except Exception as _e:
         tpl = tpl.replace("__BUFFETT_ANALYSIS__", f"智慧審查載入失敗：{_e}")
 
-    # ── 交易計畫（2026-09-01：從 pending_decisions 動態，非 8/29 統籌版快照）──
+    # ── 交易計畫（2026-10-23 修復：靜態 fallback 改讀 radar_state.weekly_plan 單一真值）
+    #    原讀 pending_decisions.json（待處理/已確認）→ 把治理卡當交易計畫顯示（TD-20261011-01）。
+    #    本段僅為 JS 未執行時的 fallback；即時版由頁尾「行動儀表板」JS 覆寫同一節點。
     try:
-        _pd = json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8"))
-        _plan_items = []
-        # 2026-10-11：原取前 6 筆（檔案順序）→ 改取「未結案」子集（四態），排序新→舊。
-        _pl = [x for x in (_pd if isinstance(_pd, list) else [])
-               if isinstance(x, dict) and str(x.get("status", "")) in ("待處理", "已確認")]
-        _pl.sort(key=lambda x: str(x.get("date", "")), reverse=True)
-        for _d in _pl[:6]:
-            _st = str(_d.get("status", "") or "").replace("：", ":")[:26]
-            _tt = str(_d.get("title", "") or "")[:26]
-            _plan_items.append(f"{_st} {_tt}")
-        _plan_str = "｜".join(_plan_items) if _plan_items else "無執行中決策"
+        _rd_tp = json.loads((BASE / "radar_state.json").read_text(encoding="utf-8"))
+        _wp_tp = _rd_tp.get("weekly_plan") or {}
+        _rows_tp = [r for r in (_wp_tp.get("rows") or [])
+                    if isinstance(r, dict) and r.get("內容") and not str(r.get("動作", "")).startswith("↳")]
+        if _rows_tp:
+            _d_tp = str(_wp_tp.get("日期") or _rd_tp.get("last_run", "")[:10])
+            _plan_items = [f"{r.get('動作', '')} {r.get('類別', '')}：{r.get('內容', '')}" for r in _rows_tp[:4]]
+            _more = f"…共 {len(_rows_tp)} 條" if len(_rows_tp) > 4 else ""
+            _plan_str = "｜".join(_plan_items) + _more + f"（靜態快照 {_d_tp}；即時版開頁後更新）"
+        else:
+            _plan_str = "⚠️ 投資計劃資料暫不可用（radar_state.weekly_plan 為空，勿引用為現行計劃）"
         tpl = tpl.replace("__TRADE_PLAN__", f"🎯 本週交易計畫（動態）：{_plan_str}")
-    except Exception:
-        tpl = tpl.replace("__TRADE_PLAN__", "交易計畫暫無資料")
+    except Exception as _e_tp:
+        tpl = tpl.replace("__TRADE_PLAN__", f"⚠️ 投資計劃資料暫不可用（radar_state 讀取失敗：{_e_tp}）")
 
     # ── 月度流入標題動態化（2026-09-01：原寫死「08月現金流入檢對核實」→ 當月）──
     tpl = tpl.replace("__INCOME_TITLE__", str(int(_today_m[5:])) + "月現金流入檢對核實")
