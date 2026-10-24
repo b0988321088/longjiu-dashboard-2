@@ -1,8 +1,8 @@
 {
-  "as_of": "2026-10-24",
-  "created_by": "dragon-nine-agent",
-  "created_at": "2026-10-24",
-  "content_sha256": "512556d32e47a83a3577bea415346bb49488e1578ee0714b1eff2c18fdbba223",
-  "approval_ref": "TD-20261012-02 / 使用者 2026-10-24 核准施工（含硬編代號改遮罩型）",
-  "note": "mtd_performance.html 內容基準（generated_at 遮罩後）。閉月推進或改版必須更新並附 approval_ref。"
+ "as_of": "2026-10-25",
+ "created_by": "dragon-nine-agent",
+ "created_at": "2026-10-25",
+ "content_sha256": "ae956a5ff418694e3dbf37a3c510aea302868c10ac9c7e0a0c50ea8e7db9261e",
+ "approval_ref": "使用者 2026-10-25 核准：F1 mtd 契約改三分法＋基準滾至當日真值（session 2026-10-25 晨間產線修復）",
+ "note": "mtd_performance.html 內容基準（generated_at 遮罩後）。同月份 as_of 推進＝預期變動 PASS；as_of 未動而內容變＝漂移 FAIL；跨月（閉月）或 as_of 倒退＝FAIL 須人工更新並附 approval_ref。"
 }

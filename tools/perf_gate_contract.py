@@ -132,8 +132,24 @@ def mtd_content_drift(page: Path | None = None, baseline: Path | None = None,
         return {"ok": False, "detail": "基準缺欄位：" + "、".join(miss)}
     if base["content_sha256"] == sha:
         return {"ok": True, "detail": f"與受治理基準一致（{sha[:12]}）"}
-    # 閉月推進：基準 as_of 落後於當前資料 → 屬預期變動，但必須更新基準（不靜默放行）
+    # 閉月推進 vs 同月每日推進（2026-10-25 修正；使用者核准）：
+    #   mtd_performance.html 每天由 build_mtd_report 重產，內容含當日 MTD 損益、seed 的 period.end
+    #   也隨交易日前進 → sha 必然每天變。原契約不分青紅皂白把 as_of 變動一律判「閉月已推進 FAIL」，
+    #   結果安裝（10-24）隔天起每天 07:00 必 FAIL、整班推不出去（10-25 實踩：只差 2 行＝損益數字＋
+    #   period.end 10-24→10-25）。語意修正三分法：
+    #     ① 同月份、as_of 推進 → 屬預期變動，PASS（detail 記錄 as_of 與 sha 變化，不靜默）
+    #     ② as_of 未動、sha 變 → 真漂移，FAIL（契約要抓的就是這個）
+    #     ③ 跨月份（閉月）→ FAIL，須人工更新基準並附 approval_ref（保留原契約原意）
     if as_of and base.get("as_of") and as_of != base["as_of"]:
+        _b_m, _n_m = str(base["as_of"])[:7], str(as_of)[:7]
+        if _b_m == _n_m and str(as_of) > str(base["as_of"]):
+            return {"ok": True,
+                    "detail": (f"as_of 同月推進（{base['as_of']} → {as_of}）：本月頁面隨當日資料重產屬預期變動；"
+                               f"基準 sha {base['content_sha256'][:12]} → 現況 {sha[:12]}")}
+        if _b_m == _n_m and str(as_of) < str(base["as_of"]):
+            return {"ok": False,
+                    "detail": (f"as_of 倒退（基準 {base['as_of']} → 現況 {as_of}）：資料來源回退，須人工確認"
+                               f"（基準 sha {base['content_sha256'][:12]} → 現況 {sha[:12]}）")}
         return {"ok": False,
                 "detail": f"閉月已推進（基準 as_of={base['as_of']} → 現況 {as_of}）：請更新 {b.name} 並附 approval_ref"}
     return {"ok": False,
