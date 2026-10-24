@@ -727,8 +727,8 @@
     "title": "index.html 靜態 fallback：fetch 失敗時顯示過期交易計畫（:275-277）",
     "severity": "NA",
     "source": "施工自我發現",
-    "status": "開放",
-    "status_raw": "🟡 待處理（唯讀盤點完成；尚未授權施工，需獨立審查＋tree 綁定）",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-10-24)：①舊 snapshot.rotation_recommendation renderer 已徹底移除（10/23 只刪獨立 script，本體仍在同一 script 內與行動儀表板競寫 #trade-plan）→ index_template.html 現僅 1 個 getElementById(trade-plan)、0 個 tp.innerHTML、1 個 wpa.innerHTML；②靜態 fallback 改讀 radar_state.weekly_plan（不再顯示 pending 治理卡）；③radar_push.py／radar_weekly.py 產出後同步重生 rebalance_dashboard，own_files 納入 index.html 與當日再平衡檔（原週六 08:30 只提交 radar_report＋radar_state → 線上靜態落後一天）；④驗證：radar last_run=2026-10-24T08:30、weekly_plan 10-24/12 條、headless DOM 顯示「行動儀表板(10-24 週六)」＋「完整分析（雷達 2026-10-24，12 條）」、無「本週乾粉：優先」與「產業優先序」舊痕跡、rebalance_dashboard_2026-10-24 為當日版；⑤stale-source 14/14、內文守門 76/76。",
     "detail": "● 位置：index.html 第 275-277 行靜態區塊（:275 標題「📡 機構流向雷達 ＆ 🎯 本週交易計畫（動態）」、:276 雷達摘要、:277 本週交易計畫）。\n● 覆寫鏈：同一 id=\"trade-plan\" 由兩支 renderer 覆寫 —— (a) index.html:981 fetch radar_state.json（失敗 catch→{}、:987 `if(!wp||!wp.rows||!wp.rows.length) return;` 早退）；(b) index.html:674-970 另一支以 snapshot.json `rotation_recommendation.交易計畫` 覆寫（:969）。任一來源都拿不到 → 靜態 :277 原樣留存。\n● 現況：:277 為寫死文字「🎯 本週交易計畫（動態）：已確認 洲際W轉貸｜待處理 美債中短 ladder 延後至 10 月標案定案…｜✅ 已結案（2026-10-10）」；正常由 JS 抓 radar_state.json 覆寫該區塊。\n● 觸發條件：radar_state.json fetch 失敗／被阻擋／JS 錯誤 → 使用者直接看到這份寫死的舊計畫，且無任何「資料過期」提示。\n● 風險：顯示過期交易計畫（含已結案事項），使用者可能誤認為現行計畫；與稽核頁同一類「靜態 fallback 冒充動態內容」。\n● 建議（未施工）：fallback 改為「⚠️ 資料暫不可用（radar_state.json 讀取失敗）」＋最後成功時間；或改用帶日期標記的快取，不得沿用無法確認新鮮度的舊文字。\n● 邊界：本卡僅登記；修法另需授權＋獨立審查＋tree 綁定。",
     "tags": [
       "儀表板",

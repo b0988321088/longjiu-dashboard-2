@@ -33,6 +33,9 @@ def main():
     d = run([sys.executable, "build_dashboard.py"], timeout=180)
     if d.returncode != 0:
         print(f"⚠️ 儀表板雷達同步失敗：{(d.stderr or '')[-200:]}")
+    rb = run([sys.executable, "build_rebalance_dashboard.py"], timeout=180)
+    if rb.returncode != 0:
+        print(f"⚠️ 再平衡儀表板同步失敗：{(rb.stderr or '')[-200:]}")
 
     # 2026-09-14：commit／紀錄／推送統一走 auto_push.py（clean-stage → commit →
     # 範圍紀錄覆蓋 → 重試推送 → 遠端 sha 驗證）
@@ -41,7 +44,8 @@ def main():
     #   add -A 會把它們一起 stage → publish_gate 對「整批變更集合」判定必非 AUTO →
     #   force_cio_paths 整批 unstage（含雷達自家兩檔）→ 無 commit → RANGE_EMPTY 拒推。
     #   改為**只 stage 自家產物**（當日報告頁＋狀態資料），讓變更集合乾淨命中白名單條目。
-    _own = [f"radar_report_{TODAY}.html", "radar_state.json"]
+    _own = [f"radar_report_{TODAY}.html", "radar_state.json", "index.html",
+            f"rebalance_dashboard_{TODAY}.html"]
     _exist = [p for p in _own if os.path.exists(os.path.join(BASE, p))]
     # 2026-10-22 P1：提交暫停旗標（只擋 commit/push，不擋產出）
     if os.path.exists(os.path.join(BASE, ".git", "PUSH_HOLD")):
