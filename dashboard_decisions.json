@@ -11354,17 +11354,16 @@
       "summary": "使用者 2026-10-24 裁決：債券目標 25%、可接受範圍統一 22–28%（25%±3），解除 2026-10-11 工單D『目標 25 < 下限 27』設定衝突。SoT 單一寫入點 snapshot.可接受範圍_pct.債券 下限 22／上限 28／目標 25；thresholds_2026_0915.桶目標_pct.債券 維持 25；單桶硬上限 35 不動。債券實際 25.3% 落入範圍 → 依靜默原則不出現行動文字。sot_targets.band_conflicts() 偵測結果 0 筆。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261024161912-1227",
+      "timestamp": "2026-10-24T16:19:12.906017+08:00",
+      "agent": "Hermes",
+      "task": "單筆上限統一 200,000（解除單筆上限設定衝突）",
+      "summary": "使用者 2026-10-24 裁決：單筆上限統一 200,000。SoT thresholds_2026_0915.動作階梯_pp.單筆上限_twd 由 500,000 改 200,000，與 2026-08-22 裁示（美股逢反彈分批減碼單次≤20萬／4-6 週）一致；解除 radar/調度表『⚠️ 單筆上限設定衝突（取嚴者 200,000；待裁決）』揭露。build_rebalance_dashboard 硬編碼衝突句改為動態讀 thresholds，僅在不一致時才顯示。重跑 sync_all 後 index/radar_state/dashboard/日報 皆無殘留。",
+      "status": "completed",
+      "source": "user"
     }
-,
-  {
-    "id": "mem-20261024161912-1227",
-    "timestamp": "2026-10-24T16:19:12.906017+08:00",
-    "agent": "Hermes",
-    "task": "單筆上限統一 200,000（解除單筆上限設定衝突）",
-    "summary": "使用者 2026-10-24 裁決：單筆上限統一 200,000。SoT thresholds_2026_0915.動作階梯_pp.單筆上限_twd 由 500,000 改 200,000，與 2026-08-22 裁示（美股逢反彈分批減碼單次≤20萬／4-6 週）一致；解除 radar/調度表『⚠️ 單筆上限設定衝突（取嚴者 200,000；待裁決）』揭露。build_rebalance_dashboard 硬編碼衝突句改為動態讀 thresholds，僅在不一致時才顯示。重跑 sync_all 後 index/radar_state/dashboard/日報 皆無殘留。",
-    "status": "completed",
-    "source": "user"
-  }
   ],
   "meta": {
     "updated_at": "2026-10-24T13:54:23.735121"

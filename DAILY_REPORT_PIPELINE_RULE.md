@@ -61,10 +61,10 @@
 > snapshot 兩組 key 也要一起改：`allianz_ab`／`allianz_ab_current_value`、`firstjin`／`firstjin_current_value`
 > （校準讀 `_current_value` 優先，只改一個會拿到舊值）。
 
-- **安聯 A + 安聯 B = 一張合併 row**（現值 7,626,961；2026-10-22 校正，配息一律讀 snapshot dividend_records）
+- **安聯 A + 安聯 B = 一張合併 row**（現值 7,632,872；2026-10-24 校正，配息一律讀 snapshot dividend_records）
   - 成本／現值／累計配息／資產報酬率：一律讀 snapshot（allianz_*），不在本檔留數字
   - 本月配息：讀 snapshot.dividend_records[當月] 保單桶（2026-10-01 校正；原 55,451 為 7 月值，已移除）
-- **第一金 = 另一張 row**（現值 1,859,885；2026-10-22 校正，配息一律讀 snapshot dividend_records）
+- **第一金 = 另一張 row**（現值 1,870,639；2026-10-24 校正，配息一律讀 snapshot dividend_records）
   - 成本／現值／累計配息／資產報酬率：一律讀 snapshot（firstjin_*），不在本檔留數字
   - 本月配息：讀 snapshot.dividend_records[當月] 保單桶（2026-10-01 校正；原 13,593 為 7 月值，已移除）
 - **保單合計配息**：讀 snapshot.dividend_records[當月]（原 69,044 為 7 月值，已移除）
