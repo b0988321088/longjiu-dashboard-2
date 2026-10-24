@@ -459,12 +459,17 @@ def refresh_rebalance_live_numbers(text: str, snap: dict) -> str:
         _dry = int(dry_powder(snap).get("dry") or 0)
         _allow = int(round(allowable_cash(snap)))
         for pat, val in ((r"(snapshot\.cash_total\s*)", _ct), (r"(乾粉\s*)", _dry),
-                         (r"(餘裕\s*)", _dry), (r"(可動用\s*)", _allow),
+                         (r"(餘裕\s*)", _dry), (r"(可動用(?:現金)?\s*)", _allow),
                          (r"(現金底線\s*[\d,]{6,}[^0-9]{0,12}現\s*)", _allow),
                          (r"(（現金\s*)", _allow),          # 例：乾粉 470,934（現金 X − 生活底線 700,000）
                          (r"(單一口徑；現\s*)", _allow)):
             text, n = re.subn(pat + r"[\d,]{6,}", rf"\g<1>{val:,}", text)
             _hits += n
+        # 2026-10-24（TD-20261015-06 殘留）：「乾粉＝<可動用> − 700,000＝<乾粉>」雙值寫法。
+        #   舊規則只認「乾粉 <金額>」單值 → 整句留舊值（實例：乾粉＝1,189,840 − 700,000＝489,840）。
+        text, n = re.subn(r"(乾粉\s*＝\s*)[\d,]{6,}(\s*[−-]\s*[\d,]{6,}\s*＝\s*)[\d,]{6,}",
+                          rf"\g<1>{_allow:,}\g<2>{_dry:,}", text)
+        _hits += n
     except Exception as _e_cash:
         # 2026-10-15 CIO blocking 修正：原為 `pass`（靜默吞例外）→ 現金欄位（cash_total／乾粉／
         # 餘裕／可動用）留舊值而桶列已更新，會產生內部不一致報告；改為 fail-visible（不得靜默放行）。
@@ -575,6 +580,7 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
                      ("美股市值型成長", "美股市值型成長"),
                      ("防守型配息", "防守型配息"),
                      ("債券", "債券"),
+                     ("現金/安全網", "現金/安全網"),
                      ("現金", "現金/安全網")]
     if _pw and _ta and _pp:
         _names_present = sum(1 for _disp, _key in _bucket_alias if _disp in text)
@@ -595,7 +601,7 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
                 _n_hit += 1
                 return f"{_disp} {float(_new_pct):.1f}%（{float(_new_amt):,.0f}"
 
-            text = re.sub(r"(台股市值型成長|美股市值型成長|防守型配息|債券|現金)\s*"
+            text = re.sub(r"(台股市值型成長|美股市值型成長|防守型配息|債券|現金/安全網|現金)\s*"
                           r"\d+(?:\.\d+)?%（([\d,]+)", _sub_bucket, text)
             # 2026-10-15（TD-20261015-06 之一）：同一語境的第二種寫法 ——「桶名 <金額>（<佔比>%）」
             #（金額在前）。緊急應變內文的『穿透口徑對照』句用的就是這個格式：
@@ -641,7 +647,8 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
                       "防守型配息": "防守型配息", "債券": "債券", "現金": "現金/安全網"}
             _sents = re.split(r"(?<=。)", text)
             for _si, _sent in enumerate(_sents):
-                if not any(_w in _sent for _w in ("超出", "低於", "高於", "落在", "未破")):
+                if not any(_w in _sent for _w in ("超出", "低於", "高於", "落在", "未破",
+                                                  "超標", "低配", "高配", "超配")):
                     continue
                 if not any(_a in _sent for _a in _alias):
                     continue
@@ -696,8 +703,13 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
             try:
                 _allow = int(round(allowable_cash(snap)))
                 _dry = int(dry_powder(snap).get("dry") or 0)
-                text = re.sub(r"(可動用\s*)[\d,]{6,}", rf"\g<1>{_allow:,}", text)
+                text = re.sub(r"(可動用(?:現金)?\s*)[\d,]{6,}", rf"\g<1>{_allow:,}", text)
+                # 2026-10-24：「現金 <金額> 遠高於底線」語境的現金＝可動用（非 cash_total）
+                text = re.sub(r"(現金\s*)[\d,]{6,}(\s*遠高於底線)", rf"\g<1>{_allow:,}\g<2>", text)
                 text = re.sub(r"((?:餘裕|乾粉)(?:（乾粉）|（餘裕）)?\s*)[\d,]{6,}", rf"\g<1>{_dry:,}", text)
+                # 2026-10-24（TD-20261015-06 殘留）：「乾粉＝<可動用> − 700,000＝<乾粉>」雙值寫法
+                text = re.sub(r"(乾粉\s*＝\s*)[\d,]{6,}(\s*[−-]\s*[\d,]{6,}\s*＝\s*)[\d,]{6,}",
+                              rf"\g<1>{_allow:,}\g<2>{_dry:,}", text)
             except Exception as _e_dry:
                 # 2026-10-15 CIO blocking 修正：原為 `pass`（靜默吞例外）→ 可動用／餘裕留舊值；
                 # 改為 fail-visible（與同函式「不得靜默放行舊值」一致）。

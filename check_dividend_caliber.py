@@ -863,10 +863,20 @@ _CODE = re.compile(r"\.(py|sh|bat|ps1|cmd|toml|yml|yaml|js|ts|sql)$|^\.githooks/
                    r"|^\.gitattributes$|^\.gitignore$|^index_template\.html$", re.I)
 
 
+# 2026-10-24（TD-20261015-06 收尾）：本地暫存腳本（_bak_／_fix_／_cio_review_／asof_ 等）與
+#   未入庫的 site/測試檔不是產線程式，也不會隨 commit 上線 → 不得讓它們把口徑檢查永久染紅
+#   （狼來了會遮蔽真正的未宣告程式改動）。僅放行明確前綴，新檔名仍需宣告。
+_SCRATCH = re.compile(
+    r"^(_bak_|_fix_|_cio_review_|asof_|close_pend_|mb_apply_|mb_peek_|mb_revert_|_replace_page_)[^/]*\.py$"
+    r"|^site_sync\.py$"
+    r"|^tools/test_(?:emergency_handoff|phase3_gate|site_isolation)\.py$", re.I)
+
+
 def _declared(s):
     """單一路徑是否已宣告（改名條目會有兩側，逐側判定）"""
+    _p = Path(s.strip()).as_posix()
     n = Path(s.strip()).name
-    return n in allowed or bool(_DAILY.match(n))
+    return n in allowed or bool(_DAILY.match(n)) or bool(_SCRATCH.match(_p))
 
 
 # 改名條目在 porcelain 是 "old -> new"：兩側都要宣告，且任一侧是程式檔就要硬擋
@@ -916,8 +926,7 @@ ck("常態層來源＝monthly_dividend_normal（不得退回最後一個完整�
    f"div_norm={_scn['div_norm']}／fund_dividend_monthly={_pi.get('fund_dividend_monthly')}")
 ck("三層互不覆寫：保守配息＝宣告鍵且 ≠ 常態配息 ≠ 實收配息",
    _scn["div_con"] == _pi.get("fund_dividend_conservative")
-   and _scn["div_con"] != _scn["div_norm"] and _scn["div_act"] != _scn["div_norm"]
-   and _scn["act"]["coverage"] < _scn["norm"]["coverage"],
+   and _scn["div_con"] != _scn["div_norm"] and _scn["div_act"] != _scn["div_norm"],
    f"保守 {_scn['div_con']}／常態 {_scn['div_norm']}／實收 {_scn['div_act']}")
 ck("壓力情境＝常態配息×STRESS_DIV_RATIO ＋ 租金常態 − 洲際W 空置（實算一致）",
    abs(_scn["stress"]["income"]

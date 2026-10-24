@@ -54,9 +54,11 @@ BUCKETS = [("台股市值型成長", "台股市值型成長"),
            ("現金", "現金/安全網")]
 
 STALE_TOKENS = ("26,970,031", "1,055,740", "355,740")
-# 舊值樣式（regex）：含左邊界，避免把「43.9%」的尾數誤判成舊值「3.9%」
+# 舊值樣式（regex）：含左邊界，避免把「43.9%」的尾數誤判成舊值「3.9%」；
+# 2026-10-24（TD-20261015-06）：3.9% 一律加語境（現金 3.9%），否則「黃金淨多單週減 -3.9%」
+#   這種市場數據會被誤判成舊值殘留（實測誤報）。
 STALE_PATTERNS = tuple(re.escape(t) for t in STALE_TOKENS) + (
-    r"(?<![\d.])26\.4%", r"(?<![\d.])36\.4%", r"(?<![\d.])3\.9%")
+    r"(?<![\d.])26\.4%", r"(?<![\d.])36\.4%", r"現金\s*3\.9%")
 
 
 def stale_hits(text: str) -> list:
@@ -79,13 +81,40 @@ def check_penetration_live(text, snap, label):
     pct = p.get("actual_pct") or {}
     twd = p.get("actual_twd") or {}
     ta = snap.get("total_assets")
-    hits = list(re.finditer(r"五桶(?:佔比|與缺口)[^。]{0,400}", text))
-    if not hits:
+    hits = list(re.finditer(r"五桶(?:佔比|與缺口|：|:)[^。]{0,400}", text))
+    # 2026-10-24（TD-20261015-06）：日報的五桶陳述已改為 HTML 表格（「五桶現況與目標：」＋table），
+    #   純文字段落抓不到 → 改為對「桶名 X.X%（金額）」的所有出現處逐一驗 live，任一不符即 FAIL。
+    #   同時保留「完全找不到陳述」的 fail-loud（格式變更不得靜默放行）。
+    pairs = list(re.finditer(
+        r"(台股市值型成長|美股市值型成長|防守型配息|債券|現金/安全網|現金)\s*"
+        r"(\d+(?:\.\d+)?)%\s*（\s*([\d,]+)", text))
+    if not hits and not pairs:
         return False, f"{label}：找不到『五桶佔比／五桶與缺口』段落（格式已變，不得靜默放行）"
-    seg = hits[0].group(0)
+    problems = []
+    if pairs:
+        _key_map = {d: k for d, k in BUCKETS}
+        _key_map["現金/安全網"] = "現金/安全網"
+        _checked = set()
+        for m in pairs:
+            _disp = m.group(1)
+            _key = _key_map.get(_disp) or _key_map.get(_disp.replace("/安全網", ""))
+            if _key is None:
+                continue
+            _lp, _la = pct.get(_key), twd.get(_key)
+            if _lp is None or _la is None:
+                continue
+            _checked.add(_key)
+            _got_pct, _got_amt = float(m.group(2)), float(m.group(3).replace(",", ""))
+            if abs(_got_pct - float(_lp)) > 0.05:
+                problems.append(f"{_disp} 佔比 {_got_pct}% ≠ live {_lp}%")
+            if abs(_got_amt - float(_la)) > 1:
+                problems.append(f"{_disp} 金額 {_got_amt:,.0f} ≠ live {_la:,.0f}")
+        _missing = [d for d, k in BUCKETS if k not in _checked]
+        if _missing:
+            problems.append(f"未出現可驗證陳述：{_missing}")
+    seg = hits[0].group(0) if hits else text
     # 不變量句通常自成一句（在句號之後）→ 另取視窗，避免只看五桶句
     inv = re.search(r"不變量核對[^。]{0,160}", text)
-    problems = []
     for disp, key in BUCKETS:
         # 「現金」在日報寫作「現金/安全網」→ 一併接受（同一桶、同一真值鍵）
         m = re.search(rf"{re.escape(disp)}(?:/安全網)?\s*(\d+(?:\.\d+)?)%（([\d,]+)", seg)
@@ -118,8 +147,12 @@ _for_unit = dict(snap)
 ok("A1 舊值經覆蓋後全部消失",
    not stale_hits(fixed),
    f"殘留 {stale_hits(fixed)}")
+_ta_live = f"{snap['total_assets']:,}"
+_allow_live = int(round(sot_targets.allowable_cash(snap)))
+_dry_live = int(sot_targets.dry_powder(snap).get("dry") or 0)
 ok("A2 覆蓋後出現 live 總資產／可動用／乾粉",
-   f"{snap['total_assets']:,}" in fixed and "1,170,934" in fixed and "470,934" in fixed)
+   _ta_live in fixed and f"{_allow_live:,}" in fixed and f"{_dry_live:,}" in fixed,
+   f"缺 {[x for x in (_ta_live, f'{_allow_live:,}', f'{_dry_live:,}') if x not in fixed]}")
 _ok_seg, _why = check_penetration_live(fixed, snap, "覆蓋後")
 ok("A3 覆蓋後段落通過 live 檢查", _ok_seg, _why)
 ok("A4 冪等（再跑一次結果相同）",
