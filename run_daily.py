@@ -295,6 +295,10 @@ def calibrate_sources() -> dict:
         "net_worth": net_worth,
         "bonds_cash": snap.get("penetration", {}).get("actual_twd", {}).get("債券及安全現金", 9_697_196),
         "penetration": snap.get("penetration", {}),
+        # 2026-10-24：tactical_table.build_table() 需要可接受範圍 SoT；原 tv 白名單缺此鍵
+        # → 每次產日報都噴「可接受範圍 SoT 不可得」且目標區間整欄留空（使用者裁決的範圍看不到）。
+        # 缺值照樣回 None，讓下游 fail-closed，不補預設值。
+        "可接受範圍_pct": snap.get("可接受範圍_pct"),
         "insurance_current_value": s_insurance,
         "funds": snap.get("fund_market_value", snap.get("funds_total", 0)) or 0,
         "funds_cathay": snap.get("funds_cathay", 0) or 0,
