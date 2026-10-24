@@ -231,8 +231,13 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
         lines.append("")
         lines.append("- 分母＝snapshot.total_assets；理論調整＝|戰略偏差pp|÷100×分母；"
                      "風控後可執行＝理論經單筆上限／可減部位／煞車封頂後金額（不得以理論充當可執行）。")
-        lines.append("- 逢反彈紀律：單次 ≤200,000、4–6 週完成（來源：使用者 2026-08-22 裁示）。"
-                     "⚠️ thresholds.動作階梯_pp.單筆上限_twd＝500,000 與之不一致 → 待裁決（本表取嚴者）。")
+        _cap_thr = (((s.get("thresholds_2026_0915") or {}).get("動作階梯_pp") or {})
+                    .get("單筆上限_twd"))
+        _cap_txt = f"{int(_cap_thr):,}" if isinstance(_cap_thr, (int, float)) else "未設定"
+        lines.append(f"- 逢反彈紀律：單次 ≤200,000、4–6 週完成（來源：使用者 2026-08-22 裁示；"
+                     f"thresholds 動作階梯_pp.單筆上限_twd＝{_cap_txt}）。"
+                     + ("" if _cap_thr == 200000
+                        else "⚠️ 與 200,000 不一致 → 待裁決（本表取嚴者）。"))
     except Exception as _e_sf:
         lines += ["", "### 調度欄位（結構化｜程式產生）", "",
                   f"- ⛔ 無法取得真值（{_e_sf}）→ 阻擋調度金額（fail-closed）"]
