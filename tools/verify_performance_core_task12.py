@@ -198,7 +198,27 @@ for f in ("mtd_performance.html", "mtd_data.json"):
         continue
     a = _norm_ts((SB / f).read_text(encoding="utf-8", errors="replace"))
     b = _norm_ts((SB / "_old" / f).read_text(encoding="utf-8", errors="replace"))
-    chk_ab(f"逐位元相同（僅遮罩 generated_at）：{f}", a == b, f"{len(a)} vs {len(b)} chars")
+    # 2026-10-24（TD-20261012-02 (b) 連動）：mtd 產物改為遮罩型（build_mtd_report 硬編代號 → FJXX），
+    #   與封版基準的數值型必然不同 → 逐位元必須改「標籤遮罩正規化後相同」（與 bip 頁同一口徑）；
+    #   標籤欄位本身的比對能力由下方「正向遮罩斷言」補回，不會靜默放行 re-leak。
+    chk_ab(f"逐位元相同（僅遮罩 generated_at／標籤代號）：{f}",
+           _label_mask.same_after_mask(a, b), f"{len(a)} vs {len(b)} chars")
+
+# 2026-10-24（TD-20261012-02 (b)）：mtd 頁補「正向遮罩斷言」。
+#   原本只靠 A/B 逐位元（僅遮罩 generated_at）保護：兩版同時把代號寫成數值型時 A/B 仍相同 → 抓不到
+#   遮罩回歸（re-leak）。此處比照 investment_performance.html 補一條獨立斷言：出貨頁必須是
+#   遮罩型（第一金 FJXX），出現 第一金 FJ<數字>／vs FJ<數字> 即 FAIL。
+#   安全性前置已確認（2026-10-24 實測）：mtd_performance.html 目前只含「第一金 FJXX」，故不會誤傷。
+_mtd_txt = (SB / "mtd_performance.html").read_text(encoding="utf-8", errors="replace") \
+    if (SB / "mtd_performance.html").exists() else ""
+_mtd_bad = _label_mask.UNMASKED_LABEL_RE.findall(_mtd_txt) if _mtd_txt else []
+_mtd_hit = ""
+if _mtd_bad:
+    _mm = _label_mask.UNMASKED_LABEL_RE.search(_mtd_txt)
+    _mtd_hit = _mtd_txt[max(0, _mm.start() - 30):_mm.end() + 30].replace("\n", " ")
+chk("標籤遮罩未回歸：mtd_performance.html 無未遮罩代號",
+    not _label_mask.has_unmasked_label(_mtd_txt),
+    f"命中 {len(_mtd_bad)} 處：{_mtd_hit}" if _mtd_bad else "出現 第一金 FJ<數字>／vs FJ<數字> 即視為遮罩回歸")
 a = (SB / "investment_performance.html").read_bytes() if (SB / "investment_performance.html").exists() else None
 b = (SB / "_old" / "investment_performance.html").read_bytes() if (SB / "_old" / "investment_performance.html").exists() else None
 # 2026-10-11（使用者裁決「受限契約正規化」）：本項改為「正規化後完全相同」。
@@ -213,9 +233,9 @@ else:
     # 2026-10-11（獨立 CIO 審查 required_fix #1）：A/B 不再比對標籤代號，缺口用「正向遮罩斷言」補回。
     #   出貨頁面必須是遮罩型；若哪天又輸出未遮罩數值代號（re-leak），本條轉紅。
     #   覆蓋範圍界線（CIO 第二輪 RF#1 之二選一，採「明文記錄」）：本斷言只套 bip 頁。
-    #   mtd_performance.html 仍含未遮罩代號（來源 build_mtd_report.py 硬編，屬既有狀態），硬套會誤傷，
-    #   且使用者本票界線明定「不擴大至其他頁面」→ mtd 頁目前僅靠「逐位元 A/B（僅遮罩 generated_at）」
-    #   保護內容變更；待 PEND-20261011-07 完成遮罩清理後，再把本斷言擴及 mtd 頁。
+    #   2026-10-24 更新（TD-20261012-02 (a)）：上述界線已解除 —— mtd_performance.html 現為遮罩型
+    #   （僅「第一金 FJXX」），已於上方補同名正向斷言；F1 亦改以 --contract-only 由
+    #   perf_gate_contract.f1_baseline_contract() 統一裁決 rc，mtd 不再是「無 rc 強制者」的黑洞。
     _pg = a.decode("utf-8", "replace")
     chk("標籤遮罩未回歸：investment_performance.html 無未遮罩代號",
         not _label_mask.has_unmasked_label(_pg), "出現 第一金 FJ<數字>／vs FJ<數字> 即視為遮罩回歸")

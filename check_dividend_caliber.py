@@ -852,6 +852,9 @@ allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "test_dashboard_stale_tokens.py",   # 上項正／負向驗收（12 條：真舊句仍抓、活值不誤紅）
            "test_push_commit_classification.py",   # 上項正／負向驗收（16 條：純資料辨識、程式／混合仍攔）
            "dashboard_stale_tokens.json",   # 資料檔：四個過寬 token 逐項退休＋新增完整舊句條件
+           # 2026-10-24（TD-20261012-02）：mtd 頁遮罩化與漂移閘門（硬編代號→FJXX、F1 納入 mtd 漂移 ck）
+           "build_mtd_report.py", "update_all.py",
+           "perf_gate_contract.py", "verify_performance_core_task12.py",
            }
 # 逐日產物：命名比對，跨月不失效（舊版 allowed_prefixes 釘死 2026-09）
 _DAILY = re.compile(r"^(asset_diff|retirement_plan|daily_report_v2|rebalance_dashboard|"

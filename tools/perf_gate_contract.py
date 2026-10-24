@@ -90,6 +90,56 @@ def _parse_env_json(stdout: str):
 
 # ══════════════════════════════ F1 ══════════════════════════════
 
+# ── mtd 頁內容漂移基準（TD-20261012-02 (c)，2026-10-24）──
+#   為什麼需要：verify_performance_core_task12 的 mtd A/B 走 chk_ab，在 --contract-only（F1 模式）
+#   下「只呈現、不計入 rc」→ mtd 頁輸出漂移長期沒有 rc 強制者。此處補獨立雜湊基準，
+#   納入 F1 的 ck（chk 在契約模式下仍計入 rc），任何未宣告的內容變動即讓 F1 轉紅。
+MTD_BASELINE_PATH = REPO / "tools" / "gate_baseline_mtd.json"
+MTD_REQUIRED_FIELDS = ("as_of", "created_by", "content_sha256", "approval_ref")
+
+
+def _norm_mtd_ts(t: str) -> str:
+    return re.sub(r'"generated_at": "[\d\- :]+"', '"generated_at": "<TS>"', t)
+
+
+def mtd_content_drift(page: Path | None = None, baseline: Path | None = None,
+                      data: Path | None = None) -> dict:
+    """mtd 頁與受治理基準的內容漂移檢查（純讀，不寫任何檔案）。"""
+    p = Path(page or REPO / "mtd_performance.html")
+    b = Path(baseline or MTD_BASELINE_PATH)
+    d_path = Path(data or REPO / "mtd_data.json")
+    if not p.exists():
+        return {"ok": False, "detail": "mtd_performance.html 不存在 → fail-closed"}
+    sha = hashlib.sha256(_norm_mtd_ts(p.read_text(encoding="utf-8", errors="replace"))
+                         .encode("utf-8")).hexdigest()
+    as_of = ""
+    if d_path.exists():
+        try:
+            _d = json.loads(d_path.read_text(encoding="utf-8"))
+            # mtd_data.json 無 as_of 欄位：以 period.end（精確到日）為準，退回 month
+            as_of = str((_d.get("period") or {}).get("end") or _d.get("month") or "")
+        except Exception:
+            as_of = ""
+    if not b.exists():
+        return {"ok": False,
+                "detail": f"基準檔不存在（{b.name}）→ fail-closed；本頁 sha={sha[:12]}、as_of={as_of or 'n/a'}"}
+    try:
+        base = json.loads(b.read_text(encoding="utf-8"))
+    except Exception as e:
+        return {"ok": False, "detail": f"基準檔無法解析：{e}"}
+    miss = [f for f in MTD_REQUIRED_FIELDS if not base.get(f)]
+    if miss:
+        return {"ok": False, "detail": "基準缺欄位：" + "、".join(miss)}
+    if base["content_sha256"] == sha:
+        return {"ok": True, "detail": f"與受治理基準一致（{sha[:12]}）"}
+    # 閉月推進：基準 as_of 落後於當前資料 → 屬預期變動，但必須更新基準（不靜默放行）
+    if as_of and base.get("as_of") and as_of != base["as_of"]:
+        return {"ok": False,
+                "detail": f"閉月已推進（基準 as_of={base['as_of']} → 現況 {as_of}）：請更新 {b.name} 並附 approval_ref"}
+    return {"ok": False,
+            "detail": f"未宣告的內容漂移：{base['content_sha256'][:12]} → {sha[:12]}（as_of={as_of or 'n/a'}）"}
+
+
 def f1_baseline_contract(baseline_sha: str = BASELINE_SHA) -> dict:
     """封版契約：2d1b9ed2 的內容與範圍仍可被驗證。與被審對象無關（時間相依＝無）。"""
     out = {"id": "F1", "name": "封版契約", "checks": [], "env_json": None}
@@ -118,6 +168,10 @@ def f1_baseline_contract(baseline_sha: str = BASELINE_SHA) -> dict:
        running[0] if running else f"rc={r.returncode}")
     failed = [ln.split("FAIL:", 1)[1].strip() for ln in lines if ln.strip().startswith("FAIL:")]
     ck("封版契約無未過檢查項", not failed, "、".join(failed) if failed else "0 條")
+
+    # TD-20261012-02 (c)：mtd 頁內容漂移（chk_ab 在契約模式下不計 rc，故獨立成 ck）
+    _drift = mtd_content_drift()
+    ck("mtd 頁無未宣告的內容漂移", _drift["ok"], _drift["detail"])
 
     out["ok"] = all(c["ok"] for c in out["checks"])
     return out

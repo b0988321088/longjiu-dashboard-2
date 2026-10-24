@@ -326,7 +326,7 @@ def payload() -> dict:
 
     policies = []
     for nm, cost_key, cur_key, div_key in (("安聯 A+B", "allianz_cost", "allianz_ab_current_value", "allianz_cum_dividend"),
-                                           ("第一金 FJ33", "firstjin_cost", "firstjin_current_value", "firstjin_cum_dividend")):
+                                           ("第一金 FJXX", "firstjin_cost", "firstjin_current_value", "firstjin_cum_dividend")):
         cost = _num(snap.get(cost_key))
         cur = _num(snap.get(cur_key))
         cd = _num(snap.get(div_key))

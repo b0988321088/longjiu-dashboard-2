@@ -128,7 +128,7 @@ def calc_penetration(cash, ins, sec, funds, bond_portion=None, fund_ratios=None,
             # ⚠️ 2026-09-15（INC-186）：原 key「摩根JPM多重收益」永不匹配 — 保單內實際基金名為
             # 「摩根投資基金 - 多重收益基金 - JPM多重收益(美元對沖) - A股(穩定月配)」，不含該字串
             # → 該檔（A+B 合計 2,296,489）債券比被算成 0，債券低估 103 萬、美股虛胖 103 萬。
-            # 比率對齊 fund_components_09 真值：摩根多重收益 股 0.55 / 債 0.45（與第一金 FJ33 同口徑）。
+            # 比率對齊 fund_components_09 真值：摩根多重收益 股 0.55 / 債 0.45（與第一金 FJXX 同口徑）。
             
             ins_bonds_calculated = 0
             ins_tech_calculated = 0
