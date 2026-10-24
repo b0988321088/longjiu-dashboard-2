@@ -225,25 +225,29 @@
   "importance": "high"
  },
  {
-  "date": "2026-10-23",
-  "item": "Flight to 胡志明市 (JX 713)",
+  "date": "2026-10-25",
+  "time": "07:55",
+  "duration_min": 205,
+  "item": "✈️ AE1857 台中清泉崗 RMQ T2 → 胡志明 SGN T2（台北 07:55 起飛 / 當地 10:20 抵達；華信訂位、華航執飛；颱風改票重購，原 10/23 JX713 作廢）",
+  "amount": "",
+  "status": "📋 行程",
+  "importance": "high"
+ },
+ {
+  "date": "2026-10-25",
+  "item": "✈️ 胡志明市出差（10/25-10/31，台中來回；颱風改票，新機票 10/23 開立）",
   "amount": "",
   "status": "📋 行程",
   "importance": "medium"
  },
  {
-  "date": "2026-10-23",
-  "item": "✈️ 胡志明市出差（10/23-28）",
+  "date": "2026-10-31",
+  "time": "12:20",
+  "duration_min": 200,
+  "item": "✈️ AE1858 胡志明 SGN → 台中清泉崗 RMQ T2（當地 11:20 = 台北 12:20 起飛 / 15:40 抵達；颱風改票重購，原 10/28 JX712 台北回程作廢）",
   "amount": "",
   "status": "📋 行程",
-  "importance": "medium"
- },
- {
-  "date": "2026-10-28",
-  "item": "Flight to 臺北市 (JX 712)",
-  "amount": "",
-  "status": "📋 行程",
-  "importance": "medium"
+  "importance": "high"
  },
  {
   "date": "2026-10-29",
