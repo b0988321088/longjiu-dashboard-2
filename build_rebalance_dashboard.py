@@ -146,24 +146,40 @@ def _rebalance_integration_block(s) -> str:
 
 
 def weekly_plan_rows(radar_state: dict, today: str) -> tuple[list, str]:
-    """回傳 (可用列, 說明)。**資料日閘門**：非當日一律不引用（2026-10-16）。
+    """回傳 (可用列, 說明)。資料日閘門 v2（2026-10-24）。
 
     weekly_plan 由 institutional_flow.py 產出（雷達排程＝週一／三 16:15），其餘日子天然落後
-    1~3 天；其文字內含當時的佔比／總資產，直接引用會讓同一份報告同時出現「台股 8.9%
-    （snapshot 現況欄）vs 9.1%（plan 建議欄）」等自相矛盾的舊真值（2026-10-16 實例：
-    真 CIO 以 blocking 攔下 → 07:00 產線全停）。閘門放在**取用端**，呼叫端不得自行讀 rows。
+    1~5 天。v1（2026-10-16）要求「資料日必須等於今日」，導致週四~週日與週一早上每天寫
+    「產生失敗」（2026-10-24 使用者回報「又出錯」）。v2：
+      - 當日：原樣引用（note 空）
+      - 落後 1..MAX_LAG_DAYS：回 rows ＋ note（資料日、落後天數、非今日）；
+        呼叫端**必須**把 note 顯示在卡片（標題加「X 版」＋黃色 banner），不得靜默引用
+      - 落後 >MAX_LAG_DAYS 或日期不可解析：回空 ＋ note（fail-closed，擋極舊值）
+    10/16 事故（舊佔比與 snapshot 現況並列被 CIO 攔下）的防線改由「明示資料日」承擔；
+    summary md 端仍只接受當日 rows（非當日僅寫註記）。
     """
+    MAX_LAG_DAYS = 5
     wp = (radar_state or {}).get("weekly_plan", {}) or {}
     rows = [r for r in (wp.get("rows") or []) if r.get("內容")]
     wp_date = str(wp.get("日期") or "")[:10]
-    if rows and wp_date != today:
-        return [], f"radar_state.weekly_plan 資料日 {wp_date or '未知'} ≠ {today} → 不引用其數值"
-    return rows, ""
+    if not rows:
+        return [], ""
+    if wp_date == today:
+        return rows, ""
+    try:
+        _lag = (date.fromisoformat(today) - date.fromisoformat(wp_date)).days
+    except Exception:
+        return [], f"radar_state.weekly_plan 資料日 {wp_date or '未知'} 無法解析 → 不引用其數值"
+    if _lag < 0 or _lag > MAX_LAG_DAYS:
+        return [], (f"radar_state.weekly_plan 資料日 {wp_date} 距今日 {today} 已 {_lag} 天"
+                    f"（上限 {MAX_LAG_DAYS}）→ 不引用其數值（請跑 institutional_flow.py）")
+    return rows, (f"radar_state.weekly_plan 資料日 {wp_date}（非今日 {today}，落後 {_lag} 天；"
+                  f"雷達週一/三產出）→ 以「{wp_date} 版」標註顯示")
 
 
-def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, sec_rows, dry_cur, risk_rows, ms_html, emg_html, total, cash, monthly_inc, monthly_exp, surplus, usd_pct, tech, us30y, plan_rows=None):
+def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, sec_rows, dry_cur, risk_rows, ms_html, emg_html, total, cash, monthly_inc, monthly_exp, surplus, usd_pct, tech, us30y, plan_rows=None, plan_stale_note=""):
     """再平衡評估（文字版 md）— 與儀表板同源，每日自動更新（2026-08-22）"""
-    lines = [
+    lines = ([f"> ⚠️ {plan_stale_note}", ""] if plan_stale_note else []) + [
         f"# 🔄 龍九再平衡評估（{TODAY}）",
         "",
         _rebalance_integration_block(s),
@@ -516,35 +532,44 @@ def main():
         _pn_html = ""
 
     # ── 本週投資計劃（2026-09-13 v3：動態全資產面結論）──
-    # 單一來源 = radar_state.weekly_plan.rows（institutional_flow.py 每日產出），禁止貼死字串
+    # 單一來源 = radar_state.weekly_plan.rows（institutional_flow.py 產出），禁止貼死字串
+    # 2026-10-24 v4：落後 ≤5 天改「標註資料日顯示」，不再整段產生失敗；>5 天仍 fail-closed
     _plan_rows = []
+    _wp_stale_msg = ""
+    _wp_stale = False
+    _wp_date = ""
     try:
         _rs = json.loads((Path(__file__).resolve().parent / "radar_state.json").read_text(encoding="utf-8"))
         _wp = _rs.get("weekly_plan", {}) or {}
         _plan_rows, _wp_stale_msg = weekly_plan_rows(_rs, TODAY)
         _wp_date = str(_wp.get("日期") or "")[:10]
-        _wp_stale = bool(_wp_stale_msg)
-        if _wp_stale:
-            print(f"⚠️ {_wp_stale_msg}（避免舊真值混入報告；要更新請跑 institutional_flow.py）")
+        _wp_stale = bool(_plan_rows) and bool(_wp_stale_msg)
+        if _wp_stale_msg:
+            print(f"⚠️ {_wp_stale_msg}")
         _date_lbl = str(_wp.get("日期") or TODAY).split("T")[0]
         try:
             _y, _m, _d = _date_lbl.split("-")
             _plan_title_date = f"{int(_m)}/{int(_d)}"
         except Exception:
             _plan_title_date = _date_lbl
-        if _wp_stale:
-            raise ValueError(f"radar_state.weekly_plan 資料日 {_wp_date} ≠ {TODAY} → 不引用其數值"
-                             f"（避免舊真值混入；要更新請跑 institutional_flow.py）")
         if not _plan_rows:
-            raise ValueError("radar_state.weekly_plan.rows 為空（請先跑 institutional_flow.py）")
+            raise ValueError(_wp_stale_msg or "radar_state.weekly_plan.rows 為空（請先跑 institutional_flow.py）")
         _plan_html = "".join(
             f"<div style=\"margin-bottom:6px;font-size:11px;color:#d1fae5\">"
             f"{r.get('動作','')} <b>{r.get('類別','')}</b>：{r.get('內容','')}</div>"
             for r in _plan_rows
         )
+        _wp_banner = ""
+        if _wp_stale:
+            _wp_banner = (
+                "<div style=\"margin:6px 0 10px;padding:8px 10px;border-radius:8px;"
+                "background:#78350f;border-left:3px solid #f59e0b;font-size:11px;color:#fde68a\">"
+                f"⚠️ 本計劃為 {_wp_date} 版，非今日（{TODAY}）。內容含當時佔比，"
+                "今日真值請以本頁五桶卡為準。</div>")
         _plan_html = f"""
         <div class="card" style="border:1px solid #10b981;background:linear-gradient(135deg,#06281a,#131a26)">
-          <h2>📋 本週投資計劃（{_plan_title_date} 全資產面結論）</h2>
+          <h2>📋 本週投資計劃（{_plan_title_date}{' 版・' if _wp_stale else ' '}全資產面結論）</h2>
+          {_wp_banner}
           {_plan_html}
         </div>"""
     except Exception as _e2:
@@ -915,7 +940,7 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
 </div>
 
 <div class="grid" style="margin-top:14px">
-  <div class="card"><h2>🎯 動作建議（執行紀律）</h2><div class="acards">{action_cards}</div></div>
+  <div class="card"><h2>🎯 動作建議（執行紀律{'・' + _wp_date[5:] + ' 版' if _wp_stale else ''}）</h2><div class="acards">{action_cards}</div></div>
   <div class="card"><h2>🏭 產業別穿透（雙層 Micro）</h2>
     <table><tr><th>產業</th><th class="num">金額</th><th class="num">佔比</th><th>狀態</th></tr>{sec_rows}</table>
     <div style="font-size:11px;color:var(--sub);margin-top:8px">紅線：高科技 ≤30%（當前 {tech:.1f}%）｜輪動閥門：科技>30% 或雷達科技轉弱 → 乾粉轉金融/電信/醫療防禦</div>
@@ -955,7 +980,7 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
 
     # 再平衡評估（文字版）— 與儀表板同源
     build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, sec_rows, dry_cur, risk_rows, ms_html, emg_html,
-                     total, cash, monthly_inc, monthly_exp, surplus, usd_pct, tech, us30y, plan_rows=_plan_rows)
+                     total, cash, monthly_inc, monthly_exp, surplus, usd_pct, tech, us30y, plan_rows=([] if _wp_stale else _plan_rows), plan_stale_note=(_wp_stale_msg if _wp_stale else ""))
 
 if __name__ == "__main__":
     main()

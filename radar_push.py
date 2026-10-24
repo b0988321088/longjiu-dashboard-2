@@ -65,6 +65,10 @@ def build_products():
     if d.returncode != 0:
         return False, out, f"儀表板雷達同步失敗：{_tail(d.stderr)}"
 
+    rb = run([sys.executable, "build_rebalance_dashboard.py"], timeout=180)
+    if rb.returncode != 0:
+        return False, out, f"再平衡儀表板同步失敗：{_tail(rb.stderr)}"
+
     return True, out, ""
 
 
@@ -133,7 +137,8 @@ def main():
     # 2026-09-13 INC-159：原 `git add -A` 會把工作區「所有」變更掃進本 job 的 commit
     # （實證：一次掃入 582 個無關的 data/ 快取刪除 + 其他流程 6 個檔案，commit 訊息卻掛
     #  「雷達儀表板同步」）→ 改白名單，只提交本 job 自身產物。
-    own_files = ["radar_state.json", f"radar_report_{TODAY}.html", "index.html"]
+    own_files = ["radar_state.json", f"radar_report_{TODAY}.html", "index.html",
+                 f"rebalance_dashboard_{TODAY}.html"]
     own_files = [f for f in own_files if os.path.exists(os.path.join(BASE, f))]
     # 2026-10-22 P1：提交暫停旗標（只擋 commit/push，不擋產出）
     if os.path.exists(os.path.join(BASE, ".git", "PUSH_HOLD")):

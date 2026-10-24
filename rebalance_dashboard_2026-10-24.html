@@ -132,15 +132,75 @@ td { padding:7px 8px; border-bottom:1px solid #263449; }
             🛢️ 原油綜合判斷：COT 淨多單當日值見燈號（資金面以燈號為準）；需求面受升息壓抑、供給面美委/伊朗拉鋸 → 維持 🟡 觀望，石油部位 Locked 不加碼</div>
           <div style="padding:8px 10px;background:#3b82f61a;border-radius:8px;border-left:3px solid #3b82f6;font-size:11px;color:#93c5fd;margin-top:4px">
             💵 債券升息敏感度：升息 1 碼已落地（9/17 起 4.00）；債券桶超配（當日比重與市值見當日資產區塊）；真正利率敏感＝保單內債券（PIMCO/M&G/摩根，債權重 48-55%）＋00983D；10Y 月動能（當日值見燈號）→ 不新增</div></div>
-  <div class='card' style='border:1px solid #ef4444'><h2>📋 本週投資計劃</h2><div style='font-size:11px;color:#f87171'>產生失敗: radar_state.weekly_plan 資料日 2026-10-23 ≠ 2026-10-24 → 不引用其數值（避免舊真值混入；要更新請跑 institutional_flow.py）</div></div>
+  
+        <div class="card" style="border:1px solid #10b981;background:linear-gradient(135deg,#06281a,#131a26)">
+          <h2>📋 本週投資計劃（10/23 版・全資產面結論）</h2>
+          <div style="margin:6px 0 10px;padding:8px 10px;border-radius:8px;background:#78350f;border-left:3px solid #f59e0b;font-size:11px;color:#fde68a">⚠️ 本計劃為 2026-10-23 版，非今日（2026-10-24）。內容含當時佔比，今日真值請以本頁五桶卡為準。</div>
+          <div style="margin-bottom:6px;font-size:11px;color:#d1fae5">🟡 <b>台股</b>：（11.0% vs 目標10%，超配 +1.0pp）→ 已達上限、不新增（US30Y 5.287%，凍結線 5.3% 未解凍前不加碼）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">🔴 <b>美股</b>：（37.3% vs 目標30%，超配 +7.3pp）→ 逢彈減碼 ≤20萬/次（可動 9,791,963）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">↳ <b>美股</b>：調度欄位：戰略目標 30%／戰略偏差 +7.3pp／理論調整 1,982,926（|戰略偏差_pp| ÷ 100 × 分母_twd；分母 27,163,376）／風控後可執行 200,000（單筆上限 200,000／4-6 週；來源：使用者 2026-08-22 裁示（美股逢反彈分批減碼，單次≤20萬／4-6 週完成））／阻擋規則：單筆上限（200,000）封頂：理論 1,982,926 > 上限｜戰術偏差：無 SoT（週報曾引用『戰術 27%』但 thresholds 無此鍵）→ 不計算</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">↳ <b>⚠️ 單筆上限設定衝突：thresholds.動作階梯_pp.單筆上限_twd=500000</b>：（取嚴者 200,000；待裁決）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">⏸️ <b>防守</b>：（配息資產合計 17,859,418 ÷ 總資產 27,163,376 = 65.7% vs 門檻 60% → 已足）→ 凍結不追（00878/00713 不加碼）｜口徑＝保單月配基金＋國泰月配＋防守ETF＋鉅亨月配＋第一金ID01（**≠防守桶＋債券**）｜含鉅亨月配 358,196（分類待確認）；排除待確認項目試算 17,501,222＝64.43%（僅試算）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">⏸️ <b>債券</b>：25.3%（目標 25%）→ 等 US30Y 回落凍結線 5.3% 以下才新增｜⚠️ 設定衝突：目標 25% < 下限 27%（snapshot.可接受範圍_pct（2026-10-02 使用者裁示②） vs thresholds_2026_0915.桶目標_pct（25%））→ 待裁決；裁決前本桶不自動交易（fail-closed）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">💰 <b>現金</b>：4.4% → 底線 700,000.0 守；乾粉 49.0萬 保留（本週無「低配＋資金流入」標的，等訊號）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">⏸️ <b>避險衛星</b>：黃金A10 32萬 8/30 生效（保單內）；00635U ~105萬 延後（華許放鷹+金價偏高）→ 等回檔</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">🟡 <b>美元曝險</b>：69.2%（黃色觀察；目標值 60%／黃色觀察 65%／高曝險觀察線 70%）→ 僅顯示，不觸發換匯／減碼（政策門檻待 10 月戰略檢討）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">✅ <b>保單轉換</b>：9/10 送出（安聯＋第一金同步轉入 M&G入息A美元避險月配，T+4 預期 9/16 生效）；9/1 安聯 PIMCO+50萬、貝萊德科技A10 90萬→摩根 已完成</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">🔍 <b>質押</b>：擔保池 1,200萬（富達600＋聯博100＋貝萊德B11 500）×5成 = 590萬@2.65%（2026-09-29 使用者確認；原記 2.77%，待銀行書面覆核）；已撥款 → 用途：優先清償 0萬高息負債（保單質押 0萬@4.0% ＋ 券商質押 0萬@3.92%）— 月息 0 → 0，月省約 0（2026-09-12 裁示；10 月標案押標金：❌ 已取消（2026-10-12 使用者裁決））；到位前全面觀望</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">📊 <b>產業輪動</b>：本週無「低配＋資金流入」標的 → 乾粉保留｜避開「工業」</div>
+        </div>
 </div>
 
 <div class="grid" style="margin-top:14px">
-  <div class="card"><h2>🎯 動作建議（執行紀律）</h2><div class="acards">
+  <div class="card"><h2>🎯 動作建議（執行紀律・10-23 版）</h2><div class="acards">
         <div class="card acard">
-          <div class="a-head"><b>—</b><span class="tag">待更新</span></div>
-          <div class="a-light">⚪</div>
-          <div class="a-desc">radar_state.weekly_plan 無資料</div>
+          <div class="a-head"><b>台股</b><span class="tag">參考</span></div>
+          <div class="a-light">🟡</div>
+          <div class="a-desc">（11.0% vs 目標10%，超配 +1.0pp）→ 已達上限、不新增（US30Y 5.287%，凍結線 5.3% 未解凍前不加碼）</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>美股</b><span class="tag">觸發</span></div>
+          <div class="a-light">🔴</div>
+          <div class="a-desc">（37.3% vs 目標30%，超配 +7.3pp）→ 逢彈減碼 ≤20萬/次（可動 9,791,963）</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>美股</b><span class="tag">參考</span></div>
+          <div class="a-light">↳</div>
+          <div class="a-desc">調度欄位：戰略目標 30%／戰略偏差 +7.3pp／理論調整 1,982,926（|戰略偏差_pp| ÷ 100 × 分母_twd；分母 27,163,376）／風控後可執行 200,000（單筆上限 200,000／4-6 週；來源：使用者 2026-08-22 裁示（美股逢反彈分批減碼，單次≤20萬／4-6 週完成））／阻擋規則：單筆上限（200,000）封頂：理論 1,982,926 > 上限｜戰術偏差：無 SoT（週報曾引用『戰術 27%』但 thresholds 無此鍵）→ 不計算</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>⚠️ 單筆上限設定衝突：thresholds.動作階梯_pp.單筆上限_twd=500000</b><span class="tag">參考</span></div>
+          <div class="a-light">↳</div>
+          <div class="a-desc">（取嚴者 200,000；待裁決）</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>防守</b><span class="tag">待命</span></div>
+          <div class="a-light">⏸️</div>
+          <div class="a-desc">（配息資產合計 17,859,418 ÷ 總資產 27,163,376 = 65.7% vs 門檻 60% → 已足）→ 凍結不追（00878/00713 不加碼）｜口徑＝保單月配基金＋國泰月配＋防守ETF＋鉅亨月配＋第一金ID01（**≠防守桶＋債券**）｜含鉅亨月配 358,196（分類待確認）；排除待確認項目試算 17,501,222＝64.43%（僅試算）</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>債券</b><span class="tag">待命</span></div>
+          <div class="a-light">⏸️</div>
+          <div class="a-desc">25.3%（目標 25%）→ 等 US30Y 回落凍結線 5.3% 以下才新增｜⚠️ 設定衝突：目標 25% < 下限 27%（snapshot.可接受範圍_pct（2026-10-02 使用者裁示②） vs thresholds_2026_0915.桶目標_pct（25%））→ 待裁決；裁決前本桶不自動交易（fail-closed）</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>現金</b><span class="tag">守線</span></div>
+          <div class="a-light">💰</div>
+          <div class="a-desc">4.4% → 底線 700,000.0 守；乾粉 49.0萬 保留（本週無「低配＋資金流入」標的，等訊號）</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>避險衛星</b><span class="tag">待命</span></div>
+          <div class="a-light">⏸️</div>
+          <div class="a-desc">黃金A10 32萬 8/30 生效（保單內）；00635U ~105萬 延後（華許放鷹+金價偏高）→ 等回檔</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>美元曝險</b><span class="tag">參考</span></div>
+          <div class="a-light">🟡</div>
+          <div class="a-desc">69.2%（黃色觀察；目標值 60%／黃色觀察 65%／高曝險觀察線 70%）→ 僅顯示，不觸發換匯／減碼（政策門檻待 10 月戰略檢討）</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>保單轉換</b><span class="tag">已執行</span></div>
+          <div class="a-light">✅</div>
+          <div class="a-desc">9/10 送出（安聯＋第一金同步轉入 M&G入息A美元避險月配，T+4 預期 9/16 生效）；9/1 安聯 PIMCO+50萬、貝萊德科技A10 90萬→摩根 已完成</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>質押</b><span class="tag">追蹤</span></div>
+          <div class="a-light">🔍</div>
+          <div class="a-desc">擔保池 1,200萬（富達600＋聯博100＋貝萊德B11 500）×5成 = 590萬@2.65%（2026-09-29 使用者確認；原記 2.77%，待銀行書面覆核）；已撥款 → 用途：優先清償 0萬高息負債（保單質押 0萬@4.0% ＋ 券商質押 0萬@3.92%）— 月息 0 → 0，月省約 0（2026-09-12 裁示；10 月標案押標金：❌ 已取消（2026-10-12 使用者裁決））；到位前全面觀望</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>產業輪動</b><span class="tag">情報</span></div>
+          <div class="a-light">📊</div>
+          <div class="a-desc">本週無「低配＋資金流入」標的 → 乾粉保留｜避開「工業」</div>
         </div></div></div>
   <div class="card"><h2>🏭 產業別穿透（雙層 Micro）</h2>
     <table><tr><th>產業</th><th class="num">金額</th><th class="num">佔比</th><th>狀態</th></tr><tr><td>高科技/半導體</td><td class='num'>4,854,031</td><td class='num'>18.5</td><td>🟢 未達紅線 30%（GICS 口徑 18.5%｜全基金官方/晨星真值，2026-08-22 定版；重算需重跑產業穿透）</td></tr><tr><td>金融/電信</td><td class='num'>1,833,638</td><td class='num'>7</td><td></td></tr><tr><td>醫療/公用事業/不動產</td><td class='num'>1,702,663</td><td class='num'>6.5</td><td></td></tr><tr><td>固收與現金</td><td class='num'>11,687,099</td><td class='num'>44.6</td><td></td></tr><tr><td>實物避險-黃金</td><td class='num'>320,068</td><td class='num'>—</td><td>✅ 已建32萬（保單8/30生效）＋鉅亨3千；剩餘 PI 後 00635U 分批</td></tr><tr><td>實物避險-石油</td><td class='num'>0</td><td class='num'>—</td><td>🔴 Locked（radar_state 標記，機構撤離中）</td></tr></table>

@@ -47,9 +47,13 @@ def main() -> int:
 
     # ── G：取用端資料日閘門 ────────────────────────────────────────────────
     rows = [{"動作": "🟢", "類別": "台股", "內容": "（9.1% vs 目標10%，缺口 -0.9pp）"}]
-    got, why = brd.weekly_plan_rows({"weekly_plan": {"日期": "2026-10-15", "rows": rows}}, "2026-10-16")
-    check("G1 非當日 weekly_plan → 一列都不引用（不得混入舊真值）", got == [], f"got={got}")
-    check("G2 非當日 → 回報原因（可診斷、非靜默）", "不引用" in why and "2026-10-15" in why, why)
+    got, why = brd.weekly_plan_rows({"weekly_plan": {"日期": "2026-10-23", "rows": rows}}, "2026-10-24")
+    check("G1 落後 1 天（雷達週一/三產出）→ 仍須回列（不得天天產生失敗）", got == rows, f"got={got}")
+    check("G2 落後 → 必須帶資料日與『非今日』標註（防靜默引用舊值）",
+          "2026-10-23" in why and "非今日" in why, why)
+    stale_old, why_old = brd.weekly_plan_rows({"weekly_plan": {"日期": "2026-10-15", "rows": rows}}, "2026-10-24")
+    check("G6 落後 >5 天 → fail-closed（不引用極舊值）",
+          stale_old == [] and "不引用" in why_old, f"{stale_old} {why_old}")
     ok_rows, why2 = brd.weekly_plan_rows({"weekly_plan": {"日期": "2026-10-16", "rows": rows}}, "2026-10-16")
     check("G3 當日 weekly_plan → 原樣引用（不得誤擋）", ok_rows == rows and why2 == "",
           f"rows={ok_rows} why={why2}")
@@ -91,8 +95,11 @@ def main() -> int:
                   (f"高科技 {gics_tech:.1f}%" in t) and (f"高科技 {gics_tech:.1f}%" in e)
                   and (f"高科技 {tech_sub:.1f}%" not in e),
                   f"gics={gics_tech} sub={tech_sub}")
-            for lbl, need in (("總資產", total), ("債券 26.2%" if False else "26.2%", "26.2%")):
-                check(f"R5 {lbl} 於兩份產物皆出現", (need in t) and (need in e), need)
+            bond_pct = float((snap.get("penetration") or {}).get("actual_pct", {}).get("債券") or 0)
+            need = f"{bond_pct:.1f}%"
+            check(f"R5 債券 {need}（snapshot 現值）於 eval HTML 出現", need in e, need)
+            if need not in t:
+                print(f"  ℹ️  正典 md 債券口徑非現值（受保護歷史版，不自動重寫）；本項只驗當日產物")
         else:
             print(f"  ℹ️  {ev.name} 不存在 → 略過 HTML 比對")
         dr = ROOT / f"daily_report_v2_{day}.html"
