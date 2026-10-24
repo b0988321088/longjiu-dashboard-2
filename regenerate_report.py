@@ -214,7 +214,13 @@ if "--skip-llm" not in sys.argv and not (BASE / f"buffett_cto_report_{TODAY}.md"
         pass
 
 sys.path.insert(0, str(BASE))
-from run_daily import calibrate_sources, render_daily_report, _inject_market_intel, build_cc_rows, close_html_tail
+from run_daily import (calibrate_sources, render_daily_report, _inject_market_intel, build_cc_rows,
+                       close_html_tail, reconcile_month_derived)
+
+# 0. 月內衍生欄位重算（2026-10-25：房租待收／配息實收只有月初寫入者 → 月內入帳後會漂移，
+#    07:00 閘門第 14 條拿舊 gap 擋下整班；與 run_daily.main() 共用同一實作）
+for _rc in reconcile_month_derived():
+    print(f"[RECONCILE] {_rc}")
 
 # 1. 載入資料
 tv = calibrate_sources()

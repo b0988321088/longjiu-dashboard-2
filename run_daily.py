@@ -2531,8 +2531,66 @@ def build_cc_rows() -> str:
     return "\n".join(_rows)
 
 
+def reconcile_month_derived() -> list[str]:
+    """2026-10-25：月內入帳後重算「月度衍生欄位」（單一實作＝monthly_rollover.compute）。
+
+    實踩（10/25 07:00 晨間 regenerate rc=1）：rent_monthly_gap 唯一寫入者 monthly_rollover
+    只在每月 1 日跑；10/24 二三樓 21,000＋管理費 2,100 入帳到 rent_received_records 後
+    沒有任何人重算 → gap 停在 23,100，而儀表板逐項待收是用「當月應收−已收」即時算的＝0
+    → check_dashboard_sync 第 14 條（0 ≠ 23,100）擋下整班，當天日報/儀表板全沒上線。
+    同類第二個：passive_income.dividend_actual_sum 也只有月初寫入者（dividend_tracker 不寫該鍵）
+    → 10 月停在 0，實際已收 183,012。
+    做法：讀 snapshot → monthly_rollover.compute()（純函式、與月初同一公式）→ 僅在偏離 >0.5 時
+    寫回（indent=1 canonical）→ 回傳變更說明清單；無漂移不寫檔、不產生 diff。
+    呼叫點：run_daily.main()／regenerate_report.py 讀 snapshot 之前（兩條產線共用同一實作）。
+    """
+    try:
+        from monthly_rollover import compute  # noqa: PLC0415  純函式，module 層僅常數
+    except Exception as _e:  # noqa: BLE001
+        return [f"⚠️ 月度衍生欄位重算略過（import monthly_rollover 失敗）：{_e}"]
+
+    _p = Path(__file__).resolve().parent / "snapshot.json"
+    try:
+        _snap = json.loads(_p.read_text(encoding="utf-8"))
+    except Exception as _e:  # noqa: BLE001
+        return [f"⚠️ 月度衍生欄位重算略過（snapshot 讀取失敗）：{_e}"]
+
+    _month = str(_snap.get("date") or TODAY)[:7]
+    try:
+        _vals, _notes = compute(_snap, _month)
+    except Exception as _e:  # noqa: BLE001
+        return [f"⚠️ 月度衍生欄位重算略過（compute 失敗）：{_e}"]
+
+    _gap_new = float(_vals.get("rent_monthly_gap") or 0)
+    _div_new = float(_vals.get("pi_dividend_actual_sum") or 0)   # ← compute() 的鍵名有 pi_ 前綴
+    _pi = _snap.get("passive_income") or {}
+
+    changes: list[str] = []
+    _gap_old = float(_snap.get("rent_monthly_gap") or 0)
+    if abs(_gap_old - _gap_new) > 0.5:
+        changes.append(f"rent_monthly_gap（{_month} 待收）{_gap_old:,.0f} → {_gap_new:,.0f}")
+        _snap["rent_monthly_gap"] = _gap_new
+    _div_old = float(_pi.get("dividend_actual_sum") or 0)
+    if abs(_div_old - _div_new) > 0.5:
+        changes.append(f"passive_income.dividend_actual_sum {_div_old:,.0f} → {_div_new:,.0f}")
+        _pi["dividend_actual_sum"] = _div_new
+
+    if changes:
+        try:
+            _p.write_text(json.dumps(_snap, ensure_ascii=False, indent=1), encoding="utf-8")
+        except Exception as _e:  # noqa: BLE001
+            return [f"⚠️ 月度衍生欄位重算寫檔失敗：{_e}"] + changes
+        return ["🔧 月度衍生欄位已重算：" + "；".join(changes)]
+    return []
+
+
 def main():
     print(f"[RUN_DAILY] 日期：{TODAY}")
+
+    # 2026-10-25：先重算月內會漂移的衍生欄位（房租待收／配息實收），再校準；
+    #   否則 07:00 儀表板閘門第 14 條會拿舊 gap 擋下整班（見函式 docstring）。
+    for _rc in reconcile_month_derived():
+        print(f"[RECONCILE] {_rc}")
 
     # 校準
     tv = calibrate_sources()
