@@ -1704,5 +1704,11 @@
   "category": "完成",
   "item": "10/24 收工閉環：稽核全綠、inc_events 清零、今日 6 項交付入庫",
   "detail": "①胡志明行程改 10/25-10/31 台中來回（AE1857/AE1858）＋Google 日曆重建、清 3 筆舊殘留 ②Moneybook 10/24 明細入庫（現金 2,111,940、大義街房租 21,000＋管理費 2,100、信用卡 52,055）③債券可接受範圍統一 25%±3（22-28，解除工單D衝突）④單筆上限統一 200,000（解除單筆上限衝突）⑤安聯配息口徑定案：App 統計為主、MB 核對入帳；10 月安聯回歸 44,136、新增 allianz_cash_recon 核對表（可對照 8-10 月差 35,505＝跨月時間差）⑥保單現值更新：安聯 A 5,021,648／AB 7,632,872、第一金 1,870,639，總資產 27,202,141。inc_events 10/20 兩筆以同義欄位 rc=0 與日報成功產出為證關閉；_audit_closeout 全部通過。"
+ },
+ {
+  "date": "2026-10-24",
+  "category": "完成",
+  "item": "P1 技術債兩筆結案：TD-20261015-06（日報五桶舊值覆蓋）、TD-20261012-02（mtd 遮罩化＋漂移閘門）",
+  "detail": "TD-20261015-06：refresh_stale_amounts 補『可動用(現金)／乾粉＝A−700,000＝B／現金/安全網 X%（金額)／現金 N 遠高於底線』四類語境；判定詞加超標/超配/低配；修測試兩個誤報（黃金 −3.9% 誤判、live 值寫死）並改逐桶驗 HTML 表格；連帶校正 passive_income.rent_monthly_actual 57,000→80,100（10 月四項全收，差異分析實收 240,012→263,112）；check_dividend_caliber 移除『實收必小於常態』假設、本地暫存腳本不再假紅；coast_fi_engine --write 重跑。驗收 9/0、57/0、93/93。commit 94f2b2d7。TD-20261012-02：mtd 補正向遮罩斷言並實修 build_mtd_report.py／update_all.py／apply_truth_20261008.py 三處硬編代號→FJXX；mtd A/B 改標籤遮罩正規化後相同；新增 tools/gate_baseline_mtd.json 與 perf_gate_contract.mtd_content_drift() 納入 F1 的 ck（契約模式下計 rc），閉月推進須附 approval_ref。驗收 F1 ok=True、口徑 93/93、跨報告 PASS、漂移負向測試會擋。commit dbc6a298。"
  }
 ]
