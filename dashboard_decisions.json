@@ -11373,6 +11373,16 @@
       "status": "completed",
       "source": "user"
     }
+,
+  {
+    "id": "mem-20261025010302-1229",
+    "timestamp": "2026-10-25T01:03:02.127231+08:00",
+    "agent": "Hermes",
+    "task": "Pending 結案 6 筆＋台股三卡併一卡",
+    "summary": "使用者 10/24 核准：結案 保單不變式／10/1 三重截止日／US30Y 紅線期因應／保單B 分批（批2 被 9/14 取代）／薪資口徑 P1／審查主層 Gemini（關案行政歸檔）；台股解凍 3 卡併為「台股解凍後分批規則定版」。pending 21→13 筆，全部先寫 archive（含 cleanup_reason）再移出正本",
+    "status": "✅ 已核准",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-24T13:54:23.735121"
