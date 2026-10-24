@@ -5778,7 +5778,7 @@
    },
    "防禦維度": {
     "歷史值": 53.8,
-    "現行值": 52.6,
+    "現行值": 52.7,
     "性質": "度量修正",
     "說明": "舊 stored 53.8% 無程式寫入者（疑人工值）→ 停用，改派生（分母排除指定用途款）"
    },
@@ -5793,17 +5793,17 @@
  },
  "us30y_gate": {
   "status": "OK",
-  "value": 5.287,
-  "as_of": "2026-10-22",
+  "value": 5.315,
+  "as_of": "2026-10-23",
   "ref_date": "2026-10-24",
-  "lag_days": 2,
+  "lag_days": 1,
   "max_lag_days": 3,
   "red_line": 5.3,
-  "streak_days": 39,
-  "mode_a_streak_days": 39,
-  "red_line_streak_days": 0,
-  "below_red_line": true,
-  "risk_warning": false,
+  "streak_days": 40,
+  "mode_a_streak_days": 40,
+  "red_line_streak_days": 1,
+  "below_red_line": false,
+  "risk_warning": true,
   "mode": "advisory",
   "unfreeze_allowed": false,
   "unfreeze_conditions": {
@@ -5811,7 +5811,7 @@
     {
      "名稱": "現金 ≥ 自由現金門檻",
      "通過": true,
-     "現值": 1189840,
+     "現值": 1211940,
      "門檻": 1000000.0,
      "註記": "可動用＝cash_layers.unrestricted_cash；指定用途款 900,000 永久排除；分批資金只認列已實際入帳盈餘",
      "來源": "sot_targets.allowable_cash ＋ sabbatical_gate_twd.自由現金_twd"
@@ -5929,12 +5929,12 @@
    },
    "source": "sot_targets.unfreeze_conditions（v1.2 TD-20261015-02；2026-10-14 裁決）"
   },
-  "reason": "讀值日 2026-10-22（落後 2 天，在容忍值 3 天內）｜US30Y 為宏觀風險警示（未觸發），不單獨否決台股分批；解凍判定＝未達：還本安全閥（無月盈餘轉負情境）",
+  "reason": "讀值日 2026-10-23（落後 1 天，在容忍值 3 天內）｜US30Y 為宏觀風險警示（已觸發，長債新增凍結生效），不單獨否決台股分批；解凍判定＝未達：還本安全閥（無月盈餘轉負情境）",
   "source": "sot_targets.us30y_gate（advisory 模式 v1.2：US30Y 警示＋unfreeze_conditions 複合條件；thresholds.US30Y閘門模式 可切回 hard_veto）"
  },
  "redline_policy": {
   "policy": "REDLINE_LONG_DURATION_POLICY",
-  "streak_days": 39,
+  "streak_days": 40,
   "stage": 2,
   "階段區間": "30–45 天",
   "應做事項": "每週重新檢查資產配置與現金流",

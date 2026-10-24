@@ -1,12 +1,12 @@
 {
   "mode": "A",
-  "streak": 39,
-  "last_rate": 5.287,
-  "last_date": "2026-10-22",
-  "checked_at": "2026-10-23",
+  "streak": 40,
+  "last_rate": 5.315,
+  "last_date": "2026-10-23",
+  "checked_at": "2026-10-24",
   "mode_label": "模式A｜防禦（警戒區 5.20-5.30）",
   "red_line": false,
   "data_source": "FRED+Yahoo",
-  "mode_a_streak": 39,
-  "red_line_streak": 0
+  "mode_a_streak": 40,
+  "red_line_streak": 1
 }
