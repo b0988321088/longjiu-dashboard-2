@@ -55,32 +55,60 @@ def list_incidents():
         print(f"    狀態: {inc['status'].capitalize()}")
         print("-" * 20)
 
-def close_incident(incident_id_prefix):
+def close_incident(incident_id_prefix, reason, evidence=None, by="Hermes"):
+    """結案必須附理由（TD-20261012-22：無結案理由欄位＝無客觀證據，不得只改 status）。"""
+    if not (reason or "").strip():
+        print("❌ 拒絕關閉：必須提供 --reason（結案理由／依據），不得只改 status。")
+        return False
     incidents = _load_incidents()
     found = False
     for inc in incidents:
         if inc.get('id', '').startswith(incident_id_prefix) and inc.get('status') == 'open':
             inc['status'] = 'closed'
             inc['closed_at'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            inc['closed_reason'] = reason.strip()
+            inc['closed_by'] = by
+            if evidence:
+                inc['closed_evidence'] = evidence.strip()
             found = True
             break
-    
+
     if found:
         _save_incidents(incidents)
-        print(f"✅ 事件 {incident_id_prefix} 已關閉。")
-    else:
-        print(f"❌ 未找到開啟中且 ID 匹配 '{incident_id_prefix}' 的事件。")
+        print(f"✅ 事件 {incident_id_prefix} 已關閉（理由：{reason.strip()[:60]}）。")
+        return True
+    print(f"❌ 未找到開啟中且 ID 匹配 '{incident_id_prefix}' 的事件。")
+    return False
 
 def main():
-    if len(sys.argv) == 1 or sys.argv[1] == 'list':
+    args = sys.argv[1:]
+    if not args or args[0] == 'list':
         list_incidents()
-    elif len(sys.argv) == 3 and sys.argv[1] == 'close':
-        close_incident(sys.argv[2])
-    else:
-        print("用法:")
-        print("  python lj_inc.py list          - 列出所有開啟中的事件")
-        print("  python lj_inc.py close <ID_PREFIX> - 關閉指定 ID 前綴的事件")
-        sys.exit(1)
+        return
+    if args[0] == 'close':
+        if len(args) < 2:
+            print("❌ 用法：python lj_inc.py close <ID_PREFIX> --reason \"<理由>\" [--evidence \"<證據>\"]")
+            sys.exit(1)
+        prefix = args[1]
+        reason = evidence = None
+        i = 2
+        while i < len(args):
+            if args[i] == '--reason' and i + 1 < len(args):
+                reason = args[i + 1]; i += 2
+            elif args[i] == '--evidence' and i + 1 < len(args):
+                evidence = args[i + 1]; i += 2
+            else:
+                i += 1
+        if not reason:
+            print("❌ 拒絕關閉：缺少 --reason（TD-20261012-22 要求結案須有理由／依據）。")
+            print("   例：python lj_inc.py close <ID> --reason \"同義欄位 rc=0、日報已成功產出\" --evidence \"2026-10-24 稽核\"")
+            sys.exit(1)
+        ok = close_incident(prefix, reason, evidence)
+        sys.exit(0 if ok else 1)
+    print("用法:")
+    print("  python lj_inc.py list          - 列出所有開啟中的事件")
+    print("  python lj_inc.py close <ID_PREFIX> --reason \"<理由>\" [--evidence \"<證據>\"]")
+    sys.exit(1)
 
 if __name__ == "__main__":
     main()

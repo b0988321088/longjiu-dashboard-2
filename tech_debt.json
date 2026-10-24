@@ -1450,13 +1450,14 @@
     "source": "TD-20261009-16 驗收條件⑤",
     "status": "開放",
     "status_raw": "",
-    "detail": "319fe1e2（09-16）／418c0820（09-23）／e77dda79（09-29）於 2026-10-09 05:26:56Z 由 lj_inc.py close 標記結案，但無結案理由欄位、error_register 對應條目仍為『待處理』→ 無客觀證據。另有 a893bf01 條目標題已解決、狀態行仍待處理（自相矛盾）。原始紀錄保留、不補造關聯。稽核紀錄：data/inc_events_closure_audit_20261012.{json,md}。後續：補證據後結案，或回改 open；並評估 inc_events schema 增列結案理由／依據欄位。",
+    "detail": "319fe1e2（09-16）／418c0820（09-23）／e77dda79（09-29）於 2026-10-09 05:26:56Z 由 lj_inc.py close 標記結案，但無結案理由欄位、error_register 對應條目仍為『待處理』→ 無客觀證據。另有 a893bf01 條目標題已解決、狀態行仍待處理（自相矛盾）。原始紀錄保留、不補造關聯。稽核紀錄：data/inc_events_closure_audit_20261012.{json,md}。後續：補證據後結案，或回改 open；並評估 inc_events schema 增列結案理由／依據欄位。｜2026-10-24 進度：①lj_inc.py close 已強制 --reason（+可選 --evidence），寫入 closed_reason／closed_by／closed_evidence，缺理由 exit 1（已實測拒絕）②今日關閉 b9ac1c58／160bd552 已補結案理由與證據（verify_synonyms rc=0／sync_all 23/23／一致性 PASS）③舊 3 筆（319fe1e2／418c0820／e77dda79）仍無客觀證據 → 不補造，本卡維持開放",
     "tags": "governance,inc_events",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-12",
-    "cleanup_reason": ""
+    "cleanup_reason": "",
+    "updated": "2026-10-24"
   },
   {
     "id": "TD-20261012-23",
