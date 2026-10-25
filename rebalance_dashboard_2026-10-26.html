@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-TW"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>龍九再平衡儀表板 2026-10-26</title>
+<style>
+:root { --bg:#0f172a; --card:#1e293b; --line:#334155; --txt:#e2e8f0; --sub:#94a3b8; --grn:#22c55e; --red:#ef4444; --yel:#f59e0b; --blu:#3b82f6; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--txt); font-family:'Segoe UI','Microsoft JhengHei',sans-serif; padding:20px; }
+.wrap { max-width:1100px; margin:0 auto; }
+h1 { font-size:22px; font-weight:800; }
+.sub { color:var(--sub); font-size:13px; margin:4px 0 16px; }
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:16px; }
+.kpi { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+.kpi .k { color:var(--sub); font-size:11px; }
+.kpi .v { font-size:20px; font-weight:800; font-family:Consolas,monospace; }
+.kpi .v.red { color:var(--red); } .kpi .v.green { color:var(--grn); } .kpi .v.yellow { color:var(--yel); }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media (max-width:800px) { .grid { grid-template-columns:1fr; } }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+.card h2 { font-size:14px; font-weight:800; margin-bottom:10px; color:#f8fafc; }
+.bucket { margin-bottom:12px; }
+.bucket-head { display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px; }
+.bucket-name { font-weight:700; }
+.gap { font-weight:800; } .gap.green { color:var(--grn); } .gap.yellow { color:var(--yel); } .gap.red { color:var(--red); }
+.bar-track { position:relative; height:14px; background:#0b1220; border-radius:7px; }
+.bar-fill { height:100%; border-radius:7px; opacity:.85; }
+.bar-target { position:absolute; top:-3px; width:2px; height:20px; background:#fff; }
+.bucket-twd { font-size:11px; color:var(--sub); text-align:right; margin-top:2px; }
+.rcards { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; }
+.rcard { border-top:3px solid var(--line); }
+.r-signal { font-size:22px; }
+.r-name { font-weight:800; font-size:13px; margin:4px 0; }
+.r-note { font-size:11px; color:var(--sub); line-height:1.5; }
+.acards { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.acard { border-left:3px solid var(--line); }
+.a-head { display:flex; justify-content:space-between; font-size:13px; }
+.tag { font-size:10px; background:#0b1220; border:1px solid var(--line); padding:1px 6px; border-radius:8px; color:var(--sub); }
+.a-light { font-size:11px; color:var(--sub); margin:3px 0; }
+.a-desc { font-size:12px; color:#cbd5e1; line-height:1.55; }
+table { width:100%; border-collapse:collapse; font-size:12.5px; }
+th { text-align:left; color:var(--sub); font-weight:600; padding:6px 8px; border-bottom:1px solid var(--line); }
+td { padding:7px 8px; border-bottom:1px solid #263449; }
+.num { font-family:Consolas,monospace; text-align:right; }
+.drybar { display:flex; height:26px; border-radius:8px; overflow:hidden; margin:10px 0; font-size:11px; font-weight:700; color:#fff; }
+.drybar div { display:flex; align-items:center; justify-content:center; }
+.ms { display:flex; gap:10px; padding:8px 10px; border-radius:8px; margin-bottom:6px; font-size:12.5px; }
+.ms-high { background:#3f1d1d; border:1px solid #7f1d1d; }
+.ms-mid { background:#1e293b; border:1px solid var(--line); }
+.ms-date { font-weight:800; color:var(--yel); white-space:nowrap; }
+.foot { margin-top:16px; color:var(--sub); font-size:11px; text-align:center; }
+</style></head><body><div class="wrap">
+<h1>🔄 龍九再平衡儀表板</h1>
+<div class="sub">2026-10-26（週一）｜修正後 DAA 口徑 + 機構流向雷達｜本週動作：全數按兵不動（等質押撥款）</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="k">總資產（流動）</div><div class="v">27,202,141</div></div>
+  <div class="kpi"><div class="k">現金（可動用）</div><div class="v">1,211,940.0</div></div>
+  <div class="kpi"><div class="k">月盈餘</div><div class="v green">+66,758.0</div></div>
+  <div class="kpi"><div class="k">收入/支出</div><div class="v">225,968.0 <small style="font-size:11px">/ 159,210.0</small></div></div>
+  <div class="kpi"><div class="k">美元曝險</div><div class="v red">69%</div></div>
+  <div class="kpi"><div class="k">高科技</div><div class="v yellow">23.0%</div></div>
+</div>
+
+<div class="grid">
+  <div class="card"><h2>📊 五桶穿透 vs 目標</h2>
+        <div class="bucket">
+          <div class="bucket-head"><span class="bucket-name">台股</span><span class="bucket-val">11.0% <small>/ 目標 10%</small></span><span class="gap green">+1.0pp</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:20.0%;background:#3b82f6"></div><div class="bar-target" style="left:18.2%"></div></div>
+          <div class="bucket-twd">300 萬</div>
+        </div>
+        <div class="bucket">
+          <div class="bucket-head"><span class="bucket-name">美股</span><span class="bucket-val">37.3% <small>/ 目標 30%</small></span><span class="gap red">+7.3pp</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:67.8%;background:#ef4444"></div><div class="bar-target" style="left:54.5%"></div></div>
+          <div class="bucket-twd">1014 萬</div>
+        </div>
+        <div class="bucket">
+          <div class="bucket-head"><span class="bucket-name">防守</span><span class="bucket-val">18.1% <small>/ 目標 30%</small></span><span class="gap red">-11.9pp</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:32.9%;background:#22c55e"></div><div class="bar-target" style="left:54.5%"></div></div>
+          <div class="bucket-twd">492 萬</div>
+        </div>
+        <div class="bucket">
+          <div class="bucket-head"><span class="bucket-name">債券</span><span class="bucket-val">25.3% <small>/ 目標 25%</small></span><span class="gap green">+0.3pp</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:46.0%;background:#f59e0b"></div><div class="bar-target" style="left:45.5%"></div></div>
+          <div class="bucket-twd">688 萬</div>
+        </div>
+        <div class="bucket">
+          <div class="bucket-head"><span class="bucket-name">現金</span><span class="bucket-val">4.5% <small>/ 目標 5%</small></span><span class="gap green">-0.5pp</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:8.2%;background:#94a3b8"></div><div class="bar-target" style="left:9.1%"></div></div>
+          <div class="bucket-twd">121 萬</div>
+        </div></div>
+  <div class="card"><h2>📡 機構流向雷達</h2><div class="rcards">
+        <div class="card rcard" style="border-top:3px solid #64748b">
+          <div class="r-signal">⚪</div>
+          <div class="r-name">台股</div>
+          <div class="r-note">外資淨買超 -2.8億 — 中性</div>
+        </div>
+        <div class="card rcard" style="border-top:3px solid #f59e0b">
+          <div class="r-signal">🟡</div>
+          <div class="r-name">黃金</div>
+          <div class="r-note">淨多單 199,865 週減 -3.9% — 觀望</div>
+        </div>
+        <div class="card rcard" style="border-top:3px solid #f59e0b">
+          <div class="r-signal">🟡</div>
+          <div class="r-name">原油</div>
+          <div class="r-note">淨多單 -23,995 週減 -4.8% — 觀望</div>
+        </div>
+        <div class="card rcard" style="border-top:3px solid #22c55e">
+          <div class="r-signal">🟢</div>
+          <div class="r-name">美債10年</div>
+          <div class="r-note">10Y殖利率月動能 -2.5%（債價↑ 買債順勢）</div>
+        </div>
+        <div class="card rcard" style="border-top:3px solid #64748b">
+          <div class="r-signal">⚪</div>
+          <div class="r-name">台幣</div>
+          <div class="r-note">USD/TWD 32.57 週變化 +0.57%</div>
+        </div></div></div>
+  <div class="card"><h2>💰 被動現金流與 FI 跑道（四情境）</h2><table><tr><th>情境</th><th class="num">月被動</th><th class="num">覆蓋率</th><th class="num">月盈餘／缺口</th><th class="num">FI 跑道</th></tr><tr><td>🟢 保守底線（判準）</td><td class="num">180,100</td><td class="num">113.1%</td><td class="num">+20,890</td><td class="num">∞（零缺口）</td></tr><tr><td>🟢 當月實收</td><td class="num">263,112</td><td class="num">165.3%</td><td class="num">+103,902</td><td class="num">∞（零缺口）</td></tr><tr><td>🟡 壓力情境（判準）</td><td class="num">188,758</td><td class="num">118.6%</td><td class="num green">+29,548</td><td class="num">∞（零缺口）</td></tr><tr><td>🔴 極端情境（參考）</td><td class="num">127,100</td><td class="num">79.8%</td><td class="num red">-32,110</td><td class="num">1,132 天</td></tr></table><div style="font-size:11px;color:var(--sub);margin-top:8px">保守底線＝判準層（配息基本值＋房租常態）｜當月實收＝配息實收＋房租實收｜壓力情境＝常態配息 −20%＋洲際W 空置（<b>留停判準</b>）｜極端情境＝配息掉到保守值再 −20%＋空置（跑道分母）。FI 跑道＝現金 ÷ 月缺口；「月盈餘」KPI 為含薪資口徑，與本表不同。</div></div>
+  
+        <div class="card" style="border:1px solid #f59e0b;background:linear-gradient(135deg,#1a1408,#131a26)">
+          <h2>🏛️ 政策面</h2>
+          <div style="font-size:11px;color:#9ca3af;margin-bottom:8px">FRED（DFEDTARU/DGS30）＋鉅亨/經濟日報/玉山銀 2026-09-20 更新（原 9/5 非農/FOMC 待決版已汰換）（2026-09-20 13:30（政策事件日期；市場數值已於 2026-10-14 去具體化，一律見當日燈號））</div>
+          <div style="margin-bottom:8px;padding:8px 10px;background:#0b0f17;border-radius:8px;border-left:3px solid #f59e0b">
+            <div style="font-weight:700;font-size:12px;color:#fbbf24">①9月FOMC升息1碼</div>
+            <div style="font-size:11px;color:#e5e7eb;margin-top:3px">9/15-16 FOMC 決議升息 1 碼：政策利率 3.50-3.75% → 3.75-4.00%（FRED DFEDTARU 自 9/17 起 4.00、DFF 3.63→3.88）；台灣央行不跟進、維持利率不變</div>
+            <div style="font-size:10px;color:#9ca3af;margin-top:3px">影響：不確定性消除 → 台股順勢＝台股分批進場條件成立；債券桶短線受 10Y 月動能壓抑（當日數值見燈號）→ 暫不新增</div>
+          </div>
+          <div style="margin-bottom:8px;padding:8px 10px;background:#0b0f17;border-radius:8px;border-left:3px solid #f59e0b">
+            <div style="font-weight:700;font-size:12px;color:#fbbf24">②後續觀察</div>
+            <div style="font-size:11px;color:#e5e7eb;margin-top:3px">下次 FOMC 11 月；10 月標案結果（押標金 240 萬已於 2026-10-12 經使用者裁決取消）；9/29 貝萊德黃金/健康 9 月配息基準日</div>
+            <div style="font-size:10px;color:#9ca3af;margin-top:3px">影響：若 10Y 續升 → 債券桶維持不新增；台股 00921 分批、避險衛星黃金批次照計畫（單批 ≤20萬、逢回檔）</div>
+          </div>
+          <div style="padding:8px 10px;background:#ef44441a;border-radius:8px;border-left:3px solid #ef4444;font-size:11px;color:#fca5a5;margin-top:4px">
+            🛢️ 原油綜合判斷：COT 淨多單當日值見燈號（資金面以燈號為準）；需求面受升息壓抑、供給面美委/伊朗拉鋸 → 維持 🟡 觀望，石油部位 Locked 不加碼</div>
+          <div style="padding:8px 10px;background:#3b82f61a;border-radius:8px;border-left:3px solid #3b82f6;font-size:11px;color:#93c5fd;margin-top:4px">
+            💵 債券升息敏感度：升息 1 碼已落地（9/17 起 4.00）；債券桶超配（當日比重與市值見當日資產區塊）；真正利率敏感＝保單內債券（PIMCO/M&G/摩根，債權重 48-55%）＋00983D；10Y 月動能（當日值見燈號）→ 不新增</div></div>
+  
+        <div class="card" style="border:1px solid #10b981;background:linear-gradient(135deg,#06281a,#131a26)">
+          <h2>📋 本週投資計劃（10/24 版・全資產面結論）</h2>
+          <div style="margin:6px 0 10px;padding:8px 10px;border-radius:8px;background:#78350f;border-left:3px solid #f59e0b;font-size:11px;color:#fde68a">⚠️ 本計劃為 2026-10-24 版，非今日（2026-10-26）。內容含當時佔比，今日真值請以本頁五桶卡為準。</div>
+          <div style="margin-bottom:6px;font-size:11px;color:#d1fae5">🟡 <b>台股</b>：（11.0% vs 目標10%，超配 +1.0pp）→ 已達上限、不新增（US30Y 5.315%，凍結線 5.3% 未解凍前不加碼）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">⏸️ <b>美股</b>：（37.3% vs 目標30%，超配 +7.3pp）→ 煞車中（US30Y 5.315% ≥ 5.3%）只回報不動作</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">↳ <b>美股</b>：調度欄位：戰略目標 30%／戰略偏差 +7.3pp／理論調整 1,985,756（|戰略偏差_pp| ÷ 100 × 分母_twd；分母 27,202,141）／風控後可執行 0（單筆上限 200,000／4-6 週；來源：使用者 2026-08-22 裁示（美股逢反彈分批減碼，單次≤20萬／4-6 週完成））／阻擋規則：US30Y 煞車（5.3%，連 2 日；優先於動作階梯與單桶硬上限）；單筆上限（200,000）封頂：理論 1,985,756 > 上限｜戰術偏差：無 SoT（週報曾引用『戰術 27%』但 thresholds 無此鍵）→ 不計算</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">⏸️ <b>防守</b>：（配息資產合計 17,876,083 ÷ 總資產 27,202,141 = 65.7% vs 門檻 60% → 已足）→ 凍結不追（00878/00713 不加碼）｜口徑＝保單月配基金＋國泰月配＋防守ETF＋鉅亨月配＋第一金ID01（**≠防守桶＋債券**）｜含鉅亨月配 358,196（分類待確認）；排除待確認項目試算 17,517,887＝64.40%（僅試算）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">⏸️ <b>債券</b>：25.3%（目標 25%）→ 等 US30Y 回落凍結線 5.3% 以下才新增</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">💰 <b>現金</b>：4.5% → 底線 700,000.0 守；乾粉 51.2萬 保留（本週無「低配＋資金流入」標的，等訊號）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">⏸️ <b>避險衛星</b>：黃金A10 32萬 8/30 生效（保單內）；00635U ~105萬 延後（華許放鷹+金價偏高）→ 等回檔</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">🟡 <b>美元曝險</b>：69.1%（黃色觀察；目標值 60%／黃色觀察 65%／高曝險觀察線 70%）→ 僅顯示，不觸發換匯／減碼（政策門檻待 10 月戰略檢討）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">✅ <b>保單轉換</b>：9/10 送出（安聯＋第一金同步轉入 M&G入息A美元避險月配，T+4 預期 9/16 生效）；9/1 安聯 PIMCO+50萬、貝萊德科技A10 90萬→摩根 已完成</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">🔍 <b>質押</b>：擔保池 1,200萬（富達600＋聯博100＋貝萊德B11 500）×5成 = 590萬@2.65%（2026-09-29 使用者確認；原記 2.77%，待銀行書面覆核）；已撥款 → 用途：優先清償 0萬高息負債（保單質押 0萬@4.0% ＋ 券商質押 0萬@3.92%）— 月息 0 → 0，月省約 0（2026-09-12 裁示；10 月標案押標金：❌ 已取消（2026-10-12 使用者裁決））；到位前全面觀望</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">📊 <b>產業輪動</b>：本週無「低配＋資金流入」標的 → 乾粉保留｜避開「工業」</div>
+        </div>
+</div>
+
+<div class="grid" style="margin-top:14px">
+  <div class="card"><h2>🎯 動作建議（執行紀律・10-24 版）</h2><div class="acards">
+        <div class="card acard">
+          <div class="a-head"><b>台股</b><span class="tag">參考</span></div>
+          <div class="a-light">🟡</div>
+          <div class="a-desc">（11.0% vs 目標10%，超配 +1.0pp）→ 已達上限、不新增（US30Y 5.315%，凍結線 5.3% 未解凍前不加碼）</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>美股</b><span class="tag">待命</span></div>
+          <div class="a-light">⏸️</div>
+          <div class="a-desc">（37.3% vs 目標30%，超配 +7.3pp）→ 煞車中（US30Y 5.315% ≥ 5.3%）只回報不動作</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>美股</b><span class="tag">參考</span></div>
+          <div class="a-light">↳</div>
+          <div class="a-desc">調度欄位：戰略目標 30%／戰略偏差 +7.3pp／理論調整 1,985,756（|戰略偏差_pp| ÷ 100 × 分母_twd；分母 27,202,141）／風控後可執行 0（單筆上限 200,000／4-6 週；來源：使用者 2026-08-22 裁示（美股逢反彈分批減碼，單次≤20萬／4-6 週完成））／阻擋規則：US30Y 煞車（5.3%，連 2 日；優先於動作階梯與單桶硬上限）；單筆上限（200,000）封頂：理論 1,985,756 > 上限｜戰術偏差：無 SoT（週報曾引用『戰術 27%』但 thresholds 無此鍵）→ 不計算</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>防守</b><span class="tag">待命</span></div>
+          <div class="a-light">⏸️</div>
+          <div class="a-desc">（配息資產合計 17,876,083 ÷ 總資產 27,202,141 = 65.7% vs 門檻 60% → 已足）→ 凍結不追（00878/00713 不加碼）｜口徑＝保單月配基金＋國泰月配＋防守ETF＋鉅亨月配＋第一金ID01（**≠防守桶＋債券**）｜含鉅亨月配 358,196（分類待確認）；排除待確認項目試算 17,517,887＝64.40%（僅試算）</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>債券</b><span class="tag">待命</span></div>
+          <div class="a-light">⏸️</div>
+          <div class="a-desc">25.3%（目標 25%）→ 等 US30Y 回落凍結線 5.3% 以下才新增</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>現金</b><span class="tag">守線</span></div>
+          <div class="a-light">💰</div>
+          <div class="a-desc">4.5% → 底線 700,000.0 守；乾粉 51.2萬 保留（本週無「低配＋資金流入」標的，等訊號）</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>避險衛星</b><span class="tag">待命</span></div>
+          <div class="a-light">⏸️</div>
+          <div class="a-desc">黃金A10 32萬 8/30 生效（保單內）；00635U ~105萬 延後（華許放鷹+金價偏高）→ 等回檔</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>美元曝險</b><span class="tag">參考</span></div>
+          <div class="a-light">🟡</div>
+          <div class="a-desc">69.1%（黃色觀察；目標值 60%／黃色觀察 65%／高曝險觀察線 70%）→ 僅顯示，不觸發換匯／減碼（政策門檻待 10 月戰略檢討）</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>保單轉換</b><span class="tag">已執行</span></div>
+          <div class="a-light">✅</div>
+          <div class="a-desc">9/10 送出（安聯＋第一金同步轉入 M&G入息A美元避險月配，T+4 預期 9/16 生效）；9/1 安聯 PIMCO+50萬、貝萊德科技A10 90萬→摩根 已完成</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>質押</b><span class="tag">追蹤</span></div>
+          <div class="a-light">🔍</div>
+          <div class="a-desc">擔保池 1,200萬（富達600＋聯博100＋貝萊德B11 500）×5成 = 590萬@2.65%（2026-09-29 使用者確認；原記 2.77%，待銀行書面覆核）；已撥款 → 用途：優先清償 0萬高息負債（保單質押 0萬@4.0% ＋ 券商質押 0萬@3.92%）— 月息 0 → 0，月省約 0（2026-09-12 裁示；10 月標案押標金：❌ 已取消（2026-10-12 使用者裁決））；到位前全面觀望</div>
+        </div>
+        <div class="card acard">
+          <div class="a-head"><b>產業輪動</b><span class="tag">情報</span></div>
+          <div class="a-light">📊</div>
+          <div class="a-desc">本週無「低配＋資金流入」標的 → 乾粉保留｜避開「工業」</div>
+        </div></div></div>
+  <div class="card"><h2>🏭 產業別穿透（雙層 Micro）</h2>
+    <table><tr><th>產業</th><th class="num">金額</th><th class="num">佔比</th><th>狀態</th></tr><tr><td>高科技/半導體</td><td class='num'>4,854,031</td><td class='num'>18.5</td><td>🟢 未達紅線 30%（GICS 口徑 18.5%｜全基金官方/晨星真值，2026-08-22 定版；重算需重跑產業穿透）</td></tr><tr><td>金融/電信</td><td class='num'>1,833,638</td><td class='num'>7</td><td></td></tr><tr><td>醫療/公用事業/不動產</td><td class='num'>1,702,663</td><td class='num'>6.5</td><td></td></tr><tr><td>固收與現金</td><td class='num'>11,687,099</td><td class='num'>44.6</td><td></td></tr><tr><td>實物避險-黃金</td><td class='num'>320,068</td><td class='num'>—</td><td>✅ 已建32萬（保單8/30生效）＋鉅亨3千；剩餘 PI 後 00635U 分批</td></tr><tr><td>實物避險-石油</td><td class='num'>0</td><td class='num'>—</td><td>🔴 Locked（radar_state 標記，機構撤離中）</td></tr></table>
+    <div style="font-size:11px;color:var(--sub);margin-top:8px">紅線：高科技 ≤30%（當前 23.0%）｜輪動閥門：科技>30% 或雷達科技轉弱 → 乾粉轉金融/電信/醫療防禦</div>
+  </div>
+</div>
+
+<div class="grid" style="margin-top:14px">
+  <div class="card"><h2>💰 台幣乾粉分配</h2>
+    <div class="drybar">
+      <div style="width:15%;background:var(--blu)">台股 12-24萬</div>
+      <div style="width:85%;background:var(--yel)">黃金衛星 131萬（預留）</div>
+      <div style="width:0%;background:var(--red)">石油 0</div>
+      <div style="width:0%;background:var(--sub)">債券 0</div>
+    </div>
+    <div style="font-size:12px;color:#cbd5e1;line-height:1.7">
+      當前 乾粉 511,940（現金 1,211,940 − 現金底線 700,000，單一口徑）｜分配表＝snapshot.乾粉執行_0926（僅供分配表；乾粉金額一律現算）<br>
+      台股 0050/006208 12-24萬<br>
+      黃金衛星 00635U 131萬（預留）<br>
+      石油 00642U 0<br>
+      債券 0<br>
+    </div>
+  </div>
+  <div class="card"><h2>🛡️ 質押 / 風險紅線</h2>
+    <div style="font-size:12.5px;color:#cbd5e1;margin-bottom:8px">📌 已質押（整池 1,200萬×5成 = 590萬@2.65%（2026-09-29 使用者確認；原記 2.77%，待銀行書面覆核）質押（已撥款））</div>
+    <table><tr><th>指標</th><th class="num">現值</th><th class="num">紅線</th><th>狀態</th></tr><tr><td>US30Y 凍結線</td><td class='num'>5.32%</td><td class='num'>≥5.30% 🔴</td><td>🔴 觸發</td></tr><tr><td>美元曝險</td><td class='num'>69%</td><td class='num'>目標值 60%／黃色觀察 65%／高曝險觀察線 70%（僅顯示）</td><td>🟡 黃色觀察（僅顯示）</td></tr><tr><td>高科技</td><td class='num'>23.0%</td><td class='num'>紅線 30%</td><td>🟢 安全</td></tr><tr><td>現金｜底線 700,000（單一口徑）</td><td class='num'>1,211,940</td><td class='num'>≥700,000</td><td>🟢 安全</td></tr><tr><td>國泰擔保池 LTV</td><td class='num'>50.1%（借 5,900,000／池 11,779,326）</td><td class='num'>綠 ≤45／黃 ≤53／追繳 ≥70</td><td>🟡 黃區</td></tr></table>
+  </div>
+</div>
+
+
+
+
+  <div class="card" style="margin-top:14px;border-left:4px solid #8b5cf6">
+    <h2>📡 產業資金流向（2026-10-24T17:11）</h2>
+    <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px">法人淨買賣超：科技 +34百萬，台積電 +31百萬，債券 +22百萬，塑化 +13百萬，生技醫療 +5百萬，通訊服務 +2百萬，汽車 +0百萬，鋼鐵 -0百萬，不動產 -0百萬，金融 -1百萬，原物料避險 -1百萬，能源 -4百萬，營建 -9百萬，航運 -9百萬，食品 -37百萬，市值型 -108百萬，高股息防禦 -130百萬，其他 -813百萬｜RS最強 能源(XLE)（+11.7pp vs SPY）｜最弱 科技(XLK)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div><div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:4px">TW 台股法人（產業桶）</div>
+      <table><tr><th>產業桶</th><th class="num">法人淨買賣超</th><th>方向</th></tr><tr><td>科技</td><td class='num'>+34百萬</td><td>🟢 inflow</td></tr><tr><td>台積電</td><td class='num'>+31百萬</td><td>🟢 inflow</td></tr><tr><td>債券</td><td class='num'>+22百萬</td><td>🟢 inflow</td></tr><tr><td>塑化</td><td class='num'>+13百萬</td><td>🟢 inflow</td></tr><tr><td>生技醫療</td><td class='num'>+5百萬</td><td>🟢 inflow</td></tr><tr><td>通訊服務</td><td class='num'>+2百萬</td><td>🟢 inflow</td></tr><tr><td>汽車</td><td class='num'>+0百萬</td><td>🟢 inflow</td></tr><tr><td>鋼鐵</td><td class='num'>-0百萬</td><td>🔴 outflow</td></tr><tr><td>不動產</td><td class='num'>-0百萬</td><td>🔴 outflow</td></tr><tr><td>金融</td><td class='num'>-1百萬</td><td>🔴 outflow</td></tr><tr><td>原物料避險</td><td class='num'>-1百萬</td><td>🔴 outflow</td></tr><tr><td>能源</td><td class='num'>-4百萬</td><td>🔴 outflow</td></tr><tr><td>營建</td><td class='num'>-9百萬</td><td>🔴 outflow</td></tr><tr><td>航運</td><td class='num'>-9百萬</td><td>🔴 outflow</td></tr><tr><td>食品</td><td class='num'>-37百萬</td><td>🔴 outflow</td></tr><tr><td>市值型</td><td class='num'>-108百萬</td><td>🔴 outflow</td></tr><tr><td>高股息防禦</td><td class='num'>-130百萬</td><td>🔴 outflow</td></tr><tr><td>其他</td><td class='num'>-813百萬</td><td>🔴 outflow</td></tr></table></div>
+      <div><div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:4px">🇺🇸 美股板塊（月動能 vs SPY）</div>
+      <table><tr><th>板塊</th><th class="num">動能%</th><th class="num">RS</th></tr><tr><td>能源(XLE)</td><td class='num'>+10.8%</td><td class='num'>+11.7pp</td></tr><tr><td>公用(XLU)</td><td class='num'>+8.1%</td><td class='num'>+9.1pp</td></tr><tr><td>核心消費(XLP)</td><td class='num'>+8.0%</td><td class='num'>+9.0pp</td></tr><tr><td>醫療(XLV)</td><td class='num'>+5.5%</td><td class='num'>+6.5pp</td></tr><tr><td>原物料(XLB)</td><td class='num'>+3.3%</td><td class='num'>+4.2pp</td></tr><tr><td>金融(XLF)</td><td class='num'>+2.5%</td><td class='num'>+3.5pp</td></tr><tr><td>非核心消費(XLY)</td><td class='num'>+2.5%</td><td class='num'>+3.5pp</td></tr><tr><td>不動產(XLRE)</td><td class='num'>+2.2%</td><td class='num'>+3.1pp</td></tr><tr><td>工業(XLI)</td><td class='num'>-2.5%</td><td class='num'>-1.6pp</td></tr><tr><td>科技(XLK)</td><td class='num'>-5.9%</td><td class='num'>-5.0pp</td></tr></table></div>
+    </div>
+    <div style="font-size:10.5px;color:var(--sub);margin-top:6px">輪動邏輯：法人流入且產業低配 → 乾粉吸納目標（科技流出→高股息/醫療防禦）</div>
+  </div>
+
+
+  <div class="card" style="margin-top:14px;border-left:4px solid #3b82f6">
+    <h2>🏭 GICS 產業分布（2026-10-26）</h2>
+    <table><tr><th>產業</th><th class="num">金額</th><th class="num">佔比</th><th>集中度</th></tr><tr><td><span style='display:inline-block;width:8px;height:8px;border-radius:2px;background:#94a3b8;margin-right:5px'></span>固收/現金</td><td class='num'>7,483,439</td><td class='num'>27.5%</td><td style='min-width:90px'><div style='background:#0b1220;border-radius:4px;height:6px'><div style='width:55%;background:#94a3b8;height:100%;border-radius:4px'></div></div></td></tr><tr><td><span style='display:inline-block;width:8px;height:8px;border-radius:2px;background:#3b82f6;margin-right:5px'></span>資訊科技</td><td class='num'>6,257,393</td><td class='num'>23.0%</td><td style='min-width:90px'><div style='background:#0b1220;border-radius:4px;height:6px'><div style='width:46%;background:#3b82f6;height:100%;border-radius:4px'></div></div></td></tr><tr><td><span style='display:inline-block;width:8px;height:8px;border-radius:2px;background:#22c55e;margin-right:5px'></span>金融</td><td class='num'>2,697,675</td><td class='num'>9.9%</td><td style='min-width:90px'><div style='background:#0b1220;border-radius:4px;height:6px'><div style='width:20%;background:#22c55e;height:100%;border-radius:4px'></div></div></td></tr><tr><td><span style='display:inline-block;width:8px;height:8px;border-radius:2px;background:#94a3b8;margin-right:5px'></span>未分類(其他權重)</td><td class='num'>2,271,072</td><td class='num'>8.3%</td><td style='min-width:90px'><div style='background:#0b1220;border-radius:4px;height:6px'><div style='width:17%;background:#94a3b8;height:100%;border-radius:4px'></div></div></td></tr><tr><td><span style='display:inline-block;width:8px;height:8px;border-radius:2px;background:#64748b;margin-right:5px'></span>工業</td><td class='num'>1,571,565</td><td class='num'>5.8%</td><td style='min-width:90px'><div style='background:#0b1220;border-radius:4px;height:6px'><div style='width:12%;background:#64748b;height:100%;border-radius:4px'></div></div></td></tr><tr><td><span style='display:inline-block;width:8px;height:8px;border-radius:2px;background:#06b6d4;margin-right:5px'></span>通訊服務</td><td class='num'>1,390,103</td><td class='num'>5.1%</td><td style='min-width:90px'><div style='background:#0b1220;border-radius:4px;height:6px'><div style='width:10%;background:#06b6d4;height:100%;border-radius:4px'></div></div></td></tr><tr><td><span style='display:inline-block;width:8px;height:8px;border-radius:2px;background:#eab308;margin-right:5px'></span>非核心消費</td><td class='num'>1,324,451</td><td class='num'>4.9%</td><td style='min-width:90px'><div style='background:#0b1220;border-radius:4px;height:6px'><div style='width:10%;background:#eab308;height:100%;border-radius:4px'></div></div></td></tr><tr><td><span style='display:inline-block;width:8px;height:8px;border-radius:2px;background:#f43f5e;margin-right:5px'></span>醫療保健</td><td class='num'>1,287,149</td><td class='num'>4.7%</td><td style='min-width:90px'><div style='background:#0b1220;border-radius:4px;height:6px'><div style='width:9%;background:#f43f5e;height:100%;border-radius:4px'></div></div></td></tr><tr><td><span style='display:inline-block;width:8px;height:8px;border-radius:2px;background:#a16207;margin-right:5px'></span>原物料</td><td class='num'>998,407</td><td class='num'>3.7%</td><td style='min-width:90px'><div style='background:#0b1220;border-radius:4px;height:6px'><div style='width:7%;background:#a16207;height:100%;border-radius:4px'></div></div></td></tr><tr><td><span style='display:inline-block;width:8px;height:8px;border-radius:2px;background:#f59e0b;margin-right:5px'></span>核心消費</td><td class='num'>632,669</td><td class='num'>2.3%</td><td style='min-width:90px'><div style='background:#0b1220;border-radius:4px;height:6px'><div style='width:5%;background:#f59e0b;height:100%;border-radius:4px'></div></div></td></tr><tr><td><span style='display:inline-block;width:8px;height:8px;border-radius:2px;background:#8b5cf6;margin-right:5px'></span>能源</td><td class='num'>631,690</td><td class='num'>2.3%</td><td style='min-width:90px'><div style='background:#0b1220;border-radius:4px;height:6px'><div style='width:5%;background:#8b5cf6;height:100%;border-radius:4px'></div></div></td></tr><tr><td><span style='display:inline-block;width:8px;height:8px;border-radius:2px;background:#14b8a6;margin-right:5px'></span>公用事業</td><td class='num'>389,401</td><td class='num'>1.4%</td><td style='min-width:90px'><div style='background:#0b1220;border-radius:4px;height:6px'><div style='width:3%;background:#14b8a6;height:100%;border-radius:4px'></div></div></td></tr><tr><td><span style='display:inline-block;width:8px;height:8px;border-radius:2px;background:#ec4899;margin-right:5px'></span>不動產</td><td class='num'>267,128</td><td class='num'>1.0%</td><td style='min-width:90px'><div style='background:#0b1220;border-radius:4px;height:6px'><div style='width:2%;background:#ec4899;height:100%;border-radius:4px'></div></div></td></tr></table>
+    <div style="margin-top:6px;padding:6px 10px;background:#0b1220;border-radius:8px;font-size:11.5px;color:#e2e8f0">
+      🏠 <b>實體不動產另計：34,017,063</b>
+      （佔含不動產總資產 56%）— 大義街+洲際W 兩間房，租金 80,100/月
+    </div>
+    <img src='industry_penetration_2026-10-26.png' alt='GICS 產業穿透圖' style='width:100%;border-radius:8px;margin-top:8px'/>
+    <div style="font-size:10.5px;color:var(--sub);margin-top:6px">L1=公開月報權重 L2=公開成分權重 L3=指數基準 L4=名稱/類型推估。2026-09-23 兩階段細化：第一階段 ETF 15 檔改 L2、貝萊德 B11 改 L3、L1/別名補齊；第二階段拆解六檔基金「其他」——安聯收益成長/PIMCO 用官方完整產業表，摩根/聯博/富達/M&G 用官方資產類別＋MSCI World 補權，元大卓越50連結＝0050 權重。未分類 34.6%→8.3%（動態）。剩餘為富達另類資產（黃金/商品）、小型境內基金（路博邁5G/台中銀優息/台新半導體/國泰高股息）與 ETF 指數「其他」桶。⚠️ 本表「固收/現金」為 GICS 研究殘餘桶，非防守比例（防守看五桶穿透合併口徑）</div>
+  </div>
+
+
+  <div class="card" style="margin-top:14px;border-left:4px solid #f59e0b">
+    <h2>🚨 緊急應變併入再平衡（2026-10-23 21:36）</h2>
+    <div style='color:#fbbf24;font-weight:700;margin-bottom:6px;background:#78350f33;border-left:3px solid #f59e0b;padding:6px 8px'>⚠️ 歷史內文（as_of=2026-10-23）：下列內容為當時分析，非 2026-10-26 現況；其中金額已以當日真值覆蓋。</div>
+    <div style="font-size:12px;color:#cbd5e1;line-height:1.7">六、風控檢查】</b>
+・US30Y：5.293%（盤中），警戒區 5.20-5.30，防禦線 5.20、債券新增永久凍結紅線 5.30 → **未觸及**，凍結狀態維持（政策延續）。連續 2 日條件：前日 5.287（<5.30），今晚若收在 5.30 以下則不成立。
+・美股超標：+7.3pp，未達單桶硬上限（美股上限 40%、科技上限 25%，見 thresholds_2026_0915）→ 不觸發強制減碼；且 92% 在後收保單、無 CDSC 前不可賣。
+・台股：11.0% <15% 硬上限 ✅。
+・質押 LTV：50.09%（綠上限 45／黃上限 53／追繳 70／單池上限 50）→ 落黃區，且微幅超過單池 50% 上限 → 停新增、不加碼擔保池。LTV 數值基於 9/28 池報價，需下次對帳單重算。
+・現金：可動用 1,211,940；底線 700,000（單一口徑）；餘裕 511,940。指定款 900,000 不列可動用。
+・美元曝險：69.2%（目標 60／黃 65／紅 70）→ 紅區邊緣；advisory only，不單獨否決任何動作，但任何新增美元部位都應視為「不允許」。
+・未定價風險：台股 10/23 休市（颱風），10/26 補跌；美國第 3 季財報季 AI 資本支出能否轉營收。
+・資料缺口（不得自行假設）：質押月付/扣款日/還本條件仍未核實（pending_decisions 列 P1）→ 本班不做現金流壓力推算，也不把質押月付計入盈餘。
+・本班判定：無 P0 事件、無需授權的新動作。產物為本機生成，未發布。
+</div>
+    <div style="margin-top:8px;font-size:12px"><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_2026-10-23.html" style="color:#f59e0b">📄 查看完整緊急應變報告 →</a></div>
+  </div>
+
+<div class="card" style="margin-top:14px"><h2>🗓 里程碑時程</h2><div class='ms ms-high'><span class='ms-date'>10/29（四）</span><span class='ms-txt'>🏦 質押貸款 590 萬第一期繳款檢核（撥款 9/29 滿月）：確認繳息方式（只繳息／本息攤還）與是否自帳戶扣款；並評估是否需要變更繳款方式</span></div><div class='ms ms-high'><span class='ms-date'>10/30（五）</span><span class='ms-txt'>🔁 洲際W 轉貸復檢—已併入 11/03 檢視日（2026-10-14 裁決）</span></div><div class='ms ms-high'><span class='ms-date'>10/31（六）</span><span class='ms-txt'>✈️ AE1858 胡志明 SGN → 台中清泉崗 RMQ T2（當地 11:20 = 台北 12:20 起飛 / 15:40 抵達；颱風改票重購，原 1…</span></div><div class='ms ms-mid'><span class='ms-date'>11/1（日）</span><span class='ms-txt'>🔁 洲際W 提早轉貸評估—已併入 11/03 檢視日（2026-10-14 裁決）</span></div><div class='ms ms-high'><span class='ms-date'>11/3（二）</span><span class='ms-txt'>📅 洲際W 轉貸檢視日（2026-10-14 裁決③：檢視≠轉貸授權）</span></div><div class='ms ms-high'><span class='ms-date'>11/5（四）</span><span class='ms-txt'>女友還款（每月6,000）</span></div><div class='ms ms-high'><span class='ms-date'>質押</span><span class='ms-txt'>整池質押 質押 590萬@2.65%（2026-09-29 使用者確認；原記 2.77%，待銀行書面覆核）（已撥款）</span></div></div>
+
+<div class="foot">資料來源：snapshot.json（2026-10-26）+ radar_state.json（機構流向雷達）｜build_rebalance_dashboard.py 動態生成</div>
+</div></body></html>
