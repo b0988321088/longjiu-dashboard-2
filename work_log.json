@@ -1746,5 +1746,17 @@
   "category": "完成",
   "item": "Pending 結案 6 筆＋台股三卡併一卡（使用者 2026-10-24 核准）：21 → 13 筆",
   "detail": "結案：保單不變式（複驗 B 逐檔＝2,611,224 差 0）／10/1 三重截止日（已轉常態閘門）／US30Y 紅線期 5 件動作（500 萬高息已清、現金 2,111,940）／保單B 分批（批1 執行、批2 被 9/14 定案取代）／薪資口徑 P1（三語意已定版）／審查主層 Gemini（10/18 關案，行政歸檔）。併卡：台股解凍 3 卡 → 「台股解凍後分批規則定版」。全部先寫 pending_decisions_archive.json（含 cleanup_reason）再移出正本。"
+ },
+ {
+  "date": "2026-10-25",
+  "category": "完成",
+  "item": "日報2026-10-25（已產出（金額見 snapshot／當日日報檔，勿在此複寫數字））",
+  "detail": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）"
+ },
+ {
+  "date": "2026-10-25",
+  "category": "完成",
+  "item": "資產穿透2026-10-25（已產出（五桶市值見 snapshot.penetration.actual_twd））",
+  "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
  }
 ]
