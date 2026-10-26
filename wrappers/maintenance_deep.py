@@ -37,5 +37,13 @@ except Exception as e:                                     # import 失敗＝自
 
 r = subprocess.run([sys.executable, TARGET, "deep"], cwd=REPO)
 
+# 2026-10-26 修正（cron 4c96c0dc93fd 連續失敗根因）：
+#   OWN 於 2026-10-19 裁決清空（產物全移到 repo 外的 state_store），但本檔仍無條件呼叫
+#   commit_own()；commit_own 的 fail-closed 契約是「allowlist 為空＝拒絕」（不得用空清單
+#   放行整棵樹）→ 每週一回傳 rc=2、cron 一律判失敗，deep 本體其實已跑完。
+#   正解：沒有自家產物就不進提交出口，直接把 producer rc 原樣帶回（本體故障仍看得到）。
+if not OWN:
+    sys.exit(r.returncode)
+
 # 推送失敗要讓 cron 看得到（rc 原樣帶回），deep 本體失敗也不得被靜默
 sys.exit(commit_own("maintenance_deep.py", OWN, producer_rc=r.returncode))
