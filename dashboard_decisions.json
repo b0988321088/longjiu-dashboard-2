@@ -11420,6 +11420,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261026225105-1234",
+    "timestamp": "2026-10-26T22:51:05.245343+08:00",
+    "agent": "Hermes",
+    "task": "維護鏈修復：週深清 cron 空 allowlist 自殺",
+    "summary": "2026-10-26 修復（f4c01826）：wrappers/maintenance_deep.py 的 OWN 於 10/19 裁決清空後仍無條件呼叫 commit_own()，撞上其『空 allowlist=拒絕』fail-closed 契約 → 每週一回 rc=2（deep 本體其實已跑完）。改為無自家產物即跳過提交出口、原樣帶回 producer rc。以 cron 實際入口（hermes/scripts 鏡像）實跑驗 rc=0；同日完成深度清理（4 支淘汰腳本、work_log 歸檔 52 筆、舊快取 204 檔、Gmail 約 9,993 封貼標歸檔、Notion 5 筆逾齡備份僅報告）。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-26T21:38:40.704487"
