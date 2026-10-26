@@ -11410,6 +11410,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261026225056-1233",
+    "timestamp": "2026-10-26T22:50:56.656619+08:00",
+    "agent": "Hermes",
+    "task": "發布閘門 F1 mtd 契約三分法＋基準滾動",
+    "summary": "2026-10-25 核准施工並上線（671d08c2，CIO RECORD tree c93f3a04）：mtd_performance.html 每日重產（含當日損益與 period.end）→ 原契約把 as_of 變動一律判『閉月已推進』FAIL，安裝隔天起每天 07:00 必擋。改三分法：同月 as_of 推進=PASS（記錄不靜默）／同 as_of 內容變=FAIL 真漂移／跨月或 as_of 倒退=FAIL 要人工。gate_baseline_mtd.json 滾至 2026-10-25 真值＋approval_ref。五分支負向測試全過。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-26T21:38:40.704487"
