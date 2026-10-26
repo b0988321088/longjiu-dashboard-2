@@ -1402,5 +1402,29 @@
   "category": "完成",
   "item": "資產穿透2026-10-25（已產出（五桶市值見 snapshot.penetration.actual_twd））",
   "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-10-26",
+  "category": "修正",
+  "item": "INC：07:00 晨間產線被房租閘門擋班（rent_monthly_gap 月內未重算）",
+  "detail": "根因：rent_monthly_gap 唯一寫入者 monthly_rollover 只在每月 1 日跑，10/24 二三樓 21,000＋管理費 2,100 入帳後無人重算 → gap 停在 23,100，儀表板逐項待收即時算出 0 → check_dashboard_sync 第 14 條擋下整班（regenerate_report rc=1）。修法：①資料校正 gap 23,100→0、passive_income.dividend_actual_sum 0→183,012（ecd57afc）②新增 run_daily.reconcile_month_derived()（共用 monthly_rollover.compute、僅偏離>0.5 才寫檔、無漂移零 diff），run_daily/regenerate_report 兩條產線各呼叫一次（b7782449，CIO RECORD）。驗證：注入漂移可回正、冪等、four_source_sync 四源一致、閘門全過。"
+ },
+ {
+  "date": "2026-10-26",
+  "category": "修正",
+  "item": "INC：月度比較閘門 F1 mtd 漂移契約與每日重產頁面衝突",
+  "detail": "根因：gate_baseline_mtd.json 凍結 mtd_performance.html 的 content_sha256＋as_of（取自 mtd_data.period.end），而該頁每天由 build_mtd_report 重產、period.end 隨交易日前進 → 安裝（10/24）隔天起每天 07:00 必 FAIL（17 檔待推被 fail-closed 擋下）。修法（671d08c2，CIO RECORD tree c93f3a04）：mtd_content_drift 改三分法 — 同月 as_of 推進＝PASS 並記錄、同 as_of 內容變＝FAIL 真漂移、跨月或 as_of 倒退＝FAIL 需人工；基準滾至 2026-10-25 真值＋approval_ref。五分支（含 as_of 倒退）負向測試全過，F1 五項全綠後晨間產線 rc=0 走完 push＋Pages。"
+ },
+ {
+  "date": "2026-10-26",
+  "category": "修正",
+  "item": "INC：週深清 cron 每週失敗（self_publish 空 allowlist）",
+  "detail": "根因：wrappers/maintenance_deep.py 的 OWN 清單於 10/19 裁決清空（產物移 repo 外 state_store），檔尾仍無條件 commit_own(...) → 撞 commit_own『空 allowlist＝拒絕』fail-closed 契約，固定回 rc=2，而 deep 本體其實跑完（cron 每週誤報失敗）。修法 f4c01826：無自家產物即 sys.exit(producer_rc)、不進提交出口。驗證：以 cron 實際入口 hermes/scripts/maintenance_deep.py 實跑 REAL_RC=0（18:47 與 08:13 各一次），鏡像逐位元一致。"
+ },
+ {
+  "date": "2026-10-26",
+  "category": "完成",
+  "item": "每週深度清理實跑（系統＋Gmail＋Notion）",
+  "detail": "系統：淘汰 4 支無用產線腳本、schedule_events 移 2 筆過期（10/25 航班）、work_log 歸檔 52 筆至 state_store/archive/work_log_archive_20261026.json（可回溯）、舊 LLM 快取 204 檔（皆 10/05-10/12、無當日檔）、__pycache__ 3 目錄；13 個受版控備份檔正確跳過；零引用腳本 0 支。Gmail：約 9,993 封貼標＋歸檔。Notion：221 筆分析庫，逾 60 天備份 5 筆僅報告（未 --fix）。21:40 快取稽核 removed=204 經查全為 >14 天舊快取、當日 5 檔完好、llm_archive 736 檔耐久鏡像在，判定正常。"
  }
 ]
