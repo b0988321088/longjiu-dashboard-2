@@ -11400,6 +11400,16 @@
       "status": "completed",
       "source": "auto"
     }
+,
+  {
+    "id": "mem-20261026225048-1232",
+    "timestamp": "2026-10-26T22:50:48.114716+08:00",
+    "agent": "Hermes",
+    "task": "月內衍生欄位重算＋房租待收口徑修復",
+    "summary": "2026-10-25 核准施工並上線（ecd57afc 資料／b7782449 程式）：rent_monthly_gap 月內入帳後無人重算 → 07:00 閘門第 14 條擋班。新增 run_daily.reconcile_month_derived()（共用 monthly_rollover.compute、僅偏離>0.5 才寫檔），run_daily 與 regenerate_report 兩條產線各呼叫一次；passive_income.dividend_actual_sum 同類漂移（0 vs 183,012）一併納入。驗證：無漂移零 diff、注入漂移可回正、冪等。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-26T21:38:40.704487"
