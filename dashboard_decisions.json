@@ -11399,42 +11399,39 @@
       "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "id": "mem-20261026225048-1232",
+      "timestamp": "2026-10-26T22:50:48.114716+08:00",
+      "agent": "Hermes",
+      "task": "月內衍生欄位重算＋房租待收口徑修復",
+      "summary": "2026-10-25 核准施工並上線（ecd57afc 資料／b7782449 程式）：rent_monthly_gap 月內入帳後無人重算 → 07:00 閘門第 14 條擋班。新增 run_daily.reconcile_month_derived()（共用 monthly_rollover.compute、僅偏離>0.5 才寫檔），run_daily 與 regenerate_report 兩條產線各呼叫一次；passive_income.dividend_actual_sum 同類漂移（0 vs 183,012）一併納入。驗證：無漂移零 diff、注入漂移可回正、冪等。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261026225056-1233",
+      "timestamp": "2026-10-26T22:50:56.656619+08:00",
+      "agent": "Hermes",
+      "task": "發布閘門 F1 mtd 契約三分法＋基準滾動",
+      "summary": "2026-10-25 核准施工並上線（671d08c2，CIO RECORD tree c93f3a04）：mtd_performance.html 每日重產（含當日損益與 period.end）→ 原契約把 as_of 變動一律判『閉月已推進』FAIL，安裝隔天起每天 07:00 必擋。改三分法：同月 as_of 推進=PASS（記錄不靜默）／同 as_of 內容變=FAIL 真漂移／跨月或 as_of 倒退=FAIL 要人工。gate_baseline_mtd.json 滾至 2026-10-25 真值＋approval_ref。五分支負向測試全過。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261026225105-1234",
+      "timestamp": "2026-10-26T22:51:05.245343+08:00",
+      "agent": "Hermes",
+      "task": "維護鏈修復：週深清 cron 空 allowlist 自殺",
+      "summary": "2026-10-26 修復（f4c01826）：wrappers/maintenance_deep.py 的 OWN 於 10/19 裁決清空後仍無條件呼叫 commit_own()，撞上其『空 allowlist=拒絕』fail-closed 契約 → 每週一回 rc=2（deep 本體其實已跑完）。改為無自家產物即跳過提交出口、原樣帶回 producer rc。以 cron 實際入口（hermes/scripts 鏡像）實跑驗 rc=0；同日完成深度清理（4 支淘汰腳本、work_log 歸檔 52 筆、舊快取 204 檔、Gmail 約 9,993 封貼標歸檔、Notion 5 筆逾齡備份僅報告）。",
+      "status": "completed",
+      "source": "user"
     }
-,
-  {
-    "id": "mem-20261026225048-1232",
-    "timestamp": "2026-10-26T22:50:48.114716+08:00",
-    "agent": "Hermes",
-    "task": "月內衍生欄位重算＋房租待收口徑修復",
-    "summary": "2026-10-25 核准施工並上線（ecd57afc 資料／b7782449 程式）：rent_monthly_gap 月內入帳後無人重算 → 07:00 閘門第 14 條擋班。新增 run_daily.reconcile_month_derived()（共用 monthly_rollover.compute、僅偏離>0.5 才寫檔），run_daily 與 regenerate_report 兩條產線各呼叫一次；passive_income.dividend_actual_sum 同類漂移（0 vs 183,012）一併納入。驗證：無漂移零 diff、注入漂移可回正、冪等。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261026225056-1233",
-    "timestamp": "2026-10-26T22:50:56.656619+08:00",
-    "agent": "Hermes",
-    "task": "發布閘門 F1 mtd 契約三分法＋基準滾動",
-    "summary": "2026-10-25 核准施工並上線（671d08c2，CIO RECORD tree c93f3a04）：mtd_performance.html 每日重產（含當日損益與 period.end）→ 原契約把 as_of 變動一律判『閉月已推進』FAIL，安裝隔天起每天 07:00 必擋。改三分法：同月 as_of 推進=PASS（記錄不靜默）／同 as_of 內容變=FAIL 真漂移／跨月或 as_of 倒退=FAIL 要人工。gate_baseline_mtd.json 滾至 2026-10-25 真值＋approval_ref。五分支負向測試全過。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261026225105-1234",
-    "timestamp": "2026-10-26T22:51:05.245343+08:00",
-    "agent": "Hermes",
-    "task": "維護鏈修復：週深清 cron 空 allowlist 自殺",
-    "summary": "2026-10-26 修復（f4c01826）：wrappers/maintenance_deep.py 的 OWN 於 10/19 裁決清空後仍無條件呼叫 commit_own()，撞上其『空 allowlist=拒絕』fail-closed 契約 → 每週一回 rc=2（deep 本體其實已跑完）。改為無自家產物即跳過提交出口、原樣帶回 producer rc。以 cron 實際入口（hermes/scripts 鏡像）實跑驗 rc=0；同日完成深度清理（4 支淘汰腳本、work_log 歸檔 52 筆、舊快取 204 檔、Gmail 約 9,993 封貼標歸檔、Notion 5 筆逾齡備份僅報告）。",
-    "status": "completed",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-26T21:38:40.704487"
+    "updated_at": "2026-10-27T07:00:17.305621"
   },
-  "last_updated": "2026-10-26T18:00:00+08:00",
+  "last_updated": "2026-10-27T18:00:00+08:00",
   "2026-09-29": [
     "9/29 質押撥款入帳 NT$5,900,000（10:57，國泰世華通知；實撥 590 萬@2.65%，原表定 540 萬@2.77%）→ 真值日全資產同步：現金 6,719,182／保單 9,453,825／基金 12,654,144／台股 2,981,410／總資產 31,808,561、負債 36,003,720（含基金質押 590 萬）、淨值 -4,195,159；銀行口徑 LTV 50.1%。待執行：清償 500 萬高息（券商 96 萬@3.92% 先、保單 400 萬@4% 後）",
     "9/29 裁示：質押撥款 590 萬先轉 200 萬還保單借貸（4% → 月省 6,667；保單借貸 400 萬 → 200 萬）；撥款剩餘 3,900,000。順序調整：保單（4%）優先於券商（3.92%）。待入帳確認後四源同步。",

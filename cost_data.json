@@ -1,19 +1,9 @@
 {
- "generated_at": "2026-10-26 23:55",
+ "generated_at": "2026-10-27 07:00",
  "days": 14,
  "ledger_rows": 48,
  "backfilled": [],
  "series": [
-  {
-   "date": "2026-10-13",
-   "ds_twd": 74,
-   "gemini_twd": 0,
-   "free_twd": 0,
-   "total_twd": 74,
-   "calls": 1285,
-   "cer": 0,
-   "q429": 0
-  },
   {
    "date": "2026-10-14",
    "ds_twd": 50,
@@ -151,26 +141,26 @@
   "q429": 0
  },
  "week": {
-  "last7_total": 216,
-  "last7_daily_avg": 31,
+  "last7_total": 176,
+  "last7_daily_avg": 25,
   "last7_days": 7,
-  "prev7_total": 356,
-  "prev7_daily_avg": 59,
+  "prev7_total": 325,
+  "prev7_daily_avg": 54,
   "prev7_days": 6,
-  "wow_pct": -48,
+  "wow_pct": -54,
   "wow_basis": "daily_avg（日均比較；兩邊天數可能不同）",
-  "median_day": 39,
-  "ds": 216,
+  "median_day": 17,
+  "ds": 176,
   "gemini": 0,
   "free": 0,
   "breakdown": {
    "ds": {
-    "total_twd": 216,
-    "avg_twd": 30.9,
-    "median_twd": 39,
-    "ratio": 0.79,
+    "total_twd": 176,
+    "avg_twd": 25.1,
+    "median_twd": 17,
+    "ratio": 1.48,
     "level": "normal",
-    "top3_share": 0.66,
+    "top3_share": 0.79,
     "days": 7,
     "cer_days": 0
    },
@@ -197,13 +187,13 @@
    "free_calls": 0,
    "days": 7,
    "dates": [
-    "2026-10-19",
     "2026-10-20",
     "2026-10-21",
     "2026-10-22",
     "2026-10-23",
     "2026-10-24",
-    "2026-10-25"
+    "2026-10-25",
+    "2026-10-26"
    ]
   }
  },
@@ -282,16 +272,6 @@
   "paid_backup_on_cer_days_upper_twd": 0,
   "series": [
    {
-    "date": "2026-10-19",
-    "cer": 0,
-    "q429": 0,
-    "calls": 879,
-    "gemini_calls": 0,
-    "free_calls": 0,
-    "gemini_twd": 0,
-    "ds_twd": 43
-   },
-   {
     "date": "2026-10-20",
     "cer": 0,
     "q429": 0,
@@ -350,6 +330,16 @@
     "free_calls": 0,
     "gemini_twd": 0,
     "ds_twd": 6
+   },
+   {
+    "date": "2026-10-26",
+    "cer": 0,
+    "q429": 0,
+    "calls": 152,
+    "gemini_calls": 0,
+    "free_calls": 0,
+    "gemini_twd": 0,
+    "ds_twd": 3
    }
   ],
   "note": "CER＝DeepSeek 內容風控擋下的呼叫數。spillover_strict_twd＝只算「CER ≥ 門檻且免費接手率 < 門檻」的日子（推定值，最接近風控逼出來的付費）。paid_backup_on_cer_days_upper_twd＝CER 當日的全部 Gemini 花費（僅為上限，含非 CER 任務，不可當成外溢成本）。streak_capped=true 表示已回溯到帳本最早一天，真實連續天數可能更長。"
