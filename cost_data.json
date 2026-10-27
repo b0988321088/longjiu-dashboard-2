@@ -1,8 +1,10 @@
 {
- "generated_at": "2026-10-27 18:30",
+ "generated_at": "2026-10-27 21:34",
  "days": 14,
- "ledger_rows": 48,
- "backfilled": [],
+ "ledger_rows": 49,
+ "backfilled": [
+  "2026-10-27"
+ ],
  "series": [
   {
    "date": "2026-10-14",
@@ -133,10 +135,20 @@
    "calls": 152,
    "cer": 0,
    "q429": 0
+  },
+  {
+   "date": "2026-10-27",
+   "ds_twd": 1,
+   "gemini_twd": 0,
+   "free_twd": 0,
+   "total_twd": 1,
+   "calls": 25,
+   "cer": 0,
+   "q429": 0
   }
  ],
  "today": {
-  "total_twd": 3,
+  "total_twd": 1,
   "cer": 0,
   "q429": 0
  },
@@ -198,7 +210,7 @@
   }
  },
  "wallets": {
-  "ds_balance_cny": 224.15,
+  "ds_balance_cny": 224.12,
   "ds_balance_twd": 1060,
   "ds_source": "API",
   "ds_daily_twd": 25,
@@ -348,15 +360,15 @@
  "governance": {
   "baseline_date": "2026-09-22",
   "start_date": "2026-09-23",
-  "days": 34,
-  "ds_twd": 1723.0,
+  "days": 35,
+  "ds_twd": 1724.0,
   "gem_twd": 3.0,
   "free_twd": 0.0,
   "free_calls": 560,
-  "calls": 32202,
+  "calls": 32227,
   "cer": 159,
   "pending": false,
-  "total_twd": 1726.0
+  "total_twd": 1727.0
  },
  "page": {
   "top_n": 3,

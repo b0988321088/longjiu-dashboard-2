@@ -11426,10 +11426,28 @@
       "summary": "2026-10-26 修復（f4c01826）：wrappers/maintenance_deep.py 的 OWN 於 10/19 裁決清空後仍無條件呼叫 commit_own()，撞上其『空 allowlist=拒絕』fail-closed 契約 → 每週一回 rc=2（deep 本體其實已跑完）。改為無自家產物即跳過提交出口、原樣帶回 producer rc。以 cron 實際入口（hermes/scripts 鏡像）實跑驗 rc=0；同日完成深度清理（4 支淘汰腳本、work_log 歸檔 52 筆、舊快取 204 檔、Gmail 約 9,993 封貼標歸檔、Notion 5 筆逾齡備份僅報告）。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261027213711-1235",
+      "timestamp": "2026-10-27T21:37:11.210883",
+      "agent": "Hermes",
+      "task": "日報2026-10-27",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261027213711-1236",
+      "timestamp": "2026-10-27T21:37:11.264884",
+      "agent": "Hermes",
+      "task": "資產穿透2026-10-27",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
     }
   ],
   "meta": {
-    "updated_at": "2026-10-27T07:00:17.305621"
+    "updated_at": "2026-10-27T21:37:11.266898"
   },
   "last_updated": "2026-10-27T18:00:00+08:00",
   "2026-09-29": [

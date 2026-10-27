@@ -24,6 +24,5 @@
 • report-editing-safety："修改日報 HTML/CSS 安全規則：禁 write_file 覆蓋大 .py、改排版先載入 formatting 規則、截圖確認後推。"
 • report-formatting-rules：|
 • screenshot-update-sop：截圖/檔案更新SOP — 辨識→確認→同步一次到位
-• team-mindset-and-evolution：團隊心態、自主進化、三層派工與費用意識
 • user-delivery-workflow：使用者交付工作流與連結處理規範 — 2026-07-26 教訓
 • yuanbao："Yuanbao (元宝) groups: @mention users, query info/members."

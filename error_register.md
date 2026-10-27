@@ -1828,3 +1828,8 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 [CALIBRATE] 三源校準失敗：{'firstjin_value': False}
 
 - 狀態: ⏳ 待處理 (總計 1 次)
+
+## INCIDENT 287a14bf (four_source_sync)
+- 首次發生: 2026-10-27 21:38:47
+- 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)
