@@ -32,9 +32,21 @@ if Path(__file__).parent.parent.parent / "skills":
     except Exception as e:
         result["actions"].append(f"技能摘要失敗：{e}")
 
-# 2. 記憶容量提醒
-result["actions"].append("請執行 `memory(action='list')` 檢查容量，必要時移除低頻條目")
-result["actions"].append("低頻判定：INC記錄(已存ERROR_LOG)、超過1個月未更新的設定、已穩定的決策")
+# 2. 記憶容量（讀真實檔案算字元，不猜）
+MEM_DIR = Path.home() / "AppData/Local/hermes/memories"
+for fname, limit in (("MEMORY.md", 2200), ("USER.md", 1375)):
+    p = MEM_DIR / fname
+    if not p.exists():
+        continue
+    used = len(p.read_text(encoding="utf-8"))
+    pct = used / limit * 100
+    tag = "MEMORY" if fname == "MEMORY.md" else "USER"
+    if fname == "MEMORY.md":
+        result["memory_pct"] = f"{pct:.0f}%"
+    result["actions"].append(f"{tag} 容量：{used:,}/{limit:,} 字元（{pct:.0f}%）")
+    if pct >= 90:
+        result["actions"].append(f"{tag} ≥90% → 用 memory(operations=[...]) 單批合併／刪除低頻條目（無 list 動作）")
+result["actions"].append("低頻判定：已清償或已過期事件、超過1個月未更新的設定、已定案且穩定的決策")
 
 # 3. ERROR_LOG 摘要
 try:
@@ -47,8 +59,8 @@ try:
 except:
     pass
 
-# 4. 記憶體重塑建議
-result["actions"].append("記憶體重塑建議：技能摘要已快取 → memory 中可移除舊技能描述")
+# 4. 記憶體重塑提示（技能描述由 skills 索引載入，不佔 memory）
+result["actions"].append("技能描述不存 memory（由 skills 索引載入）→ 不需為此刪條目；只在 >90% 時合併")
 
 CACHE.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
 print(f"📦 記憶歸檔檢查 — {today}")
