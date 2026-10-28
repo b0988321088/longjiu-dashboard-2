@@ -11493,6 +11493,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261028200201-1242",
+    "timestamp": "2026-10-28T20:02:01.858217+08:00",
+    "agent": "Hermes",
+    "task": "解封九月：9 月 net 契約改基 6,315→26,015 並發布",
+    "summary": "使用者 2026-10-28 08:15 明示『解封九月』。9 月安聯保單撥回 71,869→91,569、9 月配息 190,286、10 月 183,066 不動；tools/verify_performance_core_task12.py 的 2026-09 期望 net 改基並註明授權來源（非測試紅就改期望值）；契約 --contract-only PASS 15/0、月度閘門 PASS、mtd 頁顯示 26,015；發布 218f2871。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-10-28T08:17:20.624113"
