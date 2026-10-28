@@ -34,6 +34,11 @@ DAILY_REPORT = BASE / f"daily_report_v2_{TODAY}.html"
 INDEX_FILE = BASE / "index.html"
 SNAPSHOT = BASE / "snapshot.json"
 
+# 2026-10-28：7/17 轉貸倒數守門的專用樣式（避免裸字串造成假陽性，見 §9 註解）
+_stale_countdown = re.compile(
+    r"(?:7[/\-]17|7月17)[^<]{0,40}?剩\s*\d+\s*天"
+    r"|剩\s*\d+\s*天[^<]{0,40}?(?:7[/\-]17|7月17)")
+
 
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
@@ -182,10 +187,14 @@ def main() -> None:
     pass_check("簡體字檢查：已放寬，不阻擋推送")
 
 
-    # 9. 7/17 國泰轉貸倒數正確（今天 7/16 剩 1 天）
-    if "剩 3 天" in daily or "剩 3 天" in idx:
-        fail("7/17 轉貸倒數仍顯示 3 天")
-    pass_check("7/17 轉貸倒數正確")
+    # 9. 7/17 國泰轉貸「倒數」不得殘留（歷史守門，2026-07 事件）
+    #    2026-10-28 修正假陽性：原寫法是裸字串 `"剩 3 天" in idx`，會被完全無關的散文命中
+    #    （實例：CIO Part B「距到期只剩 3 天」，講的是 10/30 到期／11/02 審計，
+    #      9/25 起每日 21:30 班都被判「7/17 轉貸倒數仍顯示 3 天」，屬既有 P1 假紅）。
+    #    守門意圖不變：只抓「7/17 轉貸」語境下的倒數，不抓一般天數描述。
+    if _stale_countdown.search(daily) or _stale_countdown.search(idx):
+        fail("7/17 轉貸倒數仍殘留（7/17 語境 + 剩 N 天）")
+    pass_check("7/17 轉貸倒數正確（無殘留倒數）")
 
     # 8. 巴菲特分析強化審查（動態嵌入版：檢查結構完整而非硬編碼字串）
     # 2026-08-12 對齊現行 buffett_cto_analyzer 輸出結構（主要風險/總投資部位/策略建議），
