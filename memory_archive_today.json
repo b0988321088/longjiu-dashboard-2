@@ -1,13 +1,16 @@
 {
-  "date": "2026-10-27",
-  "memory_pct": "?",
+  "date": "2026-10-28",
+  "memory_pct": "90%",
   "skills_count": 28,
   "actions": [
     "技能摘要：28 個已更新",
-    "請執行 `memory(action='list')` 檢查容量，必要時移除低頻條目",
-    "低頻判定：INC記錄(已存ERROR_LOG)、超過1個月未更新的設定、已穩定的決策",
+    "MEMORY 容量：1,990/2,200 字元（90%）",
+    "MEMORY ≥90% → 用 memory(operations=[...]) 單批合併／刪除低頻條目（無 list 動作）",
+    "USER 容量：1,302/1,375 字元（95%）",
+    "USER ≥90% → 用 memory(operations=[...]) 單批合併／刪除低頻條目（無 list 動作）",
+    "低頻判定：已清償或已過期事件、超過1個月未更新的設定、已定案且穩定的決策",
     "INC 記錄：1 條（詳見 error_summary_cache.txt）",
-    "記憶體重塑建議：技能摘要已快取 → memory 中可移除舊技能描述"
+    "技能描述不存 memory（由 skills 索引載入）→ 不需為此刪條目；只在 >90% 時合併"
   ],
   "inc_count": 1
 }
