@@ -52,9 +52,9 @@ for kw, new_id in TARGETS:
     pending.remove(hit[0])
     closed.append(card.get("title", "")[:48])
 
-ARCHIVE.write_text(json.dumps(archive, ensure_ascii=False, indent=1).replace("\n", "\r\n"),
+ARCHIVE.write_text(json.dumps(archive, ensure_ascii=False, indent=2).replace("\n", "\r\n"),
                    encoding="utf-8", newline="")
-PENDING.write_text(json.dumps(pending, ensure_ascii=False, indent=1).replace("\n", "\r\n"),
+PENDING.write_text(json.dumps(pending, ensure_ascii=False, indent=2).replace("\n", "\r\n"),
                    encoding="utf-8", newline="")
 
 print(f"✅ 結案 {len(closed)} 筆（pending {len(pending)} 張，archive {len(archive)} 筆）")
