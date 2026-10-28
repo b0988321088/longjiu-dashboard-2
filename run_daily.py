@@ -2494,12 +2494,16 @@ def build_cc_rows() -> str:
                         if _bank not in _latest or _due > _latest[_bank][0]:
                             _latest[_bank] = (_due, _amt)
             for _bank, (_due, _amt) in _latest.items():
+                # 2026-10-28：帳單金額 0（如玉山 10/22 帳單 0.00）不再整列消失 —— 使用者要求四大信用卡
+                # 一律列管，cio_review 也要求四個行名都在日報；缺列會被判「四大信用卡未完整列出」而擋推送。
+                _due_md = "/".join(_due.split("/")[1:]) if "/" in _due else _due
+                # 2026-08-06：截止日已過 → 標「已截止」待下期帳單，不再顯示待扣繳
+                _due_full = _due if "/" in _due else ""
                 if _amt > 0:
-                    _due_md = "/".join(_due.split("/")[1:]) if "/" in _due else _due
-                    # 2026-08-06：截止日已過 → 標「已截止」待下期帳單，不再顯示待扣繳
-                    _due_full = _due if "/" in _due else ""
                     _status = "🔄 待扣繳" if _due_full >= date.today().strftime("%Y/%m/%d") else "⏳ 已截止（待下期帳單）"
-                    _rows.append(f'          <tr><td>{_bank}</td><td>{_cc_map[_bank]}</td><td>{_due_md}</td><td class="num">{int(_amt):,}</td><td>{_status}</td></tr>')
+                else:
+                    _status = "✅ 本期無應繳（帳單 0）"
+                _rows.append(f'          <tr><td>{_bank}</td><td>{_cc_map[_bank]}</td><td>{_due_md}</td><td class="num">{int(_amt):,}</td><td>{_status}</td></tr>')
         except Exception:
             _rows = []
     # 2) 兜底：snapshot.json 四源校準信用卡資料（credit_card dict，合計=credit_card_pending）

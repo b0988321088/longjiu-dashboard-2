@@ -11,6 +11,10 @@
     1. tree 綁定（被審 commit 的 tree 與 git 實際相符）
     2. AST 可解析（performance_core.py / build_mtd_report.py / build_investment_performance.py）
     3. performance_core 重現三個閉月 net：2026-07 100,649｜2026-08 428,802｜2026-09 6,315
+       ⚠️ 2026-10-28 使用者裁示「解封九月」→ 2026-09 改基為 26,015。
+          原因：Moneybook 明細對帳發現安聯 10/01 入帳 2 筆（6,442＋13,258＝19,700）屬 9 月基準撥回，
+          依 9/4 應收制歸 9 月（9 月安聯保單撥回 71,869→91,569）。7/8 月未動。
+          此改基為明示授權的契約變更，非「測試失敗就改期望值」的鬆綁。
     4. A/B 逐位元：舊版（parent commit）vs 新版（工作區）
          · mtd_performance.html / mtd_data.json → 相同（僅遮罩 generated_at 時間戳）
          · investment_performance.html → 完全相同
@@ -120,7 +124,8 @@ import performance_core as pc  # noqa: E402
 _snap = json.loads((REPO / "snapshot.json").read_text(encoding="utf-8"))
 _adj = json.loads((REPO / "investment_performance_adjust.json").read_text(encoding="utf-8"))
 _db = sqlite3.connect(str(REPO / "dragon_assets.db"))
-for _ym, _want in (("2026-07", 100649), ("2026-08", 428802), ("2026-09", 6315)):
+# 2026-10-28 使用者裁示「解封九月」：2026-09 net 6,315 → 26,015（+19,700 安聯 10/01 撥回歸 9 月）
+for _ym, _want in (("2026-07", 100649), ("2026-08", 428802), ("2026-09", 26015)):
     _r = pc.monthly_performance(_ym, snap=_snap, adjust_all=_adj, db=_db)
     chk(f"{_ym} net = {_want:,}", abs(_r["net"] - _want) < 0.5, f"實得 {_r['net']:,.0f}")
 _db.close()
