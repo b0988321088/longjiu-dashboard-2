@@ -1,13 +1,13 @@
 {
   "mode": "A",
-  "streak": 41,
-  "last_rate": 5.301,
-  "last_date": "2026-10-26",
-  "checked_at": "2026-10-27",
-  "mode_label": "模式A｜防禦（警戒區 5.20-5.30）｜⚠️ 宏觀風險警示 ≥5.3%（連續 2 交易日；長天期債券新增買單凍結，不否決台股分批 v1.2）",
+  "streak": 42,
+  "last_rate": 5.305,
+  "last_date": "2026-10-27",
+  "checked_at": "2026-10-28",
+  "mode_label": "模式A｜防禦（警戒區 5.20-5.30）｜⚠️ 宏觀風險警示 ≥5.3%（連續 3 交易日；長天期債券新增買單凍結，不否決台股分批 v1.2）",
   "red_line": true,
   "data_source": "FRED+Yahoo",
-  "mode_a_streak": 41,
-  "red_line_streak": 2,
+  "mode_a_streak": 42,
+  "red_line_streak": 3,
   "red_line_since": "2026-10-23"
 }
