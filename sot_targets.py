@@ -1350,15 +1350,46 @@ def repayment_valve(snap: dict) -> dict:
         _p = (snap or {}).get("cathay_pledge_0911") or {}
         _mp = _p.get("月付") or _p.get("月付金額")
         _tp = str(_p.get("還本方式") or "")
-        if isinstance(_mp, (int, float)) and not isinstance(_mp, bool) and _mp > 0:
+        # 2026-10-28（使用者確認「到期日一年」）：**到期一次還本（bullet）必須優先於「只繳息」判定**。
+        #   實踩風險：還本方式若寫成「只繳息、到期一次還本」，舊版會命中下面的「繳息」分支
+        #   → applied＝只繳息 → 月盈餘不轉負 → 閥門轉綠，等於用「每月只付利息」掩蓋
+        #   「12 個月後要一次拿出 590 萬」的本金風險。載明 bullet 時，判定情境一律用 R1 月提存。
+        _bullet = any(t in _tp for t in ("到期一次還本", "到期還本", "一次清償", "bullet", "到期清償"))
+        if _bullet:
+            _n = None
+            _m = re.search(r"(\d+)\s*個月", _tp) or re.search(r"(\d+)\s*個?月\s*到期", _tp)
+            if _m:
+                _n = int(_m.group(1))
+            else:
+                _y = re.search(r"(\d+)\s*年", _tp)
+                if _y:
+                    _n = int(_y.group(1)) * 12
+            if _n is None:
+                _dd = str(_p.get("到期日") or "")
+                _md = re.search(r"(\d{4})[-/](\d{2})[-/](\d{2})", _dd)
+                if _md:
+                    from datetime import date as _d
+                    try:
+                        _due = _d(int(_md.group(1)), int(_md.group(2)), int(_md.group(3)))
+                        _start = _d(2026, 9, 29)   # 撥款日（pledge_disbursement_20260929）
+                        _n = max(1, round((_due - _start).days / 30.44))
+                    except ValueError:
+                        _n = None
+            if _n:
+                _pay = loan / _n
+                applied = {"代號": f"U1 實際條款（到期一次還本 {_n} 個月，月提存）",
+                           "月付": round(_pay), "月盈餘": round(surplus - _pay),
+                           "轉負": (surplus - _pay) < 0,
+                           "類型": f"{_tp}｜到期一次還本：需在 {_n} 個月內累積 {round(loan):,}"}
+        if applied is None and isinstance(_mp, (int, float)) and not isinstance(_mp, bool) and _mp > 0:
             applied = {"代號": "U1 實際條款（月付）", "月付": round(float(_mp)),
                        "月盈餘": round(surplus - float(_mp)),
                        "轉負": (surplus - float(_mp)) < 0, "類型": _tp or "依銀行書面"}
-        elif ("只繳息" in _tp or "繳息" in _tp or "利息" in _tp or "循環" in _tp or "續約" in _tp):
+        elif applied is None and ("只繳息" in _tp or "繳息" in _tp or "利息" in _tp or "循環" in _tp or "續約" in _tp):
             applied = {"代號": "U1 實際條款（只繳息／續約）", "月付": round(interest),
                        "月盈餘": round(surplus - interest),
                        "轉負": (surplus - interest) < 0, "類型": _tp}
-        else:
+        elif applied is None:
             _m = re.search(r"(\d+)\s*年", _tp)
             if _m:
                 _y = int(_m.group(1))
