@@ -1,0 +1,120 @@
+{
+ "schema": "gate_summary/v1",
+ "as_of": "2026-10-29",
+ "generated_at": "2026-10-29T18:34:31",
+ "verdict": "HOLD",
+ "gates": {
+  "G1": {
+   "name": "資金安全",
+   "question": "現金夠不夠？借款規則是否明確？",
+   "status": "HOLD",
+   "lines": [
+    "現金 1,140,016 ≥ 底線 700,000｜指定款 900,000",
+    "質押 LTV 49.48%（三檔加總口徑；單池定義未取得）｜跌 30% 後 70.7%（換算維持率 141.5%，180% 僅壓力參考）",
+    "續約條件無銀行書面（E3）→ 不得視為可續約",
+    "壓力後 LTV 70.7% > 追繳參考 70%"
+   ],
+   "evidence_gaps": [
+    "E1",
+    "E2",
+    "E3"
+   ]
+  },
+  "G2": {
+   "name": "資產合理性",
+   "question": "扣掉利息、稅費與風險後，利差是否值得？",
+   "status": "待補件",
+   "lines": [
+    "利息覆蓋 274%（可持續現金 180,100 ÷ 利息 65,683）",
+    "支出覆蓋 113.1%",
+    "淨利差 UNKNOWN：缺可持續稅後總報酬（E4）；配息率不得代替"
+   ],
+   "evidence_gaps": [
+    "E4"
+   ]
+  },
+  "G3": {
+   "name": "整體負債",
+   "question": "房貸＋質押＋連帶擔保合計是否可承受？",
+   "status": "待補件",
+   "lines": [
+    "房貸 25,005,344（月付 91,735）＋質押 5,900,000｜總負債 30,952,472",
+    "國泰寬限期至 2029-08-20",
+    "攤還年限／寬限期條件無書面（E5）",
+    "房產是否質押連帶擔保未釐清（E6）"
+   ],
+   "evidence_gaps": [
+    "E5",
+    "E6"
+   ]
+  }
+ },
+ "metrics": {
+  "cash_unrestricted": 1140016.0,
+  "cash_floor": 700000,
+  "restricted_cash": 900000.0,
+  "loan": 5900000.0,
+  "loan_rate_pct": 2.65,
+  "pool": 11924797.0,
+  "ltv_pct": 49.48,
+  "stress_drop_pct": 30.0,
+  "stress_ltv_pct": 70.7,
+  "maint_pct": 202.1,
+  "stress_maint_pct": 141.5,
+  "interest_monthly": 65683.0,
+  "sustainable_cash_monthly": 180100.0,
+  "coverage_interest_pct": 274.2,
+  "coverage_expense_pct": 113.1,
+  "mortgage_balance": 25005344,
+  "mortgage_monthly": 91735,
+  "total_liabilities": 30952472,
+  "pledge_maturity": "2027-09-29（每年續約）",
+  "cathay_grace_end": "2029-08-20"
+ },
+ "evidence": {
+  "E1": {
+   "status": "MISSING",
+   "need": "銀行維持率／追繳公式與擔保品折價率"
+  },
+  "E2": {
+   "status": "MISSING",
+   "need": "三檔認列成數與「單池」定義"
+  },
+  "E3": {
+   "status": "MISSING",
+   "need": "續約與不續約的書面規則"
+  },
+  "E4": {
+   "status": "MISSING",
+   "need": "基金近 12 個月含息報酬、配息組成、費用"
+  },
+  "E5": {
+   "status": "MISSING",
+   "need": "國泰攤還年限與永豐寬限期條件（書面）"
+  },
+  "E6": {
+   "status": "UNKNOWN",
+   "need": "房產是否為質押連帶擔保"
+  }
+ },
+ "legacy_gates": {
+  "現金關": "PASS",
+  "利差關": "UNKNOWN",
+  "借款關": "FAIL"
+ },
+ "next_check": {
+  "rule": "每季首日 09:00（1/4/7/10 月）",
+  "job_id": "bb44b28c7282",
+  "next_run_at": "2027-01-01T09:00:00+08:00"
+ },
+ "authorization": {
+  "fund_action": false,
+  "publish": false,
+  "note": "三關全過僅代表可提執行申請；資金操作與發布皆須使用者明確授權"
+ },
+ "notes": [
+  "LTV 為三檔加總口徑；單池判定未取得銀行定義 → M1 未解除",
+  "維持率 180% 僅壓力參考，銀行公式未取得（E1）",
+  "利息覆蓋高不代表借款安全"
+ ]
+}
