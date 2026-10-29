@@ -117,6 +117,17 @@ def main() -> int:
     changed = {k: v for k, v in gates.items() if prev_gates.get(k) != v}
     new_events = [e for e in events if e not in (prev.get("events") or [])]
 
+    # ── 漏跑偵測（2026-10-29 使用者驗收點）：季檢若整季沒跑到，下次執行時必須自曝
+    missed = ""
+    _prev_upd = str(prev.get("updated") or "")
+    if _prev_upd:
+        try:
+            _gap = (datetime.now() - datetime.fromisoformat(_prev_upd)).days
+            if _gap > 100:      # 季檢 + 寬限；>100 天代表前一季漏跑
+                missed = f"⚠️ 上次季檢距今 {_gap} 天（>100）→ 上一季疑似漏跑或機器/閘道未開機"
+        except ValueError:
+            pass
+
     STATE.parent.mkdir(parents=True, exist_ok=True)
     STATE.write_text(json.dumps({"updated": datetime.now().isoformat(timespec="seconds"),
                                  "gates": gates, "events": events,
@@ -125,10 +136,12 @@ def main() -> int:
                                  "stress_maint_pct": round(stress, 1)},
                                 ensure_ascii=False, indent=1), encoding="utf-8")
 
-    if not out and not changed and not new_events:
+    if not out and not changed and not new_events and not missed:
         return 0           # 靜默：一切未變
 
     print(f"【BB&D 季度檢查】{today}")
+    if missed:
+        print("  " + missed)
     for k in ("現金關", "利差關", "借款關"):
         print(f"  {k}：{gates[k]}")
     if coverage:
