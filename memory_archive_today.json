@@ -1,12 +1,12 @@
 {
-  "date": "2026-10-28",
+  "date": "2026-10-29",
   "memory_pct": "90%",
   "skills_count": 28,
   "actions": [
     "技能摘要：28 個已更新",
     "MEMORY 容量：1,990/2,200 字元（90%）",
     "MEMORY ≥90% → 用 memory(operations=[...]) 單批合併／刪除低頻條目（無 list 動作）",
-    "USER 容量：1,302/1,375 字元（95%）",
+    "USER 容量：1,268/1,375 字元（92%）",
     "USER ≥90% → 用 memory(operations=[...]) 單批合併／刪除低頻條目（無 list 動作）",
     "低頻判定：已清償或已過期事件、超過1個月未更新的設定、已定案且穩定的決策",
     "INC 記錄：1 條（詳見 error_summary_cache.txt）",
