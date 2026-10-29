@@ -1,10 +1,8 @@
 {
- "generated_at": "2026-10-29 07:00",
+ "generated_at": "2026-10-29 08:53",
  "days": 14,
  "ledger_rows": 51,
- "backfilled": [
-  "2026-10-29"
- ],
+ "backfilled": [],
  "series": [
   {
    "date": "2026-10-16",
@@ -142,7 +140,7 @@
    "gemini_twd": 0,
    "free_twd": 0,
    "total_twd": 2,
-   "calls": 46,
+   "calls": 69,
    "cer": 0,
    "q429": 0
   }
@@ -210,7 +208,7 @@
   }
  },
  "wallets": {
-  "ds_balance_cny": 221.03,
+  "ds_balance_cny": 220.95,
   "ds_balance_twd": 1045,
   "ds_source": "API",
   "ds_daily_twd": 17,
@@ -365,7 +363,7 @@
   "gem_twd": 3.0,
   "free_twd": 0.0,
   "free_calls": 560,
-  "calls": 32657,
+  "calls": 32680,
   "cer": 159,
   "pending": false,
   "total_twd": 1739.0
