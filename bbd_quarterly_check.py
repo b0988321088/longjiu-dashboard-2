@@ -69,9 +69,11 @@ GATE_META = {
     "G3": {"name": "整體負債", "question": "房貸＋質押＋連帶擔保合計是否可承受？"},
 }
 EVIDENCE_DEF = {
-    "E1": "銀行維持率／追繳公式與擔保品折價率",
-    "E2": "三檔認列成數與「單池」定義",
-    "E3": "續約與不續約的書面規則",
+    # 2026-10-30 使用者裁決：本金／利率／一年期／到期日／只繳息等基本條件已確認
+    # → 不列為證據缺口、不再要求使用者重複提供；僅保留真正影響風險判斷的三項（追繳、認列、續約）
+    "E1": "銀行書面：維持率／預警線／追繳門檻與補繳期限（計算公式與通知方式）",
+    "E2": "三檔擔保基金實際認列成數（含折價率）與擔保池單池／分池計算定義",
+    "E3": "到期續約與不續約處理方式；是否允許部分還本；提前清償違約金",
     "E4": "基金近 12 個月含息報酬、配息組成、費用",
     "E5": "國泰攤還年限與永豐寬限期條件（書面）",
     "E6": "房產是否為質押連帶擔保",
@@ -106,12 +108,23 @@ def build_summary(snap: dict, today: date, *, legacy_gates: dict, metrics: dict,
         lines.append(f"質押 LTV {metrics['ltv_pct']:.2f}%（三檔加總口徑；單池定義未取得）"
                      f"｜跌 {metrics['stress_drop_pct']:.0f}% 後 {metrics['stress_ltv_pct']:.1f}%"
                      f"（換算維持率 {metrics['stress_maint_pct']:.1f}%，180% 僅壓力參考）")
+        basics = ((snap.get("cathay_pledge_0911") or {}).get("基本條件_已確認") or {}).get("項目") or {}
+        _loan = metrics.get("loan") or snap.get("fund_pledge_loan") or 0
+        if basics:
+            _rate = metrics.get("loan_rate_pct") or (float(snap.get("fund_pledge_rate") or 0) * 100)
+            _mat = metrics.get("pledge_maturity") or snap.get("fund_pledge_maturity") or ""
+            lines.append(f"基本條件 {'/'.join(basics.keys())}＝已確認"
+                         f"（{_loan:,.0f}＠{_rate:.2f}%、一年期至 {_mat}）")
+        renewal = (snap.get("cathay_pledge_0911") or {}).get("續約性質") or ""
+        if renewal:
+            lines.append("續約＝銀行每年依當時條件核准（期待續約，非保證續約）"
+                         f"→ 未續約須到期一次還本 {_loan:,.0f}")
         if legacy_gates.get("現金關") != "PASS":
             bad = True
             lines.append("現金關未過（見明細）")
         if evidence["E3"]["status"] != "OK":
             bad = True
-            lines.append("續約條件無銀行書面（E3）→ 不得視為可續約")
+            lines.append("續約／不續約／部分還本／提前清償無銀行書面（E3）→ 不得視為可續約")
         if metrics["stress_ltv_pct"] > 70:
             bad = True
             lines.append(f"壓力後 LTV {metrics['stress_ltv_pct']:.1f}% > 追繳參考 70%")
@@ -162,12 +175,22 @@ def build_summary(snap: dict, today: date, *, legacy_gates: dict, metrics: dict,
         "gates": gates,
         "metrics": metrics,
         "evidence": evidence,
+        "confirmed_basics": {
+            "確認日": ((snap.get("cathay_pledge_0911") or {}).get("基本條件_已確認") or {}).get("確認日"),
+            "來源": ((snap.get("cathay_pledge_0911") or {}).get("基本條件_已確認") or {}).get("來源"),
+            "項目": {k: v.get("值") for k, v in
+                     (((snap.get("cathay_pledge_0911") or {}).get("基本條件_已確認") or {}).get("項目") or {}).items()},
+            "不列缺口": True,
+            "續約性質": (snap.get("cathay_pledge_0911") or {}).get("續約性質"),
+        },
         "legacy_gates": legacy_gates,
         "next_check": NEXT_CHECK,
         "authorization": {"fund_action": False, "publish": False,
                           "note": "三關全過僅代表可提執行申請；資金操作與發布皆須使用者明確授權"},
         "notes": ["LTV 為三檔加總口徑；單池判定未取得銀行定義 → M1 未解除",
                   "維持率 180% 僅壓力參考，銀行公式未取得（E1）",
+                  "基本借款條件（本金/利率/一年期/到期日/只繳息）2026-10-30 已確認 → 不列證據缺口；但確認來源為使用者陳述，非銀行書面",
+                  "續約為銀行每年核准，屬期待續約而非保證續約",
                   "利息覆蓋高不代表借款安全"],
     }
 

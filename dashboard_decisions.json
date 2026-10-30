@@ -11543,12 +11543,21 @@
       "summary": "2026-10-29 使用者以「可以開始」作為正式發布授權後，依 manifest B 案執行，逐關通過：\n①Commit 5c437658（tree 25102e55）— 恰 4 檔：bbd_quarterly_check.py(M)、data/gate_summary.json(A)、docs/GATE_SUMMARY.md(A)、tests/test_bbd_quarterly_20261029.py(A)；staged tree 於 commit 前複驗與 manifest B 完全一致。\n②CIO 綁定實際 tree 複審 — CIO-Gemini APPROVE、blocking=0、契約 OK、涵蓋率 100%（1 段 / 22,797 字元）；正式 RECORD 已寫入（is_approved(tree 25102e55)=True）。不沿用先前工作區 diff 審查。\n③Push — auto_push 推送並驗證遠端 sha = 5c437658b542，未推 0、local=remote。\n④線上逐檔驗證 — 23/23 條 200（首次遇到 1 條網路異常非 404，重跑後全綠）；raw 綁 clean-main 比對：docs/GATE_SUMMARY.md、bbd_quarterly_check.py、data/gate_summary.json 之 commit blob 與遠端逐位元一致。\n⑤本機測試 5 PASS / 0 FAIL（含 P2 事件改綁、缺值不得 PASS、schema、舊版相容、門檻不變）。\n範圍外未動：非本批 3 檔 dirty 未混入；未改 .gitignore／repayment_valve／R1-R2／任何財務門檻；data/bbd_quarterly_state.json 依裁定排除，維持 untracked。\n殘留與揭露：(a) P5 未通過 — dashboard_decisions.json 81 筆無 id、6 種狀態字串混用、收據 138 筆未覆蓋全量、snapshot 仍有 68 個決策類欄位，故不宣告唯一裁定來源已完成，僅確立「新裁定只寫該檔、snapshot 欄位凍結」的寫入紀律。(b) 財務 HOLD 不解除 — 單池 LTV 壓力試算 70.7% 仍高於 70% 追繳參考，銀行單池定義與追繳公式未取得。(c) data/gate_summary.json 之本機工作檔為 CRLF、commit/遠端為 LF，內容（metrics/gates/generated_at）完全相同，差異僅換行 119 位元；已列為後續獨立小修（寫檔改用 newline=\"\"），不在本批範圍內改動。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261030075820-1249",
+      "timestamp": "2026-10-30T07:58:29+08:00",
+      "agent": "Hermes",
+      "task": "質押基本條件確認：E1–E3 證據缺口收斂（使用者裁決 2026-10-30）",
+      "summary": "使用者裁決：國泰質押借款基本條件已可確認，不再把整份契約當第一優先補件。\n已確認（不列缺口、不再要求重複提供，來源＝使用者對話）：擔保資產約 12,000,000／本金 5,900,000／初始質押比例約 50%／利率 2.65%／一年期／到期日 2027-09-29／每月繳息（不定期還本外按約定）／滿期依銀行核准條件續簽。與 10/22 實扣 9,852 反算 2.65%、9/29 撥款 590 萬互證。\nE1–E3 收斂為三項：E1 銀行維持率／預警線／追繳門檻與補繳期限；E2 三檔實際認列成數（含折價率）與單池／分池定義；E3 到期續約與不續約處理、是否允許部分還本、提前清償違約金。原待補四項中「元大證金 50 萬是否一併清」（9/30 已清償 960,000）與「撥款通知／對帳單（月付息日、繳息方式）」（10/28 以實扣核實）移出。\n界線：續約＝銀行逐年核准，屬期待續約、非保證續約；使用者確認 ≠ 銀行書面。G1 仍 HOLD（E3 未取得＋壓力後 LTV 70.7% > 追繳參考 70%），G2 待補件（E4）、G3 待補件（E5/E6），統一裁定 HOLD 不變。\n落地：snapshot.cathay_pledge_0911 新增 基本條件_已確認／續約性質／未取得書面明細_20261030；bbd_quarterly_check.py 證據定義收斂並輸出 confirmed_basics；data/gate_summary.json 與 docs/GATE_SUMMARY.md v1.1 同步；測試 5 PASS / 0 FAIL。",
+      "status": "completed",
+      "source": "user_ruling_20261030"
     }
   ],
   "meta": {
     "updated_at": "2026-10-30T07:00:19.111028"
   },
-  "last_updated": "2026-10-30T18:00:00+08:00",
+  "last_updated": "2026-10-30T07:58:29+08:00",
   "2026-09-29": [
     "9/29 質押撥款入帳 NT$5,900,000（10:57，國泰世華通知；實撥 590 萬@2.65%，原表定 540 萬@2.77%）→ 真值日全資產同步：現金 6,719,182／保單 9,453,825／基金 12,654,144／台股 2,981,410／總資產 31,808,561、負債 36,003,720（含基金質押 590 萬）、淨值 -4,195,159；銀行口徑 LTV 50.1%。待執行：清償 500 萬高息（券商 96 萬@3.92% 先、保單 400 萬@4% 後）",
     "9/29 裁示：質押撥款 590 萬先轉 200 萬還保單借貸（4% → 月省 6,667；保單借貸 400 萬 → 200 萬）；撥款剩餘 3,900,000。順序調整：保單（4%）優先於券商（3.92%）。待入帳確認後四源同步。",
