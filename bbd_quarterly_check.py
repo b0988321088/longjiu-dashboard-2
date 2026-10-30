@@ -108,6 +108,29 @@ def collect_evidence(snap: dict, *, terms_has_written: bool) -> dict:
     return {k: {"status": v, "need": EVIDENCE_DEF[k]} for k, v in ev.items()}
 
 
+def _single_pool_line(snap: dict, metrics: dict) -> str:
+    """單池風險獨立一行：不得讓三檔加總綠燈掩蓋單池破線（E2 未解除）。"""
+    try:
+        import pledge_stress as _ps
+        _c = snap.get("cathay_pledge_0911") or {}
+        _pools = {k: v for k, v in (_c.get("擔保池") or {}).items()
+                  if isinstance(v, (int, float)) and k != "合計"}
+        _loan = float(metrics.get("loan") or _c.get("實際撥款金額") or _c.get("可貸金額") or 0)
+        _sp = _ps.single_pool(_pools, _loan)
+        rows = _sp.get("逐檔") or {}
+        if not rows:
+            return "單池風險：無擔保池明細 → UNKNOWN（不得標示安全）"
+        first = next(iter(rows.values()))
+        single = first["單池跌30%_LTV_pct"]
+        lo = min(rows.items(), key=lambda kv: kv[1]["同期加總_跌30%_pct"])
+        hi = max(rows.items(), key=lambda kv: kv[1]["同期加總_跌30%_pct"])
+        return (f"單池風險：任一池單獨跌 30% → 該池 LTV {single:.2f}%（破追繳參考 70%），"
+                f"同期加總僅 {lo[1]['同期加總_跌30%_pct']:.2f}%～{hi[1]['同期加總_跌30%_pct']:.2f}% 仍為綠燈"
+                f" → 不得以加總綠燈視為安全（E2 單池規則未取得）")
+    except Exception as _e:  # 算不出來＝未知，不可靜默當安全
+        return f"單池風險：計算失敗（{_e}）→ UNKNOWN，不得標示安全"
+
+
 def build_summary(snap: dict, today: date, *, legacy_gates: dict, metrics: dict,
                   evidence: dict) -> dict:
     """組三關總表。legacy_gates 為既有 現金關/利差關/借款關（保留供舊讀者）。"""
@@ -144,6 +167,7 @@ def build_summary(snap: dict, today: date, *, legacy_gates: dict, metrics: dict,
             bad = True
             lines.append(f"壓力後 LTV {metrics['stress_ltv_pct']:.1f}% > 追繳參考 70%"
                          "（銀行公式未取得，採保守值）")
+        lines.append(_single_pool_line(snap, metrics))
         return ("HOLD" if bad else "PASS"), lines
 
     def _g2() -> tuple[str, list[str]]:

@@ -129,6 +129,44 @@ def pen_card():
         return ""
 
 
+def pledge_card():
+    """質押壓力卡（2026-10-30）：整體與單池分開呈現，來源＝snapshot 派生欄位。"""
+    try:
+        _snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+        _c = _snap.get("cathay_pledge_0911") or {}
+        ov = _c.get("LTV壓力情境") or {}
+        sp = _c.get("單池壓力_20261030") or {}
+        if not ov:
+            return ""
+        parts = [f'<div class="pen"><h3>🏦 質押壓力（整體三檔加總）</h3>',
+                 f"<p>現況 <b>{ov.get('現況','')}</b>｜{ov.get('追繳線70%','')}</p>"]
+        for k in ("跌20%", "跌30%", "跌35%"):
+            if ov.get(k):
+                parts.append(f"<p>{k}：{ov[k]}</p>")
+        if ov.get("追繳公式"):
+            parts.append(f"<p>追繳公式：{ov['追繳公式']}</p>")
+        if ov.get("緩衝現況"):
+            parts.append(f"<p>緩衝：{ov['緩衝現況']}</p>")
+        parts.append("</div>")
+        rows = (sp or {}).get("逐檔") or {}
+        if rows:
+            parts.append('<div class="pen"><h3>⚠️ 單池風險（與整體分開判定，E2 未解除）</h3>')
+            if sp.get("結論"):
+                parts.append(f"<p><b>{sp['結論']}</b></p>")
+            for name, r in rows.items():
+                parts.append(
+                    f"<p>{name[:16]}：市值 {r['市值']:,.0f}／分配借款 {r['分配借款']:,.0f}｜"
+                    f"單池跌30% <b>{r['單池跌30%_LTV_pct']:.2f}%</b>／"
+                    f"同期加總 {r['同期加總_跌30%_pct']:.2f}%</p>")
+            if sp.get("假設"):
+                parts.append(f"<p>假設：{sp['假設']}</p>")
+            parts.append("</div>")
+        return "".join(parts)
+    except Exception as _e:
+        print(f"⚠️ 質押壓力卡注入失敗: {_e}")
+        return ""
+
+
 def render(kpis_html, sec_html, pen_html, title, sub):
     return f"""<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -137,6 +175,7 @@ def render(kpis_html, sec_html, pen_html, title, sub):
 <div class="sub">{sub}</div></div>
 {kpis_html}
 {pen_html}
+{pledge_card()}
 {sec_html}
 <div class="foot">龍九控股內部報告｜僅供決策參考，非投資建議｜資料時間 {NOW} 台北｜Yahoo Finance chart API 即時 + daily_analysis briefing + us30y_state + snapshot.json 穿透數據</div>
 </div></body></html>"""
