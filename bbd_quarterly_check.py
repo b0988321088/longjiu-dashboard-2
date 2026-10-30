@@ -83,13 +83,23 @@ NEXT_CHECK = {"rule": "每季首日 09:00（1/4/7/10 月）", "job_id": "bb44b28
 
 
 def collect_evidence(snap: dict, *, terms_has_written: bool) -> dict:
-    """證據齊備度。缺值一律 MISSING／UNKNOWN，不得因缺資料而視為通過。"""
+    """證據齊備度。缺值一律 MISSING／UNKNOWN，不得因缺資料而視為通過。
+
+    2026-10-30 使用者裁決：銀行書面（E1/E2/E3）已請求約 2 個月未回覆 → 狀態改為
+    REQUESTED_UNANSWERED（已請求未回覆）。語意是「不再催件、不列待補」，**不是取得**：
+    系統改以保守假設替代（追繳線 70%、單池最保守、續約不保證），門檻一律不放寬。
+    """
     grace = snap.get("mortgage_cathay_grace") or {}
     grace_undecided = "未確認" in str(grace.get("期滿後月付_未定") or "")
+    _ru = set((snap.get("cathay_pledge_0911") or {}).get("銀行書面_已請求未回覆") or [])
+
+    def _st(code: str, default: str) -> str:
+        return "REQUESTED_UNANSWERED" if code in _ru else default
+
     ev = {
-        "E1": "PARTIAL" if terms_has_written else "MISSING",
-        "E2": "MISSING",                      # 銀行未提供認列成數／單池定義
-        "E3": "PARTIAL" if terms_has_written else "MISSING",
+        "E1": _st("E1", "PARTIAL" if terms_has_written else "MISSING"),
+        "E2": _st("E2", "MISSING"),           # 銀行未提供認列成數／單池定義
+        "E3": _st("E3", "PARTIAL" if terms_has_written else "MISSING"),
         "E4": ("OK" if isinstance(snap.get("bbd_sustainable_yield_after_tax"), (int, float))
                else "MISSING"),
         "E5": "MISSING" if grace_undecided else "PARTIAL",
@@ -122,12 +132,18 @@ def build_summary(snap: dict, today: date, *, legacy_gates: dict, metrics: dict,
         if legacy_gates.get("現金關") != "PASS":
             bad = True
             lines.append("現金關未過（見明細）")
-        if evidence["E3"]["status"] != "OK":
+        _e3 = str(evidence["E3"]["status"])
+        _ru = [k for k in ("E1", "E2", "E3") if str(evidence[k]["status"]) == "REQUESTED_UNANSWERED"]
+        if _ru:
+            lines.append(f"銀行書面（{'／'.join(_ru)}）已請求約 2 個月未回覆 → 不列待補、不再催件；"
+                         "改採保守假設：追繳線 70%、單池最保守、續約不保證")
+        if _e3 in ("MISSING", "UNKNOWN"):
             bad = True
             lines.append("續約／不續約／部分還本／提前清償無銀行書面（E3）→ 不得視為可續約")
         if metrics["stress_ltv_pct"] > 70:
             bad = True
-            lines.append(f"壓力後 LTV {metrics['stress_ltv_pct']:.1f}% > 追繳參考 70%")
+            lines.append(f"壓力後 LTV {metrics['stress_ltv_pct']:.1f}% > 追繳參考 70%"
+                         "（銀行公式未取得，採保守值）")
         return ("HOLD" if bad else "PASS"), lines
 
     def _g2() -> tuple[str, list[str]]:
@@ -189,6 +205,7 @@ def build_summary(snap: dict, today: date, *, legacy_gates: dict, metrics: dict,
                           "note": "三關全過僅代表可提執行申請；資金操作與發布皆須使用者明確授權"},
         "notes": ["LTV 為三檔加總口徑；單池判定未取得銀行定義 → M1 未解除",
                   "維持率 180% 僅壓力參考，銀行公式未取得（E1）",
+                  "銀行書面 E1／E2／E3 已請求約 2 個月未回覆（REQUESTED_UNANSWERED）→ 不列待補、不再催件；以保守假設替代，G1 HOLD 原因為壓力 LTV，非缺件",
                   "基本借款條件（本金/利率/一年期/到期日/只繳息）2026-10-30 已確認 → 不列證據缺口；但確認來源為使用者陳述，非銀行書面",
                   "續約為銀行每年核准，屬期待續約而非保證續約",
                   "利息覆蓋高不代表借款安全"],
