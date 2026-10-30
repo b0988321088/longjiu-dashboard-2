@@ -11606,10 +11606,28 @@
       "source": "auto",
       "task": "守門修復＋三項行政補正（2026-10-30 使用者核准）",
       "summary": "①守門 P0：避險衛星結案後 macro_regime 該列改為非數字口徑（target='已結案'／偏移後=None），但 check_narrative_numbers.ENGINE_ROWS 仍註冊舊名『避險衛星合計(黃金+石油)』→ 自測引擎案例 38→27 跌破下限 30 → 自測紅、closeout 不得宣告收工。修法：ENGINE_ROWS 移除該列（附復活條件註解）；合成檔鏡射現況（新名+非數字）以測到『已結案列不得出聲』分支；MIN_ENGINE_CASES 30→24（覆蓋列 5→4 等比 4/5，保留安靜日緩衝）。commit fbd07004，CIO-Gemini APPROVE（tree 1f1f9814），已推 clean-main。驗收：自測 62/62、結構檢查 0 失敗、生產守門『全部可追溯』、舊『缺少 ENGINE_ROWS 期望的引擎列』警告數=0。②pending 完整性：安聯累計現金給付對帳（差 22,180）卡於 041864a3 被直接刪除未寫 archive → 依該 commit 刪除前原文補回結案足跡（archive 124→125）。③重錄 pending baseline（12 張／archive 125 張）→ 稽核 ✅。④重跑驗證器心跳 → PASS（57/0）。未動任何真值數字。"
+    },
+    {
+      "id": "mem-20261030232008-1255",
+      "timestamp": "2026-10-30T23:20:08.589216",
+      "agent": "Hermes",
+      "task": "日報2026-10-30",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261030232008-1256",
+      "timestamp": "2026-10-30T23:20:08.646726",
+      "agent": "Hermes",
+      "task": "資產穿透2026-10-30",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
     }
   ],
   "meta": {
-    "updated_at": "2026-10-30T21:32:15.940128"
+    "updated_at": "2026-10-30T23:20:08.648726"
   },
   "last_updated": "2026-10-30T18:00:00+08:00",
   "2026-09-29": [
