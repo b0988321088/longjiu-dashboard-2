@@ -278,7 +278,7 @@ if _ms:
       f"<table style='width:100%;font-size:12px;margin-top:6px;border-collapse:collapse'><tr style='color:#64748b'><th style='text-align:left;padding:3px 6px'>情境</th><th class='num'>防禦最低</th><th class='num'>收入最低</th><th class='num'>LTV上限</th><th style='text-align:left;padding:3px 6px'>策略</th></tr>{_rows4}</table>"
       f"<span style='color:#64748b;font-size:12px'>現況驗證（{_cur}標準）：防禦 <b>{_def_f}%</b>（≥{_sc.get('防禦最低',0)}% {'✅' if _def_f_ok else '❌'}）｜收入 <b>{_inc_f}%</b>（≥{_sc.get('收入最低',0)}% {'✅' if _inc_f_ok else '❌'}）｜LTV <b>{_ltv_v}%</b>（≤{_sc.get('LTV上限',0)}% {'✅' if _ltv_f_ok else '❌'}）"
       f"＝ dual_dimension_metric 定稿公式派生（<b>單一來源</b>；2026-09-30 P0-1 起門檻判定單一化，"
-      f"原 stored 舊值已停用）。避險衛星以「目標值 131 萬」計入防禦維度（實況：黃金 32 萬尚未建倉）</span></div>")
+      f"原 stored 舊值已停用）。避險衛星 2026-10-30 已結案：目標值 {int((_dc2.get('避險衛星(目標)', 0) or 0)):,}、不再計入防禦維度；黃金實際持有 {int(((snap.get('hedge_satellite') or {}).get('黃金現況') or 0)):,} 保留於原五桶，不重複計算</span></div>")
 
 # 現況質押借款快照（2026-09-05 加：LTV 現況透明化 — 勿誤讀情境表為「無質押」）
 # 2026-10-04 P0（CIO 六審）：原 `or 0` → 缺鍵時保單質押／券商質押整列靜默消失（與同表 fund_pledge 同型）。
