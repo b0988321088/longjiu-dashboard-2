@@ -251,7 +251,7 @@ if _ddm:
         print(f"  ⚠️ P0-1：dual_dimension 現金桶 {_cash_bucket_dyn:,.0f} ≠ 動態可動用 {_avail_dyn:,.0f}"
               f"（真值 {_cash_tot_dyn:,.0f} − 指定用途款 {_rc_dyn:,.0f}）→ 請重跑 update_data.py 同步")
     w(f"<div class='callout' style='border-left:3px solid #8b5cf6'>🧭 <b>雙維度資產定位（{_ddm.get('定稿','')}）：</b>"
-      f"<br/>🛡️ <b>防禦維度 {_def.get('佔比',0)}%</b>（{_def.get('公式','')}｜抗跌/LTV保護）＝ 債券 {_dc2.get('債券類',0):,} + 現金 {_cash_bucket_dyn:,} + 低波 {_dc2.get('低波高股息防禦',0):,} + 配息型基金權益 {_dc2.get('配息型基金權益',0):,} + 避險衛星 {_dc2.get('避險衛星(目標)',0):,}（目標）"
+      f"<br/>🛡️ <b>防禦維度 {_def.get('佔比',0)}%</b>（{_def.get('公式','')}｜抗跌/LTV保護）＝ 債券 {_dc2.get('債券類',0):,} + 現金 {_cash_bucket_dyn:,} + 低波 {_dc2.get('低波高股息防禦',0):,} + 配息型基金權益 {_dc2.get('配息型基金權益',0):,} + 避險衛星（2026-10-30 結案，不計入；黃金部位保留於原五桶）"
       f"<br/>💵 <b>收入引擎 {_inc.get('佔比',0)}%</b>（{_inc.get('公式','')}｜現金流覆蓋）＝ 全配息資產 + 房租 {_rent_m_dyn:,.0f}/月"
       f"<br/><span style='color:#64748b;font-size:12px'>核心：配息≠防守，兩維度分離計算、獨立風控；現金/貨幣停泊＝可動用台幣活存 <b>{_avail_dyn:,.0f}</b>（＝帳戶層真值 {_cash_tot_dyn:,.0f} − 指定用途款 {_rc_dyn:,.0f}，由數字欄位動態生成）；{_def.get('備註','')}</span></div>")
 

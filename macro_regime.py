@@ -6,7 +6,7 @@
 - 板塊輪動因子（股票內部傾斜，不改變大類總額）：科技穿透曝險 / 席勒PE / 確定收益相對強度
 - 宏觀輔助因子（只加重警報、調子項上限）：USD-TWD / XAU / WTI / GPR
 - 基準 SAA = snapshot.penetration.targets（8/20 定案 台10/美40/防20/債25/現金5）
-- 避險衛星合計 ≤7%（黃金≤5% + 石油≤2%）（引擎輸出，不寫入 snapshot）
+- 避險衛星：2026-10-30 使用者裁決「整體機制結案」→ ≤7%（黃金≤5%＋石油≤2%）目標作廢、不再加碼、不再列建議；部位保留不賣
 - 現金 = 底線制（70萬安全網，無目標%）
 - 台股上限 15%（硬性）
 - 引擎不主動推薦 Lombard / PI / 新增美元投資（人工執行案照舊）
@@ -337,21 +337,28 @@ def target_allocation(snap: dict, light: str, regime: dict) -> dict:
         rows.append({"資產": k, "target": t, "燈號偏移後": round(v, 1),
                      "建議金額(±)": round(abs(v - t) / 100 * total)})
 
-    # 避險衛星（2026-08-21 使用者裁示：黃金+石油 合併納入避險）
-    # 黃金（地緣/美元信用加重時上調，≤5%）+ 石油/能源（地緣/通膨加重時上調，≤2%）→ 合計 ≤7%
-    gold_target = {"🟢 綠燈": 2.0, "🟡 黃燈": 3.0, "🔴 紅燈": 5.0}[light]
-    geo, usd = regime.get("地緣風險", {}).get("score"), regime.get("美元信用壓力", {}).get("score")
-    if (geo or 0) >= 70 or (usd or 0) >= 70:
-        gold_target = min(5.0, gold_target + 1.0)
-    oil_target = {"🟢 綠燈": 0.0, "🟡 黃燈": 1.0, "🔴 紅燈": 2.0}[light]
-    if (geo or 0) >= 70:
-        oil_target = min(2.0, oil_target + 0.5)
-    rows.append({"資產": "黃金/實質資產(衛星)", "target": 0, "燈號偏移後": gold_target,
-                 "建議金額(±)": round(gold_target / 100 * total)})
-    rows.append({"資產": "石油/能源(避險衛星)", "target": 0, "燈號偏移後": oil_target,
-                 "建議金額(±)": round(oil_target / 100 * total)})
-    rows.append({"資產": "避險衛星合計(黃金+石油)", "target": 0, "燈號偏移後": round(gold_target + oil_target, 1),
-                 "建議金額(±)": round((gold_target + oil_target) / 100 * total), "上限": "≤7%（8/21 裁示）"})
+    # 避險衛星（2026-08-21 裁示；2026-10-30 使用者裁決「整體機制結案」→ 目標作廢、不再加碼、不再列建議）
+    _hs = snap.get("hedge_satellite") or {}
+    if str(_hs.get("狀態") or "").startswith(("⛔ 已結案", "已結案")):
+        rows.append({"資產": "避險衛星(黃金+石油)", "target": "已結案", "燈號偏移後": None,
+                     "建議金額(±)": 0, "上限": "作廢（2026-10-30 結案）",
+                     "說明": "機制結案：≤7%／黃金≤5%／石油≤2% 目標作廢、不再加碼；"
+                             f"現有部位保留不賣（黃金 {_hs.get('黃金現況', 0):,}／石油 {_hs.get('石油現況', 0):,}）"})
+    else:
+        # 黃金（地緣/美元信用加重時上調，≤5%）+ 石油/能源（地緣/通膨加重時上調，≤2%）→ 合計 ≤7%
+        gold_target = {"🟢 綠燈": 2.0, "🟡 黃燈": 3.0, "🔴 紅燈": 5.0}[light]
+        geo, usd = regime.get("地緣風險", {}).get("score"), regime.get("美元信用壓力", {}).get("score")
+        if (geo or 0) >= 70 or (usd or 0) >= 70:
+            gold_target = min(5.0, gold_target + 1.0)
+        oil_target = {"🟢 綠燈": 0.0, "🟡 黃燈": 1.0, "🔴 紅燈": 2.0}[light]
+        if (geo or 0) >= 70:
+            oil_target = min(2.0, oil_target + 0.5)
+        rows.append({"資產": "黃金/實質資產(衛星)", "target": 0, "燈號偏移後": gold_target,
+                     "建議金額(±)": round(gold_target / 100 * total)})
+        rows.append({"資產": "石油/能源(避險衛星)", "target": 0, "燈號偏移後": oil_target,
+                     "建議金額(±)": round(oil_target / 100 * total)})
+        rows.append({"資產": "避險衛星合計(黃金+石油)", "target": 0, "燈號偏移後": round(gold_target + oil_target, 1),
+                     "建議金額(±)": round((gold_target + oil_target) / 100 * total), "上限": "≤7%（8/21 裁示）"})
 
     # 現金 = 底線制（無目標%，顯示安全網與超額）
     cash_now = snap.get("penetration", {}).get("actual_pct", {}).get("現金/安全網", 0)

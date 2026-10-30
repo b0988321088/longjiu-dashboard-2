@@ -265,13 +265,9 @@ for name, key in _dc_items:
 rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W(0)} style="text-align:right;font-weight:700">{dcm.get("配息資產合計",0):,}</td><td {W(0)} style="text-align:right;font-weight:700">{dcm.get("佔比",0)}%</td></tr>
 </table>
 <div style="font-size:11px;color:#94a3b8;margin-top:6px">防守桶 {pen.get("防守型配息",0)}% 僅高股息ETF 口徑；合併月配基金後 {dcm.get("佔比",0)}% — 8/21 裁示防守承接凍結</div>
-<h3 style="font-size:14px;font-weight:800;margin:16px 0 8px">🛡️ 避險衛星（8/21 核准待 PI）</h3>
-<table style="width:100%;font-size:12.5px;border-collapse:collapse">
-<tr>{H('衛星')}{H('目標')}{H('現況')}{H('缺口')}</tr>
-<tr><td {W(0)}>黃金（00635U）</td><td {W(0)} style="text-align:right">4.0%（105萬）</td><td {W(0)} style="text-align:right">{hs.get("黃金現況",0):,}</td><td {W(0)} style="text-align:right;color:#ef4444;font-weight:700">~104萬</td></tr>
-<tr><td {W(0)}>石油（00642U）</td><td {W(0)} style="text-align:right">1.0%（26萬）</td><td {W(0)} style="text-align:right">{hs.get("石油現況",0):,}</td><td {W(0)} style="text-align:right;color:#ef4444;font-weight:700">~26萬</td></tr>
-<tr><td {W(0)}>合計 ≤7%</td><td {W(0)} style="text-align:right">5.0%（131萬）</td><td {W(0)} style="text-align:right">~8千</td><td {W(0)} style="text-align:right;color:#ef4444;font-weight:700">~130萬</td></tr>
-</table>
+<h3 style="font-size:14px;font-weight:800;margin:16px 0 8px">🛡️ 避險衛星（2026-10-30 已結案）</h3>
+<div style="font-size:12px;color:#94a3b8;line-height:1.7">目標（黃金 ≤5%／石油 ≤2%／合計 ≤7%）已作廢，不再加碼、不再列建議與缺口。<br/>
+部位保留不賣：黃金 {hs.get("黃金現況",0):,}／石油 {hs.get("石油現況",0):,}（照實計入總資產與穿透）。</div>
 <div style="font-size:11px;color:#94a3b8;margin-top:6px"><div style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.1);margin-bottom:14px;color:#fff">
 <h3 style="font-size:14px;font-weight:800;margin:0 0 8px;color:#fff">🧭 雙維度資產定位（2026-08-21 定稿）</h3>
 <div style="display:flex;gap:12px;flex-wrap:wrap">

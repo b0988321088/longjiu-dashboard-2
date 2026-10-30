@@ -137,7 +137,11 @@ def main():
         _hs = _sn.get("hedge_satellite", {})
         _gold_row = next((r for r in alloc if "黃金" in r.get("資產", "")), None)
         _oil_row = next((r for r in alloc if "石油" in r.get("資產", "")), None)
-        if _gold_row and _oil_row:
+        if str(_hs.get("狀態") or "").startswith(("⛔ 已結案", "已結案")):
+            mr_html += (f"<div class='note' style='border-left:3px solid #64748b'>🛡️ <b>避險衛星：已結案（2026-10-30）</b>"
+                        f" — 黃金 ≤5%／石油 ≤2%／合計 ≤7% 目標作廢、不再加碼、不列建議；"
+                        f"現有部位保留不賣（黃金 {_hs.get('黃金現況',0):,}／石油 {_hs.get('石油現況',0):,}）</div>")
+        elif _gold_row and _oil_row:
             mr_html += (f"<div class='note' style='border-left:3px solid #d97706'>🛡️ <b>避險衛星（黃金+石油，合計上限 ≤7%；不計入五桶）：</b>"
                         f"黃金上限 {_gold_row['燈號偏移後']}%（現況 {_hs.get('黃金現況',0):,}）＋ 石油上限 {_oil_row['燈號偏移後']}%（現況 {_hs.get('石油現況',0):,}）"
                         f"<br/><span style='color:#cbd5e1;font-size:12px'>{_hs.get('note','')}</span></div>")

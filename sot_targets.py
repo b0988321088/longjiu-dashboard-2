@@ -271,6 +271,13 @@ def build_dual_dimension_metric(snap: dict, today: str | None = None) -> dict:
         if _bond_sot is not None:
             _bond_sot = float(_bond_sot)
             _comp["債券類"] = int(_bond_sot) if _bond_sot.is_integer() else _bond_sot
+    # 2026-10-30 使用者裁決：避險衛星整體機制結案 → 目標值（原 1,310,000）作廢，
+    # 防禦維度一律以 0 計入。理由：黃金保單 367,192 已在五桶內計入，再加會重複計算；
+    # 已作廢的配置目標不得繼續影響配置建議。以「結案狀態」為準，不接受靜態殘值。
+    if str((snap.get("hedge_satellite") or {}).get("狀態") or "").startswith(("⛔ 已結案", "已結案")):
+        for _k in list(_comp):
+            if "避險衛星" in str(_k):
+                _comp[_k] = 0
     _def["組成"] = _comp
     if _comp and _total_cfg > 0:
         _amt = sum(v for v in _comp.values() if isinstance(v, (int, float)))
