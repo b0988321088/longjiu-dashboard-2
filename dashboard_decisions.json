@@ -11570,12 +11570,48 @@
       "source": "auto",
       "task": "防禦維度口徑定案：避險衛星以 0 計入（方案一）",
       "summary": "使用者 2026-10-30 裁定採用方案一：避險衛星以 0 計入防禦維度。理由：黃金保單 367,192 已在五桶內計入，不重複計算；1,310,000 是已作廢目標值、非實際資產；不為已結案目標重新拆分類；保留實際黃金≠恢復加碼目標。\n落地：①sot_targets.build_dual_dimension_metric 加結案守門 → 避險衛星組成一律 0（唯一寫入者，避免下次產線把 1,310,000 寫回）；②sync_dual_dimension 重算並寫回：合計 13,750,419→12,440,419、佔比 52.7%→47.7%、情境現況驗證同步為 47.7%；③run_daily／build_penetration_report 雙維度敘述改為「避險衛星結案、不計入；黃金部位保留於原五桶」並移除 0（目標）字樣；④重新產生 penetration_report_2026-10-30.html。\n口徑差異（必須揭露）：使用者表格以總資產 26,980,153 為分母得 46.11%（-6.6pp）；系統既定分母為 total_assets − 指定用途款 900,000 = 26,080,153（2026-09-29 裁決），故為 47.7%（-5.0pp）。本次沿用系統口徑，未改分母規則。\n副作用（誠實揭露）：market_scenario_standards 現況驗證由「符合區間震盪」變為「未完全符合」（防禦 47.7% < 50%）。原因是原本 1,310,000 屬虛增。\n驗證：跨報告一致性 PASS（5 份）、sync_dual_dimension --check 已同步、bbd 測試 5 PASS/0 FAIL、三燈號衛星建議金額 0、未結卡 10。\n狀態：本機 commit，不 push、不發布、不補 RECORD。"
+    },
+    {
+      "id": "mem-20261030145818-1252",
+      "timestamp": "2026-10-30T14:58:18",
+      "agent": "Hermes",
+      "status": "completed",
+      "source": "auto",
+      "task": "質押壓力情境／單池監控／緊急應變頁 發布授權（364cda73＋7cb37415）",
+      "summary": "使用者 2026-10-30 14:57 Telegram 回覆「✅ 核准」，授權推送前一批已通過 CIO 逐顆審查的兩顆 commit。查證事實：①origin/clean-main 已於 13:30 由費用監控 cron 就地 commit+push 帶上線（c7c9cc83 僅動 cost.html/cost_data.json/ai_cost_daily.jsonl，未夾帶工作區其他 22 檔），故本批在授權到達前已上線＝程序違規（cron 自動 push 行為，非使用者授權）。②線上驗證：emergency_report_2026-10-30.html 13,337 bytes（本機 13,390 差 53 係 CRLF，正規化後 md5 相同 e5d0c44fd0），含質押壓力／單池風險／追繳公式 UNKNOWN／45,396.63／13:05 標註；雙鏡像 taiex 版同尺寸；check_dashboard_sync --post-push 23/23 條 200。③未推送：日報 daily_report_v2_2026-10-30.html 本機版含第八章 13:05 分析仍未提交，線上為 08:00 版；工作區 22 檔產線檔案維持未夾帶。④財務狀態不動：G1 HOLD／G2 G3 待補件／53%與70%門檻、借款條件、9/27 暫停令未變。"
+    },
+    {
+      "id": "mem-20261030150528-1253",
+      "timestamp": "2026-10-30T15:05:28",
+      "agent": "Hermes",
+      "status": "completed",
+      "source": "auto",
+      "task": "10/30 日報與緊急應變上線對齊（commit 1f106d51）",
+      "summary": "使用者 15:00「好」核准把今日日報含第八章 13:05 一併發布。scope 5 檔：daily_report_v2_2026-10-30.html、index.html、snapshot.json、us30y_state.json、data/emergency_llm_analysis.json（未夾帶其餘 17 檔 dirty）。守門：內文數字守門✅／穿透三報表一致✅／跨報告一致性 PASS(5份)／SSoT 4項🟢／HTML 結構乾淨／零值矛盾✅。審查：CIO-Gemini(gemini-2.5-flash) APPROVE、blocking=0、3 段涵蓋率 100%、tree c8ca29e343a4 已落 RECORD（auto_push 因 snapshot.json 屬強制 CIO 清單而 fail-closed 擋下，走真審查後才放行）。推送：HEAD=origin/clean-main=1f106d516dea。線上驗收：日報正規化後逐位元＝本機（含 2026-10-30 13:05 x2、45,396.63）、index 線上＝本機（US30Y 5.33%、緊急應變連到 10-30）、線上 snapshot US30Y 5.329／紅線連續 5／防禦維度 47.7、check_dashboard_sync --post-push 23/23 條 200。未動：G1 HOLD／G2 G3 待補件、53%與70%門檻、借款條件、9/27 暫停令。"
+    },
+    {
+      "id": "mem-20261030185615-1254",
+      "timestamp": "2026-10-30T18:56:15",
+      "agent": "Hermes",
+      "status": "completed",
+      "source": "auto",
+      "task": "週五審查交付註記三項處置（2026-10-30 使用者核准）",
+      "summary": "①Notion ops_logs 漏寫兩筆已補：CEO 深度分析 2026-10-30、CIO 週五決策復盤（底稿）2026-10-30，回讀確認當日 3 筆齊備。②cron b65872599f0e 提示詞修正：Part B step5 移除 git add data/ceo_analysis_{today}.json（該檔自 af9083bc 起依 .gitignore 不進版控，屬既定設計），並明文禁止把此事寫成缺陷；Part C 將三筆 Notion ops_logs 改列驗收項（先寫再補充分析）。③新增 pending 卡：moneybook_total 收斂（現值 2,070,934 停在 10/16，實際 2,040,016，差 30,918），due 2026-11-01 真值日，明訂須明細比對後才可改真值。未動任何真值數字；未夾帶其他 dirty 檔。"
+    },
+    {
+      "id": "mem-20261030185945-1255",
+      "timestamp": "2026-10-30T18:59:45",
+      "agent": "Hermes",
+      "status": "completed",
+      "source": "auto",
+      "task": "守門修復＋三項行政補正（2026-10-30 使用者核准）",
+      "summary": "①守門 P0：避險衛星結案後 macro_regime 該列改為非數字口徑（target='已結案'／偏移後=None），但 check_narrative_numbers.ENGINE_ROWS 仍註冊舊名『避險衛星合計(黃金+石油)』→ 自測引擎案例 38→27 跌破下限 30 → 自測紅、closeout 不得宣告收工。修法：ENGINE_ROWS 移除該列（附復活條件註解）；合成檔鏡射現況（新名+非數字）以測到『已結案列不得出聲』分支；MIN_ENGINE_CASES 30→24（覆蓋列 5→4 等比 4/5，保留安靜日緩衝）。commit fbd07004，CIO-Gemini APPROVE（tree 1f1f9814），已推 clean-main。驗收：自測 62/62、結構檢查 0 失敗、生產守門『全部可追溯』、舊『缺少 ENGINE_ROWS 期望的引擎列』警告數=0。②pending 完整性：安聯累計現金給付對帳（差 22,180）卡於 041864a3 被直接刪除未寫 archive → 依該 commit 刪除前原文補回結案足跡（archive 124→125）。③重錄 pending baseline（12 張／archive 125 張）→ 稽核 ✅。④重跑驗證器心跳 → PASS（57/0）。未動任何真值數字。"
     }
   ],
   "meta": {
-    "updated_at": "2026-10-30T07:00:19.111028"
+    "updated_at": "2026-10-30T13:03:23.262930"
   },
-  "last_updated": "2026-10-30T07:58:29+08:00",
+  "last_updated": "2026-10-30T18:00:00+08:00",
   "2026-09-29": [
     "9/29 質押撥款入帳 NT$5,900,000（10:57，國泰世華通知；實撥 590 萬@2.65%，原表定 540 萬@2.77%）→ 真值日全資產同步：現金 6,719,182／保單 9,453,825／基金 12,654,144／台股 2,981,410／總資產 31,808,561、負債 36,003,720（含基金質押 590 萬）、淨值 -4,195,159；銀行口徑 LTV 50.1%。待執行：清償 500 萬高息（券商 96 萬@3.92% 先、保單 400 萬@4% 後）",
     "9/29 裁示：質押撥款 590 萬先轉 200 萬還保單借貸（4% → 月省 6,667；保單借貸 400 萬 → 200 萬）；撥款剩餘 3,900,000。順序調整：保單（4%）優先於券商（3.92%）。待入帳確認後四源同步。",
@@ -11591,7 +11627,7 @@
     {
       "date": "2026-09-14",
       "action": "避險衛星加碼：保單轉換黃金A10＋健康A10（分批，單次≤20萬）",
-      "status": "已確認",
+      "status": "關案",
       "tags": "避險衛星,黃金,健康,保單轉換,分批"
     },
     {

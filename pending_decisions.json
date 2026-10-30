@@ -25,7 +25,7 @@
     "detail": "計畫依據：8/21 避險衛星（黃金≤5%、石油≤2%、合計≤7%）；8/24 不追高邏輯（黃金月+14.2% 時金額減半）；8/26 實戰 黃金:健康＝40:60。現況（9/14 真值）：保單內黃金A10 367,192（A 200,447＋B 166,745）、健康A10 520,135（A 283,803＋B 236,332）。紀律：單次≤20萬、逢回檔分批、石油 Locked。執行方式：保單內部轉換（非提領）→ 保單價值不變、B 的 100 萬借貸 LTV 不受影響。8/10 鐵則：提出≠完成，先登記 schedule_events，T+4 生效後才更新成分／四源／穿透。 ｜【9/15 閉環定案】資金來源＝保單內部轉換（免費用、保單價值不變、不影響質押 LTV）：摩根(A+B) 轉出 40 萬＋PIMCO(A+B) 轉出 52.8 萬＝92.8 萬，全數轉入貝萊德世界黃金A10（USDEQ6730）。批次：①保單B 摩根 20萬→黃金B ②保單A 摩根 20萬→黃金A ③保單A PIMCO 30萬→黃金A ④保單B PIMCO 22.8萬→黃金B（可視回檔再拆成 5 批，單批 ≤20 萬）。投影（本機 calc_penetration 實算）：黃金 367,192→1,295,192（1.4%→5.0% 觸上限）、債券 27.6%→26.0%、美股 40.6%→38.7%（回到 40% 硬上限內）、科技 15.4%→14.8%；五桶＋衛星仍＝總資產 25,918,930。觸發：逢回檔（距 20 日高 ≥5% 或單批前一日 -2%）；US30Y ≥5.30 不影響本路徑（保單內轉換、非新增質押/買債）。執行後依 8/10 鐵則：T+4 生效才更新成分／四源／穿透。",
     "due_date": null,
     "due_date_source": "未提供",
-    "needs_due_date": false,
+    "needs_due_date": true,
     "last_confirmed": null,
     "last_confirmed_source": "未提供",
     "owner": "CEO",
@@ -211,5 +211,23 @@
     "owner": "CEO",
     "external_owner": null,
     "status_raw": "進行中"
+  },
+  {
+    "date": "2026-10-30",
+    "title": "moneybook_total 收斂：改派生自 cash_detail（現值 2,070,934 停在 10/16，較實際 2,040,016 高 30,918）",
+    "status": "待處理",
+    "tags": "真值,現金,口徑,notion_ingest",
+    "detail": "來源：2026-10-30 週五深度審查 notion_ingest 警告（MB 正數合計 vs snapshot.moneybook_total 差 30,918）。真因（已查證）：snapshot.moneybook_total=2,070,934 是 2026-10-16「對齊 cash_detail 合計」的凍結值；MB 帳戶 CSV 正數合計現為 2,040,016，與 snapshot.cash_total、bank_assets_moneybook 三處完全一致 → 過期的是 moneybook_total，屬第二份真值。風險：僅在 MB 解析失敗時當 fallback（會高估現金 30,918），且 notion_ingest 每輪誤報警告，屬噪音源。處置（等真值日）：①以帳戶截圖＋cash_detail 明細逐項比對，確認 2,040,016 為真 ②確認後把 moneybook_total 改為派生（單一寫入者，比照 2026-10-02 現金、2026-10-18 債券做法）③notion_ingest 對帳改比派生值，消除假警報。硬約束：未經明細比對不得改真值、不得用反推補差額、不得移除既有對帳檢查。驗收：moneybook_total 與 cash_detail 合計逐位相同；notion_ingest 不再出現 30,918 警告；三源一致檢查 PASS。",
+    "updated_at": "2026-10-30",
+    "due_date": "2026-11-01",
+    "due_date_source": "既有文字（每月 1 日真值日；本卡要求明細比對後才可改真值）",
+    "needs_due_date": false,
+    "last_confirmed": "2026-10-30",
+    "last_confirmed_source": "updated_at",
+    "owner": "CEO",
+    "external_owner": null,
+    "status_raw": "⏳ 待處理（2026-10-30 使用者核准開卡；本卡不改任何真值數字，等真值日明細比對）",
+    "is_informational": false,
+    "note": ""
   }
 ]
