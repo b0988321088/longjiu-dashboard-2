@@ -6820,5 +6820,51 @@
   "funds_heng_total_20261030": 795797,
   "net_worth_incl_re": 30018872,
   "real_estate_value_as_of": "2026-08-08",
-  "real_estate_valuation_note": "估值日 2026-08-08（佐證待補）；僅供含房淨值衡量，非可動用現金，不得計入流動性"
+  "real_estate_valuation_note": "估值日 2026-08-08（佐證待補）；僅供含房淨值衡量，非可動用現金，不得計入流動性",
+  "dividend_class_map": {
+    "安聯保單撥回": "policy_credit",
+    "聯博全球多元收益AD基金配息(國泰)": "fund",
+    "貝萊德智慧數據B11基金配息(國泰)": "fund",
+    "路博邁5G基金配息": "fund",
+    "基金配息 聯博全球多元收益AD(小額)": "fund",
+    "基金配息 聯博美國成長": "fund",
+    "基金配息 富達全球動能C": "fund",
+    "基金配息 貝萊德健康A10": "fund",
+    "基金配息 貝萊德科技A10": "fund",
+    "基金配息 貝萊德能源A10": "fund",
+    "基金配息 貝萊德黃金A10": "fund",
+    "基金配息 貝萊德全球股票收益A6": "fund",
+    "基金配息 AI收益成長B月配": "fund",
+    "富達全動配息(國泰)": "fund",
+    "ETF 00713配息": "etf",
+    "ETF 00981A配息": "etf",
+    "ETF 00983D配息": "etf",
+    "ETF 00918配息": "etf",
+    "ETF 00919配息": "etf",
+    "基金配息 台中銀台灣優息B": "fund",
+    "基金配息 國泰台灣高股息B": "fund",
+    "基金配息 摩根多重收益(美元對沖A)": "fund",
+    "第一金FJ33摩根JPM配息": "fund",
+    "第一金人壽撥回(10/01)": "policy_credit",
+    "基金配息 安聯收益成長AMG7(小額)": "fund",
+    "基金配息 M&G入息(小額)": "fund"
+  },
+  "unrealized_pnl_opening": {
+    "value": 495520,
+    "as_of": "2026-10-01",
+    "source_type": "manual_provisional",
+    "source_ref": "git:360f4be7:snapshot.json#securities.unrealized_pnl",
+    "raw_field": "securities.unrealized_pnl",
+    "verified_by": "Hermes 唯讀核對 2026-10-31",
+    "user_ack": "2026-10-31 Telegram 裁決（同意 2026-10 過渡期一次性取值）",
+    "superseded_by": null
+  },
+  "mortgage_due_day": {
+    "永豐": 27,
+    "國泰": 20,
+    "source": "snapshot.mortgage_monthly_note / mortgage_cathay_payment_note（MB 明細確認，非本次推斷）",
+    "evidence": "永豐 2026-10-27 三筆扣款合計 65,739；國泰 2026-10-20 扣款 25,644（30 天計息）",
+    "structured_at": "2026-10-31",
+    "unknown_when_missing": true
+  }
 }

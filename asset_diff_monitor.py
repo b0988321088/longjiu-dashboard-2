@@ -502,6 +502,11 @@ def append_today(snap: dict) -> dict:
         # 2026-10-15 B1／R2：原版缺此鍵 → 當日條目只有 18 鍵（前一日 19 鍵），
         # 下游以 .get("bonds", 0) 讀會靜默歸零；隔日才由 DB 路徑補上。
         "bonds": _bonds_of(snap),
+        # 2026-10-31（每月總覽 v2）：歷史績效結構化欄位。additive。
+        # 2026-10-31 之前一律 null → 下游必須顯示「歷史資料不足」，不得補 0 或推算。
+        "unrealized_pnl": ((snap.get("securities") or {}).get("unrealized_pnl")),
+        "realized_pnl": ((snap.get("securities") or {}).get("realized_pnl")),
+        "net_worth_incl_re": (ex["total_assets"] + ex["real_estate"] - ex["total_liabilities"]),
     }
     # schema 完整性（2026-10-15 B1／R2）：今日鍵集必須涵蓋前一日鍵集，缺鍵不得靜默。
     _prev_days = sorted(d for d in history if d < today)

@@ -168,6 +168,434 @@ def build_perf_card(snap):
                        f"房產 {_m(re_v)}（估值 {re_asof}，非可動用）"]))
     return "".join(cells), as_of
 
+
+# ─────────────────────────────────────────────────────────────
+# 每月收入與獲利總覽（2026-10-31 規格 v2）
+# 鐵則：算不出就「—」；不補 0、不用估算、不用上月值頂替；
+#       配息分類不命中 → unclassified（不得自動歸基金/ETF）；
+#       房貸利息四道檢查任一失敗 → 「利息資料待核」，房租淨收益整列不計算。
+# ─────────────────────────────────────────────────────────────
+def _mio_n(v, default=None):
+    try:
+        if v is None or v == "":
+            return default
+        return float(v)
+    except (TypeError, ValueError):
+        return default
+
+
+def _mio_money(v):
+    return f"{v:,.0f}" if isinstance(v, (int, float)) else "—"
+
+
+def _mio_pct(part, whole):
+    try:
+        return f"{part / whole * 100:.1f}%"
+    except Exception:
+        return "—"
+
+
+def _mio_norm(s):
+    return str(s).replace("（", "(").replace("）", ")").replace(" ", "").strip()
+
+
+def _mio_liab_rows(limit=120):
+    """讀 liabilities 最近 N 筆（新→舊）。失敗回 []，不編造。"""
+    try:
+        import sqlite3
+        con = sqlite3.connect(str(BASE / "dragon_assets.db"))
+        con.row_factory = sqlite3.Row
+        rows = con.execute(
+            "SELECT date, mortgage_yy, mortgage_yydu, mortgage_xz, mortgage_cathay "
+            "FROM liabilities ORDER BY date DESC LIMIT ?", (limit,)).fetchall()
+        con.close()
+        return [dict(r) for r in rows]
+    except Exception as e:
+        print(f"  ⚠️ monthly_overview：讀 liabilities 失敗 ({e})")
+        return []
+
+
+def _mio_paid_actual(snap, month):
+    """MB 當月房貸實扣（結構化 `mortgage_paid_actual[YYYY-MM]` = {"永豐": x, "國泰": y}）。
+
+    缺／格式不符 → None（不可從 note 文字或推導值回填）。僅支援分帳結構，
+    因國泰為按日計息（30 天 25,644／31 天 26,498），與永豐年化月付不同口徑，
+    合併成單一總額會讓 ±10 互證失去意義。
+    """
+    m = snap.get("mortgage_paid_actual") or {}
+    if not isinstance(m, dict):
+        return None
+    v = m.get(month)
+    if not isinstance(v, dict):
+        return None
+    out = {"永豐": _mio_n(v.get("永豐")), "國泰": _mio_n(v.get("國泰"))}
+    if out["永豐"] is None and out["國泰"] is None:
+        return None
+    return out
+
+
+def _mio_interest(snap, rows, paid_actual=None):
+    """房貸利息：C1 本金推導（月差法優先／同月 7 日備援）＋ C4 三態互證。
+
+    回傳 (interest or None, detail, tag, status)
+      status = VERIFIED（MB 實扣互證）／DERIVED_UNVERIFIED（僅推導）／FAIL（不可用或矛盾）
+    C1 鐵則：月差法須為不同月份；本金須介於月付 30%–100%，
+             過大＝提前還本／額外撥款淨額，過小＝疑部分扣款，一律不採用。
+    """
+    if not rows or len(rows) < 2:
+        return None, {}, "無餘額歷史", "FAIL"
+    from datetime import date as _date
+
+    def _d(x):
+        return _date.fromisoformat(str(x)[:10])
+
+    def _sum3(r):
+        vals = [r.get(k) for k in ("mortgage_yy", "mortgage_yydu", "mortgage_xz")]
+        if any(v is None for v in vals):
+            return None
+        return sum(float(v) for v in vals)
+
+    try:
+        rows = sorted(rows, key=lambda r: str(r.get("date"))[:10], reverse=True)
+        cur = rows[0]
+        cur_d = _d(cur["date"])
+    except Exception:
+        return None, {}, "日期解析失敗", "FAIL"
+    cur_m = cur_d.strftime("%Y-%m")
+    bal_cur = _sum3(cur)
+    if bal_cur is None:
+        return None, {}, "本期餘額欄位缺值", "FAIL"
+
+    det = {}
+    P = None
+    source = ""
+    # ── C1-A 月差法：上月最後一筆 vs 本月最後一筆（不同月份才算）
+    prev_rows = []
+    for r in rows[1:]:
+        try:
+            if _d(r["date"]).strftime("%Y-%m") < cur_m:
+                prev_rows.append(r)
+        except Exception:
+            continue
+    if prev_rows:
+        prev = sorted(prev_rows, key=lambda r: str(r["date"])[:10], reverse=True)[0]
+        bal_prev = _sum3(prev)
+        if bal_prev is not None:
+            try:
+                gap = (cur_d - _d(prev["date"])).days
+            except Exception:
+                gap = None
+            if gap and gap > 0:
+                _p = round(bal_prev - bal_cur)
+                det.update({"d0": str(prev["date"])[:10], "d1": str(cur["date"])[:10], "gap": gap})
+                if _p > 0:
+                    P, source = _p, "month_diff"
+    # ── C1-B 備援：同月扣款前後 ≤7 天（僅在月差法不可用時）
+    if P is None:
+        intra = []
+        for r in rows[1:]:
+            if str(r["date"])[:10][:7] == cur_m:
+                intra.append(r)
+                break
+        if intra:
+            cand = intra[0]
+            bal_c = _sum3(cand)
+            if bal_c is not None:
+                try:
+                    gap = (cur_d - _d(cand["date"])).days
+                except Exception:
+                    gap = None
+                _p = round(bal_c - bal_cur)
+                if gap and 0 < gap <= 7 and _p > 0:
+                    P, source = _p, "intra_month"
+                    det.update({"d0": str(cand["date"])[:10], "d1": str(cur["date"])[:10], "gap": gap})
+    if P is None:
+        return None, det, "本金無法推導（無有效月差或扣款前後餘額）", "FAIL"
+
+    syn = _mio_n(snap.get("mortgage_sinopac_monthly"), 0) or 0
+    cat = _mio_n(snap.get("mortgage_cathay_monthly"), 0) or 0
+    _dd = snap.get("mortgage_due_day") or {}
+    det.update({"P": P, "source": source, "sinopac": syn, "bal": bal_cur,
+                "due_day": (_dd.get("永豐") if isinstance(_dd, dict) else None)})
+    # 本金合理性（排除提前還本／額外撥款淨額／部分扣款）
+    if P >= syn:
+        return None, det, "含提前還本或額外撥款", "FAIL"
+    if P < syn * 0.3:
+        return None, det, "本金偏低疑部分扣款", "FAIL"
+    I = round(syn - P)
+    I_cathay = round(cat)
+    rate = (I * 12 / bal_cur * 100) if bal_cur else 0
+    det.update({"I": I, "rate": round(rate, 2), "I_cathay": I_cathay})
+    if not (1.5 <= rate <= 4.0):
+        return None, det, "隱含利率異常", "FAIL"
+    cr = _mio_n(snap.get("mortgage_cathay_rate"), 0) or 0
+    if cr:
+        exp_cat = float(snap.get("mortgage_cathay") or 0) * cr / 12
+        if abs(exp_cat - cat) > max(1.0, exp_cat * 0.01):
+            det["exp_cat"] = round(exp_cat)
+            return None, det, "國泰利息與利率不符", "FAIL"
+
+    total = I + I_cathay
+    det["total"] = total
+    # ── C4 三態（獨立證據；P+I≈月付 不算驗證）
+    if paid_actual is None:
+        det.update({"paid_actual": None, "diff": None})
+        return total, det, "", "DERIVED_UNVERIFIED"
+    _py = paid_actual.get("永豐")
+    _pc = paid_actual.get("國泰")
+    if _py is None:
+        det.update({"paid_actual": None, "diff": None})
+        return total, det, "", "DERIVED_UNVERIFIED"
+    _dy = round((P + I) - _py)
+    det.update({"paid_yf": round(_py), "diff_yf": _dy})
+    if abs(_dy) > 10:
+        return None, det, f"永豐實扣差 {_dy:+,.0f}（>10）", "FAIL"
+    if _pc is not None:
+        _dc = round(I_cathay - _pc)
+        det.update({"paid_cathay": round(_pc), "diff_cathay": _dc})
+        # 國泰按日計息（30/31 天差約 350），容忍 400；超出視為矛盾
+        if abs(_dc) > 400:
+            return None, det, f"國泰實扣差 {_dc:+,.0f}（>400）", "FAIL"
+    return total, det, "", "VERIFIED"
+
+
+def _mio_div_split(snap, month):
+    """配息逐筆分類（精確字串查表；未命中 → unclassified，不自動歸類）。"""
+    rec = (snap.get("dividend_records") or {}).get(month) or {}
+    cmap = snap.get("dividend_class_map") or {}
+    nmap = {_mio_norm(k): v for k, v in cmap.items()}
+    out = {"policy_credit": 0.0, "fund": 0.0, "etf": 0.0, "unclassified": []}
+    total = 0.0
+    for name, amt in rec.items():
+        if not isinstance(amt, (int, float)):
+            continue
+        total += float(amt)
+        cls = nmap.get(_mio_norm(name))
+        if cls in ("policy_credit", "fund", "etf"):
+            out[cls] += float(amt)
+        else:
+            out["unclassified"].append((name, float(amt)))
+    return out, total
+
+
+def _mio_opening(history):
+    """期初＝當月第一筆（本月最早一筆）。
+
+    2026-10-31 實作修正：原設計取「上月最後一筆」，但 2026-09-30 條目處於保單借貸
+    4,000,000 清償過渡期（負債含借貸、資產未同步），9/30→10/1 淨值憑空跳增 1,978,063，
+    直接採用會把帳務重分類誤顯示為「本月賺 215 萬」。改取本月第一筆（2026-10-01），
+    與使用者規格驗收基準一致（10/1→10/31）。回傳 (entry or None, 標籤)。
+    """
+    if not history:
+        return None, "歷史資料不足"
+    dates = sorted(history)
+    cur_m = dates[-1][:7]
+    same = [d for d in dates if d[:7] == cur_m]
+    if same:
+        return history[min(same)], ""
+    return None, "歷史資料不足"
+
+
+def build_monthly_overview(snap, history):
+    """回傳 (card_html, trace_html, status_html)。"""
+    month = str(snap.get("date") or "")[:7]
+    warn = []
+
+    # ── 六個數字 ──
+    sal = _mio_n(snap.get("monthly_salary"))
+    if sal is None:
+        sal = _mio_n(snap.get("salary"))
+    if sal is None:
+        sr = (snap.get("salary_records") or {}).get(month)
+        sal = _mio_n((sr or {}).get("實發") or (sr or {}).get("amount")) if isinstance(sr, dict) else _mio_n(sr)
+    rent = _mio_n(snap.get("rent_monthly_actual"), _mio_n(snap.get("rent_monthly_total")))
+    div = _mio_n(snap.get("dividend_month_actual"), _mio_n(snap.get("monthly_dividend_total")))
+    exp = _mio_n(snap.get("monthly_expense"))
+    basis = _mio_n(snap.get("working_surplus"))
+
+    have_all = all(x is not None for x in (sal, rent, div, exp))
+    total_income = (sal + rent + div) if have_all else None
+    surplus = (total_income - exp) if have_all else None
+    if not have_all:
+        warn.append("收入三項或支出缺值 → 總收入／盈餘不計算")
+
+    # ── 配息分類 ──
+    split, div_raw = _mio_div_split(snap, month)
+    div_sum = split["policy_credit"] + split["fund"] + split["etf"] + sum(a for _, a in split["unclassified"])
+    if abs(div_sum - div_raw) > 1:
+        warn.append("配息分類不平，數字暫不採計")
+    if split["unclassified"]:
+        warn.append("配息有未分類項目，不得歸入基金／ETF")
+
+    # ── 房貸利息與房租淨收益 ──
+    liab = _mio_liab_rows()
+    _paid = _mio_paid_actual(snap, month)
+    interest, idet, itag, istatus = _mio_interest(snap, liab, _paid)
+    rent_net = None
+    _irs = ""
+    if interest is not None and rent is not None:
+        rent_net = rent - interest
+        _irs = "MB 實扣互證" if istatus == "VERIFIED" else "推導值，未與 MB 實扣互證"
+    elif itag:
+        warn.append(f"利息資料待核（{itag}）→ 房租淨收益不計算")
+
+    # ── 期初與損益 ──
+    prev, ptag = _mio_opening(history)
+    sec = snap.get("securities") or {}
+    up_now = _mio_n(sec.get("unrealized_pnl"))
+    rp_now = _mio_n(sec.get("realized_pnl"))
+    op = snap.get("unrealized_pnl_opening") or {}
+    _ost = str(op.get("source_type") or "")
+    up_open = None
+    up_note = ""
+    if op:
+        if _ost == "manual_provisional":
+            up_open = _mio_n(op.get("value"))
+            up_note = (f"†人工補值 {op.get('as_of')}（{op.get('source_ref')}）"
+                       if up_open is not None else "人工補值缺值")
+        elif _ost == "system":
+            up_open = _mio_n(op.get("value"))
+        else:
+            # 來源不可信（缺 source_type）→ 不採用，且不再回退 history（避免把人工值偽裝成系統值）
+            up_note = "期初來源不可信（缺 source_type）"
+    if up_open is None and not op:
+        if prev is not None and prev.get("unrealized_pnl") is not None:
+            up_open = _mio_n(prev.get("unrealized_pnl"))
+            up_note = f"期初 {prev.get('date')}"
+        else:
+            up_note = ptag or "歷史資料不足"
+    up_chg = (up_now - up_open) if (up_now is not None and up_open is not None) else None
+
+    fund_now = _mio_n(snap.get("funds_total"))
+    ins_now = _mio_n(snap.get("insurance_total"))
+    fund_chg = (fund_now - _mio_n(prev.get("fund_market"))) if (prev and fund_now is not None and prev.get("fund_market") is not None) else None
+    ins_chg = (ins_now - _mio_n(prev.get("insurance_current"))) if (prev and ins_now is not None and prev.get("insurance_current") is not None) else None
+
+    na_now = _mio_n(snap.get("net_worth_incl_re"))
+    na_open = None
+    if prev:
+        if prev.get("net_worth_incl_re") is not None:
+            na_open = _mio_n(prev.get("net_worth_incl_re"))
+        elif prev.get("real_estate") is not None:
+            na_open = _mio_n(prev.get("total_assets")) + _mio_n(prev.get("real_estate")) - _mio_n(prev.get("total_liabilities"))
+    na_chg = (na_now - na_open) if (na_now is not None and na_open is not None) else None
+    na_note = "含配息入帳與市價波動，非投資報酬"
+    try:
+        _pl = _mio_n(prev.get("total_liabilities")) if prev else None
+        _cl = _mio_n(snap.get("total_liabilities"))
+        if _pl is not None and _cl is not None and exp:
+            _jump = abs(_pl - _cl)
+            if _jump > exp * 3:
+                na_chg = None
+                na_note = f"期間負債變動 {_jump:,.0f}（結構性，如保單借貸清償）→ 月度淨值變化不可比"
+    except Exception:
+        pass
+
+    # ── 卡片 HTML ──
+    def big(label, value, sub, color="text-emerald-400"):
+        return (f'<div class="p-3 rounded-lg bg-slate-800/60">'
+                f'<div class="text-[10px] text-slate-400">{label}</div>'
+                f'<div class="text-xl font-bold {color} mt-0.5">{value}</div>'
+                f'<div class="text-[10px] text-slate-400 mt-1 leading-snug">{sub}</div></div>')
+
+    def line(label, value, color="text-slate-100", note=""):
+        note_html = ('<div class="text-[10px] text-slate-500">' + note + '</div>') if note else ""
+        return (f'<div class="flex items-baseline justify-between gap-2 text-[11.5px] py-0.5">'
+                f'<span class="text-slate-300">{label}</span>'
+                f'<span class="{color} font-semibold">{value}</span></div>' + note_html)
+
+    inc_txt = "—"
+    if total_income is not None:
+        inc_txt = (f'薪資 {_mio_money(sal)}（{_mio_pct(sal, total_income)}）· '
+                   f'房租 {_mio_money(rent)}（{_mio_pct(rent, total_income)}）· '
+                   f'配息 {_mio_money(div)}（{_mio_pct(div, total_income)}）')
+    sur_color = "text-emerald-400" if (surplus or 0) >= 0 else "text-red-400"
+    sur_txt = (f"{surplus:+,.0f}" if surplus is not None else "—")
+    basis_txt = (f"基準口徑 {basis:+,.0f}（配息保守採計 100,000）" if basis is not None else "基準口徑 —")
+
+    div_lines = []
+    div_lines.append(line("基金／ETF 配息", _mio_money(split["fund"] + split["etf"])))
+    div_lines.append(line("保單撥回", _mio_money(split["policy_credit"]), "text-amber-300",
+                          "可能包含本金返還，尚未確認實際收益成分"))
+    if split["unclassified"]:
+        _uamt = sum(a for _, a in split["unclassified"])
+        div_lines.append(line(f"未分類 {len(split['unclassified'])} 筆", _mio_money(_uamt), "text-red-400",
+                              "待人工確認，不得歸基金／ETF"))
+    div_lines.append(line("合計現金入帳", _mio_money(div_raw), "text-slate-100"))
+
+    cards = [
+        big("本月總收入", _mio_money(total_income), inc_txt),
+        big("本月收支盈餘（實收）", sur_txt, basis_txt, sur_color),
+        (f'<div class="p-3 rounded-lg bg-slate-800/60">'
+         f'<div class="text-[10px] text-slate-400">本月配息拆解</div>'
+         f'<div class="mt-1">{"".join(div_lines)}</div></div>'),
+    ]
+
+    # 次要：損益（非報酬）
+    def chg_txt(v, suffix=""):
+        return f"{v:+,.0f}{suffix}" if isinstance(v, (int, float)) else "—"
+
+    sec_lines = [
+        line("股票未實現損益變動", chg_txt(up_chg),
+             "text-emerald-400" if (up_chg or 0) >= 0 else "text-red-400",
+             "未實現損益變動，非完整總報酬" + (f"｜{up_note}" if up_note else "")),
+        line("股票已實現損益", chg_txt(rp_now)),
+        line("基金帳面變動", chg_txt(fund_chg), "text-slate-100",
+             (f"含申購資金，不視為本月增值｜期初 {prev.get('date')}" if fund_chg is not None else "歷史資料不足")),
+        line("保單帳面變動", chg_txt(ins_chg), "text-slate-100",
+             (f"與保單撥回分開呈現｜期初 {prev.get('date')}" if ins_chg is not None else "歷史資料不足")),
+        line("房租淨收益", chg_txt(rent_net),
+             "text-emerald-400" if (rent_net or 0) >= 0 else "text-red-400",
+             (f"租金 {_mio_money(rent)} − 利息 {_mio_money(interest)}（{_irs}）｜房屋稅、地價稅、修繕未計"
+              if rent_net is not None else "利息資料待核，不計算")),
+        line("含房淨值變化", chg_txt(na_chg),
+             "text-emerald-400" if (na_chg or 0) >= 0 else "text-red-400", na_note),
+    ]
+
+    card_html = (
+        f'<div class="grid grid-cols-1 sm:grid-cols-3 gap-2">{"".join(cards)}</div>'
+        f'<div class="mt-2 p-3 rounded-lg bg-slate-800/40">'
+        f'<div class="text-[10px] text-slate-400 mb-1">本月資產損益（非報酬）</div>'
+        f'{"".join(sec_lines)}</div>'
+    )
+
+    # ── 追溯明細 ──
+    tr = []
+    tr.append(f'<div class="text-[11px] text-slate-300">本月總收入：'
+              f'月薪 {_mio_money(sal)}（monthly_salary）＋ 房租 {_mio_money(rent)}（rent_monthly_actual）'
+              f'＋ 配息 {_mio_money(div)}（dividend_month_actual）＝ <b>{_mio_money(total_income)}</b></div>')
+    drec = (snap.get("dividend_records") or {}).get(month) or {}
+    dlist = "、".join(f"{k} {v:,.0f}" for k, v in sorted(drec.items(), key=lambda x: -x[1]) if isinstance(v, (int, float)))
+    tr.append(f'<div class="text-[11px] text-slate-400 mt-1">配息逐筆（{len(drec)} 筆）：{dlist}</div>')
+    if interest is not None:
+        _psrc = "月差法" if idet.get("source") == "month_diff" else "同月扣款前後備援"
+        _pv = (f'；MB 實扣 {idet.get("paid_actual"):,.0f}，差 {idet.get("diff"):+,.0f}'
+               if idet.get("paid_actual") is not None else "；MB 實扣未結構化（本值為推導）")
+        tr.append(f'<div class="text-[11px] text-slate-400 mt-1">房租淨收益：租金 {_mio_money(rent)} − '
+                  f'永豐利息 {idet.get("I"):,.0f}（月付 {_mio_n(idet.get("sinopac"), 0):,.0f} − 本金 {idet.get("P"):,.0f}，{_psrc}）'
+                  f'− 國泰利息 {idet.get("I_cathay"):,.0f}；餘額日 {idet.get("d0")}→{idet.get("d1")}（{idet.get("gap")} 天）'
+                  f'；隱含年利率 {idet.get("rate")}%；互證 {istatus}'
+                  f'；扣款日 {str(idet.get("due_day")) + " 日" if idet.get("due_day") else "未知（未結構化）"}{_pv}</div>')
+    else:
+        _pv2 = (f'；MB 實扣 {idet.get("paid_actual"):,.0f}，差 {idet.get("diff"):+,.0f}'
+                if idet.get("paid_actual") is not None else "")
+        tr.append(f'<div class="text-[11px] text-amber-400 mt-1">房租淨收益：利息資料待核（{itag}）{_pv2}</div>')
+    tr.append(f'<div class="text-[11px] text-slate-400 mt-1">股票損益：期初 {_mio_money(up_open)}'
+              f'{("（" + up_note + "）") if up_note else ""} ／期末 {_mio_money(up_now)}／差 {chg_txt(up_chg)}；'
+              f'已實現 {_mio_money(rp_now)}</div>')
+    tr.append(f'<div class="text-[11px] text-slate-400 mt-1">含房淨值變化：期初 {_mio_money(na_open)}／'
+              f'期末 {_mio_money(na_now)}／差 {chg_txt(na_chg)}；外部淨投入 0（收入非新投入）</div>')
+    trace_html = ('<details class="mt-2"><summary class="cursor-pointer text-[11px] text-teal-300">'
+                  '▸ 追溯明細（每個數字怎麼來的）</summary>'
+                  f'<div class="mt-1 p-2 rounded bg-slate-900/60">{"".join(tr)}</div></details>')
+
+    status_html = ""
+    if warn:
+        status_html = ('<div class="mt-2 text-[10.5px] text-amber-300 bg-amber-500/10 rounded px-2 py-1">'
+                       + "；".join(warn) + "</div>")
+    return card_html, trace_html, status_html
+
+
 def main():
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     tpl = (BASE / "index_template.html").read_text(encoding="utf-8")
@@ -1433,6 +1861,25 @@ def main():
         tpl = tpl.replace("__PERF_CARD__", '<div class="p-2 text-xs text-red-400">投資績效卡注入失敗</div>')
         tpl = tpl.replace("__PERF_ASOF__", "—")
         print("  ⚠️ 投資績效卡注入失敗:", _pfe)
+
+    # ── 每月收入與獲利總覽（2026-10-31 規格 v2：只增不動其他區塊）──
+    try:
+        _mio_hist = json.loads((BASE / "asset_diff_history.json").read_text(encoding="utf-8"))
+    except Exception as _mhe:
+        _mio_hist = {}
+        print("  ⚠️ 每月總覽：asset_diff_history 讀取失敗，期初一律以「資料不足」處理:", _mhe)
+    try:
+        _mio_card, _mio_trace, _mio_status = build_monthly_overview(snap, _mio_hist)
+        tpl = tpl.replace("__MIO_CARD__", _mio_card)
+        tpl = tpl.replace("__MIO_TRACE__", _mio_trace)
+        tpl = tpl.replace("__MIO_STATUS__", _mio_status)
+        tpl = tpl.replace("__MIO_MONTH__", str(snap.get("date") or "")[:7] or "—")
+    except Exception as _moe:
+        tpl = tpl.replace("__MIO_CARD__", '<div class="text-xs text-red-400">每月總覽產生失敗</div>')
+        tpl = tpl.replace("__MIO_TRACE__", "")
+        tpl = tpl.replace("__MIO_STATUS__", "")
+        tpl = tpl.replace("__MIO_MONTH__", "—")
+        print("  ⚠️ 每月收入與獲利總覽產生失敗:", _moe)
 
     # 2026-10-12 資安處置：輸出前最後一道——遮罩帳號識別碼與安全線門檻（唯一實作在 public_mask）
 
