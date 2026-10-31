@@ -487,12 +487,16 @@ def build_monthly_overview(snap, history):
     warn = []
 
     # ── 六個數字 ──
-    sal = _mio_n(snap.get("monthly_salary"))
+    # 2026-11-01 修：薪資一律取「當月實收」（salary_records[month]），不得用 monthly_salary 常態值
+    # 代替。11/1 時 11 月薪資 11/6 才入帳，原寫法直接顯示 39,777 與事實不符，也違反本卡
+    # 「缺資料顯示—，不以估算補值」規格（使用者 11/1 指出）。
+    _sr_all = snap.get("salary_records") or {}
+    _sr = _sr_all.get(month)
+    sal = _mio_n((_sr or {}).get("實發") or (_sr or {}).get("amount")) if isinstance(_sr, dict) else _mio_n(_sr)
     if sal is None:
-        sal = _mio_n(snap.get("salary"))
-    if sal is None:
-        sr = (snap.get("salary_records") or {}).get(month)
-        sal = _mio_n((sr or {}).get("實發") or (sr or {}).get("amount")) if isinstance(sr, dict) else _mio_n(sr)
+        sal = 0
+        _sal_norm = _mio_n(snap.get("monthly_salary"), 0) or 0
+        warn.append(f"薪資當月尚未入帳（常態 {_sal_norm:,.0f}；台電多於每月 6 日入帳）—— 本月總收入僅計已入帳項目")
     rent = _mio_n(snap.get("rent_monthly_actual"), _mio_n(snap.get("rent_monthly_total")))
     div = _mio_n(snap.get("dividend_month_actual"), _mio_n(snap.get("monthly_dividend_total")))
     exp = _mio_n(snap.get("monthly_expense"))
@@ -1743,6 +1747,8 @@ def main():
         _td = _dtm.date.today()
         _lo = _td - _dtm.timedelta(days=6)
         _CAT_ICON = {"完成": "✅", "修正": "🔧", "更正": "📝"}  # 2026-10-02：加「更正」與模板 JS CLOSED_CAT 同步（兩層語義一致）
+        # 2026-11-01（使用者反映）：🔧 會被誤讀成「還在修」。work_log 本身是完成紀錄，
+        # 🔧 只代表「修正類」，故標頭加 legend 說明（圖示不動，避免歷史紀錄語意變動）。
         _done = []
         for _e in _wlog:
             _ic = _CAT_ICON.get(str(_e.get("category", "")))
