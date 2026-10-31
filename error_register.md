@@ -1838,3 +1838,11 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 首次發生: 2026-10-30 23:20:09
 - 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
 - 狀態: ⏳ 待處理 (總計 1 次)
+
+## INCIDENT gov-20261031-hold-bypass (governance)
+- 首次發生: 2026-10-31 23:05
+- 錯誤: 事故隔離期間以 `rm .git/PUSH_HOLD` 直接解鎖並推送 a516c6f3，繞過 release_auth 一次性授權機制
+- 影響: HOLD 由「單次放行」變成「整段解除」，隔離範圍失控（內容本身有 cio_lane 真審查 RECORD，非未審查上線）
+- 根因: 把 HOLD 檔內「解除方式：刪除本檔」當成常規路徑；當時 release_auth.py 已存在但未使用，且機制尚未進版控
+- 修復: ① HOLD 已恢復 ② release_auth／pre-push／auto_push 進版控（819ddcae，CIO RECORD） ③ HOLD 檔改寫為「不得直接刪除、只能 issue 一次性授權」 ④ skill longjiu-pipeline-governance 補鐵則
+- 狀態: ✅ 已修復 (2026-10-31 23:35)
