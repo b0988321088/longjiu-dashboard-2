@@ -110,9 +110,15 @@ def rollback_created_commit():
 
 
 def push_lane(own_files):
-    """唯一推送出口：auto_push.py（範圍紀錄覆蓋／重試／遠端 sha 驗證）。"""
-    return run([sys.executable, os.path.join(BASE, "auto_push.py"), "--script", "radar_push.py",
-                "--own"] + own_files, timeout=600)
+    """唯一推送出口：auto_push.py（範圍紀錄覆蓋／重試／遠端 sha 驗證）。
+
+    own_files 必須是「推送範圍內實際變更的自家產物」；空清單時不傳 --own
+    （nargs='+' 不帶值會讓 argparse 直接失敗）。
+    """
+    cmd = [sys.executable, os.path.join(BASE, "auto_push.py"), "--script", "radar_push.py"]
+    if own_files:
+        cmd += ["--own"] + list(own_files)
+    return run(cmd, timeout=600)
 
 
 def commit_range_count():
@@ -209,7 +215,12 @@ def main(summary_mode: str = "alerts"):
     # 6) 推送（唯一出口）
     # --own 只做字面路徑比對（publish_gate 不展開 glob）→ 一律傳實際檔名。
     # 2026-10-19（INC）：原傳 glob「radar_report_*.html」會被判 OWN_OUTSIDE 越權，10-12／10-19 兩次因此推不出去。
-    ap = push_lane(own_files)
+    # 2026-10-31（INC）：改成「本次推送範圍內實際變更」的自家檔 —— 傳候選清單時，本次沒動到的
+    #   index.html 會被判 OWN_OUTSIDE（越權）而整批拒推（當日實踩：rc=3 blocking 1）。
+    _rng = run(["git", "diff", "--name-only", "origin/clean-main", "HEAD"], timeout=60)
+    _rng_files = {p.strip() for p in (_rng.stdout or "").splitlines() if p.strip()}
+    push_own = [f for f in own_files if f in _rng_files]
+    ap = push_lane(push_own)
     ap_out = _tail((ap.stdout or "") + (ap.stderr or ""))
     if ap.returncode != 0:
         print(f"⚠️ 未推送上線（rc={ap.returncode}）：{ap_out}")
