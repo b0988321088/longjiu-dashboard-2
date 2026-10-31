@@ -11624,20 +11624,37 @@
       "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "id": "mem-20261031090735-1257",
+      "timestamp": "2026-10-31T09:07:35.590021+08:00",
+      "agent": "Hermes",
+      "task": "雷達 cron 推送車道根治＋10/31 閉環",
+      "summary": "①週六 08:30 cron rc=3 根因＝radar_weekly 自行 git add 四檔（含 index.html／rebalance_dashboard_*.html 不在白名單）→ 閘門以整批變更集合判 must_cio。修法：radar_weekly 改薄殼 radar_push.main(summary_mode=full)，需審查時自動送真 CIO(cio_lane)，推送邏輯單一實作；不擴白名單、不繞公開首頁審查。②實跑抓到第二坑：--own 傳候選清單（含未變更 index.html）被 publish_gate 判 OWN_OUTSIDE → 改為 git diff origin/clean-main..HEAD ∩ own_files，空交集不傳 --own。③驗證：radar_weekly 實跑完整走完並推送，remote 905dd348，PUSH_LANE 4 顆皆 RECORD。④10/31 閉環：補 funds_heng_total_20261030=795,797 使基金口徑閉合（原差 25,872）、驗證器心跳重跑 57 PASS/0 FAIL、補提交 10/30 殘留 7 檔，commit 087ada0e 已推 clean-main，closeout_check 全部通過。殘留：一般申購 15 檔仍為 10/22 平台值（待帳戶總覽校正）。",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261031191445-1258",
+      "timestamp": "2026-10-31T19:14:45.095431",
+      "agent": "Hermes",
+      "task": "日報2026-10-31",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261031191445-1259",
+      "timestamp": "2026-10-31T19:14:45.150962",
+      "agent": "Hermes",
+      "task": "資產穿透2026-10-31",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
     }
-,
-  {
-    "id": "mem-20261031090735-1257",
-    "timestamp": "2026-10-31T09:07:35.590021+08:00",
-    "agent": "Hermes",
-    "task": "雷達 cron 推送車道根治＋10/31 閉環",
-    "summary": "①週六 08:30 cron rc=3 根因＝radar_weekly 自行 git add 四檔（含 index.html／rebalance_dashboard_*.html 不在白名單）→ 閘門以整批變更集合判 must_cio。修法：radar_weekly 改薄殼 radar_push.main(summary_mode=full)，需審查時自動送真 CIO(cio_lane)，推送邏輯單一實作；不擴白名單、不繞公開首頁審查。②實跑抓到第二坑：--own 傳候選清單（含未變更 index.html）被 publish_gate 判 OWN_OUTSIDE → 改為 git diff origin/clean-main..HEAD ∩ own_files，空交集不傳 --own。③驗證：radar_weekly 實跑完整走完並推送，remote 905dd348，PUSH_LANE 4 顆皆 RECORD。④10/31 閉環：補 funds_heng_total_20261030=795,797 使基金口徑閉合（原差 25,872）、驗證器心跳重跑 57 PASS/0 FAIL、補提交 10/30 殘留 7 檔，commit 087ada0e 已推 clean-main，closeout_check 全部通過。殘留：一般申購 15 檔仍為 10/22 平台值（待帳戶總覽校正）。",
-    "status": "completed",
-    "source": "auto"
-  }
   ],
   "meta": {
-    "updated_at": "2026-10-31T07:00:16.218570"
+    "updated_at": "2026-10-31T19:14:45.152962"
   },
   "last_updated": "2026-10-31T18:00:00+08:00",
   "2026-09-29": [

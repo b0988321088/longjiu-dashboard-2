@@ -169,6 +169,91 @@ def build_perf_card(snap):
     return "".join(cells), as_of
 
 
+def build_perf_month_card(snap):
+    """本月投資績效＋資金成本（2026-10-31 使用者要求加入儀表板）。
+
+    鐵則：全部走 performance_core.monthly_performance（唯一計算層）與
+    build_investment_performance.load_loans（負債口徑單一來源），本函式不自行算績效公式。
+    資金成本淨利差用「保守常態配息」口徑（與投資績效月報一致），不混當月實收。
+    """
+    import datetime as _dt
+    import sqlite3 as _sq
+    import performance_core as _pc
+    import build_investment_performance as _bip
+
+    def _m(v):
+        try:
+            return f"{float(v):,.0f}"
+        except Exception:
+            return "—"
+
+    ym = str(snap.get("date") or _dt.date.today().isoformat())[:7]
+    adj = _bip.load_adjust()
+    a = adj.get(ym, {}) or {}
+    db = _sq.connect(str(BASE / "dragon_assets.db"))
+    try:
+        core = _pc.monthly_performance(ym, snap=snap, adjust_all=adj, db=db,
+                                       reliable=bool(a.get("市值可靠", True)))
+    finally:
+        db.close()
+    rows = {x["c"]: x for x in core["rows"]}
+    grand = sum(x["pnl"] for x in core["rows"])
+
+    loans = _bip.load_loans(snap, a.get("資金成本", {}))
+    bal = sum(l["balance"] for l in loans)
+    m_int = sum(l["monthly"] for l in loans)
+    m_pay = sum(l["payment"] for l in loans)
+    wacc = (m_int * 12 / bal) if bal else 0
+    inv = ((snap.get("securities_total_market_value") or 0)
+           + (snap.get("funds_total") or 0) + (snap.get("insurance_total") or 0))
+    div_m = snap.get("dividend_month_expected") or 100000
+    dy = (div_m * 12 / inv) if inv else 0
+    spread = dy - wacc
+    if spread >= 0.012:
+        lc, lt = "text-emerald-400", "🟢 充足"
+    elif spread >= 0:
+        lc, lt = "text-yellow-400", "🟡 偏薄"
+    else:
+        lc, lt = "text-red-400", "🔴 為負"
+
+    p_cost = (snap.get("allianz_cost") or 0) + (snap.get("firstjin_cost") or 0)
+    p_div = (snap.get("allianz_cum_dividend") or 0) + (snap.get("firstjin_cum_dividend") or 0)
+    p_real = ((snap.get("insurance_total") or 0) - p_cost) + p_div
+
+    def cell2(label, main, color, subs):
+        sub_html = "".join(f'<span class="mr-2">{x}</span>' for x in subs)
+        return (f'<div class="p-2 rounded-lg bg-slate-800/60">'
+                f'<div class="flex items-baseline justify-between gap-2">'
+                f'<span class="text-slate-300">{label}</span>'
+                f'<b class="{color}">{main}</b></div>'
+                f'<div class="text-[10px] text-slate-400 mt-1 leading-snug">{sub_html}</div></div>')
+
+    out = []
+    _cg = "text-emerald-400" if grand >= 0 else "text-red-400"
+    out.append(cell2(f"本月投資績效（{ym}）", f"{grand:+,.0f}", _cg, [
+        f"股票 {_m(rows.get('股票', {}).get('pnl'))}",
+        f"基金 {_m(rows.get('基金', {}).get('pnl'))}",
+        f"保單 {_m(rows.get('保單', {}).get('pnl'))}",
+    ]))
+    out.append(cell2("資金成本（加權）", f"{wacc*100:.2f}%/年", "text-slate-100", [
+        f"借款 {_m(bal)}",
+        f"純月息 {_m(m_int)}／月付 {_m(m_pay)}",
+    ]))
+    out.append(cell2("配息殖利率 vs 成本", f"{spread*100:+.2f}pp {lt}", lc, [
+        f"保守月配 {_m(div_m)}→殖利率 {dy*100:.2f}%",
+        "口徑＝保守常態（非當月實收）",
+    ]))
+    _cp = "text-emerald-400" if p_real >= 0 else "text-red-400"
+    out.append(cell2("保單累計真實績效", f"{p_real:+,.0f}", _cp, [
+        f"投入 {_m(p_cost)}",
+        f"帳面 {_m((snap.get('insurance_total') or 0) - p_cost)}＋累計配息 {_m(p_div)}",
+    ]))
+    return ('<div class="mt-3 pt-3 border-t border-slate-700/60">'
+            '<div class="text-[11px] text-teal-300 font-bold mb-1">本月績效與資金成本</div>'
+            '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-200">'
+            + "".join(out) + "</div></div>")
+
+
 # ─────────────────────────────────────────────────────────────
 # 每月收入與獲利總覽（2026-10-31 規格 v2）
 # 鐵則：算不出就「—」；不補 0、不用估算、不用上月值頂替；
@@ -1861,6 +1946,13 @@ def main():
         tpl = tpl.replace("__PERF_CARD__", '<div class="p-2 text-xs text-red-400">投資績效卡注入失敗</div>')
         tpl = tpl.replace("__PERF_ASOF__", "—")
         print("  ⚠️ 投資績效卡注入失敗:", _pfe)
+
+    # ── 本月投資績效＋資金成本（2026-10-31 使用者要求）──
+    try:
+        tpl = tpl.replace("__PERF_MONTH_CARD__", build_perf_month_card(snap))
+    except Exception as _pme:
+        tpl = tpl.replace("__PERF_MONTH_CARD__", "")
+        print("  ⚠️ 本月投資績效卡注入失敗:", _pme)
 
     # ── 每月收入與獲利總覽（2026-10-31 規格 v2：只增不動其他區塊）──
     try:
