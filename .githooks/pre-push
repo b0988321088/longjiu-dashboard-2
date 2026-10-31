@@ -1,11 +1,23 @@
 #!/usr/bin/env bash
 # 2026-10-31 事故隔離：PUSH_HOLD 存在時，推送一律拒絕（與 .githooks/pre-commit 同一把鎖）。
 # 放在最前面，先於 publish_gate 判定——避免「gate 通過就推出去」的縫。
+# 2026-10-31 追加：唯一例外是「一次性發布授權」（.git/RELEASE_AUTH）。
+#   - HOLD 仍生效、仍預設拒絕；只有 release_auth.py 逐項驗證通過才放行一次。
+#   - 驗證內容：HEAD、待推 commit 清單、目標分支、遠端 URL、期限、使用次數。
+#   - 放行後立即消費並留稽核（.git/RELEASE_AUTH_USED/、.git/RELEASE_AUTH.used-<id>）。
+#   - 本例外只授權 push，不授權 commit；pre-commit 仍無條件擋。
 GIT_DIR_HOLD="$(git rev-parse --git-dir 2>/dev/null || echo .git)"
 if [ -f "$GIT_DIR_HOLD/PUSH_HOLD" ]; then
-    echo "⏸️  PUSH 被拒絕：PUSH_HOLD 生效（2026-10-31 事故隔離）" >&2
-    echo "    解除方式：刪除 .git/PUSH_HOLD（需使用者授權）" >&2
-    exit 1
+    REQS="$(cat)"
+    # 注意：不能用 $PWD（MSYS 路徑 /c/... 交給 native python 會被解成 C:\c\...）；
+    # git 保證 hook 的 cwd 是 worktree 頂層，故用相對路徑。
+    if printf '%s\n' "$REQS" | python release_auth.py verify --refs-from-stdin; then
+        echo "🔓 一次性發布授權有效：本次推送放行（PUSH_HOLD 仍生效，僅此一次）" >&2
+    else
+        echo "⏸️  PUSH 被拒絕：PUSH_HOLD 生效且無有效一次性授權" >&2
+        echo "    解除方式：刪除 .git/PUSH_HOLD，或建立 .git/RELEASE_AUTH（需使用者授權）" >&2
+        exit 1
+    fi
 fi
 # 龍九 pre-push 閘門 v5（2026-10-07）
 # 修正 v2 漏洞：只驗 HEAD tree → 改成驗「本次推送範圍內每一個 commit 的 tree」。

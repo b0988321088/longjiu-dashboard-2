@@ -239,10 +239,19 @@ def main() -> int:
     a = ap.parse_args()
 
     # 2026-10-31 緊急事故隔離：本檔是唯一推送出口，一律受 .git/PUSH_HOLD 約束。
-    # 即使呼叫端漏檢查 HOLD，推送在這一層仍被擋下（解除＝刪除 .git/PUSH_HOLD）。
+    # 唯一例外：.git/RELEASE_AUTH 一次性發布授權（release_auth.py 逐項驗證 HEAD／範圍／
+    # 分支／遠端／期限／使用次數；消費與稽核在 pre-push，此處只做預檢不消費）。
     if (Path(__file__).resolve().parent / ".git" / "PUSH_HOLD").exists():
-        print("⏸️ PUSH_HOLD 生效：拒絕推送（事故隔離）")
-        return 0
+        try:
+            import release_auth
+            _ok, _reason, _fp = release_auth.verify()
+        except Exception as _exc:  # noqa: BLE001
+            _ok, _reason, _fp = False, f"{type(_exc).__name__}: {_exc}", {}
+        if not _ok:
+            print(f"⏸️ PUSH_HOLD 生效且無有效一次性授權：{_reason}")
+            return 0
+        print(f"🔓 一次性發布授權有效（{len(_fp.get('commits') or [])} 顆，{_fp.get('branch')}）："
+              f"交由 pre-push 消費並執行")
 
     base = base_dir()
     refs = [a.branch] if a.branch else list(DEFAULT_REFS)

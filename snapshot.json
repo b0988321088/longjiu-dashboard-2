@@ -1218,17 +1218,17 @@
  },
  "funds": 12746364,
  "allianz_a_breakdown": {
-  "USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 2656101,
-  "USDEQ5440 摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(穩定月配)": 688894,
-  "USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)": 1622919
+  "USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 2669591,
+  "USDEQ5440 摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(穩定月配)": 691591,
+  "USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)": 1611725
  },
  "allianz_a_current_value": 4972907,
  "allianz_b_breakdown": {
-  "NTDEQ2640 元大台灣高股息優質龍頭基金-新台幣(B)配息": 319484,
-  "NTDET0010 元大台灣卓越50": 990784,
-  "USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 487509,
-  "USDEQ5700 M&G入息基金A(美元避險月配)F": 627507,
-  "USDEQ6730 貝萊德世界黃金基金 A10美元(總報酬穩定配息)": 146454
+  "NTDEQ2640 元大台灣高股息優質龍頭基金-新台幣(B)配息": 319064,
+  "NTDET0010 元大台灣卓越50": 989483,
+  "USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 486869,
+  "USDEQ5700 M&G入息基金A(美元避險月配)F": 626683,
+  "USDEQ6730 貝萊德世界黃金基金 A10美元(總報酬穩定配息)": 146262
  },
  "allianz_b_current_value": 2568361,
  "monthly_dividend_total": 198364.0,
@@ -5480,39 +5480,39 @@
   }
  },
  "coast_fi_engine": {
-  "asof": "2026-10-27",
+  "asof": "2026-10-31",
   "current": {
    "growth_assets": {
-    "tw_growth": 2988807.0,
-    "us_growth": 10103562.0,
+    "tw_growth": 2921442.0,
+    "us_growth": 10081453.0,
     "re_value": 34017063.0,
     "mortgage": 25005344.0,
     "re_net": 9011719.0,
     "fin_debt": 0.0,
-    "total": 22104088.0,
-    "net_after_fin_debt": 22104088.0
+    "total": 22014614.0,
+    "net_after_fin_debt": 22014614.0
    },
    "coast": {
     "fi_target_swr": 47763000.0,
     "fi_target_yield": 38210400.0,
-    "years_to_target": 0.27,
+    "years_to_target": 0.25,
     "target_date": "2027-02-01",
     "real_return_pct": 5.0,
-    "fin_only_capital": 13092369.0,
-    "coast_threshold_swr": 47137927.74042558,
-    "coast_fi_ratio_swr_pct": 46.9,
-    "coast_fi_ratio_fin_only_swr_pct": 27.8,
-    "coast_gap_fin_only_swr": 34045558.74042558,
-    "fv_no_contrib_swr": 22397199.15049597,
-    "gap_fv_swr": 25365800.84950403,
-    "monthly_needed_swr": 8420134.329167329,
-    "coast_threshold_yield": 37710342.19234046,
-    "coast_fi_ratio_yield_pct": 58.6,
-    "coast_fi_ratio_fin_only_yield_pct": 34.7,
-    "coast_gap_fin_only_yield": 24617973.192340463,
-    "fv_no_contrib_yield": 22397199.15049597,
-    "gap_fv_yield": 15813200.849504031,
-    "monthly_needed_yield": 5249165.051673513
+    "fin_only_capital": 13002895.0,
+    "coast_threshold_swr": 47183947.53456829,
+    "coast_fi_ratio_swr_pct": 46.7,
+    "coast_fi_ratio_fin_only_swr_pct": 27.6,
+    "coast_gap_fin_only_swr": 34181052.53456829,
+    "fv_no_contrib_swr": 22284782.50387281,
+    "gap_fv_swr": 25478217.49612719,
+    "monthly_needed_swr": 8457450.84328086,
+    "coast_threshold_yield": 37747158.027654625,
+    "coast_fi_ratio_yield_pct": 58.3,
+    "coast_fi_ratio_fin_only_yield_pct": 34.4,
+    "coast_gap_fin_only_yield": 24744263.027654625,
+    "fv_no_contrib_yield": 22284782.50387281,
+    "gap_fv_yield": 15925617.496127188,
+    "monthly_needed_yield": 5286481.565787043
    },
    "light_work": {
     "rows": [
@@ -5520,25 +5520,25 @@
       "月收": 0.0,
       "所需年現金流": 1910520,
       "所需本金": 38210400,
-      "缺口": 25118031,
-      "達成_pct": 34.3
+      "缺口": 25207505,
+      "達成_pct": 34.0
      },
      {
       "月收": 20000.0,
       "所需年現金流": 1670520,
       "所需本金": 33410400,
-      "缺口": 20318031,
-      "達成_pct": 39.2
+      "缺口": 20407505,
+      "達成_pct": 38.9
      },
      {
       "月收": 30000.0,
       "所需年現金流": 1550520,
       "所需本金": 31010400,
-      "缺口": 17918031,
-      "達成_pct": 42.2
+      "缺口": 18007505,
+      "達成_pct": 41.9
      }
     ],
-    "fin_capital": 13092369.0,
+    "fin_capital": 13002895.0,
     "yield_pct": 5.0,
     "expense": 159210.0
    },
@@ -5547,10 +5547,10 @@
     "rent": 80100.0,
     "dividend_conservative": 100000.0,
     "dividend_normal": 177072.0,
-    "dividend_actual": 183066.0,
+    "dividend_actual": 198364.0,
     "pccr_pct": 139.3,
     "pccr_conservative_pct": 113.1,
-    "pccr_actual_pct": 165.3,
+    "pccr_actual_pct": 174.9,
     "pccr_normal_headroom": 139.3,
     "nonpassive": {
      "girlfriend_repayment": 6000.0
@@ -5564,15 +5564,15 @@
     "gap": 32110.0,
     "vacancy": 33000.0,
     "scenario": "extreme",
-    "cash_full": 1140016.0,
+    "cash_full": 1120447.0,
     "reserve": 0.0,
     "floor": 700000.0,
-    "cash_used": 1140016.0,
+    "cash_used": 1120447.0,
     "cash_below_floor": false,
-    "runway_days": 1065,
+    "runway_days": 1047,
     "cash_caliber": "net_of_reserve",
-    "runway_days_full_cash": 1065,
-    "runway_days_net_reserve": 1065
+    "runway_days_full_cash": 1047,
+    "runway_days_net_reserve": 1047
    },
    "stress": {
     "pool": 11779326.0,
@@ -5598,7 +5598,7 @@
       "完成": false
      },
      {
-      "項目": "整池質押 590萬@2.65%（2026-09-29 使用者確認；原記 2.77%，待銀行書面覆核）（撥款後清償 500萬高息）",
+      "項目": "整池質押 590萬@2.65%（2026-10-28 由 10/22 實扣 9,852 ÷ 23 天 × 365 ÷ 5,900,000 反算＝2.65%，與原口徑一致）（撥款後清償 500萬高息）",
       "完成": true
      },
      {
@@ -5616,7 +5616,7 @@
    },
    "light": "🔴 紅燈",
    "blockers": [
-    "Coast FI 本金滑行（純金融）27.8% < 100%（含房產 46.9%）",
+    "Coast FI 本金滑行（純金融）27.6% < 100%（含房產 46.7%）",
     "跌30% 維持率 139.8% < 180%",
     "授信未鎖定（洲際W 轉貸（永豐 1,312萬，9/25 到期））"
    ]
@@ -5761,6 +5761,16 @@
     "maintenance_pct": 139.8,
     "credit_locked": false,
     "light_work_cap_2w": 20318031
+   },
+   "2026-10-31": {
+    "light": "🔴 紅燈",
+    "coast_fin_only_pct": 27.6,
+    "coast_with_re_pct": 46.7,
+    "pccr_pct": 139.3,
+    "runway_days": 1047,
+    "maintenance_pct": 139.8,
+    "credit_locked": false,
+    "light_work_cap_2w": 20407505
    }
   }
  },
