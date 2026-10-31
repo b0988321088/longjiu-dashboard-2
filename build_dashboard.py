@@ -93,6 +93,81 @@ def relay_schedule_html(stations) -> str:
                 </div>""")
     return (chr(13) + chr(10)).join(_cards) if _cards else '                <p class="text-xs text-slate-400">接力資料待更新</p>'
 
+def build_perf_card(snap):
+    """投資績效卡（2026-10-31 使用者裁決：四分類，只列可算項）。
+
+    口徑鐵則（不得放寬）：
+    - 股票＝成本基礎累計報酬（非年化、非 XIRR；XIRR 待 Moneybook 資金流重建）
+    - 保單＝市值 vs 投入成本；累計配息只列參考，不得當報酬率（配息型可能含本金返還）
+    - 基金無成本基礎 → 只列市值，不計算報酬
+    - 淨值雙軌：含房（財富面）／流動（流動性面）；房產估值非可動用現金
+    回傳 (html, as_of)
+    """
+    def _n(v):
+        try:
+            return float(v or 0)
+        except Exception:
+            return 0.0
+
+    def _m(v):
+        return f"{v:,.0f}"
+
+    def _pct(v):
+        try:
+            return f"{float(v):+.2f}%"
+        except Exception:
+            return "—"
+
+    sec = snap.get("securities") or {}
+    mv = _n(sec.get("total_market_value") or snap.get("securities_total"))
+    up = _n(sec.get("unrealized_pnl"))
+    up_pct = sec.get("unrealized_pnl_pct")
+    rp = _n(sec.get("realized_pnl"))
+    cost = mv - up
+    ins = _n(snap.get("insurance_total"))
+    p_cost = _n(snap.get("allianz_cost")) + _n(snap.get("firstjin_cost"))
+    p_div = _n(snap.get("allianz_cum_dividend")) + _n(snap.get("firstjin_cum_dividend"))
+    fund = _n(snap.get("funds_total"))
+    ta = _n(snap.get("total_assets"))
+    tl = _n(snap.get("total_liabilities"))
+    re_v = _n(snap.get("real_estate_value"))
+    na_l = ta - tl
+    na_i = _n(snap.get("net_worth_incl_re")) or (ta + re_v - tl)
+    re_asof = str(snap.get("real_estate_value_as_of") or "2026-08-08（佐證待補）")
+    as_of = str(sec.get("price_date") or snap.get("securities_price_date")
+                or snap.get("last_updated") or "—")
+
+    def cell(label, main, color, subs):
+        sub_html = "".join(f'<span class="mr-2">{x}</span>' for x in subs)
+        return (f'<div class="p-2 rounded-lg bg-slate-800/60">'
+                f'<div class="flex items-baseline justify-between gap-2">'
+                f'<span class="text-slate-300">{label}</span>'
+                f'<b class="{color}">{main}</b></div>'
+                f'<div class="text-[10px] text-slate-400 mt-1 leading-snug">{sub_html}</div></div>')
+
+    cells = []
+    # ① 金融投資（股票）
+    _c = "text-emerald-400" if up >= 0 else "text-red-400"
+    cells.append(cell("金融投資（股票）", f"{up:+,.0f}（{_pct(up_pct)}）", _c,
+                      [f"市值 {_m(mv)}", f"成本 {_m(cost)}", f"已實現 {rp:+,.0f}"]))
+    # ② 保單
+    p_gap = ins - p_cost
+    p_gap_pct = (p_gap / p_cost * 100) if p_cost else 0
+    _c2 = "text-emerald-400" if p_gap >= 0 else "text-red-400"
+    cells.append(cell("保單（帳面）", f"{p_gap:+,.0f}（{p_gap_pct:+.2f}%）", _c2,
+                      [f"市值 {_m(ins)}", f"投入 {_m(p_cost)}",
+                       f"累計配息 {_m(p_div)}（含本金返還，不列報酬）"]))
+    # ③ 基金
+    cells.append(cell("基金（僅市值）", _m(fund), "text-slate-100",
+                      ["無成本基礎 → 依 10/31 定案不計算報酬", "XIRR 待資金流重建"]))
+    # ④ 財富（雙軌淨值）
+    _c3 = "text-emerald-400" if na_i >= 0 else "text-red-400"
+    _c4 = "text-emerald-400" if na_l >= 0 else "text-red-400"
+    cells.append(cell("含房淨值", _m(na_i), _c3,
+                      [f'流動淨值 <b class="{_c4}">{na_l:,.0f}</b>',
+                       f"房產 {_m(re_v)}（估值 {re_asof}，非可動用）"]))
+    return "".join(cells), as_of
+
 def main():
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     tpl = (BASE / "index_template.html").read_text(encoding="utf-8")
@@ -1348,6 +1423,16 @@ def main():
     except Exception as _rse:
         tpl = tpl.replace("__RELAY_SCHEDULE__", '<p class="text-xs text-slate-400">接力資料待更新</p>')
         print("  ⚠️ 接力時序注入失敗:", _rse)
+
+    # ── 投資績效卡（2026-10-31 使用者裁決：四分類，只列可算項；缺成本基礎不宣稱報酬）──
+    try:
+        _perf_html, _perf_asof = build_perf_card(snap)
+        tpl = tpl.replace("__PERF_CARD__", _perf_html)
+        tpl = tpl.replace("__PERF_ASOF__", _perf_asof)
+    except Exception as _pfe:
+        tpl = tpl.replace("__PERF_CARD__", '<div class="p-2 text-xs text-red-400">投資績效卡注入失敗</div>')
+        tpl = tpl.replace("__PERF_ASOF__", "—")
+        print("  ⚠️ 投資績效卡注入失敗:", _pfe)
 
     # 2026-10-12 資安處置：輸出前最後一道——遮罩帳號識別碼與安全線門檻（唯一實作在 public_mask）
 

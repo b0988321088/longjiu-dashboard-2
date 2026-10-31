@@ -141,6 +141,18 @@
     </div>
     <p class="text-[10px] text-slate-500 mt-2">資料時間：<span id="live-time">—</span>｜快照版可能較舊，以即時資料為準</p>
 </div>
+
+<!-- 📈 投資績效（2026-10-31 定案：四分類，只列可算項；缺成本基礎者不宣稱報酬） -->
+<div class="mb-4 p-4 rounded-xl bg-slate-900/70 border border-teal-700/40">
+    <div class="flex items-center gap-2 mb-2 flex-wrap">
+        <span class="text-teal-400 font-bold text-sm">📈 投資績效</span>
+        <span class="text-[10px] text-slate-500">資料日 2026-10-27｜股票＝成本基礎累計報酬（非年化、非 XIRR）｜缺成本者不宣稱報酬</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-200">
+        <div class="p-2 rounded-lg bg-slate-800/60"><div class="flex items-baseline justify-between gap-2"><span class="text-slate-300">金融投資（股票）</span><b class="text-emerald-400">+395,580（+16.56%）</b></div><div class="text-[10px] text-slate-400 mt-1 leading-snug"><span class="mr-2">市值 2,783,380</span><span class="mr-2">成本 2,387,800</span><span class="mr-2">已實現 +23,460</span></div></div><div class="p-2 rounded-lg bg-slate-800/60"><div class="flex items-baseline justify-between gap-2"><span class="text-slate-300">保單（帳面）</span><b class="text-red-400">-589,709（-5.90%）</b></div><div class="text-[10px] text-slate-400 mt-1 leading-snug"><span class="mr-2">市值 9,410,291</span><span class="mr-2">投入 10,000,000</span><span class="mr-2">累計配息 2,005,201（含本金返還，不列報酬）</span></div></div><div class="p-2 rounded-lg bg-slate-800/60"><div class="flex items-baseline justify-between gap-2"><span class="text-slate-300">基金（僅市值）</span><b class="text-slate-100">12,720,594</b></div><div class="text-[10px] text-slate-400 mt-1 leading-snug"><span class="mr-2">無成本基礎 → 依 10/31 定案不計算報酬</span><span class="mr-2">XIRR 待資金流重建</span></div></div><div class="p-2 rounded-lg bg-slate-800/60"><div class="flex items-baseline justify-between gap-2"><span class="text-slate-300">含房淨值</span><b class="text-emerald-400">30,018,872</b></div><div class="text-[10px] text-slate-400 mt-1 leading-snug"><span class="mr-2">流動淨值 <b class="text-red-400">-3,998,191</b></span><span class="mr-2">房產 34,017,063（估值 2026-08-08，非可動用）</span></div></div>
+    </div>
+    <p class="text-[10px] text-slate-500 mt-2">口徑：① 股票 市值／成本／未實現＋已實現；② 保單 市值／投入成本，累計配息僅供參考（配息型可能含本金返還，不得當報酬率）；③ 基金無成本基礎 → 不計算報酬；④ 淨值雙軌（含房／流動），房產估值非可動用現金。</p>
+</div>
 <script>
 (function(){
   var g = document.getElementById('live-grid');
@@ -148,7 +160,9 @@
   fetch('snapshot.json', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(s){
     function fmt(n){ return (n==null?0:n).toLocaleString('zh-TW'); }
     function cell(l,v,c){ return '<div class="flex items-center justify-between p-2 bg-slate-800/60 rounded-lg"><span class="text-slate-300">'+l+'</span><b class="'+(c||'text-slate-100')+'">'+v+'</b></div>'; }
-    var ta = s.total_assets||0, tl = s.total_liabilities||0, na = ta - tl;
+    var ta = s.total_assets||0, tl = s.total_liabilities||0, re = s.real_estate_value||0;
+    /* 2026-10-31 定案：na＝流動淨值（原語意不變）；naI＝含房淨值（財富面，非可動用） */
+    var na = ta - tl, naI = ta + re - tl;
     var pen = (s.industry_penetration||{}).產業 || {};
     var tech = pen.資訊科技 ? pen.資訊科技.佔比 : null;
     var tp = ((s.rotation_recommendation||{}).交易計畫||[]).map(function(p){
@@ -156,8 +170,9 @@
     }).join('｜') || '—';
     var def = (s.defensive_combined_metric||{}).佔比;
     g.innerHTML =
-        cell('總資產', fmt(ta)) +
-        cell('淨資產', fmt(na), na>=0?'text-emerald-400':'text-red-400') +
+        cell('總資產（流動）', fmt(ta)) +
+        cell('含房淨值', fmt(naI), naI>=0?'text-emerald-400':'text-red-400') +
+        cell('流動淨值', fmt(na), na>=0?'text-emerald-400':'text-red-400') +
         cell('現金', fmt(s.cash_total)) +
         cell('證券', fmt(s.securities_total)) +
         cell('科技%', tech!=null?tech.toFixed(1)+'%':'—', tech!=null&&tech>30?'text-red-400':'text-slate-100') +
@@ -289,7 +304,7 @@
         </div>
 <!-- 📡 本週淨資產 vs 資金成本（2026-08-23） -->
         <div id="weekly-nw" style="border:1px solid #8b5cf6;background:#f5f3ff;border-radius:12px;padding:14px;margin-bottom:14px">
-<h3 style="color:#5b21b6;font-size:14px;font-weight:800;margin:0 0 6px">📡 本週淨資產 vs 資金成本</h3>
+<h3 style="color:#5b21b6;font-size:14px;font-weight:800;margin:0 0 6px">📡 本週流動淨值（不含房產）vs 資金成本</h3>
 <p style="color:#6b7280;font-size:11.5px;margin:0">載入中…（讀取 snapshot + 資產歷史）</p>
 </div>
         <!-- 護城河水位計 -->
@@ -1097,8 +1112,8 @@ var gotTotal = _salaryA + divTotal + rentGot;
       if(bd && bd.net_worth_change !== undefined){
         var fmt = function(v){var s2=v>=0?'+':'';return s2+Math.round(v).toLocaleString('zh-TW');};
         var col = bd.net_worth_change>=0 ? '#16a34a' : '#dc2626';
-        var h = '<div style="font-size:12px;color:#5b21b6;font-weight:800;margin-bottom:6px">📡 本週淨資產變動拆解（'+bd.period+'｜即時）</div>';
-        h += '<div style="font-size:12.5px;color:#1f2937">淨資產變動：<b style="color:'+col+'">'+fmt(bd.net_worth_change)+'</b></div>';
+        var h = '<div style="font-size:12px;color:#5b21b6;font-weight:800;margin-bottom:6px">📡 本週流動淨值變動拆解（不含房產｜'+bd.period+'）</div>';
+        h += '<div style="font-size:12.5px;color:#1f2937">流動淨值變動：<b style="color:'+col+'">'+fmt(bd.net_worth_change)+'</b></div>';
         h += '<div style="font-size:11.5px;color:#6b7280;margin-left:8px">├─ 市場性：'+fmt(bd.market)+' 🟡（市場波動）</div>';
         if(bd.transaction !== undefined) h += '<div style="font-size:11.5px;color:#6b7280;margin-left:8px">├─ 帳務/交易性：'+fmt(bd.transaction)+'</div>';
         h += '<div style="font-size:11.5px;color:#2563eb;margin-left:8px">└─ 資金成本：'+fmt(bd.cost_of_capital)+' 🔵（固定）</div>';

@@ -479,6 +479,13 @@ def rebuild_liabilities(snap: dict, land_db: bool = False) -> dict:
     if not _liab_miss:
         snap["liabilities_build_up"] = _lb_new
     snap["net_worth"] = int(snap.get("total_assets") or 0) - total
+    # 2026-10-31 使用者裁決：雙軌淨值。net_worth 維持「流動淨值」語意且不得改寫；
+    # 另立 net_worth_incl_re＝總資產＋房產估值−負債。含房淨值僅供財富衡量，非可動用現金。
+    _re_v = float(snap.get("real_estate_value") or 0)
+    snap["net_worth_incl_re"] = int(float(snap.get("total_assets") or 0) + _re_v - total)
+    snap.setdefault("real_estate_value_as_of", "2026-08-08")
+    snap.setdefault("real_estate_valuation_note",
+                    "估值日 2026-08-08（佐證待補）；僅供含房淨值衡量，非可動用現金，不得計入流動性")
     # 負債率雙軌（2026-08-10 使用者裁示格式）：含不動產主顯示 / 不含不動產流動監控
     _ta = float(snap.get("total_assets") or 0)
     _re = float(snap.get("real_estate_value") or 0)
