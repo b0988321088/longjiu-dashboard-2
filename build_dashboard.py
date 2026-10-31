@@ -1810,6 +1810,12 @@ def main():
         # 儀表板仍顯示常態值，形成兩份數字。
         _sc = _pcal.scenarios(snap)
         _cov_act = _sc["act"]["coverage"]   # 當月實收覆蓋（配息實收＋房租實收）
+        # 2026-11-01：月初（當月配息與房租實收皆 0）不得顯示「實收 0.0%／實收 -159,210」，
+        # 否則被誤讀為計算錯誤（11/1 CIO 審查 blocking）。改明確標註「未入帳」。
+        _mtd_none = (float(_sc["div_act"] or 0) == 0 and float(_sc["rent_act"] or 0) == 0)
+        _mtd_txt = ("未入帳（月初，配息 0 ＋ 房租 0）" if _mtd_none
+                    else f"{_cov_act:.1f}%（配息 {_sc['div_act']:,.0f} ＋ 房租 {_sc['rent_act']:,.0f}）")
+        _sur_act_txt = "未入帳" if _mtd_none else _pcal.surplus_text(_sc["act"]["surplus"])
         _mr = snap.get("metrics_registry") or {}
         _mv = _mr.get("metric_version")
         _metric_note = ""
@@ -1836,15 +1842,14 @@ def main():
                    f'<span class="text-blue-400">▮ 配息 {_pc(_div):.0f}%</span>'
                    f'<span class="text-teal-400">▮ 房租 {_pc(_rent):.0f}%</span>'
                    f'<span class="text-slate-500">▮ 覆蓋 {_cov:.1f}%（保守底線）</span>'
-                   f'<span class="text-slate-300">｜當月實收 {_cov_act:.1f}%'
-                   f'（配息 {_sc["div_act"]:,.0f} ＋ 房租 {_sc["rent_act"]:,.0f}）</span>'
+                   f'<span class="text-slate-300">｜當月實收 {_mtd_txt}</span>'
                    # 2026-10-15 使用者裁決：新增常態層並列（基金常態 80,000＋保單常態 97,072；
                    # 保單值為暫定規劃值）。與實收／保守互不覆寫。
                    f'<span class="text-amber-300">｜常態 {_sc["norm"]["coverage"]:.1f}%'
                    f'（配息 {_sc["div_norm"]:,.0f} ＋ 房租 {_sc["rent_norm"]:,.0f}）</span></div>'
                    f'<div class="flex flex-wrap gap-3 text-[10px] mt-1">'
                    f'<span class="text-emerald-400">💰 月盈餘：保守 {_pcal.surplus_text(_sc["con"]["surplus"])}'
-                   f'／實收 {_pcal.surplus_text(_sc["act"]["surplus"])}'
+                   f'／實收 {_sur_act_txt}'
                    f'／常態 {_pcal.surplus_text(_sc["norm"]["surplus"])}</span>'
                    f'<span class="text-amber-400">🏁 FI 跑道（極端情境口徑）：{_pcal.runway_text(_sc["extreme"]["runway_days"])}'
                    f'、實收情境 {_pcal.runway_text(_sc["act"]["runway_days"])}</span>'
@@ -1854,7 +1859,8 @@ def main():
                    f'{_cash_note}</div>')
         tpl = tpl.replace("__INC_BAR__", _bar)
         tpl = tpl.replace("__INC_LEGEND__", _legend)
-        tpl = tpl.replace("__INC_COV__", f"{_cov:.1f}% 覆蓋（保守底線）｜實收 {_cov_act:.1f}%"
+        tpl = tpl.replace("__INC_COV__", f"{_cov:.1f}% 覆蓋（保守底線）｜實收 "
+                                       f"{'未入帳' if _mtd_none else f'{_cov_act:.1f}%'}"
                                        f"｜常態 {_sc['norm']['coverage']:.1f}%")
         tpl = tpl.replace("__INC_SUMMARY__", f"薪水 {_fmt(_sal)} + 配息保守 {_fmt(_div)} + 房租 {_fmt(_rent)} = {_fmt(_inc_tot)} TWD")
         tpl = tpl.replace("__INC_EXPENSE__", _fmt(_exp))

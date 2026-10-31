@@ -461,17 +461,21 @@ def render_health_card(snap: dict) -> str:
         '<tr><td>{} {}</td><td class="num">{}</td><td>{}</td></tr>'.format(
             "🟢" if g["通過"] else "🔴", g["名稱"], g["顯示"],
             "通過" if g["通過"] else "未達") for g in gt["gate"])
+    _act_cov = gt["參考指標"].get("當月實收覆蓋_pct")
+    # 2026-11-01：月初當月實收為 0 時顯示「0.0%」會被誤讀為計算錯誤（11/1 CIO blocking），
+    # 改標註未入帳；數值本身不動（仍是真值）。
+    _act_txt = ("未入帳（月初）" if float(_act_cov or 0) == 0 else f"{_act_cov}%")
     return (
         '<div class="rounded-xl border border-slate-700/60 bg-slate-900/70 p-4 mb-4">'
         '<div class="font-black text-white mb-2">🎯 留停 Gate（三條硬門檻｜{}）</div>'
         '<table class="w-full text-xs"><tr><th>門檻</th><th>現況</th><th>判定</th></tr>{}</table>'
         '<div class="text-[11px] text-slate-400 mt-2 leading-relaxed">'
-        '參考指標（不參與 GO/WAIT）：保守覆蓋 {}%｜當月實收覆蓋 {}%｜3 個月趨勢：{}<br>'
+        '參考指標（不參與 GO/WAIT）：保守覆蓋 {}%｜當月實收覆蓋 {}｜3 個月趨勢：{}<br>'
         '現金模式：<b>{}</b>｜可動用 {:,.0f}（底線 {:,.0f}、餘裕 {:,.0f}）<br>'
         '<span class="text-slate-500">2026-10-02 裁示：取消 B 級與健康度分數敘事，'
         '保留原始指標供歷史查看。</span></div></div>'
     ).format(gt["燈號"], _rows, gt["參考指標"]["保守覆蓋_pct"],
-             gt["參考指標"]["當月實收覆蓋_pct"], gt["參考指標"]["3個月趨勢"],
+             _act_txt, gt["參考指標"]["3個月趨勢"],
              cm["模式"], cm["可動用"], cm["底線"], cm["餘裕"])
 
 

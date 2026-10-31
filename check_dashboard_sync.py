@@ -159,7 +159,11 @@ try:
     import links_config as _links_cfg
     _tpl = (BASE / "index_template.html").read_text(encoding="utf-8")
     _s = _tpl.find("<!-- 🔗 重要連結")
-    _e = _tpl.find("<!-- 🚨", _s) if _s != -1 else -1
+    # 2026-11-01 修：原本用 "<!-- 🚨"（風險提示）當結束邊界，但 10/31 之後 mio／投資績效卡
+    # 插在「重要連結」與「🚨」之間 → 它們的 __MIO_*／__PERF_* 被誤判為連結佔位符 →
+    # 07:00 產線必擋。改取下一個頂層區塊註解的**最小值**，讓邊界跟著實際結構走。
+    _ends = [p for p in (_tpl.find("<!-- 📡 即時資料", _s), _tpl.find("<!-- 🚨", _s)) if p != -1]
+    _e = min(_ends) if _ends else -1
     if _s == -1 or _e == -1:
         fails.append("找不到 index_template.html 的「重要連結」區塊（區塊註解被改動？）")
     else:
