@@ -126,7 +126,22 @@ def commit_range_count():
         return -1
 
 
-def main():
+def _print_summary(out: str, mode: str = "alerts") -> None:
+    """摘要輸出模式（2026-10-31 單一實作）。
+
+    alerts＝只有出現「⚠️ ALERTS」才輸出（週一/三 watchdog，全綠安靜）
+    full  ＝永遠輸出完整摘要（週六 COT/Fed 版，cron 直送 TG）
+    """
+    body = (out or "").strip()
+    if mode == "full":
+        if body:
+            print(f"📋 週六再平衡 — 機構流向雷達\n{body}")
+        return
+    if "⚠️ ALERTS" in (out or ""):
+        print(out)
+
+
+def main(summary_mode: str = "alerts"):
     # 1) 雷達主程式＋報告頁＋儀表板同步
     ok, out, err = build_products()
     if not ok:
@@ -166,12 +181,10 @@ def main():
     n_range = commit_range_count()
     if created and n_range == 0:
         # 極端情形（commit 成功但範圍仍為 0，例如 remote 已含同 tree）→ 視為完成
-        if "⚠️ ALERTS" in out:
-            print(out)
+        _print_summary(out, summary_mode)
         return EXIT_OK
     if not created and n_range == 0:
-        if "⚠️ ALERTS" in out:
-            print(out)
+        _print_summary(out, summary_mode)
         return EXIT_OK
 
     # 5) 需要真 CIO 才審查（本輪新建的 commit 才做，不動別人的 commit）
@@ -202,9 +215,8 @@ def main():
         print(f"⚠️ 未推送上線（rc={ap.returncode}）：{ap_out}")
         return ap.returncode
 
-    # 7) 黃/紅燈才輸出摘要（TG 推）；全綠安靜
-    if "⚠️ ALERTS" in out:
-        print(out)
+    # 7) 摘要輸出（週一/三 watchdog 只印警示；週六 full 印完整摘要，cron 直送 TG）
+    _print_summary(out, summary_mode)
     return EXIT_OK
 
 
