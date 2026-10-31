@@ -15,7 +15,7 @@
  "moneybook_total": 2070934,
  "high_yield_savings_total": 2200410,
  "cathay_refinance_amount": null,
- "rent_monthly_actual": 80100.0,
+ "rent_monthly_actual": 0,
  "cc_monthly_avg_4cards": 38000,
  "page1": {
   "actual_cash_flow": {
@@ -179,9 +179,9 @@
   "coverage_pct": 113.1,
   "note": "2026-09-18 依 9/5 定版校正：保守配息 100,000（原誤值 130,930＝安聯+第一金常態總額，非保守基本值）＋租金 80,100 = 180,100；覆蓋 113.1%（÷月支出 159,210）。當月實收配息 147,975（9/23 真值，與頂層 dividend_month_actual／monthly_dividend_total 同口徑；本鍵與 dividend_actual_sum 於 2026-09-23 由 9/18 舊值同步）。 2026-09-23 使用者指示：以 2026-09 完整估計為被動收入基準月，觀察 3 個月（~2026-11），2026-12 初檢視後再修正保守底線；期間判準層不動。｜9/30 更新：安聯保單撥回依保單 App 截圖 9 筆 71,869（前 52,169）→ 9月配息實收 167,675。｜2026-10-01 配息歸屬修正（基準日制）：10 月實收 0（10/1 入帳之 IDXX M&G 15,916 為 9 月配息、歸 9 月；安聯撥回 19,700 已含於 9 月 71,869，不重複計）→ 9 月實收 183,591。｜2026-10-01 A 制校正：9 月實收 170,586（原 183,591；13,005 移 8 月）→ 常態月配基準同步。",
   "girlfriend_repayment": 6000,
-  "dividend_actual_sum": 198364.0,
-  "rent_monthly_actual": 80100.0,
-  "rent_monthly_actual_note": "2026-10-25 月初校正：真值＝rent_received_records 當月加總＝80,100；常態應收仍為 rent_monthly=80100",
+  "dividend_actual_sum": 0.0,
+  "rent_monthly_actual": 0,
+  "rent_monthly_actual_note": "2026-11-01 月初校正：真值＝rent_received_records 當月加總＝0；常態應收仍為 rent_monthly=80100",
   "dividend_actual_note": "2026-10-01 月初校正：當月實收配息＝10月 dividend_records 加總＝0（月初尚未收到）；9月值 147,975 已隨月份結算。⚠️ 設計陷阱：passive_caliber 的 div_act 用 `or` 串接，本月為 0 時會退回舊欄位 → 已手動歸零，結構性修法待核准。",
   "fund_dividend_normal_fund": 80000,
   "fund_dividend_normal_policy": 97072,
@@ -743,7 +743,7 @@
  "policy_pledge_loan": 0,
  "policy_pledge_loan_note": "原 4,000,000（安聯A 2,000,000＋安聯B 1,000,000＋第一金人壽 1,000,000）@4%：2026-09-29 還安聯 2,000,000＋2026-10-01 還安聯 1,006,900（本金 1,000,000＋利息 6,900）、第一金人壽 1,013,724（本金 1,000,000＋利息 13,724）→ 本金全數清償 4,000,000，利息合計 20,624。證據：Moneybook 10/01 台新明細（cd轉出 017-009…31、007-0099804310022717）＋台新 ATM 收據＋使用者 2026-10-02 說明。",
  "rent_monthly_target": 80100,
- "rent_monthly_gap": 0.0,
+ "rent_monthly_gap": 80100.0,
  "rent_monthly_gap_note": "2026-10：當月應收 80,100（大義街店面 24,000＋大義街二三樓 21,000＋洲際W 33,000＋管理費 2,100）－實收 80,100＝待收 0（10/01 店面 24,000、10/20 洲際W 33,000、10/24 二三樓 21,000＋管理費 2,100 全數到帳；使用者 2026-10-26 確認本月收齊）。洲際W 33,000 銀行帳務日 MB 記 10/19、使用者確認為 10/20 入帳。",
  "passive_income_coverage": 0.5947,
  "passive_income_total": 96798,
@@ -908,7 +908,7 @@
    "第一金人壽撥回(10/29)": 9901
   }
  },
- "monthly_dividend": 198364.0,
+ "monthly_dividend": 0.0,
  "actual_fj33_dividend": 9356,
  "policy_a_total": 4972907,
  "policy_b_total": 2568361,
@@ -933,12 +933,12 @@
  "cash_total": 2020447,
  "bonds_cash": 10262984,
  "monthly_dividend_breakdown": {
-  "allianz": 49533,
-  "firstjin": 35219,
-  "insurance": 84752,
-  "etf": 14540,
-  "fund": 99072,
-  "total": 198364.0,
+  "allianz": 0,
+  "firstjin": 0,
+  "insurance": 0,
+  "etf": 0,
+  "fund": 0,
+  "total": 0.0,
   "note": "2026-10：安聯保單撥回 44,136（App 本月累積 9 筆，2026-10-21 校正；原記 21,033）＋第一金 9,402＋基金實收 99,018（國泰直購：貝萊德智慧數據B11 41,699、聯博全球多元收益AD 6,765、富達全動 49,298；鉅亨小額 926）＋ETF 14,540",
   "oneoff": 0
  },
@@ -1231,7 +1231,7 @@
   "USDEQ6730 貝萊德世界黃金基金 A10美元(總報酬穩定配息)": 146262
  },
  "allianz_b_current_value": 2568361,
- "monthly_dividend_total": 198364.0,
+ "monthly_dividend_total": 0.0,
  "relay_stations": {
   "第一站（月初）": {
    "流向": "摩根多重收益 配息（月初）→ 資金流向第二站",
@@ -1669,7 +1669,7 @@
  "debt_ratio_note": "雙軌（8/10 裁示）：主顯示含不動產 50.1%（分母 60,222,746）；流動負債率 115.2%（不含不動產，監控用）。8/20 國泰 1,200萬撥款入帳 → 負債 +1,200萬",
  "dividend_month_expected": 100000,
  "dividend_month_expected_note": "8月起依當月dividend_records動態累積，月初顯示保守預估10萬",
- "dividend_month_actual": 198364.0,
+ "dividend_month_actual": 0.0,
  "rent_received_records": {
   "2026-08-01": {
    "大義街店面": 24000
@@ -1712,6 +1712,12 @@
    "管理費": 2100
   },
   "2026-10": {
+   "大義街店面": 24000,
+   "大義街二三樓": 21000,
+   "洲際W": 33000,
+   "管理費": 2100
+  },
+  "2026-11": {
    "大義街店面": 24000,
    "大義街二三樓": 21000,
    "洲際W": 33000,
