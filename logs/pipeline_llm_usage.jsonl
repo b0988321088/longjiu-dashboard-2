@@ -1585,3 +1585,15 @@
 {"ts": "2026-10-31T19:20:20", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1094, "cached": 896, "out": 161, "ok": true}
 {"ts": "2026-10-31T19:20:24", "model": "deepseek-chat", "caller": "run_daily.py", "in": 660, "cached": 512, "out": 172, "ok": true}
 {"ts": "2026-10-31T19:20:42", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 521, "cached": 384, "out": 451, "ok": true}
+{"ts": "2026-11-01T07:00:10", "model": "deepseek-chat", "caller": "buffett_cto_analyzer.py", "in": 1031, "cached": 512, "out": 237, "ok": true}
+{"ts": "2026-11-01T07:00:12", "model": "deepseek-chat", "caller": "buffett_cto_analyzer.py", "in": 1053, "cached": 512, "out": 185, "ok": true}
+{"ts": "2026-11-01T07:00:16", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 660, "cached": 512, "out": 167, "ok": true}
+{"ts": "2026-11-01T07:00:43", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 521, "cached": 384, "out": 507, "ok": true}
+{"ts": "2026-11-01T07:03:56", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 660, "cached": 512, "out": 154, "ok": true}
+{"ts": "2026-11-01T07:04:12", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 521, "cached": 384, "out": 617, "ok": true}
+{"ts": "2026-11-01T07:06:31", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1072, "cached": 896, "out": 302, "ok": true}
+{"ts": "2026-11-01T07:06:33", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1094, "cached": 896, "out": 148, "ok": true}
+{"ts": "2026-11-01T07:06:37", "model": "deepseek-chat", "caller": "run_daily.py", "in": 660, "cached": 512, "out": 165, "ok": true}
+{"ts": "2026-11-01T07:38:49", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1072, "cached": 896, "out": 233, "ok": true}
+{"ts": "2026-11-01T07:38:50", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1094, "cached": 896, "out": 180, "ok": true}
+{"ts": "2026-11-01T07:38:53", "model": "deepseek-chat", "caller": "run_daily.py", "in": 660, "cached": 512, "out": 160, "ok": true}
