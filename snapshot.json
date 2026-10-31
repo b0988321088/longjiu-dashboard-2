@@ -5486,7 +5486,7 @@
   }
  },
  "coast_fi_engine": {
-  "asof": "2026-10-31",
+  "asof": "2026-11-01",
   "current": {
    "growth_assets": {
     "tw_growth": 2921442.0,
@@ -5553,10 +5553,10 @@
     "rent": 80100.0,
     "dividend_conservative": 100000.0,
     "dividend_normal": 177072.0,
-    "dividend_actual": 198364.0,
+    "dividend_actual": 0.0,
     "pccr_pct": 139.3,
     "pccr_conservative_pct": 113.1,
-    "pccr_actual_pct": 174.9,
+    "pccr_actual_pct": 0.0,
     "pccr_normal_headroom": 139.3,
     "nonpassive": {
      "girlfriend_repayment": 6000.0
@@ -5769,6 +5769,16 @@
     "light_work_cap_2w": 20318031
    },
    "2026-10-31": {
+    "light": "🔴 紅燈",
+    "coast_fin_only_pct": 27.6,
+    "coast_with_re_pct": 46.7,
+    "pccr_pct": 139.3,
+    "runway_days": 1047,
+    "maintenance_pct": 139.8,
+    "credit_locked": false,
+    "light_work_cap_2w": 20407505
+   },
+   "2026-11-01": {
     "light": "🔴 紅燈",
     "coast_fin_only_pct": 27.6,
     "coast_with_re_pct": 46.7,

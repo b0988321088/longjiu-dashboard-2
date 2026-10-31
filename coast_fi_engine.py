@@ -151,11 +151,16 @@ def pccr_metric(snap, c):
     # 「當月實收」（月初會塌成小額：10/09 為 9,446）→ PCCR 被嚴重低估（55.1% vs 正確 ~136%）。
     # passive_caliber.div_norm 刻意不吃當月實收、也不吃 monthly_dividend_total。
     div_n = float(_pcal.scenarios(snap).get("div_norm") or 0)          # 常態月配
-    div_a = float(snap.get("dividend_month_actual") or div_n)          # 當月實收
+    # 2026-11-01 修：原寫法 `float(x or div_n)` 會把「當月實收＝0（月初未入帳）」當成缺值，
+    # 回落常態值 → PCCR 當月實收軌顯示 161.5% 而非 0%，驗證器 FAIL。0 是有效值，只有 None 才 fallback。
+    _dma = snap.get("dividend_month_actual")
+    div_a = float(_dma) if _dma is not None else div_n          # 當月實收
     rent = float(pi.get("rent_monthly") or 0)
     # 2026-09-28：實收軌的房租用「當月入帳真值」rent_monthly_actual（77,100），
     # 與 passive_caliber.act／日報／儀表板同一口徑；原本用常態 80,100 會多出 1.8pp（140.1% vs 138.3%）
-    rent_act = float(pi.get("rent_monthly_actual") or rent)
+    # 2026-11-01：同上，0（月初未入帳）不得 fallback。
+    _rma = pi.get("rent_monthly_actual")
+    rent_act = float(_rma) if _rma is not None else rent
     h = c["stress_dividend_haircut"]
 
     def cov(x):
