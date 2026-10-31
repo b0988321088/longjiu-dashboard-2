@@ -176,6 +176,13 @@ def commit_own(script: str, allow: list[str], *, dry_run: bool = False,
         since        本輪起跑時刻（預設＝本模組 import 時刻；見上方呼叫端契約）
     回傳：推送結果（0＝已上線並驗 remote sha；非 0＝失敗，cron 端要看得到）
     """
+    # 2026-10-31 緊急事故隔離：.git/PUSH_HOLD 存在 → 一律不 stage/commit/push。
+    # 本函式是 intel_sync／notion_context_loader／maintenance_deep 等共同提交入口，
+    # 缺此檢查會讓事故隔離被繞過（排程暫停 ≠ 入口被鎖）。
+    if (REPO / ".git" / "PUSH_HOLD").exists():
+        print(f"⏸️ PUSH_HOLD 生效：{script} 跳過 commit/push（事故隔離）")
+        return 0
+
     if not allow:
         sys.stderr.write("⛔ self_publish 拒絕：allowlist 為空（不得用空清單放行整棵樹）\n")
         return 2

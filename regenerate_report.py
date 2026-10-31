@@ -29,7 +29,10 @@ TODAY = dt.today().isoformat()
 OUT = BASE / f"daily_report_v2_{TODAY}.html"
 CNY_TWD = 4.73  # 2026-09-14 使用者確認（200 CNY≈944 TWD）；Yahoo CNYTWD 4.734
 _EMERGENCY_LANE = os.environ.get("LJ_EMERGENCY_LANE") == "1"
-_NO_PUSH = ("--no-push" in sys.argv) or _EMERGENCY_LANE
+_NO_PUSH = ("--no-push" in sys.argv) or _EMERGENCY_LANE or (BASE / ".git" / "PUSH_HOLD").exists()
+# 2026-10-31 緊急事故隔離（使用者裁定）：.git/PUSH_HOLD 存在 → 只產出＋驗收，不 commit/push。
+# 本檔是 07:00 morning_deploy 的實際 commit/push 入口，先前完全沒有 HOLD 檢查（僅 --no-push 旗標），
+# 因此「暫停排程」不等於「入口被擋」。改在這裡收口，語意與 nightly/data_closeout 一致。
 # 2026-09-17 INC-210：核准前本機產出用（不 commit/push）。
 # 2026-10-15 使用者裁決（緊急應變產線 B 修正版）：「產出與驗收可以完成，發布權限仍受
 #   獨立閘門控制」。四階段口徑就此分離 —— ①產物生成＋②驗收＝本檔一律執行；

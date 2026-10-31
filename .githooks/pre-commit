@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# 龍九 pre-commit 閘門（2026-10-31 建立）
+#
+# 為什麼有這支：2026-10-31 事故中，「暫停排程」不足以阻止自動提交——
+#   多條產線以各自的 git add/commit 直接寫入歷史，把未經審查的工作區檔案帶上線。
+#   既有防護只有 push 端（pre-push v5）與各腳本自行檢查 PUSH_HOLD，屬「逐支補網」，
+#   無法保證所有入口（含人工、含 agent 自行執行的 git）都被約束。
+#
+# 本 hook 把「事故鎖」上移到 commit 層：
+#   .git/PUSH_HOLD 存在 → 一律拒絕 commit（含 --allow-empty、含所有自動產線、含人工）。
+#   解除方式只有一個：刪除 .git/PUSH_HOLD（需另行授權）。
+#
+# 刻意不做的事：
+#   - 不提供環境變數繞過（事故期間任何繞過都必須是明示的授權動作）
+#   - 不改動任何既有 gate 邏輯（pre-push v5 / publish_gate 完全不動）
+
+set -u
+
+GIT_DIR="$(git rev-parse --git-dir 2>/dev/null || echo .git)"
+if [ -f "$GIT_DIR/PUSH_HOLD" ]; then
+    echo "⏸️  COMMIT 被拒絕：PUSH_HOLD 生效（2026-10-31 事故隔離）" >&2
+    echo "    解除方式：刪除 .git/PUSH_HOLD（需使用者授權）" >&2
+    echo "    目前狀態：HEAD 不變、工作區內容保留" >&2
+    exit 1
+fi
+
+exit 0

@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+# 2026-10-31 事故隔離：PUSH_HOLD 存在時，推送一律拒絕（與 .githooks/pre-commit 同一把鎖）。
+# 放在最前面，先於 publish_gate 判定——避免「gate 通過就推出去」的縫。
+GIT_DIR_HOLD="$(git rev-parse --git-dir 2>/dev/null || echo .git)"
+if [ -f "$GIT_DIR_HOLD/PUSH_HOLD" ]; then
+    echo "⏸️  PUSH 被拒絕：PUSH_HOLD 生效（2026-10-31 事故隔離）" >&2
+    echo "    解除方式：刪除 .git/PUSH_HOLD（需使用者授權）" >&2
+    exit 1
+fi
 # 龍九 pre-push 閘門 v5（2026-10-07）
 # 修正 v2 漏洞：只驗 HEAD tree → 改成驗「本次推送範圍內每一個 commit 的 tree」。
 #

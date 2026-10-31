@@ -152,6 +152,14 @@ def main() -> int:
     ap.add_argument("--verbose", action="store_true", help="成功也印摘要（預設靜默）")
     args = ap.parse_args()
 
+    # 2026-10-31 緊急事故隔離（使用者裁定）：PUSH_HOLD 生效時一律不 stage/commit/push。
+    # 本腳本原本是全 repo 唯一「收所有資料檔」卻沒有 HOLD 檢查的自動提交入口，
+    # 事故中被判定為高風險路徑（會把非自身產生的 snapshot.json 一併帶走）。
+    # 語意與 nightly_dashboard_sync / morning_deploy 一致；解除＝刪除 .git/PUSH_HOLD。
+    if (REPO / ".git" / "PUSH_HOLD").exists():
+        print("⏸️ PUSH_HOLD 生效：跳過收尾 commit/push；發布待另行授權")
+        return 0
+
     now = datetime.now()
     stamp = now.strftime("%Y-%m-%d %H:%M")
 

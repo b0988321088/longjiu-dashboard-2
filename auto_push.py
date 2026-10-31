@@ -238,6 +238,12 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 
+    # 2026-10-31 緊急事故隔離：本檔是唯一推送出口，一律受 .git/PUSH_HOLD 約束。
+    # 即使呼叫端漏檢查 HOLD，推送在這一層仍被擋下（解除＝刪除 .git/PUSH_HOLD）。
+    if (Path(__file__).resolve().parent / ".git" / "PUSH_HOLD").exists():
+        print("⏸️ PUSH_HOLD 生效：拒絕推送（事故隔離）")
+        return 0
+
     base = base_dir()
     refs = [a.branch] if a.branch else list(DEFAULT_REFS)
     # 2026-10-07 INC-236 延伸：refs 一律先過 validate_refspecs（source 必須解析到 HEAD、
