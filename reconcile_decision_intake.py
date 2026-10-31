@@ -59,16 +59,17 @@ def load_intake(day):
     """今日入庫的「人工決策」＝ source 非 auto/notion（歷史寫方用過 'user'、'Hermes Telegram Gate' 等字串，
     語意都是人核准的決策；納入才不會漏看）。"""
     d = json.loads(DEC_FILE.read_text(encoding="utf-8"))
-    out, srcs = [], {}
+    out, srcs, all_today = [], {}, []
     for x in d.get("decisions", []):
         if not str(x.get("timestamp", "")).startswith(day):
             continue
+        all_today.append(x)
         s = str(x.get("source") or "")
         if s in ("auto", "notion"):
             continue
         out.append(x)
         srcs[s or "(空)"] = srcs.get(s or "(空)", 0) + 1
-    return out, srcs
+    return out, srcs, all_today
 
 
 def notion_today_titles(day):
@@ -223,12 +224,14 @@ def main():
     day = _today(a.date)
 
     rec = load_receipts(day)
-    intake, srcs = load_intake(day)
+    intake, srcs, intake_all = load_intake(day)
     rec_ok = [r for r in rec if r.get("ok")]
     rec_ids = {str(r.get("id")) for r in rec_ok if r.get("id")}
-    file_ids = {str(x.get("id")) for x in intake if x.get("id")}
+    # 2026-10-31 修正：缺口比對用「今日全部決策」（含 source=auto）；原本用人工集合，
+    # source=auto 的正常入庫（cron 修復紀錄）會被誤判為「有收據未入庫」的真缺口。
+    file_ids = {str(x.get("id")) for x in intake_all if x.get("id")}
 
-    missing, unregistered, legacy = compare(day, rec, intake)
+    missing, unregistered, legacy = compare(day, rec, intake_all)
 
     if not a.quiet:
         print(f"=== 決策入庫對帳（{day}）===")
