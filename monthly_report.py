@@ -32,7 +32,14 @@ def load_json(p):
     return json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
 
 def main():
-    ym = sys.argv[1] if len(sys.argv) > 1 else "2026-07"
+    # 2026-11-01：預設值原寫死 "2026-07"（無參數執行會產出三個月前的月報）
+    # → 改為「上月」，與 cashflow_analysis.py／investment_perf_monthly.py 同口徑。
+    if len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
+        ym = sys.argv[1]
+    else:
+        _t = datetime.date.today()
+        _first = _t.replace(day=1)
+        ym = (_first - datetime.timedelta(days=1)).strftime("%Y-%m")
     year, month = ym.split("-")
     # 2026-10-02 防護：月報＝「完整月份」彙整（月初 vs 月末），未滿月只有 1 天資料、數字全 0。
     # 實踩：10/1 修被動收入口徑時跑 monthly_report.py 2026-10 產出空報表 → build_dashboard 的

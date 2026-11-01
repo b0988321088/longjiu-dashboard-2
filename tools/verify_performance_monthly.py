@@ -55,14 +55,17 @@ def main() -> int:
     months = sorted(k for k in adjust if len(k) == 7 and k[4] == "-")
     import datetime as dt
     today = dt.date.today()
-    if today.strftime("%Y-%m") not in months:
-        months.append(today.strftime("%Y-%m"))
     db = sqlite3.connect(bpm.DB)
     try:
         # 2026-10-20：builder 改用「最新有效資料日 + 已登錄資金流」；重算必須同參數，
         # 否則 A 段會因「頁面多了 flow/asof 欄位」而誤判不一致。
         asof = pc.latest_asof(snap, db).get("asof") or today.isoformat()
         eff_today = dt.date.fromisoformat(asof)
+        # 2026-11-01：頁面的「當月」＝ asof 月份（builder 用 eff_today），不是真實今天。
+        # 跨月首日（如 11/1 週日、台股未開、asof 停在 10-29）時原本 append 真實當月 2026-11
+        # → core 重算多一個月 → post_months 不同 → 假 FAIL 擋住整條產線。
+        if eff_today.strftime("%Y-%m") not in months:
+            months.append(eff_today.strftime("%Y-%m"))
         fresh = pc.monthly_history(months, snap=snap, adjust_all=adjust, db=db,
                                    today=eff_today, asof=asof)
     finally:
