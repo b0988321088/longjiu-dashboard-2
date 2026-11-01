@@ -325,15 +325,40 @@ bars = "".join([
 # 5) 三階段
 p1_done = high_cost_debt == 0
 p3_need = -net_fin if net_fin < 0 else 0
+
+# 第二階段＝留停 Gate（三條：保守覆蓋／壓力覆蓋／跑道，另加現金底線）。
+# 2026-11-01 修：原本誤用 us30y_gate.unfreeze_conditions（投資解凍三條件：現金／LTV／還本），
+# 那是「投資解凍」口徑，不是留停 Gate → 報告出現「Gate 綠燈 3/3」卻標「待執行」的自相矛盾。
+# 留停 Gate 一律讀 snapshot.sabbatical_checklist（sabbatical_checklist_update.py 單一寫入者）。
+_sab = snap.get("sabbatical_checklist") or {}
+_sab_lv = _sab.get("驗收等級") or {}
+_sab_gap = ((_sab.get("驗收標準_2027_02") or {}).get("距門檻缺口") or {})
+_sab_ok = "🟢" in str(_sab_lv.get("等級", ""))
+_sab_parts = []
+for _k, _lb in (("生活費覆蓋率", "保守"), ("壓力情境覆蓋率", "壓力")):
+    _g = _sab_gap.get(_k) or {}
+    if _g.get("現況_pct") is not None:
+        _sab_parts.append(f"{_lb} {pctf(_g['現況_pct'])}")
+_rw = _sab_gap.get("FI 跑道") or {}
+if _rw.get("現況_天") is not None:
+    _sab_parts.append(f"跑道 {int(round(float(_rw['現況_天']))):,} 天")
+_cs = _sab_gap.get("現金水位") or {}
+if _cs.get("現況") is not None:
+    _sab_parts.append(f"現金 {fmt(_cs['現況'])}")
+_sab_month = _sab_lv.get("月份") or "—"
+phase2_detail = (
+    f"{'🟢 門檻已達' if _sab_ok else '🔴 未達門檻'}（{'｜'.join(_sab_parts) or '留停驗收表缺值'}；基準 {_sab_month}）"
+)
+phase2_status = "門檻已達・2027/02 執行" if _sab_ok else "未達門檻・持續改善"
+
 phase_rows = [
     ("第一階段", "債務優化", "2026–2027",
      ("✅ 高息債清零" if p1_done else f"⏳ 高息債 {fmt(high_cost_debt)}"),
      ("完成" if p1_done else "進行中")),
     ("第二階段", "留職停薪測試", "2027/02",
-     f"Gate {'綠燈' if gate.get('unfreeze_allowed') else '未通過'}（"
-     f"{sum(1 for c in (gate.get('unfreeze_conditions') or {}).get('conditions', []) if c.get('通過'))}"
-     f"/{len((gate.get('unfreeze_conditions') or {}).get('conditions', []))} 條件成立）",
-     "待執行"),
+     phase2_detail,
+     phase2_status),
+
     ("第三階段", "扣房產後淨資產 ≥ 0", "2029–2030",
      f"金融淨值 {fmt(net_fin)}（需改善 {wan(p3_need)}）",
      "待執行"),
@@ -345,11 +370,14 @@ phase_html = "\n".join(
 
 # 6) 本次檢核重點（動態：只列當下真的卡住的項目）
 focus = []
+if not _sab_ok:
+    focus.append(("🔴", "留停 Gate 未達",
+                  f"{phase2_detail} → 2027/02 前補齊缺口（來源：sabbatical_checklist）"))
 if not rv.get("已證實"):
     focus.append(("🔴", "還本安全閥未證實",
                   f"質押 {fmt(fund_pledge)} 的還本方式待銀行書面；"
                   f"轉負情境 {len(rv.get('轉負情境') or [])} 個（{esc('、'.join((rv.get('轉負情境') or [])[:2]))}…）"
-                  f"→ 這是留停 Gate 唯一卡點"))
+                  f"→ 這是質押還本／追繳緩衝的卡點（投資解凍條件，非留停 Gate）"))
 if usd is not None and usd >= (usd_cfg.get("黃") or 65):
     focus.append(("🟡", "美元曝險導流",
                   f"現 {pctf(usd)}（黃區 {usd_cfg.get('黃')}~{usd_cfg.get('紅')}%）→ "
