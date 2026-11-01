@@ -1847,3 +1847,32 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 根因: 把 HOLD 檔內「解除方式：刪除本檔」當成常規路徑；當時 release_auth.py 已存在但未使用，且機制尚未進版控
 - 修復: ① HOLD 已恢復 ② release_auth／pre-push／auto_push 進版控（819ddcae，CIO RECORD） ③ HOLD 檔改寫為「不得直接刪除、只能 issue 一次性授權」 ④ skill longjiu-pipeline-governance 補鐵則
 - 狀態: ✅ 已修復 (2026-10-31 23:35)
+
+## INC-297 ｜ 2026-11-01 ｜ P2｜fixed ｜ 真值日錨點停在舊日 → 兩條 freshness 檢查靜默跳過（假通過）
+
+**現象**：`snapshot.last_updated` 停在 `2026-10-08`，但證券／基金／保單三類早已在 10/31 截圖更新（DB `assets` 也有 10-31、11-01 兩列）。肉眼看到的是「資料很舊」，實際危害在閘門。
+
+**根因**：該欄位只由一次性 `apply_truth_2026*.py` 手寫。10/31 的真值更新走 `apply_20261031.py`（只寫 `source_import_dates`／`fund_nav_dates`），沒有任何流程蓋這個戳。
+
+**為什麼是「假通過」**：`check_thresholds.py` 用它當真值日錨點。
+- 錨 10/08 → 取 `assets[10-08]`＝30,980,898，與 snapshot 負債 30,958,623 不相等 → 整個「負債落列 freshness」區塊被 `if` 條件跳過，**不報錯**。
+- Coast FI freshness 同理，拿錯日期比對。
+即：檢查看起來有跑、rc=0，實際上什麼都沒驗。
+
+**修法**（`a15fde8b`＋`9189ccac`）：`update_data.py` 收斂成單一寫檔出口 `_write_snap()`，寫檔前蓋戳記 = `max(source_import_dates + fund_nav_dates)`，**只前進不倒退**；四個寫檔點全部改走它。
+
+**驗收**：`last_updated` 10-08→10-31｜冪等（重跑無 diff）｜邏輯測試 4/4（前進／不倒退／無來源不動／壞格式不動）｜`check_thresholds` rc=0、0 個 ❌｜CIO-Gemini APPROVE。
+
+**殘餘**：`check_thresholds` 的錨點仍讀 `last_updated`，語意上等於「來源匯入日最大值」；若未來出現「先更新 DB 才補截圖」的流程，需重新確認錨點語意。
+
+## INC-298 ｜ 2026-11-01 ｜ P2｜fixed ｜ 一次性發布授權 consume 非原子（併發可重複放行）＋機制檔只在工作區無防線
+
+**現象（兩個同源缺口，都在發布機制）**：
+1. `release_auth.consume()` 先寫 USED、再 `if p.exists()` 才 rename 授權檔。兩條推送同時通過 verify 時，兩邊都寫得出 USED、都拿到成功 → `max_pushes=1` 形同虛設。
+2. INC-236 事故隔離期間，機制（`release_auth.py`／`.githooks/pre-push`／`auto_push.py`）只改在**工作區**（HOLD 禁 commit）。事後補入庫才補回；在那之前 clone／checkout 後機制就會消失，且沒有任何檢查會發現「工作區有、HEAD 沒有」。
+
+**修法**（`c97ed419`）：
+1. consume 改為「以原子 rename 搬走 `.git/RELEASE_AUTH` 當互斥鎖」：搬成功者才寫 USED 並放行；搬不到 → `AlreadyConsumed` → 拒絕並寫 REJECT log（含授權 id）。
+2. 新增 `tools/check_publish_mechanism_sync.py`（純讀）：四支機制檔必須「已追蹤 ＋ 工作區==HEAD」，掛進 `closeout_check.py` 第⑩步（22:40 收工檢查），檢查自己跑不起來也 fail-closed。TD-03 五項 CIO 建議同步落地（REJECT log 加 id／issue 指引／refs 未收到明示／auto_push 例外寫 log／檔頭職責分工）。
+
+**驗收**：5 執行緒同時 consume → 成功 1／被拒 4｜重複消費被拒｜REJECT log 含 id｜防線負向測試 4/4（未追蹤→4 問題、入庫→0、改一檔→1、還原→0）｜收工檢查（cron 入口）14:24 全綠｜驗證器 57 PASS/0 FAIL｜CIO-Gemini APPROVE。

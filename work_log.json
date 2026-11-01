@@ -1169,5 +1169,23 @@
   "category": "完成",
   "item": "跨月首日產線 6 類同源缺陷修復（詳見 error_register）",
   "detail": "07:00 產線＋09:00 兩支月報同日失敗，收斂為 6 類同源：x or 預設吃掉 0、月初不輸出待收、佔位符區塊邊界、上月末基準落空、驗證器與 builder 的『當月』定義分叉、commit 判斷與語系耦合。驗收：regenerate rc=0（推 643e3331）、兩支月報 rc=0、驗證器 57 PASS/0 FAIL、收工 11:14 全綠。"
+ },
+ {
+  "date": "2026-11-01",
+  "category": "修正",
+  "item": "財務結構健檢「第二階段」口徑錯置：拿投資解凍三條件當留停 Gate",
+  "detail": "症狀：報告顯示「Gate 綠燈（3/3 條件成立）」卻把狀態寫死「待執行」→ 讀成「三個都過了為何還待執行」。實查留停驗收表為 🟢 三條全達標（保守 113.1%／壓力 118.6%／跑道 1,094 天／現金 1,170,934，基準 2026-10），「待執行」指的是 2027/02 時點。根因：第二階段借用 us30y_gate.unfreeze_conditions（現金≥100萬／LTV≤53%／還本安全閥），那是投資解凍口徑；留停 Gate 的唯一真值是 snapshot.sabbatical_checklist。修法：改讀驗收等級＋距門檻缺口，狀態寫「門檻已達・2027/02 執行」；檢核重點「還本安全閥→留停 Gate 卡點」改為「質押還本／追繳緩衝（投資解凍條件）」。6bf8d96a｜CIO-Gemini APPROVE｜線上 23/23 條 200。"
+ },
+ {
+  "date": "2026-11-01",
+  "category": "修正",
+  "item": "snapshot.last_updated 真值日錨點停在 10/08 → 負債落列／Coast FI freshness 靜默跳過",
+  "detail": "症狀：昨天三類截圖都已更新（證券 10/30 收盤、基金淨值 10/29-10/30、保單 10/31 19:05-19:10），但 last_updated 仍 2026-10-08，我据此誤報「資料停在 10/08」。根因：該欄位只由一次性 apply_truth_*.py 手寫，10/31 走 apply_20261031.py（只寫 source_import_dates／fund_nav_dates）漏蓋。真正風險在 check_thresholds：錨舊日 → 比 assets[10-08]＝30,980,898 ≠ snapshot 負債 30,958,623 → 整段 freshness 檢查被跳過且不報錯（假通過）。修法：update_data 收斂單一寫檔出口 _write_snap()，戳記＝max(source_import_dates＋fund_nav_dates)、只前進不倒退。驗收：last_updated→10-31、冪等無 diff、邏輯測試 4/4（前進／不倒退／無來源不動／壞格式不動）、check_thresholds rc=0。a15fde8b＋9189ccac｜CIO-Gemini APPROVE。"
+ },
+ {
+  "date": "2026-11-01",
+  "category": "結案",
+  "item": "發布機制 TD-20261031-01/02/03 結案＋新增「機制檔必須等於 HEAD」防線",
+  "detail": "①TD-01：三檔實查早已入庫且在 HEAD（819ddcae 起，git ls-files＋cat-file），卡上「尚未入庫」是過時狀態；真正缺的是沒有東西會抓「工作區有、HEAD 沒有」。②TD-02：release_auth.consume 改以原子 rename 搬走 .git/RELEASE_AUTH 當互斥鎖，搬成功者才寫 USED 並放行，搬不到→AlreadyConsumed→拒絕並寫 REJECT；實測 5 執行緒同時消費＝成功 1／被拒 4。③TD-03 五項全落地（REJECT log 加 id／issue 指引／refs 未收到明示／auto_push 例外寫 log／檔頭職責分工）。防再發：tools/check_publish_mechanism_sync.py（純讀）掛進 closeout_check 第⑩步，四支機制檔未追蹤或工作區≠HEAD 即 ❌；負向測試 4/4。c97ed419｜CIO-Gemini APPROVE｜收工檢查（cron 入口）14:24 全綠｜驗證器 57 PASS/0 FAIL。"
  }
 ]
