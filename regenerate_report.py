@@ -493,6 +493,20 @@ except Exception as _e9c2:
 #   放在 build_dashboard 之前：先產檔、後刷連結，按鈕才不會指到不存在的檔案；產物與 index.html 同一輪、
 #   同一個 commit scope（「發布責任明確」＝本輪 commit，不再靠人工補）。
 #   失敗不阻擋本輪（僅告警）——與同段其他非日報產物一致；真 404 由下游發布前連結閘門擋。
+# 9c-0. FI 引擎重算（2026-11-01 修 22:40 收工 3 FAIL 根因）
+#   症狀：verify_ficriteria 固定 3 FAIL（PCCR 實收／跑道天數／退休規劃頁條圖尺標）。
+#   根因：本產線只重產 retirement_plan 頁，卻沒先重算 snapshot.coast_fi_engine（pccr／跑道），
+#         頁面因此吃上一輪衍生值；現金／房租一變就漂移。
+#   順序：先重算引擎、後產頁面（單一寫入者）；失敗不阻擋本輪（與同段其他非日報產物一致），
+#         真漂移由 sync_all 末步 FI 驗證器與 22:40 收工檢查 fail-closed 接手。
+try:
+    _r_cfi = subprocess.run([sys.executable, str(BASE / "coast_fi_engine.py"), "--write"], cwd=str(BASE),
+                            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
+    if _r_cfi.returncode != 0:
+        print(f"  ⚠️ FI 引擎重算異常（不影響日報）: rc={_r_cfi.returncode} "
+              f"{(_r_cfi.stderr or '').strip()[:160]}")
+except Exception as _e_cfi:
+    print(f"  ⚠️ FI 引擎重算異常（不影響日報）: {_e_cfi}")
 try:
     _r_ret = subprocess.run([sys.executable, str(BASE / "build_retirement_plan.py")], cwd=str(BASE),
                             capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
