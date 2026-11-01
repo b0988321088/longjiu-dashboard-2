@@ -1,8 +1,8 @@
 {
-  "date": "2026-10-25",
-  "us30y": 5.315,
-  "us30y_as_of": "2026-10-23",
-  "us30y_date": "2026-10-23",
+  "date": "2026-11-01",
+  "us30y": 5.329,
+  "us30y_as_of": "2026-10-29",
+  "us30y_date": "2026-10-29",
   "us30y_gate_status": "OK",
   "us30y_gate_mode": "advisory",
   "us30y_risk_warning": true,
@@ -11,7 +11,7 @@
       {
         "名稱": "現金 ≥ 自由現金門檻",
         "通過": true,
-        "現值": 1211940,
+        "現值": 1120447,
         "門檻": 1000000.0,
         "註記": "可動用＝cash_layers.unrestricted_cash；指定用途款 900,000 永久排除；分批資金只認列已實際入帳盈餘",
         "來源": "sot_targets.allowable_cash ＋ sabbatical_gate_twd.自由現金_twd"
@@ -19,40 +19,38 @@
       {
         "名稱": "質押 LTV ≤ 53%（內部政策停止線）",
         "通過": true,
-        "現值": 49.29,
+        "現值": 49.33,
         "門檻": 53.0,
         "註記": "內部投資停止線（= thresholds.ltv分級_pct.黃上限），**非銀行追繳線**；銀行追繳線以追繳參考值暫作壓力測試（待銀行書面）",
         "來源": "sot_targets.pledge_ltv（fund_pledge_loan ÷ fund_breakdown_cathay；thresholds.ltv分級_pct；v1.2 TD-20261015-02）"
       },
       {
         "名稱": "還本安全閥（無月盈餘轉負情境）",
-        "通過": false,
-        "現值": "R1 bullet 12 個月；R1 bullet 24 個月；R1 bullet 36 個月；R2 攤還 5 年",
+        "通過": true,
+        "現值": "無",
         "門檻": "0 個轉負情境",
-        "註記": "還本方式未證實（U1 待銀行書面）：R1/R2 情境顯示月盈餘轉負 → 暫停新增分批；不得以暫定『只繳息』情境宣告貸款安全｜分批資金只認列**已實際入帳**的新增盈餘；預估盈餘不得當成現金",
+        "註記": "還本方式已證實且無轉負情境｜分批資金只認列**已實際入帳**的新增盈餘；預估盈餘不得當成現金",
         "來源": "sot_targets.repayment_valve（fund_pledge_loan／fund_pledge_rate／sot_monthly_income／sot_monthly_expense；v1.2 TD-20261015-02 暫定假設）"
       }
     ],
-    "all_passed": false,
-    "未達": [
-      "還本安全閥（無月盈餘轉負情境）"
-    ],
+    "all_passed": true,
+    "未達": [],
     "US30Y角色": "宏觀風險警示（不否決台股分批）",
     "pledge_ltv": {
       "借款": 5900000.0,
-      "擔保品市值": 11970101.0,
-      "LTV_pct": 49.29,
+      "擔保品市值": 11960088.0,
+      "LTV_pct": 49.33,
       "政策停止線_pct": 53.0,
       "追繳參考_pct": 70.0,
-      "距停止線_pct": 3.71,
-      "池值可跌_pct": -7.0,
+      "距停止線_pct": 3.67,
+      "池值可跌_pct": -6.92,
       "通過": true,
       "觸追繳": false,
       "語意": "內部投資停止線（= thresholds.ltv分級_pct.黃上限），**非銀行追繳線**；銀行追繳線以追繳參考值暫作壓力測試（待銀行書面）",
       "source": "sot_targets.pledge_ltv（fund_pledge_loan ÷ fund_breakdown_cathay；thresholds.ltv分級_pct；v1.2 TD-20261015-02）"
     },
     "repayment_valve": {
-      "已證實": false,
+      "已證實": true,
       "月盈餘": 66758,
       "月息": 13029,
       "情境": [
@@ -111,27 +109,33 @@
           "月盈餘": 53729,
           "轉負": false,
           "類型": "只繳息"
+        },
+        {
+          "代號": "U1 實際條款（月付）",
+          "月付": 13029,
+          "月盈餘": 53729,
+          "轉負": false,
+          "類型": "只繳息、每年續約（到期日 2027-09-29，屆期續約）"
         }
       ],
-      "轉負情境": [
-        "R1 bullet 12 個月",
-        "R1 bullet 24 個月",
-        "R1 bullet 36 個月",
-        "R2 攤還 5 年"
-      ],
-      "暫停新增分批": true,
+      "轉負情境": [],
+      "暫停新增分批": false,
       "判定用情境": {
-        "代號": "（未證實）R1／R2 全情境保守判定"
+        "代號": "U1 實際條款（月付）",
+        "月付": 13029,
+        "月盈餘": 53729,
+        "轉負": false,
+        "類型": "只繳息、每年續約（到期日 2027-09-29，屆期續約）"
       },
-      "風險標示": "還本方式未證實（U1 待銀行書面）：R1/R2 情境顯示月盈餘轉負 → 暫停新增分批；不得以暫定『只繳息』情境宣告貸款安全",
+      "風險標示": "",
       "資金來源限制": "分批資金只認列**已實際入帳**的新增盈餘；預估盈餘不得當成現金",
       "source": "sot_targets.repayment_valve（fund_pledge_loan／fund_pledge_rate／sot_monthly_income／sot_monthly_expense；v1.2 TD-20261015-02 暫定假設）"
     },
     "source": "sot_targets.unfreeze_conditions（v1.2 TD-20261015-02；2026-10-14 裁決）"
   },
-  "unfreeze_allowed": false,
-  "unfreeze_block_reason": "讀值日 2026-10-23（落後 2 天，在容忍值 3 天內）｜US30Y 為宏觀風險警示（已觸發，長債新增凍結生效），不單獨否決台股分批；解凍判定＝未達：還本安全閥（無月盈餘轉負情境）",
+  "unfreeze_allowed": true,
+  "unfreeze_block_reason": null,
   "frozen": true,
-  "total_assets": 27202141,
+  "total_assets": 26912986,
   "recommendations": []
 }
