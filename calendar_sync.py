@@ -161,6 +161,7 @@ def sync():
                         "start": _dt.isoformat(),
                         "end": (_dt + timedelta(minutes=_dur)).isoformat(),
                         "timed": True,
+                        "note": str(_e.get("note", "") or ""),
                     })
                     continue
                 except ValueError:
@@ -169,6 +170,8 @@ def sync():
                 "summary": _title,
                 "start": _d,
                 "end": (datetime.strptime(_d, "%Y-%m-%d") + timedelta(days=1)).date().isoformat(),
+                # 2026-11-01：note 一併寫進 Google 事件說明（使用者手機上要能直接看到劇本/依據）
+                "note": str(_e.get("note", "") or ""),
             })
             if _c:
                 _seen.add((_c, _d))
@@ -209,9 +212,11 @@ def sync():
 
     created = 0
     for ev in events:
+        _note = str(ev.get("note", "") or "").strip()
         body = {
             "summary": ev["summary"],
-            "description": "[calendar_sync]",
+            # 標記必須留在最前面（清理靠 [calendar_sync] 比對），說明接在標記之後
+            "description": "[calendar_sync]" + (("\n\n" + _note) if _note else ""),
         }
         if ev.get("timed"):
             body["start"] = {"dateTime": ev["start"], "timeZone": "Asia/Taipei"}
