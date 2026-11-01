@@ -1,11 +1,11 @@
 {
  "month": "2026-10",
- "rows_in_month": 241,
- "expense_actual": 178112.0,
- "expense_recurring": 145181.0,
+ "rows_in_month": 197,
+ "expense_actual": 167636.0,
+ "expense_recurring": 134705.0,
  "expense_non_recurring": 32931.0,
  "income_in_mb": 28590.0,
- "excluded_count": 117,
+ "excluded_count": 96,
  "unknown": {
   "count": 0,
   "amount": 0,
@@ -15,42 +15,6 @@
  "holds": [],
  "detail": {
   "spend": [
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "交通",
-    "desc": "加油站/洽維加油站 - 7602",
-    "amount": -70.0,
-    "bucket": "spend",
-    "reason": "MB 分類：交通"
-   },
-   {
-    "date": "2026-10",
-    "account": "Unicard－正卡",
-    "cat": "飲食",
-    "desc": "連加*新光三越高雄左營 - 8188",
-    "amount": -65.0,
-    "bucket": "spend",
-    "reason": "MB 分類：飲食"
-   },
-   {
-    "date": "2026-10",
-    "account": "Unicard－正卡",
-    "cat": "飲食",
-    "desc": "連加*昇?昌股份有限公 - 8188",
-    "amount": -650.0,
-    "bucket": "spend",
-    "reason": "MB 分類：飲食"
-   },
-   {
-    "date": "2026-10",
-    "account": "Unicard－正卡",
-    "cat": "飲食",
-    "desc": "連加*華得來(沙鹿店) - 8188",
-    "amount": -55.0,
-    "bucket": "spend",
-    "reason": "MB 分類：飲食"
-   },
    {
     "date": "2026-10",
     "account": "Unicard－正卡",
@@ -68,168 +32,6 @@
     "amount": -111.0,
     "bucket": "spend",
     "reason": "MB 分類：飲食"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "費用/手續費",
-    "desc": "國外交易服務費(簽帳 106 ) - 3841",
-    "amount": -2.0,
-    "bucket": "spend",
-    "reason": "MB 分類：費用/手續費"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "費用/手續費",
-    "desc": "國外交易服務費(簽帳 45 ) - 3841",
-    "amount": -1.0,
-    "bucket": "spend",
-    "reason": "MB 分類：費用/手續費"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "尚未分類",
-    "desc": "ziesgs25 aeworlbaen130101 - 3841",
-    "amount": -106.0,
-    "bucket": "spend",
-    "reason": "未分類小額消費（MB：尚未分類）"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "尚未分類",
-    "desc": "ziesgs25 aeworlbaen130101 - 3841",
-    "amount": -45.0,
-    "bucket": "spend",
-    "reason": "未分類小額消費（MB：尚未分類）"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "費用/手續費",
-    "desc": "國外交易服務費(簽帳 118 ) - 3841",
-    "amount": -2.0,
-    "bucket": "spend",
-    "reason": "MB 分類：費用/手續費"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "費用/手續費",
-    "desc": "國外交易服務費(簽帳 68 ) - 3841",
-    "amount": -1.0,
-    "bucket": "spend",
-    "reason": "MB 分類：費用/手續費"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "尚未分類",
-    "desc": "(joo)duwon 130101 - 3841",
-    "amount": -118.0,
-    "bucket": "spend",
-    "reason": "未分類小額消費（MB：尚未分類）"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "尚未分類",
-    "desc": "ziesgs25 aeworlbaen130101 - 3841",
-    "amount": -68.0,
-    "bucket": "spend",
-    "reason": "未分類小額消費（MB：尚未分類）"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "費用/手續費",
-    "desc": "國外交易服務費(簽帳 83 ) - 3841",
-    "amount": -1.0,
-    "bucket": "spend",
-    "reason": "MB 分類：費用/手續費"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "費用/手續費",
-    "desc": "國外交易服務費(簽帳 71 ) - 3841",
-    "amount": -1.0,
-    "bucket": "spend",
-    "reason": "MB 分類：費用/手續費"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "費用/手續費",
-    "desc": "國外交易服務費(簽帳 6,511 ) - 3841",
-    "amount": -98.0,
-    "bucket": "spend",
-    "reason": "MB 分類：費用/手續費"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "費用/手續費",
-    "desc": "國外交易服務費(簽帳 755 ) - 3841",
-    "amount": -11.0,
-    "bucket": "spend",
-    "reason": "MB 分類：費用/手續費"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "尚未分類",
-    "desc": "maegaemzissikeopije130101 - 3841",
-    "amount": -83.0,
-    "bucket": "spend",
-    "reason": "未分類小額消費（MB：尚未分類）"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "尚未分類",
-    "desc": "ziesgs25 aeworlbaen130101 - 3841",
-    "amount": -71.0,
-    "bucket": "spend",
-    "reason": "未分類小額消費（MB：尚未分類）"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "尚未分類",
-    "desc": "jusighoisajejumarin130001 - 3841",
-    "amount": -6511.0,
-    "bucket": "spend",
-    "reason": "未分類小額消費（MB：尚未分類）"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "尚未分類",
-    "desc": "jjinjjin jeoijoo 137901 - 3841",
-    "amount": -755.0,
-    "bucket": "spend",
-    "reason": "未分類小額消費（MB：尚未分類）"
-   },
-   {
-    "date": "2026-10",
-    "account": "CUBE御璽卡Visa",
-    "cat": "飲食",
-    "desc": "全支付-喫茶小舖(頭份 - 2106",
-    "amount": -35.0,
-    "bucket": "spend",
-    "reason": "MB 分類：飲食"
-   },
-   {
-    "date": "2026-10",
-    "account": "Richart卡(原@GoGo悠遊御璽)",
-    "cat": "住家",
-    "desc": "遠傳電信股份有限公司taipei - 7706",
-    "amount": -1727.0,
-    "bucket": "spend",
-    "reason": "MB 分類：住家"
    },
    {
     "date": "2026-10",
@@ -1038,15 +840,6 @@
     "date": "2026-10",
     "account": "信用卡",
     "cat": "優惠回饋",
-    "desc": "8 月sport卡基本回饋 2 點 - 7602",
-    "amount": 0.0,
-    "bucket": "income",
-    "reason": "收入：回饋"
-   },
-   {
-    "date": "2026-10",
-    "account": "信用卡",
-    "cat": "優惠回饋",
     "desc": "j卡現金回饋退款 - 356969******0948",
     "amount": 75.0,
     "bucket": "income",
@@ -1126,204 +919,6 @@
    }
   ],
   "exclude": [
-   {
-    "date": "2026-10",
-    "account": "文心綜活儲存款-薪轉",
-    "cat": "尚未分類",
-    "desc": "轉帳存入 - 安聯人壽保險股份有 華銀敦化 0801780998",
-    "amount": 13258.0,
-    "bucket": "exclude",
-    "reason": "規則：轉帳"
-   },
-   {
-    "date": "2026-10",
-    "account": "文心綜活儲存款-薪轉",
-    "cat": "尚未分類",
-    "desc": "轉帳存入 - 安聯人壽保險股份有 華銀敦化 0801780997",
-    "amount": 6442.0,
-    "bucket": "exclude",
-    "reason": "規則：轉帳"
-   },
-   {
-    "date": "2026-10",
-    "account": "敦南Richart數位一般帳戶",
-    "cat": "利息所得",
-    "desc": "轉帳存入 - 轉出0028881016305049 陳宛琳10月借貸利息",
-    "amount": 6000.0,
-    "bucket": "exclude",
-    "reason": "規則：轉帳"
-   },
-   {
-    "date": "2026-10",
-    "account": "敦南Richart外幣綜存",
-    "cat": "外幣買賣",
-    "desc": "存款息 - 交易匯率31.854",
-    "amount": 0.8,
-    "bucket": "exclude",
-    "reason": "規則：外幣買賣"
-   },
-   {
-    "date": "2026-10",
-    "account": "敦南Richart外幣綜存",
-    "cat": "外幣買賣",
-    "desc": "存款息 - 交易匯率0.203015",
-    "amount": 0.0,
-    "bucket": "exclude",
-    "reason": "規則：外幣買賣"
-   },
-   {
-    "date": "2026-10",
-    "account": "敦南Richart外幣綜存",
-    "cat": "外幣買賣",
-    "desc": "存款息 - 交易匯率4.749473",
-    "amount": 0.0,
-    "bucket": "exclude",
-    "reason": "規則：外幣買賣"
-   },
-   {
-    "date": "2026-10",
-    "account": "敦南Richart外幣綜存",
-    "cat": "外幣買賣",
-    "desc": "存款息 - 交易匯率36.149512",
-    "amount": 0.0,
-    "bucket": "exclude",
-    "reason": "規則：外幣買賣"
-   },
-   {
-    "date": "2026-10",
-    "account": "敦南Richart外幣綜存",
-    "cat": "外幣買賣",
-    "desc": "存款息 - 交易匯率22.22135",
-    "amount": 0.0,
-    "bucket": "exclude",
-    "reason": "規則：外幣買賣"
-   },
-   {
-    "date": "2026-10",
-    "account": "敦南Richart外幣綜存",
-    "cat": "外幣買賣",
-    "desc": "存款息 - 交易匯率1.946905",
-    "amount": 0.0,
-    "bucket": "exclude",
-    "reason": "規則：外幣買賣"
-   },
-   {
-    "date": "2026-10",
-    "account": "文心綜活儲存款-薪轉",
-    "cat": "尚未分類",
-    "desc": "cd轉入 - atm 013-0000064506085061",
-    "amount": 1092935.0,
-    "bucket": "exclude",
-    "reason": "規則：轉帳"
-   },
-   {
-    "date": "2026-10",
-    "account": "文心綜活儲存款-薪轉",
-    "cat": "尚未分類",
-    "desc": "轉帳存入 - 第一金人壽保險股份 一銀大安 0801781098",
-    "amount": 15916.0,
-    "bucket": "exclude",
-    "reason": "規則：轉帳"
-   },
-   {
-    "date": "2026-10",
-    "account": "營業部DAWHO活期儲蓄存款",
-    "cat": "外幣買賣",
-    "desc": "手機換匯 - 19900800993494(usd)",
-    "amount": -5019.0,
-    "bucket": "exclude",
-    "reason": "規則：外幣買賣"
-   },
-   {
-    "date": "2026-10",
-    "account": "營業部DAWHO活期儲蓄存款",
-    "cat": "外幣買賣",
-    "desc": "手機換匯 - 19900800993494(usd)",
-    "amount": 5007.0,
-    "bucket": "exclude",
-    "reason": "規則：外幣買賣"
-   },
-   {
-    "date": "2026-10",
-    "account": "營業部DAWHO外幣組合存款-美金",
-    "cat": "外幣買賣",
-    "desc": "手機換匯 - 19901800993496(twd)",
-    "amount": 157.02,
-    "bucket": "exclude",
-    "reason": "規則：外幣買賣"
-   },
-   {
-    "date": "2026-10",
-    "account": "營業部DAWHO外幣組合存款-美金",
-    "cat": "外幣買賣",
-    "desc": "手機換匯 - 19901800993496(twd)",
-    "amount": -157.02,
-    "bucket": "exclude",
-    "reason": "規則：外幣買賣"
-   },
-   {
-    "date": "2026-10",
-    "account": "活期儲蓄存款",
-    "cat": "帳戶互轉",
-    "desc": "電子轉出 - (812)0020801000019475",
-    "amount": -1092935.0,
-    "bucket": "exclude",
-    "reason": "規則：帳戶互轉"
-   },
-   {
-    "date": "2026-10",
-    "account": "證券活期儲蓄存款",
-    "cat": "投資買賣",
-    "desc": "交割股款 - 8882 810 stag",
-    "amount": -1144456.0,
-    "bucket": "exclude",
-    "reason": "規則：投資買賣"
-   },
-   {
-    "date": "2026-10",
-    "account": "證券活期儲蓄存款",
-    "cat": "尚未分類",
-    "desc": "授權轉入 - (013)0000006***230771梁*賓",
-    "amount": 1144456.0,
-    "bucket": "exclude",
-    "reason": "規則：轉帳"
-   },
-   {
-    "date": "2026-10",
-    "account": "文心綜活儲存款-薪轉",
-    "cat": "帳戶互轉",
-    "desc": "轉帳支取 - 轉入0028881000247286",
-    "amount": -2000000.0,
-    "bucket": "exclude",
-    "reason": "規則：帳戶互轉"
-   },
-   {
-    "date": "2026-10",
-    "account": "敦南Richart數位一般帳戶",
-    "cat": "尚未分類",
-    "desc": "轉帳存入 - 轉出0020801000019475",
-    "amount": 2000000.0,
-    "bucket": "exclude",
-    "reason": "規則：轉帳"
-   },
-   {
-    "date": "2026-10",
-    "account": "敦南Richart數位一般帳戶",
-    "cat": "現金消費",
-    "desc": "cd轉出 - atm 017-0099371150797331",
-    "amount": -1006900.0,
-    "bucket": "exclude",
-    "reason": "規則：轉帳"
-   },
-   {
-    "date": "2026-10",
-    "account": "敦南Richart數位一般帳戶",
-    "cat": "現金消費",
-    "desc": "cd轉出 - atm 007-0099804310022717",
-    "amount": -1013724.0,
-    "bucket": "exclude",
-    "reason": "規則：轉帳"
-   },
    {
     "date": "2026-10",
     "account": "信用卡",
@@ -2178,6 +1773,15 @@
     "amount": 0.0,
     "bucket": "exclude",
     "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "cd轉入 - atm 822-0000026540597303",
+    "amount": 24000.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
    }
   ],
   "non_recurring": [
@@ -2194,9 +1798,9 @@
   "unknown": []
  },
  "source": {
-  "file": "moneybook_new\\Moneybook_明細_20261031_1.csv",
-  "sha256": "40265171897d26aacee32b3d5c6d2f4fc1cf4a154572a0ae94cb50048ab2ade1",
-  "rows_total": 241,
-  "generated_at": "2026-11-01T18:46:15"
+  "file": "moneybook_new\\Moneybook_明細_20261101_1.csv",
+  "sha256": "c670777110f8d730e85e0cb0ad115b0e08d15c1d19a6dd395c12f5bc831cb860",
+  "rows_total": 199,
+  "generated_at": "2026-11-01T20:41:38"
  }
 }

@@ -1125,15 +1125,15 @@
   },
   "2026-11-01": {
     "date": "2026-11-01",
-    "total_assets": 26912986.0,
+    "total_assets": 26940986.0,
     "total_liabilities": 30958623.0,
-    "net_worth": -4045637.0,
+    "net_worth": -4017637.0,
     "securities_market": 2742580.0,
     "insurance_current": 9403595.0,
     "insurance_total": 9403595.0,
     "fund_market": 12746364.0,
     "real_estate": 34017063.0,
-    "cash": 2020447.0,
+    "cash": 2048447.0,
     "other": 0.0,
     "insurance_detail": {
       "【安聯保單A】現值": 4972907.0,
@@ -1153,12 +1153,12 @@
     "fund_dividend_monthly": 0.0,
     "monthly_income": 225968.0,
     "monthly_expense": 159210.0,
-    "rent_monthly": 0.0,
+    "rent_monthly": 24000.0,
     "cathay_refinance": 0.0,
     "restricted_cash": 900000.0,
     "bonds": 0.0,
     "unrealized_pnl": 354780,
     "realized_pnl": 23460,
-    "net_worth_incl_re": 29971426.0
+    "net_worth_incl_re": 29999426.0
   }
 }
