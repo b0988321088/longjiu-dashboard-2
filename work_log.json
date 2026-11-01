@@ -1187,5 +1187,23 @@
   "category": "結案",
   "item": "發布機制 TD-20261031-01/02/03 結案＋新增「機制檔必須等於 HEAD」防線",
   "detail": "①TD-01：三檔實查早已入庫且在 HEAD（819ddcae 起，git ls-files＋cat-file），卡上「尚未入庫」是過時狀態；真正缺的是沒有東西會抓「工作區有、HEAD 沒有」。②TD-02：release_auth.consume 改以原子 rename 搬走 .git/RELEASE_AUTH 當互斥鎖，搬成功者才寫 USED 並放行，搬不到→AlreadyConsumed→拒絕並寫 REJECT；實測 5 執行緒同時消費＝成功 1／被拒 4。③TD-03 五項全落地（REJECT log 加 id／issue 指引／refs 未收到明示／auto_push 例外寫 log／檔頭職責分工）。防再發：tools/check_publish_mechanism_sync.py（純讀）掛進 closeout_check 第⑩步，四支機制檔未追蹤或工作區≠HEAD 即 ❌；負向測試 4/4。c97ed419｜CIO-Gemini APPROVE｜收工檢查（cron 入口）14:24 全綠｜驗證器 57 PASS/0 FAIL。"
+ },
+ {
+  "date": "2026-11-01",
+  "category": "完成",
+  "item": "月度追蹤 monthly_tracker.py 取代事件式轉貸簡報（cron 改每月 1 日 09:00）",
+  "detail": "使用者指正「看不出這個簡報對我有什麼幫助」「想整理成 9/10/11 月的績效評估跟分析」「方便追蹤每個月的變化跟現金流」。原 grand_pivot 簡報為事件式敘事（9/11 CPI→9/25 到期→10 月標案），事件一過即過期，且內容為日報/儀表板子集；15 次改動全為修 stale/bug，無一次來自使用者內容需求。改為固定欄位逐月累積：金融資產（現金/證券/保單/基金）、負債、淨值、配息/租金/薪資、常態支出、淨現金流、被動覆蓋。7-11 月已產出；9 月標註口徑斷點（保單借貸 400 萬 10/01 才沖銷、質押款在途）。a2ab4bb6 程式＋61a85166 入口按鈕｜CIO-Gemini APPROVE。"
+ },
+ {
+  "date": "2026-11-01",
+  "category": "完成",
+  "item": "補齊 dynamic_monthly_review_2026-10.html（腳本化＋情境 B 真值）",
+  "detail": "10 月缺檔且原為手寫不可重跑。新增 build_dynamic_monthly_review.py：數字全從 asset_diff_history／snapshot 動態算，情境參數落 data/scenario_b_2026-10.json（現金 202 萬不動／防守不補／口徑凍結／月導流 73,000／現金 5% 差 21 萬三個月到位／ladder 需 US30Y 連 2 日<5.30 且美元<65，首批上限 20 萬）。歸因實測：現金流 +159,031、證券市值波動 -300,080（另買進 00927 35,440）、保單 -15,370、基金 +134,690、淨值 +130,722；現金實際 +266,772 與現金流差 107,741 標為時序/未對帳。ee8c7e0e｜CIO-Gemini APPROVE、線上已驗證。"
+ },
+ {
+  "date": "2026-11-01",
+  "category": "修正",
+  "item": "產線 6 支非 ok 逐條定位（2 支實測修復、4 支程式已修待時點驗證）",
+  "detail": "①現金流月報（76c7fb26f12e）與②投資績效月報（be935de68f9e）：09:00 失敗係舊版硬編碼 7-8 月／無月初基準，已由 69789723 修，今日實測 rc=0（現金 1,753,675→2,020,447、+266,772；績效改讀 asset_diff_history）。③週深清（4c96c0dc93fd）：self_publish 空 allowlist 拒絕＝防護正確，wrappers 已於 10/26 改為「無 OWN 就不進提交出口」，待週一 03:00 驗證。④雷達（192f1784d305）：rc=3 係 publish_gate 判需真 CIO，已重構為 radar_push 單一車道，待週六驗證。⑤晨間 07:00（6f4e4b91262c）：三項阻擋（links_config 7 佔位符／日報房租字樣／F1 基準）現已全綠——check_dashboard_sync 全過、F1 與基準一致 71feed8d0601。⑥收工檢查（d6282d33346a）：昨晚未提交項已於今日提交，18:41 全綠。"
  }
 ]
