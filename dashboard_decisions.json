@@ -11717,6 +11717,16 @@
       "status": "✅ 已核准並上線",
       "source": "auto"
     }
+,
+  {
+    "id": "mem-20261102001240-1266",
+    "timestamp": "2026-11-02T00:12:40.746211+08:00",
+    "agent": "L1-Hermes",
+    "task": "ETF 除息公告自動巡檢排程（週一至五 08:00）",
+    "summary": "使用者 2026-11-02 核准：新增 etf_dividend_watch.py（Yahoo events=div 取除息日＋每股配息）＋hermes 薄轉發器，cron f6332d89a77b 週一至五 08:00 no_agent 執行；有新公告寫回 snapshot.etf_dividend_schedule 並推播，無變更靜默。邊界：Yahoo 不提供發放日→標待確認不猜；00888 無報價維持手動；抓取失敗不動該檔。",
+    "status": "✅ 已核准並上線（首跑靜默驗證通過）",
+    "source": "auto"
+  }
   ],
   "meta": {
     "updated_at": "2026-11-01T11:11:04.206460"
