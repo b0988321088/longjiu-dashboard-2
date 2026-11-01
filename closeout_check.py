@@ -30,6 +30,11 @@
    用 GitHub 公開 API 讀「頁面建置與部署」workflow 最新一版的結論：已完成且失敗 → ❌；
    仍在執行／剛 push 未建 run → ⏳（非問題）；查不到 → ⚠️ 明示未驗證（不偽裝通過）。
    為什麼：本機與遠端都同步、④ 的 Pages 檢查也過，線上仍可能停在舊版（deploy 逾時）。
+10. **發布機制檔同步**（TD-20261031-01 防再發）：`release_auth.py`／`auto_push.py`／
+   `.githooks/pre-push`／`.githooks/pre-commit` 必須「已追蹤 ＋ 工作區 == HEAD」。
+   為什麼：事故隔離期間只能在改工作區（HOLD 禁 commit），機制會「能用但沒入庫」；
+   clone／checkout 後消失，症狀是「授權了卻推不出去」且無跡可尋。
+   實作：`tools/check_publish_mechanism_sync.py`（純讀）。
 
 用法
 ----
@@ -690,6 +695,25 @@ def _pages_runs(slug: str, timeout: int = 15):
     return None
 
 
+def step_publish_mechanism(quiet: bool) -> list:
+    """發布機制檔必須「已追蹤＋工作區==HEAD」（TD-20261031-01 防再發）。
+
+    INC-236 事故隔離時機制只改在工作區（HOLD 禁 commit）→ 事後才補入庫。
+    若再發生，clone／checkout 後機制消失：不會誤發布，但「授權了卻推不出去」
+    且沒有人知道原因。判準與理由見 tools/check_publish_mechanism_sync.py。
+    """
+    try:
+        import importlib.util
+        p = Path(__file__).resolve().parent / "tools" / "check_publish_mechanism_sync.py"
+        spec = importlib.util.spec_from_file_location("check_publish_mechanism_sync", p)
+        mod = importlib.util.module_from_spec(spec)      # type: ignore[arg-type]
+        spec.loader.exec_module(mod)                      # type: ignore[union-attr]
+        return list(mod.check(Path(__file__).resolve().parent))
+    except Exception as exc:  # noqa: BLE001
+        # 檢查自己跑不起來也要 fail-closed（不能靜默當成通過）
+        return [f"發布機制同步檢查執行失敗：{type(exc).__name__}: {exc}"]
+
+
 def step_pages_deploy(quiet: bool) -> list:
     """⑨ GitHub Pages 部署稽核：**推得動、遠端有，都不等於線上跑的是這一版**。
 
@@ -861,6 +885,7 @@ def main() -> int:
         thr_problems = step_threshold_invariants(args.quiet or args.silent_ok)
         hb_problems = step_verifier_heartbeat(args.quiet or args.silent_ok)
         pages_problems = step_pages_deploy(args.quiet or args.silent_ok)
+        mech_problems = step_publish_mechanism(args.quiet or args.silent_ok)
         # ⑩ ref topology：觀測與預警，**不**併入 problems（不阻擋產線；INC-236 延伸 Phase C）
         step_ref_topology(args.quiet or args.silent_ok)
 
@@ -877,6 +902,7 @@ def main() -> int:
         problems.extend(hb_problems)
 
         problems.extend(pages_problems)
+        problems.extend(mech_problems)
 
         print()
         print("=" * 52)

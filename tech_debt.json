@@ -2023,13 +2023,13 @@
     "detail": "release_auth.py（新檔）、.githooks/pre-push、auto_push.py 的 RELEASE_AUTH 整合目前只在工作區生效（git 執行工作區版本的 hook），HEAD 92c80f34 不含此機制。若 checkout 或重建 clone，會失去一次性授權能力，回到無條件 HOLD（fail-closed，不會誤發布，但無法發布）。修法：隔離解除後優先入庫並補 CIO 審查。",
     "date": "2026-10-31",
     "source": "INC-236 結案盤點",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-11-01)：三檔均已入庫並在 HEAD（819ddcae 起；git ls-files＋git cat-file 實查）。防再發：新增 tools/check_publish_mechanism_sync.py（純讀，檢查『已追蹤＋工作區==HEAD』）並掛進 closeout_check.py step_publish_mechanism（22:40 收工檢查）；負向測試 4/4（未追蹤→4 問題、入庫→0、改一檔→1、還原→0）",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-31",
-    "cleanup_reason": ""
+    "cleanup_reason": "三檔 release_auth.py／.githooks/pre-push／auto_push.py 已入庫；新增收工檢查防線（工作區≠HEAD 即 ❌）"
   },
   {
     "id": "TD-20261031-02",
@@ -2039,13 +2039,13 @@
     "detail": "release_auth.verify 與 consume 之間無互斥；兩個 push 同時通過驗證時理論上都會放行（本批次為單次人工發布，未受影響）。修法：consume 改原子 rename 或加 .git/RELEASE_AUTH.lock 互斥。",
     "date": "2026-10-31",
     "source": "INC-236 結案盤點",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-11-01)：release_auth.consume 改為『以原子 rename 搬走 .git/RELEASE_AUTH 當互斥鎖』，搬成功者才寫 USED 並放行；搬不到→AlreadyConsumed→拒絕並寫 REJECT log。實測 5 執行緒同時 consume：成功 1／被拒 4，重複消費亦被拒（T1~T4 全 PASS）",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-31",
-    "cleanup_reason": ""
+    "cleanup_reason": "consume 原子化完成；併發 5 執行緒實測只有 1 條放行"
   },
   {
     "id": "TD-20261031-03",
@@ -2055,12 +2055,12 @@
     "detail": "①RELEASE_AUTH_REJECT.log 加授權 id 以便追溯 ②issue 遇既有授權檔時提示可先清除 ③refs 為空時的分支驗證語意要明示 ④auto_push 的 verify 失敗也寫 REJECT log ⑤檔內註明消費與拒絕由 pre-push 負責（職責分離）。",
     "date": "2026-10-31",
     "source": "INC-236 結案盤點",
-    "status": "開放",
-    "status_raw": "",
+    "status": "已結案",
+    "status_raw": "✅ 已結案(2026-11-01)：五項全落地——①REJECT log 加授權 id（4 欄格式）②issue 遇既有授權檔印出 status／作廢指引 ③refs 未收到時 CLI 明示『僅驗 branch 設定』④auto_push 預檢例外補寫 REJECT log（新增 release_auth.log_reject 公開入口）⑤檔頭補『消費與拒絕由 pre-push 負責、auto_push 只預檢』職責分工",
     "due_date": "",
     "owner": "龍九",
     "moved_from": "",
     "moved_at": "2026-10-31",
-    "cleanup_reason": ""
+    "cleanup_reason": "CIO 5 項非阻擋建議全部實作，含公開 log_reject 入口"
   }
 ]

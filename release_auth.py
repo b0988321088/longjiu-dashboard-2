@@ -37,6 +37,14 @@
 本機制**只授權推送**，不授權 commit：`.githooks/pre-commit` 不受影響，
 PUSH_HOLD 期間 commit 仍一律被拒。這樣才不會出現「一把鑰匙同時開兩道門」。
 
+### 消費與拒絕的責任分工（2026-11-01 TD-20261031-03⑤）
+- **消費（consume）與拒絕紀錄只由 `pre-push` 負責**：它會把推送目標 refs 帶進來，
+  能同時核對「只推授權分支」。
+- `auto_push.py` 只做預檢 `verify()`（不消費），避免同一條推送被扣兩次。
+- 併發：consume 以「原子搬走 `.git/RELEASE_AUTH`」當互斥鎖；第二條同時通過 verify 的推送
+  會拿到 `AlreadyConsumed` 並被拒絕（TD-20261031-02，2026-11-01）。
+- `refs` 未傳入時只驗 `branch` 設定、不驗實際推送目標 → CLI 會明示「refs 未收到」。
+
 ## CLI
 
   python release_auth.py issue --head <sha> --commits <sha1,sha2> [--branch clean-main]
@@ -109,21 +117,37 @@ def _used_count(repo: Path, auth_id: str) -> int:
     return len(list(d.glob(f"{auth_id}*.json")))
 
 
-def _log_reject(repo: Path, reason: str) -> None:
+def _log_reject(repo: Path, reason: str, auth_id: str = "") -> None:
+    """寫拒絕紀錄。2026-11-01 TD-20261031-03①：加授權 id 以便追溯是哪一份被拒。"""
     try:
         with open(_git_dir(repo) / "RELEASE_AUTH_REJECT.log", "a", encoding="utf-8") as fh:
-            fh.write(f"{_iso(_now())}\tREJECT\t{reason}\n")
+            fh.write(f"{_iso(_now())}\tREJECT\t{auth_id or '-'}\t{reason}\n")
     except Exception:  # noqa: BLE001
         pass
+
+
+class AlreadyConsumed(RuntimeError):
+    """授權已被另一條推送消費（或授權檔已消失）→ 必須拒絕，不得重複放行。"""
+
+
+def log_reject(repo: Path, reason: str, auth_id: str = "") -> None:
+    """公開入口：供 auto_push 等呼叫端補寫拒絕紀錄（TD-20261031-03④）。
+
+    verify() 內部的失敗已自行寫 log；這支是給「呼叫端自己出錯」的情境用
+    （例如 auto_push 預檢拋例外），避免拒絕原因只存在 stdout、事後查不到。
+    """
+    _log_reject(repo, reason, auth_id)
 
 
 def verify(repo: Path | None = None, refs: list[str] | None = None) -> tuple[bool, str, dict]:
     """回傳 (是否放行, 原因, 稽核用指紋)。全部驗證通過才放行。"""
     repo = repo or _repo()
+    _aid = ""                      # 授權檔載入前先給值：載入失敗也要能寫拒絕紀錄
     j, err = _load(repo)
     if j is None:
-        _log_reject(repo, err)
+        _log_reject(repo, err, _aid)
         return False, err, {}
+    _aid = str(j.get("id") or "")
 
     # 2. 期限
     try:
@@ -131,36 +155,36 @@ def verify(repo: Path | None = None, refs: list[str] | None = None) -> tuple[boo
         if exp.tzinfo is None:
             exp = exp.replace(tzinfo=TAIPEI)
     except Exception:  # noqa: BLE001
-        _log_reject(repo, "expires_at 無法解析")
+        _log_reject(repo, "expires_at 無法解析", _aid)
         return False, "expires_at 無法解析", {}
     if _now() > exp:
-        _log_reject(repo, f"授權已過期（{j['expires_at']}）")
+        _log_reject(repo, f"授權已過期（{j['expires_at']}）", _aid)
         return False, f"授權已過期（{j['expires_at']}）", {}
 
     # 7. 使用次數
     used = _used_count(repo, str(j["id"]))
     if used >= int(j.get("max_pushes") or 1):
-        _log_reject(repo, f"授權已用盡（{used} 次）")
+        _log_reject(repo, f"授權已用盡（{used} 次）", _aid)
         return False, f"授權已用盡（{used} 次）", {}
 
     # 3. HEAD
     try:
         head = git(repo, "rev-parse", "HEAD")
     except RuntimeError as exc:
-        _log_reject(repo, str(exc))
+        _log_reject(repo, str(exc), _aid)
         return False, str(exc), {}
     if head != str(j["head"]).strip():
-        _log_reject(repo, f"HEAD 不符：實際 {head[:12]}，授權 {str(j['head'])[:12]}")
+        _log_reject(repo, f"HEAD 不符：實際 {head[:12]}，授權 {str(j['head'])[:12]}", _aid)
         return False, f"HEAD 不符（實際 {head[:12]} / 授權 {str(j['head'])[:12]}）", {}
 
     # 5. remote URL
     try:
         url = git(repo, "remote", "get-url", str(j.get("remote") or "origin"))
     except RuntimeError as exc:
-        _log_reject(repo, str(exc))
+        _log_reject(repo, str(exc), _aid)
         return False, str(exc), {}
     if url != str(j["remote_url"]).strip():
-        _log_reject(repo, "遠端 URL 不符")
+        _log_reject(repo, "遠端 URL 不符", _aid)
         return False, f"遠端 URL 不符（實際 {url}）", {}
 
     # 6. 目標分支（可由 hook 傳入 refs 交叉核對）
@@ -169,7 +193,7 @@ def verify(repo: Path | None = None, refs: list[str] | None = None) -> tuple[boo
         target = "refs/heads/" + branch
         bad = [r for r in refs if r and not r.endswith(target)]
         if bad:
-            _log_reject(repo, f"推送目標含非授權分支：{bad[:3]}")
+            _log_reject(repo, f"推送目標含非授權分支：{bad[:3]}", _aid)
             return False, f"推送目標含非授權分支（僅允許 {branch}）", {}
 
     # 4. 待推範圍
@@ -182,7 +206,7 @@ def verify(repo: Path | None = None, refs: list[str] | None = None) -> tuple[boo
     # 順序不比對：rev-list 由新到舊、授權檔由舊到新；同一組 commit 即可
     # （HEAD 與 base 已各自驗證，集合相同即代表推送範圍一致）。
     if sorted(rng) != sorted(want):
-        _log_reject(repo, f"推送範圍不符：實際 {[c[:8] for c in rng]}，授權 {[c[:8] for c in want]}")
+        _log_reject(repo, f"推送範圍不符：實際 {[c[:8] for c in rng]}，授權 {[c[:8] for c in want]}", _aid)
         return False, f"推送範圍不符（實際 {len(rng)} 顆 / 授權 {len(want)} 顆）", {}
 
     fp = {
@@ -200,14 +224,29 @@ def verify(repo: Path | None = None, refs: list[str] | None = None) -> tuple[boo
 
 
 def consume(repo: Path, fp: dict) -> Path:
-    """放行後立即消費：寫使用紀錄 + 授權檔改名（保留內容）。"""
-    d = _git_dir(repo) / "RELEASE_AUTH_USED"
+    """放行後立即消費：以「搬走授權檔」當互斥鎖，確保同一份授權只放行一次。
+
+    2026-11-01 TD-20261031-02：原版先寫 USED、再選擇性 rename（`if p.exists()`），
+    兩條推送同時通過 verify 時都會寫出 USED、都拿到成功 → max_pushes=1 形同虛設。
+    改為：先把 `.git/RELEASE_AUTH` 原子搬成 `.used-<id>`，搬成功的那一條才寫 USED
+    並放行；搬不到（已被另一條搬走／已被清除）→ AlreadyConsumed → 拒絕。
+    搬成功但寫 USED 失敗時，授權檔已不在 → 後續 verify 一律拒絕（fail-closed）。
+    """
+    g = _git_dir(repo)
+    d = g / "RELEASE_AUTH_USED"
     d.mkdir(parents=True, exist_ok=True)
+    p = _auth_path(repo)
+    try:
+        p.rename(g / f"RELEASE_AUTH.used-{fp['id']}")
+    except FileNotFoundError:
+        _log_reject(repo, "授權檔已不存在（已被另一條推送消費或已清除）→ 拒絕重複放行",
+                    str(fp.get("id") or ""))
+        raise AlreadyConsumed("授權已被消費") from None
+    except OSError as exc:
+        _log_reject(repo, f"消費失敗：{type(exc).__name__}: {exc}", str(fp.get("id") or ""))
+        raise
     out = d / f"{fp['id']}.json"
     out.write_text(json.dumps(fp, ensure_ascii=False, indent=2), encoding="utf-8")
-    p = _auth_path(repo)
-    if p.exists():
-        p.rename(_git_dir(repo) / f"RELEASE_AUTH.used-{fp['id']}")
     return out
 
 
@@ -231,7 +270,9 @@ def issue(head: str, commits: list[str], branch: str = "clean-main", remote: str
     }
     p = _auth_path(repo)
     if p.exists():
-        print(f"⛔ 已有未消費的授權檔，拒絕對覆寫（請先處理 {p}）", file=sys.stderr)
+        print(f"⛔ 已有未消費的授權檔，拒絕覆寫：{p}\n"
+              f"   請先確認該授權是否還要用（`python release_auth.py status`）；\n"
+              f"   確定作廢就刪除該檔或等它過期，再重新 issue。", file=sys.stderr)
         raise SystemExit(3)
     p.write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
     return p
@@ -290,9 +331,14 @@ def main(argv: list[str]) -> int:
             print(f"⛔ 授權驗證失敗：{reason}", file=sys.stderr)
             return 1
         if "--no-consume" in argv:
-            print(f"✅ 一次性授權有效（未消費，由 pre-push 消費）｜{len(fp['commits'])} 顆｜{fp['branch']}")
+            _r = f"｜refs {'已核對' if refs else '未收到（僅驗 branch 設定）'}"
+            print(f"✅ 一次性授權有效（未消費，由 pre-push 消費）｜{len(fp['commits'])} 顆｜{fp['branch']}{_r}")
             return 0
-        out = consume(_repo(), fp)
+        try:
+            out = consume(_repo(), fp)
+        except AlreadyConsumed:
+            print("⛔ 授權已被消費（或授權檔已消失）→ 拒絕重複放行", file=sys.stderr)
+            return 1
         print(f"✅ 一次性授權通過並已消費：{out.name}｜{len(fp['commits'])} 顆｜{fp['branch']}")
         return 0
 

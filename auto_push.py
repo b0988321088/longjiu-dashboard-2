@@ -247,6 +247,12 @@ def main() -> int:
             _ok, _reason, _fp = release_auth.verify()
         except Exception as _exc:  # noqa: BLE001
             _ok, _reason, _fp = False, f"{type(_exc).__name__}: {_exc}", {}
+            # TD-20261031-03④：預檢自己拋例外時也要留拒絕紀錄，否則原因只存在 stdout。
+            try:
+                release_auth.log_reject(Path(__file__).resolve().parent,
+                                        f"auto_push 預檢例外：{_reason}")
+            except Exception:  # noqa: BLE001
+                pass
         if not _ok:
             print(f"⏸️ PUSH_HOLD 生效且無有效一次性授權：{_reason}")
             return 0
