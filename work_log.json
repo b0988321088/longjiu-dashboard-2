@@ -1157,5 +1157,17 @@
   "category": "完成",
   "item": "資產穿透2026-10-31（已產出（五桶市值見 snapshot.penetration.actual_twd））",
   "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-11-01",
+  "category": "完成",
+  "item": "每月 1 日兩支月報 cron 修復（現金流硬編碼月份／投資績效月初基準）",
+  "detail": "現金流報告原硬編碼 2026-07~08，但 asset_diff_history 只留 32 天滾動 → dates 空集合 → prev-start TypeError（每月 1 日必炸）。改動態取上月＋資料不足友善報錯。投資績效月報：performance_core._db_asset_on 查上月末早於窗起回 None → 三類市值全判『無月初基準』；改退取窗內最早日並在報表標明基準日。另修 investment_perf_monthly 用英文 nothing to commit 判無變更（中文 git 回『無檔案要提交』→ 假 rc=1）。"
+ },
+ {
+  "date": "2026-11-01",
+  "category": "完成",
+  "item": "跨月首日產線 6 類同源缺陷修復（詳見 error_register）",
+  "detail": "07:00 產線＋09:00 兩支月報同日失敗，收斂為 6 類同源：x or 預設吃掉 0、月初不輸出待收、佔位符區塊邊界、上月末基準落空、驗證器與 builder 的『當月』定義分叉、commit 判斷與語系耦合。驗收：regenerate rc=0（推 643e3331）、兩支月報 rc=0、驗證器 57 PASS/0 FAIL、收工 11:14 全綠。"
  }
 ]
