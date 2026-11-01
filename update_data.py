@@ -13,7 +13,7 @@
   ⑤ 提示下一步：python sync_all.py [date] 產報表
 更新前自動備份 snapshot.backup.json
 """
-import json, sys, shutil, datetime
+import json, re, sys, shutil, datetime
 from pathlib import Path
 try:
     from sot_targets import (bucket_targets, defensive_caliber, build_defensive_metric,
@@ -64,6 +64,35 @@ def _derive_truth_blocks(snap: dict) -> dict:
     return out
 
 
+def _stamp_last_updated(snap: dict) -> None:
+    """last_updated＝真值日戳記，自動對齊來源匯入日（2026-11-01 修）。
+
+    病灶：此欄位只由一次性 apply_truth_*.py 手寫；10/31 的截圖校正走 apply_20261031.py
+    卻沒寫 → 停在 10/08。而 check_thresholds 拿它當真值日錨點（負債落列／Coast FI
+    freshness），錨在舊日等於用錯日期比對（該抓的沒抓到＝假通過）。
+    取 source_import_dates ＋ fund_nav_dates 的最大日期，只前進不倒退。
+    """
+    ds = []
+    for _src in ("source_import_dates", "fund_nav_dates"):
+        for _v in (snap.get(_src) or {}).values():
+            _m = re.match(r"(\d{4}-\d{2}-\d{2})", str(_v))
+            if _m:
+                ds.append(_m.group(1))
+    if not ds:
+        return
+    _new = max(ds)
+    _cur = str(snap.get("last_updated") or "")[:10]
+    if _new > _cur:
+        print(f"🔁 last_updated 真值日對齊：{_cur or '—'} → {_new}（來源匯入日最大值）")
+        snap["last_updated"] = _new
+
+
+def _write_snap(snap: dict) -> None:
+    """唯一寫檔出口：先蓋真值日戳記，再以 canonical 格式（indent=1）落檔。"""
+    _stamp_last_updated(snap)
+    SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
 def _sync_truth_blocks(snap: dict, write: bool = True) -> dict:
     """把四塊真值派生寫回 snapshot（自癒：check 模式也會補）。
 
@@ -77,7 +106,7 @@ def _sync_truth_blocks(snap: dict, write: bool = True) -> dict:
     for k, v in blocks.items():
         snap[k] = v
     if write and changed:
-        SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
+        _write_snap(snap)
     return changed
 
 
@@ -109,7 +138,7 @@ def _sync_insurance_breakdown(snap: dict, write: bool = True) -> dict:
     changed = {k: (before.get(k), v) for k, v in after.items() if before.get(k) != v}
     snap["insurance_breakdown"] = after
     if write and changed:
-        SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
+        _write_snap(snap)
     return changed
 
 
@@ -305,7 +334,7 @@ def main():
             # → 走 else 分支把 dividend_month_actual / monthly_dividend_total 算成 0，與 dividend_records 的補記值分裂，
             # 違反五欄一致鐵則（實測：dividend_records 9,446 vs dividend_month_actual 0 → 差異分析閘門翻紅）。
             # 改：先落檔 → 再跑 tracker → 重新載入，讓後續步驟（穿透/負債/寫檔）吃到 tracker 的重算結果。
-            SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
+            _write_snap(snap)
             # 2026-08-31 核准：補記後自動重算 dividend_month_actual（不再只提示手動跑）
             try:
                 import subprocess as _sp
@@ -483,7 +512,7 @@ def main():
         print("🔁 insurance_breakdown 對齊真值鍵：" + "、".join(f"{k} {v[0]}→{v[1]}" for k, v in _ib_chg.items()))
     _print_truth_blocks(snap)
 
-    SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
+    _write_snap(snap)
 
     # 2026-08-26 檢討修正：同步 DB assets 當日列（4 源比對根因：snapshot 更新但 DB 舊 → sync_all 失敗還原）
     try:
