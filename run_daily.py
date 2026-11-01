@@ -2033,6 +2033,26 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _pend_line = _pl3()
             except Exception as _e3:
                 _pend_line = "📌 Pending：無法判定（" + str(_e3) + "）"
+            # 2026-11-01 核准：經濟盈餘＝月收 −（月支出 − 房貸本金攤還）。
+            #   本金攤還是負債減少（資產移轉），不是消費；帳面盈餘會低估現金創造能力。
+            #   真值源：snapshot.debt_service_split.合計.本金（缺值即不顯示，不以常數頂替）。
+            try:
+                from sot_targets import sot_monthly_income as _smi, sot_monthly_expense as _sme
+                _ds = (_snap_p.get("debt_service_split") or {}).get("合計") or {}
+                _prin = float(_ds.get("本金") or 0)
+                if _prin <= 0:
+                    raise ValueError("debt_service_split.合計.本金 缺值或為 0")
+                _inc_e = _smi(_snap_p)
+                _exp_e = _sme(_snap_p) - _prin
+                _sur_e = _inc_e - _exp_e
+                _rate_e = (_sur_e / _inc_e * 100) if _inc_e else 0
+                _econ_line = (f"<br>🧮 經濟盈餘（剔除房貸本金攤還）：<b>{_sur_e:+,.0f}</b>"
+                              f"（月收 {_inc_e:,.0f} − 經濟支出 {_exp_e:,.0f}"
+                              f"＝月支出 {_sme(_snap_p):,.0f} − 本金 {_prin:,.0f}）"
+                              f"｜經濟儲蓄率 {_rate_e:.1f}%")
+            except Exception as _e4:
+                _econ_line = ""
+                print(f"[RUN_DAILY] 經濟盈餘無法計算（不顯示，不以常數頂替）：{_e4}", file=sys.stderr)
             _cur_line = (f"<div style='font-size:12px;color:#92400e;margin-top:6px;padding-top:6px;border-top:1px dashed #fbbf24'>"
                           f"📊 即時（{_snap_p.get('date','')}）："
                           f"月配息保守 {_div_con:,.0f}／實收 {_div_cur:,.0f}｜"
@@ -2044,7 +2064,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                           f"💰 月盈餘：保守 {_sur_con:+,.0f}／實收 {_sur_act:+,.0f}｜"
                           f"FI 跑道（極端情境口徑）：{_rw_ext_txt}、實收情境 {_rw_act_txt}｜"
                           f"壓力情境覆蓋 {_cov_stress:.1f}%"
-                          f"（判準仍為保守底線 {_div_con:,.0f}）</div>")
+                          f"（判準仍為保守底線 {_div_con:,.0f}）{_econ_line}</div>")
             # 動態失敗訊號（2026-09-24：從 snapshot 每月數據即時計算，不再用靜態欄位）
             _base_div = _b.get('月配息常態估算', 0)   # 2026-10-10：移除寫死退路 138,627
             _dr = _snap_p.get('dividend_records', {})
