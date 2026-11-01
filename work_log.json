@@ -1289,5 +1289,11 @@
   "category": "完成",
   "item": "ETF 除息公告自動巡檢排程上線（週一至五 08:00）",
   "detail": "新增 etf_dividend_watch.py（Yahoo events=div，取除息日＋金額）＋hermes/scripts 薄轉發器；cron f6332d89a77b 週一至五 08:00 no_agent 執行，有新公告才寫回 snapshot 並推播、無變更靜默。邊界：Yahoo 無發放日→標待確認；00888 Yahoo 無報價(404)維持手動。首跑靜默驗證通過。"
+ },
+ {
+  "date": "2026-11-02",
+  "category": "修正",
+  "item": "修 07:00 閘門誤報：房租待收字樣分隔符（｜ vs 、）",
+  "detail": "11/01 07:00 晨間產線 FAIL 之一：check_dashboard_sync 第 15 步只認「｜待收 N」，但日報模板現輸出「、待收 N」→ 明明有寫卻判缺失。改為 [｜、]待收 皆可並保留與 rent_monthly_gap 的數值比對（不放寬語意）。驗證：11-01 日報抓到 3 處 56,100，全數等於 snapshot.rent_monthly_gap。"
  }
 ]

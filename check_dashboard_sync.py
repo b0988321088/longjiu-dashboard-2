@@ -242,12 +242,12 @@ try:
     if _dr15.exists():
         _txt15 = _dr15.read_text(encoding="utf-8")
         _gap15 = float(json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")).get("rent_monthly_gap") or 0)
-        _ms15 = re.findall(r"｜待收 ([\d,]+)", _txt15)
+        _ms15 = re.findall(r"[｜、]待收\s*([\d,]+)", _txt15)
         _bad15 = sorted({m for m in _ms15 if abs(float(m.replace(",", "")) - _gap15) > 0.5})
         if _bad15:
             fails.append(f"日報房租待收 {'/'.join(_bad15)} ≠ snapshot.rent_monthly_gap {_gap15:,.0f}")
         elif not _ms15:
-            fails.append("日報找不到「｜待收 N」房租待收字樣（_fmt_rent_status 輸出格式變了？）")
+            fails.append("日報找不到「待收 N」房租待收字樣（｜或、皆可；_fmt_rent_status 輸出格式變了？）")
 except Exception as _e15:
     fails.append(f"日報房租待收口徑檢查無法執行: {_e15}")
 
