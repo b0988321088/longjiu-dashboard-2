@@ -62,7 +62,8 @@ EXCLUDE = [
     ("外幣買賣", r"外幣買賣|換匯|交易匯率"),
     ("貸款本金", r"攤還本金|還本|本金攤還"),
 ]
-NON_RECUR = [("修繕", r"修繕|裝修|水電修"), ("稅金", r"稅|牌照|燃料費")]
+NON_RECUR = [("修繕", r"修繕|裝修|水電修"), ("稅金", r"稅|牌照|燃料費"),
+             ("年繳保費", r"人壽保費|年繳|躉繳")]
 INCOME = [
     ("薪資", r"薪資|台電"),
     ("租金", r"租金|房租"),
@@ -151,10 +152,13 @@ def analyze(rows, month: str) -> dict:
         holds.append(f"當月有效筆數僅 {total_rows} 筆，疑似匯出缺漏")
     if unknown_ratio > 0.03:
         holds.append(f"待分類金額 {unknown_amt:,.0f} 占支出 {unknown_ratio:.1%}（>3%），需人工指定分類")
+    recurring = spend - spend_pos
     return {
         "month": month,
         "rows_in_month": total_rows,
-        "expense_actual": round(spend - spend_pos, 2),
+        # 實際支出＝經常性＋非經常性（非經常性只是「另外標記」，不從總額排除）
+        "expense_actual": round(recurring + nonrec, 2),
+        "expense_recurring": round(recurring, 2),
         "expense_non_recurring": round(nonrec, 2),
         "income_in_mb": round(income, 2),
         "excluded_count": len(buckets["exclude"]),
@@ -229,7 +233,8 @@ def main(argv=None) -> int:
 
     if not a.quiet:
         print(f"💸 Moneybook 實際支出 {month}｜來源 {res['source']['file']}")
-        print(f"   實際支出 {res['expense_actual']:,.0f}（其中非經常性 {res['expense_non_recurring']:,.0f}）")
+        print(f"   實際支出 {res['expense_actual']:,.0f}＝經常性 {res['expense_recurring']:,.0f}"
+              f"＋非經常性 {res['expense_non_recurring']:,.0f}")
         print(f"   MB 內收入 {res['income_in_mb']:,.0f}｜排除筆數 {res['excluded_count']}")
         if res["unknown"]["count"]:
             print(f"   ⚠️ 待分類 {res['unknown']['count']} 筆 / {res['unknown']['amount']:,.0f}（{res['unknown']['ratio']:.1%}）")

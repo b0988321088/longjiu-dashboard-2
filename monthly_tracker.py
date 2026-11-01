@@ -290,8 +290,9 @@ def render_html(rows, exp):
             for k, v, d in items
         )
         if r.get("expense_actual") is not None:
+            _nr = (r.get("mb") or {}).get("non_recurring") or 0
             act = (f'實際支出 <b>{_fmt(r["expense_actual"])}</b>'
-                   f'（MB 明細）｜實際淨現金流 <b>{_fmt(r["net_cash_actual"])}</b><br>'
+                   f'（MB 明細；含非經常性 {_fmt(_nr)}）｜實際淨現金流 <b>{_fmt(r["net_cash_actual"])}</b><br>'
                    f'預算差異 <b>{_fmt(r["budget_diff"])}</b>（對常態 {_fmt(r["expense"])}）'
                    f'｜被動結餘 <b>{_fmt(r["passive_left"])}</b>'
                    f'｜累積現金流 <b>{_fmt(r["cum_cash"])}</b>')

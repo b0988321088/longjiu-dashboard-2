@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-01T18:44:55",
+  "generated_at": "2026-11-01T18:46:25",
   "expense_base": 159210.0,
   "months": [
     {
@@ -118,7 +118,7 @@
       "cover_pct": 174.90358645813706,
       "mb": {
         "expense": 178112.0,
-        "non_recurring": 0,
+        "non_recurring": 32931.0,
         "holds": [],
         "source": "moneybook_new\\Moneybook_明細_20261031_1.csv"
       },

@@ -2,7 +2,8 @@
  "month": "2026-10",
  "rows_in_month": 241,
  "expense_actual": 178112.0,
- "expense_non_recurring": 0,
+ "expense_recurring": 145181.0,
+ "expense_non_recurring": 32931.0,
  "income_in_mb": 28590.0,
  "excluded_count": 117,
  "unknown": {
@@ -265,15 +266,6 @@
     "amount": -15.0,
     "bucket": "spend",
     "reason": "MB 分類：費用/手續費"
-   },
-   {
-    "date": "2026-10",
-    "account": "市政分行活期儲蓄存款",
-    "cat": "保險",
-    "desc": "人壽保費 - 安聯人壽p115081283",
-    "amount": -32931.0,
-    "bucket": "spend",
-    "reason": "MB 分類：保險"
    },
    {
     "date": "2026-10",
@@ -2188,13 +2180,23 @@
     "reason": "規則：外幣買賣"
    }
   ],
-  "non_recurring": [],
+  "non_recurring": [
+   {
+    "date": "2026-10",
+    "account": "市政分行活期儲蓄存款",
+    "cat": "保險",
+    "desc": "人壽保費 - 安聯人壽p115081283",
+    "amount": -32931.0,
+    "bucket": "non_recurring",
+    "reason": "非經常性：年繳保費"
+   }
+  ],
   "unknown": []
  },
  "source": {
   "file": "moneybook_new\\Moneybook_明細_20261031_1.csv",
   "sha256": "40265171897d26aacee32b3d5c6d2f4fc1cf4a154572a0ae94cb50048ab2ade1",
   "rows_total": 241,
-  "generated_at": "2026-11-01T18:44:55"
+  "generated_at": "2026-11-01T18:46:15"
  }
 }
