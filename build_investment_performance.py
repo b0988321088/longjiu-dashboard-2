@@ -49,10 +49,16 @@ def load_adjust():
 
 
 def db_asset_on(db, date):
+    """db 該日（含）以前最後一筆。2026-11-01：查無（月初查上月末，早於 32 天窗起）
+    → 退取窗內最早一筆當基準，避免整月市值變化被判「無月初基準」。"""
     r = db.execute(
         "SELECT date, securities, funds, insurance FROM assets "
         "WHERE date <= ? ORDER BY date DESC LIMIT 1", (date,)).fetchone()
-    return r
+    if r is not None:
+        return r
+    return db.execute(
+        "SELECT date, securities, funds, insurance FROM assets "
+        "ORDER BY date ASC LIMIT 1").fetchone()
 
 
 
@@ -345,7 +351,10 @@ def main():
     db_start_note = ""
     if end_row:
         if start_row:
+            # 2026-11-01：fallback 生效時（上月末早於 32 天窗起）明確標出基準日，不得靜默
             db_start_note = start_row[0]
+            if start_row[0] != prev_end.isoformat():
+                db_start_note += f"（上月末 {prev_end.isoformat()} 無紀錄，以窗內最早日為基準）"
         else:
             db_start_note = f"（db 自 {end_row[0]} 起，無月初基準）"
 

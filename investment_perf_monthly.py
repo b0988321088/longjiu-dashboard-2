@@ -35,8 +35,16 @@ def main():
     if (g.stdout or "").strip():
         out_lines.append(g.stdout.strip())
     _push_rc = 0
+    # 2026-11-01：原用英文 "nothing to commit" 字串判斷「無變更」，但 git 在中文語系輸出
+    # 「無檔案要提交」→ 判斷落空 → rc=1（每月 1 日 cron 假失敗，實際月報已產出）。
+    # 改用 git diff --cached --quiet（locale 無關）判有無 staged 變更。
+    _has_staged = run(["git", "diff", "--cached", "--quiet"], timeout=30).returncode != 0
+    if not _has_staged:
+        out_lines.append("ℹ️ 本次無可提交檔案（月報以文字推送為主）→ 跳過 commit/push")
+        print("\n".join(out_lines))
+        return 0
     c = run(["git", "commit", "-m", "auto: 投資績效月報更新"], timeout=60)
-    if c.returncode == 0 or "nothing to commit" in (c.stdout or "") + (c.stderr or ""):
+    if c.returncode == 0:
         # 2026-09-14：紀錄＋推送統一走 auto_push.py（範圍紀錄覆蓋／重試／遠端 sha 驗證）
         ap = run([sys.executable, os.path.join(BASE, "auto_push.py"),
                   "--script", "investment_perf_monthly.py"], timeout=600)

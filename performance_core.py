@@ -175,10 +175,21 @@ def latest_asof(snap: dict, db=None, *, ym: str | None = None) -> dict:
 
 
 def _db_asset_on(db, day: str):
-    """db 該日（含）以前最後一筆 (date, securities, funds, insurance)。"""
-    return db.execute(
+    """db 該日（含）以前最後一筆 (date, securities, funds, insurance)。
+
+    2026-11-01：db 為 32 天滾動窗。月初（每月 1 日）查「上月末」會早於窗起
+    （例：11/1 查 9/30，而 db 最早的 10/1 已晚於 9/30）→ 原本回 None，
+    整月市值變化被判「無月初基準，不計」而全數失真（投資績效月報 cron 每月 1 日受害）。
+    改為：查無 → 退取窗內最早一筆（即該月第一筆）當基準，並由呼叫端標明基準日。
+    """
+    r = db.execute(
         "SELECT date, securities, funds, insurance FROM assets "
         "WHERE date <= ? ORDER BY date DESC LIMIT 1", (day,)).fetchone()
+    if r is not None:
+        return r
+    return db.execute(
+        "SELECT date, securities, funds, insurance FROM assets "
+        "ORDER BY date ASC LIMIT 1").fetchone()
 
 
 def monthly_performance(ym: str, *, snap: dict, adjust_all: dict, db=None,
