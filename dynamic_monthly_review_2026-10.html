@@ -1,0 +1,102 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>龍九控股 動態自我檢討月報 2026-10</title><style>
+:root{--bg:#0b0d1a;--card:#151a2e;--line:#27304d;--txt:#e8ebf2;--dim:#8a8fa0;--gold:#f7a01c;--green:#34d399;--red:#ff5c5c}
+*{box-sizing:border-box}
+body{margin:0;padding:18px;background:var(--bg);color:var(--txt);font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif;line-height:1.6}
+h1{font-size:21px;margin:0 0 6px}
+h2{font-size:16px;margin:0 0 10px;padding-left:8px;border-left:3px solid var(--gold)}
+.sub{color:var(--dim);font-size:12px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.lead{background:linear-gradient(135deg,#1b2340,#141a2e);border:1px solid #33406b}
+.lead p{margin:6px 0 0;font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--dim);font-weight:600;font-size:12px}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.up{color:var(--green)} .down{color:var(--red)}
+ul{margin:8px 0 0;padding-left:20px} li{margin:4px 0;font-size:13px}
+.rules li{margin:6px 0}
+.pill{display:inline-flex;gap:8px;align-items:baseline;background:#0f1424;border:1px solid var(--line);border-radius:999px;padding:5px 12px;margin:0 6px 6px 0;font-size:12px}
+.pill i{color:var(--dim);font-style:normal;font-size:11px}
+.src,.dim{color:var(--dim);font-size:11px}
+.warn{background:#2a1f12;border:1px solid #6b5a1f;color:#f5c26b;padding:10px;border-radius:8px;font-size:12px}
+.kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+.kpi div{background:#0f1424;border-radius:8px;padding:8px}
+.kpi span{display:block;color:var(--dim);font-size:11px}
+.kpi b{font-size:15px}
+</style></head><body>
+
+<h1>🧠 龍九控股 — 動態自我檢討月報 2026-10</h1>
+<div class="sub">2026-10-01 ~ 2026-10-31｜月度復盤 ＋ 全域判斷 ＋ 策略迭代｜產出 source: build_dynamic_monthly_review.py</div>
+
+<div class="card lead">
+  <h2>📌 一句話總結</h2>
+  <p>10 月金融資產 26,912,986（月變 +121,452）、淨資產 -4,045,637（月變 +130,722）；被動收入 278,464、覆蓋 174.9%；現金 2,020,447（可動用 1,120,447＋指定款 900,000）。 證券 回檔 300,080（另含買進 35,440，人為）；現金流淨 +159,031，現金實際變動 +266,772（差 +107,741 屬時序/未對帳項）。本月賺的是現金流，價差是負的。</p>
+</div>
+
+<div class="card">
+  <h2>1. 數據動態回顧（2026-10-01 → 2026-10-31）</h2>
+  <table>
+    <tr><th>項目</th><th class="num">月初</th><th class="num">月末</th><th class="num">增減</th></tr>
+    <tr><td>現金</td><td class="num">1,753,675</td><td class="num">2,020,447</td><td class="num up">+266,772</td></tr><tr><td>證券市值</td><td class="num">3,007,220</td><td class="num">2,742,580</td><td class="num down">-264,640</td></tr><tr><td>保單現值</td><td class="num">9,418,965</td><td class="num">9,403,595</td><td class="num down">-15,370</td></tr><tr><td>基金市值</td><td class="num">12,611,674</td><td class="num">12,746,364</td><td class="num up">+134,690</td></tr><tr><td>流動資產合計</td><td class="num">26,791,534</td><td class="num">26,912,986</td><td class="num up">+121,452</td></tr><tr><td>總負債</td><td class="num">30,967,893</td><td class="num">30,958,623</td><td class="num down">-9,270</td></tr><tr><td>淨資產（流動−負債）</td><td class="num">-4,176,359</td><td class="num">-4,045,637</td><td class="num up">+130,722</td></tr>
+  </table>
+  <div class="src">資料源 asset_diff_history.json（逐日快照）。增減為帳面變動，含人為操作與市值波動，兩者已於下方現金流段分別處理。</div>
+</div>
+
+<div class="card">
+  <h2>2. 現金流（當月實收）</h2>
+  <div class="kpi">
+    <div><span>配息實收</span><b>198,364</b></div>
+    <div><span>租金實收</span><b>80,100</b></div>
+    <div><span>薪資</span><b>39,777</b></div>
+    <div><span>常態支出</span><b>159,210</b></div>
+    <div><span>被動收入</span><b>278,464</b></div>
+    <div><span>被動覆蓋</span><b>174.9%</b></div>
+  </div>
+  <p style="font-size:13px;margin:10px 0 0">淨現金流（收入−常態支出）：<b class="up">+159,031</b></p>
+  <ul><li>安聯保單撥回：<b>49,533</b></li><li>富達全動配息(國泰)：<b>49,298</b></li><li>貝萊德智慧數據B11基金配息(國泰)：<b>41,699</b></li><li>第一金人壽撥回(10/01)：<b>15,916</b></li><li>第一金人壽撥回(10/29)：<b>9,901</b></li><li>第一金FJ33摩根JPM配息：<b>9,402</b></li></ul>
+  <div class="src">配息取 snapshot.dividend_records.2026-10 逐筆加總；租金取 rent_received_records 當月逐筆；支出用常態月支出（非實際刷卡金額）。</div>
+</div>
+
+<div class="card">
+  <h2>3. 歸因（人為 vs 波動）</h2>
+  <table>
+    <tr><th>項目</th><th class="num">金額</th><th>性質</th></tr>
+    <tr><td>現金：收入−常態支出</td><td class="num">+159,031</td><td>現金流（可持續）</td></tr>
+    <tr><td>現金：其他增減</td><td class="num">+107,741</td><td>時序／未對帳</td></tr>
+    <tr><td>證券：市值波動</td><td class="num">-300,080</td><td>市場</td></tr>
+    <tr><td>證券：買進</td><td class="num">+35,440</td><td>人為（1 筆）</td></tr>
+    <tr><td>保單現值</td><td class="num">-15,370</td><td>配息撥回抵市值變動</td></tr>
+    <tr><td>基金市值</td><td class="num">+134,690</td><td>配息再投入＋淨值</td></tr>
+    <tr><td>總負債</td><td class="num">-9,270</td><td>正常攤還</td></tr>
+  </table>
+  <div class="src">本月交易：2026-10-22 2026-10-22 買入 00927 群益半導體收益 1,000 股 @35.44（成交 35,440）。性質＝除息後</div>
+</div>
+
+<div class="card">
+  <h2>4. 穿透與燈號（現行）</h2>
+  <div><div class="pill"><span>台股市值型成長</span><b>10.9%</b></div><div class="pill"><span>美股市值型成長</span><b>37.5%</b></div><div class="pill"><span>防守型配息</span><b>18.2%</b><i>目標 30%</i></div><div class="pill"><span>債券</span><b>25.5%</b><i>目標 25%</i></div><div class="pill"><span>現金/安全網</span><b>4.2%</b></div></div>
+  <div class="src">US30Y 5.329（連續 44 日）｜美元曝險 69.6%｜
+  現金 2,020,447＝可動用 1,120,447＋指定款 900,000｜
+  乾粉 420,447</div>
+</div>
+
+<div class="card">
+  <h2>5. 情境 B（凍結期結構調整）</h2>
+  <ul class="rules"><li><b>現金處理</b>：現金 202 萬維持不動（不投入、不還債、不補防守）</li><li><b>防守配置</b>：防守配置暫不補（防守型配息 18.2%，低於目標但不加碼）</li><li><b>口徑</b>：合併口徑凍結（穿透／現金／防守三處口徑不再調整）</li><li><b>每月導流</b>：每月導流 73,000（配息／租金盈餘 → 現金）</li><li><b>現金目標</b>：現金 5% 目標，差額約 21 萬，預計三個月到位（73,000 × 3 ≈ 219,000）</li><li><b>債券 ladder 啟動條件</b>：US30Y 連兩日低於 5.30% 且美元曝險低於 65%，才啟動債券 ladder，首批上限 20 萬</li></ul><div class="src">情境 B｜定調：使用者（Telegram 2026-11-01）（2026-11-01）｜參數檔 data/scenario_b_2026-10.json</div>
+  <p class="dim" style="margin-top:10px">本段只陳述已定調參數，不推導新的投資授權；任何進場仍需另行授權。</p>
+</div>
+
+<div class="card">
+  <h2>6. 下月觀察（條件式，不看日曆）</h2>
+  <ul>
+    <li>現金導流：每月 <b>73,000</b>，補至現金 5% 目標（差額約 210,000）。</li>
+    <li>債券 ladder：US30Y 連 2 日 &lt; 5.3% 且美元 &lt; 65%，首批上限 200,000。</li>
+    <li>防守配置：本情境不補；缺口仍在，留待下一輪裁決。</li>
+    <li>口徑：凍結期間不重定義分母，跨報告一致性以現行 snapshot 為準。</li>
+  </ul>
+</div>
+
+<div class="sub" style="margin-top:18px">唯一寫入者 build_dynamic_monthly_review.py｜數字源 snapshot.json ＋ asset_diff_history.json ＋ data/scenario_b_2026-10.json</div>
+</body></html>

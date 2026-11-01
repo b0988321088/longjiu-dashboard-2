@@ -1,0 +1,39 @@
+{
+  "_note": "情境 B 參數（2026-10 月報用）。來源：使用者 2026-11-01 指令，原文『情境 B 數字直接使用本次交接提供的真值』。此檔為唯一寫入者，腳本只讀不寫。",
+  "scenario": "B",
+  "month": "2026-10",
+  "asserted_by": "使用者（Telegram 2026-11-01）",
+  "asserted_at": "2026-11-01",
+  "rules": {
+    "cash_hold": {
+      "value_twd": 2020447,
+      "statement": "現金 202 萬維持不動（不投入、不還債、不補防守）",
+      "note": "對應 snapshot.cash_layers.cash_total"
+    },
+    "defense_no_topup": {
+      "statement": "防守配置暫不補（防守型配息 18.2%，低於目標但不加碼）",
+      "note": "目標值見 penetration.targets；本情境明示不補"
+    },
+    "caliber_freeze": {
+      "statement": "合併口徑凍結（穿透／現金／防守三處口徑不再調整）",
+      "note": "凍結期間任何口徑爭議以現行 snapshot 為準，不重新定義分母"
+    },
+    "monthly_channel": {
+      "value_twd": 73000,
+      "statement": "每月導流 73,000（配息／租金盈餘 → 現金）"
+    },
+    "cash_target": {
+      "pct": 5.0,
+      "gap_twd_approx": 210000,
+      "months_to_fill": 3,
+      "statement": "現金 5% 目標，差額約 21 萬，預計三個月到位（73,000 × 3 ≈ 219,000）"
+    },
+    "bond_ladder_gate": {
+      "us30y_below": 5.30,
+      "us30y_consecutive_days": 2,
+      "usd_exposure_below_pct": 65,
+      "first_batch_cap_twd": 200000,
+      "statement": "US30Y 連兩日低於 5.30% 且美元曝險低於 65%，才啟動債券 ladder，首批上限 20 萬"
+    }
+  }
+}
