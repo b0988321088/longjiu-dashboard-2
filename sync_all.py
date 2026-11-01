@@ -168,6 +168,14 @@ def main():
         #     血淚：9/21 金融資金分數停在 9/20 的 -3，被誤列「避開」；日報/儀表板/LLM 全複述。
         #     （institutional_flow.py 內部已在算完 sector_flow 後就地重算，此步純守衛）
         ("產業輪動一致性", "python check_rotation_freshness.py"),
+        # 2026-11-01 P0（22:40 收工檢查 3 FAIL 根因）：更新現金真值後，衍生區塊
+        #     snapshot.coast_fi_engine（pccr／跑道／FI 缺口）與退休規劃頁沒人重算 →
+        #     verify_ficriteria 54 PASS / 3 FAIL（PCCR 實收、跑道天數、條圖尺標）。
+        #     血淚：sync_all 過去只到「四源同步／儀表板／週報」，coast_fi 不在清單裡；
+        #     任何一次 cash/房租/配息變動都會留下舊衍生值，直到有人手動跑 --write。
+        #     修法：把引擎與頁面納入主流程（單一寫入者），並在最後以驗證器 fail-closed。
+        ("FI 引擎重算（pccr／跑道）", "python coast_fi_engine.py --write"),
+        ("退休規劃頁", "python build_retirement_plan.py"),
         ("再平衡報告", "python build_rebalance_report.py"),
         # 2026-08-29：再平衡儀表板（雷達+政策面+本週投資計劃）— 之前 sync_all 漏跑，導致雷達更新後儀表板舊
         ("再平衡儀表板", "python build_rebalance_dashboard.py"),
@@ -191,6 +199,9 @@ def main():
         # 2026-08-27：共享渲染組件自測（report_components 異常 → 報表數字不一致）
         ("組件自測", "python -c \"from report_components import render_health_score; import json; print('✅ 組件正常 健康度', render_health_score(json.load(open('snapshot.json',encoding='utf-8')))['分數'])\""),
         ("週報", "python build_weekly_report.py"),
+        # 2026-11-01 P0：把 FI 驗證器納入主流程（fail-closed）——衍生值與頁面漂移
+        #     在產報當下就被擋下，而不是等到 22:40 收工檢查才發現（每天多一輪人工）。
+        ("FI 驗證器（fail-closed）", "python tools/verify_ficriteria.py"),
     ]
     ok = True
     _ran = 0
