@@ -505,7 +505,7 @@ def main():
 
     # 2026-09-30 使用者裁示（Q4 核心原則）：真值層分層化 — 現金分層／口徑版本／US30Y 閘門／紅線長期化政策。
     # 單一 writer：與 check 模式自癒共用同一支 _sync_truth_blocks（不在此另寫一份邏輯），
-    # 寫檔仍由下方唯一的 SNAP.write_text 負責。
+    # 寫檔仍由下方唯一的 _write_snap 負責（含 last_updated 真值日戳記）。
     _sync_truth_blocks(snap, write=False)
     _ib_chg = _sync_insurance_breakdown(snap, write=False)
     if _ib_chg:
