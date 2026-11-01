@@ -177,13 +177,16 @@ def build():
                     "source": rep["source"],
                 })
                 row["note"] = "由月報解析；無逐日 history"
+        if ym == "2026-09":
+            row["caliber_break"] = True   # 9 月底負債含保單借貸 400 萬未沖銷 → 跨月不可相減
         rows.append(row)
 
     # 月變化
     prev = None
     for r in rows:
-        r["assets_chg"] = (r["assets"] - prev["assets"]) if prev and r["assets"] is not None and prev.get("assets") is not None else None
-        r["net_chg"] = (r["net"] - prev["net"]) if prev and r["net"] is not None and prev.get("net") is not None else None
+        _ok = prev and not prev.get("caliber_break") and not r.get("caliber_break")
+        r["assets_chg"] = (r["assets"] - prev["assets"]) if _ok and r["assets"] is not None and prev.get("assets") is not None else None
+        r["net_chg"] = (r["net"] - prev["net"]) if _ok and r["net"] is not None and prev.get("net") is not None else None
         prev = r
 
     # ── 口徑註記（不寫死金額：跨月斷點一律用相鄰月差額動態描述）──
@@ -210,6 +213,31 @@ def build():
         r["passive"] = passive
         r["net_cash"] = (inc - r["expense"]) if r["expense"] and inc else None
         r["cover_pct"] = (passive / r["expense"] * 100) if r["expense"] and passive else None
+
+    # ── Moneybook 實際支出（有匯入才顯示；缺失＝明示「未匯入」，不以估算冒充）──
+    cum = 0.0
+    have_any = False
+    for r in rows:
+        f = BASE / "data" / f"mb_expense_{r['month']}.json"
+        r["mb"] = None
+        if f.exists():
+            try:
+                m = json.loads(f.read_text(encoding="utf-8"))
+                r["mb"] = {"expense": m.get("expense_actual"), "non_recurring": m.get("expense_non_recurring"),
+                           "holds": m.get("holds") or [], "source": (m.get("source") or {}).get("file")}
+                have_any = True
+            except Exception:
+                r["mb"] = None
+        if r["mb"] and r["mb"]["expense"] is not None:
+            r["expense_actual"] = r["mb"]["expense"]
+            r["net_cash_actual"] = (r["income_total"] or 0) - r["expense_actual"]
+            r["budget_diff"] = r["expense_actual"] - r["expense"] if r["expense"] else None
+            r["passive_left"] = (r["passive"] or 0) - r["expense_actual"]
+            cum += r["net_cash_actual"]
+            r["cum_cash"] = cum
+        else:
+            r["expense_actual"] = r["net_cash_actual"] = r["budget_diff"] = r["passive_left"] = None
+            r["cum_cash"] = cum if have_any else None
     return rows, exp
 
 
@@ -245,13 +273,14 @@ def render_html(rows, exp):
     .warn{background:#2a1f12;border:1px solid #6b5a1f;color:#f5c26b;font-size:12px;padding:8px 10px;border-radius:8px;margin-bottom:12px}
     """
     cards = []
+    prev_break = False
     for r in rows:
         chg = r.get("net_chg")
         chg_cls = "up" if (chg or 0) > 0 else ("down" if (chg or 0) < 0 else "dim")
         chg_txt = f"{'+' if (chg or 0) > 0 else ''}{_fmt(chg)}" if chg is not None else "—"
         tag = '<span class="tag wip">進行中</span>' if r.get("partial") else '<span class="tag">已結算</span>'
         items = [
-            ("金融資產", _fmt(r["assets"]), f"月變 {_fmt(r.get('assets_chg'))}" if r.get("assets_chg") is not None else r.get("note", "")),
+            ("金融資產", _fmt(r["assets"]), f"月變 {_fmt(r.get('assets_chg'))}" if r.get("assets_chg") is not None else ("口徑斷點，不比月變" if prev_break else r.get("note", ""))),
             ("總負債", _fmt(r["liabilities"]), ""),
             ("金融淨值", _fmt(r["net"]), f'月變 <span class="{chg_cls}">{chg_txt}</span>' if chg is not None else ""),
             ("被動覆蓋", _pct(r.get("cover_pct")), f"支出基準 {_fmt(exp)}"),
@@ -260,17 +289,33 @@ def render_html(rows, exp):
             f'<div class="kv"><div class="k">{k}</div><div class="v">{v}</div><div class="d">{d}</div></div>'
             for k, v, d in items
         )
+        if r.get("expense_actual") is not None:
+            act = (f'實際支出 <b>{_fmt(r["expense_actual"])}</b>'
+                   f'（MB 明細）｜實際淨現金流 <b>{_fmt(r["net_cash_actual"])}</b><br>'
+                   f'預算差異 <b>{_fmt(r["budget_diff"])}</b>（對常態 {_fmt(r["expense"])}）'
+                   f'｜被動結餘 <b>{_fmt(r["passive_left"])}</b>'
+                   f'｜累積現金流 <b>{_fmt(r["cum_cash"])}</b>')
+        else:
+            act = (f'支出（常態，未匯入實際）：<b>{_fmt(r["expense"])}</b>'
+                   f'｜淨現金流（估）：<b>{_fmt(r["net_cash"])}</b>')
         flow = f'''<div class="sec">
           收入：薪資 <b>{_fmt(r["salary"], "本月未入帳")}</b>｜配息 <b>{_fmt(r["dividend"], "本月未入帳")}</b>｜租金 <b>{_fmt(r["rent"], "本月未入帳")}</b>
           ＝ <b>{_fmt(r["income_total"])}</b><br>
-          支出（常態）：<b>{_fmt(r["expense"])}</b>｜淨現金流：<b>{_fmt(r["net_cash"])}</b>
+          {act}
           {f'<br>資產明細：現金 {_fmt(r["cash"])}｜證券 {_fmt(r["securities"])}｜保單 {_fmt(r["insurance"])}｜基金 {_fmt(r["funds"])}' if r.get("cash") is not None else ''}
           <br><span style="opacity:.7">來源：{r.get("source") or "—"}{("｜" + r["note"]) if r.get("note") else ""}</span>
         </div>'''
         cards.append(f'<div class="card"><div class="hd"><div class="ym">{r["month"]}</div>{tag}</div><div class="grid">{kvs}</div>{flow}</div>')
+        prev_break = bool(r.get("caliber_break"))
 
-    warn = ('<div class="warn">口徑提醒：支出採「常態月支出」'
-            f'（{_fmt(exp)}），不是當月實際刷卡/匯款金額；實際支出需每月 Moneybook 匯入後才會有月別真值。</div>')
+    has_act = any(r.get("expense_actual") is not None for r in rows)
+    warn = ('<div class="warn">口徑：有 Moneybook 匯入的月份用<b>實際支出</b>；'
+            '未匯入月份沿用常態'
+            f'（{_fmt(exp)}）並標示「估」，不以估算冒充實際。'
+            '實際支出已排除帳戶互轉／信用卡繳款／投資買賣／貸款本金。</div>'
+            if has_act else
+            '<div class="warn">口徑提醒：目前尚無 Moneybook 實際支出，支出採常態'
+            f'（{_fmt(exp)}）。每月 1 日匯入後才有真值。</div>')
     return f"""<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>龍九控股 · 月度追蹤</title><style>{css}</style></head><body>

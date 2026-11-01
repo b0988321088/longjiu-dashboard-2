@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-01T17:52:07",
+  "generated_at": "2026-11-01T18:44:55",
   "expense_base": 159210.0,
   "months": [
     {
@@ -24,7 +24,13 @@
       "income_total": 130930.0,
       "passive": 130930.0,
       "net_cash": -28280.0,
-      "cover_pct": 82.23729665222034
+      "cover_pct": 82.23729665222034,
+      "mb": null,
+      "expense_actual": null,
+      "net_cash_actual": null,
+      "budget_diff": null,
+      "passive_left": null,
+      "cum_cash": null
     },
     {
       "month": "2026-08",
@@ -48,7 +54,13 @@
       "income_total": 271459.0,
       "passive": 231732.0,
       "net_cash": 112249.0,
-      "cover_pct": 145.5511588468061
+      "cover_pct": 145.5511588468061,
+      "mb": null,
+      "expense_actual": null,
+      "net_cash_actual": null,
+      "budget_diff": null,
+      "passive_left": null,
+      "cum_cash": null
     },
     {
       "month": "2026-09",
@@ -67,12 +79,19 @@
       "note": "由月報解析；無逐日 history｜負債含一次性未沖銷項（保單借貸於 10/01 入帳沖銷），9→10 月負債差 4,020,990→ 淨值偏低、跨月不可直接相減",
       "source": "monthly_report_2026-09.html",
       "as_of": "2026-09-30",
-      "assets_chg": 2698755.0,
-      "net_chg": -2142605.0,
+      "caliber_break": true,
+      "assets_chg": null,
+      "net_chg": null,
       "income_total": 309946.0,
       "passive": 267386.0,
       "net_cash": 150736.0,
-      "cover_pct": 167.94548081150683
+      "cover_pct": 167.94548081150683,
+      "mb": null,
+      "expense_actual": null,
+      "net_cash_actual": null,
+      "budget_diff": null,
+      "passive_left": null,
+      "cum_cash": null
     },
     {
       "month": "2026-10",
@@ -91,12 +110,23 @@
       "note": "",
       "source": "asset_diff_history.json",
       "as_of": "2026-10-31",
-      "assets_chg": -1912205.0,
-      "net_chg": 2108785.0,
+      "assets_chg": null,
+      "net_chg": null,
       "income_total": 318241.0,
       "passive": 278464.0,
       "net_cash": 159031.0,
-      "cover_pct": 174.90358645813706
+      "cover_pct": 174.90358645813706,
+      "mb": {
+        "expense": 178112.0,
+        "non_recurring": 0,
+        "holds": [],
+        "source": "moneybook_new\\Moneybook_明細_20261031_1.csv"
+      },
+      "expense_actual": 178112.0,
+      "net_cash_actual": 140129.0,
+      "budget_diff": 18902.0,
+      "passive_left": 100352.0,
+      "cum_cash": 140129.0
     },
     {
       "month": "2026-11",
@@ -120,7 +150,13 @@
       "income_total": null,
       "passive": 0,
       "net_cash": null,
-      "cover_pct": null
+      "cover_pct": null,
+      "mb": null,
+      "expense_actual": null,
+      "net_cash_actual": null,
+      "budget_diff": null,
+      "passive_left": null,
+      "cum_cash": 140129.0
     }
   ]
 }

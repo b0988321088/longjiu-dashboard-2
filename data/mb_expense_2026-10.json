@@ -1,0 +1,2200 @@
+{
+ "month": "2026-10",
+ "rows_in_month": 241,
+ "expense_actual": 178112.0,
+ "expense_non_recurring": 0,
+ "income_in_mb": 28590.0,
+ "excluded_count": 117,
+ "unknown": {
+  "count": 0,
+  "amount": 0,
+  "ratio": 0.0,
+  "items": []
+ },
+ "holds": [],
+ "detail": {
+  "spend": [
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "交通",
+    "desc": "加油站/洽維加油站 - 7602",
+    "amount": -70.0,
+    "bucket": "spend",
+    "reason": "MB 分類：交通"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*新光三越高雄左營 - 8188",
+    "amount": -65.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*昇?昌股份有限公 - 8188",
+    "amount": -650.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*華得來(沙鹿店) - 8188",
+    "amount": -55.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*清心福全-台中市 - 8188",
+    "amount": -35.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*中油條碼_洽維站 - 8188",
+    "amount": -111.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "費用/手續費",
+    "desc": "國外交易服務費(簽帳 106 ) - 3841",
+    "amount": -2.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "費用/手續費",
+    "desc": "國外交易服務費(簽帳 45 ) - 3841",
+    "amount": -1.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "尚未分類",
+    "desc": "ziesgs25 aeworlbaen130101 - 3841",
+    "amount": -106.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "尚未分類",
+    "desc": "ziesgs25 aeworlbaen130101 - 3841",
+    "amount": -45.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "費用/手續費",
+    "desc": "國外交易服務費(簽帳 118 ) - 3841",
+    "amount": -2.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "費用/手續費",
+    "desc": "國外交易服務費(簽帳 68 ) - 3841",
+    "amount": -1.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "尚未分類",
+    "desc": "(joo)duwon 130101 - 3841",
+    "amount": -118.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "尚未分類",
+    "desc": "ziesgs25 aeworlbaen130101 - 3841",
+    "amount": -68.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "費用/手續費",
+    "desc": "國外交易服務費(簽帳 83 ) - 3841",
+    "amount": -1.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "費用/手續費",
+    "desc": "國外交易服務費(簽帳 71 ) - 3841",
+    "amount": -1.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "費用/手續費",
+    "desc": "國外交易服務費(簽帳 6,511 ) - 3841",
+    "amount": -98.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "費用/手續費",
+    "desc": "國外交易服務費(簽帳 755 ) - 3841",
+    "amount": -11.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "尚未分類",
+    "desc": "maegaemzissikeopije130101 - 3841",
+    "amount": -83.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "尚未分類",
+    "desc": "ziesgs25 aeworlbaen130101 - 3841",
+    "amount": -71.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "尚未分類",
+    "desc": "jusighoisajejumarin130001 - 3841",
+    "amount": -6511.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "尚未分類",
+    "desc": "jjinjjin jeoijoo 137901 - 3841",
+    "amount": -755.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "飲食",
+    "desc": "全支付-喫茶小舖(頭份 - 2106",
+    "amount": -35.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "住家",
+    "desc": "遠傳電信股份有限公司taipei - 7706",
+    "amount": -1727.0,
+    "bucket": "spend",
+    "reason": "MB 分類：住家"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*全家商場 - 8188",
+    "amount": -215.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*全家商場 - 8188",
+    "amount": -60.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "費用/手續費",
+    "desc": "國外交易手續費 -google - 2106",
+    "amount": -15.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "費用/手續費",
+    "desc": "國外交易手續費 -google - 2106",
+    "amount": -15.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "市政分行活期儲蓄存款",
+    "cat": "保險",
+    "desc": "人壽保費 - 安聯人壽p115081283",
+    "amount": -32931.0,
+    "bucket": "spend",
+    "reason": "MB 分類：保險"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "飲食",
+    "desc": "全支付-發記麻辣火鍋( - 2106",
+    "amount": -332.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "飲食",
+    "desc": "ts*萊爾富taipei - 7706",
+    "amount": -110.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*mr.wish希 - 8188",
+    "amount": -90.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*poya 寶雅 - 8188",
+    "amount": -565.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*華得來(沙鹿店) - 8188",
+    "amount": -60.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*大茗本位製茶堂- - 8188",
+    "amount": -70.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "飲食",
+    "desc": "全家-ts*台新paytaipei - 7706",
+    "amount": -110.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "購物",
+    "desc": "連加*連加*coupang - 8188",
+    "amount": -346.0,
+    "bucket": "spend",
+    "reason": "MB 分類：購物"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "尚未分類",
+    "desc": "全支付—巧味牛雜湯 - 2106",
+    "amount": -170.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "現金消費",
+    "desc": "玉山wallet-盛昌行 - 8188",
+    "amount": -50.0,
+    "bucket": "spend",
+    "reason": "MB 分類：現金消費"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "飲食",
+    "desc": "全支付-喫茶小舖(頭份 - 2106",
+    "amount": -80.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*八曜和茶-苗栗頭 - 8188",
+    "amount": -67.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "尚未分類",
+    "desc": "starlux-web(othtaipei - 7706",
+    "amount": -455.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "現金消費",
+    "desc": "玉山wallet-盛昌行 - 8188",
+    "amount": -60.0,
+    "bucket": "spend",
+    "reason": "MB 分類：現金消費"
+   },
+   {
+    "date": "2026-10",
+    "account": "營業部DAWHO活期儲蓄存款",
+    "cat": "保險",
+    "desc": "火險自扣 - 100115rcm01871第一產物",
+    "amount": -2348.0,
+    "bucket": "spend",
+    "reason": "MB 分類：保險"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*連加*中聯百貨連鎖_東 - 8188",
+    "amount": -47.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "現金消費",
+    "desc": "玉山wallet-盛昌行 - 8188",
+    "amount": -110.0,
+    "bucket": "spend",
+    "reason": "MB 分類：現金消費"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*台灣中油條碼支付 - 8188",
+    "amount": -169.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*先喝道沙鹿車站店 - 8188",
+    "amount": -30.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "飲食",
+    "desc": "全支付-喫茶小舖(頭份 - 2106",
+    "amount": -25.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "飲食",
+    "desc": "全支付-水巷茶弄沙鹿大 - 2106",
+    "amount": -35.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "飲食",
+    "desc": "全支付-水巷茶弄沙鹿大 - 2106",
+    "amount": -53.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "飲食",
+    "desc": "全支付-全聯 - 2106",
+    "amount": -330.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "飲食",
+    "desc": "全支付-484紅茶專賣 - 2106",
+    "amount": -40.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "飲食",
+    "desc": "全支付-茶湯會(東勢中 - 2106",
+    "amount": -500.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "現金消費",
+    "desc": "玉山wallet-盛昌行 - 8188",
+    "amount": -220.0,
+    "bucket": "spend",
+    "reason": "MB 分類：現金消費"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "現金消費",
+    "desc": "玉山wallet-盛昌行 - 8188",
+    "amount": -60.0,
+    "bucket": "spend",
+    "reason": "MB 分類：現金消費"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "飲食",
+    "desc": "全家-ts*台新paytaipei - 7706",
+    "amount": -110.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "飲食",
+    "desc": "ts*統一超商taipei - 7706",
+    "amount": -159.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "飲食",
+    "desc": "全家-ts*台新paytaipei - 7706",
+    "amount": -145.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*mr.wish希 - 8188",
+    "amount": -110.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "現金消費",
+    "desc": "玉山wallet-盛昌行 - 8188",
+    "amount": -260.0,
+    "bucket": "spend",
+    "reason": "MB 分類：現金消費"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "尚未分類",
+    "desc": "notion vdqlymvh-0004san fr - 7706",
+    "amount": -406.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "費用/手續費",
+    "desc": "國外交易服務費-406.00 - 7706",
+    "amount": -6.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "現金消費",
+    "desc": "玉山wallet-盛昌行 - 8188",
+    "amount": -135.0,
+    "bucket": "spend",
+    "reason": "MB 分類：現金消費"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "現金消費",
+    "desc": "玉山wallet-盛昌行 - 8188",
+    "amount": -110.0,
+    "bucket": "spend",
+    "reason": "MB 分類：現金消費"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "飲食",
+    "desc": "全家-ts*台新paytaipei - 7706",
+    "amount": -110.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "交通",
+    "desc": "高鐵台中站taichu - 7706",
+    "amount": -645.0,
+    "bucket": "spend",
+    "reason": "MB 分類：交通"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "購物",
+    "desc": "富邦momo-ec - 1779",
+    "amount": -961.0,
+    "bucket": "spend",
+    "reason": "MB 分類：購物"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "飲食",
+    "desc": "全支付-水巷茶弄沙鹿大 - 2106",
+    "amount": -14.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "尚未分類",
+    "desc": "全支付-湯香滿屋雞湯 - 2106",
+    "amount": -230.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "飲食",
+    "desc": "全支付-全聯 - 2106",
+    "amount": -2.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "飲食",
+    "desc": "全支付-全聯 - 2106",
+    "amount": -157.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "飲食",
+    "desc": "全支付-全聯 - 2106",
+    "amount": -1799.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "房屋貸款",
+    "cat": "貸款繳納",
+    "desc": "利息 - 房屋貸款",
+    "amount": -25644.0,
+    "bucket": "spend",
+    "reason": "貸款利息（房屋貸款）"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "尚未分類",
+    "desc": "酷澎-皜翰文創有限公司 - 8188",
+    "amount": -192.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "現金消費",
+    "desc": "玉山wallet-盛昌行 - 8188",
+    "amount": -110.0,
+    "bucket": "spend",
+    "reason": "MB 分類：現金消費"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*lopia-新莊 - 8188",
+    "amount": -487.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "現金消費",
+    "desc": "玉山wallet-盛昌行 - 8188",
+    "amount": -188.0,
+    "bucket": "spend",
+    "reason": "MB 分類：現金消費"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "現金消費",
+    "desc": "玉山wallet-盛昌行 - 8188",
+    "amount": -110.0,
+    "bucket": "spend",
+    "reason": "MB 分類：現金消費"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "購物",
+    "desc": "影音出租/google *google one - 7602",
+    "amount": -165.0,
+    "bucket": "spend",
+    "reason": "MB 分類：購物"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "飲食",
+    "desc": "ts*統一超商taipei - 7706",
+    "amount": -240.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "飲食",
+    "desc": "ts*統一超商taipei - 7706",
+    "amount": -40.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "交通",
+    "desc": "臺鐵公司-板橋站(自動售票機new ta - 7706",
+    "amount": -288.0,
+    "bucket": "spend",
+    "reason": "MB 分類：交通"
+   },
+   {
+    "date": "2026-10",
+    "account": "其他貸款",
+    "cat": "貸款繳納",
+    "desc": "利息 - 其他貸款",
+    "amount": -9852.0,
+    "bucket": "spend",
+    "reason": "貸款利息（其他貸款）"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "電子票證加值",
+    "desc": "一卡通自動加值-台鐵新烏日站 - 7706",
+    "amount": -500.0,
+    "bucket": "spend",
+    "reason": "MB 分類：電子票證加值"
+   },
+   {
+    "date": "2026-10",
+    "account": "臺幣綜存",
+    "cat": "尚未分類",
+    "desc": "qr無卡提",
+    "amount": -1000.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "飲食",
+    "desc": "全家-ts*台新paytaipei - 7706",
+    "amount": -110.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "現金消費",
+    "desc": "玉山wallet-盛昌行 - 8188",
+    "amount": -145.0,
+    "bucket": "spend",
+    "reason": "MB 分類：現金消費"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*清心福全-苗栗縣 - 8188",
+    "amount": -105.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "現金消費",
+    "desc": "玉山wallet-盛昌行 - 8188",
+    "amount": -135.0,
+    "bucket": "spend",
+    "reason": "MB 分類：現金消費"
+   },
+   {
+    "date": "2026-10",
+    "account": "營業部DAWHO活期儲蓄存款",
+    "cat": "住家",
+    "desc": "放款本息 - 04105500032968360001",
+    "amount": -23708.0,
+    "bucket": "spend",
+    "reason": "MB 分類：住家"
+   },
+   {
+    "date": "2026-10",
+    "account": "營業部DAWHO活期儲蓄存款",
+    "cat": "住家",
+    "desc": "放款本息 - 04105500032968360002",
+    "amount": -26170.0,
+    "bucket": "spend",
+    "reason": "MB 分類：住家"
+   },
+   {
+    "date": "2026-10",
+    "account": "營業部DAWHO活期儲蓄存款",
+    "cat": "住家",
+    "desc": "放款本息 - 04105500032968360003",
+    "amount": -15861.0,
+    "bucket": "spend",
+    "reason": "MB 分類：住家"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "保險",
+    "desc": "第一產物保險股份有限公司taipei - 7706",
+    "amount": -356.0,
+    "bucket": "spend",
+    "reason": "MB 分類：保險"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "尚未分類",
+    "desc": "樹林沙鹿店 - 3841",
+    "amount": -199.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "費用/手續費",
+    "desc": "國外交易服務費(簽帳 378 ) - 3841",
+    "amount": -6.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "休閒娛樂",
+    "desc": "昇恒昌股份有限公司台中機場分公司 - 3841",
+    "amount": -25.0,
+    "bucket": "spend",
+    "reason": "MB 分類：休閒娛樂"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "尚未分類",
+    "desc": "vnpay*dvhangkhongts144401 - 3841",
+    "amount": -378.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "飲食",
+    "desc": "連加*昇?昌股份有限公 - 8188",
+    "amount": -650.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "飲食",
+    "desc": "全家-ts*台新paytaipei - 7706",
+    "amount": -110.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "休閒娛樂",
+    "desc": "全支付-易遊網旅行社( - 2106",
+    "amount": -13373.0,
+    "bucket": "spend",
+    "reason": "MB 分類：休閒娛樂"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "服飾",
+    "desc": "google *google one singapore sg - 7602",
+    "amount": -165.0,
+    "bucket": "spend",
+    "reason": "MB 分類：服飾"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "費用/手續費",
+    "desc": "google *google one s 國外交易服務費 - 7602",
+    "amount": -2.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "飲食",
+    "desc": "全家-ts*台新paytaipei - 7706",
+    "amount": -110.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "飲食",
+    "desc": "全家-ts*台新paytaipei - 7706",
+    "amount": -110.0,
+    "bucket": "spend",
+    "reason": "MB 分類：飲食"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "費用/手續費",
+    "desc": "國外交易服務費(簽帳 1,246 ) - 3841",
+    "amount": -19.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "尚未分類",
+    "desc": "hai salon 144401 - 3841",
+    "amount": -1246.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "交通",
+    "desc": "優步福爾摩沙股份有限公司-永保車隊 - 8188",
+    "amount": -325.0,
+    "bucket": "spend",
+    "reason": "MB 分類：交通"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "費用/手續費",
+    "desc": "國外交易服務費(簽帳 164 ) - 3841",
+    "amount": -2.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "尚未分類",
+    "desc": "payoo-chua 144401 - 3841",
+    "amount": -164.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "費用/手續費",
+    "desc": "國外交易服務費(簽帳 57 ) - 3841",
+    "amount": -1.0,
+    "bucket": "spend",
+    "reason": "MB 分類：費用/手續費"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "尚未分類",
+    "desc": "cty tnhh ministop v144401 - 3841",
+    "amount": -57.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   },
+   {
+    "date": "2026-10",
+    "account": "CUBE御璽卡Visa",
+    "cat": "尚未分類",
+    "desc": "metro hcm - 2106",
+    "amount": -15.0,
+    "bucket": "spend",
+    "reason": "未分類小額消費（MB：尚未分類）"
+   }
+  ],
+  "income": [
+   {
+    "date": "2026-10",
+    "account": "Unicard－正卡",
+    "cat": "優惠回饋",
+    "desc": "e point折抵消費 - 1223",
+    "amount": 326.0,
+    "bucket": "income",
+    "reason": "收入：回饋"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "優惠回饋",
+    "desc": "8 月sport卡基本回饋 2 點 - 7602",
+    "amount": 0.0,
+    "bucket": "income",
+    "reason": "收入：回饋"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "優惠回饋",
+    "desc": "j卡現金回饋退款 - 356969******0948",
+    "amount": 75.0,
+    "bucket": "income",
+    "reason": "收入：回饋"
+   },
+   {
+    "date": "2026-10",
+    "account": "市政分行活期儲蓄存款",
+    "cat": "利息所得",
+    "desc": "利息存入 - 04101800178106-20261020",
+    "amount": 12.0,
+    "bucket": "income",
+    "reason": "收入：利息"
+   },
+   {
+    "date": "2026-10",
+    "account": "營業部DAWHO活期儲蓄存款",
+    "cat": "利息所得",
+    "desc": "利息存入 - 19901800993496-20261020",
+    "amount": 208.0,
+    "bucket": "income",
+    "reason": "收入：利息"
+   },
+   {
+    "date": "2026-10",
+    "account": "房屋貸款",
+    "cat": "貸款繳納",
+    "desc": "繳息金額",
+    "amount": 11763.0,
+    "bucket": "income",
+    "reason": "收入（正值，未命中規則）"
+   },
+   {
+    "date": "2026-10",
+    "account": "房屋貸款",
+    "cat": "貸款繳納",
+    "desc": "繳息金額",
+    "amount": 9272.0,
+    "bucket": "income",
+    "reason": "收入（正值，未命中規則）"
+   },
+   {
+    "date": "2026-10",
+    "account": "房屋貸款",
+    "cat": "貸款繳納",
+    "desc": "繳息金額",
+    "amount": 5619.0,
+    "bucket": "income",
+    "reason": "收入（正值，未命中規則）"
+   },
+   {
+    "date": "2026-10",
+    "account": "Richart卡(原@GoGo悠遊御璽)",
+    "cat": "尚未分類",
+    "desc": "starlux-web(othtaipei - 7706",
+    "amount": 455.0,
+    "bucket": "income",
+    "reason": "收入（正值，未命中規則）"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "利息所得",
+    "desc": "存款息",
+    "amount": 65.0,
+    "bucket": "income",
+    "reason": "收入：利息"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart子帳戶",
+    "cat": "利息所得",
+    "desc": "存款息",
+    "amount": 795.0,
+    "bucket": "income",
+    "reason": "收入：利息"
+   }
+  ],
+  "exclude": [
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 安聯人壽保險股份有 華銀敦化 0801780998",
+    "amount": 13258.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 安聯人壽保險股份有 華銀敦化 0801780997",
+    "amount": 6442.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "利息所得",
+    "desc": "轉帳存入 - 轉出0028881016305049 陳宛琳10月借貸利息",
+    "amount": 6000.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart外幣綜存",
+    "cat": "外幣買賣",
+    "desc": "存款息 - 交易匯率31.854",
+    "amount": 0.8,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart外幣綜存",
+    "cat": "外幣買賣",
+    "desc": "存款息 - 交易匯率0.203015",
+    "amount": 0.0,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart外幣綜存",
+    "cat": "外幣買賣",
+    "desc": "存款息 - 交易匯率4.749473",
+    "amount": 0.0,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart外幣綜存",
+    "cat": "外幣買賣",
+    "desc": "存款息 - 交易匯率36.149512",
+    "amount": 0.0,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart外幣綜存",
+    "cat": "外幣買賣",
+    "desc": "存款息 - 交易匯率22.22135",
+    "amount": 0.0,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart外幣綜存",
+    "cat": "外幣買賣",
+    "desc": "存款息 - 交易匯率1.946905",
+    "amount": 0.0,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "cd轉入 - atm 013-0000064506085061",
+    "amount": 1092935.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 第一金人壽保險股份 一銀大安 0801781098",
+    "amount": 15916.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "營業部DAWHO活期儲蓄存款",
+    "cat": "外幣買賣",
+    "desc": "手機換匯 - 19900800993494(usd)",
+    "amount": -5019.0,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "營業部DAWHO活期儲蓄存款",
+    "cat": "外幣買賣",
+    "desc": "手機換匯 - 19900800993494(usd)",
+    "amount": 5007.0,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "營業部DAWHO外幣組合存款-美金",
+    "cat": "外幣買賣",
+    "desc": "手機換匯 - 19901800993496(twd)",
+    "amount": 157.02,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "營業部DAWHO外幣組合存款-美金",
+    "cat": "外幣買賣",
+    "desc": "手機換匯 - 19901800993496(twd)",
+    "amount": -157.02,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "活期儲蓄存款",
+    "cat": "帳戶互轉",
+    "desc": "電子轉出 - (812)0020801000019475",
+    "amount": -1092935.0,
+    "bucket": "exclude",
+    "reason": "規則：帳戶互轉"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "投資買賣",
+    "desc": "交割股款 - 8882 810 stag",
+    "amount": -1144456.0,
+    "bucket": "exclude",
+    "reason": "規則：投資買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "尚未分類",
+    "desc": "授權轉入 - (013)0000006***230771梁*賓",
+    "amount": 1144456.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "帳戶互轉",
+    "desc": "轉帳支取 - 轉入0028881000247286",
+    "amount": -2000000.0,
+    "bucket": "exclude",
+    "reason": "規則：帳戶互轉"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 轉出0020801000019475",
+    "amount": 2000000.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "現金消費",
+    "desc": "cd轉出 - atm 017-0099371150797331",
+    "amount": -1006900.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "現金消費",
+    "desc": "cd轉出 - atm 007-0099804310022717",
+    "amount": -1013724.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "信用卡",
+    "cat": "繳信用卡費",
+    "desc": "溢繳款退回 - 7602",
+    "amount": -18715.0,
+    "bucket": "exclude",
+    "reason": "規則：信用卡繳款"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 安聯人壽保險股份有 華銀敦化 0801781277",
+    "amount": 8254.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 轉出0028881000794227 晚餐",
+    "amount": 208.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "營業部DAWHO活期儲蓄存款",
+    "cat": "繳信用卡費",
+    "desc": "轉帳 - 永豐信用卡",
+    "amount": 18715.0,
+    "bucket": "exclude",
+    "reason": "規則：信用卡繳款"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "投資買賣",
+    "desc": "交割股款 - 8882 810 stag",
+    "amount": -1285512.0,
+    "bucket": "exclude",
+    "reason": "規則：投資買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "尚未分類",
+    "desc": "授權轉入 - (013)0000006***230771梁*賓",
+    "amount": 1285512.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "民權活儲存款-證券",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 轉出0020801000019475",
+    "amount": 276000.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "帳戶互轉",
+    "desc": "轉帳支取 - 轉入0020661200413512",
+    "amount": -276000.0,
+    "bucket": "exclude",
+    "reason": "規則：帳戶互轉"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 安聯人壽保險股份有 中信銀營 0801781442",
+    "amount": 1192.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "薪資",
+    "desc": "媒體轉入 - 薪資 台電 03795904",
+    "amount": 39777.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "投資買賣",
+    "desc": "轉帳存入 - 配息路博邁台灣5g股票證券投資信託基金t",
+    "amount": 733.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "活期儲蓄存款",
+    "cat": "投資獲利",
+    "desc": "基金配息 - 聯博多元配息 基金配息",
+    "amount": 6765.0,
+    "bucket": "exclude",
+    "reason": "規則：投資買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "股利",
+    "desc": "轉帳存入 - 配息聯博-全球多元收益基金ad月配級別美",
+    "amount": 20.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "股利",
+    "desc": "轉帳存入 - 配息聯博-美國成長基金ap(總報酬月配)",
+    "amount": 34.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart外幣綜存",
+    "cat": "外幣買賣",
+    "desc": "配息安聯ai收益成長多重資產基金-b類型 - 交易匯率",
+    "amount": 1.43,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "民權活儲存款-證券",
+    "cat": "投資買賣",
+    "desc": "轉帳支取 - 抽籤預扣",
+    "amount": -290070.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "帳戶互轉",
+    "desc": "授權轉出 - 8882 810 stag (013)0000006506230771梁*賓",
+    "amount": -581890.0,
+    "bucket": "exclude",
+    "reason": "規則：帳戶互轉"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "投資買賣",
+    "desc": "交割股款",
+    "amount": 581890.0,
+    "bucket": "exclude",
+    "reason": "規則：投資買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "股利",
+    "desc": "轉帳存入 - 配息貝萊德世界健康科學基金a10美元(總",
+    "amount": 27.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "股利",
+    "desc": "轉帳存入 - 配息貝萊德世界黃金基金a10美元(總報酬",
+    "amount": 21.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "投資買賣",
+    "desc": "轉帳存入 - 配息貝萊德全球股票收益基金 a6 美元",
+    "amount": 5.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "股利",
+    "desc": "轉帳存入 - 配息貝萊德世界科技基金a10美元(總報酬",
+    "amount": 31.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "股利",
+    "desc": "轉帳存入 - 配息貝萊德世界能源基金a10美元(總報酬",
+    "amount": 29.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "尚未分類",
+    "desc": "轉帳支取 - 貝萊德全球 gb 貝萊德全球",
+    "amount": -3000.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "股利",
+    "desc": "轉帳存入 - 配息富達基金-全球動能多元基金(a股c月",
+    "amount": 25.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "住家",
+    "desc": "轉帳支取 - 轉入0028881016305049 房租水電",
+    "amount": -5548.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "活期儲蓄存款",
+    "cat": "投資獲利",
+    "desc": "基金配息 - 貝萊智慧配息 基金配息",
+    "amount": 41699.0,
+    "bucket": "exclude",
+    "reason": "規則：投資買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "帳戶互轉",
+    "desc": "授權轉出 - 8882 810 stag (013)0000006506230771梁*賓",
+    "amount": -599954.0,
+    "bucket": "exclude",
+    "reason": "規則：帳戶互轉"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "投資買賣",
+    "desc": "交割股款",
+    "amount": 599954.0,
+    "bucket": "exclude",
+    "reason": "規則：投資買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "民權活儲存款-證券",
+    "cat": "投資買賣",
+    "desc": "轉帳存入 - 抽籤退款",
+    "amount": 290050.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "民權活儲存款-證券",
+    "cat": "投資買賣",
+    "desc": "轉帳支取 - 抽籤預扣",
+    "amount": -105670.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "民權活儲存款-證券",
+    "cat": "投資買賣",
+    "desc": "轉帳支取 - 劃撥轉帳群益半導體收益",
+    "amount": -40407.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "民權活儲存款-證券",
+    "cat": "投資買賣",
+    "desc": "轉帳存入 - 劃撥轉帳群益美國科技巨",
+    "amount": 108338.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "民權活儲存款-證券",
+    "cat": "投資買賣",
+    "desc": "轉帳存入 - 劃撥轉帳群益s&p500",
+    "amount": 106043.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "投資獲利",
+    "desc": "媒體轉入 - 基金配息00713fund",
+    "amount": 2490.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "投資獲利",
+    "desc": "媒體轉入 - 基金配息00981afund",
+    "amount": 2510.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 安聯人壽保險股份有 華銀敦化 0801782322",
+    "amount": 1467.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 安聯人壽保險股份有 華銀敦化 0801782321",
+    "amount": 1220.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 安聯人壽保險股份有 華銀敦化 0801782338",
+    "amount": 1685.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 安聯人壽保險股份有 華銀敦化 0801782348",
+    "amount": 1403.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "活期儲蓄存款",
+    "cat": "投資獲利",
+    "desc": "基金配息 - 富達全動配息 基金配息",
+    "amount": 49298.0,
+    "bucket": "exclude",
+    "reason": "規則：投資買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "投資買賣",
+    "desc": "交割股款 - 8882 810 stag",
+    "amount": -562224.0,
+    "bucket": "exclude",
+    "reason": "規則：投資買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "尚未分類",
+    "desc": "授權轉入 - (013)0000006***230771梁*賓",
+    "amount": 562224.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "民權活儲存款-證券",
+    "cat": "帳戶互轉",
+    "desc": "轉帳支取 - 轉入0028881000247286",
+    "amount": -59000.0,
+    "bucket": "exclude",
+    "reason": "規則：帳戶互轉"
+   },
+   {
+    "date": "2026-10",
+    "account": "民權活儲存款-證券",
+    "cat": "帳戶互轉",
+    "desc": "轉帳支取 - 轉入0028881810012504 851086",
+    "amount": -300000.0,
+    "bucket": "exclude",
+    "reason": "規則：帳戶互轉"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 轉出0020661200413512",
+    "amount": 59000.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart子帳戶",
+    "cat": "帳戶互轉",
+    "desc": "轉帳存入 - 轉出0020661200413512 851086",
+    "amount": 300000.0,
+    "bucket": "exclude",
+    "reason": "規則：帳戶互轉"
+   },
+   {
+    "date": "2026-10",
+    "account": "民權活儲存款-證券",
+    "cat": "投資獲利",
+    "desc": "媒體轉入 - 基金配息00983d",
+    "amount": 1210.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "投資買賣",
+    "desc": "交割股款 - 8882 810 stag",
+    "amount": -285113.0,
+    "bucket": "exclude",
+    "reason": "規則：投資買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "尚未分類",
+    "desc": "授權轉入 - (013)0000006***230771梁*賓",
+    "amount": 285113.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "民權活儲存款-證券",
+    "cat": "投資買賣",
+    "desc": "轉帳存入 - 抽籤退款",
+    "amount": 105650.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "投資獲利",
+    "desc": "媒體轉入 - 基金配息00918",
+    "amount": 1740.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "投資獲利",
+    "desc": "媒體轉入 - 基金配息00919",
+    "amount": 6590.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "投資買賣",
+    "desc": "交割股款 - 8882 810 stag",
+    "amount": -242096.0,
+    "bucket": "exclude",
+    "reason": "規則：投資買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "尚未分類",
+    "desc": "授權轉入 - (013)0000006***230771梁*賓",
+    "amount": 242096.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "股利",
+    "desc": "轉帳存入 - 配息摩根投資基金 - 多重收益基金 -",
+    "amount": 25.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "股利",
+    "desc": "轉帳存入 - 配息台灣優息b配台",
+    "amount": 235.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "股利",
+    "desc": "轉帳存入 - 配息國泰台灣高股息基金b",
+    "amount": 70.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "投資買賣",
+    "desc": "交割股款 - 8882 810 stag",
+    "amount": -96037.0,
+    "bucket": "exclude",
+    "reason": "規則：投資買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "尚未分類",
+    "desc": "授權轉入 - (013)0000006***230771梁*賓",
+    "amount": 96037.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "租金",
+    "desc": "cd轉入 - atm 824-0000111017535835",
+    "amount": 33000.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 安聯人壽保險股份有 華銀敦化 0801783139",
+    "amount": 5812.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 第一金人壽保險股份 一銀大安 0801783237",
+    "amount": 9402.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "活期儲蓄存款",
+    "cat": "繳信用卡費",
+    "desc": "信用卡款 - 國泰世華卡 信用卡款",
+    "amount": -5976.0,
+    "bucket": "exclude",
+    "reason": "規則：信用卡繳款"
+   },
+   {
+    "date": "2026-10",
+    "account": "活期儲蓄存款",
+    "cat": "住家",
+    "desc": "放款繳款 - 009381100704 (013)0000009381100704",
+    "amount": -25644.0,
+    "bucket": "exclude",
+    "reason": "規則：信用卡繳款"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "保險",
+    "desc": "媒體轉出 - 人壽保費南山人壽",
+    "amount": -11514.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "股利",
+    "desc": "轉帳存入 - 配息安聯收益成長基金-amg7月收總收益",
+    "amount": 29.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 安聯人壽保險股份有 華銀敦化 0801783592",
+    "amount": 19530.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 安聯人壽保險股份有 華銀敦化 0801783617",
+    "amount": 3573.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "活期儲蓄存款",
+    "cat": "住家",
+    "desc": "放款繳款 - 009341036884 (013)0000009341036884",
+    "amount": -9852.0,
+    "bucket": "exclude",
+    "reason": "規則：信用卡繳款"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "尚未分類",
+    "desc": "授權轉出 - 威剛科技 現金股息ach1 (013)0000006506230771梁*賓",
+    "amount": -35245.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "證券活期儲蓄存款",
+    "cat": "尚未分類",
+    "desc": "轉帳",
+    "amount": 35245.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "帳戶互轉",
+    "desc": "轉帳支取 - 轉入0028881810012504",
+    "amount": -97490.0,
+    "bucket": "exclude",
+    "reason": "規則：帳戶互轉"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart子帳戶",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 轉出0020801000019475",
+    "amount": 97490.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "活期儲蓄存款",
+    "cat": "尚未分類",
+    "desc": "網銀轉帳 - 大義本月分紅 (013)0000013***017111邱*恩",
+    "amount": 2100.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "活期儲蓄存款",
+    "cat": "租金",
+    "desc": "網銀轉帳 - 本月房租 (013)0000013***017111邱*恩",
+    "amount": 21000.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "房屋貸款",
+    "cat": "貸款繳納",
+    "desc": "攤還本金",
+    "amount": 11945.0,
+    "bucket": "exclude",
+    "reason": "貸款本金（獨立列示，不計消費）"
+   },
+   {
+    "date": "2026-10",
+    "account": "房屋貸款",
+    "cat": "貸款繳納",
+    "desc": "攤還本金",
+    "amount": 16898.0,
+    "bucket": "exclude",
+    "reason": "貸款本金（獨立列示，不計消費）"
+   },
+   {
+    "date": "2026-10",
+    "account": "房屋貸款",
+    "cat": "貸款繳納",
+    "desc": "攤還本金",
+    "amount": 10242.0,
+    "bucket": "exclude",
+    "reason": "貸款本金（獨立列示，不計消費）"
+   },
+   {
+    "date": "2026-10",
+    "account": "房屋貸款",
+    "cat": "貸款繳納",
+    "desc": "攤還本金",
+    "amount": 11945.0,
+    "bucket": "exclude",
+    "reason": "貸款本金（獨立列示，不計消費）"
+   },
+   {
+    "date": "2026-10",
+    "account": "房屋貸款",
+    "cat": "貸款繳納",
+    "desc": "攤還本金",
+    "amount": 16898.0,
+    "bucket": "exclude",
+    "reason": "貸款本金（獨立列示，不計消費）"
+   },
+   {
+    "date": "2026-10",
+    "account": "房屋貸款",
+    "cat": "貸款繳納",
+    "desc": "攤還本金",
+    "amount": 10242.0,
+    "bucket": "exclude",
+    "reason": "貸款本金（獨立列示，不計消費）"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "股利",
+    "desc": "轉帳存入 - 配息m&g入息基金a(美元避險月配)f",
+    "amount": 25.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart數位一般帳戶",
+    "cat": "繳信用卡費",
+    "desc": "媒體轉帳 - 台新卡費梁世賓",
+    "amount": -6210.0,
+    "bucket": "exclude",
+    "reason": "規則：信用卡繳款"
+   },
+   {
+    "date": "2026-10",
+    "account": "民權活儲存款-證券",
+    "cat": "投資買賣",
+    "desc": "轉帳支取 - 劃撥轉帳群益半導體收益",
+    "amount": -35490.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 安聯人壽保險股份有 華銀敦化 0801784186",
+    "amount": 5397.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "文心綜活儲存款-薪轉",
+    "cat": "尚未分類",
+    "desc": "轉帳存入 - 第一金人壽保險股份 一銀大安 0801784253",
+    "amount": 9901.0,
+    "bucket": "exclude",
+    "reason": "規則：轉帳"
+   },
+   {
+    "date": "2026-10",
+    "account": "營業部DAWHO活期儲蓄存款",
+    "cat": "繳信用卡費",
+    "desc": "永豐卡費 - 5199230417497602",
+    "amount": -237.0,
+    "bucket": "exclude",
+    "reason": "規則：信用卡繳款"
+   },
+   {
+    "date": "2026-10",
+    "account": "北台中外幣綜存",
+    "cat": "外幣買賣",
+    "desc": "hh201003-0040427 si852724760812 - 交易匯率",
+    "amount": 0.0,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart外幣綜存",
+    "cat": "外幣買賣",
+    "desc": "存款息 - 交易匯率32.544",
+    "amount": 0.95,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart外幣綜存",
+    "cat": "外幣買賣",
+    "desc": "存款息 - 交易匯率0.20657",
+    "amount": 0.0,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart外幣綜存",
+    "cat": "外幣買賣",
+    "desc": "存款息 - 交易匯率4.891848",
+    "amount": 0.0,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart外幣綜存",
+    "cat": "外幣買賣",
+    "desc": "存款息 - 交易匯率36.442771",
+    "amount": 0.0,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart外幣綜存",
+    "cat": "外幣買賣",
+    "desc": "存款息 - 交易匯率22.865414",
+    "amount": 0.0,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   },
+   {
+    "date": "2026-10",
+    "account": "敦南Richart外幣綜存",
+    "cat": "外幣買賣",
+    "desc": "存款息 - 交易匯率1.955223",
+    "amount": 0.0,
+    "bucket": "exclude",
+    "reason": "規則：外幣買賣"
+   }
+  ],
+  "non_recurring": [],
+  "unknown": []
+ },
+ "source": {
+  "file": "moneybook_new\\Moneybook_明細_20261031_1.csv",
+  "sha256": "40265171897d26aacee32b3d5c6d2f4fc1cf4a154572a0ae94cb50048ab2ade1",
+  "rows_total": 241,
+  "generated_at": "2026-11-01T18:44:55"
+ }
+}
