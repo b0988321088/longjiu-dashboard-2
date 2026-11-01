@@ -90,6 +90,66 @@ def main():
     else:
         attrib_html = ""
 
+    # ===== 一之二、上月抗跌拆解（2026-11-01 使用者核准新增：把「跌的那一桶只占多少」講清楚，
+    #       作為下個月對照基準）=====
+    # 全部由 asset_diff_history 現算（禁寫死）；月份＝上一個完整月；結論句由數據生成。
+    month_html = ""
+    try:
+        _pe = datetime.date.today().replace(day=1) - datetime.timedelta(days=1)
+        _pre = f"{_pe.year}-{_pe.month:02d}"
+        _mds = sorted(str(d) for d in hist if str(d).startswith(_pre))
+        if len(_mds) >= 2:
+            _a, _b = hist[_mds[0]], hist[_mds[-1]]
+            _t0 = _a.get("total_assets", 0) or 0
+            _t1 = _b.get("total_assets", 0) or 0
+            _rows, _contribs = "", []
+            for _key, _lab in (("fund_market", "基金"), ("securities_market", "證券"),
+                               ("insurance_current", "保單"), ("cash", "現金")):
+                _x = _a.get(_key, 0) or 0
+                _y = _b.get(_key, 0) or 0
+                if not _x:
+                    continue
+                _dd = _y - _x
+                _pp = _dd / _x * 100
+                _contrib = (_dd / _t0 * 100) if _t0 else 0
+                _share = (_x / _t0 * 100) if _t0 else 0
+                _contribs.append((_lab, _pp, _contrib, _share))
+                _c = "up" if _dd > 0 else ("down" if _dd < 0 else "")
+                _rows += (f"<tr><td>{_lab}</td><td class='num'>{_x:,.0f}</td><td class='num'>{_y:,.0f}</td>"
+                          f"<td class='num {_c}'>{_dd:+,.0f}</td><td class='num {_c}'>{_pp:+.2f}%</td>"
+                          f"<td class='num'>{_contrib:+.2f}pp</td></tr>")
+            _daily = []
+            for _p1, _p2 in zip(_mds, _mds[1:]):
+                _v1 = hist[_p1].get("total_assets", 0) or 0
+                _v2 = hist[_p2].get("total_assets", 0) or 0
+                if _v1:
+                    _daily.append((_p2, (_v2 - _v1) / _v1 * 100, _v2 - _v1))
+            _down = sum(1 for _r in _daily if _r[1] < 0)
+            _worst = min(_daily, key=lambda r: r[1]) if _daily else None
+            _best = max(_daily, key=lambda r: r[1]) if _daily else None
+            _tot_pct = ((_t1 - _t0) / _t0 * 100) if _t0 else 0
+            _stat = f"期間 {len(_mds)} 個資料日、下跌 {_down} 日"
+            if _worst:
+                _stat += f"；最差 {_worst[0]} {_worst[1]:+.2f}%（{_worst[2]:+,.0f}）"
+            if _best:
+                _stat += f"、最佳 {_best[0]} {_best[1]:+.2f}%（{_best[2]:+,.0f}）"
+            _concl = f"全月總資產 {_tot_pct:+.2f}%"
+            if _contribs:
+                _lab0, _p0, _pp0, _sh0 = sorted(_contribs, key=lambda r: r[1])[0]
+                _lab1, _p1_, _pp1, _sh1 = sorted(_contribs, key=lambda r: -r[1])[0]
+                _concl = (f"{_lab0}是最大拖累（{_p0:+.2f}%），但僅占期初總資產 {_sh0:.1f}%，"
+                          f"對總資產影響 {_pp0:+.2f}pp")
+                if _pp1 > 0:
+                    _concl += f"；{_lab1} {_p1_:+.2f}% 抵銷後，全月總資產 {_tot_pct:+.2f}%"
+            month_html = (f"<div class=\"card\"><h2>📉 一之二、{_pe.year} 年 {_pe.month} 月抗跌拆解</h2>"
+                          f"<table><thead><tr><th>桶位</th><th class='num'>期初</th><th class='num'>期末</th>"
+                          f"<th class='num'>增減</th><th class='num'>幅度</th><th class='num'>對總資產</th></tr></thead>"
+                          f"<tbody>{_rows}</tbody></table>"
+                          f"<p style='font-size:12px;margin:8px 0 0'>📊 {_stat}</p>"
+                          f"<p style='font-size:12px;color:#6e6e73;margin:4px 0 0'>🔎 {_concl}</p></div>")
+    except Exception as _em:
+        print(f"[WARN] 週報：月度抗跌拆解產生失敗（略過，不影響其他章節）: {_em}", file=sys.stderr)
+
     # ===== 三、穿透 =====
     BUCKETS = [("台股市值型成長", "台股市值型目標", "TW 台股", "配息導流+回檔小單（≤5萬）"),
                ("美股市值型成長", "美股市值型目標", "🇺🇸 美股", "逢彈減碼（≤20萬/次）"),
@@ -267,6 +327,7 @@ li{{margin-bottom:5px;font-size:12.5px;line-height:1.5}}
 
 <div class="card"><h2>📌 一、本週資產實相（{week_ago}→{today}）</h2>
 <table><thead><tr><th>項目</th><th class="num">7日前</th><th class="num">今日</th><th class="num">增減</th></tr></thead><tbody>{rows1}</tbody></table>{attrib_html}</div>
+{month_html}
 
 <div class="card"><h2>🎵 二、Rhythm-08 風險燈號（US30Y）</h2>
 <p style="font-size:13px;margin:0 0 8px">目前 US30Y <b>{us30y_txt}</b> → 模式 <b>{mode}</b></p>
