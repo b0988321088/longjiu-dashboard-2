@@ -28,6 +28,7 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 STATE = BASE / "data" / "forestry_supervision_seen.json"
+MAX_BUDGET = 10_000_000  # 2026-11-03 使用者定案：林業署設計監造一律 1,000 萬上限
 TZ = dt.timezone(dt.timedelta(hours=8))
 
 ORGS = ("臺中分署", "台中分署", "南投分署", "新竹分署", "嘉義分署",
@@ -141,6 +142,7 @@ def main() -> int:
     fresh: list[str] = []
     errors = 0
     expired = 0
+    over = 0
 
     try:
         rows = fetch_rows()
@@ -159,6 +161,11 @@ def main() -> int:
         except Exception:
             errors += 1
             continue
+        b = d.get("budget")
+        if b and b > MAX_BUDGET:
+            seen[key] = stamp
+            over += 1
+            continue                       # 超過 1,000 萬 → 不通知
         dl = parse_deadline(d.get("deadline", ""))
         if d.get("closed") or (dl and dl < today):
             seen[key] = stamp
@@ -172,12 +179,14 @@ def main() -> int:
     save_seen(seen)
     if expired:
         print(f"ℹ️ 已過截止／已決標略過 {expired} 筆", file=sys.stderr)
+    if over:
+        print(f"ℹ️ 超過 {MAX_BUDGET//10000} 萬略過 {over} 筆", file=sys.stderr)
     if errors:
         print(f"⚠️ 詳情抓取失敗 {errors} 筆", file=sys.stderr)
     if not fresh:
         return 0
 
-    lines = [f"🌲 林業署設計監造（治山／林道／擋土）{stamp}（{len(fresh)} 筆）"]
+    lines = [f"🌲 林業署設計監造（治山／林道／擋土，≤1,000 萬）{stamp}（{len(fresh)} 筆）"]
     lines += fresh[:12]
     lines.append("→ 8672 工程服務，技師可投；已決標者自動略過")
     print("\n".join(lines))

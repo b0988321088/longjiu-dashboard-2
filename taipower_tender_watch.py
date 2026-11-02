@@ -95,7 +95,7 @@ def classify(org: str, name: str) -> str | None:
     return None
 
 
-MAX_BUDGET = 8_000_000   # 2026-11-03 使用者指定：督導／勞務／工安／環保一律 800 萬上限
+MAX_BUDGET = 10_000_000  # 2026-11-03 使用者定案：督導／勞務／工安／環保一律 1,000 萬上限
 BUDGET_LOOKUP_CAP = 8     # 每輪最多查 8 筆金額，避免請求過量
 
 
@@ -196,7 +196,7 @@ def main() -> int:
 
     sup = sum(1 for f in fresh if f[0] == "🎯 督導")
     lab = len(fresh) - sup
-    lines = [f"🏗️ 台電新標案 {stamp}（≤800 萬）｜督導 {sup} 筆・中部勞務 {lab} 筆"]
+    lines = [f"🏗️ 台電新標案 {stamp}（≤1,000 萬）｜督導 {sup} 筆・中部勞務 {lab} 筆"]
     for cat, reg, org, name, day, budget in fresh[:15]:
         short = (org.replace("台灣電力股份有限公司", "台電")
                     .replace("核能火力發電工程處", "核火工程處")
