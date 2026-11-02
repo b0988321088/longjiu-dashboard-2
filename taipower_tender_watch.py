@@ -18,6 +18,7 @@ import html as htmlmod
 import json
 import re
 import sys
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -94,6 +95,37 @@ def classify(org: str, name: str) -> str | None:
     return None
 
 
+MAX_BUDGET = 8_000_000   # 2026-11-03 使用者指定：督導／勞務／工安／環保一律 800 萬上限
+BUDGET_LOOKUP_CAP = 8     # 每輪最多查 8 筆金額，避免請求過量
+
+
+def _http(url: str) -> str:
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    return urllib.request.urlopen(req, timeout=25).read().decode("utf-8", "ignore")
+
+
+def lookup_budget(name: str) -> int | None:
+    """用 acebidx 關鍵字搜尋對應標案並抓預算金額；抓不到回 None（寧可通知不漏）。"""
+    kw = name[:10]
+    try:
+        s = _http("https://acebidx.com/zh-TW/docs/tender/T/by-keyword/" + urllib.parse.quote(kw))
+        tid = None
+        for href, body in re.findall(r'href="(/zh-TW/docs/tender/id/[^"]+)"[^>]*>(.{0,900}?)</a>', s, re.S):
+            txt = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", htmlmod.unescape(body)))
+            if kw in txt:
+                tid = href
+                break
+        if not tid:
+            return None
+        d = _http("https://acebidx.com" + tid)
+        d = re.sub(r"<script.*?</script>|<style.*?</style>", "", d, flags=re.S)
+        o = re.sub(r"\s+", " ", htmlmod.unescape(re.sub(r"<[^>]+>", "\n", d)))
+        mm = re.search(r"預算金額\s+([\d,]+)", o)
+        return int(mm.group(1).replace(",", "")) if mm else None
+    except Exception:
+        return None
+
+
 def load_seen() -> dict:
     if not STATE.exists():
         return {}
@@ -121,8 +153,9 @@ def main() -> int:
     today = dt.datetime.now(TZ).date()
     seen = load_seen()
     stamp = today.isoformat()
-    fresh: list[tuple[str, str, str, str, str]] = []
+    fresh: list[tuple[str, str, str, str, str, int | None]] = []
     errors: list[str] = []
+    lookups: list[str] = []
     scanned = 0
 
     for d in (today - dt.timedelta(days=1), today):
@@ -142,8 +175,15 @@ def main() -> int:
             key = hashlib.md5(f"{org}|{name}".encode("utf-8")).hexdigest()[:16]
             if key in seen:
                 continue
+            budget = None
+            if len(lookups) < BUDGET_LOOKUP_CAP:
+                lookups.append(name)
+                budget = lookup_budget(name)
+                if budget is not None and budget > MAX_BUDGET:
+                    seen[key] = stamp      # 超過 800 萬：記錄但不通知
+                    continue
             seen[key] = stamp
-            fresh.append((cat, reg, org, name, day))
+            fresh.append((cat, reg, org, name, day, budget))
 
     save_seen(seen)
 
@@ -156,13 +196,14 @@ def main() -> int:
 
     sup = sum(1 for f in fresh if f[0] == "🎯 督導")
     lab = len(fresh) - sup
-    lines = [f"🏗️ 台電新標案 {stamp}｜督導 {sup} 筆・中部勞務 {lab} 筆"]
-    for cat, reg, org, name, day in fresh[:15]:
+    lines = [f"🏗️ 台電新標案 {stamp}（≤800 萬）｜督導 {sup} 筆・中部勞務 {lab} 筆"]
+    for cat, reg, org, name, day, budget in fresh[:15]:
         short = (org.replace("台灣電力股份有限公司", "台電")
                     .replace("核能火力發電工程處", "核火工程處")
                     .replace("輸變電工程處", "輸變電處")
                     .replace("發電廠", "電廠"))
-        lines.append(f"{cat}｜{reg}｜{short}｜{name}｜{day}")
+        amt = f"{budget / 10000:.0f} 萬" if budget else "金額待查"
+        lines.append(f"{cat}｜{reg}｜{short}｜{name}｜{day}｜{amt}")
     if len(fresh) > 15:
         lines.append(f"（另有 {len(fresh) - 15} 筆，請至採購網查）")
     lines.append("→ 金額明細：https://www.taiwanbuying.com.tw/Query_Dateaction.ASP"
