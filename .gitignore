@@ -124,3 +124,6 @@ data/notion_page_ids.json
 # 因此忽略它不會遮蔽應受版控的資料，只阻止未審查的快取內容被順手帶上線。
 # gitignore 對「已追蹤」檔無效，故另以 git rm --cached 移出索引。
 /daily_analysis.json
+
+# 台電標案監控去重狀態（執行期，非交付物）
+data/taipower_tender_seen.json
