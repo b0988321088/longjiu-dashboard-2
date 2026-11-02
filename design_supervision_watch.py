@@ -8,7 +8,7 @@
 篩選條件：
   ①標題含「設計監造／規劃設計監造／委託設計」
   ②履約地點在中部（台中／彰化／南投／苗栗）
-  ③預算 ≤ 600 萬（使用者要「規模比較小」）
+  ③預算 ≤ 800 萬（使用者要「規模比較小」；2026-11-03 由 600 萬上調）
   ④分類非 8671 建築服務
 
 資料源：acebidx（列表頁有 tender id → 詳情頁有預算/截止/履約地點/分類）
@@ -32,7 +32,7 @@ STATE = BASE / "data" / "design_supervision_seen.json"
 TZ = dt.timezone(dt.timedelta(hours=8))
 
 KEYWORD = "設計監造"
-MAX_BUDGET = 6_000_000
+MAX_BUDGET = 8_000_000   # 2026-11-03 由 600 萬調至 800 萬（610 萬這類邊界案不該漏）
 LIST_URL = ("https://acebidx.com/zh-TW/docs/tender/T/by-keyword/"
             "%E8%A8%AD%E8%A8%88%E7%9B%A3%E9%80%A0")
 CENTRAL = ("台中", "彰化", "南投", "苗栗", "后里", "豐原", "大里", "太平", "南屯",
@@ -169,7 +169,7 @@ def main() -> int:
     if not fresh:
         return 0
 
-    lines = [f"🏛️ 中部設計監造（≤600 萬）{stamp}（{len(fresh)} 筆）"]
+    lines = [f"🏛️ 中部設計監造（≤800 萬）{stamp}（{len(fresh)} 筆）"]
     lines += fresh
     lines.append("→ 技師可投 8672 工程服務；8671 建築服務已自動排除")
     print("\n".join(lines))
