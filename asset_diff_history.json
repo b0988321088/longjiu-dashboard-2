@@ -1123,15 +1123,15 @@
   },
   "2026-11-02": {
     "date": "2026-11-02",
-    "total_assets": 26723510.0,
-    "total_liabilities": 30952671.0,
-    "net_worth": -4229161.0,
+    "total_assets": 26709849.0,
+    "total_liabilities": 30952746.0,
+    "net_worth": -4242897.0,
     "securities_market": 2737150.0,
     "insurance_current": 9331847.0,
     "insurance_total": 9331847.0,
     "fund_market": 12606066.0,
     "real_estate": 34017063.0,
-    "cash": 2048447.0,
+    "cash": 2034786.0,
     "other": 0.0,
     "insurance_detail": {
       "【安聯保單A】現值": 4952477.0,
@@ -1157,6 +1157,6 @@
     "bonds": 0.0,
     "unrealized_pnl": 349350,
     "realized_pnl": 23460,
-    "net_worth_incl_re": 29787902.0
+    "net_worth_incl_re": 29774166.0
   }
 }
