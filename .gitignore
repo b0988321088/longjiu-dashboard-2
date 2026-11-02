@@ -127,3 +127,4 @@ data/notion_page_ids.json
 
 # 台電標案監控去重狀態（執行期，非交付物）
 data/taipower_tender_seen.json
+data/design_supervision_seen.json
