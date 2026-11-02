@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import urllib.request
 from datetime import date, datetime
 from pathlib import Path
 
@@ -98,7 +99,59 @@ def _fmt_quote(d: dict | None, label: str = "") -> str:
         print(f"[WARN] {label or '報價'} 盤後未取到當日值 → 顯示最後交易日收盤（{s}）")
     return s
 
-def fetch_yf_market() -> dict:
+def fetch_cpi_fred(timeout: int = 10) -> str:
+    """美國 CPI YoY（FRED CPIAUCSL／CPILFESL；2026-11-03 取代寫死的「7 月 3.5%」字串）。
+
+    舊版把一段固定字面寫進 fetch_yf_market（"美國 7 月 CPI YoY 3.5% (FRED 8/13)"），
+    11 月的日報仍在報 7 月數字 —— 直接違反 no-hardcode。本版改抓 fredgraph.csv
+    （免 API key），由同月去年值算 YoY，並把**實際資料月**寫進字串（資料月落後為常態）。
+    抓不到就回「未取得」，不得沿用舊字面。
+    """
+    def _series(sid: str) -> list[tuple[str, float]]:
+        url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}"
+        req = urllib.request.Request(url, headers=_YF_HEADERS)
+        raw = urllib.request.urlopen(req, timeout=timeout).read().decode("utf-8", "replace")
+        out: list[tuple[str, float]] = []
+        for line in raw.splitlines()[1:]:
+            parts = line.split(",")
+            if len(parts) < 2:
+                continue
+            d, v = parts[0].strip(), parts[1].strip()
+            if not d or v in ("", "."):
+                continue
+            try:
+                out.append((d, float(v)))
+            except ValueError:
+                continue
+        return out
+
+    def _yoy(rows: list[tuple[str, float]]) -> tuple[str, float] | None:
+        if not rows:
+            return None
+        rows = sorted(rows, key=lambda x: x[0])
+        month, latest = rows[-1][:2]
+        y, m = int(month[:4]) - 1, month[5:7]
+        prev = next((v for d, v in rows if d[:7] == f"{y}-{m}"), None)
+        if not prev:
+            return None
+        return month, (latest / prev - 1) * 100
+
+    try:
+        headline = _yoy(_series("CPIAUCSL"))
+        core = _yoy(_series("CPILFESL"))
+        if not headline:
+            raise ValueError("CPIAUCSL 無可用月份")
+        month = headline[0][:7]
+        txt = f"美國 {month} CPI YoY {headline[1]:.1f}%"
+        if core:
+            txt += f"／Core {core[1]:.1f}%"
+        return f"{txt}（FRED，資料月 {month}）"
+    except Exception as e:                     # 抓不到 → 誠實揭露，不沿用舊字面
+        logger.warning(f"FRED CPI 取得失敗：{e}")
+        return "未取得（FRED 無回應）"
+
+
+def fetch_yf_market(cpi: str | None = None) -> dict:
     twii = _yf_chart(_YF_SYMBOLS["twii"])
     tsm = _yf_chart(_YF_SYMBOLS["tsm"])
     sox = _yf_chart(_YF_SYMBOLS["sox"])
@@ -117,7 +170,7 @@ def fetch_yf_market() -> dict:
         "tsm": _fmt_quote(tsm, "台積電"),
         "sox": _fmt_quote(sox, "費半"),
         "us": us,
-        "cpi": "美國 7 月 CPI YoY 3.5% (FRED 8/13)；Core 2.8% (FRED 8/13)",
+        "cpi": cpi if cpi is not None else fetch_cpi_fred(),
     }
 
 def _fetch_news(queries: list[str], limit: int = 3) -> list[dict]:
@@ -241,10 +294,11 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
     briefing = "\n".join(briefing_lines)
     return {"date": today, "generated_at": datetime.now().isoformat(), "market": market, "buffett": buffett, "cto": cto, "signals": signals, "news": news, "scenario_summary": scenario_summary, "briefing": briefing}
 
-def ensure_today_intel(force_refresh: bool = False) -> dict:
+def ensure_today_intel(force_refresh: bool = False, market: dict | None = None) -> dict:
     today = _today_str()
 
-    market = fetch_yf_market()
+    # 2026-11-03：可傳入已抓好的報價（晨間產線先抓一次做真值守門，避免重複打 Yahoo／FRED）。
+    market = market or fetch_yf_market()
     signals = classify_from_yf(market)
     
     news = _fetch_news(["台股", "美股", "台積電", "外資"], limit=10)

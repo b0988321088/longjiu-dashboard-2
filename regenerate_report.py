@@ -247,8 +247,27 @@ tv["holdings_top3"] = [(r[0], pcts[i]) for i, r in enumerate(_mv[:3])]
 tv["holdings_count"] = len(rows)
 
 # 3. 載入市場情報
+# 2026-11-03（使用者反映「日報市場資訊沒更新」）：07:00 產線原本只讀 daily_analysis.json，
+#   而該檔唯一寫入者是 13:00 run_daily 的 ensure_today_intel → 晨間日報永遠落後一個交易日
+#   （且是前一日 13:00 的盤中報價，不是收盤）。改為：資料日 ≠ 今日 → 本輪先重抓一次
+#   （07:00 時台股為前一交易日收盤、美股甫收盤，皆為當下最新可得值）。
+#   守門：四項報價至少要有一項是真值才允許覆寫；抓不到就沿用舊檔，不得用「—」蓋掉好資料。
 daily_analysis = {}
 da_path = BASE / "daily_analysis.json"
+try:
+    if da_path.exists():
+        _da_cur = json.loads(da_path.read_text(encoding="utf-8"))
+        if str(_da_cur.get("date") or "") != TODAY.replace("-", ""):
+            import daily_intel as _mi
+            _mk = _mi.fetch_yf_market()
+            _vals = [str(_mk.get(k) or "").strip() for k in ("twii", "tsm", "sox", "us")]
+            if any(v and v != "—" for v in _vals):
+                _mi.ensure_today_intel(force_refresh=True, market=_mk)
+                print(f"📡 市場情報：{_da_cur.get('date')} → {TODAY.replace('-', '')}（本輪重抓收盤價）")
+            else:
+                print("⚠️ 市場情報：本輪取不到即時報價 → 沿用既有 daily_analysis.json（不覆寫）")
+except Exception as _e:
+    print(f"⚠️ 市場情報更新失敗（沿用既有檔）：{_e}")
 if da_path.exists():
     try:
         daily_analysis = json.loads(da_path.read_text(encoding="utf-8"))
