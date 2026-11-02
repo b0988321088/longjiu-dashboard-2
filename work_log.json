@@ -31,48 +31,6 @@
   ]
  },
  {
-  "date": "2026-10-03",
-  "category": "修正",
-  "item": "月報發布鏈修復：未滿月不得產出月報＋儀表板「彙整月報」改指 9 月",
-  "detail": "使用者回報「十月份才剛開始沒有參考價值」。根因：10/1 修口徑時測試跑 monthly_report.py 2026-10，產出僅 1 天、數字全 0 的空報表，而連結解析是 glob 取最新檔名 → 儀表板「📄 彙整月報」被指向它。修法：①monthly_report.py 未滿月拒產（--force 可覆寫）②check_dashboard_sync 第 16 條（月報連結不得指向未滿月）③index.html 連結改指 monthly_report_2026-09.html ④10 月空報表封存 .archive/ ⑤9 月報穿透現金 854,264（已除役餘數法）→853,675（可動用真值）。CIO 審查 APPROVE 0 必修；另發現 auto_record 對含 git rename 的 commit 必判失敗（INC-281）"
- },
- {
-  "date": "2026-10-03",
-  "category": "修正",
-  "item": "INC-282 A 案 Task 1+2：投資績效統一為單一計算核心 performance_core（既有輸出逐位元不變）",
-  "detail": "使用者裁示先立計算核心、不碰口徑。新增 performance_core.py（唯一計算層：Σ市值變化＋Σ配息實收−Σ投資利息−Σ手續費；排除薪資/租金/消費/借款本金流/淨資產變化；專案收入另列），build_mtd_report.py 閉月與 build_investment_performance.py 全數改讀 core（原 _MAP 分類表移入 core，原位留相容轉發）。驗收：A/B（舊版取 parent commit，%TEMP% 沙盒）mtd_performance.html/mtd_data.json 遮罩 generated_at 後逐位元相同、investment_performance.html 逐位元完全相同、兩支 console/TG 文字相同；三閉月 2026-07 +100,649／2026-08 +428,802／2026-09 +6,315 不變；check_dividend_caliber 78/85→79/85 無新增 FAIL。相容性修復（非口徑）：mtd 閉月 upd 保留 0.0（真值留待 Task 3）、_fmt 正規化負零讓 fee 顯示 +0。驗證器 tools/verify_performance_core_task12.py 19/19 PASS、違規 exit 1。CIO-DeepSeek-Flash APPROVE 0 required_fixes（tree 03b8229a96e4 逐字相符）。commit 2d1b9ed2；Task 3～6（月報改口徑/閘門/動態月報）暫停未動。"
- },
- {
-  "date": "2026-10-03",
-  "category": "完成",
-  "item": "投資績效｜月度比較（歷史視圖）＋資本基準月制度（9 月）",
-  "detail": "使用者 10/3 裁示：新增 performance_monthly.html（儀表板新按鈕「📈 投資績效｜月度比較」）。分區由 performance_core 判定（角色來源＝校正檔 `角色` 宣告）：7 月 Baseline／不可比、8 月歷史參考／非正式基準、9 月⭐新資本基準月、10 月基準後進行中（−34,371／同口徑暫估 −76,371）。累計只計基準月後已完成月份（目前 0 個）。核心新增 month_role／month_usability／declared_baseline_month／estimate_interest／monthly_history；報酬率無可靠期初市值一律顯示「—」不反推；HTML 零寫死數字。防回歸閘門 tools/verify_performance_monthly.py 含突變測試（角色對調後分區須跟著變）。"
- },
- {
-  "date": "2026-10-03",
-  "category": "完成",
-  "item": "月度比較閘門接進每日 07:00 管線（自動化防守：FAIL 阻擋推送）",
-  "detail": "使用者 2026-10-03 核准：把 tools/verify_performance_monthly.py 接進 regenerate_report.py 的 9c4 步驟（組完 _push_files、commit/push 之前）。PASS → 照常推送；FAIL（rc≠0 或驗證器例外）→ _gate_ok=False → 阻擋 commit/push、行程 exit 1（fail-closed，不得因驗證器故障放行）。定位＝自動化防守非績效功能：未改績效計算邏輯、未改頁面、未新增口徑。新增 tools/verify_perf_monthly_gate_wiring.py（結構＋行為負測：植入 9,999,999 必須被抓、還原後位元一致、範圍檢查）。CIO-DeepSeek-Flash APPROVE 0 required fixes（tree 07ac8e66）；程式 commit e201119d 已推 clean-main。"
- },
- {
-  "date": "2026-10-03",
-  "category": "完成",
-  "item": "CIO 獨立審查｜commit 3497b072（INC-283 日報緊急應變過 band_filter＋閘門訊息可讀性）",
-  "detail": "第三方 CIO（independent, adversarial）對抗性審查 APPROVE、0 必修（commit 3497b072／tree 2f589c41f3ea）。11/11 claim checks PASS；Task1+2 驗證器 PASS 19/FAIL 0（rc=0）；月度比較閘門 rc=0 PASS；只動 4 檔、Task1+2 三檔（performance_core/build_mtd_report/build_investment_performance）未觸；KNOWN_GATE_FAILS 白名單未擴大；唯讀驗證器確認未改工作區。三項保留判斷：①3497b072 本身核准、不需返工。②data/emergency_llm_analysis.json 與 emergency_report_2026-10-02.html 仍殘留『台股 7.6%…缺口 -2.4pp』，屬 scope leak／low severity（既有產物、gate 未掃 emergency_report_*），另開工單處理，不回頭污染本 commit。③check_dividend_caliber rc=1 的 6 項為既有白名單 FAIL，CIO 已確認非本 commit 引入，不得據此把 3497b072 判為失敗。狀態鎖定 APPROVE / CLOSED。"
- },
- {
-  "date": "2026-10-03",
-  "category": "完成",
-  "item": "INC-282 裁示：投資績效口徑統一（Q1 留／Q2 每日／Q3 硬擋；43,267 另案）（使用者 2026-10-03 對 A 案計畫（98f07662）最終裁示：①Q1 保留「常態淨資產變化（扣專案）」但與投資績效完全分欄（有管理價值，不可再冒充投資績效；分欄可避免把資產／負債增加誤讀成賺錢）②Q2 一致性閘門掛每日 regenerate_repor",
-  "detail": "使用者 2026-10-03 對 A 案計畫（98f07662）最終裁示：①Q1 保留「常態淨資產變化（扣專案）」但與投資績效完全分欄（有管理價值，不可再冒充投資績效；分欄可避免把資產／負債增加誤讀成賺錢）②Q2 一致性閘門掛每日 rege"
- },
- {
-  "date": "2026-10-03",
-  "category": "完成",
-  "item": "投資績效｜月度比較上線＋資本基準月制度（2026/09）（使用者 2026-10-03 裁示並核准施工：新增 performance_monthly.html（儀表板新按鈕「📈 投資績效｜月度比較」）。分區由 performance_core 角色判定（前端不得人工判斷）：2026/07＝Baseline／不可比（校正檔 市值可靠=false）、2026/0",
-  "detail": "使用者 2026-10-03 裁示並核准施工：新增 performance_monthly.html（儀表板新按鈕「📈 投資績效｜月度比較」）。分區由 performance_core 角色判定（前端不得人工判斷）：2026/07＝Base"
- },
- {
   "date": "2026-10-04",
   "category": "完成",
   "item": "日報2026-10-03（已產出（金額見 snapshot／當日日報檔，勿在此複寫數字））",
