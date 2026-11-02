@@ -3,25 +3,56 @@
 每日 08:30 動態推送：行事曆比對 + Gmail入帳 + 資產變化 + 市場情報 + FIRE
 """
 
-import json, subprocess, re
+import json, subprocess, re, os, sys
 from datetime import date, timedelta
 from pathlib import Path
 from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
 
 BASE = Path(__file__).resolve().parent
 TODAY = date.today()
-GAPI = Path.home() / "AppData/Local/hermes/skills/productivity/google-workspace/scripts/google_api.py"
+
+# 2026-11-03 修：原本寫死 skills/productivity/google-workspace/…，該技能被移走後
+#   run_gapi 一律拋例外並被 `except: return []` 吞掉 → 簡報的 Gmail 段整段消失（靜默）。
+#   改為候選路徑解析（可用 GOOGLE_API_SCRIPT 覆寫），找不到就明確寫 stderr。
+GAPI_CANDIDATES = [
+    os.environ.get("GOOGLE_API_SCRIPT", ""),
+    str(Path.home() / "AppData/Local/hermes/skills/productivity/google-workspace/scripts/google_api.py"),
+    str(Path.home() / "AppData/Local/hermes/hermes-agent/skills/productivity/google-workspace/scripts/google_api.py"),
+    str(Path.home() / "AppData/Local/hermes/skills/.archive/google-workspace/scripts/google_api.py"),
+]
+
 
 def load_json(p):
     return json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
 
+
+def _gapi_path() -> str | None:
+    for p in GAPI_CANDIDATES:
+        if p and Path(p).is_file():
+            return p
+    print("[gapi] 找不到 google_api.py（技能位置變動？）候選：" +
+          " ｜ ".join(x for x in GAPI_CANDIDATES if x), file=sys.stderr)
+    return None
+
+
 def run_gapi(*args):
+    p = _gapi_path()
+    if not p:
+        return []
     try:
-        r = subprocess.run(["python", str(GAPI)] + list(args), capture_output=True, text=True, timeout=15)
-        out = r.stdout
-        idx = out.find("[{")
-        return json.loads(out[idx:]) if idx >= 0 else []
-    except:
+        r = subprocess.run([sys.executable, p] + list(args), capture_output=True, text=True, timeout=30)
+        out = (r.stdout or "").strip()
+        # 2026-11-03：原本只找 "[{"（緊鄰）→ google_api.py 印的是 "[\n  {"，
+        #   一律解析失敗並被吞成「沒有資料」。改成從第一個 "[" 開始整段解析，
+        #   並在 rc≠0／解析失敗時把真正原因寫 stderr（不再靜默）。
+        i = out.find("[")
+        if i < 0:
+            if r.returncode != 0:
+                print(f"[gapi] rc={r.returncode} {(r.stderr or '')[-300:]}", file=sys.stderr)
+            return []
+        return json.loads(out[i:])
+    except Exception as e:  # noqa: BLE001
+        print(f"[gapi] {type(e).__name__}: {e}", file=sys.stderr)
         return []
 
 def get_asset_changes(hist):
@@ -41,12 +72,29 @@ def get_asset_changes(hist):
         diffs.append(f"流動合計 {'▲' if ld>0 else '▼'} {abs(ld):,.0f}")
     return diffs
 
+def _norm_event(e):
+    """統一 event 結構：google_api.py 回傳 start/end 為字串（"2026-11-03" 或含 T 的時間），
+    舊版腳本預期 {"date": ...} / {"dateTime": ...} 巢狀；兩種都吃（2026-11-03 修）。"""
+    if not isinstance(e, dict):
+        return {}
+    e = dict(e)
+    for k in ("start", "end"):
+        v = e.get(k)
+        if isinstance(v, dict):
+            continue
+        if isinstance(v, str) and v:
+            e[k] = {"dateTime": v} if "T" in v else {"date": v}
+        else:
+            e[k] = {}
+    return e
+
+
 def get_calendar_events(run_gapi, days=0):
     ts = TODAY.isoformat()
     end_day = TODAY + timedelta(days=days)
     end_s = end_day.isoformat()
     ev = run_gapi("calendar","list","--start",f"{ts}T00:00:00+08:00","--end",f"{end_s}T23:59:59+08:00")
-    return ev if isinstance(ev, list) else []
+    return [_norm_event(x) for x in ev] if isinstance(ev, list) else []
 
 def format_events(events, with_time=True):
     out = []
