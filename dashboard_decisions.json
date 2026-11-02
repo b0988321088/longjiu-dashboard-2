@@ -11762,6 +11762,16 @@
       "status": "✅ 已更正（可動用口徑）",
       "source": "user"
     }
+,
+  {
+    "id": "mem-20261102210546-1271",
+    "timestamp": "2026-11-02T21:05:46.557172+08:00",
+    "agent": "Hermes",
+    "task": "保單轉換狀態動態化（不再停在九月）＋跌幅期暫停規則入庫",
+    "summary": "使用者 2026-11-02 指證：轉換紀錄停在九月，實際 10 月與 11 月因跌幅較大沒有轉換，但不應停在九月。修法：①新增 snapshot.policy_switch（last_effective 2026-09-16、last_detail、paused_reason、rule、next_review、display、source），institutional_flow.py 第⑧行改讀該真值（原寫死『9/10 送出、T+4 預期 9/16 生效』，缺值時 fail-loud 不得沿用舊敘述）。②移除 index_template.html 靜態殘留『08/24 今日執行 保單轉換 300萬』（2.5 個月前的完成事件被標成今日執行）。③規則定版：保單轉換不按月固定執行；淨值大幅回落期暫停，回穩後再評估（不追跌轉換）；下次檢視＝跌幅收斂後，未排定期日。事實：最後一次生效 9/16（第一金 FJXX 摩根多重收益→M&G入息A 100%）；安聯B 現持 M&G入息A（USDEQ5700）626,019；安聯A 持安聯收益成長／摩根多重收益／PIMCO。commit 8ed9b79d，CIO RECORD tree 2caa9f740063，線上已驗證（新敘述 2 處、舊敘述 0）。",
+    "status": "✅ 已修復並上線",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-11-02T20:24:38.105286"
