@@ -788,8 +788,18 @@ def main():
             lines.append(f"🔴 美元曝險 {_usd_val}% 超標（目標值 ≤{_usd_cap_fn(_snap):.0f}%）→ 美股減碼/美元定存到期轉台幣")
         else:
             lines.append(f"🟡 美元曝險 {_usd_val}%（目標值 ≤{float(_usd_cap_fn(_snap) or 60):.0f}%）→ 未達減碼閾值，續觀察")
-        # ⑧ 保單轉換（9/10 安聯＋第一金同步轉入 M&G入息）
-        lines.append("✅ 保單轉換 9/10 送出（安聯＋第一金同步轉入 M&G入息A美元避險月配，T+4 預期 9/16 生效）；9/1 安聯 PIMCO+50萬、貝萊德科技A10 90萬→摩根 已完成")
+        # ⑧ 保單轉換（2026-11-02 動態化：原寫死「9/10 送出、T+4 預期 9/16 生效」
+        #   → 10 月、11 月都沒轉換，畫面卻永遠停在九月，使用者指證「不應該停在九月份」。
+        #   真值＝snapshot.policy_switch（最後一次生效日／本期未轉換原因／轉換規則／下次檢視）
+        _psw = (_snap.get("policy_switch") or {})
+        if _psw.get("display"):
+            lines.append(_psw["display"])
+        elif _psw.get("last_effective"):
+            lines.append(
+                f"✅ 保單轉換：最後一次 {_psw.get('last_effective')} T+4 生效完成"
+                f"｜本期：{_psw.get('paused_reason','')}｜下次檢視：{_psw.get('next_review','')}")
+        else:
+            lines.append("❓ 保單轉換：snapshot.policy_switch 缺值（禁沿用舊敘述，待補真值）")
         # ⑨ 負債/質押
         lines.append(_ps.pledge_status_line(_snap) + "；到位前全面觀望")
         # ⑩ 產業輪動（2026-09-21：避開名單與「無優先標的」狀態全部動態讀輪動引擎；
