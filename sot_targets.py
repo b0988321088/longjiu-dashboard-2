@@ -1467,6 +1467,11 @@ def unfreeze_conditions(snap: dict, state: dict | None = None) -> dict:
         "all_passed": not unmet,
         "未達": unmet,
         "US30Y角色": "宏觀風險警示（不否決台股分批）",
+        # 2026-11-02（CIO 18:30 審查質疑③／使用者指示修復）：拆開「加碼」與「減碼」閘門。
+        # 原本 11/01 劇本寫「解凍後才分批減碼美股」→ 與解凍條件「美元曝險<65%」形成死結
+        # （減碼才能降曝險，降曝險才能解凍，解凍才准減碼）。本函式只閘「加碼／新增」，
+        # 風險收斂（減碼、停損、還債、降低槓桿）恆可執行，不需也不得要求解凍。
+        "減碼角色": "不受本函式限制（風險收斂恆可執行；本函式僅閘加碼／新增部位）",
         "pledge_ltv": ltv,
         "repayment_valve": valve,
         "source": "sot_targets.unfreeze_conditions（v1.2 TD-20261015-02；2026-10-14 裁決）",
