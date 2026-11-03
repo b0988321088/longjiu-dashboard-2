@@ -139,7 +139,9 @@ def pledge_card():
         if not ov:
             return ""
         parts = [f'<div class="pen"><h3>🏦 質押壓力（整體三檔加總）</h3>',
-                 f"<p>現況 <b>{ov.get('現況','')}</b>｜{ov.get('追繳線70%','')}</p>"]
+                 f"<p>現況 <b>{ov.get('現況','')}</b></p>",
+                 f"<p>{ov.get('銀行級距','')}</p>",
+                 f"<p>{ov.get('距離','')}</p>"]
         for k in ("跌20%", "跌30%", "跌35%"):
             if ov.get(k):
                 parts.append(f"<p>{k}：{ov[k]}</p>")

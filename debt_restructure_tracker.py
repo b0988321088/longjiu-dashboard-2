@@ -226,15 +226,17 @@ def main():
                              pledge_loan_twd as _pledge_loan_twd,
                              pledge_collateral_market_value as _pledge_mv_fn)
     ltv = _pledge_ltv(snap)
-    print("\n【4.LTV質押槓桿監控｜策略A 燈號（8/20 定版：綠≤53/黃54-58/紅≥59/追繳≥70）】")
+    print("\n【4.質押監控｜LTV 燈號（綠≤53/黃54-58/紅≥59）＋銀行維持率（通知160/追繳140）】")
     if ltv <= 0.53:
-        light4 = "🟢 綠燈（LTV≤53%：月淨現金流≥+5萬 且穿透在目標區間 → 維持現狀每週監控）"
+        light4 = "🟢 綠燈（LTV≤53%＝維持率≥188.7%：維持現狀、每日監控）"
     elif ltv <= 0.58:
-        light4 = "🟡 黃燈（LTV 54~58%：停新增風險資產→重跑壓力測試→確認200萬現金墊可動用→預演解約300萬保單(不執行)→每3天監控）"
-    elif ltv < 0.70:
-        light4 = "🔴 紅燈（LTV≥59%：①動用現金墊還Lombard ②解約300萬保單(3%成本9萬)還債 ③賣部分基金避免強制平倉）"
+        light4 = "🟡 黃燈（LTV 54~58%：停新增風險資產→重跑壓力測試→確認現金墊可動用→每3天監控）"
+    elif ltv < 0.625:
+        light4 = "🔴 紅燈（LTV≥59%：動用現金墊還本／不賣擔保品）"
+    elif ltv < 0.714:
+        light4 = "🔔 銀行通知區（維持率<160%：銀行會通知 → 準備補繳或還本）"
     else:
-        light4 = "💥 追繳警戒（LTV≥70%：立即執行紅燈全部動作）"
+        light4 = "💥 銀行追繳區（維持率<140%／LTV≥71.4%：限期還本，優先還本不補擔保品）"
     print(f"  current_LTV_ratio = {ltv*100:.1f}% → {light4}" if ltv else "  current_LTV_ratio = 0%（尚未質押）→ 🟢")
     # 擔保池組成／借款金額一律從 snapshot 讀（2026-09-11：原為舊版硬編碼「股票600+平衡300~600」，
     # 會讓 9/11 新質押（池 1,177 萬 × 4.5 成 = 540 萬）在週報顯示成舊計畫）
@@ -246,8 +248,11 @@ def main():
     if _pool and _loan:
         print(f"  擔保池市值 {_pool:,.0f}｜實際動用 {_loan:,.0f}｜利率 {(_rate*100 if _rate else 0):.2f}%"
               f"｜撥款 {snap.get('pledge_disbursement_20260929', {}).get('日期', '—')}")
-        print(f"  壓力情境：跌20% → LTV {_loan/(_pool*0.8)*100:.1f}%｜跌30% → LTV {_loan/(_pool*0.7)*100:.1f}%"
-              f"｜追繳線70% 需再跌 {100-_loan/0.7/_pool*100:.1f}%")
+        print(f"  壓力情境：跌20% → LTV {_loan/(_pool*0.8)*100:.1f}%／維持率 {_pool*0.8/_loan*100:.1f}%"
+              f"｜跌30% → LTV {_loan/(_pool*0.7)*100:.1f}%／維持率 {_pool*0.7/_loan*100:.1f}%")
+        print(f"  銀行級距：通知 160%（池需跌 {100-_loan*1.6/_pool*100:.1f}%）"
+              f"／追繳 140%（池需跌 {100-_loan*1.4/_pool*100:.1f}%）"
+              f"｜內部停止線 LTV 53%（池需跌 {100-_loan/0.53/_pool*100:.1f}%）")
     else:
         # fail-closed：不補任何「看起來合理」的舊文（原為 7 月寫死字串）
         print("  ⛔ 質押事實缺值（fund_pledge_loan／擔保池）→ 拒絕顯示 LTV 與擔保池明細")
