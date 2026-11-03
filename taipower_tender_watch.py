@@ -329,10 +329,11 @@ def main() -> int:
         if len(hits) > 15:
             out.append(f"（另有 {len(hits) - 15} 筆，請至採購網查）")
     if over_labor:
+        # 2026-11-03 使用者裁決：勞務／勤務一律 1,000 萬上限、保全／警衛勤務不納入
+        #   （無保全業商業登記）→ 超過上限者僅列筆數與前 3 高，供確認「不是漏抓」
         over_labor.sort(key=lambda x: -(x[0] or 0))
-        out.append(f"⛔ 勞務／勤務另有 {len(over_labor)} 筆超過 1,000 萬上限"
-                   "（未列入，供你判斷是否放寬）")
-        for b_, n_, d_ in over_labor[:8]:
+        out.append(f"⛔ 另有 {len(over_labor)} 筆超過 1,000 萬上限（依裁決不列入，僅供確認）")
+        for b_, n_, d_ in over_labor[:3]:
             out.append(f"　・{b_/10000:.0f} 萬｜{n_[:52]}｜{d_}")
     out.append("→ 🆕 今日新案・📌 先前已報｜工安環保查證＝taiwanbuying 近 "
                f"{WINDOW_DAYS} 日；勞務／勤務＝acebidx 等標期內（含預算）"
