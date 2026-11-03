@@ -26,6 +26,8 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
@@ -37,6 +39,15 @@ def _m(v) -> float:
         return float(v)
     except (TypeError, ValueError):
         return 0.0
+
+
+def _num(v):
+    """整數值保持 int（避免 snapshot 出現 24000.0 這種浮點尾巴上頁）"""
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return v
+    return int(f) if f.is_integer() else f
 
 
 def compute(snap: dict, month: str) -> tuple[dict, list[str]]:
@@ -139,10 +150,10 @@ def main() -> int:
         rrb = snap.setdefault("rent_receivable_by_month", {})
         rrb[month] = values["rent_receivable_by_month"][month]
         snap["rent_receivable_by_month"] = {k: rrb[k] for k in sorted(rrb)}
-    snap["rent_monthly_actual"] = values["rent_monthly_actual"]
-    pi["rent_monthly_actual"] = values["pi_rent_monthly_actual"]
-    pi["dividend_actual_sum"] = values["pi_dividend_actual_sum"]
-    snap["rent_monthly_gap"] = values["rent_monthly_gap"]
+    snap["rent_monthly_actual"] = _num(values["rent_monthly_actual"])
+    pi["rent_monthly_actual"] = _num(values["pi_rent_monthly_actual"])
+    pi["dividend_actual_sum"] = _num(values["pi_dividend_actual_sum"])
+    snap["rent_monthly_gap"] = _num(values["rent_monthly_gap"])
     _plan_diff = {k: v for k, v in (snap.get("rent_receivable_by_month", {}).get(month) or {}).items()
                   if _m(v) != _m((snap.get("rent_breakdown") or {}).get(k))}
     _extra = ("；本月應收含一次性調整（逐項見 rent_receivable_by_month['%s']：%s）"
@@ -154,6 +165,23 @@ def main() -> int:
     # 用錯 indent 會把整檔重排成上千行假 diff（2026-10-01 INC-268 實際踩到過）
     SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
     print("✅ 已寫入 snapshot.json")
+
+    # 2026-11-03 修正：留停驗收表（sabbatical_checklist_update.py）原本沒有任何自動呼叫者
+    #   → snapshot.sabbatical_checklist.驗收等級.月份 停在 2026-10，退休規劃頁標籤也停在 10 月。
+    #   月初校正後補跑一次，保證每月至少更新一次月份標籤與記錄（真值日 12:00 資料更新後會再跑一次）。
+    _sch = BASE / "sabbatical_checklist_update.py"
+    if _sch.exists():
+        try:
+            _r = subprocess.run([sys.executable, str(_sch), month], cwd=str(BASE),
+                                capture_output=True, text=True, timeout=180)
+            _out = (_r.stdout or "").strip().splitlines()
+            print("  📋 留停驗收表：" + (_out[0] if _out else f"rc={_r.returncode}（無輸出）"))
+            if _r.returncode != 0:
+                print(f"  ⚠️ sabbatical_checklist_update rc={_r.returncode}："
+                      f"{(_r.stderr or '').strip()[:200]}")
+        except Exception as exc:  # noqa: BLE001
+            print(f"  ⚠️ 留停驗收表重算失敗：{exc}")
+
     print("→ 下一步：four_source_sync.py（四源同步）→ LJ_PREPUSH=1 check_dashboard_sync.py（閘門）→ auto_push")
     return 0
 
