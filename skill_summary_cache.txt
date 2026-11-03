@@ -14,7 +14,6 @@
 • hermes-themes："Author a Hermes color theme that skins every surface."
 • hermes-workflow-sop：Hermes 自主工作流程 SOP — 任務分派、執行、紀錄標準程序
 • longjiu-delivery-protocol：龍九系統交付鐵則與委派策略 — 檔案傳送、部署、CIO委派、成本控管
-• longjiu-workflow-best-practices：龍九系統工作流程最佳實踐 — 包含數據管理、自動化、日誌和校驗原則
 • mb-zip-extraction：Moneybook ZIP 解密與數據提取 SOP
 • nuwa-skill："女媧造人：輸入人名/主題→深度調研→生成人物 Skill。觸發：造 skill、蒸餾XX、XX 的思維方式。"
 • pipeline-sync-patterns：資料管線同步陷阱與執行順序模式 — 一次改到位、避免 patch over patch
