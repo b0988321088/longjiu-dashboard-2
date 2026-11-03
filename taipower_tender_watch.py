@@ -28,7 +28,8 @@ TZ = dt.timezone(dt.timedelta(hours=8))
 
 SUPERVISE_KW = ("督導", "巡查", "查證", "稽核", "稽查")
 SUPERVISE_REQ = ("安衛", "安全衛生", "工安", "勞安", "職安", "環保", "污染")
-LABOR_KW = ("勞務", "派遣", "承攬", "人力", "勤務")
+LABOR_KW = ("勤務",)          # 2026-11-03：只收「勤務類勞務性工作」型（如 116年度勤務類勞務性工作）
+LABOR_REQ = ("勞務",)
 # 低階／特許類勞務不做（保全需許可、清潔屬低價紅海）
 NOT_FIT = ("保全", "警衛", "清潔", "綠美化", "除草", "清運", "病媒", "洗車", "水塔")
 # 2026-11-03 使用者裁決「不放寬」：環境監測／檢測／環評／採樣類一律排除（僅計數揭露）
@@ -106,14 +107,14 @@ def classify(org: str, name: str) -> str | None:
         return None
     if any(k in s for k in SUPERVISE_KW) and any(k in s for k in SUPERVISE_REQ):
         return "🛡️ 工安環保查證"
-    if any(k in s for k in LABOR_KW):
+    if any(k in s for k in LABOR_KW) and any(k in s for k in LABOR_REQ):
         return "👷 勞務／勤務"
     return None
 
 
 MAX_BUDGET = 10_000_000  # 2026-11-03 使用者定案：督導／勞務／工安／環保一律 1,000 萬上限
 WINDOW_DAYS = 7           # 2026-11-03：改列「近 7 日內」符合條件的案，不再只報當日新案
-BUDGET_LOOKUP_CAP = 8     # 每輪最多查 8 筆金額，避免請求過量
+BUDGET_LOOKUP_CAP = 20    # 2026-11-03 使用者同意：每輪最多查 20 筆金額（原 8 筆）
 
 
 def _http(url: str) -> str:
@@ -121,17 +122,26 @@ def _http(url: str) -> str:
     return urllib.request.urlopen(req, timeout=25).read().decode("utf-8", "ignore")
 
 
-def lookup_budget(name: str) -> int | None:
-    """用 acebidx 關鍵字搜尋對應標案並抓預算金額；抓不到回 None（寧可通知不漏）。"""
+def lookup_budget(name: str, org: str = "") -> int | None:
+    """用 acebidx 關鍵字搜尋對應標案並抓預算金額。
+
+    2026-11-03 修：acebidx 同一案名會有多個機關版本（各電廠「勤務類勞務性工作」），
+    只比對前 10 字會抓到別機關的金額 → 誤判超上限而漏報。
+    改為同時要求「案名關鍵字」與「機關識別字」都命中；比對不到回 None（寧可標金額待查）。
+    """
     kw = name[:10]
+    org_key = org.replace("台灣電力股份有限公司", "").replace("臺灣電力股份有限公司", "")[:6]
     try:
         s = _http("https://acebidx.com/zh-TW/docs/tender/T/by-keyword/" + urllib.parse.quote(kw))
         tid = None
         for href, body in re.findall(r'href="(/zh-TW/docs/tender/id/[^"]+)"[^>]*>(.{0,900}?)</a>', s, re.S):
             txt = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", htmlmod.unescape(body)))
-            if kw in txt:
-                tid = href
-                break
+            if kw not in txt:
+                continue
+            if org_key and org_key not in txt:
+                continue
+            tid = href
+            break
         if not tid:
             return None
         d = _http("https://acebidx.com" + tid)
@@ -200,7 +210,7 @@ def main() -> int:
             budget = None
             if len(lookups) < BUDGET_LOOKUP_CAP:
                 lookups.append(name)
-                budget = lookup_budget(name)
+                budget = lookup_budget(name, org)
                 if budget is not None and budget > MAX_BUDGET:
                     seen[key] = stamp      # 超過上限：記錄但不通知
                     continue
