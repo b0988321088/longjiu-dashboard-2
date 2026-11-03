@@ -84,11 +84,17 @@ def review_decisions():
         today_decs = [dec for dec in decisions if dec.get("approved_at", "")[:10] == today or dec.get("timestamp", "")[:10] == today]
         
         if today_decs:
-            results.append(f"📋 今日決策 ({len(today_decs)} 項)：")
-            for dec in today_decs[-5:]:
-                name = dec.get("text", dec.get("name", dec.get("id", "?")))[:60]
-                action = dec.get("action", dec.get("status", "?"))
-                results.append(f"  {action} {name}")
+            shown = today_decs[-5:]
+            results.append(f"📋 今日決策 ({len(today_decs)} 項，列最近 {len(shown)} 筆)：")
+            for dec in shown:
+                ts = (dec.get("timestamp") or dec.get("approved_at") or "")
+                hhmm = ts[11:16] if len(ts) >= 16 else "--:--"
+                status = dec.get("status") or dec.get("action") or "?"
+                # 2026-11-03 修正（使用者核准）：原本只印 id（mem-2026…）看不出內容。
+                # 決策結構＝id/timestamp/agent/task/summary/status/source → 以 task 為標題（
+                # summary 前 40 字會斷在半句），task 缺才 fallback summary。
+                title = (dec.get("task") or "").strip() or (dec.get("summary") or dec.get("text") or dec.get("name") or dec.get("id", "?"))
+                results.append(f"  {hhmm} [{status}] {title[:40]}")
         else:
             results.append("📋 今日無新決策")
         
