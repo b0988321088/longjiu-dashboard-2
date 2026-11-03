@@ -6,7 +6,7 @@
 4. 通知 Telegram
 """
 import json, os, sqlite3
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
@@ -184,56 +184,130 @@ def gaps_analysis():
         results.append("  ✅ 系統狀態良好，無需新增技能")
     
     return results
-def tomorrow_priorities():
+def _load_snapshot():
+    return json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+
+
+def _rent_due_windows(snap):
+    """從 rent_received_records 推每項的歷史入帳日窗口。
+
+    2026-11-03 修正（使用者指證：租金有固定入帳時間，卻每天被列為「明日優先改善」）：
+      原邏輯只看「本月應收 - 本月已收 > 0」就列入優先，未考慮約定入帳日，
+      導致 11/03（店面 1 日已收、其餘約定 18–28 日）每天誤報。
+    回傳 {項目: (最早日, 最晚日, 樣本數)}，取最近 6 期。
+    """
+    from collections import defaultdict
+    hist = defaultdict(list)
+    for d, items in (snap.get("rent_received_records") or {}).items():
+        if not isinstance(items, dict):
+            continue
+        try:
+            day = int(str(d).split("-")[2])
+        except (IndexError, ValueError):
+            continue
+        for k in items:
+            hist[k].append(day)
+    out = {}
+    for k, days in hist.items():
+        days = sorted(days)[-6:]
+        out[k] = (min(days), max(days), len(days))
+    return out
+
+
+def rent_status(snap):
+    """回傳 (actions, infos)。只有「已過約定入帳窗口仍未收」才算待辦。"""
     today = date.today()
-    
-    # 自動判斷明日應辦事項
-    priorities = []
-    
-    # 2026-08-24 使用者確認：Notion 訂閱已取消（不再提醒）；信用卡全部自動扣繳（不再提醒截止日，改由 reminder_agent 餘額警示）
-    
-    # 2026-08-30 修正：動態讀 rent_received_records（硬編碼 21,000/2,100 過時 → 只提醒未收）
-    # 2026-10-16 修正（跨月累計 bug）：原 _got 把 rent_received_records「所有月份」加總，
-    #   卻與「單月」應收（rent_breakdown 常態 80,100）比 → 累計永遠 >= 月應收 →
-    #   永遠印「✅ 租金已全收」。實測 2026-10 實收僅 24,000（10/01 大義街店面）仍照印。
-    #   修法：①當月應收讀 rent_receivable_by_month[當月]（缺 → fallback rent_breakdown）
-    #         ②當月實收只算「日期落在當月」的項目
-    #         ③與 snapshot.rent_monthly_gap（單一真值）交叉驗證，不一致就顯性告警
-    try:
-        import json as _json
-        from pathlib import Path as _Path
-        _snap = _json.load(open(str(_Path(__file__).resolve().parent / "snapshot.json"), encoding="utf-8"))
-        _ym = date.today().strftime("%Y-%m")
-        _rr = _snap.get("rent_received_records", {}) or {}
-        _rbm = (_snap.get("rent_receivable_by_month") or {}).get(_ym)
-        _rb = _rbm or (_snap.get("rent_breakdown", {}) or {})
-        _got = {}
-        for _d, _items in _rr.items():
-            if not str(_d).startswith(_ym):      # ← 關鍵：只算當月
-                continue
-            if _items and isinstance(_items, dict):
-                for _k, _v in _items.items():
-                    _got[_k] = _got.get(_k, 0) + _v
-            elif isinstance(_items, (int, float)):
-                _got["其他"] = _got.get("其他", 0) + _items
-        _due, _recv = sum(_rb.values()), sum(_got.values())
-        _missing = {k: v for k, v in _rb.items() if _got.get(k, 0) < v}
-        _gap = float(_snap.get("rent_monthly_gap") or 0)
-        if _missing:
-            _mtxt = " + ".join(f"{k} {v:,}" for k, v in _missing.items())
-            priorities.append(f"🟡 租金待收：{_mtxt}（本月應收 {_due:,}／已收 {_recv:,}）")
-            if abs(sum(_missing.values()) - _gap) > 1:
-                priorities.append(
-                    f"⚠️ 租金待收合計 {sum(_missing.values()):,} 與 snapshot.rent_monthly_gap {_gap:,.0f} 不一致（待查）")
+    ym = today.strftime("%Y-%m")
+    rb = (snap.get("rent_receivable_by_month") or {}).get(ym) or (snap.get("rent_breakdown") or {})
+    got = {}
+    for d, items in (snap.get("rent_received_records") or {}).items():
+        if not str(d).startswith(ym):      # 只算當月
+            continue
+        if items and isinstance(items, dict):
+            for k, v in items.items():
+                got[k] = got.get(k, 0) + v
+        elif isinstance(items, (int, float)):
+            got["其他"] = got.get("其他", 0) + items
+    win = _rent_due_windows(snap)
+    due, recv = sum(rb.values()), sum(got.values())
+    missing = {k: v for k, v in rb.items() if got.get(k, 0) < v}
+
+    actions, infos = [], []
+    overdue, notyet, inwin = [], [], []
+    for k, v in missing.items():
+        lo, hi, n = win.get(k, (None, None, 0))
+        if lo is None:
+            notyet.append(f"{k} {v:,}（無歷史入帳日，人工確認）")
+        elif today.day > hi:
+            overdue.append(f"{k} {v:,}（約定 {lo}–{hi} 日，已逾期 {today.day - hi} 天）")
+        elif today.day < lo:
+            notyet.append(f"{k} {v:,}（約定 {lo}–{hi} 日）")
         else:
-            priorities.append(f"✅ 租金已全收（本月應收 {_due:,}／已收 {_recv:,}）")
-    except Exception:
-        pass
-    
-    # 機會子彈監控
-    priorities.append("🟢 監控台股單週跌幅，距 ±10% 觸發線")
-    
-    return priorities or ["✅ 無緊急事項"]
+            inwin.append(f"{k} {v:,}（約定 {lo}–{hi} 日，窗口內待入帳）")
+
+    if overdue:
+        actions.append(f"🔴 租金逾期未收：{' + '.join(overdue)}")
+    if inwin:
+        infos.append(f"🟡 租金窗口內待入帳：{' + '.join(inwin)}")
+    if notyet:
+        infos.append(f"ℹ️ 租金未到入帳日：{' + '.join(notyet)}")
+
+    # 與 snapshot.rent_monthly_gap 交叉驗證（單一真值）
+    gap = float(snap.get("rent_monthly_gap") or 0)
+    if abs(sum(missing.values()) - gap) > 1:
+        actions.append(f"⚠️ 租金待收合計 {sum(missing.values()):,} 與 snapshot.rent_monthly_gap {gap:,.0f} 不一致（待查）")
+
+    if not missing:
+        infos.append(f"✅ 租金已全收（本月應收 {due:,}／已收 {recv:,}）")
+    else:
+        infos.append(f"租金進度：本月應收 {due:,}／已收 {recv:,}／待收 {sum(missing.values()):,}")
+    return actions, infos
+
+
+def tw_market_read(snap):
+    """實算台股加權單日與近 5 交易日跌幅，門檻讀 thresholds 單日急跌煞車。
+
+    2026-11-03 修正（使用者指證「監控結果是什麼」）：原本是寫死字串
+    「監控台股單週跌幅，距 ±10% 觸發線」——沒有計算，且 thresholds_2026_0915
+    並無「單週 ±10%」這條門檻（±10 是 DAA 動態偏移上限，屬配置偏移非跌幅）。
+    """
+    import urllib.request
+    th = (snap.get("thresholds_2026_0915") or {}).get("風險煞車", {}) or {}
+    brake = float(th.get("單日急跌_pct") or 3)
+    try:
+        u = "https://query1.finance.yahoo.com/v8/finance/chart/%5ETWII?range=1mo&interval=1d"
+        req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            d = json.load(resp)
+        r = d["chart"]["result"][0]
+        px = [(t, c) for t, c in zip(r["timestamp"], r["indicators"]["quote"][0]["close"]) if c]
+        if len(px) < 6:
+            raise ValueError("樣本不足")
+        last, prev, wk = px[-1][1], px[-2][1], px[-6][1]
+        d1 = (last / prev - 1) * 100
+        w5 = (last / wk - 1) * 100
+        asof = datetime.utcfromtimestamp(px[-1][0]).strftime("%m/%d")
+        head = f"台股加權 {last:,.2f}（{asof}，{d1:+.2f}%）｜近 5 交易日 {w5:+.2f}%"
+        notes = []
+        if abs(d1) >= brake:
+            notes.append(
+                f"🔴 {head}｜已觸發單日急跌 {brake:g}% 煞車（thresholds_2026_0915.風險煞車）：只回報不動作，暫緩加減碼"
+            )
+        else:
+            notes.append(f"🟢 {head}｜單日急跌煞車門檻 {brake:g}%（未觸發）")
+        notes.append("ℹ️ 單週跌幅僅供觀察；系統無「單週 ±10%」門檻，加減碼授權仍看 US30Y 閘門與單日急跌煞車")
+        return notes
+    except Exception as e:
+        return [f"⚠️ 台股報價抓取失敗（{type(e).__name__}），本日不顯示跌幅，不以舊 snapshot 代替"]
+
+
+def tomorrow_priorities():
+    """回傳 (actions, infos)：actions 才是真正要處理的事。"""
+    snap = _load_snapshot()
+    actions, infos = rent_status(snap)
+    for line in tw_market_read(snap):
+        (actions if line.startswith("🔴") else infos).append(line)
+    return actions, infos
 
 
 # ── Telegram 通知 ──
@@ -272,9 +346,16 @@ if __name__ == "__main__":
     lines.extend("  " + r for r in gaps_analysis())
     lines.append("")
     
+    _acts, _infos = tomorrow_priorities()
     lines.append("📌 明日優先改善：")
-    for p in tomorrow_priorities():
-        lines.append(f"  {p}")
+    if _acts:
+        lines.extend(f"  {p}" for p in _acts)
+    else:
+        lines.append("  ✅ 無需動作（租金未到入帳窗口／無其他待辦）")
+    if _infos:
+        lines.append("")
+        lines.append("📎 現況資訊：")
+        lines.extend(f"  {p}" for p in _infos)
     
     text = "\n".join(lines)
     print(text)
