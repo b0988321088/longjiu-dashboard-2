@@ -142,6 +142,13 @@ def lookup_budget(name: str, org: str = "") -> int | None:
                 continue
             tid = href
             break
+        if not tid and org_key:
+            # 退一步：不要求機關字，但案名頭尾都要命中（避免抓到別案）
+            for href, body in re.findall(r'href="(/zh-TW/docs/tender/id/[^"]+)"[^>]*>(.{0,900}?)</a>', s, re.S):
+                txt = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", htmlmod.unescape(body)))
+                if name[:12] in txt and name[-8:] in txt:
+                    tid = href
+                    break
         if not tid:
             return None
         d = _http("https://acebidx.com" + tid)
@@ -171,6 +178,42 @@ def save_seen(seen: dict) -> None:
     tmp.replace(STATE)
 
 
+ACE_BASE = "https://acebidx.com/zh-TW/docs/tender/T/by-keyword/"
+ACE_ROW_RE = re.compile(r'href="(/zh-TW/docs/tender/id/[^"]+)"[^>]*>(.{0,900}?)</a>', re.S)
+# 2026-11-03：勞務／勤務改掃 acebidx，才拿得到「等標期＋預算」；關鍵字涵蓋台電各廠勤務類寫法
+ACE_LABOR_KW = ("勤務類勞務性工作", "勤務類", "事務類勞務性工作", "勤務類及清潔維護類")
+
+
+def ace_rows(kw: str, max_pages: int = 6) -> dict[str, str]:
+    """acebidx by-keyword 逐頁抓取（每頁 50 筆，分頁走路徑 /2 /3 …）。"""
+    out: dict[str, str] = {}
+    for pg in range(1, max_pages + 1):
+        u = ACE_BASE + urllib.parse.quote(kw) + ("" if pg == 1 else f"/{pg}")
+        try:
+            raw = _http(u)
+        except Exception:
+            break
+        new = 0
+        for href, body in ACE_ROW_RE.findall(raw):
+            tid = href.rstrip("/").split("/")[-1]
+            if tid in out:
+                continue
+            out[tid] = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", htmlmod.unescape(body)))
+            new += 1
+        if new == 0:
+            break
+    return out
+
+
+def _ace_detail(tid: str) -> dict:
+    """acebidx 詳情（預算／截止／履約地點）— 沿用 design_supervision_watch 的解析。"""
+    try:
+        import design_supervision_watch as _dd
+        return _dd.fetch_detail(tid)
+    except Exception:
+        return {}
+
+
 def main() -> int:
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -198,12 +241,10 @@ def main() -> int:
                 env_n += 1                     # 不放寬：僅計數揭露
                 continue
             cat = classify(org, name)
-            if not cat:
-                continue
+            if cat != "🛡️ 工安環保查證":
+                continue                       # 勞務／勤務改由 acebidx 掃（含等標期與預算）
             reg = region_of(org, name)
-            if cat == "👷 勞務／勤務" and reg != "中部":
-                continue                       # 勞務／勤務只收中部
-            if cat == "🛡️ 工安環保查證" and reg != "中部" and "台灣電力" not in org:
+            if reg != "中部" and "台灣電力" not in org:
                 continue                       # 工安環保查證：台電可跨全台，其他機關只收中部
             key = hashlib.md5(f"{org}|{name}".encode("utf-8")).hexdigest()[:16]
             is_new = key not in seen
@@ -218,6 +259,43 @@ def main() -> int:
                 seen[key] = stamp
             fresh.append((cat, reg, org, name, day, budget, is_new))
 
+    # ② 勞務／勤務：改掃 acebidx（有等標期與預算），能撈到 taiwanbuying 7 日視窗外的案
+    ace_scanned = 0
+    over_labor: list[tuple[int | None, str, str]] = []
+    try:
+        import design_supervision_watch as _dd
+    except Exception:
+        _dd = None
+    if _dd is not None:
+        now_dt = dt.datetime.now(TZ)
+        for kw in ACE_LABOR_KW:
+            for tid, txt in ace_rows(kw).items():
+                if not ("勤務" in txt and "勞務" in txt):
+                    continue
+                if any(k in txt for k in ENV_EXCLUDE) or any(k in txt for k in NOT_FIT):
+                    continue
+                reg = region_of(txt, txt)
+                if reg != "中部" and "台灣電力" not in txt:
+                    continue
+                ace_scanned += 1
+                d2 = _ace_detail(tid)
+                b = d2.get("budget")
+                dl = _dd.parse_deadline(d2.get("deadline", ""))
+                if dl and dl < now_dt:
+                    continue                   # 已過等標期 → 不列
+                name2 = re.sub(r"^\s*\d+\s+", "", txt)
+                name2 = re.sub(r"\s*\d+月\d+日\s*公告\s*$", "", name2).strip()
+                dls = dl.strftime("%m/%d %H:%M") if dl else "截止日未載"
+                if b and b > MAX_BUDGET:
+                    if (b, name2, dls) not in over_labor:
+                        over_labor.append((b, name2, dls))
+                    continue                   # 超過 1,000 萬 → 不列入，但下方揭露
+                key = hashlib.md5(name2.encode("utf-8")).hexdigest()[:16]
+                is_new = key not in seen
+                if is_new:
+                    seen[key] = stamp
+                fresh.append(("👷 勞務／勤務", reg, "", name2, dls, b, is_new))
+
     save_seen(seen)
 
     if scanned == 0:
@@ -229,13 +307,15 @@ def main() -> int:
         short = (org.replace("台灣電力股份有限公司", "⚡ 台電")
                     .replace("核能火力發電工程處", "核火工程處")
                     .replace("輸變電工程處", "輸變電處")
-                    .replace("發電廠", "電廠"))
-        amt = f"{budget / 10000:.0f} 萬" if budget else "金額待查"
+                    .replace("發電廠", "電廠")) if org else ""
+        amt = f"{budget / 10000:.0f} 萬" if budget else "金額未載"
         mark = "🆕" if is_new else "📌"
-        return f"{mark} {amt}｜{short}｜{name[:56]}｜{day}"
+        mid = f"{short}｜" if short else ""
+        return f"{mark} {amt}｜{mid}{name[:64]}｜{day}"
 
-    out = [f"🏗️ 中部標案日報 {stamp}（近 {WINDOW_DAYS} 日、≤1,000 萬；"
-           f"掃 {scanned} 筆，環保監測類排除 {env_n} 筆）"]
+    out = [f"🏗️ 中部標案日報 {stamp}（≤1,000 萬；"
+           f"taiwanbuying 掃 {scanned} 筆〔近 {WINDOW_DAYS} 日〕、"
+           f"acebidx 勞務候選 {ace_scanned} 筆；環保監測類排除 {env_n} 筆）"]
     for cat in ("🛡️ 工安環保查證", "👷 勞務／勤務"):
         hits = [f for f in fresh if f[0] == cat]
         # 新案優先、金額已知者優先、日期新者優先
@@ -244,13 +324,20 @@ def main() -> int:
             out.append(f"{cat}：今日無符合條件案件")
             continue
         out.append(f"{cat}：{len(hits)} 筆")
-        for c_, reg, org, name, day, budget, is_new in hits[:12]:
+        for c_, reg, org, name, day, budget, is_new in hits[:15]:
             out.append("・" + _line(org, name, day, budget, is_new))
-        if len(hits) > 12:
-            out.append(f"（另有 {len(hits) - 12} 筆，請至採購網查）")
-    out.append("→ 🆕 今日新案・📌 先前已報（近 "
-               f"{WINDOW_DAYS} 日內）｜金額明細：https://www.taiwanbuying.com.tw/"
-               f"Query_Dateaction.ASP?yy={today.year - 1911}&mm={today.month}&dd={today.day}")
+        if len(hits) > 15:
+            out.append(f"（另有 {len(hits) - 15} 筆，請至採購網查）")
+    if over_labor:
+        over_labor.sort(key=lambda x: -(x[0] or 0))
+        out.append(f"⛔ 勞務／勤務另有 {len(over_labor)} 筆超過 1,000 萬上限"
+                   "（未列入，供你判斷是否放寬）")
+        for b_, n_, d_ in over_labor[:8]:
+            out.append(f"　・{b_/10000:.0f} 萬｜{n_[:52]}｜{d_}")
+    out.append("→ 🆕 今日新案・📌 先前已報｜工安環保查證＝taiwanbuying 近 "
+               f"{WINDOW_DAYS} 日；勞務／勤務＝acebidx 等標期內（含預算）"
+               "｜金額明細：https://www.taiwanbuying.com.tw/Query_Dateaction.ASP"
+               f"?yy={today.year - 1911}&mm={today.month}&dd={today.day}")
     print("\n".join(out))
     return 0
 
