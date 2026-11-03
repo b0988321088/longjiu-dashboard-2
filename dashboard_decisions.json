@@ -11929,6 +11929,16 @@
     "status": "已完成",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261103080315-1291",
+    "timestamp": "2026-11-03T08:03:15.683590+08:00",
+    "agent": "Hermes",
+    "task": "Gmail/晨間簡報 google_api 路徑修復",
+    "summary": "07:30 信箱整理 rc=2。根因＝google_api.py 路徑寫死在已移走的 skills/productivity/google-workspace，subprocess FileNotFoundError 被吞成「請檢查 token」（三顆 token 實測 refresh 正常）。同一死路徑另使 08:00 簡報「今日待辦/銀行入帳/近3日提醒」三段長期靜默消失（另有 [{ 解析與 start 字串結構兩個地雷）。改：候選路徑＋整段 JSON 解析＋事件正規化。commit 4e3ec50c（CIO APPROVE），gmail_triage 實跑 rc=0、簡報三段恢復。",
+    "status": "已完成",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-11-03T07:31:53.019909"
