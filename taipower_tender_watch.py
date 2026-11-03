@@ -26,11 +26,14 @@ BASE = Path(__file__).resolve().parent
 STATE = BASE / "data" / "taipower_tender_seen.json"
 TZ = dt.timezone(dt.timedelta(hours=8))
 
-SUPERVISE_KW = ("督導", "巡查", "查證")
+SUPERVISE_KW = ("督導", "巡查", "查證", "稽核", "稽查")
 SUPERVISE_REQ = ("安衛", "安全衛生", "工安", "勞安", "職安", "環保", "污染")
-LABOR_KW = ("勞務", "派遣", "承攬", "人力")
+LABOR_KW = ("勞務", "派遣", "承攬", "人力", "勤務")
 # 低階／特許類勞務不做（保全需許可、清潔屬低價紅海）
 NOT_FIT = ("保全", "警衛", "清潔", "綠美化", "除草", "清運", "病媒", "洗車", "水塔")
+# 2026-11-03 使用者裁決「不放寬」：環境監測／檢測／環評／採樣類一律排除（僅計數揭露）
+ENV_EXCLUDE = ("環境監測", "環境調查", "環評", "環評", "檢測", "採樣", "水質",
+               "空氣品質", "噪音", "土壤", "廢棄物", "篩檢")
 
 # 中部地區（含台電中部各廠處所在鄉鎮）
 CENTRAL = ("台中", "彰化", "南投", "苗栗", "通霄", "大甲", "龍井", "梧棲", "清水",
@@ -38,7 +41,7 @@ CENTRAL = ("台中", "彰化", "南投", "苗栗", "通霄", "大甲", "龍井",
            "新社", "石岡", "外埔", "大肚", "竹南", "頭份", "苑裡", "後龍", "三義",
            "銅鑼", "公館", "大湖", "卓蘭", "員林", "溪湖", "田中", "北斗", "二林",
            "草屯", "埔里", "竹山", "水里", "集集", "日月潭", "萬大", "大觀", "明潭",
-           "大甲溪", "國姓", "名間", "鹿谷", "中寮", "中部", "中區", "彰濱", "中港")
+           "大甲溪", "國姓", "名間", "鹿谷", "中寮", "彰濱", "中港")
 OTHER = ("台北", "新北", "桃園", "基隆", "宜蘭", "花蓮", "台東", "新竹", "嘉義",
          "台南", "高雄", "屏東", "澎湖", "金門", "連江", "林口", "大潭", "興達",
          "大林", "核一", "核二", "核三", "龍門", "協和", "深澳")
@@ -71,31 +74,45 @@ def fetch_day(d: dt.date) -> list[tuple[str, str, str, str]]:
     return out
 
 
+CENTRAL_ORG = ("台中", "臺中", "彰化", "南投", "苗栗")
+OTHER_ORG = ("台北", "臺北", "新北", "基隆", "桃園", "新竹", "嘉義", "台南", "臺南",
+             "高雄", "屏東", "宜蘭", "花蓮", "台東", "臺東", "澎湖", "金門", "連江")
+
+
 def region_of(org: str, name: str) -> str:
-    """履約地區粗判（列表無履約地點欄，用機關名/案名地名推估）。"""
-    blob = f"{org}{name}"
-    if any(k in blob for k in CENTRAL):
+    """履約地區粗判。2026-11-03 修：改以機關所在縣市優先，避免『高中部』『公館場』等字串誤配中部。"""
+    if any(k in org for k in CENTRAL_ORG):
         return "中部"
-    if any(k in blob for k in OTHER):
+    if any(k in org for k in OTHER_ORG):
+        return "其他"
+    s = name.replace("高中部", "高中").replace("國中部", "國中").replace("公館場", "公館場區")
+    if any(k in s for k in CENTRAL):
+        return "中部"
+    if any(k in s for k in OTHER):
         return "其他"
     return "未註明"
 
 
 def classify(org: str, name: str) -> str | None:
-    """回傳 '🎯 督導' / '👷 勞務' / None。勞務類僅中部（在 main 過濾）。"""
-    if "台灣電力" not in org:
-        return None
+    """回傳分類。2026-11-03 使用者指示：①工安環保查證 ②勞務／勤務 分開查、分開回報。
+
+    範圍：中部（region_of 於 main 過濾），不限台電（台電另以 ⚡ 標示）。
+    排除：環境監測／檢測／環評／採樣（使用者已裁示「不放寬」）、低階特許勞務。
+    """
     s = name.replace("施工安裝", "")          # 子字串陷阱：施工安裝≠工安
+    if any(k in s for k in ENV_EXCLUDE):
+        return None                            # 不放寬：監測/檢測/環評類不做
+    if any(k in s for k in NOT_FIT):
+        return None
     if any(k in s for k in SUPERVISE_KW) and any(k in s for k in SUPERVISE_REQ):
-        return "🎯 督導"
+        return "🛡️ 工安環保查證"
     if any(k in s for k in LABOR_KW):
-        if any(k in s for k in NOT_FIT):
-            return None
-        return "👷 勞務"
+        return "👷 勞務／勤務"
     return None
 
 
 MAX_BUDGET = 10_000_000  # 2026-11-03 使用者定案：督導／勞務／工安／環保一律 1,000 萬上限
+WINDOW_DAYS = 7           # 2026-11-03：改列「近 7 日內」符合條件的案，不再只報當日新案
 BUDGET_LOOKUP_CAP = 8     # 每輪最多查 8 筆金額，避免請求過量
 
 
@@ -159,7 +176,7 @@ def main() -> int:
     scanned = 0
     env_n = 0
 
-    for d in (today - dt.timedelta(days=1), today):
+    for d in [today - dt.timedelta(days=i) for i in range(WINDOW_DAYS)]:
         try:
             rows = fetch_day(d)
         except Exception as e:
@@ -167,29 +184,29 @@ def main() -> int:
             continue
         scanned += len(rows)
         for org, name, day, recno in rows:
+            if any(k in name for k in ENV_EXCLUDE):
+                env_n += 1                     # 不放寬：僅計數揭露
+                continue
             cat = classify(org, name)
             if not cat:
-                # 2026-11-03：環保／監測類目前依 11/02 規則排除，但要「看得見」被排除幾筆
-                if any(k in name for k in ("環境監測", "環境調查", "環評", "污染",
-                                           "稽查", "採樣", "水質", "空氣品質",
-                                           "噪音", "土壤", "廢棄物")):
-                    env_n += 1
                 continue
             reg = region_of(org, name)
-            if cat == "👷 勞務" and reg != "中部":
-                continue          # 勞務只收中部
+            if cat == "👷 勞務／勤務" and reg != "中部":
+                continue                       # 勞務／勤務只收中部
+            if cat == "🛡️ 工安環保查證" and reg != "中部" and "台灣電力" not in org:
+                continue                       # 工安環保查證：台電可跨全台，其他機關只收中部
             key = hashlib.md5(f"{org}|{name}".encode("utf-8")).hexdigest()[:16]
-            if key in seen:
-                continue
+            is_new = key not in seen
             budget = None
             if len(lookups) < BUDGET_LOOKUP_CAP:
                 lookups.append(name)
                 budget = lookup_budget(name)
                 if budget is not None and budget > MAX_BUDGET:
-                    seen[key] = stamp      # 超過 800 萬：記錄但不通知
+                    seen[key] = stamp      # 超過上限：記錄但不通知
                     continue
-            seen[key] = stamp
-            fresh.append((cat, reg, org, name, day, budget))
+            if is_new:
+                seen[key] = stamp
+            fresh.append((cat, reg, org, name, day, budget, is_new))
 
     save_seen(seen)
 
@@ -197,27 +214,34 @@ def main() -> int:
         print("⚠️ 解析 0 筆（網站格式可能改版）", file=sys.stderr)
     if errors:
         print("⚠️ 抓取異常：" + "；".join(errors), file=sys.stderr)
-    if not fresh:
-        print(f"🏗️ 台電標案（督導／中部勞務／工安環保）{stamp}："
-              f"今日無新符合條件案（掃 {scanned} 筆；環保監測類排除 {env_n} 筆）")
-        return 0
 
-    sup = sum(1 for f in fresh if f[0] == "🎯 督導")
-    lab = len(fresh) - sup
-    lines = [f"🏗️ 台電新標案 {stamp}（≤1,000 萬）｜督導 {sup} 筆・中部勞務 {lab} 筆"
-             f"（掃 {scanned} 筆；環保監測類排除 {env_n} 筆）"]
-    for cat, reg, org, name, day, budget in fresh[:15]:
-        short = (org.replace("台灣電力股份有限公司", "台電")
+    def _line(org: str, name: str, day: str, budget: int | None, is_new: bool) -> str:
+        short = (org.replace("台灣電力股份有限公司", "⚡ 台電")
                     .replace("核能火力發電工程處", "核火工程處")
                     .replace("輸變電工程處", "輸變電處")
                     .replace("發電廠", "電廠"))
         amt = f"{budget / 10000:.0f} 萬" if budget else "金額待查"
-        lines.append(f"{cat}｜{reg}｜{short}｜{name}｜{day}｜{amt}")
-    if len(fresh) > 15:
-        lines.append(f"（另有 {len(fresh) - 15} 筆，請至採購網查）")
-    lines.append("→ 金額明細：https://www.taiwanbuying.com.tw/Query_Dateaction.ASP"
-                 f"?yy={today.year - 1911}&mm={today.month}&dd={today.day}")
-    print("\n".join(lines))
+        mark = "🆕" if is_new else "📌"
+        return f"{mark} {amt}｜{short}｜{name[:56]}｜{day}"
+
+    out = [f"🏗️ 中部標案日報 {stamp}（近 {WINDOW_DAYS} 日、≤1,000 萬；"
+           f"掃 {scanned} 筆，環保監測類排除 {env_n} 筆）"]
+    for cat in ("🛡️ 工安環保查證", "👷 勞務／勤務"):
+        hits = [f for f in fresh if f[0] == cat]
+        # 新案優先、金額已知者優先、日期新者優先
+        hits.sort(key=lambda f: (f[6], f[5] is not None, str(f[4])), reverse=True)
+        if not hits:
+            out.append(f"{cat}：今日無符合條件案件")
+            continue
+        out.append(f"{cat}：{len(hits)} 筆")
+        for c_, reg, org, name, day, budget, is_new in hits[:12]:
+            out.append("・" + _line(org, name, day, budget, is_new))
+        if len(hits) > 12:
+            out.append(f"（另有 {len(hits) - 12} 筆，請至採購網查）")
+    out.append("→ 🆕 今日新案・📌 先前已報（近 "
+               f"{WINDOW_DAYS} 日內）｜金額明細：https://www.taiwanbuying.com.tw/"
+               f"Query_Dateaction.ASP?yy={today.year - 1911}&mm={today.month}&dd={today.day}")
+    print("\n".join(out))
     return 0
 
 
