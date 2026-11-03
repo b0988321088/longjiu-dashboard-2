@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>標案情報｜台電工地督導查證</title>
+<style>
+  :root {
+    --bg:#0b1220; --card:#111c2e; --line:#1e293b; --txt:#e2e8f0; --dim:#94a3b8;
+    --us:#38bdf8; --lx:#f87171; --yi:#fbbf24; --cheng:#a78bfa;
+  }
+  * { box-sizing:border-box; -webkit-text-size-adjust:100%; }
+  body { margin:0; padding:16px 14px 40px; background:var(--bg); color:var(--txt);
+         font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;
+         line-height:1.6; }
+  h1 { font-size:19px; margin:0 0 4px; }
+  .meta { color:var(--dim); font-size:11px; margin-bottom:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px;
+           padding:14px; margin:14px 0; }
+  .card h2 { font-size:15px; margin:0 0 10px; color:var(--us); }
+  .card h2 .sub { font-size:11px; color:var(--dim); font-weight:400; display:block; margin-top:2px; }
+  .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin:12px 0; }
+  @media (min-width:640px) { .grid { grid-template-columns:repeat(4,1fr); } }
+  .kpi { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  .kpi-t { font-size:11px; color:var(--dim); }
+  .kpi-v { font-size:16px; font-weight:700; margin:2px 0; word-break:break-all; }
+  .kpi-s { font-size:10px; color:var(--dim); line-height:1.4; }
+  .tw { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  table { width:100%; border-collapse:collapse; font-size:12px; min-width:560px; }
+  th, td { padding:7px 6px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
+  th { color:var(--dim); font-weight:600; font-size:11px; position:sticky; top:0; background:var(--card); }
+  .c-num { text-align:right; font-variant-numeric:tabular-nums; }
+  .c-num.strong { font-weight:700; }
+  .c-win { font-weight:700; }
+  .win-us { color:var(--us); }
+  .win-lx { color:var(--lx); }
+  .win-yi { color:var(--yi); }
+  .win-cheng { color:var(--cheng); }
+  .c-date, .c-year, .c-org { color:var(--dim); font-size:11px; }
+  .rival { border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; }
+  .rival-h { font-weight:700; font-size:14px; margin-bottom:8px; color:var(--txt); }
+  .kv { display:flex; justify-content:space-between; gap:10px; font-size:12px; padding:3px 0;
+         border-bottom:1px dashed rgba(148,163,184,.15); }
+  .kv span { color:var(--dim); flex:0 0 auto; }
+  .kv b { text-align:right; font-weight:600; }
+  .note { font-size:11px; color:var(--dim); margin:8px 0 0; }
+  .win { border:1px solid var(--line); border-left:3px solid var(--us); border-radius:10px;
+          padding:12px; margin-bottom:10px; }
+  .win-when { font-size:11px; color:var(--us); font-weight:700; }
+  .win-name { font-size:13px; font-weight:700; margin:2px 0 8px; }
+  ul { margin:8px 0 0; padding-left:18px; font-size:12px; }
+  li { margin-bottom:6px; }
+  .banner { background:linear-gradient(135deg,rgba(56,189,248,.12),rgba(168,85,247,.10));
+             border:1px solid rgba(56,189,248,.3); border-radius:12px; padding:12px; font-size:12px; }
+  .banner b { color:var(--us); }
+  footer { color:var(--dim); font-size:10px; margin-top:18px; line-height:1.6; }
+  .tag { display:inline-block; font-size:10px; padding:1px 7px; border-radius:999px;
+          background:rgba(56,189,248,.15); color:var(--us); margin-left:6px; vertical-align:middle; }
+</style>
+</head>
+<body>
+  <h1>🎯 標案情報｜台電工地督導查證</h1>
+  <div class="meta">資料截止 2026-11-03｜台電核能火力發電工程處｜工地安衛／環保督導查證與勞務案</div>
+
+
+  <section class="grid">
+    <div class="kpi">
+      <div class="kpi-t">我方在手</div>
+      <div class="kpi-v">1 件</div>
+      <div class="kpi-s">上境工程設計顧問有限公司</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-t">主要對手</div>
+      <div class="kpi-v">亮軒企業有限公司</div>
+      <div class="kpi-s">投 61 中 17｜得標率 27.9%</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-t">對手習慣</div>
+      <div class="kpi-v">95.7%</div>
+      <div class="kpi-s">決標價占預算（貼預算、不殺價）</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-t">下一個窗口</div>
+      <div class="kpi-v">2026-11-10 截止</div>
+      <div class="kpi-s">115~116 年度興達工地環保督導查證工作</div>
+    </div>
+  </section>
+
+  <div class="banner">
+    <b>一句話：</b>中部施工處決標價已從近預算轉為價格戰<br>
+    2024 年以前安衛／環保決標多在預算 96–99%；116 年度安衛掉到 88.1%、115 年度通霄環保 83.0%
+  </div>
+
+
+  <section class="card">
+    <h2>安衛 <span class="sub">中部施工處｜每年 10–12 月招標｜亮軒連 6 年</span></h2>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>年度</th><th>機關</th><th>預算</th><th>決標</th><th>折數</th><th>得標</th><th>決標月</th></tr>
+        </thead>
+        <tbody>
+      <tr>
+        <td class="c-year">110~111</td>
+        <td class="c-org">中部施工處</td>
+        <td class="c-num">990 萬</td>
+        <td class="c-num strong">831 萬</td>
+        <td class="c-num" style="color:#34d399;font-weight:700">83.9%</td>
+        <td class="c-win win-lx">亮軒</td>
+        <td class="c-date">2021-12</td>
+      </tr>
+      <tr>
+        <td class="c-year">112</td>
+        <td class="c-org">中部施工處</td>
+        <td class="c-num">1,247 萬</td>
+        <td class="c-num strong">1,160 萬</td>
+        <td class="c-num" style="color:#fbbf24;font-weight:700">93.0%</td>
+        <td class="c-win win-lx">亮軒</td>
+        <td class="c-date">2022-12</td>
+      </tr>
+      <tr>
+        <td class="c-year">113</td>
+        <td class="c-org">中部施工處</td>
+        <td class="c-num">979 萬</td>
+        <td class="c-num strong">972 萬</td>
+        <td class="c-num" style="color:#f87171;font-weight:700">99.2%</td>
+        <td class="c-win win-lx">亮軒</td>
+        <td class="c-date">2023-12</td>
+      </tr>
+      <tr>
+        <td class="c-year">114</td>
+        <td class="c-org">中部施工處</td>
+        <td class="c-num">840 萬</td>
+        <td class="c-num strong">830 萬</td>
+        <td class="c-num" style="color:#f87171;font-weight:700">98.8%</td>
+        <td class="c-win win-lx">亮軒</td>
+        <td class="c-date">2024-12</td>
+      </tr>
+      <tr>
+        <td class="c-year">115</td>
+        <td class="c-org">中部施工處</td>
+        <td class="c-num">842 萬</td>
+        <td class="c-num strong">822 萬</td>
+        <td class="c-num" style="color:#f87171;font-weight:700">97.6%</td>
+        <td class="c-win win-lx">亮軒</td>
+        <td class="c-date">2025-11</td>
+      </tr>
+      <tr>
+        <td class="c-year">116</td>
+        <td class="c-org">中部施工處</td>
+        <td class="c-num">922 萬</td>
+        <td class="c-num strong">812 萬</td>
+        <td class="c-num" style="color:#fbbf24;font-weight:700">88.1%</td>
+        <td class="c-win win-lx">亮軒</td>
+        <td class="c-date">2026-10</td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>環保 <span class="sub">中部施工處｜每年 4–5 月招標｜台中／通霄兩工區分開標</span></h2>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>年度</th><th>機關</th><th>預算</th><th>決標</th><th>折數</th><th>得標</th><th>決標月</th></tr>
+        </thead>
+        <tbody>
+      <tr>
+        <td class="c-year">110</td>
+        <td class="c-org">中部施工處</td>
+        <td class="c-num">445 萬</td>
+        <td class="c-num strong">404 萬</td>
+        <td class="c-num" style="color:#fbbf24;font-weight:700">90.8%</td>
+        <td class="c-win win-lx">亮軒</td>
+        <td class="c-date">2021-04</td>
+      </tr>
+      <tr>
+        <td class="c-year">112</td>
+        <td class="c-org">中部施工處</td>
+        <td class="c-num">925 萬</td>
+        <td class="c-num strong">911 萬</td>
+        <td class="c-num" style="color:#f87171;font-weight:700">98.5%</td>
+        <td class="c-win win-lx">亮軒</td>
+        <td class="c-date">2023-05</td>
+      </tr>
+      <tr>
+        <td class="c-year">113 台中</td>
+        <td class="c-org">中部施工處</td>
+        <td class="c-num">840 萬</td>
+        <td class="c-num strong">819 萬</td>
+        <td class="c-num" style="color:#f87171;font-weight:700">97.5%</td>
+        <td class="c-win win-lx">亮軒</td>
+        <td class="c-date">2024-05</td>
+      </tr>
+      <tr>
+        <td class="c-year">113 通霄</td>
+        <td class="c-org">中部施工處</td>
+        <td class="c-num">441 萬</td>
+        <td class="c-num strong">424 萬</td>
+        <td class="c-num" style="color:#f87171;font-weight:700">96.1%</td>
+        <td class="c-win win-lx">亮軒</td>
+        <td class="c-date">2024-06</td>
+      </tr>
+      <tr>
+        <td class="c-year">114 台中</td>
+        <td class="c-org">中部施工處</td>
+        <td class="c-num">848 萬</td>
+        <td class="c-num strong">848 萬</td>
+        <td class="c-num" style="color:#f87171;font-weight:700">100.0%</td>
+        <td class="c-win win-us">上境（我方）</td>
+        <td class="c-date">2025-05</td>
+      </tr>
+      <tr>
+        <td class="c-year">114 通霄</td>
+        <td class="c-org">中部施工處</td>
+        <td class="c-num">667 萬</td>
+        <td class="c-num strong">618 萬</td>
+        <td class="c-num" style="color:#fbbf24;font-weight:700">92.7%</td>
+        <td class="c-win win-lx">亮軒</td>
+        <td class="c-date">2025-05</td>
+      </tr>
+      <tr>
+        <td class="c-year">115 台中</td>
+        <td class="c-org">中部施工處</td>
+        <td class="c-num">796 萬</td>
+        <td class="c-num strong">735 萬</td>
+        <td class="c-num" style="color:#fbbf24;font-weight:700">92.3%</td>
+        <td class="c-win win-yi">益洲</td>
+        <td class="c-date">2026-04</td>
+      </tr>
+      <tr>
+        <td class="c-year">115 通霄</td>
+        <td class="c-org">中部施工處</td>
+        <td class="c-num">854 萬</td>
+        <td class="c-num strong">708 萬</td>
+        <td class="c-num" style="color:#34d399;font-weight:700">83.0%</td>
+        <td class="c-win win-yi">益洲</td>
+        <td class="c-date">2026-04</td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>勞務 <span class="sub">金額最大的戰場｜每年 11–12 月招標</span></h2>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>年度</th><th>機關</th><th>預算</th><th>決標</th><th>折數</th><th>得標</th><th>決標月</th></tr>
+        </thead>
+        <tbody>
+      <tr>
+        <td class="c-year">115 行政業務</td>
+        <td class="c-org">中部施工處</td>
+        <td class="c-num">1,446 萬</td>
+        <td class="c-num strong">1,384 萬</td>
+        <td class="c-num" style="color:#fbbf24;font-weight:700">95.7%</td>
+        <td class="c-win win-lx">亮軒</td>
+        <td class="c-date">2025-12</td>
+      </tr>
+      <tr>
+        <td class="c-year">115 職安環保協助員</td>
+        <td class="c-org">綜合施工處</td>
+        <td class="c-num">—</td>
+        <td class="c-num strong">1,154 萬</td>
+        <td class="c-num" style="color:#64748b;font-weight:700">—</td>
+        <td class="c-win win-lx">亮軒</td>
+        <td class="c-date">2026-04</td>
+      </tr>
+      <tr>
+        <td class="c-year">115 文書勞務</td>
+        <td class="c-org">鐵道局中部工程分局</td>
+        <td class="c-num">—</td>
+        <td class="c-num strong">221 萬</td>
+        <td class="c-num" style="color:#64748b;font-weight:700">—</td>
+        <td class="c-win win-lx">亮軒</td>
+        <td class="c-date">2026-06</td>
+      </tr>
+      <tr>
+        <td class="c-year">116 業務勞務</td>
+        <td class="c-org">北部施工處</td>
+        <td class="c-num">—</td>
+        <td class="c-num strong">891 萬</td>
+        <td class="c-num" style="color:#64748b;font-weight:700">—</td>
+        <td class="c-win win-lx">亮軒</td>
+        <td class="c-date">2026-10</td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>🥊 對手畫像</h2>
+
+    <div class="rival">
+      <div class="rival-h">亮軒企業有限公司</div>
+      <div class="kv"><span>統編</span><b>28713325</b></div><div class="kv"><span>負責人</span><b>張瑩婷</b></div><div class="kv"><span>資本額</span><b>200 萬</b></div><div class="kv"><span>所在地</span><b>台北市信義區</b></div><div class="kv"><span>投標／得標</span><b>61／17（27.9%）</b></div><div class="kv"><span>得標總額</span><b>14,000 萬</b></div><div class="kv"><span>主場</span><b>台電中部施工處（13 件）</b></div>
+      <p class="note">決標價貼近預算 95.7%、不殺價；廣撒型投標（2021 投 14 中 2，命中 14%）</p>
+    </div>
+    <div class="rival">
+      <div class="rival-h">益洲企業社</div>
+      <div class="kv"><span>統編</span><b>47485321</b></div><div class="kv"><span>手法</span><b>低價搶標：115 台中 92.3%、通霄 83.0%</b></div>
+      <p class="note">價格戰發起者，2026 才出現的新對手</p>
+    </div>
+    <div class="rival">
+      <div class="rival-h">承晏環境科技股份有限公司</div>
+      <div class="kv"><span>統編</span><b>28372255</b></div><div class="kv"><span>所在地</span><b>高雄市岡山區</b></div><div class="kv"><span>實績</span><b>109、111、113 年度興達案皆由其得標</b></div>
+      
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>📅 出手窗口</h2>
+
+    <div class="win">
+      <div class="win-when">2026-11-10 截止</div>
+      <div class="win-name">115~116 年度興達工地環保督導查證工作</div>
+      <div class="kv"><span>機關</span><b>南部施工處</b></div>
+      <div class="kv"><span>預算</span><b>980 萬</b></div>
+      <div class="kv"><span>押標金</span><b>45 萬</b></div>
+      <div class="kv"><span>履約期</span><b>19 個月</b></div>
+      <div class="kv"><span>現況</span><b>已流標兩次（9/30、10/20），第三次招標</b></div>
+      <p class="note">承晏地盤；若切入，南部插旗</p>
+    </div>
+    <div class="win">
+      <div class="win-when">2027-04（推估）</div>
+      <div class="win-name">116 年度工地環保督導查證（台中工區）</div>
+      <div class="kv"><span>機關</span><b>中部施工處</b></div>
+      <div class="kv"><span>預算</span><b>—</b></div>
+      <div class="kv"><span>押標金</span><b>—</b></div>
+      <div class="kv"><span>履約期</span><b>1 年</b></div>
+      <div class="kv"><span>現況</span><b>115 年度被益洲 735 萬搶走</b></div>
+      <p class="note">我方曾於 114 年度承作，優先搶回</p>
+    </div>
+    <div class="win">
+      <div class="win-when">2027-04（推估）</div>
+      <div class="win-name">116 年度工地環保督導查證（通霄工區）</div>
+      <div class="kv"><span>機關</span><b>中部施工處</b></div>
+      <div class="kv"><span>預算</span><b>—</b></div>
+      <div class="kv"><span>押標金</span><b>—</b></div>
+      <div class="kv"><span>履約期</span><b>1 年</b></div>
+      <div class="kv"><span>現況</span><b>115 年度被益洲 708 萬搶走</b></div>
+      <p class="note">亮軒 114 年度 618 萬承作</p>
+    </div>
+    <div class="win">
+      <div class="win-when">2027-10（推估）</div>
+      <div class="win-name">117 年度工地安衛督導查證工作</div>
+      <div class="kv"><span>機關</span><b>中部施工處</b></div>
+      <div class="kv"><span>預算</span><b>—</b></div>
+      <div class="kv"><span>押標金</span><b>—</b></div>
+      <div class="kv"><span>履約期</span><b>1 年</b></div>
+      <div class="kv"><span>現況</span><b>亮軒連 6 年（116 年度 812 萬）</b></div>
+      <p class="note">正面對決場</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>💰 報價基準<span class="tag">依歷史折數推算</span></h2>
+    <ul><li>安衛（2027/10）：亮軒 116 年度已自行降到 88.1%，要贏須進 85–87% 區間</li><li>環保台中（2027/4）：益洲 115 年報 92.3%，我方 114 年以 100% 承作，須調降至 88–90%</li><li>環保通霄（2027/4）：益洲 115 年僅 83.0%，若維持同樣競價，須有 82–85% 成本結構才進場</li><li>勞務案（每年 11–12 月）：亮軒 115 行政業務 95.7%（1,384 萬），此類案毛利最厚、最值得切</li></ul>
+  </section>
+
+  <footer>
+    資料來源：政府電子採購網決標公告、開放政府標案、ToBid 廠商分析。<br>
+    金額單位：新台幣元（表格以萬元顯示）。折數＝決標金額 ÷ 預算金額。<br>
+    本頁由 build_tender_intel.py 依 data/tender_intel.json 產生，數字勿手改。
+  </footer>
+</body>
+</html>
