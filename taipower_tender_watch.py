@@ -28,7 +28,7 @@ TZ = dt.timezone(dt.timedelta(hours=8))
 
 SUPERVISE_KW = ("督導", "巡查", "查證", "稽核", "稽查")
 SUPERVISE_REQ = ("安衛", "安全衛生", "工安", "勞安", "職安", "環保", "污染")
-LABOR_KW = ("勤務",)          # 2026-11-03：只收「勤務類勞務性工作」型（如 116年度勤務類勞務性工作）
+LABOR_KW = ("勤務", "業務", "事務")   # 2026-11-03：台電「勤務類／業務類／事務類 勞務性工作」都算
 LABOR_REQ = ("勞務",)
 # 低階／特許類勞務不做（保全需許可、清潔屬低價紅海）
 NOT_FIT = ("保全", "警衛", "清潔", "綠美化", "除草", "清運", "病媒", "洗車", "水塔")
@@ -181,7 +181,8 @@ def save_seen(seen: dict) -> None:
 ACE_BASE = "https://acebidx.com/zh-TW/docs/tender/T/by-keyword/"
 ACE_ROW_RE = re.compile(r'href="(/zh-TW/docs/tender/id/[^"]+)"[^>]*>(.{0,900}?)</a>', re.S)
 # 2026-11-03：勞務／勤務改掃 acebidx，才拿得到「等標期＋預算」；關鍵字涵蓋台電各廠勤務類寫法
-ACE_LABOR_KW = ("勤務類勞務性工作", "勤務類", "事務類勞務性工作", "勤務類及清潔維護類")
+ACE_LABOR_KW = ("勤務類勞務性工作", "業務類勞務性工作", "事務類勞務性工作",
+                "勤務類", "業務類", "事務類", "勤務類及清潔維護類")
 
 
 def ace_rows(kw: str, max_pages: int = 6) -> dict[str, str]:
@@ -306,6 +307,7 @@ def main() -> int:
 
     # ② 勞務／勤務：改掃 acebidx（有等標期與預算），能撈到 taiwanbuying 7 日視窗外的案
     ace_scanned = 0
+    seen_names: set[str] = set()
     over_labor: list[tuple[int | None, str, str]] = []
     try:
         import design_supervision_watch as _dd
@@ -315,7 +317,7 @@ def main() -> int:
         now_dt = dt.datetime.now(TZ)
         for kw in ACE_LABOR_KW:
             for tid, txt in ace_rows(kw).items():
-                if not ("勤務" in txt and "勞務" in txt):
+                if not (any(k in txt for k in LABOR_KW) and any(k in txt for k in LABOR_REQ)):
                     continue
                 if any(k in txt for k in ENV_EXCLUDE) or any(k in txt for k in NOT_FIT):
                     continue
@@ -331,6 +333,10 @@ def main() -> int:
                 name2 = re.sub(r"^\s*\d+\s+", "", txt)
                 name2 = re.sub(r"\s*\d+月\d+日\s*公告\s*$", "", name2).strip()
                 dls = dl.strftime("%m/%d %H:%M") if dl else "截止日未載"
+                sig = re.sub(r"\s+", "", name2)
+                if sig in seen_names:
+                    continue                   # 同案被多個關鍵字抓到 → 只留一筆
+                seen_names.add(sig)
                 if b and b > MAX_BUDGET:
                     if (b, name2, dls) not in over_labor:
                         over_labor.append((b, name2, dls))
