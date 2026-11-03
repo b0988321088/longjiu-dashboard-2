@@ -11919,6 +11919,16 @@
     "status": "已完成",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261103080307-1290",
+    "timestamp": "2026-11-03T08:03:07.299354+08:00",
+    "agent": "Hermes",
+    "task": "日報市場情報鮮度修復（07:00 重抓＋CPI 去寫死）",
+    "summary": "使用者反映日報市場資訊未更新。根因＝daily_analysis.json 僅 13:00 run_daily 寫入，07:00 只讀不抓→晨報永遠落後一交易日且為盤中價；CPI 為寫死字面（7月3.5%）。改：07:00 資料日不符即重抓（全無真值則沿用舊檔）、CPI 改 FRED CPIAUCSL/CPILFESL 算 YoY 並標資料月。commit 71380d00（CIO-Gemini APPROVE），線上驗證台股 45,211.83(-2.49%)、CPI 2026-09 3.7%.",
+    "status": "已完成",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-11-03T07:31:53.019909"
