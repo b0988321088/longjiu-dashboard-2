@@ -17,6 +17,47 @@ from sot_targets import (sot_monthly_expense, sot_monthly_income, dry_display,  
 
 BASE = Path(__file__).resolve().parent
 
+def _lcs_len(a: str, b: str) -> int:
+    """最長共同子串長度（僅用於「已結案者不列」的保守比對）。"""
+    if not a or not b:
+        return 0
+    best = 0
+    prev = [0] * (len(b) + 1)
+    for ca in a:
+        cur = [0] * (len(b) + 1)
+        for j, cb in enumerate(b, 1):
+            if ca == cb:
+                cur[j] = prev[j - 1] + 1
+                if cur[j] > best:
+                    best = cur[j]
+        prev = cur
+    return best
+
+
+def filter_closed_review_items(items):
+    """CIO 審查「已核准待執行」清單：已被歸檔結案卡覆蓋者不列（2026-11-03 使用者裁決）。
+
+    為什麼在顯示層做：審查清單是當次 LLM 快照（不改寫歷史），而卡片結案是 append-only 事實；
+    兩者以「與歸檔卡標題的最長共同子串 ≥ 10 字」比對（保守片語級，非模糊搜尋），比不到就原樣顯示
+    （fail-open，寧可多列不可誤藏）。
+    """
+    if not items:
+        return items
+    try:
+        _arc = json.loads((BASE / "pending_decisions_archive.json").read_text(encoding="utf-8"))
+        _arc = _arc.get("pending_decisions", []) if isinstance(_arc, dict) else _arc
+        _titles = [str(x.get("title") or "") for x in _arc if isinstance(x, dict)]
+    except Exception:
+        return items
+    out = []
+    for it in items:
+        s = str(it)
+        if any(_lcs_len(s, t) >= 10 for t in _titles if t):
+            continue
+        out.append(it)
+    return out
+
+
 def dividend_bucket(name: str) -> str:
     """配息條目 → 儀表板三桶鍵（委派 dividend_caliber.bucket_of，單一口徑）。
 
@@ -691,6 +732,19 @@ def main():
     # 2026-09-01 修正：系統時間寫死（原模板 2026-08-29）→ 動態當天
     import datetime as _dt
     tpl = tpl.replace("系統時間：2026-08-29", "系統時間：" + _dt.date.today().strftime("%Y-%m-%d"))
+
+    # 2026-11-03（使用者裁決）：已結案卡片標題注入頁面 → CIO 快照「已核准待執行」據此去重
+    #   （與 filter_closed_review_items 同源；JS 與靜態 fallback 兩條路徑都套用）
+    try:
+        _arc_t = json.loads((BASE / "pending_decisions_archive.json").read_text(encoding="utf-8"))
+        _arc_t = _arc_t.get("pending_decisions", []) if isinstance(_arc_t, dict) else _arc_t
+        _closed_titles = [str(x.get("title") or "") for x in _arc_t
+                          if isinstance(x, dict) and x.get("title")]
+    except Exception:
+        _closed_titles = []
+    tpl = tpl.replace("__CLOSED_CARD_TITLES_JS__",
+                      "window.__CLOSED_CARD_TITLES__ = "
+                      + json.dumps(_closed_titles[-200:], ensure_ascii=False) + ";")
 
     # 2026-09-10 資金在途（贖回在途款）：未入帳前不沖銷資產（使用者 9/10 指正）
     _pr = snap.get("pending_redemption") or {}
@@ -1652,7 +1706,7 @@ def main():
                 return f'<div style="margin-top:9px"><div class="cio-h" style="color:{color};margin-top:0">{ico} {_html.escape(title)}（{len(items)}）</div>{_body}</div>'
             _h = f'<div class="cio-card"><div class="text-white font-bold text-[13px]">📅 {_c0.get("date")}（{_c0.get("weekday", "")}）最近一次審查（結構化快照）</div>'
             _h += _cio_sec("✅", "已核准", "#34d399", _st.get("approved"))
-            _h += _cio_sec("⏳", "已核准待執行", "#fbbf24", _st.get("pending_exec"))
+            _h += _cio_sec("⏳", "已核准待執行", "#fbbf24", filter_closed_review_items(_st.get("pending_exec")))
             _h += _cio_sec("⏸️", "延後 / 凍結", "#94a3b8", _st.get("frozen"))
             _h += _cio_sec("📌", "Pending 關鍵", "#93c5fd", _st.get("pending_notes"))
             _objs = _st.get("objections") or []

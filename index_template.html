@@ -1075,6 +1075,8 @@ var gotTotal = _salaryA + divTotal + rentGot;
   }
   var cl = document.getElementById('cio-list');
   if(cl){
+    /* 2026-11-03：已結案卡片標題（build_dashboard 注入）→ CIO 快照的「已核准待執行」據此去重 */
+    __CLOSED_CARD_TITLES_JS__
     /* 2026-09-07 v2：CIO 戰略審查結構化渲染（structured 優先）＋待核事項跨期去重；失敗保留 __CIO_REVIEW__ 靜態快照 */
     fetch('cio_review.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
       var revs = (j && j.reviews) || [];
@@ -1109,13 +1111,33 @@ var gotTotal = _salaryA + divTotal + rentGot;
       });
       var cardStructured = function(d){
         var st = d.structured || {};
+        /* 2026-11-03：CIO 快照的「已核准待執行」若已被歸檔結案卡覆蓋 → 不列（與 build_dashboard 同規則） */
+        var lcs6 = function(a,b){
+          if(!a||!b) return 0; var best=0, prev=new Array(b.length+1);
+          for(var k=0;k<prev.length;k++) prev[k]=0;
+          for(var i=0;i<a.length;i++){
+            var cur=new Array(b.length+1); cur[0]=0;
+            for(var j=1;j<=b.length;j++){
+              if(a[i]===b[j-1]){ cur[j]=prev[j-1]+1; if(cur[j]>best) best=cur[j]; } else { cur[j]=0; }
+            }
+            prev=cur;
+          }
+          return best;
+        };
+        var dropClosed6 = function(items){
+          var T = window.__CLOSED_CARD_TITLES__ || [];
+          if(!T.length || !items || !items.length) return items;
+          return items.filter(function(s){
+            return !T.some(function(t){ return lcs6(String(s), String(t)) >= 10; });
+          });
+        };
         var oB = (st.objections||[]).map(function(o){
           var c = o.type==='質疑' ? '#f87171' : (o.type==='風險' ? '#fb7185' : (o.type==='提醒' ? '#fbbf24' : '#60a5fa'));
           return '<div style="padding:5px 8px;margin-top:5px;background:rgba(15,23,42,0.5);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:#e2e8f0;line-height:1.65">'+badge(o.type||'意見',c)+esc6(o.text||'')+'</div>';
         }).join('');
         var h = '<div class="text-white font-bold text-[13px]">📅 '+esc6(d.date||'')+'（'+esc6(d.weekday||'')+'）</div>';
         h += sect('✅','已核准','#34d399',st.approved);
-        h += sect('⏳','已核准待執行','#fbbf24',st.pending_exec);
+        h += sect('⏳','已核准待執行','#fbbf24',dropClosed6(st.pending_exec));
         h += sect('⏸️','延後 / 凍結','#94a3b8',st.frozen);
         h += sect('📌','Pending 關鍵','#93c5fd',st.pending_notes);
         if(oB) h += '<div style="margin-top:10px"><div class="cio-h cio-h2" style="margin-top:0">🧠 Part B：對策反抗</div>'+oB+'</div>';

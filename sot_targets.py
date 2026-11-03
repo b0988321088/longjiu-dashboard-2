@@ -278,6 +278,20 @@ def build_dual_dimension_metric(snap: dict, today: str | None = None) -> dict:
         for _k in list(_comp):
             if "避險衛星" in str(_k):
                 _comp[_k] = 0
+    # 2026-11-03 使用者裁決 S1：保單內「防守型高股息」權益納入防禦維度。
+    #   邊界（裁決原文）：①防守型高股息可納入 ②不得因基金有配息就把股票型基金全部視為防禦
+    #   ③B11 已納入的權益維持原分類、不擴張保單內所有配息型基金 ④不以配息率取代底層風險。
+    #   故白名單只認「高股息」本質字樣（目前＝元大台灣高股息優質龍頭-B 295,005），
+    #   金額一律由 insurance_breakdown 逐檔派生（禁寫死），且不覆寫既有 5 個成分。
+    _pol_def = 0
+    for _pk in ("policy_a_funds", "policy_b_funds"):
+        for _nm, _v in ((snap.get("insurance_breakdown") or {}).get(_pk) or {}).items():
+            if isinstance(_v, (int, float)) and any(k in str(_nm) for k in ("高股息",)):
+                _pol_def += int(_v)
+    if _pol_def:
+        _comp["保單內防守型高股息權益"] = _pol_def
+    _def["公式"] = ("債券＋現金/貨幣＋低波高股息防禦＋配息型基金權益＋保單內防守型高股息權益"
+                    "（2026-11-03 裁決 S1）＋避險衛星（2026-10-30 結案，以 0 計入）")
     _def["組成"] = _comp
     if _comp and _total_cfg > 0:
         _amt = sum(v for v in _comp.values() if isinstance(v, (int, float)))
