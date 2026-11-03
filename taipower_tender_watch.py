@@ -214,6 +214,44 @@ def _ace_detail(tid: str) -> dict:
         return {}
 
 
+def _t2(s: str) -> str:
+    """臺→台 正規化（taiwanbuying 用『臺中』、acebidx 用『台中』，不比對就會查無）。"""
+    return s.replace("臺", "台").replace("　", " ")
+
+
+def ace_lookup(name: str, org: str = "") -> tuple[int | None, str]:
+    """用 acebidx 找同案（案名＋機關雙比對），回 (預算, 截止日字串)。
+
+    2026-11-03：工安環保查證原本只靠 taiwanbuying 猜金額，查不到就列入，
+    結果把 3,950 萬、1,142 萬這種超上限案也列進來。改為直接讀 acebidx 詳情。
+    """
+    n_name = _t2(name)
+    org_key = _t2(org.replace("台灣電力股份有限公司", "")
+                     .replace("臺灣電力股份有限公司", ""))[:6]
+    tid = None
+    for kw in (n_name[:12], n_name[:10], n_name[6:16]):
+        if len(kw) < 6:
+            continue
+        try:
+            rows = ace_rows(kw, max_pages=2)
+        except Exception:
+            rows = {}
+        for t, txt in rows.items():
+            ntxt = _t2(txt)
+            if n_name[:8] not in ntxt:
+                continue
+            if org_key and org_key not in ntxt and "台灣電力" not in n_name:
+                continue
+            tid = t
+            break
+        if tid:
+            break
+    if not tid:
+        return (None, "")
+    d = _ace_detail(tid)
+    return (d.get("budget"), str(d.get("deadline") or ""))
+
+
 def main() -> int:
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -228,6 +266,7 @@ def main() -> int:
     lookups: list[str] = []
     scanned = 0
     env_n = 0
+    over_general: list[tuple[int | None, str, str, str]] = []
 
     for d in [today - dt.timedelta(days=i) for i in range(WINDOW_DAYS)]:
         try:
@@ -248,16 +287,22 @@ def main() -> int:
                 continue                       # 工安環保查證：台電可跨全台，其他機關只收中部
             key = hashlib.md5(f"{org}|{name}".encode("utf-8")).hexdigest()[:16]
             is_new = key not in seen
-            budget = None
-            if len(lookups) < BUDGET_LOOKUP_CAP:
-                lookups.append(name)
-                budget = lookup_budget(name, org)
-                if budget is not None and budget > MAX_BUDGET:
-                    seen[key] = stamp      # 超過上限：記錄但不通知
-                    continue
+            b_ace, dl_s = ace_lookup(name, org)
+            try:
+                import design_supervision_watch as _dd2
+                dl = _dd2.parse_deadline(dl_s)
+            except Exception:
+                dl = None
+            if dl and dl < dt.datetime.now(TZ):
+                continue                       # 等標期已過 → 不列
+            if b_ace and b_ace > MAX_BUDGET:
+                if (b_ace, name, org, dl_s) not in over_general:
+                    over_general.append((b_ace, name, org, dl_s))
+                continue                       # 超過上限 → 僅揭露
             if is_new:
                 seen[key] = stamp
-            fresh.append((cat, reg, org, name, day, budget, is_new))
+            day_show = dl.strftime("%m/%d %H:%M") if dl else day
+            fresh.append((cat, reg, org, name, day_show, b_ace, is_new))
 
     # ② 勞務／勤務：改掃 acebidx（有等標期與預算），能撈到 taiwanbuying 7 日視窗外的案
     ace_scanned = 0
@@ -332,9 +377,15 @@ def main() -> int:
         # 2026-11-03 使用者裁決：勞務／勤務一律 1,000 萬上限、保全／警衛勤務不納入
         #   （無保全業商業登記）→ 超過上限者僅列筆數與前 3 高，供確認「不是漏抓」
         over_labor.sort(key=lambda x: -(x[0] or 0))
-        out.append(f"⛔ 另有 {len(over_labor)} 筆超過 1,000 萬上限（依裁決不列入，僅供確認）")
+        out.append(f"⛔ 勞務／勤務另有 {len(over_labor)} 筆超過 1,000 萬上限（依裁決不列入，僅供確認）")
         for b_, n_, d_ in over_labor[:3]:
             out.append(f"　・{b_/10000:.0f} 萬｜{n_[:52]}｜{d_}")
+    if over_general:
+        over_general.sort(key=lambda x: -(x[0] or 0))
+        out.append(f"⛔ 工安環保查證另有 {len(over_general)} 筆超過 1,000 萬上限（依裁決不列入）")
+        for b_, n_, o_, d_ in over_general[:3]:
+            out.append(f"　・{b_/10000:.0f} 萬｜{o_.replace('台灣電力股份有限公司', '⚡ 台電')[:14]}"
+                       f"｜{n_[:44]}｜{d_}")
     out.append("→ 🆕 今日新案・📌 先前已報｜工安環保查證＝taiwanbuying 近 "
                f"{WINDOW_DAYS} 日；勞務／勤務＝acebidx 等標期內（含預算）"
                "｜金額明細：https://www.taiwanbuying.com.tw/Query_Dateaction.ASP"
