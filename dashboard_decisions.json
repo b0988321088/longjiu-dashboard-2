@@ -11908,40 +11908,37 @@
       "action": "核准",
       "text": "結論：今日三皆為監控型基建，方向對。但決策軌跡顯示，系統正把「監控密度提高」誤當成「風險已下降」。真正沒解的三件事：口徑（防守 18.1 vs 47.7、乾粉含指定款）、規則死結（減碼綁解凍）、資安 P0 停滯 27 天。這三件不解，再多告警也只是把同一個風險看得更清楚。",
       "approved_at": "2026-11-03T06:00:10.206124"
+    },
+    {
+      "id": "mem-20261103080258-1289",
+      "timestamp": "2026-11-03T08:02:58.606797+08:00",
+      "agent": "Hermes",
+      "task": "07:00 晨間 F3 擋關修復（pending 兩卡四態/來源）",
+      "summary": "使用者 2026-11-03 指示修復。根因＝兩張卡把敘述字串寫進 status、due_date 有值卻無 due_date_source；已正規化（status 四態、原字串留 status_raw、來源補既有文字）並推送 2f748315。閘門 87/90 → 90/90，日報已重新發布。",
+      "status": "已完成",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261103080307-1290",
+      "timestamp": "2026-11-03T08:03:07.299354+08:00",
+      "agent": "Hermes",
+      "task": "日報市場情報鮮度修復（07:00 重抓＋CPI 去寫死）",
+      "summary": "使用者反映日報市場資訊未更新。根因＝daily_analysis.json 僅 13:00 run_daily 寫入，07:00 只讀不抓→晨報永遠落後一交易日且為盤中價；CPI 為寫死字面（7月3.5%）。改：07:00 資料日不符即重抓（全無真值則沿用舊檔）、CPI 改 FRED CPIAUCSL/CPILFESL 算 YoY 並標資料月。commit 71380d00（CIO-Gemini APPROVE），線上驗證台股 45,211.83(-2.49%)、CPI 2026-09 3.7%.",
+      "status": "已完成",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261103080315-1291",
+      "timestamp": "2026-11-03T08:03:15.683590+08:00",
+      "agent": "Hermes",
+      "task": "Gmail/晨間簡報 google_api 路徑修復",
+      "summary": "07:30 信箱整理 rc=2。根因＝google_api.py 路徑寫死在已移走的 skills/productivity/google-workspace，subprocess FileNotFoundError 被吞成「請檢查 token」（三顆 token 實測 refresh 正常）。同一死路徑另使 08:00 簡報「今日待辦/銀行入帳/近3日提醒」三段長期靜默消失（另有 [{ 解析與 start 字串結構兩個地雷）。改：候選路徑＋整段 JSON 解析＋事件正規化。commit 4e3ec50c（CIO APPROVE），gmail_triage 實跑 rc=0、簡報三段恢復。",
+      "status": "已完成",
+      "source": "user"
     }
-,
-  {
-    "id": "mem-20261103080258-1289",
-    "timestamp": "2026-11-03T08:02:58.606797+08:00",
-    "agent": "Hermes",
-    "task": "07:00 晨間 F3 擋關修復（pending 兩卡四態/來源）",
-    "summary": "使用者 2026-11-03 指示修復。根因＝兩張卡把敘述字串寫進 status、due_date 有值卻無 due_date_source；已正規化（status 四態、原字串留 status_raw、來源補既有文字）並推送 2f748315。閘門 87/90 → 90/90，日報已重新發布。",
-    "status": "已完成",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261103080307-1290",
-    "timestamp": "2026-11-03T08:03:07.299354+08:00",
-    "agent": "Hermes",
-    "task": "日報市場情報鮮度修復（07:00 重抓＋CPI 去寫死）",
-    "summary": "使用者反映日報市場資訊未更新。根因＝daily_analysis.json 僅 13:00 run_daily 寫入，07:00 只讀不抓→晨報永遠落後一交易日且為盤中價；CPI 為寫死字面（7月3.5%）。改：07:00 資料日不符即重抓（全無真值則沿用舊檔）、CPI 改 FRED CPIAUCSL/CPILFESL 算 YoY 並標資料月。commit 71380d00（CIO-Gemini APPROVE），線上驗證台股 45,211.83(-2.49%)、CPI 2026-09 3.7%.",
-    "status": "已完成",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261103080315-1291",
-    "timestamp": "2026-11-03T08:03:15.683590+08:00",
-    "agent": "Hermes",
-    "task": "Gmail/晨間簡報 google_api 路徑修復",
-    "summary": "07:30 信箱整理 rc=2。根因＝google_api.py 路徑寫死在已移走的 skills/productivity/google-workspace，subprocess FileNotFoundError 被吞成「請檢查 token」（三顆 token 實測 refresh 正常）。同一死路徑另使 08:00 簡報「今日待辦/銀行入帳/近3日提醒」三段長期靜默消失（另有 [{ 解析與 start 字串結構兩個地雷）。改：候選路徑＋整段 JSON 解析＋事件正規化。commit 4e3ec50c（CIO APPROVE），gmail_triage 實跑 rc=0、簡報三段恢復。",
-    "status": "已完成",
-    "source": "user"
-  }
   ],
   "meta": {
-    "updated_at": "2026-11-03T07:31:53.019909"
+    "updated_at": "2026-11-03T08:19:03.176923"
   },
   "last_updated": "2026-11-03T18:00:00+08:00",
   "2026-09-29": [
@@ -11950,12 +11947,6 @@
     "9/29 核准（✅ 使用者）：① 質押撥款 590 萬列為『指定用途款 restricted_cash』— 從現金桶／可動用乾粉／Runway／配置分母全部排除（現金桶 6,719,768→819,768、21.1%→2.6%；乾粉 6,019,182→119,182；『債券及安全現金』超標 +14.5pp→不足 −4.0pp），避免桶位假超標觸發 9/8 的自動減碼授權；總資產 6,719,182／負債 36,003,720 真值不變，清償入帳後將 restricted_cash 歸零即自動解除。② 校正儀表板『操作規範』舊口徑：桶位 % 一律由穿透真值派生（原由雷達計劃文字帶出 7.8/39.4/68.4/28.7/3.4 舊值），Runway 卡改動態實算並註明「真值 − 指定清償款」。附帶修復：static_gate 被 AppLocker 擋（降級鏈）、run_daily F821、funds_cathay_breakdown 殘留 9/23 舊值（11,876,124→11,779,326）、sync_all 雷達步驟時序競態（再平衡兩表吃到前一天 weekly_plan）。"
   ],
   "pending_decisions": [
-    {
-      "date": "2026-09-06",
-      "action": "美債中短 ladder 重新評估（原標案理由已終止；檢視日 2026-11-03）",
-      "status": "待處理",
-      "tags": "債券,美債,標案,資金框架"
-    },
     {
       "date": "2026-09-14",
       "action": "避險衛星加碼：保單轉換黃金A10＋健康A10（分批，單次≤20萬）",
