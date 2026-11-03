@@ -12,7 +12,7 @@
  "retirement_surplus": 20890,
  "securities_total_market_value": 2737150,
  "fund_market_value": 12606066,
- "moneybook_total": 2070934,
+ "moneybook_total": 2034786,
  "high_yield_savings_total": 2200410,
  "cathay_refinance_amount": null,
  "rent_monthly_actual": 24000,
@@ -6054,7 +6054,7 @@
   "credit_line_note": "⚠️ 無真值來源：可動用信用額度（未動用質押額度／保單借款空間）尚未建檔 → 壓力測試不得推估",
   "語義": "現金 2,034,786 中 900,000 係指定還債款（同時撐『清償承諾』與『追繳緩衝』，清償卡住則兩邊同時破）；可動用僅 unrestricted_cash 1,134,786；撐不撐得住一律看 unrestricted_cash，不得把指定還債款當普通現金。",
   "source": "sot_targets.cash_layers（派生：cash_total／restricted_cash／cash_floor）",
-  "derived_at": "2026-11-02"
+  "derived_at": "2026-11-03"
  },
  "metrics_registry": {
   "metric_version": "2.0.0",
@@ -6070,7 +6070,7 @@
    },
    "防禦維度": {
     "歷史值": 53.8,
-    "現行值": 48.1,
+    "現行值": 48.0,
     "性質": "度量修正",
     "說明": "舊 stored 53.8% 無程式寫入者（疑人工值）→ 停用，改派生（分母排除指定用途款）"
    },
@@ -6081,29 +6081,29 @@
   },
   "標註規則": "凡顯示未達標（B 級／<100%）處，一律附「（度量修正 v2.0.0，非資產變動）」；月報需獨立一行「口徑變更影響」",
   "source": "sot_targets.metrics_registry",
-  "derived_at": "2026-11-02"
+  "derived_at": "2026-11-03"
  },
  "us30y_gate": {
-  "status": "OK",
+  "status": "STALE",
   "value": 5.309,
   "as_of": "2026-10-30",
-  "ref_date": "2026-11-02",
-  "lag_days": 3,
+  "ref_date": "2026-11-03",
+  "lag_days": 4,
   "max_lag_days": 3,
   "red_line": 5.3,
   "streak_days": 45,
   "mode_a_streak_days": 45,
   "red_line_streak_days": 6,
   "below_red_line": false,
-  "risk_warning": true,
+  "risk_warning": false,
   "mode": "advisory",
-  "unfreeze_allowed": true,
+  "unfreeze_allowed": false,
   "unfreeze_conditions": {
    "conditions": [
     {
      "名稱": "現金 ≥ 自由現金門檻",
      "通過": true,
-     "現值": 1148447,
+     "現值": 1134786,
      "門檻": 1000000.0,
      "註記": "可動用＝cash_layers.unrestricted_cash；指定用途款 900,000 永久排除；分批資金只認列已實際入帳盈餘",
      "來源": "sot_targets.allowable_cash ＋ sabbatical_gate_twd.自由現金_twd"
@@ -6226,7 +6226,7 @@
    },
    "source": "sot_targets.unfreeze_conditions（v1.2 TD-20261015-02；2026-10-14 裁決）"
   },
-  "reason": "讀值日 2026-10-30（落後 3 天，在容忍值 3 天內）｜US30Y 為宏觀風險警示（已觸發，長債新增凍結生效），不單獨否決台股分批；解凍判定＝條件全數成立",
+  "reason": "讀值日 2026-10-30 落後真值日 2026-11-03 達 4 天（> 3）→ 不得判定解凍｜US30Y 為宏觀風險警示（未觸發），不單獨否決台股分批；解凍判定＝資料無效（STALE）",
   "source": "sot_targets.us30y_gate（advisory 模式 v1.2：US30Y 警示＋unfreeze_conditions 複合條件；thresholds.US30Y閘門模式 可切回 hard_veto）"
  },
  "redline_policy": {
@@ -6261,7 +6261,7 @@
    }
   ],
   "source": "sot_targets.redline_policy（使用者 2026-09-30 定案）",
-  "derived_at": "2026-11-02"
+  "derived_at": "2026-11-03"
  },
  "rent_note_20260930": "大義街 1 樓店面 10 月租金 24,000 於 2026-09-30 提前入帳 → 歸 2026-10-01（9 月租金實收維持 77,100）；現金 3,752,961 已含此筆。",
  "last_updated": "2026-11-02",
@@ -6612,7 +6612,7 @@
  },
  "真值日_20261016": "使用者 10/16 上傳：Moneybook ZIP（09/05–10/15）＋台股持股頁收盤截圖＋國泰基金頁＋安聯 A/B 標的列表＋第一金帳戶表現頁＋鉅亨一般申購 CSV／自由PAY 截圖。現金 2,070,930（差異 −4 為外幣計價慣例，維持 2,070,934 不變）。",
  "etf_dividend_schedule_note_20261016": "2026-10-16 Moneybook 實證：10 月 ETF 配息 5 檔全數入帳（台新媒體轉入）：00713 2,490／00981A 2,510／00983D 1,210／00919 6,590／00918 1,740＝14,540。公告預估合計 17,110 → 實收少 2,570：其中 00981A 差 −2,530（預估 5,040 vs 實收 2,510，約為每受益權單位 0.315 而非 0.63 → 配息率或除息基準股數待確認），其餘 4 檔各 −10（匯費）。",
- "moneybook_total_note": "2026-10-16 校正：原 3,614,169 為停用舊值（Moneybook/ 目錄已不存在的外部 ZIP 時代前值）；改對齊真值 cash_detail 合計 2,070,934",
+ "moneybook_total_note": "2026-11-03 收斂：錢簿總額一律派生自 cash_detail 台幣帳戶合計（原 2,070,934 停在 10-16，較真值高 30,148）；update_data.py 已改為寫入時自動派生",
  "allianz_ab_value": 7541268,
  "last_insurance_update": "2026-10-27T22:18:00+08:00",
  "insurance_note_20261019": "安聯 A 4,955,485／B 2,618,172／第一金 1,878,664；合計 9,452,321",

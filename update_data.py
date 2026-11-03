@@ -233,6 +233,10 @@ def main():
             print(f"⚠️ cash_detail 合計 {_cd_sum:,} ≠ cash_total {_cash_new:,}（差 {_cash_new - _cd_sum:+,}）— 儀表板銀行水位卡會顯示舊值！請用 --cash_detail 同步 8/31 帳戶 CSV")
         else:
             print(f"✅ cash_detail 合計 {_cd_sum:,} 與 cash_total 一致")
+        # 2026-11-03：mb_total 漂移自癒（--cash 路徑也守一次；以 cash_detail 為唯一真值）
+        if _cd2 and snap.get("moneybook_total") != _cd_sum:
+            print(f"🔧 moneybook_total 漂移自癒：{snap.get('moneybook_total'):,} → {_cd_sum:,}")
+            snap["moneybook_total"] = _cd_sum
 
     # ② 同步同義欄位 + 重算總資產
     from asset_sync import sync_snapshot_keys, sync_allianz_combined, verify_cross_group_invariants
@@ -264,6 +268,12 @@ def main():
                                 if isinstance(v, (int, float)) and v > 0
                                 and not any(x in k for x in _exclude))
                 snap["cash_total"] = _cash_sum
+                # 2026-11-03（PEND moneybook_total 收斂）：mb_total 一律由此派生，不再人工維護。
+                #   舊值停在 10/16 的 2,070,934（較真值高 30,148），是 asset_diff fallback 的假值來源。
+                snap["moneybook_total"] = _cash_sum
+                snap["moneybook_total_note"] = (
+                    "2026-11-03 起由 update_data.py 派生＝cash_detail 台幣帳戶合計"
+                    f"（匯入日 {datetime.date.today().isoformat()}）；勿人工改寫")
                 snap = sync_snapshot_keys(snap)
                 # 2026-08-31：現金來源標記（asset_diff_monitor 顯示「已匯入」用；Moneybook 目錄被 sync_all 清理後無法靠檔案判斷）
                 snap["cash_source"] = {"date": datetime.date.today().isoformat(), "note": "Moneybook 帳戶 CSV 匯入（cash_detail）"}
