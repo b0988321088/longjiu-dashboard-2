@@ -202,6 +202,8 @@ def main() -> int:
     if errors:
         print(f"⚠️ 詳情抓取失敗 {errors} 筆", file=sys.stderr)
     if not rows:
+        print(f"🏛️ 中部設計監造（≤1,000 萬）等標期內 {stamp}："
+              f"今日無符合條件案件（掃 {len(cands)} 筆中部候選）")
         return 0
 
     rows.sort(key=lambda r: (r[0] or now, r[3]))

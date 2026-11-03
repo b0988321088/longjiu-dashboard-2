@@ -161,8 +161,7 @@ def main() -> int:
         if not in_scope(text):
             continue
         key = hashlib.md5(tid.encode()).hexdigest()[:16]
-        if key in seen:
-            continue
+        is_new = key not in seen
         try:
             d = fetch_detail(tid)
         except Exception:
@@ -179,9 +178,10 @@ def main() -> int:
             expired += 1
             continue                       # 已決標或已過截止 → 不通知
         seen[key] = stamp
-        wan = f"{d['budget']/10000:.0f} 萬" if d.get("budget") else "未公開"
+        wan = f"{b/10000:.0f} 萬" if d.get("budget") else "未公開"
         reg = "中部" if any(k in (text + d.get("place", "")) for k in CENTRAL) else d.get("place") or "其他"
-        fresh.append(f"・{wan}｜{reg}｜{text[:60]}｜{d.get('deadline','')} 截止")
+        mark = "🆕" if is_new else "📌"
+        fresh.append(f"{mark} {wan}｜{reg}｜{text[:60]}｜{d.get('deadline','')} 截止")
 
     save_seen(seen)
     if expired:
@@ -190,12 +190,15 @@ def main() -> int:
         print(f"ℹ️ 超過 {MAX_BUDGET//10000} 萬略過 {over} 筆", file=sys.stderr)
     if errors:
         print(f"⚠️ 詳情抓取失敗 {errors} 筆", file=sys.stderr)
+
     if not fresh:
+        print(f"🌲 林業署設計監造（治山／林道／擋土，≤1,000 萬）{stamp}："
+              f"今日無符合條件案件（掃 {len(rows)} 筆）")
         return 0
 
     lines = [f"🌲 林業署設計監造（治山／林道／擋土，≤1,000 萬）{stamp}（{len(fresh)} 筆）"]
     lines += fresh[:12]
-    lines.append("→ 8672 工程服務，技師可投；已決標者自動略過")
+    lines.append("→ 🆕 新案・📌 曾報（仍在等標期）；8672 工程服務，技師可投；已決標者自動略過")
     print("\n".join(lines))
     return 0
 

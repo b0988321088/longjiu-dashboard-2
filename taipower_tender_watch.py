@@ -157,6 +157,7 @@ def main() -> int:
     errors: list[str] = []
     lookups: list[str] = []
     scanned = 0
+    env_n = 0
 
     for d in (today - dt.timedelta(days=1), today):
         try:
@@ -168,6 +169,11 @@ def main() -> int:
         for org, name, day, recno in rows:
             cat = classify(org, name)
             if not cat:
+                # 2026-11-03：環保／監測類目前依 11/02 規則排除，但要「看得見」被排除幾筆
+                if any(k in name for k in ("環境監測", "環境調查", "環評", "污染",
+                                           "稽查", "採樣", "水質", "空氣品質",
+                                           "噪音", "土壤", "廢棄物")):
+                    env_n += 1
                 continue
             reg = region_of(org, name)
             if cat == "👷 勞務" and reg != "中部":
@@ -192,11 +198,14 @@ def main() -> int:
     if errors:
         print("⚠️ 抓取異常：" + "；".join(errors), file=sys.stderr)
     if not fresh:
+        print(f"🏗️ 台電標案（督導／中部勞務／工安環保）{stamp}："
+              f"今日無新符合條件案（掃 {scanned} 筆；環保監測類排除 {env_n} 筆）")
         return 0
 
     sup = sum(1 for f in fresh if f[0] == "🎯 督導")
     lab = len(fresh) - sup
-    lines = [f"🏗️ 台電新標案 {stamp}（≤1,000 萬）｜督導 {sup} 筆・中部勞務 {lab} 筆"]
+    lines = [f"🏗️ 台電新標案 {stamp}（≤1,000 萬）｜督導 {sup} 筆・中部勞務 {lab} 筆"
+             f"（掃 {scanned} 筆；環保監測類排除 {env_n} 筆）"]
     for cat, reg, org, name, day, budget in fresh[:15]:
         short = (org.replace("台灣電力股份有限公司", "台電")
                     .replace("核能火力發電工程處", "核火工程處")
