@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-03T13:14:26.255163",
+ "generated_at": "2026-11-03T13:43:46.684589",
  "version": "v5.0.10-true-value-correction",
  "date": "2026-11-03",
  "total_assets": 26574550,
@@ -5576,14 +5576,14 @@
   "asof": "2026-11-03",
   "current": {
    "growth_assets": {
-    "tw_growth": 2844785.0,
-    "us_growth": 9958244.0,
+    "tw_growth": 2833410.0,
+    "us_growth": 9960121.0,
     "re_value": 34017063.0,
     "mortgage": 25005344.0,
     "re_net": 9011719.0,
     "fin_debt": 0.0,
-    "total": 21814748.0,
-    "net_after_fin_debt": 21814748.0
+    "total": 21805250.0,
+    "net_after_fin_debt": 21805250.0
    },
    "coast": {
     "fi_target_swr": 47763000.0,
@@ -5591,21 +5591,21 @@
     "years_to_target": 0.25,
     "target_date": "2027-02-01",
     "real_return_pct": 5.0,
-    "fin_only_capital": 12803029.0,
+    "fin_only_capital": 12793531.0,
     "coast_threshold_swr": 47183947.53456829,
     "coast_fi_ratio_swr_pct": 46.2,
     "coast_fi_ratio_fin_only_swr_pct": 27.1,
-    "coast_gap_fin_only_swr": 34380918.53456829,
-    "fv_no_contrib_swr": 22082463.70146642,
-    "gap_fv_swr": 25680536.29853358,
-    "monthly_needed_swr": 8524610.22467336,
+    "coast_gap_fin_only_swr": 34390416.53456829,
+    "fv_no_contrib_swr": 22072849.13978381,
+    "gap_fv_swr": 25690150.86021619,
+    "monthly_needed_swr": 8527801.762025718,
     "coast_threshold_yield": 37747158.027654625,
     "coast_fi_ratio_yield_pct": 57.8,
     "coast_fi_ratio_fin_only_yield_pct": 33.9,
-    "coast_gap_fin_only_yield": 24944129.027654625,
-    "fv_no_contrib_yield": 22082463.70146642,
-    "gap_fv_yield": 16127936.298533581,
-    "monthly_needed_yield": 5353640.947179545
+    "coast_gap_fin_only_yield": 24953627.027654625,
+    "fv_no_contrib_yield": 22072849.13978381,
+    "gap_fv_yield": 16137550.86021619,
+    "monthly_needed_yield": 5356832.484531901
    },
    "light_work": {
     "rows": [
@@ -5613,25 +5613,25 @@
       "月收": 0.0,
       "所需年現金流": 1910520,
       "所需本金": 38210400,
-      "缺口": 25407371,
+      "缺口": 25416869,
       "達成_pct": 33.5
      },
      {
       "月收": 20000.0,
       "所需年現金流": 1670520,
       "所需本金": 33410400,
-      "缺口": 20607371,
+      "缺口": 20616869,
       "達成_pct": 38.3
      },
      {
       "月收": 30000.0,
       "所需年現金流": 1550520,
       "所需本金": 31010400,
-      "缺口": 18207371,
+      "缺口": 18216869,
       "達成_pct": 41.3
      }
     ],
-    "fin_capital": 12803029.0,
+    "fin_capital": 12793531.0,
     "yield_pct": 5.0,
     "expense": 159210.0
    },
@@ -5893,7 +5893,7 @@
     "runway_days": 1060,
     "maintenance_pct": 139.8,
     "credit_locked": false,
-    "light_work_cap_2w": 20607371
+    "light_work_cap_2w": 20616869
    }
   }
  },
