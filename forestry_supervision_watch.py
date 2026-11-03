@@ -62,22 +62,29 @@ def fetch_rows() -> list[tuple[str, str, str]]:
     for k in KEYWORDS:
         urls.append((KW_URL + urllib.parse.quote(k), f"kw:{k}"))
     for url, tag in urls:
-        try:
-            raw = _get(url)
-        except Exception:
-            continue
-        for m in ROW_RE.finditer(raw):
-            full = m.group(1)
-            tid = full.rstrip("/").split("/")[-1]
-            body = re.sub(r"<[^>]+>", " ", m.group(2))
-            body = re.sub(r"\s+", " ", htmlmod.unescape(body)).strip()
-            body = re.sub(r"^\d+\s+", "", body)
-            if not body or tid in seen:
-                continue
-            seen.add(tid)
-            if not any(g in body for g in ("林業及自然保育署", "林業試驗所", "林務局")):
-                continue
-            out.append((tid, body, tag))
+        # 2026-11-03 修：acebidx 每頁 50 筆、分頁走路徑 /2 /3 …，先前只讀第 1 頁會漏案
+        for pg in range(1, 7):
+            u = url if pg == 1 else f"{url}/{pg}"
+            try:
+                raw = _get(u)
+            except Exception:
+                break
+            new = 0
+            for m in ROW_RE.finditer(raw):
+                full = m.group(1)
+                tid = full.rstrip("/").split("/")[-1]
+                body = re.sub(r"<[^>]+>", " ", m.group(2))
+                body = re.sub(r"\s+", " ", htmlmod.unescape(body)).strip()
+                body = re.sub(r"^\d+\s+", "", body)
+                if not body or tid in seen:
+                    continue
+                seen.add(tid)
+                new += 1
+                if not any(g in body for g in ("林業及自然保育署", "林業試驗所", "林務局")):
+                    continue
+                out.append((tid, body, tag))
+            if new == 0:
+                break
     return out
 
 

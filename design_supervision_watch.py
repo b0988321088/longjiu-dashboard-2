@@ -53,21 +53,51 @@ def _get(url: str, timeout: int = 45) -> str:
         return r.read().decode("utf-8", errors="ignore")
 
 
-def fetch_candidates() -> list[tuple[str, str]]:
-    """回傳 [(tender_id, 標題文字)]，已初篩中部地名。"""
-    raw = _get(LIST_URL)
+def fetch_candidates(max_pages: int = 12) -> list[tuple[str, str]]:
+    """回傳 [(tender_id, 標題文字)]，已初篩中部地名。
+
+    2026-11-03 修：acebidx 每頁固定 50 筆、分頁走路徑 /2 /3 …，
+    先前只抓第 1 頁 → 400 筆中只看到 50 筆，610 萬「北區」、631 萬「集集攔河堰」
+    等案全被漏掉。改為逐頁翻到「該頁無新 id」為止（上限 max_pages）。
+    """
     out: list[tuple[str, str]] = []
     seen = set()
-    for m in ROW_RE.finditer(raw):
-        tid = m.group(1).rstrip("/").split("/")[-1]
-        body = re.sub(r"<[^>]+>", " ", m.group(2))
-        body = re.sub(r"\s+", " ", htmlmod.unescape(body)).strip()
-        if not body or tid in seen:
-            continue
-        seen.add(tid)
-        if any(k in body for k in CENTRAL):
-            out.append((tid, body))
+    for pg in range(1, max_pages + 1):
+        url = LIST_URL if pg == 1 else f"{LIST_URL}/{pg}"
+        try:
+            raw = _get(url)
+        except Exception:
+            if pg == 1:
+                raise
+            break
+        new = 0
+        for m in ROW_RE.finditer(raw):
+            tid = m.group(1).rstrip("/").split("/")[-1]
+            if tid in seen:
+                continue
+            seen.add(tid)
+            new += 1
+            body = re.sub(r"<[^>]+>", " ", m.group(2))
+            body = re.sub(r"\s+", " ", htmlmod.unescape(body)).strip()
+            if body and any(k in body for k in CENTRAL):
+                out.append((tid, body))
+        if new == 0:
+            break
     return out
+
+
+def parse_deadline(s: str) -> dt.datetime | None:
+    """'115/11/09 17:00' → datetime（民國年自動換算）。"""
+    m = re.match(r"(\d{2,4})/(\d{1,2})/(\d{1,2})\s+(\d{1,2}):(\d{2})", str(s or ""))
+    if not m:
+        return None
+    y, mo, dd, hh, mi = (int(x) for x in m.groups())
+    if y < 200:
+        y += 1911
+    try:
+        return dt.datetime(y, mo, dd, hh, mi, tzinfo=TZ)
+    except ValueError:
+        return None
 
 
 def fetch_detail(tid: str) -> dict:
@@ -126,10 +156,10 @@ def main() -> int:
     except Exception:
         pass
 
-    today = dt.datetime.now(TZ).date()
-    stamp = today.isoformat()
+    now = dt.datetime.now(TZ)
+    stamp = now.date().isoformat()
     seen = load_seen()
-    fresh: list[tuple[str, str]] = []
+    rows: list[tuple] = []
     errors = 0
 
     try:
@@ -138,16 +168,15 @@ def main() -> int:
         print(f"⚠️ 列表抓取失敗：{type(e).__name__}", file=sys.stderr)
         return 1
 
-    for tid, title in cands[:12]:
+    titles: set[str] = set()
+    for tid, title in cands:
         key = hashlib.md5(tid.encode()).hexdigest()[:16]
-        if key in seen:
-            continue
         try:
             d = fetch_detail(tid)
         except Exception:
             errors += 1
             continue
-        time.sleep(0.8)
+        time.sleep(0.6)
         b = d.get("budget")
         if b is not None and b > MAX_BUDGET:
             continue
@@ -155,23 +184,38 @@ def main() -> int:
             continue                      # 建築服務需建築師，排除
         if d.get("place") and not any(k in d["place"] for k in CENTRAL):
             continue                      # 以詳情履約地點複核
-        seen[key] = stamp
-        title = re.sub(r"^\d+\s+", "", title)
-        title = re.sub(r"\s*\d+月\d+日\s*公告\s*$", "", title).strip()
-        wan = f"{b/10000:.0f} 萬" if b else "未公開"
-        cat = d.get("cat") or "類別未載"
-        fresh.append((f"・{wan}｜{d.get('place','')}｜{title[:52]}｜"
-                      f"{(d.get('deadline') or '').strip()}截止｜{cat}"))
+        dl = parse_deadline(d.get("deadline"))
+        if dl and dl < now:
+            continue                      # 等標期已過 → 不列（2026-11-03 使用者要求：只給等標期內）
+        t = re.sub(r"^\d+\s+", "", title)
+        t = re.sub(r"\s*\d+月\d+日\s*公告\s*$", "", t).strip()
+        sig = re.sub(r"\s+", "", t)
+        if sig in titles:
+            continue                      # 同案多次公告（不同 id）只留一筆
+        titles.add(sig)
+        is_new = key not in seen
+        if is_new:
+            seen[key] = stamp
+        rows.append((dl, b, d.get("place", ""), t, d.get("cat") or "類別未載", is_new))
 
     save_seen(seen)
     if errors:
         print(f"⚠️ 詳情抓取失敗 {errors} 筆", file=sys.stderr)
-    if not fresh:
+    if not rows:
         return 0
 
-    lines = [f"🏛️ 中部設計監造（≤1,000 萬）{stamp}（{len(fresh)} 筆）"]
-    lines += fresh
-    lines.append("→ 技師可投 8672 工程服務；8671 建築服務已自動排除")
+    rows.sort(key=lambda r: (r[0] or now, r[3]))
+    new_n = sum(1 for r in rows if r[5])
+    lines = [
+        f"🏛️ 中部設計監造（≤1,000 萬）等標期內 {stamp}"
+        f"（共 {len(rows)} 筆：🆕 新案 {new_n}・📌 曾報 {len(rows) - new_n}）"
+    ]
+    for dl, b, place, t, cat, is_new in rows:
+        mark = "🆕" if is_new else "📌"
+        wan = f"{b/10000:.0f} 萬" if b else "未公開"
+        dls = dl.strftime("%m/%d %H:%M") if dl else "未載"
+        lines.append(f"{mark} {wan}｜{place}｜{t[:52]}｜{dls}截止｜{cat}")
+    lines.append("→ 🆕 新案・📌 曾報（仍在等標期）；技師可投 8672 工程服務，8671 建築服務已排除")
     print("\n".join(lines))
     return 0
 
