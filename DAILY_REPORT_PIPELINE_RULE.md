@@ -61,6 +61,13 @@
 > snapshot 兩組 key 也要一起改：`allianz_ab`／`allianz_ab_current_value`、`firstjin`／`firstjin_current_value`
 > （校準讀 `_current_value` 優先，只改一個會拿到舊值）。
 
+> **校準容差（2026-11-04 使用者核准）**：`run_daily.calibrate_sources()` 對金額型校準採容差制——
+> 差額 **≤1,000 元 或 ≤0.01%** → 只印 `[CALIBRATE] ⚠️ 容差內差異（不擋）` 並繼續，不擋日報；
+> 超過容差 → 仍 `exit 2` fail-closed。目的：吸收「同義鍵分散寫入」造成的尾差
+> （實例：第一金 `firstjin_current_value` 已更新、`firstjin_fl65_current_value` 未同步，差 871 元＝0.003%，
+> 2026-11-04 曾因此擋掉整條日報與穿透報告）。容差**不吸收**真實資料錯誤（後者通常遠大於門檻）。
+> 常數：`run_daily.TOLERANCE_TWD／TOLERANCE_PCT`。
+
 - **安聯 A + 安聯 B = 一張合併 row**（現值 7,456,850；2026-11-04 校正＝安聯 App 10:44 截圖，A 4,945,215／B 2,511,635，配息一律讀 snapshot dividend_records）
   - 成本／現值／累計配息／資產報酬率：一律讀 snapshot（allianz_*），不在本檔留數字
   - 本月配息：讀 snapshot.dividend_records[當月] 保單桶（2026-10-01 校正；原 55,451 為 7 月值，已移除）

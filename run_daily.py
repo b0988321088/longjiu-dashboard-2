@@ -118,8 +118,12 @@ def extract_markdown_value(text: str, pattern: str) -> str | None:
     return m.group(1).strip() if m else None
 
 
+TOLERANCE_TWD = 1000       # 校準容差：絕對金額（元）
+TOLERANCE_PCT = 0.0001     # 校準容差：比例（0.01%）
+
+
 def calibrate_sources() -> dict:
-    """讀取三源並回傳校準後的真值 dict；不一致就 raise。"""
+    """讀取三源並回傳校準後的真值 dict；超容差不一致才 raise（2026-11-04 加容差）。"""
     snap = load_json(SNAPSHOT) if SNAPSHOT.exists() else {}
     rules = load_text(RULES) if RULES.exists() else ""
     ledger = load_text(LEDGER) if LEDGER.exists() else ""
@@ -163,25 +167,43 @@ def calibrate_sources() -> dict:
             return None
         return a == b
 
-    checks = {
-        "monthly_income": check("月收入", s_income, to_num(r_income)),
+    pairs = {
+        "monthly_income": (s_income, to_num(r_income)),
         # monthly_expense 以 MB override 為唯一真值，不跟旧文字檔比對
-        "working_surplus": check("工作期盈餘", s_work_surplus, to_num(r_work_surplus)),
-        "retirement_surplus": check("退休後盈餘", s_retire_surplus, to_num(r_retire_surplus)),
-        "allianz_value": check("安聯A+B現值", s_allianz, to_num(r_allianz)),
-        "firstjin_value": check("第一金現值", s_firstjin, to_num(r_firstjin)),
+        "working_surplus": (s_work_surplus, to_num(r_work_surplus)),
+        "retirement_surplus": (s_retire_surplus, to_num(r_retire_surplus)),
+        "allianz_value": (s_allianz, to_num(r_allianz)),
+        "firstjin_value": (s_firstjin, to_num(r_firstjin)),
     }
+    checks = {k: check(k, a, b) for k, (a, b) in pairs.items()}
 
     unresolved = [k for k, v in checks.items() if v is None]
     if unresolved:
         print(f"[CALIBRATE] ⚠️ 校準空轉（來源缺值／regex 未命中，未比對）：{unresolved}")
 
-    conflicts = {k: v for k, v in checks.items() if v is False}
+    # 2026-11-04 使用者核准：加容差。
+    # 背景：同義鍵分散寫入（如 firstjin_current_value 改了、firstjin_fl65_current_value 沒改）
+    # 造成的尾差（第一金 871 元＝0.003%）過去會 fail-closed 擋掉整條日報與穿透報告。
+    # 規則：差額 ≤ TOLERANCE_TWD 或 ≤ TOLERANCE_PCT → 只警告不擋；超過 → 仍 hard fail。
+    # 容差只吸收「寫入不同步」的尾差，不吸收真實資料錯誤（後者通常遠大於 1,000 元／0.01%）。
+    def _within_tol(a, b) -> bool:
+        if a is None or b is None:
+            return False
+        d = abs(a - b)
+        return d <= TOLERANCE_TWD or d <= max(abs(a), abs(b)) * TOLERANCE_PCT
+
+    soft = {k: pairs[k] for k, v in checks.items() if v is False and _within_tol(*pairs[k])}
+    if soft:
+        for k, (a, b) in soft.items():
+            print(f"[CALIBRATE] ⚠️ 容差內差異（不擋）：{k} snapshot={a:,} rules={b:,} "
+                  f"差 {abs(a - b):,}（容差 ≤{TOLERANCE_TWD:,} 元或 ≤{TOLERANCE_PCT * 100:.2f}%）")
+
+    conflicts = {k: v for k, v in checks.items() if v is False and k not in soft}
     if conflicts:
         print(f"[CALIBRATE] 三源校準失敗：{conflicts}")
         sys.exit(2)
 
-    print("[CALIBRATE] 三源校準通過")
+    print("[CALIBRATE] 三源校準通過" + (f"（{len(soft)} 項容差內差異，已警告）" if soft else ""))
     # 真值錨定：本月配息依當月 dividend_records 動態累積（8月起自動歸零重算）
     _today_m = date.today().strftime("%Y-%m")
     _div_records = snap.get("dividend_records", {}) or {}
