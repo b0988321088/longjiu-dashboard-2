@@ -32,6 +32,50 @@ RECEIPT_FILE = REPO / "data" / "decision_intake_receipts.jsonl"
 TPE = timezone(timedelta(hours=8))
 
 
+def empty_intake_diagnosis(day):
+    """2026-11-04（CIO 排序 B）：rc=2 時補診斷，區分「今日確實沒有裁定」與「裁定沒被收成收據」。
+    只輸出診斷，不改判定（0 筆永不得視為通過）。"""
+    out = []
+    n_rec_all, last_rec = 0, ""
+    if RECEIPT_FILE.exists():
+        for ln in RECEIPT_FILE.read_text(encoding="utf-8").splitlines():
+            ln = ln.strip()
+            if not ln:
+                continue
+            try:
+                r = json.loads(ln)
+            except Exception:
+                continue
+            n_rec_all += 1
+            ts = str(r.get("ts", ""))
+            if ts > last_rec:
+                last_rec = ts
+    out.append(f"收據檔：累計 {n_rec_all} 筆，最後一筆 {last_rec or '（無）'}")
+    n_dec_all, last_dec, dec = 0, "", {}
+    try:
+        dec = json.loads(DEC_FILE.read_text(encoding="utf-8"))
+        for d in dec.get("decisions", []) or []:
+            n_dec_all += 1
+            ts = str(d.get("timestamp", "") or d.get("date", ""))
+            if ts > last_dec:
+                last_dec = ts
+        out.append(f"決策檔：累計 {n_dec_all} 筆，最後一筆 {last_dec or '（無）'}")
+    except Exception as e:
+        out.append(f"決策檔讀取失敗：{type(e).__name__}")
+    today_in_dec = any(
+        str(d.get("timestamp", "") or d.get("date", "")).startswith(day)
+        for d in (dec.get("decisions", []) or [])
+    )
+    if today_in_dec:
+        out.append("→ 判定：決策檔已有今日決策但收據 0 → 漏收據（寫方未經 append_dashboard_decisions.py）")
+    elif not last_dec or last_dec[:10] < day:
+        out.append("→ 判定：兩邊今日皆無新增 → 可能是『今日確實沒有裁定』，也可能是『對話中的裁定沒進入任何寫方』")
+        out.append("   （後者本檢查無法識別：未經 append 工具的裁定不會留下痕跡，故 rc=2 保留）")
+    else:
+        out.append("→ 判定：兩邊皆 0 但決策檔有今日紀錄 → 檢查日期格式與 source 欄位")
+    return out
+
+
 def _today(arg=None):
     if arg:
         return arg
@@ -267,6 +311,8 @@ def main():
             #   語意改為「未驗證」，rc=2 沿用既有契約（CIO 18:30 job 已把 rc=2 視為
             #   「對帳未完成」而不得當成通過），不動 rc=0 的既有成功語意。
             print("  ⚠️ 無資料，完整性未驗證（收據 0／檔案 0）→ 不得視為通過")
+            for _dl in empty_intake_diagnosis(day):
+                print(f"     {_dl}")
             rc = max(rc, 2)
         else:
             print(f"  ✅ 一致（{len(file_ids)} 筆；今日無缺口）")
