@@ -68,6 +68,7 @@ DEPLOY_REF = "origin/clean-main"      # Pages 唯一部署來源（= GitHub defa
 sys.path.insert(0, str(REPO))
 import release_claimed_occurrences as rco  # noqa: E402
 import auto_push as apush  # noqa: E402  （複核 range-missing 是否已補紀錄）
+from account_floors import yongfeng_safe_line  # noqa: E402  2026-11-04：永豐安全線＝max(房貸月繳×3, 大戶門檻)
 
 # 已解決狀態的說明字串（v4.2 收工稽核：只有 pending 才算問題）
 SETTLED_REASON = {
@@ -413,7 +414,8 @@ def step_consistency(quiet: bool) -> list:
             safe3 = expense * 3
             want = f"{safe3:,}"
             want_cat = f"{_cat_loan * 3:,}" if _cat_loan is not None else None
-            want_sin = f"{_sin_loan * 3:,}" if _sin_loan is not None else None
+            # 2026-11-04 使用者裁示：永豐安全線＝max(房貸月繳×3, 大戶門檻 300,000)（與產出層同源）
+            want_sin = f"{yongfeng_safe_line(_sin_loan * 3):,.0f}" if _sin_loan is not None else None
             if not INDEX_FILE.exists():
                 problems.append(f"index.html 不存在（無法驗證安全線 {want}）")
             else:
@@ -430,7 +432,7 @@ def step_consistency(quiet: bool) -> list:
                 if len(anchors) != EXPECT_SAFE_ANCHORS:
                     problems.append(f"index.html 安全線錨點數量 {len(anchors)} ≠ {EXPECT_SAFE_ANCHORS}（元素被刪／結構變動）")
                 for _k, _w, _lbl in (("safe_line_cathay", want_cat, "國泰房貸月繳×3"),
-                                     ("safe_line_sinopac", want_sin, "永豐房貸月繳×3")):
+                                     ("safe_line_sinopac", want_sin, "永豐 max(房貸月繳×3, 大戶門檻)")):
                     _a = _anchors(_k)
                     if _w is None:
                         problems.append(f"index.html {_k} 無法驗證：snapshot 缺房貸月繳值（mortgage_*_monthly）")
@@ -444,13 +446,15 @@ def step_consistency(quiet: bool) -> list:
                 life = [v for v in mins if v == LIFE_ACCOUNT_MIN]
                 bank = [v for v in mins if v != LIFE_ACCOUNT_MIN]
                 # data-min 是未加千分位的原始數字（want* 為顯示格式）→ 比對用原始值
-                _allowed = {str(safe3)} | {str(int(x) * 3) for x in (_cat_loan, _sin_loan) if x}
+                _allowed = {str(safe3)} | {str(int(x) * 3) for x in (_cat_loan,) if x}
+                if _sin_loan:
+                    _allowed.add(str(int(yongfeng_safe_line(_sin_loan * 3))))
                 for v in sorted(set(bank)):
                     if not v.isdigit():
                         problems.append(f"index.html 銀行卡門檻格式錯誤 {v!r}（JS Number() 會得 NaN）")
                     elif v not in _allowed:
                         problems.append(f"index.html 銀行卡門檻不在允許集合（月支出×3={want}／國泰房貸×3={want_cat}／"
-                                        f"永豐房貸×3={want_sin}）：{v}")
+                                        f"永豐 max(房貸×3, 大戶門檻)={want_sin}）：{v}")
                 if len(bank) != EXPECT_BANK_MIN:
                     problems.append(f"index.html 銀行卡門檻數量 {len(bank)} ≠ {EXPECT_BANK_MIN}")
                 if len(life) != EXPECT_LIFE_MIN:

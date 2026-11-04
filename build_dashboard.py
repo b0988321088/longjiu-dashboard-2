@@ -14,6 +14,7 @@ from dividend_caliber import bucket_of
 import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
 from sot_targets import (sot_monthly_expense, sot_monthly_income, dry_display,  # INC-270 月支出／月收入單一入口；2026-10-11 工單A 乾粉顯示單一實作
                          defensive_caliber)  # 2026-10-15 P1-1：防守（配息資產合計）真值單一來源
+from account_floors import YONG_FENG_DAWHO_FLOOR, yongfeng_safe_line  # 2026-11-04：永豐安全線＝max(月繳×3, 大戶門檻)（單一來源）
 
 BASE = Path(__file__).resolve().parent
 
@@ -1161,7 +1162,10 @@ def main():
     _sin_loan = _sin_loan or float(expense)
     rep["__SAFE_LINE_RAW__"] = str(int(expense) * 3)              # 台新（月支出×3；顯示值由下方 data-k="safe_line" 注入）
     rep["__SAFE_LINE_CATHAY_RAW__"] = str(int(_cat_loan) * 3)     # 國泰（房貸月繳×3＝3 個月扣款）
-    rep["__SAFE_LINE_SINOPAC_RAW__"] = str(int(_sin_loan) * 3)    # 永豐（房貸月繳×3＝3 個月扣款）
+    # 2026-11-04 使用者裁示：永豐維持「大戶」資格 → 安全線＝max(房貸月繳×3, 大戶門檻 300,000)
+    #   （門檻來源＝account_floors.YONG_FENG_DAWHO_FLOOR；JS 層同名常數 YF_DAWHO_FLOOR 必須同步）
+    _sin_line = int(yongfeng_safe_line(int(_sin_loan) * 3))
+    rep["__SAFE_LINE_SINOPAC_RAW__"] = str(_sin_line)
     # 2026-08-28 修正：銀行水位全動態（Moneybook 8/27 帳戶）
     rep["20260829_1"] = _data_date      # 資料日期（2026-09-01 修正：動態，不再寫死 8/31）    # 現金合計卡「監控卡片合計」（2026-08-29 補：原寫死 799,612 殘留 → 動態算 cash_detail 正數，排除外幣 key）
     # ── 資產穿透卡五桶市值（2026-08-29 補：快照版 fallback 全部寫死舊值）──
@@ -1262,7 +1266,8 @@ def main():
         "dry_powder_signed": _cw_t["dry_signed"],
         "cash_shortfall": _cw_t["shortfall"],
         "safe_line_cathay": int(_cat_loan) * 3,      # 2026-09-28：房貸扣款行各自口徑
-        "safe_line_sinopac": int(_sin_loan) * 3,
+        "safe_line_sinopac": _sin_line,              # 2026-11-04：max(房貸月繳×3, 大戶門檻 300,000)
+        "yf_floor": YONG_FENG_DAWHO_FLOOR,           # 大戶門檻（卡片文案用；與 account_floors 同源）
         "cathay_loan": int(_cat_loan),
         "sinopac_loan": int(_sin_loan),
         "pen_tw": _ptwd.get("台股市值型成長", 0),
@@ -1299,12 +1304,12 @@ def main():
             lambda m: m.group(1) + (_show if _show is not None else _fmt(_dv)) + m.group(2), tpl)
         if _n:
             hits += _n
-    # ── 銀行水位卡片「靜態狀態」對齊門檻（2026-09-28：卡片顏色/🟢🔴字樣原本手寫，與實際門檻不一致）──
-    #    JS 失敗時的離線快照版也必須說對話（國泰 78,000／永豐 197,205 為房貸口徑）。
+    # 銀行水位卡片「靜態狀態」對齊門檻（2026-09-28：卡片顏色/🟢🔴字樣原本手寫，與實際門檻不一致）
+    #    JS 失敗時的離線快照版也必須說對話（國泰 78,000／永豐 max(月繳×3, 大戶門檻 300,000)）。
     _bank_state = {
         "cathay":  ((cd.get("活期儲蓄存款", 0) or 0) + (cd.get("數位存款帳戶２類", 0) or 0), int(_cat_loan) * 3),
         "taiwan":  (taiwan, int(expense) * 3),
-        "sinopac": ((cd.get("營業部DAWHO活期儲蓄存款", 0) or 0) + (cd.get("市政分行活期儲蓄存款", 0) or 0), int(_sin_loan) * 3),
+        "sinopac": ((cd.get("營業部DAWHO活期儲蓄存款", 0) or 0) + (cd.get("市政分行活期儲蓄存款", 0) or 0), _sin_line),
         "yushan":  (cd.get("臺幣綜存", 0) or 0, 40000),
         "fubon":   (cd.get("數位活儲", 0) or 0, 40000),
     }

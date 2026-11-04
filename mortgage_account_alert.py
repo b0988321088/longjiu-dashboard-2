@@ -109,8 +109,15 @@ ACCOUNTS = (
 # 2026-11-04 使用者裁示：永豐需維持「大戶資格」，帳戶底線 300,000。
 #   資格門檻屬外部條件常數，不隨月繳變動；安全線取 max(月繳×3, 大戶門檻)。
 #   註：永豐月繳×3 現值低於 300,000，故實務上以 300,000 為準；若月繳上升超過門檻則自動改用月繳×3。
+#   值來源＝account_floors.YONG_FENG_DAWHO_FLOOR（單一來源；import 失敗才退回本地常數，
+#   因為 08:30 告警寧可帶預設值也不可因模組缺失整支掛掉）。
+try:
+    from account_floors import YONG_FENG_DAWHO_FLOOR as _YF_FLOOR
+except Exception:                     # pragma: no cover
+    _YF_FLOOR = 300_000
+
 PREMIUM_FLOOR = {
-    "永豐銀行（洲際W 房貸扣款行）": 300_000,
+    "永豐銀行（洲際W 房貸扣款行）": _YF_FLOOR,
 }
 
 

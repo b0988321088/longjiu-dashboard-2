@@ -28,6 +28,7 @@ BASE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE))
 from pending_engine import norm_status  # noqa: E402  （唯一狀態機：原字串 → 四態）
 import pending_store  # noqa: E402  （唯一寫入通道：跨程序互斥鎖 ＋ 原子替換）
+from account_floors import yongfeng_safe_line  # noqa: E402  2026-11-04：永豐安全線＝max(月繳×3, 大戶門檻)
 
 
 def _raw_of(item: dict) -> str:
@@ -121,7 +122,8 @@ def evaluate(snap: dict, st: dict, us: dict) -> dict:
         "富邦": _f(cd.get("數位活儲")),
         "永豐": _f(cd.get("營業部DAWHO活期儲蓄存款")) + _f(cd.get("市政分行活期儲蓄存款")),
         "永豐月繳": _f(snap.get("mortgage_sinopac_monthly")),
-        "永豐安全線": _f(snap.get("mortgage_sinopac_monthly")) * 3,
+        # 2026-11-04 使用者裁示：安全線＝max(房貸月繳×3, 大戶資格門檻)（與儀表板／告警同源）
+        "永豐安全線": yongfeng_safe_line(_f(snap.get("mortgage_sinopac_monthly")) * 3),
         "可動用": _f(cl.get("unrestricted_cash")),
         "指定用途款": _f((cl.get("restricted_cash") or {}).get("total")),
         "剩餘未清償": _f(rc.get("剩餘未清償")) if isinstance(rc, dict) else 0.0,
@@ -172,18 +174,18 @@ def _main_impl() -> int:
         return {"kind": "update", "status": f"🔴 水位不足（{today} 真值重算）：{'／'.join(low)} < 安全線 {SAFE_LINE:,}",
                 "evidence": "由 snapshot.cash_detail 重算"}
 
-    def r_water_sinopac(item):  # 永豐（房貸扣款行）：安全線＝自身房貸月繳×3
+    def r_water_sinopac(item):  # 永豐（房貸扣款行）：安全線＝max(自身房貸月繳×3, 大戶門檻)
         if "永豐" not in item.get("title", ""):
             return None
         bal, line = ev["永豐"], ev["永豐安全線"]
         if not line:
             return None
         if bal >= line:
-            return {"kind": "close", "evidence": f"永豐 {bal:,.0f} ≥ 安全線 {line:,.0f}（房貸月繳×3）"}
+            return {"kind": "close", "evidence": f"永豐 {bal:,.0f} ≥ 安全線 {line:,.0f}（max(房貸月繳×3, 大戶門檻)）"}
         return {"kind": "update",
                 "status": (f"🔴 水位不足（{today} 真值重算）｜永豐 {bal:,.0f} < 安全線 {line:,.0f}"
-                           f"（房貸月繳 {ev['永豐月繳']:,.0f}×3）→ 缺口 {line - bal:,.0f}；房貸扣款前補足"),
-                "evidence": "snapshot.cash_detail（DAWHO＋市政）＋ mortgage_sinopac_monthly×3"}
+                           f"（max(房貸月繳 {ev['永豐月繳']:,.0f}×3, 大戶門檻)）→ 缺口 {line - bal:,.0f}；房貸扣款前補足"),
+                "evidence": "snapshot.cash_detail（DAWHO＋市政）＋ account_floors.yongfeng_safe_line"}
 
     def r_pledge(item):         # 質押撥款／對保
         if "質押" not in item.get("title", "") or "撥款" not in item.get("title", "") + item.get("status", ""):
