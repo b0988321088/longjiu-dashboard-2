@@ -388,15 +388,19 @@ try:
     _approved = [{'date': d.get('date',''), 'action': d.get('title',''), 'decision': '核准', 'status': d.get('status',''), 'tags': d.get('tags',''), 'timestamp': TODAY} for d in _pd if '核准' in d.get('status','')]
     _pending = [{'date': d.get('date',''), 'action': d.get('title',''), 'status': d.get('status',''), 'tags': d.get('tags','')} for d in _pd if '核准' not in d.get('status','')]
     # 合併：保留既有 decisions（含核准/歷史軌跡），僅更新 pending 與 last_updated
-    _existing['last_updated'] = f'{TODAY}T18:00:00+08:00'
+    from datetime import datetime as _dt
+    # 2026-11-04 修正：last_updated 原寫死 f'{TODAY}T18:00:00+08:00'（字面值，非寫入事實）。
+    # 後果：CIO 18:30 用該欄位判斷「今日有無新決策」時，拿到的是填上去的 18:00，
+    # 與 meta.updated_at、檔案 mtime 三者對不上 → 誤判。改為與 updated_at 共用同一寫入時刻。
+    _written_at = _dt.now().astimezone().isoformat(timespec='seconds')
+    _existing['last_updated'] = _written_at
     _existing['pending_decisions'] = _pending
     if _approved:
         _existing.setdefault('decisions', [])
         for _a in _approved:
             if not any(d.get('action') == _a['action'] for d in _existing['decisions']):
                 _existing['decisions'].append(_a)
-    from datetime import datetime as _dt
-    _existing.setdefault('meta', {})['updated_at'] = _dt.now().isoformat()
+    _existing.setdefault('meta', {})['updated_at'] = _written_at
     _dash_path.write_text(json.dumps(_existing, ensure_ascii=False, indent=2), encoding='utf-8')
 except:
     pass
