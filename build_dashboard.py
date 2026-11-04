@@ -15,6 +15,7 @@ import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（�
 from sot_targets import (sot_monthly_expense, sot_monthly_income, dry_display,  # INC-270 月支出／月收入單一入口；2026-10-11 工單A 乾粉顯示單一實作
                          defensive_caliber)  # 2026-10-15 P1-1：防守（配息資產合計）真值單一來源
 from account_floors import YONG_FENG_DAWHO_FLOOR, yongfeng_safe_line  # 2026-11-04：永豐安全線＝max(月繳×3, 大戶門檻)（單一來源）
+import us30y_policy as _usp  # 2026-11-04 US30Y 門檻口徑單一來源（5.20 顯示／5.30 行動）
 
 BASE = Path(__file__).resolve().parent
 
@@ -1445,7 +1446,7 @@ def main():
             + _pen_li("債券", "債券", 25, "💵")
             + _pen_li("現金", "現金/安全網", 5, "💰")
         )
-        _buf_card = f'''<div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-teal-400">🎯 策略建議</span><ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed"><li class='text-amber-300'><strong>🚨 指示卡（08/23 核心‑衛星保守成長版）：</strong>目標配置＝台股15/美股30/防守20/債券20/現金15，為中長期方向，容許數月階段偏離；債券鎖短中期投資等級（存續期1-5年，BBB-以上）；平衡基金僅限衛星≤防禦20%；兩條底線＝現金 ≥{cash_caliber(snap)['life']:,.0f}（單一口徑現金底線）、US30Y >5.20% 停新增長債；Lombard 橋接需手動開啟且借款≤擔保品4成</li></ul><div class="mt-3 pt-3 border-t border-slate-700"><span class="text-xs font-bold text-amber-400">📝 巴菲特視角</span><ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4 mt-2">{"".join(f"<li>{l}</li>" for l in _buf_lines[:4])}</ul></div></div>''' if _buf_lines else ""
+        _buf_card = f'''<div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-teal-400">🎯 策略建議</span><ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed"><li class='text-amber-300'><strong>🚨 指示卡（08/23 核心‑衛星保守成長版）：</strong>目標配置＝台股15/美股30/防守20/債券20/現金15，為中長期方向，容許數月階段偏離；債券鎖短中期投資等級（存續期1-5年，BBB-以上）；平衡基金僅限衛星≤防禦20%；兩條底線＝現金 ≥{cash_caliber(snap)['life']:,.0f}（單一口徑現金底線）、US30Y {_usp.bond_freeze_text()} 停新增長債；Lombard 橋接需手動開啟且借款≤擔保品4成</li></ul><div class="mt-3 pt-3 border-t border-slate-700"><span class="text-xs font-bold text-amber-400">📝 巴菲特視角</span><ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4 mt-2">{"".join(f"<li>{l}</li>" for l in _buf_lines[:4])}</ul></div></div>''' if _buf_lines else ""
         _cto_card = f'''<div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800 space-y-2"><span class="text-xs font-bold text-red-400">⚡ CTO 技術視角</span><ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4">{"".join(f"<li>{l}</li>" for l in _cto_lines[:4])}</ul></div>''' if _cto_lines else ""
         _buf_html = f'''<div class="luxury-card p-6 space-y-4">
             <h3 class="text-md font-bold text-white">智慧審查：巴菲特配置哲學與實操</h3>

@@ -12,6 +12,7 @@ import requests
 BASE = Path(__file__).parent.resolve()
 # 2026-10-07 卡①：美元曝險 advisory 唯一入口（只顯示、不觸發；LLM 不得轉成資產調整建議）
 from usd_advisory import label as _usd_label, prompt_block as _usd_prompt_block  # noqa: E402
+import us30y_policy as _usp  # noqa: E402  2026-11-04 US30Y 門檻口徑單一來源
 from usd_advisory import cap as _usd_cap, is_advisory as _usd_is_advisory  # noqa: E402
 from usd_advisory import scrub as _usd_scrub  # noqa: E402  # 卡②：硬性防呆（中和資產調整指令）
 load_dotenv(os.path.expanduser("~/AppData/Local/hermes/.env"))
@@ -579,7 +580,7 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
         lines.append("  ⚠️ 防守超標：維持現況，不追高")
     else:
         lines.append("  ✅ 防守合理範圍（第一優先維持）")
-    lines.append(f"  🔒 兩條底線：現金≥{cash_floor_label()}；US30Y 無連3日<5.20% 不開放市值大額進場")
+    lines.append(f"  🔒 兩條底線：現金≥{cash_floor_label()}；US30Y 無{_usp.entry_text()} 不開放市值大額進場")
     
     return lines
 
@@ -592,8 +593,8 @@ def us30y_note() -> str:
         _d = _st.get("last_date", "")
     except Exception:
         return "US30Y 資料無法取得（us30y_state.json 缺漏或格式異常）"
-    _pos = "已站上" if _r >= 5.30 else ("貼近" if _r >= 5.20 else "未觸及")
-    return f"US30Y {_r:.2f}%（{_d} 收盤）{_pos}5.30% 凍結線"
+    _pos = "已站上" if _r >= _usp.ACTION_THRESHOLD else ("貼近" if _r >= _usp.WARN_DISPLAY_ONLY else "未觸及")
+    return f"US30Y {_r:.2f}%（{_d} 收盤）{_pos}{_usp.ACTION_THRESHOLD:.2f}% 凍結線"
 
 
 def generate_cto_report(pen: dict, market_text: str = "") -> list:

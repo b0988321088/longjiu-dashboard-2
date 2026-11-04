@@ -30,6 +30,7 @@ FLOOR = cash_floor(s)  # 2026-10-04 P0延伸：現金底線單一入口（原紅
 # 並保留真值 CASH 供「純現金」KPI 與資產結構顯示（標籤需註明含指定清償款）。
 from sot_targets import restricted_cash as _rst_fn   # 單一實作（CIO minor3）
 from sot_targets import sot_monthly_expense, sot_monthly_income, liability_interest  # INC-270 月支出／月收入單一入口
+import us30y_policy as _usp  # 2026-11-04 US30Y 門檻口徑單一來源（5.20 顯示／5.30 行動）
 RESTRICTED = _rst_fn(s)
 CASH_AVAIL = max(0.0, CASH - RESTRICTED)
 DIV = float((s.get("passive_income") or {}).get("fund_dividend_conservative") or 0)  # 2026-10-01 INC-270：常態保守基本值（原讀 monthly_dividend_total 預設 153,389＝8/30 已廢值；且該鍵月初為 0）
@@ -294,7 +295,7 @@ rows += f"""<tr><td {W(0)} style="font-weight:700">配息資產合計</td><td {W
 <h3 style="font-size:14px;font-weight:800;margin:0 0 8px">🚨 風險紅線檢核</h3>
 <table style="width:100%;font-size:13px;border-collapse:collapse">
 <tr>{H('紅線')}{H('現況')}{H('判定')}</tr>
-<tr><td {W(0)}>US30Y 5.30% 債券凍結</td><td {W(0)}>{us30y}%（警戒區 5.20-5.30）</td><td {W(0)}>{us_light} 距紅線 {max(0, round(5.30-us30y,2)) if us30y else "—"}pp</td></tr>
+<tr><td {W(0)}>US30Y {_usp.red_text()} 債券凍結</td><td {W(0)}>{us30y}%（{_usp.band_text()}）</td><td {W(0)}>{us_light} 距行動線 {max(0, round(_usp.ACTION_THRESHOLD-us30y,2)) if us30y else "—"}pp</td></tr>
 <tr><td {W(0)}>40,500 停碼</td><td {W(0)}>未觸發</td><td {W(0)}>✅</td></tr>
 <tr><td {W(0)}>現金底線 70萬</td><td {W(0)}>可動用 {CASH_AVAIL:,}（真值 {CASH:,}）</td><td {W(0)}>{cash_ok}</td></tr>
 <tr><td {W(0)}>單次加碼 ≤20萬（核貸期 5萬）</td><td {W(0)}>紀律維持（累積型原則生效）</td><td {W(0)}>✅</td></tr>

@@ -6,6 +6,7 @@
 """
 from pptx import Presentation
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
+import us30y_policy as _usp  # 2026-11-04 US30Y 門檻口徑單一來源（5.20 顯示／5.30 行動）
 from sot_targets import policy_pledge_loan  # 2026-10-04 P0 假真值退路清除（保單借貸餘額單一入口）
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
@@ -78,7 +79,7 @@ ASOF = M["asof"]; W_LOW = M["w_low"]; PREV_W = M["prev_w"]; CHG1D = M["chg1d_pct
 FX_BASE = 32.38
 FX_MOVE = (FX_BASE - FX) / FX_BASE * 100
 FX_NOTE = "台幣偏強" if FX_MOVE > 0 else "台幣偏弱"
-Y30_STATE = "已達 5.30 凍結線，新增質押全域凍結" if Y30 >= 5.30 else (f"{Y30:.2f}% 警戒區（5.20-5.30），未觸發凍結" if Y30 >= 5.20 else "警戒線下，質押空間開放")
+Y30_STATE = _usp.us30y_state_text(Y30)
 
 prs = Presentation()
 prs.slide_width = Inches(13.33); prs.slide_height = Inches(7.5)

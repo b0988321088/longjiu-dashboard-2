@@ -10,6 +10,7 @@
 import json
 from datetime import date
 from pathlib import Path
+import us30y_policy as _usp  # 2026-11-04 US30Y 門檻口徑單一來源
 from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
 
 BASE = Path(__file__).resolve().parent
@@ -30,7 +31,7 @@ ENV_CHECKS = {
     },
     "債券": {
         "factors": ["US30Y 水準", "債券底倉需求"],
-        "adjust_rule": "US30Y<5.20% 且債券低配 → 可上修債券目標",
+        "adjust_rule": f"US30Y {_usp.entry_text()} 且債券低配 → 可上修債券目標",
     },
     "現金/安全網": {
         "factors": ["6個月支出底線", "核貸/轉貸現金流需求"],

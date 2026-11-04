@@ -7,6 +7,7 @@ import json, sqlite3, sys
 from datetime import date, timedelta
 from pathlib import Path
 from sot_targets import sot_monthly_expense, sot_monthly_income  # INC-270 月支出／月收入單一入口
+import us30y_policy as _usp  # 2026-11-04 US30Y 門檻口徑單一來源（5.20 顯示／5.30 行動）
 
 BASE = Path(__file__).resolve().parent
 
@@ -48,7 +49,7 @@ def main():
         print(f"  美股實際占比: {ind.get('us_equity_actual_pct')}%（黃燈>{th.get('us_equity_overweight_yellow')}）")
         print("  🚨 強制規則：")
         print("  1. 巴菲特指數>200% → 週報禁止建議主動加碼美股，僅被動再平衡")
-        print("  2. US30Y≥5.2% → 不建議新增00983D；≥5.4% 必須提出降長債久期建議")
+        print(f"  2. US30Y{_usp.band_text()} → 不建議新增00983D；≥5.40% 必須提出降長債久期建議")
         print("  3. AI七巨頭占比過高 → 提示產業集中泡沫風險，建議往廣義指數分散")
         print("  4. Put保費年化≥4% → 說明長期耗損，給Collar領圈/提高現金二選項")
         print("  5. 不恐慌全賣，收斂風險曝險、死守配置上限、握好現金彈藥")

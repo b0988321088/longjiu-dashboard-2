@@ -23,6 +23,7 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 import market_price  # 2026-09-22 INC-239：Yahoo 取價單一入口（勿自己解 meta/close）
+import us30y_policy as _usp  # 2026-11-04 US30Y 門檻口徑單一來源（5.20 顯示／5.30 行動）
 UA = {"User-Agent": "Mozilla/5.0"}
 TIMEOUT = 8
 EMERGENCY_FILE = BASE / "data" / "emergency_llm_analysis.json"
@@ -552,7 +553,7 @@ def _rebalance_suggestion(snap: dict, regime: dict, light: str) -> dict:
                     else "00878/00713 配息導流+回檔小單（單次≤5萬）" if label == "防守配息"
                     else "美元直債梯(1-5Y 優先)/00983D 底倉（US30Y≥5.30% 凍結新增）"})
     if light == "🟡 黃燈":
-        out.insert(0, {"資產": "全域", "偏離pp": 0.0, "建議": "警戒區（US30Y 5.20-5.30）：台股≤50萬/週、美股停購、債券不主動大筆新增",
+        out.insert(0, {"資產": "全域", "偏離pp": 0.0, "建議": f"警戒區（US30Y {_usp.band_text()}）：{_usp.band_action()}；債券不主動大筆新增",
                        "金額": 0, "分批": ""})
     return {"觸發再平衡": any(o.get("金額", 0) and o["建議"] in ("增持", "減碼") for o in out),
             "注意": "僅建議，人工確認後執行，不自動下單", "清單": out}

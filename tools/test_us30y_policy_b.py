@@ -88,6 +88,36 @@ def test_b_rules():
         mon.RED_CONSECUTIVE_DAYS = 2
 
 
+def test_display_helpers():
+    print()
+    print("⑤ 顯示層文案（8 個報表共用；今日舊制／12-01 後 B 案）")
+    _saved = pol.is_active
+    try:
+        pol.is_active = lambda *a, **k: False
+        ok(pol.band_text() == "5.20-5.30%", "舊制 band_text")
+        ok("美股停購" in pol.band_action(), "舊制 band_action 含美股停購")
+        ok("連續2日" in pol.red_text(), "舊制 red_text 連續2日")
+        ok("連3日" not in pol.entry_text() and "連續2日" in pol.entry_text(), "舊制 entry_text 連續2日")
+        ok("警戒區" in pol.us30y_state_text(5.29), "舊制 state(5.29) 警戒區")
+        _g = pol.gate_rows()
+        ok(len(_g) == 3 and "美股停購" in _g[1][2], "舊制 gate_rows 3 列且含停購")
+    finally:
+        pol.is_active = _saved
+    _saved2 = pol.is_active
+    try:
+        pol.is_active = lambda *a, **k: True
+        ok("5.30" in pol.band_text() and "連續5日" in pol.band_text(), "B 案 band_text")
+        ok("不凍結" in pol.band_action(), "B 案 band_action 明確不凍結")
+        ok("連續5日" in pol.red_text(), "B 案 red_text 連續5日")
+        ok("連續5日" in pol.entry_text(), "B 案 entry_text 連續5日")
+        ok("僅顯示" in pol.us30y_state_text(5.29), "B 案 state(5.29) 僅顯示")
+        ok("才凍結" in pol.us30y_state_text(5.35), "B 案 state(5.35) 才凍結")
+        _g2 = pol.gate_rows()
+        ok("不凍結" in _g2[0][2] and "顯示用" in _g2[1][2], "B 案 gate_rows 語意正確")
+    finally:
+        pol.is_active = _saved2
+
+
 def test_label():
     print("\n④ 文案口徑")
     ok("防禦" in mon.MODE_LABELS["A"] or "警戒" in mon.MODE_LABELS["A"], "模式A 標籤可讀")
@@ -134,6 +164,7 @@ def main():
     test_shipped_state()
     test_active_gate()
     test_b_rules()
+    test_display_helpers()
     test_label()
     if "--sim" in sys.argv:
         sim()

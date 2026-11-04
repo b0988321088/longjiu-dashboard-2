@@ -6,6 +6,7 @@
 import json, datetime
 import pledge_status as _pf  # 2026-09-13 質押文字唯一來源（動態）
 import passive_caliber as _pcal  # 2026-09-27 被動收入口徑唯一來源（保守/實收/壓力 + FI 跑道）
+import us30y_policy as _usp  # 2026-11-04 US30Y 門檻口徑單一來源（5.20 顯示／5.30 行動）
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent  # 2026-09-29 CIO minor：去硬編碼路徑
@@ -192,7 +193,7 @@ def main():
     stag_txt = f"US30Y {us30y_txt}" if us30y else "—"
     stag = f"""<table><thead><tr><th>情境</th><th>觸發</th><th>動作</th></tr></thead><tbody>
     <tr><td>🔴 滯脹警戒</td><td>US30Y &gt; 5.15%（{stag_txt}）</td><td>LTV 上限 ≤30%；停建長債；美股逢彈減碼</td></tr>
-    <tr><td>🟡 警戒區</td><td>5.20-5.30%</td><td>台股 ≤50萬/週；美股停購；長債凍結；LTV ≤30%</td></tr>
+    <tr><td>🟡 警戒區</td><td>{_usp.band_text()}</td><td>{_usp.band_action()}</td></tr>
     <tr><td>🚨 全域凍結</td><td>≥5.30%</td><td>禁新增質押/擴倉；僅配息被動再平衡+還債</td></tr>
     <tr><td>💱 匯率</td><td>台幣單季升 &gt;5%</td><td>禁新增質押；&gt;8% 動水庫還貸壓 LTV≤35%</td></tr>
     </tbody></table>"""
@@ -228,7 +229,7 @@ def main():
 
     # ===== 十一、動態監測 =====
     mon = f"""<table><thead><tr><th>維度</th><th>指標</th><th>狀態</th></tr></thead><tbody>
-    <tr><td>① 市場利率</td><td>US30Y {us30y_txt}</td><td>{'🟡 警戒' if (us30y or 0) >= 5.20 else '🟢'}</td></tr>
+    <tr><td>① 市場利率</td><td>US30Y {us30y_txt}</td><td>{'🟡 警戒（顯示）' if (us30y or 0) >= _usp.WARN_DISPLAY_ONLY else '🟢'}</td></tr>
     <tr><td>② 匯率</td><td>USD/TWD 基準 32.18</td><td>🟢 波動監控中</td></tr>
     <tr><td>③ PI 資格</td><td>已開啟（snapshot 待更新）</td><td>🟡 撥款後送件</td></tr>
     <tr><td>④ LTV</td><td>未質押</td><td>🟢 0%</td></tr>
@@ -240,7 +241,7 @@ def main():
     eng = f"""<table><thead><tr><th>閘門</th><th>條件</th><th>目前</th></tr></thead><tbody>
     <tr><td>HALT_ALL_BUY</td><td>可動用現金 &lt; {_cf:,.0f}</td><td>{'🔴 觸發' if _avail < _cf else '🟢'}（可動用 {_avail:,.0f}）</td></tr>
     <tr><td>FREEZE_US_BUY</td><td>美股 &gt; {_us_cap:.0f}%（SoT 單桶硬上限）</td><td>{'🟡 觸發' if apct.get('美股市值型成長',0) > _us_cap else '🟢'}</td></tr>
-    <tr><td>US30Y 警戒</td><td>≥5.20%</td><td>{'🟡 觸發' if (us30y or 0) >= 5.20 else '🟢'}</td></tr>
+    <tr><td>US30Y 警戒</td><td>{_usp.band_text()}</td><td>{'🟡 顯示中' if (us30y or 0) >= _usp.WARN_DISPLAY_ONLY else '🟢'}</td></tr>
     <tr><td>LTV 熔斷</td><td>&gt;38%</td><td>🟢 0%</td></tr>
     <tr><td>淨利差</td><td>&lt;0 虧損</td><td>🟢 正利差</td></tr>
     </tbody></table>"""
@@ -286,10 +287,9 @@ def main():
     if not dec_rows:
         dec_rows = "<li>本週重大決策：8/14 保單 JPM 轉換穿透更新（詳見穿透分析）</li>"
 
-    rhythm = """<table><thead><tr><th>燈號</th><th>範圍</th><th>規則</th></tr></thead><tbody>
-    <tr><td>🟢</td><td>&lt;5.20%</td><td>解凍；可分批建倉</td></tr>
-    <tr><td>🟡</td><td>5.20-5.30%</td><td>警戒：台股≤50萬/週、美股停購、長債凍結、LTV≤30%</td></tr>
-    <tr><td>🔴</td><td>≥5.30%</td><td>五因子綜合判斷（非直接凍結）；LTV低+匯率穩仍可分批</td></tr>
+    _gate_html = "".join(f"<tr><td>{_a}</td><td>{_b}</td><td>{_c}</td></tr>" for _a, _b, _c in _usp.gate_rows())
+    rhythm = f"""<table><thead><tr><th>燈號</th><th>範圍</th><th>規則</th></tr></thead><tbody>
+    {_gate_html}
     <tr><td>🚨</td><td>≥5.40%</td><td>調降 00983D 轉中短債</td></tr>
     </tbody></table>"""
 

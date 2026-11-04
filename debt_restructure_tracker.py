@@ -15,6 +15,7 @@ except Exception:
     def _cg_mo(*a, **k): return 26000
 from datetime import date, timedelta
 from pathlib import Path
+import us30y_policy as _usp  # 2026-11-04 US30Y 門檻口徑單一來源（5.20 顯示／5.30 行動）
 
 BASE = Path("C:/Users/bot/Desktop/longjiu_system")
 today = date.today()
@@ -329,7 +330,7 @@ def main():
     if us30y_dec >= _us30_red / 100:
         checks.append(("US30Y", f"{us30y:.2f}% ≥ {_us30_red:.2f}%", "🔴 五因子綜合判斷（非直接凍結；10Y回落+匯率穩+LTV低→可分批）"))
     elif us30y_dec >= _us30_yel / 100:
-        checks.append(("US30Y", f"{us30y:.2f}% ≥ {_us30_yel:.2f}%", "🟡 美股停購/長債凍結/台股≤50萬"))
+        checks.append(("US30Y", f"{us30y:.2f}% ≥ {_us30_yel:.2f}%", f"🟡 {_usp.band_action()}"))
     # 現金（2026-09-15 INC-187 兩段式：跌破「生活底線」才 HALT_ALL_BUY；
     # 介於生活底線與「合計底線（生活+追繳緩衝 50 萬）」之間 = 緩衝不足 → 只做導流補足，
     # 不阻擋既有計畫。理由：擔保池 92% 後收、追繳時賣不掉 → 緩衝只能靠現金。）

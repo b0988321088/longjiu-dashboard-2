@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import html as _html
+import us30y_policy as _usp  # 2026-11-04 US30Y 門檻口徑單一來源（5.20 顯示／5.30 行動）
 
 
 def _pending_receivables_of(snap: dict) -> float:
@@ -104,7 +105,7 @@ def pi_html(payload: dict) -> str:
         + f"｜<strong>缺口：{payload['gap_twd']:,.0f}</strong>｜{_meet}<br/>"
         "<strong>⚠️ 財力達標 ≠ 已核准：</strong>門檻僅為送件條件之一（另涉書面申請、專業知識與交易經驗、機構合理調查）<br/>"
         f"{'<strong>強制順序：</strong>' + _fo_txt + '<br/>' if _fo_txt else ''}"
-        f"<strong>🔴 宏觀紅線：</strong>30Y美債 &gt;5.20% → {_mt.get('警戒線_5.20', '停止新增長債/平衡基金')}<br/>"
+        f"<strong>🔴 宏觀紅線：</strong>30Y美債 {_usp.red_text()} → {_mt.get('警戒線_5.20', '停止新增長債/平衡基金')}<br/>"
         "<strong>🟢 友善線：</strong>&lt;4.80% 才可評估小槓桿（高息全清+現金≥300萬+擔保≤4成）<br/>"
         f"{'<strong>⛔ 禁止：</strong>' + _fb_txt if _fb_txt else ''}"
         f"<br/><strong>⚠️ 風險：</strong>{rec.get('risk_warning', '專業投資人不受金融消保法保障')}"
