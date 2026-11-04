@@ -266,6 +266,30 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
         if _pn.get("債券升息敏感度"):
             lines.append(f"- 💵 **債券升息敏感度**：{_pn['債券升息敏感度']}")
 
+    # 二之三、總體事件（2026-11-04 新增：期中選舉等；資料源 macro_events.json，禁寫死）
+    _mac = load("macro_events.json", {}) or {}
+    _mevents = [e for e in (_mac.get("events") or []) if isinstance(e, dict)]
+    if _mevents:
+        lines += ["", "## 二之三、總體事件", ""]
+        lines.append(f"> {_mac.get('source_note','')}（更新 {_mac.get('updated_at','')}）")
+        if _mac.get("analysis_note"):
+            lines.append(f"> ⚠️ {_mac['analysis_note']}")
+        for _ev in _mevents:
+            lines += ["", f"### {_ev.get('date','')}｜{_ev.get('title','')}（{_ev.get('status','')}）", ""]
+            for _f in (_ev.get("facts") or []):
+                lines.append(f"- **{_f.get('k','')}**：{_f.get('v','')}")
+            if _ev.get("market_reaction"):
+                lines.append(f"- 📈 市場反應：{_ev['market_reaction']}")
+            if _ev.get("implications"):
+                lines.append("- 對配置的含義（系統推論）：")
+                for _imp in _ev["implications"]:
+                    lines.append(f"  - {_imp}")
+            if _ev.get("portfolio_action"):
+                lines.append(f"- 🎯 建議：{_ev['portfolio_action']}")
+            if _ev.get("watch"):
+                _w = "；".join(_ev["watch"])
+                lines.append(f"- 👀 觀察點：{_w}")
+
     # 二之一、資金訊號 × 投資狀況 × 動作（2026-08-23 核准：對照表嵌評估開頭）
     # 2026-09-13：現況/動作文字改由 buckets（snapshot）＋ plan_rows（radar_state.weekly_plan）推導，禁止貼死
     _bkt = {n: (a, t) for n, a, t, _twd2, _c2 in buckets}
@@ -535,6 +559,41 @@ def main():
         _pn_html += "</div>"
     else:
         _pn_html = ""
+
+    # ── 總體事件（2026-11-04：期中選舉等；資料源 macro_events.json，禁寫死）──
+    _mac = load("macro_events.json", {}) or {}
+    _mevents = [e for e in (_mac.get("events") or []) if isinstance(e, dict)]
+    if _mevents:
+        _mac_src = _mac.get("source_note", "")
+        _mac_upd = _mac.get("updated_at", "")
+        _macro_html = (
+            '<div class="card" style="border:1px solid #38bdf8;background:linear-gradient(135deg,#08131f,#131a26)">'
+            "<h2>🗳️ 總體事件</h2>"
+            f'<div style="font-size:11px;color:#9ca3af;margin-bottom:8px">{_mac_src}（更新 {_mac_upd}）</div>'
+        )
+        if _mac.get("analysis_note"):
+            _macro_html += f'<div style="font-size:10px;color:#fbbf24;margin-bottom:8px">⚠️ {_mac["analysis_note"]}</div>'
+        for _ev in _mevents:
+            _macro_html += '<div style="padding:8px 10px;background:#0b0f17;border-radius:8px;border-left:3px solid #38bdf8;margin-bottom:8px">'
+            _macro_html += f'<div style="font-weight:700;font-size:12px;color:#7dd3fc">{_ev.get("date","")}｜{_ev.get("title","")}</div>'
+            _macro_html += f'<div style="font-size:10px;color:#9ca3af;margin-top:2px">{_ev.get("status","")}</div>'
+            for _f in (_ev.get("facts") or []):
+                _macro_html += f'<div style="font-size:11px;color:#e5e7eb;margin-top:3px">• <b>{_f.get("k","")}</b>：{_f.get("v","")}</div>'
+            if _ev.get("market_reaction"):
+                _macro_html += f'<div style="font-size:11px;color:#86efac;margin-top:4px">📈 {_ev["market_reaction"]}</div>'
+            if _ev.get("implications"):
+                _macro_html += '<div style="font-size:11px;color:#cbd5e1;margin-top:5px">對配置的含義（系統推論）：</div>'
+                for _imp in _ev["implications"]:
+                    _macro_html += f'<div style="font-size:10.5px;color:#94a3b8;margin-left:8px">– {_imp}</div>'
+            if _ev.get("portfolio_action"):
+                _macro_html += f'<div style="font-size:11px;color:#fca5a5;margin-top:5px">🎯 {_ev["portfolio_action"]}</div>'
+            if _ev.get("watch"):
+                _mw = "；".join(_ev["watch"])
+                _macro_html += f'<div style="font-size:10.5px;color:#fbbf24;margin-top:4px">👀 {_mw}</div>'
+            _macro_html += "</div>"
+        _macro_html += "</div>"
+    else:
+        _macro_html = ""
 
     # ── 本週投資計劃（2026-09-13 v3：動態全資產面結論）──
     # 單一來源 = radar_state.weekly_plan.rows（institutional_flow.py 產出），禁止貼死字串
@@ -941,6 +1000,7 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
   <div class="card"><h2>📡 機構流向雷達</h2><div class="rcards">{radar_cards}</div></div>
   {_passive_card}
   {_pn_html}
+  {_macro_html}
   {_plan_html}
 </div>
 
