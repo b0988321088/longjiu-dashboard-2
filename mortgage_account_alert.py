@@ -106,6 +106,14 @@ ACCOUNTS = (
 )
 
 
+# 2026-11-04 使用者裁示：永豐需維持「大戶資格」，帳戶底線 300,000。
+#   資格門檻屬外部條件常數，不隨月繳變動；安全線取 max(月繳×3, 大戶門檻)。
+#   註：永豐月繳×3 現值低於 300,000，故實務上以 300,000 為準；若月繳上升超過門檻則自動改用月繳×3。
+PREMIUM_FLOOR = {
+    "永豐銀行（洲際W 房貸扣款行）": 300_000,
+}
+
+
 def main() -> int:
     always = "--always" in sys.argv
     snap_path = BASE / "snapshot.json"
@@ -143,6 +151,10 @@ def main() -> int:
             line = monthly * 3
             if not (math.isfinite(line) and line > 0):   # 防禦斷言
                 line, monthly, src = None, None, None
+        _floor = PREMIUM_FLOOR.get(name)
+        if line is not None and _floor and _floor > line:
+            line = float(_floor)
+            src = "大戶資格門檻（高於月繳×3）"
         use = usefn(snap) if callable(usefn) else usefn
         rows.append({"name": name, "bal": bal, "line": line, "due_day": due_day,
                      "use": use, "src": src, "monthly": monthly, "bad_keys": bad_keys})
@@ -190,7 +202,7 @@ def main() -> int:
             dday = f"（扣款日 {r['due_day']} 日）" if r["due_day"] else ""
             fb = "｜⚠️ 月繳不可用，退回月支出口徑" if "退回" in str(r["src"]) else ""
             out.append(f"   ✅ {r['name']} {r['bal']:,.0f} / 安全線 {r['line']:,.0f}{dday}{fb}")
-    out.append("（口徑：安全線＝自身房貸月繳×3；國泰月繳取派生真值 rate×本金/12；"
+    out.append("（口徑：安全線＝max(自身房貸月繳×3, 大戶資格門檻)；國泰月繳取派生真值 rate×本金/12；"
                "永豐讀 snapshot.mortgage_sinopac_monthly；月繳不可用時退月支出×3；"
                "兩者皆不可用→告警不靜默）")
     print("\n".join(out))
