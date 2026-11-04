@@ -118,7 +118,9 @@ def sync():
             _sev_path = Path(__file__).resolve().parent / "schedule_events.json"  # 兜底
         _sev = json.loads(_sev_path.read_text(encoding="utf-8"))
         _today_s = date.today().isoformat()
-        _end30 = (date.today() + timedelta(days=30)).isoformat()
+        # 2026-11-04：原寫死 30 天 —— 超過 30 天的預約（如 12/16 免疫科回診，距當日 42 天）
+        # 會被靜默跳過、永遠不進 Google 日曆。改為 90 天視野。
+        _end30 = (date.today() + timedelta(days=90)).isoformat()
         def _norm(s):
             return re.sub(r'[\W_]+', '', s)
         # 2026-08-10 修正：改「日期+類別」去重 — 精確標題比對抓不到同義重複
