@@ -30,10 +30,18 @@ ET = timezone(timedelta(hours=-4))  # 美東（夏令時間）
 A_THRESHOLD = 5.20   # 模式A 防禦
 B_THRESHOLD = 4.90   # 模式B 布局
 RED_LINE = 5.30      # 宏觀風險警示（v1.2）：長期債券新增買單凍結（原「永久凍結」措辭；不否決台股分批）
-CONSECUTIVE_DAYS = 2  # 連續交易日
+CONSECUTIVE_DAYS = 2  # 連續交易日（模式 A／B 判定）
+
+# 2026-11-04：B 案（5.20 降級為純顯示、行動只綁 5.30＋連續 5 日）由 us30y_policy 單一管理。
+#   未核准／未到生效日 → is_active() False → 下面所有判定與文案與舊制逐位元相同。
+import us30y_policy as _pol  # noqa: E402
+
+_POLICY_B = _pol.is_active()
+RED_CONSECUTIVE_DAYS = _pol.action_consecutive_days()   # 生效前＝2（舊制），生效後＝5
 
 MODE_LABELS = {
-    "A": "模式A｜防禦（警戒區 5.20-5.30）",
+    "A": ("模式A｜警戒（顯示用；行動門檻 ≥5.30 連續5日）" if _POLICY_B
+          else "模式A｜防禦（警戒區 5.20-5.30）"),
     "B": "模式B｜布局（≤4.90 放寬）",
 }
 
@@ -148,9 +156,11 @@ def sync_snapshot_gate() -> None:
 
 
 def red_line_hit(rows) -> bool:
-    """最近 CONSECUTIVE_DAYS 個交易日皆 ≥ RED_LINE"""
-    last2 = rows[:CONSECUTIVE_DAYS]
-    return len(last2) >= CONSECUTIVE_DAYS and all(v >= RED_LINE for _, v in last2)
+    """最近 RED_CONSECUTIVE_DAYS 個交易日皆 ≥ RED_LINE
+    （B 案生效後為連續 5 日，見 us30y_policy；未生效維持舊制 2 日）。"""
+    need = RED_CONSECUTIVE_DAYS
+    last = rows[:need]
+    return len(last) >= need and all(v >= RED_LINE for _, v in last)
 
 
 def red_line_streak(rows) -> int:
@@ -251,8 +261,12 @@ def main():
         msgs.append(f"📈 US30Y 連續{CONSECUTIVE_DAYS}日達標"
                     f"（{last2[1][0]} {last2[1][1]}% → {latest_date} {latest_rate}%）")
         if new_mode == "A":
-            msgs.append("🎯 執行策略：配息導流優先 → 逢反彈分批減碼美股科技 → 資金轉台股高股息")
-            msgs.append("⛔ 禁令：不加碼美股長久期科技、不新增債券（00983D/PIMCO 維持底倉）")
+            if _POLICY_B:
+                msgs.append("ℹ️ B 案生效：5.20% 僅為顯示，不觸發任何凍結"
+                            "（行動門檻＝≥5.30% 連續5交易日）")
+            else:
+                msgs.append("🎯 執行策略：配息導流優先 → 逢反彈分批減碼美股科技 → 資金轉台股高股息")
+                msgs.append("⛔ 禁令：不加碼美股長久期科技、不新增債券（00983D/PIMCO 維持底倉）")
         else:
             msgs.append("🎯 執行策略：放寬減碼限制，可分批回補優質美股科技、開放債券布局")
 
@@ -263,8 +277,9 @@ def main():
     rl_now = red_line_hit(rows)
     rl_prev = bool(state.get("red_line", False))
     if rl_now and not rl_prev:
-        msgs.append(f"⚠️ 宏觀風險警示：US30Y 連續{CONSECUTIVE_DAYS}日 ≥{RED_LINE}%"
-                    f"（{last2[1][0]} {last2[1][1]}% / {last2[0][0]} {last2[0][1]}%）"
+        _rl_start = rows[RED_CONSECUTIVE_DAYS - 1] if len(rows) >= RED_CONSECUTIVE_DAYS else last2[1]
+        msgs.append(f"⚠️ 宏觀風險警示：US30Y 連續{RED_CONSECUTIVE_DAYS}日 ≥{RED_LINE}%"
+                    f"（{_rl_start[0]} {_rl_start[1]}% / {rows[0][0]} {rows[0][1]}%）"
                     f" — 長期債券相關新增買單【凍結】（不受階段影響）")
         msgs.append("⛔ 同步生效：禁新增質押／擴倉；僅配息被動再平衡 + 還債"
                     "｜v1.2（2026-10-14 使用者裁決）：本警示**不單獨否決台股分批**，"
@@ -292,6 +307,9 @@ def main():
         "mode_label": label,
         "red_line": rl_now,
         "data_source": src,
+        # 2026-11-04：把「當前生效的口徑」寫進 state，讓下游與稽核不必猜（B 案未生效＝舊制字串）
+        "policy": _pol.describe(),
+        "red_consecutive_days": RED_CONSECUTIVE_DAYS,
     })
     state.pop("updated_at", None)  # 2026-09-11：移除殘留的舊時間戳（會被誤讀為最後更新日）
     if rl_now:
