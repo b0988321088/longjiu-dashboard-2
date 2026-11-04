@@ -1,0 +1,64 @@
+{
+  "version": 2,
+  "note": "公開產物白名單（Pages 專用發布面）。預設不公開：原始程式、資料庫、CSV、JSONL、備份、內部 Markdown、治理紀錄、憑證與內部證據。明文 include 命中 deny＝整批失敗；glob 命中 deny＝略過。日期型報表族只保留最近 N 份（其餘歷史報表一併撤下）。",
+  "entry": "index.html",
+  "include_exact": [
+    "index.html",
+    "cost.html",
+    "cost_data.json",
+    "snapshot.json",
+    "assets/tailwind.min.js",
+    "asset_diff.html",
+    "asset_diff_history.json",
+    "mtd_data.json",
+    "mtd_performance.html",
+    "performance_monthly.html",
+    "investment_performance.html",
+    "grand_pivot_deck.html",
+    "schedule_events.json",
+    "radar_state.json",
+    "tech_debt.json",
+    "pending_decisions.json",
+    "work_log.json",
+    "cio_review.json"
+  ],
+  "required_exact": [
+    "index.html",
+    "snapshot.json",
+    "assets/tailwind.min.js"
+  ],
+  "include_latest": [
+    {"pattern": "daily_report_v2_*.html", "keep": 3},
+    {"pattern": "asset_diff_20*.html", "keep": 3},
+    {"pattern": "penetration_report_*.html", "keep": 2},
+    {"pattern": "risk_factor_penetration_*.png", "keep": 2},
+    {"pattern": "industry_penetration_*.png", "keep": 2},
+    {"pattern": "rebalance_dashboard_*.html", "keep": 2},
+    {"pattern": "rebalance_eval_*.html", "keep": 2},
+    {"pattern": "retirement_plan_*.html", "keep": 2},
+    {"pattern": "radar_report_*.html", "keep": 2},
+    {"pattern": "audit_dashboard_*.html", "keep": 1},
+    {"pattern": "ceo_dashboard_*.html", "keep": 1},
+    {"pattern": "dynamic_monthly_review_*.html", "keep": 1},
+    {"pattern": "dynamic_weekly_review_*.html", "keep": 1},
+    {"pattern": "monthly_report_*.html", "keep": 1},
+    {"pattern": "policyB_conversion_card_*.html", "keep": 1},
+    {"pattern": "emergency_report_*.html", "keep": 3},
+    {"pattern": "emergency_taiex_*.html", "keep": 3},
+    {"pattern": "weekly_report_*.html", "keep": 3},
+    {"pattern": "buffett_cto_report_*.md", "keep": 1}
+  ],
+  "include_globs": [],
+  "deny_extensions": [
+    ".py", ".sh", ".bat", ".ps1", ".cmd", ".db", ".sqlite", ".csv", ".jsonl", ".bak",
+    ".docx", ".pptx", ".xlsx", ".mp4", ".mp3", ".log", ".key", ".pem", ".zip", ".env",
+    ".tar", ".gz", ".7z", ".sql", ".toml", ".yml", ".yaml"
+  ],
+  "deny_prefixes": [
+    "site/", ".archive/", ".git/", "backups/", "tools/", "tests/", "moneybook/", "logs/",
+    "_r2_evidence/", "_bak", "assets/books/", "data/", "notion/"
+  ],
+  "deny_globs": [
+    "*_bak_*", "*template*", "*.example", "site_manifest.json"
+  ]
+}

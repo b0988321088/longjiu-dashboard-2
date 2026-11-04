@@ -1,0 +1,14 @@
+{
+ "updated": "2026-11-03T23:49:25",
+ "gates": {
+  "現金關": "PASS",
+  "利差關": "UNKNOWN",
+  "借款關": "FAIL"
+ },
+ "events": [],
+ "coverage_pct": 274.2,
+ "ltv_pct": 49.92,
+ "stress_ltv_pct": 71.3,
+ "maint_pct": 200.3,
+ "stress_maint_pct": 140.2
+}

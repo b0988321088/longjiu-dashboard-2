@@ -129,3 +129,5 @@ data/notion_page_ids.json
 data/taipower_tender_seen.json
 data/design_supervision_seen.json
 data/forestry_supervision_seen.json
+_archive/
+site/
