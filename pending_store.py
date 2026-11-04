@@ -200,6 +200,18 @@ def _validate_pending_semantics(p: Path, data) -> None:
     for i, it in enumerate(items):
         if not isinstance(it, dict):
             raise WriteRejected(f"拒絕寫入（pending_decisions[{i}] 不是物件：{type(it).__name__}）")
+        # 2026-11-05：**有寫 status 就必須落在四態**（STATUS_ENUM，單一來源＝pending_engine）。
+        #   事故：11/04 直接改 JSON 寫入 status="待命準備"（自由文字）→ 隔日 07:00
+        #   check_dividend_caliber「status 正規化為四態」FAIL → 月度閘門 F3 擋推，全產線停擺。
+        #   只驗「有宣告 status 的卡」：最小 fixture（只帶 title）不在此擋，缺 status 由
+        #   check_dividend_caliber 的五欄齊備檢查負責。此處只拒絕、不代改（代改會讓閘門空轉）。
+        if "status" in it:
+            from pending_engine import STATUS_ENUM as _ENUM
+            _st = it.get("status")
+            if _st not in _ENUM:
+                raise WriteRejected(
+                    "拒絕寫入（status 不在四態 " + "/".join(_ENUM) + "："
+                    + str(it.get("id") or it.get("title") or f"index {i}") + f"｜實得 {_st!r}）")
         if not it.get("due_date"):
             continue
         src = it.get("due_date_source")
