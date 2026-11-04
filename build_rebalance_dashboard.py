@@ -290,6 +290,25 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
                 _w = "；".join(_ev["watch"])
                 lines.append(f"- 👀 觀察點：{_w}")
 
+    # 二之四、授權邊界（2026-11-04：凍結令期間「再平衡／風控／履約／加碼」分流，資料源 trade_intent_policy.json）
+    _tip = load("trade_intent_policy.json", {}) or {}
+    _intents = _tip.get("intents") or {}
+    if _intents:
+        _fz = _tip.get("freeze") or {}
+        lines += ["", "## 二之四、授權邊界（凍結令期間）", ""]
+        _fz_state = "🔴 生效中" if _fz.get("active") else "🟢 未生效"
+        lines.append(f"> {_fz_state}，至 {_fz.get('until','—')}；來源：{_tip.get('source','')}")
+        lines.append("")
+        lines.append("| 動作類型 | 凍結期是否允許 | 是否算再平衡 | 說明 |")
+        lines.append("|---|---|---|---|")
+        for _k, _v in _intents.items():
+            _ok = "✅ 允許" if _v.get("allowed_during_freeze") else "⛔ 不允許"
+            _isrb = "是" if _v.get("counts_as_rebalance") else "否"
+            lines.append(f"| {_v.get('label', _k)} | {_ok} | {_isrb} | {_v.get('note','')} |")
+        if _tip.get("recording_rule"):
+            lines.append("")
+            lines.append(f"- 📝 **紀錄規則**：{_tip['recording_rule']}")
+
     # 二之一、資金訊號 × 投資狀況 × 動作（2026-08-23 核准：對照表嵌評估開頭）
     # 2026-09-13：現況/動作文字改由 buckets（snapshot）＋ plan_rows（radar_state.weekly_plan）推導，禁止貼死
     _bkt = {n: (a, t) for n, a, t, _twd2, _c2 in buckets}
@@ -594,6 +613,38 @@ def main():
         _macro_html += "</div>"
     else:
         _macro_html = ""
+
+    # ── 授權邊界（凍結令期間動作分流；資料源 trade_intent_policy.json）──
+    _tip = load("trade_intent_policy.json", {}) or {}
+    _intents = _tip.get("intents") or {}
+    if _intents:
+        _fz = _tip.get("freeze") or {}
+        _fz_state = "🔴 生效中" if _fz.get("active") else "🟢 未生效"
+        _intent_html = (
+            '<div class="card" style="border:1px solid #a78bfa">'
+            "<h2>🔐 授權邊界（凍結令期間）</h2>"
+            f'<div style="font-size:11px;color:#c4b5fd;margin-bottom:8px">{_fz_state}，至 {_fz.get("until","—")}</div>'
+        )
+        for _k, _v in _intents.items():
+            _ok = _v.get("allowed_during_freeze")
+            _ok_color = "#34d399" if _ok else "#f87171"
+            _ok_badge = "✅ 允許" if _ok else "⛔ 不允許"
+            _isrb = "（算再平衡）" if _v.get("counts_as_rebalance") else ""
+            _lbl = _v.get("label", _k)
+            _nt = _v.get("note", "")
+            _intent_html += (
+                '<div style="font-size:11px;margin-bottom:6px;padding:6px 8px;background:#0b0f17;border-radius:6px">'
+                f'<span style="color:{_ok_color};font-weight:700">{_ok_badge}</span> '
+                f'<b style="color:#e5e7eb">{_lbl}</b>'
+                f'<span style="color:#9ca3af">{_isrb}</span>'
+                f'<div style="color:#94a3b8;font-size:10.5px;margin-top:2px">{_nt}</div></div>'
+            )
+        if _tip.get("recording_rule"):
+            _rr = _tip["recording_rule"]
+            _intent_html += f'<div style="font-size:10px;color:#fbbf24;margin-top:6px">📝 {_rr}</div>'
+        _intent_html += "</div>"
+    else:
+        _intent_html = ""
 
     # ── 本週投資計劃（2026-09-13 v3：動態全資產面結論）──
     # 單一來源 = radar_state.weekly_plan.rows（institutional_flow.py 產出），禁止貼死字串
@@ -1001,6 +1052,7 @@ td {{ padding:7px 8px; border-bottom:1px solid #263449; }}
   {_passive_card}
   {_pn_html}
   {_macro_html}
+  {_intent_html}
   {_plan_html}
 </div>
 
