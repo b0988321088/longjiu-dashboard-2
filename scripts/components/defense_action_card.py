@@ -493,6 +493,9 @@ def render_dashboard(snap: dict | None = None, theme: str = "dark") -> str:
     _bucket_sum = sum(float(x) for kk, x in _pen_pct.items() if not kk.endswith(("_科技", "_非科技")))
     _usd_pct = ((snap.get("usd_exposure_monitor") or {}).get("current") or {}).get("合計")
     _gold_pct = (a["gold"] / a["total"] * 100) if (a["gold"] and a["total"]) else None
+    _rs = (snap.get("cash_layers") or {}).get("restricted_cash")
+    _rest = float(_rs.get("total") or 0) if isinstance(_rs, dict) else float(snap.get("restricted_cash") or 0)
+    _rest_pct = (_rest / a["total"] * 100) if (a["total"] and _rest) else None
     watch_html = "".join(f'<li>{w}</li>' for w in v["watch"]) or "<li>無</li>"
     act = {
         VERDICT_HOLD: "維持 HOLD：不因單日上漲加碼、不因短期下跌恐慌減碼。",
@@ -513,7 +516,7 @@ def render_dashboard(snap: dict | None = None, theme: str = "dark") -> str:
 
   <p class="text-[11px] font-bold text-emerald-300 mb-1">A｜資產配置（互斥分類）<span class="font-normal text-slate-400">　分母＝總資產，每筆只計入一個策略桶位，總和 100%</span></p>
   <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-1">{tiles}</div>
-  <p class="text-[11px] text-slate-500 mb-3">五桶小計 <b class="text-slate-300">{_bucket_sum:.2f}%</b>｜加衛星黃金 {_pc(_gold_pct, 2)} 與指定款 900,000（3.38%）= 100%。此為<b>不可重疊</b>口徑。</p>
+  <p class="text-[11px] text-slate-500 mb-3">五桶小計 <b class="text-slate-300">{_bucket_sum:.2f}%</b>＋衛星黃金 {_pc(_gold_pct, 2)}＋指定款 {_pc(_rest_pct, 2)}（{_m(a["cash"] and (_rest or 0))}）＋在途／未對帳 {_pc(max(0.0, 100 - _bucket_sum - (_gold_pct or 0) - (_rest_pct or 0)), 2)}＝100%。此為<b>不可重疊</b>口徑。</p>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
     <div class="bg-slate-800/40 rounded-lg p-3">

@@ -184,6 +184,13 @@ def build(snap: dict) -> dict:
         "總資產": round(total),
         "說明": "四層並列，L1/L2 互斥（總和回 100%），L3/L4 可重疊且不與 L1/L2 相加。"
                 "策略分類為規則建議，未經人工核准不得視為定案。",
+        "對帳": {
+            "映射合計": round(sum(e["金額"] for e in entries)),
+            "snapshot總資產": round(total),
+            "差額": round(sum(e["金額"] for e in entries) - total),
+            "狀態": "⚠️ 分項合計與 total_assets 不一致，待真值日核對（不自行調整）"
+                    if abs(sum(e["金額"] for e in entries) - total) >= 1 else "✅ 一致",
+        },
         "L2_合計": {k: round(v) for k, v in agg.items()},
         "L2_合計_pct": {k: round(v / total * 100, 2) for k, v in agg.items()} if total else {},
         "未映射": unmatched,

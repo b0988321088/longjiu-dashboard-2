@@ -68,6 +68,13 @@ def _carrier_records(snap: dict) -> list:
     cur_id, cur_label = "POLICY-OTHER", "保單"
     for k, v in (_ins or {}).items():
         ks = str(k).strip()
+        if ks.startswith("━"):                     # 第一金等其他保單：以跨行分隔線另起載體
+            _nm = ks.lstrip("━").replace("現值", "").replace("現値", "").strip()
+            _nm = _nm.split("（")[0].split("(")[0].strip()[:12] or "其他保單"
+            cur_id, cur_label = f"POLICY-{_nm}", _nm
+            if isinstance(v, (int, float)) and "總現" not in ks:
+                add(cur_id, cur_label, _nm, v)     # 這一行本身就是部位（含金額）
+            continue
         if ks.startswith("【"):
             _nm = ks.replace("【", "").replace("】", "").replace("現值", "").strip()
             cur_id, cur_label = f"POLICY-{_nm}", _nm
