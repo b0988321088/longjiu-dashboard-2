@@ -1537,6 +1537,14 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     # 改插到第 1 章（1/9 財富生命線）結尾、第 2 章標題之前；錨點找不到就退回檔尾（不讓卡片消失）。
     try:
         _vol_html = make_volatility_report(theme="light")   # 日報＝淺色版（日報無 Tailwind）
+        # 2026-11-05 使用者裁決：日報第 1 章最前面放「本月投資風險摘要」（MTD／燈號／裁示），
+        #   數字來自 monthly_risk_watch（→ performance_core），影子模式只顯示不觸發。
+        try:
+            from scripts.components.monthly_risk_card import render as _mrc
+            _mrc_html = _mrc(theme="light")
+            _vol_html = _mrc_html + _vol_html
+        except Exception as _e:                     # 卡片壞掉不得吃掉日報
+            print(f"[WARN] 月損益風險卡渲染失敗：{type(_e).__name__}: {_e}")
         _anchor = "2/9｜資產結構"
         _i = html.find(_anchor)
         # 插在「第 2 章的外框 <div class="card"> 之前」＝真正的第 1 章結尾（頂層）。

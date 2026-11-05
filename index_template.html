@@ -318,7 +318,40 @@ __WEEK_DONE__
 <h3 style="color:#5b21b6;font-size:14px;font-weight:800;margin:0 0 6px">📡 本週流動淨值（不含房產）vs 資金成本</h3>
 <p style="color:#6b7280;font-size:11.5px;margin:0">載入中…（讀取 snapshot + 資產歷史）</p>
 </div>
-        <!-- 護城河水位計 -->
+        <!-- 🛡️ 本月投資風險摘要（2026-11-05 裁決：相對口徑 -1/-2/-3%、影子模式；數字由 build_dashboard 注入） -->
+        <div class="luxury-card p-6" id="monthly-risk">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-md font-bold text-white flex items-center gap-2">🛡️ 本月投資風險摘要 <span class="text-xs font-normal text-slate-400">MTD｜相對口徑</span></h3>
+                    <p class="text-xs text-slate-400">本月損益｜警戒燈號｜距下一級｜今日裁示　（影子模式：只顯示，不觸發交易）</p>
+                </div>
+                <span class="text-xs bg-slate-500/20 text-slate-200 px-3 py-1 rounded-full font-mono font-bold border border-slate-500/30"><span data-k="mtd_icon">⚪</span> <span data-k="mtd_label">資料不足</span></span>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="bg-slate-800/50 rounded-lg p-3">
+                    <p class="text-[11px] text-slate-400 mb-1">本月帳面損益</p>
+                    <p class="text-lg font-black font-mono text-white"><span data-k="mtd_pnl">—</span></p>
+                    <p class="text-[11px] text-slate-500">含配息與費用</p>
+                </div>
+                <div class="bg-slate-800/50 rounded-lg p-3">
+                    <p class="text-[11px] text-slate-400 mb-1">本月累積報酬率</p>
+                    <p class="text-lg font-black font-mono text-white"><span data-k="mtd_ret">—</span></p>
+                    <p class="text-[11px] text-slate-500">時間加權（TWR）</p>
+                </div>
+                <div class="bg-slate-800/50 rounded-lg p-3">
+                    <p class="text-[11px] text-slate-400 mb-1">距下一級警戒</p>
+                    <p class="text-sm font-bold text-white leading-snug"><span data-k="mtd_gap">—</span></p>
+                    <p class="text-[11px] text-slate-500">-1% 黃／-2% 橘／-3% 紅</p>
+                </div>
+                <div class="bg-slate-800/50 rounded-lg p-3">
+                    <p class="text-[11px] text-slate-400 mb-1">今日投資風險裁示</p>
+                    <p class="text-sm font-bold text-white leading-snug"><span data-k="mtd_stance">—</span></p>
+                    <p class="text-[11px] text-slate-500">提示，非交易指令</p>
+                </div>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-3 leading-relaxed"><span data-k="mtd_note">—</span></p>
+        </div>
+<!-- 護城河水位計 -->
         <div class="luxury-card p-6">
             <div class="flex justify-between items-center mb-4">
                 <div>

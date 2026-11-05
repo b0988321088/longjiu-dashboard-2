@@ -1305,6 +1305,47 @@ def main():
             lambda m: m.group(1) + (_show if _show is not None else _fmt(_dv)) + m.group(2), tpl)
         if _n:
             hits += _n
+    # ── 本月投資風險摘要（2026-11-05 使用者裁決：日報＋儀表板第一屏，數字一律同源）──
+    #    計算在 monthly_risk_watch.assess()（→ performance_core），本檔只做注入，不得自算績效。
+    try:
+        import html as _html
+
+        import monthly_risk_watch as _mrw
+        _mrw_r = _mrw.assess(snap)
+        try:
+            _mrw.log_daily(_mrw_r)          # 影子模式：每天留紀錄（未觸發也寫）
+        except Exception:
+            pass
+        _mrw_note = (f'口徑：{_mrw_r["quality_note"]}｜資料 as-of {_mrw_r.get("asof") or "—"}'
+                     + (f'（{_mrw_r["days"]} 個估值日）' if _mrw_r.get("days") else '')
+                     + '｜警戒：月累積 -1% 黃／-2% 橘／-3% 紅（相對口徑，不受資產規模影響）'
+                     + '｜15 日滾動損益只作歷史校準，不代表月累積'
+                     + '｜影子期 2026-11-05～2027-02-05，期滿人工裁決；不自動交易、不改 G1/G2/G3。')
+        try:
+            _mrw_s = _mrw.stress(snap)
+            _mrw_note += '｜壓力（資產同幅下跌）：' + "；".join(
+                f'{int(x["shock_pct"])}% → 總資產 {x["total_after"]:,.0f}（{x["total_delta_pct"]:+.2f}%）'
+                + (f'、質押 LTV {x["ltv_after"]:.2f}%' if x.get("ltv_after") is not None else '')
+                for x in _mrw_s)
+        except Exception:
+            pass
+        _text_k_map = {
+            "mtd_icon": _mrw_r["icon"],
+            "mtd_label": _mrw_r["label"],
+            "mtd_pnl": ("—" if _mrw_r["net_twd"] is None else f'{_mrw_r["net_twd"]:+,.0f}'),
+            "mtd_ret": ("—" if _mrw_r["ret_pct"] is None else f'{_mrw_r["ret_pct"]:+.2f}%'),
+            "mtd_gap": _mrw_r["gap"]["text"],
+            "mtd_stance": _mrw_r["stance"],
+            "mtd_note": _mrw_note,
+        }
+        for _dk, _dv in _text_k_map.items():
+            _pat = _re.compile(r'(<span data-k="%s">)[^<]*(</span>)' % _dk)
+            tpl, _n = _pat.subn(lambda m: m.group(1) + _html.escape(str(_dv)) + m.group(2), tpl)
+            if _n:
+                hits += _n
+    except Exception as _e:                      # 卡片壞掉不得擋整頁
+        print(f"[WARN] 月損益風險卡注入失敗：{type(_e).__name__}: {_e}")
+
     # 銀行水位卡片「靜態狀態」對齊門檻（2026-09-28：卡片顏色/🟢🔴字樣原本手寫，與實際門檻不一致）
     #    JS 失敗時的離線快照版也必須說對話（國泰 78,000／永豐 max(月繳×3, 大戶門檻 300,000)）。
     _bank_state = {
