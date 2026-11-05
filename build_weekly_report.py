@@ -362,7 +362,7 @@ li{{margin-bottom:5px;font-size:12.5px;line-height:1.5}}
 <li>台股單筆 ≤5 萬、回檔小單、不追漲；美股單次調度 ≤20 萬</li>
 <li>現金底線 70 萬（6個月開支）任何操作後不得跌破</li>
 <li>8/15 前：僅配息導流，暫緩大規模賣出（國泰授信審查）</li>
-<li>質押紀律：LTV 50% 上限；擔保品富達（股80.75%）-30% → LTV 71% 觸追繳區；US30Y≥5.30% 禁新增質押</li>
+<li>質押紀律：核定成數 5 成（LTV 50% ＝成數用滿，僅顯示）；≥53% 禁新增質押、≥70% 追繳（70% 為內部假設線，銀行書面公式未取得）；擔保品富達（股80.75%）-30% → LTV 71% 觸追繳區；US30Y≥5.30% 禁新增質押</li>
 </ul></div>
 
 <p style="color:#6e6e73;font-size:10px;text-align:center;margin-top:20px">龍九控股自動產出｜資料：snapshot/asset_diff_history/us30y_state/dashboard_decisions｜穿透公式：桶值÷總資產（不含不動產）</p>
