@@ -12025,52 +12025,58 @@
       "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "id": "mem-20261105165207-1302",
+      "timestamp": "2026-11-05T16:52:07.878487+08:00",
+      "agent": "Hermes",
+      "task": "2026-11-05 真值日資料批核准上線",
+      "summary": "使用者核准推送純資料批（1c2f6440｜[cioreviewed]車道、無程式檔）。真值：總資產 26,613,591／現金 2,028,856／負債 30,951,762／信用卡pending 46,418／安聯A+B 7,470,483／國泰基金 11,909,979／台股 2,566,480／11月配息 17,577（安聯 9,817＋聯博 7,027＋路博邁 733）。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261105165217-1303",
+      "timestamp": "2026-11-05T16:52:17.677851+08:00",
+      "agent": "Hermes",
+      "task": "update_data 程式修正落地（國泰同義鍵／衛星鍵／日報規則）",
+      "summary": "CIO-Gemini APPROVE（tree c0db5d8ad523），commit 51302c27。①--cathay_funds 同寫 funds_cathay_breakdown：只寫 funds_breakdown 會讓門檻SoT基金口徑閉合擋推送（11,793,577 vs 11,909,979）②衛星（黃金/健康/避險衛星）禁入 penetration.actual_twd：會與五桶重複計，實測假失敗 +289,330 ③DAILY_REPORT_PIPELINE_RULE 安聯現值 7,456,850→7,470,483，修 allianz_value 三源校準擋日報。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261105165225-1304",
+      "timestamp": "2026-11-05T16:52:25.536374+08:00",
+      "agent": "Hermes",
+      "task": "緊急應變改收盤版重產（不採數字替換）",
+      "summary": "使用者指示重跑。13:00 盤中 41,862.47(-2.53%)→收盤 41,574.72(-3.20%)，尾盤再殺 288 點使舊敘述失效；真抓 Yahoo 收盤行情重寫六章（台股組合 -70,310／-2.74%，台幣 32.94 +0.64%，00981A -7.43%）。觸發判讀改為已破 3% 急跌煞車→今日零交易。連鎖修正質押擔保池 11,793,577→11,909,979、維持率 201.9%、LTV 49.5%、距內部 53% 需跌 6.53%。commit 76abd033。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261105165233-1305",
+      "timestamp": "2026-11-05T16:52:33.395709+08:00",
+      "agent": "Hermes",
+      "task": "緊急應變收盤版重產器送審落地",
+      "summary": "gen_emergency_close_20261105.py；CIO-Gemini APPROVE（tree 7f3bafab3d5f），commit 3af066ee。繞過 emergency_1330 的 _skip_html 防護（既有 full_report>1500 即跳過 HTML）但不改原檔，避免動到 07:00 主產線；只產出不 commit/push，行情 API 失敗一律 fail-loud 不退回舊價。",
+      "status": "completed",
+      "source": "user"
     }
 ,
   {
-    "id": "mem-20261105165207-1302",
-    "timestamp": "2026-11-05T16:52:07.878487+08:00",
+    "id": "mem-20261105202833-1306",
+    "timestamp": "2026-11-05T20:28:33.845940+08:00",
     "agent": "Hermes",
-    "task": "2026-11-05 真值日資料批核准上線",
-    "summary": "使用者核准推送純資料批（1c2f6440｜[cioreviewed]車道、無程式檔）。真值：總資產 26,613,591／現金 2,028,856／負債 30,951,762／信用卡pending 46,418／安聯A+B 7,470,483／國泰基金 11,909,979／台股 2,566,480／11月配息 17,577（安聯 9,817＋聯博 7,027＋路博邁 733）。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261105165217-1303",
-    "timestamp": "2026-11-05T16:52:17.677851+08:00",
-    "agent": "Hermes",
-    "task": "update_data 程式修正落地（國泰同義鍵／衛星鍵／日報規則）",
-    "summary": "CIO-Gemini APPROVE（tree c0db5d8ad523），commit 51302c27。①--cathay_funds 同寫 funds_cathay_breakdown：只寫 funds_breakdown 會讓門檻SoT基金口徑閉合擋推送（11,793,577 vs 11,909,979）②衛星（黃金/健康/避險衛星）禁入 penetration.actual_twd：會與五桶重複計，實測假失敗 +289,330 ③DAILY_REPORT_PIPELINE_RULE 安聯現值 7,456,850→7,470,483，修 allianz_value 三源校準擋日報。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261105165225-1304",
-    "timestamp": "2026-11-05T16:52:25.536374+08:00",
-    "agent": "Hermes",
-    "task": "緊急應變改收盤版重產（不採數字替換）",
-    "summary": "使用者指示重跑。13:00 盤中 41,862.47(-2.53%)→收盤 41,574.72(-3.20%)，尾盤再殺 288 點使舊敘述失效；真抓 Yahoo 收盤行情重寫六章（台股組合 -70,310／-2.74%，台幣 32.94 +0.64%，00981A -7.43%）。觸發判讀改為已破 3% 急跌煞車→今日零交易。連鎖修正質押擔保池 11,793,577→11,909,979、維持率 201.9%、LTV 49.5%、距內部 53% 需跌 6.53%。commit 76abd033。",
-    "status": "completed",
-    "source": "user"
-  }
-,
-  {
-    "id": "mem-20261105165233-1305",
-    "timestamp": "2026-11-05T16:52:33.395709+08:00",
-    "agent": "Hermes",
-    "task": "緊急應變收盤版重產器送審落地",
-    "summary": "gen_emergency_close_20261105.py；CIO-Gemini APPROVE（tree 7f3bafab3d5f），commit 3af066ee。繞過 emergency_1330 的 _skip_html 防護（既有 full_report>1500 即跳過 HTML）但不改原檔，避免動到 07:00 主產線；只產出不 commit/push，行情 API 失敗一律 fail-loud 不退回舊價。",
-    "status": "completed",
+    "task": "證券明細校正＋canonical 防錯上線（96881c41）",
+    "summary": "持股明細改11/05官方收盤：明細2,611,170→2,566,480與權威歸零；canonical=securities.total_market_value，6別名+內值+未實現全派生；新增五條fail-closed閘門(自測6/6)；CIO APPROVE、已推、Pages驗證、連線25/25；total_assets與桶位未動",
+    "status": "已完成",
     "source": "user"
   }
   ],
   "meta": {
-    "updated_at": "2026-11-05T15:34:21+08:00"
+    "updated_at": "2026-11-05T20:23:26+08:00"
   },
-  "last_updated": "2026-11-05T15:34:21+08:00",
+  "last_updated": "2026-11-05T20:23:26+08:00",
   "2026-09-29": [
     "9/29 質押撥款入帳 NT$5,900,000（10:57，國泰世華通知；實撥 590 萬@2.65%，原表定 540 萬@2.77%）→ 真值日全資產同步：現金 6,719,182／保單 9,453,825／基金 12,654,144／台股 2,981,410／總資產 31,808,561、負債 36,003,720（含基金質押 590 萬）、淨值 -4,195,159；銀行口徑 LTV 50.1%。待執行：清償 500 萬高息（券商 96 萬@3.92% 先、保單 400 萬@4% 後）",
     "9/29 裁示：質押撥款 590 萬先轉 200 萬還保單借貸（4% → 月省 6,667；保單借貸 400 萬 → 200 萬）；撥款剩餘 3,900,000。順序調整：保單（4%）優先於券商（3.92%）。待入帳確認後四源同步。",
