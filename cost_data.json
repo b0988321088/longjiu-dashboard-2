@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-05 21:33",
+ "generated_at": "2026-11-05 23:55",
  "days": 14,
  "ledger_rows": 58,
  "backfilled": [],
@@ -140,7 +140,7 @@
    "gemini_twd": 0,
    "free_twd": 0,
    "total_twd": 44,
-   "calls": 874,
+   "calls": 877,
    "cer": 0,
    "q429": 0
   }
@@ -208,8 +208,8 @@
   }
  },
  "wallets": {
-  "ds_balance_cny": 169.53,
-  "ds_balance_twd": 802,
+  "ds_balance_cny": 169.45,
+  "ds_balance_twd": 801,
   "ds_source": "API",
   "ds_daily_twd": 26,
   "ds_daily_src": "餘額真值（最近 7 個日曆日，8 個樣本）",
@@ -369,7 +369,7 @@
   "gem_twd": 3.0,
   "free_twd": 0.0,
   "free_calls": 560,
-  "calls": 38292,
+  "calls": 38295,
   "cer": 159,
   "pending": false,
   "total_twd": 1967.0
