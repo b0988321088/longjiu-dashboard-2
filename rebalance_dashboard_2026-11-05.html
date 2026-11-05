@@ -223,7 +223,7 @@ td { padding:7px 8px; border-bottom:1px solid #263449; }
   </div>
   <div class="card"><h2>🛡️ 質押 / 風險紅線</h2>
     <div style="font-size:12.5px;color:#cbd5e1;margin-bottom:8px">📌 已質押（整池 1,200萬×5成 = 590萬@2.65%（2026-10-28 由 10/22 實扣 9,852 ÷ 23 天 × 365 ÷ 5,900,000 反算＝2.65%，與原口徑一致）質押（已撥款））</div>
-    <table><tr><th>指標</th><th class="num">現值</th><th class="num">紅線</th><th>狀態</th></tr><tr><td>US30Y 凍結線</td><td class='num'>5.28%</td><td class='num'>≥5.30% 🔴</td><td>🟢 安全</td></tr><tr><td>美元曝險</td><td class='num'>70%</td><td class='num'>目標值 60%／黃色觀察 65%／高曝險觀察線 70%（僅顯示）</td><td>🟡 高曝險觀察線（僅顯示）</td></tr><tr><td>高科技</td><td class='num'>22.5%</td><td class='num'>紅線 30%</td><td>🟢 安全</td></tr><tr><td>現金｜底線 700,000（單一口徑）</td><td class='num'>1,128,856</td><td class='num'>≥700,000</td><td>🟢 安全</td></tr><tr><td>國泰擔保池 LTV</td><td class='num'>50.0%（借 5,900,000／池 11,793,577）</td><td class='num'>綠 ≤45／黃 ≤53／追繳 ≥70</td><td>🟡 黃區</td></tr></table>
+    <table><tr><th>指標</th><th class="num">現值</th><th class="num">紅線</th><th>狀態</th></tr><tr><td>US30Y 凍結線</td><td class='num'>5.28%</td><td class='num'>≥5.30% 🔴</td><td>🟢 安全</td></tr><tr><td>美元曝險</td><td class='num'>70%</td><td class='num'>目標值 60%／黃色觀察 65%／高曝險觀察線 70%（僅顯示）</td><td>🟡 高曝險觀察線（僅顯示）</td></tr><tr><td>高科技</td><td class='num'>22.5%</td><td class='num'>紅線 30%</td><td>🟢 安全</td></tr><tr><td>現金｜底線 700,000（單一口徑）</td><td class='num'>1,128,856</td><td class='num'>≥700,000</td><td>🟢 安全</td></tr><tr><td>國泰擔保池 LTV</td><td class='num'>49.5%（借 5,900,000／池 11,909,979）</td><td class='num'>綠 ≤45／黃 ≤53／追繳 ≥70</td><td>🟡 黃區</td></tr></table>
   </div>
 </div>
 
@@ -256,16 +256,17 @@ td { padding:7px 8px; border-bottom:1px solid #263449; }
 
 
   <div class="card" style="margin-top:14px;border-left:4px solid #f59e0b">
-    <h2>🚨 緊急應變併入再平衡（2026-11-05 13:07）</h2>
+    <h2>🚨 緊急應變併入再平衡（2026-11-05 15:36）</h2>
     
     <div style="font-size:12px;color:#cbd5e1;line-height:1.7">六、風控檢查】</b>
-US30Y 5.282%（11/04），模式A 防禦區 5.20–5.30 已連續 48 日，紅線 5.30 未破（紅線連續 0 日）→ 長天期債券新增買單維持凍結，科技部位上限不鬆綁。
-質押（讀 snapshot 派生欄位）：借款 5,900,000、池市值 11,793,577、維持率 199.9%，未達內部停止線（LTV 53%）；距內部停止線池需再跌 5.61%，距銀行通知 160% 需跌 19.96%、距追繳 140% 需跌 29.96%。銀行維持率公式與補繳期限仍待書面（E1），在此之前以內部線為準。今天殺台股，質押池是基金與美股為主，直接衝擊有限——但 5.61% 的緩衝不厚，若費半 -3.13% 這種跌勢連續出現，緩衝會被吃掉一半，這是本週唯一需要盯的數字。
+US30Y 5.28%（11/04），模式 A 防禦區 5.20–5.30 已連續 48 日，紅線 5.30 未破（紅線連續 0 日）→ 長天期債券新增買單維持凍結，科技部位上限不鬆綁。
+質押：借款 5,900,000、池市值 11,909,979、維持率 201.9%、LTV 49.5%，未達內部停止線（LTV 53%）；距內部停止線池需再跌 6.53%，距銀行通知 160% 需跌 20.7%、距追繳 140% 需跌 30.6%。池子每跌 1% ＝ 119,100 元 ≈ 維持率 -2.0pp。今天殺台股，質押池是國泰三檔基金（富達／B11／聯博），直接衝擊有限——但 6.53% 的緩衝不算厚，若費半這種單日 -3% 的跌勢連續兩天出現，緩衝會被吃掉約一半，這是本週唯一需要盯的數字。銀行維持率公式與補繳期限仍待書面（E1），在此之前以內部線為準。
 現金：可動用 1,128,856、指定款 900,000 不列可動用、底線 700,000（單一口徑），餘裕 428,856。
-美元曝險 69.9%（目標 60／黃 65／紅 70）→ advisory 只回報不觸發，但已貼紅線前一格。
-觸發狀態：單日急跌煞車未觸發（-2.53% < 3%）；台股 gate 門檻 -1.5% 已達，本班屬門檻內正常產出，不是升級事故。
-新聞來源：tw.stock.yahoo.com（Yahoo 台股 RSS）＋ daily_analysis briefing；行情：Yahoo chart API。</div>
-    <div style="margin-top:8px;font-size:12px"><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_2026-11-04.html" style="color:#f59e0b">📄 查看完整緊急應變報告 →</a></div>
+配息與租金：本月已收配息 17,577（保單 9,817＋基金 7,760，含聯博 7,027、路博邁 733），房租 24,000（店面；其餘 56,100 待收），被動月收 41,577。
+美元曝險 69.9%（目標 60／黃 65／紅 70）→ advisory 只回報不觸發，但已貼紅線前一格；今天台幣貶 0.64%，方向對我們有利（美元資產折算台幣變多），但這不是可以依賴的報酬來源。
+觸發狀態：單日急跌煞車已觸發（-3.20% > 3%）；依授權規則本班屬「暫緩並回報」，不做任何交易。台股 gate 門檻 -1.5% 早已達，屬門檻內正常產出，不是升級事故。
+新聞來源：Yahoo 台股 RSS（tw.stock.yahoo.com）＋ Yahoo chart API 收盤行情＋ daily_analysis briefing。</div>
+    <div style="margin-top:8px;font-size:12px"><a href="https://b0988321088.github.io/longjiu-dashboard-2/emergency_report_2026-11-05.html" style="color:#f59e0b">📄 查看完整緊急應變報告 →</a></div>
   </div>
 
 <div class="card" style="margin-top:14px"><h2>🗓 里程碑時程</h2><div class='ms ms-high'><span class='ms-date'>11/5（四）</span><span class='ms-txt'>女友還款（每月6,000）</span></div><div class='ms ms-high'><span class='ms-date'>11/6（五）</span><span class='ms-txt'>🎯 投標前置（T-5 週五）：確認押標金 700,000 金額與繳法</span></div><div class='ms ms-high'><span class='ms-date'>11/10（二）</span><span class='ms-txt'>🎯 投標前一日：押標金到位＋文件複核</span></div><div class='ms ms-high'><span class='ms-date'>11/11（三）</span><span class='ms-txt'>🎯 標案投標日（押標金 700,000）</span></div><div class='ms ms-high'><span class='ms-date'>11/20（五）</span><span class='ms-txt'>💰 國泰房貸繳款（大義街轉貸寬限期，金額見月固定支出）</span></div><div class='ms ms-high'><span class='ms-date'>12/1（二）</span><span class='ms-txt'>🔍 被動收入結構檢視（基準月 2026-09 起觀察 3 個月）：依三桶逐月實收（保單／ETF／基金）修正保守底線（現行 100,000）；使用者 9/2…</span></div><div class='ms ms-high'><span class='ms-date'>質押</span><span class='ms-txt'>整池質押 質押 590萬@2.65%（2026-10-28 由 10/22 實扣 9,852 ÷ 23 天 × 365 ÷ 5,900,000 反算＝2.65%，與原口徑一致）（已撥款）</span></div></div>
