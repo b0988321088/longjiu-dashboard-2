@@ -155,12 +155,15 @@ class TestRedLinesUnchanged(unittest.TestCase):
     """🔴 立即行動紅線維持原判準（A 案不動）。"""
 
     def test_ltv(self):
-        red, _obs, _err = run(ltv=50.1)
+        """2026-11-05 裁決：聚合紅線改讀黃上限 53%（禁新增質押）。"""
+        red, _obs, _err = run(ltv=53.1)
         self.assertTrue(any("LTV" in x for x in red))
 
     def test_ltv_at_50_ok(self):
-        red, _obs, _err = run(ltv=50.0)
-        self.assertFalse(any("LTV" in x for x in red))
+        """用滿核定成數 50%（含 50.1）不再判紅——紅線是 53%。"""
+        for _v in (50.0, 50.1, 52.9):
+            red, _obs, _err = run(ltv=_v)
+            self.assertFalse(any("LTV" in x for x in red), f"{_v}% 不得判紅線")
 
     def test_cash_below_floor(self):
         red, _obs, _err = run(cash=639661, floor=700000)
@@ -193,8 +196,9 @@ class TestRedLinesUnchanged(unittest.TestCase):
 class TestPledgePoolLTV(unittest.TestCase):
     """2026-10-14 第 0 批 R1：質押池逐池判定（門檻讀 SoT、fail-closed、不用加總平均）。"""
 
-    def _pool(self, ltv, grade, borrow=5900000, note=""):
-        return [{"池名": "國泰基金質押池", "借款_twd": borrow, "ltv_pct": ltv,
+    def _pool(self, ltv, grade, borrow=5900000, note="", coll=None):
+        return [{"池名": "國泰基金質押池", "借款_twd": borrow,
+                 "擔保品市值_twd": coll, "ltv_pct": ltv,
                  "分級": grade, "真值": True, "說明": note}]
 
     def test_below_green_silent(self):
@@ -203,16 +207,27 @@ class TestPledgePoolLTV(unittest.TestCase):
         self.assertEqual(obs, [])
         self.assertEqual(err, [])
 
-    def test_undefined_band_observe_only(self):
-        """綠上限與單池上限之間：門檻未定義動作 → 只觀察，不得升級為紅線。"""
-        red, obs, err = run(pools=self._pool(47.5, "未定義區間"), ltv=None)
-        self.assertEqual(red, [], "不得把門檻未定義區間逕判紅線")
-        self.assertEqual(len(obs), 1)
-        self.assertIn("介於綠上限與單池上限之間", obs[0])
+    def test_observe_band_is_yellow(self):
+        """2026-11-05 裁決：45–53%（觀察區／成數用滿）一律 🟡 顯示，不得判紅線。"""
+        for _ltv, _g in ((47.5, "觀察區"), (50.09, "成數用滿"), (52.9, "成數用滿")):
+            red, obs, err = run(pools=self._pool(_ltv, _g), ltv=None)
+            self.assertEqual(red, [], f"{_g} {_ltv}% 不得判紅線")
+            self.assertEqual(len(obs), 1, f"{_g} {_ltv}% 應有一筆觀察")
+            self.assertIn("已用滿核定成數", obs[0])
+            self.assertEqual(err, [])
 
-    def test_over_pool_cap_is_red(self):
-        red, _obs, _err = run(pools=self._pool(50.09, "超限"), ltv=None)
-        self.assertTrue(any("單池上限" in x for x in red))
+    def test_full_utilization_shows_buffer(self):
+        """用滿成數時必須直接說「還有多遠」：距禁新增 53%／距追繳 70% 的 pp 與市值跌幅。"""
+        red, obs, _err = run(pools=self._pool(50.03, "成數用滿",
+                                             borrow=5900000, coll=11793577),
+                             ltv=None, ltv_grades={"綠上限": 45, "黃上限": 53,
+                                                   "單池上限": 50, "追繳": 70})
+        self.assertEqual(red, [])
+        self.assertEqual(len(obs), 1)
+        self.assertIn("距禁新增 53% 還有 2.97pp", obs[0])
+        self.assertIn("距追繳 70% 還有 19.97pp", obs[0])
+        self.assertIn("市值再跌 5.6%", obs[0])
+        self.assertIn("市值再跌 28.5%", obs[0])
 
     def test_ban_zone_is_red(self):
         red, _obs, _err = run(pools=self._pool(53.2, "禁新增質押"), ltv=None)
@@ -247,7 +262,8 @@ class TestPledgePoolLTV(unittest.TestCase):
         g = S.ltv_grades({"thresholds_2026_0915":
                           {"ltv分級_pct": {"綠上限": 45, "黃上限": 53,
                                            "單池上限": 50, "追繳": 70}}})
-        seq = [(40, "正常"), (47.5, "未定義區間"), (50.09, "超限"),
+        # 2026-11-05 裁決：45–53% 全段 🟡（觀察區／成數用滿），紅線只留 ≥53% 與 ≥70%
+        seq = [(40, "正常"), (47.5, "觀察區"), (50.09, "成數用滿"), (52.9, "成數用滿"),
                (53.2, "禁新增質押"), (71, "追繳")]
         self.assertEqual([S.ltv_grade_of(v, g) for v, _ in seq], [x for _, x in seq])
 
@@ -272,23 +288,24 @@ class TestPledgePoolsSoT(unittest.TestCase):
         self.assertEqual(len(rows), 3)
         self.assertEqual(len({r["池名"] for r in rows}), 3)
 
-    def test_live_pool_over_cap_triggers_red(self):
-        """現況驗收：國泰池 LTV 已超單池上限 50% → 必須進紅線（過去不會觸發）。"""
+    def test_live_pool_full_utilization_is_observe(self):
+        """現況驗收（2026-11-05 裁決後）：國泰池用滿 5 成 → 🟡 顯示，不得判紅線。"""
         import sot_targets as S
         rows = S.pledge_pools(self._snap())
         c = [r for r in rows if r["池名"].startswith("國泰")][0]
         self.assertTrue(c["真值"], "現況應有真值")
         self.assertGreater(c["ltv_pct"], 50.0)
-        self.assertEqual(c["分級"], "超限")
-        red, _obs, _err = run(ltv=c["ltv_pct"], pools=rows)
-        self.assertTrue(any("單池上限" in x for x in red))
+        self.assertEqual(c["分級"], "成數用滿")
+        red, obs, _err = run(ltv=c["ltv_pct"], pools=rows)
+        self.assertEqual(red, [], "用滿核定成數不得判紅線")
+        self.assertTrue(any("已用滿核定成數" in x for x in obs))
 
     def test_market_drop_scenarios(self):
         """單池市值下跌情境（使用者指定驗收）：-6% 起進入禁新增質押層。"""
         import copy
         import sot_targets as S
         s = self._snap()
-        for drop, expect in ((0, "超限"), (6, "禁新增質押"), (15, "禁新增質押")):
+        for drop, expect in ((0, "成數用滿"), (6, "禁新增質押"), (15, "禁新增質押")):
             t = copy.deepcopy(s)
             pd = t["cathay_pledge_0911"]["擔保池"]
             pd["合計"] = pd["合計"] * (1 - drop / 100)

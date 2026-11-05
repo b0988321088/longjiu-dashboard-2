@@ -2506,8 +2506,12 @@ def ltv_grades(snap: dict) -> dict:
 def ltv_grade_of(ltv, grades: dict) -> str:
     """單池 LTV → 分級字串。門檻或 LTV 不可得 → 'unverified'（不得回綠燈）。
 
-    ≥追繳 → 追繳｜≥黃上限 → 禁新增質押｜>單池上限 → 超限｜≤綠上限 → 正常｜
-    其餘（綠上限, 單池上限] → 未定義區間（門檻未定義動作，只顯示不升級）
+    ≥追繳 → 追繳｜≥黃上限 → 禁新增質押｜>單池上限 → 成數用滿｜≤綠上限 → 正常｜
+    其餘（綠上限, 單池上限] → 觀察區
+
+    2026-11-05 使用者裁決：50%（銀行核定成數）**不再當紅線**。8/15 把成數由 4 成拉到 5 成後，
+    成數永久用滿 → 「超限」紅燈常駐等於噪音；真正的契約風險是維持率／追繳。
+    因此 (綠上限, 黃上限) 全段降為 🟡 顯示，紅線只留 ≥黃上限（禁新增）與 ≥追繳。
     """
     if ltv is None or not grades:
         return "unverified"
@@ -2516,10 +2520,10 @@ def ltv_grade_of(ltv, grades: dict) -> str:
     if ltv >= grades["黃上限"]:
         return "禁新增質押"
     if ltv > grades["單池上限"]:
-        return "超限"
+        return "成數用滿"
     if ltv <= grades["綠上限"]:
         return "正常"
-    return "未定義區間"
+    return "觀察區"
 
 
 # (池名, 借款真值來源, 擔保品真值來源)
@@ -2580,8 +2584,8 @@ def pledge_pools(snap: dict) -> list:
                            "→ 無法分級（不得默認綠燈）")
         else:
             row["分級"] = ltv_grade_of(row["ltv_pct"], grades)
-            if row["分級"] == "未定義區間":
-                row["說明"] = ("介於綠上限與單池上限之間；門檻未定義動作"
-                               "（只顯示，不升級）")
+            if row["分級"] == "觀察區":
+                row["說明"] = ("介於綠上限與單池上限之間（未用滿成數；"
+                               "門檻未定義動作，只顯示不升級）")
         rows.append(row)
     return rows

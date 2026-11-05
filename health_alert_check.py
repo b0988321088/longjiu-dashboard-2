@@ -72,29 +72,36 @@ def classify(ltv, cash, floor, cov, defense, usd, th, pools=None, ltv_grades=Non
     會讓「LTV 缺真值」靜默變成「不告警」，此處改為缺值即不判（fail-safe 顯示）。
 
     2026-10-14 第 0 批 R1（使用者裁決）：
-      - **LTV 紅線門檻改讀 ltv_grades**（thresholds_2026_0915.ltv分級_pct.單池上限），
-        禁硬編碼 50；門檻不可得 → 報資料異常且不判（**不得默認綠燈**）。
+      - **LTV 紅線門檻改讀 ltv_grades**（thresholds_2026_0915.ltv分級_pct.黃上限；
+        2026-11-05 起由「單池上限 50%」改為「黃上限 53%」，理由見下方註解），
+        禁硬編碼；門檻不可得 → 報資料異常且不判（**不得默認綠燈**）。
       - `ltv` 參數語意＝**單池最差 LTV**（由 sot_targets.pledge_pools 逐池取得），
         不再傳稀釋後的全體質押率（原口徑把分母含保單＋證券 → 銀行監看線永遠不觸發）。
       - `pools`＝sot_targets.pledge_pools() 結果：**各池分別判定**，不得以加總平均取代。
     """
     red, observe, data_err = [], [], []
 
+    # 2026-11-05 使用者裁決：紅線改讀「黃上限」（現 53%＝禁新增質押）。
+    #   原讀「單池上限 50%」＝銀行核定成數，8/15 把成數拉到 5 成後必然用滿 → 紅燈常駐。
+    #   單池上限保留為「成數用滿」的資訊刻度（分級用），不再當行動紅線。
     _cap = None
     if isinstance(ltv_grades, dict):
-        _cap = ltv_grades.get("單池上限")
+        _cap = ltv_grades.get("黃上限")
         if not isinstance(_cap, (int, float)):
             _cap = None
     if ltv is not None:
         if _cap is None:
             data_err.append(
-                "LTV 門檻來源缺失或無效（thresholds_2026_0915.ltv分級_pct.單池上限）"
+                "LTV 門檻來源缺失或無效（thresholds_2026_0915.ltv分級_pct.黃上限）"
                 "→ 本次不判 LTV（不得默認綠燈）"
             )
         elif ltv > _cap:
-            red.append(f"LTV {ltv:.1f}% > 單池上限 {_cap:g}%（銀行監看線）")
+            red.append(f"LTV {ltv:.1f}% > 黃上限 {_cap:g}%（禁新增質押）")
 
     # 質押池逐池判定（各池分別判定；不得以加總平均或取平均取代）
+    _grades_d = ltv_grades if isinstance(ltv_grades, dict) else {}
+    _ltv_cap_ban = _grades_d.get("黃上限")
+    _ltv_cap_call = _grades_d.get("追繳")
     for _p in (pools or []):
         _nm = _p.get("池名") or "質押池"
         _g, _v = _p.get("分級"), _p.get("ltv_pct")
@@ -102,11 +109,26 @@ def classify(ltv, cash, floor, cov, defense, usd, th, pools=None, ltv_grades=Non
             red.append(f"{_nm} LTV {_v}% ≥ 追繳線（契約層級重大風險）")
         elif _g == "禁新增質押":
             red.append(f"{_nm} LTV {_v}% ≥ 黃上限（禁止新增質押）")
-        elif _g == "超限":
-            red.append(f"{_nm} LTV {_v}% > 單池上限（已超核定成數）")
-        elif _g == "未定義區間":
-            observe.append(f"{_nm} LTV {_v}% 介於綠上限與單池上限之間"
-                           "（門檻未定義動作，僅顯示）")
+        elif _g in ("成數用滿", "觀察區"):
+            # 2026-11-05 使用者裁決：50%（銀行核定成數）不再當紅線 → 降級為 🟡 顯示。
+            #   理由：8/15 決策把成數由 4 成拉到 5 成，之後成數永久用滿 → 紅燈常駐＝噪音，
+            #   真正的契約風險是維持率／追繳。此處把「還有多遠」直接寫出來，燈才有資訊量。
+            _borrow = _p.get("借款_twd")
+            _coll = _p.get("擔保品市值_twd")
+            _tail = ""
+            try:
+                if _borrow and _coll and _v:
+                    _b, _c = float(_borrow), float(_coll)
+                    _cap_ban = _ltv_cap_ban
+                    _cap_call = _ltv_cap_call
+                    if _cap_ban and _cap_call:
+                        _tail = (f"｜距禁新增 {_cap_ban:g}% 還有 {_cap_ban - _v:.2f}pp"
+                                 f"（市值再跌 {(1 - _b / (_c * _cap_ban / 100)) * 100:.1f}%）"
+                                 f"｜距追繳 {_cap_call:g}% 還有 {_cap_call - _v:.2f}pp"
+                                 f"（市值再跌 {(1 - _b / (_c * _cap_call / 100)) * 100:.1f}%）")
+            except Exception:
+                _tail = ""
+            observe.append(f"{_nm} LTV {_v}% 已用滿核定成數（顯示，不觸發資產調整）{_tail}")
         elif _g == "unverified" and (_p.get("借款_twd") or 0) > 0:
             data_err.append(f"{_nm} 無法判定 LTV（{_p.get('說明') or '真值不足'}）")
 
