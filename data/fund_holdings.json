@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0",
+  "updated_at": "2026-11-05",
+  "說明": "持股穿透資料層。只存『權重/來源/日期』等靜態事實，金額一律由引擎在計算時自 snapshot 動態取（禁止在此寫死市值）。缺資料一律 level=未穿透，不得推定為低風險。",
+  "level_定義": {
+    "已穿透": "取得個股明細與權重，可直接合併計算重疊",
+    "部分穿透": "僅取得產業權重，無個股明細",
+    "未穿透": "無資料；不得假設低風險"
+  },
+  "holdings": {
+    "0050": {
+      "名稱": "元大台灣卓越50",
+      "match": {"type": "ticker", "key": "0050"},
+      "level": "已穿透",
+      "source": "元大投信官網 持股比重頁",
+      "source_url": "https://www.yuantaetfs.com/product/detail/0050/ratio",
+      "date": "2026-11-05",
+      "top_holdings": [
+        {"ticker": "2330", "name": "台積電", "weight": 58.87},
+        {"ticker": "2454", "name": "聯發科", "weight": 5.47},
+        {"ticker": "2317", "name": "鴻海", "weight": 3.08},
+        {"ticker": "2308", "name": "台達電", "weight": 2.34},
+        {"ticker": "3711", "name": "日月光投控", "weight": 2.04}
+      ],
+      "note": "官網僅列前五大；權重為股票部位口徑"
+    },
+    "006208": {
+      "名稱": "富邦台50",
+      "match": {"type": "ticker", "key": "006208"},
+      "level": "未穿透",
+      "source": null, "date": null, "top_holdings": [],
+      "note": "富邦投信持股頁本次抓取失敗；待補"
+    },
+    "00878": {
+      "名稱": "國泰永續高股息",
+      "match": {"type": "ticker", "key": "00878"},
+      "level": "部分穿透",
+      "source": "industry_penetration.py L2 產業權重",
+      "date": "2026-08-31", "top_holdings": [],
+      "note": "僅產業權重（資訊科技 46.8%），無個股明細"
+    },
+    "0056": {
+      "名稱": "元大高股息",
+      "match": {"type": "ticker", "key": "0056"},
+      "level": "未穿透", "source": null, "date": null, "top_holdings": [],
+      "note": "元大官網維護頁；待補"
+    },
+    "00919": {"名稱": "群益台灣精選高息", "match": {"type": "ticker", "key": "00919"}, "level": "未穿透", "source": null, "date": null, "top_holdings": [], "note": "待補"},
+    "00713": {"名稱": "元大台灣高息低波", "match": {"type": "ticker", "key": "00713"}, "level": "未穿透", "source": null, "date": null, "top_holdings": [], "note": "待補"},
+    "00918": {"名稱": "大華優利高填息30", "match": {"type": "ticker", "key": "00918"}, "level": "未穿透", "source": null, "date": null, "top_holdings": [], "note": "待補"},
+    "00888": {"名稱": "永豐台灣ESG", "match": {"type": "ticker", "key": "00888"}, "level": "未穿透", "source": null, "date": null, "top_holdings": [], "note": "待補"},
+    "00981A": {"名稱": "主動統一台股增長", "match": {"type": "ticker", "key": "00981A"}, "level": "未穿透", "source": null, "date": null, "top_holdings": [], "note": "主動式 ETF 持股每日變動；待補"},
+    "00984A": {"名稱": "主動安聯台灣高息", "match": {"type": "ticker", "key": "00984A"}, "level": "未穿透", "source": null, "date": null, "top_holdings": [], "note": "待補"},
+    "00927": {"名稱": "群益半導體收益", "match": {"type": "ticker", "key": "00927"}, "level": "未穿透", "source": null, "date": null, "top_holdings": [], "note": "半導體集中度高，優先穿透對象；待補"},
+    "00983D": {"名稱": "主動富邦複合收益", "match": {"type": "ticker", "key": "00983D"}, "level": "未穿透", "source": null, "date": null, "top_holdings": [], "note": "債券型；待補"},
+    "00646": {"名稱": "元大S&P500", "match": {"type": "ticker", "key": "00646"}, "level": "未穿透", "source": null, "date": null, "top_holdings": [], "note": "待補"},
+    "安聯收益成長AM": {"名稱": "保單A-USDEQ3490 安聯收益成長基金-AM穩定月收(美元)", "match": {"type": "name_contains", "key": "USDEQ3490"}, "level": "部分穿透", "source": "industry_penetration.py L1 官方月報", "date": "2026-07-31", "top_holdings": [], "note": "僅產業表，無個股明細"},
+    "富達全球動能多元B": {"名稱": "富達全球動能多元B股C月配息美元", "match": {"type": "name_contains", "key": "富達全球動能"}, "level": "未穿透", "source": null, "date": null, "top_holdings": [], "note": "最大部位；官網月報前十大待補"},
+    "B11智慧數據": {"名稱": "貝萊德智慧數據收益成長B11-美元", "match": {"type": "name_contains", "key": "B11"}, "level": "未穿透", "source": null, "date": null, "top_holdings": [], "note": "第二大部位；待補"},
+    "PIMCO收益增長": {"名稱": "保單A-USDEQ6550 PIMCO收益增長-M級", "match": {"type": "name_contains", "key": "USDEQ6550"}, "level": "部分穿透", "source": "industry_penetration.py L1 官方月報", "date": "2026-03-31", "top_holdings": [], "note": "僅產業表"},
+    "M&G入息": {"名稱": "保單B-USDEQ5700 M&G入息A(美元避險月配)F", "match": {"type": "name_contains", "key": "USDEQ5700"}, "level": "部分穿透", "source": "industry_penetration.py L1+L3 晨星", "date": "2026-06-30", "top_holdings": [], "note": "僅產業表"},
+    "第一金M&G": {"名稱": "第一金 M&G入息基金A(美元避險月配)F", "match": {"type": "name_contains", "key": "IDXX"}, "level": "部分穿透", "source": "industry_penetration.py L1", "date": "2026-06-30", "top_holdings": [], "note": "僅產業表"},
+    "聯博AD": {"名稱": "聯博全球多元收益AD美元月配", "match": {"type": "name_contains", "key": "聯博"}, "level": "未穿透", "source": null, "date": null, "top_holdings": [], "note": "保單擔保池成分；待補"},
+    "摩根多重收益": {"名稱": "保單A-USDEQ5440 摩根多重收益(美元對沖)A穩定月配", "match": {"type": "name_contains", "key": "USDEQ5440"}, "level": "未穿透", "source": null, "date": null, "top_holdings": [], "note": "待補"},
+    "元大龍頭": {"名稱": "保單B-NTDEQ2640 元大台灣高股息優質龍頭(B)", "match": {"type": "name_contains", "key": "NTDEQ2640"}, "level": "部分穿透", "source": "industry_penetration.py L1 官方揭露", "date": "2026-08-31", "top_holdings": [], "note": "僅產業表（資訊科技 76.31%）"}
+  }
+}

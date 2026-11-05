@@ -274,6 +274,29 @@ def render(snap: dict | None = None, theme: str = "light") -> str:
         sec = {}
     etf_txt = "｜".join(f"{k.replace('.TW', '')} {val}" for k, val in etf.items()) or "—"
 
+    # 穿透引擎（獨立模組；失敗一律留缺口，不影響本卡其餘數字）
+    hp_dual, hp_cov = {}, {}
+    try:
+        import holdings_penetration as _hp
+        _hr = _hp.run(snap)
+        hp_dual = _hr.get("dual") or {}
+        hp_cov = _hr.get("coverage") or {}
+        _c30 = (_hr.get("correlation") or {}).get("30日") or {}
+        _pairs = _c30.get("相關係數") or {}
+        _hd = _hr.get("hedge") or {}
+        _pairs = {k: v for k, v in _pairs.items() if "現金" not in k}   # 現金為資金調度，非市場連動
+        _best = sorted(_pairs.items(), key=lambda x: x[1])[:2]
+        hp_corr_txt = "｜".join(f"{k} {v:+.2f}" for k, v in _best) or "資料不足"
+        hp_corr_txt += f"（30 日，n={_c30.get('樣本數', '—')}）"
+        if not _hd.get("資料不足"):
+            _rows = _hd.get("樣本", [])
+            _n = len(_rows) or 1
+            hp_corr_txt += f"｜過去 {len(_rows)} 個台股下跌日中，各桶平均變動：" + \
+                "、".join(f"{t} {sum((r.get(t + '_pct') or 0) for r in _rows) / _n:+.2f}%"
+                          for t in ("台股／證券", "基金", "保單"))
+    except Exception:
+        hp_corr_txt = "資料不足"
+
     # ④ 壓力測試表
     cls_html = "".join(
         f"<tr><td>{c['分類']}</td><td>{c['代表標的']}</td><td>{c['金額']}</td>"
@@ -344,7 +367,10 @@ def render(snap: dict | None = None, theme: str = "light") -> str:
 <h3 style="font-size:14px;margin:14px 0 4px">③ 真正風險：哪個資產是最大拖累？</h3>
 <table>
 <tr><th style="width:26%">今日最大拖累</th><td>{worst[0] or "—"}　{_m(worst[1], True) if worst[1] is not None else "—"}</td></tr>
-<tr><th>美股超配</th><td><b style="color:{tone}">{_pc(a["us_pct"])}</b>（目標 {a["tgt"].get("美股市值型", "—")}%／硬上限 {a["cap"].get("美股市值型", "—")}%）＝目前最大單一風險；科技 {_pc(a["tech_pct"])}（上限 {a["tgt"].get("科技", "—")}%）</td></tr>
+<tr><th>美股超配</th><td><b style="color:{tone}">{_pc(a["us_pct"])}</b>（目標 {a["tgt"].get("美股市值型", "—")}%／硬上限 {a["cap"].get("美股市值型", "—")}%）＝目前最大單一風險</td></tr>
+<tr><th>科技（雙口徑）</th><td><b>{_pc(a["tech_pct"])}</b>（桶口徑：美股科技桶，上限 {a["tgt"].get("科技", "—")}%）　／　<b>{_pc(hp_dual.get("GICS_pct"))}</b>（GICS 產業穿透：含台股半導體與基金間接持股）<br><span style="color:#6e6e73;font-size:12px">兩者衡量不同維度且重疊，<b>不可相加</b>；GICS 完整度 {_pc(hp_dual.get("GICS_完整度_pct"))}、資料日 {hp_dual.get("GICS_資料日") or "—"}</span></td></tr>
+<tr><th>連動與歷史實測</th><td>{hp_corr_txt}<br><span style="color:#6e6e73;font-size:12px">相關性只描述同向、非因果；歷史不保證未來</span></td></tr>
+<tr><th>持股穿透完整度</th><td>已穿透 {_pc(hp_cov.get("分級佔比", {}).get("已穿透"))}／部分穿透 {_pc(hp_cov.get("分級佔比", {}).get("部分穿透"))}／未穿透 {_pc(hp_cov.get("分級佔比", {}).get("未穿透"))}　<span style="color:#6e6e73;font-size:12px">未穿透不等於低風險；重複持股僅就已知商品合併</span></td></tr>
 <tr><th>高股息不是防禦</th><td>防守型配息 {_pc(a["defi_pct"])} 為台股高股息 ETF，實測週跌幅：{etf_txt}（與台股同向，不列為防禦資產）</td></tr>
 <tr><th>債券與現金</th><td>債券 {_pc(a["bond_pct"])}／現金 {_pc(a["cash_pct"])}；防禦效果以壓力測試驗證（下表），不看比例本身</td></tr>
 <tr><th>槓桿</th><td>質押維持率 <b>{_pc(a["maint"])}</b>（借款 {_m(a["loan"])}／池 {_m(a["pool"])}）｜距內部停止線 {a["line_stop"]:.0f}% 需跌 {_pc(a["drop_stop"], 2)}｜距銀行通知 {a["line_notice"]:.0f}% 需跌 {_pc(a["drop_notice"], 2)}</td></tr>
@@ -389,6 +415,14 @@ def render_dashboard(snap: dict | None = None, theme: str = "dark") -> str:
     except Exception:
         etf = {}
     etf_txt = "｜".join(f"{k.replace('.TW', '')} {val}" for k, val in etf.items()) or "—"
+    hp_dual, hp_cov = {}, {}
+    try:
+        import holdings_penetration as _hp
+        _hr = _hp.run(snap)
+        hp_dual = _hr.get("dual") or {}
+        hp_cov = _hr.get("coverage") or {}
+    except Exception:
+        pass
 
     tone = {"維持": "emerald", "注意": "amber", "調整": "rose"}.get(v["code"], "slate")
     icon = v["icon"]
@@ -403,7 +437,8 @@ def render_dashboard(snap: dict | None = None, theme: str = "dark") -> str:
         tile("台股", _pc(a["tw_pct"]), f'目標 {a["tgt"].get("台股市值型", "—")}%'),
         tile("美股曝險", _pc(a["us_pct"]), f'目標 {a["tgt"].get("美股市值型", "—")}%／上限 {a["cap"].get("美股市值型", "—")}%',
              "text-rose-300" if (a["us_pct"] or 0) > float(a["tgt"].get("美股市值型") or 0) else "text-white"),
-        tile("科技股", _pc(a["tech_pct"]), f'上限 {a["tgt"].get("科技", "—")}%（與美股重疊，不可加總）', "text-amber-300"),
+        tile("科技股（雙口徑）", f'{_pc(a["tech_pct"])} ／ {_pc(hp_dual.get("GICS_pct"))}',
+             f'桶口徑 ／ GICS 產業（不可相加）；上限 {a["tgt"].get("科技", "—")}%', "text-amber-300"),
         tile("股票收益型", _pc(a["defi_pct"]), "高股息：不列防禦"),
         tile("債券", _pc(a["bond_pct"]), f'{_m(a["bond"])}（防禦力看壓力測試）'),
         tile("現金＋黃金", f'{_pc(a["cash_pct"])}／{_pc((a["gold"] / a["total"] * 100) if (a["gold"] and a["total"]) else None, 2)}',
