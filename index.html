@@ -332,11 +332,19 @@
     <span class="text-xs px-3 py-1 rounded-full font-mono font-bold border border-amber-500/40 bg-amber-500/10 text-amber-300">🟡 注意</span>
   </div>
 
-  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-3"><div class="bg-slate-800/50 rounded-lg p-3"><p class="text-[11px] text-slate-400 mb-1">台股</p><p class="text-lg font-black font-mono text-white">10.3%</p><p class="text-[11px] text-slate-500">目標 10%</p></div><div class="bg-slate-800/50 rounded-lg p-3"><p class="text-[11px] text-slate-400 mb-1">美股曝險</p><p class="text-lg font-black font-mono text-rose-300">37.7%</p><p class="text-[11px] text-slate-500">目標 30%／上限 40%</p></div><div class="bg-slate-800/50 rounded-lg p-3"><p class="text-[11px] text-slate-400 mb-1">科技股（雙口徑）</p><p class="text-lg font-black font-mono text-amber-300">14.4% ／ 22.5%</p><p class="text-[11px] text-slate-500">桶口徑 ／ GICS 產業（不可相加）；上限 15%</p></div><div class="bg-slate-800/50 rounded-lg p-3"><p class="text-[11px] text-slate-400 mb-1">股票收益型</p><p class="text-lg font-black font-mono text-white">18.0%</p><p class="text-[11px] text-slate-500">高股息：不列防禦</p></div><div class="bg-slate-800/50 rounded-lg p-3"><p class="text-[11px] text-slate-400 mb-1">債券</p><p class="text-lg font-black font-mono text-white">25.8%</p><p class="text-[11px] text-slate-500">6,867,748（防禦力看壓力測試）</p></div><div class="bg-slate-800/50 rounded-lg p-3"><p class="text-[11px] text-slate-400 mb-1">現金＋黃金</p><p class="text-lg font-black font-mono text-white">4.2%／0.54%</p><p class="text-[11px] text-slate-500">底線 700,000｜✅ 高於底線</p></div></div>
+  <p class="text-[11px] font-bold text-emerald-300 mb-1">A｜資產配置（互斥分類）<span class="font-normal text-slate-400">　分母＝總資產，每筆只計入一個策略桶位，總和 100%</span></p>
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-1"><div class="bg-slate-800/50 rounded-lg p-3"><p class="text-[11px] text-slate-400 mb-1">台股</p><p class="text-lg font-black font-mono text-white">10.3%</p><p class="text-[11px] text-slate-500">目標 10%</p></div><div class="bg-slate-800/50 rounded-lg p-3"><p class="text-[11px] text-slate-400 mb-1">美股曝險</p><p class="text-lg font-black font-mono text-rose-300">37.7%</p><p class="text-[11px] text-slate-500">目標 30%／上限 40%</p></div><div class="bg-slate-800/50 rounded-lg p-3"><p class="text-[11px] text-slate-400 mb-1">科技股（雙口徑）</p><p class="text-lg font-black font-mono text-amber-300">14.4% ／ 22.5%</p><p class="text-[11px] text-slate-500">桶口徑 ／ GICS 產業（不可相加）；上限 15%</p></div><div class="bg-slate-800/50 rounded-lg p-3"><p class="text-[11px] text-slate-400 mb-1">股票收益型</p><p class="text-lg font-black font-mono text-white">18.0%</p><p class="text-[11px] text-slate-500">高股息：不列防禦</p></div><div class="bg-slate-800/50 rounded-lg p-3"><p class="text-[11px] text-slate-400 mb-1">債券</p><p class="text-lg font-black font-mono text-white">25.8%</p><p class="text-[11px] text-slate-500">6,867,748（防禦力看壓力測試）</p></div><div class="bg-slate-800/50 rounded-lg p-3"><p class="text-[11px] text-slate-400 mb-1">現金＋黃金</p><p class="text-lg font-black font-mono text-white">4.2%／0.54%</p><p class="text-[11px] text-slate-500">底線 700,000｜✅ 高於底線</p></div></div>
+  <p class="text-[11px] text-slate-500 mb-3">五桶小計 <b class="text-slate-300">96.00%</b>｜加衛星黃金 0.54% 與指定款 900,000（3.38%）= 100%。此為<b>不可重疊</b>口徑。</p>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
     <div class="bg-slate-800/40 rounded-lg p-3">
-      <p class="text-[11px] text-slate-400 mb-1">真正的防禦能力（不看比例，看實測）</p>
+      <p class="text-[11px] font-bold text-amber-300 mb-1">B｜底層風險（重疊分類）<span class="font-normal text-amber-200/70">　風險維度可重疊，<b>不可加總為配置比例</b></span></p>
+      <p class="text-xs text-slate-300 leading-relaxed mb-2">
+        ・GICS 資訊科技 <b class="text-amber-200">22.5%</b>（穿透，完整度 91.8%、資料日 2026-11-05）<br>
+        ・美股科技桶 <b>14.4%</b>（桶口徑）　↔ 兩者不可相加<br>
+        ・美元曝險 <b>70.3%</b>（與美股桶 37.7% 不同維度）
+      </p>
+      <p class="text-[11px] text-slate-400 mb-1">C｜實際防禦（不看比例，看實測；缺歷史序列者標待實證）</p>
       <p class="text-xs text-slate-300 leading-relaxed">
         ・高股息 <b>18.0%</b>＝股票收益型，<b>不列入防禦</b>（週跌幅 00878 -5.11%（自 2026-10-30）｜0056 -7.70%（自 2026-10-30））<br>
         ・債券 <b>25.8%</b>：只看股債同跌情境下的實際損失（右下表）<br>
@@ -345,8 +353,8 @@
       </p>
       <p class="text-[11px] text-slate-500 mt-2">最大風險來源：美股 37.7%（超目標 +7.7pp）</p>
       <p class="text-[11px] text-slate-400 mt-2 mb-1">重複持股（跨基金，僅前十大內）</p>
-      <p class="text-xs text-slate-300 leading-relaxed">NVIDIA <b>540,476</b>（5 檔，2.03%）｜APPLE <b>482,843</b>（5 檔，1.81%）｜MICROSOFT <b>384,749</b>（5 檔，1.45%）<br>資料時點不一致：2026-06-30～2026-11-05（不可當同步持倉）</p>
-      <p class="text-[11px] text-slate-500 mt-1">穿透完整度：已穿透 74.5%／部分 14.8%／未穿透 10.7%</p>
+      <p class="text-xs text-slate-300 leading-relaxed">NVIDIA <b>556,903</b>（5 檔，2.09%）｜APPLE <b>495,976</b>（5 檔，1.86%）｜MICROSOFT <b>396,201</b>（5 檔，1.49%）<br>資料時點不一致：2026-06-30～2026-11-05（不可當同步持倉）</p>
+      <p class="text-[11px] text-slate-500 mt-1">穿透完整度：已穿透 75.0%／部分 14.5%／未穿透 10.5%</p>
       <table class="w-full text-[11px] mt-2 text-slate-400"><tbody><tr><td class="py-0.5 text-slate-300">台股成長型</td><td class="py-0.5 text-right font-mono">10.3%</td><td class="py-0.5 pl-2">成長型，非防禦</td></tr><tr><td class="py-0.5 text-slate-300">股票收益型</td><td class="py-0.5 text-right font-mono">18.0%</td><td class="py-0.5 pl-2">不列防禦（與台股同向）</td></tr><tr><td class="py-0.5 text-slate-300">海外股票型</td><td class="py-0.5 text-right font-mono">37.7%</td><td class="py-0.5 pl-2">成長型，非防禦</td></tr><tr><td class="py-0.5 text-slate-300">固定收益型</td><td class="py-0.5 text-right font-mono">25.8%</td><td class="py-0.5 pl-2">需以股債同跌情境驗證</td></tr><tr><td class="py-0.5 text-slate-300">流動性防禦型</td><td class="py-0.5 text-right font-mono">4.2%</td><td class="py-0.5 pl-2">可防禦（對比 70 萬底線）</td></tr><tr><td class="py-0.5 text-slate-300">分散風險型</td><td class="py-0.5 text-right font-mono">0.5%</td><td class="py-0.5 pl-2">衛星，避險強度以 0 計</td></tr></tbody></table>
     </div>
     <div class="bg-slate-800/40 rounded-lg p-3">

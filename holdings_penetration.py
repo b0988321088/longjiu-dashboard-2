@@ -42,45 +42,95 @@ def _f(v):
         return 0.0
 
 
-def resolve_amounts(snap: dict) -> dict:
+def _carrier_records(snap: dict) -> list:
+    """把每個「持有載體」的部位攤平。
+
+    載體＝實際持有帳戶／保單平台（不同載體即使同一檔基金也是真實不同資產）。
+    回傳每筆：{carrier, label, code, name, amount}
+    """
+    recs = []
+
+    def add(cid, label, name, amt, code=None):
+        if name and amt:
+            recs.append({"carrier": cid, "label": label, "code": code,
+                         "name": str(name), "amount": _f(amt)})
+
+    for h in (snap.get("holdings") or []):        # 證券帳戶
+        if h.get("ticker"):
+            add("SEC", "證券帳戶", h.get("name") or h["ticker"],
+                h.get("market_value") or h.get("value"), str(h["ticker"]))
+
+    _ins = snap.get("insurance_detail")
+    if not _ins:                                  # snapshot 無 → 退回差異分析最後一天（同一真值來源）
+        _h = _j("asset_diff_history.json")
+        _last = sorted(_h)[-1] if _h else None
+        _ins = (_h.get(_last) or {}).get("insurance_detail") if _last else None
+    cur_id, cur_label = "POLICY-OTHER", "保單"
+    for k, v in (_ins or {}).items():
+        ks = str(k).strip()
+        if ks.startswith("【"):
+            _nm = ks.replace("【", "").replace("】", "").replace("現值", "").strip()
+            cur_id, cur_label = f"POLICY-{_nm}", _nm
+            continue
+        if not isinstance(v, (int, float)) or "合計" in ks or "總現" in ks:
+            continue
+        add(cur_id, cur_label, ks, v)
+
+    for grp_name, grp in (snap.get("funds_breakdown") or {}).items():   # 基金平台（子帳戶各自一載體）
+        if not isinstance(grp, dict) or grp_name.endswith("小計"):
+            continue
+        for nm, val in grp.items():
+            if isinstance(val, (int, float)):
+                add(f"FUND-{grp_name}", f"基金-{grp_name}", nm, val)
+    return recs
+
+
+def _dedupe_within_carrier(recs: list) -> tuple:
+    """同一載體內「同名」視為同一部位：同額→重複資料列只算一次；不同額→取較大並標異常。"""
+    seen, out, dup = {}, [], []
+    for r in recs:
+        k = (r["carrier"], r["name"])
+        if k not in seen:
+            seen[k] = r
+            out.append(r)
+            continue
+        keep = seen[k]
+        if abs(keep["amount"] - r["amount"]) < 1:
+            dup.append({"carrier": r["carrier"], "name": r["name"], "amount": r["amount"],
+                        "處置": "同載體重複資料列，只計一次"})
+        else:
+            dup.append({"carrier": r["carrier"], "name": r["name"], "取用": max(keep["amount"], r["amount"]),
+                        "另一筆": min(keep["amount"], r["amount"]), "處置": "同載體同名不同額，取較大並標異常"})
+            keep["amount"] = max(keep["amount"], r["amount"])
+    return out, dup
+
+
+def resolve_amounts(snap: dict, audit: dict | None = None) -> dict:
     """把 fund_holdings.json 的每一筆對到實際市值（動態，不在資料檔寫死金額）。
 
     對不到就回 0 並標 unresolved —— 這是刻意的 fail-visible，不猜。
     """
     hd = (_j("data/fund_holdings.json").get("holdings") or {})
-    tick = {}
-    for h in (snap.get("holdings") or []):
-        if h.get("ticker"):
-            tick[str(h["ticker"])] = _f(h.get("market_value") or h.get("value"))
-    pool = []                                   # 保單內部位（名稱 → 金額）
-    _ins = snap.get("insurance_detail")
-    if not _ins:                                # snapshot 沒有時退回差異分析最後一天（同一真值來源）
-        _h = _j("asset_diff_history.json")
-        _last = sorted(_h)[-1] if _h else None
-        _ins = (_h.get(_last) or {}).get("insurance_detail") if _last else None
-    for k, v in (_ins or {}).items():
-        if isinstance(v, (int, float)) and not str(k).startswith("【") and "合計" not in str(k) and "總現" not in str(k):
-            pool.append((str(k), _f(v)))
-    for f in (snap.get("fund_holdings") or []):
-        pool.append((str(f.get("name") or ""), _f(f.get("market_value") or f.get("value"))))
-    for grp in (snap.get("funds_breakdown") or {}).values():
-        if isinstance(grp, dict):
-            for nm, val in grp.items():
-                if isinstance(val, (int, float)):
-                    pool.append((str(nm), _f(val)))
-
+    recs = _carrier_records(snap)
+    recs, dup_rows = _dedupe_within_carrier(recs)
+    if audit is not None:
+        audit["重複資料列"] = dup_rows
     out = {}
     for key, item in hd.items():
         m = item.get("match") or {}
         t, k = m.get("type"), str(m.get("key") or "")
-        amt, resolved = 0.0, False
+        hit = []
         if t == "ticker":
-            amt, resolved = tick.get(k, 0.0), k in tick
+            hit = [r for r in recs if r["carrier"] == "SEC" and r.get("code") == k]
+            if not hit:
+                hit = [r for r in recs if r["carrier"] == "SEC" and k and k in r["name"]]
         elif t == "name_contains":
-            hits = [v for nm, v in pool if k and k in nm]
-            if hits:
-                amt, resolved = max(hits), True      # 同標的取最大單筆，避免重複計入
-        out[key] = dict(item, amount=amt, resolved=resolved)
+            hit = [r for r in recs if k and k in r["name"]]
+        # 不同載體各自計入後合併；同載體重複資料列已在 _dedupe_within_carrier 去除
+        amt = sum(r["amount"] for r in hit)
+        out[key] = dict(item, amount=amt, resolved=bool(hit),
+                        carriers=[{"carrier": r["carrier"], "label": r["label"],
+                                   "amount": round(r["amount"], 0)} for r in hit])
     return out
 
 
@@ -309,3 +359,70 @@ def _main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(_main())
+
+
+# ── 去重修正前後差異報告（3 → 驗收用） ─────────────────────────
+def dedupe_diff(snap: dict) -> dict:
+    """比較「舊全域 max()」與「新按載體合計」的金額差異，量化低估幅度。"""
+    hd = (_j("data/fund_holdings.json").get("holdings") or {})
+    recs = _carrier_records(snap)
+    recs_d, _ = _dedupe_within_carrier(recs)
+    tot = _f(snap.get("total_assets") or snap.get("grand_total") or 0)
+    rows = []
+    for key, item in hd.items():
+        m = item.get("match") or {}
+        t, k = m.get("type"), str(m.get("key") or "")
+        if t == "ticker":
+            hit = [r for r in recs_d if r["carrier"] == "SEC" and r.get("code") == k]
+        else:
+            hit = [r for r in recs_d if k and k in r["name"]]
+        new = sum(r["amount"] for r in hit)
+        old = max([r["amount"] for r in hit], default=0.0)
+        if abs(new - old) >= 1:
+            rows.append({"key": key, "名稱": item.get("名稱"), "舊_max": round(old),
+                         "新_合計": round(new), "差額": round(new - old),
+                         "載體": [{"label": r["label"], "amount": round(r["amount"])} for r in hit],
+                         "對總資產影響_pp": round((new - old) / tot * 100, 3) if tot else None})
+    rows.sort(key=lambda r: -r["差額"])
+    return {"總資產": tot, "低估合計": round(sum(r["差額"] for r in rows)),
+            "影響_pp": round(sum(r["差額"] for r in rows) / tot * 100, 3) if tot else None,
+            "明細": rows}
+
+
+def _selftest() -> bool:
+    """使用者指定的四個驗收案例（合成資料，不動真值）。"""
+    fh = {"holdings": {"T": {"名稱": "測試基金", "match": {"type": "name_contains", "key": "測試基金"}}}}
+    snap = {"holdings": [], "funds_breakdown": {},
+            "insurance_detail": {"【保單A】現值": 2_000_000,
+                                 "F1 測試基金 (50%)": 1_000_000,
+                                 "F1 測試基金 (50%)": 1_000_000,      # 同載體重複資料列
+                                 "【保單B】現值": 800_000,
+                                 "F1 測試基金 (40%)": 800_000,
+                                 "F2 其他基金 (40%)": 900_000,
+                                 "保單總現値": 1_800_000}}
+    import tempfile, os, json as _json
+    bak = None
+    fpath = "data/fund_holdings.json"
+    try:
+        bak = open(fpath, encoding="utf-8").read()
+        _json.dump(fh, open(fpath, "w", encoding="utf-8"), ensure_ascii=False)
+        audit = {}
+        out = resolve_amounts(snap, audit)["T"]
+        cases = [
+            ("①同保單重複來源只計一次", out["amount"] == 1_800_000, out["amount"]),
+            ("②不同保單同一基金合計", out["amount"] == 1_800_000 and len(out["carriers"]) == 2, out["carriers"]),
+            ("③同載體重複資料列只算一次並標記", _dedupe_within_carrier(
+                [{"carrier": "POLICY-A", "label": "A", "code": None, "name": "測試基金", "amount": 1e6}] * 2
+            ) == ([{"carrier": "POLICY-A", "label": "A", "code": None, "name": "測試基金", "amount": 1e6}],
+                  [{"carrier": "POLICY-A", "name": "測試基金", "amount": 1e6, "處置": "同載體重複資料列，只計一次"}]), None),
+            ("④資料不完整不猜測", resolve_amounts({"holdings": [], "funds_breakdown": {}}, {})["T"]["resolved"] is False, None),
+        ]
+    finally:
+        if bak is not None:
+            open(fpath, "w", encoding="utf-8").write(bak)
+    ok = True
+    for nm, cond, val in cases:
+        print(("  ✅ " if cond else "  ❌ ") + nm + ("" if cond else f"  → {val}"))
+        ok = ok and cond
+    print("  " + ("全部通過" if ok else "有案例失敗"))
+    return ok

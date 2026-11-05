@@ -374,6 +374,7 @@ def render(snap: dict | None = None, theme: str = "light") -> str:
 <p {note}>對照：台股加權 {twii_txt}｜費半 {sox_txt}（前一交易日）</p>
 
 <h3 style="font-size:14px;margin:14px 0 4px">③ 真正風險：哪個資產是最大拖累？</h3>
+<p style="color:#6e6e73;font-size:12px;margin:0 0 4px">A｜配置＝互斥、分母總資產、總和 100%（下表各桶互不重複）；B｜風險＝多維度重疊、<b>不可相加</b>（GICS 產業、個股重複、幣別）。</p>
 <table>
 <tr><th style="width:26%">今日最大拖累</th><td>{worst[0] or "—"}　{_m(worst[1], True) if worst[1] is not None else "—"}</td></tr>
 <tr><th>美股超配</th><td><b style="color:{tone}">{_pc(a["us_pct"])}</b>（目標 {a["tgt"].get("美股市值型", "—")}%／硬上限 {a["cap"].get("美股市值型", "—")}%）＝目前最大單一風險</td></tr>
@@ -488,6 +489,10 @@ def render_dashboard(snap: dict | None = None, theme: str = "dark") -> str:
         f'<tr><td class="py-0.5 text-slate-300">{c["分類"]}</td>'
         f'<td class="py-0.5 text-right font-mono">{c["占比"]}</td>'
         f'<td class="py-0.5 pl-2">{c["防禦判定"]}</td></tr>' for c in asset_class_rows(a))
+    _pen_pct = (snap.get("penetration") or {}).get("actual_pct") or {}
+    _bucket_sum = sum(float(x) for kk, x in _pen_pct.items() if not kk.endswith(("_科技", "_非科技")))
+    _usd_pct = ((snap.get("usd_exposure_monitor") or {}).get("current") or {}).get("合計")
+    _gold_pct = (a["gold"] / a["total"] * 100) if (a["gold"] and a["total"]) else None
     watch_html = "".join(f'<li>{w}</li>' for w in v["watch"]) or "<li>無</li>"
     act = {
         VERDICT_HOLD: "維持 HOLD：不因單日上漲加碼、不因短期下跌恐慌減碼。",
@@ -506,11 +511,19 @@ def render_dashboard(snap: dict | None = None, theme: str = "dark") -> str:
     <span class="text-xs px-3 py-1 rounded-full font-mono font-bold border border-{tone}-500/40 bg-{tone}-500/10 text-{tone}-300">{icon} {v["code"]}</span>
   </div>
 
-  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">{tiles}</div>
+  <p class="text-[11px] font-bold text-emerald-300 mb-1">A｜資產配置（互斥分類）<span class="font-normal text-slate-400">　分母＝總資產，每筆只計入一個策略桶位，總和 100%</span></p>
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-1">{tiles}</div>
+  <p class="text-[11px] text-slate-500 mb-3">五桶小計 <b class="text-slate-300">{_bucket_sum:.2f}%</b>｜加衛星黃金 {_pc(_gold_pct, 2)} 與指定款 900,000（3.38%）= 100%。此為<b>不可重疊</b>口徑。</p>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
     <div class="bg-slate-800/40 rounded-lg p-3">
-      <p class="text-[11px] text-slate-400 mb-1">真正的防禦能力（不看比例，看實測）</p>
+      <p class="text-[11px] font-bold text-amber-300 mb-1">B｜底層風險（重疊分類）<span class="font-normal text-amber-200/70">　風險維度可重疊，<b>不可加總為配置比例</b></span></p>
+      <p class="text-xs text-slate-300 leading-relaxed mb-2">
+        ・GICS 資訊科技 <b class="text-amber-200">{_pc(hp_dual.get("GICS_pct"))}</b>（穿透，完整度 {_pc(hp_dual.get("GICS_完整度_pct"))}、資料日 {hp_dual.get("GICS_資料日") or "—"}）<br>
+        ・美股科技桶 <b>{_pc(a["tech_pct"])}</b>（桶口徑）　↔ 兩者不可相加<br>
+        ・美元曝險 <b>{_pc(_usd_pct)}</b>（與美股桶 {_pc(a["us_pct"])} 不同維度）
+      </p>
+      <p class="text-[11px] text-slate-400 mb-1">C｜實際防禦（不看比例，看實測；缺歷史序列者標待實證）</p>
       <p class="text-xs text-slate-300 leading-relaxed">
         ・高股息 <b>{_pc(a["defi_pct"])}</b>＝股票收益型，<b>不列入防禦</b>（週跌幅 {etf_txt}）<br>
         ・債券 <b>{_pc(a["bond_pct"])}</b>：只看股債同跌情境下的實際損失（右下表）<br>
