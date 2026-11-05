@@ -388,7 +388,11 @@ def main():
                 _cat[_k] = _v
             _fb["國泰直購"] = _cat
             snap["funds_breakdown"] = _fb
-            print(f"✅ funds_breakdown 國泰直購已同步（{len(_cf)} 檔）")
+            # 2026-11-05：門檻SoT檢查實踩 —— 只同步 funds_breakdown 會讓同義欄位
+            # funds_cathay_breakdown 留在舊值（11,793,577 vs 11,909,979）→ 閘門擋推送。
+            # 國泰逐檔一律與 funds_breakdown.國泰直購 同一次寫入，別留第二份手改。
+            snap["funds_cathay_breakdown"] = dict(_cat)
+            print(f"✅ funds_breakdown 國泰直購已同步（{len(_cf)} 檔）＋ funds_cathay_breakdown")
         except Exception as _e:
             print(f"⚠️ cathay_funds 解析失敗: {_e}")
     snap["total_assets"] = (snap.get("insurance_total", 0) or 0) + (snap.get("securities_total_market_value", 0) or 0) \
@@ -416,6 +420,13 @@ def main():
         # 顯式記錄，供穿透完整性不變量（五桶＋在途＋衛星＋指定用途款＝總資產）使用。
         "cash_in_transit": int((pen.get("_meta") or {}).get("cash_in_transit") or 0),
     }
+    # 2026-11-05 記錄（別再重犯）：衛星（黃金／健康）**不可**寫進 penetration.actual_twd。
+    # penetration_invariant_error 的「五桶」= actual_twd 全部非「美股市值型成長_」前綴的 key 加總，
+    # 把黃金塞進來 → 黃金同時以五桶與衛星被計兩次（實測 +2×144,665=289,330，閘門判穿透完整性失敗）。
+    # 衛星的正解：由 calc_penetration 現算回傳「黃金／健康」，呼叫端（check_thresholds ③）自行加回。
+    # 舊 seed 迴圈只掃舊 key → 不會自行長出這兩個鍵，屬正常，不是缺口。
+    _new_pen["actual_twd"].pop("避險衛星", None)
+    _new_pen["actual_pct"].pop("避險衛星", None)
     # 其餘既有延伸 key（黃金／健康／防禦維度…）：現算有就用現值，沒有才保留舊值（不靜默丟棄）
     for _k, _v in (_old_pen.get("actual_twd") or {}).items():
         if _k not in _new_pen["actual_twd"]:
@@ -423,6 +434,12 @@ def main():
     for _k, _v in (_old_pen.get("actual_pct") or {}).items():
         if _k not in _new_pen["actual_pct"]:
             _new_pen["actual_pct"][_k] = round(pen[_k] / total * 100, 1) if _k in pen else _v
+    # 上面兩圈會把舊的延伸 key 原樣搬回來 → 衛星鍵必須在 seed 迴圈之後強制清掉。
+    # （2026-11-05 曾誤寫 黃金／健康／避險衛星 進 actual_twd 想「收平」，反而讓黃金被計兩次；
+    #   這三個鍵一律不留在 actual_twd，衛星只由 calc_penetration 現算、呼叫端加回。）
+    for _bad in ("避險衛星", "黃金", "健康"):
+        _new_pen["actual_twd"].pop(_bad, None)
+        _new_pen["actual_pct"].pop(_bad, None)
     # ③-a 現算 gaps/alert/updated_at/source（2026-09-13 INC-165：重建穿透時原本整批丟掉這些 key，
     #     下游 build_dashboard / memory_sync 會讀 gaps → 一律現算補回，禁止手寫）
     _tgt = _new_pen["targets"]
