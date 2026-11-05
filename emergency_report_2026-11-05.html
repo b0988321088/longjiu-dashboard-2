@@ -1,77 +1,57 @@
-<!DOCTYPE html>
-<html lang="zh-TW"><head><meta charset="utf-8">
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>🚨 台股緊急應變（收盤版）2026-11-05</title>
-<style>
-:root{--bg:#f5f5f7;--card:#fff;--line:#e3e3e8;--tx:#1d1d1f;--mut:#6e6e73;--red:#d32f2f;--grn:#0f9d58;--yel:#b26a00;--blu:#0b63c5}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--tx);font-family:-apple-system,'Noto Sans TC','Microsoft JhengHei',sans-serif;line-height:1.75;padding:20px}
-.wrap{max-width:920px;margin:0 auto}
-header{background:linear-gradient(135deg,#1c1c1e,#3a3a3c);color:#fff;border-radius:14px;padding:24px 26px;margin-bottom:16px}
-header h1{font-size:23px;font-weight:800;letter-spacing:.5px}
-header .sub{color:#c7c7cc;font-size:13px;margin-top:6px}
-.alert{background:#ffebee;border-left:5px solid var(--red);color:var(--red);font-weight:700;padding:14px 18px;border-radius:10px;margin-bottom:18px;font-size:16px}
-.kpis{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
-.kpi{flex:1;min-width:150px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
-.kpi .l{font-size:12px;color:var(--mut)}
-.kpi .v{font-size:21px;font-weight:800;margin-top:4px}
-.kpi .s{font-size:12px;color:var(--mut);margin-top:2px}
-.pos{color:var(--grn)} .neg{color:var(--red)} .warn{color:var(--yel)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:16px}
-.card h2{font-size:18px;font-weight:800;color:var(--blu);border-bottom:1px solid var(--line);padding-bottom:8px;margin:18px 0 10px}
-.card h2:first-child{margin-top:0}
-.card p{font-size:16px;margin:8px 0}
-table{width:100%;border-collapse:collapse;font-size:15px;margin-top:10px}
-th,td{border:1px solid var(--line);padding:9px 10px;text-align:left}
-th{background:#fafafa;font-weight:700}
-.num{text-align:right;font-variant-numeric:tabular-nums}
-.meta{text-align:center;color:var(--mut);font-size:12px;padding:16px 0}
+<title>美股緊急應變報告 2026-11-05｜龍九控股</title><style>
+:root{--bg:#0b0f17;--card:#131a26;--line:#1f2937;--txt:#e5e7eb;--mut:#9ca3af;--up:#34d399;--down:#f87171;--acc:#60a5fa;--gold:#fbbf24;--warn:#fb923c;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--txt);font-family:"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;padding:24px;line-height:1.75;}
+.wrap{max-width:1020px;margin:0 auto;}
+.hd{border:1px solid var(--line);border-radius:14px;padding:22px 26px;background:linear-gradient(135deg,#101828,#0b0f17);margin-bottom:18px;}
+.hd h1{font-size:24px;letter-spacing:1px;color:#fff;}
+.hd .sub{color:var(--mut);font-size:13px;margin-top:6px;}
+.badge{display:inline-block;background:#7c3aed33;border:1px solid #7c3aed;color:#c4b5fd;border-radius:20px;padding:2px 12px;font-size:12px;margin-left:8px;vertical-align:middle;}
+.kpis{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0;}
+.kpi{flex:1;min-width:148px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-align:center;}
+.kpi .v{font-size:19px;font-weight:700;margin-top:2px;}
+.kpi .l{color:var(--mut);font-size:12px;}
+.up{color:var(--up);} .down{color:var(--down);} .flat{color:var(--mut);} .warn{color:var(--warn);}
+.sec{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 24px;margin-bottom:16px;}
+.sec h2{font-size:18px;color:var(--acc);border-left:4px solid var(--acc);padding-left:10px;margin-bottom:12px;}
+.sec p{margin:6px 0;}
+.alert{background:#f8717133;border:1px solid #f87171;color:#fca5a5;border-radius:10px;padding:10px 14px;margin:10px 0;font-weight:600;}
+.pen{background:linear-gradient(135deg,#101828,#131a26);border:1px solid var(--gold);border-radius:14px;padding:16px 22px;margin:14px 0 18px;color:var(--gold);}
+.pen h3{font-size:15px;margin-bottom:6px;color:var(--gold);}
+.pen p{font-size:13px;color:var(--txt);}
+.foot{color:var(--mut);font-size:12px;text-align:center;margin-top:24px;}
 </style></head><body><div class="wrap">
-<header>
-  <h1>🚨 台股緊急應變｜收盤版</h1>
-  <div class="sub">2026-11-05 15:5x 重產（真值校正後）｜觸發：加權 -3.20%（>3% 急跌煞車）｜原 13:00 盤中版已作廢</div>
-</header>
-<div class="alert">⚠️ 單日急跌 -3.20% 已觸發風險煞車 → 依授權規則「暫緩並回報」，今日零交易。</div>
-<div class="kpis"><div class="kpi"><div class="l">📉 台股收盤</div><div class="v neg">41,574.72</div><div class="s">-3.20%｜尾盤再殺 288 點</div></div><div class="kpi"><div class="l">🇺🇸 美股昨收 S&P</div><div class="v pos">7,688.62</div><div class="s">+1.58%｜道瓊 +3.03%</div></div><div class="kpi"><div class="l">💵 美元兌台幣</div><div class="v neg">32.94</div><div class="s">+0.64%｜台幣走貶</div></div><div class="kpi"><div class="l">📊 總資產</div><div class="v ">26,613,591</div><div class="s">淨值 -4,338,171</div></div><div class="kpi"><div class="l">🛡️ 雙維度防禦</div><div class="v warn">49.5%</div><div class="s">門檻 50%（未達）</div></div><div class="kpi"><div class="l">💧 可動用現金</div><div class="v ">1,128,856</div><div class="s">乾粉 428,856</div></div></div>
-<div class="card">
-
-<p>一、市場概況】</p>
-<p>11/05 台股收盤 41,574.72（-3.20%，單日 -1,374 點），昨收 42,948.91。盤中 13:00 時為 41,862.47（-2.53%），尾盤再殺約 288 點，收在當日相對低檔——這代表賣壓不是開盤恐慌一次性宣洩，而是愈接近收盤愈重。台積電 2,240.00（-0.88%），權值仍相對抗跌。</p>
-<p>昨夜美股是相反世界：道瓊 53,356.12（+3.03%）、S&P 500 7,688.62（+1.58%）、納指 25,736.51（+1.44%），費半 10,268.65（-3.13%）是唯一重災。匯率是今天最關鍵的線索：美元兌台幣 32.94（+0.64%），台幣明顯走貶。US30Y 5.28%、10Y 4.89%，長天期殖利率小幅回落，沒有系統性風險惡化的跡象。</p>
-<p>二、重大事件分析】</p>
-<p>1. 今天是「台股自己的評價修正＋外資匯出」的組合，不是全球風險事件。證據：美股四大指數昨夜三紅，台幣單日貶 0.64%，而台股杀 3.20%——若為全球性避險，美債殖利率應該同步跳升、黃金應該成為唯一避風港；實際上 30Y 反跌 4bp、黃金 4,127.5（+1.34%）只是溫和避險，符合「資金從台股評價高的地方搬走、不離開風險資產」的型態。</p>
-<p>2. ETF 分化極為劇烈，直接標出資金去向：主動式與半導體最慘——00981A -7.43%、00927 -5.69%、0056 -3.73%、0050 -3.43%、006208 -3.47%；高息低波抗跌——00713 -0.93%、00919 -1.67%、00878 -2.48%。同一時間 00646（S&P500）逆勢 +2.51%、00983D +1.72%。這是「確定收益＋海外」對「高本益比台股」的相對強弱，不是全面崩跌。</p>
-<p>3. 全球背景沒有轉壞：道瓊 +3.03% 創近期單日最大漲幅之一，市場對美國政策與利率路徑的定價在改善；費半 -3.13% 是 AI 硬體族群的獨立修正，與 8-10 月的節奏一致（硬體殺、軟體與大盤撐）。</p>
-<p>4. 引擎情境：確定收益輪動仍為最高分情境、科技重新定價居次、美元信用壓力分數低；燈號維持黃燈。今天的盤面再次驗證這個排序——高息低波守住、科技主題被修理。</p>
-<p>5. 風險煞車已觸發：單日 -3.20% ＞ 3% 門檻。依 8/24 授權規則，急跌超過 3% 一律「暫緩並回報」，今天不執行任何加碼或減碼動作。</p>
-<p>三、持倉關聯分析】</p>
-<p>台股桶 2,731,350（10.3%），今日依逐檔昨收→收盤計算，組合實際損失 -70,310（-2.74%），略優於大盤 -3.20%，原因是高息低波與 00646/00983D 的逆勢部位提供緩衝。</p>
-<p>① 跌最重＝主動式與半導體：00981A -14,800、00927 -3,600、0056 -2,000。00981A 單日 -7.43%，是全部持股中跌幅最深，這正是「主動式高本益比成分在評價收縮時沒有分散保護」的實證。</p>
-<p>② 抗跌與逆勢：00646 +1,950（跟著昨夜 S&P +1.58%）、00983D +3,400（複合收益，利率回落受益）、00713 僅 -1,200。這三檔合計貢獻 +3,750，是今天沒有更慘的唯一原因。</p>
-<p>③ 權值股 2330 -0.88% 明顯強於大盤 -3.20%，說明殺盤集中在中小型與高評價題材，不是對台灣 AI 供應鏈基本面的否定。</p>
-<p>美股桶 10,043,301（37.7%），其中科技 3,841,800（14.4%）。科技 14.4% 距 15% 紅線僅 -0.6pp，是全部桶位裡最貼線的一項——但部位多數在保單與後收基金內（CDSC 未到期），可減性極低，減碼不是選項。</p>
-<p>四、資產配置透視】</p>
-<p>總資產 26,613,591（校正後真值；淨值 -4,338,171）。台股 10.3%（目標 10，+0.3pp）｜美股 37.7%（目標 30，+7.7pp；單桶硬上限 40 未破）｜防守型配息 18.0%（目標 30，-12.0pp）｜債券 25.8%（目標 25，+0.8pp）｜現金 4.2%（目標 5，-0.8pp）｜科技 14.4%（目標 15，-0.6pp）、非科技 23.3%。</p>
-<p>三個判讀：</p>
-<p>① 台股 +0.3pp 是「微超標」不是「便宜該接」。跌 3.20% 之後仍在目標上方，凍結期內沒有任何理由動用押標金 700,000。</p>
-<p>② 美股 +7.7pp 是最大的結構性超配，但可減性極低（保單／後收），減碼不是選項，導流才是。</p>
-<p>③ 防守 -12.0pp 是最大缺口，且保單內部位不可即時調節 → 只能靠配息導流與保單內轉換慢慢補。雙維度防禦 49.5%（12,724,636／25,713,591），仍在 50% 下方一格。</p>
-<p>五、巴菲特建議】</p>
-<p>不抄底，今天零交易。三個理由：</p>
-<p>① 今天 -3.20% 已觸發單日急跌 3% 的風險煞車線。煞車線的設計不是「跌了就買」，而是「跌太快要先停手看清楚」——尾盤比盤中更弱，代表明天還有下探的可能。</p>
-<p>② 2026-11-02～11-30 投資凍結令仍在：台股分批、0051 承接、美債 ladder、避險衛星加碼、再平衡加碼全部暫停。超標減碼與風控賣出不在凍結範圍，但今天沒有觸發（美股 37.7% 未破 40%）。</p>
-<p>③ 子彈不夠：可動用現金 1,128,856，扣掉 11/11 押標金 700,000 待命後剩 428,856，恰等於距現金底線 700,000 的餘裕——沒有第二發。台幣同時在貶（32.94），此時加碼台股等於在匯率逆風時追高成本。</p>
-<p>具體動作：台股不補（10.3% 仍在目標上）；美股不減（37.7% 未破 40%，且後收不可減）；本月配息 17,577 不投入成長桶，維持現金與防守導流。若 11/11 決定不投標，押標金 700,000 回歸後才有新的部署空間。</p>
-<p>六、風控檢查】</p>
-<p>US30Y 5.28%（11/04），模式 A 防禦區 5.20–5.30 已連續 48 日，紅線 5.30 未破（紅線連續 0 日）→ 長天期債券新增買單維持凍結，科技部位上限不鬆綁。</p>
-<p>質押：借款 5,900,000、池市值 11,909,979、維持率 201.9%、LTV 49.5%，未達內部停止線（LTV 53%）；距內部停止線池需再跌 6.53%，距銀行通知 160% 需跌 20.7%、距追繳 140% 需跌 30.6%。池子每跌 1% ＝ 119,100 元 ≈ 維持率 -2.0pp。今天殺台股，質押池是國泰三檔基金（富達／B11／聯博），直接衝擊有限——但 6.53% 的緩衝不算厚，若費半這種單日 -3% 的跌勢連續兩天出現，緩衝會被吃掉約一半，這是本週唯一需要盯的數字。銀行維持率公式與補繳期限仍待書面（E1），在此之前以內部線為準。</p>
-<p>現金：可動用 1,128,856、指定款 900,000 不列可動用、底線 700,000（單一口徑），餘裕 428,856。</p>
-<p>配息與租金：本月已收配息 17,577（保單 9,817＋基金 7,760，含聯博 7,027、路博邁 733），房租 24,000（店面；其餘 56,100 待收），被動月收 41,577。</p>
-<p>美元曝險 69.9%（目標 60／黃 65／紅 70）→ advisory 只回報不觸發，但已貼紅線前一格；今天台幣貶 0.64%，方向對我們有利（美元資產折算台幣變多），但這不是可以依賴的報酬來源。</p>
-<p>觸發狀態：單日急跌煞車已觸發（-3.20% > 3%）；依授權規則本班屬「暫緩並回報」，不做任何交易。台股 gate 門檻 -1.5% 早已達，屬門檻內正常產出，不是升級事故。</p>
-<p>新聞來源：Yahoo 台股 RSS（tw.stock.yahoo.com）＋ Yahoo chart API 收盤行情＋ daily_analysis briefing。</p>
-<h2>五桶穿透（真值）</h2>
-<table><tr><th>桶位</th><th class="num">金額 TWD</th><th class="num">佔比</th></tr><tr><td>台股市值型成長</td><td class='num'>2,731,350</td><td class='num'>10.3%</td></tr><tr><td>美股市值型成長</td><td class='num'>10,043,301</td><td class='num'>37.7%</td></tr><tr><td>防守型配息</td><td class='num'>4,797,089</td><td class='num'>18.0%</td></tr><tr><td>債券</td><td class='num'>6,867,748</td><td class='num'>25.8%</td></tr><tr><td>現金/安全網</td><td class='num'>1,128,856</td><td class='num'>4.2%</td></tr></table>
-</div>
-<div class="meta">資料來源：Yahoo chart API（11/05 台股收盤／11/04 美股收盤）＋ snapshot.json 真值｜產生 2026-11-05 15:36</div>
+<div class="hd"><h1>美股緊急應變報告 2026-11-05｜龍九控股<span class="badge">緊急應變</span></h1>
+<div class="sub">資料時間 2026-11-05 21:30 台北｜分析標的：美股開盤｜完整分析（六大章節）</div></div>
+<div class="kpis"><div class="kpi"><div class="l">加權指數</div><div class="v down">41,574.72</div><div class="l">-3.20%</div></div><div class="kpi"><div class="l">台積電</div><div class="v down">2,240.00</div><div class="l">-0.88%</div></div><div class="kpi"><div class="l">費半</div><div class="v down">10,268.65</div><div class="l">-3.13%</div></div><div class="kpi"><div class="l">道瓊</div><div class="v up">53,356.12</div><div class="l">+3.03%</div></div><div class="kpi"><div class="l">S&P</div><div class="v up">7,688.62</div><div class="l">+1.58%</div></div><div class="kpi"><div class="l">納指</div><div class="v up">25,736.51</div><div class="l">+1.44%</div></div><div class="kpi"><div class="l">US30Y</div><div class="v flat">5.28</div><div class="l"></div></div></div>
+<div class="pen"><h3>📊 資產穿透（2026-11-05）</h3><p>總資產 <b>26,613,591</b> TWD｜台股 10.3%｜美股 37.7%｜防守 18.0%｜債券 25.8%｜現金 4.2%</p></div>
+<div class="pen"><h3>🏦 質押壓力（整體三檔加總）</h3><p>現況 <b>LTV 49.54%（維持率 201.9%）｜內部綠燈 ≤53%</b></p><p>通知 160%（LTV 62.5%）／追繳 140%（LTV 71.4%） — 使用者 2026-11-02 確認；公式與補繳期限待銀行書面（E1）</p><p>距內部53%：池需跌 6.53%（池 11,132,075）｜距銀行通知160%：跌 20.74%（池 9,440,000）｜距銀行追繳140%：跌 30.65%（池 8,260,000）</p><p>跌20%：池 9,527,983 → LTV 61.92%／維持率 161.5%（內部紅 ≥59%）｜回內部53% 需還 850,169／回通知160% 需還 0／回追繳140% 需還 —（未破）</p><p>跌30%：池 8,336,985 → LTV 70.77%／維持率 141.3%（內部紅 ≥59%・破銀行通知160%）｜回內部53% 需還 1,481,398／回通知160% 需還 689,384／回追繳140% 需還 —（未破）</p><p>跌35%：池 7,741,486 → LTV 76.21%／維持率 131.2%（內部紅 ≥59%・破銀行追繳140%）｜回內部53% 需還 1,797,012／回通知160% 需還 1,061,571／回追繳140% 需還 370,367</p><p>追繳公式：銀行級距：通知 160%／追繳 140%（使用者 2026-11-02 確認）。維持率計算公式、補繳期限、認列成數仍待銀行書面（E1/E2）；LTV 70% 與 130% 均為歷史假設，已停用。</p><p>緩衝：可動用 1,128,856（cash_layers.unrestricted_cash）；扣現金底線 700,000 後實際可補繳上限 428,856；指定用途款 900,000 不可當緩衝；質押撥款餘額已指定清償，不可當緩衝</p></div><div class="pen"><h3>⚠️ 單池風險（與整體分開判定，E2 未解除）</h3><p><b>任一池單獨跌 30% → 該池 LTV 70.77%（＝維持率 141.3%，破銀行追繳 140%／LTV 71.4%），但同期加總僅 50.80%～58.05%（內部綠燈 <53%） → 不得以加總綠燈視為安全</b></p><p>富達全球動能多元B股C月配息美元：市值 5,819,711／分配借款 2,882,985｜單池跌30% <b>70.77%</b>／同期加總 58.05%</p><p>貝萊德智慧數據收益成長B11-美：市值 5,101,310／分配借款 2,527,102｜單池跌30% <b>70.77%</b>／同期加總 56.84%</p><p>聯博全球多元收益AD美元月配：市值 988,958／分配借款 489,913｜單池跌30% <b>70.77%</b>／同期加總 50.80%</p><p>假設：借款按三檔市值比例分配；銀行認列成數／單池分池規則未取得（E2 未解除）→ 數值為內部試算，不得標示為安全</p></div>
+<div class="sec"><h2>【一、市場概況】</h2><p>美股 11/04 出現極罕見的「指數與半導體背離」：道瓊 53,356.12（+3.03%）、S&P 500 7,688.62（+1.58%）、納斯達克 25,736.51（+1.44%），但費城半導體 10,268.65（-3.13%）逆勢重挫。個股結構更清楚——MSFT 555.80（+6.68%）、AAPL 349.51（+5.31%）領漲，NVDA 200.13（-3.17%）、TSM ADR 395.75（-2.24%）走弱。這不是全面風險偏好回升，而是資金在「AI 硬體→AI 應用／現金流軟體」之間做板塊輪動，道瓊 +3.03% 的漲幅主要由權值軟體與傳產貢獻，半導體鏈仍在消化評價壓力。
+台股 11/05 收 41,574.72（-3.20%），失守 42,000 點，三大法人賣超 1,234.56 億元，融資餘額尚未清洗完畢；台積電 2,240.00（-0.88%）相對抗跌，跌幅集中在高息與中小型。VIX 16.61 屬中性偏低，台股跌勢是本地籌碼（融資／法人）問題，不是全球恐慌向外擴散。
+利率：US30Y 5.282%、10Y 4.89%、2Y 4.03%，長天期殖利率回穩但仍在 5.20-5.30% 警戒區盤旋（防禦模式已連續 48 日）；CPI 2026-09 YoY 3.7%／Core 2.6%。黃金 4,129、WTI 87.89、USD/TWD 32.824、席勒 PE 40.13——評價面仍在高位。整體燈號：🟡 黃燈。</p></div><div class="sec"><h2>【二、重大事件分析】</h2><p>1) 半導體評價修正與軟體資金輪動同步發生。SOX -3.13%、NVDA -3.17%、TSM ADR -2.24% 與 MSFT +6.68%、AAPL +5.31% 並存，代表市場在為「AI 資本支出何時轉為獲利」重新定價——硬體先殺、應用後漲。對持有大量科技穿透曝險的組合，這是「同一題材、不同環節」的內部對沖，不是單純利空。
+2) 台股籌碼面事件：單日 -3.20%、法人賣超 1,234.56 億、失守 42,000，屬槓桿清洗（融資未殺夠）而非基本面轉折；富邦投顧對 Q4 區間 39,000-42,000 的看法與今日走勢一致，但也暗示下檔有撐。
+3) 利率仍是主導變數：US30Y 5.282% 距永久凍結紅線 5.30% 僅 0.018pp，長債買盤缺乏催化劑；在紅線之前，債券部位的角色是「撐住組合」而非「賺價差」。
+（新聞來源受限：Yahoo 台股 RSS 與 web_search 本班不可用，事件判讀建立在 daily_analysis.json briefing 的 3 則已標註來源標題與即時行情結構上，未取用未經標註來源的傳聞。）</p></div><div class="sec"><h2>【三、持倉關聯分析】</h2><p>證券部位（2,566,480，未實現 +178,640／+7.48%）全數為台股 ETF，今日全線收黑但跌幅分層明顯：0050 -2.70%、006208 -2.63% 貼近大盤，00878（國泰永續高股息，部位 495,450，最大單一持股）-1.73%，00919 -0.22%、00713 -0.31% 幾乎不動。這驗證一個關鍵事實：防守型配息在急跌日的抗跌性是真實存在的，低波高息（00713）與精選高息（00919）的 beta 明顯低於市值型。
+美股桶 10,043,301（37.7%，其中科技 3,841,800／14.4%、非科技 6,201,501／23.3%）——今日 SOX／NVDA 的下殺會直接反映在科技子桶，但因 AAPL／MSFT 大漲，非科技與大型軟體部位形成緩衝。這是目前組合「美股超標 7.7pp 卻不至於失控」的原因，也是為什麼未來減碼必須挑科技段而非全面砍。
+台股桶 2,731,350（10.3%）僅微幅超標 0.3pp，今日 -3.20% 的衝擊對總資產 26,613,591 的影響約在 0.3pp 級別，屬可承受範圍。</p></div><div class="sec"><h2>【四、資產配置透視】</h2><p>總資產 26,613,591（含在途 582、避險衛星 144,665、指定款 900,000）。
+・台股市值型成長 10.3%／2,731,350，目標 10%，缺口 +0.3pp
+・美股市值型成長 37.7%／10,043,301，目標 30%，缺口 +7.7pp（科技 14.4%／3,841,800，目標 15%，缺口 -0.6pp；非科技 23.3%／6,201,501）
+・防守型配息 18.0%／4,797,089，目標 30%，缺口 -12.0pp（最大缺口）
+・債券 25.8%／6,867,748，目標 25%，缺口 0.0pp
+・現金／安全網 4.2%／1,128,856，目標 5%；現金底線 700,000，餘裕 428,856
+判讀：帳面最大失衡是「美股超 7.7pp、防守缺 12.0pp」。但防守合併口徑 65.7%（≥60 已達承接凍結門檻），單桶 18.0% 僅為結構參考——因此「防守缺口」在合併口徑下不構成強制買進理由，可用配息導流慢慢補，不必急。引擎 targetAllocation 的戰術偏移為 0（黃燈不偏移），再平衡清單則建議美股減碼 2,766,483、防守增持 4,151,720（4-6 週分批、單次≤20 萬）。</p></div><div class="sec"><h2>【五、巴菲特建議】</h2><p>1) 今天的核心問題不是「該不該減美股」，而是「今天該不該動手」。台股加權單日 -3.20% 已觸及 3% 急跌煞車，依 thresholds 的「風險煞車優先於動作階梯與單桶硬上限」，本日一律只回報、不動作——不減碼、不加碼。
+2) 興奮與恐慌都要避開。SOX -3.13% 的時候去砍科技，等於在別人恐慌時交出籌碼；MSFT +6.68% 的時候去追，等於在別人興奮時接棒。兩者都不做。
+3) 若要為未來 4-6 週排程，正確順序是：先等台股止穩（不再出現單日 -3% 級跌幅），再處理美股 7.7pp 超標——且減碼標的明確鎖定「美股科技段」而非全面降低美股，因為非科技（23.3%）正是本次輪動的受益端。
+4) 防守缺口用「配息導流＋回檔小單（單次≤5 萬）」處理，符合 00878／00713 的低 CDSC 限制；保單內後收部位（富達 2029/8、B11 2029/9）維持「停新增＋配息導流、不賣」。
+5) 現金只有 4.2%，餘裕 428,856——扣掉 900,000 標案押標金待命款後，實際可調度彈藥有限。這不是加碼的環境，是「保留選擇權」的環境。
+6) 不預測明天的指數。只確認一件事：組合的結構（債券 25.8%＋合併防守 65.7%）足以讓你在這波動中不必被迫賣出任何東西。</p></div><div class="sec"><h2>【六、風控檢查】</h2><p>・US30Y 5.282%：仍在防禦警戒區 5.20-5.30%（模式 A 已連續 48 日），永久凍結紅線 5.30% 尚未觸發（距 0.018pp）→ 長天期債券不主動新增、亦不強制賣出；紅線連續 2 日才是硬凍結。
+・單日急跌煞車：台股 -3.20% 已觸發（門檻 3%）→ 本日暫緩一切減碼／加碼，僅回報。
+・單桶硬上限檢查：美股 37.7%（上限 40%）未破；科技 14.4%（上限 25%）未破；債券 25.8%（上限 35%）未破；防守 18.0%（上限 40%）未破。無強制減碼義務。
+・質押／核貸：snapshot.質押計畫 目前為空物件，pending_decisions 無生效中的質押執行時程——本報告不引用任何舊時程。洲際W 轉貸仍在「等國泰通知（預計 12 月放款）」狀態，非本班可推進項。
+・指定款 900,000（標案押標金待命）不列入可動用；在途 582、待確認應收 0；五桶＋在途＋衛星＋指定款＝總資產 26,613,591 對帳一致。
+・不變量提示：美股市值型成長超標 7.7pp 已記錄，但因煞車啟動，本日不做任何減碼。觸發條件僅限：雷達燈變號／US30Y 突破 5.30%／單桶超硬上限。
+・本報告為本機產出，未發布。</p></div>
+<div class="foot">龍九控股內部報告｜僅供決策參考，非投資建議｜資料時間 2026-11-05 21:30 台北｜Yahoo Finance chart API 即時 + daily_analysis briefing + us30y_state + snapshot.json 穿透數據</div>
 </div></body></html>
