@@ -1876,3 +1876,8 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 2. 新增 `tools/check_publish_mechanism_sync.py`（純讀）：四支機制檔必須「已追蹤 ＋ 工作區==HEAD」，掛進 `closeout_check.py` 第⑩步（22:40 收工檢查），檢查自己跑不起來也 fail-closed。TD-03 五項 CIO 建議同步落地（REJECT log 加 id／issue 指引／refs 未收到明示／auto_push 例外寫 log／檔頭職責分工）。
 
 **驗收**：5 執行緒同時 consume → 成功 1／被拒 4｜重複消費被拒｜REJECT log 含 id｜防線負向測試 4/4（未追蹤→4 問題、入庫→0、改一檔→1、還原→0）｜收工檢查（cron 入口）14:24 全綠｜驗證器 57 PASS/0 FAIL｜CIO-Gemini APPROVE。
+
+## INCIDENT b7647542 (four_source_sync)
+- 首次發生: 2026-11-05 15:02:50
+- 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)

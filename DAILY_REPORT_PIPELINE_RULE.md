@@ -68,7 +68,7 @@
 > 2026-11-04 曾因此擋掉整條日報與穿透報告）。容差**不吸收**真實資料錯誤（後者通常遠大於門檻）。
 > 常數：`run_daily.TOLERANCE_TWD／TOLERANCE_PCT`。
 
-- **安聯 A + 安聯 B = 一張合併 row**（現值 7,456,850；2026-11-04 校正＝安聯 App 10:44 截圖，A 4,945,215／B 2,511,635，配息一律讀 snapshot dividend_records）
+- **安聯 A + 安聯 B = 一張合併 row**（現值 7,470,483；2026-11-05 校正＝安聯 App 14:49 截圖，A 5,004,542／B 2,465,941，配息一律讀 snapshot dividend_records）
   - 成本／現值／累計配息／資產報酬率：一律讀 snapshot（allianz_*），不在本檔留數字
   - 本月配息：讀 snapshot.dividend_records[當月] 保單桶（2026-10-01 校正；原 55,451 為 7 月值，已移除）
 - **第一金 = 另一張 row**（現值 1,863,198；2026-11-03 校正，配息一律讀 snapshot dividend_records）
