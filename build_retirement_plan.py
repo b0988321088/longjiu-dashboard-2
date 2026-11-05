@@ -265,6 +265,22 @@ rows = [
 cov_color = "#22c55e" if fire_cov >= 100 else "#f59e0b"
 budget_cov = fire_income / FIRE_IDEAL * 100 if FIRE_IDEAL else 0
 
+# 2026-11-05（使用者裁決）：投資損失敏感度——整合進既有退休規劃，不新增頁面。
+#   裁決要點：**不得顯示「補回月數」**（月盈餘÷投資損失 ≠ 回復本金所需時間，且混用
+#   retirement_surplus 20,890 / 月盈餘 66,758 / 補繳 274,464 三種不同概念會誤導決策）。
+#   只保留四項：投資損失金額、現金是否受影響、質押補繳金額、對現金跑道的影響。
+try:
+    import monthly_risk_watch as _mrw
+    _s10 = _mrw.stress(snap, shocks=(-10.0,))[0]
+    _cash_now = float(snap.get("cash_total") or 0)
+    _loss_txt = (f'帳面 {_s10["assets_delta"]:,.0f}（{_s10["total_delta_pct"]:+.2f}%）'
+                 f'｜現金 {_cash_now:,.0f} 不隨帳面虧損減少 → 跑道不變')
+    if _s10.get("repay_to_53"):
+        _loss_txt += (f'；若為回 53% 停止線需補繳質押 {_s10["repay_to_53"]:,.0f}，'
+                      f'跑道再扣約 {_s10["repay_to_53"] / expense * 30:.0f} 天')
+except Exception:
+    _loss_txt = '—'
+
 html = f"""<!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -364,6 +380,7 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><td>房租淨現金流（常態房租收入 {rent:,}；房貸月付 {_mort_m:,.0f} 已列月支出）</td><td>{_rent_net:,.0f}</td><td>{_rent_net_note}</td></tr>
 <tr><td>投資現金流</td><td>{div_c:,}</td><td>穩定</td></tr>
 <tr><td>現金水位</td><td>{cash:,}</td><td>≥{_floor_s:,.0f}（底線）</td></tr>
+<tr><td>投資損失敏感度（資產 -10%）</td><td>{_loss_txt}</td><td>顯示用（不設門檻）</td></tr>
 <tr><td>加碼級覆蓋率（保守·理想值·非門檻）</td><td class="{('green' if fire_cov>=150 else 'amber')}">{fire_cov:.1f}%</td><td>≥150%</td></tr>
 <tr><td>每月負債成本</td><td>{liab_cost:,}</td><td>持續下降</td></tr>
 <tr><td>第二職涯收入</td><td>{career_income:,}</td><td>不設硬性門檻（負責驗證職涯＋加速還債）</td></tr>

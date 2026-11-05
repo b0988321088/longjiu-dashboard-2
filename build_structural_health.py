@@ -283,6 +283,20 @@ if cc_unpaid:
     debt_rows.append(_debt_line("信用卡（當期未繳・全額扣繳）", cc_unpaid, None, None))
 debt_table = "\n".join(debt_rows)
 
+# 3b) 資產價格壓力情境（2026-11-05 使用者裁決：整合進既有結構健康度，不新增頁面）
+try:
+    import monthly_risk_watch as _mrw
+    _stress_rows = _mrw.stress(snap)
+except Exception:
+    _stress_rows = []
+stress_html = "".join(
+    "<tr><td>資產同幅 {s}</td><td>{ta}</td><td>{td}</td><td>{ltv}</td><td>{mt}</td><td>{rp}</td></tr>".format(
+        s=f'{int(x["shock_pct"])}%', ta=fmt(x["total_after"]), td=f'{x["total_delta_pct"]:+.2f}%',
+        ltv=(f'{x["ltv_after"]:.2f}%' if x.get("ltv_after") is not None else "—"),
+        mt=(f'{x["maintenance_after"]:.1f}%' if x.get("maintenance_after") is not None else "—"),
+        rp=(fmt(x["repay_to_53"]) if x.get("repay_to_53") else "0"))
+    for x in _stress_rows) or '<tr><td colspan="6">資料不足，無法計算</td></tr>'
+
 # 3) 風險哨兵
 ltv_lvl = "ok" if (ltv.get("LTV_pct") or 0) <= (ltv.get("政策停止線_pct") or 53) else "bad"
 usd_pct_val = usd if usd is not None else 0
@@ -567,6 +581,15 @@ _report = f"""<!DOCTYPE html>
   <section>
     <h2>④ 風險哨兵<span class="hint">四條紅線即時狀態</span></h2>
     <div class="alarms">{alarms}</div>
+  </section>
+
+  <section>
+    <h2>④b 壓力情境<span class="hint">資產價格同幅下跌（唯讀推算，非預測；現金不隨帳面虧損減少）</span></h2>
+    <table>
+      <thead><tr><th>情境</th><th>總資產</th><th>變動</th><th>質押 LTV</th><th>銀行維持率</th><th>回 53% 需還本</th></tr></thead>
+      <tbody>{stress_html}</tbody>
+    </table>
+    <p class="foot-note">LTV＝借款÷池市值；維持率＝池市值÷借款（互為倒數，不得混用）。內部停止線 53%（維持率 188.7%）；銀行通知 160%（LTV 62.5%）、追繳 140%（LTV 71.4%）。</p>
   </section>
 
   <section>
