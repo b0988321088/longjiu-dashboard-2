@@ -1420,6 +1420,14 @@ def main():
         tpl = tpl.replace("__DECISION_BANNER__", "")
         tpl = tpl.replace("__HEALTH_CARD__", "")
 
+    # ── 資產防護中心（2026-11-05 使用者定版：首頁第一屏；計算模組與日報同一支）──
+    try:
+        from scripts.components.defense_action_card import render_dashboard as _rdc
+        tpl = tpl.replace("__DEFENSE_CENTER__", _rdc(snap))
+    except Exception as _e:
+        tpl = tpl.replace("__DEFENSE_CENTER__", "")
+        print(f"[WARN] 資產防護中心渲染失敗：{type(_e).__name__}: {_e}")
+
     # ── 戰略異常中心動態化（2026-09-01：雷達/交易計畫/政策面不再硬編碼 8/29 快照）──
     try:
         _rs = json.loads((BASE / "radar_state.json").read_text(encoding="utf-8"))
