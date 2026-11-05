@@ -165,7 +165,34 @@ def scenarios(a: dict, shocks=(-10.0, -20.0, -30.0)) -> list:
                     "total_after": (total + loss2) if total is not None else None,
                     "net_after": (net + loss2) if net is not None else None,
                     "maint_after": None, "cash_after": a["cash"]})
+    # 流動性壓力：股市 −20% 同時質押池同幅下跌 → 維持率惡化、回內部停止線需還本金
+    if eq:
+        loss3 = eq * -0.20
+        pool_after = pool * 0.8 if pool else None
+        maint3 = (pool_after / loan * 100) if (pool_after and loan) else None
+        repay = max(0.0, loan - 0.53 * pool_after) if (pool_after and loan) else None
+        out.append({"label": "流動性壓力（股 20%＋維持率惡化）", "loss": loss3,
+                    "total_after": (total + loss3) if total is not None else None,
+                    "net_after": (net + loss3) if net is not None else None,
+                    "maint_after": maint3, "cash_after": a["cash"], "repay": repay})
     return out
+
+
+def asset_class_rows(a: dict) -> list:
+    """依使用者規格重新分類實際持倉（高股息＝股票收益型，不列防禦；未穿透不得假設低風險）。"""
+    def row(name, examples, bucket, amt, pct, judge):
+        return {"分類": name, "代表標的": examples, "口徑": bucket,
+                "金額": _m(amt), "占比": _pc(pct), "防禦判定": judge}
+    return [
+        row("台股成長型", "0050／006208／主動台股", "台股市值型成長", a["tw"], a["tw_pct"], "成長型，非防禦"),
+        row("股票收益型", "00878／0056／00919 等高股息", "防守型配息", a["defi"], a["defi_pct"],
+            "不列防禦（與台股同向）"),
+        row("海外股票型", "美股 ETF／美股基金", "美股市值型成長", a["us"], a["us_pct"], "成長型，非防禦"),
+        row("固定收益型", "債券基金／債券 ETF", "債券", a["bond"], a["bond_pct"], "需以股債同跌情境驗證"),
+        row("流動性防禦型", "現金／存款", "現金/安全網", a["cash"], a["cash_pct"], "可防禦（對比 70 萬底線）"),
+        row("分散風險型", "黃金", "衛星", a["gold"],
+            ((a["gold"] / a["total"] * 100) if (a["gold"] and a["total"]) else None), "衛星，避險強度以 0 計"),
+    ]
 
 
 def verdict(a: dict) -> dict:
@@ -248,9 +275,15 @@ def render(snap: dict | None = None, theme: str = "light") -> str:
     etf_txt = "｜".join(f"{k.replace('.TW', '')} {val}" for k, val in etf.items()) or "—"
 
     # ④ 壓力測試表
+    cls_html = "".join(
+        f"<tr><td>{c['分類']}</td><td>{c['代表標的']}</td><td>{c['金額']}</td>"
+        f"<td>{c['占比']}</td><td>{c['防禦判定']}</td></tr>" for c in asset_class_rows(a))
+
     rows_html = ""
     for r in rows:
         mt = _pc(r["maint_after"]) if r["maint_after"] is not None else "—（池內股債比重未取得）"
+        if r.get("repay"):
+            mt += f"（回內部停止線需還 {_m(r['repay'])}）"
         warn = ""
         if r["maint_after"] is not None:
             gap = r["maint_after"] - a["line_call"]
@@ -317,6 +350,11 @@ def render(snap: dict | None = None, theme: str = "light") -> str:
 <tr><th>槓桿</th><td>質押維持率 <b>{_pc(a["maint"])}</b>（借款 {_m(a["loan"])}／池 {_m(a["pool"])}）｜距內部停止線 {a["line_stop"]:.0f}% 需跌 {_pc(a["drop_stop"], 2)}｜距銀行通知 {a["line_notice"]:.0f}% 需跌 {_pc(a["drop_notice"], 2)}</td></tr>
 </table>
 <table>
+<tr><th>資產分類（重新歸類）</th><th>代表標的</th><th>金額</th><th>占比</th><th>防禦判定</th></tr>
+{cls_html}
+</table>
+<p {note}>配息率不等於報酬；債券可能因利率上升而下跌；未完成穿透的基金不得假設為低風險。</p>
+<table>
 <tr><th>下跌壓力測試</th><th>資產損失</th><th>總資產</th><th>淨值（含房產）</th><th>質押維持率</th><th>現金</th></tr>
 {rows_html}
 </table>
@@ -362,11 +400,14 @@ def render_dashboard(snap: dict | None = None, theme: str = "dark") -> str:
                 f'<p class="text-[11px] text-slate-500">{sub}</p></div>')
 
     tiles = "".join([
+        tile("台股", _pc(a["tw_pct"]), f'目標 {a["tgt"].get("台股市值型", "—")}%'),
         tile("美股曝險", _pc(a["us_pct"]), f'目標 {a["tgt"].get("美股市值型", "—")}%／上限 {a["cap"].get("美股市值型", "—")}%',
              "text-rose-300" if (a["us_pct"] or 0) > float(a["tgt"].get("美股市值型") or 0) else "text-white"),
-        tile("科技股", _pc(a["tech_pct"]), f'上限 {a["tgt"].get("科技", "—")}%（與美股維度重疊，不可加總）', "text-amber-300"),
+        tile("科技股", _pc(a["tech_pct"]), f'上限 {a["tgt"].get("科技", "—")}%（與美股重疊，不可加總）', "text-amber-300"),
+        tile("股票收益型", _pc(a["defi_pct"]), "高股息：不列防禦"),
         tile("債券", _pc(a["bond_pct"]), f'{_m(a["bond"])}（防禦力看壓力測試）'),
-        tile("現金", _pc(a["cash_pct"]), f'底線 {_m(a["floor"])}｜{"✅ 高於底線" if (a["cash"] and a["floor"] and a["cash"] >= a["floor"]) else "⚠️ 低於底線"}'),
+        tile("現金＋黃金", f'{_pc(a["cash_pct"])}／{_pc((a["gold"] / a["total"] * 100) if (a["gold"] and a["total"]) else None, 2)}',
+             f'底線 {_m(a["floor"])}｜{"✅ 高於底線" if (a["cash"] and a["floor"] and a["cash"] >= a["floor"]) else "⚠️ 低於底線"}'),
     ])
 
     rows_html = ""
@@ -375,11 +416,17 @@ def render_dashboard(snap: dict | None = None, theme: str = "dark") -> str:
         flag = ""
         if r["maint_after"] is not None and r["maint_after"] <= a["line_call"] + 5:
             flag = " ⚠️"
+        if r.get("repay"):
+            flag += f'<br><span class="text-[10px] text-amber-300">需還 {_m(r["repay"])}</span>'
         rows_html += (f'<tr><td class="py-1 text-slate-300">{r["label"]}</td>'
                       f'<td class="py-1 text-right font-mono text-rose-300">{_m(r["loss"], True)}</td>'
                       f'<td class="py-1 text-right font-mono text-slate-300">{_m(r["total_after"])}</td>'
                       f'<td class="py-1 text-right font-mono text-slate-300">{mt}{flag}</td></tr>')
 
+    cls_dash = "".join(
+        f'<tr><td class="py-0.5 text-slate-300">{c["分類"]}</td>'
+        f'<td class="py-0.5 text-right font-mono">{c["占比"]}</td>'
+        f'<td class="py-0.5 pl-2">{c["防禦判定"]}</td></tr>' for c in asset_class_rows(a))
     watch_html = "".join(f'<li>{w}</li>' for w in v["watch"]) or "<li>無</li>"
     act = {
         VERDICT_HOLD: "維持 HOLD：不因單日上漲加碼、不因短期下跌恐慌減碼。",
@@ -398,7 +445,7 @@ def render_dashboard(snap: dict | None = None, theme: str = "dark") -> str:
     <span class="text-xs px-3 py-1 rounded-full font-mono font-bold border border-{tone}-500/40 bg-{tone}-500/10 text-{tone}-300">{icon} {v["code"]}</span>
   </div>
 
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">{tiles}</div>
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">{tiles}</div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
     <div class="bg-slate-800/40 rounded-lg p-3">
@@ -410,6 +457,7 @@ def render_dashboard(snap: dict | None = None, theme: str = "dark") -> str:
         ・黃金 <b>{_pc((a["gold"] / a["total"] * 100) if (a["gold"] and a["total"]) else None, 2)}</b>（衛星，計入避險強度時以 0 計）
       </p>
       <p class="text-[11px] text-slate-500 mt-2">最大風險來源：美股 {_pc(a["us_pct"])}（超目標 {_pp((a["us_pct"] or 0) - float(a["tgt"].get("美股市值型") or 0))}）</p>
+      <table class="w-full text-[11px] mt-2 text-slate-400"><tbody>{cls_dash}</tbody></table>
     </div>
     <div class="bg-slate-800/40 rounded-lg p-3">
       <p class="text-[11px] text-slate-400 mb-1">下跌壓力測試（假設，非預測）</p>
