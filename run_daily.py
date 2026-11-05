@@ -1539,12 +1539,21 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         _vol_html = make_volatility_report(theme="light")   # 日報＝淺色版（日報無 Tailwind）
         # 2026-11-05 使用者裁決：日報第 1 章最前面放「本月投資風險摘要」（MTD／燈號／裁示），
         #   數字來自 monthly_risk_watch（→ performance_core），影子模式只顯示不觸發。
+        _bvm_html = ""
+        # 2026-11-05 使用者核准：台幣計價帳面 vs 大盤拆解（分項貢獻＋匯兌貢獻＋相對差），
+        #   排在第 1 章最前：MTD 卡 → 本卡 → 投資波動檢視。獨立 try：壞掉不得吃掉 MTD 卡。
+        try:
+            from scripts.components.book_vs_market_card import render as _bvm
+            _bvm_html = _bvm(theme="light")
+        except Exception as _e:
+            print(f"[WARN] 帳面vs大盤卡渲染失敗：{type(_e).__name__}: {_e}")
         try:
             from scripts.components.monthly_risk_card import render as _mrc
             _mrc_html = _mrc(theme="light")
-            _vol_html = _mrc_html + _vol_html
+            _vol_html = _mrc_html + _bvm_html + _vol_html
         except Exception as _e:                     # 卡片壞掉不得吃掉日報
             print(f"[WARN] 月損益風險卡渲染失敗：{type(_e).__name__}: {_e}")
+            _vol_html = _bvm_html + _vol_html
         _anchor = "2/9｜資產結構"
         _i = html.find(_anchor)
         # 插在「第 2 章的外框 <div class="card"> 之前」＝真正的第 1 章結尾（頂層）。
