@@ -12036,6 +12036,16 @@
     "status": "completed",
     "source": "user"
   }
+,
+  {
+    "id": "mem-20261105165217-1303",
+    "timestamp": "2026-11-05T16:52:17.677851+08:00",
+    "agent": "Hermes",
+    "task": "update_data 程式修正落地（國泰同義鍵／衛星鍵／日報規則）",
+    "summary": "CIO-Gemini APPROVE（tree c0db5d8ad523），commit 51302c27。①--cathay_funds 同寫 funds_cathay_breakdown：只寫 funds_breakdown 會讓門檻SoT基金口徑閉合擋推送（11,793,577 vs 11,909,979）②衛星（黃金/健康/避險衛星）禁入 penetration.actual_twd：會與五桶重複計，實測假失敗 +289,330 ③DAILY_REPORT_PIPELINE_RULE 安聯現值 7,456,850→7,470,483，修 allianz_value 三源校準擋日報。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "meta": {
     "updated_at": "2026-11-05T15:34:21+08:00"
