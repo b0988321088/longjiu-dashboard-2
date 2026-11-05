@@ -434,6 +434,22 @@ def render_dashboard(snap: dict | None = None, theme: str = "dark") -> str:
     except Exception:
         pass
 
+    _ov = []
+    _ovmeta = {}
+    try:
+        _ov = (_hr.get("overlap") or {}).get("重複持股") or []
+        _ovmeta = _hr.get("overlap") or {}
+    except Exception:
+        pass
+    if _ov:
+        dash_ov_html = "｜".join(
+            f'{x["name"]} <b>{x["twd"]:,.0f}</b>（{x["持有商品數"]} 檔，{(x["twd"] / a["total"] * 100):.2f}%）'
+            for x in _ov[:3] if a.get("total"))
+        if not _ovmeta.get("時點是否一致", True):
+            dash_ov_html += f'<br>資料時點不一致：{_ovmeta.get("最舊資料日")}～{_ovmeta.get("最新資料日")}（不可當同步持倉）'
+    else:
+        dash_ov_html = "資料不足"
+
     tone = {"維持": "emerald", "注意": "amber", "調整": "rose"}.get(v["code"], "slate")
     icon = v["icon"]
 
@@ -502,6 +518,9 @@ def render_dashboard(snap: dict | None = None, theme: str = "dark") -> str:
         ・黃金 <b>{_pc((a["gold"] / a["total"] * 100) if (a["gold"] and a["total"]) else None, 2)}</b>（衛星，計入避險強度時以 0 計）
       </p>
       <p class="text-[11px] text-slate-500 mt-2">最大風險來源：美股 {_pc(a["us_pct"])}（超目標 {_pp((a["us_pct"] or 0) - float(a["tgt"].get("美股市值型") or 0))}）</p>
+      <p class="text-[11px] text-slate-400 mt-2 mb-1">重複持股（跨基金，僅前十大內）</p>
+      <p class="text-xs text-slate-300 leading-relaxed">{dash_ov_html}</p>
+      <p class="text-[11px] text-slate-500 mt-1">穿透完整度：已穿透 {_pc(hp_cov.get("分級佔比", {}).get("已穿透"))}／部分 {_pc(hp_cov.get("分級佔比", {}).get("部分穿透"))}／未穿透 {_pc(hp_cov.get("分級佔比", {}).get("未穿透"))}</p>
       <table class="w-full text-[11px] mt-2 text-slate-400"><tbody>{cls_dash}</tbody></table>
     </div>
     <div class="bg-slate-800/40 rounded-lg p-3">

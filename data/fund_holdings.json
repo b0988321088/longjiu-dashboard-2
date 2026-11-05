@@ -477,11 +477,43 @@
     "type": "name_contains",
     "key": "聯博"
    },
-   "level": "未穿透",
-   "source": null,
-   "date": null,
-   "top_holdings": [],
-   "note": "保單擔保池成分；待補"
+   "level": "已穿透",
+   "source": "MoneyDJ 投資明細（聯博官方月報轉載）",
+   "date": "2026-08-31",
+   "top_holdings": [
+    {
+     "ticker": "NVDA",
+     "name": "NVIDIA",
+     "weight": 2.4
+    },
+    {
+     "ticker": "AAPL",
+     "name": "APPLE",
+     "weight": 1.76
+    },
+    {
+     "ticker": "GOOGL",
+     "name": "ALPHABET",
+     "weight": 1.46
+    },
+    {
+     "ticker": "MSFT",
+     "name": "MICROSOFT",
+     "weight": 1.27
+    },
+    {
+     "ticker": "TSM",
+     "name": "台積電 ADR",
+     "weight": 0.91
+    },
+    {
+     "ticker": "—",
+     "name": "AB 新興市場債",
+     "weight": 0.36
+    }
+   ],
+   "note": "資料月份 2026/08；其餘多為新興市場債",
+   "source_url": "https://www.moneydj.com/funddj/yp/yp013001.djhtm?a=albg6"
   },
   "摩根多重收益": {
    "名稱": "保單A-USDEQ5440 摩根多重收益(美元對沖)A穩定月配",

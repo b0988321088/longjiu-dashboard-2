@@ -121,8 +121,15 @@ def overlap(items: dict, top: int = 10) -> dict:
             rec["twd"] += i["amount"] * _f(h.get("weight")) / 100.0
             rec["holders"].append({"product": k, "weight": _f(h.get("weight")), "amount": i["amount"]})
     rows = sorted(agg.values(), key=lambda x: -x["twd"])[:top]
+    _dates = {k: i.get("date") for k, i in items.items()
+              if i.get("level") == "已穿透" and i.get("date")}
+    _uniq = sorted(set(_dates.values()))
     return {
         "可合併商品數": sum(1 for i in items.values() if i.get("level") == "已穿透"),
+        "資料時點": _dates,
+        "時點是否一致": len(_uniq) <= 1,
+        "最舊資料日": _uniq[0] if _uniq else None,
+        "最新資料日": _uniq[-1] if _uniq else None,
         "重複持股": [
             {"ticker": r["ticker"], "name": r["name"], "twd": round(r["twd"], 0),
              "持有商品數": len(r["holders"]),
