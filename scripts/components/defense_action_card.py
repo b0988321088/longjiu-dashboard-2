@@ -281,6 +281,15 @@ def render(snap: dict | None = None, theme: str = "light") -> str:
         _hr = _hp.run(snap)
         hp_dual = _hr.get("dual") or {}
         hp_cov = _hr.get("coverage") or {}
+        _ov = (_hr.get("overlap") or {}).get("重複持股") or []
+        _top3 = _ov[:3]
+        if _top3:
+            _s = sum(x["twd"] for x in _top3)
+            hp_ov_txt = "｜".join(f'{x["name"]} {x["twd"]:,.0f}（{x["持有商品數"]} 檔）' for x in _top3)
+            hp_ov_txt += (f'；前三檔合計 {_s:,.0f}＝{(_s / a["total"] * 100):.2f}% 總資產' if a.get("total") else "")
+            hp_ov_txt += "（僅前十大內，實際曝險更高）"
+        else:
+            hp_ov_txt = "資料不足"
         _c30 = (_hr.get("correlation") or {}).get("30日") or {}
         _pairs = _c30.get("相關係數") or {}
         _hd = _hr.get("hedge") or {}
@@ -370,6 +379,7 @@ def render(snap: dict | None = None, theme: str = "light") -> str:
 <tr><th>美股超配</th><td><b style="color:{tone}">{_pc(a["us_pct"])}</b>（目標 {a["tgt"].get("美股市值型", "—")}%／硬上限 {a["cap"].get("美股市值型", "—")}%）＝目前最大單一風險</td></tr>
 <tr><th>科技（雙口徑）</th><td><b>{_pc(a["tech_pct"])}</b>（桶口徑：美股科技桶，上限 {a["tgt"].get("科技", "—")}%）　／　<b>{_pc(hp_dual.get("GICS_pct"))}</b>（GICS 產業穿透：含台股半導體與基金間接持股）<br><span style="color:#6e6e73;font-size:12px">兩者衡量不同維度且重疊，<b>不可相加</b>；GICS 完整度 {_pc(hp_dual.get("GICS_完整度_pct"))}、資料日 {hp_dual.get("GICS_資料日") or "—"}</span></td></tr>
 <tr><th>連動與歷史實測</th><td>{hp_corr_txt}<br><span style="color:#6e6e73;font-size:12px">相關性只描述同向、非因果；歷史不保證未來</span></td></tr>
+<tr><th>重複持股（跨基金）</th><td>{hp_ov_txt}</td></tr>
 <tr><th>持股穿透完整度</th><td>已穿透 {_pc(hp_cov.get("分級佔比", {}).get("已穿透"))}／部分穿透 {_pc(hp_cov.get("分級佔比", {}).get("部分穿透"))}／未穿透 {_pc(hp_cov.get("分級佔比", {}).get("未穿透"))}　<span style="color:#6e6e73;font-size:12px">未穿透不等於低風險；重複持股僅就已知商品合併</span></td></tr>
 <tr><th>高股息不是防禦</th><td>防守型配息 {_pc(a["defi_pct"])} 為台股高股息 ETF，實測週跌幅：{etf_txt}（與台股同向，不列為防禦資產）</td></tr>
 <tr><th>債券與現金</th><td>債券 {_pc(a["bond_pct"])}／現金 {_pc(a["cash_pct"])}；防禦效果以壓力測試驗證（下表），不看比例本身</td></tr>

@@ -110,8 +110,12 @@ def overlap(items: dict, top: int = 10) -> dict:
         if (i.get("level") != "已穿透") or not i.get("top_holdings") or not i.get("amount"):
             continue
         for h in i["top_holdings"]:
-            t = h.get("ticker")
-            if not t:
+            t = str(h.get("ticker") or "").strip()
+            nm = str(h.get("name") or "")
+            # 只合併真正的個股；ETF/期貨/黃金/TBA/TIPS/可轉債 不是同一檔股票，不得併入
+            if (not t) or t in ("—", "-", "None"):
+                continue
+            if any(x in nm.upper() for x in ("ETF", "FUTR", "FUTURE", "GOLD", "TBA", "TIPS", "可轉債")):
                 continue
             rec = agg.setdefault(t, {"ticker": t, "name": h.get("name"), "twd": 0.0, "holders": []})
             rec["twd"] += i["amount"] * _f(h.get("weight")) / 100.0
