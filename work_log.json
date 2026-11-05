@@ -1373,5 +1373,47 @@
   "category": "完成",
   "item": "押標金 278,904 改列預備資金缺口（待命準備）（使用者 2026-11-04 裁示：目前沒有標案確定要投，未定案前僅預作準備；278,904 為準備金缺口非立即支出，不因 11/06 T-5 自動啟動股票減碼、借款或任何資產調度；真正資金調度觸發點＝確定要投標，屆時再確認押標金金額、退還條件、資金來源及投標後現金底線。準備投標不等於決定投標，準備押標金",
   "detail": "使用者 2026-11-04 裁示：目前沒有標案確定要投，未定案前僅預作準備；278,904 為準備金缺口非立即支出，不因 11/06 T-5 自動啟動股票減碼、借款或任何資產調度；真正資金調度觸發點＝確定要投標，屆時再確認押標金金額、退還"
+ },
+ {
+  "date": "2026-11-05",
+  "category": "完成",
+  "item": "日報2026-11-05（已產出（金額見 snapshot／當日日報檔，勿在此複寫數字））",
+  "detail": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）"
+ },
+ {
+  "date": "2026-11-05",
+  "category": "完成",
+  "item": "資產穿透2026-11-05（已產出（五桶市值見 snapshot.penetration.actual_twd））",
+  "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-11-05",
+  "category": "完成",
+  "item": "2026-11-05 真值日資料批核准上線（使用者核准推送純資料批（1c2f6440｜[cioreviewed]車道、無程式檔）。真值：總資產 26,613,591／現金 2,028,856／負債 30,951,762／信用卡pending 46,418／安聯A+B 7,470,483／國泰基金 11,909,979／台股 2,566,480／11月配息 1",
+  "detail": "使用者核准推送純資料批（1c2f6440｜[cioreviewed]車道、無程式檔）。真值：總資產 26,613,591／現金 2,028,856／負債 30,951,762／信用卡pending 46,418／安聯A+B 7,470,48"
+ },
+ {
+  "date": "2026-11-05",
+  "category": "完成",
+  "item": "update_data 程式修正落地（國泰同義鍵／衛星鍵／日報規則）（CIO-Gemini APPROVE（tree c0db5d8ad523），commit 51302c27。①--cathay_funds 同寫 funds_cathay_breakdown：只寫 funds_breakdown 會讓門檻SoT基金口徑閉合擋推送（11,793,577 vs",
+  "detail": "CIO-Gemini APPROVE（tree c0db5d8ad523），commit 51302c27。①--cathay_funds 同寫 funds_cathay_breakdown：只寫 funds_breakdown 會讓門檻S"
+ },
+ {
+  "date": "2026-11-05",
+  "category": "完成",
+  "item": "緊急應變改收盤版重產（不採數字替換）（使用者指示重跑。13:00 盤中 41,862.47(-2.53%)→收盤 41,574.72(-3.20%)，尾盤再殺 288 點使舊敘述失效；真抓 Yahoo 收盤行情重寫六章（台股組合 -70,310／-2.74%，台幣 32.94 +0.64%，00981A -7.43%）。觸發判讀改為已破 3% 急跌煞車→今日",
+  "detail": "使用者指示重跑。13:00 盤中 41,862.47(-2.53%)→收盤 41,574.72(-3.20%)，尾盤再殺 288 點使舊敘述失效；真抓 Yahoo 收盤行情重寫六章（台股組合 -70,310／-2.74%，台幣 32.94 "
+ },
+ {
+  "date": "2026-11-05",
+  "category": "完成",
+  "item": "緊急應變收盤版重產器送審落地（gen_emergency_close_20261105.py；CIO-Gemini APPROVE（tree 7f3bafab3d5f），commit 3af066ee。繞過 emergency_1330 的 _skip_html 防護（既有 full_report>1500 即跳過 HTML）但不改原檔，避免動到 07:00",
+  "detail": "gen_emergency_close_20261105.py；CIO-Gemini APPROVE（tree 7f3bafab3d5f），commit 3af066ee。繞過 emergency_1330 的 _skip_html 防護（"
+ },
+ {
+  "date": "2026-11-05",
+  "category": "完成",
+  "item": "證券明細校正＋canonical 防錯上線（96881c41）（持股明細改11/05官方收盤：明細2,611,170→2,566,480與權威歸零；canonical=securities.total_market_value，6別名+內值+未實現全派生；新增五條fail-closed閘門(自測6/6)；CIO APPROVE、已推、Pages驗證、連線25",
+  "detail": "持股明細改11/05官方收盤：明細2,611,170→2,566,480與權威歸零；canonical=securities.total_market_value，6別名+內值+未實現全派生；新增五條fail-closed閘門(自測6/6)"
  }
 ]
