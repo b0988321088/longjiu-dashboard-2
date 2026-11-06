@@ -144,7 +144,7 @@ def main() -> int:
         "delta": hold_sum - before_hold,
         "note": "修正明細價格由盤中價改官方收盤；total_assets 未變動（原本已用權威總額）",
     }
-    SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=2), encoding="utf-8")
+    SNAP.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
     print("  ✅ snapshot.json 已寫入（備份 .backup/）")
     return 0
 
