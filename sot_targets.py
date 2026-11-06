@@ -1745,6 +1745,12 @@ def _ltv_values(snap: dict) -> dict:
     if out:
         return out
     try:
+        # 2026-11-06（批次二）：LTV 一律現算＝借款÷擔保池（不得沿用『成數_數值』＝銀行認列成數 5 成）
+        _loan = float(snap.get("fund_pledge_loan") or 0)
+        _pool = float((((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("合計")) or 0)
+        if _loan > 0 and _pool > 0:
+            out["國泰質押池"] = round(_loan / _pool * 100, 1)
+            return out
         import pledge_status as _ps
         _f = _ps.pledge_facts(snap) or {}
         _c = _f.get("成數")
