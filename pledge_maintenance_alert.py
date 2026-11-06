@@ -74,7 +74,13 @@ def compute(snap: dict) -> dict:
     pay = _num(cp.get("維持率_繳款線"), DEFAULT_PAY)
     warn = _num(cp.get("維持率_警示線"), notice + WARN_BUFFER_PP)
     ratio = (pool / loan * 100.0) if loan > 0 else None
+    # 2026-11-06（使用者裁決）：LTV 內部停止線。LTV＝借款÷池市值，與銀行維持率互為倒數，不得混用。
+    ltv = (loan / pool * 100.0) if pool > 0 else None
+    _bands = (snap.get("thresholds_2026_0915") or {}).get("ltv分級_pct") or {}
+    ltv_stop = _num(_bands.get("黃上限"), 53)
+    ltv_target = _num(_bands.get("單池上限"), 50)
     return {"pool": pool, "loan": loan, "ratio": ratio,
+            "ltv": ltv, "ltv_stop": ltv_stop, "ltv_target": ltv_target,
             "notice": notice, "pay": pay, "warn": warn,
             "rate": snap.get("fund_pledge_rate"), "due_day": snap.get("fund_pledge_due_day")}
 
@@ -121,6 +127,32 @@ def render(m: dict, lv: str, snap: dict) -> str:
     usable = cash_now.get("unrestricted_cash") or cash_now.get("可動用") or snap.get("cash_usable")
     if isinstance(usable, (int, float)) and usable:
         L.append(f"可動用現金 {usable:,.0f}｜月息 {loan * float(m['rate'] or 0) / 12:,.0f}（每月 {m['due_day'] or '?'} 日扣）")
+
+    # ── 2026-11-06（使用者裁決）：LTV 內部停止線提示 ──
+    # 只顯示數字與缺口，不產生任何借款／質押／資金調度指令；不取代上面 160%／140% 銀行級距。
+    _ltv, _stop = m.get("ltv"), m.get("ltv_stop")
+    _tgt = m.get("ltv_target") or 50
+    if _ltv and _stop and pool > 0:
+        _pool_at = loan / (_stop / 100.0)                      # 觸線時的池值
+        _gap = pool - _pool_at                                  # 池還能跌多少錢
+        L.append("")
+        L.append(f"【LTV 內部停止線】{_ltv:.2f}%｜停止線 {_stop:.0f}%｜目標回 {_tgt:.0f}%"
+                 f"（維持率 {r:.1f}% 為倒數，勿混用）")
+        if _ltv < _stop:
+            L.append(f"· 距停止線：池可再跌 {abs(_gap) / pool * 100:.2f}%（{abs(_gap):,.0f} 元）→ 觸線池值 {_pool_at:,.0f}")
+            # 觸線後的補救成本（以觸線當下池值計算，供事前準備；非行動指令）
+            _pay_t = max(0.0, loan - (_tgt / 100.0) * _pool_at)
+            _add_t = max(0.0, loan / (_tgt / 100.0) - _pool_at)
+            L.append(f"· 觸線後補救（池 {_pool_at:,.0f}）：還本 {_pay_t:,.0f} 或補擔保品 {_add_t:,.0f} → 回 {_tgt:.0f}%")
+        else:
+            _pay_t = max(0.0, loan - (_tgt / 100.0) * pool)
+            _add_t = max(0.0, loan / (_tgt / 100.0) - pool)
+            L.append(f"· ⚠️ 已達／超過停止線：還本 {_pay_t:,.0f} 或補擔保品 {_add_t:,.0f} → 回 {_tgt:.0f}%")
+        if isinstance(usable, (int, float)) and usable and _pay_t > 0:
+            L.append(f"· 理論補款 {_pay_t:,.0f} 元 vs 可動用現金 {usable:,.0f} 元"
+                     f"（{_pay_t / usable:.2f} 倍）"
+                     + ("（❗現金不足額）" if _pay_t > usable else "（現金足額）"))
+        L.append("· 後收基金（富達 2029/8、B11 2029/9 前）不可低成本變現，緩衝只能靠現金或提前還本")
     return "\n".join(L)
 
 

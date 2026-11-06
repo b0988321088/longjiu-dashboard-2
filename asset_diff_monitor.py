@@ -688,7 +688,7 @@ def buffett_advice(history: dict, snap: dict) -> str:
     # 2026-08-08 使用者裁示：統一不記錄房地產（與差異分析一致）— 不動產值歸零
     ex["real_estate"] = 0
     ta = ex["total_assets"] + ex["real_estate"]
-    # 2026-08-10 雙軌：主顯示含不動產（資產負債表視角），另計算流動負債率（不含不動產監控）
+    # 2026-08-10 雙軌：主顯示含不動產（資產負債表視角），另計算金融資產負債比（不含不動產監控）
     _re_val = float(snap.get("real_estate", snap.get("real_estate_value", 0)) or 0)
     debt_ratio = ex["total_liabilities"] / (ex["total_assets"] + _re_val) * 100 if (ex["total_assets"] + _re_val) else 0
     debt_ratio_flow = ex["total_liabilities"] / ex["total_assets"] * 100 if ex["total_assets"] else 0
@@ -781,7 +781,7 @@ def buffett_advice(history: dict, snap: dict) -> str:
         "",
         f"資產結構：{alloc}",
         rent_line,
-        f"負債比率：{debt_ratio:.1f}%（含不動產）｜流動負債率 {debt_ratio_flow:.1f}%（不含不動產）",
+        f"負債比：{debt_ratio:.1f}%（含不動產）｜金融資產負債比 {debt_ratio_flow:.1f}%（不含不動產）",
         f"配息 保守基本值 {_fmt(div_conservative)}｜當月實收 {_fmt(div_actual)}",
         f"被動收入 保守底線 {_fmt(passive_conservative)}（覆蓋 {passive_coverage:.1f}%）｜當月實收 {_fmt(passive_actual)}（覆蓋 {passive_coverage_actual:.1f}%）",
     ]
@@ -876,9 +876,9 @@ def buffett_advice(history: dict, snap: dict) -> str:
         _after = ((ex["total_liabilities"] - _ploan) / _denom_re * 100
                   if (_ploan > 0 and _debt_left and _denom_re) else None)
         warnings.append(
-            f"負債比率 {debt_ratio:.1f}%（含不動產）偏高｜結構：" + "＋".join(_seg)
+            f"負債比 {debt_ratio:.1f}%（含不動產）偏高｜結構：" + "＋".join(_seg)
             + (f"｜保單質押清償完成後 → {_after:.1f}%" if _after is not None else "")
-            + f"｜監控口徑＝流動負債率 {debt_ratio_flow:.1f}%"
+            + f"｜監控口徑＝金融資產負債比 {debt_ratio_flow:.1f}%"
         )
     if ex["cathay_refinance"] > 0:
         warnings.append(f"國泰轉貸 {ex['cathay_refinance']/10000:.0f} 萬執行中")
@@ -1385,7 +1385,7 @@ def build_telegram_text(rows: list[dict], snap: dict) -> str:
         + (f"｜指定用途款 {_restricted_cash_of(snap):,.0f}（質押撥款待清償，已自增減排除）" if _restricted_cash_of(snap) else "")
         + "\n"
         f"{alloc}\n"
-        f"負債比率：{ex['total_liabilities']/total_with_re*100:.1f}%\n"
+        f"負債比：{ex['total_liabilities']/total_with_re*100:.1f}%\n"
         f"{flag}"
     )
 
@@ -1447,8 +1447,8 @@ def push_to_notion(snap: dict) -> None:
     ex = extract_snapshot(snap)
     # 2026-09-30：兩處修正 —— ①原字串尾部寫死「8/10 現金100萬先還星展理財型房貸（餘額2,006,447）」，
     # 該筆已於 2026-08-11 全數清償，卻每天寫進 Notion（寫死日期＋金額，與真值脫節）。
-    # ②原「負債比率」用 ex['total_assets'] 當分母＝流動負債率口徑，卻標成「負債比率」
-    #（8/10 裁示為雙軌：主顯示含不動產、流動負債率另列監控）→ 改為兩者都標明口徑。
+    # ②原標「負債比率」卻用 ex['total_assets']（不含不動產）當分母＝金融資產負債比口徑
+    #（8/10 裁示為雙軌：主顯示含不動產、金融資產負債比另列監控）→ 改為兩者都標明口徑。
     _re_n = float(snap.get("real_estate", snap.get("real_estate_value", 0)) or 0)
     _denom_n = ex["total_assets"] + _re_n
     _dr_n = ex["total_liabilities"] / _denom_n * 100 if _denom_n else 0
@@ -1464,7 +1464,7 @@ def push_to_notion(snap: dict) -> None:
         f"｜現金 {ex['cash']:,.0f}"
         f"｜負債 {ex['total_liabilities']:,.0f}"
         f"｜配息/月 {ex['fund_dividend_monthly']:,.0f}"
-        f"｜負債比率 {_dr_n:.1f}%（含不動產）｜流動負債率 {_drf_n:.1f}%"
+        f"｜負債比 {_dr_n:.1f}%（含不動產）｜金融資產負債比 {_drf_n:.1f}%"
         f"｜房貸 {_mtg_n:,.0f}（月繳 {_mtgm_n:,.0f}）"
     )
     payload = {

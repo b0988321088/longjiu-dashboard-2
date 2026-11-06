@@ -219,6 +219,23 @@ def main():
     state = load_state()
     today = date.today().isoformat()
 
+    # 2026-11-06（使用者裁決）：抓取「成功」但最新資料日落後，舊值不得冒充現行判定。
+    # FRED DGS30 正常落後 1-2 交易日（週末不計），故以工作日計算，落後 ≥2 個工作日＝STALE。
+    def _weekdays_between(d1: date, d2: date) -> int:
+        n, cur = 0, d1 + timedelta(days=1)
+        while cur <= d2:
+            if cur.weekday() < 5:
+                n += 1
+            cur += timedelta(days=1)
+        return n
+
+    _STALE_WEEKDAYS = 2
+    try:
+        _lag_wd = _weekdays_between(date.fromisoformat(str(latest_date)[:10]), date.today())
+    except Exception:
+        _lag_wd = 0
+    _stale = _lag_wd >= _STALE_WEEKDAYS
+
     # 2026-10-14 W2/RF-1：抓取成功即歸零連續失敗計數，且必須落在**任何 early return 之前**
     # （下方有「初次執行且未觸發 → 靜默不寫 state」的分支；若在那之後才歸零，
     #   streak 會殘留，下次失敗會被誤計為連續）。
@@ -240,6 +257,9 @@ def main():
     streak = state.get("streak", 0)
 
     if new_mode is None and old_mode is None:
+        if _stale:   # 2026-11-06：資料過期不得靜默
+            print(f"⚠️ US30Y 資料過期：最新資料為 {latest_date}"
+                  f"（落後 {_lag_wd} 個工作日）— 紅線 {RED_LINE}% 判定不作為有效結論")
         return  # 初次執行且未觸發 → 靜默，不寫 state
 
     msgs = []
@@ -310,8 +330,15 @@ def main():
         # 2026-11-04：把「當前生效的口徑」寫進 state，讓下游與稽核不必猜（B 案未生效＝舊制字串）
         "policy": _pol.describe(),
         "red_consecutive_days": RED_CONSECUTIVE_DAYS,
+        # 2026-11-06（使用者裁決）：資料新鮮度，供下游判斷紅線結論是否有效
+        "data_lag_weekdays": _lag_wd,
+        "data_stale": _stale,
+        "as_of": latest_date,
     })
     state.pop("updated_at", None)  # 2026-09-11：移除殘留的舊時間戳（會被誤讀為最後更新日）
+    if _stale:
+        label = label + f"｜⚠️ 資料過期 {_lag_wd} 個工作日（截至 {latest_date}）"
+        state["mode_label"] = label
     if rl_now:
         state.setdefault("red_line_since", last2[1][0])
     else:
@@ -319,6 +346,12 @@ def main():
     save_state(state)
     sync_snapshot_gate()   # 2026-10-14：state 落地後立即同步 snapshot（唯一因果鏈）
 
+    if _stale:
+        msgs.insert(0,
+                    f"⚠️ US30Y 資料過期：最新資料為 {latest_date}"
+                    f"（落後 {_lag_wd} 個工作日；來源 {src}）"
+                    f" — 紅線 {RED_LINE}% 與模式判定【不作為有效結論】，"
+                    f"不得以「未觸紅線」推定安全。")
     if msgs:
         print("\n".join(msgs))
 
