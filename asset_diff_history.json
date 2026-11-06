@@ -1114,10 +1114,10 @@
   },
   "2026-11-06": {
     "date": "2026-11-06",
-    "total_assets": 26430950.0,
+    "total_assets": 26326230.0,
     "total_liabilities": 30951762.0,
-    "net_worth": -4520812.0,
-    "securities_market": 2566480.0,
+    "net_worth": -4625532.0,
+    "securities_market": 2461760.0,
     "insurance_current": 9241130.0,
     "insurance_total": 9241130.0,
     "fund_market": 12546411.0,
@@ -1148,6 +1148,6 @@
     "bonds": 0.0,
     "unrealized_pnl": 178640,
     "realized_pnl": 23460,
-    "net_worth_incl_re": 29496251.0
+    "net_worth_incl_re": 29391531.0
   }
 }
