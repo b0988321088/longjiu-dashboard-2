@@ -1415,5 +1415,17 @@
   "category": "完成",
   "item": "證券明細校正＋canonical 防錯上線（96881c41）（持股明細改11/05官方收盤：明細2,611,170→2,566,480與權威歸零；canonical=securities.total_market_value，6別名+內值+未實現全派生；新增五條fail-closed閘門(自測6/6)；CIO APPROVE、已推、Pages驗證、連線25",
   "detail": "持股明細改11/05官方收盤：明細2,611,170→2,566,480與權威歸零；canonical=securities.total_market_value，6別名+內值+未實現全派生；新增五條fail-closed閘門(自測6/6)"
+ },
+ {
+  "date": "2026-11-06",
+  "category": "完成",
+  "item": "日報2026-11-06（已產出（金額見 snapshot／當日日報檔，勿在此複寫數字））",
+  "detail": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）"
+ },
+ {
+  "date": "2026-11-06",
+  "category": "完成",
+  "item": "資產穿透2026-11-06（已產出（五桶市值見 snapshot.penetration.actual_twd））",
+  "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
  }
 ]
