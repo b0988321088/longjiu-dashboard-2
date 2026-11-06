@@ -286,9 +286,10 @@ def do_apply():
     for key, c in changes.items():
         print(f"  ✅ {c['label']}:  {c['new']:,}（已同步同義群組）")
 
-    # 更新日期
+    # 更新日期（INC-20261106-01 裁決①：雙欄位；兩者皆僅代表報告基準日，非估值日）
     today = datetime.date.today().strftime('%Y-%m-%d')
     snap['date'] = today
+    snap['report_base_date'] = today
     snap['last_calibrated'] = f"{today}T{datetime.datetime.now().strftime('%H:%M:%S')}"
 
     save_snapshot(snap)

@@ -529,7 +529,8 @@ footer b{color:#fff}
 }
 """
 
-_now = f"{snap.get('date', TODAY)}"
+from date_integrity import report_base as _report_base  # INC-20261106-01：報告基準日≠估值日
+_now = _report_base(snap)
 _report = f"""<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>

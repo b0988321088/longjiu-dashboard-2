@@ -65,10 +65,17 @@ def _roll_day_to_today(_today: str) -> None:
         print(f"⚠️ INC-210 日期滾動略過（snapshot 讀取失敗）: {_e}")
         return
     _prev = str(_s.get("date") or "")
-    if _prev != _today:
+    _prev_rb = str(_s.get("report_base_date") or "")
+    # INC-20261106-01（裁決①）：雙欄位相容遷移。
+    #   date              = 相容欄位，僅表示「最後一次執行日」
+    #   report_base_date  = 正式語義，僅表示「報告基準日」
+    # 兩者都**不得**當成任何資產的估值日（估值日一律讀各自權威來源）。
+    if _prev != _today or _prev_rb != _today:
         _s["date"] = _today
+        _s["report_base_date"] = _today
         _sp.write_text(json.dumps(_s, ensure_ascii=False, indent=1), encoding="utf-8")
-        print(f"🗓️ INC-210 snapshot.date {_prev or '?'} → {_today}（報告日期對齊當日）")
+        print(f"🗓️ INC-210 snapshot.date {_prev or '?'} → {_today}｜"
+              f"report_base_date {_prev_rb or '?'} → {_today}（皆僅代表報告基準日）")
     # 補當日 DB 列（缺列時差異分析會拿「最新資料日」當標籤 → 當日報表標成前一天）
     _cash = _s.get("real_liquid_assets", 0) or 0
     _sec = _s.get("securities_total_market_value", 0) or 0
@@ -788,12 +795,41 @@ def _cio_review_and_record() -> tuple[bool, str]:
     return True, f"真 CIO RECORD 已落地（{_reviewer}｜tree {tree[:12]}）"
 
 
+# ── 日期完整性仲裁（INC-20261106-01，使用者 2026-11-06 批准接線）──────────
+# BLOCKED ＝ 禁止發布，但**不刪任何原始資料、不覆蓋既有產物**；
+# 財務數字照出，逐資產估值日各自標示（SPEC-P0-3 §8）。
+# 不改變 CIO RECORD／RELEASE 權限，也不改變 --no-push 語義（本段位於其之前，只計狀態）。
+# 裁決（2026-11-06）：改採「最新優先、落後標示、問題局部隔離、核心冒充才整份阻擋」。
+#   publish=True 不代表資料完美，而是「沒有冒充」→ 可發，但必須逐項標示估值日。
+_date_ok = True
+try:
+    from date_integrity import pipeline_gate, format_gate_lines, publish_decision
+    _dv = pipeline_gate(BASE)
+    try:
+        _snap_gate = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
+    except Exception:
+        _snap_gate = {}
+    _dec = publish_decision(_dv, snapshot=_snap_gate)
+    _date_ok = bool(_dec["publish"])
+    for _ln in format_gate_lines(_dv):
+        print(_ln)
+    for _lb in _dec["labels"]:
+        print(f"    · 估值日標示：{_lb}")
+    for _is in _dec["isolated"]:
+        print(f"    · 段落隔離：{_is}")
+    for _bk in _dec["blocking"]:
+        print(f"    ⛔ 阻擋發布：{_bk}")
+    print(f"[DATE-GATE] 可發布={'是' if _date_ok else '否'}（整體 {_dv.get('status')}；落後≠停發，冒充才停）")
+except Exception as _de:  # 仲裁器故障 → fail-closed（寧可不發，不發錯）
+    _date_ok = False
+    print(f"[DATE-GATE][ERROR] 日期仲裁失敗：{_de} → fail-closed（不發布）")
+
 if _NO_PUSH:
     # INC-210：核准前本機產出（交付鐵則：改完先傳本地檔案，使用者說「推」才 push）
     # 2026-10-15：緊急應變車道固定只做產物生成＋驗收，提交／發布不在本班職權內。
     _why_np = "LJ_EMERGENCY_LANE=1（緊急應變車道）" if _EMERGENCY_LANE else "--no-push"
     print(f"\n🧪 {_why_np}：產物生成＋驗收完成；略過 commit/push（發布須另行授權）")
-elif ok and _cio_ok:
+elif ok and _cio_ok and _date_ok:
     # stage + commit 所有報表檔案
     # ⚠️ 8/21 實踩：git add 清單含不存在的檔 → 整批 add 失敗 → 空 commit → Pages 404
     _msg = f"四源同步 {TODAY}"

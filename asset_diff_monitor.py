@@ -227,12 +227,13 @@ def extract_snapshot(snap: dict) -> dict:
                     _ir = _db.execute("SELECT * FROM income WHERE date = ?", (_latest_date,)).fetchone()
                     _lr = _db.execute("SELECT * FROM liabilities WHERE date = ?", (_latest_date,)).fetchone()
                     _data_date = _latest_date # Update data_date to latest_date
-                    # INC-210（2026-09-17）：查無當日列時，標籤改用 snapshot.date（管線執行日），
-                    # 而非 DB 最新資料日 —— 原本會讓當日報表整套標成前一天
-                    # （asset_diff_2026-09-17.html 內 title/明細全是 09-16）。數值仍來自 DB 該列。
-                    _data_date = str(snap.get("date") or _latest_date)
-                    # 訊息必須與實際採用的標籤同源（2026-09-17 審查：原本只印 _latest_date，除錯會誤導）
-                    print(f"[INFO] DB 無當日列 → 數值取自最新資料列 {_latest_date}；標籤採用 {_data_date}")
+                    # INC-20261106-01（2026-11-06 使用者裁決③）：**移除**以 snapshot.date 冒充資料日的推定。
+                    # 舊行為（INC-210）：查無當日列時把標籤改成 snapshot.date（＝管線執行日），
+                    #   導致「11-06 收盤」實際上是 11-05 的數值 —— 與 11/06 事故同型。
+                    # 新行為（fail-honest）：數值照用 DB 該最新列（不刪、不歸零），
+                    #   但**資料日標 UNKNOWN**，不推定、不以報告基準日代替。
+                    _data_date = "UNKNOWN"
+                    print(f"[INFO] DB 無當日列 → 數值取自最新資料列 {_latest_date}；資料日＝UNKNOWN（不推定，見 INC-20261106-01）")
                 else:
                     print("[WARN] No asset data found in DB. Falling back to snapshot.json.")
             
@@ -351,7 +352,8 @@ def extract_snapshot(snap: dict) -> dict:
         display_funds[name] = val
 
     return {
-        "date": str(snap.get("generated_at", snap.get("date", date.today().isoformat())))[:10],
+        # INC-20261106-01：此欄為報告基準日，不是估值日（估值日見 _data_date／UNKNOWN）
+        "date": str(snap.get("report_base_date") or snap.get("date") or "UNKNOWN")[:10],
         "total_assets": float(total_assets),
         "total_liabilities": float(total_liab),
         "net_worth": float(net_worth),

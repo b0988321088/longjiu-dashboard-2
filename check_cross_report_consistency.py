@@ -103,7 +103,8 @@ def main() -> int:
     a = ap.parse_args()
 
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
-    d = a.date or str(snap.get("date") or "")
+    from date_integrity import report_base as _report_base
+    d = a.date or _report_base(snap)
     TRUTH = load_truth(snap)
 
     files = {}

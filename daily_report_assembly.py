@@ -43,7 +43,7 @@ from __future__ import annotations
 
 import json
 import re as _re_mod
-from datetime import date as _date, timedelta as _td
+from datetime import date as _date, datetime as _dt, timedelta as _td
 from pathlib import Path
 
 # P0 任務要顯示的狀態關鍵字（與 regenerate_report.py 原實作相同）
@@ -300,6 +300,155 @@ def unify_us30y_live(html: str, base=None) -> str:
     return html
 
 
+def _us_session_label(_g):
+    """美股時點：以美東時間 09:30–16:00 判定（含 DST 自動換算）。
+
+    generated_at 是台北 naive 時間（daily_intel 用 datetime.now()），
+    直接拿台北小時判斷會把 22:00–22:30 的盤前誤標成盤中、把 04:00–05:00 的收盤後誤標成盤中。
+    """
+    try:
+        from zoneinfo import ZoneInfo
+        _et = _g.replace(tzinfo=ZoneInfo("Asia/Taipei")).astimezone(ZoneInfo("America/New_York"))
+        _m = _et.hour * 60 + _et.minute
+        if 9 * 60 + 30 <= _m < 16 * 60:
+            return "盤中，非收盤"
+        return "最近一次已完成收盤"
+    except Exception:
+        # 無 tzdata → 不得聲稱盤中（保守）
+        return "最近一次已完成收盤"
+
+
+def _section_links(base):
+    """第 5 章兩個連結（完整報告＋數據版備援）；檔名由 glob 取得，不補副檔名（INC-294）。"""
+    _html = ""
+    _ef = sorted(Path(base).glob("emergency_report_2*.html"), reverse=True)
+    _tf = sorted(Path(base).glob("emergency_taiex_report_2*.html"), reverse=True)
+    if _ef:
+        _html += ('<br><a href="%s" target="_blank" '
+                  'style="display:inline-block;margin-top:10px;color:#34D399;font-weight:bold">'
+                  '📄 檢視完整 LLM 緊急應變報告 →</a>') % (PAGES_BASE + "/" + _ef[0].name)
+    if _tf:
+        _html += ('<br><a href="%s" target="_blank" style="font-size:13px;color:#6e6e73">'
+                  '📊 數據版報告（備援）</a>') % (PAGES_BASE + "/" + _tf[0].name)
+    return _html
+
+
+def _section_wrap(base, inner):
+    """第 5 章外層容器：單一 callout-warn ＋ 兩條連結（與緊急應變原文同一契約）。"""
+    return f'<div class="callout callout-warn">{inner}</div>' + _section_links(base)
+
+
+def _market_phase_labels(now, gen_at=None):
+    """市場時點標籤 — 以**資料抓取時刻**決定，不看現在幾點。
+
+    為什麼：2026-11-06 事故正是「13:00 抓的盤中值，14:30 被標成當日收盤」。
+    若以 now 判斷，14:30 跑一次就會把 13:00 的盤中數字說成收盤價。
+    """
+    _g = gen_at if isinstance(gen_at, _dt) else None
+    if _g is None:
+        # 抓取時刻不明 → 不得聲稱收盤
+        return "時點不明，不標收盤", "最近一次已完成收盤"
+    if _g.date() == now.date():
+        hm = _g.hour * 60 + _g.minute
+        if hm < 9 * 60:
+            tw = "前一交易日收盤"          # 晨間抓取：台股尚未開盤
+        elif hm < 13 * 60 + 45:
+            tw = "盤中，非收盤"
+        else:
+            tw = "當日收盤"
+        return tw, _us_session_label(_g)
+    return "前一交易日收盤", _us_session_label(_g)
+
+
+def compose_market_section(base, today=None, now=None):
+    """第 5 章「市場資訊」三段式 fallback（INC-20261106-01 方案 A）。
+
+    ① emergency_llm_analysis.json  content_date == 報告基準日 → 沿用緊急應變原文
+    ② daily_analysis.json          date（YYYYMMDD）== 報告基準日 → 由結構化行情組稿
+    ③ 皆不可用 → 「本日市場資料未取得」（不得用舊章節補位）
+
+    回傳 {"tier", "html", "content_date", "source"}；tier==1 時 html 為空，
+    由 build_emergency_block 走既有（含舊值覆蓋／as_of 標示）路徑。
+    """
+    _base = Path(base)
+    _today = str(today or _date.today().isoformat())
+    _now = now or _dt.now()
+
+    # ── ① 緊急應變：只認 producer 明確的 content_date（generated_at 不得替代）
+    _ej = _base / "data" / "emergency_llm_analysis.json"
+    if _ej.exists():
+        try:
+            _d = json.loads(_ej.read_text(encoding="utf-8"))
+            if str(_d.get("content_date") or "") == _today and (_d.get("full_report") or _d.get("analysis")):
+                return {"tier": 1, "html": "", "content_date": _today,
+                        "source": "emergency_llm_analysis.json"}
+        except Exception as _e:
+            print(f"[WARN] compose_market_section tier1: {_e}")
+
+    # ── ② 每日情報：只認 date 欄位（不看 mtime）
+    _da = _base / "daily_analysis.json"
+    if _da.exists():
+        try:
+            _d2 = json.loads(_da.read_text(encoding="utf-8"))
+            _dd = str(_d2.get("date") or "").replace("-", "")
+            if _dd == _today.replace("-", ""):
+                _mk = _d2.get("market") or {}
+                _sg = _d2.get("signals") or {}
+                _news = [n for n in (_d2.get("news") or []) if isinstance(n, dict)][:3]
+                _gen = None
+                try:
+                    _gen = _dt.fromisoformat(str(_d2.get("generated_at") or ""))
+                except Exception:
+                    _gen = None
+                _tw_l, _us_l = _market_phase_labels(_now, _gen)
+
+                def _clean(x):
+                    # 不得出現「今日」描述行情（使用者四項要求之一）
+                    return str(x or "—").replace("今日", "該資料日").replace("今天", "該資料日")
+
+                _lines = [
+                    f"台股：{_clean(_mk.get('twii'))}（{_tw_l}）｜台積電 {_clean(_mk.get('tsm'))}",
+                    f"美股：{_clean(_mk.get('us'))}（{_us_l}）",
+                    f"費半：{_clean(_mk.get('sox'))}｜美國 CPI：{_clean(_mk.get('cpi'))}",
+                ]
+                _sell = "、".join(_clean(x) for x in (_sg.get("sell_signals") or [])[:3]) or "無"
+                _buy = "、".join(_clean(x) for x in (_sg.get("buy_signals") or [])[:3]) or "無"
+                _body = "".join(
+                    f"<span style=\"display:block;margin:2px 0\">• {l}</span>" for l in _lines
+                )
+                _body += (f"<span style=\"display:block;margin:6px 0 2px\"><strong>訊號</strong>："
+                          f"賣出 {_sell}｜買進 {_buy}</span>")
+                if _news:
+                    _nl = "".join(
+                        f"<span style=\"display:block\">• {_clean(n.get('title'))}</span>"
+                        for n in _news
+                    )
+                    _body += f"<span style=\"display:block;margin:6px 0 2px\"><strong>市場消息</strong>：</span>{_nl}"
+                _sc = _clean(_d2.get("scenario_summary"))
+                if _sc and _sc != "—":
+                    _body += f"<span style=\"display:block;margin-top:6px\"><strong>情境</strong>：{_sc}</span>"
+
+                # 契約（S3.13）：第 5 章區塊只能有**一個** </div>（外層 callout-warn），
+                # 內文一律用 <p>／<span>，不得再嵌 <div>。
+                _html = (
+                    f"<p style=\"font-weight:700;margin:0 0 4px\">市場資訊（as-of {_today}）</p>"
+                    f"{_body}"
+                    f"<p style=\"font-size:11px;color:#6b7280;margin:6px 0 0\">"
+                    f"資料來源：daily_analysis.json（date={_today}）｜"
+                    f"台股＝{_tw_l}、美股＝{_us_l}；非當日資料不標為當日。</p>"
+                )
+                return {"tier": 2, "html": _html, "content_date": _today,
+                        "source": "daily_analysis.json"}
+        except Exception as _e:
+            print(f"[WARN] compose_market_section tier2: {_e}")
+
+    # ── ③ 無可信來源
+    _html3 = ("<p style=\"font-size:13px;color:#b45309;margin:0\">"
+              "本日市場資料未取得（無 content_date 相符的緊急應變分析，亦無當日 daily_analysis）"
+              "→ 不引用舊章節補位。</p>")
+    return {"tier": 3, "html": _html3, "content_date": None, "source": None}
+
+
 def build_emergency_block(base, snapshot, today: str | None = None) -> str:
     """「緊急應變（美股／台股）」LLM 區塊的唯一實作（INC-291／PEND-20261007-04）。
 
@@ -322,6 +471,13 @@ def build_emergency_block(base, snapshot, today: str | None = None) -> str:
     """
     _base = Path(base)
     _today = str(today or _date.today().isoformat())
+    # INC-20261106-01 方案 A：三段式 fallback（使用者 2026-11-06 核准）
+    #   tier 1 = 緊急應變 content_date 相符 → 走下方既有路徑
+    #   tier 2 = 當日 daily_analysis 組稿｜tier 3 = 明示「本日市場資料未取得」
+    _sec = compose_market_section(_base, _today)
+    if _sec["tier"] != 1:
+        # 外層容器與連結契約不變（S3.13／S3.15 閘門）
+        return _section_wrap(_base, _sec["html"])
     _ej = _base / "data" / "emergency_llm_analysis.json"
     if not _ej.exists():
         return ""
@@ -396,14 +552,5 @@ def build_emergency_block(base, snapshot, today: str | None = None) -> str:
     except Exception as _bfe:
         print(f"[WARN] band_filter 套用失敗（緊急應變內文，範圍內靜默可能失效）：{_bfe}")
     _html = f'<div class="callout callout-warn">{_stale_badge}{_note}{_r.replace(chr(10), "<br>" + chr(10))}</div>'
-    # 連結（自動找最新可用檔案）；`_ef[0].name` 已含 `.html`，故不再補副檔名（INC-294）。
-    _ef = sorted(_base.glob("emergency_report_2*.html"), reverse=True)
-    _tf = sorted(_base.glob("emergency_taiex_report_2*.html"), reverse=True)
-    if _ef:
-        _html += ('<br><a href="%s" target="_blank" '
-                  'style="display:inline-block;margin-top:10px;color:#34D399;font-weight:bold">'
-                  '📄 檢視完整 LLM 緊急應變報告 →</a>') % (PAGES_BASE + "/" + _ef[0].name)
-    if _tf:
-        _html += ('<br><a href="%s" target="_blank" style="font-size:13px;color:#6e6e73">'
-                  '📊 數據版報告（備援）</a>') % (PAGES_BASE + "/" + _tf[0].name)
+    _html += _section_links(_base)
     return _html

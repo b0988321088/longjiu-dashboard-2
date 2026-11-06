@@ -114,7 +114,9 @@ snap["penetration"] = {
 # 只有 sync_all.py v3 自動修復會補滾 → 07:00 路徑的 snapshot.date 會落後一天，
 # 害 four_source_sync Step 4b 拿舊日期去比對昨天的報表 → 假「三報表穿透不一致」。
 # 語意與 sync_all.py v3（sp["date"] = today）一致。
+# INC-20261106-01（裁決①）：雙欄位相容遷移，兩者皆僅代表報告基準日，不得當估值日。
 snap["date"] = date.today().isoformat()
+snap["report_base_date"] = date.today().isoformat()
 snap["generated_at"] = datetime.now().isoformat()
 # P0-1（2026-09-30）：穿透報告是每日必跑路徑（regenerate_report 會呼叫）→ 在此同步
 # 雙維度佔比與情境現況驗證。防禦維度分母＝總資產−指定用途款，總資產每天隨市值變動

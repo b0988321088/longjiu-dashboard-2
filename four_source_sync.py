@@ -127,7 +127,7 @@ errors = []
 print("🔍 Step 1: 驗證 snapshot.json ...", end=" ")
 try:
     snap = json.load(open('snapshot.json', encoding='utf-8'))
-    print(f"✅ 日期 {snap.get('date','?')}")
+    print(f"✅ 報告基準日 {snap.get('report_base_date') or snap.get('date','?')}")
 except Exception as e:
     print(f"❌ {e}")
     errors.append("snapshot.json 解析失敗")
@@ -138,7 +138,8 @@ try:
     conn = sqlite3.connect('dragon_assets.db')
     c = conn.cursor()
 
-    today = snap.get('date', str(datetime.date.today()))
+    from date_integrity import report_base as _report_base  # 報告基準日≠估值日
+    today = _report_base(snap)
     cash = snap.get('real_liquid_assets', 0)
     securities = snap.get('securities_total_market_value', 0)
     ins_ab = snap.get('allianz_combined', 0)
@@ -199,7 +200,8 @@ except Exception as e:
 print("🔍 Step 3c: 產出日報 ...", end=" ")
 try:
     import subprocess, os
-    today = snap.get('date', str(datetime.date.today()))
+    from date_integrity import report_base as _report_base  # 報告基準日≠估值日
+    today = _report_base(snap)
     # 刪除舊日報強制重產（穿透報告由 build_penetration_report.py 獨立產出，不在這裡刪）
     for f in [f'daily_report_v2_{today}.html']:
         fp = os.path.join(BASE, f)
@@ -294,7 +296,8 @@ try:
         print(f"❌ 同義欄位不一致：{_c1.stdout[-200:]}")
         errors.append("同義欄位不一致（asset_sync.py 抓到）")
     else:
-        _today_s = snap.get('date', str(datetime.date.today()))
+        from date_integrity import report_base as _report_base
+        _today_s = _report_base(snap)
         _c2 = _sp.run(['python', 'check_penetration_consistency.py', _today_s], capture_output=True, text=True, timeout=30)
         if _c2.returncode != 0 or '❌' in _c2.stdout:
             print(f"❌ 穿透不一致：{_c2.stdout[-300:]}")
@@ -314,7 +317,7 @@ else:
 # === 總結 ===
 print(f"\n{'='*40}")
 if errors:
-    _handle_incidents(errors, snap.get('date', str(datetime.date.today())))
+    _handle_incidents(errors, (snap.get('report_base_date') or snap.get('date') or ''))
 else:
     print("✅ 四源同步完成！")
     print("   🔒 尚未推送 — 請傳 MEDIA 給使用者核准後才 git push")

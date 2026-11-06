@@ -180,7 +180,10 @@ def build(snap: dict) -> dict:
     return {
         "schema_version": VERSION,
         "產生時間": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "資料日": snap.get("data_date") or snap.get("date"),
+        "資料日": __import__("date_integrity").report_base(snap),
+            "估值日": {"證券": __import__("date_integrity").authority_date(snap, "tw_securities"),
+                       "基金": __import__("date_integrity").authority_date(snap, "funds"),
+                       "安聯": __import__("date_integrity").authority_date(snap, "policy_allianz")},
         "總資產": round(total),
         "說明": "四層並列，L1/L2 互斥（總和回 100%），L3/L4 可重疊且不與 L1/L2 相加。"
                 "策略分類為規則建議，未經人工核准不得視為定案。",

@@ -230,7 +230,8 @@ def build_perf_month_card(snap):
         except Exception:
             return "—"
 
-    ym = str(snap.get("date") or _dt.date.today().isoformat())[:7]
+    from date_integrity import report_base as _report_base  # 報告基準日≠估值日
+    ym = _report_base(snap)[:7]
     adj = _bip.load_adjust()
     a = adj.get(ym, {}) or {}
     db = _sq.connect(str(BASE / "dragon_assets.db"))

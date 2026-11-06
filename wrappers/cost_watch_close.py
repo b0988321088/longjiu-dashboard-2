@@ -13,11 +13,14 @@ data/ai_cost_daily.jsonl，但過去只留在工作區不提交 → 22:00 晚報
   · auto_push 的 rc 原樣帶回（0＝已上線並驗證遠端 sha；3/4/5/6＝失敗，cron 端要看得到）
 """
 import datetime as dt
+import json
 import os
 import subprocess
 import sys
 
 REPO = r"C:/Users/bot/Desktop/longjiu_system"
+if REPO not in sys.path:
+    sys.path.insert(0, REPO)  # 供 artifact_manifest 匯入（B 案）
 TARGET = os.path.join(REPO, "cost_watch.py")
 COST_FILES = ("cost.html", "cost_data.json", "data/ai_cost_daily.jsonl")
 
@@ -41,21 +44,31 @@ def main() -> int:
         sys.stderr.write(add.stderr or add.stdout)
         return 1
 
-    if _git("diff", "--cached", "--quiet", "--", *COST_FILES).returncode == 0:
-        print("費用帳本無變更，略過推送")
-        return r.returncode
-
-    msg = f"data: 費用帳本日結（close {dt.datetime.now():%Y-%m-%d %H:%M}）"
-    c = _git("commit", "-m", msg, "--", *COST_FILES)
-    if c.returncode != 0:
-        sys.stderr.write((c.stdout or "") + (c.stderr or ""))
+    # ── B 案（INC-20261106-01，使用者 2026-11-06 裁決④：同型 wrapper 全面納入）──
+    # 舊行為：git add → git commit → auto_push（產物與發布耦合）。
+    # 新行為：產生 → 驗證 → 寫 artifact_manifest.json → 停止（不 commit／不 push）。
+    # commit 統一交每日單一窗口（22:38）；缺 RECORD 的 commit 由獨立 CIO 流程處理。
+    try:
+        from artifact_manifest import write_manifest
+        _snap = {}
+        try:
+            with open(os.path.join(REPO, "snapshot.json"), encoding="utf-8") as _f:
+                _snap = json.load(_f)
+        except Exception:
+            _snap = {}
+        write_manifest(
+            producer="cost_watch_close.py",
+            artifacts=list(COST_FILES),
+            report_base_date=str(_snap.get("date") or "")[:10] or None,
+            source_dates={"cost_ledger": dt.date.today().isoformat()},
+            note=f"close rc={r.returncode}；B 案停止於留痕，未 commit／未 push",
+        )
+    except Exception as exc:
+        sys.stderr.write(f"ERROR: artifact_manifest 寫入失敗：{exc}\n")
         return 1
-    print((c.stdout or msg).strip().splitlines()[0])
 
-    # 推送仍走唯一出口；但 close 本體失敗時 rc 要留著（帳本照推、故障照報，不靜默）
-    push_rc = subprocess.run([sys.executable, "auto_push.py",
-                              "--script", "cost_watch_close.py"], cwd=REPO).returncode
-    return push_rc or r.returncode
+    print("⏸ B 案：已留痕，未 commit、未 push（發布交由每日單一窗口）")
+    return r.returncode
 
 
 if __name__ == "__main__":

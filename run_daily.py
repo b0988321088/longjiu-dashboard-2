@@ -1896,8 +1896,25 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
     try:
         _emj = json.loads((Path(__file__).resolve().parent / "data" /
                            "emergency_llm_analysis.json").read_text(encoding="utf-8"))
+        # 只有 tier==1（本區塊確實來自緊急應變原文）才加 as-of／內容日期標示，
+        # 否則會把 tier2 組稿誤標成「緊急應變分析原文」（2026-11-06 方案 A 驗收）。
+        from daily_report_assembly import compose_market_section as _cms
+        _tier = _cms(Path(__file__).resolve().parent, TODAY)["tier"]
         _emd = str(_emj.get("date") or "")
-        if _emd and _emd != TODAY:
+        # 裁決（2026-11-06）：內容日期以 content_date 為準；缺 → 標示資料不足（不停發）；
+        # 非當日 → 一律掛〔歷史：DATE〕，讓 L3 可辨識、讀者不會誤讀為當日結論。
+        _cd = str(_emj.get("content_date") or "")
+        if _tier == 1 and not _cd:
+            llm_emergency = (
+                "<div style='font-size:12px;color:#b45309;margin-bottom:6px'>"
+                f"⚠️ 本區塊內容日期未提供（as-of {_emd or '不明'}）→ 不作為當日結論，僅供參考"
+                "</div>") + llm_emergency
+        elif _tier == 1 and _cd != TODAY:
+            llm_emergency = (
+                "<div style='font-size:12px;color:#6b7280;margin-bottom:6px'>"
+                f"〔歷史：{_cd}〕本區塊為 {_cd} 分析原文 → 非當日資訊"
+                "</div>") + llm_emergency
+        if _tier == 1 and _emd and _emd != TODAY:
             _lrs = (_st_u or {}).get("last_rate")
             _ld = ((_st_u or {}).get("read_date") or (_st_u or {}).get("last_date") or "")
             if _lrs is not None:
@@ -2699,6 +2716,21 @@ def main():
             )
     except: pass
     
+    # ── 日期完整性仲裁（INC-20261106-01，使用者 2026-11-06 批准接線）──────
+    # 只是「算狀態 + 落 DIS」，不改任何既有產物內容；BLOCKED 的硬阻擋在
+    # regenerate_report.py 的發布條件（ok and _cio_ok and _date_ok）。
+    try:
+        from date_integrity import pipeline_gate, format_gate_lines
+        _dv = pipeline_gate(BASE)
+        for _ln in format_gate_lines(_dv):
+            print(_ln)
+        tv['dis_status'] = _dv.get('status')
+        tv['dis_layers'] = _dv.get('layers')
+    except Exception as _de:
+        print(f"[DATE-GATE][ERROR] 日期仲裁失敗：{_de} → fail-closed")
+        tv['dis_status'] = 'BLOCKED'
+        tv['dis_layers'] = {}
+
     # 載入統一市場情報
     daily_analysis_path = BASE / "daily_analysis.json"
     market_intel_text = ""
@@ -2794,7 +2826,7 @@ def main():
     # LLM 緊急應變分析（INC-291：唯一實作＝daily_report_assembly.build_emergency_block）
     #   原私有組裝（_format_content_to_html、無舊值覆蓋、無 as_of 標示、僅 1 條連結、包裝縮排不同）
     #   已收斂；canonical 口徑＝regenerate_report.py 的已上線實作（同輸入逐位元相同）。
-    from daily_report_assembly import build_emergency_block as _asm_em
+    from daily_report_assembly import build_emergency_block as _asm_em, compose_market_section as _cms_m
     _snap_em = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     llm_emergency_analysis_html = _asm_em(BASE, _snap_em, TODAY)
     # 2026-10-16 P0（US30Y 單一來源）：緊急應變原文 as-of 可能非當日 →
@@ -2812,7 +2844,8 @@ def main():
         _emj2 = json.loads((Path(__file__).resolve().parent / "data" /
                             "emergency_llm_analysis.json").read_text(encoding="utf-8"))
         _emd2 = str(_emj2.get("date") or "")
-        if _emd2 and _emd2 != str(TODAY):
+        _tier_main = _cms_m(Path(__file__).resolve().parent, TODAY)["tier"]
+        if _tier_main == 1 and _emd2 and _emd2 != str(TODAY):
             _h = (f"<div style='font-size:12px;color:#6b7280;margin-bottom:6px'>"
                   f"⏱ 本區塊＝{_emd2} 緊急應變分析原文（as-of {_emd2}）｜本頁即時讀值："
                   f"US30Y {_lr:.2f}%（讀值日 {_ld2}）</div>") + _h

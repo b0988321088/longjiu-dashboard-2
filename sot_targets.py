@@ -1165,7 +1165,8 @@ def us30y_gate(snap: dict | None = None, state: dict | None = None,
         _red = None
     if _red is None:
         _red = ((snap.get("thresholds_2026_0915") or {}).get("US30Y紅線")) or None
-    ref = str(snap.get("date") or dt.date.today().isoformat())
+    from date_integrity import report_base as _report_base  # 報告基準日≠估值日
+    ref = _report_base(snap)
     as_of = st.get("last_date")
     value = st.get("last_rate")
     lag = None

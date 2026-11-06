@@ -19,7 +19,8 @@ issues = []
 
 # 1. 讀 snapshot
 snap = json.load(open('snapshot.json', encoding='utf-8'))
-today = snap.get('date', '?')
+from date_integrity import report_base as _report_base
+today = _report_base(snap)
 
 print(f"\n📅 日期：{today}")
 print("📋 snapshot 關鍵數字：")

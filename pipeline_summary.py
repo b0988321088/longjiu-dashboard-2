@@ -88,7 +88,8 @@ _TGT_KEY = {"台股市值型成長": "台股市值型目標", "美股市值型�
 
 def build(rc: int = 0, day: str | None = None) -> str:
     s = _load(SNAP)
-    d = day or str(s.get("date") or date.today().isoformat())
+    from date_integrity import report_base as _report_base
+    d = day or _report_base(s)
     pen = s.get("penetration") or {}
     act, tgt, gap = pen.get("actual_pct") or {}, pen.get("targets") or {}, pen.get("gaps") or {}
     cl = s.get("cash_layers") or {}

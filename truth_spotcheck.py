@@ -50,7 +50,8 @@ def build_pool(snap: dict, st: dict) -> list[dict]:
     cd = snap.get("cash_detail") or {}
     cl = snap.get("cash_layers") or {}
     rc = snap.get("restricted_cash") or {}
-    full = str(snap.get("date") or "—")
+    from date_integrity import report_base as _report_base
+    full = _report_base(snap)
     csrc = snap.get("cash_source")
     cash_date = (csrc.get("date") if isinstance(csrc, dict) else csrc) or full
     nav = snap.get("fund_nav_dates") or {}
@@ -173,7 +174,8 @@ def main() -> int:
         st = {}
     pool = build_pool(snap, st)
     today = date.today()
-    ref = str(snap.get("date") or today.isoformat())
+    from date_integrity import report_base as _report_base
+    ref = _report_base(snap)
 
     argv = sys.argv[1:]
     if "--list" in argv:

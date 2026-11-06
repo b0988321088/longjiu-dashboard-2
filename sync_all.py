@@ -93,13 +93,16 @@ def main():
     except Exception as e:
         print(f"  ⚠️ 儀表板模板檢查失敗: {e}")
     # v3 自動修復 1：snapshot.date 同步為 today（2026-08-25 血淚：date 停在 8/24 → four_source 檢查舊日期 → 假失敗）
+    # INC-20261106-01（裁決①）：同時寫入 report_base_date（正式語義）。兩者皆僅代表報告基準日。
     try:
         sp = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
-        if sp.get("date") != today:
+        _rb_old = sp.get("report_base_date")
+        if sp.get("date") != today or _rb_old != today:
             old = sp.get("date")
             sp["date"] = today
+            sp["report_base_date"] = today
             (BASE / "snapshot.json").write_text(json.dumps(sp, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
-            print(f"  🔧 snapshot.date {old} → {today}")
+            print(f"  🔧 snapshot.date {old} → {today}｜report_base_date {_rb_old or '?'} → {today}")
     except Exception as e:
         print(f"  ⚠️ snapshot.date 修復失敗: {e}")
     # 2026-08-31 血淚：total_assets 必須 = 保險+證券+基金+現金 動態重算（禁止差額法 — 上次只加現金差額漏 sec/fund → 穿透檢查抓「總資產不一致」）

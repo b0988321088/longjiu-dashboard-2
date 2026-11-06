@@ -21,11 +21,14 @@ data/ai_cost_daily.jsonl）過去只留在本機，線上 Pages 要等到「四�
     但若範圍內唯一未落紀錄的就是本 job 自己那顆，仍原樣回 rc=3（fail-closed，不掩蓋）。
 """
 import datetime as dt
+import json
 import os
 import subprocess
 import sys
 
 REPO = r"C:/Users/bot/Desktop/longjiu_system"
+if REPO not in sys.path:
+    sys.path.insert(0, REPO)  # 供 artifact_manifest 匯入（B 案）
 TARGET = os.path.join(REPO, "cost_watch.py")
 COST_FILES = ("cost.html", "cost_data.json", "data/ai_cost_daily.jsonl")
 
@@ -50,40 +53,33 @@ def main() -> int:
     if r.returncode != 0:
         print(f"⚠️ digest rc={r.returncode}（費用頁仍嘗試推送，不讓線上停在舊版）")
 
-    add = _git("add", *COST_FILES)
-    if add.returncode != 0:
-        sys.stderr.write(add.stderr or add.stdout)
+    # ── B 案（INC-20261106-01，使用者 2026-11-06 裁決③）────────────────────
+    # 舊行為：git add → git commit → auto_push。2026-11-06 13:30 因此產生 f83b2d2d，
+    #         讓人工核對窗口內 HEAD 漂移；且因範圍含缺 RECORD 的 9dd6e960 被 rc=3 擋下。
+    # 新行為：產生 → 驗證 → 寫 artifact_manifest.json → 停止（不 commit／不 push）。
+    #         前一顆 commit 缺 CIO RECORD 時，不得由本排程繞過審查或重排發布順序；
+    #         該問題由獨立 CIO 流程處理。commit 統一交每日單一窗口（22:38）。
+    rc_verify = 0 if r.returncode == 0 else r.returncode
+    try:
+        from artifact_manifest import write_manifest
+        _snap = {}
+        try:
+            _snap = json.loads((REPO / "snapshot.json").read_text(encoding="utf-8"))
+        except Exception:
+            _snap = {}
+        write_manifest(
+            producer="cost_watch_digest.py",
+            artifacts=list(COST_FILES),
+            report_base_date=str(_snap.get("date") or "")[:10] or None,
+            source_dates={"cost_ledger": dt.date.today().isoformat()},
+            note=f"digest rc={r.returncode}；B 案停止於留痕，未 commit／未 push",
+        )
+    except Exception as exc:  # 留痕失敗不得靜默
+        sys.stderr.write(f"ERROR: artifact_manifest 寫入失敗：{exc}\n")
         return 1
 
-    if _git("diff", "--cached", "--quiet", "--", *COST_FILES).returncode == 0:
-        print("費用頁無變更，略過推送")
-        return r.returncode
-
-    msg = f"data: 費用頁同步（digest {dt.datetime.now():%Y-%m-%d %H:%M}）"
-    c = _git("commit", "-m", msg, "--", *COST_FILES)
-    if c.returncode != 0:
-        sys.stderr.write((c.stdout or "") + (c.stderr or ""))
-        return 1
-    print((c.stdout or msg).strip().splitlines()[0])
-
-    own = _git("rev-parse", "--short", "HEAD").stdout.strip()
-    rc = subprocess.run([sys.executable, "auto_push.py",
-                         "--script", "cost_watch_digest.py"], cwd=REPO).returncode
-
-    # 2026-10-15（使用者核准）：rc=3 ＝「推送範圍內有未落紀錄的強制真 CIO commit」。
-    # 若那些 commit 不屬於本 job（他條路徑正在進行／重排中），那不是本 job 的失敗：
-    # 本 job 的產出已在本機 commit，待對方落 RECORD 後下次執行會併同推送。
-    # 只有「範圍內唯一未落紀錄的就是本 job 剛造的那顆」才保留 rc=3（真問題，不得掩蓋）。
-    if rc == 3 and own:
-        foreign = [x for x in _unpushed() if not x.startswith(own + " ")]
-        if foreign:
-            print("⚠️ 跳過推送（非本 job 失敗）：推送範圍內有他條路徑尚未落紀錄的 commit")
-            for x in foreign[:8]:
-                print(f"     · {x}")
-            print(f"   本 job 產出已在本機 commit（{own}）；待上述 commit 落 RECORD 後，"
-                  "下次執行會併同推送（或由該路徑自行推送）。")
-            return 0
-    return rc
+    print("⏸ B 案：已留痕，未 commit、未 push（發布交由每日單一窗口）")
+    return rc_verify
 
 
 if __name__ == "__main__":
