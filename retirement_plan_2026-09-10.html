@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>龍九退休規劃 2026-09-10</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC",sans-serif;background:#0f172a;color:#f1f5f9;max-width:860px;margin:0 auto;padding:16px;font-size:15px;line-height:1.7}
+h1{font-size:22px;font-weight:900;margin:8px 0 2px}
+.meta{color:#94a3b8;font-size:12px;margin-bottom:16px}
+.card{background:#1e293b;border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid #334155}
+.card h2{font-size:15px;font-weight:800;margin:0 0 10px;color:#e2e8f0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.stat{background:#0f172a;border-radius:10px;padding:12px}
+.stat .label{color:#94a3b8;font-size:12px}
+.stat .val{font-size:20px;font-weight:900;color:#38bdf8;font-family:ui-monospace,monospace}
+.stat .val.green{color:#22c55e}.stat .val.amber{color:#f59e0b}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+td,th{padding:8px 6px;border-bottom:1px solid #334155;text-align:left}
+th{color:#94a3b8;font-weight:600;font-size:12px}
+.bar{height:8px;background:#334155;border-radius:6px;overflow:hidden;margin-top:4px}
+.bar>div{height:100%;background:#22c55e;border-radius:6px}
+ul{margin:6px 0;padding-left:18px} li{margin:4px 0}
+.tag{display:inline-block;background:#334155;color:#e2e8f0;border-radius:6px;padding:2px 8px;font-size:12px;margin-right:6px}
+.callout{background:#1e3a5f40;border-left:3px solid #38bdf8;padding:10px 14px;border-radius:6px;font-size:13px}
+.red{color:#ef4444}.green{color:#22c55e}.amber{color:#f59e0b}</style></head><body>
+<h1>🏖️ 退休規劃報告</h1>
+<p class="meta">產出：2026-09-10 ｜ 資料源：snapshot.json（動態讀取）｜ 被動收入 = 保單配息 130,930 + 房租 80,100</p>
+
+<div class="grid">
+  <div class="card"><div class="stat"><div class="label">當月被動收入（保守）</div><div class="val green">211,030</div></div></div>
+  <div class="card"><div class="stat"><div class="label">當下真實開銷</div><div class="val amber">162,781</div></div></div>
+  <div class="card"><div class="stat"><div class="label">FIRE 覆蓋率</div><div class="val" style="color:#22c55e">129.6%</div></div></div>
+  <div class="card"><div class="stat"><div class="label">退休生活費覆蓋（38,000 目標）</div><div class="val green">555%</div></div></div>
+</div>
+<div class="bar" style="margin-bottom:16px"><div style="width:min(130%,100%)"></div></div>
+
+<div class="card"><h2>🎯 退休目標達成檢查</h2>
+<table><tr><th>項目</th><th>現況</th><th>狀態</th></tr>
+<tr><td>退休目標</td><td>月生活費 38,000｜理想 FIRE 月花費 40,000</td><td>已達成 ✅</td></tr><tr><td>FIRE 現況</td><td>被動收入 211,030 vs 開銷 162,781（覆蓋 129.6%）</td><td>✅ 已超越</td></tr><tr><td>退休後流動性</td><td>常態被動 180,100 vs 維持支出 162,781 → 安全盈餘 +30,552</td><td>🟢 正現金流</td></tr><tr><td>2029 升級情境</td><td>富達解約免罰 +~45,000/月 → 月被動 256,030＋疊卷套利</td><td>📈 待 2029/8</td></tr><tr><td>三階段目標③</td><td>扣除房產淨資產 ≥ 0（現況 淨值 -4,159,806）</td><td>⏳ 目標 2029-30</td></tr>
+</table></div>
+
+<div class="card"><h2>📊 退休後流動性估算</h2>
+<table>
+<tr><th>項目</th><th>金額/月</th></tr>
+<tr><td>被動月固定收入（常態：配息 100,000 + 房租 80,100）</td><td>180,100</td></tr>
+<tr><td>退休維持月支出</td><td>162,781</td></tr>
+<tr><td style="color:#22c55e;font-weight:800">安全退休盈餘</td><td style="color:#22c55e;font-weight:800">+17,319</td></tr>
+<tr><td>退休生活費目標（使用者設定）</td><td>38,000</td></tr>
+<tr><td style="color:#22c55e;font-weight:800">對 38,000 目標的覆蓋</td><td style="color:#22c55e;font-weight:800">555%（211,030 / 38,000）</td></tr>
+</table></div>
+
+<div class="card"><h2>📈 2029 升級情境（富達解約 + 疊卷套利）</h2>
+<p>富達 600 萬（後收 B 股，CDSC 3 年綁）2029/8 解約免罰 → 領滿約 +45,000/月 → 月被動上看 <b style="color:#22c55e">256,030</b>。</p>
+<p>2029 後債券疊卷質押套利：借 2.5-3% 買債 4.8-5%（前提：CPI<3% + 殖利率見頂 + 美元信用未爆）</p>
+<p class="callout">前提紅線：CPI &lt; 3% ＋ 殖利率見頂 ＋ 美元信用未爆；不滿足則只領不槓。</p></div>
+
+<div class="card"><h2>🗺️ 三步驟離職計畫 × 財務驗證（8/23 核准主軸）</h2>
+<table>
+<tr><th>步驟</th><th>期間</th><th>財務關卡（通過才算數）</th></tr>
+<tr><td>① 債務優化（高息清零）</td><td>現在 ~ 2027/2</td><td>PI 質押 350萬@2.8% 還安聯300@4.2%+元大50@3.92%（年省 ~5萬）；洲際W轉貸 ≤2.5%；築巢 2.185% 生效 → 負債成本逐階下探</td></tr>
+<tr><td>② 留職停薪測試</td><td>2027/2 ~ 2027/8</td><td>薪資 39,727 暫停後，月現金流 = 被動 211,030 − 支出 162,781 = <b style="color:#22c55e">+48,249</b>（不含標案收入）；標案收入為增量；目標盈餘 9萬/月還債 70%</td></tr>
+<tr><td>③ 扣除房產淨資產 ≥ 0</td><td>2029-30</td><td>富達解約免罰 +45,000/月 + 債券疊卷套利；高息清零 + 還債進度 → 被動 &gt; 支出、淨資產轉正（現況 -4,159,806）</td></tr>
+</table>
+<p class="callout">關鍵：決策 A（轉型）/ B（延長）/ C（回台電）<b>不影響退休基本盤</b> — 被動收入已覆蓋支出（129.6%），三步驟的財務關卡是「職業轉換的安全網」，退休規劃獨立運作（財務三桶分離）。</p></div>
+
+<!-- 留停壓力測試（2026-09-02 定位提升：留停=人生財務系統壓力測試） -->
+<div class="card"><h2>🧪 留停壓力測試（2027/2 留停 = 財務系統驗證，非單純職涯測試）</h2>
+<table>
+<tr><th>情境</th><th>假設</th><th>月被動</th><th>覆蓋率</th><th>判定</th></tr>
+<tr><td>🟢 正常</td><td>配息/房租/支出正常</td><td>211,030</td><td>129.6%</td><td class="amber">🟡 基本安全（120-150%）</td></tr>
+<tr><td>🟡 壓力</td><td>配息 −20% ＋ 洲際W 空置</td><td>151,844</td><td class="red">93.3%</td><td class="red">🔴 &lt;100% → 靠現金水庫</td></tr>
+<tr><td>🔴 極端</td><td>配息 −30% ＋ 一間無租 ＋ 大型支出 30萬</td><td>138,751</td><td class="red">85.2%</td><td class="red">🔴 缺口 24,030/月 → 現金水庫撐 23 個月</td></tr>
+</table>
+<p class="callout">覆蓋率三層：🟢 &gt;150% 非常安全｜🟡 120-150% 基本安全｜🔴 &lt;120% 不能完全依賴資產（<b>不含一次性資本利得</b>）。<br>
+現況 <b class="amber">129.6% = 基本安全</b>；壓力情境會跌破 100% — 這是留停前要改善的重點（降負債成本/提高房租淨現金流）。<br>
+2027/8-9 雙軌判斷：財務穩定 × 職涯成立 → 第二職涯；財務穩但職涯觀望 → 延長測試；任一不成立 → 回台電（保留台電）。</p></div>
+
+<div class="card"><h2>📋 留停驗收表（每月真值日自動更新 · 3個月趨勢）</h2>
+<table>
+<tr><th>指標</th><th>2026-09 基準</th><th>2027/2 目標</th></tr>
+<tr><td>每月必要生活費</td><td>162,781</td><td>≤162,781</td></tr>
+<tr><td>被動現金流</td><td>211,030</td><td>≥244,172（×1.5）</td></tr>
+<tr><td>生活費覆蓋率</td><td class="red">129.6%</td><td>≥150%</td></tr>
+<tr><td>壓力情境覆蓋率</td><td class="red">93.3%</td><td>≥100%</td></tr>
+<tr><td>房租淨現金流</td><td>54,100</td><td>持續改善</td></tr>
+<tr><td>投資現金流</td><td>130,930</td><td>穩定</td></tr>
+<tr><td>現金水位</td><td>857,298</td><td>持續增加</td></tr>
+<tr><td>每月負債成本</td><td>16,600</td><td>持續下降</td></tr>
+<tr><td>第二職涯收入</td><td>0</td><td>不設硬性門檻（負責驗證職涯＋加速還債）</td></tr>
+<tr><td>第二職涯工時</td><td>0</td><td>觀察收入/工時</td></tr>
+</table>
+<p class="callout"><b>留停紅綠燈（雙指標同時達標才算）</b>：🟢 正常覆蓋率 ≥150% ＋ 🟢 壓力情境 ≥100% ＝ 財務留停安全。<br>
+現況：正常 129.6% ＋ 壓力 93.3% → <b class="red">🔴 尚未達留停安全</b>（壓力情境未破 100%，屬基本安全＋水庫防守）。<br>
+被動收入負責基本生活；標案/顧問只負責驗證第二職涯＋加速還債 — 兩者不綁死，才不會為了急著賺錢跑回現場監工。<br>
+每月 1 日真值日自動重算（sabbatical_checklist_update.py），留存 3 個月趨勢驗證「結構性改善」非單月巧合。</p></div>
+
+<div class="card"><h2>🎯 2027/2 財務驗收標準（A/B/C 級，判斷權重：當月 &lt; 趨勢 &lt; 壓力 &lt; 現金水位）</h2>
+<table>
+<tr><th>等級</th><th>條件</th><th>行動</th></tr>
+<tr><td>A級 🟢</td><td>正常 ≥150% ＋ 壓力 ≥100% ＋ 3個月趨勢無明顯惡化 ＋ 現金 ≥70萬安全網</td><td>可以放心留停（取得「薪水非生存必需品」選擇權）</td></tr>
+<tr><td>B級 🟡</td><td>正常 ≥150% 但壓力接近 100%，或現金水位不足；或正常 120-150% 持續改善中</td><td>延後一點／先補水庫</td></tr>
+<tr><td>C級 🔴</td><td>正常未達 120%，或壓力明顯 &lt;100% 且改善無趨勢</td><td>繼續留台電，先修財務結構</td></tr>
+</table>
+<p class="callout">現況（2026-09）：正常 129.6% ／ 壓力 93.3% ／ 現金 857,298 → <b class="amber">B級 🟡 持續改善中</b>（維持 🔴 不准留停，2027/2 再驗收）。<br>
+三件事：① 129.6%→150%（差 33,142/月：降支出/降利息→增淨租金→提高投資現金流）② 壓力 93.3%→100%（買抗波動能力非更高報酬）③ 3個月趨勢（結構性改善 vs 單月配息時間差）。<br>
+核心：2027/2 不是「要不要辭台電」，是「資產系統是否成熟到暫時不依賴薪水」。</p></div>
+
+<div class="card"><h2>🗺️ 三階段目標進度</h2>
+<ul>
+<li>① 債務優化（高息清零）— 執行中（PI 質押 350萬@2.8%（9/11 簽約）還安聯/元大）</li>
+<li>② 2027/2 留職停薪測試（盈餘 9萬/月還債 70%）— 待 2027/2 啟動</li>
+<li>③ 扣除房產淨資產 ≥ 0 — 目標 2029-30（現況淨值 -4,159,806，負債比 50.1%）</li>
+</ul></div>
+
+<div class="card"><h2>💎 理想生活宣言（2026-08-23 使用者確認）</h2>
+<ul><li>每週 3 次健身、每年 2 次出國</li><li>每天有 2-3 小時自己的時間（研究/閱讀/投資）</li><li>事業由團隊執行，我只做決策（投資者≠執行者）</li><li>財務：被動收入 > 支出（已達成 ✅）</li><li>身體健康到 80 歲（享受複利）</li><li>工作/事業內容要有意義與成長（拒絕厭倦）— 台電內容厭倦是創業動機</li></ul>
+<p class="callout">用途：退休/創業型態過濾器 — 任何選項先問「會破壞哪一條？」破壞 2 條以上 → 不做或重新設計。</p></div>
+
+<div class="card"><h2>💰 財務三桶分離（9/2 定案）</h2>
+<table>
+<tr><th>桶</th><th>內容</th></tr>
+<tr><td>① 家庭生活安全桶</td><td>維持正常生活與固定支出</td></tr>
+<tr><td>② 投資資產桶</td><td>原有資產配置/現金流策略照既定計畫（不因創業打亂）</td></tr>
+<tr><td>③ 第二職涯/標案營運桶</td><td>押標金/履約保證/專案週轉/營運支出（得標→請款時間差獨立管理，不當生活費）</td></tr>
+</table></div>
+
+<p class="meta" style="text-align:center">龍九資產管理系統｜退休規劃報告（動態產出）</p>
+</body></html>

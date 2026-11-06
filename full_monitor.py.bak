@@ -1,0 +1,462 @@
+import os
+import time
+import requests
+from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+# ==========================================================================
+# 【龍九資產管理系統 2.0 - 本地全資產數據庫】(2026/07/07 數據完全閉環版)
+# ==========================================================================
+
+# 載入 .env 環境變數
+load_dotenv()
+TG_TOKEN = os.getenv("TG_TOKEN", "")
+TG_CHAT_ID = os.getenv("TG_CHAT_ID", "")
+
+# 1. 台美雙軌真實持倉（已依券商截圖精確對位）
+tw_assets = {
+    '0050.TW': 2000,
+    '006208.TW': 2000,
+    '009816.TW': 16000,
+    '00646.TW': 1000,
+    '00713.TW': 2000,
+    '00878.TW': 15000,
+    '0056.TW': 1000,
+    '00981A.TW': 4000,
+    '00984A.TW': 10000,
+    '00919.TW': 5000,
+    '00918.TW': 1000,
+    '009823.TW': 10000,
+    '009824.TW': 10000,
+}
+
+# 美股建倉位（目前為0，待依20/50/20/10配置比例建倉）
+us_assets = {
+    'VOO': 0,
+    'VT': 0,
+}
+
+# 標的成本基礎（用於計算未實現損益）
+cost_basis = {
+    '0050.TW': 169800,
+    '006208.TW': 393800,
+    '009816.TW': 188800,
+    '00646.TW': 71600,
+    '00713.TW': 109600,
+    '00878.TW': 402150,
+    '0056.TW': 37150,
+    '00981A.TW': 103920,
+    '00984A.TW': 145600,
+    '00919.TW': 147800,
+    '00918.TW': 28550,
+    '009823.TW': 100200,
+    '009824.TW': 99300,
+}
+
+# 標的原始購入均價（單位：TWD）
+avg_cost_price = {
+    '0050.TW': 84.90,
+    '006208.TW': 196.90,
+    '00878.TW': 26.81,
+    '00713.TW': 54.80,
+    '00919.TW': 29.56,
+    '00918.TW': 28.55,
+    '009816.TW': 11.80,
+    '0056.TW': 37.15,
+    '00981A.TW': 25.98,
+    '00984A.TW': 14.56,
+    '009823.TW': 10.02,
+    '009824.TW': 9.93,
+    '00646.TW': 71.60,
+}
+
+# 2. 十大實體與數位流動帳戶完整覆蓋
+digital_accounts = {
+    '將來銀行數位帳戶': 1100004,
+    '台新 Richart 帳戶': 1943116,
+    '永豐大戶帳戶': 246560,
+    '第一銀行 SnY': 100085,
+    '星展銀行帳戶': 30711,        # Moneybook 2026/07/06 餘額
+    '玉山銀行帳戶': 41182,        # Moneybook 2026/07/06 餘額
+    '台北富邦帳戶': 44116,        # Moneybook 2026/07/06 餘額
+    '國泰世華帳戶': 0,
+    '元大銀行帳戶': 0,
+    '台灣銀行帳戶': 0,        # 10月洲際W轉貸預備行
+}
+
+# 3. 穿透式跨國保險資產 (已執行 Look-Through 數據映射)
+INSURANCE_ASSETS = {
+    'QL18610694': 5151588,   # 安聯保單 A
+    'QL18488224': 2760852,   # 安聯保單 B
+    'FJ33': 2010544,         # 第一金摩根多重收益
+}
+
+# 4. 系統核心防禦紅線與債務指標
+TOXIC_LOAN = 3000000           # 安聯借款 3.99%壞債（7/10償還）
+ZHOUJI_W_COLD_CHAIN = 3000000  # 洲際W轉貸專用凍結金
+GLW_STOP_LOSS = 194.85        # 美股防守線（目前未建倉）
+
+# 5. 精算流動性參數（2026-07-08 校正版）
+MONTHLY_MORTGAGE = 99458           # 星展23,424 + 洲際W 65,734 + 理財利息10,300
+MONTHLY_RENT_INFLOW = 80100        # 大義街47,100 + 洲際W 33,000
+MONTHLY_CREDIT_CARD = 30000        # 每月自動扣繳全清
+MONTHLY_LIVING_EXPENSE = 10000       # 退休後生活費最低10,000估算（餐飲/交通/娛樂）
+MONTHLY_RENT_SHA_LU = 4500         # 沙鹿房租（退休後居住支出）
+
+# 6. 財務總監核定 40 / 35 / 25 戰略新權重
+TARGET_PREFERENCES = {
+    '台股資產（大盤市值+高股息）': 0.40,
+    '美股全球科技（含保單穿透）': 0.35,
+    '保險現金與防禦債券': 0.25
+}
+
+# 7. 信用卡與貸款清單（用於預警）
+CREDIT_CARDS = [
+    {'bank': '台新銀行', 'last4': '7706', 'min_pay': 1000, 'due': '2026-06-29'},
+    {'bank': '永豐銀行', 'last4': '7602', 'min_pay': 500, 'due': '2026-06-29'},
+    {'bank': '玉山銀行', 'last4': '8188', 'min_pay': 3176, 'due': '2026-06-22'},
+    {'bank': '台北富邦', 'last4': '尾數', 'min_pay': 800, 'due': '2026-06-03'},
+]
+
+# ==========================================================================
+# Telegram 通訊模組
+# ==========================================================================
+def send_telegram_message(text: str):
+    """發送訊息到執行長的 Telegram"""
+    if not TG_TOKEN or not TG_CHAT_ID:
+        print("[WARN] 未設定 TG_TOKEN 或 TG_CHAT_ID，跳過 Telegram 推播。")
+        return False
+    url = f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": TG_CHAT_ID,
+        "text": text,
+        "parse_mode": "Markdown"
+    }
+    try:
+        resp = requests.post(url, data=payload, timeout=10)
+        if resp.status_code == 200:
+            print("[OK] Telegram 推播成功")
+            return True
+        else:
+            print(f"[FAIL] Telegram 推播失敗: {resp.status_code} {resp.text}")
+            return False
+    except Exception as e:
+        print(f"[ERROR] Telegram 發送例外: {e}")
+        return False
+
+# ==========================================================================
+# 資產與現金流計算
+# ==========================================================================
+def get_total_liquid_cash():
+    return sum(v for k, v in digital_accounts.items() if any(x in k for x in ['帳戶', '數位', '活儲', 'iLEO', 'Digital']))
+
+def get_total_insurance():
+    return sum(INSURANCE_ASSETS.values())
+
+def get_runway():
+    liquid = get_total_liquid_cash()
+    net_monthly = MONTHLY_MORTGAGE + MONTHLY_CREDIT_CARD - MONTHLY_RENT_INFLOW
+    if net_monthly <= 0:
+        return 999
+    return liquid / net_monthly
+
+def get_allocation_ratios():
+    """以即時市值計算資產配置比例，從 yfinance 取得現價"""
+    prices = fetch_market_prices()
+    tw_sh_mv = sum(qty * prices.get(code, 0) for code, qty in tw_assets.items()
+                   if any(x in code for x in ['00878','00919','00918','0056','00981A','00984A','00713']))
+    tw_largecap_mv = sum(qty * prices.get(code, 0) for code, qty in tw_assets.items()
+                         if any(x in code for x in ['0050','006208','009816']))
+    us_tech_etf_mv = sum(qty * prices.get(code, 0) for code, qty in tw_assets.items()
+                         if any(x in code for x in ['00646','009824','009823']))
+    us_total_mv = sum(qty * prices.get(code, 0) for code, qty in us_assets.items())
+
+    # 保單穿透
+    insurance_us = INSURANCE_ASSETS.get('QL18610694', 0) * 0.73 + INSURANCE_ASSETS.get('QL18488224', 0) * 0.73 + INSURANCE_ASSETS.get('FJ33', 0) * 0.25
+    insurance_def = get_total_insurance() - insurance_us
+
+    us_total_mv += insurance_us
+    tw_total_mv = tw_sh_mv + tw_largecap_mv + us_tech_etf_mv
+    cash_total_mv = get_total_liquid_cash() + insurance_def
+
+    total = tw_total_mv + us_total_mv + cash_total_mv
+    if total <= 0:
+        return 0.0, 0.0, 0.0
+    return tw_total_mv / total, us_total_mv / total, cash_total_mv / total
+
+
+# ===========================================================================
+# yfinance 市場數據對接模組（階段二：取代視覺截圖）
+# ===========================================================================
+def fetch_market_prices():
+    """從 yfinance 取得標的現價，含台股/美股。404/ delisted 標的自動跳過。"""
+    import yfinance as yf
+    prices = {}
+    all_symbols = list(tw_assets.keys()) + list(us_assets.keys())
+    for symbol in all_symbols:
+        try:
+            ticker = yf.Ticker(symbol)
+            hist = ticker.history(period="5d")
+            if not hist.empty:
+                prices[symbol] = round(hist['Close'].iloc[-1], 2)
+            else:
+                print(f"[WARN] {symbol}: possibly delisted; no price data found, skip.")
+        except Exception as e:
+            print(f"[WARN] yfinance 抓取 {symbol} 失敗: {e}")
+    return prices
+
+
+def calculate_daily_gain_loss():
+    """計算標的之未實現損益與日升幅"""
+    prices = fetch_market_prices()
+    results = []
+    all_assets = {**tw_assets, **us_assets}
+    for code, qty in all_assets.items():
+        current_price = prices.get(code, 0)
+        cost = cost_basis.get(code, 0)
+        if current_price > 0 and cost > 0:
+            market_value = round(current_price * qty, 0)
+            unrealized = round(market_value - cost, 0)
+            return_pct = round((market_value - cost) / cost * 100, 2) if cost else 0
+            premium_pct = return_pct  # 以報酬率作為溢價評估依據
+            if premium_pct > 30:
+                level = '嚴重溢價'
+            elif premium_pct > 15:
+                level = '溢價偏高'
+            else:
+                level = '合理估值'
+            results.append({
+                'code': code,
+                'qty': qty,
+                'cost': cost,
+                'avg_cost': avg_cost_price.get(code, 0),
+                'current_price': current_price,
+                'market_value': market_value,
+                'unrealized': unrealized,
+                'return_pct': return_pct,
+                'premium_level': level,
+            })
+    return results
+
+
+def get_premium_alert_groups():
+    """將標的分為三級：嚴重溢價 / 溢價偏高 / 合理估值"""
+    results = calculate_daily_gain_loss()
+    severe = [r for r in results if r['premium_level'] == '嚴重溢價']
+    high = [r for r in results if r['premium_level'] == '溢價偏高']
+    normal = [r for r in results if r['premium_level'] == '合理估值']
+    return severe, high, normal
+
+
+# ===========================================================================
+# 光影名冊 / 除息預警模組（T-4 / T-2）
+# ===========================================================================
+DIVIDEND_LIGHT_LIST = [
+    {'code': '009823.TW', 'name': '永豐優息', 'type': 'general', 'ex_date': '2026-08-20'},
+    {'code': '009824.TW', 'name': '凱基優選', 'type': 'general', 'ex_date': '2026-08-20'},
+    {'code': '00878.TW',  'name': '國泰永續高股息', 'type': 'general', 'ex_date': '2026-08-15'},
+    {'code': '00919.TW',  'name': '群益深ENE選優', 'type': 'general', 'ex_date': '2026-08-15'},
+    {'code': '00713.TW',  'name': '元大全球AI', 'type': 'general', 'ex_date': '2026-08-15'},
+    {'code': '00918.TW',  'name': '永豐台灣ESG', 'type': 'general', 'ex_date': '2026-08-15'},
+    {'code': '00981A.TW', 'name': 'bbenefit 主動型', 'type': 'flash', 'ex_date': '2026-08-10'},
+    {'code': '00984A.TW', 'name': '第一金主動型', 'type': 'flash', 'ex_date': '2026-08-10'},
+    {'code': 'QL18610694', 'name': '安聯保單A 月配', 'type': 'monthly', 'ex_date': None},
+    {'code': 'QL18488224', 'name': '安聯保單B 月配', 'type': 'monthly', 'ex_date': None},
+    {'code': 'FJ33',       'name': '第一金保單 月配', 'type': 'monthly', 'ex_date': None},
+]
+
+def get_dividend_alerts():
+    """T-4 / T-2 除息預警"""
+    from datetime import datetime, timedelta
+    alerts = []
+    today = datetime.today().date()
+    for item in DIVIDEND_LIGHT_LIST:
+        ex = item.get('ex_date')
+        if not ex:
+            continue
+        ex_date = datetime.strptime(ex, '%Y-%m-%d').date()
+        delta = (ex_date - today).days
+        if item['type'] == 'flash' and 0 <= delta <= 2:
+            alerts.append(f"⚡ {item['code']} {item['name']} 除息前 T-{delta}，啟動稅務/帳戶排程")
+        elif item['type'] == 'general' and 0 <= delta <= 4:
+            alerts.append(f"🔔 {item['code']} {item['name']} 除息前 T-{delta}，確認配息帳戶/扣款")
+    return alerts if alerts else ["✅ 除息：近期無需預警"]
+
+
+def build_calendar_events_for_dividends():
+    """將除息預警轉為行事曆事件摘要"""
+    from datetime import datetime, timedelta
+    events = []
+    today = datetime.today().date()
+    for item in DIVIDEND_LIGHT_LIST:
+        ex = item.get('ex_date')
+        if not ex:
+            continue
+        ex_date = datetime.strptime(ex, '%Y-%m-%d').date()
+        if item['type'] == 'flash':
+            alert_date = ex_date - timedelta(days=2)
+            events.append(f"🗓 T-2 {alert_date}｜{item['code']} {item['name']} 閃電調度預警")
+        else:
+            alert_date = ex_date - timedelta(days=4)
+            events.append(f"🗓 T-4 {alert_date}｜{item['code']} {item['name']} 配息帳戶預警")
+    return events
+
+
+def fetch_market_news():
+    """從 Google News RSS 取得最新市場動態，融入巴菲特視角"""
+    import requests
+    from xml.etree import ElementTree as ET
+    news_items = []
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        rss_sources = [
+            ("https://news.google.com/rss/search?q=0050+00878+%E5%8F%B0%E8%82%A1&hl=zh-TW&gl=TW&ceid=TW:zh-Hant", "📰", 4),
+            ("https://news.google.com/rss/search?q=US+stock+market+SaaS&hl=en-US&gl=US&ceid=US:en", "🌎", 3),
+        ]
+        for url, prefix, limit in rss_sources:
+            try:
+                resp = requests.get(url, headers=headers, timeout=10)
+                if resp.status_code == 200:
+                    root = ET.fromstring(resp.content)
+                    for item in root.findall('.//item')[:limit]:
+                        title = item.find('title')
+                        if title is not None and title.text:
+                            news_items.append(f"{prefix} {title.text}")
+            except Exception:
+                continue
+    except Exception as e:
+        news_items.append(f"[WARN] 新聞抓取失敗：{e}")
+    # Fallback: 靜態 headline
+    if not news_items:
+        news_items = ["📰 市場情報：台股盤後整理，美股科技股漲跌互見",
+                      "🌎 美股：微軟上漲，硬體板塊回調"]
+    return news_items
+
+
+def generate_daily_report():
+    """二元架構日報：動產水位 + 不動產現金流 + 本週戰略導航 + 巴菲特檢查"""
+    tw_ratio, us_ratio, cash_ratio = get_allocation_ratios()
+    runway = get_runway()
+    liquid = get_total_liquid_cash()
+    insurance_total = get_total_insurance()
+    now = datetime.now()
+    now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+
+    # 動產 module
+    gain_loss = calculate_daily_gain_loss()
+    severe, high, normal = get_premium_alert_groups()
+
+    # 退休後月度盈餘（完整明細）
+    retirement_income = 80000 + 80100  # 160,100
+    retirement_expense = MONTHLY_MORTGAGE + MONTHLY_CREDIT_CARD + MONTHLY_LIVING_EXPENSE + MONTHLY_RENT_SHA_LU
+    monthly_surplus = 160100 - retirement_expense
+
+    report = (
+        f"📊 *龍九資產管理系統 2.0 日報*\n"
+        f"🕒 報告時間：{now_str}\n"
+        f"💰 可動用現金：{liquid:,.0f} TWD\n"
+        f"🛡️ 保單現值：{insurance_total:,.0f} TWD\n\n"
+        f"=== 動產水位 ===\n"
+    )
+    for r in gain_loss:
+        report += (
+            f"{r['code']}：現值 {r['current_price']:.2f} | "
+            f"報酬 {r['return_pct']:+.2f}% | {r['premium_level']}\n"
+        )
+    if severe:
+        report += f"\n🚨 嚴重溢價：{', '.join([r['code'] for r in severe])}\n"
+    if high:
+        report += f"⚠️ 溢價偏高：{', '.join([r['code'] for r in high])}\n"
+
+    report += (
+        f"\n=== 不動產現金流 ===\n"
+        f"大義街月租金：47,100/月（店面24K + 2-3F 23.1K）\n"
+        f"洲際W月租金：33,000/月\n"
+        f"每月租金合計：80,100/月\n"
+        f"每月房貸支出：{MONTHLY_MORTGAGE:,.0f}/月\n"
+        f"退休後月盈餘：{monthly_surplus:,.0f}/月\n\n"
+        f"📈 配置比例：台股 {tw_ratio:.1%} / 美股 {us_ratio:.1%} / 現金防禦 {cash_ratio:.1%}\n"
+        f"⏳ 流動性 Runway：{runway:.1f} 個月\n"
+    )
+
+    # 近期節點預警
+    report += f"\n🔔 近期節點：7/10 大義街轉貸｜10月 洲際W轉貸\n"
+
+    # 市場情報 Light List
+    news_report = fetch_market_news()
+    report += f"\n📰 *市場情報導航*\n"
+    for line in news_report:
+        report += f"{line}\n"
+
+    # 本週戰略導航
+    report += f"\n🗓️ *本週戰略導航*\n"
+    today = now.date()
+    # 動態計算剩餘天數
+    def days_left(target_str):
+        target = datetime.strptime(target_str, '%Y-%m-%d').date()
+        return (target - today).days
+
+    report += f"【P0】07/10 大義街轉貸撥款（剩餘 {days_left('2026-07-10')} 天）\n"
+    report += f"【行事曆】07/11 台南行程出發（剩餘 {days_left('2026-07-11')} 天）\n"
+    report += f"【行事曆】07/12 台南演唱會（剩餘 {days_left('2026-07-12')} 天）\n"
+    report += f"【行事曆】07/14 水保竣工會勘（峨眉變電所，剩餘 {days_left('2026-07-14')} 天）\n"
+    report += f"【行事宜】07/17 段部上課：工安AI（剩餘 9 天）\n"
+    report += f"【行事宜】08/03 段部體檢（剩餘 {days_left('2026-08-03')} 天）\n"
+    report += f"【旅行】10/23 胡志明市自由行（剩餘 {days_left('2026-10-23')} 天）\n"
+
+    # 租金倒數
+    report += f"\n⏳ *租金倒數*\n"
+    report += f"距離 07/20 洲際W租金入帳：剩餘 {days_left('2026-07-20')} 天\n"
+    report += f"距離 07/01 大義街店面租金：剩餘 {days_left('2026-08-01')} 天\n"
+    report += f"距離 07/20 大義街2-3F租金：剩餘 {days_left('2026-07-20')} 天\n"
+
+    report += f"\n✍️ *裁決簽核*：動產若出現嚴重溢價，請回覆『減碼』；合理估值則『持有』。\n\n"
+    report += get_buffett_check()
+    return report
+
+def check_credit_card_alerts():
+    """檢查是否為卡費扣款前 3 天"""
+    today = datetime.now().date()
+    alerts = []
+    for card in CREDIT_CARDS:
+        if not card['due']:
+            continue
+        try:
+            due = datetime.strptime(card['due'], '%Y-%m-%d').date()
+        except ValueError:
+            continue
+        days_left = (due - today).days
+        if 0 <= days_left <= 3:
+            alerts.append(f"💳 {card['bank']} 卡費繳款截止日：{card['due']}（剩 {days_left} 天，最低 {card['min_pay']:,}）")
+    return "\n".join(alerts) if alerts else ""
+
+# ==========================================================================
+# 主監控循環（每日檢查）
+# ==========================================================================
+def run_dragon_nine_monitor():
+    print("=" * 60)
+    print("【龍九資產管理系統 2.0】完全體通電成功！")
+    print(f"啟動時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("實時指揮監測引擎已上線，每日檢查資產配置與卡費預警。")
+    print("=" * 60)
+    send_telegram_message("🟢 龍九資產管理系統 2.0 已啟動，開始執行每日監控。")
+    last_report_date = None
+    while True:
+        now = datetime.now()
+        today = now.date()
+        # 每日 09:00 推送日報
+        if last_report_date != today and now.hour == 9 and now.minute < 5:
+            report = generate_daily_report()
+            print(report)
+            send_telegram_message(report)
+            last_report_date = today
+        # 每日檢查卡費預警一次
+        cc_alert = check_credit_card_alerts()
+        if cc_alert:
+            print(cc_alert)
+            send_telegram_message(cc_alert)
+        # 每天檢查一次，不再每小時
+        time.sleep(86400)  # 每 24 小時醒來檢查一次
+
+if __name__ == "__main__":
+    run_dragon_nine_monitor()
