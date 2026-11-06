@@ -37,8 +37,9 @@ HARD = {
     "現金底線": 700_000,     # 底線制 70 萬
     "科技曝險目標": 20.0,    # 穿透科技 ≤20%（2026-09-12 使用者裁示 15→20）
     "美股偏移上限": 10.0,    # 單一大類 ±10pp
-    "美元曝險黃": 60.0,      # >60% 黃燈（2026-09-12 使用者裁示：台幣40/美金60，原 50）
-    "美元曝險紅": 65.0,      # >65% 紅燈（原 55，隨目標同步上調）
+    # 2026-11-06（使用者裁決②）：美元曝險門檻不再硬編。原「黃 60／紅 65」與 2026-10-07 裁決③
+    # 的三級政策（目標 60／黃色觀察 65／高曝險觀察線 70）不一致，形成兩套口徑。
+    # 現一律讀 usd_advisory.policy()（唯一來源＝thresholds_2026_0915.美元曝險_pct）。
 }
 
 SYM = {
@@ -405,6 +406,20 @@ def hard_check(snap: dict, out: dict) -> list[dict]:
     apct = snap.get("penetration", {}).get("actual_pct", {})
     usd = (snap.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {}
     usd_pct = usd.get("匯率曝險合計", usd.get("合計", 0))
+    # 2026-11-06（使用者裁決②）：門檻一律讀 usd_advisory 唯一入口，不在此硬編、不複製常數。
+    from usd_advisory import policy as _usd_pol, tier as _usd_tier, exposure_pct as _usd_exp
+    _up = _usd_pol(snap)
+    _u_goal, _u_y, _u_r = _up.get("目標"), _up.get("黃"), _up.get("紅")
+    # 實際美元計價部位（未扣對沖）— 必須與政策口徑並存顯示，不得因避險抵減而消失
+    _u_actual = float(usd.get("合計") or 0)
+    _hedge_gap = round(_u_actual - float(usd_pct or 0), 1)
+    _utier = _usd_tier(snap, usd_pct)
+    _u_note = (f"現況 {float(usd_pct):.1f}%（{_utier}"
+               + (f"；高於目標值 {_u_goal:.0f}%、未達黃色觀察 {_u_y:.0f}%"
+                  if (isinstance(_u_y, (int, float)) and isinstance(_u_goal, (int, float))
+                      and _u_goal <= float(usd_pct) < _u_y)
+                  else "")
+               + f"）｜實際美元計價 {_u_actual:.1f}%（已排除對沖 {_hedge_gap:.1f}pp）")
     # 2026-09-29 CIO major：硬性約束「現金底線」必須看可動用（原 cash_total → 可動用跌破仍 ✅ fail-open）
     from sot_targets import restricted_cash as _rst_fn
     cash_now = max(0.0, float(snap.get("cash_total", 0) or 0) - _rst_fn(snap))
@@ -413,8 +428,8 @@ def hard_check(snap: dict, out: dict) -> list[dict]:
          f"現況 {apct.get('台股市值型成長', 0):.1f}%"),
         ("不推薦 Lombard / 債券疊代", True, "引擎不輸出槓桿建議（人工執行案照舊）"),
         ("不推薦新增美元投資（只管控）", True, "引擎對新增美元只給「禁止/觀望」"),
-        (f"美元總曝險 ≤{HARD['美元曝險黃']:.0f}%（黃）/{HARD['美元曝險紅']:.0f}%（紅）", usd_pct <= HARD["美元曝險紅"],
-         f"現況 {usd_pct:.1f}%（>{HARD['美元曝險黃']:.0f}% 黃燈；2026-09-12 裁示 50→60）"),
+        (f"美元總曝險 ≤{_u_r:.0f}%（高曝險觀察線｜黃色觀察 {_u_y:.0f}%／目標值 {_u_goal:.0f}%）",
+         usd_pct <= _u_r, _u_note),
         ("現金底線 70 萬", (cash_now or 0) >= HARD["現金底線"],
          f"現況 {cash_now/10000:.1f}萬" if cash_now else "未知"),
         ("還高息負債優先於投資配置", True, "安聯4.2%→元大3.92%→第一金3.51%"),
