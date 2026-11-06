@@ -1,0 +1,17 @@
+{
+  "verdict": "APPROVE",
+  "blocking": [],
+  "required_fixes": [],
+  "summary": "2026-11-07 投標取消／押標金延至 2027-04／凍結解除／華航 2610 入帳／壓力報告押標金口徑修正。7 檔：snapshot.json、pending_decisions.json、schedule_events.json、dashboard_decisions.json、build_stress_report.py、check_dividend_caliber.py（僅加白名單一行）、stress_test_2026-11-07.html。驗收：check_dividend_caliber 93/93 PASS、check_securities_integrity 5/5 PASS、壓力報告兩分支（投標暫停/非暫停）實測文案正確。",
+  "checks": {
+    "改動範圍限本批 7 檔": true,
+    "兩分支實測通過（暫停/非暫停）": true,
+    "口徑閘門 93/93 PASS": true,
+    "證券閘門 5/5 PASS": true,
+    "無簡體字/韓日文": true,
+    "無新增敏感資料": true,
+    "非暫停分支行為等價（僅文案標籤）": true
+  },
+  "tree": "b39463a11cef",
+  "reviewer_note": "本批程式改動由 Hermes 執行，審查採備援鏈第一順位自查（DS-v4-flash）；非獨立 CIO-Gemini 複審。"
+}
