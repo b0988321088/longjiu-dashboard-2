@@ -49,14 +49,14 @@ td { padding:7px 8px; border-bottom:1px solid #263449; }
 .foot { margin-top:16px; color:var(--sub); font-size:11px; text-align:center; }
 </style></head><body><div class="wrap">
 <h1>🔄 龍九再平衡儀表板</h1>
-<div class="sub">2026-11-06（週五）｜修正後 DAA 口徑 + 機構流向雷達｜本週動作：全數按兵不動（等質押撥款）</div>
+<div class="sub">2026-11-06（週五）｜修正後 DAA 口徑 + 機構流向雷達｜本週動作：<b style="color:var(--grn)">美元曝險</b>，其餘按兵不動</div>
 
 <div class="kpis">
   <div class="kpi"><div class="k">總資產（流動）</div><div class="v">26,326,230</div></div>
   <div class="kpi"><div class="k">現金（可動用）</div><div class="v">1,176,929.0</div></div>
   <div class="kpi"><div class="k">月盈餘</div><div class="v green">+66,758.0</div></div>
   <div class="kpi"><div class="k">收入/支出</div><div class="v">225,968.0 <small style="font-size:11px">/ 159,210.0</small></div></div>
-  <div class="kpi"><div class="k">美元曝險</div><div class="v red">70%</div></div>
+  <div class="kpi"><div class="k">美元曝險</div><div class="v red">64%</div></div>
   <div class="kpi"><div class="k">高科技</div><div class="v yellow">22.3%</div></div>
 </div>
 
@@ -111,7 +111,7 @@ td { padding:7px 8px; border-bottom:1px solid #263449; }
         <div class="card rcard" style="border-top:3px solid #64748b">
           <div class="r-signal">⚪</div>
           <div class="r-name">台幣</div>
-          <div class="r-note">USD/TWD 32.81 週變化 +0.63%</div>
+          <div class="r-note">USD/TWD 32.71 週變化 +0.32%</div>
         </div></div></div>
   <div class="card"><h2>💰 被動現金流與 FI 跑道（四情境）</h2><table><tr><th>情境</th><th class="num">月被動</th><th class="num">覆蓋率</th><th class="num">月盈餘／缺口</th><th class="num">FI 跑道</th></tr><tr><td>🟢 保守底線（判準）</td><td class="num">180,100</td><td class="num">113.1%</td><td class="num">+20,890</td><td class="num">∞（零缺口）</td></tr><tr><td>🟢 當月實收</td><td class="num">41,577</td><td class="num">26.1%</td><td class="num">-117,633</td><td class="num">300 天</td></tr><tr><td>🟡 壓力情境（判準）</td><td class="num">188,758</td><td class="num">118.6%</td><td class="num green">+29,548</td><td class="num">∞（零缺口）</td></tr><tr><td>🔴 極端情境（參考）</td><td class="num">127,100</td><td class="num">79.8%</td><td class="num red">-32,110</td><td class="num">1,100 天</td></tr></table><div style="font-size:11px;color:var(--sub);margin-top:8px">保守底線＝判準層（配息基本值＋房租常態）｜當月實收＝配息實收＋房租實收｜壓力情境＝常態配息 −20%＋洲際W 空置（<b>留停判準</b>）｜極端情境＝配息掉到保守值再 −20%＋空置（跑道分母）。FI 跑道＝現金 ÷ 月缺口；「月盈餘」KPI 為含薪資口徑，與本表不同。</div></div>
   
@@ -138,7 +138,7 @@ td { padding:7px 8px; border-bottom:1px solid #263449; }
         <div class="card" style="border:1px solid #10b981;background:linear-gradient(135deg,#06281a,#131a26)">
           <h2>📋 本週投資計劃（11/6 全資產面結論）</h2>
           
-          <div style="margin-bottom:6px;font-size:11px;color:#d1fae5">🟡 <b>台股</b>：（10.1% vs 目標10%，超配 +0.1pp）→ 已達上限、不新增（US30Y 5.282%，凍結線 5.3% 未解凍前不加碼）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">🔴 <b>美股</b>：（37.4% vs 目標30%，超配 +7.4pp）→ 逢彈減碼 ≤20萬/次（可動 9,625,018）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">↳ <b>美股</b>：調度欄位：戰略目標 30%／戰略偏差 +7.4pp／理論調整 1,948,141（|戰略偏差_pp| ÷ 100 × 分母_twd；分母 26,326,230）／風控後可執行 200,000（單筆上限 200,000／4-6 週；來源：使用者 2026-08-22 裁示（美股逢反彈分批減碼，單次≤20萬／4-6 週完成））／阻擋規則：單筆上限（200,000）封頂：理論 1,948,141 > 上限｜戰術偏差：無 SoT（週報曾引用『戰術 27%』但 thresholds 無此鍵）→ 不計算</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">⏸️ <b>防守</b>：（配息資產合計 17,350,423 ÷ 總資產 26,326,230 = 65.9% vs 門檻 60% → 已足）→ 凍結不追（00878/00713 不加碼）｜口徑＝保單月配基金＋國泰月配＋防守ETF＋鉅亨月配＋第一金ID01（**≠防守桶＋債券**）｜含鉅亨月配 358,196（分類待確認）；排除待確認項目試算 16,992,227＝64.54%（僅試算）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">⏸️ <b>債券</b>：26.0%（目標 25%）→ 等 US30Y 回落凍結線 5.3% 以下才新增</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">💰 <b>現金</b>：4.5% → 底線 700,000.0 守；乾粉 47.7萬 保留（本週無「低配＋資金流入」標的，等訊號）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">⛔ <b>避險衛星</b>：已結案（2026-10-30）— 目標作廢、不再加碼；部位保留不賣（黃金 367,192／石油 4,958）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">🟡 <b>美元曝險</b>：70.4%（高曝險觀察線；目標值 60%／黃色觀察 65%／高曝險觀察線 70%）→ 僅顯示，不觸發換匯／減碼（政策門檻待 10 月戰略檢討）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">✅ <b>保單轉換</b>：最後一次 2026-09-16 T+4 生效（第一金 摩根多重收益 → M&G入息A 100%）｜本期未轉換：10–11 月淨值回落較大（使用者 11/02 說明）｜規則：不按月固定、跌幅期暫停｜下次檢視：自動監控（自60日低點回升≥3% 或 ma20 轉正即提醒）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">🔍 <b>質押</b>：擔保池 1,200萬（富達600＋聯博100＋貝萊德B11 500）×5成 = 590萬@2.65%（2026-10-28 由 10/22 實扣 9,852 ÷ 23 天 × 365 ÷ 5,900,000 反算＝2.65%，與原口徑一致）；已撥款 → 用途：優先清償 0萬高息負債（保單質押 0萬@4.0% ＋ 券商質押 0萬@3.92%）— 月息 0 → 0，月省約 0（2026-09-12 裁示；10 月標案押標金：❌ 已取消（2026-10-12 使用者裁決））；到位前全面觀望</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">📊 <b>產業輪動</b>：本週無「低配＋資金流入」標的 → 乾粉保留｜避開「資訊科技、能源」</div>
+          <div style="margin-bottom:6px;font-size:11px;color:#d1fae5">🟡 <b>台股</b>：（10.1% vs 目標10%，超配 +0.1pp）→ 已達上限、不新增（US30Y 5.251%，凍結線 5.3% 未解凍前不加碼）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">🔴 <b>美股</b>：（37.4% vs 目標30%，超配 +7.4pp）→ 逢彈減碼 ≤20萬/次（可動 9,625,018）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">↳ <b>美股</b>：調度欄位：戰略目標 30%／戰略偏差 +7.4pp／理論調整 1,948,141（|戰略偏差_pp| ÷ 100 × 分母_twd；分母 26,326,230）／風控後可執行 200,000（單筆上限 200,000／4-6 週；來源：使用者 2026-08-22 裁示（美股逢反彈分批減碼，單次≤20萬／4-6 週完成））／阻擋規則：單筆上限（200,000）封頂：理論 1,948,141 > 上限｜戰術偏差：無 SoT（週報曾引用『戰術 27%』但 thresholds 無此鍵）→ 不計算</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">⏸️ <b>防守</b>：（配息資產合計 17,350,423 ÷ 總資產 26,326,230 = 65.9% vs 門檻 60% → 已足）→ 凍結不追（00878/00713 不加碼）｜口徑＝保單月配基金＋國泰月配＋防守ETF＋鉅亨月配＋第一金ID01（**≠防守桶＋債券**）｜含鉅亨月配 358,196（分類待確認）；排除待確認項目試算 16,992,227＝64.54%（僅試算）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">⏸️ <b>債券</b>：26.0%（目標 25%）→ 等 US30Y 回落凍結線 5.3% 以下才新增</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">💰 <b>現金</b>：4.5% → 底線 700,000.0 守；乾粉 47.7萬 保留（本週無「低配＋資金流入」標的，等訊號）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">⛔ <b>避險衛星</b>：已結案（2026-10-30）— 目標作廢、不再加碼；部位保留不賣（黃金 367,192／石油 4,958）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">🟢 <b>美元曝險</b>：64.1%（目標值內；目標值 60%／黃色觀察 65%／高曝險觀察線 70%）→ 僅顯示，不觸發換匯／減碼（政策門檻待 10 月戰略檢討）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">✅ <b>保單轉換</b>：最後一次 2026-09-16 T+4 生效（第一金 摩根多重收益 → M&G入息A 100%）｜本期未轉換：10–11 月淨值回落較大（使用者 11/02 說明）｜規則：不按月固定、跌幅期暫停｜下次檢視：自動監控（自60日低點回升≥3% 或 ma20 轉正即提醒）</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">🔍 <b>質押</b>：擔保池 1,200萬（富達600＋聯博100＋貝萊德B11 500）×5成 = 590萬@2.65%（2026-10-28 由 10/22 實扣 9,852 ÷ 23 天 × 365 ÷ 5,900,000 反算＝2.65%，與原口徑一致）；已撥款 → 用途：優先清償 0萬高息負債（保單質押 0萬@4.0% ＋ 券商質押 0萬@3.92%）— 月息 0 → 0，月省約 0（2026-09-12 裁示；10 月標案押標金：❌ 已取消（2026-10-12 使用者裁決））；到位前全面觀望</div><div style="margin-bottom:6px;font-size:11px;color:#d1fae5">📊 <b>產業輪動</b>：本週無「低配＋資金流入」標的 → 乾粉保留｜避開「資訊科技、能源」</div>
         </div>
 </div>
 
@@ -147,7 +147,7 @@ td { padding:7px 8px; border-bottom:1px solid #263449; }
         <div class="card acard">
           <div class="a-head"><b>台股</b><span class="tag">參考</span></div>
           <div class="a-light">🟡</div>
-          <div class="a-desc">（10.1% vs 目標10%，超配 +0.1pp）→ 已達上限、不新增（US30Y 5.282%，凍結線 5.3% 未解凍前不加碼）</div>
+          <div class="a-desc">（10.1% vs 目標10%，超配 +0.1pp）→ 已達上限、不新增（US30Y 5.251%，凍結線 5.3% 未解凍前不加碼）</div>
         </div>
         <div class="card acard">
           <div class="a-head"><b>美股</b><span class="tag">觸發</span></div>
@@ -180,9 +180,9 @@ td { padding:7px 8px; border-bottom:1px solid #263449; }
           <div class="a-desc">已結案（2026-10-30）— 目標作廢、不再加碼；部位保留不賣（黃金 367,192／石油 4,958）</div>
         </div>
         <div class="card acard">
-          <div class="a-head"><b>美元曝險</b><span class="tag">參考</span></div>
-          <div class="a-light">🟡</div>
-          <div class="a-desc">70.4%（高曝險觀察線；目標值 60%／黃色觀察 65%／高曝險觀察線 70%）→ 僅顯示，不觸發換匯／減碼（政策門檻待 10 月戰略檢討）</div>
+          <div class="a-head"><b>美元曝險</b><span class="tag">主動</span></div>
+          <div class="a-light">🟢</div>
+          <div class="a-desc">64.1%（目標值內；目標值 60%／黃色觀察 65%／高曝險觀察線 70%）→ 僅顯示，不觸發換匯／減碼（政策門檻待 10 月戰略檢討）</div>
         </div>
         <div class="card acard">
           <div class="a-head"><b>保單轉換</b><span class="tag">已執行</span></div>
@@ -223,7 +223,7 @@ td { padding:7px 8px; border-bottom:1px solid #263449; }
   </div>
   <div class="card"><h2>🛡️ 質押 / 風險紅線</h2>
     <div style="font-size:12.5px;color:#cbd5e1;margin-bottom:8px">📌 已質押（整池 1,200萬×5成 = 590萬@2.65%（2026-10-28 由 10/22 實扣 9,852 ÷ 23 天 × 365 ÷ 5,900,000 反算＝2.65%，與原口徑一致）質押（已撥款））</div>
-    <table><tr><th>指標</th><th class="num">現值</th><th class="num">紅線</th><th>狀態</th></tr><tr><td>US30Y 凍結線</td><td class='num'>5.28%</td><td class='num'>≥5.30% 🔴</td><td>🟢 安全</td></tr><tr><td>美元曝險</td><td class='num'>70%</td><td class='num'>目標值 60%／黃色觀察 65%／高曝險觀察線 70%（僅顯示）</td><td>🟡 高曝險觀察線（僅顯示）</td></tr><tr><td>高科技</td><td class='num'>22.3%</td><td class='num'>紅線 30%</td><td>🟢 安全</td></tr><tr><td>現金｜底線 700,000（單一口徑）</td><td class='num'>1,176,929</td><td class='num'>≥700,000</td><td>🟢 安全</td></tr><tr><td>國泰擔保池 LTV</td><td class='num'>49.5%（借 5,900,000／池 11,909,979）</td><td class='num'>綠 ≤45／黃 ≤53／追繳 ≥70</td><td>🟡 黃區</td></tr></table>
+    <table><tr><th>指標</th><th class="num">現值</th><th class="num">紅線</th><th>狀態</th></tr><tr><td>US30Y 凍結線</td><td class='num'>5.25%</td><td class='num'>≥5.30% 🔴</td><td>🟢 安全</td></tr><tr><td>美元曝險</td><td class='num'>64%</td><td class='num'>目標值 60%／黃色觀察 65%／高曝險觀察線 70%（僅顯示）</td><td>🟡 目標值內（僅顯示）</td></tr><tr><td>高科技</td><td class='num'>22.3%</td><td class='num'>紅線 30%</td><td>🟢 安全</td></tr><tr><td>現金｜底線 700,000（單一口徑）</td><td class='num'>1,176,929</td><td class='num'>≥700,000</td><td>🟢 安全</td></tr><tr><td>國泰擔保池 LTV</td><td class='num'>49.5%（借 5,900,000／池 11,909,979）</td><td class='num'>綠 ≤45／黃 ≤53／追繳 ≥70</td><td>🟡 黃區</td></tr></table>
   </div>
 </div>
 
@@ -231,11 +231,11 @@ td { padding:7px 8px; border-bottom:1px solid #263449; }
 
 
   <div class="card" style="margin-top:14px;border-left:4px solid #8b5cf6">
-    <h2>📡 產業資金流向（2026-11-06T16:09）</h2>
-    <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px">法人淨買賣超：債券 +55百萬，原物料避險 +18百萬，塑化 +16百萬，營建 +4百萬，通訊服務 +3百萬，百貨 +0百萬，不動產 -0百萬，金融 -1百萬，汽車 -1百萬，鋼鐵 -3百萬，航運 -3百萬，能源 -4百萬，生技醫療 -4百萬，台積電 -32百萬，食品 -195百萬，高股息防禦 -216百萬，科技 -365百萬，市值型 -455百萬，其他 -1186百萬｜RS最強 核心消費(XLP)（+17.5pp vs SPY）｜最弱 科技(XLK)</div>
+    <h2>📡 產業資金流向（2026-11-06T19:25）</h2>
+    <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px">法人淨買賣超：債券 +69百萬，原物料避險 +13百萬，營建 +6百萬，生技醫療 +5百萬，通訊服務 +5百萬，百貨 +0百萬，不動產 -0百萬，汽車 -1百萬，金融 -1百萬，能源 -1百萬，鋼鐵 -3百萬，航運 -7百萬，塑化 -11百萬，台積電 -101百萬，食品 -146百萬，高股息防禦 -234百萬，科技 -276百萬，市值型 -747百萬，其他 -1358百萬｜RS最強 核心消費(XLP)（+17.5pp vs SPY）｜最弱 科技(XLK)</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div><div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:4px">TW 台股法人（產業桶）</div>
-      <table><tr><th>產業桶</th><th class="num">法人淨買賣超</th><th>方向</th></tr><tr><td>債券</td><td class='num'>+55百萬</td><td>🟢 inflow</td></tr><tr><td>原物料避險</td><td class='num'>+18百萬</td><td>🟢 inflow</td></tr><tr><td>塑化</td><td class='num'>+16百萬</td><td>🟢 inflow</td></tr><tr><td>營建</td><td class='num'>+4百萬</td><td>🟢 inflow</td></tr><tr><td>通訊服務</td><td class='num'>+3百萬</td><td>🟢 inflow</td></tr><tr><td>百貨</td><td class='num'>+0百萬</td><td>🟢 inflow</td></tr><tr><td>不動產</td><td class='num'>-0百萬</td><td>🔴 outflow</td></tr><tr><td>金融</td><td class='num'>-1百萬</td><td>🔴 outflow</td></tr><tr><td>汽車</td><td class='num'>-1百萬</td><td>🔴 outflow</td></tr><tr><td>鋼鐵</td><td class='num'>-3百萬</td><td>🔴 outflow</td></tr><tr><td>航運</td><td class='num'>-3百萬</td><td>🔴 outflow</td></tr><tr><td>能源</td><td class='num'>-4百萬</td><td>🔴 outflow</td></tr><tr><td>生技醫療</td><td class='num'>-4百萬</td><td>🔴 outflow</td></tr><tr><td>台積電</td><td class='num'>-32百萬</td><td>🔴 outflow</td></tr><tr><td>食品</td><td class='num'>-195百萬</td><td>🔴 outflow</td></tr><tr><td>高股息防禦</td><td class='num'>-216百萬</td><td>🔴 outflow</td></tr><tr><td>科技</td><td class='num'>-365百萬</td><td>🔴 outflow</td></tr><tr><td>市值型</td><td class='num'>-455百萬</td><td>🔴 outflow</td></tr><tr><td>其他</td><td class='num'>-1186百萬</td><td>🔴 outflow</td></tr></table></div>
+      <table><tr><th>產業桶</th><th class="num">法人淨買賣超</th><th>方向</th></tr><tr><td>債券</td><td class='num'>+69百萬</td><td>🟢 inflow</td></tr><tr><td>原物料避險</td><td class='num'>+13百萬</td><td>🟢 inflow</td></tr><tr><td>營建</td><td class='num'>+6百萬</td><td>🟢 inflow</td></tr><tr><td>生技醫療</td><td class='num'>+5百萬</td><td>🟢 inflow</td></tr><tr><td>通訊服務</td><td class='num'>+5百萬</td><td>🟢 inflow</td></tr><tr><td>百貨</td><td class='num'>+0百萬</td><td>🟢 inflow</td></tr><tr><td>不動產</td><td class='num'>-0百萬</td><td>🔴 outflow</td></tr><tr><td>汽車</td><td class='num'>-1百萬</td><td>🔴 outflow</td></tr><tr><td>金融</td><td class='num'>-1百萬</td><td>🔴 outflow</td></tr><tr><td>能源</td><td class='num'>-1百萬</td><td>🔴 outflow</td></tr><tr><td>鋼鐵</td><td class='num'>-3百萬</td><td>🔴 outflow</td></tr><tr><td>航運</td><td class='num'>-7百萬</td><td>🔴 outflow</td></tr><tr><td>塑化</td><td class='num'>-11百萬</td><td>🔴 outflow</td></tr><tr><td>台積電</td><td class='num'>-101百萬</td><td>🔴 outflow</td></tr><tr><td>食品</td><td class='num'>-146百萬</td><td>🔴 outflow</td></tr><tr><td>高股息防禦</td><td class='num'>-234百萬</td><td>🔴 outflow</td></tr><tr><td>科技</td><td class='num'>-276百萬</td><td>🔴 outflow</td></tr><tr><td>市值型</td><td class='num'>-747百萬</td><td>🔴 outflow</td></tr><tr><td>其他</td><td class='num'>-1358百萬</td><td>🔴 outflow</td></tr></table></div>
       <div><div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:4px">🇺🇸 美股板塊（月動能 vs SPY）</div>
       <table><tr><th>板塊</th><th class="num">動能%</th><th class="num">RS</th></tr><tr><td>核心消費(XLP)</td><td class='num'>+11.6%</td><td class='num'>+17.5pp</td></tr><tr><td>醫療(XLV)</td><td class='num'>+10.7%</td><td class='num'>+16.6pp</td></tr><tr><td>不動產(XLRE)</td><td class='num'>+7.8%</td><td class='num'>+13.7pp</td></tr><tr><td>金融(XLF)</td><td class='num'>+6.5%</td><td class='num'>+12.4pp</td></tr><tr><td>非核心消費(XLY)</td><td class='num'>+5.3%</td><td class='num'>+11.2pp</td></tr><tr><td>公用(XLU)</td><td class='num'>+5.2%</td><td class='num'>+11.1pp</td></tr><tr><td>原物料(XLB)</td><td class='num'>+5.2%</td><td class='num'>+11.1pp</td></tr><tr><td>能源(XLE)</td><td class='num'>-3.3%</td><td class='num'>+2.6pp</td></tr><tr><td>工業(XLI)</td><td class='num'>-5.3%</td><td class='num'>+0.6pp</td></tr><tr><td>科技(XLK)</td><td class='num'>-19.6%</td><td class='num'>-13.7pp</td></tr></table></div>
     </div>

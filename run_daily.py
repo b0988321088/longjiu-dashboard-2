@@ -789,7 +789,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                     _cio_usd_pb = _usd_pb(_snap_c)
                     # 2026-10-07 裁決①：advisory → 連數字都不進 LLM 脈絡（與 prompt_block 一致）
                     _usd_ictx = ("" if _usd_adv_c else
-                                 f"｜風險因子：美元曝險 {_usd_c.get('合計','—')}%"
+                                 f"｜風險因子：美元曝險 {_usd_c.get('匯率曝險合計', _usd_c.get('合計','—'))}%"
                                  f"（美股桶 {_usd_c.get('美股桶','—')}%＋美元計價基金 {_usd_c.get('美元計價基金（非美股桶）','—')}%"
                                  f"＋保單美元債 {_usd_c.get('保單美元債券','—')}%，目標值 ≤{(_usd_cap_fn(_snap_c) or 60):.0f}%）")
                     _cio_ictx = (f"產業：{_top4}｜資金流向：{_sf_c.get('台股總結','—')}；{_sf_c.get('美股總結','—')}｜"
@@ -2354,7 +2354,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                         "現金流覆蓋（常態）：⚠️ 缺真值 → 不予判斷（不以常數救場）")
                 # 2026-09-13：口徑統一 = usd_exposure_monitor.current.合計（與儀表板/穿透圖同源；原用美股桶會與儀表板不一致）
                 _mon = (_snap_now.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {}
-                _usd_ex = float(_mon.get("合計") or tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0))
+                _usd_ex = float(_mon.get("匯率曝險合計", _mon.get("合計")) or tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0))
                 # 2026-10-07 裁決①③：美元曝險已裁定「僅顯示、不觸發」→ 哲學檢核不得再標紅燈
                 from usd_advisory import cap as _usd_cap_fn, is_advisory as _usd_is_adv, tier as _usd_tier
                 _usd_cap = float(_usd_cap_fn(_snap_now) or 60)   # 政策門檻單一來源（thresholds.美元曝險_pct）

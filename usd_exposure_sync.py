@@ -90,11 +90,20 @@ def compute_usd_exposure(snap: dict, pen: dict = None, total: float = None) -> d
     }
     total_pct = round(sum(out.values()), 1)
     out["合計"] = total_pct
+    # 2026-11-06（使用者核准 方案A）：已確認對沖的部位不計入「匯率曝險」。
+    # 來源＝snapshot.usd_exposure_monitor.hedged_funds（機器可讀清單，逐筆附證據與來源）。
+    # 合計 = 全部美元計價部位（語意不變）；匯率曝險合計 = 合計 − 已避險。
+    _hf = mon.get("hedged_funds") or {}
+    _hedged_twd = float(_hf.get("合計_twd") or 0)
+    out["已避險"] = pct(_hedged_twd)
+    out["匯率曝險合計"] = round(total_pct - pct(_hedged_twd), 1)
     out["_twd_amounts"] = {"美股桶": us_bucket, "美元計價基金": usd_funds, "保單美元債券": ins_bonds,
                            "美元定存": usd_td, "美元債券梯": usd_ladder, "分母_總資產": total}
     # 2026-10-07 裁決③：命名＝目標值／黃色觀察／高曝險觀察線；狀態字串由 usd_advisory 單一入口產生
-    out["狀態"] = _usd_status(snap, total_pct)
-    out["等級"] = _usd_tier(snap, total_pct)
+    # 2026-11-06：等級／狀態改用「匯率曝險合計」（已排除對沖部位），與顯示口徑一致
+    _exposure_for_policy = out["匯率曝險合計"]
+    out["狀態"] = _usd_status(snap, _exposure_for_policy)
+    out["等級"] = _usd_tier(snap, _exposure_for_policy)
     out["目標值"] = thr
     # 2026-10-07 使用者裁決（只顯示、不觸發）：美元曝險自動化＝真值回歸，不是重新制定資產政策。
     # 68~70% 為新觀測結果，但 60/65/70 三級門檻與 2026-09-12「放寬到 60」的政策存在衝突 →
@@ -118,6 +127,8 @@ def sync_usd_exposure(snap: dict, pen: dict = None, total: float = None, verbose
         "美元定存": cur["美元定存"],
         "美元債券梯": cur["美元債券梯"],
         "合計": cur["合計"],
+        "已避險": cur["已避險"],
+        "匯率曝險合計": cur["匯率曝險合計"],
         "目標值": cur["目標值"],
         "等級": cur["等級"],
         "狀態": cur["狀態"],
@@ -126,15 +137,20 @@ def sync_usd_exposure(snap: dict, pen: dict = None, total: float = None, verbose
     }
     if prev.get("口徑校正_20260914"):
         new["口徑校正_20260914"] = prev["口徑校正_20260914"]
+    # 2026-11-06：sync 每次重建 current，必須保留人工維護的三層拆分（否則文件欄位被吃掉）
+    if prev.get("三層拆分"):
+        new["三層拆分"] = prev["三層拆分"]
     mon["current"] = new
     # 2026-10-07 裁決：advisory_only 為消費端唯一判準（只顯示、不觸發資產調整）
     mon["advisory_only"] = bool(cur.get("advisory_only"))
     mon["政策提示"] = cur.get("政策提示")
-    snap["usd_exposure_pct"] = cur["合計"]
+    # 2026-11-06：對外「美元曝險」單一欄位改指匯率曝險（已排除對沖部位）；合計仍保留於 current
+    snap["usd_exposure_pct"] = cur["匯率曝險合計"]
     if verbose:
         print("  美元曝險 " + "＋".join(f"{k} {v}%" for k, v in new.items()
               if k in ("美股桶", "美元計價基金（非美股桶）", "保單美元債券", "美元定存", "美元債券梯"))
-              + f" = {new['合計']}%（目標值 {new['目標值']:.0f}%）")
+              + f" = {new['合計']}%（全部美元計價）｜已避險 {new['已避險']}%"
+              + f" → 匯率曝險 {new['匯率曝險合計']}%（目標值 {new['目標值']:.0f}%）")
     return new
 
 

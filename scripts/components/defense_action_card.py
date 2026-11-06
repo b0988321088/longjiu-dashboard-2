@@ -491,7 +491,7 @@ def render_dashboard(snap: dict | None = None, theme: str = "dark") -> str:
         f'<td class="py-0.5 pl-2">{c["防禦判定"]}</td></tr>' for c in asset_class_rows(a))
     _pen_pct = (snap.get("penetration") or {}).get("actual_pct") or {}
     _bucket_sum = sum(float(x) for kk, x in _pen_pct.items() if not kk.endswith(("_科技", "_非科技")))
-    _usd_pct = ((snap.get("usd_exposure_monitor") or {}).get("current") or {}).get("合計")
+    _usd_pct = (((snap.get("usd_exposure_monitor") or {}).get("current") or {}).get("匯率曝險合計", ((snap.get("usd_exposure_monitor") or {}).get("current") or {}).get("合計")))
     _gold_pct = (a["gold"] / a["total"] * 100) if (a["gold"] and a["total"]) else None
     _rs = (snap.get("cash_layers") or {}).get("restricted_cash")
     _rest = float(_rs.get("total") or 0) if isinstance(_rs, dict) else float(snap.get("restricted_cash") or 0)

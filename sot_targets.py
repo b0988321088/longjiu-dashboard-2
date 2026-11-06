@@ -1894,7 +1894,7 @@ def triggers(snap: dict) -> dict:
 
     # 5) 美元曝險
     usd = (snap or {}).get("usd_exposure_monitor") or {}
-    usd_now = (usd.get("current") or {}).get("合計")
+    usd_now = ((usd.get("current") or {}).get("匯率曝險合計", (usd.get("current") or {}).get("合計")))
     usd_thr = t.get("美元曝險_pct") or {}
     if isinstance(usd_now, (int, float)):
         _y, _r = usd_thr.get("黃"), usd_thr.get("紅")

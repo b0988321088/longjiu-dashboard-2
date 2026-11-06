@@ -874,7 +874,7 @@ def main():
             #   snapshot.乾粉執行_0926 舊值（119,182）」的路徑——負值被 max(0,·) 夾成 0 後，
             #   falsy 判斷會把過期正值寫進下游報告（10/11 週報/eval 即此症狀）。
             _dry2 = _cw3["dry_signed"]
-            _usd2 = snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
+            _usd2 = snap.get("usd_exposure_monitor", {}).get("current", {}).get("匯率曝險合計", snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0))
             from usd_advisory import cap as _usd_cap_fn   # 2026-10-07 裁決②：政策門檻單一來源
             _usd_cap2 = float(_usd_cap_fn(snap) or 60)
             # 2026-09-13：本週計劃改讀 radar_state.weekly_plan.rows（單一來源＝institutional_flow 產出）

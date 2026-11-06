@@ -619,7 +619,7 @@ def main():
         _dp = _dp_fn(_snap)
         _dry = _dp["dry"]                               # 有正負號（<0＝短少）
         _dry_wan = _dry_txt_fn(_dp, "wan")              # 「乾粉 11.9萬」／「短少 6.0萬」
-        _usd = _snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0)
+        _usd = _snap.get("usd_exposure_monitor", {}).get("current", {}).get("匯率曝險合計", _snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0))
         _hs = _snap.get("hedge_satellite", {})
         _conv = _snap.get("insurance_conversion_0826b", {})
 
@@ -780,9 +780,13 @@ def main():
             lines.append(f"🟢 避險衛星：黃金現況 {_hs.get('黃金現況',0):,} → PI 後 00635U 分批 ≤20萬/次")
         # ⑦ 美元曝險（2026-10-07 裁決①~③：只顯示、不觸發；政策門檻單一來源；觀測線命名）
         _usd_mon = _snap.get("usd_exposure_monitor", {}) or {}
-        _usd_val = (_usd_mon.get("current") or {}).get("合計")
+        _usd_val = ((_usd_mon.get("current") or {}).get("匯率曝險合計", (_usd_mon.get("current") or {}).get("合計")))
         if _usd_is_advisory(_snap):
-            lines.append(f"🟡 美元曝險 {_usd_val}%（{_usd_tier(_snap, _usd_val)}；{_usd_tier_text(_snap)}）"
+            # 2026-11-06：圖示改依實際等級（原硬編 🟡，與「目標值內」文字矛盾）
+            _tier_txt = str(_usd_tier(_snap, _usd_val))
+            _usd_icon = ("🟢" if _tier_txt.startswith("目標值內")
+                         else ("🔴" if "高曝險" in _tier_txt else "🟡"))
+            lines.append(f"{_usd_icon} 美元曝險 {_usd_val}%（{_tier_txt}；{_usd_tier_text(_snap)}）"
                          f"→ 僅顯示，不觸發換匯／減碼（政策門檻待 10 月戰略檢討）")
         elif _usd_val is not None and float(_usd_val) > float(_usd_cap_fn(_snap) or 60):
             lines.append(f"🔴 美元曝險 {_usd_val}% 超標（目標值 ≤{_usd_cap_fn(_snap):.0f}%）→ 美股減碼/美元定存到期轉台幣")

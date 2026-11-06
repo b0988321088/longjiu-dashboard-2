@@ -57,6 +57,22 @@ def policy(snap) -> dict:
     return out
 
 
+def exposure_pct(snap) -> float:
+    """美元「匯率曝險」單一入口（2026-11-06 使用者核准 方案A）。
+
+    語意：已排除具匯率對沖的級別（來源 snapshot.usd_exposure_monitor.hedged_funds）。
+    current.合計 仍代表「全部美元計價部位」，保留給需要總額的場景；
+    顯示政策門檻（60/65/70）比較時一律用本函式。
+    缺 匯率曝險合計 → 回退 合計（fail-safe，不捏造）。
+    """
+    cur = ((snap.get("usd_exposure_monitor") or {}).get("current") or {})
+    v = cur.get("匯率曝險合計", cur.get("合計"))
+    try:
+        return float(v) if v is not None else 0.0
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def cap(snap):
     """目標值（％）；缺真值回 None（呼叫端自行決定是否以顯示用 fallback 頂替）。"""
     return policy(snap).get("目標")
@@ -430,7 +446,7 @@ def _canon_pct_allowed(snap) -> set:
     if isinstance(m, dict):
         cur = m.get("current")
         if isinstance(cur, dict):
-            for k in ("合計", "目標值", "門檻", "現值", "current", "threshold"):
+            for k in ("合計", "匯率曝險合計", "已避險", "目標值", "門檻", "現值", "current", "threshold"):
                 _add(cur.get(k))
         for k in ("threshold", "current_pct", "threshold_pct", "target_pct"):
             _add(m.get(k))
@@ -483,7 +499,7 @@ def _canon_current(snap):
     if isinstance(m, dict):
         cur = m.get("current")
         if isinstance(cur, dict):
-            for k in ("合計", "現值", "current"):
+            for k in ("合計", "匯率曝險合計", "已避險", "現值", "current"):
                 v = cur.get(k)
                 if isinstance(v, (int, float)) and not isinstance(v, bool):
                     vals.add(round(float(v), 1))

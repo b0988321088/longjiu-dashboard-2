@@ -166,7 +166,7 @@ def render_health_score(snap: dict) -> dict:
     # 這不是美化分數，而是移除已被政策取消的觸發語意；真值仍讀出供明細參考（不計分）。
     _usd_m = snap.get("usd_exposure_monitor", {}).get("current", {})
     if isinstance(_usd_m, dict):
-        usd = _num(_usd_m.get("合計", _usd_m.get("美股桶", 54)), 54)
+        usd = _num(_usd_m.get("匯率曝險合計", _usd_m.get("合計", _usd_m.get("美股桶", 54))), 54)
     else:
         usd = _num(_usd_m, 54)
     usd_score = None   # 不計分（2026-10-07 裁決①；原 20% 權重併入防禦維度）

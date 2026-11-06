@@ -53,7 +53,7 @@ def build_chart():
 
     # 美元曝險（2026-09-13：單一真值來源 = snapshot.usd_exposure_monitor.current.合計；紅線讀 threshold = 60）
     _usd_m = (s.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {}
-    usd_pct = float(_usd_m.get("合計") or s.get("usd_exposure_pct", 0) or 0)
+    usd_pct = float(_usd_m.get("匯率曝險合計", _usd_m.get("合計")) or s.get("usd_exposure_pct", 0) or 0)
     # 2026-10-07 裁決②：政策門檻單一來源（usd_advisory.policy ← thresholds.美元曝險_pct）
     _usd_cap = float(_usd_cap_fn(s) or 60)
     usd_twd = total * usd_pct / 100

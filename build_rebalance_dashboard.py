@@ -504,8 +504,8 @@ def main():
         'FI 跑道＝現金 ÷ 月缺口；「月盈餘」KPI 為含薪資口徑，與本表不同。</div></div>' 
     )
     # 2026-10-07 裁決②：口徑統一＝usd_exposure_monitor.current.合計（單一真值；原讀 top-level usd_exposure_pct）
-    usd_pct = float((((s.get("usd_exposure_monitor") or {}).get("current") or {}).get("合計")
-                     or s.get("usd_exposure_pct") or 0))
+    _usd_cur = ((s.get("usd_exposure_monitor") or {}).get("current") or {})
+    usd_pct = float(_usd_cur.get("匯率曝險合計", _usd_cur.get("合計")) or s.get("usd_exposure_pct") or 0)
     # 2026-10-16：原第三段 fallback 寫死 8/22 舊值 17.5（缺鍵時印出舊數字＝假真值）。
     # 改以 snapshot 穿透真值為最後一道，不再退舊常數（缺值即 None → 交由渲染端判定）。
     tech = (s.get("industry_penetration", {}).get("產業", {}).get("資訊科技", {}).get("佔比")
