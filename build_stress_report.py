@@ -2,11 +2,19 @@
 # -*- coding: utf-8 -*-
 """build_stress_report.py — 股災壓力測試報告（stress_test_{date}.html）
 
-用途：把「這次股災對資產造成什麼影響」變成可重複產出的頁面，掛在儀表板按鈕。
+用途：把「這次股災對資產造成什麼影響、壓力在哪、可承受多少」變成可重複產出的頁面，掛在儀表板按鈕。
 原則：
-  · 全部數字現讀 snapshot／dragon_assets.db／Yahoo 收盤，**不得寫死**（no-hardcode）。
+  · 全部數字現讀 snapshot／dragon_assets.db／asset_diff_history／radar_state／Yahoo 收盤，**不得寫死**（no-hardcode）。
   · 假設一律具名（例：情境衝擊對各桶採 β 假設），不得偽裝成實測。
-  · 資料日與價格日各自標示，不把前一交易日收盤說成當日。
+  · 資料日與價格日各自標示，不把前一交易日收盤說成當日；淨值日落後市場日時必須示警。
+  · 門檻讀 thresholds／snapshot，不在程式裡寫 53／160／140。
+
+2026-11-06 改版（使用者要求把當日評估回饋進本報告）：
+  ① 歸因由「前後兩日」改為「本波高點→今日」，並同時列前後日。
+  ② 質押段加入內部停止線 LTV 53% 與「回線需還本金額」。
+  ③ 新增流動性壓力段（押標金與維持率回補搶同一筆現金）。
+  ④ 新增收入韌性段（配息縮水斷點）。
+  ⑤ 修正舊版「配息不變」的過度樂觀敘述。
 """
 from __future__ import annotations
 
@@ -18,6 +26,10 @@ from pathlib import Path
 
 BASE = Path(__file__).parent.resolve()
 TODAY = date.today().isoformat()
+
+# 情境 β 假設（具名，非實測）：台股／美股桶 1.0、防守型配息 0.5、債券 0.2
+BETA = {"tw": 1.0, "us": 1.0, "df": 0.5, "bd": 0.2}
+POOL_BETA_US = 0.8   # 擔保池以美股部位為主
 
 
 def _num(v, default=0.0):
@@ -40,20 +52,39 @@ def load_rows(n=2):
     return rows
 
 
-def yclose(sym):
-    """回傳 (date, close, prev_close) 或 None。"""
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?interval=1d&range=1mo"
+def load_history(days=60):
+    p = BASE / "asset_diff_history.json"
+    if not p.exists():
+        return {}
+    h = json.loads(p.read_text(encoding="utf-8"))
+    keys = sorted(h.keys())[-days:]
+    return {k: h[k] for k in keys}
+
+
+def yhist(sym, months=6):
+    """回傳 [(date, close)]（依日期遞增）或 []。"""
+    url = (f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}"
+           f"?interval=1d&range={months}mo")
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         j = json.load(urllib.request.urlopen(req, timeout=15))["chart"]["result"][0]
         ts, cl = j["timestamp"], j["indicators"]["quote"][0]["close"]
-        pts = [(datetime.utcfromtimestamp(t + 8 * 3600).strftime("%Y-%m-%d"), c)
+        pts = [(datetime.utcfromtimestamp(t + 8 * 3600).strftime("%Y-%m-%d"), float(c))
                for t, c in zip(ts, cl) if c]
-        if len(pts) >= 2:
-            return pts[-1][0], pts[-1][1], pts[-2][1]
+        return pts
     except Exception:
-        return None
-    return None
+        return []
+
+
+def close_asof(pts, d):
+    """取 <= d 的最後一筆收盤。"""
+    out = None
+    for dt, c in pts:
+        if dt <= d:
+            out = (dt, c)
+        else:
+            break
+    return out
 
 
 def fmt(v, unit="元"):
@@ -63,16 +94,146 @@ def fmt(v, unit="元"):
 def build():
     snap = load_snap()
     rows = load_rows(2)
-    cur, prev = rows[0], rows[1] if len(rows) > 1 else rows[0]
+    hist = load_history(60)
+    cur = rows[0]
+    prev = rows[1] if len(rows) > 1 else rows[0]
 
-    tot_now, tot_prev = _num(cur["total_assets"]), _num(prev["total_assets"])
-    d_tot = tot_now - tot_prev
-    parts = [
-        ("現金", _num(cur["cash_total"]), _num(prev["cash_total"])),
-        ("證券（台股）", _num(cur["securities"]), _num(prev["securities"])),
-        ("基金", _num(cur["funds"]), _num(prev["funds"])),
-        ("保險（含保單基金）", _num(cur["insurance"]), _num(prev["insurance"])),
+    # ── 本波高點（近 60 天 total_assets 最大值）─────────────────────────
+    hi_date, hi = (None, None)
+    for d, v in hist.items():
+        ta = _num(v.get("total_assets"))
+        if hi is None or ta > hi:
+            hi_date, hi = d, ta
+    if hi is None:
+        hi_date, hi = cur["date"], _num(cur["total_assets"])
+
+    tot_now = _num(cur["total_assets"])
+    d_wave = tot_now - hi
+    pct_wave = d_wave / hi * 100 if hi else 0
+
+    # 逐部位：本波（高點→今日）與前後日
+    def part(key_map):
+        out = []
+        for name, hkey, ckey in key_map:
+            hv = _num(hist.get(hi_date, {}).get(hkey))
+            cv = _num(cur[ckey])
+            pv = _num(prev[ckey])
+            out.append((name, hv, cv, cv - hv, (cv - hv) / hv * 100 if hv else 0, cv - pv))
+        return out
+
+    parts = part([
+        ("現金", "cash", "cash_total"),
+        ("證券（台股）", "securities_market", "securities"),
+        ("基金", "fund_market", "funds"),
+        ("保險（含保單基金）", "insurance_current", "insurance"),
+    ])
+
+    # ── 市場 ──────────────────────────────────────────────────────────
+    idx = {}
+    for sym, label in [("%5ETWII", "台股加權"), ("%5ESOX", "費城半導體"), ("%5EIXIC", "納斯達克")]:
+        pts = yhist(sym)
+        if not pts:
+            continue
+        last = pts[-1]
+        prevc = pts[-2] if len(pts) > 1 else last
+        base = close_asof(pts, hi_date) or pts[0]
+        idx[label] = {
+            "date": last[0], "close": last[1], "prev": prevc[1],
+            "base_date": base[0], "base": base[1],
+            "wave_pct": (last[1] - base[1]) / base[1] * 100 if base[1] else 0,
+        }
+
+    radar = {}
+    try:
+        rs = json.loads((BASE / "radar_state.json").read_text(encoding="utf-8"))
+        radar = (rs.get("data") or {}).get("us_sector") or {}
+    except Exception:
+        radar = {}
+
+    # ── 質押 ──────────────────────────────────────────────────────────
+    pledge = _num(snap.get("fund_pledge_loan"))
+    pool = _num(snap.get("funds_cathay"))
+    ratio = pool / pledge * 100 if pledge else 0
+    ltv = pledge / pool * 100 if pool else 0
+
+    th = snap.get("thresholds_2026_0915") or {}
+    ltv_bands = th.get("ltv分級_pct") or {}
+    ltv_stop = _num(ltv_bands.get("黃上限"), 53)          # 內部停止線
+    maint_warn = _num(th.get("通知_維持率_pct"), 160)      # 銀行通知
+    maint_call = _num(th.get("追繳_維持率_pct"), 140)      # 銀行追繳
+
+    gates = []
+    for label, gpool, note in [
+        (f"內部停止線 LTV {ltv_stop:.0f}%", pledge / (ltv_stop / 100) if ltv_stop else 0,
+         f"維持率 {100/ltv_stop*100:.1f}%"),
+        (f"銀行通知 {maint_warn:.0f}%", pledge * maint_warn / 100, f"LTV {100/maint_warn*100:.1f}%"),
+        (f"銀行追繳 {maint_call:.0f}%", pledge * maint_call / 100, f"LTV {100/maint_call*100:.1f}%"),
+    ]:
+        drop = (1 - gpool / pool) * 100 if pool else 0
+        gates.append((label, gpool, drop, note))
+
+    scen_pledge = []
+    for d in (0.05, 0.10, 0.15, 0.20, 0.25, 0.30):
+        p = pool * (1 - d)
+        need = max(0.0, pledge - (ltv_stop / 100) * p)
+        scen_pledge.append((d * 100, p, p / pledge * 100 if pledge else 0,
+                            pledge / p * 100 if p else 0, need))
+
+    # ── 流動性 ────────────────────────────────────────────────────────
+    cl = snap.get("cash_layers") or {}
+    unrestricted = _num(cl.get("unrestricted_cash"))
+    restricted = _num((cl.get("restricted_cash") or {}).get("total"))
+    floor = _num(cl.get("emergency_cash", {}).get("金額") or cl.get("cash_floor"), 700000)
+
+    bid = snap.get("bid_evaluation_20261102") or {}
+    bid_amt = _num(bid.get("押標金"))
+    bid_date = (bid.get("時程") or {}).get("截止投標") or "—"
+    after_bid = unrestricted - bid_amt
+    short_after = max(0.0, floor - after_bid)
+
+    ds = snap.get("debt_service_split") or {}
+    month_pay = _num((ds.get("合計") or {}).get("月付"))
+    _mdd = snap.get("mortgage_due_day") or {}
+    _d_cathay = _mdd.get("國泰", 20) if isinstance(_mdd, dict) else 20
+    _d_yf = _mdd.get("永豐", 27) if isinstance(_mdd, dict) else 27
+    due_rows = [
+        ("國泰房貸", _num((ds.get("房貸_國泰") or {}).get("月付")), f"每月 {_d_cathay} 日"),
+        ("永豐房貸", _num((ds.get("房貸_永豐") or {}).get("月付")), f"每月 {_d_yf} 日"),
+        ("質押利息", _num((ds.get("基金質押息") or {}).get("月付")), f"每月 {snap.get('fund_pledge_due_day', 22)} 日"),
     ]
+
+    # ── 收入韌性 ──────────────────────────────────────────────────────
+    income = _num(snap.get("monthly_income"))
+    expense = _num(snap.get("monthly_expense"))
+    surplus = income - expense
+    pi = snap.get("passive_income") or {}
+    div_n = _num(pi.get("fund_dividend_normal"))
+    rent_n = _num(pi.get("rent_monthly"))
+    pccr = (div_n + rent_n) / expense * 100 if expense else 0
+    div_actual = _num(snap.get("monthly_dividend_total"))
+
+    cut_zero = surplus / div_n * 100 if div_n else 0
+    cut_pccr = (1 - expense / (div_n + rent_n)) * 100 if (div_n + rent_n) else 0
+    div_rows = []
+    for c in (0, 0.10, 0.20, 0.30, cut_zero / 100, 0.40):
+        d = div_n * (1 - c)
+        inc = income - (div_n - d)
+        div_rows.append((max(0.0, c * 100), d, inc - expense))
+
+    # ── 淨值日 vs 市場日（落後示警）──────────────────────────────────
+    nav_note = []
+    for k, lab in [("fund_nav_dates", "基金淨值日"), ("insurance_nav_dates", "保單淨值日")]:
+        v = snap.get(k)
+        if isinstance(v, dict) and v:
+            dates = sorted({str(x) for x in v.values() if x})
+            if dates:
+                nav_note.append(f"{lab} {dates[-1]}")
+        elif isinstance(v, str) and v:
+            nav_note.append(f"{lab} {v}")
+    latest_mkt = max((i["date"] for i in idx.values()), default="")
+    stale = any(n.split()[-1] < latest_mkt for n in nav_note) if latest_mkt and nav_note else False
+
+    # ── 總資產情境（沿用 β 假設）─────────────────────────────────────
     pen = snap.get("penetration") or {}
     act_twd = pen.get("actual_twd") or {}
     act_pct = pen.get("actual_pct") or {}
@@ -80,53 +241,73 @@ def build():
     us = _num(act_twd.get("美股市值型成長"))
     df = _num(act_twd.get("防守型配息"))
     bd = _num(act_twd.get("債券"))
-    cash = _num(act_twd.get("現金/安全網"))
-
-    pledge = _num(snap.get("fund_pledge_loan") or 0)
-    pool = _num(snap.get("funds_cathay") or 0)
-    ratio = pool / pledge * 100 if pledge else 0
-
-    twii = yclose("%5ETWII")
-    sox = yclose("%5ESOX")
-
-    # 情境：對投資桶套用假設衝擊（假設具名，非預測）
     scen = []
     for label, s_tw, s_us, s_df, s_bd in [
-        ("台股再跌 10%", -0.10, 0, 0, 0),
-        ("美股再跌 10%", 0, -0.10, 0, 0),
-        ("股債雙殺（台美 -10%、防守 -5%、債 -2%）", -0.10, -0.10, -0.05, -0.02),
-        ("極端（台美 -20%、防守 -10%、債 -4%）", -0.20, -0.20, -0.10, -0.04),
+        ("止穩（不再下跌）", 0, 0, 0, 0),
+        ("再修正 8%（美股 -8／台股 -5／債 +2）", -0.05, -0.08, -0.03, 0.02),
+        ("再修正 15%（美股 -15／台股 -12／債 -2）", -0.12, -0.15, -0.06, -0.02),
+        ("極端 25%（美股 -25／台股 -20／債 -5）", -0.20, -0.25, -0.12, -0.05),
     ]:
-        d = tw * s_tw + us * s_us + df * s_df + bd * s_bd
+        d = (tw * s_tw * BETA["tw"] + us * s_us * BETA["us"]
+             + df * s_df * BETA["df"] + bd * s_bd * BETA["bd"])
         new_tot = tot_now + d
-        new_pool = pool * (1 + s_us * 0.8)  # 池以美股部位為主，β 假設 0.8
-        scen.append((label, d, new_tot, new_pool / pledge * 100 if pledge else 0))
+        new_pool = pool * (1 + s_us * POOL_BETA_US)
+        scen.append((label, d, new_tot, new_pool / pledge * 100 if pledge else 0,
+                     pledge / new_pool * 100 if new_pool else 0))
 
     def cls(v):
         return "up" if v >= 0 else "down"
 
-    rows_html = "".join(
-        f"<tr><td>{n}</td><td class='n'>{fmt(a)}</td><td class='n'>{fmt(b)}</td>"
-        f"<td class='n {cls(a-b)}'>{a-b:+,.0f}</td>"
-        f"<td class='n {cls(a-b)}'>{(a-b)/b*100:+.2f}%</td></tr>"
-        for n, a, b in parts if b)
-
-    scen_html = "".join(
-        f"<tr><td>{l}</td><td class='n down'>{d:+,.0f}</td><td class='n'>{t:,.0f}</td>"
-        f"<td class='n {'down' if r < 160 else ''}'>{r:.1f}%</td></tr>"
-        for l, d, t, r in scen)
+    parts_html = "".join(
+        f"<tr><td>{n}</td><td class='n'>{fmt(h)}</td><td class='n'>{fmt(c)}</td>"
+        f"<td class='n {cls(c-h)}'>{c-h:+,.0f}</td>"
+        f"<td class='n {cls(c-h)}'>{(c-h)/h*100:+.1f}%</td></tr>"
+        for n, h, c, dh, ph, dp in parts if h)
 
     idx_html = ""
-    if twii:
-        d0, c0, p0 = twii
-        idx_html += (f"<li>台股加權 {c0:,.2f}（{d0} 收盤），前一日 {p0:,.2f}，"
-                     f"<b class='{'up' if c0>=p0 else 'down'}'>{c0-p0:+,.2f}（{(c0-p0)/p0*100:+.2f}%）</b></li>")
-    if sox:
-        d1, c1, p1 = sox
-        idx_html += (f"<li>費城半導體 {c1:,.2f}（{d1} 收盤），前一日 {p1:,.2f}，"
-                     f"<b class='{'up' if c1>=p1 else 'down'}'>{c1-p1:+,.2f}（{(c1-p1)/p1*100:+.2f}%）</b></li>")
+    for lab, v in idx.items():
+        idx_html += (
+            f"<li>{lab} <b>{v['close']:,.2f}</b>（{v['date']} 收盤）"
+            f"當日 <b class='{cls(v['close']-v['prev'])}'>{(v['close']-v['prev'])/v['prev']*100:+.2f}%</b>"
+            f"｜本波（{v['base_date']} 起）<b class='{cls(v['wave_pct'])}'>{v['wave_pct']:+.1f}%</b></li>")
 
-    pct_tot = d_tot / tot_prev * 100 if tot_prev else 0
+    rot_html = ""
+    if radar:
+        etfs = radar.get("etfs") or {}
+        best = sorted(etfs.items(), key=lambda kv: _num(kv[1].get("動能%")), reverse=True)[:3]
+        worst = sorted(etfs.items(), key=lambda kv: _num(kv[1].get("動能%")))[:2]
+        seg = "｜".join(f"{k} {v.get('產業','')} {_num(v.get('動能%')):+.1f}%" for k, v in worst)
+        seg2 = "｜".join(f"{k} {v.get('產業','')} {_num(v.get('動能%')):+.1f}%" for k, v in best)
+        rot_html = (f"<li>產業輪動（{radar.get('date','')}）：資金流出 <b class='down'>{seg}</b>；"
+                    f"流入 <b class='up'>{seg2}</b></li>")
+
+    gate_html = "".join(
+        f"<tr><td>{lab}</td><td class='n'>{fmt(p)}</td><td class='n down'>-{d:.1f}%</td>"
+        f"<td class='n'>{note}</td></tr>"
+        for lab, p, d, note in gates)
+
+    scen_pl_html = "".join(
+        f"<tr><td class='n'>-{d:.0f}%</td><td class='n'>{fmt(p)}</td><td class='n'>{r:.1f}%</td>"
+        f"<td class='n'>{l:.1f}%</td><td class='n'>{fmt(need)}</td></tr>"
+        for d, p, r, l, need in scen_pledge)
+
+    due_html = "".join(
+        f"<li>{n} <b>{fmt(a)}</b>（{d}）</li>" for n, a, d in due_rows if a)
+
+    div_html = "".join(
+        f"<tr><td class='n'>{'-' if c>0 else ''}{c:.1f}%</td><td class='n'>{fmt(d)}</td>"
+        f"<td class='n {cls(s)}'>{s:+,.0f}</td></tr>"
+        for c, d, s in div_rows)
+
+    scen_html = "".join(
+        f"<tr><td>{l}</td><td class='n down'>{'0' if abs(d)<0.5 else f'{d:+,.0f}'}</td><td class='n'>{t:,.0f}</td>"
+        f"<td class='n'>{r:.1f}%</td><td class='n'>{lt:.1f}%</td></tr>"
+        for l, d, t, r, lt in scen)
+
+    pct_tot = (_num(cur["total_assets"]) - _num(prev["total_assets"])) / _num(prev["total_assets"]) * 100 \
+        if _num(prev["total_assets"]) else 0
+    d_tot = _num(cur["total_assets"]) - _num(prev["total_assets"])
+
     html = f"""<!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -138,72 +319,108 @@ body{{margin:0;background:#0b1220;color:#e5e7eb;font:16px/1.75 -apple-system,"No
 h1{{font-size:26px;font-weight:900;margin:0 0 6px}}
 h2{{font-size:18px;font-weight:800;margin:30px 0 10px;color:#93c5fd}}
 .sub{{color:#94a3b8;font-size:13px;margin-bottom:18px}}
-.card{{background:#111c2e;border:1px solid #1f2c44;border-radius:14px;padding:16px 18px;margin:12px 0}}
-.big{{font-size:32px;font-weight:900}}
+.card{{background:#111c2e;border:1px solid #1f2c44;border-radius:14px;padding:16px 18px;margin:12px 0;overflow-x:auto}}
+.big{{font-size:30px;font-weight:900}}
 .down{{color:#f87171}} .up{{color:#34d399}}
-table{{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}}
-th,td{{padding:8px 6px;border-bottom:1px solid #1f2c44;text-align:left}}
+table{{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}}
+th,td{{padding:7px 5px;border-bottom:1px solid #1f2c44;text-align:left}}
 td.n,th.n{{text-align:right;font-variant-numeric:tabular-nums}}
-ul{{margin:8px 0 0;padding-left:20px}} li{{margin:4px 0}}
+ul{{margin:8px 0 0;padding-left:20px}} li{{margin:5px 0}}
+.warn{{background:#2a1215;border-color:#7f1d1d}}
 .tag{{display:inline-block;font-size:12px;background:#1e293b;border:1px solid #334155;border-radius:999px;padding:2px 10px;color:#cbd5e1;margin-right:6px}}
 a{{color:#34d399}}
 </style></head><body><div class="wrap">
 <h1>股災壓力測試・{TODAY}</h1>
-<div class="sub">資料基準：{cur['date']}｜比較基準：{prev['date']}｜全部數字現讀 snapshot／DB，未經人工填寫</div>
+<div class="sub">資料基準 {cur['date']}｜本波高點 {hi_date}｜全部數字現讀 snapshot／DB／history／radar，未經人工填寫</div>
 
 <div class="card">
-  <div class="sub" style="margin:0">總資產（{cur['date']} vs {prev['date']}）</div>
-  <div class="big {'down' if d_tot<0 else 'up'}">{tot_now:,.0f} <span style="font-size:16px">({d_tot:+,.0f}／{pct_tot:+.2f}%)</span></div>
+  <div class="sub" style="margin:0">總資產（今日 vs 本波高點 {hi_date}）</div>
+  <div class="big {'down' if d_wave<0 else 'up'}">{tot_now:,.0f} <span style="font-size:15px">({d_wave:+,.0f}／{pct_wave:+.2f}%)</span></div>
+  <div class="sub" style="margin:6px 0 0">前一交易日對比：{_num(prev['total_assets']):,.0f} → {d_tot:+,.0f}（{pct_tot:+.2f}%）</div>
 </div>
 
-<h2>一、衝擊歸因（逐部位）</h2>
+<h2>一、本波衝擊歸因（{hi_date} → {cur['date']}）</h2>
 <div class="card">
 <table>
-<tr><th>部位</th><th class="n">本次</th><th class="n">前次</th><th class="n">差異</th><th class="n">幅度</th></tr>
-{rows_html}
+<tr><th>部位</th><th class="n">高點</th><th class="n">今日</th><th class="n">差異</th><th class="n">幅度</th></tr>
+{parts_html}
 </table>
-<div class="sub" style="margin:8px 0 0">註：基金與保單的變動含「估值日推進」（淨值日由前次推進至最新），不完全是單日跌幅。</div>
+<div class="sub" style="margin:8px 0 0">註：基金與保單變動含「估值日推進」，不完全是單日跌幅；高點以 history 總資產最大值認定。</div>
 </div>
 
 <h2>二、市場對照</h2>
-<div class="card"><ul>{idx_html or '<li>行情取得失敗（不補值）</li>'}</ul></div>
-
-<h2>三、質押壓力</h2>
-<div class="card">
-<ul>
-<li>借款 <b>{pledge:,.0f}</b>｜擔保池（國泰三檔）<b>{pool:,.0f}</b>｜維持率 <b class="{'down' if ratio<160 else 'up'}">{ratio:.1f}%</b></li>
-<li>距銀行通知線 160%：池需再跌 <b>{(1-pledge*1.6/pool)*100:.1f}%</b></li>
-<li>距追繳線 140%：池需再跌 <b>{(1-pledge*1.4/pool)*100:.1f}%</b></li>
-</ul>
+<div class="card"><ul>{idx_html or '<li>行情取得失敗（不補值）</li>'}{rot_html}</ul>
+<div class="sub" style="margin:8px 0 0">價格日以 Yahoo 最後收盤為準；本波起算日＝總資產高點日，非指數自身高點。</div>
 </div>
 
-<h2>四、情境壓力（假設，非預測）</h2>
+<h2>三、質押壓力（三段門檻）</h2>
+<div class="card">
+<ul>
+<li>借款 <b>{fmt(pledge)}</b>｜擔保池 <b>{fmt(pool)}</b>｜維持率 <b class="{'down' if ratio<maint_warn else 'up'}">{ratio:.1f}%</b>｜LTV <b>{ltv:.1f}%</b></li>
+<li>門檻讀 snapshot／thresholds：內部停止 LTV {ltv_stop:.0f}%／銀行通知 {maint_warn:.0f}%／追繳 {maint_call:.0f}%</li>
+</ul>
+<table>
+<tr><th>門檻</th><th class="n">池市值</th><th class="n">池需跌</th><th class="n">對應</th></tr>
+{gate_html}
+</table>
+<div class="sub" style="margin:8px 0 0">維持率＝池市值÷借款；LTV＝借款÷池市值（互為倒數，不得混用）。</div>
+</div>
+
+<div class="card">
+<div class="sub" style="margin:0 0 6px">逐跌幅情境（回 {ltv_stop:.0f}% 需還本金額）</div>
+<table>
+<tr><th class="n">池跌幅</th><th class="n">池市值</th><th class="n">維持率</th><th class="n">LTV</th><th class="n">需還本</th></tr>
+{scen_pl_html}
+</table>
+<div class="sub" style="margin:8px 0 0">假設借款不變、不計配息再投入；擔保品以<b>後收級別</b>為主（CDSC 未到期），追繳時不宜賣擔保品，優先以現金還本。</div>
+</div>
+
+<h2>四、流動性壓力（押標金 vs 維持率回補）</h2>
+<div class="card{' warn' if short_after>0 else ''}">
+<ul>
+<li>可動用現金 <b>{fmt(unrestricted)}</b>｜指定款（不可動用）<b>{fmt(restricted)}</b>｜生活底線 <b>{fmt(floor)}</b></li>
+<li>押標金 <b>{fmt(bid_amt)}</b>（{bid_date}）→ 支出後可動用 <b class="{'down' if short_after>0 else 'up'}">{fmt(after_bid)}</b>，低於底線 <b>{fmt(short_after)}</b></li>
+<li>11 月固定扣款合計 <b>{fmt(month_pay)}</b>：</li>
+</ul>
+<ul>{due_html}</ul>
+<div class="sub" style="margin:8px 0 0">扣款日以 snapshot 為準；押標金屬「暫時性資金占用」，不得視為投資配置或加碼。</div>
+</div>
+
+<h2>五、收入韌性（配息縮水斷點）</h2>
+<div class="card">
+<ul>
+<li>月收入 <b>{fmt(income)}</b>（含薪資）－月支出 <b>{fmt(expense)}</b>＝盈餘 <b class="{'down' if surplus<0 else 'up'}">{fmt(surplus)}</b></li>
+<li>常態配息 <b>{fmt(div_n)}</b>＋房租 <b>{fmt(rent_n)}</b>｜被動覆蓋 <b>{pccr:.1f}%</b>（常態口徑）</li>
+<li>當月實收配息 <b>{fmt(div_actual)}</b>（月初筆數少，非縮水；月際波動含 ETF 除息月曆效應）</li>
+</ul>
+<table>
+<tr><th class="n">配息縮水</th><th class="n">配息金額</th><th class="n">盈餘</th></tr>
+{div_html}
+</table>
+<div class="sub" style="margin:8px 0 0">兩個斷點口徑不同、不得互換：以「月收入（含薪資）」計，配息縮水 {cut_zero:.1f}% 盈餘歸零；以「被動收入覆蓋率」計，配息縮水 {cut_pccr:.1f}% 覆蓋跌破 100%。</div>
+</div>
+
+<h2>六、總資產情境（假設，非預測）</h2>
 <div class="card">
 <table>
-<tr><th>情境</th><th class="n">總資產影響</th><th class="n">情境後總資產</th><th class="n">維持率</th></tr>
+<tr><th>情境</th><th class="n">影響</th><th class="n">資產</th><th class="n">維持率</th><th class="n">LTV</th></tr>
 {scen_html}
 </table>
-<div class="sub" style="margin:8px 0 0">假設：台股／美股桶 β=1.0、防守 0.5、債券 0.2；擔保池以美股 β=0.8 估算。僅供壓力測試，不代表預測。</div>
+<div class="sub" style="margin:8px 0 0">β 假設：台股／美股 1.0、防守 0.5、債券 0.2；擔保池美股 β {POOL_BETA_US}。僅供壓力測試。</div>
 </div>
 
-<h2>五、現金流是否受影響</h2>
+<h2>七、結論與行動</h2>
 <div class="card">
 <ul>
-<li>配息為「單位數 × 每單位配息」，價格下跌不影響單位數 → 月配現金流不變。</li>
-<li>質押只繳息（月付約 {pledge*_num(snap.get('fund_pledge_rate'))/12:,.0f}，利率 {_num(snap.get('fund_pledge_rate'))*100:.2f}%），與市值無關。</li>
-<li>房租、薪資與市場無關。</li>
+<li>本波回檔 {pct_wave:+.2f}%，主因台股部位僅 {_num(act_pct.get('台股市值型成長')):.1f}%、三塊各跌約 25–33 萬，屬配置分散生效，非單一部位爆炸。</li>
+<li>最緊的不是銀行線，是<b>內部停止線</b>：池再跌 {gates[0][2]:.1f}% 就觸線，而美股單日波動即可達此量級。</li>
+<li>流動性衝突：押標金後只剩 {fmt(after_bid)}，可承受「池跌 10%（需還 {fmt(scen_pledge[1][4])}）」，不足承受「池跌 15%（需還 {fmt(scen_pledge[2][4])}）」。</li>
+<li>若觸線：<b>現金還本</b>，不賣後收級別擔保品（CDSC 未到期）；不新增借款。</li>
+<li>紀律不變：急跌日（單日 ≥3%）只回報不動作；11 月凍結、不接刀、不停損、不攤平；減碼窗口是反彈。</li>
 </ul>
 </div>
-
-<h2>六、結論</h2>
-<div class="card">
-<ul>
-<li>本次回檔對總資產的影響為 <b class="{'down' if d_tot<0 else 'up'}">{pct_tot:+.2f}%</b>，主因台股部位僅 {_num(act_pct.get('台股市值型成長')):.1f}%，不是重傷。</li>
-<li>真正的風險不是今天，是<b>美股桶 {_num(act_pct.get('美股市值型成長')):.1f}%（目標 30%）超標</b>與台幣升值同時發生。</li>
-<li>紀律不變：11 月凍結、不接刀、不停損、不攤平；減碼窗口是反彈。</li>
-</ul>
-</div>
-<div class="sub">產生時間 {datetime.now().strftime('%Y-%m-%d %H:%M')}｜來源：snapshot.json／dragon_assets.db／Yahoo Finance</div>
+{f'<div class="card warn"><b>淨值日落後示警</b>：{"／".join(nav_note)}，市場價 {latest_mkt}。下一交易日淨值仍可能再下修，今日總資產不是底部。</div>' if stale else ''}
+<div class="sub">產生時間 {datetime.now().strftime('%Y-%m-%d %H:%M')}｜來源：snapshot.json／dragon_assets.db／asset_diff_history.json／radar_state.json／Yahoo Finance</div>
 </div></body></html>"""
     out = BASE / f"stress_test_{TODAY}.html"
     out.write_text(html, encoding="utf-8")

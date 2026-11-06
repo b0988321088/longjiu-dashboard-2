@@ -9,70 +9,106 @@ body{margin:0;background:#0b1220;color:#e5e7eb;font:16px/1.75 -apple-system,"Not
 h1{font-size:26px;font-weight:900;margin:0 0 6px}
 h2{font-size:18px;font-weight:800;margin:30px 0 10px;color:#93c5fd}
 .sub{color:#94a3b8;font-size:13px;margin-bottom:18px}
-.card{background:#111c2e;border:1px solid #1f2c44;border-radius:14px;padding:16px 18px;margin:12px 0}
-.big{font-size:32px;font-weight:900}
+.card{background:#111c2e;border:1px solid #1f2c44;border-radius:14px;padding:16px 18px;margin:12px 0;overflow-x:auto}
+.big{font-size:30px;font-weight:900}
 .down{color:#f87171} .up{color:#34d399}
-table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
-th,td{padding:8px 6px;border-bottom:1px solid #1f2c44;text-align:left}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+th,td{padding:7px 5px;border-bottom:1px solid #1f2c44;text-align:left}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
-ul{margin:8px 0 0;padding-left:20px} li{margin:4px 0}
+ul{margin:8px 0 0;padding-left:20px} li{margin:5px 0}
+.warn{background:#2a1215;border-color:#7f1d1d}
 .tag{display:inline-block;font-size:12px;background:#1e293b;border:1px solid #334155;border-radius:999px;padding:2px 10px;color:#cbd5e1;margin-right:6px}
 a{color:#34d399}
 </style></head><body><div class="wrap">
 <h1>股災壓力測試・2026-11-06</h1>
-<div class="sub">資料基準：2026-11-06｜比較基準：2026-11-05｜全部數字現讀 snapshot／DB，未經人工填寫</div>
+<div class="sub">資料基準 2026-11-06｜本波高點 2026-10-24｜全部數字現讀 snapshot／DB／history／radar，未經人工填寫</div>
 
 <div class="card">
-  <div class="sub" style="margin:0">總資產（2026-11-06 vs 2026-11-05）</div>
-  <div class="big down">26,326,230 <span style="font-size:16px">(-287,361／-1.08%)</span></div>
+  <div class="sub" style="margin:0">總資產（今日 vs 本波高點 2026-10-24）</div>
+  <div class="big down">26,326,230 <span style="font-size:15px">(-875,911／-3.22%)</span></div>
+  <div class="sub" style="margin:6px 0 0">前一交易日對比：26,613,591 → -287,361（-1.08%）</div>
 </div>
 
-<h2>一、衝擊歸因（逐部位）</h2>
+<h2>一、本波衝擊歸因（2026-10-24 → 2026-11-06）</h2>
 <div class="card">
 <table>
-<tr><th>部位</th><th class="n">本次</th><th class="n">前次</th><th class="n">差異</th><th class="n">幅度</th></tr>
-<tr><td>現金</td><td class='n'>2,076,929</td><td class='n'>2,028,856</td><td class='n up'>+48,073</td><td class='n up'>+2.37%</td></tr><tr><td>證券（台股）</td><td class='n'>2,461,760</td><td class='n'>2,566,480</td><td class='n down'>-104,720</td><td class='n down'>-4.08%</td></tr><tr><td>基金</td><td class='n'>12,546,411</td><td class='n'>12,684,574</td><td class='n down'>-138,163</td><td class='n down'>-1.09%</td></tr><tr><td>保險（含保單基金）</td><td class='n'>9,241,130</td><td class='n'>9,333,681</td><td class='n down'>-92,551</td><td class='n down'>-0.99%</td></tr>
+<tr><th>部位</th><th class="n">高點</th><th class="n">今日</th><th class="n">差異</th><th class="n">幅度</th></tr>
+<tr><td>現金</td><td class='n'>2,111,940</td><td class='n'>2,076,929</td><td class='n down'>-35,011</td><td class='n down'>-1.7%</td></tr><tr><td>證券（台股）</td><td class='n'>2,794,920</td><td class='n'>2,461,760</td><td class='n down'>-333,160</td><td class='n down'>-11.9%</td></tr><tr><td>基金</td><td class='n'>12,791,770</td><td class='n'>12,546,411</td><td class='n down'>-245,359</td><td class='n down'>-1.9%</td></tr><tr><td>保險（含保單基金）</td><td class='n'>9,503,511</td><td class='n'>9,241,130</td><td class='n down'>-262,381</td><td class='n down'>-2.8%</td></tr>
 </table>
-<div class="sub" style="margin:8px 0 0">註：基金與保單的變動含「估值日推進」（淨值日由前次推進至最新），不完全是單日跌幅。</div>
+<div class="sub" style="margin:8px 0 0">註：基金與保單變動含「估值日推進」，不完全是單日跌幅；高點以 history 總資產最大值認定。</div>
 </div>
 
 <h2>二、市場對照</h2>
-<div class="card"><ul><li>台股加權 39,701.64（2026-11-06 收盤），前一日 41,574.72，<b class='down'>-1,873.08（-4.51%）</b></li><li>費城半導體 9,011.14（2026-11-05 收盤），前一日 10,268.65，<b class='down'>-1,257.51（-12.25%）</b></li></ul></div>
-
-<h2>三、質押壓力</h2>
-<div class="card">
-<ul>
-<li>借款 <b>5,900,000</b>｜擔保池（國泰三檔）<b>11,771,816</b>｜維持率 <b class="up">199.5%</b></li>
-<li>距銀行通知線 160%：池需再跌 <b>19.8%</b></li>
-<li>距追繳線 140%：池需再跌 <b>29.8%</b></li>
-</ul>
+<div class="card"><ul><li>台股加權 <b>39,701.64</b>（2026-11-06 收盤）當日 <b class='down'>-4.51%</b>｜本波（2026-10-22 起）<b class='down'>-13.8%</b></li><li>費城半導體 <b>9,011.14</b>（2026-11-05 收盤）當日 <b class='down'>-12.25%</b>｜本波（2026-10-23 起）<b class='down'>-16.4%</b></li><li>納斯達克 <b>24,315.00</b>（2026-11-05 收盤）當日 <b class='down'>-5.52%</b>｜本波（2026-10-23 起）<b class='down'>-6.3%</b></li><li>產業輪動（2026-11-06）：資金流出 <b class='down'>XLK 科技 -19.6%｜XLI 工業 -5.3%</b>；流入 <b class='up'>XLP 核心消費 +11.6%｜XLV 醫療 +10.7%｜XLRE 不動產 +7.8%</b></li></ul>
+<div class="sub" style="margin:8px 0 0">價格日以 Yahoo 最後收盤為準；本波起算日＝總資產高點日，非指數自身高點。</div>
 </div>
 
-<h2>四、情境壓力（假設，非預測）</h2>
+<h2>三、質押壓力（三段門檻）</h2>
+<div class="card">
+<ul>
+<li>借款 <b>5,900,000</b>｜擔保池 <b>11,771,816</b>｜維持率 <b class="up">199.5%</b>｜LTV <b>50.1%</b></li>
+<li>門檻讀 snapshot／thresholds：內部停止 LTV 53%／銀行通知 160%／追繳 140%</li>
+</ul>
+<table>
+<tr><th>門檻</th><th class="n">池市值</th><th class="n">池需跌</th><th class="n">對應</th></tr>
+<tr><td>內部停止線 LTV 53%</td><td class='n'>11,132,075</td><td class='n down'>-5.4%</td><td class='n'>維持率 188.7%</td></tr><tr><td>銀行通知 160%</td><td class='n'>9,440,000</td><td class='n down'>-19.8%</td><td class='n'>LTV 62.5%</td></tr><tr><td>銀行追繳 140%</td><td class='n'>8,260,000</td><td class='n down'>-29.8%</td><td class='n'>LTV 71.4%</td></tr>
+</table>
+<div class="sub" style="margin:8px 0 0">維持率＝池市值÷借款；LTV＝借款÷池市值（互為倒數，不得混用）。</div>
+</div>
+
+<div class="card">
+<div class="sub" style="margin:0 0 6px">逐跌幅情境（回 53% 需還本金額）</div>
+<table>
+<tr><th class="n">池跌幅</th><th class="n">池市值</th><th class="n">維持率</th><th class="n">LTV</th><th class="n">需還本</th></tr>
+<tr><td class='n'>-5%</td><td class='n'>11,183,225</td><td class='n'>189.5%</td><td class='n'>52.8%</td><td class='n'>0</td></tr><tr><td class='n'>-10%</td><td class='n'>10,594,634</td><td class='n'>179.6%</td><td class='n'>55.7%</td><td class='n'>284,844</td></tr><tr><td class='n'>-15%</td><td class='n'>10,006,044</td><td class='n'>169.6%</td><td class='n'>59.0%</td><td class='n'>596,797</td></tr><tr><td class='n'>-20%</td><td class='n'>9,417,453</td><td class='n'>159.6%</td><td class='n'>62.6%</td><td class='n'>908,750</td></tr><tr><td class='n'>-25%</td><td class='n'>8,828,862</td><td class='n'>149.6%</td><td class='n'>66.8%</td><td class='n'>1,220,703</td></tr><tr><td class='n'>-30%</td><td class='n'>8,240,271</td><td class='n'>139.7%</td><td class='n'>71.6%</td><td class='n'>1,532,656</td></tr>
+</table>
+<div class="sub" style="margin:8px 0 0">假設借款不變、不計配息再投入；擔保品以<b>後收級別</b>為主（CDSC 未到期），追繳時不宜賣擔保品，優先以現金還本。</div>
+</div>
+
+<h2>四、流動性壓力（押標金 vs 維持率回補）</h2>
+<div class="card warn">
+<ul>
+<li>可動用現金 <b>1,176,929</b>｜指定款（不可動用）<b>900,000</b>｜生活底線 <b>700,000</b></li>
+<li>押標金 <b>700,000</b>（2026-11-11 10:00）→ 支出後可動用 <b class="down">476,929</b>，低於底線 <b>223,071</b></li>
+<li>11 月固定扣款合計 <b>104,768</b>：</li>
+</ul>
+<ul><li>國泰房貸 <b>26,000</b>（每月 20 日）</li><li>永豐房貸 <b>65,739</b>（每月 27 日）</li><li>質押利息 <b>13,029</b>（每月 22 日）</li></ul>
+<div class="sub" style="margin:8px 0 0">扣款日以 snapshot 為準；押標金屬「暫時性資金占用」，不得視為投資配置或加碼。</div>
+</div>
+
+<h2>五、收入韌性（配息縮水斷點）</h2>
+<div class="card">
+<ul>
+<li>月收入 <b>225,968</b>（含薪資）－月支出 <b>159,210</b>＝盈餘 <b class="up">66,758</b></li>
+<li>常態配息 <b>177,072</b>＋房租 <b>80,100</b>｜被動覆蓋 <b>161.5%</b>（常態口徑）</li>
+<li>當月實收配息 <b>17,577</b>（月初筆數少，非縮水；月際波動含 ETF 除息月曆效應）</li>
+</ul>
+<table>
+<tr><th class="n">配息縮水</th><th class="n">配息金額</th><th class="n">盈餘</th></tr>
+<tr><td class='n'>0.0%</td><td class='n'>177,072</td><td class='n up'>+66,758</td></tr><tr><td class='n'>-10.0%</td><td class='n'>159,365</td><td class='n up'>+49,051</td></tr><tr><td class='n'>-20.0%</td><td class='n'>141,658</td><td class='n up'>+31,344</td></tr><tr><td class='n'>-30.0%</td><td class='n'>123,950</td><td class='n up'>+13,636</td></tr><tr><td class='n'>-37.7%</td><td class='n'>110,314</td><td class='n up'>+0</td></tr><tr><td class='n'>-40.0%</td><td class='n'>106,243</td><td class='n down'>-4,071</td></tr>
+</table>
+<div class="sub" style="margin:8px 0 0">兩個斷點口徑不同、不得互換：以「月收入（含薪資）」計，配息縮水 37.7% 盈餘歸零；以「被動收入覆蓋率」計，配息縮水 38.1% 覆蓋跌破 100%。</div>
+</div>
+
+<h2>六、總資產情境（假設，非預測）</h2>
 <div class="card">
 <table>
-<tr><th>情境</th><th class="n">總資產影響</th><th class="n">情境後總資產</th><th class="n">維持率</th></tr>
-<tr><td>台股再跌 10%</td><td class='n down'>-266,493</td><td class='n'>26,059,737</td><td class='n '>199.5%</td></tr><tr><td>美股再跌 10%</td><td class='n down'>-983,594</td><td class='n'>25,342,636</td><td class='n '>183.6%</td></tr><tr><td>股債雙殺（台美 -10%、防守 -5%、債 -2%）</td><td class='n down'>-1,625,014</td><td class='n'>24,701,216</td><td class='n '>183.6%</td></tr><tr><td>極端（台美 -20%、防守 -10%、債 -4%）</td><td class='n down'>-3,250,027</td><td class='n'>23,076,203</td><td class='n '>167.6%</td></tr>
+<tr><th>情境</th><th class="n">影響</th><th class="n">資產</th><th class="n">維持率</th><th class="n">LTV</th></tr>
+<tr><td>止穩（不再下跌）</td><td class='n down'>0</td><td class='n'>26,326,230</td><td class='n'>199.5%</td><td class='n'>50.1%</td></tr><tr><td>再修正 8%（美股 -8／台股 -5／債 +2）</td><td class='n down'>-964,189</td><td class='n'>25,362,041</td><td class='n'>186.8%</td><td class='n'>53.5%</td></tr><tr><td>再修正 15%（美股 -15／台股 -12／債 -2）</td><td class='n down'>-1,965,410</td><td class='n'>24,360,820</td><td class='n'>175.6%</td><td class='n'>57.0%</td></tr><tr><td>極端 25%（美股 -25／台股 -20／債 -5）</td><td class='n down'>-3,346,108</td><td class='n'>22,980,122</td><td class='n'>159.6%</td><td class='n'>62.6%</td></tr>
 </table>
-<div class="sub" style="margin:8px 0 0">假設：台股／美股桶 β=1.0、防守 0.5、債券 0.2；擔保池以美股 β=0.8 估算。僅供壓力測試，不代表預測。</div>
+<div class="sub" style="margin:8px 0 0">β 假設：台股／美股 1.0、防守 0.5、債券 0.2；擔保池美股 β 0.8。僅供壓力測試。</div>
 </div>
 
-<h2>五、現金流是否受影響</h2>
+<h2>七、結論與行動</h2>
 <div class="card">
 <ul>
-<li>配息為「單位數 × 每單位配息」，價格下跌不影響單位數 → 月配現金流不變。</li>
-<li>質押只繳息（月付約 13,029，利率 2.65%），與市值無關。</li>
-<li>房租、薪資與市場無關。</li>
+<li>本波回檔 -3.22%，主因台股部位僅 10.1%、三塊各跌約 25–33 萬，屬配置分散生效，非單一部位爆炸。</li>
+<li>最緊的不是銀行線，是<b>內部停止線</b>：池再跌 5.4% 就觸線，而美股單日波動即可達此量級。</li>
+<li>流動性衝突：押標金後只剩 476,929，可承受「池跌 10%（需還 284,844）」，不足承受「池跌 15%（需還 596,797）」。</li>
+<li>若觸線：<b>現金還本</b>，不賣後收級別擔保品（CDSC 未到期）；不新增借款。</li>
+<li>紀律不變：急跌日（單日 ≥3%）只回報不動作；11 月凍結、不接刀、不停損、不攤平；減碼窗口是反彈。</li>
 </ul>
 </div>
-
-<h2>六、結論</h2>
-<div class="card">
-<ul>
-<li>本次回檔對總資產的影響為 <b class="down">-1.08%</b>，主因台股部位僅 10.1%，不是重傷。</li>
-<li>真正的風險不是今天，是<b>美股桶 37.4%（目標 30%）超標</b>與台幣升值同時發生。</li>
-<li>紀律不變：11 月凍結、不接刀、不停損、不攤平；減碼窗口是反彈。</li>
-</ul>
-</div>
-<div class="sub">產生時間 2026-11-06 16:12｜來源：snapshot.json／dragon_assets.db／Yahoo Finance</div>
+<div class="card warn"><b>淨值日落後示警</b>：基金淨值日 2026-11-05，市場價 2026-11-06。下一交易日淨值仍可能再下修，今日總資產不是底部。</div>
+<div class="sub">產生時間 2026-11-06 17:02｜來源：snapshot.json／dragon_assets.db／asset_diff_history.json／radar_state.json／Yahoo Finance</div>
 </div></body></html>

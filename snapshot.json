@@ -4,8 +4,8 @@
  "date": "2026-11-06",
  "total_assets": 26326230,
  "total_liabilities": 30951762,
- "net_worth": -4290098,
- "debt_ratio": 51.0,
+ "net_worth": -4625532,
+ "debt_ratio": 51.3,
  "monthly_income": 225968,
  "monthly_expense": 159210,
  "working_surplus": 66758,
@@ -2045,7 +2045,7 @@
    "防護重點：①PI審查期避免資產水位壓低 ②防範建債還貸後現金過低流動性枯竭"
   ]
  },
- "debt_ratio_flow": 116.1,
+ "debt_ratio_flow": 117.6,
  "real_estate": 34017063,
  "financial_mortgage_note": "理財型房貸 2,006,447 已於 2026-08-11 全數清償 ✅",
  "fund_watchlist": {
@@ -7108,7 +7108,7 @@
  "source_import_dates_asof_fix_note": "2026-10-30 修正：MB 標記停 10/20（真值 10/27＝cash_source.date）、鉅亨停 10/20（真值 10/22＝heng_note_20261022）→ performance_core.latest_asof 取 min 導致本月績效/TWR 鎖在 10/20。",
  "heng_note_20261030": "2026-10-30 21:10 鉅亨帳戶：一般申購淨值日 10/29（截圖僅露 5 檔：黃金A10 2,435／智慧數據 3,073／富達動能 2,966／M&G 2,972／安聯AI 194.89USD×32.583＝6,350）；自由PAY 淨值日 10/30 三檔 229,742＋110,002＋87,280＝427,024（成本 310,000、損益 117,024、已Pay 5,096、含Pay +39.39%）✓ 加總與表頭一致。一般申購小計 368,773（5 檔新報價、其餘 15 檔沿用 10/22）＋自由PAY 427,024＝鉅亨 795,797；含國泰直購 11,924,797 → 基金 12,720,594（原 12,746,466，Δ-25,872）。缺一般申購總計列（截圖未含），待補。",
  "funds_heng_total_20261030": 786276,
- "net_worth_incl_re": 29726965,
+ "net_worth_incl_re": 29391531,
  "real_estate_value_as_of": "2026-08-08",
  "real_estate_valuation_note": "估值日 2026-08-08（佐證待補）；僅供含房淨值衡量，非可動用現金，不得計入流動性",
  "dividend_class_map": {
