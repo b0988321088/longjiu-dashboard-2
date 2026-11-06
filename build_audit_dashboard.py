@@ -104,6 +104,8 @@ _def_break = " + ".join(f"{k.replace('(目標)','')} {round(v/(_dd_den or TA)*10
 MORT_MONTHLY = _cg_mo(s) + s.get("mortgage_sinopac_monthly", 65735)   # 2026-10-01：國泰月付改讀派生值（原讀 mortgage_cathay_monthly 第二來源，與利率真值可漂移）
 
 debt_ratio = TL / (TA + RE) * 100
+# 2026-11-06：金融資產負債比（分子為全部負債，故不可稱「流動負債率」）
+debt_ratio_fin = TL / TA * 100 if TA else 0
 net_worth = TA + RE - TL
 runway = CASH_AVAIL / EXP if EXP else 0
 cov = (DIV + RENT) / EXP * 100
@@ -195,7 +197,7 @@ rows = f"""
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
 {kpi("總資產", f"{TA:,}", "不含不動產", "#1d1d1f")}
 {kpi("淨值", f"{net_worth:,}", "資產+不動產−負債", "#3b82f6")}
-{kpi("負債比", f"{debt_ratio:.1f}%", f"負債 {TL:,}", "#d97706")}
+{kpi("負債比（含不動產）", f"{debt_ratio:.1f}%", f"負債 {TL:,} ÷（金融資產 {TA:,.0f}＋房產 {RE:,.0f}）｜金融資產負債比 {debt_ratio_fin:.1f}%（負債 ÷ 金融資產 {TA:,.0f}）", "#d97706")}
 {kpi("純現金（可動用）", f"{CASH_AVAIL:,}", f"真值 {CASH:,}" + (f" − 指定清償款 {RESTRICTED/10000:.0f}萬" if RESTRICTED else "") + f"｜底線 70萬 {cash_ok}", "#22c55e" if CASH_AVAIL>=FLOOR else "#ef4444")}
 {kpi("Runway", f"{runway:.1f} 月", f"可動用 {CASH_AVAIL:,} / 月支出 {EXP:,}")}
 {kpi("被動覆蓋", f"{cov:.0f}%", f"配息 {DIV:,} + 房租 {RENT:,}", "#22c55e")}
