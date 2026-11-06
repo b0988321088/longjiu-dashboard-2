@@ -152,7 +152,9 @@ def build():
 
     # ── 質押 ──────────────────────────────────────────────────────────
     pledge = _num(snap.get("fund_pledge_loan"))
-    pool = _num(snap.get("funds_cathay"))
+    # 2026-11-06：池值以 cathay_pledge_0911.擔保池 為單一真值（含資料日），舊 funds_cathay 僅作回退
+    pool = _num((((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("合計"))
+                or snap.get("funds_cathay"))
     ratio = pool / pledge * 100 if pledge else 0
     ltv = pledge / pool * 100 if pool else 0
 
@@ -241,11 +243,26 @@ def build():
     us = _num(act_twd.get("美股市值型成長"))
     df = _num(act_twd.get("防守型配息"))
     bd = _num(act_twd.get("債券"))
+    # ── 整合分析用（與日報第八章同源；全部現讀 snapshot）─────────────
+    _nw = _num(snap.get("net_worth"))
+    _nw_re = _num(snap.get("net_worth_incl_re"))
+    _re_val = _num(snap.get("real_estate_value_as_of") or snap.get("real_estate_value"))
+    _liab = _num(snap.get("total_liabilities"))
+    _mort = _num(((snap.get("liabilities_build_up") or {}).get("房貸_含國泰")))
+    _dd = _num((((snap.get("dual_dimension_metric") or {}).get("防禦維度") or {}).get("佔比")))
+    _ind = ((snap.get("industry_penetration") or {}).get("產業") or {})
+    _gics_tech = _num((_ind.get("資訊科技") or {}).get("佔比"))
+    _usd = ((snap.get("usd_exposure_monitor") or {}).get("current") or {})
+    _usd_all, _usd_hedge, _usd_net = (_num(_usd.get("合計")), _num(_usd.get("已避險")),
+                                      _num(_usd.get("匯率曝險合計")))
+    _pool_date = ((snap.get("cathay_pledge_0911") or {}).get("擔保池") or {}).get("資料日", "")
+    _pool_hist = (((snap.get("cathay_pledge_0911") or {}).get("擔保池_歷史") or [{}])[0])
     scen = []
     for label, s_tw, s_us, s_df, s_bd in [
         ("止穩（不再下跌）", 0, 0, 0, 0),
         ("再修正 8%（美股 -8／台股 -5／債 +2）", -0.05, -0.08, -0.03, 0.02),
         ("再修正 15%（美股 -15／台股 -12／債 -2）", -0.12, -0.15, -0.06, -0.02),
+        ("股債同跌（股 -20／債 -5）", -0.20, -0.20, -0.10, -0.05),
         ("極端 25%（美股 -25／台股 -20／債 -5）", -0.20, -0.25, -0.12, -0.05),
     ]:
         d = (tw * s_tw * BETA["tw"] + us * s_us * BETA["us"]
@@ -257,6 +274,14 @@ def build():
 
     def cls(v):
         return "up" if v >= 0 else "down"
+
+    _sc = {lab: (d, t, r, lt) for lab, d, t, r, lt in scen}
+    _gb = _sc.get("股債同跌（股 -20／債 -5）", (0.0, tot_now, 0.0, 0.0))
+    _inv_sum = sum(p[3] for p in parts[1:4])
+    _pool_note = (f"（資料日 {str(_pool_date).split('（')[0].strip()}）" if _pool_date else "")
+    _hist_note = (f"；舊值 {_num(_pool_hist.get('合計')):,.0f}（{_pool_hist.get('asof','')} 截圖／"
+                  f"報價日 {_pool_hist.get('報價日','—')}，維持率 {_pool_hist.get('對應維持率','—')}）"
+                  f"保留於 snapshot 歷史" if _pool_hist.get("合計") else "")
 
     parts_html = "".join(
         f"<tr><td>{n}</td><td class='n'>{fmt(h)}</td><td class='n'>{fmt(c)}</td>"
@@ -409,7 +434,20 @@ a{{color:#34d399}}
 <div class="sub" style="margin:8px 0 0">β 假設：台股／美股 1.0、防守 0.5、債券 0.2；擔保池美股 β {POOL_BETA_US}。僅供壓力測試。</div>
 </div>
 
-<h2>七、結論與行動</h2>
+<h2>七、整合分析結論（{TODAY} 股災｜與日報第八章同源）</h2>
+<div class="card">
+<ul>
+<li><b>真值校準</b>：本波（{hi_date} → {cur['date']}）總資產 {hi:,.0f} → {tot_now:,.0f}（<b class="down">{d_wave:+,.0f}／{pct_wave:+.1f}%</b>）；三個投資部位合計 <b class="down">{_inv_sum:+,.0f}</b>。含房淨值 <b>{_nw_re:,.0f}</b>、流動淨值（不含房產）<b class="down">{_nw:,.0f}</b>——負債 {_liab:,.0f} 中房貸 {_mort:,.0f}（{(_mort/_liab*100) if _liab else 0:.1f}%），「負債大於流動資產」是不對等口徑，不是償債危機。</li>
+<li><b>三個口徑不可互換</b>：五桶 台股 {_num(act_pct.get('台股市值型成長')):.1f}%／美股 {_num(act_pct.get('美股市值型成長')):.1f}%／防守 {_num(act_pct.get('防守型配息')):.1f}%／債券 {_num(act_pct.get('債券')):.1f}%／現金 {_num(act_pct.get('現金/安全網')):.1f}%；抗跌力看<b>雙維度防禦維度 {_dd:.1f}%</b>（不是防守桶）；GICS 高科技 <b>{_gics_tech:.1f}%</b>；美元曝險 {_usd_all:.1f}%／已避險 {_usd_hedge:.1f}%／淨 {_usd_net:.1f}%。</li>
+<li><b>質押主線</b>：維持率 {ratio:.1f}%／LTV {ltv:.1f}%{_pool_note}{_hist_note}。距內部停止線 {gates[0][2]:.1f}%、距銀行通知 {gates[1][2]:.1f}%、距追繳 {gates[2][2]:.1f}%——真正危險距離是通知線，內部 53% 只是停止加碼線。</li>
+<li><b>股債同跌</b>（股 -20／債 -5）：資產影響 <b class="down">{_gb[0]:+,.0f}</b> → {_gb[1]:,.0f}，維持率 <b>{_gb[2]:.1f}%</b>、LTV {_gb[3]:.1f}%（擔保池按美股 β {POOL_BETA_US} 推估，屬假設）。</li>
+<li><b>流動性才是真風險</b>：押標金後可動用 {after_bid:,.0f}，低於底線 <b class="down">{short_after:,.0f}</b>；11 月固定扣款 {month_pay:,.0f}。若同時遇池跌 15%（需還 {scen_pledge[2][4]:,.0f}）→ 只剩「賣後收級別」一途（CDSC 未到期，不該賣）。</li>
+<li><b>一句話</b>：真正要守的是「11 月現金不被擠爆」，不是「資產不再跌」；紀律＝不追跌、不攤平、減碼窗口在反彈。</li>
+</ul>
+<div class="sub" style="margin:8px 0 0">本段與日報第八章同一批真值（2026-11-06 18:05 整合版）；數字全部現算，未人工填寫。</div>
+</div>
+
+<h2>八、結論與行動</h2>
 <div class="card">
 <ul>
 <li>本波回檔 {pct_wave:+.2f}%，主因台股部位僅 {_num(act_pct.get('台股市值型成長')):.1f}%、三塊各跌約 25–33 萬，屬配置分散生效，非單一部位爆炸。</li>
