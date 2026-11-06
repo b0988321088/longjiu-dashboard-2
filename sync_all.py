@@ -201,6 +201,7 @@ def main():
 
         # 2026-08-27：共享渲染組件自測（report_components 異常 → 報表數字不一致）
         ("組件自測", "python -c \"from report_components import render_health_score; import json; print('✅ 組件正常 健康度', render_health_score(json.load(open('snapshot.json',encoding='utf-8')))['分數'])\""),
+        ("股災壓力測試", "python build_stress_report.py"),
         ("週報", "python build_weekly_report.py"),
         # 2026-11-01 P0：把 FI 驗證器納入主流程（fail-closed）——衍生值與頁面漂移
         #     在產報當下就被擋下，而不是等到 22:40 收工檢查才發現（每天多一輪人工）。

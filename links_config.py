@@ -41,6 +41,7 @@ PREFIX_RULES = {
     "industry_penetration_": (".png", None),
     "risk_factor_penetration_": (".png", None),
     "tender_intel_": (".html", None),  # 2026-11-03 標案情報（對手分析＋報價基準）
+    "stress_test_": (".html", None),   # 2026-11-06 股災壓力測試
 }
 
 # 模板佔位符 → 檔名前綴（glob 由前綴+副檔名推導）
@@ -65,6 +66,7 @@ PLACEHOLDER_PREFIX = {
     "__MONTHLY_REPORT__": "monthly_report_",
     "__RETIREMENT_HTML__": "retirement_plan_",
     "__TENDER_INTEL__": "tender_intel_",  # 2026-11-03 標案情報
+    "__STRESS_REPORT__": "stress_test_",   # 2026-11-06 股災壓力測試
     # 2026-09-22 移除 __RATE_HIKE_REPORT__（使用者核准）：模板「升息情境」按鈕已撤，
     # 產生器 build_rate_hike_dashboard.py 亦在 cleanup_utils.STALE_PY 淘汰名單內。
 }

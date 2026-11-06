@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>股災壓力測試 2026-11-06</title>
+<style>
+:root{color-scheme:dark}
+body{margin:0;background:#0b1220;color:#e5e7eb;font:16px/1.75 -apple-system,"Noto Sans TC",sans-serif}
+.wrap{max-width:920px;margin:0 auto;padding:24px 18px 60px}
+h1{font-size:26px;font-weight:900;margin:0 0 6px}
+h2{font-size:18px;font-weight:800;margin:30px 0 10px;color:#93c5fd}
+.sub{color:#94a3b8;font-size:13px;margin-bottom:18px}
+.card{background:#111c2e;border:1px solid #1f2c44;border-radius:14px;padding:16px 18px;margin:12px 0}
+.big{font-size:32px;font-weight:900}
+.down{color:#f87171} .up{color:#34d399}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+th,td{padding:8px 6px;border-bottom:1px solid #1f2c44;text-align:left}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+ul{margin:8px 0 0;padding-left:20px} li{margin:4px 0}
+.tag{display:inline-block;font-size:12px;background:#1e293b;border:1px solid #334155;border-radius:999px;padding:2px 10px;color:#cbd5e1;margin-right:6px}
+a{color:#34d399}
+</style></head><body><div class="wrap">
+<h1>股災壓力測試・2026-11-06</h1>
+<div class="sub">資料基準：2026-11-06｜比較基準：2026-11-05｜全部數字現讀 snapshot／DB，未經人工填寫</div>
+
+<div class="card">
+  <div class="sub" style="margin:0">總資產（2026-11-06 vs 2026-11-05）</div>
+  <div class="big down">26,326,230 <span style="font-size:16px">(-287,361／-1.08%)</span></div>
+</div>
+
+<h2>一、衝擊歸因（逐部位）</h2>
+<div class="card">
+<table>
+<tr><th>部位</th><th class="n">本次</th><th class="n">前次</th><th class="n">差異</th><th class="n">幅度</th></tr>
+<tr><td>現金</td><td class='n'>2,076,929</td><td class='n'>2,028,856</td><td class='n up'>+48,073</td><td class='n up'>+2.37%</td></tr><tr><td>證券（台股）</td><td class='n'>2,461,760</td><td class='n'>2,566,480</td><td class='n down'>-104,720</td><td class='n down'>-4.08%</td></tr><tr><td>基金</td><td class='n'>12,546,411</td><td class='n'>12,684,574</td><td class='n down'>-138,163</td><td class='n down'>-1.09%</td></tr><tr><td>保險（含保單基金）</td><td class='n'>9,241,130</td><td class='n'>9,333,681</td><td class='n down'>-92,551</td><td class='n down'>-0.99%</td></tr>
+</table>
+<div class="sub" style="margin:8px 0 0">註：基金與保單的變動含「估值日推進」（淨值日由前次推進至最新），不完全是單日跌幅。</div>
+</div>
+
+<h2>二、市場對照</h2>
+<div class="card"><ul><li>台股加權 39,701.64（2026-11-06 收盤），前一日 41,574.72，<b class='down'>-1,873.08（-4.51%）</b></li><li>費城半導體 9,011.14（2026-11-05 收盤），前一日 10,268.65，<b class='down'>-1,257.51（-12.25%）</b></li></ul></div>
+
+<h2>三、質押壓力</h2>
+<div class="card">
+<ul>
+<li>借款 <b>5,900,000</b>｜擔保池（國泰三檔）<b>11,771,816</b>｜維持率 <b class="up">199.5%</b></li>
+<li>距銀行通知線 160%：池需再跌 <b>19.8%</b></li>
+<li>距追繳線 140%：池需再跌 <b>29.8%</b></li>
+</ul>
+</div>
+
+<h2>四、情境壓力（假設，非預測）</h2>
+<div class="card">
+<table>
+<tr><th>情境</th><th class="n">總資產影響</th><th class="n">情境後總資產</th><th class="n">維持率</th></tr>
+<tr><td>台股再跌 10%</td><td class='n down'>-266,493</td><td class='n'>26,059,737</td><td class='n '>199.5%</td></tr><tr><td>美股再跌 10%</td><td class='n down'>-983,594</td><td class='n'>25,342,636</td><td class='n '>183.6%</td></tr><tr><td>股債雙殺（台美 -10%、防守 -5%、債 -2%）</td><td class='n down'>-1,625,014</td><td class='n'>24,701,216</td><td class='n '>183.6%</td></tr><tr><td>極端（台美 -20%、防守 -10%、債 -4%）</td><td class='n down'>-3,250,027</td><td class='n'>23,076,203</td><td class='n '>167.6%</td></tr>
+</table>
+<div class="sub" style="margin:8px 0 0">假設：台股／美股桶 β=1.0、防守 0.5、債券 0.2；擔保池以美股 β=0.8 估算。僅供壓力測試，不代表預測。</div>
+</div>
+
+<h2>五、現金流是否受影響</h2>
+<div class="card">
+<ul>
+<li>配息為「單位數 × 每單位配息」，價格下跌不影響單位數 → 月配現金流不變。</li>
+<li>質押只繳息（月付約 13,029，利率 2.65%），與市值無關。</li>
+<li>房租、薪資與市場無關。</li>
+</ul>
+</div>
+
+<h2>六、結論</h2>
+<div class="card">
+<ul>
+<li>本次回檔對總資產的影響為 <b class="down">-1.08%</b>，主因台股部位僅 10.1%，不是重傷。</li>
+<li>真正的風險不是今天，是<b>美股桶 37.4%（目標 30%）超標</b>與台幣升值同時發生。</li>
+<li>紀律不變：11 月凍結、不接刀、不停損、不攤平；減碼窗口是反彈。</li>
+</ul>
+</div>
+<div class="sub">產生時間 2026-11-06 16:12｜來源：snapshot.json／dragon_assets.db／Yahoo Finance</div>
+</div></body></html>
