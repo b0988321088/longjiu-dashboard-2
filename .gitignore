@@ -131,3 +131,21 @@ data/design_supervision_seen.json
 data/forestry_supervision_seen.json
 _archive/
 site/
+
+# ── INC-PAGES-DEPLOY-OPTIMIZATION（2026-11-06 使用者核准）──
+# 非網站資產不再入版控；原件已封存於分支 archive-media（保留原始路徑）
+拼合_*.mp4
+_conv_img_*.png
+_fullpage*.png
+_crop_*.png
+_tts_*.mp3
+snapshot.backup*
+*.bak
+*.bak2
+*.bak3
+*.bak4
+pdf_extract/
+
+# Pages 組裝輸出（本機驗證用，不進版控）
+_tmp_site/
+_site/
