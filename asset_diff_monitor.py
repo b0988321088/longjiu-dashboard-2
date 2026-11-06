@@ -300,7 +300,9 @@ def extract_snapshot(snap: dict) -> dict:
                     "rent_receivable_by_month": snap.get("rent_receivable_by_month", {}),
                     "rent_received_records": snap.get("rent_received_records", {}),
                     "cathay_refinance": float(snap.get("cathay_refinance_amount") or 0),
-                    "runway_months": float(snap.get("runway_months", 12)),
+                    # 2026-11-06 資料治理：跑道一律用「純現金跑道」= 可動用現金 ÷ 月支出。
+                    # 不再讀 snapshot.runway_months（舊值 27.1 來源不明，已停用）。
+                    "runway_months": float(snap.get("cash_runway_months") or (snap.get("cash_layers", {}).get("unrestricted_cash", 0) / (snap.get("monthly_expense") or 1))),
                 }
         except Exception as e:
             print(f"[WARN] db read failed ({e}), fallback to snapshot")
@@ -316,7 +318,9 @@ def extract_snapshot(snap: dict) -> dict:
     insurance_total = snap.get("insurance_total", insurance)
     funds = snap.get("funds", snap.get("fund_market_value", snap.get("funds_total", 0)))
 
-    cash = snap.get("real_liquid_assets", 0) or (snap.get("high_yield_savings_total", 0) + snap.get("moneybook_total", 0))
+    # 2026-11-06 資料治理：high_yield_savings_total 為 2026-07-16 歷史值（未計入現行金融資產），
+    # 禁止再加回現金；舊式相加會把 2,200,410 重複計入。
+    cash = snap.get("real_liquid_assets") or snap.get("moneybook_total") or 0
     real_estate = snap.get("real_estate_value", 0)
     if not real_estate:
         real_estate = max(0, total_assets - securities - insurance - funds - cash)
@@ -380,7 +384,8 @@ def extract_snapshot(snap: dict) -> dict:
         "rent_receivable_by_month": snap.get("rent_receivable_by_month", {}),
         "rent_received_records": snap.get("rent_received_records", {}),
         "cathay_refinance": float(snap.get("cathay_refinance_amount") or 0),
-        "runway_months": float(snap.get("runway_months") or (snap.get("real_liquid_assets", 0) / (snap.get("monthly_expense", 1) or 1))),
+        # 2026-11-06 資料治理：純現金跑道（可動用現金 ÷ 月支出），不混入收入情境。
+        "runway_months": float(snap.get("cash_runway_months") or (snap.get("cash_layers", {}).get("unrestricted_cash", 0) / (snap.get("monthly_expense") or 1))),
     }
 
 

@@ -14,9 +14,11 @@ class AssetMoatMonitor:
         total_assets = snapshot.get("total_assets") or 0
         monthly_expense = snapshot.get("monthly_expense") or 1
         liquid_assets = (
+            # 2026-11-06 資料治理：移除 high_yield_savings_total（2026-07-16 歷史值 2,200,410，
+            # 未計入現行現金；原順位在 cash_total 前，導致液動跑道高估 0.8 個月）
             snapshot.get("liquid_assets")
-            or snapshot.get("high_yield_savings_total")
             or snapshot.get("cash_total")
+            or snapshot.get("moneybook_total")
             or 0
         )
         if isinstance(liquid_assets, dict):
