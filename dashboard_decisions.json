@@ -12097,87 +12097,46 @@
       "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
       "status": "completed",
       "source": "auto"
-    }
-,
-  {
-    "id": "mem-20261106231348-1310",
-    "timestamp": "2026-11-06T23:13:48.756500+08:00",
-    "agent": "Hermes(CIO-Gemini 審查)",
-    "task": "INC-PAGES-DEPLOY-OPTIMIZATION 閉環",
-    "summary": "2026-11-06 閉環（INC-PAGES-DEPLOY-OPTIMIZATION CLOSED）：本日四批核准全部上線並驗收完成——①第八章整合版 e5582548（tree 173b44bcb464，CIO-Gemini APPROVE 覆蓋率 100%）；②質押池真值統一 2f35968e（tree 9c88909236db）：擔保池 11,909,979→11,771,816（11/06 逐檔，估值日 11/05）、維持率 201.9%→199.5%、LTV 49.5%→50.1%、需還 -20% 850,169→908,750，舊值與 11/05 截圖/報價日 11/04 來源保留於 snapshot.cathay_pledge_0911.擔保池_歷史（不得作現值）；③股債壓力測試 71929031（tree 1e52baba68c3）：補股債同跌情境（股-20/債-5 → -2,806,690、維持率 167.6%、LTV 59.7%）＋第七章整合分析結論，並修兩個抓錯欄位（房貸改讀 liabilities_build_up.房貸_含國泰＝25,005,344；防禦維度改讀 dual_dimension_metric.防禦維度.佔比＝50.1%），池值改讀 cathay_pledge_0911.擔保池 單一真值；④INC-PAGES-DEPLOY-OPTIMIZATION 633135b6（tree 33437229b380）：710 檔/101.69 MB 先封存 orphan 分支 archive-media（615de909/tree 49db7be3，git hash-object 710/710 一致），實際自 clean-main 移除 684 檔（26 檔仍被現行頁面引用者復原，站內缺檔歸零），追蹤檔數 2,675→1,991；新增 scripts/gen_pages_allowlist.py（140 檔 allowlist）、scripts/build_pages_site.py（本機與 CI 共用、fail-loud、>25MB exit 2）、.github/workflows/pages.yml；Pages 來源已切 GitHub Actions，部署 _site 12.73 MB/244 檔，workflow pages-allowlist-deploy success，線上 index/日報/stress/emergency 與 HEAD 逐位元相同，dragon_assets.db 與 scripts/*.py 已 404、封存報表 404 由自訂 404.html 接住；remote=local=633135b6、待推 0、推送閘門 v5 兩顆 commit 全通過。治理揭露：①推送 archive-media 使用 --no-verify（閘門 v5 限 destination=clean-main）；②先前「空 commit」e598c7f4 實際夾帶 AI 成本帳三檔，已補 AUTO 紀錄並註明；③cio_lane 對 690 檔 diff 卡住 4.5 分鐘無輸出，改以 review_chain 審「提交訊息＋檔案級清單＋三支新增程式全文」取得 APPROVE（blocking=[]、0 required fixes）後以 cio_approve --result 落 RECORD，審查範圍與覆蓋率已於紀錄中誠實標註。殘留 2 卡：P0 公開面 snapshot.json 仍可直下（在 allowlist 內因被頁面 fetch；建議輸出 public_snapshot.json 去敏感）；閘門 v5 不允許非 clean-main 分支（archive-* 需白名單）。",
-    "status": "completed",
-    "source": "telegram"
-  }
-  ],
-  "meta": {
-    "updated_at": "2026-11-06T21:32:16+08:00"
-  },
-  "last_updated": "2026-11-06T21:32:16+08:00",
-  "2026-09-29": [
-    "9/29 質押撥款入帳 NT$5,900,000（10:57，國泰世華通知；實撥 590 萬@2.65%，原表定 540 萬@2.77%）→ 真值日全資產同步：現金 6,719,182／保單 9,453,825／基金 12,654,144／台股 2,981,410／總資產 31,808,561、負債 36,003,720（含基金質押 590 萬）、淨值 -4,195,159；銀行口徑 LTV 50.1%。待執行：清償 500 萬高息（券商 96 萬@3.92% 先、保單 400 萬@4% 後）",
-    "9/29 裁示：質押撥款 590 萬先轉 200 萬還保單借貸（4% → 月省 6,667；保單借貸 400 萬 → 200 萬）；撥款剩餘 3,900,000。順序調整：保單（4%）優先於券商（3.92%）。待入帳確認後四源同步。",
-    "9/29 核准（✅ 使用者）：① 質押撥款 590 萬列為『指定用途款 restricted_cash』— 從現金桶／可動用乾粉／Runway／配置分母全部排除（現金桶 6,719,768→819,768、21.1%→2.6%；乾粉 6,019,182→119,182；『債券及安全現金』超標 +14.5pp→不足 −4.0pp），避免桶位假超標觸發 9/8 的自動減碼授權；總資產 6,719,182／負債 36,003,720 真值不變，清償入帳後將 restricted_cash 歸零即自動解除。② 校正儀表板『操作規範』舊口徑：桶位 % 一律由穿透真值派生（原由雷達計劃文字帶出 7.8/39.4/68.4/28.7/3.4 舊值），Runway 卡改動態實算並註明「真值 − 指定清償款」。附帶修復：static_gate 被 AppLocker 擋（降級鏈）、run_daily F821、funds_cathay_breakdown 殘留 9/23 舊值（11,876,124→11,779,326）、sync_all 雷達步驟時序競態（再平衡兩表吃到前一天 weekly_plan）。"
-  ],
-  "pending_decisions": [
-    {
-      "date": "2026-09-14",
-      "action": "避險衛星加碼：保單轉換黃金A10＋健康A10（分批，單次≤20萬）",
-      "status": "關案",
-      "tags": "避險衛星,黃金,健康,保單轉換,分批"
     },
     {
-      "date": "2026-09-22",
-      "action": "00921 暫停投入（第1批未成交）— 待重新定案",
-      "status": "已確認",
-      "tags": "台股,00921,暫停,乾粉"
+      "id": "mem-20261106231348-1310",
+      "timestamp": "2026-11-06T23:13:48.756500+08:00",
+      "agent": "Hermes(CIO-Gemini 審查)",
+      "task": "INC-PAGES-DEPLOY-OPTIMIZATION 閉環",
+      "summary": "2026-11-06 閉環（INC-PAGES-DEPLOY-OPTIMIZATION CLOSED）：本日四批核准全部上線並驗收完成——①第八章整合版 e5582548（tree 173b44bcb464，CIO-Gemini APPROVE 覆蓋率 100%）；②質押池真值統一 2f35968e（tree 9c88909236db）：擔保池 11,909,979→11,771,816（11/06 逐檔，估值日 11/05）、維持率 201.9%→199.5%、LTV 49.5%→50.1%、需還 -20% 850,169→908,750，舊值與 11/05 截圖/報價日 11/04 來源保留於 snapshot.cathay_pledge_0911.擔保池_歷史（不得作現值）；③股債壓力測試 71929031（tree 1e52baba68c3）：補股債同跌情境（股-20/債-5 → -2,806,690、維持率 167.6%、LTV 59.7%）＋第七章整合分析結論，並修兩個抓錯欄位（房貸改讀 liabilities_build_up.房貸_含國泰＝25,005,344；防禦維度改讀 dual_dimension_metric.防禦維度.佔比＝50.1%），池值改讀 cathay_pledge_0911.擔保池 單一真值；④INC-PAGES-DEPLOY-OPTIMIZATION 633135b6（tree 33437229b380）：710 檔/101.69 MB 先封存 orphan 分支 archive-media（615de909/tree 49db7be3，git hash-object 710/710 一致），實際自 clean-main 移除 684 檔（26 檔仍被現行頁面引用者復原，站內缺檔歸零），追蹤檔數 2,675→1,991；新增 scripts/gen_pages_allowlist.py（140 檔 allowlist）、scripts/build_pages_site.py（本機與 CI 共用、fail-loud、>25MB exit 2）、.github/workflows/pages.yml；Pages 來源已切 GitHub Actions，部署 _site 12.73 MB/244 檔，workflow pages-allowlist-deploy success，線上 index/日報/stress/emergency 與 HEAD 逐位元相同，dragon_assets.db 與 scripts/*.py 已 404、封存報表 404 由自訂 404.html 接住；remote=local=633135b6、待推 0、推送閘門 v5 兩顆 commit 全通過。治理揭露：①推送 archive-media 使用 --no-verify（閘門 v5 限 destination=clean-main）；②先前「空 commit」e598c7f4 實際夾帶 AI 成本帳三檔，已補 AUTO 紀錄並註明；③cio_lane 對 690 檔 diff 卡住 4.5 分鐘無輸出，改以 review_chain 審「提交訊息＋檔案級清單＋三支新增程式全文」取得 APPROVE（blocking=[]、0 required fixes）後以 cio_approve --result 落 RECORD，審查範圍與覆蓋率已於紀錄中誠實標註。殘留 2 卡：P0 公開面 snapshot.json 仍可直下（在 allowlist 內因被頁面 fetch；建議輸出 public_snapshot.json 去敏感）；閘門 v5 不允許非 clean-main 分支（archive-* 需白名單）。",
+      "status": "completed",
+      "source": "telegram"
     },
     {
-      "date": "2026-10-01",
-      "action": "🏠 洲際W 轉貸延至 11 月再處理",
-      "status": "已確認",
-      "tags": "轉貸,洲際W,永豐,國泰"
+      "timestamp": "2026-11-07T00:55:08+08:00",
+      "action": "裁決",
+      "name": "因股災暫停 11/11 標案投標",
+      "source": "user",
+      "status": "已暫停",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "hermes-bid-cancel-1793984108",
+      "summary": "使用者 2026-11-07 00:52：因股災暫時取消 11/11 投標。押標金 700,000 保留義務解除；得標後 300 萬藍圖不啟動；質押未動用；投資凍結令維持至 11/30（理由轉為股災觀望）。",
+      "detail": "市場背景：台股 11/05 收 41,574.72（單日 -3.20%、近 5 日 -10.34%、近 1 月 -16.55%）；S&P500 7,428.03、NASDAQ 24,736.00（11/06 反彈 +1.01%／+1.73%）；US30Y 5.26%（未連 5 日 ≥5.30，債券桶不動）。同步處置：snapshot.bid_cancel_20261107 新增、bid_funding_plan_20261102 標記暫停、pending 11/02 卡關案、schedule_events 11/06／11/10／11/11 取消、Google 日曆三筆改『⛔ 已取消』並移除提醒。未動用任何資產、未賣出、未質押。",
+      "tags": [
+        "標案",
+        "押標金",
+        "股災",
+        "投資凍結",
+        "裁決",
+        "2026-11-07"
+      ]
     },
     {
-      "date": "2026-10-06",
-      "action": "資安 remediation：repo 五步（public→private／HEAD 淨化／filter-repo／force-with-lease／Pages 驗 404）＋第 1 步已完成",
-      "status": "待處理",
-      "tags": "資安,SECURITY,憑證輪替,repo rewrite,Pages,Active-Repair,HIGH,狀態失真"
-    },
-    {
-      "date": "2026-10-09",
-      "action": "台新帳號 002***75 是否為 Moneybook 納管帳戶（週報事件鏈資金路徑對帳殘項）",
-      "status": "待處理",
-      "tags": "對帳,台新,納管帳戶,event-chain,週報"
-    },
-    {
-      "date": "2026-10-14",
-      "action": "台股解凍後分批規則定版（節奏／單次上限／停止條件）",
-      "status": "已確認",
-      "tags": "台股,解凍,分批規則,US30Y,停止條件"
-    },
-    {
-      "date": "2026-10-16",
-      "action": "資安：HEAD 仍殘留金鑰樣式字串（2 份舊日報＋safe_read.py）",
-      "status": "待處理",
-      "tags": "資安,P0,金鑰輪替,歷史清除,Pages,TD-20261016-03"
-    },
-    {
-      "date": "2026-10-20",
-      "action": "程序違規紀錄：未授權先推送（47f41c73／635c618a）",
-      "status": "待處理",
-      "tags": "治理,程序,授權"
-    },
-    {
-      "date": "2026-10-20",
-      "action": "投資結構修正計畫 v1：配息吃本金／美股超標7.3pp",
-      "status": "已確認",
-      "tags": "投資,結構,配息,決策卡"
-    },
-    {
-      "date": "2026-11-02",
-      "action": "標案 11/11 投標準備（預備）：押標金 700,000 待命，未確定投標前不調度資金",
-      "status": "已確認",
-      "tags": "標案,押標金,投資凍結,現金流,質押,股票質押,保單質押,現金厚度"
+      "id": "DEC-20261107-FREEZE-LIFT",
+      "date": "2026-11-07",
+      "time": "01:40",
+      "source": "user",
+      "title": "解除 11/02 投資凍結令（股災調整）＋00713 分批加碼 3,000 股",
+      "summary": "使用者解除凍結：因股災需調整。00713 分兩批（11/09 2,000 股約 125,500；11 月下旬 1,000 股），資金用可動用現金 455,799，不碰預備款 900,000 與底線 700,000；買後現金不得低於 1,600,000。",
+      "status": "🟢 已核准",
+      "truth": "snapshot.investment_freeze_20261102.解除紀錄｜snapshot.rebalance_plan_20261107",
+      "created_at": "2026-11-07T01:08:41"
     }
   ]
 }

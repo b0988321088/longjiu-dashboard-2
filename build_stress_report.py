@@ -188,13 +188,34 @@ def build():
     floor = _num(cl.get("emergency_cash", {}).get("金額") or cl.get("cash_floor"), 700000)
 
     bid = snap.get("bid_evaluation_20261102") or {}
-    bid_amt = _num(bid.get("押標金"))
+    # 2026-11-07：使用者裁決因股災暫停投標 → 押標金不再占用。狀態一律讀 snapshot（不寫死日期判斷）。
+    _bid_st = str(bid.get("status") or "")
+    _bid_paused = ("暫停" in _bid_st) or ("取消" in _bid_st)
+    bid_amt = 0 if _bid_paused else _num(bid.get("押標金"))
     bid_date = (bid.get("時程") or {}).get("截止投標") or "—"
     after_bid = unrestricted - bid_amt
     short_after = max(0.0, floor - after_bid)
 
     ds = snap.get("debt_service_split") or {}
     month_pay = _num((ds.get("合計") or {}).get("月付"))
+    # 2026-11-07：投標暫停 → 押標金占用解除；三處敘述改由本段組字，避免模板硬寫「押標金後只剩」
+    if _bid_paused:
+        _bid_note = ("⛔ 11/11 標案投標已暫停（股災裁決）→ 押標金不計入；"
+                     f"可動用現金 <b>{fmt(unrestricted)}</b> 全數可用（生活底線 <b>{fmt(floor)}</b>）")
+        _liq_note = (f"押標金占用已解除：可動用 {unrestricted:,.0f} 全數可用，高於底線 {floor:,.0f}；"
+                     "真風險回到「11 月現金不被擠爆」，不是押標金")
+        _liq2_note = (f"流動性：可動用 {fmt(unrestricted)}（押標金已取消）；"
+                      f"可承受「池跌 10%（需還 {fmt(scen_pledge[1][4])}）」，"
+                      f"不足承受「池跌 15%（需還 {fmt(scen_pledge[2][4])}）」")
+    else:
+        _bid_note = (f"押標金 <b>{fmt(bid_amt)}</b>（{bid_date}）→ 支出後可動用 "
+                     f"<b class=\"{'down' if short_after>0 else 'up'}\">{fmt(after_bid)}</b>，"
+                     f"低於底線 <b>{fmt(short_after)}</b>")
+        _liq_note = (f"押標金後可動用 {after_bid:,.0f}，低於底線 "
+                     f"<b class=\"down\">{short_after:,.0f}</b>；11 月固定扣款 {month_pay:,.0f}。"
+                     f"若同時遇池跌 15%（需還 {scen_pledge[2][4]:,.0f}）→ 只剩「賣後收級別」一途（CDSC 未到期，不該賣）。")
+        _liq2_note = (f"流動性衝突：押標金後只剩 {fmt(after_bid)}，可承受「池跌 10%（需還 {fmt(scen_pledge[1][4])}）」，"
+                      f"不足承受「池跌 15%（需還 {fmt(scen_pledge[2][4])}）」")
     _mdd = snap.get("mortgage_due_day") or {}
     _d_cathay = _mdd.get("國泰", 20) if isinstance(_mdd, dict) else 20
     _d_yf = _mdd.get("永豐", 27) if isinstance(_mdd, dict) else 27
@@ -404,7 +425,7 @@ a{{color:#34d399}}
 <div class="card{' warn' if short_after>0 else ''}">
 <ul>
 <li>可動用現金 <b>{fmt(unrestricted)}</b>｜指定款（不可動用）<b>{fmt(restricted)}</b>｜生活底線 <b>{fmt(floor)}</b></li>
-<li>押標金 <b>{fmt(bid_amt)}</b>（{bid_date}）→ 支出後可動用 <b class="{'down' if short_after>0 else 'up'}">{fmt(after_bid)}</b>，低於底線 <b>{fmt(short_after)}</b></li>
+<li>{_bid_note}</li>
 <li>11 月固定扣款合計 <b>{fmt(month_pay)}</b>：</li>
 </ul>
 <ul>{due_html}</ul>
@@ -441,7 +462,7 @@ a{{color:#34d399}}
 <li><b>三個口徑不可互換</b>：五桶 台股 {_num(act_pct.get('台股市值型成長')):.1f}%／美股 {_num(act_pct.get('美股市值型成長')):.1f}%／防守 {_num(act_pct.get('防守型配息')):.1f}%／債券 {_num(act_pct.get('債券')):.1f}%／現金 {_num(act_pct.get('現金/安全網')):.1f}%；抗跌力看<b>雙維度防禦維度 {_dd:.1f}%</b>（不是防守桶）；GICS 高科技 <b>{_gics_tech:.1f}%</b>；美元曝險 {_usd_all:.1f}%／已避險 {_usd_hedge:.1f}%／淨 {_usd_net:.1f}%。</li>
 <li><b>質押主線</b>：維持率 {ratio:.1f}%／LTV {ltv:.1f}%{_pool_note}{_hist_note}。距內部停止線 {gates[0][2]:.1f}%、距銀行通知 {gates[1][2]:.1f}%、距追繳 {gates[2][2]:.1f}%——真正危險距離是通知線，內部 53% 只是停止加碼線。</li>
 <li><b>股債同跌</b>（股 -20／債 -5）：資產影響 <b class="down">{_gb[0]:+,.0f}</b> → {_gb[1]:,.0f}，維持率 <b>{_gb[2]:.1f}%</b>、LTV {_gb[3]:.1f}%（擔保池按美股 β {POOL_BETA_US} 推估，屬假設）。</li>
-<li><b>流動性才是真風險</b>：押標金後可動用 {after_bid:,.0f}，低於底線 <b class="down">{short_after:,.0f}</b>；11 月固定扣款 {month_pay:,.0f}。若同時遇池跌 15%（需還 {scen_pledge[2][4]:,.0f}）→ 只剩「賣後收級別」一途（CDSC 未到期，不該賣）。</li>
+<li><b>流動性才是真風險</b>：{_liq_note}</li>
 <li><b>一句話</b>：真正要守的是「11 月現金不被擠爆」，不是「資產不再跌」；紀律＝不追跌、不攤平、減碼窗口在反彈。</li>
 </ul>
 <div class="sub" style="margin:8px 0 0">本段與日報第八章同一批真值（2026-11-06 18:05 整合版）；數字全部現算，未人工填寫。</div>
@@ -452,7 +473,7 @@ a{{color:#34d399}}
 <ul>
 <li>本波回檔 {pct_wave:+.2f}%，主因台股部位僅 {_num(act_pct.get('台股市值型成長')):.1f}%、三塊各跌約 25–33 萬，屬配置分散生效，非單一部位爆炸。</li>
 <li>最緊的不是銀行線，是<b>內部停止線</b>：池再跌 {gates[0][2]:.1f}% 就觸線，而美股單日波動即可達此量級。</li>
-<li>流動性衝突：押標金後只剩 {fmt(after_bid)}，可承受「池跌 10%（需還 {fmt(scen_pledge[1][4])}）」，不足承受「池跌 15%（需還 {fmt(scen_pledge[2][4])}）」。</li>
+<li>{_liq2_note}。</li>
 <li>若觸線：<b>現金還本</b>，不賣後收級別擔保品（CDSC 未到期）；不新增借款。</li>
 <li>紀律不變：急跌日（單日 ≥3%）只回報不動作；11 月凍結、不接刀、不停損、不攤平；減碼窗口是反彈。</li>
 </ul>
