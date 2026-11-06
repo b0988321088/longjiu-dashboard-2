@@ -190,5 +190,35 @@
     "status_raw": "🟡 待命準備（無確定投標案；確定要投標才啟動資金調度）",
     "due_date_source": "既有文字（detail「本月（至 11/30）凍結其他投資」「11/30 到期自動失效」）",
     "updated_at": "2026-11-04T20:02:31+08:00"
+  },
+  {
+    "date": "2026-11-06",
+    "title": "資安：Pages 仍可直下 snapshot.json（真值公開面）",
+    "status": "待處理",
+    "tags": "資安,P0,Pages,allowlist,snapshot",
+    "detail": "INC-PAGES-DEPLOY-OPTIMIZATION 上線後 _site 只帶 allowlist 140 檔，但 snapshot.json 因被頁面 fetch 而列入 allowlist，線上仍 200 可直下（含保單號、帳號片段、理專聯絡）。本次未惡化亦未解決，屬既有 P0。建議改法：產出去敏感的 public_snapshot.json（只留總資產／五桶／穿透／指標）給前端，原始 snapshot.json 不進 _site；驗收＝snapshot.json 線上 404、public_snapshot.json 200 且欄位白名單化。",
+    "due_date": "2026-11-30",
+    "due_date_source": "既有文字（登錄日推定：建議 11/30 前決策）",
+    "needs_due_date": false,
+    "owner": "CEO",
+    "external_owner": null,
+    "is_informational": false,
+    "updated_at": "2026-11-06T23:20:00",
+    "id": "pend-20261106-pages-01"
+  },
+  {
+    "date": "2026-11-06",
+    "title": "治理：推送閘門 v5 不允許非 clean-main 分支（archive-* 需白名單）",
+    "status": "待處理",
+    "tags": "治理,閘門,git,archive,push-gate",
+    "detail": "封存 orphan 分支 archive-media（615de909）時，pre-push 閘門 v5 規定 destination 僅能 clean-main，只能 --no-verify 繞過並事後記錄。封存分支非部署來源、不觸發 Pages，建議對 refs/heads/archive-* 開白名單（仍保留 per-commit 紀錄或明確豁免規則），避免繞閘門成常態。驗收＝乾淨 clone 推 archive-test 不被擋、其他非 clean-main 分支仍被擋。",
+    "due_date": "2026-11-30",
+    "due_date_source": "既有文字（登錄日推定）",
+    "needs_due_date": false,
+    "owner": "CEO",
+    "external_owner": null,
+    "is_informational": false,
+    "updated_at": "2026-11-06T23:20:00",
+    "id": "pend-20261106-pages-02"
   }
 ]
