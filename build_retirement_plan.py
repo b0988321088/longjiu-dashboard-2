@@ -243,7 +243,7 @@ _rw_actual = _pcal.runway_text(_SC["act"]["runway_days"])
 _rw_stress = _pcal.runway_text(_SC["stress"]["runway_days"])
 _rw_ext = _pcal.runway_text(_SC["extreme"]["runway_days"])
 
-_ext_txt = (f"🔴 缺口 {_ext_gap:,.0f}/月 → 現金水庫撐 {_ext_months} 個月"
+_ext_txt = (f"🔴 缺口 {_ext_gap:,.0f}/月 → 現金水庫撐 {_ext_months:g} 個月"
             if _ext_gap > 0 else "🟢 無缺口（水庫不受壓）")
 
 # 2029 情境（snapshot/記憶既有定案）

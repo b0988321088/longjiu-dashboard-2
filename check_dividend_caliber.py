@@ -690,6 +690,7 @@ _ext = [d for d in _dirty if _EXT.match(d)]
 _dirty = [d for d in _dirty if d not in _ext]
 allowed = {"build_retirement_plan.py", "snapshot.json", "snapshot.json.bak",
            "build_stress_report.py",   # 2026-11-07 投標暫停：押標金不再計入流動性壓力（原硬寫「押標金後只剩 428,856」失效）
+           "cio_gemini_review.py",   # 2026-11-07 新增：Gemini CIO 審查落地工具（commit range → 審查 → 落 CIO_APPROVED）
            "sot_targets.py",   # 決策核心單一入口（Gate／現金模式／觸發器；2026-10-02 第 1 批）
            "report_components.py",   # 首頁 CEO 決定卡（健康度分數退場；2026-10-02 第 1 批）
            "check_dashboard_sync.py",   # 首頁必備關鍵字改「CEO 決定卡」（2026-10-02 第 1 批）
