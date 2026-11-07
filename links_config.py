@@ -42,10 +42,12 @@ PREFIX_RULES = {
     "risk_factor_penetration_": (".png", None),
     "tender_intel_": (".html", None),  # 2026-11-03 標案情報（對手分析＋報價基準）
     "stress_test_": (".html", None),   # 2026-11-06 股災壓力測試
+    "national_fund_": (".html", None),  # 2026-11-07 國安基金護盤（機制＋買超清單）
 }
 
 # 模板佔位符 → 檔名前綴（glob 由前綴+副檔名推導）
 PLACEHOLDER_PREFIX = {
+    "__NATFUND__": "national_fund_",
     "__RADAR_REPORT__": "radar_report_",
     "__ASSET_DIFF__": "asset_diff_",
     "__BUFFETT_MD__": "buffett_cto_report_",
