@@ -351,48 +351,57 @@ def build():
         f"<td class='n'>{r:.1f}%</td><td class='n'>{lt:.1f}%</td></tr>"
         for l, d, t, r, lt in scen)
 
-    # ── 超跌進場評估（2026-11-07 使用者核准解凍；00713 分批計畫，狀態觀察中）──
-    # 全部讀 snapshot.rebalance_plan_20261107；計畫未核准下單前只是「待命」，不得寫成已執行。
-    rp = snap.get("rebalance_plan_20261107") or {}
-    ammo = unrestricted - floor
-    batch_html = "".join(
-        f"<tr><td class='n'>第 {b.get('批')} 批</td><td>{b.get('日', '')}</td>"
-        f"<td class='n'>{(b.get('股數') or 0):,} 股</td>"
-        f"<td class='n'>{fmt(_num(b.get('估金額')))}</td></tr>"
-        for b in (rp.get("分批") or []))
-    risk_html = "".join(f"<li>{x}</li>" for x in (rp.get("風控") or []))
-    watch_html = "".join(f"<li>{x}</li>" for x in (rp.get("觀察重點") or []))
+    # ── 機會子彈（2026-11-07 使用者裁決：保留 700,000 生活底線，其餘乾粉在大盤回檔 ≥20% 啟動，加碼限現有持股）
+    # 全部讀 snapshot.opportunity_bullet_20261107；未下單前不得寫成已執行。
+    ob = snap.get("opportunity_bullet_20261107") or {}
+    _ob_rule = ob.get("規則") or {}
+    _ob_trig = ob.get("觸發狀態") or {}
+    _ob_alloc = ob.get("分配") or []
+    _ob_excl = ob.get("排除") or []
+    _ob_risk = ob.get("風控") or []
+    _ob_prog = ob.get("批次進度") or {}
+    _ob_ammo = _num(_ob_rule.get("金額上限")) or (unrestricted - floor)
+    _ob_thr = _num(_ob_rule.get("觸發門檻_pct"), -20)
+    _ob_dd = _num(_ob_trig.get("回檔_pct"))
+    _ob_nb = int(_num(_ob_prog.get("總批次"), 9))
+    _ob_cost = sum(_num(a.get("實付")) for a in _ob_alloc)
+    _ob_state = _ob_trig.get("狀態") or "—"
+    _alloc_rows = "".join(
+        f"<tr><td>{a.get('ticker', '')}</td><td>{a.get('name', '')}</td>"
+        f"<td class='n'>{_num(a.get('現市值')):,.0f}</td><td class='n'>{_num(a.get('權重_pct')):.1f}%</td>"
+        f"<td class='n'>{_num(a.get('分配金額')):,.0f}</td>"
+        f"<td class='n'>{int(_num(a.get('目標股數'))):,}</td><td class='n'>{int(_num(a.get('每批股數'))):,}</td>"
+        f"<td class='n {cls(_num(a.get('三月高點跌幅_pct')))}'>{_num(a.get('三月高點跌幅_pct')):+.1f}%</td></tr>"
+        for a in _ob_alloc)
+    _excl_rows = "".join(
+        f"<tr><td>{e.get('ticker', '')}</td><td>{e.get('理由', '')}</td></tr>" for e in _ob_excl)
+    _ob_risk_html = "".join(f"<li>{x}</li>" for x in _ob_risk)
     crash_rows = []
-    _cp = BASE / "data" / "_crash_check.json"
+    _cp = BASE / "data" / "_crash_check2.json"
+    if not _cp.exists():
+        _cp = BASE / "data" / "_crash_check.json"
     if _cp.exists():
         try:
             crash_rows = json.loads(_cp.read_text(encoding="utf-8"))
         except Exception:
             crash_rows = []
+    _tick_name = {"^TWII": "加權指數", "0050.TW": "元大台灣50", "006208.TW": "富邦台50",
+                  "009816.TW": "凱基台灣TOP50", "00713.TW": "元大台灣高息低波",
+                  "00878.TW": "國泰永續高股息", "0056.TW": "元大高股息",
+                  "00981A.TW": "主動統一台股增長", "00984A.TW": "主動安聯台灣高息",
+                  "00919.TW": "群益台灣精選高息", "00918.TW": "大華優利高填息30",
+                  "00927.TW": "群益半導體收益", "00983D.TW": "主動富邦複合收益",
+                  "00646.TW": "元大S&P500", "2610.TW": "華航"}
     crash_html = "".join(
-        f"<tr><td>{r.get('name', '')}</td><td class='n'>{_num(r.get('close')):,.2f}</td>"
-        f"<td class='n {cls(_num(r.get('1d')))}'>{_num(r.get('1d')):+.2f}%</td>"
-        f"<td class='n {cls(_num(r.get('5d')))}'>{_num(r.get('5d')):+.2f}%</td>"
-        f"<td class='n {cls(_num(r.get('1m')))}'>{_num(r.get('1m')):+.2f}%</td>"
-        f"<td class='n {cls(_num(r.get('from_3m_high')))}'>{_num(r.get('from_3m_high')):+.2f}%</td>"
+        f"<tr><td>{_tick_name.get(r.get('sym', ''), r.get('sym', ''))}</td>"
+        f"<td class='n'>{_num(r.get('close')):,.2f}</td>"
+        f"<td class='n {cls(_num(r.get('d1')))}'>{_num(r.get('d1')):+.2f}%</td>"
+        f"<td class='n {cls(_num(r.get('dd')))}'>{_num(r.get('dd')):+.2f}%</td>"
         f"<td class='n sub' style='text-align:left'>{r.get('date', '')}</td></tr>"
-        for r in crash_rows)
-    _rp_state = rp.get("狀態") or "—"
-    _rp_target = rp.get("標的") or "—"
-    _rp_px = _num(rp.get("參考價"))
-    _rp_shares = int(_num(rp.get("目標股數")))
-    _rp_cost = _rp_px * _rp_shares if _rp_px and _rp_shares else 0
-    pen_targets = pen.get("targets") or {}
-    _rp_short = (_rp_target.split() or ["—"])[0]
-    _rp_state_short = re.sub(r"[^0-9A-Za-z\u4e00-\u9fff]", "", _rp_state.split("（")[0]) or "—"
-    _df_t = _num((pen_targets or {}).get("防守型配息"), 30)
-    _best3 = [f"{r.get('name','')} {_num(r.get('1m')):+.1f}%" for r in
-              sorted(crash_rows, key=lambda x: _num(x.get("1m")), reverse=True)[:3]] if crash_rows else []
-    _worst2 = [f"{r.get('name','')} {_num(r.get('1m')):+.1f}%" for r in
-               sorted(crash_rows, key=lambda x: _num(x.get("1m")))[:2]] if crash_rows else []
-    _rank_note = (f"本波 1 個月抗跌排序：{'＜'.join(_best3)}；跌幅最大：{'＜'.join(_worst2)}。"
-                  "低波高息優於純市值型，這是「補防守缺口」而非「攤平台股」的依據。") if crash_rows else ""
+        for r in crash_rows
+        if isinstance(r, dict) and 'dd' in r)
     _snap_gen = str(snap.get("generated_at") or "")[:16].replace("T", " ")
+    pen_targets = pen.get("targets") or {}
 
     pct_tot = (_num(cur["total_assets"]) - _num(prev["total_assets"])) / _num(prev["total_assets"]) * 100 \
         if _num(prev["total_assets"]) else 0
@@ -512,32 +521,41 @@ a{{color:#34d399}}
 <div class="sub" style="margin:8px 0 0">本段與日報第八章同一批真值（snapshot 產生 {_snap_gen or '—'}）；數字全部現算，未人工填寫。</div>
 </div>
 
-<h2>八、超跌進場評估（{_rp_short} 分批｜{_rp_state_short}）</h2>
+<h2>八、機會子彈（大盤回檔 {abs(_ob_thr):.0f}% 啟動｜依現有持股加碼）</h2>
 <div class="card">
 <ul>
-<li><b>缺口判定</b>：防守型配息 <b>{_num(act_pct.get('防守型配息')):.1f}%</b> vs 目標 {_df_t:.0f}%（缺 <b class="down">{_df_t - _num(act_pct.get('防守型配息')):.1f}pp</b>）；台股桶 <b>{_num(act_pct.get('台股市值型成長')):.1f}%</b> 已達目標 → 這筆彈藥是<b>補防守</b>，不是補台股。</li>
-<li><b>標的與狀態</b>：{_rp_target}｜<b>{_rp_state}</b>；參考價 <b>{_rp_px:,.2f}</b>｜目標 <b>{_rp_shares:,} 股</b>（約 <b>{fmt(_rp_cost)}</b>）</li>
-<li><b>資金來源</b>：可動用 <b>{fmt(unrestricted)}</b> − 生活底線 <b>{fmt(floor)}</b> ＝ 超跌彈藥 <b>{fmt(ammo)}</b>；指定預備款 <b>{fmt(restricted)}</b> 不動、不動保單、不質押。</li>
-<li><b>效果</b>：{rp.get('效果', '—')}</li>
+<li><b>規則（2026-11-07 裁決）</b>：保留生活底線 <b>{fmt(floor)}</b>；其餘<b>乾粉 {fmt(_ob_ammo)}</b> 只在<b>大盤自波段高點回檔 ≥{abs(_ob_thr):.0f}%</b> 時啟動；<b>加碼只限目前持有股票</b>，不新增標的。</li>
+<li><b>觸發狀態</b>：{_ob_trig.get('指標', '^TWII')} 高點 <b>{_num(_ob_trig.get('波段高點')):,.2f}</b>（{_ob_trig.get('高點日', '—')}）→ 現值 <b>{_num(_ob_trig.get('現值')):,.2f}</b>（{_ob_trig.get('價格日', '—')}）＝ 回檔 <b class="down">{abs(_ob_dd):.2f}%</b>　{_ob_state}</li>
+<li><b>彈藥</b>：可動用 <b>{fmt(unrestricted)}</b> − 生活底線 <b>{fmt(floor)}</b> ＝ <b>{fmt(_ob_ammo)}</b>；指定預備款 <b>{fmt(restricted)}</b> 不動</li>
+<li><b>分批</b>：{_ob_nb} 批、每批 ≤50,000，按分配權重比例買入；分配合計 <b>{fmt(_ob_cost)}</b>（未用 {fmt(_ob_ammo - _ob_cost)}）｜已執行 <b>{_ob_prog.get('已執行', 0)}</b> 批——條件成立不代表已下單</li>
 </ul>
-<table>
-<tr><th>批次</th><th>日期</th><th class="n">股數</th><th class="n">估計金額</th></tr>
-{batch_html or '<tr><td colspan="4">snapshot 無分批資料</td></tr>'}
-</table>
-<div class="sub" style="margin:10px 0 0">風控（觸發即暫停，不追價）：</div>
-<ul>{risk_html or '<li>—</li>'}</ul>
-<div class="sub" style="margin:10px 0 0">觀察重點：</div>
-<ul>{watch_html or '<li>—</li>'}</ul>
-<div class="sub" style="margin:8px 0 0">不做：{rp.get('不做', '—')}｜背景：{rp.get('背景', '—')}</div>
 </div>
 
 <div class="card">
-<div class="sub" style="margin:0 0 6px">本波超跌對照（價格日各自標示；跌幅為市場價，非個人部位報酬）</div>
+<div class="sub" style="margin:0 0 6px">分配表（依現有持股市值權重；跌幅＝各自 3 個月高點回檔）</div>
 <table>
-<tr><th>標的</th><th class="n">收盤</th><th class="n">1日</th><th class="n">5日</th><th class="n">1月</th><th class="n">距3月高</th><th>價格日</th></tr>
-{crash_html or '<tr><td colspan="7">超跌掃描檔（data/_crash_check.json）不存在，不補值</td></tr>'}
+<tr><th>代號</th><th>名稱</th><th class="n">現市值</th><th class="n">權重</th><th class="n">分配金額</th><th class="n">目標股數</th><th class="n">每批股數</th><th class="n">3月跌幅</th></tr>
+{_alloc_rows or '<tr><td colspan="8">snapshot 無分配資料</td></tr>'}
 </table>
-<div class="sub" style="margin:8px 0 0">{_rank_note}</div>
+<div class="sub" style="margin:8px 0 0">共 {len(_ob_alloc)} 檔；股數以 snapshot 收盤價換算整股，實際下單以當日價為準。</div>
+</div>
+
+<div class="card">
+<div class="sub" style="margin:0 0 6px">未列入加碼（{len(_ob_excl)} 檔）</div>
+<table>
+<tr><th>代號</th><th>理由</th></tr>
+{_excl_rows or '<tr><td colspan="2">—</td></tr>'}
+</table>
+<div class="sub" style="margin:10px 0 0">風控：</div>
+<ul>{_ob_risk_html or '<li>—</li>'}</ul>
+</div>
+
+<div class="card">
+<div class="sub" style="margin:0 0 6px">個別標的本波回檔（3 個月高點 → 最新收盤；價格日各自標示）</div>
+<table>
+<tr><th>標的</th><th class="n">收盤</th><th class="n">當日</th><th class="n">距3月高</th><th>價格日</th></tr>
+{crash_html or '<tr><td colspan="5">無掃描資料（data/_crash_check2.json）</td></tr>'}
+</table>
 </div>
 
 <h2>九、結論與行動</h2>
@@ -548,7 +566,7 @@ a{{color:#34d399}}
 <li>{_liq2_note}。</li>
 <li>若觸線：<b>現金還本</b>，不賣後收級別擔保品（CDSC 未到期）；不新增借款。</li>
 <li>紀律不變：急跌日（單日 ≥3%）只回報不動作；不接刀、不停損、不攤平；減碼窗口是反彈。</li>
-<li>超跌彈藥 <b>{fmt(ammo)}</b>（可動用 {fmt(unrestricted)} − 生活底線 {fmt(floor)}）只補防守型配息缺口；{_rp_target} 計畫目前 <b>{_rp_state}</b>，風控觸發即暫停，未見觸發條件成立不下單。</li>
+<li>機會子彈 <b>{fmt(_ob_ammo)}</b>（可動用 {fmt(unrestricted)} − 生活底線 {fmt(floor)}）只在大盤回檔 ≥{abs(_ob_thr):.0f}% 時啟動、只加碼現有持股：現已回檔 <b class="down">{abs(_ob_dd):.2f}%</b>，第 1 批待下令；未下第二批前不再投入。</li>
 </ul>
 </div>
 {f'<div class="card warn"><b>淨值日落後示警</b>：{"／".join(nav_note)}，市場價 {latest_mkt}。下一交易日淨值仍可能再下修，今日總資產不是底部。</div>' if stale else ''}
