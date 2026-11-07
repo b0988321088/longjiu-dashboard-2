@@ -30,6 +30,10 @@ a{color:var(--acc)}
 <p>資料（全源並陳）：snapshot.json（資料日 2026-10-13）＋ radar_state.json ＋ macro_regime_2026-10-13.json ＋ rotation_recommendation（snapshot 內）＋ data/emergency_llm_analysis.json ＋ pending_decisions.json ＋ us30y_state.json<br />
 口徑：配置權重一律引用 snapshot.penetration.actual_pct；防守口徑引用 sot_targets.defensive_caliber（門檻 60）；本評估<strong>不自行重算</strong>任何百分比。<br />
 ⚠️ 觸發時點：2026-10-13（週二）— 本作業排程為每週六 09:00，本次為非週六觸發；評估基準仍為當日真值（snapshot 資料日 2026-10-13），已列為排程觀測項。</p>
+<p>資料（全源並陳）：snapshot.json（資料日 2026-10-13）＋ radar_state.json ＋ macro_regime_2026-10-13.json ＋ rotation_recommendation（snapshot 內）＋ data/emergency_llm_analysis.json ＋ pending_decisions.json ＋ us30y_state.json<br />
+口徑：配置權重一律引用 snapshot.penetration.actual_pct；防守口徑引用 sot_targets.defensive_caliber（門檻 60）；本評估<strong>不自行重算</strong>任何百分比。<br />
+⚠️ 觸發時點：2026-10-13（週二）— 本作業排程為每週六 09:00，本次為非週六觸發；評估基準仍為當日真值（snapshot 資料日 2026-10-13），已列為排程觀測項。<br />
+🔴 <strong>跨日並陳（2026-11-07 標註）</strong>：本節為 2026-10-13 快照。僅「五桶偏離」列已更新至 2026-11-07 當日真值；「宏觀引擎／資金訊號／雷達／政策面／緊急風控」各列<strong>仍為 10-13 狀態</strong>，不得視為當日裁定。</p>
 </blockquote>
 <h2>零、📊 全源整合對照（防偏頗）</h2>
 <div class="tw"><table>
@@ -55,10 +59,10 @@ a{color:var(--acc)}
 <td>承接方向，但<strong>暫緩執行</strong>（見第四節：解凍雙閘門未成立）</td>
 </tr>
 <tr>
-<td>五桶偏離（snapshot 真值）</td>
+<td>五桶偏離（snapshot 真值 <strong>2026-11-07</strong>）</td>
 <td>台股 10.2%｜美股 37.4%｜防守 18.1%｜債券 26.0%｜現金 4.4%；防守合併 66.4%（門檻 60，已足）</td>
-<td>⚠️ SoT 內部不一致：債券「桶目標 25% ＜ 可接受下限 27%」</td>
-<td>債券本週不自動交易（fail-closed），待裁決</td>
+<td>⚠️ 美股 37.4% 超可接受上限 33%；科技 14.5% 逼近硬上限 15%</td>
+<td>美股不加碼；超標以反彈減碼處理，不追高</td>
 </tr>
 <tr>
 <td>雷達燈號 radar_state</td>
@@ -75,7 +79,7 @@ a{color:var(--acc)}
 <tr>
 <td>緊急風控 emergency（10-13 13:03）</td>
 <td>US30Y 5.598% 紅線自 9/23；現金底線 700,000；「減碼／加碼維持暫緩」；質押 LTV 處黃燈區</td>
-<td>⚠️ 該報告「現金 1,827,363／餘裕 455,799」與 snapshot.cash_total 2,055,799／乾粉 455,799 分歧</td>
+<td>⚠️ 該報告「現金 1,827,363／餘裕 455,799」與 snapshot.cash_total 2,055,799／乾粉 455,799（2026-11-07 真值）分歧</td>
 <td>以 SoT（snapshot ＋ sot_targets）為準；分歧列 OBSERVE-BACKLOG，<strong>不阻擋本評估</strong></td>
 </tr>
 <tr>
@@ -86,9 +90,6 @@ a{color:var(--acc)}
 </tr>
 </tbody>
 </table></div>
-<blockquote>
-<p>⚠️ 本節為 2026-10-13 版（尚未更新至 2026-11-07）→ 僅供參考，<strong>不得視為當日裁定</strong>。</p>
-</blockquote>
 <h2>一、五桶偏離 vs 目標</h2>
 <div class="tw"><table>
 <thead>
@@ -398,6 +399,6 @@ a{color:var(--acc)}
 <h2>八、結論</h2>
 <p><strong>本週動作：主動項 = 美元曝險；其餘按兵不動。</strong><br />
 最大等待：整池質押 質押 590萬@2.65%（2026-10-28 由 10/22 實扣 9,852 ÷ 23 天 × 365 ÷ 5,900,000 反算＝2.65%，與原口徑一致）（已撥款） → 撥款到位即清償高息負債。</p>
-<div class="foot">資料源：rebalance_summary_2026-11-07.md（唯一真值）｜由 build_rebalance_eval_html.py 於 2026-11-07 08:30 產生
+<div class="foot">資料源：rebalance_summary_2026-11-07.md（唯一真值）｜由 build_rebalance_eval_html.py 於 2026-11-07 08:52 產生
 ｜規則權威：rebalance-monitoring-sop 技能｜本頁為評估建議，不自動下單。</div>
 </div></body></html>
