@@ -1427,5 +1427,17 @@
   "category": "完成",
   "item": "資產穿透2026-11-06（已產出（五桶市值見 snapshot.penetration.actual_twd））",
   "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-11-07",
+  "category": "完成",
+  "item": "日報2026-11-07（已產出（金額見 snapshot／當日日報檔，勿在此複寫數字））",
+  "detail": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）"
+ },
+ {
+  "date": "2026-11-07",
+  "category": "完成",
+  "item": "資產穿透2026-11-07（已產出（五桶市值見 snapshot.penetration.actual_twd））",
+  "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
  }
 ]
