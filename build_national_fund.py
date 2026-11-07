@@ -130,7 +130,7 @@ def build() -> Path:
     cash = float((pen.get("actual_twd") or {}).get("現金/安全網") or 0)
     ob = snap.get("opportunity_bullet_20261107") or {}
     order = ob.get("執行紀錄_20261109") or {}
-    ordered = float(order.get("估計合計") or 0)
+    ordered = float((ob.get("資金現況_20261107") or {}).get("已承諾_未成交") or 0)
     ammo_left = max(0.0, cash - ordered - LIFE_FLOOR)
     tw_room = max(0.0, ta * TW_CAP_PCT / 100 - tw_twd - ordered)
     tsmc_all = sec_tsmc + pol_tsmc
@@ -275,7 +275,7 @@ th{{color:#93a3bb;font-weight:600;font-size:11px;background:#0f1a2b}}
   <div class="kv" style="margin-top:8px"><span>我的台積電曝險（證券＋保單）</span><b>{wan(tsmc_all)}</b></div>
   <div class="kv"><span>護盤七雄曝險（證券）</span><b>{wan(sec_seven)}</b></div>
   <div class="kv"><span>總彈藥（現金 {wan(cash)} − 生活底線 {wan(LIFE_FLOOR)}）</span><b>{wan(cash - LIFE_FLOOR)}</b></div>
-  <div class="kv"><span>已承諾（11/09 已下令、未成交）</span><b>{wan(ordered)}</b></div>
+  <div class="kv"><span>已承諾（已下單未成交）</span><b>{wan(ordered)}</b></div>
   <div class="kv"><span>未承諾彈藥（可再規劃）</span><b>{wan(ammo_left)}</b></div>
   <div class="kv"><span>台股桶還有空間（至 {TW_CAP_PCT:.0f}%）</span><b>{wan(tw_room)}</b></div>
 </div>
