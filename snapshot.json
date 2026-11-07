@@ -6421,9 +6421,9 @@
   "cash_shortfall": 0,
   "credit_line_available": null,
   "credit_line_note": "⚠️ 無真值來源：可動用信用額度（未動用質押額度／保單借款空間）尚未建檔 → 壓力測試不得推估",
-  "語義": "現金 2,076,929 中 900,000 係指定還債款（同時撐『清償承諾』與『追繳緩衝』，清償卡住則兩邊同時破）；可動用僅 unrestricted_cash 1,176,929；撐不撐得住一律看 unrestricted_cash，不得把指定還債款當普通現金。",
+  "語義": "現金 2,055,799 中 900,000 係指定還債款（同時撐『清償承諾』與『追繳緩衝』，清償卡住則兩邊同時破）；可動用僅 unrestricted_cash 1,155,799；撐不撐得住一律看 unrestricted_cash，不得把指定還債款當普通現金。",
   "source": "sot_targets.cash_layers（派生：cash_total／restricted_cash／cash_floor）",
-  "derived_at": "2026-11-07（華航交割款 21,130 已扣，乾粉同步重算）"
+  "derived_at": "2026-11-07（重派生：語義字串同步華航交割款後現金）"
  },
  "metrics_registry": {
   "metric_version": "2.0.0",
