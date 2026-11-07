@@ -274,7 +274,9 @@ th{{color:#93a3bb;font-weight:600;font-size:11px;background:#0f1a2b}}
   <div style="font-size:13.5px;color:#e2e8f0">{fill(strat.get('headline',''))}</div>
   <div class="kv" style="margin-top:8px"><span>我的台積電曝險（證券＋保單）</span><b>{wan(tsmc_all)}</b></div>
   <div class="kv"><span>護盤七雄曝險（證券）</span><b>{wan(sec_seven)}</b></div>
-  <div class="kv"><span>剩餘彈藥（可動用 − 底線 − 已下單）</span><b>{wan(ammo_left)}</b></div>
+  <div class="kv"><span>總彈藥（現金 {wan(cash)} − 生活底線 {wan(LIFE_FLOOR)}）</span><b>{wan(cash - LIFE_FLOOR)}</b></div>
+  <div class="kv"><span>已承諾（11/09 已下令、未成交）</span><b>{wan(ordered)}</b></div>
+  <div class="kv"><span>未承諾彈藥（可再規劃）</span><b>{wan(ammo_left)}</b></div>
   <div class="kv"><span>台股桶還有空間（至 {TW_CAP_PCT:.0f}%）</span><b>{wan(tw_room)}</b></div>
 </div>
 
@@ -315,7 +317,7 @@ th{{color:#93a3bb;font-weight:600;font-size:11px;background:#0f1a2b}}
   </table>
 </div>
 <div class="card">
-  <div class="sub"><b>剩餘彈藥 {wan(ammo_left)} 的使用順序</b></div>
+  <div class="sub"><b>未承諾彈藥 {wan(ammo_left)} 的使用順序</b></div>
   <ul>{deploy_li}</ul>
 </div>
 <div class="card warn">
@@ -329,7 +331,7 @@ th{{color:#93a3bb;font-weight:600;font-size:11px;background:#0f1a2b}}
 
 <h2>五、乾粉進場計畫（{plan.get('版本','')}）</h2>
 <div class="card">
-  <div class="kv"><span>可用彈藥（扣已下單與底線）</span><b>{wan(ammo_left)}</b></div>
+  <div class="kv"><span>未承諾彈藥（總彈藥 {wan(cash - LIFE_FLOOR)} − 已承諾 {wan(ordered)}）</span><b>{wan(ammo_left)}</b></div>
   <div class="kv"><span>本計畫合計</span><b>{wan(plan.get('計畫合計') or 0)}</b></div>
   <div class="kv"><span>執行後現金</span><b>{wan(plan.get('執行後現金') or 0)}（距底線剩 {wan(plan.get('執行後緩衝') or 0)}）</b></div>
   <div class="kv"><span>全數執行後台股桶</span><b>{_post / ta * 100:.2f}%（上限 {TW_CAP_PCT:.0f}%）</b></div>
@@ -376,7 +378,7 @@ th{{color:#93a3bb;font-weight:600;font-size:11px;background:#0f1a2b}}
 """
     out = BASE / f"national_fund_{TODAY}.html"
     out.write_text(html, encoding="utf-8", newline="\n")
-    print(f"✅ {out.name}（{len(html):,} chars）｜台積電總曝險 {wan(tsmc_all)}｜剩餘彈藥 {wan(ammo_left)}")
+    print(f"✅ {out.name}（{len(html):,} chars）｜台積電總曝險 {wan(tsmc_all)}｜未承諾彈藥 {wan(ammo_left)}")
     return out
 
 
