@@ -2,9 +2,8 @@
   "verdict": "APPROVE",
   "blocking": [],
   "required_fixes": [],
-  "summary": "本次 commit 實作了機會子彈 T2–T6 的自動觸發監控機制，並將資金口徑校正為總彈藥、已承諾與未承諾彈藥。程式碼將門檻設定抽離至 JSON 檔案，並實作了冪等狀態與靜默機制，符合預期。資金口徑的調整也正確反映在 HTML 報表與 snapshot.json 中。",
+  "summary": "本次 commit 更正了資金口徑，將原本誤記為『已下令』的 27.3 萬狀態改為『計畫中』，並將已承諾金額歸零。相關的 HTML 報表與 snapshot.json 均已同步更新，未承諾彈藥恢復為 45.6 萬。程式碼中也將寫死的金額改為從 snapshot 動態讀取，提升了維護性。",
   "risks": [
-    "依賴外部 API (Yahoo Finance, TWSE) 抓取指數與法人資料，若 API 格式變更或連線失敗，可能導致監控失效或延遲。",
-    "cron 轉發器寫死了絕對路徑 (C:/Users/bot/Desktop/longjiu_system)，若部署環境變更需手動修改。"
+    "未來若有實際下單，需確保狀態能正確從『計畫中』切換為『已下令』或『已成交』，避免資金口徑再次失準。"
   ]
 }

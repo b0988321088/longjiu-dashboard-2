@@ -1,0 +1,46 @@
+{
+  "root_cause": "data/rebalance_integration.md 為靜態檔案且寫死歷史快照數據，未隨每日系統快照同步更新，導致與報表其他動態生成的段落產生數據矛盾。",
+  "options": [
+    {
+      "id": "A",
+      "desc": "由執行代理讀取最新 snapshot 與 emergency 數據，重新生成並覆寫 data/rebalance_integration.md，更新其內部資料日。",
+      "pros": "完全遵守現有「程式不重算、來源檔即實質內容」的架構原則，改動範圍最小（僅動資料檔）。",
+      "cons": "未解決靜態檔案需定期維護的根本機制問題，未來若未觸發更新仍會過期。",
+      "risk": "低",
+      "files": [
+        "data/rebalance_integration.md"
+      ]
+    },
+    {
+      "id": "B",
+      "desc": "修改 Python 程式碼，將 data/rebalance_integration.md 轉為 Jinja2/字串模板，動態注入 snapshot 真值。",
+      "pros": "一勞永逸解決數據不同步與自相矛盾的問題。",
+      "cons": "嚴重違反 _rebalance_integration_block 註解中「不重算、不硬編任何數字」及「來源檔變更須經真 CIO 審查」的防禦性設計。",
+      "risk": "高",
+      "files": [
+        "程式碼 (如 build_summary_md 相關腳本)",
+        "data/rebalance_integration.md"
+      ]
+    }
+  ],
+  "recommended": "A",
+  "why": "嚴格遵守現有防禦性架構與「不改 code」原則，透過代理更新靜態檔以最小化系統風險，並確保變更可被審查。",
+  "fix_plan": [
+    "步驟1：由執行代理讀取當日最新的 snapshot.json 與 data/emergency_llm_analysis.json。",
+    "步驟2：解析 data/rebalance_integration.md，將「五桶偏離」列的數值替換為最新 snapshot 的 actual_pct (台股 10.2%｜美股 37.4% 等)。",
+    "步驟3：將「緊急風控」列的現金數值替換為最新 snapshot.cash_total (2,055,799)。",
+    "步驟4：將檔案內的「資料日」字串更新為當前執行日期 (TODAY)。",
+    "步驟5：若代理更新失敗，保留原檔觸發 fail-closed，依賴現有 stale 警語機制提示人工介入；更新成功則提交 PR 待 CIO 審查。"
+  ],
+  "must_not": [
+    "不可修改 snapshot.json 真值",
+    "不可刪除任何歷史檔案",
+    "不可在 Python 程式碼中寫死金額或日期",
+    "不可修改 _rebalance_integration_block 的核心邏輯與防禦機制"
+  ],
+  "verification": [
+    "重新執行報表生成，檢查 summary 內的五桶偏離與緊急風控數值是否與最新 snapshot 完全一致。",
+    "確認 summary 報表該節末尾不再出現「⚠️ 本節為 X 版…不得視為當日裁定」的過期警語。"
+  ],
+  "residual_risk": "檔案本質仍為靜態，若未來排程或代理未能每日穩定觸發更新，仍會再次發生數據過期與矛盾，需依賴 stale 警語作為最後防線。"
+}
