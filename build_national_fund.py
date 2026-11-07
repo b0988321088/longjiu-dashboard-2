@@ -72,7 +72,7 @@ def build() -> Path:
     pol = d.get("policy") or {}
     link = d.get("linkage") or {}
 
-    total_cost = sum(float(h.get("cost") or 0) for h in holds9)
+    total_cost = float(r9.get("invested") or 0) or sum(float(h.get("cost") or 0) for h in holds9)
 
     # ── 我的持股 × 護盤關聯 ────────────────────────────────
     rows = []
@@ -202,6 +202,20 @@ def build() -> Path:
             s = s.replace(k, v)
         return s
 
+    plan = ob.get("分批計畫_v2_20261107") or {}
+    plan_rows = []
+    for b in plan.get("批次") or []:
+        plan_rows.append(
+            "<tr>"
+            f"<td><b>{b.get('批次','')}</b></td>"
+            f"<td><b>{b.get('ticker','')}</b> {b.get('名稱','')}<div class='sub'>{b.get('股數',0):,} 股 @ {b.get('參考價',0):.2f}</div></td>"
+            f"<td class='n'>{b.get('估計合計',0):,.0f}</td>"
+            f"<td>{b.get('觸發','')}<div class='sub'>{b.get('理由','')}</div></td>"
+            "</tr>"
+        )
+    plan_ban = "".join(f"<li>{x}</li>" for x in plan.get("不進場條件") or [])
+    _post = float((plan.get("前提") or {}).get("已下單後台股桶") or 0) + sum(
+        float(b.get("估計金額") or 0) for b in plan.get("批次") or [])
     tier_rows = "".join(
         f"<tr><td><b>{t.get('tier', '')}</b></td><td>{fill(t.get('your', ''))}</td><td>{fill(t.get('conclusion', ''))}</td></tr>"
         for t in strat.get("tiers") or []
@@ -313,7 +327,30 @@ th{{color:#93a3bb;font-weight:600;font-size:11px;background:#0f1a2b}}
   <ul>{watch_li}</ul>
 </div>
 
-<h2>五、第 9 次實際買進（護盤慣性依據）</h2>
+<h2>五、乾粉進場計畫（{plan.get('版本','')}）</h2>
+<div class="card">
+  <div class="kv"><span>可用彈藥（扣已下單與底線）</span><b>{wan(ammo_left)}</b></div>
+  <div class="kv"><span>本計畫合計</span><b>{wan(plan.get('計畫合計') or 0)}</b></div>
+  <div class="kv"><span>執行後現金</span><b>{wan(plan.get('執行後現金') or 0)}（距底線剩 {wan(plan.get('執行後緩衝') or 0)}）</b></div>
+  <div class="kv"><span>全數執行後台股桶</span><b>{_post / ta * 100:.2f}%（上限 {TW_CAP_PCT:.0f}%）</b></div>
+  <table>
+    <tr><th>批次</th><th>標的</th><th class="n">估金額</th><th>觸發條件／理由</th></tr>
+    {''.join(plan_rows)}
+  </table>
+  <div class="sub" style="margin-top:8px"><b>不進場條件</b></div>
+  <ul>{plan_ban}</ul>
+  <div class="sub" style="margin-top:6px">{plan.get('停止條件','')}</div>
+</div>
+<div class="card ok">
+  <div class="sub"><b>資金約束（為什麼不能一次打光）</b></div>
+  <ul>
+    <li><b>硬約束</b>：{plan.get('約束',{}).get('硬','')}</li>
+    <li><b>軟約束</b>：{plan.get('約束',{}).get('軟','')}</li>
+    <li><b>季節性</b>：{plan.get('約束',{}).get('季節','')}</li>
+  </ul>
+</div>
+
+<h2>六、第 9 次實際買進（護盤慣性依據）</h2>
 <div class="card">
   <div class="sub">{r9.get('label','')}｜{r9.get('period','')}</div>
   <div class="kv"><span>投入金額</span><b>{money(r9.get('invested'))}</b></div>
@@ -323,13 +360,13 @@ th{{color:#93a3bb;font-weight:600;font-size:11px;background:#0f1a2b}}
     <tr><th>標的</th><th class="n">投入成本</th><th class="n">占比</th><th class="n">處分獲利</th><th>定位</th></tr>
     {''.join(hold_rows9)}
   </table>
-  <div class="sub" style="margin-top:8px">中小型股、櫃買（OTC）買超為 0；8 檔全數獲利出場。第 8 次（{r8.get('label','')}）為 {r8.get('count','—')} 檔，同樣權值龍頭：{r8.get('note','')}</div>
+  <div class="sub" style="margin-top:8px">中小型股、櫃買（OTC）買超為 0；8 檔全數獲利出場。第 8 次為 {r8.get('count','—')} 檔：{r8.get('note','')}</div>
 </div>
 
-<h2>六、風險與誤區</h2>
+<h2>七、風險與誤區</h2>
 <div class="card warn"><ul>{risk_li}</ul></div>
 
-<h2>七、來源</h2>
+<h2>八、來源</h2>
 <div class="card"><ul>{src_li}</ul></div>
 
 <div class="foot">產生時間 {TODAY}｜build_national_fund.py｜持股與保單現讀 snapshot.json、成分權重現讀 data/etf_holdings_*.json<br>
