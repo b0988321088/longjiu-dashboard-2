@@ -149,3 +149,7 @@ pdf_extract/
 # Pages 組裝輸出（本機驗證用，不進版控）
 _tmp_site/
 _site/
+
+# CIO 審查產物（每次送審即重寫，只在本機被 cio_review 讀取，不進版控）2026-11-07
+cio_review_gemini_latest.json
+cio_review_gemini_latest_raw.txt
