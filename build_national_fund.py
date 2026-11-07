@@ -202,18 +202,22 @@ def build() -> Path:
             s = s.replace(k, v)
         return s
 
-    plan = ob.get("分批計畫_v2_20261107") or {}
+    plan = ob.get("建倉計畫_v3_20261108") or {}
+    rules = ob.get("建倉規則_v1_20261108") or {}
     plan_rows = []
     for b in plan.get("批次") or []:
         plan_rows.append(
             "<tr>"
-            f"<td><b>{b.get('批次','')}</b></td>"
+            f"<td><b>{b.get('批次','')}</b><div class='sub'>{b.get('段','')}</div></td>"
             f"<td><b>{b.get('ticker','')}</b> {b.get('名稱','')}<div class='sub'>{b.get('股數',0):,} 股 @ {b.get('參考價',0):.2f}</div></td>"
             f"<td class='n'>{b.get('估計合計',0):,.0f}</td>"
             f"<td>{b.get('觸發','')}<div class='sub'>{b.get('理由','')}</div></td>"
             "</tr>"
         )
-    plan_ban = "".join(f"<li>{x}</li>" for x in plan.get("不進場條件") or [])
+    plan_ban = "".join(f"<li>{x}</li>" for x in rules.get("建倉") or [])
+    exit_li = "".join(f"<li>{x}</li>" for x in rules.get("退場") or [])
+    ban_li2 = "".join(f"<li>{x}</li>" for x in rules.get("禁止") or [])
+    seg_rows = "".join(f"<tr><td><b>{k}</b></td><td>{v}</td></tr>" for k, v in (rules.get("分段釋放") or {}).items())
     _post = float((plan.get("前提") or {}).get("已下單後台股桶") or 0) + sum(
         float(b.get("估計金額") or 0) for b in plan.get("批次") or [])
     tier_rows = "".join(
@@ -329,29 +333,30 @@ th{{color:#93a3bb;font-weight:600;font-size:11px;background:#0f1a2b}}
   <ul>{watch_li}</ul>
 </div>
 
-<h2>五、乾粉進場計畫（{plan.get('版本','')}）</h2>
+<h2>五、建倉計畫（{plan.get('版本','')}｜兩段釋放）</h2>
 <div class="card">
-  <div class="kv"><span>未承諾彈藥（總彈藥 {wan(cash - LIFE_FLOOR)} − 已承諾 {wan(ordered)}）</span><b>{wan(ammo_left)}</b></div>
-  <div class="kv"><span>本計畫合計</span><b>{wan(plan.get('計畫合計') or 0)}</b></div>
-  <div class="kv"><span>執行後現金</span><b>{wan(plan.get('執行後現金') or 0)}（距底線剩 {wan(plan.get('執行後緩衝') or 0)}）</b></div>
-  <div class="kv"><span>全數執行後台股桶</span><b>{_post / ta * 100:.2f}%（上限 {TW_CAP_PCT:.0f}%）</b></div>
+  <div class="kv"><span>建倉池（現金 {wan(cash)} − 生存底線 {wan(LIFE_FLOOR)}）</span><b>{wan((plan.get('前提') or {}).get('建倉池') or 0)}</b></div>
+  <div class="kv"><span>第一段授權（B1–B5，可即刻）</span><b>{wan((plan.get('前提') or {}).get('第一段授權') or 0)}</b></div>
+  <div class="kv"><span>第二段授權（B6–B10，需 gate 條件）</span><b>{wan((plan.get('前提') or {}).get('第二段授權') or 0)}</b></div>
+  <div class="kv"><span>兩段合計／保留緩衝</span><b>{wan((plan.get('前提') or {}).get('兩段合計') or 0)}／{wan((plan.get('前提') or {}).get('保留緩衝') or 0)}</b></div>
+  <div class="kv"><span>全數執行後台股桶</span><b>{(plan.get('前提') or {}).get('全數執行後台股桶_pct', 0):.2f}%（上限 {TW_CAP_PCT:.0f}%）</b></div>
   <table>
-    <tr><th>批次</th><th>標的</th><th class="n">估金額</th><th>觸發條件／理由</th></tr>
+    <tr><th>批次</th><th>標的</th><th class="n">估金額</th><th>觸發條件</th></tr>
     {''.join(plan_rows)}
   </table>
-  <div class="sub" style="margin-top:8px"><b>不進場條件</b></div>
+  <div class="sub" style="margin-top:8px"><b>建倉紀律</b></div>
   <ul>{plan_ban}</ul>
-  <div class="sub" style="margin-top:6px">{plan.get('停止條件','')}</div>
 </div>
 <div class="card ok">
-  <div class="sub"><b>資金約束（為什麼不能一次打光）</b></div>
-  <ul>
-    <li><b>硬約束</b>：{plan.get('約束',{}).get('硬','')}</li>
-    <li><b>軟約束</b>：{plan.get('約束',{}).get('軟','')}</li>
-    <li><b>季節性</b>：{plan.get('約束',{}).get('季節','')}</li>
-  </ul>
+  <div class="sub"><b>分段釋放條件</b></div>
+  <table><tr><th>段</th><th>條件</th></tr>{seg_rows}</table>
 </div>
-
+<div class="card warn">
+  <div class="sub"><b>退場規則（四類，先寫清楚才不會臨場亂賣）</b></div>
+  <ul>{exit_li}</ul>
+  <div class="sub" style="margin-top:6px"><b>禁止</b></div>
+  <ul>{ban_li2}</ul>
+</div>
 <h2>六、第 9 次實際買進（護盤慣性依據）</h2>
 <div class="card">
   <div class="sub">{r9.get('label','')}｜{r9.get('period','')}</div>
