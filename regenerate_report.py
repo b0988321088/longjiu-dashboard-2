@@ -856,15 +856,23 @@ elif ok and _cio_ok and _date_ok:
                         #   （原本零呼叫者、零發布責任 → 2026-10-12 線上按鈕 404）
                         f'retirement_plan_{TODAY}.html']
     # 再平衡儀表板（2026-08-22：每日重跑，build_rebalance_dashboard.py 讀 snapshot+radar_state）
+    # 2026-11-07 修復：原寫法 `except Exception: pass` 且不檢查 returncode → 產出失敗仍把檔名
+    #   塞進推送候選，07:00 就會回報「產物已生成但未發布」而線上 404（實為根本沒產出）。
+    #   現在：失敗一定發聲；只把「檔案真的存在」的產物列入推送候選。
     try:
-        subprocess.run([sys.executable, str(BASE / "build_rebalance_dashboard.py")], cwd=str(BASE),
-                       capture_output=True, timeout=120)
-        _push_candidates.append(f'rebalance_dashboard_{TODAY}.html')
-        _push_candidates.append(f'rebalance_eval_{TODAY}.html')
-        _push_candidates.append(f'rebalance_summary_{TODAY}.md')
-        _push_candidates.append(f'industry_penetration_{TODAY}.png')
-    except Exception:
-        pass
+        _rb = subprocess.run([sys.executable, str(BASE / "build_rebalance_dashboard.py")],
+                             cwd=str(BASE), capture_output=True, timeout=120)
+        _rb_err = (_rb.stderr or b"").decode("utf-8", "replace").strip()[-300:]
+        if _rb.returncode != 0:
+            print(f"⚠️ build_rebalance_dashboard.py rc={_rb.returncode}：{_rb_err}")
+        for _rf in (f'rebalance_dashboard_{TODAY}.html', f'rebalance_eval_{TODAY}.html',
+                    f'rebalance_summary_{TODAY}.md', f'industry_penetration_{TODAY}.png'):
+            if (BASE / _rf).exists():
+                _push_candidates.append(_rf)
+            else:
+                print(f"⚠️ 再平衡產物缺失，不列入推送候選：{_rf}")
+    except Exception as _rbe:
+        print(f"⚠️ 再平衡產物步驟異常（未列入推送候選）：{_rbe}")
     # 2026-10-15 B1（§5 HTML 方案 A）：首頁「重要連結」的兩份報告頁納入 producer stage 白名單。
     #   背景（2026-10-15 實測、check_dashboard_sync 第 12 項 FAIL）：index.html 以 links_config
     #   前綴 glob 指向最新檔（emergency_report_*／weekly_report_*），但這兩份的 producer
