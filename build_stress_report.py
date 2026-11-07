@@ -387,6 +387,7 @@ def build():
             crash_rows = []
     _tick_name = {"^TWII": "加權指數", "0050.TW": "元大台灣50", "006208.TW": "富邦台50",
                   "009816.TW": "凱基台灣TOP50", "00713.TW": "元大台灣高息低波",
+                  "2330.TW": "台積電",
                   "00878.TW": "國泰永續高股息", "0056.TW": "元大高股息",
                   "00981A.TW": "主動統一台股增長", "00984A.TW": "主動安聯台灣高息",
                   "00919.TW": "群益台灣精選高息", "00918.TW": "大華優利高填息30",
@@ -400,6 +401,30 @@ def build():
         f"<td class='n sub' style='text-align:left'>{r.get('date', '')}</td></tr>"
         for r in crash_rows
         if isinstance(r, dict) and 'dd' in r)
+    _ob_lock = ob.get("指定標的計畫_20261109") or {}
+    _lock_tg = _ob_lock.get("標的") or []
+    _lock_first = (_ob_lock.get("首批_20261109") or {}).get("各檔") or []
+    _lock_evt = _ob_lock.get("市場事件") or {}
+    _lock_imp = _ob_lock.get("假設與影響") or []
+    _lock_risk = _ob_lock.get("風控") or []
+    _lock_batch = _ob_lock.get("批次") or {}
+    _lock_status = _ob_lock.get("狀態") or "—"
+    _lock_rows = "".join(
+        f"<tr><td>{t.get('ticker', '')}</td><td>{t.get('name', '')}</td>"
+        f"<td class='n'>{_num(t.get('分配金額')):,.0f}</td>"
+        f"<td class='n'>{_num(t.get('參考價')):,.2f}</td>"
+        f"<td class='n'>{int(_num(t.get('目標股數'))):,}</td>"
+        f"<td class='n'>{_num(t.get('每批金額')):,.0f}</td>"
+        f"<td class='n'>{int(_num(t.get('每批股數'))):,}</td>"
+        f"<td class='n sub' style='text-align:left'>{t.get('來源', '')}</td></tr>"
+        for t in _lock_tg)
+    _first_rows = "".join(
+        f"<tr><td>{f.get('ticker', '')}</td><td>{f.get('name', '')}</td>"
+        f"<td class='n'>{int(_num(f.get('股數'))):,} 股</td>"
+        f"<td class='n'>{_num(f.get('估計金額')):,.0f}</td></tr>"
+        for f in _lock_first)
+    _lock_imp_html = "".join(f"<li>{x}</li>" for x in _lock_imp)
+    _lock_risk_html = "".join(f"<li>{x}</li>" for x in _lock_risk)
     _snap_gen = str(snap.get("generated_at") or "")[:16].replace("T", " ")
     pen_targets = pen.get("targets") or {}
 
@@ -521,33 +546,48 @@ a{{color:#34d399}}
 <div class="sub" style="margin:8px 0 0">本段與日報第八章同一批真值（snapshot 產生 {_snap_gen or '—'}）；數字全部現算，未人工填寫。</div>
 </div>
 
-<h2>八、機會子彈（大盤回檔 {abs(_ob_thr):.0f}% 啟動｜依現有持股加碼）</h2>
+<h2>八、機會子彈（大盤回檔 {abs(_ob_thr):.0f}% 啟動｜週一 11/09 指定標的計畫）</h2>
 <div class="card">
 <ul>
-<li><b>規則（2026-11-07 裁決）</b>：保留生活底線 <b>{fmt(floor)}</b>；其餘<b>乾粉 {fmt(_ob_ammo)}</b> 只在<b>大盤自波段高點回檔 ≥{abs(_ob_thr):.0f}%</b> 時啟動；<b>加碼只限目前持有股票</b>，不新增標的。</li>
-<li><b>觸發狀態</b>：{_ob_trig.get('指標', '^TWII')} 高點 <b>{_num(_ob_trig.get('波段高點')):,.2f}</b>（{_ob_trig.get('高點日', '—')}）→ 現值 <b>{_num(_ob_trig.get('現值')):,.2f}</b>（{_ob_trig.get('價格日', '—')}）＝ 回檔 <b class="down">{abs(_ob_dd):.2f}%</b>　{_ob_state}</li>
-<li><b>彈藥</b>：可動用 <b>{fmt(unrestricted)}</b> − 生活底線 <b>{fmt(floor)}</b> ＝ <b>{fmt(_ob_ammo)}</b>；指定預備款 <b>{fmt(restricted)}</b> 不動</li>
-<li><b>分批</b>：{_ob_nb} 批、每批 ≤50,000，按分配權重比例買入；分配合計 <b>{fmt(_ob_cost)}</b>（未用 {fmt(_ob_ammo - _ob_cost)}）｜已執行 <b>{_ob_prog.get('已執行', 0)}</b> 批——條件成立不代表已下單</li>
+<li><b>規則</b>：保留生活底線 <b>{fmt(floor)}</b>；乾粉 <b>{fmt(_ob_ammo)}</b> 在大盤自波段高點回檔 <b>≥{abs(_ob_thr):.0f}%</b> 時啟動；<b>本輪鎖定 5 檔</b>：2330 台積電／0050／00878／00919／0056</li>
+<li><b>觸發狀態</b>：^TWII 高點 <b>{_num(_ob_trig.get('波段高點')):,.2f}</b>（{_ob_trig.get('高點日', '—')}）→ <b>{_num(_ob_trig.get('現值')):,.2f}</b>（{_ob_trig.get('價格日', '—')}）＝ 回檔 <b class="down">{abs(_ob_dd):.2f}%</b>　{_ob_state}</li>
+<li><b>彈藥</b>：可動用 <b>{fmt(unrestricted)}</b> − 生活底線 <b>{fmt(floor)}</b> ＝ <b>{fmt(_ob_ammo)}</b>；預備款 <b>{fmt(restricted)}</b> 不動</li>
+<li><b>批次</b>：{_lock_batch.get('總批次', '—')} 批、每批 ≤<b>{_num(_lock_batch.get('每批上限')):,.0f}</b>，首批 {_lock_batch.get('首批日', '—')}｜狀態：<b>{_lock_status}</b></li>
 </ul>
 </div>
 
 <div class="card">
-<div class="sub" style="margin:0 0 6px">分配表（依現有持股市值權重；跌幅＝各自 3 個月高點回檔）</div>
-<table>
-<tr><th>代號</th><th>名稱</th><th class="n">現市值</th><th class="n">權重</th><th class="n">分配金額</th><th class="n">目標股數</th><th class="n">每批股數</th><th class="n">3月跌幅</th></tr>
-{_alloc_rows or '<tr><td colspan="8">snapshot 無分配資料</td></tr>'}
-</table>
-<div class="sub" style="margin:8px 0 0">共 {len(_ob_alloc)} 檔；股數以 snapshot 收盤價換算整股，實際下單以當日價為準。</div>
+<div class="sub" style="margin:0 0 6px">市場事件（計畫依據）</div>
+<ul>
+<li><b>{_lock_evt.get('事件', '—')}</b>（{_lock_evt.get('宣布', '')}）：{_lock_evt.get('額度', '')}</li>
+<li>宣布時台股：{_lock_evt.get('宣布時台股', '—')}</li>
+<li class="sub">{_lock_evt.get('備註', '')}</li>
+</ul>
 </div>
 
 <div class="card">
-<div class="sub" style="margin:0 0 6px">未列入加碼（{len(_ob_excl)} 檔）</div>
+<div class="sub" style="margin:0 0 6px">標的與金額（總額 {fmt(_ob_ammo)}；每批＝{_lock_batch.get('總批次', '—')} 等分）</div>
 <table>
-<tr><th>代號</th><th>理由</th></tr>
-{_excl_rows or '<tr><td colspan="2">—</td></tr>'}
+<tr><th>代號</th><th>名稱</th><th class="n">計畫金額</th><th class="n">參考價</th><th class="n">目標股數</th><th class="n">每批金額</th><th class="n">每批股數</th><th>來源</th></tr>
+{_lock_rows or '<tr><td colspan="8">snapshot 無指定標的計畫</td></tr>'}
 </table>
+<div class="sub" style="margin:8px 0 0">參考價為 snapshot／Yahoo 最近收盤（價格日見表下方資料來源）；實際下單以當日價為準，股數為整股換算。</div>
+</div>
+
+<div class="card">
+<div class="sub" style="margin:0 0 6px">首批 {_lock_batch.get('首批日', '11/09')} 明細（未下單）</div>
+<table>
+<tr><th>代號</th><th>名稱</th><th class="n">股數</th><th class="n">估計金額</th></tr>
+{_first_rows or '<tr><td colspan="4">—</td></tr>'}
+<tr><td colspan="3"><b>首批估計合計</b></td><td class="n"><b>{_num((_ob_lock.get('首批_20261109') or {}).get('估計合計')):,.0f}</b></td></tr>
+</table>
+</div>
+
+<div class="card">
+<div class="sub" style="margin:0 0 6px">影響與假設（估算，非實測）</div>
+<ul>{_lock_imp_html or '<li>—</li>'}</ul>
 <div class="sub" style="margin:10px 0 0">風控：</div>
-<ul>{_ob_risk_html or '<li>—</li>'}</ul>
+<ul>{_lock_risk_html or '<li>—</li>'}</ul>
 </div>
 
 <div class="card">
@@ -566,7 +606,7 @@ a{{color:#34d399}}
 <li>{_liq2_note}。</li>
 <li>若觸線：<b>現金還本</b>，不賣後收級別擔保品（CDSC 未到期）；不新增借款。</li>
 <li>紀律不變：急跌日（單日 ≥3%）只回報不動作；不接刀、不停損、不攤平；減碼窗口是反彈。</li>
-<li>機會子彈 <b>{fmt(_ob_ammo)}</b>（可動用 {fmt(unrestricted)} − 生活底線 {fmt(floor)}）只在大盤回檔 ≥{abs(_ob_thr):.0f}% 時啟動、只加碼現有持股：現已回檔 <b class="down">{abs(_ob_dd):.2f}%</b>，第 1 批待下令；未下第二批前不再投入。</li>
+<li>機會子彈 <b>{fmt(_ob_ammo)}</b>：本輪鎖定 <b>2330 台積電／0050／00878／00919／0056</b>，{_lock_batch.get('總批次', '—')} 批、每批 ≤{_num(_lock_batch.get('每批上限')):,.0f}；首批 {_lock_batch.get('首批日', '11/09')} 估計 <b>{_num((_ob_lock.get('首批_20261109') or {}).get('估計合計')):,.0f}</b>，<b>尚未下單</b>；買後可動用現金不得低於 {fmt(floor)}。</li>
 </ul>
 </div>
 {f'<div class="card warn"><b>淨值日落後示警</b>：{"／".join(nav_note)}，市場價 {latest_mkt}。下一交易日淨值仍可能再下修，今日總資產不是底部。</div>' if stale else ''}
