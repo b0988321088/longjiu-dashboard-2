@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import urllib.request
 from datetime import date, datetime
@@ -350,6 +351,49 @@ def build():
         f"<td class='n'>{r:.1f}%</td><td class='n'>{lt:.1f}%</td></tr>"
         for l, d, t, r, lt in scen)
 
+    # ── 超跌進場評估（2026-11-07 使用者核准解凍；00713 分批計畫，狀態觀察中）──
+    # 全部讀 snapshot.rebalance_plan_20261107；計畫未核准下單前只是「待命」，不得寫成已執行。
+    rp = snap.get("rebalance_plan_20261107") or {}
+    ammo = unrestricted - floor
+    batch_html = "".join(
+        f"<tr><td class='n'>第 {b.get('批')} 批</td><td>{b.get('日', '')}</td>"
+        f"<td class='n'>{(b.get('股數') or 0):,} 股</td>"
+        f"<td class='n'>{fmt(_num(b.get('估金額')))}</td></tr>"
+        for b in (rp.get("分批") or []))
+    risk_html = "".join(f"<li>{x}</li>" for x in (rp.get("風控") or []))
+    watch_html = "".join(f"<li>{x}</li>" for x in (rp.get("觀察重點") or []))
+    crash_rows = []
+    _cp = BASE / "data" / "_crash_check.json"
+    if _cp.exists():
+        try:
+            crash_rows = json.loads(_cp.read_text(encoding="utf-8"))
+        except Exception:
+            crash_rows = []
+    crash_html = "".join(
+        f"<tr><td>{r.get('name', '')}</td><td class='n'>{_num(r.get('close')):,.2f}</td>"
+        f"<td class='n {cls(_num(r.get('1d')))}'>{_num(r.get('1d')):+.2f}%</td>"
+        f"<td class='n {cls(_num(r.get('5d')))}'>{_num(r.get('5d')):+.2f}%</td>"
+        f"<td class='n {cls(_num(r.get('1m')))}'>{_num(r.get('1m')):+.2f}%</td>"
+        f"<td class='n {cls(_num(r.get('from_3m_high')))}'>{_num(r.get('from_3m_high')):+.2f}%</td>"
+        f"<td class='n sub' style='text-align:left'>{r.get('date', '')}</td></tr>"
+        for r in crash_rows)
+    _rp_state = rp.get("狀態") or "—"
+    _rp_target = rp.get("標的") or "—"
+    _rp_px = _num(rp.get("參考價"))
+    _rp_shares = int(_num(rp.get("目標股數")))
+    _rp_cost = _rp_px * _rp_shares if _rp_px and _rp_shares else 0
+    pen_targets = pen.get("targets") or {}
+    _rp_short = (_rp_target.split() or ["—"])[0]
+    _rp_state_short = re.sub(r"[^0-9A-Za-z\u4e00-\u9fff]", "", _rp_state.split("（")[0]) or "—"
+    _df_t = _num((pen_targets or {}).get("防守型配息"), 30)
+    _best3 = [f"{r.get('name','')} {_num(r.get('1m')):+.1f}%" for r in
+              sorted(crash_rows, key=lambda x: _num(x.get("1m")), reverse=True)[:3]] if crash_rows else []
+    _worst2 = [f"{r.get('name','')} {_num(r.get('1m')):+.1f}%" for r in
+               sorted(crash_rows, key=lambda x: _num(x.get("1m")))[:2]] if crash_rows else []
+    _rank_note = (f"本波 1 個月抗跌排序：{'＜'.join(_best3)}；跌幅最大：{'＜'.join(_worst2)}。"
+                  "低波高息優於純市值型，這是「補防守缺口」而非「攤平台股」的依據。") if crash_rows else ""
+    _snap_gen = str(snap.get("generated_at") or "")[:16].replace("T", " ")
+
     pct_tot = (_num(cur["total_assets"]) - _num(prev["total_assets"])) / _num(prev["total_assets"]) * 100 \
         if _num(prev["total_assets"]) else 0
     d_tot = _num(cur["total_assets"]) - _num(prev["total_assets"])
@@ -465,17 +509,46 @@ a{{color:#34d399}}
 <li><b>流動性才是真風險</b>：{_liq_note}</li>
 <li><b>一句話</b>：真正要守的是「11 月現金不被擠爆」，不是「資產不再跌」；紀律＝不追跌、不攤平、減碼窗口在反彈。</li>
 </ul>
-<div class="sub" style="margin:8px 0 0">本段與日報第八章同一批真值（2026-11-06 18:05 整合版）；數字全部現算，未人工填寫。</div>
+<div class="sub" style="margin:8px 0 0">本段與日報第八章同一批真值（snapshot 產生 {_snap_gen or '—'}）；數字全部現算，未人工填寫。</div>
 </div>
 
-<h2>八、結論與行動</h2>
+<h2>八、超跌進場評估（{_rp_short} 分批｜{_rp_state_short}）</h2>
+<div class="card">
+<ul>
+<li><b>缺口判定</b>：防守型配息 <b>{_num(act_pct.get('防守型配息')):.1f}%</b> vs 目標 {_df_t:.0f}%（缺 <b class="down">{_df_t - _num(act_pct.get('防守型配息')):.1f}pp</b>）；台股桶 <b>{_num(act_pct.get('台股市值型成長')):.1f}%</b> 已達目標 → 這筆彈藥是<b>補防守</b>，不是補台股。</li>
+<li><b>標的與狀態</b>：{_rp_target}｜<b>{_rp_state}</b>；參考價 <b>{_rp_px:,.2f}</b>｜目標 <b>{_rp_shares:,} 股</b>（約 <b>{fmt(_rp_cost)}</b>）</li>
+<li><b>資金來源</b>：可動用 <b>{fmt(unrestricted)}</b> − 生活底線 <b>{fmt(floor)}</b> ＝ 超跌彈藥 <b>{fmt(ammo)}</b>；指定預備款 <b>{fmt(restricted)}</b> 不動、不動保單、不質押。</li>
+<li><b>效果</b>：{rp.get('效果', '—')}</li>
+</ul>
+<table>
+<tr><th>批次</th><th>日期</th><th class="n">股數</th><th class="n">估計金額</th></tr>
+{batch_html or '<tr><td colspan="4">snapshot 無分批資料</td></tr>'}
+</table>
+<div class="sub" style="margin:10px 0 0">風控（觸發即暫停，不追價）：</div>
+<ul>{risk_html or '<li>—</li>'}</ul>
+<div class="sub" style="margin:10px 0 0">觀察重點：</div>
+<ul>{watch_html or '<li>—</li>'}</ul>
+<div class="sub" style="margin:8px 0 0">不做：{rp.get('不做', '—')}｜背景：{rp.get('背景', '—')}</div>
+</div>
+
+<div class="card">
+<div class="sub" style="margin:0 0 6px">本波超跌對照（價格日各自標示；跌幅為市場價，非個人部位報酬）</div>
+<table>
+<tr><th>標的</th><th class="n">收盤</th><th class="n">1日</th><th class="n">5日</th><th class="n">1月</th><th class="n">距3月高</th><th>價格日</th></tr>
+{crash_html or '<tr><td colspan="7">超跌掃描檔（data/_crash_check.json）不存在，不補值</td></tr>'}
+</table>
+<div class="sub" style="margin:8px 0 0">{_rank_note}</div>
+</div>
+
+<h2>九、結論與行動</h2>
 <div class="card">
 <ul>
 <li>本波回檔 {pct_wave:+.2f}%，主因台股部位僅 {_num(act_pct.get('台股市值型成長')):.1f}%、三塊各跌約 25–33 萬，屬配置分散生效，非單一部位爆炸。</li>
 <li>最緊的不是銀行線，是<b>內部停止線</b>：池再跌 {gates[0][2]:.1f}% 就觸線，而美股單日波動即可達此量級。</li>
 <li>{_liq2_note}。</li>
 <li>若觸線：<b>現金還本</b>，不賣後收級別擔保品（CDSC 未到期）；不新增借款。</li>
-<li>紀律不變：急跌日（單日 ≥3%）只回報不動作；11 月凍結、不接刀、不停損、不攤平；減碼窗口是反彈。</li>
+<li>紀律不變：急跌日（單日 ≥3%）只回報不動作；不接刀、不停損、不攤平；減碼窗口是反彈。</li>
+<li>超跌彈藥 <b>{fmt(ammo)}</b>（可動用 {fmt(unrestricted)} − 生活底線 {fmt(floor)}）只補防守型配息缺口；{_rp_target} 計畫目前 <b>{_rp_state}</b>，風控觸發即暫停，未見觸發條件成立不下單。</li>
 </ul>
 </div>
 {f'<div class="card warn"><b>淨值日落後示警</b>：{"／".join(nav_note)}，市場價 {latest_mkt}。下一交易日淨值仍可能再下修，今日總資產不是底部。</div>' if stale else ''}
