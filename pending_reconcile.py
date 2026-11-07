@@ -220,17 +220,22 @@ def _main_impl() -> int:
         # v1.2（2026-10-14 TD-20261015-02）：US30Y 為宏觀風險警示、不否決台股分批；
         # 解凍判定改列實體未達條件（現金／質押 LTV／還本安全閥）。
         _conds = ev.get("unfreeze_conditions") or {}
-        _unmet = _conds.get("未達") or ["條件無法計算"]
+        _unmet = _conds.get("未達") or []
+        # 2026-11-07 修復：原碼無條件寫「⏸ 條件未成立」——即使 unfreeze_allowed=True 且無未達項，
+        #   卡片仍顯示未成立（與 gate 實算 all_passed 衝突，週六再平衡評估據此列待辦）。
+        #   改為實算優先：許可且無未達 → ✅ 條件已成立；否則維持 ⏸ 並列出未達項。
+        _passed = bool(ev.get("unfreeze_allowed")) and not _unmet
         # 2026-10-15（審查 finding：語意混用）：舊文字只寫「紅線連續 N 日」而未標門檻，
         #   與「模式A（≥5.20%）連續日數」在閱讀上混為一談 → 審查者拿模式A 的 32／33 質疑
         #   紅線的 17。兩個數字都保留、門檻寫明；紅線值一律讀真值源 red_line_streak
         #   （us30y_state.json，由 us30y_monitor.red_line_streak() 計算），不為迎合審查改數值。
-        status = (f"⏸ 條件未成立（{today} 真值重算）：US30Y {ev['us30y']}%（as_of {ev['us30y_as_of']}）"
+        status = (f"{'✅ 條件已成立' if _passed else '⏸ 條件未成立'}（{today} 真值重算）：US30Y {ev['us30y']}%（as_of {ev['us30y_as_of']}）"
                   f"＝宏觀風險警示（{'觸發' if ev.get('us30y_risk_warning') else '未觸發'}），不否決台股分批；"
                   f"紅線（≥5.30%）連續 {ev.get('red_line_streak')} 交易日"
                   f"（模式A警戒（≥5.20%）連續 {ev.get('us30y_streak')} 日，兩者不同口徑）；"
-                  f"未達＝{'、'.join(_unmet)}"
-                  f"（解凍{'許可' if ev['unfreeze_allowed'] else '不許可'}｜閘門模式 {ev.get('gate_mode')}）")
+                  + ("解凍實體條件全數達標（現金／質押 LTV／還本安全閥）"
+                     if _passed else f"未達＝{'、'.join(_unmet) or '條件無法計算'}")
+                  + f"（解凍{'許可' if ev['unfreeze_allowed'] else '不許可'}｜閘門模式 {ev.get('gate_mode')}）")
         return {"kind": "update", "status": status, "evidence": ev["gate_reason"]}
 
     rules = [r_water_life, r_water_sinopac, r_pledge, r_repay, r_us30y]
@@ -293,7 +298,8 @@ def _main_impl() -> int:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     shutil.copy(PEND, PEND.with_suffix(PEND.suffix + f".bak_reconcile_{stamp}"))
     shutil.copy(ARCH, ARCH.with_suffix(ARCH.suffix + f".bak_reconcile_{stamp}"))
-    save(PEND, keep, 2)
+    # 2026-11-07 修復：pending_decisions.json 歷史格式為 indent=1；原本寫 2 會造成整檔假 diff（163/163）
+    save(PEND, keep, 1)
     save(ARCH, arch, 1)
     # 落地後驗證（INC-263：先寫、後驗；驗證失敗一律只警告不 raise）
     # 理由：檔案已寫入，raise 會讓 cron/操作者誤判「寫入失敗」→ 重跑造成二次搬移。

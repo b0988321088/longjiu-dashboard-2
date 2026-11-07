@@ -19,7 +19,7 @@ institutional_flow.py — 機構流向雷達 (Institutional Flow Radar)
   🟡 黃：個人策略與機構反向（暫停自動加碼，日報載明理由）
   🔴 紅：機構大規模撤離但個人擬加碼（凍結該資產調度）
 """
-import json, re, ssl, sys, urllib.request
+import json, re, ssl, sys, time, urllib.request
 from datetime import datetime, date, timedelta
 from pathlib import Path
 
@@ -119,46 +119,66 @@ def save_json(p, obj):
     Path(p).write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
-def http_get(url, timeout=25):
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+def http_get(url, timeout=40):
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Referer": "https://www.twse.com.tw/zh/",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+    })
     return urllib.request.urlopen(req, timeout=timeout, context=SSL_CTX).read()
 
 
 # ─────────────────────────── Fetchers ───────────────────────────
 
 def fetch_twse(day=None):
-    """證交所三大法人買賣超（含各標的明細）。週末/休市自動往前找最近交易日。回傳 {date, 外資總買賣超, etfs}"""
+    """證交所三大法人買賣超（含各標的明細）。週末/休市自動往前找最近交易日。回傳 {date, 外資總買賣超, etfs}
+
+    2026-11-07 修復（T86 抓取失敗＝radar 台股燈號 ⚪）：
+      · 單次失敗即整段放棄 → 改為「每個日期最多 2 次嘗試（含 /rwd/zh 端點備援）」，
+        只有連續多日全失敗才回報 error，並把失敗原因（HTTP/非 JSON 前 120 字）帶回。
+      · UA 加上 Referer／Accept；TWSE 對無 Referer 的請求會回 HTML 擋頁（json.loads 直接爆）。
+      · 遇到 stat != OK（休市/無資料）改 continue 下一日，不中斷整輪。
+    """
     cfg = load_json(BASE / "radar_config.json", DEFAULT_CONFIG)
     watch = set(cfg["twse"]["watch_etfs"])
+    errs = []
     for back in range(0, 6):
         d = (day or date.today()) - timedelta(days=back)
         if d.weekday() >= 5:  # 六日跳過
             continue
-        url = f"https://www.twse.com.tw/fund/T86?response=json&date={d:%Y%m%d}&selectType=ALL"
-        try:
-            data = json.loads(http_get(url).decode("utf-8"))
-            if data.get("stat") != "OK":
-                continue
-            etfs, etfs_all, total_foreign = {}, {}, 0
-            for r in data.get("data", []):
-                if len(r) < 12:
-                    continue
-                code = r[0].strip()
+        for tmpl in ("https://www.twse.com.tw/fund/T86?response=json&date={d}&selectType=ALL",
+                     "https://www.twse.com.tw/rwd/zh/fund/T86?response=json&date={d}&selectType=ALL"):
+            url = tmpl.format(d=f"{d:%Y%m%d}")
+            for attempt in range(2):
                 try:
-                    fnet = int(r[4].replace(",", ""))
-                except Exception:
+                    raw = http_get(url).decode("utf-8", "replace")
+                    data = json.loads(raw)
+                except Exception as e:
+                    errs.append(f"{d:%Y-%m-%d} {type(e).__name__}: {str(e)[:80]}")
+                    if attempt == 0:
+                        time.sleep(1.5)
                     continue
-                total_foreign += fnet
-                try:
-                    etfs_all[code] = {"name": r[1].strip(), "法人淨買賣超": int(r[11].replace(",", ""))}
-                except Exception:
-                    pass
-                if code in watch:
-                    etfs[code] = fnet
-            return {"date": f"{d:%Y-%m-%d}", "外資總買賣超": total_foreign, "etfs": etfs, "etfs_all": etfs_all}
-        except Exception as e:
-            return {"error": str(e)[:80], "date": f"{d:%Y-%m-%d}"}
-    return {"error": "近 6 日無交易資料", "date": f"{(day or date.today()):%Y-%m-%d}"}
+                if data.get("stat") != "OK":
+                    errs.append(f"{d:%Y-%m-%d} stat={data.get('stat')}")
+                    break
+                etfs, etfs_all, total_foreign = {}, {}, 0
+                for r in data.get("data", []):
+                    if len(r) < 12:
+                        continue
+                    code = r[0].strip()
+                    try:
+                        fnet = int(r[4].replace(",", ""))
+                    except Exception:
+                        continue
+                    total_foreign += fnet
+                    try:
+                        etfs_all[code] = {"name": r[1].strip(), "法人淨買賣超": int(r[11].replace(",", ""))}
+                    except Exception:
+                        pass
+                    if code in watch:
+                        etfs[code] = fnet
+                return {"date": f"{d:%Y-%m-%d}", "外資總買賣超": total_foreign, "etfs": etfs, "etfs_all": etfs_all}
+    return {"error": "；".join(errs[-4:]) or "近 6 日無交易資料", "date": f"{(day or date.today()):%Y-%m-%d}"}
 
 
 def fetch_cftc():
