@@ -217,6 +217,14 @@ def build() -> Path:
     plan_ban = "".join(f"<li>{x}</li>" for x in rules.get("建倉") or [])
     exit_li = "".join(f"<li>{x}</li>" for x in rules.get("退場") or [])
     ban_li2 = "".join(f"<li>{x}</li>" for x in rules.get("禁止") or [])
+    wave = ob.get("波段計畫_v1_20261108") or {}
+    wave_rows = "".join(
+        f"<div class='kv'><span>{p.get('ticker','')} {p.get('名稱','')}｜{int(p.get('股數') or 0):,} 股 @ 進場 {float(p.get('進場參考價') or 0):.2f}</span>"
+        f"<b>目標 {float(p.get('目標價') or 0):.2f}（{float(p.get('目標報酬_pct') or 0):+.2f}%）／停損 {float(p.get('停損價') or 0):.2f}／期限 {p.get('期限','')}</b></div>"
+        for p in wave.get("部位") or []
+    )
+    wave_block = wave_rows + "<ul>" + "".join(f"<li>{x}</li>" for x in wave.get("規則") or []) + "</ul>" + f"<div class='sub'>{wave.get('建立','')}</div>"
+    cap_li = "".join(f"<li>{x}</li>" for x in ((rules.get('證券市值上限') or {}).get('規則') or []))
     seg_rows = "".join(f"<tr><td><b>{k}</b></td><td>{v}</td></tr>" for k, v in (rules.get("分段釋放") or {}).items())
     _post = float((plan.get("前提") or {}).get("已下單後台股桶") or 0) + sum(
         float(b.get("估計金額") or 0) for b in plan.get("批次") or [])
@@ -333,23 +341,32 @@ th{{color:#93a3bb;font-weight:600;font-size:11px;background:#0f1a2b}}
   <ul>{watch_li}</ul>
 </div>
 
-<h2>五、建倉計畫（{plan.get('版本','')}｜兩段釋放）</h2>
+<h2>五、建倉計畫（{plan.get('版本','')}｜三段釋放）</h2>
 <div class="card">
   <div class="kv"><span>建倉池（現金 {wan(cash)} − 生存底線 {wan(LIFE_FLOOR)}）</span><b>{wan((plan.get('前提') or {}).get('建倉池') or 0)}</b></div>
   <div class="kv"><span>第一段授權（B1–B5，可即刻）</span><b>{wan((plan.get('前提') or {}).get('第一段授權') or 0)}</b></div>
   <div class="kv"><span>第二段授權（B6–B10，需 gate 條件）</span><b>{wan((plan.get('前提') or {}).get('第二段授權') or 0)}</b></div>
-  <div class="kv"><span>兩段合計／保留緩衝</span><b>{wan((plan.get('前提') or {}).get('兩段合計') or 0)}／{wan((plan.get('前提') or {}).get('保留緩衝') or 0)}</b></div>
+  <div class="kv"><span>第三段授權（E1–E2 市值型 2 張，護盤受惠）</span><b>{wan((plan.get('前提') or {}).get('第三段授權') or 0)}</b></div>
+  <div class="kv"><span>三段合計／保留緩衝</span><b>{wan((plan.get('前提') or {}).get('三段合計') or 0)}／{wan((plan.get('前提') or {}).get('保留緩衝') or 0)}</b></div>
+  <div class="kv"><span>證券市值上限（硬上限／減碼線）</span><b>{wan(((rules.get('證券市值上限') or {}).get('上限') or 0))}／{wan(((rules.get('證券市值上限') or {}).get('減碼線') or 0))}</b></div>
+  <div class="kv"><span>證券現值 → 全執行後（餘裕）</span><b>{wan(((rules.get('證券市值上限') or {}).get('現值') or 0))} → {wan(((rules.get('證券市值上限') or {}).get('計畫全執行後') or 0))}（{wan(((rules.get('證券市值上限') or {}).get('距上限餘裕') or 0))}）</b></div>
   <div class="kv"><span>全數執行後台股桶</span><b>{(plan.get('前提') or {}).get('全數執行後台股桶_pct', 0):.2f}%（上限 {TW_CAP_PCT:.0f}%）</b></div>
   <table>
     <tr><th>批次</th><th>標的</th><th class="n">估金額</th><th>觸發條件</th></tr>
     {''.join(plan_rows)}
   </table>
+  <div class="sub" style="margin-top:8px"><b>證券市值上限（股票市場不得超過 300 萬）</b></div>
+  <ul>{cap_li}</ul>
   <div class="sub" style="margin-top:8px"><b>建倉紀律</b></div>
   <ul>{plan_ban}</ul>
 </div>
 <div class="card ok">
   <div class="sub"><b>分段釋放條件</b></div>
   <table><tr><th>段</th><th>條件</th></tr>{seg_rows}</table>
+</div>
+<div class="card">
+  <div class="sub"><b>波段部位（獨立於配置，到價就出）</b></div>
+  {wave_block}
 </div>
 <div class="card warn">
   <div class="sub"><b>退場規則（四類，先寫清楚才不會臨場亂賣）</b></div>

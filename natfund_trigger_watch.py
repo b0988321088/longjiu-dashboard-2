@@ -99,6 +99,12 @@ def evaluate(snap: dict, cfg: dict, state: dict, idx: dict, dry: bool):
         tag = b.get("批次")
         if not tag or tag in fired:
             continue
+        sec_cap = float(((snap.get("opportunity_bullet_20261107") or {}).get("建倉規則_v1_20261108") or {}).get("證券市值上限", {}).get("上限") or 0)
+        sec_val = float((snap.get("securities") or {}).get("total_market_value") or 0)
+        if sec_cap and sec_val + float(b.get("估計合計") or 0) > sec_cap:
+            if dry:
+                print(f"[dry] {tag} 跳過：證券 {sec_val:,.0f} + 本批 {float(b.get('估計合計') or 0):,.0f} > 上限 {sec_cap:,.0f}")
+            continue
         gates = b.get("gates") or {}
         if gates:
             after = str(gates.get("after") or "")
@@ -120,6 +126,79 @@ def evaluate(snap: dict, cfg: dict, state: dict, idx: dict, dry: bool):
     if dry:
         print(f"[dry] {idx['last_date']} close={close:,.0f} tw_pct={tw_pct:.2f}% cash={cash:,.0f} fired={sorted(fired)}")
     return out
+
+
+def last_price(sym: str) -> float | None:
+    """Yahoo 單檔最後收盤（台股加 .TW）。抓不到回 None（不阻擋買入提醒）。"""
+    try:
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?interval=1d&range=5d"
+        d = json.loads(_get(url))
+        closes = [c for c in d["chart"]["result"][0]["indicators"]["quote"][0]["close"] if c]
+        return float(closes[-1]) if closes else None
+    except Exception:
+        return None
+
+
+def exits(snap: dict, state: dict, dry: bool):
+    """波段部位出場：目標價／停損價／期限，三者任一成立就推播。"""
+    ob = snap.get("opportunity_bullet_20261107") or {}
+    plan = ob.get("波段計畫_v1_20261108") or {}
+    fired = state.setdefault("exit_fired", {})
+    today = dt.date.today().isoformat()
+    out = []
+    for p in plan.get("部位") or []:
+        tag = str(p.get("ticker") or "")
+        if not tag or fired.get(tag):
+            continue
+        q = last_price(f"{tag}.TW")
+        if q is None:
+            if dry:
+                print(f"[dry] {tag} 取價失敗 → 本期不判斷出場")
+            continue
+        target, stop, due = float(p.get("目標價") or 0), float(p.get("停損價") or 0), str(p.get("期限") or "")
+        hit = None
+        if target and q >= target:
+            hit = f"🎯 到價 {q:.2f} ≥ 目標 {target:.2f}"
+        elif stop and q <= stop:
+            hit = f"🛑 破停損 {q:.2f} ≤ {stop:.2f}"
+        elif due and today > due:
+            hit = f"⏰ 期限 {due} 已到（現價 {q:.2f}）"
+        if hit:
+            shares = int(p.get("股數") or 0)
+            gross = q * shares
+            fee = max(20, round(gross * 0.001425))
+            tax = round(gross * 0.001)
+            net = round(gross - fee - tax)
+            cost = int(p.get("進場成本") or 0)
+            out.append(
+                f"🔔 波段出場：{tag} {p.get('名稱','')}\n"
+                f"{hit}\n"
+                f"賣出 {shares:,} 股 @ {q:.2f} → 估淨額 {net:,}（手續費 {fee:,}＋證交稅 {tax:,}）\n"
+                f"估算損益 {net - cost:+,}｜進場成本 {cost:,}\n"
+                f"賣出後回我成交價，我入帳並回補現金池（不自動轉買）。"
+            )
+            if not dry:
+                fired[tag] = today
+    return out
+
+
+def trim_watch(snap: dict, state: dict, dry: bool):
+    """證券市值達減碼線 → 推播減碼建議（冪等）。"""
+    rules = ((snap.get("opportunity_bullet_20261107") or {}).get("建倉規則_v1_20261108") or {}).get("證券市值上限") or {}
+    cap, trim, target = float(rules.get("上限") or 0), float(rules.get("減碼線") or 0), float(rules.get("減碼後目標") or 0)
+    sec = float((snap.get("securities") or {}).get("total_market_value") or 0)
+    if not (cap and trim) or sec < trim:
+        return []
+    key = f"trim_{dt.date.today().isoformat()}"
+    if state.setdefault("trim_fired", {}).get(key):
+        return []
+    if not dry:
+        state["trim_fired"][key] = True
+    need = round(sec - target)
+    return [f"⚠️ 證券市值 {sec:,.0f} ≥ 減碼線 {trim:,.0f}\n"
+            f"減碼至 {target:,.0f}：需賣約 {need:,}\n"
+            f"優先序：00713／0056／00918／00984A（無護盤關聯且有獲利）→ 其次部分減 006208／0050\n"
+            f"賣出後資金回現金池，不自動轉買；成交後回我價位，我入帳。"]
 
 
 def main(argv) -> int:
@@ -146,14 +225,16 @@ def main(argv) -> int:
         return 0
 
     trig = evaluate(snap, cfg, state, idx, dry)
-    if not trig:
+    exit_msgs = exits(snap, state, dry)
+    trim_msgs = trim_watch(snap, state, dry)
+    if not trig and not exit_msgs and not trim_msgs:
         if not dry:
             state.update({"last_run": dt.datetime.now().isoformat(timespec="seconds"), "last_index": idx["last_close"]})
             STATE.parent.mkdir(parents=True, exist_ok=True)
             STATE.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
         return 0
 
-    msgs = []
+    msgs = list(exit_msgs) + list(trim_msgs)
     for tag, b, why in trig:
         msgs.append(build_message(b, idx, why, cfg))
         state.setdefault("fired", {})[tag] = today
