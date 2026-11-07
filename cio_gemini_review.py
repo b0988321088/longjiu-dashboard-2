@@ -217,6 +217,11 @@ def main() -> int:
     print(f"📏 diff {len(diff):,} 字元｜真值背景已載入")
     rev, model, raw = call_gemini(build_prompt(shas, stat_all, diff), chain, cfg, args.timeout)
 
+    if isinstance(rev, list):
+        rev = rev[0] if rev and isinstance(rev[0], dict) else {}
+    if not isinstance(rev, dict):
+        print("❌ 審查回應非 JSON 物件 → fail-closed（不落紀錄）")
+        return 2
     rev["reviewer_model"] = model
     rev["commits"] = shas
     rev["tree"] = git("rev-parse", "HEAD^{tree}").strip()[:12]
