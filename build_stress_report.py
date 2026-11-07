@@ -425,6 +425,28 @@ def build():
         for f in _lock_first)
     _lock_imp_html = "".join(f"<li>{x}</li>" for x in _lock_imp)
     _lock_risk_html = "".join(f"<li>{x}</li>" for x in _lock_risk)
+    # ── 機會子彈：本批下單紀錄（使用者 2026-11-07 下令，週一 11/09 執行）──
+    _ord = ob.get("執行紀錄_20261109") or {}
+    _ord_rows = "".join(
+        f"<tr><td>{o.get('ticker','')}</td><td>{o.get('name','')}</td>"
+        f"<td class='n'>{(o.get('股數') or 0):,}</td><td class='n'>{_num(o.get('參考價')):,.2f}</td>"
+        f"<td class='n'>{_num(o.get('估計金額')):,.0f}</td><td class='n'>{_num(o.get('手續費')):,.0f}</td>"
+        f"<td class='n'>{_num(o.get('估計合計')):,.0f}</td></tr>"
+        for o in (_ord.get("標的") or []))
+    _ord_block = ""
+    if _ord:
+        _ord_block = (
+            "<div class='card'>"
+            + f"<div class='sub' style='margin:0 0 6px'><b>{_ord.get('狀態', '')}</b>｜{_ord.get('依據', '')}</div>"
+            + "<table><tr><th>代號</th><th>名稱</th><th class='n'>股數</th><th class='n'>參考價</th>"
+              "<th class='n'>金額</th><th class='n'>手續費</th><th class='n'>估計合計</th></tr>"
+            + _ord_rows
+            + f"<tr><td colspan='6'><b>合計</b></td><td class='n'><b>{_num(_ord.get('估計合計')):,.0f}</b></td></tr></table>"
+            + f"<div class='sub' style='margin:8px 0 0'>下單後可動用 {_num(_ord.get('下單後可動用現金')):,.0f}（底線 {_num(_ord.get('生活底線')):,.0f}｜餘裕 {_num(_ord.get('餘裕')):,.0f}）｜{_ord.get('偏離說明', '')}</div>"
+            + f"<div class='sub' style='margin:6px 0 0'>⚠️ {_ord.get('價格提醒', '')}</div>"
+            + f"<div class='sub' style='margin:6px 0 0'>未納入本批：{_ord.get('未納入本批', '')}</div>"
+            + "</div>\n"
+        )
     _snap_gen = str(snap.get("generated_at") or "")[:16].replace("T", " ")
     pen_targets = pen.get("targets") or {}
 
@@ -546,7 +568,8 @@ a{{color:#34d399}}
 <div class="sub" style="margin:8px 0 0">本段與日報第八章同一批真值（snapshot 產生 {_snap_gen or '—'}）；數字全部現算，未人工填寫。</div>
 </div>
 
-<h2>八、機會子彈（大盤回檔 {abs(_ob_thr):.0f}% 啟動｜週一 11/09 指定標的計畫）</h2>
+<h2>八、機會子彈（大盤回檔 {abs(_ob_thr):.0f}% 啟動｜{_ord.get('狀態', '計畫')}）</h2>
+{_ord_block}
 <div class="card">
 <ul>
 <li><b>規則</b>：保留生活底線 <b>{fmt(floor)}</b>；乾粉 <b>{fmt(_ob_ammo)}</b> 在大盤自波段高點回檔 <b>≥{abs(_ob_thr):.0f}%</b> 時啟動；<b>本輪鎖定 5 檔</b>：2330 台積電／0050／00878／00919／0056</li>
