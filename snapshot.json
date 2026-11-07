@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-07T01:19:09.593286",
+ "generated_at": "2026-11-07T07:00:17.812072",
  "version": "v5.0.10-true-value-correction",
  "date": "2026-11-07",
  "total_assets": 26326300,
@@ -3733,13 +3733,13 @@
   "created": "2026-08-23"
  },
  "net_worth_weekly_breakdown": {
-  "period": "2026-10-30 → 2026-11-06",
-  "net_worth_change": -339980.0,
-  "market": -329530,
-  "transaction": -10450.0,
+  "period": "2026-10-31 → 2026-11-07",
+  "net_worth_change": -579825.0,
+  "market": -622038,
+  "transaction": 42213.0,
   "cost_of_capital": 0,
-  "judgment": "淨值 -339,980：市場性 -329,530（證券 -216,900為主）+ 帳務/交易性 -10,450（現金 -11,160、負債 710）；DB 真值自動拆解，成本 0（無利息扣款日曆），週五深度審查覆核細分",
-  "note": "2026-11-06 自動更新（DB 真值）；週五深度審查覆核"
+  "judgment": "淨值 -579,825：市場性 -622,038（證券 -259,620為主）+ 帳務/交易性 42,213（現金 35,352、負債 6,861）；DB 真值自動拆解，成本 0（無利息扣款日曆），週五深度審查覆核細分",
+  "note": "2026-11-07 自動更新（DB 真值）；週五深度審查覆核"
  },
  "insurance_conversion_0824": {
   "定案": "2026-08-24 調整核准（不追高黃金/健康）",
@@ -5901,17 +5901,17 @@
   }
  },
  "coast_fi_engine": {
-  "asof": "2026-11-06",
+  "asof": "2026-11-07",
   "current": {
    "growth_assets": {
-    "tw_growth": 2664930.0,
+    "tw_growth": 2686130.0,
     "us_growth": 9835943.0,
     "re_value": 34017063.0,
     "mortgage": 25005344.0,
     "re_net": 9011719.0,
     "fin_debt": 0.0,
-    "total": 21512592.0,
-    "net_after_fin_debt": 21512592.0
+    "total": 21533792.0,
+    "net_after_fin_debt": 21533792.0
    },
    "coast": {
     "fi_target_swr": 47763000.0,
@@ -5919,21 +5919,21 @@
     "years_to_target": 0.24,
     "target_date": "2027-02-01",
     "real_return_pct": 5.0,
-    "fin_only_capital": 12500873.0,
+    "fin_only_capital": 12522073.0,
     "coast_threshold_swr": 47206974.27696794,
     "coast_fi_ratio_swr_pct": 45.6,
     "coast_fi_ratio_fin_only_swr_pct": 26.5,
-    "coast_gap_fin_only_swr": 34706101.27696794,
-    "fv_no_contrib_swr": 21765977.32503511,
-    "gap_fv_swr": 25997022.67496489,
-    "monthly_needed_swr": 8629667.3375441,
+    "coast_gap_fin_only_swr": 34684901.27696794,
+    "fv_no_contrib_swr": 21787427.028506026,
+    "gap_fv_swr": 25975572.971493974,
+    "monthly_needed_swr": 8622547.145060627,
     "coast_threshold_yield": 37765579.421574354,
     "coast_fi_ratio_yield_pct": 57.0,
-    "coast_fi_ratio_fin_only_yield_pct": 33.1,
-    "coast_gap_fin_only_yield": 25264706.421574354,
-    "fv_no_contrib_yield": 21765977.32503511,
-    "gap_fv_yield": 16444422.67496489,
-    "monthly_needed_yield": 5458698.060050284
+    "coast_fi_ratio_fin_only_yield_pct": 33.2,
+    "coast_gap_fin_only_yield": 25243506.421574354,
+    "fv_no_contrib_yield": 21787427.028506026,
+    "gap_fv_yield": 16422972.971493974,
+    "monthly_needed_yield": 5451577.867566811
    },
    "light_work": {
     "rows": [
@@ -5941,25 +5941,25 @@
       "月收": 0.0,
       "所需年現金流": 1910520,
       "所需本金": 38210400,
-      "缺口": 25709527,
-      "達成_pct": 32.7
+      "缺口": 25688327,
+      "達成_pct": 32.8
      },
      {
       "月收": 20000.0,
       "所需年現金流": 1670520,
       "所需本金": 33410400,
-      "缺口": 20909527,
-      "達成_pct": 37.4
+      "缺口": 20888327,
+      "達成_pct": 37.5
      },
      {
       "月收": 30000.0,
       "所需年現金流": 1550520,
       "所需本金": 31010400,
-      "缺口": 18509527,
-      "達成_pct": 40.3
+      "缺口": 18488327,
+      "達成_pct": 40.4
      }
     ],
-    "fin_capital": 12500873.0,
+    "fin_capital": 12522073.0,
     "yield_pct": 5.0,
     "expense": 159210.0
    },
@@ -5985,15 +5985,15 @@
     "gap": 32110.0,
     "vacancy": 33000.0,
     "scenario": "extreme",
-    "cash_full": 1176929.0,
+    "cash_full": 1155799.0,
     "reserve": 0.0,
     "floor": 700000.0,
-    "cash_used": 1176929.0,
+    "cash_used": 1155799.0,
     "cash_below_floor": false,
-    "runway_days": 1100,
+    "runway_days": 1080,
     "cash_caliber": "net_of_reserve",
-    "runway_days_full_cash": 1100,
-    "runway_days_net_reserve": 1100
+    "runway_days_full_cash": 1080,
+    "runway_days_net_reserve": 1080
    },
    "stress": {
     "pool": 11771816.0,
@@ -6252,6 +6252,16 @@
     "maintenance_pct": 139.7,
     "credit_locked": false,
     "light_work_cap_2w": 20909527
+   },
+   "2026-11-07": {
+    "light": "🔴 紅燈",
+    "coast_fin_only_pct": 26.5,
+    "coast_with_re_pct": 45.6,
+    "pccr_pct": 139.3,
+    "runway_days": 1080,
+    "maintenance_pct": 139.7,
+    "credit_locked": false,
+    "light_work_cap_2w": 20888327
    }
   }
  },
@@ -7632,7 +7642,8 @@
     "美股 37.4% 已超上限 33%（減碼窗口在反彈，不是加碼）",
     "科技 14.5% 逼近硬上限 15%",
     "美元曝險 64.1% 逼近門檻 65%",
-    "現金厚度目標 2,500,000 未達，加碼須保留預備款 900,000＋生活底線 700,000"
+    "現金厚度目標 2,500,000 未達，加碼須保留預備款 900,000＋生活底線 700,000",
+    "★ 解除凍結 ≠ 投資授權：00713 為 👀 觀察中（不下單）；使用者 2026-11-07 明示「11 月仍維持不新增投資」"
    ],
    "source": "使用者 2026-11-07 Telegram"
   }
@@ -7873,5 +7884,13 @@
    "12/05 女友結清約 280,000 入帳後的可動用現金實況"
   ]
  },
- "cash_alias_note_20261107": "2026-11-07 華航交割款 21,130 採保守口徑提前自現金扣除（T+2 於 11/10 實際扣款）。cash／real_liquid_assets／bank_assets_moneybook 一律等於 cash_layers.cash_total=2,055,799；11/10 對帳時 MB 會顯示少 21,130，屬時間差非差異。"
+ "cash_alias_note_20261107": "2026-11-07 華航交割款 21,130 採保守口徑提前自現金扣除（T+2 於 11/10 實際扣款）。cash／real_liquid_assets／bank_assets_moneybook 一律等於 cash_layers.cash_total=2,055,799；11/10 對帳時 MB 會顯示少 21,130，屬時間差非差異。",
+ "nov2026_investment_stance": {
+  "asof": "2026-11-07",
+  "結論": "11 月不新增投資（凍結令雖解除，但不構成投資授權）",
+  "依據": "使用者 2026-11-07：『這是狀態管理調整，不是投資授權。11 月仍維持不新增投資』",
+  "例外": "已發生事實：華航 2610 1,000 股（11/06 買進，已入帳）",
+  "待執行": "00713 分批計畫維持 👀 觀察中（snapshot.rebalance_plan_20261107）",
+  "source": "使用者 2026-11-07 Telegram"
+ }
 }

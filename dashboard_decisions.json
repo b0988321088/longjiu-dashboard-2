@@ -12157,8 +12157,82 @@
       "source": "auto"
     }
   ],
-  "pending_decisions": [],
+  "pending_decisions": [
+    {
+      "date": "2026-09-14",
+      "action": "避險衛星加碼：保單轉換黃金A10＋健康A10（分批，單次≤20萬）",
+      "status": "關案",
+      "tags": "避險衛星,黃金,健康,保單轉換,分批"
+    },
+    {
+      "date": "2026-09-22",
+      "action": "00921 暫停投入（第1批未成交）— 待重新定案",
+      "status": "已確認",
+      "tags": "台股,00921,暫停,乾粉"
+    },
+    {
+      "date": "2026-10-01",
+      "action": "🏠 洲際W 轉貸延至 11 月再處理",
+      "status": "已確認",
+      "tags": "轉貸,洲際W,永豐,國泰"
+    },
+    {
+      "date": "2026-10-06",
+      "action": "資安 remediation：repo 五步（public→private／HEAD 淨化／filter-repo／force-with-lease／Pages 驗 404）＋第 1 步已完成",
+      "status": "待處理",
+      "tags": "資安,SECURITY,憑證輪替,repo rewrite,Pages,Active-Repair,HIGH,狀態失真"
+    },
+    {
+      "date": "2026-10-09",
+      "action": "台新帳號 002***75 是否為 Moneybook 納管帳戶（週報事件鏈資金路徑對帳殘項）",
+      "status": "待處理",
+      "tags": "對帳,台新,納管帳戶,event-chain,週報"
+    },
+    {
+      "date": "2026-10-14",
+      "action": "台股解凍後分批規則定版（節奏／單次上限／停止條件）",
+      "status": "已確認",
+      "tags": "台股,解凍,分批規則,US30Y,停止條件"
+    },
+    {
+      "date": "2026-10-16",
+      "action": "資安：HEAD 仍殘留金鑰樣式字串（2 份舊日報＋safe_read.py）",
+      "status": "待處理",
+      "tags": "資安,P0,金鑰輪替,歷史清除,Pages,TD-20261016-03"
+    },
+    {
+      "date": "2026-10-20",
+      "action": "程序違規紀錄：未授權先推送（47f41c73／635c618a）",
+      "status": "待處理",
+      "tags": "治理,程序,授權"
+    },
+    {
+      "date": "2026-10-20",
+      "action": "投資結構修正計畫 v1：配息吃本金／美股超標7.3pp",
+      "status": "已確認",
+      "tags": "投資,結構,配息,決策卡"
+    },
+    {
+      "date": "2026-11-02",
+      "action": "標案 11/11 投標準備（預備）：押標金 700,000 待命，未確定投標前不調度資金",
+      "status": "關案",
+      "tags": "標案,押標金,投資凍結,現金流,質押,股票質押,保單質押,現金厚度"
+    },
+    {
+      "date": "2026-11-06",
+      "action": "資安：Pages 仍可直下 snapshot.json（真值公開面）",
+      "status": "待處理",
+      "tags": "資安,P0,Pages,allowlist,snapshot"
+    },
+    {
+      "date": "2026-11-06",
+      "action": "治理：推送閘門 v5 不允許非 clean-main 分支（archive-* 需白名單）",
+      "status": "待處理",
+      "tags": "治理,閘門,git,archive,push-gate"
+    }
+  ],
   "meta": {
-    "updated_at": "2026-11-07T01:19:08.990961"
-  }
+    "updated_at": "2026-11-07T07:00:03+08:00"
+  },
+  "last_updated": "2026-11-07T07:00:03+08:00"
 }
