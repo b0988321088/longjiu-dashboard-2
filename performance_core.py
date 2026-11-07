@@ -166,10 +166,22 @@ def latest_asof(snap: dict, db=None, *, ym: str | None = None) -> dict:
         src["db 資產列"] = db_last
     if not src:
         return {"asof": None, "by_source": {}, "db_last": db_last, "warnings": ["無任何來源日期"]}
-    asof = min(src.values())
+    # 2026-11-07 修復（使用者：11 月績效應為負，月報卻顯示 −24,423）：
+    #   原 asof = min(所有來源) → 被「現金／銀行（Moneybook）」的匯入日 11-01 拖住，
+    #   投資績效視窗只算到 11/01（1 天），11/02–11/06 的急跌完全沒進月報。
+    #   現金不在績效公式內（薪資/租金/消費一律排除）→ 不得當作績效視窗的上限。
+    #   改：①只看投資三類（證券／保單／基金）的來源日 ②若 db 最新列不早於投資來源，
+    #   以 db 為 asof（db 每日由 snapshot 重建，是唯一的逐日估值序列）。
+    _INV_KW = ("證券", "保單", "基金")
+    inv = {k: v for k, v in src.items() if any(w in k for w in _INV_KW)}
+    asof_inv = min(inv.values()) if inv else None
     newest = max(src.values())
+    if db_last and (asof_inv is None or db_last >= asof_inv):
+        asof = db_last
+    else:
+        asof = asof_inv or newest
     warnings = [f"{k} 落後（{v}）" for k, v in src.items() if v < newest]
-    return {"asof": asof, "newest": newest, "by_source": src,
+    return {"asof": asof, "newest": newest, "by_source": src, "asof_inv": asof_inv,
             "db_last": db_last, "warnings": warnings}
 
 
