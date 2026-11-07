@@ -1,3 +1,5 @@
+> ⛔ **本節已過期**（最後更新 2026-10-13，落後超過 7 天）：除各列另有標註資料日者外，**不得作為當日依據**。
+
 # 🔄 龍九再平衡評估（2026-11-07）
 
 > 資料（全源並陳）：snapshot.json（資料日 2026-10-13）＋ radar_state.json ＋ macro_regime_2026-10-13.json ＋ rotation_recommendation（snapshot 內）＋ data/emergency_llm_analysis.json ＋ pending_decisions.json ＋ us30y_state.json

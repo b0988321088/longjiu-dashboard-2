@@ -118,14 +118,20 @@ def cash_caliber(s):
     }
 
 
-def _rebalance_integration_block(s) -> str:
+def _rebalance_integration_block(s, _today: str | None = None) -> str:
     """全源整合區塊（單一真值＝data/rebalance_integration.md）— 2026-10-13 TD-20261013-13 根因修復。
 
     原缺陷：build_summary_md 每次重跑只寫出 basic 資料宣告 → 把上一次已審查的
     「零、📊 全源整合對照（防偏頗）」整節洗掉（已核准正典倒退 → 真 CIO REJECT、發布 fail-closed）。
     修法：本區塊改由來源檔提供並原樣插入。本函式**不重算、不硬編任何數字**；
     來源檔變更＝實質內容變更 → 須經真 CIO 審查。缺漏／讀取失敗 → 明示從缺（不假裝已整合）。
+
+    2026-11-07（新鮮度分級）：舊版只在「資料日 ≠ 今日」時於**節末**補一句，讀者先看到
+    表格才看到警語，等於沒警示（實證：10-13 版連續 25 天被當成當日分析）。改為
+    ①落後 ≤1 天：不警示（正常）②2–7 天：🟡 ③>7 天：⛔ 紅字，
+    且警語一律置於**節首**。只改顯示層，不動來源檔內容與資料日。
     """
+    _day = _today or TODAY
     _fallback = (f"> 資料：snapshot.json（資料日期 {s.get('date','—')}）+ radar_state.json "
                  "+ data/emergency_llm_analysis.json")
     try:
@@ -137,9 +143,22 @@ def _rebalance_integration_block(s) -> str:
         _t = re.sub(r"<!--.*?-->", "", _t, flags=re.S).strip()   # 來源檔的說明註解不得外洩到產出
         _m = re.search(r"資料日\s*(\d{4}-\d{2}-\d{2})", _t)
         _asof = _m.group(1) if _m else None
-        if _asof and _asof != TODAY:
-            _t += (f"\n\n> ⚠️ 本節為 {_asof} 版（尚未更新至 {TODAY}）→ 僅供參考，"
-                   "**不得視為當日裁定**。")
+        if _asof:
+            try:
+                _lag = (date.fromisoformat(_day) - date.fromisoformat(_asof)).days
+            except Exception:  # noqa: BLE001
+                _lag = None
+            if _lag is not None and _lag > 1:
+                if _lag > 7:
+                    # 2026-11-07（CIO 審查 blocking 修正）：警語文字不得含「今日／落後 N 天」等
+                    # 會隨時間過期的動態值 —— 正典 .md 受保護不自動重寫，一旦程式版帶天數、
+                    # 正典版不帶，同一份報告就會出現兩種警語（CIO 實測抓到並 REJECT）。
+                    # 統一為不含天數的穩定句，兩邊永遠一致。
+                    _warn = (f"> ⛔ **本節已過期**（最後更新 {_asof}，落後超過 7 天）："
+                             "除各列另有標註資料日者外，**不得作為當日依據**。\n\n")
+                else:
+                    _warn = f"> 🟡 本節為 {_asof} 版（非當日裁定）。\n\n"
+                _t = _warn + _t
         return _t
     except Exception as _e:  # noqa: BLE001
         return (f"> ⛔ 全源整合區塊讀取失敗（{_e}）→ 本節從缺，**不得視為已整合**。")
