@@ -31,7 +31,57 @@ REPO = Path(__file__).resolve().parent
 DEC_FILE = REPO / "dashboard_decisions.json"
 RECEIPT_FILE = REPO / "data" / "decision_intake_receipts.jsonl"
 TPE = timezone(timedelta(hours=8))
-MARKER = b'  ],\r\n  "meta"'  # decisions 陣列收尾（後接 "meta" 鍵）
+MARKER = b'  ],\r\n  "meta"'  # 舊版定位標記（已停用，見 _decisions_array_bounds）
+
+
+def _decisions_array_bounds(raw: bytes):
+    """回傳 decisions 陣列的（最後元素結尾 index, 收尾行 index）。
+
+    2026-11-09 修（閉環入庫實踩）：舊版用固定 `MARKER = '  ],\\r\\n  "meta"'` 定位陣列尾，
+    但頂層鍵序是 decisions → pending_decisions → meta，該標記**命中的是 pending_decisions
+    的收尾** → 新筆被插進 pending_decisions、decisions 筆數不變 → 三重驗證擋下，
+    工具永遠回「decisions 筆數未 +1 → 中止」，dashboard_decisions.json 從此寫不進去
+    （CIO 唯一讀取面＝此檔，等於裁決入庫斷鏈）。
+    改為真解析：找到 "decisions" 的 `[`，做括號配對（跳過字串／轉義）取真正的收尾位置。
+    """
+    key = raw.find(b'"decisions"')
+    if key < 0:
+        raise ValueError('找不到 "decisions" 鍵')
+    start = raw.find(b"[", key)
+    if start < 0:
+        raise ValueError('decisions 後找不到 [')
+    depth = 0
+    in_str = False
+    esc = False
+    i = start
+    while i < len(raw):
+        c = raw[i:i + 1]
+        if in_str:
+            if esc:
+                esc = False
+            elif c == b"\\":
+                esc = True
+            elif c == b'"':
+                in_str = False
+        else:
+            if c == b'"':
+                in_str = True
+            elif c == b"[":
+                depth += 1
+            elif c == b"]":
+                depth -= 1
+                if depth == 0:
+                    break
+        i += 1
+    else:
+        raise ValueError("decisions 陣列未閉合")
+    close = i                                  # ']' 的位置
+    line_start = raw.rfind(b"\n", 0, close) + 1  # 收尾行（含縮排）
+    j = close - 1
+    while j > 0 and raw[j:j + 1] in (b" ", b"\t", b"\r", b"\n"):
+        j -= 1
+    return j, line_start
+
 
 
 def _now():
@@ -61,11 +111,12 @@ def append_entry(entry, dry_run=False):
     """文字手術插入 decisions 陣列尾；回傳 (ok, msg)。"""
     raw = DEC_FILE.read_bytes()
     before = json.loads(raw.decode("utf-8"))
-    if raw.count(MARKER) != 1:
-        return False, f"decisions 收尾標記命中 {raw.count(MARKER)} 處（預期 1）→ 中止，未寫入"
-    i = raw.index(MARKER)
+    try:
+        j_end, i_close_line = _decisions_array_bounds(raw)
+    except ValueError as e:
+        return False, f"{e} → 中止，未寫入"
     body = json.dumps(entry, ensure_ascii=False, indent=2).replace("\n", "\r\n  ")
-    new = raw[:i] + b"," + b"\r\n  " + body.encode("utf-8") + b"\r\n" + raw[i:]
+    new = raw[:j_end + 1] + b"," + b"\r\n  " + body.encode("utf-8") + b"\r\n" + raw[i_close_line:]
 
     # 三重驗證（寫入前）
     try:
