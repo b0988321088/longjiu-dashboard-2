@@ -82,9 +82,18 @@ def normalize_cards(items: list) -> list[str]:
     return fixes
 
 def norm_status(raw: str) -> str:
-    """原字串 → 狀態機旗標（只看開頭語境，避免敘事中出現「已達標」被誤判為完成）。"""
+    """原字串 → 狀態機旗標（只看開頭語境，避免敘事中出現「已達標」被誤判為完成）。
+
+    2026-11-08（INC-300）：原版「✅ 開頭 → 已完成」把 pending_reconcile 派生的
+    「✅ 條件已成立（…真值重算）」判成結案態 → 卡片留在 pending 佇列卻標已完成，
+    check_thresholds 每晚 FAIL、22:40 收工檢查連續多日紅。
+    修法：「條件已成立」先明確判為 已確認（條件成立 ≠ 決策結案、卡片仍須留在佇列），
+    其餘 ✅ 語意完全不變（避免影響既有「✅ 已實作／已入帳」類卡片）。
+    """
     s = str(raw or "").strip()
     head = s[:40]
+    if "條件已成立" in head:
+        return "已確認"
     if s.startswith("✅") or any(k in head for k in ("已完成", "已結清", "已入帳完成")):
         return "已完成"
     if any(k in head for k in ("關案", "作廢")):
