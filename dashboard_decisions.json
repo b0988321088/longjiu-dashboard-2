@@ -12165,24 +12165,6 @@
       "tags": "避險衛星,黃金,健康,保單轉換,分批"
     },
     {
-      "date": "2026-09-22",
-      "action": "00921 暫停投入（第1批未成交）— 待重新定案",
-      "status": "已確認",
-      "tags": "台股,00921,暫停,乾粉"
-    },
-    {
-      "date": "2026-10-01",
-      "action": "🏠 洲際W 轉貸延至 11 月再處理",
-      "status": "已確認",
-      "tags": "轉貸,洲際W,永豐,國泰"
-    },
-    {
-      "date": "2026-10-06",
-      "action": "資安 remediation：repo 五步（public→private／HEAD 淨化／filter-repo／force-with-lease／Pages 驗 404）＋第 1 步已完成",
-      "status": "待處理",
-      "tags": "資安,SECURITY,憑證輪替,repo rewrite,Pages,Active-Repair,HIGH,狀態失真"
-    },
-    {
       "date": "2026-10-09",
       "action": "台新帳號 002***75 是否為 Moneybook 納管帳戶（週報事件鏈資金路徑對帳殘項）",
       "status": "待處理",
@@ -12191,7 +12173,7 @@
     {
       "date": "2026-10-14",
       "action": "台股解凍後分批規則定版（節奏／單次上限／停止條件）",
-      "status": "已確認",
+      "status": "進行中",
       "tags": "台股,解凍,分批規則,US30Y,停止條件"
     },
     {
@@ -12232,7 +12214,7 @@
     }
   ],
   "meta": {
-    "updated_at": "2026-11-07T07:00:03+08:00"
+    "updated_at": "2026-11-08T07:00:38+08:00"
   },
-  "last_updated": "2026-11-07T07:00:03+08:00"
+  "last_updated": "2026-11-08T07:00:38+08:00"
 }
