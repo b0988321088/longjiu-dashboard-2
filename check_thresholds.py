@@ -397,6 +397,16 @@ def main() -> int:
                 errs.append(f"us30y_gate.as_of {_ug.get('as_of')} ≠ us30y_state.last_date {_st.get('last_date')}（未同源 → 解凍判定會踩舊讀值）")
             if _ug.get("value") != _st.get("last_rate"):
                 errs.append(f"us30y_gate.value {_ug.get('value')} ≠ us30y_state.last_rate {_st.get('last_rate')}")
+        # 2026-11-08（週報模組2）：rhythm08.indicators.us30y 曾停在 2026-09-10 的 5.361%
+        # 與閘門真值 5.251% 衝突（下游讀到過期煞車值）。現由 update_data 派生，此處斷言防再漂移。
+        _r8i = ((snap.get("rhythm08") or {}).get("indicators") or {})
+        if _ug and _ug.get("status") == "OK" and _r8i.get("us30y") is not None:
+            if (float(_r8i.get("us30y") or 0) != float(_ug.get("value") or 0)
+                    or str(_r8i.get("us30y_date") or "") != str(_ug.get("as_of") or "")):
+                errs.append(
+                    f"rhythm08.indicators.us30y {_r8i.get('us30y')}@{_r8i.get('us30y_date')} "
+                    f"≠ us30y_gate {_ug.get('value')}@{_ug.get('as_of')}"
+                    "（應由 update_data 派生，不得手改）")
         if _ug and _ug.get("status") != "OK" and _ug.get("unfreeze_allowed"):
             errs.append(f"US30Y 閘門 {_ug.get('status')} 卻許可解凍（應為 False）")
         # ── v1.2（2026-10-14 TD-20261015-02）：US30Y 由台股 hard veto 改宏觀風險警示 ──

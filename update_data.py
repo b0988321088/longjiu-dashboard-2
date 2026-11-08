@@ -105,6 +105,23 @@ def _sync_truth_blocks(snap: dict, write: bool = True) -> dict:
     changed = {k: (before.get(k), v) for k, v in blocks.items() if before.get(k) != v}
     for k, v in blocks.items():
         snap[k] = v
+
+    # 2026-11-08 修復（週報模組2 資料品質）：rhythm08.indicators.us30y 原為人工維護欄位，
+    # 實測停在 2026-09-10 的 5.361%，與 us30y_gate 真值 5.251% 衝突；institutional_flow.py
+    # 與 debt_restructure_tracker.py 讀到這格就等於用過期煞車值判斷（INC-187 同一病灶）。
+    # 修法＝由閘門派生，維持單一因果鏈：us30y_state → us30y_gate → rhythm08.indicators，
+    # 之後不得再手改此格（check_thresholds.py 有對應斷言防漂移）。
+    _g8 = blocks.get("us30y_gate") or {}
+    if _g8.get("status") == "OK" and _g8.get("value") is not None:
+        _r8 = snap.get("rhythm08")
+        if isinstance(_r8, dict):
+            _ind = _r8.setdefault("indicators", {})
+            _old8 = {"us30y": _ind.get("us30y"), "us30y_date": _ind.get("us30y_date")}
+            _new8 = {"us30y": _g8.get("value"), "us30y_date": _g8.get("as_of")}
+            if _old8 != _new8:
+                _ind.update(_new8)
+                changed["rhythm08.indicators"] = (_old8, _new8)
+
     if write and changed:
         _write_snap(snap)
     return changed

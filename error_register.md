@@ -1891,3 +1891,17 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 首次發生: 2026-11-07 01:19:54
 - 錯誤: 同義欄位不一致（asset_sync.py 抓到）
 - 狀態: ⏳ 待處理 (總計 1 次)
+
+## INC-299 ｜ 2026-11-08 ｜ P1｜fixed ｜ 週報兩項「資料品質問題」：一項誤報、一項真過期
+
+**現象（2026-11-08 週報「模組2 待優化」自述）**：
+1. 「台股法人 T86 連續缺值、sector_flow 空」→ **誤報**。實查 `fetch_twse()` 現場探測 ✅ 回 2026-11-06（外資 −2.0 億）、`radar_state.twse.外資連日` 3 筆、`sector_flow` 台股 19 桶非空。整條鏈正常，是週報憑印象下判斷，並據此在可信度扣了 −1 分（7/10）。
+2. 「Rhythm-08 的 US30Y 停在 2026-09-10 的 5.361%」→ **真的**。該格是人工維護欄位、兩個月無更新，`debt_restructure_tracker.py` 直接讀它當煞車值（INC-187 同病灶）。
+
+**修法**：
+1. `update_data.py`：`rhythm08.indicators.us30y/us30y_date` 改由 `us30y_gate` 派生（單一因果鏈 us30y_state→gate→rhythm08），不再人工維護；`check_thresholds.py` 加同源斷言（漂移即 FAIL）。
+2. 新增 `check_radar_evidence.py`（唯讀）：輸出 T86 最新交易日／外資連日筆數／是否達連續 3 日驗證、sector_flow 新鮮度與桶數，`--live` 可現場探測。經 `~/AppData/Local/hermes/scripts/radar_evidence.py` 薄殼掛進週報 cron（job 6a9babc90954）的 `script` 欄位 → 每週執行前自動注入證據，**沒有 ✅ 不得寫「抓取失敗」**。
+
+**驗收**：`update_data` 派生後 5.251%@2026-11-05 與閘門一致、重跑冪等（無 diff）｜`check_thresholds.py` rc=0、0 個 ❌｜`check_radar_evidence.py --live` ✅ 3/3 日、台股 19 桶｜週報 HTML 可信度 7/10→8/10（撤銷誤扣 −1，其餘數字未動，逐處標「2026-11-08 更正」）。
+
+**殘餘**：`us30y_state.json` 最新讀值為 11-05（11-06 交易日未取得），閘門 lag 3 天仍在容忍值內 → 列入觀察，未動線。
