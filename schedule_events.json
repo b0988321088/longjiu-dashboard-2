@@ -503,5 +503,23 @@
     "status": "📋 分割作業",
     "note": "分割作業期間不交易 006208；待分割完成、單位數與淨值校正後才恢復零股分批（B6–B10 原定 12/05 後執行）。",
     "importance": "high"
+  },
+  {
+    "date": "2026-11-30",
+    "item": "🔧 US30Y B 案 T-1 前置檢查",
+    "title": "🔧 US30Y B 案 T-1 前置檢查",
+    "amount": "—",
+    "status": "📋 前置檢查",
+    "note": "12/01 生效前一日核對：①python -c \"import us30y_policy as p; print(p.is_active('2026-12-01'))\" 應為 True ②us30y_monitor 於 12/01 import 時 RED_CONSECUTIVE_DAYS 應變 5（舊制 2）③掃仍含 5.20 的 15 支腳本，確認屬顯示層（走 us30y_policy.band_text）而非仍在判定 ④check_thresholds rc=0。⚠️ 禁止 merge 分支 hold/us30y-b-20261201：該分支落後 main，合併會刪掉 band_text／門檻文案等顯示層函式。",
+    "importance": "high"
+  },
+  {
+    "date": "2026-12-01",
+    "item": "⚙️ US30Y 閘門 B 案生效（5.20 只顯示、行動綁 5.30 連續 5 日）",
+    "title": "⚙️ US30Y 閘門 B 案生效（5.20 只顯示、行動綁 5.30 連續 5 日）",
+    "amount": "—",
+    "status": "⏳ 待確認（is_active 依日期自動 True，無需改程式）",
+    "note": "生效後：①5.20% 僅顯示，不凍結美股／債券 ②唯一行動門檻＝5.30% 且需連續 5 個交易日（舊制 2 日）③單日穿越 5.30 不再觸發。當日核對 monitor 文案是否切成「顯示用；行動門檻 ≥5.30 連續5日」、報告燈號文案同步；12/02 08:45 首次以新制執行，無輸出＝靜默正常（僅狀態變化才推播）。",
+    "importance": "high"
   }
 ]
