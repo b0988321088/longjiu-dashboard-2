@@ -9,6 +9,17 @@
 Token 路徑：~/AppData/Local/hermes/google_token.json
 """
 import os, sys
+
+# 2026-11-09：google.api_core 對 Python 3.11 的「未來停用預告」（3.11 EOL 2027-10-24）屬已知噪音，
+# 功能正常、rc 仍為 0。只抑制這一條，其他 stderr 照常顯示。
+# 根本解（執行環境升到 3.12+）列 backlog，等 Hermes 大版更新時一併處理。
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    message=r"You are using a Python version .*google\.api_core",
+    category=FutureWarning,
+    module=r"google\.api_core\..*",
+)
 from pathlib import Path
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials

@@ -1,6 +1,16 @@
 """Google Calendar 每日同步 — 純腳本版（0 Token）
 讀取 Company_Ledger.md 固定排程，寫入 Google Calendar"""
 
+# 2026-11-09：抑制 google.api_core 對 Python 3.11 的未來停用預告（3.11 EOL 2027-10-24），
+# 功能正常、屬已知噪音。只過濾這一條，其他 stderr 照常顯示。
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    message=r"You are using a Python version .*google\.api_core",
+    category=FutureWarning,
+    module=r"google\.api_core\..*",
+)
+
 import json, os, re
 from datetime import date, datetime, timedelta
 from pathlib import Path
