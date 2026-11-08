@@ -671,8 +671,9 @@ def _cleanup_unreferenced_py_scripts(apply_changes: bool):
         logger.info(f"G. 報告已寫入 .archive/orphan_py_report_{stamp}.txt")
     logger.info(f"G. 零引用 {len(orphans)} 支：" + (', '.join(orphans[:12]) + ('…' if len(orphans) > 12 else '') if orphans else '無'))
     logger.info(f"G. 僅 1 次引用 {len(weak)} 支：" + (', '.join(weak[:12]) + ('…' if len(weak) > 12 else '') if weak else '無'))
-    # 回傳 0：本函式不刪任何檔案，維持「cleaned」語意誠實
-    return 0
+    # 2026-11-09：改回傳「被報告的零引用支數」（本函式唯讀、仍不刪任何檔案）。
+    # 舊版固定 return 0 讓統計行永遠顯示 0 支，與同一次 log 的「零引用 19 支」互相矛盾。
+    return len(orphans)
 
 def _cleanup_temp_and_cache_files(apply_changes: bool, keep_review: int = 3, cache_days: int = 14):
     """H. 臨時/快取清理（2026-10-10 實作；原本是「待實作」的空殼）。
@@ -824,9 +825,37 @@ def weekly_calendar_main(dry_run: bool | None = None) -> None:
 
 
 # --- 主清理入口函數 ---
+def _cleanup_footprint():
+    """本輪清理守備範圍的 (檔數, bytes)：根目錄 *.bak*、data/、各 __pycache__、.archive。
+
+    只為了報告「這一輪到底動了多少、釋放多少空間」。刻意不掃 .git／node_modules／site／logs
+    （那是版控與第三方地盤，不是本清理的對象，掃進來只會讓數字失真又變慢）。
+    """
+    files = 0
+    total = 0
+    skip = {".git", "node_modules", "site", "_tmp_site", "logs"}
+    for dirpath, dirnames, filenames in os.walk(ROOT):
+        d = pathlib.Path(dirpath)
+        rel = d.relative_to(ROOT)
+        if rel.parts and d.name in skip:
+            dirnames[:] = []
+            continue
+        in_scope = any(p in ("__pycache__", ".archive", "data") for p in rel.parts)
+        for f in filenames:
+            if not (in_scope or (not rel.parts and ".bak" in f)):
+                continue
+            try:
+                total += (d / f).stat().st_size
+                files += 1
+            except OSError:
+                continue
+    return files, total
+
+
 def run_full_cleanup(apply_changes: bool = False):
     logger.info(f"=== 開始執行龍九系統深度清理 (apply_changes={apply_changes}) ===")
-    
+    n_before, b_before = _cleanup_footprint()
+
     current_date = date.today()
     
     results = {
@@ -839,7 +868,7 @@ def run_full_cleanup(apply_changes: bool = False):
         'work_log': {'cleaned': 0, 'retained': 0},
         'error_register': {'cleaned': 0, 'retained': 0},
         'archive_dir_smart': {'cleaned': 0},
-        'unreferenced_py_scripts': {'cleaned': 0},
+        'unreferenced_py_scripts': {'reported': 0},
         'temp_and_cache_files': {'cleaned': 0},
     }
 
@@ -878,12 +907,38 @@ def run_full_cleanup(apply_changes: bool = False):
     results['archive_dir_smart'] = {'cleaned': cleaned_archive_smart}
 
     cleaned_unreferenced_py = _cleanup_unreferenced_py_scripts(apply_changes)
-    results['unreferenced_py_scripts'] = {'cleaned': cleaned_unreferenced_py}
+    results['unreferenced_py_scripts'] = {'reported': cleaned_unreferenced_py}
 
     cleaned_temp_cache = _cleanup_temp_and_cache_files(apply_changes)
     results['temp_and_cache_files'] = {'cleaned': cleaned_temp_cache}
 
     logger.info("=== 龍九系統深度清理完成 ===")
+
+    # ── 統計輸出（2026-11-09 使用者裁決 A）：讓「清了什麼」在 Telegram 一眼看得見 ─────
+    # 舊版只印「完成」與產物清單，細節全在 log 裡 → 使用者看到「好像沒清掉什麼」。
+    # 這行數字＝本輪各類實際處置數＋守備範圍的檔數/容量變化，乾跑也印（標註未動檔）。
+    n_after, b_after = _cleanup_footprint()
+    freed = max(0, b_before - b_after)
+    gone = max(0, n_before - n_after)
+    print(
+        "🧹 深度清理統計："
+        f"備份 {results['old_backups']['cleaned']}｜"
+        f"快取/暫存 {results['temp_and_cache_files']['cleaned']}｜"
+        f"work_log {results['work_log']['cleaned']} 條｜"
+        f"error_register {results['error_register']['cleaned']} 條｜"
+        f"淘汰腳本 {results['stale_py_scripts']['cleaned']}｜"
+        f".archive {results['archive_dir_smart']['cleaned']}｜"
+        f"逾時文件 {results['stale_docs']['cleaned']}｜"
+        f"決策 {results['pending_decisions']['cleaned']}｜"
+        f"行程事件 {results['schedule_events']['cleaned']}｜"
+        f"零引用 {results['unreferenced_py_scripts']['reported']} 支（只報告）"
+    )
+    print(
+        f"   · 守備範圍 {n_before:,} 檔 / {b_before / 2 ** 20:.1f} MB → "
+        f"{n_after:,} 檔 / {b_after / 2 ** 20:.1f} MB："
+        + (f"刪除 {gone:,} 檔、釋放約 {freed / 2 ** 20:.1f} MB" if apply_changes
+           else "乾跑未動檔（實際套用請加 --apply）")
+    )
 
     # ── 收尾：盤點本輪產物並交棒（2026-10-12 修：不再自行落版／推送）───────────────
     # 舊版走 auto_push --auto-stage（＝git add -A）自行落版＋推送。2026-10-12 03:00 實踩三件事：
