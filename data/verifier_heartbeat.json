@@ -1,16 +1,16 @@
 {
  "verifier": "tools/verify_ficriteria.py",
- "last_run_at": "2026-11-08T00:27:11.724432+08:00",
- "last_success_at": "2026-11-08T00:27:11.724432+08:00",
+ "last_run_at": "2026-11-08T22:35:23.357430+08:00",
+ "last_success_at": "2026-11-08T22:35:23.357430+08:00",
  "last_failure_at": "2026-11-01T22:35:20.992990+08:00",
- "duration_ms": 201,
+ "duration_ms": 283,
  "exit_code": 0,
  "pass_count": 57,
  "fail_count": 0,
  "execution_status": "PASS",
  "consecutive_failure_count": 0,
- "snapshot_mtime": "2026-11-08T00:25:39.471806+08:00",
+ "snapshot_mtime": "2026-11-08T19:29:09.504243+08:00",
  "verifier_mtime": "2026-10-13T17:00:05.555761+08:00",
- "inputs_changed_since_prev_run": true,
+ "inputs_changed_since_prev_run": false,
  "summary_found": true
 }
