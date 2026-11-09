@@ -551,6 +551,29 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
         if new and old != new:
             text = text.replace(old, new)
 
+    # ── 2026-11-09（券商 App 對帳抓到）：證券敘述要跟著收盤價換 ──
+    # 症狀：內文寫「市值 2,594,130（估值日 11/06），未實現 185,190（+3.07%）、已實現 23,460」，
+    #       收盤套用後金額已變 2,579,760／170,820，敘述卻不動；且 +3.07% 與金額本身互斥
+    #       （170,820 ÷ 2,408,940 = 7.09%）。→ 以 snapshot.securities 真值整句覆蓋。
+    _sec_rf = snap.get("securities") or {}
+    _smv = _sec_rf.get("total_market_value")
+    _sun = _sec_rf.get("unrealized_pnl")
+    _sup = _sec_rf.get("unrealized_pnl_pct")
+    _sr = _sec_rf.get("realized_pnl")
+    _srp = _sec_rf.get("realized_pnl_pct")
+    _smd = str(_sec_rf.get("as_of") or _sec_rf.get("price_date") or "")[:10]
+    if _smv:
+        if _smd:
+            text = re.sub(r"市值\s*[\d,]+\s*（估值日\s*[^）]{0,14}）",
+                          f"市值 {_smv:,.0f}（估值日 {_smd}）", text)
+        if _sun is not None and _sup is not None:
+            _un_txt = (f"未實現 +{_sun:,.0f}（+{_sup:.2f}%）" if _sun >= 0
+                       else f"未實現 {_sun:,.0f}（{_sup:.2f}%）")
+            text = re.sub(r"未實現\s*[+\-]?[\d,]+\s*（\s*[+\-]?[\d.]+%\s*）", _un_txt, text)
+        if _sr is not None:
+            _sr_txt = f"已實現 +{_sr:,.0f}" + (f"（+{_srp:.2f}%）" if _srp is not None else "")
+            text = re.sub(r"已實現\s*[+\-]?[\d,]+(?:\s*（\s*[+\-]?[\d.]+%\s*）)?", _sr_txt, text)
+
     # ── 2026-10-12（總工單 A2/A3 收尾）：**失效敘述覆蓋**，與金額覆蓋同一層、同一入口 ──
     # 症狀：日報與再平衡報表會嵌入先前班次的「緊急應變 LLM 內文」
     #       （data/emergency_llm_analysis.json）。該內文可能仍寫「押標金 240 萬＝條件式事件、

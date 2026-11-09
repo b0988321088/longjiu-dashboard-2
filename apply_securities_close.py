@@ -34,6 +34,8 @@ BASE = Path(__file__).resolve().parent
 SNAP = BASE / "snapshot.json"
 
 UA = {"User-Agent": "Mozilla/5.0 (longjiu-securities-close)"}
+# TWSE MIS 需要 Referer，否則批次查詢會回空成交價（z='-'）→ 全部誤判「前收」
+_UA_MIS = {**UA, "Referer": "https://mis.twse.com.tw/stock/", "Accept": "application/json"}
 
 MIRROR_KEYS = ("securities_total", "securities_total_market_value", "securities_market",
                "securities_market_value", "securities_current", "securities_current_value")
@@ -127,10 +129,40 @@ def r0(x: float) -> int:
     return int(Decimal(str(x)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 
+def mis_quotes(codes, chunk: int = 5):
+    """盤中即時報價。主源 Yahoo chart meta（實測 00878/0056/00919/0050 都有值），
+    TWSE MIS 為備援（實測批次回 z='-'，不可靠）。
+
+    2026-11-09 使用者指示：可用盤中價估現值以保持資料新鮮度。
+    契約：盤中價只用來「估算現值」，估值日仍記最後收盤日，並在 securities.intraday_estimate
+    留時間戳與來源——不得把盤中價寫成收盤價（date_integrity L1 明文）。
+    """
+    out = {}
+    for code in codes:
+        for suffix in ("TW", "TWO"):
+            url = (f"https://query1.finance.yahoo.com/v8/finance/chart/{code}.{suffix}"
+                   f"?interval=1m&range=1d")
+            try:
+                js = json.loads(_get(url))
+                meta = js["chart"]["result"][0]["meta"]
+                px = meta.get("regularMarketPrice")
+                ts = meta.get("regularMarketTime")
+                if px:
+                    at = (datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
+                          if ts else datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    out[code] = (float(px), at, True)
+                    break
+            except Exception:
+                continue
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--date", default=date.today().isoformat())
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--intraday", action="store_true",
+                    help="用 TWSE MIS 盤中價估算現值（估值日仍記最近收盤，另存 intraday_estimate）")
     ap.add_argument("--sync", action="store_true", help="寫入後跑 check_securities_integrity＋four_source_sync＋regenerate_report")
     a = ap.parse_args()
     target = datetime.strptime(a.date, "%Y-%m-%d").date()
@@ -142,21 +174,47 @@ def main() -> int:
         return 2
 
     before_total = snap.get("securities", {}).get("total_market_value")
-    print(f"{'代號':8s}{'股數':>8s}{'舊價':>9s}{'新價':>9s}{'差':>9s}  來源")
+    last_close_date = str(snap.get("securities", {}).get("price_date") or "")[:10] or target.isoformat()
+    quotes_at = ""
+    live_map = {}
+    if a.intraday:
+        live_map = mis_quotes([str(h.get("ticker") or "").strip() for h in holds])
+        quotes_at = max((v[1] for v in live_map.values()), default="")
+        print(f"📡 盤中估價：TWSE MIS {len(live_map)}/{len(holds)} 檔取得，時間 {quotes_at}")
+        print(f"{'代號':8s}{'股數':>8s}{'前價':>9s}{'盤中':>9s}{'差':>9s}  來源")
+    else:
+        print(f"{'代號':8s}{'股數':>8s}{'舊價':>9s}{'新價':>9s}{'差':>9s}  來源")
     misses, changed = [], 0
     for h in holds:
         code = str(h.get("ticker") or "").strip()
-        got = twse_close(code, target) or tpex_close(code, target) or yahoo_close(code, target)
-        if not got:
-            misses.append(code)
-            print(f"{code:8s}{int(h['shares']):>8d}{h['price']:>9.2f}{'—':>9s}{'':>9s}  ✗ 取不到")
-            continue
-        px, src = got
+        if a.intraday:
+            q = live_map.get(code)
+            if not q:
+                misses.append(code)
+                print(f"{code:8s}{int(h['shares']):>8d}{h['price']:>9.2f}{'—':>9s}{'':>9s}  ✗ 取不到")
+                continue
+            px, at, live = q
+            src = f"MIS盤中{f'@{at[9:]}' if at else ''}{'' if live else '(前收)'}"
+        else:
+            got = twse_close(code, target) or tpex_close(code, target) or yahoo_close(code, target)
+            if not got:
+                misses.append(code)
+                print(f"{code:8s}{int(h['shares']):>8d}{h['price']:>9.2f}{'—':>9s}{'':>9s}  ✗ 取不到")
+                continue
+            px, src = got
         mv = r0(h["shares"] * px)
         old_mv = h.get("market_value") or 0
         cost = h.get("cost") or 0
-        h.update({"price": px, "market_value": mv, "value": mv,
-                  "price_date": target.isoformat(), "price_source": src})
+        if a.intraday:
+            # 盤中：price 必須等於 market_value 的計算基礎（閘門 ① shares×price==market_value），
+            # 因此 price 也寫盤中價；估值日仍記最後收盤，另存 prev_close 與 intraday_at 供追溯。
+            h.update({"price": px, "price_intraday": px, "intraday_at": at,
+                      "market_value_intraday": mv, "value": mv, "market_value": mv,
+                      "price_prev_close": old_mv / max(int(h["shares"]), 1) if h["shares"] else None,
+                      "price_date": last_close_date, "price_source": src})
+        else:
+            h.update({"price": px, "market_value": mv, "value": mv,
+                      "price_date": target.isoformat(), "price_source": src})
         if cost:
             pnl = mv - cost
             h["pnl"] = pnl
@@ -168,11 +226,29 @@ def main() -> int:
     hold_sum = sum(h.get("market_value") or 0 for h in holds)
     cost_sum = sum(h.get("cost") or 0 for h in holds)
     sec = snap.setdefault("securities", {})
-    sec.update({"total_market_value": hold_sum,
-                "price_date": f"{target}（收盤）",
-                "as_of": target.isoformat(),
-                "source": f"TWSE／Yahoo 官方收盤抓取 {target}（{changed} 檔成功、{len(misses)} 檔失敗）",
-                "unrealized_pnl": hold_sum - cost_sum if cost_sum else sec.get("unrealized_pnl")})
+    if a.intraday:
+        sec.update({"total_market_value": hold_sum,
+                    "price_date": f"{last_close_date}（收盤）",
+                    "as_of": last_close_date,
+                    "source": f"盤中估算 TWSE MIS {quotes_at}（{changed} 檔成功、{len(misses)} 檔失敗）；估值日仍為 {last_close_date} 收盤",
+                    "unrealized_pnl": hold_sum - cost_sum if cost_sum else sec.get("unrealized_pnl"),
+                    "intraday_estimate": {"at": quotes_at, "total": hold_sum,
+                                          "delta_vs_close": hold_sum - (before_total or 0),
+                                          "note": "市值＝股數×盤中價估算，非收盤真值；收盤後由 apply_securities_close.py --date 覆寫"}})
+    else:
+        sec.pop("intraday_estimate", None)
+        sec.update({"total_market_value": hold_sum,
+                    "price_date": f"{target}（收盤）",
+                    "as_of": target.isoformat(),
+                    "source": f"TWSE／Yahoo 官方收盤抓取 {target}（{changed} 檔成功、{len(misses)} 檔失敗）",
+                    "unrealized_pnl": hold_sum - cost_sum if cost_sum else sec.get("unrealized_pnl")})
+    # 2026-11-09（券商 App 對帳抓到）：unrealized_pnl_pct 是派生值，舊版只寫金額不寫比率，
+    # 導致收盤後金額更新、比率停在舊值（實例：金額 170,820／成本 2,408,940 應為 7.09%，欄位卻是 3.07）。
+    # 一律由「未實現 ÷ 成本」現算，成本不可得時留 None 而不是沿用舊值。
+    if cost_sum:
+        sec["unrealized_pnl_pct"] = round((hold_sum - cost_sum) / cost_sum * 100, 2)
+    else:
+        sec["unrealized_pnl_pct"] = None
     for k in MIRROR_KEYS:
         snap[k] = hold_sum
     snap["securities_unrealized_pnl"] = sec.get("unrealized_pnl")
@@ -202,7 +278,7 @@ def main() -> int:
     print("✅ snapshot.json 已寫入")
 
     if a.sync:
-        chain = [["check_securities_integrity.py"], ["four_source_sync.py"]]
+        chain = [["scripts/check_securities_integrity.py"], ["four_source_sync.py"]]
         for cmd in chain:
             print(f"→ {' '.join(cmd)}")
             r = subprocess.run([sys.executable, *cmd], cwd=str(BASE))

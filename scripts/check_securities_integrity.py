@@ -31,6 +31,14 @@ def r0(x) -> int:
     return int(Decimal(str(x)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 
+def _num(x):
+    """數值轉換；None/不可轉 → None（⑥ 未實現比率驗算用）。"""
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return None
+
+
 def run(snap: dict) -> list:
     """回傳 [(level, code, msg)]；level ∈ FAIL/WARN/OK"""
     out = []
@@ -101,14 +109,41 @@ def run(snap: dict) -> list:
         except Exception as e:
             out.append(("FAIL", "⑤", f"pnl 無法驗算：{e}"))
 
+    # ⑥ 未實現比率＝派生（2026-11-09 券商 App 對帳抓到：金額對、比率停在舊值 3.07% vs 真值 7.09%）
+    #    比率必須等於 pnl ÷ 成本；成本＝市值−pnl（逐檔 cost 合計須與之相符）。
+    #    只驗「存的比率」與「反算比率」是否一致，不另立口徑。
+    try:
+        cost_sum = sum(r0(h.get("cost") or 0) for h in holds)
+        mv_sum = sum(r0(h.get("market_value") or 0) for h in holds)
+        pnl_stored = _num((snap.get("securities") or {}).get("unrealized_pnl"))
+        pct_stored = _num((snap.get("securities") or {}).get("unrealized_pnl_pct"))
+        if cost_sum > 0 and pnl_stored is not None:
+            if abs((mv_sum - pnl_stored) - cost_sum) > PNL_TOL:
+                out.append(("FAIL", "⑥", f"成本對不上：市值 {mv_sum:,} − 未實現 {r0(pnl_stored):,} = "
+                                         f"{mv_sum - r0(pnl_stored):,} ≠ 逐檔成本合計 {cost_sum:,}"))
+            if pct_stored is None:
+                out.append(("FAIL", "⑥", "unrealized_pnl_pct 缺失（比率必須派生，不得空白）"))
+            else:
+                calc_pct = (mv_sum - cost_sum) / cost_sum * 100
+                if abs(calc_pct - float(pct_stored)) > 0.05:
+                    out.append(("FAIL", "⑥", f"未實現比率 {float(pct_stored):.2f}% ≠ 反算 {calc_pct:.2f}%"
+                                             f"（差 {abs(calc_pct - float(pct_stored)):.2f}pp > 0.05）"))
+    except Exception as e:
+        out.append(("FAIL", "⑥", f"未實現比率無法驗算：{e}"))
+
     if not out:
-        out.append(("OK", "—", f"五條全過（權威 {r0(auth):,}／{len(holds)} 檔／price_date {d_auth}）"))
+        out.append(("OK", "—", f"六條全過（權威 {r0(auth):,}／{len(holds)} 檔／price_date {d_auth}）"))
     return out
 
 
 # ── 自我測試（含 00983D 精度案例） ─────────────
-def _mk(holdings, auth, pnl, pdate):
+def _mk(holdings, auth, pnl, pdate, pct="auto"):
+    # 2026-11-09：⑥ 需要 unrealized_pnl_pct；預設由「未實現 ÷ 逐檔成本」現算（缺值即 FAIL）。
+    if pct == "auto":
+        _c = sum(r0(h.get("cost") or 0) for h in holdings)
+        pct = round((r0(auth) - _c) / _c * 100, 2) if _c else None
     return {"holdings": holdings, "securities": {"total_market_value": auth, "unrealized_pnl": pnl,
+                                                 "unrealized_pnl_pct": pct,
                                                  "price_date": pdate},
             "securities_total": auth, "securities_total_market_value": auth, "securities_market": auth,
             "securities_market_value": auth, "securities_current": auth, "securities_current_value": auth,
@@ -146,6 +181,14 @@ def selftest() -> int:
     h6 = json.loads(json.dumps(h)); h6[0]["cost"] = 150000
     r = run(_mk(h6, 395300, 23500, "2026-11-05"))
     cases.append(("⑥pnl 超容差必須 FAIL", any(x[0] == "FAIL" and x[1] == "⑤" for x in r), r))
+
+    # 2026-11-09 新增：未實現比率必須是派生值（券商 App 對帳實例 3.07% vs 真值 7.09%）
+    r = run(_mk(json.loads(json.dumps(h)), 395300, 23500, "2026-11-05", pct=3.07))
+    cases.append(("⑦未實現比率與反算不符必須 FAIL",
+                  any(x[0] == "FAIL" and x[1] == "⑥" for x in r), r))
+    r = run(_mk(json.loads(json.dumps(h)), 395300, 23500, "2026-11-05", pct=None))
+    cases.append(("⑧未實現比率缺失必須 FAIL",
+                  any(x[0] == "FAIL" and x[1] == "⑥" for x in r), r))
 
     ok = True
     for name, passed, res in cases:
