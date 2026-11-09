@@ -917,6 +917,27 @@ elif ok and _cio_ok and _date_ok:
     #   出現在候選清單、或「被 index.html 連結」而進 commit —— 一次封住 Vector 1（靜態 over-declare）
     #   與 Vector 2（動態 dirty-link 掃入）。呼叫端宣告 ≠ 本輪產物。
     #   註：本過濾不宣稱「絕對 fail-closed」；殘留風險（並行寫入歸因、不可快照檔 under-push）見檔頭警示。
+    # 2026-11-09（使用者核准）：Pages allowlist 自動重產生。
+    #   實踩：structural_health_20261109.html 404，根因 scripts/pages_allowlist.txt 停在 11/06，
+    #   而 Pages 走 Actions 白名單部署 → 新產物不在名單就 404。每次換日必復發，故納入本輪產出。
+    #   放在 _after 快照之前，該檔才會被判定為「本輪產物」而進 commit；失敗不阻擋本輪發布。
+    import hashlib as _hl
+    _al_ok = False
+    _AL_F = "scripts/pages_allowlist.txt"
+    try:
+        _al_path = BASE / _AL_F
+        _al_before = _hl.sha256(_al_path.read_bytes()).hexdigest() if _al_path.exists() else ""
+        _al_r = subprocess.run([sys.executable, str(BASE / "scripts" / "gen_pages_allowlist.py")],
+                               cwd=str(BASE), capture_output=True, text=True,
+                               encoding="utf-8", errors="replace", timeout=120)
+        _al_lines = (_al_r.stdout or "").strip().splitlines()
+        print("  " + (_al_lines[-1] if _al_lines else "✅ pages allowlist"))
+        _al_ok = (_al_r.returncode == 0)
+        if not _al_ok:
+            print(f"  ⚠️ allowlist 重產生失敗（不阻擋本輪）: {(_al_r.stderr or '').strip()[:160]}")
+    except Exception as _e_al:
+        print(f"  ⚠️ allowlist 重產生異常（不阻擋本輪）: {_e_al}")
+
     _after = _snap_root(BASE)
     _snap_ok = bool(_BEFORE) and bool(_after)
     if not _snap_ok:
@@ -937,6 +958,13 @@ elif ok and _cio_ok and _date_ok:
                       f"{_before_n - len(_push_candidates)} 檔）")
         _cands = [f for f in _push_candidates if (BASE / f).exists()]
         _push_files, _excluded = _produced_only(_cands, _BEFORE, _after)
+        # allowlist 是 .txt（不在 _SNAP_EXT）→ 以內容指紋差異認定為本輪產物
+        if _al_ok:
+            _al_after = _hl.sha256((BASE / _AL_F).read_bytes()).hexdigest() if (BASE / _AL_F).exists() else ""
+            if _al_after and _al_after != _al_before:
+                if _AL_F not in _push_files:
+                    _push_files.append(_AL_F)
+                print(f"  📄 allowlist 有變更 → 納入本輪發布（{_AL_F}）")
         _unsnap = [f for f in _cands if f not in _BEFORE and f not in _after]
         if _unsnap:
             print(f"  ⚠️ 候選檔無法快照（副檔名不在 _SNAP_EXT 或過大）→ 已排除，請確認非本輪產物: {', '.join(sorted(_unsnap))}")
