@@ -12164,7 +12164,16 @@
       "summary": "核准 A 統計透明化＋C git repack（253M→231M、歷史全保留）；B(DB備份keep=2)與D(舊session歸檔)暫緩；push 未授權",
       "status": "已核准",
       "source": "user"
-    }
+    },
+  {
+    "id": "mem-20261109083418-1316",
+    "timestamp": "2026-11-09T08:34:18.780007+08:00",
+    "agent": "Hermes",
+    "task": "07:00 日報未上線修復（L3 舊稿＋F3 快照續期）",
+    "summary": "使用者裁示「沿用禮拜五收盤」：L3 只收 content_date=報告日的敘述；F3 基準快照續期至 2026-12-09、fail_set 清空（93/93 PASS）；四連結已上線 200",
+    "status": "已核准",
+    "source": "user"
+  }
   ],
   "pending_decisions": [
     {
