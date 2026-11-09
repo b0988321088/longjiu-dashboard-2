@@ -286,7 +286,18 @@ def load_snapshot(path: Path | None = None):
         return None, f"快照無法解析：{e}"
     if not isinstance(d, dict):
         return None, "快照格式非物件"
-    miss = [f for f in SNAPSHOT_REQUIRED_FIELDS if not d.get(f)]
+    miss = []
+    for f in SNAPSHOT_REQUIRED_FIELDS:
+        v = d.get(f)
+        # 2026-11-09：fail_set 的合法值包含「空陣列」＝現行沒有任何已知可接受 FAIL。
+        # 舊版用 `not d.get(f)` 判定缺欄位，空陣列是 falsy → 被誤判成「缺 fail_set」，
+        # 導致「全部 FAIL 都修好」這個狀態無法表達（只能把已修好的項目硬留在白名單，
+        # 反而遮蔽日後復發）。此處只認型別，不認真假值。
+        if f == "fail_set":
+            if not isinstance(v, list):
+                miss.append(f)
+        elif not v:
+            miss.append(f)
     if miss:
         return None, "快照缺必要欄位：" + "、".join(miss)
     if not isinstance(d.get("fail_set"), list):
