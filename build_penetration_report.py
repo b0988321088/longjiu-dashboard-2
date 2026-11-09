@@ -97,6 +97,12 @@ snap["penetration"] = {
     # 2026-10-16 INC-292（卡 #15）：待確認應收（暫時性占用；款項已離開現金帳戶、尚未回到
     # 任何科目）亦為分母組成 → 顯式揭露，供逐項對帳（不與 cash_in_transit 混用）。
     "pending_receivables": round(_pending_recv),
+    # 2026-11-09 裁決 A+C：分母「宣告」——五桶 pct 一律占總資產（INC-245 定版）。
+    #   過去只存在於計算式裡、沒有宣告，導致敘述層（LLM）把「防禦維度分母（TA−指定款）」
+    #   誤寫成「配置分母」時無人可驗。現由產出器顯式宣告，供
+    #   check_penetration_consistency.py 反算比對（缺宣告＝FAIL）。
+    "pct_denominator": round(total),
+    "pct_denominator_basis": "total_assets",
     # 2026-10-18（使用者核准施工）：桶位「組成拆解」持久化 —— 供 tools/check_bucket_attribution.py
     #   做逐日歸因（單桶大額異動時，必須能說出是證券／平台基金／保單哪一塊動的）。
     #   只新增鍵、不改 actual_twd／actual_pct 形狀，舊消費端不受影響。
@@ -193,7 +199,11 @@ w("@media(max-width:640px){table{font-size:12px}th,td{padding:6px 4px}}")
 w("</style></head><body>")
 
 w("<h1>📊 龍九控股 穿透分析報告（詳細版）</h1>")
-w(f"<p class='meta'>{today} ｜ 穿透分母 = {total:,} TWD</p>")
+w(f"<p class='meta'>{today} ｜ 穿透分母 = {total:,} TWD（＝總資產，含指定款／在途／衛星）</p>")
+w("<div class='callout'>📏 <b>兩個分母不可互換</b>：本報告各桶佔比的分母＝<b>總資產</b>"
+  f"（{int(total):,}，已含指定款、在途及衛星資產）；<b>防禦維度</b>另以「總資產－指定用途款」為分母"
+  f"（{int(total - round(_restricted_cash)):,}，指定用途款 {int(round(_restricted_cash)):,}）。"
+  "各桶金額依既定分類統計；同一份報告只允許一種五桶分母。</div>")
 # 2026-10-17：未分類持股不得靜默消失（00927 事件根因）。有 other → 明確列在報表頂端。
 _other_h = [h for h in holdings if cat_ticker(h.get("ticker", "")) == "other"]
 if _other_h:

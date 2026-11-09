@@ -1285,7 +1285,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         </tbody>
       </table>
     </div>
-    <p class="text-sm" style="color:#6e6e73;margin-top:8px">穿透分母：台股+美股+防守+債券（不含不動產）；管理費~1.5%，偏高於配息收益率。</p>
+    <p class="text-sm" style="color:#6e6e73;margin-top:8px">配置比例依<b>總資產</b>計算（分母＝總資產，已含指定款、在途及衛星資產）；各桶金額依既定分類統計。<br>防禦維度另以「總資產－指定用途款」為分母（__DEN_DEFENSE__），與本表配置比例不可互換。管理費~1.5%，偏高於配息收益率。</p>
   </div>
 
   <div class="card" style="margin-top:4px;padding:10px 14px;background:#f0f4ff;">

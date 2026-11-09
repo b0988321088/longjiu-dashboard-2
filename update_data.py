@@ -486,6 +486,9 @@ def main():
          if abs(_v) >= 1.5 and _k != "防守型配息"] + [_dtxt]) or "各桶均在容忍範圍"
     _new_pen["updated_at"] = datetime.date.today().isoformat()
     _new_pen["source"] = "update_all.calc_penetration（四源同步）"
+    # 2026-11-09 裁決 A+C：分母宣告（五桶 pct 一律占總資產；防禦維度分母另計）。
+    _new_pen["pct_denominator"] = round(float(snap.get("total_assets") or 0))
+    _new_pen["pct_denominator_basis"] = "total_assets"
     snap["penetration"] = _new_pen
 
     # ③b 負債由明細推導（2026-09-13 INC-159 P2）：cc_liability/total_liabilities/net_worth 禁手寫

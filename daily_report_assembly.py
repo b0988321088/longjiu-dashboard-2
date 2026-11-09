@@ -202,6 +202,12 @@ def substitute_dr_tokens(html: str, penetration) -> str:
     _atwd = _pen.get("actual_twd", {}) or {}
     _apct = _pen.get("actual_pct", {}) or {}
     _tgt = _pen.get("targets", {}) or {}
+    # 2026-11-09 裁決 A：五桶表註記需顯式列出「防禦維度分母」（總資產−指定用途款），
+    #   與配置比例分母（總資產）並列，避免讀者把兩個分母互換。數值現算、不寫死。
+    _ta = float(_pen.get("pct_denominator") or 0)
+    _rst = float(_pen.get("restricted_cash") or 0)
+    _den_def = f"{_ta - _rst:,.0f} TWD，指定用途款 {_rst:,.0f}" if _ta else "無法取得（缺分母宣告）"
+    html = html.replace("__DEN_DEFENSE__", _den_def)
     for _tk in ("美股市值型成長_科技", "美股市值型成長_非科技"):
         if _tk in _apct and not _atwd.get(_tk):
             print(f"  ⚠️ 穿透缺 {_tk} 金額（actual_twd）→ 日報該列會顯示 0 TWD；"
@@ -449,6 +455,44 @@ def compose_market_section(base, today=None, now=None):
     return {"tier": 3, "html": _html3, "content_date": None, "source": None}
 
 
+def relabel_denominator_labels(text: str, snapshot: dict):
+    """分母標籤守門（2026-11-09 裁決 A）：把 LLM 混寫的「配置分母」按金額改回正確名稱。
+
+    本次事故：內文寫「防禦與配置分母 25,596,691（扣除指定用途款 900,000）」，緊接五桶
+    百分比（占總資產）→ 正確數字搭配錯誤標籤。規則：
+      · 金額 == 總資產−指定用途款 → 改「防禦維度分母」
+      · 金額 == 總資產           → 改「五桶配置分母（＝總資產，含指定款／在途／衛星）」
+      · 兩者都不是               → 原樣保留並加「（待核對）」，禁止自行補值
+    回傳 (新文字, {"def":n,"ta":n,"unknown":n})；缺分母宣告時不做任何改寫。
+    """
+    pen = (snapshot or {}).get("penetration") or {}
+    try:
+        ta = int(float(pen.get("pct_denominator") or (snapshot or {}).get("total_assets") or 0))
+        rst = int(float(pen.get("restricted_cash") or 0))
+    except (TypeError, ValueError):
+        return text, {"def": 0, "ta": 0, "unknown": 0}
+    if not ta:
+        return text, {"def": 0, "ta": 0, "unknown": 0}
+    den_def = ta - rst
+    stat = {"def": 0, "ta": 0, "unknown": 0}
+
+    def _repl(m):
+        num = int(m.group(1).replace(",", ""))
+        rst_txt = m.group(2) or f"{rst:,}"
+        if num == den_def:
+            stat["def"] += 1
+            return f"防禦維度分母 {m.group(1)}（＝總資產−指定用途款 {rst_txt}）"
+        if num == ta:
+            stat["ta"] += 1
+            return f"五桶配置分母 {m.group(1)}（＝總資產，含指定款／在途／衛星）"
+        stat["unknown"] += 1
+        return f"{m.group(0)}（待核對）"
+
+    out = _re_mod.sub(r"(?:防禦與)?配置分母\s*([\d,]{5,})(?:\s*（扣除指定用途款\s*([\d,]{3,})）)?",
+                      _repl, text)
+    return out, stat
+
+
 def build_emergency_block(base, snapshot, today: str | None = None) -> str:
     """「緊急應變（美股／台股）」LLM 區塊的唯一實作（INC-291／PEND-20261007-04）。
 
@@ -494,6 +538,11 @@ def build_emergency_block(base, snapshot, today: str | None = None) -> str:
         _r = _refresh(_r, snapshot or {})
     except Exception as _e_r:
         print(f"[WARN] P0-1 緊急應變內文舊值覆蓋失敗：{_e_r}")
+    # 2026-11-09 裁決 A（使用者核准）：分母標籤守門（實作在模組層，可單測）。
+    _r, _stat = relabel_denominator_labels(_r, snapshot or {})
+    if _stat["def"] or _stat["ta"] or _stat["unknown"]:
+        print(f"  🏷 分母標籤守門：防禦維度 {_stat['def']} 處、總資產 {_stat['ta']} 處、"
+              f"待核對 {_stat['unknown']} 處")
     # 2026-10-18（真 CIO 審查 blocking）：內文的「五桶現況／現況缺口」是生成當時的凍結讀值
     #   （例：10-16 原文寫台股 8.8%、美股超標 8.1pp／現況 38.1%），卻緊接在今日桶位表下方
     #   → 同一頁兩個數字互相矛盾。改為以 snapshot.penetration 現值就地改寫這兩句
