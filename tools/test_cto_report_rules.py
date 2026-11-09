@@ -56,17 +56,22 @@ def main() -> int:
     m = _load("cto_probe", ROOT / "buffett_cto_analyzer.py")
     TECH_EXP, TECH_CAP = 14.4, 15.0
 
-    # ---- C1 凍結禁令 -------------------------------------------------------
-    print("C1 凍結禁令由程式強制（原文字缺 → 補回固定句）")
-    check("負向：原文字確實缺禁令", not any(mk in REAL_RISK for mk in m._BAN_MARKERS),
+    # ---- C1 交易授權紀律 ---------------------------------------------------
+    print("C1 交易授權紀律由程式強制（原文字缺 → 補回固定句；舊凍結句移除）")
+    check("負向：原文字確實缺紀律", not any(mk in REAL_RISK for mk in m._BAN_MARKERS),
           str(m._BAN_MARKERS))
     _t, _fx = m._enforce_report_rules(REAL_RISK, tech_exp=TECH_EXP, tech_cap=TECH_CAP)
-    check("補回禁令句", "承接額度凍結未解前" in _t and "不得加碼" in _t, _t[-90:])
-    check("修正清單有記錄", any("凍結禁令" in f for f in _fx), str(_fx))
-    # 已有禁令時不得重複追加
-    _t2, _fx2 = m._enforce_report_rules("紀律提醒：承接額度凍結未解前，不得加碼、不得新增部位。",
-                                        tech_exp=TECH_EXP, tech_cap=TECH_CAP)
-    check("已有禁令時不重複追加", _t2.count("承接額度凍結") == 1, _t2)
+    check("補回交易授權句", "條件成立不等於交易授權" in _t and "未收到本人明確指令前不得買進" in _t, _t[-140:])
+    check("修正清單有記錄", any("交易授權" in f for f in _fx), str(_fx))
+    # 已有紀律時不得重複追加
+    _t2, _fx2 = m._enforce_report_rules(
+        "紀律提醒：台股分批進場條件已成立，但條件成立不等於交易授權；維持逐批下令，未收到本人明確指令前不得買進。",
+        tech_exp=TECH_EXP, tech_cap=TECH_CAP)
+    check("已有紀律時不重複追加", _t2.count("條件成立不等於交易授權") == 1, _t2)
+    # 舊凍結句必須被替換，不能與新口徑並存
+    _t3, _fx3 = m._enforce_report_rules(
+        "紀律提醒：承接額度凍結未解前，不得加碼、不得新增部位。", tech_exp=TECH_EXP, tech_cap=TECH_CAP)
+    check("舊凍結句被移除並改寫", "承接額度凍結未解前" not in _t3 and "條件成立不等於交易授權" in _t3, _t3)
 
     # ---- C2 紅線配對 -------------------------------------------------------
     print("C2 紅線數字與主語配對以程式真值為準")

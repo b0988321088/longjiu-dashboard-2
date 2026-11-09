@@ -49,8 +49,11 @@ SECTOR_LABELS = {"XLK": "科技", "XLF": "金融", "XLV": "醫療", "XLE": "能�
                  "XLP": "核心消費", "XLI": "工業", "XLU": "公用", "XLRE": "不動產", "XLB": "原物料"}
 # 註：本表鏡射 institutional_flow.py 的 SECTOR_ETFS（該表在函式內，無法直接 import）；
 #     兩者一致性由 tools/test_cto_report_rules.py 以 AST 讀取後斷言，禁止只靠人工同步。
-FREEZE_BAN_SENTENCE = "紀律提醒：現金是底線不是彈藥；承接額度凍結未解前，不得加碼、不得新增部位。"
-_BAN_MARKERS = ("不得加碼", "不得新增部位", "承接額度凍結", "任何加碼都是違規")
+TRADE_AUTH_SENTENCE = ("紀律提醒：台股分批進場條件已成立，但條件成立不等於交易授權；"
+                        "維持逐批下令，未收到本人明確指令前不得買進。"
+                        "其他資產仍依既有風控規則管理，不得將台股條件成立解讀為全面解除風險限制。")
+FREEZE_BAN_SENTENCE = TRADE_AUTH_SENTENCE  # 相容舊名稱
+_BAN_MARKERS = ("條件成立不等於交易授權", "未收到本人明確指令前不得買進", "全面解除風險限制")
 
 
 def _fix_redline_numbers(text: str, tech_exp: float, tech_cap: float) -> tuple[str, list[str]]:
@@ -124,7 +127,7 @@ def _enforce_report_rules(text: str, *, tech_exp: float | None = None,
                           tech_cap: float | None = None) -> tuple[str, list[str]]:
     """報告輸出規則守門（2026-10-15 B1／R3）→ (修正後文字, 修正清單)。
 
-    ① 凍結禁令必須存在（缺 → 由程式補回固定句）
+    ① 交易授權紀律必須存在（條件成立≠授權；缺 → 由程式補回固定句）
     ② 紅線數字／主語配對必須等於程式真值
     ③ ETF 標籤必須等於 SECTOR_LABELS 真值
     """
@@ -136,9 +139,12 @@ def _enforce_report_rules(text: str, *, tech_exp: float | None = None,
     text, _f1 = _fix_redline_numbers(text, _exp, _cap)
     text, _f2 = _fix_etf_labels(text)
     fixes += _f1 + _f2
+    # 舊版「承接額度凍結未解」句與新口徑衝突：先移除，再由下方補回交易授權紀律
+    text = re.sub(r"[^。\n]*承接(?:額度)?凍結未解[^。\n]*[。]?", "", text)
+    text = re.sub(r"[^。\n]*本週不進場[^。\n]*[。]?", "", text)
     if not any(mk in text for mk in _BAN_MARKERS):
-        text = text.rstrip() + "\n" + FREEZE_BAN_SENTENCE
-        fixes.append("補回凍結禁令（原文字缺）")
+        text = text.rstrip() + "\n" + TRADE_AUTH_SENTENCE
+        fixes.append("補回交易授權紀律（原文字缺）")
     return text, fixes
 
 def _cat_value(db, category: str) -> float:
@@ -501,7 +507,7 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
             f"硬性約束（違反即無效，不可建議）：現金=底線制{cash_floor_label(_snap)}（{cash_caliber_note(_snap)}）；"
             f"台股加碼單筆≤5萬、8-12週分批；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
             f"債券等 US30Y<5.30%；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）；"
-            f"承接額度凍結未解前**不得加碼、不得新增部位**（凍結禁令必須出現在紀律提醒，不可省略）。\n"
+            f"台股分批進場條件已成立，但條件成立不等於交易授權：維持逐批下令，未收到本人明確指令前不得買進；其他資產仍依既有風控規則管理，不得將台股條件成立解讀為全面解除風險限制。\n"
             f"請以巴菲特投資哲學（護城河、安全邊際、能力圈、長期持有、別人恐懼我貪婪）做 3 點具體觀察 + 1 個紀律提醒，200字內，繁體中文，不要重複數字表。"
         )
         _out = _llm_cached("buffett", _prompt, "你是巴菲特視角的投資分析師。輸出繁體中文，精簡犀利，有具體觀點。")
@@ -622,7 +628,7 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
             f"硬性約束（違反即無效，不可建議）：現金=底線制{cash_floor_label(_snap)}（{cash_caliber_note(_snap)}）；"
             f"台股加碼單筆≤5萬、8-12週分批（不可建議單筆大額）；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
             f"債券等 US30Y<5.30%（禁建議買債）；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）；"
-            f"承接額度凍結未解前**不得加碼、不得新增部位**（凍結禁令必須出現，不可省略）。\n"
+            f"台股分批進場條件已成立，但條件成立不等於交易授權：維持逐批下令，未收到本人明確指令前不得買進；其他資產仍依既有風控規則管理，不得將台股條件成立解讀為全面解除風險限制。\n"
             f"請以技術面（動能、趨勢、支撐壓力、風險）+ 產業資金流向（哪個產業順勢/逆勢）給：今日最大風險 + 具體建議動作（含標的/金額節奏，須符合上述約束），150字內，繁體中文。"
         )
         _out = _llm_cached("cto", _prompt, "你是技術分析師（CTO）。輸出繁體中文，直接給結論與動作，不要客套。")
