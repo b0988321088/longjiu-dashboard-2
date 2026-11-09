@@ -93,7 +93,7 @@ radar_report_2026-09-08.html
 radar_report_2026-10-12.html
 radar_report_2026-10-14.html
 radar_report_2026-11-02.html
-radar_report_2026-11-07.html
+radar_report_2026-11-09.html
 radar_state.json
 rebalance_dashboard_2026-09-06.html
 rebalance_dashboard_2026-09-08.html
@@ -143,5 +143,5 @@ weekly_report_2026-09-08.html
 weekly_report_2026-10-12.html
 weekly_report_2026-10-15.html
 weekly_report_2026-11-01.html
-weekly_report_2026-11-08.html
+weekly_report_2026-11-09.html
 work_log.json
