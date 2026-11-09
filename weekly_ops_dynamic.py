@@ -21,6 +21,8 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent
 DONE = "✅"
 PENDING = ("⏳", "📌", "🔴", "🔄", "⛔")
+# 終止態：這些狀態不是「待辦」，不得進待追蹤（2026-11-09：已取消的投標事件曾被列為待追蹤）
+CLOSED = ("⛔", "已取消", "已暫停", "已併入", "已結案", "已清償", "已終止")
 WINDOW_DAYS = 7
 MAX_DONE = 8
 MAX_PENDING = 6
@@ -59,6 +61,8 @@ def build(base: Path | None = None, today: str | None = None, window_days: int =
         if DONE in st:
             if d0 <= d <= t:
                 done.append((d, {"項目": title, "狀態": st, "金額": str(x.get("amount") or "—")}))
+        elif any(c in st for c in CLOSED):
+            continue  # 已取消／已暫停／已併入等終止態：不是待辦，不列待追蹤也不算完成
         elif d >= t and (any(m in st for m in PENDING) or not st):
             pend.append((d, f"{title}（{d.isoformat()}）"))
         elif d < t and "⏳" in st:

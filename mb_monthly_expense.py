@@ -64,6 +64,12 @@ EXCLUDE = [
 ]
 NON_RECUR = [("修繕", r"修繕|裝修|水電修"), ("稅金", r"稅|牌照|燃料費"),
              ("年繳保費", r"人壽保費|年繳|躉繳")]
+# 收入白名單（優先於 EXCLUDE；MB 分類可能錯標）
+#   006-0005562988013559 = 女友帳戶（ATM 006 敦南Richart），每月 6,000 借款還款，
+#   MB 分類標成「利息所得」且描述為「cd轉入 - atm …」，會被「轉帳」排除規則誤攔。
+WHITELIST = [
+    ("女友還款", r"006-0005562988013559"),
+]
 INCOME = [
     ("薪資", r"薪資|台電"),
     ("租金", r"租金|房租"),
@@ -103,6 +109,10 @@ def classify(row) -> tuple[str, str]:
 
     if (row.get("是否排除收支") or "").strip() == "是":
         return "exclude", "MB 標記排除收支"
+    # 收入白名單：必須早於 EXCLUDE（女友還款走 cd轉入／atm，會被「轉帳」規則誤攔）
+    for name, pat in WHITELIST:
+        if re.search(pat, text, re.I):
+            return "income", f"白名單：{name}"
     # 貸款帳戶：利息＝支出（房貸），本金＝獨立列示
     if "貸款" in acc:
         if "本金" in desc:
