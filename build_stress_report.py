@@ -311,6 +311,38 @@ def build():
         f"<td class='n {cls(c-h)}'>{(c-h)/h*100:+.1f}%</td></tr>"
         for n, h, c, dh, ph, dp in parts if h)
 
+    # ── 分段歸因（2026-11-09 使用者要求：把「這幾天」拆成股災段／反彈段）────────
+    # 一律現讀 dragon_assets.db 日資料，找本波低點，三段並列；不寫死任何數字。
+    def _snap_at(d):
+        if d == cur["date"]:
+            return {"ta": _num(cur["total_assets"]), "cash": _num(cur["cash_total"]),
+                    "sec": _num(cur["securities"]), "fund": _num(cur["funds"]),
+                    "ins": _num(cur["insurance"])}
+        h = hist.get(d, {})
+        return {"ta": _num(h.get("total_assets")), "cash": _num(h.get("cash")),
+                "sec": _num(h.get("securities_market")), "fund": _num(h.get("fund_market")),
+                "ins": _num(h.get("insurance_current"))}
+
+    _seg_dates = sorted(d for d in hist if hi_date and hi_date <= d <= cur["date"])
+    low_date, low_val = hi_date, hi
+    for d in _seg_dates:
+        ta = _num(hist[d].get("total_assets"))
+        if ta and (low_val is None or ta < low_val):
+            low_date, low_val = d, ta
+    _hi, _lo, _now_s = _snap_at(hi_date), _snap_at(low_date), _snap_at(cur["date"])
+    seg_html = ""
+    for _lab, _a, _b in ((f"股災段 {hi_date} → {low_date}", _hi, _lo),
+                         (f"反彈段 {low_date} → {cur['date']}", _lo, _now_s),
+                         (f"本波合計 {hi_date} → {cur['date']}", _hi, _now_s)):
+        _d = _b["ta"] - _a["ta"]
+        _p = _d / _a["ta"] * 100 if _a["ta"] else 0
+        seg_html += (
+            f"<tr><td>{_lab}</td><td class='n'>{fmt(_a['ta'])}</td><td class='n'>{fmt(_b['ta'])}</td>"
+            f"<td class='n {cls(_d)}'>{_d:+,.0f}</td><td class='n {cls(_d)}'>{_p:+.2f}%</td>"
+            f"<td class='n {cls(_b['sec']-_a['sec'])}'>{_b['sec']-_a['sec']:+,.0f}</td>"
+            f"<td class='n {cls(_b['fund']-_a['fund'])}'>{_b['fund']-_a['fund']:+,.0f}</td>"
+            f"<td class='n {cls(_b['ins']-_a['ins'])}'>{_b['ins']-_a['ins']:+,.0f}</td></tr>")
+
     idx_html = ""
     for lab, v in idx.items():
         idx_html += (
@@ -492,6 +524,15 @@ a{{color:#34d399}}
 {parts_html}
 </table>
 <div class="sub" style="margin:8px 0 0">註：基金與保單變動含「估值日推進」，不完全是單日跌幅；高點以 history 總資產最大值認定。</div>
+</div>
+
+<div class="card">
+<div class="sub" style="margin:0 0 6px"><b>分段歸因</b>：同一波拆成「股災段」與「反彈段」，低點取本波 total_assets 最小值。</div>
+<table>
+<tr><th>區間</th><th class="n">起點總資產</th><th class="n">終點總資產</th><th class="n">差異</th><th class="n">幅度</th><th class="n">證券</th><th class="n">基金</th><th class="n">保險</th></tr>
+{seg_html}
+</table>
+<div class="sub" style="margin:8px 0 0">證券欄為台股部位（今日為盤中估算時，已在第一章標示估值日）；保險含保單基金淨值變動，非配息消失。</div>
 </div>
 
 <h2>二、市場對照</h2>
