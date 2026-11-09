@@ -1905,3 +1905,27 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 **驗收**：`update_data` 派生後 5.251%@2026-11-05 與閘門一致、重跑冪等（無 diff）｜`check_thresholds.py` rc=0、0 個 ❌｜`check_radar_evidence.py --live` ✅ 3/3 日、台股 19 桶｜週報 HTML 可信度 7/10→8/10（撤銷誤扣 −1，其餘數字未動，逐處標「2026-11-08 更正」）。
 
 **殘餘**：`us30y_state.json` 最新讀值為 11-05（11-06 交易日未取得），閘門 lag 3 天仍在容忍值內 → 列入觀察，未動線。
+
+## INCIDENT 9523dfa7 (four_source_sync)
+- 首次發生: 2026-11-09 12:14:43
+- 錯誤: 同義欄位不一致（asset_sync.py 抓到）；日報產出失敗: [RUN_DAILY] 日期：2026-11-09
+[CALIBRATE] 三源校準失敗：{'firstjin_value': False}
+
+- 狀態: ⏳ 待處理 (總計 1 次)
+
+## INCIDENT 2aab23ca (four_source_sync)
+- 首次發生: 2026-11-09 12:16:11
+- 錯誤: 同義欄位不一致（asset_sync.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)
+
+## INCIDENT 91f94063 (four_source_sync)
+- 首次發生: 2026-11-09 12:18:29
+- 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)
+
+## INCIDENT 5986d0f7 (four_source_sync)
+- 首次發生: 2026-11-09 12:25:26
+- 錯誤: 日報產出失敗: [RUN_DAILY] 日期：2026-11-09
+[CALIBRATE] 三源校準失敗：{'allianz_value': False}
+；穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)

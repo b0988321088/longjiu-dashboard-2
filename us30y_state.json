@@ -1,17 +1,17 @@
 {
   "mode": "A",
-  "streak": 49,
-  "last_rate": 5.251,
-  "last_date": "2026-11-05",
-  "checked_at": "2026-11-06",
+  "streak": 50,
+  "last_rate": 5.26,
+  "last_date": "2026-11-06",
+  "checked_at": "2026-11-09",
   "mode_label": "模式A｜防禦（警戒區 5.20-5.30）",
   "red_line": false,
   "data_source": "FRED+Yahoo",
-  "mode_a_streak": 49,
+  "mode_a_streak": 50,
   "red_line_streak": 0,
   "policy": "舊制（B 案未生效）：模式A ≥5.20% 連 2 日即防禦；紅線 ≥5.30% 連 2 日",
   "red_consecutive_days": 2,
   "data_lag_weekdays": 1,
   "data_stale": false,
-  "as_of": "2026-11-05"
+  "as_of": "2026-11-06"
 }
