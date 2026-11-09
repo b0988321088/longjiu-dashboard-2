@@ -482,6 +482,45 @@ def build():
     _snap_gen = str(snap.get("generated_at") or "")[:16].replace("T", " ")
     pen_targets = pen.get("targets") or {}
 
+    # ── 恢復度三層（2026-11-09 使用者核准：帳面／已實現／未入帳）────────────
+    # 全部由本波高點／低點／今日與 snapshot 派生；不寫死金額。
+    _rec = tot_now - low_val
+    _wave_loss = hi - low_val
+    _wave_loss_pct = _wave_loss / hi * 100 if hi else 0
+    _rec_pct = _rec / _wave_loss * 100 if _wave_loss else 0
+    _sec_chg = _now_s["sec"] - _lo["sec"]
+    # 11/07 新增部位（2610）不是價格回補：從 snapshot.securities.note 取市值扣除
+    _new_buy = 0.0
+    _sec_note = str((snap.get("securities") or {}).get("note") or "")
+    _mb = re.search(r"新增[^。]*?[\d,]+\s*股（均價\s*[\d.]+，市值\s*([\d,]+)）", _sec_note)
+    if _mb:
+        _new_buy = float(_mb.group(1).replace(",", ""))
+    _sec_price = _sec_chg - _new_buy
+    _ins_chg = _now_s["ins"] - _lo["ins"]
+    _realized = _sec_price + _ins_chg
+    _realized_pct = _realized / _wave_loss * 100 if _wave_loss else 0
+    _fund_chg = _now_s["fund"] - _lo["fund"]
+    _sec_gap = _hi["sec"] - _now_s["sec"]
+    _sec_gap_pct = _sec_gap / _now_s["sec"] * 100 if _now_s["sec"] else 0
+    _fund_gap = _hi["fund"] - _now_s["fund"]
+    _nav_dates = snap.get("fund_nav_dates") or {}
+    _nav_txt = "；".join(f"{str(k).split('（')[0]} {v}" for k, v in _nav_dates.items()) or "—"
+    # 台幣：Yahoo 11/06→最新；美元曝險毛額估算，僅供方向，不當精確帳
+    _fx_pts = yhist("USDTWD=X")
+    _fx_now = _fx_pts[-1][1] if _fx_pts else 0
+    _fx_prev = _fx_pts[-2][1] if len(_fx_pts) > 1 else _fx_now
+    _fx_pct = (_fx_now / _fx_prev - 1) * 100 if _fx_prev else 0
+    _fx_drag = tot_now * (_usd_all / 100) * (_fx_pct / 100)
+    _new_buy_note = f"（已扣 11/07 新增 {_new_buy:,.0f}）" if _new_buy else ""
+    _fx_ok = bool(_fx_pts) and _fx_prev > 0
+    _fx_word = "升值" if _fx_pct < 0 else "貶值"
+    if _fx_ok:
+        _fx_line = (f"台幣 11/06→最新 <b>{_fx_pct:+.2f}%</b>（{_fx_word}）；美元曝險 {_usd_all:.1f}%，"
+                    f"毛額換算 <b class=\"{cls(_fx_drag)}\">{_fx_drag:+,.0f}</b>。"
+                    "基金／保單更新時可能先反映匯損，不是補漲。")
+    else:
+        _fx_line = "台幣匯率資料取得失敗（不補值）；基金／保單更新時仍可能有匯損。"
+
     pct_tot = (_num(cur["total_assets"]) - _num(prev["total_assets"])) / _num(prev["total_assets"]) * 100 \
         if _num(prev["total_assets"]) else 0
     d_tot = _num(cur["total_assets"]) - _num(prev["total_assets"])
@@ -492,6 +531,7 @@ def build():
 <title>股災壓力測試 {TODAY}</title>
 <style>
 :root{{color-scheme:dark}}
+*,*::before,*::after{{box-sizing:border-box}}
 body{{margin:0;background:#0b1220;color:#e5e7eb;font:16px/1.75 -apple-system,"Noto Sans TC",sans-serif}}
 .wrap{{max-width:920px;margin:0 auto;padding:24px 18px 60px}}
 h1{{font-size:26px;font-weight:900;margin:0 0 6px}}
@@ -515,6 +555,7 @@ a{{color:#34d399}}
   <div class="sub" style="margin:0">總資產（今日 vs 本波高點 {hi_date}）</div>
   <div class="big {'down' if d_wave<0 else 'up'}">{tot_now:,.0f} <span style="font-size:15px">({d_wave:+,.0f}／{pct_wave:+.2f}%)</span></div>
   <div class="sub" style="margin:6px 0 0">前一交易日對比：{_num(prev['total_assets']):,.0f} → {d_tot:+,.0f}（{pct_tot:+.2f}%）</div>
+  <div class="sub" style="margin:6px 0 0">本波低點回升 <b class="{cls(_rec)}">{_rec:+,.0f}</b>（帳面收復 {_rec_pct:.1f}%）；<b class="{cls(_realized)}">已實現 {_realized_pct:.1f}%</b></div>
 </div>
 
 <h2>一、本波衝擊歸因（{hi_date} → {cur['date']}）</h2>
@@ -596,7 +637,31 @@ a{{color:#34d399}}
 <div class="sub" style="margin:8px 0 0">β 假設：台股／美股 1.0、防守 0.5、債券 0.2；擔保池美股 β {POOL_BETA_US}。僅供壓力測試。</div>
 </div>
 
-<h2>七、整合分析結論（{TODAY} 股災｜與日報第八章同源）</h2>
+<h2>七、恢復度三層（帳面／已實現／未入帳）</h2>
+<div class="card">
+<div class="sub" style="margin:0 0 6px">同一個「回升 {_rec:+,.0f}」拆三層；只有已實現才是真的回到口袋，未入帳不先算。</div>
+<div style="border-bottom:1px solid #1f2c44;padding:10px 0">
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:baseline"><b>帳面</b><b class="{cls(_rec)}">{_rec:+,.0f}</b><span class="sub">占股災段跌幅 {_rec_pct:.1f}%</span></div>
+<div class="sub" style="margin:4px 0 0">總資產低點 {low_val:,.0f} → 今日 {tot_now:,.0f}；含基金口徑變動，不等於行情。</div>
+</div>
+<div style="border-bottom:1px solid #1f2c44;padding:10px 0">
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:baseline"><b>已實現</b><b class="{cls(_realized)}">{_realized:+,.0f}</b><span class="sub">占股災段跌幅 {_realized_pct:.1f}%</span></div>
+<div class="sub" style="margin:4px 0 0">證券價格 {_sec_price:+,.0f}{_new_buy_note}＋保單 {_ins_chg:+,.0f}（淨值／匯率）。</div>
+</div>
+<div style="padding:10px 0">
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:baseline"><b>未入帳</b><span class="sub">不計（先不列已實現）</span></div>
+<div class="sub" style="margin:4px 0 0">基金帳面 {_fund_chg:+,.0f}、淨值日 {_nav_txt}；{cur['date']} 行情未反映。</div>
+</div>
+<div class="sub" style="margin:8px 0 0">已實現＝已反映在 {cur['date']} 市價的變動（證券收盤＋保單換算），不是賣出實現損益。</div>
+<ul>
+<li>股災段跌幅 <b class="down">{_wave_loss:,.0f}</b>（-{_wave_loss_pct:.2f}%）；帳面回升 {_rec:,.0f}（{_rec_pct:.1f}%），距高點仍差 <b class="down">{abs(tot_now-hi):,.0f}</b>。</li>
+<li>證券距高點 <b class="down">{_sec_gap:,.0f}</b>（需再 +{_sec_gap_pct:.1f}%）；基金距高點 <b class="down">{_fund_gap:,.0f}</b>。</li>
+<li>台幣 11/06→最新 <b>{_fx_pct:+.2f}%</b>（{_fx_word}）；美元曝險 {_usd_all:.1f}%，毛額換算 <b class="{cls(_fx_drag)}">{_fx_drag:+,.0f}</b>。基金／保單更新時可能先反映匯損，不是補漲。</li>
+<li><b>結論</b>：帳面 {_rec_pct:.1f}% 不是實際恢復；已實現只有 {_realized_pct:.1f}%。基金慢半拍，慢到的可能是匯損，不是反彈。</li>
+</ul>
+</div>
+
+<h2>八、整合分析結論（{TODAY} 股災｜與日報第八章同源）</h2>
 <div class="card">
 <ul>
 <li><b>真值校準</b>：本波（{hi_date} → {cur['date']}）總資產 {hi:,.0f} → {tot_now:,.0f}（<b class="down">{d_wave:+,.0f}／{pct_wave:+.1f}%</b>）；三個投資部位合計 <b class="down">{_inv_sum:+,.0f}</b>。含房淨值 <b>{_nw_re:,.0f}</b>、流動淨值（不含房產）<b class="down">{_nw:,.0f}</b>——負債 {_liab:,.0f} 中房貸 {_mort:,.0f}（{(_mort/_liab*100) if _liab else 0:.1f}%），「負債大於流動資產」是不對等口徑，不是償債危機。</li>
@@ -609,7 +674,7 @@ a{{color:#34d399}}
 <div class="sub" style="margin:8px 0 0">本段與日報第八章同一批真值（snapshot 產生 {_snap_gen or '—'}）；數字全部現算，未人工填寫。</div>
 </div>
 
-<h2>八、機會子彈（大盤回檔 {abs(_ob_thr):.0f}% 啟動｜{_ord.get('狀態', '計畫')}）</h2>
+<h2>九、機會子彈（大盤回檔 {abs(_ob_thr):.0f}% 啟動｜{_ord.get('狀態', '計畫')}）</h2>
 {_ord_block}
 <div class="card">
 <ul>
@@ -662,7 +727,7 @@ a{{color:#34d399}}
 </table>
 </div>
 
-<h2>九、結論與行動</h2>
+<h2>十、結論與行動</h2>
 <div class="card">
 <ul>
 <li>本波回檔 {pct_wave:+.2f}%，主因台股部位僅 {_num(act_pct.get('台股市值型成長')):.1f}%、三塊各跌約 25–33 萬，屬配置分散生效，非單一部位爆炸。</li>
