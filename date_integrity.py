@@ -462,14 +462,26 @@ def load_gate_inputs(base=None, now=None):
         try:
             em = json.loads(em_path.read_text(encoding="utf-8"))
             body = str(em.get("full_report") or "")
-            narratives.append({
-                "text": body,
-                # 只認 producer 明確提供的 content_date；generated_at 僅記錄、不得當日期
-                "content_date": em.get("content_date"),
-                "sections": em.get("sections") or [],
-                "contains_today_word": "今日" in body,
-                "generated_at": em.get("generated_at"),  # 僅供追溯，不參與判定
-            })
+            _cd = parse_date(em.get("content_date"))
+            # 2026-11-09 修（07:00 連日「已產出但未上線」根因）：
+            #   日報只有在 content_date == 報告日 時才會採用緊急應變分析（daily_report_assembly
+            #   tier 1 的條件就是相等）；過期檔留在 data/ 只是歷史殘留。舊版卻無條件把它塞進 L3，
+            #   它一過期就讓**整份日報永久 BLOCKED**（實例：11-06 的分析讓 11-07～11-09 每天早上
+            #   都停在「未推送」，直到晚上收尾 commit 才補上線）。
+            #   判準改為與產出端一致：只有本報告日真的會用到的敘述才受日期閘門管。
+            #   方向是「不收未使用的舊稿」而非「放寬對本稿的判定」——本報告日的稿仍逐字判。
+            if _cd and _cd == report_date:
+                narratives.append({
+                    "text": body,
+                    # 只認 producer 明確提供的 content_date；generated_at 僅記錄、不得當日期
+                    "content_date": em.get("content_date"),
+                    "sections": em.get("sections") or [],
+                    "contains_today_word": "今日" in body,
+                    "generated_at": em.get("generated_at"),  # 僅供追溯，不參與判定
+                })
+            elif body:
+                print(f"[DATE-GATE] 緊急應變分析 content_date={em.get('content_date') or 'UNKNOWN'} "
+                      f"≠ 報告日 {report_date} → 未列入 L3（日報不採用此檔，僅為歷史殘留）")
         except Exception:
             pass
 
