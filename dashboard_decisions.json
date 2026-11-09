@@ -12156,15 +12156,15 @@
       "status": "completed",
       "source": "auto"
     },
-  {
-    "id": "mem-20261109032419-1315",
-    "timestamp": "2026-11-09T03:24:19.410060+08:00",
-    "agent": "Hermes",
-    "task": "深度清理透明化＋Git 空間整理（A+C）",
-    "summary": "核准 A 統計透明化＋C git repack（253M→231M、歷史全保留）；B(DB備份keep=2)與D(舊session歸檔)暫緩；push 未授權",
-    "status": "已核准",
-    "source": "user"
-  }
+    {
+      "id": "mem-20261109032419-1315",
+      "timestamp": "2026-11-09T03:24:19.410060+08:00",
+      "agent": "Hermes",
+      "task": "深度清理透明化＋Git 空間整理（A+C）",
+      "summary": "核准 A 統計透明化＋C git repack（253M→231M、歷史全保留）；B(DB備份keep=2)與D(舊session歸檔)暫緩；push 未授權",
+      "status": "已核准",
+      "source": "user"
+    }
   ],
   "pending_decisions": [
     {
@@ -12182,7 +12182,7 @@
     {
       "date": "2026-10-14",
       "action": "台股解凍後分批規則定版（節奏／單次上限／停止條件）",
-      "status": "進行中",
+      "status": "已確認",
       "tags": "台股,解凍,分批規則,US30Y,停止條件"
     },
     {
@@ -12223,7 +12223,7 @@
     }
   ],
   "meta": {
-    "updated_at": "2026-11-08T07:00:38+08:00"
+    "updated_at": "2026-11-09T08:31:31+08:00"
   },
-  "last_updated": "2026-11-08T07:00:38+08:00"
+  "last_updated": "2026-11-09T08:31:31+08:00"
 }
