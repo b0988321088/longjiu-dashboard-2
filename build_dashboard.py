@@ -200,9 +200,20 @@ def build_perf_card(snap):
     cells.append(cell("保單（帳面）", f"{p_gap:+,.0f}（{p_gap_pct:+.2f}%）", _c2,
                       [f"市值 {_m(ins)}", f"投入 {_m(p_cost)}",
                        f"累計配息 {_m(p_div)}（含本金返還，不列報酬）"]))
-    # ③ 基金
-    cells.append(cell("基金（僅市值）", _m(fund), "text-slate-100",
-                      ["無成本基礎 → 依 10/31 定案不計算報酬", "XIRR 待資金流重建"]))
+    # ③ 基金（2026-11-09 使用者指正：投資績效漏列國泰直購配息）
+    #    國泰直購配息留在投資型帳戶、不進銀行帳 → Moneybook 抓不到，必須顯式列示。
+    #    口徑不變：基金仍不計算報酬率（10/31 定案），配息只作參考、標明含本金返還。
+    _ct_cost = _n(snap.get("cathay_cost"))
+    _ct_div = _n(snap.get("cathay_cum_dividend"))
+    _ct_asof = str(snap.get("cathay_cum_dividend_asof") or "—")
+    _fund_subs = ["無成本基礎 → 依 10/31 定案不計算報酬", "XIRR 待資金流重建"]
+    if _ct_div:
+        _fund_subs.insert(0, f"國泰直購 累計配息 {_m(_ct_div)}（至 {_ct_asof}，含本金返還，不列報酬）")
+        if _ct_cost:
+            _fund_subs.insert(1, f"國泰直購 投入本金 {_m(_ct_cost)}")
+    else:
+        _fund_subs.insert(0, "國泰直購累計配息 待補（不臆測）")
+    cells.append(cell("基金（僅市值）", _m(fund), "text-slate-100", _fund_subs))
     # ④ 財富（雙軌淨值）
     _c3 = "text-emerald-400" if na_i >= 0 else "text-red-400"
     _c4 = "text-emerald-400" if na_l >= 0 else "text-red-400"
