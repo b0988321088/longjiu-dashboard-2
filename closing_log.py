@@ -40,6 +40,7 @@ CACHE_AUDIT_STATE_LEGACY = DATA_DIR / ".cache_audit_state.json"   # 遷移來源
 CACHE_AUDIT_STATE_NAME = "cache_audit_state.json"
 CACHE_AUDIT_LOG = DATA_DIR / ".cache_audit.log"
 CACHE_NAME_RE = re.compile(r"_(\d{4}-\d{2}-\d{2})_")
+CACHE_RETENTION_DAYS = 14   # 與 cleanup_utils._cleanup_temp_and_cache_files(cache_days=14) 對齊
 
 sys.path.insert(0, str(BASE))
 try:
@@ -75,14 +76,29 @@ def cache_audit() -> None:
         today = dt.date.today().isoformat()
     else:
         today = dt.date.today().isoformat()
-    removed = sorted(set(prev) - set(cur))
+    removed_all = sorted(set(prev) - set(cur))
+    # 2026-11-09：逾期（>CACHE_RETENTION_DAYS）快取由 cleanup_utils H4 政策刪除，
+    # 不列入異常告警；仍完整寫入稽核 log。近期／當日被刪才告警。
+    _today_date = dt.date.fromisoformat(today)
+
+    def _expired(name: str) -> bool:
+        m = CACHE_NAME_RE.search(name)
+        if not m:
+            return False
+        try:
+            return (_today_date - dt.date.fromisoformat(m.group(1))).days > CACHE_RETENTION_DAYS
+        except ValueError:
+            return False
+
+    removed = [r for r in removed_all if not _expired(r)]
+    expired_removed = len(removed_all) - len(removed)
     added = sorted(set(cur) - set(prev))
     n_today = sum(1 for f in cur if f"_{today}_" in f)
     try:
         with CACHE_AUDIT_LOG.open("a", encoding="utf-8") as fh:
             fh.write(f"{dt.datetime.now():%Y-%m-%d %H:%M} total={len(cur)} today={n_today} "
-                     f"removed={len(removed)} added={len(added)}\n")
-            for r in removed:
+                     f"removed={len(removed_all)} expired={expired_removed} added={len(added)}\n")
+            for r in removed_all:
                 fh.write(f"    - {r}\n")
         if _ss is not None:
             _ss.write_json(CACHE_AUDIT_STATE_NAME,
@@ -98,6 +114,8 @@ def cache_audit() -> None:
                f"（總數 {len(prev)}→{len(cur)}）")
         if same_day:
             msg += f"\n  🚨 含**當日**快取 {len(same_day)} 個（會造成同日重算）：" + "、".join(same_day[:5])
+        if expired_removed:
+            msg += f"\n  （另有 {expired_removed} 檔逾期快取由清理政策刪除，不告警）"
         msg += "\n  刪除清單（前 10）：" + "、".join(removed[:10])
         msg += "\n  （規則：禁刪 `_{TODAY}_` 當日快取；完整記錄見 data/.cache_audit.log）"
         print(msg)
