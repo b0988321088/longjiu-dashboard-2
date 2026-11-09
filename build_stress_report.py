@@ -300,7 +300,10 @@ def build():
     _sc = {lab: (d, t, r, lt) for lab, d, t, r, lt in scen}
     _gb = _sc.get("股債同跌（股 -20／債 -5）", (0.0, tot_now, 0.0, 0.0))
     _inv_sum = sum(p[3] for p in parts[1:4])
-    _pool_note = (f"（資料日 {str(_pool_date).split('（')[0].strip()}）" if _pool_date else "")
+    _pool_date_clean = str(_pool_date).split('（')[0].strip() if _pool_date else ""
+    _pool_note = (f"（資料日 {_pool_date_clean}）" if _pool_date_clean else "")
+    if _pool_date_clean and _pool_date_clean != cur["date"]:
+        _pool_note = f"（資料日 {_pool_date_clean}；{cur['date']} 尚未更新，LTV 為保守值）"
     _hist_note = (f"；舊值 {_num(_pool_hist.get('合計')):,.0f}（{_pool_hist.get('asof','')} 截圖／"
                   f"報價日 {_pool_hist.get('報價日','—')}，維持率 {_pool_hist.get('對應維持率','—')}）"
                   f"保留於 snapshot 歷史" if _pool_hist.get("合計") else "")
@@ -395,6 +398,16 @@ def build():
     _ob_ammo = _num(_ob_rule.get("金額上限")) or (unrestricted - floor)
     _ob_thr = _num(_ob_rule.get("觸發門檻_pct"), -20)
     _ob_dd = _num(_ob_trig.get("回檔_pct"))
+    _dry_now = unrestricted - floor
+    _ob_base_cash = _ob_ammo + floor
+    _ob_gap = _dry_now - _ob_ammo
+    _tw = idx.get("台股加權") or {}
+    _tw_now = _num(_tw.get("close")) or _num(_ob_trig.get("現值"))
+    _tw_date = _tw.get("date") or _ob_trig.get("價格日", "—")
+    _tw_high = _num(_ob_trig.get("波段高點"))
+    _tw_dd = (_tw_now / _tw_high - 1) * 100 if _tw_high else _ob_dd
+    _tw_met = _tw_dd <= _ob_thr
+    _tw_state = "首批日期為 11/07 計畫之歷史日期，非執行訊號"
     _ob_nb = int(_num(_ob_prog.get("總批次"), 9))
     _ob_cost = sum(_num(a.get("實付")) for a in _ob_alloc)
     _ob_state = _ob_trig.get("狀態") or "—"
@@ -459,6 +472,11 @@ def build():
     _lock_risk_html = "".join(f"<li>{x}</li>" for x in _lock_risk)
     # ── 機會子彈：本批下單紀錄（使用者 2026-11-07 下令，週一 11/09 執行）──
     _ord = ob.get("執行紀錄_20261109") or {}
+    _ord_total = _num(_ord.get("估計合計"))
+    _ord_cash_after = _num(_ord.get("下單後可動用現金"))
+    if not _ord_cash_after and _ord_total:
+        _ord_cash_after = unrestricted - _ord_total
+    _ord_buffer = _ord_cash_after - floor
     _ord_rows = "".join(
         f"<tr><td>{o.get('ticker','')}</td><td>{o.get('name','')}</td>"
         f"<td class='n'>{(o.get('股數') or 0):,}</td><td class='n'>{_num(o.get('參考價')):,.2f}</td>"
@@ -469,12 +487,12 @@ def build():
     if _ord:
         _ord_block = (
             "<div class='card'>"
-            + f"<div class='sub' style='margin:0 0 6px'><b>{_ord.get('狀態', '')}</b>｜{_ord.get('依據', '')}</div>"
+            + f"<div class='sub' style='margin:0 0 6px'><b>11/07 基準・歷史計畫</b>｜<b>{_ord.get('狀態', '')}</b>｜{_ord.get('依據', '')}｜非 11/09 執行指令</div>"
             + "<table><tr><th>代號</th><th>名稱</th><th class='n'>股數</th><th class='n'>參考價</th>"
               "<th class='n'>金額</th><th class='n'>手續費</th><th class='n'>估計合計</th></tr>"
             + _ord_rows
             + f"<tr><td colspan='6'><b>合計</b></td><td class='n'><b>{_num(_ord.get('估計合計')):,.0f}</b></td></tr></table>"
-            + f"<div class='sub' style='margin:8px 0 0'>下單後可動用 {_num(_ord.get('下單後可動用現金')):,.0f}（底線 {_num(_ord.get('生活底線')):,.0f}｜餘裕 {_num(_ord.get('餘裕')):,.0f}）｜{_ord.get('偏離說明', '')}</div>"
+            + f"<div class='sub' style='margin:8px 0 0'>下單後可動用 {_ord_cash_after:,.0f}（底線 {_num(_ord.get('生活底線')):,.0f}｜餘裕 {_ord_buffer:,.0f}）｜{_ord.get('偏離說明', '')}</div>"
             + f"<div class='sub' style='margin:6px 0 0'>⚠️ {_ord.get('價格提醒', '')}</div>"
             + f"<div class='sub' style='margin:6px 0 0'>未納入本批：{_ord.get('未納入本批', '')}</div>"
             + "</div>\n"
@@ -555,7 +573,7 @@ a{{color:#34d399}}
   <div class="sub" style="margin:0">總資產（今日 vs 本波高點 {hi_date}）</div>
   <div class="big {'down' if d_wave<0 else 'up'}">{tot_now:,.0f} <span style="font-size:15px">({d_wave:+,.0f}／{pct_wave:+.2f}%)</span></div>
   <div class="sub" style="margin:6px 0 0">前一交易日對比：{_num(prev['total_assets']):,.0f} → {d_tot:+,.0f}（{pct_tot:+.2f}%）</div>
-  <div class="sub" style="margin:6px 0 0">本波低點回升 <b class="{cls(_rec)}">{_rec:+,.0f}</b>（帳面收復 {_rec_pct:.1f}%）；<b class="{cls(_realized)}">已實現 {_realized_pct:.1f}%</b></div>
+  <div class="sub" style="margin:6px 0 0">本波低點回升 <b class="{cls(_rec)}">{_rec:+,.0f}</b>（帳面收復 {_rec_pct:.1f}%）；<b class="{cls(_realized)}">已反映市價 {_realized_pct:.1f}%</b></div>
 </div>
 
 <h2>一、本波衝擊歸因（{hi_date} → {cur['date']}）</h2>
@@ -591,7 +609,7 @@ a{{color:#34d399}}
 <tr><th>門檻</th><th class="n">池市值</th><th class="n">池需跌</th><th class="n">對應</th></tr>
 {gate_html}
 </table>
-<div class="sub" style="margin:8px 0 0">維持率＝池市值÷借款；LTV＝借款÷池市值（互為倒數，不得混用）。</div>
+<div class="sub" style="margin:8px 0 0">維持率＝池市值÷借款；LTV＝借款÷池市值（互為倒數，不得混用）。{_pool_note}</div>
 </div>
 
 <div class="card">
@@ -637,27 +655,27 @@ a{{color:#34d399}}
 <div class="sub" style="margin:8px 0 0">β 假設：台股／美股 1.0、防守 0.5、債券 0.2；擔保池美股 β {POOL_BETA_US}。僅供壓力測試。</div>
 </div>
 
-<h2>七、恢復度三層（帳面／已實現／未入帳）</h2>
+<h2>七、恢復度三層（帳面／已反映市價／未入帳）</h2>
 <div class="card">
-<div class="sub" style="margin:0 0 6px">同一個「回升 {_rec:+,.0f}」拆三層；只有已實現才是真的回到口袋，未入帳不先算。</div>
+<div class="sub" style="margin:0 0 6px">同一個「回升 {_rec:+,.0f}」拆三層；只有賣出才是真的落袋，這裡是已反映市價、尚未賣出，未入帳不先算。</div>
 <div style="border-bottom:1px solid #1f2c44;padding:10px 0">
 <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:baseline"><b>帳面</b><b class="{cls(_rec)}">{_rec:+,.0f}</b><span class="sub">占股災段跌幅 {_rec_pct:.1f}%</span></div>
 <div class="sub" style="margin:4px 0 0">總資產低點 {low_val:,.0f} → 今日 {tot_now:,.0f}；含基金口徑變動，不等於行情。</div>
 </div>
 <div style="border-bottom:1px solid #1f2c44;padding:10px 0">
-<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:baseline"><b>已實現</b><b class="{cls(_realized)}">{_realized:+,.0f}</b><span class="sub">占股災段跌幅 {_realized_pct:.1f}%</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:baseline"><b>已反映市價</b><b class="{cls(_realized)}">{_realized:+,.0f}</b><span class="sub">占股災段跌幅 {_realized_pct:.1f}%</span></div>
 <div class="sub" style="margin:4px 0 0">證券價格 {_sec_price:+,.0f}{_new_buy_note}＋保單 {_ins_chg:+,.0f}（淨值／匯率）。</div>
 </div>
 <div style="padding:10px 0">
-<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:baseline"><b>未入帳</b><span class="sub">不計（先不列已實現）</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:baseline"><b>未入帳</b><span class="sub">不計（先不列已反映市價）</span></div>
 <div class="sub" style="margin:4px 0 0">基金帳面 {_fund_chg:+,.0f}、淨值日 {_nav_txt}；{cur['date']} 行情未反映。</div>
 </div>
-<div class="sub" style="margin:8px 0 0">已實現＝已反映在 {cur['date']} 市價的變動（證券收盤＋保單換算），不是賣出實現損益。</div>
+<div class="sub" style="margin:8px 0 0">已反映市價＝已反映在 {cur['date']} 市價的變動（證券收盤＋保單換算）；尚未賣出，不是落袋損益。</div>
 <ul>
 <li>股災段跌幅 <b class="down">{_wave_loss:,.0f}</b>（-{_wave_loss_pct:.2f}%）；帳面回升 {_rec:,.0f}（{_rec_pct:.1f}%），距高點仍差 <b class="down">{abs(tot_now-hi):,.0f}</b>。</li>
 <li>證券距高點 <b class="down">{_sec_gap:,.0f}</b>（需再 +{_sec_gap_pct:.1f}%）；基金距高點 <b class="down">{_fund_gap:,.0f}</b>。</li>
 <li>台幣 11/06→最新 <b>{_fx_pct:+.2f}%</b>（{_fx_word}）；美元曝險 {_usd_all:.1f}%，毛額換算 <b class="{cls(_fx_drag)}">{_fx_drag:+,.0f}</b>。基金／保單更新時可能先反映匯損，不是補漲。</li>
-<li><b>結論</b>：帳面 {_rec_pct:.1f}% 不是實際恢復；已實現只有 {_realized_pct:.1f}%。基金慢半拍，慢到的可能是匯損，不是反彈。</li>
+<li><b>結論</b>：帳面 {_rec_pct:.1f}% 不是實際恢復；已反映市價只有 {_realized_pct:.1f}%（未賣出）。基金慢半拍，慢到的可能是匯損，不是反彈。</li>
 </ul>
 </div>
 
@@ -666,6 +684,7 @@ a{{color:#34d399}}
 <ul>
 <li><b>真值校準</b>：本波（{hi_date} → {cur['date']}）總資產 {hi:,.0f} → {tot_now:,.0f}（<b class="down">{d_wave:+,.0f}／{pct_wave:+.1f}%</b>）；三個投資部位合計 <b class="down">{_inv_sum:+,.0f}</b>。含房淨值 <b>{_nw_re:,.0f}</b>、流動淨值（不含房產）<b class="down">{_nw:,.0f}</b>——負債 {_liab:,.0f} 中房貸 {_mort:,.0f}（{(_mort/_liab*100) if _liab else 0:.1f}%），「負債大於流動資產」是不對等口徑，不是償債危機。</li>
 <li><b>三個口徑不可互換</b>：五桶 台股 {_num(act_pct.get('台股市值型成長')):.1f}%／美股 {_num(act_pct.get('美股市值型成長')):.1f}%／防守 {_num(act_pct.get('防守型配息')):.1f}%／債券 {_num(act_pct.get('債券')):.1f}%／現金 {_num(act_pct.get('現金/安全網')):.1f}%；抗跌力看<b>雙維度防禦維度 {_dd:.1f}%</b>（不是防守桶）；GICS 高科技 <b>{_gics_tech:.1f}%</b>；美元曝險 {_usd_all:.1f}%／已避險 {_usd_hedge:.1f}%／淨 {_usd_net:.1f}%。</li>
+<li><b>不能把這次抗跌當全面防禦</b>：台股僅 {_num(act_pct.get('台股市值型成長')):.1f}%，本次損失相對較小主要是台股比重低；若美股／科技／美元同步下跌，壓力會更大。真正集中風險是美股 {_num(act_pct.get('美股市值型成長')):.1f}%、GICS 科技 {_gics_tech:.1f}%、美元毛曝險 {_usd_all:.1f}%。</li>
 <li><b>質押主線</b>：維持率 {ratio:.1f}%／LTV {ltv:.1f}%{_pool_note}{_hist_note}。距內部停止線 {gates[0][2]:.1f}%、距銀行通知 {gates[1][2]:.1f}%、距追繳 {gates[2][2]:.1f}%——真正危險距離是通知線，內部 53% 只是停止加碼線。</li>
 <li><b>股債同跌</b>（股 -20／債 -5）：資產影響 <b class="down">{_gb[0]:+,.0f}</b> → {_gb[1]:,.0f}，維持率 <b>{_gb[2]:.1f}%</b>、LTV {_gb[3]:.1f}%（擔保池按美股 β {POOL_BETA_US} 推估，屬假設）。</li>
 <li><b>流動性才是真風險</b>：{_liq_note}</li>
@@ -678,10 +697,11 @@ a{{color:#34d399}}
 {_ord_block}
 <div class="card">
 <ul>
-<li><b>規則</b>：保留生活底線 <b>{fmt(floor)}</b>；乾粉 <b>{fmt(_ob_ammo)}</b> 在大盤自波段高點回檔 <b>≥{abs(_ob_thr):.0f}%</b> 時啟動；<b>本輪鎖定 5 檔</b>：2330 台積電／0050／00878／00919／0056</li>
-<li><b>觸發狀態</b>：^TWII 高點 <b>{_num(_ob_trig.get('波段高點')):,.2f}</b>（{_ob_trig.get('高點日', '—')}）→ <b>{_num(_ob_trig.get('現值')):,.2f}</b>（{_ob_trig.get('價格日', '—')}）＝ 回檔 <b class="down">{abs(_ob_dd):.2f}%</b>　{_ob_state}</li>
-<li><b>彈藥</b>：可動用 <b>{fmt(unrestricted)}</b> − 生活底線 <b>{fmt(floor)}</b> ＝ <b>{fmt(_ob_ammo)}</b>；預備款 <b>{fmt(restricted)}</b> 不動</li>
-<li><b>批次</b>：{_lock_batch.get('總批次', '—')} 批、每批 ≤<b>{_num(_lock_batch.get('每批上限')):,.0f}</b>，首批 {_lock_batch.get('首批日', '—')}｜狀態：<b>{_lock_status}</b></li>
+<li><b>規則</b>：保留生活底線 <b>{fmt(floor)}</b>；計畫彈藥 <b>{fmt(_ob_ammo)}</b>、現行乾粉 <b>{fmt(_dry_now)}</b> 在大盤自波段高點回檔 <b>≥{abs(_ob_thr):.0f}%</b> 時啟動；<b>本輪鎖定 5 檔</b>：2330 台積電／0050／00878／00919／0056</li>
+<li><b>觸發狀態</b>：^TWII 波段高點 <b>{_num(_ob_trig.get('波段高點')):,.2f}</b>（{_ob_trig.get('高點日', '—')}）→ 前次 <b>{_num(_ob_trig.get('現值')):,.2f}</b>（{_ob_trig.get('價格日', '—')}）＝ 回檔 <b class="down">{_ob_dd:+.2f}%</b>　{_ob_state}；{_tw_date} 收盤 <b>{_tw_now:,.2f}</b>＝ 回檔 <b class="down">{_tw_dd:+.2f}%</b> → <b>{_tw_state}</b></li>
+<li><b>台股分批狀態</b>：依 {cur['date']} 真值，US30Y、LTV、現金三項條件已成立，<b>待本人逐批下令</b>；此與機會子彈 -20% 觸發是兩個不同條件，不得混用。</li>
+<li><b>計畫彈藥</b>：<b>{fmt(_ob_ammo)}</b>（{fmt(_ob_base_cash)} − 底線 {fmt(floor)}，11/07 基準）；<b>現行乾粉</b>：<b>{fmt(_dry_now)}</b>（可動用 {fmt(unrestricted)} − 底線 {fmt(floor)}）；差額 <b>{_ob_gap:+,.0f}</b> 為 11/07 後現金增加，未編入本計畫；預備款 <b>{fmt(restricted)}</b> 不動</li>
+<li><b>批次</b>：{_lock_batch.get('總批次', '—')} 批、每批 ≤<b>{_num(_lock_batch.get('每批上限')):,.0f}</b>，首批 {_lock_batch.get('首批日', '—')}（歷史計畫日期，非執行訊號）｜狀態：<b>{_lock_status}</b></li>
 </ul>
 </div>
 
@@ -695,7 +715,7 @@ a{{color:#34d399}}
 </div>
 
 <div class="card">
-<div class="sub" style="margin:0 0 6px">標的與金額（總額 {fmt(_ob_ammo)}；每批＝{_lock_batch.get('總批次', '—')} 等分）</div>
+<div class="sub" style="margin:0 0 6px">標的與金額（11/07 基準；計畫總額 {fmt(_ob_ammo)}；現行乾粉 {fmt(_dry_now)}；每批＝{_lock_batch.get('總批次', '—')} 等分；首批 11/09 為歷史計畫日期）</div>
 <table>
 <tr><th>代號</th><th>名稱</th><th class="n">計畫金額</th><th class="n">參考價</th><th class="n">目標股數</th><th class="n">每批金額</th><th class="n">每批股數</th><th>來源</th></tr>
 {_lock_rows or '<tr><td colspan="8">snapshot 無指定標的計畫</td></tr>'}
@@ -710,6 +730,7 @@ a{{color:#34d399}}
 {_first_rows or '<tr><td colspan="4">—</td></tr>'}
 <tr><td colspan="3"><b>首批估計合計</b></td><td class="n"><b>{_num((_ob_lock.get('首批_20261109') or {}).get('估計合計')):,.0f}</b></td></tr>
 </table>
+<div class="sub" style="margin:6px 0 0">首批估計 <b>{_num((_ob_lock.get('首批_20261109') or {}).get('估計合計')):,.0f}</b> 為 11/06 收盤價估算；每批上限 <b>{_num(_lock_batch.get('每批上限')):,.0f}</b> 為風控上限，兩者不是同一件事，非數字矛盾。</div>
 </div>
 
 <div class="card">
@@ -730,12 +751,12 @@ a{{color:#34d399}}
 <h2>十、結論與行動</h2>
 <div class="card">
 <ul>
-<li>本波回檔 {pct_wave:+.2f}%，主因台股部位僅 {_num(act_pct.get('台股市值型成長')):.1f}%、三塊各跌約 25–33 萬，屬配置分散生效，非單一部位爆炸。</li>
+<li>本波回檔 {pct_wave:+.2f}%，損失相對較小主要因為台股部位僅 {_num(act_pct.get('台股市值型成長')):.1f}%，不能推論整體配置已具備全面防禦能力；三塊分別 證券 <b>{_now_s['sec']-_hi['sec']:+,.0f}</b>、基金 <b>{_now_s['fund']-_hi['fund']:+,.0f}</b>、保險 <b>{_now_s['ins']-_hi['ins']:+,.0f}</b>；真正集中風險是美股 {_num(act_pct.get('美股市值型成長')):.1f}%、GICS 科技 {_gics_tech:.1f}%、美元毛曝險 {_usd_all:.1f}%。</li>
 <li>最緊的不是銀行線，是<b>內部停止線</b>：池再跌 {gates[0][2]:.1f}% 就觸線，而美股單日波動即可達此量級。</li>
 <li>{_liq2_note}。</li>
 <li>若觸線：<b>現金還本</b>，不賣後收級別擔保品（CDSC 未到期）；不新增借款。</li>
 <li>紀律不變：急跌日（單日 ≥3%）只回報不動作；不接刀、不停損、不攤平；減碼窗口是反彈。</li>
-<li>機會子彈 <b>{fmt(_ob_ammo)}</b>：本輪鎖定 <b>2330 台積電／0050／00878／00919／0056</b>，{_lock_batch.get('總批次', '—')} 批、每批 ≤{_num(_lock_batch.get('每批上限')):,.0f}；首批 {_lock_batch.get('首批日', '11/09')} 估計 <b>{_num((_ob_lock.get('首批_20261109') or {}).get('估計合計')):,.0f}</b>，<b>尚未下單</b>；買後可動用現金不得低於 {fmt(floor)}。</li>
+<li>機會子彈計畫彈藥 <b>{fmt(_ob_ammo)}</b>（現行乾粉 <b>{fmt(_dry_now)}</b>）：本輪鎖定 <b>2330 台積電／0050／00878／00919／0056</b>，{_lock_batch.get('總批次', '—')} 批、每批 ≤{_num(_lock_batch.get('每批上限')):,.0f}；首批 {_lock_batch.get('首批日', '11/09')} 估計 <b>{_num((_ob_lock.get('首批_20261109') or {}).get('估計合計')):,.0f}</b>，<b>尚未下單</b>；買後可動用現金不得低於 {fmt(floor)}。</li>
 </ul>
 </div>
 {f'<div class="card warn"><b>淨值日落後示警</b>：{"／".join(nav_note)}，市場價 {latest_mkt}。下一交易日淨值仍可能再下修，今日總資產不是底部。</div>' if stale else ''}
