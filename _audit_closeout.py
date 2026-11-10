@@ -139,12 +139,12 @@ def collect_link_issues(linked_targets, tracked_files, untracked_files, base):
     rep, temp, miss = classify_linked_artifacts(linked_targets, tracked_files, untracked_files, base)
     issues, lines = [], []
     if rep:
-        lines.append(f"  ❌ 被 index.html 連結卻未入庫（push 不會帶上去 → 線上 404）: {rep}")
+        lines.append(f"  ❌ 被今日報表連結卻未入庫（push 不會帶上去 → 線上 404）: {rep}")
         issues.append(f"正式報表未入庫: {rep}")
     else:
-        lines.append("  ✅ 所有 index.html 連結的正式報表均已入庫")
+        lines.append("  ✅ 所有今日交付物連結（首頁＋當日日報）的正式報表均已入庫")
     if miss:
-        lines.append(f"  ❌ index.html 連結目標本機不存在（產檔失敗／連結指到未來檔）: {miss}")
+        lines.append(f"  ❌ 今日交付物連結目標本機不存在（產檔失敗／連結指到未來檔）: {miss}")
         issues.append(f"連結目標不存在: {miss}")
     lines.append(f"  ℹ️ 未追蹤暫存/備份（未連結首頁，預期、不阻擋）共 {len(temp)} 檔")
     return issues, lines
@@ -375,8 +375,11 @@ if owned:
 # 被歸類成正常暫存。判準改為「index.html 連到的相對路徑＝正式交付物，未入版控即 fail」；
 # 未連結者（_bak_*／site/／hunter_cache/／log…）維持既有「只產檔不 commit」流程，只印 ℹ️。
 try:
-    _linked_targets = set(re.findall(r'href="([^"]+)"',
-                                     (R / "index.html").read_text(encoding="utf-8")))
+    # 2026-11-10：連結來源由 links_config 單一提供（首頁 ∪ 當日日報的當日連結）。
+    # 原本只讀 index.html → 台股版緊急報告（只被日報連、且是 Pages 絕對 URL）永遠掃不到，
+    # 每晚漏收、線上 404，隔天早上才手動補（2026-11-06、11-09 實例）。
+    import links_config as _links_cfg
+    _linked_targets = _links_cfg.today_deliverable_links(str(R))
     _tracked_all = set(subprocess.run(["git", "ls-files"], cwd=R, capture_output=True, text=True,
                                       encoding="utf-8", errors="replace").stdout.splitlines())
     _link_issues, _link_lines = collect_link_issues(

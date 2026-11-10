@@ -508,6 +508,41 @@ def scan(T: str, base: Path = BASE) -> list[str]:
         if _hist_n:
             print(f"  ℹ️ 內文數字守門：{p.name}（產出時點 {_asof}）併入當日 {_hist_n} 版 snapshot 歷史值")
         hits += scan_text(txt, allowed, p.name)
+    hits += forbidden_publish_claims(T, base)
+    return hits
+
+
+# ── 發布狀態宣告守門（2026-11-10 新增）─────────────────────────────────────
+# 為什麼：13:00／21:30 緊急應變班會在內文寫「未 commit、未 push、未發布（待授權）」，
+# 但 22:38 收尾提交會把同一批資料與報表入庫並推送 → 報告上線後自我矛盾
+# （2026-11-10 實例：日報第八章寫「線上頁面今晚不會更新」，22:38 就推上去了）。
+# 生產者無法預知收尾結果，因此**不得宣告發布狀態**，只寫時間中性敘述。
+# 刻意不含「未提交／未入庫」：那兩個詞在稽核敘述裡是正常用語（例：「13 檔未提交」），
+# 收進來只會製造假陽性。
+_NL = chr(10)
+_CLAIM_RE = re.compile(
+    "[^。" + _NL + "]{0,60}"
+    "(?:未[ 	]*(?:commit|push|publish)|未發布|未上線|未宣稱上線|不會更新)"
+    "[^。" + _NL + "]{0,60}。?"
+)
+_SELF_RE = re.compile(r"本(?:份|報告|簡報|文)")
+
+
+def forbidden_publish_claims(T: str, base: Path = BASE) -> list[str]:
+    """內文不得宣告「未 commit／未 push／未發布／線上不會更新」這類發布狀態。"""
+    hits: list[str] = []
+    for p in narrative_sources(T, base):
+        txt = _text_of(p)
+        if not txt:
+            continue
+        for m in _CLAIM_RE.finditer(txt):
+            seg = m.group(0).strip()
+            if not _SELF_RE.search(seg):
+                continue
+            hits.append(
+                f"{p.name}：宣告發布狀態「{seg[:80]}」→ 22:38 收尾會入庫並推送，"
+                "此句將與事實相反；請改成時間中性敘述（例：入庫與推送交由晚間收尾程序處理）"
+            )
     return hits
 
 

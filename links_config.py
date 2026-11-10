@@ -18,6 +18,9 @@
 2. 本檔的 `PREFIX_RULES` 加前綴
 3. 本檔的 `PLACEHOLDER_PREFIX` 加佔位符 → 前綴
 """
+import datetime
+import re
+from pathlib import Path
 
 # 檔名前綴 → (副檔名, 顯示規則)；rule="month" 表示標籤要帶（N月）
 PREFIX_RULES = {
@@ -111,6 +114,59 @@ def build_link_map():
 
 def all_placeholder_keys():
     return set(PLACEHOLDER_PREFIX) | set(PLACEHOLDER_FIXED)
+
+
+# ── 今日交付物連結（2026-11-10 新增：單一連結判準）────────────────────────────
+# 為什麼要有：`data_closeout_commit.py`（22:38 收尾）與 `_audit_closeout.py`（22:40 稽核）
+# 原本都只把 `index.html` 的 href 當「正式交付物」清單。但當日報表常只被「當日日報」連到，
+# 而且寫成 Pages 絕對 URL（`https://<帳號>.github.io/<repo>/x.html`）→ 兩支都掃不到
+# → 台股版緊急報告每晚漏收、線上 404，隔天早上才手動補（2026-11-06、11-09 實例）。
+# 這裡把「誰算交付物」收斂成單一函式：首頁連結 ∪ 今日報表內的當日連結。
+PAGES_ABS_MARKERS = ("b0988321088.github.io/longjiu-dashboard-2",)
+
+
+def normalize_link(u: str) -> str:
+    """href → repo 相對路徑；外部站點、mailto、javascript、錨點、目錄一律回空字串。"""
+    u = str(u or "").split("#")[0].split("?")[0].strip()
+    if not u or u.startswith(("#", "mailto:", "javascript:", "tel:")):
+        return ""
+    for m in PAGES_ABS_MARKERS:
+        if u.startswith(("https://" + m, "http://" + m)):
+            u = u.split(m, 1)[1].lstrip("/")
+            break
+    if u.startswith(("http://", "https://", "//")):
+        return ""
+    while u.startswith("./"):
+        u = u[2:]
+    if not u or u.endswith("/"):
+        return ""
+    return u
+
+
+def html_links(path) -> set:
+    """讀一個本機 HTML，回傳正規化後的相對連結集合（讀不到回空集合，不拋錯）。"""
+    try:
+        html = Path(path).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return set()
+    return {n for n in (normalize_link(h) for h in re.findall(r'href="([^"]+)"', html)) if n}
+
+
+def today_deliverable_links(base=".", date_str: str | None = None) -> set:
+    """今日正式交付物的相對路徑集合。
+
+    ＝ `index.html` 的全部連結 ∪ 檔名含當日日期的報表內的「檔名含當日日期」連結。
+    後者只收含日期戳的目標：無日期戳的檔（cost.html、index.html…）是長期資產，
+    不是每晚變動的交付物；把它們全拉進來會讓候選集暴增並誤收暫存檔。
+    """
+    b = Path(base)
+    date_str = date_str or datetime.date.today().isoformat()
+    out = set(html_links(b / "index.html"))
+    for rep in sorted(b.glob(f"*_{date_str}.html")):
+        for link in html_links(rep):
+            if date_str in Path(link).name:
+                out.add(link)
+    return out
 
 
 if __name__ == "__main__":

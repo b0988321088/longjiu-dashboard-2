@@ -102,7 +102,20 @@ def is_data_file(path: str) -> bool:
 
 
 def linked_targets() -> set[str]:
-    """index.html 連到的相對路徑＝使用者看得到的正式交付物。"""
+    """今日正式交付物＝index.html 連結 ∪ 今日報表內的當日連結（單一判準）。
+
+    2026-11-10 修正：原本只讀 index.html。但台股版緊急報告只被「當日日報」連到，
+    而且寫成 Pages 絕對 URL → 永遠掃不到 → 每晚漏收、線上 404，隔天早上才手動補
+    （2026-11-06 手動入庫、11-09 隔天 10:57 補、11-10 再次漏收）。
+    判準收斂到 `links_config.today_deliverable_links()`，與 22:40 稽核共用同一份定義。
+    """
+    import links_config as _links_cfg
+
+    return set(_links_cfg.today_deliverable_links(str(REPO)))
+
+
+def _index_only_links() -> set[str]:
+    """舊行為（僅 index.html 的相對連結）：保留作對照與回退，不參與正式判定。"""
     idx = REPO / "index.html"
     if not idx.exists():
         return set()
@@ -121,14 +134,14 @@ def linked_targets() -> set[str]:
 
 
 def collect() -> tuple[list[str], list[str], list[str]]:
-    """回傳 (全部候選, 已追蹤修改, 未入庫但被首頁連結的正式報表)。"""
+    """回傳 (全部候選, 已追蹤修改, 未入庫但被今日報表連結的正式報表)。"""
     modified = set(git("diff", "--name-only").stdout.splitlines())
     modified |= set(git("diff", "--cached", "--name-only").stdout.splitlines())
     untracked = set(git("ls-files", "--others", "--exclude-standard").stdout.splitlines())
     linked = linked_targets()
 
     tracked_pick = sorted(p for p in modified if is_data_file(p))
-    # 正式報表：本機存在、被首頁連結、卻完全不在版控 → 線上必然 404
+    # 正式報表：本機存在、被今日報表連結、卻完全不在版控 → 線上必然 404
     published = set(git("ls-files").stdout.splitlines())
     missing_reports = sorted(
         p for p in untracked
@@ -193,7 +206,7 @@ def main() -> int:
         for p in tracked_pick:
             print(f"  M {p}")
         for p in missing_reports:
-            print(f"  A {p}  ← 被 index.html 連結但未入庫")
+            print(f"  A {p}  ← 被今日報表連結但未入庫")
         return 0
 
     add = git("add", "-f", "--", *files, timeout=120)
