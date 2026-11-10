@@ -798,6 +798,25 @@ def buffett_advice(history: dict, snap: dict) -> str:
             f"近一日變化：總資產 {d_total:+,.0f}（{d_total_pct:+.2f}%）",
             f"證券 {d_sec:+,.0f} / 保單 {d_ins:+,.0f} / 基金 {d_fund:+,.0f}",
         ]
+        # 2026-11-10：口徑修正（如外幣原幣被當台幣相加）不得被讀成投資虧損。
+        #   使用者當日即回報「有沒有搞錯基金虧 180,000」—— 帳面 -180,206 裡有 -368,877
+        #   是不存在的錢被拿掉，實際投資是正的。凡 snapshot 有登記 caliber_adjustments
+        #   就在同一段揭露「帳面 / 口徑 / 實際」三個數字，不讓讀者自己拆。
+        _cals = snap.get("caliber_adjustments") or {}
+        _cal = _cals.get(date.today().isoformat()) if isinstance(_cals, dict) else None
+        if _cal:
+            try:
+                _camt = float(_cal.get("amount") or 0)
+            except Exception:
+                _camt = 0.0
+            _scope = str(_cal.get("scope") or "")
+            _d_fund_real = d_fund - _camt if _scope.startswith("基金") else d_fund
+            _d_total_real = d_total - _camt
+            lines += [
+                f"　↳ 帳面含口徑修正 {_camt:+,.0f}（{_cal.get('note', '口徑調整')}）",
+                f"　↳ 剔除口徑後：總資產實際 {_d_total_real:+,.0f}／基金實際 {_d_fund_real:+,.0f}"
+                f"（{'不是虧損' if _camt < 0 else '非投資收益'}）",
+            ]
 
     warnings = []
     # 2026-09-30：原 `ex["securities_market"] / ta * 100 > 50` 未防 ta==0
