@@ -4,7 +4,7 @@
  "date": "2026-11-10",
  "total_assets": 26421039,
  "total_liabilities": 30954836,
- "net_worth": -4429414,
+ "net_worth": -4533797.0,
  "debt_ratio": 51.2,
  "monthly_income": 225968,
  "monthly_expense": 159210,
@@ -1369,17 +1369,17 @@
  },
  "funds": 12467892,
  "allianz_a_breakdown": {
-  "USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 2641059,
-  "USDEQ5440 摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(穩定月配)": 696046,
-  "USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)": 1593147
+  "USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 2648319,
+  "USDEQ5440 摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(穩定月配)": 689972,
+  "USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)": 1612214
  },
  "allianz_a_current_value": 4950505,
  "allianz_b_breakdown": {
-  "NTDEQ2640 元大台灣高股息優質龍頭基金-新台幣(B)配息": 237026,
-  "NTDET0010 元大台灣卓越50": 857053,
-  "USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 484748,
-  "USDEQ5700 M&G入息基金A(美元避險月配)F": 631071,
-  "USDEQ6730 貝萊德世界黃金基金 A10美元(總報酬穩定配息)": 151485
+  "NTDEQ2640 元大台灣高股息優質龍頭基金-新台幣(B)配息": 254106,
+  "NTDET0010 元大台灣卓越50": 902864,
+  "USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 486081,
+  "USDEQ5700 M&G入息基金A(美元避險月配)F": 632138,
+  "USDEQ6730 貝萊德世界黃金基金 A10美元(總報酬穩定配息)": 159773
  },
  "allianz_b_current_value": 2434962,
  "monthly_dividend_total": 60878.0,
@@ -1451,19 +1451,19 @@
  "allianz_a_performance": -1.63,
  "allianz_b_performance": -12.02,
  "allianz_a_monthly": {
-  "total": 4930252,
+  "total": 4950505,
   "performance_pct": -1.63
  },
  "allianz_b_monthly": {
-  "total": 2361383,
+  "total": 2434962,
   "performance_pct": -12.02
  },
  "moneybook_date": "20260820_1",
  "total_portfolio_value": 26088027,
  "total_stock_value": 2783380,
  "allianz_combined": 7385467,
- "allianz_a_value": 4930252,
- "allianz_b_value": 2361383,
+ "allianz_a_value": 4950505,
+ "allianz_b_value": 2434962,
  "_updated_by": "hermes-8/20-MB-sync",
  "_updated_at": "2026-08-20",
  "unrealized_pnl": 223330,
