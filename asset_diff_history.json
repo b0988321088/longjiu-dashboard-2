@@ -1098,15 +1098,14 @@
     "monthly_expense": 159210.0,
     "rent_monthly": 80100.0,
     "cathay_refinance": 0.0,
-    "restricted_cash": 900000.0,
-    "caliber_note": "此日基金/總資產為帳面值，含鉅亨日圓原幣虛增 368,877（2026-11-10 已修正並登記 caliber_adjustments）。真實值：fund_market 12,279,221／total_assets 26,156,545。與 11/10 比較請用真實值。"
+    "restricted_cash": 900000.0
   },
   "2026-11-10": {
     "date": "2026-11-10",
-    "total_assets": 26421039.0,
+    "total_assets": 26480389.0,
     "total_liabilities": 30954836.0,
-    "net_worth": -4533797.0,
-    "securities_market": 2579760.0,
+    "net_worth": -4474447.0,
+    "securities_market": 2639110.0,
     "insurance_current": 9258990.0,
     "insurance_total": 9258990.0,
     "fund_market": 12467892.0,
@@ -1137,6 +1136,6 @@
     "bonds": 0.0,
     "unrealized_pnl": 170820,
     "realized_pnl": 23460,
-    "net_worth_incl_re": 29483266.0
+    "net_worth_incl_re": 29542616.0
   }
 }
