@@ -12255,15 +12255,15 @@
       "status": "completed",
       "source": "user"
     },
-  {
-    "id": "mem-20261110221905-1326",
-    "timestamp": "2026-11-10T22:19:05.288038+08:00",
-    "agent": "Hermes",
-    "task": "交付物判準改吃今日報表連結（終結每晚緊急報告漏收 404）＋發布狀態宣告守門",
-    "summary": "使用者 2026-11-10 核准 ✅ 四項一次做：①links_config.today_deliverable_links()＝index.html∪當日日報內含當日日期連結（Pages 絕對 URL 正規化）②data_closeout_commit(22:38)與_audit_closeout(22:40)共用同一判準 ③check_narrative_numbers 新增 forbidden_publish_claims：內文宣告未commit/未push/未發布即 REJECT ④13:00/21:30 緊急應變 cron prompt 同步改規則。資料補救：11/10 台股版緊急報告補入庫、4 檔內文改時間中性。驗證：沙盒負向樣本抓到、dry-run 16→17 檔、雙閘門✅、線上三頁 200。推送：cc8d5f56（CIO-Gemini APPROVE 3段100%）＋907e1939（AUTO-checker），遠端 sha 已驗證。",
-    "status": "completed",
-    "source": "user"
-  }
+    {
+      "id": "mem-20261110221905-1326",
+      "timestamp": "2026-11-10T22:19:05.288038+08:00",
+      "agent": "Hermes",
+      "task": "交付物判準改吃今日報表連結（終結每晚緊急報告漏收 404）＋發布狀態宣告守門",
+      "summary": "使用者 2026-11-10 核准 ✅ 四項一次做：①links_config.today_deliverable_links()＝index.html∪當日日報內含當日日期連結（Pages 絕對 URL 正規化）②data_closeout_commit(22:38)與_audit_closeout(22:40)共用同一判準 ③check_narrative_numbers 新增 forbidden_publish_claims：內文宣告未commit/未push/未發布即 REJECT ④13:00/21:30 緊急應變 cron prompt 同步改規則。資料補救：11/10 台股版緊急報告補入庫、4 檔內文改時間中性。驗證：沙盒負向樣本抓到、dry-run 16→17 檔、雙閘門✅、線上三頁 200。推送：cc8d5f56（CIO-Gemini APPROVE 3段100%）＋907e1939（AUTO-checker），遠端 sha 已驗證。",
+      "status": "completed",
+      "source": "user"
+    }
   ],
   "pending_decisions": [
     {
@@ -12286,7 +12286,7 @@
     }
   ],
   "meta": {
-    "updated_at": "2026-11-10T21:34:55+08:00"
+    "updated_at": "2026-11-11T07:01:19+08:00"
   },
-  "last_updated": "2026-11-10T21:34:55+08:00"
+  "last_updated": "2026-11-11T07:01:19+08:00"
 }
