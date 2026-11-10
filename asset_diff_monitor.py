@@ -1226,7 +1226,13 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
 
         # 2026-10-20 修正：列標籤與 source_import_dates 的鍵不同名（「保單 第一金 FLXX（App）」
         #   vs「保單 第一金」）→ 舊版查不到就退回 as-of，讓「最近匯入」比實際舊 15 天。
-        _SID_ALIAS = {"保單 第一金 FLXX（App）": "保單 第一金"}
+        # 2026-11-10 修正：①第一金標籤的「FLXX」是 2026-09 前的基金代號，現為 IDXX M&G → 改中性標籤
+        #   ②安聯 as-of 改讀 policy_valuation_dates.allianz（與 date_integrity／DATE-GATE 同源）。
+        #     舊版讀 fund_nav_dates['安聯保單內基金（App）']＝基金淨值日，與 DATE-GATE 的保單估值日
+        #     是兩個不同欄位，同一份報告會出現「卡片 11-10 / 閘門 11-06」的矛盾（使用者回報
+        #     「差異分析的資料新鮮度一直都有問題」）。
+        _SID_ALIAS = {"保單 第一金 FLXX（App）": "保單 第一金",
+                      "保單 第一金（IDXX M&G）": "保單 第一金"}
 
         def _imported_on(_label, _asof):
             _v = _sids.get(_SID_ALIAS.get(_label, _label)) or _sids.get(_label)
@@ -1241,35 +1247,39 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
         _src_rows = [
             ("現金／銀行（Moneybook）", _dig(snap, "cash_source", "date")),
             ("證券部位", _dig(snap, "securities", "price_date")),
-            ("保單 第一金 FL65（App）", _dig(snap, "firstjin_detail", "last_update")),
-            ("保單 安聯 A/B（App）", _fnd.get("安聯保單內基金（App）")),
+            ("保單 第一金（IDXX M&G）", _dig(snap, "firstjin_detail", "last_update")),
+            # 2026-11-10：安聯保單估值日＝policy_valuation_dates.allianz（與 date_integrity 同源），
+            #   不再用基金淨值日 fund_nav_dates（那是另一個欄位，會與 DATE-GATE 打架）。
+            ("保單 安聯 A/B（App）",
+             _dig(snap, "policy_valuation_dates", "allianz") or _fnd.get("安聯保單內基金（App）")),
             ("基金 國泰直購（富達/聯博/B11）", _fnd.get("國泰直購（富達/聯博/B11）")),
             ("基金 鉅亨（一般申購＋自由Pay）", _fnd.get("鉅亨（一般申購＋自由Pay）")),
         ]
-        # 2026-10-20：標註「無自動寫入者」的源。fund_nav_dates／firstjin_detail.last_update 全庫
-        #   只有 apply_truth_*.py（真值日一次性腳本）會寫，沒有每日寫入者 → 不標註時 🔴 會被
-        #   誤讀成程式異常（使用者：「新鮮度一直有更新，內容卻一直是舊的」）。
-        _no_auto = {"保單 第一金 FLXX（App）", "保單 安聯 A/B（App）",
+        # 2026-10-20：標註「無每日自動寫入者」的源。fund_nav_dates／firstjin_detail.last_update 全庫
+        #   只有真值日一次性腳本會寫 → 不標註時 🔴 會被誤讀成程式異常。
+        # 2026-11-10：措辭改為「截圖匯入」，避免與「狀態燈」語意打架。
+        _no_auto = {"保單 第一金（IDXX M&G）", "保單 安聯 A/B（App）",
                     "基金 國泰直購（富達/聯博/B11）", "基金 鉅亨（一般申購＋自由Pay）"}
         # 人工補充來源：data_freshness 內非保留鍵者仍照舊呈現（已不再承載上述六列的日期）
         _legacy = {k: v for k, v in (snap.get("data_freshness", {}) or {}).items()
                    if k not in ("note", "updated_at", "deprecated", "機制")}
         _src_rows += list(_legacy.items())
 
-        _frows, _ages, _imp_ages = [], [], []
+        _frows, _ages, _imp_ages, _stale = [], [], [], []
         _today_iso = date.today().isoformat()
         for _src, _d in _src_rows:
-            _src_cell = (_src + "<span style='color:#94a3b8;font-size:11px'>（無自動來源）</span>"
+            _src_cell = (_src + "<span style='color:#94a3b8;font-size:11px'>（截圖匯入）</span>"
                          if _src in _no_auto else _src)
             _imp = _imported_on(_src, _d)
-            _imp_cell = "—"
+            _imp_cell, _ia = "—", None
             if _imp:
                 try:
-                    _ia = (date.today() - date.fromisoformat(_imp)).days
+                    _ia = (date.today() - date.fromisoformat(str(_imp)[:10])).days
                 except Exception:
                     _ia = None
-                _imp_ages.append(_imp)
-                _imp_cell = f"{_imp}（{'今天' if _ia == 0 else str(_ia) + ' 天前'}）" if _ia is not None else _imp
+                _imp_ages.append(str(_imp)[:10])
+                _imp_cell = (f"{str(_imp)[:10]}（{'今天' if _ia == 0 else str(_ia) + ' 天前'}）"
+                             if _ia is not None else str(_imp)[:10])
             if not _d:
                 _frows.append(f"<tr><td>{_src_cell}</td><td class='num'>待補</td>"
                               f"<td>⚪ 缺機器欄位（不回退舊值）</td><td class='num'>{_imp_cell}</td></tr>")
@@ -1281,29 +1291,51 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
                 _age = None
             if _age is not None:
                 _ages.append((_iso, _age))
-            _lk = ("🟢" if (_age is not None and _age <= 1) else
-                   ("🟡" if (_age is not None and _age <= 3) else
-                    ("🔴" if _age is not None else "⚪")))
+            # 2026-11-10 治本（使用者：「我明明昨天都有更新還會有過期資料的訊息」）：
+            #   狀態燈錨點改「我方最後取得資料日」，不再用淨值 as-of 算「距今日」。
+            #   基金淨值 T+1、安聯 NAV 落後 2-4 天是公布時差，不是資料過期；
+            #   用 as-of 判燈 → 使用者今天給了截圖仍看到 🔴「N 天前」，反覆誤判。
+            #   證券例外：價格每日自動更新（price_date），故用 as-of 判燈，另標持股確認日。
+            _is_sec = _src.startswith("證券")
+            _anchor = _age if _is_sec else (_ia if _ia is not None else _age)
+            if _is_sec and _imp_cell != "—":
+                _imp_cell = f"持股確認 {_imp_cell}（價格每日自動）"
+            _lk = ("🟢" if (_anchor is not None and _anchor <= 1) else
+                   ("🟡" if (_anchor is not None and _anchor <= 3) else
+                    ("🔴" if _anchor is not None else "⚪")))
+            if _anchor is None:
+                _state = "—"
+            elif _anchor <= 3:
+                _state = f"已同步（資料基準 {_iso}）"
+            else:
+                _state = f"{_anchor} 天未匯入"
+                _stale.append((_src, _anchor))
             _frows.append(
                 f"<tr><td>{_src_cell}</td><td class='num'>{_iso}</td>"
-                f"<td>{_lk} {str(_age) + ' 天前' if _age is not None else '—'}</td>"
-                f"<td class='num'>{_imp_cell}</td></tr>")
+                f"<td>{_lk} {_state}</td><td class='num'>{_imp_cell}</td></tr>")
         # 卡片自證：最新 as-of 與產出時間（任何「卡住」一眼可辨）
         _latest = max(_ages, key=lambda x: x[0])[0] if _ages else "—"
         _latest_imp = max(_imp_ages) if _imp_ages else "—"
         _ft_note = ("每列由 snapshot 機器欄位推導（現金=cash_source.date／證券=securities.price_date／"
-                    "保單 firstjin=firstjin_detail.last_update／基金與安聯=fund_nav_dates）；"
-                    "「（無自動來源）」＝該源沒有每日寫入者，as-of 只在你提供截圖／匯出並入庫時前進；"
-                    "「資料日期」＝該源 as-of（基金淨值 T+1 公布，今天匯入的資料 as-of 多為昨日），"
-                    "「最近匯入」＝我方收到並寫入的日期（基金＝source_import_dates）。"
-                    "缺值＝待補／—，不回退舊值。某列 🟡🔴 代表該上游還沒給新資料 —— 差異分析的"
-                    "「數字沒動」看這裡，不是程式異常。")
+                    "保單第一金=firstjin_detail.last_update／保單安聯=policy_valuation_dates.allianz／"
+                    "基金=fund_nav_dates）；<b>狀態燈錨點＝「最近取得」（我方何時拿到新資料），"
+                    "不是淨值基準日</b>；「（截圖匯入）」＝該源沒有每日寫入者，只在你提供截圖時前進。"
+                    "「資料基準日」＝該源 as-of（基金淨值 T+1、安聯 NAV 落後 2-4 天屬公布時差，不是過期）；"
+                    "證券的價格每日自動更新，故另標「持股確認」日。"
+                    "缺值＝待補／—，不回退舊值。")
+        _concl = ("✅ 六個來源皆在 3 天內取得新資料（狀態燈錨點＝我方取得日，非淨值 as-of；"
+                  "淨值 T+1／安聯 NAV 落後 2-4 天屬公布時差，不算過期）"
+                  if not _stale else
+                  "⚠️ 超過 3 天未取得新資料：" +
+                  "、".join(f"{s.replace('（App）', '')}（{a} 天）" for s, a in _stale) +
+                  "｜這是上游還沒給，不是程式異常")
         _fresh_card = (
             '<div class="card"><h2>🕒 資料新鮮度（各源 as-of）</h2>'
-            '<div class="table-wrap"><table><thead><tr><th>資料源</th><th class="num">資料日期</th>'
-            '<th>距今日</th><th class="num">最近匯入</th></tr></thead><tbody>'
+            '<div class="table-wrap"><table><thead><tr><th>資料源</th><th class="num">資料基準日</th>'
+            '<th>狀態</th><th class="num">最近取得</th></tr></thead><tbody>'
             + "".join(_frows)
             + "</tbody></table></div>"
+            + (f"<div class='text-sm' style='margin-top:6px'>{_concl}</div>")
             + (f"<div class='text-sm' style='margin-top:6px'>{_ft_note}</div>")
             + (f"<div class='text-sm' style='margin-top:4px'>最新 as-of {_latest}｜最新匯入 {_latest_imp}"
                f"（今日 {_today_iso}）｜卡片產出 {_today_iso}</div>")
