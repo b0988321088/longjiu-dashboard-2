@@ -25,14 +25,22 @@
     同一燈號、同一日只推一次（state 檔：pledge_maintenance_state.json）。
     燈號惡化當下必推（不受同日限制）。
 
+續約倒數（2026-11-10 新增，使用者核准）：
+    合約是「只繳息＋每年續約」，銀行一年一決 → 到期不續約即一次還本。
+    倒數里程碑 T-90／T-60／T-30／T-7／T-0，**每個里程碑只推一次**（記在 state 的
+    renewal_announced），且與維持率燈號各自獨立觸發（綠燈日照樣可推續約倒數）。
+    到期日換了（已續約）→ renewal_maturity 變動即重置清單，不會被上一輪紀錄吃掉。
+    訊息為 advisory-only：只列缺口與續約必問四項，不產生還本／資金調度指令。
+
 用法：
     python pledge_maintenance_alert.py            # cron no_agent
-    python pledge_maintenance_alert.py --always    # 人工檢查，一律輸出
-    python pledge_maintenance_alert.py --json      # 機器可讀
+    python pledge_maintenance_alert.py --always    # 人工檢查，一律輸出（不寫 state）
+    python pledge_maintenance_alert.py --json      # 機器可讀（含 renewal 區塊）
 """
 from __future__ import annotations
 
 import json
+import re
 import sys
 from datetime import date
 from pathlib import Path
@@ -44,6 +52,10 @@ STATE = BASE / "pledge_maintenance_state.json"
 WARN_BUFFER_PP = 5.0          # 警示線 = 通知線 + 5pp（刻意常數：緩衝寬度，非金額）
 DEFAULT_NOTICE = 160.0        # 銀行未提供時的預設級距（使用者 2026-11-02 確認）
 DEFAULT_PAY = 140.0
+# 續約倒數里程碑（天）。每個里程碑一生只推一次，狀態記在 pledge_maintenance_state.json。
+# 為什麼要有：合約是「只繳息＋每年續約」，銀行一年一決 → 到期不續約即一次還本，
+# 這是最容易被忽略的單點（2026-11-10 使用者核准，來源：威利財經角 QA '台灣版買借死'）。
+RENEWAL_MILESTONES = (90, 60, 30, 7)
 
 
 def _num(v, default=None):
@@ -96,6 +108,62 @@ def level_of(m: dict) -> str:
     if r <= m["warn"]:
         return "yellow"
     return "green"
+
+
+def renewal_info(snap: dict) -> dict:
+    """續約到期日與剩餘天數。來源：snapshot.fund_pledge_maturity（缺則 cathay_pledge_0911.到期日）。
+
+    欄位值是「2027-09-29（每年續約）」這種帶註記的字串 → 只取第一個 YYYY-MM-DD，
+    取不到就回 None（不猜、不預設日期）。
+    """
+    raw = str(snap.get("fund_pledge_maturity") or "").strip()
+    if not raw:
+        raw = str((snap.get("cathay_pledge_0911") or {}).get("到期日") or "").strip()
+    mt = re.search(r"(\d{4})-(\d{2})-(\d{2})", raw)
+    if not mt:
+        return {"maturity": None, "days_left": None, "raw": raw}
+    try:
+        mat = date(int(mt.group(1)), int(mt.group(2)), int(mt.group(3)))
+    except ValueError:
+        return {"maturity": None, "days_left": None, "raw": raw}
+    return {"maturity": mat.isoformat(), "days_left": (mat - date.today()).days, "raw": raw}
+
+
+def renewal_milestone(info: dict) -> str | None:
+    """回傳「已進入哪個倒數視窗」的鍵（T-90／T-60／T-30／T-7／T-0）；>90 天回 None。
+
+    必須由小到大掃（7→30→60→90）才不會在剩 30 天時誤報 T-90（2026-11-10 自測抓到）。
+    """
+    d = info.get("days_left")
+    if d is None:
+        return None
+    if d <= 0:
+        return "T-0"
+    for mm in sorted(RENEWAL_MILESTONES):
+        if d <= mm:
+            return f"T-{mm}"
+    return None
+
+
+def renewal_block(info: dict, m: dict, due_key: str, surplus: float | None = None) -> str:
+    """續約倒數訊息。advisory-only：只顯示缺口與必問項，不產生還本／調度指令。"""
+    loan = float(m.get("loan") or 0)
+    rate = float(m.get("rate") or 0)
+    d = int(info.get("days_left") or 0)
+    head = "已到期／待補辦續約" if d <= 0 else f"剩 {d} 天"
+    # 註記只取「日期以外的說明」（例：每年續約），避免與到期日重複顯示
+    note = str(info.get("raw") or "").replace(str(info.get("maturity") or ""), "").strip("（）() 　")
+    mat_txt = f"{info['maturity']}（{note}）" if note else str(info["maturity"])
+    L = [f"🗓️ 質押續約倒數 {due_key}｜{head}",
+         f"到期日 {mat_txt}",
+         f"不續約＝一次還本 {loan:,.0f}（只繳息、無攤還；月息 {loan * rate / 12:,.0f}）"]
+    if surplus and surplus > 0:
+        L.append(f"月盈餘 {surplus:,.0f} vs 一次還本 → 缺口約 {loan / surplus:,.0f} 個月盈餘"
+                 "（銀行一年一決，續約失敗時月現金流無法支應）")
+    L.append(f"續約必問四項：① 維持率門檻是否調整（現 通知 {m['notice']:.0f}%／繳款 {m['pay']:.0f}%）"
+             f"② 利率是否重定（現 {rate * 100:.2f}%）③ 可否部分還本 ④ 提前清償違約金")
+    L.append("※ advisory：只顯示缺口與必問項，不產生還本／資金調度指令")
+    return "\n".join(L)
 
 
 def render(m: dict, lv: str, snap: dict) -> str:
@@ -173,30 +241,52 @@ def main() -> int:
     today = date.today().isoformat()
     st = _load(STATE, {}) or {}
 
-    if as_json:
-        print(json.dumps({**{k: v for k, v in m.items()}, "level": lv}, ensure_ascii=False))
-        return 0
+    # ── 續約倒數（2026-11-10 新增）：與維持率燈號各自獨立觸發 ──
+    # 換了到期日（已續約、或銀行改約）→ 重置已通知清單，避免新一輪被舊紀錄吃掉。
+    ren = renewal_info(snap)
+    if str(st.get("renewal_maturity") or "") != str(ren.get("maturity") or ""):
+        st["renewal_maturity"] = ren.get("maturity")
+        st["renewal_announced"] = []
+    announced = [str(x) for x in (st.get("renewal_announced") or [])]
+    ms = renewal_milestone(ren)
+    ren_txt = None
+    if ms and ms not in announced:
+        ren_txt = renewal_block(ren, m, ms, _num(snap.get("working_surplus")))
+        st["renewal_announced"] = announced + [ms]
 
-    if lv == "green" and not always:
-        _save_state(today, lv, st.get("last_alert_date"))
+    if as_json:
+        print(json.dumps({**{k: v for k, v in m.items()}, "level": lv,
+                          "renewal": ren, "renewal_milestone": ms},
+                         ensure_ascii=False, default=str))
         return 0
 
     # 防噪音：同日同燈號只推一次；燈號惡化（排序變差）當下必推
     order = {"green": 0, "yellow": 1, "orange": 2, "red": 3, "none": -1}
     worse = order.get(lv, 0) > order.get(st.get("last_level", "green"), 0)
-    if not always and not worse and st.get("last_alert_date") == today and st.get("last_level") == lv:
+    same = st.get("last_alert_date") == today and st.get("last_level") == lv
+    maint_due = bool(always) or (lv != "green" and (worse or not same))
+
+    if not maint_due and not ren_txt:
+        if lv == "green":
+            _save_state(today, lv, st.get("last_alert_date"), st)
         return 0
 
-    print(render(m, lv, snap))
+    parts = []
+    if maint_due:
+        parts.append(render(m, lv, snap))
+    if ren_txt:
+        parts.append(ren_txt)
+    print("\n\n".join(parts))
     if not always:                        # --always 只給人看，不污染 state（否則會吃掉當日真警示）
-        _save_state(today, lv, today)
+        _save_state(today, lv, (today if maint_due and lv != "green" else st.get("last_alert_date")), st)
     return 0
 
 
-def _save_state(today: str, lv: str, alert_date) -> None:
+def _save_state(today: str, lv: str, alert_date, st: dict | None = None) -> None:
     try:
-        STATE.write_text(json.dumps({"last_date": today, "last_level": lv,
-                                     "last_alert_date": alert_date}, ensure_ascii=False, indent=1),
+        d = dict(st or {})
+        d.update({"last_date": today, "last_level": lv, "last_alert_date": alert_date})
+        STATE.write_text(json.dumps(d, ensure_ascii=False, indent=1),
                          encoding="utf-8", newline="\n")
     except Exception:
         pass
