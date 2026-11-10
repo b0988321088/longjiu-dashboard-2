@@ -706,7 +706,7 @@ def build_monthly_overview(snap, history):
     # ── 追溯明細 ──
     tr = []
     tr.append(f'<div class="text-[11px] text-slate-300">本月總收入：'
-              f'月薪 {_mio_money(sal)}（monthly_salary）＋ 房租 {_mio_money(rent)}（rent_monthly_actual）'
+              f'月薪 {_mio_money(sal)}（salary_records 當月實收）＋ 房租 {_mio_money(rent)}（rent_monthly_actual）'
               f'＋ 配息 {_mio_money(div)}（dividend_month_actual）＝ <b>{_mio_money(total_income)}</b></div>')
     drec = (snap.get("dividend_records") or {}).get(month) or {}
     dlist = "、".join(f"{k} {v:,.0f}" for k, v in sorted(drec.items(), key=lambda x: -x[1]) if isinstance(v, (int, float)))
