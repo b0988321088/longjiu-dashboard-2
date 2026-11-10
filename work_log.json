@@ -1024,5 +1024,11 @@
    "621fc084",
    "19fed399"
   ]
+ },
+ {
+  "date": "2026-11-10",
+  "category": "修正",
+  "item": "決策卡清理：9 筆歸檔（保留 2 張資安卡）",
+  "detail": "使用者 2026-11-10 裁示「除兩張資安卡外全部清掉」。歸檔至 pending_decisions_archive.json（含 cleanup_date／cleanup_reason，可追溯）：台新帳號納管對帳、台股分批規則定版、程序違規紀錄、投資結構修正計畫 v1、推送閘門分支白名單、避險衛星加碼（已結案）、標案 11/11（已取消）、00919／00888 入帳卡、第一金轉換敘述。保留：HEAD 殘留金鑰樣式字串、Pages 可直下 snapshot.json。check_dividend_caliber 93/93 PASS。"
  }
 ]
