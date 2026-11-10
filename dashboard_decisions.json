@@ -12218,6 +12218,15 @@
     "summary": "使用者兩次回報「明明昨天更新還顯示過期」。根因：狀態燈用淨值 as-of 算距今日（基金 T+1、安聯 NAV 落後 2-4 天）；安聯 as-of 讀錯欄位與 DATE-GATE 打架；現金 source_import_dates 停在 11-01。修後六列全綠、結論行明示「公布時差不算過期」。",
     "status": "completed",
     "source": "user"
+  },
+  {
+    "id": "mem-20261110121529-1322",
+    "timestamp": "2026-11-10T12:15:29.078267+08:00",
+    "agent": "Hermes",
+    "task": "日曆治本：已取消行程不再進 Google 日曆＋11 月保單接力補齊",
+    "summary": "calendar_sync.py 只跳過「節日」未過濾「已取消」→ 11/07 取消投標後 11/10/11 節點仍每日被簡報當今日待辦推播。修後日曆標案事件歸零。另補 11 月接力 T+4 截止/除息 10 筆（安聯 11/13、M&G 11/20、PIMCO 11/24、安聯AI 11/25、聯博+貝萊德 11/27）。",
+    "status": "completed",
+    "source": "user"
   }
   ],
   "pending_decisions": [
