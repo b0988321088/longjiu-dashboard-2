@@ -181,11 +181,12 @@
     "title": "第一金轉換敘述與真值不符（日報內文）",
     "status": "待處理",
     "status_raw": "⏳ 日報寫「10/08 轉換已生效」，但 snapshot conversion 記 9/16 T+4 生效，且 10/08 截圖當時仍顯示 FJXX",
-    "needs_due_date": false,
+    "needs_due_date": true,
     "last_confirmed": null,
     "owner": "CEO",
     "external_owner": null,
     "tags": "顯示,保單,第一金",
-    "detail": "屬內文敘述非金額，不影響決策；確認正確轉換生效日後改模板文字。範圍外不擴大本輪。"
+    "detail": "屬內文敘述非金額，不影響決策；確認正確轉換生效日後改模板文字。範圍外不擴大本輪。",
+    "due_date": null
   }
 ]
