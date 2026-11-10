@@ -153,3 +153,6 @@ _site/
 # CIO 審查產物（每次送審即重寫，只在本機被 cio_review 讀取，不進版控）2026-11-07
 cio_review_gemini_latest.json
 cio_review_gemini_latest_raw.txt
+
+# 2026-11-10：真值改動前的本機備份目錄（.backup/ 內為 snapshot 快照，僅本機回溯用，不進版控）
+.backup/

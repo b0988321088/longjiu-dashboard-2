@@ -1,0 +1,78 @@
+{
+ "report_base_date": "2026-11-10",
+ "generated_at": "2026-11-10T07:01:16+08:00",
+ "status": "DEGRADED",
+ "layers": {
+  "L1_market": "DEGRADED",
+  "L2_financial": "DEGRADED",
+  "L3_narrative": "PASS"
+ },
+ "reasons": [
+  "盤中值：僅得標示「盤中」，禁止出現在「收盤」語境",
+  "台股：估值日落後（2026-11-09）→ 標示最後有效日期",
+  "基金：估值日落後（{'國泰直購（富達/聯博/B11）': '2026-11-06', '鉅亨（一般申購＋自由Pay）': '2026-11-06', '安聯保單內基金（App）': '2026-11-05'}）→ 標示最後有效日期",
+  "第一金保單：估值日落後（2026-11-09）→ 標示最後有效日期",
+  "安聯保單：估值日落後（{'allianz': '2026-11-06', 'note': '2026-11-09'}）→ 標示最後有效日期",
+  "現金：估值日落後（2026-11-09）→ 標示最後有效日期"
+ ],
+ "market_conclusion_allowed": false,
+ "items": [
+  {
+   "key": "tw_securities",
+   "label": "台股",
+   "source": "securities.price_date",
+   "value": "2026-11-09",
+   "status": "DEGRADED",
+   "tier": "core",
+   "publish_blocking": false,
+   "display": "台股：2026-11-09（落後）"
+  },
+  {
+   "key": "funds",
+   "label": "基金",
+   "source": "fund_nav_dates",
+   "value": {
+    "國泰直購（富達/聯博/B11）": "2026-11-06",
+    "鉅亨（一般申購＋自由Pay）": "2026-11-06",
+    "安聯保單內基金（App）": "2026-11-05"
+   },
+   "status": "DEGRADED",
+   "tier": "core",
+   "publish_blocking": false,
+   "display": "基金：國泰直購 2026-11-06／鉅亨 2026-11-06／安聯保單內基金 2026-11-05"
+  },
+  {
+   "key": "policy_firstjin",
+   "label": "第一金保單",
+   "source": "firstjin_detail.last_update",
+   "value": "2026-11-09",
+   "status": "DEGRADED",
+   "tier": "noncore",
+   "publish_blocking": false,
+   "display": "第一金保單：2026-11-09（落後）"
+  },
+  {
+   "key": "policy_allianz",
+   "label": "安聯保單",
+   "source": "policy_valuation_dates",
+   "value": {
+    "allianz": "2026-11-06",
+    "note": "2026-11-09"
+   },
+   "status": "DEGRADED",
+   "tier": "noncore",
+   "publish_blocking": false,
+   "display": "安聯保單：allianz 2026-11-06／note 2026-11-09"
+  },
+  {
+   "key": "cash",
+   "label": "現金",
+   "source": "cash_source.date",
+   "value": "2026-11-09",
+   "status": "DEGRADED",
+   "tier": "core",
+   "publish_blocking": false,
+   "display": "現金：2026-11-09（落後）"
+  }
+ ]
+}

@@ -158,6 +158,11 @@ def sync():
             # 2026-08-10 修正：跳過「📋 節日」狀態（Google 內建假日行事曆已有，自建=重複顯示）
             if "節日" in _status:
                 continue
+            # 2026-11-10：跳過「已取消」狀態 —— 取消的節點不得再進 Google 日曆，
+            # 否則晨間簡報（讀 GCal）會把已取消行程當「今日待辦」每天推播，
+            # 實例：11/07 股災裁決取消投標後，11/10、11/11 兩個節點仍連日出現於簡報。
+            if "已取消" in _status:
+                continue
             _title = f"{_item} {_amt}".strip() if _amt else _item
             _c = _cat(_title)
             if _c and (_c, _d) in _seen:
