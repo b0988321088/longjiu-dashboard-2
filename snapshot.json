@@ -4,7 +4,7 @@
  "date": "2026-11-10",
  "total_assets": 26480389.0,
  "total_liabilities": 30954836,
- "net_worth": -4474447.0,
+ "net_worth": -4474447,
  "debt_ratio": 51.2,
  "monthly_income": 225968,
  "monthly_expense": 159210,
@@ -2151,9 +2151,10 @@
   "2026-11": {
    "amount": 48016,
    "date": "2026-11-06",
-   "note": "台電薪資媒體轉入（自動帶入：MB 明細 台新銀行 文心綜活儲存款-薪轉）；使用者 2026-11-10 裁示：含一次性 8,239（考績/加給類），常態仍為 monthly_salary=39,777，不得以此筆反推常態月薪",
+   "note": "台電薪資媒體轉入（自動帶入：MB 明細 台新銀行 文心綜活儲存款-薪轉）；使用者 2026-11-10 說明：11 月【升等調薪】→ 實入 48,016（較 10 月 39,777 增 8,239），屬薪級結構性調整、非一次性加給；常態 monthly_salary 仍暫留 39,777，依使用者裁示待 12 月薪資入帳後確認新常態再修改。",
    "source": "mb_auto",
-   "one_off_amount": 8239
+   "raise_amount_vs_prev": 8239,
+   "raise_reason": "升等調薪"
   }
  },
  "salary": 39777,
@@ -8933,5 +8934,20 @@
   "市值口徑": "市值暫用 2026-11-09 收盤價計算（price_date 未變）；13:30 收盤後以當日收盤價重算",
   "註記": "本次證券市值增加含新增部位（成本 60,570），非市場上漲，差異分析須排除"
  },
- "salary_one_off_202611": 8239
+ "salary_caliber_pending": {
+  "decision_date": "2026-11-10",
+  "rule": "11 月升等調薪 → 常態月薪修正依 12 月薪資入帳後確認，不憑單月逕改",
+  "current_monthly_salary": 39777,
+  "nov_actual": 48016,
+  "nov_raise": 8239,
+  "nov_raise_reason": "升等調薪（非一次性）",
+  "check_due": "2026-12-08",
+  "decision_if_39777": "與升等調薪矛盾 → 回頭查薪給單",
+  "decision_if_48016_or_more": "確認新常態，改 monthly_salary 並重算月收/覆蓋率/FI 跑道"
+ },
+ "salary_raise_202611": {
+  "amount": 8239,
+  "reason": "升等調薪",
+  "effective": "2026-11"
+ }
 }
