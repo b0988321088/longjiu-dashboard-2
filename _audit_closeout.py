@@ -613,17 +613,72 @@ try:
     _cb = float(_snap.get("allianz_b_current_value") or 0)
     _ba = sum(v for v in (_snap.get("allianz_a_breakdown") or {}).values() if isinstance(v, (int, float)))
     _bb = sum(v for v in (_snap.get("allianz_b_breakdown") or {}).values() if isinstance(v, (int, float)))
+    # 2026-11-11（使用者指示「修復並且避免再發生」）：差額改「宣告式」。
+    # 根因有兩種，檢查必須分得開：
+    #   ①真缺口：明細沒跟上總值（例：11/11 14:59 B 的逐檔只寫進 allianz_b_update_*，沒回寫 breakdown）
+    #   ②評價日差：只拿到總值、逐檔沿用前一日（A 本次 2,767）→ 這是可接受的，但必須明示金額／原因／來源。
+    # 因此：breakdown + 宣告差額 == 總值；差額非 0 時必須有 reason+source，且 |差額| ≤ 0.5% 總值。
+    # 沒有宣告欄位、宣告了卻沒有理由、或差額長大 → 一律 FAIL（不放寬，只是不再用「靜默紅燈」表達）。
+    def _decl_gap(_tag: str, _policy: float):
+        _g = _snap.get(f"allianz_{_tag}_detail_gap") or {}
+        _amt = float(_g.get("amount") or 0)
+        _why = str(_g.get("reason") or "").strip()
+        _src = str(_g.get("source") or "").strip()
+        _lim = abs(_policy) * 0.005
+        if abs(_amt) <= 1:
+            return 0.0, True, ""
+        if not _why or not _src:
+            return _amt, False, "差額未宣告（缺 reason/source）"
+        if abs(_amt) > _lim:
+            return _amt, False, f"差額 {abs(_amt):,.0f} 超過容許上限 {_lim:,.0f}（0.5%）"
+        return _amt, True, ""
+
+    _ga, _gok_a, _gwhy_a = _decl_gap("a", _pa)
+    _gb, _gok_b, _gwhy_b = _decl_gap("b", _pb)
     _rows = [
         (f"同義欄位 A 兩組一致（policy {_pa:,.0f} ≡ current {_ca:,.0f}）", _pa == _ca),
         (f"同義欄位 B 兩組一致（policy {_pb:,.0f} ≡ current {_cb:,.0f}）", _pb == _cb),
         (f"分項相加 = A+B 合計（{_pa + _pb:,.0f} ≡ {_ab:,.0f}）", abs((_pa + _pb) - _ab) < 1),
-        (f"子基金加總 = 保單A（{_ba:,.0f}）", abs(_ba - _pa) < 1),
-        (f"子基金加總 = 保單B（{_bb:,.0f}）", abs(_bb - _pb) < 1),
+        (f"子基金加總+宣告差額 = 保單A（{_ba:,.0f}+{_ga:,.0f}={_ba + _ga:,.0f} ≡ {_pa:,.0f}）",
+         abs((_ba + _ga) - _pa) < 1 and _gok_a),
+        (f"子基金加總+宣告差額 = 保單B（{_bb:,.0f}+{_gb:,.0f}={_bb + _gb:,.0f} ≡ {_pb:,.0f}）",
+         abs((_bb + _gb) - _pb) < 1 and _gok_b),
     ]
     for _n, _b in _rows:
         print(f"  {ok(_b)} {_n}")
         if not _b:
             fail.append(f"保單不變式：{_n}")
+    for _tag, _why in (("a", _gwhy_a), ("b", _gwhy_b)):
+        if _why:
+            print(f"  ❌ 保單{_tag.upper()} 宣告差額不合格：{_why}")
+            fail.append(f"保單不變式：{_tag.upper()} 宣告差額不合格（{_why}）")
+    # 追加守門（防同一類事故再發生）：任何 allianz_[ab]_update_* 內含「明細」，就必須與 canonical
+    # breakdown 一致，且逐檔合計等於該筆的合計。這種「明細寫進 update 字典、breakdown 沒動」正是
+    # 2026-11-11 14:59 的真因 → 由閘門抓，不靠下次有人記得。
+    import re as _re2
+    _stale = []
+    for _k, _v in _snap.items():
+        if not _re2.match(r"^allianz_[ab]_update_\d+$", _k) or not isinstance(_v, dict):
+            continue
+        _f = {n: x for n, x in (_v.get("明細") or {}).items() if isinstance(x, (int, float))}
+        if not _f:
+            continue
+        _tag = _k.split("_")[1]
+        _bd = {n: x for n, x in (_snap.get(f"allianz_{_tag}_breakdown") or {}).items()
+               if isinstance(x, (int, float))}
+        _decl = float((_v.get("合計") or _v.get("B合計") or _v.get("A合計") or 0))
+        if _decl and abs(sum(_f.values()) - _decl) >= 1:
+            _stale.append(f"{_k} 內部矛盾：明細合計 {sum(_f.values()):,.0f} ≠ 該筆合計 {_decl:,.0f}")
+            continue
+        if _bd != _f and _decl:
+            _stale.append(f"{_k} 的明細（{sum(_f.values()):,.0f}）尚未回寫 allianz_{_tag}_breakdown"
+                          f"（現值 {sum(_bd.values()):,.0f}）")
+    if _stale:
+        for _s in _stale:
+            print(f"  ❌ {_s}")
+        fail.append(f"保單不變式：更新字典與 breakdown 不同步（{len(_stale)} 筆）")
+    else:
+        print("  ✅ 更新字典（allianz_*_update_*）與 breakdown 同步")
 except Exception as _e:
     print(f"  ❌ 保單不變式檢查失敗 {_e}")
     fail.append("保單不變式檢查失敗")
