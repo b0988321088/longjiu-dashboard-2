@@ -12299,6 +12299,15 @@
     "summary": "使用者 15:28 將 Pages 部署來源切換為 GitHub Actions（allowlist 流程 scripts/build_pages_site.py），並於 15:30 補上部署前 snapshot 淨化（帳號/保單號/身分證遮罩，fail-loud）。實測 18:40：manifest.json 存在、線上 snapshot.json 為淨化版（41 處 [已遮蔽]、無保單號/帳號/身分證樣式、generated_at 與本機同步），非 404 而係前端 fetch 所需。殘留：金額真值仍公開（設計取捨）。commit 4961b790／57e9fa0b。",
     "status": "completed",
     "source": "user"
+  },
+  {
+    "id": "mem-20261111151134-1331",
+    "timestamp": "2026-11-11T15:11:34+08:00",
+    "agent": "Hermes",
+    "task": "Moneybook 匯入與 11/11 配息入帳",
+    "summary": "10/12–11/11 Moneybook 匯入 243 筆、涵蓋 45 個帳戶；11/11 配息 2,969 入帳；現金總額 2,145,414（可動用 772,607／非限制 1,245,414／指定款 900,000）。四報表已重算。commit 8a872386。",
+    "status": "completed",
+    "source": "user"
   }
   ],
   "pending_decisions": [
