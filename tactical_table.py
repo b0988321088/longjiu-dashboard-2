@@ -144,7 +144,14 @@ def build_table(snap: dict, us30y: float = None) -> dict:
         "現金/安全網": ("現金", "現金/安全網"),
     }
 
-    frozen = bool(us30y is not None and us30y > 5.30)
+    # 2026-11-11（CIO 18:30 質疑③）：煞車門檻改讀 SoT 單一來源（thresholds_2026_0915.風險煞車.us30y_pct），
+    #   不再寫死 5.30；且邊界改 ≥（原 `> 5.30` 在「剛好 5.30」時不凍結，與 allocation_alert 的 ≥ 不一致）。
+    _brake = (snap.get("thresholds_2026_0915") or {}).get("風險煞車") or {}
+    try:
+        _brake_ln = float(_brake.get("us30y_pct", 5.30))
+    except (TypeError, ValueError):
+        _brake_ln = 5.30
+    frozen = bool(us30y is not None and us30y >= _brake_ln)
     rows = []
     for asset, (tgt_key, pct_key) in target_map.items():
         tgt = targets.get(tgt_key, 0)
@@ -173,10 +180,10 @@ def build_table(snap: dict, us30y: float = None) -> dict:
         # US30Y 凍結：債券類直接凍結；其他保留觀察
         elif frozen and strat.get("freeze_on_us30y"):
             action, trade, amount = "凍結", False, 0
-            note = f"US30Y {us30y:.2f}% > 5.30% → TAA凍結（只觀察）"
+            note = f"US30Y {us30y:.2f}% ≥ {_brake_ln:.2f}% → TAA凍結（只觀察）"
         elif frozen:
             action, trade, amount = "觀察(凍結期)", False, 0
-            note = f"US30Y {us30y:.2f}% 全域凍結，等解除"
+            note = f"US30Y {us30y:.2f}% ≥ {_brake_ln:.2f}% 全域凍結，等解除"
         else:
             action = strat.get("action", "觀察")
             trade = ladder["trade"]
@@ -201,6 +208,14 @@ def build_table(snap: dict, us30y: float = None) -> dict:
             _band_txt = f"≤{_hi:g}%（硬上限）"
         else:
             _band_txt = "無真值（不推導）"
+
+        # 2026-11-11（CIO 18:30 建議 2）：煞車優先於一切動作階梯——最終後置守門。
+        #   上面的「防守型配息」分支排在 frozen 之前，若合併口徑 <60% 會落到策略動作（增持），
+        #   等於繞過煞車。這裡對「任何交易型動作」做最後一次的 no-op 覆寫，不依賴人腦記住順序。
+        if frozen and trade:
+            action, trade, amount = "觀察(凍結期)", False, 0
+            note = (f"US30Y {us30y:.2f}% ≥ {_brake_ln:.2f}% 風險煞車優先於動作階梯"
+                    f"（{_brake.get('優先於', '動作階梯與單桶硬上限')}）→ 只回報不動作")
 
         rows.append({
             "資產分類": asset,

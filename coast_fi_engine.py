@@ -266,8 +266,17 @@ def credit_locked(snap, facts):
     items.append({"項目": f"大義街轉貸（國泰 {_cg_wan()}萬@{_cg_pct()}%）",
                   "完成": "撥款已入帳" in str(dy.get("狀態") or "")})
     xz = ref.get("洲際W") or {}
-    items.append({"項目": f"洲際W 轉貸（永豐 1,312萬，9/25 到期）",
-                  "完成": any(k in str(xz.get("狀態") or "") for k in ("完成", "已撥款", "已入帳"))})
+    _xz_st = str(xz.get("狀態") or "")
+    # 2026-11-11（CIO 18:30 提醒①）：轉貸已有定案（國泰 2.65% > 永豐隱含 2.44% → 暫不轉貸、
+    #   維持永豐續繳）。「不轉貸」是決策完成，不是待辦；若仍以「未撥款」判未完成，
+    #   下游會永遠輸出「授信未鎖定（洲際W 轉貸）」的舊結論（= 只讀一鍵的假缺口）。
+    _xz_done = any(k in _xz_st for k in ("完成", "已撥款", "已入帳"))
+    _xz_closed = any(k in _xz_st for k in ("暫不轉貸", "不轉貸"))
+    items.append({"項目": "洲際W 轉貸（永豐 1,312萬，續繳中）",
+                  "完成": bool(_xz_done or _xz_closed),
+                  "狀態": ("已撥款/已入帳" if _xz_done
+                           else ("已定案：維持永豐續繳、暫不轉貸（2.65% 無誘因）" if _xz_closed
+                                 else "未定案"))})
     items.append({"項目": f"整池質押 {facts.get('可貸萬', '')}@{facts.get('利率文字', '')}（撥款後清償 500萬高息）",
                   "完成": bool(facts.get("已撥款"))})
     items.append({"項目": "理財型房貸清償",

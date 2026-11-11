@@ -88,6 +88,22 @@ def _now():
     return datetime.now(TPE)
 
 
+def _parse_ts(s):
+    """--ts：支援 ISO 或 'YYYY-MM-DD HH:MM:SS'（視為台北時間）。解析失敗即中止，不猜。"""
+    if not s:
+        return None
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y/%m/%d %H:%M:%S"):
+        try:
+            return datetime.strptime(s, fmt).replace(tzinfo=TPE)
+        except ValueError:
+            continue
+    try:
+        d = datetime.fromisoformat(s)
+        return d if d.tzinfo else d.replace(tzinfo=TPE)
+    except ValueError:
+        raise SystemExit(f"❌ --ts 無法解析：{s}（用 YYYY-MM-DD HH:MM:SS 或 ISO）")
+
+
 def _next_id(decisions, ts):
     """id 格式沿用管線既有樣式：mem-<YYYYmmddHHMMSS>-<累計筆數>。"""
     return f"mem-{ts.strftime('%Y%m%d%H%M%S')}-{len(decisions)}"
@@ -168,7 +184,7 @@ def _git(*args):
                           text=True, encoding="utf-8", errors="replace")
 
 
-def settle_own(entry):
+def settle_own(entry, skip_push=False):
     """把本次入庫的寫入集就地提交（純資料檔），回傳一行狀態。
 
     為什麼（2026-10-02 修復）：22:40 收工稽核連續判「已追蹤未提交」——入庫寫的兩個檔
@@ -190,6 +206,12 @@ def settle_own(entry):
     if c.returncode != 0:
         return f"⚠️ 入庫收尾：commit 失敗 {(c.stderr or c.stdout or '').strip()[:200]}"
     head = (_git("rev-parse", "--short", "HEAD").stdout or "").strip()
+
+    if skip_push:
+        # 2026-11-11（CIO 18:30 質疑①）：入庫 ≠ 發布。過去本工具唯一的收尾方式是「1 顆待推
+        # 就自動 push」，於是「沒有 push 授權」等於「不准記錄」——當天的人工裁示就整批缺席，
+        # CIO Part A 只能看到殼。--no-push 讓「記錄」與「上線」脫鉤。
+        return f"✅ 入庫已提交 {head}（--no-push：未推送，待獨立發布授權）"
 
     ahead = _git("rev-list", "--count", "origin/clean-main..HEAD")
     n = (ahead.stdout or "").strip()
@@ -216,9 +238,13 @@ def main():
     ap.add_argument("--quiet", action="store_true")
     ap.add_argument("--allow-duplicate", action="store_true",
                     help="明確允許同日同任務同來源再寫一筆（預設＝去重，P0-2）")
+    ap.add_argument("--no-push", action="store_true",
+                    help="只提交、不推送（入庫≠發布；無發布授權時必用，2026-11-11 CIO 質疑①）")
+    ap.add_argument("--ts", default=None,
+                    help="指定事件時間（ISO 或 YYYY-MM-DD HH:MM:SS，台北時間）；補登當日已發生的裁示用")
     a = ap.parse_args()
 
-    entry = build_entry(a.task, a.summary, a.status, a.source, a.agent)
+    entry = build_entry(a.task, a.summary, a.status, a.source, a.agent, ts=_parse_ts(a.ts))
 
     # ── duplicate guard（P0-2，2026-10-05 使用者核准）────────────────────────
     # 同一決策／同一任務／同一 execution 不得產生多筆等價收據。
@@ -253,7 +279,7 @@ def main():
         elif out:
             print(out)
     if not a.dry_run:
-        print(settle_own(entry))
+        print(settle_own(entry, skip_push=a.no_push))
     return 0
 
 
