@@ -12317,6 +12317,15 @@
     "summary": "依 App 截圖更新安聯B 淨值為 2,472,783（+37,821）；保單帳戶合計 1,882,263（第一金），防禦維度約 7%。第一金 7 月淨值跳空仍未釐清，其報酬率暫不作配置依據。",
     "status": "completed",
     "source": "user"
+  },
+  {
+    "id": "mem-20261111190000-1333",
+    "timestamp": "2026-11-11T19:00:00+08:00",
+    "agent": "Hermes",
+    "task": "裁決 B：US30Y 綠燈附宏觀警語（不推翻 v1.2）",
+    "summary": "CIO 18:30 質疑②指 unfreeze_allowed=true 與 redline stage 3 並存、綠燈像裝飾。裁決：不採 A（把 unfreeze_allowed 接 stage＝改回 hard veto，會推翻 2026-10-14 23:04『US30Y 改宏觀警示、不單獨否決台股分批』裁決）；改採 B——us30y_gate 新增 macro_caution／macro_caution_reason／redline_stage（由 risk_warning 與 redline_policy(streak) 派生），unfreeze_allowed 計算路徑不動。check_thresholds 加斷言：macro_caution 須等於 risk_warning、reason 須含 stage 與 streak、redline_stage 須等於 redline_policy.stage；突變測試（改 False）rc=1、還原 rc=0。A 與 C 留 11/19 正式議程。commit 16b075bd／fe9c09dc。",
+    "status": "completed",
+    "source": "user"
   }
   ],
   "pending_decisions": [
