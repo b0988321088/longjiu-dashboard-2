@@ -12290,6 +12290,15 @@
     "summary": "國泰 2026-11-11 告知現行利率 2.65%（原『≤2.5%』作廢），高於永豐隱含 2.438%（利息 26,654×12÷13,120,575）→ 轉貸貴 0.212pp 且純為寬限期（停止還本），現金流已足夠前提下無誘因 → 裁示暫不轉貸、維持永豐續繳 65,739/月（本金 39,085＋利息 26,654）。延後對淨值 +119,298 非損失。commit 79233558。",
     "status": "completed",
     "source": "user"
+  },
+  {
+    "id": "mem-20261111152835-1330",
+    "timestamp": "2026-11-11T15:28:35+08:00",
+    "agent": "Hermes",
+    "task": "Pages 來源切換 GitHub Actions",
+    "summary": "使用者 15:28 將 Pages 部署來源切換為 GitHub Actions（allowlist 流程 scripts/build_pages_site.py），並於 15:30 補上部署前 snapshot 淨化（帳號/保單號/身分證遮罩，fail-loud）。實測 18:40：manifest.json 存在、線上 snapshot.json 為淨化版（41 處 [已遮蔽]、無保單號/帳號/身分證樣式、generated_at 與本機同步），非 404 而係前端 fetch 所需。殘留：金額真值仍公開（設計取捨）。commit 4961b790／57e9fa0b。",
+    "status": "completed",
+    "source": "user"
   }
   ],
   "pending_decisions": [
