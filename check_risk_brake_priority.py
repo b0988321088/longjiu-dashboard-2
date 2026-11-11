@@ -41,8 +41,11 @@ def _rows_violating_freeze(t):
     bad = []
     for r in t.get("rows", []):
         act = str(r.get("建議動作") or "")
-        if r.get("是否交易") or any(k in act for k in TRADING_ACTIONS):
-            bad.append(f"{r.get('資產分類')}／動作={act}／交易={r.get('是否交易')}")
+        amt = r.get("精算金額") or 0
+        # 金額也必須為 0：萬一日後新增交易型動作用語（不在 TRADING_ACTIONS 內），
+        # 只要還算出金額就代表煞車漏了（CIO 2026-11-11 指出的殘留風險）。
+        if r.get("是否交易") or any(k in act for k in TRADING_ACTIONS) or float(amt or 0) != 0:
+            bad.append(f"{r.get('資產分類')}／動作={act}／交易={r.get('是否交易')}／金額={amt}")
     return bad
 
 
