@@ -23,6 +23,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -105,6 +106,28 @@ def main() -> int:
         size = os.path.getsize(dst)
         total += size
         manifest.append({"path": p, "bytes": size, "sha256": sha256(dst)})
+
+    # P0 pages-01（2026-11-11）：前端要 fetch snapshot.json 做即時渲染（不能下架），
+    # 但原檔含帳號/保單號/身分證片段 → 發布前一律換成淨化版；淨化失敗即中止（fail-loud）。
+    if "snapshot.json" in picked:
+        rc = subprocess.run(
+            [sys.executable, os.path.join(root, "scripts", "sanitize_snapshot_public.py"),
+             "--src", os.path.join(root, "snapshot.json"),
+             "--dst", os.path.join(out, "snapshot.json")],
+            capture_output=True, text=True,
+        )
+        if rc.returncode != 0:
+            print("❌ 公開版 snapshot 淨化失敗 → 中止部署（fail-loud）")
+            print(rc.stdout.strip() or rc.stderr.strip())
+            return 1
+        print("  " + (rc.stdout.strip() or "snapshot.json 已淨化"))
+        _p2 = os.path.join(out, "snapshot.json")
+        for _m in manifest:
+            if _m["path"] == "snapshot.json":
+                _m["bytes"] = os.path.getsize(_p2)
+                _m["sha256"] = sha256(_p2)
+                _m["sanitized"] = True
+        total = sum(_m["bytes"] for _m in manifest)
 
     open(os.path.join(out, ".nojekyll"), "w").close()
     with open(os.path.join(out, "404.html"), "w", encoding="utf-8", newline="\n") as f:
