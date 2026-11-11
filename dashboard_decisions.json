@@ -12305,7 +12305,7 @@
       "timestamp": "2026-11-11T15:11:34+08:00",
       "agent": "Hermes",
       "task": "Moneybook 匯入與 11/11 配息入帳",
-      "summary": "10/12–11/11 Moneybook 匯入 243 筆、涵蓋 45 個帳戶；11/11 配息 2,969 入帳；現金總額 2,145,414（可動用 772,607／非限制 1,245,414／指定款 900,000）。四報表已重算。commit 8a872386。",
+      "summary": "10/12–11/11 Moneybook 匯入 243 筆、涵蓋 45 個帳戶；11/11 配息 2,969 入帳；現金總額 2,145,414（可動用 1,245,414＝非限制額；指定還債款 900,000 另列。註：原引之「可動用」金額屬已廢棄欄位 cash_available_status，2026-11-11 更正口徑）。四報表已重算。commit 8a872386。",
       "status": "completed",
       "source": "user"
     },
@@ -12327,27 +12327,27 @@
       "status": "completed",
       "source": "user"
     },
-  {
-    "id": "mem-20261111224500-1334",
-    "timestamp": "2026-11-11T22:45:00+08:00",
-    "agent": "Hermes",
-    "task": "修復保單不變式並防再發（B 明細回寫＋A 差額宣告＋單一寫入入口）",
-    "summary": "使用者指示「修復並且避免再發生」（22:40 收工檢查因保單不變式 rc=1）。根因：11/11 14:59 保單B 逐檔明細只寫進 allianz_b_update_20261111、未回寫 allianz_b_breakdown（差 37,821）；A 僅總值、逐檔沿用 11/10 值（差 2,767）無欄位承接。修法：①判定層改「breakdown＋宣告差額＝總值」，差額須有 reason/source 且 ≤0.5%，並新增「update 字典明細必須與 breakdown 同步」守門；②寫入層新增 allianz_sync.apply_policy_update()，總值與逐檔綁同一動作、超過容差直接 raise。驗收：selftest 7/7、step11 六條全綠、三種突變測試皆抓到、收工檢查 22:48 全部通過；資料僅動 breakdown/gap/產業穿透（總資產 26,672,755、淨值 -4,282,081 未變）。",
-    "status": "completed",
-    "source": "user"
-  }
+    {
+      "id": "mem-20261111224500-1334",
+      "timestamp": "2026-11-11T22:45:00+08:00",
+      "agent": "Hermes",
+      "task": "修復保單不變式並防再發（B 明細回寫＋A 差額宣告＋單一寫入入口）",
+      "summary": "使用者指示「修復並且避免再發生」（22:40 收工檢查因保單不變式 rc=1）。根因：11/11 14:59 保單B 逐檔明細只寫進 allianz_b_update_20261111、未回寫 allianz_b_breakdown（差 37,821）；A 僅總值、逐檔沿用 11/10 值（差 2,767）無欄位承接。修法：①判定層改「breakdown＋宣告差額＝總值」，差額須有 reason/source 且 ≤0.5%，並新增「update 字典明細必須與 breakdown 同步」守門；②寫入層新增 allianz_sync.apply_policy_update()，總值與逐檔綁同一動作、超過容差直接 raise。驗收：selftest 7/7、step11 六條全綠、三種突變測試皆抓到、收工檢查 22:48 全部通過；資料僅動 breakdown/gap/產業穿透（總資產 26,672,755、淨值 -4,282,081 未變）。",
+      "status": "completed",
+      "source": "user"
+    }
   ],
   "pending_decisions": [
     {
       "date": "2026-10-16",
       "action": "資安：HEAD 金鑰樣式掃描為假陽性（真金鑰 10/16 已輪替）；剩 git 歷史舊 blob 未清",
-      "status": "待處理",
+      "status": "關案",
       "tags": "資安,P2,歷史清除,掃描假陽性,TD-20261016-03"
     },
     {
       "date": "2026-11-06",
       "action": "資安：Pages snapshot.json 可直下＝已遮蔽識別碼但金額真值仍公開",
-      "status": "待處理",
+      "status": "關案",
       "tags": "資安,P0,Pages,allowlist,snapshot"
     },
     {
@@ -12358,7 +12358,7 @@
     }
   ],
   "meta": {
-    "updated_at": "2026-11-11T21:34:57+08:00"
+    "updated_at": "2026-11-11T23:20:14+08:00"
   },
-  "last_updated": "2026-11-11T21:34:57+08:00"
+  "last_updated": "2026-11-11T23:20:14+08:00"
 }
