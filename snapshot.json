@@ -9079,6 +9079,7 @@
   "時間": "2026-11-11 15:24:53",
   "現象": "pages-allowlist-deploy 08a872386 deploy 失敗：400 deployment in progress（與內建 pages build and deployment 爭鎖）",
   "處置": "補一筆資料變更重觸發部署，驗證自訂流程能否取得部署鎖",
-  "備註": "線上內容已是最新（26,672,755 等值實測正確）；snapshot.json 仍可直下＝內建流程繞過白名單"
+  "備註": "線上內容已是最新（26,672,755 等值實測正確）；snapshot.json 仍可直下＝內建流程繞過白名單",
+  "後續": "2026-11-11 15:28 使用者已將 Pages 來源切為 GitHub Actions；本次推送用於驗證新部署路徑（預期內建 pages build and deployment 不再觸發、snapshot.json 應轉 404）"
  }
 }
