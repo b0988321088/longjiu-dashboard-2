@@ -9074,5 +9074,11 @@
    "USDEQ6730 貝萊德世界黃金基金 A10美元(總報酬穩定配息)": 155686
   },
   "來源": "使用者截圖 img_57f12a337ff9"
+ },
+ "pages_deploy_retry_20261111": {
+  "時間": "2026-11-11 15:24:53",
+  "現象": "pages-allowlist-deploy 08a872386 deploy 失敗：400 deployment in progress（與內建 pages build and deployment 爭鎖）",
+  "處置": "補一筆資料變更重觸發部署，驗證自訂流程能否取得部署鎖",
+  "備註": "線上內容已是最新（26,672,755 等值實測正確）；snapshot.json 仍可直下＝內建流程繞過白名單"
  }
 }
