@@ -518,6 +518,10 @@ def step_consistency(quiet: bool) -> list:
 THRESHOLD_CHECKER = REPO / "check_thresholds.py"
 THRESHOLD_ARGS = ("--sot-only",)
 THRESHOLD_TIMEOUT = 180
+# 2026-11-11（使用者核准）：風險煞車優先序的可測斷言（US30Y 煞車期間不得出現任何交易型動作）。
+# 這條原本只存在於人的記憶裡；CIO 質疑③指出「超標 vs 煞車」的優先序不能靠記住 → 每天跑。
+BRAKE_CHECKER = REPO / "check_risk_brake_priority.py"
+BRAKE_TIMEOUT = 120
 
 
 def step_threshold_invariants(quiet: bool, checker: Path | None = None) -> list:
@@ -558,6 +562,39 @@ def step_threshold_invariants(quiet: bool, checker: Path | None = None) -> list:
         return [f"門檻不變式檢查 FAIL（rc={p.returncode}）：{head}"]
     if not quiet:
         print("⑦ 門檻／不變式（check_thresholds.py --sot-only）：✅")
+    return []
+
+
+def step_brake_priority(quiet: bool) -> list:
+    """⑦b 風險煞車優先序（check_risk_brake_priority.py）——煞車期間出現任何交易型動作即 FAIL。
+
+    為什麼獨立成一步：⑦ 驗的是「門檻口徑」，這步驗的是「優先序與 no-op 行為」。
+    兩者失效模式不同——口徑全對但順序錯（防守桶分支排在凍結之前），照樣會輸出增持
+    並帶金額（2026-11-11 實測：舊碼 B4/B6 就是這樣 FAIL）。純讀取，不改任何檔案。
+    """
+    if not BRAKE_CHECKER.exists():
+        return [f"風險煞車檢查器不存在：{BRAKE_CHECKER}（fail-closed，不得宣告收工全綠）"]
+    env = dict(os.environ)
+    env["LJ_NO_TELEGRAM"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
+    try:
+        p = subprocess.run([sys.executable, str(BRAKE_CHECKER)],
+                           cwd=str(BRAKE_CHECKER.parent), capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=BRAKE_TIMEOUT, env=env)
+    except subprocess.TimeoutExpired:
+        return [f"風險煞車優先序檢查逾時（>{BRAKE_TIMEOUT}s）→ fail-closed"]
+    except Exception as e:                                   # noqa: BLE001
+        return [f"風險煞車優先序檢查無法執行：{type(e).__name__}: {e} → fail-closed"]
+    out = (p.stdout or "").rstrip()
+    if p.returncode != 0:
+        print("⑦b 風險煞車優先序（check_risk_brake_priority.py）：❌ FAIL")
+        for ln in out.splitlines()[-20:]:
+            print("   " + ln)
+        bad = [ln.strip() for ln in out.splitlines() if ln.strip().startswith("❌")]
+        head = "；".join(bad[:4]) if bad else f"rc={p.returncode}（無 ❌ 行，詳見上方輸出）"
+        return [f"風險煞車優先序 FAIL（rc={p.returncode}）：{head}"]
+    if not quiet:
+        print("⑦b 風險煞車優先序（check_risk_brake_priority.py）：✅")
     return []
 
 
@@ -887,6 +924,7 @@ def main() -> int:
         sync_problems = step_remote_sync(args.quiet or args.silent_ok)
         cons_problems = step_consistency(args.quiet or args.silent_ok)
         thr_problems = step_threshold_invariants(args.quiet or args.silent_ok)
+        brake_problems = step_brake_priority(args.quiet or args.silent_ok)
         hb_problems = step_verifier_heartbeat(args.quiet or args.silent_ok)
         pages_problems = step_pages_deploy(args.quiet or args.silent_ok)
         mech_problems = step_publish_mechanism(args.quiet or args.silent_ok)
@@ -903,6 +941,7 @@ def main() -> int:
         problems.extend(sync_problems)
         problems.extend(cons_problems)
         problems.extend(thr_problems)
+        problems.extend(brake_problems)
         problems.extend(hb_problems)
 
         problems.extend(pages_problems)
