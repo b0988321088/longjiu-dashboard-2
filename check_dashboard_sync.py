@@ -85,8 +85,66 @@ if re.search(r"\['2026-0\d'\]", html):
 #    → footer／再平衡備忘等 build 產出的區塊仍照掃，不犧牲覆蓋率。
 _p6 = html.find('id="panel-6"')
 _m2 = html.find("</main>")
-_scan = html if (_p6 < 0 or _m2 <= _p6) else (html[:_p6] + html[_m2:])
-_scan = re.sub(r"<script\b.*?</script>", "", _scan, flags=re.S | re.I)
+
+
+def _visible_text(s: str) -> str:
+    """只取「使用者真的看得到」的文字：剔除 <script>／<style>／註解／panel-6（審查者原文）。
+
+    2026-11-11 實踩：舊做法用 `re.sub(r"<script\\b.*?</script>")` 非貪婪移除 JS，但頁面某段
+    JS 字串裡出現 `</script>` 字樣 → 提早收束，剩下一大段 JS 仍被當成 HTML 掃；那段又剛好
+    含「註解掉的舊版審查卡」與審查者原文（引用已廢棄欄位 cash_available_status 的舊金額），
+    於是每次重產都報「舊值殘留」，把真問題蓋掉（INC-208 同型復發）。
+    修法：用 HTMLParser 依真實結構取資料，不再用正則切 script；panel-6 以 id 判定而非位置。
+    """
+    from html.parser import HTMLParser
+
+    class _P(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.buf, self.skip, self.stack = [], 0, []
+
+        def handle_starttag(self, tag, attrs):
+            if tag in ("script", "style"):
+                self.stack.append(tag)
+                self.skip += 1
+                return
+            if self.skip:
+                return
+            if dict(attrs).get("id") == "panel-6":
+                self.stack.append("panel-6")
+                self.skip += 1
+                return
+            if self.stack and self.stack[-1] == "panel-6":
+                self.stack.append(tag)
+
+        def handle_endtag(self, tag):
+            if tag in ("script", "style"):
+                if self.stack and self.stack[-1] == tag:
+                    self.stack.pop()
+                    self.skip = max(0, self.skip - 1)
+                return
+            if self.stack and self.stack[-1] == "panel-6":
+                # panel-6 內：只有在對應的 </div> 收掉時才結束
+                if tag == "main" or tag == "body":
+                    self.stack.pop()
+                    self.skip = max(0, self.skip - 1)
+                return
+            if self.stack and self.stack[-1] == tag:
+                self.stack.pop()
+
+        def handle_data(self, data):
+            if not self.skip:
+                self.buf.append(data)
+
+        def handle_comment(self, data):
+            return
+
+    _p = _P()
+    _p.feed(s)
+    return "\n".join(_p.buf)
+
+
+_scan = _visible_text(html)
 OLD = [
     "753,388", "138,627", "123,607", "243,434",
     "225,918", "799,612", "20260829", "20260821_1", "772,607",
