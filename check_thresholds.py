@@ -414,6 +414,25 @@ def main() -> int:
         #   advisory 模式＝解凍一律由 unfreeze_conditions（現金／質押 LTV／還本安全閥）決定，
         #   逐一重算比對，缺資料或寫死值一律 fail-closed。
         _gm = _ug.get("mode") or "advisory"
+        # 2026-11-11（CIO 質疑②／裁決 B）：綠燈必須同時帶宏觀警語，且警語要指名紅線長期化階段。
+        #   這裡不驗「該不該凍結」（那是政策），只驗「揭露有沒有跟上真值」——防止再一次出現
+        #   unfreeze_allowed=true 卻是裝飾綠燈而下游看不到任何警語。
+        if _ug:
+            _rw = bool(_ug.get("risk_warning"))
+            _mc = _ug.get("macro_caution")
+            _mcr = str(_ug.get("macro_caution_reason") or "")
+            if _mc is None:
+                errs.append("us30y_gate 缺 macro_caution（綠燈未附宏觀警語欄位）")
+            elif bool(_mc) != _rw:
+                errs.append(f"us30y_gate.macro_caution({_mc}) 與 risk_warning({_rw}) 不一致")
+            if _rw and "stage" not in _mcr:
+                errs.append("us30y_gate.macro_caution_reason 未帶 redline stage 與 streak 證據")
+            _rps = snap.get("redline_policy") or {}
+            if _rps and _ug.get("redline_stage") is not None:
+                if int(_ug.get("redline_stage") or 0) != int(_rps.get("stage") or 0):
+                    errs.append(
+                        f"us30y_gate.redline_stage({_ug.get('redline_stage')}) "
+                        f"≠ redline_policy.stage({_rps.get('stage')})")
         if _ug and _gm == "hard_veto" and _ug.get("below_red_line") is False and _ug.get("unfreeze_allowed"):
             errs.append("US30Y 未脫離紅線卻許可解凍（hard_veto 模式）")
         if _ug and _gm == "advisory":

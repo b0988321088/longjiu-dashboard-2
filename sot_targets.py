@@ -1253,6 +1253,25 @@ def us30y_gate(snap: dict | None = None, state: dict | None = None,
         "risk_warning": risk_warning,
         "mode": _mode,
     }
+    # 2026-11-11（CIO 18:30 質疑②／使用者裁決「B」）：advisory 綠燈本身不動語意（v1.2 裁決不推翻），
+    #   但必須同時揭露宏觀警語與紅線長期化階段，否則「unfreeze_allowed=true」會被讀成「可以放心進場」。
+    #   僅新增欄位，不改變 unfreeze_allowed 的計算路徑。
+    try:
+        _rp = redline_policy(_base.get("streak_days"))
+        _stage = int(_rp.get("stage") or 0)
+        _stage_txt = str(_rp.get("應做事項") or "")
+    except Exception:                                # 政策不可得 → 不謊報，留空
+        _stage, _stage_txt = 0, ""
+    _macro_caution = bool(risk_warning)
+    _macro_reason = ""
+    if _macro_caution:
+        _macro_reason = (f"US30Y {value}% ≥ 紅線 {_red}%（模式A streak {_base.get('streak_days')} 日／"
+                         f"紅線 streak {_base.get('red_line_streak_days')} 日）"
+                         f"｜redline_policy stage {_stage}：{_stage_txt}"
+                         "｜本警語不否決台股分批（v1.2 advisory），但綠燈不等於建議進場")
+    _base["macro_caution"] = _macro_caution
+    _base["macro_caution_reason"] = _macro_reason
+    _base["redline_stage"] = _stage
     if _mode == GATE_MODE_HARD_VETO:
         # 回復路徑（v1.1 原語意）：資料有效且低於紅線才許可解凍。
         return {**_base,
