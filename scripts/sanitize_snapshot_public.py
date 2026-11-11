@@ -19,10 +19,10 @@ REDACT = "[已遮蔽]"
 PATTERNS = [
     re.compile(r"\d{2,3}[-\u2013\uff0d]\d{6,}"),              # 812-000123456789
     re.compile(r"[A-Z]{2}\d{8}"),                              # QL18610694 保單號
-    re.compile(r"[A-Z]\d{9}"),                                 # B121835155 身分證
+    re.compile(r"[A-Z]\d{9}"),                                 # 身分證字號（1 英文字母＋9 數字）
     re.compile(r"\d{4}[-\s]\d{4}[-\s]\d{4}[-\s]\d{4}"),        # 卡號
     re.compile(r"\d{6,}[*]{2,}\d*"),                           # 000123******55
-    re.compile(r"[A-Za-z0-9]{0,6}[*]{3,}[0-9A-Za-z]*"),        # B121***155
+    re.compile(r"[A-Za-z0-9]{0,6}[*]{3,}[0-9A-Za-z]*"),        # 已遮蔽片段的星號樣式
 ]
 NAMES = ("梁世寶",)
 
