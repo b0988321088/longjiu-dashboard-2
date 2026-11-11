@@ -1996,3 +1996,7 @@
 {"ts": "2026-11-11T15:37:31", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1120, "cached": 896, "out": 162, "ok": true}
 {"ts": "2026-11-11T15:37:35", "model": "deepseek-chat", "caller": "run_daily.py", "in": 642, "cached": 508, "out": 235, "ok": true}
 {"ts": "2026-11-11T15:38:53", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 531, "cached": 384, "out": 805, "ok": true}
+{"ts": "2026-11-11T16:16:04", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 520, "cached": 128, "out": 608, "ok": true}
+{"ts": "2026-11-11T21:33:27", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 649, "cached": 0, "out": 141, "ok": true}
+{"ts": "2026-11-11T21:34:09", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 649, "cached": 512, "out": 176, "ok": true}
+{"ts": "2026-11-11T21:34:59", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 649, "cached": 512, "out": 215, "ok": true}
