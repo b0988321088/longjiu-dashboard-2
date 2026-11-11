@@ -12322,19 +12322,19 @@
   "pending_decisions": [
     {
       "date": "2026-10-16",
-      "action": "資安：HEAD 仍殘留金鑰樣式字串（2 份舊日報＋safe_read.py）",
+      "action": "資安：HEAD 金鑰樣式掃描為假陽性（真金鑰 10/16 已輪替）；剩 git 歷史舊 blob 未清",
       "status": "待處理",
-      "tags": "資安,P0,金鑰輪替,歷史清除,Pages,TD-20261016-03"
+      "tags": "資安,P2,歷史清除,掃描假陽性,TD-20261016-03"
     },
     {
       "date": "2026-11-06",
-      "action": "資安：Pages 仍可直下 snapshot.json（真值公開面）",
+      "action": "資安：Pages snapshot.json 可直下＝已遮蔽識別碼但金額真值仍公開",
       "status": "待處理",
       "tags": "資安,P0,Pages,allowlist,snapshot"
     },
     {
       "date": "2026-11-10",
-      "action": "12 月薪資入帳後確認升等調薪後的新常態月薪（現 monthly_salary 39,777）",
+      "action": "薪資常態定版：12/05 完整月先定暫定 48,016，2027-01 轉正式",
       "status": "待處理",
       "tags": "薪資,升等調薪,常態口徑,monthly_salary,月收,FI跑道,使用者裁示20261110"
     }
