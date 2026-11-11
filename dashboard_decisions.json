@@ -12326,7 +12326,16 @@
       "summary": "CIO 18:30 質疑②指 unfreeze_allowed=true 與 redline stage 3 並存、綠燈像裝飾。裁決：不採 A（把 unfreeze_allowed 接 stage＝改回 hard veto，會推翻 2026-10-14 23:04『US30Y 改宏觀警示、不單獨否決台股分批』裁決）；改採 B——us30y_gate 新增 macro_caution／macro_caution_reason／redline_stage（由 risk_warning 與 redline_policy(streak) 派生），unfreeze_allowed 計算路徑不動。check_thresholds 加斷言：macro_caution 須等於 risk_warning、reason 須含 stage 與 streak、redline_stage 須等於 redline_policy.stage；突變測試（改 False）rc=1、還原 rc=0。A 與 C 留 11/19 正式議程。commit 16b075bd／fe9c09dc。",
       "status": "completed",
       "source": "user"
-    }
+    },
+  {
+    "id": "mem-20261111224500-1334",
+    "timestamp": "2026-11-11T22:45:00+08:00",
+    "agent": "Hermes",
+    "task": "修復保單不變式並防再發（B 明細回寫＋A 差額宣告＋單一寫入入口）",
+    "summary": "使用者指示「修復並且避免再發生」（22:40 收工檢查因保單不變式 rc=1）。根因：11/11 14:59 保單B 逐檔明細只寫進 allianz_b_update_20261111、未回寫 allianz_b_breakdown（差 37,821）；A 僅總值、逐檔沿用 11/10 值（差 2,767）無欄位承接。修法：①判定層改「breakdown＋宣告差額＝總值」，差額須有 reason/source 且 ≤0.5%，並新增「update 字典明細必須與 breakdown 同步」守門；②寫入層新增 allianz_sync.apply_policy_update()，總值與逐檔綁同一動作、超過容差直接 raise。驗收：selftest 7/7、step11 六條全綠、三種突變測試皆抓到、收工檢查 22:48 全部通過；資料僅動 breakdown/gap/產業穿透（總資產 26,672,755、淨值 -4,282,081 未變）。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "pending_decisions": [
     {
