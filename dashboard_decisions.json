@@ -12282,51 +12282,51 @@
       "status": "completed",
       "source": "auto"
     },
-  {
-    "id": "mem-20261111122945-1329",
-    "timestamp": "2026-11-11T12:29:45+08:00",
-    "agent": "Hermes",
-    "task": "洲際W 轉貸定案（暫不轉貸）",
-    "summary": "國泰 2026-11-11 告知現行利率 2.65%（原『≤2.5%』作廢），高於永豐隱含 2.438%（利息 26,654×12÷13,120,575）→ 轉貸貴 0.212pp 且純為寬限期（停止還本），現金流已足夠前提下無誘因 → 裁示暫不轉貸、維持永豐續繳 65,739/月（本金 39,085＋利息 26,654）。延後對淨值 +119,298 非損失。commit 79233558。",
-    "status": "completed",
-    "source": "user"
-  },
-  {
-    "id": "mem-20261111152835-1330",
-    "timestamp": "2026-11-11T15:28:35+08:00",
-    "agent": "Hermes",
-    "task": "Pages 來源切換 GitHub Actions",
-    "summary": "使用者 15:28 將 Pages 部署來源切換為 GitHub Actions（allowlist 流程 scripts/build_pages_site.py），並於 15:30 補上部署前 snapshot 淨化（帳號/保單號/身分證遮罩，fail-loud）。實測 18:40：manifest.json 存在、線上 snapshot.json 為淨化版（41 處 [已遮蔽]、無保單號/帳號/身分證樣式、generated_at 與本機同步），非 404 而係前端 fetch 所需。殘留：金額真值仍公開（設計取捨）。commit 4961b790／57e9fa0b。",
-    "status": "completed",
-    "source": "user"
-  },
-  {
-    "id": "mem-20261111151134-1331",
-    "timestamp": "2026-11-11T15:11:34+08:00",
-    "agent": "Hermes",
-    "task": "Moneybook 匯入與 11/11 配息入帳",
-    "summary": "10/12–11/11 Moneybook 匯入 243 筆、涵蓋 45 個帳戶；11/11 配息 2,969 入帳；現金總額 2,145,414（可動用 772,607／非限制 1,245,414／指定款 900,000）。四報表已重算。commit 8a872386。",
-    "status": "completed",
-    "source": "user"
-  },
-  {
-    "id": "mem-20261111145900-1332",
-    "timestamp": "2026-11-11T14:59:00+08:00",
-    "agent": "Hermes",
-    "task": "安聯B 保單淨值更新",
-    "summary": "依 App 截圖更新安聯B 淨值為 2,472,783（+37,821）；保單帳戶合計 1,882,263（第一金），防禦維度約 7%。第一金 7 月淨值跳空仍未釐清，其報酬率暫不作配置依據。",
-    "status": "completed",
-    "source": "user"
-  },
-  {
-    "id": "mem-20261111190000-1333",
-    "timestamp": "2026-11-11T19:00:00+08:00",
-    "agent": "Hermes",
-    "task": "裁決 B：US30Y 綠燈附宏觀警語（不推翻 v1.2）",
-    "summary": "CIO 18:30 質疑②指 unfreeze_allowed=true 與 redline stage 3 並存、綠燈像裝飾。裁決：不採 A（把 unfreeze_allowed 接 stage＝改回 hard veto，會推翻 2026-10-14 23:04『US30Y 改宏觀警示、不單獨否決台股分批』裁決）；改採 B——us30y_gate 新增 macro_caution／macro_caution_reason／redline_stage（由 risk_warning 與 redline_policy(streak) 派生），unfreeze_allowed 計算路徑不動。check_thresholds 加斷言：macro_caution 須等於 risk_warning、reason 須含 stage 與 streak、redline_stage 須等於 redline_policy.stage；突變測試（改 False）rc=1、還原 rc=0。A 與 C 留 11/19 正式議程。commit 16b075bd／fe9c09dc。",
-    "status": "completed",
-    "source": "user"
-  }
+    {
+      "id": "mem-20261111122945-1329",
+      "timestamp": "2026-11-11T12:29:45+08:00",
+      "agent": "Hermes",
+      "task": "洲際W 轉貸定案（暫不轉貸）",
+      "summary": "國泰 2026-11-11 告知現行利率 2.65%（原『≤2.5%』作廢），高於永豐隱含 2.438%（利息 26,654×12÷13,120,575）→ 轉貸貴 0.212pp 且純為寬限期（停止還本），現金流已足夠前提下無誘因 → 裁示暫不轉貸、維持永豐續繳 65,739/月（本金 39,085＋利息 26,654）。延後對淨值 +119,298 非損失。commit 79233558。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261111152835-1330",
+      "timestamp": "2026-11-11T15:28:35+08:00",
+      "agent": "Hermes",
+      "task": "Pages 來源切換 GitHub Actions",
+      "summary": "使用者 15:28 將 Pages 部署來源切換為 GitHub Actions（allowlist 流程 scripts/build_pages_site.py），並於 15:30 補上部署前 snapshot 淨化（帳號/保單號/身分證遮罩，fail-loud）。實測 18:40：manifest.json 存在、線上 snapshot.json 為淨化版（41 處 [已遮蔽]、無保單號/帳號/身分證樣式、generated_at 與本機同步），非 404 而係前端 fetch 所需。殘留：金額真值仍公開（設計取捨）。commit 4961b790／57e9fa0b。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261111151134-1331",
+      "timestamp": "2026-11-11T15:11:34+08:00",
+      "agent": "Hermes",
+      "task": "Moneybook 匯入與 11/11 配息入帳",
+      "summary": "10/12–11/11 Moneybook 匯入 243 筆、涵蓋 45 個帳戶；11/11 配息 2,969 入帳；現金總額 2,145,414（可動用 772,607／非限制 1,245,414／指定款 900,000）。四報表已重算。commit 8a872386。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261111145900-1332",
+      "timestamp": "2026-11-11T14:59:00+08:00",
+      "agent": "Hermes",
+      "task": "安聯B 保單淨值更新",
+      "summary": "依 App 截圖更新安聯B 淨值為 2,472,783（+37,821）；保單帳戶合計 1,882,263（第一金），防禦維度約 7%。第一金 7 月淨值跳空仍未釐清，其報酬率暫不作配置依據。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261111190000-1333",
+      "timestamp": "2026-11-11T19:00:00+08:00",
+      "agent": "Hermes",
+      "task": "裁決 B：US30Y 綠燈附宏觀警語（不推翻 v1.2）",
+      "summary": "CIO 18:30 質疑②指 unfreeze_allowed=true 與 redline stage 3 並存、綠燈像裝飾。裁決：不採 A（把 unfreeze_allowed 接 stage＝改回 hard veto，會推翻 2026-10-14 23:04『US30Y 改宏觀警示、不單獨否決台股分批』裁決）；改採 B——us30y_gate 新增 macro_caution／macro_caution_reason／redline_stage（由 risk_warning 與 redline_policy(streak) 派生），unfreeze_allowed 計算路徑不動。check_thresholds 加斷言：macro_caution 須等於 risk_warning、reason 須含 stage 與 streak、redline_stage 須等於 redline_policy.stage；突變測試（改 False）rc=1、還原 rc=0。A 與 C 留 11/19 正式議程。commit 16b075bd／fe9c09dc。",
+      "status": "completed",
+      "source": "user"
+    }
   ],
   "pending_decisions": [
     {
@@ -12349,7 +12349,7 @@
     }
   ],
   "meta": {
-    "updated_at": "2026-11-11T10:03:30.096836"
+    "updated_at": "2026-11-11T21:34:57+08:00"
   },
-  "last_updated": "2026-11-11T07:01:19+08:00"
+  "last_updated": "2026-11-11T21:34:57+08:00"
 }
