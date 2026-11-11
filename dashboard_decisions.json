@@ -12263,6 +12263,24 @@
       "summary": "使用者 2026-11-10 核准 ✅ 四項一次做：①links_config.today_deliverable_links()＝index.html∪當日日報內含當日日期連結（Pages 絕對 URL 正規化）②data_closeout_commit(22:38)與_audit_closeout(22:40)共用同一判準 ③check_narrative_numbers 新增 forbidden_publish_claims：內文宣告未commit/未push/未發布即 REJECT ④13:00/21:30 緊急應變 cron prompt 同步改規則。資料補救：11/10 台股版緊急報告補入庫、4 檔內文改時間中性。驗證：沙盒負向樣本抓到、dry-run 16→17 檔、雙閘門✅、線上三頁 200。推送：cc8d5f56（CIO-Gemini APPROVE 3段100%）＋907e1939（AUTO-checker），遠端 sha 已驗證。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261111100330-1327",
+      "timestamp": "2026-11-11T10:03:30.041940",
+      "agent": "Hermes",
+      "task": "日報2026-11-11",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261111100330-1328",
+      "timestamp": "2026-11-11T10:03:30.093838",
+      "agent": "Hermes",
+      "task": "資產穿透2026-11-11",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
     }
   ],
   "pending_decisions": [
@@ -12286,7 +12304,7 @@
     }
   ],
   "meta": {
-    "updated_at": "2026-11-11T07:01:19+08:00"
+    "updated_at": "2026-11-11T10:03:30.096836"
   },
   "last_updated": "2026-11-11T07:01:19+08:00"
 }
