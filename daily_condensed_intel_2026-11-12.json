@@ -9,20 +9,20 @@
   },
   {
     "title": "市場動態：台股加權",
-    "description": "台股加權 今日 43,474.97 (-1.77%)，市場情緒看跌。",
+    "description": "台股加權 今日 43,091.87 (-2.63%)，市場情緒看跌。",
     "holdings_impact": [],
     "sentiment": "negative",
-    "signal_level": "✅ 參考",
+    "signal_level": "🟡 注意",
     "raw_source": "Yahoo Finance - 台股加權"
   },
   {
     "title": "市場動態：台積電",
-    "description": "台積電 今日 2,365.00 (-1.25%)，市場情緒看跌。",
+    "description": "台積電 今日 2,340.00 (-2.30%)，市場情緒看跌。",
     "holdings_impact": [
       "0050"
     ],
     "sentiment": "negative",
-    "signal_level": "✅ 參考",
+    "signal_level": "🟡 注意",
     "raw_source": "Yahoo Finance - 台積電"
   }
 ]
