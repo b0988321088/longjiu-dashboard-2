@@ -12353,6 +12353,17 @@
       "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "timestamp": "2026-11-12T10:49:42+08:00",
+      "action": "核准",
+      "name": "保單轉換 方案A（安聯A 收益成長 → PIMCO/M&G，3 批共 1,000,000）",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "policy_conv_A_20261112",
+      "summary": "11/20 M&G 除息後啟動；批1 11/23 400k→PIMCO、批2 11/27 300k→M&G、批3 12/04 300k→PIMCO。預期美股 36.2%→35.6%、債券 25.0%→25.6%。以 11/12 真值（總資產 26,764,602／安聯A 4,962,614）計算。"
     }
   ],
   "pending_decisions": [
