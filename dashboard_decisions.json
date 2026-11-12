@@ -12335,6 +12335,24 @@
       "summary": "使用者指示「修復並且避免再發生」（22:40 收工檢查因保單不變式 rc=1）。根因：11/11 14:59 保單B 逐檔明細只寫進 allianz_b_update_20261111、未回寫 allianz_b_breakdown（差 37,821）；A 僅總值、逐檔沿用 11/10 值（差 2,767）無欄位承接。修法：①判定層改「breakdown＋宣告差額＝總值」，差額須有 reason/source 且 ≤0.5%，並新增「update 字典明細必須與 breakdown 同步」守門；②寫入層新增 allianz_sync.apply_policy_update()，總值與逐檔綁同一動作、超過容差直接 raise。驗收：selftest 7/7、step11 六條全綠、三種突變測試皆抓到、收工檢查 22:48 全部通過；資料僅動 breakdown/gap/產業穿透（總資產 26,672,755、淨值 -4,282,081 未變）。",
       "status": "completed",
       "source": "user"
+    },
+    {
+      "id": "mem-20261112101956-1335",
+      "timestamp": "2026-11-12T10:19:56.006907",
+      "agent": "Hermes",
+      "task": "日報2026-11-12",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261112101956-1336",
+      "timestamp": "2026-11-12T10:19:56.064899",
+      "agent": "Hermes",
+      "task": "資產穿透2026-11-12",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
     }
   ],
   "pending_decisions": [
@@ -12358,7 +12376,7 @@
     }
   ],
   "meta": {
-    "updated_at": "2026-11-12T07:01:10+08:00"
+    "updated_at": "2026-11-12T10:19:56.067892"
   },
   "last_updated": "2026-11-12T07:01:10+08:00"
 }

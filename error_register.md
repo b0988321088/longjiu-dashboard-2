@@ -1941,3 +1941,10 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 [CALIBRATE] 三源校準失敗：{'allianz_value': False}
 ；穿透三報表不一致（check_penetration_consistency.py 抓到）
 - 狀態: ⏳ 待處理 (總計 1 次)
+
+## INCIDENT c9b1a425 (four_source_sync)
+- 首次發生: 2026-11-12 08:42:38
+- 錯誤: 日報產出失敗: [RUN_DAILY] 日期：2026-11-12
+[CALIBRATE] 三源校準失敗：{'allianz_value': False}
+；穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)
