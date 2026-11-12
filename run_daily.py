@@ -677,6 +677,57 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       </table>
     </div>
     <p class="text-sm" style="color:#6e6e73;margin-top:6px">除息日→<strong>T+4轉換截止</strong>。T+4 = 除息日前4工作日。</p>"""
+
+    # ── 保單轉換計畫（使用者 2026-11-12 裁決：說明放進日報保單段）──────────────
+    # 數字一律讀 snapshot.policy_conversion_plan_*，不寫死；無計畫時靜默（不佔版面）
+    _conv_html = ""
+    try:
+        _cp_snap = json.loads(Path(SNAPSHOT).read_text(encoding="utf-8"))
+    except Exception:
+        _cp_snap = {}
+    _cp_keys = [k for k in _cp_snap if k.startswith("policy_conversion_plan_")]
+    _cp = _cp_snap.get(sorted(_cp_keys)[-1]) if _cp_keys else None
+    if isinstance(_cp, dict) and _cp.get("批次"):
+        _cp_rows = ""
+        for _b in _cp["批次"]:
+            _cp_rows += (
+                f'<tr><td>批 {_b.get("批", "")}</td><td>{_b.get("申請日", "")}</td>'
+                f'<td class="num">{float(_b.get("金額", 0)):,.0f}</td>'
+                f'<td>{_b.get("轉入", "")}</td><td>{_b.get("T+4完成", "")}</td>'
+                f'<td>{_b.get("搶息", "—")}</td></tr>'
+            )
+        _cp_eff = _cp.get("預期效果") or {}
+        _cp_src = _cp.get("轉出") or {}
+        _cp_rows_eff = ""
+        for _k, _lab in (("美股_TWD", "美股曝險"), ("債券_TWD", "債券曝險")):
+            if _cp_eff.get(_k) is not None:
+                _pp = _cp_eff.get(_k.replace("_TWD", "_pp"))
+                _pp_txt = f"{float(_pp):+.2f} pp" if isinstance(_pp, (int, float)) else "—"
+                _cp_rows_eff += (
+                    f'<tr><td>{_lab}</td><td class="num">{float(_cp_eff[_k]):+,.0f}</td>'
+                    f'<td>{_pp_txt}</td></tr>'
+                )
+        _cp_lim = "".join(f'<li>{_x}</li>' for _x in (_cp.get("限制與風險") or [])[:3])
+        _conv_html = f"""    <h3>轉換計畫（方案 A）</h3>
+    <p class="text-lead">轉出 <strong>{_cp_src.get("基金", "")}</strong>（現值 <strong>{float(_cp_src.get("現值", 0)):,.0f} TWD</strong>，轉出 <strong>{float(_cp_src.get("轉出金額", 0)):,.0f} TWD</strong>／{_cp_src.get("占比_pct", "")}%），分 3 批內部轉換，<strong>不新增資金、不動保單現值總額</strong>。{_cp.get("狀態", "")}</p>
+    <div class="table-wrap">
+      <table class="mobile-bordered">
+        <thead><tr><th>批次</th><th>申請日</th><th class="num">金額 TWD</th><th>轉入</th><th>T+4 入帳</th><th>搶息</th></tr></thead>
+        <tbody>
+{_cp_rows}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <table class="mobile-bordered">
+        <thead><tr><th>預期位移</th><th class="num">金額 TWD</th><th>桶位變化</th></tr></thead>
+        <tbody>
+{_cp_rows_eff}
+        </tbody>
+      </table>
+    </div>
+    <ul class="text-sm" style="color:#6e6e73;margin:6px 0 0 18px">{_cp_lim}</ul>
+    <p class="text-sm" style="color:#6e6e73;margin-top:6px">搶息規則：送件日＝除息基準日前 4 個營業日（入帳當日即算參與），提前 1 營業日較安全。系統不下單，需於安聯 App 送件後回報截圖。</p>"""
     _rc_rows = ""
     # 從 snapshot relay_stations 動態生成接力站表
     _stations = tv.get("relay_stations", {})
@@ -1324,6 +1375,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <p class="text-lead"><strong>本月配息合計：{tv['insurance_dividend']:,} TWD</strong></p>
     {relay_table}
     {_relay_calendar_html}
+    {_conv_html}
 
     <h3>保單成分穿透</h3>
     <h3>安聯 A+B 合併帳戶（成本 8,000,000 / 現值 {allianz:,}）</h3>

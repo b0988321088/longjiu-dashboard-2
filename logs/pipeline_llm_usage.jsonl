@@ -2019,3 +2019,7 @@
 {"ts": "2026-11-12T10:21:54", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1102, "cached": 0, "out": 223, "ok": true}
 {"ts": "2026-11-12T10:21:56", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1127, "cached": 0, "out": 226, "ok": true}
 {"ts": "2026-11-12T10:22:00", "model": "deepseek-chat", "caller": "run_daily.py", "in": 649, "cached": 0, "out": 185, "ok": true}
+{"ts": "2026-11-12T11:05:13", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 649, "cached": 0, "out": 202, "ok": true}
+{"ts": "2026-11-12T11:05:38", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 520, "cached": 0, "out": 640, "ok": true}
+{"ts": "2026-11-12T11:07:26", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 649, "cached": 0, "out": 148, "ok": true}
+{"ts": "2026-11-12T11:07:50", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 520, "cached": 384, "out": 607, "ok": true}
