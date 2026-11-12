@@ -1,10 +1,8 @@
 {
- "generated_at": "2026-11-12 11:05",
+ "generated_at": "2026-11-12 11:07",
  "days": 14,
  "ledger_rows": 65,
- "backfilled": [
-  "2026-11-12"
- ],
+ "backfilled": [],
  "series": [
   {
    "date": "2026-10-30",
@@ -142,7 +140,7 @@
    "gemini_twd": 0,
    "free_twd": 0,
    "total_twd": 10,
-   "calls": 168,
+   "calls": 172,
    "cer": 0,
    "q429": 0
   }
@@ -365,7 +363,7 @@
   "gem_twd": 3.0,
   "free_twd": 0.0,
   "free_calls": 560,
-  "calls": 43433,
+  "calls": 43437,
   "cer": 159,
   "pending": false,
   "total_twd": 2198.0
