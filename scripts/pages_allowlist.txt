@@ -47,7 +47,7 @@ emergency_report_2026-09-07.html
 emergency_report_2026-10-09.html
 emergency_report_2026-10-15.html
 emergency_report_2026-11-03.html
-emergency_report_2026-11-11.html
+emergency_report_2026-11-12.html
 grand_pivot_deck.html
 grand_pivot_deck.pptx
 index.html
@@ -139,7 +139,7 @@ risk_factor_penetration_2026-11-11.png
 risk_factor_penetration_2026-11-12.png
 schedule_events.json
 snapshot.json
-stress_test_2026-11-11.html
+stress_test_2026-11-12.html
 structural_health_20261103.html
 structural_health_20261112.html
 tech_debt.json
@@ -149,5 +149,5 @@ weekly_report_2026-09-08.html
 weekly_report_2026-10-12.html
 weekly_report_2026-10-15.html
 weekly_report_2026-11-01.html
-weekly_report_2026-11-11.html
+weekly_report_2026-11-12.html
 work_log.json
