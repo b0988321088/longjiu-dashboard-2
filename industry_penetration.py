@@ -10,7 +10,7 @@
   L4 = 名稱/類型推估（無公開資料時，依基金類型估算）
 """
 import json
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import matplotlib
@@ -286,11 +286,61 @@ def build_chart(pen: dict, out=None):
     return out
 
 
+def derive_sector_penetration(pen: dict, prev: dict | None = None, gold_amt: float | None = None) -> dict:
+    """由 GICS 產業穿透派生「產業別穿透」表（Micro 層）。
+
+    2026-11-12：原本是 2026-08-22 手寫的靜態快照（科技 18.5%、updated_at 08-22），
+    沒有任何腳本會重算，但日報/再平衡儀表板每天照印 → 與 GICS 即時值（26.3%）互相矛盾。
+    改為單一寫入者：數值一律由 industry_penetration 派生；策略設定（黃金/石油、輪動閥門）沿用既有。
+    """
+    ind = pen.get("產業") or {}
+    total = pen.get("總資產") or 0
+
+    def _amt(*names):
+        return sum((ind.get(n) or {}).get("金額", 0) for n in names)
+
+    def _pct(v):
+        return round(v / total * 100, 1) if total else 0.0
+
+    groups = [
+        ("高科技/半導體", ("資訊科技",), 30),
+        ("金融/電信", ("金融", "通訊服務"), None),
+        ("醫療/公用事業/不動產", ("醫療保健", "公用事業", "不動產"), None),
+        ("民生/工業/原物料", ("工業", "核心消費", "非核心消費", "原物料", "能源"), None),
+        ("固收與現金", ("固收/現金",), None),
+        ("其他/未分類", ("未分類(其他權重)",), None),
+    ]
+    out = dict(prev or {})  # 保留 實物避險-黃金／石油、輪動閥門 等策略設定
+    out["updated_at"] = datetime.now().isoformat(timespec="seconds")
+    out["source"] = "industry_penetration（GICS 派生；勿手寫）"
+    out["note"] = ("2026-11-12 起由 GICS 產業穿透派生（原 2026-08-22 手寫值作廢）。"
+                   "六組互斥、可加總 100%；固收與現金為 GICS 殘餘桶，"
+                   "不等於防守比例（防守看五桶穿透口徑）。")
+    for name, members, redline in groups:
+        a = _amt(*members)
+        row = {"金額_估": round(a), "佔比_估": _pct(a), "note": "GICS：" + "＋".join(members)}
+        if redline:
+            row["紅線"] = redline
+            row["狀態"] = ("🔴 已觸紅線 30% → 凍結科技加碼，乾粉轉金融/電信/醫療防禦"
+                           if _pct(a) > redline else f"🟢 未達紅線 30%（當前 {_pct(a)}%）")
+        out[name] = row
+    # 實物避險-黃金：金額取 penetration.satellite_twd（單一真值）；目標與狀態屬策略設定，沿用
+    if gold_amt is not None:
+        _g = dict(out.get("實物避險-黃金") or {})
+        _g["金額"] = round(float(gold_amt))
+        _g["佔比_估"] = _pct(float(gold_amt))
+        out["實物避險-黃金"] = _g
+    return out
+
+
 def main():
     snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     pen = calc_industry_penetration(snap)
     # 寫入 snapshot（單一真值，pipeline 不覆寫）
     snap["industry_penetration"] = pen
+    snap["sector_penetration"] = derive_sector_penetration(
+        pen, snap.get("sector_penetration"),
+        gold_amt=((snap.get("penetration") or {}).get("satellite_twd") or {}).get("黃金"))
     (BASE / "snapshot.json").write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
     print("✅ industry_penetration 已寫入 snapshot")
     build_chart(pen)

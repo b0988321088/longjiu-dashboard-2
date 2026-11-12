@@ -734,8 +734,14 @@ def main():
 
     # ── 產業穿透 ──
     sec_rows = ""
-    for k in ["高科技/半導體", "金融/電信", "醫療/公用事業/不動產", "固收與現金", "實物避險-黃金", "實物避險-石油"]:
-        v = s.get("sector_penetration", {}).get(k, {})
+    _sec_all = s.get("sector_penetration", {}) or {}
+    # 2026-11-12：改動態巡覽（數值由 industry_penetration 派生；新增產業組自動出現，不再寫死 key 清單）
+    _sec_order = ["高科技/半導體", "金融/電信", "醫療/公用事業/不動產", "民生/工業/原物料",
+                  "固收與現金", "其他/未分類", "實物避險-黃金", "實物避險-石油"]
+    _sec_keys = [k for k in _sec_order if k in _sec_all] + \
+                [k for k in _sec_all if k not in _sec_order and isinstance(_sec_all[k], dict)]
+    for k in _sec_keys:
+        v = _sec_all.get(k, {})
         if not v:
             continue
         amt = v.get("金額_估", v.get("金額", 0)) or 0
