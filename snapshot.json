@@ -1418,9 +1418,9 @@
  },
  "funds": 12539098,
  "allianz_a_breakdown": {
-  "USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 2648319,
-  "USDEQ5440 摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(穩定月配)": 689972,
-  "USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)": 1612214
+  "USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 2663061,
+  "USDEQ5440 摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(穩定月配)": 690329,
+  "USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)": 1609224
  },
  "allianz_a_current_value": 4962614,
  "allianz_b_breakdown": {
@@ -1511,7 +1511,7 @@
  "total_portfolio_value": 26088027,
  "total_stock_value": 2695030,
  "allianz_combined": 7435397,
- "allianz_a_value": 4950505,
+ "allianz_a_value": 4962614,
  "allianz_b_value": 2434962,
  "_updated_by": "hermes-8/20-MB-sync",
  "_updated_at": "2026-08-20",
@@ -9098,7 +9098,7 @@
  "allianz_a_detail_gap": {
   "amount": 0,
   "as_of": "2026-11-12",
-  "reason": "A 逐檔三檔合計＝4,962,614＝表頭",
+  "reason": "A 逐檔三檔合計＝4,962,614＝表頭（allianz_a_breakdown 原為舊值 4,950,505，已同步 insurance_breakdown.policy_a_funds）",
   "source": "11/12 08:42 截圖"
  },
  "allianz_b_detail_gap": {
