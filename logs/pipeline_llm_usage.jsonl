@@ -2023,3 +2023,15 @@
 {"ts": "2026-11-12T11:05:38", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 520, "cached": 0, "out": 640, "ok": true}
 {"ts": "2026-11-12T11:07:26", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 649, "cached": 0, "out": 148, "ok": true}
 {"ts": "2026-11-12T11:07:50", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 520, "cached": 384, "out": 607, "ok": true}
+{"ts": "2026-11-12T13:01:18", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 657, "cached": 0, "out": 199, "ok": true}
+{"ts": "2026-11-12T13:03:54", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 657, "cached": 512, "out": 182, "ok": true}
+{"ts": "2026-11-12T13:05:11", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 657, "cached": 512, "out": 146, "ok": true}
+{"ts": "2026-11-12T13:54:26", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1102, "cached": 256, "out": 273, "ok": true}
+{"ts": "2026-11-12T13:54:29", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1127, "cached": 256, "out": 177, "ok": true}
+{"ts": "2026-11-12T13:54:33", "model": "deepseek-chat", "caller": "run_daily.py", "in": 666, "cached": 0, "out": 170, "ok": true}
+{"ts": "2026-11-12T13:55:27", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1102, "cached": 896, "out": 196, "ok": true}
+{"ts": "2026-11-12T13:55:29", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1127, "cached": 896, "out": 166, "ok": true}
+{"ts": "2026-11-12T13:55:32", "model": "deepseek-chat", "caller": "run_daily.py", "in": 666, "cached": 512, "out": 139, "ok": true}
+{"ts": "2026-11-12T13:57:17", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1102, "cached": 896, "out": 212, "ok": true}
+{"ts": "2026-11-12T13:57:19", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1127, "cached": 896, "out": 204, "ok": true}
+{"ts": "2026-11-12T13:57:23", "model": "deepseek-chat", "caller": "run_daily.py", "in": 666, "cached": 512, "out": 160, "ok": true}

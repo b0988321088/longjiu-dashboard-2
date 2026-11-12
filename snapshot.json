@@ -1,16 +1,16 @@
 {
- "generated_at": "2026-11-12T11:07:42.325088",
+ "generated_at": "2026-11-12T13:56:33.627487",
  "version": "v5.0.10-true-value-correction",
  "date": "2026-11-12",
- "total_assets": 26764602,
+ "total_assets": 26764512,
  "total_liabilities": 30954979,
- "net_worth": -4190377,
+ "net_worth": -4190467,
  "debt_ratio": 50.9,
  "monthly_income": 225968,
  "monthly_expense": 159210,
  "working_surplus": 66758,
  "retirement_surplus": 20890,
- "securities_total_market_value": 2762430,
+ "securities_total_market_value": 2762340,
  "fund_market_value": 12539098,
  "moneybook_total": 2071296,
  "high_yield_savings_total": 2200410,
@@ -151,7 +151,7 @@
  "credit_card_pending": 49635,
  "mb_source": "Moneybook_明細_20260718.zip",
  "monthly_expense_snapshot_original": 141958,
- "securities_total": 2762430,
+ "securities_total": 2762340,
  "funds_total": 12539098,
  "last_calibration_sources": {
   "securities": "凱基證券截圖 2026-07-18 02:00",
@@ -244,8 +244,8 @@
   "note": "帳戶總覽截圖：市值 880,943／成本 567,603／損益 +313,340 (+55.2%)／已配息 19,317／含息報酬 +58.61%"
  },
  "securities": {
-  "total_market_value": 2762430,
-  "unrealized_pnl": 292760,
+  "total_market_value": 2762340,
+  "unrealized_pnl": 292670,
   "unrealized_pnl_pct": 11.85,
   "realized_pnl": 23460,
   "realized_pnl_pct": 27.34,
@@ -254,17 +254,17 @@
     "ticker": "0050",
     "name": "元大台灣50",
     "shares": 2000,
-    "price": 104.1,
-    "value": 208200,
-    "market_value": 208200,
+    "price": 104.0,
+    "value": 208000,
+    "market_value": 208000,
     "currency": "TWD",
     "cost": 169800,
     "cost_avg": 84.9,
-    "pnl": 38400,
-    "pnl_pct": 22.61,
+    "pnl": 38200,
+    "pnl_pct": 22.5,
     "price_date": "2026-11-12",
-    "price_source": "券商持股即時報價截圖（10:21 盤中）",
-    "price_type": "盤中10:21"
+    "price_source": "券商持股截圖 13:54（收盤後）",
+    "price_type": "收盤"
    },
    {
     "ticker": "006208",
@@ -279,14 +279,14 @@
     "pnl": 83800,
     "pnl_pct": 21.28,
     "price_date": "2026-11-12",
-    "price_source": "券商持股即時報價截圖（10:21 盤中）",
-    "price_type": "盤中10:21"
+    "price_source": "券商持股截圖 13:54（收盤後）",
+    "price_type": "收盤"
    },
    {
     "ticker": "009816",
     "name": "凱基台灣TOP50",
     "shares": 16000,
-    "price": 15.47,
+    "price": 15.46,
     "value": 247360,
     "market_value": 247360,
     "currency": "TWD",
@@ -295,9 +295,9 @@
     "pnl": 47520,
     "pnl_pct": 23.78,
     "price_date": "2026-11-12",
-    "price_source": "券商持股即時報價截圖（10:21 盤中）",
+    "price_source": "券商持股截圖 13:54（收盤後）",
     "realized_pnl": 16800,
-    "price_type": "盤中10:21"
+    "price_type": "收盤"
    },
    {
     "ticker": "00646",
@@ -312,8 +312,8 @@
     "pnl": 7100,
     "pnl_pct": 9.92,
     "price_date": "2026-11-12",
-    "price_source": "券商持股即時報價截圖（10:21 盤中）",
-    "price_type": "盤中10:21"
+    "price_source": "券商持股截圖 13:54（收盤後）",
+    "price_type": "收盤"
    },
    {
     "ticker": "00713",
@@ -328,57 +328,57 @@
     "pnl": 17000,
     "pnl_pct": 15.51,
     "price_date": "2026-11-12",
-    "price_source": "券商持股即時報價截圖（10:21 盤中）",
-    "price_type": "盤中10:21"
+    "price_source": "券商持股截圖 13:54（收盤後）",
+    "price_type": "收盤"
    },
    {
     "ticker": "00878",
     "name": "國泰永續高股息",
     "shares": 15000,
-    "price": 33.61,
-    "value": 504150,
-    "market_value": 504150,
+    "price": 33.62,
+    "value": 504300,
+    "market_value": 504300,
     "currency": "TWD",
     "cost": 407550,
     "cost_avg": 27.17,
-    "pnl": 96600,
-    "pnl_pct": 23.7,
+    "pnl": 96750,
+    "pnl_pct": 23.74,
     "price_date": "2026-11-12",
-    "price_source": "券商持股即時報價截圖（10:21 盤中）",
+    "price_source": "券商持股截圖 13:54（收盤後）",
     "realized_pnl": 6660,
-    "price_type": "盤中10:21"
+    "price_type": "收盤"
    },
    {
     "ticker": "0056",
     "name": "元大高股息",
     "shares": 1000,
     "price": 53.85,
-    "value": 53800,
-    "market_value": 53800,
+    "value": 53850,
+    "market_value": 53850,
     "currency": "TWD",
     "cost": 37150,
     "cost_avg": 37.15,
-    "pnl": 16650,
-    "pnl_pct": 44.82,
+    "pnl": 16700,
+    "pnl_pct": 44.95,
     "price_date": "2026-11-12",
-    "price_source": "券商持股即時報價截圖（10:21 盤中）",
-    "price_type": "盤中10:21"
+    "price_source": "券商持股截圖 13:54（收盤後）",
+    "price_type": "收盤"
    },
    {
     "ticker": "00981A",
     "name": "主動統一台股增長",
     "shares": 8000,
-    "price": 25.46,
-    "value": 203680,
-    "market_value": 203680,
+    "price": 25.41,
+    "value": 203280,
+    "market_value": 203280,
     "currency": "TWD",
     "cost": 210560,
     "cost_avg": 26.32,
-    "pnl": -6880,
-    "pnl_pct": -3.27,
+    "pnl": -7280,
+    "pnl_pct": -3.46,
     "price_date": "2026-11-12",
-    "price_source": "券商持股即時報價截圖（10:21 盤中）",
-    "price_type": "盤中10:21"
+    "price_source": "券商持股截圖 13:54（收盤後）",
+    "price_type": "收盤"
    },
    {
     "ticker": "00984A",
@@ -393,31 +393,31 @@
     "pnl": -4600,
     "pnl_pct": -3.16,
     "price_date": "2026-11-12",
-    "price_source": "券商持股即時報價截圖（10:21 盤中）",
-    "price_type": "盤中10:21"
+    "price_source": "券商持股截圖 13:54（收盤後）",
+    "price_type": "收盤"
    },
    {
     "ticker": "00919",
     "name": "群益台灣精選高息",
     "shares": 7000,
-    "price": 31.34,
-    "value": 219380,
-    "market_value": 219380,
+    "price": 31.35,
+    "value": 219450,
+    "market_value": 219450,
     "currency": "TWD",
     "cost": 208600,
     "cost_avg": 29.8,
-    "pnl": 10780,
-    "pnl_pct": 5.17,
+    "pnl": 10850,
+    "pnl_pct": 5.2,
     "price_date": "2026-11-12",
     "last_trade": "2026-11-10 13:01:30 凱基成交回報（9202-7413512）｜買 1000 股 @ 31.31",
-    "price_source": "券商持股即時報價截圖（10:21 盤中）",
-    "price_type": "盤中10:21"
+    "price_source": "券商持股截圖 13:54（收盤後）",
+    "price_type": "收盤"
    },
    {
     "ticker": "00918",
     "name": "大華優利高填息30",
     "shares": 1000,
-    "price": 33.29,
+    "price": 33.28,
     "value": 33280,
     "market_value": 33280,
     "currency": "TWD",
@@ -426,25 +426,25 @@
     "pnl": 4730,
     "pnl_pct": 16.57,
     "price_date": "2026-11-12",
-    "price_source": "券商持股即時報價截圖（10:21 盤中）",
-    "price_type": "盤中10:21"
+    "price_source": "券商持股截圖 13:54（收盤後）",
+    "price_type": "收盤"
    },
    {
     "ticker": "00888",
     "name": "永豐台灣ESG",
     "shares": 6000,
-    "price": 30.2,
-    "value": 181200,
-    "market_value": 181200,
+    "price": 30.24,
+    "value": 181440,
+    "market_value": 181440,
     "currency": "TWD",
     "cost": 187920,
     "cost_avg": 31.32,
-    "pnl": -6720,
-    "pnl_pct": -3.58,
+    "pnl": -6480,
+    "pnl_pct": -3.45,
     "price_date": "2026-11-12",
     "last_trade": "2026-11-10 13:01:30 凱基成交回報（9202-7413512）｜買 1000 股 @ 29.26",
-    "price_source": "券商持股即時報價截圖（10:21 盤中）",
-    "price_type": "盤中10:21"
+    "price_source": "券商持股截圖 13:54（收盤後）",
+    "price_type": "收盤"
    },
    {
     "ticker": "00983D",
@@ -459,8 +459,8 @@
     "pnl": -2200,
     "pnl_pct": -1.09,
     "price_date": "2026-11-12",
-    "price_source": "券商持股即時報價截圖（10:21 盤中）",
-    "price_type": "盤中10:21"
+    "price_source": "券商持股截圖 13:54（收盤後）",
+    "price_type": "收盤"
    },
    {
     "ticker": "00927",
@@ -475,8 +475,8 @@
     "pnl": -11520,
     "pnl_pct": -15.2,
     "price_date": "2026-11-12",
-    "price_source": "券商持股即時報價截圖（10:21 盤中）",
-    "price_type": "盤中10:21"
+    "price_source": "券商持股截圖 13:54（收盤後）",
+    "price_type": "收盤"
    },
    {
     "ticker": "2610",
@@ -491,16 +491,16 @@
     "pnl": 2100,
     "pnl_pct": 9.95,
     "price_date": "2026-11-12",
-    "price_source": "券商持股即時報價截圖（10:21 盤中）",
-    "price_type": "盤中10:21"
+    "price_source": "券商持股截圖 13:54（收盤後）",
+    "price_type": "收盤"
    }
   ],
-  "as_of": "2026-11-12",
+  "as_of": "2026-11-12T13:54",
   "price_date": "2026-11-12",
-  "price_type": "盤中（10:21 即時報價）",
-  "provisional": true,
-  "source": "券商持股即時報價截圖 10:21（盤中，非官方收盤）",
-  "note": "2026-11-12 10:21 盤中截圖：15 檔逐檔市值合計 2,762,430、未實現 +292,760（+11.85%）、已實現 +23,460（+27.34%）。券商表頭 總市值 2,762,260／未實現 +292,750／當日 +18,270，與逐檔差 -170／-10（009816/0056/00918 報價時點差）→ 以逐檔為準。⚠️ 盤中價非官方收盤，13:30 後須以 TWSE 收盤覆蓋並重跑 check_securities_integrity。"
+  "price_type": "收盤",
+  "provisional": false,
+  "source": "券商 App 持股截圖 2026-11-12 13:54（收盤後）",
+  "note": "2026-11-12 收盤（13:54 截圖）：15 檔逐檔股價×股數合計 2,762,340、未實現 +292,670（+11.85%）、已實現 +23,460（+27.34%）。⚠️ App 表頭面板（總市值 2,695,030／當日 -48,960／未實現 +9.13%）與逐檔股價不符（0050 2,000×104.00=208,000 vs 面板 201,900；00983D 20,000×10.00=200,000 完全一致）→ 判面板市值欄為舊價，採逐檔股價（與 10:21 盤中值 2,762,430 差 -90，屬報價位數）。"
  },
  "core_watchlist": {
   "updated_at": "2026-07-18",
@@ -734,9 +734,9 @@
    "科技曝險": -0.8
   },
   "actual_twd": {
-   "台股市值型成長": 3445770,
+   "台股市值型成長": 3445010,
    "美股市值型成長": 9687897,
-   "防守型配息": 4659526,
+   "防守型配息": 4659976,
    "債券": 6678900,
    "現金/安全網": 1245414,
    "美股市值型成長_科技": 3811029,
@@ -747,13 +747,13 @@
    "健康": 0.0
   },
   "restricted_cash": 900000,
-  "cash_in_transit": -220,
+  "cash_in_transit": 0,
   "pending_receivables": 0,
-  "pct_denominator": 26764602,
+  "pct_denominator": 26764512,
   "pct_denominator_basis": "total_assets",
   "components_twd": {
    "台股市值型成長": {
-    "證券": 1365480,
+    "證券": 1364720,
     "平台基金": 1156598,
     "保單穿透": 923692
    }
@@ -1057,8 +1057,8 @@
  "firstjin_cum_dividend": 169024,
  "allianz_cum_dividend": 1846078,
  "firstjin_cost": 2000000,
- "securities_market_value": 2762430,
- "securities_unrealized_pnl": 292760,
+ "securities_market_value": 2762340,
+ "securities_unrealized_pnl": 292670,
  "monthly_salary": 39777,
  "travel_allowance": 12000,
  "second_salary": 39121,
@@ -1518,17 +1518,17 @@
    "ticker": "0050",
    "name": "元大台灣50",
    "shares": 2000,
-   "price": 104.1,
-   "value": 208200,
-   "market_value": 208200,
+   "price": 104.0,
+   "value": 208000,
+   "market_value": 208000,
    "currency": "TWD",
    "cost": 169800,
    "cost_avg": 84.9,
-   "pnl": 38400,
-   "pnl_pct": 22.61,
+   "pnl": 38200,
+   "pnl_pct": 22.5,
    "price_date": "2026-11-12",
-   "price_source": "券商持股即時報價截圖（10:21 盤中）",
-   "price_type": "盤中10:21"
+   "price_source": "券商持股截圖 13:54（收盤後）",
+   "price_type": "收盤"
   },
   {
    "ticker": "006208",
@@ -1543,14 +1543,14 @@
    "pnl": 83800,
    "pnl_pct": 21.28,
    "price_date": "2026-11-12",
-   "price_source": "券商持股即時報價截圖（10:21 盤中）",
-   "price_type": "盤中10:21"
+   "price_source": "券商持股截圖 13:54（收盤後）",
+   "price_type": "收盤"
   },
   {
    "ticker": "009816",
    "name": "凱基台灣TOP50",
    "shares": 16000,
-   "price": 15.47,
+   "price": 15.46,
    "value": 247360,
    "market_value": 247360,
    "currency": "TWD",
@@ -1559,9 +1559,9 @@
    "pnl": 47520,
    "pnl_pct": 23.78,
    "price_date": "2026-11-12",
-   "price_source": "券商持股即時報價截圖（10:21 盤中）",
+   "price_source": "券商持股截圖 13:54（收盤後）",
    "realized_pnl": 16800,
-   "price_type": "盤中10:21"
+   "price_type": "收盤"
   },
   {
    "ticker": "00646",
@@ -1576,8 +1576,8 @@
    "pnl": 7100,
    "pnl_pct": 9.92,
    "price_date": "2026-11-12",
-   "price_source": "券商持股即時報價截圖（10:21 盤中）",
-   "price_type": "盤中10:21"
+   "price_source": "券商持股截圖 13:54（收盤後）",
+   "price_type": "收盤"
   },
   {
    "ticker": "00713",
@@ -1592,57 +1592,57 @@
    "pnl": 17000,
    "pnl_pct": 15.51,
    "price_date": "2026-11-12",
-   "price_source": "券商持股即時報價截圖（10:21 盤中）",
-   "price_type": "盤中10:21"
+   "price_source": "券商持股截圖 13:54（收盤後）",
+   "price_type": "收盤"
   },
   {
    "ticker": "00878",
    "name": "國泰永續高股息",
    "shares": 15000,
-   "price": 33.61,
-   "value": 504150,
-   "market_value": 504150,
+   "price": 33.62,
+   "value": 504300,
+   "market_value": 504300,
    "currency": "TWD",
    "cost": 407550,
    "cost_avg": 27.17,
-   "pnl": 96600,
-   "pnl_pct": 23.7,
+   "pnl": 96750,
+   "pnl_pct": 23.74,
    "price_date": "2026-11-12",
-   "price_source": "券商持股即時報價截圖（10:21 盤中）",
+   "price_source": "券商持股截圖 13:54（收盤後）",
    "realized_pnl": 6660,
-   "price_type": "盤中10:21"
+   "price_type": "收盤"
   },
   {
    "ticker": "0056",
    "name": "元大高股息",
    "shares": 1000,
    "price": 53.85,
-   "value": 53800,
-   "market_value": 53800,
+   "value": 53850,
+   "market_value": 53850,
    "currency": "TWD",
    "cost": 37150,
    "cost_avg": 37.15,
-   "pnl": 16650,
-   "pnl_pct": 44.82,
+   "pnl": 16700,
+   "pnl_pct": 44.95,
    "price_date": "2026-11-12",
-   "price_source": "券商持股即時報價截圖（10:21 盤中）",
-   "price_type": "盤中10:21"
+   "price_source": "券商持股截圖 13:54（收盤後）",
+   "price_type": "收盤"
   },
   {
    "ticker": "00981A",
    "name": "主動統一台股增長",
    "shares": 8000,
-   "price": 25.46,
-   "value": 203680,
-   "market_value": 203680,
+   "price": 25.41,
+   "value": 203280,
+   "market_value": 203280,
    "currency": "TWD",
    "cost": 210560,
    "cost_avg": 26.32,
-   "pnl": -6880,
-   "pnl_pct": -3.27,
+   "pnl": -7280,
+   "pnl_pct": -3.46,
    "price_date": "2026-11-12",
-   "price_source": "券商持股即時報價截圖（10:21 盤中）",
-   "price_type": "盤中10:21"
+   "price_source": "券商持股截圖 13:54（收盤後）",
+   "price_type": "收盤"
   },
   {
    "ticker": "00984A",
@@ -1657,31 +1657,31 @@
    "pnl": -4600,
    "pnl_pct": -3.16,
    "price_date": "2026-11-12",
-   "price_source": "券商持股即時報價截圖（10:21 盤中）",
-   "price_type": "盤中10:21"
+   "price_source": "券商持股截圖 13:54（收盤後）",
+   "price_type": "收盤"
   },
   {
    "ticker": "00919",
    "name": "群益台灣精選高息",
    "shares": 7000,
-   "price": 31.34,
-   "value": 219380,
-   "market_value": 219380,
+   "price": 31.35,
+   "value": 219450,
+   "market_value": 219450,
    "currency": "TWD",
    "cost": 208600,
    "cost_avg": 29.8,
-   "pnl": 10780,
-   "pnl_pct": 5.17,
+   "pnl": 10850,
+   "pnl_pct": 5.2,
    "price_date": "2026-11-12",
    "last_trade": "2026-11-10 13:01:30 凱基成交回報（9202-7413512）｜買 1000 股 @ 31.31",
-   "price_source": "券商持股即時報價截圖（10:21 盤中）",
-   "price_type": "盤中10:21"
+   "price_source": "券商持股截圖 13:54（收盤後）",
+   "price_type": "收盤"
   },
   {
    "ticker": "00918",
    "name": "大華優利高填息30",
    "shares": 1000,
-   "price": 33.29,
+   "price": 33.28,
    "value": 33280,
    "market_value": 33280,
    "currency": "TWD",
@@ -1690,25 +1690,25 @@
    "pnl": 4730,
    "pnl_pct": 16.57,
    "price_date": "2026-11-12",
-   "price_source": "券商持股即時報價截圖（10:21 盤中）",
-   "price_type": "盤中10:21"
+   "price_source": "券商持股截圖 13:54（收盤後）",
+   "price_type": "收盤"
   },
   {
    "ticker": "00888",
    "name": "永豐台灣ESG",
    "shares": 6000,
-   "price": 30.2,
-   "value": 181200,
-   "market_value": 181200,
+   "price": 30.24,
+   "value": 181440,
+   "market_value": 181440,
    "currency": "TWD",
    "cost": 187920,
    "cost_avg": 31.32,
-   "pnl": -6720,
-   "pnl_pct": -3.58,
+   "pnl": -6480,
+   "pnl_pct": -3.45,
    "price_date": "2026-11-12",
    "last_trade": "2026-11-10 13:01:30 凱基成交回報（9202-7413512）｜買 1000 股 @ 29.26",
-   "price_source": "券商持股即時報價截圖（10:21 盤中）",
-   "price_type": "盤中10:21"
+   "price_source": "券商持股截圖 13:54（收盤後）",
+   "price_type": "收盤"
   },
   {
    "ticker": "00983D",
@@ -1723,8 +1723,8 @@
    "pnl": -2200,
    "pnl_pct": -1.09,
    "price_date": "2026-11-12",
-   "price_source": "券商持股即時報價截圖（10:21 盤中）",
-   "price_type": "盤中10:21"
+   "price_source": "券商持股截圖 13:54（收盤後）",
+   "price_type": "收盤"
   },
   {
    "ticker": "00927",
@@ -1739,8 +1739,8 @@
    "pnl": -11520,
    "pnl_pct": -15.2,
    "price_date": "2026-11-12",
-   "price_source": "券商持股即時報價截圖（10:21 盤中）",
-   "price_type": "盤中10:21"
+   "price_source": "券商持股截圖 13:54（收盤後）",
+   "price_type": "收盤"
   },
   {
    "ticker": "2610",
@@ -1755,8 +1755,8 @@
    "pnl": 2100,
    "pnl_pct": 9.95,
    "price_date": "2026-11-12",
-   "price_source": "券商持股即時報價截圖（10:21 盤中）",
-   "price_type": "盤中10:21"
+   "price_source": "券商持股截圖 13:54（收盤後）",
+   "price_type": "收盤"
   }
  ],
  "fund_general": 325215,
@@ -2029,7 +2029,7 @@
  "policy_pledge_rate_note": "使用者確認 2026-08-05：保單質押利率 4%（原記錄 5% 有誤）",
  "pledge_loan_rate": null,
  "pledge_loan_rate_note": "待確認（凱基/券商對帳單）",
- "securities_market": 2762430,
+ "securities_market": 2762340,
  "allianz_a_funds": 4962614,
  "allianz_b_funds": 2472783,
  "fx_rates": {
@@ -2858,7 +2858,7 @@
     "保單美元債券": 3577254.0,
     "美元定存": 0.0,
     "美元債券梯": 0.0,
-    "分母_總資產": 26764602.0
+    "分母_總資產": 26764512.0
    },
    "口徑校正_20260914": "2026-09-14 定案：原 9/13 註記用『美股桶 44.8%』（≈ 引擎美股桶 24.5% + B11 19.3%，B11 重複計入）→ 總計 79.2%；經比對 9/12-9/14 各版 snapshot，引擎 actual_pct.美股市值型成長 一直為 24.5~24.7%，故改採引擎口徑。B11 僅在『美元計價基金』計一次 → 合計 59.0%（未超 60% 黃燈線）。",
    "三層拆分": {
@@ -3294,7 +3294,7 @@
    },
    "備註": "避險衛星以目標值計入防禦維度（現況未建倉，目標金額由避險衛星欄位動態讀取）；配息型基金權益＝B11 依官方成分 62.58/32.65/4.77（權益部位＋內部現金，內部現金不進現金桶）；現金/貨幣停泊＝可動用台幣活存，帳戶層真值與指定用途款一律由 snapshot 數字欄位動態生成（2026-09-30 P0-1 移除手寫金額）｜【2026-10-30 裁決】避險衛星整體機制結案 → 原以『目標值 1,310,000』計入之口徑作廢，改以 0 計入；理由：黃金保單 367,192 已在五桶內計入，再加會重複計算，且已作廢的配置目標不應影響配置建議。實際部位（黃金 367,192／石油 4,958）保留不賣、仍計入總資產與穿透。分母維持既定口徑＝total_assets − 指定用途款 900,000＝26,080,153（9/29 裁決），故佔比 47.7%、較原 52.7% 降 5.0pp；若以總資產 26,980,153 為分母則為 46.11%（-6.6pp），非本系統口徑。",
    "更新": "2026-10-02（使用者核准）：現金成分 819,182→853,675 —— 對齊可動用現金唯一真值 sot_targets.allowable_cash＝cash_layers.unrestricted_cash（853,675）；819,182 為 9/29-9/30 清償前舊值（校正前與真值差 34,493）。歷史沿革：2026-09-29 885,890→819,182（可動用口徑；分母已排除指定用途款 5,900,000）｜2026-10-30：避險衛星結案，組成 1,310,000→0，合計 13,750,419→12,440,419，佔比 52.7%→47.7%",
-   "分母": 25864602.0,
+   "分母": 25864512.0,
    "derived_at": "2026-11-12"
   },
   "收入維度": {
@@ -3882,7 +3882,7 @@
    "估算月配息增加": "PIMCO ~0.4-0.5%/月 + 黃金A10 ~0.3-0.5%/月 ≈ 月增 0.6-1.0萬（含本金風險）"
   }
  },
- "securities_current_value": 2762430,
+ "securities_current_value": 2762340,
  "funds_cathay_market_value": 11825959,
  "decision_0824_pm": {
   "裁示": "PI 未核 → 現金/加倉全部暫緩（含黃金衛星 00635U、00878、台股慢慢買）；美元曝險由保單調整處理",
@@ -3929,7 +3929,7 @@
   "貝萊德智慧數據收益成長B11-美元-強化穩定月配息": 5063348,
   "聯博全球多元收益AD美元月配": 980475
  },
- "securities_current": 2762430,
+ "securities_current": 2762340,
  "insurance_conversion_0826": {
   "定案": "2026-08-26 使用者修正：M&G 轉 80萬 → 貝萊德黃金A10 32萬(40%) + 貝萊德健康A10 48萬(60%)",
   "轉出": {
@@ -7481,7 +7481,7 @@
  "source_import_dates_asof_fix_note": "2026-10-30 修正：MB 標記停 10/20（真值 10/27＝cash_source.date）、鉅亨停 10/20（真值 10/22＝heng_note_20261022）→ performance_core.latest_asof 取 min 導致本月績效/TWR 鎖在 10/20。",
  "heng_note_20261030": "2026-10-30 21:10 鉅亨帳戶：一般申購淨值日 10/29（截圖僅露 5 檔：黃金A10 2,435／智慧數據 3,073／富達動能 2,966／M&G 2,972／安聯AI 194.89USD×32.583＝6,350）；自由PAY 淨值日 10/30 三檔 229,742＋110,002＋87,280＝427,024（成本 310,000、損益 117,024、已Pay 5,096、含Pay +39.39%）✓ 加總與表頭一致。一般申購小計 368,773（5 檔新報價、其餘 15 檔沿用 10/22）＋自由PAY 427,024＝鉅亨 795,797；含國泰直購 11,924,797 → 基金 12,720,594（原 12,746,466，Δ-25,872）。缺一般申購總計列（截圖未含），待補。",
  "funds_heng_total_20261030": 786276,
- "net_worth_incl_re": 29826686,
+ "net_worth_incl_re": -4190467.0,
  "real_estate_value_as_of": "2026-08-08",
  "real_estate_staleness": {
   "落後天數": 90,
