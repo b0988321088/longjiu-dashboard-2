@@ -164,7 +164,7 @@ def _rebalance_integration_block(s, _today: str | None = None) -> str:
         return (f"> ⛔ 全源整合區塊讀取失敗（{_e}）→ 本節從缺，**不得視為已整合**。")
 
 
-def weekly_plan_rows(radar_state: dict, today: str) -> tuple[list, str]:
+def weekly_plan_rows(radar_state: dict, today: str, snap: dict | None = None) -> tuple[list, str]:
     """回傳 (可用列, 說明)。資料日閘門 v2（2026-10-24）。
 
     weekly_plan 由 institutional_flow.py 產出（雷達排程＝週一／三 16:15），其餘日子天然落後
@@ -180,6 +180,15 @@ def weekly_plan_rows(radar_state: dict, today: str) -> tuple[list, str]:
     MAX_LAG_DAYS = 5
     wp = (radar_state or {}).get("weekly_plan", {}) or {}
     rows = [r for r in (wp.get("rows") or []) if r.get("內容")]
+    # 2026-11-13：radar rows 的桶位%／目標／偏差pp／分母／理論調整／配息資產合計一律改寫為
+    #   snapshot 當日真值（與 index.html 共用 build_dashboard.live_plan_row＝單一實作）。
+    #   實踩：本頁顯示「美股 36.4%／分母 26,636,761／配息資產合計 17,536,467」，同日 index 已是 36.3%／26,738,129。
+    if rows and snap:
+        try:
+            from build_dashboard import live_plan_row as _lpr
+            rows = [_lpr(r, snap) for r in rows]
+        except Exception as _e_lpr:  # noqa: BLE001
+            print(f"⚠️ 週計畫桶位即時改寫不可用（{type(_e_lpr).__name__}: {_e_lpr}）→ 保留 radar 原文（fail-visible）")
     wp_date = str(wp.get("日期") or "")[:10]
     if not rows:
         return [], ""
@@ -675,7 +684,7 @@ def main():
     try:
         _rs = json.loads((Path(__file__).resolve().parent / "radar_state.json").read_text(encoding="utf-8"))
         _wp = _rs.get("weekly_plan", {}) or {}
-        _plan_rows, _wp_stale_msg = weekly_plan_rows(_rs, TODAY)
+        _plan_rows, _wp_stale_msg = weekly_plan_rows(_rs, TODAY, s)
         _wp_date = str(_wp.get("日期") or "")[:10]
         _wp_stale = bool(_plan_rows) and bool(_wp_stale_msg)
         if _wp_stale_msg:
