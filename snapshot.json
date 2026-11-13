@@ -6088,10 +6088,10 @@
     "rent": 80100.0,
     "dividend_conservative": 100000.0,
     "dividend_normal": 177072.0,
-    "dividend_actual": 114091.0,
+    "dividend_actual": 121382.0,
     "pccr_pct": 139.3,
     "pccr_conservative_pct": 113.1,
-    "pccr_actual_pct": 86.7,
+    "pccr_actual_pct": 91.3,
     "pccr_normal_headroom": 139.3,
     "nonpassive": {
      "girlfriend_repayment": 6000.0
