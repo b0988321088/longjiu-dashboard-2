@@ -418,7 +418,7 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
         ("US30Y", f"{us30y:.2f}%" if us30y else "—", "≥5.30%", us30y and us30y >= 5.30),
         ("美元曝險", f"{usd_pct:.0f}%",
          (f"{_usd_tier_text(s)}（僅顯示）" if _usd_adv else f"紅線 {_usd_cap_fn(s):.0f}%"),
-         (False if _usd_adv else usd_pct > float(_usd_cap_fn(s) or 60))),
+         (False if _usd_adv else usd_pct > float(_usd_cap_fn(s) or 63))),
         ("高科技", f"{tech:.1f}%", "紅線 30%", tech > 30),
     ]:
         st = (f"🟡 {_usd_tier(s, usd_pct)}（僅顯示）" if (_usd_adv and name == "美元曝險")
@@ -989,7 +989,7 @@ def main():
         ("美元曝險", f"{usd_pct:.0f}%",
          (f"{_usd_tier_text(s)}（僅顯示）" if _usd_adv else f"紅線 {_usd_cap_fn(s):.0f}%"),
          (f"🟡 {_usd_tier(s, usd_pct)}（僅顯示）" if _usd_adv
-          else ("🔴 觸發" if usd_pct > float(_usd_cap_fn(s) or 60) else "🟢 安全"))),
+          else ("🔴 觸發" if usd_pct > float(_usd_cap_fn(s) or 63) else "🟢 安全"))),
         ("高科技", f"{tech:.1f}%", "紅線 30%", "🔴 觸發" if tech > 30 else "🟢 安全"),
         (f"現金｜底線 {_cw2['life']:,.0f}（單一口徑）", f"{_cw2['cash']:,.0f}", f"≥{_cw2['life']:,.0f}", _lif_st2),
         ("國泰擔保池 LTV", _pl_txt, _pl_lim,

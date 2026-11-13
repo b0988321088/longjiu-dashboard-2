@@ -971,7 +971,7 @@ def main():
             _dry2 = _cw3["dry_signed"]
             _usd2 = snap.get("usd_exposure_monitor", {}).get("current", {}).get("匯率曝險合計", snap.get("usd_exposure_monitor", {}).get("current", {}).get("合計", 0))
             from usd_advisory import cap as _usd_cap_fn   # 2026-10-07 裁決②：政策門檻單一來源
-            _usd_cap2 = float(_usd_cap_fn(snap) or 60)
+            _usd_cap2 = float(_usd_cap_fn(snap) or 63)
             # 2026-09-13：本週計劃改讀 radar_state.weekly_plan.rows（單一來源＝institutional_flow 產出）
             # 原為 7 行貼死文字（含「9/11簽約」「Fed 9/11 CPI / 9/16 FOMC」等過期日期）
             _plan = [f"{r.get('動作','')} {r.get('類別','')}：{r.get('內容','')}"

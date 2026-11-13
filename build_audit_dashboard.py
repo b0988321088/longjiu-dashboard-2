@@ -123,7 +123,7 @@ cash_ok = "✅" if CASH_AVAIL >= FLOOR else "🔴"  # 2026-10-04 P0延伸：底�
 # 與 snapshot.usd_exposure_monitor（9/14 定案 engine 口徑 59.0%、門檻已放寬 60%）脫節 →
 # 一律讀 snapshot，門檻/緩衝/判定全部現算。
 _usd_m = s.get("usd_exposure_monitor", {}) or {}
-usd_thr = float(_usd_cap_fn(s) or 60)  # 2026-10-07 裁決②：政策門檻單一來源（usd_advisory ← thresholds）
+usd_thr = float(_usd_cap_fn(s) or 63)  # 2026-10-07 裁決②：政策門檻單一來源（usd_advisory ← thresholds）
 usd_exp = float((_usd_m.get("current") or {}).get("匯率曝險合計", (_usd_m.get("current") or {}).get("合計")) or 0)
 usd_gap = round(usd_exp - usd_thr, 1)
 # 2026-10-07 裁決①③：advisory（僅顯示、不觸發）→ 改用觀測線命名、不標紅、不產生處置指令

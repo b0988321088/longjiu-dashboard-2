@@ -842,7 +842,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                     _usd_ictx = ("" if _usd_adv_c else
                                  f"｜風險因子：美元曝險 {_usd_c.get('匯率曝險合計', _usd_c.get('合計','—'))}%"
                                  f"（美股桶 {_usd_c.get('美股桶','—')}%＋美元計價基金 {_usd_c.get('美元計價基金（非美股桶）','—')}%"
-                                 f"＋保單美元債 {_usd_c.get('保單美元債券','—')}%，目標值 ≤{(_usd_cap_fn(_snap_c) or 60):.0f}%）")
+                                 f"＋保單美元債 {_usd_c.get('保單美元債券','—')}%，目標值 ≤{(_usd_cap_fn(_snap_c) or 63):.0f}%）")
                     _cio_ictx = (f"產業：{_top4}｜資金流向：{_sf_c.get('台股總結','—')}；{_sf_c.get('美股總結','—')}｜"
                                  f"輪動建議：{_rot_c or '—'}" + _usd_ictx)
                 except Exception:
@@ -2419,7 +2419,7 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                 _usd_ex = float(_mon.get("匯率曝險合計", _mon.get("合計")) or tv.get("penetration", {}).get("actual_pct", {}).get("美股市值型成長", 0))
                 # 2026-10-07 裁決①③：美元曝險已裁定「僅顯示、不觸發」→ 哲學檢核不得再標紅燈
                 from usd_advisory import cap as _usd_cap_fn, is_advisory as _usd_is_adv, tier as _usd_tier
-                _usd_cap = float(_usd_cap_fn(_snap_now) or 60)   # 政策門檻單一來源（thresholds.美元曝險_pct）
+                _usd_cap = float(_usd_cap_fn(_snap_now) or 63)   # 政策門檻單一來源（thresholds.美元曝險_pct）
                 if _usd_is_adv(_snap_now):
                     _philosophy_items.append(
                         f"美元曝險 {_usd_ex:.1f}%（🟡 {_usd_tier(_snap_now, _usd_ex)}；僅顯示，不觸發資產調整）")

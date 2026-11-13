@@ -229,7 +229,7 @@ rows = [
     ("緩衝", "可動用現金", BL["cash_available"], allowable, "up", "元",
      f"總現金 {fmt(cash)}＝可動用 {fmt(allowable)}＋指定款 {fmt(restricted)}"),
     ("風險", "美元曝險", BL["usd_exposure_pct"], usd, "down", "%",
-     f"門檻 目標 {usd_cfg.get('目標', 60)}／黃 {usd_cfg.get('黃', 65)}／紅 {usd_cfg.get('紅', 70)}"),
+     f"門檻 目標 {usd_cfg.get('目標', 63)}／黃 {usd_cfg.get('黃', 65)}／紅 {usd_cfg.get('紅', 70)}"),
     ("風險", "質押 LTV", BL["pledge_ltv_pct"], ltv.get("LTV_pct"), "down", "%",
      f"政策停止線 {ltv.get('政策停止線_pct')}%、追繳 {ltv.get('追繳參考_pct')}%（內部判定，非銀行追繳線）"),
 ]

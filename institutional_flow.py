@@ -808,10 +808,10 @@ def main():
                          else ("🔴" if "高曝險" in _tier_txt else "🟡"))
             lines.append(f"{_usd_icon} 美元曝險 {_usd_val}%（{_tier_txt}；{_usd_tier_text(_snap)}）"
                          f"→ 僅顯示，不觸發換匯／減碼（政策門檻待 10 月戰略檢討）")
-        elif _usd_val is not None and float(_usd_val) > float(_usd_cap_fn(_snap) or 60):
+        elif _usd_val is not None and float(_usd_val) > float(_usd_cap_fn(_snap) or 63):
             lines.append(f"🔴 美元曝險 {_usd_val}% 超標（目標值 ≤{_usd_cap_fn(_snap):.0f}%）→ 美股減碼/美元定存到期轉台幣")
         else:
-            lines.append(f"🟡 美元曝險 {_usd_val}%（目標值 ≤{float(_usd_cap_fn(_snap) or 60):.0f}%）→ 未達減碼閾值，續觀察")
+            lines.append(f"🟡 美元曝險 {_usd_val}%（目標值 ≤{float(_usd_cap_fn(_snap) or 63):.0f}%）→ 未達減碼閾值，續觀察")
         # ⑧ 保單轉換（2026-11-02 動態化：原寫死「9/10 送出、T+4 預期 9/16 生效」
         #   → 10 月、11 月都沒轉換，畫面卻永遠停在九月，使用者指證「不應該停在九月份」。
         #   真值＝snapshot.policy_switch（最後一次生效日／本期未轉換原因／轉換規則／下次檢視）

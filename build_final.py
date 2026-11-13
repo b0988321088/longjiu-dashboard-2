@@ -34,6 +34,12 @@ USD_EXP = SNAP.get('usd_exposure_pct')
 # 不再加碼美元曝險」等處置語意，且不經 scrub → 改為 advisory 感知（僅顯示時不產生方向）。
 USD_ADV = bool((SNAP.get('usd_exposure_monitor') or {}).get('advisory_only'))
 USD_EXP_TXT = f'{USD_EXP}%' if isinstance(USD_EXP,(int,float)) else '~64%'
+# 2026-11-14：門檻字串改動態派生（原硬編碼「目標 60／黃 65／觀察 70」），單一來源＝thresholds
+_USD_THR = ((SNAP.get('thresholds_2026_0915') or {}).get('美元曝險_pct') or {})
+def _ut(k):
+    v = _USD_THR.get(k)
+    return f'{v:.0f}' if isinstance(v,(int,float)) else '—'
+USD_TIER_TXT = f'目標 {_ut("目標")}／黃 {_ut("黃")}／觀察 {_ut("紅")}'
 
 # ── 市場快照執行時抓取（v5：取代寫死 as-of 值；失敗 fallback + 印警告）──
 def _fetch_chart(sym, host="query1"):
@@ -157,7 +163,7 @@ B(s, [
 # === S3: 匯率 ===
 s = ns()
 T(s, f'匯率 {FX:.2f} — {FX_NOTE}' + ('' if USD_ADV else '，美元曝險的雙面刃'))
-ST(s, f'美元曝險 {USD_EXP_TXT}（🟡 僅顯示，目標 60／黃 65／觀察 70）' if USD_ADV
+ST(s, f'美元曝險 {USD_EXP_TXT}（🟡 僅顯示，{USD_TIER_TXT}）' if USD_ADV
    else f'美元曝險 {USD_EXP_TXT}（>55% 監控線）→ 台幣{"升值" if FX_MOVE>0 else "貶值"} = {"估值回吐風險" if FX_MOVE>0 else "估值增益"}')
 B(s, [
     ('🔵 美股ETF + 安聯保單 + 基金部位之計價結構僅供觀察（🟡 僅顯示，不觸發資產調整）'

@@ -488,7 +488,7 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
                          for c in ["tw_equity", "us_equity", "defensive", "bond", "cash"])
 
         _usd_exp_val = (_snap.get("usd_exposure_monitor", {}) or {}).get("current", {}).get("匯率曝險合計", (_snap.get("usd_exposure_monitor", {}) or {}).get("current", {}).get("合計", 0))
-        _usd_cap_val = float(_usd_cap(_snap) or 60)   # 2026-10-07 裁決②：政策門檻單一來源
+        _usd_cap_val = float(_usd_cap(_snap) or 63)   # 2026-10-07 裁決②：政策門檻單一來源
         _tech_exp_val = (_snap.get("penetration", {}) or {}).get("actual_pct", {}).get("美股市值型成長_科技", 0)
         _tech_cap_val = TARGETS["tech_exposure"]
         # 2026-10-07 裁決①：advisory 時美元曝險整項不進 prompt（連數字都不餵，防線前移到輸入端）
@@ -611,7 +611,7 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
         _fmt = "、".join(f"{TARGET_LABELS[c]} {a.get(c,0):.1f}%（目標{TARGETS[c]}%，{g.get(c,0):+.1f}pp）"
                          for c in ["tw_equity", "us_equity", "defensive", "bond", "cash"])
         _usd_exp_val = (_snap.get("usd_exposure_monitor", {}) or {}).get("current", {}).get("匯率曝險合計", (_snap.get("usd_exposure_monitor", {}) or {}).get("current", {}).get("合計", 0))
-        _usd_cap_val = float(_usd_cap(_snap) or 60)   # 2026-10-07 裁決②：政策門檻單一來源
+        _usd_cap_val = float(_usd_cap(_snap) or 63)   # 2026-10-07 裁決②：政策門檻單一來源
         _tech_exp_val = (_snap.get("penetration", {}) or {}).get("actual_pct", {}).get("美股市值型成長_科技", 0)
         _tech_cap_val = TARGETS["tech_exposure"]
         # 2026-10-07 裁決①：advisory 時美元曝險整項不進 prompt（連數字都不餵，防線前移到輸入端）

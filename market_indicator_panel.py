@@ -58,7 +58,7 @@ def build_panel(snap: dict | None = None) -> str:
     usd = (s.get("usd_exposure_monitor", {}) or {}).get("current", {}) or {}
     usd_pct = usd.get("匯率曝險合計", usd.get("合計", 0))
     # 2026-10-07 裁決②：政策門檻單一來源（usd_advisory.policy ← thresholds.美元曝險_pct）
-    _usd_cap = float(_usd_cap_fn(s) or 60)
+    _usd_cap = float(_usd_cap_fn(s) or 63)
     # 2026-10-07 裁決①③：美元曝險只顯示、不觸發（advisory_only）→ 不標紅線，改用觀測線命名
     _usd_adv = bool((s.get("usd_exposure_monitor", {}) or {}).get("advisory_only"))
     if _usd_adv:
