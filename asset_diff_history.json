@@ -1093,15 +1093,15 @@
   },
   "2026-11-13": {
     "date": "2026-11-13",
-    "total_assets": 26692883.0,
+    "total_assets": 26738129.0,
     "total_liabilities": 30955248.0,
-    "net_worth": -4262365.0,
-    "securities_market": 2695030.0,
+    "net_worth": -4217119.0,
+    "securities_market": 2733570.0,
     "insurance_current": 9364348.0,
     "insurance_total": 9364348.0,
     "fund_market": 12548532.0,
     "real_estate": 34017063.0,
-    "cash": 2084973.0,
+    "cash": 2091679.0,
     "other": 0.0,
     "insurance_detail": {
       "【安聯保單A】現值": 4978741.0,
@@ -1125,8 +1125,8 @@
     "cathay_refinance": 0.0,
     "restricted_cash": 900000.0,
     "bonds": 0.0,
-    "unrealized_pnl": 225360,
+    "unrealized_pnl": 264060,
     "realized_pnl": 23460,
-    "net_worth_incl_re": 29754698.0
+    "net_worth_incl_re": 29799944.0
   }
 }
