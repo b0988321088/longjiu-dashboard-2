@@ -148,9 +148,11 @@ def live_plan_row(_r, snap):
     # ⑧台股列語意除錯（2026-11-13）：radar 原文把「已達上限不新增（US30Y X%，凍結線 5.3% 未解凍前不加碼）」
     #   並列，讀者會誤以為台股被 US30Y 凍結。實際上 US30Y v1.2（2026-10-14 裁決）只凍結「長債新增」，
     #   不否決台股分批；台股本列不新增的真正理由是超配。此處把因果講明，避免與長債凍結混淆。
-    _t = re.sub(
-        r"（US30Y\s*([\d.]+)%\s*，?\s*凍結線\s*[\d.]+%?\s*未解凍前不加碼）",
-        r"（US30Y \1% 只凍結長債新增、不否決台股；本列不加碼主因＝台股超配）", _t)
+    try:
+        from sot_targets import normalize_us30y_row_text as _norm_row
+        _t = _norm_row(_t)
+    except Exception as _e_norm:
+        print(f"⚠️ 台股列 US30Y 因果改寫失敗（{type(_e_norm).__name__}: {_e_norm}）→ 保留原文（fail-visible）")
     _n = dict(_r)
     _n["內容"] = _t
     return _n

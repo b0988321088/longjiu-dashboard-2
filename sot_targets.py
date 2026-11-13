@@ -517,6 +517,21 @@ def refresh_rebalance_live_numbers(text: str, snap: dict) -> str:
     return text
 
 
+def normalize_us30y_row_text(text: str) -> str:
+    """把 radar 行動列裡「（US30Y X%，凍結線 5.3% 未解凍前不加碼）」改寫成正確因果。
+
+    2026-11-13：US30Y v1.2（2026-10-14 裁決）只凍結「長債新增」，不否決台股分批。
+    radar 原文把「已達上限不新增」與「US30Y 未解凍」並列，讀起來像台股被長債指標擋住
+    → 台股不動作的真正理由是超配。單一實作，index／audit／rebalance 評估頁共用。
+    """
+    if not text:
+        return text
+    return re.sub(
+        r"（US30Y\s*([\d.]+)%\s*，?\s*凍結線\s*[\d.]+%?\s*未解凍前不加碼）",
+        r"（US30Y \1% 只凍結長債新增、不否決台股；本列不加碼主因＝台股超配）",
+        text)
+
+
 def refresh_stale_amounts(text: str, snap: dict) -> str:
     """把歷史內文（前一日的 LLM 分析）中的清償前舊金額，替換為當日 snapshot 真值。
 
@@ -527,6 +542,7 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
     """
     if not text:
         return text
+    text = normalize_us30y_row_text(text)  # 2026-11-13：台股列 US30Y 因果改寫（單一實作）
     _cash = float(snap.get("cash_total") or 0)
     _rc = restricted_cash(snap)
     _ta = snap.get("total_assets")
@@ -550,6 +566,17 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
     for old, new in repl.items():
         if new and old != new:
             text = text.replace(old, new)
+
+    # ── 2026-11-13：月收／盈餘改為「模式覆蓋」（原為硬映射舊值，薪資一變就要再補一次）──
+    # 症狀：rebalance_summary 內文寫「現金流：月收 225,968、月支出 159,210、盈餘 66,758（來源：11/12 21:35）」，
+    #       11/13 薪資定版後 snapshot 已是 234,207／74,997，但字串因帶 as-of 標記被當歷史段落保留，
+    #       導致 11/13 的評估頁引用前一日的現金流。
+    _mi = snap.get("monthly_income")
+    _ws = snap.get("working_surplus")
+    if _mi:
+        text = re.sub(r"(月收(?:入)?\s*)\d{1,3}(?:,\d{3})+", rf"\g<1>{_mi:,}", text)
+    if _ws:
+        text = re.sub(r"(盈餘\s*)[+-]?\d{1,3}(?:,\d{3})+", rf"\g<1>{_ws:,}", text)
 
     # ── 2026-11-09（券商 App 對帳抓到）：證券敘述要跟著收盤價換 ──
     # 症狀：內文寫「市值 2,594,130（估值日 11/06），未實現 185,190（+3.07%）、已實現 23,460」，

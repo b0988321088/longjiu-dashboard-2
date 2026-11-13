@@ -59,8 +59,10 @@ def _weekly_plan_html():
         _rows, _d = [], "—"
         print(f"[WARN] radar_state.weekly_plan 讀取失敗：{_e}")
     if _rows:
+        # 2026-11-13：台股列的 US30Y 因果改寫走 sot_targets 單一實作（與 index／rebalance 評估頁共用）
+        from sot_targets import normalize_us30y_row_text as _norm_row
         _items = "".join(
-            f"<li><b>{r.get('動作','⚪')} {r.get('類別','—')}</b>：{r.get('內容','')}</li>"
+            f"<li><b>{r.get('動作','⚪')} {r.get('類別','—')}</b>：{_norm_row(str(r.get('內容', '')))}</li>"
             for r in _rows if r.get("類別") != "質押")
         _src = f"📋 來源：radar_state.weekly_plan（{_d} 全資產面結論）"
     else:
