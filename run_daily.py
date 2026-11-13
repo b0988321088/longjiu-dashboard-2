@@ -2427,6 +2427,22 @@ def _inject_market_intel(html: str, tv: dict, signals: dict, llm_emergency: str 
                     _philosophy_items.append(
                         f"美元曝險 {_usd_ex:.1f}%（≤{_usd_cap:.0f}% "
                         f"{'✅' if _usd_ex <= _usd_cap else '🟡' if _usd_ex <= _usd_cap + 5 else '🔴'}）")
+                # 2026-11-14 使用者核准：台幣匯率急升監控（usd_fx_monitor.py 每日寫入 snapshot）
+                # advisory 只顯示；門檻 單日≥2%／5日≥4%／升破31.0／貶破33.0
+                _fx = _snap_now.get("usd_fx_monitor") or {}
+                try:
+                    if _fx.get("usd_twd"):
+                        _fx_v = float(_fx["usd_twd"])
+                        _fx_r1 = float(_fx.get("r1_pct") or 0)
+                        _fx_r5 = float(_fx.get("r5_pct") or 0)
+                        _fx_1pct = float(_fx.get("每升值1%_帳面影響_twd") or 0)
+                        _fx_flag = ("🔴" if (_fx_r1 <= -2 or _fx_r5 <= -4)
+                                    else "🟡" if (_fx_r1 <= -1 or _fx_r5 <= -2) else "🟢")
+                        _philosophy_items.append(
+                            f"台幣 {_fx_v:.3f}（單日 {_fx_r1:+.2f}%／5日 {_fx_r5:+.2f}% {_fx_flag}；"
+                            f"每升 1% 帳面 -{_fx_1pct:,.0f}）")
+                except (TypeError, ValueError):
+                    pass
                 # 2026-09-29 CIO major：投資哲學檢核的現金底線必須看可動用（原 cash_total → fail-open）
                 from sot_targets import available_cash as _ac_fn
                 _cash_all = float(_snap_now.get("cash_total") or 0)
