@@ -968,7 +968,12 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     # 雙維度資產定位（2026-08-21 使用者定稿）— 防禦維度 vs 收入維度
     _dual_dim = ""
     try:
-        _ddm = load_json(BASE / "snapshot.json").get("dual_dimension_metric", {})
+        _snap_dd = load_json(BASE / "snapshot.json")
+        _ddm = _snap_dd.get("dual_dimension_metric", {})
+        # 2026-11-13：防禦維度（抗跌/LTV 保護）與防守合併口徑（配息承接）是兩個不同問題的指標，
+        #   並列時易被讀成「兩套結論矛盾」（週五深度審查 11/13 三大隱憂①）。此處把承接值一起印出並註明分工，
+        #   不改變任何門檻與判定（防禦 ≥50% 仍是雙維度定稿的配置門檻）。
+        _dcm_pct = ((_snap_dd.get("defensive_combined_metric") or {}).get("佔比"))
         if _ddm:
             _df = _ddm.get("防禦維度", {}); _inc = _ddm.get("收入維度", {})
             _dc2 = _df.get("組成", {})
@@ -978,7 +983,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
   <p style="margin:4px 0">💵 <b>收入引擎 {_inc.get('佔比',0)}%</b>（{_inc.get('公式','')}｜現金流覆蓋）＝ 全配息資產 + 房租 {_nn(_rent_tgt)}/月</p>
   <p style="font-size:11px;color:#94a3b8;margin:4px 0">核心：配息≠防守，兩維度分離計算、獨立風控；{_df.get('備註','')}</p>
   <p style="margin:8px 0 2px 0">🎯 <b>四大市場情境（當前：區間震盪）：</b>多頭 防禦≥40/收入≥60/LTV≤55 ｜ <b>震盪 防禦≥50/收入≥65/LTV≤52</b> ｜ 股債雙殺 防禦≥55/收入≥70/LTV≤50 ｜ 熊市 防禦≥60/收入≥70/LTV≤48</p>
-  <p style="font-size:12px;margin:4px 0">📐 現況對照（震盪標準 防禦≥50／收入≥65）：防禦 {_df.get('佔比',0):.1f}% {'✅' if _df.get('佔比',0)>=50 else '⚠️ 未達'} ｜ 收入 {_inc.get('佔比',0):.1f}% {'✅' if _inc.get('佔比',0)>=65 else '⚠️ 未達'}｜LTV 見第八章風險紅線（動態）</p>
+  <p style="font-size:12px;margin:4px 0">📐 現況對照（震盪標準 防禦≥50／收入≥65）：防禦 {_df.get('佔比',0):.1f}% {'✅' if _df.get('佔比',0)>=50 else '⚠️ 未達'}（抗跌／LTV 保護；配息承接判準＝合併口徑 {(_dcm_pct or 0):.1f}% ≥60% {'✅ 已足' if (_dcm_pct or 0)>=60 else '⚠️ 不足'}，兩者不同問題、勿混讀） ｜ 收入 {_inc.get('佔比',0):.1f}% {'✅' if _inc.get('佔比',0)>=65 else '⚠️ 未達'}｜LTV 見第八章風險紅線（動態）</p>
 </div>"""
     except Exception:
         _dual_dim = ""

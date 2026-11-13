@@ -233,6 +233,9 @@ _dd_llm = A.get("雙維度", {}) or {}
 _def_pct = (_dd_snap.get("防禦維度") or {}).get("佔比")
 _inc_pct = (_dd_snap.get("收入維度") or {}).get("佔比")
 _def_txt = f"{_def_pct:.1f}%" if isinstance(_def_pct, (int, float)) else str(_dd_llm.get("防禦", "—"))
+# 2026-11-13：防禦維度（抗跌）與防守合併口徑（配息承接）並列常被讀成矛盾 → 同卡印出承接值並註明分工
+_dcm_pct = ((s.get("defensive_combined_metric") or {}).get("佔比"))
+_dcm_txt = f"{_dcm_pct:.1f}%" if isinstance(_dcm_pct, (int, float)) else "—"
 _inc_txt = f"{_inc_pct:.1f}%" if isinstance(_inc_pct, (int, float)) else str(_dd_llm.get("收入", "—"))
 _scene = str(_dd_llm.get("情境", "") or "")
 if not _scene:
@@ -250,7 +253,8 @@ if not _scene:
 if not _scene:
     _scene = "區間震盪"
 dd_card = card("🧭 雙維度 + 情境", "⚖️",
-    f"<p style='margin:4px 0;font-size:13px'>🛡️ 防禦維度 <b>{_def_txt}</b> ｜ 💵 收入引擎 <b>{_inc_txt}</b> ｜ 🎯 情境：<b>{_scene}</b></p>"
+    f"<p style='margin:4px 0;font-size:13px'>🛡️ 防禦維度（抗跌／LTV 保護）<b>{_def_txt}</b> ｜ 💵 收入引擎 <b>{_inc_txt}</b> ｜ 🎯 情境：<b>{_scene}</b></p>"
+    f"<p style='margin:2px 0 4px 0;font-size:11.5px;color:#6e6e73'>※ 防禦維度是抗跌能力（配置門檻 ≥50%）；配息承接能力是另一個指標（合併口徑 {_dcm_txt} ≥60%），兩者分工、不同問題，勿讀成矛盾</p>"
     "<p style='margin:4px 0;font-size:12px;color:#6e6e73'>配息≠防守；多頭可進攻、空頭只能防守；加減碼/LTV/現金水位隨情境自動切換</p>")
 summary_txt = A.get("總結", "等待 cron 產出")
 
