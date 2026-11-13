@@ -12375,7 +12375,16 @@
       "user": "Laing",
       "idem_key": "mb_recon_close_20261112",
       "summary": "①10/23 威剛現金股息 35,245 屬不列管帳戶（8882-810 證券交割戶）→ 不列股息/損益/追蹤。②10 月安聯 49,533 與 MB 40,087 差 9,446 係 MB 視窗自 10/13 起，未含 10/01–10/12 兩筆；以安聯 App 10/31 本月累積 10 筆 49,533 為準，不重複不調整。③11 月安聯 11,076 兩邊一致。"
-    }
+    },
+  {
+    "id": "mem-20261114001805-1339",
+    "timestamp": "2026-11-14T00:18:05.573662+08:00",
+    "agent": "Hermes",
+    "task": "美元曝險政策門檻：目標值 60→63（黃 65／紅 70 不動）",
+    "summary": "使用者 2026-11-14 核准方案三：thresholds_2026_0915.美元曝險_pct.目標 60→63（對齊現值 62.4%；USD/TWD 32.892 處 5 年 95% 分位，不在極值加碼），黃 65／紅 70 不動、不形成加碼誘因。同步：usd_advisory 硬編碼字串改動態派生、prompt_block 與 _NEUTRAL 移除門檻數字、8 支消費端 fallback 60→63、build_final/build_structural_health 顯示字串動態化。驗證：check_thresholds rc=0（無舊門檻字面殘留）、check_usd_advisory rc=0、policy() 回 63/65/70。未授權項：未 push、未重生 index.html、未改紅線。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "pending_decisions": [
     {
