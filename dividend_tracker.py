@@ -3,25 +3,48 @@
 執行：python dividend_tracker.py
 自動化：可掛 cron 每日跑一次（lj.py dividend）
 """
-import json, csv, os, glob
+import json, csv, os, glob, re
 from datetime import date
 from collections import defaultdict
 from dividend_caliber import bucket_of, classify_mb_memo
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 SNAP_PATH = os.path.join(BASE, "snapshot.json")
-MB_DIR = os.path.join(BASE, "moneybook")
+# 2026-11-13 修：原只讀 BASE/moneybook（實際檔案早已改放 moneybook_cur/）→
+#   每天只做重算、掃不到新配息，11/13 的 00927/00984A 兩筆因此漏記整天。
+MB_DIRS = (os.path.join(BASE, "moneybook"),
+           os.path.join(BASE, "moneybook_cur"),
+           os.path.join(BASE, "moneybook_prev"))
 
 # ETF 代碼（證券帳戶）vs 基金（鉅亨/保單）
 ETF_CODES = ['00981a', '00713', '00918', '00919', '0050', '006208', '00878', '00888',
-             '00984a', '00983d', '009823', '009824', '0056', '00646']
+             '00984a', '00983d', '009823', '009824', '0056', '00646', '00927', '009816']
 INSURANCE_KEYS = ['安聯人壽', '第一金人壽']  # 保單配息
 
 
+def _norm_date(s):
+    """MB 匯出用 2026/11/13，程式 comparison 用 2026-11-13 → 一律正規化。
+
+    2026-11-13 修：原版 startswith('YYYY-MM') 對 slash 格式永遠不成立，
+    是「掃不到配息」的第二個獨立原因（第一個是 MB_DIR 路徑失效）。
+    """
+    return (s or '').strip().replace('/', '-')[:10]
+
+
 def latest_mb_file():
-    """找最新 Moneybook 明細 CSV"""
-    files = sorted(glob.glob(os.path.join(MB_DIR, "Moneybook_明細_*.csv")))
-    return files[-1] if files else None
+    """找最新 Moneybook 明細 CSV（掃三個目錄，取檔名日期最大者）。"""
+    cands = []
+    for d in MB_DIRS:
+        cands += glob.glob(os.path.join(d, "Moneybook_明細_*.csv"))
+    cands += glob.glob(os.path.join(BASE, "Moneybook_明細_*.csv"))
+    if not cands:
+        return None
+
+    def _key(p):
+        m = re.search(r'(\d{8})', os.path.basename(p))
+        return (m.group(1) if m else '00000000', os.path.getmtime(p))
+
+    return max(cands, key=_key)
 
 
 def scan_month_dividends(target_month: str):
@@ -35,7 +58,8 @@ def scan_month_dividends(target_month: str):
             if len(r) < 10 or r[0] == '金融機構/手動新增':
                 continue
             cat, memo, amt, d = r[4], r[5], r[7], r[8]
-            if not (d or '').startswith(target_month):
+            d = _norm_date(r[8])
+            if not d.startswith(target_month):
                 continue
             if '配息' not in cat and '配息' not in memo and '股利' not in cat and '撥回' not in memo:
                 continue
@@ -90,18 +114,43 @@ def main():
     dr = snap.get("dividend_records", {}) or {}
     records = scan_month_dividends(month)
 
-    if records:
-        # 合併進 dividend_records（保留既有）
-        for d, items in records.items():
-            merged = dict(dr.get(d, {}))
-            for k, v in items.items():
-                merged[k] = merged.get(k, 0) + v
-            dr[d] = merged
+    # 2026-11-13 治本：舊版把掃描結果用「日期 key」累加進 dividend_records，
+    #   ①同一筆配息每跑一次就再加一次（非冪等）②日期 key 與月份 key 並存會讓
+    #   month_total（startswith 月）重複計。改為「分類差額法」：MB 掃描的
+    #   ETF／基金／一次性合計，與紀錄同分類合計比較，只補正差額 → 天然冪等，
+    #   且不會覆蓋手動或應收制紀錄（保單撥回不入掃描）。
+    cur = dict(dr.get(month, {}))
+    scan_agg = {"etf": 0.0, "fund": 0.0, "oneoff": 0.0}
+    for _d, _items in records.items():
+        for _name, _amt in _items.items():
+            _b = bucket_of(_name)
+            if _b not in scan_agg:
+                _b = "fund"
+            scan_agg[_b] += _amt
+
+    def _bucket_recorded(_b):
+        return sum(v for k, v in cur.items()
+                   if isinstance(v, (int, float)) and bucket_of(k) == _b)
+
+    _added = []
+    for _b, _label in (("etf", "ETF"), ("fund", "基金"), ("oneoff", "一次性")):
+        _rec = _bucket_recorded(_b)
+        _delta = round(scan_agg[_b] - _rec, 2)
+        if _delta > 0.5:
+            _key = f"{_label}配息 補登（MB 差額 {today.isoformat()}）"
+            cur[_key] = int(round(_delta))
+            _added.append((_key, cur[_key]))
+        elif _delta < -0.5:
+            print(f"[INFO] {_label}：紀錄 {_rec:,.0f} 多於 MB 掃描 {scan_agg[_b]:,.0f}"
+                  f"（差 {_delta:,.0f}）→ 不調整（多為較新截圖或應收制撥回）")
+    if _added:
+        dr[month] = cur
         snap["dividend_records"] = dr
-        scanned = sum(v for items in records.values() for v in items.values())
-        print(f"✅ 本月({month})本次掃到配息（已併入紀錄）: {scanned:,.0f} TWD")
-        for d in sorted(records):
-            print(f"  {d}: " + ", ".join(f"{k} {v:,.0f}" for k, v in records[d].items()))
+        print(f"✅ 本月({month})補登 MB 差額 {sum(v for _, v in _added):,.0f} TWD：")
+        for _k, _v in _added:
+            print(f"  + {_v:,} {_k}")
+    elif records:
+        print(f"ℹ️ 本月({month})掃描 {sum(scan_agg.values()):,.0f} TWD：與紀錄無差額（不重複寫入）")
 
     # 2026-10-12 A1：五欄一律由當月全部紀錄重算（不因有無新掃描而換口徑）
     total = month_total(dr, month)

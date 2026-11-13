@@ -657,6 +657,12 @@ try:
     # 2026-11-11 14:59 的真因 → 由閘門抓，不靠下次有人記得。
     import re as _re2
     _stale = []
+    # 2026-11-13 修（假紅）：update 字典是「事件快照」，breakdown 會隨之後的匯入前進。
+    # 舊版拿所有 update 的明細去比對「現值」breakdown → 只要隔天再匯入一次保單，
+    # 前一次的 update 必然「不同步」，稽核每晚固定 FAIL（11/11 事件之後每天都會踩）。
+    # 守門真正要抓的是「同一次匯入把明細寫進 update、卻沒回寫 breakdown」→ 只驗
+    # update 日期 ≥ 最後匯入日者；較舊者屬歷史快照，不比對現值（內部一致性仍照驗）。
+    _import = str((_snap.get("source_import_dates") or {}).get("保單 安聯 A/B（App）") or "")[:10]
     for _k, _v in _snap.items():
         if not _re2.match(r"^allianz_[ab]_update_\d+$", _k) or not isinstance(_v, dict):
             continue
@@ -669,6 +675,12 @@ try:
         _decl = float((_v.get("合計") or _v.get("B合計") or _v.get("A合計") or 0))
         if _decl and abs(sum(_f.values()) - _decl) >= 1:
             _stale.append(f"{_k} 內部矛盾：明細合計 {sum(_f.values()):,.0f} ≠ 該筆合計 {_decl:,.0f}")
+            continue
+        _digits = str(_k).rsplit("_", 1)[-1]
+        _iso = (f"{_digits[:4]}-{_digits[4:6]}-{_digits[6:8]}"
+                if (len(_digits) == 8 and _digits.isdigit()) else "")
+        if _iso and _import and _iso < _import:
+            print(f"  ℹ️ {_k}（{_iso}）為歷史事件快照，breakdown 已於 {_import} 前進 → 不比對現值")
             continue
         if _bd != _f and _decl:
             _stale.append(f"{_k} 的明細（{sum(_f.values()):,.0f}）尚未回寫 allianz_{_tag}_breakdown"
