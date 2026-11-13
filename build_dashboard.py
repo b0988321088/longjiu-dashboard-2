@@ -145,6 +145,12 @@ def live_plan_row(_r, snap):
             _t = re.sub(r"乾粉\s*[\d.]+萬", f"乾粉 {_dr / 10000:.1f}萬", _t)
         except Exception as _e_dr:
             print(f"⚠️ 行動列乾粉即時值不可得（{type(_e_dr).__name__}: {_e_dr}）→ 保留原文（fail-visible）")
+    # ⑧台股列語意除錯（2026-11-13）：radar 原文把「已達上限不新增（US30Y X%，凍結線 5.3% 未解凍前不加碼）」
+    #   並列，讀者會誤以為台股被 US30Y 凍結。實際上 US30Y v1.2（2026-10-14 裁決）只凍結「長債新增」，
+    #   不否決台股分批；台股本列不新增的真正理由是超配。此處把因果講明，避免與長債凍結混淆。
+    _t = re.sub(
+        r"（US30Y\s*([\d.]+)%\s*，?\s*凍結線\s*[\d.]+%?\s*未解凍前不加碼）",
+        r"（US30Y \1% 只凍結長債新增、不否決台股；本列不加碼主因＝台股超配）", _t)
     _n = dict(_r)
     _n["內容"] = _t
     return _n
@@ -1798,6 +1804,11 @@ def main():
                 )
                 return f'<div style="margin-top:9px"><div class="cio-h" style="color:{color};margin-top:0">{ico} {_html.escape(title)}（{len(items)}）</div>{_body}</div>'
             _h = f'<div class="cio-card"><div class="text-white font-bold text-[13px]">📅 {_c0.get("date")}（{_c0.get("weekday", "")}）最近一次審查（結構化快照）</div>'
+            # 2026-11-13：本段內文（含現金緩衝、盈餘、pending 金額）為該日快照，若未同步會與頁首 KPI 互斥
+            #   （實踩：11/11 快照寫「盈餘 66,758／現金 2,145,414／緩衝 2.2%」，11/13 真值已是 74,997／2,091,679）。
+            #   標明「以此日期為準」，避免被當現況引用。
+            _h += (f'<div style="font-size:10.5px;color:#94a3b8;margin:2px 0 4px 0">'
+                   f'※ 本段數字以 {_c0.get("date")} 當日為準（歷史快照）；現況請看頁首 KPI 與穿透表</div>')
             _h += _cio_sec("✅", "已核准", "#34d399", _st.get("approved"))
             _h += _cio_sec("⏳", "已核准待執行", "#fbbf24", filter_closed_review_items(_st.get("pending_exec")))
             _h += _cio_sec("⏸️", "延後 / 凍結", "#94a3b8", _st.get("frozen"))

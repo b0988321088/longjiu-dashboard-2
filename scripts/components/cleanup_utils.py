@@ -17,6 +17,7 @@ import json
 import os
 import sys
 import pathlib
+from datetime import date, timedelta
 import re
 import shutil
 import subprocess
@@ -250,7 +251,7 @@ def _cleanup_schedule_events(apply_changes: bool, current_date: datetime.date):
 
 def _cleanup_pending_decisions(apply_changes: bool, current_date_iso: str):
     logger.info("執行 B. 清理 pending_decisions.json / dashboard_decisions.json...")
-    CLOSED = re.compile(r'^\s*(✅|❌|⛔|🔚)|已結案|已完成|已取消|已作廢|作廢|已送出|已核准|已生效|維持不轉換|已延後|已暫緩|已更正')
+    CLOSED = re.compile(r'^\s*(✅|❌|⛔|🔚)|已結案|關案|已完成|已取消|已作廢|作廢|已送出|已核准|已生效|維持不轉換|已延後|已暫緩|已更正')
     cleaned_count = 0
     retained_count = 0
 
@@ -267,7 +268,13 @@ def _cleanup_pending_decisions(apply_changes: bool, current_date_iso: str):
             st = str(it.get('status', ''))
             dt = str(it.get('date', ''))[:10]
             # 移除「已結案/已完成/已取消/作廢」且日期早於 2026-09-01 的條目
-            if CLOSED.search(st) and dt < '2026-09-01':
+            # 2026-11-13：原規則只清 9/1 前 → 10/16、11/06 兩筆「關案」仍留在 pending（顯示 4 筆、實際 2 筆）。
+            #   改為「已結案且 date 早於今日−7 天」一併歸檔，近 7 天仍保留供回顧。
+            try:
+                _cut = (date.fromisoformat(current_date_iso) - timedelta(days=7)).isoformat()
+            except Exception:
+                _cut = ''
+            if CLOSED.search(st) and (dt < '2026-09-01' or (dt and _cut and dt <= _cut)):
                 gone2.append(it)
             else:
                 keep2.append(it)

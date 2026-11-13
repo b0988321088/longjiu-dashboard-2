@@ -198,7 +198,7 @@ rows = f"""
 {kpi("總資產", f"{TA:,}", "不含不動產", "#1d1d1f")}
 {kpi("淨值", f"{net_worth:,}", "資產+不動產−負債", "#3b82f6")}
 {kpi("負債比（含不動產）", f"{debt_ratio:.1f}%", f"負債 {TL:,} ÷（金融資產 {TA:,.0f}＋房產 {RE:,.0f}）｜金融資產負債比 {debt_ratio_fin:.1f}%（負債 ÷ 金融資產 {TA:,.0f}）", "#d97706")}
-{kpi("純現金（可動用）", f"{CASH_AVAIL:,}", f"真值 {CASH:,}" + (f" − 指定清償款 {RESTRICTED/10000:.0f}萬" if RESTRICTED else "") + f"｜底線 70萬 {cash_ok}", "#22c55e" if CASH_AVAIL>=FLOOR else "#ef4444")}
+{kpi("純現金（可動用）", f"{CASH_AVAIL:,}", f"真值 {CASH:,}" + (f" − 指定清償款 {RESTRICTED/10000:.0f}萬" if RESTRICTED else "") + f"｜底線 70萬 {cash_ok}｜乾粉 {CASH_AVAIL-FLOOR:,.0f}＝{(CASH_AVAIL-FLOOR)/EXP:.1f} 個月支出（佔總資產 {(CASH_AVAIL-FLOOR)/float(s.get('total_assets') or 1)*100:.2f}%）" if EXP else "", "#22c55e" if CASH_AVAIL>=FLOOR else "#ef4444")}
 {kpi("Runway", f"{runway:.1f} 月", f"可動用 {CASH_AVAIL:,} / 月支出 {EXP:,}")}
 {kpi("被動覆蓋", f"{cov:.0f}%", f"配息 {DIV:,} + 房租 {RENT:,}", "#22c55e")}
 </div>
