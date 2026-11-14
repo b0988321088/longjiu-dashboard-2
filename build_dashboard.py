@@ -1282,8 +1282,19 @@ def main():
                  + (cd.get("臺幣綜存", 0) or 0) + (cd.get("數位活儲", 0) or 0))
     _other_sum = max(0, float(snap.get("cash_total") or 0) - _card_sum)
     _dry = _cw_t["dry"]
+    # 2026-11-15：機會子彈當前狀態（模板原本只有鐵律條文，讀者無從得知是否已觸發 →
+    #   11/06 曾達 -20.31% 後回彈至 -7.91%，頁面仍被當成「可執行」的教訓）
+    _ob_txt = "資料未取得"
+    try:
+        _obs = ((snap.get("opportunity_bullet_20261107") or {}).get("觸發狀態") or {})
+        if _obs.get("狀態"):
+            _ob_txt = (f"{_obs.get('狀態')}｜當時回檔 {float(_obs.get('回檔_pct') or 0):.2f}%"
+                       f"（{_obs.get('價格日', '')}）")
+    except Exception:
+        pass
     _data_k_map = {
         "cash_total": cash,        # 現金（snapshot.cash_total）
+        "ob_status": _ob_txt,      # 機會子彈目前狀態（2026-11-15 新增）
         "div_total": div_total,    # 配息實收
         "got_total2": got_total,   # 當月已收合計（說明欄）
         "got_total": got_total,    # 當月已收合計卡片（2026-08-31 補：template 用 data-k="got_total"）
@@ -1345,7 +1356,8 @@ def main():
         #   狀態色與門檻比較仍用真值計算（功能不失、金額不公開）。真值層與內部報告不受影響。
         _show = public_mask.display_value(_dk, _dv)
         tpl, _n = _pat.subn(
-            lambda m: m.group(1) + (_show if _show is not None else _fmt(_dv)) + m.group(2), tpl)
+            lambda m: m.group(1) + (_show if _show is not None else
+                                    (str(_dv) if isinstance(_dv, str) else _fmt(_dv))) + m.group(2), tpl)
         if _n:
             hits += _n
     # ── 本月投資風險摘要（2026-11-05 使用者裁決：日報＋儀表板第一屏，數字一律同源）──
