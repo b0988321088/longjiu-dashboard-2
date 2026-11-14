@@ -219,6 +219,9 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     ]
     action_map = {"台股": "✅ 慢慢買", "美股": "⏸ 逢彈減", "防守": "🟢 已足", "債券": "⏸ 等利率", "現金": "🟢 底線制"}
     for name, act, t, twd, _c in buckets:
+        if t is None:
+            lines.append(f"| {name} | {act:.1f}% | — | — | 指定款＋避險衛星（不調度） |")
+            continue
         gap = act - t
         lines.append(f"| {name} | {act:.1f}% | {t}% | {gap:+.1f}pp | {action_map.get(name, '—')} |")
 
@@ -414,10 +417,18 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
     lines.append(f"- {dry_display(_cw)}（現金 {_cw['cash']:,.0f} − 生活底線 {_cw['life']:,.0f}）｜{_al_txt}")
     # 2026-10-07 裁決：美元曝險僅顯示、不觸發（advisory_only 由 usd_exposure_sync.py 寫入）
     _usd_adv = bool(((s.get("usd_exposure_monitor") or {}).get("advisory_only")))
+    # 2026-11-14：雙口徑並列會誤讀（68.6% 含已避險 6.2%，門檻判的是 62.4%）→ 明寫差異
+    _usd_cur = ((s.get("usd_exposure_monitor") or {}).get("current") or {})
+    _usd_gross = _usd_cur.get("合計")
+    _usd_hgd = _usd_cur.get("已避險")
+    _usd_adv_txt = _usd_tier_text(s) + "（僅顯示）"
+    if isinstance(_usd_gross, (int, float)) and isinstance(_usd_hgd, (int, float)):
+        _usd_adv_txt = (f"{_usd_tier_text(s)}（僅顯示；總計價 {_usd_gross:.1f}%，"
+                        f"已避險 {_usd_hgd:.1f}% 不計入匯率風險）")
     for name, val, limit, triggered in [
         ("US30Y", f"{us30y:.2f}%" if us30y else "—", "≥5.30%", us30y and us30y >= 5.30),
         ("美元曝險", f"{usd_pct:.0f}%",
-         (f"{_usd_tier_text(s)}（僅顯示）" if _usd_adv else f"紅線 {_usd_cap_fn(s):.0f}%"),
+         (_usd_adv_txt if _usd_adv else f"紅線 {_usd_cap_fn(s):.0f}%"),
          (False if _usd_adv else usd_pct > float(_usd_cap_fn(s) or 63))),
         ("高科技", f"{tech:.1f}%", "紅線 30%", tech > 30),
     ]:
@@ -549,8 +560,24 @@ def main():
         ("債券", apct.get("債券", 0), tgt.get("債券型目標", 25), atwd.get("債券", 0), "#f59e0b"),
         ("現金", apct.get("現金/安全網", 0), tgt.get("現金目標", 5), atwd.get("現金/安全網", 0), "#94a3b8"),
     ]
+    # 2026-11-14：五桶只佔 96.1%，缺的 3.9% 是指定用途款 90 萬＋避險衛星 →
+    # 補「其他」列讓「五桶＋指定款＋衛星＝總資產」不變量在畫面上可驗，不再讓 3.9% 憑空消失。
+    _used = sum(b[3] for b in buckets)
+    _total_ta = float(s.get("total_assets") or 0)
+    if _total_ta > 0:
+        _rest_ta = _total_ta - _used
+        if _rest_ta > _total_ta * 0.001:
+            buckets.append(("其他", _rest_ta / _total_ta * 100, None, _rest_ta, "#cbd5e1"))
     bar_rows = ""
     for name, act, t, twd, color in buckets:
+        if t is None:
+            bar_rows += f"""
+        <div class="bucket">
+          <div class="bucket-head"><span class="bucket-name">{name}</span><span class="bucket-val">{act:.1f}% <small>/ 指定款＋避險衛星</small></span><span class="gap green">—</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{min(act / 55 * 100, 100):.1f}%;background:{color}"></div></div>
+          <div class="bucket-twd">{twd/1e4:.0f} 萬</div>
+        </div>"""
+            continue
         gap = act - t
         w = min(act / 55 * 100, 100)
         tw = min(t / 55 * 100, 100)
