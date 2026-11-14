@@ -807,7 +807,7 @@ def main():
             _usd_icon = ("🟢" if _tier_txt.startswith("目標值內")
                          else ("🔴" if "高曝險" in _tier_txt else "🟡"))
             lines.append(f"{_usd_icon} 美元曝險 {_usd_val}%（{_tier_txt}；{_usd_tier_text(_snap)}）"
-                         f"→ 僅顯示，不觸發換匯／減碼（政策門檻待 10 月戰略檢討）")
+                         f"→ 僅顯示，不觸發換匯／減碼")
         elif _usd_val is not None and float(_usd_val) > float(_usd_cap_fn(_snap) or 63):
             lines.append(f"🔴 美元曝險 {_usd_val}% 超標（目標值 ≤{_usd_cap_fn(_snap):.0f}%）→ 美股減碼/美元定存到期轉台幣")
         else:

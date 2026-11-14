@@ -133,7 +133,7 @@ _usd_action_txt = ("→ 🟡 僅顯示，不觸發台幣加碼／MMF 轉配置�
                    else "→ 選台幣計價避險標的不推高；MMF 轉配置優先累積型")
 usd_col = ("#6e6e73" if _usd_adv
            else ("#22c55e" if usd_exp <= usd_thr else "#ef4444"))
-usd_verdict = (f"🟡 {_usd_tier(s, usd_exp)}（僅顯示；政策門檻待 10 月戰略檢討）" if _usd_adv
+usd_verdict = (f"🟡 {_usd_tier(s, usd_exp)}（僅顯示；不觸發資產調整）" if _usd_adv
                else (f"🟢 未觸線（緩衝 {abs(usd_gap):.1f}pp）" if usd_exp <= usd_thr
                      else f"🔴 超 {usd_gap:.1f}pp（靠台幣側壓回）"))
 # Moneybook 真值日期（原寫死 8/21）與下次審計日（原寫死 2026-08-28）

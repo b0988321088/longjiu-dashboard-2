@@ -982,7 +982,7 @@ def main():
             if snap.get("usd_exposure_monitor", {}).get("advisory_only"):
                 # 2026-10-07 裁決①③：美元曝險僅顯示、不觸發＋觀測線命名（門檻讀單一來源）
                 from usd_advisory import tier_limit_text as _usd_tl
-                _plan.append(f"🟡 美元曝險 {_usd2}%（{_usd_tl(snap)}）→ 僅顯示，不觸發美股減碼；政策門檻待 10 月戰略檢討")
+                _plan.append(f"🟡 美元曝險 {_usd2}%（{_usd_tl(snap)}）→ 僅顯示，不觸發美股減碼")
             elif _usd2 > _usd_cap2:
                 _plan.append(f"🔴 美元曝險 {_usd2}% 超標（目標值 ≤{_usd_cap2:.0f}%）→ 美股減碼")
             else:
