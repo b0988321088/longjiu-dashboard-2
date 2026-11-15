@@ -10,14 +10,6 @@
   {
     "date": "2026-11-02",
     "status": "🔴 待辦",
-    "item": "💳 信用卡遺失補辦（掛失＋補發）",
-    "amount": "",
-    "importance": "high",
-    "note": "使用者 2026-11-01 口述：信用卡遺失要補辦。需確認是哪一張卡（四大主力：富邦 momo/J、國泰 CUBE、玉山 Unicard、台新 Richart）＋是否有被盜刷；補發後卡號末四碼變更，要同步 Moneybook 帳戶名稱與自動扣繳設定。"
-  },
-  {
-    "date": "2026-11-02",
-    "status": "🔴 待辦",
     "item": "🛡️ 保險退費",
     "amount": "",
     "importance": "medium",
