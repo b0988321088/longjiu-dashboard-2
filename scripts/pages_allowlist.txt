@@ -42,7 +42,7 @@ dynamic_monthly_review_2026-10.html
 dynamic_weekly_review_2026-09-20.html
 dynamic_weekly_review_2026-10-11.html
 dynamic_weekly_review_2026-11-01.html
-dynamic_weekly_review_2026-11-08.html
+dynamic_weekly_review_2026-11-15.html
 emergency_report_2026-09-07.html
 emergency_report_2026-10-09.html
 emergency_report_2026-10-15.html
@@ -155,5 +155,5 @@ weekly_report_2026-09-08.html
 weekly_report_2026-10-12.html
 weekly_report_2026-10-15.html
 weekly_report_2026-11-01.html
-weekly_report_2026-11-12.html
+weekly_report_2026-11-15.html
 work_log.json
