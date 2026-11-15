@@ -43,7 +43,11 @@ except Exception as _e_ss:           # 載不到 → 不猜位置、不退回 re
 ARCHIVE_DIR = (_ss.ARCHIVE_DIR if _ss is not None else ROOT / ".archive")
 
 # --- schedule_events_weekly_clean.py 常數與輔助函數 ---
-DONE_MARK = ("✅", "已入帳", "已完成", "已核准", "核准完成", "已進帳", "已送出", "已收")
+DONE_MARK = ("✅", "已入帳", "已完成", "已核准", "核准完成", "已進帳", "已送出", "已收",
+             # 2026-11-15：狀態已寫明「已取消／已作廢」卻仍每週被列為「待裁決」（⛔ 不在 TRACK_MARK
+             #   也不在 DONE_MARK → 落到 else 的保守分支）；「歷史計畫」同理，兩者都是過去式，
+             #   留著只會讓週日提醒長出不會有人處理的項目。
+             "已取消", "已作廢", "歷史計畫")
 PURE_PREFIX = ("📋 行程", "📋 節日", "📋 例行", "📅 ", "❌ 取消", "📋 行程")
 PURE_EXACT = ("📋 行程", "📋 節日", "📋 例行")
 TRACK_MARK = ("🔴", "⏸️", "⏳", "🟡", "📌", "pipeline", "📋 重要")
