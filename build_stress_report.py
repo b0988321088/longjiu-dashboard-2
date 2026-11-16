@@ -471,7 +471,8 @@ def build():
     _lock_imp_html = "".join(f"<li>{x}</li>" for x in _lock_imp)
     _lock_risk_html = "".join(f"<li>{x}</li>" for x in _lock_risk)
     # ── 機會子彈：本批下單紀錄（使用者 2026-11-07 下令，週一 11/09 執行）──
-    _ord = ob.get("執行紀錄_20261109") or {}
+    _ord_keys = sorted([k for k in ob if k.startswith("執行紀錄_")])
+    _ord = (ob.get(_ord_keys[-1]) if _ord_keys else None) or ob.get("執行紀錄_20261109") or {}
     _ord_total = _num(_ord.get("估計合計"))
     _ord_cash_after = _num(_ord.get("下單後可動用現金"))
     if not _ord_cash_after and _ord_total:
@@ -483,6 +484,8 @@ def build():
         f"<td class='n'>{_num(o.get('估計金額')):,.0f}</td><td class='n'>{_num(o.get('手續費')):,.0f}</td>"
         f"<td class='n'>{_num(o.get('估計合計')):,.0f}</td></tr>"
         for o in (_ord.get("標的") or []))
+    if not _ord_rows:
+        _ord_rows = f"<tr><td colspan='7'>無批次可執行 — {_ord.get('狀態', '未觸發')}</td></tr>"
     _ord_block = ""
     if _ord:
         _ord_block = (
