@@ -374,6 +374,23 @@ def build():
         f"<td class='n'>{l:.1f}%</td><td class='n'>{fmt(need)}</td></tr>"
         for d, p, r, l, need in scen_pledge)
 
+    # ── 2026-11-16 新增：匯率衝擊（池 100% 美元、借款台幣）──
+    _fx_rows = ""
+    for _fx in (0.05, 0.10, 0.134, 0.15):
+        _p = pool * (1 - _fx); _mr = _p / pledge * 100; _ltv2 = pledge / _p * 100
+        _st = "🔴 跌破銀行通知" if _mr < maint_warn else ("🟡 已破內部停止" if _mr < 100/ltv_stop*100 else "🟢")
+        _fx_rows += (f"<tr><td class='n'>+{_fx*100:.1f}%</td><td class='n'>{fmt(_p)}</td>"
+                     f"<td class='n'>{_mr:.1f}%</td><td class='n'>{_ltv2:.1f}%</td><td>{_st}</td></tr>")
+    _fx_us_rows = ""
+    for _fx in (0.10, 0.134):
+        for _us in (-0.10, -0.15, -0.20):
+            _p = pool * (1 + _us * POOL_BETA_US) * (1 - _fx)
+            _mr = _p / pledge * 100; _need = max(0, pledge - ltv_stop / 100 * _p)
+            _st = "🔴 跌破銀行通知" if _mr < maint_warn else ("🟡 已破內部停止" if _mr < 100/ltv_stop*100 else "🟢")
+            _fx_us_rows += (f"<tr><td class='n'>+{_fx*100:.1f}%</td><td class='n'>{_us*100:.0f}%</td>"
+                            f"<td class='n'>{fmt(_p)}</td><td class='n'>{_mr:.1f}%</td>"
+                            f"<td class='n'>{fmt(_need)}</td><td>{_st}</td></tr>")
+
     due_html = "".join(
         f"<li>{n} <b>{fmt(a)}</b>（{d}）</li>" for n, a, d in due_rows if a)
 
@@ -623,6 +640,25 @@ a{{color:#34d399}}
 {scen_pl_html}
 </table>
 <div class="sub" style="margin:8px 0 0">假設借款不變、不計配息再投入；擔保品以<b>後收級別</b>為主（CDSC 未到期），追繳時不宜賣擔保品，優先以現金還本。</div>
+</div>
+
+<h2>三之二、匯率衝擊（第四個風險軸）</h2>
+<div class="card warn">
+<ul>
+<li>機制：擔保池三檔皆<b>美元級別</b>（富達全球動能多元 48.6%／貝萊德智慧數據 B11 43.1%／聯博全球多元收益 AD 8.3%），加權股票部位 <b>69.5%</b>、債券 30.5%；維持率＝台幣計價的池市值 ÷ 台幣借款 → <b>台幣升值直接壓縮維持率，與股市漲跌無關</b></li>
+<li>β 驗證：現行假設 0.8 對應「股票部位 β 1.15」（偏高）；以全球股對美股 β≈0.87 推算，池對美股 β≈0.60。0.8 係保守上限，壓力測試偏嚴（觸內部線由美股 -8.7% 提前至 -6.6%），保留不動但須標明</li>
+<li>歷史依據：2025-04-02 USD/TWD 33.26 → 2025-06-26 28.82，台幣升值 13.4%，<b>同期美股仍上漲</b> → 匯率可與股市脫鉤，不能假設「跌市必有台幣貶值保護」</li>
+</ul>
+<table>
+<tr><th class="n">台幣升值</th><th class="n">池台幣值</th><th class="n">維持率</th><th class="n">LTV</th><th>狀態</th></tr>
+{_fx_rows}
+</table>
+<div class="sub" style="margin:10px 0 6px">雙衝擊（匯率 × 美股，池 β {POOL_BETA_US}）</div>
+<table>
+<tr><th class="n">台幣升</th><th class="n">美股</th><th class="n">池市值</th><th class="n">維持率</th><th class="n">需還本</th><th>狀態</th></tr>
+{_fx_us_rows}
+</table>
+<div class="sub" style="margin:8px 0 0"><b>乾粉 {fmt(_dry_now)}，雙衝擊需還本 74～137 萬 → 完全不足</b>，須賣資產或動用指定款。此軸為 2026-11-16 新增，原壓力測試僅計股市未計匯率。</div>
 </div>
 
 <h2>四、流動性壓力（押標金 vs 維持率回補）</h2>

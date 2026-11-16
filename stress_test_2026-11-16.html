@@ -76,6 +76,25 @@ a{color:#34d399}
 <div class="sub" style="margin:8px 0 0">假設借款不變、不計配息再投入；擔保品以<b>後收級別</b>為主（CDSC 未到期），追繳時不宜賣擔保品，優先以現金還本。</div>
 </div>
 
+<h2>三之二、匯率衝擊（第四個風險軸）</h2>
+<div class="card warn">
+<ul>
+<li>機制：擔保池三檔皆<b>美元級別</b>（富達全球動能多元 48.6%／貝萊德智慧數據 B11 43.1%／聯博全球多元收益 AD 8.3%），加權股票部位 <b>69.5%</b>、債券 30.5%；維持率＝台幣計價的池市值 ÷ 台幣借款 → <b>台幣升值直接壓縮維持率，與股市漲跌無關</b></li>
+<li>β 驗證：現行假設 0.8 對應「股票部位 β 1.15」（偏高）；以全球股對美股 β≈0.87 推算，池對美股 β≈0.60。0.8 係保守上限，壓力測試偏嚴（觸內部線由美股 -8.7% 提前至 -6.6%），保留不動但須標明</li>
+<li>歷史依據：2025-04-02 USD/TWD 33.26 → 2025-06-26 28.82，台幣升值 13.4%，<b>同期美股仍上漲</b> → 匯率可與股市脫鉤，不能假設「跌市必有台幣貶值保護」</li>
+</ul>
+<table>
+<tr><th class="n">台幣升值</th><th class="n">池台幣值</th><th class="n">維持率</th><th class="n">LTV</th><th>狀態</th></tr>
+<tr><td class='n'>+5.0%</td><td class='n'>11,160,606</td><td class='n'>189.2%</td><td class='n'>52.9%</td><td>🟢</td></tr><tr><td class='n'>+10.0%</td><td class='n'>10,573,205</td><td class='n'>179.2%</td><td class='n'>55.8%</td><td>🟡 已破內部停止</td></tr><tr><td class='n'>+13.4%</td><td class='n'>10,173,773</td><td class='n'>172.4%</td><td class='n'>58.0%</td><td>🟡 已破內部停止</td></tr><tr><td class='n'>+15.0%</td><td class='n'>9,985,805</td><td class='n'>169.3%</td><td class='n'>59.1%</td><td>🟡 已破內部停止</td></tr>
+</table>
+<div class="sub" style="margin:10px 0 6px">雙衝擊（匯率 × 美股，池 β 0.8）</div>
+<table>
+<tr><th class="n">台幣升</th><th class="n">美股</th><th class="n">池市值</th><th class="n">維持率</th><th class="n">需還本</th><th>狀態</th></tr>
+<tr><td class='n'>+10.0%</td><td class='n'>-10%</td><td class='n'>9,727,349</td><td class='n'>164.9%</td><td class='n'>744,505</td><td>🟡 已破內部停止</td></tr><tr><td class='n'>+10.0%</td><td class='n'>-15%</td><td class='n'>9,304,421</td><td class='n'>157.7%</td><td class='n'>968,657</td><td>🔴 跌破銀行通知</td></tr><tr><td class='n'>+10.0%</td><td class='n'>-20%</td><td class='n'>8,881,493</td><td class='n'>150.5%</td><td class='n'>1,192,809</td><td>🔴 跌破銀行通知</td></tr><tr><td class='n'>+13.4%</td><td class='n'>-10%</td><td class='n'>9,359,871</td><td class='n'>158.6%</td><td class='n'>939,268</td><td>🔴 跌破銀行通知</td></tr><tr><td class='n'>+13.4%</td><td class='n'>-15%</td><td class='n'>8,952,920</td><td class='n'>151.7%</td><td class='n'>1,154,952</td><td>🔴 跌破銀行通知</td></tr><tr><td class='n'>+13.4%</td><td class='n'>-20%</td><td class='n'>8,545,969</td><td class='n'>144.8%</td><td class='n'>1,370,636</td><td>🔴 跌破銀行通知</td></tr>
+</table>
+<div class="sub" style="margin:8px 0 0"><b>乾粉 494,919，雙衝擊需還本 74～137 萬 → 完全不足</b>，須賣資產或動用指定款。此軸為 2026-11-16 新增，原壓力測試僅計股市未計匯率。</div>
+</div>
+
 <h2>四、流動性壓力（押標金 vs 維持率回補）</h2>
 <div class="card">
 <ul>
@@ -129,7 +148,7 @@ a{color:#34d399}
 <ul>
 <li>股災段跌幅 <b class="down">875,911</b>（-3.22%）；帳面回升 219,677（25.1%），距高點仍差 <b class="down">656,234</b>。</li>
 <li>證券距高點 <b class="down">187,410</b>（需再 +7.2%）；基金距高點 <b class="down">310,229</b>。</li>
-<li>台幣 11/06→最新 <b>+0.10%</b>（貶值）；美元曝險 68.6%，毛額換算 <b class="up">+18,797</b>。基金／保單更新時可能先反映匯損，不是補漲。</li>
+<li>台幣 11/06→最新 <b>+0.12%</b>（貶值）；美元曝險 68.6%，毛額換算 <b class="up">+22,115</b>。基金／保單更新時可能先反映匯損，不是補漲。</li>
 <li><b>結論</b>：帳面 25.1% 不是實際恢復；已反映市價只有 30.4%（未賣出）。基金慢半拍，慢到的可能是匯損，不是反彈。</li>
 </ul>
 </div>
@@ -216,5 +235,5 @@ a{color:#34d399}
 </ul>
 </div>
 <div class="card warn"><b>淨值日落後示警</b>：基金淨值日 2026-11-13，市場價 2026-11-16。下一交易日淨值仍可能再下修，今日總資產不是底部。</div>
-<div class="sub">產生時間 2026-11-16 15:34｜來源：snapshot.json／dragon_assets.db／asset_diff_history.json／radar_state.json／Yahoo Finance</div>
+<div class="sub">產生時間 2026-11-16 16:00｜來源：snapshot.json／dragon_assets.db／asset_diff_history.json／radar_state.json／Yahoo Finance</div>
 </div></body></html>
