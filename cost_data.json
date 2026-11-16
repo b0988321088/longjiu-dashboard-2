@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-11-16 07:01",
+ "generated_at": "2026-11-16 13:30",
  "days": 14,
- "ledger_rows": 68,
+ "ledger_rows": 69,
  "backfilled": [],
  "series": [
   {
@@ -133,6 +133,16 @@
    "calls": 176,
    "cer": 0,
    "q429": 0
+  },
+  {
+   "date": "2026-11-16",
+   "ds_twd": 4,
+   "gemini_twd": 0,
+   "free_twd": 0,
+   "total_twd": 4,
+   "calls": 93,
+   "cer": 0,
+   "q429": 0
   }
  ],
  "today": {
@@ -198,12 +208,12 @@
   }
  },
  "wallets": {
-  "ds_balance_cny": 104.09,
-  "ds_balance_twd": 492,
+  "ds_balance_cny": 103.0,
+  "ds_balance_twd": 487,
   "ds_source": "API",
-  "ds_daily_twd": 28,
-  "ds_daily_src": "餘額真值（最近 7 個日曆日，7 個樣本）",
-  "ds_days_left": 17.8,
+  "ds_daily_twd": 24,
+  "ds_daily_src": "餘額真值（最近 7 個日曆日，8 個樣本）",
+  "ds_days_left": 19.9,
   "gemini_balance_twd": 1000,
   "gemini_daily_twd": 0,
   "gemini_days_left": null,
@@ -348,15 +358,15 @@
  "governance": {
   "baseline_date": "2026-09-22",
   "start_date": "2026-09-23",
-  "days": 54,
-  "ds_twd": 2249.0,
+  "days": 55,
+  "ds_twd": 2253.0,
   "gem_twd": 3.0,
   "free_twd": 0.0,
   "free_calls": 560,
-  "calls": 44823,
+  "calls": 44916,
   "cer": 159,
   "pending": false,
-  "total_twd": 2252.0
+  "total_twd": 2256.0
  },
  "page": {
   "top_n": 3,

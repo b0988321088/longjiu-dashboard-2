@@ -2130,3 +2130,6 @@
 {"ts": "2026-11-16T07:00:17", "model": "deepseek-chat", "caller": "buffett_cto_analyzer.py", "in": 1085, "cached": 896, "out": 196, "ok": true}
 {"ts": "2026-11-16T07:00:38", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 654, "cached": 512, "out": 169, "ok": true}
 {"ts": "2026-11-16T07:01:13", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 486, "cached": 256, "out": 587, "ok": true}
+{"ts": "2026-11-16T13:00:44", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 665, "cached": 0, "out": 193, "ok": true}
+{"ts": "2026-11-16T13:04:43", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 665, "cached": 512, "out": 160, "ok": true}
+{"ts": "2026-11-16T13:05:56", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 665, "cached": 512, "out": 187, "ok": true}
