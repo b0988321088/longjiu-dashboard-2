@@ -6817,16 +6817,17 @@
    "減碼角色": "不受本函式限制（風險收斂恆可執行；本函式僅閘加碼／新增部位）",
    "pledge_ltv": {
     "借款": 5900000.0,
-    "擔保品市值": 11825959.0,
-    "LTV_pct": 49.89,
+    "擔保品市值": 11748006.0,
+    "LTV_pct": 50.22,
     "政策停止線_pct": 53.0,
     "追繳參考_pct": 70.0,
-    "距停止線_pct": 3.11,
-    "池值可跌_pct": -5.87,
+    "距停止線_pct": 2.78,
+    "池值可跌_pct": -5.24,
     "通過": true,
     "觸追繳": false,
     "語意": "內部投資停止線（= thresholds.ltv分級_pct.黃上限），**非銀行追繳線**；銀行追繳線以追繳參考值暫作壓力測試（待銀行書面）",
-    "source": "sot_targets.pledge_ltv（fund_pledge_loan ÷ fund_breakdown_cathay；thresholds.ltv分級_pct；v1.2 TD-20261015-02）"
+    "source": "sot_targets.pledge_ltv（fund_pledge_loan ÷ funds_breakdown.國泰直購 富達＋聯博＋B11，2026-11-16 收盤/最新淨值；thresholds.ltv分級_pct）",
+    "基準日": "2026-11-16"
    },
    "repayment_valve": {
     "已證實": true,
