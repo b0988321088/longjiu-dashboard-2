@@ -3,5 +3,8 @@
  "last_level": "green",
  "last_alert_date": "2026-11-02",
  "renewal_maturity": "2027-09-29",
- "renewal_announced": []
+ "renewal_announced": [],
+ "ltv_unfreeze_announced": null,
+ "last_ltv_stage": "警戒",
+ "last_ltv_pct": 50.22
 }
