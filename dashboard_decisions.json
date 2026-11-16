@@ -12436,6 +12436,17 @@
       "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "timestamp": "2026-11-16T18:05:00+08:00",
+      "action": "核准",
+      "name": "LTV 53% 以下第二段分級制度（六段＋解凍條件）",
+      "source": "Hermes Telegram Gate",
+      "status": "已核准",
+      "category": "決策",
+      "user": "Laing",
+      "idem_key": "ltv_stage_20261116",
+      "summary": "使用者原話「照草案」。分段：<45% 正常（子彈依原規則）／45–53% 警戒（不加碼、只回補、子彈暫停）／53–57% 一階（停子彈＋禁新增負債＋現金回補）／57–60% 二階（減碼衛星黃金高波動 10%、優先清償質押）／60–62.5% 三階（減碼 20%、備妥補繳、通知銀行）／≥62.5% 斷路（全數去槓桿）。解凍條件：LTV<45% 且可動用現金 ≥ 700,000，且需一次明確裁決。落地：snapshot.thresholds_2026_0915.ltv分級_pct.階段_20261116、snapshot.ltv_stage_now（現況 50.22%＝警戒）。"
     }
   ],
   "pending_decisions": [
@@ -12481,5 +12492,5 @@
   "meta": {
     "updated_at": "2026-11-16T21:35:54+08:00"
   },
-  "last_updated": "2026-11-16T17:45:00+08:00"
+  "last_updated": "2026-11-16T18:05:00+08:00"
 }
