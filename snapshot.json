@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-16T16:49:08.857739",
+ "generated_at": "2026-11-16T21:36:36.583014",
  "version": "v5.0.10-true-value-correction",
  "date": "2026-11-16",
  "total_assets": 26545907,
@@ -6128,14 +6128,14 @@
   "asof": "2026-11-16",
   "current": {
    "growth_assets": {
-    "tw_growth": 3432159.0,
-    "us_growth": 9710837.0,
+    "tw_growth": 3380837.0,
+    "us_growth": 9635839.0,
     "re_value": 34017063.0,
     "mortgage": 25005344.0,
     "re_net": 9011719.0,
     "fin_debt": 0.0,
-    "total": 22154715.0,
-    "net_after_fin_debt": 22154715.0
+    "total": 22028395.0,
+    "net_after_fin_debt": 22028395.0
    },
    "coast": {
     "fi_target_swr": 47763000.0,
@@ -6143,21 +6143,21 @@
     "years_to_target": 0.21,
     "target_date": "2027-02-01",
     "real_return_pct": 5.0,
-    "fin_only_capital": 13142996.0,
+    "fin_only_capital": 13016676.0,
     "coast_threshold_swr": 47276121.951265775,
-    "coast_fi_ratio_swr_pct": 46.9,
-    "coast_fi_ratio_fin_only_swr_pct": 27.8,
-    "coast_gap_fin_only_swr": 34133125.951265775,
-    "fv_no_contrib_swr": 22382877.631879624,
-    "gap_fv_swr": 25380122.368120376,
-    "monthly_needed_swr": 8424888.332845856,
+    "coast_fi_ratio_swr_pct": 46.6,
+    "coast_fi_ratio_fin_only_swr_pct": 27.5,
+    "coast_gap_fin_only_swr": 34259445.951265775,
+    "fv_no_contrib_swr": 22255256.71224879,
+    "gap_fv_swr": 25507743.28775121,
+    "monthly_needed_swr": 8467251.879452525,
     "coast_threshold_yield": 37820897.56101262,
-    "coast_fi_ratio_yield_pct": 58.6,
-    "coast_fi_ratio_fin_only_yield_pct": 34.8,
-    "coast_gap_fin_only_yield": 24677901.56101262,
-    "fv_no_contrib_yield": 22382877.631879624,
-    "gap_fv_yield": 15827522.368120376,
-    "monthly_needed_yield": 5253919.055352039
+    "coast_fi_ratio_yield_pct": 58.2,
+    "coast_fi_ratio_fin_only_yield_pct": 34.4,
+    "coast_gap_fin_only_yield": 24804221.56101262,
+    "fv_no_contrib_yield": 22255256.71224879,
+    "gap_fv_yield": 15955143.287751209,
+    "monthly_needed_yield": 5296282.601958709
    },
    "light_work": {
     "rows": [
@@ -6165,25 +6165,25 @@
       "月收": 0.0,
       "所需年現金流": 1910520,
       "所需本金": 38210400,
-      "缺口": 25067404,
-      "達成_pct": 34.4
+      "缺口": 25193724,
+      "達成_pct": 34.1
      },
      {
       "月收": 20000.0,
       "所需年現金流": 1670520,
       "所需本金": 33410400,
-      "缺口": 20267404,
-      "達成_pct": 39.3
+      "缺口": 20393724,
+      "達成_pct": 39.0
      },
      {
       "月收": 30000.0,
       "所需年現金流": 1550520,
       "所需本金": 31010400,
-      "缺口": 17867404,
-      "達成_pct": 42.4
+      "缺口": 17993724,
+      "達成_pct": 42.0
      }
     ],
-    "fin_capital": 13142996.0,
+    "fin_capital": 13016676.0,
     "yield_pct": 5.0,
     "expense": 159210.0
    },
@@ -6220,16 +6220,16 @@
     "runway_days_net_reserve": 1116
    },
    "stress": {
-    "pool": 11783508.0,
+    "pool": 11748006.0,
     "loan": 5900000.0,
     "disbursed": true,
-    "ltv_now_pct": 50.1,
-    "maintenance_now_pct": 199.7,
-    "pool_minus30": 8248455.6,
-    "ltv_minus30_pct": 71.5,
-    "maintenance_minus30_pct": 139.8,
+    "ltv_now_pct": 50.2,
+    "maintenance_now_pct": 199.1,
+    "pool_minus30": 8223604.199999999,
+    "ltv_minus30_pct": 71.7,
+    "maintenance_minus30_pct": 139.4,
     "call_line_pct": 70.0,
-    "drop_to_call_pct": 28.5
+    "drop_to_call_pct": 28.3
    },
    "credit": {
     "locked": true,
@@ -6262,8 +6262,8 @@
    },
    "light": "🔴 紅燈",
    "blockers": [
-    "Coast FI 本金滑行（純金融）27.8% < 100%（含房產 46.9%）",
-    "跌30% 維持率 139.8% < 180%"
+    "Coast FI 本金滑行（純金融）27.5% < 100%（含房產 46.6%）",
+    "跌30% 維持率 139.4% < 180%"
    ]
   },
   "history": {
@@ -6569,13 +6569,13 @@
    },
    "2026-11-16": {
     "light": "🔴 紅燈",
-    "coast_fin_only_pct": 27.8,
-    "coast_with_re_pct": 46.9,
+    "coast_fin_only_pct": 27.5,
+    "coast_with_re_pct": 46.6,
     "pccr_pct": 139.3,
     "runway_days": 1116,
-    "maintenance_pct": 139.8,
+    "maintenance_pct": 139.4,
     "credit_locked": true,
-    "light_work_cap_2w": 20267404
+    "light_work_cap_2w": 20393724
    }
   }
  },
@@ -7720,22 +7720,23 @@
    "生活底線": 700000,
    "營運緩衝": 900000
   },
-  "current_cash": 2021096.0,
-  "gap": 478904.0,
-  "progress_pct": 80.8,
+  "current_cash": 2094919,
+  "gap": 405081,
+  "progress_pct": 83.8,
   "monthly_surplus_used": 66758,
-  "eta_months": 7.2,
-  "asof": "2026-11-04",
+  "eta_months": 6.1,
+  "asof": "2026-11-16",
   "policy": "2026-11-04 使用者裁示：現金總額目標 2,500,000（預備款 900,000＋安全底線 700,000＋營運緩衝 900,000），取代 2026-11-01 的 310 萬。",
-  "note": "雙口徑並列：target/current 為 gross（總額）；available_* 為可動用（＝總額−指定款 900,000）。厚度判定用 gross，投資與調度決策一律用 available。含 12/05 女友結清約 280,000 與 12 月配息導流 ≥45,388，可於 2026/12 月底達標。",
+  "note": "雙口徑並列：target/current 為 gross（總額）；available_* 為可動用（＝總額−指定款 900,000）。以 2026-11-16 真值：總額 2,094,919（進度 83.8%、缺 405,081）、可動用 1,194,919（缺 405,081）。加 12/05 女友結清 280,000 後缺 125,081，約 1.9 個月月餘（66,758／月）→ 達標落在 2027-01 中旬；若 12 月配息／支出優於預期可望 12 月底壓線，不預先宣告達標。",
   "caliper": "gross＝cash_total；available＝cash_layers.unrestricted_cash（指定款 900,000 永久排除）",
   "correction_20261102": "更正 2026-11-01 口徑錯誤：原 current_cash 2,048,447＝總現金（含指定款 900,000）→ 缺口 1,051,553／進度 66.1%／ETA 16 個月。依 9/29 裁示指定款不列可動用，改用可動用 1,148,447 → 缺口 1,951,553／進度 37.0%／ETA 30 個月（月盈餘 66,758）。來源：CIO 2026-11-02 18:30 審查質疑①，使用者同日指示修復。",
   "押標金期間註記": "2026-11-11 押標金 700,000 自可動用現金支應後，current_cash 由 1,134,786 降至 434,786（低於生活底線 265,214）；未得標退回後回復。本月其他投資凍結（snapshot.investment_freeze_20261102）。",
   "target_caliper": "gross（總額，含指定款）",
   "available_target": 1600000,
-  "available_current": 1121096.0,
-  "available_gap": 478904.0,
-  "押標金期間註記_20261107": "⛔ 已失效：2026-11-07 使用者裁決因股災暫停投標，押標金 700,000 不再支應、不影響 available_current；原『押標金期間註記』（11/02）僅保留為歷史。"
+  "available_current": 1194919,
+  "available_gap": 405081,
+  "押標金期間註記_20261107": "⛔ 已失效：2026-11-07 使用者裁決因股災暫停投標，押標金 700,000 不再支應、不影響 available_current；原『押標金期間註記』（11/02）僅保留為歷史。",
+  "口徑裁示_20261116": "使用者 2026-11-16 核准「B：含指定款 900,000 的總水庫口徑」。報表一律寫「總水庫 2,500,000（含指定款 900,000）；可動用另計」；厚度判定用 gross，投資／調度決策一律用 available。指定款 900,000 永久不得動用，計入目標僅為衡量總水庫，不代表可支應。"
  },
  "debt_service_split": {
   "asof": "2026-11-01",
@@ -9577,7 +9578,13 @@
    "11/27 M&G 300k",
    "12/04 PIMCO 300k"
   ],
-  "next_action": "11/20 前確認安聯 App 可送件；11/20 送出；11/26 對帳；12/08 配息入帳後核對"
+  "next_action": "11/20 送件 100 萬轉摩根 USDEQ5440（前置已於 11/16 結案：無轉換次數限制）；11/26 對帳；12/08 配息入帳後核對",
+  "前置確認": {
+   "項目": "安聯 App 可送件與年度免費轉換次數",
+   "狀態": "✅ 已確認（2026-11-16 使用者：安聯轉換沒有次數限制）",
+   "結論": "無次數上限，單批 100 萬可一次送件；不需合併批次",
+   "confirmed_at": "2026-11-16"
+  }
  },
  "insurance_refund_20261116": {
   "日期": "2026-11-16",

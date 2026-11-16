@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-16 18:30",
+ "generated_at": "2026-11-16 21:36",
  "days": 14,
  "ledger_rows": 69,
  "backfilled": [],
@@ -136,17 +136,17 @@
   },
   {
    "date": "2026-11-16",
-   "ds_twd": 27,
+   "ds_twd": 29,
    "gemini_twd": 0,
    "free_twd": 0,
-   "total_twd": 27,
-   "calls": 423,
+   "total_twd": 29,
+   "calls": 500,
    "cer": 0,
    "q429": 0
   }
  ],
  "today": {
-  "total_twd": 27,
+  "total_twd": 29,
   "cer": 0,
   "q429": 0
  },
@@ -208,12 +208,12 @@
   }
  },
  "wallets": {
-  "ds_balance_cny": 97.69,
-  "ds_balance_twd": 462,
+  "ds_balance_cny": 97.38,
+  "ds_balance_twd": 461,
   "ds_source": "API",
   "ds_daily_twd": 24,
   "ds_daily_src": "餘額真值（最近 7 個日曆日，8 個樣本）",
-  "ds_days_left": 18.9,
+  "ds_days_left": 18.8,
   "gemini_balance_twd": 1000,
   "gemini_daily_twd": 0,
   "gemini_days_left": null,
@@ -359,14 +359,14 @@
   "baseline_date": "2026-09-22",
   "start_date": "2026-09-23",
   "days": 55,
-  "ds_twd": 2276.0,
+  "ds_twd": 2278.0,
   "gem_twd": 3.0,
   "free_twd": 0.0,
   "free_calls": 560,
-  "calls": 45246,
+  "calls": 45323,
   "cer": 159,
   "pending": false,
-  "total_twd": 2279.0
+  "total_twd": 2281.0
  },
  "page": {
   "top_n": 3,
