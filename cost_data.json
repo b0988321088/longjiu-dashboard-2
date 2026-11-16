@@ -1,19 +1,11 @@
 {
- "generated_at": "2026-11-16 21:36",
+ "generated_at": "2026-11-17 07:01",
  "days": 14,
- "ledger_rows": 69,
- "backfilled": [],
+ "ledger_rows": 70,
+ "backfilled": [
+  "2026-11-17"
+ ],
  "series": [
-  {
-   "date": "2026-11-03",
-   "ds_twd": 49,
-   "gemini_twd": 0,
-   "free_twd": 0,
-   "total_twd": 49,
-   "calls": 1028,
-   "cer": 0,
-   "q429": 0
-  },
   {
    "date": "2026-11-04",
    "ds_twd": 23,
@@ -136,41 +128,51 @@
   },
   {
    "date": "2026-11-16",
-   "ds_twd": 29,
+   "ds_twd": 31,
    "gemini_twd": 0,
    "free_twd": 0,
-   "total_twd": 29,
-   "calls": 500,
+   "total_twd": 31,
+   "calls": 567,
+   "cer": 0,
+   "q429": 0
+  },
+  {
+   "date": "2026-11-17",
+   "ds_twd": 0,
+   "gemini_twd": 0,
+   "free_twd": 0,
+   "total_twd": 0,
+   "calls": 5,
    "cer": 0,
    "q429": 0
   }
  ],
  "today": {
-  "total_twd": 29,
+  "total_twd": 0,
   "cer": 0,
   "q429": 0
  },
  "week": {
-  "last7_total": 173,
-  "last7_daily_avg": 25,
+  "last7_total": 152,
+  "last7_daily_avg": 22,
   "last7_days": 7,
-  "prev7_total": 228,
+  "prev7_total": 231,
   "prev7_daily_avg": 38,
   "prev7_days": 6,
-  "wow_pct": -35,
+  "wow_pct": -44,
   "wow_basis": "daily_avg（日均比較；兩邊天數可能不同）",
   "median_day": 24,
-  "ds": 173,
+  "ds": 152,
   "gemini": 0,
   "free": 0,
   "breakdown": {
    "ds": {
-    "total_twd": 173,
-    "avg_twd": 24.7,
+    "total_twd": 152,
+    "avg_twd": 21.7,
     "median_twd": 24,
-    "ratio": 1.03,
+    "ratio": 0.9,
     "level": "normal",
-    "top3_share": 0.66,
+    "top3_share": 0.62,
     "days": 7,
     "cer_days": 0
    },
@@ -197,23 +199,23 @@
    "free_calls": 0,
    "days": 7,
    "dates": [
-    "2026-11-09",
     "2026-11-10",
     "2026-11-11",
     "2026-11-12",
     "2026-11-13",
     "2026-11-14",
-    "2026-11-15"
+    "2026-11-15",
+    "2026-11-16"
    ]
   }
  },
  "wallets": {
-  "ds_balance_cny": 97.38,
-  "ds_balance_twd": 461,
+  "ds_balance_cny": 96.53,
+  "ds_balance_twd": 457,
   "ds_source": "API",
-  "ds_daily_twd": 24,
-  "ds_daily_src": "餘額真值（最近 7 個日曆日，8 個樣本）",
-  "ds_days_left": 18.8,
+  "ds_daily_twd": 26,
+  "ds_daily_src": "餘額真值（最近 7 個日曆日，7 個樣本）",
+  "ds_days_left": 17.4,
   "gemini_balance_twd": 1000,
   "gemini_daily_twd": 0,
   "gemini_days_left": null,
@@ -282,16 +284,6 @@
   "paid_backup_on_cer_days_upper_twd": 0,
   "series": [
    {
-    "date": "2026-11-09",
-    "cer": 0,
-    "q429": 0,
-    "calls": 1159,
-    "gemini_calls": 0,
-    "free_calls": 0,
-    "gemini_twd": 0,
-    "ds_twd": 52
-   },
-   {
     "date": "2026-11-10",
     "cer": 0,
     "q429": 0,
@@ -350,6 +342,16 @@
     "free_calls": 0,
     "gemini_twd": 0,
     "ds_twd": 4
+   },
+   {
+    "date": "2026-11-16",
+    "cer": 0,
+    "q429": 0,
+    "calls": 567,
+    "gemini_calls": 0,
+    "free_calls": 0,
+    "gemini_twd": 0,
+    "ds_twd": 31
    }
   ],
   "note": "CER＝DeepSeek 內容風控擋下的呼叫數。spillover_strict_twd＝只算「CER ≥ 門檻且免費接手率 < 門檻」的日子（推定值，最接近風控逼出來的付費）。paid_backup_on_cer_days_upper_twd＝CER 當日的全部 Gemini 花費（僅為上限，含非 CER 任務，不可當成外溢成本）。streak_capped=true 表示已回溯到帳本最早一天，真實連續天數可能更長。"
@@ -358,15 +360,15 @@
  "governance": {
   "baseline_date": "2026-09-22",
   "start_date": "2026-09-23",
-  "days": 55,
-  "ds_twd": 2278.0,
+  "days": 56,
+  "ds_twd": 2280.0,
   "gem_twd": 3.0,
   "free_twd": 0.0,
   "free_calls": 560,
-  "calls": 45323,
+  "calls": 45395,
   "cer": 159,
   "pending": false,
-  "total_twd": 2281.0
+  "total_twd": 2283.0
  },
  "page": {
   "top_n": 3,
