@@ -91,8 +91,25 @@ def compute(snap: dict) -> dict:
     _bands = (snap.get("thresholds_2026_0915") or {}).get("ltv分級_pct") or {}
     ltv_stop = _num(_bands.get("黃上限"), 53)
     ltv_target = _num(_bands.get("單池上限"), 50)
+    # ── 2026-11-16（使用者裁決「照草案」）：LTV 第二段六段分級 ──
+    # 只做判讀與提示，不產生任何下單／調度指令。
+    ltv_stage = None
+    if ltv is not None:
+        _stages = _bands.get("階段_20261116") or {}
+        _green = _num(_bands.get("綠上限"), 45)
+        _cuts = [("綠_正常", _green)]
+        for _k, _dflt in (("警戒", 53.0), ("一階", 57.0), ("二階", 60.0), ("三階", 62.5)):
+            _cuts.append((_k, _num((_stages.get(_k) or {}).get("上限"), _dflt)))
+        ltv_stage = "斷路"
+        for _name, _up in _cuts:
+            if ltv < _up:
+                ltv_stage = _name
+                break
+    _stage_act = ((_bands.get("階段_20261116") or {}).get(ltv_stage) or {}).get("動作") if ltv_stage else None
     return {"pool": pool, "loan": loan, "ratio": ratio,
             "ltv": ltv, "ltv_stop": ltv_stop, "ltv_target": ltv_target,
+            "ltv_stage": ltv_stage, "ltv_stage_action": _stage_act,
+            "ltv_unfreeze_ltv": _num(_bands.get("綠上限"), 45),
             "notice": notice, "pay": pay, "warn": warn,
             "rate": snap.get("fund_pledge_rate"), "due_day": snap.get("fund_pledge_due_day")}
 
@@ -108,6 +125,41 @@ def level_of(m: dict) -> str:
     if r <= m["warn"]:
         return "yellow"
     return "green"
+
+
+# ── 2026-11-16（使用者裁決「照草案」＋「必還」）：LTV 階段提示與解凍提醒 ──
+# 純提示：只判讀階段與解凍條件，不產生任何下單／還本／質押指令。
+_LTV_SEV = {"綠_正常": 0, "警戒": 1, "一階": 2, "二階": 3, "三階": 4, "斷路": 5}
+UNFREEZE_CASH_FLOOR = 700000.0
+
+
+def _usable_cash(snap: dict):
+    cl = snap.get("cash_layers") or {}
+    for v in (cl.get("unrestricted_cash"), cl.get("可動用現金"),
+              (snap.get("cash_now") or {}).get("unrestricted_cash"), snap.get("cash_usable")):
+        if isinstance(v, (int, float)) and v:
+            return float(v)
+    return None
+
+
+def stage_block(m: dict, snap: dict) -> str:
+    ltv, stage = m.get("ltv"), m.get("ltv_stage")
+    if ltv is None or not stage:
+        return ""
+    usable = _usable_cash(snap)
+    floor = UNFREEZE_CASH_FLOOR
+    L = [f"【LTV 階段】{ltv:.2f}% → {stage}",
+         f"· 動作：{m.get('ltv_stage_action') or '—'}"]
+    if stage == "綠_正常":
+        if usable is not None:
+            ok = usable >= floor
+            L.append(f"· 解凍條件：LTV<{float(m.get('ltv_unfreeze_ltv') or 45):.0f}%＋可動用現金 ≥ {floor:,.0f}"
+                     f"（現 {usable:,.0f}{'，✅ 已符合' if ok else '，❌ 未達'}）")
+        L.append("· ⚠️ 解凍不自動生效：仍需一次明確裁決（Telegram ✅ 落 dashboard_decisions）；"
+                 "本則只通知「符合條件」，不代表已解凍")
+    else:
+        L.append(f"· 解凍門檻：LTV<{float(m.get('ltv_unfreeze_ltv') or 45):.0f}% 且可動用現金 ≥ {floor:,.0f}，需明確裁決")
+    return "\n".join(L)
 
 
 def renewal_info(snap: dict) -> dict:
@@ -254,9 +306,32 @@ def main() -> int:
         ren_txt = renewal_block(ren, m, ms, _num(snap.get("working_surplus")))
         st["renewal_announced"] = announced + [ms]
 
+    # ── 2026-11-16（使用者裁決）：LTV 階段變動＋解凍提醒，與維持率燈號各自獨立 ──
+    _stage = m.get("ltv_stage") or ""
+    _sev_now = _LTV_SEV.get(_stage, 0)
+    _sev_last = _LTV_SEV.get(str(st.get("last_ltv_stage") or ""), 0)
+    _usable = _usable_cash(snap)
+    ltv_txt = None
+    if _sev_now >= 1:
+        st["ltv_unfreeze_announced"] = None          # 回到警戒以上 → 重新武裝解凍通知
+        if _sev_now >= 2 and (_sev_now > _sev_last or st.get("ltv_alert_date") != today):
+            ltv_txt = stage_block(m, snap)           # 一階以上：惡化或當日未推 → 推
+    elif _stage == "綠_正常":
+        if (_sev_last >= 1 and st.get("ltv_unfreeze_announced") != "done"
+                and _usable is not None and _usable >= UNFREEZE_CASH_FLOOR):
+            ltv_txt = stage_block(m, snap)           # 回綠且現金達標 → 通知一次
+            st["ltv_unfreeze_announced"] = "done"
+    if _stage:
+        st["last_ltv_stage"] = _stage
+        st["last_ltv_pct"] = round(float(m["ltv"]), 2) if m.get("ltv") is not None else None
+        if ltv_txt:
+            st["ltv_alert_date"] = today
+
     if as_json:
         print(json.dumps({**{k: v for k, v in m.items()}, "level": lv,
-                          "renewal": ren, "renewal_milestone": ms},
+                          "renewal": ren, "renewal_milestone": ms,
+                          "ltv_stage": _stage, "ltv_stage_due": bool(ltv_txt),
+                          "unfreeze_triggered": bool(ltv_txt and _stage == "綠_正常")},
                          ensure_ascii=False, default=str))
         return 0
 
@@ -266,7 +341,7 @@ def main() -> int:
     same = st.get("last_alert_date") == today and st.get("last_level") == lv
     maint_due = bool(always) or (lv != "green" and (worse or not same))
 
-    if not maint_due and not ren_txt:
+    if not maint_due and not ren_txt and not ltv_txt:
         if lv == "green":
             _save_state(today, lv, st.get("last_alert_date"), st)
         return 0
@@ -274,6 +349,8 @@ def main() -> int:
     parts = []
     if maint_due:
         parts.append(render(m, lv, snap))
+    if ltv_txt:
+        parts.append(ltv_txt)
     if ren_txt:
         parts.append(ren_txt)
     print("\n\n".join(parts))
