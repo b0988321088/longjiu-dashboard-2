@@ -365,11 +365,12 @@ def build():
 
     gate_html = "".join(
         f"<tr><td>{lab}</td><td class='n'>{fmt(p)}</td><td class='n down'>-{d:.1f}%</td>"
+        f"<td class='n'>-{d/POOL_BETA_US:.1f}%</td>"
         f"<td class='n'>{note}</td></tr>"
         for lab, p, d, note in gates)
 
     scen_pl_html = "".join(
-        f"<tr><td class='n'>-{d:.0f}%</td><td class='n'>{fmt(p)}</td><td class='n'>{r:.1f}%</td>"
+        f"<tr><td class='n'>-{d:.0f}%</td><td class='n'>-{d/POOL_BETA_US:.1f}%</td><td class='n'>{fmt(p)}</td><td class='n'>{r:.1f}%</td>"
         f"<td class='n'>{l:.1f}%</td><td class='n'>{fmt(need)}</td></tr>"
         for d, p, r, l, need in scen_pledge)
 
@@ -609,16 +610,16 @@ a{{color:#34d399}}
 <li>門檻讀 snapshot／thresholds：內部停止 LTV {ltv_stop:.0f}%／銀行通知 {maint_warn:.0f}%／追繳 {maint_call:.0f}%</li>
 </ul>
 <table>
-<tr><th>門檻</th><th class="n">池市值</th><th class="n">池需跌</th><th class="n">對應</th></tr>
+<tr><th>門檻</th><th class="n">池市值</th><th class="n">池需跌</th><th class="n">對應美股</th><th class="n">對應</th></tr>
 {gate_html}
 </table>
-<div class="sub" style="margin:8px 0 0">維持率＝池市值÷借款；LTV＝借款÷池市值（互為倒數，不得混用）。{_pool_note}</div>
+<div class="sub" style="margin:8px 0 0">維持率＝池市值÷借款；LTV＝借款÷池市值（互為倒數，不得混用）。<b>β 轉換</b>：擔保池以美股部位為主，池跌幅＝美股跌幅×{POOL_BETA_US}（故「對應美股」＝池需跌÷{POOL_BETA_US}）。依 2026-11-16 定案，表格一律同時列示兩者，避免「池跌 10%」與「美股跌 10%」互指而高估或低估還本需求。{_pool_note}</div>
 </div>
 
 <div class="card">
-<div class="sub" style="margin:0 0 6px">逐跌幅情境（回 {ltv_stop:.0f}% 需還本金額）</div>
+<div class="sub" style="margin:0 0 6px">逐跌幅情境（回 {ltv_stop:.0f}% 需還本金額＝借款 − {ltv_stop/100:.2f}×池市值）</div>
 <table>
-<tr><th class="n">池跌幅</th><th class="n">池市值</th><th class="n">維持率</th><th class="n">LTV</th><th class="n">需還本</th></tr>
+<tr><th class="n">池跌幅</th><th class="n">對應美股</th><th class="n">池市值</th><th class="n">維持率</th><th class="n">LTV</th><th class="n">需還本</th></tr>
 {scen_pl_html}
 </table>
 <div class="sub" style="margin:8px 0 0">假設借款不變、不計配息再投入；擔保品以<b>後收級別</b>為主（CDSC 未到期），追繳時不宜賣擔保品，優先以現金還本。</div>

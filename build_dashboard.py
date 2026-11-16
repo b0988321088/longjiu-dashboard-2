@@ -1438,7 +1438,7 @@ def main():
         _td = date.today().isoformat()
         _wk = (date.today() + timedelta(days=7)).isoformat()
         # 2026-09-01 定案：優先級由資料欄位 importance 宣告（high=硬性要做 / medium=觀察 / low=例行），不再關鍵字猜
-        _is_active = lambda e: str(e.get("importance", "")) == "high" and "✅" not in str(e.get("status", "")) and "已完成" not in str(e.get("status", ""))
+        _is_active = lambda e: str(e.get("importance", "")) == "high" and not any(x in str(e.get("status", "")) for x in ("✅", "已完成", "⛔", "已取消", "已作廢"))
         _today_act = [e for e in _evs if str(e.get("date","")) == _td and _is_active(e)]
         _soon3 = sorted([e for e in _evs if _td < str(e.get("date","")) <= (date.today() + timedelta(days=3)).isoformat() and _is_active(e)],
                         key=lambda x: str(x.get("date","")))
@@ -1446,14 +1446,16 @@ def main():
                        key=lambda x: str(x.get("date","")))
         _parts = []
         # 今日重點 = importance=high 且日期=今天（含已完成，讓使用者對照完成狀態）
-        _today_key = [e for e in _evs if isinstance(e, dict) and str(e.get("date","")) == _td and str(e.get("importance","")) == "high" and str(e.get("item",""))]
+        _today_key = [e for e in _evs if isinstance(e, dict) and str(e.get("date", "")) == _td and str(e.get("importance", "")) == "high" and str(e.get("item", "")) and not any(x in str(e.get("status", "")) for x in ("⛔", "已取消", "已作廢"))]
         for e in _today_key[:3]:
             _st = str(e.get("status",""))
             _icon = "✅" if ("✅" in _st or "已完成" in _st) else ("🔄" if ("執行中" in _st or "待確認" in _st) else "⏳")
             _st_short = _st.lstrip("✅ ").strip()[:14]
-            _parts.append(f"🔴 今日要做：{str(e.get('item',''))[:40]}（{_icon} {_st_short}）")
+            _parts.append(f"📋 行政提醒（非投資授權）：{str(e.get('item',''))[:40]}（{_icon} {_st_short}）")
         if not _parts:
             _parts.append("🟢 今日無重點事項")
+        else:
+            _parts.insert(0, "🧊 投資凍結中：下列為行政／除息／對帳提醒，不等於投資授權或下單許可")
         if _soon3:
             _d3 = " ｜ ".join(f"{str(e.get('date',''))[5:]} {str(e.get('item',''))[:26]}" for e in _soon3[:3])
             _parts.append(f"📌 近 3 天：{_d3}")
@@ -1862,6 +1864,8 @@ def main():
             except Exception:
                 continue
             if not (_today <= _d <= _cutoff):
+                continue
+            if any(x in str(_e.get("status", "")) for x in ("⛔", "已取消", "已作廢")):
                 continue
             _imp = _e.get("importance", "medium")
             _c = _imp_color.get(_imp, "#94a3b8")
