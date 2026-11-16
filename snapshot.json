@@ -6661,12 +6661,12 @@
    "定義": "現金底線內、不得動用的部分（cash_floor）",
    "floor": 700000
   },
-  "dry_powder": 491679,
-  "dry_powder_signed": 491679,
+  "dry_powder": 494919,
+  "dry_powder_signed": 494919,
   "cash_shortfall": 0,
   "credit_line_available": null,
   "credit_line_note": "⚠️ 無真值來源：可動用信用額度（未動用質押額度／保單借款空間）尚未建檔 → 壓力測試不得推估",
-  "語義": "現金 2,091,679 中 900,000 係指定還債款（同時撐『清償承諾』與『追繳緩衝』，清償卡住則兩邊同時破）；可動用僅 unrestricted_cash 1,191,679；撐不撐得住一律看 unrestricted_cash，不得把指定還債款當普通現金。",
+  "語義": "現金 2,094,919 中 900,000 係指定還債款（同時撐『清償承諾』與『追繳緩衝』，清償卡住則兩邊同時破）；可動用僅 unrestricted_cash 1,194,919，其中 700,000 為生活底線不得動用；真乾粉 494,919＝可動用−生活底線。撐不撐得住一律看 unrestricted_cash，不得把指定還債款當普通現金，亦不得把生活底線算進可承擔風險的錢。",
   "source": "sot_targets.cash_layers（派生：cash_total／restricted_cash／cash_floor）",
   "derived_at": "2026-11-16"
  },
