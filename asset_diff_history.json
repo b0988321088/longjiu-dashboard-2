@@ -1086,13 +1086,13 @@
   },
   "2026-11-16": {
     "date": "2026-11-16",
-    "total_assets": 26741369.0,
+    "total_assets": 26545907.0,
     "total_liabilities": 30955248.0,
-    "net_worth": -4213879.0,
-    "securities_market": 2733570.0,
-    "insurance_current": 9364348.0,
-    "insurance_total": 9364348.0,
-    "fund_market": 12548532.0,
+    "net_worth": -4409341.0,
+    "securities_market": 2607510.0,
+    "insurance_current": 9361937.0,
+    "insurance_total": 9361937.0,
+    "fund_market": 12481541.0,
     "real_estate": 34017063.0,
     "cash": 2094919.0,
     "other": 0.0,
@@ -1108,8 +1108,8 @@
       "  B-USDEQ5700 M&G入息基金A(美元避險月配)F (25.6%) ": 638125,
       "  B-黃金投資 (USDEQ6730 貝萊德世界黃金基金 A10美元(總報酬穩定配息)) (6.2%) ": 153659,
       "安聯A+B合計": 7470379.0,
-      "━第一金M&G入息基金A(美元避險月配)F（IDXX，10/08 申請轉換已生效；10/16 截圖確認 100% IDXX）現値": 1893969.0,
-      "━保單總現値": 9364348.0
+      "━第一金M&G入息基金A(美元避險月配)F（IDXX，10/08 申請轉換已生效；10/16 截圖確認 100% IDXX）現値": 1891558.0,
+      "━保單總現値": 9361937.0
     },
     "fund_dividend_monthly": 121382.0,
     "monthly_income": 234207.0,
@@ -1118,8 +1118,8 @@
     "cathay_refinance": 0.0,
     "restricted_cash": 900000.0,
     "bonds": 0.0,
-    "unrealized_pnl": 264060,
+    "unrealized_pnl": 137840,
     "realized_pnl": 23460,
-    "net_worth_incl_re": 29803184.0
+    "net_worth_incl_re": 29607722.0
   }
 }

@@ -49,11 +49,59 @@ SECTOR_LABELS = {"XLK": "科技", "XLF": "金融", "XLV": "醫療", "XLE": "能�
                  "XLP": "核心消費", "XLI": "工業", "XLU": "公用", "XLRE": "不動產", "XLB": "原物料"}
 # 註：本表鏡射 institutional_flow.py 的 SECTOR_ETFS（該表在函式內，無法直接 import）；
 #     兩者一致性由 tools/test_cto_report_rules.py 以 AST 讀取後斷言，禁止只靠人工同步。
-TRADE_AUTH_SENTENCE = ("紀律提醒：台股分批進場條件已成立，但條件成立不等於交易授權；"
+# 2026-11-16 修正：原句寫死「台股分批進場條件已成立」，但 11/16 回檔僅 -17.62%（未達 -20% 門檻）
+# → 程式會輸出「條件已成立」的假授權。改為狀態中性句，實際狀態由 _trade_auth_status() 動態產生。
+TRADE_AUTH_SENTENCE = ("紀律提醒：台股分批進場條件以程式判定為準（未達門檻即不成立），"
+                        "且條件成立與否都不等於交易授權；"
                         "維持逐批下令，未收到本人明確指令前不得買進。"
-                        "其他資產仍依既有風控規則管理，不得將台股條件成立解讀為全面解除風險限制。")
+                        "其他資產仍依既有風控規則管理，不得將條件達成解讀為全面解除風險限制。")
 FREEZE_BAN_SENTENCE = TRADE_AUTH_SENTENCE  # 相容舊名稱
-_BAN_MARKERS = ("條件成立不等於交易授權", "未收到本人明確指令前不得買進", "全面解除風險限制")
+_BAN_MARKERS = ("不等於交易授權", "未收到本人明確指令前不得買進", "全面解除風險限制")
+
+
+def _active_bullet(snap: dict | None = None) -> dict:
+    """2026-11-16：動態取「最新」機會子彈（snapshot 內 opportunity_bullet_YYYYMMDD 任一日期的鍵）。
+
+    禁寫死日期鍵：新子彈建立後舊鍵不會消失，寫死會永遠讀到過期子彈（CIO 2026-11-16 審查 blocking）。
+    """
+    cand = [(k, v) for k, v in (snap or {}).items()
+            if k.startswith("opportunity_bullet_") and isinstance(v, dict)]
+    if not cand:
+        return {}
+    cand.sort(key=lambda kv: kv[0])  # 鍵尾 YYYYMMDD 字典序即時間序
+    return cand[-1][1]
+
+
+def _trade_auth_status(snap: dict | None = None) -> str:
+    """2026-11-16：依機會子彈觸發狀態動態產生「成立／未成立」敘述，禁止寫死。"""
+    st = (_active_bullet(snap).get("觸發狀態") or {})
+    raw = str(st.get("狀態", "") or "")
+    hit = bool(raw) and "未觸發" not in raw and "❌" not in raw
+    if hit:
+        return "台股分批進場條件已成立（回檔已達門檻），但成立不等於授權"
+    if raw:
+        return f"台股分批進場條件尚未成立（{raw}），因此不具備進場資格"
+    return "台股分批進場條件未取得可判定狀態（資料缺漏視同未成立）"
+
+
+
+def _twii_live():
+    """2026-11-16：抓 Yahoo TWII 最新收盤＋日漲跌，避免依賴會停在舊交易日的 daily_analysis.json。"""
+    try:
+        import urllib.request
+        url = "https://query1.finance.yahoo.com/v8/finance/chart/%5ETWII?range=5d&interval=1d"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=10) as _r:
+            j = json.loads(_r.read().decode())
+        r = j["chart"]["result"][0]
+        cl = [c for c in r["indicators"]["quote"][0]["close"] if c]
+        if len(cl) >= 2:
+            return float(cl[-1]), (cl[-1] / cl[-2] - 1) * 100
+        if cl:
+            return float(cl[-1]), 0.0
+    except Exception:
+        return None
+    return None
 
 
 def _fix_redline_numbers(text: str, tech_exp: float, tech_cap: float) -> tuple[str, list[str]]:
@@ -143,6 +191,9 @@ def _enforce_report_rules(text: str, *, tech_exp: float | None = None,
     text = re.sub(r"[^。\n]*承接(?:額度)?凍結未解[^。\n]*[。]?", "", text)
     text = re.sub(r"[^。\n]*本週不進場[^。\n]*[。]?", "", text)
     if not any(mk in text for mk in _BAN_MARKERS):
+        # 2026-11-16：LLM 常自寫一段「**紀律提醒**：…」但缺交易授權字樣，導致程式再附加一次 → 整段重複
+        # 先移除 LLM 自寫的紀律段（含 markdown 粗體變體），統一由程式附加標準句
+        text = re.sub(r"\n*\*{0,2}紀律提醒\*{0,2}\s*[:：].*?(?=\n\s*\n|\Z)", "", text, flags=re.S)
         text = text.rstrip() + "\n" + TRADE_AUTH_SENTENCE
         fixes.append("補回交易授權紀律（原文字缺）")
     return text, fixes
@@ -507,7 +558,7 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
             f"硬性約束（違反即無效，不可建議）：現金=底線制{cash_floor_label(_snap)}（{cash_caliber_note(_snap)}）；"
             f"台股加碼單筆≤5萬、8-12週分批；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
             f"債券等 US30Y<5.30%；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）；"
-            f"台股分批進場條件已成立，但條件成立不等於交易授權：維持逐批下令，未收到本人明確指令前不得買進；其他資產仍依既有風控規則管理，不得將台股條件成立解讀為全面解除風險限制。\n"
+            f"{_trade_auth_status(_snap)}：維持逐批下令，未收到本人明確指令前不得買進；其他資產仍依既有風控規則管理，不得將條件達成解讀為全面解除風險限制。\n"
             f"請以巴菲特投資哲學（護城河、安全邊際、能力圈、長期持有、別人恐懼我貪婪）做 3 點具體觀察 + 1 個紀律提醒，200字內，繁體中文，不要重複數字表。"
         )
         _out = _llm_cached("buffett", _prompt, "你是巴菲特視角的投資分析師。輸出繁體中文，精簡犀利，有具體觀點。")
@@ -628,7 +679,7 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
             f"硬性約束（違反即無效，不可建議）：現金=底線制{cash_floor_label(_snap)}（{cash_caliber_note(_snap)}）；"
             f"台股加碼單筆≤5萬、8-12週分批（不可建議單筆大額）；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
             f"債券等 US30Y<5.30%（禁建議買債）；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）；"
-            f"台股分批進場條件已成立，但條件成立不等於交易授權：維持逐批下令，未收到本人明確指令前不得買進；其他資產仍依既有風控規則管理，不得將台股條件成立解讀為全面解除風險限制。\n"
+            f"{_trade_auth_status(_snap)}：維持逐批下令，未收到本人明確指令前不得買進；其他資產仍依既有風控規則管理，不得將條件達成解讀為全面解除風險限制。\n"
             f"請以技術面（動能、趨勢、支撐壓力、風險）+ 產業資金流向（哪個產業順勢/逆勢）給：今日最大風險 + 具體建議動作（含標的/金額節奏，須符合上述約束），150字內，繁體中文。"
         )
         _out = _llm_cached("cto", _prompt, "你是技術分析師（CTO）。輸出繁體中文，直接給結論與動作，不要客套。")
@@ -696,12 +747,28 @@ def main(**kwargs):
             # → 值為 0 時退回 daily_analysis.json 市場字串，避免日報出現「加權 0 (+0.00%) | SOX 0」
             _tw_i = float(_r[3] or 0); _tw_c = float(_r[4] or 0); _sox_v = float(_r[5] or 0)
             if _tw_i == 0 or _sox_v == 0:
+                # 2026-11-16：daily_analysis.json 會停在舊交易日（實測 11/16 仍為 11/05 的 41,580.29）
+                # → 先抓 Yahoo 即時；失敗再退回 snapshot 機會子彈觸發狀態；最後才用 daily_analysis
+                _live = _twii_live()
+                if _live:
+                    _tw_i, _tw_c = _live[0], _live[1]
+                if _tw_i == 0:
+                    try:
+                        _obv = (_active_bullet(json.loads((BASE / "snapshot.json").read_text(encoding="utf-8")))
+                                .get("觸發狀態") or {})
+                        _tw_i = float(_obv.get("現值") or 0)
+                        _tw_c = 0.0
+                    except Exception:
+                        pass
                 try:
                     _da_m = json.loads((BASE / "daily_analysis.json").read_text(encoding="utf-8")).get("market", {}) or {}
                 except Exception:
                     _da_m = {}
-                _tw_txt = str(_da_m.get("twii", "") or "").strip()
                 _sox_txt = str(_da_m.get("sox", "") or "").strip()
+                if _tw_i:
+                    _tw_txt = f"{_tw_i:,.2f} ({_tw_c:+.2f}%)"
+                else:
+                    _tw_txt = str(_da_m.get("twii", "") or "").strip()
                 _bits = [f"市場：加權 {_tw_txt or '—'}"]
                 if _sox_txt:
                     _bits.append(f"SOX {_sox_txt}")

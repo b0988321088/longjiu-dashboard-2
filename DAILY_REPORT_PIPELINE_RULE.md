@@ -71,7 +71,7 @@
 - **安聯 A + 安聯 B = 一張合併 row**（現值 7,470,379；2026-11-13 校正＝安聯 App 12:56 截圖，A 4,978,741／B 2,491,638，參考淨值日 11/11；配息一律讀 snapshot dividend_records）
   - 成本／現值／累計配息／資產報酬率：一律讀 snapshot（allianz_*），不在本檔留數字
   - 本月配息：讀 snapshot.dividend_records[當月] 保單桶（2026-10-01 校正；原 55,451 為 7 月值，已移除）
-- **第一金 = 另一張 row**（現值 1,893,969；2026-11-13 校正＝第一金 App 截圖，配息一律讀 snapshot dividend_records）
+- **第一金 = 另一張 row**（現值 1,891,558；2026-11-16 對齊 snapshot.firstjin_current_value＝M&G 入息 NAV 回落後值；11/13 App 截圖為 1,893,969，差 2,411 待 11/16 截圖確認；配息一律讀 snapshot dividend_records）
   - 成本／現值／累計配息／資產報酬率：一律讀 snapshot（firstjin_*），不在本檔留數字
   - 本月配息：讀 snapshot.dividend_records[當月] 保單桶（2026-10-01 校正；原 13,593 為 7 月值，已移除）
 - **保單合計配息**：讀 snapshot.dividend_records[當月]（原 69,044 為 7 月值，已移除）
