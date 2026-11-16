@@ -391,6 +391,24 @@ def build():
                             f"<td class='n'>{fmt(_p)}</td><td class='n'>{_mr:.1f}%</td>"
                             f"<td class='n'>{fmt(_need)}</td><td>{_st}</td></tr>")
 
+    # ── 2026-11-16b：可調動上限（四層調用序）──
+    _layers = [("1 乾粉", 494919, 0), ("2 生活底線", 700000, 494919),
+               ("3 國泰保留", 700000, 1194919), ("4 房貸預繳", 200000, 1894919)]
+    _ly_rows = "".join(
+        f"<tr><td>{n}</td><td class='n'>{fmt(v)}</td><td class='n'>{fmt(v+c)}</td></tr>"
+        for n, v, c in _layers)
+    _cum = [494919, 1194919, 1894919, 2094919]
+    _lv_name = ["乾粉足", "動生活底線", "動國泰保留", "動房貸預繳"]
+    _cs_rows = ""
+    for _fx2, _us2 in [(0, -0.15), (0, -0.20), (0, -0.30), (0.10, -0.15),
+                       (0.134, -0.15), (0.134, -0.20), (0.15, -0.30)]:
+        _p2 = pool * (1 + _us2 * POOL_BETA_US) * (1 - _fx2)
+        _mr2 = _p2 / pledge * 100
+        _nd2 = max(0, pledge - ltv_stop / 100 * _p2)
+        _lv2 = next((_lv_name[i] for i, _c in enumerate(_cum) if _nd2 <= _c), "❌ 超出全部可動")
+        _cs_rows += (f"<tr><td class='n'>{_fx2*100:.1f}%</td><td class='n'>{_us2*100:.0f}%</td>"
+                     f"<td class='n'>{_mr2:.1f}%</td><td class='n'>{fmt(_nd2)}</td><td>{_lv2}</td></tr>")
+
     due_html = "".join(
         f"<li>{n} <b>{fmt(a)}</b>（{d}）</li>" for n, a, d in due_rows if a)
 
@@ -659,6 +677,24 @@ a{{color:#34d399}}
 {_fx_us_rows}
 </table>
 <div class="sub" style="margin:8px 0 0"><b>乾粉 {fmt(_dry_now)}，雙衝擊需還本 74～137 萬 → 完全不足</b>，須賣資產或動用指定款。此軸為 2026-11-16 新增，原壓力測試僅計股市未計匯率。</div>
+</div>
+
+<h2>三之三、可調動上限（四層調用序）</h2>
+<div class="card">
+<ul>
+<li><b>「不動」＝平常不得動用（優先序保護），不是法律鎖死。</b>極端情境下四層皆可調動，但每往下一層就消耗一層安全網</li>
+<li>層 2 可月盈餘 66,758 逐步回補，動用 700,000 約需 <b>10.5 個月</b>重建；層 3 動用後質押續簽籌碼降低；層 4 動用即房貸扣款風險</li>
+</ul>
+<table>
+<tr><th>層級</th><th class="n">金額</th><th class="n">累積可動</th></tr>
+{_ly_rows}
+</table>
+<div class="sub" style="margin:10px 0 6px">情境 → 需動到哪一層（β {POOL_BETA_US}）</div>
+<table>
+<tr><th class="n">台幣升</th><th class="n">美股</th><th class="n">維持率</th><th class="n">需還本</th><th>需動到</th></tr>
+{_cs_rows}
+</table>
+<div class="sub" style="margin:8px 0 0"><b>關鍵前提：可調動的前提是「仍有月收入」。</b>若留停／失業與市場崩跌同時發生，層 2 不是緩衝而是生命線 —— 屆時實際可用僅層 1＋層 3（{fmt(494919+700000)}），而非 {fmt(2094919)}。</div>
 </div>
 
 <h2>四、流動性壓力（押標金 vs 維持率回補）</h2>
