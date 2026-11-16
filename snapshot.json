@@ -2073,8 +2073,8 @@
   "comment": "不預言金融危機，做前置風險偵測；不恐慌殺盤，不主動擴張風險曝險，握好現金彈藥。只產生警示與操作建議，永不自動下單。",
   "indicators": {
    "buffett_index_pct": null,
-   "us30y": 5.433,
-   "us30y_date": "2026-11-12",
+   "us30y": 5.481,
+   "us30y_date": "2026-11-13",
    "ai_magnificent7_share_pct": null,
    "put_premium_cost_pct": null,
    "us_equity_actual_pct": 34,
@@ -6626,7 +6626,7 @@
   "credit_line_note": "⚠️ 無真值來源：可動用信用額度（未動用質押額度／保單借款空間）尚未建檔 → 壓力測試不得推估",
   "語義": "現金 2,091,679 中 900,000 係指定還債款（同時撐『清償承諾』與『追繳緩衝』，清償卡住則兩邊同時破）；可動用僅 unrestricted_cash 1,191,679；撐不撐得住一律看 unrestricted_cash，不得把指定還債款當普通現金。",
   "source": "sot_targets.cash_layers（派生：cash_total／restricted_cash／cash_floor）",
-  "derived_at": "2026-11-13"
+  "derived_at": "2026-11-16"
  },
  "metrics_registry": {
   "metric_version": "2.0.0",
@@ -6653,24 +6653,24 @@
   },
   "標註規則": "凡顯示未達標（B 級／<100%）處，一律附「（度量修正 v2.0.0，非資產變動）」；月報需獨立一行「口徑變更影響」",
   "source": "sot_targets.metrics_registry",
-  "derived_at": "2026-11-13"
+  "derived_at": "2026-11-16"
  },
  "us30y_gate": {
   "status": "OK",
-  "value": 5.433,
-  "as_of": "2026-11-12",
-  "ref_date": "2026-11-13",
-  "lag_days": 1,
+  "value": 5.481,
+  "as_of": "2026-11-13",
+  "ref_date": "2026-11-16",
+  "lag_days": 3,
   "max_lag_days": 3,
   "red_line": 5.3,
-  "streak_days": 54,
-  "mode_a_streak_days": 54,
-  "red_line_streak_days": 3,
+  "streak_days": 55,
+  "mode_a_streak_days": 55,
+  "red_line_streak_days": 4,
   "below_red_line": false,
   "risk_warning": true,
   "mode": "advisory",
   "macro_caution": true,
-  "macro_caution_reason": "US30Y 5.433% ≥ 紅線 5.3%（模式A streak 54 日／紅線 streak 3 日）｜redline_policy stage 3：啟動替代配置評估（替代路線 A/B/C）｜本警語不否決台股分批（v1.2 advisory），但綠燈不等於建議進場",
+  "macro_caution_reason": "US30Y 5.481% ≥ 紅線 5.3%（模式A streak 55 日／紅線 streak 4 日）｜redline_policy stage 3：啟動替代配置評估（替代路線 A/B/C）｜本警語不否決台股分批（v1.2 advisory），但綠燈不等於建議進場",
   "redline_stage": 3,
   "unfreeze_allowed": true,
   "unfreeze_conditions": {
@@ -6801,12 +6801,12 @@
    },
    "source": "sot_targets.unfreeze_conditions（v1.2 TD-20261015-02；2026-10-14 裁決）"
   },
-  "reason": "讀值日 2026-11-12（落後 1 天，在容忍值 3 天內）｜US30Y 為宏觀風險警示（已觸發，長債新增凍結生效），不單獨否決台股分批；解凍判定＝條件全數成立",
+  "reason": "讀值日 2026-11-13（落後 3 天，在容忍值 3 天內）｜US30Y 為宏觀風險警示（已觸發，長債新增凍結生效），不單獨否決台股分批；解凍判定＝條件全數成立",
   "source": "sot_targets.us30y_gate（advisory 模式 v1.2：US30Y 警示＋unfreeze_conditions 複合條件；thresholds.US30Y閘門模式 可切回 hard_veto）"
  },
  "redline_policy": {
   "policy": "REDLINE_LONG_DURATION_POLICY",
-  "streak_days": 54,
+  "streak_days": 55,
   "stage": 3,
   "階段區間": "45–60 天",
   "應做事項": "啟動替代配置評估（替代路線 A/B/C）",
@@ -6836,7 +6836,7 @@
    }
   ],
   "source": "sot_targets.redline_policy（使用者 2026-09-30 定案）",
-  "derived_at": "2026-11-13"
+  "derived_at": "2026-11-16"
  },
  "rent_note_20260930": "大義街 1 樓店面 10 月租金 24,000 於 2026-09-30 提前入帳 → 歸 2026-10-01（9 月租金實收維持 77,100）；現金 3,752,961 已含此筆。",
  "last_updated": "2026-11-13",
@@ -9373,11 +9373,11 @@
   }
  },
  "usd_fx_monitor": {
-  "updated_at": "2026-11-14 00:22:37",
-  "last_date": "2026-11-13",
-  "usd_twd": 32.887,
-  "r1_pct": 0.08,
-  "r5_pct": -0.67,
+  "updated_at": "2026-11-16 09:10:36",
+  "last_date": "2026-11-16",
+  "usd_twd": 32.893,
+  "r1_pct": -0.14,
+  "r5_pct": 0.41,
   "high_60d": 33.109,
   "low_60d": 31.464,
   "usd_exposure_twd": 16684592,
@@ -9443,5 +9443,17 @@
    "12/04 PIMCO 300k"
   ],
   "next_action": "11/20 前確認安聯 App 可送件；11/20 送出；11/26 對帳；12/08 配息入帳後核對"
+ },
+ "insurance_refund_20261116": {
+  "日期": "2026-11-16",
+  "金額": 4000,
+  "項目": "飛機延誤保險退費（第一產物保險）",
+  "性質": "費用返還——不計入被動收入、不計入投資績效",
+  "入帳時間": "2026-11-16 10:03:54（交易）／帳務日 11/16",
+  "匯款方": "第一產物保險（永豐營業部 08017-86512）",
+  "App餘額顯示": 152820,
+  "入帳帳戶": "待歸戶：App 畫面餘額 152,820 與 cash_detail 任一帳戶皆不符（Richart一般 106,393／子帳戶 509,467／DAWHO 339,274）→ 待 Moneybook 匯入或下次截圖歸戶",
+  "cash_total_影響": "未動（帳戶未歸屬前不改 cash_total，避免 cash_detail 合計 ≠ cash_total 破壞不變量）",
+  "來源": "2026-11-16 10:22 使用者截圖"
  }
 }
