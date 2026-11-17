@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""cron 薄 wrapper：治理巡檢（backfill 缺漏 RECORD → flush 孤兒產物）。"""
+"""cron 薄 wrapper：治理巡檢（backfill 缺漏 RECORD → resync 派生欄位 → flush 孤兒產物）。"""
 
 # 為什麼要這支（2026-11-17 實踩）：
 #   手動 commit 治理檔（snapshot.json）沒落 RECORD → push gate 對整段待推範圍
@@ -19,15 +19,18 @@ import sys
 REPO = r"C:/Users/bot/Desktop/longjiu_system"
 
 STEPS = [
-    ("RECORD 巡檢補齊", os.path.join(REPO, "tools", "backfill_records.py")),
-    ("孤兒產物回收", os.path.join(REPO, "tools", "flush_leftover_artifacts.py")),
+    # 順序不可換：先補 RECORD 解開 push gate，再修派生欄位（讓本輪產物數字正確），
+    # 最後才回收產物並推送。
+    ("RECORD 巡檢補齊", os.path.join(REPO, "tools", "backfill_records.py"), ["--quiet"]),
+    ("派生欄位重算", os.path.join(REPO, "tools", "resync_aliases.py"), ["--fix", "--quiet"]),
+    ("孤兒產物回收", os.path.join(REPO, "tools", "flush_leftover_artifacts.py"), ["--quiet"]),
 ]
 
 blocks = []
 rc_all = 0
-for label, target in STEPS:
+for label, target, extra in STEPS:
     proc = subprocess.run(
-        [sys.executable, target, "--quiet"],
+        [sys.executable, target, *extra],
         cwd=REPO, capture_output=True, text=True,
         encoding="utf-8", errors="replace",
     )
