@@ -111,6 +111,11 @@ def _flow_sums(flows: dict | None, c: str) -> tuple[float, float, list]:
     return fin, fout, detail
 
 
+# 對外公開別名：build_mtd_report 等消費端共用同一公式，不再長出第二套實作
+# （2026-11-17：mtd 曾漏算資金流，把華航 21,100 買進當成獲利）
+flow_sums = _flow_sums
+
+
 def daily_twr(daily: list, flows: dict | None, *, c: str | None = None) -> dict:
     """時間加權報酬率（daily chain-linked，flow 於日初計入分母）。
 

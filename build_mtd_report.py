@@ -249,6 +249,10 @@ def payload() -> dict:
 
     # 口徑更正（前期錯帳）：僅揭露、不併入損益（2026-11-17 裁示）
     caliber = perf_core.caliber_by_class(snap, mk)
+    # 資金流：買進（流入）不是獲利、賣出（流出）不是虧損。公式與 performance_core
+    # 完全一致（同一個 flow_sums），否則同一份資料會算出兩個損益（2026-11-17 修的
+    # 就是 mtd 漏扣華航 11/06 買進 21,100 的缺口）。
+    flows = a.get("資金流") or {}
     classes = []
     for c in CLASS_KEYS:
         inv = _num(adj_invest.get(c, 0))
@@ -260,8 +264,9 @@ def payload() -> dict:
             mkt = _num(adj_mv[c])
             basis = "校正檔指定"
         elif mv_reliable and mv0:
-            mkt = gross - inv - upd_sum
-            basis = "推導"
+            fin, fout, _fd = perf_core.flow_sums(flows, c)
+            mkt = gross - inv - upd_sum + fout - fin
+            basis = "推導（含已登錄資金流）" if (fin or fout) else "推導"
         else:
             mkt = 0
             basis = "無月初基準，不計"
