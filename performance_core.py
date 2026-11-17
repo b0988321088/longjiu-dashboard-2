@@ -55,6 +55,26 @@ def dividend_totals(snap: dict, ym: str) -> dict:
     return out
 
 
+CALIBER_SCOPE = {"基金": "基金", "證券": "股票", "保單": "保單"}
+
+
+def caliber_by_class(snap: dict, ym: str) -> dict:
+    """`snapshot.caliber_adjustments` → {類別: 當月口徑更正}（僅揭露，不進損益）。
+
+    口徑更正＝帳面變化但屬前期錯帳（例：原幣被當台幣相加的虛增）。
+    使用者裁示（2026-11-17）：前期錯帳不得計為本月收益、也不得美化本月虧損，
+    月報主數字照帳面，這筆只在明細列示並註明來源與性質。
+    """
+    out = {c: 0.0 for c in CLASS_KEYS}
+    for d, it in ((snap or {}).get("caliber_adjustments") or {}).items():
+        if not isinstance(it, dict) or not str(d).startswith(f"{ym}-"):
+            continue
+        c = CALIBER_SCOPE.get(str(it.get("scope") or ""))
+        if c:
+            out[c] += _num(it.get("amount"))
+    return out
+
+
 def month_bounds(ym: str) -> tuple[dt.date, dt.date, dt.date]:
     """ym → (月初, 月末, 上月末)。"""
     y, m = int(ym[:4]), int(ym[5:7])
@@ -260,6 +280,7 @@ def monthly_performance(ym: str, *, snap: dict, adjust_all: dict, db=None,
         mv0 = {c: _num(adj_mv0.get(c)) for c in CLASS_KEYS}
         mv0_src = adj_mv0.get("來源") or "校正檔月初市值"
 
+    cal = caliber_by_class(snap, ym)   # 僅揭露：不併入 mkt／pnl（2026-11-17 裁示）
     rows, missing = [], []
     for c in CLASS_KEYS:
         inv = _num(adj_inv.get(c, 0))
@@ -287,7 +308,7 @@ def monthly_performance(ym: str, *, snap: dict, adjust_all: dict, db=None,
             basis = "無月初基準，不計"
             missing.append(f"{c}市值變化")
         rows.append({"c": c, "mkt": mkt, "invest": inv, "src": src, "upd": upd,
-                     "gross": gross, "div": div, "fee": fee,
+                     "gross": gross, "div": div, "fee": fee, "caliber": cal[c],
                      "mv0": (mv0[c] if mv0 else None),
                      "mv1": (mv1[c] if mv1 else None),
                      "flow_in": flow_in, "flow_out": flow_out, "flow_detail": flow_detail,

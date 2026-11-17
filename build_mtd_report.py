@@ -247,6 +247,8 @@ def payload() -> dict:
                 "kind": u.get("態樣", "估值更新"), "reason": u.get("原因", "")}
                for u in updates_all if isinstance(u, dict)]
 
+    # 口徑更正（前期錯帳）：僅揭露、不併入損益（2026-11-17 裁示）
+    caliber = perf_core.caliber_by_class(snap, mk)
     classes = []
     for c in CLASS_KEYS:
         inv = _num(adj_invest.get(c, 0))
@@ -266,6 +268,7 @@ def payload() -> dict:
         classes.append({"c": c, "mv0": (mv0[c] if mv0 else None), "mv1": mv1[c],
                         "gross": gross, "invest": inv, "src": adj_src.get(c, ""),
                         "upd_sum": upd_sum, "mkt": mkt, "div": div, "fee": fee,
+                        "caliber": caliber[c],
                         "pnl": mkt + div - fee, "basis": basis})
 
     grand_mkt = sum(x["mkt"] for x in classes)
@@ -360,7 +363,8 @@ def payload() -> dict:
                    "div_est": ct_div_est, "pl": ct_cur - ct_cost},
         "juhang": {"rows": jh_rows, "total": sum(r["sum"] for r in jh_rows), "count": sum(r["n"] for r in jh_rows)},
         "classes": classes,
-        "grand": {"mkt": grand_mkt, "div": grand_div, "fee": grand_fee, "sub": sub_total},
+        "grand": {"mkt": grand_mkt, "div": grand_div, "fee": grand_fee, "sub": sub_total,
+                  "caliber": sum(x["caliber"] for x in classes)},
         "total_mv0": total_mv0,
         "rate": ((sub_total / total_mv0) if total_mv0 else None),
         "rate_ann": ((sub_total / total_mv0 * 12) if total_mv0 else None),
@@ -414,7 +418,10 @@ def static_fallback(p: dict) -> str:
         ("市場面損益（推定）", nt(p["grand"]["mkt"])),
     ]
     for c in p["classes"]:
-        rows.append((f'　{c["c"]}', f'市值 {nt(c["gross"])}｜配息 {nt(c["div"])}｜損益 {nt(c["pnl"])}'))
+        _cal = c.get("caliber") or 0
+        rows.append((f'　{c["c"]}', f'市值 {nt(c["gross"])}'
+                     + (f'（含口徑調整 {nt(_cal)}，不計損益）' if _cal else '')
+                     + f'｜配息 {nt(c["div"])}｜損益 {nt(c["pnl"])}'))
     rows.append(("淨利差", f'{p["funding"]["spread"]*100:+.2f}pp｜{p["funding"]["light_txt"]}'))
     tr = "".join(f"<tr><th>{k}</th><td>{v}</td></tr>" for k, v in rows)
     return ('<section class="card"><h2>◆ 摘要<em>（靜態版；JS 可用時自動升級為完整圖表）</em></h2>'
@@ -520,6 +527,7 @@ function wfRow(c){
   if(c.invest){ h += '<div class="step"><span>− 新增投入'+(c.src?'（'+esc(c.src)+'）':'')+'</span><span class="v">'+money(-c.invest)+'</span></div>'; }
   if(c.upd_sum){ h += '<div class="step"><span>− 估值更新</span><span class="v">'+money(-c.upd_sum)+'</span></div>'; }
   h += '<div class="step total"><span>＝ 市場面損益'+(c.basis==='推導'?'（推定）':'')+'</span><span class="v '+cls(c.mkt)+'">'+sgn(c.mkt)+'</span></div>';
+  if(c.caliber){ h += '<div class="step sub2"><span>※ 含口徑調整<small>（非市場損益，不計入本月）</small></span><span class="v">'+sgn(c.caliber)+'</span></div>'; }
   h += '<div class="step"><span>＋ 配息實收</span><span class="v up">'+sgn(c.div)+'</span></div>';
   if(c.div_yield_m){ h += '<div class="step sub2"><span>配息率（本月配息 ÷ 月初市值）</span><span class="v">'+(c.div_yield_m*100).toFixed(2)+'%/月 ≈ '+(c.div_yield_y*100).toFixed(1)+'%/年</span></div>'; }
   if(c.int_cover!=null){ h += '<div class="step sub2"><span>配息 vs 借貸月息</span><span class="v">'+money(c.div)+' ÷ '+money(c.policy_int)+' → 覆蓋 '+c.int_cover.toFixed(1)+' 倍</span></div>'; }

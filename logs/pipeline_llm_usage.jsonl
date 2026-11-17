@@ -2196,3 +2196,5 @@
 {"ts": "2026-11-17T15:25:50", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1132, "cached": 896, "out": 208, "ok": true}
 {"ts": "2026-11-17T15:25:52", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1157, "cached": 1023, "out": 170, "ok": true}
 {"ts": "2026-11-17T15:25:55", "model": "deepseek-chat", "caller": "run_daily.py", "in": 661, "cached": 512, "out": 154, "ok": true}
+{"ts": "2026-11-17T21:32:59", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 661, "cached": 512, "out": 195, "ok": true}
+{"ts": "2026-11-17T21:34:04", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 661, "cached": 512, "out": 186, "ok": true}
