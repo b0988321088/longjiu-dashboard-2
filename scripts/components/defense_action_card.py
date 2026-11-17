@@ -141,9 +141,16 @@ def today_parts() -> dict:
            if _f(hist[t].get(k)) is not None and _f(hist[p].get(k)) is not None}
     base = _f(hist[p].get("total_assets"))
     tot = _f(hist[t].get("total_assets"))
+    # 2026-11-17：除息（除息參考價）造成的市值缺口不是虧損，但資產_diff 只看市值差，
+    #   故一併帶出 caliber_adjustments 讓 ① 揭示「帳面／實際」，避免被讀成單日大虧。
+    _cal = ((_load("snapshot.json") or {}).get("caliber_adjustments") or {}).get(t) or {}
+    _amt = _f(_cal.get("amount")) or 0.0
+    _chg_tot = chg.get("總資產")
     return {"date": t, "prev": p, "total": tot,
-            "chg": chg.get("總資產"),
-            "pct": ((chg["總資產"] / base * 100) if (chg.get("總資產") is not None and base) else None),
+            "chg": _chg_tot,
+            "pct": ((_chg_tot / base * 100) if (_chg_tot is not None and base) else None),
+            "cal": _amt, "cal_scope": _cal.get("scope"), "cal_note": _cal.get("note"),
+            "chg_real": (_chg_tot - _amt) if (_chg_tot is not None and _amt) else None,
             "parts": chg}
 
 
@@ -354,6 +361,15 @@ def render(snap: dict | None = None, theme: str = "light") -> str:
                                    f"本週 {sec.get('week')}" if sec.get("week") else None,
                                    f"匯兌 {sec.get('fx')}" if sec.get("fx") else None] if x) or "—"
 
+    _cal_amt = tp.get("cal") or 0.0
+    cal_row = ""
+    if _cal_amt:
+        _real = tp.get("chg_real")
+        cal_row = ('<tr><th>除息／口徑</th><td>含 <b>{:+,.0f}</b>（{}）<br>'
+                   '<b>實際變動 {}</b>（除息是配息現金入帳，不是虧損）</td></tr>').format(
+            _cal_amt, tp.get("cal_note") or "口徑調整",
+            _m(_real, True) if _real is not None else "—")
+
     return f'''<div class="card" style="border-left:6px solid {tone};background:{bg}">
 <h2>🛡️ 每日資產防禦檢查（{tp.get("date") or snap.get("date") or "—"}）</h2>
 <p style="font-size:15px;font-weight:800;color:{tone};margin:2px 0 2px">
@@ -365,7 +381,7 @@ def render(snap: dict | None = None, theme: str = "light") -> str:
 <tr><th style="width:26%">帳面變動</th><td><b style="color:{tone};font-size:16px">{_m(tp.get("chg"), True)}</b>
 　（{_pct_signed(tp.get("pct"))}）｜總資產 {_m(tp.get("total"))}</td></tr>
 <tr><th>分項貢獻</th><td>{parts_txt}</td></tr>
-<tr><th>估值日</th><td>台股 {tp.get("date") or "—"} 收盤｜美股／費半 <b>前一交易日 {tp.get("prev") or "—"}</b>（T+1 反映於基金與保單淨值）</td></tr>
+{cal_row}<tr><th>估值日</th><td>台股 {tp.get("date") or "—"} 收盤｜美股／費半 <b>前一交易日 {tp.get("prev") or "—"}</b>（T+1 反映於基金與保單淨值）</td></tr>
 </table>
 <p {note}>基金淨值有 T+1 時差：今日顯示的美股部位漲跌，實際是前一交易日的價格。不同交易日的數字不得當成同一天的避險效果。</p>
 

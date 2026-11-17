@@ -811,10 +811,12 @@ def buffett_advice(history: dict, snap: dict) -> str:
                 _camt = 0.0
             _scope = str(_cal.get("scope") or "")
             _d_fund_real = d_fund - _camt if _scope.startswith("基金") else d_fund
+            _d_sec_real = d_sec - _camt if _scope.startswith("證券") else d_sec
             _d_total_real = d_total - _camt
             lines += [
                 f"　↳ 帳面含口徑修正 {_camt:+,.0f}（{_cal.get('note', '口徑調整')}）",
                 f"　↳ 剔除口徑後：總資產實際 {_d_total_real:+,.0f}／基金實際 {_d_fund_real:+,.0f}"
+                f"／證券實際 {_d_sec_real:+,.0f}"
                 f"（{'不是虧損' if _camt < 0 else '非投資收益'}）",
             ]
 
