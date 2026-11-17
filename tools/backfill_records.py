@@ -69,13 +69,17 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="補齊待推範圍內缺 RECORD 的 commit")
     ap.add_argument("--check", action="store_true", help="只列出，不改狀態")
     ap.add_argument("--limit", type=int, default=0, help="最多補幾顆（0=全部，最舊優先）")
+    ap.add_argument("--quiet", action="store_true",
+                    help="cron 用：無事時完全靜默（stdout 空＝不推播），有事才輸出摘要")
     a = ap.parse_args()
 
     total_ahead = git("rev-list", "--count", f"{BASE_REF}..HEAD").strip() or "0"
     todo = pending_commits()
-    print(f"待推範圍 {BASE_REF}..HEAD：{total_ahead} 顆｜缺有效 RECORD：{len(todo)} 顆")
+    if not a.quiet:
+        print(f"待推範圍 {BASE_REF}..HEAD：{total_ahead} 顆｜缺有效 RECORD：{len(todo)} 顆")
     if not todo:
-        print("✅ 全部 commit 都有有效 RECORD（閘門無事可擋）")
+        if not a.quiet:
+            print("✅ 全部 commit 都有有效 RECORD（閘門無事可擋）")
         return 0
     for sha, tree, subj in todo:
         print(f"   · {sha[:12]}  tree {tree[:12]}  {subj[:70]}")
@@ -86,19 +90,34 @@ def main() -> int:
 
     batch = todo[:a.limit] if a.limit > 0 else todo
     tag = f"backfill_{datetime.now():%Y%m%d_%H%M%S}"
-    for i, (sha, _tree, _subj) in enumerate(batch, 1):
-        print(f"\n[{i}/{len(batch)}] 真審查 {sha[:12]} …")
-        rc = subprocess.run([sys.executable, str(BASE / "tools" / "review_commit_and_record.py"),
-                             sha, f"{tag}_{i}"], cwd=str(BASE)).returncode
-        if rc != 0:
-            print(f"❌ {sha[:12]} 審查未通過 → 停止（fail-closed，不推送；其餘未處理）")
-            return 1
+    logpath = BASE / "logs" / "backfill_records.log"
+    log = open(logpath, "a", encoding="utf-8", errors="replace") if a.quiet else None
+    try:
+        for i, (sha, _tree, _subj) in enumerate(batch, 1):
+            if not a.quiet:
+                print(f"\n[{i}/{len(batch)}] 真審查 {sha[:12]} …")
+            elif log:
+                log.write(f"\n=== {datetime.now():%Y-%m-%d %H:%M:%S} 審查 {sha[:12]} ===\n")
+                log.flush()
+            cmd = [sys.executable, str(BASE / "tools" / "review_commit_and_record.py"),
+                   sha, f"{tag}_{i}"]
+            if log:
+                rc = subprocess.run(cmd, cwd=str(BASE), stdout=log,
+                                    stderr=subprocess.STDOUT).returncode
+            else:
+                rc = subprocess.run(cmd, cwd=str(BASE)).returncode
+            if rc != 0:
+                print(f"❌ {sha[:12]} 審查未通過 → 停止（fail-closed，不推送；其餘未處理）")
+                return 1
+    finally:
+        if log:
+            log.close()
 
     left = pending_commits()
     if left:
-        print(f"\n⚠️ 仍有 {len(left)} 顆缺紀錄（--limit 或新 commit）：{', '.join(s[:12] for s, _, _ in left)}")
+        print(f"⚠️ 仍有 {len(left)} 顆缺紀錄（--limit 或新 commit）：{', '.join(x[:12] for x, _, _ in left)}")
         return 1
-    print("\n✅ 全部補齊。接著執行：python auto_push.py")
+    print(f"✅ 已補 {len(batch)} 顆 RECORD（{', '.join(x[:12] for x, _, _ in batch)}）→ 可推送")
     return 0
 
 

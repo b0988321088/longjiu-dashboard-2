@@ -99,11 +99,14 @@ def main() -> int:
     ap.add_argument("--list", action="store_true", help="只列出，不 commit")
     ap.add_argument("--min-age", type=float, default=5.0,
                     help="只收 mtime 超過 N 分鐘的檔（預設 5；0=連剛寫入的也收）")
+    ap.add_argument("--quiet", action="store_true",
+                    help="cron 用：無事時完全靜默（stdout 空＝不推播），有事才輸出摘要")
     a = ap.parse_args()
 
     files = dirty_artifacts(a.min_age)
     if not files:
-        print("✅ 無孤兒產物（工作區產物與 HEAD 一致）")
+        if not a.quiet:
+            print("✅ 無孤兒產物（工作區產物與 HEAD 一致）")
         return 0
     print(f"🧺 孤兒產物 {len(files)} 檔（執行前已 dirty、非本輪 produced → evening_sync 收不走）：")
     for f in files:
@@ -119,8 +122,16 @@ def main() -> int:
 
     msg = f"data: 回收未落版產物 {len(files)} 檔（evening_sync 邊界排除後殘留，{datetime.now():%m-%d %H:%M}）"
     print(f"\n▶ 走一條龍：commit → 真審查 → RECORD → push\n  {msg}")
-    rc = subprocess.run([sys.executable, str(BASE / "tools" / "commit_code_now.py"), msg,
-                         "--only", *files], cwd=str(BASE)).returncode
+    cmd = [sys.executable, str(BASE / "tools" / "commit_code_now.py"), msg, "--only", *files]
+    if a.quiet:
+        logpath = BASE / "logs" / "flush_leftover.log"
+        with open(logpath, "a", encoding="utf-8", errors="replace") as fh:
+            fh.write(f"\n=== {datetime.now():%Y-%m-%d %H:%M:%S} 回收 {len(files)} 檔 ===\n")
+            fh.flush()
+            rc = subprocess.run(cmd, cwd=str(BASE), stdout=fh,
+                                stderr=subprocess.STDOUT).returncode
+    else:
+        rc = subprocess.run(cmd, cwd=str(BASE)).returncode
     if rc != 0:
         print("❌ 一條龍失敗 → 產物仍在工作區、未上線（見上方訊息）")
         return rc
@@ -128,7 +139,7 @@ def main() -> int:
     if left:
         print(f"⚠️ 仍有 {len(left)} 檔未回收（可能剛被重寫）：{', '.join(left[:5])}")
         return 1
-    print("✅ 回收完成，工作區產物與 HEAD 一致")
+    print(f"✅ 已回收 {len(files)} 檔並上線（工作區產物與 HEAD 一致）")
     return 0
 
 
