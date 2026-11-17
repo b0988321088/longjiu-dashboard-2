@@ -205,6 +205,12 @@ def payload() -> dict:
     total_end, total_end_date = _db_total(today.isoformat())
     total_start, total_start_date = _db_total(prev_end.isoformat())
 
+    def _db_cash(d):
+        """同期現金（cash_total）— 現金非投資類，僅作四類對照用。"""
+        r = db.execute("SELECT cash_total FROM assets WHERE date <= ? "
+                       "ORDER BY date DESC LIMIT 1", (d,)).fetchone()
+        return _num(r[0]) if r and r[0] is not None else None
+
     def _db_liab(d):
         """同期總負債（與 total_assets 同一列口徑）— 供「還債 ≠ 虧損」註記推算。"""
         r = db.execute("SELECT total_liabilities FROM assets WHERE date <= ? "
@@ -228,6 +234,8 @@ def payload() -> dict:
 
     _weeks = week_buckets(db, today)
     _daily = daily_series(db, month_start, today)
+    _cash0 = _db_cash(prev_end.isoformat())
+    _cash1 = _db_cash(today.isoformat())
     db.close()
     if not end_row:
         raise RuntimeError("dragon_assets.db 沒有可用資產列")
@@ -275,6 +283,23 @@ def payload() -> dict:
                         "upd_sum": upd_sum, "mkt": mkt, "div": div, "fee": fee,
                         "caliber": caliber[c],
                         "pnl": mkt + div - fee, "basis": basis})
+
+    # ── 現金（第四類，非投資）：使用者 2026-11-17 要求四類對照 ──
+    # 現金沒有「投資損益」概念，顯示的是淨現金流（收支＋配息入帳＋還債）；
+    # 因此不併入 grand（投資績效只算三類），僅在同一張表提供對照。
+    cash_row = None
+    _c0, _c1 = _cash0, _cash1
+    if _c0 is not None and _c1 is not None:
+        _cf = _c1 - _c0
+        cash_row = {
+            "c": "現金（非投資）", "mv0": _c0, "mv1": _c1,
+            "gross": _cf, "mkt": _cf, "div": 0.0, "fee": 0.0, "pnl": _cf,
+            "rate": (_cf / _c0) if _c0 else None,
+            "rate_ann": (_cf / _c0 * 12) if _c0 else None,
+            "caliber": 0.0, "invest": 0.0, "upd_sum": 0.0, "src": "",
+            "basis": "淨現金流（收支／配息入帳／還債，非投資績效）",
+            "div_yield_m": None, "div_yield_y": None, "share": None, "is_cash": True,
+        }
 
     grand_mkt = sum(x["mkt"] for x in classes)
     grand_div = sum(x["div"] for x in classes)
@@ -368,6 +393,7 @@ def payload() -> dict:
                    "div_est": ct_div_est, "pl": ct_cur - ct_cost},
         "juhang": {"rows": jh_rows, "total": sum(r["sum"] for r in jh_rows), "count": sum(r["n"] for r in jh_rows)},
         "classes": classes,
+        "cash": cash_row,
         "grand": {"mkt": grand_mkt, "div": grand_div, "fee": grand_fee, "sub": sub_total,
                   "caliber": sum(x["caliber"] for x in classes)},
         "total_mv0": total_mv0,
@@ -542,6 +568,18 @@ function wfRow(c){
   return h+'</div>';
 }
 
+function wfCash(c){
+  var h = '<div class="wf" style="opacity:.94"><div class="head"><div class="name">'+esc(c.c)+
+          '<span class="chip2">對照</span></div>'+
+          '<div class="rt">'+(c.rate!=null?'<span class="chip2 '+cls(c.rate)+'">淨流 '+pct(c.rate)+'</span>':'')+'</div>'+
+          '<div class="amt '+cls(c.pnl)+'">'+sgn(c.pnl)+'</div></div>';
+  if(c.mv0!=null){ h += '<div class="step sub2"><span>月初 → '+esc(PERIOD_END)+'</span><span class="v">'+money(c.mv0)+' → '+money(c.mv1)+'</span></div>'; }
+  h += '<div class="step total"><span>＝ 淨現金流</span><span class="v '+cls(c.mkt)+'">'+sgn(c.mkt)+'</span></div>';
+  h += '<div class="step sub2"><span>＋ 配息實收</span><span class="v">— 現金不另計配息</span></div>';
+  h += '<div class="step sub2"><span>口徑</span><span class="v">'+esc(c.basis)+'</span></div>';
+  return h + '</div>';
+}
+
 function render(d){
   var h = [], g = d.grand||{}, f = d.funding||{}, p = d.period||{}, t = d.total_assets||{};
   PERIOD_END = p.end || '';
@@ -583,8 +621,16 @@ function render(d){
     h.push('</section>');
   }
 
-  h.push('<section class="card"><h2>◆ 四段式拆解<em>帳面 → 投入/校正 → 市場 → 配息（每類同一套）</em></h2>');
+  h.push('<section class="card"><h2>◆ 四類拆解<em>帳面 → 投入/校正 → 市場 → 配息（前三類投資；現金為對照）</em></h2>');
   (d.classes||[]).forEach(function(c){ h.push(wfRow(c)); });
+  if(d.cash){ h.push(wfCash(d.cash));
+    var _invPnl = (d.classes||[]).reduce(function(a,x){return a+(x.pnl||0);},0);
+    var _invGross = (d.classes||[]).reduce(function(a,x){return a+(x.gross||0);},0);
+    h.push('<div class="note">四類帳面市值變化合計 <b class="'+cls(_invGross+d.cash.gross)+'">'+sgn(_invGross+d.cash.gross)+'</b>'+
+      '（投資三類 '+sgn(_invGross)+' ＋ 現金 '+sgn(d.cash.gross)+'）＝ 總資產變化；'+
+      '投資三類含息損益 <b class="'+cls(_invPnl)+'">'+sgn(_invPnl)+'</b>。'+
+      '⚠️ 現金淨流已含配息入帳，故不與投資類含息損益相加。</div>');
+  }
   h.push('<div class="note">市場面＝帳面市值變化 − 新增投入 − 估值更新（推定值，含匯率）。'+
          '配息實收為本月入帳金額；月配息基金的除息本身會壓低淨值，已由「配息實收」加回，不重複計算。</div>');
   h.push('</section>');

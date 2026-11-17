@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-17 22:47",
+ "generated_at": "2026-11-17 23:10",
  "month": "2026-11",
  "period": {
   "start": "2026-11-01",
@@ -137,6 +137,27 @@
    "policy_int": 0
   }
  ],
+ "cash": {
+  "c": "現金（非投資）",
+  "mv0": 2020447.0,
+  "mv1": 2094919.0,
+  "gross": 74472.0,
+  "mkt": 74472.0,
+  "div": 0.0,
+  "fee": 0.0,
+  "pnl": 74472.0,
+  "rate": 0.03685917027271688,
+  "rate_ann": 0.4423100432726026,
+  "caliber": 0.0,
+  "invest": 0.0,
+  "upd_sum": 0.0,
+  "src": "",
+  "basis": "淨現金流（收支／配息入帳／還債，非投資績效）",
+  "div_yield_m": null,
+  "div_yield_y": null,
+  "share": null,
+  "is_cash": true
+ },
  "grand": {
   "mkt": -574012.0,
   "div": 121382.0,
