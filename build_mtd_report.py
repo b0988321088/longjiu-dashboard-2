@@ -558,12 +558,19 @@ function wfRow(c){
   if(c.invest){ h += '<div class="step"><span>− 新增投入'+(c.src?'（'+esc(c.src)+'）':'')+'</span><span class="v">'+money(-c.invest)+'</span></div>'; }
   if(c.upd_sum){ h += '<div class="step"><span>− 估值更新</span><span class="v">'+money(-c.upd_sum)+'</span></div>'; }
   h += '<div class="step total"><span>＝ 市場面損益'+(c.basis==='推導'?'（推定）':'')+'</span><span class="v '+cls(c.mkt)+'">'+sgn(c.mkt)+'</span></div>';
-  if(c.caliber){ h += '<div class="step sub2"><span>※ 含口徑調整<small>（非市場損益，不計入本月）</small></span><span class="v">'+sgn(c.caliber)+'</span></div>'; }
+  if(c.caliber){
+    // 2026-11-18 使用者指正：卡片只寫「※ 含口徑調整（不計入本月）」，但「市場面損益」仍含該筆 →
+    //   使用者看到基金 -519,044 會以為真的虧 51 萬。改為明確「減口徑 → 實質市場 → 實質含息」三步。
+    var _realMkt = c.mkt - c.caliber;
+    h += '<div class="step"><span>− 口徑調整<small>（帳務記錯／除息時點，非市場虧損）</small></span><span class="v up">'+money(Math.abs(c.caliber))+'</span></div>';
+    h += '<div class="step total"><span>＝ 實質市場損益</span><span class="v '+cls(_realMkt)+'">'+sgn(_realMkt)+'</span></div>';
+  }
   h += '<div class="step"><span>＋ 配息實收</span><span class="v up">'+sgn(c.div)+'</span></div>';
   if(c.div_yield_m){ h += '<div class="step sub2"><span>配息率（本月配息 ÷ 月初市值）</span><span class="v">'+(c.div_yield_m*100).toFixed(2)+'%/月 ≈ '+(c.div_yield_y*100).toFixed(1)+'%/年</span></div>'; }
   if(c.int_cover!=null){ h += '<div class="step sub2"><span>配息 vs 借貸月息</span><span class="v">'+money(c.div)+' ÷ '+money(c.policy_int)+' → 覆蓋 '+c.int_cover.toFixed(1)+' 倍</span></div>'; }
   if(c.fee){ h += '<div class="step"><span>− 手續費</span><span class="v">'+money(-c.fee)+'</span></div>'; }
   h += '<div class="step total"><span>＝ '+esc(c.c)+'損益（含市值）</span><span class="v '+cls(c.pnl)+'">'+sgn(c.pnl)+'</span></div>';
+  if(c.caliber){ h += '<div class="step total" style="color:#67e8f9"><span>＝ 實質含息損益<small>（已扣帳務因素）</small></span><span class="v '+cls(c.pnl - c.caliber)+'">'+sgn(c.pnl - c.caliber)+'</span></div>'; }
   if(c.basis!=='推導'){ h += '<div class="note">基準：'+esc(c.basis)+'</div>'; }
   return h+'</div>';
 }
