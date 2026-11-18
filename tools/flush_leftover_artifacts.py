@@ -122,6 +122,7 @@ def main() -> int:
 
     msg = f"data: 回收未落版產物 {len(files)} 檔（evening_sync 邊界排除後殘留，{datetime.now():%m-%d %H:%M}）"
     print(f"\n▶ 走一條龍：commit → 真審查 → RECORD → push\n  {msg}")
+    before = git("rev-parse", "HEAD").strip()
     cmd = [sys.executable, str(BASE / "tools" / "commit_code_now.py"), msg, "--only", *files]
     if a.quiet:
         logpath = BASE / "logs" / "flush_leftover.log"
@@ -133,6 +134,17 @@ def main() -> int:
     else:
         rc = subprocess.run(cmd, cwd=str(BASE)).returncode
     if rc != 0:
+        # 2026-11-18 實踩：commit_code_now 在審查 REJECT 時把 commit 留在本地，
+        # 那顆「已 commit、無 RECORD」的 commit 會讓 origin/<branch>..HEAD 整段進入
+        # CIO 模式 → 隔天 07:00 產線 fail-closed 全停（今晚 21:45 實際發生，
+        # 21 檔卡在工作區、推送範圍被毒化）。這裡只回退「本輪自己剛建的那顆」，
+        # 產物內容原樣留在工作區，下一輪仍可回收；不動任何既有 commit。
+        now_head = git("rev-parse", "HEAD").strip()
+        if before and now_head and now_head != before:
+            subprocess.run(["git", "reset", "--mixed", before], cwd=str(BASE),
+                           capture_output=True, text=True)
+            print(f"↩️ 已回退本輪 commit {now_head[:8]}（審查未過、無 RECORD）"
+                  f"→ 產物留在工作區，不毒化推送範圍")
         print("❌ 一條龍失敗 → 產物仍在工作區、未上線（見上方訊息）")
         return rc
     left = dirty_artifacts(0)

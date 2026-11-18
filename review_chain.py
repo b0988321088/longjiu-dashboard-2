@@ -353,6 +353,18 @@ def build_review_prompt(commit: str, tree: str, subject: str, files: str, stat: 
                           "那是刻意分段（整批 patch 100% 已送審、無省略），**不得**以「截斷／不完整／"
                           "malformed／無法解析」為由列入 blocking；只有能指名「與切點無關的具體缺陷」"
                           "（例如數值矛盾、邏輯錯誤、fail-open）才算 blocking。\n")
+    # 2026-11-18（治理巡檢 21:45 假 REJECT 實踩）：資料/報表批不得以「頁面呈現的治理
+    #   待辦未結案」為 blocking。孤兒產物回收批含 index.html 的 CIO 快照，審查者把畫面內
+    #   的 Pending／質疑／風險條目當成本批缺陷 → 同型 REJECT 連兩輪，整批產物卡在工作區。
+    #   本判準只放寬「顯示內容」這一維；數值／日期矛盾、截斷、錯誤照樣算 blocking。
+    _focus_data_txt = ""
+    if patch is not None and not re.search(
+            r"diff --git a/\S+\.(py|sh|bat|ps1|cmd|toml|ya?ml|js|ts|sql)\s+b/", patch):
+        _focus_data_txt = (
+            "⑦**本批為資料／報表產物（patch 內無程式檔）**：頁面或 JSON 內呈現的治理待辦、"
+            "待決事項、風險提醒、Pending 清單屬**顯示內容**，其「尚未結案」不構成本批缺陷，"
+            "不得據此列入 blocking；只有當該文字與 diff 內數值／日期自相矛盾、明顯錯誤、"
+            "或內容被截斷時才算 blocking。\n")
     return (
         "你是龍九控股的獨立 CIO 審查者（異質審查，不得預設放行）。只回傳 JSON，不要任何其他文字。\n"
         f"待推送 commit：{c12}\n待推送 tree：{t12}\n主旨：{subject}\n\n"
@@ -363,7 +375,7 @@ def build_review_prompt(commit: str, tree: str, subject: str, files: str, stat: 
         "③是否與使用者既定裁決衝突（例如公開首頁必經真 CIO、不可放寬審查）④是否有 blocking 級缺陷 "
         "⑤**變更內容本身是否有具體缺陷**（邏輯錯誤、fail-open／靜默失敗、資料誤用、未處理缺失值）"
         "—— 有則必須**指名檔案與問題**列入 blocking；無具體缺陷時不得以泛泛理由填入。\n"
-        + _focus_seg_txt + "\n"
+        + _focus_seg_txt + _focus_data_txt + "\n"
         + REVIEW_CONTRACT
         + "\n輸出格式（原樣抄寫下方 12 碼 commit 與 12 碼 tree，不得自行補齊或改寫字元）：\n"
         '{"verdict":"APPROVE 或 REJECT","reviewed_commits":[{"commit":"' + c12 + '","tree":"' + t12 + '"}],'
