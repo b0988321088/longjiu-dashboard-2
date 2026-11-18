@@ -158,7 +158,7 @@ def sync_allianz_combined(snap: dict, verbose: bool = True) -> list:
     return msgs
 
 
-def verify_cross_group_invariants(snap: dict) -> list:
+def verify_cross_group_invariants(snap: dict) -> list[str]:
     """跨群組不變式檢查（回傳不一致清單；由呼叫端決定警告或硬擋）。"""
     issues = []
     total = allianz_ab_from_units(snap)
@@ -168,6 +168,63 @@ def verify_cross_group_invariants(snap: dict) -> list:
             if isinstance(v, (int, float)) and v != total:
                 issues.append(f"安聯 A+B={total:,} 但 {k}={int(v):,}（跨群組不變式）")
     return issues
+
+
+# 與 allianz_sync.GAP_LIMIT_PCT 同值（宣告差額上限 0.5%）：兩處必須一致，否則
+# 「寫入端放行、稽核端擋」會再現 2026-11-18 的死結。
+POLICY_GAP_LIMIT_PCT = 0.005
+
+
+def verify_policy_breakdown_invariants(snap: dict) -> tuple[list[str], list[str]]:
+    """保單「逐檔明細 vs 總值」不變式 → (hard, soft)。
+
+    為什麼要這支（2026-11-18 收工稽核紅燈實踩）：
+      13:31 只把 A/B 的**總值**寫進 snapshot，`allianz_[ab]_breakdown` 仍停在 11/13
+      → 22:40 稽核「子基金加總 4,978,741 ≠ 現值 4,874,833」。正解入口
+      `allianz_sync.apply_policy_update` 早就把「總值＋逐檔」綁成一個動作並內建 assert，
+      但它**沒有任何呼叫端**（孤島）→ 實際更新繞過它，守門形同不存在。
+
+    判準：breakdown 加總 + detail_gap.amount == 總值（容差 1 元）。
+      hard → 差額 > 0.5% 且無有效宣告（必須補逐檔），或宣告額與實際差額不符
+      soft → 差額 ≤ 0.5% 但 detail_gap 缺 reason/source（補宣告即可）
+    """
+    hard: list[str] = []
+    soft: list[str] = []
+    for tag, key in (("a", "allianz_policy_a_value"), ("b", "allianz_policy_b_value")):
+        total = snap.get(key)
+        if not isinstance(total, (int, float)) or not total:
+            continue
+        total = float(total)
+        bd = snap.get(f"allianz_{tag}_breakdown") or {}
+        s = float(sum(v for v in bd.values() if isinstance(v, (int, float))))
+        gap = snap.get(f"allianz_{tag}_detail_gap")
+        amt = float(gap.get("amount") or 0) if isinstance(gap, dict) else 0.0
+        has_decl = bool(isinstance(gap, dict)
+                        and str(gap.get("reason") or "").strip()
+                        and str(gap.get("source") or "").strip())
+        limit = abs(total) * POLICY_GAP_LIMIT_PCT
+        if abs((s + amt) - total) < 1:
+            # 宣告額與實際差額相符，但宣告本身仍受 0.5% 上限約束 —— 這條必須與
+            # _audit_closeout.py 的 _decl_gap 同值，否則「寫入端放行、稽核端照樣紅燈」
+            # （2026-11-18 的教訓：兩端規則不一致＝製造死結）。
+            if abs(amt) > 1 and not has_decl:
+                soft.append(f"保單{tag.upper()} 宣告差額 {amt:,.0f} 缺 reason/source（detail_gap）")
+            elif abs(amt) > limit:
+                hard.append(f"保單{tag.upper()} 宣告差額 {amt:,.0f} 超過容許 {limit:,.0f}（0.5%）"
+                            "→ 逐檔必須一併更新（宣告不能拿來吞大額落差）")
+            continue
+        head = (f"保單{tag.upper()} 逐檔加總 {s:,.0f}"
+                + (f"＋宣告差額 {amt:,.0f}" if amt else "")
+                + f" ≠ 總值 {total:,.0f}（差 {s + amt - total:,.0f}）")
+        if abs(s - total) > limit:
+            hard.append(head + f"｜差額超過容許 {limit:,.0f}（0.5%）"
+                              "→ 逐檔必須一併更新（用 allianz_sync.apply_policy_update）")
+        elif not has_decl:
+            soft.append(head + "｜差額在 0.5% 內，但 detail_gap 缺 reason/source")
+        else:
+            hard.append(head + "｜宣告差額與實際差額不符"
+                              "（detail_gap.amount 必須等於 總值−逐檔加總）")
+    return hard, soft
 
 
 # ─────────────────────────────────────────────────────────────
@@ -565,4 +622,17 @@ if __name__ == "__main__":
             print(f"  {i}")
     else:
         print("✅ 所有同義欄位一致")
+    # 2026-11-18（使用者核准）：保單「總值有、逐檔沒跟上」在此硬擋。
+    #   sync_all.py 第「同義欄位驗證」步就是跑這支，stop_on_fail 會讓後續產線全停 →
+    #   問題在寫入當天就炸，不必等 22:40 收工稽核。soft 只提示、不阻擋。
+    _p_hard, _p_soft = verify_policy_breakdown_invariants(snap)
+    for _m in _p_soft:
+        print(f"⚠️ {_m}")
     print(f"  總資產: {snap.get('total_assets'):,}")
+    if _p_hard:
+        print("❌ 保單不變式（逐檔明細 vs 總值）：")
+        for _m in _p_hard:
+            print(f"  {_m}")
+        print("   → 拒收（exit 1）：請用 allianz_sync.apply_policy_update(total＋funds 一起給）")
+        _sys.exit(1)
+    print("✅ 保單逐檔明細與總值一致（A/B）")

@@ -224,6 +224,20 @@ def apply_changes(snap, changes):
     sync_allianz_combined(snap)
     for _i in verify_cross_group_invariants(snap):
         print(f"  ⚠️ {_i}")
+    # 2026-11-18（使用者核准）：保單更新路徑的最後一道 —— 寫了總值卻沒有逐檔，直接拒寫。
+    #   11/18 13:31 就是這樣留下 A 差 103,908／B 差 126,090 的缺口（allianz_[ab]_breakdown
+    #   停在 11/13），一路到 22:40 收工稽核才紅燈。此處 raise 發生在 do_apply 落檔之前
+    #   （apply_changes 只動記憶體），所以拒絕＝snapshot.json 完全不變，不會留下半套。
+    from asset_sync import verify_policy_breakdown_invariants
+    _p_hard, _p_soft = verify_policy_breakdown_invariants(snap)
+    for _i in _p_soft:
+        print(f"  ⚠️ {_i}")
+    if _p_hard:
+        raise ValueError(
+            "保單不變式不成立 → 拒絕寫入（snapshot 未落檔）："
+            + "；".join(_p_hard)
+            + "。請改用 allianz_sync.apply_policy_update(total 與 funds 一起給)，"
+              "只給總值且差額 >0.5% 一律不受理。")
     return snap
 
 
