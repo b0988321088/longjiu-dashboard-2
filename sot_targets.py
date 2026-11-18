@@ -737,7 +737,7 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
             text = re.sub(r"（現讀\s*snapshot\.json\s*penetration[，,]\s*(\d{4}-\d{2}-\d{2}[^）]*)）",
                           _stamp, text)
             # 不變量核對句的總資產（容忍半形 = 與全形 ＝）
-            text = re.sub(r"([=＝]\s*總資產\s*)[\d,]{7,}", rf"\g<1>{_ta:,}", text)
+            text = re.sub(r"([=＝]\s*總資產\s*)[\d,]{7,}", rf"\g<1>{float(_ta):,.0f}", text)
             # 2026-10-15（TD-20261015-06 之一續）：資產配置透視段落的括號註
             #   「（全部現讀 snapshot.json：…總資產 27,085,225。）」——無 =／＝ 前綴，原規則漏掉。
             # 2026-11-09 修正（P2）：此規則原本連「績效追蹤基準線」一起改 → 基準 8/31 的
@@ -750,7 +750,7 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
                     _tail = _s.find("追蹤點", _hdr)
                     if _tail == -1 or m.start() < _tail:
                         return m.group(0)      # 基準區塊內：保留歷史值
-                return f"{m.group(1)}{_ta:,}"
+                return f"{m.group(1)}{float(_ta):,.0f}"
 
             text = re.sub(r"(總資產\s*)[\d,]{7,}", _sub_ta_guarded, text)
             # 子項金額（原規則刻意「金額不動」→ 修正為一併改 live；例「科技 14.8%（3,907,015；硬上限 15%）」）
