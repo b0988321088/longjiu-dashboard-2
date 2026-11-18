@@ -318,12 +318,27 @@ def main():
                      + ("｜推送待獨立審查" if _ok_art else ""))
     _dropped = sorted(set(_drop) - set(_keep))
     if _d2_ok and _dropped:
-        lines.append(f"🚫 排除 {len(_dropped)} 檔（非本輪產物／執行前已 dirty）：{', '.join(_dropped[:8])}"
-                     + ("…" if len(_dropped) > 8 else ""))
-    # ★ 2026-10-15 裁決 b：收尾提交（步 5）**不算推送**——只有步 4 真的推成功才宣稱已上線，
-    #   否則一律明示「未推送上線」（殘留本機 commit 由獨立審查車道處理）。
-    lines.append("✅ 已推送並驗證（clean-main）" if _pushed
-                 else "⚠️ 未推送上線 — 線上可能仍是舊版，詳見上方訊息（收尾提交僅完成本機 commit）")
+        # 2026-11-18（使用者核准）：1507 檔是常態（工作區長期躺著備份／一次性腳本），
+        # 舊版逐一列名會把「正常排除」講成「🚫 警告」，讀的人分不清有沒有事。
+        # 少量（≤5）才列名便於追查；大量只報數量，並降級為 ℹ️ 資訊。
+        if len(_dropped) <= 5:
+            lines.append(f"ℹ️ 排除 {len(_dropped)} 檔非本輪產物（執行前已 dirty／非產物路徑，不納入 scope）："
+                         f"{', '.join(_dropped)}")
+        else:
+            lines.append(f"ℹ️ 排除 {len(_dropped)} 檔非本輪產物（執行前已 dirty／非產物路徑，不納入 scope）"
+                         f"｜例：{', '.join(_dropped[:3])}…")
+    # ★ 2026-10-15 裁決 b：收尾提交（步 5）**不算推送**——只有步 4 真的推成功才宣稱已上線。
+    #   2026-11-18（使用者核准）：補上「本來就沒東西可推」這一態。舊版把 ahead=0 也印成
+    #   「⚠️ 未推送上線／線上可能仍是舊版」→ 明明四源已同步、HEAD 與 clean-main 一致，
+    #   卻每晚誤報一次警告，讓真正的推送失敗被噪音稀釋。判準改讀真值（推送範圍筆數）。
+    _ahead = (subprocess.run(["git", "rev-list", "--count", "origin/clean-main..HEAD"],
+                             cwd=BASE, capture_output=True, text=True, timeout=120).stdout or "").strip()
+    if _pushed:
+        lines.append("✅ 已推送並驗證（clean-main）")
+    elif _ahead == "0":
+        lines.append("⏭️ 本輪無需推送（HEAD 與 clean-main 一致，線上已是最新）")
+    else:
+        lines.append("⚠️ 未推送上線 — 線上可能仍是舊版，詳見上方訊息（收尾提交僅完成本機 commit）")
     lines.append("")
     lines.append(f"📰 日報：https://b0988321088.github.io/longjiu-dashboard-2/daily_report_v2_{TODAY}.html")
     lines.append(f"📊 差異：https://b0988321088.github.io/longjiu-dashboard-2/asset_diff_{TODAY}.html")
