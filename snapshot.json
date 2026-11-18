@@ -9926,6 +9926,33 @@
     }
    },
    "verified_total_twd": 1252888
+  },
+  "firstjin": {
+   "as_of": "2026-11-18",
+   "source": "第一金人壽「投資狀況」截圖（11/18）",
+   "fx": 32.815,
+   "fx_date": "2026-11-18",
+   "account_value_twd": 1881254,
+   "cum_premium_twd": 2000000,
+   "cum_dividend_twd": 169024,
+   "funds": {
+    "ID05": {
+     "name": "M&G入息基金A(美元避險月配)",
+     "units": 5700.98491,
+     "nav": 10.056,
+     "nav_date": "2026-11-18",
+     "currency": "USD",
+     "fx": 32.815,
+     "value_twd": 1881254,
+     "cost_per_unit_twd": 324.71,
+     "cost_twd": 1851166.81,
+     "cum_dividend_twd": 9901,
+     "return_pct_ex_div": 1.63,
+     "return_pct_cum": 2.16
+    }
+   },
+   "verified_total_twd": 1881254.56,
+   "note": "ID05 單位數 5,700.98491、NAV 10.056 USD、匯率 32.815；units×nav×fx 與表列 1,881,254 差 0"
   }
  }
 }
