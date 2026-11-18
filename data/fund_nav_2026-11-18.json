@@ -4,6 +4,48 @@
  "fx_date": "2026-11-16",
  "fx_note": "匯率暫用真值日固定值，非當日即時匯率（誤差來源之一）",
  "navs": {
+  "acyt162": {
+   "name": "元大高股息龍頭B配息",
+   "nav": 21.04,
+   "nav_date": "2026-11-18",
+   "ok": false,
+   "ref_nav": 20.82
+  },
+  "tlz64": {
+   "name": "安聯收益成長AM(美元)",
+   "nav": 7.9765,
+   "nav_date": "2026-11-17",
+   "ok": true,
+   "ref_nav": 7.9765
+  },
+  "shzv6": {
+   "name": "貝萊德世界黃金A10美元",
+   "nav": 25.85,
+   "nav_date": "2026-11-17",
+   "ok": true,
+   "ref_nav": 25.85
+  },
+  "mmg23": {
+   "name": "M&G入息A(美元避險月配)",
+   "nav": 10.0052,
+   "nav_date": "2026-11-17",
+   "ok": true,
+   "ref_nav": 10.056
+  },
+  "pima1": {
+   "name": "PIMCO收益增長M(月收息強化)",
+   "nav": 12.42,
+   "nav_date": "2026-11-17",
+   "ok": true,
+   "ref_nav": 12.42
+  },
+  "mmg55": {
+   "name": "M&G入息A(美元避險月配)F",
+   "nav": 75.4854,
+   "nav_date": "2026-11-17",
+   "ok": true,
+   "ref_nav": 75.4854
+  },
   "jfzn3": {
    "name": "摩根多重收益A股(美元對沖穩月配)",
    "nav": 70.41,
@@ -17,48 +59,6 @@
    "nav_date": "2026-11-18",
    "ok": false,
    "ref_nav": 90.1596
-  },
-  "mmg23": {
-   "name": "M&G入息A(美元避險月配)",
-   "nav": 10.0052,
-   "nav_date": "2026-11-17",
-   "ok": true,
-   "ref_nav": 10.056
-  },
-  "shzv6": {
-   "name": "貝萊德世界黃金A10美元",
-   "nav": 25.85,
-   "nav_date": "2026-11-17",
-   "ok": true,
-   "ref_nav": 25.85
-  },
-  "acyt162": {
-   "name": "元大高股息龍頭B配息",
-   "nav": 21.04,
-   "nav_date": "2026-11-18",
-   "ok": false,
-   "ref_nav": 20.82
-  },
-  "mmg55": {
-   "name": "M&G入息A(美元避險月配)F",
-   "nav": 75.4854,
-   "nav_date": "2026-11-17",
-   "ok": true,
-   "ref_nav": 75.4854
-  },
-  "pima1": {
-   "name": "PIMCO收益增長M(月收息強化)",
-   "nav": 12.42,
-   "nav_date": "2026-11-17",
-   "ok": true,
-   "ref_nav": 12.42
-  },
-  "tlz64": {
-   "name": "安聯收益成長AM(美元)",
-   "nav": 7.9765,
-   "nav_date": "2026-11-17",
-   "ok": true,
-   "ref_nav": 7.9765
   }
  },
  "accounts": {
