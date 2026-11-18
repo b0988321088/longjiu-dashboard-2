@@ -56,7 +56,15 @@ def derived(snap: dict) -> dict:
         c = round(sum(float(v) for v in cathay.values()), 2)
         out["funds_cathay"] = c
         out["funds_cathay_market_value"] = c
+        # 2026-11-18：國泰直購逐檔明細也是同義欄位（漏同步會讓門檻SoT擋住 sync_all）
+        out["funds_cathay_breakdown"] = {k: float(v) for k, v in cathay.items()}
 
+    # 基金別名群（2026-11-18：漏同步會讓 asset_sync 擋住 sync_all）
+    if snap.get("funds") is not None:
+        _fv = float(snap["funds"])
+        for _k in ("fund_market", "fund_market_value", "funds_total", "fund_total_market_value"):
+            if _k in snap:
+                out[_k] = _fv
     if snap.get("total_assets") is not None and snap.get("total_liabilities") is not None:
         out["net_worth"] = round(float(snap["total_assets"]) - float(snap["total_liabilities"]), 2)
 
