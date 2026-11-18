@@ -588,6 +588,25 @@ function render(d){
          '<a class="back" href="index.html">← 回主儀表板</a></header>');
 
   var sub = (d.interest && d.interest.total) ? '已扣投資利息 '+money(d.interest.total) : '未扣利息（見資金成本卡）';
+
+  // 2026-11-18 使用者指示：帳務因素必須記錄並在同一眼看到（「910,000 裡面有 400,000 是因為記錯」）
+  var _cal = g.caliber||0, _real = (t.chg||0) - _cal;   // caliber 為負值（帳面中被口徑拖累的部分）→ 需減去
+  if(_cal){
+    h.push('<section class="card" style="margin-bottom:12px;border-left:4px solid #f59e0b">'+
+      '<div style="font-size:13px;font-weight:700;margin-bottom:8px">🧾 帳面 vs 實質（帳務因素已分離）</div>'+
+      '<table style="width:100%;font-size:12px;border-collapse:collapse">'+
+      '<tr><td>帳面總資產變化</td><td class="'+cls(t.chg)+'" style="text-align:right;font-weight:700">'+sgn(t.chg)+'</td>'+
+        '<td style="color:#94a3b8;padding-left:10px">'+money(t.start)+' → '+money(t.end)+'</td></tr>'+
+      '<tr><td>減：帳務因素（非市場虧損）</td><td class="up" style="text-align:right;font-weight:600">+'+money(Math.abs(_cal))+'</td>'+
+        '<td style="color:#94a3b8;padding-left:10px">日幣計價匯率記錯 ' + money(368877) + '（基金）｜ETF 除息缺口 ' + money(27730) + '（股票）</td></tr>'+
+      '<tr style="border-top:1px solid #334155"><td style="font-weight:700">實質市場變化</td>'+
+        '<td class="'+cls(_real)+'" style="text-align:right;font-weight:700">'+sgn(_real)+'</td>'+
+        '<td style="color:#94a3b8;padding-left:10px">'+pct((_real/(t.start||1)))+'｜配息 '+sgn(g.div)+' 已入現金</td></tr>'+
+      '</table>'+
+      '<div style="font-size:11px;color:#64748b;margin-top:6px">口徑明細永久記錄於 <code>data/caliber_adjustments.json</code>（逐筆含金額、根因、使用者指示、市場對照）｜只揭露、不計入損益</div>'+
+      '</section>');
+  }
+
   h.push('<section class="grid k4">');
   h.push(kpi('本月投資損益', '<span class="'+cls(d.perf.net)+'">'+sgn(d.perf.net)+'</span>', esc(sub)));
   h.push(kpi('總資產變化', '<span class="'+cls(t.chg)+'">'+sgn(t.chg)+'</span>', '帳面（含未實現、含配息）｜⚠️ 含現金流，非投資績效'));

@@ -401,6 +401,27 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     insurance_total = tv["insurance_total"] or allianz + firstjin
 
     # 2026-11-18 使用者核准：保單每日推算（真值仍為截圖值，此處只增透明度）
+    # 2026-11-18 使用者指示：帳務因素必須記錄（「910,000 裡面有 400,000 是因為記錯」）
+    #   數字一律讀 mtd_data.json，不寫死；mtd_data 缺檔或口徑為 0 時整列不出現（不誤導）
+    _cal_row = ""
+    try:
+        _mp = BASE / "mtd_data.json"
+        if _mp.exists():
+            _mj = json.loads(_mp.read_text(encoding="utf-8"))
+            _cal = (_mj.get("grand") or {}).get("caliber") or 0
+            _ta = _mj.get("total_assets") or {}
+            _chg, _start = _ta.get("chg") or 0, _ta.get("start") or 0
+            if _cal and _start:
+                _real = _chg - _cal
+                _cal_row = (
+                    f'<tr><td>本月帳務因素</td><td>{_cal:+,.0f} TWD</td>'
+                    f'<td>非市場虧損（日幣匯率記錯＋ETF 除息缺口）；帳面 {_chg:+,.0f} → '
+                    f'實質 {_real:+,.0f}（{_real / _start * 100:+.2f}%）｜'
+                    f'<a href="mtd_performance.html">本月績效拆解</a></td></tr>'
+                )
+    except Exception as _e:
+        print(f"[mtd-note] ⚠️ {type(_e).__name__}: {_e}")
+
     _ie = tv.get("insurance_estimate") or {}
     if _ie.get("estimated_incl_truth_twd"):
         _dp = _ie.get("diff_pct")
@@ -1347,6 +1368,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
         </thead>
         <tbody>
           <tr><td>總資產</td><td>{tv['total_assets']:,} TWD</td><td>流動資產（不記錄不動產）；負債比（含不動產）{_liab_ratio:.1f}%｜金融資產負債比 {_liab_ratio_flow:.1f}%（負債÷金融資產）</td></tr>
+          {_cal_row}
           <tr><td>總負債</td><td>{tv['total_liabilities']:,} TWD</td><td>總負債合計（含房貸、保單借貸、質押）</td></tr>
           <tr><td>本月領息</td><td>{monthly_dividend:,} TWD</td><td>保單 {tv['insurance_dividend']:,} + ETF {tv['sec_dividend_monthly']:,} + 基金 {tv['fund_dividend_monthly']:,}</td></tr>
           <tr><td>被動月收</td><td>{monthly_dividend + _rent_got:,} TWD</td><td>實收：配息 {monthly_dividend:,} + 房租 {_rent_got:,}｜預期：房租 {_nn(_rent_tgt)} + 配息保守 {_nn(_div_expected)}</td></tr>
