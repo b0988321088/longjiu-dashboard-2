@@ -570,7 +570,7 @@ function wfRow(c){
   if(c.int_cover!=null){ h += '<div class="step sub2"><span>配息 vs 借貸月息</span><span class="v">'+money(c.div)+' ÷ '+money(c.policy_int)+' → 覆蓋 '+c.int_cover.toFixed(1)+' 倍</span></div>'; }
   if(c.fee){ h += '<div class="step"><span>− 手續費</span><span class="v">'+money(-c.fee)+'</span></div>'; }
   h += '<div class="step total"><span>＝ '+esc(c.c)+'損益（含市值）</span><span class="v '+cls(c.pnl)+'">'+sgn(c.pnl)+'</span></div>';
-  if(c.caliber){ h += '<div class="step total" style="color:#67e8f9"><span>＝ 實質含息損益<small>（已扣帳務因素）</small></span><span class="v '+cls(c.pnl - c.caliber)+'">'+sgn(c.pnl - c.caliber)+'</span></div>'; }
+  if(c.caliber){ h += '<div class="step sub2"><span>含息後（配息已入現金，不重複計入總資產）</span><span class="v '+cls(c.pnl - c.caliber)+'">'+sgn(c.pnl - c.caliber)+'</span></div>'; }
   if(c.basis!=='推導'){ h += '<div class="note">基準：'+esc(c.basis)+'</div>'; }
   return h+'</div>';
 }
@@ -610,6 +610,13 @@ function render(d){
         '<td class="'+cls(_real)+'" style="text-align:right;font-weight:700">'+sgn(_real)+'</td>'+
         '<td style="color:#94a3b8;padding-left:10px">'+pct((_real/(t.start||1)))+'｜配息 '+sgn(g.div)+' 已入現金</td></tr>'+
       '</table>'+
+      '<div style="margin-top:8px;font-size:12px;color:#cbd5e1">逐類實質（帳面 − 口徑，合計＝'+sgn(_real)+'）：'+
+        (d.classes||[]).concat(d.cash?[d.cash]:[]).map(function(c){
+          var r=(c.gross||0)-(c.caliber||0), pc=c.mv0?pct(r/c.mv0):'—';
+          return '<span style="display:inline-block;margin:2px 10px 2px 0"><b class="'+cls(r)+'">'+esc(c.c)+' '+sgn(r)+'</b>'+
+                 '<span style="color:#64748b">（'+pc+'）</span></span>';
+        }).join('')+
+      '</div>'+
       '<div style="font-size:11px;color:#64748b;margin-top:6px">口徑明細永久記錄於 <code>data/caliber_adjustments.json</code>（逐筆含金額、根因、使用者指示、市場對照）｜只揭露、不計入損益</div>'+
       '</section>');
   }
