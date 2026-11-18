@@ -4,12 +4,12 @@
  "fx_date": "2026-11-16",
  "fx_note": "匯率暫用真值日固定值，非當日即時匯率（誤差來源之一）",
  "navs": {
-  "mmg55": {
-   "name": "M&G入息A(美元避險月配)F",
-   "nav": 75.4854,
+  "acyt162": {
+   "name": "元大高股息龍頭B配息",
+   "nav": 20.82,
    "nav_date": "2026-11-17",
    "ok": true,
-   "ref_nav": 75.4854
+   "ref_nav": 20.82
   },
   "shzv6": {
    "name": "貝萊德世界黃金A10美元",
@@ -25,12 +25,12 @@
    "ok": true,
    "ref_nav": 7.9765
   },
-  "acyt162": {
-   "name": "元大高股息龍頭B配息",
-   "nav": 20.82,
+  "pima1": {
+   "name": "PIMCO收益增長M(月收息強化)",
+   "nav": 12.42,
    "nav_date": "2026-11-17",
    "ok": true,
-   "ref_nav": 20.82
+   "ref_nav": 12.42
   },
   "mmg23": {
    "name": "M&G入息A(美元避險月配)",
@@ -39,31 +39,36 @@
    "ok": true,
    "ref_nav": 10.056
   },
+  "mmg55": {
+   "name": "M&G入息A(美元避險月配)F",
+   "nav": 75.4854,
+   "nav_date": "2026-11-17",
+   "ok": true,
+   "ref_nav": 75.4854
+  },
+  "jfzn3": {
+   "name": "摩根多重收益A股(美元對沖穩月配)",
+   "nav": 70.41,
+   "nav_date": "2026-11-17",
+   "ok": true,
+   "ref_nav": 70.82
+  },
   "ac0050": {
    "name": "元大台灣卓越50",
    "nav": 93.69,
    "nav_date": "2026-11-17",
    "ok": false,
    "ref_nav": 90.1596
-  },
-  "pima1": {
-   "name": "PIMCO收益增長M(月收息強化)",
-   "nav": 12.42,
-   "nav_date": "2026-11-17",
-   "ok": true,
-   "ref_nav": 12.42
   }
  },
  "accounts": {
   "allianz_a": {
-   "estimated_twd": 4188887.0,
+   "estimated_twd": 4872307.0,
    "truth_twd": 4874833.0,
-   "diff_twd": -685946.0,
-   "diff_pct": -14.07,
-   "coverage_pct": 85.9,
-   "skipped": [
-    "USDEQ5440"
-   ],
+   "diff_twd": -2526.0,
+   "diff_pct": -0.05,
+   "coverage_pct": 100.0,
+   "skipped": [],
    "rows": [
     {
      "code": "USDEQ3490",
@@ -88,11 +93,12 @@
     {
      "code": "USDEQ5440",
      "ccy": "USD",
-     "units": null,
+     "units": 295.230312685,
      "truth_twd": 685946,
-     "note": "無單位數，未納入推算",
-     "estimated_twd": null,
-     "skip_reason": "無單位數，未納入推算"
+     "note": "平台 NAV 11/16、匯率 11/13（較其他檔舊）",
+     "estimated_twd": 683420.0,
+     "nav": 70.41,
+     "nav_date": "2026-11-17"
     }
    ]
   },
@@ -179,9 +185,9 @@
   }
  },
  "total": {
-  "estimated_twd": 7558968.0,
+  "estimated_twd": 8242388.0,
   "truth_twd": 9121635.0,
-  "diff_twd": -1562667.0,
-  "diff_pct": -17.13
+  "diff_twd": -879247.0,
+  "diff_pct": -9.64
  }
 }

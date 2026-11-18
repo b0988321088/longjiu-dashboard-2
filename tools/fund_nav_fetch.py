@@ -42,6 +42,7 @@ FUNDS = {
     "acyt162": {"page": "yp010000", "name": "元大高股息龍頭B配息",         "ccy": "TWD", "ref_nav": 20.82},
     "ac0050": {"page": "yp010000", "name": "元大台灣卓越50",              "ccy": "TWD", "ref_nav": 90.1596},
     "mmg23":  {"page": "yp010001", "name": "M&G入息A(美元避險月配)",       "ccy": "USD", "ref_nav": 10.056},
+    "jfzn3":  {"page": "yp010001", "name": "摩根多重收益A股(美元對沖穩月配)", "ccy": "USD", "ref_nav": 70.82},
 }
 
 # 持倉：(帳戶, 基金代碼, MoneyDJ代碼, 幣別, 單位數, 真值台幣, 備註)
@@ -49,7 +50,7 @@ FUNDS = {
 HOLDINGS = [
     ("allianz_a", "USDEQ3490", "tlz64",   "USD", 9950.851679627,   2609545, ""),
     ("allianz_a", "USDEQ6550", "pima1",   "USD", 3867.786085079,   1579342, ""),
-    ("allianz_a", "USDEQ5440", None,      "USD", None,              685946, "無單位數，未納入推算"),
+    ("allianz_a", "USDEQ5440", "jfzn3",   "USD", 295.230312685,     685946, "平台 NAV 11/16、匯率 11/13（較其他檔舊）"),
     ("allianz_b", "NTDEQ2640", "acyt162", "TWD", 11618.932208288,   241906, ""),
     ("allianz_b", "NTDET0010", "ac0050",  "TWD", 9657.916572796,    870754, "App NAV 90.1596 與公開 93.69 不符（疑平台調整價）"),
     ("allianz_b", "USDEQ3490", "tlz64",   "USD", 1826.410827706,    478964, ""),

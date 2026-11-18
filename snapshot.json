@@ -10021,6 +10021,21 @@
      "value_twd": 1579342,
      "cum_return_pct": 0.81,
      "avg_return_pct": -1.31
+    },
+    "USDEQ5440": {
+     "name": "摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(穩定月配)",
+     "currency": "USD",
+     "units": 295.230312685,
+     "nav": 70.82,
+     "nav_date": "2026-11-16",
+     "fx": 32.8075,
+     "fx_date": "2026-11-13",
+     "avg_price_usd": 75.0255,
+     "avg_fx": 31.8022,
+     "cost_twd": 704413,
+     "value_twd": 685946,
+     "return_pct": -2.62,
+     "cum_return_pct": 0.47
     }
    },
    "verified_total_twd": 4188887,
