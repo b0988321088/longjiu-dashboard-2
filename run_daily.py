@@ -322,6 +322,7 @@ def calibrate_sources() -> dict:
         # 缺值照樣回 None，讓下游 fail-closed，不補預設值。
         "可接受範圍_pct": snap.get("可接受範圍_pct"),
         "insurance_current_value": s_insurance,
+        "insurance_estimate": snap.get("insurance_estimate") or {},
         "funds": snap.get("fund_market_value", snap.get("funds_total", 0)) or 0,
         "funds_cathay": snap.get("funds_cathay", 0) or 0,
         "cash_total": total_cash(snap),  # 2026-10-04 P0：原 fallback 3,614,169 為假真值
@@ -398,6 +399,19 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     firstjin = tv["firstjin"] or 0   # 2026-10-10：移除寫死退路 1,952,366
     firstjin_label = tv.get("firstjin_label", "第一金FA81聯博")
     insurance_total = tv["insurance_total"] or allianz + firstjin
+
+    # 2026-11-18 使用者核准：保單每日推算（真值仍為截圖值，此處只增透明度）
+    _ie = tv.get("insurance_estimate") or {}
+    if _ie.get("estimated_incl_truth_twd"):
+        _dp = _ie.get("diff_pct")
+        _dp_txt = f"{_dp:+.2f}%" if isinstance(_dp, (int, float)) else "—"
+        _ins_est_txt = (
+            f'<span style="color:#0369a1">每日推算 {_ie["estimated_incl_truth_twd"]:,} TWD'
+            f'（NAV 基準 {_ie.get("nav_basis_date") or "—"}，誤差 {_dp_txt}、'
+            f'覆蓋 {_ie.get("coverage_pct")}%）。</span>'
+        )
+    else:
+        _ins_est_txt = ""
     monthly_dividend = tv.get("monthly_dividend", 0)   # 2026-10-10：移除寫死退路 107,116
     allianz_dividend = tv.get("allianz_dividend", 0)   # 2026-10-10：移除寫死退路 73,167
     firstjin_dividend = tv.get("firstjin_dividend", 0)   # 2026-10-10：移除寫死退路 22,949
@@ -1383,7 +1397,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     <div class="label">四大戰略重點</div>
 
     <h3>保單維運</h3>
-    <p class="text-lead">保單現值 <strong>{insurance_total:,} TWD</strong>（安聯 A+B {allianz:,} + {firstjin_label} {firstjin:,}），本月配息合計 <strong>{tv['insurance_dividend']:,} TWD</strong>。落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
+    <p class="text-lead">保單現值 <strong>{insurance_total:,} TWD</strong>（安聯 A+B {allianz:,} + {firstjin_label} {firstjin:,}），本月配息合計 <strong>{tv['insurance_dividend']:,} TWD</strong>。{_ins_est_txt}落實利潤再投資 SOP，於 T+4 最晚轉換申請日才執行 relay 轉換。</p>
 
     <h3>證券曝險</h3>
     <p class="text-lead">證券總市值 <strong>{tv['securities_total']:,} TWD</strong>（{tv['holdings_count']}檔）。本月已收配息：{tv['sec_dividend_monthly']:,} TWD。前三大：{tv['holdings_top3'][0][0]} {tv['holdings_top3'][0][1]:.1f}%、{tv['holdings_top3'][1][0]} {tv['holdings_top3'][1][1]:.1f}%、{tv['holdings_top3'][2][0]} {tv['holdings_top3'][2][1]:.1f}%。0056 凍結質押中，短期無法加碼。</p>

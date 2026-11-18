@@ -140,6 +140,7 @@ def main():
         out["accounts"][acct] = {
             "estimated_twd": round(est, 0),
             "truth_twd": truth,
+            "covered_truth_twd": round(acc["covered_truth"], 0),
             "diff_twd": round(est - truth, 0),
             "diff_pct": round((est - truth) / truth * 100, 2) if truth else None,
             "coverage_pct": round(acc["covered_truth"] / truth * 100, 1) if truth else 0.0,
@@ -149,9 +150,15 @@ def main():
 
     tot_est = sum(a["estimated_twd"] for a in out["accounts"].values())
     tot_truth = sum(a["truth_twd"] for a in out["accounts"].values())
+    # 未取得 NAV 的檔（如 NTDET0010 級別不符）以真值代入，才能與真值同基準比較
+    uncovered = sum(a["truth_twd"] - a["covered_truth_twd"] for a in out["accounts"].values())
+    est_incl = tot_est + uncovered
     out["total"] = {"estimated_twd": round(tot_est, 0), "truth_twd": tot_truth,
                     "diff_twd": round(tot_est - tot_truth, 0),
-                    "diff_pct": round((tot_est - tot_truth) / tot_truth * 100, 2) if tot_truth else None}
+                    "diff_pct": round((tot_est - tot_truth) / tot_truth * 100, 2) if tot_truth else None,
+                    "uncovered_truth_twd": int(round(uncovered, 0)),
+                    "estimated_incl_truth_twd": int(round(est_incl, 0)),
+                    "diff_incl_pct": round((est_incl - tot_truth) / tot_truth * 100, 2) if tot_truth else None}
 
     if "--print" in sys.argv:
         print(json.dumps(out, ensure_ascii=False, indent=1))
@@ -160,6 +167,30 @@ def main():
     DATA.mkdir(exist_ok=True)
     path = DATA / f"fund_nav_{out['date']}.json"
     path.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    # 第二段：把每日推算寫進 snapshot.insurance_estimate。
+    # 主數字 insurance 仍為截圖真值（真值層不動），此欄僅供透明度與誤差追蹤。
+    if "--write-estimate" in sys.argv:
+        sys.path.insert(0, str(BASE))
+        from tools.json_guard import safe_json_write
+        nav_dates = sorted({v["nav_date"] for v in navs.values() if v.get("nav_date")})
+        cov = sum(a["covered_truth_twd"] for a in out["accounts"].values())
+        snap["insurance_estimate"] = {
+            "as_of": out["date"],
+            "nav_basis_date": nav_dates[-1] if nav_dates else None,
+            "estimated_incl_truth_twd": out["total"]["estimated_incl_truth_twd"],
+            "truth_twd": out["total"]["truth_twd"],
+            "diff_twd": round(out["total"]["estimated_incl_truth_twd"] - out["total"]["truth_twd"], 0),
+            "diff_pct": out["total"]["diff_incl_pct"],
+            "coverage_pct": round(cov / out["total"]["truth_twd"] * 100, 1) if out["total"]["truth_twd"] else 0.0,
+            "uncovered_truth_twd": out["total"]["uncovered_truth_twd"],
+            "accounts": {k: {"estimated_twd": v["estimated_twd"], "truth_twd": v["truth_twd"],
+                             "diff_pct": v["diff_pct"], "coverage_pct": v["coverage_pct"]}
+                         for k, v in out["accounts"].items()},
+            "note": "每日以公開 NAV 推算保單價值；未取得 NAV 的檔以真值代入。主數字 insurance 仍為截圖真值，此欄僅供透明度與誤差追蹤。",
+        }
+        safe_json_write(SNAPSHOT, snap)
+        print(f"已寫入 snapshot.insurance_estimate（推算 {out['total']['estimated_incl_truth_twd']:,} vs 真值 {out['total']['truth_twd']:,}）")
 
     print(f"NAV 抓取 {len(navs)} 檔｜輸出 {path.relative_to(BASE)}")
     for acct, a in out["accounts"].items():

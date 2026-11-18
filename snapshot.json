@@ -10048,5 +10048,36 @@
    },
    "note": "A 帳戶 3 檔已建檔 2 檔（USDEQ3490／USDEQ6550），USDEQ5440 待補"
   }
+ },
+ "insurance_estimate": {
+  "as_of": "2026-11-18",
+  "nav_basis_date": "2026-11-17",
+  "estimated_incl_truth_twd": 9113142,
+  "truth_twd": 9121635.0,
+  "diff_twd": -8493.0,
+  "diff_pct": -0.09,
+  "coverage_pct": 90.5,
+  "uncovered_truth_twd": 870754,
+  "accounts": {
+   "allianz_a": {
+    "estimated_twd": 4872307.0,
+    "truth_twd": 4874833.0,
+    "diff_pct": -0.05,
+    "coverage_pct": 100.0
+   },
+   "allianz_b": {
+    "estimated_twd": 1494794.0,
+    "truth_twd": 2365548.0,
+    "diff_pct": -36.81,
+    "coverage_pct": 63.2
+   },
+   "firstjin": {
+    "estimated_twd": 1875287.0,
+    "truth_twd": 1881254.0,
+    "diff_pct": -0.32,
+    "coverage_pct": 100.0
+   }
+  },
+  "note": "每日以公開 NAV 推算保單價值；未取得 NAV 的檔以真值代入。主數字 insurance 仍為截圖真值，此欄僅供透明度與誤差追蹤。"
  }
 }

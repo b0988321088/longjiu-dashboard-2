@@ -867,6 +867,20 @@ def main():
         _sys.path.insert(0, str(BASE / "tools"))
         from freshness import compute as _fcompute  # noqa: E402
         _fr = _fcompute(snap)
+        # 2026-11-18 使用者核准：保單每日推算（真值仍為截圖值）
+        _ie = snap.get("insurance_estimate") or {}
+        if _ie.get("estimated_incl_truth_twd"):
+            _dp = _ie.get("diff_pct")
+            _dp_txt = f"{_dp:+.2f}%" if isinstance(_dp, (int, float)) else "—"
+            _ins_est_html = (
+                '<p style="color:#93c5fd;font-size:11px;margin:8px 0 0;'
+                'border-top:1px solid #334155;padding-top:6px">'
+                f'📈 保單每日推算 <b>{_ie["estimated_incl_truth_twd"]:,}</b> TWD'
+                f'（NAV 基準 {_ie.get("nav_basis_date") or "—"}，誤差 {_dp_txt}、'
+                f'覆蓋 {_ie.get("coverage_pct")}%；未取 NAV 檔以真值代入）</p>'
+            )
+        else:
+            _ins_est_html = ""
         _rows_html = "".join(
             '<tr>'
             f'<td style="padding:3px 6px;color:#e2e8f0">{r["mark"]} {r["label"]}</td>'
@@ -884,6 +898,7 @@ def main():
             f'<b style="color:#93c5fd">{_fr["base_as_of"] or "—"}</b>'
             f'（最舊來源：{_fr["base_label"] or "—"}，落後 {_fr["base_lag_days"]} 天）</p>'
             f'<table style="width:100%;font-size:12px;border-collapse:collapse">{_rows_html}</table>'
+            f'{_ins_est_html}'
             '</div>'
         )
     except Exception as _fe:
