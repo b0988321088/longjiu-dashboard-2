@@ -858,6 +858,39 @@ def main():
         _pending_note = ""
     tpl = tpl.replace("__PENDING_REDEMPTION__", _pending_note)
 
+    # 2026-11-18 使用者核准：資料新鮮度卡片。
+    #   血淚：11/18 總資產是「11/17 證券＋11/16 國泰＋11/13 鉅亨＋11/13 安聯」的拼盤，
+    #   報表只給一個數字，導致連續五天的跌勢被使用者理解成「今天突然掉 46 萬」。
+    #   從此每個來源都標 as_of 與落後天數，並明示「可信基準日＝最舊來源」。
+    try:
+        import sys as _sys
+        _sys.path.insert(0, str(BASE / "tools"))
+        from freshness import compute as _fcompute  # noqa: E402
+        _fr = _fcompute(snap)
+        _rows_html = "".join(
+            '<tr>'
+            f'<td style="padding:3px 6px;color:#e2e8f0">{r["mark"]} {r["label"]}</td>'
+            f'<td style="padding:3px 6px;color:#94a3b8;font-family:monospace">{r["as_of"] or "—"}</td>'
+            f'<td style="padding:3px 6px;text-align:right;color:'
+            f'{"#f87171" if r["level"] == "stale" else "#fbbf24" if r["level"] == "warn" else "#4ade80"}">'
+            f'{r["lag_days"] if r["lag_days"] is not None else "—"} 天</td>'
+            '</tr>'
+            for r in _fr["rows"])
+        _fresh_html = (
+            '<div id="data-freshness" style="border:1px solid #334155;background:#111827;'
+            'border-radius:12px;padding:14px;margin-bottom:14px">'
+            '<h3 style="color:#cbd5e1;font-size:14px;font-weight:800;margin:0 0 2px">🕒 資料新鮮度</h3>'
+            f'<p style="color:#64748b;font-size:11px;margin:0 0 8px">總資產可信基準日 '
+            f'<b style="color:#93c5fd">{_fr["base_as_of"] or "—"}</b>'
+            f'（最舊來源：{_fr["base_label"] or "—"}，落後 {_fr["base_lag_days"]} 天）</p>'
+            f'<table style="width:100%;font-size:12px;border-collapse:collapse">{_rows_html}</table>'
+            '</div>'
+        )
+    except Exception as _fe:
+        _fresh_html = ('<div style="color:#f87171;font-size:12px">'
+                       f'資料新鮮度載入失敗：{_fe}</div>')
+    tpl = tpl.replace("__FRESHNESS_CARD__", _fresh_html)
+
     # 2026-09-11 修：US30Y 曾寫死「5.22%（8/28 收盤）」→ 改動態讀 us30y_state.json
     # 2026-10-14 v1.2（TD-20261015-02）P3 修正：紅線門檻與兩種連續天數皆改讀真值，
     #   不再寫死 5.30，也不再拿模式A 的 streak 冒充「紅線連續 N 日」。

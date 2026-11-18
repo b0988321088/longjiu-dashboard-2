@@ -65,6 +65,32 @@ def derived(snap: dict) -> dict:
         for _k in ("fund_market", "fund_market_value", "funds_total", "fund_total_market_value"):
             if _k in snap:
                 out[_k] = _fv
+    # 保單別名群（2026-11-18：5 個舊 allianz 鍵與 firstjin 三鍵漏同步會讓
+    # run_daily 三源校準 fail-closed，且「同一份資產兩個值」正是報表失真來源）
+    ib = snap.get("insurance_breakdown") or {}
+    a_raw = snap.get("allianz_policy_a_value") or ib.get("policy_a_total")
+    b_raw = snap.get("allianz_policy_b_value") or ib.get("policy_b_total")
+    fj_raw = (snap.get("firstjin_current_value")
+              or (snap.get("firstjin_detail") or {}).get("base_value_before_dividend")
+              or snap.get("firstjin_fl65_current_value"))
+    if a_raw and b_raw:
+        A, B = float(a_raw), float(b_raw)
+        out["allianz_a_value"] = A
+        out["allianz_b_value"] = B
+        for k in ("allianz_total", "allianz_current_value", "allianz_ab_value",
+                  "allianz_combined", "allianz_ab", "allianz_ab_current_value"):
+            out[k] = A + B
+        out["insurance_breakdown.policy_a_total"] = A
+        out["insurance_breakdown.policy_b_total"] = B
+    if fj_raw:
+        FJ = float(fj_raw)
+        for k in ("firstjin", "firstjin_current_value", "firstjin_fl65_current_value", "firstjin_total"):
+            out[k] = FJ
+        out["insurance_breakdown.firstjin_total"] = FJ
+    if a_raw and b_raw and fj_raw:
+        INS = float(a_raw) + float(b_raw) + float(fj_raw)
+        for k in ("insurance", "insurance_total", "insurance_current_value", "insurance_market_value"):
+            out[k] = INS
     if snap.get("total_assets") is not None and snap.get("total_liabilities") is not None:
         out["net_worth"] = round(float(snap["total_assets"]) - float(snap["total_liabilities"]), 2)
 

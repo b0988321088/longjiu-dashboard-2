@@ -454,6 +454,23 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
     _liab_ratio = (_total_liab / (_total_with_re + _re_val) * 100) if (_total_with_re + _re_val) else 0  # 含不動產（主顯示）
     _liab_ratio_flow = (_total_liab / _total_with_re * 100) if _total_with_re else 0  # 不含不動產（流動監控）
 
+    # 2026-11-18 使用者核准：資料新鮮度。
+    # 血淚：總資產曾是「11/17 證券＋11/16 國泰＋11/13 鉅亨＋11/13 安聯」的拼盤，
+    # 只給一個數字 → 五天的跌勢被讀成單日暴跌。從此每類標 as_of 與落後天數。
+    try:
+        import sys as _fsys
+        _fsys.path.insert(0, str(SNAPSHOT.parent / "tools"))
+        from freshness import compute as _fcomp  # noqa: E402
+        _fres = _fcomp(json.loads(SNAPSHOT.read_text(encoding="utf-8")))
+        _fresh_line = "｜".join(
+            f"{r['mark']}{r['label']}{r['lag_days']}天"
+            for r in _fres["rows"] if r["lag_days"] is not None)
+        _fresh_line += (f"　→ 可信基準日 {_fres['base_as_of']}"
+                        f"（{_fres['base_label']}，落後 {_fres['base_lag_days']} 天）")
+    except Exception as _fe:
+        print(f"[freshness] ⚠️ {type(_fe).__name__}: {_fe}")
+        _fresh_line = ""
+
     loans_rows_html = ""
     # 2026-10-04 P0（CIO 四審 R1）：原為 `if tv[k] > 0:`×3——配合 producer 端 `, 0` default，
     # 缺真值時整列被**靜默跳過**（負債憑空消失，表看起來仍正常）。
@@ -1323,6 +1340,7 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
       </table>
       <p style="font-size:11px;color:#6e6e73;margin-top:6px">📌 口徑速記：月支出 {tv['monthly_expense']:,}（v4 定版）｜配息 {monthly_dividend:,}（實收=常態）/ {_nn(_div_expected)}（保守）｜被動保守 {_nn(_div_expected + _rent_tgt) if (_div_expected is not None and _rent_tgt is not None) else "⚠️ 缺真值"}（配息 {_nn(_div_expected)} + 房租 {_nn(_rent_tgt)}）</p>
       <p style="font-size:11px;color:#b45309;margin-top:2px">⚠️ 配息為截至今日實收，月底前依配息接力時程陸續補齊（撥回入帳後覆蓋率更高）</p>
+      <p style="font-size:11px;color:#6e6e73;margin-top:4px">🕒 資料新鮮度：{_fresh_line}</p>
     </div>
   </div>
 
