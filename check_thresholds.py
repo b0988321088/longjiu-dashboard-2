@@ -457,6 +457,22 @@ def main() -> int:
                         errs.append("v1.2 質押 LTV 與 unfreeze_conditions 內值不一致（非動態真值）")
                     if not (40.0 <= float(_l["政策停止線_pct"]) <= 60.0):
                         errs.append(f"v1.2 質押政策停止線異常：{_l['政策停止線_pct']}（應為 ltv分級_pct.黃上限）")
+                    # 2026-11-18 修復：LTV 閘門改判「階段」（45–53%＝警戒不加碼），守三件事
+                    #   ①階段與銀行 App 截圖值一致 ②條件通過＝階段判定（禁回退「≤53% 即綠燈」）
+                    #   ③非綠_正常階段不得許可解凍／加碼
+                    _stage_now = snap.get("ltv_stage_now") or {}
+                    if _stage_now.get("階段") and _l.get("LTV_來源") == "bank_app":
+                        if str(_stage_now.get("階段")) != str(_l.get("階段")):
+                            errs.append(f"LTV 階段不一致：ltv_stage_now={_stage_now.get('階段')} "
+                                        f"vs 派生={_l.get('階段')}（App 截圖為真值）")
+                    _cond_ltv = [x for x in _ucs if "質押 LTV" in str(x.get("名稱"))]
+                    if _cond_ltv:
+                        _expect = bool(_l.get("加碼許可") and not _l.get("觸追繳"))
+                        if bool(_cond_ltv[0].get("通過")) != _expect:
+                            errs.append(f"v1.2 質押 LTV 條件未依階段判定（階段 {_l.get('階段')} "
+                                        f"應為 {'通過' if _expect else '不通過'}；禁回退「≤53% 即綠燈」）")
+                    if bool(_ug.get("unfreeze_allowed")) and not bool(_l.get("加碼許可")):
+                        errs.append(f"LTV 階段 {_l.get('階段')}（非綠_正常）卻許可解凍／加碼")
                     _vv = _rvv(snap)
                     if bool(_vv["轉負情境"]) != bool(_vv["暫停新增分批"]):
                         errs.append("v1.2 還本安全閥：暫停新增分批 與 轉負情境 不一致")

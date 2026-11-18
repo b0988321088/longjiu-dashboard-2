@@ -1349,6 +1349,37 @@ def gate_mode(snap: dict | None = None) -> str:
     return GATE_MODE_HARD_VETO if m == GATE_MODE_HARD_VETO else GATE_MODE_ADVISORY
 
 
+LTV_STAGE_ORDER = ("綠_正常", "警戒", "一階", "二階", "三階", "斷路")
+
+
+def classify_ltv_stage(ltv_pct: float, grades: dict | None) -> tuple[str, str]:
+    """LTV 階段分類（單一來源＝thresholds.ltv分級_pct.階段_20261116，禁硬編碼門檻）。
+
+    2026-11-18 修復：原閘門只比「≤ 黃上限(53%)」，把 45–53% 的「警戒＝不加碼」誤判為
+    可加碼綠燈。階段表缺漏時回 ("未知", ...) —— 呼叫端必須 fail-closed，不得視為綠燈。
+
+    回 (階段, 該階段動作說明)。
+    """
+    seg_table = (grades or {}).get("階段_20261116") or {}
+    if not isinstance(seg_table, dict) or not seg_table:
+        return "未知", "缺 thresholds.ltv分級_pct.階段_20261116 → fail-closed（不得判定可加碼）"
+    try:
+        v = float(ltv_pct)
+    except (TypeError, ValueError):
+        return "未知", "LTV 不可解析 → fail-closed"
+    for name in LTV_STAGE_ORDER:
+        seg = seg_table.get(name)
+        if not isinstance(seg, dict):
+            continue
+        lo, hi = seg.get("下限"), seg.get("上限")
+        if isinstance(lo, (int, float)) and v < float(lo):
+            continue
+        if isinstance(hi, (int, float)) and v >= float(hi):
+            continue
+        return name, str(seg.get("動作") or "")
+    return "未知", "LTV 未落入任何已定義階段 → fail-closed"
+
+
 def pledge_ltv_detail(snap: dict) -> dict:
     """質押 LTV（市值口徑，明細版）— v1.2 條文第 2 條。
 
@@ -1376,11 +1407,48 @@ def pledge_ltv_detail(snap: dict) -> dict:
     chase = grades.get("追繳")
     if not isinstance(line, (int, float)) or isinstance(line, bool):
         raise KeyError("snapshot 缺 thresholds.ltv分級_pct.黃上限（政策停止線）→ 拒絕判斷")
-    ltv = float(loan) / pool * 100.0
+    _snap = snap or {}
+    ltv_self = float(loan) / pool * 100.0
+    # ── 2026-11-18 修復（CIO 質疑②③）：LTV 雙源對齊＋階段判定 ──────────────
+    # 病灶①：閘門只驗「≤ 黃上限 53%」，但 11/16 六段分級把 45–53% 定為「警戒＝不加碼」
+    #        → 50.39% 每天都輸出「可加碼」綠燈（兩套判準並存）。
+    # 病灶②：系統自算 50.22% 與銀行 App 截圖 50.39% 雙源並存，閘門讀自算值（落後）。
+    # 修法：App 截圖為 authoritative（截圖＝真值），且一律取兩者較保守（較高）值；
+    #       階段由 thresholds.ltv分級_pct.階段_20261116 分類；缺表 → 未知 → 不可加碼。
+    _now = _snap.get("ltv_stage_now") or {}
+    _app_ltv, _app_date = None, None
+    if isinstance(_now, dict):
+        try:
+            _v = float(_now.get("LTV_pct"))
+            if 0 < _v < 100:
+                _app_ltv = _v
+        except (TypeError, ValueError):
+            _app_ltv = None
+        _app_date = str(_now.get("判定日") or "") or None
+    _app_fresh = False
+    if _app_ltv is not None and _app_date:
+        try:
+            _age = (dt.date.today() - dt.date.fromisoformat(_app_date)).days
+            _app_fresh = 0 <= _age <= 7
+        except ValueError:
+            _app_fresh = False
+    ltv = max(_ for _ in (ltv_self, (_app_ltv if _app_fresh else None)) if _ is not None)
+    _stage, _stage_action = classify_ltv_stage(ltv, grades)
+    _green_cap = ((grades.get("階段_20261116") or {}).get("綠_正常") or {}).get("上限")
     return {
         "借款": float(loan),
         "擔保品市值": pool,
         "LTV_pct": round(ltv, 2),
+        "LTV_self_pct": round(ltv_self, 2),
+        "LTV_app_pct": round(_app_ltv, 2) if _app_ltv is not None else None,
+        "LTV_app_date": _app_date,
+        "LTV_app_fresh": _app_fresh,
+        "LTV_來源": ("bank_app" if (_app_fresh and _app_ltv is not None and _app_ltv >= ltv_self)
+                     else "self_calc"),
+        "階段": _stage,
+        "階段動作": _stage_action,
+        "綠上限_pct": float(_green_cap) if isinstance(_green_cap, (int, float)) else None,
+        "加碼許可": bool(_stage == "綠_正常"),
         "政策停止線_pct": float(line),
         "追繳參考_pct": float(chase) if isinstance(chase, (int, float)) and not isinstance(chase, bool) else None,
         "距停止線_pct": round(float(line) - ltv, 2),
@@ -1547,10 +1615,21 @@ def unfreeze_conditions(snap: dict, state: dict | None = None) -> dict:
          "註記": "可動用＝cash_layers.unrestricted_cash；指定用途款 900,000 永久排除；"
                  "分批資金只認列已實際入帳盈餘",
          "來源": "sot_targets.allowable_cash ＋ sabbatical_gate_twd.自由現金_twd"},
-        {"名稱": f"質押 LTV ≤ {ltv['政策停止線_pct']:.0f}%（內部政策停止線）",
-         "通過": bool(ltv["通過"] and not ltv["觸追繳"]),
-         "現值": ltv["LTV_pct"], "門檻": ltv["政策停止線_pct"],
-         "註記": ltv["語意"], "來源": ltv["source"]},
+        {"名稱": (f"質押 LTV 階段＝綠_正常（<{ltv['綠上限_pct']:.0f}%）"
+                   if ltv.get("綠上限_pct") is not None
+                   else "質押 LTV 階段＝綠_正常（缺階段表 → fail-closed）"),
+         # 2026-11-18 修復：原判準 ltv <= 黃上限(53%) 與 11/16 六段分級衝突
+         # （45–53% 是「警戒＝不加碼」），改由階段判定；53% 降為內部停止線下限。
+         "通過": bool(ltv["加碼許可"] and not ltv["觸追繳"]),
+         "現值": ltv["LTV_pct"],
+         "門檻": (float(ltv["綠上限_pct"]) if ltv.get("綠上限_pct") is not None
+                  else float(ltv["政策停止線_pct"])),
+         "階段": ltv.get("階段"), "階段動作": ltv.get("階段動作"),
+         "LTV_自算": ltv.get("LTV_self_pct"), "LTV_App": ltv.get("LTV_app_pct"),
+         "註記": (f"{ltv['語意']}｜2026-11-18 起本條改判「階段」：45–53%＝警戒（不加碼、"
+                  f"子彈暫停），53% 僅為內部停止線下限。現階段＝{ltv.get('階段')}："
+                  f"{ltv.get('階段動作')}"),
+         "來源": ltv["source"]},
         {"名稱": "還本安全閥（無月盈餘轉負情境）", "通過": (not valve["暫停新增分批"]),
          "現值": ("；".join(valve["轉負情境"]) if valve["轉負情境"] else "無"),
          "門檻": "0 個轉負情境",
