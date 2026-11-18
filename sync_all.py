@@ -154,6 +154,10 @@ def main():
         ("四源同步", "python four_source_sync.py"),
         ("同義欄位複驗", "python asset_sync.py"),
         ("一致性檢查", f"python check_penetration_consistency.py {today}"),
+        # 2026-11-18 使用者核准：四頁期末總資產必須相等（fail-closed）
+        #   血淚：MTD 頁停在 11/17 口徑 26,434,546，儀表板 25,970,345，差 464,201，
+        #   而 sync_all 全綠（因為它根本沒重產 MTD）。此後任一頁漂移即在此擋下。
+        ("四頁總資產一致", f"python tools/check_total_consistency.py --date {today}"),
         # 2026-10-07 卡②（使用者裁決）：美元曝險 advisory 硬性防呆閘門 —
         #   即使 prompt 未被遵守、或哪個模組忘了吃 advisory_only，產出檔只要出現
         #   「美元曝險＋資產調整指令」即 FAIL，擋住後續 commit/push。非 advisory 時自動 SKIP。
