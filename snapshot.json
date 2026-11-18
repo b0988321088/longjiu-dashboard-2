@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-18T14:38:29.837179",
+ "generated_at": "2026-11-18T21:33:45.425342",
  "version": "v5.0.10-true-value-correction",
  "date": "2026-11-18",
  "total_assets": 25970345.0,
@@ -10075,13 +10075,13 @@
  },
  "insurance_estimate": {
   "as_of": "2026-11-18",
-  "nav_basis_date": "2026-11-17",
+  "nav_basis_date": "2026-11-18",
   "estimated_incl_truth_twd": 9113142,
   "truth_twd": 9121635.0,
   "diff_twd": -8493.0,
   "diff_pct": -0.09,
-  "coverage_pct": 90.5,
-  "uncovered_truth_twd": 870754,
+  "coverage_pct": 87.8,
+  "uncovered_truth_twd": 1112660,
   "accounts": {
    "allianz_a": {
     "estimated_twd": 4872307.0,
@@ -10090,10 +10090,10 @@
     "coverage_pct": 100.0
    },
    "allianz_b": {
-    "estimated_twd": 1494794.0,
+    "estimated_twd": 1252888.0,
     "truth_twd": 2365548.0,
-    "diff_pct": -36.81,
-    "coverage_pct": 63.2
+    "diff_pct": -47.04,
+    "coverage_pct": 53.0
    },
    "firstjin": {
     "estimated_twd": 1875287.0,

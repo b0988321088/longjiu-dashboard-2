@@ -2238,3 +2238,6 @@
 {"ts": "2026-11-18T14:38:55", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1164, "cached": 1024, "out": 184, "ok": true}
 {"ts": "2026-11-18T14:38:58", "model": "deepseek-chat", "caller": "run_daily.py", "in": 652, "cached": 512, "out": 195, "ok": true}
 {"ts": "2026-11-18T14:39:32", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 517, "cached": 383, "out": 954, "ok": true}
+{"ts": "2026-11-18T16:15:28", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 476, "cached": 128, "out": 631, "ok": true}
+{"ts": "2026-11-18T21:32:29", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 645, "cached": 0, "out": 130, "ok": true}
+{"ts": "2026-11-18T21:33:33", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 645, "cached": 511, "out": 149, "ok": true}
