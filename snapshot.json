@@ -9886,7 +9886,7 @@
    "source": "永旭保經 App 標的詳細資訊（11/18 14:04 截圖 3 張）",
    "fx": 32.877,
    "fx_date": "2026-11-16",
-   "note": "B 帳戶 5 檔中之 3 檔美元計價標的；另 2 檔台幣（NTDEQ2640 241,906／NTDET0010 870,754）無匯率項",
+   "note": "B 帳戶 5 檔全數建檔（3 檔美元＋2 檔台幣）；台幣檔匯率 1",
    "funds": {
     "USDEQ3490": {
      "name": "安聯收益成長基金-AM穩定月收類股(美元)",
@@ -9898,7 +9898,9 @@
      "cost_twd": 513216,
      "value_twd": 478964,
      "cum_return_pct": 2.01,
-     "avg_return_pct": -6.67
+     "avg_return_pct": -6.67,
+     "currency": "USD",
+     "fx": 32.877
     },
     "USDEQ5700": {
      "name": "M&G入息基金A(美元避險月配)F",
@@ -9910,7 +9912,9 @@
      "cost_twd": 628100,
      "value_twd": 631760,
      "cum_return_pct": 0.31,
-     "avg_return_pct": 0.58
+     "avg_return_pct": 0.58,
+     "currency": "USD",
+     "fx": 32.877
     },
     "USDEQ6730": {
      "name": "貝萊德世界黃金基金 A10美元(總報酬穩定配息)",
@@ -9922,10 +9926,40 @@
      "cost_twd": 165752,
      "value_twd": 142164,
      "cum_return_pct": -12.73,
-     "avg_return_pct": -14.23
+     "avg_return_pct": -14.23,
+     "currency": "USD",
+     "fx": 32.877
+    },
+    "NTDEQ2640": {
+     "name": "元大台灣高股息優質龍頭基金-新台幣(B)配息",
+     "units": 11618.932208288,
+     "nav": 20.82,
+     "nav_date": "2026-11-17",
+     "currency": "TWD",
+     "avg_price": 31.64,
+     "avg_fx": 1,
+     "cost_twd": 367623,
+     "value_twd": 241906,
+     "cum_return_pct": -34.06,
+     "avg_return_pct": -34.19,
+     "div_status": "已申請"
+    },
+    "NTDET0010": {
+     "name": "元大台灣卓越50",
+     "units": 9657.916572796,
+     "nav": 90.1596,
+     "nav_date": "2026-11-17",
+     "currency": "TWD",
+     "avg_price": 104.5222,
+     "avg_fx": 1,
+     "cost_twd": 1009467,
+     "value_twd": 870754,
+     "cum_return_pct": null,
+     "avg_return_pct": -13.74,
+     "div_status": "未申請"
     }
    },
-   "verified_total_twd": 1252888
+   "verified_total_twd": 2365548
   },
   "firstjin": {
    "as_of": "2026-11-18",
@@ -9953,6 +9987,51 @@
    },
    "verified_total_twd": 1881254.56,
    "note": "ID05 單位數 5,700.98491、NAV 10.056 USD、匯率 32.815；units×nav×fx 與表列 1,881,254 差 0"
+  },
+  "allianz_a": {
+   "as_of": "2026-11-18",
+   "source": "永旭保經 App 標的詳細資訊（11/18 14:03 截圖）",
+   "fx": 32.877,
+   "fx_date": "2026-11-16",
+   "funds": {
+    "USDEQ3490": {
+     "name": "安聯收益成長基金-AM穩定月收類股(美元)",
+     "units": 9950.851679627,
+     "nav": 7.9765,
+     "nav_date": "2026-11-17",
+     "currency": "USD",
+     "fx": 32.877,
+     "avg_price": 8.4844,
+     "avg_fx": 32.0681,
+     "cost_twd": 2707440,
+     "value_twd": 2609545,
+     "cum_return_pct": 0.52,
+     "avg_return_pct": -3.61
+    },
+    "USDEQ6550": {
+     "name": "PIMCO收益增長基金-M級類別(月收息強化股份)",
+     "units": 3867.786085079,
+     "nav": 12.42,
+     "nav_date": "2026-11-17",
+     "currency": "USD",
+     "fx": 32.877,
+     "avg_price": 12.9767,
+     "avg_fx": 31.885,
+     "cost_twd": 1600360,
+     "value_twd": 1579342,
+     "cum_return_pct": 0.81,
+     "avg_return_pct": -1.31
+    }
+   },
+   "verified_total_twd": 4188887,
+   "missing": {
+    "USDEQ5440": {
+     "name": "摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(穩定月配)",
+     "value_twd": 685946,
+     "note": "尚未取得標的明細截圖（A 帳戶 3 檔中缺此檔）"
+    }
+   },
+   "note": "A 帳戶 3 檔已建檔 2 檔（USDEQ3490／USDEQ6550），USDEQ5440 待補"
   }
  }
 }
