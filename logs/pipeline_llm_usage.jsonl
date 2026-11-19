@@ -2248,3 +2248,14 @@
 {"ts": "2026-11-18T22:52:01", "model": "deepseek-chat", "caller": "run_daily.py", "in": 1157, "cached": 512, "out": 167, "ok": true}
 {"ts": "2026-11-18T22:52:04", "model": "deepseek-chat", "caller": "run_daily.py", "in": 645, "cached": 511, "out": 194, "ok": true}
 {"ts": "2026-11-18T22:52:28", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 488, "cached": 0, "out": 583, "ok": true}
+{"ts": "2026-11-19T07:00:59", "model": "deepseek-chat", "caller": "buffett_cto_analyzer.py", "in": 1091, "cached": 256, "out": 191, "ok": true}
+{"ts": "2026-11-19T07:01:02", "model": "deepseek-chat", "caller": "buffett_cto_analyzer.py", "in": 1116, "cached": 256, "out": 165, "ok": true}
+{"ts": "2026-11-19T07:01:24", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 653, "cached": 0, "out": 178, "ok": true}
+{"ts": "2026-11-19T07:02:23", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 488, "cached": 256, "out": 527, "ok": true}
+{"ts": "2026-11-19T08:12:14", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 653, "cached": 512, "out": 171, "ok": true}
+{"ts": "2026-11-19T08:12:38", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 488, "cached": 256, "out": 617, "ok": true}
+{"ts": "2026-11-19T08:13:45", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 653, "cached": 128, "out": 152, "ok": true}
+{"ts": "2026-11-19T08:15:10", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 645, "cached": 0, "out": 202, "ok": true}
+{"ts": "2026-11-19T08:15:34", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 488, "cached": 256, "out": 624, "ok": true}
+{"ts": "2026-11-19T08:18:38", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 645, "cached": 511, "out": 155, "ok": true}
+{"ts": "2026-11-19T08:18:58", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 488, "cached": 256, "out": 627, "ok": true}
