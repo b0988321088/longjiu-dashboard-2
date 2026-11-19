@@ -43,11 +43,16 @@ def main():
         out_lines.append("ℹ️ 本次無可提交檔案（月報以文字推送為主）→ 跳過 commit/push")
         print("\n".join(out_lines))
         return 0
+    # 2026-11-19（review 修正）：commit 前的 HEAD＝本輪佇列基準。
+    _base0 = (run(["git", "rev-parse", "HEAD"], timeout=30).stdout or "").strip()
     c = run(["git", "commit", "-m", "auto: 投資績效月報更新"], timeout=60)
     if c.returncode == 0:
         # 2026-09-14：紀錄＋推送統一走 auto_push.py（範圍紀錄覆蓋／重試／遠端 sha 驗證）
-        ap = run([sys.executable, os.path.join(BASE, "auto_push.py"),
-                  "--script", "investment_perf_monthly.py"], timeout=600)
+        _ap_cmd = [sys.executable, os.path.join(BASE, "auto_push.py"),
+                   "--script", "investment_perf_monthly.py"]
+        if _base0:
+            _ap_cmd += ["--baseline", _base0]
+        ap = run(_ap_cmd, timeout=600)
         if ap.returncode != 0:
             out_lines.append(f"⚠️ 未推送上線（rc={ap.returncode}）："
                              f"{((ap.stdout or '') + (ap.stderr or '')).strip()[-160:]}")

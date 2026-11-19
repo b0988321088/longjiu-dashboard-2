@@ -44,6 +44,8 @@ today = datetime.date.today().isoformat()
 if os.path.exists(os.path.join(REPO, ".git", "PUSH_HOLD")):
     print("⏸️ PUSH_HOLD 生效：跳過 nightly commit/push；發布待另行授權")
     sys.exit(0)
+# 2026-11-19（review 修正）：本檔先 commit 再 push → 記下 commit 前的 HEAD 當佇列基準。
+_base0 = (git("rev-parse", "HEAD").stdout or "").strip()
 git("add", "--", *FILES)
 st = git("status", "--porcelain", "--", *FILES)
 if not st.stdout.strip():
@@ -112,8 +114,10 @@ if _cio:
 # 2026-09-14：紀錄＋推送統一走 auto_push.py —— 確保「推送範圍內每顆 commit 都有審查紀錄」、
 # push 失敗自動重試 3 次、並用 git ls-remote 驗證遠端 sha 真的前進（不再是「按了就算成功」）。
 # 未完成 → 非零退出（cron 才看得到失敗，不會靜默地以為推上去了）。
-r = subprocess.run([sys.executable, "auto_push.py", "--script", "nightly_dashboard_sync.py", "--record", _rec],
-                   cwd=REPO, capture_output=True, text=True, encoding="utf-8")
+_ap_cmd = [sys.executable, "auto_push.py", "--script", "nightly_dashboard_sync.py", "--record", _rec]
+if _base0:
+    _ap_cmd += ["--baseline", _base0]
+r = subprocess.run(_ap_cmd, cwd=REPO, capture_output=True, text=True, encoding="utf-8")
 print((r.stdout or "").strip() or (r.stderr or "").strip())
 if r.returncode != 0:
     print(f"未推送上線（rc={r.returncode}）"); sys.exit(1)

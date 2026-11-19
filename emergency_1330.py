@@ -426,6 +426,8 @@ def _commit_own() -> int:
     if _foreign:
         # 只用 pathspec commit → 不會帶走他班已 stage 的檔；此處僅揭露、不 abort（避免因此製造殘留）
         print(f"ℹ️ index 另有他班已 stage 檔（不隨本次提交）：{_foreign}")
+    # 2026-11-19（review 修正）：commit 前 HEAD＝本輪佇列基準（auto_push --baseline）。
+    _base0 = (g("rev-parse", "HEAD").stdout or "").strip()
     c = g("commit", "-m", f"data: 13:00 應變產物 {today}（資產差異歷史＋巴菲特CTO報告）", "--", *_files)
     out = ((c.stdout or "") + (c.stderr or "")).strip()
     if c.returncode != 0:
@@ -435,8 +437,10 @@ def _commit_own() -> int:
         print(out)
         return 1
     print(out.splitlines()[0] if out else "已提交自家產物")
-    return subprocess.run([sys.executable, str(LJ / "auto_push.py"),
-                           "--script", "emergency_1330.py"], cwd=str(LJ)).returncode
+    _ap_cmd = [sys.executable, str(LJ / "auto_push.py"), "--script", "emergency_1330.py"]
+    if _base0:
+        _ap_cmd += ["--baseline", _base0]
+    return subprocess.run(_ap_cmd, cwd=str(LJ)).returncode
 
 
 _ok_own = _commit_own()

@@ -193,13 +193,17 @@ def publish_deck(dry_run=False, no_push=False):
             return 1
         print(f'⏭ 簡報無變更，略過發布（遠端已同步 {_remote[:12]}）')
         return 0
+    # 2026-11-19（review 修正）：commit 前 HEAD＝本輪佇列基準（auto_push --baseline）。
+    _base0 = subprocess.run(["git", "rev-parse", "HEAD"], cwd=BASE,
+                            capture_output=True, text=True).stdout.strip()
     steps = [
         ['git', 'add', '--', *PUB_FILES],
         # pathspec 式 commit（CIO required_fix #2）：只提交這 2 檔，index 若夾帶他班 staged 檔也不會被一起推上去
         ['git', 'commit', '-q', '-m', 'publish(deck): 大轉向簡報自動發布（週日 17:00）', '--', *PUB_FILES],
         [_sys.executable, os.path.join(BASE, 'auto_record.py'), '--script', 'build_final.py',
          '--own', *PUB_FILES, '--note', '週日17:00 簡報自動發布（build_refinance_html 收尾）'],
-        [_sys.executable, _PUB_CMD, '--script', 'build_final.py'],
+        [_sys.executable, _PUB_CMD, '--script', 'build_final.py']
+        + (['--baseline', _base0] if _base0 else []),
     ]
     if dry_run:
         print('🔍 --dry-run 將執行：')

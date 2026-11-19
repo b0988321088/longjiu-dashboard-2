@@ -131,6 +131,9 @@ def github_push(filepath: str) -> bool:
     if _cio:
         print(f"  🔐 {filepath}：閘門判定必須真 CIO 審查（未命中白名單／特殊類別）→ 取真 CIO APPROVE 後才推")
 
+    # 2026-11-19（review 修正）：先記下本輪 commit 前的 HEAD，供 auto_push 佇列斷言當基準。
+    _base0 = subprocess.run(["git", "rev-parse", "HEAD"], cwd=BASE,
+                            capture_output=True, text=True).stdout.strip()
     result = subprocess.run(
         ["git", "add", filepath],
         cwd=BASE,
@@ -179,9 +182,11 @@ def github_push(filepath: str) -> bool:
             print(f"  ⛔ 落紀錄未通過 → 不推送：{((_ar.stdout or '') + (_ar.stderr or ''))[-200:]}")
             return False
     # 2026-09-14：推送統一走 auto_push.py（範圍紀錄覆蓋／重試 3 次／遠端 sha 驗證）。
-    ap = subprocess.run([sys.executable, str(BASE / "auto_push.py"), "--script", "daily_deploy.py",
-                         "--record", _rec_mode],
-                        cwd=BASE, capture_output=True, text=True, timeout=600)
+    _ap_cmd = [sys.executable, str(BASE / "auto_push.py"), "--script", "daily_deploy.py",
+               "--record", _rec_mode]
+    if _base0:
+        _ap_cmd += ["--baseline", _base0]
+    ap = subprocess.run(_ap_cmd, cwd=BASE, capture_output=True, text=True, timeout=600)
     ok = ap.returncode == 0
     print(f"  push {filepath} via auto_push: {'ok' if ok else 'FAIL（rc=%d）' % ap.returncode}")
     if not ok:

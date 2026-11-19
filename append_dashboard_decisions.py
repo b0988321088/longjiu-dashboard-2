@@ -202,6 +202,8 @@ def settle_own(entry, skip_push=False):
         return f"⚠️ 入庫收尾：git add 失敗 {(add.stderr or add.stdout or '').strip()[:200]}"
     if _git("diff", "--cached", "--quiet", "--", *OWN_FILES).returncode == 0:
         return "ℹ️ 入庫收尾：無變更，未提交"
+    # 2026-11-19（review 修正）：commit 前的 HEAD＝本輪佇列基準（auto_push --baseline）。
+    _pre = (_git("rev-parse", "HEAD").stdout or "").strip()
     c = _git("commit", "-m", f"data(decisions): 入庫 {entry['id']}｜{entry['task'][:40]}", "--", *OWN_FILES)
     if c.returncode != 0:
         return f"⚠️ 入庫收尾：commit 失敗 {(c.stderr or c.stdout or '').strip()[:200]}"
@@ -219,7 +221,10 @@ def settle_own(entry, skip_push=False):
         return f"✅ 入庫已提交 {head}（讀不到 origin/clean-main → 未推送，交由既有推送路徑）"
     if n != "1":
         return f"✅ 入庫已提交 {head}（待推 {n} 顆，含本筆 → 不代推，交由既有推送路徑）"
-    p = subprocess.run([sys.executable, "auto_push.py", "--script", "append_dashboard_decisions.py"],
+    _ap_cmd = [sys.executable, "auto_push.py", "--script", "append_dashboard_decisions.py"]
+    if _pre:
+        _ap_cmd += ["--baseline", _pre]
+    p = subprocess.run(_ap_cmd,
                        cwd=str(REPO), capture_output=True, text=True,
                        encoding="utf-8", errors="replace")
     tail = ((p.stdout or "").strip().splitlines() or [""])[-1]

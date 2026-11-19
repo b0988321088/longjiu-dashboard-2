@@ -1115,6 +1115,9 @@ elif ok and _cio_ok and _date_ok:
         if _staged and _links_ok:
             # stage 後、commit 前：staged 必須完全落在本輪 scope 內（絕對禁止 scope 外檔案進入 commit）
             _dsi(_scope, base=BASE, label=f"regenerate_report({TODAY})")
+            # 2026-11-19（review 修正）：commit 前 HEAD＝本輪佇列基準（auto_push --baseline）。
+            _base0 = (subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True,
+                                     cwd=BASE).stdout or '').strip()
             subprocess.run(['git', 'commit', '-m', _msg], capture_output=True, text=True, cwd=BASE)
             # 2026-09-14（INC-183）：此處原本寫 --record skip，但檔案內沒有任何地方替這顆 commit 落紀錄
             # （cio_review.py 只是本地規則檢查、不寫紀錄；cio_approve 從未被呼叫；原先是靠 [cioreviewed]
@@ -1127,8 +1130,10 @@ elif ok and _cio_ok and _date_ok:
             _cio2_ok, _cio2_msg = _cio_review_and_record()
             print(f"  🔐 真 CIO RECORD：{_cio2_msg}")
             if _cio2_ok:
-                _ar = subprocess.run([sys.executable, str(BASE / "auto_push.py"), "--script", "regenerate_report.py"],
-                                     capture_output=True, text=True, timeout=900, cwd=BASE)
+                _ap_cmd = [sys.executable, str(BASE / "auto_push.py"), "--script", "regenerate_report.py"]
+                if _base0:
+                    _ap_cmd += ["--baseline", _base0]
+                _ar = subprocess.run(_ap_cmd, capture_output=True, text=True, timeout=900, cwd=BASE)
                 print((_ar.stdout or "").strip() or (_ar.stderr or "").strip())
                 if _ar.returncode != 0:
                     print(f"⚠️ 未推送上線（rc={_ar.returncode}）")

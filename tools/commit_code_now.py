@@ -92,6 +92,8 @@ def main() -> int:
         return 0
 
     msg = a.message or f"chore: 程式檔整批落版（{datetime.now():%Y-%m-%d %H:%M}）"
+    # 2026-11-19（review 修正）：commit 前 HEAD＝本輪佇列基準（auto_push --baseline）。
+    _base0 = git("rev-parse", "HEAD").strip()
     if subprocess.run(["git", "add", "--", *files], cwd=str(BASE)).returncode != 0:
         print("❌ git add 失敗 → 中止")
         return 1
@@ -106,7 +108,10 @@ def main() -> int:
         print(f"❌ 真 CIO 審查未通過 → 不推送。修完後重跑：python tools/commit_code_now.py")
         print(f"   （commit {sha} 仍在本地、尚未取得 RECORD，勿留過夜）")
         return 1
-    if run(str(BASE / "auto_push.py")) != 0:
+    _ap_cmd = [str(BASE / "auto_push.py"), "--script", "commit_code_now.py"]
+    if _base0:
+        _ap_cmd += ["--baseline", _base0]
+    if run(*_ap_cmd) != 0:
         print("❌ push 失敗 → 遠端未更新（見上方 auto_push 訊息）")
         return 1
 

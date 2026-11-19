@@ -110,6 +110,9 @@ def main():
     # 成功靜默；失敗才印 ERR（cron 空 stdout = 不推送）。
     try:
         if _needs_commit(OUT, BASE):
+            # 2026-11-19（review 修正）：先記 commit 前 HEAD，push 時當佇列基準。
+            _pre = (subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True,
+                                   cwd=str(BASE)).stdout or b"").decode().strip()
             _cmds = [
                 ["git", "add", "cio_review.json"],
                 ["git", "commit", "-m", "data: cio_review.json 收錄更新（CIO 審查）"],
@@ -120,8 +123,10 @@ def main():
                     print(f"ERR: ingest commit 失敗 {' '.join(_c[:2])}: {(_r.stderr or _r.stdout).decode('utf-8','ignore')[-300:]}")
                     return 1
             # 2026-09-14：紀錄＋推送統一走 auto_push.py（範圍紀錄覆蓋／重試 3 次／遠端 sha 驗證）
-            _ap = subprocess.run([sys.executable, str(BASE / "auto_push.py"), "--script", "cio_review_ingest.py"],
-                                 capture_output=True, cwd=str(BASE), timeout=600)
+            _ap_cmd = [sys.executable, str(BASE / "auto_push.py"), "--script", "cio_review_ingest.py"]
+            if _pre:
+                _ap_cmd += ["--baseline", _pre]
+            _ap = subprocess.run(_ap_cmd, capture_output=True, cwd=str(BASE), timeout=600)
             if _ap.returncode != 0:
                 _o = ((_ap.stdout or b"") + (_ap.stderr or b"")).decode("utf-8", "ignore")
                 print(f"ERR: ingest 未推送上線（rc={_ap.returncode}）: {_o[-300:]}")

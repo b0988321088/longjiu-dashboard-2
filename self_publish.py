@@ -232,14 +232,18 @@ def commit_own(script: str, allow: list[str], *, dry_run: bool = False,
 
     msg = (f"data: {script} 自身產出就地提交（{time.strftime('%Y-%m-%d %H:%M')}）\n\n"
            + "".join(f"- {f}\n" for f in staged))
+    # 2026-11-19（review 修正）：commit 前 HEAD＝本輪佇列基準（auto_push --baseline）。
+    _base0 = (_g("rev-parse", "HEAD").stdout or "").strip()
     commit = _g("commit", "-m", msg, "--", *staged)
     if commit.returncode != 0:
         sys.stderr.write(((commit.stdout or "") + (commit.stderr or "")).strip()[:400] + "\n")
         return 1
     print(((commit.stdout or "").splitlines() or [msg])[0])
 
-    ap = subprocess.run([sys.executable, str(AUTO_PUSH), "--script", script],
-                        cwd=str(REPO))
+    _ap_cmd = [sys.executable, str(AUTO_PUSH), "--script", script]
+    if _base0:
+        _ap_cmd += ["--baseline", _base0]
+    ap = subprocess.run(_ap_cmd, cwd=str(REPO))
     return ap.returncode or producer_rc
 
 

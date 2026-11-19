@@ -808,14 +808,19 @@ def weekly_calendar_main(dry_run: bool | None = None) -> None:
         _dirty = bool(cleaned)
 
     if _dirty:
+        # 2026-11-19（review 修正）：commit 前 HEAD＝本輪佇列基準（auto_push --baseline）。
+        _base0 = (subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(ROOT),
+                                 capture_output=True, text=True).stdout or "").strip()
         r = subprocess.run(["git", "commit", "-m",
                             f"[cron] 每週事件清理：刪除 {cleaned} 筆過期事件（git 可回溯）",
                             "--", *_tracked_candidates],
                            cwd=str(ROOT), capture_output=True, text=True, timeout=120)
         if r.returncode == 0:
-            ap = subprocess.run([sys.executable, str(ROOT / "auto_push.py"),
-                                 "--script", "schedule_events_weekly_clean.py"],
-                                cwd=str(ROOT), capture_output=True, text=True, timeout=600)
+            _ap_cmd = [sys.executable, str(ROOT / "auto_push.py"),
+                       "--script", "schedule_events_weekly_clean.py"]
+            if _base0:
+                _ap_cmd += ["--baseline", _base0]
+            ap = subprocess.run(_ap_cmd, cwd=str(ROOT), capture_output=True, text=True, timeout=600)
             if ap.returncode != 0:
                 push_note = (f"\n⚠️ 未推送上線（rc={ap.returncode}）："
                              f"{((ap.stdout or '') + (ap.stderr or ''))[-200:]}")

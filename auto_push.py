@@ -27,6 +27,11 @@
                                     若其中含程式檔 → 拒絕推送（程式改動必須走真 CIO 審查）
                       skip：完全不動紀錄（呼叫端已自行走 cio_approve 真審查）
   --own GLOB...       轉發給 auto_record：本 job 產出未提交 → 硬擋
+  --baseline SHA      本輪「自己 commit 之前」的 HEAD sha（先 commit 再呼叫本檔的產線必填）。
+                      未推佇列斷言改以它為基準：origin/分支..baseline 必須 0 顆，
+                      否則代表佇列裡有非本輪產生的 commit → 拒推（2026-11-19 未授權發布事故）。
+                      不給 → 以「呼叫當下的 HEAD」為基準（commit 由本檔內部完成的用法）。
+                      必須可解析且為 HEAD 的祖先，否則 rc=6、完全不推送。
   --branch REF        預設 HEAD:clean-main；source 必須解析到當前 HEAD（見「refspec 治理」）
   --no-verify         略過遠端 sha 驗證（不建議）
   --dry-run           只印將做什麼，不動任何東西
@@ -233,6 +238,10 @@ def main() -> int:
     ap.add_argument("--commit", default="")
     ap.add_argument("--record", choices=["auto", "skip"], default="auto")
     ap.add_argument("--own", nargs="+", default=[])
+    # 2026-11-19（review 修正）：先 commit 再呼叫本檔的產線要傳「自己 commit 前」的 HEAD，
+    # 否則未推佇列斷言會把呼叫端自己的 commit 誤判為陌生 commit → 一律 rc=3（產線全鎖死）。
+    ap.add_argument("--baseline", default="",
+                    help="本輪 commit 之前的 HEAD sha（未推佇列斷言的基準；不給＝呼叫當下 HEAD）")
     ap.add_argument("--branch", default="")
     ap.add_argument("--no-verify", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
@@ -262,6 +271,24 @@ def main() -> int:
     base = base_dir()
     # 2026-11-19：記錄「本輪呼叫前」的 HEAD，供稍後未推佇列範圍斷言使用。
     _head0 = run(["git", "rev-parse", "HEAD"], base).stdout.strip()
+    # 2026-11-19（review 修正）：--baseline 覆寫基準，讓「先 commit 再 push」的產線推得動
+    #   自己的 commit，同時仍擋住「佇列裡本來就有別人的 commit」的情形。
+    #   fail-closed：解析不到、或不是 HEAD 的祖先 → 直接 rc=6，不做任何推送。
+    _baseline_raw = (a.baseline or "").strip()
+    if _baseline_raw:
+        _bv = run(["git", "rev-parse", "--verify", "--quiet", _baseline_raw + "^{commit}"], base)
+        _b_sha = (_bv.stdout or "").strip() if _bv.returncode == 0 else ""
+        if not _b_sha:
+            print(f"❌ --baseline 無法解析：{_baseline_raw}（rc=6，不推送）", file=sys.stderr)
+            log(base, f"BASELINE-BAD\t{a.script}\t{_baseline_raw[:40]}")
+            return 6
+        if run(["git", "merge-base", "--is-ancestor", _b_sha, "HEAD"], base).returncode != 0:
+            print(f"❌ --baseline 不是 HEAD 的祖先：{_b_sha[:12]}（rc=6，不推送）", file=sys.stderr)
+            log(base, f"BASELINE-NOT-ANCESTOR\t{a.script}\t{_b_sha[:12]}")
+            return 6
+        if not a.dry_run:
+            log(base, f"PUSH-BASELINE\t{a.script}\t{_b_sha[:12]}")
+        _head0 = _b_sha
     refs = [a.branch] if a.branch else list(DEFAULT_REFS)
     # 2026-10-07 INC-236 延伸：refs 一律先過 validate_refspecs（source 必須解析到 HEAD、
     # destination 必須是部署分支），推送前就擋 —— 不是先推、再看遠端 sha 是否相符。
@@ -329,7 +356,9 @@ def main() -> int:
                 print(f"⛔ 未推佇列在本輪呼叫前已有 {_pre_n} 顆 commit → 拒絕推送", file=sys.stderr)
                 print("   原因：push 會把它們一起帶上線（未授權發布）。清單：", file=sys.stderr)
                 print("   " + (_lst or "（讀取失敗）").replace("\n", "\n   "), file=sys.stderr)
-                print("   處置：取得發布授權（release_auth）或由使用者裁決後人工推送。", file=sys.stderr)
+                print("   處置：取得發布授權（release_auth）或由使用者裁決後人工推送；"
+                      "若本輪是自己先 commit 再呼叫（佇列裡只有自己的 commit），改傳 --baseline <本輪 commit 前的 HEAD>。",
+                      file=sys.stderr)
                 log(base, f"UNPUSHED-FOREIGN\t{a.script}\t{_pre_n}")
                 if a.dry_run:
                     print("[dry-run] 依上方判定：實跑時會以 rc=3 拒推")

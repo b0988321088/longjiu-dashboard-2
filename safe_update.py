@@ -335,12 +335,17 @@ def do_apply():
 
     # P2（2026-09-14）：改走 RECORD 通道（原為自打 [cioreviewed]）
     print("\n  📤 Git commit + push...")
+    # 2026-11-19（review 修正）：commit 前 HEAD＝本輪佇列基準（auto_push --baseline）。
+    _base0 = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=BASE,
+                            capture_output=True, text=True).stdout.strip()
     os.system('git add snapshot.json')
     os.system(f'git commit -m "safe_update {today}" 2>&1')
     # 2026-09-14：紀錄＋推送統一走 auto_push.py（範圍紀錄覆蓋／重試 3 次／遠端 sha 驗證）。
     # 舊版只 `git push origin clean-main` 且完全不看回傳碼 → main 沒同步、失敗也當成功。
-    _ap = subprocess.run([sys.executable, os.path.join(BASE, 'auto_push.py'),
-                          '--script', 'safe_update.py'], cwd=BASE,
+    _ap_cmd = [sys.executable, os.path.join(BASE, 'auto_push.py'), '--script', 'safe_update.py']
+    if _base0:
+        _ap_cmd += ['--baseline', _base0]
+    _ap = subprocess.run(_ap_cmd, cwd=BASE,
                          capture_output=True, text=True, timeout=600)
     print(((_ap.stdout or '') + (_ap.stderr or '')).strip()[-300:])
     if _ap.returncode != 0:
