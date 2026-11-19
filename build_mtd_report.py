@@ -429,7 +429,7 @@ def static_fallback(p: dict) -> str:
             return "—"
 
     rows = [
-        (f'{p["month"]} 本月投資損益', nt(p["perf"]["net"]) + "（未扣利息）" if not p["interest"]["total"] else nt(p["perf"]["net"])),
+        (f'{p["month"]} 本月投資損益（MTD 起算）', nt(p["perf"]["net"]) + "（未扣利息）" if not p["interest"]["total"] else nt(p["perf"]["net"])),
         ("　總資產變化（帳面）", nt(p["total_assets"].get("chg"))),
         ("　同期總負債變化", nt((p.get("equity") or {}).get("liab_chg"))),
         ("　同期淨值變化", nt((p.get("equity") or {}).get("net_worth_chg"))),
@@ -447,6 +447,9 @@ def static_fallback(p: dict) -> str:
                                     for w in (p.get("weeks") or []) if w.get("total") is not None)),
         ("　估值更新", nt(-sum(u["amount"] for u in p["updates"]))),
         ("市場面損益（推定）", nt(p["grand"]["mkt"])),
+        ("　帳務修正（非市場損失）", (nt(p["grand"].get("caliber"))
+                                + "｜日幣匯率記錯＋ETF 除息時點差，已於各類別註明不計損益")
+                               if p["grand"].get("caliber") else "—"),
     ]
     for c in p["classes"]:
         _cal = c.get("caliber") or 0
@@ -622,7 +625,7 @@ function render(d){
   }
 
   h.push('<section class="grid k4">');
-  h.push(kpi('本月投資損益', '<span class="'+cls(d.perf.net)+'">'+sgn(d.perf.net)+'</span>', esc(sub)));
+  h.push(kpi('本月投資損益（MTD 起算）', '<span class="'+cls(d.perf.net)+'">'+sgn(d.perf.net)+'</span>', esc(sub)));
   h.push(kpi('總資產變化', '<span class="'+cls(t.chg)+'">'+sgn(t.chg)+'</span>', '帳面（含未實現、含配息）｜⚠️ 含現金流，非投資績效'));
   h.push(kpi('配息實收（三類）', '<span class="up">'+sgn(g.div)+'</span>', '股票＋基金＋保單'));
   h.push(kpi('本月報酬率', '<span class="'+(d.rate==null?'':(d.rate>=0?'up':'down'))+'">'+(d.rate==null?'—':pct(d.rate))+'</span>',

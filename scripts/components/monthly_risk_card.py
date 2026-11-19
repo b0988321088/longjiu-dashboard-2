@@ -61,7 +61,7 @@ def render(snap: dict | None = None, theme: str = "light") -> str:
 <table>
 <tr><th style="width:28%">本月累積報酬率</th><td><b style="color:{tone};font-size:16px">{_pct(r["ret_pct"])}</b>
 　<span style="color:{tone};font-weight:700">{r["icon"]} {r["label"]}</span></td></tr>
-<tr><th>本月帳面損益</th><td>{_money(r["net_twd"])} TWD <span class="note">（含配息與費用；與報酬率不同源）</span></td></tr>
+<tr><th>本月帳面損益</th><td>{_money(r["net_twd"])} TWD <span class="note">（含配息與費用；MTD 基準、與報酬率不同源；累計未實現損益不在此列）</span></td></tr>
 <tr><th>距下一級警戒</th><td>{r["gap"]["text"]}</td></tr>
 <tr><th>壓力情境（資產價格同幅下跌）</th><td>{stress_txt}</td></tr>
 <tr><th>當日投資風險裁示</th><td><b>{r["stance"]}</b></td></tr>

@@ -308,13 +308,21 @@ def build_perf_card(snap):
 
 
 def build_perf_month_card(snap):
-    """本月投資績效＋資金成本（2026-10-31 使用者要求加入儀表板）。
+    """本月投資績效／本月資產變動／累計未實現損益 —— 三個口徑分離呈現。
 
-    鐵則：全部走 performance_core.monthly_performance（唯一計算層）與
-    build_investment_performance.load_loans（負債口徑單一來源），本函式不自行算績效公式。
-    資金成本淨利差用「保守常態配息」口徑（與投資績效月報一致），不混當月實收。
+    ★ 2026-11-19 P0 口徑修正（使用者裁決）：
+      舊版把 performance_core 的帳面 pnl 標成「本月投資績效」，又在下一個卡片放
+      「保單累計真實績效」，結果外部 AI 把「累計未實現損益 -911,377」與
+      「股票累計 -31,270」誤讀成本月虧損（實際本月為保單 -314,972、證券 -304,180）。
+      修正原則：市場報酬 ≠ 資產變動 ≠ 累計未實現損益，三者不得混用或相加。
+        A 本月投資績效 = drawdown caliber.pnl_market（市場價格變動，10/31 起算）
+        B 本月資產變動 = caliber.assets_change（含帳務修正與淨金流）
+        C 累計未實現損益 = 持有期間累計，明示「非本月」
+      真值來源：data/drawdown_{ym}.json（單一寫入者 drawdown_review.py）；
+      缺檔時 A/B 顯示「—」並註明原因，不以舊公式冒充。
     """
     import datetime as _dt
+    import json as _json
     import sqlite3 as _sq
     import performance_core as _pc
     import build_investment_performance as _bip
@@ -327,24 +335,46 @@ def build_perf_month_card(snap):
 
     from date_integrity import report_base as _report_base  # 報告基準日≠估值日
     ym = _report_base(snap)[:7]
-    adj = _bip.load_adjust()
-    a = adj.get(ym, {}) or {}
-    db = _sq.connect(str(BASE / "dragon_assets.db"))
-    try:
-        core = _pc.monthly_performance(ym, snap=snap, adjust_all=adj, db=db,
-                                       reliable=bool(a.get("市值可靠", True)))
-    finally:
-        db.close()
-    rows = {x["c"]: x for x in core["rows"]}
-    grand = sum(x["pnl"] for x in core["rows"])
 
+    # ── A/B：讀跌幅檢討的 caliber（單一真值），不自行重算 ──
+    cal, _cal_err = {}, ""
+    for cand in (BASE / "data" / f"drawdown_{ym}.json", BASE / "data" / "drawdown_latest.json"):
+        try:
+            if cand.exists():
+                _dd = _json.loads(cand.read_text(encoding="utf-8"))
+                if (_dd.get("month") or "") == ym or cand.name == "drawdown_latest.json":
+                    cal = _dd.get("caliber") or {}
+                    if cal:
+                        break
+        except Exception as _e:
+            _cal_err = f"{type(_e).__name__}"
+    if not cal:
+        _cal_err = _cal_err or f"缺 data/drawdown_{ym}.json（先跑 drawdown_review.py）"
+
+    pnl_mkt = cal.get("pnl_market")
+    pnl_pct = cal.get("pnl_market_pct")
+    ast_chg = cal.get("assets_change")
+    acct_adj = cal.get("accounting_adj")
+    net_flow = cal.get("net_flow")
+
+    # ── C：累計未實現損益（持有期間累計，非本月）──
+    p_cost = (snap.get("allianz_cost") or 0) + (snap.get("firstjin_cost") or 0)
+    p_div = (snap.get("allianz_cum_dividend") or 0) + (snap.get("firstjin_cum_dividend") or 0)
+    ins_total = snap.get("insurance_total") or 0
+    p_unreal = (ins_total - p_cost) if p_cost else None
+    p_real = ((ins_total - p_cost) + p_div) if p_cost else None
+    sec_unreal = (snap.get("securities") or {}).get("unrealized_pnl")
+
+    # ── 資金成本／配息殖利率（非績效，維持原口徑）──
+    adj_all = _bip.load_adjust()
+    a = adj_all.get(ym, {}) or {}
     loans = _bip.load_loans(snap, a.get("資金成本", {}))
     bal = sum(l["balance"] for l in loans)
     m_int = sum(l["monthly"] for l in loans)
     m_pay = sum(l["payment"] for l in loans)
     wacc = (m_int * 12 / bal) if bal else 0
     inv = ((snap.get("securities_total_market_value") or 0)
-           + (snap.get("funds_total") or 0) + (snap.get("insurance_total") or 0))
+           + (snap.get("funds_total") or 0) + ins_total)
     div_m = snap.get("dividend_month_expected") or 100000
     dy = (div_m * 12 / inv) if inv else 0
     spread = dy - wacc
@@ -355,40 +385,108 @@ def build_perf_month_card(snap):
     else:
         lc, lt = "text-red-400", "🔴 為負"
 
-    p_cost = (snap.get("allianz_cost") or 0) + (snap.get("firstjin_cost") or 0)
-    p_div = (snap.get("allianz_cum_dividend") or 0) + (snap.get("firstjin_cum_dividend") or 0)
-    p_real = ((snap.get("insurance_total") or 0) - p_cost) + p_div
-
-    def cell2(label, main, color, subs):
+    def cell2(label, main, color, subs, metric=""):
         sub_html = "".join(f'<span class="mr-2">{x}</span>' for x in subs)
-        return (f'<div class="p-2 rounded-lg bg-slate-800/60">'
+        dm = f' data-metric="{metric}"' if metric else ""
+        return (f'<div class="p-2 rounded-lg bg-slate-800/60"{dm}>'
                 f'<div class="flex items-baseline justify-between gap-2">'
                 f'<span class="text-slate-300">{label}</span>'
                 f'<b class="{color}">{main}</b></div>'
                 f'<div class="text-[10px] text-slate-400 mt-1 leading-snug">{sub_html}</div></div>')
 
     out = []
-    _cg = "text-emerald-400" if grand >= 0 else "text-red-400"
-    out.append(cell2(f"本月投資績效（{ym}）", f"{grand:+,.0f}", _cg, [
-        f"股票 {_m(rows.get('股票', {}).get('pnl'))}",
-        f"基金 {_m(rows.get('基金', {}).get('pnl'))}",
-        f"保單 {_m(rows.get('保單', {}).get('pnl'))}",
-    ]))
+    # A 本月投資績效（市場口徑）
+    if pnl_mkt is None:
+        out.append(cell2("A｜本月投資績效（市場口徑）", "—", "text-slate-400",
+                         [_cal_err or "資料未產生"], "investment_return"))
+    else:
+        _c = "text-emerald-400" if pnl_mkt >= 0 else "text-red-400"
+        out.append(cell2("A｜本月投資績效（市場口徑）", f"{pnl_mkt:+,.0f}", _c, [
+            f"{pnl_pct:+.2f}%" if pnl_pct is not None else "—",
+            "10/31 起算・只算市場價格變動",
+        ], "investment_return"))
+    # B 本月資產變動
+    if ast_chg is None:
+        out.append(cell2("B｜本月資產變動", "—", "text-slate-400",
+                         ["非投資報酬，勿與 A 混用"], "assets_change"))
+    else:
+        _c2 = "text-emerald-400" if ast_chg >= 0 else "text-red-400"
+        out.append(cell2("B｜本月資產變動", f"{ast_chg:+,.0f}", _c2, [
+            f"帳務修正 {_m(acct_adj)}" if acct_adj else "無帳務修正",
+            f"現金淨流 {net_flow:+,.0f}" if net_flow is not None else "",
+            "含帳務與金流・≠投資虧損",
+        ], "assets_change"))
+    # C 累計未實現損益（非本月）
+    out.append(cell2("C｜累計未實現損益（非本月）", f"{_m(sec_unreal)}／{_m(p_unreal)}", "text-slate-100", [
+        f"股票 {_m(sec_unreal)}",
+        f"保單 {_m(p_unreal)}",
+        "持有期間累計・禁止當本月虧損",
+    ], "unrealized_pnl_cumulative"))
+    # 資金成本
     out.append(cell2("資金成本（加權）", f"{wacc*100:.2f}%/年", "text-slate-100", [
         f"借款 {_m(bal)}",
         f"純月息 {_m(m_int)}／月付 {_m(m_pay)}",
-    ]))
+    ], "funding_cost"))
+    # 配息殖利率 vs 成本
     out.append(cell2("配息殖利率 vs 成本", f"{spread*100:+.2f}pp {lt}", lc, [
         f"保守月配 {_m(div_m)}→殖利率 {dy*100:.2f}%",
         "口徑＝保守常態（非當月實收）",
-    ]))
-    _cp = "text-emerald-400" if p_real >= 0 else "text-red-400"
-    out.append(cell2("保單累計真實績效", f"{p_real:+,.0f}", _cp, [
-        f"投入 {_m(p_cost)}",
-        f"帳面 {_m((snap.get('insurance_total') or 0) - p_cost)}＋累計配息 {_m(p_div)}",
-    ]))
-    return ('<div class="mt-3 pt-3 border-t border-slate-700/60">'
-            '<div class="text-[11px] text-teal-300 font-bold mb-1">本月績效與資金成本</div>'
+    ], "dividend_yield_vs_cost"))
+    # 保單累計真實績效（含累計配息，仍是累計口徑）
+    if p_real is not None:
+        _cp = "text-emerald-400" if p_real >= 0 else "text-red-400"
+        out.append(cell2("保單累計真實績效（含息）", f"{p_real:+,.0f}", _cp, [
+            f"投入 {_m(p_cost)}",
+            f"帳面 {_m(p_unreal)}＋累計配息 {_m(p_div)}",
+            "累計口徑・非本月變動",
+        ], "insurance_cumulative_real"))
+
+    # ── 機器可讀定義（防 AI 誤判）──
+    try:
+        _defs = {
+            "version": 1,
+            "generated_at": _dt.datetime.now().astimezone().isoformat(timespec="seconds"),
+            "month": ym,
+            "warning": ("investment_return / assets_change / unrealized_pnl_cumulative 為三種不同口徑，"
+                        "不得相加、不得互換；cumulative 系列為持有期間累計，禁止當作本月損益。"),
+            "metrics": {
+                "investment_return": {
+                    "label": "本月投資績效（市場口徑）",
+                    "value": pnl_mkt, "pct": pnl_pct,
+                    "period": "月初最後交易日 → 最新估值日",
+                    "formula": "投資部位期末 − 期初 − 本期買進成本 − 帳務修正",
+                    "excludes": ["帳務修正", "淨現金流", "本期投入"],
+                    "source": f"data/drawdown_{ym}.json#caliber",
+                },
+                "assets_change": {
+                    "label": "本月資產變動",
+                    "value": ast_chg,
+                    "includes": ["投資報酬", "帳務修正", "淨現金流"],
+                    "note": "帳戶實際少掉的金額，不是投資虧損",
+                    "source": f"data/drawdown_{ym}.json#caliber",
+                },
+                "unrealized_pnl_cumulative": {
+                    "label": "累計未實現損益（非本月）",
+                    "securities": sec_unreal, "insurance": p_unreal,
+                    "note": "持有期間累計數字，不得列為本月虧損、不得與月度指標相加",
+                    "source": "snapshot.securities.unrealized_pnl / insurance_total − cost",
+                },
+                "insurance_cumulative_real": {
+                    "label": "保單累計真實績效（含息）",
+                    "value": p_real, "cost": p_cost, "cum_dividend": p_div,
+                    "note": "累計口徑（帳面＋累計配息），非本月變動",
+                },
+            },
+        }
+        (BASE / "data" / "metric_definitions.json").write_text(
+            _json.dumps(_defs, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    except Exception as _e:
+        print(f"  ⚠️ metric_definitions 寫入失敗: {type(_e).__name__}: {_e}")
+
+    return ('<div class="mt-3 pt-3 border-t border-slate-700/60" '
+            'aria-label="績效口徑分離：本月投資績效、本月資產變動、累計未實現損益，三者不得混用">'
+            '<div class="text-[11px] text-teal-300 font-bold mb-1">'
+            '本月績效／資產變動／累計損益（口徑分離）</div>'
             '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-200">'
             + "".join(out) + "</div></div>")
 

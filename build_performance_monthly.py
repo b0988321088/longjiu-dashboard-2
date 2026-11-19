@@ -158,7 +158,7 @@ def _hero(cur: dict, base_mv: float, asof: str) -> str:
     fee_line = f"−{cur['fee']:,.0f}" if cur["fee"] else "0（未登錄）"
     return f"""
 <section class="card hero">
-  <div class="klabel">本月淨投資損益（已扣投資利息）</div>
+  <div class="klabel">本月淨投資損益（已扣投資利息・MTD 起算）</div>
   <div class="kval {_cls(net_same)}">{_f(net_same)}</div>
   <div class="ksub">未扣息 <b>{_f(cur['net'])}</b>｜投資利息 {int_line}｜手續費 {fee_line}</div>
   <div class="kgrid">

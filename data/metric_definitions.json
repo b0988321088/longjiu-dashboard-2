@@ -1,0 +1,46 @@
+{
+ "version": 1,
+ "generated_at": "2026-11-19T21:17:03+08:00",
+ "month": "2026-11",
+ "warning": "investment_return / assets_change / unrealized_pnl_cumulative 為三種不同口徑，不得相加、不得互換；cumulative 系列為持有期間累計，禁止當作本月損益。",
+ "metrics": {
+  "investment_return": {
+   "label": "本月投資績效（市場口徑）",
+   "value": -839689.0,
+   "pct": -3.3677736855313265,
+   "period": "月初最後交易日 → 最新估值日",
+   "formula": "投資部位期末 − 期初 − 本期買進成本 − 帳務修正",
+   "excludes": [
+    "帳務修正",
+    "淨現金流",
+    "本期投入"
+   ],
+   "source": "data/drawdown_2026-11.json#caliber"
+  },
+  "assets_change": {
+   "label": "本月資產變動",
+   "value": -1049848.0,
+   "includes": [
+    "投資報酬",
+    "帳務修正",
+    "淨現金流"
+   ],
+   "note": "帳戶實際少掉的金額，不是投資虧損",
+   "source": "data/drawdown_2026-11.json#caliber"
+  },
+  "unrealized_pnl_cumulative": {
+   "label": "累計未實現損益（非本月）",
+   "securities": -31270,
+   "insurance": -911377.0,
+   "note": "持有期間累計數字，不得列為本月虧損、不得與月度指標相加",
+   "source": "snapshot.securities.unrealized_pnl / insurance_total − cost"
+  },
+  "insurance_cumulative_real": {
+   "label": "保單累計真實績效（含息）",
+   "value": 1103725.0,
+   "cost": 10000000,
+   "cum_dividend": 2015102,
+   "note": "累計口徑（帳面＋累計配息），非本月變動"
+  }
+ }
+}
