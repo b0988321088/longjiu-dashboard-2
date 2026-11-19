@@ -10087,31 +10087,31 @@
   }
  },
  "insurance_estimate": {
-  "as_of": "2026-11-18",
-  "nav_basis_date": "2026-11-18",
-  "estimated_incl_truth_twd": 9113142,
+  "as_of": "2026-11-19",
+  "nav_basis_date": "2026-11-19",
+  "estimated_incl_truth_twd": 9089954,
   "truth_twd": 9121635.0,
-  "diff_twd": -8493.0,
-  "diff_pct": -0.09,
-  "coverage_pct": 87.8,
-  "uncovered_truth_twd": 1112660,
+  "diff_twd": -31681.0,
+  "diff_pct": -0.35,
+  "coverage_pct": 95.8,
+  "uncovered_truth_twd": 384070,
   "accounts": {
    "allianz_a": {
-    "estimated_twd": 4872307.0,
+    "estimated_twd": 4854812.0,
     "truth_twd": 4874833.0,
-    "diff_pct": -0.05,
+    "diff_pct": -0.41,
     "coverage_pct": 100.0
    },
    "allianz_b": {
-    "estimated_twd": 1252888.0,
+    "estimated_twd": 1977846.0,
     "truth_twd": 2365548.0,
-    "diff_pct": -47.04,
-    "coverage_pct": 53.0
+    "diff_pct": -16.39,
+    "coverage_pct": 83.8
    },
    "firstjin": {
-    "estimated_twd": 1875287.0,
+    "estimated_twd": 1873226.0,
     "truth_twd": 1881254.0,
-    "diff_pct": -0.32,
+    "diff_pct": -0.43,
     "coverage_pct": 100.0
    }
   },
