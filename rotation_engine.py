@@ -262,11 +262,44 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
         })
         return plan
 
+    # ★ 2026-11-19 使用者裁決 C：LTV 警戒期（≥45%）不新增任何產業部位，乾粉全留現金。
+    #   理由：質押距停止線僅 2.6pp，補繳彈藥優先於產業缺口；LTV 回落 <45%（綠_正常）自動恢復部署。
+    #   值取「即時自算」與「App 截圖」較高者（截圖=authoritative，但自算升高時不等待截圖）。
+    _ltv_vals = []
+    try:
+        from sot_targets import pledge_ltv as _pltv_fn
+        _v = float(_pltv_fn(snap)) * 100
+        if _v > 0:
+            _ltv_vals.append(_v)
+    except Exception:
+        pass
+    _shot = (snap.get("ltv_stage_now") or {}).get("LTV_pct")
+    try:
+        if _shot:
+            _ltv_vals.append(float(_shot))
+    except Exception:
+        pass
+    _ltv_use = max(_ltv_vals) if _ltv_vals else None
+    # 門檻不寫死：綠燈上限（=警戒起點）讀 thresholds 分級（2026-11-19：45%）
+    try:
+        from sot_targets import ltv_grades as _lg_fn
+        _ltv_green_max = float(_lg_fn(snap).get("綠上限"))
+    except Exception:
+        _ltv_green_max = None
+    _ltv_warn = bool(_ltv_use is not None and _ltv_green_max is not None and _ltv_use >= _ltv_green_max)
+
     # ② 產業吸納：資金輪動引擎「建議」中動作 ✅ 者；金額由乾粉平均分配（單筆 ≤5 萬節奏）
-    buys = [r for r in rec.get("建議", []) if str(r.get("動作", "")).startswith("✅")]
+    #   裁決 C：LTV 警戒期 buys 一律清空（不是縮小金額，是完全不新增）
+    buys = [] if _ltv_warn else [r for r in rec.get("建議", []) if str(r.get("動作", "")).startswith("✅")]
+    if _ltv_warn:
+        rec["總結"] = (f"本週暫停新增部位 — LTV {_ltv_use:.2f}% ≥{_ltv_green_max:.0f}% 警戒（裁決 C）；"
+                       f"乾粉 {_dry_now:,.0f} 全留現金，待 LTV 回落 <{_ltv_green_max:.0f}% 自動恢復")
     used = 0
     if buys:
-        alloc = int(dry / len(buys) / 1000) * 1000
+        # 2026-11-19 修：當期可部署金額只能用「已到手的乾粉」(_dry_now)，
+        # 月盈餘的一半是規劃值、不得先當成可執行金額（舊寫法用 dry → 559,000 > 實際 525,855，
+        # 執行後可動用會跌破現金底線）。差額留在「現金保留」欄的節奏文字說明。
+        alloc = int(_dry_now / len(buys) / 1000) * 1000
         for r in buys:
             amt = max(alloc, 10000)
             batch = max(amt // 50000, 1)
@@ -284,13 +317,17 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
     _dcm_note = (f"防守合併 {_dcm.get('佔比', 0):.1f}%（{_dcm.get('裁示', '')}）"
                  if _dcm else "現金底線制")
     # 2026-09-29 CIO info：可動用 ≤ 底線（乾粉 0）時不得輸出「守住底線」的進場計畫
-    _keep = max(int((dry - used) / 1000) * 1000, 0)
+    _keep = (int(_dry_now / 1000) * 1000 if _ltv_warn
+             else max(int((_dry_now - used) / 1000) * 1000, 0))
     if _dry_now > 0:
         plan.append({
             "產業": "現金保留",
             "標的": "台幣活存/MMF",
             "金額": _keep,
-            "節奏": f"守住現金底線 {_cf_v:,}；{_dcm_note}",
+            "節奏": ((f"裁決 C：LTV {_ltv_use:.2f}% ≥{_ltv_green_max:.0f}% 警戒 → 本週不新增部位，乾粉 {_dry_now:,.0f} 全留現金；"
+                      if _ltv_warn else "") +
+                     f"守住現金底線 {_cf_v:,}（可動用 {cash:,.0f}、乾粉 {_dry_now:,.0f}；"
+                     f"月盈餘 {surplus:,.0f} 其中半數 {surplus*0.5:,.0f} 屬規劃值、未入帳不動用）；{_dcm_note}"),
             "理由": "乾粉餘額緩衝（底線制，不借錢囤現金）",
         })
     else:
