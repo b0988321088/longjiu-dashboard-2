@@ -1,9 +1,9 @@
 {
- "last_date": "2026-11-18",
- "last_value": 32.937,
- "r1_pct": -0.08,
- "r5_pct": -0.05,
+ "last_date": "2026-11-19",
+ "last_value": 32.956,
+ "r1_pct": 0.14,
+ "r5_pct": 0.29,
  "latches": {},
- "updated_at": "2026-11-18 16:10:02",
+ "updated_at": "2026-11-19 13:10:25",
  "pushed": []
 }

@@ -151,6 +151,11 @@ def main():
         #   獨立觸發（保留應變能力）：`python emergency_1330.py`（原 cron 排程 13:00 台股／21:00 美股）。
         #   ⚠️ 獨立執行前仍須先跑 `python build_penetration_report.py`，否則會讀到上一輪穿透快取。
         ("穿透報告", "python build_penetration_report.py"),
+        # 2026-11-19 血淚：緊急應變頁是 13:00 盤中快照，盤後真值一動（收盤覆蓋／基金淨值／
+        # 保單／MB 匯入）check_penetration_consistency 就判「緊急應變 缺少真值」→ 擋在
+        # 10/30 步，後續 20 步全不跑。當天連擋三次、每次手改數字（patch over patch）。
+        # 改為：這裡用 snapshot 真值重建該頁穿透卡片（冪等，無檔則 exit 0）。
+        ("緊急應變穿透對齊", f"python refresh_emergency_pen.py {today}"),
         ("四源同步", "python four_source_sync.py"),
         ("同義欄位複驗", "python asset_sync.py"),
         ("一致性檢查", f"python check_penetration_consistency.py {today}"),

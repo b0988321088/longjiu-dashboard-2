@@ -397,6 +397,26 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
         for p in _rot.get("交易計畫", []):
             if p.get("金額", 0) > 0:
                 lines.append(f"- 買 **{p['標的']}** {p['金額']:,} 元｜{p['節奏']}（{p['理由']}）")
+        # 2026-11-19 使用者核准：裁決以資料驅動呈現（引擎原案不動，避免計算與裁決混寫）
+        # 血淚：曾放在 rotation_recommendation.裁決_20261119，但該 dict 每次由雷達重產、
+        # 整包覆寫 → 裁決靜默消失。改讀獨立穩定鍵 rebalance_weekly_plan_verdict。
+        _vg = s.get("rebalance_weekly_plan_verdict")
+        if _vg and _vg.get("日期") == TODAY:
+            lines.append("")
+            lines.append(f"**⛔ 裁決（{_vg.get('裁決','')}）** — {_vg.get('裁決者','')}")
+            for _r in _vg.get("理由", []):
+                lines.append(f"- {_r}")
+            if _vg.get("修正後執行條件"):
+                lines.append("- **修正後執行條件（三項同時成立）**：" + "；".join(_vg["修正後執行條件"]))
+            if _vg.get("修正後標的"):
+                lines.append(f"- **修正後標的**：{_vg['修正後標的']}｜**金額上限**：{_vg.get('金額上限',0):,}")
+            if _vg.get("節奏"):
+                lines.append(f"- **節奏**：{_vg['節奏']}")
+            _bt = _vg.get("分批修正")
+            if _bt:
+                for _k in ("原案缺陷", "首批條件", "後續批次", "期限"):
+                    if _bt.get(_k):
+                        lines.append(f"  - **{_k}**：{_bt[_k]}")
     except Exception:
         pass
 

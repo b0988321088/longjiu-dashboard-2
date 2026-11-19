@@ -24,8 +24,14 @@ import re
 
 GAP_LIMIT_PCT = 0.005          # 宣告差額上限 0.5%
 _POLICY_ALIASES = {
-    "a": ("allianz_policy_a_value", "allianz_a_current_value", "allianz_a", "allianz_a_value", "allianz_a_funds"),
-    "b": ("allianz_policy_b_value", "allianz_b_current_value", "allianz_b", "allianz_b_value", "allianz_b_funds"),
+    # 2026-11-19 修正：群組 master 鍵 allianz_policy_a/b 原本不在清單內 →
+    # apply_policy_update 寫完別名後，update_data 的 sync_snapshot_keys 立刻用
+    # master 舊值把全部別名覆寫回去（A 4,851,426 被還原成 4,874,833）。
+    # master 必須第一個寫，別名才會被保住。
+    "a": ("allianz_policy_a", "allianz_policy_a_value", "allianz_a_current_value", "allianz_a",
+          "allianz_a_value", "allianz_a_funds", "policy_a_total"),
+    "b": ("allianz_policy_b", "allianz_policy_b_value", "allianz_b_current_value", "allianz_b",
+          "allianz_b_value", "allianz_b_funds", "policy_b_total"),
 }
 _IB_KEY = {"a": "policy_a_total", "b": "policy_b_total"}
 _IB_FUNDS = {"a": "policy_a_funds", "b": "policy_b_funds"}
