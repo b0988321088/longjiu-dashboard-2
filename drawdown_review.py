@@ -819,7 +819,8 @@ def render(d: dict, embedded: bool = False) -> str:
 .legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin:0 4px 0 10px}
 </style>"""
         body = patch_css + head + verdict + attrib + review + f"""
-<div class="card"><div class="sub">完整逐檔與市場拆解：<b>drawdown_review_{d['month']}.html</b></div></div>""" + foot
+<div class="card"><div class="sub">完整逐檔、保單/基金拆解與市場事件：
+<a href="drawdown_review_{d['month']}.html" style="color:#7dd3fc"><b>開啟完整檢討頁 →</b></a></div></div>""" + foot
         return body
     return f"""<!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="utf-8">

@@ -36,6 +36,7 @@ dashboard_tab3.html
 dashboard_tab4.html
 dashboard_tab5.html
 dashboard_v2.html
+drawdown_review_2026-11.html
 dynamic_monthly_review_2026-08.html
 dynamic_monthly_review_2026-09.html
 dynamic_monthly_review_2026-10.html
@@ -47,7 +48,7 @@ emergency_report_2026-09-07.html
 emergency_report_2026-10-09.html
 emergency_report_2026-10-15.html
 emergency_report_2026-11-03.html
-emergency_report_2026-11-18.html
+emergency_report_2026-11-19.html
 grand_pivot_deck.html
 grand_pivot_deck.pptx
 index.html
@@ -88,7 +89,7 @@ monthly_report_2026-10.html
 monthly_tracker.html
 mtd_data.json
 mtd_performance.html
-national_fund_2026-11-08.html
+national_fund_2026-11-19.html
 pending_decisions.json
 penetration_report_2026-09-06.html
 penetration_report_2026-09-08.html
@@ -153,7 +154,7 @@ risk_factor_penetration_2026-11-18.png
 risk_factor_penetration_2026-11-19.png
 schedule_events.json
 snapshot.json
-stress_test_2026-11-18.html
+stress_test_2026-11-19.html
 structural_health_20261103.html
 structural_health_20261119.html
 tech_debt.json
@@ -163,5 +164,5 @@ weekly_report_2026-09-08.html
 weekly_report_2026-10-12.html
 weekly_report_2026-10-15.html
 weekly_report_2026-11-01.html
-weekly_report_2026-11-18.html
+weekly_report_2026-11-19.html
 work_log.json
