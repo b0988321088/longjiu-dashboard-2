@@ -12607,7 +12607,16 @@
       "summary": "2026-11-19 使用者裁決。維持投資凍結與 HOLD：台股/美股/高股息/長天期債券新增買進全部暫停；乾粉 525,855 全數保留，不因下跌攤平。恢復買進須同時滿足：LTV<45%（綠_正常）、可動用現金≥100 萬、市場廣度改善（跌停擴散停止）、美股未逼近帶上限、壓力測試仍在 5% 預算內，並經明示裁決。US30Y<5.20 為新增長債之額外必要條件。",
       "status": "completed",
       "source": "user"
-    }
+    },
+  {
+    "id": "mem-20261119221214-1363",
+    "timestamp": "2026-11-19T22:12:14.409920+08:00",
+    "agent": "Hermes",
+    "task": "未授權發布事故（21:45 flush_leftover）+ 推送範圍斷言修復",
+    "summary": "2026-11-19 21:45 tools/flush_leftover_artifacts.py 自動 commit 44f51d59 並經 auto_push 推送，因 git push HEAD 帶走 origin/clean-main..HEAD 全部 commit，把 21:19 兩顆尚未取得發布授權的 commit（b77dcf58 P0 口徑三拆、2f7a9827 六項決策入庫）一起推上 clean-main → 線上 index.html 實測已含『口徑分離』，構成未授權發布，違反使用者『不 PUSH、不發布』指令。根因：既有防護只驗每顆 commit 有無 CIO RECORD，但 RECORD＝審查通過≠發布授權，且 push 範圍是整條祖先鏈而非單顆。止血：21:57 建立 .git/PUSH_HOLD（全系統斷路器，auto_push／data_closeout_commit／evening_sync／nightly_dashboard_sync／morning_deploy 共同遵守），阻止 22:38 收尾把 8b1dc58c 一併推出。使用者 2026-11-19 ✅ 核准：保留現狀（兩顆內容均已 CIO APPROVE 且經逐項核對，線上千萬別回滾使 P0 錯誤復活）＋ 修根因。修法 commit 5f843bf8：auto_push.py 與 data_closeout_commit.py 於 push 前記錄『本輪呼叫前 HEAD』，若該 HEAD 已領先遠端即 rc=3 拒推並列出非本輪 commit；例外為 .git/RELEASE_AUTH 一次性授權。實跑負向：現有 1 顆未推 → auto_push 印『已有 1 顆 commit → 拒絕推送』並列 8b1dc58c；data_closeout 中止並列同一顆。CIO-Gemini APPROVE（tree 77cd7fed2066）。現況：PUSH_HOLD 維持生效，待推 2 顆（8b1dc58c 觀察型事件、5f843bf8 推送斷言），發布待使用者另行授權。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "pending_decisions": [
     {
