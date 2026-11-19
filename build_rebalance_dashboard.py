@@ -218,6 +218,24 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
         "|---|---|---|---|---|",
     ]
     action_map = {"台股": "✅ 慢慢買", "美股": "⏸ 逢彈減", "防守": "🟢 已足", "債券": "⏸ 等利率", "現金": "🟢 底線制"}
+    # 2026-10-02 裁示②（2026-11-19 落實）：落在可接受範圍內＝完全靜默 —— 不得出現
+    # 「超配 +x pp／低於目標／建議增加／需再平衡」。台股 12.0% 在 7–13% 內卻標「✅ 慢慢買」，
+    # 與「範圍內靜默」及同頁第四節「不新增」自相矛盾（使用者 11/19 指出）。
+    _band = (s.get("可接受範圍_pct") or {})
+    _band_key = {"台股": "台股市值型成長", "美股": "美股市值型成長", "防守": "防守型配息", "債券": "債券"}
+    for _name, _key in _band_key.items():
+        _r = _band.get(_key) or {}
+        _lo, _hi = _r.get("下限"), _r.get("上限")
+        try:
+            if _lo is None or _hi is None:
+                continue
+            _cur = next((a for n, a, t, _tw, _c in buckets if n == _name), None)
+            if _cur is None:
+                continue
+            if float(_lo) <= float(_cur) <= float(_hi):
+                action_map[_name] = f"🟢 範圍內（{_lo}–{_hi}%）靜默"
+        except Exception:
+            pass
     for name, act, t, twd, _c in buckets:
         if t is None:
             lines.append(f"| {name} | {act:.1f}% | — | — | 指定款＋避險衛星（不調度） |")
