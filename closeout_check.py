@@ -712,7 +712,13 @@ def step_verifier_heartbeat(quiet: bool) -> list:
 
 
 # ── ⑨ GitHub Pages 部署稽核（2026-10-15 使用者核准）─────────────────────────────
+# 2026-11-19 修正：11/06 核准 INC-PAGES-DEPLOY-OPTIMIZATION 後，Pages 改由自建
+# workflow「pages-allowlist-deploy」部署（.github/workflows/pages.yml），legacy 的
+# 「pages build and deployment」不再產生新 run。本常數原本只認 legacy 名稱，
+# 導致 ⑨ 對每次推送都判「未觸發」——但 44f51d59 的 run 實際 completed/success。
+# → 兩種名稱都接受，legacy 保留以兼容尚未切換的時期。
 PAGES_WORKFLOW = "pages build and deployment"
+PAGES_WORKFLOWS = ("pages build and deployment", "pages-allowlist-deploy")
 PAGES_GRACE_MIN = 30          # push 後 GitHub 建立 run 的寬限（分鐘）
 
 
@@ -797,7 +803,7 @@ def step_pages_deploy(quiet: bool) -> list:
         return []
 
     mine = [r for r in runs
-            if r.get("name") == PAGES_WORKFLOW and (r.get("head_sha") or "").startswith(deploy_sha[:40])]
+            if r.get("name") in PAGES_WORKFLOWS and (r.get("head_sha") or "").startswith(deploy_sha[:40])]
     if not mine:
         try:
             ts = _git("show", "-s", "--format=%cI", deploy_sha).strip()
