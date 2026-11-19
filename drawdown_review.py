@@ -562,15 +562,52 @@ def _chart(series: list[dict]) -> str:
 
 
 def _attrib_table(d) -> str:
-    rows = "".join(
-        f'<tr><td>{r["label"]}</td><td class="n">{money(r["start"])}</td><td class="n">{money(r["end"])}</td>'
-        f'<td class="n {"neg" if r["chg"] < 0 else "pos"}">{signed_money(r["chg"])}</td>'
-        f'<td class="n {"neg" if _num(r["pct"]) < 0 else "pos"}">{signed_pct(r["pct"])}</td>'
-        f'<td class="n">{pct(r["share"], 0) if r["share"] is not None else "—"}</td></tr>'
-        for r in sorted(d["attrib"], key=lambda x: x["chg"])
-    )
-    return (f'<table><tr><th>部位</th><th class="n">月初</th><th class="n">最新</th>'
-            f'<th class="n">變化</th><th class="n">%</th><th class="n">占跌幅</th></tr>{rows}</table>')
+    """歸因表：帳面 vs 真實（扣帳務因素）。
+
+    2026-11-19 使用者指正：基金帳面 -536,104 看似虧最多，實含日幣匯率記錯 -368,877，
+    真實只 -167,227。故並列「帳務」與「真實變化」，占跌幅改以真實口徑計算。
+    """
+    _items = {i.get("class"): _num(i.get("amount"))
+              for i in ((d.get("caliber") or {}).get("items") or [])}
+
+    def _adj(label: str) -> float:
+        if label.startswith("平台基金"):
+            return _items.get("基金", 0.0)
+        if label.startswith("證券"):
+            return _items.get("股票", 0.0)
+        if label.startswith("保單"):
+            return _items.get("保單", 0.0)
+        return 0.0
+
+    _rows = []
+    for r in sorted(d["attrib"], key=lambda x: x["chg"]):
+        _a = _adj(r["label"])
+        _real = _num(r["chg"]) - _a
+        _rp = (_real / _num(r["start"]) * 100) if _num(r["start"]) else None
+        _rows.append((r, _a, _real, _rp))
+    _loss = sum(-x[2] for x in _rows if x[2] < 0) or 0.0
+
+    rows = ""
+    for r, _a, _real, _rp in _rows:
+        _share = (abs(_real) / _loss * 100) if (_real < 0 and _loss) else None
+        rows += (f'<tr><td>{r["label"]}</td>'
+                 f'<td class="n {"neg" if r["chg"] < 0 else "pos"}">{signed_money(r["chg"])}'
+                 f'<br><span style="color:#94a3b8;font-size:11px">{signed_pct(r["pct"])}</span></td>'
+                 f'<td class="n">{signed_money(_a) if _a else "—"}</td>'
+                 f'<td class="n {"neg" if _real < 0 else "pos"}">{signed_money(_real)}'
+                 f'<br><span style="color:#94a3b8;font-size:11px">{signed_pct(_rp)}</span></td>'
+                 f'<td class="n">{pct(_share, 0) if _share is not None else "—"}</td></tr>')
+    _pol = next((x for x in _rows if x[0]["label"].startswith("保單")), None)
+    _sec = next((x for x in _rows if x[0]["label"].startswith("證券")), None)
+    _cmp = ""
+    if _pol and _sec:
+        _cmp = (f'部位 {money(_pol[0]["start"])} 的保單跌 {signed_pct(_pol[0]["pct"], 2)}，'
+                f'虧的金額超過部位 {money(_sec[0]["start"])} 的證券跌 {signed_pct(_sec[0]["pct"], 2)}；'
+                '只看金額會被部位大小誤導，看比例才看得出誰真的出問題。')
+    return (f'<table><tr><th>部位</th><th class="n">帳面變化</th><th class="n">帳務</th>'
+            f'<th class="n">真實變化</th><th class="n">占跌幅</th></tr>{rows}</table>'
+            f'<div class="sub" style="margin-top:6px">真實＝帳面 − 帳務因素（日幣匯率記錯、ETF 除息時點差）；'
+            f'占跌幅以真實口徑計算。{_cmp}</div>')
 
 
 def _legs_table(d) -> str:

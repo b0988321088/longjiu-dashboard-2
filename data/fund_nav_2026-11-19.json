@@ -1,0 +1,199 @@
+{
+ "date": "2026-11-19",
+ "fx_usd_twd": 32.877,
+ "fx_date": "2026-11-16",
+ "fx_note": "匯率暫用真值日固定值，非當日即時匯率（誤差來源之一）",
+ "navs": {
+  "jfzn3": {
+   "name": "摩根多重收益A股(美元對沖穩月配)",
+   "nav": 70.19,
+   "nav_date": "2026-11-18",
+   "ok": true,
+   "ref_nav": 70.82
+  },
+  "tlz64": {
+   "name": "安聯收益成長AM(美元)",
+   "nav": 7.9451,
+   "nav_date": "2026-11-18",
+   "ok": true,
+   "ref_nav": 7.9765
+  },
+  "ac0050": {
+   "name": "元大台灣卓越50",
+   "nav": 90.05,
+   "nav_date": "2026-11-19",
+   "ok": true,
+   "ref_nav": 90.1596
+  },
+  "mmg55": {
+   "name": "M&G入息A(美元避險月配)F",
+   "nav": 75.4032,
+   "nav_date": "2026-11-18",
+   "ok": true,
+   "ref_nav": 75.4854
+  },
+  "pima1": {
+   "name": "PIMCO收益增長M(月收息強化)",
+   "nav": 12.38,
+   "nav_date": "2026-11-18",
+   "ok": true,
+   "ref_nav": 12.42
+  },
+  "acyt162": {
+   "name": "元大高股息龍頭B配息",
+   "nav": 19.52,
+   "nav_date": "2026-11-19",
+   "ok": false,
+   "ref_nav": 20.82
+  },
+  "shzv6": {
+   "name": "貝萊德世界黃金A10美元",
+   "nav": 24.24,
+   "nav_date": "2026-11-18",
+   "ok": false,
+   "ref_nav": 25.85
+  },
+  "mmg23": {
+   "name": "M&G入息A(美元避險月配)",
+   "nav": 9.9942,
+   "nav_date": "2026-11-18",
+   "ok": true,
+   "ref_nav": 10.056
+  }
+ },
+ "accounts": {
+  "allianz_a": {
+   "estimated_twd": 4854812.0,
+   "truth_twd": 4874833.0,
+   "covered_truth_twd": 4874833.0,
+   "diff_twd": -20021.0,
+   "diff_pct": -0.41,
+   "coverage_pct": 100.0,
+   "skipped": [],
+   "rows": [
+    {
+     "code": "USDEQ3490",
+     "ccy": "USD",
+     "units": 9950.851679627,
+     "truth_twd": 2609545,
+     "note": "",
+     "estimated_twd": 2599272.0,
+     "nav": 7.9451,
+     "nav_date": "2026-11-18"
+    },
+    {
+     "code": "USDEQ6550",
+     "ccy": "USD",
+     "units": 3867.786085079,
+     "truth_twd": 1579342,
+     "note": "",
+     "estimated_twd": 1574256.0,
+     "nav": 12.38,
+     "nav_date": "2026-11-18"
+    },
+    {
+     "code": "USDEQ5440",
+     "ccy": "USD",
+     "units": 295.230312685,
+     "truth_twd": 685946,
+     "note": "平台 NAV 11/16、匯率 11/13（較其他檔舊）",
+     "estimated_twd": 681284.0,
+     "nav": 70.19,
+     "nav_date": "2026-11-18"
+    }
+   ]
+  },
+  "allianz_b": {
+   "estimated_twd": 1977846.0,
+   "truth_twd": 2365548.0,
+   "covered_truth_twd": 1981478.0,
+   "diff_twd": -387702.0,
+   "diff_pct": -16.39,
+   "coverage_pct": 83.8,
+   "skipped": [
+    "NTDEQ2640",
+    "USDEQ6730"
+   ],
+   "rows": [
+    {
+     "code": "NTDEQ2640",
+     "ccy": "TWD",
+     "units": 11618.932208288,
+     "truth_twd": 241906,
+     "note": "",
+     "estimated_twd": null,
+     "skip_reason": "NAV 不可用"
+    },
+    {
+     "code": "NTDET0010",
+     "ccy": "TWD",
+     "units": 9657.916572796,
+     "truth_twd": 870754,
+     "note": "App NAV 90.1596 與公開 93.69 不符（疑平台調整價）",
+     "estimated_twd": 869695.0,
+     "nav": 90.05,
+     "nav_date": "2026-11-19"
+    },
+    {
+     "code": "USDEQ3490",
+     "ccy": "USD",
+     "units": 1826.410827706,
+     "truth_twd": 478964,
+     "note": "",
+     "estimated_twd": 477079.0,
+     "nav": 7.9451,
+     "nav_date": "2026-11-18"
+    },
+    {
+     "code": "USDEQ5700",
+     "ccy": "USD",
+     "units": 254.563972213,
+     "truth_twd": 631760,
+     "note": "",
+     "estimated_twd": 631072.0,
+     "nav": 75.4032,
+     "nav_date": "2026-11-18"
+    },
+    {
+     "code": "USDEQ6730",
+     "ccy": "USD",
+     "units": 167.276977265,
+     "truth_twd": 142164,
+     "note": "",
+     "estimated_twd": null,
+     "skip_reason": "NAV 不可用"
+    }
+   ]
+  },
+  "firstjin": {
+   "estimated_twd": 1873226.0,
+   "truth_twd": 1881254.0,
+   "covered_truth_twd": 1881254.0,
+   "diff_twd": -8028.0,
+   "diff_pct": -0.43,
+   "coverage_pct": 100.0,
+   "skipped": [],
+   "rows": [
+    {
+     "code": "ID05",
+     "ccy": "USD",
+     "units": 5700.98491,
+     "truth_twd": 1881254,
+     "note": "",
+     "estimated_twd": 1873226.0,
+     "nav": 9.9942,
+     "nav_date": "2026-11-18"
+    }
+   ]
+  }
+ },
+ "total": {
+  "estimated_twd": 8705884.0,
+  "truth_twd": 9121635.0,
+  "diff_twd": -415751.0,
+  "diff_pct": -4.56,
+  "uncovered_truth_twd": 384070,
+  "estimated_incl_truth_twd": 9089954,
+  "diff_incl_pct": -0.35
+ }
+}
