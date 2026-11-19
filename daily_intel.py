@@ -171,6 +171,10 @@ def fetch_yf_market(cpi: str | None = None) -> dict:
         "sox": _fmt_quote(sox, "費半"),
         "us": us,
         "cpi": cpi if cpi is not None else fetch_cpi_fred(),
+        # 2026-11-19：市場資料日（＝報價本身的交易日，不是產出時間）。
+        #   date_integrity 的 L1 用它判 phase／落後；原本無此欄位 → 只能靠檔案 mtime 猜，
+        #   07:00 產線剛寫完就被判「盤中」（內容其實是昨收）。
+        "market_date": (twii.get("as_of") or "")[:10] or None,
     }
 
 def _fetch_news(queries: list[str], limit: int = 3) -> list[dict]:
@@ -292,7 +296,7 @@ def build_analysis(intel_text: str, signals: dict, market_override: dict | None 
         briefing_lines.append(condensed_intel_text)
 
     briefing = "\n".join(briefing_lines)
-    return {"date": today, "generated_at": datetime.now().isoformat(), "market": market, "buffett": buffett, "cto": cto, "signals": signals, "news": news, "scenario_summary": scenario_summary, "briefing": briefing}
+    return {"date": today, "generated_at": datetime.now().isoformat(), "market": market, "market_date": market.get("market_date"), "buffett": buffett, "cto": cto, "signals": signals, "news": news, "scenario_summary": scenario_summary, "briefing": briefing}
 
 def ensure_today_intel(force_refresh: bool = False, market: dict | None = None) -> dict:
     today = _today_str()

@@ -783,14 +783,14 @@ def main():
         if _dry <= 0:
             # 2026-10-11 工單A：乾粉為負＝短少 → 不得再寫「優先吸納」（沒有可部署金額，
             #   否則同一份報告會出現「短少 6.0萬」＋「✅ 乾粉優先吸納」自相矛盾）。
-            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；{_dry_wan} → 先補現金底線、"
+            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,.0f} 守；{_dry_wan} → 先補現金底線、"
                          f"本週不做新增部署（指定款不得視為可動用）")
         elif _rot5.get("產業") and not _gate:
-            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；{_dry_wan} 優先「{_rot5.get('產業','—')}」（{_rot5.get('動作','')}）")
+            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,.0f} 守；{_dry_wan} 優先「{_rot5.get('產業','—')}」（{_rot5.get('動作','')}）")
         elif _gate:
-            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；{_dry_wan} 保留（觀望 gate 未解除前零新增）")
+            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,.0f} 守；{_dry_wan} 保留（觀望 gate 未解除前零新增）")
         else:
-            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,} 守；{_dry_wan} 保留（本週無「低配＋資金流入」標的，等訊號）")
+            lines.append(f"💰 現金 {_cash5:.1f}% → 底線 {_floor5:,.0f} 守；{_dry_wan} 保留（本週無「低配＋資金流入」標的，等訊號）")
         # ⑥ 避險衛星（2026-10-30 使用者裁決：整體機制結案）
         if str(_hs.get("狀態") or "").startswith(("⛔ 已結案", "已結案")):
             lines.append(f"⛔ 避險衛星：已結案（2026-10-30）— 目標作廢、不再加碼；部位保留不賣（黃金 {_hs.get('黃金現況',0):,}／石油 {_hs.get('石油現況',0):,}）")

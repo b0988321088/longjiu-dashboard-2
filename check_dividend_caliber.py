@@ -199,8 +199,12 @@ if _pg:
     ck(f"保守覆蓋率 {_con_pct}% 全部成對或標明保守底線", not _l1, f"孤立 {len(_l1)} 處: {_l1[:2]}")
     _l2 = _lone(_act_pct, (_con_pct, "當月實收"))
     ck(f"實收覆蓋率 {_act_pct}% 全部成對或標明當月實收", not _l2, f"孤立 {len(_l2)} 處: {_l2[:2]}")
-    ck("頁面無浮點尾巴（x,xxx.0）", not re.search(r"\d[\d,]*\.0(?![\d%])", _pg),
-       str(re.findall(r"\d[\d,]*\.0(?![\d%])", _pg)[:3]))
+    # 2026-11-19：只抓「金額」的浮點尾巴。原 regex `\d[\d,]*\.0` 連 initial-scale=1.0、
+    #   口徑版本 v2.0.0、匯率門檻 31.0／33.0 都判 FAIL —— 每次改文案就假紅燈，
+    #   真金額反而被淹沒。金額的長相是「有千分位」或「≥4 位整數」，據此收斂。
+    _FT = r"(?:\d{1,3}(?:,\d{3})+|\d{4,})\.0(?![\d%])"
+    ck("頁面無浮點尾巴（x,xxx.0）", not re.search(_FT, _pg),
+       str(re.findall(_FT, _pg)[:3]))
     ck("頁面無退役字樣（舊值不得殘留）", not [s for s in RETIRED if s in _pg],
        str([s for s in RETIRED if s in _pg]))
 

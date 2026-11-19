@@ -33,7 +33,7 @@ AUTHORITY = {
     "policy_firstjin": {"label": "第一金保單", "path": "firstjin_detail.last_update", "tolerance": 1, "tier": "noncore"},
     "policy_allianz":  {"label": "安聯保單", "path": "policy_valuation_dates", "tolerance": 1, "tier": "noncore"},
     "cash":            {"label": "現金", "path": "cash_source.date", "tolerance": 1, "tier": "core"},
-    "market":          {"label": "市場行情", "path": "daily_analysis.date", "tolerance": 0, "tier": "core"},
+    "market":          {"label": "市場行情", "path": "daily_analysis.market_date", "tolerance": 0, "tier": "core"},
     "us30y":           {"label": "US30Y", "path": "us30y_gate.as_of", "tolerance": 1, "tier": "noncore"},
 }
 
@@ -419,8 +419,21 @@ def publish_decision(verdict, claims=None, snapshot=None):
 BASE_DIR = Path(__file__).resolve().parent
 
 
-def _infer_phase(da_path: Path, report_date: date, now: datetime):
-    """由 daily_analysis.json 的 mtime 推斷 phase（不猜數值，只判類型）。"""
+def _infer_phase(da_path: Path, report_date: date, now: datetime, market_date: date | None = None):
+    """phase 由「市場資料本身的交易日」判定；只有拿不到 market_date 才退回 mtime 猜。
+
+    2026-11-19 修（每天早上都假 DEGRADED 的根因）：
+      舊版只看 daily_analysis.json 的 mtime —— 07:00 產線剛寫完這個檔（內容是**前一交易日
+      收盤**），mtime 就是今天且早於 13:45 → 一律判 "intraday" → 頁面標「盤中」、
+      DATE-GATE 每天吐一次「盤中值：僅得標示盤中」。但那份資料其實是昨收，不是盤中。
+      現在 producer（daily_intel.fetch_yf_market）會寫 market_date＝報價本身的交易日，
+      這裡據此判定；資料日 < 報告日 → "close"（落後交由 market_layer 的 lag 判）。
+    """
+    if market_date:
+        if market_date < report_date:
+            return "close"
+        if market_date == report_date:
+            return "intraday" if (now.hour, now.minute) < TW_CLOSE_READY else "close"
     try:
         mtime = datetime.fromtimestamp(da_path.stat().st_mtime)
     except OSError:
@@ -447,9 +460,13 @@ def load_gate_inputs(base=None, now=None):
     if da_path.exists():
         try:
             da = json.loads(da_path.read_text(encoding="utf-8"))
+            # 2026-11-19：date 必須是「市場資料本身的交易日」；daily_analysis.date 是報告日
+            #   （R2 明文：報告基準日不得當任何資產/市場的資料日）。舊版直接把報告日塞進
+            #   market_meta["date"]，於是 07:00 的昨收資料自稱「今日行情」、lag 恆為 0。
+            _mkt_date = parse_date(da.get("market_date"))
             market_meta = {
-                "date": da.get("date"),
-                "phase": _infer_phase(da_path, report_date, now),
+                "date": _mkt_date or parse_date(da.get("date")),
+                "phase": _infer_phase(da_path, report_date, now, _mkt_date),
                 "source": "daily_analysis.json",
                 "source_updated_at": datetime.fromtimestamp(da_path.stat().st_mtime).isoformat(),
             }

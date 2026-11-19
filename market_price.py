@@ -95,6 +95,46 @@ def _last_intraday(symbol: str, timeout: int = 10) -> tuple[date, float] | None:
     return None
 
 
+def _raw_bars(res: dict) -> list[tuple[date, float | None]]:
+    """日線 → [(交易日, 收盤或 None)]，**保留 null**（用來偵測 Yahoo 缺 K 棒）。
+
+    2026-11-19 事故：^TWII 的 11/18 日線 close 是 null，但 meta.regularMarketTime
+    已是 11/18 13:33 —— `_bars()` 濾掉 null 後最後一根變 11/17，於是整條產線
+    把 11/17 當成最新收盤（L1 判「落後 2 個交易日」→ BLOCKED）。
+    """
+    ts = res.get("timestamp") or []
+    closes = (res.get("indicators", {}).get("quote", [{}])[0].get("close") or [])
+    out: list[tuple[date, float | None]] = []
+    for t, c in zip(ts, closes):
+        try:
+            d = datetime.fromtimestamp(int(t), timezone.utc).date()
+        except Exception:  # noqa: BLE001
+            continue
+        out.append((d, None if c is None else float(c)))
+    out.sort(key=lambda x: x[0])
+    return out
+
+
+def _last_close_on(symbol: str, target: date, timeout: int = 10) -> tuple[date, float] | None:
+    """指定交易日的最後一筆成交（台北日界）——補日線 null 缺口用。"""
+    res = _get_result(f"{symbol}?interval=5m&range=5d", timeout)
+    if not res:
+        return None
+    ts = res.get("timestamp") or []
+    closes = (res.get("indicators", {}).get("quote", [{}])[0].get("close") or [])
+    best = None
+    for t, c in zip(ts, closes):
+        if c is None:
+            continue
+        try:
+            d = datetime.fromtimestamp(int(t), TW_TZ).date()
+        except Exception:  # noqa: BLE001
+            continue
+        if d == target:
+            best = (d, float(c))
+    return best
+
+
 def fetch_snapshot(symbol: str, timeout: int = 10) -> dict:
     """回 {"price","prev","change_pct","as_of","used_intraday","stale"}；失敗回 {}。"""
     res = _get_result(f"{symbol}?interval=1d&range=5d", timeout)  # range=5d 保證 ≥2 點（INC-141）
@@ -106,9 +146,19 @@ def fetch_snapshot(symbol: str, timeout: int = 10) -> dict:
 
     last_date, last_close = bars[-1]
     price, as_of = last_close, last_date
-    used_intraday, stale = False, False
+    used_intraday, stale, filled_gap = False, False, False
 
+    # 2026-11-19：最新交易日的日線 close 為 null（Yahoo 缺 K 棒）→ 用該日分鐘資料補收盤。
+    #   這與「日線未 roll」不同：缺的是**已收盤的交易日**，補到的是收盤價、不是盤中價，
+    #   所以 used_intraday 保持 False（phase 仍為 close），另以 filled_daily_gap 標示來源。
     if _is_tw(symbol):
+        _raw = _raw_bars(res)
+        if _raw and _raw[-1][1] is None and _raw[-1][0] > last_date:
+            _fill = _last_close_on(symbol, _raw[-1][0], timeout)
+            if _fill:
+                price, as_of, filled_gap = _fill[1], _fill[0], True
+
+    if _is_tw(symbol) and not filled_gap:
         now_tw = datetime.now(TW_TZ)
         if last_date != now_tw.date() and _tw_should_have_today_bar(now_tw):
             intra = _last_intraday(symbol, timeout)
@@ -117,8 +167,8 @@ def fetch_snapshot(symbol: str, timeout: int = 10) -> dict:
             else:
                 stale = True  # 應有當日價卻拿不到 → 呼叫端應標「資料延遲」，不要當今日
 
-    if used_intraday:
-        prev = last_close            # 日線最後一根＝前一日
+    if used_intraday or filled_gap:
+        prev = last_close            # 日線最後一根有效＝前一交易日
     elif len(bars) >= 2:
         prev = bars[-2][1]
     else:
@@ -131,6 +181,7 @@ def fetch_snapshot(symbol: str, timeout: int = 10) -> dict:
         "change_pct": pct,
         "as_of": as_of.isoformat(),
         "used_intraday": used_intraday,
+        "filled_daily_gap": filled_gap,
         "stale": stale,
     }
 

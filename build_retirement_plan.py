@@ -259,7 +259,7 @@ rows = [
     ("FIRE 現況", f"被動收入 保守 {fire_income:,}／當月實收 {fire_income_actual:,.0f} vs 開銷 {fire_cost:,}（覆蓋 {fire_cov:.1f}%／{fire_cov_actual:.1f}%）", "✅ 已超越"),
     ("退休後流動性", f"保守 {fire_income:,} vs 維持支出 {fire_cost:,} → 盈餘 +{fire_income - fire_cost:,.0f}；當月實收 {fire_income_actual:,.0f} → +{fire_income_actual - fire_cost:,.0f}", "🟢 正現金流"),
     ("2029 升級情境", f"富達解約免罰 +~{fuda_2029:,}/月 → 月被動 {after_2029:,}＋疊卷套利", "📈 待 2029/8"),
-    ("三階段目標③", f"扣除房產淨資產 ≥ 0（現況 淨值 {net_worth:,}）", "⏳ 目標 2029-30"),
+    ("三階段目標③", f"扣除房產淨資產 ≥ 0（現況 淨值 {net_worth:,.0f}）", "⏳ 目標 2029-30"),
 ]
 
 cov_color = "#22c55e" if fire_cov >= 100 else "#f59e0b"
@@ -350,7 +350,7 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <tr><th>步驟</th><th>期間</th><th>財務關卡（通過才算數）</th></tr>
 <tr><td>① 債務優化（高息清零）</td><td>現在 ~ 2027/2</td><td>{_pf.pledge_status_line()}；洲際W轉貸 ≤2.5%；築巢 2.185% 生效 → 負債成本逐階下探</td></tr>
 <tr><td>② 留職停薪測試</td><td>2027/2 ~ 2027/8</td><td>薪資 {sal:,} 暫停後，月現金流 = 被動 {fire_income:,}（保守底線）／{fire_income_actual:,.0f}（當月實收） − 支出 {fire_cost:,} = <b style="color:#22c55e">+{fire_income - fire_cost:,}</b>（保守）／<b style="color:#38bdf8">+{fire_income_actual - fire_cost:,.0f}</b>（實收）（不含標案收入）；標案收入為增量；目標盈餘 9萬/月還債 70%</td></tr>
-<tr><td>③ 扣除房產淨資產 ≥ 0</td><td>2029-30</td><td>富達解約免罰 +{fuda_2029:,}/月 + 債券疊卷套利；高息清零 + 還債進度 → 被動 &gt; 支出、淨資產轉正（現況 {net_worth:,}）</td></tr>
+<tr><td>③ 扣除房產淨資產 ≥ 0</td><td>2029-30</td><td>富達解約免罰 +{fuda_2029:,}/月 + 債券疊卷套利；高息清零 + 還債進度 → 被動 &gt; 支出、淨資產轉正（現況 {net_worth:,.0f}）</td></tr>
 </table>
 <p class="callout">關鍵：決策 A（轉型）/ B（延長）/ C（回台電）<b>不影響退休基本盤</b> — 被動收入已覆蓋支出（保守底線 {fire_cov:.1f}%／當月實收 {fire_cov_actual:.1f}%），三步驟的財務關卡是「職業轉換的安全網」，退休規劃獨立運作（財務三桶分離）。</p></div>
 
@@ -412,7 +412,7 @@ ul{{margin:6px 0;padding-left:18px}} li{{margin:4px 0}}
 <ul>
 <li>① 債務優化（高息清零）— 執行中（{_pf.pledge_status_line(style='short')}）</li>
 <li>② 2027/2 留職停薪測試（盈餘 9萬/月還債 70%）— 待 2027/2 啟動</li>
-<li>③ 扣除房產淨資產 ≥ 0 — 目標 2029-30（現況淨值 {net_worth:,}，負債比 {debt_ratio}%）</li>
+<li>③ 扣除房產淨資產 ≥ 0 — 目標 2029-30（現況淨值 {net_worth:,.0f}，負債比 {debt_ratio}%）</li>
 </ul></div>
 
 <div class="card"><h2>💎 {manifesto_title}</h2>
