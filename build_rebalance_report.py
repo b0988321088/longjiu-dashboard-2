@@ -37,6 +37,12 @@ def main():
     us30y_txt = f"{us30y:.2f}%" if us30y else "—"
 
     # 五桶對照
+    # 2026-11-19（使用者核准）：偏離欄／燈號／動作一律以「可接受範圍」判定，落實 10/02 裁示②
+    #   「落在範圍內＝完全靜默」。原版用 |gap|<=1.5 判綠，導致台股 12.0%（範圍 7–13%）仍被
+    #   標 🟡 + 「回檔小單低吸」、並印出 +2.0pp（等於在講距離目標多遠），與靜默原則衝突。
+    _band_all = (snap.get("可接受範圍_pct") or {})
+    _band_of = {"台股市值型成長": "台股市值型成長", "美股市值型成長": "美股市值型成長",
+                "防守型配息": "防守型配息", "債券": "債券"}
     BUCKETS = [
         ("台股市值型成長", "台股市值型目標", "TW 台股", "配息導流 + 回檔小單低吸（單筆≤5萬）"),
         ("美股市值型成長", "美股市值型目標", "🇺🇸 美股", "逢反彈分批減碼（單次≤20萬），資金導向防守"),
@@ -52,19 +58,30 @@ def main():
         v = atwd.get(actual_key, 0)
         gap = a - t
         sum_pct += a
-        if abs(gap) <= 1.5:
-            light = "🟢"
-        elif abs(gap) <= 3:
-            light = "🟡"
+        _b = _band_all.get(_band_of.get(actual_key, ""), {}) or {}
+        _lo, _hi = _b.get("下限"), _b.get("上限")
+        try:
+            _inb = (_lo is not None and _hi is not None and float(_lo) <= float(a) <= float(_hi))
+        except Exception:
+            _inb = False
+        if _inb:
+            light, gap_txt = "🟢", "範圍內"
+            action = f"範圍內靜默（可接受 {_lo}–{_hi}%，不出手、不建議增減）"
+        elif actual_key == "現金/安全網":
+            light, gap_txt = ("🟢" if abs(gap) <= 1.5 else "🟡"), "—（底線制）"
         else:
-            light = "🔴"
+            gap_txt = f"{gap:+.1f}pp"
+            light = "🟡" if abs(gap) <= 3 else "🔴"
+            if actual_key == "防守型配息" and gap < 0:
+                # 原版對 17.4%（目標 30%）寫「已達標維持」＝紅燈配達標，自相矛盾
+                action = f"低於可接受範圍（{_lo}–{_hi}%）→ 以配息導流優先補入，不動用乾粉"
         rows.append(f"""
         <tr>
           <td>{label} {actual_key.replace('成長','').replace('型','')}</td>
           <td class="num">{v:,.0f}</td>
           <td class="num">{a:.1f}%</td>
           <td class="num">{t}%</td>
-          <td class="num">{gap:+.1f}pp</td>
+          <td class="num">{gap_txt}</td>
           <td class="light">{light}</td>
           <td class="action">{action}</td>
         </tr>""")

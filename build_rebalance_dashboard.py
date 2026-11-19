@@ -241,7 +241,19 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
             lines.append(f"| {name} | {act:.1f}% | — | — | 指定款＋避險衛星（不調度） |")
             continue
         gap = act - t
-        lines.append(f"| {name} | {act:.1f}% | {t}% | {gap:+.1f}pp | {action_map.get(name, '—')} |")
+        # 2026-11-19（使用者核准）：偏離欄也遵守 10/02 裁示②靜默原則 ——
+        #   在可接受範圍內不出現任何 pp 數字（那等於在講距離目標多遠），只標「範圍內」；
+        #   出範圍才顯示 pp（此時是「範圍外」的證據，不是建議）。
+        _r = _band.get(_band_key.get(name, ""), {}) or {}
+        _lo, _hi = _r.get("下限"), _r.get("上限")
+        try:
+            _inb = (_lo is not None and _hi is not None and float(_lo) <= float(act) <= float(_hi))
+        except Exception:
+            _inb = False
+        _gap_txt = "範圍內" if _inb else f"{gap:+.1f}pp"
+        if name == "現金":
+            _gap_txt = "—（底線制）"  # 裁示②：現金桶不設百分比，由 Gate／cash_mode 管理
+        lines.append(f"| {name} | {act:.1f}% | {t}% | {_gap_txt} | {action_map.get(name, '—')} |")
 
     # 2026-10-11 工單B：資產分解（SoT 唯一入口）——五桶只佔 93.44% 時必須交代其餘部分與分母。
     #   不變量不閉合（未歸類 >1 元）→ 明確標示並**阻擋精確調度建議**（fail-closed），
