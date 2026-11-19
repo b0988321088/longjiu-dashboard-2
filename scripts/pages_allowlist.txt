@@ -20,7 +20,7 @@ buffett_cto_report_2026-11-19.md
 ceo_dashboard_2026-09-04.html
 ceo_dashboard_2026-10-09.html
 ceo_dashboard_2026-10-30.html
-ceo_dashboard_2026-11-16.html
+ceo_dashboard_2026-11-20.html
 cio_review.json
 cost.html
 cost_data.json
