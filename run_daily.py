@@ -415,10 +415,27 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                 _real = _chg - _cal
                 _cal_row = (
                     f'<tr><td>本月帳務因素</td><td>{_cal:+,.0f} TWD</td>'
-                    f'<td>非市場虧損（日幣匯率記錯＋ETF 除息缺口）；帳面 {_chg:+,.0f} → '
-                    f'實質 {_real:+,.0f}（{_real / _start * 100:+.2f}%）｜'
+                    f'<td>非市場虧損（日幣匯率記錯＋ETF 除息缺口），不計入投資績效；'
+                    f'扣帳務後資產變動 {_real:+,.0f}（{_real / _start * 100:+.2f}%，仍含金流，非報酬率）｜'
                     f'<a href="mtd_performance.html">本月績效拆解</a></td></tr>'
                 )
+                # 2026-11-19 使用者指正：投資績效必須排除帳務修正與金流。單一真值來源＝drawdown_*.json 的 caliber
+                try:
+                    _dc = sorted((BASE / "data").glob("drawdown_*.json"), key=lambda x: x.name)
+                    _dd = json.loads(_dc[-1].read_text(encoding="utf-8")) if _dc else {}
+                    _cv = _dd.get("caliber") or {}
+                    if _cv.get("pnl_market_pct") is not None:
+                        _a0 = (_dd.get("assets") or {}).get("start") or _start
+                        _cal_row += (
+                            f'<tr><td><b>本月投資績效</b></td><td><b>{_cv["pnl_market"]:+,.0f} TWD</b></td>'
+                            f'<td><b>投資報酬 {_cv["pnl_market_pct"]:+.2f}%</b>（只算市場價格變動；分母＝投資部位 '
+                            f'{_cv["invest_start"]:,.0f}＋本期投入半數）｜'
+                            f'資產變動 {_cv["assets_change"]:+,.0f}（{_cv["assets_change"] / _a0 * 100:+.2f}%）另含 '
+                            f'帳務 {_cv["accounting_adj"]:+,.0f}、投入 {_cv["net_invest"]:+,.0f}、現金淨流 {_cv["net_flow"]:+,.0f}｜'
+                            f'<a href="drawdown_review_{_dd.get("month", "")}.html">跌幅檢討</a></td></tr>'
+                        )
+                except Exception as _e2:
+                    print(f"[caliber-row] ⚠️ {type(_e2).__name__}: {_e2}")
     except Exception as _e:
         print(f"[mtd-note] ⚠️ {type(_e).__name__}: {_e}")
 

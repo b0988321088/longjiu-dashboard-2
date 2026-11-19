@@ -412,6 +412,28 @@ def compute(month: str) -> dict:
                  "floor": LIFE_FLOOR},
     }
     data["market"]["usd_twd"] = ((cur.get("radar_state") or {}) if isinstance(cur.get("radar_state"), dict) else {}).get("twd")
+
+    # ── 投資績效口徑（2026-11-19 使用者指正：-4% 是資產變動率，不是投資績效）
+    #    恆等式：總資產變動 = 市場損益 + 帳務修正 + 淨投入 + 現金淨流
+    #    市場損益 = 投資部位變動 − 帳務修正 − 本期投入（買進不再算報酬）
+    _inv0 = sum(_num(b.get("start")) for b in attrib if not b["label"].startswith("現金"))
+    _inv1 = sum(_num(b.get("end")) for b in attrib if not b["label"].startswith("現金"))
+    _buy_cost = sum(_num(b.get("shares")) * _num(b.get("price")) for b in buys)
+    _cash_chg = next((_num(b.get("chg")) for b in attrib if b["label"].startswith("現金")), 0.0)
+    _cal = ((_load(BASE / "data" / "caliber_adjustments.json").get("months") or {}).get(month) or {})
+    _adj = _num(_cal.get("total_adjustment"))
+    _pnl_all = _inv1 - _inv0 - _buy_cost
+    _pnl_mkt = _pnl_all - _adj
+    _denom = _inv0 + _buy_cost / 2
+    data["caliber"] = {
+        "invest_start": _inv0, "invest_end": _inv1, "net_invest": _buy_cost,
+        "pnl_total": _pnl_all, "accounting_adj": _adj, "pnl_market": _pnl_mkt,
+        "pnl_market_pct": (_pnl_mkt / _denom * 100) if _denom else None,
+        "assets_change": a1 - a0, "net_flow": _cash_chg,
+        "items": _cal.get("items") or [],
+        "source": "data/caliber_adjustments.json",
+        "closure_gap": round((_pnl_all + _buy_cost + _cash_chg) - (a1 - a0), 1),
+    }
     return data
 
 
@@ -589,6 +611,9 @@ def _fund_table(rows, title="") -> str:
 
 def render(d: dict, embedded: bool = False) -> str:
     a, m, tw, pl = d["assets"], d["market"], d["tw"], d["pledge"]
+    cal = d.get("caliber") or {}
+    mv_pct = cal.get("pnl_market_pct")
+    mv_alpha = (mv_pct or 0) - (m["index_pct"] or 0)
     bond_row = next((r for r in d["securities"] if r["ticker"] == "00983D"), None)
     bond_pct = bond_row["mtd_pct"] if bond_row else None
     cash_pct = next((r["pct"] for r in d["attrib"] if r["label"].startswith("現金")), None)
@@ -619,47 +644,45 @@ def render(d: dict, embedded: bool = False) -> str:
 </div>
 """
 
-    # 多殺多評估摘要（資料來自 market_squeeze.py；不存在就整卡略過）
-    sq_card = ""
-    try:
-        _sq = json.loads((BASE / "data" / "market_squeeze.json").read_text(encoding="utf-8"))
-    except Exception:
-        _sq = {}
-    if _sq:
-        _p, _m, _i = _sq.get("pledge") or {}, _sq.get("market") or {}, _sq.get("index") or {}
-        sq_card = f"""<div class="card">
-  <div class="sub">同月份的市場結構評估</div>
-  <div class="kv"><span>多殺多判定</span><b>{_sq.get('stage', '—')}</b></div>
-  <div class="kv"><span>指數自波段高</span><b>{signed_pct(_i.get('from_peak'))}（{money(_i.get('now'))}）</b></div>
-  <div class="kv"><span>可補繳現金能撐到</span><b>池跌 {pct(_p.get('cash_limit_drop'), 1)}（{wan(_p.get('avail_cash'))}）</b></div>
-  <div style="margin-top:6px"><a href="market_squeeze_{_sq.get('date', '')}.html"
-     style="color:#7dd3fc;font-weight:700;font-size:13px">→ 完整評估（四層證據／補繳預案／情境）</a></div>
-</div>
-"""
-
     head = f"""
 <div class="card hero">
   {title_tag}📉 {d['period']['start']} → {d['period']['end']} 跌幅檢討{title_end}
   <div class="sub">資料：snapshot 快照 {d['period']['days']} 筆｜金額單位 TWD</div>
   <div class="kpi">
-    <div><div class="v neg">{signed_money(loss)}</div><div class="l">總資產變化<br>{signed_pct(a['pct'])}</div></div>
-    <div><div class="v">{signed_pct(alpha)}</div><div class="l">相對大盤<br>（大盤 {signed_pct(m['index_pct'])}）</div></div>
-    <div><div class="v neg">{signed_pct(d['local_peak_to_trough']['pct'])}</div><div class="l">波段高→谷<br>{d['local_peak']['date'][5:]}→{d['trough']['date'][5:]}</div></div>
+    <div><div class="v {'neg' if (mv_pct or 0) < 0 else ''}">{signed_pct(mv_pct, 2)}</div><div class="l">投資報酬<br>（市場價格變動）</div></div>
+    <div><div class="v neg">{signed_money(cal.get('assets_change') or loss)}</div><div class="l">資產變動<br>{signed_pct(a['pct'])}</div></div>
+    <div><div class="v">{signed_pct(mv_alpha, 1)}</div><div class="l">相對大盤<br>（大盤 {signed_pct(m['index_pct'])}）</div></div>
   </div>
-  <div class="kv" style="margin-top:8px"><span>總資產</span><b>{money(a['start'])} → {money(a['end'])}</b></div>
+  <div class="kv" style="margin-top:8px"><span>投資部位</span><b>{money(cal.get('invest_start'))} → {money(cal.get('invest_end'))}</b></div>
+  <div class="kv"><span>帳務修正（不計入績效）</span><b>{signed_money(cal.get('accounting_adj'))}</b></div>
+  <div class="kv"><span>本期投入（買進成本）</span><b>{money(cal.get('net_invest'))}</b></div>
+  <div class="kv"><span>現金淨流動</span><b>{signed_money(cal.get('net_flow'))}</b></div>
+  <div class="kv"><span>總資產</span><b>{money(a['start'])} → {money(a['end'])}</b></div>
   <div class="kv"><span>淨值（資產−負債）</span><b>{money(a['net_worth_start'])} → {money(a['net_worth_end'])}</b></div>
   <div class="kv"><span>質押 LTV（{pl.get('as_of') or '—'}）</span>
     <b>{pct(pl.get('ltv_pct'), 2)}（{pl.get('stage') or '—'}）</b></div>
 </div>
 """
 
-    chart = f'<div class="card">{_chart(d["series"])}</div>'
+    caliber_card = f"""
+<div class="card">
+  <div class="sub">三個數字的差別（橫向加總剛好閉合）</div>
+  <div class="kv"><span>① 投資報酬</span><b>{signed_pct(mv_pct, 2)}　只算市場價格變動</b></div>
+  <div class="kv"><span>② 帳務修正</span><b>{signed_money(cal.get('accounting_adj'))}　日幣匯率記錯、ETF 除息時點差</b></div>
+  <div class="kv"><span>③ 本期投入</span><b>{money(cal.get('net_invest'))}　買進成本，屬資金移動</b></div>
+  <div class="kv"><span>④ 現金淨流動</span><b>{signed_money(cal.get('net_flow'))}　收支與買賣現金</b></div>
+  <div class="kv"><span>＝ 資產變動</span><b>{signed_money(cal.get('assets_change'))}（{signed_pct(a['pct'])}）</b></div>
+  <div class="sub" style="margin-top:6px">閉合差 {cal.get('closure_gap')}；帳務來源 {cal.get('source')}。
+    <b>資產變動</b>是你帳戶實際少掉的金額，<b>投資報酬</b>才是投資表現——兩者不該混用同一個百分比。</div>
+</div>
+"""
+    chart = caliber_card + f'<div class="card">{_chart(d["series"])}</div>'
 
     verdict = f"""
 <h2>一、結論先講</h2>
 <div class="card ok">
   <ul>
-    <li><b>跌幅本身不大，問題在結構。</b>大盤 {signed_pct(m['index_pct'])}，總資產只 {signed_pct(a['pct'])}（少跌 {alpha:.1f}pp）——
+    <li><b>跌幅本身不大，問題在結構。</b>大盤 {signed_pct(m['index_pct'])}，投資報酬只 {signed_pct(mv_pct, 2)}（少跌 {mv_alpha:.1f}pp；資產變動 {signed_pct(a['pct'])} 另含帳務與金流）——
         資產配置有效，因為台股只占 {pct(d['penetration'].get('台股市值型成長'))}、七成是美元資產。</li>
     <li><b>但「台股純度」的部位全軍覆沒。</b>證券＋保單內台股＋平台台股基金合計 {wan(tw['total']['start'])} → {wan(tw['total']['end'])}，
         虧 {signed_money(tw_total_chg)}（{signed_pct(tw['total']['pct'])}），佔整體虧損的
