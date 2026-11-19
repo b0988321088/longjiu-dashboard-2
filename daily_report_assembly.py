@@ -98,6 +98,64 @@ def _is_active_card(d) -> bool:
     return not any(k in s for k in _closed)
 
 
+def build_watchlist_html(events, today: str | None = None, horizon: int = 75) -> str:
+    """觀察型事件倒數（2026-11-19 使用者裁決）。
+
+    為什麼需要獨立區塊：build_schedule_rows 只顯示 7 天內事件，12/09 Fed 與
+    12/17 央行（距 11/19 為 20／28 天）永遠不會出現在日報。使用者要求「日報
+    顯示倒數、會議日期及觀察不行動」，故以本區塊承接中長期事件監控。
+
+    定位＝事件監控，**不是交易觸發條件**：
+      - importance=medium／status 含「觀察」者只在此列示，不進今日狀態列的硬性提醒
+      - 不因日期到來解凍 HOLD、不改 LTV 六段、5% 回撤預算、配置或交易閘門
+      - 區塊尾註明本戶第一順位風險仍是質押維持率，避免事件蓋過每日風控
+    """
+    _t = _date.fromisoformat(today or _date.today().isoformat())
+    picked = []
+    for e in (events or []):
+        if not isinstance(e, dict):
+            continue
+        d = str(e.get("date", ""))
+        if len(d) != 10 or d[4] != "-" or d[7] != "-":
+            continue
+        try:
+            dd = _date.fromisoformat(d)
+        except Exception:
+            continue
+        n = (dd - _t).days
+        if n < 1 or n > horizon:
+            continue
+        st = str(e.get("status", ""))
+        # 只收「觀察型」：一般行程已由 build_schedule_rows 的 7 天表覆蓋，
+        # 若兩者混收，11 月密集事件會把 12/09、12/17 擠出前 8 名（實測被擠掉）。
+        if "觀察" not in st:
+            continue
+        picked.append((n, d, e))
+    if not picked:
+        return ""
+    picked.sort(key=lambda x: (x[0], str(x[2].get("item", ""))))
+    body = "".join(
+        f'<div style="display:flex;gap:10px;align-items:baseline;padding:6px 9px;'
+        f'background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin:4px 0">'
+        f'<span style="flex:0 0 62px;font-weight:800;color:#2563eb;font-size:12px">D-{n}</span>'
+        f'<span style="flex:1;font-size:12.5px;color:#0f172a"><b>{d}</b>　{str(e.get("item",""))}'
+        f'<span style="color:#64748b">　{str(e.get("status",""))}</span></span></div>'
+        for n, d, e in picked[:12]
+    )
+    return (
+        '<div style="background:#fff;border:1px solid #cbd5e1;border-radius:10px;'
+        'padding:12px;margin:12px 0" data-block="watchlist-events">'
+        '<div style="font-weight:800;color:#0f172a;margin-bottom:4px">'
+        '📅 觀察型事件倒數（非交易觸發）</div>'
+        '<div style="font-size:11.5px;color:#64748b;margin-bottom:6px">'
+        '事件監控用；到日不自動解凍 HOLD、不改 LTV 六段／5% 回撤預算／配置／交易閘門。</div>'
+        f'{body}'
+        '<div style="font-size:11.5px;color:#b45309;margin-top:8px;padding-top:6px;'
+        'border-top:1px dashed #e2e8f0">⚠️ 優先序：本戶第一順位風險＝質押擔保池市值與 LTV'
+        '（每日 15:10 market_squeeze 計算），本區事件重要性在其之下。</div></div>'
+    )
+
+
 def build_decision_rows(pending, snapshot) -> str:
     """「執行中決策追蹤」逐卡一列（含決策卡連結）。
 

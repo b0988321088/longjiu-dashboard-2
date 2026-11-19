@@ -2947,6 +2947,13 @@ def main():
     _pending_dec = json.loads((BASE / "pending_decisions.json").read_text(encoding="utf-8"))
     _snap_asm = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     _schedule_rows = _asm_sched(_events, date.today().isoformat())
+    # 2026-11-19：觀察型事件倒數（12/09 Fed、12/10 決議、12/17 央行）——7 天視窗
+    # 抓不到，另立區塊；定位＝事件監控，不是交易觸發（使用者裁決）。
+    try:
+        from daily_report_assembly import build_watchlist_html as _asm_watch
+        _schedule_rows += _asm_watch(_events, date.today().isoformat())
+    except Exception as _we:
+        print(f"⚠️ 觀察型事件倒數失敗（不阻擋日報）：{type(_we).__name__}: {_we}")
     _p0_html = _asm_p0(_events, _pending_dec, _snap_asm, date.today().isoformat())
 
     # 日報
