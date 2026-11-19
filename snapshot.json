@@ -4,7 +4,7 @@
  "date": "2026-11-19",
  "total_assets": 25863138.0,
  "total_liabilities": 30957276,
- "net_worth": -5124138,
+ "net_worth": -5094138,
  "debt_ratio": 51.7,
  "monthly_income": 234207,
  "monthly_expense": 159210,
@@ -6263,7 +6263,7 @@
     "dividend_actual": 121737.0,
     "pccr_pct": 139.3,
     "pccr_conservative_pct": 113.1,
-    "pccr_actual_pct": 91.5,
+    "pccr_actual_pct": 110.4,
     "pccr_normal_headroom": 139.3,
     "nonpassive": {
      "girlfriend_repayment": 6000.0
@@ -6282,10 +6282,10 @@
     "floor": 700000.0,
     "cash_used": 1225855.0,
     "cash_below_floor": false,
-    "runway_days": 1117,
+    "runway_days": 1145,
     "cash_caliber": "net_of_reserve",
-    "runway_days_full_cash": 1117,
-    "runway_days_net_reserve": 1117
+    "runway_days_full_cash": 1145,
+    "runway_days_net_reserve": 1145
    },
    "stress": {
     "pool": 11748006.0,
@@ -6670,7 +6670,7 @@
     "coast_fin_only_pct": 26.5,
     "coast_with_re_pct": 45.6,
     "pccr_pct": 139.3,
-    "runway_days": 1117,
+    "runway_days": 1145,
     "maintenance_pct": 139.4,
     "credit_locked": true,
     "light_work_cap_2w": 20869293
@@ -6828,8 +6828,8 @@
    "定義": "現金底線內、不得動用的部分（cash_floor）",
    "floor": 700000
   },
-  "dry_powder": 495855,
-  "dry_powder_signed": 495855,
+  "dry_powder": 525855,
+  "dry_powder_signed": 525855,
   "cash_shortfall": 0,
   "credit_line_available": null,
   "credit_line_note": "⚠️ 無真值來源：可動用信用額度（未動用質押額度／保單借款空間）尚未建檔 → 壓力測試不得推估",
@@ -10155,7 +10155,7 @@
    "使用者明示解凍（且可動用現金 ≥70 萬）"
   ],
   "修正後標的": "核心消費曝險（非加碼台股大盤 0050）",
-  "金額上限": 495855,
+  "金額上限": 525855,
   "節奏": "條件觸發式分批，非固定 10 批：每批上限 50,000（495,855÷10＝49,585／批），最多 10 批；首批須三條件同時成立才動，後續每批綁回檔觸發，未觸發則批次失效不補買",
   "分批修正": {
    "原案缺陷": "533,000 ÷ 10 批 = 53,300／批，已超過單筆 ≤5 萬上限，原案自相矛盾；且『10 批』未綁任何觸發條件，等於無條件攤平",
