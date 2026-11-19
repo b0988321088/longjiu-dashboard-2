@@ -322,16 +322,26 @@ def step_remote_sync(quiet: bool) -> list:
             print(f"⑤ 遠端同步：✅ {branch} == {remote_ref}（{_git('rev-parse', '--short', 'HEAD')}）")
         return problems
 
+    # 2026-11-19：PUSH_HOLD 生效期間，「本機領先遠端」是刻意的治理狀態（發布待授權），
+    # 不是 INC-236 那種「以為推了其實沒推」的事故。→ 列為預期、不計入 problems，
+    # 但保留可見輸出（不靜默）；HOLD 解除後自動恢復嚴格判定，不會掩蓋真漏推。
+    _hold = (Path(__file__).resolve().parent / ".git" / "PUSH_HOLD").exists()
     if n_ahead:
         oldest = _git("log", "--oneline", "--reverse", f"{remote_ref}..HEAD").splitlines()[:3]
-        problems.append(
-            f"遠端同步：{n_ahead} 顆 commit 未推送（{branch} 領先 {remote_ref}）→ Pages 吃舊值"
-        )
-        if not quiet:
-            print(f"⑤ 遠端同步：❌ {n_ahead} 顆未推送")
-            for ln in oldest:
-                print(f"     - {ln}")
-            print("   修法：git push --force-with-lease origin HEAD:clean-main")
+        if _hold:
+            if not quiet:
+                print(f"⑤ 遠端同步：⏸️ {n_ahead} 顆未推送（PUSH_HOLD 生效中 → 預期，非漏推）")
+                for ln in oldest:
+                    print(f"     - {ln}")
+        else:
+            problems.append(
+                f"遠端同步：{n_ahead} 顆 commit 未推送（{branch} 領先 {remote_ref}）→ Pages 吃舊值"
+            )
+            if not quiet:
+                print(f"⑤ 遠端同步：❌ {n_ahead} 顆未推送")
+                for ln in oldest:
+                    print(f"     - {ln}")
+                print("   修法：git push --force-with-lease origin HEAD:clean-main")
     if n_behind:
         problems.append(f"遠端同步：本機落後 {remote_ref} {n_behind} 顆（別處推過，需 pull/rebase）")
         if not quiet:

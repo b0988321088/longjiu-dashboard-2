@@ -7,8 +7,20 @@
 #   無法保證所有入口（含人工、含 agent 自行執行的 git）都被約束。
 #
 # 本 hook 把「事故鎖」上移到 commit 層：
-#   .git/PUSH_HOLD 存在 → 一律拒絕 commit（含 --allow-empty、含所有自動產線、含人工）。
-#   解除方式只有一個：刪除 .git/PUSH_HOLD（需另行授權）。
+#   .git/PUSH_HOLD 存在 → 預設拒絕 commit（含 --allow-empty、含所有自動產線、含人工）。
+#
+# ⚠️ 2026-11-19 修正（使用者裁決「維持日常報告正常運作，只隔離未授權的 commit」）：
+#   原設計「一律拒絕 commit」在實際凍結期造成連鎖故障 —— 22:38 收尾提交被擋 →
+#   當日 6 檔資料（buffett_cto_report／daily_intel_report／artifact_manifest／
+#   dis_status／metric_definitions／ai_cost_daily）堆在工作區 → 22:40 收工檢查
+#   ② 閉環稽核連續 3 次失敗，變成每日噪音，而凍結的目的（不上線）本來就已由
+#   push 端達成。commit 只寫本地歷史，不改變線上狀態。
+#   → HOLD 期間改為「允許 commit、僅警告」；發布仍由三層擋住：
+#     ① pre-push：PUSH_HOLD 生效 → 必須有 release_auth 一次性授權才放行
+#     ② auto_push.py：未推佇列含非本輪 commit → rc=3 拒推（2026-11-19 新增）
+#     ③ data_closeout_commit.py：同上斷言（2026-11-19 新增）
+#   殘餘風險（明示）：`git push --no-verify` 可繞過 pre-push。此風險在原本
+#   「連 commit 都擋」的設計下同樣存在（先刪 PUSH_HOLD 再 commit 即可），故非新增。
 #
 # 刻意不做的事：
 #   - 不提供環境變數繞過（事故期間任何繞過都必須是明示的授權動作）
@@ -18,10 +30,9 @@ set -u
 
 GIT_DIR="$(git rev-parse --git-dir 2>/dev/null || echo .git)"
 if [ -f "$GIT_DIR/PUSH_HOLD" ]; then
-    echo "⏸️  COMMIT 被拒絕：PUSH_HOLD 生效（2026-10-31 事故隔離）" >&2
-    echo "    解除方式：刪除 .git/PUSH_HOLD（需使用者授權）" >&2
-    echo "    目前狀態：HEAD 不變、工作區內容保留" >&2
-    exit 1
+    echo "⏸️  PUSH_HOLD 生效：本次 commit 僅寫入本地歷史，不會被自動發布。" >&2
+    echo "    發布需 .git/RELEASE_AUTH 一次性授權（release_auth.py 驗範圍／期限／次數）。" >&2
+    echo "    push 端防護：pre-push（HOLD）＋ auto_push／data_closeout 未推佇列斷言。" >&2
 fi
 
 # JSON 整檔重排守門（2026-11-17 建立）
