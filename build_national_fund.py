@@ -57,6 +57,15 @@ def weights(etf, ticker):
     return {c: float(w) for _, c, w in e.get("rows") or []}
 
 
+def drawdown_block() -> str:
+    """本月跌幅檢討（由 drawdown_review.py 計算；失敗不影響本頁）"""
+    try:
+        import drawdown_review
+        return drawdown_review.section_html()
+    except Exception as e:  # noqa: BLE001
+        return f'<div class="card warn">跌幅檢討未產生：{e}</div>'
+
+
 def build() -> Path:
     d = json.loads(SRC.read_text(encoding="utf-8"))
     snap = json.loads(SNAP.read_text(encoding="utf-8"))
@@ -243,6 +252,8 @@ def build() -> Path:
         for s in (d.get("sources") or [])
     )
 
+    dd_block = drawdown_block()
+
     html = f"""<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -291,6 +302,9 @@ th{{color:#93a3bb;font-weight:600;font-size:11px;background:#0f1a2b}}
   <div class="kv"><span>未承諾彈藥（可再規劃）</span><b>{wan(ammo_left)}</b></div>
   <div class="kv"><span>台股桶還有空間（至 {TW_CAP_PCT:.0f}%）</span><b>{wan(tw_room)}</b></div>
 </div>
+
+<h2>📉 本月跌幅檢討（先看這個）</h2>
+{dd_block}
 
 <h2>一、機制重點（為什麼是那些股票）</h2>
 <div class="card"><ul>{mech_li}</ul></div>
