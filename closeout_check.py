@@ -277,6 +277,36 @@ EXPECT_BANK_MIN = 3          # 銀行卡門檻數（國泰／台新／永豐；�
 EXPECT_LIFE_MIN = 2          # 生活帳戶門檻數（玉山／台北富邦）
 
 
+def _hold_block_has_exit(src: str) -> bool:
+    """pre-commit 的 PUSH_HOLD 區塊裡是否有 `exit 1`（凍結 commit＝語意錯誤）。
+
+    2026-11-19（使用者核准收尾）：原實作用單一正則 `PUSH_HOLD.*?(?=\nfi\b)` 抓區塊，
+    只要區塊內出現字串 `fi`（確認提示、註解、變數名）就會提早截斷 → 判定失真。
+    改為逐行掃描：從含 PUSH_HOLD 的 if 起始行起，追蹤 if/fi 巢狀深度，只取同層的 fi，
+    區塊內任何 `exit 1` 即判定為「凍結 commit」。
+    """
+    lines = (src or "").splitlines()
+    start = None
+    for i, ln in enumerate(lines):
+        if "PUSH_HOLD" in ln and re.match(r"\s*if\b", ln):
+            start = i
+            break
+    if start is None:
+        return False                      # hook 沒有 PUSH_HOLD 檢查 → 不在此步判定
+    depth = 0
+    for ln in lines[start:]:
+        code = ln.strip()
+        if re.match(r"if\b", code):
+            depth += 1
+        elif code == "fi" or code.startswith("fi ") or code.startswith("fi;"):
+            depth -= 1
+            if depth <= 0:
+                return False
+        elif re.match(r"exit\s+1\b", code):
+            return True
+    return False
+
+
 def step_hold_semantics(quiet: bool) -> list:
     """⑪ HOLD 語意自檢（2026-11-19 二次故障事故）。
 
@@ -292,8 +322,7 @@ def step_hold_semantics(quiet: bool) -> list:
         src = hook.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return []
-    m = re.search(r"PUSH_HOLD.*?(?=\nfi\b)", src, re.S)
-    if m and re.search(r"^\s*exit\s+1\s*$", m.group(0), re.M):
+    if _hold_block_has_exit(src):
         if not quiet:
             print("⑪ HOLD 語意：❌ pre-commit 在 HOLD 生效時拒絕 commit → 當日產物無法入庫")
         return ["HOLD 語意矛盾：pre-commit 凍結 commit（凍結應只作用於發布）→ 22:40 ② 必失敗；"
@@ -359,6 +388,18 @@ def step_remote_sync(quiet: bool) -> list:
                 print(f"⑤ 遠端同步：⏸️ {n_ahead} 顆未推送（PUSH_HOLD 生效中 → 預期，非漏推）")
                 for ln in oldest:
                     print(f"     - {ln}")
+                # 2026-11-19（使用者核准收尾）：HOLD 期間不列問題，但「線上實際落後多久」
+                #   必須可見 —— 否則凍結久了會誤以為線上是最新的（11/19 就是落後一整天仍全綠）。
+                _dep = _git("log", "-1", "--format=%cI", remote_ref).strip()
+                if _dep:
+                    try:
+                        _ts = dt.datetime.fromisoformat(_dep)
+                        _days = (dt.datetime.now(_ts.tzinfo) - _ts).days
+                        _span = f"已 {_days} 天未更新" if _days >= 1 else "今日更新過"
+                    except ValueError:
+                        _span = "時間無法解析"
+                    print(f"   線上現況：{remote_ref} 停在 {_dep[:16].replace('T', ' ')}"
+                          f"（{_span}）→ 上面這 {n_ahead} 顆的內容尚未上線，非最新版")
         else:
             problems.append(
                 f"遠端同步：{n_ahead} 顆 commit 未推送（{branch} 領先 {remote_ref}）→ Pages 吃舊值"
@@ -743,8 +784,9 @@ def step_verifier_heartbeat(quiet: bool) -> list:
 # 「pages build and deployment」不再產生新 run。本常數原本只認 legacy 名稱，
 # 導致 ⑨ 對每次推送都判「未觸發」——但 44f51d59 的 run 實際 completed/success。
 # → 兩種名稱都接受，legacy 保留以兼容尚未切換的時期。
-PAGES_WORKFLOW = "pages build and deployment"
-PAGES_WORKFLOWS = ("pages build and deployment", "pages-allowlist-deploy")
+# 2026-11-19（使用者核准收尾）：移除未被任何程式使用的 PAGES_WORKFLOW 單值常數（死碼）——
+#   留著只會在下次 workflow 改名時製造「兩處真值」的漂移空間。
+PAGES_WORKFLOWS = ("pages-allowlist-deploy", "pages build and deployment")
 PAGES_GRACE_MIN = 30          # push 後 GitHub 建立 run 的寬限（分鐘）
 
 
