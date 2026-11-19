@@ -277,6 +277,32 @@ EXPECT_BANK_MIN = 3          # 銀行卡門檻數（國泰／台新／永豐；�
 EXPECT_LIFE_MIN = 2          # 生活帳戶門檻數（玉山／台北富邦）
 
 
+def step_hold_semantics(quiet: bool) -> list:
+    """⑪ HOLD 語意自檢（2026-11-19 二次故障事故）。
+
+    凍結的目標是「發布」，不是「入庫」。若 .git/PUSH_HOLD 生效而 pre-commit
+    仍會 exit 1，當天 22:38 收尾提交會被拒 → 當日產物堆在工作區 → 本檢查 ②
+    必然失敗，且 cron 連續告警三次才被人看到。這條自檢把「上鎖造成二次故障」
+    變成當日可見、可定位的問題，而不是三天後才回頭查。
+    """
+    if not (REPO / ".git" / "PUSH_HOLD").exists():
+        return []
+    hook = REPO / ".githooks" / "pre-commit"
+    try:
+        src = hook.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return []
+    m = re.search(r"PUSH_HOLD.*?(?=\nfi\b)", src, re.S)
+    if m and re.search(r"^\s*exit\s+1\s*$", m.group(0), re.M):
+        if not quiet:
+            print("⑪ HOLD 語意：❌ pre-commit 在 HOLD 生效時拒絕 commit → 當日產物無法入庫")
+        return ["HOLD 語意矛盾：pre-commit 凍結 commit（凍結應只作用於發布）→ 22:40 ② 必失敗；"
+                "修法：`.githooks/pre-commit` 改為僅警告，或跑 tools/hold_impact_preview.py 診斷"]
+    if not quiet:
+        print("⑪ HOLD 語意：✅ 只凍結發布、允許入庫")
+    return []
+
+
 def step_remote_sync(quiet: bool) -> list:
     """⑤ 遠端同步稽核（2026-09-21 INC-236）：本機不得有「推不上去」的 commit 累積。
 
@@ -942,6 +968,7 @@ def main() -> int:
         thr_problems = step_threshold_invariants(args.quiet or args.silent_ok)
         brake_problems = step_brake_priority(args.quiet or args.silent_ok)
         hb_problems = step_verifier_heartbeat(args.quiet or args.silent_ok)
+        hold_problems = step_hold_semantics(args.quiet or args.silent_ok)
         pages_problems = step_pages_deploy(args.quiet or args.silent_ok)
         mech_problems = step_publish_mechanism(args.quiet or args.silent_ok)
         # ⑩ ref topology：觀測與預警，**不**併入 problems（不阻擋產線；INC-236 延伸 Phase C）
@@ -959,6 +986,7 @@ def main() -> int:
         problems.extend(thr_problems)
         problems.extend(brake_problems)
         problems.extend(hb_problems)
+        problems.extend(hold_problems)
 
         problems.extend(pages_problems)
         problems.extend(mech_problems)
