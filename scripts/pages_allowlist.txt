@@ -83,6 +83,7 @@ industry_penetration_2026-11-18.png
 industry_penetration_2026-11-19.png
 investment_performance.html
 investment_structure_plan_card_2026-10-20.html
+market_squeeze_2026-11-19.html
 monthly_report_2026-08.html
 monthly_report_2026-09.html
 monthly_report_2026-10.html

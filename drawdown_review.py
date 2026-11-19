@@ -601,6 +601,42 @@ def render(d: dict, embedded: bool = False) -> str:
 
     title_tag = ("<div style=\"font-size:16px;font-weight:800;margin:2px 0 4px\">" if embedded else "<h1>")
     title_end = "</div>" if embedded else "</h1>"
+    # 多殺多評估摘要（資料來自 market_squeeze.py；不存在就整卡略過）
+    sq_card = ""
+    try:
+        _sq = json.loads((BASE / "data" / "market_squeeze.json").read_text(encoding="utf-8"))
+    except Exception:
+        _sq = {}
+    if _sq:
+        _p, _m, _i = _sq.get("pledge") or {}, _sq.get("market") or {}, _sq.get("index") or {}
+        sq_card = f"""<div class="card">
+  <div class="sub">同月份的市場結構評估</div>
+  <div class="kv"><span>多殺多判定</span><b>{_sq.get('stage', '—')}</b></div>
+  <div class="kv"><span>指數自波段高</span><b>{signed_pct(_i.get('from_peak'))}（{money(_i.get('now'))}）</b></div>
+  <div class="kv"><span>可補繳現金能撐到</span><b>池跌 {pct(_p.get('cash_limit_drop'), 1)}（{wan(_p.get('avail_cash'))}）</b></div>
+  <div style="margin-top:6px"><a href="market_squeeze_{_sq.get('date', '')}.html"
+     style="color:#7dd3fc;font-weight:700;font-size:13px">→ 完整評估（四層證據／補繳預案／情境）</a></div>
+</div>
+"""
+
+    # 多殺多評估摘要（資料來自 market_squeeze.py；不存在就整卡略過）
+    sq_card = ""
+    try:
+        _sq = json.loads((BASE / "data" / "market_squeeze.json").read_text(encoding="utf-8"))
+    except Exception:
+        _sq = {}
+    if _sq:
+        _p, _m, _i = _sq.get("pledge") or {}, _sq.get("market") or {}, _sq.get("index") or {}
+        sq_card = f"""<div class="card">
+  <div class="sub">同月份的市場結構評估</div>
+  <div class="kv"><span>多殺多判定</span><b>{_sq.get('stage', '—')}</b></div>
+  <div class="kv"><span>指數自波段高</span><b>{signed_pct(_i.get('from_peak'))}（{money(_i.get('now'))}）</b></div>
+  <div class="kv"><span>可補繳現金能撐到</span><b>池跌 {pct(_p.get('cash_limit_drop'), 1)}（{wan(_p.get('avail_cash'))}）</b></div>
+  <div style="margin-top:6px"><a href="market_squeeze_{_sq.get('date', '')}.html"
+     style="color:#7dd3fc;font-weight:700;font-size:13px">→ 完整評估（四層證據／補繳預案／情境）</a></div>
+</div>
+"""
+
     head = f"""
 <div class="card hero">
   {title_tag}📉 {d['period']['start']} → {d['period']['end']} 跌幅檢討{title_end}
@@ -635,6 +671,7 @@ def render(d: dict, embedded: bool = False) -> str:
         —— 帳面 −{abs(a['pct'] or 0):.1f}% 已經吃掉大半緩衝。</li>
   </ul>
 </div>
+{sq_card}
 """
 
     attrib = f"""
