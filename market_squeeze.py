@@ -183,19 +183,30 @@ def compute() -> dict:
 
     # 三段判定（可驗證指標計分，缺資料不給分）
     ld_cnt, ld_src = _limit_down_count()
+    mg = ((rs.get("data") or {}).get("margin") or {})
+    mg_d1 = _num(mg.get("單日增減%"))
+    mg_dN = _num(mg.get("期間增減%"))
+    mg_amt = _num(mg.get("融資餘額億"))
+    margin_val = (f"{mg_amt:,.0f} 億（{mg.get('date')}）：單日 {mg_d1:+.2f}%、"
+                  f"{mg.get('期間起')} 起 {mg_dN:+.2f}%" if mg_amt else "未取得（MI_MARGN 未抓）")
+    margin_fire = bool(mg_amt and (mg_d1 <= -1 or mg_dN <= -3))
     checks = [
         ("指數自波段高 −10% 以上", bool(idx_from_peak is not None and idx_from_peak <= -10), f"{signed_pct(idx_from_peak)}"),
         ("外資連 3 日賣超", len(f_days) >= 3, f"{yi(f_sum)}"),
         ("市值型／高股息 ETF 法人淨流出", sflow("市值型") < 0 or sflow("高股息防禦") < 0,
          f"市值型 {sflow('市值型'):+.2f} 億／高股息 {sflow('高股息防禦'):+.2f} 億"),
         ("主動型 ETF 跌幅 > 大盤 1.3 倍", True, f"4 檔月內最深 −24%"),
+        ("融資餘額去槓桿（斷頭進行中）", margin_fire, margin_val),
         ("跌停家數擴散（>20 檔）", bool(ld_cnt and ld_cnt > 20), f"{ld_cnt} 檔（{ld_src}）" if ld_cnt else "未取得"),
         ("台幣貶 > 0.5%（外資撤出）", bool(twd_chg < -0.5), signed_pct(twd_chg)),
         ("金融／債券逆勢流入（反證）", sflow("債券") > 0, f"債券 {sflow('債券'):+.2f} 億、金融 {sflow('金融'):+.2f} 億"),
         ("美股防守類股淨流入（反證）", (us.get("核心消費(XLP)") or {}).get("方向") == "inflow", "XLP／XLU／XLV 全流入"),
     ]
     hit = sum(1 for _, ok, _ in checks if ok)
-    stage = ("第 3 段（融資斷頭）" if ld_cnt and ld_cnt > 20 and twd_chg < -0.5 else
+    # 第 3 段＝槓桿出場已實際發生：融資明顯去化（單日 ≤ −2% 或跌幅期間 ≤ −5%），
+    # 或跌停擴散＋外資撤出（匯出）。2026-11-19 起改以 MI_MARGN 實算，不再靠推論。
+    stage3 = bool((mg_amt and (mg_d1 <= -2 or mg_dN <= -5)) or (ld_cnt and ld_cnt > 20 and twd_chg < -0.5))
+    stage = ("第 3 段（融資斷頭）" if stage3 else
              "第 2 段（被動贖回／主動型去槓桿）" if hit >= 3 else "第 1 段（估值重定價）")
 
     # 情境
@@ -220,6 +231,7 @@ def compute() -> dict:
         "generated_at": cur.get("generated_at"),
         "date": cur.get("date"),
         "stage": stage, "score": hit, "checks": [{"label": a, "ok": b, "value": c} for a, b, c in checks],
+        "margin": {k: v for k, v in mg.items()},
         "index": {"now": idx_now, "mtd": idx_mtd, "from_peak": idx_from_peak,
                   "peak": peak, "low": biggest, "series": series},
         "market": {
@@ -267,12 +279,14 @@ h2{font-size:16px;margin:24px 0 8px;padding-left:9px;border-left:3px solid #38bd
 .kpi>div{flex:1 1 30%;min-width:96px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:9px 10px}
 .kpi b{display:block;font-size:17px;font-weight:800;line-height:1.3}
 .kpi span{font-size:11px;color:#94a3b8}
+td:first-child,th:first-child{width:46%;white-space:normal;word-break:break-word}
+td.n,th.n{width:54%;word-break:break-word}
 table{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0}
 table.compact{font-size:11.5px}
 table.compact th,table.compact td{padding:5px 3px}
 th,td{padding:6px 5px;border-bottom:1px solid #1e293b;text-align:left;vertical-align:top}
 th{color:#94a3b8;font-weight:600;font-size:11.5px;background:#0f172a}
-td.n,th.n{text-align:right;white-space:nowrap}
+td.n,th.n{text-align:right;white-space:normal;word-break:break-word}
 tr.hl{background:#172033}
 .neg{color:#f87171}.pos{color:#34d399}.dim{color:#94a3b8}
 .tag{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:999px;border:1px solid #334155;color:#cbd5e1;margin-left:4px}
@@ -289,6 +303,15 @@ def render(d: dict) -> str:
     m, e, p = d["market"], d["exposure"], d["pledge"]
     idx = d["index"]
     ld = m.get("limit_down")
+    mgx = d.get("margin") or {}
+    mg_amt = _num(mgx.get("融資餘額億"))
+    mg_txt = (f"{mgx.get('期間起')} 起 {_num(mgx.get('期間增減%')):+.2f}%"
+              f"（{_num(mgx.get('期間增減億')):+,.1f} 億）" if mg_amt else "未取得")
+    mg_rows = (
+        f'<tr><td>融資餘額（{mgx.get("date")}）</td><td class="n">{mg_amt:,.0f} 億</td></tr>'
+        f'<tr><td>融資單日／期間</td><td class="n">{_num(mgx.get("單日增減%")):+.2f}% ／ '
+        f'{_num(mgx.get("期間增減%")):+.2f}%</td></tr>'
+    ) if mg_amt else '<tr><td>融資餘額</td><td class="n">未取得</td></tr>'
     stage_tag = "r" if d["stage"].startswith("第 3") else ("y" if d["stage"].startswith("第 2") else "g")
 
     def chk_rows():
@@ -343,7 +366,7 @@ def render(d: dict) -> str:
 
 <div class="card"><div class="kpi">
   <div><b>{d['stage'].split('（')[0]}</b><span>{d['stage'].split('（')[1].rstrip('）') if '（' in d['stage'] else '目前判定'}
-        <span class="tag {stage_tag}">{d['score']} / 8</span></span></div>
+        <span class="tag {stage_tag}">{d['score']} / {len(d['checks'])}</span></span></div>
   <div><b class="{'neg' if (idx['from_peak'] or 0) < 0 else 'pos'}">{signed_pct(idx['from_peak'])}</b><span>指數自波段高</span></div>
   <div><b>{pct(p['ltv'])}</b><span>質押 LTV（{p['stage'] or '—'}）</span></div>
   <div><b>{wan(p['avail_cash'])}</b><span>可補繳現金（扣底線）</span></div>
@@ -351,8 +374,9 @@ def render(d: dict) -> str:
 
 <div class="card warn">
   <b>一句話：</b>跌的是「AI 鏈＋槓桿型 ETF」的單點去槓桿，不是資金逃離台灣 ——
-  外資 {len(m['foreign_days'])} 日賣超 {yi(m['foreign_sum'])}，但台幣只動 {signed_pct(m['twd_chg'])}、
-  債券與金融逆勢流入、跌停集中在 {ld or '少數'} 檔。
+  外資 {len(m['foreign_days'])} 日賣超 {yi(m['foreign_sum'])}、融資 {mg_txt}，
+  但台幣只動 {signed_pct(m['twd_chg'])}、債券與金融逆勢流入、跌停集中在 {ld or '少數'} 檔。
+  <b>第 3 段已局部啟動</b>（融資去化代表浮額在快速出清，對打底有利，但斷頭賣壓還沒結束）。<br>
   <b>所以對策不是清倉，是「不接刀、先算好補繳、反彈減超配」。</b>
 </div>
 
@@ -360,14 +384,16 @@ def render(d: dict) -> str:
 <div class="card">
   <table><tr><th>檢查點</th><th class="n">現值</th></tr>{chk_rows()}</table>
   <div class="sub" style="margin-top:6px">
-    ✅ 命中＝風險成立、❌ 未成立。<b>第 3 段（融資斷頭）判定需要「融資餘額」與「跌停家數擴散」，
-    系統目前沒有融資資料</b> → 這是本頁最大盲點，已列入待補資料（證交所 MI_MARGN 公開端點）。</div>
+    ✅ 命中＝風險成立、❌ 未成立。<b>第 3 段（融資斷頭）已改為實算</b>：融資餘額取自證交所
+    MI_MARGN（現值 {mgx.get('date') or '—'}），單日 ≤ −2% 或跌幅期間 ≤ −5% 即判定斷頭進行中。
+    仍缺：跌停家數即時化、ETF 折溢價、當沖比、成交量。</div>
 </div>
 
 <h2>二、市場快照</h2>
 <div class="card">
   <table>
     <tr><th>項目</th><th class="n">數值</th></tr>
+    {mg_rows}
     <tr><td>外資連日買賣超</td><td class="n">{' / '.join(yi(x) for x in m['foreign_days']) or '—'}</td></tr>
     <tr><td>US30Y（紅線 {pct(m['us30y_red'], 1)}，連 {m['us30y_streak'] or '—'} 日）</td><td class="n">{pct(m['us30y'], 3)}</td></tr>
     <tr><td>US10Y</td><td class="n">{pct(m['us10y'], 3)}</td></tr>
@@ -459,7 +485,7 @@ def render(d: dict) -> str:
 <div class="foot">
 資料源：snapshot（{d['date']} 真值）｜radar_state（外資／ETF／類股／US30Y）｜daily_report_v2（指數收盤序列 {len(idx['series'])} 筆）｜
 emergency_report（跌停家數）。<br>
-缺資料（不猜）：融資餘額與維持率、ETF 折溢價、當沖比、成交量、VIX 現值 —— 這五項是「第 3 段」判定的必要條件。<br>
+缺資料（不猜）：融資維持率、ETF 折溢價、當沖比、成交量、VIX 現值 —— 融資餘額已改由證交所 MI_MARGN 每日取得。<br>
 本頁為評估，不含授權動作；減碼與加碼仍受既有閘門（US30Y／LTV 階段／單筆上限）約束。
 </div>
 </body></html>"""

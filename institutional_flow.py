@@ -181,6 +181,63 @@ def fetch_twse(day=None):
     return {"error": "；".join(errs[-4:]) or "近 6 日無交易資料", "date": f"{(day or date.today()):%Y-%m-%d}"}
 
 
+def fetch_margin(day=None) -> dict:
+    """證交所信用交易統計（MI_MARGN）：融資餘額水位與變化。
+
+    多殺多的第三段＝融資斷頭。判準不是餘額高低，而是「跌幅期間餘額有沒有減」：
+      餘額明顯減少＝斷頭已出場（浮額消化）；餘額幾乎不減＝浮額還在（後面還有賣壓）。
+    端點：exchangeReport/MI_MARGN（/rwd/zh 版回 HTML 擋頁，勿用）。
+    單位：仟元 → 億元（÷100,000）。回傳 {date, 融資餘額億, 單日增減億/%, 期間增減億/%, series}
+    """
+    series: list[dict] = []
+    errs: list[str] = []
+    for back in range(0, 14):
+        if len(series) >= 6:
+            break
+        d = (day or date.today()) - timedelta(days=back)
+        if d.weekday() >= 5:
+            continue
+        url = (f"https://www.twse.com.tw/exchangeReport/MI_MARGN"
+               f"?response=json&date={d:%Y%m%d}&selectType=MS")
+        try:
+            data = json.loads(http_get(url).decode("utf-8", "replace"))
+        except Exception as e:
+            errs.append(f"{d:%Y-%m-%d} {type(e).__name__}")
+            continue
+        rows = ((data.get("tables") or [{}])[0].get("data") or [])
+        if data.get("stat") != "OK" or not rows:
+            continue
+        amt = prev_amt = lots = short_lots = None
+        for r in rows:
+            if len(r) < 6:
+                continue
+            if r[0].startswith("融資金額"):
+                amt = int(r[5].replace(",", "")) / 1e5
+                prev_amt = int(r[4].replace(",", "")) / 1e5
+            elif r[0].startswith("融資(交易單位)"):
+                lots = int(r[5].replace(",", ""))
+            elif r[0].startswith("融券"):
+                short_lots = int(r[5].replace(",", ""))
+        if amt is None:
+            continue
+        series.append({"date": f"{d:%Y-%m-%d}", "融資餘額億": round(amt, 1),
+                       "前日億": round(prev_amt or amt, 1), "融資張數": lots, "融券張數": short_lots})
+        time.sleep(0.6)
+    if not series:
+        return {"error": "；".join(errs[-3:]) or "近 14 日無信用交易資料"}
+    series.sort(key=lambda x: x["date"])
+    last, first = series[-1], series[0]
+    prev = series[-2] if len(series) > 1 else last
+    d1 = last["融資餘額億"] - prev["融資餘額億"]
+    d1p = d1 / prev["融資餘額億"] * 100 if prev["融資餘額億"] else 0.0
+    dN = last["融資餘額億"] - first["融資餘額億"]
+    dNp = dN / first["融資餘額億"] * 100 if first["融資餘額億"] else 0.0
+    return {"date": last["date"], "融資餘額億": last["融資餘額億"],
+            "單日增減億": round(d1, 1), "單日增減%": round(d1p, 2),
+            "期間起": first["date"], "期間增減億": round(dN, 1), "期間增減%": round(dNp, 2),
+            "融資張數": last["融資張數"], "融券張數": last["融券張數"], "series": series}
+
+
 def fetch_cftc():
     """CFTC COT 非商業淨多單（Socrata API 6dca-aqww Legacy - Futures Only）。
     黃金/原油抓最新+前一期算週增減；美債10年 CFTC 公開資料僅至 2022-02-01（改用 fetch_tnx 殖利率動能代理）。回傳 {date, contracts}"""
@@ -538,6 +595,7 @@ def main():
     fed = fetch_fed()
     twd = fetch_twd()
     tnx = fetch_tnx()
+    mg = fetch_margin()  # 2026-11-19：多殺多第 3 段（融資斷頭）判準，取代原本無資料的推論
     us_sec = fetch_us_sector()
 
     sig = compute_signals(tw, cot, fed, twd, tnx, cfg, state)
@@ -545,7 +603,8 @@ def main():
     state["last_run"] = datetime.now().isoformat()
     # 瘦身：etfs_all（14,867 筆）不寫入 state，只保留彙總結果，避免 radar_state 膨脹
     _tw_slim = {k: v for k, v in tw.items() if k != "etfs_all"}
-    state["data"] = {"twse": _tw_slim, "cot": cot, "fed": fed, "twd": twd, "tnx": tnx, "us_sector": us_sec}
+    state["data"] = {"twse": _tw_slim, "cot": cot, "fed": fed, "twd": twd, "tnx": tnx,
+                     "us_sector": us_sec, "margin": mg}
     state["signals"] = sig
     state["sector_flow"] = sector_flow
     # TD-20261014-01：政策面「當日市場對照」必須在存檔前生成，否則不會落地到 radar_state.json。
@@ -575,6 +634,13 @@ def main():
 
     summary = render_summary(sig, tw, cot, fed, sector_flow)
     print(summary)
+    if mg and not mg.get("error"):
+        print(f"  💳 融資餘額 {mg['融資餘額億']:,.0f} 億（{mg['date']}）："
+              f"單日 {mg['單日增減億']:+,.1f} 億（{mg['單日增減%']:+.2f}%）；"
+              f"{mg['期間起']} 起 {mg['期間增減%']:+.2f}%"
+              + ("｜🔴 斷頭啟動（單日減 >1%）" if mg["單日增減%"] <= -1 else "｜浮額未消化"))
+    elif mg:
+        print(f"  💳 融資餘額：未取得（{mg.get('error', '')}）")
 
     # 黃/紅燈輸出給 cron 判斷（非空即有警示）
     alerts = [f"{k}：{v['note']}" for k, v in sig.items() if v["color"].startswith(("🔴", "🟡"))]
