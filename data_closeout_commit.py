@@ -181,6 +181,10 @@ def main() -> int:
         print(f"❌ 收尾提交失敗：git fetch 失敗（{now:%H:%M}）\n{(fetch.stderr or '').strip()}")
         return 1
 
+    # 2026-11-19 事故：本腳本以 git push HEAD:<branch> 推送，會帶走 origin..HEAD 之間
+    # 所有 commit。21:45 同類流程因此把兩顆尚未取得發布授權的 commit 一起推上線。
+    # 記錄「本輪呼叫前」HEAD，稍後 push 前斷言佇列裡沒有非本輪 commit。
+    _head0 = git("rev-parse", "HEAD").stdout.strip()
     ahead = unpushed_count()
     if ahead > 0:
         heads = git("log", "--oneline", f"origin/{TARGET_BRANCH}..HEAD").stdout.strip()
@@ -233,6 +237,31 @@ def main() -> int:
         print(f"❌ 收尾提交失敗：git commit 失敗\n{((commit.stdout or '') + (commit.stderr or '')).strip()[:800]}")
         return 1
     head = git("rev-parse", "HEAD").stdout.strip()
+
+    # 3-0b) 未推佇列範圍斷言（2026-11-19 未授權發布事故）
+    if _head0:
+        _rv = git("rev-parse", "--verify", "--quiet", f"origin/{TARGET_BRANCH}")
+        if _rv.returncode == 0:
+            _pre = git("rev-list", "--count", f"origin/{TARGET_BRANCH}..{_head0}")
+            try:
+                _pre_n = int((_pre.stdout or "0").strip() or 0)
+            except ValueError:
+                _pre_n = 0
+            if _pre_n > 0:
+                _rel_ok = False
+                try:
+                    import release_auth as _ra
+                    _rel_ok = bool(_ra.verify()[0])
+                except Exception:  # noqa: BLE001
+                    _rel_ok = False
+                if not _rel_ok:
+                    _lst = git("log", "--oneline", "-12",
+                               f"origin/{TARGET_BRANCH}..{_head0}").stdout.strip()
+                    print(f"⛔ 未推佇列在本輪呼叫前已有 {_pre_n} 顆 commit → 拒絕推送")
+                    print(f"   原因：push 會把它們一起帶上線（未授權發布）。清單：\n   "
+                          + (_lst or "（讀取失敗）").replace("\n", "\n   "))
+                    print("   處置：取得發布授權（release_auth）或由使用者裁決後人工推送。")
+                    return 3
 
     push = git("push", "origin", f"HEAD:{TARGET_BRANCH}", timeout=300)
     if push.returncode != 0:

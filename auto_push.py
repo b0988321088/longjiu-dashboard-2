@@ -260,6 +260,8 @@ def main() -> int:
               f"交由 pre-push 消費並執行")
 
     base = base_dir()
+    # 2026-11-19：記錄「本輪呼叫前」的 HEAD，供稍後未推佇列範圍斷言使用。
+    _head0 = run(["git", "rev-parse", "HEAD"], base).stdout.strip()
     refs = [a.branch] if a.branch else list(DEFAULT_REFS)
     # 2026-10-07 INC-236 延伸：refs 一律先過 validate_refspecs（source 必須解析到 HEAD、
     # destination 必須是部署分支），推送前就擋 —— 不是先推、再看遠端 sha 是否相符。
@@ -299,6 +301,40 @@ def main() -> int:
     if not head:
         print("❌ 讀不到 HEAD", file=sys.stderr)
         return 6
+
+    # 3-0b) 未推佇列範圍斷言（2026-11-19 事故：未授權發布）
+    #   事故：21:45 tools/flush_leftover_artifacts.py 建 commit 後 push，而 git push HEAD
+    #   必然帶走 origin/<branch>..HEAD 之間「所有」commit → 把 21:19 兩顆尚未取得發布授權
+    #   的 commit（P0 口徑修正、六項決策入庫）一起推上 clean-main，線上提前發布。
+    #   既有防護只驗「每顆 commit 有無 CIO RECORD」；RECORD ≠ 發布授權，故補此斷言：
+    #   若「呼叫前」HEAD 已領先遠端，代表佇列裡有非本輪產生的 commit → 拒推。
+    #   例外：.git/RELEASE_AUTH 有效一次性授權（release_auth 逐項驗範圍／期限／次數）。
+    _primary0 = dest_of(refs[0])
+    if (_head0 and run(["git", "rev-parse", "--verify", "--quiet", f"origin/{_primary0}"],
+                       base).returncode == 0):
+        _pre = run(["git", "rev-list", "--count", f"origin/{_primary0}..{_head0}"], base)
+        try:
+            _pre_n = int((_pre.stdout or "0").strip() or 0)
+        except ValueError:
+            _pre_n = 0
+        if _pre_n > 0:
+            try:
+                import release_auth as _ra
+                _rel_ok = bool(_ra.verify()[0])
+            except Exception:  # noqa: BLE001
+                _rel_ok = False
+            if not _rel_ok:
+                _lst = run(["git", "log", "--oneline", "-12",
+                            f"origin/{_primary0}..{_head0}"], base).stdout.strip()
+                print(f"⛔ 未推佇列在本輪呼叫前已有 {_pre_n} 顆 commit → 拒絕推送", file=sys.stderr)
+                print("   原因：push 會把它們一起帶上線（未授權發布）。清單：", file=sys.stderr)
+                print("   " + (_lst or "（讀取失敗）").replace("\n", "\n   "), file=sys.stderr)
+                print("   處置：取得發布授權（release_auth）或由使用者裁決後人工推送。", file=sys.stderr)
+                log(base, f"UNPUSHED-FOREIGN\t{a.script}\t{_pre_n}")
+                if a.dry_run:
+                    print("[dry-run] 依上方判定：實跑時會以 rc=3 拒推")
+                else:
+                    return 3
 
     # 3-0a) refspec 治理（2026-10-07 INC-236 延伸 Phase A）：驗「實際被推送的 source ref →
     #       destination ref」，不再用 HEAD 代表 source；違反即拒推（rc=7），不進行任何推送。
