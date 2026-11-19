@@ -106,10 +106,16 @@ def compute(snap: dict) -> dict:
                 ltv_stage = _name
                 break
     _stage_act = ((_bands.get("階段_20261116") or {}).get(ltv_stage) or {}).get("動作") if ltv_stage else None
+    # 2026-11-19：池值估值日。LTV 用的是 snapshot 的國泰明細，明細落後幾天，
+    #   算出的 LTV 就只是「下限」——今天的跌幅還沒進池值。提示時必須講清楚，
+    #   否則會把「51% 還沒到 53%」誤讀成安全（實際可能已經跨線）。
+    _navd = snap.get("fund_nav_dates") or {}
+    cathay_nav_date = next((v for k, v in _navd.items() if "國泰" in str(k)), None)
     return {"pool": pool, "loan": loan, "ratio": ratio,
             "ltv": ltv, "ltv_stop": ltv_stop, "ltv_target": ltv_target,
             "ltv_stage": ltv_stage, "ltv_stage_action": _stage_act,
             "ltv_unfreeze_ltv": _num(_bands.get("綠上限"), 45),
+            "cathay_nav_date": cathay_nav_date,
             "notice": notice, "pay": pay, "warn": warn,
             "rate": snap.get("fund_pledge_rate"), "due_day": snap.get("fund_pledge_due_day")}
 
@@ -150,6 +156,20 @@ def stage_block(m: dict, snap: dict) -> str:
     floor = UNFREEZE_CASH_FLOOR
     L = [f"【LTV 階段】{ltv:.2f}% → {stage}",
          f"· 動作：{m.get('ltv_stage_action') or '—'}"]
+    # 2026-11-19：池值落後就明說「這是下限」。跨線判斷靠這行才不會誤讀成安全。
+    _cn = m.get("cathay_nav_date")
+    if _cn:
+        try:
+            from datetime import date as _date
+            from date_integrity import parse_date as _pd, trading_days_between as _tdb
+            _d = _pd(_cn)
+            if _d:
+                _lag = _tdb(_d, _date.today())
+                if _lag >= 1:
+                    L.append(f"· ⚠️ 池值估值日 {_d.isoformat()}（落後 {_lag} 個交易日）→ "
+                             f"LTV {ltv:.2f}% 是下限，實際可能更高")
+        except Exception:  # noqa: BLE001  日期模組異常不得讓告警整則消失
+            pass
     if stage == "綠_正常":
         if usable is not None:
             ok = usable >= floor
