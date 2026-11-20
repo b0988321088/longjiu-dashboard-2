@@ -4,7 +4,7 @@ asset_diff_2026-09-08.html
 asset_diff_2026-10-12.html
 asset_diff_2026-10-15.html
 asset_diff_2026-11-03.html
-asset_diff_2026-11-20.html
+asset_diff_2026-11-21.html
 assets/tailwind.min.js
 audit_dashboard_2026-09-04.html
 audit_dashboard_2026-10-10.html
@@ -16,7 +16,7 @@ buffett_cto_report_2026-09-08.md
 buffett_cto_report_2026-10-12.md
 buffett_cto_report_2026-10-15.md
 buffett_cto_report_2026-11-03.md
-buffett_cto_report_2026-11-20.md
+buffett_cto_report_2026-11-21.md
 ceo_dashboard_2026-09-04.html
 ceo_dashboard_2026-10-09.html
 ceo_dashboard_2026-10-30.html
@@ -29,7 +29,7 @@ daily_report_v2_2026-09-08.html
 daily_report_v2_2026-10-12.html
 daily_report_v2_2026-10-15.html
 daily_report_v2_2026-11-03.html
-daily_report_v2_2026-11-20.html
+daily_report_v2_2026-11-21.html
 dashboard_tab1.html
 dashboard_tab2.html
 dashboard_tab3.html
@@ -82,6 +82,7 @@ industry_penetration_2026-11-17.png
 industry_penetration_2026-11-18.png
 industry_penetration_2026-11-19.png
 industry_penetration_2026-11-20.png
+industry_penetration_2026-11-21.png
 investment_performance.html
 investment_structure_plan_card_2026-10-20.html
 market_squeeze_2026-11-19.html
@@ -99,7 +100,7 @@ penetration_report_2026-09-08.html
 penetration_report_2026-10-12.html
 penetration_report_2026-10-15.html
 penetration_report_2026-11-03.html
-penetration_report_2026-11-20.html
+penetration_report_2026-11-21.html
 performance_monthly.html
 policyB_conversion_card_2026-09-12.html
 radar_report_2026-09-06.html
@@ -114,18 +115,18 @@ rebalance_dashboard_2026-09-08.html
 rebalance_dashboard_2026-10-12.html
 rebalance_dashboard_2026-10-15.html
 rebalance_dashboard_2026-11-03.html
-rebalance_dashboard_2026-11-20.html
+rebalance_dashboard_2026-11-21.html
 rebalance_eval_2026-09-05.html
 rebalance_eval_2026-10-12.html
 rebalance_eval_2026-10-15.html
 rebalance_eval_2026-11-03.html
-rebalance_eval_2026-11-20.html
+rebalance_eval_2026-11-21.html
 rebalance_summary_2026-09-06.md
 retirement_plan_2026-09-02.html
 retirement_plan_2026-10-12.html
 retirement_plan_2026-10-15.html
 retirement_plan_2026-11-03.html
-retirement_plan_2026-11-20.html
+retirement_plan_2026-11-21.html
 risk_factor_penetration_2026-09-08.png
 risk_factor_penetration_2026-10-12.png
 risk_factor_penetration_2026-10-15.png
@@ -156,11 +157,12 @@ risk_factor_penetration_2026-11-17.png
 risk_factor_penetration_2026-11-18.png
 risk_factor_penetration_2026-11-19.png
 risk_factor_penetration_2026-11-20.png
+risk_factor_penetration_2026-11-21.png
 schedule_events.json
 snapshot.json
-stress_test_2026-11-19.html
+stress_test_2026-11-20.html
 structural_health_20261103.html
-structural_health_20261120.html
+structural_health_20261121.html
 tech_debt.json
 tender_intel_2026-11-03.html
 weekly_report_2026-09-06.html
@@ -168,5 +170,5 @@ weekly_report_2026-09-08.html
 weekly_report_2026-10-12.html
 weekly_report_2026-10-15.html
 weekly_report_2026-11-01.html
-weekly_report_2026-11-19.html
+weekly_report_2026-11-20.html
 work_log.json
