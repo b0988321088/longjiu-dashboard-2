@@ -861,18 +861,33 @@ elif ok and _cio_ok and _date_ok:
     #   現在：失敗一定發聲；只把「檔案真的存在」的產物列入推送候選。
     try:
         _rb = subprocess.run([sys.executable, str(BASE / "build_rebalance_dashboard.py")],
-                             cwd=str(BASE), capture_output=True, timeout=120)
+                             cwd=str(BASE), capture_output=True, timeout=240)
         _rb_err = (_rb.stderr or b"").decode("utf-8", "replace").strip()[-300:]
+        # 2026-11-20 修復：07:00 曾出現「產物缺失」但無任何可診斷痕跡（只印 ⚠️ 一行），
+        #   事後無法回溯是 rc≠0、timeout 還是編碼錯。此處把每次執行的 rc/stdout/stderr 落 log，
+        #   失敗時訊息直接指向 log 路徑；成功也留檔（供比對耗時與警告）。
+        _rb_log = BASE / "logs" / f"rebalance_build_{TODAY}.log"
+        try:
+            _rb_log.parent.mkdir(parents=True, exist_ok=True)
+            _rb_log.write_text(
+                f"rc={_rb.returncode}\n--- stdout (tail 4000) ---\n"
+                + (_rb.stdout or b"").decode("utf-8", "replace")[-4000:]
+                + "\n--- stderr ---\n" + (_rb.stderr or b"").decode("utf-8", "replace"),
+                encoding="utf-8")
+        except Exception:
+            pass
         if _rb.returncode != 0:
-            print(f"⚠️ build_rebalance_dashboard.py rc={_rb.returncode}：{_rb_err}")
+            print(f"⚠️ build_rebalance_dashboard.py rc={_rb.returncode}：{_rb_err}"
+                  f"（診斷 log：logs/rebalance_build_{TODAY}.log）")
         for _rf in (f'rebalance_dashboard_{TODAY}.html', f'rebalance_eval_{TODAY}.html',
                     f'rebalance_summary_{TODAY}.md', f'industry_penetration_{TODAY}.png'):
             if (BASE / _rf).exists():
                 _push_candidates.append(_rf)
             else:
-                print(f"⚠️ 再平衡產物缺失，不列入推送候選：{_rf}")
+                print(f"⚠️ 再平衡產物缺失，不列入推送候選：{_rf}（診斷 log：logs/rebalance_build_{TODAY}.log）")
     except Exception as _rbe:
-        print(f"⚠️ 再平衡產物步驟異常（未列入推送候選）：{_rbe}")
+        print(f"⚠️ 再平衡產物步驟異常（未列入推送候選）：{_rbe}"
+              f"（診斷 log 可能未產生：logs/rebalance_build_{TODAY}.log）")
     # 2026-10-15 B1（§5 HTML 方案 A）：首頁「重要連結」的兩份報告頁納入 producer stage 白名單。
     #   背景（2026-10-15 實測、check_dashboard_sync 第 12 項 FAIL）：index.html 以 links_config
     #   前綴 glob 指向最新檔（emergency_report_*／weekly_report_*），但這兩份的 producer
