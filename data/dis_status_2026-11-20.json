@@ -1,15 +1,13 @@
 {
  "report_base_date": "2026-11-20",
- "generated_at": "2026-11-20T07:01:50+08:00",
+ "generated_at": "2026-11-20T21:08:52+08:00",
  "status": "DEGRADED",
  "layers": {
-  "L1_market": "DEGRADED",
+  "L1_market": "PASS",
   "L2_financial": "DEGRADED",
   "L3_narrative": "PASS"
  },
  "reasons": [
-  "市場資料落後 1 個交易日 → DEGRADED（僅可使用，不得宣稱當日）",
-  "台股：估值日落後（2026-11-19）→ 標示最後有效日期",
   "基金：估值日落後（{'國泰直購（富達/聯博/B11）': '2026-11-16', '鉅亨（一般申購＋自由Pay）': '2026-11-13', '安聯保單內基金（App）': '2026-11-10'}）→ 標示最後有效日期",
   "第一金保單：估值日落後（2026-11-18）→ 標示最後有效日期",
   "安聯保單：估值日落後（{'allianz': '2026-11-17', 'note': '2026-11-13'}）→ 標示最後有效日期",
@@ -21,11 +19,11 @@
    "key": "tw_securities",
    "label": "台股",
    "source": "securities.price_date",
-   "value": "2026-11-19",
-   "status": "DEGRADED",
+   "value": "2026-11-20",
+   "status": "PASS",
    "tier": "core",
    "publish_blocking": false,
-   "display": "台股：2026-11-19（落後）"
+   "display": "台股：2026-11-20"
   },
   {
    "key": "funds",

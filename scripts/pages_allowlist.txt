@@ -10,7 +10,7 @@ audit_dashboard_2026-09-04.html
 audit_dashboard_2026-10-10.html
 audit_dashboard_2026-10-14.html
 audit_dashboard_2026-10-30.html
-audit_dashboard_2026-11-16.html
+audit_dashboard_2026-11-20.html
 buffett_cto_report_2026-09-06.md
 buffett_cto_report_2026-09-08.md
 buffett_cto_report_2026-10-12.md
@@ -48,7 +48,7 @@ emergency_report_2026-09-07.html
 emergency_report_2026-10-09.html
 emergency_report_2026-10-15.html
 emergency_report_2026-11-03.html
-emergency_report_2026-11-19.html
+emergency_report_2026-11-20.html
 grand_pivot_deck.html
 grand_pivot_deck.pptx
 index.html
@@ -85,6 +85,7 @@ industry_penetration_2026-11-20.png
 investment_performance.html
 investment_structure_plan_card_2026-10-20.html
 market_squeeze_2026-11-19.html
+market_squeeze_2026-11-20.html
 monthly_report_2026-08.html
 monthly_report_2026-09.html
 monthly_report_2026-10.html
@@ -118,7 +119,7 @@ rebalance_eval_2026-09-05.html
 rebalance_eval_2026-10-12.html
 rebalance_eval_2026-10-15.html
 rebalance_eval_2026-11-03.html
-rebalance_eval_2026-11-19.html
+rebalance_eval_2026-11-20.html
 rebalance_summary_2026-09-06.md
 retirement_plan_2026-09-02.html
 retirement_plan_2026-10-12.html

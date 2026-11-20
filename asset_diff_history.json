@@ -1086,13 +1086,13 @@
   },
   "2026-11-20": {
     "date": "2026-11-20",
-    "total_assets": 25863138.0,
+    "total_assets": 25692433.0,
     "total_liabilities": 30957276.0,
-    "net_worth": -5094138.0,
-    "securities_market": 2438400.0,
+    "net_worth": -5264843.0,
+    "securities_market": 2296470.0,
     "insurance_current": 9088623.0,
     "insurance_total": 9088623.0,
-    "fund_market": 12210260.0,
+    "fund_market": 12181485.0,
     "real_estate": 34017063.0,
     "cash": 2125855.0,
     "other": 0.0,
@@ -1118,8 +1118,8 @@
     "cathay_refinance": 0.0,
     "restricted_cash": 900000.0,
     "bonds": 0.0,
-    "unrealized_pnl": -31270,
+    "unrealized_pnl": -173200,
     "realized_pnl": 23460,
-    "net_worth_incl_re": 28922925.0
+    "net_worth_incl_re": 28752220.0
   }
 }
