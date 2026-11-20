@@ -160,7 +160,8 @@ def _publish(message, lines, own_commit=True, runner=None, lane=None):
     """
     runner = runner or (lambda args, **kw: subprocess.run(args, cwd=BASE, **kw))
     head0 = _git_head()
-    cmd = [sys.executable, str(BASE / "auto_push.py"), "--script", "evening_sync.py", "--record", "auto"]
+    cmd = [sys.executable, str(BASE / "auto_push.py"), "--script", "evening_sync.py", "--record", "auto",
+           "--baseline", head0]
     if message:
         cmd += ["--commit", message]
     ap = runner(cmd, capture_output=True, text=True, timeout=900)
@@ -200,7 +201,7 @@ def _publish(message, lines, own_commit=True, runner=None, lane=None):
                              + (rb.stdout or rb.stderr).strip()[:100])
             return False
         ap2 = runner([sys.executable, str(BASE / "auto_push.py"), "--script", "evening_sync.py",
-                      "--record", "skip"], capture_output=True, text=True, timeout=900)
+                      "--record", "skip", "--baseline", head0], capture_output=True, text=True, timeout=900)
         for _l in (((ap2.stdout or "") + (ap2.stderr or "")).strip()).splitlines()[-3:]:
             lines.append("  " + _l)
         if ap2.returncode != 0:
