@@ -139,6 +139,8 @@ def main():
 
     # commit + push（僅有變更時）
     if changed:
+        # 2026-11-20：commit 前 HEAD＝本輪佇列基準（auto_push --baseline；否則自己的 commit 被誤判為陌生 commit → rc=3）
+        _base0 = (git("rev-parse", "HEAD").stdout or "").strip()
         r = git("commit", "-am",
                 f"[cron] 每週事件清理：刪除 {len(auto_del)} 筆過期事件（git 可回溯）")
         if r.returncode == 0:
@@ -147,7 +149,8 @@ def main():
             #   結構檢查（不得含程式檔／JSON 可解析／HTML 未截斷／工作區守門）並落 tree 紀錄；
             #   未過 → 不落紀錄 → push 被閘門擋下（寧可斷、不要無審上線）。main 用 --force-with-lease。
             ap = subprocess.run([sys.executable, str(BASE / "auto_push.py"),
-                                 "--script", "schedule_events_weekly_clean.py"],
+                                 "--script", "schedule_events_weekly_clean.py",
+                                 "--baseline", _base0],
                                 cwd=str(BASE), capture_output=True, text=True, timeout=600)
             push_note = ""
             if ap.returncode != 0:

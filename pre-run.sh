@@ -96,6 +96,8 @@ COMMIT_MSG="${COMMIT_RAW}"
 echo "[OK] commit message: ${COMMIT_MSG}"
 
 git add -A
+# 2026-11-20：commit 前 HEAD＝本輪佇列基準（auto_push --baseline；否則自己的 commit 會被誤判為陌生 commit → rc=3 自鎖）
+BASE0=$(git rev-parse HEAD)
 # P1（2026-09-14）：add -A 會掃進別人未提交的程式改動 → commit 前先排除程式檔
 # （auto_record 會拒收含程式檔的紀錄，留著＝push 被閘門擋下）
 python auto_record.py --clean-stage
@@ -111,7 +113,7 @@ fi
 # ======================
 # 防呆3b+4：紀錄＋推送（auto_push.py：範圍紀錄覆蓋／失敗重試 3 次／遠端 sha 驗證）
 # ======================
-if python auto_push.py --script pre-run.sh; then
+if python auto_push.py --script pre-run.sh --baseline "${BASE0}"; then
     echo "[OK] 已推送並驗證遠端 sha"
 else
     echo "[ABORT] 未推送上線 — 詳見上方訊息（閘門／重試／遠端驗證）"

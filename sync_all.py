@@ -125,6 +125,9 @@ def main():
         #     但 run_daily.py 的 `intel_text`、`timedelta` 遮蔽、`monthly_income` 重複 key
         #     全靠人工看才發現；此步讓它們在產報前就被自動擋下。
         ("靜態閘門", "python static_gate.py"),
+        # 2026-11-20 INC：產線自鎖防再發 —— 先自己 commit 再呼叫 auto_push 必須帶 --baseline，
+        #   否則 auto_push 把自家 commit 誤判為陌生 commit → rc=3，留下毒藥 commit 連累下一個 job。
+        ("auto_push baseline 守門", "python tools/check_auto_push_baseline.py"),
         # 2026-10-08 SEC-P0-20261008：負向閘門 —— 敏感匯出檔（Moneybook CSV／加密 ZIP／分析 JSON）
         #  或 .env 內敏感值不得出現在 Git index；命中即 FAIL（fail-closed，擋住後續推送）。
         ("敏感檔禁入 index", "python pii_guard.py --index"),
