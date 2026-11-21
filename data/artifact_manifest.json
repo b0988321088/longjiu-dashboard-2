@@ -1680,5 +1680,92 @@
    }
   ],
   "note": "close rc=0；B 案停止於留痕，未 commit／未 push"
+ },
+ {
+  "generated_at": "2026-11-20T23:55:32+08:00",
+  "producer": "cost_watch_digest.py",
+  "report_base_date": null,
+  "source_dates": {
+   "cost_ledger": "2026-11-20"
+  },
+  "artifacts": [
+   {
+    "artifact": "cost.html",
+    "sha256": "e6ffeed2a5b80fa54f0ec9cf934c85ff10fe1c7107f2a272de05076bd54bb09f",
+    "exists": true,
+    "bytes": 24038
+   },
+   {
+    "artifact": "cost_data.json",
+    "sha256": "af53d59ec9907e250c1133ebc3667cca91e105be7a7fcc6855908e95247ce84e",
+    "exists": true,
+    "bytes": 6993
+   },
+   {
+    "artifact": "data/ai_cost_daily.jsonl",
+    "sha256": "74dca84a32e7546bd0e5b39ed086ec1192682ef704e591afe95bf5b9dff181dd",
+    "exists": true,
+    "bytes": 17074
+   }
+  ],
+  "note": "digest rc=0；B 案停止於留痕，未 commit／未 push"
+ },
+ {
+  "generated_at": "2026-11-21T13:30:32+08:00",
+  "producer": "cost_watch_digest.py",
+  "report_base_date": null,
+  "source_dates": {
+   "cost_ledger": "2026-11-21"
+  },
+  "artifacts": [
+   {
+    "artifact": "cost.html",
+    "sha256": "879e45f2789be5612dd245b1218d7f29bd8b77ef1c363b5d5b0b137dc64c3b08",
+    "exists": true,
+    "bytes": 23840
+   },
+   {
+    "artifact": "cost_data.json",
+    "sha256": "4d60da97518285aeac0260d33cfd8f04ec2d40bfe9af26766e81172ac799ebf2",
+    "exists": true,
+    "bytes": 6747
+   },
+   {
+    "artifact": "data/ai_cost_daily.jsonl",
+    "sha256": "34fa4da4dfa3268e7005bbb57f91fc68c6b388104704f6b557d6251a391d848c",
+    "exists": true,
+    "bytes": 17074
+   }
+  ],
+  "note": "digest rc=0；B 案停止於留痕，未 commit／未 push"
+ },
+ {
+  "generated_at": "2026-11-21T18:30:18+08:00",
+  "producer": "cost_watch_digest.py",
+  "report_base_date": null,
+  "source_dates": {
+   "cost_ledger": "2026-11-21"
+  },
+  "artifacts": [
+   {
+    "artifact": "cost.html",
+    "sha256": "a67446895fda1a24976e14fb05f0f93ea13fdf3cb7faf24e642157ff14a46b58",
+    "exists": true,
+    "bytes": 23957
+   },
+   {
+    "artifact": "cost_data.json",
+    "sha256": "b0bf3f350da559ceb08fd87e1422d37e6816bad44ab6df2f1fa8fcfeb3f86ea7",
+    "exists": true,
+    "bytes": 6895
+   },
+   {
+    "artifact": "data/ai_cost_daily.jsonl",
+    "sha256": "737c87069a29df00261ca1d1004a425e2ce8d9cbec791c4d885ab74f19dc04e9",
+    "exists": true,
+    "bytes": 17302
+   }
+  ],
+  "note": "digest rc=0；B 案停止於留痕，未 commit／未 push"
  }
 ]
