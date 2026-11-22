@@ -116,7 +116,7 @@ def main():
     try:
         _led = json.load(open(BASE / "data" / "weekly_open_items.json", encoding="utf-8"))
         _items = _led.get("items", [])
-        _open = [x for x in _items if x.get("status") != "CLOSED"]
+        _open = [x for x in _items if x.get("status") not in ("CLOSED", "WAIVED")]
         print("\n[週報待處理台帳｜唯一真值，禁止自行新增敘述]")
         print(f"  規則：{_led.get('_meta', {}).get('rule', '')}")
         for _x in _items:

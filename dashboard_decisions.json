@@ -12634,6 +12634,15 @@
       "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
       "status": "completed",
       "source": "auto"
+    },
+    {
+      "id": "mem-20261122T22094-1366",
+      "timestamp": "2026-11-22T22:09:43.615854",
+      "agent": "Hermes",
+      "task": "OI-01 美股超配處置裁決",
+      "summary": "使用者核准 waive 33% 硬目標（凍結期內減碼後無處可去）；替代規則＝科技 ≤15% 不新增（現 14.4%，剩 0.6pp）。台帳 OI-01 → WAIVED，科技 ≥15% 自動重啟為 OI-05。",
+      "status": "completed",
+      "source": "user_telegram_approve"
     }
   ],
   "pending_decisions": [
@@ -12653,5 +12662,5 @@
   "meta": {
     "updated_at": "2026-11-22T07:00:46+08:00"
   },
-  "last_updated": "2026-11-22T07:00:46+08:00"
+  "last_updated": "2026-11-22T22:09:43.615854"
 }
