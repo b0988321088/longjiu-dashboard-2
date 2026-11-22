@@ -1,8 +1,8 @@
 {
-  "date": "2026-11-15",
-  "us30y": 5.433,
-  "us30y_as_of": "2026-11-12",
-  "us30y_date": "2026-11-12",
+  "date": "2026-11-22",
+  "us30y": 5.401,
+  "us30y_as_of": "2026-11-19",
+  "us30y_date": "2026-11-19",
   "us30y_gate_status": "OK",
   "us30y_gate_mode": "advisory",
   "us30y_risk_warning": true,
@@ -11,17 +11,21 @@
       {
         "名稱": "現金 ≥ 自由現金門檻",
         "通過": true,
-        "現值": 1191679,
+        "現值": 1225855,
         "門檻": 1000000.0,
         "註記": "可動用＝cash_layers.unrestricted_cash；指定用途款 900,000 永久排除；分批資金只認列已實際入帳盈餘",
         "來源": "sot_targets.allowable_cash ＋ sabbatical_gate_twd.自由現金_twd"
       },
       {
-        "名稱": "質押 LTV ≤ 53%（內部政策停止線）",
-        "通過": true,
-        "現值": 49.89,
-        "門檻": 53.0,
-        "註記": "內部投資停止線（= thresholds.ltv分級_pct.黃上限），**非銀行追繳線**；銀行追繳線以追繳參考值暫作壓力測試（待銀行書面）",
+        "名稱": "質押 LTV 階段＝綠_正常（<45%）",
+        "通過": false,
+        "現值": 50.39,
+        "門檻": 45.0,
+        "階段": "警戒",
+        "階段動作": "不加碼、只回補現金；機會子彈暫停",
+        "LTV_自算": 50.22,
+        "LTV_App": 50.39,
+        "註記": "內部投資停止線（= thresholds.ltv分級_pct.黃上限），**非銀行追繳線**；銀行追繳線以追繳參考值暫作壓力測試（待銀行書面）｜2026-11-18 起本條改判「階段」：45–53%＝警戒（不加碼、子彈暫停），53% 僅為內部停止線下限。現階段＝警戒：不加碼、只回補現金；機會子彈暫停",
         "來源": "sot_targets.pledge_ltv（fund_pledge_loan ÷ fund_breakdown_cathay；thresholds.ltv分級_pct；v1.2 TD-20261015-02）"
       },
       {
@@ -33,18 +37,29 @@
         "來源": "sot_targets.repayment_valve（fund_pledge_loan／fund_pledge_rate／sot_monthly_income／sot_monthly_expense；v1.2 TD-20261015-02 暫定假設）"
       }
     ],
-    "all_passed": true,
-    "未達": [],
+    "all_passed": false,
+    "未達": [
+      "質押 LTV 階段＝綠_正常（<45%）"
+    ],
     "US30Y角色": "宏觀風險警示（不否決台股分批）",
     "減碼角色": "不受本函式限制（風險收斂恆可執行；本函式僅閘加碼／新增部位）",
     "pledge_ltv": {
       "借款": 5900000.0,
-      "擔保品市值": 11825959.0,
-      "LTV_pct": 49.89,
+      "擔保品市值": 11748006.0,
+      "LTV_pct": 50.39,
+      "LTV_self_pct": 50.22,
+      "LTV_app_pct": 50.39,
+      "LTV_app_date": "2026-11-16",
+      "LTV_app_fresh": true,
+      "LTV_來源": "bank_app",
+      "階段": "警戒",
+      "階段動作": "不加碼、只回補現金；機會子彈暫停",
+      "綠上限_pct": 45.0,
+      "加碼許可": false,
       "政策停止線_pct": 53.0,
       "追繳參考_pct": 70.0,
-      "距停止線_pct": 3.11,
-      "池值可跌_pct": -5.87,
+      "距停止線_pct": 2.61,
+      "池值可跌_pct": -5.24,
       "通過": true,
       "觸追繳": false,
       "語意": "內部投資停止線（= thresholds.ltv分級_pct.黃上限），**非銀行追繳線**；銀行追繳線以追繳參考值暫作壓力測試（待銀行書面）",
@@ -134,9 +149,9 @@
     },
     "source": "sot_targets.unfreeze_conditions（v1.2 TD-20261015-02；2026-10-14 裁決）"
   },
-  "unfreeze_allowed": true,
-  "unfreeze_block_reason": null,
+  "unfreeze_allowed": false,
+  "unfreeze_block_reason": "讀值日 2026-11-19（落後 3 天，在容忍值 3 天內）｜US30Y 為宏觀風險警示（已觸發，長債新增凍結生效），不單獨否決台股分批；解凍判定＝未達：質押 LTV 階段＝綠_正常（<45%）",
   "frozen": true,
-  "total_assets": 26738129,
+  "total_assets": 25692433.0,
   "recommendations": []
 }
