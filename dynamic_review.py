@@ -112,6 +112,21 @@ def main():
     except Exception as _e:
         print(f"\n[目標-對策對照表] 產生失敗: {_e}")
 
+    # 週報待處理台帳（2026-11-22 建：唯一真值，避免同一缺口每週重複貼）
+    try:
+        _led = json.load(open(BASE / "data" / "weekly_open_items.json", encoding="utf-8"))
+        _items = _led.get("items", [])
+        _open = [x for x in _items if x.get("status") != "CLOSED"]
+        print("\n[週報待處理台帳｜唯一真值，禁止自行新增敘述]")
+        print(f"  規則：{_led.get('_meta', {}).get('rule', '')}")
+        for _x in _items:
+            print(f"  {_x['id']} [{_x['status']}] {_x['title']}｜owner={_x.get('owner','')}"
+                  f"｜due={_x.get('due','')}｜close={_x.get('close_cond','')}")
+        print(f"  → 待處理只准列 {len(_open)} 項（{', '.join(y['id'] for y in _open) or '無'}）；"
+              f"CLOSED 項不得再出現在『待優化』或紅線表。")
+    except Exception as _e:
+        print(f"\n[週報待處理台帳] 讀取失敗: {_e}")
+
     # P1-4 月戰略檢討（僅 monthly 模式）
     if mode == "monthly":
         try:
