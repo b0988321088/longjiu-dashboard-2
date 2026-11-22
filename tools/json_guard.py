@@ -73,10 +73,22 @@ def _git(*args: str) -> str:
     return r.stdout.decode("utf-8", errors="replace")
 
 
-def check_staged(threshold: float = 0.8, min_lines: int = 200) -> tuple[int, list[str]]:
-    """回傳 (rc, 違規清單)。rc=1 代表疑似整檔重排。"""
+def check_staged(threshold: float = 0.8, min_lines: int = 200,
+                message_file: str | None = None) -> tuple[int, list[str]]:
+    """回傳 (rc, 違規清單)。rc=1 代表疑似整檔重排。
+
+    2026-11-22 修正：原本用 `git log -1` 讀「上一顆 commit」的 message 判斷放行，
+    在 pre-commit 階段新 message 尚未成為 commit → [json-reflow-ok] 永遠無效（結構性死路）。
+    改由 commit-msg hook 傳入 --message-file（git 已寫好本次 message）。
+    """
     numstat = _git("diff", "--cached", "--numstat", "--", "*.json")
-    msg = _git("log", "-1", "--format=%B")
+    if message_file:
+        try:
+            msg = Path(message_file).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            msg = ""
+    else:
+        msg = _git("log", "-1", "--format=%B")
     allow = "[json-reflow-ok]" in msg
 
     bad: list[str] = []
@@ -112,7 +124,9 @@ def check_staged(threshold: float = 0.8, min_lines: int = 200) -> tuple[int, lis
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="JSON 安全寫入與整檔重排守門")
-    ap.add_argument("--check-staged", action="store_true", help="pre-commit 用：檢查 staged 的 *.json")
+    ap.add_argument("--check-staged", action="store_true", help="pre-commit/commit-msg 用：檢查 staged 的 *.json")
+    ap.add_argument("--message-file", metavar="FILE",
+                    help="commit-msg hook 傳入的 message 檔（判斷 [json-reflow-ok]）")
     ap.add_argument("--probe", metavar="FILE", help="印出該檔偵測到的格式（不寫入）")
     ap.add_argument("--threshold", type=float, default=0.8, help="改動行數占比門檻（預設 0.8）")
     ap.add_argument("--min-lines", type=int, default=200, help="小於此行數的檔不判（預設 200）")
@@ -126,7 +140,7 @@ def main() -> int:
         return 0
 
     if a.check_staged:
-        rc, bad = check_staged(a.threshold, a.min_lines)
+        rc, bad = check_staged(a.threshold, a.min_lines, a.message_file)
         if rc == 0 and not bad:
             pass  # 靜默：pre-commit 無事不打字
         return rc

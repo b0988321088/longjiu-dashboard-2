@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# 龍九 commit-msg 閘門（2026-11-22 建立）
+#
+# 為什麼搬到這裡：JSON 整檔重排守門原本放在 pre-commit，用 `git log -1` 讀「上一顆」
+#   commit 的 message 判斷 [json-reflow-ok] → 新 message 在 pre-commit 階段還不存在，
+#   放行機制結構性無效（2026-11-22 schedule_events.json indent 修復時實證：加了標記仍被擋）。
+#   commit-msg 階段 git 已把本次 message 寫入 $1，且 staged 內容尚未清除 → 兩者都拿得到。
+set -u
+MSG_FILE="${1:-}"
+if [ -z "$MSG_FILE" ] || [ ! -f "$MSG_FILE" ]; then
+    exit 0
+fi
+if [ -f "tools/json_guard.py" ] && command -v python >/dev/null 2>&1; then
+    python "tools/json_guard.py" --check-staged --message-file "$MSG_FILE" || {
+        echo "" >&2
+        echo "❌ COMMIT 被拒絕：JSON 疑似整檔重排（清單見上）" >&2
+        echo "   修正：改用 tools/json_guard.py 的 safe_json_write() 重寫後重新 add。" >&2
+        echo "   若整檔重排是刻意的，commit message 加 [json-reflow-ok] 留痕放行。" >&2
+        exit 1
+    }
+fi
+exit 0

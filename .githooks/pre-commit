@@ -35,23 +35,8 @@ if [ -f "$GIT_DIR/PUSH_HOLD" ]; then
     echo "    push 端防護：pre-push（HOLD）＋ auto_push／data_closeout 未推佇列斷言。" >&2
 fi
 
-# JSON 整檔重排守門（2026-11-17 建立）
-# 為什麼：snapshot.json 被以 indent=2 寫回，造成 9,749/9,746 行整檔重排 —— 真正的
-#   改動只有 3 個值，審查看不出、diff 無法人工複核。這道檢查讓「寫錯格式」在 commit
-#   前就被擋下（正式寫入請用 tools/json_guard.py 的 safe_json_write）。
-# 判定與還原工具同一支，避免「hook 說 A、工具說 B」。
-if [ -f "tools/json_guard.py" ]; then
-    if command -v python >/dev/null 2>&1; then
-        python "tools/json_guard.py" --check-staged || {
-            echo "" >&2
-            echo "❌ COMMIT 被拒絕：JSON 疑似整檔重排（清單見上）" >&2
-            echo "   修正：改用 tools/json_guard.py 的 safe_json_write() 重寫後重新 add。" >&2
-            echo "   若整檔重排是刻意的，commit message 加 [json-reflow-ok] 留痕放行。" >&2
-            exit 1
-        }
-    else
-        echo "⚠️  找不到 python，跳過 JSON 格式守門（21:45 治理巡檢會補檢）" >&2
-    fi
-fi
+# JSON 整檔重排守門（2026-11-17 建立；2026-11-22 移至 .githooks/commit-msg）
+# 為什麼移走：本 hook 階段 git 尚未寫入 commit message，[json-reflow-ok] 無法生效。
+# 檢查改由 commit-msg hook 執行（同一支 tools/json_guard.py，參數 --message-file）。
 
 exit 0
