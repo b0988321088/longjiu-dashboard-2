@@ -18,6 +18,25 @@ def _fmt_money(n):
     return f"{v:+.1f}百萬" if abs(v) >= 0.05 else f"{v:+.0f}萬"
 
 
+def _fmt_foreign(tw):
+    """外資買賣超：依 tw['外資單位'] 決定單位（元→億；股→億股），None 顯示 -"""
+    v = (tw or {}).get("外資總買賣超")
+    if v is None:
+        return "-"
+    if (tw or {}).get("外資單位") == "股":
+        return f"{v / 1e8:+.2f} 億股（股數口徑）"
+    return f"{v / 1e8:+.2f} 億"
+
+
+def _fmt_shares(n):
+    """股數簡寫：|v|>=1e8 用億股，否則百萬股"""
+    if n is None:
+        return "-"
+    if abs(n) >= 1e8:
+        return f"{n / 1e8:+.2f} 億股"
+    return f"{n / 1e6:+.1f} 百萬股"
+
+
 def _arrow(direction):
     return {"inflow": "🟢 流入", "outflow": "🔴 流出", "neutral": "⚪ 中性"}.get(direction, direction or "-")
 
@@ -65,7 +84,7 @@ def main():
         etf_html = (f"<div style='background:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:12px'>"
                     f"<h3 style='font-size:13px;font-weight:800;margin:0 0 6px;color:#1d1d1f'>📈 追蹤 ETF 法人買賣超（{tw.get('date','')}）</h3>"
                     f"<table style='width:100%;font-size:12px;border-collapse:collapse'>{rows}</table>"
-                    f"<p style='font-size:11px;color:#6b7280;margin:6px 0 0'>外資總買賣超：{_fmt_money(tw.get('外資總買賣超'))}</p></div>")
+                    f"<p style='font-size:11px;color:#6b7280;margin:6px 0 0'>外資總買賣超：{_fmt_foreign(tw)}</p></div>")
 
     # ── 產業資金流向：台股 ──
     tw_sector = sf.get("台股", {}) or {}
@@ -74,7 +93,7 @@ def main():
         for k, v in sorted(tw_sector.items(), key=lambda x: -(x[1].get("法人淨買賣超", 0) or 0)):
             amt = v.get("法人淨買賣超", 0) or 0
             tw_rows += (f"<tr><td style='padding:4px 8px;border-bottom:1px solid #f3f4f6'>{k}</td>"
-                        f"<td style='padding:4px 8px;border-bottom:1px solid #f3f4f6;text-align:right;font-weight:600;color:{_color(v.get('方向'))}'>{_fmt_money(amt)}</td>"
+                        f"<td style='padding:4px 8px;border-bottom:1px solid #f3f4f6;text-align:right;font-weight:600;color:{_color(v.get('方向'))}'>{_fmt_shares(amt)}</td>"
                         f"<td style='padding:4px 8px;border-bottom:1px solid #f3f4f6;text-align:center'>{_arrow(v.get('方向'))}</td></tr>")
     tw_flow_html = ""
     if tw_rows:

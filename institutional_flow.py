@@ -130,6 +130,50 @@ def http_get(url, timeout=40):
 
 # ─────────────────────────── Fetchers ───────────────────────────
 
+def fetch_twse_money(day=None):
+    """證交所三大法人**金額**（單位：元）— BFI82U 汇总表。
+
+    2026-11-23 修：T86 的 r[4] 是「外陸資買賣超**股數**」，原碼把它當金額累加，
+    再除以 1e8 印成「億」，並與 radar_config 的 -2,000,000,000 元紅線比較
+    → 單位錯配（股數 vs 元），紅燈永遠不會亮、方向也可能與金額相反。
+    改以 BFI82U 的「外資及陸資(不含外資自營商) 買賣超」為金額主來源。
+    回傳 {"date","外資_元","投信_元","自營_元"} 或 None。
+    """
+    for back in range(0, 6):
+        d = (day or date.today()) - timedelta(days=back)
+        if d.weekday() >= 5:
+            continue
+        for tmpl in ("https://www.twse.com.tw/rwd/zh/fund/BFI82U?dayDate={d}&type=day&response=json",
+                     "https://www.twse.com.tw/fund/BFI82U?response=json&dayDate={d}&type=day"):
+            url = tmpl.format(d=f"{d:%Y%m%d}")
+            try:
+                data = json.loads(http_get(url).decode("utf-8", "replace"))
+            except Exception:
+                continue
+            if data.get("stat") != "OK":
+                continue
+            out = {"date": f"{d:%Y-%m-%d}", "外資_元": None, "投信_元": None, "自營_元": None}
+            for r in data.get("data", []):
+                if len(r) < 4:
+                    continue
+                lbl = str(r[0]); 
+                try:
+                    val = int(str(r[3]).replace(",", ""))
+                except Exception:
+                    continue
+                _l = lbl.strip()
+                if _l.startswith("外資及陸資(不含"):   # 排除「外資自營商」列
+                    out["外資_元"] = val
+                elif _l.startswith("投信"):
+                    out["投信_元"] = val
+                elif _l.startswith("自營商"):
+                    # 自行買賣與避險兩列都要合計（原碼只取第一列，漏 -16,101,874,546）
+                    out["自營_元"] = (out["自營_元"] or 0) + val
+            if out["外資_元"] is not None:
+                return out
+    return None
+
+
 def fetch_twse(day=None):
     """證交所三大法人買賣超（含各標的明細）。週末/休市自動往前找最近交易日。回傳 {date, 外資總買賣超, etfs}
 
@@ -172,12 +216,37 @@ def fetch_twse(day=None):
                         continue
                     total_foreign += fnet
                     try:
-                        etfs_all[code] = {"name": r[1].strip(), "法人淨買賣超": int(r[11].replace(",", ""))}
+                        # 2026-11-23：三大法人買賣超在 r[18]（19 欄）；r[11]=自營商合計、
+                        # r[12]=自營商(自行買賣)**買進**（恆正，曾誤用導致方向全流入）。
+                        # identity 檢查：r[4]+r[10]+r[11] == r[18]
+                        if len(r) < 19:
+                            continue
+                        try:
+                            _f = int(r[4].replace(",", ""))
+                            _t = int(r[10].replace(",", ""))
+                            _d = int(r[11].replace(",", ""))
+                            _tot = int(r[18].replace(",", ""))
+                        except Exception:
+                            continue
+                        if _f + _t + _d != _tot:
+                            errs.append(f"{code} identity 不符 {_f}+{_t}+{_d}!={_tot}")
+                            continue
+                        etfs_all[code] = {"name": r[1].strip(), "法人淨買賣超": _tot, "單位": "股"}
                     except Exception:
                         pass
                     if code in watch:
                         etfs[code] = fnet
-                return {"date": f"{d:%Y-%m-%d}", "外資總買賣超": total_foreign, "etfs": etfs, "etfs_all": etfs_all}
+                mon = fetch_twse_money(d)
+                _want = f"{d:%Y-%m-%d}"
+                if mon and mon.get("外資_元") is not None and mon.get("date") == _want:
+                    return {"date": f"{d:%Y-%m-%d}", "外資總買賣超": mon["外資_元"],
+                            "外資單位": "元", "外資總買賣超_股": total_foreign,
+                            "投信_元": mon.get("投信_元"), "自營_元": mon.get("自營_元"),
+                            "etfs": etfs, "etfs_all": etfs_all}
+                # backup：BFI82U 失敗時退回 T86 股數，明確標單位，避免再被當成元
+                return {"date": f"{d:%Y-%m-%d}", "外資總買賣超": total_foreign,
+                        "外資單位": "股", "外資總買賣超_股": total_foreign,
+                        "etfs": etfs, "etfs_all": etfs_all}
     return {"error": "；".join(errs[-4:]) or "近 6 日無交易資料", "date": f"{(day or date.today()):%Y-%m-%d}"}
 
 
@@ -439,8 +508,9 @@ def compute_sector_flow(tw, us_sec, state):
     try:
         tw_sorted = sorted(tw_sector.items(), key=lambda x: -x[1]["法人淨買賣超"])
         if tw_sorted:
-            parts = [f"{b} {v['法人淨買賣超']/1e6:+.0f}百萬" for b, v in tw_sorted if v["法人淨買賣超"]]
-            flow["台股總結"] = "法人淨買賣超：" + "，".join(parts)
+            parts = [f"{b} {v['法人淨買賣超']/1e6:+.0f}百萬股" for b, v in tw_sorted
+                     if abs(v["法人淨買賣超"] or 0) >= 1_000_000]   # < 100 萬股視為噪音
+            flow["台股總結"] = "三大法人淨買賣（股數）：" + "，".join(parts)
     except Exception:
         pass
     try:
@@ -470,11 +540,31 @@ def compute_signals(tw, cot, fed, twd, tnx, cfg, state):
     else:
         fnet = tw["外資總買賣超"]
         _tw_date = tw.get("date", today)
+        _cur_unit = tw.get("外資單位", "元")          # 元=BFI82U 金額；股=T86 股數 backup
+        _u = "億" if _cur_unit == "元" else "億股"
         prev_days = state.get("twse", {}).get("外資連日", [])
-        # 同一交易日重跑（含 TWSE 當日未公布→回退前一日）不重複累加，覆寫最後一筆
-        if state.get("twse", {}).get("外資連日_日期") == _tw_date and prev_days:
-            prev_days = prev_days[:-1]
-        streak = (prev_days + [fnet])[-3:] if fnet else prev_days
+        # 2026-11-23：單位由「股數」改為「金額」。舊狀態的數列是股數，與元混算會讓
+        # 「連N日」與方向全錯 → 元口徑一律用 BFI82U 回補近 3 個交易日重建（同日重跑亦同）
+        _prev_unit = state.get("twse", {}).get("外資連日_單位")
+        if _cur_unit == "元":
+            _seen, _hist = set(), []
+            for _b in range(0, 6):
+                _d = date.fromisoformat(_tw_date) - timedelta(days=_b)
+                if _d.weekday() >= 5:
+                    continue
+                _m = fetch_twse_money(_d)
+                if _m and _m.get("外資_元") is not None and _m.get("date") not in _seen:
+                    _seen.add(_m["date"])
+                    _hist.append(_m["外資_元"])
+                if len(_hist) >= 3:
+                    break
+            streak = list(reversed(_hist)) or ([fnet] if fnet else [])
+        else:
+            if _prev_unit and _prev_unit != _cur_unit:
+                prev_days = []
+            if state.get("twse", {}).get("外資連日_日期") == _tw_date and prev_days:
+                prev_days = prev_days[:-1]
+            streak = (prev_days + [fnet])[-3:] if fnet else prev_days
         # 2026-10-14 修：原本 `sum(1 for v in streak if v > 0)` 數的是「近 3 日買超**天數**」，
         # 不是「**連續**買超天數」→ 陣列 [+2.2億, -6.1億, +7.0億] 會誤報「連2日」
         # （前一日實為淨賣超）。改為由最新往回數、遇反向即停。
@@ -489,16 +579,23 @@ def compute_signals(tw, cot, fed, twd, tnx, cfg, state):
                 sell_days += 1
             else:
                 break
-        if fnet < c["twse"]["外資單日賣超_紅"]:
-            tw_sig, tw_note = "🔴", f"外資單日賣超 {fnet/1e8:.1f}億 大撤離 — 凍結台股加碼"
+        if _cur_unit != "元":
+            # 股數 backup 不能與「元」門檻比較（161M 股 ≫ -2e9 元，紅燈結構性失效）
+            if sell_days >= c["twse"]["外資連續賣超_黃"]:
+                tw_sig, tw_note = "🟡", "外資連賣（股數口徑，紅燈不判定）— 台股加碼暫緩"
+            else:
+                tw_sig, tw_note = "⚪", f"外資淨{fnet/1e8:+.1f}億股（股數口徑，紅燈不判定）"
+        elif fnet < c["twse"]["外資單日賣超_紅"]:
+            tw_sig, tw_note = "🔴", f"外資單日賣超 {abs(fnet)/1e8:.1f}{_u} 大撤離 — 凍結台股加碼"
         elif buy_days >= c["twse"]["外資連續買超_綠"]:
-            tw_sig, tw_note = "🟢", f"外資淨買超 {fnet/1e8:.1f}億（連{buy_days}日）— 台股慢慢買順勢"
+            tw_sig, tw_note = "🟢", f"外資淨買超 {fnet/1e8:.1f}{_u}（連{buy_days}日）— 台股慢慢買順勢"
         elif sell_days >= c["twse"]["外資連續賣超_黃"]:
             tw_sig, tw_note = "🟡", "外資連賣 — 台股加碼暫緩，等方向"
         else:
-            tw_sig, tw_note = "⚪", f"外資淨買超 {fnet/1e8:.1f}億 — 中性"
+            tw_sig, tw_note = "⚪", f"外資淨{(fnet/1e8):+.1f}{_u}{'（買超）' if fnet > 0 else '（賣超）'} — 中性"
         state.setdefault("twse", {})["外資連日"] = streak[-3:]
         state["twse"]["外資連日_日期"] = _tw_date
+        state["twse"]["外資連日_單位"] = _cur_unit
     sig["台股"] = {"color": tw_sig, "note": tw_note}
 
     # 避險衛星（黃金/原油）：COT 聰明錢方向（美債10年改用 TNX 動能，見下方）
