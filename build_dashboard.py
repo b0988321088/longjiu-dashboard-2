@@ -693,6 +693,17 @@ def _mio_div_split(snap, month):
             continue
         total += float(amt)
         cls = nmap.get(_mio_norm(name))
+        if cls not in ("policy_credit", "fund", "etf"):
+            # 2026-11-23 修正：key 會帶「（11/23 入帳…）」等後綴 → 精確表查不到，
+            # 18 筆／140,541 全落未分類（保單只剩 9,817）。改為退回單一分類器
+            # performance_core.classify_dividend（與配息口徑／月報同一份規則），
+            # 精確表仍然優先，不覆蓋人工指定。
+            try:
+                import build_investment_performance as _BIP
+                cls = {"保單": "policy_credit", "基金": "fund", "股票": "etf"}.get(
+                    _BIP.classify_dividend(name))
+            except Exception:
+                cls = None
         if cls in ("policy_credit", "fund", "etf"):
             out[cls] += float(amt)
         else:
@@ -1050,7 +1061,10 @@ def main():
     _today_m = _dt.date.today().strftime("%Y-%m")
     _dr = snap.get("dividend_records", {}).get(_today_m, {}) or {}
     firstjin_div = sum(v for k, v in _dr.items() if "第一金" in k and isinstance(v, (int, float))) or 0
-    az_div = _dr.get("安聯保單撥回", 0) or 0
+    # 2026-11-23 修正：安聯撥回會被寫成多個鍵（含入帳日/基準日後綴），
+    # 精確 get 只抓到 9,817（漏 30,909）→ 改為前綴加總，對齊 monthly_dividend_breakdown.insurance
+    az_div = sum(v for k, v in _dr.items()
+                 if isinstance(v, (int, float)) and str(k).startswith("安聯保單撥回")) or 0
     div_ins = az_div + firstjin_div
     div_total = sum(v for k, v in _dr.items() if isinstance(v, (int, float))) or 0
     expense = sot_monthly_expense(snap)
