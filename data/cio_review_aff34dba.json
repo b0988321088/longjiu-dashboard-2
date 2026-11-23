@@ -1,0 +1,40 @@
+{
+ "commit": "aff34dba",
+ "verdict": "APPROVE",
+ "confidence": 0.82,
+ "blocking": [],
+ "reviewer": "CIO-DeepSeek-V4-Flash(委派-唯讀・第三輪複審)",
+ "scope_creep": false,
+ "claim_checks": [
+  {
+   "claim": "NEW-1 壓力情境 -5%/-10% 為推算值 24,079,447/22,922,920，非硬編碼",
+   "pass": true
+  },
+  {
+   "claim": "_sub_ta_guarded 對含壓力情境字串不改寫；控制組仍正確更新",
+   "pass": true
+  },
+  {
+   "claim": "F3 契約值 -1,280,406（-4.76%）、無 pnl_mkt fallback",
+   "pass": true
+  },
+  {
+   "claim": "F4 日報 -1,472,207=0、-1,280,406=3、本月實質市場變化=2",
+   "pass": true
+  },
+  {
+   "claim": "regression index/mtd/monthly 皆 -1,280,406，舊值 0",
+   "pass": true
+  },
+  {
+   "claim": "commit 僅含 5 py + 5 輸出，無雜項檔",
+   "pass": true
+  }
+ ],
+ "required_fixes": [
+  "build_dashboard.py:357-358 卡片 A 仍以 pnl_mkt 為閘門、real_change 缺值時 fallback 舊值 → 下輪改以 real_change 為閘門並印 —",
+  "build_mtd_report.static_fallback 其餘 p['classes']/c['gross'] 仍硬取；cash 缺鍵會靜默少 85,001 → 下輪改 .get + 顯性警告",
+  "sot_targets._sub_ta_guarded 保護窗過寬（單字『情境』、通用『（-x%）』）→ 收斂為『壓力情境』+ shock 行樣式，跳過時發 WARN"
+ ],
+ "note": "四項 blocking（含 NEW-1）全數修復並複驗通過；殘留屬 fallback 語意硬化，非阻擋，列入 BACKLOG 不阻發布"
+}
