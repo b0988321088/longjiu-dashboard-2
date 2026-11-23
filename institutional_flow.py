@@ -584,6 +584,85 @@ def render_summary(sig, tw, cot, fed, sector_flow=None):
     return "\n".join(lines)
 
 
+def fetch_fred_series(series_id: str, start: str = "2025-01-01"):
+    """抓 FRED 單一序列（CSV）→ [(date_str, float)]，空值/缺值自動略過。"""
+    url = (f"https://fred.stlouisfed.org/graph/fredgraph.csv"
+           f"?id={series_id}&cosd={start}")
+    raw = http_get(url, timeout=30).decode("utf-8", "replace")
+    out = []
+    for i, line in enumerate(raw.strip().splitlines()):
+        if i == 0:
+            continue
+        parts = line.split(",")
+        if len(parts) < 2:
+            continue
+        d, v = parts[0].strip(), parts[1].strip()
+        if not v or v == ".":
+            continue
+        try:
+            out.append((d, float(v)))
+        except ValueError:
+            continue
+    return out
+
+
+def refresh_bond_sensitivity(state, cfg=None):
+    """2026-11-23：債券升息敏感度由 FRED 即時生成（原為 2026-09-20 手寫文字，
+    停在「9/17 起 4.00」兩個多月未更新，頁面被誤讀成資料只到 9/17）。
+
+    真值來源（全部即時、不寫死）：
+      DFEDTARU = 聯邦資金目標利率上限；DGS10／DGS30 = 10Y／30Y 殖利率。
+    輸出寫回 state.policy_notes['債券升息敏感度'] 與 state['bond_sensitivity']（結構化，供閘門與報告讀）。
+    抓取失敗時 fail-loud：文字標明「自動更新失敗」，不沿用舊值假裝新鮮。
+    """
+    cfg = cfg or {}
+    _b = (cfg.get("bond") or {})
+    hi_line = float(_b.get("us30y_顯示線", 5.20))
+    act_line = float(_b.get("us30y_行動線", 5.30))
+    need_n = int(_b.get("行動線連日", 5))
+
+    up = fetch_fred_series("DFEDTARU")
+    y10 = fetch_fred_series("DGS10")
+    y30 = fetch_fred_series("DGS30")
+    if not up or not y10 or not y30:
+        raise RuntimeError("FRED 序列為空（DFEDTARU/DGS10/DGS30）")
+
+    # 政策利率：取最後一筆，並回推「這一個利率是哪天開始的」
+    cur_rate, cur_dt = up[-1][1], up[-1][0]
+    eff_dt = cur_dt
+    for d, v in reversed(up):
+        if abs(v - cur_rate) > 1e-9:
+            break
+        eff_dt = d
+
+    # 30Y 連續高於行動線天數（自最後一筆往回數，遇缺日略過、遇低於即停）
+    streak = 0
+    for d, v in reversed(y30):
+        if v >= act_line:
+            streak += 1
+        else:
+            break
+    d30, v30 = y30[-1]
+    d10, v10 = y10[-1]
+    above = streak >= need_n
+    _md = lambda s: f"{s[5:7]}/{s[8:10]}"
+
+    text = (f"政策利率上限 {cur_rate:.2f}%（{eff_dt} 起；FRED 至 {cur_dt} 未再調整）"
+            f"｜10Y {v10:.2f}%（{_md(d10)}）｜30Y {v30:.2f}%（{_md(d30)}，"
+            f"{'高於' if v30 >= act_line else '低於'} {act_line:.2f} 行動線"
+            + (f"，已連 {streak} 個交易日" if streak else "")
+            + f"）→ 債券桶{'不新增（行動線觸發）' if above else ('觀察' if v30 >= hi_line else '可維持')}"
+            f"；敏感部位＝保單內債券（PIMCO/M&G/摩根）＋00983D")
+
+    pn = state.setdefault("policy_notes", {})
+    pn["債券升息敏感度"] = text
+    pn["債券升息敏感度_as_of"] = d30
+    return {"as_of": d30, "政策利率上限": cur_rate, "政策利率起算日": eff_dt,
+            "10Y": v10, "10Y_date": d10, "30Y": v30, "30Y_date": d30,
+            "30Y連續高於行動線日數": streak, "行動線": act_line, "顯示線": hi_line,
+            "行動線觸發": above, "text": text, "source": "FRED DFEDTARU/DGS10/DGS30"}
+
+
 def main():
     cfg = load_json(BASE / "radar_config.json", DEFAULT_CONFIG)
     if not Path(BASE / "radar_config.json").exists():
@@ -597,6 +676,15 @@ def main():
     tnx = fetch_tnx()
     mg = fetch_margin()  # 2026-11-19：多殺多第 3 段（融資斷頭）判準，取代原本無資料的推論
     us_sec = fetch_us_sector()
+
+    # 2026-11-23：債券升息敏感度改由 FRED 即時生成（手寫版停在 9/17 兩個月）
+    try:
+        state["bond_sensitivity"] = refresh_bond_sensitivity(state, cfg)
+        print(f"  💵 債券升息敏感度（FRED 自動）：{state['bond_sensitivity']['text']}")
+    except Exception as _bs_err:
+        _pn_fail = state.setdefault("policy_notes", {})
+        _pn_fail["債券升息敏感度"] = f"⚠️ 自動更新失敗（{_bs_err.__class__.__name__}: {_bs_err}）→ 數值不可信，請人工確認"
+        print(f"  ⚠️ 債券升息敏感度自動更新失敗：{_bs_err}")
 
     sig = compute_signals(tw, cot, fed, twd, tnx, cfg, state)
     sector_flow = compute_sector_flow(tw, us_sec, state)  # Phase 2：產業資金流向
@@ -671,7 +759,7 @@ def main():
                         print(f"  📰 {_k.replace('新聞','').replace('_',' ')}: {_c}")
                     if _imp:
                         print(f"     💡 影響: {_imp}")
-                elif isinstance(_v, str) and _v and _k not in ("來源", "記錄時間", "會議正名", "原油綜合判斷", "債券升息敏感度", "與雷達衝突"):
+                elif isinstance(_v, str) and _v and _k not in ("來源", "記錄時間", "會議正名", "原油綜合判斷", "債券升息敏感度", "債券升息敏感度_as_of", "與雷達衝突"):
                     print(f"  📌 {_k}: {_v}")
             # 會議正名/來源/時間
             if _pn.get("會議正名"):
