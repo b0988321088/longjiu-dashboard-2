@@ -1,0 +1,48 @@
+{
+ "commit": "247e27fc",
+ "verdict": "APPROVE",
+ "confidence": 0.88,
+ "blocking": [],
+ "scope_creep": false,
+ "reviewer": "CIO-DeepSeek-V4-Flash(委派-唯讀)",
+ "claim_checks": [
+  {
+   "claim": "僅 3 檔 +4/-2，未夾帶資料檔",
+   "pass": true
+  },
+  {
+   "claim": "前綴/佔位符格式一致、無前綴互含衝突（24/24）、glob 只命中 1 檔",
+   "pass": true
+  },
+  {
+   "claim": "build_dashboard 重跑後 href=drawdown_review_2026-11.html、無佔位符殘留、602 檔零漂移",
+   "pass": true
+  },
+  {
+   "claim": "目標檔存在且已版控（不會 404）",
+   "pass": true
+  },
+  {
+   "claim": "check_dashboard_sync exit 0；update_dashboard_links --check 一致",
+   "pass": true
+  },
+  {
+   "claim": "缺檔時 fallback index.html，不產生 404（全域既有行為）",
+   "pass": true
+  },
+  {
+   "claim": "未動其他按鈕順序、未夾帶 snapshot/db/json",
+   "pass": true
+  },
+  {
+   "claim": "跌幅頁未渲染 canonical 實質總計 -1,280,406（被連結檔缺漏）",
+   "pass": false
+  }
+ ],
+ "required_fixes": [
+  "drawdown_review.py 未渲染 caliber.real_change 總列（頁面 KPI 仍是資產變動 -1,677,013／投資報酬 -5.90%）→ 另案修產生器補『實質市場變化 -1,280,406（-4.76%）』",
+  "新按鈕與國安基金同列，樣式建議獨立一行（非阻擋）",
+  "缺檔 fallback 靜默回首頁（全域設計，非本次引入）"
+ ],
+ "note": "導覽按鈕本身零阻擋；被連結頁的總計呈現缺口另案處理"
+}
