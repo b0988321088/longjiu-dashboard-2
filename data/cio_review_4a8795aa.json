@@ -1,0 +1,40 @@
+{
+ "commit": "4a8795aa",
+ "verdict": "APPROVE",
+ "confidence": 0.94,
+ "blocking": [],
+ "required_fixes": [],
+ "scope_creep": false,
+ "reviewer": "CIO-DeepSeek-V4-Flash(委派-唯讀)",
+ "claim_checks": [
+  {
+   "claim": "僅 2 檔（py+html），未動 compute() 的 pnl_market/pnl_total",
+   "pass": true
+  },
+  {
+   "claim": "HTML 與 render() 重跑輸出具 difflib 差異 0 行（機器產物）",
+   "pass": true
+  },
+  {
+   "claim": "-1,280,406×2、-4.76%×3、-5.90%=0、投資報酬字樣 0",
+   "pass": true
+  },
+  {
+   "claim": "算術自洽：帳面−帳務=實質；alpha 13.8pp",
+   "pass": true
+  },
+  {
+   "claim": "real 為 None 時 fail-visible 印 '—'，不補假數",
+   "pass": true
+  },
+  {
+   "claim": "跨報告一致性 + 儀表板同步兩閘門 exit 0",
+   "pass": true
+  },
+  {
+   "claim": "未夾帶資料檔/snapshot",
+   "pass": true
+  }
+ ],
+ "note": "口徑最後一個缺口補齊；提醒 -4.76% 分母為期初總資產，非投資部位報酬率"
+}
