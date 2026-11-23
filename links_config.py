@@ -47,11 +47,13 @@ PREFIX_RULES = {
     "stress_test_": (".html", None),   # 2026-11-06 股災壓力測試
     "market_squeeze_": (".html", None),  # 2026-11-19 市場／多殺多評估（含質押補繳預案）
     "national_fund_": (".html", None),  # 2026-11-07 國安基金護盤（機制＋買超清單）
+    "drawdown_review_": (".html", None),  # 2026-11-19 本月跌幅檢討（實質市場變化口徑）
 }
 
 # 模板佔位符 → 檔名前綴（glob 由前綴+副檔名推導）
 PLACEHOLDER_PREFIX = {
     "__NATFUND__": "national_fund_",
+    "__DRAWDOWN__": "drawdown_review_",
     "__SQUEEZE__": "market_squeeze_",
     "__RADAR_REPORT__": "radar_report_",
     "__ASSET_DIFF__": "asset_diff_",
