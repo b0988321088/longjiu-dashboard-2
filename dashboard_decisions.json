@@ -12662,24 +12662,24 @@
       "status": "completed",
       "source": "auto"
     },
-  {
-    "id": "mem-20261123203840-1369",
-    "timestamp": "2026-11-23T20:38:40.646159+08:00",
-    "agent": "Hermes",
-    "task": "治理修復：決策入庫對帳分車道＋保單轉換卡改送件未證實（含行事曆 11/27 地價稅單）",
-    "summary": "使用者 2026-11-23 Telegram 核准並指示推送。①reconcile_decision_intake.py 拆人工/自動車道：人工進檔無收據 rc=1、僅 auto 時 rc=2（原本 rc=0 靜默）；②memory_helper.add_memory 自動寫入補收據；③保單轉換卡由已確認改待處理、due 11/26，驗收條件＝摩根 ≥1,550,000 且收益成長 ≤1,700,000。commit 76d6e6b1（CIO-Gemini APPROVE 100%）。④新增行事曆：11/27 回洲際W 領地價稅單、11/30 繳納截止，commit e912f170（CIO-Gemini APPROVE）。未動任何投資部位。",
-    "status": "completed",
-    "source": "user"
-  },
-  {
-    "id": "mem-20261123204129-1370",
-    "timestamp": "2026-11-23T20:41:29.859551+08:00",
-    "agent": "Hermes",
-    "task": "核准：把「入庫對帳分兩車道」寫進 decision-governance 技能",
-    "summary": "使用者 2026-11-23 Telegram ✅ 核准。已寫入 financial/decision-governance SKILL.md 新章節（人工繞道 rc=1／僅 auto rc=2／車道一致性／驗法 E1–E12），並更正該檔內已過期的『現行無 --no-push 旗標』敘述。未動程式、未動部位、未推送。",
-    "status": "completed",
-    "source": "user"
-  }
+    {
+      "id": "mem-20261123203840-1369",
+      "timestamp": "2026-11-23T20:38:40.646159+08:00",
+      "agent": "Hermes",
+      "task": "治理修復：決策入庫對帳分車道＋保單轉換卡改送件未證實（含行事曆 11/27 地價稅單）",
+      "summary": "使用者 2026-11-23 Telegram 核准並指示推送。①reconcile_decision_intake.py 拆人工/自動車道：人工進檔無收據 rc=1、僅 auto 時 rc=2（原本 rc=0 靜默）；②memory_helper.add_memory 自動寫入補收據；③保單轉換卡由已確認改待處理、due 11/26，驗收條件＝摩根 ≥1,550,000 且收益成長 ≤1,700,000。commit 76d6e6b1（CIO-Gemini APPROVE 100%）。④新增行事曆：11/27 回洲際W 領地價稅單、11/30 繳納截止，commit e912f170（CIO-Gemini APPROVE）。未動任何投資部位。",
+      "status": "completed",
+      "source": "user"
+    },
+    {
+      "id": "mem-20261123204129-1370",
+      "timestamp": "2026-11-23T20:41:29.859551+08:00",
+      "agent": "Hermes",
+      "task": "核准：把「入庫對帳分兩車道」寫進 decision-governance 技能",
+      "summary": "使用者 2026-11-23 Telegram ✅ 核准。已寫入 financial/decision-governance SKILL.md 新章節（人工繞道 rc=1／僅 auto rc=2／車道一致性／驗法 E1–E12），並更正該檔內已過期的『現行無 --no-push 旗標』敘述。未動程式、未動部位、未推送。",
+      "status": "completed",
+      "source": "user"
+    }
   ],
   "pending_decisions": [
     {
@@ -12691,12 +12691,12 @@
     {
       "date": "2026-11-12",
       "action": "保單轉換：安聯A 收益成長 1,000,000 → 摩根 USDEQ5440（單批，月初配息第一站）",
-      "status": "已確認",
-      "tags": "保單轉換,安聯,方案A,配息接力,T+4,使用者裁決20261112,P1"
+      "status": "待處理",
+      "tags": "保單轉換,安聯,方案A,配息接力,T+4,使用者裁決20261112,P1,送件未證實,11/26對帳"
     }
   ],
   "meta": {
-    "updated_at": "2026-11-23T15:05:27+08:00"
+    "updated_at": "2026-11-23T21:38:21+08:00"
   },
-  "last_updated": "2026-11-23T15:05:27+08:00"
+  "last_updated": "2026-11-23T21:38:21+08:00"
 }

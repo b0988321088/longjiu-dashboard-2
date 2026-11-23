@@ -855,5 +855,29 @@
   "category": "完成",
   "item": "資產穿透2026-11-20（已產出（五桶市值見 snapshot.penetration.actual_twd））",
   "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-11-23",
+  "category": "完成",
+  "item": "日報2026-11-23（已產出（金額見 snapshot／當日日報檔，勿在此複寫數字））",
+  "detail": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）"
+ },
+ {
+  "date": "2026-11-23",
+  "category": "完成",
+  "item": "資產穿透2026-11-23（已產出（五桶市值見 snapshot.penetration.actual_twd））",
+  "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
+ },
+ {
+  "date": "2026-11-23",
+  "category": "完成",
+  "item": "治理修復：決策入庫對帳分車道＋保單轉換卡改送件未證實（含行事曆 11/27 地價稅單）（使用者 2026-11-23 Telegram 核准並指示推送。①reconcile_decision_intake.py 拆人工/自動車道：人工進檔無收據 rc=1、僅 auto 時 rc=2（原本 rc=0 靜默）；②memory_helper.add_memory ",
+  "detail": "使用者 2026-11-23 Telegram 核准並指示推送。①reconcile_decision_intake.py 拆人工/自動車道：人工進檔無收據 rc=1、僅 auto 時 rc=2（原本 rc=0 靜默）；②memory_he"
+ },
+ {
+  "date": "2026-11-23",
+  "category": "完成",
+  "item": "核准：把「入庫對帳分兩車道」寫進 decision-governance 技能（使用者 2026-11-23 Telegram ✅ 核准。已寫入 financial/decision-governance SKILL.md 新章節（人工繞道 rc=1／僅 auto rc=2／車道一致性／驗法 E1–E12），並更正該檔內已過期的『現行無 --no-push ",
+  "detail": "使用者 2026-11-23 Telegram ✅ 核准。已寫入 financial/decision-governance SKILL.md 新章節（人工繞道 rc=1／僅 auto rc=2／車道一致性／驗法 E1–E12），並更正該檔"
  }
 ]

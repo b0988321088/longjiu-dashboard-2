@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-23T15:06:00.334034",
+ "generated_at": "2026-11-23T21:38:50.275748",
  "version": "v5.0.10-true-value-correction",
  "date": "2026-11-23",
  "total_assets": 25235973.0,
@@ -10263,32 +10263,32 @@
   }
  },
  "insurance_estimate": {
-  "as_of": "2026-11-22",
-  "nav_basis_date": "2026-11-20",
-  "estimated_incl_truth_twd": 9103839,
+  "as_of": "2026-11-23",
+  "nav_basis_date": "2026-11-23",
+  "estimated_incl_truth_twd": 9121635,
   "truth_twd": 9121635.0,
-  "diff_twd": -17796.0,
-  "diff_pct": -0.2,
-  "coverage_pct": 35.1,
-  "uncovered_truth_twd": 5922675,
+  "diff_twd": 0.0,
+  "diff_pct": 0.0,
+  "coverage_pct": 0.0,
+  "uncovered_truth_twd": 9121635,
   "accounts": {
    "allianz_a": {
-    "estimated_twd": 681770.0,
+    "estimated_twd": 0.0,
     "truth_twd": 4874833.0,
-    "diff_pct": -86.01,
-    "coverage_pct": 14.1
+    "diff_pct": -100.0,
+    "coverage_pct": 0.0
    },
    "allianz_b": {
-    "estimated_twd": 629823.0,
+    "estimated_twd": 0.0,
     "truth_twd": 2365548.0,
-    "diff_pct": -73.38,
-    "coverage_pct": 26.7
+    "diff_pct": -100.0,
+    "coverage_pct": 0.0
    },
    "firstjin": {
-    "estimated_twd": 1869571.0,
+    "estimated_twd": 0.0,
     "truth_twd": 1881254.0,
-    "diff_pct": -0.62,
-    "coverage_pct": 100.0
+    "diff_pct": -100.0,
+    "coverage_pct": 0.0
    }
   },
   "note": "每日以公開 NAV 推算保單價值；未取得 NAV 的檔以真值代入。主數字 insurance 仍為截圖真值，此欄僅供透明度與誤差追蹤。"
