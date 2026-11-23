@@ -12643,6 +12643,24 @@
       "summary": "使用者核准 waive 33% 硬目標（凍結期內減碼後無處可去）；替代規則＝科技 ≤15% 不新增（現 14.4%，剩 0.6pp）。台帳 OI-01 → WAIVED，科技 ≥15% 自動重啟為 OI-05。",
       "status": "completed",
       "source": "user_telegram_approve"
+    },
+    {
+      "id": "mem-20261123133949-1367",
+      "timestamp": "2026-11-23T13:39:49.726449",
+      "agent": "Hermes",
+      "task": "日報2026-11-23",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261123133949-1368",
+      "timestamp": "2026-11-23T13:39:49.787072",
+      "agent": "Hermes",
+      "task": "資產穿透2026-11-23",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
     }
   ],
   "pending_decisions": [
@@ -12660,7 +12678,7 @@
     }
   ],
   "meta": {
-    "updated_at": "2026-11-23T07:00:40+08:00"
+    "updated_at": "2026-11-23T13:39:49.789074"
   },
-  "last_updated": "2026-11-23T07:00:40+08:00"
+  "last_updated": "2026-11-23T13:06:26+08:00"
 }

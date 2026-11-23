@@ -1985,3 +1985,16 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 首次發生: 2026-11-19 19:10:45
 - 錯誤: 同義欄位不一致（asset_sync.py 抓到）
 - 狀態: ⏳ 待處理 (總計 1 次)
+
+## INCIDENT 42ac025c (four_source_sync)
+- 首次發生: 2026-11-23 13:37:47
+- 錯誤: 日報產出失敗: [RUN_DAILY] 日期：2026-11-23
+[RECONCILE] 🔧 月度衍生欄位已重算：passive_income.dividend_actual_sum 121,737 → 158,296
+[CALIBRATE] 三源校準失敗：{'allianz_value': False, 'firstjin_value': False}
+；穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)
+
+## INCIDENT d3cc5431 (four_source_sync)
+- 首次發生: 2026-11-23 13:39:50
+- 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)

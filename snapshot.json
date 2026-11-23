@@ -1,18 +1,18 @@
 {
- "generated_at": "2026-11-23T07:01:27.715891",
+ "generated_at": "2026-11-23T14:00:31.217808",
  "version": "v5.0.10-true-value-correction",
  "date": "2026-11-23",
- "total_assets": 25692433.0,
- "total_liabilities": 30957276,
- "net_worth": -5264843,
- "debt_ratio": 51.8,
+ "total_assets": 25235973.0,
+ "total_liabilities": 30940005,
+ "net_worth": -5704032,
+ "debt_ratio": 52.2,
  "monthly_income": 234207,
  "monthly_expense": 159210,
  "working_surplus": 74997,
  "retirement_surplus": 20890,
- "securities_total_market_value": 2296470,
- "fund_market_value": 12181485,
- "moneybook_total": 2125855,
+ "securities_total_market_value": 2365710,
+ "fund_market_value": 11908332,
+ "moneybook_total": 2105448.0,
  "high_yield_savings_total": 2200410,
  "_high_yield_savings_status": "DEPRECATED 2026-11-06｜2026-07-16 歷史值（將來1.1M＋台子1.0M＋第一金0.1M），未計入 total_assets，不得當現行現金或安全網。重新納入前須以現行帳戶明細核對是否已含於 moneybook_total 2,076,929，避免重複計算。同值欄位 high_yield_savings 一併停用。",
  "denominators": {
@@ -139,20 +139,20 @@
  "cc_low": 35000,
  "cc_mid": 38000,
  "cc_high": 42000,
- "firstjin_fl65_current_value": 1881254.0,
- "allianz_ab_current_value": 7207369,
- "firstjin_current_value": 1881254.0,
- "last_mb_sync": "2026-11-13 Moneybook ZIP（10/14–11/13）",
+ "firstjin_fl65_current_value": 1866663,
+ "allianz_ab_current_value": 6989820,
+ "firstjin_current_value": 1866663,
+ "last_mb_sync": "2026-11-23 Moneybook ZIP（10/24–11/23）",
  "last_mb_sync_note": "2026-11-13 匯入（10/14–11/13）：現金 2,084,973→2,091,679（文心綜活儲 +4,720、敦南Richart一般 -1,000、民權活儲-證券 -57,455 劃撥買股）；停用帳戶（國泰活期 20,776）依 10/21 口徑不計。證券同日 15:40 凱基收盤 2,733,570（15 檔逐檔加總＝App 總市值）。",
- "bank_assets_moneybook": 2125855,
+ "bank_assets_moneybook": 2105448.0,
  "bank_assets_memo": "Moneybook 9/8 匯出（8/9-9/8）；國泰 20,776 誤列排除（9/2 判定一致）；9/4 薪資 42,560、9/8 第一金配息 13,005 入帳",
  "monthly_expense_mb": 199186,
  "monthly_expense_mb_note": "MB 近30天明細真實支出；不含帳戶互轉/貸款/投資/信用卡清償",
- "credit_card_pending": 51932,
+ "credit_card_pending": 34661.0,
  "mb_source": "Moneybook_明細_20260718.zip",
  "monthly_expense_snapshot_original": 141958,
- "securities_total": 2296470,
- "funds_total": 12181485,
+ "securities_total": 2365710,
+ "funds_total": 11908332,
  "last_calibration_sources": {
   "securities": "凱基證券截圖 2026-07-18 02:00",
   "funds": "鉅亨基金截圖 2026-07-18 02:03",
@@ -161,41 +161,41 @@
  },
  "funds_breakdown": {
   "一般申購": {
-   "A05144 元大台灣卓越50ETF(0050)連結基金-台幣B配息": 42487,
-   "A17030 台中銀台灣優息基金-B配息台幣": 39972,
-   "A36004 安聯台灣科技基金": 2385,
-   "A36135 安聯AI收益成長多重資產基金-B(月配)美元": 5957,
-   "A37170 國泰台灣高股息基金B": 6180,
-   "A47219 台新美日台半導體基金A-日圓": 100525,
-   "A49015 路博邁台灣5G股票基金T月配級別(台幣)": 65893,
-   "B03629 聯博-全球多元收益基金AD月配美元": 2895,
-   "B03870 聯博-美國成長基金AP總報酬月配美元": 2873,
-   "B08291 摩根基金-JPM多重收益美元對沖A穩定月配": 2925,
-   "B09006 貝萊德世界黃金A2美元": 2991,
-   "B09261 貝萊德全球股票收益A6美元穩定配息": 3047,
-   "B09460 貝萊德世界科技A10美元總報酬穩定配息": 3501,
-   "B09461 貝萊德世界能源A10美元總報酬穩定配息": 5526,
-   "B09462 貝萊德世界健康科學A10美元總報酬穩定配息": 5240,
-   "B09463 貝萊德世界黃金A10美元總報酬穩定配息": 2397,
-   "B09557 貝萊德全球智慧數據股票入息A11美元強化穩定配息": 2992,
-   "B14445 富達全球動能多元基金A股C月配美元": 2809,
-   "B20186 安聯收益成長AMg7月收總收益美元": 3298,
-   "B31138 M&G入息基金A(美元避險月配)F": 2979
+   "元大台灣卓越50ETF(0050)連結基金-台幣B配息": 38396,
+   "台中銀台灣優息基金-B配息台幣": 36452,
+   "安聯台灣科技基金": 2040,
+   "安聯AI收益成長多重資產基金-B(月配)美元": 5870,
+   "國泰台灣高股息基金B": 5430,
+   "路博邁台灣5G股票基金T月配級別(台幣)": 56008,
+   "聯博-全球多元收益基金AD月配美元": 2829,
+   "聯博-美國成長基金AP總報酬月配美元": 2676,
+   "摩根基金-JPM多重收益美元對沖A穩定月配": 2888,
+   "貝萊德世界黃金A2美元": 2657,
+   "貝萊德全球股票收益A6美元穩定配息": 2948,
+   "貝萊德世界科技A10美元總報酬穩定配息": 3409,
+   "貝萊德世界能源A10美元總報酬穩定配息": 5270,
+   "貝萊德世界健康科學A10美元總報酬穩定配息": 5084,
+   "貝萊德世界黃金A10美元總報酬穩定配息": 2130,
+   "貝萊德全球智慧數據股票入息A11美元強化穩定配息": 2918,
+   "富達全球動能多元基金A股C月配美元": 2734,
+   "安聯收益成長AMg7月收總收益美元": 3246,
+   "M&G入息基金A(美元避險月配)F": 2937,
+   "台新美日台半導體基金A-日圓": 97252
   },
   "自由Pay": {
-   "A05143 元大台灣卓越50ETF(0050)連結基金-台幣A不配息": 98424,
-   "A09012 統一泰順基金": 69311,
-   "A49038 路博邁台灣5G股票基金T累積級別(台幣)": 183123
+   "元大台灣卓越50ETF(0050)連結基金-台幣A不配息": 88955,
+   "統一奔騰基金": 59934,
+   "路博邁台灣5G股票基金T累積級別(台幣)": 155642
   },
   "國泰直購": {
-   "富達全球動能多元B股C月配息美元": 5568328,
-   "貝萊德智慧數據收益成長B11-美元-強化穩定月配息": 4993069,
-   "聯博全球多元收益AD美元月配": 962358
+   "富達全球動能多元B股C月配息美元": 5440807,
+   "貝萊德智慧數據收益成長B11-美元-強化穩定月配息": 4934511,
+   "聯博全球多元收益AD美元月配": 945309
   },
-  "一般申購_平台小計": 306872,
-  "note": "2026-11-18 精確來源：鉅亨『帳戶總覽_一般申購』CSV（20 檔，淨值日 2026/11/17）＋自由PAY 專頁截圖（3 檔，淨值日 2026/11/17）。台幣市值 657,730（成本 570,603、損益 +87,127 +15.27%、已配息 21,988 +19.12%）。美元檔以匯率 32.8875 換算；日圓檔 A47219 原幣 489,655 日圓，台幣約當 100,525（由總覽 657,730 扣除其餘逐檔求得，隱含匯率 0.2053）。",
-  "note_date": "2026-11-18",
-  "平台小計": 657730,
+  "一般申購_平台小計": 283174,
+  "note": "2026-11-23 真值日（淨值日 2026/11/20）：鉅亨 一般申購 283,174（20 檔 CSV；日圓檔 A47219 差額法台幣約當 97,252，隱含匯率 0.2055，與 11/18 之 0.2053 同基準）＋自由PAY 304,531（3 檔明細）＝587,705（＝帳戶總覽表頭，三份檔案互驗通過：已配息 16,947＋5,096＝22,043＝表頭）；國泰直購 11,320,627（報價日 11/20、FX 32.88）；基金合計 11,908,332。vs 11/17 基準 657,730／11,523,755：鉅亨 −70,025、國泰 −203,128，全部為淨值下跌（成本 570,603／12,000,000 未變，期間無申贖）。",
+  "note_date": "2026-11-23",
+  "平台小計": 587705,
   "自由Pay_小計": 350858,
   "鉅亨平台合計": 657730,
   "國泰直購_小計": 11569590
@@ -210,7 +210,7 @@
   "解凍狀態": "✅ 條件觸及（2026-09-20 US30Y 5.296 < 5.30 凍結線；rebalance_snapshot frozen=false）→ 2026-09-20 使用者核准：納入 9/21 再平衡評估",
   "評估限制": "警戒區（5.20-5.30）台股 ≤50萬/週、單筆 ≤5萬、8-12 週分批；標的 006208／0051；不追 0050（科技 15.4% 已頂）"
  },
- "real_liquid_assets": 2125855,
+ "real_liquid_assets": 2105448.0,
  "total_assets_note": "snapshot原值 50,689,930（含不動產）；流動資產真值 6,890,791（不含房屋）",
  "passive_income": {
   "fund_dividend_monthly": 170586,
@@ -221,7 +221,7 @@
   "coverage_pct": 113.1,
   "note": "2026-09-18 依 9/5 定版校正：保守配息 100,000（原誤值 130,930＝安聯+第一金常態總額，非保守基本值）＋租金 80,100 = 180,100；覆蓋 113.1%（÷月支出 159,210）。當月實收配息 147,975（9/23 真值，與頂層 dividend_month_actual／monthly_dividend_total 同口徑；本鍵與 dividend_actual_sum 於 2026-09-23 由 9/18 舊值同步）。 2026-09-23 使用者指示：以 2026-09 完整估計為被動收入基準月，觀察 3 個月（~2026-11），2026-12 初檢視後再修正保守底線；期間判準層不動。｜9/30 更新：安聯保單撥回依保單 App 截圖 9 筆 71,869（前 52,169）→ 9月配息實收 167,675。｜2026-10-01 配息歸屬修正（基準日制）：10 月實收 0（10/1 入帳之 IDXX M&G 15,916 為 9 月配息、歸 9 月；安聯撥回 19,700 已含於 9 月 71,869，不重複計）→ 9 月實收 183,591。｜2026-10-01 A 制校正：9 月實收 170,586（原 183,591；13,005 移 8 月）→ 常態月配基準同步。",
   "girlfriend_repayment": 6000,
-  "dividend_actual_sum": 121737.0,
+  "dividend_actual_sum": 158296.0,
   "rent_monthly_actual": 54000,
   "rent_monthly_actual_note": "2026-11-19 更新：當月實收＝rent_received_records 加總＝54,000（店面 24,000＋洲際W 30,000，後者為 33,000 扣洗衣機修理折讓 3,000）；常態應收仍為 80,100。",
   "dividend_actual_note": "2026-10-01 月初校正：當月實收配息＝10月 dividend_records 加總＝0（月初尚未收到）；9月值 147,975 已隨月份結算。⚠️ 設計陷阱：passive_caliber 的 div_act 用 `or` 串接，本月為 0 時會退回舊欄位 → 已手動歸零，結構性修法待核准。",
@@ -233,8 +233,8 @@
   "coverage_pct_normal": 161.5,
   "normal_note": "2026-10-15 使用者裁決新增常態層：基金常態 80,000＋保單常態 97,072（暫定規劃值）＝配息常態 177,072；＋租金常態 80,100＝常態被動 257,172（覆蓋 161.5%）。保單常態取最近完整月實收（2026-09：安聯 71,869＋第一金 FJ33 9,287＋IDXX M&G 15,916），採基準日歸屬制、含月配撥回多批次未逐筆拆解性質 → 標示為暫定、非已驗證穩定配息。保守配息 100,000 維持不變；三層（實收／保守／常態）各自獨立、互不覆寫。"
  },
- "allianz_policy_a_value": 4851426,
- "allianz_policy_b_value": 2355943,
+ "allianz_policy_a_value": 4780219,
+ "allianz_policy_b_value": 2209601,
  "anue_account": {
   "total_mv": 880943,
   "total_cost": 567603,
@@ -244,9 +244,9 @@
   "note": "帳戶總覽截圖：市值 880,943／成本 567,603／損益 +313,340 (+55.2%)／已配息 19,317／含息報酬 +58.61%"
  },
  "securities": {
-  "total_market_value": 2296470,
-  "unrealized_pnl": -173200,
-  "unrealized_pnl_pct": -7.01,
+  "total_market_value": 2365710,
+  "unrealized_pnl": -129160,
+  "unrealized_pnl_pct": -5.18,
   "realized_pnl": 23460,
   "realized_pnl_pct": 27.34,
   "holdings": [
@@ -254,48 +254,48 @@
     "ticker": "0050",
     "name": "元大台灣50",
     "shares": 2000,
-    "price": 84.45,
-    "value": 168900,
-    "market_value": 168900,
+    "price": 87.0,
+    "value": 174000,
+    "market_value": 174000,
     "currency": "TWD",
     "cost": 169800,
     "cost_avg": 84.9,
-    "pnl": -900,
-    "pnl_pct": -0.53,
-    "price_date": "2026-11-20",
-    "price_source": "TWSE",
+    "pnl": 4200,
+    "pnl_pct": 2.47,
+    "price_date": "2026-11-23",
+    "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
     "price_type": "收盤"
    },
    {
     "ticker": "006208",
     "name": "富邦台50",
     "shares": 2000,
-    "price": 189.8,
-    "value": 379600,
-    "market_value": 379600,
+    "price": 195.55,
+    "value": 391100,
+    "market_value": 391100,
     "currency": "TWD",
     "cost": 393800,
     "cost_avg": 196.9,
-    "pnl": -14200,
-    "pnl_pct": -3.61,
-    "price_date": "2026-11-20",
-    "price_source": "TWSE",
+    "pnl": -2700,
+    "pnl_pct": -0.69,
+    "price_date": "2026-11-23",
+    "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
     "price_type": "收盤"
    },
    {
     "ticker": "009816",
     "name": "凱基台灣TOP50",
-    "shares": 16000,
-    "price": 12.6,
-    "value": 201600,
-    "market_value": 201600,
+    "shares": 18000,
+    "price": 12.88,
+    "value": 231840,
+    "market_value": 231840,
     "currency": "TWD",
-    "cost": 199840,
-    "cost_avg": 12.49,
-    "pnl": 1760,
-    "pnl_pct": 0.88,
-    "price_date": "2026-11-20",
-    "price_source": "TWSE",
+    "cost": 225040,
+    "cost_avg": 12.5,
+    "pnl": 6800,
+    "pnl_pct": 3.02,
+    "price_date": "2026-11-23",
+    "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
     "realized_pnl": 16800,
     "price_type": "收盤"
    },
@@ -303,16 +303,16 @@
     "ticker": "00646",
     "name": "元大S&P500",
     "shares": 1000,
-    "price": 74.05,
-    "value": 74050,
-    "market_value": 74050,
+    "price": 73.45,
+    "value": 73450,
+    "market_value": 73450,
     "currency": "TWD",
     "cost": 71600,
     "cost_avg": 71.6,
-    "pnl": 2450,
-    "pnl_pct": 3.42,
-    "price_date": "2026-11-20",
-    "price_source": "TWSE",
+    "pnl": 1850,
+    "pnl_pct": 2.58,
+    "price_date": "2026-11-23",
+    "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
     "price_type": "收盤"
    },
    {
@@ -327,24 +327,24 @@
     "cost_avg": 54.8,
     "pnl": 6400,
     "pnl_pct": 5.84,
-    "price_date": "2026-11-20",
-    "price_source": "TWSE",
+    "price_date": "2026-11-23",
+    "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
     "price_type": "收盤"
    },
    {
     "ticker": "00878",
     "name": "國泰永續高股息",
     "shares": 15000,
-    "price": 28.03,
-    "value": 420450,
-    "market_value": 420450,
+    "price": 28.05,
+    "value": 420750,
+    "market_value": 420750,
     "currency": "TWD",
     "cost": 407550,
     "cost_avg": 27.17,
-    "pnl": 12900,
-    "pnl_pct": 3.17,
-    "price_date": "2026-11-20",
-    "price_source": "TWSE",
+    "pnl": 13200,
+    "pnl_pct": 3.24,
+    "price_date": "2026-11-23",
+    "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
     "realized_pnl": 6660,
     "price_type": "收盤"
    },
@@ -352,157 +352,157 @@
     "ticker": "0056",
     "name": "元大高股息",
     "shares": 1000,
-    "price": 44.31,
-    "value": 44310,
-    "market_value": 44310,
+    "price": 45.4,
+    "value": 45400,
+    "market_value": 45400,
     "currency": "TWD",
     "cost": 37150,
     "cost_avg": 37.15,
-    "pnl": 7160,
-    "pnl_pct": 19.27,
-    "price_date": "2026-11-20",
-    "price_source": "TWSE",
+    "pnl": 8250,
+    "pnl_pct": 22.21,
+    "price_date": "2026-11-23",
+    "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
     "price_type": "收盤"
    },
    {
     "ticker": "00981A",
     "name": "主動統一台股增長",
     "shares": 8000,
-    "price": 18.58,
-    "value": 148640,
-    "market_value": 148640,
+    "price": 20.04,
+    "value": 160320,
+    "market_value": 160320,
     "currency": "TWD",
     "cost": 210560,
     "cost_avg": 26.32,
-    "pnl": -61920,
-    "pnl_pct": -29.41,
-    "price_date": "2026-11-20",
-    "price_source": "TWSE",
+    "pnl": -50240,
+    "pnl_pct": -23.86,
+    "price_date": "2026-11-23",
+    "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
     "price_type": "收盤"
    },
    {
     "ticker": "00984A",
     "name": "主動安聯台灣高息",
     "shares": 10000,
-    "price": 10.71,
-    "value": 107100,
-    "market_value": 107100,
+    "price": 11.11,
+    "value": 111100,
+    "market_value": 111100,
     "currency": "TWD",
     "cost": 145600,
     "cost_avg": 14.56,
-    "pnl": -38500,
-    "pnl_pct": -26.44,
-    "price_date": "2026-11-20",
-    "price_source": "TWSE",
+    "pnl": -34500,
+    "pnl_pct": -23.7,
+    "price_date": "2026-11-23",
+    "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
     "price_type": "收盤"
    },
    {
     "ticker": "00919",
     "name": "群益台灣精選高息",
     "shares": 7000,
-    "price": 27.49,
-    "value": 192430,
-    "market_value": 192430,
+    "price": 27.12,
+    "value": 189840,
+    "market_value": 189840,
     "currency": "TWD",
     "cost": 208600,
     "cost_avg": 29.8,
-    "pnl": -16170,
-    "pnl_pct": -7.75,
-    "price_date": "2026-11-20",
+    "pnl": -18760,
+    "pnl_pct": -8.99,
+    "price_date": "2026-11-23",
     "last_trade": "2026-11-10 13:01:30 凱基成交回報（9202-7413512）｜買 1000 股 @ 31.31",
-    "price_source": "TWSE",
+    "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
     "price_type": "收盤"
    },
    {
     "ticker": "00918",
     "name": "大華優利高填息30",
     "shares": 1000,
-    "price": 28.81,
-    "value": 28810,
-    "market_value": 28810,
+    "price": 28.87,
+    "value": 28870,
+    "market_value": 28870,
     "currency": "TWD",
     "cost": 28550,
     "cost_avg": 28.55,
-    "pnl": 260,
-    "pnl_pct": 0.91,
-    "price_date": "2026-11-20",
-    "price_source": "TWSE",
+    "pnl": 320,
+    "pnl_pct": 1.12,
+    "price_date": "2026-11-23",
+    "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
     "price_type": "收盤"
    },
    {
     "ticker": "00888",
     "name": "永豐台灣ESG",
     "shares": 6000,
-    "price": 24.31,
-    "value": 145860,
-    "market_value": 145860,
+    "price": 25.14,
+    "value": 150840,
+    "market_value": 150840,
     "currency": "TWD",
     "cost": 187920,
     "cost_avg": 31.32,
-    "pnl": -42060,
-    "pnl_pct": -22.38,
-    "price_date": "2026-11-20",
+    "pnl": -37080,
+    "pnl_pct": -19.73,
+    "price_date": "2026-11-23",
     "last_trade": "2026-11-10 13:01:30 凱基成交回報（9202-7413512）｜買 1000 股 @ 29.26",
-    "price_source": "Yahoo(2026-11-17)",
+    "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
     "price_type": "收盤"
    },
    {
     "ticker": "00983D",
     "name": "主動富邦複合收益",
     "shares": 20000,
-    "price": 9.81,
-    "value": 196200,
-    "market_value": 196200,
+    "price": 9.84,
+    "value": 196800,
+    "market_value": 196800,
     "currency": "TWD",
     "cost": 202200,
     "cost_avg": 10.11,
-    "pnl": -6000,
-    "pnl_pct": -2.97,
-    "price_date": "2026-11-20",
-    "price_source": "TWSE",
+    "pnl": -5400,
+    "pnl_pct": -2.67,
+    "price_date": "2026-11-23",
+    "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
     "price_type": "收盤"
    },
    {
     "ticker": "00927",
     "name": "群益半導體收益",
     "shares": 2000,
-    "price": 25.61,
-    "value": 51220,
-    "market_value": 51220,
+    "price": 27.15,
+    "value": 54300,
+    "market_value": 54300,
     "currency": "TWD",
     "cost": 75800,
     "cost_avg": 37.9,
-    "pnl": -24580,
-    "pnl_pct": -32.43,
-    "price_date": "2026-11-20",
-    "price_source": "TWSE",
+    "pnl": -21500,
+    "pnl_pct": -28.36,
+    "price_date": "2026-11-23",
+    "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
     "price_type": "收盤"
    },
    {
     "ticker": "2610",
     "name": "華航",
     "shares": 1000,
-    "price": 21.3,
-    "value": 21300,
-    "market_value": 21300,
+    "price": 21.1,
+    "value": 21100,
+    "market_value": 21100,
     "currency": "TWD",
     "cost": 21100,
     "cost_avg": 21.1,
-    "pnl": 200,
-    "pnl_pct": 0.95,
-    "price_date": "2026-11-20",
-    "price_source": "TWSE",
+    "pnl": 0,
+    "pnl_pct": 0.0,
+    "price_date": "2026-11-23",
+    "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
     "price_type": "收盤"
    }
   ],
-  "as_of": "2026-11-20",
-  "price_date": "2026-11-20",
-  "price_type": "TWSE／Yahoo 官方收盤（與 source 同批抓取）",
+  "as_of": "2026-11-23",
+  "price_date": "2026-11-23",
+  "price_type": "TWSE 官方收盤",
   "provisional": false,
-  "source": "TWSE／Yahoo 官方收盤抓取 2026-11-17（15 檔成功、0 檔失敗）",
-  "note": "2026-11-20 收盤（凱基 App 21:01 截圖逐檔校對；15 檔價格/股數全數一致）",
-  "today_pnl": -141930,
-  "today_pnl_pct": -5.82,
+  "source": "凱基 App 持倉明細 2026-11-23 收盤（15 檔逐檔截圖，15:06 更新）",
+  "note": "2026-11-23 收盤：App 表頭 2,365,710／未實現 −129,000（−5.17%）／已實現 +23,460（+27.34%）；逐檔市值加總 2,365,710 與表頭完全一致，未實現逐檔合計 -129,160（與 App 差 120＝均價 2dp×股數 精度）。今日買進 009816 2,000 股 @12.60（16,000→18,000 股，成本 +25,200，均價 12.49→12.50）；成本口徑改以 App 持股成本均價×股數逐檔對齊（原逐檔 cost 有 160 結構差已歸零）。",
+  "today_pnl": 69240,
+  "today_pnl_pct": 3.02,
   "pnl_note": "逐檔成本法合計 263,900；App 顯示 264,060（差 160＝手續費/成本口徑），以 App 為真值",
   "holdings_note": "本區塊為別名鏡像，真值＝頂層 holdings；更新收盤價時兩處須同步，或以頂層為唯一寫入者。",
   "today_pnl_note": "today_pnl/today_pnl_pct 為 2026-11-16 遺留值（-126,060／-4.61，當日 11/15→11/16 帳面變動），11/17 起不再維護、無消費端；當日變動請看 asset_diff_history（11/17 帳面 -72,140）。"
@@ -723,47 +723,47 @@
    "科技曝險目標": 15
   },
   "actual_pct": {
-   "台股市值型成長": 11.7,
+   "台股市值型成長": 11.6,
    "美股市值型成長": 36.7,
    "防守型配息": 17.2,
-   "債券": 25.6,
+   "債券": 25.7,
    "現金/安全網": 4.8,
    "美股市值型成長_科技": 14.4,
    "美股市值型成長_非科技": 22.3
   },
   "gaps": {
-   "台股市值型成長": 1.7,
+   "台股市值型成長": 1.6,
    "美股市值型成長": 6.7,
    "防守型配息": -12.8,
-   "債券及安全現金": 0.4,
+   "債券及安全現金": 0.5,
    "科技曝險": -0.6
   },
   "actual_twd": {
-   "台股市值型成長": 3012080,
-   "美股市值型成長": 9428213,
-   "防守型配息": 4426810,
-   "債券": 6573157,
-   "現金/安全網": 1225855,
-   "美股市值型成長_科技": 3707934,
-   "美股市值型成長_非科技": 5720279
+   "台股市值型成長": 2929333,
+   "美股市值型成長": 9253991,
+   "防守型配息": 4347902,
+   "債券": 6479624,
+   "現金/安全網": 1205448,
+   "美股市值型成長_科技": 3636595,
+   "美股市值型成長_非科技": 5617396
   },
   "satellite_twd": {
-   "黃金": 126318.0,
+   "黃金": 119675.0,
    "健康": 0.0
   },
   "restricted_cash": 900000,
   "cash_in_transit": 0,
   "pending_receivables": 0,
-  "pct_denominator": 25692433,
+  "pct_denominator": 25235973,
   "pct_denominator_basis": "total_assets",
   "components_twd": {
    "台股市值型成長": {
-    "證券": 1078360,
-    "平台基金": 1062057,
-    "保單穿透": 871663
+    "證券": 1143760,
+    "平台基金": 1003334,
+    "保單穿透": 782239
    }
   },
-  "alert": "台股市值型成長 超標1.7pp；美股市值型成長 超標6.7pp；防守合併口徑 66.5%（≥60 承接凍結 ✅；單桶 17.2% 僅結構參考）"
+  "alert": "台股市值型成長 超標1.6pp；美股市值型成長 超標6.7pp；防守合併口徑 65.6%（≥60 承接凍結 ✅；單桶 17.2% 僅結構參考）"
  },
  "penetration_canonical": {
   "_status": "DEPRECATED 2026-11-06｜updated_at 2026-07-18，無寫入者且現行 .py/.html 讀取者為 0（孤兒資料）。數字已失效：台股 7.2%（現 10.1）／美股 46.1%（現 37.4）／現金/安全網含 2026-07-16 舊高利活存 2,200,410（現行現金 2,076,929）。現行值一律讀 penetration.actual_pct／actual_twd（2026-11-06 派生）。保留原始內容僅供歷史追溯，禁止引用於任何分析、報表或配置判斷。",
@@ -867,26 +867,26 @@
  "runway_months": 27.1,
  "_runway_months_status": "DEPRECATED 2026-11-06｜來源不明（無寫入者，三種口徑均無法還原），不得作跑道使用。純現金跑道一律讀 cash_runway_months = 7.4（可動用現金 1,176,929 ÷ 月支出 159,210）；收入支撐情境讀 passive_caliber.scenarios()。asset_diff_monitor 已於 2026-11-06 改讀 cash_runway_months。",
  "securities_breakdown": {
-  "0050": 168900.0,
-  "006208": 379600.0,
-  "009816": 201600.0,
-  "00646": 74050.0,
-  "00713": 116000.0,
-  "00878": 420450.0,
-  "0056": 44310.0,
-  "00981A": 148640.0,
-  "00984A": 107100.0,
-  "00919": 192430.0,
-  "00918": 28810.0,
-  "00888": 145860.0,
-  "00983D": 196200.0,
-  "00927": 51220.0,
-  "2610": 21300.0
+  "0050": 174000,
+  "006208": 391100,
+  "009816": 231840,
+  "00646": 73450,
+  "00713": 116000,
+  "00878": 420750,
+  "0056": 45400,
+  "00981A": 160320,
+  "00984A": 111100,
+  "00919": 189840,
+  "00918": 28870,
+  "00888": 150840,
+  "00983D": 196800,
+  "00927": 54300,
+  "2610": 21100
  },
  "securities_tw_growth": 2756160,
  "securities_tw_defense": 0,
  "securities_us_growth": 0,
- "cash": 2125855,
+ "cash": 2105448.0,
  "high_yield_savings": 2200410,
  "_high_yield_savings_deprecated": "DEPRECATED 2026-11-06｜同 high_yield_savings_total（2026-07-16 歷史值）。現金真值一律讀 moneybook_total／cash_layers.cash_total = 2,076,929；本欄與 regular_cash 1,684,210 僅供歷史追溯，不得用於現金、安全網或金融資產加總。",
  "regular_cash": 1684210,
@@ -920,28 +920,28 @@
  "mortgage_count": 3,
  "note_rent_status": "房租應收固定 80,100/月 = 1樓24,000 + 二三樓21,000 + 洲際W33,000 + 管理費2,100",
  "insurance_breakdown": {
-  "policy_a_total": 4851426,
-  "policy_b_total": 2355943,
-  "allianz_ab_total": 7207369,
+  "policy_a_total": 4780219,
+  "policy_b_total": 2209601,
+  "allianz_ab_total": 6989820,
   "policy_a_funds": {
-   "USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 2609545,
-   "USDEQ5440 摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(穩定月配)": 685946,
-   "USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)": 1579342
+   "USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 2567947,
+   "USDEQ5440 摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(穩定月配)": 682952,
+   "USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)": 1529320
   },
   "policy_b_funds": {
-   "NTDEQ2640 元大台灣高股息優質龍頭基金-新台幣(B)配息": 244462,
-   "NTDET0010 元大台灣卓越50": 871663,
-   "USDEQ3490 安聯收益成長基金-AM月收類股(美元)": 476448,
-   "USDEQ5700 M&G入息基金A(美元避險月配)F": 630237,
-   "USDEQ6730 貝萊德世界黃金基金A10美元(總報酬穩定配息)": 133133
+   "NTDEQ2640 元大台灣高股息優質龍頭基金-新台幣(B)配息": 206933,
+   "NTDET0010 元大台灣卓越50": 782239,
+   "USDEQ3490 安聯收益成長基金-AM月收類股(美元)": 471329,
+   "USDEQ5700 M&G入息基金A(美元避險月配)F": 622820,
+   "USDEQ6730 貝萊德世界黃金基金A10美元(總報酬穩定配息)": 126280
   },
-  "firstjin_total": 1881254,
-  "note": "2026-11-18 13:31 永旭 App（資料查詢時間 115/11/18 13:31:57）：帳戶總價值 7,240,381（A 4,874,833 -2.74%／B 2,365,548 -11.87%），逐檔 3+5 檔皆與表頭一致；本月累積配息/撥回 3 筆共 11,657；風險屬性積極型（效期 116/01/21）。第一金無新截圖 → 保留 1,891,558。",
+  "firstjin_total": 1866663,
+  "note": "2026-11-23 11:50 安聯 App＋第一金 11/20：A 4,780,219／B 2,209,601（逐檔 3+5 檔皆與表頭一致）／第一金 1,866,663（100% ID05 M&G入息A 美元避險月配，NAV 9.8507）＝ 8,856,483。",
   "allianz_note_20261111": "2026-11-11 09:56 安聯 App：帳戶總價值 7,388,234（A 4,953,272 -1.17%／B 2,434,962 -9.28%）；本月累積配息撥回 11,076（2 筆）；風險屬性積極型（效期 2027/01/21）。B 逐檔 5 檔合計＝2,434,962 ✓；A 逐檔本次未提供截圖 → 保留 11/10 評價值 4,950,505，僅 A 總值更新（差 2,767 為評價日差，下次 A 明細截圖時一併校正）。",
   "allianz_note_20261112": "2026-11-12 08:42-08:43 安聯 App：帳戶總價值 7,435,397（A 4,962,614 -0.98%／B 2,472,783 -7.87%）；本月累積配息撥回 11,076（2 筆）；風險屬性積極型（效期 2027/01/21）。A 逐檔 3 檔、B 逐檔 5 檔均與表頭一致 → allianz_a_detail_gap 歸零。組合確認：醫療基金（USDEQ5680 貝萊德世界健康科學）A/B 皆已無 → 已轉換；黃金基金（USDEQ6730）A 已無、B 仍持 155,686（-6.07%）。"
  },
- "allianz_ab": 7207369,
- "firstjin": 1881254.0,
+ "allianz_ab": 6989820,
+ "firstjin": 1866663,
  "dividend_records": {
   "2026-08": {
    "安聯保單撥回": 76931,
@@ -1051,13 +1051,17 @@
    "基金配息 台中銀台灣優息B（11/16 入帳）": 230,
    "基金配息 國泰台灣高股息B（11/16 入帳）": 70,
    "基金配息 安聯收益成長AMg7（11/18 入帳）": 30,
-   "基金配息 JPM多重收益（11/18 入帳）": 25
+   "基金配息 JPM多重收益（11/18 入帳）": 25,
+   "ETF 00888配息（11-20 入帳）": 7490,
+   "安聯保單撥回（11-20 入帳 5,805）": 5805,
+   "安聯保單撥回（11-23 入帳 19,656）": 19656,
+   "安聯保單撥回（11-23 入帳 3,608）": 3608
   }
  },
- "monthly_dividend": 121737.0,
+ "monthly_dividend": 158296.0,
  "actual_fj33_dividend": 9356,
- "policy_a_total": 4851426,
- "policy_b_total": 2355943,
+ "policy_a_total": 4780219,
+ "policy_b_total": 2209601,
  "policy_a_book_value": 5079576,
  "policy_b_book_value": 2728721,
  "allianz_ab_book_value": 7843892,
@@ -1070,20 +1074,20 @@
  "firstjin_cum_dividend": 169024,
  "allianz_cum_dividend": 1846078,
  "firstjin_cost": 2000000,
- "securities_market_value": 2296470.0,
- "securities_unrealized_pnl": 65700,
+ "securities_market_value": 2365710,
+ "securities_unrealized_pnl": -129160,
  "monthly_salary": 48016,
  "travel_allowance": 12000,
  "second_salary": 39121,
  "bonus_july": 39121,
- "cash_total": 2125855,
+ "cash_total": 2105448.0,
  "bonds_cash": 10262984,
  "monthly_dividend_breakdown": {
-  "insurance": 11657,
-  "etf": 9630,
+  "insurance": 40726,
+  "etf": 17120,
   "fund": 100450,
-  "total": 121737.0,
-  "allianz": 11657,
+  "total": 158296.0,
+  "allianz": 40726,
   "firstjin": 0,
   "oneoff": 0
  },
@@ -1185,11 +1189,12 @@
   "note_20261118": "2026-11-18 第一金『我的帳戶表現』：保單帳戶價值 1,881,254（vs 11/16 之 1,891,558，-10,304）；累計已給付配息/撥回 169,024（本月未新增）；100% IDXX M&G入息A(美元避險月配)F。"
  },
  "credit_card": {
-  "玉山Unicard": 326,
-  "台新Richart": -2702,
-  "富邦": -10068,
-  "永豐": -19045,
-  "國泰CUBE": -20117
+  "玉山Unicard": 326.0,
+  "富邦": -10117.0,
+  "永豐": -19243.0,
+  "台新Richart": -2702.0,
+  "國泰CUBE": -2599.0,
+  "一銀": 0.0
  },
  "mortgage_balance": 25005344,
  "updated_by": "moneybook_20260723",
@@ -1210,7 +1215,7 @@
  "financial_mortgage_paid": 3796447,
  "policy_loan": 0,
  "pledge_loan": 0,
- "cc_liability": 51932,
+ "cc_liability": 34661.0,
  "sinopac_savings": 10919,
  "sinopac_dawho": 235809,
  "etf_dividend_schedule": {
@@ -1438,22 +1443,22 @@
  "true_value": {
   "total_assets": 16659573
  },
- "funds": 12181485,
+ "funds": 11908332,
  "allianz_a_breakdown": {
-  "USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 2609545,
-  "USDEQ5440 摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(穩定月配)": 685946,
-  "USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)": 1579342
+  "USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 2567947,
+  "USDEQ5440 摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(穩定月配)": 682952,
+  "USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)": 1529320
  },
- "allianz_a_current_value": 4851426,
+ "allianz_a_current_value": 4780219,
  "allianz_b_breakdown": {
-  "NTDEQ2640 元大台灣高股息優質龍頭基金-新台幣(B)配息": 244462,
-  "NTDET0010 元大台灣卓越50": 871663,
-  "USDEQ3490 安聯收益成長基金-AM月收類股(美元)": 476448,
-  "USDEQ5700 M&G入息基金A(美元避險月配)F": 630237,
-  "USDEQ6730 貝萊德世界黃金基金A10美元(總報酬穩定配息)": 133133
+  "NTDEQ2640 元大台灣高股息優質龍頭基金-新台幣(B)配息": 206933,
+  "NTDET0010 元大台灣卓越50": 782239,
+  "USDEQ3490 安聯收益成長基金-AM月收類股(美元)": 471329,
+  "USDEQ5700 M&G入息基金A(美元避險月配)F": 622820,
+  "USDEQ6730 貝萊德世界黃金基金A10美元(總報酬穩定配息)": 126280
  },
- "allianz_b_current_value": 2355943,
- "monthly_dividend_total": 121737.0,
+ "allianz_b_current_value": 2209601,
+ "monthly_dividend_total": 158296.0,
  "relay_stations": {
   "第一站（月初）": {
    "流向": "摩根多重收益 配息（月初）→ 資金流向第二站",
@@ -1519,8 +1524,8 @@
    "結清口徑_20261107_月份近似": "月息 1,250×5 期＝6,250 僅為近似；合約第二條明定按實際天數計息，正式金額以 結清試算_合約口徑 為準"
   }
  },
- "allianz_a_performance": -2.74,
- "allianz_b_performance": -11.87,
+ "allianz_a_performance": -4.62,
+ "allianz_b_performance": -17.67,
  "allianz_a_monthly": {
   "total": 4950505,
   "performance_pct": -1.23
@@ -1529,10 +1534,10 @@
   "total": 2434962,
   "performance_pct": -9.28
  },
- "moneybook_date": "20260820_1",
+ "moneybook_date": "20261123_1",
  "total_portfolio_value": 26088027,
  "total_stock_value": 2296470.0,
- "allianz_combined": 7207369,
+ "allianz_combined": 6989820,
  "allianz_a_value": 4851426,
  "allianz_b_value": 2355943,
  "_updated_by": "hermes-8/20-MB-sync",
@@ -1543,48 +1548,48 @@
    "ticker": "0050",
    "name": "元大台灣50",
    "shares": 2000,
-   "price": 94.0,
-   "value": 188000,
-   "market_value": 188000,
+   "price": 87.0,
+   "value": 174000,
+   "market_value": 174000,
    "currency": "TWD",
    "cost": 169800,
    "cost_avg": 84.9,
-   "pnl": 18200,
-   "pnl_pct": 10.72,
-   "price_date": "2026-11-17",
-   "price_source": "TWSE",
+   "pnl": 4200,
+   "pnl_pct": 2.47,
+   "price_date": "2026-11-23",
+   "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
    "price_type": "收盤"
   },
   {
    "ticker": "006208",
    "name": "富邦台50",
    "shares": 2000,
-   "price": 211.9,
-   "value": 423800,
-   "market_value": 423800,
+   "price": 195.55,
+   "value": 391100,
+   "market_value": 391100,
    "currency": "TWD",
    "cost": 393800,
    "cost_avg": 196.9,
-   "pnl": 30000,
-   "pnl_pct": 7.62,
-   "price_date": "2026-11-17",
-   "price_source": "TWSE",
+   "pnl": -2700,
+   "pnl_pct": -0.69,
+   "price_date": "2026-11-23",
+   "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
    "price_type": "收盤"
   },
   {
    "ticker": "009816",
    "name": "凱基台灣TOP50",
-   "shares": 16000,
-   "price": 14.07,
-   "value": 225120,
-   "market_value": 225120,
+   "shares": 18000,
+   "price": 12.88,
+   "value": 231840,
+   "market_value": 231840,
    "currency": "TWD",
-   "cost": 199840,
-   "cost_avg": 12.49,
-   "pnl": 25280,
-   "pnl_pct": 12.65,
-   "price_date": "2026-11-17",
-   "price_source": "TWSE",
+   "cost": 225040,
+   "cost_avg": 12.5,
+   "pnl": 6800,
+   "pnl_pct": 3.02,
+   "price_date": "2026-11-23",
+   "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
    "realized_pnl": 16800,
    "price_type": "收盤"
   },
@@ -1592,48 +1597,48 @@
    "ticker": "00646",
    "name": "元大S&P500",
    "shares": 1000,
-   "price": 77.15,
-   "value": 77150,
-   "market_value": 77150,
+   "price": 73.45,
+   "value": 73450,
+   "market_value": 73450,
    "currency": "TWD",
    "cost": 71600,
    "cost_avg": 71.6,
-   "pnl": 5550,
-   "pnl_pct": 7.75,
-   "price_date": "2026-11-17",
-   "price_source": "TWSE",
+   "pnl": 1850,
+   "pnl_pct": 2.58,
+   "price_date": "2026-11-23",
+   "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
    "price_type": "收盤"
   },
   {
    "ticker": "00713",
    "name": "元大台灣高息低波",
    "shares": 2000,
-   "price": 62.8,
-   "value": 125600,
-   "market_value": 125600,
+   "price": 58.0,
+   "value": 116000,
+   "market_value": 116000,
    "currency": "TWD",
    "cost": 109600,
    "cost_avg": 54.8,
-   "pnl": 16000,
-   "pnl_pct": 14.6,
-   "price_date": "2026-11-17",
-   "price_source": "TWSE",
+   "pnl": 6400,
+   "pnl_pct": 5.84,
+   "price_date": "2026-11-23",
+   "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
    "price_type": "收盤"
   },
   {
    "ticker": "00878",
    "name": "國泰永續高股息",
    "shares": 15000,
-   "price": 30.86,
-   "value": 462900,
-   "market_value": 462900,
+   "price": 28.05,
+   "value": 420750,
+   "market_value": 420750,
    "currency": "TWD",
    "cost": 407550,
    "cost_avg": 27.17,
-   "pnl": 55350,
-   "pnl_pct": 13.58,
-   "price_date": "2026-11-17",
-   "price_source": "TWSE",
+   "pnl": 13200,
+   "pnl_pct": 3.24,
+   "price_date": "2026-11-23",
+   "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
    "realized_pnl": 6660,
    "price_type": "收盤"
   },
@@ -1641,335 +1646,335 @@
    "ticker": "0056",
    "name": "元大高股息",
    "shares": 1000,
-   "price": 49.92,
-   "value": 49920,
-   "market_value": 49920,
+   "price": 45.4,
+   "value": 45400,
+   "market_value": 45400,
    "currency": "TWD",
    "cost": 37150,
    "cost_avg": 37.15,
-   "pnl": 12770,
-   "pnl_pct": 34.37,
-   "price_date": "2026-11-17",
-   "price_source": "TWSE",
+   "pnl": 8250,
+   "pnl_pct": 22.21,
+   "price_date": "2026-11-23",
+   "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
    "price_type": "收盤"
   },
   {
    "ticker": "00981A",
    "name": "主動統一台股增長",
    "shares": 8000,
-   "price": 21.53,
-   "value": 172240,
-   "market_value": 172240,
+   "price": 20.04,
+   "value": 160320,
+   "market_value": 160320,
    "currency": "TWD",
    "cost": 210560,
    "cost_avg": 26.32,
-   "pnl": -38320,
-   "pnl_pct": -18.2,
-   "price_date": "2026-11-17",
-   "price_source": "TWSE",
+   "pnl": -50240,
+   "pnl_pct": -23.86,
+   "price_date": "2026-11-23",
+   "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
    "price_type": "收盤"
   },
   {
    "ticker": "00984A",
    "name": "主動安聯台灣高息",
    "shares": 10000,
-   "price": 12.49,
-   "value": 124900,
-   "market_value": 124900,
+   "price": 11.11,
+   "value": 111100,
+   "market_value": 111100,
    "currency": "TWD",
    "cost": 145600,
    "cost_avg": 14.56,
-   "pnl": -20700,
-   "pnl_pct": -14.22,
-   "price_date": "2026-11-17",
-   "price_source": "TWSE",
+   "pnl": -34500,
+   "pnl_pct": -23.7,
+   "price_date": "2026-11-23",
+   "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
    "price_type": "收盤"
   },
   {
    "ticker": "00919",
    "name": "群益台灣精選高息",
    "shares": 7000,
-   "price": 30.39,
-   "value": 212730,
-   "market_value": 212730,
+   "price": 27.12,
+   "value": 189840,
+   "market_value": 189840,
    "currency": "TWD",
    "cost": 208600,
    "cost_avg": 29.8,
-   "pnl": 4130,
-   "pnl_pct": 1.98,
-   "price_date": "2026-11-17",
+   "pnl": -18760,
+   "pnl_pct": -8.99,
+   "price_date": "2026-11-23",
    "last_trade": "2026-11-10 13:01:30 凱基成交回報（9202-7413512）｜買 1000 股 @ 31.31",
-   "price_source": "TWSE",
+   "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
    "price_type": "收盤"
   },
   {
    "ticker": "00918",
    "name": "大華優利高填息30",
    "shares": 1000,
-   "price": 31.89,
-   "value": 31890,
-   "market_value": 31890,
+   "price": 28.87,
+   "value": 28870,
+   "market_value": 28870,
    "currency": "TWD",
    "cost": 28550,
    "cost_avg": 28.55,
-   "pnl": 3340,
-   "pnl_pct": 11.7,
-   "price_date": "2026-11-17",
-   "price_source": "TWSE",
+   "pnl": 320,
+   "pnl_pct": 1.12,
+   "price_date": "2026-11-23",
+   "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
    "price_type": "收盤"
   },
   {
    "ticker": "00888",
    "name": "永豐台灣ESG",
    "shares": 6000,
-   "price": 27.229999542236328,
-   "value": 163380,
-   "market_value": 163380,
+   "price": 25.14,
+   "value": 150840,
+   "market_value": 150840,
    "currency": "TWD",
    "cost": 187920,
    "cost_avg": 31.32,
-   "pnl": -24540,
-   "pnl_pct": -13.06,
-   "price_date": "2026-11-17",
+   "pnl": -37080,
+   "pnl_pct": -19.73,
+   "price_date": "2026-11-23",
    "last_trade": "2026-11-10 13:01:30 凱基成交回報（9202-7413512）｜買 1000 股 @ 29.26",
-   "price_source": "Yahoo(2026-11-17)",
+   "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
    "price_type": "收盤"
   },
   {
    "ticker": "00983D",
    "name": "主動富邦複合收益",
    "shares": 20000,
-   "price": 9.82,
-   "value": 196400,
-   "market_value": 196400,
+   "price": 9.84,
+   "value": 196800,
+   "market_value": 196800,
    "currency": "TWD",
    "cost": 202200,
    "cost_avg": 10.11,
-   "pnl": -5800,
-   "pnl_pct": -2.87,
-   "price_date": "2026-11-17",
-   "price_source": "TWSE",
+   "pnl": -5400,
+   "pnl_pct": -2.67,
+   "price_date": "2026-11-23",
+   "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
    "price_type": "收盤"
   },
   {
    "ticker": "00927",
    "name": "群益半導體收益",
    "shares": 2000,
-   "price": 29.12,
-   "value": 58240,
-   "market_value": 58240,
+   "price": 27.15,
+   "value": 54300,
+   "market_value": 54300,
    "currency": "TWD",
    "cost": 75800,
    "cost_avg": 37.9,
-   "pnl": -17560,
-   "pnl_pct": -23.17,
-   "price_date": "2026-11-17",
-   "price_source": "TWSE",
+   "pnl": -21500,
+   "pnl_pct": -28.36,
+   "price_date": "2026-11-23",
+   "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
    "price_type": "收盤"
   },
   {
    "ticker": "2610",
    "name": "華航",
    "shares": 1000,
-   "price": 23.1,
-   "value": 23100,
-   "market_value": 23100,
+   "price": 21.1,
+   "value": 21100,
+   "market_value": 21100,
    "currency": "TWD",
    "cost": 21100,
    "cost_avg": 21.1,
-   "pnl": 2000,
-   "pnl_pct": 9.48,
-   "price_date": "2026-11-17",
-   "price_source": "TWSE",
+   "pnl": 0,
+   "pnl_pct": 0.0,
+   "price_date": "2026-11-23",
+   "price_source": "TWSE 收盤（凱基 App 15:06 逐檔截圖核對）",
    "price_type": "收盤"
   }
  ],
- "fund_general": 325215,
- "fund_freepay": 387924,
+ "fund_general": 283174,
+ "fund_freepay": 304531,
  "fund_holdings": [
   {
    "name": "元大台灣卓越50ETF(0050)連結基金-台幣B配息",
    "code": "A05144",
-   "value": 44023,
+   "value": 38396,
    "cost": 21448,
    "currency": "TWD",
-   "market_value": 44023
+   "market_value": 38396
   },
   {
    "name": "台中銀台灣優息基金-B配息台幣",
    "code": "A17030",
-   "value": 42133,
+   "value": 36452,
    "cost": 30014,
    "currency": "TWD",
-   "market_value": 42133
+   "market_value": 36452
   },
   {
    "name": "安聯台灣科技基金",
    "code": "A36004",
-   "value": 2520,
+   "value": 2040,
    "cost": 3000,
    "currency": "TWD",
-   "market_value": 2520
+   "market_value": 2040
   },
   {
    "name": "安聯AI收益成長多重資產基金-B(月配)美元",
    "code": "A36135",
-   "value": 180,
+   "value": 5870,
    "cost": 200,
    "currency": "TWD",
-   "market_value": 180
+   "market_value": 5870
   },
   {
    "name": "國泰台灣高股息基金B",
    "code": "A37170",
-   "value": 6531,
+   "value": 5430,
    "cost": 5000,
    "currency": "TWD",
-   "market_value": 6531
+   "market_value": 5430
   },
   {
    "name": "台新美日台半導體基金A-日圓",
    "code": "A47219",
-   "value": 104616,
+   "value": 97252,
    "cost": 609172,
    "currency": "TWD",
-   "market_value": 104616
+   "market_value": 97252
   },
   {
    "name": "路博邁台灣5G股票基金T月配級別(台幣)",
    "code": "A49015",
-   "value": 69577,
+   "value": 56008,
    "cost": 30000,
    "currency": "TWD",
-   "market_value": 69577
+   "market_value": 56008
   },
   {
    "name": "聯博-全球多元收益基金AD月配美元",
    "code": "B03629",
-   "value": 2951,
+   "value": 2829,
    "cost": 3000,
    "currency": "TWD",
-   "market_value": 2951
+   "market_value": 2829
   },
   {
    "name": "聯博-美國成長基金AP總報酬月配美元",
    "code": "B03870",
-   "value": 2978,
+   "value": 2676,
    "cost": 3000,
    "currency": "TWD",
-   "market_value": 2978
+   "market_value": 2676
   },
   {
    "name": "摩根基金-JPM多重收益美元對沖A穩定月配",
    "code": "B08291",
-   "value": 2979,
+   "value": 2888,
    "cost": 3000,
    "currency": "TWD",
-   "market_value": 2979
+   "market_value": 2888
   },
   {
    "name": "貝萊德世界黃金A2美元",
    "code": "B09006",
-   "value": 3378,
+   "value": 2657,
    "cost": 3000,
    "currency": "TWD",
-   "market_value": 3378
+   "market_value": 2657
   },
   {
    "name": "貝萊德全球股票收益A6美元穩定配息",
    "code": "B09261",
-   "value": 3108,
+   "value": 2948,
    "cost": 3000,
    "currency": "TWD",
-   "market_value": 3108
+   "market_value": 2948
   },
   {
    "name": "貝萊德世界科技A10美元總報酬穩定配息",
    "code": "B09460",
-   "value": 3624,
+   "value": 3409,
    "cost": 3000,
    "currency": "TWD",
-   "market_value": 3624
+   "market_value": 3409
   },
   {
    "name": "貝萊德世界能源A10美元總報酬穩定配息",
    "code": "B09461",
-   "value": 5353,
+   "value": 5270,
    "cost": 5000,
    "currency": "TWD",
-   "market_value": 5353
+   "market_value": 5270
   },
   {
    "name": "貝萊德世界健康科學A10美元總報酬穩定配息",
    "code": "B09462",
-   "value": 5269,
+   "value": 5084,
    "cost": 5000,
    "currency": "TWD",
-   "market_value": 5269
+   "market_value": 5084
   },
   {
    "name": "貝萊德世界黃金A10美元總報酬穩定配息",
    "code": "B09463",
-   "value": 2708,
+   "value": 2130,
    "cost": 3000,
    "currency": "TWD",
-   "market_value": 2708
+   "market_value": 2130
   },
   {
    "name": "富達全球動能多元基金A股C月配美元",
    "code": "B14445",
-   "value": 2889,
+   "value": 2734,
    "cost": 3000,
    "currency": "TWD",
-   "market_value": 2889
+   "market_value": 2734
   },
   {
    "name": "安聯收益成長AMg7月收總收益美元",
    "code": "B20186",
-   "value": 3369,
+   "value": 3246,
    "cost": 3403,
    "currency": "TWD",
-   "market_value": 3369
+   "market_value": 3246
   },
   {
    "name": "M&G入息基金A(美元避險月配)F",
    "code": "B31138",
-   "value": 2996,
+   "value": 2937,
    "cost": 3000,
    "currency": "TWD",
-   "market_value": 2996
+   "market_value": 2937
   },
   {
    "name": "元大台灣卓越50ETF(0050)連結基金-台幣A不配息",
    "code": "A05143",
-   "value": 101992,
+   "value": 88955,
    "cost": 0,
    "currency": "TWD",
-   "market_value": 101992
+   "market_value": 88955
   },
   {
    "name": "統一奔騰基金",
    "code": "A09012",
-   "value": 74862,
+   "value": 59934,
    "cost": 0,
    "currency": "TWD",
-   "market_value": 74862
+   "market_value": 59934
   },
   {
    "name": "路博邁台灣5G股票基金T累積級別(台幣)",
    "code": "A49038",
-   "value": 193339,
+   "value": 155642,
    "cost": 0,
    "currency": "TWD",
-   "market_value": 193339
+   "market_value": 155642
   }
  ],
- "allianz_a": 4851426,
- "allianz_b": 2355943,
- "firstjin_fund_name": "ID05-M&G入息基金A(美元避險月配)F 100%（2026-10-15 App；2026-10-08 申請轉換已生效，原 FJXX 摩根JPM 已退出）",
- "insurance_label_b": "第一金 M&G入息基金A(美元避險月配)F 100%（10/08 轉換已生效）",
- "insurance_current_value": 9088623.0,
- "insurance_total": 9088623.0,
+ "allianz_a": 4780219,
+ "allianz_b": 2209601,
+ "firstjin_fund_name": "ID05-M&G入息基金A(美元避險月配) 100%（2026/11/20 帳戶頁；標的淨值 9.8507）",
+ "insurance_label_b": "第一金 M&G入息基金A(美元避險月配) 100%（ID05，11/20 淨值 9.8507）",
+ "insurance_current_value": 8856483,
+ "insurance_total": 8856483,
  "pending_income": [
   {
    "source": "台電標案合作（上境工程）利潤分成",
@@ -1981,7 +1986,7 @@
  "debt_ratio_note": "雙軌（2026-11-06 更新）：負債比（含不動產）51.3% ＝ 負債 30,951,762 ÷（金融資產 26,326,230＋房產 34,017,063＝60,343,293）；金融資產負債比 117.6% ＝ 負債 30,951,762 ÷ 金融資產 26,326,230。⚠️ 117.6% 不得稱「流動負債率」（分子為全部負債，非流動負債）。沿用 2026-08-10 雙軌裁示。沿革：2026-08-20 為 50.1%（分母 60,222,746）／115.2%；8/20 國泰 1,200 萬撥款入帳使負債增加。",
  "dividend_month_expected": 100000,
  "dividend_month_expected_note": "8月起依當月dividend_records動態累積，月初顯示保守預估10萬",
- "dividend_month_actual": 121737.0,
+ "dividend_month_actual": 158296.0,
  "rent_received_records": {
   "2026-08-01": {
    "大義街店面": 24000
@@ -2044,8 +2049,8 @@
  },
  "rent_receivable_note": "當月應收明細（含一次性調整，2026-09-23 INC-241 建立）：2026-09 ＝ 常態 80,100 − 洲際W 維修費折讓 3,000 ＝ 77,100。逐項待收計算一律讀本欄（缺本月 → fallback rent_breakdown），合計須對齊 rent_monthly_gap（2026-09：已收 77,100 ＋ 待收 0，9/25 全數到帳） ｜2026-11：洲際W 洗衣機修理費折讓 3,000（使用者 11/19 陳述），當月應收 77,100。",
  "fund_dividend_monthly": 160670,
- "fund_market": 12181485,
- "fund_total_market_value": 12181485,
+ "fund_market": 11908332,
+ "fund_total_market_value": 11908332,
  "professional_investor": {
   "note": "8/21 申請 → 9/8 國泰通知 PI 核定 → 9/21 對保 → 9/29 撥款 590 萬@2.65%",
   "application_status": "已完成",
@@ -2057,9 +2062,9 @@
  "policy_pledge_rate_note": "使用者確認 2026-08-05：保單質押利率 4%（原記錄 5% 有誤）",
  "pledge_loan_rate": null,
  "pledge_loan_rate_note": "待確認（凱基/券商對帳單）",
- "securities_market": 2296470,
- "allianz_a_funds": 4851426,
- "allianz_b_funds": 2355943,
+ "securities_market": 2365710,
+ "allianz_a_funds": 4780219,
+ "allianz_b_funds": 2209601,
  "fx_rates": {
   "jpy_to_twd": 0.2188,
   "usd_to_twd": 32.9225,
@@ -2266,7 +2271,7 @@
    "防護重點：①PI審查期避免資產水位壓低 ②防範建債還貸後現金過低流動性枯竭"
   ]
  },
- "debt_ratio_flow": 120.5,
+ "debt_ratio_flow": 122.6,
  "real_estate": 34017063,
  "financial_mortgage_note": "理財型房貸 2,006,447 已於 2026-08-11 全數清償 ✅",
  "fund_watchlist": {
@@ -2866,24 +2871,24 @@
   "current": {
    "updated_at": "2026-11-23",
    "美股桶": 36.7,
-   "美元計價基金（非美股桶）": 19.4,
-   "保單美元債券": 13.7,
+   "美元計價基金（非美股桶）": 19.6,
+   "保單美元債券": 13.8,
    "美元定存": 0.0,
    "美元債券梯": 0.0,
-   "合計": 69.8,
-   "已避險": 6.4,
-   "匯率曝險合計": 63.4,
+   "合計": 70.1,
+   "已避險": 6.5,
+   "匯率曝險合計": 63.6,
    "目標值": 63.0,
    "等級": "目標值內",
-   "狀態": "🟢 63.4% ≥ 目標值 63%（未進觀察區）（僅顯示：不觸發資產調整；目標 63／黃 65／觀察 70）",
+   "狀態": "🟢 63.6% ≥ 目標值 63%（未進觀察區）（僅顯示：不觸發資產調整；目標 63／黃 65／觀察 70）",
    "口徑": "引擎自動產生（usd_exposure_sync.py；build_penetration_report 每日呼叫）— 2026-10-07 起廢除手動維護",
    "金額明細": {
-    "美股桶": 9428213.0,
-    "美元計價基金": 4993069.0,
-    "保單美元債券": 3528178.0,
+    "美股桶": 9253991.0,
+    "美元計價基金": 4934511.0,
+    "保單美元債券": 3482389.0,
     "美元定存": 0.0,
     "美元債券梯": 0.0,
-    "分母_總資產": 25692433.0
+    "分母_總資產": 25235973.0
    },
    "口徑校正_20260914": "2026-09-14 定案：原 9/13 註記用『美股桶 44.8%』（≈ 引擎美股桶 24.5% + B11 19.3%，B11 重複計入）→ 總計 79.2%；經比對 9/12-9/14 各版 snapshot，引擎 actual_pct.美股市值型成長 一直為 24.5~24.7%，故改採引擎口徑。B11 僅在『美元計價基金』計一次 → 合計 59.0%（未超 60% 黃燈線）。",
    "三層拆分": {
@@ -3174,27 +3179,27 @@
   "基金質押利息_note": "590萬@2.65% **每月 22 日固定扣款**（使用者 2026-10-29 確認）；MB 2026/10/22 首扣 9,852＝23 天息；按日計息 30 天 12,851、31 天 13,279，取平均 13,029。已由帳上計息改列現金支出。"
  },
  "rent_monthly_note": "常態 80,100 = 大義街店面24,000 + 二三樓21,000 + 洲際W33,000 + 管理費2,100（使用者 2026-09-22 確認）；2026-09 洲際W 因維修費折讓 3,000 → 當月應收 77,100、實收 30,000，屬一次性，非新常態",
- "funds_cathay": 11523755,
+ "funds_cathay": 11320627,
  "funds_cathay_breakdown": {
-  "富達全球動能多元B股C月配息美元": 5568328,
-  "貝萊德智慧數據收益成長B11-美元-強化穩定月配息": 4993069,
-  "聯博全球多元收益AD美元月配": 962358
+  "富達全球動能多元B股C月配息美元": 5440807,
+  "貝萊德智慧數據收益成長B11-美元-強化穩定月配息": 4934511,
+  "聯博全球多元收益AD美元月配": 945309
  },
  "funds_note": "2026-10-12：鉅亨＝896,219（一般申購 401,048＝CSV 20 檔、淨值日 10/08-10/09，USD 用平台 31.8825、JPY 用 Yahoo 0.1993；自由Pay 495,171＝平台總額差額法，逐檔待補）＋國泰直購 11,780,925（10/09 淨值）＝基金 12,677,144。",
  "defensive_combined_metric": {
-  "配息資產合計": 17078891,
-  "佔比": 66.5,
+  "配息資產合計": 16552495,
+  "佔比": 65.6,
   "note": "合併口徑（8/21 使用者裁示）+ 8/26 真值更新（安聯 7,753,544/國泰 6,969,076/第一金 1,928,889）；2026-09-18 第一金依 App 截圖對齊帳戶價值，合計與佔比同步重算",
   "組成": {
-   "保單月配基金": 7207369,
-   "國泰月配(富達C+聯博AD)": 6684212,
-   "防守ETF": 947860,
+   "保單月配基金": 6989820,
+   "國泰月配(富達C+聯博AD)": 6386116,
+   "防守ETF": 951700,
    "鉅亨月配": 358196,
-   "第一金ID01": 1881254
+   "第一金ID01": 1866663
   },
   "裁示": "防守承接凍結（2026-08-21 使用者：基金也有配息應合併計算）",
-  "組成說明": "由真值鍵派生（INC-242b v3）：保單月配基金＝allianz_combined 7,207,369；國泰月配＝富達C＋聯博AD 6,684,212（不含 B11 後收級別）；防守ETF＝6 檔 ticker 加總 947,860；第一金ID01＝firstjin_fl65_current_value 1,881,254；⚠️ 鉅亨月配口徑未定，暫留原值 358,196",
-  "derived_at": "2026-11-20",
+  "組成說明": "由真值鍵派生（INC-242b v3）：保單月配基金＝allianz_combined 6,989,820；國泰月配＝富達C＋聯博AD 6,386,116（不含 B11 後收級別）；防守ETF＝6 檔 ticker 加總 951,700；第一金ID01＝firstjin_fl65_current_value 1,866,663；⚠️ 鉅亨月配口徑未定，暫留原值 358,196",
+  "derived_at": "2026-11-23",
   "source": "sot_targets.build_defensive_metric（組成加總派生：安聯×allianz_combined／國泰×fund_breakdown_cathay／防守ETF×holdings ticker／第一金×firstjin_fl65_current_value）"
  },
  "hedge_satellite": {
@@ -3306,20 +3311,20 @@
   "定稿": "2026-08-21 使用者定稿：雙維度資產定位框架",
   "核心": "配息≠防守（一般配息資產不列防守）；但平衡型收益基金（RR3，如 B11）依官方成分拆解，權益部位視為低波收益權益計入防禦維度；兩維度獨立計算、獨立風控",
   "防禦維度": {
-   "合計": 12500436,
-   "佔比": 50.4,
+   "合計": 12348967,
+   "佔比": 50.7,
    "公式": "債券＋現金/貨幣＋低波高股息防禦＋配息型基金權益＋保單內防守型高股息權益（2026-11-03 裁決 S1）＋避險衛星（2026-10-30 結案，以 0 計入）",
    "組成": {
-    "債券類": 6573157,
-    "現金/貨幣停泊": 1225855,
+    "債券類": 6479624,
+    "現金/貨幣停泊": 1205448,
     "低波高股息防禦": 1089462,
     "配息型基金權益": 3367500,
     "避險衛星(目標)": 0,
-    "保單內防守型高股息權益": 244462
+    "保單內防守型高股息權益": 206933
    },
    "備註": "避險衛星以目標值計入防禦維度（現況未建倉，目標金額由避險衛星欄位動態讀取）；配息型基金權益＝B11 依官方成分 62.58/32.65/4.77（權益部位＋內部現金，內部現金不進現金桶）；現金/貨幣停泊＝可動用台幣活存，帳戶層真值與指定用途款一律由 snapshot 數字欄位動態生成（2026-09-30 P0-1 移除手寫金額）｜【2026-10-30 裁決】避險衛星整體機制結案 → 原以『目標值 1,310,000』計入之口徑作廢，改以 0 計入；理由：黃金保單 367,192 已在五桶內計入，再加會重複計算，且已作廢的配置目標不應影響配置建議。實際部位（黃金 367,192／石油 4,958）保留不賣、仍計入總資產與穿透。分母維持既定口徑＝total_assets − 指定用途款 900,000＝26,080,153（9/29 裁決），故佔比 47.7%、較原 52.7% 降 5.0pp；若以總資產 26,980,153 為分母則為 46.11%（-6.6pp），非本系統口徑。",
    "更新": "2026-10-02（使用者核准）：現金成分 819,182→853,675 —— 對齊可動用現金唯一真值 sot_targets.allowable_cash＝cash_layers.unrestricted_cash（853,675）；819,182 為 9/29-9/30 清償前舊值（校正前與真值差 34,493）。歷史沿革：2026-09-29 885,890→819,182（可動用口徑；分母已排除指定用途款 5,900,000）｜2026-10-30：避險衛星結案，組成 1,310,000→0，合計 13,750,419→12,440,419，佔比 52.7%→47.7%",
-   "分母": 24792433.0,
+   "分母": 24335973.0,
    "derived_at": "2026-11-23"
   },
   "收入維度": {
@@ -3378,16 +3383,16 @@
    "當前": "區間震盪（2026-08-21：US30Y 5.24% 黃燈、VIX 16、股債雙弱）"
   },
   "現況驗證": {
-   "防禦": 50.4,
+   "防禦": 50.7,
    "防禦門檻": 50,
    "防禦合格": true,
    "收入": 69.5,
    "收入門檻": 65,
    "收入合格": true,
-   "LTV": 50.2,
+   "LTV": 52.1,
    "LTV上限": 52,
-   "LTV合格": true,
-   "結論": "完全符合「區間震盪」標準",
+   "LTV合格": false,
+   "結論": "未完全符合「區間震盪」標準（防禦 50.7% vs ≥50%、收入 69.5% vs ≥65%、LTV 52.1% vs ≤52%）",
    "source": "sot_targets.sync_scenario_verification（派生自 dual_dimension_metric；2026-09-30 P0-1 建立單一寫入者）",
    "derived_at": "2026-11-23"
   },
@@ -3418,31 +3423,31 @@
  },
  "sector_penetration": {
   "note": "2026-11-12 起由 GICS 產業穿透派生（原 2026-08-22 手寫值作廢）。六組互斥、可加總 100%；固收與現金為 GICS 殘餘桶，不等於防守比例（防守看五桶穿透口徑）。",
-  "updated_at": "2026-11-23T07:01:28",
+  "updated_at": "2026-11-23T14:02:04",
   "高科技/半導體": {
-   "金額_估": 6495801,
+   "金額_估": 6386044,
    "佔比_估": 25.3,
    "note": "GICS：資訊科技",
    "紅線": 30,
    "狀態": "🟢 未達紅線 30%（當前 25.3%）"
   },
   "金融/電信": {
-   "金額_估": 4066043,
+   "金額_估": 3998611,
    "佔比_估": 15.8,
    "note": "GICS：金融＋通訊服務"
   },
   "醫療/公用事業/不動產": {
-   "金額_估": 1927754,
+   "金額_估": 1894035,
    "佔比_估": 7.5,
    "note": "GICS：醫療保健＋公用事業＋不動產"
   },
   "固收與現金": {
-   "金額_估": 7708457,
-   "佔比_估": 30.0,
+   "金額_估": 7622307,
+   "佔比_估": 30.2,
    "note": "GICS：固收/現金"
   },
   "實物避險-黃金": {
-   "金額": 126318,
+   "金額": 119675,
    "目標": "≤5%（131萬）",
    "狀態": "⛔ 已結案（2026-10-30）：既有部位保留不賣；不再有後續建倉／分批指示",
    "佔比_估": 0.5
@@ -3459,13 +3464,13 @@
   },
   "source": "industry_penetration（GICS 派生；勿手寫）",
   "民生/工業/原物料": {
-   "金額_估": 5082316,
+   "金額_估": 4989764,
    "佔比_估": 19.8,
    "note": "GICS：工業＋核心消費＋非核心消費＋原物料＋能源"
   },
   "其他/未分類": {
-   "金額_估": 412063,
-   "佔比_估": 1.6,
+   "金額_估": 345212,
+   "佔比_估": 1.4,
    "note": "GICS：未分類(其他權重)"
   }
  },
@@ -3506,149 +3511,148 @@
   ],
   "產業輪動": "若高科技>30% 或雷達科技轉弱 → 當月乾粉轉金融/電信/醫療/公用/不動產防禦型標的"
  },
- "usd_exposure_pct": 63.4,
+ "usd_exposure_pct": 63.6,
  "usd_exposure_pct_note": "2026-09-14 定案：引擎口徑 59%（原 8/22 值 64、9/13 全量表 79.2 均作廢）；穿透圖/報告讀 usd_exposure_monitor.current.合計",
  "industry_penetration": {
   "日期": "2026-11-23",
-  "總資產": 25692433.0,
+  "總資產": 25235973.0,
   "產業": {
    "資訊科技": {
-    "金額": 6495801,
+    "金額": 6386044,
     "佔比": 25.3
    },
    "金融": {
-    "金額": 2710009,
-    "佔比": 10.5
+    "金額": 2668938,
+    "佔比": 10.6
    },
    "醫療保健": {
-    "金額": 1274347,
+    "金額": 1251186,
     "佔比": 5.0
    },
    "核心消費": {
-    "金額": 626355,
+    "金額": 615201,
     "佔比": 2.4
    },
    "非核心消費": {
-    "金額": 1308339,
+    "金額": 1286628,
     "佔比": 5.1
    },
    "工業": {
-    "金額": 1560849,
+    "金額": 1536307,
     "佔比": 6.1
    },
    "能源": {
-    "金額": 624903,
+    "金額": 613963,
     "佔比": 2.4
    },
    "公用事業": {
-    "金額": 389719,
+    "金額": 383332,
     "佔比": 1.5
    },
    "不動產": {
-    "金額": 263688,
+    "金額": 259517,
     "佔比": 1.0
    },
    "通訊服務": {
-    "金額": 1356034,
+    "金額": 1329673,
     "佔比": 5.3
    },
    "原物料": {
-    "金額": 961870,
+    "金額": 937665,
     "佔比": 3.7
    },
    "固收/現金": {
-    "金額": 7708457,
-    "佔比": 30.0
+    "金額": 7622307,
+    "佔比": 30.2
    },
    "未分類(其他權重)": {
-    "金額": 412063,
-    "佔比": 1.6
+    "金額": 345212,
+    "佔比": 1.4
    }
   },
   "未分類組成": {
-   "富達全球動能多元B股C月配息美元": 136981,
-   "保單-USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 34446,
-   "A49038 路博邁台灣5G股票基金T累積級別(台幣)": 27468,
-   "保單-USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)": 18952,
-   "A17030 台中銀台灣優息基金-B配息台幣": 11992,
-   "00984A": 11428,
-   "A47219 台新美日台半導體基金A-日圓": 10052,
-   "A49015 路博邁台灣5G股票基金T月配級別(台幣)": 9884,
-   "00878": 9376,
-   "保單-USDEQ3490 安聯收益成長基金-AM月收類股(美元)": 6289,
-   "00919": 3810,
+   "富達全球動能多元B股C月配息美元": 133844,
+   "保單-USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 33897,
+   "路博邁台灣5G股票基金T累積級別(台幣)": 23346,
+   "保單-USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)": 18352,
+   "00984A": 11854,
+   "台中銀台灣優息基金-B配息台幣": 10936,
+   "台新美日台半導體基金A-日圓": 9725,
+   "00878": 9383,
+   "路博邁台灣5G股票基金T月配級別(台幣)": 8401,
+   "保單-USDEQ3490 安聯收益成長基金-AM月收類股(美元)": 6222,
+   "00919": 3759,
    "00713": 2506,
-   "A09012 統一泰順基金": 69311,
-   "B03629 聯博-全球多元收益基金AD月配美元": 2895
+   "聯博-全球多元收益基金AD月配美元": 2829
   },
   "實體不動產_另計": {
    "金額": 34017063,
-   "佔比_含不動產": 56.97094311430798,
+   "佔比_含不動產": 57.409822848571004,
    "note": "兩間房（大義街 1F店面24,000+2-3F住宅21,000、洲際W 33,000，+管理費2,100=80,100/月）；GICS 分母為流動金融資產（8/10 雙軌裁示），實體不動產另行計列"
   },
   "估算層級": {
    "資訊科技": [
     "00984A(L1 安聯官方持股明細 2026/11/06（口袋證券轉載）：金融保險28.06/半導體16.05/電子零組件8.35/電腦週邊8.13/航運7.69/塑膠4.64/油電燃氣3.70/光電3.25/通信網路2.81/其他電子1.92；股票95.27、未列產業10.67、現金4.73)",
-    "A05143 元大台灣卓越50ETF(0050)連結基金-台幣A不配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)",
-    "A05144 元大台灣卓越50ETF(0050)連結基金-台幣B配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)"
+    "M&G入息基金A(美元避險月配)F(L1+L3 晨星2026/6 股39.25/債57.89/現4.64（8/23截圖真值；MoneyDJ 2026/07/31 有效部位為股47.6/債45.5/現6.9，含期貨，故沿用晨星口徑）；已知 5 行業＝晨星；未揭露權益尾依 MSCI World 相對權重補（醫療2.69/核心消費1.40/能源1.19/公用0.68/不動產0.45）)",
+    "保單-NTDEQ2640 元大台灣高股息優質龍頭基金-新台幣(B)配息(L1 官方揭露 2026/08/31（MoneyDJ 依產業）：半導體63.70＋電子零組件7.43＋其他電子5.11＋電腦週邊0.07→資訊科技76.31；通信網路9.99→通訊服務；金融保險4.43；鋼鐵0.51→原物料；現金8.76。同期官方區域表：台灣91.24／國外0.00（北美0）)"
    ],
    "金融": [
     "00984A(L1 安聯官方持股明細 2026/11/06（口袋證券轉載）：金融保險28.06/半導體16.05/電子零組件8.35/電腦週邊8.13/航運7.69/塑膠4.64/油電燃氣3.70/光電3.25/通信網路2.81/其他電子1.92；股票95.27、未列產業10.67、現金4.73)",
-    "A05143 元大台灣卓越50ETF(0050)連結基金-台幣A不配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)",
-    "A05144 元大台灣卓越50ETF(0050)連結基金-台幣B配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)"
+    "M&G入息基金A(美元避險月配)F(L1+L3 晨星2026/6 股39.25/債57.89/現4.64（8/23截圖真值；MoneyDJ 2026/07/31 有效部位為股47.6/債45.5/現6.9，含期貨，故沿用晨星口徑）；已知 5 行業＝晨星；未揭露權益尾依 MSCI World 相對權重補（醫療2.69/核心消費1.40/能源1.19/公用0.68/不動產0.45）)",
+    "保單-NTDEQ2640 元大台灣高股息優質龍頭基金-新台幣(B)配息(L1 官方揭露 2026/08/31（MoneyDJ 依產業）：半導體63.70＋電子零組件7.43＋其他電子5.11＋電腦週邊0.07→資訊科技76.31；通信網路9.99→通訊服務；金融保險4.43；鋼鐵0.51→原物料；現金8.76。同期官方區域表：台灣91.24／國外0.00（北美0）)"
    ],
    "通訊服務": [
     "00984A(L1 安聯官方持股明細 2026/11/06（口袋證券轉載）：金融保險28.06/半導體16.05/電子零組件8.35/電腦週邊8.13/航運7.69/塑膠4.64/油電燃氣3.70/光電3.25/通信網路2.81/其他電子1.92；股票95.27、未列產業10.67、現金4.73)",
-    "A05143 元大台灣卓越50ETF(0050)連結基金-台幣A不配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)",
-    "A05144 元大台灣卓越50ETF(0050)連結基金-台幣B配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)"
+    "M&G入息基金A(美元避險月配)F(L1+L3 晨星2026/6 股39.25/債57.89/現4.64（8/23截圖真值；MoneyDJ 2026/07/31 有效部位為股47.6/債45.5/現6.9，含期貨，故沿用晨星口徑）；已知 5 行業＝晨星；未揭露權益尾依 MSCI World 相對權重補（醫療2.69/核心消費1.40/能源1.19/公用0.68/不動產0.45）)",
+    "保單-NTDEQ2640 元大台灣高股息優質龍頭基金-新台幣(B)配息(L1 官方揭露 2026/08/31（MoneyDJ 依產業）：半導體63.70＋電子零組件7.43＋其他電子5.11＋電腦週邊0.07→資訊科技76.31；通信網路9.99→通訊服務；金融保險4.43；鋼鐵0.51→原物料；現金8.76。同期官方區域表：台灣91.24／國外0.00（北美0）)"
    ],
    "原物料": [
     "00984A(L1 安聯官方持股明細 2026/11/06（口袋證券轉載）：金融保險28.06/半導體16.05/電子零組件8.35/電腦週邊8.13/航運7.69/塑膠4.64/油電燃氣3.70/光電3.25/通信網路2.81/其他電子1.92；股票95.27、未列產業10.67、現金4.73)",
-    "A05143 元大台灣卓越50ETF(0050)連結基金-台幣A不配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)",
-    "A05144 元大台灣卓越50ETF(0050)連結基金-台幣B配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)"
+    "保單-NTDEQ2640 元大台灣高股息優質龍頭基金-新台幣(B)配息(L1 官方揭露 2026/08/31（MoneyDJ 依產業）：半導體63.70＋電子零組件7.43＋其他電子5.11＋電腦週邊0.07→資訊科技76.31；通信網路9.99→通訊服務；金融保險4.43；鋼鐵0.51→原物料；現金8.76。同期官方區域表：台灣91.24／國外0.00（北美0）)",
+    "保單-NTDET0010 元大台灣卓越50(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)"
    ],
    "核心消費": [
-    "A05143 元大台灣卓越50ETF(0050)連結基金-台幣A不配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)",
-    "A05144 元大台灣卓越50ETF(0050)連結基金-台幣B配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)",
-    "B14445 富達全球動能多元基金A股C月配美元(L1+L3 官方資產類別2026/07/31（股73.04/企業債8.77/股權類衍生7.72/新興市場債4.21/另類資產2.46/現金及其他2.17/固收衍生0.88/公債0.75，MoneyDJ fth29）；5 行業＝晨星2025/12 官方（科技21.79/金融12.6/原物料8.7/電信6.77/工業6.68）；未揭露權益尾（含股權衍生）依 MSCI World 相對權重補；另類資產（黃金/商品）留其他)"
+    "M&G入息基金A(美元避險月配)F(L1+L3 晨星2026/6 股39.25/債57.89/現4.64（8/23截圖真值；MoneyDJ 2026/07/31 有效部位為股47.6/債45.5/現6.9，含期貨，故沿用晨星口徑）；已知 5 行業＝晨星；未揭露權益尾依 MSCI World 相對權重補（醫療2.69/核心消費1.40/能源1.19/公用0.68/不動產0.45）)",
+    "保單-NTDET0010 元大台灣卓越50(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)",
+    "保單-USDEQ3490 安聯收益成長基金-AM月收類股(美元)(L1 官方月報2026/07/31 完整產業表（MoneyDJ tlz64）：資訊科技24.2/工業11.26/金融10.38/通訊服務10.28/非必需消費9.14/健康護理8.04/流動資金6.69/能源4.93/公用3.98/房地產3.97/原物料3.42/必需消費2.39/其他1.31)"
    ],
    "固收/現金": [
     "00984A(L1 安聯官方持股明細 2026/11/06（口袋證券轉載）：金融保險28.06/半導體16.05/電子零組件8.35/電腦週邊8.13/航運7.69/塑膠4.64/油電燃氣3.70/光電3.25/通信網路2.81/其他電子1.92；股票95.27、未列產業10.67、現金4.73)",
-    "A05143 元大台灣卓越50ETF(0050)連結基金-台幣A不配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)",
-    "A05144 元大台灣卓越50ETF(0050)連結基金-台幣B配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)"
+    "M&G入息基金A(美元避險月配)F(L1+L3 晨星2026/6 股39.25/債57.89/現4.64（8/23截圖真值；MoneyDJ 2026/07/31 有效部位為股47.6/債45.5/現6.9，含期貨，故沿用晨星口徑）；已知 5 行業＝晨星；未揭露權益尾依 MSCI World 相對權重補（醫療2.69/核心消費1.40/能源1.19/公用0.68/不動產0.45）)",
+    "保單-NTDEQ2640 元大台灣高股息優質龍頭基金-新台幣(B)配息(L1 官方揭露 2026/08/31（MoneyDJ 依產業）：半導體63.70＋電子零組件7.43＋其他電子5.11＋電腦週邊0.07→資訊科技76.31；通信網路9.99→通訊服務；金融保險4.43；鋼鐵0.51→原物料；現金8.76。同期官方區域表：台灣91.24／國外0.00（北美0）)"
    ],
    "工業": [
     "00984A(L1 安聯官方持股明細 2026/11/06（口袋證券轉載）：金融保險28.06/半導體16.05/電子零組件8.35/電腦週邊8.13/航運7.69/塑膠4.64/油電燃氣3.70/光電3.25/通信網路2.81/其他電子1.92；股票95.27、未列產業10.67、現金4.73)",
-    "A05143 元大台灣卓越50ETF(0050)連結基金-台幣A不配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)",
-    "A05144 元大台灣卓越50ETF(0050)連結基金-台幣B配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)"
+    "M&G入息基金A(美元避險月配)F(L1+L3 晨星2026/6 股39.25/債57.89/現4.64（8/23截圖真值；MoneyDJ 2026/07/31 有效部位為股47.6/債45.5/現6.9，含期貨，故沿用晨星口徑）；已知 5 行業＝晨星；未揭露權益尾依 MSCI World 相對權重補（醫療2.69/核心消費1.40/能源1.19/公用0.68/不動產0.45）)",
+    "保單-NTDET0010 元大台灣卓越50(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)"
    ],
    "公用事業": [
     "00984A(L1 安聯官方持股明細 2026/11/06（口袋證券轉載）：金融保險28.06/半導體16.05/電子零組件8.35/電腦週邊8.13/航運7.69/塑膠4.64/油電燃氣3.70/光電3.25/通信網路2.81/其他電子1.92；股票95.27、未列產業10.67、現金4.73)",
-    "A05143 元大台灣卓越50ETF(0050)連結基金-台幣A不配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)",
-    "A05144 元大台灣卓越50ETF(0050)連結基金-台幣B配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)"
+    "M&G入息基金A(美元避險月配)F(L1+L3 晨星2026/6 股39.25/債57.89/現4.64（8/23截圖真值；MoneyDJ 2026/07/31 有效部位為股47.6/債45.5/現6.9，含期貨，故沿用晨星口徑）；已知 5 行業＝晨星；未揭露權益尾依 MSCI World 相對權重補（醫療2.69/核心消費1.40/能源1.19/公用0.68/不動產0.45）)",
+    "保單-NTDET0010 元大台灣卓越50(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)"
    ],
    "醫療保健": [
-    "A05143 元大台灣卓越50ETF(0050)連結基金-台幣A不配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)",
-    "A05144 元大台灣卓越50ETF(0050)連結基金-台幣B配息(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)",
-    "B09462 貝萊德世界健康科學A10美元總報酬穩定配息(L1 MoneyDJ 官方月報 2026/06/30（製藥46.98+生物技術23.46+醫療保健服務11.20+生命科學工具8.74+醫療保健設備8.60；現金1.02）)"
+    "M&G入息基金A(美元避險月配)F(L1+L3 晨星2026/6 股39.25/債57.89/現4.64（8/23截圖真值；MoneyDJ 2026/07/31 有效部位為股47.6/債45.5/現6.9，含期貨，故沿用晨星口徑）；已知 5 行業＝晨星；未揭露權益尾依 MSCI World 相對權重補（醫療2.69/核心消費1.40/能源1.19/公用0.68/不動產0.45）)",
+    "保單-NTDET0010 元大台灣卓越50(L1 元大投信月報 2026/10/31：半導體69.03+電子零組件8.11+電腦週邊4.32+其他電子3.91+光電0.51→資訊科技85.88；金融保險9.48；通信網路1.80→通訊服務；塑膠1.45→原物料；食品0.39→核心消費；生技醫療0.37→醫療保健；航運0.29→工業；油電燃氣0.11→公用事業；現金0.23)",
+    "保單-USDEQ3490 安聯收益成長基金-AM月收類股(美元)(L1 官方月報2026/07/31 完整產業表（MoneyDJ tlz64）：資訊科技24.2/工業11.26/金融10.38/通訊服務10.28/非必需消費9.14/健康護理8.04/流動資金6.69/能源4.93/公用3.98/房地產3.97/原物料3.42/必需消費2.39/其他1.31)"
    ],
    "能源": [
-    "B09461 貝萊德世界能源A10美元總報酬穩定配息(L1 公開月報（能源）)",
-    "B14445 富達全球動能多元基金A股C月配美元(L1+L3 官方資產類別2026/07/31（股73.04/企業債8.77/股權類衍生7.72/新興市場債4.21/另類資產2.46/現金及其他2.17/固收衍生0.88/公債0.75，MoneyDJ fth29）；5 行業＝晨星2025/12 官方（科技21.79/金融12.6/原物料8.7/電信6.77/工業6.68）；未揭露權益尾（含股權衍生）依 MSCI World 相對權重補；另類資產（黃金/商品）留其他)",
-    "B20186 安聯收益成長AMg7月收總收益美元(L1 官方月報2026/07/31 完整產業表（MoneyDJ tlz64）：資訊科技24.2/工業11.26/金融10.38/通訊服務10.28/非必需消費9.14/健康護理8.04/流動資金6.69/能源4.93/公用3.98/房地產3.97/原物料3.42/必需消費2.39/其他1.31)"
+    "M&G入息基金A(美元避險月配)F(L1+L3 晨星2026/6 股39.25/債57.89/現4.64（8/23截圖真值；MoneyDJ 2026/07/31 有效部位為股47.6/債45.5/現6.9，含期貨，故沿用晨星口徑）；已知 5 行業＝晨星；未揭露權益尾依 MSCI World 相對權重補（醫療2.69/核心消費1.40/能源1.19/公用0.68/不動產0.45）)",
+    "保單-USDEQ3490 安聯收益成長基金-AM月收類股(美元)(L1 官方月報2026/07/31 完整產業表（MoneyDJ tlz64）：資訊科技24.2/工業11.26/金融10.38/通訊服務10.28/非必需消費9.14/健康護理8.04/流動資金6.69/能源4.93/公用3.98/房地產3.97/原物料3.42/必需消費2.39/其他1.31)",
+    "保單-USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)(L1 官方月報2026/07/31 完整產業表（MoneyDJ tlz64）：資訊科技24.2/工業11.26/金融10.38/通訊服務10.28/非必需消費9.14/健康護理8.04/流動資金6.69/能源4.93/公用3.98/房地產3.97/原物料3.42/必需消費2.39/其他1.31)"
    ],
    "非核心消費": [
-    "B14445 富達全球動能多元基金A股C月配美元(L1+L3 官方資產類別2026/07/31（股73.04/企業債8.77/股權類衍生7.72/新興市場債4.21/另類資產2.46/現金及其他2.17/固收衍生0.88/公債0.75，MoneyDJ fth29）；5 行業＝晨星2025/12 官方（科技21.79/金融12.6/原物料8.7/電信6.77/工業6.68）；未揭露權益尾（含股權衍生）依 MSCI World 相對權重補；另類資產（黃金/商品）留其他)",
-    "B20186 安聯收益成長AMg7月收總收益美元(L1 官方月報2026/07/31 完整產業表（MoneyDJ tlz64）：資訊科技24.2/工業11.26/金融10.38/通訊服務10.28/非必需消費9.14/健康護理8.04/流動資金6.69/能源4.93/公用3.98/房地產3.97/原物料3.42/必需消費2.39/其他1.31)",
-    "B31138 M&G入息基金A(美元避險月配)F(L1+L3 晨星2026/6 股39.25/債57.89/現4.64（8/23截圖真值；MoneyDJ 2026/07/31 有效部位為股47.6/債45.5/現6.9，含期貨，故沿用晨星口徑）；已知 5 行業＝晨星；未揭露權益尾依 MSCI World 相對權重補（醫療2.69/核心消費1.40/能源1.19/公用0.68/不動產0.45）)"
+    "M&G入息基金A(美元避險月配)F(L1+L3 晨星2026/6 股39.25/債57.89/現4.64（8/23截圖真值；MoneyDJ 2026/07/31 有效部位為股47.6/債45.5/現6.9，含期貨，故沿用晨星口徑）；已知 5 行業＝晨星；未揭露權益尾依 MSCI World 相對權重補（醫療2.69/核心消費1.40/能源1.19/公用0.68/不動產0.45）)",
+    "保單-USDEQ3490 安聯收益成長基金-AM月收類股(美元)(L1 官方月報2026/07/31 完整產業表（MoneyDJ tlz64）：資訊科技24.2/工業11.26/金融10.38/通訊服務10.28/非必需消費9.14/健康護理8.04/流動資金6.69/能源4.93/公用3.98/房地產3.97/原物料3.42/必需消費2.39/其他1.31)",
+    "保單-USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)(L1 官方月報2026/07/31 完整產業表（MoneyDJ tlz64）：資訊科技24.2/工業11.26/金融10.38/通訊服務10.28/非必需消費9.14/健康護理8.04/流動資金6.69/能源4.93/公用3.98/房地產3.97/原物料3.42/必需消費2.39/其他1.31)"
    ],
    "不動產": [
-    "B14445 富達全球動能多元基金A股C月配美元(L1+L3 官方資產類別2026/07/31（股73.04/企業債8.77/股權類衍生7.72/新興市場債4.21/另類資產2.46/現金及其他2.17/固收衍生0.88/公債0.75，MoneyDJ fth29）；5 行業＝晨星2025/12 官方（科技21.79/金融12.6/原物料8.7/電信6.77/工業6.68）；未揭露權益尾（含股權衍生）依 MSCI World 相對權重補；另類資產（黃金/商品）留其他)",
-    "B20186 安聯收益成長AMg7月收總收益美元(L1 官方月報2026/07/31 完整產業表（MoneyDJ tlz64）：資訊科技24.2/工業11.26/金融10.38/通訊服務10.28/非必需消費9.14/健康護理8.04/流動資金6.69/能源4.93/公用3.98/房地產3.97/原物料3.42/必需消費2.39/其他1.31)",
-    "B31138 M&G入息基金A(美元避險月配)F(L1+L3 晨星2026/6 股39.25/債57.89/現4.64（8/23截圖真值；MoneyDJ 2026/07/31 有效部位為股47.6/債45.5/現6.9，含期貨，故沿用晨星口徑）；已知 5 行業＝晨星；未揭露權益尾依 MSCI World 相對權重補（醫療2.69/核心消費1.40/能源1.19/公用0.68/不動產0.45）)"
+    "M&G入息基金A(美元避險月配)F(L1+L3 晨星2026/6 股39.25/債57.89/現4.64（8/23截圖真值；MoneyDJ 2026/07/31 有效部位為股47.6/債45.5/現6.9，含期貨，故沿用晨星口徑）；已知 5 行業＝晨星；未揭露權益尾依 MSCI World 相對權重補（醫療2.69/核心消費1.40/能源1.19/公用0.68/不動產0.45）)",
+    "保單-USDEQ3490 安聯收益成長基金-AM月收類股(美元)(L1 官方月報2026/07/31 完整產業表（MoneyDJ tlz64）：資訊科技24.2/工業11.26/金融10.38/通訊服務10.28/非必需消費9.14/健康護理8.04/流動資金6.69/能源4.93/公用3.98/房地產3.97/原物料3.42/必需消費2.39/其他1.31)",
+    "保單-USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)(L1 官方月報2026/07/31 完整產業表（MoneyDJ tlz64）：資訊科技24.2/工業11.26/金融10.38/通訊服務10.28/非必需消費9.14/健康護理8.04/流動資金6.69/能源4.93/公用3.98/房地產3.97/原物料3.42/必需消費2.39/其他1.31)"
    ]
   },
-  "備註": "L1=公開月報權重 L2=公開成分權重 L3=指數基準 L4=名稱/類型推估。2026-09-23 兩階段細化：第一階段 ETF 15 檔改 L2、貝萊德 B11 改 L3、L1/別名補齊；第二階段拆解六檔基金「其他」——安聯收益成長/PIMCO 用官方完整產業表，摩根/聯博/富達/M&G 用官方資產類別＋MSCI World 補權，元大卓越50連結＝0050 權重。未分類 34.6%→1.6%（動態）。剩餘為富達另類資產（黃金/商品）、小型境內基金（路博邁5G/台中銀優息/台新半導體/國泰高股息）與 ETF 指數「其他」桶。⚠️ 本表「固收/現金」為 GICS 研究殘餘桶，非防守比例（防守看五桶穿透合併口徑）"
+  "備註": "L1=公開月報權重 L2=公開成分權重 L3=指數基準 L4=名稱/類型推估。2026-09-23 兩階段細化：第一階段 ETF 15 檔改 L2、貝萊德 B11 改 L3、L1/別名補齊；第二階段拆解六檔基金「其他」——安聯收益成長/PIMCO 用官方完整產業表，摩根/聯博/富達/M&G 用官方資產類別＋MSCI World 補權，元大卓越50連結＝0050 權重。未分類 34.6%→1.4%（動態）。剩餘為富達另類資產（黃金/商品）、小型境內基金（路博邁5G/台中銀優息/台新半導體/國泰高股息）與 ETF 指數「其他」桶。⚠️ 本表「固收/現金」為 GICS 研究殘餘桶，非防守比例（防守看五桶穿透合併口徑）"
  },
  "rotation_recommendation": {
   "日期": "2026-11-23",
@@ -3715,12 +3719,12 @@
    },
    {
     "產業": "金融",
-    "現況": 10.5,
+    "現況": 10.6,
     "目標": 8.0,
     "紅線": null,
     "資金分數": 0,
     "動作": "維持現況",
-    "理由": "現況 10.5%",
+    "理由": "現況 10.6%",
     "標的": [
      "0055(金融)"
     ]
@@ -3809,7 +3813,7 @@
     ]
    }
   ],
-  "總結": "本週暫停新增部位 — LTV 50.39% ≥45% 警戒（裁決 C）；乾粉 525,855 全留現金，待 LTV 回落 <45% 自動恢復",
+  "總結": "本週暫停新增部位 — LTV 52.12% ≥45% 警戒（裁決 C）；乾粉 505,448 全留現金，待 LTV 回落 <45% 自動恢復",
   "ETF資金": {
    "高股息防禦": {
     "法人淨買賣超": -175185440,
@@ -3818,24 +3822,24 @@
    }
   },
   "資料來源": {
-   "雷達資金流 generated_at": "2026-11-21T08:30:42.378348",
+   "雷達資金流 generated_at": "2026-11-23T14:01:59.384835",
    "產業現況來源": "snapshot.industry_penetration",
-   "產出時間": "2026-11-23T07:01:28"
+   "產出時間": "2026-11-23T14:02:04"
   },
   "交易計畫": [
    {
     "產業": "現金保留",
     "標的": "台幣活存/MMF",
-    "金額": 525000,
-    "節奏": "裁決 C：LTV 50.39% ≥45% 警戒 → 本週不新增部位，乾粉 525,855 全留現金；守住現金底線 700,000.0（可動用 1,225,855、乾粉 525,855；月盈餘 74,997 其中半數 37,498 屬規劃值、未入帳不動用）；防守合併 66.5%（防守承接凍結（2026-08-21 使用者：基金也有配息應合併計算））",
+    "金額": 505000,
+    "節奏": "裁決 C：LTV 52.12% ≥45% 警戒 → 本週不新增部位，乾粉 505,448 全留現金；守住現金底線 700,000.0（可動用 1,205,448、乾粉 505,448；月盈餘 74,997 其中半數 37,498 屬規劃值、未入帳不動用）；防守合併 65.6%（防守承接凍結（2026-08-21 使用者：基金也有配息應合併計算））",
     "理由": "乾粉餘額緩衝（底線制，不借錢囤現金）"
    }
   ]
  },
  "sector_deep_dive": {
-  "核心消費": "【核心消費】資金分數為中性，代表機構在此價位沒有明顯加碼或撤出，防禦性配置的需求尚未被殖利率環境逼出來；目前持倉明顯低於目標，屬於「結構性低配、但缺乏催化」的狀態，相對強弱處於中性偏弱、尚未擁擠。執行上不宜一次補足缺口，建議以月頻分批、每次小額方式往目標靠攏，進場條件可設在長天期殖利率回落或市場波動率跳升時加速，停損以個股基本面惡化為準而非價格線；總體上這是對沖景氣下行與地緣風險的底倉，但美元信用若持續緊縮、實質利率偏高，防禦類股的評價修復會偏慢，寧可慢補不可搶補。",
-  "能源": "【能源】資金分數為負，顯示機構正在減碼，背後含義是對油價邊際需求與資本支出紀律的疑慮升溫，而非單純獲利了結；目前權重已略高於目標，屬於「擁擠度下降中」的減碼格局，相對強弱轉弱但尚未超跌。執行上應順勢而為，不逆勢加碼，反彈至前波壓力區時分批減至目標以下，停損線設在油價跌破關鍵支撐或龍頭股跌破季線；與總體情境的關聯在於地緣風險溢價一旦消退、加上長端殖利率居高壓抑遠期需求預期，能源的高股息吸引力會被債息比價削弱，這是資金流出的深層原因。",
-  "醫療保健": "【醫療保健】資金分數為負且處於明顯低配，這是「基本面與資金面背離」的典型：評價已具吸引力、但機構仍在觀望政策定價與大型藥廠專利懸崖的能見度，屬於超跌但尚未止穩的輪動位置。執行上暫緩進場是對的，等資金流出趨緩、出現連續數週淨流入或龍頭股止穩打底再啟動分批，第一批只建立觀察倉、停損設在跌破前低；總體上醫療保健對殖利率敏感度低於科技，是殖利率高原期的相對避風港，但美元信用緊縮會壓抑生技類的融資與併購動能，因此止穩訊號要看資金面而非只看評價面。"
+  "核心消費": "【核心消費】目前配置僅及目標的一半，但資金分數為中性，顯示機構並未急於回補這個防禦性板塊。這通常意味大型資金在等殖利率路徑更明朗後才願意進場，屬於「低配但觀望」的典型狀態，而非遭到拋棄。輪動位置上核心消費相對大盤偏弱但未超跌，擁擠度低，具備左側布局價值。執行上建議採分批、以時間換取確認：先維持觀察，待資金分數轉正或出現連續淨流入再啟動第一筆加碼，節奏放慢至三到四批；若殖利率意外再上行壓縮防禦股評價，則暫停加碼但不砍底倉。與總體連動在於其現金流穩定、對長端殖利率敏感度中等，是殖利率高檔震盪時的資金避風港，美元信用若轉弱亦有助其相對抗跌。",
+  "能源": "【能源】資金分數為負且已明確流出，機構正在減碼這個循環性與地緣溢價並存的板塊，背後含義是對油價上行持續性存疑、不願在波動高位承擔部位。輪動上能源屬於資金撤離的後段，短線雖可能有超跌反彈，但相對強弱轉弱、尚未見到承接量能，不宜逆勢加碼。執行上維持避開、不主動進場，若既有部位偏重則逢反彈分批減碼；若要重新評估，須等資金分數回正且油價與地緣風險溢價同步降溫，並設嚴格停損避免事件驅動的跳空風險。總體上能源高度連動地緣政治與美元，地緣升溫時波動放大、美元走強則壓抑商品評價，兩者皆使此板塊的風險報酬不對稱。",
+  "醫療保健": "【醫療保健】明顯低配但資金持續流出，機構行為顯示在政策與定價不確定性未解前選擇先撤，屬於「便宜但沒人要」的狀態。輪動上醫療保健相對弱勢、情緒偏冷但尚未到全面超跌，擁擠度低代表一旦資金回頭，回補空間大。執行上暫緩進場、以止穩為前提：觀察資金流出是否收斂、出現單日或單週淨流入轉正再啟動第一批，分批節奏宜緩，並設停損防政策利空二次打擊。與總體連動上，醫療保健防禦屬性使其在殖利率回落、市場轉向避險時受惠，但美元信用與政策風險會壓抑評價，屬「等總體轉折再布局」的板塊。"
  },
  "phase_goals": {
   "phase1": {
@@ -3924,8 +3928,8 @@
    "估算月配息增加": "PIMCO ~0.4-0.5%/月 + 黃金A10 ~0.3-0.5%/月 ≈ 月增 0.6-1.0萬（含本金風險）"
   }
  },
- "securities_current_value": 2296470,
- "funds_cathay_market_value": 11523755,
+ "securities_current_value": 2365710,
+ "funds_cathay_market_value": 11320627,
  "decision_0824_pm": {
   "裁示": "PI 未核 → 現金/加倉全部暫緩（含黃金衛星 00635U、00878、台股慢慢買）；美元曝險由保單調整處理",
   "原因": "美元曝險 54-64% 超 50% 紅線，但 PI（9/3前）未核 → 不動本金（8/21 裁示）",
@@ -3941,23 +3945,23 @@
  "allianz_current_value": 7207369.0,
  "cash_available": 772607,
  "cash_detail": {
-  "北台中活儲存款-優質薪轉儲蓄存款": 100,
-  "民權活儲存款-證券": 8955,
-  "文心綜活儲存款-薪轉": 153401,
-  "敦南Richart數位一般帳戶": 104988,
-  "敦南數位二類異業帳戶": 13,
-  "敦南Richart子帳戶": 509467,
-  "臺幣綜存": 59044,
-  "市政分行活期儲蓄存款": 20,
-  "營業部DAWHO活期儲蓄存款": 339274,
-  "數位活儲": 40609,
-  "Digital Savings Account": 739,
-  "我的儲蓄口袋": 0,
-  "金如意": 0,
-  "iLEO帳戶": 716,
-  "活期儲蓄存款": 878527,
-  "數位存款帳戶２類": 2,
-  "證券活期儲蓄存款": 0
+  "北台中活儲存款-優質薪轉儲蓄存款": 100.0,
+  "民權活儲存款-證券": 26445.0,
+  "文心綜活儲存款-薪轉": 202470.0,
+  "敦南Richart數位一般帳戶": 104988.0,
+  "敦南數位二類異業帳戶": 13.0,
+  "敦南Richart子帳戶": 509467.0,
+  "臺幣綜存": 59044.0,
+  "市政分行活期儲蓄存款": 20.0,
+  "營業部DAWHO活期儲蓄存款": 339606.0,
+  "數位活儲": 40609.0,
+  "Digital Savings Account": 739.0,
+  "我的儲蓄口袋": 0.0,
+  "iLEO帳戶": 716.0,
+  "活期儲蓄存款": 821229.0,
+  "數位存款帳戶２類": 2.0,
+  "證券活期儲蓄存款": 0.0,
+  "": 0.0
  },
  "cc_unbilled": {
   "永豐SPORT": 16613,
@@ -3967,11 +3971,11 @@
   "第一金": 0
  },
  "fund_breakdown_cathay": {
-  "富達全球動能多元B股C月配息美元": 5704635,
-  "貝萊德智慧數據收益成長B11-美元-強化穩定月配息": 5063794,
-  "聯博全球多元收益AD美元月配": 979577
+  "富達全球動能多元B股C月配息美元": 5440807,
+  "貝萊德智慧數據收益成長B11-美元-強化穩定月配息": 4934511,
+  "聯博全球多元收益AD美元月配": 945309
  },
- "securities_current": 2535370,
+ "securities_current": 2365710,
  "insurance_conversion_0826": {
   "定案": "2026-08-26 使用者修正：M&G 轉 80萬 → 貝萊德黃金A10 32萬(40%) + 貝萊德健康A10 48萬(60%)",
   "轉出": {
@@ -5183,7 +5187,7 @@
    "權重": "當月 < 3個月趨勢 < 壓力情境 < 現金水位"
   }
  },
- "firstjin_short_label": "M&G入息基金A(美元避險月配)F（IDXX，10/08 申請轉換已生效；10/16 截圖確認 100% IDXX）",
+ "firstjin_short_label": "M&G入息基金A(美元避險月配)（ID05；原遮罩 IDXX 於 11/23 正名）",
  "weekly_ops_closure_0904": {
   "期間": "2026-09-01 ~ 09-04（9月第1週後段）",
   "狀態": "✅ 本週操作紀錄已更新（9/4 使用者確認）",
@@ -5371,7 +5375,7 @@
   "額度_本金": 12000000,
   "利率": "2.65%（2026-10-28 由 10/22 實扣 9,852 ÷ 23 天 × 365 ÷ 5,900,000 反算＝2.65%，與原口徑一致）",
   "撥款": "✅ 2026-09-29 10:57 入帳 NT$5,900,000（國泰世華 App 入帳通知，入帳帳號末五碼 85061＝活期儲蓄存款）；使用者 9/29 確認實撥 590 萬（表定 540 萬，多 50 萬）",
-  "LTV": "50.12%（借款 5,900,000 / 池市值 11,771,816，2026-11-06 逐檔核算）",
+  "LTV": "52.12%（借款 5,900,000 / 池市值 11,320,627，2026-11-23 逐檔核算；原 11/06 為 50.12%）",
   "用途": "優先清償 500 萬高息負債（保單借貸 400萬@4%＋券商質押 96萬@3.92%）→ 2026-09-29 第一批保單借貸 200 萬已提出還款申請（待入帳）",
   "待補": [],
   "待補_收斂_20261030": "2026-10-30 使用者裁決：基本借款條件已確認 → 不再列為待補件；僅保留真正影響風險判斷的 E1（維持率/追繳）、E2（認列成數/單池）、E3（續約與不續約/部分還本/提前清償）。原四項待補中，①「元大證金 50 萬@3.92% 是否一併清」已於 2026-09-30 清償 960,000 入帳結案；②「銀行側撥款通知／對帳單（月付息日、繳息方式）」已於 2026-10-28 以 10/22 實扣 9,852（23 天息）核實 → 兩項移出待補。保留 B11 級別費率/配息是否含本金於 b11 區塊（不列本關證據缺口）。",
@@ -5413,11 +5417,11 @@
    "合計": 11773599
   },
   "擔保池": {
-   "富達全球動能多元B股C月配息美元": 5704635,
-   "貝萊德智慧數據收益成長B11-美元-強化穩定月配息": 5063794,
-   "聯博全球多元收益AD美元月配": 979577,
-   "合計": 11748006,
-   "資料日": "2026-11-16（國泰基金截圖，參考淨值日 2026/11/13）"
+   "富達全球動能多元B股C月配息美元": 5440807,
+   "貝萊德智慧數據收益成長B11-美元-強化穩定月配息": 4934511,
+   "聯博全球多元收益AD美元月配": 945309,
+   "合計": 11320627,
+   "資料日": "2026-11-23（11/20 報價日；11/23 寫入）"
   },
   "淨值_20260915": {
    "富達": "15,744.5 單位 @USD 11.64",
@@ -5773,6 +5777,12 @@
     "乾粉承受度": "494,919；雙衝擊需還本 74～137 萬 → 完全不足，須賣資產或動用指定款",
     "歷史依據": "2025-04-02 USD/TWD 33.26 → 2025-06-26 28.82（台幣升值 13.4%），同期美股仍上漲 → 匯率與股市可脫鉤"
    }
+  },
+  "現金不動用_20261123": {
+   "裁決": "使用者 2026-11-23 Telegram：「80 萬沒打算動」→ 帳戶保留現金為生活／房貸安全網，不作為質押補款彈藥",
+   "口徑": "LTV 風險只看擔保品本身：銀行維持率＝池市值 11,320,627 ÷ 借款 5,900,000＝191.9%（LTV 52.12%）；本金額度 1,200 萬僅為核貸基準，非擔保估值",
+   "成數現況": "5 成上限＝池需 ≥ 11,800,000，現池低 479,373（-4.06%）→ 已低於 5 成；追繳線（維持率 140%）尚需池再跌 27.01%（3,057,322）",
+   "唯一槓桿": "現金不動 → 觸線後只能賣基金並同日還款（國泰三檔為後收級別，先確認費用）"
   }
  },
  "標案押標金_1010": {
@@ -5797,9 +5807,11 @@
   "系統修復_同日": "us30y_monitor.py 兩處：① 紅線檢查原寫在模式切換分支，模式維持時 early return（L90-95）→ 警示在穩態永遠不會響，永久凍結規則形同未生效（改為 red_line latch，跨日只發一次）② 只讀 FRED（落後 1-2 交易日）→ 改 FRED + Yahoo ^TYX 合併、只取已收盤交易日"
  },
  "fund_nav_dates": {
-  "國泰直購（富達/聯博/B11）": "2026-11-16",
-  "鉅亨（一般申購＋自由Pay）": "2026-11-13",
-  "安聯保單內基金（App）": "2026-11-10"
+  "國泰直購（富達/聯博/B11）": "2026-11-20",
+  "鉅亨（一般申購＋自由Pay）": "2026-11-20",
+  "安聯保單內基金（App）": "2026-11-23",
+  "第一金（ID05 M&G）": "2026-11-20",
+  "證券": "2026-11-23（盤中 11:48）"
  },
  "data_freshness": {
   "securities": {
@@ -5835,9 +5847,9 @@
   "券商質押利率": 0.0392,
   "基金質押": 5900000,
   "基金質押利率": 0.0265,
-  "信用卡_當期未繳_全額扣繳": 51932,
+  "信用卡_當期未繳_全額扣繳": 34661,
   "個人借款_借出款_列應收款非負債": {},
-  "total": 30957276,
+  "total": 30940005,
   "note": "2026-09-13 建立：負債改由明細推導（原為手寫值，曾出現 78,099 不明殘差）；借給女友的錢＝應收款（見 snapshot.receivables），不計入負債；2026-09-29 起「基金質押」（fund_pledge_loan，國泰 590萬@2.65%）與「券商質押」分列不同利率欄，勿合併計算月息"
  },
  "receivables": {
@@ -6107,14 +6119,15 @@
  "source_import_dates": {
   "現金／銀行（Moneybook）": "2026-11-13",
   "證券部位": "2026-11-19",
-  "保單 第一金": "2026-11-13",
-  "保單 安聯 A/B（App）": "2026-11-13",
-  "基金 國泰直購（富達/聯博/B11）": "2026-11-17",
-  "基金 鉅亨（一般申購＋自由Pay）": "2026-11-16",
+  "保單 第一金": "2026-11-23",
+  "保單 安聯 A/B（App）": "2026-11-23",
+  "基金 國泰直購（富達/聯博/B11）": "2026-11-23",
+  "基金 鉅亨（一般申購＋自由Pay）": "2026-11-23",
   "_note": "匯入日＝我方取得並寫入的日期，必須 ≥ 該源 as-of；證券部位記的是『最後一次人工確認持股』；鉅亨 2026-11-16 使用者提供「帳戶總覽_一般申購(38).csv」＋自由PAY 截圖（淨值日 2026/11/13），as-of 已由 2026-11-09 校正為 2026-11-13、匯入日 2026-11-16。",
   "Moneybook 明細": "2026-11-13",
   "Moneybook 帳戶": "2026-11-13",
-  "國泰基金配息（活儲入帳）": "2026-11-10"
+  "國泰基金配息（活儲入帳）": "2026-11-10",
+  "證券 凱基": "2026-11-23"
  },
  "signal_priority_20260923": {
   "定案": "2026-09-23 使用者核准（Telegram ✅）",
@@ -6191,14 +6204,14 @@
   "asof": "2026-11-23",
   "current": {
    "growth_assets": {
-    "tw_growth": 3012080.0,
-    "us_growth": 9428213.0,
+    "tw_growth": 2929333.0,
+    "us_growth": 9253991.0,
     "re_value": 34017063.0,
     "mortgage": 25005344.0,
     "re_net": 9011719.0,
     "fin_debt": 0.0,
-    "total": 21452012.0,
-    "net_after_fin_debt": 21452012.0
+    "total": 21195043.0,
+    "net_after_fin_debt": 21195043.0
    },
    "coast": {
     "fi_target_swr": 47763000.0,
@@ -6206,21 +6219,21 @@
     "years_to_target": 0.19,
     "target_date": "2027-02-01",
     "real_return_pct": 5.0,
-    "fin_only_capital": 12440293.0,
+    "fin_only_capital": 12183324.0,
     "coast_threshold_swr": 47322276.6615883,
-    "coast_fi_ratio_swr_pct": 45.3,
-    "coast_fi_ratio_fin_only_swr_pct": 26.3,
-    "coast_gap_fin_only_swr": 34881983.6615883,
-    "fv_no_contrib_swr": 21651799.563305512,
-    "gap_fv_swr": 26111200.436694488,
-    "monthly_needed_swr": 13028457.598350635,
+    "coast_fi_ratio_swr_pct": 44.8,
+    "coast_fi_ratio_fin_only_swr_pct": 25.7,
+    "coast_gap_fin_only_swr": 35138952.6615883,
+    "fv_no_contrib_swr": 21392437.351407483,
+    "gap_fv_swr": 26370562.648592517,
+    "monthly_needed_swr": 13157869.097010775,
     "coast_threshold_yield": 37857821.32927063,
-    "coast_fi_ratio_yield_pct": 56.7,
-    "coast_fi_ratio_fin_only_yield_pct": 32.9,
-    "coast_gap_fin_only_yield": 25417528.32927063,
-    "fv_no_contrib_yield": 21651799.563305512,
-    "gap_fv_yield": 16558600.436694488,
-    "monthly_needed_yield": 8262087.53598059
+    "coast_fi_ratio_yield_pct": 56.0,
+    "coast_fi_ratio_fin_only_yield_pct": 32.2,
+    "coast_gap_fin_only_yield": 25674497.32927063,
+    "fv_no_contrib_yield": 21392437.351407483,
+    "gap_fv_yield": 16817962.648592517,
+    "monthly_needed_yield": 8391499.03464073
    },
    "light_work": {
     "rows": [
@@ -6228,25 +6241,25 @@
       "月收": 0.0,
       "所需年現金流": 1910520,
       "所需本金": 38210400,
-      "缺口": 25770107,
-      "達成_pct": 32.6
+      "缺口": 26027076,
+      "達成_pct": 31.9
      },
      {
       "月收": 20000.0,
       "所需年現金流": 1670520,
       "所需本金": 33410400,
-      "缺口": 20970107,
-      "達成_pct": 37.2
+      "缺口": 21227076,
+      "達成_pct": 36.5
      },
      {
       "月收": 30000.0,
       "所需年現金流": 1550520,
       "所需本金": 31010400,
-      "缺口": 18570107,
-      "達成_pct": 40.1
+      "缺口": 18827076,
+      "達成_pct": 39.3
      }
     ],
-    "fin_capital": 12440293.0,
+    "fin_capital": 12183324.0,
     "yield_pct": 5.0,
     "expense": 159210.0
    },
@@ -6255,10 +6268,10 @@
     "rent": 80100.0,
     "dividend_conservative": 100000.0,
     "dividend_normal": 177072.0,
-    "dividend_actual": 121737.0,
+    "dividend_actual": 158296.0,
     "pccr_pct": 139.3,
     "pccr_conservative_pct": 113.1,
-    "pccr_actual_pct": 110.4,
+    "pccr_actual_pct": 133.3,
     "pccr_normal_headroom": 139.3,
     "nonpassive": {
      "girlfriend_repayment": 6000.0
@@ -6272,27 +6285,27 @@
     "gap": 32110.0,
     "vacancy": 33000.0,
     "scenario": "extreme",
-    "cash_full": 1225855.0,
+    "cash_full": 1205448.0,
     "reserve": 0.0,
     "floor": 700000.0,
-    "cash_used": 1225855.0,
+    "cash_used": 1205448.0,
     "cash_below_floor": false,
-    "runway_days": 1145,
+    "runway_days": 1126,
     "cash_caliber": "net_of_reserve",
-    "runway_days_full_cash": 1145,
-    "runway_days_net_reserve": 1145
+    "runway_days_full_cash": 1126,
+    "runway_days_net_reserve": 1126
    },
    "stress": {
-    "pool": 11748006.0,
+    "pool": 11320627.0,
     "loan": 5900000.0,
     "disbursed": true,
-    "ltv_now_pct": 50.2,
-    "maintenance_now_pct": 199.1,
-    "pool_minus30": 8223604.199999999,
-    "ltv_minus30_pct": 71.7,
-    "maintenance_minus30_pct": 139.4,
+    "ltv_now_pct": 52.1,
+    "maintenance_now_pct": 191.9,
+    "pool_minus30": 7924438.899999999,
+    "ltv_minus30_pct": 74.5,
+    "maintenance_minus30_pct": 134.3,
     "call_line_pct": 70.0,
-    "drop_to_call_pct": 28.3
+    "drop_to_call_pct": 25.5
    },
    "credit": {
     "locked": true,
@@ -6325,8 +6338,8 @@
    },
    "light": "🔴 紅燈",
    "blockers": [
-    "Coast FI 本金滑行（純金融）26.3% < 100%（含房產 45.3%）",
-    "跌30% 維持率 139.4% < 180%"
+    "Coast FI 本金滑行（純金融）25.7% < 100%（含房產 44.8%）",
+    "跌30% 維持率 134.3% < 180%"
    ]
   },
   "history": {
@@ -6702,13 +6715,13 @@
    },
    "2026-11-23": {
     "light": "🔴 紅燈",
-    "coast_fin_only_pct": 26.3,
-    "coast_with_re_pct": 45.3,
+    "coast_fin_only_pct": 25.7,
+    "coast_with_re_pct": 44.8,
     "pccr_pct": 139.3,
-    "runway_days": 1145,
-    "maintenance_pct": 139.4,
+    "runway_days": 1126,
+    "maintenance_pct": 134.3,
     "credit_locked": true,
-    "light_work_cap_2w": 20970107
+    "light_work_cap_2w": 21227076
    }
   }
  },
@@ -6726,8 +6739,8 @@
  },
  "fund_pledge_rate_old": 0.026,
  "fund_pledge_rate_note": "2026-09-29 使用者確認 2.65%（原記 2.77% → 2.6% → 2.65%）；以銀行撥款通知書／對帳單為最終依據",
- "allianz_policy_a": 4851426,
- "allianz_policy_b": 2355943,
+ "allianz_policy_a": 4780219,
+ "allianz_policy_b": 2209601,
  "allianz_b_breakdown_note": "2026-11-18 13:31 永旭 App（B）價值總額 2,365,548（-11.87%）；逐檔已於 2026-11-18 22:5x 套用（2640 241,906／T0010 870,754／3490 478,964／5700 631,760／6730 142,164，合計 2,365,548 ✓）",
  "firstjin_note_20260929": "2026-09-29 第一金人壽保單資訊頁：保單帳戶價值 1,885,484｜累計總繳保費 2,000,000｜累計提領 0｜累計已給付配息/撥回 133,805｜投資標的 100% ID01-M&G入息基金A(美元避險月配)F｜總繳保險費報酬率（含息）0.96%／（不含息）-5.73%",
  "真值日_20260929": "使用者 9/29 上傳：Moneybook ZIP（08/30–09/29）＋安聯保單 A/B 截圖＋第一金保單頁＋國泰基金庫存＋鉅亨一般申購 CSV／自由PAY 截圖；台股證券沿用 3,006,890（本批未提供）",
@@ -6806,8 +6819,8 @@
   }
  ],
  "cash_layers": {
-  "cash_total": 2125855,
-  "unrestricted_cash": 1225855,
+  "cash_total": 2105448,
+  "unrestricted_cash": 1205448,
   "restricted_cash": {
    "total": 900000,
    "debt_repayment_reserve": 900000,
@@ -6863,12 +6876,12 @@
    "定義": "現金底線內、不得動用的部分（cash_floor）",
    "floor": 700000
   },
-  "dry_powder": 525855,
-  "dry_powder_signed": 525855,
+  "dry_powder": 505448,
+  "dry_powder_signed": 505448,
   "cash_shortfall": 0,
   "credit_line_available": null,
   "credit_line_note": "⚠️ 無真值來源：可動用信用額度（未動用質押額度／保單借款空間）尚未建檔 → 壓力測試不得推估",
-  "語義": "現金 2,125,855 中 900,000 係指定還債款（同時撐『清償承諾』與『追繳緩衝』，清償卡住則兩邊同時破）；可動用僅 unrestricted_cash 1,225,855；撐不撐得住一律看 unrestricted_cash，不得把指定還債款當普通現金。",
+  "語義": "現金 2,105,448 中 900,000 係指定還債款（同時撐『清償承諾』與『追繳緩衝』，清償卡住則兩邊同時破）；可動用僅 unrestricted_cash 1,205,448；撐不撐得住一律看 unrestricted_cash，不得把指定還債款當普通現金。",
   "source": "sot_targets.cash_layers（派生：cash_total／restricted_cash／cash_floor）",
   "derived_at": "2026-11-23"
  },
@@ -6886,7 +6899,7 @@
    },
    "防禦維度": {
     "歷史值": 53.8,
-    "現行值": 50.4,
+    "現行值": 50.8,
     "性質": "度量修正",
     "說明": "舊 stored 53.8% 無程式寫入者（疑人工值）→ 停用，改派生（分母排除指定用途款）"
    },
@@ -6931,11 +6944,11 @@
     {
      "名稱": "質押 LTV 階段＝綠_正常（<45%）",
      "通過": false,
-     "現值": 50.39,
+     "現值": 52.12,
      "門檻": 45.0,
      "階段": "警戒",
      "階段動作": "不加碼、只回補現金；機會子彈暫停",
-     "LTV_自算": 50.22,
+     "LTV_自算": 52.12,
      "LTV_App": 50.39,
      "註記": "內部投資停止線（= thresholds.ltv分級_pct.黃上限），**非銀行追繳線**；銀行追繳線以追繳參考值暫作壓力測試（待銀行書面）｜2026-11-18 起本條改判「階段」：45–53%＝警戒（不加碼、子彈暫停），53% 僅為內部停止線下限。現階段＝警戒：不加碼、只回補現金；機會子彈暫停",
      "來源": "sot_targets.pledge_ltv（fund_pledge_loan ÷ fund_breakdown_cathay；thresholds.ltv分級_pct；v1.2 TD-20261015-02）"
@@ -6957,21 +6970,21 @@
    "減碼角色": "不受本函式限制（風險收斂恆可執行；本函式僅閘加碼／新增部位）",
    "pledge_ltv": {
     "借款": 5900000.0,
-    "擔保品市值": 11748006.0,
-    "LTV_pct": 50.39,
-    "LTV_self_pct": 50.22,
+    "擔保品市值": 11320627.0,
+    "LTV_pct": 52.12,
+    "LTV_self_pct": 52.12,
     "LTV_app_pct": 50.39,
     "LTV_app_date": "2026-11-16",
     "LTV_app_fresh": true,
-    "LTV_來源": "bank_app",
+    "LTV_來源": "self_calc",
     "階段": "警戒",
     "階段動作": "不加碼、只回補現金；機會子彈暫停",
     "綠上限_pct": 45.0,
     "加碼許可": false,
     "政策停止線_pct": 53.0,
     "追繳參考_pct": 70.0,
-    "距停止線_pct": 2.61,
-    "池值可跌_pct": -5.24,
+    "距停止線_pct": 0.88,
+    "池值可跌_pct": -1.67,
     "通過": true,
     "觸追繳": false,
     "語意": "內部投資停止線（= thresholds.ltv分級_pct.黃上限），**非銀行追繳線**；銀行追繳線以追繳參考值暫作壓力測試（待銀行書面）",
@@ -7061,7 +7074,7 @@
    },
    "source": "sot_targets.unfreeze_conditions（v1.2 TD-20261015-02；2026-10-14 裁決）"
   },
-  "reason": "讀值日 2026-11-20（落後 1 個交易日／日曆 3 天，容忍 3 個交易日）｜US30Y 為宏觀風險警示（已觸發，長債新增凍結生效），不單獨否決台股分批；解凍判定＝未達：質押 LTV 階段＝綠_正常（<45%）［現值 50.39 vs 門檻 45.0］",
+  "reason": "讀值日 2026-11-20（落後 1 個交易日／日曆 3 天，容忍 3 個交易日）｜US30Y 為宏觀風險警示（已觸發，長債新增凍結生效），不單獨否決台股分批；解凍判定＝未達：質押 LTV 階段＝綠_正常（<45%）［現值 52.12 vs 門檻 45.0］",
   "source": "sot_targets.us30y_gate（advisory 模式 v1.2：US30Y 警示＋unfreeze_conditions 複合條件；thresholds.US30Y閘門模式 可切回 hard_veto）"
  },
  "redline_policy": {
@@ -7099,7 +7112,7 @@
   "derived_at": "2026-11-23"
  },
  "rent_note_20260930": "大義街 1 樓店面 10 月租金 24,000 於 2026-09-30 提前入帳 → 歸 2026-10-01（9 月租金實收維持 77,100）；現金 3,752,961 已含此筆。",
- "last_updated": "2026-11-19",
+ "last_updated": "2026-11-23",
  "securities_note_20260930": "2026-09-30 持股截圖：持有股票市值 2,993,630（15 檔）｜未實現 +482,080（+19.19%）｜已實現 +23,460（+27.34%）｜當日 +12,220（+0.41%）",
  "allianz_note_20260930": "2026-09-30 安聯保單 App 截圖（19:39）：A 4,912,418（−21,991 vs 9/29）｜B 2,626,554（−7,378）｜合計 7,538,972＝App 目前帳戶總價值 ✓｜本月累積配息/撥回 9 筆 71,869｜風險屬性 積極型（效期至 116/01/21）｜保單借貸 4,000,000 未動（標的列表頁無借款餘額欄，待保單借款頁截圖）",
  "policy_loan_posting_note_20260930": "安聯保單借貸沖銷需等保單公司 3 個工作日入帳（預計 2026-10-03）；入帳前保單借貸 4,000,000 不動。",
@@ -7300,7 +7313,7 @@
   "一般申購": "鉅亨 CSV 2026-10-16（淨值日 2026/10/15）",
   "自由Pay": "鉅亨自由PAY專區 2026-10-16（淨值日 2026/10/15）"
  },
- "fund_freepay_as_of": "2026-10-30（平台自由PAY專區：市值 427,024／成本 310,000／已Pay 5,096／含Pay +39.39%）",
+ "fund_freepay_as_of": "2026-11-20（自由PAY 明細：市值 304,531／成本 310,000／已Pay 5,096／含Pay −0.12%）",
  "fund_freepay_platform_total_20261012": 495171,
  "funds_heng_total_20261012": 896219,
  "fund_freepay_note": "自由Pay＝453,080（2026-10-16 平台截圖，含Pay報酬率 47.8%）；逐檔 A05143 114,170／A09012 95,995／A49038 242,915，淨值日 2026/10/15。",
@@ -7313,7 +7326,7 @@
  },
  "allianz_a_note": "2026-10-12 13:21 永旭保經 App 標的列表（QL18610694）逐檔套用；價值總額 4,936,257（−2.15%）。USDEQ6730=177,803 為差額推導（截圖該列被『快捷選單』浮球遮住，僅露出 177,8 前綴，與差額完全吻合）。取代 2026-10-08 之 4,956,894（−20,637）。",
  "insurance_note": "2026-11-18 安聯 A 4,874,833＋B 2,365,548＋第一金 1,881,254（11/18 我的帳戶表現）＝9,121,635",
- "insurance": 9088623.0,
+ "insurance": 8856483,
  "insurance_stale_notice": "無（安聯 A/B 2026-11-11 淨值；第一金 2026-11-03）",
  "allianz_a_funds_note": "2026-10-12 App 逐檔（QL18610694）；含 allianz_a_breakdown 五檔，USDEQ6730 為差額推導 177,803",
  "insurance_breakdown_note_fix_20261012": "修復 2026-10-12 誤寫：本鍵契約為 calc_penetration 讀取之 policy_a_funds／policy_b_funds（缺鍵會使保單債券比消失、權益部位全灌美股桶 → 五桶失真）；已還原為標準結構並套用 A 逐檔新值。",
@@ -7449,7 +7462,7 @@
  "etf_dividend_schedule_note_20261016": "2026-10-16 Moneybook 實證：10 月 ETF 配息 5 檔全數入帳（台新媒體轉入）：00713 2,490／00981A 2,510／00983D 1,210／00919 6,590／00918 1,740＝14,540。公告預估合計 17,110 → 實收少 2,570：其中 00981A 差 −2,530（預估 5,040 vs 實收 2,510，約為每受益權單位 0.315 而非 0.63 → 配息率或除息基準股數待確認），其餘 4 檔各 −10（匯費）。",
  "moneybook_total_note": "2026-11-03 起由 update_data.py 派生＝cash_detail 台幣帳戶合計（匯入日 2026-11-19）；勿人工改寫",
  "allianz_ab_value": 7207369.0,
- "last_insurance_update": "2026-11-18T19:30:00+08:00",
+ "last_insurance_update": "2026-11-23T11:50:00+08:00",
  "insurance_note_20261019": "安聯 A 4,955,485／B 2,618,172／第一金 1,878,664；合計 9,452,321",
  "fund_source_note": "國泰直購＝2026-10-29 淨值 11,960,088（富達 5,894,411／貝萊B11 5,079,377／聯博AD 986,300）；本金 12,000,000、不含息 -39,912",
  "firstjin_source_note": "2026-10-19 我的帳戶表現頁：1,875,393（100% ID05-M&G入息A美元避險月配）；累計已給付配息 149,721；報酬率含息 1.26%／不含息 -6.23%",
@@ -7458,7 +7471,7 @@
  "credit_card_note_20261020": "2026-10-20 MB：未繳總額 43,307＝富邦 24,468＋國泰 CUBE 9,743＋台新 Richart 8,859＋永豐 237；玉山 Unicard 為溢繳 +6,804（不計入未繳）。富邦 24,468 主要為 9 月旅遊（易遊網 15,622、濟州島 6,511、免稅店 1,300）。",
  "securities_note_20261020": "2026-10-20 元大證券持股截圖：市值 2,756,160（14 檔，逐檔加總＝表頭 ✓）｜未實現 +403,610（+17.16%）｜已實現 +38,860（13.62%）。畫面未實現顯示 +403,760，差 150 為成本均價顯示四捨五入。vs 10/19 2,782,720：−26,560。009824／009823 已出清、00401A／00921 尚未建倉。",
  "funds_note_20261020": "2026-10-20：一般申購＝CSV 21 檔（20 檔台幣計價＋台新美日台 JPY 31,727.8 單位×18.5603，以平台總額 368,214 回推約當市值 120,366，隱含匯率 0.2044）＝368,214；自由PAY＝專頁截圖 3 檔＝451,730；國泰直購＝3 檔（淨值日 10/19）＝11,943,529。合計 12,763,473。",
- "firstjin_total": 1881254.0,
+ "firstjin_total": 1866663,
  "insurance_note_20261020": "2026-10-20：安聯 A 4,954,482（−1.32%）／B 2,597,559（−3.41%）／第一金 1,884,459；合計 9,436,500。vs 10/19 9,449,050：−12,550（A −1,003、B −20,613、第一金 +5,795）。",
  "dividend_caliber_note_20261020": "2026-10-20 定案：配息歸屬看基準月，不看入帳日。MB 月初入帳多為上月梯：10/01 安聯 19,700（13,258+6,442）與第一金 15,916 屬 9 月，已記 9 月不重複；9/21 第一金 FJ33 9,287 屬 8 月梯。10 月保單配息＝安聯 21,033（7 筆：10/05×2、10/13×4、10/20×1）＋第一金 9,402（1 筆）＝30,435。撈取規則：『配息/撥回』字樣＋人壽公司轉帳存入雙條件，只撈字樣會漏保單撥回。",
  "asset_note_20261020": "2026-10-20 真值套用（MB 明細/帳戶＋元大持股＋鉅亨兩平台＋國泰 3 檔＋安聯 A/B＋第一金）：現金 2,108,630／證券 2,756,160／基金 12,763,473／保單 9,436,500＝總資產 27,064,763；負債 30,987,736；淨值 -3,922,973。",
@@ -7790,7 +7803,7 @@
  "source_import_dates_asof_fix_note": "2026-10-30 修正：MB 標記停 10/20（真值 10/27＝cash_source.date）、鉅亨停 10/20（真值 10/22＝heng_note_20261022）→ performance_core.latest_asof 取 min 導致本月績效/TWR 鎖在 10/20。",
  "heng_note_20261030": "2026-10-30 21:10 鉅亨帳戶：一般申購淨值日 10/29（截圖僅露 5 檔：黃金A10 2,435／智慧數據 3,073／富達動能 2,966／M&G 2,972／安聯AI 194.89USD×32.583＝6,350）；自由PAY 淨值日 10/30 三檔 229,742＋110,002＋87,280＝427,024（成本 310,000、損益 117,024、已Pay 5,096、含Pay +39.39%）✓ 加總與表頭一致。一般申購小計 368,773（5 檔新報價、其餘 15 檔沿用 10/22）＋自由PAY 427,024＝鉅亨 795,797；含國泰直購 11,924,797 → 基金 12,720,594（原 12,746,466，Δ-25,872）。缺一般申購總計列（截圖未含），待補。",
  "funds_heng_total_20261030": 786276,
- "net_worth_incl_re": 28752220,
+ "net_worth_incl_re": 28313031,
  "real_estate_value_as_of": "2026-08-08",
  "real_estate_staleness": {
   "落後天數": 90,
@@ -8229,10 +8242,10 @@
  "funds_heng_total_20261102": 774595,
  "heng_note_20261102": "2026-11-03 鉅亨帳戶總覽截圖（淨值日 11/02）：台幣市值 774,595／約當台幣成本 570,603／損益 +203,992（不含息 +35.75%）／已配息 20,678（含息 +39.37%）；幣別 台幣 654,986＋美元 189.7（×32.6425＝6,193）＋日圓 551,906（×0.20551＝113,416）＝774,595 ✓。一般申購 20 檔 350,183（台幣 230,574＋日圓 113,416＋美元 6,193）＋自由Pay 3 檔 424,412 ＝ 774,595 ✓ （對帳：一般申購成本 132,865＋自由Pay 310,000＝442,865＝App 表頭 ✓；損益 97,709＋114,412＝212,121＝App 表頭 212,121 ✓）。⚠️ App 自身口徑不一致：自由Pay A49038 單列損益 123,386 為含Pay、合計列 114,412 為不含Pay（差 5,096）。",
  "insurance_market_value": 9088623.0,
- "holdings_asof": "2026-11-06（15:54 凱基截圖）",
+ "holdings_asof": "2026-11-23（11:48 凱基截圖，盤中）",
  "securities_note_20261104": "2026-11-04 10:42 盤中即時報價（玉山證券 App）：總市值 2,611,170（14 檔，逐檔加總＝表頭）｜當日 -31,370（-1.19%）｜未實現 +223,330（+9.35%，逐檔加總 +223,370 差 40 為成本均價四捨五入）｜已實現 +23,460（+27.34%）。vs 11/03 表頭 2,650,550：-39,380（-1.49%）。注意：本筆為盤中值，13:30 收盤需再校。",
  "firstjin_note_20261103": "2026-11-03 第一金人壽『我的帳戶表現』截圖真值：保單帳戶價值 1,863,198（vs 10/31 之 1,862,327，+871）；累計總繳保費 2,000,000、累計提領 0、累計已給付配息/撥回 169,024（與 10/31 同）；配置 100% IDXX M&G入息基金A(美元避險月配)F。★ 2026-11-04 修復：本值為四鍵（fl65／current_value／firstjin／insurance_breakdown.firstjin_total）唯一來源；10/31 的 1,862,327 屬前一日事實，不得回寫。",
- "firstjin_as_of": "2026-11-18",
+ "firstjin_as_of": "2026-11-20",
  "funds_cathay_note_20261105": "2026-11-05 國泰基金頁截圖（報價日 2026/11/04）：總現值 11,909,979／本金 12,000,000／不含息 -90,021（-0.75%）／現持有配息 160,670／含息 +0.59%；富達 5,819,711(-3.00%)／B11 5,101,310(+2.03%)／聯博AD 988,958(-1.10%)；三檔隱含匯率 32.74 一致",
  "securities_closeout_20261105": {
   "at": "2026-11-05 20:22",
@@ -9194,25 +9207,35 @@
     {
      "ticker": "009816",
      "名稱": "凱基台灣TOP50",
-     "股數": 5000,
-     "進場參考價": 13.88,
-     "進場成本": 69499,
+     "股數": 18000,
+     "進場參考價": 12.5,
+     "進場成本": 225040,
      "目標價": 15.0,
-     "目標報酬_pct": 8.07,
-     "停損價": 12.91,
-     "停損_pct": -7.0,
+     "目標報酬_pct": 20.0,
+     "停損價": 11.6,
+     "停損_pct": -7.2,
      "期限": "2027-01-08",
-     "狀態": "待進場",
-     "賣出估淨額": 74873,
-     "賣出估獲利": 5374
+     "狀態": "持有中（18,000 股，成本 225,040，2026-11-23 收 12.88）",
+     "賣出估淨額": 268920,
+     "賣出估獲利": 43880
     }
    ],
    "規則": [
     "到 15.00 即賣出全部，不貪高",
-    "跌破 12.91 停損，不攤平",
+    "跌破 11.60 全部出清，不攤平",
+    "12.20 以下停止加碼（今日 12.60 加碼為最後一次，之後不再加）",
     "2027-01-08 前未達目標 → 檢視是否續抱或平倉，不無限延長",
     "賣出後資金回現金池，不自動轉買其他標的"
-   ]
+   ],
+   "重設_20261123": {
+    "觸發": "使用者 2026-11-23 加碼 2,000 股 @12.60（16,000→18,000 股、均價 12.49→12.50），原停損 12.91 已高於市價 12.88，失效",
+    "新停損": 11.6,
+    "新目標": 15.0,
+    "口徑": "停損改以『均價 −7.2%』為基準（原 12.91 是以進場 13.88 −7% 訂的固定價，不再適用）",
+    "最大虧損": 16200,
+    "最大虧損_pct": -7.2,
+    "裁決": "使用者 2026-11-23 Telegram：重設"
+   }
   },
   "更新_20261116": "台股急跌 -5.68%，回檔由 -12.34% 擴大至 -17.62%（距門檻 2.38pp）；未觸發、不下令",
   "執行紀錄_20261116": {
@@ -9227,8 +9250,8 @@
  },
  "allianz_note_20261109": "2026-11-09 12:19 安聯 App「我的投資」：帳戶總價值 7,291,635 = A 4,930,252（-1.63%）+ B 2,361,383（-12.02%）；逐檔合計＝價值總額 ✓；本月累積配息/撥回 1 筆共 9,817；風險屬性積極型（效期至 116/01/21）",
  "cathay_cost": 12000000,
- "cathay_cum_dividend": 203771,
- "cathay_cum_dividend_asof": "2026-11-09",
+ "cathay_cum_dividend": 252780,
+ "cathay_cum_dividend_asof": "2026-11-20",
  "cathay_cum_dividend_note": "國泰直購三檔 2026-11 配息共 3 筆，全部入帳國泰世華活儲（末五碼 85061）：7,027（11/05 聯博全球多元收益AD）＋43,101（11/09 貝萊智慧數據）＋49,009（11/10 富達全球動能）＝99,137；11/05 截圖 160,670 為先前累積口徑，不與本月三筆混算。",
  "cathay_dividend_note_20261109": "2026/11/09 13:53 銀行入帳 NT$43,101（摘要：基金配息，帳號末五碼 85061）→ 已記入 2026-11 配息並加計現金；推定入國泰世華活期儲蓄存款（與 10/12 富達 49,298 同一約定帳戶）。",
  "funds_heng_total_20261109": 1022272,
@@ -9414,7 +9437,7 @@
  },
  "funds_cathay_note_1111": "2026-11-11 國泰轉貸專區截圖：總投資本金 12,000,000、參考現值 11,761,894、未實現 -238,106（不含息 -1.98%）、累計配息 252,780、含息總報酬 +0.12%。富達 5,718,614（含息 -2.23%／不含息 -4.69%）｜B11 5,060,413（+2.90%／+1.21%）｜聯博AD 982,867（+0.34%／-1.71%）；三檔逐檔合計＝表頭 ✓",
  "firstjin_note_20261111": "2026-11-11 第一金人壽 App：保單帳戶價值 1,882,263、累計總繳保費 2,000,000、累計提領 0、累計配息 169,024；投資總成本報酬率 -5.8%、總繳保費含息報酬 +2.56%（不含息 -5.89%）；100% 單一標的 ID05 M&G入息A(美元避險月配)，標的投報率 不含息 1.68%／含息 2.22% → 約 8pp 為保單費用與匯差。⚠️ 走勢圖 2026/07 曾近歸零後 08 月跳回，累計提領為 0，待向第一金索取 7 月交易明細釐清。",
- "securities_unrealized_pnl_pct": 9.13,
+ "securities_unrealized_pnl_pct": -5.18,
  "funds_heng_total_20261111": 713139,
  "refinance_delay_20261111": {
   "asof": "2026-11-11",
@@ -9480,17 +9503,17 @@
   "後續": "2026-11-11 15:28 使用者已將 Pages 來源切為 GitHub Actions；本次推送用於驗證新部署路徑（預期內建 pages build and deployment 不再觸發、snapshot.json 應轉 404）"
  },
  "allianz_a_detail_gap": {
-  "amount": -23407.0,
-  "as_of": "2026-11-19",
-  "reason": "僅總值更新（逐檔沿用前次評價值，屬評價日差）",
-  "source": "安聯 App 11/19 13:43（僅總值，逐檔待補）",
-  "next": "下次逐檔截圖時歸零"
+  "amount": 0.0,
+  "as_of": "2026-11-23",
+  "reason": "逐檔與總值一致（11/23 11:50 App 逐檔截圖）",
+  "source": "安聯 App 11/23 11:50",
+  "next": "—"
  },
  "allianz_b_detail_gap": {
   "amount": 0.0,
-  "as_of": "2026-11-19",
-  "reason": "明細與總值一致",
-  "source": "安聯 App 11/19 13:43（B 逐檔 5 檔）",
+  "as_of": "2026-11-23",
+  "reason": "逐檔與總值一致（11/23 11:50 App 逐檔截圖）",
+  "source": "安聯 App 11/23 11:50",
   "next": "—"
  },
  "satellite_reality_20261112": {
@@ -9717,15 +9740,15 @@
   }
  },
  "usd_fx_monitor": {
-  "updated_at": "2026-11-20 16:10:50",
-  "last_date": "2026-11-20",
-  "usd_twd": 32.969,
-  "r1_pct": 0.12,
-  "r5_pct": 0.09,
+  "updated_at": "2026-11-23 13:10:26",
+  "last_date": "2026-11-23",
+  "usd_twd": 32.915,
+  "r1_pct": -0.34,
+  "r5_pct": 0.12,
   "high_60d": 33.109,
   "low_60d": 31.464,
-  "usd_exposure_twd": 16293777,
-  "每升值1%_帳面影響_twd": 162938,
+  "usd_exposure_twd": 16289003,
+  "每升值1%_帳面影響_twd": 162890,
   "門檻": {
    "單日升值_pct": 2.0,
    "五日升值_pct": 4.0,
@@ -9823,7 +9846,7 @@
   "核對": "與 Moneybook 投資獲利 3 筆完全一致 ✓"
  },
  "firstjin_note_20261116": "2026-11-16 第一金人壽『我的帳戶表現』：保單帳戶價值 1,891,558（vs 11/13 之 1,893,969，-2,411）；累計總繳保費 2,000,000、累計提領 0、累計已給付配息/撥回 169,024（與 11/13 同，本月尚未新增）；投資總成本報酬率 -5.34%、總繳保費報酬率 含息 3.03%／不含息 -5.42%；配置 100% ID05 M&G入息基金A(美元避險月配)，標的投報率 不含息 2.18%／含息 2.72% → 約 8pp 為保單費用與匯差。⚠️ 走勢圖 2026/07 曾近歸零後 08 月跳回（累計提領仍 0），7 月交易明細仍未釐清。",
- "funds_heng_platform_total": 657730,
+ "funds_heng_platform_total": 587705,
  "funds_heng_total_20261116": 733535,
  "heng_note_20261116": "2026-11-16 鉅亨帳戶總覽（台幣市值 733,535／成本 570,603／損益 +162,932 +28.55%／已配息 21,687 +32.36%）＝一般申購 332,902＋自由Pay 400,633；一般申購取 11/13 一般申購 CSV 20 檔（日圓檔 A47219 523,839 円 台幣值 106,758（匯率隱含 0.20380） 用平台差額法反推）；自由Pay 取 11/13 專頁三檔 107,446+80,973+212,214=400,633",
  "risk_policy_20261116": {
@@ -10202,5 +10225,57 @@
   "原案保留": "不改寫引擎原案，僅標示暫緩與修正條件（引擎仍是唯一計算者）",
   "備註_20261119_2": "使用者指出：因今日下跌台股已回到可接受範圍內。查核：台股 12.0%（7–13% 範圍內，且從未觸及 13% 上限）；報告『超配 +2.0pp／已達上限』措辭違反 10/02 靜默原則 → 已修 institutional_flow（範圍內改印靜默）＋ build_rebalance_dashboard（第一節動作改『範圍內靜默』）。結論不變：本週不承接，但理由須改為以 US30Y／解凍閘門／急跌為主，台股權重不再是阻擋理由。"
  },
- "rent_cash_note": "2026-11-19 洲際W 租金 30,000 入台新（帳號末四碼 9475，入帳時間 18:41，台新銀行官方帳號入帳通知截圖確認）；現金桶同步 +30,000。"
+ "rent_cash_note": "2026-11-19 洲際W 租金 30,000 入台新（帳號末四碼 9475，入帳時間 18:41，台新銀行官方帳號入帳通知截圖確認）；現金桶同步 +30,000。",
+ "funds_heng_total_20261123": 587705,
+ "funds_heng_total_20261120": 587705,
+ "allianz_a_update_20261123": {
+  "時間": "安聯 App 11/23 11:50（逐檔 3 檔）",
+  "合計": 4780219,
+  "前值": 4851426,
+  "增減": -71207,
+  "明細": {
+   "USDEQ3490 安聯收益成長基金-AM穩定月收類股(美元)": 2567947,
+   "USDEQ5440 摩根投資基金-多重收益基金-JPM多重收益(美元對沖)-A股(穩定月配)": 682952,
+   "USDEQ6550 PIMCO收益增長基金-M級類別(月收息強化股份)": 1529320
+  },
+  "來源": "永旭保經 App 我的投資（QL-XXXXXXXX）"
+ },
+ "allianz_b_update_20261123": {
+  "時間": "安聯 App 11/23 11:50（逐檔 5 檔）",
+  "合計": 2209601,
+  "前值": 2355943,
+  "增減": -146342,
+  "明細": {
+   "NTDEQ2640 元大台灣高股息優質龍頭基金-新台幣(B)配息": 206933,
+   "NTDET0010 元大台灣卓越50": 782239,
+   "USDEQ3490 安聯收益成長基金-AM月收類股(美元)": 471329,
+   "USDEQ5700 M&G入息基金A(美元避險月配)F": 622820,
+   "USDEQ6730 貝萊德世界黃金基金A10美元(總報酬穩定配息)": 126280
+  },
+  "來源": "永旭保經 App 我的投資（QL-XXXXXXXX）"
+ },
+ "allianz_note_20261123": "2026-11-23 11:50 安聯 App：帳戶總價值 6,989,820＝A 4,780,219（-4.62%）＋B 2,209,601（-17.67%），逐檔 3+5 檔與表頭一致；本月累積配息/撥回 6 筆共 40,726（11/18 為 3 筆 11,657，新增 3 筆 29,069 明細待補）；vs 11/19 之 7,207,369：−217,549（A −71,207／B −146,342）。B 的台股部位（元大卓越50 782,239＋龍頭B 206,933＝989,172，佔 B 44.8%）為主要拖累，對應 11/18–11/20 台股急殺。",
+ "firstjin_note_20261120": "2026-11-20 第一金人壽『我的帳戶表現』：保單帳戶價值 1,866,663（vs 11/18 之 1,881,254，−14,591）、累計總繳保費 2,000,000、累計提領 0、累計已給付配息/撥回 169,024；投資總成本報酬率 −6.57%、總繳保險費報酬率 含息 +1.78%／不含息 −6.67%；配置 100% ID05-M&G入息基金A(美元避險月配)，標的投報率 不含息 1.10%／含息 1.63%。日期推定：標的淨值頁 ID05 2026/11/20 淨值 9.8507 → 以 11/16 值回推隱含淨值 9.982、變動 −1.31%，與帳戶值同期 −1.32% 吻合，故定為 11/20。⚠️ 走勢圖 2026/07 曾近歸零後 08 月跳回（累計提領仍 0），7 月交易明細仍未釐清。",
+ "mb_cash_note_20261123": "11/23 匯入：台幣活存合計 2,105,448.0（排除停用/外幣/金如意/卡戶/貸款）；國泰活期 878,527→821,229.0（−57,298＝11/20 卡費 17,520＋房貸息 26,499＋11/23 質押息 13,279）；信用卡未繳 34,661.0（富邦 10,117／永豐 19,243／台新 2,702／國泰 2,599；玉山 +326 溢繳不計）。",
+ "insurance_claim_20261116": {
+  "金額": 4000,
+  "來源": "第一產物保險（台新文心 11/16 轉帳存入）",
+  "使用者確認": "2026-11-23 使用者確認＝理賠",
+  "計入": "現金流入；不計入被動收入/配息"
+ },
+ "health_spend_note_20261123": "10/24–11/23 醫療支出 19,573（使用者 11/23 裁示：不列入健康追蹤）。",
+ "securities_unrealized_pnl_note_20261123": "原殘值 +65,700／9.13% 為舊口徑遺留（無來源）；11/23 收斂為 securities.unrealized_pnl 派生值。",
+ "band_trade_009816_20261123": {
+  "持倉": 18000,
+  "均價": 12.5,
+  "收盤": 12.88,
+  "停損": 11.6,
+  "目標": 15.0,
+  "今日買進": {
+   "股數": 2000,
+   "價格": 12.6,
+   "金額": 25200
+  },
+  "備註": "原 v1（5 張＠13.88、停損 12.91）已由 2026-11-23 重設取代；歷史保留於 opportunity_bullet_20261107.波段計畫_v1_20261108.重設_20261123"
+ }
 }
