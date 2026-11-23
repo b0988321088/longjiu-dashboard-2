@@ -682,7 +682,17 @@ def _mio_interest(snap, rows, paid_actual=None):
 
 
 def _mio_div_split(snap, month):
-    """配息逐筆分類（精確字串查表；未命中 → unclassified，不自動歸類）。"""
+    """配息逐筆分類（兩段式）。
+
+    ① `dividend_class_map` 精確查表優先（人工指定，任何情況都不覆蓋）；
+    ② 查不到時，僅當名稱含「基金／ETF／保單／撥回」字樣，才退回單一分類器
+       `performance_core.classify_dividend`（與月報／配息口徑同一份規則）；
+    ③ 其餘一律進 `unclassified`，顯示紅字待人工確認——不自動猜。
+    2026-11-23：①原本只做精確查表，遇到「（11/23 入帳 19,656）」等帶後綴的鍵
+    會整批落未分類（18 筆／140,541），故補第②段。第③段是安全網：底層
+    `bucket_of` 對未知名稱預設 oneoff（會被映射成 ETF），若不設關鍵字門檻，
+    未分類警示會形同失效、ETF 數字被靜默灌大。
+    """
     rec = (snap.get("dividend_records") or {}).get(month) or {}
     cmap = snap.get("dividend_class_map") or {}
     nmap = {_mio_norm(k): v for k, v in cmap.items()}
@@ -698,12 +708,16 @@ def _mio_div_split(snap, month):
             # 18 筆／140,541 全落未分類（保單只剩 9,817）。改為退回單一分類器
             # performance_core.classify_dividend（與配息口徑／月報同一份規則），
             # 精確表仍然優先，不覆蓋人工指定。
-            try:
-                import build_investment_performance as _BIP
-                cls = {"保單": "policy_credit", "基金": "fund", "股票": "etf"}.get(
-                    _BIP.classify_dividend(name))
-            except Exception:
-                cls = None
+            _kw = ("基金", "ETF", "保單", "撥回")
+            if any(t in str(name) for t in _kw):
+                try:
+                    import build_investment_performance as _BIP
+                    cls = {"保單": "policy_credit", "基金": "fund", "股票": "etf"}.get(
+                        _BIP.classify_dividend(name))
+                except Exception:
+                    cls = None
+            else:
+                cls = None   # 無可辨識字樣 → 保持未分類（不得靠 oneoff 預設灌進 ETF）
         if cls in ("policy_credit", "fund", "etf"):
             out[cls] += float(amt)
         else:
