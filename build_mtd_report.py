@@ -428,8 +428,15 @@ def static_fallback(p: dict) -> str:
         except Exception:
             return "—"
 
+    # 2026-11-23 使用者定版：本月對外單一口徑＝實質市場變化＝Σ(帳面 − 帳務因素)
+    _classes_d = p.get("classes") or []
+    _cash_d = p.get("cash") or {}
+    _real_all = (sum((c.get("gross") or 0) - (c.get("caliber") or 0) for c in (p.get("classes") or []))
+                 + (_cash_d.get("gross") or 0) - (_cash_d.get("caliber") or 0)) if _classes_d or _cash_d else 0.0
+    _ta0 = (p.get("total_assets") or {}).get("start") or 0
+    _real_pct = (_real_all / _ta0 * 100) if _ta0 else None
     rows = [
-        (f'{p["month"]} 本月投資損益（MTD 起算）', nt(p["perf"]["net"]) + "（未扣利息）" if not p["interest"]["total"] else nt(p["perf"]["net"])),
+        (f'{p["month"]} 本月實質市場變化（帳面−帳務）', nt(_real_all) + ("（%+.2f%%）" % _real_pct if _real_pct is not None else "") + "｜配息 " + nt(p["grand"]["div"]) + " 已入現金、不重複加"),
         ("　總資產變化（帳面）", nt(p["total_assets"].get("chg"))),
         ("　同期總負債變化", nt((p.get("equity") or {}).get("liab_chg"))),
         ("　同期淨值變化", nt((p.get("equity") or {}).get("net_worth_chg"))),
@@ -441,12 +448,12 @@ def static_fallback(p: dict) -> str:
         ("　配息實收", nt(p["grand"]["div"])),
         ("　本月報酬率", "｜".join(f'{x["c"]} {x["rate"]*100:+.2f}%（佔 {(x["share"] or 0)*100:.1f}%）'
                                   for x in p["classes"] if x.get("rate") is not None)),
-        ("　月份統計（同口徑）", "｜".join(f'{m["label"]} {nt(m["net"])}（{m["days"]}天，日均 {nt(m["net_per_day"])}）'
+        ("　月份統計（同口徑淨損益・跨月比較，與本月實質不同義）", "｜".join(f'{m["label"]} {nt(m["net"])}（{m["days"]}天，日均 {nt(m["net_per_day"])}）'
                                     for m in (p.get("months") or []))),
         ("　週變化（僅帳面）", "｜".join(f'{w["label"]} {nt(w["total"])}'
                                     for w in (p.get("weeks") or []) if w.get("total") is not None)),
         ("　估值更新", nt(-sum(u["amount"] for u in p["updates"]))),
-        ("市場面損益（推定）", nt(p["grand"]["mkt"])),
+        ("帳面市值變化（未剔帳務・勿作績效）", nt(p["grand"]["mkt"])),
         ("　帳務修正（非市場損失）", (nt(p["grand"].get("caliber"))
                                 + "｜日幣匯率記錯＋ETF 除息時點差，已於各類別註明不計損益")
                                if p["grand"].get("caliber") else "—"),
@@ -625,7 +632,7 @@ function render(d){
   }
 
   h.push('<section class="grid k4">');
-  h.push(kpi('本月投資損益（MTD 起算）', '<span class="'+cls(d.perf.net)+'">'+sgn(d.perf.net)+'</span>', esc(sub)));
+  h.push(kpi('本月實質市場變化（帳面−帳務）', '<span class="'+cls(_real)+'">'+sgn(_real)+'</span>', esc(sub)));
   h.push(kpi('總資產變化', '<span class="'+cls(t.chg)+'">'+sgn(t.chg)+'</span>', '帳面（含未實現、含配息）｜⚠️ 含現金流，非投資績效'));
   h.push(kpi('配息實收（三類）', '<span class="up">'+sgn(g.div)+'</span>', '股票＋基金＋保單'));
   h.push(kpi('本月報酬率', '<span class="'+(d.rate==null?'':(d.rate>=0?'up':'down'))+'">'+(d.rate==null?'—':pct(d.rate))+'</span>',

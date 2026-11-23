@@ -75,6 +75,29 @@ def caliber_by_class(snap: dict, ym: str) -> dict:
     return out
 
 
+def real_change(rows: list, total_start: float | None = None) -> dict:
+    """【口徑唯一定義】實質市場變化＝Σ(帳面市值變化 − 帳務因素)。
+
+    - 帳面變化（gross）：期初→期末市值差，含買進/賣出與配息入帳的效果。
+    - 帳務因素（caliber）：前期錯帳／除息時點差，只揭露、不計入績效（2026-11-17 裁示）。
+    - 買進／賣出視為「現金↔投資」內部移轉，不另加減（故本函式不扣 net_invest）。
+    - 配息＋158,296 等現金流已落在現金列，不得再加第二次。
+    2026-11-23 使用者定版：本月一律以本函式輸出對外，禁止再用「市場面（扣資金流）」舊口徑。
+    """
+    out_rows, gross_tot, adj_tot, real_tot = [], 0.0, 0.0, 0.0
+    for r in (rows or []):
+        g = _num(r.get("gross"))
+        c = _num(r.get("caliber"))
+        real = g - c
+        gross_tot += g
+        adj_tot += c
+        real_tot += real
+        out_rows.append({"c": r.get("c"), "gross": g, "caliber": c, "real": real})
+    pct = (real_tot / total_start * 100) if total_start else None
+    return {"gross": gross_tot, "accounting_adj": adj_tot, "real": real_tot,
+            "real_pct": pct, "rows": out_rows}
+
+
 def month_bounds(ym: str) -> tuple[dt.date, dt.date, dt.date]:
     """ym → (月初, 月末, 上月末)。"""
     y, m = int(ym[:4]), int(ym[5:7])

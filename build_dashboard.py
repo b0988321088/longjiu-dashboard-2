@@ -353,6 +353,9 @@ def build_perf_month_card(snap):
 
     pnl_mkt = cal.get("pnl_market")
     pnl_pct = cal.get("pnl_market_pct")
+    # 2026-11-23 使用者定版：本月對外單一口徑＝實質市場變化（帳面 − 帳務因素）
+    real_chg = cal.get("real_change", pnl_mkt)
+    real_pct = cal.get("real_pct", pnl_pct)
     ast_chg = cal.get("assets_change")
     acct_adj = cal.get("accounting_adj")
     net_flow = cal.get("net_flow")
@@ -397,13 +400,13 @@ def build_perf_month_card(snap):
     out = []
     # A 本月投資績效（市場口徑）
     if pnl_mkt is None:
-        out.append(cell2("A｜本月投資績效（市場口徑）", "—", "text-slate-400",
+        out.append(cell2("A｜本月實質市場變化（帳面−帳務）", "—", "text-slate-400",
                          [_cal_err or "資料未產生"], "investment_return"))
     else:
         _c = "text-emerald-400" if pnl_mkt >= 0 else "text-red-400"
-        out.append(cell2("A｜本月投資績效（市場口徑）", f"{pnl_mkt:+,.0f}", _c, [
-            f"{pnl_pct:+.2f}%" if pnl_pct is not None else "—",
-            "10/31 起算・只算市場價格變動",
+        out.append(cell2("A｜本月實質市場變化（帳面−帳務）", f"{real_chg:+,.0f}", _c, [
+            f"{real_pct:+.2f}%" if real_pct is not None else "—",
+            "帳務因素已剔除・配息已入現金・買進視為內部移轉",
         ], "investment_return"))
     # B 本月資產變動
     if ast_chg is None:
@@ -443,6 +446,8 @@ def build_perf_month_card(snap):
 
     # ── 機器可讀定義（防 AI 誤判）──
     try:
+        _real_def_v = cal.get("real_change")   # CIO F3：缺值 fail-visible，不得用舊 pnl_market 冒充
+        _real_def_p = cal.get("real_pct")
         _defs = {
             "version": 1,
             "generated_at": _dt.datetime.now().astimezone().isoformat(timespec="seconds"),
@@ -451,12 +456,12 @@ def build_perf_month_card(snap):
                         "不得相加、不得互換；cumulative 系列為持有期間累計，禁止當作本月損益。"),
             "metrics": {
                 "investment_return": {
-                    "label": "本月投資績效（市場口徑）",
-                    "value": pnl_mkt, "pct": pnl_pct,
+                    "label": "本月實質市場變化（帳面−帳務因素）",
+                    "value": _real_def_v, "pct": _real_def_p,
                     "period": "月初最後交易日 → 最新估值日",
-                    "formula": "投資部位期末 − 期初 − 本期買進成本 − 帳務修正",
-                    "excludes": ["帳務修正", "淨現金流", "本期投入"],
-                    "source": f"data/drawdown_{ym}.json#caliber",
+                    "formula": "總資產帳面變化 − 帳務因素（買進/賣出＝現金↔投資內部移轉，不調整；配息已入現金，不重複加）",
+                    "excludes": ["帳務因素（日幣匯率記錯／ETF 除息時點差）"],
+                    "source": f"data/drawdown_{ym}.json#caliber.real_change",
                 },
                 "assets_change": {
                     "label": "本月資產變動",
@@ -681,7 +686,7 @@ def _mio_interest(snap, rows, paid_actual=None):
     return total, det, "", "VERIFIED"
 
 
-def _mio_div_split(snap, month):
+def _mio_div_split(snap, month, detail=False):
     """配息逐筆分類（兩段式）。
 
     ① `dividend_class_map` 精確查表優先（人工指定，任何情況都不覆蓋）；
@@ -694,6 +699,7 @@ def _mio_div_split(snap, month):
     未分類警示會形同失效、ETF 數字被靜默灌大。
     """
     rec = (snap.get("dividend_records") or {}).get(month) or {}
+    _items = []
     cmap = snap.get("dividend_class_map") or {}
     nmap = {_mio_norm(k): v for k, v in cmap.items()}
     out = {"policy_credit": 0.0, "fund": 0.0, "etf": 0.0, "unclassified": []}
@@ -722,7 +728,38 @@ def _mio_div_split(snap, month):
             out[cls] += float(amt)
         else:
             out["unclassified"].append((name, float(amt)))
-    return out, total
+        _items.append((name, cls, float(amt)))
+    # detail=True 時回傳逐筆明細（供拆解卡片分流）；預設維持 (out, total) 二元組，不動既有呼叫端
+    return (out, total, _items) if detail else (out, total)
+
+
+def _mio_div_rows(snap, month):
+    """配息拆解卡片用的四桶分流（國泰人壽基金／其他基金／ETF／保單撥回）。
+
+    基金內部再分「國泰人壽平台」與「其他（鉅亨等）」：來源由
+    snapshot.dividend_source_map 明確指定，查不到一律歸「其他基金」——
+    不靠名稱關鍵字猜（例：鉅亨的「國泰台灣高股息B」名字有國泰，但不屬國泰人壽平台）。
+    """
+    out, total, items = _mio_div_split(snap, month, detail=True)
+    smap = {_mio_norm(k): v for k, v in (snap.get("dividend_source_map") or {}).items()}
+    rows = {"cathay": 0.0, "cathay_n": 0, "other_fund": 0.0, "other_n": 0,
+            "etf": 0.0, "etf_n": 0, "policy_credit": 0.0, "pc_n": 0,
+            "unclassified": out.get("unclassified") or []}
+    for name, cls, amt in items:
+        if cls == "fund":
+            if smap.get(_mio_norm(name)) == "國泰":
+                rows["cathay"] += amt
+                rows["cathay_n"] += 1
+            else:
+                rows["other_fund"] += amt
+                rows["other_n"] += 1
+        elif cls == "etf":
+            rows["etf"] += amt
+            rows["etf_n"] += 1
+        elif cls == "policy_credit":
+            rows["policy_credit"] += amt
+            rows["pc_n"] += 1
+    return rows, total
 
 
 def _mio_opening(history):
@@ -865,9 +902,18 @@ def build_monthly_overview(snap, history):
     basis_txt = (f"基準口徑 {basis:+,.0f}（配息保守採計 100,000）" if basis is not None else "基準口徑 —")
 
     div_lines = []
-    div_lines.append(line("基金／ETF 配息", _mio_money(split["fund"] + split["etf"])))
-    div_lines.append(line("保單撥回", _mio_money(split["policy_credit"]), "text-amber-300",
-                          "可能包含本金返還，尚未確認實際收益成分"))
+    # 2026-11-23 使用者指示：拆解要看得出來源 → 國泰人壽基金／其他基金／ETF／保單撥回 四行
+    _rows, _rtot = _mio_div_rows(snap, month)
+    if _rows and (_rows["cathay"] or _rows["other_fund"] or _rows["etf"]):
+        div_lines.append(line(f"國泰人壽基金（{_rows['cathay_n']} 筆）", _mio_money(_rows["cathay"])))
+        div_lines.append(line(f"其他基金（鉅亨等，{_rows['other_n']} 筆）", _mio_money(_rows["other_fund"])))
+        div_lines.append(line(f"ETF 配息（{_rows['etf_n']} 筆）", _mio_money(_rows["etf"])))
+        div_lines.append(line(f"保單撥回（{_rows['pc_n']} 筆）", _mio_money(_rows["policy_credit"]), "text-amber-300",
+                              "可能包含本金返還，尚未確認實際收益成分"))
+    else:
+        div_lines.append(line("基金／ETF 配息", _mio_money(split["fund"] + split["etf"])))
+        div_lines.append(line("保單撥回", _mio_money(split["policy_credit"]), "text-amber-300",
+                              "可能包含本金返還，尚未確認實際收益成分"))
     if split["unclassified"]:
         _uamt = sum(a for _, a in split["unclassified"])
         div_lines.append(line(f"未分類 {len(split['unclassified'])} 筆", _mio_money(_uamt), "text-red-400",
@@ -1541,6 +1587,16 @@ def main():
 
         import monthly_risk_watch as _mrw
         _mrw_r = _mrw.assess(snap)
+        # 2026-11-23 單一口徑：實質市場變化＝帳面 − 帳務因素（唯讀 data/drawdown_{ym}.json）
+        _ym_card = str(snap.get("date") or "")[:7]
+        _real_chg = None
+        try:
+            _ddp = BASE / "data" / f"drawdown_{_ym_card}.json"
+            if _ddp.exists():
+                _ddc = (json.loads(_ddp.read_text(encoding="utf-8")).get("caliber") or {})
+                _real_chg = _ddc.get("real_change")
+        except Exception:
+            _real_chg = None
         try:
             _mrw.log_daily(_mrw_r)          # 影子模式：每天留紀錄（未觸發也寫）
         except Exception:
@@ -1561,7 +1617,8 @@ def main():
         _text_k_map = {
             "mtd_icon": _mrw_r["icon"],
             "mtd_label": _mrw_r["label"],
-            "mtd_pnl": ("—" if _mrw_r["net_twd"] is None else f'{_mrw_r["net_twd"]:+,.0f}'),
+            # 2026-11-23 使用者定版單一口徑：實質市場變化＝帳面 − 帳務因素（源 data/drawdown_{ym}.json）
+            "mtd_pnl": ("—" if _real_chg is None else f'{_real_chg:+,.0f}'),
             "mtd_ret": ("—" if _mrw_r["ret_pct"] is None else f'{_mrw_r["ret_pct"]:+.2f}%'),
             "mtd_gap": _mrw_r["gap"]["text"],
             "mtd_stance": _mrw_r["stance"],

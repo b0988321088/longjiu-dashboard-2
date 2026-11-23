@@ -424,12 +424,13 @@ def render_daily_report(tv: dict, intel_text: str = "", intel_signals: dict | No
                     _dc = sorted((BASE / "data").glob("drawdown_*.json"), key=lambda x: x.name)
                     _dd = json.loads(_dc[-1].read_text(encoding="utf-8")) if _dc else {}
                     _cv = _dd.get("caliber") or {}
-                    if _cv.get("pnl_market_pct") is not None:
+                    if _cv.get("real_change") is not None:
+                        # 2026-11-23 使用者定版單一口徑：實質市場變化＝帳面 − 帳務因素
                         _a0 = (_dd.get("assets") or {}).get("start") or _start
                         _cal_row += (
-                            f'<tr><td><b>本月投資績效</b></td><td><b>{_cv["pnl_market"]:+,.0f} TWD</b></td>'
-                            f'<td><b>投資報酬 {_cv["pnl_market_pct"]:+.2f}%</b>（只算市場價格變動；分母＝投資部位 '
-                            f'{_cv["invest_start"]:,.0f}＋本期投入半數）｜'
+                            f'<tr><td><b>本月實質市場變化</b></td><td><b>{_cv["real_change"]:+,.0f} TWD</b></td>'
+                            f'<td><b>{(_cv.get("real_pct") or 0):+.2f}%</b>（帳面 − 帳務因素；買進/賣出視為內部移轉、'
+                            f'配息已入現金）｜'
                             f'資產變動 {_cv["assets_change"]:+,.0f}（{_cv["assets_change"] / _a0 * 100:+.2f}%）另含 '
                             f'帳務 {_cv["accounting_adj"]:+,.0f}、投入 {_cv["net_invest"]:+,.0f}、現金淨流 {_cv["net_flow"]:+,.0f}｜'
                             f'<a href="drawdown_review_{_dd.get("month", "")}.html">跌幅檢討</a></td></tr>'

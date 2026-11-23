@@ -425,6 +425,32 @@ def compute(month: str) -> dict:
     _pnl_all = _inv1 - _inv0 - _buy_cost
     _pnl_mkt = _pnl_all - _adj
     _denom = _inv0 + _buy_cost / 2
+    # ── 2026-11-23 使用者定版：對外單一口徑＝「實質市場變化」＝帳面 − 帳務因素
+    #    （買進/賣出視為現金↔投資內部移轉，不再扣 net_invest；配息已入現金，不得再加）
+    _adj_by_cls = {}
+    for it in (_cal.get("items") or []):
+        _c = str(it.get("class") or "")
+        if _c:
+            _adj_by_cls[_c] = _adj_by_cls.get(_c, 0.0) + _num(it.get("amount"))
+    _real_rows, _real_tot = [], 0.0
+    for b in attrib:
+        _lbl = str(b.get("label") or "")
+        # attrib 標籤是長名（證券（台股／美股 ETF、個股）／平台基金（…）／保單／現金（…））
+        if "證券" in _lbl:
+            _cls = "股票"
+        elif "基金" in _lbl:
+            _cls = "基金"
+        elif "保單" in _lbl:
+            _cls = "保單"
+        elif "現金" in _lbl:
+            _cls = "現金"
+        else:
+            _cls = _lbl
+        _g = _num(b.get("chg"))
+        _cadj = _adj_by_cls.get(_cls, 0.0)
+        _real = _g - _cadj
+        _real_rows.append({"c": _cls, "gross": _g, "caliber": _cadj, "real": _real})
+        _real_tot += _real
     data["caliber"] = {
         "invest_start": _inv0, "invest_end": _inv1, "net_invest": _buy_cost,
         "pnl_total": _pnl_all, "accounting_adj": _adj, "pnl_market": _pnl_mkt,
@@ -433,6 +459,10 @@ def compute(month: str) -> dict:
         "items": _cal.get("items") or [],
         "source": "data/caliber_adjustments.json",
         "closure_gap": round((_pnl_all + _buy_cost + _cash_chg) - (a1 - a0), 1),
+        "real_change": _real_tot,
+        "real_pct": (_real_tot / a0 * 100) if a0 else None,
+        "real_by_class": _real_rows,
+        "real_def": "實質市場變化＝帳面市值變化 − 帳務因素；買進/賣出視為內部移轉不調整；配息已入現金不得再加",
     }
     return data
 

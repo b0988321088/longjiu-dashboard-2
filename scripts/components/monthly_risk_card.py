@@ -29,6 +29,15 @@ def render(snap: dict | None = None, theme: str = "light") -> str:
     if snap is None:
         snap = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))
     r = mrw.assess(snap)
+    # 2026-11-23 使用者定版單一口徑：本月實質市場變化＝帳面 − 帳務因素（data/drawdown_{ym}.json 為單一真值）
+    _real_chg, _real_pct = None, None
+    try:
+        _ym = str(snap.get("date") or "")[:7]
+        _dd = json.loads((BASE / "data" / f"drawdown_{_ym}.json").read_text(encoding="utf-8"))
+        _cal = _dd.get("caliber") or {}
+        _real_chg, _real_pct = _cal.get("real_change"), _cal.get("real_pct")
+    except Exception:
+        pass
     try:
         mrw.log_daily(r)                     # 影子模式：每天留紀錄（含未觸發）
     except Exception:
@@ -61,7 +70,7 @@ def render(snap: dict | None = None, theme: str = "light") -> str:
 <table>
 <tr><th style="width:28%">本月累積報酬率</th><td><b style="color:{tone};font-size:16px">{_pct(r["ret_pct"])}</b>
 　<span style="color:{tone};font-weight:700">{r["icon"]} {r["label"]}</span></td></tr>
-<tr><th>本月帳面損益</th><td>{_money(r["net_twd"])} TWD <span class="note">（含配息與費用；MTD 基準、與報酬率不同源；累計未實現損益不在此列）</span></td></tr>
+<tr><th>本月實質市場變化</th><td>{(_money(_real_chg) + " TWD") if _real_chg is not None else "—（drawdown 資料未產生，不以舊口徑代替）"} <span class="note">（帳面 − 帳務因素；買進/賣出視為內部移轉、配息已入現金；累計未實現損益不在此列）</span></td></tr>
 <tr><th>距下一級警戒</th><td>{r["gap"]["text"]}</td></tr>
 <tr><th>壓力情境（資產價格同幅下跌）</th><td>{stress_txt}</td></tr>
 <tr><th>當日投資風險裁示</th><td><b>{r["stance"]}</b></td></tr>

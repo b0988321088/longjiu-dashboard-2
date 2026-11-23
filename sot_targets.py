@@ -745,6 +745,12 @@ def refresh_stale_amounts(text: str, snap: dict) -> str:
             #   不得 live 覆蓋；只在非基準區塊內替換。
             def _sub_ta_guarded(m):
                 _s = m.string
+                # 2026-11-23 INC：壓力情境（-5%／-10% 推算值）不是真值，禁止 live 覆寫
+                _pre120 = _s[max(0, m.start() - 120):m.start()]
+                if "壓力情境" in _pre120 or "情境" in _pre120:
+                    return m.group(0)
+                if re.match(r"\s*（\s*-\d", _s[m.end():m.end() + 8] or ""):
+                    return m.group(0)
                 _hdr = _s.rfind("操作績效追蹤", 0, m.start())
                 if _hdr != -1:
                     _tail = _s.find("追蹤點", _hdr)

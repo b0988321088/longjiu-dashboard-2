@@ -1,25 +1,23 @@
 {
  "version": 1,
- "generated_at": "2026-11-23T14:39:16+08:00",
+ "generated_at": "2026-11-23T15:05:58+08:00",
  "month": "2026-11",
  "warning": "investment_return / assets_change / unrealized_pnl_cumulative 為三種不同口徑，不得相加、不得互換；cumulative 系列為持有期間累計，禁止當作本月損益。",
  "metrics": {
   "investment_return": {
-   "label": "本月投資績效（市場口徑）",
-   "value": -839689.0,
-   "pct": -3.3677736855313265,
+   "label": "本月實質市場變化（帳面−帳務因素）",
+   "value": -1280406.0,
+   "pct": -4.757576881286974,
    "period": "月初最後交易日 → 最新估值日",
-   "formula": "投資部位期末 − 期初 − 本期買進成本 − 帳務修正",
+   "formula": "總資產帳面變化 − 帳務因素（買進/賣出＝現金↔投資內部移轉，不調整；配息已入現金，不重複加）",
    "excludes": [
-    "帳務修正",
-    "淨現金流",
-    "本期投入"
+    "帳務因素（日幣匯率記錯／ETF 除息時點差）"
    ],
-   "source": "data/drawdown_2026-11.json#caliber"
+   "source": "data/drawdown_2026-11.json#caliber.real_change"
   },
   "assets_change": {
    "label": "本月資產變動",
-   "value": -1049848.0,
+   "value": -1677013.0,
    "includes": [
     "投資報酬",
     "帳務修正",

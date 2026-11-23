@@ -158,7 +158,7 @@ def _hero(cur: dict, base_mv: float, asof: str) -> str:
     fee_line = f"−{cur['fee']:,.0f}" if cur["fee"] else "0（未登錄）"
     return f"""
 <section class="card hero">
-  <div class="klabel">本月淨投資損益（已扣投資利息・MTD 起算）</div>
+  <div class="klabel">同口徑淨損益（舊口徑・僅供對帳，非本月績效；本月績效見上方橫幅）</div>
   <div class="kval {_cls(net_same)}">{_f(net_same)}</div>
   <div class="ksub">未扣息 <b>{_f(cur['net'])}</b>｜投資利息 {int_line}｜手續費 {fee_line}</div>
   <div class="kgrid">
@@ -402,6 +402,30 @@ def build(today: dt.date | None = None, out_path: Path | str | None = None) -> s
     prev_m = baseline or next((m for m in reversed(done)
                               if m["month"] != (cur_m or {}).get("month")), None)
     hero = _hero(cur_m, cur_m["mv_total0"] or 0, asof) if cur_m else '<p class="empty">本月無資料</p>'
+    # 2026-11-23 使用者定版：本月對外單一口徑（帳面／帳務因素／實質市場變化／配息），源 data/drawdown_{ym}.json
+    _banner = ""
+    try:
+        _ym = asof[:7]
+        _cal = (json.loads((BASE / "data" / f"drawdown_{_ym}.json").read_text(encoding="utf-8")).get("caliber") or {})
+        _div_ym = 0.0
+        for _k, _v in ((snap.get("dividend_records") or {}).get(_ym) or {}).items():
+            if isinstance(_v, (int, float)):
+                _div_ym += float(_v)
+        if _cal.get("real_change") is not None:
+            _banner = (f'<section class="card" style="border-left:4px solid #38bdf8">'
+                       f'<div class="klabel">本月口徑（單一真值・全站一致）</div>'
+                       f'<div style="font-size:13px;line-height:1.9">'
+                       f'帳面資產變化 <b>{_cal.get("assets_change"):+,.0f}</b>'
+                       f'　−　帳務因素 <b>{-(_cal.get("accounting_adj") or 0):+,.0f}</b>'
+                       f'（日幣匯率記錯／ETF 除息缺口・非市場虧損）'
+                       f'　＝　實質市場變化 <b>{_cal.get("real_change"):+,.0f}'
+                       f'（{_cal.get("real_pct"):+.2f}%）</b><br>'
+                       f'配息 <b>{_div_ym:+,.0f}</b>'
+                       f' 已入現金，不重複加；買進／賣出視為現金↔投資內部移轉，不作績效調整。'
+                       f'<br><span style="color:#94a3b8">本頁其餘「投資損益／淨投資績效」欄位為舊口徑（含資金流與利息），僅供跨月對帳。</span>'
+                       f'</div></section>')
+    except Exception:
+        _banner = ""
     quality = _quality(cur_m, asof_info, []) if cur_m else ""
     flow_tbl = _flow_table(cur_m) if cur_m else ""
     src_tbl = _source_table(cur_m) if cur_m else ""
@@ -410,6 +434,7 @@ def build(today: dt.date | None = None, out_path: Path | str | None = None) -> s
 <h1>📈 本月投資績效</h1>
 <p class="sub">先看結論，再看拆解。口徑唯一計算層 <b>performance_core.py</b>；
 產出 {dt.datetime.now():%Y-%m-%d %H:%M}</p>
+{_banner}
 {hero}
 {_verdict(cur_m) if cur_m else ""}
 
