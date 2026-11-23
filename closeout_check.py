@@ -325,7 +325,7 @@ def step_hold_semantics(quiet: bool) -> list:
     if _hold_block_has_exit(src):
         if not quiet:
             print("⑪ HOLD 語意：❌ pre-commit 在 HOLD 生效時拒絕 commit → 當日產物無法入庫")
-        return ["HOLD 語意矛盾：pre-commit 凍結 commit（凍結應只作用於發布）→ 22:40 ② 必失敗；"
+        return ["HOLD 語意矛盾：pre-commit 凍結 commit（凍結應只作用於發布）→ 收工檢查 ②（未提交）必失敗；"
                 "修法：`.githooks/pre-commit` 改為僅警告，或跑 tools/hold_impact_preview.py 診斷"]
     if not quiet:
         print("⑪ HOLD 語意：✅ 只凍結發布、允許入庫")
