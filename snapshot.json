@@ -2094,8 +2094,8 @@
   "comment": "不預言金融危機，做前置風險偵測；不恐慌殺盤，不主動擴張風險曝險，握好現金彈藥。只產生警示與操作建議，永不自動下單。",
   "indicators": {
    "buffett_index_pct": null,
-   "us30y": 5.401,
-   "us30y_date": "2026-11-19",
+   "us30y": 5.303,
+   "us30y_date": "2026-11-20",
    "ai_magnificent7_share_pct": null,
    "put_premium_cost_pct": null,
    "us_equity_actual_pct": 34,
@@ -6870,7 +6870,7 @@
   "credit_line_note": "⚠️ 無真值來源：可動用信用額度（未動用質押額度／保單借款空間）尚未建檔 → 壓力測試不得推估",
   "語義": "現金 2,125,855 中 900,000 係指定還債款（同時撐『清償承諾』與『追繳緩衝』，清償卡住則兩邊同時破）；可動用僅 unrestricted_cash 1,225,855；撐不撐得住一律看 unrestricted_cash，不得把指定還債款當普通現金。",
   "source": "sot_targets.cash_layers（派生：cash_total／restricted_cash／cash_floor）",
-  "derived_at": "2026-11-20"
+  "derived_at": "2026-11-23"
  },
  "metrics_registry": {
   "metric_version": "2.0.0",
@@ -6897,25 +6897,26 @@
   },
   "標註規則": "凡顯示未達標（B 級／<100%）處，一律附「（度量修正 v2.0.0，非資產變動）」；月報需獨立一行「口徑變更影響」",
   "source": "sot_targets.metrics_registry",
-  "derived_at": "2026-11-20"
+  "derived_at": "2026-11-23"
  },
  "us30y_gate": {
   "status": "OK",
-  "value": 5.401,
-  "as_of": "2026-11-19",
-  "ref_date": "2026-11-20",
+  "value": 5.303,
+  "as_of": "2026-11-20",
+  "ref_date": "2026-11-23",
   "lag_days": 1,
+  "lag_calendar_days": 3,
   "max_lag_days": 3,
   "red_line": 5.3,
-  "streak_days": 59,
-  "mode_a_streak_days": 59,
-  "red_line_streak_days": 8,
+  "streak_days": 60,
+  "mode_a_streak_days": 60,
+  "red_line_streak_days": 9,
   "below_red_line": false,
   "risk_warning": true,
   "mode": "advisory",
   "macro_caution": true,
-  "macro_caution_reason": "US30Y 5.401% ≥ 紅線 5.3%（模式A streak 59 日／紅線 streak 8 日）｜redline_policy stage 3：啟動替代配置評估（替代路線 A/B/C）｜本警語不否決台股分批（v1.2 advisory），但綠燈不等於建議進場",
-  "redline_stage": 3,
+  "macro_caution_reason": "US30Y 5.303% ≥ 紅線 5.3%（模式A streak 60 日／紅線 streak 9 日）｜redline_policy stage 4：CIO 必須重新審查「原本解凍邏輯是否仍適用」｜本警語不否決台股分批（v1.2 advisory），但綠燈不等於建議進場",
+  "redline_stage": 4,
   "unfreeze_allowed": false,
   "unfreeze_conditions": {
    "conditions": [
@@ -7060,16 +7061,16 @@
    },
    "source": "sot_targets.unfreeze_conditions（v1.2 TD-20261015-02；2026-10-14 裁決）"
   },
-  "reason": "讀值日 2026-11-19（落後 1 天，在容忍值 3 天內）｜US30Y 為宏觀風險警示（已觸發，長債新增凍結生效），不單獨否決台股分批；解凍判定＝未達：質押 LTV 階段＝綠_正常（<45%）",
+  "reason": "讀值日 2026-11-20（落後 1 個交易日／日曆 3 天，容忍 3 個交易日）｜US30Y 為宏觀風險警示（已觸發，長債新增凍結生效），不單獨否決台股分批；解凍判定＝未達：質押 LTV 階段＝綠_正常（<45%）［現值 50.39 vs 門檻 45.0］",
   "source": "sot_targets.us30y_gate（advisory 模式 v1.2：US30Y 警示＋unfreeze_conditions 複合條件；thresholds.US30Y閘門模式 可切回 hard_veto）"
  },
  "redline_policy": {
   "policy": "REDLINE_LONG_DURATION_POLICY",
-  "streak_days": 59,
-  "stage": 3,
-  "階段區間": "45–60 天",
-  "應做事項": "啟動替代配置評估（替代路線 A/B/C）",
-  "下一階段": "60 天：CIO 必須重新審查「原本解凍邏輯是否仍適用」",
+  "streak_days": 60,
+  "stage": 4,
+  "階段區間": "60–∞ 天",
+  "應做事項": "CIO 必須重新審查「原本解凍邏輯是否仍適用」",
+  "下一階段": null,
   "授權邊界": "本政策只決定『檢查頻率與評估啟動』，不授權任何買賣；交易一律另案核准",
   "目的": "避免『暫停』變成『沒有人再處理』",
   "ladder": [
@@ -7095,7 +7096,7 @@
    }
   ],
   "source": "sot_targets.redline_policy（使用者 2026-09-30 定案）",
-  "derived_at": "2026-11-20"
+  "derived_at": "2026-11-23"
  },
  "rent_note_20260930": "大義街 1 樓店面 10 月租金 24,000 於 2026-09-30 提前入帳 → 歸 2026-10-01（9 月租金實收維持 77,100）；現金 3,752,961 已含此筆。",
  "last_updated": "2026-11-19",

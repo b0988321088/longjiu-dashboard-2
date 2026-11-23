@@ -1210,6 +1210,26 @@ def _us30y_state_file() -> dict:
         return {}
 
 
+def _trading_days_between(d0: dt.date, d1: dt.date) -> int:
+    """d0 → d1 之間的交易日數（不含 d0、含 d1；週六日不計）。
+
+    為什麼（2026-11-23 修）：
+      US30Y 原始資料（FRED DGS30）只在交易日更新。原 lag 用日曆日計算 →
+      每個週一 lag 必然等於 3（週五值 → 週一），剛好頂到 max_lag_days=3；
+      連假更直接 lag≥4 → 誤判 STALE「不得判定解凍」，即使資料本身完全正常。
+      改以交易日計算，週末不再吃掉容忍額度。
+    """
+    if d1 <= d0:
+        return 0
+    n = 0
+    cur = d0
+    while cur < d1:
+        cur += dt.timedelta(days=1)
+        if cur.weekday() < 5:
+            n += 1
+    return n
+
+
 def us30y_gate(snap: dict | None = None, state: dict | None = None,
                max_lag_days: int = 3) -> dict:
     """US30Y 讀值有效性閘門（CIO 2026-09-30 P0）：as_of 落後真值日 → UNKNOWN，禁止解凍判定。
@@ -1231,11 +1251,15 @@ def us30y_gate(snap: dict | None = None, state: dict | None = None,
     ref = _report_base(snap)
     as_of = st.get("last_date")
     value = st.get("last_rate")
-    lag = None
+    lag = None            # 交易日（判定用；週末不吃容忍額度）
+    lag_calendar = None   # 日曆日（顯示／稽核用）
     try:
-        lag = (dt.date.fromisoformat(ref[:10]) - dt.date.fromisoformat(str(as_of)[:10])).days
+        _d_ref = dt.date.fromisoformat(ref[:10])
+        _d_asof = dt.date.fromisoformat(str(as_of)[:10])
+        lag_calendar = (_d_ref - _d_asof).days
+        lag = _trading_days_between(_d_asof, _d_ref)
     except Exception:
-        lag = None
+        lag, lag_calendar = None, None
     # 2026-10-14 W2/RF-2（使用者裁決）：缺值／不可解析／非有限（含 NaN）一律不得回 OK。
     # 原版只靠 unfreeze_allowed=False 擋住解凍，但 status="OK" 會被下游讀成「資料有效」的
     # 綠燈（語意不符、且 value 非數值時 646 行的 float() 會直接拋錯）。此處同時收斂。
@@ -1253,9 +1277,11 @@ def us30y_gate(snap: dict | None = None, state: dict | None = None,
         status, reason = "UNKNOWN", ("缺 us30y 讀值（last_rate 缺漏／不可解析／非有限）"
                                      "→ 不得判定解凍／凍結")
     elif lag > max_lag_days:
-        status, reason = "STALE", f"讀值日 {as_of} 落後真值日 {ref} 達 {lag} 天（> {max_lag_days}）→ 不得判定解凍"
+        status, reason = "STALE", (f"讀值日 {as_of} 落後真值日 {ref} 達 {lag} 個交易日"
+                                   f"（> {max_lag_days}；日曆 {lag_calendar} 天）→ 不得判定解凍")
     else:
-        status, reason = "OK", f"讀值日 {as_of}（落後 {lag} 天，在容忍值 {max_lag_days} 天內）"
+        status, reason = "OK", (f"讀值日 {as_of}（落後 {lag} 個交易日／日曆 {lag_calendar} 天，"
+                                f"容忍 {max_lag_days} 個交易日）")
     below = (_vnum is not None and _red is not None and _vnum < float(_red))
     # ── v1.2（2026-10-14 使用者裁決 TD-20261015-02）───────────────────────
     # US30Y 由「台股分批 hard veto」改為「宏觀風險警示」：長天期債券新增買單
@@ -1271,6 +1297,7 @@ def us30y_gate(snap: dict | None = None, state: dict | None = None,
         "as_of": as_of,
         "ref_date": ref,
         "lag_days": lag,
+        "lag_calendar_days": lag_calendar,
         "max_lag_days": max_lag_days,
         "red_line": _red,
         "streak_days": st.get("streak"),
@@ -1313,8 +1340,20 @@ def us30y_gate(snap: dict | None = None, state: dict | None = None,
         _cond = {"conditions": [], "all_passed": False, "未達": [f"條件無法計算（{type(_e).__name__}）"],
                  "source": "sot_targets.unfreeze_conditions"}
     _allowed = bool(status == "OK" and _cond.get("all_passed"))
+    # 2026-11-23 修（可讀性）：原輸出「解凍判定＝未達：質押 LTV 階段＝綠_正常（<45%）」
+    #   會被讀成「LTV 階段是綠_正常」，實際是「未達的條件名稱叫『…＝綠_正常』」。
+    #   改為在未達條件後附上〔現值 vs 門檻〕，讓「為什麼未達」自明。
+    _defs = {c.get("名稱"): c for c in (_cond.get("conditions") or [])}
+    _miss_txt = []
+    for _n in (_cond.get("未達") or []):
+        _c = _defs.get(_n) or {}
+        _cv, _cl = _c.get("現值"), _c.get("門檻")
+        if _cv not in (None, "") and _cl not in (None, ""):
+            _miss_txt.append(f"{_n}［現值 {_cv} vs 門檻 {_cl}］")
+        else:
+            _miss_txt.append(str(_n))
     _why = ("資料無效（%s）" % status) if status != "OK" else (
-        "條件全數成立" if _cond.get("all_passed") else "未達：" + "、".join(_cond.get("未達") or []))
+        "條件全數成立" if _cond.get("all_passed") else "未達：" + "、".join(_miss_txt))
     return {**_base,
             "unfreeze_allowed": _allowed,
             "unfreeze_conditions": _cond,
