@@ -1,0 +1,76 @@
+{
+ "commit": "a9cfeb1d",
+ "verdict": "APPROVE",
+ "blocking": [],
+ "confidence": "high",
+ "scope_creep": true,
+ "reviewer": "CIO-DeepSeek-V4-Flash(委派-唯讀)",
+ "required_fixes": [
+  "30Y 連日起點文字錯（寫 11/12 起，實際 11/10 起）→ 已在 3e8e792b 修正",
+  "失敗時未清除 state['bond_sensitivity'] → 已在 3e8e792b 修正",
+  "index.html 政策小卡硬切斷句 → 已在 3e8e792b 修正"
+ ],
+ "claim_checks": [
+  {
+   "claim": "9 檔、程式僅 institutional_flow.py",
+   "pass": true,
+   "evidence": "git show --stat a9cfeb1d：9 files +236/-42"
+  },
+  {
+   "claim": "新增僅 fetch_fred_series／refresh_bond_sensitivity／main 呼叫＋fail-loud／輸出排除 _as_of",
+   "pass": true,
+   "evidence": "diff 3 hunk"
+  },
+  {
+   "claim": "compute_signals／燈號邏輯未動",
+   "pass": true,
+   "evidence": "compute_signals md5 與 parent 相同"
+  },
+  {
+   "claim": "政策利率 4.00、起算 2026-09-17",
+   "pass": true,
+   "evidence": "FRED DFEDTARU 實抓；至 11/22 仍 4.00"
+  },
+  {
+   "claim": "10Y 5.04／30Y 5.40／連日 7／觸發 true",
+   "pass": true,
+   "evidence": "實跑 refresh_bond_sensitivity"
+  },
+  {
+   "claim": "30Y ≥5.30 連 7 筆（第三方）",
+   "pass": true,
+   "evidence": "FRED CSV 自行回數 11/10,12,13,16,17,18,19"
+  },
+  {
+   "claim": "『30Y 自 11/12 起連續 7 個交易日』",
+   "pass": false,
+   "evidence": "11/12→11/19 僅 6 個交易日，起點應為 11/10（已修）"
+  },
+  {
+   "claim": "失敗不得默默回舊值",
+   "pass": true,
+   "evidence": "raise → RuntimeError；惟舊 bond_sensitivity 未清（已修）"
+  },
+  {
+   "claim": "頁面汰換舊文字",
+   "pass": true,
+   "evidence": "9/15-16 FOMC → 0；10/27-28 → 1"
+  },
+  {
+   "claim": "三支檢查 PASS",
+   "pass": true,
+   "evidence": "cross PASS／caliber 93-93／radar evidence PASS"
+  },
+  {
+   "claim": "FOMC 10-2、維持 3.75-4.00%、下次 12/8-9",
+   "pass": true,
+   "evidence": "Fed 官網 monetary20261028a.htm＋會議日曆"
+  },
+  {
+   "claim": "融資/外資/加權數字一致",
+   "pass": true,
+   "evidence": "radar_state margin 4,352.3/-491.4/-1,013.7；外資 238,942,904；Yahoo ^TWII 47,035.58/36,033.29/36,811.89"
+  }
+ ],
+ "notes": "scope_creep=true 非阻擋：夾帶上一輪 data/cio_review_81ce0d67.json 與 snapshot sector_deep_dive LLM 文案（pipeline 重跑副作用）。三項 required_fixes 已於 3e8e792b 修復。"
+}
