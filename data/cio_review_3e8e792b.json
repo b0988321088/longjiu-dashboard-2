@@ -1,0 +1,62 @@
+{
+ "commit": "3e8e792b",
+ "verdict": "APPROVE",
+ "blocking": [],
+ "required_fixes": [],
+ "confidence": "high",
+ "scope_creep": false,
+ "reviewer": "CIO-DeepSeek-V4-Flash(委派-唯讀)",
+ "claim_checks": [
+  {
+   "claim": "5 檔、無夾帶",
+   "pass": true,
+   "evidence": "5 files +21/-6，無 snapshot/data/logs"
+  },
+  {
+   "claim": "兩 py 僅三項修正",
+   "pass": true,
+   "evidence": "各 1 hunk；py_compile OK"
+  },
+  {
+   "claim": "30Y 連 7 筆起點 11/10、11/11 無值",
+   "pass": true,
+   "evidence": "FRED 實抓 11/10 5.35…11/19 5.40；11/04 5.28 中斷"
+  },
+  {
+   "claim": "失敗後清除 bond_sensitivity",
+   "pass": true,
+   "evidence": "等價重現：RuntimeError → 鍵不存在、文字為更新失敗"
+  },
+  {
+   "claim": "截斷器括號閉合、非句中断裂",
+   "pass": true,
+   "evidence": "index 政策面段落全形括號 10 開 10 閉；舊症狀消失"
+  },
+  {
+   "claim": "舊字串 0、「近 7 個觀測交易日」≥1",
+   "pass": true,
+   "evidence": "grep 實測"
+  },
+  {
+   "claim": "三支檢查 PASS",
+   "pass": true,
+   "evidence": "cross PASS／caliber 93-93／dashboard_sync 全過"
+  },
+  {
+   "claim": "_cut 空字串/無標點不抛例外",
+   "pass": true,
+   "evidence": "等價測試 4 組"
+  },
+  {
+   "claim": "移除鍵不造成下游 KeyError",
+   "pass": true,
+   "evidence": "全 repo grep 僅 institutional_flow 與 state 自身"
+  },
+  {
+   "claim": "其餘數字未漂移",
+   "pass": true,
+   "evidence": "DFEDTARU 4.00/起 9-17、DGS10 5.04、DGS30 5.40"
+  }
+ ],
+ "notes": "唯一殘留為交付層：rebalance_dashboard_2026-11-23.html 的『近月高』僅在工作區未進版控（已於 cd9305e1 補進）。_cut 取第一個命中且 ≥n/2 的分隔符（保守），非最靠近 n 者。"
+}
