@@ -5,13 +5,22 @@
 CIO 2026-09-23 ② 的缺口本質是「時序不可靠」：核准有留下、程式有留下，但 dashboard_decisions
 在 CIO 18:30 跑的時候是殘缺的，靠晚上人工補。這支把「有沒有漏」變成可判定的檢查：
 
-  今日收據（decision_intake_receipts.jsonl，由 append_dashboard_decisions.py 產生）
+  今日收據（decision_intake_receipts.jsonl；人工由 append_dashboard_decisions.py 產生、
+            自動由 memory_helper.add_memory 產生）
         ↓
-  今日 dashboard_decisions（source=user）
+  今日 dashboard_decisions
         ↓
-  ID 集合比對
+  ID 集合比對（**分兩條車道**：人工／自動）
         ↓
-  一致 → PASS ／ 不一致 → 印出缺口筆數與明細（exit 1）
+  人工一致 → PASS ／ 人工缺口 → exit 1 ／ 無人工證據 → exit 2
+
+2026-11-23（CIO 18:30 ②）：舊版把「自動寫入無收據」與「人工決策無收據」混在同一個
+unregistered 桶，且該桶**從不影響 rc** → 收據 0／人工 0 但檔案有 2 筆 auto 時，
+對帳印了 ⚠️ 卻回 rc=0（CIO 讀成「通過」）。同一層機制出現兩種失明方向：
+9/23 是「有真核准、檔案看不到」，11/23 是「有條目、收據看不到」。
+本版把車道拆開：人工無收據 = 真缺口（rc=1，不得再靜默），自動無收據 = 覆蓋率資訊
+（不動 rc，因為那不是裁決），且「今日無人工證據」一律 rc=2，不被 auto 條目稀釋。
+
 
 另可加 --notion：向 Notion 分析 DB 查「今日建立的決策頁」數，與檔案今日 user 筆數對照
 （獨立第二來源；Notion 不可達時明確標示「未查核」，不靜默通過）。
@@ -239,27 +248,47 @@ def receipt_regime_start():
     return min(ts) if ts else None
 
 
-def compare(day, rec, intake):
-    """回傳 (missing, unregistered, legacy) 三個 id 清單。
+def _is_auto(x, key="source"):
+    """自動寫入（非人工裁決）：source=auto（memory_helper／cron）或 notion（bridge 自動寫）。"""
+    return str(x.get(key) or "") in ("auto", "notion")
+
+
+def compare(day, rec, intake_all):
+    """回傳 (missing, unreg_manual, unreg_auto, legacy) 四個 id 清單。
 
     missing      = 有收據但沒進檔 → 真缺口（rc=1）
-    unregistered = 收據制上線**之後**進檔卻沒有收據 → 未經單一入口（警示）
+    unreg_manual = 收據制上線**之後**進檔的人工決策卻沒有收據 → 未經單一入口（rc=1）
+    unreg_auto   = 收據制上線**之後**進檔的自動寫入沒有收據 → 覆蓋率資訊（不動 rc）
     legacy       = 收據制上線**之前**的歷史入庫 → 不列警示（制度當時不存在）
-    fail-closed：收據檔無有效時戳（空／不存在）時無法判定起點 → 一律歸 unregistered。
+    fail-closed：收據檔無有效時戳（空／不存在）時無法判定起點 → 人工類一律歸 unreg_manual。
+
+    2026-11-23（CIO ②）：舊版只回三個桶且 unregistered 從不影響 rc；人工與自動混在一起，
+    使「人工核准走別的路徑進來」與「cron 快照」長得一樣 → 真缺口被 auto 噪音蓋掉。
     """
     rec_ok = [r for r in rec if r.get("ok")]
     rec_ids = {str(r.get("id")) for r in rec_ok if r.get("id")}
-    file_ids = {str(x.get("id")) for x in intake if x.get("id")}
+    file_ids = {str(x.get("id")) for x in intake_all if x.get("id")}
     missing = sorted(rec_ids - file_ids)
     start = receipt_regime_start()
-    unregistered, legacy = [], []
+    rec_src = {str(r.get("id")): str(r.get("source") or "") for r in rec_ok if r.get("id")}
+    unreg_manual, unreg_auto, legacy = [], [], []
     for i in sorted(file_ids - rec_ids):
-        t = next((_ts_of(x) for x in intake if str(x.get("id")) == i), None)
+        x = next((x for x in intake_all if str(x.get("id")) == i), {})
+        t = _ts_of(x)
         if start is not None and t is not None and t < start:
             legacy.append(i)
+        elif _is_auto(x):
+            unreg_auto.append(i)
         else:
-            unregistered.append(i)
-    return missing, unregistered, legacy
+            unreg_manual.append(i)
+    # 車道一致性：人工決策的收據不得記成自動（否則可用「auto 收據」掩蓋手工寫入，
+    # 等於繞過單一入口還能通過對帳）→ 視為人工未經單一入口，fail-closed。
+    for i in sorted(file_ids & rec_ids):
+        x = next((x for x in intake_all if str(x.get("id")) == i), {})
+        if not _is_auto(x) and _is_auto({"source": rec_src.get(i)}):
+            unreg_manual.append(i)
+    return missing, sorted(set(unreg_manual)), unreg_auto, legacy
+
 
 
 def main():
@@ -274,17 +303,29 @@ def main():
     intake, srcs, intake_all = load_intake(day)
     rec_ok = [r for r in rec if r.get("ok")]
     rec_ids = {str(r.get("id")) for r in rec_ok if r.get("id")}
+    # 人工收據＝寫入時 source 非 auto/notion（收據沿用入庫當下的 source）
+    rec_manual_ids = {str(r.get("id")) for r in rec_ok
+                      if r.get("id") and not _is_auto(r)}
     # 2026-10-31 修正：缺口比對用「今日全部決策」（含 source=auto）；原本用人工集合，
     # source=auto 的正常入庫（cron 修復紀錄）會被誤判為「有收據未入庫」的真缺口。
     file_ids = {str(x.get("id")) for x in intake_all if x.get("id")}
+    file_manual_ids = {str(x.get("id")) for x in intake if x.get("id")}
 
-    missing, unregistered, legacy = compare(day, rec, intake_all)
+    missing, unreg_manual, unreg_auto, legacy = compare(day, rec, intake_all)
+    start = receipt_regime_start()
+
+    def _task_of(i, pool):
+        x = next((x for x in pool if str(x.get("id")) == i), {})
+        return str(_title_of(x))[:44]
 
     if not a.quiet:
         print(f"=== 決策入庫對帳（{day}）===")
-        print(f"  收據（單一入口）：{len(rec)} 筆（成功 {len(rec_ok)}）")
+        print(f"  收據（單一入口）：{len(rec)} 筆（成功 {len(rec_ok)}；人工 {len(rec_manual_ids)}"
+              f"／自動 {len(rec_ids) - len(rec_manual_ids)}）")
         print(f"  檔案（人工決策）：{len(intake)} 筆" + (f"｜source 分布 {srcs}" if srcs else ""))
+        print(f"  檔案（含自動寫入）：{len(intake_all)} 筆")
         print(f"  收據 ∩ 檔案：{len(rec_ids & file_ids)} 筆")
+
 
     rc = 0
     if missing:
@@ -293,26 +334,42 @@ def main():
             t = next((r.get("task") for r in rec_ok if r.get("id") == i), "")
             print(f"     - {i}｜{str(t)[:44]}")
         rc = 1
-    start = receipt_regime_start()
     if legacy:
         print(f"  ℹ️ 收據制上線前（{start:%Y-%m-%d %H:%M}）的歷史入庫 {len(legacy)} 筆，不列警示：")
         for i in legacy:
-            t = next((x.get("task") for x in intake if str(x.get("id")) == i), "")
-            print(f"     - {i}｜{str(t)[:44]}")
-    if unregistered:
-        print(f"  ⚠️ {len(unregistered)} 筆入庫沒有收據（未經 append_dashboard_decisions.py，可能是舊路徑或人工補）：")
-        for i in unregistered:
-            t = next((x.get("task") for x in intake if str(x.get("id")) == i), "")
-            print(f"     - {i}｜{str(t)[:44]}")
+            print(f"     - {i}｜{_task_of(i, intake_all)}")
+    if unreg_manual:
+        # 2026-11-23（CIO ②）：人工決策繞過單一入口 → 必須 fail-loud。
+        # 舊版只印 ⚠️、rc 仍 0，等於「真核准走別條路進來」永遠查不出來（11/22 實例）。
+        print(f"  ❌ {len(unreg_manual)} 筆人工決策未經單一入口（收據制上線後進檔卻沒有收據）→ 列為缺口 rc=1：")
+        for i in unreg_manual:
+            print(f"     - {i}｜{_task_of(i, intake_all)}")
+        print("     → 修法：人工核准一律 python append_dashboard_decisions.py --source user（會留收據）")
         if start is None:
-            print("     （收據檔無有效時戳 → 無法判定收據制起點，一律列警示）")
-    if not missing and not unregistered:
-        if not rec and not intake:
+            print("     （收據檔無有效時戳 → 無法判定收據制起點，一律列缺口）")
+        rc = 1
+    if unreg_auto:
+        # 自動寫入（cron／memory_helper／notion bridge）不是裁決 → 只報覆蓋率，不動 rc。
+        print(f"  ℹ️ {len(unreg_auto)} 筆自動寫入沒有收據（覆蓋率缺口，非人工裁決；不影響 rc）：")
+        for i in unreg_auto:
+            print(f"     - {i}｜{_task_of(i, intake_all)}")
+        print("     → 2026-11-23 起 memory_helper.add_memory 也會留收據；此類持續出現＝有寫方繞過工具")
+    matched_manual = file_manual_ids - set(legacy)
+    no_id = [x for x in intake if not x.get("id")]
+    if no_id:
+        # 沒有 id 的人工決策無法與收據做集合比對（歷史寫方未帶 id）→ 只能列示，不得當成 PASS 依據
+        print(f"  ⚠️ {len(no_id)} 筆人工決策沒有 id（無法與收據比對，不計入一致判定）：")
+        for x in no_id:
+            print(f"     - {str(_title_of(x))[:44]}｜{str(x.get('timestamp'))[:19]}")
+    if not missing and not unreg_manual:
+        if not rec_manual_ids and not matched_manual:
             # 2026-10-21（使用者核准，範圍限本檔）：空集合不得算「一致性 PASS」。
             #   收據 0／檔案 0 只證明「今天沒有可比對的資料」，無法證明今日裁定都已入庫
             #   （實證：10/21 有兩項裁定、兩邊皆 0 筆，舊版仍印「✅ 一致」rc=0）。
             #   語意改為「未驗證」，rc=2 沿用既有契約（CIO 18:30 job 已把 rc=2 視為
             #   「對帳未完成」而不得當成通過），不動 rc=0 的既有成功語意。
+            # 2026-11-23 補：這段原本只在「三個桶全空」時才走到，只要檔案有 auto 條目就整段被跳過
+            #   → 收據 0／人工 0 仍回 rc=0。改為只依「有無人工證據」判定，auto 不得稀釋。
             _dl, _code = empty_intake_diagnosis(day)
             if _code == "NO_RULING_TODAY":
                 print("  ℹ️ 今日無裁定（收據 0／檔案 0）→ rc=2 是契約保守語意，不是缺口陳述")
@@ -324,7 +381,8 @@ def main():
             print(f"  RESULT={_code}")
             rc = max(rc, 2)
         else:
-            print(f"  ✅ 一致（{len(file_ids)} 筆；今日無缺口）")
+            print(f"  ✅ 一致（人工 {len(matched_manual)} 筆 ↔ 人工收據 {len(rec_manual_ids)} 筆；今日無缺口）")
+
 
     if a.notion:
         titles, note = notion_today_titles(day)

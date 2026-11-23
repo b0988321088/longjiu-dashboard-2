@@ -791,7 +791,9 @@ else:
 
 # ── 11) 決策入庫對帳（2026-10-02 新增；CIO 2026-09-23 ② 的時序缺口）──────────
 # 「今日核准」與「今日 dashboard_decisions 入庫」做 ID 集合比對（細節見 reconcile_decision_intake.py）：
-#   收據有、檔案沒有 → 真缺口（列 fail）；檔案有、收據沒有 → 未經單一入口（列示不擋）。
+#   收據有、檔案沒有 → 真缺口（rc=1 → fail）
+#   檔案有、收據沒有 → 人工決策繞過單一入口 → 真缺口（rc=1 → fail；2026-11-23 CIO ② 收緊）
+#                        自動寫入（auto/notion）無收據 → 只列覆蓋率，不動 rc
 print("=== 11) 決策入庫對帳（核准 → dashboard_decisions）===")
 try:
     _rc = subprocess.run([sys.executable, str(R / "reconcile_decision_intake.py")],

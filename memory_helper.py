@@ -53,8 +53,33 @@ def find_duplicate(decisions: list, entry: dict):
     return None
 
 
+def _receipt_path(dec_path: Path) -> Path:
+    """收據檔位置＝決策檔同一 repo 下的 data/（測試注入沙盒時自動跟著走，不污染真 repo）。"""
+    return Path(dec_path).parent / "data" / "decision_intake_receipts.jsonl"
+
+
+def write_auto_receipt(entry: dict, ok: bool, msg: str, dec_path: Path) -> None:
+    """自動寫入也留收據（2026-11-23 CIO ② 收據覆蓋率）。
+
+    為什麼：reconcile_decision_intake 過去只認得 append_dashboard_decisions.py 產生的收據，
+    run_daily 每天兩筆 add_memory（日報／資產穿透）在檔案裡看得到、在收據裡看不到 →
+    「有條目、收據看不到」的結構盲點，也讓 auto 噪音與人工缺口長得一樣。
+    本函式只補稽核軌跡，不改任何判定：source 記 'auto'，reconcile 會歸在「自動車道」。
+    寫入失敗不得影響決策入庫（收據是旁證，不是入庫前置）→ 一律吞例外並印警告。
+    """
+    try:
+        p = _receipt_path(dec_path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        rec = {"ts": entry.get("timestamp"), "id": entry.get("id"), "task": entry.get("task"),
+               "source": entry.get("source"), "ok": bool(ok), "note": msg}
+        with p.open("a", encoding="utf-8", newline="") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\r\n")
+    except Exception as e:                                  # noqa: BLE001
+        print(f"  ⚠️ 收據寫入失敗（不影響入庫）：{type(e).__name__}: {e}")
+
+
 def add_memory(agent: str, task: str, summary: str, status: str = "completed",
-               *, allow_duplicate: bool = False, path=None):
+               *, allow_duplicate: bool = False, path=None, receipt: bool = True):
     """寫入一條記憶/決策到 dashboard_decisions.json
 
     用法: from memory_helper import add_memory
@@ -62,8 +87,11 @@ def add_memory(agent: str, task: str, summary: str, status: str = "completed",
 
     allow_duplicate=True：明確允許同日同任務同摘要再寫一筆（預設 False＝去重）。
     path：僅供測試注入沙盒檔案（預設＝repo 內 dashboard_decisions.json）。
+    receipt：預設 True＝同時寫收據（source=auto）。去重命中（沒 append）時不寫收據，
+             與 append_dashboard_decisions.py 的 idempotent 語意一致。
     """
     path = Path(path) if path else (Path(__file__).resolve().parent / "dashboard_decisions.json")
+
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
         # ⚠️ 2026-08-27 相容：檔案可能被寫成純 list → 包回 dict（.setdefault 在 list 會炸）
@@ -93,6 +121,9 @@ def add_memory(agent: str, task: str, summary: str, status: str = "completed",
     data.setdefault("decisions", []).append(entry)
     data.setdefault("meta", {})["updated_at"] = datetime.now().isoformat()
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    if receipt:
+        # 收據只記「真的 append 了什麼」（去重命中不寫，否則會造出檔案沒有的假收據）
+        write_auto_receipt(entry, True, f"✅ 自動寫入 id={entry['id']}（memory_helper）", path)
     print(f"  🧠 記憶已寫入: [{agent}] {task}")
     return entry["id"]
 
