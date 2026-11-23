@@ -81,7 +81,9 @@ def main() -> int:
         print("─" * 34)
         for i, (d, cash, _t) in enumerate(rows):
             diff = "" if i == 0 else f"{cash - rows[i - 1][1]:+,.0f}"
-            print(f"{d[5:]}  {cash:>12,.0f}  {diff:>+12s}" if diff else f"{d[5:]}  {cash:>12,.0f}  {'-':>12s}")
+            # 2026-11-23 修：原 `{diff:>+12s}` 對字串套用 + 號 → ValueError: Sign not allowed
+            #   （每月 1 日現金流報告因此 exit 1；diff 本身已帶 +/- 符號）
+            print(f"{d[5:]}  {cash:>12,.0f}  {(diff if diff else '-'):>12s}")
     return 0
 
 
