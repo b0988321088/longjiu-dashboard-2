@@ -39,9 +39,9 @@ ul{margin:6px 0 0;padding-left:18px}li{margin:5px 0}
   <h1>📉 2026-10-31 → 2026-11-23 跌幅檢討</h1>
   <div class="sub">資料：snapshot 快照 17 筆｜金額單位 TWD</div>
   <div class="kpi">
-    <div><div class="v neg">-5.90%</div><div class="l">投資報酬<br>（市場價格變動）</div></div>
+    <div><div class="v neg">-1,280,406</div><div class="l">實質市場變化<br>-4.76%（帳面−帳務）</div></div>
     <div><div class="v neg">-1,677,013</div><div class="l">資產變動<br>-6.2%</div></div>
-    <div><div class="v">+12.7%</div><div class="l">相對大盤<br>（大盤 -18.6%）</div></div>
+    <div><div class="v">+13.8%</div><div class="l">相對大盤<br>（大盤 -18.6%）</div></div>
   </div>
   <div class="kv" style="margin-top:8px"><span>投資部位</span><b>24,892,539 → 23,130,525</b></div>
   <div class="kv"><span>帳務修正（不計入績效）</span><b>-396,607</b></div>
@@ -55,13 +55,12 @@ ul{margin:6px 0 0;padding-left:18px}li{margin:5px 0}
 
 <div class="card">
   <div class="sub">三個數字的差別（橫向加總剛好閉合）</div>
-  <div class="kv"><span>① 投資報酬</span><b>-5.90%　只算市場價格變動</b></div>
-  <div class="kv"><span>② 帳務修正</span><b>-396,607　日幣匯率記錯、ETF 除息時點差</b></div>
-  <div class="kv"><span>③ 本期投入</span><b>106,800　買進成本，屬資金移動</b></div>
-  <div class="kv"><span>④ 現金淨流動</span><b>+85,001　收支與買賣現金</b></div>
-  <div class="kv"><span>＝ 資產變動</span><b>-1,677,013（-6.2%）</b></div>
+  <div class="kv"><span>① 實質市場變化</span><b>-1,280,406（-4.76%）</b></div>
+  <div class="kv"><span>② 帳務修正</span><b>-396,607　日幣匯率記錯、ETF 除息時點差（非市場虧損）</b></div>
+  <div class="kv"><span>＝ 帳面資產變動</span><b>-1,677,013（-6.2%）</b></div>
   <div class="sub" style="margin-top:6px">閉合差 0.0；帳務來源 data/caliber_adjustments.json。
-    <b>資產變動</b>是你帳戶實際少掉的金額，<b>投資報酬</b>才是投資表現——兩者不該混用同一個百分比。</div>
+    <b>本口徑不扣買進/賣出</b>（現金↔投資內部移轉，本期投入 106,800、現金淨流 +85,001 僅供對帳），
+    <b>配息已入現金不重複加</b>。帳面變動含帳務與金流，不是投資表現。</div>
 </div>
 <div class="card"><svg viewBox="0 0 320 172" width="100%" height="172" role="img" aria-label="當月資產與大盤走勢">
 <line x1="34" y1="18.5" x2="276" y2="18.5" stroke="#334155" stroke-width="1"/>
@@ -76,7 +75,7 @@ ul{margin:6px 0 0;padding-left:18px}li{margin:5px 0}
 <h2>一、結論先講</h2>
 <div class="card ok">
   <ul>
-    <li><b>跌幅本身不大，問題在結構。</b>大盤 -18.6%，投資報酬只 -5.90%（少跌 12.7pp；資產變動 -6.2% 另含帳務與金流）——
+    <li><b>跌幅本身不大，問題在結構。</b>大盤 -18.6%，實質市場變化只 -4.76%（少跌 13.8pp；帳面資產變動 -6.2% 另含帳務與金流）——
         資產配置有效，因為台股只占 11.6%、七成是美元資產。</li>
     <li><b>但「台股純度」的部位全軍覆沒。</b>證券＋保單內台股＋平台台股基金合計 451.0 萬 → 362.5 萬，
         虧 -885,044（-19.6%），佔整體虧損的
@@ -91,9 +90,9 @@ ul{margin:6px 0 0;padding-left:18px}li{margin:5px 0}
 <div class="card">
   <div class="sub">同月份的市場結構評估</div>
   <div class="kv"><span>多殺多判定</span><b>第 3 段（融資斷頭）</b></div>
-  <div class="kv"><span>指數自波段高</span><b>-20.2%（36,069）</b></div>
-  <div class="kv"><span>可補繳現金能撐到</span><b>池跌 13.7%（52.6 萬）</b></div>
-  <div style="margin-top:6px"><a href="market_squeeze_2026-11-20.html"
+  <div class="kv"><span>指數自波段高</span><b>-18.6%（36,812）</b></div>
+  <div class="kv"><span>可補繳現金能撐到</span><b>池跌 10.1%（50.5 萬）</b></div>
+  <div style="margin-top:6px"><a href="market_squeeze_2026-11-23.html"
      style="color:#7dd3fc;font-weight:700;font-size:13px">→ 完整評估（四層證據／補繳預案／情境）</a></div>
 </div>
 

@@ -680,7 +680,10 @@ def render(d: dict, embedded: bool = False) -> str:
     a, m, tw, pl = d["assets"], d["market"], d["tw"], d["pledge"]
     cal = d.get("caliber") or {}
     mv_pct = cal.get("pnl_market_pct")
-    mv_alpha = (mv_pct or 0) - (m["index_pct"] or 0)
+    # 2026-11-23 使用者定版：對外主數字＝實質市場變化（帳面 − 帳務因素）
+    real = cal.get("real_change")
+    real_pct = cal.get("real_pct")
+    mv_alpha = (real_pct if real_pct is not None else (mv_pct or 0)) - (m["index_pct"] or 0)
     bond_row = next((r for r in d["securities"] if r["ticker"] == "00983D"), None)
     bond_pct = bond_row["mtd_pct"] if bond_row else None
     cash_pct = next((r["pct"] for r in d["attrib"] if r["label"].startswith("現金")), None)
@@ -716,7 +719,7 @@ def render(d: dict, embedded: bool = False) -> str:
   {title_tag}📉 {d['period']['start']} → {d['period']['end']} 跌幅檢討{title_end}
   <div class="sub">資料：snapshot 快照 {d['period']['days']} 筆｜金額單位 TWD</div>
   <div class="kpi">
-    <div><div class="v {'neg' if (mv_pct or 0) < 0 else ''}">{signed_pct(mv_pct, 2)}</div><div class="l">投資報酬<br>（市場價格變動）</div></div>
+    <div><div class="v {'neg' if (real_pct or 0) < 0 else ''}">{signed_money(real) if real is not None else '—'}</div><div class="l">實質市場變化<br>{signed_pct(real_pct, 2)}（帳面−帳務）</div></div>
     <div><div class="v neg">{signed_money(cal.get('assets_change') or loss)}</div><div class="l">資產變動<br>{signed_pct(a['pct'])}</div></div>
     <div><div class="v">{signed_pct(mv_alpha, 1)}</div><div class="l">相對大盤<br>（大盤 {signed_pct(m['index_pct'])}）</div></div>
   </div>
@@ -734,13 +737,12 @@ def render(d: dict, embedded: bool = False) -> str:
     caliber_card = f"""
 <div class="card">
   <div class="sub">三個數字的差別（橫向加總剛好閉合）</div>
-  <div class="kv"><span>① 投資報酬</span><b>{signed_pct(mv_pct, 2)}　只算市場價格變動</b></div>
-  <div class="kv"><span>② 帳務修正</span><b>{signed_money(cal.get('accounting_adj'))}　日幣匯率記錯、ETF 除息時點差</b></div>
-  <div class="kv"><span>③ 本期投入</span><b>{money(cal.get('net_invest'))}　買進成本，屬資金移動</b></div>
-  <div class="kv"><span>④ 現金淨流動</span><b>{signed_money(cal.get('net_flow'))}　收支與買賣現金</b></div>
-  <div class="kv"><span>＝ 資產變動</span><b>{signed_money(cal.get('assets_change'))}（{signed_pct(a['pct'])}）</b></div>
+  <div class="kv"><span>① 實質市場變化</span><b>{signed_money(real) if real is not None else '—'}（{signed_pct(real_pct, 2)}）</b></div>
+  <div class="kv"><span>② 帳務修正</span><b>{signed_money(cal.get('accounting_adj'))}　日幣匯率記錯、ETF 除息時點差（非市場虧損）</b></div>
+  <div class="kv"><span>＝ 帳面資產變動</span><b>{signed_money(cal.get('assets_change'))}（{signed_pct(a['pct'])}）</b></div>
   <div class="sub" style="margin-top:6px">閉合差 {cal.get('closure_gap')}；帳務來源 {cal.get('source')}。
-    <b>資產變動</b>是你帳戶實際少掉的金額，<b>投資報酬</b>才是投資表現——兩者不該混用同一個百分比。</div>
+    <b>本口徑不扣買進/賣出</b>（現金↔投資內部移轉，本期投入 {money(cal.get('net_invest'))}、現金淨流 {signed_money(cal.get('net_flow'))} 僅供對帳），
+    <b>配息已入現金不重複加</b>。帳面變動含帳務與金流，不是投資表現。</div>
 </div>
 """
     chart = caliber_card + f'<div class="card">{_chart(d["series"])}</div>'
@@ -749,7 +751,7 @@ def render(d: dict, embedded: bool = False) -> str:
 <h2>一、結論先講</h2>
 <div class="card ok">
   <ul>
-    <li><b>跌幅本身不大，問題在結構。</b>大盤 {signed_pct(m['index_pct'])}，投資報酬只 {signed_pct(mv_pct, 2)}（少跌 {mv_alpha:.1f}pp；資產變動 {signed_pct(a['pct'])} 另含帳務與金流）——
+    <li><b>跌幅本身不大，問題在結構。</b>大盤 {signed_pct(m['index_pct'])}，實質市場變化只 {signed_pct(real_pct, 2)}（少跌 {mv_alpha:.1f}pp；帳面資產變動 {signed_pct(a['pct'])} 另含帳務與金流）——
         資產配置有效，因為台股只占 {pct(d['penetration'].get('台股市值型成長'))}、七成是美元資產。</li>
     <li><b>但「台股純度」的部位全軍覆沒。</b>證券＋保單內台股＋平台台股基金合計 {wan(tw['total']['start'])} → {wan(tw['total']['end'])}，
         虧 {signed_money(tw_total_chg)}（{signed_pct(tw['total']['pct'])}），佔整體虧損的
