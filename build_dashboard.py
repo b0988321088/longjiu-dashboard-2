@@ -1666,11 +1666,23 @@ def main():
         _sig_str = "｜".join(f"{k}{v.get('color', '⚪')} {v.get('note', '')}" for k, v in _sig.items())
         tpl = tpl.replace("__RADAR_SIG__", f"（雷達更新 {str(_rs.get('last_run', ''))[:10]}）{_sig_str}")
         _pn = _rs.get("policy_notes", {}) or {}
+        # 2026-11-23 CIO 審查：原字元硬切（56/42）會把小卡片文字斷在句子中間、
+        # 括號不閉合（例：「…FRED DFEDTARU 自 2（債券桶不新增…」）。改為優先斷在標點。
+        def _cut(_s, _n):
+            _s = (_s or "").strip()
+            if len(_s) <= _n:
+                return _s
+            _head = _s[:_n]
+            for _sep in ("。", "；", "，", "、"):
+                _i = _head.rfind(_sep)
+                if _i >= int(_n * 0.5):
+                    return _head[:_i] + "…"
+            return _head + "…"
         _pol_items = []
         for _k in _pn:
             if str(_k).startswith("新聞"):
-                _c = (_pn[_k].get("內容", "") or "")[:56]
-                _imp = (_pn[_k].get("對資產影響", "") or "")[:42]
+                _c = _cut(_pn[_k].get("內容", ""), 88)
+                _imp = _cut(_pn[_k].get("對資產影響", ""), 56)
                 _pol_items.append(f"{_c}（{_imp}）")
         _pol_str = "｜".join(_pol_items) if _pol_items else "無重大政策事件"
         _src = _pn.get("來源", "") or ""

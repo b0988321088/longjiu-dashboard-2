@@ -684,6 +684,9 @@ def main():
     except Exception as _bs_err:
         _pn_fail = state.setdefault("policy_notes", {})
         _pn_fail["債券升息敏感度"] = f"⚠️ 自動更新失敗（{_bs_err.__class__.__name__}: {_bs_err}）→ 數值不可信，請人工確認"
+        # 2026-11-23 CIO 審查：失敗時必須清掉上一輪結構值，否則下游讀 state['bond_sensitivity']
+        # 會拿到「舊的 30Y／行動線觸發」卻配上「更新失敗」的文字，形同假新鮮值。
+        state.pop("bond_sensitivity", None)
         print(f"  ⚠️ 債券升息敏感度自動更新失敗：{_bs_err}")
 
     sig = compute_signals(tw, cot, fed, twd, tnx, cfg, state)
