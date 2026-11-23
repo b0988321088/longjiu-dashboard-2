@@ -1,0 +1,46 @@
+{
+ "commit": "7f1eef9d",
+ "verdict": "APPROVE",
+ "raw_verdict": "ACCEPT_WITH_NITS",
+ "confidence": 0.88,
+ "blocking": [],
+ "required_fixes": [
+  "_fmt_foreign 小數位 2 位（-289.48 億）與驗收字串 -289.5 億 不一致（僅措辭，單位方向正確）",
+  "_fmt_shares 負零：-32,188 股 → '-0.0 百萬股'",
+  "fetch_twse_money 的 date 以請求日組出，非 API 回傳 date（目前恆真，無錯值風險）",
+  "check_radar_evidence.py:90-94 仍無條件 /1e8 印『億』，未讀 外資單位",
+  "identity 不符時僅 append errs，無 stderr 警示"
+ ],
+ "reviewer": "CIO-DeepSeek-V4-Flash(委派-唯讀)",
+ "claim_checks": [
+  {
+   "claim": "僅 2 檔 py（+130/-14），無資料檔",
+   "pass": true
+  },
+  {
+   "claim": "外資 -28,947,879,995 元；自營 -19,001,143,162（兩列合計）",
+   "pass": true
+  },
+  {
+   "claim": "產業合計 -1,770,218,133 股 = Σr[18]，19 桶 16 負",
+   "pass": true
+  },
+  {
+   "claim": "T86 fields[18]=三大法人買賣超股數，逐列 identity 0 失敗",
+   "pass": true
+  },
+  {
+   "claim": "r[12] 僅存在註解；股數 backup 不觸 -2e9 紅線",
+   "pass": true
+  },
+  {
+   "claim": "紅燈已可亮：外資單日賣超 289.5 億",
+   "pass": true
+  },
+  {
+   "claim": "報表無 -28947.9、產業表方向與 aggregate 一致",
+   "pass": true
+  }
+ ],
+ "note": "方向性錯誤已消除；5 條 nits 非阻擋，列 BACKLOG 下一批處理"
+}
