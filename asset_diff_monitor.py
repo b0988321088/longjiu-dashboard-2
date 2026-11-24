@@ -1283,7 +1283,10 @@ def build_html(rows: list[dict], history: dict, snap: dict) -> str:
                     "基金 國泰直購（富達/聯博/B11）", "基金 鉅亨（一般申購＋自由Pay）"}
         # 人工補充來源：data_freshness 內非保留鍵者仍照舊呈現（已不再承載上述六列的日期）
         _legacy = {k: v for k, v in (snap.get("data_freshness", {}) or {}).items()
-                   if k not in ("note", "updated_at", "deprecated", "機制")}
+                   if k not in ("note", "updated_at", "deprecated", "機制")
+                   # 2026-11-24 修：data_freshness 內殘留 dict/list（securities/funds_* 的 as_of 子字典）
+                   #   會被原樣印成「{'as_of': ...}」垃圾列 → 只收字串值。
+                   and isinstance(v, str) and v.strip()}
         _src_rows += list(_legacy.items())
 
         _frows, _ages, _imp_ages, _stale = [], [], [], []
