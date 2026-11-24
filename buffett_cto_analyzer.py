@@ -557,7 +557,7 @@ def generate_buffett_report(pen: dict, market_text: str = "") -> list:
             f"{market_text}\n"
             f"硬性約束（違反即無效，不可建議）：現金=底線制{cash_floor_label(_snap)}（{cash_caliber_note(_snap)}）；"
             f"台股加碼單筆≤5萬、8-12週分批；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
-            f"債券等 US30Y<5.30%；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）；"
+            f"債券等 US30Y<5.30%；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金 Locked 禁建議（2026-11-24 使用者指示：超跌不打算再買，既有部位保留不賣）；不動產(REITs)禁建議（實體3,401萬已超配）；"
             f"{_trade_auth_status(_snap)}：維持逐批下令，未收到本人明確指令前不得買進；其他資產仍依既有風控規則管理，不得將條件達成解讀為全面解除風險限制。\n"
             f"請以巴菲特投資哲學（護城河、安全邊際、能力圈、長期持有、別人恐懼我貪婪）做 3 點具體觀察 + 1 個紀律提醒，200字內，繁體中文，不要重複數字表。"
         )
@@ -678,7 +678,7 @@ def generate_cto_report(pen: dict, market_text: str = "") -> list:
             f"{market_text}\n"
             f"硬性約束（違反即無效，不可建議）：現金=底線制{cash_floor_label(_snap)}（{cash_caliber_note(_snap)}）；"
             f"台股加碼單筆≤5萬、8-12週分批（不可建議單筆大額）；美股逢彈減碼≤20萬/次；新增資金全台幣（禁止兌外幣/匯率避險建議）；"
-            f"債券等 US30Y<5.30%（禁建議買債）；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金衛星≤5% PI後分3批；不動產(REITs)禁建議（實體3,401萬已超配）；"
+            f"債券等 US30Y<5.30%（禁建議買債）；石油 Locked 禁建議；防守合併口徑{defensive_combined_phrase(_snap)}；黃金 Locked 禁建議（2026-11-24 使用者指示：超跌不打算再買，既有部位保留不賣）；不動產(REITs)禁建議（實體3,401萬已超配）；"
             f"{_trade_auth_status(_snap)}：維持逐批下令，未收到本人明確指令前不得買進；其他資產仍依既有風控規則管理，不得將條件達成解讀為全面解除風險限制。\n"
             f"請以技術面（動能、趨勢、支撐壓力、風險）+ 產業資金流向（哪個產業順勢/逆勢）給：今日最大風險 + 具體建議動作（含標的/金額節奏，須符合上述約束），150字內，繁體中文。"
         )

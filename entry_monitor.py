@@ -6,7 +6,7 @@
 進場計畫（entry_plan.json，可調）：
   台股慢慢買：PI 已核准（snapshot.professional_investor.approval_status）→ 每週 0050/006208 1.5-2萬
   美股減碼：SPY/費半 反彈 ≥2% → 00646/009823/009824 ≤20萬
-  黃金衛星：00635U 回檔 -3% 或 PI 後 → 第一批 20萬
+  黃金衛星：⛔ 2026-11-24 使用者指示取消（超跌過多、不再加碼）；原邏輯已停用，既有部位保留不賣
   PI 質押：額度已核定（9/11, 540萬@2.77%）→ 待對保後撥款（~9/25）→ 清償 500萬高息負債
   保單轉換：8/25 執行（PIMCO M120/M&G 115/健康25/黃金A10 15）
 """
@@ -59,7 +59,7 @@ def main():
         _pi_gap = 0.0
         _pi_err = _e
     if _pi_approved:
-        alerts.append("🎯 PI 已核准（唯一容器 professional_investor）→ 執行鏈啟動：\n├ 台股分批 0050/006208（單筆 ≤5萬）\n├ " + _pf.pledge_status_line(style="short") + "\n└ 黃金衛星 00635U 分批 ≤20萬")
+        alerts.append("🎯 PI 已核准（唯一容器 professional_investor）→ 執行鏈啟動：\n├ 台股分批 0050/006208（單筆 ≤5萬）\n├ " + _pf.pledge_status_line(style="short") + "\n└ 黃金衛星已取消（2026-11-24 指示，不再加碼）")
     elif _pi_err is not None:
         # 缺真值屬資料品質事件（罕見）→ 明確告警，不靜默、不塞預設「未申請」
         alerts.append(f"⛔ PI 狀態缺真值（{_pi_err}）→ 執行鏈鎖定（fail-closed；請用 sync_professional_investor.py 寫入）")
@@ -80,18 +80,14 @@ def main():
     except Exception:
         pass
 
-    # 3. 黃金衛星：00635U 回檔 -3%（10 日內高點）或 PI 後
-    try:
-        g = _yf_close("00635U.TW")
-        if len(g) >= 5:
-            hi = max(g[-10:])
-            drawdown = (g[-1] - hi) / hi * 100
-            if drawdown <= -3 and not _pi_approved:
-                alerts.append(f"🥇 黃金回檔 {drawdown:.1f}% → 00635U 可進第一批（≤20萬，回檔紀律）")
-            elif drawdown <= -3 and _pi_approved:
-                alerts.append(f"🥇 黃金回檔 {drawdown:.1f}% + PI 已核准 → 00635U 第一批 20萬 可執行")
-    except Exception:
-        pass
+    # 3. 黃金衛星：⛔ 2026-11-24 使用者指示取消（「最近超跌太多，沒有打算再買」）
+    #    原邏輯：00635U 回檔 -3% → 推播「可進第一批 ≤20萬」。已停用，不再產生任何黃金進場提醒。
+    #    既有部位（保單貝萊德世界黃金 A10）保留不賣，僅停止加碼建議。
+    # try:
+    #     g = _yf_close("00635U.TW")
+    #     ...
+    # except Exception:
+    #     pass
 
     # 4. 保單轉換（8/25）提醒
     if today == datetime.date(2026, 8, 25):
