@@ -114,7 +114,7 @@ def compute(snap: dict) -> dict:
     return {"pool": pool, "loan": loan, "ratio": ratio,
             "ltv": ltv, "ltv_stop": ltv_stop, "ltv_target": ltv_target,
             "ltv_stage": ltv_stage, "ltv_stage_action": _stage_act,
-            "ltv_unfreeze_ltv": _num(_bands.get("綠上限"), 45),
+            "ltv_unfreeze_ltv": _num(_bands.get("解凍上限", _bands.get("綠上限")), 50),
             "cathay_nav_date": cathay_nav_date,
             "notice": notice, "pay": pay, "warn": warn,
             "rate": snap.get("fund_pledge_rate"), "due_day": snap.get("fund_pledge_due_day")}
@@ -170,15 +170,16 @@ def stage_block(m: dict, snap: dict) -> str:
                              f"LTV {ltv:.2f}% 是下限，實際可能更高")
         except Exception:  # noqa: BLE001  日期模組異常不得讓告警整則消失
             pass
-    if stage == "綠_正常":
+    _cap = float(m.get('ltv_unfreeze_ltv') or 50)
+    if stage == "綠_正常" or (ltv is not None and ltv <= _cap):
         if usable is not None:
             ok = usable >= floor
-            L.append(f"· 解凍條件：LTV<{float(m.get('ltv_unfreeze_ltv') or 45):.0f}%＋可動用現金 ≥ {floor:,.0f}"
+            L.append(f"· 解凍條件：LTV≤{_cap:.0f}%＋可動用現金 ≥ {floor:,.0f}"
                      f"（現 {usable:,.0f}{'，✅ 已符合' if ok else '，❌ 未達'}）")
         L.append("· ⚠️ 解凍不自動生效：仍需一次明確裁決（Telegram ✅ 落 dashboard_decisions）；"
                  "本則只通知「符合條件」，不代表已解凍")
     else:
-        L.append(f"· 解凍門檻：LTV<{float(m.get('ltv_unfreeze_ltv') or 45):.0f}% 且可動用現金 ≥ {floor:,.0f}，需明確裁決")
+        L.append(f"· 解凍門檻：LTV≤{_cap:.0f}% 且可動用現金 ≥ {floor:,.0f}，需明確裁決")
     return "\n".join(L)
 
 

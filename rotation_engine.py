@@ -281,9 +281,11 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
         pass
     _ltv_use = max(_ltv_vals) if _ltv_vals else None
     # 門檻不寫死：綠燈上限（=警戒起點）讀 thresholds 分級（2026-11-19：45%）
+    # 2026-11-24 裁決「LTV 回 50% 即可」：警戒解除／恢復部署門檻改讀 解凍上限（缺→綠上限）
     try:
         from sot_targets import ltv_grades as _lg_fn
-        _ltv_green_max = float(_lg_fn(snap).get("綠上限"))
+        _lg_now = _lg_fn(snap) or {}
+        _ltv_green_max = float(_lg_now.get("解凍上限", _lg_now.get("綠上限")))
     except Exception:
         _ltv_green_max = None
     _ltv_warn = bool(_ltv_use is not None and _ltv_green_max is not None and _ltv_use >= _ltv_green_max)

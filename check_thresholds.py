@@ -466,13 +466,17 @@ def main() -> int:
                             errs.append(f"LTV 階段不一致：ltv_stage_now={_stage_now.get('階段')} "
                                         f"vs 派生={_l.get('階段')}（App 截圖為真值）")
                     _cond_ltv = [x for x in _ucs if "質押 LTV" in str(x.get("名稱"))]
+                    # 2026-11-24 裁決（使用者「LTV 回 50% 即可」）：解凍門檻改讀
+                    # thresholds.ltv分級_pct.解凍上限（現 50），不再要求階段＝綠_正常。
+                    _cap = ((snap.get("thresholds_2026_0915") or {}).get("ltv分級_pct") or {}).get("解凍上限")
+                    _cap = float(_cap) if isinstance(_cap, (int, float)) and not isinstance(_cap, bool) else float(_l["綠上限_pct"])
                     if _cond_ltv:
-                        _expect = bool(_l.get("加碼許可") and not _l.get("觸追繳"))
+                        _expect = bool(float(_l["LTV_pct"]) <= _cap and not _l.get("觸追繳"))
                         if bool(_cond_ltv[0].get("通過")) != _expect:
-                            errs.append(f"v1.2 質押 LTV 條件未依階段判定（階段 {_l.get('階段')} "
-                                        f"應為 {'通過' if _expect else '不通過'}；禁回退「≤53% 即綠燈」）")
-                    if bool(_ug.get("unfreeze_allowed")) and not bool(_l.get("加碼許可")):
-                        errs.append(f"LTV 階段 {_l.get('階段')}（非綠_正常）卻許可解凍／加碼")
+                            errs.append(f"v1.2 質押 LTV 條件未依解凍上限判定（LTV {_l['LTV_pct']}% "
+                                        f"vs 門檻 ≤{_cap:.0f}%；禁回退「≤53% 即綠燈」）")
+                    if bool(_ug.get("unfreeze_allowed")) and float(_l["LTV_pct"]) > _cap:
+                        errs.append(f"LTV {_l['LTV_pct']}% 高於解凍上限 {_cap:.0f}% 卻許可解凍／加碼")
                     _vv = _rvv(snap)
                     if bool(_vv["轉負情境"]) != bool(_vv["暫停新增分批"]):
                         errs.append("v1.2 還本安全閥：暫停新增分批 與 轉負情境 不一致")

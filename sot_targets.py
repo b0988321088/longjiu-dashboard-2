@@ -1654,26 +1654,39 @@ def unfreeze_conditions(snap: dict, state: dict | None = None) -> dict:
     cash_line = float(gate_thresholds(snap)["自由現金_twd"])
     ltv = pledge_ltv_detail(snap)
     valve = repayment_valve(snap)
+    # 2026-11-24 裁決（使用者 Telegram「LTV 回 50% 即可」）：解凍／恢復部署的 LTV 上限
+    # 改讀 thresholds.ltv分級_pct.解凍上限（缺鍵→回退綠上限 45，維持 fail-closed）。
+    _bands = ((snap or {}).get(SOT_KEY) or {}).get("ltv分級_pct") or {}
+    _cap_raw = _bands.get("解凍上限")
+    _unfreeze_cap = float(_cap_raw) if isinstance(_cap_raw, (int, float)) and not isinstance(_cap_raw, bool) else ltv.get("綠上限_pct")
+    try:
+        _unfreeze_ok = bool(_unfreeze_cap is not None
+                            and float(ltv["LTV_pct"]) <= float(_unfreeze_cap)
+                            and not ltv["觸追繳"])
+    except (TypeError, ValueError, KeyError):
+        _unfreeze_ok = False
     conds = [
         {"名稱": "現金 ≥ 自由現金門檻", "通過": bool(cash >= cash_line),
          "現值": round(cash), "門檻": cash_line,
          "註記": "可動用＝cash_layers.unrestricted_cash；指定用途款 900,000 永久排除；"
                  "分批資金只認列已實際入帳盈餘",
          "來源": "sot_targets.allowable_cash ＋ sabbatical_gate_twd.自由現金_twd"},
-        {"名稱": (f"質押 LTV 階段＝綠_正常（<{ltv['綠上限_pct']:.0f}%）"
-                   if ltv.get("綠上限_pct") is not None
-                   else "質押 LTV 階段＝綠_正常（缺階段表 → fail-closed）"),
-         # 2026-11-18 修復：原判準 ltv <= 黃上限(53%) 與 11/16 六段分級衝突
-         # （45–53% 是「警戒＝不加碼」），改由階段判定；53% 降為內部停止線下限。
-         "通過": bool(ltv["加碼許可"] and not ltv["觸追繳"]),
+        {"名稱": (f"質押 LTV ≤ 解凍上限 {_unfreeze_cap:.0f}%"
+                   if _unfreeze_cap is not None
+                   else "質押 LTV ≤ 解凍上限（缺 thresholds → fail-closed）"),
+         # 2026-11-18：原判準 ltv <= 黃上限(53%) 與 11/16 六段分級衝突，改由階段判定。
+         # 2026-11-24：使用者裁決「LTV 回 50% 即可」→ 解凍門檻自階段＝綠_正常(<45%)
+         #   改為 LTV ≤ thresholds.ltv分級_pct.解凍上限（現 50）。綠_正常/警戒標籤與
+         #   六段分級不動，53% 仍為內部停止線；僅「解凍／恢復部署」這一條放寬到 50%。
+         "通過": bool(_unfreeze_ok),
          "現值": ltv["LTV_pct"],
-         "門檻": (float(ltv["綠上限_pct"]) if ltv.get("綠上限_pct") is not None
+         "門檻": (float(_unfreeze_cap) if _unfreeze_cap is not None
                   else float(ltv["政策停止線_pct"])),
          "階段": ltv.get("階段"), "階段動作": ltv.get("階段動作"),
          "LTV_自算": ltv.get("LTV_self_pct"), "LTV_App": ltv.get("LTV_app_pct"),
-         "註記": (f"{ltv['語意']}｜2026-11-18 起本條改判「階段」：45–53%＝警戒（不加碼、"
-                  f"子彈暫停），53% 僅為內部停止線下限。現階段＝{ltv.get('階段')}："
-                  f"{ltv.get('階段動作')}"),
+         "註記": (f"{ltv['語意']}｜2026-11-24 裁決：解凍／恢復部署門檻＝LTV ≤{_unfreeze_cap:.0f}%"
+                  f"（原階段＝綠_正常 <{ltv.get('綠上限_pct')}%）；六段分級與 53% 內部停止線不變，"
+                  f"綠_正常階段仍可依原規則逐批（須逐批下令）。現階段＝{ltv.get('階段')}：{ltv.get('階段動作')}"),
          "來源": ltv["source"]},
         {"名稱": "還本安全閥（無月盈餘轉負情境）", "通過": (not valve["暫停新增分批"]),
          "現值": ("；".join(valve["轉負情境"]) if valve["轉負情境"] else "無"),
@@ -2712,6 +2725,10 @@ def ltv_grades(snap: dict) -> dict:
         return {}
     out["判定單位"] = str(g.get("判定單位")
                           or "各池分別判定（不加總平均；追繳看單池）")
+    # 2026-11-24 裁決：解凍／恢復部署上限（選用鍵；缺→呼叫端回退綠上限）
+    _cap = _finite(g.get("解凍上限"))
+    if _cap is not None:
+        out["解凍上限"] = _cap
     return out
 
 
