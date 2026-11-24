@@ -163,6 +163,57 @@ def main():
     <span style="color:#94a3b8">日幣部位現值為口徑修正後金額（原 473,493 是日圓金額誤記成台幣），等日幣回升後再轉換，不在此次處置範圍。</span>
   </div>"""
 
+    # 🔄 保單轉換與部位處置清單（2026-11-24 彙整）
+    #    資料來源：snapshot.policy_conversion_plan_20261114／funds_breakdown／insurance_breakdown／usd_exposure_monitor／penetration
+    #    目的：把散落在決策庫與 snapshot 的動作整理成單一可讀清單（先前報告完全沒有呈現 11/14 的轉換定案）
+    _pc = snap.get("policy_conversion_plan_20261114") or {}
+    _pc_out = (_pc.get("轉出") or {})
+    _pc_in = (_pc.get("轉入") or {})
+    _pc_amt = float(_pc_out.get("轉出金額") or 0)
+    _pc_batch = (_pc.get("批次") or [{}])[0]
+    _ui = ((snap.get("usd_exposure_monitor") or {}).get("current") or {})
+    _usd_now = float(_ui.get("匯率曝險合計") or 0)
+    _usd_after = (_usd_now - (_pc_amt / _den * 100)) if _den else 0.0
+    _us_pct_now = float(apct.get("美股市值型成長", 0) or 0)
+    _us_pct_after = max(0.0, _us_pct_now - 0.9) if _pc_amt else _us_pct_now
+    _tw_after_sell = ((float(atwd.get("台股市值型成長", 0) or 0) - _tw_total) / _den * 100) if _den else 0.0
+    _cash_after_all = float(snap.get("cash_total", 0) or 0) + _tw_total
+    _ratio_rows = "".join(
+        "<tr><td>{}</td><td class=\"num\">{}</td><td class=\"num\"><b>{}</b></td><td>{}</td></tr>".format(a, b, c, d)
+        for a, b, c, d in [
+            ("美元曝險", f"{_usd_now:.1f}%", f"{_usd_after:.1f}%", "目標 63／黃 65／觀察 70（advisory only）"),
+            ("美股市值型", f"{_us_pct_now:.1f}%", f"{_us_pct_after:.1f}%", "目標 30／熔斷 33 ⚠️ 仍超標"),
+            ("台股市值型", f"{_tw_apct:.1f}%", f"{_tw_after_sell:.1f}%", "目標 10／容許 7–13（平台台股全賣時）"),
+            ("防守型配息", f"{float(apct.get('防守型配息', 0) or 0):.1f}%", f"{float(apct.get('防守型配息', 0) or 0):.1f}%", "目標 30 ⚠️ 缺 12.6pp（本表動作不解此項）"),
+            ("債券", f"{float(apct.get('債券', 0) or 0):.1f}%", f"{float(apct.get('債券', 0) or 0):.1f}%", "目標 25 ✅ 已達標"),
+            ("現金（全口徑）", f"{float(snap.get('cash_total', 0) or 0):,.0f}", f"{_cash_after_all:,.0f}", "12 月底目標 2,500,000"),
+        ])
+    action_plan_html = f"""
+  <div class="note" style="border-left:3px solid #a78bfa">
+    <b>本清單把三份不同來源的決策併成一張表</b>：A 保單內轉換（11/14 定案）、B 平台基金減碼（11/24 指示）、C 明確不動的部位。金額全部由 snapshot 派生，改資料即自動更新。
+  </div>
+  <h3>A. 保單內轉換（不產生現金，只在保單內換基金）</h3>
+  <table><thead><tr><th>#</th><th>保單</th><th>轉出</th><th>轉入</th><th class="num">金額</th><th>時程</th><th>效果</th></tr></thead>
+  <tbody><tr><td>1</td><td>安聯 A</td><td style="font-size:11.5px">{_pc_out.get('基金', '—')}</td><td style="font-size:11.5px">{_pc_in.get('級別', '—')}</td><td class="num">{_pc_amt:,.0f}</td><td style="font-size:11.5px">送件 {_pc_batch.get('申請日', '—')}（狀態待證實）→ T+4 生效 {_pc_batch.get('T+4完成', '—')}</td><td style="font-size:11.5px">美元曝險 −{(_pc_amt / _den * 100) if _den else 0:.1f}pp；美股桶 −0.9pp；吃 12/08 摩根除息</td></tr></tbody></table>
+  <h3>B. 平台基金減碼（會回到台幣現金）</h3>
+  <table><thead><tr><th>範圍</th><th class="num">金額</th><th>動作</th><th>入帳／費用</th></tr></thead>
+  <tbody><tr><td>鉅亨平台台股基金 {len(_tw)} 檔</td><td class="num">{_tw_total:,.0f}</td><td>賣掉一些（金額待定）</td><td style="font-size:11.5px">T+3~T+5 工作天；未滿 7 天恐收短線交易費 0.5–2%</td></tr></tbody></table>
+  <h3>C. 明確不動</h3>
+  <table><thead><tr><th>部位</th><th class="num">金額</th><th>原因</th></tr></thead>
+  <tbody>
+  <tr><td style="font-size:11.5px">安聯 B 台幣計價（元大卓越50／元大高股息龍頭）</td><td class="num">{_b_ntd_total:,.0f}</td><td style="font-size:11.5px">2026-11-24 指示：台幣計價的安聯 B 不動</td></tr>
+  <tr><td style="font-size:11.5px">台新美日台半導體（日圓級別）</td><td class="num">{_jpy_total:,.0f}</td><td style="font-size:11.5px">等日幣回升再做轉換</td></tr>
+  <tr><td style="font-size:11.5px">貝萊德世界黃金 A10（保單 B）</td><td class="num">{float((_pb.get('USDEQ6730 貝萊德世界黃金基金A10美元(總報酬穩定配息)') or 0)):,.0f}</td><td style="font-size:11.5px">黃金禁建議：不再加碼（2026-11-24），部位保留不賣</td></tr>
+  <tr><td style="font-size:11.5px">國泰三檔（富達／貝萊德 B11／聯博 AD）</td><td class="num">{sum(float(_v) for _v in ((snap.get('funds_breakdown') or {}).get('國泰直購') or {}).values() if isinstance(_v, (int, float))):,.0f}</td><td style="font-size:11.5px">質押擔保品，賣出會抬 LTV → 不可賣</td></tr>
+  </tbody></table>
+  <h3>D. 比例調整總表（做完 A＋B 之後）</h3>
+  <table><thead><tr><th>項目</th><th class="num">現在</th><th class="num">動作後</th><th>目標／說明</th></tr></thead>
+  <tbody>{_ratio_rows}</tbody></table>
+  <div class="note">
+    <b>轉換無次數限制</b>（安聯，2026-11-16 確認、11/18 與 11/24 複述）→ 可任意分批，不需為省次數一次到位。<br>
+    <b>待辦</b>：① 確認 11/20 是否已送件（系統無送件記錄）② 11/26 對帳生效 ③ 平台基金賣多少由你決定
+  </div>"""
+
     # 🔴 Fed 升息情境（2026-09-01 整合：snapshot.fed_hike_monitor_0901）
     fed_html = ""
     try:
@@ -306,6 +357,9 @@ def main():
 
   <h2>🎯 調倉優先順序</h2>
   {priority}
+
+  <h2>🔄 轉換動作與比例調整清單</h2>
+  {action_plan_html}
 
   <h2>📋 台股部位處置（2026-11-24 指示）</h2>
   {tw_trim_html}

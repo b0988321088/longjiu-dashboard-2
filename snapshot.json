@@ -10241,20 +10241,20 @@
   }
  },
  "insurance_estimate": {
-  "as_of": "2026-11-23",
-  "nav_basis_date": "2026-11-23",
-  "estimated_incl_truth_twd": 9121635,
+  "as_of": "2026-11-24",
+  "nav_basis_date": "2026-11-24",
+  "estimated_incl_truth_twd": 9107647,
   "truth_twd": 9121635.0,
-  "diff_twd": 0.0,
-  "diff_pct": 0.0,
-  "coverage_pct": 0.0,
-  "uncovered_truth_twd": 9121635,
+  "diff_twd": -13988.0,
+  "diff_pct": -0.15,
+  "coverage_pct": 17.3,
+  "uncovered_truth_twd": 7542293,
   "accounts": {
    "allianz_a": {
-    "estimated_twd": 0.0,
+    "estimated_twd": 1565354.0,
     "truth_twd": 4874833.0,
-    "diff_pct": -100.0,
-    "coverage_pct": 0.0
+    "diff_pct": -67.89,
+    "coverage_pct": 32.4
    },
    "allianz_b": {
     "estimated_twd": 0.0,
@@ -10423,5 +10423,20 @@
   "既有部位": 120360,
   "處置": "保留不賣（只停止加碼建議，不處分既有持倉）",
   "前案": "避險衛星目標（黃金≤5%/石油≤2%）已於 2026-10-30 結案作廢"
+ },
+ "insurance_switch_policy": {
+  "轉換次數限制": "無（安聯人壽投資型保單）",
+  "首次確認": "2026-11-16 使用者告知",
+  "複述確認": [
+   "2026-11-18",
+   "2026-11-24"
+  ],
+  "來源": "使用者 Telegram（三次一致）",
+  "結論": "可任意分批轉換，不受年度免費次數限制；不需為省次數一次到位",
+  "已知載體": [
+   "snapshot.policy_conversion_plan_20261114.前置確認",
+   "dashboard_decisions（2026-11-18 保單轉換前置已確認：安聯無轉換次數限制）"
+  ],
+  "用途": "任何保單轉換建議不得再以「次數有限」為由要求一次到位；亦不得再要求使用者確認次數"
  }
 }
