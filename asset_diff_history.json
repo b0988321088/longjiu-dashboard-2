@@ -1086,12 +1086,12 @@
   },
   "2026-11-24": {
     "date": "2026-11-24",
-    "total_assets": 25638685.13,
+    "total_assets": 25612679.13,
     "total_liabilities": 30946510.0,
-    "net_worth": -5307824.870000001,
+    "net_worth": -5333830.870000001,
     "securities_market": 2568640.0,
-    "insurance_current": 8919404.0,
-    "insurance_total": 8919404.0,
+    "insurance_current": 8893398.0,
+    "insurance_total": 8893398.0,
     "fund_market": 12022089.0,
     "real_estate": 34017063.0,
     "cash": 2128552.13,
@@ -1108,8 +1108,8 @@
       "  B-USDEQ5700 M&G入息基金A(美元避險月配)F (27.8%) ": 622820,
       "  B-黃金投資 (USDEQ6730 貝萊德世界黃金基金A10美元(總報酬穩定配息)) (5.6%) ": 126280,
       "安聯A+B合計": 7052741.0,
-      "━第一金M&G入息基金A(美元避險月配)（ID05；原遮罩 IDXX 於 11/23 正名）現値": 1866663.0,
-      "━保單總現値": 8919404.0
+      "━第一金M&G入息基金A(美元避險月配)（ID05；原遮罩 IDXX 於 11/23 正名）現値": 1840657.0,
+      "━保單總現値": 8893398.0
     },
     "fund_dividend_monthly": 158296.0,
     "monthly_income": 234207.0,
@@ -1120,6 +1120,6 @@
     "bonds": 0.0,
     "unrealized_pnl": 73770,
     "realized_pnl": 23460,
-    "net_worth_incl_re": 28709238.129999995
+    "net_worth_incl_re": 28683232.129999995
   }
 }
