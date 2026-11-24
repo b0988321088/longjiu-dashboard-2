@@ -1659,10 +1659,19 @@ def unfreeze_conditions(snap: dict, state: dict | None = None) -> dict:
     _bands = ((snap or {}).get(SOT_KEY) or {}).get("ltv分級_pct") or {}
     _cap_raw = _bands.get("解凍上限")
     _unfreeze_cap = float(_cap_raw) if isinstance(_cap_raw, (int, float)) and not isinstance(_cap_raw, bool) else ltv.get("綠上限_pct")
+    # 2026-11-24 第二道裁決（使用者「質押解凍門檻取消」）：ltv條件啟用=False 時，
+    #   「LTV 是否達到解凍上限」不再參與判斷；仍保留兩道硬否決 —— 觸追繳、逾 53% 政策停止線。
+    _ltv_gate_on = _bands.get("ltv條件啟用")
+    _ltv_gate_on = True if _ltv_gate_on is None else bool(_ltv_gate_on)
     try:
-        _unfreeze_ok = bool(_unfreeze_cap is not None
-                            and float(ltv["LTV_pct"]) <= float(_unfreeze_cap)
-                            and not ltv["觸追繳"])
+        _ltv_now = float(ltv["LTV_pct"])
+        _stop = float(ltv["政策停止線_pct"])
+        if ltv["觸追繳"] or _ltv_now > _stop:
+            _unfreeze_ok = False
+        elif _ltv_gate_on:
+            _unfreeze_ok = bool(_unfreeze_cap is not None and _ltv_now <= float(_unfreeze_cap))
+        else:
+            _unfreeze_ok = True
     except (TypeError, ValueError, KeyError):
         _unfreeze_ok = False
     conds = [
@@ -1671,22 +1680,30 @@ def unfreeze_conditions(snap: dict, state: dict | None = None) -> dict:
          "註記": "可動用＝cash_layers.unrestricted_cash；指定用途款 900,000 永久排除；"
                  "分批資金只認列已實際入帳盈餘",
          "來源": "sot_targets.allowable_cash ＋ sabbatical_gate_twd.自由現金_twd"},
-        {"名稱": (f"質押 LTV ≤ 解凍上限 {_unfreeze_cap:.0f}%"
+        {"名稱": ((f"質押 LTV ≤ 解凍上限 {_unfreeze_cap:.0f}%"
                    if _unfreeze_cap is not None
-                   else "質押 LTV ≤ 解凍上限（缺 thresholds → fail-closed）"),
+                   else "質押 LTV ≤ 解凍上限（缺 thresholds → fail-closed）")
+                  if _ltv_gate_on else
+                  "質押 LTV（門檻已取消：僅 53% 停止線與追繳否決）"),
          # 2026-11-18：原判準 ltv <= 黃上限(53%) 與 11/16 六段分級衝突，改由階段判定。
          # 2026-11-24：使用者裁決「LTV 回 50% 即可」→ 解凍門檻自階段＝綠_正常(<45%)
          #   改為 LTV ≤ thresholds.ltv分級_pct.解凍上限（現 50）。綠_正常/警戒標籤與
          #   六段分級不動，53% 仍為內部停止線；僅「解凍／恢復部署」這一條放寬到 50%。
          "通過": bool(_unfreeze_ok),
          "現值": ltv["LTV_pct"],
-         "門檻": (float(_unfreeze_cap) if _unfreeze_cap is not None
+         "門檻": ((float(_unfreeze_cap) if _unfreeze_cap is not None
+                   else float(ltv["政策停止線_pct"])) if _ltv_gate_on
                   else float(ltv["政策停止線_pct"])),
          "階段": ltv.get("階段"), "階段動作": ltv.get("階段動作"),
          "LTV_自算": ltv.get("LTV_self_pct"), "LTV_App": ltv.get("LTV_app_pct"),
-         "註記": (f"{ltv['語意']}｜2026-11-24 裁決：解凍／恢復部署門檻＝LTV ≤{_unfreeze_cap:.0f}%"
-                  f"（原階段＝綠_正常 <{ltv.get('綠上限_pct')}%）；六段分級與 53% 內部停止線不變，"
-                  f"綠_正常階段仍可依原規則逐批（須逐批下令）。現階段＝{ltv.get('階段')}：{ltv.get('階段動作')}"),
+         "註記": ((f"{ltv['語意']}｜2026-11-24 裁決：解凍／恢復部署門檻＝LTV ≤{_unfreeze_cap:.0f}%"
+                   f"（原階段＝綠_正常 <{ltv.get('綠上限_pct')}%）；六段分級與 53% 內部停止線不變，"
+                   f"綠_正常階段仍可依原規則逐批（須逐批下令）。現階段＝{ltv.get('階段')}：{ltv.get('階段動作')}")
+                  if _ltv_gate_on else
+                  (f"{ltv['語意']}｜2026-11-24 裁決：質押解凍門檻取消 → 不再因 LTV 未達標而禁止加碼／買進。"
+                   f"保留兩道硬否決：①觸追繳（{ltv.get('追繳_pct')}%）②逾政策停止線 "
+                   f"{ltv['政策停止線_pct']:.0f}%（內部上限，非銀行線）。現階段＝{ltv.get('階段')}："
+                   f"{ltv.get('階段動作')}（階段標籤僅供顯示，不再作為解凍條件）")),
          "來源": ltv["source"]},
         {"名稱": "還本安全閥（無月盈餘轉負情境）", "通過": (not valve["暫停新增分批"]),
          "現值": ("；".join(valve["轉負情境"]) if valve["轉負情境"] else "無"),

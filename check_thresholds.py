@@ -470,13 +470,22 @@ def main() -> int:
                     # thresholds.ltv分級_pct.解凍上限（現 50），不再要求階段＝綠_正常。
                     _cap = ((snap.get("thresholds_2026_0915") or {}).get("ltv分級_pct") or {}).get("解凍上限")
                     _cap = float(_cap) if isinstance(_cap, (int, float)) and not isinstance(_cap, bool) else float(_l["綠上限_pct"])
-                    if _cond_ltv:
+                    # 2026-11-24 第二道裁決：ltv條件啟用=False → 門檻取消，改以 53% 停止線＋追繳為硬否決
+                    _gate = ((snap.get("thresholds_2026_0915") or {}).get("ltv分級_pct") or {}).get("ltv條件啟用")
+                    _gate = True if _gate is None else bool(_gate)
+                    _stop = float(_l["政策停止線_pct"])
+                    if _gate:
                         _expect = bool(float(_l["LTV_pct"]) <= _cap and not _l.get("觸追繳"))
+                    else:
+                        _expect = bool(float(_l["LTV_pct"]) <= _stop and not _l.get("觸追繳"))
+                    if _cond_ltv:
                         if bool(_cond_ltv[0].get("通過")) != _expect:
-                            errs.append(f"v1.2 質押 LTV 條件未依解凍上限判定（LTV {_l['LTV_pct']}% "
-                                        f"vs 門檻 ≤{_cap:.0f}%；禁回退「≤53% 即綠燈」）")
-                    if bool(_ug.get("unfreeze_allowed")) and float(_l["LTV_pct"]) > _cap:
-                        errs.append(f"LTV {_l['LTV_pct']}% 高於解凍上限 {_cap:.0f}% 卻許可解凍／加碼")
+                            errs.append(f"v1.2 質押 LTV 條件判定不符（LTV {_l['LTV_pct']}%｜"
+                                        f"門檻{'啟用 ≤%.0f%%' % _cap if _gate else '已取消，僅 53% 停止線'}｜"
+                                        f"應為 {'通過' if _expect else '不通過'}；禁回退「≤53% 即綠燈」）")
+                    if bool(_ug.get("unfreeze_allowed")) and not _expect:
+                        errs.append(f"LTV {_l['LTV_pct']}% 未達解凍條件（門檻"
+                                    f"{'%.0f%%' % _cap if _gate else '已取消→看 53% 停止線'}）卻許可解凍／加碼")
                     _vv = _rvv(snap)
                     if bool(_vv["轉負情境"]) != bool(_vv["暫停新增分批"]):
                         errs.append("v1.2 還本安全閥：暫停新增分批 與 轉負情境 不一致")

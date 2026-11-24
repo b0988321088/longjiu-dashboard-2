@@ -285,7 +285,14 @@ def build_trade_plan(rec: dict, snap: dict) -> list:
     try:
         from sot_targets import ltv_grades as _lg_fn
         _lg_now = _lg_fn(snap) or {}
-        _ltv_green_max = float(_lg_now.get("解凍上限", _lg_now.get("綠上限")))
+        _gate_on = True
+        _bands_now = ((snap.get("thresholds_2026_0915") or {}).get("ltv分級_pct") or {})
+        if _bands_now.get("ltv條件啟用") is False:
+            # 2026-11-24 裁決：質押解凍門檻取消 → 警戒／恢復部署改以 53% 政策停止線為界
+            _gate_on = False
+            _ltv_green_max = float(_lg_now.get("黃上限"))
+        else:
+            _ltv_green_max = float(_lg_now.get("解凍上限", _lg_now.get("綠上限")))
     except Exception:
         _ltv_green_max = None
     _ltv_warn = bool(_ltv_use is not None and _ltv_green_max is not None and _ltv_use >= _ltv_green_max)

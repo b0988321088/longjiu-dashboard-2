@@ -114,7 +114,10 @@ def compute(snap: dict) -> dict:
     return {"pool": pool, "loan": loan, "ratio": ratio,
             "ltv": ltv, "ltv_stop": ltv_stop, "ltv_target": ltv_target,
             "ltv_stage": ltv_stage, "ltv_stage_action": _stage_act,
-            "ltv_unfreeze_ltv": _num(_bands.get("解凍上限", _bands.get("綠上限")), 50),
+            "ltv_unfreeze_ltv": (_num(_bands.get("黃上限"), 53)
+                                 if _bands.get("ltv條件啟用") is False
+                                 else _num(_bands.get("解凍上限", _bands.get("綠上限")), 50)),
+            "ltv_gate_on": (_bands.get("ltv條件啟用") is not False),
             "cathay_nav_date": cathay_nav_date,
             "notice": notice, "pay": pay, "warn": warn,
             "rate": snap.get("fund_pledge_rate"), "due_day": snap.get("fund_pledge_due_day")}
@@ -171,7 +174,11 @@ def stage_block(m: dict, snap: dict) -> str:
         except Exception:  # noqa: BLE001  日期模組異常不得讓告警整則消失
             pass
     _cap = float(m.get('ltv_unfreeze_ltv') or 50)
-    if stage == "綠_正常" or (ltv is not None and ltv <= _cap):
+    _gate_on = bool(m.get('ltv_gate_on', True))
+    if not _gate_on:
+        L.append(f"· 解凍門檻：質押 LTV 條件已取消（2026-11-24 裁決）→ 僅保留 "
+                 f"{_cap:.0f}% 政策停止線與追繳硬否決；加碼仍須逐筆下令")
+    elif stage == "綠_正常" or (ltv is not None and ltv <= _cap):
         if usable is not None:
             ok = usable >= floor
             L.append(f"· 解凍條件：LTV≤{_cap:.0f}%＋可動用現金 ≥ {floor:,.0f}"
