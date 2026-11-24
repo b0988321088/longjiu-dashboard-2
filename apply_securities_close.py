@@ -252,6 +252,12 @@ def main() -> int:
     for k in MIRROR_KEYS:
         snap[k] = hold_sum
     snap["securities_unrealized_pnl"] = sec.get("unrealized_pnl")
+    # 2026-11-24：securities.holdings 是頂層 holdings 的鏡像（見 securities.holdings_note），
+    # 收盤更新必須同步，否則明細停在舊價而總額已是新價 —— 實例：11/24 頂層 2,568,640、
+    # 鏡像仍 2,365,710，閘門 ③⑤⑥ 全 FAIL。此處以頂層為唯一寫入者，逐檔 deepcopy。
+    sec["holdings"] = [dict(h) for h in holds]
+    sec["holdings_note"] = ("本區塊為別名鏡像，真值＝頂層 holdings；"
+                            "由 apply_securities_close.py 收盤更新時同步寫入。")
 
     ins = snap.get("insurance_total") or 0
     fund = snap.get("fund_market") or 0

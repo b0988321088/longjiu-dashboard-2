@@ -25,7 +25,10 @@ SYNONYM_GROUPS = {
     # 保險總值
     "insurance_total": ["insurance_total", "insurance_current_value", "insurance"],
     # 證券總值（含 8/24 新增 securities_current_value）
-    "securities_total": ["securities_total_market_value", "securities_total", "securities_market", "securities_current_value"],
+    "securities_total": ["securities_total_market_value", "securities_total", "securities_market", "securities_current_value",
+                         # 2026-11-24：補齊與 check_securities_integrity 相同清單（漏下面兩個 → 收盤更新
+                         # 只寫 4 個別名，securities_market_value／securities_current 停在舊值，閘門 ③ FAIL）
+                         "securities_market_value", "securities_current", "total_stock_value"],
     # 基金總值（5 個 key + 國泰基金市值 8/24 新增）
     "funds_total": ["fund_market", "fund_market_value", "funds_total", "fund_total_market_value", "funds"],
     "funds_cathay": ["funds_cathay", "funds_cathay_market_value"],

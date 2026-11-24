@@ -143,6 +143,13 @@ def main():
         #     基金群組值一變動就必假失敗（且訊息誤導成「疑似又用反推」）。
         ("門檻SoT檢查", "python check_thresholds.py --sot-only"),
         ("同義欄位驗證", "python asset_sync.py"),
+        # 2026-11-24 血淚：11/24 收盤價套用只更新了頂層 holdings／total_market_value 與 4 個別名，
+        #   securities.holdings 鏡像、securities_market_value／securities_current、unrealized_pnl
+        #   全部停在 11/23 → 證券閘門 ③⑤⑥ FAIL、asset_diff 頁仍顯示舊證券 2,365,710。
+        #   修法：① resync_aliases 以 holdings 為真值全量派生（--fix --quiet：無事完全靜默，可 cron 用）；
+        #        ② 證券閘門 fail-closed，明細與總額不同步時在此擋下，不進入日報。
+        ("派生欄位自動校正", "python tools/resync_aliases.py --fix --quiet"),
+        ("證券一致性（六條）", "python scripts/check_securities_integrity.py"),
         ("日報", "python run_daily.py"),
         # INC-238：日報渲染行比對搬到產報之後（此時檔案才是本輪輸出）
         ("日報口徑閘門", "python check_thresholds.py --report-only"),
