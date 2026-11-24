@@ -12707,15 +12707,15 @@
       "status": "completed",
       "source": "user"
     },
-  {
-    "id": "mem-20261124141943-1374",
-    "timestamp": "2026-11-24T14:19:43.417215+08:00",
-    "agent": "Hermes",
-    "task": "裁決：質押解凍門檻取消",
-    "summary": "使用者 2026-11-24 Telegram『質押解凍門檻取消不然都一直停在不能買賣的限制』：thresholds.ltv分級_pct.ltv條件啟用=False，『LTV 是否達到解凍上限』不再參與解凍判斷（原 45%→50%→取消）。保留硬否決：觸追繳(70%)、逾 53% 政策停止線；現金≥100萬與還本安全閥仍在。結果：今日 LTV 51.62%、可動用 1,228,552，三條件全過 → unfreeze_allowed=true，可依指示加碼（仍須逐筆下令、系統不自動下單）。減碼/風險收斂本來就不受此閘門限制。同步：sot_targets、check_thresholds、rotation_engine（觸發點改 53%）、pledge_maintenance_alert、rebalance 報告。",
-    "status": "completed",
-    "source": "user"
-  }
+    {
+      "id": "mem-20261124141943-1374",
+      "timestamp": "2026-11-24T14:19:43.417215+08:00",
+      "agent": "Hermes",
+      "task": "裁決：質押解凍門檻取消",
+      "summary": "使用者 2026-11-24 Telegram『質押解凍門檻取消不然都一直停在不能買賣的限制』：thresholds.ltv分級_pct.ltv條件啟用=False，『LTV 是否達到解凍上限』不再參與解凍判斷（原 45%→50%→取消）。保留硬否決：觸追繳(70%)、逾 53% 政策停止線；現金≥100萬與還本安全閥仍在。結果：今日 LTV 51.62%、可動用 1,228,552，三條件全過 → unfreeze_allowed=true，可依指示加碼（仍須逐筆下令、系統不自動下單）。減碼/風險收斂本來就不受此閘門限制。同步：sot_targets、check_thresholds、rotation_engine（觸發點改 53%）、pledge_maintenance_alert、rebalance 報告。",
+      "status": "completed",
+      "source": "user"
+    }
   ],
   "pending_decisions": [
     {
