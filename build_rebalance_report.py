@@ -107,6 +107,41 @@ def main():
       <li><b>③ 資金禁令（模式A）</b>：不加碼美股長久期科技、不新增債券標的（00983D/PIMCO 維持底倉）</li>
     </ol>"""
 
+    # 📋 台股減碼執行單（2026-11-24 使用者核准）：平台基金台股部位第一批 → 現金/MMF
+    #    金額一律動態讀 snapshot.funds_breakdown；批次歸屬為「使用者核准的決策參數」
+    _TW_KEYS = ("台灣", "台股", "卓越50", "高股息", "龍頭", "5G", "優息", "奔騰")
+    _B1 = ("路博邁台灣5G股票基金T累積級別(台幣)", "統一奔騰基金",
+           "元大台灣卓越50ETF(0050)連結基金-台幣B配息", "台中銀台灣優息基金-B配息台幣",
+           "國泰台灣高股息基金B")
+    _tw = []
+    for _grp in ("一般申購", "自由Pay"):
+        for _n, _v in (snap.get("funds_breakdown", {}).get(_grp) or {}).items():
+            if isinstance(_v, (int, float)) and _v > 0 and any(k in _n for k in _TW_KEYS):
+                _tw.append({"grp": _grp, "name": _n, "v": float(_v), "b1": _n in _B1})
+    _b1v = sum(x["v"] for x in _tw if x["b1"])
+    _b2v = sum(x["v"] for x in _tw if not x["b1"])
+    _den = float(total or 0)
+    _tw_apct = float(apct.get("台股市值型成長", 0) or 0)
+    _after_pct = ((float(atwd.get("台股市值型成長", 0) or 0) - _b1v) / _den * 100) if _den else 0.0
+    _cash_now = float(snap.get("cash_total", 0) or 0)
+    _cash_after = _cash_now + _b1v
+    _cash_goal = 2500000
+    _rows = "".join(
+        '<tr><td>{}</td><td style="font-size:11.5px">{}</td><td>{}</td><td class="num">{:,}</td><td>{}</td></tr>'.format(
+            "第1批" if x["b1"] else "第2批（待議）", x["name"], x["grp"], x["v"],
+            "✅ 核准賣出" if x["b1"] else "暫不動")
+        for x in sorted(_tw, key=lambda y: (not y["b1"], -y["v"])))
+    tw_trim_html = f"""
+  <table><thead><tr><th>批次</th><th>基金</th><th>平台</th><th class="num">現值</th><th>動作</th></tr></thead>
+  <tbody>{_rows}</tbody></table>
+  <div class="note">
+    <b>第一批合計 {_b1v:,.0f}</b>（使用者 2026-11-24 核准）｜第二批 <b>{_b2v:,.0f}</b> 同類台股（0050連結A、5G月配）尚未核准，暫不動<br>
+    <b>執行方式</b>：分 2 批、間隔 3 個交易日（不用「等回兩天」預測行情）；每批約 {_b1v/2:,.0f}<br>
+    <b>入帳</b>：境內基金贖回 T+3~T+5 工作天（鉅亨平台）｜<b>費用</b>：下單前確認持有天數，未滿 7 天可能收短線交易費 0.5–2%<br>
+    <b>去向</b>：全數進台幣活存／MMF（不進股債混合、不再投入台股）<br>
+    <b>淨效果</b>：台股 {_tw_apct:.1f}% → <b>{_after_pct:.1f}%</b>（目標 10%、容許區間 7–13%）｜現金 {_cash_now:,.0f} → <b>{_cash_after:,.0f}</b>（12 月底目標 {_cash_goal:,}，尚差 {max(0.0, _cash_goal - _cash_after):,.0f}）
+  </div>"""
+
     # 🔴 Fed 升息情境（2026-09-01 整合：snapshot.fed_hike_monitor_0901）
     fed_html = ""
     try:
@@ -250,6 +285,9 @@ def main():
 
   <h2>🎯 調倉優先順序</h2>
   {priority}
+
+  <h2>📋 台股減碼執行單（2026-11-24 核准）</h2>
+  {tw_trim_html}
 
   <h2>🚨 風控紅線檢核</h2>
   <table><thead><tr><th>紅線</th><th>狀態</th><th>現況</th></tr></thead><tbody>{redlines_html}</tbody></table>
