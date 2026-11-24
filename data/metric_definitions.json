@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generated_at": "2026-11-24T14:24:52+08:00",
+ "generated_at": "2026-11-24T16:38:29+08:00",
  "month": "2026-11",
  "warning": "investment_return / assets_change / unrealized_pnl_cumulative 為三種不同口徑，不得相加、不得互換；cumulative 系列為持有期間累計，禁止當作本月損益。",
  "metrics": {
@@ -28,14 +28,14 @@
   },
   "unrealized_pnl_cumulative": {
    "label": "累計未實現損益（非本月）",
-   "securities": 73930,
-   "insurance": -1080596,
+   "securities": 73770,
+   "insurance": -1106602.0,
    "note": "持有期間累計數字，不得列為本月虧損、不得與月度指標相加",
    "source": "snapshot.securities.unrealized_pnl / insurance_total − cost"
   },
   "insurance_cumulative_real": {
    "label": "保單累計真實績效（含息）",
-   "value": 934506,
+   "value": 908500.0,
    "cost": 10000000,
    "cum_dividend": 2015102,
    "note": "累計口徑（帳面＋累計配息），非本月變動"

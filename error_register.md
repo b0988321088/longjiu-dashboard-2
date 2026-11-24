@@ -1998,3 +1998,8 @@ run_daily、update_all）。只改「畫面有看到的」就會漏掉計算端�
 - 首次發生: 2026-11-23 13:39:50
 - 錯誤: 穿透三報表不一致（check_penetration_consistency.py 抓到）
 - 狀態: ⏳ 待處理 (總計 1 次)
+
+## INCIDENT fb0f3544 (four_source_sync)
+- 首次發生: 2026-11-24 13:34:31
+- 錯誤: 同義欄位不一致（asset_sync.py 抓到）
+- 狀態: ⏳ 待處理 (總計 1 次)
