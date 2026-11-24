@@ -405,7 +405,11 @@ def payload() -> dict:
         "weeks": _weeks,
         "daily": _daily,
         "interest": {"total": interest_total, "by": adj_interest},
-        "perf": {"gross": sub_total, "net": sub_total - interest_total},
+        # perf.real = 實質市場變化＝Σ(帳面 − 帳務因素)，與摘要首行同口徑（2026-11-24 補：供下游直接讀，勿再誤用 gross 當績效）
+        "perf": {"gross": sub_total, "net": sub_total - interest_total,
+                 "real": round(sum((c.get("gross") or 0) - (c.get("caliber") or 0) for c in classes)
+                               + ((cash_row.get("gross") or 0) - (cash_row.get("caliber") or 0)), 2),
+                 "real_note": "實質市場變化＝Σ(帳面−帳務因素)；caliber 逐筆見 data/caliber_adjustments.json（只揭露、不計入損益）"},
         "updates": updates,
         "loans": [{"name": l["name"], "balance": l["balance"], "rate": l["rate"],
                    "monthly": l["monthly"], "payment": l["payment"]} for l in loans],

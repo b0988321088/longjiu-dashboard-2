@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-24 16:38",
+ "generated_at": "2026-11-24 19:39",
  "month": "2026-11",
  "period": {
   "start": "2026-11-01",
@@ -655,7 +655,9 @@
  },
  "perf": {
   "gross": -1271246.0,
-  "net": -1271246.0
+  "net": -1271246.0,
+  "real": -903699.87,
+  "real_note": "實質市場變化＝Σ(帳面−帳務因素)；caliber 逐筆見 data/caliber_adjustments.json（只揭露、不計入損益）"
  },
  "updates": [],
  "loans": [
