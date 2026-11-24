@@ -12706,7 +12706,16 @@
       "summary": "使用者 2026-11-24 Telegram『LTV 回 50% 即可』：解凍／恢復部署門檻由階段＝綠_正常（<45%）改為 LTV ≤50%（thresholds.ltv分級_pct.解凍上限）。六段分級 45/53/57/60/62.5、追繳 70、通知維持率 160%、指定用途款 900,000 排除、須一次明示裁決等條件全部不變；53% 仍為內部停止線。今日 LTV 51.62%（借款 5,900,000／池 11,429,678），距 50% 差 1.62pp：池值須 +3.24%（至 11,800,000）或還本 185,161。程式面同步修改 sot_targets.unfreeze_conditions／ltv_grades、check_thresholds、rotation_engine、pledge_maintenance_alert 四處，避免解凍與恢復部署門檻不一致。風險揭露：50% 距 53% 停止線僅 3pp（池跌 5.66% 即跨線），維持率 200%。",
       "status": "completed",
       "source": "user"
-    }
+    },
+  {
+    "id": "mem-20261124141943-1374",
+    "timestamp": "2026-11-24T14:19:43.417215+08:00",
+    "agent": "Hermes",
+    "task": "裁決：質押解凍門檻取消",
+    "summary": "使用者 2026-11-24 Telegram『質押解凍門檻取消不然都一直停在不能買賣的限制』：thresholds.ltv分級_pct.ltv條件啟用=False，『LTV 是否達到解凍上限』不再參與解凍判斷（原 45%→50%→取消）。保留硬否決：觸追繳(70%)、逾 53% 政策停止線；現金≥100萬與還本安全閥仍在。結果：今日 LTV 51.62%、可動用 1,228,552，三條件全過 → unfreeze_allowed=true，可依指示加碼（仍須逐筆下令、系統不自動下單）。減碼/風險收斂本來就不受此閘門限制。同步：sot_targets、check_thresholds、rotation_engine（觸發點改 53%）、pledge_maintenance_alert、rebalance 報告。",
+    "status": "completed",
+    "source": "user"
+  }
   ],
   "pending_decisions": [
     {
