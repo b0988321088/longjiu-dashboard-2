@@ -2086,5 +2086,34 @@
    }
   ],
   "note": "digest rc=0；B 案停止於留痕，未 commit／未 push"
+ },
+ {
+  "generated_at": "2026-11-24T18:31:03+08:00",
+  "producer": "cost_watch_digest.py",
+  "report_base_date": null,
+  "source_dates": {
+   "cost_ledger": "2026-11-24"
+  },
+  "artifacts": [
+   {
+    "artifact": "cost.html",
+    "sha256": "8982c90f4350c59733908c2947653388ba722f1966bcd73a9b84c695df623a85",
+    "exists": true,
+    "bytes": 24031
+   },
+   {
+    "artifact": "cost_data.json",
+    "sha256": "bb8d40c8d296797432d450834f24790d36e6b602d5ea628bb4f50a9c0cdb5774",
+    "exists": true,
+    "bytes": 6987
+   },
+   {
+    "artifact": "data/ai_cost_daily.jsonl",
+    "sha256": "44462977cddd75e00eca8916d896bf6be58a83e2580ec2c10b2c250a27c7da13",
+    "exists": true,
+    "bytes": 17996
+   }
+  ],
+  "note": "digest rc=0；B 案停止於留痕，未 commit／未 push"
  }
 ]
