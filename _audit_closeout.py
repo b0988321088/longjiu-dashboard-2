@@ -283,7 +283,11 @@ checks = [
     (f"snapshot 負債 = DB assets = DB liabilities（DB 負債列 = {L_SRC or '無'}）",
      bool(l13) and d13[1] is not None and s["total_liabilities"] == int(d13[1]) == l13[0]),
     ("snapshot 負債 = 日報 HTML", f"{s['total_liabilities']:,}" in html),
-    ("snapshot 淨值 = asset_diff_history", int(h[T]["net_worth"]) == s["net_worth"]),
+    # 2026-11-24 修（假紅）：淨值是負數（-5,307,824.87），int() 會截斷成 -5,307,824
+    #   → 與 snapshot 的浮點值永不相等，四源這條每晚必紅（實際兩邊完全一致）。
+    #   改為 ±1 元容差比較，仍能抓到真正的漂移。
+    ("snapshot 淨值 = asset_diff_history",
+     abs(float(h[T]["net_worth"]) - float(s["net_worth"])) <= 1.0),
     (f"信用卡當期未繳三源一致（{_cc:,}）", bool(l13) and _cc == l13[1] == _bup["信用卡_當期未繳_全額扣繳"]),
     (f"歷史列未被污染（{hist_days} 個重疊日 assets = liabilities）", hist_days > 0 and not hist_bad),
     (f"應收款備忘可重建（{_rec:,}）", _rec == s["receivables"]["女友借款"] == _bd["本金"] + _bd["未收利息"]),

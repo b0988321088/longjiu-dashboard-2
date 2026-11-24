@@ -114,12 +114,15 @@ def main():
         oks.append(f"B5 反向 {below}% 不凍結")
 
     # B6 繞道（防守桶分支在 frozen 之前）
+    # 2026-11-24 修（測試語意）：原本用「snapshot 現值 US30Y」當參數，US30Y 一旦跌破門檻
+    #   （今日 5.29 < 5.30）就變成 frozen=False，B6 會在「非煞車情境」下驗繞道而假 FAIL。
+    #   本項要驗的是「煞車成立時」防守桶不得繞道 → 一律以 brake_ln（門檻本身）觸發。
     s2 = copy.deepcopy(snap)
     s2["defensive_combined_metric"] = {"佔比": 30, "裁示": ""}
     pen = s2.setdefault("penetration", {})
     pen.setdefault("actual_pct", {})["防守型配息"] = 18.0
     pen.setdefault("targets", {})["防守型配息"] = 30
-    t_d = build_table(s2, float(us30y if us30y is not None else brake_ln))
+    t_d = build_table(s2, brake_ln)
     d_row = next((r for r in t_d.get("rows", []) if r.get("資產分類") == "防守型配息"), None)
     if d_row is None:
         fails.append("B6 找不到防守型配息列 → 無法驗證繞道")
