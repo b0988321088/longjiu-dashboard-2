@@ -129,13 +129,14 @@ def main():
     _rows = "".join(
         '<tr><td>{}</td><td style="font-size:11.5px">{}</td><td>{}</td><td class="num">{:,}</td><td>{}</td></tr>'.format(
             "第1批" if x["b1"] else "第2批（待議）", x["name"], x["grp"], x["v"],
-            "✅ 核准賣出" if x["b1"] else "暫不動")
+            "⏸ 暫緩（11/24 改口）" if x["b1"] else "暫不動")
         for x in sorted(_tw, key=lambda y: (not y["b1"], -y["v"])))
     tw_trim_html = f"""
   <table><thead><tr><th>批次</th><th>基金</th><th>平台</th><th class="num">現值</th><th>動作</th></tr></thead>
   <tbody>{_rows}</tbody></table>
   <div class="note">
-    <b>第一批合計 {_b1v:,.0f}</b>（使用者 2026-11-24 核准）｜第二批 <b>{_b2v:,.0f}</b> 同類台股（0050連結A、5G月配）尚未核准，暫不動<br>
+    <span style="color:#fbbf24"><b>⏸ 2026-11-24 晚間使用者改口：本批暫不執行</b>——理由是台股比例 11.7% 未到容許上限 13%，且優先處理「美元計價部位」以平衡美元/台幣匯差。以下保留為原核准內容，供日後重啟。</span><br>
+    <b>第一批合計 {_b1v:,.0f}</b>（原核准）｜第二批 <b>{_b2v:,.0f}</b> 同類台股（0050連結A、5G月配）尚未核准，暫不動<br>
     <b>執行方式</b>：分 2 批、間隔 3 個交易日（不用「等回兩天」預測行情）；每批約 {_b1v/2:,.0f}<br>
     <b>入帳</b>：境內基金贖回 T+3~T+5 工作天（鉅亨平台）｜<b>費用</b>：下單前確認持有天數，未滿 7 天可能收短線交易費 0.5–2%<br>
     <b>去向</b>：全數進台幣活存／MMF（不進股債混合、不再投入台股）<br>
