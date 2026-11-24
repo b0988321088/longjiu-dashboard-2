@@ -107,40 +107,60 @@ def main():
       <li><b>③ 資金禁令（模式A）</b>：不加碼美股長久期科技、不新增債券標的（00983D/PIMCO 維持底倉）</li>
     </ol>"""
 
-    # 📋 台股減碼執行單（2026-11-24 使用者核准）：平台基金台股部位第一批 → 現金/MMF
-    #    金額一律動態讀 snapshot.funds_breakdown；批次歸屬為「使用者核准的決策參數」
+    # 📋 台股部位處置（2026-11-24 使用者三項指示）
+    #    ① 平台基金台股：會賣一部分（金額待使用者定）② 安聯B 台幣計價部位：不動 ③ 日幣部位：等日幣回升再轉換
+    #    金額一律動態讀 snapshot；分類為使用者指示的決策參數
     _TW_KEYS = ("台灣", "台股", "卓越50", "高股息", "龍頭", "5G", "優息", "奔騰")
-    _B1 = ("路博邁台灣5G股票基金T累積級別(台幣)", "統一奔騰基金",
-           "元大台灣卓越50ETF(0050)連結基金-台幣B配息", "台中銀台灣優息基金-B配息台幣",
-           "國泰台灣高股息基金B")
     _tw = []
     for _grp in ("一般申購", "自由Pay"):
         for _n, _v in (snap.get("funds_breakdown", {}).get(_grp) or {}).items():
             if isinstance(_v, (int, float)) and _v > 0 and any(k in _n for k in _TW_KEYS):
-                _tw.append({"grp": _grp, "name": _n, "v": float(_v), "b1": _n in _B1})
-    _b1v = sum(x["v"] for x in _tw if x["b1"])
-    _b2v = sum(x["v"] for x in _tw if not x["b1"])
+                _tw.append({"grp": _grp, "name": _n, "v": float(_v)})
+    _tw_total = sum(x["v"] for x in _tw)
+    _pb = (snap.get("insurance_breakdown") or {}).get("policy_b_funds") or {}
+    _b_ntd = {k: float(v) for k, v in _pb.items() if str(k).startswith("NTD") and isinstance(v, (int, float))}
+    _b_ntd_total = sum(_b_ntd.values())
+    _jpy = {}
+    for _grp in ("一般申購", "自由Pay", "國泰直購"):
+        for _n, _v in (snap.get("funds_breakdown", {}).get(_grp) or {}).items():
+            if isinstance(_v, (int, float)) and _v > 0 and ("日圓" in _n or "日幣" in _n):
+                _jpy[_n] = float(_v)
+    _jpy_total = sum(_jpy.values())
     _den = float(total or 0)
     _tw_apct = float(apct.get("台股市值型成長", 0) or 0)
-    _after_pct = ((float(atwd.get("台股市值型成長", 0) or 0) - _b1v) / _den * 100) if _den else 0.0
+    _after_pct = ((float(atwd.get("台股市值型成長", 0) or 0) - _tw_total) / _den * 100) if _den else 0.0
     _cash_now = float(snap.get("cash_total", 0) or 0)
-    _cash_after = _cash_now + _b1v
+    _cash_after = _cash_now + _tw_total
     _cash_goal = 2500000
     _rows = "".join(
-        '<tr><td>{}</td><td style="font-size:11.5px">{}</td><td>{}</td><td class="num">{:,}</td><td>{}</td></tr>'.format(
-            "第1批" if x["b1"] else "第2批（待議）", x["name"], x["grp"], x["v"],
-            "⏸ 暫緩（11/24 改口）" if x["b1"] else "暫不動")
-        for x in sorted(_tw, key=lambda y: (not y["b1"], -y["v"])))
+        '<tr><td style="font-size:11.5px">{}</td><td>{}</td><td class="num">{:,}</td><td>會賣一部分</td></tr>'.format(
+            x["name"], x["grp"], x["v"])
+        for x in sorted(_tw, key=lambda y: -y["v"]))
+    _b_rows = "".join(
+        '<tr><td style="font-size:11.5px">{}</td><td class="num">{:,}</td><td>🚫 不動</td></tr>'.format(k, v)
+        for k, v in _b_ntd.items())
+    _j_rows = "".join(
+        '<tr><td style="font-size:11.5px">{}</td><td class="num">{:,}</td><td>⏳ 等日幣回升再轉換</td></tr>'.format(k, v)
+        for k, v in _jpy.items())
     tw_trim_html = f"""
-  <table><thead><tr><th>批次</th><th>基金</th><th>平台</th><th class="num">現值</th><th>動作</th></tr></thead>
+  <div class="note" style="border-left:3px solid #38bdf8">
+    <b>2026-11-24 使用者三項指示</b>：① 平台基金台股賣掉一些（金額待定）② 安聯 B 台幣計價部位不動 ③ 日幣部位等回升再轉換。<br>
+    <span style="color:#94a3b8">原「第一批 304,572／第二批 150,476」的批次切分已作廢——保單 B 不動，減碼範圍只在平台基金。</span>
+  </div>
+  <h3>① 會賣：平台基金台股 {_tw_total:,.0f}</h3>
+  <table><thead><tr><th>基金</th><th>平台</th><th class="num">現值</th><th>動作</th></tr></thead>
   <tbody>{_rows}</tbody></table>
+  <h3>② 不動：安聯 B 台幣計價 {_b_ntd_total:,.0f}</h3>
+  <table><thead><tr><th>基金</th><th class="num">現值</th><th>處置</th></tr></thead>
+  <tbody>{_b_rows}</tbody></table>
+  <h3>③ 等回升：日幣計價 {_jpy_total:,.0f}</h3>
+  <table><thead><tr><th>基金</th><th class="num">現值</th><th>處置</th></tr></thead>
+  <tbody>{_j_rows}</tbody></table>
   <div class="note">
-    <span style="color:#fbbf24"><b>⏸ 2026-11-24 晚間使用者改口：本批暫不執行</b>——理由是台股比例 11.7% 未到容許上限 13%，且優先處理「美元計價部位」以平衡美元/台幣匯差。以下保留為原核准內容，供日後重啟。</span><br>
-    <b>第一批合計 {_b1v:,.0f}</b>（原核准）｜第二批 <b>{_b2v:,.0f}</b> 同類台股（0050連結A、5G月配）尚未核准，暫不動<br>
-    <b>執行方式</b>：分 2 批、間隔 3 個交易日（不用「等回兩天」預測行情）；每批約 {_b1v/2:,.0f}<br>
-    <b>入帳</b>：境內基金贖回 T+3~T+5 工作天（鉅亨平台）｜<b>費用</b>：下單前確認持有天數，未滿 7 天可能收短線交易費 0.5–2%<br>
-    <b>去向</b>：全數進台幣活存／MMF（不進股債混合、不再投入台股）<br>
-    <b>淨效果</b>：台股 {_tw_apct:.1f}% → <b>{_after_pct:.1f}%</b>（目標 10%、容許區間 7–13%）｜現金 {_cash_now:,.0f} → <b>{_cash_after:,.0f}</b>（12 月底目標 {_cash_goal:,}，尚差 {max(0.0, _cash_goal - _cash_after):,.0f}）
+    <b>入帳／費用</b>：境內基金贖回 T+3~T+5 工作天（鉅亨）；下單前確認持有天數，未滿 7 天可能收短線交易費 0.5–2%<br>
+    <b>去向</b>：台幣活存／MMF（不進股債混合、不再投入台股）<br>
+    <b>淨效果</b>（若平台台股全賣）：台股 {_tw_apct:.1f}% → <b>{_after_pct:.1f}%</b>（目標 10%、容許 7–13%）｜現金 {_cash_now:,.0f} → <b>{_cash_after:,.0f}</b>（12 月底目標 {_cash_goal:,}）<br>
+    <span style="color:#94a3b8">日幣部位現值為口徑修正後金額（原 473,493 是日圓金額誤記成台幣），等日幣回升後再轉換，不在此次處置範圍。</span>
   </div>"""
 
     # 🔴 Fed 升息情境（2026-09-01 整合：snapshot.fed_hike_monitor_0901）
@@ -287,7 +307,7 @@ def main():
   <h2>🎯 調倉優先順序</h2>
   {priority}
 
-  <h2>📋 台股減碼執行單（2026-11-24 核准）</h2>
+  <h2>📋 台股部位處置（2026-11-24 指示）</h2>
   {tw_trim_html}
 
   <h2>🚨 風控紅線檢核</h2>
