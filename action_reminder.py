@@ -85,6 +85,16 @@ def _items_open_items(ref: date) -> list[dict]:
             continue
         due_txt = it.get("due")
         due = _nearest_due([due_txt], ref) if due_txt and due_txt != "—" else None
+        # 2026-11-25：使用者回「延後 N 天」後，到期日以 snooze_until 為準，
+        #   否則同一件事會在他已回覆後繼續每天出現（那是最快讓人關通知的方式）。
+        _sn = str(it.get("snooze_until") or "")
+        if _sn:
+            try:
+                _sn_d = date.fromisoformat(_sn)
+                if _sn_d >= ref:
+                    due = _sn_d
+            except ValueError:
+                pass
         rows.append({
             "key": it.get("id"),
             "what": f"{it.get('id')} {it.get('title')}",
