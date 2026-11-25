@@ -109,10 +109,11 @@ def _next_id(decisions, ts):
     return f"mem-{ts.strftime('%Y%m%d%H%M%S')}-{len(decisions)}"
 
 
-def build_entry(task, summary, status="completed", source="user", agent="Hermes", ts=None):
+def build_entry(task, summary, status="completed", source="user", agent="Hermes", ts=None,
+                supersedes=None):
     dec = json.loads(DEC_FILE.read_text(encoding="utf-8"))
     ts = ts or _now()
-    return {
+    entry = {
         "id": _next_id(dec["decisions"], ts),
         "timestamp": ts.isoformat(),
         "agent": agent,
@@ -121,6 +122,12 @@ def build_entry(task, summary, status="completed", source="user", agent="Hermes"
         "status": status,
         "source": source,
     }
+    # 2026-11-25（CIO 18:30 風險①）：撤回／作廢必須留下機器可讀的指向，
+    # 否則舊筆 status=已核准 會被任何按 status 重放的讀方當成「已核准未執行」。
+    # 界線：只新增本筆欄位，不改舊筆（歷史不可竄改）。
+    if supersedes:
+        entry["supersedes"] = supersedes
+    return entry
 
 
 def append_entry(entry, dry_run=False):
@@ -245,11 +252,14 @@ def main():
                     help="明確允許同日同任務同來源再寫一筆（預設＝去重，P0-2）")
     ap.add_argument("--no-push", action="store_true",
                     help="只提交、不推送（入庫≠發布；無發布授權時必用，2026-11-11 CIO 質疑①）")
+    ap.add_argument("--supersedes", default=None,
+                    help="被本筆撤回/作廢的舊決策 id（寫入機器可讀指向，不改舊筆）")
     ap.add_argument("--ts", default=None,
                     help="指定事件時間（ISO 或 YYYY-MM-DD HH:MM:SS，台北時間）；補登當日已發生的裁示用")
     a = ap.parse_args()
 
-    entry = build_entry(a.task, a.summary, a.status, a.source, a.agent, ts=_parse_ts(a.ts))
+    entry = build_entry(a.task, a.summary, a.status, a.source, a.agent, ts=_parse_ts(a.ts),
+                        supersedes=a.supersedes)
 
     # ── duplicate guard（P0-2，2026-10-05 使用者核准）────────────────────────
     # 同一決策／同一任務／同一 execution 不得產生多筆等價收據。
