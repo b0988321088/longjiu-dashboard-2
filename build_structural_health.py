@@ -590,7 +590,7 @@ _report = f"""<!DOCTYPE html>
       <thead><tr><th>情境</th><th>總資產</th><th>變動</th><th>質押 LTV</th><th>銀行維持率</th><th>回 53% 需還本</th></tr></thead>
       <tbody>{stress_html}</tbody>
     </table>
-    <p class="foot-note">LTV＝借款÷池市值；維持率＝池市值÷借款（互為倒數，不得混用）。內部停止線 53%（維持率 188.7%）；銀行通知 160%（LTV 62.5%）、追繳 140%（LTV 71.4%）。</p>
+    <p class="foot-note">LTV＝借款÷池市值；維持率＝池市值÷借款（互為倒數，不得混用）。內部停止線 53%（維持率 188.7%）；銀行通知 160%（LTV 62.5%）、追繳 120%（LTV 83.3%）。</p>
   </section>
 
   <section>

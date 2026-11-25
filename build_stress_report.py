@@ -163,7 +163,7 @@ def build():
     ltv_bands = th.get("ltv分級_pct") or {}
     ltv_stop = _num(ltv_bands.get("黃上限"), 53)          # 內部停止線
     maint_warn = _num(th.get("通知_維持率_pct"), 160)      # 銀行通知
-    maint_call = _num(th.get("追繳_維持率_pct"), 140)      # 銀行追繳
+    maint_call = _num(th.get("追繳_維持率_pct"), 120)  # 2026-11-25 契約值      # 銀行追繳
 
     gates = []
     for label, gpool, note in [

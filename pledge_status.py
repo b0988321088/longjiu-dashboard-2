@@ -107,6 +107,32 @@ def pledge_facts(snap: dict | None = None) -> dict:
     }
 
 
+def _maint_ltv_suffix() -> str:
+    """維持率＋LTV 兩個數字並列（2026-11-25 使用者要求：120% 才追繳，兩個數據都要看到）。
+
+    來源：pledge_maintenance_state.json（每日監控寫入）＋ thresholds.ltv分級_pct 追繳線。
+    讀不到就回空字串（不得用推算值假裝真值）。
+    """
+    try:
+        _st = json.loads((BASE / "pledge_maintenance_state.json").read_text(encoding="utf-8"))
+        _ltv = _st.get("last_ltv_pct")
+        if not isinstance(_ltv, (int, float)) or _ltv <= 0:
+            return ""
+        _maint = 100.0 / (_ltv / 100.0)
+        _call = 120.0
+        try:
+            _th = json.loads((BASE / "snapshot.json").read_text(encoding="utf-8"))\
+                .get("thresholds_2026_0915", {}).get("ltv分級_pct", {})
+            _call = float(_th.get("追繳_維持率_pct") or 120.0)
+        except Exception:
+            pass
+        _room = (_maint / _call - 1) * 100 if _call else 0
+        return (f"｜維持率 {_maint:.1f}%／LTV {_ltv:.2f}%"
+                f"（追繳 {_call:.0f}%，池再跌 {_room:.0f}% 才觸發）")
+    except Exception:
+        return ""
+
+
 def pledge_status_line(snap: dict | None = None, style: str = "full") -> str:
     """質押狀態句。
 
@@ -133,7 +159,7 @@ def pledge_status_line(snap: dict | None = None, style: str = "full") -> str:
            f"，月省約 {f['月省息']:,.0f}（{f['裁示日']} 裁示；{f['押標金']}）")
 
     if style == "short":
-        return f"質押 {f['可貸萬']}@{f['利率文字']}（{pay_status}）"
+        return f"質押 {f['可貸萬']}@{f['利率文字']}（{pay_status}）{_maint_ltv_suffix()}"
     if style == "card":
         return (f"整池 {f['池本金萬']}×{f['成數文字']} = {f['可貸萬']}@{f['利率文字']}質押"
                 f"（{pay_status}）")
