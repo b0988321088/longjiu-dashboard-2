@@ -12780,15 +12780,15 @@
       "status": "已核准",
       "source": "user"
     },
-  {
-    "id": "mem-20261125202510-1382",
-    "timestamp": "2026-11-25T20:25:10.804991+08:00",
-    "agent": "Hermes",
-    "task": "核准：提醒系統 P2（口頭裁決偵測＋回應率週統計）",
-    "summary": "使用者 2026-11-25 ✅ 核准 P2 全項。落地：①verbal_decision_watch.py＋cron cdbaacf72134 每日 22:35 比對『今日對話裁決語句』vs『dashboard_decisions 當日 source=user 筆數』，不足才出聲、不自動寫入（避免假裁決）；②reminder_weekly_stats.py＋cron b186bb549654 每週一 07:20 統近 7 日推播/回覆/卡住項目（推≥3 次未回→建議作廢或降級週報）；③action_reminder 與 apply_action_reply 增 data/reminder_log.jsonl 留痕。P0/P1 已於同日上線：排程健康 07:30（22e14c021a58）、到期行動提醒 08:10（c666b25f713d）、盤前 digest 09:10（14b472f16eb7），六支舊早盤排程已 paused。commit 9efae7c8（CIO APPROVE）。",
-    "status": "已核准",
-    "source": "user"
-  }
+    {
+      "id": "mem-20261125202510-1382",
+      "timestamp": "2026-11-25T20:25:10.804991+08:00",
+      "agent": "Hermes",
+      "task": "核准：提醒系統 P2（口頭裁決偵測＋回應率週統計）",
+      "summary": "使用者 2026-11-25 ✅ 核准 P2 全項。落地：①verbal_decision_watch.py＋cron cdbaacf72134 每日 22:35 比對『今日對話裁決語句』vs『dashboard_decisions 當日 source=user 筆數』，不足才出聲、不自動寫入（避免假裁決）；②reminder_weekly_stats.py＋cron b186bb549654 每週一 07:20 統近 7 日推播/回覆/卡住項目（推≥3 次未回→建議作廢或降級週報）；③action_reminder 與 apply_action_reply 增 data/reminder_log.jsonl 留痕。P0/P1 已於同日上線：排程健康 07:30（22e14c021a58）、到期行動提醒 08:10（c666b25f713d）、盤前 digest 09:10（14b472f16eb7），六支舊早盤排程已 paused。commit 9efae7c8（CIO APPROVE）。",
+      "status": "已核准",
+      "source": "user"
+    }
   ],
   "pending_decisions": [
     {
@@ -12805,7 +12805,7 @@
     }
   ],
   "meta": {
-    "updated_at": "2026-11-25T20:08:30+08:00"
+    "updated_at": "2026-11-25T20:36:14+08:00"
   },
-  "last_updated": "2026-11-25T20:08:30+08:00"
+  "last_updated": "2026-11-25T20:36:14+08:00"
 }
