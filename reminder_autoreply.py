@@ -182,7 +182,10 @@ def run(dry: bool = False) -> str:
         if not dry:
             st["last_ts"] = max(float(st.get("last_ts") or 0), ts)
             st["done"] = list(done_set)
-    if not dry:
+    # 只在「真的有動作」時落 checkpoint：無動作也寫檔會讓 runtime state 每 10 分鐘弄髒
+    # 工作區（收工稽核每晚固定報「未提交」）。沒有新動作時重掃同一窗口是安全的 —
+    # done 集合以訊息雜湊去重，已處理過的不會重複套用。
+    if not dry and receipts:
         _save_state(st)
     if not receipts:
         return ""
