@@ -12779,7 +12779,16 @@
       "summary": "使用者 2026-11-25 Telegram『第三條缺口暫不補因為配息不一定抗跌』：防守型配息 17.35% vs 目標 30%（缺口 12.65pp／3,228,317）不補。防守判準改看真抗跌口徑＝債券 25.6% ＋現金 4.8% = 30.4%（門檻 30%，已達）。週報／再平衡不得再把『防守型配息缺口』列為待執行；配息桶只在現金流覆蓋不足時檢視。台帳新增 OI-06（WAIVED＋replacement_rule）。",
       "status": "已核准",
       "source": "user"
-    }
+    },
+  {
+    "id": "mem-20261125202510-1382",
+    "timestamp": "2026-11-25T20:25:10.804991+08:00",
+    "agent": "Hermes",
+    "task": "核准：提醒系統 P2（口頭裁決偵測＋回應率週統計）",
+    "summary": "使用者 2026-11-25 ✅ 核准 P2 全項。落地：①verbal_decision_watch.py＋cron cdbaacf72134 每日 22:35 比對『今日對話裁決語句』vs『dashboard_decisions 當日 source=user 筆數』，不足才出聲、不自動寫入（避免假裁決）；②reminder_weekly_stats.py＋cron b186bb549654 每週一 07:20 統近 7 日推播/回覆/卡住項目（推≥3 次未回→建議作廢或降級週報）；③action_reminder 與 apply_action_reply 增 data/reminder_log.jsonl 留痕。P0/P1 已於同日上線：排程健康 07:30（22e14c021a58）、到期行動提醒 08:10（c666b25f713d）、盤前 digest 09:10（14b472f16eb7），六支舊早盤排程已 paused。commit 9efae7c8（CIO APPROVE）。",
+    "status": "已核准",
+    "source": "user"
+  }
   ],
   "pending_decisions": [
     {
