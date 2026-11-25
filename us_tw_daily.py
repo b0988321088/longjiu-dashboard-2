@@ -167,10 +167,10 @@ def taifex_tx(day: dt.date):
     months = sorted({x["month"] for x in recs if x["month"]})
     near = months[0] if months else None
     recs = [x for x in recs if x["month"] == near]
+    # 2026-11-25 修正：不得把「盤後」當成「日盤」（08:35 執行時當日日盤尚未產生，
+    # 舊邏輯 fallback recs[0] 會把夜盤標成日盤，且 day/night 印同一筆）。
     day_sess = next((x for x in recs if "一般" in x["session"]), None)
     night_sess = next((x for x in recs if "盤後" in x["session"]), None)
-    if day_sess is None and recs:
-        day_sess = recs[0]
     return {"month": near, "day": day_sess, "night": night_sess}
 
 
@@ -222,7 +222,7 @@ def main():
             got = taifex_tx(d)
         except Exception:
             got = None
-        if got and got.get("day") and got["day"].get("close") is not None:
+        if got and any((got.get(k) or {}).get("close") is not None for k in ("day", "night")):
             tx, day_used = got, d
             break
 
@@ -247,22 +247,32 @@ def main():
         lines.append(f"　{name:<6} {fmt(v.get('px'), 2):>12}　{fmt_pct(v.get('pct'))}{mark}")
     lines.append("")
     if tx and day_used:
-        d = tx["day"]
-        lines.append(f"🇹🇼 台指期（{day_used:%m/%d} 日盤・近月 {tx['month']}）")
-        lines.append(
-            f"　收盤 {fmt(d.get('close'), 0)}　漲跌 {d.get('chg') or 0:+,.0f} 點（{d.get('pct') or '—'}）"
-        )
-        if d.get("vol"):
-            lines.append(f"　成交量 {d['vol']:,.0f} 口")
-        if tx.get("night"):
-            n = tx["night"]
-            lines.append(
-                f"　夜盤收 {fmt(n.get('close'), 0)}　{n.get('chg') or 0:+,.0f} 點（{n.get('pct') or '—'}）"
-            )
+        d, n = tx.get("day"), tx.get("night")
+
+        def _blk(tag, x):
+            out = [f"　{tag}收 {fmt(x.get('close'), 0)}　{x.get('chg') or 0:+,.0f} 點（{x.get('pct') or '—'}）"]
+            if x.get("vol"):
+                out.append(f"　{tag}量 {x['vol']:,.0f} 口")
+            return out
+
+        if d:
+            lines.append(f"TW 台指期（{day_used:%m/%d} 日盤・近月 {tx['month']}）")
+            lines += _blk("", d)
+        elif n:
+            lines.append(f"TW 台指期（{day_used:%m/%d} 夜盤・近月 {tx['month']}）")
+            lines.append("　※ 當日日盤 09:00 開盤、資料尚未產生")
+            lines += _blk("", n)
+        else:
+            lines.append(f"TW 台指期（{day_used:%m/%d}・近月 {tx['month']}）：查無有效收盤")
+        # 日盤／夜盤同一筆時不重複印（期交所偶把夜盤歸在同日）
+        same = bool(d and n and d.get("close") == n.get("close") and d.get("chg") == n.get("chg"))
+        if d and n and not same:
+            lines += _blk("夜盤", n)
         if twii:
-            lines.append(f"　加權指數 {fmt(twii.get('px'), 2)}（{fmt_pct(twii.get('pct'))}）")
+            _td = dt.datetime.fromtimestamp(twii["ts"]).strftime("%m/%d") if twii.get("ts") else ""
+            lines.append(f"　加權指數 {fmt(twii.get('px'), 2)}（{fmt_pct(twii.get('pct'))}，{_td} 收盤）")
     else:
-        lines.append("🇹🇼 台指期：查無資料（期交所尚未更新或休市）")
+        lines.append("TW 台指期：查無資料（期交所尚未更新或休市）")
 
     msg = "\n".join(lines)
 
