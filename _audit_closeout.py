@@ -432,6 +432,14 @@ jobs = data["jobs"] if isinstance(data, dict) else data
 # 刻意停用白名單（2026-09-13）：稽核只認「意外」停用，已核准的收斂/去重停用列 ℹ️ 不列 fail
 INTENTIONAL_PAUSED = {
     "1422af3c2905": "9/9 核准：記憶同步重複 cron 收斂，19:00 b18b41e13102 為唯一每日同步",
+    # 2026-11-25 核准：早盤六支分散提醒併入 09:10 digest（同一批資料、單則輸出），
+    # 各支腳本仍在 digest 內被呼叫；停用的是「各自獨立推播」的行為，不是監控本身。
+    "0a596eafe6fa": "11/25 併入 digest：健康度紅線改由 digest_premarket 統一輸出",
+    "668af6f54c08": "11/25 併入 digest：質押維持率改由 digest_premarket 統一輸出",
+    "3030b556b627": "11/25 併入 digest：保單轉換時機改由 digest_premarket 統一輸出",
+    "e6a21b491dca": "11/25 併入 digest：台電標案改由 digest_premarket 統一輸出",
+    "16e2aafde7ab": "11/25 併入 digest：中部設計監造改由 digest_premarket 統一輸出",
+    "723a94385e22": "11/25 併入 digest：林業署設計監造改由 digest_premarket 統一輸出",
 }
 for j in jobs:
     if not isinstance(j, dict):
