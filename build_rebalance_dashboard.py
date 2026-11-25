@@ -253,6 +253,17 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
         _gap_txt = "範圍內" if _inb else f"{gap:+.1f}pp"
         if name == "現金":
             _gap_txt = "—（底線制）"  # 裁示②：現金桶不設百分比，由 Gate／cash_mode 管理
+        # 2026-11-25 使用者裁決：防守型配息目標缺口 waive（配息不等於抗跌）→
+        #   表格不得再把缺口印成待執行訊號，改印 waiver 與替代判準。
+        if name == "防守":
+            from sot_targets import defense_waiver as _dwf
+            _dw = _dwf(s)
+            if _dw:
+                _gap_txt = (f"waived（{_dw['裁決日']} 起不執行）" if not _inb else "範圍內")
+                _action = (f"⛔ 缺口不補（真抗跌 債券 {_dw['債券_pct']}% ＋ 現金 {_dw['現金_pct']}% "
+                           f"= {_dw['真抗跌_pct']}%／門檻 {_dw['門檻_pct']}%）")
+                lines.append(f"| {name} | {act:.1f}% | {t}% | {_gap_txt} | {_action} |")
+                continue
         lines.append(f"| {name} | {act:.1f}% | {t}% | {_gap_txt} | {action_map.get(name, '—')} |")
 
     # 2026-10-11 工單B：資產分解（SoT 唯一入口）——五桶只佔 93.44% 時必須交代其餘部分與分母。
@@ -290,6 +301,14 @@ def build_summary_md(s, radar, apct, atwd, tgt, buckets, radar_cards, actions, s
                 f"{_sb} | {_tb} | {_th} | {_ex} | "
                 f"{('；'.join(_d.get('阻擋規則名稱') or []) or '—')} |")
         lines.append("")
+        try:
+            from sot_targets import defense_judgement_line as _djl
+            _dline = _djl(s)
+            if _dline:
+                lines.append(_dline)
+                lines.append("")
+        except Exception:
+            pass
         lines.append("- 分母＝snapshot.total_assets；理論調整＝|戰略偏差pp|÷100×分母；"
                      "風控後可執行＝理論經單筆上限／可減部位／煞車封頂後金額（不得以理論充當可執行）。")
         _cap_thr = (((s.get("thresholds_2026_0915") or {}).get("動作階梯_pp") or {})
