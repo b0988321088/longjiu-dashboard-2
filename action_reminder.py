@@ -27,6 +27,7 @@ OEI = BASE / "data" / "weekly_open_items.json"
 PD = BASE / "pending_decisions.json"
 EV = BASE / "schedule_events.json"
 SNAP = BASE / "snapshot.json"
+RLOG = BASE / "data" / "reminder_log.jsonl"
 
 _WEEK = "一二三四五六日"
 _DATE_PATTERNS = [
@@ -254,6 +255,19 @@ def build(ref: date, window: int = 3) -> str:
     return "\n".join([title, ""] + blocks + tail)
 
 
+def _log(ref: date, text: str) -> None:
+    """推播即留痕：週統計要算「推了幾則／你回幾則」，沒有 log 就只能靠印象。"""
+    try:
+        keys = re.findall(r"(OI-\d+|PD-\d+|CV-[0-9]+|EV [0-9-]+)", text)
+        rec = {"ts": datetime.now().isoformat(timespec="seconds"), "date": ref.isoformat(),
+               "keys": sorted(set(keys))}
+        RLOG.parent.mkdir(parents=True, exist_ok=True)
+        with RLOG.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--today", default=None, help="YYYY-MM-DD（預設系統日）")
@@ -266,6 +280,8 @@ def main() -> int:
         if a.dry_run:
             print(f"[{ref}] 無 T-{a.window} 內到期項目 → 靜默（不推播）")
         return 0
+    if not a.dry_run:
+        _log(ref, out)
     print(out)
     return 0
 

@@ -27,6 +27,7 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parent
 OEI = BASE / "data" / "weekly_open_items.json"
 APPEND = BASE / "append_dashboard_decisions.py"
+RLOG = BASE / "data" / "reminder_log.jsonl"
 
 
 def _load():
@@ -36,6 +37,17 @@ def _load():
 def _save(d):
     d.setdefault("_meta", {})["updated"] = date.today().isoformat()
     OEI.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def _log_reply(key: str, action: str, note: str) -> None:
+    try:
+        RLOG.parent.mkdir(parents=True, exist_ok=True)
+        rec = {"ts": datetime.now().isoformat(timespec="seconds"),
+               "date": date.today().isoformat(), "key": key, "reply": action, "note": note}
+        with RLOG.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
 
 
 def _record(task: str, summary: str, dry: bool):
@@ -72,6 +84,7 @@ def main() -> int:
             item["close_note"] = a.note or "使用者回覆已處理"
         _save(d) if (oi_like and item and not a.dry_run) else None
         print(f"{'[dry-run] ' if a.dry_run else ''}✅ {key} 標記 CLOSED")
+        _log_reply(key, "done", a.note)
         _record(f"行動提醒結案：{key}", f"使用者回覆已處理。備註：{a.note or '—'}", a.dry_run)
 
     elif a.snooze:
@@ -81,6 +94,7 @@ def main() -> int:
             if not a.dry_run:
                 _save(d)
         print(f"{'[dry-run] ' if a.dry_run else ''}⏰ {key} 延後至 {until}")
+        _log_reply(key, "snooze", a.note)
         _record(f"行動提醒延後：{key}", f"延後 {a.days} 天至 {until}。備註：{a.note or '—'}", a.dry_run)
 
     else:
@@ -91,6 +105,7 @@ def main() -> int:
         if oi_like and item and not a.dry_run:
             _save(d)
         print(f"{'[dry-run] ' if a.dry_run else ''}🗑️ {key} 作廢")
+        _log_reply(key, "void", a.note)
         _record(f"行動提醒作廢：{key}", f"使用者裁定作廢。備註：{a.note or '—'}", a.dry_run)
     return 0
 
