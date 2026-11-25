@@ -12807,15 +12807,15 @@
       "status": "已核准",
       "source": "user"
     },
-  {
-    "id": "mem-20261125215901-1385",
-    "timestamp": "2026-11-25T21:59:01.784229+08:00",
-    "agent": "Hermes",
-    "task": "核准：質押追繳線改契約值 120%（LTV 83.3%）",
-    "summary": "使用者 2026-11-25 口述『質押應該顯示兩個數據因為到 120 才會追繳』，經確認裁決：①thresholds_2026_0915.ltv分級_pct 追繳_維持率_pct 140→120、追繳_LTV_pct 71.43→83.33 ②儀表板並列顯示維持率與 LTV 兩數（pledge_status._maint_ltv_suffix）③四個消費端同步（pledge_stress／build_structural_health／debt_restructure_tracker／build_stress_report）④LTV 70% 保留為內部提前預警、非契約觸發 ⑤通知線 160% 不變。未授權項：未改六段分級 45/53/57/60/62.5、未動交易授權（維持 HOLD）。",
-    "status": "已核准",
-    "source": "user"
-  }
+    {
+      "id": "mem-20261125215901-1385",
+      "timestamp": "2026-11-25T21:59:01.784229+08:00",
+      "agent": "Hermes",
+      "task": "核准：質押追繳線改契約值 120%（LTV 83.3%）",
+      "summary": "使用者 2026-11-25 口述『質押應該顯示兩個數據因為到 120 才會追繳』，經確認裁決：①thresholds_2026_0915.ltv分級_pct 追繳_維持率_pct 140→120、追繳_LTV_pct 71.43→83.33 ②儀表板並列顯示維持率與 LTV 兩數（pledge_status._maint_ltv_suffix）③四個消費端同步（pledge_stress／build_structural_health／debt_restructure_tracker／build_stress_report）④LTV 70% 保留為內部提前預警、非契約觸發 ⑤通知線 160% 不變。未授權項：未改六段分級 45/53/57/60/62.5、未動交易授權（維持 HOLD）。",
+      "status": "已核准",
+      "source": "user"
+    }
   ],
   "pending_decisions": [
     {
@@ -12832,7 +12832,7 @@
     }
   ],
   "meta": {
-    "updated_at": "2026-11-25T21:34:49+08:00"
+    "updated_at": "2026-11-26T07:01:33+08:00"
   },
-  "last_updated": "2026-11-25T21:34:49+08:00"
+  "last_updated": "2026-11-26T07:01:33+08:00"
 }
