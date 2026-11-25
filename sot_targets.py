@@ -2304,6 +2304,48 @@ def asset_decomposition_line(snap: dict) -> str:
     return "｜".join(_parts) + " " + _tail
 
 
+def defense_waiver(snap: dict) -> dict | None:
+    """防守型配息「目標缺口不執行」waiver（2026-11-25 使用者裁決）。
+
+    背景：防守型配息 17.35% vs 目標 30%（缺口 12.65pp／約 322 萬）是全桶最大偏離，
+    但使用者裁決「缺口暫不補，因為配息不一定抗跌」——月配股債混合在急跌日照跌，
+    補配息桶只是放大同一個風險。故缺口**不再視為待執行**，防守判準改看真抗跌口徑：
+    債券＋現金 ≥ 替代門檻（30%）。
+
+    回傳 None＝無 waiver（行為與過去一致）；dict＝waiver 生效（呼叫端必須把該桶
+    可執行金額歸零，且不得把缺口列為待辦）。
+    """
+    _thr = snap.get("thresholds_2026_0915") or {}
+    _w = _thr.get("防守目標_waiver") or {}
+    if not _w.get("生效"):
+        return None
+    _apct = (snap.get("penetration") or {}).get("actual_pct") or {}
+    _bond = _apct.get("債券")
+    _cash = _apct.get("現金/安全網")
+    _tgt = _w.get("替代門檻_pct", 30)
+    _sum = (round(float(_bond) + float(_cash), 1)
+            if isinstance(_bond, (int, float)) and isinstance(_cash, (int, float)) else None)
+    return {
+        "生效": True, "裁決日": _w.get("裁決日"), "理由": _w.get("理由"),
+        "債券_pct": _bond, "現金_pct": _cash, "真抗跌_pct": _sum, "門檻_pct": _tgt,
+        "達標": (bool(_sum is not None and _sum >= float(_tgt))),
+        "來源": "thresholds_2026_0915.防守目標_waiver",
+    }
+
+
+def defense_judgement_line(snap: dict) -> str:
+    """waiver 生效時的單行結論（供報告引用，不得手寫數字）。"""
+    w = defense_waiver(snap)
+    if not w:
+        return ""
+    if w["真抗跌_pct"] is None:
+        return ("- 防守判準（waiver）：債券或現金真值缺失 → 不計算（fail-closed）")
+    _mark = "✅ 達標" if w["達標"] else "⛔ 未達"
+    return (f"- 防守判準（waiver 生效 {w['裁決日']}）：債券 {w['債券_pct']}% ＋ 現金 {w['現金_pct']}% "
+            f"= **{w['真抗跌_pct']}%**（門檻 {w['門檻_pct']}%）{_mark}；"
+            f"配息桶缺口不執行、不列待辦。理由：{w['理由']}")
+
+
 def scheduling_fields(snap: dict, us30y: float | None = None, sellable_twd: dict | None = None) -> dict:
     """調度欄位（結構化）＝程式產生，報告只引用（2026-10-11 工單E）。
 
@@ -2383,6 +2425,15 @@ def scheduling_fields(snap: dict, us30y: float | None = None, sellable_twd: dict
             _exec_amt = 0
         if _hard.get(_sot_name) is not None and _cur > _hard[_sot_name]:
             _blocks.append(f"已破單桶硬上限 {_hard[_sot_name]}%")
+        # 2026-11-25：防守型配息目標缺口已由使用者 waive（配息不等於抗跌）→
+        #   缺口不得再被任何報告當成「待執行加碼」。可執行歸零、阻擋規則寫明替代判準。
+        _dw = defense_waiver(snap) if _pen_name == "防守型配息" else None
+        if _dw:
+            _exec_amt = 0
+            _blocks = [f"目標已 waive（{_dw['裁決日']}：{_dw['理由']}）→ 缺口不執行、不列待辦",
+                       (f"替代判準：債券 {_dw['債券_pct']}% ＋ 現金 {_dw['現金_pct']}% "
+                        f"= {_dw['真抗跌_pct']}%（門檻 {_dw['門檻_pct']}%）"
+                        + ("✅ 達標" if _dw["達標"] else "⛔ 未達"))]
         out[_pen_name] = {
             "現況_pct": _cur,
             "戰略目標_pct": _st,
