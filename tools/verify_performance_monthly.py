@@ -141,6 +141,15 @@ def main() -> int:
     for m in fresh["months"]:
         s = sum(r["mkt"] for r in m["rows"])
         core_nums |= {f"{s:+,.0f}".lstrip("+-"), f"{s:,.0f}".lstrip("+-")}
+    # 2026-11-25：本月對外單一口徑（2026-11-23 使用者定版）直接引用 data/drawdown_{ym}.json 的
+    # caliber 區塊（帳面資產變化／帳務因素／實質市場變化）。該檔為產線計算層輸出（非手寫），
+    # 併入白名單，避免合法來源被誤判為「core 未產生的金額」。
+    for _f in sorted((BASE / "data").glob("drawdown_*.json")):
+        try:
+            _cal = json.loads(_f.read_text(encoding="utf-8")).get("caliber") or {}
+            core_nums |= {x.lstrip("+-") for x in _nums(_cal, set())}   # 與 core 同格式（+,-,0f／,0f）
+        except Exception:
+            pass
     body = re.sub(r"<style\b[^>]*>.*?</style>", "", html, flags=re.S)   # CSS 色彩 tuple 非金額
     body = re.sub(r'<pre id="pm-data-json">.*?</pre>', "", body, flags=re.S)  # core 原始輸出區
     body = body.split('<script id="pm-data"')[0]
