@@ -12788,7 +12788,16 @@
       "summary": "使用者 2026-11-25 ✅ 核准 P2 全項。落地：①verbal_decision_watch.py＋cron cdbaacf72134 每日 22:35 比對『今日對話裁決語句』vs『dashboard_decisions 當日 source=user 筆數』，不足才出聲、不自動寫入（避免假裁決）；②reminder_weekly_stats.py＋cron b186bb549654 每週一 07:20 統近 7 日推播/回覆/卡住項目（推≥3 次未回→建議作廢或降級週報）；③action_reminder 與 apply_action_reply 增 data/reminder_log.jsonl 留痕。P0/P1 已於同日上線：排程健康 07:30（22e14c021a58）、到期行動提醒 08:10（c666b25f713d）、盤前 digest 09:10（14b472f16eb7），六支舊早盤排程已 paused。commit 9efae7c8（CIO APPROVE）。",
       "status": "已核准",
       "source": "user"
-    }
+    },
+  {
+    "id": "mem-20261125204859-1383",
+    "timestamp": "2026-11-25T20:48:59.550207+08:00",
+    "agent": "Hermes",
+    "task": "核准：提醒回覆自動落庫（閉環最後一段）",
+    "summary": "使用者 2026-11-25「核准執行」。新增 reminder_autoreply.py＋cron 5202d9070135（*/10 08:00–23:59，no_agent）：讀 state.db 今日 telegram 來源 user 訊息，切子句比對『編號＋動作』→ done/snooze/void 一律呼叫 apply_action_reply.py 單一寫入入口並回一張收據。防誤判三道：①問句不動作②長訊息（>60 字）只提示不落地（實測：把報告貼回來會因『建議作廢』誤關 OI-07）③動作詞必須與編號同一個短子句（≤40 字）。冪等：已 CLOSED/WAIVED 不重寫；checkpoint data/reminder_autoreply_state.json，首跑從現在起不回放歷史。解析器 13/13 案例通過。commit 62c08a3f（CIO APPROVE）。",
+    "status": "已核准",
+    "source": "user"
+  }
   ],
   "pending_decisions": [
     {
