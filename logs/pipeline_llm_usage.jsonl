@@ -2520,3 +2520,6 @@
 {"ts": "2026-11-25T20:36:59", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 498, "cached": 256, "out": 580, "ok": true}
 {"ts": "2026-11-25T21:28:05", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 651, "cached": 512, "out": 190, "ok": true}
 {"ts": "2026-11-25T21:28:57", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 498, "cached": 0, "out": 622, "ok": true}
+{"ts": "2026-11-25T21:32:37", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 651, "cached": 0, "out": 198, "ok": true}
+{"ts": "2026-11-25T21:34:52", "model": "deepseek-chat", "caller": "regenerate_report.py", "in": 651, "cached": 512, "out": 191, "ok": true}
+{"ts": "2026-11-25T21:35:36", "model": "deepseek-chat", "caller": "build_rebalance_dashboard.py", "in": 498, "cached": 256, "out": 609, "ok": true}
