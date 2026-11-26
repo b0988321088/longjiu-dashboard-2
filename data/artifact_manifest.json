@@ -2260,5 +2260,63 @@
    }
   ],
   "note": "close rc=0；B 案停止於留痕，未 commit／未 push"
+ },
+ {
+  "generated_at": "2026-11-25T23:55:37+08:00",
+  "producer": "cost_watch_digest.py",
+  "report_base_date": null,
+  "source_dates": {
+   "cost_ledger": "2026-11-25"
+  },
+  "artifacts": [
+   {
+    "artifact": "cost.html",
+    "sha256": "00643b4ef1f5fd6ffeac90d200a4f36cb0001fd74ece6c04a433513192aa610b",
+    "exists": true,
+    "bytes": 24031
+   },
+   {
+    "artifact": "cost_data.json",
+    "sha256": "5eae8654524b836422c1765f7f006d9af4b245e1e9b9ec87b9c0b9f17ce843bc",
+    "exists": true,
+    "bytes": 6987
+   },
+   {
+    "artifact": "data/ai_cost_daily.jsonl",
+    "sha256": "cfcb5f17d635409491d8435609e3d23eea1d87a63ac6f48602d46a22a1f5c6e9",
+    "exists": true,
+    "bytes": 18227
+   }
+  ],
+  "note": "digest rc=0；B 案停止於留痕，未 commit／未 push"
+ },
+ {
+  "generated_at": "2026-11-26T13:31:16+08:00",
+  "producer": "cost_watch_digest.py",
+  "report_base_date": null,
+  "source_dates": {
+   "cost_ledger": "2026-11-26"
+  },
+  "artifacts": [
+   {
+    "artifact": "cost.html",
+    "sha256": "f4d88f1c8ae3dc89d78755034716bc5621525a04909cc7b8e25cb1b03cb70b46",
+    "exists": true,
+    "bytes": 24052
+   },
+   {
+    "artifact": "cost_data.json",
+    "sha256": "b59eae82b33191ffc1bfcf49a864be885d6599a9d9acec89335a2626c4536147",
+    "exists": true,
+    "bytes": 7008
+   },
+   {
+    "artifact": "data/ai_cost_daily.jsonl",
+    "sha256": "39061f80b3a812aa4b9a410626294c5315156772093c4ed5e1ade9e5e1be860c",
+    "exists": true,
+    "bytes": 18458
+   }
+  ],
+  "note": "digest rc=0；B 案停止於留痕，未 commit／未 push"
  }
 ]

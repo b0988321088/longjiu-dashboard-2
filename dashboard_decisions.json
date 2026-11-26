@@ -12815,6 +12815,24 @@
       "summary": "使用者 2026-11-25 口述『質押應該顯示兩個數據因為到 120 才會追繳』，經確認裁決：①thresholds_2026_0915.ltv分級_pct 追繳_維持率_pct 140→120、追繳_LTV_pct 71.43→83.33 ②儀表板並列顯示維持率與 LTV 兩數（pledge_status._maint_ltv_suffix）③四個消費端同步（pledge_stress／build_structural_health／debt_restructure_tracker／build_stress_report）④LTV 70% 保留為內部提前預警、非契約觸發 ⑤通知線 160% 不變。未授權項：未改六段分級 45/53/57/60/62.5、未動交易授權（維持 HOLD）。",
       "status": "已核准",
       "source": "user"
+    },
+    {
+      "id": "mem-20261126164818-1386",
+      "timestamp": "2026-11-26T16:48:18.961017",
+      "agent": "Hermes",
+      "task": "日報2026-11-26",
+      "summary": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）",
+      "status": "completed",
+      "source": "auto"
+    },
+    {
+      "id": "mem-20261126164819-1387",
+      "timestamp": "2026-11-26T16:48:19.024913",
+      "agent": "Hermes",
+      "task": "資產穿透2026-11-26",
+      "summary": "已產出（五桶市值見 snapshot.penetration.actual_twd）",
+      "status": "completed",
+      "source": "auto"
     }
   ],
   "pending_decisions": [
@@ -12832,7 +12850,7 @@
     }
   ],
   "meta": {
-    "updated_at": "2026-11-26T14:03:16+08:00"
+    "updated_at": "2026-11-26T16:48:19.027913"
   },
   "last_updated": "2026-11-26T14:03:16+08:00"
 }

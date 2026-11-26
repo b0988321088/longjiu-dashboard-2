@@ -1,10 +1,10 @@
 {
-  "date": "2026-11-25",
-  "memory_pct": "100%",
+  "date": "2026-11-26",
+  "memory_pct": "99%",
   "skills_count": 25,
   "actions": [
     "技能摘要：25 個已更新",
-    "MEMORY 容量：2,200/2,200 字元（100%）",
+    "MEMORY 容量：2,187/2,200 字元（99%）",
     "MEMORY ≥90% → 用 memory(operations=[...]) 單批合併／刪除低頻條目（無 list 動作）",
     "USER 容量：1,268/1,375 字元（92%）",
     "USER ≥90% → 用 memory(operations=[...]) 單批合併／刪除低頻條目（無 list 動作）",
