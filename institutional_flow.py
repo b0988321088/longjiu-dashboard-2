@@ -250,6 +250,51 @@ def fetch_twse(day=None):
     return {"error": "；".join(errs[-4:]) or "近 6 日無交易資料", "date": f"{(day or date.today()):%Y-%m-%d}"}
 
 
+def fetch_tw_futures():
+    """期交所三大法人**期貨部位**（台股期貨）— openapi，只提供最新交易日。
+
+    用途（2026-11-26 使用者核准）：現貨賣超 2,000 億時，要能分辨
+      「現貨撤 ＋ 期貨加空」＝真撤（部位對沖也偏空）
+      「現貨賣 ＋ 期貨空單回補」＝換手／避險降低
+    注意：openapi 無 date 參數、只回最新交易日 → 「前日→今日」增減由本檔自己
+    在 state.tw_futures.history 逐日累積（同 外資連日 的做法）。
+    舊路徑 futContractsDate／futContractsDateDown 只回選單頁與 951 byte stub，勿用。
+    """
+    url = ("https://openapi.taifex.com.tw/v1/"
+           "MarketDataOfMajorInstitutionalTradersDetailsOfFuturesContractsBytheDate")
+    try:
+        rows = json.loads(http_get(url, timeout=25).decode("utf-8", "replace"))
+    except Exception:
+        return None
+    if not isinstance(rows, list):
+        return None
+
+    def _i(v):
+        try:
+            return int(str(v).replace(",", ""))
+        except Exception:
+            return None
+
+    out = {"date": None, "foreign_long": None, "foreign_short": None,
+           "foreign_net_oi": None, "foreign_net_vol": None,
+           "trust_net_oi": None, "dealer_net_oi": None}
+    for r in rows:
+        if str(r.get("ContractCode") or "") != "臺股期貨":
+            continue
+        item = str(r.get("Item") or "")
+        if item.startswith("外資"):
+            out["date"] = str(r.get("Date") or "")[:8]
+            out["foreign_long"] = _i(r.get("OpenInterest(Long)"))
+            out["foreign_short"] = _i(r.get("OpenInterest(Short)"))
+            out["foreign_net_oi"] = _i(r.get("OpenInterest(Net)"))
+            out["foreign_net_vol"] = _i(r.get("TradingVolume(Net)"))
+        elif item.startswith("投信"):
+            out["trust_net_oi"] = _i(r.get("OpenInterest(Net)"))
+        elif item.startswith("自營"):
+            out["dealer_net_oi"] = _i(r.get("OpenInterest(Net)"))
+    return out if out["foreign_net_oi"] is not None else None
+
+
 def fetch_margin(day=None) -> dict:
     """證交所信用交易統計（MI_MARGN）：融資餘額水位與變化。
 
@@ -661,13 +706,70 @@ def compute_signals(tw, cot, fed, twd, tnx, cfg, state):
     return sig
 
 
-def render_summary(sig, tw, cot, fed, sector_flow=None):
+def _yi(v):
+    return (v / 1e8) if isinstance(v, (int, float)) else None
+
+
+def render_carry(tw, margin=None) -> list[str]:
+    """現貨賣超的錢去哪了 —— 用「對應買方」回答，不猜匯出（匯出無日資料）。
+
+    11/25 實例：外資 -1,236.5 億，投信 +550.3 億接走 45%，其餘由自營（同為賣方）、
+    融資戶與其他帳戶吸收。三大法人合計＝三者加總，缺口才是散戶/公司派/外資其他帳戶。
+    """
+    f = _yi((tw or {}).get("外資總買賣超"))
+    if f is None:
+        return []
+    t = _yi((tw or {}).get("投信_元"))
+    d = _yi((tw or {}).get("自營_元"))
+    parts = [f"外資 {f:+,.1f} 億"]
+    if t is not None:
+        if f < 0 and t > 0:
+            parts.append(f"投信 {t:+,.1f} 億（接走 {abs(t) / abs(f) * 100:.0f}%）")
+        else:
+            parts.append(f"投信 {t:+,.1f} 億")
+    if d is not None:
+        parts.append(f"自營 {d:+,.1f} 億")
+    total = f + (t or 0) + (d or 0)
+    line = "  現貨承接：" + "｜".join(parts) + f"｜三大法人合計 {total:+,.1f} 億"
+    if isinstance(margin, dict) and isinstance(margin.get("單日增減億"), (int, float)):
+        line += f"｜融資 {margin['單日增減億']:+,.1f} 億（{margin.get('date')}，散戶）"
+    return [line]
+
+
+def render_tw_futures(fut) -> list[str]:
+    """外資台指期部位 —— 判斷現貨賣超是「真撤」還是「換手/避險降」。"""
+    if not fut or fut.get("foreign_net_oi") is None:
+        return ["  期貨部位：本輪未取得（期交所 openapi）"]
+    net = fut["foreign_net_oi"]
+    prev = fut.get("prev_net_oi")
+    side = f"淨空單 {abs(net):,} 口" if net < 0 else f"淨多單 {net:,} 口"
+    line = (f"  期貨部位：外資台指期 {side}"
+            f"（多 {fut.get('foreign_long') or 0:,}／空 {fut.get('foreign_short') or 0:,}）")
+    if fut.get("trust_net_oi") is not None:
+        line += f"｜投信淨多 {fut['trust_net_oi']:+,} 口"
+    if prev is not None:
+        line += f"｜前日 {prev:+,} → 今日 {net:+,}（{net - prev:+,} 口）"
+    if fut.get("stale"):
+        line += "｜⚠️ 延遲（本輪抓取失敗，顯示前次快照）"
+    out = [line]
+    if prev is not None:
+        if net < 0 and net < prev:
+            out.append("  → 現貨賣超＋期貨空單加碼＝真撤（避險與方向單一起偏空）")
+        elif net < 0 and net > prev:
+            out.append("  → 現貨賣超但期貨空單回補＝換手／避險降低，不等於加碼看空")
+    return out
+
+
+def render_summary(sig, tw, cot, fed, sector_flow=None, margin=None, twfut=None):
     lines = [f"📡 機構流向雷達 {date.today().isoformat()}"]
     reds = [k for k, v in sig.items() if (v.get("color") or "").startswith("🔴")]
     yellows = [k for k, v in sig.items() if (v.get("color") or "").startswith("🟡")]
     lines.append(f"燈號：🔴紅 {len(reds)}｜🟡黃 {len(yellows)}｜綠 {sum(1 for v in sig.values() if (v.get('color') or '').startswith('🟢'))}")
     for k, v in sig.items():
         lines.append(f"  {v.get('color') or '⚪'} {k}：{v['note']}")
+    # 2026-11-26 使用者核准：現貨承接結構 ＋ 外資期貨部位
+    lines += render_carry(tw, margin)
+    lines += render_tw_futures(twfut)
     if tw.get("etfs"):
         etf_txt = "、".join(f"{k} {v/1000:+.0f}千" for k, v in tw["etfs"].items() if v)
         lines.append(f"  追蹤ETF法人：{etf_txt}")
@@ -772,6 +874,7 @@ def main():
     twd = fetch_twd()
     tnx = fetch_tnx()
     mg = fetch_margin()  # 2026-11-19：多殺多第 3 段（融資斷頭）判準，取代原本無資料的推論
+    twfut = fetch_tw_futures()  # 2026-11-26：外資台指期部位（現貨賣超是避險還是真撤）
     us_sec = fetch_us_sector()
 
     # 2026-11-23：債券升息敏感度改由 FRED 即時生成（手寫版停在 9/17 兩個月）
@@ -794,6 +897,24 @@ def main():
     state["data"] = {"twse": _tw_slim, "cot": cot, "fed": fed, "twd": twd, "tnx": tnx,
                      "us_sector": us_sec, "margin": mg}
     state["signals"] = sig
+
+    # 2026-11-26：期貨部位歷史 — openapi 只給最新交易日，自己逐日累積才有「前日→今日」
+    _fut_old = state.get("tw_futures") or {}
+    _fut_hist = list(_fut_old.get("history") or [])
+    if twfut:
+        if not _fut_hist or _fut_hist[-1].get("date") != twfut["date"]:
+            _fut_hist.append({k: twfut.get(k) for k in
+                              ("date", "foreign_net_oi", "foreign_long", "foreign_short",
+                               "trust_net_oi", "dealer_net_oi")})
+        twfut["prev_net_oi"] = (_fut_hist[-2].get("foreign_net_oi")
+                                if len(_fut_hist) >= 2 else None)
+        state["tw_futures"] = {**twfut, "history": _fut_hist[-12:]}
+    elif _fut_old.get("foreign_net_oi") is not None:
+        # 抓取失敗：沿用前次快照但明確標延遲，不假裝是本輪新值
+        print("  ⚠️ 期交所三大法人期貨抓取失敗 → 沿用前次快照並標記延遲")
+        twfut = {**_fut_old, "stale": True, "prev_net_oi": None}
+    else:
+        print("  ⚠️ 期交所三大法人期貨抓取失敗 → 本輪無期貨部位資料")
     state["sector_flow"] = sector_flow
     # TD-20261014-01：政策面「當日市場對照」必須在存檔前生成，否則不會落地到 radar_state.json。
     try:
@@ -820,7 +941,7 @@ def main():
     except Exception as _rot_err:
         print(f"  ⚠️ 產業輪動建議重算失敗：{_rot_err}")
 
-    summary = render_summary(sig, tw, cot, fed, sector_flow)
+    summary = render_summary(sig, tw, cot, fed, sector_flow, margin=mg, twfut=twfut)
     print(summary)
     if mg and not mg.get("error"):
         print(f"  💳 融資餘額 {mg['融資餘額億']:,.0f} 億（{mg['date']}）："
@@ -947,12 +1068,16 @@ def main():
             _lo5, _hi5 = _rng5.get("下限"), _rng5.get("上限")
             _in_band5 = (_lo5 is not None and _hi5 is not None
                          and float(_lo5) <= _tw5 <= float(_hi5))
+            # 2026-11-26 使用者核准：桶位行改 ⚪ ＋ 明寫「桶位」
+            #   原因：同一則訊息上方「台股 🔴」是資金面燈號，桶位行用 🟢 會被讀成「系統認可台股」，
+            #   11/25 外資賣超 1,236.5 億時就是這種誤讀。
+            #   桶位判定（偏離目標/在不在可接受範圍）與資金面燈號是兩套語意，不得共用同一組燈號。
             if _tw_gap >= 0 and _in_band5:
-                lines.append(f"🟢 台股（{_tw5:.1f}%，可接受範圍 {_lo5}–{_hi5}%）→ 範圍內不動作（US30Y {_us30_v}% 僅凍結長債新增，不否決台股）")
+                lines.append(f"⚪ 台股桶位（{_tw5:.1f}%，可接受範圍 {_lo5}–{_hi5}%）→ 範圍內不動作（US30Y {_us30_v}% 僅凍結長債新增，不否決台股）")
             elif _tw_gap >= 0:
-                lines.append(f"🟡 台股（{_tw5:.1f}% vs 目標{_tw_t}%，超配 {_tw_gap:+.1f}pp）→ 超出原案目標、不新增（US30Y {_us30_v}%，凍結線 {_us30_gate}% 未解凍前不加碼）")
+                lines.append(f"⚪ 台股桶位（{_tw5:.1f}% vs 目標{_tw_t}%，超配 {_tw_gap:+.1f}pp）→ 超出原案目標、不新增（US30Y {_us30_v}%，凍結線 {_us30_gate}% 未解凍前不加碼）")
             else:
-                lines.append(f"🟢 台股（{_tw5:.1f}% vs 目標{_tw_t}%，缺口 {_tw_gap:+.1f}pp）→ 0050/006208 分批慢慢買（單筆 ≤5萬）")
+                lines.append(f"⚪ 台股桶位（{_tw5:.1f}% vs 目標{_tw_t}%，缺口 {_tw_gap:+.1f}pp）→ 0050/006208 分批慢慢買（單筆 ≤5萬）")
         # ② 美股（2026-09-15 INC-187 使用者核准：門檻收斂 + 可執行性 + 煞車優先序）
         # ① 觸發帶讀 thresholds SoT（導流帶），不再寫死 +5
         # ② 減碼只能減「非後收、非保單內、無 CDSC」部位（國泰池 92% 後收、保單內無 CDSC 但屬長線）
