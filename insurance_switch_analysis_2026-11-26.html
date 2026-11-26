@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>保單轉換後穿透分析 2026-11-26</title>
+<style>
+:root{--bg:#0b1220;--card:#141c2e;--line:#243149;--txt:#e6edf7;--dim:#94a3b8;--up:#ef4444;--down:#22c55e;--amber:#f59e0b;--blue:#3b82f6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;line-height:1.65;padding:16px}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:20px;margin:4px 0 2px}
+.sub{color:var(--dim);font-size:13px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+h2{font-size:15px;margin:0 0 10px;color:#cbd5e1;letter-spacing:.02em}
+h2 span{color:var(--dim);font-weight:400;font-size:12px;margin-left:6px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--dim);font-weight:500;font-size:12px}
+tr:last-child td{border-bottom:none}
+.num{font-variant-numeric:tabular-nums}
+.hi{color:#fff;font-weight:600}
+.pos{color:var(--up)}.neg{color:var(--down)}
+ul{margin:6px 0 0;padding-left:18px;font-size:13.5px}
+li{margin-bottom:6px}
+.k{display:inline-block;background:#1e293b;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12px;color:#cbd5e1}
+.note{font-size:12.5px;color:var(--dim);margin-top:8px}
+.big{font-size:22px;font-weight:700}
+.warn{border-left:3px solid var(--amber);padding-left:10px;color:#fde68a;font-size:13.5px;margin-top:8px}
+.ok{border-left:3px solid var(--down);padding-left:10px;color:#bbf7d0;font-size:13.5px;margin-top:8px}
+</style>
+</head>
+<body><div class="wrap">
+<h1>保單轉換後穿透分析</h1>
+<div class="sub">2026-11-26｜安聯A／安聯B／第一金 三張同步轉入摩根多重收益｜資料源：snapshot.json 重算（update_data + build_penetration_report）</div>
+
+<div class="card">
+<h2>一、配置穿透<span>100% 對得上</span></h2>
+<table>
+<tr><th>桶位</th><th>金額</th><th>佔比</th><th>目標</th><th>偏離</th></tr>
+<tr><td>台股市值型成長</td><td class="num">3,023,634</td><td class="num hi">11.8%</td><td class="num">10%</td><td class="num pos">+1.8pp</td></tr>
+<tr><td>美股市值型成長</td><td class="num">9,417,144</td><td class="num hi">36.9%</td><td class="num">30%</td><td class="num pos">+6.9pp</td></tr>
+<tr><td>債券</td><td class="num">6,541,178</td><td class="num hi">25.6%</td><td class="num">25%</td><td class="num">+0.6pp</td></tr>
+<tr><td>防守型配息</td><td class="num">4,429,039</td><td class="num hi">17.4%</td><td class="num">30%</td><td class="num neg">−12.6pp</td></tr>
+<tr><td>現金／安全網</td><td class="num">1,213,525</td><td class="num hi">4.8%</td><td class="num">5%</td><td class="num">−0.2pp</td></tr>
+<tr><td>指定還債款</td><td class="num">900,000</td><td class="num hi">3.5%</td><td class="num">—</td><td class="num">—</td></tr>
+<tr><td class="hi">合計＝總資產</td><td class="num hi">25,524,520</td><td class="num hi">100.0%</td><td></td><td></td></tr>
+</table>
+<div class="note">衛星 0／在途 0／待確認應收 0。防守合併口徑 65.7%（≥60 承接凍結 ✅）；債券＋現金 30.4%（門檻 30% ✅）。</div>
+</div>
+
+<div class="card">
+<h2>二、保單內基金分佈<span>三張合計 8,977,451</span></h2>
+<table>
+<tr><th>基金（品號）</th><th>金額</th><th>佔保單</th></tr>
+<tr><td>摩根多重收益 A股穩定月配 <span class="k">USDEQ5440</span></td><td class="num">3,172,085</td><td class="num">35.3%</td></tr>
+<tr><td>摩根多重收益 A股每月派息 <span class="k">FJXX</span></td><td class="num">1,840,657</td><td class="num">20.5%</td></tr>
+<tr><td>PIMCO收益增長 M級月收息強化 <span class="k">USDEQ6550</span></td><td class="num">1,563,583</td><td class="num">17.4%</td></tr>
+<tr><td>安聯收益成長 AM穩定月收 <span class="k">USDEQ3490</span></td><td class="num">1,278,189</td><td class="num">14.2%</td></tr>
+<tr><td>元大台灣卓越50 <span class="k">NTDET0010</span></td><td class="num">886,376</td><td class="num">9.9%</td></tr>
+<tr><td>元大台灣高股息優質龍頭(B) <span class="k">NTDEQ2640</span></td><td class="num">236,561</td><td class="num">2.6%</td></tr>
+<tr><td class="hi">摩根同檔兩級別合計</td><td class="num hi">5,012,742</td><td class="num hi">55.8%</td></tr>
+</table>
+<div class="note">黃金 129,034／M&G 617,734／安聯收益成長（B 470,713）已全數清空。依保單：安聯A 53.4%／安聯B 26.1%／第一金 20.5%。幣別：美元 67.0%／台幣 33.0%。</div>
+</div>
+
+<div class="card">
+<h2>三、對桶位的影響幾乎為零</h2>
+<table>
+<tr><th>項目</th><th>轉換前</th><th>轉換後</th><th>Δ</th></tr>
+<tr><td>債券</td><td class="num">6,526,141</td><td class="num">6,541,178</td><td class="num">+15,037</td></tr>
+<tr><td>美股市值型成長</td><td class="num">9,309,201</td><td class="num">9,417,144</td><td class="num">+107,943</td></tr>
+<tr><td>台股／防守／現金</td><td class="num">8,666,198</td><td class="num">8,666,198</td><td class="num">0</td></tr>
+</table>
+<ul>
+<li>債券比互相抵銷：黃金 0%／M&amp;G 55%／安聯收益成長 35% → 摩根 45%；第一金反向 55%→46.7%（減債 156,144）。</li>
+<li>淨結果 <b>+15,038</b>（引擎 +15,037，差 1 元進位）。</li>
+</ul>
+<div class="warn">結論：這次不是「加債」也不是「加股」，是<b>換人管理</b>。用桶位看不出風險變化，要看集中度。</div>
+</div>
+
+<div class="card">
+<h2>四、集中度（真正變的地方）</h2>
+<ul>
+<li>保單內摩根 <b>55.8%</b>（5,012,742，兩個級別相加）</li>
+<li>換算全資產：<b>19.6%</b> 的總資產押在同一檔基金</li>
+<li>保單內前兩大（摩根＋安聯收益成長）＝ <b>70%</b></li>
+<li>持有種類由 5 種收斂為 4 種（商品避險／多元收益／成長收益／台股市值／台股高息 → 去掉黃金與 M&amp;G）</li>
+</ul>
+<div class="warn">兩個級別（穩定月配／每月派息）配息率與內扣費用不同，加總看是 55.8%，但現金流是兩套規則算出來的。</div>
+</div>
+
+<div class="card">
+<h2>五、美元曝險</h2>
+<ul>
+<li>70.0% 全部美元計價｜已避險 6.5% → <b>匯率曝險 63.5%</b>（目標 63%，超 0.5pp，advisory）</li>
+<li>黃金（美元）、M&amp;G（美元避險）→ 摩根（美元對沖）：美元計價比重不變，避險部位未增加</li>
+</ul>
+<div class="warn">台幣若轉升，63.5% 匯率曝險與 19.6% 單一基金會同時咬。</div>
+</div>
+
+<div class="card">
+<h2>六、與既定框架的一致性</h2>
+<ul>
+<li class="ok">台股 11.8% 未動 ✓ 雷達 🔴、外資台指期淨空單 105,709 口的當下不加碼</li>
+<li class="ok">清黃金與雷達黃金 🔴（COT 淨多單週減 12.6%）同向 ✓</li>
+<li class="ok">防守口徑 債券＋現金 30.4% ≥ 30% ✓（waiver 後）</li>
+<li class="ok">美股超標 6.9pp，依 11/25 裁決②「不賣美股、走台幣計價替代」→ 不動作 ✓</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>七、建議與待辦</h2>
+<ul>
+<li><b>現在不要再動</b>：同日已三筆轉換，T+4 於 <b>12/02（三）</b>生效，等實際淨值落地</li>
+<li>下次分散<b>不要往摩根加</b>；替代為 PIMCO（17.4%）或台幣計價級別</li>
+<li><b>12/02 覆核</b>：三張餘額與基金別、第一金現值校正（系統 1,840,657／App 1,847,017，差 6,360）</li>
+<li>下次配息入帳時拆算摩根兩級別實際配息率，驗證月配息現金流可靠度</li>
+</ul>
+<div class="note">本報告數字全部由 snapshot.json 重算產出（update_data rc=0／build_penetration_report rc=0），非手動填寫。</div>
+</div>
+
+</div></body></html>
