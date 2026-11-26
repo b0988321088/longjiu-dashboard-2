@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-26T16:50:30.974322",
+ "generated_at": "2026-11-26T21:37:22.169676",
  "version": "v5.0.10-true-value-correction",
  "date": "2026-11-26",
  "total_assets": 25567701,
@@ -10271,26 +10271,26 @@
   }
  },
  "insurance_estimate": {
-  "as_of": "2026-11-25",
-  "nav_basis_date": "2026-11-25",
-  "estimated_incl_truth_twd": 9109181,
+  "as_of": "2026-11-26",
+  "nav_basis_date": "2026-11-26",
+  "estimated_incl_truth_twd": 9121635,
   "truth_twd": 9121635.0,
-  "diff_twd": -12454.0,
-  "diff_pct": -0.14,
-  "coverage_pct": 26.9,
-  "uncovered_truth_twd": 6671539,
+  "diff_twd": 0.0,
+  "diff_pct": 0.0,
+  "coverage_pct": 0.0,
+  "uncovered_truth_twd": 9121635,
   "accounts": {
    "allianz_a": {
-    "estimated_twd": 1564083.0,
+    "estimated_twd": 0.0,
     "truth_twd": 4874833.0,
-    "diff_pct": -67.92,
-    "coverage_pct": 32.4
+    "diff_pct": -100.0,
+    "coverage_pct": 0.0
    },
    "allianz_b": {
-    "estimated_twd": 873559.0,
+    "estimated_twd": 0.0,
     "truth_twd": 2365548.0,
-    "diff_pct": -63.07,
-    "coverage_pct": 36.8
+    "diff_pct": -100.0,
+    "coverage_pct": 0.0
    },
    "firstjin": {
     "estimated_twd": 0.0,

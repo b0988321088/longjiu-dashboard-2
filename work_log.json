@@ -903,5 +903,17 @@
   "category": "完成",
   "item": "裁決：質押解凍門檻取消（使用者 2026-11-24 Telegram『質押解凍門檻取消不然都一直停在不能買賣的限制』：thresholds.ltv分級_pct.ltv條件啟用=False，『LTV 是否達到解凍上限』不再參與解凍判斷（原 45%→50%→取消）。保留硬否決：觸追繳(70%)、逾 53% 政策停止線；現金≥100萬與還本安全閥仍在。結果：今日",
   "detail": "使用者 2026-11-24 Telegram『質押解凍門檻取消不然都一直停在不能買賣的限制』：thresholds.ltv分級_pct.ltv條件啟用=False，『LTV 是否達到解凍上限』不再參與解凍判斷（原 45%→50%→取消）。"
+ },
+ {
+  "date": "2026-11-26",
+  "category": "完成",
+  "item": "日報2026-11-26（已產出（金額見 snapshot／當日日報檔，勿在此複寫數字））",
+  "detail": "已產出（金額見 snapshot／當日日報檔，勿在此複寫數字）"
+ },
+ {
+  "date": "2026-11-26",
+  "category": "完成",
+  "item": "資產穿透2026-11-26（已產出（五桶市值見 snapshot.penetration.actual_twd））",
+  "detail": "已產出（五桶市值見 snapshot.penetration.actual_twd）"
  }
 ]
