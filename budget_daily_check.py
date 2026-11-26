@@ -75,8 +75,13 @@ def parse_moneybook_bill():
             continue
         due = str(row.get("繳費截止日", "") or "")
         amt = _safe_float(row.get("帳單金額", 0))
-        if amt <= 0:
+        # 2026-11-26 修（使用者抓錯）：Moneybook 帳單 CSV 對「該期為退款／已繳」會記負數，
+        # 例：玉山 due 2026/11/23 = -3,085（10 月帳單 3,085，11/23 扣款）。
+        # 舊版 `if amt <= 0: continue` 會把這期跳過，退回上一期 9/22 的 25,906
+        # → 玉山被誤報「超預算 145%」。正解＝跳過 0（無帳單），非零取絕對值當該期帳單金額。
+        if amt == 0:
             continue
+        amt = abs(amt)
         if bank not in latest or due > latest[bank][0]:
             latest[bank] = (due, amt)
     for bank, (due, amt) in latest.items():
