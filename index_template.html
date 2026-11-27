@@ -771,9 +771,11 @@ __RELAY_SCHEDULE__
       for(var k4 in rb){ var g4 = _rrecv[k4]||0; if(g4 < rb[k4]) pend.push([k4+'房租', rb[k4]-g4, '']); }
       var fjExp = (snap.firstjin_dividend_expected||{})[_ym2]||{};
       if(fjExp.amount>0 && !pend.some(function(p){return p[0].indexOf('第一金')>=0;})) pend.push(['第一金 FAXX 配息', fjExp.amount, (fjExp.note||'').slice(0,40)]);
-      /* 2026-10-12：ETF 已除息待發放（發放日未到，不計入實收；來源 snapshot.etf_dividend_receivable_202610） */
+      /* 2026-10-12：ETF 已除息待發放（發放日未到，不計入實收；來源 snapshot.etf_dividend_receivable_202610）
+         2026-11-27 修：該筆狀態已是「已全數發放並入帳」卻仍被列為待收（幽靈待收 14,540）。
+         改用明確 boolean 旗標 已入帳（不靠字串比對，避免「已除息待發放」被誤殺）。 */
       var _etfr = snap.etf_dividend_receivable_202610 || null;
-      if(_etfr && Number(_etfr.合計) > 0){
+      if(_etfr && Number(_etfr.合計) > 0 && _etfr.已入帳 !== true){
         var _etfl = (_etfr.明細||[]).map(function(x){ return x.代號 + ' ' + x.發放日; }).join('／');
         pend.push(['ETF 配息（已除息待發放）', Number(_etfr.合計), _etfl]);
       }
