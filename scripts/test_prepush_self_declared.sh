@@ -42,7 +42,11 @@ _rec() { # _rec <tree> <commit> <reviewer> <note>
 
 _case() { # _case <name> <expect pass|block> <branch> <grep-key-or-->
   local name="$1" expect="$2" branch="$3" key="$4" out rc verdict
-  out=$(git push origin "$branch" 2>&1); rc=$?
+  # 2026-11-27：pre-push v5 的 REFSPEC lane 只准推 clean-main（remote ref 必須是部署分支），
+  # 舊版推 origin "$branch"（refs/heads/caseA…）會先被 REFSPEC 擋掉，7 個案例全 FAIL
+  # 且與 RECORD 規則無關。改為一律推 HEAD:refs/heads/clean-main；各案例是 orphan
+  # （無共同祖先）故需 --force，沙盒 remote 是獨立的 bare repo，不影響真實遠端。
+  out=$(git push --force origin "HEAD:refs/heads/clean-main" 2>&1); rc=$?
   if [ "$expect" = "pass" ]; then
     if [ $rc -eq 0 ]; then verdict="PASS(放行)"; else verdict="FAIL(被擋 rc=$rc)"; fi
   else
@@ -112,6 +116,15 @@ _case "F 一般(有parent)程式檔+SELF-DECLARED → 應擋" block caseA "僅�
 _new_branch caseG app.py "print('g')"
 S=$(git rev-parse HEAD); _rec "$(git rev-parse HEAD^{tree})" "$S" "CIO-DeepSeek-V4Pro" "pre-push v4.3 SELF-DECLARED 規則;複審 APPROVE"
 _case "G 程式檔+真審查(note 提到 SELF-DECLARED) → 應放行" pass caseG -
+
+# H 程式檔 + 紀錄的 commit 與實際 commit 不符（tree 相同）→ 應擋
+#   （2026-11-27 核准鏈修復：憑證必須 commit+tree 成對；reset／合併改寫後
+#     舊 commit 的紀錄不得沿用，這正是 1c75d41f 卡死的成因）
+_new_branch caseH app.py "print('h')"
+S=$(git rev-parse HEAD); T=$(git rev-parse HEAD^{tree})
+FAKE=$(python -c "s='$S'; print(s[:-1]+('0' if s[-1]!='0' else '1'))")
+_rec "$T" "$FAKE" "CIO-DeepSeek-V4Pro" "舊 commit 的核准紀錄"
+_case "H tree 同但 commit 不同 → 應擋" block caseH "無審查紀錄"
 
 echo "--- 結果 ---"
 echo "PASS=$PASS  FAIL=$FAIL"
