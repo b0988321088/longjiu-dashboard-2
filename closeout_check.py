@@ -92,7 +92,10 @@ def sha_state(sha: str) -> str:
     """判斷被閘門／稽核點名的 commit 現在該算不算問題（2026-09-15 新增）。
 
     回傳：
-      approved：tree 在 .git/CIO_APPROVED 有紀錄（真審或 AUTO 補審）→ 已解決
+      approved：(commit, tree) 成對在 .git/CIO_APPROVED 有紀錄（真審或 AUTO 補審）→ 已解決
+                （2026-11-27 核准鏈修復：原為「tree 有紀錄就當已解決」，會漏掉
+                 「內容已核准、commit 被改寫」的待推 commit；現統一由
+                 auto_push.tree_approved → approval_ledger 判成對鍵）
       remote  ：已是 origin/<branch> 的祖先（那顆早就成功推出去了）→ 已解決
       pending ：仍在 HEAD 歷史、未上遠端、又沒有紀錄 → ❌ 真問題（未來 push 必被閘門擋）
       obsolete：已不在 HEAD 歷史（被 amend/rebase 改寫或丟棄）→ ℹ️ 不會再進任何推送範圍

@@ -173,19 +173,26 @@ def git_dir(base: Path) -> Path:
 
 
 def tree_approved(base: Path, commit: str) -> bool:
-    """該 commit 的 tree 在 CIO_APPROVED 是否已有 APPROVE 紀錄（＝閘門會不會放行）。"""
-    f = git_dir(base) / "CIO_APPROVED"
-    if not f.exists():
-        return False
+    """該 commit 是否已有「成對」的 APPROVE 紀錄（＝閘門會不會放行）。
+
+    2026-11-27 核准鏈修復：原版只比 tree（parts[1] == t），與 publish_gate 的
+    commit-keyed 查核不同調 → reset／合併後回 True 卻仍被閘門擋（假陽性阻塞）。
+    改走 approval_ledger 的單一實作（commit+tree 雙綁）；帳本不可用一律 fail-closed。
+    """
     p = run(["git", "rev-parse", f"{commit}^{{tree}}"], base)
     if p.returncode != 0:
         return False
     t = p.stdout.strip()
-    for ln in f.read_text(encoding="utf-8", errors="replace").splitlines():
-        parts = ln.split("\t")
-        if len(parts) >= 5 and parts[1] == t and parts[3] == "APPROVE":
-            return True
-    return False
+    try:
+        if str(base) not in sys.path:
+            sys.path.insert(0, str(base))
+        import approval_ledger as ledger  # noqa: E402 — 單一查核實作
+        ok, _reason, _hit = ledger.verify_commit(commit, t, base=str(base))
+        return ok
+    except Exception as e:  # noqa: BLE001 — 不可用 → 視為未核准（fail-closed）
+        print(f"⚠️ approval_ledger 不可用（{str(e)[:80]}）→ 視為未核准（fail-closed）",
+              file=sys.stderr)
+        return False
 
 
 def log_warn(base: Path, commit: str, script: str, kind: str, detail: str) -> None:

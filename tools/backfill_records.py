@@ -35,9 +35,14 @@ def git(*args: str) -> str:
                           encoding="utf-8", errors="replace").stdout
 
 
-def approved_trees() -> set[str]:
-    """CIO_APPROVED 內「有效 APPROVE」的 tree 集合（排除自宣告）。"""
-    out: set[str] = set()
+def approved_pairs() -> set[tuple[str, str]]:
+    """CIO_APPROVED 內「有效 APPROVE」的 (commit, tree) 配對（排除自宣告）。
+
+    2026-11-27 核准鏈修復：原版只收 tree 集合，於是「tree 已核准、commit 被改寫」
+    會被誤判成『已補過』而不再補 → 待推 commit 永遠缺自己的憑證（1c75d41f 事件的
+    另一個破口）。改收成對鍵，與 publish_gate／approval_ledger 同調。
+    """
+    out: set[tuple[str, str]] = set()
     if not APPROVE_FILE.exists():
         return out
     for ln in APPROVE_FILE.read_text(encoding="utf-8", errors="replace").splitlines():
@@ -45,21 +50,23 @@ def approved_trees() -> set[str]:
         if len(parts) < 4:
             continue
         # 欄序（cio_approve.py 寫入格式）：時間 / tree / commit / verdict / reviewer / note
-        tree, verdict = parts[1].strip(), parts[3].strip()
+        tree, commit, verdict = parts[1].strip(), parts[2].strip(), parts[3].strip()
+        reviewer = parts[4].strip() if len(parts) > 4 else ""
         note = parts[5].strip() if len(parts) > 5 else ""
-        if verdict == "APPROVE" and not note.startswith("SELF-DECLARED:"):
-            out.add(tree)
+        if verdict == "APPROVE" and not reviewer.startswith("SELF-DECLARED:") \
+                and not note.startswith("SELF-DECLARED:"):
+            out.add((commit, tree))
     return out
 
 
 def pending_commits() -> list[tuple[str, str, str]]:
     """(sha, tree, subject) —— 待推範圍內缺有效 RECORD 者，由舊到新。"""
-    has = approved_trees()
+    has = approved_pairs()
     shas = [s for s in git("rev-list", "--reverse", f"{BASE_REF}..HEAD").split() if s]
     todo: list[tuple[str, str, str]] = []
     for sha in shas:
         tree = git("rev-parse", f"{sha}^{{tree}}").strip()
-        if tree and tree not in has:
+        if tree and (sha, tree) not in has:
             subj = git("log", "-1", "--format=%s", sha).strip()
             todo.append((sha, tree, subj))
     return todo

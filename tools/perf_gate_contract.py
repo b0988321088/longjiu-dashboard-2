@@ -494,6 +494,10 @@ def f4_publish_consistency(approval_tree: str = "", candidate_tree: str = "",
            f"BLOCKED：無 CIO 核准紀錄（{approval_file or '預設 .git/CIO_APPROVED'}）→ 不得發布")
         out["ok"] = False
         return out
+    # 2026-11-27 核准鏈修復註記：本函式是「核准 tree == 候選 tree」的契約測試工具
+    #（驗證 perf gate 行為），**不參與發布放行決策**，故仍以 tree 為鍵。
+    # 真正的放行查核統一在 approval_ledger.verify_commit（commit+tree 雙綁），
+    # 由 pre-push／publish_gate／auto_push／auto_record 共用。
     if "APPROVE" not in _appr.get(candidate_tree, []):
         ck("已取得 CIO 核准 tree 綁定", False,
            f"BLOCKED：核准紀錄共 {len(_appr)} 筆，無本候選 tree {candidate_tree[:16]} 的 APPROVE "
