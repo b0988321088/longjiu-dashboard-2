@@ -25,7 +25,20 @@ BASE = Path(__file__).resolve().parent
 STATE = BASE / "us30y_state.json"
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS30"
 YAHOO_URL = "https://query1.finance.yahoo.com/v8/finance/chart/%5ETYX?range=1mo&interval=1d"
-ET = timezone(timedelta(hours=-4))  # 美東（夏令時間）
+try:
+    from zoneinfo import ZoneInfo
+    ET = ZoneInfo("America/New_York")  # 自動處理夏令／冬令時間（原固定 -4 在 11-3 月會快 1 小時）
+except Exception:  # pragma: no cover
+    ET = timezone(timedelta(hours=-4))
+
+# 2026-11-27：美股休市日（週末另計）。假日缺資料不得判 STALE，否則每逢美股假期
+# 就輸出「紅線判定不作為有效結論」，等於風控失明。半日市（如 11/27）仍算交易日。
+US_MARKET_HOLIDAYS = {
+    "2026-01-01", "2026-01-19", "2026-02-16", "2026-04-03", "2026-05-25",
+    "2026-06-19", "2026-07-03", "2026-09-07", "2026-11-26", "2026-12-25",
+    "2027-01-01", "2027-01-18", "2027-02-15", "2027-03-26", "2027-05-31",
+    "2027-06-18", "2027-07-05", "2027-09-06", "2027-11-25", "2027-12-24",
+}
 
 A_THRESHOLD = 5.20   # 模式A 防禦
 B_THRESHOLD = 4.90   # 模式B 布局
@@ -221,17 +234,26 @@ def main():
 
     # 2026-11-06（使用者裁決）：抓取「成功」但最新資料日落後，舊值不得冒充現行判定。
     # FRED DGS30 正常落後 1-2 交易日（週末不計），故以工作日計算，落後 ≥2 個工作日＝STALE。
-    def _weekdays_between(d1: date, d2: date) -> int:
+    # 2026-11-27 修：改以「美股交易日」計算並排除休市日、且今日若美東尚未收盤則不計今日。
+    #   原版在 11/26 感恩節（休市）＋11/27 尚未收盤時，會把兩天都算成落後 → 假 STALE，
+    #   連帶讓紅線與模式判定失效（風控失明）。
+    def _trading_days_between(d1: date, d2: date) -> int:
+        try:
+            now_et = datetime.now(timezone.utc).astimezone(ET)
+            if d2 == now_et.date() and now_et.hour < 17:
+                d2 = d2 - timedelta(days=1)
+        except Exception:
+            pass
         n, cur = 0, d1 + timedelta(days=1)
         while cur <= d2:
-            if cur.weekday() < 5:
+            if cur.weekday() < 5 and cur.isoformat() not in US_MARKET_HOLIDAYS:
                 n += 1
             cur += timedelta(days=1)
         return n
 
     _STALE_WEEKDAYS = 2
     try:
-        _lag_wd = _weekdays_between(date.fromisoformat(str(latest_date)[:10]), date.today())
+        _lag_wd = _trading_days_between(date.fromisoformat(str(latest_date)[:10]), date.today())
     except Exception:
         _lag_wd = 0
     _stale = _lag_wd >= _STALE_WEEKDAYS
