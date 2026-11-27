@@ -37,6 +37,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import approval_ledger as ledger
+
 
 def clean(value: str, maxlen: int = 120) -> str:
     """紀錄檔是 tab 分隔的 append-only 文字檔 → 一律清掉 tab/CR/LF 與控制字元。
@@ -205,6 +207,10 @@ def main() -> int:
     ap.add_argument("--note", default="", help="備註（例：改動摘要）")
     ap.add_argument("--result", help="CIO 審查回傳的 JSON 檔路徑")
     ap.add_argument("--commit", help="指定要記錄的 commit（預設 HEAD）；寫入該 commit 的 tree 一筆（P2 自動化路徑用）")
+    ap.add_argument("--expect-tree", help="安全帶（2026-11-27）：落紀錄前驗證該 commit 的 tree 必須等於此值。"
+                                         "用於「內容未變、commit 被 reset／合併改寫」時重新綁定憑證；不符一律拒寫")
+    ap.add_argument("--allow-dup", action="store_true",
+                    help="允許重複寫入同一 (commit,tree,verdict,reviewer)；預設去重（idempotent，不產生重複授權）")
     ap.add_argument("--range-base", help="把 <base>..HEAD 之間「審查 JSON 有列到」的 commit tree 寫入紀錄（只會記錄真的被審過的那些）")
     ap.add_argument("--force", action="store_true", help="略過 result 檢查（僅供人工補登，需自行負責）")
     a = ap.parse_args()
@@ -215,6 +221,15 @@ def main() -> int:
         # 當下不一定有正確的 upstream base 可用（--range-base 不適用）→ 直接指定 commit 最穩。
         commit = git("rev-parse", f"{a.commit}^{{commit}}")
         tree = git("rev-parse", f"{commit}^{{tree}}")
+
+    # 2026-11-27 安全帶：內容未變才允許「重新綁定到改寫後的 commit」。
+    # 沒有這道檢查，「沿用舊審查 JSON 綁新 commit」會變成內容變了也能綁的後門。
+    if a.expect_tree:
+        _exp = a.expect_tree.strip()
+        if not ledger.sha_match(_exp, tree):
+            print(f"❌ --expect-tree {_exp[:12]} 與 commit {commit[:12]} 的 tree {tree[:12]} 不符 → 拒寫"
+                  f"（內容已變更，必須重新送 CIO 審查，不得沿用舊憑證）", file=sys.stderr)
+            return 2
 
     if a.status:
         rows = [r for r in read_rows(approve_file()) if len(r) >= 4 and r[1] == tree]
@@ -341,9 +356,16 @@ def main() -> int:
             targets = [(c, git("rev-parse", f"{c}^{{tree}}")) for c in sel]
 
     written: list[tuple[str, str]] = []
+    _dup_skipped: list[str] = []
+    _existing, _ = ledger.read_records(base=".")
     with approve_file().open("a", encoding="utf-8") as f:
         for c, t in targets:
             t = t.split()[0]
+            # 2026-11-27：預設去重——同一 (commit,tree,verdict,reviewer) 已存在就不重寫，
+            # 避免重跑審查時長出重複授權（歷史只追加，故不能靠覆蓋解決）。
+            if not a.allow_dup and ledger.is_duplicate(c, t, "APPROVE", reviewer, _existing):
+                _dup_skipped.append(c[:12])
+                continue
             line = "\t".join([ts, t, c, "APPROVE", reviewer, note])
             # 寫入前自我檢查：欄位數必須為 6（防注入破壞格式）
             if len(line.split("\t")) != 6:
@@ -352,6 +374,11 @@ def main() -> int:
             f.write(line + "\n")
             written.append((c[:12], t[:12]))
 
+    for d in _dup_skipped:
+        print(f"ℹ️ 已存在相同核准紀錄，去重略過：{d}")
+    if not written and _dup_skipped:
+        print("✅ 無需變更（本次全部為重複紀錄，未產生重複授權）")
+        return 0
     for c, t in written:
         print(f"✅ 已寫入審查紀錄：commit {c} tree {t} by {reviewer}")
     print(f"   共 {len(written)} 筆 → {approve_file()}")

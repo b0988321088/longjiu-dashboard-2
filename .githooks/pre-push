@@ -85,9 +85,9 @@ check_one() {
     # 沒收到 --result）不得替「含程式檔」的 tree 背書。先找非自宣告的 APPROVE；找不到才退回自宣告
     # （純資料 commit 行為不變）。★標記只在 reviewer 欄比對：第一版寫在 note，結果被 note 裡的
     # 敘述文字（「SELF-DECLARED 規則」）誤命中，把真審查紀錄擋掉。
-    rev=$(awk -F'\t' -v t="$tree" '$2==t && $4=="APPROVE" && $5 !~ /^SELF-DECLARED:/{print $5; exit}' "$APPROVE_FILE")
+    rev=$(awk -F'\t' -v t="$tree" -v c="$c" '($2==t && ($3==c || index(c,$3)==1 || index($3,c)==1)) && $4=="APPROVE" && $5 !~ /^SELF-DECLARED:/{print $5; exit}' "$APPROVE_FILE")
     if [ -z "$rev" ]; then
-      sd=$(awk -F'\t' -v t="$tree" '$2==t && $4=="APPROVE" && $5 ~ /^SELF-DECLARED:/{print $5; exit}' "$APPROVE_FILE")
+      sd=$(awk -F'\t' -v t="$tree" -v c="$c" '($2==t && ($3==c || index(c,$3)==1 || index($3,c)==1)) && $4=="APPROVE" && $5 ~ /^SELF-DECLARED:/{print $5; exit}' "$APPROVE_FILE")
       if [ -n "$sd" ]; then
         cf=$(code_files "$c")
         if [ -n "$cf" ]; then

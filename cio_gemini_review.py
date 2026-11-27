@@ -187,14 +187,27 @@ def _parse_json(txt: str) -> dict:
 
 
 def approve(rev: dict, model: str, shas: list[str], note: str) -> int:
-    cmd = [sys.executable, "cio_approve.py", "--verdict", "APPROVE",
-           "--reviewer", "CIO-Gemini", "--result", str(REVIEW_OUT),
-           "--note", f"{model}｜{len(shas)} 筆｜{note}"[:120]]
-    p = subprocess.run(cmd, cwd=BASE, capture_output=True, text=True,
-                       encoding="utf-8", errors="replace")
-    out = ((p.stdout or "") + (p.stderr or "")).strip()
-    print(out[-500:] if out else "（cio_approve 無輸出）")
-    return p.returncode
+    """逐 commit 落紀錄（2026-11-27 核准鏈修復）。
+
+    原版只呼叫一次 cio_approve 且不傳 --commit → cio_approve 落的是 HEAD 的 (commit,tree)，
+    即使 --commits 指定的是別顆（1c75d41f 事件的直接成因）。
+    現在對每一顆被審查的 commit 各落一筆，並用 --expect-tree 鎖定內容，
+    確保「核准 SHA == 實際待推 SHA」。
+    """
+    rc = 0
+    for s in shas:
+        c = git("rev-parse", f"{s}^{{commit}}").strip()
+        t = git("rev-parse", f"{c}^{{tree}}").strip()
+        cmd = [sys.executable, "cio_approve.py", "--verdict", "APPROVE",
+               "--reviewer", "CIO-Gemini", "--result", str(REVIEW_OUT),
+               "--commit", c, "--expect-tree", t,
+               "--note", f"{model}｜{note}"[:120]]
+        p = subprocess.run(cmd, cwd=BASE, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace")
+        out = ((p.stdout or "") + (p.stderr or "")).strip()
+        print(out[-500:] if out else "（cio_approve 無輸出）")
+        rc = rc or p.returncode
+    return rc
 
 
 def main() -> int:
@@ -224,7 +237,17 @@ def main() -> int:
         return 2
     rev["reviewer_model"] = model
     rev["commits"] = shas
-    rev["tree"] = git("rev-parse", "HEAD^{tree}").strip()[:12]
+    # 2026-11-27 核准鏈修復：tree 不再一律取 HEAD^{tree}。
+    # 原版不論 --commits 指定哪顆，tree 都寫 HEAD 的 → 落紀錄時憑證綁錯 commit
+    #（1c75d41f 事件的根因）。改為逐筆記錄真正被審查的 (commit, tree) 配對，
+    # 讓 cio_approve 能對「每一個實際待推的 commit」綁對憑證。
+    _pairs: list[dict] = []
+    for _s in shas:
+        _c = git("rev-parse", f"{_s}^{{commit}}").strip()
+        _t = git("rev-parse", f"{_c}^{{tree}}").strip()
+        _pairs.append({"commit": _c, "tree": _t})
+    rev["reviewed_commits"] = _pairs
+    rev["tree"] = (_pairs[-1]["tree"] if _pairs else "")[:12]
     rev["reviewed_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
     REVIEW_OUT.write_text(json.dumps(rev, ensure_ascii=False, indent=2), encoding="utf-8")
     RAW_OUT.write_text(raw, encoding="utf-8")

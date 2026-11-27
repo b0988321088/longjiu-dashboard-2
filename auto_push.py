@@ -169,18 +169,27 @@ def git_dir(base: Path) -> Path:
 
 
 def tree_approved(base: Path, commit: str) -> bool:
-    f = git_dir(base) / "CIO_APPROVED"
-    if not f.exists():
-        return False
+    """該 commit 是否已有「成對」的核准憑證（2026-11-27：commit+tree 雙綁）。
+
+    原版只比 tree（parts[1] == t），於是 reset／合併改寫 commit 後仍回 True，
+    auto_push 便認為「不需補紀錄」；但 publish_gate 以 commit 為 key 判「無核准紀錄」
+    → 兩套標準打架，push 卡在「程式已核准、紀錄綁錯 commit」。
+    改為單一實作（approval_ledger），查核不過一律 fail-closed。
+    """
     p = run(["git", "rev-parse", f"{commit}^{{tree}}"], base)
     if p.returncode != 0:
         return False
     t = p.stdout.strip()
-    for ln in f.read_text(encoding="utf-8", errors="replace").splitlines():
-        parts = ln.split("\t")
-        if len(parts) >= 5 and parts[1] == t and parts[3] == "APPROVE":
-            return True
-    return False
+    try:
+        if str(base) not in sys.path:
+            sys.path.insert(0, str(base))
+        import approval_ledger as ledger  # noqa: E402 — 單一查核實作
+        ok, _reason, _hit = ledger.verify_commit(commit, t, base=str(base))
+        return ok
+    except Exception as e:  # noqa: BLE001 — 帳本不可用 → fail-closed（不猜、不放行）
+        print(f"⚠️ approval_ledger 不可用（{str(e)[:80]}）→ 視為未核准（fail-closed）",
+              file=sys.stderr)
+        return False
 
 
 def commit_has_code(base: Path, commit: str) -> list[str]:
