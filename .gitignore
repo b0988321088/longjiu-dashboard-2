@@ -156,3 +156,6 @@ cio_review_gemini_latest_raw.txt
 
 # 2026-11-10：真值改動前的本機備份目錄（.backup/ 內為 snapshot 快照，僅本機回溯用，不進版控）
 .backup/
+
+# 2026-11-27：備份檔不進版控（含 PUSH_HOLD 原文等系統治理留痕，避免公開 repo 曝光）
+backups/
