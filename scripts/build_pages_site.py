@@ -54,7 +54,9 @@ def main() -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--allowlist", default=None)
     ap.add_argument("--pattern", default=DEFAULT_PATTERN)
-    ap.add_argument("--max-mb", type=float, default=25.0)
+    ap.add_argument("--max-mb", type=float, default=32.0,
+                    help="站點總容量上限（MB）。2026-11-28 由 25.0 提高：allowlist 依站內引用自動展開，"
+                         "歷史日報/圖檔逐日累積，07:00 產線新增後 25.33MB 觸頂 → Pages build exit 2。")
     a = ap.parse_args()
 
     root = os.path.abspath(a.root)
